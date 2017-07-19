@@ -722,6 +722,8 @@ namespace engine
       _mthRecordGenerator generator ;
       ossValuePtr recordDataPtr = 0 ;
       INT32 startNumRecords = numRecords();
+      BOOLEAN hasLocked = _mbContext->isMBLock() ;
+      monAppCB *pMonAppCB = cb ? cb->getMonAppCB() : NULL ;
 
       if ( DMS_INVALID_EXTENT == _extentID )
       {
@@ -755,7 +757,7 @@ namespace engine
                rc = SDB_SYS ;
                goto error ;
             }
-
+            DMS_MON_OP_COUNT_INC( pMonAppCB, MON_SELECT, 1 ) ;
             if ( _numToReturn > 0 )
             {
                --_numToReturn ;
@@ -785,6 +787,10 @@ namespace engine
             _hitEnd = TRUE ;
             break ;
          }
+         if ( !hasLocked )
+         {
+            _mbContext->pause() ;
+         }
       }
 
       if ( !isEmpty() )
@@ -798,6 +804,10 @@ namespace engine
       }
 
    done:
+      if ( !hasLocked )
+      {
+         _mbContext->pause() ;
+      }
       return rc ;
    error:
       goto done ;
