@@ -77,6 +77,12 @@ void getConf()
 	cout << "COORD: " << COORD << endl ;
 }
 
+void getUniqueName( const char* modName, char name[] )
+{
+	pid_t pid = getpid() ;
+	sprintf( name, "%s_%d_%s", CHANGEDPREFIX, pid, modName ) ;
+}
+
 void ossSleep(int milliseconds)
 {
 	#if defined (_WINDOWS)
@@ -112,4 +118,35 @@ done:
 	return rc ;
 error:
 	goto done ;
+}
+
+
+/*****************************************************************
+* get all data groups to a vector, 
+* vector ex [ "group1", "group2", ... ]
+* return SDB_OK if success, return others if error
+*
+*****************************************************************/
+int getGroups( sdb& db, vector<string>& vec )
+{
+    int rc = SDB_OK ;
+    sdbCursor cursor ;
+    BSONObj obj ;
+
+    rc = db.listReplicaGroups( cursor ) ;
+    CHECK_RC( rc, "fail to list replica groups, rc = %d\n", rc ) ;
+    while( !cursor.next( obj ) )
+    {
+        string groupname = obj.getField( "GroupName" ).String() ;
+        if( groupname != "SYSCoord" && groupname != "SYSCatalogGroup" )
+        {
+            // cout << groupname << endl ;
+            vec.push_back( groupname ) ;
+        }
+    }
+
+done:
+    return rc ;
+error:
+    goto done ;
 }

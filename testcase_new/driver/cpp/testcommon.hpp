@@ -3,9 +3,12 @@
 
 #include "client.hpp"
 #include <iostream>
+#include <vector>
+#include <string>
 #include <stdarg.h>
 
 using namespace sdbclient ; 
+using namespace std ;
 
 #define CHECK_RC( rc, fmt, ... ) \
 do { \
@@ -30,10 +33,18 @@ extern char WORKDIR[100] ;
 extern char COORD[100] ;
 
 void printMsg( const char* fmt, ... ) ;
+
 void getConf() ;
-void ossSleep( int milliseconds ) ;
-bool isStandalone( sdb& db ) ;
+
+void getUniqueName( const char* modName, char name[] ) ;
+
 int createNormalCl( sdb& db, sdbCollectionSpace& cs, sdbCollection& cl,
 					const char* csname, const char* clname ) ;
+
+void ossSleep( int milliseconds ) ;
+
+bool isStandalone( sdb& db ) ;
+
+int getGroups( sdb& db, vector<string>& groups ) ;
 
 #endif
