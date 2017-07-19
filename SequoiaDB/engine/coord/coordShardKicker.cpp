@@ -532,6 +532,11 @@ namespace engine
          goto error ;
       }
 
+      if ( !cataPtr->isSharded() )
+      {
+         goto done ;
+      }
+
       rc = _checkShardingKey( cataPtr, updator, hasInclude ) ;
       if ( rc )
       {
