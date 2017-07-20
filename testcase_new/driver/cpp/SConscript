@@ -13,7 +13,7 @@ gtestMainFile = [
       ]
 
 testCommonFiles = [
-        "testcommon.cpp","impWorker.cpp",
+        "./testcommon.cpp","./impWorker.cpp",
         "./datasource/DS_thread.cpp"      ]
 
 testFiles1 = [ "./misc/decimal.cpp" ]
@@ -56,6 +56,10 @@ testFiles19 = [ "./misc/prepareMore.cpp" ]
 
 testFiles20 = [ "./misc/JSCompatible.cpp" ]
 
+testFiles21 = [ "./ssl/sslTrue.cpp" ]
+
+testFiles22 = [ "./ssl/sslFalse.cpp" ]
+
 # compile common lib
 gtestall = env.StaticLibrary('gtest', gtestFiles)
 gtestMainObj = env.Object('gtestMainObj', gtestMainFile)
@@ -81,6 +85,8 @@ date			   = dllBuildEnv.Program("date", [testFiles17, gtestMainObj, testCommonFi
 analyze			   = dllBuildEnv.Program("analyze", [testFiles18, gtestMainObj, testCommonFiles])
 prepareMore		   = dllBuildEnv.Program("prepareMore", [testFiles19, gtestMainObj, testCommonFiles])
 JSCompatible	   = dllBuildEnv.Program("JSCompatible", [testFiles20, gtestMainObj, testCommonFiles])
+sslTrue			   = dllBuildEnv.Program("sslTrue", [testFiles21, gtestMainObj, testCommonFiles])
+sslFalse           = dllBuildEnv.Program("sslFalse", [testFiles22, gtestMainObj, testCommonFiles])
 
 # static compile
 # dll compile
@@ -103,16 +109,19 @@ date.static				  = staticBuildEnv.Program("date.static",[testFiles17, gtestMainO
 analyze.static			  = staticBuildEnv.Program("analyze.static",[testFiles18, gtestMainObj, testCommonFiles])
 prepareMore.static		  = staticBuildEnv.Program("prepareMore.static",[testFiles19, gtestMainObj, testCommonFiles])
 JSCompatible.static	      = staticBuildEnv.Program("JSCompatible.static",[testFiles20, gtestMainObj, testCommonFiles])
+sslTrue.static			  = staticBuildEnv.Program("sslTrue.static",[testFiles21, gtestMainObj, testCommonFiles])
+sslFalse.static           = staticBuildEnv.Program("sslFalse.static",[testFiles22, gtestMainObj, testCommonFiles])
 
 # dll compile
 env.Install( '#/build_test',[ decimal,numberLong,trunOncache,time,DS_InvalidArgTest,
 			                  DS_InvalidConnTest,DS_ConnTest,DS_ThreadTest,DS_ChecktimeTest,DS_ClTest,DS_InvalidUsrTest,
-                              lob,code,closeAllCursors,bson_oid,date,analyze,prepareMore,JSCompatible ] )
+                              lob,code,closeAllCursors,bson_oid,date,analyze,prepareMore,JSCompatible,sslTrue,sslFalse ] )
 
 # static compile
 env.Install( '#/build_test',[ decimal.static,numberLong.static,trunOncache.static,
 							  time.static,DS_InvalidArgTest.static,DS_InvalidConnTest.static,
 							  DS_ConnTest.static,DS_ThreadTest.static,DS_ChecktimeTest.static,
 							  DS_ClTest.static,DS_InvalidUsrTest.static,lob.static,code.static,closeAllCursors.static,
-							  bson_oid.static,date.static,analyze.static,prepareMore.static,JSCompatible.static ] )
+							  bson_oid.static,date.static,analyze.static,prepareMore.static,JSCompatible.static,
+							  sslTrue.static,sslFalse.static ] )
 
