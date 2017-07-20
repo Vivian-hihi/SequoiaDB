@@ -849,15 +849,15 @@ namespace engine
       {
          rc = _prepareCappedTbScan( cb, accessType, dollarList,
                                     matcher, selector ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to prepare data on capped "
-                      "collection, rc: %d", rc ) ;
       }
       else
       {
          rc = _prepareNormalTbScan( cb, accessType, dollarList,
                                     matcher, selector ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to prepare data on "
-                      "collection, rc: %d", rc ) ;
+      }
+      if ( rc && SDB_DMS_EOC != rc )
+      {
+         PD_LOG( PDERROR, "Prepare data failed, rc: %d", rc ) ;
       }
 
    done:
