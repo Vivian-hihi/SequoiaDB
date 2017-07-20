@@ -172,6 +172,7 @@ namespace engine
          catAgent* getCataAgent () ;
          nodeMgrAgent* getNodeMgrAgent () ;
          clsFreezingWindow *getFreezingWindow() ;
+         clsDCMgr* getDCMgr() ;
 
          INT32 getAndLockCataSet( const CHAR *name, clsCatalogSet **ppSet,
                                   BOOLEAN noWithUpdate = TRUE,
@@ -189,6 +190,8 @@ namespace engine
                            UINT32 &lobPageSize,
                            DMS_STORAGE_TYPE &type,
                            INT64 waitMillSec = CLS_SHARD_TIMEOUT ) ;
+
+         INT32 updateDCBaseInfo() ;
 
       public:
          INT32  sendToCatlog ( MsgHeader * msg,
