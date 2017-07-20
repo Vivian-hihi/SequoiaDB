@@ -19,6 +19,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.logging.Logger;
 
 /**
  * @FileName
@@ -28,6 +29,9 @@ import java.util.*;
  */
 public class MyUtil {
 
+    private static Logger log = Logger.getLogger(MyUtil.class.getName());
+
+
     /**
      * 批量产生名字
      *
@@ -36,12 +40,13 @@ public class MyUtil {
      * @return
      */
     public static List<String> createNames(String preName, int num) {
-        List<String> names = new ArrayList<>(1000);
+        List<String> names = new ArrayList<>(num + num / 10);
         for (int i = 0; i < num; i++) {
             names.add(preName + i);
         }
         return names;
     }
+
 
     /**
      * 打印开始时间
@@ -209,7 +214,7 @@ public class MyUtil {
                     cs.createCollection(name);
                     count++;
                 } catch (BaseException e) {
-                    e.printStackTrace();
+//                    e.printStackTrace();
                 }
             }
         }
@@ -229,7 +234,7 @@ public class MyUtil {
                     .createCollection(clName);
             return 1;
         } catch (BaseException e) {
-            e.printStackTrace();
+//            e.printStackTrace();
             return 0;
         }
     }
@@ -240,7 +245,7 @@ public class MyUtil {
                     .createCollection(clName, option);
             return 1;
         } catch (BaseException e) {
-            e.printStackTrace();
+//            e.printStackTrace();
             return 0;
         }
     }
@@ -259,7 +264,7 @@ public class MyUtil {
                     db.createCollectionSpace(name);
                     count++;
                 } catch (BaseException e) {
-                    e.printStackTrace();
+//                    e.printStackTrace();
                 }
             }
         }
@@ -280,7 +285,7 @@ public class MyUtil {
             db.createCollectionSpace(csName, options);
             return 1;
         } catch (BaseException e) {
-            e.printStackTrace();
+//            e.printStackTrace();
             return 0;
         }
     }
@@ -291,7 +296,7 @@ public class MyUtil {
             db.createCollectionSpace(name);
             return true;
         } catch (BaseException e) {
-            e.printStackTrace();
+//            e.printStackTrace();
             return false;
         }
     }
@@ -310,7 +315,7 @@ public class MyUtil {
             db.createDomain(domainName, options);
             return 1;
         } catch (BaseException e) {
-            e.printStackTrace();
+//            e.printStackTrace();
             return 0;
         }
     }
@@ -329,7 +334,7 @@ public class MyUtil {
             db.createDomain(domainName, options);
             return 1;
         } catch (BaseException e) {
-            e.printStackTrace();
+//            e.printStackTrace();
             return 0;
         }
     }
@@ -384,7 +389,7 @@ public class MyUtil {
                     db.createDomain(name, options);
                     count++;
                 } catch (BaseException e) {
-                    e.printStackTrace();
+//                    e.printStackTrace();
                 }
             }
         } finally {
@@ -408,7 +413,7 @@ public class MyUtil {
                     db.getCollectionSpace(name).dropCollection(clName);
                     count++;
                 } catch (BaseException e) {
-                    e.printStackTrace();
+//                    e.printStackTrace();
                 }
             }
         }
@@ -426,7 +431,7 @@ public class MyUtil {
             db.dropDomain(domainName);
             return 1;
         } catch (BaseException e) {
-            e.printStackTrace();
+//            e.printStackTrace();
             return 0;
         }
     }
@@ -439,7 +444,7 @@ public class MyUtil {
                     db.dropDomain(name);
                     count++;
                 } catch (BaseException e) {
-                    e.printStackTrace();
+//                    e.printStackTrace();
                 }
             }
         }
@@ -461,7 +466,7 @@ public class MyUtil {
                     db.dropCollectionSpace(name);
                     count++;
                 } catch (BaseException e) {
-                    e.printStackTrace();
+//                    e.printStackTrace();
                 }
             }
         }
@@ -477,8 +482,10 @@ public class MyUtil {
     public static boolean isDomainsDeleted(List<String> domains) {
         try (MySequoiadb db = getMySdb()) {
             for (String domain : domains) {
-                if (db.isDomainExist(domain))
+                if (db.isDomainExist(domain)) {
+                    log.severe(domain);
                     return false;
+                }
             }
         }
         return true;
@@ -487,8 +494,10 @@ public class MyUtil {
     public static boolean isDomainAllCreated(List<String> domains) {
         try (MySequoiadb db = getMySdb()) {
             for (String domain : domains) {
-                if (db.isDomainExist(domain) == false)
+                if (db.isDomainExist(domain) == false) {
+                    log.severe(domain);
                     return false;
+                }
             }
         }
         return true;
@@ -511,7 +520,7 @@ public class MyUtil {
                     cs.dropCollection(clName);
                     count++;
                 } catch (BaseException e) {
-                    e.printStackTrace();
+//                    e.printStackTrace();
                 }
             }
         }
@@ -528,8 +537,10 @@ public class MyUtil {
         try (MySequoiadb db = getMySdb()) {
             for (String name : csNames) {
                 boolean isExist = db.isCollectionSpaceExist(name);
-                if (isExist == true)
+                if (isExist == true) {
+                    log.severe(name);
                     return false;
+                }
             }
         }
         return true;
@@ -542,13 +553,12 @@ public class MyUtil {
      * @return
      */
     public static boolean isCsAllCreated(List<String> csNames) {
-        boolean falg=true;
+        boolean falg = true;
         try (MySequoiadb db = getMySdb()) {
             for (String csName : csNames) {
-                if (db.isCollectionSpaceExist(csName) == false)
-                {
-                    System.out.println("MyUtil.isCsAllCreated:this cs not exist: "+csName);
-                    falg=false;
+                if (db.isCollectionSpaceExist(csName) == false) {
+                    System.out.println("MyUtil.isCsAllCreated:this cs not exist: " + csName);
+                    falg = false;
                 }
             }
             return falg;
@@ -605,7 +615,7 @@ public class MyUtil {
                     .getCollection(clName).delete((BSONObject) null);
             return true;
         } catch (BaseException e) {
-            e.printStackTrace();
+//            e.printStackTrace();
             return false;
         }
     }
@@ -671,8 +681,10 @@ public class MyUtil {
         try (MySequoiadb db = getMySdb()) {
             CollectionSpace cs = db.getCollectionSpace(csName);
             for (String clName : clNames) {
-                if (cs.isCollectionExist(clName))
+                if (cs.isCollectionExist(clName)) {
+                    log.severe(clName);
                     return false;
+                }
             }
             return true;
         }
@@ -687,8 +699,10 @@ public class MyUtil {
         try (MySequoiadb db = getMySdb()) {
             CollectionSpace cs = db.getCollectionSpace(csName);
             for (String name : clNames) {
-                if (cs.isCollectionExist(name) == false)
+                if (cs.isCollectionExist(name) == false) {
+                    log.severe(name);
                     return false;
+                }
             }
         } catch (BaseException e) {
             e.printStackTrace();
@@ -804,8 +818,10 @@ public class MyUtil {
         int num = getNumOfLobFromDataNode(csName, clName, group.getMaster());
         for (NodeWrapper nodeWrapper : group.getNodes()) {
             int numInNode = getNumOfLobFromDataNode(csName, clName, nodeWrapper);
-            if (num != numInNode)
+            if (num != numInNode) {
+                log.severe("num:"+String.valueOf(num)+" numInNode"+String.valueOf(numInNode));
                 return false;
+            }
         }
         return true;
     }
@@ -847,8 +863,10 @@ public class MyUtil {
                         e.printStackTrace();
                         if (e.getErrorCode() == -296)
                             continue;
-                        else
+                        else {
+                            log.severe(id.toString());
                             return false;
+                        }
                     }
                 }
             }
@@ -867,19 +885,21 @@ public class MyUtil {
                 listLobsMap.put(id, "");
             }
             for (ObjectId id : createdLobIds) {
-                if (listLobsMap.containsKey(id) == false)
+                if (listLobsMap.containsKey(id) == false) {
+                    log.severe(id.toString());
                     return false;
+                }
             }
             return true;
         }
     }
 
-    public static void throwSkipException(String msg){
+    public static void throwSkipException(String msg) {
         System.out.println(msg);
         throw new SkipException(msg);
     }
 
-    public static void throwSkipExeWithoutFaultEnv(){
+    public static void throwSkipExeWithoutFaultEnv() {
         throwSkipException("没遇上异常环境");
     }
 }
