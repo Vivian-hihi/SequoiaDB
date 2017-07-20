@@ -80,9 +80,6 @@ namespace engine
       // 1. insert self to node collection
       rc = readCataConf() ;
 
-      /// load group info and ignore the error info
-      _loadGroupInfo() ;
-
       PD_TRACE_EXITRC ( SDB_CATNODEMGR_INIT, rc ) ;
       return rc ;
    }
@@ -95,6 +92,9 @@ namespace engine
    void catNodeManager::attachCB( pmdEDUCB * cb )
    {
       _pEduCB = cb ;
+
+      /// load group info and ignore the error info
+      _loadGroupInfo() ;
    }
 
    void catNodeManager::detachCB( pmdEDUCB * cb )
