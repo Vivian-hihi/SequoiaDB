@@ -58,6 +58,7 @@ namespace engine
 
    INT32 mthDoubleBufferSize ( CHAR **ppStr, INT32 &bufLen ) ;
 
+   BOOLEAN mthIsZero( const BSONElement &element ) ;
 
    INT32 mthCheckFieldName( const CHAR *pField, INT32 &dollarNum ) ;
 

@@ -1095,6 +1095,14 @@ namespace engine
          goto error ;
       }
 
+      if ( mthIsZero( ele ) )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "divisor must not be zero:ele=%s",
+                 ele.toString().c_str() ) ;
+         goto error ;
+      }
+
    done:
       return rc ;
    error:

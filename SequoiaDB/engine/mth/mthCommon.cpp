@@ -357,7 +357,7 @@ namespace engine
                   l_max.init() ;
                   l_min.fromLong( OSS_SINT64_MIN ) ;
                   l_max.fromLong( OSS_SINT64_MAX ) ;
-                  if ( original.compare( l_min ) < 0 || 
+                  if ( original.compare( l_min ) < 0 ||
                        original.compare( l_max ) > 0 )
                   {
                      builder.appendNull( fieldName ) ;
@@ -526,7 +526,7 @@ namespace engine
                   l_max.init() ;
                   l_min.fromLong( OSS_SINT64_MIN ) ;
                   l_max.fromLong( OSS_SINT64_MAX ) ;
-                  if ( original.compare( l_min ) < 0 || 
+                  if ( original.compare( l_min ) < 0 ||
                        original.compare( l_max ) > 0 )
                   {
                      builder.appendNull( fieldName ) ;
@@ -991,6 +991,30 @@ namespace engine
       return rc ;
    error :
       goto done ;
+   }
+
+   BOOLEAN mthIsZero( const BSONElement &ele )
+   {
+      if ( ele.type() == NumberDecimal ) {
+         bsonDecimal decimal = ele.numberDecimal() ;
+         if ( decimal.isZero() ) {
+            return TRUE ;
+         }
+      }
+      else if ( ele.type() == NumberDouble ) {
+         double d = ele.numberDouble() ;
+         if ( d < OSS_EPSILON && d > -OSS_EPSILON ) {
+            return TRUE ;
+         }
+      }
+      else {
+         long l = ele.numberLong() ;
+         if ( 0 == l ) {
+            return TRUE ;
+         }
+      }
+
+      return FALSE ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__MTHDOUBLEBUFFERSIZE, "mthDoubleBufferSize" )
