@@ -62,6 +62,8 @@ testFiles22 = [ "./ssl/sslFalse.cpp" ]
 
 testFiles23 = [ "./misc/index.cpp" ]
 
+testFiles24 = [ "./misc/idIndex.cpp" ]
+
 # compile common lib
 gtestall = env.StaticLibrary('gtest', gtestFiles)
 gtestMainObj = env.Object('gtestMainObj', gtestMainFile)
@@ -90,6 +92,7 @@ JSCompatible	   = dllBuildEnv.Program("JSCompatible", [testFiles20, gtestMainObj
 sslTrue			   = dllBuildEnv.Program("sslTrue", [testFiles21, gtestMainObj, testCommonFiles])
 sslFalse           = dllBuildEnv.Program("sslFalse", [testFiles22, gtestMainObj, testCommonFiles])
 index			   = dllBuildEnv.Program("index", [testFiles23, gtestMainObj, testCommonFiles])
+idIndex			   = dllBuildEnv.Program("idIndex", [testFiles24, gtestMainObj, testCommonFiles])
 
 # static compile
 # dll compile
@@ -115,12 +118,13 @@ JSCompatible.static	      = staticBuildEnv.Program("JSCompatible.static",[testFi
 sslTrue.static			  = staticBuildEnv.Program("sslTrue.static",[testFiles21, gtestMainObj, testCommonFiles])
 sslFalse.static           = staticBuildEnv.Program("sslFalse.static",[testFiles22, gtestMainObj, testCommonFiles])
 index.static			  = staticBuildEnv.Program("index.static", [testFiles23, gtestMainObj, testCommonFiles])
+idIndex.static			  = staticBuildEnv.Program("idIndex.static", [testFiles24, gtestMainObj, testCommonFiles])
 
 # dll compile
 env.Install( '#/build_test',[ decimal,numberLong,trunOncache,time,DS_InvalidArgTest,
 			                  DS_InvalidConnTest,DS_ConnTest,DS_ThreadTest,DS_ChecktimeTest,DS_ClTest,DS_InvalidUsrTest,
                               lob,code,closeAllCursors,bson_oid,date,analyze,prepareMore,JSCompatible,sslTrue,sslFalse,
-							  index ] )
+							  index,idIndex ] )
 
 # static compile
 env.Install( '#/build_test',[ decimal.static,numberLong.static,trunOncache.static,
@@ -128,5 +132,5 @@ env.Install( '#/build_test',[ decimal.static,numberLong.static,trunOncache.stati
 							  DS_ConnTest.static,DS_ThreadTest.static,DS_ChecktimeTest.static,
 							  DS_ClTest.static,DS_InvalidUsrTest.static,lob.static,code.static,closeAllCursors.static,
 							  bson_oid.static,date.static,analyze.static,prepareMore.static,JSCompatible.static,
-							  sslTrue.static,sslFalse.static,index.static ] )
+							  sslTrue.static,sslFalse.static,index.static,idIndex.static ] )
 
