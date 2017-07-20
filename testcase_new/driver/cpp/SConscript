@@ -60,6 +60,8 @@ testFiles21 = [ "./ssl/sslTrue.cpp" ]
 
 testFiles22 = [ "./ssl/sslFalse.cpp" ]
 
+testFiles23 = [ "./misc/index.cpp" ]
+
 # compile common lib
 gtestall = env.StaticLibrary('gtest', gtestFiles)
 gtestMainObj = env.Object('gtestMainObj', gtestMainFile)
@@ -87,6 +89,7 @@ prepareMore		   = dllBuildEnv.Program("prepareMore", [testFiles19, gtestMainObj,
 JSCompatible	   = dllBuildEnv.Program("JSCompatible", [testFiles20, gtestMainObj, testCommonFiles])
 sslTrue			   = dllBuildEnv.Program("sslTrue", [testFiles21, gtestMainObj, testCommonFiles])
 sslFalse           = dllBuildEnv.Program("sslFalse", [testFiles22, gtestMainObj, testCommonFiles])
+index			   = dllBuildEnv.Program("index", [testFiles23, gtestMainObj, testCommonFiles])
 
 # static compile
 # dll compile
@@ -111,11 +114,13 @@ prepareMore.static		  = staticBuildEnv.Program("prepareMore.static",[testFiles19
 JSCompatible.static	      = staticBuildEnv.Program("JSCompatible.static",[testFiles20, gtestMainObj, testCommonFiles])
 sslTrue.static			  = staticBuildEnv.Program("sslTrue.static",[testFiles21, gtestMainObj, testCommonFiles])
 sslFalse.static           = staticBuildEnv.Program("sslFalse.static",[testFiles22, gtestMainObj, testCommonFiles])
+index.static			  = staticBuildEnv.Program("index.static", [testFiles23, gtestMainObj, testCommonFiles])
 
 # dll compile
 env.Install( '#/build_test',[ decimal,numberLong,trunOncache,time,DS_InvalidArgTest,
 			                  DS_InvalidConnTest,DS_ConnTest,DS_ThreadTest,DS_ChecktimeTest,DS_ClTest,DS_InvalidUsrTest,
-                              lob,code,closeAllCursors,bson_oid,date,analyze,prepareMore,JSCompatible,sslTrue,sslFalse ] )
+                              lob,code,closeAllCursors,bson_oid,date,analyze,prepareMore,JSCompatible,sslTrue,sslFalse,
+							  index ] )
 
 # static compile
 env.Install( '#/build_test',[ decimal.static,numberLong.static,trunOncache.static,
@@ -123,5 +128,5 @@ env.Install( '#/build_test',[ decimal.static,numberLong.static,trunOncache.stati
 							  DS_ConnTest.static,DS_ThreadTest.static,DS_ChecktimeTest.static,
 							  DS_ClTest.static,DS_InvalidUsrTest.static,lob.static,code.static,closeAllCursors.static,
 							  bson_oid.static,date.static,analyze.static,prepareMore.static,JSCompatible.static,
-							  sslTrue.static,sslFalse.static ] )
+							  sslTrue.static,sslFalse.static,index.static ] )
 
