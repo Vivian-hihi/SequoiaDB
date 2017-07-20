@@ -187,6 +187,7 @@
             <sequential>
                <!--如果有失败的则中断-->
                <var name="fail_num" value="0"/>
+               <var name="error_num" value="0"/>
                <if>
                   <available file="${tmp_report_dir}/junitreports" type="dir"/>
                   <then>
@@ -195,10 +196,18 @@
                            <fileset dir="${WORKSPACE}/report" includes="**/*.xml"/>
                         </path-elements>
                      </countstr>
+                     <countstr str="&lt;/error&gt;"  resultproperty="error_num">
+                        <path-elements>
+                           <fileset dir="${WORKSPACE}/report" includes="**/*.xml"/>
+                        </path-elements>
+                     </countstr>
                   </then>
                </if>
                <if>
-                  <equals arg1="${fail_num}" arg2="0"/>
+                  <and>
+                     <equals arg1="${fail_num}" arg2="0"/>
+                     <equals arg1="${error_num}" arg2="0"/>
+                  </and>
                   <then>
                      <testng outputDir="${tmp_report_dir}" classpathref="testcasecalsspath">
                         <xmlfileset dir="${casedir}" includes="@{xmlname}"/>
