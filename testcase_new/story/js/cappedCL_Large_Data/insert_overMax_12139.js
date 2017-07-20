@@ -113,6 +113,29 @@ function main()
    //最终主备数据一致
    db.setSessionAttr( { PreferedInstance: "s" } );
    
+   //比较count结果
+   var flag = false;
+   for(var i=0; i< 30; i++)
+   {
+	  sleep(1000);
+	  actualNum = dbcl.count();
+	  if(parseInt(actualNum) !== expectNum)
+	  {
+		 continue;
+	  }else
+	  {
+		  flag = true;
+		  break;
+	  }
+   }
+   
+   if(flag !== true)
+   {
+	   println("after 30s,the second node is not the same the primary");
+	   throw "SECOND_COUNT_ERR";
+   }
+   println("--second node count success!actualNum:" + actualNum + ",expectNum: " + expectNum);
+   
    //比较find结果
    try
    {
@@ -123,10 +146,6 @@ function main()
       throw buildException("find data", e, null, null, e);
    }
    println("--second node find data success!");
-   
-   //比较count结果
-   checkCount( dbcl, null, expectNum);
-   println("--second node count success!expectCount: " + expectNum);
   
    commDropCS( db, csName, true, "drop CS in the end" );
 }
