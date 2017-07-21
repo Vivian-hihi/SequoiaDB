@@ -487,6 +487,10 @@ INT32 _pdTraceCB::dump( OSSFILE *outFile )
    // write header first
    pAllocPair = ( pdAllocPair* )_ptr.fetch() ;
    _header.savePosition( pAllocPair->_b.fetch(), _size ) ;
+   if ( _header._bufTail % TRACE_CHUNK_SIZE )
+   {
+      _pBuffer[_header._bufTail] = 0;
+   }
 
    rc = ossWriteN( outFile, ( const CHAR* )&_header, sizeof( _header ) ) ;
    if ( rc )

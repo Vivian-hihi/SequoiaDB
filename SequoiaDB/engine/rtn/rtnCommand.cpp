@@ -2349,6 +2349,8 @@ namespace engine
       OSSFILE outFile ;
       BOOLEAN isOpen = FALSE ;
       CHAR filePath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+      CHAR path[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+      CHAR *ptr = NULL ;
 
       if ( _pDumpFileName && ossStrlen( _pDumpFileName ) > 0 &&
            traceCB->getSize() > 0 )
@@ -2372,7 +2374,22 @@ namespace engine
             ossStrncpy( filePath, _pDumpFileName, OSS_MAX_PATHSIZE ) ;
          }
 
+
+         //create dir
+         ossStrncpy( path, filePath, OSS_MAX_PATHSIZE ) ;
+         ptr = ossStrrchr( path, OSS_FILE_SEP_CHAR ) ;
+         if ( ptr != &path[0] )
+         {
+            *ptr = 0 ;
+            if ( ossAccess( path ) )
+            {
+               ossMkdir( path ) ;
+            }
+         }
+
+
          /// open file
+
          rc = ossOpen( filePath, OSS_REPLACE|OSS_READWRITE,
                        OSS_DEFAULTFILE, outFile ) ;
          if ( rc )
@@ -2386,16 +2403,19 @@ namespace engine
          PD_LOG( PDEVENT, "Begin to dump trace to %s ...", filePath ) ;
          rc = traceCB->dump( &outFile ) ;
          PD_RC_CHECK ( rc, PDWARNING, "Failed to stop trace, rc = %d", rc ) ;
-      }
-   done :
-      traceCB->destroy() ;
-      if ( isOpen )
-      {
+
          ossClose( outFile ) ;
       }
+   done :
+      traceCB->destroy() ;    
       PD_TRACE_EXITRC ( SDB__RTNTRACESTOP_DOIT, rc ) ;
       return rc ;
    error :
+      if ( isOpen )
+      {
+         ossClose( outFile ) ;
+         ossDelete( filePath ) ;
+      }
       goto done ;
    }
 

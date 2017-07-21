@@ -7109,6 +7109,9 @@ static JSBool sdb_trace_on ( JSContext *cx, uintN argc, jsval *vp )
                               &bufferSize, &strComp, &strBreakPoint );
    REPORT( ret, "Sdb.traceOn(): invalid arguments");
 
+   REPORT ( bufferSize > 0,
+            "Sdb.traceOn(): bufferSize must be a positive integer" ) ;
+
    if ( argc >= 2 )
    {
       comp = (CHAR*)JS_EncodeString( cx, strComp ) ;

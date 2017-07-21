@@ -171,7 +171,7 @@ error:
 void _pdTraceParser::_removeSuffix( CHAR *path )
 {
    INT32 idx = ossStrlen( path ) - 1 ;
-   while( idx >= 0 && path[idx] != '\\' && path[idx] != '/' )
+   while( idx >= 0 && path[idx] != OSS_FILE_SEP_CHAR )
    {
       if ( path[ idx ] == '.' )
       {
@@ -179,6 +179,11 @@ void _pdTraceParser::_removeSuffix( CHAR *path )
          break ;
       }
       --idx ;
+   }
+
+   if ( path[idx] == OSS_FILE_SEP_CHAR )
+   {
+      ossStrncat( path, "trace", ossStrlen("trace") ) ;
    }
 }
 
@@ -330,7 +335,7 @@ INT32 _pdTraceParser::_parseTraceDumpFile( OSSFILE *file,
       goto error ;
    }
 
-   while ( cursor != endPos && readLen < pHeader->_bufSize )
+   while ( /*cursor != endPos &&*/ readLen < pHeader->_bufSize )
    {
       INT64 hasRead = 0 ;
       /// read a chunk
@@ -351,10 +356,10 @@ INT32 _pdTraceParser::_parseTraceDumpFile( OSSFILE *file,
 
       /// parse the trunk data
       dataOffset = 0 ;
-      while( dataOffset < TRACE_CHUNK_SIZE )
+      while( cursor + dataOffset != endPos && dataOffset < TRACE_CHUNK_SIZE )
       {
          record = ( const pdTraceRecord* )( pTmpBuf + dataOffset ) ;
-         recIdx = pdTraceRecordIndex( sequenceNum++,
+         recIdx = pdTraceRecordIndex( ++sequenceNum,
                                       cursor + dataOffset ) ;
          if ( 0 != ossMemcmp( record->_eyeCatcher, TRACE_EYE_CATCHER,
                               TRACE_EYE_CATCHER_SIZE ) ||
@@ -654,13 +659,13 @@ INT32  _pdTraceParser::_outputErrorFunctions( PD_MAP_FUNCS &errFunctions,
          ++it )
    {
       length += ossSnprintf( _pFormatBuf, _bufSize,
-                             "%d: %s "OSS_NEWLINE"       (",
+                             "%d: %s "OSS_NEWLINE"       ( ",
                              nCount, pdGetTraceFunction( it->first ) ) ;
 
       for ( UINT32 item = 0 ; item < it->second.size() ; ++item )
       {
          length += ossSnprintf( _pFormatBuf + length, _bufSize - length,
-                                "%d", it->second[ item ] ) ;
+                                "%d ", it->second[ item ] ) ;
       }
 
       length += ossSnprintf( _pFormatBuf + length, _bufSize - length,
@@ -1091,7 +1096,7 @@ INT32 _pdTraceParser::_outputExceptionReport( OSSFILE *inFile,
                                          _bufSize - length,
                                          OSS_NEWLINE"           . . . .  " ) ;
                }
-               else if( nScan > 1 )
+               if( nScan > 1 )
                {
                   length += _outputTraceRecordFormat( _pFormatBuf + length,
                                                       _bufSize - length,
@@ -1108,7 +1113,8 @@ INT32 _pdTraceParser::_outputExceptionReport( OSSFILE *inFile,
                {
                   length += ossSnprintf( _pFormatBuf + length,
                                          _bufSize - length,
-                                        "      (%ld)" ) ;
+                                         "      (%ld)",
+                                         timeInterval ) ;
                }
                nScan = 0 ;
             }
@@ -1204,7 +1210,7 @@ INT32 _pdTraceParser::_outputTraceRecordByFMT( OSSFILE *out,
    }
    else if ( PD_TRACE_RECORD_FLAG_ENTRY == pRecord->_flag )
    {
-      pTypeStr = "Normal" ;
+      pTypeStr = "Entry" ;
    }
 
    // write sequence
