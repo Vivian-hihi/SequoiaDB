@@ -68,6 +68,8 @@ testFiles25 = [ "./misc/attachAndDetachNode.cpp" ]
 
 testFiles26 = [ "./misc/createNode.cpp" ] 
 
+testFiles27 = [ "./misc/bson_time.cpp" ]
+
 # compile common lib
 gtestall = env.StaticLibrary('gtest', gtestFiles)
 gtestMainObj = env.Object('gtestMainObj', gtestMainFile)
@@ -99,6 +101,7 @@ index			   = dllBuildEnv.Program("index", [testFiles23, gtestMainObj, testCommon
 idIndex			   = dllBuildEnv.Program("idIndex", [testFiles24, gtestMainObj, testCommonFiles])
 attachAndDetachNode = dllBuildEnv.Program("attachAndDetachNode", [testFiles25, gtestMainObj, testCommonFiles])
 createNode			= dllBuildEnv.Program("createNode", [testFiles26, gtestMainObj, testCommonFiles])
+bson_time			= dllBuildEnv.Program("bson_time", [testFiles27, gtestMainObj, testCommonFiles])
 
 # static compile
 # dll compile
@@ -127,12 +130,13 @@ index.static			  = staticBuildEnv.Program("index.static", [testFiles23, gtestMai
 idIndex.static			  = staticBuildEnv.Program("idIndex.static", [testFiles24, gtestMainObj, testCommonFiles])
 attachAndDetachNode.static = staticBuildEnv.Program("attachAndDetachNode.static", [testFiles25, gtestMainObj, testCommonFiles])
 createNode.static		   = staticBuildEnv.Program("createNode.static", [testFiles26, gtestMainObj, testCommonFiles])
+bson_time.static		   = staticBuildEnv.Program("bson_time.static", [testFiles27, gtestMainObj, testCommonFiles])
 
 # dll compile
 env.Install( '#/build_test',[ decimal,numberLong,trunOncache,time,DS_InvalidArgTest,
 			                  DS_InvalidConnTest,DS_ConnTest,DS_ThreadTest,DS_ChecktimeTest,DS_ClTest,DS_InvalidUsrTest,
                               lob,code,closeAllCursors,bson_oid,date,analyze,prepareMore,JSCompatible,sslTrue,sslFalse,
-							  index,idIndex,attachAndDetachNode,createNode ] )
+							  index,idIndex,attachAndDetachNode,createNode,bson_time ] )
 
 # static compile
 env.Install( '#/build_test',[ decimal.static,numberLong.static,trunOncache.static,
@@ -141,5 +145,5 @@ env.Install( '#/build_test',[ decimal.static,numberLong.static,trunOncache.stati
 							  DS_ClTest.static,DS_InvalidUsrTest.static,lob.static,code.static,closeAllCursors.static,
 							  bson_oid.static,date.static,analyze.static,prepareMore.static,JSCompatible.static,
 							  sslTrue.static,sslFalse.static,index.static,idIndex.static,attachAndDetachNode.static,
-							  createNode.static ] )
+							  createNode.static,bson_time.static ] )
 
