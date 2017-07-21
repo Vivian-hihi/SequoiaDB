@@ -4817,6 +4817,9 @@
                      'max': 100        //一页最大显示多少行， 默认 100
                      'trim': true,     //是否允许调整表格宽度, 默认开启
                      'sort': [],       //是否开启排序，数组仅支持bool类型的元素，排序数组和标题数组一一对应
+                     'autoSort': {}    //自动排序，当第一次数据写入到表格、表格数据改变时，将会自动排序
+                                         格式:
+                                          { 'key': '排序的字段', 'asc': true }  asc为true就是正序，从小到大
                      'filter': {}      //是否开启过滤功能，支持4种模式, key对应title的key
                                          1. 'indexof': 模糊匹配，只要在内容找到字符串子串就匹配成功。 输入框
                                          2. 任意字符串: 正则匹配，按照正则规则来匹配。 输入框
@@ -4843,7 +4846,7 @@
                                        ResizeTableHeader()
                                        ResetBodyTop()
                                        ResetBodyTopAfterRender()
-
+                                       SortData( 字段名, 是否正序(boolean) )
    */
    sacApp.directive( 'ngTable', function( $animate, $timeout, $compile, $filter, SdbFunction ){
       var brower = SdbFunction.getBrowserInfo() ;
@@ -4919,6 +4922,7 @@
                   'max': 100,       //一页最大显示多少行
                   'trim': true,     //是否允许调整表格宽度
                   'sort': [],       //是否开启排序，数组仅支持bool类型的元素，排序数组和标题数组一一对应
+                  'autoSort': '',   //自动排序，当第一次数据写入到表格、表格数据改变时，将会自动排序
                   'filter': {},     //是否开启过滤功能
                   'default': {},    //如果开启过滤，是否要设置默认值，如果不填，默认是''
                   'text': {
@@ -4993,6 +4997,7 @@
                      {
                         scope.loadStatus['onFilter']['expre'][key] = value ;
                         scope.find() ;
+                        scope.$digest() ;
                      }
                   }
 
@@ -5065,6 +5070,7 @@
                            } )
                            .on( 'click', function(){
                               sortFun( index, key, false ) ;
+                              scope.$digest() ;
                            } ) ;
                      }
                      else
@@ -5595,6 +5601,11 @@
                      scope.table['body'] = null ;
                      scope.table['body'] = setOptionsFun( contents, [] ) ;
                      scope.loadStatus['length'] = scope.table['body'].length ;
+                     if( typeof( scope.table['options']['autoSort'] ) == 'object' )
+                     {
+                        scope.table['body'] = $filter( 'orderObjectBy' )( scope.table['body'], scope.table['options']['autoSort']['key'],
+                                                                                               !scope.table['options']['autoSort']['asc'] ) ;
+                     }
                      createTableContents( 1, false ) ;
                      if( scope.loadStatus['onFilter']['status'] ) //如果已经做了过滤，那么要把数据复制到备份中，不然会丢数据
                      {
@@ -5673,6 +5684,14 @@
                   //重绘当前页
                   var showCurrentPage = function(){
                      createTableContents( scope.loadStatus['page'] ) ;
+                     scope.$digest() ;
+                  }
+
+                  //接口专用排序，跟表格的标题排序不同，不会存在状态中
+                  var sortData = function( key, asc ){
+                     scope.table['body'] = $filter( 'orderObjectBy' )( scope.table['body'], key, !asc ) ;
+                     createTableContents( scope.loadStatus['page'], false ) ;
+                     scope.$digest() ;
                   }
 
                   //如果有table-callback，那么把回调的函数传给他
@@ -5692,6 +5711,7 @@
                         callbackGetter['ResizeTableHeader'] = resizeTableHeaders ;
                         callbackGetter['ResetBodyTop']      = resetBodyTop ;
                         callbackGetter['ResetBodyTopAfterRender'] = initBodyTop ;
+                        callbackGetter['SortData']          = sortData ;
                      }
                   } ) ;
 

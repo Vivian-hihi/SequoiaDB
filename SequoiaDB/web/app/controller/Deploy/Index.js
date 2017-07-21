@@ -798,6 +798,54 @@
          }
       }
 
+      //同步业务 弹窗
+      $scope.SyncWindow = {
+         'config': {},
+         'callback': {}
+      }
+
+      //打开 同步业务 弹窗
+      $scope.ShowSyncWindow = function(){
+         if( $scope.clusterList.length > 0 && $scope.ModuleNum != 0 )
+         {
+            $scope.SyncWindow['config'] = {
+               inputList: [
+                  {
+                     "name": 'moduleName',
+                     "webName": $scope.autoLanguage( '业务名' ),
+                     "type": "select",
+                     "value": null,
+                     "valid": []
+                  }
+               ]
+            } ;
+            var clusterName = $scope.clusterList[ $scope.currentCluster ]['ClusterName'] ;
+            $.each( $scope.moduleList, function( index, moduleInfo ){
+               if( clusterName == moduleInfo['ClusterName'] && moduleInfo['BusinessType'] == 'sequoiadb')
+               {
+                  if( $scope.SyncWindow['config']['inputList'][0]['value'] == null )
+                  {
+                     $scope.SyncWindow['config']['inputList'][0]['value'] = index ;
+                  }
+                  $scope.SyncWindow['config']['inputList'][0]['valid'].push( { 'key': moduleInfo['BusinessName'], 'value': index } )
+               }
+            } ) ;
+            $scope.SyncWindow['callback']['SetOkButton']( $scope.autoLanguage( '确定' ), function(){
+               var isAllClear = $scope.SyncWindow['config'].check() ;
+               if( isAllClear )
+               {
+                  var formVal = $scope.SyncWindow['config'].getValue() ;
+                  $rootScope.tempData( 'Deploy', 'ModuleName',  $scope.moduleList[ formVal['moduleName'] ]['BusinessName'] ) ;
+                  $rootScope.tempData( 'Deploy', 'ClusterName', $scope.clusterList[ $scope.currentCluster ]['ClusterName'] ) ;
+                  $location.path( '/Deploy/SDB-Sync' ).search( { 'r': new Date().getTime() } ) ;
+               }
+               return isAllClear ;
+            } ) ;
+            $scope.SyncWindow['callback']['SetTitle']( $scope.autoLanguage( '同步业务' ) ) ;
+            $scope.SyncWindow['callback']['SetIcon']( '' ) ;
+            $scope.SyncWindow['callback']['Open']() ;
+         }
+      }
 
       //添加业务 弹窗
       $scope.InstallModule = {

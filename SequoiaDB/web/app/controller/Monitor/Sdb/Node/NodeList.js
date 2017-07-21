@@ -2,7 +2,7 @@
 (function(){
    var sacApp = window.SdbSacManagerModule ;
    //控制器
-   sacApp.controllerProvider.register( 'Monitor.SdbOverview.Node.Ctrl', function( $scope, $compile, $location, SdbRest, SdbFunction ){
+   sacApp.controllerProvider.register( 'Monitor.SdbOverview.Node.Ctrl', function( $scope, $compile, $location, $rootScope, SdbRest, SdbFunction ){
       
       _IndexPublic.checkMonitorEdition( $location ) ; //检测是不是企业版
 
@@ -358,7 +358,9 @@
       } ;
 
       $scope.GotoSync = function(){
-         $location.path( '/Deploy/SDB-SyncConf' ).search( { 'r': new Date().getTime() } ) ;
+         $rootScope.tempData( 'Deploy', 'ModuleName',  moduleName ) ;
+         $rootScope.tempData( 'Deploy', 'ClusterName', clusterName ) ;
+         $location.path( '/Deploy/SDB-Sync' ).search( { 'r': new Date().getTime() } ) ;
       }
 
        //跳转至资源

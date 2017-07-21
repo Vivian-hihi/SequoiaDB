@@ -384,18 +384,25 @@
          SdbRest.Exec( sql, {
             'success': function( versionList ){
                $scope.moduleInfo['version'] = '' ;
-               var i = 0 ;
+               var versionRemoval = {} ;
                $.each( versionList, function( index, versionInfo ){
                   if( typeof( versionInfo['Version'] ) == 'object' )
                   {
-                     if( i > 0 )
+                     var versionStr = versionInfo['Version']['Major'] + '.' + versionInfo['Version']['Minor'] ;
+                     if( versionInfo['Version']['Fix'] > 0 )
+                     {
+                        versionStr += '.' + versionInfo['Version']['Fix'] ;
+                     }
+                     if( versionRemoval[versionStr] === 1 )
+                     {
+                        return true ;
+                     }
+                     if( index > 0 )
                      {
                         $scope.moduleInfo['version'] += ', ' ;
                      }
-                     $scope.moduleInfo['version'] += versionInfo['Version']['Major'] + '.' + versionInfo['Version']['Minor'] ;
-                     if( versionInfo['Version']['Fix'] > 0 )
-                        $scope.moduleInfo['version'] += '.' + versionInfo['Version']['Fix'] ;
-                     ++i ;
+                     versionRemoval[versionStr] = 1 ;
+                     $scope.moduleInfo['version'] += versionStr ;
                   }
                } ) ;
             },

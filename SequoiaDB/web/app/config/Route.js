@@ -387,28 +387,16 @@
            resolve: resolveFun( [ './app/controller/Deploy/InstallModule/Ssql/Mod.js' ] )
         }
       },
-      { path: '/Deploy/SDB-DiscoverConf',
+      { path: '/Deploy/SDB-Discover',
         options: {
-           templateUrl: './app/template/Deploy/DiscoverModule/Sdb/conf.html',
-           resolve: resolveFun( [ './app/controller/Deploy/DiscoverModule/Sdb/conf.js' ] )
+           templateUrl: './app/template/Deploy/DiscoverModule/Sdb/Index.html',
+           resolve: resolveFun( [ './app/controller/Deploy/DiscoverModule/Sdb/Index.js' ] )
         }
       },
-      { path: '/Deploy/SDB-DiscoverMod',
+      { path: '/Deploy/SDB-Sync',
         options: {
-           templateUrl: './app/template/Deploy/DiscoverModule/Sdb/mod.html',
-           resolve: resolveFun( [ './app/controller/Deploy/DiscoverModule/Sdb/mod.js' ] )
-        }
-      },
-      { path: '/Deploy/SDB-SyncConf',
-        options: {
-           templateUrl: './app/template/Deploy/SyncModule/Sdb/conf.html',
-           resolve: resolveFun( [ './app/controller/Deploy/SyncModule/Sdb/conf.js' ] )
-        }
-      },
-      { path: '/Deploy/SDB-SyncMod',
-        options: {
-           templateUrl: './app/template/Deploy/SyncModule/Sdb/mod.html',
-           resolve: resolveFun( [ './app/controller/Deploy/SyncModule/Sdb/mod.js' ] )
+           templateUrl: './app/template/Deploy/SyncModule/Sdb/Index.html',
+           resolve: resolveFun( [ './app/controller/Deploy/SyncModule/Sdb/Index.js' ] )
         }
       }
    ] ;
