@@ -115,7 +115,7 @@ function main()
    
    //比较count结果
    var flag = false;
-   for(var i=0; i< 30; i++)
+   for(var i=0; i< 300; i++)
    {
 	  sleep(1000);
 	  actualNum = dbcl.count();
@@ -131,8 +131,8 @@ function main()
    
    if(flag !== true)
    {
-	   println("after 30s,the second node is not the same the primary");
-	   throw "SECOND_COUNT_ERR";
+	   println("after 300s,the second node is not the same the primary!actualNum:" + actualNum + ",expectNum:" + expectNum);
+	   throw "SECOND_NODE_COUNT_ERR";
    }
    println("--second node count success!actualNum:" + actualNum + ",expectNum: " + expectNum);
    
