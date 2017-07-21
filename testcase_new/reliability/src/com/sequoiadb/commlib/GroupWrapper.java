@@ -17,6 +17,7 @@ import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.types.BasicBSONList;
 
+import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.ReplicaGroup;
@@ -267,10 +268,30 @@ public class GroupWrapper {
             List<BSONObject> tmp = new ArrayList<BSONObject>();
             Sequoiadb db = new Sequoiadb(url, "", "");
             try {
-                DBCollection cl = db.getCollectionSpace(SYSCAT).getCollection(clName);
+                CollectionSpace cs = db.getCollectionSpace(SYSCAT);
+                DBCollection cl = cs.getCollection(clName);
+                if (cl == null) {
+                    if (printIncompatibility) {
+                        System.out.println(SYSCAT + "." + clName + " not exists,host:" + url);
+                    }
+                    return false;
+                }
                 DBCursor cursor = cl.query(null, null, "{_id:1}", null);
                 while (cursor.hasNext()) {
                     tmp.add(cursor.getNext());
+                }
+            }
+            catch (BaseException e) {
+                if (e.getErrorCode() == -23 || e.getErrorCode() == -34) {
+                    if (printIncompatibility) {
+                        System.out.println("SYSCAT or SYSCAT." + clName + " not exists,host:" + url
+                                + ", stack on console out put");
+                        throw e;
+                    }
+                    return false;
+                }
+                else {
+                    throw e;
                 }
             }
             finally {
