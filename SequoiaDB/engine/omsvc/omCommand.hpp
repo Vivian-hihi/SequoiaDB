@@ -992,29 +992,45 @@ namespace engine
 
    class omDiscoverBusinessCommand : public omAuthCommand
    {
-      public:
-         omDiscoverBusinessCommand( restAdaptor *pRestAdaptor,
-                                    pmdRestSession *pRestSession ) ;
+   public:
 
-         virtual ~omDiscoverBusinessCommand() ;
+      omDiscoverBusinessCommand( restAdaptor *pRestAdaptor,
+                                 pmdRestSession *pRestSession,
+                                 string &localAgentHost,
+                                 string &localAgentService ) ;
 
-      public:
-         virtual INT32   doCommand() ;
+      virtual ~omDiscoverBusinessCommand() ;
 
-      protected:
-         INT32           _getRestBusinessInfo( BSONObj &configInfo ) ;
+      virtual INT32 doCommand() ;
 
-         INT32           _checkBusinssCFG( BSONObj &configInfo ) ;
-         INT32           _checkSparkCFG( BSONObj &configInfo ) ;
-         INT32           _checkHdfsCFG( BSONObj &configInfo ) ;
-         INT32           _checkYarnCFG( BSONObj &configInfo ) ;
-         INT32           _checkSequoiasqlCFG( BSONObj &configInfo ) ;
+   private:
 
-         INT32           _storeBusinessInfo( BSONObj &configInfo ) ;
-         INT32           _storeSparkBInfo( BSONObj &configInfo ) ;
-         INT32           _storeHdfsBInfo( BSONObj &configInfo ) ;
-         INT32           _storeYarnBInfo( BSONObj &configInfo ) ;
-         INT32           _storeSequoiasqlInfo( BSONObj &configInfo ) ;
+      INT32 _getRestInfo( BSONObj &configInfo ) ;
+
+      INT32 _checkBusinssCFG( BSONObj &configInfo ) ;
+      INT32 _checkWebLinkCFG( BSONObj &buzInfo ) ;
+      INT32 _checkSequoiasqlCFG( BSONObj &buzInfo ) ;
+      INT32 _checkSequoiaDBCFG( BSONObj &buzInfo ) ;
+
+      void _generateRequest( const string &hostName,
+                             const string &svcname,
+                             const string &authUser,
+                             const string &authPwd,
+                             BSONObj &request ) ;
+      INT32 _syncSequoiaDB( omRestTool &restTool, const BSONObj &buzInfo ) ;
+      INT32 _storeBusinessInfo( const INT32 addType,
+                                const string deployMod,
+                                const BSONObj &buzInfo ) ;
+      INT32 _syncBusiness( omRestTool &restTool, BSONObj &configInfo ) ;
+
+   private:
+
+      string _clusterName ;
+      string _businessName ;
+      string _businessType ;
+      string _localAgentHost ;
+      string _localAgentService ;
+
    } ;
 
    class omUnDiscoverBusinessCommand : public omAuthCommand

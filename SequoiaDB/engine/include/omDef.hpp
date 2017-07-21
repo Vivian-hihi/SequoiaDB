@@ -244,6 +244,11 @@ namespace engine
                                                    OM_STRATEGY_FIELD_TASKID":1} } "
 
    /*
+      discover businesss respone
+   */
+   #define OM_BUSINESS_RES_HOSTS             "hosts"
+
+   /*
       addHost's ResultInfo:
       {
         IP,HostName,Status,StatusDesc,errno,detail,Flow

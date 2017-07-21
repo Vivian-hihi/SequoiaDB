@@ -448,6 +448,57 @@ namespace engine
       goto done ;
    }
 
+   INT32 omDatabaseTool::addBusinessInfo( const INT32 addType,
+                                          const string &clusterName,
+                                          const string &businessName,
+                                          const string &businessType,
+                                          const string &deployMod,
+                                          const BSONObj &businessInfo )
+   {
+      INT32 rc = SDB_OK ;
+      time_t now = time( NULL ) ;
+      BSONObj buzRecord ;
+      BSONObjBuilder builder ;
+
+      builder.append( OM_BUSINESS_FIELD_ADDTYPE, addType ) ;
+      builder.append( OM_BUSINESS_FIELD_CLUSTERNAME, clusterName ) ;
+      builder.append( OM_BUSINESS_FIELD_NAME, businessName ) ;
+      builder.append( OM_BUSINESS_FIELD_TYPE, businessType ) ;
+      builder.append( OM_BUSINESS_FIELD_DEPLOYMOD, deployMod ) ;
+      builder.appendTimestamp( OM_BUSINESS_FIELD_TIME, (UINT64)now * 1000, 0 ) ;
+   
+      builder.appendElements( businessInfo ) ;
+      buzRecord = builder.obj() ;
+
+      if ( FALSE == clusterIsExist( clusterName ) )
+      {
+         rc = SDB_OM_CLUSTER_NOT_EXIST ;
+         PD_LOG( PDERROR, "cluster does not exist,name:%s",
+                 clusterName.c_str() ) ;
+         goto error ;
+      }
+
+      if ( TRUE == businessIsExist( businessName ) )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "business already exist,name:%s",
+                 businessName.c_str() ) ;
+         goto error ;
+      }
+
+      rc = rtnInsert( OM_CS_DEPLOY_CL_BUSINESS, buzRecord, 1, 0, _cb ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "insert record failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    /**
     * Get business info.
     *
@@ -712,7 +763,7 @@ namespace engine
       return isExist ;
    }
 
-   INT32 omDatabaseTool::updateBusinessInfo( const string &businessName,
+   INT32 omDatabaseTool::upsertBusinessInfo( const string &businessName,
                                              const BSONObj &newBusinessInfo,
                                              INT64 &updateNum )
    {
@@ -722,7 +773,7 @@ namespace engine
       BSONObj hint ;
    
       rc = rtnUpdate( OM_CS_DEPLOY_CL_BUSINESS, condition, updator, hint,
-                      FLG_UPDATE_RETURNNUM,
+                      FLG_UPDATE_UPSERT | FLG_UPDATE_RETURNNUM,
                       _cb, &updateNum ) ;
       if ( rc )
       {
@@ -1122,6 +1173,68 @@ namespace engine
       goto done ;
    }
 
+   INT32 omDatabaseTool::addNodeConfigOfBusiness( const string &clusterName,
+                                                  const string &businessName,
+                                                  const string &businessType,
+                                                  const BSONObj &newConfig )
+   {
+      INT32 rc = SDB_OK ;
+      INT64 updateNum = 0 ;
+      string deployMod ;
+      BSONObj hostInfoList ;
+      BSONObjBuilder builder ;
+      BSONArrayBuilder hostLocation ;
+      set<string> newHostList ;
+
+      hostInfoList = newConfig.getObjectField( OM_BSON_FIELD_HOST_INFO ) ;
+      BSONObjIterator iter( hostInfoList ) ;
+      while ( iter.more() )
+      {
+         BSONElement ele = iter.next() ;
+         BSONObj tmpConfig = ele.embeddedObject() ;
+         string hostName = tmpConfig.getStringField(
+                                             OM_CONFIGURE_FIELD_HOSTNAME ) ;
+
+         if ( 0 == deployMod.length() )
+         {
+            deployMod = tmpConfig.getStringField(
+                                          OM_CONFIGURE_FIELD_DEPLOYMODE ) ;
+         }
+
+         newHostList.insert( hostName ) ;
+
+         rc = upsertConfigure( businessName, hostName, tmpConfig,
+                               updateNum ) ;
+         if( rc )
+         {
+            PD_LOG( PDERROR, "failed to update configure,hostname=%s,rc=%d",
+                    hostName.c_str(), rc ) ;
+            goto error ;
+         }
+
+         //used to construct business info
+         hostLocation.append( BSON( OM_CONFIGURE_FIELD_HOSTNAME <<
+                                    hostName ) ) ;
+      }
+
+      //add business
+      builder.append( OM_BUSINESS_FIELD_LOCATION, hostLocation.arr() ) ;
+      rc = addBusinessInfo( OM_BUSINESS_ADDTYPE_INSTALL, clusterName,
+                            businessName, businessType,
+                            deployMod, builder.obj() ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to add business,name=%s,rc=%d",
+                 businessName.c_str(), rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    /**
     * update node config of the business
     *
@@ -1166,8 +1279,8 @@ namespace engine
          goto error ;
       }
 
-      businessType = buzInfo.getStringField( OM_BUSINESS_FIELD_TYPE );
-      if ( businessType.length() == 0 )
+      businessType = buzInfo.getStringField( OM_BUSINESS_FIELD_TYPE ) ;
+      if ( businessType.empty() )
       {
          rc = SDB_INVALIDARG ;
          PD_LOG_MSG( PDERROR, "business does not exist: %s",
@@ -1208,7 +1321,6 @@ namespace engine
             hostLocation.append( BSON( OM_CONFIGURE_FIELD_HOSTNAME <<
                                        hostName ) ) ;
 
-
          }
       }
 
@@ -1232,7 +1344,7 @@ namespace engine
          }
       }
 
-
+      //upsert business
       {
          BSONObj condition = BSON( OM_BUSINESS_FIELD_ADDTYPE << 0 <<
                                    OM_BUSINESS_FIELD_NAME << "" <<
@@ -1244,8 +1356,7 @@ namespace engine
       }
       builder.append( OM_BUSINESS_FIELD_DEPLOYMOD, deployMod ) ;
       builder.append( OM_BUSINESS_FIELD_LOCATION, hostLocation.arr() ) ;
-
-      rc = updateBusinessInfo( businessName, builder.obj(), updateNum ) ;
+      rc = upsertBusinessInfo( businessName, builder.obj(), updateNum ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "failed to update business info,name=%s,rc=%d",
@@ -1299,6 +1410,51 @@ namespace engine
       goto done ;
    }
 
+   INT32 omDatabaseTool::upsertAuth( const string &businessName,
+                                     const string &authUser,
+                                     const string &authPasswd )
+   {
+      INT32 rc = SDB_OK ;
+      INT64 updateNum = 0 ;
+      BSONObj condition = BSON( OM_BUSINESSAUTH_BUSINESSNAME << businessName ) ;
+      BSONObj updator = BSON( "$replace" <<
+            BSON( OM_BUSINESSAUTH_BUSINESSNAME << businessName <<
+                  OM_BUSINESSAUTH_USER << authUser <<
+                  OM_BUSINESSAUTH_PASSWD << authPasswd ) ) ;
+      BSONObj hint ;
+
+      if ( authUser.empty() )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "user cannot be empty" ) ;
+         goto error ;
+      }
+
+      if ( authPasswd.empty() )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "password cannot be empty" ) ;
+         goto error ;
+      }
+
+      rc = rtnUpdate( OM_CS_DEPLOY_CL_BUSINESS_AUTH, condition, updator, hint,
+                      FLG_UPDATE_UPSERT | FLG_UPDATE_RETURNNUM,
+                      _cb, &updateNum ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "falied to update business auth,"
+                          "condition=%s,updator=%s,rc=%d",
+                 condition.toString().c_str(),
+                 updator.toString().c_str(), rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 omDatabaseTool::removeAuth( const string &businessName )
    {
       INT32 rc = SDB_OK ;
@@ -1317,6 +1473,57 @@ namespace engine
 
    done:
       return rc ;
+   error:
+      goto done ;
+   }
+
+   BOOLEAN omDatabaseTool::isHostExistOfCluster( const string &hostName,
+                                                 const string &clusterName )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN isExist = FALSE ;
+      SINT64 contextID = -1 ;
+      BSONObj selector ;
+      BSONObj matcher ;
+      BSONObj order ;
+      BSONObj hint ;
+
+      matcher = BSON( OM_HOST_FIELD_NAME << hostName <<
+                      OM_HOST_FIELD_CLUSTERNAME << clusterName ) ;
+      rc = rtnQuery( OM_CS_DEPLOY_CL_HOST, selector, matcher, order, hint, 0,
+                     _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to query host:rc=%d,host=%s", rc,
+                 matcher.toString().c_str() ) ;
+         goto error ;
+      }
+
+      while( TRUE )
+      {
+         rtnContextBuf buffObj ;
+         rc = rtnGetMore ( contextID, 1, buffObj, _cb, _pRTNCB ) ;
+         if ( rc )
+         {
+            if ( SDB_DMS_EOC != rc )
+            {
+               rc = SDB_OK ;
+               break ;
+            }
+
+            PD_LOG( PDERROR, "Failed to retreive record, rc = %d", rc ) ;
+            goto error ;
+         }
+         isExist = TRUE ;
+      }
+
+   done:
+      if( -1 != contextID )
+      {
+         _pRTNCB->contextDelete ( contextID, _cb ) ;
+         contextID = -1 ;
+      }
+      return isExist ;
    error:
       goto done ;
    }
@@ -1348,28 +1555,45 @@ namespace engine
          }
       }
 
-      sendResponse( SDB_OK, "" ) ;
+      sendRespone( SDB_OK, "" ) ;
    }
 
-   void omRestTool::sendOkResonse()
+   void omRestTool::sendOkRespone()
    {
-      sendResponse( SDB_OK, "" ) ;
+      sendRespone( SDB_OK, "" ) ;
    }
 
-   void omRestTool::sendResponse( INT32 rc, const string &detail )
+   void omRestTool::sendRespone( INT32 rc, const string &detail )
    {
-      sendResponse( rc, detail.c_str() ) ;
+      sendRespone( rc, detail.c_str() ) ;
    }
 
-   void omRestTool::sendResponse( INT32 rc, const char *pDetail )
+   void omRestTool::sendRespone( INT32 rc, const char *pDetail )
    {
-      BSONObj res = BSON( OM_REST_RES_RETCODE << rc <<
-                          OM_REST_RES_DESP << getErrDesp( rc ) <<
-                          OM_REST_RES_DETAIL << pDetail ) ;
+      list<BSONObj>::iterator iter ;
+      BSONObj res ;
+      BSONObj defaultRes ;
+      BSONObjBuilder resBuilder ;
 
+      defaultRes = BSON( OM_REST_RES_RETCODE << rc <<
+                         OM_REST_RES_DESP << getErrDesp( rc ) <<
+                         OM_REST_RES_DETAIL << pDetail ) ;
+
+      resBuilder.appendElements( defaultRes ) ;
+      for ( iter = _msgList.begin(); iter != _msgList.end(); ++iter )
+      {
+         resBuilder.appendElements( *iter ) ;
+      }
+
+      res = resBuilder.obj() ;
       _pRestAdaptor->setOPResult( _pRestSession, rc, res ) ;
       _pRestAdaptor->sendResponse( _pRestSession, HTTP_OK ) ;
 
+   }
+
+   void omRestTool::appendResponeMsg( const BSONObj &msg )
+   {
+      _msgList.push_back( msg.copy() ) ;
    }
 
    INT32 omTaskTool::createTask( INT32 taskType, INT64 taskID,

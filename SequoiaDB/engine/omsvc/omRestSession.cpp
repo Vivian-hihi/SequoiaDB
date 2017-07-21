@@ -983,8 +983,9 @@ namespace engine
          else if ( ossStrcasecmp( pSubCommand, 
                                   OM_DISCOVER_BUSINESS_REQ ) == 0 )
          {
-            commandIf = SDB_OSS_NEW omDiscoverBusinessCommand( pAdptor, 
-                                                               this ) ;
+            commandIf = SDB_OSS_NEW omDiscoverBusinessCommand( pAdptor, this,
+                                                               localAgentHost,
+                                                               localAgentPort ) ;
          }
          else if ( ossStrcasecmp( pSubCommand, 
                                   OM_UNDISCOVER_BUSINESS_REQ ) == 0 )

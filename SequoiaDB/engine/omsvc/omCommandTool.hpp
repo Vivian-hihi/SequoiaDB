@@ -128,6 +128,13 @@ namespace engine
       INT64 getTaskIdOfRunningBuz( const string &businessName ) ;
 
       //business
+      INT32 addBusinessInfo( const INT32 addType,
+                             const string &clusterName,
+                             const string &businessName,
+                             const string &businessType,
+                             const string &deployMod,
+                             const BSONObj &businessInfo ) ;
+
       INT32 getBusinessInfo( const string &businessName,
                              BSONObj &businessInfo ) ;
 
@@ -139,7 +146,7 @@ namespace engine
 
       BOOLEAN businessIsExist( const string &businessName ) ;
 
-      INT32 updateBusinessInfo( const string &businessName,
+      INT32 upsertBusinessInfo( const string &businessName,
                                 const BSONObj &newBusinessInfo,
                                 INT64 &updateNum ) ;
 
@@ -158,14 +165,24 @@ namespace engine
                              const string &hostName,
                              const BSONObj &newConfig,
                              INT64 &updateNum ) ;
+
+      INT32 addNodeConfigOfBusiness( const string &clusterName,
+                                     const string &businessName,
+                                     const string &businessType,
+                                     const BSONObj &newConfig ) ;
       INT32 updateNodeConfigOfBusiness( const string &businessName,
                                         const BSONObj &newConfig ) ;
       INT32 removeConfigure( const string &businessName,
                              const string &hostName ) ;
 
       //auth
+      INT32 upsertAuth( const string &businessName, const string &authUser,
+                        const string &authPasswd ) ;
       INT32 removeAuth( const string &businessName ) ;
 
+      //host
+      BOOLEAN isHostExistOfCluster( const string &hostName,
+                                    const string &clusterName ) ;
    private:
 
       pmdEDUCB    *_cb ;
@@ -177,20 +194,26 @@ namespace engine
    class omRestTool : public SDBObject
    {
    public:
+
       omRestTool( restAdaptor *pRestAdaptor, pmdRestSession *pRestSession ) ;
 
       void sendRecord2Web( list<BSONObj> &records,
                            const BSONObj *pFilter = NULL,
                            BOOLEAN inFilter = TRUE ) ;
 
-      void sendOkResonse() ;
+      void sendOkRespone() ;
 
-      void sendResponse( INT32 rc, const string &detail ) ;
-      void sendResponse( INT32 rc, const char *pDetail ) ;
+      void sendRespone( INT32 rc, const string &detail ) ;
+      void sendRespone( INT32 rc, const char *pDetail ) ;
+
+      void appendResponeMsg( const BSONObj &msg ) ;
 
    private:
+
       restAdaptor    *_pRestAdaptor ;
       pmdRestSession *_pRestSession ;
+
+      list<BSONObj> _msgList ;
    } ;
 
    class omTaskTool : public SDBObject
