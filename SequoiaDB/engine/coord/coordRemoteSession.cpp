@@ -280,8 +280,6 @@ namespace engine
    INT32 _coordGroupSel::selBegin( UINT32 groupID, MsgRouteID &nodeID )
    {
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( COORD_GROUP_SEL_INVALID == _pos,
-                  "Last sel doesn't call selDone" ) ;
 
       _resetStatus() ;
 
