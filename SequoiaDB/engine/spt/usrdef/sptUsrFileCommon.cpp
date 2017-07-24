@@ -2116,6 +2116,24 @@ namespace engine
    error:
       goto done ;
    }
+
 #endif
 
+   INT32 _sptUsrFileCommon::getFileSize( const string &filename,
+                                         string &err, INT64 &size )
+   {
+      INT32 rc = SDB_OK ;
+      rc = ossGetFileSizeByName( filename.c_str(), &size ) ;
+      if( SDB_OK != rc )
+      {
+         err = "Failed to get file size" ;
+         PD_LOG( PDERROR, "Failed to get file size, filename: %s, rc: %d",
+                 filename.c_str(), rc ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
 }

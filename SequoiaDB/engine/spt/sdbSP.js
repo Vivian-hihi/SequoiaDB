@@ -7,8 +7,6 @@ var SDB_FILE_SHAREWROTE =    SDB_FILE_SHAREREAD | 0x00000020 ;
 var SDB_FILE_READONLY =      0x00000004 | SDB_FILE_SHAREREAD ;
 var SDB_FILE_WRITEONLY =     0x00000008 ;
 var SDB_FILE_READWRITE =     0x00000004 | SDB_FILE_WRITEONLY ;
-var SDB_FILE_WRITETHROUGH =  0x00000040 ;
-var SDB_FILE_DIRECTIO =      0x00000080 ;
 
 // BSONObj
 BSONObj.prototype.toObj = function() {
@@ -2512,15 +2510,12 @@ File.prototype.seek = function( offset, where ) {
       }
       else if ( 'e' == where )
       {
-         var recvObj = this._remote._runCommand( "file get content size", {},
-                                                 { "name": this._filename } ) ;
-         var size = recvObj.toObj().size ;
-
+         var size = this.getSize( this._filename ) ;
          if ( 0 > size - 1 + offset )
          {
             throw SDB_INVALIDARG ;
          }
-         this._location = size -1 + offset ;
+         this._location = size - 1 + offset ;
       }
       else
       {
@@ -3111,6 +3106,19 @@ File.prototype._getPermission = function( pathname ) {
    else
    {
       return File._getPermission( pathname ) ;
+   }
+}
+
+File.prototype.getSize = function( filename ) {
+   if( undefined != this._remote )
+   {
+      var retObj = this._remote._runCommand( "file get content size", {},
+                                             { "filename": filename } ).toObj() ;
+      return retObj.size ;
+   }
+   else
+   {
+      return File.getSize( filename ) ;
    }
 }
 // end File

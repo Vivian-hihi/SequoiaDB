@@ -1204,65 +1204,53 @@ namespace engine
 
 
    /*
-      _remoteFileGetContentSize implement
+      _remoteFileGetSize implement
    */
-   IMPLEMENT_OACMD_AUTO_REGISTER( _remoteFileGetContentSize )
+   IMPLEMENT_OACMD_AUTO_REGISTER( _remoteFileGetSize )
 
-   _remoteFileGetContentSize::_remoteFileGetContentSize()
+   _remoteFileGetSize::_remoteFileGetSize()
    {
    }
 
-   _remoteFileGetContentSize::~_remoteFileGetContentSize()
+   _remoteFileGetSize::~_remoteFileGetSize()
    {
    }
 
-   const CHAR* _remoteFileGetContentSize::name()
+   const CHAR* _remoteFileGetSize::name()
    {
       return OMA_REMOTE_FILE_GET_CONTENT_SIZE ;
    }
 
-   INT32 _remoteFileGetContentSize::doit( BSONObj &retObj )
+   INT32 _remoteFileGetSize::doit( BSONObj &retObj )
    {
-      INT32 rc                       = SDB_OK ;
-      INT32 size                     = 0 ;
-      ossPrimitiveFileOp             op ;
-      ossPrimitiveFileOp::offsetType offset ;
-      string                         name ;
+      INT32 rc = SDB_OK ;
+      INT64 size = 0 ;
+      string name ;
+      string err ;
 
       // get filename
-      if ( FALSE == _matchObj.hasField( "name" ) )
+      if ( FALSE == _matchObj.hasField( "filename" ) )
       {
          rc = SDB_OUT_OF_BOUND ;
-         PD_LOG_MSG( PDERROR, "name must be config" ) ;
+         PD_LOG_MSG( PDERROR, "filename must be config" ) ;
          goto error ;
       }
-      if ( String != _matchObj.getField( "name" ).type() )
+      if ( String != _matchObj.getField( "filename" ).type() )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "name must be string" ) ;
+         PD_LOG_MSG( PDERROR, "filename must be string" ) ;
          goto error ;
       }
-      name = _matchObj.getStringField( "name" ) ;
+      name = _matchObj.getStringField( "filename" ) ;
 
-      // open file
-      rc = op.Open ( name.c_str() , OSS_PRIMITIVE_FILE_OP_READ_ONLY ) ;
-      if ( rc != SDB_OK )
+      rc = _sptUsrFileCommon::getFileSize( name, err, size ) ;
+      if( SDB_OK != rc )
       {
-         PD_LOG_MSG( PDERROR, "Can't open file: %s", name.c_str() ) ;
+         PD_LOG_MSG( PDERROR, err.c_str() ) ;
          goto error ;
       }
-
-      // get filesize
-      rc = op.getSize ( &offset ) ;
-      if ( rc != SDB_OK )
-      {
-         PD_LOG_MSG( PDERROR, "Failed to get file's size" ) ;
-         goto error ;
-      }
-      size = offset.offset + 1 ;
       retObj = BSON( "size" << size ) ;
    done:
-      op.Close() ;
       return rc ;
    error:
       goto done ;

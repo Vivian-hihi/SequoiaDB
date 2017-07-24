@@ -119,6 +119,9 @@ namespace engine
 
       static INT32 readFile( const std::string &filename,
                              std::string &err, CHAR **pBuf ) ;
+
+      static INT32 getFileSize( const std::string &filename,
+                                std::string &err, INT64 &size ) ;
    private:
       static INT32 _extractFindInfo( const CHAR* buf,
                                      bson::BSONObjBuilder &builder ) ;
@@ -131,5 +134,7 @@ namespace engine
       OSSFILE _file ;
       string  _filename ;
    } ;
+
+   typedef _sptUsrFileCommon sptUsrFileCommon ;
 }
 #endif

@@ -169,6 +169,9 @@ namespace engine
                                    _sptReturnVal &rval,
                                    bson::BSONObj &detail ) ;
 
+      static INT32 getFileSize( const _sptArguments &arg,
+                                _sptReturnVal &rval,
+                                bson::BSONObj &detail ) ;
    private:
 
       INT32 _readContentLocal( const _sptArguments &arg,

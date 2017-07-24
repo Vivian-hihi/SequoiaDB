@@ -83,6 +83,7 @@ JS_STATIC_FUNC_DEFINE( _sptUsrFile, getUmask )
 JS_STATIC_FUNC_DEFINE( _sptUsrFile, setUmask )
 JS_STATIC_FUNC_DEFINE( _sptUsrFile, isEmptyDir )
 JS_STATIC_FUNC_DEFINE( _sptUsrFile, getStat )
+JS_STATIC_FUNC_DEFINE( _sptUsrFile, getFileSize )
 JS_STATIC_FUNC_DEFINE( _sptUsrFile, getPermission )
 
 JS_BEGIN_MAPPING( _sptUsrFile, "File" )
@@ -114,6 +115,7 @@ JS_BEGIN_MAPPING( _sptUsrFile, "File" )
    JS_ADD_STATIC_FUNC( "stat", getStat )
    JS_ADD_STATIC_FUNC( "md5", md5 )
    JS_ADD_STATIC_FUNC( "_getPermission", getPermission )
+   JS_ADD_STATIC_FUNC( "getSize", getFileSize )
    JS_ADD_STATIC_FUNC( "help", staticHelp )
    JS_ADD_CONSTRUCT_FUNC( construct )
    JS_ADD_DESTRUCT_FUNC( destruct )
@@ -795,7 +797,8 @@ JS_MAPPING_END()
          << "   isEmptyDir( dirName )" << endl
          << "   stat( filename )" << endl
          << "   md5( filename )" << endl
-         << "   getInfo()" << endl ;
+         << "   getInfo()" << endl
+         << "   getSize( filename )" << endl ;
       rval.getReturnVal().setValue( ss.str() ) ;
       return SDB_OK ;
    }
@@ -1538,7 +1541,7 @@ JS_MAPPING_END()
          err = "filename must be config" ;
          goto error ;
       }
-      rc = arg.getString( 0,  filename ) ;
+      rc = arg.getString( 0, filename ) ;
       if ( SDB_OK != rc )
       {
          rc = SDB_INVALIDARG ;
@@ -1559,9 +1562,46 @@ JS_MAPPING_END()
       goto done ;
    }
 
-   INT32 _sptUsrFile::staticHelp( const _sptArguments & arg,
-                                  _sptReturnVal & rval,
-                                  BSONObj & detail )
+   INT32 _sptUsrFile::getFileSize( const _sptArguments &arg,
+                                   _sptReturnVal &rval,
+                                   BSONObj &detail )
+   {
+      INT32 rc = SDB_OK ;
+      string filename ;
+      INT64 size ;
+      string err ;
+
+      if( 0 == arg.argc() )
+      {
+         rc = SDB_OUT_OF_BOUND ;
+         detail = BSON( SPT_ERR << "filename must be config" ) ;
+         goto error ;
+      }
+
+      rc = arg.getString( 0, filename ) ;
+      if( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << "filename must be string" ) ;
+         goto error ;
+      }
+
+      rc = _sptUsrFileCommon::getFileSize( filename, err, size ) ;
+      if( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << err ) ;
+         goto error ;
+      }
+      rval.getReturnVal().setValue( size ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sptUsrFile::staticHelp( const _sptArguments &arg,
+                                  _sptReturnVal &rval,
+                                  BSONObj &detail )
    {
       stringstream ss ;
       ss << "Methods to access:" << endl
@@ -1594,7 +1634,8 @@ JS_MAPPING_END()
          << " File.isEmptyDir( dirName )" << endl
          << " File.stat( filename )" << endl
          << " File.md5( filename )" << endl
-         << " File.scp( srcFile, dstFile, [isReplace], [mode] )" << endl ;
+         << " File.scp( srcFile, dstFile, [isReplace], [mode] )" << endl
+         << " File.getSize( filename )" << endl ;
       rval.getReturnVal().setValue( ss.str() ) ;
       return SDB_OK ;
    }

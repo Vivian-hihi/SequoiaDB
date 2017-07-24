@@ -366,15 +366,15 @@ namespace engine
    } ;
 
    /*
-      _remoteFileGetContentSize define
+      _remoteFileGetSize define
    */
-   class _remoteFileGetContentSize : public _remoteExec
+   class _remoteFileGetSize : public _remoteExec
    {
       DECLARE_OACMD_AUTO_REGISTER()
       public:
-         _remoteFileGetContentSize() ;
+         _remoteFileGetSize() ;
 
-         ~_remoteFileGetContentSize() ;
+         ~_remoteFileGetSize() ;
 
          const CHAR *name() ;
 
