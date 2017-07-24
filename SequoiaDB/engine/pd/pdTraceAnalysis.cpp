@@ -658,18 +658,26 @@ INT32  _pdTraceParser::_outputErrorFunctions( PD_MAP_FUNCS &errFunctions,
          it != errFunctions.end() ;
          ++it )
    {
-      length += ossSnprintf( _pFormatBuf, _bufSize,
-                             "%d: %s "OSS_NEWLINE"       ( ",
-                             nCount, pdGetTraceFunction( it->first ) ) ;
+      length = ossSnprintf( _pFormatBuf, _bufSize,
+                            "%d: %s "OSS_NEWLINE"       ( ",
+                            nCount, pdGetTraceFunction( it->first ) ) ;
 
       for ( UINT32 item = 0 ; item < it->second.size() ; ++item )
       {
-         length += ossSnprintf( _pFormatBuf + length, _bufSize - length,
-                                "%d ", it->second[ item ] ) ;
+         if ( item > 0 )
+         {
+            length += ossSnprintf( _pFormatBuf + length, _bufSize - length,
+                                   ", %d", it->second[ item ] ) ;
+         }
+         else
+         {
+            length += ossSnprintf( _pFormatBuf + length, _bufSize - length,
+                                   "%d", it->second[ item ] ) ;
+         }
       }
 
       length += ossSnprintf( _pFormatBuf + length, _bufSize - length,
-                             ")"OSS_NEWLINE ) ;
+                             " )"OSS_NEWLINE ) ;
 
       /// write to file
       ossWriteN( errFile, _pFormatBuf, length ) ;
