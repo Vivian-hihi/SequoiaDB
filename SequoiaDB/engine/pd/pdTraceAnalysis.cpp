@@ -181,7 +181,7 @@ void _pdTraceParser::_removeSuffix( CHAR *path )
       --idx ;
    }
 
-   if ( path[idx] == OSS_FILE_SEP_CHAR )
+   if ( path[ossStrlen(path)-1] == OSS_FILE_SEP_CHAR )
    {
       ossStrncat( path, "trace", ossStrlen("trace") ) ;
    }
