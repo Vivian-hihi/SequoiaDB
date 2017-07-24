@@ -307,9 +307,9 @@ namespace engine
 #if defined( _LINUX )
 
    #define REDHAT_RELEASE_FILE      "/etc/redhat-release"
-   #define SUSE_RELEASE_FILE           "/etc/SuSE-release"
-   #define OS_RELEASE_FILE               "/etc/os-release"
-   
+   #define SUSE_RELEASE_FILE        "/etc/SuSE-release"
+   #define OS_RELEASE_FILE          "/etc/os-release"
+
    INT32 _sptUsrSystemCommon::_extractReleaseFileInfo( bson::BSONObjBuilder &builder )
    {
       INT32 rc = SDB_OK ;
@@ -317,7 +317,7 @@ namespace engine
       CHAR *readBuffer = NULL ;
       INT64 readSize = 0 ;
       string releaseFilePath ;
-      enum distroType { redhat, suse, os } ;
+      enum distroType { Redhat, Suse, OS } ;
       distroType type ;
 
       vector<string> splited ;
@@ -332,19 +332,19 @@ namespace engine
             true == ifExists )
       {
          releaseFilePath = REDHAT_RELEASE_FILE ;
-         type = redhat ;
+         type = Redhat ;
       }
       else if ( SDB_OK == ( rc = ossFile::exists( SUSE_RELEASE_FILE, ifExists ) ) &&
             true == ifExists )
       {
          releaseFilePath = SUSE_RELEASE_FILE ;
-         type = suse ;
+         type = Suse ;
       }
       else if (SDB_OK == ( rc = ossFile::exists( OS_RELEASE_FILE, ifExists ) ) &&
             true == ifExists )
       {
          releaseFilePath = OS_RELEASE_FILE ;
-         type = os ;
+         type = OS ;
       }
       else
       {
@@ -386,7 +386,7 @@ namespace engine
          goto error ;
       }
 
-      if ( redhat == type )
+      if ( Redhat == type )
       {
          description = splited[0] ;
          vector<string> words = utilStrSplit( splited[0] , " " ) ;
@@ -414,7 +414,7 @@ namespace engine
             }
          }
       }
-      else if ( suse == type )
+      else if ( Suse == type )
       {
          distro = "SUSE LINUX" ;
          for ( vector<string>::iterator iter = splited.begin(); iter != splited.end(); iter++ )
@@ -440,7 +440,7 @@ namespace engine
             }
          }
       }
-      else if ( os == type )
+      else if ( OS == type )
       {
             for ( vector<string>::iterator iter = splited.begin(); iter != splited.end(); iter++ )
          {

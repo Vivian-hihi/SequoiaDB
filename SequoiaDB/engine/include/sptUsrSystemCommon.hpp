@@ -66,7 +66,7 @@ namespace engine
    #define CMD_USR_SYSTEM_DISTRIBUTOR        "Distributor"
    #define CMD_USR_SYSTEM_RELASE             "Release"
    #define CMD_USR_SYSTEM_DESP               "Description"
-   #define CMD_USR_SYSTEM_KERNEL          "KernelRelease"
+   #define CMD_USR_SYSTEM_KERNEL             "KernelRelease"
    #define CMD_USR_SYSTEM_BIT                "Bit"
    #define CMD_USR_SYSTEM_IP                 "Ip"
    #define CMD_USR_SYSTEM_HOSTS              "Hosts"
