@@ -808,12 +808,8 @@ public class MyUtil {
     }
 
     public static boolean isLobNumInspectInGroup(String csName, String clName, String groupName) throws ReliabilityException {
-        try {
-            Thread.sleep(5 * 1000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
         GroupMgr groupMgr = new GroupMgr();
+        groupMgr.checkBusiness();
         GroupWrapper group = groupMgr.getGroupByName(groupName);
         int num = getNumOfLobFromDataNode(csName, clName, group.getMaster());
         for (NodeWrapper nodeWrapper : group.getNodes()) {

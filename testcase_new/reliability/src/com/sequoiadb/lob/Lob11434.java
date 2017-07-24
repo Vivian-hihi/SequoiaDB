@@ -83,6 +83,7 @@ public class Lob11434 implements StandTestInterface {
         taskMgr.execute();
 
         byte[] targetMd5Value = MyUtil.getMd5(data);
+        groupMgr.checkBusiness();
         assertTrue(MyUtil.isLobsAllCreated(csName, clName, createdId));
         assertTrue(MyUtil.isLobsAllDelete(csName, clName, deletedIdMap));
         assertTrue(MyUtil.isLobNumInspectInGroup(csName, clName, "group1"));
