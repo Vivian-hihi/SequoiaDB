@@ -22,7 +22,7 @@ import com.sequoiadb.testcommon.SdbThreadBase;
 
 /**
 * FileName: InsertMoreCappedCL11778.java
-* test content:test concurrentcy insert more cappedCL 
+* test content:test concurrentcy insert for more cappedCLs
 * @author liuxiaoxuan
     * @Date    2017.7.18
 */
@@ -32,8 +32,8 @@ public class InsertMoreCappedCL11778 extends SdbTestBase{
 	private List<DBCollection> cappedCLs = new ArrayList<DBCollection>();
 	private String cappedCSName_11778 = "story_java_cappedCS_11778";
 	private String cappedCLName_11778 = "cappedCL_11778";
-	private int csNum = 2; //2 cs
-	private int clNum = 2; //each cs has 2 cl
+	private int csNum = 2; //2 CSs
+	private int clNum = 2; //each CS has 2 CLs
 	private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
 	
 	@BeforeClass
@@ -41,9 +41,9 @@ public class InsertMoreCappedCL11778 extends SdbTestBase{
 		System.out.println(this.getClass().getName()+" begin at "+sdf.format(new Date()));
 		try {
 			sdb = new Sequoiadb(SdbTestBase.coordUrl, "","");
+			sdb.setSessionAttr((BSONObject)JSON.parse("{PreferedInstance:'M'}"));
 			cappedCLs = Commlib.createMoreCappedCL(sdb, cappedCSName_11778, cappedCLName_11778 ,csNum,clNum);
 		}catch(BaseException e) {
-//			System.out.println("Error message: " + e.getMessage());
 			Assert.fail(e.getMessage());
 		}
 	}
@@ -59,17 +59,14 @@ public class InsertMoreCappedCL11778 extends SdbTestBase{
 		Assert.assertTrue(insertThread.isSuccess(),insertThread.getErrorMsg());
 		
 		//check all cappedCLs' logicalID
-		for(int clNo = 0; clNo < cappedCLs.size(); clNo++) {
-			DBCollection cl = cappedCLs.get(clNo);
-			 if(cl != null) {
-				 Assert.assertTrue(Commlib.checkLogicalID(sdb, cl, strBuffer.length()));
-			 } 
-		}
-
-				
+		for(DBCollection cl : cappedCLs) {
+			if(cl != null) {
+				 Assert.assertTrue(Commlib.checkLogicalID(cl, strBuffer.length() ,this.getClass().getName()));
+			}
+		}			
 	}
 	
-	@AfterClass
+    @AfterClass
 	public void tearDown() {
 		try {
 			for(int csNo = 1; csNo <= csNum; csNo++) {
@@ -79,11 +76,10 @@ public class InsertMoreCappedCL11778 extends SdbTestBase{
 				}
 			}
 		}catch (BaseException e) {
-//			System.out.println("11778 teardown error: " + e.getMessage());
 			Assert.fail(e.getMessage());
 		}finally {
 			sdb.close();
-//			System.out.println(this.getClass().getName()+" end at "+sdf.format(new Date()));
+			System.out.println(this.getClass().getName()+" end at "+sdf.format(new Date()));
 		}
 		
 	}
@@ -112,17 +108,16 @@ public class InsertMoreCappedCL11778 extends SdbTestBase{
                 db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
                 db.setSessionAttr((BSONObject)JSON.parse("{PreferedInstance:'M'}"));               
                 
-				//2 CSs and 2CLs,total all 4 CLs
+                //insert records in all CLs
                 for(int csNo = 1; csNo <= csNum; csNo++) {
                 	cs = db.getCollectionSpace(cappedCSName_11778 + csNo);
                 	for(int clNo = 1; clNo <= clNum; clNo++) {  
          	            cl = cs.getCollection(cappedCLName_11778 + clNo);
-         	            Commlib.insertRecords(cl,strBuffer,obj); 
+         	            Commlib.insertRecords(cl,obj); 
                 	}
                 }
     
             }catch(BaseException e){
-//            	System.out.println("11778 ERROR_EXEC:"+e);
                 if(-23 != e.getErrorCode()  || -34 != e.getErrorCode()){
                     throw e;
                 }

@@ -25,12 +25,11 @@ public class Commlib {
 		try {
 			BSONObject options_cs = new BasicBSONObject();
 			options_cs.put("Capped", true);
-//			System.out.println("options_cs: " + options_cs);
-//			System.err.println(sdb);
+			
 			if(isCapped == true) {
-				sdb.createCollectionSpace(csName,options_cs);//cappedCL
+				sdb.createCollectionSpace(csName,options_cs);//create cappedCS
 			}else {
-				sdb.createCollectionSpace(csName);//commonCL
+				sdb.createCollectionSpace(csName);//create commonCS
 			}
 			
 		}catch (BaseException e) {
@@ -46,20 +45,18 @@ public class Commlib {
 		try {
 			CollectionSpace cs = sdb.getCollectionSpace(csName);
 			if(cs.isCollectionExist(clName)) {
-//				System.out.println("options_cl has existed");
 				cs.dropCollection(clName);
 			}
 			if(isCapped == true) {
-				cl = cs.createCollection(clName,options_cl);
+				cl = cs.createCollection(clName,options_cl);//create cappedCL
 			}else {
-				cl = cs.createCollection(clName,(BSONObject) JSON.parse("{AutoIndexId:false}"));
+				cl = cs.createCollection(clName,(BSONObject) JSON.parse("{AutoIndexId:false}"));//create commonCL
 			}
 			
 		}catch (BaseException e) {
 			if(-22 != e.getErrorCode()) {
 				throw e;
 			}
-			throw e;
 		}
 		return cl;
 	}
@@ -73,31 +70,33 @@ public class Commlib {
 	public static List<DBCollection> createMoreCappedCL(Sequoiadb sdb,String csName,String clName,int csNum,int clNum) throws BaseException{
 		List<DBCollection> dbCollections = new ArrayList<DBCollection>();
 		
-		try {
-			for(int csNo = 1; csNo <= csNum; csNo++) {
+		for(int csNo = 1; csNo <= csNum; csNo++) {
+			try {
 				BSONObject options_cs = new BasicBSONObject();
 				options_cs.put("Capped", true);
-				sdb.createCollectionSpace(csName + csNo,options_cs);
-				
-				CollectionSpace cs = sdb.getCollectionSpace(csName + csNo);
-				for(int clNo = 1 ; clNo <= clNum; clNo++) {
-					if(cs.isCollectionExist(clName + clNo)) {
-						cs.dropCollection(clName + clNo);
-					}
+				sdb.createCollectionSpace(csName + csNo,options_cs);	
+			}catch (BaseException e) {
+				if(-33 != e.getErrorCode()) {
+					throw e;
+				}
+			}
+			
+			for(int clNo = 1 ; clNo <= clNum; clNo++) {
+				try {
+					CollectionSpace cs = sdb.getCollectionSpace(csName + csNo);
 					BSONObject options_cl = new BasicBSONObject();
 					options_cl.put("Capped", true);
 					options_cl.put("Size", 8589934592L);
 					options_cl.put("AutoIndexId", false);
 					DBCollection cl = cs.createCollection(clName + clNo,options_cl);
 					dbCollections.add(cl);
-				}
-			}
-		}catch (BaseException e) {
-			if(-33 != e.getErrorCode() || -22 != e.getErrorCode()) {
-				throw e;
+				}catch (BaseException e) {
+					if(-22 != e.getErrorCode()) {
+						throw e;
+					}
+				}			
 			}
 		}
-	
 		return dbCollections;
 	}
 	
@@ -107,13 +106,12 @@ public class Commlib {
 	 * @param obj
 	 * @throws BaseException
 	 */
-	public static void insertRecords(DBCollection cl,StringBuffer strBuffer,BSONObject obj) throws BaseException{
+	public static void insertRecords(DBCollection cl,BSONObject obj) throws BaseException{
 		
-        final int each_thread_recordNums = 20;
+        final int each_thread_recordNums = 10;
 		try {	
 	       for(int i = 0; i < each_thread_recordNums; i++) {
-	          cl.insert(obj);
-//	          System.out.println("Thread: " + Thread.currentThread().getName() + " inserting record length " + strBuffer.length());
+	          cl.insert(obj);//each cappedCL insert the same record 
 	       }
 	         
 		} catch (BaseException e) {
@@ -122,12 +120,12 @@ public class Commlib {
 	}
 	
 	/**
-	 * get random record length
+	 * get random length for records
 	 */
 	public static int getRandomStringLength() {
-		int minLength = 1 * 1024 * 1024;
-		int range = 1 * 1024  ;//strings range [1m,1m+1k]
-        int stringLength =  (int)(minLength + Math.random() * range);
+		int minLength = 100 * 1024; //100k
+		int range = 100 * 1024  ;
+        int stringLength =  (int)(minLength + Math.random() * range);//all records length range [100k,200k]
         return stringLength;
 	}
 	
@@ -138,18 +136,23 @@ public class Commlib {
 	 * @param stringLength
 	 * @throws BaseException
 	 */
-	public static boolean checkLogicalID(Sequoiadb sdb,DBCollection cl,int stringLength) throws BaseException{
-		System.out.println("--------begin to check logicalId---------");
+	public static boolean checkLogicalID(DBCollection cl,int stringLength,String className) throws BaseException{
+		System.out.println("--------" + className + " begin to check logicalId---------");
 		DBCursor queryCursor = null;
+		
 		try {
-			sdb.setSessionAttr((BSONObject)JSON.parse("{PreferedInstance:'M'}"));
-			final int each_add_55 = 55;
+			int recordNo = 0;
+			final int each_add_55 = 55; //add head length
 			final int full_byte_4 = 4; //4 bytes
 		    int blockCounts = 1; //init block 
 			final int block_max_32 = 33554396; //each block is up to 32m
 			long expectId = 0;
-			queryCursor = cl.query((BSONObject)null, null, null, null);
+			BSONObject orderBy = new BasicBSONObject();
+			orderBy.put("_id", 1);
+			queryCursor = cl.query(null, null, orderBy, null);
 			while(queryCursor.hasNext()) {
+				recordNo++;
+			
 				long actId = (long)queryCursor.getNext().get("_id");
 				int recordLength = stringLength + each_add_55;
 				
@@ -163,18 +166,19 @@ public class Commlib {
 				}
 				
 		        if(expectId != actId) {
+		        	System.out.println(className + ": stringLength: " + stringLength + " recordNo: " + recordNo + " blockCounts: " + blockCounts + " expectId: " + expectId + "  actId: " + actId);
 		        	return false;
 		        }
 		        expectId = actId + recordLength;//This expectId belongs to the next record			
 			}
 			return true;
 		}catch(BaseException e){
-//			System.out.println("check Exception: " + e.getMessage());
 			return false;
 		}finally {
-//			System.out.println("--------end to check logicalId---------");
+			System.out.println("--------" + className + " end to check logicalId---------");
 			queryCursor.close();
 		}
 		
 	}
+	
 }

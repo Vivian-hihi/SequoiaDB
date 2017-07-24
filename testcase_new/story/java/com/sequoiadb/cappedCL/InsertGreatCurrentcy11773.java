@@ -20,7 +20,7 @@ import com.sequoiadb.testcommon.SdbThreadBase;
 
 /**
 * FileName: InsertGreatCurrentcy11773.java
-* test content:test concurrentcy insert in cappedCL
+* test content:test concurrentcy insert for cappedCL
 * @author liuxiaoxuan
     * @Date    2017.7.18
 */
@@ -38,9 +38,9 @@ public class InsertGreatCurrentcy11773 extends SdbTestBase{
 		try {
 			boolean isCapped = true;
 			sdb = new Sequoiadb(SdbTestBase.coordUrl, "","");
+			sdb.setSessionAttr((BSONObject)JSON.parse("{PreferedInstance:'M'}"));
 			cappedCL_11773 = Commlib.createCL(sdb, cappedCSName, cappedCLName, isCapped);
 		}catch(BaseException e) {
-//			System.out.println("Error message: " + e.getMessage());
 			Assert.fail(e.getMessage());
 		}
 	}
@@ -54,7 +54,7 @@ public class InsertGreatCurrentcy11773 extends SdbTestBase{
 		insertThread.start(threadNums);
 		
 		Assert.assertTrue(insertThread.isSuccess(),insertThread.getErrorMsg());
-		Assert.assertTrue(Commlib.checkLogicalID(sdb, cappedCL_11773, strBuffer.length()));
+		Assert.assertTrue(Commlib.checkLogicalID(cappedCL_11773, strBuffer.length(),this.getClass().getName()));
 	}
 	
 	@AfterClass
@@ -65,7 +65,6 @@ public class InsertGreatCurrentcy11773 extends SdbTestBase{
 				sdb.dropCollectionSpace(cappedCSName);
 			}
 		}catch (BaseException e) {
-			System.out.println("teardown exception 11773: " + e.getMessage());
 			Assert.fail(e.getMessage());
 		}finally {
 			sdb.close();
@@ -96,15 +95,13 @@ public class InsertGreatCurrentcy11773 extends SdbTestBase{
                 db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
                 db.setSessionAttr((BSONObject)JSON.parse("{PreferedInstance:'M'}"));
                 cl = db.getCollectionSpace(cappedCSName).getCollection(cappedCLName);
-                // doing insert
-                Commlib.insertRecords(cl,strBuffer,obj);
+                // insert records in cappedCL
+                Commlib.insertRecords(cl,obj);
             }catch(BaseException e){
-//            	System.out.println("11773 ERROR_EXEC:"+e);
                 if(e.getErrorCode() != -23 || e.getErrorCode() != -34){
                     throw e;
                 }
             }finally{
-//            	System.out.println("db: " + db);
                 db.close();
             }
         }

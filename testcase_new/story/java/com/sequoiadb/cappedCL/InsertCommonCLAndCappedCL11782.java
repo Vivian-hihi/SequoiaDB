@@ -20,7 +20,7 @@ import com.sequoiadb.testcommon.SdbThreadBase;
 
 /**
 * FileName: InsertCommonCLAndCappedCL11782.java
-* test content:test concurrentcy insert in commonCL and cappedCL 
+* test content:test concurrentcy insert for commonCL and cappedCL 
 * @author liuxiaoxuan
     * @Date    2017.7.18
 */
@@ -42,6 +42,7 @@ public class InsertCommonCLAndCappedCL11782 extends SdbTestBase{
 		try {
 			boolean isCapped = true;
 			sdb = new Sequoiadb(SdbTestBase.coordUrl, "","");
+			sdb.setSessionAttr((BSONObject)JSON.parse("{PreferedInstance:'M'}"));
 			cappedCL_11782 = Commlib.createCL(sdb, cappedCSName_11782, cappedClName_11782 ,isCapped);
 			commonCL_11782 = Commlib.createCL(sdb, commonCSName_11782, commonClName_11782 ,false);
 		}catch(BaseException e) {
@@ -60,7 +61,7 @@ public class InsertCommonCLAndCappedCL11782 extends SdbTestBase{
 		insertThread.start(threadNum);
 		
 		Assert.assertTrue(insertThread.isSuccess(),insertThread.getErrorMsg());
-		Assert.assertTrue(Commlib.checkLogicalID(sdb, cappedCL_11782, strBuffer.length()));
+		Assert.assertTrue(Commlib.checkLogicalID(cappedCL_11782, strBuffer.length(),this.getClass().getName()));
 	}
 	
 	@AfterClass
@@ -108,11 +109,10 @@ public class InsertCommonCLAndCappedCL11782 extends SdbTestBase{
                 db.setSessionAttr((BSONObject)JSON.parse("{PreferedInstance:'M'}"));
                 capCl = db.getCollectionSpace(cappedCSName_11782).getCollection(cappedClName_11782);
                 commCl = db.getCollectionSpace(commonCSName_11782).getCollection(commonClName_11782);
-                // doing insert
-              Commlib.insertRecords(capCl,strBuffer,obj);
-              Commlib.insertRecords(commCl,strBuffer,obj);
+                //insert records in cappedCL and commonCL
+                Commlib.insertRecords(capCl,obj);
+                Commlib.insertRecords(commCl,obj);
             }catch(BaseException e){
-//            	System.out.println("11782 ERROR_EXEC:"+e);
                 if(e.getErrorCode() != -23 || e.getErrorCode() != -34){
                     throw e;
                 }
