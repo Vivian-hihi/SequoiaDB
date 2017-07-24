@@ -34,14 +34,25 @@ TEST( bson, date )
 		builder.appendDate( key, dt ) ;
 	}
 	BSONObj obj = builder.obj() ;
-	const char* expect = "{ \"date0\": {\"$date\": \"0000-01-01\"}, "
-						   "\"date1\": {\"$date\": \"9999-12-31\"}, "
-						   "\"date2\": { \"$date\": -62167248353000 }, "
-						   "\"date3\": { \"$date\": 253402272000000 }, "
-						   "\"date4\": { \"$date\": -9223372036854775808 }, "
-						   "\"date5\": { \"$date\": 9223372036854775807 } }" ;
-	string real = obj.toString() ;
-	ASSERT_STREQ( expect, real.c_str() ) << "fail to check date" ;
+	// new system output
+	const char* expect1 = "{ \"date0\": {\"$date\": \"0000-01-01\"}, "
+						    "\"date1\": {\"$date\": \"9999-12-31\"}, "
+						    "\"date2\": { \"$date\": -62167248353000 }, "
+						    "\"date3\": { \"$date\": 253402272000000 }, "
+						    "\"date4\": { \"$date\": -9223372036854775808 }, "
+						    "\"date5\": { \"$date\": 9223372036854775807 } }" ;
+	// old system output
+	const char* expect2 = "{ \"date0\": { \"$date\": -62167248352000 }, "
+						    "\"date1\": {\"$date\": \"9999-12-31\"}, "
+							"\"date2\": { \"$date\": -62167248353000 }, "
+							"\"date3\": { \"$date\": 253402272000000 }, "
+							"\"date4\": { \"$date\": -9223372036854775808 }, "
+							"\"date5\": { \"$date\": 9223372036854775807 } }" ;
+	string tmp = obj.toString() ;
+	const char* real = tmp.c_str() ;
+	ASSERT_TRUE( !strcmp( expect1, real ) || !strcmp( expect2, real ) ) 
+				<< "fail to check date\n expect1 = " << expect1 
+				<< "\n expect2 = " << expect2 << "\n real = " << real ; 
 }
 
 TEST( bson, timestamp )
@@ -69,9 +80,15 @@ TEST( bson, timestamp )
 		builder.appendTimestamp( key, tmp ) ;
 	}
 	BSONObj obj = builder.obj() ;
-	string real = obj.toString() ;
-	const char* expect = "{ \"time0\": {\"$timestamp\": \"1902-01-01-00.05.52.000000\"}, "
-						   "\"time1\": {\"$timestamp\": \"1928-01-01-00.00.00.000000\"}, "
-						   "\"time2\": {\"$timestamp\": \"2037-12-31-23.59.59.999999\"} }" ;
-	ASSERT_STREQ( expect, real.c_str() ) << "fail to check timestamp" ;
+	string tmp = obj.toString() ;
+	const char* real = tmp.c_str() ;
+	const char* expect1 = "{ \"time0\": {\"$timestamp\": \"1902-01-01-00.05.52.000000\"}, "
+						    "\"time1\": {\"$timestamp\": \"1928-01-01-00.00.00.000000\"}, "
+						    "\"time2\": {\"$timestamp\": \"2037-12-31-23.59.59.999999\"} }" ;
+	const char* expect2 = "{ \"time0\": {\"$timestamp\": \"1902-01-01-00.00.00.000000\"}, "
+						    "\"time1\": {\"$timestamp\": \"1928-01-01-00.00.00.000000\"}, "
+							"\"time2\": {\"$timestamp\": \"2037-12-31-23.59.59.999999\"} }" ;	
+	ASSERT_TRUE( !strcmp( expect1, real ) || !strcmp( expect2, real ) ) 
+				<< "fail to check timestamp\n expect1 = " << expect1 
+				<< "\n expect2 = " << expect2 << "\n real = " << real ;
 }
