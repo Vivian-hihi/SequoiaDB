@@ -15,16 +15,17 @@ Global
 .sp 2
 Format trace input to output by type.
 .sp 2
-\fformatType (int)\fR
+\f formatType (int)\fR
 .br
-       0 : output flw file
-       1 : output fmt file
+       specifies the type of output file, contains the following types:
+        0 : output flw file, contains several analysis files for dump ;
+        1 : output fmt file, the file format of the dump file ;
 .sp 2
-\finput  (string)\fR
+\f input  (string)\fR
 .br
-       Name of dump file.
+       Name of dump file, which produced by db.traceOff().
 .sp 2
-\finput  (string)\fR
+\f output  (string)\fR
 .br
        Name of out file.
 .SH EXAMPLES
