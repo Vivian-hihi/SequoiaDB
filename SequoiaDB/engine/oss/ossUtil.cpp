@@ -461,6 +461,17 @@ INT32 ossGetOSInfo( ossOSInfo &info )
             ossStrcpy( info._distributor, "Windows Server 2008" ) ;
          }
       }
+      if ( OSVerInfo.dwMinorVersion == 2 )
+      {
+         if ( OSVerInfo.wProductType == VER_NT_WORKSTATION )
+         {
+            ossStrcpy( info._distributor, "Windows 8 or later" ) ;
+         }
+         else
+         {
+            ossStrcpy( info._distributor, "Windows Server 2012 or later" ) ;
+         }
+      }
    }
    if ( OSVerInfo.dwMajorVersion == 5 && OSVerInfo.dwMinorVersion == 2 )
    {

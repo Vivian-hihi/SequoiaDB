@@ -66,6 +66,7 @@ namespace engine
    #define CMD_USR_SYSTEM_DISTRIBUTOR        "Distributor"
    #define CMD_USR_SYSTEM_RELASE             "Release"
    #define CMD_USR_SYSTEM_DESP               "Description"
+   #define CMD_USR_SYSTEM_KERNEL          "KernelRelease"
    #define CMD_USR_SYSTEM_BIT                "Bit"
    #define CMD_USR_SYSTEM_IP                 "Ip"
    #define CMD_USR_SYSTEM_HOSTS              "Hosts"
@@ -289,6 +290,10 @@ namespace engine
    private:
       static INT32 _extractReleaseInfo( const CHAR *buf,
                                         bson::BSONObjBuilder &builder ) ;
+
+#if defined (_LINUX)
+      static INT32 _extractReleaseFileInfo( bson::BSONObjBuilder &builder ) ;
+#endif //_Linux
 
       static INT32 _parseHostsFile( VEC_HOST_ITEM &vecItems, string &err ) ;
 

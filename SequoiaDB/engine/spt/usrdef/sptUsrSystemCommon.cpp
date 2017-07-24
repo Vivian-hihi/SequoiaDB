@@ -35,6 +35,7 @@
 #include "utilStr.hpp"
 #include "ossSocket.hpp"
 #include "ossIO.hpp"
+#include "ossFile.hpp"
 #include "oss.h"
 #include "ossPath.hpp"
 #include "ossPrimitiveFileOp.hpp"
@@ -116,6 +117,13 @@ namespace engine
       _ossCmdRunner runner ;
       string outStr ;
       BSONObjBuilder builder ;
+      
+      ossOSInfo info ;
+      rc = ossGetOSInfo( info ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error;
+      }
 
 #if defined (_LINUX)
       rc = runner.exec( "lsb_release -a |grep -v \"LSB Version\"", exitCode,
@@ -126,13 +134,25 @@ namespace engine
       if ( SDB_OK != rc || SDB_OK != exitCode )
       {
          rc = SDB_OK ;
-         ossOSInfo info ;
-         ossGetOSInfo( info ) ;
 
+#if defined (_LINUX)
+         rc = _extractReleaseFileInfo(builder);
+         if ( SDB_OK != rc )
+         {
+            rc = SDB_OK ;
+            builder.append( CMD_USR_SYSTEM_DISTRIBUTOR, info._distributor ) ;
+            builder.append( CMD_USR_SYSTEM_RELASE, info._release ) ;
+            builder.append( CMD_USR_SYSTEM_DESP, info._desp ) ;
+         }
+         builder.append( CMD_USR_SYSTEM_KERNEL, info._release ) ;
+         builder.append( CMD_USR_SYSTEM_BIT, info._bit ) ;
+#elif defined (_WINDOWS)
          builder.append( CMD_USR_SYSTEM_DISTRIBUTOR, info._distributor ) ;
          builder.append( CMD_USR_SYSTEM_RELASE, info._release ) ;
          builder.append( CMD_USR_SYSTEM_DESP, info._desp ) ;
+         builder.append( CMD_USR_SYSTEM_KERNEL, info._release ) ;
          builder.append( CMD_USR_SYSTEM_BIT, info._bit ) ;
+#endif
 
          retObj = builder.obj() ;
          goto done ;
@@ -194,7 +214,7 @@ namespace engine
          err = ss.str() ;
          goto error ;
       }
-
+      builder.append( CMD_USR_SYSTEM_KERNEL, info._release ) ;
       if ( NULL != ossStrstr( outStr.c_str(), "64") )
       {
          builder.append( CMD_USR_SYSTEM_BIT, 64 ) ;
@@ -283,6 +303,198 @@ namespace engine
    error:
       goto done ;
    }
+
+#if defined( _LINUX )
+
+   #define REDHAT_RELEASE_FILE      "/etc/redhat-release"
+   #define SUSE_RELEASE_FILE           "/etc/SuSE-release"
+   #define OS_RELEASE_FILE               "/etc/os-release"
+   
+   INT32 _sptUsrSystemCommon::_extractReleaseFileInfo( bson::BSONObjBuilder &builder )
+   {
+      INT32 rc = SDB_OK ;
+      INT64 fileSize = 0 ;
+      CHAR *readBuffer = NULL ;
+      INT64 readSize = 0 ;
+      string releaseFilePath ;
+      enum distroType { redhat, suse, os } ;
+      distroType type ;
+
+      vector<string> splited ;
+      string distro ;
+      string release ;
+      string description ;
+
+      ossFile file ;
+      BOOLEAN ifExists ;
+
+      if ( SDB_OK == ( rc = ossFile::exists( REDHAT_RELEASE_FILE, ifExists ) ) &&
+            true == ifExists )
+      {
+         releaseFilePath = REDHAT_RELEASE_FILE ;
+         type = redhat ;
+      }
+      else if ( SDB_OK == ( rc = ossFile::exists( SUSE_RELEASE_FILE, ifExists ) ) &&
+            true == ifExists )
+      {
+         releaseFilePath = SUSE_RELEASE_FILE ;
+         type = suse ;
+      }
+      else if (SDB_OK == ( rc = ossFile::exists( OS_RELEASE_FILE, ifExists ) ) &&
+            true == ifExists )
+      {
+         releaseFilePath = OS_RELEASE_FILE ;
+         type = os ;
+      }
+      else
+      {
+         if ( SDB_OK == rc && false == ifExists )
+         {
+            rc = SDB_FNE;
+         }
+         goto error ;
+      }
+
+      rc = file.open( releaseFilePath, OSS_READONLY|OSS_SHAREREAD, 0 ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error;
+      }
+      rc = file.getFileSize( fileSize ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error;
+      }
+      readBuffer = ( CHAR* )SDB_OSS_MALLOC( fileSize + 1 ) ;
+      if ( !readBuffer )
+      {
+         rc = SDB_OOM ;
+         goto error ;
+      }
+      ossMemset( readBuffer, 0, fileSize + 1 ) ;
+      rc = file.readN( readBuffer, fileSize, readSize ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error;
+      }
+      file.close();
+
+      splited = utilStrSplit( readBuffer, "\n" ) ;
+      if ( splited.empty() )
+      {
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      if ( redhat == type )
+      {
+         description = splited[0] ;
+         vector<string> words = utilStrSplit( splited[0] , " " ) ;
+         for ( vector<string>::iterator iter = words.begin(); iter != words.end(); iter++ )
+         {
+            if ( iter->empty() )
+            {
+               continue ;
+            }
+            else if ( iter == words.begin() )
+            {
+               if ( "CentOS" == *iter )
+               {
+                  distro = "CentOS" ;
+               }
+               else if ("Red" == *iter )
+               {
+                  distro = "RedHatEnterpriseServer" ;
+               }
+            }
+            else if ( "release" == *iter &&
+                 iter != words.end() - 1 )
+            {
+               release = *( iter + 1 ) ;
+            }
+         }
+      }
+      else if ( suse == type )
+      {
+         distro = "SUSE LINUX" ;
+         for ( vector<string>::iterator iter = splited.begin(); iter != splited.end(); iter++ )
+         {
+            if ( iter == splited.begin() )
+            {
+               description = *iter ;
+            }
+            else
+            {
+               vector<string> words = utilStrSplit( *iter , "=" ) ;
+               for ( vector<string>::iterator iter = words.begin(); iter != words.end(); iter++ )
+               {
+                  utilStrTrim( *iter ) ;
+                  if ( "VERSION" == *iter &&
+                        iter != words.end() - 1 )
+                  {
+                     utilStrTrim( *( iter + 1 )  ) ;
+                     release = *( iter + 1 ) ;
+                     break ;
+                  }
+               }
+            }
+         }
+      }
+      else if ( os == type )
+      {
+            for ( vector<string>::iterator iter = splited.begin(); iter != splited.end(); iter++ )
+         {
+               vector<string> words = utilStrSplit( *iter , "=" ) ;
+               for ( vector<string>::iterator iter = words.begin(); iter != words.end(); iter++ )
+               {
+                  if ( iter->empty() )
+                  {
+                     continue ;
+                  }
+                  else if ( "NAME" == *iter &&
+                            iter != words.end() -1 )
+                  {
+                     distro = *( iter + 1 ) ;
+                     boost::algorithm::erase_all( distro, "\"" ) ;
+                  }
+                  else if ( "PRETTY_NAME" == *iter &&
+                            iter != words.end() -1 )
+                  {
+                     description = *( iter + 1 ) ;
+                     boost::algorithm::erase_all( description, "\"" ) ;
+                  }
+                  else if ( "VERSION_ID" == *iter &&
+                            iter != words.end() -1 )
+                  {
+                     release = *( iter + 1 ) ;
+                     boost::algorithm::erase_all( release, "\"" ) ;
+                  }
+               }
+            }
+      }
+
+      if ( 0 == distro.size() ||
+           0 == release.size() ||
+           0 == description.size() )
+      {
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      builder.append( CMD_USR_SYSTEM_DISTRIBUTOR, distro ) ;
+      builder.append( CMD_USR_SYSTEM_RELASE, release ) ;
+      builder.append( CMD_USR_SYSTEM_DESP, description ) ;
+
+   done:
+      if ( readBuffer )
+      {
+         SDB_OSS_FREE( readBuffer ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+#endif //_Linux
 
    INT32 _sptUsrSystemCommon::getHostsMap( string &err, BSONObj &retObj )
    {

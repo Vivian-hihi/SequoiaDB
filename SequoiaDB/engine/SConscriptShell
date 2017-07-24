@@ -59,6 +59,7 @@ ossFiles = [
       "oss/oss.cpp",
       "oss/ossErr.cpp",
       "oss/ossUtil.cpp",
+      "oss/ossFile.cpp",
       "oss/ossIO.cpp",
       "oss/ossPrimitiveFileOp.cpp",
       "oss/ossStackDump.cpp",
