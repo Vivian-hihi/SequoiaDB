@@ -185,11 +185,11 @@ namespace engine
       {
          INT32 rc = SDB_OK ;
          PD_TRACE_ENTRY ( SDB__IXMKEYGEN__GETKEYS );
-#define IXM_DEFAULT_FIELD_NUM 3
+#define IXM_DEFAULT_FIELD_NUM 4
          BSONElement eleOnStack[IXM_DEFAULT_FIELD_NUM] ;
          BSONElement *keyEles = NULL ;
          const CHAR *arrEleName = NULL ;
-         UINT32 arrElePos = 0 ;
+         UINT32 arrElePos = -1 ;
          UINT32 eooNum = 0 ;
 
          if ( IXM_DEFAULT_FIELD_NUM < fieldNames.size() )
@@ -260,23 +260,27 @@ namespace engine
          }
          else
          {
+            INT32 arrNameLen = -1 ;
             if ( NULL != arrEleName )
             {
-               // cut off key name from array name
-
+               const CHAR *originalName = fieldNames.at( arrElePos ) ;
                CHAR* subname = (CHAR*)arrEleName ;
 
-               while ( '.' != *subname )
+               if ( '\0' != *subname )
                {
-                  subname-- ;
+                  while ( '.' != *subname && subname > originalName )
+                  {
+                     subname-- ;
+                  }
                }
 
-               *subname = '\0' ;
+               // cut off key name from array name
+               arrNameLen = subname - originalName;
             }
 
             rc = _genKeyWithNormalEle( keyEles, fieldNames,
                                        isKeepKeyName, ignoreUndefined,
-                                       keys ) ;
+                                       keys, arrElePos, arrNameLen ) ;
             if ( SDB_OK != rc )
             {
                PD_LOG( PDERROR, "failed to gen keys with normal element:%d", rc ) ;
@@ -396,18 +400,31 @@ namespace engine
                                   vector<const CHAR *> &fieldNames,
                                   BOOLEAN isKeepKeyName,
                                   BOOLEAN ignoreUndefined,
-                                  BSONObjSet &keys ) const
+                                  BSONObjSet &keys,
+                                  INT32 arrElePos = -1,
+                                  INT32 arrNameLen = -1 ) const
       {
          PD_TRACE_ENTRY ( SDB__IXMKEYGEN__GENKEYSWITHNORMALELE );
          INT32 rc = SDB_OK ;
          UINT32 eleNum = fieldNames.size() ;
          BSONObjBuilder builder ;
          BSONObj obj ;
-         string keyName ;
          for ( UINT32 i = 0; i < eleNum; i++ )
          {
             BSONElement &e = keyELes[i] ;
-            keyName = isKeepKeyName ? fieldNames[i] : "" ;
+            string keyName ;
+            if ( isKeepKeyName )
+            {
+               if ( i == arrElePos )
+               {
+                  SDB_ASSERT( arrNameLen >= 0, "invalid arrNameLen" ) ;
+                  keyName = string( fieldNames[i], arrNameLen ) ;
+               }
+               else
+               {
+                  keyName = fieldNames[i] ;
+               }
+            }
             if ( e.eoo() )
             {
                if ( !ignoreUndefined )
