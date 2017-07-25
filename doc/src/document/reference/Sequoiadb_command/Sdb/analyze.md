@@ -17,7 +17,7 @@
  | CollectionSpace | 指定需要分析的集合名称，字符串类型。默认为空。 | 不能与Collection同时使用 |  CollectionSpace:"foo" |
  | Collection | 指定需要分析的集合名称，字符串类型。默认为空。 | 不能与CollecitonSpace同时使用 |  Collection:"bar" |
  | Index | 指定需要分析的索引名称，字符串类型。默认为空。 | 如果指定该参数，需要指定Collection参数 | Index:"index" |
- | SampleNum | 指定抽样的数据个数，整数类型，( 100 - 10000 )，默认是200 | 不能与SampleNum同时使用 | SampleNum:1000 |
+ | SampleNum | 指定抽样的数据个数，整数类型，( 100 - 10000 )，默认是200 | 不能与SamplePercent同时使用 | SampleNum:1000 |
  | SamplePercent | 指定抽样的比例，浮点数类型，( 0.0 - 100.0 ) | 不能与SampleNum同时使用 | SamplePercent:50 |
  | Location Elements | 命令位置参数项，详细见 **[命令位置参数](reference/Sequoiadb_command/Overview/location.md)** | | GroupName:"db1" |
 
@@ -31,7 +31,7 @@
 
   *  **SDB_DMS_CS_NOTEXIST**(-34)
      指定的集合空间不存在。
-  *  **SDB_CS_NOTEXIST**(-23)
+  *  **SDB_DMS_NOTEXIST**(-23)
      指定的集合不存在。
   *  **SDB_IXM_NOTEXIST**(-47)
      指定的索引不存在。
