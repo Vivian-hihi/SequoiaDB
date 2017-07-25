@@ -890,11 +890,13 @@ public class MyUtil {
         }
     }
 
+    @Deprecated
     public static void throwSkipException(String msg) {
         System.out.println(msg);
         throw new SkipException(msg);
     }
 
+    @Deprecated
     public static void throwSkipExeWithoutFaultEnv() {
 //        throwSkipException("没遇上异常环境");
     }
