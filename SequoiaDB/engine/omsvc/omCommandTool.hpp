@@ -172,6 +172,7 @@ namespace engine
                                      const BSONObj &newConfig ) ;
       INT32 updateNodeConfigOfBusiness( const string &businessName,
                                         const BSONObj &newConfig ) ;
+      INT32 removeConfigure( const BSONObj &condition ) ;
       INT32 removeConfigure( const string &businessName,
                              const string &hostName ) ;
 

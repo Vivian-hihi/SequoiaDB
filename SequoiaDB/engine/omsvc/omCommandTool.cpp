@@ -1267,7 +1267,6 @@ namespace engine
       BSONObjBuilder builder ;
       BSONArrayBuilder hostLocation ;
       set<string> newHostList ;
-      set<string> removeHostList ;
       string businessType = "" ;
       string deployMod = "" ;
 
@@ -1324,26 +1323,6 @@ namespace engine
          }
       }
 
-      //business info location hosts
-      {
-         BSONObj hostInfoList = buzInfo.getObjectField(
-                                                OM_BUSINESS_FIELD_LOCATION ) ;
-         BSONObjIterator iter( hostInfoList ) ;
-         while ( iter.more() )
-         {
-            BSONElement ele = iter.next() ;
-            BSONObj tmpHostInfo = ele.embeddedObject() ;
-            string hostName = tmpHostInfo.getStringField(
-                                                OM_CONFIGURE_FIELD_HOSTNAME ) ;
-
-            if( newHostList.find( hostName ) == newHostList.end() )
-            {
-               //find all the hosts that have been deleted
-               removeHostList.insert( hostName ) ;
-            }
-         }
-      }
-
       //upsert business
       {
          BSONObj condition = BSON( OM_BUSINESS_FIELD_ADDTYPE << 0 <<
@@ -1365,20 +1344,53 @@ namespace engine
       }
 
       //delete the host config that does not exist
-      for ( set<string>::iterator iter = removeHostList.begin();
-            iter != removeHostList.end(); ++iter )
       {
-         string hostName = *iter ;
-         rc = removeConfigure( businessName, hostName ) ;
+         BSONObj deleteCondition ;
+         BSONObjBuilder deleteBuilder ;
+         BSONObjBuilder conditionBuilder ;
+         BSONArrayBuilder notDeleteArray ;
+
+         for ( set<string>::iterator iter = newHostList.begin();
+               iter != newHostList.end(); ++iter )
+         {
+            string hostName = *iter ;
+            notDeleteArray.append( hostName ) ;
+         }
+         conditionBuilder.append( "$nin", notDeleteArray.arr() ) ;
+
+         deleteBuilder.append( OM_CONFIGURE_FIELD_BUSINESSNAME, businessName ) ;
+         deleteBuilder.append( OM_CONFIGURE_FIELD_HOSTNAME,
+                               conditionBuilder.obj() ) ;
+         deleteCondition = deleteBuilder.obj() ;
+
+         rc = removeConfigure( deleteCondition ) ;
          if ( rc )
          {
-            PD_LOG( PDERROR, "failed to remove configure,"
-                             "businessName=%s,hostName=%s,rc=%d",
-                    businessName.c_str(), hostName.c_str(), rc ) ;
+            PD_LOG( PDERROR, "failed to remove configure,condition=%s,rc=%d",
+                    deleteCondition.toString().c_str(), rc ) ;
             goto error ;
          }
       }
 
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omDatabaseTool::removeConfigure( const BSONObj &condition )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj hint ;
+   
+      rc = rtnDelete( OM_CS_DEPLOY_CL_CONFIGURE, condition, hint, 0, _cb ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to delete configure from table:%s,rc=%d",
+                 OM_CS_DEPLOY_CL_CONFIGURE, rc ) ;
+         goto error ;
+      }
+   
    done:
       return rc ;
    error:
@@ -1391,9 +1403,8 @@ namespace engine
       INT32 rc = SDB_OK ;
       BSONObj condition = BSON( OM_CONFIGURE_FIELD_BUSINESSNAME <<
             businessName << OM_CONFIGURE_FIELD_HOSTNAME << hostName ) ;
-      BSONObj hint ;
 
-      rc = rtnDelete( OM_CS_DEPLOY_CL_CONFIGURE, condition, hint, 0, _cb ) ;
+      rc = removeConfigure( condition ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "failed to delete configure from table:%s,"
