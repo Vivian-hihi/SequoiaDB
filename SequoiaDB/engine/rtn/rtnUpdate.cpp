@@ -54,7 +54,8 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNUPDATE1, "rtnUpdate" )
    INT32 rtnUpdate ( const CHAR *pCollectionName, const BSONObj &selector,
                      const BSONObj &updator, const BSONObj &hint, INT32 flags,
-                     pmdEDUCB *cb, INT64 *pUpdateNum, INT32 *pInsertNum )
+                     pmdEDUCB *cb, INT64 *pUpdateNum, INT32 *pInsertNum,
+                     const BSONObj *shardingKey )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNUPDATE1 ) ;
@@ -68,7 +69,7 @@ namespace engine
       }
 
       rc = rtnUpdate ( pCollectionName, selector, updator, hint, flags, cb,
-                       dmsCB, dpsCB, 1, pUpdateNum, pInsertNum ) ;
+                       dmsCB, dpsCB, 1, pUpdateNum, pInsertNum, shardingKey ) ;
 
       PD_TRACE_EXITRC ( SDB_RTNUPDATE1, rc ) ;
       return rc ;
@@ -78,7 +79,8 @@ namespace engine
    INT32 rtnUpdate ( const CHAR *pCollectionName, const BSONObj &selector,
                      const BSONObj &updator, const BSONObj &hint, INT32 flags,
                      pmdEDUCB *cb, SDB_DMSCB *dmsCB, SDB_DPSCB *dpsCB,
-                     INT16 w, INT64 *pUpdateNum, INT32 *pInsertNum )
+                     INT16 w, INT64 *pUpdateNum, INT32 *pInsertNum,
+                     const BSONObj *shardingKey )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNUPDATE2 ) ;
@@ -108,10 +110,13 @@ namespace engine
          rc = SDB_INVALIDARG ;
          goto error ;
       }
+
       try
       {
          rc = modifier.loadPattern ( updator,
-                                     &dollarList ) ;
+                                     &dollarList,
+                                     TRUE,
+                                     shardingKey ) ;
          PD_RC_CHECK( rc, PDERROR, "Invalid pattern is detected for updator: "
                       "%s", updator.toString().c_str() ) ;
       }

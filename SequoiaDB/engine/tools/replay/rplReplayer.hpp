@@ -116,7 +116,7 @@ namespace replay
       Monitor                    _monitor;
       engine::ossFile            _status;
       string                     _path;
-      sdbclient::sdb             _sdb;
+      sdbclient::sdb*            _sdb;
       engine::dpsArchiveFileMgr  _archiveFileMgr;
       CHAR*                      _buf;
       UINT32                     _bufSize;

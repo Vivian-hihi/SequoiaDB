@@ -64,6 +64,8 @@ namespace engine
                            const BSONObj &oldObj,
                            const BSONObj &newMatch,
                            const BSONObj &newObj,
+                           const BSONObj &oldShardingKey,
+                           const BSONObj &newShardingKey,
                            const DPS_TRANS_ID &transID,
                            const DPS_LSN_OFFSET &preTransLsn,
                            const DPS_LSN_OFFSET &relatedLSN,
@@ -74,7 +76,9 @@ namespace engine
                            BSONObj &oldMatch,
                            BSONObj &oldObj,
                            BSONObj &newMatch,
-                           BSONObj &newObj ) ;
+                           BSONObj &newObj,
+                           BSONObj *oldShardingKey = NULL,
+                           BSONObj *newShardingKey = NULL ) ;
 
    INT32 dpsDelete2Record( const CHAR *fullName,
                            const BSONObj &oldObj,

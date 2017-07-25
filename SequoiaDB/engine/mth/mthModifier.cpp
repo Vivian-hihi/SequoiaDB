@@ -2006,7 +2006,8 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMDF_LDPTN, "_mthModifier::loadPattern" )
    INT32 _mthModifier::loadPattern ( const BSONObj &modifierPattern,
                                      vector<INT64> *dollarList,
-                                     BOOLEAN ignoreTypeError )
+                                     BOOLEAN ignoreTypeError,
+                                     const BSONObj* shardingKey )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__MTHMDF_LDPTN );
@@ -2046,6 +2047,20 @@ namespace engine
       }
 
       modifierSort() ;
+
+      if ( NULL != shardingKey && !shardingKey->isEmpty() )
+      {
+         _shardingKeyGen = SDB_OSS_NEW _ixmIndexKeyGen(
+                              *shardingKey, GEN_OBJ_KEEP_FIELD_NAME ) ;
+         if ( NULL == _shardingKeyGen )
+         {
+            rc = SDB_OOM ;
+            PD_LOG_MSG( PDERROR,
+                        "Failed to create new sharding key gen, rc=%d", rc ) ;
+            goto error ;
+         }
+      }
+
       _initialized = TRUE ;
 
    done :
@@ -2809,7 +2824,9 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMDF_MODIFY, "_mthModifier::modify" )
    INT32 _mthModifier::modify ( const BSONObj &source, BSONObj &target,
                                 BSONObj *srcID, BSONObj *srcChange,
-                                BSONObj *dstID, BSONObj *dstChange )
+                                BSONObj *dstID, BSONObj *dstChange,
+                                BSONObj *srcShardingKey,
+                                BSONObj *dstShardingKey )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__MTHMDF_MODIFY );
@@ -2922,6 +2939,43 @@ namespace engine
       if ( dstChange )
       {
          *dstChange = _dstChgBuilder->obj () ;
+      }
+
+      if ( NULL != _shardingKeyGen )
+      {
+         if ( NULL != srcShardingKey )
+         {
+            BSONObjSet keySet ;
+            rc = _shardingKeyGen->getKeys( source, keySet, NULL, TRUE, TRUE, TRUE ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG ( PDERROR, "Failed to get sharding key from obj: %s, rc=%d",
+                        source.toString().c_str(), rc ) ;
+               goto error ;
+            }
+
+            if ( keySet.size() == 1 )
+            {
+               *srcShardingKey = *keySet.begin() ;
+            }
+         }
+
+         if ( NULL != dstShardingKey )
+         {
+            BSONObjSet keySet ;
+            rc = _shardingKeyGen->getKeys( target, keySet, NULL, TRUE, TRUE, TRUE ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG ( PDERROR, "Failed to get sharding key from obj: %s, rc=%d",
+                        target.toString().c_str(), rc ) ;
+               goto error ;
+            }
+
+            if ( keySet.size() == 1 )
+            {
+               *dstShardingKey = *keySet.begin() ;
+            }
+         }
       }
 
    done :

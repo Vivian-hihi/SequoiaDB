@@ -3159,6 +3159,7 @@ namespace engine
       monAppCB * pMonAppCB          = cb ? cb->getMonAppCB() : NULL ;
       BSONObj oldMatch, oldChg ;
       BSONObj newMatch, newChg ;
+      BSONObj oldShardingKey, newShardingKey ;
       UINT32 logRecSize             = 0 ;
       dpsMergeInfo info ;
       dpsLogRecord &record = info.getMergeBlock().record() ;
@@ -3237,7 +3238,8 @@ namespace engine
             if ( dpscb )
             {
                rc = modifier.modify ( obj, newobj, &oldMatch, &oldChg,
-                                      &newMatch, &newChg ) ;
+                                      &newMatch, &newChg,
+                                      &oldShardingKey, &newShardingKey ) ;
                if ( SDB_OK == rc && newChg.isEmpty() )
                {
                   SDB_ASSERT( oldChg.isEmpty(),
@@ -3262,8 +3264,10 @@ namespace engine
                _clFullName( context->mb()->_collectionName, fullName,
                             sizeof(fullName) ) ;
                // reserved log-size
-               rc = dpsUpdate2Record( fullName, oldMatch, oldChg, newMatch,
-                                      newChg, transID, preTransLsn,
+               rc = dpsUpdate2Record( fullName,
+                                      oldMatch, oldChg, newMatch, newChg,
+                                      oldShardingKey, newShardingKey,
+                                      transID, preTransLsn,
                                       relatedLSN, record ) ;
                if ( SDB_OK != rc )
                {

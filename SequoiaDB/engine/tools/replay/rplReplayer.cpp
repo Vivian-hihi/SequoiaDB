@@ -107,13 +107,18 @@ namespace replay
    Replayer::Replayer()
    {
       _options = NULL;
+      _sdb = NULL;
       _buf = NULL;
       _bufSize = 0;
    }
 
    Replayer::~Replayer()
    {
-      _sdb.disconnect();
+      if (NULL != _sdb)
+      {
+         _sdb->disconnect();
+         SAFE_OSS_DELETE(_sdb);
+      }
 
       if (!_tmpFile.empty())
       {
@@ -380,15 +385,19 @@ namespace replay
          goto error ;
       }
 
-      SDB_ASSERT( readSize == DPS_LOG_HEAD_LEN,
-                  "readSize != DPS_LOG_HEAD_LEN" ) ;
+      if (readSize != DPS_LOG_HEAD_LEN)
+      {
+         rc = SDB_DPS_FILE_NOT_RECOGNISE ;
+         PD_LOG( PDWARNING, "DPS file header length error, rc=%d", rc ) ;
+         goto error ;
+      }
 
       if (0 != ossStrncmp(logHeader->_eyeCatcher,
                           DPS_LOG_HEADER_EYECATCHER,
                           DPS_LOG_HEADER_EYECATCHER_LEN))
       {
-         PD_LOG( PDERROR, "DPS file eye catcher error" ) ;
          rc = SDB_DPS_FILE_NOT_RECOGNISE ;
+         PD_LOG( PDWARNING, "DPS file eye catcher error, rc=%d", rc ) ;
          goto error ;
       }
 
@@ -834,7 +843,7 @@ namespace replay
          goto error;
       }
 
-      rc = _sdb.getCollection(fullName, cl);
+      rc = _sdb->getCollection(fullName, cl);
       if (SDB_OK != rc)
       {
          PD_LOG(PDERROR, "Failed to get collection:%s, lsn[%lld], rc=%d",
@@ -874,12 +883,15 @@ namespace replay
       BSONObj oldObj;
       BSONObj newMatch;
       BSONObj modifier;
+      BSONObj oldShardingKey ;
       BSONObj hint = BSON( "" << "$id" );
 
       SDB_ASSERT(LOG_TYPE_DATA_UPDATE == header._type, "not data update log");
 
       rc = dpsRecord2Update(log, &fullName,
-                            match, oldObj, newMatch, modifier);
+                            match, oldObj,
+                            newMatch, modifier,
+                            &oldShardingKey );
       if (SDB_OK != rc)
       {
          PD_LOG(PDERROR, "Failed to parse log record[%lld], rc:%d",
@@ -887,12 +899,20 @@ namespace replay
          goto error;
       }
 
-      rc = _sdb.getCollection(fullName, cl);
+      rc = _sdb->getCollection(fullName, cl);
       if (SDB_OK != rc)
       {
          PD_LOG(PDERROR, "Failed to get collection:%s, lsn[%lld], rc=%d",
                 fullName, header._lsn, rc ) ;
          goto error ;
+      }
+
+      if (!oldShardingKey.isEmpty() && _options->updateWithShardingKey())
+      {
+         BSONObjBuilder builder ;
+         builder.appendElements(match) ;
+         builder.appendElements(oldShardingKey) ;
+         match = builder.obj() ;
       }
 
       rc = cl.update(modifier, match, hint);
@@ -929,7 +949,7 @@ namespace replay
          goto error;
       }
 
-      rc = _sdb.getCollection(fullName, cl);
+      rc = _sdb->getCollection(fullName, cl);
       if (SDB_OK != rc)
       {
          PD_LOG(PDERROR, "Failed to get collection: %s, lsn[%lld], rc=%d", 
@@ -968,7 +988,7 @@ namespace replay
          goto error;
       }
 
-      rc = _sdb.getCollection(fullName, cl);
+      rc = _sdb->getCollection(fullName, cl);
       if (SDB_OK != rc)
       {
          PD_LOG(PDERROR, "Failed to get collection: %s, lsn[%lld], rc=%d", 
@@ -1750,7 +1770,7 @@ namespace replay
 
          // current file is completely replayed
          // fileId starts from 0
-         if (_monitor.getNextLSN() > fileInfo.fileSize * (fileInfo.fileId + 1))
+         if (_monitor.getNextLSN() > (UINT64)fileInfo.fileSize * (fileInfo.fileId + 1))
          {
             _monitor.setNextFileId(fileId + 1);
          }
@@ -2296,7 +2316,7 @@ namespace replay
          }
       }
 
-      rc = _sdb.getCollection(fullName, cl);
+      rc = _sdb->getCollection(fullName, cl);
       if (SDB_OK != rc)
       {
          PD_LOG(PDERROR, "Failed to get collection:%s, lsn[%lld], rc=%d",
@@ -2328,12 +2348,15 @@ namespace replay
       BSONObj oldObj;
       BSONObj newMatch;
       BSONObj modifier;
+      BSONObj newShardingKey ;
       BSONObj hint = BSON( "" << "$id" );
 
       SDB_ASSERT(LOG_TYPE_DATA_UPDATE == header._type, "not data update log");
 
       rc = dpsRecord2Update(log, &fullName,
-                            match, oldObj, newMatch, modifier);
+                            match, oldObj,
+                            newMatch, modifier,
+                            NULL, &newShardingKey );
       if (SDB_OK != rc)
       {
          PD_LOG(PDERROR, "Failed to parse log record[%lld], rc:%d",
@@ -2341,12 +2364,20 @@ namespace replay
          goto error;
       }
 
-      rc = _sdb.getCollection(fullName, cl);
+      rc = _sdb->getCollection(fullName, cl);
       if (SDB_OK != rc)
       {
          PD_LOG(PDERROR, "Failed to get collection:%s, lsn[%lld], rc=%d",
                 fullName, header._lsn, rc ) ;
          goto error ;
+      }
+
+      if (!newShardingKey.isEmpty() && _options->updateWithShardingKey())
+      {
+         BSONObjBuilder builder ;
+         builder.appendElements( newMatch ) ;
+         builder.appendElements( newShardingKey ) ;
+         newMatch = builder.obj() ;
       }
 
       rc = cl.update(oldObj, newMatch, hint);
@@ -2383,7 +2414,7 @@ namespace replay
          goto error;
       }
 
-      rc = _sdb.getCollection(fullName, cl);
+      rc = _sdb->getCollection(fullName, cl);
       if (SDB_OK != rc)
       {
          PD_LOG(PDERROR, "Failed to get collection: %s, lsn[%lld], rc=%d", 
@@ -2453,6 +2484,8 @@ namespace replay
    {
       INT32 rc = SDB_OK;
 
+      SDB_ASSERT(NULL == _sdb, "_sdb is not null");
+
       if (_options->dump() ||
           _options->dumpHeader() ||
           _options->deflate() ||
@@ -2461,7 +2494,15 @@ namespace replay
          goto done;
       }
 
-      rc = _sdb.connect(_options->hostName().c_str(),
+      _sdb = new(std::nothrow) sdbclient::sdb(_options->useSSL());
+      if (NULL == _sdb)
+      {
+         rc = SDB_OOM;
+         PD_LOG(PDERROR, "Failed to new sdbclient::sdb, rc=%d", rc);
+         goto error;
+      }
+
+      rc = _sdb->connect(_options->hostName().c_str(),
                         _options->serviceName().c_str(),
                         _options->user().c_str(),
                         _options->password().c_str());
@@ -2477,6 +2518,7 @@ namespace replay
    done:
       return rc;
    error:
+      SAFE_OSS_DELETE(_sdb);
       goto done;
    }
 

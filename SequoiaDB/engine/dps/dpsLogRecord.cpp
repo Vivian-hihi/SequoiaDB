@@ -443,7 +443,8 @@ namespace engine
                                  "UPDATE", LOG_TYPE_DATA_UPDATE ) ;
 
             dpsLogRecord::iterator itrFullName, itrOldM, itrOldO,
-                                   itrNewM, itrNewO ;
+                                   itrNewM, itrNewO,
+                                   itrOldSK, itrNewSK ;
             itrFullName = this->find( DPS_LOG_PUBLIC_FULLNAME ) ;
             if ( !itrFullName.valid() )
             {
@@ -495,6 +496,9 @@ namespace engine
                goto done ;
             }
 
+            itrOldSK = this->find( DPS_LOG_UPDATE_OLDSHARDINGKEY ) ;
+            itrNewSK = this->find( DPS_LOG_UPDATE_NEWSHARDINGKEY ) ;
+
             try
             {
                BSONObj oldM( itrOldM.value() ) ;
@@ -513,6 +517,20 @@ namespace engine
                len += ossSnprintf ( outBuf + len, outSize - len,
                                     " New    : %s"OSS_NEWLINE,
                                     newO.toString().c_str() ) ;
+               if ( itrOldSK.valid() )
+               {
+                  BSONObj oldSK( itrOldSK.value() ) ;
+                  len += ossSnprintf ( outBuf + len, outSize - len,
+                                       " Old ShardingKey: %s"OSS_NEWLINE,
+                                       oldSK.toString().c_str() ) ;
+               }
+               if ( itrNewSK.valid() )
+               {
+                  BSONObj newSK( itrNewSK.value() ) ;
+                  len += ossSnprintf ( outBuf + len, outSize - len,
+                                       " New ShardingKey: %s"OSS_NEWLINE,
+                                       newSK.toString().c_str() ) ;
+               }
             }
             catch ( std::exception &e )
             {

@@ -112,13 +112,15 @@ namespace engine
    INT32 rtnUpdate ( const CHAR *pCollectionName, const BSONObj &selector,
                      const BSONObj &updator, const BSONObj &hint, INT32 flags,
                      pmdEDUCB *cb, INT64 *pUpdateNum = NULL,
-                     INT32 *pInsertNum = NULL ) ;
+                     INT32 *pInsertNum = NULL,
+                     const BSONObj *shardingKey = NULL ) ;
 
    INT32 rtnUpdate ( const CHAR *pCollectionName, const BSONObj &selector,
                      const BSONObj &updator, const BSONObj &hint, INT32 flags,
                      pmdEDUCB *cb, SDB_DMSCB *dmsCB, SDB_DPSCB *dpsCB,
                      INT16 w = 1, INT64 *pUpdateNum = NULL,
-                     INT32 *pInsertNum = NULL ) ;
+                     INT32 *pInsertNum = NULL,
+                     const BSONObj *shardingKey = NULL ) ;
 
    INT32 rtnUpsertSet( const BSONElement& setOnInsert, BSONObj& target ) ;
 

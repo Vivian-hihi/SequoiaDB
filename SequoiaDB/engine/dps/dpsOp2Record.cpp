@@ -179,6 +179,8 @@ namespace engine
                            const BSONObj &oldObj,
                            const BSONObj &newMatch,
                            const BSONObj &newObj,
+                           const BSONObj &oldShardingKey,
+                           const BSONObj &newShardingKey,
                            const DPS_TRANS_ID &transID,
                            const DPS_LSN_OFFSET &preTransLsn,
                            const DPS_LSN_OFFSET &relatedLSN,
@@ -242,6 +244,34 @@ namespace engine
          goto error ;
       }
 
+      if ( !oldShardingKey.isEmpty() )
+      {
+         rc = record.push( DPS_LOG_UPDATE_OLDSHARDINGKEY,
+                           oldShardingKey.objsize(),
+                           oldShardingKey.objdata() ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to push oldShardingKey to record, rc: %d", rc ) ;
+            goto error ;
+         }
+      }
+
+      // To save space,
+      // do not log new sharding key when it equals old sharding key.
+      if ( !newShardingKey.isEmpty() && newShardingKey.woCompare( oldShardingKey ) != 0 )
+      {
+         SDB_ASSERT( !oldShardingKey.isEmpty(), "must have old sharding key" ) ;
+
+         rc = record.push( DPS_LOG_UPDATE_NEWSHARDINGKEY,
+                           newShardingKey.objsize(),
+                           newShardingKey.objdata() ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to push newShardingKey to record, rc: %d", rc ) ;
+            goto error ;
+         }
+      }
+
       header._length = record.alignedLen() ;
 
    done:
@@ -257,7 +287,9 @@ namespace engine
                            BSONObj &oldMatch,
                            BSONObj &oldObj,
                            BSONObj &newMatch,
-                           BSONObj &newObj )
+                           BSONObj &newObj,
+                           BSONObj *oldShardingKey,
+                           BSONObj *newShardingKey )
    {
       PD_TRACE_ENTRY( SDB__DPS_RECORD2UPDATE ) ;
       SDB_ASSERT( NULL != logRecord, "Record can't be NULL" ) ;
@@ -318,6 +350,41 @@ namespace engine
       oldObj = BSONObj( itrOldObj.value() ) ;
       newMatch = BSONObj( itrNewM.value() ) ;
       newObj = BSONObj( itrNewObj.value() ) ;
+      }
+
+      if ( NULL != oldShardingKey )
+      {
+         dpsLogRecord::iterator itrOldSK ;
+         itrOldSK = record.find( DPS_LOG_UPDATE_OLDSHARDINGKEY ) ;
+         if ( itrOldSK.valid() )
+         {
+            *oldShardingKey = BSONObj( itrOldSK.value() ) ;
+         }
+      }
+
+      if ( NULL != newShardingKey )
+      {
+         dpsLogRecord::iterator itrNewSK ;
+         itrNewSK = record.find( DPS_LOG_UPDATE_NEWSHARDINGKEY ) ;
+         if ( itrNewSK.valid() )
+         {
+            *newShardingKey = BSONObj( itrNewSK.value() ) ;
+         }
+         else if ( NULL != oldShardingKey )
+         {
+            // new sharding key equals old sharding key
+            *newShardingKey = *oldShardingKey ;
+         }
+         else
+         {
+            // new sharding key equals old sharding key
+            dpsLogRecord::iterator itrOldSK ;
+            itrOldSK = record.find( DPS_LOG_UPDATE_OLDSHARDINGKEY ) ;
+            if ( itrOldSK.valid() )
+            {
+               *newShardingKey = BSONObj( itrOldSK.value() ) ;
+            }
+         }
       }
 
    done:

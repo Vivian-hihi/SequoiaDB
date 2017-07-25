@@ -171,9 +171,12 @@ namespace engine
          INT32 _onRemoveLobReq( MsgHeader *msg ) ;
 
       private:
+         INT32 _getShardingKey( const CHAR* clName,
+                                BSONObj &shardingKey ) ;
+
          INT32 _includeShardingOrder( const CHAR *pCollectionName,
-                                    const BSONObj &orderBy,
-                                    BOOLEAN &result );
+                                      const BSONObj &orderBy,
+                                      BOOLEAN &result ) ;
          INT32 _insertToMainCL( BSONObj &objs, INT32 objNum, INT32 flags,
                                 INT16 w, INT32 &insertedNum,
                                 INT32 &ignoredNum ) ;

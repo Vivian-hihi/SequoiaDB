@@ -856,6 +856,7 @@ namespace engine
          BSONObj selector( pSelectorBuffer );
          BSONObj updator( pUpdatorBuffer );
          BSONObj hint( pHintBuffer );
+
          // add last op info
          MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), msg->opCode,
                              "Collection:%s, Matcher:%s, Updator:%s, Hint:%s, "
@@ -880,10 +881,21 @@ namespace engine
          }
          else
          {
+            BSONObj shardingKey ;
+
+            rc = _getShardingKey( pCollectionName, shardingKey ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to get sharding key of collection[%s], rc=%d",
+                       pCollectionName, rc ) ;
+               goto error ;
+            }
+
             rc = rtnUpdate( pCollectionName, selector, updator, hint,
                             flags, _pEDUCB, _pDmsCB, _pDpsCB, w,
                             ( pUpdate->flags & FLG_UPDATE_RETURNNUM ) ?
-                            &updateNum : NULL ) ;
+                            &updateNum : NULL, NULL,
+                            shardingKey.isEmpty() ? NULL : &shardingKey ) ;
          }
       }
       catch ( std::exception &e )
@@ -1798,6 +1810,54 @@ namespace engine
       goto done ;
    }
 
+   INT32 _clsShdSession::_getShardingKey( const CHAR* clName,
+                                               BSONObj &shardingKey )
+   {
+      INT32 rc = SDB_OK ;
+      _clsCatalogSet* set = NULL ;
+
+      for( ;; )
+      {
+         _pCatAgent->lock_r() ;
+
+         set = _pCatAgent->collectionSet( clName ) ;
+         if ( NULL == set )
+         {
+            _pCatAgent->release_r() ;
+
+            rc = _pShdMgr->syncUpdateCatalog( clName ) ;
+            if ( SDB_OK == rc )
+            {
+               continue ;
+            }
+            else
+            {
+               PD_LOG( PDERROR, "Failed to update catalog of collection[%s], rc=%d",
+                       clName, rc ) ;
+               goto error ;
+            }
+         }
+         else
+         {
+            break ;
+         }
+      }
+
+      SDB_ASSERT( NULL != set, "_clsCatalogSet should not be NULL" ) ;
+
+      if ( set->isSharding() )
+      {
+         shardingKey = set->getShardingKey() ;
+      }
+
+      _pCatAgent->release_r() ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _clsShdSession::_includeShardingOrder( const CHAR *pCollectionName,
                                                 const BSONObj &orderBy,
                                                 BOOLEAN &result )
@@ -2224,9 +2284,19 @@ namespace engine
       {
          numTmp = 0 ;
          pSubCLName = (*iterSubCLSet).c_str() ;
+         BSONObj shardingKey ;
+
+         rc = _getShardingKey( pSubCLName, shardingKey ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to get sharding key of collection[%s], rc=%d",
+                    pCollectionName, rc ) ;
+            goto error ;
+         }
 
          rc = rtnUpdate( pSubCLName, boNewSelector, updator,
-                         hint, flags, cb, pDmsCB, pDpsCB, w, &numTmp ) ;
+                         hint, flags, cb, pDmsCB, pDpsCB, w, &numTmp, NULL,
+                         shardingKey.isEmpty() ? NULL : &shardingKey ) ;
          if ( rc )
          {
             rc = _processSubCLResult( rc, pSubCLName, _pCollectionName ) ;
