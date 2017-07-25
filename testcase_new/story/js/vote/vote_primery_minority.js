@@ -45,14 +45,17 @@ function main ( db )
 
          // Inspect the new primary node ant the olde primary node
          var count = 0 ;
+         var totalSleepLen = 60;
          do
          {
             ++ count ;
+            sleep(1000);
             var newPrimNode = getPrimNode( db, getRG ) ;
             //println( "node ID" + newPrimNode + " = " + primNode ) ;
-            if( 10000 < count )
+            if( totalSleepLen < count )
             {
                println( "Don't change the primary node, node = " + newPrimNode ) ;
+               db.getRG(getRG).start();
                throw "ErrVotePrimary" ;
             }
             //println( "count : " + count ) ;
@@ -90,4 +93,8 @@ try
 catch ( e )
 {
    throw e ;
+}
+finally
+{
+   
 }
