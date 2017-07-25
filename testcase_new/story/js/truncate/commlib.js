@@ -3,6 +3,75 @@
 *@Modify list:
 *              2015-5-8  xiaojun Hu   Init
 ******************************************************************************/
+function checkResult(real, expect)
+{
+   if ( typeof(real) !== "object" && typeof(expect) !== "object" )
+   {
+      return false ;
+   }
+   
+   for (var key in expect)
+   {
+      if ( undefined === typeof( real[key] ) )
+      {
+         return false ;
+      }
+      
+      if ( real[key] != expect[key] )
+      {
+         println( "<"+ key +"> expect: " + expect[key] + ", actual: " );
+         return false ;
+      }
+   }
+   
+   if ( undefined !== typeof( real["Indexes"] ) && 
+        undefined !== typeof( real["TotalIndexPages"] ) )
+   {
+      return real.Indexes * 2 === real.TotalIndexPages ;
+   }
+   
+   return true ;     
+}
+
+function getCLSnapShotInfo( db, tableName )
+{
+   var snapShotInfoSet = [] ;
+   try
+   {
+      var snpDtl = db.snapshot(4,{Name:tableName}).current().toObj().Details ;
+      for( var i in snpDtl )
+      {
+         var dtlOneRg = snpDtl[i];
+         println(JSON.stringify(dtlOneRg)) 
+         if ( "" === dtlOneRg.GroupName )
+         {
+            snapShotInfoSet.push( dtlOneRg ) ;
+            println("exit ............")
+            break ; 
+         }
+         
+         var rgName = dtlOneRg.GroupName;
+         var materNode = db.getRG(rgName).getMaster();
+         
+         var dtlAllNode = dtlOneRg.Group;
+         for( var j in dtlAllNode )
+         {
+            var dtlOneNode = dtlAllNode[j];
+            var nodeName = dtlOneNode.NodeName;
+            if( nodeName == materNode )   // use '==' instand of '===', because type is diffent
+            { 
+               snapShotInfoSet.push( dtlOneNode ) ;
+               break;
+            }
+         }
+      }     
+   }
+   catch(e)
+   {
+      throw buildException( "getSnapshot(4,{Name:" + tableName + "})", e ) ; 
+   }
+   return snapShotInfoSet ;
+}
 
 /*******************************************************************************
 *@Description: 对truncate的操作的验证, 使用db.snapshot(4)来验证.主要看其中的:
@@ -14,101 +83,23 @@
 *@Return: no return
 *@modify:   TingYU 2016-06-06
 ********************************************************************************/
-function truncateVerify( db, tableName, jsonObj )
+function truncateVerify( db, tableName, obj )
 {
-   var totalRecords = 0;
-   var totalDataPages = 0;
-//   var totalIndexPages = 2;  //Indexs:1 --> totalIndexPages:2, default: $id index
-   var totalLobPages = 0;
-   
-   for( var key in jsonObj )
-   {
-      if( "TotalRecords"    == key )   totalRecords    = jsonObj[key];
-      if( "TotalDataPages"  == key )   totalDataPages  = jsonObj[key];
-//      if( "TotalIndexPages" == key )   totalIndexPages = jsonObj[key];
-      if( "TotalLobPages"   == key )   totalLobPages   = jsonObj[key];
-   }
-  
-   var snpDtl = db.snapshot(4,{Name:tableName}).current().toObj().Details;
-   
-   if( true === commIsStandalone(db) )
-   {  // standalone 
-      var dtlOneNode = snpDtl[0];
-      if( totalRecords !== dtlOneNode.TotalRecords )
-      {
-         println( "<TotalRecords> expect: " + totalRecords + ", actual: " );
-         commPrint(snpDtl);
-         throw buildException( "truncateVerify", "compare error" );
-      }
-      if( totalDataPages !== dtlOneNode.TotalDataPages )
-      {
-         println( "<TotalDataPages> expect: " + totalDataPages + ", actual: " );
-         commPrint(snpDtl);
-         throw buildException( "truncateVerify", "compare error" );
-      }
-      if( (dtlOneNode.Indexes*2) !== dtlOneNode.TotalIndexPages )
-      {
-         println( "<TotalIndexPages> expect: " + (dtlOneNode.Indexes*2) + ", actual: " );
-         commPrint(snpDtl);
-         throw buildException( "truncateVerify", "compare error" );
-      }
-      if( totalLobPages !== dtlOneNode.TotalLobPages )
-      {
-         println( "<TotalLobPages> expect: " + totalLobPages + ", actual: " );
-         commPrint(snpDtl);
-         throw buildException( "truncateVerify", "compare error" );
-      }
-   }
-   else
-   {  // cluster 
-      for( var i in snpDtl )
-      {
-         var dtlOneRg = snpDtl[i];
-         
-         var rgName = dtlOneRg.GroupName;
-         var materNode = db.getRG(rgName).getMaster();
-         
-         var dtlAllNode = dtlOneRg.Group;
-         for( var j in dtlAllNode )
-         {
-            var dtlOneNode = dtlAllNode[j];
-            var nodeName = dtlOneNode.NodeName;
-            if( nodeName == materNode )   // use '==' instand of '===', because type is diffent
-            {  //only check master node
-               if( totalRecords !== dtlOneNode.TotalRecords )
-               {
-                  println( "nodeName=" + nodeName );
-                  println( "<TotalRecords> expect: " + totalRecords + ", actual: " );
-                  commPrint(snpDtl);
-                  throw buildException( "truncateVerify", "compare error" );
-               }
-               if( totalDataPages !== dtlOneNode.TotalDataPages )
-               {
-                  println( "nodeName=" + nodeName );
-                  println( "<TotalDataPages> expect: " + totalDataPages + ", actual: " );
-                  commPrint(snpDtl);
-                  throw buildException( "truncateVerify", "compare error" );
-               }
-               if( (dtlOneNode.Indexes*2) !== dtlOneNode.TotalIndexPages )
-               {  //every index remains 2 indexPages
-                  println( "nodeName=" + nodeName );
-                  println( "<TotalIndexPages> expect: " + (dtlOneNode.Indexes*2) + ", actual: " );
-                  commPrint(snpDtl);
-                  throw buildException( "truncateVerify", "compare error" );
-               }
-               if( totalLobPages !== dtlOneNode.TotalLobPages )
-               {
-                  println( "nodeName=" + nodeName );
-                  println( "<TotalLobPages> expect: " + totalLobPages + ", actual: " );
-                  commPrint(snpDtl);
-                  throw buildException( "truncateVerify", "compare error" );
-               }
-            }
-         }
-      }                  
-   }   
-   
-
+    if ( undefined === obj )
+    {
+       var obj = {TotalRecords:0, TotalDataPages:0, TotalLobPages:0};
+    }
+    var snapShotInfoSet = getCLSnapShotInfo( db, tableName );
+    println( JSON.stringify(snapShotInfoSet));
+    for (var i = 0; i < snapShotInfoSet.length; ++i)
+    {  
+       var snapshotOfCLPerNode = snapShotInfoSet[i];
+       if ( !checkResult( snapshotOfCLPerNode, obj ) )
+       {
+          commPrint( snapshotOfCLPerNode ) ;
+          throw buildException( "truncateVerify", "compare error" ); 
+       } 
+    }
 }
 
 /*******************************************************************************
@@ -209,14 +200,14 @@ function truncatePutLob( cl, lobSize, lobNumber )
    if( undefined == lobSize ){ lobSize = 1024; }
    if( undefined == lobNumber ){ lobNumber = 1; }
    var funcName = "truncatePutLob";
-   var lobCursor = new Array();
+   var lobIDs = new Array();
    try
    {
       for( var n = 0; n < lobNumber ; ++n )
       {
          var fileName = "tempLobFile";
          // file
-         var length = lobSize || 32;
+         var length = lobSize || 32; // if (lobSize == 0) length = 32;
          var source = "abcdefghijklmopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" +
                       "`1234567890-=~!@#$%^&*()_+{}[]\\|;':\",./<>?";
          var string = "";
@@ -226,7 +217,8 @@ function truncatePutLob( cl, lobSize, lobNumber )
          }
          var file = new File( fileName );
          file.write( string );
-         lobCursor[n] = cl.putLob( fileName );
+         var lobID = cl.putLob( fileName ) ;
+         lobIDs.push( lobID );
          File.remove( fileName );
       }
       // verify lobs
@@ -238,7 +230,7 @@ function truncatePutLob( cl, lobSize, lobNumber )
                   ", actual: " + listLobs.length );
          throw "error lob numbers before truncate";
       }
-      return lobCursor;
+      return lobIDs;
    }
    catch( e )
    {
