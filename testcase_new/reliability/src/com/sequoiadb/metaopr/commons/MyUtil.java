@@ -896,7 +896,7 @@ public class MyUtil {
     }
 
     public static void throwSkipExeWithoutFaultEnv() {
-        throwSkipException("没遇上异常环境");
+//        throwSkipException("没遇上异常环境");
     }
 }
 
