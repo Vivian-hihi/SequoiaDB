@@ -1,4 +1,4 @@
-﻿//@ sourceURL=Charts.js
+//@ sourceURL=Charts.js
 (function(){
    var sacApp = window.SdbSacManagerModule ;
    //控制器
@@ -12,7 +12,7 @@
       var moduleName = SdbFunction.LocalData( 'SdbModuleName' ) ;
       var hostName = SdbFunction.LocalData( 'SdbHostName' ) ;
       var svcname = SdbFunction.LocalData( 'SdbServiceName' ) ;
-      if( clusterName == null || moduleType != 'sequoiadb' || moduleMode == null || moduleName == null || hostName == null || svcname == null )
+      if( clusterName == null || moduleType != 'sequoiadb' || moduleMode == null || moduleName == null )
       {
          $location.path( '/Transfer' ).search( { 'r': new Date().getTime() } ) ;
          return;
