@@ -305,7 +305,7 @@ namespace engine
 
       // run js code
       rc = _jsScope->eval( _code.c_str(), _code.size(),
-                           "", 1, SPT_EVAL_FLAG_PRINT, &pRval ) ;
+                           "", 1, SPT_EVAL_FLAG_NONE, &pRval ) ;
       if ( rc )
       {
          errmsg = _jsScope->getLastErrMsg() ;

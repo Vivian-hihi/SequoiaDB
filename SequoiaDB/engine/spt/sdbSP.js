@@ -2034,7 +2034,7 @@ Cmd.prototype.runJS = function( code ) {
    }
    else
    {
-      setLastErrMsg( "runJS() should be called by remote obj" ) ;
+      setLastErrMsg( "runJS() should be called by remote cmd obj" ) ;
       throw SDB_SYS ;
    }
 }
