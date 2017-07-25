@@ -85,6 +85,81 @@ function main(){
    readWriteContentManyTimes(readFile, writeFile, 104857600);
    println("many times read and write content 104857600 size success");
    
+   //mode test
+   //SDB_FILE_READONLY
+   try
+   {
+      var readFile = remote.getFile(readFileName, 0777, SDB_FILE_READONLY);
+	   var content = readFile.readContent();
+   }catch(e)
+   {
+      throw e;
+   }
+   
+   try
+   {
+	   var writeFile = remote.getFile(writeFileName, 0777, SDB_FILE_CREATE|SDB_FILE_READONLY);
+	   writeFile.writeContent(content);
+	   throw "NEED_AN_ERROR";
+   }catch(e)
+   {
+      if(e !== -3)
+	  {
+		 throw e;
+	  }
+   }
+   println("check mode set SDB_FILE_READONLY success!");
+   
+   //SDB_FILE_WRITEONLY
+   try
+   {
+      var readFile = remote.getFile(readFileName, 0777, SDB_FILE_WRITEONLY);
+	   var content = readFile.readContent();
+	   throw "NEED_AN_ERROR";
+   }catch(e)
+   {
+      if(e !== -3)
+	   {
+		   throw e;
+	   }
+   }
+   
+   
+   try
+   {
+	   var writeFile = remote.getFile(writeFileName, 0777, SDB_FILE_CREATE|SDB_FILE_WRITEONLY);
+	   writeFile.writeContent(content);
+	   var writeLength = parseInt(writeFile.stat(writeFileName).toObj().size);
+	   if(writeLength !== 1024)
+	   {
+         throw "WRITE_LENGTH_ERROR";
+	   }
+	   writeFile.remove(writeFileName);
+   }catch(e)
+   {
+      throw e;
+   }
+   println("check mode set SDB_FILE_WRITEONLY success!");
+   
+   //SDB_FILE_READWRITE
+   try
+   {
+	   var readFile = remote.getFile(readFileName, 0777, SDB_FILE_READWRITE);
+	   var content = readFile.readContent();
+	   var writeFile = remote.getFile(writeFileName, 0777, SDB_FILE_CREATE|SDB_FILE_READWRITE);
+	   writeFile.writeContent(content);
+	   var writeLength = parseInt(writeFile.stat(writeFileName).toObj().size);
+	   if(writeLength !== 1024)
+	   {
+         throw "WRITE_LENGTH_ERROR";
+	   }
+	   writeFile.remove(writeFileName);
+   }catch(e)
+   {
+      throw e;
+   }
+   println("check mode set SDB_FILE_READWRITE success!");
+   
    //argument check
    //float size
    var readFile = remote.getFile(readFileName);

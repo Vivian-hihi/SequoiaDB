@@ -8,7 +8,7 @@ function main(){
    var localhost = toolGetLocalhost();
    println("localhost:" + localhost);
    var localFileName = "/tmp/test_11338";
-   localFile = new File(localFileName , 0777);
+   var localFile = new File(localFileName , 0777);
    
    var remotehost = toolGetRemotehost();
    println( "remotehost:" + remotehost );
@@ -141,38 +141,133 @@ function main(){
 	println("check replace set true success");
 
 	//seqDB-11340
+	//local to remote
 	scpTest(localSrcFileName, 
 		   remotehost + ":" + CMSVCNAME + "@" + remoteDstFileName,
-		   localFile, remoteFile, 448)
+		   localFile, remoteFile, 448);
+		   
+	/*scpTest(localSrcFileName, 
+		   remotehost + ":" + CMSVCNAME + "@" + remoteDstFileName,
+		   localFile, remoteFile, 0);*/
+	
+	//remote to local
+	scpTest(remotehost + ":" + CMSVCNAME + "@" + remoteSrcFileName, 
+		    localDstFileName,
+		    remoteFile, localFile, 448);
+			
+	/*scpTest(remotehost + ":" + CMSVCNAME + "@" + remoteSrcFileName, 
+		    localDstFileName,
+		    remoteFile, localFile, 0);*/
+	
+	//local to local
+	scpTest(localSrcFileName, 
+		    localDstFileName,
+		    localFile, localFile, 448);
+			
+	/*scpTest(localSrcFileName, 
+		    localDstFileName,
+		    localFile, localFile, 0);*/
+	
+	//remote to remote
+	scpTest(remotehost + ":" + CMSVCNAME + "@" + remoteSrcFileName, 
+		    remotehost + ":" + CMSVCNAME + "@" + remoteDstFileName,
+		    remoteFile, remoteFile, 448);
+			
+	/*scpTest(remotehost + ":" + CMSVCNAME + "@" + remoteSrcFileName, 
+		    remotehost + ":" + CMSVCNAME + "@" + remoteDstFileName,
+		    remoteFile, remoteFile, 0);*/
+	
+	/*var readOnlyFileName = WORKDIR + "/readOnly_11338";
+	var readOnlylocalFile = new File(readOnlyFileName , 0444, SDB_FILE_CREATE|SDB_FILE_READONLY);
+	var readOnlyremoteFile = remote.getFile(readOnlyFileName, 0444, SDB_FILE_CREATE|SDB_FILE_READONLY);
+	try
+	{
+		File.scp(localSrcFileName, readOnlyFileName, true, 0444);
+		
+		//local to remote
+		scpTest(readOnlyFileName, 
+				remotehost + ":" + CMSVCNAME + "@" + remoteDstFileName,
+				readOnlylocalFile, readOnlyremoteFile, 0444);
+		remoteFile.remove(remoteDstFileName);
+		
+		//remote to local
+		scpTest(remotehost + ":" + CMSVCNAME + "@" + readOnlyFileName, 
+				localDstFileName,
+				readOnlyremoteFile, readOnlylocalFile, 0444);
+		localFile.remove(localDstFileName);
+		
+		//local to local
+		scpTest(readOnlyFileName, 
+				localDstFileName,
+				readOnlylocalFile, localFile, 0444);
+		localFile.remove(localDstFileName);
+		
+		//remote to remote
+		scpTest(remotehost + ":" + CMSVCNAME + "@" + readOnlyFileName, 
+				remotehost + ":" + CMSVCNAME + "@" + remoteDstFileName,
+				readOnlyremoteFile, readOnlyremoteFile, 0444);
+		remoteFile.remove(remoteDstFileName);		
+	}catch(e)
+	{
+		throw e;
+	}
+	File.remove(readOnlyFileName);*/
+	
+	//src only write,only for user sdbadmin
+	/*var writeOnlyFileName = WORKDIR + "/writeOnly_11338";
+	
+	//local
+	try
+	{
+		File.scp(localSrcFileName, writeOnlyFileName, true, 0222);
+		File.scp(writeOnlyFileName, remotehost + ":" + CMSVCNAME + "@" + remoteDstFileName, true, 0222);
+		throw "NEED_AN_ERROR";
+	}catch(e)
+	{
+		if(e !== -3)
+		{
+			throw e;
+		}
+	}
+	
+	//remote
+	try
+	{
+		File.scp(localSrcFileName, remotehost + ":" + CMSVCNAME + "@" + writeOnlyFileName,
+				 true, 0222);
+		File.scp(remotehost + ":" + CMSVCNAME + "@" + writeOnlyFileName, 
+				 remotehost + ":" + CMSVCNAME + "@" + remoteDstFileName,
+				 true, 0222);
+		throw "NEED_AN_ERROR";
+	}catch(e)
+	{
+		if(e !== -3)
+		{
+			throw e;
+		}
+	}
+	File.remove(writeOnlyFileName);*/
 	println("check set mode copy success");
-
+	
 	//seqDB-11346        
 	checkArgumentScp(localInstallPath, remotehost + ":" + CMSVCNAME + "@" + remoteDstFileName,
 					remoteFile, 0755, true);
 					
 	checkArgumentScp(remotehost + ":" + CMSVCNAME + remoteSrcFileName, remotehost + ":" + CMSVCNAME + "@" + remoteDstFileName,
 					remoteFile, 0755, true);
-
+	
 	checkArgumentScp("", remotehost + ":" + CMSVCNAME + "@" + remoteDstFileName, remoteFile, 0755, true);
 					
 	checkArgumentScp(localSrcFileName, remotehost + CMSVCNAME + "@" + remoteDstFileName,
 					remoteFile, 0755, true);
 				 
 	checkArgumentScp(localSrcFileName, WORKDIR, remoteFile, 0755, true);
-
+	
 	checkArgumentScp(localSrcFileName, "", remoteFile, 0755, true);
-
-	//SEQUOIADBMAINSTREAM-2378
-	/*checkArgumentScp(localSrcFileName, 
-					remotehost + ":" + CMSVCNAME + "@" + remoteDstFileName, 0800, true);
-					
-	checkArgumentScp(localSrcFileName, 
-					remotehost + ":" + CMSVCNAME + "@" + remoteDstFileName, 512, true);*/
-
+	
 	scpTest(localSrcFileName, 
 		   remotehost + ":" + CMSVCNAME + "@" + remoteDstFileName, 
-		   localFile, remoteFile, 0755, "a");
-		 
+		   localFile, remoteFile, 0755, "a"); 
 	File.remove(localFileName);
 }
 main();
