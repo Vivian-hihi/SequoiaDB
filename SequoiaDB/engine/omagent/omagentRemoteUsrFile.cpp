@@ -90,14 +90,14 @@ namespace engine
       rc = fileCommon.open( filename, _optionObj, err ) ;
       if( SDB_OK != rc )
       {
-         PD_LOG_MSG( PDERROR, err.c_str() ) ;
+         PD_LOG_MSG( PDERROR, "%s", err.c_str() ) ;
          goto error ;
       }
 
       rc = fileCommon.close( err ) ;
       if( SDB_OK != rc )
       {
-         PD_LOG_MSG( PDERROR, err.c_str() ) ;
+         PD_LOG_MSG( PDERROR, "%s", err.c_str() ) ;
          goto error ;
       }
    done:
@@ -203,14 +203,14 @@ namespace engine
       rc = fileCommon.open( _filename, _optionObj, err ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG_MSG( PDERROR, err.c_str() ) ;
+         PD_LOG_MSG( PDERROR, "%s", err.c_str() ) ;
          goto error ;
       }
 
       rc = fileCommon.seek( _location, BSONObj(), err ) ;
       if( SDB_OK != rc )
       {
-         PD_LOG_MSG( PDERROR, err.c_str() ) ;
+         PD_LOG_MSG( PDERROR, "%s", err.c_str() ) ;
          goto error ;
       }
 
@@ -219,7 +219,7 @@ namespace engine
                            &buf, readLen ) ;
       if( SDB_OK != rc )
       {
-         PD_LOG_MSG( PDERROR, err.c_str() ) ;
+         PD_LOG_MSG( PDERROR, "%s", err.c_str() ) ;
          goto error ;
       }
       builder.append( "readContent", buf, readLen + 1 ) ;
@@ -330,14 +330,14 @@ namespace engine
       rc = fileCommon.open( _filename, _optionObj, err ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG_MSG( PDERROR, err.c_str() ) ;
+         PD_LOG_MSG( PDERROR, "%s", err.c_str() ) ;
          goto error ;
       }
 
       rc = fileCommon.seek( _location, BSONObj(), err ) ;
       if( SDB_OK != rc )
       {
-         PD_LOG_MSG( PDERROR, err.c_str() ) ;
+         PD_LOG_MSG( PDERROR, "%s", err.c_str() ) ;
          goto error ;
       }
 
@@ -345,7 +345,7 @@ namespace engine
       rc = fileCommon.write( _content, _size, err ) ;
       if( SDB_OK != rc )
       {
-         PD_LOG_MSG( PDERROR, err.c_str() ) ;
+         PD_LOG_MSG( PDERROR, "%s", err.c_str() ) ;
          goto error ;
       }
    done:
@@ -397,7 +397,7 @@ namespace engine
       rc = _sptUsrFileCommon::remove( filepath, err ) ;
       if( SDB_OK != rc )
       {
-         PD_LOG_MSG( PDERROR, err.c_str() ) ;
+         PD_LOG_MSG( PDERROR, "%s", err.c_str() ) ;
          goto error ;
       }
    done:
@@ -449,7 +449,7 @@ namespace engine
       rc = _sptUsrFileCommon::exist( filepath, err, fileExist ) ;
       if( SDB_OK != rc )
       {
-         PD_LOG_MSG( PDERROR, err.c_str() ) ;
+         PD_LOG_MSG( PDERROR, "%s", err.c_str() ) ;
          goto error ;
       }
       builder.appendBool( "isExist", fileExist ) ;
@@ -517,7 +517,7 @@ namespace engine
       rc = _sptUsrFileCommon::copy( src, dst, _optionObj, err ) ;
       if( SDB_OK != rc )
       {
-         PD_LOG_MSG( PDERROR, err.c_str() ) ;
+         PD_LOG_MSG( PDERROR, "%s", err.c_str() ) ;
          goto error ;
       }
    done:
@@ -583,7 +583,7 @@ namespace engine
       rc = _sptUsrFileCommon::move( src, dst, err ) ;
       if( SDB_OK != rc )
       {
-         PD_LOG_MSG( PDERROR, err.c_str() ) ;
+         PD_LOG_MSG( PDERROR, "%s", err.c_str() ) ;
          goto error ;
       }
    done:
@@ -634,7 +634,7 @@ namespace engine
       rc = _sptUsrFileCommon::mkdir( name, _optionObj, err ) ;
       if( SDB_OK != rc )
       {
-         PD_LOG_MSG( PDERROR, err.c_str() ) ;
+         PD_LOG_MSG( PDERROR, "%s", err.c_str() ) ;
          goto error ;
       }
    done:
@@ -677,7 +677,7 @@ namespace engine
       rc = _sptUsrFileCommon::find( _optionObj, err, retObj ) ;
       if( SDB_OK != rc )
       {
-         PD_LOG_MSG( PDERROR, err.c_str() ) ;
+         PD_LOG_MSG( PDERROR, "%s", err.c_str() ) ;
          goto error ;
       }
    done:
@@ -743,7 +743,7 @@ namespace engine
       rc = _sptUsrFileCommon::chmod( pathname, mode, _optionObj, err ) ;
       if( SDB_OK != rc )
       {
-         PD_LOG_MSG( PDERROR, err.c_str() ) ;
+         PD_LOG_MSG( PDERROR, "%s", err.c_str() ) ;
          goto error ;
       }
    done:
@@ -794,7 +794,7 @@ namespace engine
       rc = _sptUsrFileCommon::chown( pathname, _valueObj, _optionObj, err ) ;
       if( SDB_OK != rc )
       {
-         PD_LOG_MSG( PDERROR, err.c_str() ) ;
+         PD_LOG_MSG( PDERROR, "%s", err.c_str() ) ;
          goto error ;
       }
    done:
@@ -859,7 +859,7 @@ namespace engine
       rc = _sptUsrFileCommon::chgrp( pathname, groupname, _optionObj, err ) ;
       if( SDB_OK != rc )
       {
-         PD_LOG_MSG( PDERROR, err.c_str() ) ;
+         PD_LOG_MSG( PDERROR, "%s", err.c_str() ) ;
          goto error ;
       }
    done:
@@ -896,7 +896,7 @@ namespace engine
       rc = _sptUsrFileCommon::getUmask( err, outStr ) ;
       if( SDB_OK != rc )
       {
-         PD_LOG_MSG( PDERROR, err.c_str() ) ;
+         PD_LOG_MSG( PDERROR, "%s", err.c_str() ) ;
          goto error ;
       }
       retObj = BSON( "mask" << outStr.c_str() ) ;
@@ -948,7 +948,7 @@ namespace engine
       rc = _sptUsrFileCommon::setUmask( mask, err ) ;
       if( SDB_OK != rc )
       {
-         PD_LOG_MSG( PDERROR, err.c_str() ) ;
+         PD_LOG_MSG( PDERROR, "%s", err.c_str() ) ;
          goto error ;
       }
    done:
@@ -983,7 +983,7 @@ namespace engine
       rc = _sptUsrFileCommon::list( _optionObj, err, retObj ) ;
       if( SDB_OK != rc )
       {
-         PD_LOG_MSG( PDERROR, err.c_str() ) ;
+         PD_LOG_MSG( PDERROR, "%s", err.c_str() ) ;
          goto error ;
       }
    done:
@@ -1035,7 +1035,7 @@ namespace engine
       rc = _sptUsrFileCommon::getPathType( pathname, err, pathType ) ;
       if( SDB_OK != rc )
       {
-         PD_LOG_MSG( PDERROR, err.c_str() ) ;
+         PD_LOG_MSG( PDERROR, "%s", err.c_str() ) ;
          goto error ;
       }
       retObj = BSON( "pathType" << pathType ) ;
@@ -1088,7 +1088,7 @@ namespace engine
       rc = _sptUsrFileCommon::isEmptyDir( pathname, err, isEmpty ) ;
       if( SDB_OK != rc )
       {
-         PD_LOG_MSG( PDERROR, err.c_str() ) ;
+         PD_LOG_MSG( PDERROR, "%s", err.c_str() ) ;
          goto error ;
       }
       retObj = BSON( "isEmpty" << isEmpty ) ;
@@ -1140,7 +1140,7 @@ namespace engine
       rc = _sptUsrFileCommon::getStat( pathname, err, retObj ) ;
       if( SDB_OK != rc )
       {
-         PD_LOG_MSG( PDERROR, err.c_str() ) ;
+         PD_LOG_MSG( PDERROR, "%s", err.c_str() ) ;
          goto error ;
       }
    done:
@@ -1198,7 +1198,7 @@ namespace engine
    done:
       return rc ;
    error:
-      PD_LOG_MSG( PDERROR, err.c_str() ) ;
+      PD_LOG_MSG( PDERROR, "%s", err.c_str() ) ;
       goto done ;
    }
 
@@ -1246,7 +1246,7 @@ namespace engine
       rc = _sptUsrFileCommon::getFileSize( name, err, size ) ;
       if( SDB_OK != rc )
       {
-         PD_LOG_MSG( PDERROR, err.c_str() ) ;
+         PD_LOG_MSG( PDERROR, "%s", err.c_str() ) ;
          goto error ;
       }
       retObj = BSON( "size" << size ) ;
@@ -1299,7 +1299,7 @@ namespace engine
       rc = _sptUsrFileCommon::getPermission( pathname, err, permission ) ;
       if( SDB_OK != rc )
       {
-         PD_LOG_MSG( PDERROR, err.c_str() ) ;
+         PD_LOG_MSG( PDERROR, "%s", err.c_str() ) ;
          goto error ;
       }
       retObj = BSON( "permission" << permission ) ;
