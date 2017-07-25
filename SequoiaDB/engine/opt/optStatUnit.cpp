@@ -906,18 +906,20 @@ namespace engine
             maxEle = rtnKeyGetMaxForCmp( majorType, FALSE ).firstElement() ;
          }
 
+         BOOLEAN sameType = ( minEle.canonicalType() == maxEle.canonicalType() ) ;
          BOOLEAN startIsMin = ( 0 == startKey.woCompare( minEle, FALSE ) ) ;
          BOOLEAN stopIsMax = ( 0 == stopKey.woCompare( maxEle, FALSE ) ) ;
 
-         if ( startIsMin && stopIsMax )
+         if ( startIsMin && stopIsMax &&
+              ( ( startIncluded && stopIncluded ) || !sameType ) )
          {
             selectivity = 1.0 ;
          }
-         else if ( startIsMin )
+         else if ( startIsMin && startIncluded )
          {
             selectivity = _evalLTOperator( stopKey, stopIncluded ) ;
          }
-         else if ( stopIsMax )
+         else if ( stopIsMax && stopIncluded )
          {
             selectivity = _evalGTOperator( startKey, startIncluded ) ;
          }
