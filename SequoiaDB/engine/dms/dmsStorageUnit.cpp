@@ -376,6 +376,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSEVTHLD_ONTRUNCCL, "_dmsEventHolder::onTruncateCL" )
    INT32 _dmsEventHolder::onTruncateCL ( UINT32 mask,
                                          const dmsEventCLItem &clItem,
+                                         UINT32 newCLLID,
                                          pmdEDUCB *cb,
                                          SDB_DPSCB *dpsCB )
    {
@@ -398,7 +399,7 @@ namespace engine
          if ( pHandler && ( pHandler->getMask() & mask ) )
          {
             INT32 tmprc = pHandler->onTruncateCL( this, _pCacheHolder, clItem,
-                                                  cb, dpsCB ) ;
+                                                  newCLLID, cb, dpsCB ) ;
             if ( SDB_OK != tmprc )
             {
                rc = tmprc ;

@@ -2457,8 +2457,9 @@ namespace engine
       {
          dmsEventCLItem clItem( context->mb()->_collectionName,
                                 context->mbID(),
-                                context->clLID() ) ;
-         _pEventHolder->onTruncateCL( DMS_EVENT_MASK_ALL, clItem, cb, dpscb ) ;
+                                oldCLID ) ;
+         _pEventHolder->onTruncateCL( DMS_EVENT_MASK_ALL, clItem, newCLID,
+                                      cb, dpscb ) ;
       }
 
    done:

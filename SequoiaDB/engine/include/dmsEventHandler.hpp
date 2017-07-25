@@ -207,6 +207,7 @@ namespace engine
          OSS_INLINE virtual INT32 onTruncateCL ( IDmsEventHolder *pEventHolder,
                                                  IDmsSUCacheHolder *pCacheHolder,
                                                  const dmsEventCLItem &clItem,
+                                                 UINT32 newCLLID,
                                                  pmdEDUCB *cb,
                                                  SDB_DPSCB *dpsCB )
          {
@@ -315,6 +316,7 @@ namespace engine
 
          virtual INT32 onTruncateCL ( UINT32 mask,
                                       const dmsEventCLItem &clItem,
+                                      UINT32 newCLLID,
                                       pmdEDUCB *cb,
                                       SDB_DPSCB *dpsCB ) = 0 ;
 

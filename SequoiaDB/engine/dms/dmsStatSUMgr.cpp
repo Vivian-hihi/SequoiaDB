@@ -811,6 +811,7 @@ namespace engine
    INT32 _dmsStatSUMgr::onTruncateCL ( IDmsEventHolder *pEventHolder,
                                        IDmsSUCacheHolder *pCacheHolder,
                                        const dmsEventCLItem &clItem,
+                                       UINT32 newCLLID,
                                        pmdEDUCB *cb,
                                        SDB_DPSCB *dpsCB )
    {

@@ -143,6 +143,7 @@ namespace engine
          virtual INT32 onTruncateCL ( IDmsEventHolder *pEventHolder,
                                       IDmsSUCacheHolder *pCacheHolder,
                                       const dmsEventCLItem &clItem,
+                                      UINT32 newCLLID,
                                       pmdEDUCB *cb,
                                       SDB_DPSCB *dpsCB ) ;
 
