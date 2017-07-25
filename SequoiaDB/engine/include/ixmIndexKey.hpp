@@ -105,7 +105,8 @@ namespace engine
       INT32 getKeys ( const BSONObj &obj, BSONObjSet &keys,
                       BSONElement *pArrEle = NULL,
                       BOOLEAN isKeepKeyName = FALSE,
-                      BOOLEAN transform = TRUE ) const ;
+                      BOOLEAN transform = TRUE,
+                      BOOLEAN ignoreUndefined = FALSE ) const ;
       BSONElement missingField() const ;
       IndexSuitability suitability( const BSONObj &query ,
                                     const BSONObj &order ) const ;
