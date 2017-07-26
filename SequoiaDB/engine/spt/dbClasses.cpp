@@ -7094,10 +7094,8 @@ static JSBool sdb_trace_on ( JSContext *cx, uintN argc, jsval *vp )
    sdbConnectionHandle *   connection   = NULL ;
    JSString               *strComp      = NULL;
    JSString               *strBreakPoint= NULL;
-   JSString               *strMonitorthreads = NULL;
    CHAR                   *comp         = NULL;
    CHAR                   *breakPoint   = NULL;
-   CHAR                   *monitorthreads   = NULL;
    UINT32                  tids[PD_TRACE_MAX_MONITORED_THREAD_NUM] = {0} ;
    JSObject               *tidsObj     = NULL ;
    jsuint                  nTids       = 0 ;
