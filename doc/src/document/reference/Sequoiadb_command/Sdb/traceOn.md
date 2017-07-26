@@ -30,6 +30,6 @@
 * 开户数据库引擎程序跟踪功能，指定跟踪的模块名称和指定断点进行跟踪
 
 	```lang-javascript
-	> db.traceOn( 256, "cls, dms, mth", "_dmsTempCB::init", 12712 )
-	> db.traceOn( 256, "cls, dms, mth", "_dmsTempCB::init", [12712, 12713, 12714] )
+	> db.traceOn( 256, "cls, dms, mth", "_dmsTempSUMgr::init", 12712 )
+	> db.traceOn( 256, "cls, dms, mth", "_dmsTempSUMgr::init", [12712, 12713, 12714] )
 	```
