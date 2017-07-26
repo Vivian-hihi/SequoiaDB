@@ -2511,11 +2511,11 @@ File.prototype.seek = function( offset, where ) {
       else if ( 'e' == where )
       {
          var size = this.getSize( this._filename ) ;
-         if ( 0 > size - 1 + offset )
+         if ( 0 > size + offset )
          {
             throw SDB_INVALIDARG ;
          }
-         this._location = size - 1 + offset ;
+         this._location = size + offset ;
       }
       else
       {
