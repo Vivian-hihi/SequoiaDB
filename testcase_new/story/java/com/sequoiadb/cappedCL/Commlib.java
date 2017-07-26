@@ -120,6 +120,30 @@ public class Commlib {
 	}
 	
 	/**
+	 * @param cl
+	 * @param stringLength
+	 * @param recordNums
+	 * @throws BaseException
+	 */
+	public static void insertRecords(DBCollection cl,int stringLength,int recordNums) throws BaseException{		
+        StringBuffer strBuffer = new StringBuffer();
+        BSONObject obj = new BasicBSONObject(); 
+        for(int len = 0; len < stringLength; len++) {    
+	    	strBuffer.append("a");
+	    }
+	    obj.put("a", strBuffer.toString()); 
+
+		try {	
+	       for(int i = 0; i < recordNums; i++) { 
+	           cl.insert(obj);//each cappedCL insert the same record 
+	       }
+	         
+		} catch (BaseException e) {
+			throw e;	
+		}
+	}
+	
+	/**
 	 * get random length for records
 	 */
 	public static int getRandomStringLength() {
