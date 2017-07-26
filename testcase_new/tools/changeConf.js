@@ -389,7 +389,10 @@ function markRestart( hostname, diagpath )
    var currentTime = cmd.run( 'date "+%Y-%m-%d-%H.%M.%S"' );
    
    var file = remote.getFile( diagpath + "/.RESTART_BY_CHANGECONF" );
-   file.seek( 0, 'e' );
+   if ( file.getSize() != 0 ) 
+   {
+      file.seek( 0, 'e' );
+   }
    file.write( "restart by tool changeConf.js at " + currentTime );
    file.close();
 }
