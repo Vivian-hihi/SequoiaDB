@@ -40,6 +40,7 @@
 |svcname|-|SequoiaDB的服务名（端口号）|string|-|dump和dumpheader为false时必填|
 |user|-|用户名|string|-|
 |password|-|密码|string|-|
+|ssl|-|使用SSL连接|bool|false|
 |path|-|归档目录|string|-|必填，可以是文件或目录|
 |filter|-|过滤条件|string(json)|-|
 |dump|-|只导出日志，不重放|bool|false|
