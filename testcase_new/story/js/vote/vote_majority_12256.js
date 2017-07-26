@@ -32,20 +32,26 @@ function main ( db )
          // Inspect the new primary node ant the olde primary node
          var count = 0 ;
          var totalTimeLen = 30;
-         do
-         {
-            sleep(1000) ;
-            ++ count ;
-            var newPrimNode = getPrimNode( db, getRG ) ;
-            //println( "node ID" + newPrimNode + " = " + primNode ) ;
-            if( count >=  totalTimeLen)
+         try{
+            do
             {
-               result = false ;
-            }
-            //println( "count : " + count ) ;
-         }while( newPrimNode ) ;
-         
+               sleep(1000) ;
+               ++ count ;
+               var newPrimNode = getPrimNode( db, getRG ) ;
+               //println( "node ID" + newPrimNode + " = " + primNode ) ;
+               if( count >=  totalTimeLen)
+               {
+                  result = false ;
+               }
+               //println( "count : " + count ) ;
+            }while( newPrimNode ) ;
+         }catch(e)
+         {
+            throw e ;
+         }
+         finally{
          db.getRG( getRG ).start() ;
+         }
          /*
          for( var j = 1 ; j < (nodeSize/2+1) ; ++j )    //many groups,begin 1 not 0
          {
