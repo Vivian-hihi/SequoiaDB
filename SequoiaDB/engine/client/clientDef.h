@@ -53,8 +53,9 @@
 #define SDB_LIST_TASKS            10
 #define SDB_LIST_TRANSACTIONS     11
 #define SDB_LIST_TRANSACTIONS_CURRENT 12
-#define SDB_LIST_CS_IN_DOMAIN     129
-#define SDB_LIST_CL_IN_DOMAIN     130
+#define SDB_LIST_CL_IN_DOMAIN     129
+#define SDB_LIST_CS_IN_DOMAIN     130
+
 
 
 typedef BOOLEAN (*socketInterruptFunc)(void) ;
