@@ -15,6 +15,8 @@ var SDB_SNAP_COLLECTIONSPACES    = 5 ;
 var SDB_SNAP_DATABASE            = 6 ;
 var SDB_SNAP_SYSTEM              = 7 ;
 var SDB_SNAP_CATALOG             = 8 ;
+var SDB_SNAP_TRANSACTIONS_CURRENT = 9 ;
+var SDB_SNAP_TRANSACTIONS         = 10 ;
 
 var SDB_LIST_CONTEXTS            = 0 ;
 var SDB_LIST_CONTEXTS_CURRENT    = 1 ;

@@ -6047,6 +6047,12 @@ error :
       case SDB_SNAP_CATALOG :
          p = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_CATA ;
          break;
+      case SDB_SNAP_TRANSACTIONS_CURRENT :
+         p = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_TRANSACTIONS_CUR ;
+         break;
+      case SDB_SNAP_TRANSACTIONS :
+         p = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_TRANSACTIONS ;
+         break;
       default :
          rc = SDB_INVALIDARG ;
          goto exit ;

@@ -70,6 +70,8 @@
 #define SDB_SNAP_DATABASE         6
 #define SDB_SNAP_SYSTEM           7
 #define SDB_SNAP_CATALOG          8
+#define SDB_SNAP_TRANSACTIONS_CURRENT 9
+#define SDB_SNAP_TRANSACTIONS         10
 
 #define SDB_LIST_CONTEXTS         0
 #define SDB_LIST_CONTEXTS_CURRENT 1
