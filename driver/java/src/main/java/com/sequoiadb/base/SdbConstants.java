@@ -76,6 +76,9 @@ final class SdbConstants {
     final static String FIELD_NAME_ONLY_DETACH = "OnlyDetach";
     final static String FIELD_NAME_ONLY_ATTACH = "OnlyAttach";
 
+    final static String FIELD_NAME_LOGICALID = "LogicalID";
+    final static String FIELD_NAME_DIRECTION = "Direction";
+
     final static String IXM_NAME = "name";
     final static String IXM_KEY = "key";
     final static String IXM_UNIQUE = "unique";

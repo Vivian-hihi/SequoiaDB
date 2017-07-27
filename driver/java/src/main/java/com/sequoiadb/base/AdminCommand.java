@@ -45,6 +45,7 @@ final class AdminCommand {
     final static String DETACH_CL = PREFIX + "unlink collection";
     final static String ALTER_COLLECTION = PREFIX + "alter collection";
     final static String TRUNCATE = PREFIX + "truncate";
+    final static String POP = PREFIX + "pop";
 
     final static String LIST_LOBS = PREFIX + "list lobs";
 
