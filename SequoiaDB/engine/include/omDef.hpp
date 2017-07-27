@@ -135,6 +135,11 @@ namespace engine
    #define OM_CLUSTER_FIELD_SDBPASSWD        "SdbPasswd"
    #define OM_CLUSTER_FIELD_SDBUSERGROUP     "SdbUserGroup"
    #define OM_CLUSTER_FIELD_INSTALLPATH      "InstallPath"
+   #define OM_CLUSTER_FIELD_GRANTCONF        "GrantConf"
+   #define OM_CLUSTER_FIELD_GRANTNAME        "Name"
+   #define OM_CLUSTER_FIELD_PRIVILEGE        "Privilege"
+   #define OM_CLUSTER_FIELD_HOSTFILE         "HostFile"
+   #define OM_CLUSTER_FIELD_ROOTUSER         "RootUser"
 
    #define OM_CS_DEPLOY_CL_CLUSTERIDX1       "{name:\"SYSDEPLOY_CLUSTER_IDX1\",key: {"\
                                              OM_CLUSTER_FIELD_NAME":1}, unique: true, enforced: true } "
@@ -189,6 +194,7 @@ namespace engine
    #define OM_BUSINESS_FIELD_ADDTYPE         "AddtionType"
    #define OM_BUSINESS_FIELD_INFO            "BusinessInfo"
    #define OM_BUSINESS_FIELD_LOCATION        "Location"
+   #define OM_BUSINESS_FIELD_ID              "_id"
 
    #define OM_BUSINESS_ADDTYPE_DISCOVERY     1
    #define OM_BUSINESS_ADDTYPE_INSTALL       0
