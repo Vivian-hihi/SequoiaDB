@@ -1,5 +1,7 @@
 function compareObj( lobj, robj, needObjectID )
 {
+   println(JSON.stringify(lobj));
+   println(JSON.stringify(robj));
    if ( typeof(lobj) !== "object" ||
         typeof(robj) !== "object" )
    {
@@ -26,6 +28,7 @@ function compareObj( lobj, robj, needObjectID )
    
    for ( k in lobj )
    {
+      println(k)
       if ( needObjectID === false && k === "_id" )
       {
          continue ;
@@ -33,6 +36,7 @@ function compareObj( lobj, robj, needObjectID )
 
       if ( robj[k] === undefined )
       {
+         println(k + " not exist ");
          return false ;
       }
       
@@ -41,17 +45,19 @@ function compareObj( lobj, robj, needObjectID )
       {
          if ( !compareObj( lobj[k], robj[k], true) )
          {
+            println( JSON.stringify(lobj[k]) + " not equal " + JSON.stringify(robj[k]));
             return false ;
          }
       }
       else if (typeof(lobj[k]) === "object" || 
                typeof(robj[k]) === "object")
       {
+         println( typeof(lobj[k]) + "not equal" + typeof(robj[k]));
          return false ;
       }
-          
-      if ( lobj[k] !== robj[k] )
+      else if ( lobj[k] !== robj[k] )
       {
+         println( lobj[k] + " not equal " + robj[k]);
          return false ;
       }
    }

@@ -35,6 +35,7 @@ catch ( e )
    throw e;
 }
 
+println("###################");
 checkResult( varCL, {}, [{a:[1,2]}] );
 try
 {
@@ -46,6 +47,7 @@ catch ( e )
    throw e ;
 }
 
+println("###################");
 try
 {
    varCL.update({$set:{"a.a":"b"}}) ;
@@ -57,7 +59,7 @@ catch ( e )
    throw e;
 }
 
-checkResult( varCL, {"a.a":"b"}, [{a:[1,2]}] );
+checkResult( varCL, {"a.a":"b"}, [{"a":{"a":"b"}}] );
 
 try
 {
