@@ -390,7 +390,7 @@ public class DBCollectionTest {
             assertNotNull(cl);
         }
     */
-//	@Test
+//  @Test
     @Ignore
     public void testSplit() {
         String srcGroup = Constants.TEST_RG_NAME_SRC;
@@ -426,7 +426,7 @@ public class DBCollectionTest {
         }
         BSONObject condition = new BasicBSONObject();
         condition.put("operation", "Split2");
-//		cl1.split(srcGroup, destGroup, condition, new BasicBSONObject());
+//      cl1.split(srcGroup, destGroup, condition, new BasicBSONObject());
         cl1.split(srcGroup, destGroup, 50.0);
 
         Sequoiadb sdb2 = sdb.getReplicaGroup(destGroup).getNode(node2)
@@ -440,51 +440,51 @@ public class DBCollectionTest {
         sdb2.disconnect();
     }
 
-	@Test
-	public void testPop() {
-		String csName = "cappedCS" ;
-		String clName = "cappedCL" ;
-		CollectionSpace csCapped ;
-		if ( sdb.isCollectionSpaceExist(csName) )
-		{
-			sdb.dropCollectionSpace(csName) ;
-		}
+    @Test
+    public void testPop() {
+        String csName = "cappedCS";
+        String clName = "cappedCL";
+        CollectionSpace csCapped;
+        if (sdb.isCollectionSpaceExist(csName))
+        {
+            sdb.dropCollectionSpace(csName);
+        }
 
-		BSONObject csOptions = new BasicBSONObject() ;
-		csOptions.put("Capped", true) ;
-		csCapped = sdb.createCollectionSpace(csName, csOptions) ;
-		BSONObject clOptions = new BasicBSONObject() ;
-		clOptions.put("Capped", true) ;
-		clOptions.put("Size", 1024) ;
-		clOptions.put("AutoIndexId", false) ;
-		DBCollection clCapped ;
-		clCapped = csCapped.createCollection( clName, clOptions ) ;
+        BSONObject csOptions = new BasicBSONObject();
+        csOptions.put("Capped", true);
+        csCapped = sdb.createCollectionSpace(csName, csOptions);
+        BSONObject clOptions = new BasicBSONObject();
+        clOptions.put("Capped", true);
+        clOptions.put("Size", 1024);
+        clOptions.put("AutoIndexId", false);
+        DBCollection clCapped;
+        clCapped = csCapped.createCollection(clName, clOptions);
 
-		LinkedList<BSONObject> insertObjs = new LinkedList<BSONObject>() ;
-		for ( int i = 0; i < 32767; i++)
-		{
-			BSONObject object = new BasicBSONObject() ;
-			object.put( "a", "testaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaatesttesttetestaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaatesttesttetestaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaatesttesttetestaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaatesttesttetestaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaatesttesttetestaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaatesttesttetestaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaatesttesttetestaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaatesttesttetestaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaatesttesttetestaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" ) ;
-			insertObjs.add( object ) ;
-		}
-		clCapped.bulkInsert(insertObjs, 0) ;
+        LinkedList<BSONObject> insertObjs = new LinkedList<BSONObject>();
+        for ( int i = 0; i < 32767; i++)
+        {
+            BSONObject object = new BasicBSONObject();
+            object.put("a", "testaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaatesttesttetestaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaatesttesttetestaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaatesttesttetestaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaatesttesttetestaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaatesttesttetestaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaatesttesttetestaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaatesttesttetestaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaatesttesttetestaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaatesttesttetestaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+            insertObjs.add(object);
+        }
+        clCapped.bulkInsert(insertObjs, 0);
 
-		BSONObject popOption = new BasicBSONObject() ;
-		popOption.put("LogicalID", 1024) ;
-		clCapped.pop(popOption) ;
-		BSONObject record = clCapped.queryOne() ;
-		assertEquals( 2048, (long)( record.get( "_id" ) ) ) ;
+        BSONObject popOption = new BasicBSONObject();
+        popOption.put("LogicalID", 1024);
+        clCapped.pop(popOption);
+        BSONObject record = clCapped.queryOne();
+        assertEquals(2048, (long)( record.get("_id")));
 
-		BSONObject popOption2 = new BasicBSONObject() ;
-		popOption2.put("LogicalID", 2048) ;
-		popOption2.put("Direction", -1) ;
-		clCapped.pop(popOption2) ;
-		BSONObject record2 = clCapped.queryOne() ;
-		assertNull( record2 ) ;
-		assertEquals( 0, clCapped.getCount() ) ;
-		clCapped.bulkInsert(insertObjs, 0) ;
-		assertEquals( 32767, clCapped.getCount() ) ;
-	}
+        BSONObject popOption2 = new BasicBSONObject();
+        popOption2.put("LogicalID", 2048);
+        popOption2.put("Direction", -1);
+        clCapped.pop(popOption2);
+        BSONObject record2 = clCapped.queryOne();
+        assertNull(record2);
+        assertEquals(0, clCapped.getCount());
+        clCapped.bulkInsert(insertObjs, 0);
+        assertEquals(32767, clCapped.getCount());
+    }
 
     // create chinese record
     private static BSONObject createChineseRecord() {

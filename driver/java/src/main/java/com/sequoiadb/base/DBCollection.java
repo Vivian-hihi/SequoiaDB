@@ -1852,31 +1852,31 @@ public class DBCollection {
      * @fn void pop()
      * @brief pop records from the collection
      */
-	public void pop(BSONObject options) throws BaseException {
-		if ( null == options ) {
-			throw new BaseException(SDBError.SDB_INVALIDARG, "options is null" );
-		}
+    public void pop(BSONObject options) throws BaseException {
+        if (null == options) {
+            throw new BaseException(SDBError.SDB_INVALIDARG, "options is null");
+        }
 
-		BSONObject newObj = new BasicBSONObject();
-		newObj.put(SdbConstants.FIELD_COLLECTION, collectionFullName);
-		Object lidObj = options.get(SdbConstants.FIELD_NAME_LOGICALID);
-		if (lidObj instanceof Integer || lidObj instanceof Long) {
-			newObj.put(SdbConstants.FIELD_NAME_LOGICALID, lidObj);
-		} else {
-			throw new BaseException(SDBError.SDB_INVALIDARG, options.toString());
-		}
-		Object directObj = options.get(SdbConstants.FIELD_NAME_DIRECTION);
-		if ( null == directObj ) {
-			newObj.put(SdbConstants.FIELD_NAME_DIRECTION, 1);
-		} else if ( directObj instanceof Integer ) {
-			newObj.put(SdbConstants.FIELD_NAME_DIRECTION, directObj);
-		} else {
-			throw new BaseException(SDBError.SDB_INVALIDARG, options.toString());
-		}
+        BSONObject newObj = new BasicBSONObject();
+        newObj.put(SdbConstants.FIELD_COLLECTION, collectionFullName);
+        Object lidObj = options.get(SdbConstants.FIELD_NAME_LOGICALID);
+        if (lidObj instanceof Integer || lidObj instanceof Long) {
+            newObj.put(SdbConstants.FIELD_NAME_LOGICALID, lidObj);
+        } else {
+            throw new BaseException(SDBError.SDB_INVALIDARG, options.toString());
+        }
+        Object directObj = options.get(SdbConstants.FIELD_NAME_DIRECTION);
+        if (null == directObj) {
+            newObj.put(SdbConstants.FIELD_NAME_DIRECTION, 1);
+        } else if (directObj instanceof Integer) {
+            newObj.put(SdbConstants.FIELD_NAME_DIRECTION, directObj);
+        } else {
+            throw new BaseException(SDBError.SDB_INVALIDARG, options.toString());
+        }
 
-		AdminRequest request = new AdminRequest(AdminCommand.POP, newObj);
-		SdbReply response = sequoiadb.requestAndResponse(request);
-		sequoiadb.reportIfError(response, newObj);
-		sequoiadb.upsertCache(collectionFullName);
-	}
+        AdminRequest request = new AdminRequest(AdminCommand.POP, newObj);
+        SdbReply response = sequoiadb.requestAndResponse(request);
+        sequoiadb.reportIfError(response, newObj);
+        sequoiadb.upsertCache(collectionFullName);
+    }
 }
