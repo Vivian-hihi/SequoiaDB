@@ -412,6 +412,18 @@ namespace engine
                BOOLEAN subIsEqual = isEqual && iterSSKey->isEquality() ;
                double subScanSel = 1.0, subPredSel = 1.0 ;
 
+               // [$minKey, $minKey], [$minKey, $undefined), [$maxKey, $maxKey]
+               // which could be ignored
+               if ( ( iterSSKey->_startKey._bound.type() == MinKey &&
+                      ( iterSSKey->_stopKey._bound.type() == MinKey ||
+                      ( iterSSKey->_stopKey._bound.type() == Undefined &&
+                        !( iterSSKey->_stopKey._inclusive ) ) ) ) ||
+                    ( iterSSKey->_startKey._bound.type() == MaxKey &&
+                      iterSSKey->_stopKey._bound.type() == MaxKey ) )
+               {
+                  continue ;
+               }
+
                startKeys.pushKeyBound( &(iterSSKey->_startKey) ) ;
                stopKeys.pushKeyBound( &(iterSSKey->_stopKey) ) ;
 
