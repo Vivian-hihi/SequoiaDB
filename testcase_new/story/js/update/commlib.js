@@ -6,7 +6,7 @@ function compareObj( lobj, robj, needObjectID )
       return lobj === robj ;
    }
    
-   if ( lobj === null || robj == null )
+   if ( lobj === null || robj === null )
    {
       return lobj === robj ;
    }
@@ -74,21 +74,21 @@ function checkResult( cl, cond, resultSet )
       var resultSet = [] ;
    }   
    
-   var tmp = resultSet ;
+   var tmp = resultSet.concat() ;
    var realRes = [] ;
    var docNum = 0 ;
-   var check = false ;
+   var check = true ;
    var cursor = cl.find( cond ) ;
    while ( cursor.next() )
    {
       var doc = cursor.current().toObj() ;
       var i = 0;
       var find = false ;
-      if ( !check )
+      if ( check )
       {
          for ( ; i < tmp.length; ++i )
          {
-            if ( compareObj(doc, tmp[i]), false )
+            if ( compareObj(doc, tmp[i], false))
             {
                tmp.splice(i, 1) ;
                find = true ;
@@ -99,7 +99,7 @@ function checkResult( cl, cond, resultSet )
       
       if ( !find ) 
       {
-         check = true ;
+         check = false ;
       }
       realRes.push( doc ) ;
    }
