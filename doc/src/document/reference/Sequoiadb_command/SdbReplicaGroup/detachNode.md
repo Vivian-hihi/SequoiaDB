@@ -1,7 +1,7 @@
 ##语法##
 ***rg.detachNode( \<host\>, \<service\>, [options] )***
 
-分离当前分区组内的一个节点，其配置信息不会被删除。搭配 [rg.attachNode()](reference/Sequoiadb_command/SdbReplicaGroup/attachNode.md)使用。
+分离当前分区组内的一个节点，其配置信息不会被删除。搭配 [rg.attachNode()](reference/Sequoiadb_command/SdbReplicaGroup/attachNode.md)使用。目前可以支持从数据组或者编目组中分离节点。
 
 ##参数描述##
 
