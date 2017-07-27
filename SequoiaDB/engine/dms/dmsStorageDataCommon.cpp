@@ -1491,6 +1491,8 @@ namespace engine
       context->mbStat()->_totalDataLen = 0 ;
       context->mbStat()->_totalOrgDataLen = 0 ;
 
+      _onCollectionTruncated( context ) ;
+
    done :
       PD_TRACE_EXITRC ( SDB__DMSSTORAGEDATACOMMON__TRUNCATECOLLECTION, rc ) ;
       return rc ;
@@ -2661,7 +2663,8 @@ namespace engine
                                                pmdEDUCB *cb,
                                                SDB_DPSCB *dpscb,
                                                BOOLEAN mustOID,
-                                               BOOLEAN canUnLock )
+                                               BOOLEAN canUnLock,
+                                               INT64 position )
    {
       INT32 rc                      = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATACOMMON_INSERTRECORD ) ;
@@ -2692,7 +2695,8 @@ namespace engine
 
       try
       {
-         rc = _prepareInsertData( record, mustOID, cb, recordData, newMem ) ;
+         rc = _prepareInsertData( record, mustOID, cb, recordData,
+                                  newMem, position ) ;
          PD_RC_CHECK( rc, PDERROR, "Prepare data for insertion failed, rc: %d",
                       rc ) ;
          if ( newMem )
@@ -2811,7 +2815,15 @@ namespace engine
             goto error ;
          }
 
-         rc = _allocRecordSpace( context, dmsRecordSize, foundRID, cb ) ;
+         if ( position >= 0 )
+         {
+            rc = _allocRecordSpaceByPos( context, dmsRecordSize, position,
+                                         foundRID, cb ) ;
+         }
+         else
+         {
+            rc = _allocRecordSpace( context, dmsRecordSize, foundRID, cb ) ;
+         }
          PD_RC_CHECK( rc, PDERROR, "Allocate space for record failed, "
                       "rc: %d", rc ) ;
 

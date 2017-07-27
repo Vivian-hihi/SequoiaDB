@@ -13,7 +13,7 @@ function main()
    commCreateCS( db, csName, false, "", csOption );
    
    var clName = COMMCLNAME + "_11779";
-   var clOption = {Capped:true, Size:1073741824, AutoIndexId:false};
+   var clOption = {Capped:true, Size:1024, AutoIndexId:false};
    var dbcl = commCreateCLByOption( db, csName, clName, clOption, true, true );
    
    //插入500万条记录，数据长度随机，使数据文件被扩展一次

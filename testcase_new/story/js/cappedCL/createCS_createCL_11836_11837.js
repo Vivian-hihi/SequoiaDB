@@ -38,7 +38,7 @@ function main()
 
 function normalCScreateCL( normal_csName, capped_csName )
 {
-   var optionObj = {Capped:true, Size:1024000000, Max:10000000, AutoIndexId:false};
+   var optionObj = {Capped:true, Size:1024, Max:10000000, AutoIndexId:false};
    try
    {
       db.getCS( normal_csName ).createCL( capped_csName, optionObj );

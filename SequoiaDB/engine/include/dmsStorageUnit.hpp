@@ -382,14 +382,17 @@ namespace engine
          INT32        _resetCollection( dmsMBContext *context ) ;
 
       public:
-
+         // Position is used to specify the insert position of the record.
+         // Currently it's used in capped collection, holding the logical id
+         // of the record.
          INT32    insertRecord ( const CHAR *pName,
                                  BSONObj &record,
                                  _pmdEDUCB *cb,
                                  SDB_DPSCB *dpscb,
                                  BOOLEAN mustOID = TRUE,
                                  BOOLEAN canUnLock = TRUE,
-                                 dmsMBContext *context = NULL ) ;
+                                 dmsMBContext *context = NULL,
+                                 INT64 position = -1 ) ;
 
          INT32    updateRecords ( const CHAR *pName,
                                   _pmdEDUCB *cb,

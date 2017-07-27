@@ -28,31 +28,31 @@ function main()
    println("---check cl Max---")
    
    //check Max : 10000000
-   var options1 = { Capped : true, Size:1024000000, Max:10000000, AutoIndexId:false };
+   var options1 = { Capped : true, Size:1024, Max:10000000, AutoIndexId:false };
    checkCreateCLOptions( csName, clName1, options1, true );
    
    //check Max : -1
-   var options2 = { Capped : true, Size:1024000000, Max:-1, AutoIndexId:false };
+   var options2 = { Capped : true, Size:1024, Max:-1, AutoIndexId:false };
    checkCreateCLOptions( csName, clName2, options2, false );
    
    //check Max : 0
-   var options3 = { Capped : true, Size:1024000000, Max:0, AutoIndexId:false };
+   var options3 = { Capped : true, Size:1024, Max:0, AutoIndexId:false };
    checkCreateCLOptions( csName, clName3, options3, true );
    
    //check Max : 132.456,单机创建成功
-   var options4 = { Capped : true, Size:1024000000, Max:123.456, AutoIndexId:false };
+   var options4 = { Capped : true, Size:1024, Max:123.456, AutoIndexId:false };
    checkCreateCLOptions( csName, clName4, options4, true );
    
    //check Max : "abc"
-   var options5 = { Capped : true, Size:1024000000, Max:"abc", AutoIndexId:false };
+   var options5 = { Capped : true, Size:1024, Max:"abc", AutoIndexId:false };
    checkCreateCLOptions( csName, clName5, options5, false );
      
    //check 不指定Max,单机创建成功
-   var options6 = { Capped : true, Size:1024000000, AutoIndexId:false };
+   var options6 = { Capped : true, Size:1024, AutoIndexId:false };
    checkCreateCLOptions( csName, clName6, options6, true );
    
    //check Mx,单机创建成功
-   var options7 = { Capped : true, Size:1024000000, Mx:10000000, AutoIndexId:false };
+   var options7 = { Capped : true, Size:1024, Mx:10000000, AutoIndexId:false };
    checkCreateCLOptions( csName, clName7, options7, true );
    
    //clean environment after test  

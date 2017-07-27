@@ -109,6 +109,12 @@ namespace engine
                      INT32 *pInsertedNum = NULL,
                      INT32 *pIgnoredNum = NULL ) ;
 
+   // for replaying insert operation. Only one record will be inserted in one
+   // call.
+   INT32 rtnReplayInsert( const CHAR *pCollectionName, BSONObj &obj,
+                          INT32 flags, pmdEDUCB *cb, SDB_DMSCB *dmsCB,
+                          SDB_DPSCB *dpsCB, INT16 w = 1 ) ;
+
    INT32 rtnUpdate ( const CHAR *pCollectionName, const BSONObj &selector,
                      const BSONObj &updator, const BSONObj &hint, INT32 flags,
                      pmdEDUCB *cb, INT64 *pUpdateNum = NULL,

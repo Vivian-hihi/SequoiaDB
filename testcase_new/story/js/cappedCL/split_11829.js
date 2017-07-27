@@ -34,7 +34,7 @@ function main()
    println("---create cappedCL---")
    var srcGroup = allGroupName[0][0].GroupName;
    var tarGroup = allGroupName[1][0].GroupName;
-   var optionObj = { Capped:true, Size:1024000000, Max:10000000, AutoIndexId:false, Group:srcGroup };
+   var optionObj = { Capped:true, Size:1024, Max:10000000, AutoIndexId:false, Group:srcGroup };
    var dbcl = commCreateCLByOption( db, csName, clName, optionObj, false, false, "create cappedCL" );
    
    println("---cappedCL split---")

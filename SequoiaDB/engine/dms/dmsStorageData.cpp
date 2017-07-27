@@ -90,7 +90,8 @@ namespace engine
                                               BOOLEAN mustOID,
                                               pmdEDUCB *cb,
                                               dmsRecordData &recordData,
-                                              BOOLEAN &memReallocate )
+                                              BOOLEAN &memReallocate,
+                                              INT64 position )
    {
       INT32 rc = SDB_OK ;
       IDToInsert oid ;
@@ -168,6 +169,15 @@ namespace engine
       return rc ;
    error:
       goto done;
+   }
+
+   INT32 _dmsStorageData::_allocRecordSpaceByPos( dmsMBContext *context,
+                                                  UINT32 size,
+                                                  INT64 position,
+                                                  dmsRecordID &foundRID,
+                                                  pmdEDUCB *cb )
+   {
+      return SDB_OPERATION_INCOMPATIBLE ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA__EXTENTUPDATERECORD, "_dmsStorageData::_extentUpdatedRecord" )

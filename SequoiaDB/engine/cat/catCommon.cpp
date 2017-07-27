@@ -43,6 +43,8 @@
 
 using namespace bson ;
 
+#define MAX_CL_SIZE_ALIGN_SIZE      (32 * 1024 * 1024)
+
 namespace engine
 {
 
@@ -3642,7 +3644,9 @@ namespace engine
                       SDB_INVALIDARG, error, PDWARNING,
                       "Field [%s] type [%d] error",
                       CAT_CL_MAX_SIZE, eleTmp.type() ) ;
-            clInfo._maxSize = eleTmp.numberLong() ;
+            // Always align the size upper to 32MB.
+            clInfo._maxSize = ossRoundUpToMultipleX( eleTmp.numberLong() << 20,
+                                                     MAX_CL_SIZE_ALIGN_SIZE ) ;
             fieldMask |= CAT_MASK_CLMAXSIZE ;
          }
          else if ( 0 == ossStrcmp( eleTmp.fieldName(), CAT_CL_OVERWRITE ) )

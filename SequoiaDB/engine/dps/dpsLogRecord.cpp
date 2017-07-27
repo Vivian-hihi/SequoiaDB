@@ -604,7 +604,7 @@ namespace engine
             }
 
             len += ossSnprintf( outBuf + len, outSize - len,
-                                " Pop logicalID: %u"OSS_NEWLINE,
+                                " LogicalID: %u"OSS_NEWLINE,
                                 *( (INT64*)itrLID.value() ) ) ;
 
             itrDirect = this->find( DPS_LOG_POP_DIRECTION ) ;
@@ -614,7 +614,7 @@ namespace engine
                goto done ;
             }
             len += ossSnprintf( outBuf + len, outSize - len,
-                                " Pop direction: %c"OSS_NEWLINE,
+                                " Direction: %d"OSS_NEWLINE,
                                 *( (INT8*)itrDirect.value() ) ) ;
             break ;
          }

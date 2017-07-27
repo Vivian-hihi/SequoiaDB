@@ -782,6 +782,7 @@ namespace engine
          }
 
          _extentID = extScanner.nextExtentID() ;
+         _lastExtLID = extScanner.curExtent()->_logicID ;
          if ( DMS_INVALID_EXTENT == _extentID )
          {
             _hitEnd = TRUE ;

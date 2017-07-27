@@ -56,6 +56,7 @@
 using namespace bson ;
 using namespace std ;
 
+#define MAX_CL_SIZE_ALIGN_SIZE (32 * 1024 * 1024)
 namespace engine
 {
    _rtnCommand::_rtnCommand ()
@@ -664,6 +665,8 @@ namespace engine
             }
             goto error ;
          }
+         maxSize = ossRoundUpToMultipleX( maxSize << 20,
+                                          MAX_CL_SIZE_ALIGN_SIZE ) ;
          builder.append( FIELD_NAME_SIZE, maxSize ) ;
 
          // Max/OverWrite is optional.
@@ -2407,7 +2410,7 @@ namespace engine
          ossClose( outFile ) ;
       }
    done :
-      traceCB->destroy() ;    
+      traceCB->destroy() ;
       PD_TRACE_EXITRC ( SDB__RTNTRACESTOP_DOIT, rc ) ;
       return rc ;
    error :

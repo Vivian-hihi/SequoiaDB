@@ -93,12 +93,19 @@ namespace engine
                                         BOOLEAN mustOID,
                                         pmdEDUCB *cb,
                                         dmsRecordData &recordData,
-                                        BOOLEAN &memReallocate ) ;
+                                        BOOLEAN &memReallocate,
+                                        INT64 position ) ;
 
       virtual INT32 _allocRecordSpace( dmsMBContext *context,
                                        UINT32 size,
                                        dmsRecordID &foundRID,
-                                       _pmdEDUCB *cb) ;
+                                       _pmdEDUCB *cb ) ;
+
+      virtual INT32 _allocRecordSpaceByPos( dmsMBContext *context,
+                                            UINT32 size,
+                                            INT64 position,
+                                            dmsRecordID &foundRID,
+                                            _pmdEDUCB *cb ) ;
 
       virtual void _finalRecordSize( UINT32 &size,
                                      const dmsRecordData &recordData ) ;

@@ -28,31 +28,31 @@ function main()
    println("---check cl Max---")
    
    //check OverWrite : true
-   var options1 = { Capped : true, Size:1024000000, Max:10000000, AutoIndexId:false, OverWrite:true };
+   var options1 = { Capped : true, Size:1024, Max:10000000, AutoIndexId:false, OverWrite:true };
    checkCreateCLOptions( csName, clName1, options1, true );
    
    //check OverWrite : 1
-   var options2 = { Capped : true, Size:1024000000, Max:10000000, AutoIndexId:false, OverWrite:1 };
+   var options2 = { Capped : true, Size:1024, Max:10000000, AutoIndexId:false, OverWrite:1 };
    checkCreateCLOptions( csName, clName2, options2, false );
    
    //check OverWrite : 0
-   var options3 = { Capped : true, Size:1024000000, Max:10000000, AutoIndexId:false, OverWrite:0 };
+   var options3 = { Capped : true, Size:1024, Max:10000000, AutoIndexId:false, OverWrite:0 };
    checkCreateCLOptions( csName, clName3, options3, false );
    
    //check OverWrite : false
-   var options4 = { Capped : true, Size:1024000000, Max:10000000, AutoIndexId:false, OverWrite:false };
+   var options4 = { Capped : true, Size:1024, Max:10000000, AutoIndexId:false, OverWrite:false };
    checkCreateCLOptions( csName, clName4, options4, true );
    
    //check OverWrite : "abc"
-   var options5 = { Capped : true, Size:1024000000, Max:10000000, AutoIndexId:false, OverWrite:"abc" };
+   var options5 = { Capped : true, Size:1024, Max:10000000, AutoIndexId:false, OverWrite:"abc" };
    checkCreateCLOptions( csName, clName5, options5, false );
      
    //check OverWrite:123.456
-   var options6 = { Capped : true, Size:1024000000, Max:10000000, AutoIndexId:false, OverWrite:123.456};
+   var options6 = { Capped : true, Size:1024, Max:10000000, AutoIndexId:false, OverWrite:123.456};
    checkCreateCLOptions( csName, clName6, options6, false );
    
    //check OvWre:true,单机模式下不会报错
-   var options7 = { Capped : true, Size:1024000000, Max:10000000, AutoIndexId:false, OvWre:true };
+   var options7 = { Capped : true, Size:1024, Max:10000000, AutoIndexId:false, OvWre:true };
    checkCreateCLOptions( csName, clName7, options7, true );
    
    //clean environment after test  

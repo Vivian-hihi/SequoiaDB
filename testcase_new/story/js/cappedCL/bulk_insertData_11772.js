@@ -17,7 +17,7 @@ function main()
    initCappedCS( csName );
    
    //create cappedCL
-   var optionObj = {Capped:true, Size:4294967296, Max:10000000, AutoIndexId:false};
+   var optionObj = {Capped:true, Size:4096, Max:10000000, AutoIndexId:false};
    var dbcl =  commCreateCLByOption( db, csName, clName, optionObj, false, false, "create cappedCL" );
    
    //insertData

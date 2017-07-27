@@ -42,7 +42,7 @@
 
 namespace engine
 {
-#define DMS_INVALID_REC_LOGICALID         0xffffffffffffffff
+#define DMS_INVALID_REC_LOGICALID         -1
 #define DMS_CAP_EXTENT_SZ                 (32 * 1024 * 1024)
 #define DMS_CAP_EXTENT_PG_NUM             (DMS_CAP_EXTENT_SZ>>pageSizeSquareRoot())
 #define DMS_CAP_CL_MIN_SZ                 DMS_CAP_EXTENT_SZ
@@ -159,6 +159,16 @@ namespace engine
       {
          _recNo++ ;
       }
+
+      // Should only be done after attach to a new empty extent.
+      void adjustWritePos( dmsOffset offset )
+      {
+         SDB_ASSERT( offset >= (INT32)DMS_EXTENT_METADATA_SZ,
+                     "offset is invalid" ) ;
+         INT32 distance = offset - DMS_EXTENT_METADATA_SZ - _writePos ;
+         _writePos = offset - DMS_EXTENT_METADATA_SZ ;
+         _freeSpace -= distance ;
+      }
    } ;
    typedef _dmsExtentInfo dmsExtentInfo ;
 
@@ -181,11 +191,16 @@ namespace engine
 
       OSS_INLINE dmsExtentInfo* getWorkExtInfo( UINT16 mbID ) ;
 
+      virtual INT32 postDataRestored( dmsMBContext * context ) ;
+
    private:
       virtual const CHAR* _getEyeCatcher() const ;
       virtual INT32 _onOpened() ;
       virtual void _onClosed() ;
+      virtual void _onRestore() ;
+      virtual INT32 _onFlushDirty( BOOLEAN force, BOOLEAN sync ) ;
 
+      virtual INT32 _onCollectionTruncated( dmsMBContext *context ) ;
       virtual INT32 _prepareAddCollection( const BSONObj *extOption,
                                            dmsExtentID &extOptExtent,
                                            UINT16 &extentPageNum ) ;
@@ -203,7 +218,8 @@ namespace engine
                                         BOOLEAN mustOID,
                                         pmdEDUCB *cb,
                                         dmsRecordData &recordData,
-                                        BOOLEAN &memReallocate ) ;
+                                        BOOLEAN &memReallocate,
+                                        INT64 position ) ;
 
       virtual void _finalRecordSize( UINT32 &size,
                                      const dmsRecordData &recordData ) ;
@@ -212,6 +228,12 @@ namespace engine
                                        UINT32 size,
                                        dmsRecordID &foundRID,
                                        _pmdEDUCB *cb ) ;
+
+      virtual INT32 _allocRecordSpaceByPos( dmsMBContext *context,
+                                            UINT32 size,
+                                            INT64 position,
+                                            dmsRecordID &foundRID,
+                                            _pmdEDUCB *cb ) ;
 
       virtual INT32 _extentInsertRecord( dmsMBContext *context,
                                          dmsExtRW &extRW,
@@ -286,9 +308,12 @@ namespace engine
                                            UINT32 newSize ) ;
       OSS_INLINE BOOLEAN _numExceedLimit( dmsMBContext *context, UINT32 size ) ;
       OSS_INLINE BOOLEAN _overwriteOnExceed( dmsMBContext *context ) ;
-      OSS_INLINE void _getExtLIDAndOffsetByLID( INT64 logicalID,
-                                                dmsExtentID &extID,
-                                                dmsOffset &offset ) ;
+      OSS_INLINE void _recLid2ExtLidAndOffset( INT64 logicalID,
+                                               dmsExtentID &extID,
+                                               dmsOffset &offset ) ;
+      OSS_INLINE void _extLidAndOffset2RecLid( dmsExtentID extID,
+                                               dmsOffset offset,
+                                               INT64 &logicalID ) ;
       OSS_INLINE dmsExtentID _logicID2ExtID( dmsMBContext *context,
                                              INT64 logicalID,
                                              const dmsExtent *&extent ) ;
@@ -316,6 +341,10 @@ namespace engine
                                  UINT32 &recNum,
                                  UINT32 &totalSize,
                                  BOOLEAN endInclude = TRUE ) ;
+
+      INT32 _updateExtentLID( UINT16 mbID,
+                              dmsExtentID extID,
+                              dmsExtentID extLogicID ) ;
 
    private:
       dmsCappedCLOptions *_options[ DMS_MME_SLOTS ] ;
@@ -398,8 +427,8 @@ namespace engine
       const dmsMBStatInfo *mbStatInfo = getMBStatInfo( context->mbID() ) ;
       SDB_ASSERT( mbStatInfo, "mbStatInfo should not be NULL" ) ;
 
-      return ( mbStatInfo->_totalDataLen + newSize ) >
-               (UINT64)_options[context->mbID()]->_maxSize ;
+      return (( mbStatInfo->_totalDataPages << pageSizeSquareRoot()) + newSize)
+             > (UINT64)_options[context->mbID()]->_maxSize ;
    }
 
    OSS_INLINE BOOLEAN _dmsStorageDataCapped::_numExceedLimit( dmsMBContext *context,
@@ -418,18 +447,36 @@ namespace engine
       return _options[context->mbID()]->_overwrite ;
    }
 
-   OSS_INLINE void _dmsStorageDataCapped::_getExtLIDAndOffsetByLID( INT64 logicalID,
-                                                                    dmsExtentID &extID,
-                                                                    dmsOffset &offset )
+   OSS_INLINE void _dmsStorageDataCapped::_recLid2ExtLidAndOffset( INT64 logicalID,
+                                                                   dmsExtentID &extID,
+                                                                   dmsOffset &offset )
    {
       if ( logicalID < 0 )
       {
          extID = DMS_INVALID_EXTENT ;
-         offset = 0 ;
+         offset = DMS_INVALID_OFFSET ;
       }
+      else
+      {
+         extID = logicalID / DMS_CAP_EXTENT_BODY_SZ ;
+         offset = logicalID % DMS_CAP_EXTENT_BODY_SZ + DMS_EXTENT_METADATA_SZ ;
+      }
+   }
 
-      extID = logicalID / DMS_CAP_EXTENT_BODY_SZ ;
-      offset = logicalID % DMS_CAP_EXTENT_BODY_SZ + DMS_EXTENT_METADATA_SZ ;
+   OSS_INLINE void _dmsStorageDataCapped::_extLidAndOffset2RecLid( dmsExtentID extLID,
+                                                                   dmsOffset offset,
+                                                                   INT64 &logicalID )
+   {
+      if ( DMS_INVALID_EXTENT == extLID ||
+           offset < (INT32)DMS_EXTENT_METADATA_SZ )
+      {
+         logicalID = DMS_INVALID_REC_LOGICALID ;
+      }
+      else
+      {
+         logicalID = (INT64)extLID * DMS_CAP_EXTENT_BODY_SZ + offset
+                     - DMS_EXTENT_METADATA_SZ ;
+      }
    }
 
    OSS_INLINE dmsExtentID _dmsStorageDataCapped::_logicID2ExtID( dmsMBContext *context,
@@ -449,7 +496,7 @@ namespace engine
          goto error ;
       }
 
-      _getExtLIDAndOffsetByLID( logicalID, extLID, offset ) ;
+      _recLid2ExtLidAndOffset( logicalID, extLID, offset ) ;
 
       extentID = context->mb()->_firstExtentID ;
       extent = NULL ;

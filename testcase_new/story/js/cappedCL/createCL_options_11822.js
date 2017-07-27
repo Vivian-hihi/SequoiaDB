@@ -27,27 +27,27 @@ function main()
    println("---check cl Capped---")
    
    //check Capped : true
-   var options1 = { Capped : true, Size:1024000000, Max:10000000, AutoIndexId:false };
+   var options1 = { Capped : true, Size:1024, Max:10000000, AutoIndexId:false };
    checkCreateCLOptions( csName, clName1, options1, true );
    
    //check Capped : false
-   var options2 = { Capped : false, Size:1024000000, Max:10000000, AutoIndexId:false };
+   var options2 = { Capped : false, Size:1024, Max:10000000, AutoIndexId:false };
    checkCreateCLOptions( csName, clName2, options2, false );
    
    //check Capped
-   var options3 = { Capped : "", Size:1024000000, Max:10000000, AutoIndexId:false };
+   var options3 = { Capped : "", Size:1024, Max:10000000, AutoIndexId:false };
    checkCreateCLOptions( csName, clName3, options3, false );
    
    //check Capped : "abc"
-   var options4 = { Capped : "abc", Size:1024000000, Max:10000000, AutoIndexId:false };
+   var options4 = { Capped : "abc", Size:1024, Max:10000000, AutoIndexId:false };
    checkCreateCLOptions( csName, clName4, options4, false );
    
    //check options = ""
-   var options5 = { Size:1024000000, Max:10000000, AutoIndexId:false };
+   var options5 = { Size:1024, Max:10000000, AutoIndexId:false };
    checkCreateCLOptions( csName, clName5, options5, false );
      
    //check Caped
-   var options6 = { Caped : true, Size:1024000000, Max:10000000, AutoIndexId:false };
+   var options6 = { Caped : true, Size:1024, Max:10000000, AutoIndexId:false };
    checkCreateCLOptions( csName, clName6, options6, false );
    
    //clean environment after test  

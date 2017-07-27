@@ -84,8 +84,15 @@ namespace engine
       }
 
       {
-         rtnCLRebuilder rebuilder( su, pCollectionShortName ) ;
-         rc = rebuilder.recover( cb ) ;
+         rtnCLRebuilderFactory *factory = rtnGetCLRebuilderFactory() ;
+         rtnCLRebuilderBase *rebuilder = NULL ;
+         rc = factory->create( su, pCollectionShortName, rebuilder ) ;
+         PD_RC_CHECK( rc, PDERROR, "Create collection rebuilder failed, rc: %d",
+                      rc ) ;
+         rc = rebuilder->recover( cb ) ;
+         factory->release( rebuilder ) ;
+         PD_RC_CHECK( rc, PDERROR, "Recover collection[%s] failed, rc: %d",
+                      pCollectionName, rc ) ;
       }
 
    done :
@@ -135,8 +142,15 @@ namespace engine
       }
 
       {
-         rtnCLRebuilder rebuilder( su, pCollectionShortName ) ;
-         rc = rebuilder.reorg( cb, hint ) ;
+         rtnCLRebuilderFactory *factory = rtnGetCLRebuilderFactory() ;
+         rtnCLRebuilderBase *rebuilder = NULL ;
+         rc = factory->create( su, pCollectionShortName, rebuilder ) ;
+         PD_RC_CHECK( rc, PDERROR, "Create collection rebuilder failed, rc: %d",
+                      rc ) ;
+         rc = rebuilder->reorg( cb, hint ) ;
+         factory->release( rebuilder ) ;
+         PD_RC_CHECK( rc, PDERROR, "Reorganize collection[%s] failed, rc: %d",
+                      pCollectionName, rc ) ;
       }
 
    done :

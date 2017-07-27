@@ -26,14 +26,14 @@ function main()
    
    //check cappedCL sharding
    println( "---check sharding---" )
-   var hashOptions = { Capped:true, Size:1024000000, Max:10000000, AutoIndexId:false, ShardingKey:{ "age":1 },ShardingType:"hash", Partition: 1024 };
+   var hashOptions = { Capped:true, Size:1024, Max:10000000, AutoIndexId:false, ShardingKey:{ "age":1 },ShardingType:"hash", Partition: 1024 };
    createCappedCL( csName, clName1, hashOptions );
-   var rangeOptions = { Capped:true, Size:1024000000, Max:10000000, AutoIndexId:false, ShardingKey:{ "age":1 },ShardingType:"hash", Partition: 1024 };
+   var rangeOptions = { Capped:true, Size:1024, Max:10000000, AutoIndexId:false, ShardingKey:{ "age":1 },ShardingType:"hash", Partition: 1024 };
    createCappedCL( csName, clName2, rangeOptions );
    
    //check cappedCL alter
    println( "---check cappedCL alter---" )
-   var options = { Capped:true, Size:1024000000, Max:10000000, AutoIndexId:false};
+   var options = { Capped:true, Size:1024, Max:10000000, AutoIndexId:false};
    var dbcl = commCreateCLByOption( db, csName, clName3, options, false, false, "create capped cl" );
    var alterOption1 = { ShardingKey:{a:1}, ShardingType:"hash" };
    checkCappedAlter( dbcl, alterOption1 );

@@ -28,7 +28,7 @@ function main()
    println( "create cappedCL" )
    for(var i = 0; i < 3; i++)
    {
-      var optionObj = {Capped:true, Size:1024000000, Max:10000000, AutoIndexId:false};
+      var optionObj = {Capped:true, Size:1024, Max:10000000, AutoIndexId:false};
       commCreateCLByOption( db, csName1, clName+i, optionObj, false, false, "create cappedCL" );
    }
    
@@ -36,7 +36,7 @@ function main()
    for(var i = 0; i < 9; i++)
    {
       var replSize = i - 1;
-      var optionObj = {Capped:true, Size:1024000000, Max:10000000, AutoIndexId:false, ReplSize:replSize};
+      var optionObj = {Capped:true, Size:1024, Max:10000000, AutoIndexId:false, ReplSize:replSize};
       commCreateCLByOption( db, csName2, clName+i, optionObj, false, false, "create cappedCL" );
    }
    

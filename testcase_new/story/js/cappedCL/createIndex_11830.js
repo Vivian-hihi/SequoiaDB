@@ -17,7 +17,7 @@ function main()
    initCappedCS( csName );
    
    //create cappedCL
-   var optionObj = {Capped:true, Size:1024000000, Max:10000000, AutoIndexId:false};
+   var optionObj = {Capped:true, Size:1024, Max:10000000, AutoIndexId:false};
    var dbcl = commCreateCLByOption( db, csName, clName, optionObj, false, false, "create cappedCL" );
    
    //createIndex

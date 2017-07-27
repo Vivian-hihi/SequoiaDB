@@ -21,23 +21,23 @@ function main()
    commCreateCS( db, csName, false, "create cappedCS", options );
    
    //create cappedCL AutoIndexId:true
-   var optionObj1 = {Capped:true, Size:1024000000, Max:10000000, AutoIndexId:true};
+   var optionObj1 = {Capped:true, Size:1024, Max:10000000, AutoIndexId:true};
    createCappedCL( db, csName, clName+1, optionObj1);
    
    //create cappedCL Compressed:true
-   var optionObj2 = {Capped:true, Size:1024000000, Max:10000000, AutoIndexId:false, Compressed:true};
+   var optionObj2 = {Capped:true, Size:1024, Max:10000000, AutoIndexId:true, Compressed:true};
    createCappedCL( db, csName, clName+2, optionObj2);
    
    //create cappedCL Compressed:false
-   var optionObj3 = {Capped:true, Size:1024000000, Max:10000000, AutoIndexId:false, Compressed:false};
+   var optionObj3 = {Capped:true, Size:1024, Max:10000000, AutoIndexId:true, Compressed:false};
    createCappedCL( db, csName, clName+3, optionObj3);
    
    //create cappedCL CompressionType:"snappy"
-   var optionObj4 = {Capped:true, Size:1024000000, Max:10000000, AutoIndexId:false, Compressed:true, CompressionType:"snappy"};
+   var optionObj4 = {Capped:true, Size:1024, Max:10000000, AutoIndexId:true, Compressed:true, CompressionType:"snappy"};
    createCappedCL( db, csName, clName+4, optionObj4);
    
    //create cappedCL CompressionType:"lzw"
-   var optionObj5 = {Capped:true, Size:1024000000, Max:10000000, AutoIndexId:false, Compressed:true, CompressionType:"lzw"};
+   var optionObj5 = {Capped:true, Size:1024, Max:10000000, AutoIndexId:true, Compressed:true, CompressionType:"lzw"};
    createCappedCL( db, csName, clName+5, optionObj5);
    
    //clean cappedCS after test

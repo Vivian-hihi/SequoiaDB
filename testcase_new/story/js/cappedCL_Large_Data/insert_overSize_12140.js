@@ -13,7 +13,7 @@ function main()
    commCreateCS( db, csName, false, "", csOption );
    
    var clName = COMMCLNAME + "_12140";
-   var clOption = {Capped:true, Size:33554432, AutoIndexId:false, OverWrite:true};
+   var clOption = {Capped:true, Size:32, AutoIndexId:false, OverWrite:true};
    var dbcl = commCreateCLByOption( db, csName, clName, clOption, true, true );
    
    db.setSessionAttr( { PreferedInstance: "M" } );

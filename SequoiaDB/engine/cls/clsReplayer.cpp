@@ -329,7 +329,7 @@ namespace engine
             {
                goto error ;
             }
-            rc = rtnInsert( fullname, obj, 1, 0, eduCB, _dmsCB, _dpsCB, 1 ) ;
+            rc = rtnReplayInsert( fullname, obj, 0, eduCB, _dmsCB, _dpsCB, 1 ) ;
             if ( SDB_OK == rc && incCount )
             {
                _monDBCB->monOperationCountInc ( MON_INSERT_REPL ) ;
@@ -1255,8 +1255,8 @@ namespace engine
                                      _pmdEDUCB *eduCB )
    {
       SDB_ASSERT( NULL != collection, "collection should not be NULL" ) ;
-      return rtnInsert( collection, obj, 1, FLG_INSERT_CONTONDUP, eduCB,
-                        _dmsCB, _dpsCB ) ;
+      return rtnReplayInsert( collection, obj, FLG_INSERT_CONTONDUP, eduCB,
+                              _dmsCB, _dpsCB ) ;
    }
 
    INT32 _clsReplayer::replayWriteLob( const CHAR *fullName,

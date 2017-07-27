@@ -860,7 +860,8 @@ namespace engine
                               _pmdEDUCB *cb,
                               SDB_DPSCB *dpscb,
                               BOOLEAN mustOID = TRUE,
-                              BOOLEAN canUnLock = TRUE ) ;
+                              BOOLEAN canUnLock = TRUE,
+                              INT64 position = -1 ) ;
 
          // if deletedDataPtr = 0, will get from recordID
          // must hold mb exclusive lock
@@ -913,6 +914,11 @@ namespace engine
          {
          }
 
+         virtual INT32 postDataRestored( dmsMBContext * context )
+         {
+            return SDB_OK ;
+         }
+
          virtual INT32 dumpExtOptions( dmsMBContext *context,
                                        BSONObj &extOptions ) = 0 ;
 
@@ -926,6 +932,11 @@ namespace engine
                                          UINT32 extentSize,
                                          UINT16 collectionID ) = 0 ;
 
+         virtual INT32 _onCollectionTruncated( dmsMBContext *context )
+         {
+            return SDB_OK ;
+         }
+
          virtual void _onAllocExtent( dmsMBContext *context,
                                       dmsExtent *extAddr,
                                       SINT32 extentID ) = 0 ;
@@ -934,12 +945,19 @@ namespace engine
                                            BOOLEAN mustOID,
                                            pmdEDUCB *cb,
                                            dmsRecordData &recordData,
-                                           BOOLEAN &memReallocate ) = 0 ;
+                                           BOOLEAN &memReallocate,
+                                           INT64 position ) = 0 ;
 
          virtual INT32 _allocRecordSpace( dmsMBContext *context,
                                           UINT32 size,
                                           dmsRecordID &foundRID,
-                                          _pmdEDUCB *cb) = 0 ;
+                                          _pmdEDUCB *cb ) = 0 ;
+
+         virtual INT32 _allocRecordSpaceByPos( dmsMBContext *context,
+                                               UINT32 size,
+                                               INT64 position,
+                                               dmsRecordID &foundRID,
+                                               _pmdEDUCB *cb ) = 0 ;
 
          virtual INT32 _extentInsertRecord( dmsMBContext *context,
                                             dmsExtRW &extRW,
@@ -977,14 +995,14 @@ namespace engine
          virtual INT32  _onOpened() ;
          virtual void   _onClosed() ;
          virtual INT32  _onMapMeta( UINT64 curOffSet ) ;
+         virtual void   _onRestore() ;
+         virtual INT32  _onFlushDirty( BOOLEAN force, BOOLEAN sync ) ;
 
       private:
          virtual UINT64 _dataOffset() ;
          virtual UINT32 _curVersion() const ;
          virtual INT32  _checkVersion( dmsStorageUnitHeader *pHeader ) ;
          virtual INT32  _onCreate( OSSFILE *file, UINT64 curOffSet ) ;
-
-         virtual INT32  _onFlushDirty( BOOLEAN force, BOOLEAN sync ) ;
 
          virtual INT32  _onMarkHeaderValid( UINT64 &lastLSN,
                                             BOOLEAN sync,
@@ -994,7 +1012,7 @@ namespace engine
 
          virtual UINT64 _getOldestWriteTick() const ;
 
-         virtual void   _onRestore() ;
+
 
       protected:
          OSS_INLINE const CHAR* _clFullName ( const CHAR *clName,
