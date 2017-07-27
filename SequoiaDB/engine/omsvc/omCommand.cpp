@@ -11452,6 +11452,7 @@ namespace engine
    INT32 omSyncBusinessConfigureCommand::doCommand()
    {
       INT32 rc = SDB_OK ;
+      INT64 taskID = -1 ;
       string deployMod ;
       BSONObj businessInfo ;
       vector<simpleAddressInfo> addressList ;
@@ -11492,6 +11493,17 @@ namespace engine
          rc = SDB_INVALIDARG ;
          _errorMsg.setError( TRUE, "business does not exist: %s",
                              _businessName.c_str() ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      taskID = dbTool.getTaskIdOfRunningBuz( _businessName ) ;
+      if( 0 <= taskID )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "business[%s] is exist "
+                             "in task["OSS_LL_PRINT_FORMAT"]",
+                             _businessName.c_str(), taskID ) ;
          PD_LOG( PDERROR, _errorMsg.getError() ) ;
          goto error ;
       }
