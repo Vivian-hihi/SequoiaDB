@@ -426,6 +426,41 @@ in the cluser environment only" << endl ;
    connection.disconnect() ;
 }
 
+TEST(sdb,getSnapshot_SDB_SNAP_TRANSACTION_CURRENT)
+{
+   sdb connection ;
+   sdbCollectionSpace cs ;
+   sdbCursor cursor ;
+   // initialize local variables
+   const CHAR *pHostName                    = HOST ;
+   const CHAR *pPort                        = SERVER ;
+   const CHAR *pUsr                         = USER ;
+   const CHAR *pPasswd                      = PASSWD ;
+   INT32 rc                                 = SDB_OK ;
+   const CHAR *clName                       = NULL ;
+   // initialize the work environment
+   rc = initEnv() ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // connect to database
+   rc = connection.connect( pHostName, pPort, pUsr, pPasswd ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // test whether it is in the cluser environment, because
+   rc = connection.getSnapshot( cursor, SDB_SNAP_TRANSACTIONS_CURRENT ) ;
+   CHECK_MSG("%s%d\n","rc = ",rc) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   printf("SDB_SNAP_TRANSACTIONS_CURRENT is: \n") ;
+   displayRecord( cursor ) ;
+   cursor.close() ;
+   rc = connection.getSnapshot( cursor, SDB_SNAP_TRANSACTIONS ) ;
+   CHECK_MSG("%s%d\n","rc = ",rc) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   printf("SDB_SNAP_TRANSACTIONS is: \n") ;
+   displayRecord( cursor ) ;
+   cursor.close() ;
+   // disconnect the connection
+   connection.disconnect() ;
+}
+
 TEST(sdb,getList_SDB_LIST_CONTEXTS)
 {
    sdb connection ;
@@ -669,6 +704,50 @@ in the cluser environment only" << endl ;
    ASSERT_EQ( SDB_OK, rc ) ;
    // display records
 //   displayRecord( cursor ) ;
+   // disconnect the connection
+   connection.disconnect() ;
+}
+
+TEST(sdb,getList_SDB_LIST_TRANSACTIONS)
+{
+   sdb connection ;
+   sdbCursor cursor ;
+   sdbCursor cursor1 ;
+   // initialize local variables
+   const CHAR *pHostName                    = HOST ;
+   const CHAR *pPort                        = SERVER ;
+   const CHAR *pUsr                         = USER ;
+   const CHAR *pPasswd                      = PASSWD ;
+   INT32 rc                                 = SDB_OK ;
+   // initialize the work environment
+   rc = initEnv() ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // connect to database
+   rc = connection.connect( pHostName, pPort, pUsr, pPasswd ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   // test whether it is in the cluser environment
+   rc = connection.getList( cursor1, SDB_LIST_GROUPS ) ;
+   if ( rc == SDB_RTN_COORD_ONLY )
+   {
+      cout << "getList() 'SDB_LIST_TRANSACTIONS' use in the cluser environment only" << endl ;
+      return ;
+   }
+   // list
+   rc = connection.getList( cursor, SDB_LIST_TRANSACTIONS ) ;
+   CHECK_MSG("%s%d\n","rc = ",rc) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   printf("the result of SDB_LIST_TRANSACTIONS is: \n") ;
+   displayRecord( cursor ) ;
+   cursor.close() ;
+
+   rc = connection.getList( cursor, SDB_LIST_TRANSACTIONS_CURRENT ) ;
+   CHECK_MSG("%s%d\n","rc = ",rc) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   printf("the result of SDB_LIST_TRANSACTIONS_CURRENT is: \n") ;
+   displayRecord( cursor ) ;
+   cursor.close() ;
+
    // disconnect the connection
    connection.disconnect() ;
 }
