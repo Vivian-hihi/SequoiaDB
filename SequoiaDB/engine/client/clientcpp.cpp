@@ -6185,11 +6185,11 @@ error :
       case SDB_LIST_TRANSACTIONS_CURRENT :
          p = CMD_ADMIN_PREFIX CMD_NAME_LIST_TRANSACTIONS_CUR ;
          break ;
-      case SDB_LIST_CS_IN_DOMAIN :
-         p = CMD_ADMIN_PREFIX CMD_NAME_LIST_CS_IN_DOMAIN ;
-         break ;
       case SDB_LIST_CL_IN_DOMAIN :
          p = CMD_ADMIN_PREFIX CMD_NAME_LIST_CL_IN_DOMAIN ;
+         break ;
+      case SDB_LIST_CS_IN_DOMAIN :
+         p = CMD_ADMIN_PREFIX CMD_NAME_LIST_CS_IN_DOMAIN ;
          break ;
       default :
          rc = SDB_INVALIDARG ;

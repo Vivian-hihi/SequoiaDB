@@ -336,6 +336,8 @@ SDB_EXPORT INT32 sdbGetQueryMeta ( sdbCollectionHandle cHandle,
         SDB_SNAP_DATABASE         : Get the snapshot of the database
         SDB_SNAP_SYSTEM           : Get the snapshot of the system
         SDB_SNAP_CATA             : Get the snapshot of the catalog
+        SDB_SNAP_TRANSACTIONS     : Get snapshot of transactions in current session
+        SDB_SNAP_TRANSACTIONS_CURRENT : Get snapshot of all the transactions
 
     \param [in] condition The matching rule, match all the documents if null
     \param [in] select The selective rule, return the whole document if null
@@ -447,17 +449,20 @@ SDB_EXPORT INT32 sdbTraceStatus ( sdbConnectionHandle cHandle,
     \param [in] cHandle The collection handle
     \param [in] listType The list type as below
 
-        SDB_LIST_CONTEXTS         : Get the list of the contexts
-        SDB_LIST_CONTEXTS_CURRENT : Get the list of current context
-        SDB_LIST_SESSIONS         : Get the list of the sessions
-        SDB_LIST_SESSIONS_CURRENT : Get the list of current session
-        SDB_LIST_COLLECTIONS      : Get the list of the collections
-        SDB_LIST_COLLECTIONSPACES : Get the list of the collecion spaces
-        SDB_LIST_STORAGEUNITS     : Get the list of the storage units
-        SDB_LIST_GROUPS           : Get the list of the replica groups ( only applicable in sharding env )
-        SDB_LIST_STOREPROCEDURES  : Get the list of the stored procedures ( only applicable in sharding env )
-        SDB_LIST_DOMAINS          : Get the list of the domains ( only applicable in sharding env )
-        SDB_LIST_TASKS            : Get the list of the tasks ( only applicable in sharding env )
+        SDB_LIST_CONTEXTS         : Get all contexts list
+        SDB_LIST_CONTEXTS_CURRENT : Get contexts list for the current session
+        SDB_LIST_SESSIONS         : Get all sessions list
+        SDB_LIST_SESSIONS_CURRENT : Get the current session
+        SDB_LIST_COLLECTIONS      : Get all collections list
+        SDB_LIST_COLLECTIONSPACES : Get all collecion spaces' list
+        SDB_LIST_STORAGEUNITS     : Get storage units list
+        SDB_LIST_GROUPS           : Get replicaGroup list ( only applicable in sharding env )
+        SDB_LIST_STOREPROCEDURES  : Get all the stored procedure list
+        SDB_LIST_DOMAINS          : Get all the domains list
+        SDB_LIST_TASKS            : Get all the running split tasks ( only applicable in sharding env )
+        SDB_LIST_TRANSACTIONS     : Get all the transactions information.
+        SDB_LIST_TRANSACTIONS_CURRENT : Get the transactions information of current session.
+
     \param [in] condition The matching rule, match all the documents if null
     \param [in] select The selective rule, return the whole document if null
     \param [in] orderBy The ordered rule, never sort if null
