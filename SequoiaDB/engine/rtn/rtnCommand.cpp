@@ -3868,7 +3868,8 @@ namespace engine
                  _param._samplePercent <= 0.0 )
             {
                PD_LOG( PDERROR, "Field[%s] %.2f is out of range ( %.2f - %.2f ]",
-                       _param._samplePercent, 0.0, 100.0 ) ;
+                       FIELD_NAME_ANALYZE_PERCENT, _param._samplePercent,
+                       0.0, 100.0 ) ;
                rc = SDB_INVALIDARG ;
                goto error ;
             }
