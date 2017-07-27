@@ -118,8 +118,20 @@ class SdbConfig(val properties: Map[String, String]) extends Serializable {
         invalidConfigValue(SdbConfig.FastCursorDecoderNum, fastCursorDecoderNum)
     }
 
+    private val scanType: String = properties
+        .getOrElse(SdbConfig.ScanType, SdbConfig.SCAN_TYPE_AUTO)
+
     val partitionMode: String = properties
-        .getOrElse(SdbConfig.PartitionMode, SdbConfig.DefaultPartitionMode)
+        .getOrElse(SdbConfig.PartitionMode, {
+            // compatible with old edition option
+            scanType.toLowerCase match {
+                case SdbConfig.SCAN_TYPE_IXSCAN =>
+                    SdbConfig.PARTITION_MODE_SHARDING
+                case SdbConfig.SCAN_TYPE_TBSCAN =>
+                    SdbConfig.PARTITION_MODE_DATABLOCK
+                case _ => SdbConfig.DefaultPartitionMode
+            }
+        })
 
     partitionMode.toLowerCase match {
         case SdbConfig.PARTITION_MODE_SINGLE =>
@@ -175,6 +187,9 @@ object SdbConfig {
     val ShardingPartitionSingleNode = "shardingpartitionsinglenode"
     val PreferredLocation = "preferredlocation"
 
+    // compatible with old edition option
+    val ScanType = "scantype" // auto/ixscan/tbscan
+
     val CURSOR_TYPE_FAST = "fast"
     val CURSOR_TYPE_NORMAL = "normal"
 
@@ -182,6 +197,10 @@ object SdbConfig {
     val PARTITION_MODE_SHARDING = "sharding"
     val PARTITION_MODE_DATABLOCK = "datablock"
     val PARTITION_MODE_AUTO = "auto"
+
+    val SCAN_TYPE_IXSCAN = "ixscan"
+    val SCAN_TYPE_TBSCAN = "tbscan"
+    val SCAN_TYPE_AUTO = "auto"
 
     val AllProperties = List(
         Host,
@@ -201,7 +220,8 @@ object SdbConfig {
         PartitionBlockNum,
         PartitionMaxNum,
         ShardingPartitionSingleNode,
-        PreferredLocation
+        PreferredLocation,
+        ScanType
     )
 
     val RequiredProperties = List(
