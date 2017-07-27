@@ -1,7 +1,5 @@
 function compareObj( lobj, robj, needObjectID )
 {
-   println(JSON.stringify(lobj));
-   println(JSON.stringify(robj));
    if ( typeof(lobj) !== "object" ||
         typeof(robj) !== "object" )
    {
@@ -28,7 +26,6 @@ function compareObj( lobj, robj, needObjectID )
    
    for ( k in lobj )
    {
-      println(k)
       if ( needObjectID === false && k === "_id" )
       {
          continue ;
