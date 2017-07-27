@@ -9904,6 +9904,7 @@ namespace engine
    INT32 omDiscoverBusinessCommand::_checkBusinssCFG( BSONObj &configInfo )
    {
       INT32 rc = SDB_OK ;
+      INT64 taskID = -1 ;
       omDatabaseTool dbTool( _cb ) ;
 
       _clusterName = configInfo.getStringField( OM_BSON_FIELD_CLUSTER_NAME ) ;
@@ -9938,6 +9939,26 @@ namespace engine
       {
          rc = SDB_INVALIDARG ;
          _errorMsg.setError( TRUE, "failed to get business type:rc=%d", rc ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      if ( TRUE == dbTool.businessIsExist( _businessName ) )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "business already exist,name:%s",
+                             _businessName.c_str() ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      taskID = dbTool.getTaskIdOfRunningBuz( _businessName ) ;
+      if( 0 <= taskID )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "business[%s] is exist "
+                             "in task["OSS_LL_PRINT_FORMAT"]",
+                             _businessName.c_str(), taskID ) ;
          PD_LOG( PDERROR, _errorMsg.getError() ) ;
          goto error ;
       }
