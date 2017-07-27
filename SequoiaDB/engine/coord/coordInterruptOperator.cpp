@@ -88,11 +88,8 @@ namespace engine
          pRtncb->contextDelete( tmpContextID, NULL ) ;
       }
 
-   done:
       PD_TRACE_EXITRC ( COORD_INTERRUPT_EXE, rc ) ;
       return rc ;
-   error:
-      goto done ;
    }
 
 }
