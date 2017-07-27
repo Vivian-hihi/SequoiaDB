@@ -1325,12 +1325,11 @@ namespace engine
 
       //upsert business
       {
-         BSONObj condition = BSON( OM_BUSINESS_FIELD_ADDTYPE << 0 <<
-                                   OM_BUSINESS_FIELD_NAME << "" <<
-                                   OM_BUSINESS_FIELD_TYPE << "" <<
-                                   OM_BUSINESS_FIELD_CLUSTERNAME << "" <<
-                                   OM_BUSINESS_FIELD_TIME << "" ) ;
-         BSONObj businessInfo = buzInfo.filterFieldsUndotted( condition, true ) ;
+         BSONObj condition = BSON( OM_BUSINESS_FIELD_LOCATION << "" <<
+                                   OM_BUSINESS_FIELD_DEPLOYMOD << "" <<
+                                   OM_BUSINESS_FIELD_ID << "" ) ;
+         BSONObj businessInfo = buzInfo.filterFieldsUndotted( condition,
+                                                              FALSE ) ;
          builder.appendElements( businessInfo ) ;
       }
       builder.append( OM_BUSINESS_FIELD_DEPLOYMOD, deployMod ) ;
