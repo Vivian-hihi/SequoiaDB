@@ -42,21 +42,12 @@ var SDB_COORD_GROUP_NAME         = "SYSCoord" ;
 var SDB_CATALOG_GROUP_NAME       = "SYSCatalogGroup" ;
 var SDB_SPARE_GROUP_NAME         = "SYSSpare" ;
 
-//var SDB_PRINT_LANGUAGE           = "en" ;
 var SDB_PRINT_JSON_FORMAT        = true ;
 
 var SDB_JSON_PARSE               = JSON.parse ;
 // end Global Constants
 
 // Global functions
-/*
-function setLanguage( str ) {
-	if ( str != "en" || str != "cn" ) {
-		throw new Error("argument should be 'en' or 'cn'");
-	}
-	SDB_PRINT_LANGUAGE = str ;
-} 
-*/
 
 // register json function
 //JSON.parse JSON.stringify
