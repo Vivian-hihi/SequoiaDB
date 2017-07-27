@@ -1,5 +1,6 @@
 package com.sequoiadb.metaopr.networkfail.domain;
 
+import com.sequoiadb.commlib.CommLib;
 import com.sequoiadb.commlib.StandTestInterface;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.BrokenNetwork;
@@ -44,6 +45,7 @@ public class AlterDomainSlaver2156 implements StandTestInterface {
     public void alterDomainSlaver() throws ReliabilityException {
         DBoperateTask task = DBoperateTask.getTaskAlterDomain(domain, 1000, groupNames);
         String hostName = getSlaveNodeOfCatalog().hostName();
+        task.setHostname(CommLib.getSafeCoordUrl(hostName));
         FaultMakeTask faultMakeTask = BrokenNetwork.getFaultMakeTask(hostName, 0, 5);
         TaskMgr mgr = new TaskMgr(faultMakeTask, task);
         mgr.execute();

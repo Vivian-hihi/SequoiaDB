@@ -8,6 +8,7 @@ import org.bson.BSONObject;
 import org.bson.util.JSON;
 
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * @FileName
@@ -17,20 +18,40 @@ import java.util.List;
  */
 public abstract class DBoperateTask extends OperateTask {
     int breakIndex;
+    Sequoiadb db = null;
+    private String hostname=null;
+
+    private final static Logger log = Logger.getLogger(DBoperateTask.class.getName());
 
     public int getBreakIndex() {
         return breakIndex;
     }
 
-    @Override
-    public void exec() {
-        try (MySequoiadb db = MyUtil.getMySdb()) {
-            operate(db.getSequoiadb());
-        } catch (InterruptedException e) {
-        }
+    public void setHostname(String hostname) {
+        this.hostname = hostname;
     }
 
-    abstract void operate(Sequoiadb db) throws InterruptedException;
+    public String getHostname() {
+        return hostname;
+    }
+
+    @Override
+    public void exec() {
+        if (hostname == null) {
+            db = MyUtil.getMySdb().getSequoiadb();
+        }else{
+            db=new Sequoiadb(hostname,"","");
+        }
+        try {
+            operate();
+        } catch (InterruptedException e) {
+            log.warning(e.toString());
+        }
+        db.close();
+    }
+
+
+    abstract void operate() throws InterruptedException;
 
     /**
      * @param clNames
@@ -40,7 +61,7 @@ public abstract class DBoperateTask extends OperateTask {
     public static DBoperateTask getTaskCreateCLInOneCs(final List<String> clNames, final String csName, final int delayMillis) {
         return new DBoperateTask() {
             @Override
-            void operate(Sequoiadb db) throws InterruptedException {
+            void operate() throws InterruptedException {
                 CollectionSpace cs = db.getCollectionSpace(csName);
                 for (int i = 0; i < clNames.size(); i++) {
                     Thread.sleep(delayMillis);
@@ -63,7 +84,7 @@ public abstract class DBoperateTask extends OperateTask {
     public static DBoperateTask getTaskDropCLInOneCs(final List<String> clNames, final String csName, final int delayMillis) {
         return new DBoperateTask() {
             @Override
-            void operate(Sequoiadb db) throws InterruptedException {
+            void operate() throws InterruptedException {
                 CollectionSpace cs = db.getCollectionSpace(csName);
                 for (int i = 0; i < clNames.size(); i++) {
                     Thread.sleep(delayMillis);
@@ -88,7 +109,7 @@ public abstract class DBoperateTask extends OperateTask {
     public static DBoperateTask getTaskCreateDomains(final List<String> domains, final int delayMillis) {
         return new DBoperateTask() {
             @Override
-            void operate(Sequoiadb db) throws InterruptedException {
+            void operate() throws InterruptedException {
                 List<String> groupNames = MyUtil.getDataGroupNames();
                 String groupName1 = groupNames.get(0);
                 String groupName2 = groupNames.get(1);
@@ -110,7 +131,7 @@ public abstract class DBoperateTask extends OperateTask {
     public static DBoperateTask getTaskDropDomains(final List<String> domains, final int delayMillis) {
         return new DBoperateTask() {
             @Override
-            void operate(Sequoiadb db) throws InterruptedException {
+            void operate() throws InterruptedException {
                 for (int i = 0; i < domains.size(); i++) {
                     Thread.sleep(delayMillis);
                     db.dropDomain(domains.get(i));
@@ -127,7 +148,7 @@ public abstract class DBoperateTask extends OperateTask {
     public static DBoperateTask getTaskDropCs(final List<String> csNames, final int delayMillis) {
         return new DBoperateTask() {
             @Override
-            void operate(Sequoiadb db) throws InterruptedException {
+            void operate() throws InterruptedException {
                 for (int i = 0; i < csNames.size(); i++) {
                     Thread.sleep(delayMillis);
                     db.dropCollectionSpace(csNames.get(i));
@@ -145,7 +166,7 @@ public abstract class DBoperateTask extends OperateTask {
     public static DBoperateTask getTaskCreateCs(final List<String> csNames, final int delayMillis) {
         return new DBoperateTask() {
             @Override
-            void operate(Sequoiadb db) throws InterruptedException {
+            void operate() throws InterruptedException {
                 for (int i = 0; i < csNames.size(); i++) {
                     Thread.sleep(delayMillis);
                     db.createCollectionSpace(csNames.get(i));
@@ -171,7 +192,7 @@ public abstract class DBoperateTask extends OperateTask {
     public static DBoperateTask getTaskAlterDomain(final String domainName, final int num, final List<String> groupNames) {
         return new DBoperateTask() {
             @Override
-            void operate(Sequoiadb db) throws InterruptedException {
+            void operate() throws InterruptedException {
                 Domain domain = db.getDomain(domainName);
                 String groupName1 = groupNames.get(0);
                 String groupName2 = groupNames.get(1);

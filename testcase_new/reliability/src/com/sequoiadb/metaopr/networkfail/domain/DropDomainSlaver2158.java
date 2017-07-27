@@ -1,5 +1,6 @@
 package com.sequoiadb.metaopr.networkfail.domain;
 
+import com.sequoiadb.commlib.CommLib;
 import com.sequoiadb.commlib.StandTestInterface;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.BrokenNetwork;
@@ -59,6 +60,7 @@ public class DropDomainSlaver2158 implements StandTestInterface {
 
         DBoperateTask task = DBoperateTask.getTaskDropDomains(domains);
         String hostName = getSlaveNodeOfCatalog().hostName();
+        task.setHostname(CommLib.getSafeCoordUrl(hostName));
         FaultMakeTask faultMakeTask = BrokenNetwork.getFaultMakeTask(hostName, 0, 5);
         TaskMgr taskMgr = new TaskMgr(faultMakeTask, task);
         taskMgr.execute();

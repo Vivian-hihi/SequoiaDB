@@ -6,6 +6,8 @@ import com.sequoiadb.exception.BaseException;
 import org.bson.BSONObject;
 import org.bson.util.JSON;
 
+import java.util.logging.Logger;
+
 import static com.sequoiadb.metaopr.commons.MyUtil.*;
 
 /**
@@ -16,6 +18,7 @@ import static com.sequoiadb.metaopr.commons.MyUtil.*;
  */
 public class LobUtil {
     public static final String csName = "lobcs", clName = "lobcl";
+    private static final Logger log=Logger.getLogger(LobUtil.class.getName());
 
 
     public static void createLobCsAndCl() {
@@ -42,7 +45,9 @@ public class LobUtil {
         Sequoiadb db=getSdb();
         try {
             db.dropCollectionSpace(csName);
-        }catch (BaseException e){}
+        }catch (BaseException e){
+            log.severe("dropcs fail "+csName);
+        }
         db.close();
     }
 

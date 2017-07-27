@@ -1,5 +1,6 @@
 package com.sequoiadb.metaopr.networkfail.cl;
 
+import com.sequoiadb.commlib.CommLib;
 import com.sequoiadb.commlib.StandTestInterface;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.BrokenNetwork;
@@ -60,6 +61,8 @@ public class CreateClMaster2163 implements StandTestInterface {
 
         DBoperateTask task = DBoperateTask.getTaskCreateCLInOneCs(clNames, csName);
         String hostName = getMasterNodeOfCatalog().hostName();
+        String safeUrl= CommLib.getSafeCoordUrl(hostName);
+        task.setHostname(safeUrl);
         FaultMakeTask faultMakeTask = BrokenNetwork.getFaultMakeTask(hostName, 0, 5);
         TaskMgr mgr = new TaskMgr(faultMakeTask, task);
         mgr.execute();

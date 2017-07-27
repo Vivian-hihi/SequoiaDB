@@ -1,5 +1,6 @@
 package com.sequoiadb.metaopr.networkfail.domain;
 
+import com.sequoiadb.commlib.CommLib;
 import com.sequoiadb.commlib.StandTestInterface;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.BrokenNetwork;
@@ -58,6 +59,8 @@ public class CreateDomainMaster2153 implements StandTestInterface {
     public void createDomainMaster() throws ReliabilityException, InterruptedException {
         DBoperateTask task = DBoperateTask.getTaskCreateDomains(domains);
         String hostName=getMasterNodeOfCatalog().hostName();
+        String safeUrl= CommLib.getSafeCoordUrl(hostName);
+        task.setHostname(safeUrl);
         FaultMakeTask faultMakeTask = BrokenNetwork.getFaultMakeTask(hostName, 1, 5);
         TaskMgr taskMgr = new TaskMgr(faultMakeTask, task);
         taskMgr.execute();
