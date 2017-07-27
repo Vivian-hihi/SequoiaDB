@@ -92,8 +92,27 @@ public class SdbSnapshotList {
         } catch (BaseException e) {
             if (!e.getErrorType().equals("SDB_RTN_COORD_ONLY"))
                 assertTrue(false);
-            return;
         }
+
+        // 9
+        sdb.beginTransaction();
+        try {
+            cl.insert(new BasicBSONObject());
+            cursor = sdb.getSnapshot(Sequoiadb.SDB_SNAP_TRANSACTIONS_CURRENT, "", "", "");
+            System.out.println("result of SDB_SNAP_TRANSACTIONS_CURRENT is: ");
+            while(cursor.hasNext()){
+                System.out.println(cursor.getNext());
+            }
+            // 10
+            cursor = sdb.getSnapshot(Sequoiadb.SDB_SNAP_TRANSACTIONS, "", "", "");
+            System.out.println("result of SDB_SNAP_TRANSACTIONS is: ");
+            while(cursor.hasNext()){
+                System.out.println(cursor.getNext());
+            }
+        } finally {
+            sdb.commit();
+        }
+
     }
 
     @Test
@@ -160,6 +179,27 @@ public class SdbSnapshotList {
             cursor = null;
             cursor = sdb.getList(10, null, null, null);
             assertTrue(null != cursor);
+        }
+
+        // 11
+        sdb.beginTransaction();
+        try {
+            BSONObject dump = new BasicBSONObject();
+            BSONObject obj = new BasicBSONObject();
+            cl.insert(obj);
+            cursor = sdb.getList(Sequoiadb.SDB_LIST_TRANSACTIONS_CURRENT, dump, dump, dump);
+            System.out.println("result of SDB_LIST_TRANSACTIONS_CURRENT is: ");
+            while(cursor.hasNext()){
+                System.out.println(cursor.getNext());
+            }
+            // 12
+            cursor = sdb.getList(Sequoiadb.SDB_LIST_TRANSACTIONS, dump, dump, dump);
+            System.out.println("result of SDB_LIST_TRANSACTIONS is: ");
+            while(cursor.hasNext()){
+                System.out.println(cursor.getNext());
+            }
+        } finally {
+            sdb.commit();
         }
     }
 }

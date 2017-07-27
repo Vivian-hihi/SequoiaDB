@@ -81,8 +81,10 @@ public class Sequoiadb implements Closeable {
     public final static int SDB_LIST_STOREPROCEDURES = 8;
     public final static int SDB_LIST_DOMAINS = 9;
     public final static int SDB_LIST_TASKS = 10;
-    public final static int SDB_LIST_CS_IN_DOMAIN = 11;
-    public final static int SDB_LIST_CL_IN_DOMAIN = 12;
+    public final static int SDB_LIST_TRANSACTIONS = 11;
+    public final static int SDB_LIST_TRANSACTIONS_CURRENT = 12;
+    public final static int SDB_LIST_CL_IN_DOMAIN = 129;
+    public final static int SDB_LIST_CS_IN_DOMAIN = 130;
 
     public final static int SDB_SNAP_CONTEXTS = 0;
     public final static int SDB_SNAP_CONTEXTS_CURRENT = 1;
@@ -93,6 +95,8 @@ public class Sequoiadb implements Closeable {
     public final static int SDB_SNAP_DATABASE = 6;
     public final static int SDB_SNAP_SYSTEM = 7;
     public final static int SDB_SNAP_CATALOG = 8;
+    public final static int SDB_SNAP_TRANSACTIONS = 9;
+    public final static int SDB_SNAP_TRANSACTIONS_CURRENT = 10;
 
     public final static int FMP_FUNC_TYPE_INVALID = -1;
     public final static int FMP_FUNC_TYPE_JS = 0;
@@ -925,6 +929,8 @@ public class Sequoiadb implements Closeable {
      *                 <dt>Sequoiadb.SDB_LIST_STOREPROCEDURES           : Get stored procedure list ( only applicable in sharding env )
      *                 <dt>Sequoiadb.SDB_LIST_DOMAINS        : Get all the domains list ( only applicable in sharding env )
      *                 <dt>Sequoiadb.SDB_LIST_TASKS        : Get all the running split tasks ( only applicable in sharding env )
+     *                 <dt>Sequoiadb.SDB_LIST_TRANSACTIONS        : Get all the transactions information.
+     *                 <dt>Sequoiadb.SDB_LIST_TRANSACTIONS_CURRENT        : Get the transactions information of current session.
      *                 </dl>
      * @param query    The matching rule, match all the documents if null.
      * @param selector The selective rule, return the whole document if null.
@@ -1016,8 +1022,8 @@ public class Sequoiadb implements Closeable {
      *                 <dt>Sequoiadb.SDB_SNAP_DATABASE        : Get database's snapshot
      *                 <dt>Sequoiadb.SDB_SNAP_SYSTEM        : Get system's snapshot
      *                 <dt>Sequoiadb.SDB_SNAP_CATALOG        : Get catalog's snapshot
-     *                 <dt>Sequoiadb.SDB_LIST_GROUPS        : Get replica group list ( only applicable in sharding env )
-     *                 <dt>Sequoiadb.SDB_LIST_STOREPROCEDURES           : Get stored procedure list ( only applicable in sharding env )
+     *                 <dt>Sequoiadb.SDB_SNAP_TRANSACTIONS           : Get the snapshot of all the transactions
+     *                 <dt>Sequoiadb.SDB_SNAP_TRANSACTIONS_CURRENT        : Get the snapshot of current transactions
      *                 </dl>
      * @param matcher  the matching rule, match all the documents if null
      * @param selector the selective rule, return the whole document if null
@@ -1112,6 +1118,10 @@ public class Sequoiadb implements Closeable {
                 return AdminCommand.SNAP_SYSTEM;
             case SDB_SNAP_CATALOG:
                 return AdminCommand.SNAP_CATALOG;
+            case SDB_SNAP_TRANSACTIONS:
+                return AdminCommand.SNAP_TRANSACTIONS;
+            case SDB_SNAP_TRANSACTIONS_CURRENT:
+                return AdminCommand.SNAP_TRANSACTIONS_CURRENT;
             default:
                 throw new BaseException(SDBError.SDB_INVALIDARG, String.format("Invalid snapshot type: %d", snapType));
         }
@@ -1821,10 +1831,14 @@ public class Sequoiadb implements Closeable {
                 return AdminCommand.LIST_DOMAINS;
             case SDB_LIST_TASKS:
                 return AdminCommand.LIST_TASKS;
-            case SDB_LIST_CS_IN_DOMAIN:
-                return AdminCommand.LIST_CS_IN_DOMAIN;
+            case SDB_LIST_TRANSACTIONS:
+                return AdminCommand.LIST_TRANSACTIONS;
+            case SDB_LIST_TRANSACTIONS_CURRENT:
+                return AdminCommand.LIST_TRANSACTIONS_CURRENT;
             case SDB_LIST_CL_IN_DOMAIN:
                 return AdminCommand.LIST_CL_IN_DOMAIN;
+            case SDB_LIST_CS_IN_DOMAIN:
+                return AdminCommand.LIST_CS_IN_DOMAIN;
             default:
                 throw new BaseException(SDBError.SDB_INVALIDARG, String.format("Invalid list type: %d", listType));
         }

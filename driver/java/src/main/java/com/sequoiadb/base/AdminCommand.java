@@ -64,8 +64,10 @@ final class AdminCommand {
     final static String LIST_PROCEDURES = PREFIX + "list procedures";
     final static String LIST_DOMAINS = PREFIX + "list domains";
     final static String LIST_TASKS = PREFIX + "list tasks";
-    final static String LIST_CS_IN_DOMAIN = PREFIX + "list collectionspaces in domain";
+    final static String LIST_TRANSACTIONS = PREFIX + "list transactions";
+    final static String LIST_TRANSACTIONS_CURRENT = PREFIX + "list transactions current";
     final static String LIST_CL_IN_DOMAIN = PREFIX + "list collections in domain";
+    final static String LIST_CS_IN_DOMAIN = PREFIX + "list collectionspaces in domain";
 
     final static String SNAP_CONTEXTS = PREFIX + "snapshot contexts";
     final static String SNAP_CONTEXTS_CURRENT = PREFIX + "snapshot contexts current";
@@ -76,6 +78,9 @@ final class AdminCommand {
     final static String SNAP_DATABASE = PREFIX + "snapshot database";
     final static String SNAP_SYSTEM = PREFIX + "snapshot system";
     final static String SNAP_CATALOG = PREFIX + "snapshot catalog";
+    final static String SNAP_TRANSACTIONS = PREFIX + "snapshot transactions";
+    final static String SNAP_TRANSACTIONS_CURRENT = PREFIX + "snapshot transactions current";
+
     final static String RESET_SNAPSHOT = PREFIX + "snapshot reset";
 
     final static String CREATE_PROCEDURE = PREFIX + "create procedure";
