@@ -82,7 +82,7 @@ if( false == commIsStandalone( db ) )
       throw e ;
    }
 
-   docs.splice(12,1);
+   docs.splice(14,1);
    checkResult( cl, {}, docs );
    try
    {
