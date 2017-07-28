@@ -643,6 +643,18 @@
                            "file": "SDB_LIST_GROUPS",
                            "cn": "分区组列表",
                            "en": "SDB_LIST_GROUPS"
+                        },
+                        {
+                           "id": 1501230617,
+                           "file": "SDB_LIST_TRANSACTIONS",
+                           "cn": "事务列表",
+                           "en": "SDB_LIST_TRANSACTIONS"
+                        },
+                        {
+                           "id": 1501230618,
+                           "file": "SDB_LIST_TRANSACTIONS_CURRENT",
+                           "cn": "当前事务列表",
+                           "en": "SDB_LIST_TRANSACTIONS_CURRENT"
                         }
                      ]
                   },
