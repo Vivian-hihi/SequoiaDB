@@ -20,10 +20,10 @@ function toolGetReleaseInfo( hostName, svcName )
     var command = "lsb_release -a | grep Description | awk -F ':' '{print $2}'" ;
     var tmpInfo = cmd.run( command ).split( "\n" ) ;
     result = tmpInfo[ tmpInfo.length-2 ] ;
-    result = result.replace( /[\t ]/g, '' ) ;
     if( result.indexOf( "command not found" ) === -1 )
     {
         remote.close() ;
+        result = result.replace( /[\t ]/g, '' ) ;
         return result ;
     }
     
