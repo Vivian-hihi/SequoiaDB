@@ -12,28 +12,44 @@
 
 function toolGetReleaseInfo( hostName, svcName )
 {
-   var remote = new Remote( hostName, svcName ) ;
-   var cmd = remote.getCmd() ;
-   var result = [] ;
-   
-   var command = "cat /etc/issue" ;
-   var tmpInfo = cmd.run( command ).split( "\n" ) ;
-   result[0] = tmpInfo[tmpInfo.length-3] ; 
-   result[0] = result[0].replace( /[\t ]/g, '' ) ;
-   
-   command = "uname -s" ;
-   tmpInfo = cmd.run( command ).split( "\n" ) ;
-   var osType = tmpInfo[tmpInfo.length-2] ;
-   command = "uname -r" ;
-   tmpInfo = cmd.run( command ).split( "\n" ) ;
-   var release = tmpInfo[tmpInfo.length-2] ;
-   command = "uname -m" ;
-   tmpInfo = cmd.run( command ).split( "\n" ) ;
-   var machine = tmpInfo[tmpInfo.length-2] ; 
-   result[1] = osType + release + "(" + machine + ")" ;
-   
-   remote.close() ;
-   return result ;
+    var remote = new Remote( hostName, svcName ) ;
+    var cmd = remote.getCmd() ;
+    var result ;
+    
+    // use lsb_release to get release info
+    var command = "lsb_release -a | grep Description | awk -F ':' '{print $2}'" ;
+    var tmpInfo = cmd.run( command ).split( "\n" ) ;
+    result = tmpInfo[ tmpInfo.length-2 ] ;
+    result = result.replace( /[\t ]/g, '' ) ;
+    if( result.indexOf( "command not found" ) === -1 )
+    {
+        remote.close() ;
+        return result ;
+    }
+    
+    // if cannot use lsb_release, use release file    
+    var files = [ "/etc/SuSE-release", "/etc/redhat-release", "/etc/os-release" ] ;
+    var file = remote.getFile() ;
+    for( var i = 0;i < files.length;i++ )
+    {
+        if( file.exists( files[i] ) )
+        {
+            if( i == 0 || i == 1 )
+            {
+                result = cmd.run( "cat " + files[i] ).split( "\n" )[0] ;
+                result = result.replace( /[\t ]/g, '' ) ;
+            }
+            else
+            {
+                var tmpInfo = cmd.run( "cat /etc/os-release | grep PRETTY_NAME").split("\n")[0] ;
+                tmpInfo = tmpInfo.split("=")[1] ;
+                result = tmpInfo.replace( /\"/g, '' ) ;
+                result = result.replace( /[\t ]/g, '' ) ;
+            }
+            remote.close() ;
+            return result ;
+        }    
+    }
 }
 
 // 测试获取system对象信息
@@ -120,11 +136,9 @@ SystemTest.prototype.testGetReleaseInfo = function()
    
    // 测试获取的系统发行版本信息
    var descript1 = this.system.getReleaseInfo().toObj().Description ;
-   descript1 = descript1.replace( /[\t ]/g, '' ) ;
+   descript1 = descript1.replace( /[\t ]/g, '' ) ; 
    var descript2 = toolGetReleaseInfo( this.hostname, this.svcname ) ;
-   
-   if( descript2[0].indexOf( descript1 ) === -1 &&  
-       descript1 !== descript2[1] )
+   if( descript1 !== descript2 )
    {
       throw buildException( "testGetReleaseInfo", null, "test description " + this, 
                             descript2, descript1 ) ;
