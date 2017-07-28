@@ -44,6 +44,7 @@
 #include "dmsCompress.hpp"
 #include "pdTrace.hpp"
 #include "dmsTrace.hpp"
+#include "dmsStorageDataCapped.hpp"
 
 using namespace bson ;
 
@@ -82,6 +83,9 @@ namespace engine
                            header->_name ) ;
 
       if ( ossStrncmp ( eyeCatcher, DMS_DATASU_EYECATCHER,
+                        DMS_HEADER_EYECATCHER_LEN ) == 0
+           ||
+           ossStrncmp ( eyeCatcher, DMS_DATACAPSU_EYECATCHER,
                         DMS_HEADER_EYECATCHER_LEN ) == 0 )
       {
          dataOffset = DMS_MME_OFFSET + DMS_MME_SZ ;
@@ -426,7 +430,8 @@ namespace engine
             }
          }
 
-         if ( mb->_attributes & ~(DMS_MB_ATTR_COMPRESSED|DMS_MB_ATTR_NOIDINDEX) )
+         if ( mb->_attributes & ~(DMS_MB_ATTR_COMPRESSED|DMS_MB_ATTR_NOIDINDEX
+                                  |DMS_MB_ATTR_CAPPED) )
          {
             mbAttr2String ( mb->_attributes, tmpStr, DMS_COLLECTION_STATUS_LEN ) ;
             len += ossSnprintf ( outBuf + len, outSize - len,
@@ -543,7 +548,7 @@ namespace engine
       return len ;
    }
 
-   UINT32 _dmsInspect::inspectDataExtent( pmdEDUCB *cb, void *inBuf,
+   UINT32 _dmsInspect::inspectDataExtent( pmdEDUCB *cb, CHAR *inBuf,
                                           UINT32 inSize, CHAR *outBuf,
                                           UINT32 outSize, INT32 maxPages,
                                           UINT16 collectionID,
@@ -552,7 +557,8 @@ namespace engine
                                           SINT32 &err,
                                           dmsCompressorEntry *compressorEntry,
                                           UINT64 &recordNum,
-                                          UINT64 &compressedNum )
+                                          UINT64 &compressedNum,
+                                          BOOLEAN capped )
    {
       UINT32 len           = 0 ;
       SINT32 localErr      = 0 ;
@@ -590,45 +596,17 @@ namespace engine
       }
       nextExtent = extent->_nextExtent ;
 
+      if ( capped )
       {
-         INT32 recordCount = 0 ;
-         BOOLEAN isCompressed = FALSE ;
-
-         len += inspectExtentHeader ( inBuf, inSize, outBuf + len,
-                                      outSize - len, collectionID, localErr ) ;
-         // make sure the extent is valid and in use
-         if ( DMS_EXTENT_FLAG_FREED == extent->_flag )
-         {
-            len += ossSnprintf ( outBuf + len, outSize - len,
-                                 "Error: Extent is not in use"OSS_NEWLINE ) ;
-            ++localErr ;
-         }
-         // start inspect all records
-         dmsOffset nextRecord = extent->_firstRecordOffset ;
-         while ( DMS_INVALID_OFFSET != nextRecord && len < outSize )
-         {
-            if ( nextRecord >= (SINT32)inSize )
-            {
-               len += ossSnprintf (  outBuf + len, outSize - len,
-                                     "Error : nextRecord %d is greater "
-                                     "than inSize %d",
-                                     nextRecord, inSize ) ;
-               ++localErr ;
-            }
-            len += inspectDataRecord ( cb, ((CHAR*)inBuf)+nextRecord,
-                                       inSize - nextRecord,
-                                       outBuf + len, outSize - len,
-                                       recordCount,
-                                       nextRecord, ridList, localErr,
-                                       compressorEntry,
-                                       isCompressed ) ;
-            ++recordCount ;
-            ++recordNum ;
-            if ( isCompressed )
-            {
-               ++compressedNum ;
-            }
-         }
+         len += inspectCappedExtent( inBuf, inSize, outBuf + len, outSize - len,
+                                     collectionID, compressorEntry, recordNum,
+                                     compressedNum, localErr, cb ) ;
+      }
+      else
+      {
+         len += inspectNormalExtent( inBuf, inSize, outBuf + len, outSize - len,
+                                     collectionID, compressorEntry, recordNum,
+                                     compressedNum, localErr, ridList, cb ) ;
       }
 
    exit :
@@ -773,6 +751,53 @@ namespace engine
       return len ;
    error:
       goto exit ;
+   }
+
+   UINT32 _dmsInspect::inspectCappedDataRecord( pmdEDUCB *cb,
+                                                dmsCappedRecord *record,
+                                                CHAR *outBuf,
+                                                UINT32 outSize,
+                                                dmsOffset currentOffset,
+                                                SINT32 &err,
+                                                dmsCompressorEntry *compressorEntry )
+   {
+      INT32 rc = SDB_OK ;
+      UINT32 len = 0 ;
+
+      try
+      {
+         /// first to inc error
+         ++err ;
+
+         ossValuePtr recordPtr = 0 ;
+         DMS_RECORD_EXTRACTDATA ( record, recordPtr,
+                                  compressorEntry ) ;
+         BSONObj obj ( (CHAR*)recordPtr ) ;
+         if ( !obj.isValid() )
+         {
+            len += ossSnprintf ( outBuf + len, outSize - len,
+                                 "Error: Detected invalid record (0x%08x)"
+                                 OSS_NEWLINE, currentOffset ) ;
+         }
+         /// dec error
+         else
+         {
+            --err ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         len += ossSnprintf ( outBuf + len, outSize - len,
+                              "Error: Failed to format "
+                              "record: %s"OSS_NEWLINE,
+                              e.what() ) ;
+      }
+
+   exit :
+      return len ;
+   error:
+      goto exit ;
+
    }
 
    UINT32 _dmsInspect::inspectExtentHeader( void *inBuf, UINT32 inSize,
@@ -1275,6 +1300,166 @@ namespace engine
       return len ;
    }
 
+   INT32 _dmsInspect::inspectNormalExtent( CHAR *inBuf, UINT32 inSize,
+                                           CHAR *outBuf, UINT32 outSize,
+                                           UINT16 collectionID,
+                                           dmsCompressorEntry *compressorEntry,
+                                           UINT64 &recordNum,
+                                           UINT64 &compressedNum,
+                                           INT32 &localErr,
+                                           set< dmsRecordID > *ridList,
+                                           pmdEDUCB *cb )
+   {
+      UINT32 len = 0 ;
+      INT32 recordCount = 0 ;
+      dmsExtent *extent = (dmsExtent *)inBuf ;
+      BOOLEAN isCompressed = FALSE ;
+
+      len += inspectExtentHeader ( inBuf, inSize, outBuf + len,
+                                   outSize - len, collectionID, localErr ) ;
+      // make sure the extent is valid and in use
+      if ( DMS_EXTENT_FLAG_FREED == extent->_flag )
+      {
+         len += ossSnprintf ( outBuf + len, outSize - len,
+                              "Error: Extent is not in use"OSS_NEWLINE ) ;
+         ++localErr ;
+      }
+      // start inspect all records
+      dmsOffset nextRecord = extent->_firstRecordOffset ;
+      while ( DMS_INVALID_OFFSET != nextRecord && len < outSize )
+      {
+         if ( nextRecord >= (SINT32)inSize )
+         {
+            len += ossSnprintf (  outBuf + len, outSize - len,
+                                  "Error : nextRecord %d is greater "
+                                  "than inSize %d",
+                                  nextRecord, inSize ) ;
+            ++localErr ;
+         }
+
+         len += inspectDataRecord ( cb, ((CHAR*)inBuf)+nextRecord,
+                                    inSize - nextRecord,
+                                    outBuf + len, outSize - len,
+                                    recordCount, nextRecord,
+                                    ridList, localErr,
+                                    compressorEntry,
+                                    isCompressed ) ;
+         ++recordCount ;
+         ++recordNum ;
+         if ( isCompressed )
+         {
+            ++compressedNum ;
+         }
+      }
+      return len ;
+   }
+
+   INT32 _dmsInspect::inspectCappedExtent( CHAR *inBuf, UINT32 inSize,
+                                           CHAR *outBuf, UINT32 outSize,
+                                           UINT16 collectionID,
+                                           dmsCompressorEntry *compressorEntry,
+                                           UINT64 &recordNum,
+                                           UINT64 &compressedNum,
+                                           INT32 &localErr,
+                                           pmdEDUCB *cb )
+   {
+      UINT32 len = 0 ;
+      INT32 recordCount = 0 ;
+      dmsExtent *extent = (dmsExtent *)inBuf ;
+      BOOLEAN isCompressed = FALSE ;
+
+      len += inspectExtentHeader ( inBuf, inSize, outBuf + len,
+                                   outSize - len, collectionID, localErr ) ;
+      // make sure the extent is valid and in use
+      if ( DMS_EXTENT_FLAG_FREED == extent->_flag )
+      {
+         len += ossSnprintf ( outBuf + len, outSize - len,
+                              "Error: Extent is not in use"OSS_NEWLINE ) ;
+         ++localErr ;
+      }
+      // start inspect all records
+      dmsOffset nextRecord = extent->_firstRecordOffset ;
+      dmsOffset lastRecord = extent->_lastRecordOffset ;
+      while ( DMS_INVALID_OFFSET != nextRecord && len < outSize )
+      {
+         dmsCappedRecord *record = NULL ;
+         INT64 logicalID = -1 ;
+         dmsOffset myOffset = DMS_INVALID_OFFSET ;
+         if ( nextRecord >= (SINT32)inSize )
+         {
+            len += ossSnprintf (  outBuf + len, outSize - len,
+                                  "Error : nextRecord %d is greater "
+                                  "than inSize %d",
+                                  nextRecord, inSize ) ;
+            ++localErr ;
+         }
+
+         record = (dmsCappedRecord*)( ((CHAR*)inBuf) + nextRecord ) ;
+         logicalID = record->getLogicalID() ;
+
+         // If we have gone beyond the last record offset, we see it as the end.
+         // In that case, no error will be reported.
+         if ( logicalID < 0 )
+         {
+            // If we are still before the last record offset, print the current
+            // record, but stop going to the next one.
+            if ( nextRecord <= lastRecord )
+            {
+               len += ossSnprintf( outBuf + len, outSize - len,
+                                   "Error: logicalID (%lld) is invalid"OSS_NEWLINE,
+                                   logicalID ) ;
+               nextRecord = DMS_INVALID_OFFSET ;
+            }
+            else
+            {
+               nextRecord = DMS_INVALID_OFFSET ;
+               goto exit ;
+            }
+         }
+         else
+         {
+            // Check if the logical id in the record header matches the position
+            // (extent and offset). If not, print the current record, and stop.
+            myOffset = logicalID % DMS_CAP_EXTENT_BODY_SZ +
+                       DMS_EXTENT_METADATA_SZ ;
+            if ( myOffset != nextRecord )
+            {
+               if ( nextRecord <= lastRecord )
+               {
+                  len += ossSnprintf( outBuf + len, outSize - len,
+                                      "Error: logicalID (%lld) and offset (%u) "
+                                      "dose not match"OSS_NEWLINE,
+                                      logicalID, nextRecord ) ;
+                  nextRecord = DMS_INVALID_OFFSET ;
+               }
+               else
+               {
+                  nextRecord = DMS_INVALID_OFFSET ;
+                  goto exit ;
+               }
+            }
+         }
+
+         len += inspectCappedDataRecord( cb, record,
+                                         outBuf + len, outSize - len,
+                                         nextRecord, localErr,
+                                         compressorEntry ) ;
+         ++recordCount ;
+         ++recordNum ;
+         if ( isCompressed )
+         {
+            ++compressedNum ;
+         }
+         if ( DMS_INVALID_EXTENT != nextRecord )
+         {
+            nextRecord = ossRoundUpToMultipleX( nextRecord + record->getSize(),
+                                                4 ) ;
+         }
+      }
+
+   exit:
+      return len ;
+   }
 }
 
 

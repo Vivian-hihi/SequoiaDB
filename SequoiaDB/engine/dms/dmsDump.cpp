@@ -45,6 +45,7 @@
 #include "pdTrace.hpp"
 #include "dmsTrace.hpp"
 #include "utilDictionary.hpp"
+#include "dmsStorageDataCapped.hpp"
 
 using namespace bson ;
 
@@ -528,7 +529,10 @@ namespace engine
                              mb->_lobCommitFlag,
                              mb->_lobCommitLSN, mb->_lobCommitLSN,
                              strLobTime, mb->_lobCommitTime ) ;
-
+         // Extent option extent id
+         len += ossSnprintf( outBuf + len, outSize - len,
+                             " Extend option extent ID: 0x%08x (%d)"OSS_NEWLINE,
+                             mb->_mbOptExtentID, mb->_mbOptExtentID ) ;
          // Delete list
          len += ossSnprintf( outBuf + len, outSize - len,
                              " Deleted list :"OSS_NEWLINE ) ;
@@ -720,6 +724,28 @@ namespace engine
       return len ;
    }
 
+   UINT32 _dmsDump::_dumpExtOptionDetail( CHAR *inBuf, UINT32 inSize,
+                                          CHAR *outBuf, UINT32 outSize,
+                                          DMS_STORAGE_TYPE type )
+   {
+      UINT32 len = 0 ;
+      if ( DMS_STORAGE_CAPPED == type )
+      {
+         dmsCappedCLOptions *options =
+            (dmsCappedCLOptions *)(inBuf + sizeof(DMS_OPTEXTENT_HEADER_SZ)) ;
+         len += ossSnprintf( outBuf + len, outSize - len,
+                             "Extend option detail:"OSS_NEWLINE ) ;
+         len += ossSnprintf( outBuf + len, outSize - len,
+                             "   Size: %lld"OSS_NEWLINE, options->_maxSize ) ;
+         len += ossSnprintf( outBuf + len, outSize - len,
+                             "   Max: %lld"OSS_NEWLINE, options->_maxRecNum ) ;
+         len += ossSnprintf( outBuf + len, outSize - len,
+                             "   Overwrite: %s"OSS_NEWLINE,
+                             (options->_overwrite) ? "true" : "false" ) ;
+      }
+      return len ;
+   }
+
    UINT32 _dmsDump::dumpDictExtent( void * inBuf, UINT32 inSize, CHAR * outBuf,
                                     UINT32 outSize, CHAR * addrPrefix,
                                     UINT32 options, dmsExtentID extID )
@@ -785,13 +811,69 @@ namespace engine
       return len ;
    }
 
-   UINT32 _dmsDump::dumpDataExtent( pmdEDUCB *cb, void *inBuf, UINT32 inSize,
+   UINT32 _dmsDump::dumpExtOptExtent( CHAR *inBuf, UINT32 inSize,
+                                      CHAR *outBuf, UINT32 outSize,
+                                      CHAR *addrPrefix, UINT32 options,
+                                      dmsExtentID extID,
+                                      DMS_STORAGE_TYPE type )
+   {
+      UINT32 len = 0 ;
+      UINT32 hexDumpOption = 0 ;
+      dmsOptExtent *extent = (dmsOptExtent *)inBuf ;
+
+      if ( extent->_eyeCatcher[0] != DMS_OPT_EXTENT_EYECATCHER0
+           || extent->_eyeCatcher[1] != DMS_OPT_EXTENT_EYECATCHER1 )
+      {
+         len += ossSnprintf( outBuf + len, outSize - len,
+                             "Error: Invalid eye catcher: %c%c"OSS_NEWLINE,
+                             extent->_eyeCatcher[0],
+                             extent->_eyeCatcher[1] ) ;
+         goto exit ;
+      }
+
+      len += ossSnprintf( outBuf + len, outSize - len,
+                          " ExtentId: 0x%08x (%d)"OSS_NEWLINE,
+                          extID, extID ) ;
+      if ( DMS_SU_DMP_OPT_HEX & options )
+      {
+         if ( DMS_SU_DMP_OPT_HEX_PREFIX_AS_ADDR & options )
+         {
+            hexDumpOption |= OSS_HEXDUMP_PREFIX_AS_ADDR ;
+         }
+         if ( !(DMS_SU_DMP_OPT_HEX_WITH_ASCII & options ) )
+         {
+            hexDumpOption |= OSS_HEXDUMP_RAW_HEX_ONLY ;
+         }
+         len += ossHexDumpBuffer( inBuf, inSize, outBuf + len, outSize - len,
+                                  addrPrefix, hexDumpOption ) ;
+      }
+      if ( DMS_SU_DMP_OPT_FORMATTED & options )
+      {
+         len += ossSnprintf( outBuf + len, outSize - len,
+                         " Extend Option Extent Header :"OSS_NEWLINE ) ;
+         len += dumpExtentHeader( inBuf, inSize, outBuf + len, outSize - len ) ;
+         if ( DMS_EXTENT_FLAG_FREED == extent->_flag )
+         {
+            len += ossSnprintf( outBuf + len, outSize - len,
+                                "Error: Extent is not in use"OSS_NEWLINE ) ;
+            goto exit ;
+         }
+         len += _dumpExtOptionDetail( inBuf, inSize, outBuf + len,
+                                      outSize - len, type ) ;
+      }
+      len += ossSnprintf ( outBuf + len, outSize - len, OSS_NEWLINE ) ;
+   exit:
+      return len ;
+   }
+
+   UINT32 _dmsDump::dumpDataExtent( pmdEDUCB *cb, CHAR *inBuf, UINT32 inSize,
                                     CHAR *outBuf, UINT32 outSize,
                                     CHAR *addrPrefix, UINT32 options,
                                     dmsExtentID &nextExtent,
                                     dmsCompressorEntry *compressorEntry,
                                     set< dmsRecordID > *ridList,
-                                    BOOLEAN dumpRecord )
+                                    BOOLEAN dumpRecord,
+                                    BOOLEAN capped )
    {
       UINT32 len           = 0 ;
       UINT32 hexDumpOption = 0 ;
@@ -856,29 +938,16 @@ namespace engine
 
          if( dumpRecord )
          {
-            // start dump all records
-            dmsOffset nextRecord = extent->_firstRecordOffset ;
-            INT32 recordCount = 0 ;
-
-            while ( DMS_INVALID_OFFSET != nextRecord && len < outSize )
+            if ( capped )
             {
-               if ( nextRecord >= (SINT32)inSize )
-               {
-                  len += ossSnprintf (  outBuf + len, outSize - len,
-                                        "Error : nextRecord %d is greater "
-                                        "than inSize %d",
-                                        nextRecord, inSize ) ;
-                  goto exit ;
-               }
-               len += ossSnprintf ( outBuf + len, outSize - len,
-                                    "    Record %d:"OSS_NEWLINE,
-                                    recordCount ) ;
-               len += dumpDataRecord ( cb, ((CHAR*)inBuf)+nextRecord,
-                                       inSize - nextRecord,
-                                       outBuf + len, outSize - len,
-                                       nextRecord, compressorEntry, ridList ) ;
-               len += ossSnprintf ( outBuf + len, outSize - len, OSS_NEWLINE ) ;
-               ++recordCount ;
+               len += _dumpCappedExtent( inBuf, inSize, outBuf + len,
+                                         outSize - len, compressorEntry, cb ) ;
+            }
+            else
+            {
+               len += _dumpNormalExtent( inBuf, inSize, outBuf + len,
+                                         outSize - len, compressorEntry,
+                                         ridList, cb ) ;
             }
          }
       }
@@ -926,6 +995,11 @@ namespace engine
                 IXM_EXTENT_CB_EYECATCHER1 == extent->_eyeCatcher[1] )
       {
          return dumpIndexCBExtentHeader ( inBuf, inSize, outBuf, outSize ) ;
+      }
+      else if ( DMS_OPT_EXTENT_EYECATCHER0 == extent->_eyeCatcher[0] &&
+                DMS_OPT_EXTENT_EYECATCHER1 == extent->_eyeCatcher[1] )
+      {
+         return dumpExtOptExtentHeader( inBuf, inSize, outBuf, outSize ) ;
       }
       else
       {
@@ -1059,9 +1133,172 @@ namespace engine
       return len ;
    }
 
+   UINT32 _dmsDump::dumpExtOptExtentHeader( void *inBuf, UINT32 inSize,
+                                            CHAR * outBuf, UINT32 outSize )
+   {
+      UINT32 len = 0 ;
+      dmsOptExtent *extent = (dmsOptExtent *)inBuf ;
+
+      if ( NULL == inBuf || NULL == outBuf
+           ||  inSize < DMS_DICTEXTENT_HEADER_SZ)
+      {
+         len = ossSnprintf( outBuf, outSize,
+                            "Error: dumpExtOptExtentHeader input size (%d) "
+                            "is too small"OSS_NEWLINE, inSize ) ;
+         goto exit ;
+      }
+
+      len += _dmsDump::_dumpExtentHeaderComm( (dmsExtent *)extent,
+                                              outBuf, outSize ) ;
+      len += ossSnprintf( outBuf + len, outSize - len,
+                          "    Extend option size: %u"OSS_NEWLINE,
+                          extent->_optSize ) ;
+   exit:
+      return len ;
+   }
+
+   UINT32 _dmsDump::_dumpNormalExtent( CHAR *inBuf, UINT32 inSize,
+                                       CHAR *outBuf, UINT32 outSize,
+                                       dmsCompressorEntry *compressorEntry,
+                                       set< dmsRecordID > *ridList,
+                                       pmdEDUCB *cb )
+   {
+      UINT32 len = 0 ;
+      dmsExtent *extent = (dmsExtent *)inBuf ;
+      dmsOffset nextRecord = extent->_firstRecordOffset ;
+      INT32 recordCount = 0 ;
+
+      while ( DMS_INVALID_OFFSET != nextRecord && len < outSize )
+      {
+         if ( nextRecord >= (SINT32)inSize )
+         {
+            len += ossSnprintf (  outBuf + len, outSize - len,
+                                  "Error : nextRecord %d is greater "
+                                  "than inSize %d",
+                                  nextRecord, inSize ) ;
+            goto exit ;
+         }
+         len += ossSnprintf ( outBuf + len, outSize - len,
+                              "    Record %d:"OSS_NEWLINE,
+                              recordCount ) ;
+         len += dumpDataRecord ( cb, ((CHAR*)extent)+nextRecord,
+                                 inSize - nextRecord,
+                                 outBuf + len, outSize - len,
+                                 nextRecord, compressorEntry,
+                                 ridList) ;
+
+         len += ossSnprintf ( outBuf + len, outSize - len, OSS_NEWLINE ) ;
+         ++recordCount ;
+      }
+   exit:
+      return len ;
+   }
+
+   UINT32 _dmsDump::_dumpCappedExtent( CHAR *inBuf, UINT32 inSize,
+                                       CHAR *outBuf, UINT32 outSize,
+                                       dmsCompressorEntry *compressorEntry,
+                                       pmdEDUCB *cb )
+   {
+      UINT32 len = 0 ;
+      dmsExtent *extent = (dmsExtent *)inBuf ;
+      dmsOffset nextRecord = extent->_firstRecordOffset ;
+      dmsOffset lastRecord = extent->_lastRecordOffset ;
+      INT32 recordCount = 0 ;
+
+      if ( NULL == inBuf || NULL == outBuf || inSize < sizeof(dmsCappedRecord) )
+      {
+         len += ossSnprintf ( outBuf + len, outSize - len,
+                              "Error: dumpCappedDataRecord input size (%d) "
+                              "is too small"OSS_NEWLINE,
+                              inSize ) ;
+         nextRecord = DMS_INVALID_OFFSET ;
+         goto exit ;
+      }
+
+      while ( DMS_INVALID_OFFSET != nextRecord && len < outSize )
+      {
+         dmsCappedRecord *record = NULL ;
+         INT64 logicalID = -1 ;
+         dmsOffset myOffset = DMS_INVALID_OFFSET ;
+         if ( nextRecord >= (SINT32)inSize )
+         {
+            len += ossSnprintf (  outBuf + len, outSize - len,
+                                  "Error : nextRecord %d is greater "
+                                  "than inSize %d",
+                                  nextRecord, inSize ) ;
+            goto exit ;
+         }
+
+         record = (dmsCappedRecord*)( ((CHAR*)inBuf) + nextRecord ) ;
+         logicalID = record->getLogicalID() ;
+
+         // If we have gone beyond the last record offset, we see it as the end.
+         // In that case, no error will be reported.
+         if ( logicalID < 0 )
+         {
+            // If we are still before the last record offset, print the current
+            // record, but stop going to the next one.
+            if ( nextRecord <= lastRecord )
+            {
+               len += ossSnprintf( outBuf + len, outSize - len,
+                                   "Error: logicalID (%lld) is invalid"OSS_NEWLINE,
+                                   logicalID ) ;
+               nextRecord = DMS_INVALID_OFFSET ;
+            }
+            else
+            {
+               nextRecord = DMS_INVALID_OFFSET ;
+               goto exit ;
+            }
+         }
+         else
+         {
+            // Check if the logical id in the record header matches the position
+            // (extent and offset). If not, print the current record, and stop.
+            myOffset = logicalID % DMS_CAP_EXTENT_BODY_SZ +
+                       DMS_EXTENT_METADATA_SZ ;
+            if ( myOffset != nextRecord )
+            {
+               if ( nextRecord <= lastRecord )
+               {
+                  len += ossSnprintf( outBuf + len, outSize - len,
+                                      "Error: logicalID (%lld) and offset (%u) "
+                                      "dose not match"OSS_NEWLINE,
+                                      logicalID, nextRecord ) ;
+                  nextRecord = DMS_INVALID_OFFSET ;
+               }
+               else
+               {
+                  nextRecord = DMS_INVALID_OFFSET ;
+                  goto exit ;
+               }
+            }
+         }
+
+         len += ossSnprintf ( outBuf + len, outSize - len,
+                              "    Record %d:"OSS_NEWLINE,
+                              recordCount ) ;
+
+         len += dumpCappedDataRecord ( cb, record,
+                                       outBuf + len, outSize - len,
+                                       compressorEntry ) ;
+
+         if ( DMS_INVALID_OFFSET != nextRecord )
+         {
+            nextRecord = ossRoundUpToMultipleX( nextRecord + record->getSize(),
+                                                4 ) ;
+         }
+
+         len += ossSnprintf ( outBuf + len, outSize - len, OSS_NEWLINE ) ;
+         ++recordCount ;
+      }
+   exit:
+      return len ;
+   }
+
    #define DMS_DUMP_DATA_RECORD_FLAG_TEXT_LEN         63
 
-   UINT32 _dmsDump::dumpDataRecord( pmdEDUCB *cb, void *inBuf, UINT32 inSize,
+   UINT32 _dmsDump::dumpDataRecord( pmdEDUCB *cb, CHAR *inBuf, UINT32 inSize,
                                     CHAR *outBuf, UINT32 outSize,
                                     dmsOffset &nextRecord,
                                     dmsCompressorEntry *compressorEntry,
@@ -1192,6 +1429,64 @@ namespace engine
       }
 
    exit :
+      return len ;
+   error:
+      goto exit ;
+   }
+
+   UINT32 _dmsDump::dumpCappedDataRecord( pmdEDUCB *cb, dmsCappedRecord *record,
+                                          CHAR *outBuf,
+                                          UINT32 outSize,
+                                          dmsCompressorEntry *compressorEntry )
+   {
+      INT32 rc = SDB_OK ;
+      SDB_ASSERT ( cb, "cb can't be NULL" ) ;
+      UINT32 len = 0 ;
+      CHAR flag = 0 ;
+      CHAR flagText [DMS_DUMP_DATA_RECORD_FLAG_TEXT_LEN+1] = {0} ;
+
+      flag = record->getFlag() ;
+      if ( record->isNormal() && record->getLogicalID() >= 0 )
+      {
+         ossStrncat( flagText, "Normal", DMS_DUMP_DATA_RECORD_FLAG_TEXT_LEN ) ;
+      }
+
+      len += ossSnprintf ( outBuf + len, outSize - len,
+                           "       Flag        : 0x%02x (%s)"OSS_NEWLINE,
+                           flag, flagText ) ;
+      len += ossSnprintf ( outBuf + len, outSize - len,
+                           "       Compressed  : %s"OSS_NEWLINE,
+                           OSS_BIT_TEST ( flag, DMS_RECORD_FLAG_COMPRESSED ) ?
+                           "True":"False" ) ;
+      len += ossSnprintf ( outBuf + len, outSize - len,
+                           "       Record Size : %u"OSS_NEWLINE,
+                           record->getSize() ) ;
+      len += ossSnprintf ( outBuf + len, outSize - len,
+                           "       Record Number: %u"OSS_NEWLINE,
+                           record->getRecordNo() ) ;
+      len += ossSnprintf ( outBuf + len, outSize - len,
+                           "       LogicalID: %lld"OSS_NEWLINE,
+                           record->getLogicalID() ) ;
+
+      try
+      {
+         ossValuePtr recordPtr = 0 ;
+         DMS_RECORD_EXTRACTDATA ( record, recordPtr,
+                                  compressorEntry ) ;
+         BSONObj obj ( (CHAR*)recordPtr ) ;
+         len += ossSnprintf ( outBuf + len, outSize - len,
+                              "       Record: %s"OSS_NEWLINE,
+                              obj.toString().c_str() ) ;
+      }
+      catch ( std::exception &e )
+      {
+         len += ossSnprintf ( outBuf + len, outSize - len,
+                              "Error: Failed to format "
+                              "record: %s"OSS_NEWLINE,
+                              e.what() ) ;
+      }
+
+   exit:
       return len ;
    error:
       goto exit ;

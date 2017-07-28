@@ -1254,6 +1254,7 @@ enum INSPECT_EXTENT_TYPE
    INSPECT_EXTENT_TYPE_INDEX_CB,
    INSPECT_EXTENT_TYPE_MBEX,
    INSPECT_EXTENT_TYPE_DICT,
+   INSPECT_EXTENT_TYPE_EXTOPT,
    // for unknown type, that means we do not know which type of extent it is.
    // For example if we are provided by a single extent id without any other
    // information, in this case our extract function should first read extent
@@ -1417,6 +1418,37 @@ retry :
          result = FALSE ;
       }
    }
+   else if ( INSPECT_EXTENT_TYPE_EXTOPT == type )
+   {
+      dmsOptExtent *extent = (dmsOptExtent *)&extentHead ;
+      if ( extent->_eyeCatcher[0] != DMS_OPT_EXTENT_EYECATCHER0 ||
+           extent->_eyeCatcher[1] != DMS_OPT_EXTENT_EYECATCHER1 )
+      {
+         dumpPrintf( "Error: Invalid eye catcher: %c%c"OSS_NEWLINE,
+                     extent->_eyeCatcher[0],
+                     extent->_eyeCatcher[1] ) ;
+         result = FALSE ;
+      }
+      if ( extent->_blockSize <= 0 ||
+           extent->_blockSize * pageSize > DMS_SEGMENT_SZ )
+      {
+         dumpPrintf( "Error: Invalid block size: %d, pageSize: %d"OSS_NEWLINE,
+                     extent->_blockSize, pageSize ) ;
+         result = FALSE ;
+      }
+      if ( extent->_mbID != expID )
+      {
+         dumpPrintf( "Error: Unexpected id: %d, expected %d"OSS_NEWLINE,
+                     extent->_mbID, expID ) ;
+         result = FALSE ;
+      }
+      if ( extent->_version > DMS_OPT_EXTENT_CURRENT_V )
+      {
+         dumpPrintf( "Error: Invalid version: %d, current %d"OSS_NEWLINE,
+                     extent->_version, DMS_OPT_EXTENT_CURRENT_V ) ;
+         result = FALSE ;
+      }
+   }
    else if ( INSPECT_EXTENT_TYPE_UNKNOWN == type )
    {
       // if we do not know which type to read, let's first check eye catcher
@@ -1451,6 +1483,12 @@ retry :
                 extentHead._eyeCatcher[1] == DMS_DICT_EXTENT_EYECATCHER1 )
       {
          type = INSPECT_EXTENT_TYPE_DICT ;
+         goto retry ;
+      }
+      else if ( extentHead._eyeCatcher[0] == DMS_OPT_EXTENT_EYECATCHER0 &&
+                extentHead._eyeCatcher[1] == DMS_OPT_EXTENT_EYECATCHER1 )
+      {
+         type = INSPECT_EXTENT_TYPE_EXTOPT ;
          goto retry ;
       }
       else
@@ -2090,6 +2128,7 @@ void inspectCollectionData( OSSFILE &file, SINT32 pageSize, UINT16 id,
    dmsCompressorEntry compressorEntry ;
    UINT64 totalRecord = 0 ;
    BOOLEAN extScan = FALSE ;
+   BOOLEAN capped = FALSE ;
 
    rc = loadMB ( id, mb ) ;
    if ( rc )
@@ -2100,6 +2139,7 @@ void inspectCollectionData( OSSFILE &file, SINT32 pageSize, UINT16 id,
       goto error ;
    }
 
+   capped = OSS_BIT_TEST( mb->_attributes, DMS_MB_ATTR_CAPPED ) ;
    firstExtent = mb->_firstExtentID ;
    ossStrncpy( collectionName, mb->_collectionName, DMS_COLLECTION_NAME_SZ ) ;
    dumpPrintf ( " Inspect Data for collection [%d : %s]"OSS_NEWLINE,
@@ -2209,7 +2249,8 @@ retry_data :
                                &extentRIDList, localErr,
                                &compressorEntry,
                                extTotalRecord,
-                               extCompressedNum ) ;
+                               extCompressedNum,
+                               capped ) ;
       if ( (UINT32)len >= gBufferSize-1 )
       {
          // if our buffer is not large enough, let's allocate more memory and
@@ -2374,6 +2415,7 @@ void dumpCollectionData( OSSFILE &file, SINT32 pageSize, UINT16 id )
    dmsExtentID tempExtent = DMS_INVALID_EXTENT ;
    dmsExtentID firstExtent = DMS_INVALID_EXTENT ;
    dmsCompressorEntry compressorEntry ;
+   BOOLEAN capped = FALSE ;
 
    rc = loadMB ( id, mb ) ;
    if ( rc )
@@ -2382,6 +2424,8 @@ void dumpCollectionData( OSSFILE &file, SINT32 pageSize, UINT16 id )
                    rc ) ;
       goto error ;
    }
+
+   capped = OSS_BIT_TEST( mb->_attributes, DMS_MB_ATTR_CAPPED ) ;
 
    // dump mb expand extent
    if ( DMS_INVALID_EXTENT != mb->_mbExExtentID )
@@ -2458,6 +2502,41 @@ void dumpCollectionData( OSSFILE &file, SINT32 pageSize, UINT16 id )
       flushOutput( gBuffer, len ) ;
    }
 
+   if ( DMS_INVALID_EXTENT != mb->_mbOptExtentID )
+   {
+      UINT32 size = 0 ;
+      extentType = INSPECT_EXTENT_TYPE_EXTOPT ;
+      dumpPrintf( "Dump extend option extent for collection [%d]"OSS_NEWLINE,
+                  id ) ;
+      rc = loadExtent( file, extentType, pageSize, mb->_mbOptExtentID, id ) ;
+      if ( rc )
+      {
+         dumpPrintf( "Error: Failed to load mb extend option extent %d, rc = %d"
+                     OSS_NEWLINE, mb->_mbOptExtentID, rc ) ;
+         goto error ;
+      }
+      size = ((dmsOptExtent*)gExtentBuffer)->_blockSize * pageSize ;
+
+   retry_extOptExt:
+      len = dmsDump::dumpExtOptExtent( gExtentBuffer, size,
+                                       gBuffer, gBufferSize, NULL,
+                                       DMS_SU_DMP_OPT_HEX |
+                                       DMS_SU_DMP_OPT_HEX_WITH_ASCII |
+                                       DMS_SU_DMP_OPT_HEX_PREFIX_AS_ADDR |
+                                       gDumpType, mb->_mbExExtentID,
+                                       capped ? DMS_STORAGE_CAPPED : DMS_STORAGE_NORMAL ) ;
+      if ( (UINT32)len >= gBufferSize - 1 )
+      {
+         if ( reallocBuffer() )
+         {
+            clearBuffer() ;
+            goto error ;
+         }
+         goto retry_extOptExt ;
+      }
+      flushOutput( gBuffer, len ) ;
+   }
+
    extentType = INSPECT_EXTENT_TYPE_DATA ;
    firstExtent = mb->_firstExtentID ;
    dumpPrintf ( " Dump Data for Collection [%d]"OSS_NEWLINE, id ) ;
@@ -2485,7 +2564,7 @@ retry_data :
                                DMS_SU_DMP_OPT_HEX_WITH_ASCII |
                                DMS_SU_DMP_OPT_HEX_PREFIX_AS_ADDR |
                                gDumpType, tempExtent, &compressorEntry,
-                               &extentRIDList,  gShowRecordContent ) ;
+                               &extentRIDList,  gShowRecordContent, capped ) ;
 
       PD_TRACE1 ( SDB_DUMPCOLL, PD_PACK_INT(len) );
       if ( (UINT32)len >= gBufferSize-1 )
@@ -2952,7 +3031,7 @@ enum SDB_INSPT_ACTION
 } ;
 
 // PD_TRACE_DECLARE_FUNCTION ( SDB_ACTIONCSATTEMPT, "actionCSAttempt" )
-void actionCSAttempt ( const CHAR *pFile, const CHAR *expectEye,
+void actionCSAttempt ( const CHAR *pFile, vector<const CHAR *> &expectEyeVec,
                        BOOLEAN specific, SDB_INSPT_ACTION action )
 {
    INT32    rc = SDB_OK ;
@@ -2967,6 +3046,7 @@ void actionCSAttempt ( const CHAR *pFile, const CHAR *expectEye,
    SINT64   restLen = 0 ;
    SINT64   readPos = 0 ;
    UINT32   iMode = OSS_DEFAULT | OSS_EXCLUSIVE ;
+   BOOLEAN  csValid = FALSE ;
 
    if ( SDB_INSPT_ACTION_REPARE == action )
    {
@@ -3004,8 +3084,18 @@ void actionCSAttempt ( const CHAR *pFile, const CHAR *expectEye,
       readPos += readSize ;
    }
 
+   for ( vector<const CHAR *>::iterator itr = expectEyeVec.begin();
+         itr != expectEyeVec.end(); ++itr )
+   {
+      if ( 0 == ossStrncmp( eyeCatcher, *itr, DMS_HEADER_EYECATCHER_LEN ) )
+      {
+         csValid = TRUE ;
+         break ;
+      }
+   }
+
    // if it doens't match our eye catcher, we may or may not dump error
-   if ( ossStrncmp ( eyeCatcher, expectEye, DMS_HEADER_EYECATCHER_LEN ) )
+   if ( !csValid )
    {
       // if user specified the collection space, we should dump error if it's
       // not a valid SU file
@@ -3176,6 +3266,9 @@ INT32 prepareForDump( const CHAR *csName, UINT32 sequence )
       goto error ;
    }
    if ( 0 != ossStrncmp( dataHeader._eyeCatcher, DMS_DATASU_EYECATCHER,
+                         DMS_HEADER_EYECATCHER_LEN )
+        &&
+        0 != ossStrncmp( dataHeader._eyeCatcher, DMS_DATACAPSU_EYECATCHER,
                          DMS_HEADER_EYECATCHER_LEN ) )
    {
       dumpPrintf ( "Error: File[%s] is not dms storage unit data file"
@@ -3246,9 +3339,10 @@ void actionCSAttemptEntry( const CHAR *csName, UINT32 sequence,
       gDataOffset = DMS_MME_OFFSET + DMS_MME_SZ ;
       gPageNum    = 0 ;
       gCurInsptType = SDB_INSPT_DATA ;
-
-      actionCSAttempt( csFullName.c_str(), DMS_DATASU_EYECATCHER,
-                       specific, action ) ;
+      vector<const CHAR *> eyeCatcherVec ;
+      eyeCatcherVec.push_back( DMS_DATASU_EYECATCHER ) ;
+      eyeCatcherVec.push_back( DMS_DATACAPSU_EYECATCHER ) ;
+      actionCSAttempt( csFullName.c_str(), eyeCatcherVec, specific, action ) ;
    }
    if ( gDumpIndex )
    {
@@ -3258,9 +3352,9 @@ void actionCSAttemptEntry( const CHAR *csName, UINT32 sequence,
       gDataOffset = DMS_SME_OFFSET + DMS_SME_SZ ;
       gPageNum    = 0 ;
       gCurInsptType = SDB_INSPT_INDEX ;
-
-      actionCSAttempt( csFullName.c_str(), DMS_INDEXSU_EYECATCHER,
-                       specific, action ) ;
+      vector<const CHAR *> eyeCatcherVec ;
+      eyeCatcherVec.push_back( DMS_INDEXSU_EYECATCHER ) ;
+      actionCSAttempt( csFullName.c_str(), eyeCatcherVec, specific, action ) ;
    }
 }
 

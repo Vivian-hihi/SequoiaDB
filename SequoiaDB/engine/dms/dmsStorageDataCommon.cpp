@@ -857,6 +857,24 @@ namespace engine
                                       TRUE : FALSE ;
             /// lsn
             _mbStatInfo[i]._lastLSN.init( _dmsMME->_mbList[i]._commitLSN ) ;
+
+            // If the _mbOptExtentID is 0, there are two possibilities:
+            // (1) Upgrade from elder version.
+            // (2) A valid extend option extent.
+            // In the first case, need to set its value to DMS_INVALID_EXTENT.
+            // Here we check by validating the 0 extent, to see if it's a valid
+            // extend option extent.
+            if ( 0 == _dmsMME->_mbList[i]._mbOptExtentID )
+            {
+               dmsExtRW extRW = extent2RW( _dmsMME->_mbList[i]._mbOptExtentID,
+                                           i ) ;
+               extRW.setNothrow( TRUE ) ;
+               const dmsOptExtent *optExt = extRW.readPtr<dmsOptExtent>() ;
+               if ( !optExt || !optExt->validate(i) )
+               {
+                  _dmsMME->_mbList[i]._mbOptExtentID = DMS_INVALID_EXTENT ;
+               }
+            }
          }
       }
 

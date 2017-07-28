@@ -255,7 +255,7 @@ namespace engine
       void init( UINT16 numPages, UINT16 mbID )
       {
          _eyeCatcher[0]    = DMS_OPT_EXTENT_EYECATCHER0 ;
-         _eyeCatcher[1]    = DMS_OPT_EXTENT_EYECATCHER0 ;
+         _eyeCatcher[1]    = DMS_OPT_EXTENT_EYECATCHER1 ;
          _blockSize        = numPages ;
          _mbID             = mbID ;
          _flag             = DMS_EXTENT_FLAG_INUSE ;

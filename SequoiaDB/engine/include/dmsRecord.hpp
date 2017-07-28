@@ -424,6 +424,11 @@ namespace engine
       INT64       _logicalID ;
 
    public:
+      CHAR getFlag() const
+      {
+         return _head._recordHead[ 0 ] ;
+      }
+
       void setSize( UINT32 size )
       {
          return ((dmsRecord*)this)->setSize( size ) ;

@@ -473,7 +473,7 @@ namespace engine
          }
 
          // If free space in current working extent is not enough, get another.
-         if ( workExtInfo->_freeSpace < (INT32)size )
+         if ( workExtInfo->_freeSpace < size )
          {
             // Before allocationg another extent, check size limitation.
             if ( _sizeExceedLimit( context, DMS_CAP_EXTENT_SZ ) )
@@ -495,7 +495,7 @@ namespace engine
             // After recycle, check once again. For when recycling the woking
             // extent, it will be reset and used again. In that case, no need to
             // allocate extent again.
-            if ( workExtInfo->_freeSpace < (INT32)size )
+            if ( workExtInfo->_freeSpace < size )
             {
                rc = _allocateExtent( context, DMS_CAP_EXTENT_PAGE_NUM, TRUE,
                                      FALSE, &extID ) ;
@@ -635,7 +635,7 @@ namespace engine
                }
             }
             // If free space in current working extent is not enough, get another.
-            if ( workExtInfo->_freeSpace < (INT32)size )
+            if ( workExtInfo->_freeSpace < size )
             {
                // Before allocationg another extent, check size limitation.
                if ( _sizeExceedLimit( context, DMS_CAP_EXTENT_SZ ) )
@@ -657,7 +657,7 @@ namespace engine
                // After recycle, check once again. For when recycling the woking
                // extent, it will be reset and used again. In that case, no need to
                // allocate extent again.
-               if ( workExtInfo->_freeSpace < (INT32)size )
+               if ( workExtInfo->_freeSpace < size )
                {
                   rc = _allocateExtent( context, DMS_CAP_EXTENT_PAGE_NUM, TRUE,
                                         FALSE, &extID ) ;
@@ -983,7 +983,7 @@ namespace engine
                maxSize = ele.numberLong() ;
 
                if ( maxSize < DMS_CAP_CL_MIN_SZ ||
-                    maxSize > DMS_MAX_SZ( pageSize() ) )
+                    (UINT64)maxSize > DMS_MAX_SZ( pageSize() ) )
                {
                   PD_LOG( PDERROR, "Invalid size[%lld] of capped collection",
                           maxSize ) ;
