@@ -450,7 +450,11 @@ namespace engine
       }
       else if ( primary && SDB_EVT_OCCUR_AFTER == type )
       {
-         sdbGetClsCB()->invalidateStatistics() ;
+         /// TODO: For multi datacenter, when node change primary can't
+         /// write dps log.
+         /// So this will cause stat cache is not the same between new
+         /// primary node and other secondary nodes
+         // sdbGetClsCB()->invalidateStatistics() ;
       }
    }
 
