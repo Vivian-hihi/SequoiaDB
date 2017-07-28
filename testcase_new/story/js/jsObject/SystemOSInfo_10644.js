@@ -16,9 +16,9 @@ function toolGetReleaseInfo( hostName, svcName )
    var cmd = remote.getCmd() ;
    var result = [] ;
    
-   var command = "lsb_release -a | grep Description | awk -F ':' '{print $2}'" ;
+   var command = "cat /etc/issue" ;
    var tmpInfo = cmd.run( command ).split( "\n" ) ;
-   result[0] = tmpInfo[tmpInfo.length-2] ; 
+   result[0] = tmpInfo[tmpInfo.length-3] ; 
    result[0] = result[0].replace( /[\t ]/g, '' ) ;
    
    command = "uname -s" ;
@@ -123,7 +123,8 @@ SystemTest.prototype.testGetReleaseInfo = function()
    descript1 = descript1.replace( /[\t ]/g, '' ) ;
    var descript2 = toolGetReleaseInfo( this.hostname, this.svcname ) ;
    
-   if( descript1 !== descript2[0] &&  descript1 !== descript2[1] )
+   if( descript2[0].indexOf( descript1 ) === -1 &&  
+       descript1 !== descript2[1] )
    {
       throw buildException( "testGetReleaseInfo", null, "test description " + this, 
                             descript2, descript1 ) ;
