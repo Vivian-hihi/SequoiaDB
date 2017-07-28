@@ -40,7 +40,7 @@ public class Commlib {
 		DBCollection cl = null;
 		BSONObject options_cl = new BasicBSONObject();
 		options_cl.put("Capped", true);
-		options_cl.put("Size", 8589934592L);
+		options_cl.put("Size", 8192);
 		options_cl.put("AutoIndexId", false);
 		try {
 			CollectionSpace cs = sdb.getCollectionSpace(csName);
@@ -86,7 +86,7 @@ public class Commlib {
 					CollectionSpace cs = sdb.getCollectionSpace(csName + csNo);
 					BSONObject options_cl = new BasicBSONObject();
 					options_cl.put("Capped", true);
-					options_cl.put("Size", 8589934592L);
+					options_cl.put("Size", 8192);
 					options_cl.put("AutoIndexId", false);
 					DBCollection cl = cs.createCollection(clName + clNo,options_cl);
 					dbCollections.add(cl);
