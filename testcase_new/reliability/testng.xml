@@ -29,7 +29,8 @@
 			<package name="com.sequoiadb.metaopr.networkfail.cs" />
 			<package name="com.sequoiadb.metaopr.networkfail.domain" />
 			<package name="com.sequoiadb.metaopr.noderestart" />
-			<package name="com.sequoiadb.lob" />
+			<!--lob用例先不跑，等代码检视后再跑。-->
+			<!--<package name="com.sequoiadb.lob" />-->
 		</packages>
 	</test>
 	
