@@ -28,6 +28,7 @@
 */
 
 var FILE_NAME_CHECK_HOST = "checkHost.js" ;
+var disablePathArr = [ "/bin", "/boot", "/root", "/sbin" ] ;
 var errMsg           = "" ;
 var rc               = SDB_OK ;
 var RET_JSON         = new Object() ;
@@ -54,6 +55,31 @@ function OMAOption()
 function OMAFilter()
 {
    this.type   = "sdbcm" ;
+}
+
+/* *****************************************************************************
+@discretion: chech the disk is mounted on the system directoris or not
+@author: Tanzhaobo
+@parameter
+   disk: object of disk
+@return
+   true for the disk can be use while false for not
+***************************************************************************** */
+function _checkDiskPath( disk )
+{
+   var path = disk[Mount] ;
+   if (undefined == path )
+   {
+      return false ;
+   }
+   for ( var i = 0; i < disablePathArr.length; i++ )
+   {
+      if ( 0 == path.indexOf( disablePathArr[i] ) )
+      {
+         return false ;
+      }
+   }
+   return true ;
 }
 
 /* *****************************************************************************
@@ -367,13 +393,21 @@ function _getDiskInfo()
       for ( var i = 0; i < arr.length; i++ )
       {
          var obj           = arr[i] ;
-         var diskInfo      = new DiskInfo() ;
-         diskInfo[Name]    = obj[Filesystem] ;
-         diskInfo[Mount]   = obj[Mount] ;
-         diskInfo[Size]    = obj[Size] ;
-         diskInfo[Free]    = obj[Size] - obj[Used] ;
-         diskInfo[IsLocal] = obj[IsLocal] ;
-         diskInfos.push( diskInfo ) ;
+         if ( _checkDiskPath( obj ) )
+         {
+            var diskInfo      = new DiskInfo() ;
+            diskInfo[Name]    = obj[Filesystem] ;
+            diskInfo[Mount]   = obj[Mount] ;
+            diskInfo[Size]    = obj[Size] ;
+            diskInfo[Free]    = obj[Size] - obj[Used] ;
+            diskInfo[IsLocal] = obj[IsLocal] ;
+            diskInfos.push( diskInfo ) ;
+         }
+         else
+         {
+            PD_LOG( arguments, PDEVENT, FILE_NAME_CHECK_HOST, 
+                    "Give up using disk mounted on [" + obj[Mount] + "]"  ) ;
+         }
       }
    }
    catch( e )
