@@ -415,7 +415,7 @@ namespace engine
             string keyName ;
             if ( isKeepKeyName )
             {
-               if ( i == arrElePos )
+               if ( (INT32)i == arrElePos )
                {
                   SDB_ASSERT( arrNameLen >= 0, "invalid arrNameLen" ) ;
                   keyName = string( fieldNames[i], arrNameLen ) ;
