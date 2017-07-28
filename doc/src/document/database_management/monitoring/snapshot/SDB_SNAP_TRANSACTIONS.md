@@ -1,6 +1,6 @@
 ##描述##
 
-事务快照 SDB_SNAP_TRANSACTION 列出数据库中正在进行的事务信息。
+事务快照 SDB_SNAP_TRANSACTIONS 列出数据库中正在进行的事务信息。
 
 每一个数据节点上正在进行的每一个事务为一条记录。
 
@@ -14,7 +14,7 @@
 
 ##标示##
 
-SDB_SNAP_TRANSACTION
+SDB_SNAP_TRANSACTIONS
 
 ###字段信息###
 
@@ -38,7 +38,7 @@ WaitLock 和 GetLocks 字段中锁对象的信息：
 | ------------ | ---- | ------------------------ |
 | CSID         | 整型 | 锁对象所在集合空间的 ID  |
 | CLID         | 整型 | 锁对象所在集合的 ID      |
-| recordID     | 整型 | 锁对象所在记录的ID       |
+| recordID     | 整型 | 锁对象所在记录的 ID       |
 | recordOffset | 整型 | 锁对象所在记录的偏移量   |
 
 ###锁对象的描述###
@@ -55,7 +55,7 @@ WaitLock 和 GetLocks 字段中锁对象的信息：
 ##示例##
 
 ```lang-javascript
-> db.snapshot( SDB_SNAP_TRANSACTION )
+> db.snapshot( SDB_SNAP_TRANSACTIONS )
 {
   "NodeName": "hostname1:11830",
   "SessionID": 19,

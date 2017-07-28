@@ -1,6 +1,6 @@
 ##描述##
 
-事务快照 SDB_SNAP_TRANSACTION_CURRENT 列出当前会话在数据库中正在进行的事务信息。
+事务快照 SDB_SNAP_TRANSACTIONS_CURRENT 列出当前会话在数据库中正在进行的事务信息。
 
 当前会话在每一个数据节点上正在进行的事务为一条记录。（一般每个会话在每个数据节点上只有一个事务记录）
 
@@ -14,7 +14,7 @@
 
 ##标示##
 
-SDB_SNAP_TRANSACTION_CURRENT
+SDB_SNAP_TRANSACTIONS_CURRENT
 
 ###字段信息###
 
@@ -55,7 +55,7 @@ WaitLock 和 GetLocks 字段中锁对象的信息：
 ##示例##
 
 ```lang-javascript
-> db.snapshot( SDB_SNAP_TRANSACTION_CURRENT )
+> db.snapshot( SDB_SNAP_TRANSACTIONS_CURRENT )
 {
   "NodeName": "hostname1:11820",
   "SessionID": 17,
