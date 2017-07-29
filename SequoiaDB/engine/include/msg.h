@@ -464,9 +464,10 @@ typedef struct _MsgInternalReplyHeader MsgInternalReplyHeader ;
 
 // If set, the database will insert the supplied object into the collection if
 // no matching document is found.
-#define FLG_UPDATE_UPSERT       0x00000001
-#define FLG_UPDATE_MULTIUPDATE  0x00000002
-#define FLG_UPDATE_RETURNNUM    0x00000004
+#define FLG_UPDATE_UPSERT           0x00000001
+#define FLG_UPDATE_MULTIUPDATE      0x00000002
+#define FLG_UPDATE_RETURNNUM        0x00000004
+#define FLG_UPDATE_KEEP_SHARDINGKEY FLG_QUERY_KEEP_SHARDINGKEY_IN_UPDATE
 // For Update, 3 BSON objects will be followed
 // Selector + Updator + Hint
 struct _MsgOpUpdate
@@ -504,36 +505,38 @@ typedef struct _MsgOpInsert MsgOpInsert ;
 
 // String output, each fields are separated by |, this is only used by Hadoop
 // this flag is taking effect only with selector
-#define FLG_QUERY_STRINGOUT           0x00000001
+#define FLG_QUERY_STRINGOUT                  0x00000001
 // Allow query of replica slave
-#define FLG_QUERY_SLAVEOK             0x00000002
+#define FLG_QUERY_SLAVEOK                    0x00000002
 // Internal replication use only
-#define FLG_QUERY_OPLOGREPLAY         0x00000004
+#define FLG_QUERY_OPLOGREPLAY                0x00000004
 // Context never timeout
-#define FLG_QUERY_NOCONTEXTTIMEOUT    0x00000008
+#define FLG_QUERY_NOCONTEXTTIMEOUT           0x00000008
 // If we are at end of the data, block for a while rather than return no data
 // After timeout period, we do return as normal
-#define FLG_QUERY_AWAITDATA           0x00000010
+#define FLG_QUERY_AWAITDATA                  0x00000010
 // Allow partial reads if some of the shards are down
-#define FLG_QUERY_PARTIALREAD         0x00000020
+#define FLG_QUERY_PARTIALREAD                0x00000020
 // Command[Create collection] if cs not exist,will create first
-#define FLG_CREATE_WHEN_NOT_EXIST     0x00000040
+#define FLG_CREATE_WHEN_NOT_EXIST            0x00000040
 // If use hint failed, query return failed
-#define FLG_QUERY_FORCE_HINT          0x00000080
+#define FLG_QUERY_FORCE_HINT                 0x00000080
 // Enable paralled sub querys
-#define FLG_QUERY_PARALLED            0x00000100
+#define FLG_QUERY_PARALLED                   0x00000100
 // Find with return data in query response, can use for find one
-#define FLG_QUERY_WITH_RETURNDATA     0x00000200
+#define FLG_QUERY_WITH_RETURNDATA            0x00000200
 // explain query
-#define FLG_QUERY_EXPLAIN             0x00000400
+#define FLG_QUERY_EXPLAIN                    0x00000400
 // Query from the primary node( only use in inner )
-#define FLG_QUERY_PRIMARY             0x00000800
+#define FLG_QUERY_PRIMARY                    0x00000800
 // query and modify
-#define FLG_QUERY_MODIFY              0x00001000
+#define FLG_QUERY_MODIFY                     0x00001000
 // query must use index by sort
-#define FLG_QUERY_FORCE_IDX_BY_SORT   0x00002000
+#define FLG_QUERY_FORCE_IDX_BY_SORT          0x00002000
 // query prepare more data
-#define FLG_QUERY_PREPARE_MORE        0x00004000
+#define FLG_QUERY_PREPARE_MORE               0x00004000
+// The sharding key in update rule is not filtered, when executing findAndUpdate.
+#define FLG_QUERY_KEEP_SHARDINGKEY_IN_UPDATE 0x00008000
 
 // For query takes 4 document
 // Query + returnFieldSelector + orderBy + hint

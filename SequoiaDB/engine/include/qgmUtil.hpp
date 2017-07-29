@@ -43,6 +43,13 @@
 #include "qgmPlan.hpp"
 #include "qgmOptiAggregation.hpp"
 
+#define TABLE_SCAN                  "NULL"
+#define TABLE_SCAN_SIZE             ( sizeof( TABLE_SCAN ) - 1 )
+#define TABLE_SCAN_LOWER            "null"
+#define TABLE_SCAN_LOWER_SIZE       ( sizeof( TABLE_SCAN_LOWER ) - 1 )
+#define FLG_SQL_UPDATE_KEEP_SK      "SQL_UPDATE_KEEP_SHARDINGKEY"
+#define FLG_SQL_UPDATE_KEEP_SK_SIZE ( sizeof( FLG_SQL_UPDATE_KEEP_SK ) - 1 )
+
 using namespace bson ;
 
 namespace engine
@@ -116,6 +123,8 @@ namespace engine
    string qgmHintToString( const QGM_HINS &hint ) ;
 
    BSONObj qgmUseIndexHintToBson( const qgmHint &h ) ;
+
+   INT32 qgmUseHintToFlag( const qgmHint &h, INT32 &flag ) ;
 
    const CHAR* qgmGetNodeTypeStr( INT32 type ) ;
 

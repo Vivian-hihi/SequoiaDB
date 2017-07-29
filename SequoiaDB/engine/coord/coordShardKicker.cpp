@@ -97,6 +97,7 @@ namespace engine
       return count ;
    }
 
+   /// kick sharding key of a cl
    INT32 _coordShardKicker::_kickShardingKey( const CoordCataInfoPtr &cataInfo,
                                               const BSONObj &updator,
                                               BSONObj &newUpdator,
@@ -108,12 +109,13 @@ namespace engine
       if ( skSiteID > 0 )
       {
          /// if is the same sharding key
-         if ( _skSiteIDs.count( skSiteID ) > 0 )
+         map< UINT32, BOOLEAN >::iterator it = _skSiteIDs.find( skSiteID );
+         if ( it != _skSiteIDs.end() )
          {
             newUpdator = updator ;
+            hasShardingKey = it->second ;
             goto done ;
          }
-         _skSiteIDs.insert( skSiteID ) ;
       }
 
       try
@@ -220,7 +222,14 @@ namespace engine
          rc = SDB_INVALIDARG;
          PD_LOG ( PDERROR,"Failed to kick sharding key from the record,"
                   "occured unexpected error: %s", e.what() ) ;
+
          goto error;
+      }
+
+      if ( skSiteID > 0 )
+      {
+         _skSiteIDs.insert(
+                    pair< UINT32, BOOLEAN >( skSiteID, hasShardingKey ) ) ;
       }
 
    done:
@@ -229,13 +238,16 @@ namespace engine
       goto done;
    }
 
+   /// kick sharding key of all cl
    INT32 _coordShardKicker::kickShardingKey( const BSONObj &updator,
                                              BSONObj &newUpdator,
-                                             BOOLEAN &hasShardingKey,
+                                             BOOLEAN &isChanged,
                                              pmdEDUCB *cb,
-                                             const BSONObj &matcher )
+                                             const BSONObj &matcher,
+                                             BOOLEAN keepShardingKey )
    {
       INT32 rc = SDB_OK ;
+      BOOLEAN hasShardingKey = FALSE ;
 
       if ( !_cataPtr.get() || !_cataPtr->isSharded() )
       {
@@ -253,6 +265,29 @@ namespace engine
          PD_LOG( PDERROR, "Kick sharding key failed, rc: %d", rc ) ;
          goto error ;
       }
+      if ( keepShardingKey )
+      {
+         if ( hasShardingKey && 1 != _cataPtr->getGroupNum() )
+         {
+            // num = 0, main cl, not allow sharding key of maincl
+            // num >= 2, cl which has been split, also not allow sharding key
+            rc = SDB_UPDATE_SHARD_KEY ;
+            PD_LOG( PDERROR, "When the partition cl falls on two or more groups, "
+                    "or it is a main cl, the update rule don't allow sharding key. "
+                    "rc: %d", rc ) ;
+            goto error ;
+         }
+         // can't set isChanged to FALSE, in case it is TRUE
+         // when passing to this function.
+      }
+      else
+      {
+         if ( hasShardingKey )
+         {
+            isChanged = TRUE ;
+         }
+      }
+
 
       /// When is main collection, need to kick all sub-collection's
       /// sharding key
@@ -278,7 +313,7 @@ namespace engine
          while( iterCL != subCLLst.end() )
          {
             rc = _kickShardingKey( *iterCL, subUpdator, newUpdator,
-                                   hasShardingKey, cb ) ;
+                                   isChanged, cb, keepShardingKey ) ;
             if ( rc )
             {
                PD_LOG( PDERROR, "Kick sharding key for sub-collection[%s] "
@@ -296,14 +331,17 @@ namespace engine
       goto done ;
    }
 
+   /// kick sharding key of subcl
    INT32 _coordShardKicker::_kickShardingKey( const string &collectionName,
                                               const BSONObj &updator,
                                               BSONObj &newUpdator,
-                                              BOOLEAN &hasShardingKey,
-                                              pmdEDUCB *cb )
+                                              BOOLEAN &isChanged,
+                                              pmdEDUCB *cb,
+                                              BOOLEAN keepShardingKey )
    {
       INT32 rc = SDB_OK ;
       CoordCataInfoPtr cataPtr ;
+      BOOLEAN hasShardingKey = FALSE ;
 
       rc = _pResource->getOrUpdateCataInfo( collectionName.c_str(),
                                             cataPtr,
@@ -321,15 +359,38 @@ namespace engine
          goto error ;
       }
 
+      /// when subcl isn't partition cl
       if ( !cataPtr->isSharded() )
       {
          goto done ;
       }
 
-      rc = _kickShardingKey( cataPtr, updator, newUpdator, hasShardingKey ) ;
+      rc = _kickShardingKey( cataPtr, updator, newUpdator,
+                             hasShardingKey ) ;
       if ( rc )
       {
          goto error ;
+      }
+      if ( keepShardingKey )
+      {
+         if ( 1 != cataPtr->getGroupNum() && hasShardingKey )
+         {
+            // num >= 2, cl which has been splited, not allow sharding key
+            rc = SDB_UPDATE_SHARD_KEY ;
+            PD_LOG( PDERROR, "When the partition cl falls on two or "
+                    "more groups, the update rule don't allow sharding"
+                    " key. rc: %d", rc ) ;
+            goto error ;
+         }
+         // can't set isChanged to FALSE, in case it is TRUE
+         // when passing to this function.
+      }
+      else
+      {
+         if ( hasShardingKey )
+         {
+            isChanged = TRUE ;
+         }
       }
 
    done:
@@ -422,7 +483,7 @@ namespace engine
          {
             goto done ;
          }
-         _skSiteIDs.insert( skSiteID ) ;
+         _skSiteIDs.insert( pair< UINT32, BOOLEAN >( skSiteID, TRUE ) ) ;
       }
 
       try

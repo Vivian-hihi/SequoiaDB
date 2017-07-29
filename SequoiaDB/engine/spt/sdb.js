@@ -603,7 +603,8 @@ SdbQuery.prototype._exec = function() {
                                                this._hint,
                                                this._skip,
                                                this._limit,
-                                               this._flags );
+                                               this._flags,
+                                               this._options );
    }
    return this._cursor;
 }
@@ -657,12 +658,15 @@ SdbQuery.prototype.close = function() {
    return this._cursor.close();
 }
 
-SdbQuery.prototype.update = function( rule, returnNew ) {
+SdbQuery.prototype.update = function( rule, returnNew, options ) {
    if ((typeof rule) != "object" || isEmptyObject(rule)) {
       throw "SdbQuery.update(): the 1st param should be non-empty object";
    }
    if (undefined != returnNew && (typeof returnNew) != "boolean") {
       throw "SdbQuery.update(): the 2nd param should be boolean";
+   }
+   if (undefined != options && (typeof options) != "object") {
+      throw "SdbQuery.update(): the 3rd param should be object";
    }
 
    this._checkExecuted();
@@ -678,6 +682,10 @@ SdbQuery.prototype.update = function( rule, returnNew ) {
    modify.Update = rule;
    modify.ReturnNew = (returnNew != undefined) ? returnNew : false;
    this._hint.$Modify = modify;
+
+   if (undefined != options) {
+      this._options = options;
+   }
 
    return this;
 }

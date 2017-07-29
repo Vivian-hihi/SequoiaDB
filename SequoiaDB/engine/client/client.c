@@ -5637,6 +5637,15 @@ SDB_EXPORT INT32 sdbUpdate ( sdbCollectionHandle cHandle,
    return __sdbUpdate ( cHandle, 0, rule, condition, hint ) ;
 }
 
+SDB_EXPORT INT32 sdbUpdate1 ( sdbCollectionHandle cHandle,
+                             bson *rule,
+                             bson *condition,
+                             bson *hint,
+                             INT32 flag )
+{
+   return __sdbUpdate ( cHandle, flag, rule, condition, hint ) ;
+}
+
 SDB_EXPORT INT32 sdbUpsert ( sdbCollectionHandle cHandle,
                              bson *rule,
                              bson *condition,
@@ -5683,6 +5692,45 @@ error:
    goto done ;
 }
 
+
+SDB_EXPORT INT32 sdbUpsert2 ( sdbCollectionHandle cHandle,
+                              bson *rule,
+                              bson *condition,
+                              bson *hint,
+                              bson *setOnInsert,
+                              INT32 flag )
+{
+   INT32 rc = SDB_OK ;
+   BOOLEAN bsoninit = FALSE ;
+   bson* hintPtr = hint ;
+   bson newHint ;
+
+   BSON_INIT( newHint ) ;
+   if ( NULL != setOnInsert )
+   {
+      if ( NULL != hint )
+      {
+         rc = bson_append_elements( &newHint, hint ) ;
+         if ( rc )
+         {
+            rc = SDB_SYS ;
+            goto error ;
+         }
+      }
+
+      BSON_APPEND( newHint, FIELD_NAME_SET_ON_INSERT, setOnInsert, bson ) ;
+      BSON_FINISH( newHint ) ;
+      hintPtr = &newHint ;
+   }
+
+   rc = __sdbUpdate ( cHandle, FLG_UPDATE_UPSERT | flag, rule, condition, hint ) ;
+
+done:
+   BSON_DESTROY( newHint ) ;
+   return rc ;
+error:
+   goto done ;
+}
 /*
 static INT32 _sdbDelete ( SOCKET sock, CHAR *pCollectionFullName,
                           CHAR **ppSendBuffer, INT32 *sendBufferSize,

@@ -46,6 +46,7 @@
 #include "pmd.hpp"
 #include "pdTrace.hpp"
 #include "rtnTrace.hpp"
+#include "ossUtil.hpp"
 
 using namespace bson;
 
@@ -84,7 +85,7 @@ namespace engine
                 grpSubCl->begin()->second.size() > 1 ) )
          {
             if ( _pContext->getLimitNum() > 0 ||
-                 _pContext->getSkipNum() > 0 || 
+                 _pContext->getSkipNum() > 0 ||
                  queryMsg->numToReturn > 0 ||
                  queryMsg->numToSkip > 0 )
             {
@@ -327,7 +328,7 @@ namespace engine
          ioItem.iovLen = ossRoundUpToMultipleX( objSelector.objsize(), 4 ) +
                          ossRoundUpToMultipleX( objOrderby.objsize(), 4 ) +
                          objHint.objsize() ;
-         iovec.push_back( ioItem ) ;         
+         iovec.push_back( ioItem ) ;
 
          ++it ;
       }
@@ -524,7 +525,8 @@ namespace engine
                                                 BSONObj &newHint,
                                                 BOOLEAN &isChanged,
                                                 BOOLEAN &isEmpty,
-                                                pmdEDUCB *cb )
+                                                pmdEDUCB *cb,
+                                                BOOLEAN keepShardingKey )
    {
       INT32 rc = SDB_OK ;
       coordShardKicker kicker ;
@@ -535,7 +537,7 @@ namespace engine
       BSONElement ele ;
 
       ele = hint.getField( FIELD_NAME_MODIFY ) ;
-      SDB_ASSERT( Object == ele.type(), 
+      SDB_ASSERT( Object == ele.type(),
                   "Modifier element must be an Object" ) ;
       if ( Object != ele.type() )
       {
@@ -562,7 +564,8 @@ namespace engine
       kicker.bind( _pResource, cataInfo ) ;
 
       rc = kicker.kickShardingKey( updator, newUpdator,
-                                   isChanged, cb, matcher ) ;
+                                   isChanged, cb, matcher,
+                                   keepShardingKey ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Kick shardingkey for updator failed, rc: %d", rc ) ;
@@ -840,9 +843,12 @@ namespace engine
             BOOLEAN isChanged = FALSE ;
             BSONObj tmpNewHint ;
             BOOLEAN isEmpty = FALSE ;
+            BOOLEAN keepShardingKey = OSS_BIT_TEST( pQueryMsg->flags,
+                                      FLG_UPDATE_KEEP_SHARDINGKEY ) ;
 
-            rc = _generateNewHint( cataSel.getCataPtr(), objQuery, objHint,
-                                   tmpNewHint, isChanged, isEmpty, cb ) ;
+            rc = _generateNewHint( cataSel.getCataPtr(), objQuery,
+                                   objHint, tmpNewHint, isChanged,
+                                   isEmpty, cb, keepShardingKey ) ;
             if ( SDB_OK != rc )
             {
                PD_LOG( PDERROR, "Generate new hint failed, rc: %d", rc ) ;

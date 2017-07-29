@@ -776,6 +776,7 @@ static JSBool collection_raw_find ( JSContext *cx , uintN argc , jsval *vp )
    JSObject *objSel                 = NULL ;
    JSObject *objOrder               = NULL ;
    JSObject *objHint                = NULL ;
+   JSObject *objOptions             = NULL ;
    int32_t numToSkip                = 0 ;
    int32_t numToRet                 = -1 ;
    int32_t flags                    = 0 ;
@@ -783,6 +784,7 @@ static JSBool collection_raw_find ( JSContext *cx , uintN argc , jsval *vp )
    bson *bsonSel                    = NULL ;
    bson *bsonOrder                  = NULL ;
    bson *bsonHint                   = NULL ;
+   bson *bsonOptions                = NULL ;
    sdbCursorHandle *cursor          = NULL ;
    JSObject *objCursor              = NULL ;
    INT32 rc                         = SDB_OK ;
@@ -931,7 +933,40 @@ static JSBool collection_raw_find ( JSContext *cx , uintN argc , jsval *vp )
    {
       flags |= FLG_QUERY_MODIFY ;
    }
+   // options
+   if ( JSVAL_IS_VOID( argv[7] ) || JSVAL_IS_NULL( argv[7] ) )
+   {
+      // use orginal flag
+   }
+   else
+   {
+      objOptions = JSVAL_TO_OBJECT ( argv[7] ) ;
+      VERIFY ( objOptions ) ;
 
+      if ( JS_FALSE == objToBson( cx , objOptions , &bsonOptions ) )
+      {
+         rc = SDB_INVALIDARG ;
+         REPORT_RC ( JS_FALSE , "SdbCollection.rawFind()" , rc ) ;
+      }
+
+      // find field 'KeepShardingKey'
+      bson_iterator it ;
+      bson_type type = bson_find( &it, bsonOptions,
+                                  FIELD_NAME_KEEP_SHARDING_KEY ) ;
+      if ( BSON_EOO != type )
+      {
+         if ( BSON_BOOL != type )
+         {
+            REPORT( FALSE,
+                    "SdbCollection.rawFind(): wrong argument"
+                    " in options(<options>)" ) ;
+         }
+         if ( TRUE == bson_iterator_bool( &it ) )
+         {
+            flags |= QUERY_KEEP_SHARDINGKEY_IN_UPDATE ;
+         }
+      }
+   }
 /*
    // get arguments
    ret = JS_ConvertArguments ( cx , argc , JS_ARGV ( cx , vp ) , "/ooooii" ,
@@ -995,6 +1030,7 @@ done :
    SAFE_BSON_DISPOSE ( bsonSel ) ;
    SAFE_BSON_DISPOSE ( bsonOrder ) ;
    SAFE_BSON_DISPOSE ( bsonHint ) ;
+   SAFE_BSON_DISPOSE ( bsonOptions ) ;
    PD_TRACE_EXIT ( SDB_COLL_RAW_FND );
    return ret ;
 error :
@@ -1071,16 +1107,19 @@ static JSBool collection_update ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_COLL_UPDATE );
    engine::sdbClearErrorInfo() ;
-   sdbCollectionHandle *collection  = NULL ;
-   JSObject *           objRule     = NULL ;
-   JSObject *           objCond     = NULL ;
-   JSObject *           objHint     = NULL ;
-   bson *               bsonRule    = NULL ;
-   bson *               bsonCond    = NULL ;
-   bson *               bsonHint    = NULL ;
-   INT32                rc          = SDB_OK ;
-   JSBool               ret         = JS_TRUE ;
-   jsval *              argv        = JS_ARGV ( cx , vp ) ;
+   sdbCollectionHandle *collection        = NULL ;
+   JSObject *           objRule           = NULL ;
+   JSObject *           objCond           = NULL ;
+   JSObject *           objHint           = NULL ;
+   JSObject *           objOptions        = NULL ;
+   bson *               bsonRule          = NULL ;
+   bson *               bsonCond          = NULL ;
+   bson *               bsonHint          = NULL ;
+   bson *               bsonOptions       = NULL ;
+   INT32                flags             = 0 ;
+   INT32                rc                = SDB_OK ;
+   JSBool               ret               = JS_TRUE ;
+   jsval *              argv              = JS_ARGV ( cx , vp ) ;
 
    collection = (sdbCollectionHandle *)
       JS_GetPrivate ( cx , JS_THIS_OBJECT ( cx , vp ) ) ;
@@ -1095,8 +1134,35 @@ static JSBool collection_update ( JSContext *cx , uintN argc , jsval *vp )
    // get optional object
    GET_OBJ_FROM_ARG_ARR( cx, argc, argv, 2, objCond, bsonCond, "SdbCollection.update()" ) ;
    GET_OBJ_FROM_ARG_ARR( cx, argc, argv, 3, objHint, bsonHint, "SdbCollection.update()" ) ;
+   GET_OBJ_FROM_ARG_ARR( cx, argc, argv, 4, objOptions, bsonOptions,
+                         "SdbCollection.update()" ) ;
+   if ( NULL == bsonOptions )
+   {
+      // use orginal flag
+   }
+   else
+   {
+      bson_iterator it ;
+      bson_type type = bson_find( &it, bsonOptions,
+                                  FIELD_NAME_KEEP_SHARDING_KEY ) ;
+
+      if ( BSON_EOO != type )
+      {
+         if ( BSON_BOOL != type )
+         {
+            REPORT( FALSE,
+                    "SdbCollection.update(): the "FIELD_NAME_KEEP_SHARDING_KEY
+                    " argument should be bool" ) ;
+         }
+         if ( TRUE == bson_iterator_bool( &it ) )
+         {
+            flags |= FLG_UPDATE_KEEP_SHARDINGKEY ;
+         }
+      }
+   }
+
    // update
-   rc = sdbUpdate ( *collection , bsonRule , bsonCond , bsonHint ) ;
+   rc = sdbUpdate1 ( *collection, bsonRule, bsonCond, bsonHint, flags ) ;
    REPORT_RC ( SDB_OK == rc , "SdbCollection.update()" , rc ) ;
 
    JS_SET_RVAL ( cx , vp , JSVAL_VOID ) ;
@@ -1105,6 +1171,7 @@ done :
    SAFE_BSON_DISPOSE ( bsonRule ) ;
    SAFE_BSON_DISPOSE ( bsonCond ) ;
    SAFE_BSON_DISPOSE ( bsonHint ) ;
+   SAFE_BSON_DISPOSE ( bsonOptions ) ;
    PD_TRACE_EXIT ( SDB_COLL_UPDATE );
    return ret ;
 error :
@@ -1117,19 +1184,22 @@ static JSBool collection_upsert ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_COLL_UPSERT );
    engine::sdbClearErrorInfo() ;
-   sdbCollectionHandle *collection  = NULL ;
-   JSObject *           objRule     = NULL ;
-   JSObject *           objCond     = NULL ;
-   JSObject *           objHint     = NULL ;
-   JSObject *           objSetOnInsert = NULL ;
-   bson *               bsonRule    = NULL ;
-   bson *               bsonCond    = NULL ;
-   bson *               bsonHint    = NULL ;
-   bson *               bsonNewHint = NULL ;
-   bson *               bsonSetOnInsert = NULL ;
-   INT32                rc          = SDB_OK ;
-   JSBool               ret         = JS_TRUE ;
-   jsval *              argv        = JS_ARGV ( cx , vp ) ;
+   sdbCollectionHandle *collection        = NULL ;
+   JSObject *           objRule           = NULL ;
+   JSObject *           objCond           = NULL ;
+   JSObject *           objHint           = NULL ;
+   JSObject *           objSetOnInsert    = NULL ;
+   JSObject *           objOptions        = NULL ;
+   bson *               bsonRule          = NULL ;
+   bson *               bsonCond          = NULL ;
+   bson *               bsonHint          = NULL ;
+   bson *               bsonNewHint       = NULL ;
+   bson *               bsonSetOnInsert   = NULL ;
+   bson *               bsonOptions       = NULL ;
+   INT32                flags             = 0 ;
+   INT32                rc                = SDB_OK ;
+   JSBool               ret               = JS_TRUE ;
+   jsval *              argv              = JS_ARGV ( cx , vp ) ;
 
    collection = (sdbCollectionHandle *)
       JS_GetPrivate ( cx , JS_THIS_OBJECT ( cx , vp ) ) ;
@@ -1146,6 +1216,8 @@ static JSBool collection_upsert ( JSContext *cx , uintN argc , jsval *vp )
    GET_OBJ_FROM_ARG_ARR( cx, argc, argv, 2, objCond, bsonCond, "SdbCollection.upsert()" ) ;
    GET_OBJ_FROM_ARG_ARR( cx, argc, argv, 3, objHint, bsonHint, "SdbCollection.upsert()" ) ;
    GET_OBJ_FROM_ARG_ARR( cx, argc, argv, 4, objSetOnInsert, bsonSetOnInsert, "SdbCollection.upsert()" ) ;
+   GET_OBJ_FROM_ARG_ARR( cx, argc, argv, 5, objOptions, bsonOptions,
+                         "SdbCollection.upsert()" ) ;
    // create new hint and insert $setOnInsert into it
    if ( argc >= 4 )
    {
@@ -1169,8 +1241,33 @@ static JSBool collection_upsert ( JSContext *cx , uintN argc , jsval *vp )
       bsonHint = bsonNewHint ;
       bsonNewHint = NULL ;
    }
+   // resolve flag
+   if ( NULL == bsonOptions )
+   {
+      // use orginal flag
+   }
+   else
+   {
+      bson_iterator it ;
+      bson_type type = bson_find( &it, bsonOptions,
+                                  FIELD_NAME_KEEP_SHARDING_KEY ) ;
 
-   rc = sdbUpsert ( *collection , bsonRule , bsonCond , bsonHint ) ;
+      if ( BSON_EOO != type )
+      {
+         if ( BSON_BOOL != type )
+         {
+            REPORT( FALSE,
+                    "SdbCollection.update(): the "FIELD_NAME_KEEP_SHARDING_KEY
+                    " argument should be bool" ) ;
+         }
+         if ( TRUE == bson_iterator_bool( &it ) )
+         {
+            flags |= FLG_UPDATE_KEEP_SHARDINGKEY ;
+         }
+      }
+   }
+
+   rc = sdbUpsert2 ( *collection, bsonRule, bsonCond, bsonHint, NULL, flags ) ;
    REPORT_RC ( SDB_OK == rc , "SdbCollection.upsert()" , rc ) ;
 
    JS_SET_RVAL ( cx , vp , JSVAL_VOID ) ;

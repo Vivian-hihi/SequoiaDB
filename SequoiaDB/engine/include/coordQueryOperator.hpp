@@ -133,7 +133,8 @@ namespace engine
                                     BSONObj &newHint,
                                     BOOLEAN &isChanged,
                                     BOOLEAN &isEmpty,
-                                    pmdEDUCB *cb ) ;
+                                    pmdEDUCB *cb,
+                                    BOOLEAN keepShardingKey ) ;
 
          void     _clearBlock( pmdEDUCB *cb ) ;
 

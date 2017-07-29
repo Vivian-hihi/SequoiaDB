@@ -55,9 +55,11 @@ namespace engine
    _qgmPlUpdate::_qgmPlUpdate( const _qgmDbAttr &collection,
                                const qgmDbAttrVec &columns,
                                const qgmOPFieldVec &values,
-                               _qgmConditionNode *condition )
+                               _qgmConditionNode *condition,
+                               INT32 flag )
    :_qgmPlan( QGM_PLAN_TYPE_UPDATE, _qgmField() ),
-    _collection( collection )
+    _collection( collection ),
+    _flag( flag )
    {
       INT32 rc = SDB_OK ;
       if ( columns.size() != values.size() )
@@ -167,7 +169,7 @@ namespace engine
          /// build message
          rc = msgBuildUpdateMsg( &pMsg, &msgSize,
                                  _collection.toString().c_str(),
-                                 0, 0,
+                                 _flag, 0,
                                  &_condition,
                                  &_updater,
                                  &hint,
@@ -200,7 +202,7 @@ namespace engine
                          _condition,
                          _updater,
                          hint,
-                         0, eduCB, dmsCB, dpsCB ) ;
+                         _flag, eduCB, dmsCB, dpsCB ) ;
          if( SDB_OK != rc )
          {
             goto error ;

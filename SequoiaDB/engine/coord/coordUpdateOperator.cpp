@@ -47,6 +47,7 @@
 #include "rtn.hpp"
 #include "pdTrace.hpp"
 #include "coordTrace.hpp"
+#include "ossUtil.hpp"
 
 using namespace bson;
 
@@ -181,7 +182,9 @@ namespace engine
       do
       {
          BSONObj tmpNewObj = boUpdator ;
-         BOOLEAN hasShardingKey = FALSE ;
+         BOOLEAN isChanged = FALSE ;
+         BOOLEAN keepShardingKey = OSS_BIT_TEST( flag,
+                                                 FLG_UPDATE_KEEP_SHARDINGKEY ) ;
 
          if ( cataSel.getCataPtr()->isSharded() )
          {
@@ -189,8 +192,9 @@ namespace engine
             shardKicker.bind( _pResource, cataSel.getCataPtr() ) ;
 
             rc = shardKicker.kickShardingKey( boUpdator, tmpNewObj,
-                                              hasShardingKey, cb,
-                                              boSelector ) ;
+                                              isChanged, cb,
+                                              boSelector,
+                                              keepShardingKey ) ;
             if ( rc )
             {
                PD_LOG( PDERROR, "Kick sharding key for collection[%s] "
@@ -199,7 +203,7 @@ namespace engine
             }
          }
 
-         if ( !hasShardingKey )
+         if ( !isChanged )
          {
             // no sharding key
             pNewUpdate = pUpdate ;

@@ -102,14 +102,18 @@ typedef sdbNodeHandle             sdbReplicaNodeHandle ;
 #define sdbReleaseReplicaNode     sdbReleaseNode
 
 /** Force to use specified hint to query, if database have no index assigned by the hint, fail to query. */
-#define QUERY_FORCE_HINT          0x00000080
+#define QUERY_FORCE_HINT                  0x00000080
 /** Enable parallel sub query, each sub query will finish scanning diffent part of the data. */
-#define QUERY_PARALLED            0x00000100
+#define QUERY_PARALLED                    0x00000100
 /** In general, query won't return data until cursor gets from database, when add this flag, return data in query response, it will be more high-performance */
-#define QUERY_WITH_RETURNDATA     0x00000200
+#define QUERY_WITH_RETURNDATA             0x00000200
 /** Enable prepare more data when query */
-#define QUERY_PREPARE_MORE        0x00004000
+#define QUERY_PREPARE_MORE                0x00004000
+/** The sharding key in update rule is not filtered, when executing findAndUpdate. */
+#define QUERY_KEEP_SHARDINGKEY_IN_UPDATE  0x00008000
 
+/** The sharding key in update rule is not filtered, when executing update or upsert. */
+#define UPDATE_KEEP_SHARDINGKEY           QUERY_KEEP_SHARDINGKEY_IN_UPDATE
 
 /** \fn INT32 initClient ( sdbClientConf* config ) ;
     \brief set client global configuration such as cache strategy to improve performance
@@ -1351,6 +1355,35 @@ SDB_EXPORT INT32 sdbUpdate ( sdbCollectionHandle cHandle,
                              bson *condition,
                              bson *hint ) ;
 
+/** \fn INT32 sdbUpdate1 ( sdbCollectionHandle cHandle,
+                          bson *rule,
+                          bson *condition,
+                          bson *hint,
+                          INT32 flag )
+    \brief Update the matching documents in current collection
+    \param [in] cHandle The collection handle
+    \param [in] rule The updating rule, cannot be null
+    \param [in] condition The matching rule, update all the documents if this parameter is null
+    \param [in] hint Specified the index used to scan data. e.g. {"":"ageIndex"} means
+                    using index "ageIndex" to scan data(index scan);
+                    {"":null} means table scan. when hint is null,
+                    database automatically match the optimal index to scan data
+    \param [in] flag The update flag, default to be 0. Please see the definition of follow
+                    flags for more detail.
+
+        UPDATE_KEEP_SHARDINGKEY
+
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+    \note When flag is set to 0, it won't work to update the "ShardingKey" field, but the
+              other fields take effect
+*/
+SDB_EXPORT INT32 sdbUpdate1 ( sdbCollectionHandle cHandle,
+                             bson *rule,
+                             bson *condition,
+                             bson *hint,
+                             INT32 flag ) ;
+
 /** \fn INT32 sdbUpsert ( sdbCollectionHandle cHandle,
                           bson *rule,
                           bson *condition,
@@ -1395,6 +1428,38 @@ SDB_EXPORT INT32 sdbUpsert1 ( sdbCollectionHandle cHandle,
                               bson *condition,
                               bson *hint,
                               bson *setOnInsert ) ;
+
+/** \fn INT32 sdbUpsert2 ( sdbCollectionHandle cHandle,
+                           bson *rule,
+                           bson *condition,
+                           bson *hint,
+                           bson *setOnInsert,
+                           INT32 flag )
+    \brief Update the matching documents in current collection, insert if no matching
+    \param [in] cHandle The collection handle
+    \param [in] rule The updating rule, cannot be null
+    \param [in] condition The matching rule, update all the documents if this parameter is null
+    \param [in] hint Specified the index used to scan data. e.g. {"":"ageIndex"} means
+                    using index "ageIndex" to scan data(index scan);
+                    {"":null} means table scan. when hint is null,
+                    database automatically match the optimal index to scan data
+    \param [in] setOnInsert The setOnInsert assigns the specified values to the fileds when insert
+    \param [in] flag The upsert flag, default to be 0. Please see the definition of follow
+                    flags for more detail.
+
+        UPDATE_KEEP_SHARDINGKEY
+
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+    \note When flag is set to 0, it won't work to update the "ShardingKey" field, but the
+              other fields take effect
+*/
+SDB_EXPORT INT32 sdbUpsert2 ( sdbCollectionHandle cHandle,
+                              bson *rule,
+                              bson *condition,
+                              bson *hint,
+                              bson *setOnInsert,
+                              INT32 flag ) ;
 
 /** \fn INT32 sdbDelete ( sdbCollectionHandle cHandle,
                           bson *condition,
@@ -1514,6 +1579,7 @@ SDB_EXPORT INT32 sdbQuery ( sdbCollectionHandle cHandle,
         QUERY_FORCE_HINT
         QUERY_PARALLED
         QUERY_WITH_RETURNDATA
+        QUERY_KEEP_SHARDINGKEY_IN_UPDATE
 
     \param [in] returnNew When TRUE, returns the updated document rather than the original
     \param [out] handle The cursor handle of current query

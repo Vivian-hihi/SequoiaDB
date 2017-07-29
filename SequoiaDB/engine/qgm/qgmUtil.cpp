@@ -41,6 +41,8 @@
 #include "ossUtil.hpp"
 #include "pdTrace.hpp"
 #include "qgmTrace.hpp"
+#include "msg.h"
+#include "utilStr.hpp"
 
 using namespace bson ;
 
@@ -247,7 +249,7 @@ namespace engine
          }
          ++i ;
       }
-      
+
    done:
       PD_TRACE_EXIT( SDB__QGMISFROMONE ) ;
       return ret ;
@@ -985,24 +987,64 @@ namespace engine
          goto done ;
       }
 
-      if ( 0 == ossStrncmp( f.begin(),
-                            "null",
-                            f.size() ) ||
-           0 == ossStrncmp( f.begin(),
-                            "NULL",
-                            f.size() ) )
+      if ( TABLE_SCAN_SIZE == f.size() &&
+           0 == ossStrncmp( f.begin(), TABLE_SCAN, f.size() ) )
       {
          builder.appendNull("") ;
+         goto done ;
       }
-      else
+      if ( TABLE_SCAN_LOWER_SIZE == f.size() &&
+           0 == ossStrncmp( f.begin(), TABLE_SCAN_LOWER, f.size() ) )
       {
-         builder.appendStrWithNoTerminating( "",
-                                             f.begin(),
-                                             f.size() ) ;
+         builder.appendNull("") ;
+         goto done ;
       }
+      builder.appendStrWithNoTerminating( "", f.begin(), f.size() ) ;
 
    done:
       return builder.obj() ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMUSEHINTTOFLAG, "qgmUseHintToFlag" )
+   INT32 qgmUseHintToFlag( const qgmHint &h, INT32 &flag )
+   {
+      PD_TRACE_ENTRY( SDB__QGMUSEHINTTOFLAG ) ;
+      INT32 rc = SDB_OK ;
+      const CHAR *strFlag = NULL ;
+      qgmField f ;
+
+      if ( 1 == h.param.size() )
+      {
+         f = h.param.at( 0 ).value.attr() ;
+      }
+      else
+      {
+         goto done ;
+      }
+
+      // treat it as string flag
+      if ( FLG_SQL_UPDATE_KEEP_SK_SIZE == f.size() &&
+           0 == ossStrncmp( f.begin(), FLG_SQL_UPDATE_KEEP_SK, f.size() ) )
+      {
+         flag = FLG_UPDATE_KEEP_SHARDINGKEY ;
+         goto done ;
+      }
+
+      // treat it as number flag
+      strFlag = f.toString().c_str() ;
+      rc = utilStr2Num( strFlag, flag );
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Fail to convert %s to int flag, rc: %d",
+                 strFlag, rc ) ;
+         goto error ;
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB__QGMUSEHINTTOFLAG, rc ) ;
+      return rc ;
+   error :
+      goto done ;
    }
 
    const CHAR* qgmGetNodeTypeStr( INT32 type )

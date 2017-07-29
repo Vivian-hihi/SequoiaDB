@@ -87,7 +87,7 @@ namespace engine
 
    // sequoiasql oltp
    #define OM_SEQUOIASQL_DEPLOY_OLTP            "oltp"
-   
+
    // sequoiasql olap
    #define OM_SEQUOIASQL_DEPLOY_OLAP            "olap"
    #define OM_SSQL_OLAP_DEPLOY_STANDBY          "deploy_standby"
@@ -123,7 +123,7 @@ namespace engine
    #define OM_BUSINESS_YARN                  "yarn"
    #define OM_BUSINESS_SEQUOIASQL            "sequoiasql"
 
-   
+
    #define OM_CS_DEPLOY                      "SYSDEPLOY"
 
    // deploy.cluster
@@ -144,7 +144,7 @@ namespace engine
    #define OM_CS_DEPLOY_CL_CLUSTERIDX1       "{name:\"SYSDEPLOY_CLUSTER_IDX1\",key: {"\
                                              OM_CLUSTER_FIELD_NAME":1}, unique: true, enforced: true } "
 
-   // deploy.host                            
+   // deploy.host
    #define OM_CS_DEPLOY_CL_HOST              OM_CS_DEPLOY".SYSHOST"
    #define OM_HOST_FIELD_NAME                "HostName"
    #define OM_HOST_FIELD_CLUSTERNAME         OM_CLUSTER_FIELD_NAME
@@ -218,7 +218,7 @@ namespace engine
    #define OM_BUSINESSAUTH_PASSWD            OM_HOST_FIELD_PASSWORD
    #define OM_CS_DEPLOY_CL_BUSINESSAUTHIDX1  "{name:\"SYSDEPLOY_BUSINESSAUTH_IDX1\",key: {"\
                                              OM_BUSINESS_FIELD_NAME":1}, unique: true, enforced: true } "
-   
+
    // deploy.taskinfo
    #define OM_CS_DEPLOY_CL_TASKINFO          OM_CS_DEPLOY".SYSTASKINFO"
    //INT64
@@ -327,13 +327,13 @@ namespace engine
 
 #if defined _WINDOWS
    #define  OM_DEFAULT_INSTALL_PATH          "C:\\Program Files\\sequoiadb\\"
-#else 
+#else
    #define  OM_DEFAULT_INSTALL_PATH          "/opt/sequoiadb/"
 #endif
 
 #if defined _WINDOWS
    #define  OM_DEFAULT_INSTALL_ROOT_PATH     "C:\\Program Files\\"
-#else 
+#else
    #define  OM_DEFAULT_INSTALL_ROOT_PATH     "/opt/"
 #endif
 
@@ -619,6 +619,13 @@ namespace engine
    #define REST_KEY_NAME_UPBOUND             "Upbound"
    #define REST_KEY_NAME_CODE                "Code"
    #define REST_KEY_NAME_FUNCTION            "Function"
+
+   #define REST_VALUE_FLAG_UPDATE_KEEP_SK          "SDB_UPDATE_KEEP_SHARDINGKEY"
+   #define REST_VALUE_FLAG_QUERY_KEEP_SK_IN_UPDATE "SDB_QUERY_KEEP_SHARDINGKEY_IN_UPDATE"
+   #define REST_VALUE_FLAG_QUERY_FORCE_HINT        "SDB_QUERY_FORCE_HINT"
+   #define REST_VALUE_FLAG_QUERY_PARALLED          "SDB_QUERY_PARALLED"
+   #define REST_VALUE_FLAG_QUERY_WITH_RETURNDATA   "SDB_QUERY_WITH_RETURNDATA"
+   #define REST_FLAG_SEP "|"
 
 }
 

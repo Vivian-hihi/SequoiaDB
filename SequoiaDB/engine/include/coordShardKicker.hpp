@@ -47,7 +47,7 @@ namespace engine
    /*
       _coordShardKicker define
    */
-   class _coordShardKicker : public SDBObject 
+   class _coordShardKicker : public SDBObject
    {
       struct strContainner
       {
@@ -86,9 +86,10 @@ namespace engine
    public:
       INT32    kickShardingKey( const BSONObj &updator,
                                 BSONObj &newUpdator,
-                                BOOLEAN &hasShardingKey,
+                                BOOLEAN &isChange,
                                 _pmdEDUCB *cb,
-                                const BSONObj &matcher = BSONObj() ) ;
+                                const BSONObj &matcher = BSONObj(),
+                                BOOLEAN keepShardingKey = FALSE ) ;
 
       INT32    checkShardingKey( const BSONObj &updator,
                                  BOOLEAN &hasInclude,
@@ -105,22 +106,23 @@ namespace engine
                                     BOOLEAN &hasShardingKey ) ;
 
       INT32       _kickShardingKey( const string &collectionName,
-                                    const BSONObj &updator, 
+                                    const BSONObj &updator,
                                     BSONObj &newUpdator,
-                                    BOOLEAN &hasShardingKey,
-                                    _pmdEDUCB *cb ) ;
+                                    BOOLEAN &isChange,
+                                    _pmdEDUCB *cb,
+                                    BOOLEAN keepShardingKey ) ;
 
       INT32       _checkShardingKey( const CoordCataInfoPtr &cataInfo,
                                      const BSONObj &updator,
                                      BOOLEAN &hasInclude ) ;
 
       INT32       _checkShardingKey( const string &collectionName,
-                                     const BSONObj &updator, 
+                                     const BSONObj &updator,
                                      BOOLEAN &hasInclude,
                                      _pmdEDUCB *cb ) ;
 
    private:
-      set< UINT32 >              _skSiteIDs ;
+      map< UINT32, BOOLEAN >     _skSiteIDs ;
       SET_SHARDINGKEY            _setKeys ;
 
       coordResource              *_pResource ;

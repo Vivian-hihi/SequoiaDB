@@ -249,7 +249,7 @@ typedef SQL_CONTAINER::const_iterator SQL_CON_ITR ;
          rule<ScannerT> expr_factor ;
          rule<ScannerT> expr_group ;
          rule<ScannerT> expr;
-         
+
 
          const SQL_RULE(SQL) &start() const
          {
@@ -266,7 +266,7 @@ typedef SQL_CONTAINER::const_iterator SQL_CON_ITR ;
 
             bool_true = as_lower_d[ str_p("true") ] ;
 
-            bool_false = as_lower_d[ str_p("false") ] ;         
+            bool_false = as_lower_d[ str_p("false") ] ;
 
             graph = (anychar_p - ( ch_p('"')|ch_p('\0')|ch_p('\'')))
                     | str_p("\\\\")
@@ -280,7 +280,7 @@ typedef SQL_CONTAINER::const_iterator SQL_CON_ITR ;
                    | ( inner_node_d[ch_p('\'')
                                >> leaf_node_d[+graph]
                                >> ch_p('\'')])
-                   | ( no_node_d[ch_p('\'')] >> no_node_d[ch_p('\'')]); 
+                   | ( no_node_d[ch_p('\'')] >> no_node_d[ch_p('\'')]);
 
             dbattrchar = anychar_p - ( ch_p('=')
                                        |ch_p('<')
@@ -379,7 +379,7 @@ typedef SQL_CONTAINER::const_iterator SQL_CON_ITR ;
             expr = expr_group % ( SQL_BLANKORNO
                                   >> root_node_d[( add | sub )]
                                   >> SQL_BLANKORNO  ) ;
-                   
+
 
             func = leaf_node_d[dbattr
                                >> SQL_BLANKORNO
@@ -477,7 +477,7 @@ typedef SQL_CONTAINER::const_iterator SQL_CON_ITR ;
                                >> SQL_BLANKORNO )
                        >> SQL_BLANKORNO
                        >> no_node_d[rbrackets];
-                       
+
 
             /// lt and gt must be behind the others.
             wFactor = ( dbattr
@@ -658,7 +658,8 @@ typedef SQL_CONTAINER::const_iterator SQL_CON_ITR ;
                      >> dbattr
                      >> SQL_BLANK
                      >> set
-                     >> !( SQL_BLANK >> where ) ;
+                     >> !( SQL_BLANK >> where )
+                     >> !( SQL_BLANK >> hint ) ;
 
             del = no_node_d[as_lower_d[str_p("delete")]]
                   >> SQL_BLANK
