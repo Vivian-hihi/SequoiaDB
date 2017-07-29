@@ -72,10 +72,8 @@ public class TestSameLobs7841 extends SdbTestBase {
 	    }
 	 }	
 	
-	private ObjectId putLob(){
-		int lobsize = random.nextInt(1048576);
-		String lobSb = Commlib.getRandomString(lobsize);
-		ObjectId oid  = null;			
+	private ObjectId putLob(String lobSb){		
+		ObjectId oid  = null;	
 		
 		DBLob lob = null;
 		try{			
@@ -126,7 +124,7 @@ public class TestSameLobs7841 extends SdbTestBase {
 	public void tearDown(){		
 		try{			
 			if(cs.isCollectionExist(clName)){
-				cs.dropCollection(clName);
+				//cs.dropCollection(clName);
 			}
 			sdb.disconnect();
 		}catch(BaseException e){			
@@ -137,11 +135,16 @@ public class TestSameLobs7841 extends SdbTestBase {
 		}
 	}	
 	
-	//write the 100 same lob 
-	@Test(invocationCount = 100)
-	private void testSameLob(){		
-		ObjectId oid = putLob();
-		checkLob(oid);
+	//write same lob 
+	@Test
+	private void testSameLob(){	
+		int lobsize = random.nextInt(10240);		
+		String lobSb = Commlib.getRandomString(lobsize);
+		for(int i=0;i<5;i++)
+		{
+			ObjectId oid = putLob(lobSb);
+			checkLob(oid);
+		}
 	}	
 	
 	
