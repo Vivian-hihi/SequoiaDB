@@ -73,7 +73,7 @@ function main ( db )
 
          // Inspect the new primary node ant the olde primary node
          var majCount = 0 ;
-         var sleepTimeLen = 30;
+         var sleepTimeLen = 60;
          do
          {
             sleep(1000);

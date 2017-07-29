@@ -32,7 +32,7 @@ function main ( db )
             println( "Failed to start group in the beginning, group = " + getRG ) ;
             throw e ;
          }
-         sleep(10000) ;
+         sleep(1000) ;
          // 1.Stop the group
          try
          {
@@ -82,7 +82,7 @@ function main ( db )
          // 5.Inspect the Group than have primary
          // Inspect the new primary node ant the olde primary node
          var majCount = 0 ;
-         var totalTimeLen = 30;
+         var totalTimeLen = 60;
          do
          {
             sleep(1000);

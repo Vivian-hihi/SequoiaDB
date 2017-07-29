@@ -35,7 +35,7 @@ function main ( db )
 
                // Inspect the new primary node ant the olde primary node
                var count = 0 ;
-               var totalLen = 30;
+               var totalLen = 60;
                do
                {
                   sleep(1000);
