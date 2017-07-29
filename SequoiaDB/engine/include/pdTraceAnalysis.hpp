@@ -139,6 +139,8 @@ struct _pdFunctionSummaryRecord
 {
    UINT32               _count ;
    UINT32               _minCost ;
+   UINT64               _maxIn2OutCost ;
+   UINT64               _maxCurrentCost ;
    UINT64               _totalCost ;
    double               _avgcost ;
    pdFunctionRecord     _reserveRecords[ NUMBER_OF_FUNCTION_RECORD_RESERVATION ] ;
@@ -148,6 +150,8 @@ struct _pdFunctionSummaryRecord
       _count = 0 ;
       _minCost = 0 ;
       _totalCost = 0 ;
+      _maxIn2OutCost = 0 ;
+      _maxCurrentCost = 0 ;
    }
 
    void insert( const pdFunctionRecord &record )
@@ -177,10 +181,14 @@ struct _pdFunctionSummaryRecord
       if ( _count == 0 )
       {
          _minCost = (UINT32)record._cost ;
+         _maxIn2OutCost = record._totalCost ;
+         _maxCurrentCost = record._cost ;
       }
       else
       {
          _minCost = OSS_MIN ( (UINT32)record._cost, _minCost ) ;
+         _maxIn2OutCost = OSS_MAX ( record._totalCost, _maxIn2OutCost ) ;
+         _maxCurrentCost = OSS_MAX ( record._cost, _maxCurrentCost ) ;
       }
 
       ++_count ;

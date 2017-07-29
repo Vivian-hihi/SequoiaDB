@@ -43,7 +43,7 @@
 using namespace engine ;
 
 #define PD_FUNC_RECORD_TITLE \
-   "name, count, avgcost, min, first, second, third, fourth, fifth"
+   "name, count, avgcost, min, maxIn2OutCost, maxCurrentCost, first, second, third, fourth, fifth"
 
 /*
    _pdTraceParser implement
@@ -929,11 +929,13 @@ INT32 _pdTraceParser::_outputFunctionSummaryRecord( UINT64 funcId,
 
    // PD_FUNC_RECORD_TITLE
    length = ossSnprintf( _pFormatBuf, _bufSize,
-                         OSS_NEWLINE"%s,%d,%.1f,%u",
+                         OSS_NEWLINE"%s,%d,%.1f,%u,%lld,%lld",
                          pdGetTraceFunction(funcId),
                          record._count,
                          record.avgCost(),
-                         record._minCost ) ;
+                         record._minCost,
+                         record._maxIn2OutCost,
+                         record._maxCurrentCost ) ;
 
    count = OSS_MIN ( record._count, NUMBER_OF_FUNCTION_RECORD_RESERVATION ) ;
    for ( UINT32 idx = 0; idx < count ; ++idx )
