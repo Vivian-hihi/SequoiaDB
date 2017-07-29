@@ -108,7 +108,8 @@ public class Commlib {
 	 */
 	public static void insertRecords(DBCollection cl,BSONObject obj) throws BaseException{
 		
-        final int each_thread_recordNums = 10;
+        //has modified one case has two threads
+        final int each_thread_recordNums = 1000;
 		try {	
 	       for(int i = 0; i < each_thread_recordNums; i++) {
 	          cl.insert(obj);//each cappedCL insert the same record 
@@ -148,7 +149,7 @@ public class Commlib {
 	 */
 	public static int getRandomStringLength() {
 		int minLength = 100 * 1024; //100k
-		int range = 100 * 1024  ;
+		int range = 100 * 1024;
         int stringLength =  (int)(minLength + Math.random() * range);//all records length range [100k,200k]
         return stringLength;
 	}

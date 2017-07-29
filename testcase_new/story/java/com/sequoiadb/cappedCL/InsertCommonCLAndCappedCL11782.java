@@ -57,7 +57,7 @@ public class InsertCommonCLAndCappedCL11782 extends SdbTestBase{
 		
 		InsertThread insertThread = new InsertThread(strBuffer);
 		
-		int threadNum = 10;
+		int threadNum = 2;
 		insertThread.start(threadNum);
 		
 		Assert.assertTrue(insertThread.isSuccess(),insertThread.getErrorMsg());
