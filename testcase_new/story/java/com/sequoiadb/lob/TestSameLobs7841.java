@@ -124,7 +124,7 @@ public class TestSameLobs7841 extends SdbTestBase {
 	public void tearDown(){		
 		try{			
 			if(cs.isCollectionExist(clName)){
-				//cs.dropCollection(clName);
+				cs.dropCollection(clName);
 			}
 			sdb.disconnect();
 		}catch(BaseException e){			
