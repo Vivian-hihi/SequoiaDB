@@ -2320,6 +2320,7 @@ File.scp = function( src, dst, isReplace, mode ) {
       {
          var fileContent = srcFile.readContent( COPY_UNIT ) ;
          dstFile.writeContent( fileContent ) ;
+         fileContent.clear() ;
       }
    }
    catch( e )

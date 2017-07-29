@@ -62,6 +62,10 @@ namespace engine
                           _sptReturnVal &rval,
                           bson::BSONObj &detail ) ;
 
+      INT32 clear( const _sptArguments &arg,
+                   _sptReturnVal &rval,
+                   bson::BSONObj &detail ) ;
+
       INT32 memberHelp( const _sptArguments &arg,
                         _sptReturnVal &rval,
                         bson::BSONObj &detail ) ;
@@ -78,6 +82,16 @@ namespace engine
       inline const CHAR* getBuf()
       {
          return _buf ;
+      }
+
+      inline void clear()
+      {
+         if( _buf )
+         {
+            SDB_OSS_FREE( _buf ) ;
+            _buf = NULL ;
+            _length = 0 ;
+         }
       }
 
    private:

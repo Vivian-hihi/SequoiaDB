@@ -241,12 +241,15 @@ namespace engine
       }
       PD_RC_CHECK( rc, PDERROR, "Failed to get content, rc: %d", rc ) ;
 
-      rc = ossWriteN( &_file, buf, size ) ;
-      if ( SDB_OK != rc )
+      if( NULL != buf )
       {
-         err = getErrDesp( rc ) ;
-         PD_LOG( PDERROR, "failed to write to file:%d", rc ) ;
-         goto error ;
+         rc = ossWriteN( &_file, buf, size ) ;
+         if ( SDB_OK != rc )
+         {
+            err = getErrDesp( rc ) ;
+            PD_LOG( PDERROR, "failed to write to file:%d", rc ) ;
+            goto error ;
+         }
       }
    done:
       return rc ;
