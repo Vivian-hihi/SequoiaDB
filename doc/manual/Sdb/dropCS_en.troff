@@ -7,7 +7,7 @@
 dropCS \- Delete a specified collection space.
 .SH SYNOPSIS
 .PP
-\f[B]\f[I]db.collectionspace.dropCL(<name>)\f[]\f[]
+\f[B]\f[I]db.collectionspace.dropCS(<name>)\f[]\f[]
 .SH CATEGORY
 .PP
 Sequoiadb
