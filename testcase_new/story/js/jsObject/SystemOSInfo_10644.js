@@ -10,57 +10,57 @@
 *@author      : Liang XueWang
 ******************************************************************************/
 function isLsbReleaseExist( cmd )
-{
-    try
-    {
-        cmd.run( "lsb_release -a" ) ;
-        return true ;
-    }
-    catch( e )
-    {
-        return false ;
-    }
+{    
+   try
+   {
+      cmd.run( "lsb_release -a" ) ;
+      return true ;
+   }
+   catch( e )
+   {
+      return false ;
+   }
 }
 
 function toolGetReleaseInfo( hostName, svcName )
-{
-    var remote = new Remote( hostName, svcName ) ;
-    var cmd = remote.getCmd() ;
-    var result ;
+{  
+   var remote = new Remote( hostName, svcName ) ;
+   var cmd = remote.getCmd() ;
+   var result ;
     
-    if( isLsbReleaseExist( cmd ) )
-    {
-        // use lsb_release to get release info
-        var command = "lsb_release -a | grep Description | awk -F ':' '{print $2}'" ;
-        var tmpInfo = cmd.run( command ).split( "\n" ) ;
-        result = tmpInfo[ tmpInfo.length-2 ] ;
-    }
-    else
-    {
-        // if cannot use lsb_release, use release file    
-        var files = [ "/etc/SuSE-release", "/etc/redhat-release", "/etc/os-release" ] ;
-        var file = remote.getFile() ;
-        for( var i = 0;i < files.length;i++ )
-        {
-            if( file.exist( files[i] ) )
+   if( isLsbReleaseExist( cmd ) )
+   {
+      // use lsb_release to get release info
+      var command = "lsb_release -a | grep Description | awk -F ':' '{print $2}'" ;
+      var tmpInfo = cmd.run( command ).split( "\n" ) ;
+      result = tmpInfo[ tmpInfo.length-2 ] ;
+   }
+   else
+   {
+      // if cannot use lsb_release, use release file    
+      var files = [ "/etc/SuSE-release", "/etc/redhat-release", "/etc/os-release" ] ;
+      var file = remote.getFile() ;
+      for( var i = 0;i < files.length;i++ )
+      {
+         if( file.exist( files[i] ) )
+         {
+            if( i == 0 || i == 1 )
             {
-                if( i == 0 || i == 1 )
-                {
-                    result = cmd.run( "cat " + files[i] ).split( "\n" )[0] ;
-                }
-                else
-                {
-                    var tmpInfo = cmd.run( "cat /etc/os-release | grep PRETTY_NAME").split("\n")[0] ;
-                    tmpInfo = tmpInfo.split("=")[1] ;
-                    result = tmpInfo.replace( /\"/g, '' ) ;
-                    
-                }
+               result = cmd.run( "cat " + files[i] ).split( "\n" )[0] ;
             }
-        }    
-    }
-    remote.close() ;
-    result = result.replace( /[\t ]/g, '' ) ;
-    return result ;
+            else
+            {
+               var tmpInfo = cmd.run( "cat /etc/os-release | grep PRETTY_NAME" ).split("\n")[0] ;
+               tmpInfo = tmpInfo.split("=")[1] ;
+               result = tmpInfo.replace( /\"/g, '' ) ;
+            }
+            break ;
+         }
+      }    
+   }
+   remote.close() ;
+   result = result.replace( /[\t ]/g, '' ) ;
+   return result ;
 }
 
 // 测试获取system对象信息
