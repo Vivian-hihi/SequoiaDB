@@ -108,8 +108,8 @@ public class Commlib {
 	 */
 	public static void insertRecords(DBCollection cl,BSONObject obj) throws BaseException{
 		
-        //has modified one case has two threads
-        final int each_thread_recordNums = 1000;
+        //has modified one case has 10 threads
+        final int each_thread_recordNums = 200;
 		try {	
 	       for(int i = 0; i < each_thread_recordNums; i++) {
 	          cl.insert(obj);//each cappedCL insert the same record 

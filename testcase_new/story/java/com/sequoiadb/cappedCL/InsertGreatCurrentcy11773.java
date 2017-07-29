@@ -49,7 +49,7 @@ public class InsertGreatCurrentcy11773 extends SdbTestBase{
 	public void testGreatConcurrencyInsert() {
 		StringBuffer strBuffer =  new StringBuffer();
 		
-		int threadNums = 2;
+		int threadNums = 10;
 		InsertThread insertThread = new InsertThread(strBuffer);
 		insertThread.start(threadNums);
 		

@@ -41,7 +41,7 @@ public class QueryGreatConcurrentcy11806 extends SdbTestBase{
 			sdb.setSessionAttr((BSONObject)JSON.parse("{PreferedInstance:'M'}"));
 			cappedCL_11806 = Commlib.createCL(sdb, cappedCSName_11806, cappedCLName_11806, isCapped);
 			stringLength = Commlib.getRandomStringLength();
-			Commlib.insertRecords(cappedCL_11806,stringLength,1000);//init insert 1000 records
+			Commlib.insertRecords(cappedCL_11806,stringLength,2000);//init insert 2000 records
 		}catch(BaseException e) {
 			Assert.fail(e.getMessage());
 		}
@@ -50,7 +50,7 @@ public class QueryGreatConcurrentcy11806 extends SdbTestBase{
 	@Test
 	public void testGreatConcurrencyQuery() {
 		QueryThread queryThread = new QueryThread();
-		int threadNum = 2;
+		int threadNum = 10;
 		queryThread.start(threadNum);
 		
 		Assert.assertTrue(queryThread.isSuccess(),queryThread.getErrorMsg());
