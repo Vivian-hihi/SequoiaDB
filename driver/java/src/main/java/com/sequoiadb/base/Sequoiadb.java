@@ -290,8 +290,7 @@ public class Sequoiadb implements Closeable {
      * @param username    the user's name of the account
      * @param password    the password  of the account
      * @param options     the options for connection
-     * @throws com.sequoiadb.exception.BaseException "SDB_NETWORK" means network error,
-     *                                               "SDB_INVALIDARG" means wrong address or the address don't map to the hosts table in local computer
+     * @throws com.sequoiadb.exception.BaseException
      * @fn Sequoiadb(List<String> connStrings, String username, String password,
      *ConfigOptions options)
      * @brief Constructor, use a random valid address to connect to database.
@@ -325,11 +324,14 @@ public class Sequoiadb implements Closeable {
                 init(str, username, password, options);
                 return;
             } catch (BaseException e) {
+                if (e.getErrorCode() == SDBError.SDB_AUTH_AUTHORITY_FORBIDDEN.getErrorCode()) {
+                    throw e;
+                }
                 list.remove(index);
             }
         }
 
-        throw new BaseException(SDBError.SDB_INVALIDARG, "No valid address");
+        throw new BaseException(SDBError.SDB_NET_CANNOT_CONNECT, "No valid address");
     }
 
     /**
