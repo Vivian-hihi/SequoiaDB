@@ -54,12 +54,29 @@
             <antcall target="generate_node_start_report"/>
          </then>
       </if>
+      <!--detect cl remain-->
+      <antcall target="detect_cl_remain"/>
       
       <!-- cp report to ${WORKSPACE}/report-->
       <delete dir="${WORKSPACE}/report/env_detect"/>
       <copy todir="${WORKSPACE}/report/env_detect">
          <fileset dir="${report_dir}" includes="*.xml"/>
       </copy>
+   </target>
+   
+   <target name="detect_cl_remain">
+      <property file="${basedir}/src/conf/test.conf" />
+      <propertycopy name="testhost_list" from="${plat_form}_${TEST_TYPE}_${DEPLOY_MODE}_HOST" />
+
+      <propertyregex property="firsthost" input="${testhost_list}" regexp=",(.*)" 
+                     replace="" defaultValue="${testhost_list}"/>
+      <staf location="${firsthost}" service="PROCESS"
+            request="START SHELL COMMAND &quot;${INSTALL_DIR}/bin/sdb -s \&quot;db=new Sdb('localhost',${SVCNAME});db.list(4);\&quot;&quot; WAIT 1m STDERRTOSTDOUT RETURNSTDOUT"
+            resultPrefix="cl"
+            throwBuildException="1"/>
+      <delete file="${report_dir}/detect_cl_remain.xml" failonerror="false"/>
+      <copy file="${basedir}/src/test/exec_testcase/report_succ_temple.xml" tofile="${report_dir}/detect_cl_remain.xml"/>
+      <echo file="${report_dir}/detect_cl_remain.xml" message="${cl.result}" append="true" />
    </target>
    
    <target name="detect_remote_env">
@@ -117,7 +134,7 @@
       <!--detect node by find core-->
       <for param="nodecorname">
          <path>
-            <fileset dir="${INSTALL_DIR}/database/" includes="**/*core*" />
+            <fileset dir="${INSTALL_DIR}/" includes="database/**/*core*,bin/*core*" />
          </path>
          <sequential>
             <echo message="${host.NAME}   ${host.ADDR4}   @{nodecorname}&#10;" file="${report_dir}/${host.NAME}_node_core.log" append="true"/>
