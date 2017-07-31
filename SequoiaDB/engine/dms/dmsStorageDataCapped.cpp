@@ -273,12 +273,17 @@ namespace engine
       // Init the option page.
       optExtRW = extent2RW( extOptExtent, collectionID ) ;
       optExtRW.setNothrow( TRUE ) ;
-      optExtent = optExtRW.writePtr<dmsOptExtent>() ;
+      optExtent = optExtRW.writePtr<dmsOptExtent>( 0, extentSize <<
+                                                      pageSizeSquareRoot() ) ;
       PD_CHECK( optExtent, SDB_SYS, error, PDERROR,
                 "Invalid option extent[%d]", optExtent ) ;
       optExtent->init( extentSize, collectionID ) ;
       optExtent->setOption( (const CHAR *)&options,
                             sizeof( dmsCappedCLOptions )) ;
+
+      // Flush immediately to avoid corruption of this page in crash.
+      flushPages( extOptExtent, extentSize, isSyncDeep() ) ;
+
       rc = optExtent->getOption( (CHAR **)&_options[collectionID], NULL ) ;
       PD_RC_CHECK( rc, PDERROR, "Get collection extend option from extent "
                    "failed, rc: %d", rc ) ;
