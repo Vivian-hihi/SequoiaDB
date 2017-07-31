@@ -732,7 +732,7 @@ namespace engine
       if ( DMS_STORAGE_CAPPED == type )
       {
          dmsCappedCLOptions *options =
-            (dmsCappedCLOptions *)(inBuf + sizeof(DMS_OPTEXTENT_HEADER_SZ)) ;
+            (dmsCappedCLOptions *)(inBuf + DMS_OPTEXTENT_HEADER_SZ) ;
          len += ossSnprintf( outBuf + len, outSize - len,
                              "Extend option detail:"OSS_NEWLINE ) ;
          len += ossSnprintf( outBuf + len, outSize - len,
