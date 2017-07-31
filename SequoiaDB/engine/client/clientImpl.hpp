@@ -203,9 +203,11 @@ namespace sdbclient
       // update rule ( required )
       // update condition ( optional )
       // hint ( optional )
+      // flag ( optional )
       INT32 update ( const BSONObj &rule,
                      const BSONObj &condition = _sdbStaticObject,
-                     const BSONObj &hint = _sdbStaticObject
+                     const BSONObj &hint = _sdbStaticObject,
+                     INT32 flag = 0
                    ) ;
 
       // update bson object from current collection, if no record has been
@@ -216,10 +218,12 @@ namespace sdbclient
       // update condition ( optional )
       // hint ( optional )
       // setOnInsert ( optional )
+      // flag ( optional )
       INT32 upsert ( const BSONObj &rule,
                      const BSONObj &condition = _sdbStaticObject,
                      const BSONObj &hint = _sdbStaticObject,
-                     const BSONObj &setOnInsert = _sdbStaticObject
+                     const BSONObj &setOnInsert = _sdbStaticObject,
+                     INT32 flag = 0
                    ) ;
       // delete bson objects from current collection
       // given:

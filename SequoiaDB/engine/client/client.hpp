@@ -77,13 +77,18 @@
 #define activateReplicaGroup   activateReplicaGroup
 
 /** Force to use specified hint to query, if database have no index assigned by the hint, fail to query. */
-#define QUERY_FORCE_HINT          0x00000080
+#define QUERY_FORCE_HINT                  0x00000080
 /** Enable parallel sub query, each sub query will finish scanning different part of the data. */
-#define QUERY_PARALLED            0x00000100
+#define QUERY_PARALLED                    0x00000100
 /** In general, query won't return data until cursor gets from database, when add this flag, return data in query response, it will be more high-performance */
-#define QUERY_WITH_RETURNDATA     0x00000200
+#define QUERY_WITH_RETURNDATA             0x00000200
 /** Enable prepare more data when query */
-#define QUERY_PREPARE_MORE        0x00004000
+#define QUERY_PREPARE_MORE                0x00004000
+/** The sharding key in update rule is not filtered, when executing queryAndUpdate. */
+#define QUERY_KEEP_SHARDINGKEY_IN_UPDATE  0x00008000
+
+/** The sharding key in update rule is not filtered, when executing update or upsert. */
+#define UPDATE_KEEP_SHARDINGKEY           QUERY_KEEP_SHARDINGKEY_IN_UPDATE
 
 enum _SDB_LOB_OPEN_MODE
 {
@@ -255,9 +260,11 @@ namespace sdbclient
       // update rule ( required )
       // update condition ( optional )
       // hint ( optional )
+      // flag ( optional )
       virtual INT32 update ( const bson::BSONObj &rule,
                              const bson::BSONObj &condition = _sdbStaticObject,
-                             const bson::BSONObj &hint      = _sdbStaticObject
+                             const bson::BSONObj &hint      = _sdbStaticObject,
+                             INT32 flag = 0
                            ) = 0 ;
 
       // update bson object from current collection, if there's nothing match
@@ -267,10 +274,12 @@ namespace sdbclient
       // update condition ( optional )
       // hint ( optional )
       // setOnInsert ( optional )
+      // flag ( optional )
       virtual INT32 upsert ( const bson::BSONObj &rule,
                              const bson::BSONObj &condition = _sdbStaticObject,
                              const bson::BSONObj &hint      = _sdbStaticObject,
-                             const bson::BSONObj &setOnInsert = _sdbStaticObject
+                             const bson::BSONObj &setOnInsert = _sdbStaticObject,
+                             INT32 flag = 0
                            ) = 0 ;
 
       // delete bson objects from current collection
@@ -687,7 +696,8 @@ namespace sdbclient
 
 /** \fn  INT32 update ( const bson::BSONObj &rule,
                      const bson::BSONObj &condition,
-                     const bson::BSONObj &hint
+                     const bson::BSONObj &hint,
+                     INT32 flag
                    )
     \brief Update the matching documents in current collection
     \param [in] rule The updating rule
@@ -696,23 +706,29 @@ namespace sdbclient
                     using index "ageIndex" to scan data(index scan);
                     {"":null} means table scan. when hint is not provided,
                     database automatically match the optimal index to scan data
+    \code
+UPDATE_KEEP_SHARDINGKEY
+    \endcode
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
-    \note It won't work to update the "ShardingKey" field, but the other fields take effect
+    \note When flag is set to 0, it won't work to update the "ShardingKey" field, but the
+              other fields take effect
 */
       INT32 update ( const bson::BSONObj &rule,
                      const bson::BSONObj &condition = _sdbStaticObject,
-                     const bson::BSONObj &hint      = _sdbStaticObject
+                     const bson::BSONObj &hint      = _sdbStaticObject,
+                     INT32 flag = 0
                    )
       {
          if ( !pCollection )
             return SDB_NOT_CONNECTED ;
-         return pCollection->update ( rule, condition, hint ) ;
+         return pCollection->update ( rule, condition, hint, flag ) ;
       }
 
 /** \fn INT32 upsert ( const bson::BSONObj &rule,
                      const bson::BSONObj &condition = _sdbStaticObject,
-                     const bson::BSONObj &hint      = _sdbStaticObject
+                     const bson::BSONObj &hint      = _sdbStaticObject,
+                     INT32 flag = 0
                    )
     \brief Update the matching documents in current collection, insert if no matching
     \param [in] rule The updating rule
@@ -722,19 +738,24 @@ namespace sdbclient
                     {"":null} means table scan. when hint is not provided,
                     database automatically match the optimal index to scan data
     \param [in] setOnInsert The setOnInsert assigns the specified values to the fileds when insert
+    \code
+UPDATE_KEEP_SHARDINGKEY
+    \endcode
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
-    \note It won't work to upsert the "ShardingKey" field, but the other fields take effect
+    \note When flag is set to 0, it won't work to update the "ShardingKey" field, but the
+              other fields take effect
 */
       INT32 upsert ( const bson::BSONObj &rule,
                      const bson::BSONObj &condition = _sdbStaticObject,
                      const bson::BSONObj &hint      = _sdbStaticObject,
-                     const bson::BSONObj &setOnInsert = _sdbStaticObject
+                     const bson::BSONObj &setOnInsert = _sdbStaticObject,
+                     INT32 flag = 0
                    )
       {
          if ( !pCollection )
             return SDB_NOT_CONNECTED ;
-         return pCollection->upsert ( rule, condition, hint, setOnInsert ) ;
+         return pCollection->upsert ( rule, condition, hint, setOnInsert, flag ) ;
       }
 
 /** \fn   INT32 del ( const bson::BSONObj &condition,
@@ -823,11 +844,11 @@ namespace sdbclient
     \param [in] numToSkip Skip the first numToSkip documents, default is 0
     \param [in] numToReturn Only return numToReturn documents, default is -1 for returning all results
     \param [in] flag The query flag, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( QUERY_FORCE_HINT | QUERY_WITH_RETURNDATA ) to param flag
-
-        QUERY_FORCE_HINT
-        QUERY_PARALLED
-        QUERY_WITH_RETURNDATA
-
+    \code
+QUERY_FORCE_HINT
+QUERY_PARALLED
+QUERY_WITH_RETURNDATA
+    \endcode
     \param [out] cursor The cursor of current query
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
@@ -866,11 +887,11 @@ namespace sdbclient
                     database automatically match the optimal index to scan data
     \param [in] numToSkip Skip the first numToSkip documents, default is 0
     \param [in] flag The query flag, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( QUERY_FORCE_HINT | QUERY_WITH_RETURNDATA ) to param flag
-
-        QUERY_FORCE_HINT
-        QUERY_PARALLED
-        QUERY_WITH_RETURNDATA
-
+    \code
+QUERY_FORCE_HINT
+QUERY_PARALLED
+QUERY_WITH_RETURNDATA
+    \endcode
     \param [out] obj The first matching object
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
@@ -912,11 +933,12 @@ namespace sdbclient
     \param [in] numToSkip Skip the first numToSkip documents, default is 0
     \param [in] numToReturn Only return numToReturn documents, default is -1 for returning all results
     \param [in] flag The query flag, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( QUERY_FORCE_HINT | QUERY_WITH_RETURNDATA ) to param flag
-
-        QUERY_FORCE_HINT
-        QUERY_PARALLED
-        QUERY_WITH_RETURNDATA
-
+    \code
+QUERY_FORCE_HINT
+QUERY_PARALLED
+QUERY_WITH_RETURNDATA
+QUERY_KEEP_SHARDINGKEY_IN_UPDATE
+    \endcode
     \param [in] returnNew When TRUE, returns the updated document rather than the original
     \param [out] cursor The cursor of current query
     \retval SDB_OK Operation Success
@@ -961,11 +983,11 @@ namespace sdbclient
     \param [in] numToSkip Skip the first numToSkip documents, default is 0
     \param [in] numToReturn Only return numToReturn documents, default is -1 for returning all results
     \param [in] flag The query flag, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( QUERY_FORCE_HINT | QUERY_WITH_RETURNDATA ) to param flag
-
-        QUERY_FORCE_HINT
-        QUERY_PARALLED
-        QUERY_WITH_RETURNDATA
-
+    \code
+QUERY_FORCE_HINT
+QUERY_PARALLED
+QUERY_WITH_RETURNDATA
+    \endcode
     \param [out] cursor The cursor of current query
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
@@ -1304,11 +1326,11 @@ namespace sdbclient
     \param [in] numToSkip Skip the first numToSkip documents, never skip if this parameter is 0
     \param [in] numToReturn Only return numToReturn documents, return all if this parameter is -1
     \param [in] flag The query flag, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( QUERY_FORCE_HINT | QUERY_WITH_RETURNDATA ) to param flag
-
-        QUERY_FORCE_HINT
-        QUERY_PARALLED
-        QUERY_WITH_RETURNDATA
-
+    \code
+QUERY_FORCE_HINT
+QUERY_PARALLED
+QUERY_WITH_RETURNDATA
+    \endcode
     \param [in] options the rules of explain, the options are as below:
 
         Run     : Whether execute query explain or not, true for excuting query explain then get
@@ -3348,7 +3370,7 @@ namespace sdbclient
         SDB_SNAP_CATA             : Get the snapshot of the catalog
         SDB_SNAP_TRANSACTIONS     : Get snapshot of transactions in current session
         SDB_SNAP_TRANSACTIONS_CURRENT : Get snapshot of all the transactions
-        
+
     \param [in] condition The matching rule, match all the documents if not provided.
     \param [in] select The selective rule, return the whole document if not provided.
     \param [in] orderBy The ordered rule, result set is unordered if not provided.
@@ -3390,7 +3412,7 @@ namespace sdbclient
         SDB_SNAP_CATA             : Get the snapshot of the catalog
         SDB_SNAP_TRANSACTIONS     : Get snapshot of transactions in current session
         SDB_SNAP_TRANSACTIONS_CURRENT : Get snapshot of all the transactions
-        
+
      \param [in] condition The matching rule, match all the documents if not provided.
      \param [in] select The selective rule, return the whole document if not provided.
      \param [in] orderBy The ordered rule, result set is unordered if not provided.
@@ -3447,7 +3469,7 @@ namespace sdbclient
         SDB_LIST_TASKS            : Get all the running split tasks ( only applicable in sharding env )
         SDB_LIST_TRANSACTIONS     : Get all the transactions information.
         SDB_LIST_TRANSACTIONS_CURRENT : Get the transactions information of current session.
-        
+
    \param [in] condition The matching rule, match all the documents if null.
    \param [in] select The selective rule, return the whole document if null.
    \param [in] orderBy The ordered rule, never sort if null.
@@ -3494,7 +3516,7 @@ namespace sdbclient
         SDB_LIST_TASKS            : Get all the running split tasks ( only applicable in sharding env )
         SDB_LIST_TRANSACTIONS     : Get all the transactions information.
         SDB_LIST_TRANSACTIONS_CURRENT : Get the transactions information of current session.
-        
+
    \param [in] condition The matching rule, match all the documents if null.
    \param [in] select The selective rule, return the whole document if null.
    \param [in] orderBy The ordered rule, never sort if null.

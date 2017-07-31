@@ -1162,15 +1162,17 @@ do                                                            \
 
    INT32 _sdbCollectionImpl::update ( const BSONObj &rule,
                                       const BSONObj &condition,
-                                      const BSONObj &hint )
+                                      const BSONObj &hint,
+                                      INT32 flag )
    {
-      return _update ( rule, condition, hint, 0 ) ;
+      return _update ( rule, condition, hint, flag ) ;
    }
 
    INT32 _sdbCollectionImpl::upsert ( const BSONObj &rule,
                                       const BSONObj &condition,
                                       const BSONObj &hint,
-                                      const BSONObj &setOnInsert )
+                                      const BSONObj &setOnInsert,
+                                      INT32 flag )
    {
       BSONObj newHint ;
       INT32 rc = SDB_OK ;
@@ -1199,7 +1201,7 @@ do                                                            \
          goto error ;
       }
 
-      rc = _update ( rule, condition, newHint, FLG_UPDATE_UPSERT ) ;
+      rc = _update ( rule, condition, newHint, flag | FLG_UPDATE_UPSERT ) ;
 
    done:
       return rc ;
