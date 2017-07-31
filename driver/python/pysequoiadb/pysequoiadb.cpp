@@ -3749,7 +3749,7 @@ static PyMethodDef sequoiadb_methods[] = {
    {"sdb_init_client",                 sdb_init_client,                 METH_VARARGS},
    {"sdb_sync",                        sdb_sync,                        METH_VARARGS},
    {"sdb_get_datacenter",              sdb_get_datacenter,              METH_VARARGS},
-   
+
    /** cs */
    {"create_cs",                       create_cs,                       METH_VARARGS},
    {"release_cs",                      release_cs,                      METH_VARARGS},

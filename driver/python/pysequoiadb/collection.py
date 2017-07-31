@@ -377,10 +377,10 @@ class collection(object):
          pysequoiadb.error.SDBBaseError
       Info:
          query flags:
-         UPDATE_FLG_KEEP_SHARDINGKEY : The sharding key in update rule is not filtered, when executing 
+         UPDATE_FLG_KEEP_SHARDINGKEY : The sharding key in update rule is not filtered, when executing
                                              update or upsert.
       Note:
-         When flag is set to 0, it won't work to update the "ShardingKey" field, but the 
+         When flag is set to 0, it won't work to update the "ShardingKey" field, but the
          other fields take effect.
       """
       if not isinstance(rule, dict):
@@ -390,7 +390,7 @@ class collection(object):
       bson_condition = None
       bson_hint = None
       flags = 0
-      
+
       if "condition" in kwargs:
          if not isinstance(kwargs.get("condition"), dict):
             raise SDBTypeError("condition in kwargs must be an instance of dict")
@@ -404,7 +404,7 @@ class collection(object):
             raise SDBTypeError("flags must be an instance of int")
          else:
             flags = kwargs.get("flags")
-            
+
       try:
          rc = sdb.cl_update(self._cl, bson_rule, bson_condition, bson_hint, flags)
          pysequoiadb._raise_if_error("Failed to update", rc)
@@ -423,7 +423,7 @@ class collection(object):
                                    if not provided.
          - hint        dict  The hint, automatically match the optimal hint
                                    if not provided
-         - setOnInsert dict  The setOnInsert assigns the specified values 
+         - setOnInsert dict  The setOnInsert assigns the specified values
                              to the fileds when insert
          - flags       int   The update flag
       Exceptions:
@@ -431,10 +431,10 @@ class collection(object):
          pysequoiadb.error.SDBBaseError
       Info:
          query flags:
-         UPDATE_FLG_KEEP_SHARDINGKEY : The sharding key in update rule is not filtered, when executing 
+         UPDATE_FLG_KEEP_SHARDINGKEY : The sharding key in update rule is not filtered, when executing
                                              update or upsert.
       Note:
-         When flag is set to 0, it won't work to update the "ShardingKey" field, but the 
+         When flag is set to 0, it won't work to update the "ShardingKey" field, but the
          other fields take effect.
       """
       if not isinstance(rule, dict):
@@ -445,7 +445,7 @@ class collection(object):
       bson_hint = None
       bson_setOnInsert = None
       flags = 0
-      
+
       if "condition" in kwargs:
          if not isinstance(kwargs.get("condition"), dict):
             raise SDBTypeError("condition must be an instance of dict")
@@ -463,9 +463,9 @@ class collection(object):
             raise SDBTypeError("flags must be an instance of int")
          else:
             flags = kwargs.get("flags")
-            
+
       try:
-         rc = sdb.cl_upsert(self._cl, bson_rule, bson_condition, bson_hint, 
+         rc = sdb.cl_upsert(self._cl, bson_rule, bson_condition, bson_hint,
                             bson_setOnInsert, flags)
          pysequoiadb._raise_if_error("Failed to update", rc)
       except SDBBaseError:
@@ -554,7 +554,7 @@ class collection(object):
                                           default is -1L for returning
                                           all results.
          - flags           int      The query flags, default to be 0. Please see
-                                          the definition of follow flags for 
+                                          the definition of follow flags for
                                           more detail. See Info as below.
       Return values:
          a cursor object of query
@@ -645,10 +645,10 @@ class collection(object):
                                           default is -1L for returning
                                           all results.
          - flags         int      The query flags, default to be 0. Please see
-                                          the definition of follow flags for 
+                                          the definition of follow flags for
                                           more detail. See Info as below.
          - return_new    bool     When True, returns the updated document rather than the original
-         
+
       Return values:
          a cursor object of query
       Exceptions:
@@ -656,12 +656,12 @@ class collection(object):
          pysequoiadb.error.SDBBaseError
       Info:
          query flags:
-         QUERY_FLG_WITH_RETURNDATA            : Force to use specified hint to query, if database have 
+         QUERY_FLG_WITH_RETURNDATA            : Force to use specified hint to query, if database have
                                                       no index assigned by the hint, fail to query
-         QUERY_FLG_PARALLED                   : Enable parallel sub query, each sub query will finish scanning 
+         QUERY_FLG_PARALLED                   : Enable parallel sub query, each sub query will finish scanning
                                                       different part of the data
-         QUERY_FLG_FORCE_HINT                 : In general, query won't return data until cursor gets from 
-                                                      database, when add this flag, return data in query response, 
+         QUERY_FLG_FORCE_HINT                 : In general, query won't return data until cursor gets from
+                                                      database, when add this flag, return data in query response,
                                                       it will be more high-performance
          QUERY_FLG_KEEP_SHARDINGKEY_IN_UPDATE : The sharding key in update rule is not filtered, when executing
                                                       queryAndUpdate.
@@ -763,7 +763,7 @@ class collection(object):
                                           default is -1L for returning
                                           all results.
          - flags         int      The query flags, default to be 0. Please see
-                                          the definition of follow flags for 
+                                          the definition of follow flags for
                                           more detail. See Info as below.
       Return values:
          a cursor object of query
@@ -1252,7 +1252,7 @@ class collection(object):
          - num_to_skip     long     Skip the first numToSkip documents,
                                           default is 0L.
          - flags           int      The query flags, default to be 0. Please see
-                                          the definition of follow flags for 
+                                          the definition of follow flags for
                                           more detail. See Info as below.
       Return values:
          a record of json/dict
@@ -1344,7 +1344,7 @@ class collection(object):
                                           default is -1L for returning
                                           all results.
          - flags           int      The query flags, default to be 0. Please see
-                                          the definition of follow flags for 
+                                          the definition of follow flags for
                                           more detail. See Info as below.
          - options         dict
       Return values:
