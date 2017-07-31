@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Logger;
 
 
 import com.jcraft.jsch.Channel;
@@ -21,6 +22,8 @@ import com.sequoiadb.exception.ReliabilityException;
  * 
  */
 public class Ssh {
+    private final static Logger log=Logger.getLogger(Ssh.class.getName());
+
     private String host;
     private String username;
     private String password;
@@ -136,7 +139,6 @@ public class Ssh {
         try {
             channel = session.openChannel("exec");
             ((ChannelExec) channel).setCommand(command);
-            channel.connect(60 * 1000);
             getResult(channel, Integer.MAX_VALUE);
             if (exitStatus != 0) {
                 throw new ReliabilityException("ssh failed to execute commond '" + command
@@ -253,6 +255,11 @@ public class Ssh {
         InputStream in = channel.getInputStream();
         byte[] tmp = new byte[1024];
         long timer = System.currentTimeMillis();
+        try {
+            channel.connect(60*1000);
+        } catch (JSchException e) {
+            log.severe(e.toString());
+        }
         while (true) {
             while (in.available() > 0) {
                 int i = in.read(tmp, 0, 1024);
