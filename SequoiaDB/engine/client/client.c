@@ -5660,36 +5660,8 @@ SDB_EXPORT INT32 sdbUpsert1 ( sdbCollectionHandle cHandle,
                               bson *hint,
                               bson *setOnInsert )
 {
-   INT32 rc = SDB_OK ;
-   BOOLEAN bsoninit = FALSE ;
-   bson* hintPtr = hint ;
-   bson newHint ;
 
-   BSON_INIT( newHint ) ;
-   if ( NULL != setOnInsert )
-   {
-      if ( NULL != hint )
-      {
-         rc = bson_append_elements( &newHint, hint ) ;
-         if ( rc )
-         {
-            rc = SDB_SYS ;
-            goto error ;
-         }
-      }
-
-      BSON_APPEND( newHint, FIELD_NAME_SET_ON_INSERT, setOnInsert, bson ) ;
-      BSON_FINISH( newHint ) ;
-      hintPtr = &newHint ;
-   }
-
-   rc = sdbUpsert ( cHandle, rule, condition, hintPtr ) ;
-
-done:
-   BSON_DESTROY( newHint ) ;
-   return rc ;
-error:
-   goto done ;
+   return sdbUpsert2 ( cHandle, rule, condition, hint, setOnInsert, 0 ) ;
 }
 
 
@@ -5723,7 +5695,8 @@ SDB_EXPORT INT32 sdbUpsert2 ( sdbCollectionHandle cHandle,
       hintPtr = &newHint ;
    }
 
-   rc = __sdbUpdate ( cHandle, FLG_UPDATE_UPSERT | flag, rule, condition, hint ) ;
+   rc = __sdbUpdate ( cHandle, flag | FLG_UPDATE_UPSERT,
+                      rule, condition, hintPtr ) ;
 
 done:
    BSON_DESTROY( newHint ) ;
