@@ -97,3 +97,25 @@
 192.168.30.186 ci-test-suse4
 192.168.20.202 ci-test-ubun3
 
+#branch2.8 G3D3
+192.168.30.108 ci-test-ubun2
+192.168.30.109 ci-test-ubun4
+192.168.30.110 ci-test-ubun5
+
+#branch2.8 G1G3
+192.168.30.101 ci-test-rhel5
+192.168.30.105 ci-test-rhel6
+192.168.30.106 ci-test-rhel7
+
+#branch2.8 sync
+192.168.30.111 ci-test-cent5
+192.168.30.115 ci-test-cent6
+192.168.30.116 ci-test-cent7
+
+#branch2.8 config
+192.168.30.111 ci-test-cent5
+192.168.30.115 ci-test-cent6
+192.168.30.116 ci-test-cent7
+
+#branch2.8 standalone 
+192.168.30.186 ci-test-suse4
