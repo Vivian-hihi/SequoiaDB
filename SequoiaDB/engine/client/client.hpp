@@ -707,7 +707,7 @@ namespace sdbclient
                     {"":null} means table scan. when hint is not provided,
                     database automatically match the optimal index to scan data
     \code
-UPDATE_KEEP_SHARDINGKEY
+        UPDATE_KEEP_SHARDINGKEY
     \endcode
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
@@ -739,7 +739,7 @@ UPDATE_KEEP_SHARDINGKEY
                     database automatically match the optimal index to scan data
     \param [in] setOnInsert The setOnInsert assigns the specified values to the fileds when insert
     \code
-UPDATE_KEEP_SHARDINGKEY
+        UPDATE_KEEP_SHARDINGKEY
     \endcode
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
@@ -799,11 +799,11 @@ UPDATE_KEEP_SHARDINGKEY
     \param [in] numToSkip Skip the first numToSkip documents, default is 0
     \param [in] numToReturn Only return numToReturn documents, default is -1 for returning all results
     \param [in] flags The query flags, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( QUERY_FORCE_HINT | QUERY_WITH_RETURNDATA ) to param flags
-
+    \code
         QUERY_FORCE_HINT
         QUERY_PARALLED
         QUERY_WITH_RETURNDATA
-
+    \endcode
     \param [out] cursor The cursor of current query
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
@@ -845,9 +845,9 @@ UPDATE_KEEP_SHARDINGKEY
     \param [in] numToReturn Only return numToReturn documents, default is -1 for returning all results
     \param [in] flag The query flag, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( QUERY_FORCE_HINT | QUERY_WITH_RETURNDATA ) to param flag
     \code
-QUERY_FORCE_HINT
-QUERY_PARALLED
-QUERY_WITH_RETURNDATA
+        QUERY_FORCE_HINT
+        QUERY_PARALLED
+        QUERY_WITH_RETURNDATA
     \endcode
     \param [out] cursor The cursor of current query
     \retval SDB_OK Operation Success
@@ -888,9 +888,9 @@ QUERY_WITH_RETURNDATA
     \param [in] numToSkip Skip the first numToSkip documents, default is 0
     \param [in] flag The query flag, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( QUERY_FORCE_HINT | QUERY_WITH_RETURNDATA ) to param flag
     \code
-QUERY_FORCE_HINT
-QUERY_PARALLED
-QUERY_WITH_RETURNDATA
+        QUERY_FORCE_HINT
+        QUERY_PARALLED
+        QUERY_WITH_RETURNDATA
     \endcode
     \param [out] obj The first matching object
     \retval SDB_OK Operation Success
@@ -934,10 +934,10 @@ QUERY_WITH_RETURNDATA
     \param [in] numToReturn Only return numToReturn documents, default is -1 for returning all results
     \param [in] flag The query flag, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( QUERY_FORCE_HINT | QUERY_WITH_RETURNDATA ) to param flag
     \code
-QUERY_FORCE_HINT
-QUERY_PARALLED
-QUERY_WITH_RETURNDATA
-QUERY_KEEP_SHARDINGKEY_IN_UPDATE
+        QUERY_FORCE_HINT
+        QUERY_PARALLED
+        QUERY_WITH_RETURNDATA
+        QUERY_KEEP_SHARDINGKEY_IN_UPDATE
     \endcode
     \param [in] returnNew When TRUE, returns the updated document rather than the original
     \param [out] cursor The cursor of current query
@@ -984,9 +984,9 @@ QUERY_KEEP_SHARDINGKEY_IN_UPDATE
     \param [in] numToReturn Only return numToReturn documents, default is -1 for returning all results
     \param [in] flag The query flag, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( QUERY_FORCE_HINT | QUERY_WITH_RETURNDATA ) to param flag
     \code
-QUERY_FORCE_HINT
-QUERY_PARALLED
-QUERY_WITH_RETURNDATA
+        QUERY_FORCE_HINT
+        QUERY_PARALLED
+        QUERY_WITH_RETURNDATA
     \endcode
     \param [out] cursor The cursor of current query
     \retval SDB_OK Operation Success
@@ -1327,9 +1327,9 @@ QUERY_WITH_RETURNDATA
     \param [in] numToReturn Only return numToReturn documents, return all if this parameter is -1
     \param [in] flag The query flag, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( QUERY_FORCE_HINT | QUERY_WITH_RETURNDATA ) to param flag
     \code
-QUERY_FORCE_HINT
-QUERY_PARALLED
-QUERY_WITH_RETURNDATA
+        QUERY_FORCE_HINT
+        QUERY_PARALLED
+        QUERY_WITH_RETURNDATA
     \endcode
     \param [in] options the rules of explain, the options are as below:
 
