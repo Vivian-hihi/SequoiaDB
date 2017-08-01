@@ -485,6 +485,8 @@ class SequoiaCL
     *
     * @param $hint	an array or the string argument. The hint, automatically match the optimal hint if null.
     *
+    * @param $setOnInsert	an array or the string argument. The setOnInsert, assigns the specified values to the fileds when insert
+    *
     * @param $flag	an integer argument. The query flag, default to be 0.
     *                                   @code
     *                                   SDB_FLG_UPDATE_KEEP_SHARDINGKEY(0x00008000) : The sharding key in update rule is not filtered.
