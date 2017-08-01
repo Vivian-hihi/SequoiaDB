@@ -23,17 +23,17 @@ namespace SequoiaDB
 	    public const int FLG_QUERY_FORCE_HINT = 0x00000080;
 
         /** \memberof FLG_QUERY_PARALLED 0x00000100
-         *  \brief Enable parallel sub query, 
+         *  \brief Enable parallel sub query,
          *         each sub query will finish scanning diffent part of the data
          */
         public const int FLG_QUERY_PARALLED = 0x00000100;
 
         /** \memberof FLG_QUERY_WITH_RETURNDATA 0x00000200
-         *  \brief In general, query won't return data until cursor gets from database, 
+         *  \brief In general, query won't return data until cursor gets from database,
          *         when add this flag, return data in query response, it will be more high-performance
          */
         public const int FLG_QUERY_WITH_RETURNDATA = 0x00000200;
-	
+
 	    /** \memberof FLG_QUERY_EXPLAIN 0x00000400
 	     *  \brief Query explain
 	     */
@@ -49,13 +49,13 @@ namespace SequoiaDB
          *  \brief Enable prepare more data when query.
          */
         internal const int FLG_QUERY_PREPARE_MORE = 0x00004000;
-        
+
         /** \memberof FLG_QUERY_KEEP_SHARDINGKEY_IN_UPDATE 0x00008000
-         *  \brief The sharding key in update rule is not filtered, 
+         *  \brief The sharding key in update rule is not filtered,
                    when executing querydAndUpdate.
          */
         public const int FLG_QUERY_KEEP_SHARDINGKEY_IN_UPDATE = 0x00008000;
-        
+
 
         internal static readonly Dictionary<int, int> flagsDir = new Dictionary<int, int>() {
             {FLG_QUERY_FORCE_HINT, FLG_QUERY_FORCE_HINT},
@@ -117,7 +117,7 @@ namespace SequoiaDB
             set { flag = value; }
         }
 
-	    private static int _Regulate(int newFlags, int originalFlag) 
+	    private static int _Regulate(int newFlags, int originalFlag)
         {
 		    int retFlags = newFlags;
             int tmpFlag = 0;

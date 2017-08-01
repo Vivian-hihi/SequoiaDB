@@ -8,7 +8,7 @@
         public const int FLG_INSERT_CONTONDUP = 0x00000001;
 
         /** \memberof FLG_UPDATE_KEEP_SHARDINGKEY 0x00008000
-         *   \brief The sharding key in update rule is not filtered, 
+         *   \brief The sharding key in update rule is not filtered,
          *          when executing update or upsert.
          */
         public const int FLG_UPDATE_KEEP_SHARDINGKEY = 0x00008000;
