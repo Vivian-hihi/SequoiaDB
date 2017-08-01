@@ -338,7 +338,7 @@ namespace SequoiaDB
         /** \fn void BulkInsert(List<BsonDocument> insertor, int flag)
          *  \brief Insert a bulk of bson objects into current collection
          *  \param insertor The Bson document of insertor list, can't be null
-         *  \param flag FLG_INSERT_CONTONDUP or 0
+         *  \param flag SDBConst.FLG_INSERT_CONTONDUP or 0
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
@@ -788,7 +788,10 @@ namespace SequoiaDB
          *            when returnRows is 0, return nothing,
          *            when returnRows is -1, return all the documents
          *  \param update The update rule, can't be null
-         *  \param flag The query flag, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( DBQuery.FLG_QUERY_FORCE_HINT | DBQuery.FLG_QUERY_WITH_RETURNDATA ) to param flag
+         *  \param flag
+         *            The query flag, default to be 0. Please see the definition
+         *            of follow flags for more detail. Usage:
+         *            e.g. set ( DBQuery.FLG_QUERY_FORCE_HINT | DBQuery.FLG_QUERY_WITH_RETURNDATA ) to param flag
          *
          *      DBQuery.FLG_QUERY_FORCE_HINT
          *      DBQuery.FLG_QUERY_PARALLED
@@ -826,7 +829,10 @@ namespace SequoiaDB
          *            Return the specified amount of documents,
          *            when returnRows is 0, return nothing,
          *            when returnRows is -1, return all the documents
-         *  \param flag The query flag, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( DBQuery.FLG_QUERY_FORCE_HINT | DBQuery.FLG_QUERY_WITH_RETURNDATA ) to param flag
+         *  \param flag
+         *            The query flag, default to be 0. Please see the definition
+         *            of follow flags for more detail. Usage:
+         *            e.g. set ( DBQuery.FLG_QUERY_FORCE_HINT | DBQuery.FLG_QUERY_WITH_RETURNDATA ) to param flag
          *
          *      DBQuery.FLG_QUERY_FORCE_HINT
          *      DBQuery.FLG_QUERY_PARALLED
@@ -862,7 +868,9 @@ namespace SequoiaDB
          *            Return the specified amount of documents,
          *            when returnRows is 0, return nothing,
          *            when returnRows is -1, return all the documents
-         *  \param flag The query flag, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( DBQuery.FLG_QUERY_FORCE_HINT | DBQuery.FLG_QUERY_WITH_RETURNDATA ) to param flag
+         *  \param flag 
+         *            The query flag, default to be 0. Please see the definition of follow flags for more detail. 
+         *            Usage: e.g. set ( DBQuery.FLG_QUERY_FORCE_HINT | DBQuery.FLG_QUERY_WITH_RETURNDATA ) to param flag
          *
          *      DBQuery.FLG_QUERY_FORCE_HINT
          *      DBQuery.FLG_QUERY_PARALLED
