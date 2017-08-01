@@ -1847,6 +1847,9 @@ public class DBCollection {
     }
 
     /**
+     * @param options the pop option for the operation, including a record LogicalID,
+     *                and an optional Direction: 1 for forward pop and -1 for backward
+     *                pop
      * @return void
      * @throws com.sequoiadb.exception.BaseException
      * @fn void pop()
