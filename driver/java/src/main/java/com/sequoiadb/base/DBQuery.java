@@ -79,6 +79,12 @@ public class DBQuery {
      */
     public static final int FLG_QUERY_PREPARE_MORE = 0x00004000;
 
+    /** @memberof FLG_QUERY_KEEP_SHARDINGKEY_IN_UPDATE 0x00008000
+      * @brief The sharding key in update rule is not filtered,
+      *        when executing queryAndUpdate.
+      */
+    public static final int FLG_QUERY_KEEP_SHARDINGKEY_IN_UPDATE = 0x00008000;
+
     final static Map<Integer, Integer> flagsMap = new HashMap<Integer, Integer>();
 
     static {
@@ -87,6 +93,7 @@ public class DBQuery {
         flagsMap.put(FLG_QUERY_PARALLED, FLG_QUERY_PARALLED);
         flagsMap.put(FLG_QUERY_WITH_RETURNDATA, FLG_QUERY_WITH_RETURNDATA);
         flagsMap.put(FLG_QUERY_PREPARE_MORE, FLG_QUERY_PREPARE_MORE);
+        flagsMap.put(FLG_QUERY_KEEP_SHARDINGKEY_IN_UPDATE, FLG_QUERY_KEEP_SHARDINGKEY_IN_UPDATE);
     }
 
     public DBQuery() {
@@ -275,6 +282,9 @@ public class DBQuery {
         }
         if ((flag & FLG_QUERY_WITH_RETURNDATA) != 0) {
             newFlags = _regulate(newFlags, FLG_QUERY_WITH_RETURNDATA);
+        }
+        if ((flag & FLG_QUERY_KEEP_SHARDINGKEY_IN_UPDATE) != 0) {
+            newFlags = _regulate(newFlags, FLG_QUERY_KEEP_SHARDINGKEY_IN_UPDATE);
         }
         return newFlags;
     }

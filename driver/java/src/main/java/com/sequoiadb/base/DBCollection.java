@@ -20,6 +20,7 @@ import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.SDBError;
 import com.sequoiadb.message.request.*;
 import com.sequoiadb.message.response.SdbReply;
+
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.types.ObjectId;
@@ -45,7 +46,13 @@ public class DBCollection {
      * @brief this flags represent that bulkInsert will continue when
      * Duplicate key exist.(the duplicate record will be ignored)
      */
-    public final static int FLG_INSERT_CONTONDUP = 0x00000001;
+    public static final int FLG_INSERT_CONTONDUP = 0x00000001;
+
+    /** @memberof FLG_UPDATE_KEEP_SHARDINGKEY 0x00008000
+      * @brief The sharding key in update rule is not filtered,
+      *        when executing update or upsert.
+      */
+    public static final int FLG_UPDATE_KEEP_SHARDINGKEY = 0x00008000;
 
     /**
      * @return The collection name
@@ -466,12 +473,10 @@ public class DBCollection {
      * @throws com.sequoiadb.exception.BaseException
      * @fn void update(DBQuery query)
      * @brief Update the document of current collection
-     * @note when save include update shardingKey field, the shardingKey modify action is not take effect, but the other
-     * field update is take effect.
-     * Because of current version is not support update shardingKey field.
+     * @note It won't work to update the ShardingKey field, but the other fields take effect.
      */
     public void update(DBQuery query) throws BaseException {
-        _update(0, query.getMatcher(), query.getModifier(), query.getHint());
+        _update(query.getFlag(), query.getMatcher(), query.getModifier(), query.getHint());
     }
 
     /**
@@ -484,13 +489,33 @@ public class DBCollection {
      * @throws com.sequoiadb.exception.BaseException
      * @fn void update(BSONObject matcher, BSONObject modifier, BSONObject hint)
      * @brief Update the BSONObject of current collection
-     * @note when save include update shardingKey field, the shardingKey modify action is not take effect, but the other
-     * field update is take effect.
-     * Because of current version is not support update shardingKey field.
+     * @note It won't work to update the ShardingKey field, but the other fields take effect.
      */
     public void update(BSONObject matcher, BSONObject modifier, BSONObject hint)
         throws BaseException {
         _update(0, matcher, modifier, hint);
+    }
+
+    /**
+     * @param matcher  The matching condition, update all the documents if null
+     * @param modifier The updating rule, can't be null
+     * @param hint     Specified the index used to scan data. e.g. {"":"ageIndex"} means
+     *                 using index "ageIndex" to scan data(index scan);
+     *                 {"":null} means table scan. when hint is null,
+     *                 database automatically match the optimal index to scan data.
+     * @param flag     the update flag, default to be 0. Please see the definition
+     *                 of follow flags for more detail.
+     *                 <ul>
+     *                 <li>DBCollection.FLG_UPDATE_KEEP_SHARDINGKEY
+     *                 </ul>
+     * @throws com.sequoiadb.exception.BaseException
+     * @fn void update(BSONObject matcher, BSONObject modifier, BSONObject hint, int flag)
+     * @brief Update the BSONObject of current collection
+     * @note When flag is set to 0, it won't work to update the ShardingKey field, but the other fields take effect.
+     */
+    public void update(BSONObject matcher, BSONObject modifier, BSONObject hint,
+                       int flag) throws BaseException {
+        _update(flag, matcher, modifier, hint);
     }
 
     /**
@@ -503,9 +528,7 @@ public class DBCollection {
      * @throws com.sequoiadb.exception.BaseException
      * @fn void update(String matcher, String modifier, String hint)
      * @brief Update the BSONObject of current collection
-     * @note when save include update shardingKey field, the shardingKey modify action is not take effect, but the other
-     * field update is take effect.
-     * Because of current version is not support update shardingKey field.
+     * @note It won't work to update the ShardingKey field, but the other fields take effect.
      */
     public void update(String matcher, String modifier, String hint)
         throws BaseException {
@@ -525,6 +548,40 @@ public class DBCollection {
     }
 
     /**
+     * @param matcher  The matching condition, update all the documents if null
+     * @param modifier The updating rule, can't be null or empty
+     * @param hint     Specified the index used to scan data. e.g. {"":"ageIndex"} means
+     *                 using index "ageIndex" to scan data(index scan);
+     *                 {"":null} means table scan. when hint is null,
+     *                 database automatically match the optimal index to scan data.
+     * @param flag     the update flag, default to be 0. Please see the definition
+     *                 of follow flags for more detail.
+     *                 <ul>
+     *                 <li>DBCollection.FLG_UPDATE_KEEP_SHARDINGKEY
+     *                 </ul>
+     * @throws com.sequoiadb.exception.BaseException
+     * @fn void update(String matcher, String modifier, String hint, int flag)
+     * @brief Update the BSONObject of current collection
+     * @note When flag is set to 0, it won't work to update the ShardingKey field, but the other fields take effect.
+     */
+    public void update(String matcher, String modifier, String hint, int flag)
+        throws BaseException {
+        BSONObject ma = null;
+        BSONObject mo = null;
+        BSONObject hi = null;
+        if (matcher != null) {
+            ma = (BSONObject) JSON.parse(matcher);
+        }
+        if (modifier != null) {
+            mo = (BSONObject) JSON.parse(modifier);
+        }
+        if (hint != null) {
+            hi = (BSONObject) JSON.parse(hint);
+        }
+        _update(flag, ma, mo, hi);
+    }
+
+    /**
      * @param matcher  The matching condition, update all the documents
      *                 if null(that's to say, we match all the documents)
      * @param modifier The updating rule, can't be null
@@ -535,9 +592,7 @@ public class DBCollection {
      * @throws com.sequoiadb.exception.BaseException
      * @fn void upsert(BSONObject matcher, BSONObject modifier, BSONObject hint)
      * @brief Update the BSONObject of current collection, insert if no matching
-     * @note when save include update shardingKey field, the shardingKey modify action is not take effect, but the other
-     * field update is take effect.
-     * Because of current version is not support update shardingKey field.
+     * @note It won't work to update the ShardingKey field, but the other fields take effect.
      */
     public void upsert(BSONObject matcher, BSONObject modifier, BSONObject hint)
         throws BaseException {
@@ -556,12 +611,34 @@ public class DBCollection {
      * @throws com.sequoiadb.exception.BaseException
      * @fn void upsert(BSONObject matcher, BSONObject modifier, BSONObject hint, BSONObject setOnInsert)
      * @brief Update the BSONObject of current collection, insert if no matching
-     * @note when save include update shardingKey field, the shardingKey modify action is not take effect, but the other
-     * field update is take effect.
-     * Because of current version is not support update shardingKey field.
+     * @note It won't work to update the ShardingKey field, but the other fields take effect.
      */
-    public void upsert(BSONObject matcher, BSONObject modifier, BSONObject hint, BSONObject setOnInsert)
-        throws BaseException {
+    public void upsert(BSONObject matcher, BSONObject modifier, BSONObject hint,
+                       BSONObject setOnInsert) throws BaseException {
+        upsert(matcher, modifier, hint, setOnInsert, 0);
+    }
+
+    /**
+     * @param matcher     The matching condition, update all the documents
+     *                    if null(that's to say, we match all the documents)
+     * @param modifier    The updating rule, can't be null
+     * @param hint        Specified the index used to scan data. e.g. {"":"ageIndex"} means
+     *                    using index "ageIndex" to scan data(index scan);
+     *                    {"":null} means table scan. when hint is null,
+     *                    database automatically match the optimal index to scan data.
+     * @param setOnInsert The setOnInsert assigns the specified values to the fileds when insert
+     * @param flag        the upsert flag, default to be 0. Please see the definition
+     *                    of follow flags for more detail.
+     *                    <ul>
+     *                    <li>DBCollection.FLG_UPDATE_KEEP_SHARDINGKEY
+     *                    </ul>
+     * @throws com.sequoiadb.exception.BaseException
+     * @fn void upsert(BSONObject matcher, BSONObject modifier, BSONObject hint, BSONObject setOnInsert, int flag)
+     * @brief Update the BSONObject of current collection, insert if no matching
+     * @note When flag is set to 0, it won't work to update the ShardingKey field, but the other fields take effect.
+     */
+    public void upsert(BSONObject matcher, BSONObject modifier, BSONObject hint,
+                       BSONObject setOnInsert, int flag) throws BaseException {
         BSONObject newHint;
         if (setOnInsert != null) {
             newHint = new BasicBSONObject();
@@ -572,7 +649,8 @@ public class DBCollection {
         } else {
             newHint = hint;
         }
-        upsert(matcher, modifier, newHint);
+        flag |= SdbConstants.FLG_UPDATE_UPSERT;
+        _update(flag, matcher, modifier, newHint);
     }
 
     /**
@@ -1018,6 +1096,7 @@ public class DBCollection {
      *                   <li>DBQuery.FLG_QUERY_FORCE_HINT
      *                   <li>DBQuery.FLG_QUERY_PARALLED
      *                   <li>DBQuery.FLG_QUERY_WITH_RETURNDATA
+     *                   <li>DBQuery.FLG_QUERY_KEEP_SHARDINGKEY_IN_UPDATE
      *                   </ul>
      * @param returnNew  When true, returns the updated document rather than the original
      * @return a DBCursor instance of the result or null if no any matched document
