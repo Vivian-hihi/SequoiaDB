@@ -256,6 +256,39 @@ namespace replay
       return FALSE;
    }
 
+   BOOLEAN Filter::isFiltered(engine::dpsLogFile& file)
+   {
+      string fileName = engine::ossFile::getFileName(file.path());
+
+      if (_isFileFiltered(fileName))
+      {
+         return TRUE;
+      }
+
+      if (DPS_INVALID_LSN_OFFSET != _minLSN)
+      {
+         dpsLogHeader& header = file.header();
+         if (DPS_INVALID_LOG_FILE_ID != header._logID)
+         {
+            DPS_LSN_OFFSET endLSN = header._fileSize * (header._logID + 1);
+            if (endLSN <= _minLSN)
+            {
+               return TRUE;
+            }
+         }
+      }
+
+      if (DPS_INVALID_LSN_OFFSET != _maxLSN)
+      {
+         if (file.getFirstLSN().compareOffset(_maxLSN) > 0)
+         {
+            return TRUE;
+         }
+      }
+
+      return FALSE;
+   }
+
    BOOLEAN Filter::isFiltered(const dpsLogRecord& log)
    {
       const dpsLogRecordHeader& head = log.head();

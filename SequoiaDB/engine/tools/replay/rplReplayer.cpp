@@ -580,6 +580,15 @@ namespace replay
 
       logHeader = &(logFile.header());
 
+      if (_filter.isFiltered(logFile))
+      {
+         DPS_LSN_OFFSET endLSN = (UINT64)fileSize * (logHeader->_logID + 1);
+         _monitor.setNextLSN(endLSN);
+         PD_LOG(PDEVENT, "Archive log file[%s] is filtered",
+                file.c_str());
+         goto done;
+      }
+
       if (_monitor.getNextFileId() != DPS_INVALID_LOG_FILE_ID)
       {
          if (logHeader->_logID < _monitor.getNextFileId())
@@ -1557,6 +1566,11 @@ namespace replay
             UINT32 fileSize = 0;
             UINT32 fileNum = 0;
             UINT32 fileId = DPS_INVALID_LOG_FILE_ID;
+
+            if (!fs::is_regular_file(dirIter->status()))
+            {
+               continue;
+            }
 
             rc = _isDpsLogFile(filePath, isArchive, fileSize, fileNum, fileId);
             if (SDB_OK != rc)
