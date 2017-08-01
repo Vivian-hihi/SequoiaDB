@@ -69,11 +69,21 @@
 |          | 说明                                             | 例子                                                                                            |
 |----------|--------------------------------------------------|-------------------------------------------------------------------------------------------------|
 | 请求头   | 同通用请求头                                     |                                                                                                 |
-| 请求内容 | cmd: queryandupdate<br>name: 集合的全称（集合空间.集合）<br>updator: 更新操作<br>sort: 待排序字段名（可选参数，可不填）<br>selector: 查询结果列（可选参数，可不填）<br>skip: 跳过多少行（可选参数，可不填）<br>returnnum: 最大返回条数（可选参数，可不填）<br>filter: 查询条件（可选参数，可不填）<br>returnnew: 是否返回更新后记录（可选参数，可不填） | cmd=queryandupdate&name=foo.bar&updator={$set:{"age":100}}&filter={"name":"hello"}&returnnew=true |
-| 说明     |                                                  |                                                                                                 |
+| 请求内容 | cmd: queryandupdate<br>name: 集合的全称（集合空间.集合）<br>updator: 更新操作<br>sort: 待排序字段名（可选参数，可不填）<br>selector: 查询结果列（可选参数，可不填）<br>skip: 跳过多少行（可选参数，可不填）<br>returnnum: 最大返回条数（可选参数，可不填）<br>filter: 查询条件（可选参数，可不填）<br>returnnew: 是否返回更新后记录（可选参数，可不填）<br>flag: 标志位（可选参数，可不填） | cmd=queryandupdate&name=foo.bar&updator={$set:{"age":100}}&filter={"name":"hello"}&returnnew=true |
+| 说明     |  |                                                                                                 |
 | 响应头   | 同通用响应头                                     |                                                                                                 |
 | 响应内容 | {<br>errno: 返回值，0表示成功，其他为失败<br>description: 失败时的错误描述<br>}<br>{<br>返回表里的记录<br>}<br>... | { "errno": 0 }{ "_id":{ "$oid":"54def72f0d8737161d9d6934" },"age":100,"name":"hello" } |
 | 说明     |                                                  |                                                                                                 |
+
+> **Note:**
+>
+> flag既支持字符串形式，也支持数值型。数值型包括十六进制（0x开头）、八进制（0开头）、十进制。  
+> 取值如下：  
+> SDB_QUERY_FORCE_HINT(0x00000080)  
+> SDB_QUERY_PARALLED(0x00000100)  
+> SDB_QUERY_WITH_RETURNDATA(0x00000200)  
+> SDB_QUERY_KEEP_SHARDINGKEY_IN_UPDATE(0x00008000)  
+> 多个flag用“|”分隔，如flag=SDB_QUERY_FORCE_HINT|SDB_QUERY_PARALLED。
 
 ##查询删除数据##
 
@@ -102,22 +112,34 @@
 |          | 说明                                     | 例子                                                                     |
 |----------|------------------------------------------|--------------------------------------------------------------------------|
 | 请求头   | 同通用请求头                             |                                                                          |
-| 请求内容 | cmd: update<br>name: 集合的全称（集合空间.集合）<br>updator: 更新操作<br>filter: 更新条件 | cmd=update&name=foo.bar&updator={$set:{"age":100}}&filter={"name":"hello"} |
+| 请求内容 | cmd: update<br>name: 集合的全称（集合空间.集合）<br>updator: 更新操作<br>filter: 更新条件<br>flag: 标志位（可选参数，可不填） | cmd=update&name=foo.bar&updator={$set:{"age":100}}&filter={"name":"hello"}&flag=SDB_UPDATE_KEEP_SHARDINGKEY |
 | 说明     |                                          |                                                                          |
 | 响应头   | 同通用响应头                             |                                                                          |
 | 响应内容 | {<br>errno: 返回值，0表示成功，其他为失败<br>description: 失败时的错误描述<br>} | { "errno": 0 } |
 | 说明     |                                          |                                                                          |
+
+> **Note:**
+>
+> flag既支持字符串形式，也支持数值型。数值型包括十六进制（0x开头）、八进制（0开头）、十进制。  
+> 取值如下：  
+> SDB_UPDATE_KEEP_SHARDINGKEY(0x00008000)
 
 ##更新或插入记录##
 
 |          | 说明                                     | 例子                                                                                                |
 |----------|------------------------------------------|-----------------------------------------------------------------------------------------------------|
 | 请求头   | 同通用请求头                             |                                                                                                     |
-| 请求内容 | cmd: upsert<br>name: 集合的全称（集合空间.集合）<br>updator: 更新操作<br>filter: 更新条件（可选参数，可不填）<br> setoninsert: 插入数据（可选参数，可不填）<br> | cmd=upsert&name=foo.bar&updator={$set:{"age":100}}&filter={"name":"hello"}&setoninsert={"sex":"male"} |
-| 说明     |                                          |                                                                                                     |
+| 请求内容 | cmd: upsert<br>name: 集合的全称（集合空间.集合）<br>updator: 更新操作<br>filter: 更新条件（可选参数，可不填）<br> setoninsert: 插入数据（可选参数，可不填）<br>flag: 标志位（可选参数，可不填） | cmd=upsert&name=foo.bar&updator={$set:{"age":100}}&filter={"name":"hello"}&setoninsert={"sex":"male"}&flag=SDB_UPDATE_KEEP_SHARDINGKEY |
+| 说明     |                                          |                                                                                                      |
 | 响应头   | 同通用响应头                             |                                                                                                     |
 | 响应内容 | {<br>errno: 返回值，0表示成功，其他为失败<br>description: 失败时的错误描述<br>} | { "errno": 0 } |
 | 说明     |                                          |                                                                                                     |
+
+> **Note:**
+>
+> flag既支持字符串形式，也支持数值型。数值型包括十六进制（0x开头）、八进制（0开头）、十进制。  
+> 取值如下：  
+> SDB_UPDATE_KEEP_SHARDINGKEY(0x00008000)
 
 ##获取记录数##
 
