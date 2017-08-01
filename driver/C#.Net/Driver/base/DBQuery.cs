@@ -49,12 +49,20 @@ namespace SequoiaDB
          *  \brief Enable prepare more data when query.
          */
         internal const int FLG_QUERY_PREPARE_MORE = 0x00004000;
+        
+        /** \memberof FLG_QUERY_KEEP_SHARDINGKEY_IN_UPDATE 0x00008000
+         *  \brief The sharding key in update rule is not filtered, 
+                   when executing querydAndUpdate.
+         */
+        public const int FLG_QUERY_KEEP_SHARDINGKEY_IN_UPDATE = 0x00008000;
+        
 
         internal static readonly Dictionary<int, int> flagsDir = new Dictionary<int, int>() {
             {FLG_QUERY_FORCE_HINT, FLG_QUERY_FORCE_HINT},
             {FLG_QUERY_PARALLED, FLG_QUERY_PARALLED},
             {FLG_QUERY_WITH_RETURNDATA, FLG_QUERY_WITH_RETURNDATA},
-            {FLG_QUERY_PREPARE_MORE, FLG_QUERY_PREPARE_MORE}
+            {FLG_QUERY_PREPARE_MORE, FLG_QUERY_PREPARE_MORE},
+            {FLG_QUERY_KEEP_SHARDINGKEY_IN_UPDATE, FLG_QUERY_KEEP_SHARDINGKEY_IN_UPDATE},
         };
 
        /** \property Matcher
@@ -139,6 +147,10 @@ namespace SequoiaDB
             if ((flags & FLG_QUERY_WITH_RETURNDATA) != 0)
             {
                 newFlags = _Regulate(newFlags, FLG_QUERY_WITH_RETURNDATA);
+            }
+            if ((flags & FLG_QUERY_KEEP_SHARDINGKEY_IN_UPDATE) != 0)
+            {
+                newFlags = _Regulate(newFlags, FLG_QUERY_KEEP_SHARDINGKEY_IN_UPDATE);
             }
             return newFlags;
         }

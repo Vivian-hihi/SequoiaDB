@@ -438,13 +438,14 @@ namespace SequoiaDB
          *  \param query DBQuery with matching condition, updating rule and hint
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
-         *  \note It won't work to update the "ShardingKey" field, but the other fields take effect
+         *  \note When flag is set to 0, it won't work to update the "ShardingKey" field, but the
+         *        other fields take effect
          */
         public void Update(DBQuery query) 
         {
-            _Update(0, query.Matcher, query.Modifier, query.Hint);
+            _Update(query.Flag, query.Matcher, query.Modifier, query.Hint);
         }
-
+        
         /** \fn void Update(BsonDocument matcher, BsonDocument modifier, BsonDocument hint)
          *  \brief Update the document of current collection
          *  \param matcher
@@ -463,6 +464,33 @@ namespace SequoiaDB
         public void Update(BsonDocument matcher, BsonDocument modifier, BsonDocument hint) 
         {
             _Update(0, matcher, modifier, hint);
+        }
+
+        /** \fn void Update(BsonDocument matcher, BsonDocument modifier, BsonDocument hint, int flag)
+         *  \brief Update the document of current collection
+         *  \param matcher
+         *            The matching condition, update all the documents if null
+         *  \param modifier
+         *            The updating rule, can't be null
+         *  \param hint
+         *            Specified the index used to scan data. e.g. {"":"ageIndex"} means 
+         *            using index "ageIndex" to scan data(index scan); 
+         *            {"":null} means table scan. when hint is null, 
+         *            database automatically match the optimal index to scan data.
+         *  \param flag
+         *            The update flag, default to be 0. Please see the definition
+         *            of follow flags for more detail. 
+         *
+         *      SDBConst.FLG_UPDATE_KEEP_SHARDINGKEY
+         *
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+         *  \note When flag is set to 0, it won't work to update the "ShardingKey" field, but the
+         *        other fields take effect
+         */
+        public void Update(BsonDocument matcher, BsonDocument modifier, BsonDocument hint, int flag) 
+        {
+            _Update(flag, matcher, modifier, hint);
         }
 
         /** \fn void Upsert(BsonDocument matcher, BsonDocument modifier, BsonDocument hint)
@@ -505,6 +533,37 @@ namespace SequoiaDB
          */
         public void Upsert(BsonDocument matcher, BsonDocument modifier, BsonDocument hint, BsonDocument setOnInsert)
         {
+            Upsert(matcher, modifier, hint, setOnInsert, 0);
+        }
+
+        /** \fn void Upsert(BsonDocument matcher, BsonDocument modifier, BsonDocument hint, BsonDocument setOnInsert, int flag)
+         *  \brief Update the document of current collection, insert if no matching
+         *  \param matcher
+         *            The matching condition, update all the documents 
+         *            if null(that's to say, we match all the documents)
+         *  \param modifier
+         *            The updating rule, can't be null
+         *  \param hint
+         *            Specified the index used to scan data. e.g. {"":"ageIndex"} means 
+         *            using index "ageIndex" to scan data(index scan); 
+         *            {"":null} means table scan. when hint is null, 
+         *            database automatically match the optimal index to scan data.
+         *  \param setOnInsert 
+         *            The setOnInsert assigns the specified values to the fileds when insert
+         *  \param flag
+         *            The upsert flag, default to be 0. Please see the definition
+         *            of follow flags for more detail. 
+         *
+         *      SDBConst.FLG_UPDATE_KEEP_SHARDINGKEY
+         *      
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+         *  \note When flag is set to 0, it won't work to update the "ShardingKey" field, but the
+         *        other fields take effect
+         */
+        public void Upsert(BsonDocument matcher, BsonDocument modifier, BsonDocument hint, 
+                           BsonDocument setOnInsert, int flag)
+        {
             BsonDocument newHint;
             if (setOnInsert != null)
             {
@@ -519,7 +578,8 @@ namespace SequoiaDB
             {
                 newHint = hint;
             }
-            Upsert(matcher, modifier, newHint);
+            flag |= SequoiadbConstants.FLG_UPDATE_UPSERT;
+            _Update(flag, matcher, modifier, newHint);
         }
 
         /** \fn DBCursor Query()
@@ -733,6 +793,7 @@ namespace SequoiaDB
          *      DBQuery.FLG_QUERY_FORCE_HINT
          *      DBQuery.FLG_QUERY_PARALLED
          *      DBQuery.FLG_QUERY_WITH_RETURNDATA
+         *      DBQuery.FLG_QUERY_KEEP_SHARDINGKEY_IN_UPDATE
          *
          *  \param returnNew When true, returns the updated document rather than the original
          *  \return The DBCursor of matching documents or null

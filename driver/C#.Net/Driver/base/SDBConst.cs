@@ -7,6 +7,12 @@
          */
         public const int FLG_INSERT_CONTONDUP = 0x00000001;
 
+        /** \memberof FLG_UPDATE_KEEP_SHARDINGKEY 0x00008000
+         *   \brief The sharding key in update rule is not filtered, 
+         *          when executing update or upsert.
+         */
+        public const int FLG_UPDATE_KEEP_SHARDINGKEY = 0x00008000;
+
         public const int SDB_PAGESIZE_4K = 4096;
         public const int SDB_PAGESIZE_8K = 8192;
         public const int SDB_PAGESIZE_16K = 16384;
