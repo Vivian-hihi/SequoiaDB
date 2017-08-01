@@ -37,6 +37,7 @@
 #include "../bson/bsonobj.h"
 #include "utilJsonFile.hpp"
 #include "ixm.hpp"
+#include "dms.hpp"
 #include <sstream>
 #include <iostream>
 #include <boost/filesystem.hpp>
@@ -946,6 +947,7 @@ namespace replay
       sdbCollection cl;
       const CHAR *fullName = NULL;
       BSONObj obj;
+      BSONObj condition;
       BSONObj hint = BSON( "" << "$id" );
 
       SDB_ASSERT(LOG_TYPE_DATA_DELETE == header._type, "not data delete log");
@@ -958,6 +960,21 @@ namespace replay
          goto error;
       }
 
+      {
+         BSONObjBuilder conditionBuilder;
+         BSONElement idEle = obj.getField( DMS_ID_KEY_NAME ) ;
+         if ( idEle.eoo() )
+         {
+            PD_LOG(PDWARNING, "Failed to parse oid from bson:[%s]",
+                   obj.toString().c_str());
+            rc = SDB_INVALIDARG;
+            goto error;
+         }
+
+         conditionBuilder.append( idEle ) ;
+         condition = conditionBuilder.obj() ;
+      }
+
       rc = _sdb->getCollection(fullName, cl);
       if (SDB_OK != rc)
       {
@@ -966,7 +983,7 @@ namespace replay
          goto error;
       }
 
-      rc = cl.del(obj, hint);
+      rc = cl.del(condition, hint);
       if (SDB_OK != rc)
       {
          PD_LOG(PDERROR, "Failed to delete record[%s], lsn[%lld], rc=%d",
