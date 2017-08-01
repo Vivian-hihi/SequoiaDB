@@ -876,10 +876,11 @@ struct _QueryFlagStat
 typedef struct _QueryFlagStat QueryFlagStat ;
 
 static QueryFlagStat stats[] = {
-   { _QUERY_FORCE_HINT, FLG_QUERY_FORCE_HINT },
-   { _QUERY_PARALLED, FLG_QUERY_PARALLED },
-   { _QUERY_WITH_RETURNDATA, FLG_QUERY_WITH_RETURNDATA },
-   { _QUERY_PREPARE_MORE, FLG_QUERY_PREPARE_MORE }
+   // add mapping flags as below, if necessary:
+   //{ _QUERY_FORCE_HINT, FLG_QUERY_FORCE_HINT },
+   //{ _QUERY_PARALLED, FLG_QUERY_PARALLED },
+   //{ _QUERY_WITH_RETURNDATA, FLG_QUERY_WITH_RETURNDATA },
+   //{ _QUERY_PREPARE_MORE, FLG_QUERY_PREPARE_MORE }
 } ;
 
 static const QueryFlagStat* _getQueryFlagPair( const INT32 flag )
@@ -897,13 +898,15 @@ static const QueryFlagStat* _getQueryFlagPair( const INT32 flag )
    }
    return pRet ;
 }
+
 INT32 regulateQueryFlags( INT32 *newFlags, const INT32 flag )
 {
    INT32 rc = SDB_OK ;
    INT32 bit = 1 ;
    INT32 i = 0 ;
    const QueryFlagStat* pPair = NULL ;
-   INT32 tmpFlags = flag ;
+   INT32 erasedFlags = flag ;
+   INT32 mergedFlags = 0 ;
    if ( NULL == newFlags )
    {
       rc = SDB_INVALIDARG ;
@@ -917,20 +920,21 @@ INT32 regulateQueryFlags( INT32 *newFlags, const INT32 flag )
          pPair = _getQueryFlagPair( bit ) ;
          if ( NULL != pPair && pPair->_original != pPair->_new )
          {
-            tmpFlags &= ~(pPair->_original) ;
-            tmpFlags |= pPair->_new ;
+            erasedFlags &= ~(pPair->_original) ;
+            mergedFlags |= pPair->_new ;
          }
       }
       if ( (UINT32)bit >= (UINT32)flag )
          break ;
       bit = bit << 1 ;
    }
-   *newFlags = tmpFlags ;
+   *newFlags = (erasedFlags | mergedFlags) ;
 done:
    return rc ;
 error:
    goto done ;
 }
+
 static void clientEndianConvertHeader ( MsgHeader *pHeader )
 {
    MsgHeader newheader ;
