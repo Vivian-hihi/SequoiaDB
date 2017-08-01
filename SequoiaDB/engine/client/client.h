@@ -1370,9 +1370,9 @@ SDB_EXPORT INT32 sdbUpdate ( sdbCollectionHandle cHandle,
                     database automatically match the optimal index to scan data
     \param [in] flag The update flag, default to be 0. Please see the definition of follow
                     flags for more detail.
-    \code
-UPDATE_KEEP_SHARDINGKEY
-    \endcode
+
+        UPDATE_KEEP_SHARDINGKEY
+
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
     \note When flag is set to 0, it won't work to update the "ShardingKey" field, but the
@@ -1446,9 +1446,9 @@ SDB_EXPORT INT32 sdbUpsert1 ( sdbCollectionHandle cHandle,
     \param [in] setOnInsert The setOnInsert assigns the specified values to the fileds when insert
     \param [in] flag The upsert flag, default to be 0. Please see the definition of follow
                     flags for more detail.
-    \code
-UPDATE_KEEP_SHARDINGKEY
-    \endcode
+
+        UPDATE_KEEP_SHARDINGKEY
+
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
     \note When flag is set to 0, it won't work to update the "ShardingKey" field, but the
@@ -1499,11 +1499,11 @@ SDB_EXPORT INT32 sdbDelete ( sdbCollectionHandle cHandle,
     \param [in] numToSkip Skip the first numToSkip documents, never skip if this parameter is 0
     \param [in] numToReturn Only return numToReturn documents, return all if this parameter is -1
     \param [in] flag The query flag, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( QUERY_FORCE_HINT | QUERY_WITH_RETURNDATA ) to param flag
-    \code
-QUERY_FORCE_HINT
-QUERY_PARALLED
-QUERY_WITH_RETURNDATA
-    \endcode
+
+        QUERY_FORCE_HINT
+        QUERY_PARALLED
+        QUERY_WITH_RETURNDATA
+
     \param [out] handle The cursor handle of current query
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
@@ -1575,12 +1575,12 @@ SDB_EXPORT INT32 sdbQuery ( sdbCollectionHandle cHandle,
     \param [in] numToSkip Skip the first numToSkip documents, never skip if this parameter is 0
     \param [in] numToReturn Only return numToReturn documents, return all if this parameter is -1
     \param [in] flag The query flag, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( QUERY_FORCE_HINT | QUERY_WITH_RETURNDATA ) to param flag
-    \code
-QUERY_FORCE_HINT
-QUERY_PARALLED
-QUERY_WITH_RETURNDATA
-QUERY_KEEP_SHARDINGKEY_IN_UPDATE
-    \endcode
+
+        QUERY_FORCE_HINT
+        QUERY_PARALLED
+        QUERY_WITH_RETURNDATA
+        QUERY_KEEP_SHARDINGKEY_IN_UPDATE
+
     \param [in] returnNew When TRUE, returns the updated document rather than the original
     \param [out] handle The cursor handle of current query
     \retval SDB_OK Operation Success
@@ -1619,11 +1619,11 @@ SDB_EXPORT INT32 sdbQueryAndUpdate ( sdbCollectionHandle cHandle,
     \param [in] numToSkip Skip the first numToSkip documents, never skip if this parameter is 0
     \param [in] numToReturn Only return numToReturn documents, return all if this parameter is -1
     \param [in] flag The query flag, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( QUERY_FORCE_HINT | QUERY_WITH_RETURNDATA ) to param flag
-    \code
-QUERY_FORCE_HINT
-QUERY_PARALLED
-QUERY_WITH_RETURNDATA
-    \endcode
+
+        QUERY_FORCE_HINT
+        QUERY_PARALLED
+        QUERY_WITH_RETURNDATA
+
     \param [out] handle The cursor handle of current query
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
@@ -1658,11 +1658,11 @@ SDB_EXPORT INT32 sdbQueryAndRemove ( sdbCollectionHandle cHandle,
                     {"":null} means table scan. when hint is null,
                     database automatically match the optimal index to scan data
     \param [in] flag The query flag, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( QUERY_FORCE_HINT | QUERY_WITH_RETURNDATA ) to param flag
-    \code
-QUERY_FORCE_HINT
-QUERY_PARALLED
-QUERY_WITH_RETURNDATA
-    \endcode
+
+        QUERY_FORCE_HINT
+        QUERY_PARALLED
+        QUERY_WITH_RETURNDATA
+
     \param [in] numToSkip Skip the first numToSkip documents, never skip if this parameter is 0
     \param [in] numToReturn Only return numToReturn documents, return all if this parameter is -1
     \param [in] options the rules of explain, the options are as below:
