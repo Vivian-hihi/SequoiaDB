@@ -1,5 +1,5 @@
 ##语法##
-***db.collectionspace.collection.update\(\<rule\>,\[cond\],\[hint\]\)***
+***db.collectionspace.collection.update\(\<rule\>, \[cond\], \[hint\], \[options\]\)***
 
 更新集合记录。
 
@@ -10,12 +10,21 @@
 | rule   | Json 对象| 更新规则。记录按 rule 的内容更新。 | 是 |
 | cond   | Json 对象| 选择条件。为空时，更新所有记录，不为空时，更新符合条件的记录。 | 否 |
 | hint | Json 对象 | 指定访问计划。 | 否 |
+| options | Json 对象 | 可选项，详见options选项说明。| 否 |
+
+##options选项##
+
+| 参数名          | 参数类型 | 描述                | 默认值 |
+| --------------- | -------- | ------------------- | ------ |
+| KeepShardingKey | bool     | 是否保留分区键字段。| false  |
 
 > **Note:**
 >
 > * hint 参数是一个包含一个单一字段的 Json 对象，字段名会被忽略，而其字段值则指定为需要访问索引的名称，当字段值为 null 时，则遍历集合中所有的记录，它的格式为{"":null}或者{"":"<indexname>"}。
 >
-> * update 本版本暂不支持对表分区键（ShardingKey）字段更新，如果包含对分区键的更新操作，将自动剔除掉对分区键的更新，但其他字段更新生效，且不会发生错误。
+> * 当 KeepShardingKey 为 false 时，如果包含对分区键的更新操作，将自动剔除掉对分区键的更新，但其他字段更新生效，且不会发生错误。当 KeepShardingKey 为 true 时，将会保留分区键字段。
+>
+> * 当切分表只落在一个组上，允许更新分区键；当切分表落在多个组上，在本版本中暂时不允许更新分区键。对于主子表，不允许更新主表分区键；当每个子表各自都只落在一个组上时，才允许更新子表分区键。
 
 
 ##返回值##
@@ -24,8 +33,11 @@
 
 ##错误##
 
-[错误码](reference/Sequoiadb_error_code.md)
-
+错误信息记录在节点诊断日志（diaglog）中，可参考[错误码](reference/Sequoiadb_error_code.md)。
+  
+| 错误码   | 可能的原因                           | 解决方法                                     |
+| -------- | ------------------------------------ | -------------------------------------------- |
+| -178     | 切分表落在多个组上，不允许更新分区键 | KeepShardingKey 设置为 false，自动过滤分区键 |
 
 ## 示例##
 
@@ -45,5 +57,14 @@
 
  ```lang-javascript
  > db.foo.bar.update( { $inc: { age: 1 } }, { age: { $gt: 20 } }, { "": "testIndex" } )
+ ```
+
+* 指定更新记录时保留分区键，切分表foo.bar，落在两个分区组上，分区键为 { b: 1 }
+
+ ```lang-javascript
+ > db.foo.bar.update( { $set: { b: 1 } }, { }, { }, { KeepShardingKey: true } )
+ (nofile):0 uncaught exception: -178
+ Sharding key cannot be updated
+ Takes 0.002696s.
  ```
 
