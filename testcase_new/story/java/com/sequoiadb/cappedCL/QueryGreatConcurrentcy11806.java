@@ -50,7 +50,7 @@ public class QueryGreatConcurrentcy11806 extends SdbTestBase{
 	@Test
 	public void testGreatConcurrencyQuery() {
 		QueryThread queryThread = new QueryThread();
-		int threadNum = 10;
+		int threadNum = 20;
 		queryThread.start(threadNum);
 		
 		Assert.assertTrue(queryThread.isSuccess(),queryThread.getErrorMsg());

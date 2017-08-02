@@ -53,7 +53,7 @@ public class InsertMoreCappedCL11778 extends SdbTestBase{
 		StringBuffer strBuffer = new StringBuffer();
 		
 		InsertThread insertThread = new InsertThread(strBuffer);
-		int threadNum = 10;
+		int threadNum = 20;
 		insertThread.start(threadNum);
 		
 		Assert.assertTrue(insertThread.isSuccess(),insertThread.getErrorMsg());
