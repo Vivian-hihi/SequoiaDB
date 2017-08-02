@@ -291,7 +291,7 @@ int main ( int argc , const char * argv[] )
    if ( ! freopen ( SDB_BP_LOG_FILE , "a" , stdout ) )
    {
       rc = ossResetTty() ;
-      if ( SDB_OK == rc )
+      if ( SDB_OK != rc )
       {
          goto error ;
       }
