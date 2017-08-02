@@ -7,7 +7,7 @@
       //初始化
       var scanHostTmp        = $rootScope.tempData( 'Deploy', 'ScanHost' ) ;
       var successNum         = 0 ;
-      var hostList        = scanHostTmp == null ? [] : scanHostTmp ;
+      var hostList           = scanHostTmp == null ? [] : scanHostTmp ;
       $scope.checkedHostNum  = 0 ;
       //主机列表表格
       $scope.HostListTable = {
@@ -111,13 +111,34 @@
       var deployModel  = $rootScope.tempData( 'Deploy', 'Model' ) ;
       var deplpyModule = $rootScope.tempData( 'Deploy', 'Module' ) ;
       var clusterName  = $rootScope.tempData( 'Deploy', 'ClusterName' ) ;
+      var discoverConf = $rootScope.tempData( 'Deploy', 'DiscoverConf' ) ;
+
       if( deployModel == null || clusterName == null || deplpyModule == null )
       {
          $location.path( '/Deploy/Index' ).search( { 'r': new Date().getTime() } ) ;
          return ;
       }
 
-      $scope.stepList = _Deploy.BuildSdbStep( $scope, $location, deployModel, $scope['Url']['Action'], deplpyModule ) ;
+      if( discoverConf == null )
+      {
+         $scope.stepList = _Deploy.BuildSdbStep( $scope, $location, deployModel, $scope['Url']['Action'], deplpyModule ) ;
+      }
+      else
+      {
+         $scope.stepList = _Deploy.BuildSdbDiscoverStep( $scope, $location, $scope['Url']['Action'], 'sequoiadb' ) ;
+         var discoverHostList  = $rootScope.tempData( 'Deploy', 'DiscoverHostList' ) ;
+         $.each( discoverHostList, function( index, value ){
+            if( $scope.ScanForm['inputList'][0]['value'] == '' )
+            {
+               $scope.ScanForm['inputList'][0]['value'] = value ;
+            }
+            else
+            {
+               $scope.ScanForm['inputList'][0]['value'] = $scope.ScanForm['inputList'][0]['value'] + ',' + value ;
+            }
+         } ) ;
+      }
+
       if( $scope.stepList['info'].length == 0 )
       {
          $location.path( '/Deploy/Index' ).search( { 'r': new Date().getTime() } ) ;

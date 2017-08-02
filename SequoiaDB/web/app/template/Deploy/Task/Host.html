@@ -83,7 +83,7 @@
          <button class="btn btn-default" ng-if="DeployType == 'Deploy' || DeployType == 'Host'" ng-click="GotoAddHost()"><i class="fa fa-chevron-left"></i> {{autoLanguage("上一步")}}</button>
          <button class="btn btn-default" ng-if="DeployType == 'Task'" ng-click="GotoDeploy2()"><i class="fa fa-chevron-left"></i> {{autoLanguage("返回")}}</button>
          &nbsp;&nbsp;&nbsp;
-         <button class="btn" ng-if="DeployType == 'Deploy'" ng-class="{'true':'btn-primary','false':'btn-danger'}[IsFinish]" ng-click="GotoConf()">
+         <button class="btn" ng-if="DeployType == 'Deploy'" ng-class="{'true':'btn-primary','false':'btn-danger'}[IsFinish]" ng-click="GotoNext()">
             {{autoLanguage("下一步")}} <i class="fa fa-chevron-right"></i>
          </button>
          <button class="btn" ng-if="DeployType != 'Deploy'" ng-class="{'true':'btn-primary','false':'btn-danger'}[IsFinish]" ng-click="GotoDeploy()">

@@ -13,6 +13,7 @@
       $scope.DeployType  = $rootScope.tempData( 'Deploy', 'Model' ) ;
       $scope.ModuleType  = $rootScope.tempData( 'Deploy', 'Module' ) ;
       var installTask    = $rootScope.tempData( 'Deploy', 'HostTaskID' ) ;
+      var discoverConf   = $rootScope.tempData( 'Deploy', 'DiscoverConf' ) ;
 
       $scope.TaskInfo = [] ;
       //输出到表格的task数据
@@ -50,7 +51,14 @@
 
       if( $scope.DeployType != 'Task' )
       {
-         $scope.stepList = _Deploy.BuildSdbStep( $scope, $location, $scope.DeployType, $scope['Url']['Action'], $scope.ModuleType ) ;
+         if( discoverConf == null )
+         {
+            $scope.stepList = _Deploy.BuildSdbStep( $scope, $location, $scope.DeployType, $scope['Url']['Action'], $scope.ModuleType ) ;
+         }
+         else
+         {
+            $scope.stepList = _Deploy.BuildSdbDiscoverStep( $scope, $location, $scope['Url']['Action'], 'sequoiadb' ) ;
+         }
          if( $scope.stepList['info'].length == 0 )
          {
             $location.path( '/Deploy/Index' ).search( { 'r': new Date().getTime() } ) ;
@@ -68,7 +76,28 @@
          $location.path( '/Deploy/Index' ).search( { 'r': new Date().getTime() } ) ;
       }
 
-      //下一步
+      //前往发现业务
+      var gotoDiscover = function(){
+         if( $scope.IsFinish == true )
+         {
+            var data = { 'cmd': 'discover business', 'ConfigInfo': JSON.stringify( discoverConf ) } ;
+            SdbRest.OmOperation( data, {
+               'success': function(){
+                  $rootScope.tempData( 'Deploy', 'ModuleName', discoverConf['BusinessName'] ) ;
+                  $rootScope.tempData( 'Deploy', 'ClusterName', discoverConf['ClusterName'] ) ;
+                  $location.path( '/Deploy/SDB-Discover' ).search( { 'r': new Date().getTime() }  ) ;
+               }, 
+               'failed': function( errorInfo ){
+                  _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                     gotoDiscover() ;
+                     return true ;
+                  } ) ;
+               }
+            } ) ;
+         }
+      }
+
+      //完成
       $scope.GotoDeploy = function(){
          if( $scope.IsFinish == true )
          {
@@ -77,24 +106,31 @@
       }
 
       //下一步
-      $scope.GotoConf = function(){
+      $scope.GotoNext = function(){
          if( $scope.IsFinish == true )
          {
-            if( $scope.ModuleType == 'sequoiadb' )
+            if( discoverConf != null )
             {
-               $location.path( '/Deploy/SDB-Conf' ).search( { 'r': new Date().getTime() } ) ;
-            }
-            else if( $scope.ModuleType == 'sequoiasql' )
-            {
-               $location.path( '/Deploy/SSQL-Conf' ).search( { 'r': new Date().getTime() } ) ;
-            }
-            else if( $scope.ModuleType == 'zookeeper' )
-            {
-               $location.path( '/Deploy/ZKP-Mod' ).search( { 'r': new Date().getTime() } ) ;
+               gotoDiscover() ;
             }
             else
             {
-               $location.path( '/Deploy/Index' ).search( { 'r': new Date().getTime() } ) ;
+               if( $scope.ModuleType == 'sequoiadb' )
+               {
+                  $location.path( '/Deploy/SDB-Conf' ).search( { 'r': new Date().getTime() } ) ;
+               }
+               else if( $scope.ModuleType == 'sequoiasql' )
+               {
+                  $location.path( '/Deploy/SSQL-Conf' ).search( { 'r': new Date().getTime() } ) ;
+               }
+               else if( $scope.ModuleType == 'zookeeper' )
+               {
+                  $location.path( '/Deploy/ZKP-Mod' ).search( { 'r': new Date().getTime() } ) ;
+               }
+               else
+               {
+                  $location.path( '/Deploy/Index' ).search( { 'r': new Date().getTime() } ) ;
+               }
             }
          }
       }

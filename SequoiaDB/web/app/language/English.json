@@ -154,6 +154,8 @@
    "断开会话": "Force session",
    "发行版本": "Edition",
    "发送流量": "TXByts",
+   "发现SequoiaDB需要先在集群中添加该业务的所有主机。是否前往添加主机？": "Append SequoiaDB needs to add all hosts to the business in the cluster. Do you want to go to the add host?",
+   "发现信息": "Append Information",
    "发现业务": "Append Module",
    "反选": "Inverse",
    "返 回": "Return",

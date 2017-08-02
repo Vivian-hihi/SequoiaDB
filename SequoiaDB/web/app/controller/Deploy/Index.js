@@ -1033,8 +1033,9 @@
                      "name": 'moduleType',
                      "webName": $scope.autoLanguage( '业务类型' ),
                      "type": "select",
-                     "value": 'sequoiasql',
+                     "value": 'sequoiadb',
                      "valid": [
+                        { 'key': 'SequoiaDB', 'value': 'sequoiadb' },
                         { 'key': $scope.autoLanguage( 'SequoiaSQL引擎' ), 'value': 'sequoiasql' },
                         { 'key': 'Spark', 'value': 'spark' },
                         { 'key': 'Hdfs', 'value': 'hdfs' },
@@ -1106,7 +1107,14 @@
                {
                   $scope.AppendModule['callback']['Close']() ;
                   var formVal = $scope.AppendModule['config'].getValue() ;
-                  if( formVal['moduleType'] == 'sequoiasql' )
+                  if( formVal['moduleType'] == 'sequoiadb' )
+                  {
+                     setTimeout( function(){
+                        $scope.ShowAppendSdb( formVal['moduleName'] ) ;
+                        $scope.$apply() ;
+                     } ) ;
+                  }
+                  else if( formVal['moduleType'] == 'sequoiasql' )
                   {
                      setTimeout( function(){
                         $scope.ShowAppendSSQL( formVal['moduleName'] ) ;
@@ -1132,20 +1140,75 @@
          }
       }
 
-      //发现业务
-      var discoverModule = function( configure ){
-         var data = { 'cmd': 'discover business', 'ConfigInfo': JSON.stringify( configure ) } ;
-         SdbRest.OmOperation( data, {
-            'success': function(){
-               $location.path( '/Deploy/Index' ).search( { 'r': new Date().getTime() }  ) ;
-            }, 
-            'failed': function( errorInfo ){
-               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-                  discoverModule( configure ) ;
-                  return true ;
-               } ) ;
+      //从发现前往添加主机
+      var gotoAddHost = function( configure ){
+         $rootScope.tempData( 'Deploy', 'Model', 'Deploy' ) ;
+         $rootScope.tempData( 'Deploy', 'Module', 'None' ) ;
+         $rootScope.tempData( 'Deploy', 'ClusterName', $scope.clusterList[ $scope.currentCluster ]['ClusterName'] ) ;
+         $rootScope.tempData( 'Deploy', 'InstallPath', $scope.clusterList[ $scope.currentCluster ]['InstallPath'] ) ;
+         $rootScope.tempData( 'Deploy', 'DiscoverConf', configure ) ;
+         $location.path( '/Deploy/ScanHost' ).search( { 'r': new Date().getTime() } ) ;
+      }
+
+      //发现sdb 弹窗
+      $scope.AppendSdb = {
+         'config': {},
+         'callback': {}
+      }
+
+      //打开 发现sdb 弹窗
+      $scope.ShowAppendSdb = function( moduleName ){
+         $scope.AppendSdb['config'] = {
+            inputList: [
+               {
+                  "name": 'HostName',
+                  "webName": $scope.autoLanguage( '主机名' ),
+                  "type": "string",
+                  "required": true,
+                  "value": "",
+                  "valid": {
+                     "min": 1
+                  }
+               },
+               {
+                  "name": 'ServiceName',
+                  "webName": $scope.autoLanguage( '服务名' ),
+                  "type": "port",
+                  "required": true,
+                  "value": '',
+                  "valid": {}
+               },
+               {
+                  "name": 'User',
+                  "webName": $scope.autoLanguage( '数据库用户名' ),
+                  "type": "string",
+                  "value": ""
+               },
+               {
+                  "name": 'Passwd',
+                  "webName": $scope.autoLanguage( '数据库密码' ),
+                  "type": "string",
+                  "value": ""
+               }
+            ]
+         }
+         $scope.AppendSdb['callback']['SetOkButton']( $scope.autoLanguage( '确定' ), function(){
+            var isAllClear = $scope.AppendSdb['config'].check() ;
+            if( isAllClear )
+            {
+               var formVal = $scope.AppendSdb['config'].getValue() ;
+               var configure = {} ;
+               configure['ClusterName']  = $scope.clusterList[ $scope.currentCluster ]['ClusterName'] ;
+               configure['BusinessType'] = 'sequoiadb' ;
+               configure['BusinessName'] = moduleName ;
+               configure['BusinessInfo'] = formVal ;
+               discoverModule( configure ) ;
             }
+            return isAllClear ;
          } ) ;
+         $scope.AppendSdb['callback']['SetTitle']( 'SequoiaDB' ) ;
+         $scope.AppendSdb['callback']['SetIcon']( '' ) ;
+         $scope.AppendSdb['callback']['Open']() ;
       }
 
       //发现ssql 弹窗
@@ -1232,8 +1295,8 @@
             }
             return isAllClear ;
          } ) ;
-         $scope.InstallModule['callback']['SetTitle']( 'SequoiaSQL' ) ;
-         $scope.InstallModule['callback']['SetIcon']( '' ) ;
+         $scope.AppendSSQL['callback']['SetTitle']( 'SequoiaSQL' ) ;
+         $scope.AppendSSQL['callback']['SetIcon']( '' ) ;
          $scope.AppendSSQL['callback']['Open']() ;
       }
       
@@ -1284,6 +1347,48 @@
          $scope.AppendOtherModule['callback']['SetTitle']( moduleType ) ;
          $scope.AppendOtherModule['callback']['SetIcon']( '' ) ;
          $scope.AppendOtherModule['callback']['Open']() ;
+      }
+      
+      //发现业务
+      var discoverModule = function( configure ){
+         var data = { 'cmd': 'discover business', 'ConfigInfo': JSON.stringify( configure ) } ;
+         SdbRest.OmOperation( data, {
+            'success': function(){
+               if( configure['BusinessType'] == 'sequoiadb' )
+               {
+                  $rootScope.tempData( 'Deploy', 'ModuleName', configure['BusinessName'] ) ;
+                  $rootScope.tempData( 'Deploy', 'ClusterName', configure['ClusterName'] ) ;
+                  $location.path( '/Deploy/SDB-Discover' ).search( { 'r': new Date().getTime() }  ) ;
+               }
+               else
+               {
+                  $location.path( '/Deploy/Index' ).search( { 'r': new Date().getTime() }  ) ;
+               }
+            }, 
+            'failed': function( errorInfo ){
+               if( configure['BusinessType'] == 'sequoiadb' &&
+                   isArray( errorInfo['hosts'] ) &&
+                   errorInfo['hosts'].length > 0 )
+               {
+                  $scope.Components.Confirm.type = 3 ;
+                  $scope.Components.Confirm.context = $scope.autoLanguage( '发现SequoiaDB需要先在集群中添加该业务的所有主机。是否前往添加主机？' ) ;
+                  $scope.Components.Confirm.isShow = true ;
+                  $scope.Components.Confirm.okText = $scope.autoLanguage( '是' ) ;
+                  $scope.Components.Confirm.ok = function(){
+                     $rootScope.tempData( 'Deploy', 'DiscoverHostList', errorInfo['hosts'] ) ;
+                     gotoAddHost( configure ) ;
+                  }
+               }
+               else
+               {
+                  _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                     discoverModule( configure ) ;
+                     return true ;
+                  } ) ;
+               }
+               
+            }
+         } ) ;
       }
 
       //卸载业务

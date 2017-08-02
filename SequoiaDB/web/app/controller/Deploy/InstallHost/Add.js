@@ -12,6 +12,7 @@
       var deplpyModule = $rootScope.tempData( 'Deploy', 'Module' ) ;
       var installPath  = $rootScope.tempData( 'Deploy', 'InstallPath' ) ;
       var clusterName  = $rootScope.tempData( 'Deploy', 'ClusterName' ) ;
+      var discoverConf = $rootScope.tempData( 'Deploy', 'DiscoverConf' ) ;
 
       if( deployModel == null || clusterName == null || installPath == null || deplpyModule == null || addHostInfo == null )
       {
@@ -32,7 +33,14 @@
       hostList = hostList.sort( hostSort ) ;
 
       //创建步骤条
-      $scope.stepList = _Deploy.BuildSdbStep( $scope, $location, deployModel, $scope['Url']['Action'], deplpyModule ) ;
+      if( discoverConf == null )
+      {
+         $scope.stepList = _Deploy.BuildSdbStep( $scope, $location, deployModel, $scope['Url']['Action'], deplpyModule ) ;
+      }
+      else
+      {
+         $scope.stepList = _Deploy.BuildSdbDiscoverStep( $scope, $location, $scope['Url']['Action'], 'sequoiadb' ) ;
+      }
       if( $scope.stepList['info'].length == 0 )
       {
          $location.path( '/Deploy/Index' ).search( { 'r': new Date().getTime() } ) ;

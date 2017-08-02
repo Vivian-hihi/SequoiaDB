@@ -542,6 +542,35 @@ _Deploy.BuildSdbExtStep = function( $scope, $location, action, deployModule ){
    return stepList ;
 }
 
+//生成安装主机-发现业务步骤图
+_Deploy.BuildSdbDiscoverStep = function( $scope, $location, action, deployModule ){
+   var stepList = {
+      'step': 0,
+      'info': [] 
+   } ;
+
+   switch( action )
+   {
+   case 'ScanHost':
+      stepList['step'] = 1 ;
+      break ;
+   case 'AddHost':
+      stepList['step'] = 2 ;
+      break ;
+   case 'InstallHost':
+      stepList['step'] = 3 ;
+      break ;
+   case 'SDB-Discover':
+      stepList['step'] = 4 ;
+      break ;
+   }
+   stepList['info'].push( { 'text': $scope.autoLanguage( '扫描主机' ), 'click': function(){ _Deploy.GotoStep( $location, 'ScanHost') ; } } ) ;
+   stepList['info'].push( { 'text': $scope.autoLanguage( '添加主机' ), 'click': function(){ _Deploy.GotoStep( $location, 'AddHost' ) ; } } ) ;
+   stepList['info'].push( { 'text': $scope.autoLanguage( '安装主机' ), 'click': function(){ _Deploy.GotoStep( $location, 'InstallHost' ) ; } } ) ;
+   stepList['info'].push( { 'text': $scope.autoLanguage( '发现业务' ), 'click': function(){ _Deploy.GotoStep( $location, 'SDB-Discover'  ) ; } } ) ;
+   return stepList ;
+}
+
 //参数模板转换
 _Deploy.ConvertTemplate = function( templateList, level ){
    var setLevel = 0 ;
