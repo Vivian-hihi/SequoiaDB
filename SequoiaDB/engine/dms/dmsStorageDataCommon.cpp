@@ -857,6 +857,17 @@ namespace engine
                                       TRUE : FALSE ;
             /// lsn
             _mbStatInfo[i]._lastLSN.init( _dmsMME->_mbList[i]._commitLSN ) ;
+
+            // _mbOptExtentID is added in version 2.9(acoording data version is
+            // 3, refer to DMS_DATASU_CUR_VERSION ) when developping capped
+            // collection. It's default value is DMS_INVALID_EXTENT, so need
+            // to upgrade the existing collections to this default value for
+            // those collections which created on cs before this version.
+            if ( _dmsHeader->_version < 3 &&
+                 DMS_INVALID_EXTENT != _dmsMME->_mbList[i]._mbOptExtentID )
+            {
+               _dmsMME->_mbList[i]._mbOptExtentID = DMS_INVALID_EXTENT ;
+            }
          }
       }
 
@@ -877,54 +888,20 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATACOMMON__ONOPENED ) ;
-      BOOLEAN needFlush = FALSE ;
 
+      /* Initialize compressor entries for collections. */
       for ( UINT16 i = 0 ; i < DMS_MME_SLOTS ; ++i )
       {
-         if ( DMS_IS_MB_INUSE ( _dmsMME->_mbList[i]._flag ) )
-         {
-            /* Initialize compressor entries for collections. */
-            if ( OSS_BIT_TEST( _dmsMME->_mbList[i]._attributes,
+         if ( DMS_IS_MB_INUSE( _dmsMME->_mbList[i]._flag ) &&
+              OSS_BIT_TEST( _dmsMME->_mbList[i]._attributes,
                                DMS_MB_ATTR_COMPRESSED ) )
-            {
-               rc = _initCompressorEntry( i ) ;
-               PD_RC_CHECK( rc, PDERROR,
-                            "Failed to initialize compressor entry for "
-                            "collection: %s, rc = %d",
-                            _dmsMME->_mbList[i]._collectionName, rc ) ;
-            }
-
-            // _mbOptExtentID is added in version 2.9 when developping capped
-            // collection. It's default value is DMS_INVALID_EXTENT, so need
-            // to upgrade the existing collections to this default value.
-            // If the _mbOptExtentID is 0, there are two possibilities:
-            // (1) Upgrade from elder version.
-            // (2) A valid extend option extent.
-            // In the first case, need to set its value to DMS_INVALID_EXTENT.
-            // Here we check by validating the extent, to see if it's a valid
-            // extend option extent.
-            if ( 0 == _dmsMME->_mbList[i]._mbOptExtentID )
-            {
-               dmsExtRW extRW = extent2RW( _dmsMME->_mbList[i]._mbOptExtentID,
-                                           i ) ;
-               extRW.setNothrow( TRUE ) ;
-               const dmsOptExtent *optExt = extRW.readPtr<dmsOptExtent>() ;
-               if ( !optExt || !optExt->validate(i) )
-               {
-                  _dmsMME->_mbList[i]._mbOptExtentID = DMS_INVALID_EXTENT ;
-                  if ( !needFlush )
-                  {
-                     needFlush = TRUE ;
-                  }
-               }
-            }
+         {
+            rc = _initCompressorEntry( i ) ;
+            PD_RC_CHECK( rc, PDERROR,
+                         "Failed to initialize compressor entry for "
+                         "collection: %s, rc = %d",
+                         _dmsMME->_mbList[i]._collectionName, rc ) ;
          }
-      }
-
-
-      if ( needFlush )
-      {
-         flushMME( isSyncDeep() ) ;
       }
 
    done:

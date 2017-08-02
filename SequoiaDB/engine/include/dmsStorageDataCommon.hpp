@@ -728,7 +728,17 @@ namespace engine
 
    #define DMS_MME_OFFSET                 ( DMS_SME_OFFSET + DMS_SME_SZ )
    #define DMS_DATASU_EYECATCHER          "SDBDATA"
-   #define DMS_DATASU_CUR_VERSION         2
+
+   // History of data version change:
+   // Version  Update in which version    Reason
+   //    1             --                 The Initial version.
+   //    2             2.0                Support for lzw compression. New
+   //                                     dictionary extent information added
+   //                                     in MB.
+   //    3             2.9                Support for capped collection. A new
+   //                                     page for extend option is used, id
+   //                                     stored in MB.
+   #define DMS_DATASU_CUR_VERSION         3
    #define DMS_DATACAPSU_EYECATCHER       "SDBDCAP"
    #define DMS_COMPRESSION_ENABLE_VER     2
    #define DMS_CONTEXT_MAX_SIZE           (2000)
