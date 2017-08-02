@@ -20,7 +20,7 @@ function main ( db )
       if( 3 < nodeSize )
       {
          // Majority nodes = (nodeSize/2+1)
-         for( var j = 1 ; j < (nodeSize/2+1) ; ++j )    //many groups,begin 1 not 0
+         for( var j = 1 ; j < Math.floor(nodeSize/2)+1 ; ++j )    //many groups,begin 1 not 0
          {
             var node = group[i][j].svcname ;    // svcname
             var nodeHost = group[i][j].HostName ;   // HostName

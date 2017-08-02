@@ -19,7 +19,7 @@ function main ( db )
       // If the nodes less than 3, nodes cannot be stop
       if( 3 < nodeSize )
       {
-         for( var j = 1 ; j < nodeSize/2 ; ++j )    //many groups,begin 1 not 0
+         for( var j = 1 ; j < Math.floor(nodeSize/2) ; ++j )    //many groups,begin 1 not 0
          {
             var node = group[i][j].svcname ;    // svcname
             var nodeHost = group[i][j].HostName ;    // HostName
@@ -43,7 +43,7 @@ function main ( db )
             //println( "count : " + count ) ;
          }while( false == newPrimNode ) ;
 
-         for( var j = 1 ; j < nodeSize/2 ; ++j )    //many groups,begin 1 not 0
+         for( var j = 1 ; j < Math.floor(nodeSize/2) ; ++j )    //many groups,begin 1 not 0
          {
             var node = group[i][j].svcname ;    // svcname
             var nodeHost = group[i][j].HostName ;    // HostName
