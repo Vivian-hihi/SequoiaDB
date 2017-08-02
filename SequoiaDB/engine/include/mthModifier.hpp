@@ -62,7 +62,9 @@ namespace engine
       PUSH,
       PUSH_ALL,
       PULL,
+      PULL_BY,
       PULL_ALL,
+      PULL_ALL_BY,
       POP,
       UNSET,
       BITNOT,
@@ -206,7 +208,8 @@ namespace engine
       BOOLEAN _dupFieldName ( const BSONElement &l,
                               const BSONElement &r ) ;
       BOOLEAN _pullElementMatch( BSONElement& org,
-                                 BSONElement& toMatch ) ;
+                                 BSONElement& toMatch,
+                                 BOOLEAN fullMatch ) ;
       template<class Builder>
       void _applyUnsetModifier(Builder &b) ;
 
