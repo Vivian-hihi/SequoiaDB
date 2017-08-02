@@ -875,20 +875,17 @@ struct _QueryFlagStat
 } ;
 typedef struct _QueryFlagStat QueryFlagStat ;
 
-static QueryFlagStat stats[] = {
-   // add mapping flags as below, if necessary:
-   //{ _QUERY_FORCE_HINT, FLG_QUERY_FORCE_HINT },
-   //{ _QUERY_PARALLED, FLG_QUERY_PARALLED },
-   //{ _QUERY_WITH_RETURNDATA, FLG_QUERY_WITH_RETURNDATA },
-   //{ _QUERY_PREPARE_MORE, FLG_QUERY_PREPARE_MORE }
-} ;
-
 static const QueryFlagStat* _getQueryFlagPair( const INT32 flag )
 {
+   QueryFlagStat stats[] = {
+      { 0, 0 }
+      // add mapping flags as below, if necessary:
+      //{ _QUERY_FORCE_HINT, FLG_QUERY_FORCE_HINT }
+   } ;
    QueryFlagStat *pRet = NULL ;
    INT32 num = sizeof(stats) / sizeof(QueryFlagStat) ;
    INT32 i = 0 ;
-   for ( ; i < num; i++ )
+   for ( i = 1; i < num; i++ )
    {
       if ( flag == (INT32)(stats[i]._original) )
       {
