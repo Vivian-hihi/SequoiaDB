@@ -899,7 +899,8 @@ INT32 regulateQueryFlags( INT32 *newFlags, const INT32 flags )
    {
       INT32 originalFlag = (INT32)(stats[i]._original) ;
       INT32 newFlag = (INT32)(stats[i]._new) ;
-      if ( originalFlag != newFlag )
+      if ( ( erasedFlags & originalFlag ) && 
+           ( originalFlag != newFlag ) )
       {
          erasedFlags &= ~originalFlag ;
          mergedFlags |= newFlag ;
