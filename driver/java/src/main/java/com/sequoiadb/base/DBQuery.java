@@ -260,7 +260,7 @@ public class DBQuery {
         Iterator<Map.Entry<Integer, Integer>> entries = flagsMap.entrySet().iterator();
         while(entries.hasNext()) {
             Map.Entry<Integer,Integer> entry = entries.next();
-            if (entry.getKey() != entry.getValue()) {
+            if (((erasedFlags & entry.getKey()) != 0) && (entry.getKey() != entry.getValue())) {
                 erasedFlags &= ~entry.getKey();
                 mergedFlags |= entry.getValue();
             }
