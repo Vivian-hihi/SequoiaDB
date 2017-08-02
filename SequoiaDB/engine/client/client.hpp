@@ -304,7 +304,7 @@ namespace sdbclient
                              const bson::BSONObj &hint      = _sdbStaticObject,
                              INT64 numToSkip    = 0,
                              INT64 numToReturn  = -1,
-                             INT32 flag         = 0
+                             INT32 flags        = 0
                            ) = 0 ;
 
       virtual INT32 query  ( sdbCursor &cursor,
@@ -314,7 +314,7 @@ namespace sdbclient
                              const bson::BSONObj &hint      = _sdbStaticObject,
                              INT64 numToSkip    = 0,
                              INT64 numToReturn  = -1,
-                             INT32 flag         = 0
+                             INT32 flags        = 0
                            ) = 0 ;
 
       virtual INT32 queryOne( bson::BSONObj &obj,
@@ -323,7 +323,7 @@ namespace sdbclient
                               const bson::BSONObj &orderBy   = _sdbStaticObject,
                               const bson::BSONObj &hint      = _sdbStaticObject,
                               INT64 numToSkip    = 0,
-                              INT32 flag         = 0 ) = 0 ;
+                              INT32 flags        = 0 ) = 0 ;
 
       // query objects from current collection and update
       // given:
@@ -860,13 +860,13 @@ namespace sdbclient
                      const bson::BSONObj &hint      = _sdbStaticObject,
                      INT64 numToSkip          = 0,
                      INT64 numToReturn        = -1,
-                     INT32 flag               = 0
+                     INT32 flags              = 0
                    )
       {
          if ( !pCollection )
             return SDB_NOT_CONNECTED ;
          return pCollection->query ( cursor, condition, selected, orderBy,
-                                     hint, numToSkip, numToReturn, flag ) ;
+                                     hint, numToSkip, numToReturn, flags ) ;
       }
 
 /** \fn INT32 queryOne( BSONObj &obj,

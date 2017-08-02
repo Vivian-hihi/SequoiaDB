@@ -1348,10 +1348,10 @@ do                                                            \
                                      const BSONObj &hint,
                                      INT64 numToSkip,
                                      INT64 numToReturn,
-                                     INT32 flag )
+                                     INT32 flags )
    {
       INT32 rc              = SDB_OK ;
-      INT32 newFlags        = flag ;
+      INT32 newFlags        = 0 ;
       _sdbCursor *pCursor   = NULL ;
 
       // check
@@ -1361,9 +1361,9 @@ do                                                            \
          goto done;
       }
       // try to regulate query flags
-      if ( 0 != flag )
+      if ( 0 != flags )
       {
-         rc = regulateQueryFlags( &newFlags, flag ) ;
+         rc = regulateQueryFlags( &newFlags, flags ) ;
          if ( SDB_OK != rc )
          {
             goto error ;

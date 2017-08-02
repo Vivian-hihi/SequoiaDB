@@ -867,6 +867,7 @@ error:
 #define _QUERY_PARALLED            0x00000100
 #define _QUERY_WITH_RETURNDATA     0x00000200
 #define _QUERY_PREPARE_MORE        0x00004000
+#define _QUERY_FLAG_END            0x00000000
 
 struct _QueryFlagStat
 {
@@ -875,55 +876,34 @@ struct _QueryFlagStat
 } ;
 typedef struct _QueryFlagStat QueryFlagStat ;
 
-static const QueryFlagStat* _getQueryFlagPair( const INT32 flag )
+INT32 regulateQueryFlags( INT32 *newFlags, const INT32 flags )
 {
-   QueryFlagStat stats[] = {
-      { 0, 0 }
+   static QueryFlagStat stats[] = {
       // add mapping flags as below, if necessary:
-      //{ _QUERY_FORCE_HINT, FLG_QUERY_FORCE_HINT }
+      //{ _QUERY_FORCE_HINT, FLG_QUERY_FORCE_HINT },
+      { _QUERY_FLAG_END, _QUERY_FLAG_END }
    } ;
-   QueryFlagStat *pRet = NULL ;
-   INT32 num = sizeof(stats) / sizeof(QueryFlagStat) ;
-   INT32 i = 0 ;
-   for ( i = 1; i < num; i++ )
-   {
-      if ( flag == (INT32)(stats[i]._original) )
-      {
-         pRet = &(stats[i]) ;
-         break ;
-      }
-   }
-   return pRet ;
-}
-
-INT32 regulateQueryFlags( INT32 *newFlags, const INT32 flag )
-{
    INT32 rc = SDB_OK ;
-   INT32 bit = 1 ;
    INT32 i = 0 ;
-   const QueryFlagStat* pPair = NULL ;
-   INT32 erasedFlags = flag ;
+   INT32 num = sizeof(stats) / sizeof(QueryFlagStat) - 1 ;
+   INT32 erasedFlags = flags ;
    INT32 mergedFlags = 0 ;
+   
    if ( NULL == newFlags )
    {
       rc = SDB_INVALIDARG ;
       goto error ;
    }
-   for( ; i < 32; i++ )
+
+   for ( i = 0; i < num; i++ )
    {
-      if ( bit & flag )
+      INT32 originalFlag = (INT32)(stats[i]._original) ;
+      INT32 newFlag = (INT32)(stats[i]._new) ;
+      if ( originalFlag != newFlag )
       {
-         pPair = NULL ;
-         pPair = _getQueryFlagPair( bit ) ;
-         if ( NULL != pPair && pPair->_original != pPair->_new )
-         {
-            erasedFlags &= ~(pPair->_original) ;
-            mergedFlags |= pPair->_new ;
-         }
+         erasedFlags &= ~originalFlag ;
+         mergedFlags |= newFlag ;
       }
-      if ( (UINT32)bit >= (UINT32)flag )
-         break ;
-      bit = bit << 1 ;
    }
    *newFlags = (erasedFlags | mergedFlags) ;
 done:

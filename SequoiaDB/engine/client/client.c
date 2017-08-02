@@ -5874,11 +5874,11 @@ SDB_EXPORT INT32 sdbQuery1 ( sdbCollectionHandle cHandle,
                              bson *hint,
                              INT64 numToSkip,
                              INT64 numToReturn,
-                             INT32 flag,
+                             INT32 flags,
                              sdbCursorHandle *handle )
 {
    INT32 rc                        = SDB_OK ;
-   INT32 newFlags                  = flag ;
+   INT32 newFlags                  = 0 ;
    sdbCursorHandle cursor          = SDB_INVALID_HANDLE ;
    sdbConnectionStruct *connection = NULL ;
    sdbCollectionStruct *cs         = (sdbCollectionStruct*)cHandle ;
@@ -5891,9 +5891,9 @@ SDB_EXPORT INT32 sdbQuery1 ( sdbCollectionHandle cHandle,
       goto error ;
    }
 
-   if ( 0 != flag )
+   if ( 0 != flags )
    {
-      rc = regulateQueryFlags( &newFlags, flag ) ;
+      rc = regulateQueryFlags( &newFlags, flags ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
