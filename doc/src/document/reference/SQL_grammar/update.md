@@ -1,7 +1,7 @@
 用于修改集合中的记录。
 
 ##语法##
-***update \<cs_name\>.\<cl_name\> set (\<field1_name\>=\<value1\>,...) [where \<condition\>]***
+***update \<cs_name\>.\<cl_name\> set (\<field1_name\>=\<value1\>,...) [where \<condition\>] [/*+\<hint1\> \<hint2\> ...*/]***
 
 ##参数##
 | 参数名 | 参数类型 | 描述 | 是否必填 |
@@ -11,12 +11,13 @@
 | field1_name | string | 字段名。 | 是 |
 | value1 | string | 字段值。 | 是 |
 | condition | expression | 条件，只对符合条件的记录更新。 | 是 |
+| hint1 | [hint](reference/SQL_grammar/hint.md) | 指定执行方式。 | 是 |
 
 ##返回值##
 无。
 
 ##示例##
- 
+
    * 集合 foo.bar 中原始记录。
 
    ```
@@ -36,4 +37,13 @@
    ```lang-javascript
    > db.execUpdate( "update foo.bar set age=30 where age < 25" )
    Takes 0.3023s.
+   ```
+
+   * 指定更新时保留分区键。切分表foo.bar落在两个分区组上，分区键为 { b: 1 }
+
+   ```lang-javascript
+   > db.execUpdate( "update foo.bar set b = 1 where age < 25 /*+use_flag(SQL_UPDATE_KEEP_SHARDINGKEY)*/" )
+   (nofile):0 uncaught exception: -178
+   Sharding key cannot be updated
+   Takes 0.002696s.
    ```
