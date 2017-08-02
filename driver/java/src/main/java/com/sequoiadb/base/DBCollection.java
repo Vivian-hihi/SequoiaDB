@@ -917,7 +917,7 @@ public class DBCollection {
      * @param returnRows return the specified amount of documents,
      *                   when returnRows is 0, return nothing,
      *                   when returnRows is -1, return all the documents
-     * @param flag       the query flag, default to be 0. Please see the definition
+     * @param flags     the query flags, default to be 0. Please see the definition
      *                   of follow flags for more detail. Usage:
      *                   e.g. set ( DBQuery.FLG_QUERY_FORCE_HINT | DBQuery.FLG_QUERY_WITH_RETURNDATA ) to param flag
      *                   <ul>
@@ -937,24 +937,24 @@ public class DBCollection {
     public DBCursor query(BSONObject matcher, BSONObject selector,
                           BSONObject orderBy, BSONObject hint,
                           long skipRows, long returnRows,
-                          int flag) throws BaseException {
-        int newFlag = DBQuery.regulateFlag(flag);
+                          int flags) throws BaseException {
+        int newFlags = DBQuery.regulateFlags(flags);
 
         if (returnRows < 0) {
             returnRows = -1;
         }
         if (returnRows == 1) {
-            newFlag |= DBQuery.FLG_QUERY_WITH_RETURNDATA;
+            newFlags |= DBQuery.FLG_QUERY_WITH_RETURNDATA;
         }
 
         QueryRequest request = new QueryRequest(collectionFullName,
             matcher, selector, orderBy, hint,
-            skipRows, returnRows, newFlag);
+            skipRows, returnRows, newFlags);
         SdbReply response = sequoiadb.requestAndResponse(request);
 
-        int flags = response.getFlag();
-        if (flags != 0) {
-            if (flags == SDBError.SDB_DMS_EOC.getErrorCode()) {
+        int flag = response.getFlag();
+        if (flag != 0) {
+            if (flag == SDBError.SDB_DMS_EOC.getErrorCode()) {
                 return null;
             } else {
                 String msg = "matcher = " + matcher +

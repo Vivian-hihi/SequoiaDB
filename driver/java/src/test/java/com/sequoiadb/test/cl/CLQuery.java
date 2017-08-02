@@ -490,6 +490,21 @@ public class CLQuery {
     }
 
     @Test
+    public void testQueryWithMultiFlags() {
+        BSONObject empty = new BasicBSONObject();
+        DBCursor cursor = cl.query(empty, empty, empty, empty, 0, -1,
+                DBQuery.FLG_QUERY_STRINGOUT|DBQuery.FLG_QUERY_FORCE_HINT|DBQuery.FLG_QUERY_PARALLED);
+        int i = 0;
+        BSONObject obj1 = null;
+        while (cursor.hasNext()) {
+            obj1 = cursor.getNext();
+            System.out.println(obj1.toString());
+            i++;
+        }
+        assertEquals(100, i);
+    }
+
+    @Test
     public void testQueryRecordHasNoKey() {
         BSONObject record = new BasicBSONObject();
         record.put("", "name|age|Id");

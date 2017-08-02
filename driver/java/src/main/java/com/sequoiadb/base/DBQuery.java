@@ -19,6 +19,7 @@ package com.sequoiadb.base;
 import org.bson.BSONObject;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -88,12 +89,8 @@ public class DBQuery {
     final static Map<Integer, Integer> flagsMap = new HashMap<Integer, Integer>();
 
     static {
-        flagsMap.put(FLG_QUERY_STRINGOUT, FLG_QUERY_STRINGOUT);
-        flagsMap.put(FLG_QUERY_FORCE_HINT, FLG_QUERY_FORCE_HINT);
-        flagsMap.put(FLG_QUERY_PARALLED, FLG_QUERY_PARALLED);
-        flagsMap.put(FLG_QUERY_WITH_RETURNDATA, FLG_QUERY_WITH_RETURNDATA);
-        flagsMap.put(FLG_QUERY_PREPARE_MORE, FLG_QUERY_PREPARE_MORE);
-        flagsMap.put(FLG_QUERY_KEEP_SHARDINGKEY_IN_UPDATE, FLG_QUERY_KEEP_SHARDINGKEY_IN_UPDATE);
+        // add mapping flags as below, if necessary:
+        //flagsMap.put(FLG_QUERY_STRINGOUT, NEW_FLG_QUERY_STRINGOUT);
     }
 
     public DBQuery() {
@@ -257,35 +254,17 @@ public class DBQuery {
         this.flag = flag;
     }
 
-    private static int _regulate(final int newFlags, final int flag) {
-        int retFlags = newFlags;
-        Integer tmpFlag = flagsMap.get((Integer) flag);
-        if (tmpFlag == null)
-            return retFlags;
-        if (tmpFlag != flag) {
-            retFlags &= ~flag;
-            retFlags |= tmpFlag;
+    static int regulateFlags(final int flags) {
+        int erasedFlags = flags ;
+        int mergedFlags = 0 ;
+        Iterator<Map.Entry<Integer, Integer>> entries = flagsMap.entrySet().iterator();
+        while(entries.hasNext()) {
+            Map.Entry<Integer,Integer> entry = entries.next();
+            if (entry.getKey() != entry.getValue()) {
+                erasedFlags &= ~entry.getKey();
+                mergedFlags |= entry.getValue();
+            }
         }
-        return retFlags;
-    }
-
-    static int regulateFlag(final int flag) {
-        int newFlags = flag;
-        if ((flag & FLG_QUERY_STRINGOUT) != 0) {
-            newFlags = _regulate(newFlags, FLG_QUERY_STRINGOUT);
-        }
-        if ((flag & FLG_QUERY_FORCE_HINT) != 0) {
-            newFlags = _regulate(newFlags, FLG_QUERY_FORCE_HINT);
-        }
-        if ((flag & FLG_QUERY_PARALLED) != 0) {
-            newFlags = _regulate(newFlags, FLG_QUERY_PARALLED);
-        }
-        if ((flag & FLG_QUERY_WITH_RETURNDATA) != 0) {
-            newFlags = _regulate(newFlags, FLG_QUERY_WITH_RETURNDATA);
-        }
-        if ((flag & FLG_QUERY_KEEP_SHARDINGKEY_IN_UPDATE) != 0) {
-            newFlags = _regulate(newFlags, FLG_QUERY_KEEP_SHARDINGKEY_IN_UPDATE);
-        }
-        return newFlags;
+        return erasedFlags|mergedFlags;
     }
 }
