@@ -223,17 +223,21 @@ public class DBCollection {
     /**
      * @param type            The object of insertor, can't be null
      * @param ignoreNullValue true:if type's inner value is null, it will not save to collection;
-     *                        false:if type's inner value is null, it will save to collection too.
+     * @param flag     the update flag, default to be 0. Please see the definition
+     *                 of follow flags for more detail.
+     *                 <ul>
+     *                 <li>DBCollection.FLG_UPDATE_KEEP_SHARDINGKEY
+     *                 </ul>
      * @throws com.sequoiadb.exception.BaseException 1.when the type is not support, throw BaseException with the type "SDB_INVALIDARG"
      *                                               2.when offer main keys by setMainKeys(), and try to update "_id" field,
      *                                               it may get a BaseException with the type of "SDB_IXM_DUP_KEY"
      * @fn <T> void save(T type, Boolean ignoreNullValue)
      * @brief Insert an object into current collection
-     * @note when save include update shardingKey field, the shardingKey modify action is not take effect, but the other
-     * field update is take effect. Because of current version is not support update shardingKey field.
+     * @note When flag is set to 0, it won't work to update the ShardingKey field, but the other fields take effect.
      * @see com.sequoiadb.base.DBCollection.setMainKeys
      */
-    public /*! @cond x*/ <T> /*! @endcond */ void save(T type, Boolean ignoreNullValue) throws BaseException {
+    public /*! @cond x*/ <T> /*! @endcond */ void save(T type, Boolean ignoreNullValue, 
+                                                       int flag) throws BaseException {
         // transform java object to bson object
         BSONObject obj;
         try {
@@ -255,7 +259,7 @@ public class DBCollection {
                 matcher.put(SdbConstants.OID, id);
                 // build rule
                 modifer.put("$set", obj);
-                upsert(matcher, modifer, null);
+                upsert(matcher, modifer, null, null, flag);
             }
         } else { // if user specify main keys, use these main keys
             Iterator<String> it = mainKeys.iterator();
@@ -268,11 +272,28 @@ public class DBCollection {
             // build rule
             if (!matcher.isEmpty()) {
                 modifer.put("$set", obj);
-                upsert(matcher, modifer, null);
+                upsert(matcher, modifer, null, null, flag);
             } else {
                 insert(obj);
             }
         }
+    }
+    
+    /**
+     * @param type            The object of insertor, can't be null
+     * @param ignoreNullValue true:if type's inner value is null, it will not save to collection;
+     *                        false:if type's inner value is null, it will save to collection too.
+     * @throws com.sequoiadb.exception.BaseException 1.when the type is not support, throw BaseException with the type "SDB_INVALIDARG"
+     *                                               2.when offer main keys by setMainKeys(), and try to update "_id" field,
+     *                                               it may get a BaseException with the type of "SDB_IXM_DUP_KEY"
+     * @fn <T> void save(T type, Boolean ignoreNullValue)
+     * @brief Insert an object into current collection
+     * @note when save include update shardingKey field, the shardingKey modify action is not take effect, but the other
+     * field update is take effect.
+     * @see com.sequoiadb.base.DBCollection.setMainKeys
+     */
+    public /*! @cond x*/ <T> /*! @endcond */ void save(T type, Boolean ignoreNullValue) throws BaseException {
+        save(type, ignoreNullValue, 0);
     }
 
     /**
@@ -283,7 +304,7 @@ public class DBCollection {
      * @fn <T> void save(T type)
      * @brief Insert an object into current collection
      * @note when save include update shardingKey field, the shardingKey modify action is not take effect, but the other
-     * field update is take effect. Because of current version is not support update shardingKey field.
+     * field update is take effect.
      * @see com.sequoiadb.base.DBCollection.setMainKeys
      */
     public /*! @cond x*/ <T> /*! @endcond */ void save(T type) throws BaseException {
@@ -293,7 +314,11 @@ public class DBCollection {
     /**
      * @param type            The List instance of insertor, can't be null or empty
      * @param ignoreNullValue true:if type's inner value is null, it will not save to collection;
-     *                        false:if type's inner value is null, it will save to collection too.
+     * @param flag     the update flag, default to be 0. Please see the definition
+     *                 of follow flags for more detail.
+     *                 <ul>
+     *                 <li>DBCollection.FLG_UPDATE_KEEP_SHARDINGKEY
+     *                 </ul>
      * @throws com.sequoiadb.exception.BaseException 1.while the input argument is null or the List instance is empty
      *                                               2.while the type is not support, throw BaseException with the type "SDB_INVALIDARG"
      *                                               3.while offer main keys by setMainKeys(), and try to update "_id" field,
@@ -301,11 +326,11 @@ public class DBCollection {
      *                                               want to update to had been existing in database
      * @fn <T> void save(List<T> type, Boolean ignoreNullValue)
      * @brief Insert an object into current collection
-     * @note when save include update shardingKey field, the shardingKey modify action is not take effect, but the other
-     * field update is take effect. Because of current version is not support update shardingKey field.
+     * @note When flag is set to 0, it won't work to update the ShardingKey field, but the other fields take effect.
      * @see com.sequoiadb.base.DBCollection.setMainKeys
      */
-    public /*! @cond x*/ <T> /*! @endcond */ void save(List<T> type, Boolean ignoreNullValue) throws BaseException {
+    public /*! @cond x*/ <T> /*! @endcond */ void save(List<T> type, Boolean ignoreNullValue,
+                                                       int flag) throws BaseException {
         if (type == null || type.size() == 0)
             throw new BaseException(SDBError.SDB_INVALIDARG, "type is empty or null");
         // transform java object to bson object
@@ -336,7 +361,7 @@ public class DBCollection {
                     matcher.put(SdbConstants.OID, id);
                     // build rule
                     modifer.put("$set", obj);
-                    upsert(matcher, modifer, null);
+                    upsert(matcher, modifer, null, null, flag);
                 }
             }
         } else { // if user specify main keys, use these main keys
@@ -352,12 +377,31 @@ public class DBCollection {
                 if (!matcher.isEmpty()) {
                     // build rule
                     modifer.put("$set", obj);
-                    upsert(matcher, modifer, null);
+                    upsert(matcher, modifer, null, null, flag);
                 } else {
                     insert(obj);
                 }
             }
         }
+    }
+    
+    /**
+     * @param type            The List instance of insertor, can't be null or empty
+     * @param ignoreNullValue true:if type's inner value is null, it will not save to collection;
+     *                        false:if type's inner value is null, it will save to collection too.
+     * @throws com.sequoiadb.exception.BaseException 1.while the input argument is null or the List instance is empty
+     *                                               2.while the type is not support, throw BaseException with the type "SDB_INVALIDARG"
+     *                                               3.while offer main keys by setMainKeys(), and try to update "_id" field,
+     *                                               it may get a BaseException with the type of "SDB_IXM_DUP_KEY" when the "_id" field you
+     *                                               want to update to had been existing in database
+     * @fn <T> void save(List<T> type, Boolean ignoreNullValue)
+     * @brief Insert an object into current collection
+     * @note when save include update shardingKey field, the shardingKey modify action is not take effect, but the other
+     * field update is take effect. 
+     * @see com.sequoiadb.base.DBCollection.setMainKeys
+     */
+    public /*! @cond x*/ <T> /*! @endcond */ void save(List<T> type, Boolean ignoreNullValue) throws BaseException {
+        save(type, ignoreNullValue, 0);
     }
 
     /**
@@ -370,7 +414,7 @@ public class DBCollection {
      * @fn <T> void save(List<T> type)
      * @brief Insert an object into current collection
      * @note when save include update shardingKey field, the shardingKey modify action is not take effect, but the other
-     * field update is take effect. Because of current version is not support update shardingKey field.
+     * field update is take effect.
      * @see com.sequoiadb.base.DBCollection.setMainKeys
      */
     public /*! @cond x*/ <T> /*! @endcond */ void save(List<T> type) throws BaseException {
