@@ -562,10 +562,17 @@ namespace engine
                      sessionName(), msg->opCode, rc ) ;
          }
 
-         if ( SDB_CLS_NOT_PRIMARY == rc && 0 != _primaryID.columns.nodeID )
+         if ( SDB_CLS_NOT_PRIMARY == rc )
          {
-            // retrun the node id by startFrom
-            startFrom = _primaryID.columns.nodeID ;
+            if ( 0 == _primaryID.columns.nodeID )
+            {
+               _primaryID.value = _pReplSet->getPrimary().value ;
+            }
+            if ( 0 != _primaryID.columns.nodeID )
+            {
+               // retrun the node id by startFrom
+               startFrom = _primaryID.columns.nodeID ;
+            }
          }
       }
 
@@ -1811,7 +1818,7 @@ namespace engine
    }
 
    INT32 _clsShdSession::_getShardingKey( const CHAR* clName,
-                                               BSONObj &shardingKey )
+                                          BSONObj &shardingKey )
    {
       INT32 rc = SDB_OK ;
       _clsCatalogSet* set = NULL ;
