@@ -696,6 +696,8 @@ namespace engine
       PD_TRACE_EXITRC ( SDB__RTNCREATECL_INIT, rc ) ;
       return rc ;
    error :
+      _clean( pmdGetThreadEDUCB(), pmdGetKRCB()->getDMSCB(),
+              pmdGetKRCB()->getDPSCB() ) ;
       goto done ;
    }
 
@@ -734,8 +736,43 @@ namespace engine
                            _extOptions.toString().c_str() ) ;
       }
 
+      if ( rc )
+      {
+         goto error ;
+      }
+
+   done:
       PD_TRACE_EXITRC ( SDB__RTNCREATECL_DOIT, rc ) ;
       return rc ;
+   error:
+      _clean( cb, dmsCB, dpsCB ) ;
+      goto done ;
+   }
+
+   // Clean when error happened.
+   // The main job here is to remove the collection space if this is the only
+   // collection in the collection space.
+   // Attention: This should only be done on data node in a cluster when the
+   // command is from shard plane.
+   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCREATECL__CLEAN, "_rtnCreateCollection::_clean" )
+   void _rtnCreateCollection::_clean( pmdEDUCB *cb, SDB_DMSCB *dmsCB,
+                                      SDB_DPSCB *dpsCB )
+   {
+      PD_TRACE_ENTRY( SDB__RTNCREATECL__CLEAN ) ;
+      if ( CMD_SPACE_SERVICE_SHARD == getFromService() )
+      {
+         INT32 rc = SDB_OK ;
+         string nameStr( _collectionName ) ;
+         string csName = nameStr.substr( 0, nameStr.find( '.' ) ) ;
+         rc = dmsCB->dropEmptyCollectionSpace( csName.c_str(), cb, dpsCB ) ;
+         if ( rc && SDB_DMS_CS_NOT_EMPTY != rc )
+         {
+            // Just logging the error, but can do nothing about it.
+            PD_LOG( PDERROR, "Drop new created collection space[%s] failed, "
+                    "rc: %d", csName.c_str(), rc ) ;
+         }
+      }
+      PD_TRACE_EXIT( SDB__RTNCREATECL__CLEAN ) ;
    }
 
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnCreateCollectionspace)

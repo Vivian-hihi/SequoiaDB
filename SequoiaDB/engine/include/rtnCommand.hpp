@@ -507,6 +507,8 @@ namespace engine
                               _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
                               INT16 w = 1, INT64 *pContextID = NULL  ) ;
 
+      private:
+         void _clean( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB, _dpsLogWrapper *dpsCB ) ;
       protected:
          const CHAR              *_collectionName ;
          BSONObj                 _shardingKey ;
