@@ -3724,6 +3724,10 @@ namespace engine
             pTmpStr = "can't be Array" ;
             valid = FALSE ;
             break ;
+         case RegEx:
+            pTmpStr = "can't be RegEx" ;
+            valid = FALSE ;
+            break ;
          case Object :
             valid = dmsIsKeyNameValid( oidEle.embeddedObject(), pErrStr ) ;
             break ;
