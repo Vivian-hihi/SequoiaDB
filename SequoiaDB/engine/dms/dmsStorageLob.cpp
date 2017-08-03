@@ -2265,7 +2265,7 @@ namespace engine
    error:
       if ( needPanic )
       {
-         PD_LOG( PDSEVERE, "we must panic db now, we got a lrreparable "
+         PD_LOG( PDSEVERE, "we must panic db now, we got a irreparable "
                  "error" ) ;
          ossPanic() ;
       }
