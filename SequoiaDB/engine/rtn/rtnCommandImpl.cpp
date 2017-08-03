@@ -787,11 +787,13 @@ namespace engine
                           rtnContextDump *context )
    {
       INT32 rc = SDB_OK ;
+
+      SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
       dmsStorageUnitID suID = DMS_INVALID_CS ;
       dmsStorageUnit *su = NULL ;
       const CHAR *pCollectionShortName = NULL ;
       dmsMBContext *mbContext = NULL ;
-      rtnAccessPlanManager *apm = NULL ;
+      optAccessPlanManager *apm = NULL ;
       optAccessPlan *plan = NULL ;
       BSONObj emptyObj ;
 
@@ -804,23 +806,21 @@ namespace engine
       rc = su->data()->getMBContext( &mbContext, pCollectionShortName, -1 ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get dms mb context, rc: %d", rc ) ;
 
-      apm = su->getAPM() ;
+      apm = rtnCB->getAPM() ;
       SDB_ASSERT ( apm, "apm shouldn't be NULL" ) ;
 
       // plan is released in context destructor
-      rc = apm->getPlan ( emptyObj,
-                          match,
-                          orderby,  // orderBy
-                          hint,     // hint
-                          0, 0, -1, // flags, numToSkip, numToReturn
-                          pCollectionShortName,
-                          &plan ) ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "Failed to get access plan for %s, context %lld, "
-                  "rc: %d", pCollectionName, context->contextID(), rc ) ;
-         goto error ;
-      }
+      rc = apm->getAccessPlan( su, mbContext,
+                               pCollectionName,
+                               emptyObj,
+                               match,
+                               orderby,  // orderBy
+                               hint,     // hint
+                               0, 0, -1, // flags, numToSkip, numToReturn
+                               &plan ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to get access plan for %s, "
+                   "context %lld, rc: %d", pCollectionName,
+                   context->contextID(), rc ) ;
 
       rc = mbContext->mbLock( SHARED ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to lock collection[%s], rc: %d",
@@ -1319,9 +1319,9 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_RTNCREATEINDEXCOMMAND ) ;
       SDB_ASSERT ( pCollection, "collection can't be NULL" ) ;
       SDB_ASSERT ( dmsCB, "dms control block can't be NULL" ) ;
+
       dmsStorageUnit *su            = NULL ;
       dmsStorageUnitID suID         = DMS_INVALID_CS ;
-      rtnAccessPlanManager *apm     = NULL ;
       const CHAR *pCollectionShortName = NULL ;
       BOOLEAN writable              = FALSE ;
 
@@ -1355,8 +1355,6 @@ namespace engine
                   pCollection, indexObj.toString().c_str(), rc ) ;
          goto error ;
       }
-      apm = su->getAPM() ;
-      apm->invalidatePlans ( pCollectionShortName ) ;
 
       PD_LOG( PDEVENT, "Create index[%s] for collection[%s] succeed",
               indexObj.toString().c_str(), pCollection ) ;
@@ -1386,10 +1384,10 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNDROPINDEXCOMMAND ) ;
+
       OID oid ;
       SDB_ASSERT ( pCollection, "collection can't be NULL" ) ;
       SDB_ASSERT ( dmsCB, "dms control block can't be NULL" ) ;
-      rtnAccessPlanManager *apm        = NULL ;
       dmsStorageUnit *su               = NULL ;
       dmsStorageUnitID suID            = DMS_INVALID_CS ;
       const CHAR *pCollectionShortName = NULL ;
@@ -1437,8 +1435,6 @@ namespace engine
                   pCollection, identifier.toString().c_str(), rc ) ;
          goto error ;
       }
-      apm = su->getAPM() ;
-      apm->invalidatePlans ( pCollectionShortName ) ;
 
       PD_LOG( PDEVENT, "Drop index[%s] for collection[%s] succeed",
               identifier.toString().c_str(), pCollection ) ;
@@ -1599,7 +1595,6 @@ namespace engine
       SDB_ASSERT ( pCollection, "collection can't be NULL" ) ;
       SDB_ASSERT ( dmsCB, "dms control block can't be NULL" ) ;
       dmsStorageUnit *su                  = NULL ;
-      rtnAccessPlanManager *apm           = NULL ;
       const CHAR *pCollectionShortName    = NULL ;
       BOOLEAN writable                    = FALSE ;
 
@@ -1623,8 +1618,6 @@ namespace engine
                   pCollection, rc ) ;
          goto error ;
       }
-      apm = su->getAPM() ;
-      apm->invalidatePlans ( pCollectionShortName ) ;
 
       PD_LOG( PDEVENT, "Drop collection[%s] succeed", pCollection ) ;
 

@@ -1,6 +1,5 @@
 /*******************************************************************************
 
-
    Copyright (C) 2011-2014 SequoiaDB Ltd.
 
    This program is free software: you can redistribute it and/or modify
@@ -61,6 +60,7 @@ namespace engine
 
    #define UTIL_SU_CACHE_UNIT_CLSTAT ( 1 )
    #define UTIL_SU_CACHE_UNIT_IXSTAT ( 2 )
+   #define UTIL_SU_CACHE_UNIT_CLPLAN ( 3 )
 
    class _utilSUCacheUnit ;
    typedef class _utilSUCacheUnit utilSUCacheUnit ;
@@ -99,14 +99,6 @@ namespace engine
          {
             _createTime = crtTime ;
          }
-
-         virtual const CHAR *getCSName () const = 0 ;
-
-         virtual void setCSName ( const CHAR *pCSName ) = 0 ;
-
-         virtual const CHAR *getCLName () const = 0 ;
-
-         virtual void setCLName ( const CHAR *pCLName ) = 0 ;
 
          virtual UINT8 getUnitType () const = 0 ;
 

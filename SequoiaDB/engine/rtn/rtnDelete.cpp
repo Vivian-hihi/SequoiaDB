@@ -88,10 +88,11 @@ namespace engine
       SDB_ASSERT ( cb, "educb can't be NULL" ) ;
       SDB_ASSERT ( dmsCB, "dmsCB can't be NULL" ) ;
 
+      SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
       dmsStorageUnit *su                  = NULL ;
       dmsMBContext   *mbContext           = NULL ;
       dmsStorageUnitID suID               = DMS_INVALID_CS ;
-      rtnAccessPlanManager *apm           = NULL ;
+      optAccessPlanManager *apm           = NULL ;
       optAccessPlan *plan                 = NULL ;
       const CHAR *pCollectionShortName    = NULL ;
       dmsScanner *pScanner                = NULL ;
@@ -110,12 +111,8 @@ namespace engine
 
       rc = rtnResolveCollectionNameAndLock ( pCollectionName, dmsCB, &su,
                                              &pCollectionShortName, suID ) ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "Failed to resolve collection name %s, rc: %d",
-                  pCollectionName, rc ) ;
-         goto error ;
-      }
+      PD_RC_CHECK( rc, PDERROR, "Failed to resolve collection name %s, rc: %d",
+                   pCollectionName, rc ) ;
 
       // get mb context
       rc = su->data()->getMBContext( &mbContext, pCollectionShortName, -1 ) ;
@@ -130,23 +127,19 @@ namespace engine
          goto error ;
       }
 
-      apm = su->getAPM() ;
+      apm = rtnCB->getAPM() ;
       SDB_ASSERT ( apm, "apm shouldn't be NULL" ) ;
 
       // plan is released when exiting the function
-      rc = apm->getPlan ( emptyObj,
-                          deletor,
-                          emptyObj, // orderBy
-                          hint,     // hint
-                          0, 0, -1, // flags, numToSkip, numToReturn
-                          pCollectionShortName,
-                          &plan ) ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "Failed to get access plan for %s for delete, "
-                  "rc: %d", pCollectionName, rc ) ;
-         goto error ;
-      }
+      rc = apm->getAccessPlan( su, mbContext, pCollectionName,
+                               emptyObj,
+                               deletor,
+                               emptyObj, // orderBy
+                               hint,     // hint
+                               0, 0, -1, // flags, numToSkip, numToReturn
+                               &plan ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to get access plan for %s for delete, "
+                   "rc: %d", pCollectionName, rc ) ;
 
       if ( plan->getScanType() == TBSCAN )
       {
@@ -252,7 +245,6 @@ namespace engine
       dmsStorageUnit *su               = NULL ;
       dmsMBContext   *mbContext        = NULL ;
       dmsStorageUnitID suID            = DMS_INVALID_CS ;
-      optAccessPlan *plan              = NULL ;
       const CHAR *pCollectionShortName = NULL ;
       BOOLEAN writable                 = FALSE;
       dmsScanner *pScanner             = NULL ;
@@ -286,70 +278,68 @@ namespace engine
                        e.what() ) ;
       }
 
-      plan = SDB_OSS_NEW optAccessPlan( su, pCollectionShortName,
-                                        dummy, dummy, dummy, hint,
-                                        0, 0, -1 ) ;
-      if ( !plan )
       {
-         rc = SDB_OOM ;
-         goto error ;
-      }
-      rc = plan->optimize() ;
-      PD_RC_CHECK( rc, PDERROR, "Plan optimize failed, rc: %d", rc ) ;
-      PD_CHECK ( plan->getScanType() == IXSCAN && !plan->isAutoGen(),
-                 SDB_INVALIDARG, error, PDERROR,
-                 "Unable to generate access plan by index %s",
-                 pIndexName ) ;
+         optAccessPlanKey planKey( pCollectionName, dummy, dummy, dummy, hint,
+                                   0, 0, -1, FALSE ) ;
+         optAccessPlan plan( planKey, FALSE ) ;
 
-      SDB_ASSERT( plan->getPredList(), "predList can't be NULL" ) ;
-      // set traversal direction
-      plan->getPredList()->setDirection ( dir ) ;
+         rc = plan.optimize( su, mbContext ) ;
+         PD_RC_CHECK( rc, PDERROR, "Plan optimize failed, rc: %d", rc ) ;
+         PD_CHECK ( plan.getScanType() == IXSCAN && !plan.isAutoGen(),
+                    SDB_INVALIDARG, error, PDERROR,
+                    "Unable to generate access plan by index %s",
+                    pIndexName ) ;
 
-      rc = rtnGetIXScanner( pCollectionShortName, plan, su, mbContext, cb,
-                            &pScanner, DMS_ACCESS_TYPE_DELETE ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to get dms ixscanner, rc: %d", rc ) ;
+         SDB_ASSERT( plan.getPredList(), "predList can't be NULL" ) ;
+         // set traversal direction
+         plan.getPredList()->setDirection ( dir ) ;
 
-      // relocate key
-      {
-         rtnIXScanner *scanner = ((dmsIXScanner*)pScanner)->getScanner() ;
-         dmsRecordID rid ;
+         rc = rtnGetIXScanner( pCollectionShortName, &plan, su, mbContext, cb,
+                               &pScanner, DMS_ACCESS_TYPE_DELETE ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get dms ixscanner, rc: %d", rc ) ;
 
-         if ( -1 == dir )
+         // relocate key
          {
-            rid.resetMax () ;
-         }
-         else
-         {
-            rid.resetMin () ;
-         }
-         rc = scanner->relocateRID ( key, rid ) ;
-         PD_RC_CHECK ( rc, PDERROR, "Failed to relocate key to the specified "
-                       "location: %s, rc: %d", key.toString().c_str(), rc ) ;
-      }
+            rtnIXScanner *scanner = ((dmsIXScanner*)pScanner)->getScanner() ;
+            dmsRecordID rid ;
 
-      // delete
-      {
-         _mthRecordGenerator generator ;
-         dmsRecordID recordID ;
-         ossValuePtr recordDataPtr = 0 ;
-
-         while ( SDB_OK == ( rc = pScanner->advance( recordID, generator,
-                                                     cb ) ) )
-         {
-            generator.getDataPtr( recordDataPtr ) ;
-            rc = su->data()->deleteRecord( mbContext, recordID, recordDataPtr,
-                                           cb, dpsCB ) ;
-            PD_RC_CHECK( rc, PDERROR, "Delete record failed, rc: %d", rc ) ;
+            if ( -1 == dir )
+            {
+               rid.resetMax () ;
+            }
+            else
+            {
+               rid.resetMin () ;
+            }
+            rc = scanner->relocateRID ( key, rid ) ;
+            PD_RC_CHECK ( rc, PDERROR, "Failed to relocate key to the specified "
+                          "location: %s, rc: %d", key.toString().c_str(), rc ) ;
          }
 
-         if ( SDB_DMS_EOC == rc )
+         // delete
          {
-            rc = SDB_OK ;
-         }
-         else if ( rc )
-         {
-            PD_LOG( PDERROR, "Failed to get next record, rc: %d", rc ) ;
-            goto error ;
+            _mthRecordGenerator generator ;
+            dmsRecordID recordID ;
+            ossValuePtr recordDataPtr = 0 ;
+
+            while ( SDB_OK == ( rc = pScanner->advance( recordID, generator,
+                                                        cb ) ) )
+            {
+               generator.getDataPtr( recordDataPtr ) ;
+               rc = su->data()->deleteRecord( mbContext, recordID, recordDataPtr,
+                                              cb, dpsCB ) ;
+               PD_RC_CHECK( rc, PDERROR, "Delete record failed, rc: %d", rc ) ;
+            }
+
+            if ( SDB_DMS_EOC == rc )
+            {
+               rc = SDB_OK ;
+            }
+            else if ( rc )
+            {
+               PD_LOG( PDERROR, "Failed to get next record, rc: %d", rc ) ;
+               goto error ;
+            }
          }
       }
 
@@ -361,10 +351,6 @@ namespace engine
       if ( mbContext )
       {
          su->data()->releaseMBContext( mbContext ) ;
-      }
-      if ( plan )
-      {
-         plan->release() ;
       }
       if ( DMS_INVALID_CS != suID )
       {

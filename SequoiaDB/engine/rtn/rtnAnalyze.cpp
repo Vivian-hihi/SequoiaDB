@@ -323,7 +323,7 @@ namespace engine
                 "collection spaces" ) ;
 
       // Clear cached plans
-      dmsCB->clearSUCaches() ;
+      dmsCB->clearSUCaches( DMS_EVENT_MASK_PLAN ) ;
 
       if ( param._mode == SDB_ANALYZE_MODE_RELOAD )
       {
@@ -414,7 +414,7 @@ namespace engine
       suLocked = TRUE ;
 
       // Clear cached plans
-      pSU->getAPM()->clear( TRUE ) ;
+      pSU->getEventHolder()->onClearSUCaches( DMS_EVENT_MASK_PLAN ) ;
 
       if ( param._mode == SDB_ANALYZE_MODE_RELOAD )
       {
@@ -513,9 +513,6 @@ namespace engine
       PD_CHECK( !dmsIsSysCLName( pCLName ), SDB_INVALIDARG, error, PDERROR,
                 "Could not analyze SYS collection [%s]", pCLFullName ) ;
 
-      // Clear cached plans
-      pSU->getAPM()->invalidatePlans( pCLName ) ;
-
       pSU->dumpInfo( monCS, FALSE, FALSE, FALSE ) ;
 
       if ( param._mode == SDB_ANALYZE_MODE_RELOAD ||
@@ -527,6 +524,13 @@ namespace engine
       rc = pSU->data()->getMBContext( &mbContext, pCLName, clLockType ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get collection [%s], rc: %d",
                    pCLFullName, rc ) ;
+
+      {
+         // Clear cached plans
+         dmsEventCLItem clItem( pCLName, mbContext->mbID(),
+                                mbContext->clLID() ) ;
+         pSU->getEventHolder()->onClearCLCaches( DMS_EVENT_MASK_PLAN, clItem ) ;
+      }
 
       if ( param._mode == SDB_ANALYZE_MODE_RELOAD )
       {
@@ -645,9 +649,6 @@ namespace engine
       PD_CHECK( !dmsIsSysCLName( pCLName ), SDB_INVALIDARG, error, PDERROR,
                 "Could not analyze SYS collection [%s]", pCLFullName ) ;
 
-      // Clear cached plans
-      pSU->getAPM()->invalidatePlans( pCLName ) ;
-
       // Dump CS information
       pSU->dumpInfo( monCS, FALSE, FALSE, FALSE ) ;
 
@@ -660,6 +661,13 @@ namespace engine
       rc = pSU->data()->getMBContext( &mbContext, pCLName, clLockType ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get collection [%s], rc: %d",
                    pCLFullName, rc ) ;
+
+      {
+         // Clear cached plans
+         dmsEventCLItem clItem( pCLName, mbContext->mbID(),
+                                mbContext->clLID() ) ;
+         pSU->getEventHolder()->onClearCLCaches( DMS_EVENT_MASK_PLAN, clItem ) ;
+      }
 
       pSU->dumpInfo( monCL, mbContext->mbID(), FALSE ) ;
 
@@ -1207,7 +1215,7 @@ namespace engine
          else if ( SDB_OK != rc )
          {
             PD_LOG( PDWARNING, "Skip analyze collection [%s], rc: %d",
-                   pCLFullName, rc ) ;
+                    pCLFullName, rc ) ;
             rc = SDB_OK ;
          }
       }

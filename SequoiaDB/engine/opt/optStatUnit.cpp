@@ -473,12 +473,10 @@ namespace engine
     */
    _optIndexStat::_optIndexStat ( const optCollectionStat &collectionStat,
                                   const ixmIndexCB &indexCB )
-   : _optStatUnit( collectionStat.getCollectionName(),
-                   collectionStat.getTotalRecords( TRUE ) ),
+   : _optStatUnit( collectionStat.getTotalRecords( TRUE ) ),
      _collectionStat( collectionStat )
    {
-      _pIndexName = indexCB.getName() ;
-      _pIndexStat = collectionStat.getIndexStat( _pIndexName ) ;
+      _pIndexStat = collectionStat.getIndexStat( indexCB.getName() ) ;
       _keyPattern = indexCB.keyPattern().copy() ;
    }
 
@@ -574,11 +572,10 @@ namespace engine
    /*
       _optCollectionStat implement
     */
-   _optCollectionStat::_optCollectionStat ( const CHAR *pCollectionName,
-                                            UINT32 pageSize,
+   _optCollectionStat::_optCollectionStat ( UINT32 pageSize,
                                             _dmsMBContext *mbContext,
                                             const dmsStatCache *statCache )
-   : _optStatUnit( pCollectionName, 0 )
+   : _optStatUnit( 0 )
    {
       _pageSize = pageSize ;
       _totalDataPages = 0 ;

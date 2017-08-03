@@ -42,11 +42,12 @@
 #include "dmsStorageDataCommon.hpp"
 #include "dmsStorageIndex.hpp"
 #include "dmsStorageLob.hpp"
-#include "rtnAPM.hpp"
 #include "monDMS.hpp"
 #include "utilCache.hpp"
 #include "dmsEventHandler.hpp"
 #include "dmsExtDataHandler.hpp"
+#include "dmsStatUnit.hpp"
+#include "dmsCachedPlanUnit.hpp"
 
 using namespace bson ;
 
@@ -226,6 +227,11 @@ namespace engine
                                     pmdEDUCB *cb,
                                     SDB_DPSCB *dpsCB ) ;
 
+         virtual INT32 onClearSUCaches ( UINT32 mask ) ;
+
+         virtual INT32 onClearCLCaches ( UINT32 mask,
+                                         const dmsEventCLItem &clItem ) ;
+
          virtual const CHAR *getCSName () const ;
 
          virtual UINT32 getSUID () const ;
@@ -277,7 +283,6 @@ namespace engine
 
          dmsStorageIndex   *index() { return _pIndexSu ; }
          dmsStorageLob     *lob() { return _pLobSu ; }
-         rtnAccessPlanManager *getAPM () { return &_apm ; }
          utilCacheUnit     *cacheUnit() { return _pCacheUnit ; }
 
          INT32       getPageSize() const { return _storageInfo._pageSize ; }
@@ -477,6 +482,7 @@ namespace engine
          dmsSUCache *getSUCache ( UINT32 type ) ;
 
          dmsStatCache *getStatCache () ;
+         dmsCachedPlanMgr *getCachedPlanMgr () ;
 
          INT32 regExtDataHandler( IDmsExtDataHandler *pHandler ) ;
          void unregExtDataHandler( IDmsExtDataHandler *pHandler ) ;
@@ -488,7 +494,6 @@ namespace engine
                                  DMS_STORAGE_TYPE &type ) ;
 
       private :
-         rtnAccessPlanManager                _apm ;
          dmsStorageDataCommon                *_pDataSu ;
          dmsStorageIndex                     *_pIndexSu ;
          dmsStorageInfo                      _storageInfo ;

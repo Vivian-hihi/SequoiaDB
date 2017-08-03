@@ -290,6 +290,14 @@ namespace engine
 
          virtual ~_dmsStatUnit () {}
 
+         virtual const CHAR *getCSName () const = 0 ;
+
+         virtual void setCSName ( const CHAR *pCSName ) = 0 ;
+
+         virtual const CHAR *getCLName () const = 0 ;
+
+         virtual void setCLName ( const CHAR *pCLName ) = 0 ;
+
          OSS_INLINE UINT16 getMBID () const
          {
             // For statistics cache, mbID is ID of unit

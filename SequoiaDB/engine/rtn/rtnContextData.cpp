@@ -124,7 +124,7 @@ namespace engine
    {
       if ( _su && _plan )
       {
-         ss << ",Collection:" << _su->CSName() << "." << _plan->getName() ;
+         ss << ",Collection:" << _plan->getCLFullName() ;
       }
       ss << ",ScanType:" << ( ( TBSCAN == _scanType ) ? "TBSCAN" : "IXSCAN" ) ;
       if ( _numToReturn > 0 )
@@ -1354,8 +1354,12 @@ namespace engine
       dmsMBContext *mbContext = NULL ;
       rtnContextData *dataContext = NULL ;
 
-      rc = _su->data()->getMBContext( &mbContext, _plan->getName(), -1 ) ;
+      rc = _su->data()->getMBContext( &mbContext, _plan->getCLMBID(),
+                                      DMS_INVALID_CLID, -1 ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get dms mb context, rc: %d", rc ) ;
+      PD_CHECK( _plan->getCLLID() == mbContext->clLID(), SDB_DMS_NOTEXIST,
+                error, PDERROR, "Failed to get dms mb context, rc: %d",
+                SDB_DMS_NOTEXIST ) ;
 
       // create a new context
       dataContext = SDB_OSS_NEW rtnContextData( -1, eduID() ) ;

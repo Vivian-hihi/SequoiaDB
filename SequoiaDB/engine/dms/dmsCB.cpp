@@ -1209,6 +1209,8 @@ namespace engine
       INT32 lobPageSz = 0 ;
       INT32 type = 0 ;
       dpsTransCB *pTransCB = pmdGetKRCB()->getTransCB();
+      _SDB_RTNCB *pRtnCB = pmdGetKRCB()->getRTNCB() ;
+
       PD_TRACE_ENTRY ( SDB__SDB_DMSCB_ADDCS );
 
       if ( !pName || !su )
@@ -1273,6 +1275,7 @@ namespace engine
       }
 
       su->regEventHandler( &_statSUMgr ) ;
+      su->regEventHandler( pRtnCB->getAPM() ) ;
 
       if ( isLocked )
       {
@@ -1735,11 +1738,8 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_CLRSUCACHES, "_SDB_DMSCB::clearSUCaches" )
-   void _SDB_DMSCB::clearSUCaches ()
+   void _SDB_DMSCB::clearSUCaches ( UINT32 mask )
    {
-      //TODO: add type to specify plan caches or statistics caches, etc
-      // Currently only used to clear plan caches
-
       PD_TRACE_ENTRY ( SDB__SDB_DMSCB_CLRSUCACHES ) ;
 
       ossScopedLock _lock( &_mutex, SHARED ) ;
@@ -1757,7 +1757,9 @@ namespace engine
          {
             continue ;
          }
-         cscb->_su->getAPM()->clear( TRUE ) ;
+         _latchVec[ suID ]->lock_w() ;
+         cscb->_su->getEventHolder()->onClearSUCaches( mask ) ;
+         _latchVec[ suID ]->release_w() ;
       }
 
       PD_TRACE_EXIT ( SDB__SDB_DMSCB_CLRSUCACHES ) ;

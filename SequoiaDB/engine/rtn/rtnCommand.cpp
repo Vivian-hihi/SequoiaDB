@@ -1569,9 +1569,6 @@ namespace engine
          goto error ;
       }
 
-      /// clean apm
-      su->getAPM()->invalidatePlans( _oldCollectionName ) ;
-
    done:
       if ( suID != DMS_INVALID_CS )
       {

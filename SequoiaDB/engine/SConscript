@@ -193,7 +193,6 @@ rtnFiles = [
       "rtn/rtnCommandList.cpp",
       "rtn/rtnPredicate.cpp",
       "rtn/rtnIXScanner.cpp",
-      "rtn/rtnAPM.cpp",
       "rtn/rtnBackup.cpp",
       "rtn/rtnReorg.cpp",
       "rtn/rtnRecover.cpp",
@@ -282,6 +281,7 @@ dmsFiles = [
       "dms/dmsIndexBuilderImpl.cpp",
       "dms/dmsStatSUMgr.cpp",
       "dms/dmsStatUnit.cpp",
+      "dms/dmsCachedPlanUnit.cpp"
       ]
 
 ixmFiles = [
@@ -323,7 +323,9 @@ optFiles = [
       "opt/optQgmOptimizer.cpp",
       "opt/optCommon.cpp",
       "opt/optPlanPath.cpp",
-      "opt/optStatUnit.cpp"
+      "opt/optStatUnit.cpp",
+      "opt/optAPM.cpp",
+      "opt/optAccessPlanKey.cpp"
       ]
 
 monFiles = [

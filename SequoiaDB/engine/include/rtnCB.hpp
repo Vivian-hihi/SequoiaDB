@@ -49,6 +49,7 @@
 #include "pmdEDU.hpp"
 #include "sdbInterface.hpp"
 #include "utilConcurrentMap.hpp"
+#include "optAPM.hpp"
 #include <map>
 #include <set>
 #include "pmdRemoteSession.hpp"
@@ -90,7 +91,10 @@ namespace engine
 
       ossAtomicSigned64 _contextIdGenerator ;
       RTN_CTX_MAP       _contextMap ;
+
       BOOLEAN           _enableMixCmp ;
+      optAccessPlanManager _accessPlanManager ;
+
       pmdRemoteSessionMgr _rsMgr ;
       rtnMsgHandler     *_msgHandler ;
       netRouteAgent     *_routeAgent ;  // For communication with search engine adapter.
@@ -207,6 +211,12 @@ namespace engine
       {
          ++_textIdxVersion ;
       }
+
+      OSS_INLINE optAccessPlanManager *getAPM ()
+      {
+         return &_accessPlanManager ;
+      }
+
    } ;
    typedef class _SDB_RTNCB SDB_RTNCB ;
 

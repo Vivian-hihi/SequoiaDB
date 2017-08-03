@@ -89,13 +89,14 @@ namespace engine
       SDB_ASSERT ( cb, "educb can't be NULL" ) ;
       SDB_ASSERT ( dmsCB, "dmsCB can't be NULL" ) ;
 
+      SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
       SINT64 numUpdatedRecords         = 0 ;
       INT32  insertNum                 = 0 ;
       dmsStorageUnit *su               = NULL ;
       dmsMBContext   *mbContext        = NULL ;
       dmsStorageUnitID suID            = DMS_INVALID_CS ;
       const CHAR *pCollectionShortName = NULL ;
-      rtnAccessPlanManager *apm        = NULL ;
+      optAccessPlanManager *apm        = NULL ;
       optAccessPlan *plan              = NULL ;
       BOOLEAN writable                 = FALSE ;
       dmsScanner *pScanner             = NULL ;
@@ -139,12 +140,8 @@ namespace engine
 
       rc = rtnResolveCollectionNameAndLock ( pCollectionName, dmsCB, &su,
                                              &pCollectionShortName, suID ) ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "Failed to resolve collection name %s, rc: %d",
-                  pCollectionName, rc ) ;
-         goto error ;
-      }
+      PD_RC_CHECK( rc, PDERROR, "Failed to resolve collection name %s, rc: %d",
+                   pCollectionName, rc ) ;
 
       // get mb context
       rc = su->data()->getMBContext( &mbContext, pCollectionShortName, -1 ) ;
@@ -159,23 +156,19 @@ namespace engine
          goto error ;
       }
 
-      apm = su->getAPM() ;
+      apm = rtnCB->getAPM() ;
       SDB_ASSERT ( apm, "apm shouldn't be NULL" ) ;
 
       // plan is released when exiting the function
-      rc = apm->getPlan ( emptyObj,
-                          selector,
-                          emptyObj, // orderBy
-                          hint,     // hint
-                          0, 0, -1, // flags, numToSkip, numToReturn
-                          pCollectionShortName,
-                          &plan ) ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "Failed to get access plan for %s for update, "
-                  "rc: %d", pCollectionName, rc ) ;
-         goto error ;
-      }
+      rc = apm->getAccessPlan( su, mbContext, pCollectionName,
+                               emptyObj,
+                               selector, // FIXME: this is the matcher
+                               emptyObj, // orderBy
+                               hint,     // hint
+                               0, 0, -1, // flags, numToSkip, numToReturn
+                               &plan ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to get access plan for %s for update, "
+                   "rc: %d", pCollectionName, rc ) ;
 
       if ( plan->getScanType() == TBSCAN )
       {

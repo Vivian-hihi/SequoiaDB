@@ -49,9 +49,6 @@
 namespace engine
 {
 
-   #define DMS_CACHE_TYPE_STAT ( 0 )
-   #define DMS_CACHE_TYPE_NUM  ( 1 )
-
    class _IDmsEventHolder ;
    typedef class _IDmsEventHolder IDmsEventHolder ;
 
@@ -59,6 +56,7 @@ namespace engine
 
    #define DMS_EVENT_MASK_ALL    0xFFFFFFFF
    #define DMS_EVENT_MASK_STAT   0x00000001
+   #define DMS_EVENT_MASK_PLAN   0x00000002
 
    /*
       _dmsEventSUItem define
@@ -262,6 +260,19 @@ namespace engine
             return SDB_OK ;
          }
 
+         OSS_INLINE virtual INT32 onClearSUCaches ( IDmsEventHolder *pEventHolder,
+                                                    IDmsSUCacheHolder *pCacheHolder )
+         {
+            return SDB_OK ;
+         }
+
+         OSS_INLINE virtual INT32 onClearCLCaches ( IDmsEventHolder *pEventHolder,
+                                                    IDmsSUCacheHolder *pCacheHolder,
+                                                    const dmsEventCLItem &clItem )
+         {
+            return SDB_OK ;
+         }
+
          virtual UINT32 getMask () = 0 ;
    } ;
 
@@ -348,6 +359,11 @@ namespace engine
                                     const CHAR *pMainCLName,
                                     pmdEDUCB *cb,
                                     SDB_DPSCB *dpsCB ) = 0 ;
+
+         virtual INT32 onClearSUCaches ( UINT32 mask ) = 0 ;
+
+         virtual INT32 onClearCLCaches ( UINT32 mask,
+                                         const dmsEventCLItem &clItem ) = 0 ;
 
          virtual const CHAR *getCSName () const = 0 ;
 

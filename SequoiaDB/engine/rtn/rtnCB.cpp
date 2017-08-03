@@ -195,6 +195,9 @@ namespace engine
          sdbGetPMDController()->setRSManager( &_rsMgr ) ;
       }
 
+      _accessPlanManager.init( sdbGetDMSCB(),
+                               pmdGetOptionCB()->getPlanBuckets() ) ;
+
    done:
       return rc ;
    error:
@@ -235,6 +238,8 @@ namespace engine
 
    INT32 _SDB_RTNCB::fini ()
    {
+      _accessPlanManager.clear() ;
+
       dmsIxmKeySorterCreator* creator = sdbGetDMSCB()->getIxmKeySorterCreator() ;
       if ( NULL != creator )
       {
@@ -254,7 +259,7 @@ namespace engine
       if ( _enableMixCmp != enableMixCmp )
       {
          // parameter changed, need to clear cached plans
-         sdbGetDMSCB()->clearSUCaches() ;
+         sdbGetDMSCB()->clearSUCaches( DMS_EVENT_MASK_PLAN ) ;
       }
    }
 

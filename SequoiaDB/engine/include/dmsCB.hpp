@@ -289,7 +289,7 @@ namespace engine
 
       dmsStatSUMgr *getStatSUMgr () ;
 
-      void clearSUCaches () ;
+      void clearSUCaches ( UINT32 mask ) ;
 
       INT32 dropCollectionSpaceP1 ( const CHAR *pName, _pmdEDUCB *cb,
                                     SDB_DPSCB *dpsCB );

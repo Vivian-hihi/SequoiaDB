@@ -38,7 +38,7 @@
 #include "rtn.hpp"
 #include "dmsStorageUnit.hpp"
 #include "mthSelector.hpp"
-#include "rtnAPM.hpp"
+#include "optAPM.hpp"
 #include "rtnIXScanner.hpp"
 #include "pdTrace.hpp"
 #include "rtnTrace.hpp"
@@ -368,7 +368,7 @@ namespace engine
       dmsMBContext *mbContext = NULL ;
       rtnContextData *dataContext = NULL ;
       const CHAR *pCollectionShortName = NULL ;
-      rtnAccessPlanManager *apm = NULL ;
+      optAccessPlanManager *apm = NULL ;
       optAccessPlan *plan = NULL ;
       rtnQueryModifier *queryModifier = NULL ;
       BOOLEAN writable = FALSE ;
@@ -479,27 +479,20 @@ namespace engine
          hintTmp = build.obj () ;
       }
 
-      apm = su->getAPM() ;
+      apm = rtnCB->getAPM() ;
       SDB_ASSERT ( apm, "apm shouldn't be NULL" ) ;
 
       // plan is released in context destructor
       // selector, numToSkip and numToReturn are not considered in plan cache
       // now, so put dummy ones to find the plan
-      rc = apm->getPlan ( emptyObj,
-                          matcher,
-                          orderBy,  // orderBy
-                          hintTmp,  // hint
-                          flags, 0, -1, // flags, numToSkip, numToReturn
-                          pCollectionShortName,
-                          &plan ) ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "Failed to get access plan for %s, context %lld, "
-                  "rc: %d", pCollectionName, contextID, rc ) ;
-         goto error ;
-      }
+      rc = apm->getAccessPlan ( su, mbContext, pCollectionName, emptyObj,
+                                matcher, orderBy, hintTmp, flags, 0, -1,
+                                &plan ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to get access plan for %s, "
+                   "context %lld, rc: %d", pCollectionName, contextID, rc ) ;
+
       // used force hint, but hint failed
-      else if ( ( flags & FLG_QUERY_FORCE_HINT ) && !hintTmp.isEmpty() &&
+      if ( ( flags & FLG_QUERY_FORCE_HINT ) && !hintTmp.isEmpty() &&
                 plan->isHintFailed() )
       {
          PD_LOG( PDERROR, "Query used force hint[%s] failed",
@@ -699,15 +692,17 @@ namespace engine
                        e.what() ) ;
       }
 
-      plan = SDB_OSS_NEW optAccessPlan( su, pCollectionShortName,
-                                        dummy, dummy, dummy, hint,
-                                        0, 0, -1 ) ;
-      if ( !plan )
       {
-         rc = SDB_OOM ;
-         goto error ;
+         optAccessPlanKey planKey( pCollectionName, dummy, dummy, dummy, hint,
+                                   0, 0, -1, FALSE ) ;
+         plan = SDB_OSS_NEW optAccessPlan( planKey, TRUE ) ;
+         if ( !plan )
+         {
+            rc = SDB_OOM ;
+            goto error ;
+         }
       }
-      rc = plan->optimize() ;
+      rc = plan->optimize( su, mbContext ) ;
       PD_RC_CHECK( rc, PDERROR, "Plan optimize failed, rc: %d", rc ) ;
       PD_CHECK ( plan->getScanType() == IXSCAN && !plan->isAutoGen(),
                  SDB_INVALIDARG, error, PDERROR,

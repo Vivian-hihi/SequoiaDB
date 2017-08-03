@@ -146,18 +146,12 @@ namespace engine
    class _optStatUnit : public SDBObject
    {
       public :
-         _optStatUnit ( const CHAR *pCollectionName, UINT64 totalRecords )
+         _optStatUnit ( UINT64 totalRecords )
          {
-            _pCollectionName = pCollectionName ;
             _totalRecords = totalRecords ;
          }
 
          virtual ~_optStatUnit () {}
-
-         OSS_INLINE const CHAR *getCollectionName () const
-         {
-            return _pCollectionName ;
-         }
 
          virtual UINT64 getTotalRecords ( BOOLEAN realTime = FALSE ) const = 0 ;
 
@@ -186,7 +180,6 @@ namespace engine
                               double &scanSelectivity ) const ;
 
       protected :
-         const CHAR *   _pCollectionName ;
          UINT64         _totalRecords ;
    } ;
 
@@ -204,11 +197,6 @@ namespace engine
          OSS_INLINE const dmsIndexStat *getIndexStat () const
          {
             return _pIndexStat ;
-         }
-
-         OSS_INLINE const CHAR *getIndexName () const
-         {
-            return _pIndexName ;
          }
 
          OSS_INLINE const BSONObj &getKeyPattern () const
@@ -250,7 +238,6 @@ namespace engine
 
       protected :
          const optCollectionStat &  _collectionStat ;
-         const CHAR *               _pIndexName ;
          const dmsIndexStat *       _pIndexStat ;
 
          BSONObj                    _keyPattern ;
@@ -264,8 +251,7 @@ namespace engine
    class _optCollectionStat : public _optStatUnit
    {
       public :
-         _optCollectionStat ( const CHAR *pCollectionName,
-                              UINT32 pageSize,
+         _optCollectionStat ( UINT32 pageSize,
                               _dmsMBContext *mbContext,
                               const dmsStatCache *statCache ) ;
 

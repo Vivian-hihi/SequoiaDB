@@ -618,6 +618,62 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSEVTHLD_ONCLRSUCACHES, "_dmsEventHolder::onClearSUCaches" )
+   INT32 _dmsEventHolder::onClearSUCaches ( UINT32 mask )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__DMSEVTHLD_ONCLRSUCACHES ) ;
+
+      for ( HANDLER_LIST::iterator iter = _handlers.begin() ;
+            iter != _handlers.end() ;
+            ++ iter )
+      {
+         _IDmsEventHandler *pHandler = (*iter) ;
+         if ( pHandler && ( pHandler->getMask() & mask ) )
+         {
+            INT32 tmprc = pHandler->onClearSUCaches( this, _pCacheHolder ) ;
+            if ( SDB_OK != tmprc )
+            {
+               rc = tmprc ;
+            }
+         }
+      }
+
+      PD_TRACE_EXITRC( SDB__DMSEVTHLD_ONCLRSUCACHES, rc ) ;
+
+      return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSEVTHLD_ONCLRCLCACHES, "_dmsEventHolder::onClearCLCaches" )
+   INT32 _dmsEventHolder::onClearCLCaches ( UINT32 mask,
+                                            const dmsEventCLItem &clItem )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__DMSEVTHLD_ONCLRCLCACHES ) ;
+
+      for ( HANDLER_LIST::iterator iter = _handlers.begin() ;
+            iter != _handlers.end() ;
+            ++ iter )
+      {
+         _IDmsEventHandler *pHandler = (*iter) ;
+         if ( pHandler && ( pHandler->getMask() & mask ) )
+         {
+            INT32 tmprc = pHandler->onClearCLCaches( this, _pCacheHolder,
+                                                     clItem ) ;
+            if ( SDB_OK != tmprc )
+            {
+               rc = tmprc ;
+            }
+         }
+      }
+
+      PD_TRACE_EXITRC( SDB__DMSEVTHLD_ONCLRCLCACHES, rc ) ;
+
+      return rc ;
+   }
+
    const CHAR *_dmsEventHolder::getCSName () const
    {
       return _su->CSName() ;
@@ -699,6 +755,9 @@ namespace engine
             exists = TRUE ;
             break ;
          }
+         case UTIL_SU_CACHE_UNIT_CLPLAN :
+            exists = TRUE ;
+            break ;
          default :
             break ;
       }
@@ -728,6 +787,23 @@ namespace engine
                {
                   _pSUCaches[ type ] = SDB_OSS_NEW dmsStatCache( this ) ;
                }
+               break ;
+            }
+            case DMS_CACHE_TYPE_PLAN :
+            {
+               UINT32 bucketNum = pmdGetOptionCB()->getPlanBuckets() ;
+               if ( bucketNum > 0 )
+               {
+                  bucketNum = ossRoundUpToMultipleX( bucketNum,
+                                                     UTIL_HASH_TABLE_BUCKET_UNIT ) ;
+                  _pSUCaches[ type ] =
+                        SDB_OSS_NEW dmsCachedPlanMgr( this, bucketNum ) ;
+               }
+               break ;
+            }
+            default :
+            {
+               SDB_ASSERT( FALSE, "Invalid switch branch" ) ;
                break ;
             }
          }
@@ -956,8 +1032,7 @@ namespace engine
                                       INT32 pageSize,
                                       INT32 lobPageSize,
                                       DMS_STORAGE_TYPE type )
-   :_apm( this ),
-    _pDataSu( NULL ),
+   :_pDataSu( NULL ),
     _pIndexSu( NULL ),
     _pLobSu( NULL ),
     _pMgr( pMgr ),
@@ -999,6 +1074,10 @@ namespace engine
 
       // Create caches
       _cacheHolder.createSUCache( DMS_CACHE_TYPE_STAT ) ;
+      if ( options->getPlanBuckets() > 0 )
+      {
+         _cacheHolder.createSUCache( DMS_CACHE_TYPE_PLAN ) ;
+      }
       _eventHolder.setCacheHolder( &_cacheHolder ) ;
 
       PD_TRACE_EXIT ( SDB__DMSSU ) ;
@@ -2907,6 +2986,11 @@ namespace engine
    dmsStatCache *_dmsStorageUnit::getStatCache ()
    {
       return (dmsStatCache *)getSUCache( DMS_CACHE_TYPE_STAT ) ;
+   }
+
+   dmsCachedPlanMgr *_dmsStorageUnit::getCachedPlanMgr ()
+   {
+      return (dmsCachedPlanMgr *)getSUCache( DMS_CACHE_TYPE_PLAN ) ;
    }
 
    INT32 _dmsStorageUnit::regExtDataHandler( IDmsExtDataHandler *pHandler )

@@ -437,7 +437,6 @@ namespace engine
          }
       }
 
-      _su->getAPM()->invalidatePlans ( _clShortName ) ;
       _hasDropped = TRUE ;
 
       _clean( cb ) ;

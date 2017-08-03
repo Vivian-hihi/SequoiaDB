@@ -40,12 +40,14 @@
 #include "core.hpp"
 #include "oss.hpp"
 #include "utilSUCache.hpp"
+#include "utilBitmap.hpp"
 
 namespace engine
 {
 
    #define DMS_CACHE_TYPE_STAT ( 0 )
-   #define DMS_CACHE_TYPE_NUM  ( 1 )
+   #define DMS_CACHE_TYPE_PLAN ( 1 )
+   #define DMS_CACHE_TYPE_NUM  ( 2 )
 
    typedef class _utilSUCache<UTIL_SU_CACHE_DFT_SIZE> dmsSUCache ;
    typedef class _IUtilSUCacheHolder<DMS_MME_SLOTS> IDmsSUCacheHolder ;
@@ -65,6 +67,62 @@ namespace engine
    } ;
 
    typedef class _dmsStatCache dmsStatCache ;
+
+   /*
+      _dmsCachedPlanIndex define
+    */
+   class _dmsCachedPlanMgr : public dmsSUCache
+   {
+      public :
+         _dmsCachedPlanMgr ( IDmsSUCacheHolder *pHolder,
+                             UINT32 bucketNum )
+         : dmsSUCache( DMS_CACHE_TYPE_PLAN, UTIL_SU_CACHE_UNIT_CLPLAN, pHolder ),
+           _cacheBitmap( bucketNum )
+         {
+            if ( _cacheBitmap.getSize() > 0 )
+            {
+               _bucketModulo = bucketNum - 1 ;
+            }
+         }
+
+         virtual ~_dmsCachedPlanMgr () {}
+
+         void setCacheBitmapForPlan( UINT32 hashCode )
+         {
+            setCacheBitmap( hashCode & _bucketModulo ) ;
+         }
+
+         void setCacheBitmap ( UINT32 bucketID )
+         {
+            _cacheBitmap.setBit( bucketID ) ;
+         }
+
+         void clearCacheBit ( UINT32 bucketID )
+         {
+            _cacheBitmap.clearBit( bucketID ) ;
+         }
+
+         BOOLEAN testCacheBitMap ( UINT32 bucketID )
+         {
+            return _cacheBitmap.testBit( bucketID ) ;
+         }
+
+         void resetCacheBitmap ()
+         {
+            _cacheBitmap.resetBitmap() ;
+         }
+
+         UINT32 getBucketNum () const
+         {
+            return _cacheBitmap.getSize() ;
+         }
+
+      protected :
+         UINT32 _bucketModulo ;
+         utilBitmap _cacheBitmap ;
+   } ;
+
+   typedef class _dmsCachedPlanMgr dmsCachedPlanMgr ;
 
 }
 

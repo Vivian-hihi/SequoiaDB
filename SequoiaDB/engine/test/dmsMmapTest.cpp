@@ -36,7 +36,7 @@
 #include <iostream>
 #include "boost/thread.hpp"
 #include "rtnIXScanner.hpp"
-#include "rtnAPM.hpp"
+#include "optAPM.hpp"
 #include "boost/thread.hpp"
 #include <stdio.h>
 #include <vector>
@@ -444,7 +444,7 @@ printf ( "dmsStorageUnitHeader size = %d\n", sizeof ( engine::_dmsStorageUnit::_
    }
    ixmExtent root ( rootExtent, myUnit ) ;
    printf("Totally %lld keys in the index\n", root.count()) ;
-   rtnAccessPlanManager apm( myUnit ) ;
+   //rtnAccessPlanManager apm( myUnit ) ;
 while ( true )
 {
    CHAR inputBuffer[1024] = {0} ;
@@ -459,46 +459,46 @@ while ( true )
       break ;
    }
    BSONObj emptyObj ;
-   optAccessPlan *plan ;
-   rc = apm.getPlan ( emptyObj, inputObj, emptyObj, emptyObj,
-                      0, 0, -1, BIG_COLLECTION_NAME, &plan ) ;
-   if ( rc )
-   {
-      printf("Failed to get plan\n") ;
-      return 0 ;
-   }
-   if ( plan->getScanType() == IXSCAN )
-   {
-      ixmIndexCB myIndexCB ( plan->getIndexCBExtent(), myUnit->index() ) ;
-      if ( !myIndexCB.isInitialized() )
-      {
-         printf("Failed to init index\n") ;
-         return 0 ;
-      }
-      rtnPredicateList *predList = plan->getPredList() ;
-      printf("rtnList = %s\n", predList->toString().c_str()) ;
-      rtnIXScanner scanner ( &myIndexCB, predList, myUnit, NULL ) ;
-      dmsRecordID rid ;
-      INT32 count = 0 ;
-      while ( scanner.advance (rid) != SDB_IXM_EOC )
-      {
-         BSONObj dataRecord ;
-         if ( !rid.isNull() )
-         {
-            rc = myUnit->data()->fetch ( rid, dataRecord, NULL ) ;
-            if ( rc )
-            {
-               printf("failed to fetch\n");
-               return 0 ;
-            }
-            printf("dataRecord = %s\n",dataRecord.toString(false,
-                   false).c_str()) ;
-            count++ ;
-         }
-      }
-      printf("Totally %d records selected from index scan\n", count);
-      apm.releasePlan ( plan ) ;
-   }
+//   optAccessPlan *plan ;
+//   rc = apm.getPlan ( emptyObj, inputObj, emptyObj, emptyObj,
+//                      0, 0, -1, BIG_COLLECTION_NAME, &plan ) ;
+//   if ( rc )
+//   {
+//      printf("Failed to get plan\n") ;
+//      return 0 ;
+//   }
+//   if ( plan->getScanType() == IXSCAN )
+//   {
+//      ixmIndexCB myIndexCB ( plan->getIndexCBExtent(), myUnit->index() ) ;
+//      if ( !myIndexCB.isInitialized() )
+//      {
+//         printf("Failed to init index\n") ;
+//         return 0 ;
+//      }
+//      rtnPredicateList *predList = plan->getPredList() ;
+//      printf("rtnList = %s\n", predList->toString().c_str()) ;
+//      rtnIXScanner scanner ( &myIndexCB, predList, myUnit, NULL ) ;
+//      dmsRecordID rid ;
+//      INT32 count = 0 ;
+//      while ( scanner.advance (rid) != SDB_IXM_EOC )
+//      {
+//         BSONObj dataRecord ;
+//         if ( !rid.isNull() )
+//         {
+//            rc = myUnit->data()->fetch ( rid, dataRecord, NULL ) ;
+//            if ( rc )
+//            {
+//               printf("failed to fetch\n");
+//               return 0 ;
+//            }
+//            printf("dataRecord = %s\n",dataRecord.toString(false,
+//                   false).c_str()) ;
+//            count++ ;
+//         }
+//      }
+//      printf("Totally %d records selected from index scan\n", count);
+//      apm.releasePlan ( plan ) ;
+//   }
 }
 /*
    rtnPredicateListIterator listIterator ( rtnList ) ;
