@@ -1011,7 +1011,7 @@ INT32 _dpsDumper::_analysisMeta()
    }
    else
    {
-      UINT32 index = 0 ;
+      INT32 index = 0 ;
       ossMemcpy( dirPath, srcPath, OSS_MAX_PATHSIZE ) ;
       rc = getFileCount( dirPath, fileCount ) ;
       if( SDB_OK != rc )
@@ -1028,7 +1028,7 @@ INT32 _dpsDumper::_analysisMeta()
 
       {
          fs::path fileDir( dirPath ) ;
-         for ( index = 0; index < (UINT32)fileCount; ++index )
+         for ( index = 0; index < fileCount; ++index )
          {
             const CHAR *filepath = fileDir.string().c_str() ;
             CHAR filename[ OSS_MAX_PATHSIZE * 2 ] = { 0 } ;
