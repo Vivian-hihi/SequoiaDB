@@ -7,7 +7,7 @@
 update \- Update records in a collection.
 .SH SYNOPSIS
 .PP
-\f[B]\f[I]db.collectionspace.collection.update(<rule>,[cond],[hint])\f[]\f[]
+\f[B]\f[I]db.collectionspace.collection.update(<rule>,[cond],[hint],[options])\f[]\f[]
 .SH CATEGORY
 .PP
 Collection
@@ -31,12 +31,21 @@ Update records in a collection.
 .br
        Specify the access plan.
 .sp 2
+\fBoptions (Json object)\fR
+.br
+       Optional in update.
+.sp 2
+       \fBKeepShardingKey (bool)\fR
+.br
+       The sharding key in update rule is not filtered.
+       Default value: false.
+.sp 2
        \fBFormat\fR
 .br
-              The definition of update() must contain field
-              "rule" which should be a json object. "cond" and
-              "hint" are optional fields. Parameter "hint" is a
-              json object that includes one field, the field name
+              The definition of update() must contain field "rule"
+              which should be a json object. "cond" "hit" and
+              "options" are optional fields. Parameter "hint" is
+              a json object that includes one field, the field name
               will be ignored, and its value specifies the index
               name, when the value of the field is null, all the
               records in the collection will be accessed, its
@@ -51,10 +60,18 @@ Update records in a collection.
 .sp 2
 \fBNote: \fR
 .sp 2
-   *  update() does not support the update of sharding key in
-   this version, if there are update operations on sharding key,
-   these operations will be automatically neglected and the
-   update of other fields will still work without any problems.
+   *  When "KeepShardingKey" is set to false, if the update rule
+   contains sharding key, the sharding key will be automatically
+   filtered, but other field will take effect and no error will
+   occur. When "KeepShardingKey" is set to true, the sharding key
+   field is retained.
+.sp 2
+   *  When the partition cl falls on only one group, sharding key
+   is allow to be updated. When the partition cl falls on multiple
+   groups, updating sharding key is not supported in this release.
+   For main cl, updating sharding key of main cl is also not
+   supported. Sub cl's sharding keys are allowed to be updated,
+   only when each sub cl falls on one group.
 .SH "Examples"
 
 .sp 2
@@ -84,3 +101,8 @@ db.foo.bar.update({$inc:{age:1}},{age:{$gt:20}},{"":"testIndex"})>
 This operation accesses records that contain a value which is no
 less than 20 in the field "age" according to the index named
 "testIndex"
+.sp 2
+db.foo.bar.update({$inc:{age:1}},{age:{$gt:20}},{"":"testIndex"},
+                  {KeepShardingKey:true})
+.sp 2
+If bar cl has sharding key { age: 1 }, it will keep sharding key.

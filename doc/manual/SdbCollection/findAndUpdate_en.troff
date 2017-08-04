@@ -7,7 +7,7 @@
 findAndUpdate \- Find and update the matching records.
 .SH SYNOPSIS
 .PP
-\f[B]\f[I]db.collectionspace.collection.find([cond],[sel]).update(<rule>,[returnNew])\f[]\f[]
+\f[B]\f[I]db.collectionspace.collection.find([cond],[sel]).update(<rule>,[returnNew],[options])\f[]\f[]
 \f[B]\f[I]db.collectionspace.collection.find([cond],[sel])[.hint([hint])][.skip([skipNum])][.limit([retNum])][.sort([sort])].update(<rule>,[returnNew])\f[]\f[]
 .SH CATEGORY
 .PP
@@ -24,6 +24,15 @@ update the queried document set.
 \fBreturnNew (bool)\fR
 .br
        set true if want to return updated document.
+.sp 2
+\fBoptions (Json object)\fR
+.br
+       Optional in update.
+.sp 2
+       \fBKeepShardingKey (bool)\fR
+.br
+       The sharding key in update rule is not filtered.
+       Default value: false.
 .sp 2
        \fBFormat\fR
 .br
