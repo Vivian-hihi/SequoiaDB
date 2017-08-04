@@ -160,11 +160,11 @@ namespace engine
             }
          }
 
-         OSS_INLINE void removeItem ( _utilHashTableListItem *pItem )
+         OSS_INLINE BOOLEAN removeItem ( _utilHashTableListItem *pItem )
          {
             if ( pItem->getList() != this )
             {
-               return ;
+               return FALSE ;
             }
 
             _utilHashTableListItem *pPrev = pItem->getPrev() ;
@@ -188,6 +188,8 @@ namespace engine
             }
 
             pItem->setItem( NULL, NULL, NULL ) ;
+
+            return TRUE ;
          }
 
          OSS_INLINE void clearList ( BOOLEAN deleteItem )
@@ -318,8 +320,7 @@ namespace engine
          BOOLEAN removeItem ( utilHashTableItem *pItem )
          {
             SDB_ASSERT( pItem != NULL, "pItem is invalid" ) ;
-            _list.removeItem( pItem ) ;
-            return TRUE ;
+            return _list.removeItem( pItem ) ;
          }
 
          OSS_INLINE utilHashTableItem *getHead ()

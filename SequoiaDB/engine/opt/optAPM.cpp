@@ -518,6 +518,8 @@ namespace engine
          UINT64 timestampFactor = 0 ;
          UINT64 currentTimestamp = 0 ;
          UINT32 accessCountThreshold = 0 ;
+         UINT32 lastClockIndex = _clockIndex ;
+         UINT32 loopCount = 0 ;
 
          // Check again after lock
          UINT32 cachedPlanCount = _cachedPlanCount.peek() ;
@@ -543,7 +545,11 @@ namespace engine
          accessCountThreshold = accessCountThreshold / cachedPlanCount + 1 ;
          needRemoveCount = cachedPlanCount - _lowWaterMark ;
 
-         while ( needRemoveCount > 0 )
+         // End searching conditions:
+         // 1. removed enough plans
+         // 2. loop after 4 times
+         // Note, at most 3 loops wiil clear most plans
+         while ( needRemoveCount > 0 && loopCount < 4 )
          {
             optCachedPlanActivity &activity = _pActivities[ _clockIndex ] ;
             UINT64 accessTime = activity.getAccessTime() ;
@@ -552,6 +558,11 @@ namespace engine
             if ( activity.isEmpty() )
             {
                _clockIndex = ( _clockIndex + 1 ) % _activityNum ;
+               // Searched one loop
+               if ( _clockIndex == lastClockIndex )
+               {
+                  loopCount ++ ;
+               }
                continue ;
             }
 
@@ -571,11 +582,16 @@ namespace engine
             }
 
             _clockIndex = ( _clockIndex + 1 ) % _activityNum ;
+            // Searched one loop
+            if ( _clockIndex == lastClockIndex )
+            {
+               loopCount ++ ;
+            }
          }
 
          _accessCount.init( 0 ) ;
-         _clearThread.init( 0 ) ;
          _lastClearTimestamp = _accessTimestamp.inc() ;
+         _clearThread.init( 0 ) ;
       }
 
    done :
@@ -1052,7 +1068,12 @@ namespace engine
       {
          if ( !_monitor.setActivity( pPlan ) )
          {
-            _planCache.removeCachedPlan( pPlan ) ;
+            // Could not allocate activity for the plan
+            // remove it from cache
+            if ( _planCache.removeItem( pPlan ) )
+            {
+               _monitor.decCachedPlanCount( 1 ) ;
+            }
          }
       }
 
