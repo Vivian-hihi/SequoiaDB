@@ -7,11 +7,18 @@
 
 | 参数名 | 参数类型 | 描述 | 是否必填 |
 | ------ | -------- | ---- | -------- |
-| update    | Json 对象 | 更新规则，记录按指定规则更新。 | 是 |
+| rule    | Json 对象 | 更新规则，记录按指定规则更新。 | 是 |
 | returnNew | bool      | 是否返回更新后的记录。         | 否 |
+| options | Json 对象 | 可选项，详见options选项说明。| 否 |
+
+##options选项##
+
+| 参数名          | 参数类型 | 描述                | 默认值 |
+| --------------- | -------- | ------------------- | ------ |
+| KeepShardingKey | bool     | 是否保留分区键字段。| false  |
 
 > **Note:**  
-> query.update()方法的定义格式包含 update 参数和 returnNew 参数。其中 update 参数是 Json 对象，与 [update()](reference/Sequoiadb_command/SdbCollection/update.md)的 rule 参数相同。returnNew 参数可选，为 bool 类型，默认为 false。当为 true 时，返回修改后的记录值。
+> query.update()方法的定义格式包含 rule 参数、 returnNew 参数 options 参数。其中 rule 参数与 [update()](reference/Sequoiadb_command/SdbCollection/update.md)的 rule 参数相同，options 参数与 [update()](reference/Sequoiadb_command/SdbCollection/update.md)的 options 参数相同。returnNew 参数默认为 false，当为 true 时，返回修改后的记录值。
 
 ##返回值##
 
