@@ -89,10 +89,10 @@ TEST( sdbSyncDB, normal )
 	ASSERT_EQ( rc, SDB_OK ) << "fail to sync db" ;
 	bson_destroy( &option ) ;
 	
-	// rc = sdbDropCollectionSpace( db, CsName ) ;
-	// ASSERT_EQ( rc, SDB_OK ) << "fail to drop cs" ;
-	// rc = sdbDropDomain( db, domainName ) ;
-	// ASSERT_EQ( rc, SDB_OK ) << "fail to drop domain" ;
+	rc = sdbDropCollectionSpace( db, CsName ) ;
+	ASSERT_EQ( rc, SDB_OK ) << "fail to drop cs" ;
+	rc = sdbDropDomain( db, domainName ) ;
+	ASSERT_EQ( rc, SDB_OK ) << "fail to drop domain" ;
 	sdbDisconnect( db ) ;
 	sdbReleaseCollection( cl ) ;
 	sdbReleaseCS( cs ) ;

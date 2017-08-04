@@ -91,6 +91,8 @@ testFiles31 = [ "./misc/analyze.cpp" ]
 
 testFiles32 = [ "./misc/prepareMore.cpp" ]
 
+testFiles33 = [ "./misc/backup.cpp" ]
+
 # compile common lib
 gtestall = env.StaticLibrary('gtest', gtestFiles)
 gtestMainObj = env.Object('gtestMainObj', gtestMainFile)
@@ -118,7 +120,7 @@ idIndex        = dllBuildEnv.Program("idIndex",  [testFiles15, testCommon, gtest
 attachAndDetachNode = dllBuildEnv.Program("attachAndDetachNode",  [testFiles16, testCommon, gtestMainObj])
 concurrentNode = dllBuildEnv.Program("concurrentNode",  [testFiles17, testCommon, gtestMainObj])
 concurrentRg   = dllBuildEnv.Program("concurrentRg",  [testFiles18, testCommon, gtestMainObj])
-sslFalse	   = dllBuildEnv.Program("sslFalse",  [testFiles19, testCommon, gtestMainObj])
+sslFalse	   	= dllBuildEnv.Program("sslFalse",  [testFiles19, testCommon, gtestMainObj])
 sslTrue        = dllBuildEnv.Program("sslTrue",  [testFiles20, testCommon, gtestMainObj])
 forceSession   = dllBuildEnv.Program("forceSession",  [testFiles21, testCommon, gtestMainObj])
 JSCompatible   = dllBuildEnv.Program("JSCompatible",  [testFiles22, testCommon, gtestMainObj])
@@ -129,9 +131,10 @@ setPDLevel     = dllBuildEnv.Program("setPDLevel",  [testFiles26, testCommon, gt
 code           = dllBuildEnv.Program("code",  [testFiles27, testCommon, gtestMainObj])
 bson_oid       = dllBuildEnv.Program("bson_oid",  [testFiles28, testCommon, gtestMainObj])
 handle         = dllBuildEnv.Program("handle",  [testFiles29, testCommon, gtestMainObj])
-date		   = dllBuildEnv.Program("date",  [testFiles30, testCommon, gtestMainObj])
+date		   	= dllBuildEnv.Program("date",  [testFiles30, testCommon, gtestMainObj])
 analyze		   = dllBuildEnv.Program("analyze",  [testFiles31, testCommon, gtestMainObj])
 prepareMore    = dllBuildEnv.Program("prepareMore",  [testFiles32, testCommon, gtestMainObj]) 
+backup			= dllBuildEnv.Program("backup", [testFiles33, testCommon, gtestMainObj])
 
 # static compile
 
@@ -167,6 +170,7 @@ handle.static            = staticBuildEnv.Program("handle.static",  [testFiles29
 date.static				 = staticBuildEnv.Program("date.static",  [testFiles30, testCommon, gtestMainObj])
 analyze.static			 = staticBuildEnv.Program("analyze.static",  [testFiles31, testCommon, gtestMainObj])
 prepareMore.static		 = staticBuildEnv.Program("prepareMore.static",  [testFiles32, testCommon, gtestMainObj])
+backup.static			 = staticBuildEnv.Program("backup.static",  [testFiles33, testCommon, gtestMainObj])
 
 # dll compile
 env.Install( '#/build_test', [   decimal,
@@ -186,7 +190,7 @@ env.Install( '#/build_test', [   decimal,
 								 attachAndDetachNode,
 								 concurrentNode,concurrentRg,sslFalse,sslTrue,forceSession,JSCompatible,
 								 loadUnloadCS,rename,reloadConf,setPDLevel,code,bson_oid,handle,date,analyze,
-							     prepareMore
+							     prepareMore,backup
                               ] )
 # static compile
 env.Install( '#/build_test', [   decimal.static,
@@ -206,6 +210,6 @@ env.Install( '#/build_test', [   decimal.static,
 								 concurrentNode.static,concurrentRg.static,sslFalse.static,sslTrue.static,
 								 forceSession.static,JSCompatible.static,loadUnloadCS.static,rename.static,
 								 reloadConf.static,setPDLevel.static,code.static,bson_oid.static,handle.static,
-								 date.static,analyze.static,prepareMore.static
+								 date.static,analyze.static,prepareMore.static,backup.static
                               ] )
 
