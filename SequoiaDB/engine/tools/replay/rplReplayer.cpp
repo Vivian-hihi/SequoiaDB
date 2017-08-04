@@ -1077,6 +1077,10 @@ namespace replay
          << "(" << dec << archiveHeader->endLSN.offset << ")"
          << endl;
 
+      ss << " " << left << setfill(' ') << setw(RPL_DUMP_FIELD_WIDTH) << "FileSize" << ": "
+         << logHeader->_fileSize
+         << endl;
+
       string out = ss.str();
 
       cout << out << endl;
@@ -1102,6 +1106,14 @@ namespace replay
       ss << " " << left << setfill(' ') << setw(RPL_DUMP_FIELD_WIDTH) << "FirstLSN" << ": "
          << "0x" << hex << right << setfill('0') << setw(16) << logHeader._firstLSN.offset
          << "(" << dec << logHeader._firstLSN.offset << ")"
+         << endl;
+
+      ss << " " << left << setfill(' ') << setw(RPL_DUMP_FIELD_WIDTH) << "FileSize" << ": "
+         << logFile.size()
+         << endl;
+
+      ss << " " << left << setfill(' ') << setw(RPL_DUMP_FIELD_WIDTH) << "IdleSize" << ": "
+         << logFile.getIdleSize()
          << endl;
 
       string out = ss.str();
