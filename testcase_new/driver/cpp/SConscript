@@ -72,6 +72,8 @@ testFiles27 = [ "./misc/bson_time.cpp" ]
 
 testFiles28 = [ "./misc/sync.cpp" ]
 
+testFiles29 = [ "./misc/backup.cpp" ] 
+
 # compile common lib
 gtestall = env.StaticLibrary('gtest', gtestFiles)
 gtestMainObj = env.Object('gtestMainObj', gtestMainFile)
@@ -105,6 +107,7 @@ attachAndDetachNode = dllBuildEnv.Program("attachAndDetachNode", [testFiles25, g
 createNode			= dllBuildEnv.Program("createNode", [testFiles26, gtestMainObj, testCommonFiles])
 bson_time			= dllBuildEnv.Program("bson_time", [testFiles27, gtestMainObj, testCommonFiles])
 sync			    = dllBuildEnv.Program("sync", [testFiles28, gtestMainObj, testCommonFiles])
+backup			 = dllBuildEnv.Program("backup", [testFiles29, gtestMainObj, testCommonFiles])
 
 # static compile
 # dll compile
@@ -135,12 +138,13 @@ attachAndDetachNode.static = staticBuildEnv.Program("attachAndDetachNode.static"
 createNode.static		   = staticBuildEnv.Program("createNode.static", [testFiles26, gtestMainObj, testCommonFiles])
 bson_time.static		   = staticBuildEnv.Program("bson_time.static", [testFiles27, gtestMainObj, testCommonFiles])
 sync.static				   = staticBuildEnv.Program("sync.static", [testFiles28, gtestMainObj, testCommonFiles])
+backup.static				= staticBuildEnv.Program("backup.static", [testFiles29, gtestMainObj, testCommonFiles])
 
 # dll compile
 env.Install( '#/build_test',[ decimal,numberLong,trunOncache,time,DS_InvalidArgTest,
 			                  DS_InvalidConnTest,DS_ConnTest,DS_ThreadTest,DS_ChecktimeTest,DS_ClTest,DS_InvalidUsrTest,
                               lob,code,closeAllCursors,bson_oid,date,analyze,prepareMore,JSCompatible,sslTrue,sslFalse,
-							  index,idIndex,attachAndDetachNode,createNode,bson_time,sync ] )
+							  index,idIndex,attachAndDetachNode,createNode,bson_time,sync,backup ] )
 
 # static compile
 env.Install( '#/build_test',[ decimal.static,numberLong.static,trunOncache.static,
@@ -149,5 +153,4 @@ env.Install( '#/build_test',[ decimal.static,numberLong.static,trunOncache.stati
 							  DS_ClTest.static,DS_InvalidUsrTest.static,lob.static,code.static,closeAllCursors.static,
 							  bson_oid.static,date.static,analyze.static,prepareMore.static,JSCompatible.static,
 							  sslTrue.static,sslFalse.static,index.static,idIndex.static,attachAndDetachNode.static,
-							  createNode.static,bson_time.static,sync.static ] )
-
+							  createNode.static,bson_time.static,sync.static,backup.static ] )
