@@ -744,7 +744,7 @@ namespace replay
             goto error;
          }
 
-         if (_filter.isFiltered(log))
+         if (_filter.isFiltered(log, _options->dump()))
          {
             _monitor.setLastLSN(currentLSN);
             currentLSN += logHeader._length;

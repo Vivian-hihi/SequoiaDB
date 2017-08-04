@@ -91,7 +91,7 @@ namespace replay
       return valid;
    }
 
-   static BOOLEAN isValidFilterOP(const string& op)
+   static BOOLEAN isValidOPName(const string& op)
    {
       static const CHAR* ops[] =
       {
@@ -99,16 +99,23 @@ namespace replay
          RPL_LOG_OP_UPDATE,
          RPL_LOG_OP_DELETE,
          RPL_LOG_OP_TRUNCATE_CL,
-         //RPL_LOG_OP_CREATE_CS,
-         //RPL_LOG_OP_DELETE_CS,
-         //RPL_LOG_OP_CREATE_CL,
-         //RPL_LOG_OP_DELETE_CL,
-         //RPL_LOG_OP_CREATE_IX,
-         //RPL_LOG_OP_DELETE_IX,
-         //RPL_LOG_OP_LOB_WRITE,
-         //RPL_LOG_OP_LOB_REMOVE,
-         //RPL_LOG_OP_LOB_UPDATE,
-         //RPL_LOG_OP_LOB_TRUNCATE
+         RPL_LOG_OP_CREATE_CS,
+         RPL_LOG_OP_DELETE_CS,
+         RPL_LOG_OP_CREATE_CL,
+         RPL_LOG_OP_DELETE_CL,
+         RPL_LOG_OP_CREATE_IX,
+         RPL_LOG_OP_DELETE_IX,
+         RPL_LOG_OP_LOB_WRITE,
+         RPL_LOG_OP_LOB_REMOVE,
+         RPL_LOG_OP_LOB_UPDATE,
+         RPL_LOG_OP_LOB_TRUNCATE,
+         RPL_LOG_OP_DUMMY,
+         RPL_LOG_OP_CL_RENAME,
+         RPL_LOG_OP_TS_COMMIT,
+         RPL_LOG_OP_TS_ROLLBACK,
+         RPL_LOG_OP_INVALIDATE_CATA,
+         RPL_LOG_OP_CS_RENAME,
+         RPL_LOG_OP_POP
       };
 
       const INT32 opNum = sizeof(ops) / sizeof(ops[0]);
@@ -289,13 +296,14 @@ namespace replay
       return FALSE;
    }
 
-   BOOLEAN Filter::isFiltered(const dpsLogRecord& log)
+   BOOLEAN Filter::isFiltered(const dpsLogRecord& log, BOOLEAN dump)
    {
       const dpsLogRecordHeader& head = log.head();
       DPS_LSN_OFFSET lsn = head._lsn;
       string op;
 
-      if (!isValidFilterOP(head._type))
+      // when dump, don't invalidate op
+      if (!dump && !isValidFilterOP(head._type))
       {
          return TRUE;
       }
@@ -518,7 +526,7 @@ namespace replay
       for (; it != ops.end(); it++)
       {
          string op = *it;
-         if (!isValidFilterOP(op))
+         if (!isValidOPName(op))
          {
             rc = SDB_INVALIDARG;
             PD_LOG(PDERROR, "Invalid filter op: %s", op.c_str());
