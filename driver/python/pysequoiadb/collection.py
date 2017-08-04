@@ -608,7 +608,7 @@ class collection(object):
          if not isinstance(kwargs.get("flags"), int):
             raise SDBTypeError("flags must be an instance of int")
          else:
-            num_to_skip = kwargs.get("flags")
+            flags = kwargs.get("flags")
 
       try:
          result = cursor()
@@ -1299,7 +1299,7 @@ class collection(object):
          if not isinstance(kwargs.get("flags"), int):
             raise SDBTypeError("flags must be an instance of int")
          else:
-            num_to_skip = kwargs.get("flags")
+            flags = kwargs.get("flags")
 
       try:
          result = cursor()
