@@ -1066,6 +1066,12 @@ namespace engine
                                                               localAgentHost,
                                                               localAgentPort ) ;
          }
+         else if ( ossStrcasecmp( pSubCommand,
+                                  OM_GRANT_SYSCONF_REQ ) == 0 )
+         {
+            commandIf = SDB_OSS_NEW omGrantSysConfigureCommand( pAdptor,
+                                                                this ) ;
+         }
          else
          {
             rc = SDB_INVALIDARG ;

@@ -151,10 +151,18 @@ namespace engine
                                 INT64 &updateNum ) ;
 
       //cluster
+      INT32 addCluster( const BSONObj &clusterInfo ) ;
       INT32 getClusterInfo( const string &clusterName,
                             BSONObj &clusterInfo ) ;
 
+      INT32 updateClusterInfo( const string &clusterName,
+                               const BSONObj &clusterInfo ) ;
+
       BOOLEAN clusterIsExist( const string &clusterName ) ;
+
+      INT32 updateClusterGrantConf( const string &clusterName,
+                                    const string &grantName,
+                                    const BOOLEAN privilege ) ;
 
       //configure
       INT32 getOneHostConfig( const string &hostName,

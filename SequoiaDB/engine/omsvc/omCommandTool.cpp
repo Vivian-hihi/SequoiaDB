@@ -35,6 +35,8 @@
 #include "rtn.hpp"
 #include "msgMessage.hpp"
 
+using namespace bson ;
+
 namespace engine
 {
 
@@ -790,6 +792,95 @@ namespace engine
       goto done ;
    }
 
+   INT32 omDatabaseTool::addCluster( const BSONObj &clusterInfo )
+   {
+      INT32 rc = SDB_OK ;
+      string installPath ;
+      BSONObjBuilder recordBuilder ;
+      BSONElement grantConfEle ;
+      BSONObj record ;
+      BSONObj filter = BSON( OM_BSON_FIELD_CLUSTER_NAME  << "" <<
+                             OM_BSON_FIELD_CLUSTER_DESC  << "" <<
+                             OM_BSON_FIELD_SDB_USER      << "" <<
+                             OM_BSON_FIELD_SDB_PASSWD    << "" <<
+                             OM_BSON_FIELD_SDB_USERGROUP << "" ) ;
+      BSONObj newClusterInfo = clusterInfo.filterFieldsUndotted( filter,
+                                                                 TRUE ) ;
+
+      // ClusterName Desc SdbUser SdbPasswd SdbUserGroup
+      recordBuilder.appendElements( newClusterInfo ) ;
+
+      // InstallPath
+      installPath = clusterInfo.getStringField( OM_BSON_FIELD_INSTALL_PATH ) ;
+      if ( installPath.empty() )
+      {
+         installPath = OM_DEFAULT_INSTALL_PATH ;
+      }
+      recordBuilder.append( OM_BSON_FIELD_INSTALL_PATH,
+                            OM_DEFAULT_INSTALL_PATH ) ;
+
+      // GrantConf
+      grantConfEle = clusterInfo.getField( OM_BSON_FIELD_GRANTCONF ) ;
+      if ( bson::Array == grantConfEle.type() )
+      {
+         BSONArrayBuilder grantConfBuilder ;
+         BSONObjIterator iter( grantConfEle.embeddedObject() ) ;
+
+         while ( iter.more() )
+         {
+            BSONObjBuilder privilegeBuilder ;
+            BSONElement ele = iter.next() ;
+            BSONObj grantInfo = ele.embeddedObject() ;
+            string tmpName = grantInfo.getStringField(
+                                                OM_CLUSTER_FIELD_GRANTNAME ) ;
+            BOOLEAN tmpPrivilege = grantInfo.getBoolField(
+                                                OM_CLUSTER_FIELD_PRIVILEGE ) ;
+
+            privilegeBuilder.append( OM_CLUSTER_FIELD_GRANTNAME,
+                                     tmpName ) ;
+            privilegeBuilder.appendBool( OM_CLUSTER_FIELD_PRIVILEGE,
+                                         tmpPrivilege ) ;
+            grantConfBuilder.append( privilegeBuilder.obj() ) ;
+         }
+
+         recordBuilder.append( OM_BSON_FIELD_GRANTCONF,
+                               grantConfBuilder.arr() ) ;
+      }
+      else
+      {
+         BSONArrayBuilder grantConfBuilder ;
+         BSONObjBuilder hostFileBuilder ;
+         BSONObjBuilder rootUserBuilder ;
+
+         hostFileBuilder.append( OM_CLUSTER_FIELD_GRANTNAME,
+                                 OM_CLUSTER_FIELD_HOSTFILE ) ;
+         hostFileBuilder.appendBool( OM_CLUSTER_FIELD_PRIVILEGE, TRUE ) ;
+
+         rootUserBuilder.append( OM_CLUSTER_FIELD_GRANTNAME,
+                                 OM_CLUSTER_FIELD_ROOTUSER ) ;
+         rootUserBuilder.appendBool( OM_CLUSTER_FIELD_PRIVILEGE, TRUE ) ;
+
+         grantConfBuilder.append( hostFileBuilder.obj() ) ;
+         grantConfBuilder.append( rootUserBuilder.obj() ) ;
+
+         recordBuilder.append( OM_BSON_FIELD_GRANTCONF,
+                               grantConfBuilder.arr() ) ;
+      }
+      record = recordBuilder.obj() ;
+
+      rc = rtnInsert( OM_CS_DEPLOY_CL_CLUSTER, record, 1, 0, _cb ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "insert record failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    /**
     * Get cluster info
     *
@@ -858,6 +949,32 @@ namespace engine
       goto done ;
    }
 
+   INT32 omDatabaseTool::updateClusterInfo( const string &clusterName,
+                                            const BSONObj &clusterInfo )
+   {
+      INT32 rc = SDB_OK ;
+      INT64 updateNum = 0 ;
+      BSONObj condition = BSON( OM_CLUSTER_FIELD_NAME << clusterName ) ;
+      BSONObj updator = BSON( "$set" << clusterInfo ) ;
+      BSONObj hint ;
+
+      rc = rtnUpdate( OM_CS_DEPLOY_CL_CLUSTER, condition, updator, hint,
+                      FLG_UPDATE_RETURNNUM, _cb, &updateNum ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "falied to update cluster info,"
+                          "condition=%s,updator=%s,rc=%d",
+                 condition.toString().c_str(),
+                 updator.toString().c_str(), rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    BOOLEAN omDatabaseTool::clusterIsExist( const string &clusterName )
    {
       INT32 rc = SDB_OK ;
@@ -875,6 +992,77 @@ namespace engine
       }
 
       return isExist ;
+   }
+
+   INT32 omDatabaseTool::updateClusterGrantConf( const string &clusterName,
+                                                 const string &grantName,
+                                                 const BOOLEAN privilege )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj clusterInfo ;
+      BSONObj newClusterInfo ;
+      BSONObj grantConf ;
+      map<string,BOOLEAN> grantList ;
+
+      rc = getClusterInfo( clusterName, clusterInfo ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to get cluster info: cluster=%s, rc=%d",
+                 clusterName.c_str(), rc ) ;
+         goto error ;
+      }
+
+      grantConf = clusterInfo.getObjectField( OM_CLUSTER_FIELD_GRANTCONF ) ;
+      {
+         BSONObjIterator iter( grantConf ) ;
+         while ( iter.more() )
+         {
+            BSONElement ele = iter.next() ;
+            BSONObj grantInfo = ele.embeddedObject() ;
+            string tmpName = grantInfo.getStringField(
+                                                OM_CLUSTER_FIELD_GRANTNAME ) ;
+            BOOLEAN tmpPrivilege = grantInfo.getBoolField(
+                                                OM_CLUSTER_FIELD_PRIVILEGE ) ;
+
+            grantList[tmpName] = tmpPrivilege ;
+         }
+      }
+
+      grantList[grantName] = privilege ;
+
+      {
+         BSONObjBuilder grantConfBuilder ;
+         BSONArrayBuilder grantArray ;
+         map<string,BOOLEAN>::iterator iter ;
+
+         for ( iter = grantList.begin(); iter != grantList.end(); ++iter )
+         {
+            BSONObjBuilder grantInfoBuilder ;
+
+            grantInfoBuilder.append( OM_CLUSTER_FIELD_GRANTNAME, iter->first ) ;
+            grantInfoBuilder.appendBool( OM_CLUSTER_FIELD_PRIVILEGE,
+                                         iter->second ) ;
+
+            grantArray.append( grantInfoBuilder.obj() ) ;
+         }
+
+         grantConfBuilder.append( OM_CLUSTER_FIELD_GRANTCONF,
+                                  grantArray.arr() ) ;
+         newClusterInfo = grantConfBuilder.obj() ;
+      }
+
+      rc = updateClusterInfo( clusterName, newClusterInfo ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to get cluster info: cluster=%s, rc=%d",
+                 clusterName.c_str(), rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    /**
@@ -1184,7 +1372,6 @@ namespace engine
       BSONObj hostInfoList ;
       BSONObjBuilder builder ;
       BSONArrayBuilder hostLocation ;
-      set<string> newHostList ;
 
       hostInfoList = newConfig.getObjectField( OM_BSON_FIELD_HOST_INFO ) ;
       BSONObjIterator iter( hostInfoList ) ;
@@ -1200,8 +1387,6 @@ namespace engine
             deployMod = tmpConfig.getStringField(
                                           OM_CONFIGURE_FIELD_DEPLOYMODE ) ;
          }
-
-         newHostList.insert( hostName ) ;
 
          rc = upsertConfigure( businessName, hostName, tmpConfig,
                                updateNum ) ;

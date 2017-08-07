@@ -190,7 +190,8 @@ namespace engine
       _SDB_RTNCB *pRTNCB = pKrcb->getRTNCB() ;
       _pmdEDUCB *pEDUCB  = pmdGetThreadEDUCB() ;
 
-      selector = BSON( OM_CLUSTER_FIELD_NAME << "" ) ;
+      selector = BSON( OM_CLUSTER_FIELD_NAME << "" <<
+                       OM_CLUSTER_FIELD_GRANTCONF << "" ) ;
       rc = rtnQuery( OM_CS_DEPLOY_CL_CLUSTER, selector, matcher, order, hint, 0, 
                      pEDUCB, 0, -1, pDMSCB, pRTNCB, contextID );
       if ( rc )
@@ -203,6 +204,7 @@ namespace engine
       while ( TRUE )
       {
          rtnContextBuf buffObj ;
+
          rc = rtnGetMore( contextID, 1, buffObj, pEDUCB, pRTNCB ) ;
          if ( rc )
          {
@@ -218,9 +220,31 @@ namespace engine
             goto error ;
          }
 
-         BSONObj record( buffObj.data() ) ;
-         string clusterName = record.getStringField( OM_CLUSTER_FIELD_NAME ) ;
-         _hostVersion->incVersion( clusterName ) ;
+         {
+            BOOLEAN privilege = TRUE ;
+            BSONObj record( buffObj.data() ) ;
+            BSONObj grantConf = record.getObjectField(
+                                                OM_CLUSTER_FIELD_GRANTCONF ) ;
+            string clusterName = record.getStringField(
+                                                OM_CLUSTER_FIELD_NAME ) ;
+            BSONObjIterator iter( grantConf ) ;
+            while ( iter.more() )
+            {
+               BSONElement ele = iter.next() ;
+               BSONObj grantInfo = ele.embeddedObject() ;
+               string tmpName = grantInfo.getStringField(
+                                                OM_CLUSTER_FIELD_GRANTNAME ) ;
+
+               if ( OM_CLUSTER_FIELD_HOSTFILE == tmpName )
+               {
+                  privilege = grantInfo.getBoolField(
+                                                OM_CLUSTER_FIELD_PRIVILEGE ) ;
+               }
+            }
+
+            _hostVersion->incVersion( clusterName ) ;
+            _hostVersion->setPrivilege( clusterName, privilege ) ;
+         }
       }
    done:
       return rc ;
@@ -240,6 +264,13 @@ namespace engine
    void _omManager::removeClusterVersion( string cluster )
    {
       _hostVersion->removeVersion( cluster ) ;
+   }
+
+   void _omManager::updateClusterHostFilePrivilege( string clusterName,
+                                                    BOOLEAN privilege )
+   {
+      _hostVersion->setPrivilege( clusterName, privilege ) ;
+      _hostVersion->incVersion( clusterName ) ;
    }
 
    omTaskManager *_omManager::getTaskManager()
@@ -715,6 +746,175 @@ namespace engine
       goto done ;
    }
 
+   INT32 _omManager::_appendClusterGrant( const string& clusertName,
+                                          const string& grantName,
+                                          BOOLEAN privilege )
+   {
+      INT32 rc = SDB_OK ;
+      SINT64 contextID   = -1 ;
+      BOOLEAN isFind     = FALSE ;
+      pmdEDUCB *cb       = pmdGetThreadEDUCB() ;
+      pmdKRCB *pKRCB     = pmdGetKRCB() ;
+      _SDB_DMSCB *pdmsCB = pKRCB->getDMSCB() ;
+      _SDB_RTNCB *pRtnCB = pKRCB->getRTNCB() ;
+      BSONObj sort ;
+      BSONObj hint ;
+
+      {
+         BSONObj selector ;
+         BSONObj matcher = BSON( OM_CLUSTER_FIELD_NAME << clusertName <<
+               OM_CLUSTER_FIELD_GRANTCONF"."OM_CLUSTER_FIELD_GRANTNAME <<
+               grantName ) ;
+
+         rc = rtnQuery( OM_CS_DEPLOY_CL_CLUSTER, selector, matcher, sort, 
+                        hint, 0, cb, 0, 1, pdmsCB, pRtnCB, contextID ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "query table failed:table=%s,rc=%d",
+                    OM_CS_DEPLOY_CL_CLUSTER, rc ) ;
+            goto error ;
+         }
+
+         while ( TRUE )
+         {
+            rtnContextBuf buffObj ;
+
+            rc = rtnGetMore( contextID, 1, buffObj, cb, pRtnCB ) ;
+            if ( rc )
+            {
+               if ( SDB_DMS_EOC == rc )
+               {
+                  rc = SDB_OK ;
+                  break ;
+               }
+
+               PD_LOG( PDERROR, "get record failed:table=%s,rc=%d",
+                       OM_CS_DEPLOY_CL_CLUSTER, rc ) ;
+               goto error ;
+            }
+            isFind = TRUE ;
+         }
+      }
+
+      if ( FALSE == isFind )
+      {
+         BSONObj updator ;
+         BSONObj matcher = BSON( OM_CLUSTER_FIELD_NAME << clusertName ) ;
+         BSONObjBuilder grantInfoBuilder ;
+         
+         grantInfoBuilder.append( OM_CLUSTER_FIELD_GRANTNAME, grantName ) ;
+         grantInfoBuilder.appendBool( OM_CLUSTER_FIELD_PRIVILEGE, privilege ) ;
+
+         updator = BSON( "$push" <<
+              BSON( OM_CLUSTER_FIELD_GRANTCONF << grantInfoBuilder.obj() ) ) ;
+
+         rc = rtnUpdate( OM_CS_DEPLOY_CL_CLUSTER, matcher, updator, hint,
+                      0, cb ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "update table failed:table=%s,updator=%s,rc=%d",
+                    OM_CS_DEPLOY_CL_CLUSTER, updator.toString().c_str(), rc ) ;
+            goto error ;
+         }
+      }
+
+   done:
+      if ( -1 != contextID )
+      {
+         pRtnCB->contextDelete ( contextID, cb ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+
+   }
+
+   INT32 _omManager::_updateClusterTable()
+   {
+      INT32 rc = SDB_OK ;
+      SINT64 contextID   = -1 ;
+      pmdEDUCB *cb       = pmdGetThreadEDUCB() ;
+      pmdKRCB *pKRCB     = pmdGetKRCB() ;
+      _SDB_DMSCB *pdmsCB = pKRCB->getDMSCB() ;
+      _SDB_RTNCB *pRtnCB = pKRCB->getRTNCB() ;
+      BSONObj sort ;
+      BSONObj hint ;
+      BSONObj selector ;
+      BSONObj matcher ;
+      set<string> clusterList ;
+
+      rc = rtnQuery( OM_CS_DEPLOY_CL_CLUSTER, selector, matcher, sort, 
+                     hint, 0, cb, 0, -1, pdmsCB, pRtnCB, contextID ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "query table failed:table=%s,rc=%d",
+                 OM_CS_DEPLOY_CL_CLUSTER, rc ) ;
+         goto error ;
+      }
+
+      while ( TRUE )
+      {
+         rtnContextBuf buffObj ;
+
+         rc = rtnGetMore( contextID, 1, buffObj, cb, pRtnCB ) ;
+         if ( rc )
+         {
+            if ( SDB_DMS_EOC == rc )
+            {
+               rc = SDB_OK ;
+               break ;
+            }
+
+            PD_LOG( PDERROR, "get record failed:table=%s,rc=%d",
+                    OM_CS_DEPLOY_CL_CLUSTER, rc ) ;
+            goto error ;
+         }
+
+         {
+            BSONObj result( buffObj.data() ) ;
+            string clusterName ;
+
+            clusterName = result.getStringField( OM_CLUSTER_FIELD_NAME ) ;
+            clusterList.insert( clusterName ) ;            
+         }
+      }
+
+      for ( set<string>::iterator iter = clusterList.begin();
+               iter != clusterList.end(); ++iter )
+      {
+         string clusterName = *iter ;
+
+         //HostFile
+         rc = _appendClusterGrant( clusterName,
+                                   OM_CLUSTER_FIELD_HOSTFILE, TRUE ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "failed to add cluster grant config %s, rc=%d",
+                    OM_CLUSTER_FIELD_HOSTFILE, rc ) ;
+            goto error ;
+         }
+
+         //RootUser
+         rc = _appendClusterGrant( clusterName,
+                                   OM_CLUSTER_FIELD_ROOTUSER, TRUE ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "failed to add cluster grant config %s, rc=%d",
+                    OM_CLUSTER_FIELD_ROOTUSER, rc ) ;
+            goto error ;
+         }
+      }
+
+   done:
+      if ( -1 != contextID )
+      {
+         pRtnCB->contextDelete ( contextID, cb ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _omManager::_updateTable()
    {
       INT32 rc = SDB_OK ;
@@ -726,6 +926,15 @@ namespace engine
       rc = _updateBusinessTable() ;
       PD_RC_CHECK( rc, PDERROR, "update table failed:table=%s,rc=%d", 
                    OM_CS_DEPLOY_CL_BUSINESS, rc ) ;
+
+      rc = _updateClusterTable() ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "update table failed:table=%s,rc=%d", 
+                 OM_CS_DEPLOY_CL_CLUSTER, rc ) ;
+         goto error ;
+      }
+
    done:
       return rc ;
    error:

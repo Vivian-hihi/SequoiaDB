@@ -43,6 +43,11 @@ namespace engine
    #define OM_PATH_CONFIG                    "config"
    #define OM_PATH_VERSION                   "version"
 
+   #define OM_VALUE_BOOLEAN_TRUE1             "true"
+   #define OM_VALUE_BOOLEAN_TRUE2             "TRUE"
+   #define OM_VALUE_BOOLEAN_FALSE1            "false"
+   #define OM_VALUE_BOOLEAN_FALSE2            "FALSE"
+
    // Sequoiadb's template configure
    #define OM_TEMPLATE_REPLICA_NUM           "replicanum"
    #define OM_TEMPLATE_DATAGROUP_NUM         "datagroupnum"
@@ -441,6 +446,7 @@ namespace engine
    #define  OM_GET_SYSTEM_INFO_REQ           "get system info"
    #define  OM_EXTEND_BUSINESS_REQ           "extend business"
    #define  OM_SYNC_BUSINESS_CONF_REQ        "sync business configure"
+   #define  OM_GRANT_SYSCONF_REQ             "grant sysconf"
 
    //**************************************************************************
 
@@ -453,6 +459,7 @@ namespace engine
    #define  OM_BSON_FIELD_SDB_PASSWD         OM_CLUSTER_FIELD_SDBPASSWD
    #define  OM_BSON_FIELD_SDB_USERGROUP      OM_CLUSTER_FIELD_SDBUSERGROUP
    #define  OM_BSON_FIELD_INSTALL_PATH       OM_CLUSTER_FIELD_INSTALLPATH
+   #define  OM_BSON_FIELD_GRANTCONF          OM_CLUSTER_FIELD_GRANTCONF
    #define  OM_REST_HEAD_SESSIONID           "SdbSessionID"
    #define  OM_REST_HEAD_LANGUAGE            "SdbLanguage"
    #define  OM_REST_FIELD_LOGIN_NAME         "User"

@@ -204,29 +204,24 @@ namespace engine
       protected:
    };
 
-   class omCreateClusterCommand : public omCheckSessionCommand
+   class omCreateClusterCommand : public omAuthCommand
    {
-      public:
-         omCreateClusterCommand( restAdaptor *pRestAdaptor,
-                                 pmdRestSession *pRestSession ) ;
+   public:
 
-         virtual ~omCreateClusterCommand() ;
+      omCreateClusterCommand( restAdaptor *pRestAdaptor,
+                              pmdRestSession *pRestSession ) ;
 
-      public:
-         virtual INT32   doCommand() ;
+      virtual ~omCreateClusterCommand() ;
 
-      protected:
+      virtual INT32 doCommand() ;
 
-      private:
-         INT32           _getParaOfCreateCluster( string &clusterName,
-                                                  string &desc,
-                                                  string &sdbUsr,
-                                                  string &sdbPasswd,
-                                                  string &sdbUsrGroup,
-                                                  string &installPath ) ;
-   };
+   private:
 
-   class omQueryClusterCommand : public omCreateClusterCommand
+      INT32 _getRestInfo( string &clusterName, BSONObj &clusterInfo ) ;
+
+   } ;
+
+   class omQueryClusterCommand : public omCheckSessionCommand
    {
       public:
          omQueryClusterCommand( restAdaptor *pRestAdaptor,
@@ -271,7 +266,7 @@ namespace engine
       }
    } ;
 
-   class omUpdateHostInfoCommand : public omCreateClusterCommand
+   class omUpdateHostInfoCommand : public omCheckSessionCommand
    {
       public:
          omUpdateHostInfoCommand( restAdaptor *pRestAdaptor,
@@ -289,7 +284,7 @@ namespace engine
                                           string &clusterName ) ;
    } ;
 
-   class omScanHostCommand : public omCreateClusterCommand
+   class omScanHostCommand : public omCheckSessionCommand
    {
       public:
          omScanHostCommand( restAdaptor *pRestAdaptor,
@@ -452,7 +447,7 @@ namespace engine
          INT32           _checkTaskExistence( list<BSONObj> &hostInfoList ) ;
    };
 
-   class omListHostCommand : public omCreateClusterCommand
+   class omListHostCommand : public omCheckSessionCommand
    {
       public:
          omListHostCommand( restAdaptor *pRestAdaptor,
@@ -482,7 +477,7 @@ namespace engine
       private:
    } ;
 
-   class omListBusinessTypeCommand : public omCreateClusterCommand
+   class omListBusinessTypeCommand : public omCheckSessionCommand
    {
       public:
          omListBusinessTypeCommand( restAdaptor *pRestAdaptor,
@@ -1019,7 +1014,7 @@ namespace engine
                              BSONObj &request ) ;
       INT32 _syncSequoiaDB( omRestTool &restTool, const BSONObj &buzInfo ) ;
       INT32 _storeBusinessInfo( const INT32 addType,
-                                const string deployMod,
+                                const string &deployMod,
                                 const BSONObj &buzInfo ) ;
       INT32 _syncBusiness( omRestTool &restTool, BSONObj &configInfo ) ;
 
@@ -1284,6 +1279,33 @@ namespace engine
       string _businessType ;
       string _localAgentHost ;
       string _localAgentService ;
+   } ;
+
+   class omGrantSysConfigureCommand : public omAuthCommand
+   {
+   public:
+
+      omGrantSysConfigureCommand( restAdaptor *pRestAdaptor,
+                                  pmdRestSession *pRestSession ) ;
+
+      ~omGrantSysConfigureCommand() ;
+
+      virtual INT32 doCommand() ;
+
+   private:
+
+      INT32 _getRestInfo() ;
+
+      INT32 _checkCluster() ;
+
+      INT32 _grantSysConf() ;
+
+   private:
+
+      string  _clusterName ;
+      string  _grantName ;
+      BOOLEAN _privilege ;
+
    } ;
 
 }

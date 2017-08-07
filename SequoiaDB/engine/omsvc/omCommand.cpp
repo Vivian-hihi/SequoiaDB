@@ -1443,7 +1443,7 @@ namespace engine
    // *****************omCreateClusterCommand *****************************
    omCreateClusterCommand::omCreateClusterCommand( restAdaptor *pRestAdaptor,
                                                  pmdRestSession *pRestSession )
-                          :omCheckSessionCommand( pRestAdaptor,
+                                 : omAuthCommand( pRestAdaptor,
                                                   pRestSession )
    {
    }
@@ -1452,57 +1452,124 @@ namespace engine
    {
    }
 
-   INT32 omCreateClusterCommand::_getParaOfCreateCluster( string &clusterName,
-                                                          string &desc,
-                                                          string &sdbUsr,
-                                                          string &sdbPasswd,
-                                                          string &sdbUsrGroup,
-                                                          string &installPath )
+   INT32 omCreateClusterCommand::_getRestInfo( string &clusterName,
+                                               BSONObj &clusterInfo )
    {
+      INT32 rc = SDB_OK ;
       const CHAR *pClusterInfo = NULL ;
-      BSONObj clusterInfo ;
-      INT32 rc                 = SDB_OK ;
+      string sdbUsr ;
+      string sdbPasswd ;
+      string sdbUsrGroup ;
+      BSONElement grantConfEle ;
+
       _restAdaptor->getQuery(_restSession, OM_REST_CLUSTER_INFO,
                              &pClusterInfo ) ;
       if ( NULL == pClusterInfo )
       {
-         _errorDetail = string("rest field ") + OM_REST_CLUSTER_INFO
-                        + " is null" ;
          rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+         _errorMsg.setError( TRUE, "invalid argument:%s is null,rc=%d",
+                             OM_REST_CLUSTER_INFO, rc ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
          goto error ;
       }
 
       rc = fromjson( pClusterInfo, clusterInfo ) ;
       if ( rc )
       {
-         PD_LOG_MSG( PDERROR, "change rest field to BSONObj failed:src=%s,"
-                     "rc=%d", pClusterInfo, rc ) ;
-         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
+         _errorMsg.setError( TRUE, "change rest field to BSONObj failed:"
+                                   "src=%s,rc=%d",
+                             pClusterInfo, rc ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
          goto error ;
       }
 
       clusterName = clusterInfo.getStringField( OM_BSON_FIELD_CLUSTER_NAME ) ;
-      desc        = clusterInfo.getStringField( OM_BSON_FIELD_CLUSTER_DESC ) ;
-      sdbUsr      = clusterInfo.getStringField( OM_BSON_FIELD_SDB_USER ) ;
-      sdbPasswd   = clusterInfo.getStringField( OM_BSON_FIELD_SDB_PASSWD ) ;
-      sdbUsrGroup = clusterInfo.getStringField( OM_BSON_FIELD_SDB_USERGROUP ) ;
-      installPath = clusterInfo.getStringField( OM_BSON_FIELD_INSTALL_PATH ) ;
-      if ( 0 == clusterName.length() || 0 == sdbUsr.length()
-           || 0 == sdbPasswd.length() || 0 == sdbUsrGroup.length() )
+      if ( clusterName.empty() )
       {
-         _errorDetail = string( OM_BSON_FIELD_CLUSTER_NAME ) + " is null"
-                        + " or " + OM_BSON_FIELD_SDB_USER + " is null"
-                        + " or " + OM_BSON_FIELD_SDB_PASSWD + " is null"
-                        + " or " + OM_BSON_FIELD_SDB_USERGROUP + " is null" ;
          rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+         _errorMsg.setError( TRUE, "invalid argument:%s is null",
+                             OM_BSON_FIELD_CLUSTER_NAME ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
          goto error ;
       }
 
-      if ( 0 == installPath.length() )
+      sdbUsr = clusterInfo.getStringField( OM_BSON_FIELD_SDB_USER ) ;
+      if ( sdbUsr.empty() )
       {
-         installPath = OM_DEFAULT_INSTALL_PATH ;
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "invalid argument:%s is null",
+                             OM_BSON_FIELD_SDB_USER ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      sdbPasswd = clusterInfo.getStringField( OM_BSON_FIELD_SDB_PASSWD ) ;
+      if ( sdbPasswd.empty() )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "invalid argument:%s is null",
+                             OM_BSON_FIELD_SDB_PASSWD ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      sdbUsrGroup = clusterInfo.getStringField( OM_BSON_FIELD_SDB_USERGROUP ) ;
+      if ( sdbUsrGroup.empty() )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "invalid argument:%s is null",
+                             OM_BSON_FIELD_SDB_USERGROUP ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      grantConfEle = clusterInfo.getField( OM_BSON_FIELD_GRANTCONF ) ;
+      if ( FALSE == grantConfEle.eoo() )
+      {
+         if ( bson::Array != grantConfEle.type() )
+         {
+            rc = SDB_INVALIDARG ;
+            _errorMsg.setError( TRUE, "invalid argument:%s is not an array",
+                                OM_BSON_FIELD_GRANTCONF ) ;
+            PD_LOG( PDERROR, _errorMsg.getError() ) ;
+            goto error ;
+         }
+
+         BSONObjIterator iter( grantConfEle.embeddedObject() ) ;
+         while ( iter.more() )
+         {
+            BSONElement ele = iter.next() ;
+            BSONObj grantInfo = ele.embeddedObject() ;
+            string tmpName = grantInfo.getStringField(
+                                                OM_CLUSTER_FIELD_GRANTNAME ) ;
+            BOOLEAN tmpPrivilege = grantInfo.getBoolField(
+                                                OM_CLUSTER_FIELD_PRIVILEGE ) ;
+
+            if ( OM_CLUSTER_FIELD_HOSTFILE == tmpName )
+            {
+            }
+            else if ( OM_CLUSTER_FIELD_ROOTUSER == tmpName )
+            {
+               if ( FALSE == tmpPrivilege )
+               {
+                  rc = SDB_INVALIDARG ;
+                  _errorMsg.setError( TRUE, "%s can not be false",
+                                      OM_CLUSTER_FIELD_ROOTUSER ) ;
+                  PD_LOG( PDERROR, _errorMsg.getError() ) ;
+                  goto error ;
+               }
+            }
+            else
+            {
+               rc = SDB_INVALIDARG ;
+               _errorMsg.setError( TRUE, "invalid argument:%s=%s",
+                                   OM_CLUSTER_FIELD_GRANTNAME,
+                                   tmpName.c_str() ) ;
+               PD_LOG( PDERROR, _errorMsg.getError() ) ;
+               goto error ;
+
+            }
+         }
       }
 
    done:
@@ -1513,64 +1580,58 @@ namespace engine
 
    INT32 omCreateClusterCommand::doCommand()
    {
+      INT32 rc = SDB_OK ;
       string clusterName ;
-      string desc ;
-      string sdbUser ;
-      string sdbPasswd ;
-      string sdbUserGroup ;
-      string sdbinstallPath ;
-      BSONObjBuilder resBuilder ;
-      BSONObj bsonCluster ;
-      INT32 rc                 = SDB_OK ;
+      BSONObj clusterInfo ;
+      omRestTool restTool( _restAdaptor, _restSession ) ;
+      omDatabaseTool dbTool( _cb ) ;
 
-      rc = _getParaOfCreateCluster( clusterName, desc, sdbUser, sdbPasswd,
-                                    sdbUserGroup, sdbinstallPath ) ;
-      if ( SDB_OK != rc )
+      _setFileLanguageSep() ;
+
+      pmdGetThreadEDUCB()->resetInfo( EDU_INFO_ERROR ) ;
+
+      rc = _getRestInfo( clusterName, clusterInfo ) ;
+      if ( rc )
       {
-         PD_LOG( PDERROR, "get cluster info failed:rc=%d", rc ) ;
-         _sendErrorRes2Web( rc, _errorDetail ) ;
+         PD_LOG( PDERROR, "_getRestInfo failed:rc=%d", rc ) ;
          goto error ;
       }
 
-      // duplicate check depends on the unique index of table(OM_CS_DEPLOY_CL_CLUSTERIDX1)
-      bsonCluster = BSON( OM_CLUSTER_FIELD_NAME << clusterName
-                          << OM_CLUSTER_FIELD_DESC << desc
-                          << OM_CLUSTER_FIELD_SDBUSER << sdbUser
-                          << OM_CLUSTER_FIELD_SDBPASSWD << sdbPasswd
-                          << OM_CLUSTER_FIELD_SDBUSERGROUP << sdbUserGroup
-                          << OM_CLUSTER_FIELD_INSTALLPATH << sdbinstallPath ) ;
-      rc = rtnInsert( OM_CS_DEPLOY_CL_CLUSTER, bsonCluster, 1, 0, _cb );
+      /*
+         duplicate check depends on the unique index of
+         table (OM_CS_DEPLOY_CL_CLUSTERIDX1)
+      */
+      rc = dbTool.addCluster( clusterInfo ) ;
       if ( rc )
       {
          if ( SDB_IXM_DUP_KEY == rc )
          {
-            PD_LOG_MSG( PDERROR, "%s is already exist:rc=%d",
-                        clusterName.c_str(), rc ) ;
-            _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
-            _sendErrorRes2Web( rc, _errorDetail ) ;
+            _errorMsg.setError( TRUE, "%s is already exist:rc=%d",
+                                clusterName.c_str(), rc ) ;
          }
          else
          {
-            PD_LOG_MSG( PDERROR, "failed to insert cluster:name=%s,rc=%d",
-                        clusterName.c_str(), rc ) ;
-            _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
-            _sendErrorRes2Web( rc, _errorDetail ) ;
+            _errorMsg.setError( TRUE, "failed to insert cluster:name=%s,rc=%d",
+                                clusterName.c_str(), rc ) ;
          }
-
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
          goto error ;
       }
 
-      _sendOKRes2Web() ;
+      restTool.sendOkRespone() ;
+
    done:
       return rc ;
    error:
+      restTool.sendRespone( rc, _errorMsg.getError() ) ;
       goto done ;
+
    }
 
    // *****************omQueryClusterCommand *****************************
    omQueryClusterCommand::omQueryClusterCommand( restAdaptor *pRestAdaptor,
                                                  pmdRestSession *pRestSession )
-                         : omCreateClusterCommand( pRestAdaptor, pRestSession )
+                         : omCheckSessionCommand( pRestAdaptor, pRestSession )
    {
    }
 
@@ -1636,7 +1697,7 @@ namespace engine
    // ***************** omUpdateHostInfoCommand *****************************
    omUpdateHostInfoCommand::omUpdateHostInfoCommand( restAdaptor *pRestAdaptor,
                                                   pmdRestSession *pRestSession )
-                          : omCreateClusterCommand( pRestAdaptor, pRestSession )
+                          : omCheckSessionCommand( pRestAdaptor, pRestSession )
    {
    }
 
@@ -1825,7 +1886,7 @@ namespace engine
                                          pmdRestSession *pRestSession,
                                          const string &localAgentHost,
                                          const string &localAgentService )
-                     : omCreateClusterCommand( pRestAdaptor, pRestSession ),
+                     : omCheckSessionCommand( pRestAdaptor, pRestSession ),
                        _localAgentHost( localAgentHost ),
                        _localAgentService( localAgentService )
    {
@@ -3978,7 +4039,7 @@ namespace engine
    // *****************omListHostCommand *****************************
    omListHostCommand::omListHostCommand( restAdaptor *pRestAdaptor,
                                          pmdRestSession *pRestSession )
-                     :omCreateClusterCommand( pRestAdaptor, pRestSession )
+                     : omCheckSessionCommand( pRestAdaptor, pRestSession )
    {
    }
 
@@ -4126,7 +4187,7 @@ namespace engine
                                                 pmdRestSession *pRestSession,
                                                 const CHAR *pRootPath,
                                                 const CHAR *pSubPath )
-                             :omCreateClusterCommand( pRestAdaptor,
+                             : omCheckSessionCommand( pRestAdaptor,
                                                       pRestSession ),
                               _rootPath( pRootPath ), _subPath( pSubPath )
    {
@@ -10027,7 +10088,7 @@ namespace engine
    }
 
    INT32 omDiscoverBusinessCommand::_storeBusinessInfo( const INT32 addType,
-                                                        const string deployMod,
+                                                        const string &deployMod,
                                                         const BSONObj &buzInfo )
    {
       INT32 rc = SDB_OK ;
@@ -11682,5 +11743,197 @@ namespace engine
       request = builder.obj() ;
    }
 
+   omGrantSysConfigureCommand::omGrantSysConfigureCommand(
+                                                restAdaptor *pRestAdaptor,
+                                                pmdRestSession *pRestSession )
+         : omAuthCommand( pRestAdaptor, pRestSession )
+   {
+   }
+
+   omGrantSysConfigureCommand::~omGrantSysConfigureCommand()
+   {
+   }
+
+   INT32 omGrantSysConfigureCommand::_getRestInfo()
+   {
+      INT32 rc = SDB_OK ;
+      const CHAR *pClusterName  = NULL ;
+      const CHAR *pName         = NULL ;
+      const CHAR *pPrivilege    = NULL ;
+      string privilege ;
+
+      //ClusterName
+      _restAdaptor->getQuery( _restSession, OM_CLUSTER_FIELD_NAME,
+                              &pClusterName ) ;
+      if ( NULL == pClusterName || 0 == ossStrlen( pClusterName ) )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "get rest info failed:%s is NULL",
+                             OM_CLUSTER_FIELD_NAME ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+      _clusterName = pClusterName ;
+
+      //Name
+      _restAdaptor->getQuery( _restSession, OM_CLUSTER_FIELD_GRANTNAME,
+                              &pName ) ;
+      if ( NULL == pName || 0 == ossStrlen( pName ) )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "get rest info failed:%s is NULL",
+                             OM_CLUSTER_FIELD_GRANTNAME ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+      _grantName = pName ;
+
+      if ( OM_CLUSTER_FIELD_HOSTFILE != _grantName &&
+           OM_CLUSTER_FIELD_ROOTUSER != _grantName )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "invalid argument:%s=%s",
+                             OM_CLUSTER_FIELD_GRANTNAME, _grantName.c_str() ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      //Privilege
+      _restAdaptor->getQuery( _restSession, OM_CLUSTER_FIELD_PRIVILEGE,
+                              &pPrivilege ) ;
+      if ( NULL == pPrivilege || 0 == ossStrlen( pPrivilege ) )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "get rest info failed:%s is NULL",
+                             OM_CLUSTER_FIELD_PRIVILEGE ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+      privilege = pPrivilege ;
+
+      if ( OM_VALUE_BOOLEAN_TRUE1 == privilege ||
+           OM_VALUE_BOOLEAN_TRUE2 == privilege )
+      {
+         _privilege = TRUE ;
+      }
+      else if ( OM_VALUE_BOOLEAN_FALSE1 == privilege ||
+                OM_VALUE_BOOLEAN_FALSE2 == privilege )
+      {
+         _privilege = FALSE ;
+      }
+      else
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "invalid argument:%s=%s",
+                             OM_CLUSTER_FIELD_PRIVILEGE, privilege.c_str() ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omGrantSysConfigureCommand::_checkCluster()
+   {
+      INT32 rc = SDB_OK ;
+      omDatabaseTool dbTool( _cb ) ;
+
+      if ( FALSE == dbTool.clusterIsExist( _clusterName ) )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "cluster does not exist: %s",
+                             _clusterName.c_str() ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omGrantSysConfigureCommand::_grantSysConf()
+   {
+      INT32 rc = SDB_OK ;
+      omDatabaseTool dbTool( _cb ) ;
+
+      rc = dbTool.updateClusterGrantConf( _clusterName, _grantName,
+                                          _privilege ) ;
+      if ( rc )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "grant cluster failed:%s=%s,%s=%s,%s=%s",
+                             OM_CLUSTER_FIELD_NAME, _clusterName.c_str(),
+                             OM_CLUSTER_FIELD_GRANTNAME, _grantName.c_str(),
+                             OM_CLUSTER_FIELD_PRIVILEGE,
+                             _privilege == TRUE ? OM_VALUE_BOOLEAN_TRUE1 :
+                                                     OM_VALUE_BOOLEAN_FALSE1 ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omGrantSysConfigureCommand::doCommand()
+   {
+      INT32 rc = SDB_OK ;
+      omRestTool restTool( _restAdaptor, _restSession ) ;
+
+      _setFileLanguageSep() ;
+
+      pmdGetThreadEDUCB()->resetInfo( EDU_INFO_ERROR ) ;
+
+      rc = _getRestInfo() ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "_getRestInfo failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      if ( OM_CLUSTER_FIELD_ROOTUSER == _grantName )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "%s can not be modified",
+                             OM_CLUSTER_FIELD_ROOTUSER ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      rc = _checkCluster() ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "_checkCluster failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = _grantSysConf() ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "_checkCluster failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      if ( OM_CLUSTER_FIELD_HOSTFILE == _grantName )
+      {
+         sdbGetOMManager()->updateClusterHostFilePrivilege( _clusterName,
+                                                            _privilege ) ;
+      }
+
+      restTool.sendOkRespone() ;
+
+   done:
+      return rc ;
+   error:
+      restTool.sendRespone( rc, _errorMsg.getError() ) ;
+      goto done ;
+   }
 }
 

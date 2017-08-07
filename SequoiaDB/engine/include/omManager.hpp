@@ -128,6 +128,8 @@ namespace engine
          INT32             refreshVersions() ;
          void              updateClusterVersion( string cluster ) ;
          void              removeClusterVersion( string cluster ) ;
+         void              updateClusterHostFilePrivilege( string clusterName,
+                                                           BOOLEAN privilege ) ;
 
          omTaskManager     *getTaskManager() ;
 
@@ -155,6 +157,7 @@ namespace engine
 
          INT32             _updateConfTable() ;
          INT32             _updateBusinessTable() ;
+         INT32             _updateClusterTable() ;
          INT32             _updateTable() ;
 
          INT32             _createJobs() ;
@@ -190,6 +193,10 @@ namespace engine
 
          void              _createVersionFile() ;
 
+      private:
+         INT32 _appendClusterGrant( const string& clusertName,
+                                    const string& grantName,
+                                    BOOLEAN privilege ) ;
 
       // Msg functions
       protected:
