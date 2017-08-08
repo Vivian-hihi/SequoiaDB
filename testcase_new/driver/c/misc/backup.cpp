@@ -21,6 +21,13 @@ TEST( backup, option )
    getConf() ;
    rc = sdbConnect( HOSTNAME, SVCNAME, USER, PASSWD, &db ) ;
    ASSERT_EQ( rc, SDB_OK ) << "fail to connect sdb" ;
+	if( isStandalone( db ) ) 
+	{
+		printf( "Run mode is standalone.\n" ) ;
+		sdbDisconnect( db ) ;
+		sdbReleaseConnection( db ) ;
+		return ;
+	}
 	
 	// get a data group id
 	sdbCursorHandle cursor = SDB_INVALID_HANDLE ;
