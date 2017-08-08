@@ -645,7 +645,7 @@ namespace engine
          {
             PD_LOG( PDERROR, "Option Sharding/Compress/Index is not compatible "
                     "with Capped" ) ;
-            rc = SDB_OPERATION_INCOMPATIBLE ;
+            rc = SDB_INVALIDARG ;
             goto error ;
          }
 

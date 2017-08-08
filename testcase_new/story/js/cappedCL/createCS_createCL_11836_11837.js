@@ -46,9 +46,9 @@ function normalCScreateCL( normal_csName, capped_csName )
    }
    catch( e )
    {
-      if( e !== -6 )
+      if( e !== -315 )
       {
-         throw buildException( "normalCS create cappedCL", e, "normalCS create cappedCL", "-6", e );
+         throw buildException( "normalCS create cappedCL", e, "normalCS create cappedCL", "-315", e );
       }
    }
 }
