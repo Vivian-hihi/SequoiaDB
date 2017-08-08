@@ -257,8 +257,8 @@ namespace engine
       goto done ;
    }
 
-   INT32 _sptUsrFileCommon::seek( INT32 seekSize, const BSONObj &optionObj,
-                                 string &err )
+   INT32 _sptUsrFileCommon::seek( INT64 seekSize, const BSONObj &optionObj,
+                                  string &err )
    {
       INT32 rc = SDB_OK ;
       OSS_SEEK whence ;

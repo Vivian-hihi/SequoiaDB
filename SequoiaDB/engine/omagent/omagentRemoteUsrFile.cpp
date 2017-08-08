@@ -33,6 +33,7 @@
 #include "omagentRemoteUsrFile.hpp"
 #include "omagentMgr.hpp"
 #include "omagentDef.hpp"
+#include "omagentSession.hpp"
 #include "ossCmdRunner.hpp"
 #include "ossPrimitiveFileOp.hpp"
 #include "sptUsrFileCommon.hpp"
@@ -47,6 +48,40 @@ using namespace bson ;
 
 namespace engine
 {
+   // function to get current thread omagent session
+   static omaSession* _getThreadOmaSession()
+   {
+      ISession *pSession = NULL ;
+      omaSession *pAgentSession = NULL ;
+      pmdEDUCB *cb = NULL ;
+
+
+      cb = pmdGetThreadEDUCB() ;
+      if( NULL == cb )
+      {
+         PD_LOG_MSG( PDERROR, "Failed to get thread edu cb" ) ;
+         goto error ;
+      }
+      pSession = cb->getSession() ;
+      if( NULL == pSession )
+      {
+         PD_LOG( PDERROR, "Failed to get session" ) ;
+         goto error ;
+      }
+      if( pSession->sessionType() != SDB_SESSION_OMAGENT )
+      {
+         PD_LOG_MSG( PDERROR, "Session is not omagent session" ) ;
+         goto error ;
+      }
+
+      pAgentSession = dynamic_cast< omaSession* >( pSession ) ;
+   done:
+      return pAgentSession ;
+   error:
+      pAgentSession = NULL ;
+      goto done ;
+   }
+
    /*
       _remoteFileOpen implement
    */
@@ -69,8 +104,10 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       string filename ;
-      _sptUsrFileCommon fileCommon ;
+      _sptUsrFileCommon *fileCommon = NULL ;
+      omaSession *pAgentSession = NULL ;
       string err ;
+      UINT32 fID ;
 
       // get argument
       if ( FALSE == _valueObj.hasField( "filename" ) )
@@ -87,19 +124,30 @@ namespace engine
       }
       filename = _valueObj.getStringField( "filename" ) ;
 
-      rc = fileCommon.open( filename, _optionObj, err ) ;
-      if( SDB_OK != rc )
+      pAgentSession = _getThreadOmaSession() ;
+      if( NULL == pAgentSession )
       {
-         PD_LOG_MSG( PDERROR, "%s", err.c_str() ) ;
+         rc = SDB_SYS ;
+         PD_LOG_MSG( PDERROR, "Failed to get omagent session" ) ;
          goto error ;
       }
 
-      rc = fileCommon.close( err ) ;
+      rc = pAgentSession->newFileObj( fID, &fileCommon ) ;
       if( SDB_OK != rc )
       {
+         PD_LOG_MSG( PDERROR, "Failed to new sptUsrFileCommon obj" ) ;
+         goto error ;
+      }
+
+      rc = fileCommon->open( filename, _optionObj, err ) ;
+      if( SDB_OK != rc )
+      {
+         // Need to release file obj if failed to open file
+         pAgentSession->releaseFileObj( fID ) ;
          PD_LOG_MSG( PDERROR, "%s", err.c_str() ) ;
          goto error ;
       }
+      retObj = BSON( "fID" << fID ) ;
    done:
       return rc ;
    error:
@@ -111,7 +159,8 @@ namespace engine
    */
    IMPLEMENT_OACMD_AUTO_REGISTER( _remoteFileRead )
 
-   _remoteFileRead::_remoteFileRead()
+   _remoteFileRead::_remoteFileRead():
+      _fID( 0 ), _size( 1024 )
    {
    }
 
@@ -126,39 +175,19 @@ namespace engine
       rc = _remoteExec::init( pInfomation ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get argument, rc: %d", rc ) ;
 
-      if ( FALSE == _valueObj.hasField( "filename" ) )
+      if( FALSE == _matchObj.hasField( "fID" ) )
       {
          rc = SDB_OUT_OF_BOUND ;
-         PD_LOG_MSG( PDERROR, "filename must be config" ) ;
-         goto error;
-      }
-      if ( String != _valueObj.getField( "filename" ).type() )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "filename must be string" ) ;
+         PD_LOG_MSG( PDERROR, "fID must be config" ) ;
          goto error ;
       }
-      _filename = _valueObj.getStringField( "filename" ) ;
-
-      if ( FALSE == _valueObj.hasField( "location" ) )
+      if( NumberInt != _matchObj.getField( "fID" ).type() )
       {
-         _location = 0 ;
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "fID must be numberInt" ) ;
+         goto error ;
       }
-      else
-      {
-         BSONElement element  = _valueObj.getField( "location" ) ;
-         if( NumberInt != element.type() &&
-             NumberLong != element.type() )
-         {
-            rc = SDB_INVALIDARG ;
-            PD_LOG_MSG( PDERROR, "location must be number" ) ;
-            goto error ;
-         }
-         else
-         {
-            _location = element.numberLong() ;
-         }
-      }
+      _fID = _matchObj.getIntField( "fID" ) ;
 
       if ( FALSE == _valueObj.hasField( "size" ) )
       {
@@ -195,28 +224,31 @@ namespace engine
       INT32 rc = SDB_OK ;
       CHAR *buf = NULL ;
       SINT64 readLen = 0 ;
+      omaSession *pAgentSession = NULL ;
       BSONObjBuilder builder ;
-      _sptUsrFileCommon fileCommon ;
+      _sptUsrFileCommon *fileCommon = NULL ;
       string err ;
 
-      // open file
-      rc = fileCommon.open( _filename, _optionObj, err ) ;
-      if ( SDB_OK != rc )
+      pAgentSession = _getThreadOmaSession() ;
+      if( NULL == pAgentSession )
       {
-         PD_LOG_MSG( PDERROR, "%s", err.c_str() ) ;
+         rc = SDB_SYS ;
+         PD_LOG_MSG( PDERROR, "Failed to get omagent session" ) ;
          goto error ;
       }
 
-      rc = fileCommon.seek( _location, BSONObj(), err ) ;
-      if( SDB_OK != rc )
+      fileCommon = pAgentSession->getFileObjByID( _fID ) ;
+      if( NULL == fileCommon )
       {
-         PD_LOG_MSG( PDERROR, "%s", err.c_str() ) ;
+         rc = SDB_FNE ;
+         PD_LOG_MSG( PDERROR, "Failed to get sptUsrFileCommon obj, fID: %u",
+                     _fID ) ;
          goto error ;
       }
 
       // read content
-      rc = fileCommon.read( BSON( "size" << _size ), err,
-                           &buf, readLen ) ;
+      rc = fileCommon->read( BSON( "size" << _size ), err,
+                             &buf, readLen ) ;
       if( SDB_OK != rc )
       {
          PD_LOG_MSG( PDERROR, "%s", err.c_str() ) ;
@@ -231,7 +263,6 @@ namespace engine
       {
          SDB_OSS_FREE( buf ) ;
       }
-      fileCommon.close( err ) ;
       return rc ;
    error:
       goto done ;
@@ -242,11 +273,9 @@ namespace engine
    */
    IMPLEMENT_OACMD_AUTO_REGISTER( _remoteFileWrite )
 
-   _remoteFileWrite::_remoteFileWrite()
+   _remoteFileWrite::_remoteFileWrite():
+      _fID( 0 ), _size( 0 ), _content( NULL )
    {
-      _location = 0 ;
-      _size = 0 ;
-      _content = NULL ;
    }
 
    _remoteFileWrite::~_remoteFileWrite()
@@ -261,36 +290,6 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Failed to get argument, rc: %d", rc ) ;
 
       _content = _valueObj.getStringField( "content" ) ;
-
-      if ( FALSE == _valueObj.hasField( "filename" ) )
-      {
-         rc = SDB_OUT_OF_BOUND ;
-         PD_LOG_MSG( PDERROR, "filename must be config" ) ;
-         goto error;
-      }
-      if ( String != _valueObj.getField( "filename" ).type() )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "filename must be string" ) ;
-         goto error ;
-      }
-      _filename = _valueObj.getStringField( "filename" ) ;
-
-      if ( FALSE == _valueObj.hasField( "location" ) )
-      {
-         _location = 0 ;
-      }
-      else if ( NumberInt != _valueObj.getField( "location" ).type() &&
-                NumberLong != _valueObj.getField( "location" ).type() )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "location must be number" ) ;
-         goto error ;
-      }
-      else
-      {
-         _location = _valueObj.getIntField( "location" ) ;
-      }
 
       if( FALSE == _valueObj.hasField( "size" ) )
       {
@@ -308,6 +307,20 @@ namespace engine
          _size = _valueObj.getIntField( "size" ) ;
       }
 
+      if( FALSE == _matchObj.hasField( "fID" ) )
+      {
+         rc = SDB_OUT_OF_BOUND ;
+         PD_LOG_MSG( PDERROR, "fID must be config" ) ;
+         goto error ;
+      }
+      if( NumberInt != _matchObj.getField( "fID" ).type() )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "fID must be numberInt" ) ;
+         goto error ;
+      }
+      _fID = _matchObj.getIntField( "fID" ) ;
+
    done:
       return rc ;
    error:
@@ -322,34 +335,213 @@ namespace engine
    INT32 _remoteFileWrite::doit( BSONObj &retObj )
    {
       INT32 rc = SDB_OK ;
-      OSSFILE file ;
-      _sptUsrFileCommon fileCommon ;
+      omaSession *pAgentSession = NULL ;
+      _sptUsrFileCommon *fileCommon = NULL ;
       string err ;
 
-      // open file
-      rc = fileCommon.open( _filename, _optionObj, err ) ;
-      if ( SDB_OK != rc )
+      pAgentSession = _getThreadOmaSession() ;
+      if( NULL == pAgentSession )
       {
-         PD_LOG_MSG( PDERROR, "%s", err.c_str() ) ;
+         rc = SDB_SYS ;
+         PD_LOG_MSG( PDERROR, "Failed to get omagent session" ) ;
          goto error ;
       }
 
-      rc = fileCommon.seek( _location, BSONObj(), err ) ;
-      if( SDB_OK != rc )
+      fileCommon = pAgentSession->getFileObjByID( _fID ) ;
+      if( NULL == fileCommon )
       {
-         PD_LOG_MSG( PDERROR, "%s", err.c_str() ) ;
+         rc = SDB_FNE ;
+         PD_LOG_MSG( PDERROR, "Failed to get sptUsrFileCommon obj, fID: %u",
+                     _fID ) ;
          goto error ;
       }
 
       // write content
-      rc = fileCommon.write( _content, _size, err ) ;
+      rc = fileCommon->write( _content, _size, err ) ;
       if( SDB_OK != rc )
       {
          PD_LOG_MSG( PDERROR, "%s", err.c_str() ) ;
          goto error ;
       }
    done:
-      fileCommon.close( err ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   /*
+      _remoteFileSeek implement
+   */
+   IMPLEMENT_OACMD_AUTO_REGISTER( _remoteFileSeek )
+
+   _remoteFileSeek::_remoteFileSeek(): _fID( 0 ), _seekSize( 0 )
+   {
+   }
+
+   _remoteFileSeek::~_remoteFileSeek()
+   {
+   }
+
+   INT32 _remoteFileSeek::init( const CHAR * pInfomation )
+   {
+      INT32 rc = SDB_OK ;
+      rc = _remoteExec::init( pInfomation ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to get argument, rc: %d", rc ) ;
+
+      if( FALSE == _matchObj.hasField( "fID" ) )
+      {
+         rc = SDB_OUT_OF_BOUND ;
+         PD_LOG_MSG( PDERROR, "fID must be config" ) ;
+         goto error ;
+      }
+      if( NumberInt != _matchObj.getField( "fID" ).type() )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "fID must be numberInt" ) ;
+         goto error ;
+      }
+      _fID = _matchObj.getIntField( "fID" ) ;
+
+      if( FALSE == _valueObj.hasField( "seekSize" ) )
+      {
+         rc = SDB_OUT_OF_BOUND ;
+         PD_LOG_MSG( PDERROR, "seekSize must be config" ) ;
+         goto error ;
+      }
+
+      {
+         BSONElement element = _valueObj.getField( "seekSize" ) ;
+         if( NumberInt != element.type() &&
+             NumberLong != element.type() )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "seekSize must be number" ) ;
+            goto error ;
+         }
+         _seekSize = element.numberLong() ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   const CHAR* _remoteFileSeek::name()
+   {
+      return OMA_REMOTE_FILE_SEEK ;
+   }
+
+   INT32 _remoteFileSeek::doit( BSONObj &retObj )
+   {
+      INT32 rc = SDB_OK ;
+      omaSession *pAgentSession = NULL ;
+      _sptUsrFileCommon *fileCommon = NULL ;
+      string err ;
+
+      pAgentSession = _getThreadOmaSession() ;
+      if( NULL == pAgentSession )
+      {
+         rc = SDB_SYS ;
+         PD_LOG_MSG( PDERROR, "Failed to get omagent session" ) ;
+         goto error ;
+      }
+
+      fileCommon = pAgentSession->getFileObjByID( _fID ) ;
+      if( NULL == fileCommon )
+      {
+         rc = SDB_FNE ;
+         PD_LOG_MSG( PDERROR, "Failed to get sptUsrFileCommon obj, fID: %u",
+                     _fID ) ;
+         goto error ;
+      }
+
+      rc = fileCommon->seek( _seekSize, _optionObj, err ) ;
+      if( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "%s", err.c_str() ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   /*
+      _remoteFileClose implement
+   */
+   IMPLEMENT_OACMD_AUTO_REGISTER( _remoteFileClose )
+
+   _remoteFileClose::_remoteFileClose(): _fID( 0 )
+   {
+   }
+
+   _remoteFileClose::~_remoteFileClose()
+   {
+   }
+
+   INT32 _remoteFileClose::init( const CHAR * pInfomation )
+   {
+      INT32 rc = SDB_OK ;
+      rc = _remoteExec::init( pInfomation ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to get argument, rc: %d", rc ) ;
+
+      if( FALSE == _matchObj.hasField( "fID" ) )
+      {
+         rc = SDB_OUT_OF_BOUND ;
+         PD_LOG_MSG( PDERROR, "fID must be config" ) ;
+         goto error ;
+      }
+      if( NumberInt != _matchObj.getField( "fID" ).type() )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "fID must be numberInt" ) ;
+         goto error ;
+      }
+      _fID = _matchObj.getIntField( "fID" ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   const CHAR* _remoteFileClose::name()
+   {
+      return OMA_REMOTE_FILE_CLOSE ;
+   }
+
+   INT32 _remoteFileClose::doit( BSONObj &retObj )
+   {
+      INT32 rc = SDB_OK ;
+      omaSession *pAgentSession = NULL ;
+      _sptUsrFileCommon *fileCommon = NULL ;
+      string err ;
+
+      pAgentSession = _getThreadOmaSession() ;
+      if( NULL == pAgentSession )
+      {
+         rc = SDB_SYS ;
+         PD_LOG_MSG( PDERROR, "Failed to get omagent session" ) ;
+         goto error ;
+      }
+
+      fileCommon = pAgentSession->getFileObjByID( _fID ) ;
+      if( NULL == fileCommon )
+      {
+         rc = SDB_FNE ;
+         PD_LOG_MSG( PDERROR, "Failed to get sptUsrFileCommon obj, fID: %u",
+                     _fID ) ;
+         goto error ;
+      }
+
+      rc = fileCommon->close( err ) ;
+      if( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "%s", err.c_str() ) ;
+         goto error ;
+      }
+      pAgentSession->releaseFileObj( _fID ) ;
+   done:
       return rc ;
    error:
       goto done ;

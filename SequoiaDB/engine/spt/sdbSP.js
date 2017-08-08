@@ -539,20 +539,10 @@ Remote.prototype.getFile = function( filename, permission, openMode ) {
          }
       }
 
-      this._runCommand( "file open", option, {}, { "filename": filename } ) ;
+      var retObj = this._runCommand( "file open", option, {},
+                                     { "filename": filename } ) ;
+      file._fID = retObj.toObj().fID ;
       file._filename = filename ;
-      file._location = 0 ;
-      file._isOpened = true ;
-
-      if( 0 != ( option.mode & SDB_FILE_CREATEONLY ) )
-      {
-         option.mode &= ~SDB_FILE_CREATEONLY ;
-      }
-      if( 0 != ( option.mode & SDB_FILE_REPLACE ) )
-      {
-         option.mode &= ~SDB_FILE_REPLACE ;
-      }
-      file._option = option ;
    }
    return file ;
 }
@@ -2264,15 +2254,13 @@ File.scp = function( src, dst, isReplace, mode ) {
    }
 
    var dstArr = dst.split( "@" ) ;
-   var isDstExist = false ;
    if( dstArr.length > 1 )
    {
       var hostPortSplit = dstArr[0].split( ":" ) ;
       var remote = new Remote( hostPortSplit[0], hostPortSplit[1] ) ;
       var fileMgr = remote.getFile() ;
       dstFilename = dstArr[1] ;
-      isDstExist = fileMgr.exist( dstFilename ) ;
-      if( true == isDstExist )
+      if( true == fileMgr.exist( dstFilename ) )
       {
          if( false == isReplace )
          {
@@ -2281,13 +2269,13 @@ File.scp = function( src, dst, isReplace, mode ) {
          }
          else
          {
-            dstFile = remote.getFile( dstFilename, 0777,
+            dstFile = remote.getFile( dstFilename, mode,
                                       SDB_FILE_REPLACE| SDB_FILE_READWRITE ) ;
          }
       }
       else
       {
-         dstFile = remote.getFile( dstFilename, 0777,
+         dstFile = remote.getFile( dstFilename, mode,
                                    SDB_FILE_CREATEONLY | SDB_FILE_READWRITE ) ;
       }
    }
@@ -2303,13 +2291,13 @@ File.scp = function( src, dst, isReplace, mode ) {
          }
          else
          {
-            dstFile = new File( dstFilename, 0777,
+            dstFile = new File( dstFilename, mode,
                                 SDB_FILE_REPLACE | SDB_FILE_READWRITE ) ;
          }
       }
       else
       {
-         dstFile = new File( dstFilename, 0777,
+         dstFile = new File( dstFilename, mode,
                              SDB_FILE_CREATEONLY | SDB_FILE_READWRITE ) ;
       }
    }
@@ -2327,11 +2315,6 @@ File.scp = function( src, dst, isReplace, mode ) {
    {
       if( -9 == e )
       {
-         if( false == isDstExist )
-         {
-            var umask = dstFile.getUmask() ;
-            dstFile.chmod( dstFilename, mode & ~umask ) ;
-         }
          println( "Success to copy file from " + src + " to " + dst ) ;
       }
       else
@@ -2366,29 +2349,20 @@ File.prototype.read = function( size ) {
 
    if ( undefined != this._remote )
    {
-      if ( true != this._isOpened )
-      {
-         setLastErrMsg( "file is not opened" ) ;
-         throw SDB_IO ;
-      }
-
       var retObj ;
       if ( undefined != size )
       {
-         retObj = this._remote._runCommand( "file read", this._option, {},
-                                            { "size": size,
-                                              "filename": this._filename,
-                                              "location": this._location } ) ;
+         retObj = this._remote._runCommand( "file read", {},
+                                            { "fID": this._fID },
+                                            { "size": size } ) ;
       }
       else
       {
-         retObj = this._remote._runCommand( "file read", this._option, {},
-                                            { "filename": this._filename,
-                                              "location": this._location } ) ;
+         retObj = this._remote._runCommand( "file read", {},
+                                            { "fID": this._fID } ) ;
       }
       var recvObj = retObj.toObj() ;
       str = recvObj.readContent ;
-      this._location += recvObj.readLen ;
    }
    else
    {
@@ -2411,15 +2385,12 @@ File.prototype.readContent = function( size )
    {
       if( undefined != size )
       {
-         retObj = this._readContent( this._remote, this._option, this._filename,
-                                     this._location, size ) ;
+         retObj = this._readContent( this._remote, this._fID, size ) ;
       }
       else
       {
-         retObj = this._readContent( this._remote, this._option, this._filename,
-                                     this._location ) ;
+         retObj = this._readContent( this._remote, this._fID ) ;
       }
-      this._location += retObj.getLength() ;
    }
    else
    {
@@ -2439,17 +2410,8 @@ File.prototype.write = function( content ){
 
    if ( undefined != this._remote )
    {
-      if ( true != this._isOpened )
-      {
-         setLastErrMsg( "file is not opened" ) ;
-         throw SDB_IO ;
-      }
-
-      this._remote._runCommand( "file write", this._option, {},
-                                { "filename": this._filename,
-                                  "location": this._location,
-                                  "content": content } ) ;
-      this._location += content.length ;
+      this._remote._runCommand( "file write", {}, { "fID": this._fID },
+                                { "content": content } ) ;
    }
    else
    {
@@ -2461,9 +2423,7 @@ File.prototype.writeContent = function( content )
 {
    if( undefined != this._remote )
    {
-      this._writeContent( this._remote, this._option, this._filename,
-                          this._location, content ) ;
-      this._location += content.getLength() ;
+      this._writeContent( this._remote, this._fID, content ) ;
    }
    else
    {
@@ -2480,53 +2440,20 @@ File.prototype.seek = function( offset, where ) {
       throw SDB_OUT_OF_BOUND ;
    }
 
-   if ( undefined == where )
+   var optionObj = {} ;
+   if ( undefined != where )
    {
-      where = 'b' ;
+      optionObj.whenceStr = where ;
    }
 
    if ( undefined != this._remote )
    {
-      if ( true != this._isOpened )
-      {
-         setLastErrMsg( "file is not opened" ) ;
-         throw SDB_IO ;
-      }
-
-      if ( 'b' == where )
-      {
-         if ( offset < 0 )
-         {
-            throw SDB_INVALIDARG ;
-         }
-         this._location = offset ;
-      }
-      else if ( 'c' == where )
-      {
-         if ( 0 > this._location + offset )
-         {
-            throw SDB_INVALIDARG ;
-         }
-         this._location += offset ;
-      }
-      else if ( 'e' == where )
-      {
-         var size = this.getSize( this._filename ) ;
-         if ( 0 > size + offset )
-         {
-            throw SDB_INVALIDARG ;
-         }
-         this._location = size + offset ;
-      }
-      else
-      {
-         setLastErrMsg( "where must be string(b/c/e)" ) ;
-         throw SDB_INVALIDARG ;
-      }
+      this._remote._runCommand( "file seek", optionObj, { "fID": this._fID },
+                                { "seekSize": offset } ) ;
    }
    else
    {
-      this._seek( offset, where ) ;
+      this._seek( offset, optionObj ) ;
    }
 }
 
@@ -2537,7 +2464,12 @@ File.prototype.close = function() {
    }
    else
    {
-      this._isOpened = false ;
+      println( "fid:" + this._fID ) ;
+      if( this._fID != undefined )
+      {
+         this._remote._runCommand( "file close", {}, { "fID": this._fID } ) ;
+         this._fID = undefined ;
+      }
    }
 }
 

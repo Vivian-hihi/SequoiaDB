@@ -75,8 +75,7 @@ namespace engine
          INT32 doit( BSONObj &retObj ) ;
 
       private:
-         string _filename ;
-         SINT64 _location ;
+         UINT32 _fID ;
          SINT64 _size ;
    } ;
 
@@ -98,10 +97,52 @@ namespace engine
          INT32 doit( BSONObj &retObj ) ;
 
       private:
-         string _filename ;
-         SINT64 _location ;
+         UINT32 _fID ;
          SINT64 _size ;
          const CHAR* _content ;
+   } ;
+
+   /*
+      _remoteFileSeek define
+   */
+   class _remoteFileSeek : public _remoteExec
+   {
+      DECLARE_OACMD_AUTO_REGISTER()
+      public:
+         _remoteFileSeek() ;
+
+         ~_remoteFileSeek() ;
+
+         INT32 init( const CHAR * pInfomation ) ;
+
+         const CHAR *name() ;
+
+         INT32 doit( BSONObj &retObj ) ;
+
+      private:
+         UINT32 _fID ;
+         INT64  _seekSize ;
+   } ;
+
+   /*
+      _remoteFileClose define
+   */
+   class _remoteFileClose : public _remoteExec
+   {
+      DECLARE_OACMD_AUTO_REGISTER()
+      public:
+         _remoteFileClose() ;
+
+         ~_remoteFileClose() ;
+
+         INT32 init( const CHAR * pInfomation ) ;
+
+         const CHAR *name() ;
+
+         INT32 doit( BSONObj &retObj ) ;
+
+      private:
+         UINT32 _fID ;
    } ;
 
    /*

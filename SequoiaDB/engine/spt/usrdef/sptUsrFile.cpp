@@ -383,10 +383,8 @@ JS_MAPPING_END()
    {
       INT32 rc = SDB_OK ;
       _sptUsrRemote *pRemote = NULL ;
-      string filename ;
-      SINT64 location = 0 ;
       SINT64 size = 1024 ;
-      BSONObj optionObj ;
+      UINT32 fID ;
       SINT64 hasRead ;
       SINT64 readTimes ;
       const CHAR* retBuf = NULL ;
@@ -403,56 +401,32 @@ JS_MAPPING_END()
          goto error ;
       }
 
-      rc = arg.getBsonobj( 1, optionObj ) ;
+      rc = arg.getNative( 1, (void*)&fID, SPT_NATIVE_INT32 ) ;
       if( SDB_OUT_OF_BOUND == rc )
       {
-         detail = BSON( SPT_ERR << "optionObj must be config" ) ;
+         detail = BSON( SPT_ERR << "fID must be config" ) ;
          goto error ;
       }
       else if( SDB_OK != rc )
       {
-         detail = BSON( SPT_ERR << "optionObj must be Obj" ) ;
+         detail = BSON( SPT_ERR << "fID must be numberInt" ) ;
          goto error ;
       }
 
-      rc = arg.getString( 2, filename ) ;
-      if( SDB_OUT_OF_BOUND == rc )
-      {
-         detail = BSON( SPT_ERR << "filename must be config" ) ;
-         goto error ;
-      }
-      if( SDB_OK != rc )
-      {
-         detail = BSON( SPT_ERR << "filename must be string" ) ;
-         goto error ;
-      }
-
-      rc = arg.getNative( 3, (void*)&location, SPT_NATIVE_INT64 ) ;
-      if( SDB_OUT_OF_BOUND == rc )
-      {
-         detail = BSON( SPT_ERR << "location must be config" ) ;
-         goto error ;
-      }
-      else if( SDB_OK != rc )
-      {
-         detail = BSON( SPT_ERR << "location must be int" ) ;
-         goto error ;
-      }
-
-      rc = arg.getNative( 4, (void*)&size, SPT_NATIVE_INT64 ) ;
+      rc = arg.getNative( 2, (void*)&size, SPT_NATIVE_INT64 ) ;
       if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
       {
          detail = BSON( SPT_ERR << "size must be number" ) ;
          goto error ;
       }
-
       if( size < 0 )
       {
          rc = SDB_INVALIDARG ;
          detail = BSON( SPT_ERR << "size must be zero or positive number" ) ;
          goto error ;
       }
-      *buf = ( CHAR* )SDB_OSS_MALLOC( size+1 ) ;
+
+      *buf = ( CHAR* )SDB_OSS_MALLOC( size + 1 ) ;
       if( NULL == *buf )
       {
          rc = SDB_OOM ;
@@ -464,7 +438,6 @@ JS_MAPPING_END()
       readTimes = 0 ;
       while( hasRead < size )
       {
-         BSONObjBuilder builder ;
          BSONObj retObj ;
          SINT64 readLen = 0 ;
          SINT64 realRead = 0 ;
@@ -477,11 +450,9 @@ JS_MAPPING_END()
             readLen = size - hasRead ;
          }
 
-         builder.append( "filename", filename ) ;
-         builder.append( "location", location + hasRead ) ;
-         builder.append( "size", readLen ) ;
-         rc = pRemote->runCommand( OMA_REMOTE_FILE_READ, optionObj,
-                                   BSONObj(), builder.obj(), detail, retObj ) ;
+         rc = pRemote->runCommand( OMA_REMOTE_FILE_READ, BSONObj(),
+                                   BSON( "fID" << fID ),
+                                   BSON( "size" << readLen ), detail, retObj ) ;
          if( SDB_OK != rc )
          {
             if( 0 < readTimes && SDB_EOF == rc )
@@ -577,9 +548,7 @@ JS_MAPPING_END()
       INT32 rc = SDB_OK ;
       _sptUsrRemote *pRemote = NULL ;
       sptUsrFileContent *pFileContent = NULL ;
-      string filename ;
-      SINT64 location = 0 ;
-      BSONObj optionObj ;
+      UINT32 fID ;
       SINT64 size ;
       SINT64 hasWrite ;
       BSONObj retObj ;
@@ -596,43 +565,19 @@ JS_MAPPING_END()
          goto error ;
       }
 
-      rc = arg.getBsonobj( 1, optionObj ) ;
+      rc = arg.getNative( 1, (void*)&fID, SPT_NATIVE_INT32 ) ;
       if( SDB_OUT_OF_BOUND == rc )
       {
-         detail = BSON( SPT_ERR << "optionObj must be config" ) ;
+         detail = BSON( SPT_ERR << "fID must be config" ) ;
          goto error ;
       }
       else if( SDB_OK != rc )
       {
-         detail = BSON( SPT_ERR << "optionObj must be Obj" ) ;
+         detail = BSON( SPT_ERR << "fID must be numberInt" ) ;
          goto error ;
       }
 
-      rc = arg.getString( 2, filename ) ;
-      if( SDB_OUT_OF_BOUND == rc )
-      {
-         detail = BSON( SPT_ERR << "filename must be config" ) ;
-         goto error ;
-      }
-      if( SDB_OK != rc )
-      {
-         detail = BSON( SPT_ERR << "filename must be string" ) ;
-         goto error ;
-      }
-
-      rc = arg.getNative( 3, (void*)&location, SPT_NATIVE_INT64 ) ;
-      if( SDB_OUT_OF_BOUND == rc )
-      {
-         detail = BSON( SPT_ERR << "location must be config" ) ;
-         goto error ;
-      }
-      else if( SDB_OK != rc )
-      {
-         detail = BSON( SPT_ERR << "location must be int" ) ;
-         goto error ;
-      }
-
-      rc = arg.getUserObj( 4, "FileContent", (const void**)&pFileContent ) ;
+      rc = arg.getUserObj( 2, "FileContent", (const void**)&pFileContent ) ;
       if( SDB_OUT_OF_BOUND == rc )
       {
          detail = BSON( SPT_ERR << "fileContent must be config" ) ;
@@ -659,12 +604,11 @@ JS_MAPPING_END()
          {
             writeSize = size - hasWrite ;
          }
-         builder.append( "filename", filename ) ;
-         builder.append( "location", location + hasWrite ) ;
          builder.append( "content", pFileContent->getBuf() + hasWrite,
                          writeSize ) ;
          builder.append( "size", writeSize ) ;
-         rc = pRemote->runCommand( OMA_REMOTE_FILE_WRITE, optionObj, BSONObj(),
+         rc = pRemote->runCommand( OMA_REMOTE_FILE_WRITE, BSONObj(),
+                                   BSON( "fID" << fID ),
                                    builder.obj(), detail, retObj ) ;
          hasWrite += writeSize ;
       }
@@ -683,12 +627,12 @@ JS_MAPPING_END()
                             bson::BSONObj &detail )
    {
       INT32 rc = SDB_OK ;
-      INT32 seekSize = 0 ;
+      INT64 seekSize = 0 ;
       string whenceStr ;
-      BSONObjBuilder optionBuilder ;
+      BSONObj optionObj ;
       string err ;
 
-      rc = arg.getNative( 0, &seekSize, SPT_NATIVE_INT32 ) ;
+      rc = arg.getNative( 0, &seekSize, SPT_NATIVE_INT64 ) ;
       if ( SDB_OUT_OF_BOUND == rc )
       {
          detail = BSON( SPT_ERR << "offset must be config" ) ;
@@ -699,18 +643,19 @@ JS_MAPPING_END()
       }
       PD_RC_CHECK( rc, PDERROR, "Failed to get offset, rc: %d", rc ) ;
 
-      rc = arg.getString( 1, whenceStr ) ;
-      if( SDB_OK == rc )
+      rc = arg.getBsonobj( 1, optionObj ) ;
+      if ( SDB_OUT_OF_BOUND == rc )
       {
-         optionBuilder.append( "whenceStr", whenceStr ) ;
+         detail = BSON( SPT_ERR << "optionObj must be config" ) ;
+         goto error ;
       }
-      else if ( SDB_OUT_OF_BOUND != rc )
+      else if( SDB_OK != rc )
       {
-         detail = BSON( SPT_ERR << "where must be string(b/c/e)" ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to get where, rc: %d", rc ) ;
+         detail = BSON( SPT_ERR << "optionObj must be obj" );
+         goto error ;
       }
 
-      rc = _fileCommon.seek( seekSize, optionBuilder.obj(), err ) ;
+      rc = _fileCommon.seek( seekSize, optionObj, err ) ;
       if( SDB_OK != rc )
       {
          detail = BSON( SPT_ERR << err ) ;
