@@ -194,6 +194,10 @@ namespace engine
 
    void _omaSession::_onDetach()
    {
+      /// clear self scopes
+      sdbGetOMAgentMgr()->clearScopeBySession() ;
+      /// clear open file
+      _clearFileObjMap() ;
    }
 
    void _omaSession::_onAttach()
@@ -205,9 +209,6 @@ namespace engine
       /// register edu exit hook func
       pmdSetEDUHook( (PMD_ON_EDU_EXIT_FUNC)sdbHookFuncOnThreadExit ) ;
       _pNodeMgr = sdbGetOMAgentMgr()->getNodeMgr() ;
-      /// clear self scopes
-      sdbGetOMAgentMgr()->clearScopeBySession() ;
-      _clearFileObjMap() ;
    }
 
    INT32 _omaSession::_defaultMsgFunc( NET_HANDLE handle, MsgHeader * msg )
