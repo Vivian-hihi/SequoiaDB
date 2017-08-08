@@ -98,7 +98,6 @@ namespace engine
       if ( addItem( pPlan ) )
       {
          pPlan->incRefCount() ;
-         _pMonitor->incCachedPlanCount() ;
          result = TRUE ;
       }
 
@@ -1063,18 +1062,27 @@ namespace engine
 
       PD_TRACE_ENTRY( SDB_OPTAPM__CACHEAP ) ;
 
-      cached = _planCache.addPlan( pPlan ) ;
-      if ( cached )
+      // To avoid dropCL during the processing, set the activity in advanced.
+      // And pre-increase the cached plan count, so the monitor could test if
+      // the number of cached plans will exceed the high water mark with this
+      // new plan
+      _monitor.incCachedPlanCount() ;
+      if ( _monitor.setActivity( pPlan ) )
       {
-         if ( !_monitor.setActivity( pPlan ) )
+         cached = _planCache.addPlan( pPlan ) ;
+         if ( !cached )
          {
-            // Could not allocate activity for the plan
-            // remove it from cache
-            if ( _planCache.removeItem( pPlan ) )
+            INT32 activityID = pPlan->resetActivityID() ;
+            if ( OPT_INVALID_ACT_ID != activityID )
             {
-               _monitor.decCachedPlanCount( 1 ) ;
+               _monitor.resetActivity( activityID ) ;
             }
          }
+      }
+
+      if ( !cached )
+      {
+         _monitor.decCachedPlanCount() ;
       }
 
       PD_TRACE_EXIT( SDB_OPTAPM__CACHEAP ) ;
