@@ -78,6 +78,8 @@ class SdbRelation(@transient val sqlContext: SQLContext,
     }
 
     override def insert(data: DataFrame, overwrite: Boolean): Unit = {
+        logInfo(s"insert into ${config.collectionSpace}.${config.collection}")
+
         if (overwrite) {
             val sdb = new Sequoiadb(config.host, config.username, config.password, null)
             try {
@@ -104,6 +106,8 @@ class SdbRelation(@transient val sqlContext: SQLContext,
             // always write through coordinator node which specified in config
             new SdbWriter(config).write(it, schema)
         })
+
+        logInfo(s"finished inserting into ${config.collectionSpace}.${config.collection}")
     }
 }
 

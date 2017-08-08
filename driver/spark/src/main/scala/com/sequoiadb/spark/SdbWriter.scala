@@ -16,7 +16,7 @@ import scala.collection.JavaConversions._
   *
   * @param config Configuration parameters (host,collectionspace,collection,...)
   */
-private[spark] class SdbWriter(config: SdbConfig) extends Serializable {
+private[spark] class SdbWriter(config: SdbConfig) extends Serializable with Logging {
 
     /**
       * Storing a bunch of SequoiaDB objects.
@@ -41,11 +41,13 @@ private[spark] class SdbWriter(config: SdbConfig) extends Serializable {
             }
 
             val bulk = new util.ArrayList[BSONObject](config.bulkSize)
+            var count: Long = 0
 
             while (it.hasNext) {
                 val row = it.next()
                 val obj = convert(row)
                 bulk.add(obj)
+                count += 1
 
                 if (bulk.size() > config.bulkSize) {
                     cl.bulkInsert(bulk, 0)
@@ -57,16 +59,22 @@ private[spark] class SdbWriter(config: SdbConfig) extends Serializable {
                 cl.bulkInsert(bulk, 0)
                 bulk.clear()
             }
+
+            logInfo(s"write $count records to ${config.collectionSpace}.${config.collection}")
         } finally {
             sdb.disconnect()
         }
     }
 
     def write(it: Iterator[Row], schema: StructType): Unit = {
+        logInfo(s"begin to write rows to ${config.collectionSpace}.${config.collection}")
         write(it, (v: Row) => BSONConverter.rowToBson(v, schema))
+        logInfo(s"finish writing rows to ${config.collectionSpace}.${config.collection}")
     }
 
     def write(it: Iterator[BSONObject]): Unit = {
+        logInfo(s"begin to write BSONObject to ${config.collectionSpace}.${config.collection}")
         write(it, (v: BSONObject) => v)
+        logInfo(s"finish writing rows to ${config.collectionSpace}.${config.collection}")
     }
 }
