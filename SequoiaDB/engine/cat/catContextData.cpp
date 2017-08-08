@@ -1166,7 +1166,7 @@ namespace engine
             {
                PD_LOG( PDERROR, "Capped colleciton can only be created on "
                        "Capped collection space" ) ;
-               rc = SDB_INVALIDARG ;
+               rc = SDB_OPERATION_INCOMPATIBLE ;
                goto error ;
             }
 

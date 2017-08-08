@@ -1191,7 +1191,7 @@ namespace engine
          PD_LOG( PDERROR, "Capped collection[%s] can only be created on "
                  "capped collection space[%s]",
                  pCollectionShortName, su->CSName() ) ;
-         rc = SDB_INVALIDARG ;
+         rc = SDB_OPERATION_INCOMPATIBLE ;
          goto error ;
       }
 

@@ -640,11 +640,12 @@ namespace engine
          INT64 maxRecNum = 0 ;
          BOOLEAN overwrite = FALSE ;
          BSONObjBuilder builder ;
+
          if ( isCompressed || autoIndexId )
          {
-            PD_LOG( PDERROR, "Sharding/Compress/Index is not support on capped "
-                    "collection" ) ;
-            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "Option Sharding/Compress/Index is not compatible "
+                    "with Capped" ) ;
+            rc = SDB_OPERATION_INCOMPATIBLE ;
             goto error ;
          }
 
@@ -654,8 +655,8 @@ namespace engine
          {
             if ( SDB_FIELD_NOT_EXIST == rc )
             {
-               PD_LOG( PDERROR, "Field[%s] must be specified for capped "
-                       "collection in obj[%s]",
+               PD_LOG( PDERROR, "Field[%s] must always be used when Capped is "
+                       "true in obj[%s]",
                        FIELD_NAME_SIZE, matcher.toString().c_str() ) ;
             }
             else
