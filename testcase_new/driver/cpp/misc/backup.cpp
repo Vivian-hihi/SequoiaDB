@@ -22,6 +22,12 @@ TEST( backup, option )
    getConf() ;
    rc = db.connect( HOSTNAME, SVCNAME, USER, PASSWD ) ;
    ASSERT_EQ( rc, SDB_OK ) << "fail to connect sdb" ;
+	if( isStandalone(db) )
+	{
+		cout << "Run mode is standalone" << endl ;
+		db.disconnect() ;
+		return ;
+	}
 	
 	// get a data group id
 	sdbCursor cursor ;
