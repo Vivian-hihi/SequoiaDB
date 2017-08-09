@@ -71,7 +71,7 @@ public abstract class OperateTask extends Task {
         try {
             exec();
         }
-        catch (Exception e) {
+        catch (Error | Exception e) {
             if (e instanceof InterruptedException) {
                 setStatus(Task.TaskStatus.TASKINTERRUPT);
             }
