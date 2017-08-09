@@ -294,7 +294,7 @@
          <arg line=" ${cmd_mvn} " />
       </exec>
       <exec executable="mvn" dir="${srccode_dir}/driver/spark" failonerror="true" logError="true">
-         <arg line=" clean package " />
+         <arg line=" clean package -Drevision=${fdw_svn}" />
       </exec>
    </target>
    
