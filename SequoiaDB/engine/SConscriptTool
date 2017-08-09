@@ -543,6 +543,7 @@ sdbSEAdptFiles = [
       "rtn/rtnContextBuff.cpp",
       "rest/http_parser.cpp",
       "tools/seadapter/pmdSEAdptMain.cpp",
+      "tools/seadapter/seAdptOptionsMgr.cpp",
       "tools/seadapter/pmdSeAdptEDUEntryPoint.cpp",
       "tools/seadapter/seAdptMgr.cpp",
       "tools/seadapter/seAdptAgentSession.cpp",

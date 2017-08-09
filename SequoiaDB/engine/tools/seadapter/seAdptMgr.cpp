@@ -1,3 +1,40 @@
+/*******************************************************************************
+
+
+   Copyright (C) 2011-2017 SequoiaDB Ltd.
+
+   This program is free software: you can redistribute it and/or modify
+   it under the term of the GNU Affero General Public License, version 3,
+   as published by the Free Software Foundation.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warrenty of
+   MARCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program. If not, see <http://www.gnu.org/license/>.
+
+   Source File Name = seadptMgr.cpp
+
+   Descriptive Name = Search engine adapter manager.
+
+   When/how to use: this program may be used on binary and text-formatted
+   versions of PMD component. This file contains main function for sdbcm,
+   which is used to do cluster managing.
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+          04/14/2017  YSD  Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
 #include "pmd.hpp"
 #include "sptCommon.hpp"
 #include "seAdptMgr.hpp"
@@ -10,121 +47,13 @@
 #define DATA_NODE_ID                            10000
 #define SEADPT_NAME_CAPPED_COLLECTIONSPACE      "CappedCS"
 #define SEADPT_NAME_CAPPED_COLLECTION           "CappedCL"
+// Wait for at most 10 mins for register.
+#define SDBADPT_REGIST_MAX_WAIT_TIME            600
 
 namespace engine
 {
-   _seAdptOptions::_seAdptOptions()
-   {
-      ossMemset( _cfgFileName, 0, sizeof( _cfgFileName ) ) ;
-      ossMemset( _serviceName, 0, sizeof( _serviceName ) ) ;
-      ossMemset( _dbHost, 0, sizeof( _dbHost ) ) ;
-      ossMemset( _dbService, 0, sizeof( _dbService ) ) ;
-      ossMemset( _seHost, 0, sizeof( _seHost ) ) ;
-      ossMemset( _seService, 0, sizeof( _seService ) ) ;
-      _dbGroup = INVALID_GROUPID ;
-      _dbNodeID = INVALID_NODEID ;
-      _diagLevel = PDWARNING ;
-   }
-
-   INT32 _seAdptOptions::init( const CHAR *rootPath )
-   {
-      INT32 rc = SDB_OK ;
-      po::options_description desc( "Command options" ) ;
-      po::variables_map vm ;
-
-      PMD_ADD_PARAM_OPTIONS_BEGIN( desc )
-         ( SDB_SEADPT_DNODE_HOST, po::value<string>(),
-           "Remote data node host name or ip" )
-         ( SDB_SEADPT_SERVICE_NAME, po::value<string>(),
-           "Search engine adapter service name" )
-         ( SDB_SEADPT_DNODE_PORT, po::value<string>(),
-           "Remote data node server port" )
-         ( SDB_SEADPT_DIAGLEVEL, po::value<INT32>(),
-           "Dialog level" )
-         ( SDB_SEADPT_SE_HOST, po::value<string>(),
-           "Search engine host name or ip" )
-         ( SDB_SEADPT_SE_PORT, po::value<string>(),
-           "Search engine server port" )
-      PMD_ADD_PARAM_OPTIONS_END
-
-      if ( !rootPath )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "Root path is empty" ) ;
-         goto error ;
-      }
-
-      rc = utilBuildFullPath( rootPath, SDB_SEADPT_CFG_FILE_NAME,
-                              OSS_MAX_PATHSIZE, _cfgFileName ) ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Root path is too long: %s", rootPath ) ;
-         goto error ;
-      }
-
-      rc = utilReadConfigureFile( _cfgFileName, desc, vm ) ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Read configuration file[ %s ] failed[ %d ]",
-                 _cfgFileName, rc ) ;
-         goto error ;
-      }
-
-      rc = pmdCfgRecord::init( &vm, NULL ) ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Failed to init config record, rc: %d", rc ) ;
-         goto error ;
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 _seAdptOptions::doDataExchange( pmdCfgExchange *pEX )
-   {
-      resetResult() ;
-
-      rdxString( pEX, SDB_SEADPT_DNODE_HOST, _dbHost,
-                 sizeof( _dbHost ), TRUE, FALSE , _dbHost ) ;
-      rdxString( pEX, SDB_SEADPT_SERVICE_NAME, _serviceName,
-                 sizeof( _serviceName ), TRUE, FALSE, _serviceName ) ;
-      rdxString( pEX, SDB_SEADPT_DNODE_PORT, _dbService,
-                 sizeof( _dbService ), TRUE, FALSE, _dbService ) ;
-      rdxInt( pEX, SDB_SEADPT_DIAGLEVEL, _diagLevel,
-              FALSE, FALSE, _diagLevel ) ;
-      rdxString( pEX, SDB_SEADPT_SE_HOST, _seHost, sizeof( _seHost ),
-                 TRUE, FALSE, _seHost ) ;
-      rdxString( pEX, SDB_SEADPT_SE_PORT, _seService,
-                 sizeof( _seService ), TRUE, FALSE, _seService ) ;
-
-      return getResult() ;
-   }
-
-   PDLEVEL _seAdptOptions::getDiagLevel() const
-   {
-      PDLEVEL level = PDWARNING ;
-      if ( _diagLevel < PDSEVERE )
-      {
-         level = PDSEVERE ;
-      }
-      else if ( _diagLevel > PDDEBUG )
-      {
-         level = PDDEBUG ;
-      }
-      else
-      {
-         level = (PDLEVEL)_diagLevel ;
-      }
-
-      return level ;
-   }
-
    _seSvcSessionMgr::_seSvcSessionMgr( _seAdptCB *pAdptCB )
    {
-
    }
 
    INT32 _seSvcSessionMgr::handleSessionTimeout( UINT32 timerID, UINT32 interval )
@@ -163,7 +92,6 @@ namespace engine
 
       return session ;
    }
-
 
    _seIndexSessionMgr::_seIndexSessionMgr( _seAdptCB *pAdptCB )
    {
@@ -305,10 +233,6 @@ namespace engine
                   CHAR esTypeName[11] = {0} ;
                   ossItoa( _pAdptCB->getDataNodeGID(), esTypeName, 10 ) ;
 
-                  // TODO: test code to remove
-                  PD_LOG( PDERROR, "Index definition: %s", key.toString().c_str() ) ;
-
-                  // seIndexTask newTask( clFullName, idxName, key ) ;
                   seIndexTask newTask( csName, clName, idxName, cappedCSName,
                                        cappedCLName, esIdxName,
                                        esTypeName, key ) ;
@@ -354,12 +278,14 @@ namespace engine
                                             (void *)(&*itr) ) ;
             }
 
+            PD_LOG( PDDEBUG, "Change local version from [ %d ] to [ %d ]",
+                    _indexVersion, peerVersion ) ;
             _indexVersion = peerVersion ;
          }
          else
          {
-            PD_LOG( PDEVENT, "Text index version are the same[%lld], skip",
-                    _indexVersion ) ;
+            PD_LOG( PDDEBUG, "Text index version are the same[%lld], no need "
+                    "for updating", _indexVersion ) ;
          }
       }
 
@@ -422,17 +348,18 @@ namespace engine
 
    _seAdptCB::_seAdptCB()
    : _indexMsgHandler( &_idxSessionMgr ),
-     _svcMsgHandler( &_sessionMgr ),
+     _svcMsgHandler( &_svcSessionMgr ),
      _indexTimerHandler( &_idxSessionMgr ),
-     _svcTimerHandler( &_sessionMgr ),
+     _svcTimerHandler( &_svcSessionMgr ),
      _indexNetRtAgent( &_indexMsgHandler ),
      _svcRtAgent( &_svcMsgHandler ),
      _idxSessionMgr( this ),
-     _sessionMgr( this )
+     _svcSessionMgr( this )
    {
       ossMemset( _serviceName, 0, OSS_MAX_SERVICENAME + 1 ) ;
       _oneSecTimer = NET_INVALID_TIMER_ID ;
       _dataNodeID.value = MSG_INVALID_ROUTEID ;
+      _cataNodeID.value = MSG_INVALID_ROUTEID ;
       _selfRouteID.value = MSG_INVALID_ROUTEID ;
       _peerPrimary = FALSE ;
       _peerGroupID = 0 ;
@@ -463,37 +390,38 @@ namespace engine
       // register config handler to se adapter options.
       _options.setConfigHandler( pmdGetKRCB() ) ;
 
+      // Create listener socket. This is for searching and command processing.
       svcRtID.columns.serviceID = MSG_ROUTE_SE_SERVICE ;
       _svcRtAgent.updateRoute( svcRtID, hostName, _options.getSvcName() ) ;
       rc = _svcRtAgent.listen( svcRtID ) ;
       PD_RC_CHECK( rc, PDERROR, "Create listener for hostname[ %s ] and "
                    "service[ %s ] failed[ %d ]",
                    hostName, _options.getSvcName(), rc ) ;
-      PD_LOG( PDEVENT, "Create listener for service[ %s ] succeed",
-              _options.getSvcName() ) ;
+      PD_LOG( PDEVENT, "Create search engine adapter listener[ServiceName: %s] "
+              "successfully", _options.getSvcName() ) ;
 
       // Init sdb data node address.
       rc = _initSdbAddr() ;
       if ( rc )
       {
-         PD_LOG( PDERROR, "Failed to init sdb data node address, rc: %d", rc ) ;
+         PD_LOG( PDERROR, "Init sdb data node address failed[ %d ]", rc ) ;
          goto error ;
       }
 
       rc = _initSearchEngineAddr() ;
       if ( rc )
       {
-         PD_LOG( PDERROR, "Failed to init search engine address, rc: %d", rc ) ;
+         PD_LOG( PDERROR, "Init search engine address failed[ %d ]", rc ) ;
          goto error ;
       }
 
       rc = _idxSessionMgr.init( &_indexNetRtAgent, &_indexTimerHandler,
                                 5 * OSS_ONE_SEC ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to init index session manager, rc: %d",
+      PD_RC_CHECK( rc, PDERROR, "Init index session manager failed[ %d ]",
                    rc ) ;
 
-      rc = _sessionMgr.init( &_svcRtAgent, &_svcTimerHandler,
-                             60 * OSS_ONE_SEC ) ;
+      rc = _svcSessionMgr.init( &_svcRtAgent, &_svcTimerHandler,
+                                60 * OSS_ONE_SEC ) ;
       PD_RC_CHECK( rc, PDERROR, "Init service session manager failed[ %d ]",
                    rc ) ;
 
@@ -503,13 +431,16 @@ namespace engine
       rc = _seCltMgr.init( seSvcPath ) ;
       if ( rc )
       {
-         PD_LOG( PDERROR, "Failed to init search engine client manager, rc: %d",
+         PD_LOG( PDERROR, "Init search engine client manager failed[ %d ]",
                  rc ) ;
          goto error ;
       }
+      PD_LOG( PDEVENT, "Search engine client manager init successfully" ) ;
 
       _textIdxVersion = ossGetCurrentProcessID() ;
 
+      // Set the business status to not OK. Change to OK after successfully
+      // registered on data node.
       pmdGetKRCB()->setBusinessOK( FALSE ) ;
 
    done:
@@ -525,6 +456,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       EDUID eduID = PMD_INVALID_EDUID ;
       pmdEDUMgr *pEDUMgr = pmdGetKRCB()->getEDUMgr() ;
+      INT32 registWaitTime = 0 ;
 
       // 1. start se adapter manager edu.
       rc = pEDUMgr->startEDU( EDU_TYPE_SEADPTMGR, (_pmdObjBase*)this, &eduID ) ;
@@ -541,6 +473,7 @@ namespace engine
                    "rc: %d", rc ) ;
       pEDUMgr->regSystemEDU( EDU_TYPE_SE_INDEXR, eduID ) ;
 
+      // 3. start se adapter service.
       rc = pEDUMgr->startEDU( EDU_TYPE_SE_SERVICE, (void *)&_svcRtAgent,
                               &eduID ) ;
       PD_RC_CHECK( rc, PDERROR, "Start service listener failed[ %d ]", rc ) ;
@@ -551,7 +484,27 @@ namespace engine
 
       _idxSessionMgr.startIndexTimer( 5 * OSS_ONE_SEC ) ;
 
-      _sendRegisterMsg() ;
+      // 4. Register on data node. Try at most 10 mins before exiting.
+      while ( PMD_IS_DB_UP() && registWaitTime < SDBADPT_REGIST_MAX_WAIT_TIME )
+      {
+         rc = _sendRegisterMsg() ;
+         registWaitTime++ ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Send register message to sdb data node "
+                    "failed[ %d ]. Try times[ %d ]. Max try time[ %d ]",
+                    rc, registWaitTime, SDBADPT_REGIST_MAX_WAIT_TIME ) ;
+         }
+         else
+         {
+            break ;
+         }
+         ossSleepsecs( 1 ) ;
+      }
+      if ( rc )
+      {
+         goto error ;
+      }
 
    done:
       return rc ;
@@ -615,7 +568,7 @@ namespace engine
       return ;
    }
 
-   seAdptOptions* _seAdptCB::getOptions()
+   seAdptOptionsMgr* _seAdptCB::getOptions()
    {
       return &_options ;
    }
@@ -627,7 +580,7 @@ namespace engine
 
    seSvcSessionMgr* _seAdptCB::getSeAgentMgr()
    {
-      return &_sessionMgr ;
+      return &_svcSessionMgr ;
    }
 
    seIndexSessionMgr* _seAdptCB::getIdxSessionMgr()
@@ -664,11 +617,20 @@ namespace engine
       INT32 rc = SDB_OK ;
 
       rc = _indexNetRtAgent.syncSend( _dataNodeID, (void *)msg ) ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Failed to send message, rc: %d", rc ) ;
-         goto error ;
-      }
+      PD_RC_CHECK( rc, PDERROR, "Send message to data node failed[ %d ]", rc ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _seAdptCB::sendToCataNode( MsgHeader *msg )
+   {
+      INT32 rc = SDB_OK ;
+
+      rc = _indexNetRtAgent.syncSend( _cataNodeID, (void *)msg ) ;
+      PD_RC_CHECK( rc, PDERROR, "Send message to cata node failed[ %d ]", rc ) ;
 
    done:
       return rc ;
@@ -768,6 +730,8 @@ namespace engine
       rc = sendToDataNode( (MsgHeader *)authMsg ) ;
       PD_RC_CHECK( rc, PDERROR, "Send auth request to data node failed[ %d ]",
                    rc ) ;
+      PD_LOG( PDDEBUG, "Send register message to data node successfully. "
+              "Information: %s", authObj.toString().c_str() ) ;
 
    done:
       if ( authMsg )
@@ -787,6 +751,9 @@ namespace engine
       INT32 startFrom = 0 ;
       INT32 numReturned = 0 ;
       vector<BSONObj> objVec ;
+      BSONObj cataInfoObj ;
+      string cataHost ;
+      string cataSvc ;
 
       // Get the role, group id of the node.
       rc = msgExtractReply( (CHAR *)msg, &flag, &contextID, &startFrom,
@@ -801,6 +768,29 @@ namespace engine
 
       _peerPrimary = objVec[0].getBoolField( FIELD_NAME_IS_PRIMARY ) ;
       _peerGroupID = objVec[0].getIntField( FIELD_NAME_GROUPID ) ;
+
+      cataInfoObj = objVec[0].getObjectField( FIELD_NAME_CATALOGINFO ) ;
+      if ( cataInfoObj.isEmpty() )
+      {
+         PD_LOG( PDERROR, "Find catalog info in object failed" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      cataHost = cataInfoObj.getStringField( FIELD_NAME_HOST ) ;
+      cataSvc = cataInfoObj.getStringField( FIELD_NAME_SERVICE_NAME ) ;
+      _cataNodeID.columns.groupID = cataInfoObj.getIntField( FIELD_NAME_GROUPID ) ;
+      _cataNodeID.columns.nodeID = cataInfoObj.getIntField( FIELD_NAME_NODEID ) ;
+      _cataNodeID.columns.serviceID = cataInfoObj.getIntField( FIELD_NAME_SERVICE ) ;
+
+      rc = _indexNetRtAgent.updateRoute( _cataNodeID, cataHost.c_str(),
+                                         cataSvc.c_str() ) ;
+      PD_RC_CHECK( rc, PDERROR, "Update route failed[ %d ]" ) ;
+
+      pmdGetKRCB()->setBusinessOK( TRUE ) ;
+
+      PD_LOG( PDEVENT, "Search engine adapter registered on SequoiaDB data "
+              "node successfully" ) ;
 
    done:
       return rc ;
@@ -928,7 +918,8 @@ namespace engine
 
       rc = sendToDataNode( (MsgHeader *)msg ) ;
       PD_RC_CHECK( rc, PDERROR, "Send message to data node failed[ %d ]", rc ) ;
-      PD_LOG( PDEVENT, "Send text index update request to data node..." ) ;
+      PD_LOG( PDDEBUG, "Send text index update request to data node. "
+              "Message: %s", msgBody.toString().c_str() ) ;
 
    done:
       return rc ;
@@ -971,7 +962,7 @@ namespace engine
       return &s_seAdptMgr ;
    }
 
-   seAdptOptions* sdbGetSeAdptOptions()
+   seAdptOptionsMgr* sdbGetSeAdptOptions()
    {
       return sdbGetSeAdapterCB()->getOptions() ;
    }

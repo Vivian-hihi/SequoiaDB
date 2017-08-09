@@ -1,7 +1,7 @@
 /*******************************************************************************
 
 
-   Copyright (C) 2011-2016 SequoiaDB Ltd.
+   Copyright (C) 2011-2017 SequoiaDB Ltd.
 
    This program is free software: you can redistribute it and/or modify
    it under the term of the GNU Affero General Public License, version 3,
@@ -16,6 +16,8 @@
    along with this program. If not, see <http://www.gnu.org/license/>.
 
    Source File Name = pmdSEAdapterMain.cpp
+
+   Descriptive Name = Search engine adapter main entry.
 
    When/how to use: this program may be used on binary and text-formatted
    versions of PMD component. This file contains main function for sdbcm,
@@ -33,8 +35,6 @@
    Last Changed =
 
 *******************************************************************************/
-
-#include "core.hpp"
 #include "ossVer.hpp"
 #include "ossProc.hpp"
 #include "pd.hpp"
@@ -45,49 +45,27 @@
 
 namespace engine
 {
-   #define COMMANDS_OPTIONS \
-      ( PMD_COMMANDS_STRING ( PMD_OPTION_HELP, ",h"), "help" ) \
-      ( PMD_OPTION_VERSION, "version" )
-
-   void displayArg( po::options_description &desc )
-   {
-      std::cout << "Usage:  sdbseadapter [OPTIONS]" << std::endl ;
-      std::cout << desc << std::endl ;
-   }
-
-   INT32 initArgs( INT32 argc, CHAR **argv, po::variables_map &vm )
+   INT32 pmdResolveArguments( INT32 argc, CHAR **argv )
    {
       INT32 rc = SDB_OK ;
-      po::options_description desc( "Command options" ) ;
-      po::options_description all( "Command options" ) ;
+      CHAR exePath[ OSS_MAX_PATHSIZE + 1 ] = {0} ;
 
-      PMD_ADD_PARAM_OPTIONS_BEGIN( all )
-         COMMANDS_OPTIONS
-      PMD_ADD_PARAM_OPTIONS_END
-
-      PMD_ADD_PARAM_OPTIONS_BEGIN( desc )
-         COMMANDS_OPTIONS
-      PMD_ADD_PARAM_OPTIONS_END
-
-      rc = utilReadCommandLine( argc, argv, all, vm ) ;
+      rc = ossGetEWD( exePath, OSS_MAX_PATHSIZE ) ;
       if ( rc )
       {
-         std::cerr << "Invalid arguments: " << rc << std::endl ;
-         displayArg( desc ) ;
+         std::cerr << "Get module path failed: " << rc << std::endl ;
          goto error ;
       }
 
-      if ( vm.count( PMD_OPTION_HELP ) )
+      rc = sdbGetSeAdptOptions()->init( argc, argv, exePath ) ;
+      if ( SDB_PMD_HELP_ONLY == rc || SDB_PMD_VERSION_ONLY == rc )
       {
-         displayArg( desc ) ;
-         rc = SDB_PMD_HELP_ONLY ;
          goto done ;
       }
-      if ( vm.count( PMD_OPTION_VERSION ) )
+      else if ( rc )
       {
-         ossPrintVersion( "sdbseadapter version" ) ;
-         rc = SDB_PMD_VERSION_ONLY ;
-         goto done ;
+         PD_LOG( PDERROR, "Initialize configuration failed[ %d ]", rc ) ;
+         goto error ;
       }
 
    done:
@@ -102,66 +80,37 @@ namespace engine
       iPmdProc::stop( 0 ) ;
    }
 
+   // Wait time for all daemon threads start, based on millisecond
+   #define PMD_START_WAIT_TIME      ( 60000 )
+
    INT32 pmdThreadMainEntry( INT32 argc, CHAR** argv )
    {
       INT32 rc = SDB_OK ;
       pmdKRCB *krcb = pmdGetKRCB() ;
-      CHAR currentPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
-      CHAR dialogPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
-      CHAR dialogFile[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+      UINT32 startTimerCount = 0 ;
       CHAR verText[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
       INT32 delSig[] = { 17, 0 } ;
       po::variables_map vm ;
 
-      rc = initArgs( argc, argv, vm ) ;
-      if ( rc )
+      rc = pmdResolveArguments( argc, argv ) ;
+      if ( SDB_PMD_HELP_ONLY == rc || SDB_PMD_VERSION_ONLY == rc )
       {
-         if ( SDB_PMD_HELP_ONLY == rc || SDB_PMD_VERSION_ONLY == rc )
-         {
-            rc = SDB_OK ;
-            goto done ;
-         }
+         rc = SDB_OK ;
+         goto done ;
+      }
+      else if ( rc )
+      {
+         ossPrintf( "Failed resolving arguments(error=%d), exit"OSS_NEWLINE,
+                    rc ) ;
          goto error ;
       }
 
-      rc = ossGetEWD( currentPath, OSS_MAX_PATHSIZE ) ;
-      if ( rc )
-      {
-         std::cerr << "Get current path failed[ " << rc << " ]" << std:: endl ;
-         goto error ;
-      }
-
-      ossChDir( currentPath ) ;
-
-      // TODO: which path to put diaglog?
-      // Temporary: use the current path.
-      rc = ossGetEWD( dialogPath, OSS_MAX_PATHSIZE ) ;
-      if ( rc )
-      {
-         std::cerr << "Get current path failed[ " << rc << " ]" << std:: endl ;
-         goto error ;
-      }
-
-      rc = utilBuildFullPath( currentPath, SDB_SEADPT_LOG_FILE_NAME,
-                              OSS_MAX_PATHSIZE, dialogFile ) ;
-      if ( rc )
-      {
-         std::cerr << "Build dialog path failed[ " << rc << " ]" << std::endl ;
-         goto error ;
-      }
-      sdbEnablePD( dialogFile ) ;
+      sdbEnablePD( sdbGetSeAdptOptions()->getDiagLogPath() ) ;
+      setPDLevel( (PDLEVEL)( sdbGetSeAdptOptions()->getDiagLevel() ) ) ;
 
       ossSprintVersion( "Version", verText, OSS_MAX_PATHSIZE, FALSE ) ;
-      PD_LOG( PDEVENT, "Start sdbseadapter[%s]...", verText ) ;
-
-      rc = sdbGetSeAdptOptions()->init( currentPath ) ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Initialize configuration failed[ %d ]", rc ) ;
-         goto error ;
-      }
-
-      setPDLevel( sdbGetSeAdptOptions()->getDiagLevel() ) ;
+      PD_LOG( ( getPDLevel() > PDEVENT ? PDEVENT: getPDLevel() ),
+              "Start sdbseadapter[%s]...", verText ) ;
 
       // Print all configurations in log file.
       {
@@ -170,7 +119,8 @@ namespace engine
          PD_LOG( PDEVENT, "All configs:\n%s", configs.c_str() ) ;
       }
 
-      rc = pmdEnableSignalEvent( dialogPath, (PMD_ON_QUIT_FUNC)pmdOnQuit,
+      rc = pmdEnableSignalEvent( sdbGetSeAdptOptions()->getDiagLogPath(),
+                                 (PMD_ON_QUIT_FUNC)pmdOnQuit,
                                  delSig ) ;
       PD_RC_CHECK( rc, PDERROR, "Enable trap failed[ %d ]", rc ) ;
 
@@ -179,9 +129,41 @@ namespace engine
       rc = krcb->init() ;
       PD_RC_CHECK( rc, PDERROR, "Initialize krcb failed[ %d ]", rc ) ;
 
+      // wait until all daemon threads start
+      while ( PMD_IS_DB_UP() && startTimerCount < PMD_START_WAIT_TIME &&
+              !krcb->isBusinessOK() )
+      {
+         ossSleepmillis( 100 ) ;
+         startTimerCount += 100 ;
+      }
+
+      if ( PMD_IS_DB_DOWN() )
+      {
+         rc = krcb->getShutdownCode() ;
+         PD_LOG( PDERROR, "Start failed, rc: %d", rc ) ;
+         goto error ;
+      }
+      else if ( startTimerCount >= PMD_START_WAIT_TIME )
+      {
+         PD_LOG( PDWARNING, "Start warning(timeout)" ) ;
+      }
+
+#if defined (_LINUX)
+      {
+         // Rename the process, adding the service name and role.
+         CHAR pmdProcessName[OSS_RENAME_PROCESS_BUFFER_LEN + 1] = {0} ;
+         ossSnprintf( pmdProcessName, OSS_RENAME_PROCESS_BUFFER_LEN,
+                      "%s(%s) %s", SDB_SEADPT_PROCESS_NAME,
+                      sdbGetSeAdptOptions()->getSvcName(),
+                      SDB_SEADPT_ROLE_SHORT_STR ) ;
+         ossEnableNameChanges( argc, argv ) ;
+         ossRenameProcess( pmdProcessName ) ;
+      }
+#endif /* _LINUX */
+
       while ( PMD_IS_DB_UP() )
       {
-         ossSleep( 1 ) ;
+         ossSleepsecs( 1 ) ;
       }
       rc = krcb->getShutdownCode() ;
 

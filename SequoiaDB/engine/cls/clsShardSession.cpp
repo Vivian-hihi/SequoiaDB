@@ -1218,9 +1218,9 @@ namespace engine
 
             if ( !_isMainCL )
             {
-               // Get an operator based on the message type. Currently only a text
-               // query operator is supported. Otherwise, the original flow will
-               // be executed.
+               // Get an operator based on the message type. Currently only a
+               // text query operator is supported. Otherwise, the original flow
+               // will be executed.
                // In the long run, the explain and normal query may also be
                // abstracted into operators.
                rtnQueryOptions options( matcher, selector, orderBy, hint,
@@ -1233,8 +1233,8 @@ namespace engine
                if ( pOperator )
                {
                   rtnContextBase *context = NULL ;
-                  rc = pOperator->init( options, eduCB(), sdbGetRTNCB(), contextID,
-                                        &context, FALSE ) ;
+                  rc = pOperator->init( options, eduCB(), sdbGetRTNCB(),
+                                        contextID, &context, FALSE ) ;
                   PD_RC_CHECK( rc, PDERROR,
                                "Initialize operator for query failed[ %d ]", rc ) ;
 
@@ -4110,6 +4110,7 @@ namespace engine
       _clsCatalogSet *set = NULL ;
       BOOLEAN mainCL = FALSE ;
       BOOLEAN agentLocked = FALSE ;
+      const CHAR *clShortName = NULL ;
 
       rc = _checkReplStatus() ;
       if ( SDB_OK != rc )
@@ -4123,6 +4124,16 @@ namespace engine
       if ( rc )
       {
          goto error ;
+      }
+
+      // For SYS collections, do not check the version. This limit is added when
+      // developping text search. The search engine adapter will query and pop
+      // data from capped collections through the shard flat, if the version
+      // checking is enable, no operations can be done.
+      clShortName = ossStrchr( name, '.' ) + 1 ;
+      if ( dmsIsSysCLName( clShortName ) )
+      {
+         goto done ;
       }
 
       _pCatAgent->lock_r () ;

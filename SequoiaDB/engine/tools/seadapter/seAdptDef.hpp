@@ -36,18 +36,28 @@
 #ifndef SEADPT_DEF_HPP_
 #define SEADPT_DEF_HPP_
 
-#define SDB_SEADPT_SERVICE_NAME     "svcname"
-#define SDB_SEADPT_DNODE_HOST       "datanodehost"
-#define SDB_SEADPT_DNODE_PORT       "datasvcname"
-#define SDB_SEADPT_DIAGLEVEL        "diaglevel"
-#define SDB_SEADPT_SE_HOST          "searchenginehost"
-#define SDB_SEADPT_SE_PORT          "searchengineport"
-#define SDB_SEADPT_DNODE_GRP        "datanodegroup"
-#define SDB_SEADPT_DNODE_NODEID     "datanodeid"
+namespace engine
+{
+   #if defined (_LINUX)
+   #define SDB_SEADPT_NAME             "sdbseadapter"
+   #elif defined (_WINDOWS)
+   #define SDB_SEADPT_NAME             "sdbseadapter.exe"
+   #endif
 
-#define SDB_SEADPT_EXE_FILE_NAME    "sdbseadapter"
-#define SDB_SEADPT_CFG_FILE_NAME    SDB_SEADPT_EXE_FILE_NAME".conf"
-#define SDB_SEADPT_LOG_FILE_NAME    SDB_SEADPT_EXE_FILE_NAME".log"
+   #define SDB_SEADPT_PROCESS_NAME     "sdbseadapter"
+   #define SDB_SEADPT_ROLE_SHORT_STR   "A"
+   #define SDB_SEADPT_OPTION_CONFPATH  "confpath"
+   #define SDB_SEADPT_SERVICE_NAME     "svcname"
+   #define SDB_SEADPT_DNODE_HOST       "datanodehost"
+   #define SDB_SEADPT_DNODE_PORT       "datasvcname"
+   #define SDB_SEADPT_DIAGLEVEL        "diaglevel"
+   #define SDB_SEADPT_SE_HOST          "searchenginehost"
+   #define SDB_SEADPT_SE_PORT          "searchengineport"
+
+   #define SDB_SEADPT_EXE_FILE_NAME    "sdbseadapter"
+   #define SDB_SEADPT_CFG_FILE_NAME    SDB_SEADPT_EXE_FILE_NAME".conf"
+   #define SDB_SEADPT_LOG_FILE_NAME    SDB_SEADPT_EXE_FILE_NAME".log"
+}
 
 #endif /* SEADPT_DEF_HPP_ */
 

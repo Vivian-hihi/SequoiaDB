@@ -1,3 +1,40 @@
+/*******************************************************************************
+
+
+   Copyright (C) 2011-2017 SequoiaDB Ltd.
+
+   This program is free software: you can redistribute it and/or modify
+   it under the term of the GNU Affero General Public License, version 3,
+   as published by the Free Software Foundation.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warrenty of
+   MARCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program. If not, see <http://www.gnu.org/license/>.
+
+   Source File Name = seAdptIndexSession.hpp
+
+   Descriptive Name = Index session on search engine adapter.
+
+   When/how to use: this program may be used on binary and text-formatted
+   versions of PMD component. This file contains main function for sdbcm,
+   which is used to do cluster managing.
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+          04/14/2017  YSD  Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
 #ifndef SEADPT_INDEX_SESSION_HPP_
 #define SEADPT_INDEX_SESSION_HPP_
 
@@ -8,22 +45,19 @@
 
 using namespace bson ;
 
-#define SEADPT_LOGICAL_ID            "_lid"
+#define SEADPT_FIELD_NAME_ID         "_id"
 
 namespace engine
 {
    enum SEADPT_SESSION_STATUS
    {
-      SEADPT_SESSION_STAT_BEGIN = 1,
-      SEADPT_SESSION_STAT_CONSULT,
-      SEADPT_SESSION_STAT_CONSULT_CQ_RES,
+      SEADPT_SESSION_STAT_BEGIN = 1,         // Start from the beginning.
+      SEADPT_SESSION_STAT_UPDATE_CL_VERSION, // Update collection version.
+      SEADPT_SESSION_STAT_CONSULT,           // To find where to start.
       SEADPT_SESSION_STAT_QUERY_NORMAL_TBL,
-      SEADPT_SESSION_STAT_WAIT_NQ_RES,
-      SEADPT_SESSION_STAT_GETMORE_NORMAL,
       SEADPT_SESSION_STAT_QUERY_CAP_TBL,
-      SEADPT_SESSION_STAT_WAIT_CQ_RES,
-      SEADPT_SESSION_STAT_GETMORE_CAP,
-      SEADPT_SESSION_STAT_POP_CAP
+      SEADPT_SESSION_STAT_POP_CAP,
+      SEADPT_SESSION_STAT_MAX
    } ;
 
    // Indexer sessions on search engine adapter.
@@ -55,14 +89,17 @@ namespace engine
    private:
       // Consule the current progress of the indexing.
       INT32 _progressConsult() ;
+      void  _updateCLVersion( INT32 version ) ;
       void  _switchStatus( SEADPT_SESSION_STATUS newStatus ) ;
-
+      INT32 _sendUpdateCLVersionReq() ;
       INT32 _sendQueryReq() ;
-      INT32 _sendQueryReq( BOOLEAN queryCappedCL ) ;
+      INT32 _sendGetmoreReq( INT64 contextID, UINT64 requestID ) ;
+      INT32 _queryOrigCollection() ;
+      INT32 _queryCappedCollection() ;
       INT32 _getExpectRLID( INT64 &expectRLID ) ;
       INT32 _cleanData( INT64 recLID ) ;
       INT32 _parseSrcData( const BSONObj &origObj, _dmsExtOprType &oprType,
-                           OID &oid, BSONObj &sourceObj ) ;
+                           const CHAR **origOID, BSONObj &sourceObj ) ;
       INT32 _processNormalCLRecords( NET_HANDLE handle, MsgHeader *msg ) ;
 
       INT32 _processCappedCLRecords( NET_HANDLE handle, MsgHeader *msg ) ;
@@ -75,15 +112,17 @@ namespace engine
       INT32 _ensureESClt() ;
       void _onSDBEOC() ;
 
-      void _begin() ;
-      INT32 _getMoreSdbRecords( INT64 contextID, UINT64 requestID ) ;
       INT32 _onResMsg( NET_HANDLE handle, MsgHeader *msg ) ;
+      INT32 _onCatalogResMsg( NET_HANDLE handle, MsgHeader *msg ) ;
+      void  _setQueryBusyFlag( BOOLEAN busy ) { _queryBusy = busy; }
+      BOOLEAN _isQueryBusy() { return _queryBusy ; }
 
       OSS_INLINE INT32 _findRecWithLID( INT64 logicalID, BOOLEAN &found ) ;
 
    private:
       string                  _origCLFullName ;
       string                  _cappedCLFullName ;
+      INT32                   _origCLVersion ;
       string                  _origIdxName ;
       string                  _indexName ;
       string                  _typeName ;
@@ -102,6 +141,10 @@ namespace engine
       BOOLEAN                 _indexCappedData ;
       BOOLEAN                 _indexInProgress ;
       ossRWMutex              _progressLatch ;
+      INT64                   _queryCtxID ;
+      BOOLEAN                 _queryBusy ;   // Where one query is in progress.
+                                             // A new query can be started only
+                                             // when it's FALSE.
    } ;
    typedef _seAdptIndexSession seAdptIndexSession ;
 
@@ -124,7 +167,7 @@ namespace engine
       }
 
       rc = _esClt->documentExist( _indexName.c_str(), _typeName.c_str(),
-                                  SEADPT_LOGICAL_ID, lidStr.str().c_str(),
+                                  SEADPT_FIELD_NAME_ID, lidStr.str().c_str(),
                                   found ) ;
       PD_RC_CHECK( rc, PDERROR, "Document existence check failed[ %d ]", rc ) ;
    done:

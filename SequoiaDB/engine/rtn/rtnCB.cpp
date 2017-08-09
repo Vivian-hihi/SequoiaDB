@@ -145,6 +145,12 @@ namespace engine
       FOR_EACH_CMAP_ELEMENT_END ;
 
       _contextMap.clear() ;
+
+      if ( _msgHandler )
+      {
+         SDB_OSS_FREE( _msgHandler ) ;
+      }
+
       if ( _routeAgent )
       {
          SDB_OSS_FREE( _routeAgent ) ;

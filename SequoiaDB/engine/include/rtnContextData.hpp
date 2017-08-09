@@ -324,7 +324,6 @@ namespace engine
          virtual _dmsStorageUnit* getSU() ;
 
          INT32 open( const rtnQueryOptions &options, pmdEDUCB *eduCB ) ;
-         INT32 open( const MsgHeader *msg, pmdEDUCB *eduCB ) ;
 
       protected:
          virtual INT32 _prepareData( _pmdEDUCB *cb ) ;

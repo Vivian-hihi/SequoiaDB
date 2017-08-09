@@ -1,3 +1,40 @@
+/*******************************************************************************
+
+
+   Copyright (C) 2011-2017 SequoiaDB Ltd.
+
+   This program is free software: you can redistribute it and/or modify
+   it under the term of the GNU Affero General Public License, version 3,
+   as published by the Free Software Foundation.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warrenty of
+   MARCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program. If not, see <http://www.gnu.org/license/>.
+
+   Source File Name = rtnExtDataHandler.cpp
+
+   Descriptive Name = External data process handler for rtn.
+
+   When/how to use: this program may be used on binary and text-formatted
+   versions of data management component. This file contains structure for
+   DMS storage unit and its methods.
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+          14/04/2017  YSD Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
 #include "pmd.hpp"
 #include "rtn.hpp"
 #include "rtnExtDataHandler.hpp"
@@ -31,13 +68,9 @@ namespace engine
       INT32 ignoreNum = 0 ;
       BSONObj objToInsert ;
       BSONObjBuilder objBuilder ;
-      string clFullName = name ;
       BOOLEAN oidRequired = FALSE ;
       BOOLEAN dataRequired = FALSE ;
       SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB () ;
-
-      clFullName += "." ;
-      clFullName += name ;
 
       switch ( oprType )
       {
@@ -92,7 +125,7 @@ namespace engine
 
       // Pass dpsCB as NULL as we don't want to write dps log. The replication
       // of external data totally relies on the original data.
-      rc = rtnInsert( clFullName.c_str(), objToInsert, 1, 0,
+      rc = rtnInsert( name, objToInsert, 1, 0,
                       cb, dmsCB, NULL, 1, &insertNum, &ignoreNum ) ;
       PD_RC_CHECK( rc, PDERROR, "Insert record failed[ %d ]", rc ) ;
 
@@ -133,9 +166,13 @@ namespace engine
 
       builder.append( FIELD_NAME_SIZE, buffSize ) ;
       builder.append( FIELD_NAME_MAX, RTN_CAPPED_CL_MAXRECNUM ) ;
+      // Set the OverWrite option as false.
+      builder.appendBool( FIELD_NAME_OVERWRITE, FALSE ) ;
       extOptions = builder.done() ;
 
-      rc = rtnCreateCollectionCommand( cappedCLFullName.c_str(), 0, cb, dmsCB, dpsCB,
+      rc = rtnCreateCollectionCommand( cappedCLFullName.c_str(),
+                                       DMS_MB_ATTR_NOIDINDEX,
+                                       cb, dmsCB, dpsCB,
                                        UTIL_COMPRESSOR_INVALID, 0,
                                        TRUE, &extOptions ) ;
       PD_RC_CHECK( rc, PDERROR, "Create capped collection failed[ %d ]", rc ) ;
@@ -168,7 +205,6 @@ namespace engine
                                           dpscb, FALSE ) ;
       PD_RC_CHECK( rc, PDERROR, "Drop capped collection space failed[ %d ]",
                    rc ) ;
-
    done:
       return rc ;
    error:

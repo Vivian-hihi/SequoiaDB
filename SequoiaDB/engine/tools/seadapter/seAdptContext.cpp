@@ -1,3 +1,40 @@
+/*******************************************************************************
+
+
+   Copyright (C) 2011-2017 SequoiaDB Ltd.
+
+   This program is free software: you can redistribute it and/or modify
+   it under the term of the GNU Affero General Public License, version 3,
+   as published by the Free Software Foundation.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warrenty of
+   MARCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program. If not, see <http://www.gnu.org/license/>.
+
+   Source File Name = seAdptContext.cpp
+
+   Descriptive Name = Context on search engine adapter.
+
+   When/how to use: this program may be used on binary and text-formatted
+   versions of PMD component. This file contains main function for sdbcm,
+   which is used to do cluster managing.
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+          04/14/2017  YSD  Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
 #include "msgDef.hpp"
 #include "seAdptContext.hpp"
 
@@ -74,17 +111,15 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Append orderby to object buffer failed[ %d ]",
                    rc ) ;
 
-      if ( rebuildItems.find( SE_QUERY_REBLD_HINT ) != rebuildItems.end() )
       {
-         object = rebuildItems[SE_QUERY_REBLD_HINT] ;
+         // The original hint is used to pass the text index name. In the
+         // replay, we give an empty hint.
+         // Any problem ?
+         BSONObj object ;
+         rc = objBuff.appendObj( object ) ;
+         PD_RC_CHECK( rc, PDERROR, "Append hint to object buffer failed[ %d ]",
+                      rc ) ;
       }
-      else
-      {
-         object = &_hint ;
-      }
-      rc = objBuff.appendObj( object ) ;
-      PD_RC_CHECK( rc, PDERROR, "Append hint to object buffer failed[ %d ]",
-                   rc ) ;
 
    done:
       return rc ;
@@ -166,22 +201,12 @@ namespace engine
                                    utilCommObjBuff &objBuff,
                                    pmdEDUCB *eduCB )
    {
-      INT32 rc = SDB_OK ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
+      return SDB_OK ;
    }
 
    INT32 _seAdptContextData::getMore( INT32 returnNum, utilCommObjBuff &objBuff )
    {
-      INT32 rc = SDB_OK ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
+      return SDB_OK ;
    }
 
    _seAdptContextQuery::_seAdptContextQuery( const string &indexName,
@@ -221,6 +246,11 @@ namespace engine
                    rc ) ;
 
       // The search result should only contain _id objects.
+      if ( !_esClt->isActive() )
+      {
+         rc = _esClt->active() ;
+         PD_RC_CHECK( rc, PDERROR, "Reactive ES client failed[ %d ]", rc ) ;
+      }
       rc = _esClt->initScroll( _scrollID, _indexName.c_str(),
                                _type.c_str(),
                                queryCond, searchResult, 1000 ) ;
@@ -251,7 +281,11 @@ namespace engine
       REBUILD_ITEM_MAP rebuildItems ;
 
       objBuff.reset() ;
-
+      if ( !_esClt->isActive() )
+      {
+         rc = _esClt->active() ;
+         PD_RC_CHECK( rc, PDERROR, "Reactive ES client failed[ %d ]", rc ) ;
+      }
       rc = _esClt->scrollNext( _scrollID, searchResult ) ;
       PD_RC_CHECK( rc, PDERROR, "Scroll with id[ %s ] for index[ %s ] and "
                    "type[ %s ] failed[ %d ]", _scrollID.c_str(),
@@ -287,20 +321,29 @@ namespace engine
 
       BSONObj obj ;
 
-      while ( !objBuff.eof() )
+      try
       {
-         objBuff.nextObj( obj ) ;
-         idValue = obj.getStringField( DMS_ID_KEY_NAME ) ;
-         SDB_ASSERT( idValue, "id value should not be NULL" ) ;
+         while ( !objBuff.eof() )
+         {
+            objBuff.nextObj( obj ) ;
+            idValue = obj.getStringField( DMS_ID_KEY_NAME ) ;
+            SDB_ASSERT( idValue, "id value should not be NULL" ) ;
 
-         bson::OID oid( idValue ) ;
-         arrayBuilder.append( oid ) ;
+            bson::OID oid( idValue ) ;
+            arrayBuilder.append( oid ) ;
+         }
+
+         idArray = arrayBuilder.arr() ;
+
+         condition = BSON( "_id" << BSON( "$in" << idArray ) ) ;
+         condition.getOwned() ;
       }
-
-      idArray = arrayBuilder.arr() ;
-
-      condition = BSON( "_id" << BSON( "$in" << idArray ) ) ;
-      condition.getOwned() ;
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Exception occurred: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
 
       PD_LOG( PDDEBUG, "New in condition: %s", condition.toString().c_str() ) ;
 

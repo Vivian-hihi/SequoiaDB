@@ -1,3 +1,40 @@
+/*******************************************************************************
+
+
+   Copyright (C) 2011-2017 SequoiaDB Ltd.
+
+   This program is free software: you can redistribute it and/or modify
+   it under the term of the GNU Affero General Public License, version 3,
+   as published by the Free Software Foundation.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warrenty of
+   MARCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program. If not, see <http://www.gnu.org/license/>.
+
+   Source File Name = seAdptAgentSession.cpp
+
+   Descriptive Name = Agent session on search engine adapter.
+
+   When/how to use: this program may be used on binary and text-formatted
+   versions of PMD component. This file contains main function for sdbcm,
+   which is used to do cluster managing.
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+          04/14/2017  YSD  Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
 #include "seAdptAgentSession.hpp"
 #include "rtnContextBuff.hpp"
 #include "msgMessage.hpp"
@@ -219,7 +256,6 @@ namespace engine
       return rc ;
    error:
       goto done ;
-
    }
 
    // Handle message MSG_SEADPT_Q_REWT_REQ.
@@ -402,12 +438,20 @@ namespace engine
       try
       {
          BSONObj hintObj( pHint ) ;
-         // TODO: change name of the index.
-         // indexName += "idx" ;
+         if ( 1 != hintObj.nFields() )
+         {
+            PD_LOG( PDERROR, "1 object is expected in hint. Actual[ %d ]",
+                    hintObj.nFields() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         indexName += string( hintObj.getStringField( "" ) ) ;
       }
       catch ( std::exception &e )
       {
-
+         PD_LOG( PDERROR, "Exception occurred: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
       }
 
       ossItoa( groupID, type, UTIL_SE_MAX_TYPE_SZ ) ;

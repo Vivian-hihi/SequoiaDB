@@ -1,3 +1,40 @@
+/*******************************************************************************
+
+
+   Copyright (C) 2011-2017 SequoiaDB Ltd.
+
+   This program is free software: you can redistribute it and/or modify
+   it under the term of the GNU Affero General Public License, version 3,
+   as published by the Free Software Foundation.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warrenty of
+   MARCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program. If not, see <http://www.gnu.org/license/>.
+
+   Source File Name = utilESClt.cpp
+
+   Descriptive Name = Elasticsearch client.
+
+   When/how to use: this program may be used on binary and text-formatted
+   versions of data management component. This file contains structure for
+   DMS storage unit and its methods.
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+          14/04/2017  YSD Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
 #include "utilESClt.hpp"
 
 #include <iostream>
@@ -107,6 +144,19 @@ namespace engine
    BOOLEAN _utilESClt::isActive()
    {
       return ( SDB_OK == _http.get( NULL, NULL ) ) ? TRUE : FALSE ;
+   }
+
+   INT32 _utilESClt::active()
+   {
+      INT32 rc = SDB_OK ;
+
+      rc = _http.reconnect() ;
+      PD_RC_CHECK( rc, PDERROR, "Activate client failed[ %d ]", rc ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _utilESClt::getSEInfo( BSONObj &infoObj )
@@ -376,16 +426,9 @@ namespace engine
                                   const CHAR *query, utilCommObjBuff &objBuff,
                                   BOOLEAN withMeta )
    {
-      INT32 rc = SDB_OK ;
-
       // TODO:
-
-   done:
-      return rc ;
-   error:
-      goto done ;
+      return SDB_OK ;
    }
-
 
    INT32 _utilESClt::getDocCount( const CHAR *index, const CHAR *type,
                                   UINT64 &count )
@@ -428,10 +471,23 @@ namespace engine
       oss << index << "/" << type << "/" << id ;
       // Only need the status code in the head.
       rc = _http.head( oss.str().c_str(), NULL, &status, &reply, &replyLen ) ;
-      rc = _processReply( rc, reply, replyLen, result, FALSE ) ;
-      PD_RC_CHECK( rc, PDERROR, "Process request reply failed[ %d ]", rc ) ;
       // We are get the document by id, so if it exists, the status would be OK.
-      exist = ( HTTP_OK == status ) ;
+      if ( SDB_OK == rc )
+      {
+         exist = ( HTTP_OK == status ) ;
+      }
+      else if ( SDB_INVALIDARG == rc )
+      {
+         exist = FALSE ;
+         rc = SDB_OK ;
+         goto done ;
+      }
+      else
+      {
+         PD_LOG( PDERROR, "HEAD request[ %s ] failed[ %d ]", oss.str().c_str(),
+                 rc ) ;
+         goto error ;
+      }
 
    done:
       return rc ;

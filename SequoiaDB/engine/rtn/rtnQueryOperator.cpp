@@ -1,3 +1,40 @@
+/*******************************************************************************
+
+
+   Copyright (C) 2011-2017 SequoiaDB Ltd.
+
+   This program is free software: you can redistribute it and/or modify
+   it under the term of the GNU Affero General Public License, version 3,
+   as published by the Free Software Foundation.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warrenty of
+   MARCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program. If not, see <http://www.gnu.org/license/>.
+
+   Source File Name = rtnQueryOperator.cpp
+
+   Descriptive Name = rtn query operator.
+
+   When/how to use: this program may be used on binary and text-formatted
+   versions of data management component. This file contains structure for
+   DMS storage unit and its methods.
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+          14/04/2017  YSD Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
 #include "rtnContextData.hpp"
 #include "rtnQueryOperator.hpp"
 
@@ -21,11 +58,9 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       rtnContextTSData *pContext = NULL ;
-      // One context should be allocated and opened.
 
       // 1. Allocate a context, and pass the options to it. Inside that context,
       // do the logic of communicate with search engine adapter.
-
       rc = rtnCB->contextNew( RTN_CONTEXT_TS_DATA, (rtnContext **)&pContext,
                               contextID, eduCB ) ;
       PD_RC_CHECK( rc, PDERROR, "Create text search context failed[ %d ]",
@@ -34,12 +69,6 @@ namespace engine
       rc = pContext->open( options, eduCB ) ;
       PD_RC_CHECK( rc, PDERROR, "Open text search query context failed[ %d ]",
                    rc ) ;
-
-      // For text search query, as we are gonna rewrite the query, the original
-      // options should be stored.
-      //rc = _options.getOwned() ;
-      PD_RC_CHECK( rc, PDERROR,
-                   "Get query options into own buffer failed[ %d ]", rc ) ;
 
       if ( ppContext )
       {

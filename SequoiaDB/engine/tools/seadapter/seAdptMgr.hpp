@@ -1,7 +1,7 @@
 /*******************************************************************************
 
 
-   Copyright (C) 2011-2016 SequoiaDB Ltd.
+   Copyright (C) 2011-2017 SequoiaDB Ltd.
 
    This program is free software: you can redistribute it and/or modify
    it under the term of the GNU Affero General Public License, version 3,
@@ -16,6 +16,8 @@
    along with this program. If not, see <http://www.gnu.org/license/>.
 
    Source File Name = seAdptMgr.hpp
+
+   Descriptive Name = Search engine adapter manager.
 
    When/how to use: this program may be used on binary and text-formatted
    versions of PMD component. This file contains main function for sdbcm,
@@ -37,7 +39,7 @@
 #define SE_ADPTMGR_HPP_
 
 #include "sdbInterface.hpp"
-#include "pmdOptionsMgr.hpp"
+#include "seAdptOptionsMgr.hpp"
 #include "pmdAsyncSession.hpp"
 #include "pmdAsyncHandler.hpp"
 #include "utilESCltMgr.hpp"
@@ -74,41 +76,6 @@ namespace engine
       void*       data ;
    } ;
    typedef _seAdptSessionInfo seAdptSessionInfo ;
-
-   // Manage the configurations of the search engine adapter
-   class _seAdptOptions : public _pmdCfgRecord
-   {
-   public:
-      _seAdptOptions() ;
-      virtual ~_seAdptOptions() {}
-
-      INT32 init( const CHAR *rootPath ) ;
-
-      const CHAR* getCfgFileName() const { return _cfgFileName ; }
-      const CHAR* getSvcName() const { return _serviceName ; }
-      const CHAR* getDbHost() const { return _dbHost ; }
-      const CHAR* getDbService() const { return _dbService ; }
-      const CHAR* getSeHost() const { return _seHost ; }
-      const CHAR* getSeService() const { return _seService ; }
-      UINT32      getDbGroup() const { return _dbGroup; }
-      UINT32      getDbNodeID() const { return _dbNodeID ; }
-      PDLEVEL     getDiagLevel() const ;
-
-   protected:
-      virtual INT32 doDataExchange( pmdCfgExchange *pEX ) ;
-
-   private:
-      CHAR     _cfgFileName[ OSS_MAX_PATHSIZE + 1 ] ;
-      CHAR     _serviceName[ OSS_MAX_SERVICENAME + 1 ] ;
-      CHAR     _dbHost[ OSS_MAX_HOSTNAME + 1 ] ;
-      CHAR     _dbService[ OSS_MAX_SERVICENAME + 1 ] ;
-      CHAR     _seHost[ OSS_MAX_PATHSIZE + 1 ] ;
-      CHAR     _seService[ OSS_MAX_SERVICENAME + 1 ] ;
-      INT32    _dbGroup ;
-      INT32    _dbNodeID ;
-      INT32    _diagLevel ;
-   } ;
-   typedef _seAdptOptions seAdptOptions ;
 
    // Service sessions manager. It manages the sessions which started by client
    // connections.
@@ -161,8 +128,9 @@ namespace engine
       string _esTypeName ;
       BSONObj _indexDef ;  // Used for fetching data from original collection.
 
-      _seIndexTask( string origCSName, string origCLName, string origIdxName,
-                    string cappedCSName, string cappedCLName, string esIdxName,
+      _seIndexTask( string origCSName, string origCLName,
+                    string origIdxName, string cappedCSName,
+                    string cappedCLName, string esIdxName,
                     string esTypeName, BSONObj &indexKey )
       {
          _origCSName = origCSName ;
@@ -265,7 +233,7 @@ namespace engine
 
       virtual void onTimer( UINT64 timerID, UINT32 interval ) ;
 
-      seAdptOptions*       getOptions() ;
+      seAdptOptionsMgr*    getOptions() ;
       utilESCltMgr*        getSeCltMgr() ;
       seSvcSessionMgr*     getSeAgentMgr() ;
       seIndexSessionMgr*   getIdxSessionMgr() ;
@@ -273,6 +241,7 @@ namespace engine
 
       INT32 startInnerSession( INT32 type, INT32 innerTID, void *data = NULL ) ;
       INT32 sendToDataNode( MsgHeader *msg ) ;
+      INT32 sendToCataNode( MsgHeader *msg ) ;
       BOOLEAN isDataNodePrimary() { return _peerPrimary ; }
       UINT32 getDataNodeGID() { return _peerGroupID ; }
 
@@ -298,13 +267,14 @@ namespace engine
       netRouteAgent           _indexNetRtAgent ;  // net route agent for indexer
       netRouteAgent           _svcRtAgent ;
       seIndexSessionMgr       _idxSessionMgr ;
-      seSvcSessionMgr         _sessionMgr ;
-      seAdptOptions           _options ;
+      seSvcSessionMgr         _svcSessionMgr ;
+      seAdptOptionsMgr        _options ;
       CHAR                    _serviceName[ OSS_MAX_SERVICENAME + 1 ] ;
 
       ossEvent                _attachEvent ;
       UINT32                  _oneSecTimer ;
       MsgRouteID              _dataNodeID ;
+      MsgRouteID              _cataNodeID ;
       BOOLEAN                 _peerPrimary ;    // If the connected data node is
                                                 // primary. If not, no document
                                                 // index should be done. The
@@ -323,7 +293,7 @@ namespace engine
    typedef _seAdptCB seAdptCB ;
 
    seAdptCB* sdbGetSeAdapterCB() ;
-   seAdptOptions* sdbGetSeAdptOptions() ;
+   seAdptOptionsMgr* sdbGetSeAdptOptions() ;
    seSvcSessionMgr* sdbGetSeAgentCB() ;
    utilESCltMgr* sdbGetSeCltMgr() ;
 }

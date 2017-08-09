@@ -2430,6 +2430,8 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Get owned of query options failed[ %d ]",
                    rc ) ;
 
+      PD_LOG( PDDEBUG, "Options for search: %s", options.toString().c_str() ) ;
+
       // Format the message, and send it to search engine adapter.
       rc = options.toQueryMsg( (CHAR **)&queryMsg, msgSize, eduCB ) ;
       PD_RC_CHECK( rc, PDERROR, "Build query message from options failed[ %d ]",
@@ -2437,6 +2439,7 @@ namespace engine
 
       queryMsg->opCode = MSG_SEADPT_Q_REWT_REQ ;
 
+      // Send query message to search engine adapter.
       rc = _sendToRemote( queryMsg ) ;
       PD_RC_CHECK( rc, PDERROR, "Send query message to remote failed[ %d ]",
                    rc ) ;
@@ -2450,32 +2453,6 @@ namespace engine
    error:
       _isOpened = FALSE ;
       _hitEnd = TRUE ;
-      goto done ;
-   }
-
-   INT32 _rtnContextTSData::open( const MsgHeader *msg, pmdEDUCB *eduCB )
-   {
-      INT32 rc = SDB_OK ;
-
-      SDB_ASSERT( eduCB, "eduCB should not be NULL" ) ;
-
-      rc = _prepareRemoteSession( eduCB ) ;
-      PD_RC_CHECK( rc, PDERROR, "Prepare remote session failed[ %d ]", rc ) ;
-
-      // 1. Store the query items.
-      // 2. Send the query to search engine adapter, and get the replay. Then
-      //    call query interface again, to get a sub context id.
-      rc = _sendToRemote( msg ) ;
-      PD_RC_CHECK( rc, PDERROR, "Send query message to remote failed[ %d ]",
-                   rc ) ;
-
-      rc = _waitAndProcessRemoteReply() ;
-      PD_RC_CHECK( rc, PDERROR, "Wait and process reply from search engine "
-                   "adapter failed[ %d ]", rc ) ;
-
-   done:
-      return rc ;
-   error:
       goto done ;
    }
 
@@ -2524,7 +2501,6 @@ namespace engine
       INT32 rc = SDB_OK ;
       pmdRemoteSessionMgr *rsMgr = NULL ;
       pmdRemoteSessionSite *rsSite = NULL ;
-      UINT64 seAdptNodeID = 99999 ;
 
       // Register a remote session.
       rsMgr = sdbGetPMDController()->getRSManager() ;
@@ -2542,7 +2518,7 @@ namespace engine
          goto error ;
       }
 
-      (void)_remoteSession->addSubSession( seAdptNodeID ) ;
+      (void)_remoteSession->addSubSession( SDB_EXT_DATA_NODE_ID ) ;
 
    done:
       return rc ;
@@ -2582,9 +2558,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       pmdSubSession *subSession = NULL ;
 
-      UINT64 seAdptNodeID = 99999 ;
-
-      subSession = _remoteSession->getSubSession( seAdptNodeID ) ;
+      subSession = _remoteSession->getSubSession( SDB_EXT_DATA_NODE_ID ) ;
       if ( !subSession )
       {
          PD_LOG( PDERROR, "Sub session does not exist" ) ;
@@ -2614,12 +2588,11 @@ namespace engine
       vector< BSONObj > objList ;
       SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
       SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
-      UINT64 seAdptNodeID = 99999 ;
 
       rc = _remoteSession->waitReply( TRUE ) ;
       PD_RC_CHECK( rc, PDERROR, "Wait reply failed[ %d ]", rc ) ;
 
-      subSession = _remoteSession->getSubSession( seAdptNodeID ) ;
+      subSession = _remoteSession->getSubSession( SDB_EXT_DATA_NODE_ID ) ;
       if ( !subSession )
       {
          PD_LOG( PDERROR, "Get subsession of search engine adapter "
@@ -2634,10 +2607,10 @@ namespace engine
                             &numReturned, objList ) ;
       PD_RC_CHECK( rc, PDERROR, "Extract query respond message failed[ %d ]",
                    rc ) ;
-
+      // 4 objects are expected: matcher, selector, order by, hint.
       if ( objList.size() != 4 )
       {
-         PD_LOG( PDERROR, "Respond message size is wrong, expect[ % ], "
+         PD_LOG( PDERROR, "Respond message size is wrong, expect[ %d ], "
                  "actual[ %d ]", 4, objList.size() ) ;
          rc = SDB_SYS ;
          goto error ;

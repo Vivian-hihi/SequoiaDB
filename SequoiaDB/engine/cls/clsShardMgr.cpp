@@ -2485,9 +2485,11 @@ namespace engine
    // that is when it's from search engine adapter. We do not really
    // authenticate, but to get the adapter service information from the message.
    // For any other auth request, just return OK.
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR__ONAUTHREQMSG, "_clsShardMgr::_onAuthReqMsg" )
    INT32 _clsShardMgr::_onAuthReqMsg( NET_HANDLE handle, MsgHeader * msg )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__CLSSHDMGR__ONAUTHREQMSG ) ;
       BSONObj bodyObj ;
       BSONElement ele ;
       const CHAR *peerHost = NULL ;
@@ -2498,6 +2500,11 @@ namespace engine
       BSONObjBuilder builder ;
       MsgAuthReply *reply = NULL ;
       INT32 replySize = 0 ;
+      UINT32 tmpPos = CLS_RG_NODE_POS_INVALID ;
+      MsgRouteID cataRouteID ;
+      string cataHost ;
+      string cataSvc ;
+      MSG_ROUTE_SERVICE_TYPE svcType = MSG_ROUTE_CAT_SERVICE ;
       UINT32 groupID = pmdGetKRCB()->getGroupID() ;
 
       SDB_ASSERT( rtnRTAgent, "rtn route agent should not be NULL" ) ;
@@ -2517,13 +2524,19 @@ namespace engine
       peerHost = bodyObj.getStringField( FIELD_NAME_HOST ) ;
       peerSvc = bodyObj.getStringField( FIELD_NAME_SERVICE_NAME ) ;
 
-      // Update both the route agent of rtn shard.
+      // Update both the route agent of rtn and shard.
       rc = rtnRTAgent->updateRoute( _seAdptID, peerHost, peerSvc ) ;
       if ( rc && SDB_NET_UPDATE_EXISTING_NODE != rc )
       {
          PD_LOG( PDERROR, "Update route failed[ %d ], host[ %s ], "
                  "service[ %s ]", rc, peerHost, peerSvc ) ;
          goto error ;
+      }
+
+      // Set the local id of route agent in rtn.
+      if ( MSG_INVALID_ROUTEID == rtnRTAgent->localID().value )
+      {
+         rtnRTAgent->setLocalID( _nodeID ) ;
       }
 
       rc = _pNetRtAgent->updateRoute( _seAdptID, peerHost, peerSvc ) ;
@@ -2537,8 +2550,27 @@ namespace engine
       // Need to reply with following information:
       // Whether master node?
       // Group id ( used as type of index in ES )
+      // Catalog information( Currently only send the catalog primary node
+      // information ). The search engine adapter needs the catalog information
+      // to get collection version when query.
       builder.appendBool( FIELD_NAME_IS_PRIMARY, pmdIsPrimary() ) ;
       builder.append( FIELD_NAME_GROUPID, groupID ) ;
+
+      tmpPos = _cataGrpItem.getPrimaryPos() ;
+      rc = _cataGrpItem.getNodeInfo( tmpPos, cataRouteID, cataHost,
+                                     cataSvc, svcType ) ;
+      PD_RC_CHECK( rc, PDERROR, "Get catalog node info failed[ %d ]", rc ) ;
+      {
+         BSONObjBuilder subBuilder(
+            builder.subobjStart( FIELD_NAME_CATALOGINFO ) ) ;
+         subBuilder.append( FIELD_NAME_HOST, cataHost ) ;
+         subBuilder.append( FIELD_NAME_SERVICE_NAME, cataSvc ) ;
+         subBuilder.append( FIELD_NAME_GROUPID, cataRouteID.columns.groupID ) ;
+         subBuilder.append( FIELD_NAME_NODEID, cataRouteID.columns.nodeID ) ;
+         subBuilder.append( FIELD_NAME_SERVICE, cataRouteID.columns.serviceID ) ;
+         subBuilder.done() ;
+      }
+
       myInfoObj = builder.done() ;
 
       replySize = sizeof( MsgAuthReply ) +
@@ -2572,15 +2604,18 @@ namespace engine
       {
          SDB_OSS_FREE( reply ) ;
       }
+      PD_TRACE_EXITRC( SDB__CLSSHDMGR__ONAUTHREQMSG, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR__ONTEXTIDXINFOREQMSG, "_clsShardMgr::_onTextIdxInfoReqMsg" )
    INT32 _clsShardMgr::_onTextIdxInfoReqMsg( NET_HANDLE handle,
                                              MsgHeader * msg )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__CLSSHDMGR__ONTEXTIDXINFOREQMSG ) ;
       CHAR *body = NULL ;
       INT64 version = 0 ;
       BSONObj textIdxInfo ;
@@ -2662,6 +2697,7 @@ namespace engine
       {
          SDB_OSS_FREE( reply ) ;
       }
+      PD_TRACE_EXITRC( SDB__CLSSHDMGR__ONTEXTIDXINFOREQMSG, rc ) ;
       return rc ;
    error:
       goto done ;
@@ -2673,7 +2709,6 @@ namespace engine
       SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
       MON_CS_SIM_LIST csList ;
       MON_CS_SIM_LIST::iterator csItr ;
-
       BSONObj infoObj ;
       BSONObjBuilder builder ;
       builder.append( FIELD_NAME_VERSION, localVersion ) ;
