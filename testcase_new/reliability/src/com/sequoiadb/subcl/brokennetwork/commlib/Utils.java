@@ -1,13 +1,5 @@
 package com.sequoiadb.subcl.brokennetwork.commlib;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-
-import org.bson.BSONObject;
-import org.bson.util.JSON;
-import org.testng.Assert;
-
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
@@ -16,6 +8,13 @@ import com.sequoiadb.commlib.GroupWrapper;
 import com.sequoiadb.commlib.SdbTestBase;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.ReliabilityException;
+import org.bson.BSONObject;
+import org.bson.util.JSON;
+import org.testng.Assert;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 
 /**
  * @author linsuqiang

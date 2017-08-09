@@ -1,15 +1,14 @@
 package com.sequoiadb.commlib;
 
-import java.util.List;
-
+import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.exception.ReliabilityException;
 import org.testng.Assert;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Parameters;
 
-import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.exception.ReliabilityException;
+import java.util.List;
 
 public class SdbTestBase {
     public static String coordUrl;

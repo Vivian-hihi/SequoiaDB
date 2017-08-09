@@ -1,12 +1,11 @@
 package com.sequoiadb.datasync.brokennetwork.commlib;
 
-import org.bson.BSONObject;
-
 import com.sequoiadb.base.Node;
 import com.sequoiadb.base.ReplicaGroup;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.commlib.SdbTestBase;
 import com.sequoiadb.task.OperateTask;
+import org.bson.BSONObject;
 
 public class AddNodeTask extends OperateTask {
     private String groupName = null;

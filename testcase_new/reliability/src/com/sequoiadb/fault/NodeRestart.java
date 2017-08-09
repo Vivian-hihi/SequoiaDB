@@ -9,7 +9,6 @@ package com.sequoiadb.fault;
 
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.commlib.NodeWrapper;
-
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.FaultException;
 import com.sequoiadb.exception.ReliabilityException;

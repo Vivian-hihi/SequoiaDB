@@ -6,22 +6,21 @@
  */
 package com.sequoiadb.commlib;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-
-import org.bson.BSONObject;
-import org.bson.BasicBSONObject;
-import org.bson.util.JSON;
-
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.ReliabilityException;
+import org.bson.BSONObject;
+import org.bson.BasicBSONObject;
+import org.bson.util.JSON;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 public class GroupMgr {
     private Map<String, GroupWrapper> name2group = new HashMap<String, GroupWrapper>();

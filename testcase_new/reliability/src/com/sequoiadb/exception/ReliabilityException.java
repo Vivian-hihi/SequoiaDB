@@ -9,11 +9,11 @@
  */
 package com.sequoiadb.exception;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.SftpException;
+
+import java.io.FileNotFoundException;
+import java.io.IOException;
 
 public class ReliabilityException extends Exception {
 	/**

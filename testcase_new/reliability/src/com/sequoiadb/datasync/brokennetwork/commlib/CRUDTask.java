@@ -1,13 +1,12 @@
 package com.sequoiadb.datasync.brokennetwork.commlib;
 
-import org.bson.BSONObject;
-import org.bson.util.JSON;
-
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.commlib.SdbTestBase;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.task.OperateTask;
+import org.bson.BSONObject;
+import org.bson.util.JSON;
 
 public class CRUDTask extends OperateTask {
     private String safeUrl = null;

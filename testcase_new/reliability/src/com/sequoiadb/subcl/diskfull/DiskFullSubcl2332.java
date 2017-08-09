@@ -1,16 +1,5 @@
 package com.sequoiadb.subcl.diskfull;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
-import org.bson.BSONObject;
-import org.bson.util.JSON;
-import org.testng.Assert;
-import org.testng.SkipException;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
@@ -25,6 +14,16 @@ import com.sequoiadb.fault.DiskFull;
 import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.OperateTask;
 import com.sequoiadb.task.TaskMgr;
+import org.bson.BSONObject;
+import org.bson.util.JSON;
+import org.testng.Assert;
+import org.testng.SkipException;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * @FileName:SEQDB-2332 在主表做基本操作时dataRG备节点所在服务器磁盘满

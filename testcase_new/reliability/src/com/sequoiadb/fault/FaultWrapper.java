@@ -1,26 +1,26 @@
 /**
  * Copyright (c) 2017, SequoiaDB Ltd. File Name:FaultWrapper.java
- * 
  *
  * @author wenjingwang Date:2017-2-21下午4:54:48
  * @version 1.00
  */
 package com.sequoiadb.fault;
 
-import java.text.SimpleDateFormat;
+import com.sequoiadb.exception.FaultException;
+import com.sequoiadb.task.FaultMakeTask;
+import com.sequoiadb.task.OperateTask;
+import org.bson.BSONObject;
+import org.bson.BasicBSONObject;
+
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
-
-import org.bson.BSONObject;
-import org.bson.BasicBSONObject;
-
-import com.sequoiadb.exception.FaultException;
-import com.sequoiadb.task.FaultMakeTask;
-import com.sequoiadb.task.OperateTask;
+import java.util.logging.Logger;
 
 public class FaultWrapper extends Fault {
+    private final static Logger log = Logger.getLogger(FaultWrapper.class.getName());
+
     private Fault instance;
     private int checkTimes = 3;
     private List<OperateTask> taskSet = new ArrayList<OperateTask>();
@@ -58,8 +58,7 @@ public class FaultWrapper extends Fault {
     public void make() throws FaultException {
         FaultException exception = null;
         Date date = Calendar.getInstance().getTime();
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        System.out.println("make " + instance.getName() + " at " + sdf.format(date));
+        log.info("make " + instance.getName());
 
         try {
             instance.make();
@@ -67,17 +66,12 @@ public class FaultWrapper extends Fault {
                 if (checkMakeResult()) {
                     date = Calendar.getInstance().getTime();
                     status = OperateTask.faultStatus.MAKESUCCESS;
-                    sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                    System.out.println(
-                            "make " + instance.getName() + " success at " + sdf.format(date));
-                }
-                else {
-                    System.out.println(
-                            "make " + instance.getName() + " failure at " + sdf.format(date));
+                    log.info("make " + instance.getName() + " success");
+                } else {
+                    log.info("make " + instance.getName() + " failure ");
                 }
             }
-        }
-        catch (FaultException e) {
+        } catch (FaultException e) {
             handleException(e);
             exception = e;
         }
@@ -101,8 +95,7 @@ public class FaultWrapper extends Fault {
         for (int i = 0; i < checkTimes; ++i) {
             try {
                 checkResult = instance.checkMakeResult();
-            }
-            catch (FaultException e) {
+            } catch (FaultException e) {
                 if (i >= checkTimes - 1) {
                     throw e;
                 }
@@ -113,8 +106,7 @@ public class FaultWrapper extends Fault {
             }
             try {
                 Thread.sleep(500);
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 // ignore
             }
         }
@@ -128,25 +120,19 @@ public class FaultWrapper extends Fault {
         }
 
         Date date = Calendar.getInstance().getTime();
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        System.out.println("restore " + instance.getName() + " at " + sdf.format(date));
+        log.info("restore " + instance.getName());
         try {
             instance.restore();
             if (status != OperateTask.faultStatus.EXCEPTION) {
                 if (checkRestoreResult()) {
                     date = Calendar.getInstance().getTime();
-                    sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                    System.out.println(
-                            "restore " + instance.getName() + " success at " + sdf.format(date));
-                }
-                else {
-                    System.out.println(
-                            "restore " + instance.getName() + " failure at " + sdf.format(date));
+                    log.info("restore " + instance.getName() + " success.");
+                } else {
+                    log.info("restore " + instance.getName() + " failure.");
                     status = OperateTask.faultStatus.RESTOREFAILURE;
                 }
             }
-        }
-        catch (FaultException e) {
+        } catch (FaultException e) {
             handleException(e);
             exception = e;
         }

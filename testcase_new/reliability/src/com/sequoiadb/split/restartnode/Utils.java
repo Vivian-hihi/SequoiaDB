@@ -1,12 +1,5 @@
 package com.sequoiadb.split.restartnode;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.bson.BSONObject;
-import org.bson.util.JSON;
-import org.testng.SkipException;
-
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
@@ -14,6 +7,12 @@ import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.commlib.GroupWrapper;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.ReliabilityException;
+import org.bson.BSONObject;
+import org.bson.util.JSON;
+import org.testng.SkipException;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 

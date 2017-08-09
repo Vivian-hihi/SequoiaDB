@@ -1,14 +1,5 @@
 package com.sequoiadb.subcl.brokennetwork;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
-import org.testng.Assert;
-import org.testng.SkipException;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.commlib.CommLib;
 import com.sequoiadb.commlib.GroupMgr;
@@ -21,6 +12,14 @@ import com.sequoiadb.subcl.brokennetwork.commlib.AttachCLTask;
 import com.sequoiadb.subcl.brokennetwork.commlib.Utils;
 import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.TaskMgr;
+import org.testng.Assert;
+import org.testng.SkipException;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * @FileName seqDB-2172: attachCL过程中dataRG主节点断网

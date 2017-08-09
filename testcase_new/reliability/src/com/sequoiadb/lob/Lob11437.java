@@ -18,8 +18,8 @@ import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Vector;
 
-import static com.sequoiadb.metaopr.commons.MyUtil.createLob;
 import static com.sequoiadb.metaopr.commons.MyUtil.createRandomBytes;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -30,20 +30,22 @@ import static org.testng.AssertJUnit.assertTrue;
  * @Version 1.00
  */
 public class Lob11437 implements StandTestInterface {
-    String csName = LobUtil.csName;
-    String clName = LobUtil.clName;
+    String csName = "lob11437cs";
+    String clName = "lob11437cl";
     private byte[] data = createRandomBytes(200 * 1024);
     private List<ObjectId> ids = new ArrayList<>();
 
+    private List<LobBean> lobs2Create = new Vector<>();
 
     @BeforeClass
     @Override
     public void setup() {
         MyUtil.printBeginTime(this);
-        LobUtil.createLobCsAndCl();
+        LobUtil.createLobCsAndCl(csName, clName);
         MyUtil.deleteAllLobs(csName, clName);
+
         for (int i = 0; i < 100; i++) {
-            ids.add(createLob(csName, clName, data));
+            lobs2Create.add(new LobBean(createRandomBytes(1024 * 200)));
         }
     }
 
@@ -51,7 +53,7 @@ public class Lob11437 implements StandTestInterface {
     @AfterClass
     @Override
     public void tearDown() {
-        LobUtil.dropLobCS();
+        MyUtil.dropCS(csName);
         MyUtil.printEndTime(this);
     }
 
@@ -64,9 +66,10 @@ public class Lob11437 implements StandTestInterface {
     public void test(FaultMakeTask faultMakeTask) throws ReliabilityException {
         setup();
 
-        OperateTask clTask = ClTask.getClTask(1000);
+        OperateTask clTask = ClTask.getClTask(1000, csName, clName);
         List<ObjectId> createdLobIds = new ArrayList<>();
-        LobTask lobTask = LobTask.getCreateLobsTask(1000, data, createdLobIds);
+        LobTask lobTask = LobTask.getCreateLobsTask(lobs2Create)
+                .setCsAndClName(csName, clName);
 
         TaskMgr taskMgr = new TaskMgr(faultMakeTask);
         taskMgr.addTask(lobTask);
@@ -74,11 +77,11 @@ public class Lob11437 implements StandTestInterface {
         taskMgr.execute();
 
         byte[] targetMd5Value = MyUtil.getMd5(data);
-        assertTrue(MyUtil.isLobsAllCreated(csName, clName, createdLobIds));
+        assertTrue(MyUtil.isLobsAllCreated(csName, clName, lobs2Create));
         assertTrue(MyUtil.isLobNumInspectInGroup(csName, clName, "group1"));
         assertTrue(MyUtil.isLobNumInspectInGroup(csName, clName, "group2"));
-        assertTrue(MyUtil.isLobMd5InspectInGroup(csName, clName, "group1", targetMd5Value));
-        assertTrue(MyUtil.isLobMd5InspectInGroup(csName, clName, "group2", targetMd5Value));
+        assertTrue(MyUtil.isLobMd5InspectInGroup(csName, clName, "group1", lobs2Create));
+        assertTrue(MyUtil.isLobMd5InspectInGroup(csName, clName, "group2", lobs2Create));
 
         Assert.assertTrue(isCountOfClInspect());
     }

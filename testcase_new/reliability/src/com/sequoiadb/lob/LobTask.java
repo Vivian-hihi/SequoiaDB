@@ -5,10 +5,8 @@ import com.sequoiadb.base.DBLob;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.metaopr.commons.MyUtil;
 import com.sequoiadb.task.OperateTask;
-import org.bson.types.ObjectId;
 
 import java.util.List;
-import java.util.Map;
 
 import static com.sequoiadb.metaopr.commons.MyUtil.getSdb;
 
@@ -20,53 +18,74 @@ import static com.sequoiadb.metaopr.commons.MyUtil.getSdb;
  */
 public abstract class LobTask extends OperateTask {
 
+    String csName = null, clName = null;
+    DBCollection collection = null;
+    Sequoiadb db = null;
+    String hostName = null;
+
+    public LobTask setHostName(String hostName) {
+        this.hostName = hostName;
+        return this;
+    }
 
     @Override
     public void exec() {
-        try (Sequoiadb db = getSdb()) {
-            DBCollection cl = db.getCollectionSpace(LobUtil.csName).getCollection(LobUtil.clName);
-            lobOperate(cl);
-        }
+        if (hostName != null)
+            db = new Sequoiadb(hostName, "", "");
+        else
+            db = getSdb();
+        if (csName == null || clName == null)
+            throw new IllegalArgumentException("cs or cl can not be null");
+        collection = db.getCollectionSpace(csName).getCollection(clName);
+        lobOperate();
+
+        db.close();
     }
 
+    public LobTask setCsAndClName(String csName, String clName) {
+        this.clName = clName;
+        this.csName = csName;
+        return this;
+    }
 
-    abstract void lobOperate(DBCollection cl);
+    abstract void lobOperate();
 
-    public static LobTask getCreateLobsTask(final int num, final byte[] bytes, final List<ObjectId> createLobIds) {
+
+    public static LobTask getCreateLobsTask(final List<LobBean> lobs) {
         return new LobTask() {
             @Override
-            void lobOperate(DBCollection cl) {
-                if (createLobIds == null)
-                    throw new IllegalArgumentException("lobIds can not be null");
-                for (int i = 0; i < num; i++) {
-                    DBLob lob = cl.createLob();
-                    lob.write(bytes);
-                    lob.close();
-                    createLobIds.add(lob.getID());
+            void lobOperate() {
+                if (lobs == null)
+                    throw new IllegalArgumentException("lobs can not be null");
+
+                for (LobBean lob : lobs) {
+                    DBLob dbLob = collection.createLob();
+                    dbLob.write(lob.getContent());
+                    lob.setId(dbLob.getID());
+                    dbLob.close();
                 }
             }
         };
     }
 
-    public static LobTask getDeleteLobsTask(final List<ObjectId> lobIds, final Map<ObjectId,String> deletedIdMap) {
+    public static LobTask getDeleteLobsTask(final List<LobBean> lobs) {
         return new LobTask() {
             @Override
-            void lobOperate(DBCollection cl) {
-                for (int i = 0; i < lobIds.size(); i++) {
-                    ObjectId id = lobIds.get(i);
-                    cl.removeLob(id);
-                    deletedIdMap.put(id,"");
+            void lobOperate() {
+                for (LobBean lob : lobs) {
+                    collection.removeLob(lob.getId());
+                    lob.setInSdb(false);
                 }
             }
         };
     }
 
-    public static LobTask getReadLobsTask(final List<ObjectId> lobIds) {
+    public static LobTask getReadLobsTask(final List<LobBean> lobs) {
         return new LobTask() {
             @Override
-            void lobOperate(DBCollection cl) {
-                for (ObjectId lobId : lobIds) {
-                    MyUtil.readLob(cl.getCSName(),cl.getName(),lobId);
+            void lobOperate() {
+                for (LobBean lob : lobs) {
+                    MyUtil.readLob(collection, lob.getId());
                 }
             }
         };

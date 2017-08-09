@@ -1,20 +1,14 @@
 package com.sequoiadb.commlib;
 
+import com.jcraft.jsch.*;
+import com.sequoiadb.exception.FaultException;
+import com.sequoiadb.exception.ReliabilityException;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
-
-
-import com.jcraft.jsch.Channel;
-import com.jcraft.jsch.ChannelExec;
-import com.jcraft.jsch.ChannelSftp;
-import com.jcraft.jsch.JSch;
-import com.jcraft.jsch.JSchException;
-import com.jcraft.jsch.Session;
-import com.sequoiadb.exception.FaultException;
-import com.sequoiadb.exception.ReliabilityException;
 
 /**
  * 
@@ -24,6 +18,7 @@ import com.sequoiadb.exception.ReliabilityException;
 public class Ssh {
     private final static Logger log=Logger.getLogger(Ssh.class.getName());
 
+    private static final int CHANNEL_CONNECT_TIMEOUT=60*1000;
     private String host;
     private String username;
     private String password;
@@ -68,7 +63,7 @@ public class Ssh {
             session = jsch.getSession(username, host, port);
             session.setPassword(password);
             session.setConfig("StrictHostKeyChecking", "no");
-            session.connect(60 * 1000);
+            session.connect(CHANNEL_CONNECT_TIMEOUT);
         }
         catch (JSchException e) {
             if (session != null) {
@@ -89,7 +84,7 @@ public class Ssh {
         ChannelSftp channel = null;
         try {
             channel = (ChannelSftp) session.openChannel("sftp");
-            channel.connect(60 * 1000);
+            channel.connect(CHANNEL_CONNECT_TIMEOUT);
             channel.put(localPath, remotePath);
         }
         catch (Exception e) {
@@ -113,7 +108,7 @@ public class Ssh {
         ChannelSftp channel = null;
         try {
             channel = (ChannelSftp) session.openChannel("sftp");
-            channel.connect(60 * 1000);
+            channel.connect(CHANNEL_CONNECT_TIMEOUT);
             channel.get(remotePath, localPath);
         }
         catch (Exception e) {
@@ -168,7 +163,7 @@ public class Ssh {
         try {
             channel = session.openChannel("exec");
             ((ChannelExec) channel).setCommand(command);
-            channel.connect(60 * 1000);
+            channel.connect(CHANNEL_CONNECT_TIMEOUT);
             backgroundCMD.put(channel.getId(), channel);
             return channel.getId();
         }

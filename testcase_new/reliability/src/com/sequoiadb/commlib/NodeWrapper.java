@@ -7,15 +7,14 @@
  */
 package com.sequoiadb.commlib;
 
-import org.bson.BSONObject;
-import org.bson.BasicBSONObject;
-import org.bson.types.BasicBSONList;
-
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Node;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.ReliabilityException;
+import org.bson.BSONObject;
+import org.bson.BasicBSONObject;
+import org.bson.types.BasicBSONList;
 
 public class NodeWrapper {
     public enum NodeStatus {
@@ -28,6 +27,15 @@ public class NodeWrapper {
     private NodeStatus status;
     private Node node;
     private BasicBSONObject nodeInfo;
+
+    @Override
+    public String toString() {
+        return "NodeWrapper{" +
+                "status=" + status +
+                ", node=" + node +
+                ", nodeInfo=" + nodeInfo +
+                '}';
+    }
 
     public NodeWrapper(Node node, BasicBSONObject nodeInfo) {
         this.node = node;

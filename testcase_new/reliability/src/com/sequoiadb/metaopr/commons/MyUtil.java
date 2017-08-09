@@ -8,6 +8,8 @@ import com.sequoiadb.commlib.SdbTestBase;
 import com.sequoiadb.datasource.SequoiadbDatasource;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.ReliabilityException;
+import com.sequoiadb.index.IndexBean;
+import com.sequoiadb.lob.LobBean;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.types.ObjectId;
@@ -712,9 +714,26 @@ public class MyUtil {
     }
 
     public static ObjectId createLob(String csName, String clName, byte[] bytes) {
+        try (MySequoiadb db = getMySdb()) {
+            return createLob(csName, clName, bytes, db.getSequoiadb());
+        }
+    }
+
+    public static void createLobs(String csName, String clName, List<LobBean> lobs) {
+        if (lobs == null)
+            throw new IllegalArgumentException("lobs can not be null");
+        try (MySequoiadb db = getMySdb()) {
+            for (LobBean lob : lobs) {
+                createLob(csName, clName, lob.getContent(), db.getSequoiadb());
+                lob.setInSdb(true);
+            }
+        }
+    }
+
+    private static ObjectId createLob(String csName, String clName, byte[] bytes, Sequoiadb db) {
         DBLob lob = null;
         ObjectId id = null;
-        try (MySequoiadb db = getMySdb()) {
+        try {
             DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
             lob = cl.createLob();
             lob.write(bytes);
@@ -727,6 +746,17 @@ public class MyUtil {
         }
     }
 
+    public static Map<ObjectId, byte[]> createLob(String csName, String clName, List<byte[]> data) {
+        Map<ObjectId, byte[]> map = new HashMap<>();
+        try (MySequoiadb db = getMySdb()) {
+            for (byte[] datum : data) {
+                ObjectId id = createLob(csName, clName, datum, db.getSequoiadb());
+                map.put(id, datum);
+            }
+        }
+        return map;
+    }
+
     public static byte[] readLob(String csName, String clName, ObjectId lobID) {
         DBLob lob = null;
         try (MySequoiadb db = getMySdb()) {
@@ -736,6 +766,8 @@ public class MyUtil {
     }
 
     public static byte[] readLob(DBCollection cl, ObjectId id) {
+        if (cl == null || id == null)
+            throw new IllegalArgumentException();
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         try {
             DBLob lob = cl.openLob(id);
@@ -759,6 +791,7 @@ public class MyUtil {
         return bytes;
     }
 
+    @Deprecated
     public static boolean compareMd5(byte[] rawByte, byte[] targetMd5Value) {
         return Arrays.equals(getMd5(rawByte), targetMd5Value);
     }
@@ -815,14 +848,22 @@ public class MyUtil {
         for (NodeWrapper nodeWrapper : group.getNodes()) {
             int numInNode = getNumOfLobFromDataNode(csName, clName, nodeWrapper);
             if (num != numInNode) {
-                log.severe("num:"+String.valueOf(num)+" numInNode"+String.valueOf(numInNode));
+                log.severe("num:" + String.valueOf(num) + " numInNode" + String.valueOf(numInNode));
                 return false;
             }
         }
         return true;
     }
 
-    public static boolean isLobMd5InspectInGroup(String csName, String clName, String groupName, final byte[] targetMd5Value) throws ReliabilityException {
+    public static boolean isLobMd5InspectInGroup(String csName, String clName, String groupName, List<LobBean> lobs) throws ReliabilityException {
+        Map<ObjectId, LobBean> targetLob = new HashMap<>();
+        Set<String> targetMd5 = new HashSet<>();
+
+        for (LobBean lob : lobs) {
+            targetLob.put(lob.getId(), lob);
+            targetMd5.add(Arrays.toString(lob.getContentMd5()));
+        }
+
         GroupMgr groupMgr = new GroupMgr();
         GroupWrapper groupWrapper = groupMgr.getGroupByName(groupName);
 
@@ -837,40 +878,63 @@ public class MyUtil {
                     byte[] bytes = readLob(cl, id);
                     if (Arrays.equals("-269".getBytes(), bytes))
                         continue;
-                    if (compareMd5(bytes, targetMd5Value) == false)
+                    if (targetMd5.contains(Arrays.toString(getMd5(bytes))) == false) {
+                        log.severe("oid: " + id.toString() + " should be " + targetLob.get(id));
                         return false;
+                    }
                 }
             }
         }
         return true;
     }
 
-    public static boolean isLobsAllDelete(String csName, String clName, Map<ObjectId, String> lobsId) {
+
+    public static boolean isLobsAllDelete(String csName, String clName, List<LobBean> lobs) {
+        Set<ObjectId> idSet = new HashSet<>();
+        for (LobBean lob : lobs) {
+            if (lob.isInSdb() == false)
+                idSet.add(lob.getId());
+        }
+        return isLobsAllDelete(csName, clName, idSet);
+    }
+
+    public static boolean isLobsAllDelete(String csName, String clName, Set<ObjectId> lobsId) {
         try (MySequoiadb db = getMySdb()) {
             DBCollection cl = db.getCollectionSpace(csName)
                     .getCollection(clName);
             DBCursor cursor = cl.listLobs();
             while (cursor.hasNext()) {
                 ObjectId id = (ObjectId) cursor.getNext().get("Oid");
-                if (lobsId.containsKey(id)) {
+                if (lobsId.contains(id)) {
                     try {
                         cl.openLob(id);
                     } catch (BaseException e) {
                         e.printStackTrace();
                         if (e.getErrorCode() == -296)
                             continue;
-                        else {
-                            log.severe(id.toString());
-                            return false;
-                        }
+
+                        log.severe("OID: " + id.toString());
+                        log.severe(e.getMessage());
+                        return false;
                     }
+                    log.severe("OID: " + id.toString());
+                    return false;
                 }
             }
             return true;
         }
     }
 
-    public static boolean isLobsAllCreated(String csName, String clName, List<ObjectId> createdLobIds) {
+    public static boolean isLobsAllCreated(String csName, String clName, List<LobBean> lobs) {
+        List<ObjectId> ids = new ArrayList<>();
+        for (LobBean lob : lobs) {
+            if (lob.isInSdb())
+                ids.add(lob.getId());
+        }
+        return isLobsAllCreated2(csName, clName, ids);
+    }
+
+    private static boolean isLobsAllCreated2(String csName, String clName, List<ObjectId> createdLobIds) {
         try (MySequoiadb db = getMySdb()) {
             DBCollection cl = db.getCollectionSpace(csName)
                     .getCollection(clName);
@@ -899,6 +963,100 @@ public class MyUtil {
     @Deprecated
     public static void throwSkipExeWithoutFaultEnv() {
 //        throwSkipException("没遇上异常环境");
+    }
+
+    public static void createIndex(DBCollection cl, IndexBean index) {
+        cl.createIndex(index.getName(), index.getIndexDef(), index.isUnique(), index.isEnforced(), index.getSortBufferSize());
+        index.setCreated(true);
+    }
+
+    public static void createIndexs(String csName, String clName, List<IndexBean> indexList) {
+        try (MySequoiadb db = getMySdb()) {
+            DBCollection cl = db.getCollectionSpace(csName)
+                    .getCollection(clName);
+            for (IndexBean indexBean : indexList) {
+                createIndex(cl, indexBean);
+            }
+        }
+    }
+
+    private static void removeIndex(DBCollection cl, String indexName) {
+        cl.dropIndex(indexName);
+    }
+
+    public static void removeIndex(DBCollection cl, IndexBean index) {
+        removeIndex(cl, index.getName());
+        index.setDeleted(true);
+    }
+
+    public static void removeIndexes(String csName, String clName, List<IndexBean> indexBeans) {
+        try (MySequoiadb db = getMySdb()) {
+            DBCollection cl = db.getCollectionSpace(csName)
+                    .getCollection(clName);
+            for (IndexBean indexBean : indexBeans) {
+                removeIndex(cl, indexBean);
+            }
+        }
+    }
+
+    public static boolean isIndexAllCreated(String csName, String clName, List<IndexBean> indexBeanList) {
+        boolean flag;
+        try (MySequoiadb db = getMySdb()) {
+            DBCollection cl = db.getCollectionSpace(csName)
+                    .getCollection(clName);
+            flag = isIndexAllCreated(cl, indexBeanList);
+        }
+        return flag;
+    }
+
+
+    public static boolean isIndexAllCreated(DBCollection cl, List<IndexBean> indexBeanList) {
+        Set<String> sdbIndexes = new HashSet<>();
+        DBCursor cursor = cl.getIndexes();
+        while (cursor.hasNext()) {
+            Object def = cursor.getNext().get("IndexDef");
+            String name = ((BSONObject) def).get("name").toString();
+            sdbIndexes.add(name);
+        }
+        for (IndexBean indexBean : indexBeanList) {
+            if (indexBean.isCreated()) {
+                if (sdbIndexes.contains(indexBean.getName()) == false) {
+                    log.severe("can not find index: " + indexBean.getName());
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+
+    public static boolean isIndexAllDeleted(String csName, String clName, List<IndexBean> indexBeanList) {
+        boolean flag;
+        try (MySequoiadb db = getMySdb()) {
+            DBCollection cl = db.getCollectionSpace(csName)
+                    .getCollection(clName);
+            flag = isIndexAllDeleted(cl, indexBeanList);
+        }
+        return flag;
+    }
+
+
+    public static boolean isIndexAllDeleted(DBCollection cl, List<IndexBean> indexBeanList) {
+        Set<String> deletedIndex = new HashSet<>();
+        for (IndexBean indexBean : indexBeanList) {
+            if (indexBean.isDeleted())
+                deletedIndex.add(indexBean.getName());
+        }
+        DBCursor cursor = cl.getIndexes();
+        while (cursor.hasNext()) {
+            Object def = cursor.getNext().get("IndexDef");
+            String name = ((BSONObject) def).get("name").toString();
+            if (deletedIndex.contains(name)) {
+                log.severe("index was not deleted:" + name);
+                return false;
+            }
+        }
+        return true;
     }
 }
 

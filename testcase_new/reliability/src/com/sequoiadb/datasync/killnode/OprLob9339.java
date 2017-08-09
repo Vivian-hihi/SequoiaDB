@@ -1,19 +1,6 @@
 package com.sequoiadb.datasync.killnode;
 
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Random;
-
-import org.bson.BSONObject;
-import org.bson.types.ObjectId;
-import org.bson.util.JSON;
-import org.testng.Assert;
-import org.testng.SkipException;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBLob;
@@ -29,6 +16,18 @@ import com.sequoiadb.fault.KillNode;
 import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.OperateTask;
 import com.sequoiadb.task.TaskMgr;
+import org.bson.BSONObject;
+import org.bson.types.ObjectId;
+import org.bson.util.JSON;
+import org.testng.Assert;
+import org.testng.SkipException;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Random;
 
 /**
  * @FileName seqDB-9339: lob写入过程中主节点异常重启，选出新主节点，该故障节点为同步的目的节点 

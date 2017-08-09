@@ -7,23 +7,14 @@
  */
 package com.sequoiadb.commlib;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-
+import com.sequoiadb.base.*;
+import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.exception.ReliabilityException;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.types.BasicBSONList;
 
-import com.sequoiadb.base.CollectionSpace;
-import com.sequoiadb.base.DBCollection;
-import com.sequoiadb.base.DBCursor;
-import com.sequoiadb.base.ReplicaGroup;
-import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.exception.ReliabilityException;
+import java.util.*;
 
 public class GroupWrapper {
     private ReplicaGroup group;

@@ -1,14 +1,10 @@
 /**
  * Copyright (c) 2017, SequoiaDB Ltd. File Name:DiskFull.java
- * 
  *
  * @author wenjingwang Date:2017-2-21下午4:54:48
  * @version 1.00
  */
 package com.sequoiadb.fault;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.commlib.SdbTestBase;
@@ -16,6 +12,9 @@ import com.sequoiadb.commlib.Ssh;
 import com.sequoiadb.exception.FaultException;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.task.FaultMakeTask;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class DiskFull extends Fault {
     private String hostName;
@@ -31,10 +30,8 @@ public class DiskFull extends Fault {
     private final String scriptName = "fillUpDisk.sh";
 
     /**
-     * 
      * @param hostName
-     * @param padPath
-     *            填充文件的路径
+     * @param padPath  填充文件的路径
      */
     public DiskFull(String hostName, String padPath) {
         super("diskFull");
@@ -94,22 +91,19 @@ public class DiskFull extends Fault {
             if (padSize > 0) {
                 this.fillUpDisk(100);
                 return false;
-            }
-            else {
+            } else {
                 return true;
             }
-        }
-        catch (ReliabilityException e) {
+        } catch (ReliabilityException e) {
             throw new FaultException(e);
         }
     }
 
     public void restore() throws FaultException {
-        for (int i = 0; i < padFileList.size();) {
+        for (int i = 0; i < padFileList.size(); ) {
             try {
                 ssh.exec("rm -f " + padFileList.get(i));
-            }
-            catch (ReliabilityException e) {
+            } catch (ReliabilityException e) {
                 FaultException e1 = new FaultException(e);
                 e1.setStackTrace(e.getStackTrace());
                 throw e1;
@@ -129,8 +123,7 @@ public class DiskFull extends Fault {
                 String padFileName = ssh.getStdout().substring(0, ssh.getStdout().length() - 1);
                 padFileList.add(padFileName);
             }
-        }
-        catch (ReliabilityException e) {
+        } catch (ReliabilityException e) {
             throw new FaultException(e);
         }
     }
@@ -139,12 +132,11 @@ public class DiskFull extends Fault {
     public void init() throws FaultException {
         try {
             ssh = new Ssh(hostName, user, passwd, port);
-            
+
             ssh.scpTo(localScriptPath + "/" + scriptName, remotePath + "/");
             ssh.exec("chmod 777 " + remotePath + "/" + scriptName);
             fillUpDisk(presetPercent);
-        }
-        catch (ReliabilityException e) {
+        } catch (ReliabilityException e) {
             throw new FaultException(e);
         }
     }
@@ -157,51 +149,44 @@ public class DiskFull extends Fault {
                 ssh.disconnect();
                 ssh = null;
             }
-        }
-        catch (ReliabilityException e) {
+        } catch (ReliabilityException e) {
             throw new FaultException(e);
         }
     }
 
     /**
-     * 
      * @param hostName
-     * @param padPath
-     *            填充路徑
-     * @param maxDelay
-     *            最大延迟启动时间s
-     * @param duration
-     *            持续时间s
-     * @param presetPercent
-     *            线程启动之前，希望磁盘占用率达到的数值(<98)
-     * @param sysCataCL
-     *            待填满的系统编目表（SYSCOLLECTIONS,SYSDOMAINS...）
-     *            备注：当填充catalog节点时，单纯通过创建domain/cs/cl增加编目信息很难填满磁盘，
-     *            如果填写该参数，则可以通过特意插入记录来填满该编目表的空间。
-     *            缺省，则不做此特殊处理。
+     * @param padPath       填充路徑
+     * @param maxDelay      最大延迟启动时间s
+     * @param duration      持续时间s
+     * @param presetPercent 线程启动之前，希望磁盘占用率达到的数值(<98)
+     * @param sysCataCL     待填满的系统编目表（SYSCOLLECTIONS,SYSDOMAINS...）
+     *                      备注：当填充catalog节点时，单纯通过创建domain/cs/cl增加编目信息很难填满磁盘，
+     *                      如果填写该参数，则可以通过特意插入记录来填满该编目表的空间。
+     *                      缺省，则不做此特殊处理。
      * @return
      */
     public static FaultMakeTask getFaultMakeTask(String hostName, String padPath, int maxDelay,
-            int duration, DBCollection sysCataCL, int presetPercent) {
+                                                 int duration, DBCollection sysCataCL, int presetPercent) {
         FaultMakeTask task = null;
         if (sysCataCL != null) {
             DiskFullForCata df = new DiskFullForCata(hostName, padPath, presetPercent, sysCataCL);
             task = new FaultMakeTask(df, maxDelay, duration, 3);
-        } else  {
+        } else {
             DiskFull df = new DiskFull(hostName, padPath, presetPercent);
             task = new FaultMakeTask(df, maxDelay, duration, 3);
         }
         return task;
     }
-    
+
     public static FaultMakeTask getFaultMakeTask(String hostName, String padPath, int maxDelay,
-            int duration, DBCollection sysCataCL) {
+                                                 int duration, DBCollection sysCataCL) {
         int defaultPercent = 97;
         return getFaultMakeTask(hostName, padPath, maxDelay, duration, sysCataCL, defaultPercent);
     }
-    
+
     public static FaultMakeTask getFaultMakeTask(String hostName, String padPath, int maxDelay,
-            int duration) {
+                                                 int duration) {
         return getFaultMakeTask(hostName, padPath, maxDelay, duration, null);
     }
 }

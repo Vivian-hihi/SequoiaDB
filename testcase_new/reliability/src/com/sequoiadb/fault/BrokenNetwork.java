@@ -7,11 +7,6 @@
  */
 package com.sequoiadb.fault;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
-
 import com.sequoiadb.commlib.GroupWrapper;
 import com.sequoiadb.commlib.NodeWrapper;
 import com.sequoiadb.commlib.SdbTestBase;
@@ -19,6 +14,10 @@ import com.sequoiadb.commlib.Ssh;
 import com.sequoiadb.exception.FaultException;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.task.FaultMakeTask;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class BrokenNetwork extends Fault {

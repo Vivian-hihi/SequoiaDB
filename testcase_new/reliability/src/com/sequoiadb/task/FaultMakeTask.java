@@ -7,11 +7,11 @@
  */
 package com.sequoiadb.task;
 
-import java.util.Random;
-
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.Fault;
 import com.sequoiadb.fault.FaultWrapper;
+
+import java.util.Random;
 
 public class FaultMakeTask extends Task {
 

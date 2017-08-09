@@ -6,10 +6,10 @@
  */
 package com.sequoiadb.task;
 
+import com.sequoiadb.exception.ReliabilityException;
+
 import java.util.HashMap;
 import java.util.Map;
-
-import com.sequoiadb.exception.ReliabilityException;
 
 public class TaskMgr {
     private Map<String, Task> taskSet = new HashMap<String, Task>();
@@ -21,11 +21,11 @@ public class TaskMgr {
     }
 
     public TaskMgr() {
-
     }
 
     /**
      * add by jt
+     *
      * @param faultMakeTask
      * @param operateTasks
      */
@@ -67,13 +67,12 @@ public class TaskMgr {
         }
     }
 
-    public void addTask(Task task) {
-        if (!taskSet.containsKey(task.getName())) {
-            taskSet.put(task.getName(), task);
-        }
+    public TaskMgr addTask(Task task) {
+        taskSet.put(task.getName(), task);
         if (faultMakeTask != null) {
             faultMakeTask.addDependsTask((OperateTask) task);
         }
+        return this;
     }
 
     /**
@@ -105,7 +104,7 @@ public class TaskMgr {
             entry.getValue().start();
         }
     }
-    
+
     public void join() {
         for (Map.Entry<String, Task> entry : taskSet.entrySet()) {
             try {
@@ -115,7 +114,7 @@ public class TaskMgr {
             }
         }
     }
-    
+
     public void check() throws ReliabilityException {
         if (!this.isAllSuccess()) {
             throw new ReliabilityException(this.getErrorMsg());
@@ -179,11 +178,11 @@ public class TaskMgr {
     }
 
     public String getErrorMsg() {
-        String reStr = new String();
+        StringBuffer reStr = new StringBuffer();
         for (Map.Entry<String, Task> entry : taskSet.entrySet()) {
-            reStr += entry.getValue().getErrorMsg();
+            reStr.append(entry.getValue().getErrorMsg());
         }
-        return reStr;
+        return reStr.toString();
     }
 
     public void clear() {

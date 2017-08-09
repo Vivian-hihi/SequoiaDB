@@ -5,7 +5,6 @@ import com.sequoiadb.commlib.NodeWrapper;
 import com.sequoiadb.commlib.StandTestInterface;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.NodeRestart;
-import com.sequoiadb.metaopr.commons.MyUtil;
 import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.TaskMgr;
 import org.bson.types.ObjectId;
@@ -13,12 +12,9 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-import static com.sequoiadb.metaopr.commons.MyUtil.createRandomBytes;
+import static com.sequoiadb.metaopr.commons.MyUtil.*;
 import static org.testng.Assert.assertTrue;
 
 /**
@@ -28,13 +24,11 @@ import static org.testng.Assert.assertTrue;
  * @Version 1.00
  */
 public class Lob3885 implements StandTestInterface {
-    private String csName = LobUtil.csName;
-    private String clName = LobUtil.clName;
+    private String csName = "lob3885cs";
+    private String clName = "lob3885cl";
 
-    private final byte[] data = createRandomBytes(200 * 1024);
-    private List<ObjectId> objectIds = new ArrayList<>();
-    private List<byte[]> byteList = new ArrayList<>();
-
+    private List<LobBean> lobs2Create = new Vector<>();
+    private List<LobBean> lobs2Delete = new Vector<>();
 
     /**
      * 1.在集合上并发执行以下操作：
@@ -55,9 +49,11 @@ public class Lob3885 implements StandTestInterface {
         List<ObjectId> createIds = new ArrayList<>(50);
         Map<ObjectId, String> deteledIdMap = new HashMap<>();
 
-        LobTask createLobsTask = LobTask.getCreateLobsTask(1000, data, createIds);
+        LobTask createLobsTask = LobTask.getCreateLobsTask(lobs2Create)
+                .setCsAndClName(csName, clName);
         createLobsTask.setName("create lobs task");
-        LobTask deleteLobsTask = LobTask.getDeleteLobsTask(objectIds, deteledIdMap);
+        LobTask deleteLobsTask = LobTask.getDeleteLobsTask(lobs2Delete)
+                .setCsAndClName(csName, clName);
         deleteLobsTask.setName("delete lobs task ");
 
         TaskMgr mgr = new TaskMgr(faultMakeTask);
@@ -65,36 +61,38 @@ public class Lob3885 implements StandTestInterface {
         mgr.addTask(deleteLobsTask);
         mgr.execute();
 
-        byte[] targetMd5Value = MyUtil.getMd5(data);
-        assertTrue(MyUtil.isLobsAllCreated(csName, clName, createIds));
-        assertTrue(MyUtil.isLobsAllDelete(csName, clName, deteledIdMap));
-        assertTrue(MyUtil.isLobNumInspectInGroup(csName, clName, "group1"));
-        assertTrue(MyUtil.isLobNumInspectInGroup(csName, clName, "group2"));
-        assertTrue(MyUtil.isLobMd5InspectInGroup(csName, clName, "group1", targetMd5Value));
-        assertTrue(MyUtil.isLobMd5InspectInGroup(csName, clName, "group2", targetMd5Value));
-    }
-
-    private void createLob() {
-        for (int i = 0; i < 500; i++) {
-            objectIds.add(MyUtil.createLob(csName, clName, data));
-        }
+        checkBusiness();
+        assertTrue(isLobsAllCreated(csName, clName, lobs2Create));
+        assertTrue(isLobsAllDelete(csName, clName, lobs2Delete));
+        assertTrue(isLobNumInspectInGroup(csName, clName, "group1"));
+        assertTrue(isLobNumInspectInGroup(csName, clName, "group2"));
+        List<LobBean> lobs = new ArrayList<>();
+        lobs.addAll(lobs2Create);
+        lobs.addAll(lobs2Delete);
+        assertTrue(isLobMd5InspectInGroup(csName, clName, "group1", lobs));
+        assertTrue(isLobMd5InspectInGroup(csName, clName, "group2", lobs));
     }
 
     @BeforeClass
     @Override
     public void setup() {
-        MyUtil.printBeginTime(this);
-        LobUtil.createLobCsAndCl();
-        MyUtil.deleteAllLobs(csName, clName);
-        createLob();
+        printBeginTime(this);
+        LobUtil.createLobCsAndCl(csName, clName);
+        deleteAllLobs(csName, clName);
+
+        for (int i = 0; i < 100; i++) {
+            lobs2Delete.add(new LobBean(createRandomBytes(1024 * 200)));
+            lobs2Create.add(new LobBean(createRandomBytes(1024 * 200)));
+        }
+        createLobs(csName, clName, lobs2Delete);
     }
 
 
     @AfterClass
     @Override
     public void tearDown() {
-        MyUtil.deleteAllLobs(csName, clName);
-        LobUtil.dropLobCS();
-        MyUtil.printEndTime(this);
+        deleteAllLobs(csName, clName);
+        dropCS(csName);
+        printEndTime(this);
     }
 }

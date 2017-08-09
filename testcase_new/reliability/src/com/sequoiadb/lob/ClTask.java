@@ -19,13 +19,11 @@ public abstract class ClTask extends OperateTask {
      * @param num
      * @return
      */
-    public static ClTask getClTask(final int num) {
+    public static ClTask getClTask(final int num, final String csName, final String clName) {
         return new ClTask() {
             @Override
             public void exec() throws Exception {
                 try (Sequoiadb db = MyUtil.getSdb()) {
-                    String csName = LobUtil.csName;
-                    String clName = LobUtil.clName;
                     db.beginTransaction();
                     DBCollection cl = db.getCollectionSpace(csName)
                             .getCollection(clName);

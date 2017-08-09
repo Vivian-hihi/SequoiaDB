@@ -1,10 +1,13 @@
 package com.sequoiadb.fault;
 
+import com.sequoiadb.commlib.NodeWrapper;
 import com.sequoiadb.commlib.SdbTestBase;
 import com.sequoiadb.commlib.Ssh;
 import com.sequoiadb.exception.FaultException;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.task.FaultMakeTask;
+
+import java.util.logging.Logger;
 
 public class KillNode extends Fault {
     private String hostName;
@@ -17,6 +20,8 @@ public class KillNode extends Fault {
     private int port;
     private final String localScriptPath = SdbTestBase.scriptDir;
     private final String scriptName = "killNode.sh";
+    private final static Logger log = Logger.getLogger(KillNode.class.getName());
+
 
     public KillNode(String hostName, String svcName) {
         super("killNode");
@@ -30,12 +35,11 @@ public class KillNode extends Fault {
 
     @Override
     public void make() throws FaultException {
-        System.out.println("target node:" + hostName + " : " + svcName);
+        log.info("target node:" + hostName + " : " + svcName);
         try {
             ssh.exec(remotePath + "/" + scriptName + " " + svcName);
             pid = ssh.getStdout().substring(0, ssh.getStdout().length() - 1);
-        }
-        catch (ReliabilityException e) {
+        } catch (ReliabilityException e) {
             throw new FaultException(e);
         }
     }
@@ -54,12 +58,10 @@ public class KillNode extends Fault {
             if (!pid.equals(currentPid)) {
                 pid = currentPid;
                 return true;
-            }
-            else {
+            } else {
                 return false;
             }
-        }
-        catch (ReliabilityException e) {
+        } catch (ReliabilityException e) {
             throw new FaultException(e);
         }
     }
@@ -78,8 +80,7 @@ public class KillNode extends Fault {
                 return false;
             }
             return true;
-        }
-        catch (ReliabilityException e) {
+        } catch (ReliabilityException e) {
             throw new FaultException(e);
         }
     }
@@ -91,8 +92,7 @@ public class KillNode extends Fault {
 
             ssh.scpTo(localScriptPath + "/" + scriptName, remotePath + "/");
             ssh.exec("chmod 777 " + remotePath + "/" + scriptName);
-        }
-        catch (ReliabilityException e) {
+        } catch (ReliabilityException e) {
             throw new FaultException(e);
         }
     }
@@ -104,37 +104,35 @@ public class KillNode extends Fault {
                 ssh.exec("rm -rf " + remotePath + "/" + scriptName);
                 ssh.disconnect();
             }
-        }
-        catch (ReliabilityException e) {
+        } catch (ReliabilityException e) {
             throw new FaultException(e);
         }
     }
 
     /**
-     * 
      * @param hostName
      * @param svcName
-     * @param maxDelay
-     *            最大延迟启动时间s
-     * @param checkTimes
-     *            构造成功与否的检查次数（20）
+     * @param maxDelay   最大延迟启动时间s
+     * @param checkTimes 构造成功与否的检查次数（20）
      * @return
      */
     public static FaultMakeTask getFaultMakeTask(String hostName, String svcName, int maxDelay,
-            int checkTimes) {
+                                                 int checkTimes) {
         FaultMakeTask task = null;
         KillNode kn = new KillNode(hostName, svcName);
         task = new FaultMakeTask(kn, maxDelay, 3, checkTimes);
         return task;
     }
 
+    public static FaultMakeTask getFaultMakeTask(NodeWrapper node, int maxDelay) {
+        return getFaultMakeTask(node.hostName(), node.svcName(), maxDelay);
+    }
+
+
     /**
-     * 
-     * 
      * @param hostName
      * @param svcName
-     * @param maxDelay
-     *            最大延迟启动时间s
+     * @param maxDelay 最大延迟启动时间s
      * @return
      */
     public static FaultMakeTask getFaultMakeTask(String hostName, String svcName, int maxDelay) {

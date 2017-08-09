@@ -1,5 +1,6 @@
 package com.sequoiadb.lob;
 
+import com.sequoiadb.commlib.CommLib;
 import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.commlib.StandTestInterface;
 import com.sequoiadb.exception.ReliabilityException;
@@ -7,16 +8,15 @@ import com.sequoiadb.fault.BrokenNetwork;
 import com.sequoiadb.metaopr.commons.MyUtil;
 import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.TaskMgr;
-import org.bson.types.ObjectId;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
+import java.util.Vector;
 
-import static com.sequoiadb.metaopr.commons.MyUtil.createLob;
+import static com.sequoiadb.metaopr.commons.MyUtil.createLobs;
 import static com.sequoiadb.metaopr.commons.MyUtil.createRandomBytes;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -27,28 +27,32 @@ import static org.testng.AssertJUnit.assertTrue;
  * @Version 1.00
  */
 public class Lob3476 implements StandTestInterface {
-    String csName = LobUtil.csName;
-    String clName = LobUtil.clName;
-    private byte[] data = createRandomBytes(200 * 1024);
-    private List<ObjectId> ids = new ArrayList<>();
+    String csName = "lob3476cs";
+    String clName = "lob3476cl";
+    private List<LobBean> lobs2Create = new Vector<>();
+    private List<LobBean> lobs2Delete = new Vector<>();
 
 
     @BeforeClass
     @Override
     public void setup() {
         MyUtil.printBeginTime(this);
-        LobUtil.createLobCsAndCl();
+        LobUtil.createLobCsAndCl(csName, clName);
         MyUtil.deleteAllLobs(csName, clName);
 
+        byte[] data = createRandomBytes(1024 * 20);
         for (int i = 0; i < 100; i++) {
-            ids.add(createLob(csName, clName, data));
+            lobs2Delete.add(new LobBean(data));
+            lobs2Create.add(new LobBean(data));
         }
+
+        createLobs(csName, clName, lobs2Delete);
     }
 
     @AfterClass
     @Override
     public void tearDown() {
-        LobUtil.dropLobCS();
+        MyUtil.dropCS(csName);
         MyUtil.printEndTime(this);
     }
 
@@ -65,12 +69,17 @@ public class Lob3476 implements StandTestInterface {
         GroupMgr groupMgr = new GroupMgr();
         String hostName = groupMgr.getGroupByName("group1").getMaster().hostName();
         FaultMakeTask faultMakeTask = BrokenNetwork.getFaultMakeTask(hostName, 0, 5);
+        String safeHosName = CommLib.getSafeCoordUrl(hostName);
 
-        List<ObjectId> createdId = new ArrayList<>();
-        HashMap<ObjectId, String> deletedIdMap = new HashMap<>();
-        LobTask createTask = LobTask.getCreateLobsTask(1000, data, createdId);
-        LobTask readTask = LobTask.getReadLobsTask(ids);
-        LobTask deleteTask = LobTask.getDeleteLobsTask(ids, deletedIdMap);
+        LobTask createTask = LobTask.getCreateLobsTask(lobs2Create)
+                .setCsAndClName(csName, clName)
+                .setHostName(safeHosName);
+        LobTask readTask = LobTask.getReadLobsTask(lobs2Delete)
+                .setCsAndClName(csName, clName)
+                .setHostName(safeHosName);
+        LobTask deleteTask = LobTask.getDeleteLobsTask(lobs2Delete)
+                .setCsAndClName(csName, clName)
+                .setHostName(safeHosName);
 
         TaskMgr taskMgr = new TaskMgr(faultMakeTask);
         taskMgr.addTask(createTask);
@@ -79,12 +88,14 @@ public class Lob3476 implements StandTestInterface {
 
         taskMgr.execute();
 
-        byte[] targetMd5Value = MyUtil.getMd5(data);
-        assertTrue(MyUtil.isLobsAllCreated(csName, clName, createdId));
-        assertTrue(MyUtil.isLobsAllDelete(csName, clName, deletedIdMap));
+        assertTrue(MyUtil.isLobsAllCreated(csName, clName, lobs2Create));
+        assertTrue(MyUtil.isLobsAllDelete(csName, clName, lobs2Delete));
         assertTrue(MyUtil.isLobNumInspectInGroup(csName, clName, "group1"));
         assertTrue(MyUtil.isLobNumInspectInGroup(csName, clName, "group2"));
-        assertTrue(MyUtil.isLobMd5InspectInGroup(csName, clName, "group1", targetMd5Value));
-        assertTrue(MyUtil.isLobMd5InspectInGroup(csName, clName, "group2", targetMd5Value));
+        List<LobBean> lobs = new ArrayList<>();
+        lobs.addAll(lobs2Create);
+        lobs.addAll(lobs2Delete);
+        assertTrue(MyUtil.isLobMd5InspectInGroup(csName, clName, "group1", lobs));
+        assertTrue(MyUtil.isLobMd5InspectInGroup(csName, clName, "group2", lobs));
     }
 }

@@ -8,7 +8,6 @@ import com.sequoiadb.fault.NodeRestart;
 import com.sequoiadb.metaopr.commons.DBoperateTask;
 import com.sequoiadb.metaopr.commons.MyUtil;
 import com.sequoiadb.task.TaskMgr;
-import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;

@@ -1,14 +1,5 @@
 package com.sequoiadb.subcl.brokennetwork;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
-import org.testng.Assert;
-import org.testng.SkipException;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.commlib.CommLib;
@@ -22,6 +13,14 @@ import com.sequoiadb.subcl.brokennetwork.commlib.AttachCLTask;
 import com.sequoiadb.subcl.brokennetwork.commlib.Utils;
 import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.TaskMgr;
+import org.testng.Assert;
+import org.testng.SkipException;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * @FileName seqDB-2171: attachCL过程中catalog主节点连续降备

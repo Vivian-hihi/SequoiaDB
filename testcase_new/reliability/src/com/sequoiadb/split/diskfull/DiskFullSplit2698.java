@@ -1,9 +1,15 @@
 package com.sequoiadb.split.diskfull;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.List;
-
+import com.sequoiadb.base.CollectionSpace;
+import com.sequoiadb.base.DBCollection;
+import com.sequoiadb.base.DBCursor;
+import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.commlib.*;
+import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.exception.ReliabilityException;
+import com.sequoiadb.fault.DiskFull;
+import com.sequoiadb.task.OperateTask;
+import com.sequoiadb.task.TaskMgr;
 import org.bson.BSONObject;
 import org.bson.util.JSON;
 import org.testng.Assert;
@@ -12,20 +18,9 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.sequoiadb.base.CollectionSpace;
-import com.sequoiadb.base.DBCollection;
-import com.sequoiadb.base.DBCursor;
-import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.commlib.CommLib;
-import com.sequoiadb.commlib.GroupMgr;
-import com.sequoiadb.commlib.GroupWrapper;
-import com.sequoiadb.commlib.NodeWrapper;
-import com.sequoiadb.commlib.SdbTestBase;
-import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.exception.ReliabilityException;
-import com.sequoiadb.fault.DiskFull;
-import com.sequoiadb.task.OperateTask;
-import com.sequoiadb.task.TaskMgr;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
 
 /**
  * @FileName:SEQDB-2698 对range分区组进行百分比切分，切分时cata组主节点所在服务器磁盘耗尽

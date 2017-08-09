@@ -1,16 +1,15 @@
 package com.sequoiadb.metaopr.noderestart;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.bson.BSONObject;
-import org.bson.util.JSON;
-
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.commlib.GroupWrapper;
 import com.sequoiadb.exception.ReliabilityException;
+import org.bson.BSONObject;
+import org.bson.util.JSON;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class Utils {
     public static void checkConsistency(GroupWrapper cataGroup) throws ReliabilityException {

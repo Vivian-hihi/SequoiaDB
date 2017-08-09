@@ -1,23 +1,18 @@
 package com.sequoiadb.datasync;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
-
-import org.bson.BSONObject;
-import org.bson.BasicBSONObject;
-import org.bson.types.ObjectId;
-
-import com.sequoiadb.base.DBCollection;
-import com.sequoiadb.base.DBCursor;
-import com.sequoiadb.base.DBLob;
-import com.sequoiadb.base.ReplicaGroup;
-import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.base.*;
 import com.sequoiadb.commlib.GroupCheckResult;
 import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.commlib.GroupWrapper;
 import com.sequoiadb.commlib.SdbTestBase;
 import com.sequoiadb.exception.ReliabilityException;
+import org.bson.BSONObject;
+import org.bson.BasicBSONObject;
+import org.bson.types.ObjectId;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Random;
 
 public class Utils {
     /**
