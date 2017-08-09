@@ -77,7 +77,9 @@ public abstract class SdbThreadBase implements Runnable {
 			exec();
 		} catch (Exception e) {
 			exceptionList.add(e);
-		}
+        } catch (Error e) {
+            exceptionList.add(new Exception(e));
+        }
 	}
 
 	public abstract void exec() throws Exception;
