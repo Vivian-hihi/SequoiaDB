@@ -5,6 +5,7 @@ import com.sequoiadb.commlib.NodeWrapper;
 import com.sequoiadb.commlib.StandTestInterface;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.NodeRestart;
+import com.sequoiadb.metaopr.commons.MyUtil;
 import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.TaskMgr;
 import org.bson.types.ObjectId;
@@ -69,7 +70,7 @@ public class Lob3885 implements StandTestInterface {
         List<LobBean> lobs = new ArrayList<>();
         lobs.addAll(lobs2Create);
         lobs.addAll(lobs2Delete);
-        assertTrue(isLobMd5InspectInGroup(csName, clName, "group1", lobs));
+        assertTrue(MyUtil.isLobMd5InspectInGroup(csName, clName, "group1", lobs));
         assertTrue(isLobMd5InspectInGroup(csName, clName, "group2", lobs));
     }
 

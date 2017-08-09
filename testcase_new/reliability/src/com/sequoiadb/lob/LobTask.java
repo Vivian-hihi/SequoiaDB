@@ -5,8 +5,11 @@ import com.sequoiadb.base.DBLob;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.metaopr.commons.MyUtil;
 import com.sequoiadb.task.OperateTask;
+import org.bson.BSONObject;
+import org.bson.BasicBSONObject;
 
 import java.util.List;
+import java.util.Map;
 
 import static com.sequoiadb.metaopr.commons.MyUtil.getSdb;
 
@@ -28,12 +31,29 @@ public abstract class LobTask extends OperateTask {
         return this;
     }
 
+    /**
+     * 优先从主获取数据:db.setSessionAttr({PreferedInstance:"M"})
+     */
+    private BSONObject setSessionAttrOption=null;
+    public LobTask setSessionAttr(BSONObject option){
+        setSessionAttrOption=new BasicBSONObject(option.toMap());
+        return this;
+    }
+
+    public BSONObject getSetSessionAttrOption() {
+        return setSessionAttrOption;
+    }
+
     @Override
     public void exec() {
         if (hostName != null)
             db = new Sequoiadb(hostName, "", "");
         else
             db = getSdb();
+
+        if(setSessionAttrOption!=null)
+            db.setSessionAttr(setSessionAttrOption);
+
         if (csName == null || clName == null)
             throw new IllegalArgumentException("cs or cl can not be null");
         collection = db.getCollectionSpace(csName).getCollection(clName);

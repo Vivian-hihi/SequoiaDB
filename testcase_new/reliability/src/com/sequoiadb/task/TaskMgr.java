@@ -51,9 +51,6 @@ public class TaskMgr {
         return taskMgr;
     }
 
-    /**
-     * @param task 任务
-     */
     public void addTask(String taskClassName) {
         OperateTask task = OperateTaskFactory.newTask(taskClassName, this);
         if (task == null) {
