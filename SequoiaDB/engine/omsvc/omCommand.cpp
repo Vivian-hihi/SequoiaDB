@@ -10203,6 +10203,9 @@ namespace engine
                                                     const BSONObj &buzInfo )
    {
       INT32 rc = SDB_OK ;
+      INT32 lastErrno = SDB_OK ;
+      INT32 errorHostNum = 0 ;
+      string lastErrMsg ;
       string hostName ;
       string svcname ;
       string authUser ;
@@ -10252,24 +10255,38 @@ namespace engine
 
       {
          INT32 missHostNum = 0 ;
-         BSONObj hostInfoList ;
+         BSONObj hostInfoList = result.getObjectField(
+                                                   OM_BSON_FIELD_HOST_INFO ) ;
          BSONArrayBuilder hostsArray ;
-
-         hostInfoList = result.getObjectField( OM_BSON_FIELD_HOST_INFO ) ;
          BSONObjIterator iter( hostInfoList ) ;
+
          while ( iter.more() )
          {
             BSONElement ele = iter.next() ;
             BSONObj tmpConfig = ele.embeddedObject() ;
+            INT32 hostErrno = tmpConfig.getIntField(
+                                                OM_CONFIGURE_FIELD_ERRNO ) ;
             string hostName = tmpConfig.getStringField(
                                                 OM_CONFIGURE_FIELD_HOSTNAME ) ;
+
             if ( FALSE == dbTool.isHostExistOfCluster( hostName,
                                                        _clusterName ) )
             {
                ++missHostNum ;
                hostsArray.append( hostName ) ;
             }
+
+            if ( SDB_OK != hostErrno )
+            {
+               string hostErrMsg = tmpConfig.getStringField(
+                                                OM_CONFIGURE_FIELD_DETAIL ) ;
+
+               lastErrno  = hostErrno ;
+               lastErrMsg = hostErrMsg ;
+               ++errorHostNum ;
+            }
          }
+
          if ( 0 < missHostNum )
          {
             BSONObjBuilder missHost ;
@@ -10280,6 +10297,14 @@ namespace engine
             rc = SDB_INVALIDARG ;
             _errorMsg.setError( TRUE, "failed to add business, missing host",
                                 errDetail.c_str(), rc ) ;
+            PD_LOG( PDERROR, _errorMsg.getError() ) ;
+            goto error ;
+         }
+
+         if ( 0 < errorHostNum )
+         {
+            rc = lastErrno ;
+            _errorMsg.setError( TRUE, "%s, rc=%d", lastErrMsg.c_str(), rc ) ;
             PD_LOG( PDERROR, _errorMsg.getError() ) ;
             goto error ;
          }
@@ -11761,7 +11786,7 @@ namespace engine
    INT32 omSyncBusinessConfigureCommand::_syncBusinessConfig(
                                        vector<simpleAddressInfo> &addressList )
    {
-      INT32 rc    = SDB_OK ;
+      INT32 rc = SDB_OK ;
       BSONObj request ;
       BSONObj result ;
       string errDetail ;
@@ -11778,6 +11803,32 @@ namespace engine
                              errDetail.c_str(), rc ) ;
          PD_LOG( PDERROR, _errorMsg.getError() ) ;
          goto error ;
+      }
+
+      {
+         BSONObj hostInfoList = result.getObjectField(
+                                                   OM_BSON_FIELD_HOST_INFO ) ;
+         BSONArrayBuilder hostsArray ;
+         BSONObjIterator iter( hostInfoList ) ;
+
+         while ( iter.more() )
+         {
+            BSONElement ele = iter.next() ;
+            BSONObj tmpConfig = ele.embeddedObject() ;
+            INT32 hostErrno = tmpConfig.getIntField(
+                                                OM_CONFIGURE_FIELD_ERRNO ) ;
+
+            if ( SDB_OK != hostErrno )
+            {
+               string hostErrMsg = tmpConfig.getStringField(
+                                                OM_CONFIGURE_FIELD_DETAIL ) ;
+
+               rc = hostErrno ;
+               _errorMsg.setError( TRUE, "%s, rc=%d", hostErrMsg.c_str(), rc ) ;
+               PD_LOG( PDERROR, _errorMsg.getError() ) ;
+               goto error ;
+            }
+         }
       }
 
       rc = dbTool.updateNodeConfigOfBusiness( _businessName, result ) ;

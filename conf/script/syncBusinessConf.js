@@ -168,10 +168,11 @@ function _getNodeConfig( hostRemoval, hostList, hostName, svcname )
    var clusterName  = BUS_JSON[FIELD_CLUSTER_NAME] ;
    var businessName = BUS_JSON[FIELD_BUSINESS_NAME] ;
    var deployMod ;
+   var index ;
 
    try
    {
-      var index = hostRemoval[hostName] ;
+      index = hostRemoval[hostName] ;
 
       config = _getConfig( hostName, svcname ) ;
       if( config[FIELD_ROLE] == FIELD_COORD ||
@@ -194,28 +195,6 @@ function _getNodeConfig( hostRemoval, hostList, hostName, svcname )
       {
          return ;
       }
-
-      if( isNaN( index ) == true )
-      {
-         var hostInfo = {} ;
-
-         index = hostList.length ;
-         hostRemoval[hostName] = index ;
-
-         hostInfo[FIELD_HOSTNAME]      = hostName ;
-         hostInfo[FIELD_CLUSTER_NAME]  = clusterName ;
-         hostInfo[FIELD_BUSINESS_NAME] = businessName ;
-         hostInfo[FIELD_BUSINESS_TYPE] = FIELD_SEQUOIADB ;
-         hostInfo[FIELD_DEPLOYMOD]     = deployMod ;
-         hostInfo[FIELD_CONFIG]        = [] ;
-
-         hostInfo[FIELD_CONFIG].push( config ) ;
-         hostList.push( hostInfo ) ;
-      }
-      else
-      {
-         hostList[index][FIELD_CONFIG].push( config ) ;
-      }
    }
    catch( e )
    {
@@ -231,7 +210,33 @@ function _getNodeConfig( hostRemoval, hostList, hostName, svcname )
                                             hostName, svcname ) ) ;
       }
       PD_LOGGER.log( PDERROR, error ) ;
-      throw error ;
+      //throw error ;
+   }
+
+   if( isNaN( index ) == true )
+   {
+      var hostInfo = {} ;
+
+      index = hostList.length ;
+      hostRemoval[hostName] = index ;
+
+      hostInfo[FIELD_ERRNO]         = rc ;
+      hostInfo[FIELD_DETAIL]        = rc == SDB_OK ? "" : error.toString() ;
+      hostInfo[FIELD_HOSTNAME]      = hostName ;
+      hostInfo[FIELD_CLUSTER_NAME]  = clusterName ;
+      hostInfo[FIELD_BUSINESS_NAME] = businessName ;
+      hostInfo[FIELD_BUSINESS_TYPE] = FIELD_SEQUOIADB ;
+      hostInfo[FIELD_DEPLOYMOD]     = deployMod ;
+      hostInfo[FIELD_CONFIG]        = [] ;
+
+      hostInfo[FIELD_CONFIG].push( config ) ;
+      hostList.push( hostInfo ) ;
+   }
+   else
+   {
+      hostList[index][FIELD_ERRNO]  = rc ;
+      hostList[index][FIELD_DETAIL] = rc == SDB_OK ? "" : error.toString() ;
+      hostList[index][FIELD_CONFIG].push( config ) ;
    }
 }
 
@@ -313,8 +318,6 @@ function main()
    var result = {} ;
 
    PD_LOGGER.log( PDEVENT, "Begin to sync business configure" ) ;
-
-   PD_LOGGER.log( PDEVENT, JSON.stringify( BUS_JSON ) ) ;
 
    var businessName = BUS_JSON[FIELD_BUSINESS_NAME] ;
    var businessType = BUS_JSON[FIELD_BUSINESS_TYPE] ;

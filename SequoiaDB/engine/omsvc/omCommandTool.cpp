@@ -1428,6 +1428,8 @@ namespace engine
       BSONObj hostInfoList ;
       BSONObjBuilder builder ;
       BSONArrayBuilder hostLocation ;
+      BSONObj hostInfoFilter = BSON( OM_CONFIGURE_FIELD_ERRNO  << "" <<
+                                     OM_CONFIGURE_FIELD_DETAIL << "" ) ;
 
       hostInfoList = newConfig.getObjectField( OM_BSON_FIELD_HOST_INFO ) ;
       BSONObjIterator iter( hostInfoList ) ;
@@ -1435,16 +1437,18 @@ namespace engine
       {
          BSONElement ele = iter.next() ;
          BSONObj tmpConfig = ele.embeddedObject() ;
-         string hostName = tmpConfig.getStringField(
+         BSONObj filterConfg = tmpConfig.filterFieldsUndotted( hostInfoFilter,
+                                                               FALSE ) ;
+         string hostName = filterConfg.getStringField(
                                              OM_CONFIGURE_FIELD_HOSTNAME ) ;
 
          if ( 0 == deployMod.length() )
          {
-            deployMod = tmpConfig.getStringField(
+            deployMod = filterConfg.getStringField(
                                           OM_CONFIGURE_FIELD_DEPLOYMODE ) ;
          }
 
-         rc = upsertConfigure( businessName, hostName, tmpConfig,
+         rc = upsertConfigure( businessName, hostName, filterConfg,
                                updateNum ) ;
          if( rc )
          {
@@ -1507,6 +1511,8 @@ namespace engine
       BSONObj buzInfo ;
       BSONObjBuilder builder ;
       BSONArrayBuilder hostLocation ;
+      BSONObj hostInfoFilter = BSON( OM_CONFIGURE_FIELD_ERRNO  << "" <<
+                                     OM_CONFIGURE_FIELD_DETAIL << "" ) ;
       set<string> newHostList ;
       string businessType = "" ;
       string deployMod = "" ;
@@ -1537,18 +1543,20 @@ namespace engine
          {
             BSONElement ele = iter.next() ;
             BSONObj tmpConfig = ele.embeddedObject() ;
-            string hostName = tmpConfig.getStringField(
+            BSONObj filterConfg = tmpConfig.filterFieldsUndotted( hostInfoFilter,
+                                                                  FALSE ) ;
+            string hostName = filterConfg.getStringField(
                                                 OM_CONFIGURE_FIELD_HOSTNAME ) ;
 
             if ( 0 == deployMod.length() )
             {
-               deployMod = tmpConfig.getStringField(
+               deployMod = filterConfg.getStringField(
                                              OM_CONFIGURE_FIELD_DEPLOYMODE ) ;
             }
 
             newHostList.insert( hostName ) ;
 
-            rc = upsertConfigure( businessName, hostName, tmpConfig,
+            rc = upsertConfigure( businessName, hostName, filterConfg,
                                   updateNum ) ;
             if( rc )
             {
