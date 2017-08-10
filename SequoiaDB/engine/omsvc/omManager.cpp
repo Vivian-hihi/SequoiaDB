@@ -102,6 +102,9 @@ namespace engine
    {
       INT32 rc           = SDB_OK ;
 
+      //set bson to string for js format
+      BSONObj::setJSCompatibility( TRUE ) ;
+
       // create collection space and collection
       _pKrcb  = pmdGetKRCB() ;
       _pDmsCB = _pKrcb->getDMSCB() ;
