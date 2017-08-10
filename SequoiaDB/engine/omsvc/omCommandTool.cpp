@@ -1332,6 +1332,62 @@ namespace engine
       goto done ;
    }
 
+   INT32 omDatabaseTool::getHostUsedPort( const string &hostName,
+                                          vector<string> &portList )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj hostConfig ;
+      BSONObj config ;
+
+      rc = getOneHostConfig( hostName, hostConfig ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to get host config, host=%s, rc=%d",
+                 hostName.c_str(), rc ) ;
+         goto error ;
+      }
+
+      /*
+      hostConfig
+      {
+         "Config": [
+             {
+                "BusinessName":"b1",
+                "BusinessType": "sequoiadb",
+                "DeployMod": "distribution",
+                "dbpath":"",
+                "svcname":"11810",
+                 ...
+             },
+             ...
+          ]
+      }
+      */
+      config = hostConfig.getObjectField( OM_BSON_FIELD_CONFIG ) ;
+
+      {
+         BSONObjIterator iter( config ) ;
+         while ( iter.more() )
+         {
+            BSONElement ele = iter.next() ;
+            BSONObj nodeConfig = ele.embeddedObject() ;
+            string buzType = nodeConfig.getStringField(
+                                             OM_CONFIGURE_FIELD_BUSINESSTYPE ) ;
+
+            if ( OM_BUSINESS_SEQUOIADB == buzType )
+            {
+               portList.push_back( nodeConfig.getStringField(
+                                                OM_CONFIGURE_FIELD_SVCNAME ) ) ;
+            }
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 omDatabaseTool::upsertConfigure( const string &businessName,
                                           const string &hostName,
                                           const BSONObj &newConfig,
@@ -1672,24 +1728,21 @@ namespace engine
       goto done ;
    }
 
-   BOOLEAN omDatabaseTool::isHostExistOfCluster( const string &hostName,
-                                                 const string &clusterName )
+   INT32 omDatabaseTool::_getOneHostInfo( const BSONObj &matcher,
+                                          const BSONObj &selector,
+                                          BSONObj &hostInfo )
    {
       INT32 rc = SDB_OK ;
       BOOLEAN isExist = FALSE ;
       SINT64 contextID = -1 ;
-      BSONObj selector ;
-      BSONObj matcher ;
       BSONObj order ;
       BSONObj hint ;
 
-      matcher = BSON( OM_HOST_FIELD_NAME << hostName <<
-                      OM_HOST_FIELD_CLUSTERNAME << clusterName ) ;
       rc = rtnQuery( OM_CS_DEPLOY_CL_HOST, selector, matcher, order, hint, 0,
-                     _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
+                     _cb, 0, 1, _pDMSCB, _pRTNCB, contextID );
       if ( rc )
       {
-         PD_LOG( PDERROR, "Failed to query host:rc=%d,host=%s", rc,
+         PD_LOG( PDERROR, "Failed to query host:rc=%d,condition=%s", rc,
                  matcher.toString().c_str() ) ;
          goto error ;
       }
@@ -1697,10 +1750,11 @@ namespace engine
       while( TRUE )
       {
          rtnContextBuf buffObj ;
+
          rc = rtnGetMore ( contextID, 1, buffObj, _cb, _pRTNCB ) ;
          if ( rc )
          {
-            if ( SDB_DMS_EOC != rc )
+            if ( SDB_DMS_EOC == rc )
             {
                rc = SDB_OK ;
                break ;
@@ -1709,7 +1763,19 @@ namespace engine
             PD_LOG( PDERROR, "Failed to retreive record, rc = %d", rc ) ;
             goto error ;
          }
-         isExist = TRUE ;
+
+         {
+            BSONObj result( buffObj.data() ) ;
+            hostInfo = result.copy() ;
+            isExist = TRUE ;
+         }
+      }
+
+      if ( FALSE == isExist )
+      {
+         rc = SDB_DMS_RECORD_NOTEXIST ;
+         PD_LOG( PDERROR, "Failed to query host info:rc=%d", rc ) ;
+         goto error ;
       }
 
    done:
@@ -1718,6 +1784,34 @@ namespace engine
          _pRTNCB->contextDelete ( contextID, _cb ) ;
          contextID = -1 ;
       }
+      return rc ;
+   error:
+      goto done ;
+
+   }
+
+   BOOLEAN omDatabaseTool::isHostExistOfCluster( const string &hostName,
+                                                 const string &clusterName )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN isExist = FALSE ;
+      BSONObj selector ;
+      BSONObj matcher ;
+      BSONObj hostInfo ;
+
+      matcher = BSON( OM_HOST_FIELD_NAME << hostName <<
+                      OM_HOST_FIELD_CLUSTERNAME << clusterName ) ;
+
+      rc = _getOneHostInfo( matcher, selector, hostInfo ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to get host info:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      isExist = TRUE ;
+
+   done:
       return isExist ;
    error:
       goto done ;

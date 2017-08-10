@@ -9857,6 +9857,61 @@ namespace engine
       goto done ;
    }
 
+   INT32 omDiscoverBusinessCommand::_checkHostPort( const string &address,
+                                                    const string &port )
+   {
+      INT32 rc = SDB_OK ;
+      string hostName ;
+      omDatabaseTool dbTool( _cb ) ;
+      vector<string> portList ;
+      vector<string>::iterator iter ;
+
+      rc = dbTool.getHostNameByAddress( address, hostName ) ;
+      if ( rc )
+      {
+         if ( SDB_DMS_RECORD_NOTEXIST == rc )
+         {
+            rc = SDB_OK ;
+            hostName = address ;
+         }
+         else
+         {
+            _errorMsg.setError( TRUE, "failed to get host name,rc=%d", rc ) ;
+            PD_LOG( PDERROR, _errorMsg.getError() ) ;
+            goto error ;
+         }
+      }
+
+      rc = dbTool.getHostUsedPort( hostName, portList ) ;
+      if ( rc )
+      {
+         _errorMsg.setError( TRUE, "failed to get host used port,host=%s,rc=%d",
+                             hostName.c_str(), rc ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      for ( iter = portList.begin(); iter != portList.end(); ++iter )
+      {
+         string usedPort = *iter ;
+
+         if ( usedPort == port  )
+         {
+            rc = SDB_INVALIDARG ;
+            _errorMsg.setError( TRUE, "invalid argument: %s:%s has been used by"
+                                      " other business.",
+                                hostName.c_str(), port.c_str() ) ;
+            PD_LOG( PDERROR, _errorMsg.getError() ) ;
+            goto error ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 omDiscoverBusinessCommand::_checkWebLinkCFG( BSONObj &buzInfo )
    {
       INT32 rc = SDB_OK ;
@@ -9953,6 +10008,13 @@ namespace engine
          _errorMsg.setError( TRUE, "invalid argument:%s is empty",
                              OM_BSON_FIELD_SVCNAME ) ;
          PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      rc = _checkHostPort( hostName, svcname ) ;
+      if( rc )
+      {
+         PD_LOG( PDERROR, "failed to check host used port, rc=%d", rc ) ;
          goto error ;
       }
 

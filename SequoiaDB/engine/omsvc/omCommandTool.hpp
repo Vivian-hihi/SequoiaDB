@@ -169,6 +169,9 @@ namespace engine
                               BSONObj &config ) ;
       INT32 getHostConfigOfCluster( const string &clusterName,
                                     BSONObj &config ) ;
+      INT32 getHostUsedPort( const string &hostName,
+                             vector<string> &portList ) ;
+
       INT32 upsertConfigure( const string &businessName,
                              const string &hostName,
                              const BSONObj &newConfig,
@@ -192,6 +195,12 @@ namespace engine
       //host
       BOOLEAN isHostExistOfCluster( const string &hostName,
                                     const string &clusterName ) ;
+
+   private:
+      //host
+      INT32 _getOneHostInfo( const BSONObj &matcher, const BSONObj &selector,
+                             BSONObj &hostInfo ) ;
+
    private:
 
       pmdEDUCB    *_cb ;

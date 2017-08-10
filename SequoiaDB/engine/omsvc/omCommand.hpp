@@ -1002,6 +1002,7 @@ namespace engine
 
       INT32 _getRestInfo( BSONObj &configInfo ) ;
 
+      INT32 _checkHostPort( const string &hostName, const string &port ) ;
       INT32 _checkBusinssCFG( BSONObj &configInfo ) ;
       INT32 _checkWebLinkCFG( BSONObj &buzInfo ) ;
       INT32 _checkSequoiasqlCFG( BSONObj &buzInfo ) ;
