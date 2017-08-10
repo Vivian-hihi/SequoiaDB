@@ -1790,6 +1790,31 @@ namespace engine
 
    }
 
+   INT32 omDatabaseTool::getHostNameByAddress( const string &address,
+                                               string &hostName )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj matcher = BSON( "$or" << BSON_ARRAY(
+                                    BSON( OM_HOST_FIELD_NAME << address ) <<
+                                    BSON( OM_HOST_FIELD_IP   << address ) ) ) ;
+      BSONObj selector ;
+      BSONObj hostInfo ;
+
+      rc = _getOneHostInfo( matcher, selector, hostInfo ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to get host info:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      hostName = hostInfo.getStringField( OM_HOST_FIELD_NAME ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    BOOLEAN omDatabaseTool::isHostExistOfCluster( const string &hostName,
                                                  const string &clusterName )
    {

@@ -193,6 +193,8 @@ namespace engine
       INT32 removeAuth( const string &businessName ) ;
 
       //host
+      INT32 getHostNameByAddress( const string &address,
+                                  string &hostName ) ;
       BOOLEAN isHostExistOfCluster( const string &hostName,
                                     const string &clusterName ) ;
 

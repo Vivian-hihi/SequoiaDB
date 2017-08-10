@@ -10217,6 +10217,27 @@ namespace engine
       svcname  = buzInfo.getStringField( OM_BSON_FIELD_SVCNAME ) ;
       authUser = buzInfo.getStringField( OM_BSON_FIELD_HOST_USER ) ;
       authPwd  = buzInfo.getStringField( OM_BSON_FIELD_HOST_PASSWD ) ;
+
+      {
+         //try to replace the hostName with om SYSHOST table data
+         string address = hostName ;
+
+         rc = dbTool.getHostNameByAddress( address, hostName ) ;
+         if ( rc )
+         {
+            if ( SDB_DMS_RECORD_NOTEXIST == rc )
+            {
+               rc = SDB_OK ;
+            }
+            else
+            {
+               _errorMsg.setError( TRUE, "failed to get host name,rc=%d", rc ) ;
+               PD_LOG( PDERROR, _errorMsg.getError() ) ;
+               goto error ;
+            }
+         }
+      }
+
       _generateRequest( hostName, svcname, authUser, authPwd, request ) ;
 
       rc = taskTool.notifyAgentMsg( CMD_ADMIN_PREFIX OM_SYNC_BUSINESS_CONF_REQ,
