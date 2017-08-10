@@ -7,7 +7,9 @@ function main()
 {
    // 获取本地主机和远程主机
    var localhost = toolGetLocalhost() ;
+	localhost = localhost["hostname"] ;
    var remotehost = toolGetRemotehost() ;
+	remotehost = remotehost["hostname"] ;
    if( remotehost === localhost )
    {
       println( "The cluster has only a host.") ;

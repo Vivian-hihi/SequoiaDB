@@ -7,7 +7,7 @@ function OmaTest( hostName, cmSvcName, isLegalHost, isLegalSvc )
    if( hostName === undefined )
       this.hostname = COORDHOSTNAME ;
    else
-      this.hostname = hostName ;
+      this.hostname = hostName["hostname"] ;
    if( cmSvcName === undefined )
       this.svcname = CMSVCNAME ;
    else
@@ -55,7 +55,7 @@ function RemoteTest( hostName, cmSvcName, isLegalHost, isLegalSvc )
    if( hostName === undefined )
       this.hostname = COORDHOSTNAME ;
    else
-      this.hostname = hostName ;
+      this.hostname = hostName["hostname"] ;
    if( cmSvcName === undefined )
       this.svcname = CMSVCNAME ;
    else
@@ -97,11 +97,12 @@ function SystemTest( hostName, cmSvcName )
    if( hostName === undefined )
       this.hostname = COORDHOSTNAME ;
    else
-      this.hostname = hostName ;
+      this.hostname = hostName["hostname"] ;
    if( cmSvcName === undefined )
       this.svcname = CMSVCNAME ;
    else
       this.svcname = cmSvcName ;
+   this.isLocal = hostName["isLocal"] ;
    var db = new Sdb( this.hostname, COORDSVCNAME ) ;
    this.isStandalone = commIsStandalone( db ) ;
    db.close() ;
@@ -114,7 +115,7 @@ SystemTest.prototype.toString = function()
 
 SystemTest.prototype.init = function()
 {
-   if( isLocal( this.hostname ) )
+   if( this.isLocal )
    {
       this.system = System ;
       this.cmd = new Cmd() ;
@@ -138,20 +139,17 @@ function FileTest( hostName, cmSvcName, fileName )
    if( hostName === undefined )
       this.hostname = COORDHOSTNAME ;
    else
-      this.hostname = hostName ;   // 主机名    
+      this.hostname = hostName["hostname"] ;   // 主机名    
    if( cmSvcName === undefined )
       this.svcname = CMSVCNAME ;
    else
       this.svcname = cmSvcName ;   // 端口号  
    this.filename = fileName ;      // 文件名
+   this.isLocal = hostName["isLocal"] ;
 }
 
 FileTest.prototype.init = function()
-{
-   this.isLocal = false ;          // 是否连接本地cm
-   if( isLocal( this.hostname ) )
-      this.isLocal = true ;
-      
+{  
    if( this.isLocal )
    {
       this.cmd = new Cmd() ;       // 本地cmd对象
@@ -214,11 +212,12 @@ function CmdTest( hostName, cmSvcName )
    if( hostName === undefined )
       this.hostname = COORDHOSTNAME ;
    else
-      this.hostname = hostName ;
+      this.hostname = hostName["hostname"] ;
    if( cmSvcName === undefined )
       this.svcname = CMSVCNAME ;
    else
       this.svcname = cmSvcName ;
+   this.isLocal = hostName["isLocal"] ;
 }
 
 CmdTest.prototype.toString = function()
@@ -228,7 +227,6 @@ CmdTest.prototype.toString = function()
 
 CmdTest.prototype.init = function()
 {
-   this.isLocal = isLocal( this.hostname ) ;
    if( this.isLocal )
    {
       this.cmd = new Cmd() ;
@@ -250,7 +248,7 @@ CmdTest.prototype.release = function()
 *@Description : check two number is approximately equal to each other or not
 *@author      : Liang XueWang
 ******************************************************************************/
-function isApproEqual( n1, n2 )  // n1 n2 >= 0
+function isApproEqual( n1, n2 )  // n1 n2 > 0
 {
    var max = n1 > n2 ? n1 : n2 ;
    var min = ( max === n1 ) ? n2 : n1 ;
@@ -291,37 +289,47 @@ function toolGetHosts()
 
 
 /******************************************************************************
-*@Description : get local hostname
+*@Description : get local hostname( COORDHOSTNAME ), return obj
+*               localhost means cluster local host, host of COORDHOSTNAME
 *@author      : Liang XueWang            
 ******************************************************************************/
 function toolGetLocalhost()
-{
+{ 
+   // get local host of cluster, with COORDHOSTNAME
    var remote = new Remote( COORDHOSTNAME, CMSVCNAME ) ;
    var cmd = remote.getCmd() ;
    var localhost = cmd.run( "hostname" ).split( "\n" )[0] ;
    remote.close() ;
-   return localhost ;
+   
+   var obj = {} ;
+   obj["hostname"] = localhost ;
+   obj["isLocal"] = isLocal( localhost ) ;
+   return obj ;
 }
 
 /******************************************************************************
 *@Description : get a remote hostname in cluster
 *               if cluster has no remote host,return localhost
+*               return obj
 *@author      : Liang XueWang
 ******************************************************************************/
 function toolGetRemotehost()
 {
    var hosts = toolGetHosts() ;
    var localhost = toolGetLocalhost() ;
-   var remotehost = localhost ;
+   var remotehost = localhost["hostname"] ;
    for( var i = 0;i < hosts.length;i++ )
    {
-      if( hosts[i] !== localhost )
+      if( hosts[i] !== localhost["hostname"] )
       {
          remotehost = hosts[i] ;
          break ;
       }
    }
-   return remotehost ;
+   var obj = {} ;
+   obj["hostname"] = remotehost ;
+   obj["isLocal"] = false ;
+   return obj ;
 }
 
 /******************************************************************************

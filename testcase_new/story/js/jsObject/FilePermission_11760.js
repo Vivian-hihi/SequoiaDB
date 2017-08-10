@@ -7,6 +7,7 @@
 try
 {
     var remotehost = toolGetRemotehost() ;
+	 remotehost = remotehost["hostname"] ;
     var remote = new Remote( remotehost, CMSVCNAME ) ;
     println( "init remote with remote host: " + remotehost ) ;
 }
