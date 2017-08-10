@@ -2,7 +2,7 @@ package com.sequoiadb.spark
 
 import java.util
 
-import com.sequoiadb.base.Sequoiadb
+import com.sequoiadb.base.{DBCollection, Sequoiadb}
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types.StructType
 import org.bson.BSONObject
@@ -40,6 +40,12 @@ private[spark] class SdbWriter(config: SdbConfig) extends Serializable with Logg
                     s"${config.collectionSpace}.${config.collection}")
             }
 
+            val flag: Int = if (config.ignoreDuplicateKey) {
+                DBCollection.FLG_INSERT_CONTONDUP
+            } else {
+                0
+            }
+
             val bulk = new util.ArrayList[BSONObject](config.bulkSize)
             var count: Long = 0
 
@@ -50,13 +56,13 @@ private[spark] class SdbWriter(config: SdbConfig) extends Serializable with Logg
                 count += 1
 
                 if (bulk.size() > config.bulkSize) {
-                    cl.bulkInsert(bulk, 0)
+                    cl.bulkInsert(bulk, flag)
                     bulk.clear()
                 }
             }
 
             if (bulk.size() > 0) {
-                cl.bulkInsert(bulk, 0)
+                cl.bulkInsert(bulk, flag)
                 bulk.clear()
             }
 

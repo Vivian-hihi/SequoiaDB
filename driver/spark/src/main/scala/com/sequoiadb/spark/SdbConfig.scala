@@ -162,6 +162,9 @@ class SdbConfig(val properties: Map[String, String]) extends Serializable {
 
     val shardingPartitionSingleNode: Boolean = properties.get(SdbConfig.ShardingPartitionSingleNode)
         .map(_.toBoolean).getOrElse(SdbConfig.DefaultShardingPartitionSingleNode)
+
+    val ignoreDuplicateKey: Boolean = properties.get(SdbConfig.IgnoreDuplicateKey)
+        .map(_.toBoolean).getOrElse(SdbConfig.DefaultIgnoreDuplicateKey)
 }
 
 object SdbConfig {
@@ -186,6 +189,7 @@ object SdbConfig {
     val PartitionMaxNum = "partitionmaxnum"
     val ShardingPartitionSingleNode = "shardingpartitionsinglenode"
     val PreferredLocation = "preferredlocation"
+    val IgnoreDuplicateKey = "ignoreduplicatekey"
 
     // compatible with old edition option
     val ScanType = "scantype" // auto/ixscan/tbscan
@@ -221,6 +225,7 @@ object SdbConfig {
         PartitionMaxNum,
         ShardingPartitionSingleNode,
         PreferredLocation,
+        IgnoreDuplicateKey,
         ScanType
     )
 
@@ -246,6 +251,7 @@ object SdbConfig {
     val DefaultPartitionMaxNum = 1000
     val DefaultShardingPartitionSingleNode = false
     val DefaultPreferredLocation = false
+    val DefaultIgnoreDuplicateKey = false
 
     def apply(parameters: Map[String, String]): SdbConfig = new SdbConfig(parameters)
 
