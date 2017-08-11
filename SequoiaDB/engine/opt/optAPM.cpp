@@ -1081,6 +1081,7 @@ namespace engine
             if ( _planCache.removeItem( pPlan ) )
             {
                cached = FALSE ;
+               _monitor.decCachedPlanCount( 1 ) ;
             }
          }
          else
@@ -1095,14 +1096,13 @@ namespace engine
                if ( OPT_INVALID_ACT_ID != activityID )
                {
                   _monitor.resetActivity( activityID ) ;
-                  cached = FALSE ;
                }
+               // NOTE: no need to dec cached plan count, The dropCL will do it
+               cached = FALSE ;
             }
          }
       }
-
-      // Decrease the cached plan count if it is not cached
-      if ( !cached )
+      else
       {
          _monitor.decCachedPlanCount( 1 ) ;
       }
