@@ -24,14 +24,14 @@ import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
 /**
- * FileName: Sdv829.java
+ * FileName: UpdateMainCLConcurrentcy829.java
  * test content: 多线程并发同时在主表插入大量数据_SD.subCL.01.015
  * testlink case: seqDB-829
  * @author zengxianquan
  * @date 2016年12月12日
  * @version 1.00
  */
-public class Sdv829 extends SdbTestBase{
+public class UpdateMainCLConcurrentcy829 extends SdbTestBase{
 	private Sequoiadb sdb = null;
 	private CollectionSpace maincs = null;
 	private String mainclName = "maincl829";

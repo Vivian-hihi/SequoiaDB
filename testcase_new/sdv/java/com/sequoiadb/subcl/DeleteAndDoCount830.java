@@ -19,23 +19,22 @@ import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
-import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
 /**
- * FileName: Sdv828.java
- * test content: 多线程并发同时在主表插入大量数据_SD.subCL.01.015
- * testlink case: seqDB-828
+ * FileName: DeleteAndDoCount830.java
+ * test content: 多线程并发删除数据的同时做count操作_SD.subCL.01.017 
+ * testlink case: seqDB-830
  * @author zengxianquan
- * @date 2016年12月12日
+ * @date 2016年12月13日
  * @version 1.00
  */
-public class Sdv828 extends SdbTestBase{
+public class DeleteAndDoCount830 extends SdbTestBase{
 		
 	private Sequoiadb sdb = null;
 	private CollectionSpace maincs = null;
-	private String mainclName = "maincl828";
+	private String mainclName = "maincl830";
 	private AtomicInteger doneCount = new AtomicInteger(0);
 	private final int THREAD_COUNT = 5;
 	
@@ -47,22 +46,24 @@ public class Sdv828 extends SdbTestBase{
 			sdb = new Sequoiadb(SdbTestBase.coordUrl,"","");
 			maincs = sdb.getCollectionSpace(SdbTestBase.csName);
 		}catch(BaseException e){
-		
+			e.printStackTrace();
+			Assert.fail(e.getMessage());
 		}
         if (Commlib.isStandAlone(sdb)){
             throw new SkipException("is standalone skip testcase");
         }
-	   	createMaincl();
-		createSubcls();
-		attachSubcls();
+	    createMaincl();
+	    createSubcls();
+	    attachSubcls();
 	}
-	
 	@AfterClass
 	public void tearDown(){
 		try{
-			maincs.dropCollection(mainclName);
+			if(maincs.isCollectionExist(mainclName)){
+				maincs.dropCollection(mainclName);
+			}
 		}catch(BaseException e){
-			Assert.assertEquals(e.getErrorCode(), -23, e.getMessage());
+			Assert.fail("failed to drop cl"+"ErrorMsg:\n" +e.getMessage());
 		}finally{
 			System.out.println("End to run " + this.getClass().getName() 
 						+ ", end in: " + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:S").format(new Date()));
@@ -87,7 +88,7 @@ public class Sdv828 extends SdbTestBase{
 	public void createSubcls(){
 		try{
 			for(int j = 0;j<5;j++){
-					maincs.createCollection("subcl828_"+j);					
+					maincs.createCollection("subcl830_"+j);					
 			}
 		}catch(BaseException e){
 			Assert.assertTrue(false, "createSubcl failed "+e.getMessage());
@@ -105,7 +106,7 @@ public class Sdv828 extends SdbTestBase{
 			for(int j = 0;j<5;j++){
 				String jsonStr = "{'LowBound':{'a':"+j*100+"},UpBound:{'a':"+(j+1)*100+"}}";
 				BSONObject options = (BSONObject) JSON.parse(jsonStr);
-				maincl.attachCollection(SdbTestBase.csName+".subcl828_"+j, options);
+				maincl.attachCollection(SdbTestBase.csName+".subcl830_"+j, options);
 			}
 		}catch(BaseException e){
 			Assert.assertTrue(false, "attachSubcl  failed "+e.getMessage());
@@ -121,31 +122,38 @@ public class Sdv828 extends SdbTestBase{
 			new Object[]{"e"},
 		};
 	}
+	public void insertData(DBCollection maincl,String diffData){
+		//构造插入的数据
+		List <BSONObject> insertor = new ArrayList<>();
+		for(int i = 0; i<500; i++){
+			BSONObject bson = new BasicBSONObject();
+			bson.put("a", i);
+			bson.put("test", diffData);
+			insertor.add(bson);
+		}
+		try{
+			maincl.bulkInsert(insertor, 1);			
+		}catch(BaseException e){
+			Assert.fail("failed to bulkInsert "+e.getMessage());
+		}
+	}
 	
 	@Test(dataProvider  =  "diffDataProvider")
 	public void test(String diffData){
 		Sequoiadb db = null;
 		CollectionSpace cs = null;
-		DBCollection maincl = null;
+		DBCollection maincl  =  null;
 		try{
-			db = new Sequoiadb(SdbTestBase.coordUrl,"","");	
+			db = new Sequoiadb(SdbTestBase.coordUrl,"","");			
 			cs = db.getCollectionSpace(SdbTestBase.csName);	
 			maincl = cs.getCollection(mainclName);
-			//构造插入的数据
-			List <BSONObject> insertor = new ArrayList<>();
-			for(int i = 0; i<500; i++){
-				BSONObject bson = new BasicBSONObject();
-				bson.put("a", i);
-				bson.put("test", diffData);
-				insertor.add(bson);
-			}	
-			maincl.bulkInsert(insertor, 1);	
-			
-			//检验数据是否正确
-			checkData(cs, diffData);
+			insertData(maincl,diffData);
+			delete(maincl,diffData);
+			//检验数据的数量是否正确
+			checkData(maincl, diffData);
 			//检验数据的完整性
 			if(doneCount.incrementAndGet() == THREAD_COUNT){
-	           if(maincl.getCount() != 2500){
+	           if(maincl.getCount() != 500){
 	        	   Assert.fail(" The data count is not correct");
 	           }
 	        }
@@ -157,35 +165,32 @@ public class Sdv828 extends SdbTestBase{
 				db.disconnect();
 			}
 		}		
+
 	}
-		
-	public void checkData(CollectionSpace cs,String diffData){
-		DBCollection subcl = null;
-		for(int i = 0;i<5;i++){
-			try{
-				subcl = cs.getCollection("subcl828_"+i);				
-			}catch(BaseException e){
-				Assert.fail("failed to get cl "+e.getMessage());
-			}
-			BSONObject matcher = new BasicBSONObject();
-			matcher.put("test", diffData);
-			BSONObject order = new BasicBSONObject();
-			order.put("a", 1);
-			DBCursor cursor = null;
-			try{
-				cursor = subcl.query(matcher,null,order,null);				
-			}catch(BaseException e){
-				Assert.fail("failed to query data "+e.getMessage());
-			}
-			int j = 100*i;
-			BSONObject res;
-			while(cursor.hasNext()){
-				res = cursor.getNext();
-				if((!res.get("a").equals(j))||(!res.get("test").equals(diffData))){
-					Assert.fail("The data is not same");
-				}
-				j++;
-			}			
-		}	
+	
+	public void delete(DBCollection maincl,String diffData){
+		BSONObject options = new BasicBSONObject();
+		BSONObject opt = new BasicBSONObject();
+		opt.put("$gte", 100);
+		options.put("a", opt);
+		options.put("test", diffData);
+		try{
+			maincl.delete(options);			
+		}catch(BaseException e){
+			Assert.fail("failed to delete data"+e.getMessage());
+		}
+	}
+	public void checkData(DBCollection maincl,String diffData){
+		BSONObject options = new BasicBSONObject();
+		options.put("test", diffData);
+		long count = 0;
+		try{
+			count = maincl.getCount(options);	
+		}catch(BaseException e){
+			Assert.fail("failed to get count "+e.getMessage());
+		}
+		if(count != 100){
+			Assert.fail("failed to check count");
+		}
 	}
 }
