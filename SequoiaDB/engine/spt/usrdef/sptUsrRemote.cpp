@@ -383,16 +383,10 @@ namespace engine
                                    const bson::BSONObj& valueObj,
                                    bson::BSONObjBuilder& builder )
    {
-      INT32 rc = SDB_OK ;
-
       builder.append( "$optionObj", optionObj ) ;
       builder.append( "$matchObj", matchObj ) ;
       builder.append( "$valueObj", valueObj ) ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
+      return SDB_OK ;
    }
 
    INT32 _sptUsrRemote::_initBSONObj( BSONObj &recvObj, const CHAR* buf )
