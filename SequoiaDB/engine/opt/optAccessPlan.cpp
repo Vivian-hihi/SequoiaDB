@@ -858,7 +858,7 @@ namespace engine
       // If the plan is cached, decrease the reference count
       // If the plan is not cached, only delete the plan when it has only one
       // reference
-      if ( _isCached() )
+      if ( isCached() )
       {
          decRefCount() ;
       }

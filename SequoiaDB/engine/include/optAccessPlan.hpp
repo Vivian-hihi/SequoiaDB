@@ -129,11 +129,6 @@ namespace engine
 
       INT32 _usePath ( dmsStorageUnit *su, optScanPath &path ) ;
 
-      OSS_INLINE BOOLEAN _isCached () const
-      {
-         return ( NULL != _pList ) ;
-      }
-
       INT32 _prepareOptimize ( dmsStorageUnit *su,
                                dmsMBContext *mbContext ) ;
 
@@ -307,6 +302,11 @@ namespace engine
       OSS_INLINE UINT32 decRefCount ()
       {
          return _refCount.dec() ;
+      }
+
+      OSS_INLINE BOOLEAN isCached () const
+      {
+         return ( NULL != _pList ) ;
       }
 
    } ;

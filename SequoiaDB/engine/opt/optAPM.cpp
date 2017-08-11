@@ -95,11 +95,9 @@ namespace engine
 
       PD_TRACE_ENTRY( SDB_OPTAPCACHES_ADDPLAN ) ;
 
-      if ( addItem( pPlan ) )
-      {
-         pPlan->incRefCount() ;
-         result = TRUE ;
-      }
+      // Increase reference count before we cache the plan
+      pPlan->incRefCount() ;
+      result = addItem( pPlan ) ;
 
       PD_TRACE_EXIT( SDB_OPTAPCACHES_ADDPLAN ) ;
 
@@ -111,22 +109,20 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB_OPTAPCACHES_RMPLAN ) ;
 
-      INT32 activityID = pPlan->resetActivityID() ;
-
-      // We need to test the activity ID to check if
-      // someone else is also deleting this plan
-      if ( OPT_INVALID_ACT_ID != activityID )
+      // Increase the reference count before we delete it
+      pPlan->incRefCount() ;
+      if ( removeItem( pPlan ) )
       {
-         _pMonitor->resetActivity( activityID ) ;
-
-         // Increase the reference count before we delete it
-         pPlan->incRefCount() ;
-         if ( removeItem( pPlan ) )
+         // We need to test the activity ID to check if
+         // someone else is also deleting this plan
+         INT32 activityID = pPlan->resetActivityID() ;
+         if ( OPT_INVALID_ACT_ID != activityID )
          {
-            _pMonitor->decCachedPlanCount( 1 ) ;
+            _pMonitor->resetActivity( activityID ) ;
          }
-         pPlan->release() ;
+         _pMonitor->decCachedPlanCount( 1 ) ;
       }
+      pPlan->release() ;
 
       PD_TRACE_EXIT( SDB_OPTAPCACHES_RMPLAN ) ;
    }
@@ -160,21 +156,23 @@ namespace engine
                   optAccessPlan *pNextPlan = (optAccessPlan *)pPlan->getNext() ;
                   if ( pPlan->getSULID() == suLID )
                   {
+                     // Increase the reference count before we delete it
+                     pPlan->incRefCount() ;
+
                      // Locked bucket already, safe to remove from bucket
-                     // But we need to test the activity ID to check if
-                     // someone else is also deleting this plan
-                     INT32 activityID = pPlan->resetActivityID() ;
-                     if ( OPT_INVALID_ACT_ID != activityID )
+                     if ( pBucket->removeItem( pPlan ) )
                      {
-                        _pMonitor->resetActivity( activityID ) ;
-
-                        // Increase the reference count before we delete it
-                        pPlan->incRefCount() ;
-                        pBucket->removeItem( pPlan ) ;
-                        pPlan->release() ;
-
+                        // We need to test the activity ID to check if someone
+                        // else is also deleting this plan
+                        INT32 activityID = pPlan->resetActivityID() ;
+                        if ( OPT_INVALID_ACT_ID != activityID )
+                        {
+                           _pMonitor->resetActivity( activityID ) ;
+                        }
                         deleteCount ++ ;
                      }
+
+                     pPlan->release() ;
                   }
                   pPlan = pNextPlan ;
                }
@@ -222,28 +220,34 @@ namespace engine
                   optAccessPlan *pNextPlan = (optAccessPlan *)pPlan->getNext() ;
                   if ( pPlan->getSULID() == suLID && pPlan->getCLLID() == clLID )
                   {
+                     // Increase the reference count before we delete it
+                     pPlan->incRefCount() ;
+
                      // Locked bucket already, safe to remove from bucket
-                     // But we need to test the activity ID to check if
-                     // someone else is also deleting this plan
-                     INT32 activityID = pPlan->resetActivityID() ;
-                     if ( OPT_INVALID_ACT_ID != activityID )
+                     if ( pBucket->removeItem( pPlan ) )
                      {
-                        _pMonitor->resetActivity( activityID ) ;
-
-                        // Increase the reference count before we delete it
-                        pPlan->incRefCount() ;
-                        pBucket->removeItem( pPlan ) ;
-                        pPlan->release() ;
-
+                        // We need to test the activity ID to check if someone
+                        // else is also deleting this plan
+                        INT32 activityID = pPlan->resetActivityID() ;
+                        if ( OPT_INVALID_ACT_ID != activityID )
+                        {
+                           _pMonitor->resetActivity( activityID ) ;
+                        }
                         deleteCount ++ ;
                      }
                      else if ( clearBit )
                      {
+                        // The plan is not removed, so to be safe,
+                        // could not clear the bit
                         clearBit = FALSE ;
                      }
+
+                     pPlan->release() ;
                   }
                   else if ( clearBit && pPlan->getSULID() == suLID )
                   {
+                     // Still contains plans from the same colleciton space
+                     // could not clear the bit
                      clearBit = FALSE ;
                   }
                   pPlan = pNextPlan ;
@@ -1062,27 +1066,45 @@ namespace engine
 
       PD_TRACE_ENTRY( SDB_OPTAPM__CACHEAP ) ;
 
-      // To avoid dropCL during the processing, set the activity in advanced.
-      // And pre-increase the cached plan count, so the monitor could test if
+      // Pre-increase the cached plan count, so the monitor could test if
       // the number of cached plans will exceed the high water mark with this
       // new plan
       _monitor.incCachedPlanCount() ;
-      if ( _monitor.setActivity( pPlan ) )
+
+      cached = _planCache.addPlan( pPlan ) ;
+      if ( cached )
       {
-         cached = _planCache.addPlan( pPlan ) ;
-         if ( !cached )
+         if ( !_monitor.setActivity( pPlan ) )
          {
-            INT32 activityID = pPlan->resetActivityID() ;
-            if ( OPT_INVALID_ACT_ID != activityID )
+            // Could not allocate activity for the plan
+            // remove it from cache
+            if ( _planCache.removeItem( pPlan ) )
             {
-               _monitor.resetActivity( activityID ) ;
+               cached = FALSE ;
+            }
+         }
+         else
+         {
+            // Re-check if the plan is still cached.
+            // If it is not cached after setting the activity, it might be
+            // removed by dropCL, so we need to reset the activity if the
+            // dropCL didn't
+            if ( !pPlan->isCached() )
+            {
+               INT32 activityID = pPlan->resetActivityID() ;
+               if ( OPT_INVALID_ACT_ID != activityID )
+               {
+                  _monitor.resetActivity( activityID ) ;
+                  cached = FALSE ;
+               }
             }
          }
       }
 
+      // Decrease the cached plan count if it is not cached
       if ( !cached )
       {
-         _monitor.decCachedPlanCount() ;
+         _monitor.decCachedPlanCount( 1 ) ;
       }
 
       PD_TRACE_EXIT( SDB_OPTAPM__CACHEAP ) ;
