@@ -43,6 +43,9 @@ public class CreateMainCLSplitHash834 extends SdbTestBase{
         if (Commlib.isStandAlone(sdb)){
             throw new SkipException("is standalone skip testcase");
         }
+		if (Commlib.getDataGroups(sdb).size() < 2){
+            throw new SkipException("current environment less than tow groups");
+        }
 	}
 	
 	@AfterClass

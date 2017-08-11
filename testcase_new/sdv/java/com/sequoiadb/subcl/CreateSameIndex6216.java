@@ -54,6 +54,9 @@ public class CreateSameIndex6216 extends SdbTestBase{
         if (Commlib.isStandAlone(db)){
             throw new SkipException("is standalone skip testcase");
         }
+		if (Commlib.getDataGroups(db).size() < 2){
+            throw new SkipException("current environment less than tow groups");
+        }
 		createMaincl();
 
 		createAndAttachSubcls();
