@@ -165,6 +165,24 @@ class SdbConfig(val properties: Map[String, String]) extends Serializable {
 
     val ignoreDuplicateKey: Boolean = properties.get(SdbConfig.IgnoreDuplicateKey)
         .map(_.toBoolean).getOrElse(SdbConfig.DefaultIgnoreDuplicateKey)
+
+    val useSelector: String = properties
+        .getOrElse(SdbConfig.UseSelector, SdbConfig.DefaultUseSelector)
+
+    useSelector.toLowerCase match {
+        case SdbConfig.USE_SELECTOR_ENABLE =>
+        case SdbConfig.USE_SELECTOR_DISABLE =>
+        case SdbConfig.USE_SELECTOR_AUTO =>
+        case _ =>
+            invalidConfigValue(SdbConfig.UseSelector, useSelector)
+    }
+
+    val selectorDiff: Int = properties.get(SdbConfig.SelectorDiff)
+        .map(_.toInt).getOrElse(SdbConfig.DefaultSelectorDiff)
+
+    if (selectorDiff < 0) {
+        invalidConfigValue(SdbConfig.SelectorDiff, selectorDiff)
+    }
 }
 
 object SdbConfig {
@@ -190,6 +208,8 @@ object SdbConfig {
     val ShardingPartitionSingleNode = "shardingpartitionsinglenode"
     val PreferredLocation = "preferredlocation"
     val IgnoreDuplicateKey = "ignoreduplicatekey"
+    val UseSelector = "useselector"
+    val SelectorDiff = "selectordiff"
 
     // compatible with old edition option
     val ScanType = "scantype" // auto/ixscan/tbscan
@@ -205,6 +225,10 @@ object SdbConfig {
     val SCAN_TYPE_IXSCAN = "ixscan"
     val SCAN_TYPE_TBSCAN = "tbscan"
     val SCAN_TYPE_AUTO = "auto"
+
+    val USE_SELECTOR_ENABLE = "enable"
+    val USE_SELECTOR_DISABLE = "disable"
+    val USE_SELECTOR_AUTO = "auto"
 
     val AllProperties = List(
         Host,
@@ -226,6 +250,8 @@ object SdbConfig {
         ShardingPartitionSingleNode,
         PreferredLocation,
         IgnoreDuplicateKey,
+        UseSelector,
+        SelectorDiff,
         ScanType
     )
 
@@ -243,15 +269,17 @@ object SdbConfig {
     val DefaultSamplingWithId = false
     val DefaultSamplingSingle = true
     val DefaultBulkSize = 500
-    val DefaultCursorType = "fast"
+    val DefaultCursorType = CURSOR_TYPE_FAST
     val DefaultFastCursorBufSize = 500
     val DefaultFastCursorDecoderNum = 2
-    val DefaultPartitionMode = "auto"
+    val DefaultPartitionMode = PARTITION_MODE_AUTO
     val DefaultPartitionBlockNum = 4
     val DefaultPartitionMaxNum = 1000
     val DefaultShardingPartitionSingleNode = false
     val DefaultPreferredLocation = false
     val DefaultIgnoreDuplicateKey = false
+    val DefaultUseSelector = USE_SELECTOR_ENABLE
+    val DefaultSelectorDiff = 2
 
     def apply(parameters: Map[String, String]): SdbConfig = new SdbConfig(parameters)
 

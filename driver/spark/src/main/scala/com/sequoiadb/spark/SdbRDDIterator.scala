@@ -88,6 +88,10 @@ abstract class SdbRDDIterator[T: ClassTag](config: SdbConfig,
         hintObj
     }
 
+    private val selector: BSONObject = SdbRDDIterator.createSelector(requiredColumns)
+
+    logInfo(s"selector=$selector")
+
     private val cl: DBCollection = {
         val cs = if (sdb.isCollectionSpaceExist(partition.csName)) {
             sdb.getCollectionSpace(partition.csName)
@@ -107,7 +111,7 @@ abstract class SdbRDDIterator[T: ClassTag](config: SdbConfig,
 
     private val cursor: DBCursor = cl.query(
         partition.filter.BSONObj(),
-        SdbRDDIterator.createSelector(requiredColumns),
+        selector,
         null, hint, 0, numReturned, 0)
 
     protected lazy val sdbCursor: SdbCursor = {

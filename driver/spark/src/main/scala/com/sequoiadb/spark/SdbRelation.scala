@@ -59,18 +59,59 @@ class SdbRelation(@transient val sqlContext: SQLContext,
 
     override def schema: StructType = providedSchema.getOrElse(lazySchema)
 
+    if (config.useSelector == SdbConfig.USE_SELECTOR_AUTO) {
+        logInfo(s"sparksql-schema=$schema, sequoiadb-schema=$lazySchema")
+    }
+
+    private def needSelector(targetSchema: StructType): Boolean = {
+        config.useSelector.toLowerCase match {
+            case SdbConfig.USE_SELECTOR_ENABLE => true
+            case SdbConfig.USE_SELECTOR_DISABLE => false
+            case _ =>
+                if (targetSchema.equals(lazySchema)) {
+                    false
+                } else if (targetSchema.size >= lazySchema.size - config.selectorDiff) {
+                    false
+                } else {
+                    true
+                }
+        }
+    }
+
+    private def realColumns(targetSchema: StructType,
+                            requiredColumns: Array[String])
+    : Array[String] = {
+        if (requiredColumns.isEmpty) {
+            return requiredColumns
+        }
+
+        if (needSelector(targetSchema)) {
+            requiredColumns
+        } else {
+            Array()
+        }
+    }
+
     override def buildScan(): RDD[Row] = {
+        logInfo(s"select * from ${config.collectionSpace}.${config.collection}")
         SdbRowRDD(sqlContext.sparkContext, config, schema)
     }
 
     override def buildScan(requiredColumns: Array[String]): RDD[Row] = {
+        logInfo(s"select ${requiredColumns.mkString(", ")} " +
+            s"from ${config.collectionSpace}.${config.collection}")
         val prunedSchema = SdbRelation.pruneSchema(schema, requiredColumns)
-        SdbRowRDD(sqlContext.sparkContext, config, prunedSchema, requiredColumns)
+        SdbRowRDD(sqlContext.sparkContext, config,
+            prunedSchema, realColumns(prunedSchema, requiredColumns))
     }
 
     override def buildScan(requiredColumns: Array[String], filters: Array[Filter]): RDD[Row] = {
+        logInfo(s"select ${requiredColumns.mkString(", ")} " +
+            s"from ${config.collectionSpace}.${config.collection} " +
+            s"where ${filters.mkString(", ")}")
         val prunedSchema = SdbRelation.pruneSchema(schema, requiredColumns)
-        SdbRowRDD(sqlContext.sparkContext, config, prunedSchema, requiredColumns, filters)
+        SdbRowRDD(sqlContext.sparkContext, config,
+            prunedSchema, realColumns(prunedSchema, requiredColumns), filters)
     }
 
     override def unhandledFilters(filters: Array[Filter]): Array[Filter] = {
