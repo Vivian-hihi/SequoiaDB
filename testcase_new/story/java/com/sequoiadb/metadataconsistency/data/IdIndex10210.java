@@ -88,6 +88,7 @@ public class IdIndex10210 extends SdbTestBase {
 		public void exec() throws BaseException{
 			Sequoiadb db  = null;
 			try{
+				db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 				if (db.isCollectionSpaceExist(csName)) {
 					CollectionSpace csDB = db.getCollectionSpace(csName);
 					if (csDB.isCollectionExist(clName)) {
