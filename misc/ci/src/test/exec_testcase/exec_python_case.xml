@@ -26,7 +26,6 @@
          </else>
       </if>
       
-      <pythondriver type="uninstall"/>
       <pythondriver type="install"/>
       
       <!--execute-->
@@ -34,6 +33,8 @@
       <execallcase pyversion="python2" testcasedir="${testcase_dir}" reportdir="${report_dir}"/>
       <execallcase pyversion="python3" testcasedir="${testcase_dir}" reportdir="${report_dir}"/>
             
+      <pythondriver type="uninstall"/>
+      
    </target>
 
    <macrodef name="execallcase">
@@ -278,9 +279,10 @@
                         <arg line=" setup.py install --force --record files.txt" />
                      </exec>
                   </case>
+            
                   <case value="uninstall">
-                     <exec executable="cat" dir="${pythondir}/py${py_version}" failonerror="true" logError="true">
-                        <arg line=" files.txt | xargs rm -rf " />
+                     <exec executable="/bin/bash" dir="${pythondir}/py${py_version}" failonerror="true" logError="true">
+                        <arg line=" -c 'cat files.txt |xargs rm -rf'  " />
                      </exec>
                   </case>
                </switch>
