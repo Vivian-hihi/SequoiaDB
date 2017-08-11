@@ -240,9 +240,8 @@ namespace engine
       fileCommon = pAgentSession->getFileObjByID( _fID ) ;
       if( NULL == fileCommon )
       {
-         rc = SDB_FNE ;
-         PD_LOG_MSG( PDERROR, "Failed to get sptUsrFileCommon obj, fID: %u",
-                     _fID ) ;
+         rc = SDB_IO ;
+         PD_LOG_MSG( PDERROR, "file is not opened" ) ;
          goto error ;
       }
 
@@ -350,9 +349,8 @@ namespace engine
       fileCommon = pAgentSession->getFileObjByID( _fID ) ;
       if( NULL == fileCommon )
       {
-         rc = SDB_FNE ;
-         PD_LOG_MSG( PDERROR, "Failed to get sptUsrFileCommon obj, fID: %u",
-                     _fID ) ;
+         rc = SDB_IO ;
+         PD_LOG_MSG( PDERROR, "file is not opened" ) ;
          goto error ;
       }
 
@@ -449,9 +447,8 @@ namespace engine
       fileCommon = pAgentSession->getFileObjByID( _fID ) ;
       if( NULL == fileCommon )
       {
-         rc = SDB_FNE ;
-         PD_LOG_MSG( PDERROR, "Failed to get sptUsrFileCommon obj, fID: %u",
-                     _fID ) ;
+         rc = SDB_IO ;
+         PD_LOG_MSG( PDERROR, "file is not opened" ) ;
          goto error ;
       }
 
@@ -528,10 +525,7 @@ namespace engine
       fileCommon = pAgentSession->getFileObjByID( _fID ) ;
       if( NULL == fileCommon )
       {
-         rc = SDB_FNE ;
-         PD_LOG_MSG( PDERROR, "Failed to get sptUsrFileCommon obj, fID: %u",
-                     _fID ) ;
-         goto error ;
+         goto done ;
       }
 
       rc = fileCommon->close( err ) ;

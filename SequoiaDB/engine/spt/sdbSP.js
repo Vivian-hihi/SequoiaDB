@@ -2464,11 +2464,9 @@ File.prototype.close = function() {
    }
    else
    {
-      println( "fid:" + this._fID ) ;
       if( this._fID != undefined )
       {
          this._remote._runCommand( "file close", {}, { "fID": this._fID } ) ;
-         this._fID = undefined ;
       }
    }
 }
