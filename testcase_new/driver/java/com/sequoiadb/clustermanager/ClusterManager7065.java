@@ -226,7 +226,7 @@ public class ClusterManager7065 extends SdbTestBase{
 		String actualMasterNodeName = null;
 		String actualSlaveNodeName = null;
 		try{
-			for(int i=0;i<60;i++){
+			for(int i=0;i<120;i++){
 				if(dataRG.getMaster() == null){
 					try {
 						System.out.println("i:"+i);
@@ -239,7 +239,9 @@ public class ClusterManager7065 extends SdbTestBase{
 				}
 			}
 			actualMasterNodeName = dataRG.getMaster().getNodeName();
+			System.out.println("masterNodeName=" + actualMasterNodeName);
 			actualSlaveNodeName = dataRG.getSlave().getNodeName();
+			System.out.println("slaveNodeName=" + actualSlaveNodeName);
 		}catch(BaseException e){
 			Assert.fail("get master and slave node failed" + e.getMessage());
 		}
