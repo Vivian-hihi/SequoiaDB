@@ -51,6 +51,7 @@ public class ClusterManager7065 extends SdbTestBase{
 	private String workDir;
 	private int reservedPortBegin;
 	private String coordIP;
+	private boolean clearFlag = false;
 	private CommLib commlib = new CommLib();
 	
 	@BeforeClass
@@ -77,7 +78,8 @@ public class ClusterManager7065 extends SdbTestBase{
 		try{
 			System.out.println("the TestCase: "+ this.getClass().getName() + 
 					" end at:" + df.format(new Date().getTime()));
-			if(sdb.getReplicaGroup(dataRGName) != null){
+			
+			if(clearFlag && sdb.getReplicaGroup(dataRGName) != null){
 				sdb.removeReplicaGroup(dataRGName);
 			}
 			sdb.disconnect();
@@ -263,6 +265,10 @@ public class ClusterManager7065 extends SdbTestBase{
 			Assert.fail("remove replicaGroup failed" + e.getMessage());
 		}
 		Assert.assertNull(sdb.getReplicaGroup(dataRGName),"replicaGroup " + dataRGName + " exists ,but expect result is removed!");
-		
+	
+	   //Normal operating environment
+      clearFlag = true;		
 	}
+	
+	
 }
