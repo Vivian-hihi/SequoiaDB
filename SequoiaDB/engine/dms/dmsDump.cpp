@@ -1417,7 +1417,7 @@ namespace engine
             BSONObj obj ( (CHAR*)recordPtr ) ;
             len += ossSnprintf ( outBuf + len, outSize - len,
                                  "       Record: %s"OSS_NEWLINE,
-                                 obj.toString().c_str() ) ;
+                                 obj.toString( FALSE, TRUE ).c_str() ) ;
          }
          catch ( std::exception &e )
          {
