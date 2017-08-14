@@ -36,6 +36,7 @@
 #include "core.hpp"
 #include "oss.hpp"
 #include "../bson/bson.hpp"
+#include "sptPrivateData.hpp"
 
 namespace engine
 {
@@ -62,9 +63,9 @@ namespace engine
       virtual INT32 getString( UINT32 pos, std::string &value,
                                BOOLEAN strict = TRUE ) const = 0 ;
       virtual INT32 getBsonobj( UINT32 pos, bson::BSONObj &value ) const = 0 ;
-
       virtual INT32 getUserObj( UINT32 pos, const std::string &className,
                                 const void** value ) const = 0 ;
+      virtual sptPrivateData* getPrivateData() const = 0 ;
 
       virtual UINT32 argc() const = 0 ;
 

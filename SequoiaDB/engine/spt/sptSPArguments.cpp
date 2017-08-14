@@ -230,6 +230,11 @@ namespace engine
       goto done ;
    }
 
+   sptPrivateData* _sptSPArguments::getPrivateData( ) const
+   {
+      return ( sptPrivateData* )JS_GetContextPrivate( _context ) ;
+   }
+
    BOOLEAN _sptSPArguments::isString( UINT32 pos ) const
    {
       jsval *val = NULL ;

@@ -48,6 +48,7 @@ namespace engine
       _desc = NULL ;
       _attr = SPT_PROP_DEFAULT ;
       _deleted = FALSE ;
+      _isRawData = FALSE ;
    }
 
    void _sptProperty::clear()
@@ -73,6 +74,7 @@ namespace engine
       _pReleaseFunc = NULL ;
       _desc = NULL ;
       _type = bson::EOO ;
+	  _isRawData = FALSE ;
    }
 
    _sptProperty::~_sptProperty()
@@ -196,6 +198,14 @@ namespace engine
       goto done ;
    }
 
+   INT32 _sptProperty::assignResultVal( const sptResultVal* value )
+   {
+      clear() ;
+      _value = ( UINT64 )value ;
+      _isRawData = TRUE ;
+      return SDB_OK ;
+   }
+
    INT32 _sptProperty::getNative( bson::BSONType type,
                                   void *value ) const
    {
@@ -227,6 +237,21 @@ namespace engine
    {
       SDB_ASSERT( String == _type, "type must be string" ) ;
       return ( CHAR * )_value ;
+   }
+
+   INT32 _sptProperty::getResultVal( sptResultVal ** ppResultVal ) const
+   {
+      INT32 rc = SDB_OK ;
+      if( FALSE == _isRawData )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      *ppResultVal = (sptResultVal*) _value ;
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    _sptProperty* _sptProperty::addArrayItem()

@@ -273,6 +273,7 @@ spt2Files = [
       "spt/usrdef/sptUsrSsh.cpp",
       "spt/sptRemote.cpp",
       "spt/sptProperty.cpp",
+      "spt/sptPrivateData.cpp",
       "spt/sptGlobalFunc.cpp",
       "spt/usrdef/sptUsrCmd.cpp",
       "spt/usrdef/sptUsrFile.cpp",

@@ -117,8 +117,8 @@ namespace engine
                         std::string &err,
                         std::string &code ) ;
 
-      static INT32 readFile( const std::string &filename,
-                             std::string &err, CHAR **pBuf ) ;
+      static INT32 readFile( const std::string &filename, std::string &err,
+                             CHAR **pBuf, INT64 &readSize ) ;
 
       static INT32 getFileSize( const std::string &filename,
                                 std::string &err, INT64 &size ) ;

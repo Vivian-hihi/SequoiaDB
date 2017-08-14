@@ -34,6 +34,7 @@ spt2Files = [
       "spt/sptWords.cpp",
       "spt/sptParseMandoc.cpp",
       "spt/sptFuncDef.cpp",
+      "spt/sptPrivateData.cpp",
       "spt/usrdef/sptUsrSsh.cpp",
       "spt/usrdef/sptUsrCmd.cpp",
       "spt/usrdef/sptUsrFile.cpp",

@@ -42,7 +42,7 @@ namespace engine
 
    public:
       _sptGlobalFunc() {}
-      virtual ~_sptGlobalFunc() {} 
+      virtual ~_sptGlobalFunc() {}
 
    public:
       static INT32 getLastErrorMsg( const _sptArguments &arg,
@@ -105,11 +105,23 @@ namespace engine
                             _sptReturnVal &rval,
                             bson::BSONObj &detail ) ;
 
+      static INT32 importJSFile( const _sptArguments &arg,
+                                 _sptReturnVal &rval,
+                                 bson::BSONObj &detail ) ;
+
+      static INT32 importJSFileOnce( const _sptArguments &arg,
+                                     _sptReturnVal &rval,
+                                     bson::BSONObj &detail ) ;
    protected:
-      static INT32 _showClassInner( const string &className,
+      static INT32 _showClassInner( const _sptArguments &arg,
+                                    const string &className,
                                     BOOLEAN showHide,
                                     _sptReturnVal &rval,
                                     bson::BSONObj &detail ) ;
+      static INT32 _evalFile( BOOLEAN importOnce,
+                              const _sptArguments &arg,
+                              _sptReturnVal &rval,
+                              bson::BSONObj &detail ) ;
    } ;
    typedef class _sptGlobalFunc sptGlobalFunc ;
 }

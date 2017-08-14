@@ -54,6 +54,8 @@ namespace engine
       virtual INT32 getUserObj( UINT32 pos, const std::string &className,
                                 const void** value ) const ;
 
+      virtual sptPrivateData* getPrivateData() const ;
+
       virtual UINT32 argc() const
       {
          return _argc ;

@@ -34,6 +34,7 @@
 #include "sptObjDesc.hpp"
 #include "pd.hpp"
 #include "ossUtil.hpp"
+#include "ossMem.hpp"
 #include "sptSPDef.hpp"
 #include "sptBsonobj.hpp"
 #include "sptBsonobjArray.hpp"
@@ -44,12 +45,15 @@
 #include "spt.hpp"
 #include "sptFuncDef.hpp"
 #include "sptHelp.hpp"
+#include "sptInvoker.hpp"
 #include "../spt/js_in_cpp.hpp"
-#include <sstream>
+
+using namespace std ;
 
 namespace engine
 {
-
+   #define JS_ERROBJ_FILENAME    "fileName"
+   #define JS_ERROBJ_LINENO      "lineNumber"
    /*
       case 1: when no argument, we display the functions of class/instance
       case 2: when getting argument in format of "Oma"/"Oma.createCoord"
@@ -427,7 +431,7 @@ namespace engine
       JS_SetErrorReporter( _context, sdbReportError ) ;
 
       _global = JS_NewCompartmentAndGlobalObject( _context, &global_class,
-                                                  NULL );
+                                                  NULL ) ;
       if ( NULL == _global )
       {
          ossPrintf( "failed to init js global object"OSS_NEWLINE ) ;
@@ -449,9 +453,16 @@ namespace engine
          goto error ;
       }
       _loadMask = loadMask ;
-      sdbDeclareThreadContext( _context ) ;
-      sdbDeclareThreadGlobal( _global ) ;
 
+      {
+         sptPrivateData *privateData = SDB_OSS_NEW sptPrivateData( this ) ;
+         if( NULL == privateData )
+         {
+            ossPrintf( "Failed to new sptPrivateData obj" ) ;
+            goto error ;
+         }
+         JS_SetContextPrivate( _context, privateData ) ;
+      }
    done:
       return rc ;
    error:
@@ -509,15 +520,12 @@ namespace engine
 
    void _sptSPScope::shutdown()
    {
-      sdbUndeclareThreadContext( _context ) ;
-      sdbUndeclareThreadGlobal( _global ) ;
-
       if ( NULL != _context )
       {
-         void *p = JS_GetContextPrivate( _context ) ;
+         sptPrivateData* p = (sptPrivateData*)JS_GetContextPrivate( _context ) ;
          if ( NULL != p )
          {
-            SDB_OSS_FREE( p ) ;
+            SDB_OSS_DEL p ;
          }
 
          JS_SetContextPrivate( _context, NULL ) ;
@@ -817,6 +825,7 @@ namespace engine
       SAFE_JS_FREE ( _context , print ) ;
       return rc ;
    error:
+      // report error while calling eval() recursively
       if ( JS_IsExceptionPending( _context ) &&
            JS_GetPendingException ( _context , &exception ) )
       {
@@ -830,14 +839,82 @@ namespace engine
          if ( NULL != strException )
          {
             std::stringstream ss ;
-            ss << "Uncaught exception:" ;
-            ss << strException ;
+            sptPrivateData *privateData  = NULL ;
+
+            // get privateData to get exception filename and lineno
+            privateData = ( sptPrivateData* ) JS_GetContextPrivate( _context ) ;
+            /*
+             * Branch 1: userdef function throw errno
+             *    true == privateData->isSetErrInfo() means exception occurs in
+             *    userdef function
+             */
+            if( NULL != privateData && privateData->isSetErrInfo() )
+            {
+               {
+                  ss << privateData->getErrFileName().c_str() << ":"
+                     << privateData->getErrLineno() << " " ;
+               }
+               ss << "uncaught exception: "
+                  << strException << endl
+                  << sdbGetErrMsg() ;
+            }
+            /*
+             * Branch 2: throw obj
+             *    unable to determine if the obj type is Erro
+             *
+             * TODO: find a way to determine if the obj type is Error
+            */
+            else if( JSVAL_IS_OBJECT( exception ) )
+            {
+               CHAR *errfileName = NULL ;
+               UINT32 errLineno = 0 ;
+               JSObject *errObj = NULL ;
+               jsval fileName ;
+               jsval lineNumber ;
+
+               errObj = JSVAL_TO_OBJECT( exception ) ;
+               if( NULL != errObj )
+               {
+                  // get Error obj fileName
+                  if( JS_GetProperty( _context, errObj,
+                                      JS_ERROBJ_FILENAME, &fileName )
+                      && JSVAL_IS_STRING( fileName ) )
+                  {
+                     JSString *jsStr = JSVAL_TO_STRING( fileName ) ;
+                     if( NULL != jsStr )
+                     {
+                        errfileName = JS_EncodeString ( _context , jsStr ) ;
+                     }
+                  }
+                  // get Error obj lineno
+                  if( JS_GetProperty( _context, errObj,
+                                      JS_ERROBJ_LINENO, &lineNumber )
+                      && JSVAL_IS_INT( lineNumber ) )
+                  {
+                     errLineno = (UINT32) JSVAL_TO_INT( lineNumber ) ;
+                  }
+               }
+               ss << ( errfileName ? string( errfileName ): "(nofile)" ) << ":"
+                  << errLineno << " "
+                  << strException ;
+            }
+            /*
+             *Branch 3: Throw other type, such as string
+             */
+            else
+            {
+               ss << ( filename ? string( filename ): "(nofile)" )
+                  << ":"
+                  << lineno << " "
+                  << "uncaught exception: "
+                  << strException ;
+            }
+
             std::string errInfo = ss.str() ;
             _rval.setError( errInfo ) ;
-            sdbReportError( NULL, 0, errInfo.c_str(), TRUE ) ;
             SAFE_JS_FREE( _context, strException ) ;
          }
-         JS_ClearPendingException ( _context ) ;
+         JS_ReportPendingException( _context ) ;
       }
       goto done ;
    }
@@ -885,6 +962,5 @@ namespace engine
       JSObject *pJSObj = ( JSObject* )pObj ;
       return sptGetObjFactory()->getObjPropNames( _context, pJSObj, setProp ) ;
    }
-
 }
 

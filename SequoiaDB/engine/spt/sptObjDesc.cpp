@@ -485,7 +485,7 @@ namespace engine
 
       if ( className.empty() )
       {
-         jsObj = (JSObject*)sdbGetThreadGlobal() ;
+         jsObj = JS_GetGlobalObject( cx ) ;
       }
       else
       {

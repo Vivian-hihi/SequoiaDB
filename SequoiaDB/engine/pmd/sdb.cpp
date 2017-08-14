@@ -60,7 +60,6 @@
 #include "ossSignal.hpp"
 #include "ossIO.hpp"
 #include <locale.h>
-
 using namespace bson ;
 
 using std::ostream ;
@@ -278,11 +277,7 @@ INT32 enterBatchMode( sptScope * scope , const CHAR * filename ,
 {
    INT32    rc       = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_ENTERBATCHMODE );
-   CHAR *   result   = NULL ;
    UINT32   varLen   = 0 ;
-   CHAR *   temp     = NULL ;
-   UINT32   tempSize = 0 ;
-   UINT32   readlen  = 0 ;
    CHAR *   toker    = NULL ;
    CHAR *   last     = NULL ;
    string   content ;
@@ -306,7 +301,7 @@ INT32 enterBatchMode( sptScope * scope , const CHAR * filename ,
    }
 
    toker = ossStrtok( fileNameTmp, ",;", &last ) ;
-   while ( toker )
+   while( toker )
    {
       // trim begin space
       while ( ' ' == *toker )
@@ -323,36 +318,17 @@ INT32 enterBatchMode( sptScope * scope , const CHAR * filename ,
       {
          *lastPos = 0 ;
       }
-
-      rc = readFile( toker , &temp , &tempSize, &readlen ) ;
-      if ( rc != SDB_OK )
+      if( !content.empty() )
       {
-         ossPrintf ( "fail to read file: %s"OSS_NEWLINE , toker ) ;
-         goto error ;
+         content += OSS_NEWLINE ;
       }
-
-      if ( readlen > 0 )
-      {
-         content += '\n' ;
-
-         //skip BOM (notepad auto add flag for UTF-8)
-         if ( readlen >= 3 && (UINT8)temp[0] == 0xEF &&
-              (UINT8)temp[1] == 0xBB && (UINT8)temp[2] == 0xBF )
-         {
-            content += &temp[3] ;
-         }
-         else
-         {
-            content += temp ;
-         }
-      }
+      content += "import( '" + string( toker ) + "' ) ;" ;
       toker = ossStrtok( last, ",;", &last ) ;
    }
-
    if ( content.length() > varLen )
    {
       rc = scope->eval ( content.c_str() , (UINT32)content.length() ,
-                         filename , 1, SPT_EVAL_FLAG_PRINT, NULL ) ;
+                         "shell" , 1, SPT_EVAL_FLAG_PRINT, NULL ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
@@ -364,8 +340,6 @@ INT32 enterBatchMode( sptScope * scope , const CHAR * filename ,
    }
 
 done :
-   SAFE_OSS_FREE ( temp ) ;
-   SAFE_OSS_FREE ( result ) ;
    SAFE_OSS_FREE ( fileNameTmp ) ;
    PD_TRACE_EXITRC ( SDB_ENTERBATCHMODE, rc );
    return rc ;
@@ -377,7 +351,6 @@ error :
 INT32 enterInteractiveMode ( sptScope *scope, const CHAR *lang )
 {
    INT32    rc          = SDB_OK ;
-   CHAR *   result      = NULL ;
    CHAR *   code        = NULL ;
    INT64 sec            = 0 ;
    INT64 microSec       = 0 ;
@@ -396,6 +369,7 @@ INT32 enterInteractiveMode ( sptScope *scope, const CHAR *lang )
    historyInit () ;
    linenoiseHistoryLoad( historyFile.c_str() ) ;
    g_lnBuilder.loadCmd( historyFile.c_str() ) ;
+
    ossPrintf ( "Welcome to SequoiaDB shell!"OSS_NEWLINE ) ;
    ossPrintf ( "help() for help, Ctrl+c or quit to exit"OSS_NEWLINE ) ;
 
@@ -449,7 +423,6 @@ INT32 enterInteractiveMode ( sptScope *scope, const CHAR *lang )
 
    loop_next :
          SAFE_OSS_FREE ( code ) ;
-         SAFE_OSS_FREE ( result ) ;
    }
 
    SAFE_OSS_FREE ( code ) ;

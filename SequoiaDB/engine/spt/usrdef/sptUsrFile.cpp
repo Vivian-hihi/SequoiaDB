@@ -1005,6 +1005,7 @@ JS_MAPPING_END()
       CHAR* buf = NULL ;
       string name ;
       string err ;
+      INT64 readSize = 0 ;
 
       rc = arg.getString( 0, name ) ;
       if( SDB_OUT_OF_BOUND == rc )
@@ -1018,7 +1019,7 @@ JS_MAPPING_END()
          goto error ;
       }
 
-      rc = _sptUsrFileCommon::readFile( name, err, &buf ) ;
+      rc = _sptUsrFileCommon::readFile( name, err, &buf, readSize ) ;
       if( SDB_OK != rc )
       {
          detail = BSON( SPT_ERR << err ) ;

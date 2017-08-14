@@ -105,14 +105,6 @@ namespace engine
 
    UINT32   sdbGetGlobalID() ;
 
-   const void* sdbGetThreadContext() ;
-   void     sdbDeclareThreadContext( const void *pContext ) ;
-   void     sdbUndeclareThreadContext( const void *pContext ) ;
-
-   const void* sdbGetThreadGlobal() ;
-   void     sdbDeclareThreadGlobal( const void *pGlobal ) ;
-   void     sdbUndeclareThreadGlobal( const void *pGlobal ) ;
-
    BOOLEAN sptIsOpGetProperty( UINT32 opcode ) ;
    BOOLEAN sptIsOpSetProperty( UINT32 opcode ) ;
    BOOLEAN sptIsOpCallProperty( UINT32 opcode ) ;

@@ -402,7 +402,7 @@ namespace engine
             err = "mode must be NumberInt" ;
             goto error ;
          }
-         mode = optionObj.getIntField( "mode") ;
+         mode = optionObj.getIntField( "mode" ) ;
          permission = 0 ;
          if ( mode & 0x0001 )
          {
@@ -1558,78 +1558,55 @@ namespace engine
 #endif
 
    INT32 _sptUsrFileCommon::readFile( const string &filename,
-                                     string &err, CHAR **pBuf )
+                                      string &err, CHAR **pBuf, INT64 &readSize )
    {
-      INT32 rc = SDB_OK ;
-      CHAR* buf = NULL ;
       ossPrimitiveFileOp op ;
-      INT32 readLen = 1024 ;
-      INT32 bufLen = readLen + 1 ;
+      ossPrimitiveFileOp::offsetType offset ;
+      INT32 rc = SDB_OK ;
 
-      // open file
-      rc = op.Open( filename.c_str() , OSS_PRIMITIVE_FILE_OP_READ_ONLY ) ;
+      SDB_ASSERT ( pBuf, "Invalid arguments" ) ;
+
+      rc = op.Open ( filename.c_str() , OSS_PRIMITIVE_FILE_OP_READ_ONLY ) ;
       if ( rc != SDB_OK )
       {
-         err = "Failed to open file" ;
-         PD_LOG( PDERROR, "Can't open file: %s", filename.c_str() ) ;
+         err = "Can't open file: %s" + filename ;
          goto error ;
       }
 
-      // malloc buff
-      buf = (CHAR*) SDB_OSS_MALLOC( bufLen ) ;
-      if ( NULL == buf )
+      rc = op.getSize ( &offset ) ;
+      if ( rc != SDB_OK )
+      {
+         err = "Failed to get file's size" ;
+         goto error ;
+      }
+
+      if ( *pBuf )
+      {
+         SDB_OSS_FREE( *pBuf ) ;
+         *pBuf = NULL ;
+      }
+      *pBuf = (CHAR *) SDB_OSS_MALLOC ( offset.offset + 1 ) ;
+      if ( ! *pBuf )
       {
          rc = SDB_OOM ;
-         PD_LOG( PDERROR, "Failed to malloc buff" ) ;
-         err = "Failed to malloc buff" ;
+         err = "Failed to alloc memory" ;
          goto error ;
       }
 
+      rc = op.Read ( offset.offset , *pBuf , NULL ) ;
+      if ( rc != SDB_OK )
       {
-         INT32 readByte = 0 ;
-         INT32 hasRead = 0 ;
-         INT32 increaseLen = 1024 ;
-         CHAR *curPos = buf ;
-         BOOLEAN finishRead = FALSE ;
-         while( !finishRead )
-         {
-            rc = op.Read( readLen , curPos , &readByte ) ;
-            if ( SDB_OK != rc )
-            {
-               PD_LOG( PDERROR, "Failed to read file" ) ;
-               err = "Failed to read file" ;
-               goto error ;
-            }
-            hasRead += readByte ;
-
-            // mem not enough, need to realloc, newBuffSize = 2*oldBuffSize
-            if ( readByte == readLen )
-            {
-               bufLen += increaseLen ;
-               buf = (CHAR*) SDB_OSS_REALLOC( buf, bufLen ) ;
-               if ( NULL == buf )
-               {
-                  rc = SDB_OOM ;
-                  PD_LOG( PDERROR, "Failed to realloc buff" ) ;
-                  err = "Failed to realloc buff" ;
-                  goto error ;
-               }
-               curPos = buf + hasRead ;
-               readLen = increaseLen ;
-               increaseLen *= 2 ;
-            }
-            else
-            {
-               finishRead = TRUE ;
-            }
-         }
-         buf[ hasRead ] = '\0' ;
+         err = "Failed to read file" ;
+         goto error ;
       }
-      *pBuf = buf ;
-   done:
+      (*pBuf)[ offset.offset ] = 0 ;
+
+      readSize = offset.offset ;
+
+   done :
       op.Close() ;
       return rc ;
-   error:
+   error :
       goto done ;
    }
 
