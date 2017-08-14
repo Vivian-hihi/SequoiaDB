@@ -24,6 +24,7 @@ function test_range_attach_hash_insert_large_same_beforesplit()
    }
 
    try {
+	   db.setSessionAttr( { PreferedInstance: "M" } );
       var cs = commCreateCS( db, COMMCSNAME, true, "create cs in the beginning" );
    }catch(e){
       println( "failed to create cs, rc = " + e );

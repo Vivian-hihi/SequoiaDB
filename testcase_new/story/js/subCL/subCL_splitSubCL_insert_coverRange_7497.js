@@ -24,6 +24,7 @@ function test_range_attach_hash_insert_BoundData() // Not Error, test mainCL'Sha
    }
 
    try {
+	   db.setSessionAttr( { PreferedInstance: "M" } );
       var cs = commCreateCS( db, COMMCSNAME, true, "create cs in the beginning" );
    }catch(e){
       println( "failed to create cs, rc = " + e );
@@ -159,9 +160,6 @@ function test_range_attach_hash_insert_BoundData() // Not Error, test mainCL'Sha
 // Add inspect standalone run mode
 try
 {
-   //set priority from masterNode
-   db.setSessionAttr( {PreferedInstance:"M"} );
-   
    // Inspect the run mode is standalone or not
    if( true == commIsStandalone( db ) )
       throw "ModeStandAlone" ;
