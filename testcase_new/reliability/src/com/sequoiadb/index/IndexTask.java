@@ -16,6 +16,10 @@ import static com.sequoiadb.metaopr.commons.MyUtil.*;
  * @Version 1.00
  */
 public abstract class IndexTask extends OperateTask {
+    public IndexTask(String threadName) {
+        super(threadName);
+    }
+
     Sequoiadb db = null;
     private String coorUrl = null;
 
@@ -42,7 +46,7 @@ public abstract class IndexTask extends OperateTask {
     abstract void operate();
 
     public static IndexTask getCreateIndexTask(final String csName, final String clName, final List<IndexBean> indexBeanList) {
-        return new IndexTask() {
+        return new IndexTask("create index task thread") {
             @Override
             void operate() {
                 DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
@@ -54,7 +58,7 @@ public abstract class IndexTask extends OperateTask {
     }
 
     public static IndexTask getRemoveIndexTask(final String csName, final String clName, final List<IndexBean> indexBeanList) {
-        return new IndexTask() {
+        return new IndexTask("deleted index task thread") {
             @Override
             void operate() {
                 DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
