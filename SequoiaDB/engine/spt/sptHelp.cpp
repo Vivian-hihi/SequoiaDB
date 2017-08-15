@@ -143,9 +143,10 @@ namespace engine
             // "find,findOne", let's display the manual of "find"
             if ( fuzzyFuncName == funcName )
             {
+               string funcFullName = *it ;
                vec.clear() ;
                v_tmp.clear() ;
-               vec.push_back( *it ) ;
+               vec.push_back( funcFullName ) ;
                break ;
             }
             else
