@@ -26,6 +26,7 @@ public class NodeRestart extends Fault {
 
     }
 
+    @Override
     public void make() throws FaultException {
         System.out.println("target node:" + this.node.hostName() + " : " + this.node.svcName());
         try {
@@ -36,6 +37,7 @@ public class NodeRestart extends Fault {
         }
     }
 
+    @Override
     public boolean checkMakeResult() throws FaultException {
         Sequoiadb db = null;
         try {
@@ -60,6 +62,7 @@ public class NodeRestart extends Fault {
         }
     }
 
+    @Override
     public void restore() throws FaultException {
         try {
             this.node.start();
@@ -69,6 +72,7 @@ public class NodeRestart extends Fault {
         }
     }
 
+    @Override
     public boolean checkRestoreResult() {
         return this.node.isNodeActive();
     }
@@ -80,7 +84,6 @@ public class NodeRestart extends Fault {
 
     @Override
     public void fini() throws FaultException {
-
     }
 
     /**

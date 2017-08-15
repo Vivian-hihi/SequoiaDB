@@ -9,7 +9,6 @@ import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.commlib.GroupWrapper;
 import com.sequoiadb.commlib.SdbTestBase;
 import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.exception.FaultException;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.BrokenNetwork;
 import com.sequoiadb.task.FaultMakeTask;
@@ -26,14 +25,11 @@ import org.testng.annotations.Test;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * @FileName:SEQDB-2579 对range分区组进行百分比切分，切分时源主节点断网
- * 
  * @author huangqiaohui
  * @version 1.00
- *
+ * @FileName:SEQDB-2579 对range分区组进行百分比切分，切分时源主节点断网
  */
 
 public class NetSplit2579 extends SdbTestBase {
@@ -83,12 +79,10 @@ public class NetSplit2579 extends SdbTestBase {
             connectUrl = CommLib.getSafeCoordUrl(brokenNetHost);
             groupMgr.refresh();
             System.out.println("brokenHost:" + brokenNetHost + " connectUrl:" + connectUrl);
-        }
-        catch (ReliabilityException e) {
+        } catch (ReliabilityException e) {
             Assert.fail(this.getClass().getName() + " setUp error, error description:"
                     + e.getMessage() + "\r\n" + Utils.getStackString(e));
-        }
-        finally {
+        } finally {
             if (sdb != null) {
                 sdb.close();
             }
@@ -102,12 +96,14 @@ public class NetSplit2579 extends SdbTestBase {
         }
     }
 
+    private FaultMakeTask faultTask = null;
+
     @Test
     public void test() {
         Sequoiadb db = null;
         try {
             // 建立并行任务
-            FaultMakeTask faultTask = BrokenNetwork.getFaultMakeTask(brokenNetHost, 5, 15, 25);
+            faultTask = BrokenNetwork.getFaultMakeTask(brokenNetHost, 5, 15, 25);
             TaskMgr mgr = new TaskMgr(faultTask);
             mgr.addTask(new Split());
             mgr.addTask(new Insert());
@@ -143,11 +139,9 @@ public class NetSplit2579 extends SdbTestBase {
                 // Assert.assertEquals(destGroup.checkInspect(60), true);
             }
             clearFlag = true;
-        }
-        catch (ReliabilityException e) {
+        } catch (ReliabilityException e) {
             Assert.fail(e.getMessage() + "\r\n" + Utils.getStackString(e));
-        }
-        finally {
+        } finally {
             if (db != null) {
                 db.close();
             }
@@ -166,12 +160,10 @@ public class NetSplit2579 extends SdbTestBase {
             Assert.assertEquals(macherCount == count, true,
                     destGroupName + " count:" + count + " macherCount:" + macherCount);
             return count;
-        }
-        catch (BaseException e) {
+        } catch (BaseException e) {
             e.printStackTrace();
             Assert.fail(e.getMessage() + "\r\n" + Utils.getStackString(e));
-        }
-        finally {
+        } finally {
             if (cursor != null) {
                 cursor.close();
             }
@@ -191,11 +183,9 @@ public class NetSplit2579 extends SdbTestBase {
                 CollectionSpace commCS = sdb.getCollectionSpace(csName);
                 commCS.dropCollection(clName);
             }
-        }
-        catch (BaseException e) {
+        } catch (BaseException e) {
             Assert.fail(e.getMessage() + "\r\n" + Utils.getStackString(e));
-        }
-        finally {
+        } finally {
             sdb.close();
             System.out.println(
                     "the TestCase Name:" + this.getClass().getName() + ". the TestCase end at:"
@@ -204,7 +194,6 @@ public class NetSplit2579 extends SdbTestBase {
     }
 
     class Insert extends OperateTask {
-        private AtomicBoolean isCutnet = new AtomicBoolean(false);
 
         @Override
         public void exec() throws Exception {
@@ -219,9 +208,8 @@ public class NetSplit2579 extends SdbTestBase {
                 BSONObject obj = (BSONObject) JSON.parse("{sk:" + i + "}");
                 try {
                     cl.insert(obj);
-                }
-                catch (BaseException e) {
-                    if (isCutnet.get()) {
+                } catch (BaseException e) {
+                    if (faultTask!=null&&faultTask.isMakeSuccess()) {
                         System.out.println("insertThread insert record:{sk:" + i + "} :"
                                 + e.getMessage() + Utils.getStackString(e));
                         exceptionRecNum = i - 5000;
@@ -232,17 +220,6 @@ public class NetSplit2579 extends SdbTestBase {
             }
             exceptionRecNum = 45000;
         }
-
-        @Override
-        public void faultNotify(BSONObject status) throws FaultException {
-            super.faultNotify(status);
-            OperateTask.faultStatus mk = (faultStatus) status.get(FaultMakeTask.MAKE_RESULT);
-            if (mk == OperateTask.faultStatus.MAKESUCCESS) {
-                isCutnet.set(true);
-                return;
-            }
-        }
-
     }
 
     class Split extends OperateTask {
@@ -257,15 +234,12 @@ public class NetSplit2579 extends SdbTestBase {
                     cl.split(srcGroupName, destGroupName, (BSONObject) JSON.parse("{sk:5000}"), // 切分
                             (BSONObject) JSON.parse("{sk:50000}"));
                     splitComplete = true;
-                }
-                catch (BaseException e) {
+                } catch (BaseException e) {
                     System.out.println("split have exception:" + e.getMessage());
                 }
-            }
-            catch (BaseException e) {
+            } catch (BaseException e) {
                 throw e;
-            }
-            finally {
+            } finally {
                 if (sdb != null) {
                     sdb.close();
                 }

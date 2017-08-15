@@ -15,8 +15,11 @@ import com.sequoiadb.task.FaultMakeTask;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 public class DiskFull extends Fault {
+    private final static Logger log=Logger.getLogger(DiskFull.class.getName());
+
     private String hostName;
     private String user;
     private String passwd;
@@ -75,11 +78,13 @@ public class DiskFull extends Fault {
         this.remotePath = remotePath;
     }
 
+    @Override
     public void make() throws FaultException {
-        System.out.println("target path: " + hostName + " : " + padPath);
+        log.info("target path: " + hostName + " : " + padPath);
         fillUpDisk(100);
     }
 
+    @Override
     public boolean checkMakeResult() throws FaultException {
         try {
             ssh.exec("df " + padPath + " | sed '1d' |awk '{print $4}'");
@@ -99,6 +104,7 @@ public class DiskFull extends Fault {
         }
     }
 
+    @Override
     public void restore() throws FaultException {
         for (int i = 0; i < padFileList.size(); ) {
             try {
@@ -112,6 +118,7 @@ public class DiskFull extends Fault {
         }
     }
 
+    @Override
     public boolean checkRestoreResult() {
         return padFileList.size() == 0 ? true : false;
     }
@@ -132,7 +139,6 @@ public class DiskFull extends Fault {
     public void init() throws FaultException {
         try {
             ssh = new Ssh(hostName, user, passwd, port);
-
             ssh.scpTo(localScriptPath + "/" + scriptName, remotePath + "/");
             ssh.exec("chmod 777 " + remotePath + "/" + scriptName);
             fillUpDisk(presetPercent);

@@ -24,7 +24,7 @@ public class Index4118 extends IndexTestBase {
     @Override
     public void setup() {
         super.setup();
-        BSONObject option = (BSONObject) JSON.parse("{ ShardingKey: { \"a\": 1 }," +
+        BSONObject option = (BSONObject) JSON.parse("{ ShardingKey: { \"age\": 1 }," +
                 " ShardingType: \"hash\", " +
                 "Partition: 1024, ReplSize: 1," +
                 " Compressed: true ," +

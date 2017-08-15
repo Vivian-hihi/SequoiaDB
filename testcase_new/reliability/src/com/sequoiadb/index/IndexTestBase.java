@@ -27,15 +27,20 @@ import static com.sequoiadb.metaopr.commons.MyUtil.*;
  */
 class IndexTestBase implements StandTestInterface {
     private final Logger log = Logger.getLogger(this.getClass().getName());
-
-//    final String shardingKey = "a";
-    String csName = null;
-    String clName = null;
     //num of inserting json
-    private static final int NUM = 100 * 1000;
+    private static final int NUM = 500 * 1000;
+
+    //cs name
+    String csName = null;
+    //cl name
+    String clName = null;
+    //array of indexes to be creating
     List<IndexBean> index2Create = new ArrayList<>(100);
+    //array of indexes already created
     List<IndexBean> indexAlreadlyCreated = new ArrayList<>(100);
+    //array of bson to be inserting
     static List<BSONObject> simpleBSONList = new ArrayList<>(NUM);
+
     private DBCollection _cl = null;
     private Sequoiadb _db = null;
 
@@ -43,23 +48,25 @@ class IndexTestBase implements StandTestInterface {
     public IndexTestBase() {
         csName = this.getClass().getSimpleName() + "cs";
         clName = this.getClass().getSimpleName() + "_cl";
-        //num of index
-        final int indexNum = 3;
-        for (int i = 0; i < indexNum; i++) {
-            indexAlreadlyCreated.add(new IndexBean()
-                    .setName("indexa" + i)
-                    .setIndexDef(new BasicBSONObject("a"+i,1))
-            );
 
-            index2Create.add(new IndexBean()
-                    .setName("indexb" + i)
-                    .setIndexDef(new BasicBSONObject("b"+i,1))
-            );
+        String[] fileds = {"A", "B", "C", "D", "E", "F"};
+        for (int i = 0; i < fileds.length; i++) {
+            if (i < fileds.length / 2) {
+                indexAlreadlyCreated.add(new IndexBean()
+                        .setName("index" + i)
+                        .setIndexDef(new BasicBSONObject(fileds[i], 1)));
+            } else {
+                index2Create.add(new IndexBean()
+                        .setName("index" + i)
+                        .setIndexDef(new BasicBSONObject(fileds[i], 1)));
+            }
         }
 
         for (int i = 0; i < NUM; i++) {
-            BSONObject bson = new BasicBSONObject("a", i);
-            bson.put("b", i);
+            BSONObject bson = new BasicBSONObject();
+            for (String filed : fileds) {
+                bson.put(filed, i);
+            }
             simpleBSONList.add(bson);
         }
     }
@@ -74,13 +81,12 @@ class IndexTestBase implements StandTestInterface {
         _cl.split("group1", "group2", 50);
     }
 
-    private DBCollection openCl() {
+    private void openCl() {
         if (_cl == null) {
             Sequoiadb db = MyUtil.getSdb();
             _cl = db.getCollectionSpace(csName)
                     .getCollection(clName);
         }
-        return _cl;
     }
 
     void createIndexCl(BSONObject option) {
@@ -93,6 +99,7 @@ class IndexTestBase implements StandTestInterface {
             createCS(csName);
         }
         createCl(csName, clName, option);
+        openCl();
     }
 
     void createIndexes(List<IndexBean> indexBeans) {
@@ -167,7 +174,7 @@ class IndexTestBase implements StandTestInterface {
     @AfterClass
     @Override
     public void tearDown() {
+        _db.dropCollectionSpace(csName);
         _db.close();
-        MyUtil.dropCS(csName);
     }
 }

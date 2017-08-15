@@ -18,9 +18,12 @@ import com.sequoiadb.task.FaultMakeTask;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 
 public class BrokenNetwork extends Fault {
+    private final static Logger log=Logger.getLogger(BrokenNetwork.class.getName());
+
     private String hostName;
     private String user;
     private String passwd;
@@ -36,9 +39,6 @@ public class BrokenNetwork extends Fault {
     /**
      * 
      * @param hostName
-     * @param user
-     * @param passwd
-     * @param remotePath
      * @param duration
      */
     public BrokenNetwork(String hostName, int duration) {
@@ -65,7 +65,7 @@ public class BrokenNetwork extends Fault {
     public void make() throws FaultException {
         try {
             if (group == null) {
-                System.out.println("brokenHost: " + hostName);
+                log.info("brokenHost: " + hostName);
                 ssh.execBackground("nohup " + remotePath + "/" + scriptName + " " + duration
                         + " > /tmp/brokenNet.log &");
                 brokenTime = System.currentTimeMillis();

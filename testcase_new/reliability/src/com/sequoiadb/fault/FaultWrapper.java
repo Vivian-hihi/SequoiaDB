@@ -7,15 +7,10 @@
 package com.sequoiadb.fault;
 
 import com.sequoiadb.exception.FaultException;
-import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.OperateTask;
-import org.bson.BSONObject;
-import org.bson.BasicBSONObject;
 
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.List;
 import java.util.logging.Logger;
 
 public class FaultWrapper extends Fault {
@@ -23,11 +18,10 @@ public class FaultWrapper extends Fault {
 
     private Fault instance;
     private int checkTimes = 3;
-    private List<OperateTask> taskSet = new ArrayList<OperateTask>();
-    OperateTask.faultStatus status;
+    private OperateTask.FaultStatus status;
 
     private void handleException(FaultException e) {
-        status = OperateTask.faultStatus.EXCEPTION;
+        status = OperateTask.FaultStatus.EXCEPTION;
     }
 
     public FaultWrapper(Fault instance) {
@@ -41,57 +35,29 @@ public class FaultWrapper extends Fault {
         this.checkTimes = checkTimes;
     }
 
-    public void addDependsTask(OperateTask task) {
-        taskSet.add(task);
-    }
-
-    public void removeDependsTask(OperateTask task) {
-        int pos = 0;
-        for (; pos < taskSet.size(); ++pos) {
-            if (task.getName().equals(taskSet.get(pos).getName())) {
-                break;
-            }
-        }
-        taskSet.remove(pos);
-    }
-
     public void make() throws FaultException {
-        FaultException exception = null;
-        Date date = Calendar.getInstance().getTime();
         log.info("make " + instance.getName());
 
         try {
             instance.make();
-            if (status != OperateTask.faultStatus.EXCEPTION) {
+            if (status != OperateTask.FaultStatus.EXCEPTION) {
                 if (checkMakeResult()) {
-                    date = Calendar.getInstance().getTime();
-                    status = OperateTask.faultStatus.MAKESUCCESS;
+                    status = OperateTask.FaultStatus.MAKESUCCESS;
                     log.info("make " + instance.getName() + " success");
                 } else {
+                    status= OperateTask.FaultStatus.MAKEFAILURE;
                     log.info("make " + instance.getName() + " failure ");
                 }
             }
         } catch (FaultException e) {
             handleException(e);
-            exception = e;
+            throw e;
         }
-
-        // 通知依赖的任务
-        for (OperateTask task : taskSet) {
-            BSONObject bson = new BasicBSONObject();
-            bson.put(FaultMakeTask.MAKE_RESULT, status);
-            task.faultNotify(bson);
-        }
-
-        if (exception != null) {
-            throw exception;
-        }
-
     }
 
     public boolean checkMakeResult() throws FaultException {
         boolean checkResult = false;
-        status = OperateTask.faultStatus.MAKEFAILURE;
+        status = OperateTask.FaultStatus.MAKEFAILURE;
         for (int i = 0; i < checkTimes; ++i) {
             try {
                 checkResult = instance.checkMakeResult();
@@ -101,7 +67,7 @@ public class FaultWrapper extends Fault {
                 }
             }
             if (checkResult) {
-                status = OperateTask.faultStatus.MAKESUCCESS;
+                status = OperateTask.FaultStatus.MAKESUCCESS;
                 break;
             }
             try {
@@ -114,8 +80,7 @@ public class FaultWrapper extends Fault {
     }
 
     public void restore() throws FaultException {
-        FaultException exception = null;
-        if (status != OperateTask.faultStatus.MAKESUCCESS) {
+        if (status != OperateTask.FaultStatus.MAKESUCCESS) {
             return;
         }
 
@@ -123,39 +88,28 @@ public class FaultWrapper extends Fault {
         log.info("restore " + instance.getName());
         try {
             instance.restore();
-            if (status != OperateTask.faultStatus.EXCEPTION) {
+            if (status != OperateTask.FaultStatus.EXCEPTION) {
                 if (checkRestoreResult()) {
                     date = Calendar.getInstance().getTime();
                     log.info("restore " + instance.getName() + " success.");
                 } else {
                     log.info("restore " + instance.getName() + " failure.");
-                    status = OperateTask.faultStatus.RESTOREFAILURE;
+                    status = OperateTask.FaultStatus.RESTOREFAILURE;
                 }
             }
         } catch (FaultException e) {
             handleException(e);
-            exception = e;
-        }
-
-        // 通知依赖的任务
-        for (OperateTask task : taskSet) {
-            BSONObject bson = new BasicBSONObject();
-            bson.put(FaultMakeTask.RESTORE_RESULT, status);
-            task.faultNotify(bson);
-        }
-
-        if (exception != null) {
-            throw exception;
+            throw e;
         }
     }
 
     public boolean checkRestoreResult() throws FaultException {
         boolean checkResult = false;
-        status = OperateTask.faultStatus.RESTOREFAILURE;
+        status = OperateTask.FaultStatus.RESTOREFAILURE;
         for (int i = 0; i < checkTimes; ++i) {
             checkResult = instance.checkRestoreResult();
             if (checkResult) {
-                status = OperateTask.faultStatus.RESTORESUCESS;
+                status = OperateTask.FaultStatus.RESTORESUCESS;
                 break;
             }
         }

@@ -1,6 +1,5 @@
 /**
  * Copyright (c) 2017, SequoiaDB Ltd. File Name:GroupWrapper.java
- * 
  *
  * @author wenjingwang Date:2017-2-21下午4:54:48
  * @version 1.00
@@ -28,7 +27,7 @@ public class GroupWrapper {
     private static final String SYSNODES = "SYSNODES";
     private GroupMgr mgr;
 
-    public GroupWrapper(BasicBSONObject groupInfo, ReplicaGroup group,GroupMgr mgr) {
+    public GroupWrapper(BasicBSONObject groupInfo, ReplicaGroup group, GroupMgr mgr) {
         this.groupInfo = groupInfo;
         this.group = group;
         this.mgr = mgr;
@@ -54,7 +53,7 @@ public class GroupWrapper {
     }
 
     public void init() throws ReliabilityException {
-        String hostName =null;
+        String hostName = null;
         String port = null;
         try {
             BasicBSONList nodesinfo = (BasicBSONList) groupInfo.get("Group");
@@ -64,15 +63,14 @@ public class GroupWrapper {
                 port = ((BasicBSONObject) ((BasicBSONList) nodeinfo.get("Service")).get(0))
                         .getString("Name");
 
-                
+
                 NodeWrapper node = new NodeWrapper(
                         this.group.getNode(hostName, Integer.parseInt(port)), nodeinfo);
                 nodes.add(node);
             }
-        }
-        catch (BaseException e) {
-            System.out.println("hostName:"+hostName+" error:"+e.getErrorCode());
-            System.out.println("port:"+port);
+        } catch (BaseException e) {
+            System.out.println("hostName:" + hostName + " error:" + e.getErrorCode());
+            System.out.println("port:" + port);
             throw new ReliabilityException(e);
         }
     }
@@ -92,11 +90,9 @@ public class GroupWrapper {
         int pos = random.nextInt(nodes.size());
         if (!nodes.get(pos).isMaster()) {
             return nodes.get(pos);
-        }
-        else if (nodes.size() > 1) {
+        } else if (nodes.size() > 1) {
             return nodes.get((pos + 1) % nodes.size());
-        }
-        else {
+        } else {
             return null;
         }
     }
@@ -107,8 +103,7 @@ public class GroupWrapper {
 
     /**
      * 至多尝试10次的切主操作（rg.reelect()），若失败则返回false
-     * 
-     * @param times
+     *
      * @return
      * @throws ReliabilityException
      */
@@ -118,7 +113,7 @@ public class GroupWrapper {
 
     /**
      * 至多尝试times的切主操作（rg.reelect()），若失败则返回false
-     * 
+     *
      * @param times
      * @return
      * @throws ReliabilityException
@@ -146,8 +141,7 @@ public class GroupWrapper {
                     return true;
                 }
             }
-        }
-        finally {
+        } finally {
             ssh.disconnect();
         }
         return false;
@@ -189,7 +183,7 @@ public class GroupWrapper {
 
     /**
      * 检查组间节点一致性，若在checkTimes次数（每次间隔两秒）内仍未检查通过则返回false，并打印对该组执行sdbinspect的输出
-     * 
+     *
      * @param checkTimes
      * @return
      * @throws ReliabilityException
@@ -201,8 +195,7 @@ public class GroupWrapper {
     /**
      * 检查组间节点一致性，若在checkTimes次数（每次间隔intervelSecond秒）内仍未检查通过则返回false，
      * 并打印对该组执行sdbinspect的输出
-     * 
-     * @param checkTimes
+     *
      * @param intervelSecond
      * @return
      * @throws ReliabilityException
@@ -215,15 +208,13 @@ public class GroupWrapper {
             }
             try {
                 Thread.sleep(intervelSecond * 1000);
-            }
-            catch (InterruptedException e) {
+            } catch (InterruptedException e) {
 
             }
         }
         if (this.getGroupName().equals(CATA_RG_NAME)) {
             return inspectCata(true);
-        }
-        else {
+        } else {
             System.out.println(getInspectStdout());
             return false;
         }
@@ -271,8 +262,7 @@ public class GroupWrapper {
                 while (cursor.hasNext()) {
                     tmp.add(cursor.getNext());
                 }
-            }
-            catch (BaseException e) {
+            } catch (BaseException e) {
                 if (e.getErrorCode() == -23 || e.getErrorCode() == -34) {
                     if (printIncompatibility) {
                         System.out.println("SYSCAT or SYSCAT." + clName + " not exists,host:" + url
@@ -280,19 +270,17 @@ public class GroupWrapper {
                         throw e;
                     }
                     return false;
-                }
-                else {
+                } else {
                     throw e;
                 }
-            }
-            finally {
+            } finally {
                 db.closeAllCursors();
                 db.close();
             }
             res.put(url + ":" + clName, tmp);
         }
         Map.Entry<String, List<BSONObject>> tmp2 = null;
-        String forPrint = new String();
+        String forPrint = "";
         boolean ret = true;
         for (Map.Entry<String, List<BSONObject>> entry : res.entrySet()) {
             if (tmp2 != null && !entry.getValue().equals(tmp2.getValue())) {
@@ -311,8 +299,7 @@ public class GroupWrapper {
         Ssh ssh = new Ssh(SdbTestBase.hostName, SdbTestBase.remoteUser, SdbTestBase.remotePwd);
         try {
             ssh.exec(ssh.getSdbInstallDir() + "/bin/sdbinspect -g " + getGroupName());
-        }
-        finally {
+        } finally {
             ssh.disconnect();
         }
         return ssh.getStdout();
@@ -321,7 +308,7 @@ public class GroupWrapper {
     public List<NodeWrapper> getNodes() {
         return nodes;
     }
-    
+
     public ReplicaGroup getGroup() {
         return group;
     }
@@ -329,5 +316,5 @@ public class GroupWrapper {
     public BasicBSONObject getGroupInfo() {
         return groupInfo;
     }
-    
+
 }

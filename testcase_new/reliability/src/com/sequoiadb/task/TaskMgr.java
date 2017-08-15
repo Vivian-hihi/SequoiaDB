@@ -9,25 +9,15 @@ package com.sequoiadb.task;
 import com.sequoiadb.exception.ReliabilityException;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Logger;
 
 public class TaskMgr {
     private final static Logger log = Logger.getLogger(TaskMgr.class.getName());
 
-    //    private Map<String, Task> taskSet = new HashMap<String, Task>();
     private List<Task> taskList = new ArrayList<>(10);
-    private FaultMakeTask faultMakeTask;
-
-    public void setFaultMakeTask(FaultMakeTask faultMakeTask) {
-        this.faultMakeTask = faultMakeTask;
-    }
 
     public TaskMgr(FaultMakeTask faultMakeTask) {
-        this.faultMakeTask = faultMakeTask;
-//        taskSet.put(faultMakeTask.getName(), faultMakeTask);
         taskList.add(faultMakeTask);
     }
 
@@ -69,16 +59,10 @@ public class TaskMgr {
             return;
         }
         taskList.add(task);
-        if (faultMakeTask != null) {
-            faultMakeTask.addDependsTask(task);
-        }
     }
 
     public TaskMgr addTask(Task task) {
         taskList.add(task);
-        if (faultMakeTask != null) {
-            faultMakeTask.addDependsTask((OperateTask) task);
-        }
         return this;
     }
 
@@ -87,10 +71,6 @@ public class TaskMgr {
      */
     public void removeTask(Task task) {
         taskList.remove(task);
-
-        if (faultMakeTask != null) {
-            faultMakeTask.removeDependsTask((OperateTask) task);
-        }
     }
 
     public void init() throws ReliabilityException {
@@ -113,7 +93,6 @@ public class TaskMgr {
                 log.warning(e.getMessage());
             }
         }
-
     }
 
     public void check() throws ReliabilityException {
@@ -143,26 +122,13 @@ public class TaskMgr {
         return null;
     }
 
-    /**
-     * @param task 执行完成的任务
-     */
-    public void Done(Task task) {
-        /*
-         * if ( task.getStatus() == Task.TaskStatus.TASKTHROWEXCEPTION ) { for (
-         * Entry< String, Task > entry : taskSet.entrySet() ) { if (
-         * !task.getName().equals( entry.getKey() ) || task.getClass().equals(
-         * FaultMakeTask.class ) ) { entry.getValue().interrupt() ; } } }
-         */
-    }
-
-    public Map<String, ReliabilityException> getExceptions() {
-        HashMap<String, ReliabilityException> map = new HashMap<>();
+    public List<Exception> getExceptions() {
+        List<Exception> list=new ArrayList<>();
         for (Task task : taskList) {
             if (task.getException() != null)
-                map.put(task.getName(), task.getException());
+                list.add(task.getException());
         }
-
-        return map;
+        return list;
     }
 
     public boolean isAllSuccess() {
@@ -183,6 +149,8 @@ public class TaskMgr {
 
     /**
      * 顺序调用init(),start(),join(),fini()
+     *
+     * @throws ReliabilityException
      */
     public void execute() throws ReliabilityException {
         init();

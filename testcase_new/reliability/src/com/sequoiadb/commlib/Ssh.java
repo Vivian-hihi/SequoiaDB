@@ -11,14 +11,12 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 /**
- * 
  * @author huangqiaohui
- * 
  */
 public class Ssh {
-    private final static Logger log=Logger.getLogger(Ssh.class.getName());
+    private final static Logger log = Logger.getLogger(Ssh.class.getName());
 
-    private static final int CHANNEL_CONNECT_TIMEOUT=60*1000;
+    private static final int CHANNEL_CONNECT_TIMEOUT = 60 * 1000;
     private String host;
     private String username;
     private String password;
@@ -32,7 +30,7 @@ public class Ssh {
 
     /**
      * 使用给定参数及22端口创建ssh对象
-     * 
+     *
      * @param host
      * @param username
      * @param password
@@ -44,7 +42,7 @@ public class Ssh {
 
     /**
      * 使用给定参数创建ssh对象
-     * 
+     *
      * @param host
      * @param username
      * @param password
@@ -64,8 +62,7 @@ public class Ssh {
             session.setPassword(password);
             session.setConfig("StrictHostKeyChecking", "no");
             session.connect(CHANNEL_CONNECT_TIMEOUT);
-        }
-        catch (JSchException e) {
+        } catch (JSchException e) {
             if (session != null) {
                 session.disconnect();
             }
@@ -75,7 +72,7 @@ public class Ssh {
 
     /**
      * 本地发送文件至远程主机
-     * 
+     *
      * @param localPath
      * @param remotePath
      * @throws ReliabilityException
@@ -86,11 +83,9 @@ public class Ssh {
             channel = (ChannelSftp) session.openChannel("sftp");
             channel.connect(CHANNEL_CONNECT_TIMEOUT);
             channel.put(localPath, remotePath);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new FaultException(e);
-        }
-        finally {
+        } finally {
             if (channel != null) {
                 channel.disconnect();
             }
@@ -99,7 +94,7 @@ public class Ssh {
 
     /**
      * 下载远程主机文件至本地
-     * 
+     *
      * @param localPath
      * @param remotePath
      * @throws ReliabilityException
@@ -110,11 +105,9 @@ public class Ssh {
             channel = (ChannelSftp) session.openChannel("sftp");
             channel.connect(CHANNEL_CONNECT_TIMEOUT);
             channel.get(remotePath, localPath);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new FaultException(e);
-        }
-        finally {
+        } finally {
             if (channel != null) {
                 channel.disconnect();
             }
@@ -124,7 +117,7 @@ public class Ssh {
     /**
      * 在远程主机上执行命令，并等待其执行结果，标准输出存入stdout，标准出错存入stderr,返回值存入exitStatus(注意：
      * 每一次调用exec都将覆盖上一次的执行结果,返回值不为零将抛出异常)
-     * 
+     *
      * @param command
      * @return
      * @throws ReliabilityException
@@ -139,11 +132,9 @@ public class Ssh {
                 throw new ReliabilityException("ssh failed to execute commond '" + command
                         + "',stderr:" + stderr + " ,stdout:" + stdout + ",errcode: " + exitStatus);
             }
-        }
-        catch (IOException | JSchException e) {
+        } catch (IOException | JSchException e) {
             throw new FaultException(e);
-        }
-        finally {
+        } finally {
             if (channel != null) {
                 channel.disconnect();
             }
@@ -153,10 +144,10 @@ public class Ssh {
     /**
      * 将命令发送至远程主机，返回当前命令的channelId，backgroundCMD将会记录执行本条命令的ChannelId及其Channel对象，
      * waitBackgroudCMDDown方法可以根据channelid检测命令的执行结果
-     * 
+     *
      * @param command
-     * @throws JSchException
      * @return channelID
+     * @throws JSchException
      */
     public int execBackground(String command) throws ReliabilityException {
         Channel channel = null;
@@ -166,8 +157,7 @@ public class Ssh {
             channel.connect(CHANNEL_CONNECT_TIMEOUT);
             backgroundCMD.put(channel.getId(), channel);
             return channel.getId();
-        }
-        catch (JSchException e) {
+        } catch (JSchException e) {
             if (channel != null) {
                 channel.disconnect();
             }
@@ -177,7 +167,7 @@ public class Ssh {
 
     /**
      * 等待给定channelId所执行的命令结束，覆盖stdout，stderr，exitstatus保存结果
-     * 
+     *
      * @param channelId
      * @return
      * @throws ReliabilityException
@@ -188,7 +178,7 @@ public class Ssh {
 
     /**
      * 等待给定channelId所执行的命令结束，覆盖stdout，stderr，exitstatus保存结果
-     * 
+     *
      * @param timeOutSecond
      * @param channelId
      * @return
@@ -203,11 +193,9 @@ public class Ssh {
         backgroundCMD.remove(channelId);
         try {
             getResult(channel, timeOutSecond);
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new FaultException(e);
-        }
-        finally {
+        } finally {
             channel.disconnect();
         }
     }
@@ -235,8 +223,7 @@ public class Ssh {
                         "exec command:cat /etc/default/sequoiadb |grep INSTALL_DIR can not find sequoiadb install dir");
             }
             dir = str.substring(str.indexOf("=") + 1, str.length() - 1);
-        }
-        finally {
+        } finally {
             ssh.disconnect();
         }
         return dir;
@@ -251,7 +238,7 @@ public class Ssh {
         byte[] tmp = new byte[1024];
         long timer = System.currentTimeMillis();
         try {
-            channel.connect(60*1000);
+            channel.connect(60 * 1000);
         } catch (JSchException e) {
             log.severe(e.toString());
         }
@@ -286,8 +273,7 @@ public class Ssh {
 
             try {
                 Thread.sleep(200);
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 // ignore
             }
 

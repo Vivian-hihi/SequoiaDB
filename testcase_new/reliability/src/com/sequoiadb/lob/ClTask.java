@@ -23,6 +23,7 @@ public abstract class ClTask extends OperateTask {
         return new ClTask() {
             @Override
             public void exec() throws Exception {
+                setName("data opration task thread ");
                 try (Sequoiadb db = MyUtil.getSdb()) {
                     db.beginTransaction();
                     DBCollection cl = db.getCollectionSpace(csName)
