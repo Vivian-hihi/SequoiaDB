@@ -1199,6 +1199,18 @@
                            "file": "getLastErrObj",
                            "cn": "getLastErrObj()",
                            "en": "getLastErrObj()"
+                        },
+                        {
+                           "id": 1502694296,
+                           "file": "import",
+                           "cn": "import()",
+                           "en": "import()"
+                        },
+                        {
+                           "id": 1502694324,
+                           "file": "importOnce",
+                           "cn": "importOnce()",
+                           "en": "importOnce()"
                         }
                      ]
                   },
