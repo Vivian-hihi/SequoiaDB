@@ -32,7 +32,7 @@ for dir in MD_SRC_DIR:
 for i in range(0,MD_SRC_DIR_NUM):
     input = SOURCE_ARRAY[i]
     output = TARGET_ARRAY[i]
-    cmd = PROG_NAME + " -i " + input + " -o " + output
+    cmd = " python " + PROG_NAME + " -i " + input + " -o " + output
     os.system( cmd )
 
 
