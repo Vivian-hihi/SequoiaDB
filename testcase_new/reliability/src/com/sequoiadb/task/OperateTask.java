@@ -43,12 +43,14 @@ public abstract class OperateTask extends Task {
         log.info("Thread '" + this.getName() + "' run ");
         try {
             exec();
-        } catch (Exception e) {
+        } catch (Error | Exception e) {
             if (e instanceof InterruptedException) {
                 setStatus(Task.TaskStatus.TASKINTERRUPT);
             } else {
                 setStatus(Task.TaskStatus.TASKTHROWEXCEPTION);
-                setException(e);
+                Exception e1= new ReliabilityException(e);
+                e1.setStackTrace(e.getStackTrace());
+                setException(e1);
             }
         }
         if (getException() == null) {
