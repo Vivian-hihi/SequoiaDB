@@ -14,9 +14,16 @@ Global
 
 在编写新的js脚本时存在重用现有脚本的可能性。可通过该命令将 js 文件导入并执行。
 
->**Note:**  
-> 1. 如果import()嵌套导入同个文件多次，会跳过后续的文件导入。  
-> 2. 在一段js脚本中，如果导入的文件和该脚本对同个函数有多个定义，那么在先导入文件再在脚本中定义相同函数的场景下，实际情况生效的函数定义将会是导入文件中的函数定义。导致这个现象的原因是 js 运行前会先读取该段 js 脚本的函数定义，而导入的文件中的函数定义是在运行import方法时才读取的，这导致了最终生效的是导入文件中的函数定义。通过将脚本中的函数放置到别的文件中再导入，可以规避这个问题。
+
+**Note:**  
+
+1. 如果import()嵌套导入同个文件多次，会跳过后续的文件导入。  
+2. 在一段js脚本中，如果导入的文件和该脚本对同个函数有多个定义，那么
+   在先导入文件再在脚本中定义相同函数的场景下，实际生效的函数定义将
+   会是导入文件中的函数定义。导致这个现象的原因是js运行前会先读取该
+   段js脚本的函数定义，而导入的文件中的函数定义是在运行import方法时
+   才读取的，这导致了最终生效的是导入文件中的函数定义。通过将脚本中
+   的函数放置到别的文件中再导入，可以规避这个问题。
 
 ##参数##
 
@@ -51,7 +58,7 @@ v2.9及以上版本。
 
 1. 导入执行 helloWorld.js 文件
 
-    helloWorld.js 内容如下：
+    1) helloWorld.js 内容如下：
 
     ```lang-javascript
     function sayHello()
@@ -61,9 +68,9 @@ v2.9及以上版本。
     println( "import helloWorld.js" ) ;
     ```
 
-	导入执行 helloWorld.js 并调用定义的方法
+	2) 导入执行 helloWorld.js 并调用定义的方法
 
-	```lang-javascript
+    ```lang-javascript
 	> import( 'helloWorld.js' )
     import helloWorld.js
     Takes 0.000901s.
@@ -76,7 +83,7 @@ v2.9及以上版本。
    
     * 问题描述举例
 
-        funcDef.js 内容如下：
+        1) funcDef.js 内容如下：
 
         ```lang-javascript
         function test()
@@ -85,7 +92,7 @@ v2.9及以上版本。
         }  
         ```
 
-        test.js 内容如下：
+        2) test.js 内容如下：
 
         ```lang-javascript
         import( './funcDef.js' ) ;
@@ -96,7 +103,7 @@ v2.9及以上版本。
         test() ;
         ```
 
-        使用 sdb 执行 test.js 文件
+        3) 使用 sdb 执行 test.js 文件
 
         ```lang-javascript
         $ ./sdb -f test.js 
@@ -109,7 +116,7 @@ v2.9及以上版本。
 
         可以通过将脚本中的函数定义放置到单独的文件再导入来规避这个问题
 
-        增加文件 userDef.js,内容如下：
+        1) 增加文件 userDef.js,内容如下：
 
         ```lang-javascript
         function test()
@@ -118,7 +125,7 @@ v2.9及以上版本。
         }
         ```
 
-        test.js 内容改为：
+        2) test.js 内容改为：
 
         ```lang-javascript
         import( './funcDef.js' ) ;
@@ -126,7 +133,7 @@ v2.9及以上版本。
         test() ;
         ```
 
-        使用 sdb 执行 test.js 文件
+        3) 使用 sdb 执行 test.js 文件
 
         ```lang-javascript
         $ ./sdb -f test.js 
