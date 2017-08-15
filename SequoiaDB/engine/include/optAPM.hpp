@@ -92,6 +92,8 @@ namespace engine
          UINT32 getCachedPlanCount () const ;
 
       protected :
+         virtual void afterAddItem ( UINT32 bucketID, optAccessPlan *pPlan ) ;
+
          virtual void afterGetItem ( UINT32 bucketID, optAccessPlan *pPlan ) ;
 
       protected :

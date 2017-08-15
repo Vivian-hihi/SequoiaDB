@@ -69,6 +69,8 @@ namespace engine
       _autoHint = FALSE ;
 
       _useCount = 0 ;
+
+      _cachedPlanMgr = NULL ;
    }
 
    INT32 _optAccessPlan::_checkOrderBy ()
@@ -712,7 +714,6 @@ namespace engine
       PD_TRACE_ENTRY( SDB__OPTACCPLAN__PREPAREOPT ) ;
 
       dmsStatCache *statCache = NULL ;
-      dmsCachedPlanMgr *cachedPlanMgr = NULL ;
 
       BOOLEAN needCacheStat = FALSE, needCachedPlan = FALSE ;
 
@@ -725,9 +726,10 @@ namespace engine
       }
 
       // Check if cached plan status need to be added
-      cachedPlanMgr = su->getCachedPlanMgr() ;
-      if ( NULL != cachedPlanMgr &&
-           UTIL_SU_CACHE_UNIT_STATUS_EMPTY == cachedPlanMgr->getStatus( _key._mbID ) )
+      _cachedPlanMgr = su->getCachedPlanMgr() ;
+      if ( NULL != _cachedPlanMgr &&
+           UTIL_SU_CACHE_UNIT_STATUS_EMPTY ==
+                 _cachedPlanMgr->getStatus( _key._mbID ) )
       {
          needCachedPlan = TRUE ;
       }
@@ -752,7 +754,7 @@ namespace engine
                      SDB_OSS_NEW dmsCLCachedPlanUnit( _key._mbID, 0 ) ;
                if ( NULL != pCachedPlanUnit )
                {
-                  cachedPlanMgr->addCacheUnit( pCachedPlanUnit, TRUE, FALSE ) ;
+                  _cachedPlanMgr->addCacheUnit( pCachedPlanUnit, TRUE, FALSE ) ;
                }
             }
          }
@@ -760,12 +762,6 @@ namespace engine
          rc = mbContext->mbLock( SHARED ) ;
          PD_RC_CHECK( rc, PDERROR, "Lock dms mb context SHARED failed, "
                       "rc: %d", rc ) ;
-      }
-
-      // Set the cached plan bitmap for colleciton space
-      if ( NULL != cachedPlanMgr )
-      {
-         cachedPlanMgr->setCacheBitmapForPlan( _key._keyCode ) ;
       }
 
    done :

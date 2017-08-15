@@ -279,6 +279,13 @@ namespace engine
       return _pMonitor->getCachedPlanCount() ;
    }
 
+   void _optAccessPlanCache::afterAddItem ( UINT32 bucketID,
+                                            optAccessPlan *pPlan )
+   {
+      SDB_ASSERT( pPlan, "pPlan is invalid" ) ;
+      pPlan->setCachedBitmap() ;
+   }
+
    void _optAccessPlanCache::afterGetItem ( UINT32 bucketID,
                                             optAccessPlan *pPlan )
    {

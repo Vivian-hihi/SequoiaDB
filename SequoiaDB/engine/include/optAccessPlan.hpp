@@ -85,6 +85,8 @@ namespace engine
 
       UINT32 _useCount ;
 
+      dmsCachedPlanMgr *_cachedPlanMgr ;
+
    private:
       INT32 _checkOrderBy() ;
 
@@ -307,6 +309,15 @@ namespace engine
       OSS_INLINE BOOLEAN isCached () const
       {
          return ( NULL != _pList ) ;
+      }
+
+      OSS_INLINE void setCachedBitmap ()
+      {
+         // Set the cached plan bitmap for colleciton space
+         if ( NULL != _cachedPlanMgr )
+         {
+            _cachedPlanMgr->setCacheBitmapForPlan( _key._keyCode ) ;
+         }
       }
 
    } ;
