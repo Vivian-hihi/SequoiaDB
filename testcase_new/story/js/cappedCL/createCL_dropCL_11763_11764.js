@@ -104,7 +104,9 @@ function checkCappedCL( csName, clName, nodeList )
 		  var catadb = new Sdb( nodeList[j] );
 	      var cursor = catadb.SYSCAT.SYSCOLLECTIONS.find({ 'Name' : csName + "." + clName});
           if(cursor == null){
-			  sleep(5 * 60 * 1000);//5 mins		  
+			  // wait for the slave node sync
+			  sleep(5 * 60 * 1000);//5 mins		
+              cursor = catadb.SYSCAT.SYSCOLLECTIONS.find({ 'Name' : csName + "." + clName});			  
 		  }
           
 		  if(cursor != null){
