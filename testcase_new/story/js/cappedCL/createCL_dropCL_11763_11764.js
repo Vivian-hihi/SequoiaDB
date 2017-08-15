@@ -90,36 +90,40 @@ function getNodeList( groupName )
       var nodeInfo = groupInfo[i].HostName + ":" + groupInfo[i].Service[0].Name;
       nodeList.push( nodeInfo );
    }
-   //println( "---get nodelist of " + groupName + ": " + nodeList );
+   println( "---get nodelist of " + groupName + ": " + nodeList );
    
    return nodeList;
 }
 
 function checkCappedCL( csName, clName, nodeList )
 {
-	for( var i in nodeList )
-   {
-	   var catadb = new Sdb( nodeList[i] );
-	   var cursor = catadb.SYSCAT.SYSCOLLECTIONS.find({ 'Name' : csName + "." + clName});
-      var obj    = cursor.next().toObj();
-      var attributeDesc = obj.AttributeDesc;
-      var max    = obj.Max;
-      var size   = obj.Size;
-      if( attributeDesc !== "NoIDIndex | Capped" )
-	   {
-		   throw buildException( "check cappedCL attributeDesc", null, "check cappedCL attributeDesc", "NoIDIndex | Capped",  attributeDesc);
-	   }
-      if( max == undefined )
-	   {
-		   throw buildException( "check cappedCL", null, "check cappedCL max", "not undefined",  max);
-	   }
-      if( size == undefined )
-	   {
-		   throw buildException( "check cappedCL", null, "check cappedCL size", "not undefined",  size);
-	   }
-	   cursor.close();
-	   catadb.close();
-   }
+	var repeatTime = 10;
+	for(var i = 0; i < repeatTime; i++){
+		  var j = i % nodeList.length;
+		  println("j: " + j);
+		  var catadb = new Sdb( nodeList[j] );
+	      var cursor = catadb.SYSCAT.SYSCOLLECTIONS.find({ 'Name' : csName + "." + clName});
+          if(cursor == null){
+			  sleep(5 * 60 * 1000);//5 mins		  
+		  }
+          
+		  if(cursor != null){
+			   var obj    = cursor.next().toObj();
+               var attributeDesc = obj.AttributeDesc;
+               var max    = obj.Max;
+               var size   = obj.Size;
+			   if( attributeDesc !== "NoIDIndex | Capped" || max == undefined 
+			      || size == undefined)
+	           {
+		          throw buildException( "check cappedCL attributeDesc", null, "check cappedCL attributeDesc", "NoIDIndex | Capped",  attributeDesc);
+	           }
+	          cursor.close();
+	          catadb.close();  
+		  }else{
+			  throw buildException( "check cappedCL failed , cursor is null");
+		  }
+	}
+	  
 }
 
 function checkDropCL( csName, clName, nodeList )
