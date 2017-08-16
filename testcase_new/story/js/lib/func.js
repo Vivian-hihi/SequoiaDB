@@ -1569,9 +1569,8 @@ function commDataGenerator()
    
    function getRandomLong( min, max )
    {
-      var longValue = getRandomInt( min, max );
-	  var value = {"$numberLong":longValue.toString()};
-      return value;
+      var value = getRandomInt( min, max );
+      return NumberLong(value);
    }
    
    function getRandomFloat( min, max )
@@ -1607,7 +1606,9 @@ function commDataGenerator()
    function getRandomDate()
    {
       var sec = getRandomInt( -2208902400, 253402128000 ); //1900-01-02 ~ 9999-12-30
-      var dateVal = new Date( sec * 1000 ).Format("yyyy-MM-dd");
+      var d = new Date( sec * 1000 );
+      var dateVal = d.getFullYear() + '-' + (d.getMonth()+1) + '-' + d.getDate();
+      
       var value = {"$date":dateVal};
       return value;
    }
@@ -1615,7 +1616,8 @@ function commDataGenerator()
    function getRandomTimestamp()
    {   
       var sec = getRandomInt( -2147397248, 2147397247 ); //1901-12-14-20.45.52 ~ 2038-01-18-03.14.07
-      var d = new Date( sec * 1000 ).Format("yyyy-MM-dd-hh.mm.ss");
+      var d = new Date( sec * 1000 );
+      
       var ns = getRandomInt( 0, 1000000 ).toString();
       if( ns.length < 6 )
       {
@@ -1623,7 +1625,8 @@ function commDataGenerator()
          for(var i = 0; i < addZero; i++ ) { ns = '0' + ns; }   
       }
       
-      var timeVal = d + '.' + ns;
+      var timeVal = d.getFullYear() + '-' + (d.getMonth()+1) + '-' + d.getDate() + '-' +
+                    d.getHours() + '.' +  d.getMinutes() + '.' + d.getSeconds() + '.' + ns;
       
       var value = {"$timestamp": timeVal};
       return value;
@@ -1691,58 +1694,40 @@ function commDataGenerator()
       
       return arr;
    }
-   
 }
 
-Date.prototype.Format = function(fmt)   
-    { //author: meizz   
-      var o = {   
-        "M+" : this.getMonth()+1,                 //month   
-        "d+" : this.getDate(),                    //date  
-        "h+" : this.getHours(),                   //hour  
-        "m+" : this.getMinutes(),                 //minute 
-        "s+" : this.getSeconds(),                 //second   
-        "q+" : Math.floor((this.getMonth()+3)/3), //quarter   
-        "S"  : this.getMilliseconds()             //millisecond   
-      };   
-      if(/(y+)/.test(fmt))   
-        fmt=fmt.replace(RegExp.$1, (this.getFullYear()+"").substr(4 - RegExp.$1.length));   
-      for(var k in o)   
-        if(new RegExp("("+ k +")").test(fmt))   
-      fmt = fmt.replace(RegExp.$1, (RegExp.$1.length==1) ? (o[k]) : (("00"+ o[k]).substr((""+ o[k]).length)));   
-      return fmt;   
+/**********************************************************************
+@Description:  make dir in host( can be used to make WORKDIR )
+@author:       Liangxw
+@usage:        1¡¢commMakeDir( COORDHOSTNAME, WORKDIR )
+               2¡¢commMakeDir( "localhost", WORKDIR )
+***********************************************************************/
+function commMakeDir( host, dir )
+{
+    try
+    {
+        var remote = new Remote( host, CMSVCNAME ) ;
+        var file = remote.getFile() ;
+        if( file.exist( dir ) )
+        {
+            return ;
+        }
+        file.mkdir( dir ) ;
+    }
+    catch( e )
+    {
+        throw buildException( "commMakeDir", e, 
+              "make dir " + dir + " in " + host, 0, e ) ;
     } 
+}
 
 // common database connection
 try
 {
-   var db = new Sdb(COORDHOSTNAME,COORDSVCNAME );
-   var group = commGetGroups( db );
-   if ( true == commIsStandalone( db ) || 1 == group.length )   // standalone or one group
-   {
-      db = new SecureSdb( COORDHOSTNAME, COORDSVCNAME );   // SSL
-      println( "SSL connection" ) ;
-   }
-   var connSucess = false ;
+   var db = new Sdb( COORDHOSTNAME, COORDSVCNAME );
 }
 catch ( e )
 {
-   if( -15 != e )
-   {
-      println( "Connect Failed in Common Function!" );
-      connSucess = true ;
-      throw e;
-   }
-   else
-   {
-      db = new Sdb( COORDHOSTNAME, COORDSVCNAME );
-      println( "general connection" ) ;
-   }
+   throw buildException( null, null, 
+         "connect sdb " + COORDHOSTNAME + ":" + COORDSVCNAME, 0, e ) ;
 }
-
-//example
-//var db = new Sdb(COORDHOSTNAME,COORDSVCNAME ) ;
-
-//var aa = new RSize( 'CSname' );
-//println(aa.ReplSize());
-
