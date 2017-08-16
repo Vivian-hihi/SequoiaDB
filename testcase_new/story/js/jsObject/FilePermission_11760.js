@@ -39,7 +39,7 @@ function testInitNotExistFile( local )
     
     // test init not exist file with permission and mode
     var permissions = [ 0, 0644, 0755, 0755, 0755, 0755, 0755, 0755, 0444 ] ;
-    var modes = [ 0, 
+    var modes = [ 0,  
                   0, 
                   SDB_FILE_READWRITE | SDB_FILE_CREATEONLY, 
                   SDB_FILE_READONLY | SDB_FILE_CREATEONLY, 
@@ -51,7 +51,6 @@ function testInitNotExistFile( local )
     // errno of open file, read file, write file
     var errnos = [ [0,0,0], [0,0,0], [0,0,0], [0,-9,-3], [0,-3,0], 
                    [-4,0,0], [0,0,0], [0,0,0], [0,0,0] ] ;
-    // if( user !== "root" )  errnos[8] = [0,-3,-3] ;  // read -3 ?
   
     for( var i = 0;i < permissions.length;i++ )
     {
@@ -186,7 +185,7 @@ function toolInitFile( local, filename, per, mode, errno )
 function main()
 {
     testInitNotExistFile( true ) ;
-    // testInitNotExistFile( false ) ;
+    testInitNotExistFile( false ) ;
     testInitExistedFile( true ) ;
     testInitExistedFile( false ) ;
 }
