@@ -91,7 +91,9 @@ testFiles31 = [ "./misc/analyze.cpp" ]
 
 testFiles32 = [ "./misc/prepareMore.cpp" ]
 
-testFiles33 = [ "./misc/backup.cpp" ]
+testFiles33 = [ "./misc/bson_array.cpp" ] 
+
+testFiles34 = [ "./misc/backup.cpp" ]
 
 # compile common lib
 gtestall = env.StaticLibrary('gtest', gtestFiles)
@@ -134,7 +136,8 @@ handle         = dllBuildEnv.Program("handle",  [testFiles29, testCommon, gtestM
 date		   	= dllBuildEnv.Program("date",  [testFiles30, testCommon, gtestMainObj])
 analyze		   = dllBuildEnv.Program("analyze",  [testFiles31, testCommon, gtestMainObj])
 prepareMore    = dllBuildEnv.Program("prepareMore",  [testFiles32, testCommon, gtestMainObj]) 
-backup			= dllBuildEnv.Program("backup", [testFiles33, testCommon, gtestMainObj])
+bson_array	   = dllBuildEnv.Program("bson_array", [testFiles33, testCommon, gtestMainObj])
+backup			= dllBuildEnv.Program("backup", [testFiles34, testCommon, gtestMainObj])
 
 # static compile
 
@@ -170,7 +173,8 @@ handle.static            = staticBuildEnv.Program("handle.static",  [testFiles29
 date.static				 = staticBuildEnv.Program("date.static",  [testFiles30, testCommon, gtestMainObj])
 analyze.static			 = staticBuildEnv.Program("analyze.static",  [testFiles31, testCommon, gtestMainObj])
 prepareMore.static		 = staticBuildEnv.Program("prepareMore.static",  [testFiles32, testCommon, gtestMainObj])
-backup.static			 = staticBuildEnv.Program("backup.static",  [testFiles33, testCommon, gtestMainObj])
+bson_array.static		 = staticBuildEnv.Program("bson_array.static",  [testFiles33, testCommon, gtestMainObj])
+backup.static			 = staticBuildEnv.Program("backup.static",  [testFiles34, testCommon, gtestMainObj])
 
 # dll compile
 env.Install( '#/build_test', [   decimal,
@@ -190,7 +194,7 @@ env.Install( '#/build_test', [   decimal,
 								 attachAndDetachNode,
 								 concurrentNode,concurrentRg,sslFalse,sslTrue,forceSession,JSCompatible,
 								 loadUnloadCS,rename,reloadConf,setPDLevel,code,bson_oid,handle,date,analyze,
-							     prepareMore,backup
+							     prepareMore,bson_array,backup
                               ] )
 # static compile
 env.Install( '#/build_test', [   decimal.static,
@@ -210,6 +214,6 @@ env.Install( '#/build_test', [   decimal.static,
 								 concurrentNode.static,concurrentRg.static,sslFalse.static,sslTrue.static,
 								 forceSession.static,JSCompatible.static,loadUnloadCS.static,rename.static,
 								 reloadConf.static,setPDLevel.static,code.static,bson_oid.static,handle.static,
-								 date.static,analyze.static,prepareMore.static,backup.static
+								 date.static,analyze.static,prepareMore.static,bson_array.static,backup.static
                               ] )
 
