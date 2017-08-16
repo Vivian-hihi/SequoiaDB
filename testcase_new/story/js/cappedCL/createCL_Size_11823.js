@@ -80,14 +80,18 @@ function checkCreateCLOptions( csName, clName, options, result, expectSize )
       {
          throw "ERR_CREATE_CAPPEDCL";
       }
-      var cursor = db.snapshot(8,{Name:csName + "." + clName});
-      while(cursor.next())
+      
+      if(true !== commIsStandalone( db ))
       {
-         var size = cursor.current().toObj().Size;
-         if(size !== expectSize)
+         var cursor = db.snapshot(8,{Name:csName + "." + clName});
+         while(cursor.next())
          {
-            println("actual Size:" + size);
-            throw "ERR_Size";
+            var size = cursor.current().toObj().Size;
+            if(size !== expectSize)
+            {
+               println("actual Size:" + size);
+               throw "ERR_Size";
+            }
          }
       }
    }
