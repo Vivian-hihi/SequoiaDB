@@ -163,7 +163,7 @@ try
    }
 }
 
-/*try
+try
 {
    commDropCL( db, COMMCSNAME, COMMCLNAME, false, false, "drop cl in the beginning" ) ;
 }
@@ -171,4 +171,4 @@ catch ( e )
 {
    println( "failed to drop cs, rc= " + e ) ;
    throw e ;
-}*/
+}
