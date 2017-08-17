@@ -196,18 +196,12 @@ function main()
    //findOne
    var findObj = {};
    var results8 = {a:10, b:1, c:"aaa"};
-   checkFindOneResult( dbcl, etObj, results8 );
+   checkFindOneResult( dbcl, findObj, results8 );
    
    //findOne $et
    var etObj = { a: {$et: "a"}};
    var results9 = {a:["a","b","c"], b:2};
    checkFindOneResult( dbcl, etObj, results9 );
-   
-   //insert 100000 record
-   insertRecord( dbcl, 100000 );
-   checkResultID( dbcl, 1, 16000 );
-   checkResultID( dbcl, 2, 32000 );
-   checkResultID( dbcl, 3, 48000 );
    
    //clean environment after test  
    println( "---end the test---" );
@@ -299,36 +293,4 @@ function insertDate( dbcl, doc )
    }
 }
 
-function insertRecord( dbcl, recordNum )
-{
-   var arr = [];
-   for( var i = 0; i < 1024; i++ )
-   {
-      arr.push("a");
-   }
-   var str = arr.toString();
-   var doc = [];
-   for( var j = 0; j < recordNum; j++ )
-   {
-      doc.push({b:str});
-   }
-   try
-   {
-      dbcl.insert(doc);
-   }
-   catch( e )
-   {
-      throw buildException( "insertRecord()", e, "insert record", "insert success", "insert fail:"+e);
-   }
-}
 
-function checkResultID( dbcl, fold, num )
-{
-   var rc = dbcl.find().sort( { _id: 1 } ).skip( num ).limit( 1 );
-   var id = rc.next().toObj()._id;
-   if(id < (33554396 * fold) )
-   {
-      throw "ERR_RECORD_ID";
-   }
-   rc.close();
-}
