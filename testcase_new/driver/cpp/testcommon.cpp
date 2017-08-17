@@ -21,6 +21,7 @@ char RSRVPORTEND[100]      = "27000" ;
 char RSRVNODEDIR[100]      = "/opt/sequoiadb/database/" ;
 char WORKDIR[100]          = "/tmp/cpptest" ;
 char COORD[100]   		   = "localhost:11810" ;
+char HOST[100]    		   = "localhost" ;
 
 void printMsg( const char* fmt, ... )
 {
@@ -149,4 +150,21 @@ done:
     return rc ;
 error:
     goto done ;
+}
+
+/********************************************************************
+* get local hostname 
+* return 0 if success, return errno if fail
+*
+********************************************************************/
+int getLocalHost()
+{
+	int rc = 0 ;
+	rc = gethostname( HOST, sizeof(HOST) ) ;
+	CHECK_RC( rc, "fail to get local hostname, rc = %d", rc ) ;
+	cout << "local hostname: " << HOST << endl ;
+done:
+	return rc ;
+error:
+	goto done ;
 }

@@ -31,6 +31,7 @@ extern char RSRVPORTEND[100] ;
 extern char RSRVNODEDIR[100] ;
 extern char WORKDIR[100] ;
 extern char COORD[100] ;
+extern char HOST[100] ;
 
 void printMsg( const char* fmt, ... ) ;
 
@@ -46,5 +47,7 @@ void ossSleep( int milliseconds ) ;
 bool isStandalone( sdb& db ) ;
 
 int getGroups( sdb& db, vector<string>& groups ) ;
+
+int getLocalHost() ;
 
 #endif

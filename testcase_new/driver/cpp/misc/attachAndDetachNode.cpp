@@ -1,9 +1,8 @@
 /************************************************************
 * @Description: test case for Jira questionaire
-*               ( manual test case,not in CI ) 
-*				SEQUOIADBMAINSTREAM-809
+*					 SEQUOIADBMAINSTREAM-809
 * @Modify:      Liang xuewang Init
-*				2016-11-11
+*					 2016-11-11
 *************************************************************/
 #include <gtest/gtest.h>
 #include <client.hpp>
@@ -21,10 +20,10 @@ sdbNode tempNode ;
 
 int setup()
 {
-    int rc = SDB_OK ;
-    getConf() ;
-    rc = db.connect( HOSTNAME, SVCNAME, USER, PASSWD ) ;
-    CHECK_RC( rc, "fail to connect sdb, rc = %d\n", rc ) ;	
+   int rc = SDB_OK ;
+   getConf() ;
+   rc = db.connect( HOSTNAME, SVCNAME, USER, PASSWD ) ;
+   CHECK_RC( rc, "fail to connect sdb, rc = %d\n", rc ) ;	
 done:
 	return rc ;
 error:
@@ -34,7 +33,7 @@ error:
 int teardown()
 {
 	int rc = SDB_OK ;
-    db.disconnect() ;
+   db.disconnect() ;
 done:
 	return rc ;
 error:
@@ -72,29 +71,32 @@ TEST( AttachAndDetachNodeTest, onlyAttachAndOnlyDetach )
 	char tempNodeDbPath[100] ;
 	sprintf( tempNodeDbPath, "%s%s", RSRVNODEDIR, tempNodeSvcName ) ;
 	cout << "temp node dbpath: " << tempNodeDbPath << endl ;
-    
-	rc = dataRG.createNode( HOSTNAME, tempNodeSvcName, tempNodeDbPath ) ;
+	
+	rc = getLocalHost() ;
+	ASSERT_EQ( rc, SDB_OK ) ;  
+ 
+	rc = dataRG.createNode( HOST, tempNodeSvcName, tempNodeDbPath ) ;
 	ASSERT_EQ( rc, SDB_OK ) << "fail to create tempNode" ;
 	
 	// detach tempNode from dataRG
-	rc = dataRG.detachNode( HOSTNAME, tempNodeSvcName ) ;
+	rc = dataRG.detachNode( HOST, tempNodeSvcName ) ;
 	ASSERT_EQ( rc, SDB_OK ) << "fail to detach tempNode" ;
-	rc = dataRG.getNode( HOSTNAME, tempNodeSvcName, tempNode ) ;
+	rc = dataRG.getNode( HOST, tempNodeSvcName, tempNode ) ;
 	ASSERT_EQ( rc, SDB_CLS_NODE_NOT_EXIST ) << "fail to check detach" ;
 	
 	// create tempRG
-    rc = db.createReplicaGroup( "temp", tempRG ) ;
-    ASSERT_EQ( rc, SDB_OK ) << "fail to create tempRG" ;
+   rc = db.createReplicaGroup( "temp", tempRG ) ;
+   ASSERT_EQ( rc, SDB_OK ) << "fail to create tempRG" ;
 	
 	// attach tempNode to tempRG
-    rc = tempRG.attachNode( HOSTNAME, tempNodeSvcName ) ;
-    ASSERT_EQ( rc, SDB_OK ) << "fail to attach tempNode" ;
-    rc = tempRG.getNode( HOSTNAME, tempNodeSvcName, tempNode ) ;
-    ASSERT_EQ( rc, SDB_OK ) << "fail to check attach" ;
+   rc = tempRG.attachNode( HOST, tempNodeSvcName ) ;
+   ASSERT_EQ( rc, SDB_OK ) << "fail to attach tempNode" ;
+   rc = tempRG.getNode( HOST, tempNodeSvcName, tempNode ) ;
+   ASSERT_EQ( rc, SDB_OK ) << "fail to check attach" ;
     
 	// start tempRG
-    rc = tempRG.start() ;
-    ASSERT_EQ( rc, SDB_OK ) << "fail to start tempRG" ;
+	rc = tempRG.start() ;
+   ASSERT_EQ( rc, SDB_OK ) << "fail to start tempRG" ;
 	
 	// stop tempRG
 	rc = tempRG.stop() ;
