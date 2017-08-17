@@ -170,11 +170,37 @@ namespace engine
       virtual INT32 getType() ;
 
       virtual INT64 getTaskID() ;
-   private:
 
    private:
       INT64 _taskID ;
       INT32 _taskType ;
+   } ;
+
+   class omShrinkBusinessTask : public omTaskBase
+   {
+   public:
+      omShrinkBusinessTask( INT64 taskID ) ;
+      virtual ~omShrinkBusinessTask() ;
+   
+   public:
+      virtual INT32 finish( BSONObj &resultInfo ) ;
+   
+      virtual INT32 getType() ;
+   
+      virtual INT64 getTaskID() ;
+
+   private:
+      INT32 _removeNodeConfig( const string &businessName,
+                               const string &hostName,
+                               const string &svcname ) ;
+      INT32 _removeConfig( const BSONObj &taskInfo,
+                           const BSONObj &resultInfo ) ;
+      INT32 _updateBizHostInfo( const string &businessName ) ;
+
+   private:
+      INT64 _taskID ;
+      INT32 _taskType ;
+
    } ;
 
    class omRemoveBusinessTask : public omTaskBase

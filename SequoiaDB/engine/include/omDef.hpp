@@ -218,6 +218,7 @@ namespace engine
    #define OM_CONFIGURE_FIELD_SVCNAME        PMD_OPTION_SVCNAME
    #define OM_CONFIGURE_FIELD_ERRNO          "errno"
    #define OM_CONFIGURE_FIELD_DETAIL         "detail"
+   #define OM_CONFIGURE_FIELD_ROLE           "role"
 
    // deploy.business_auth
    #define OM_CS_DEPLOY_CL_BUSINESS_AUTH     OM_CS_DEPLOY".SYSBUSINESSAUTH"
@@ -282,6 +283,7 @@ namespace engine
       OM_TASK_TYPE_REMOVE_BUSINESS = 3,
       OM_TASK_TYPE_SSQL_EXEC       = 4,
       OM_TASK_TYPE_EXTEND_BUSINESS = 5,
+      OM_TASK_TYPE_SHRINK_BUSINESS = 6,
 
       OM_TASK_TYPE_END
    } ;
@@ -292,6 +294,7 @@ namespace engine
    #define OM_TASK_TYPE_REMOVE_BUSINESS_STR   "REMOVE_BUSINESS"
    #define OM_TASK_TYPE_SSQL_EXEC_STR         "SSQL_EXEC"
    #define OM_TASK_TYPE_EXTEND_BUSINESS_STR   "EXTEND_BUSINESS"
+   #define OM_TASK_TYPE_SHRINK_BUSINESS_STR   "SHRINK_BUSINESS"
 
    const CHAR *getTaskTypeStr( INT32 taskType ) ;
 
@@ -448,6 +451,7 @@ namespace engine
    #define  OM_SSQL_EXEC_REQ                 "ssql exec"
    #define  OM_GET_SYSTEM_INFO_REQ           "get system info"
    #define  OM_EXTEND_BUSINESS_REQ           "extend business"
+   #define  OM_SHRINK_BUSINESS_REQ           "shrink business"
    #define  OM_SYNC_BUSINESS_CONF_REQ        "sync business configure"
    #define  OM_GRANT_SYSCONF_REQ             "grant sysconf"
 
