@@ -310,7 +310,7 @@ function scpTest(srcFileName, dstFileName, srcFile, dstFile, mode, isReplace){
    }catch(e){
       throw buildException("scp()", e, e, "expectMd5:" + expectMd5 + "mode:" + mode, ",actualMd5:" + actualMd5 + ",dstMode:" + dstMode);
    }
-   forceGC();   
+   //forceGC();   
 }
 
 function checkArgumentScp(srcFileName, dstFileName, dstFile, mode, isReplace){

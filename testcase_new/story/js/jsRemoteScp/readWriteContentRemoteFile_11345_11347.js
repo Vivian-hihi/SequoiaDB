@@ -151,8 +151,19 @@ function main(){
 	   var writeLength = parseInt(writeFile.stat(writeFileName).toObj().size);
 	   if(writeLength !== 1024)
 	   {
+	      println("writeLength:" + writeLength);
          throw "WRITE_LENGTH_ERROR";
 	   }
+	   
+	   //SEQUOIADBMAINSTREAM-2661,clear()
+	   content.clear();
+	   var readLength = content.getLength();
+	   if(readLength !== 0)
+	   {
+	      println("readLength:" + readLength);
+	      throw "CLEAR_CONTENT_ERROR";
+	   }
+	   
 	   writeFile.remove(writeFileName);
    }catch(e)
    {
