@@ -123,45 +123,88 @@ namespace engine
 
    class omExtendBusinessCommand : public omAuthCommand
    {
-      public:
-         omExtendBusinessCommand( restAdaptor *pRestAdaptor,
-                                  pmdRestSession *pRestSession,
-                                  const CHAR *pRootPath,
-                                  string& localAgentHost,
-                                  string& localAgentService ) ;
-         ~omExtendBusinessCommand() ;
+   public:
+      omExtendBusinessCommand( restAdaptor *pRestAdaptor,
+                               pmdRestSession *pRestSession,
+                               const CHAR *pRootPath,
+                               string& localAgentHost,
+                               string& localAgentService ) ;
+      ~omExtendBusinessCommand() ;
 
-      public:
-         virtual INT32 doCommand() ;
+   public:
+      virtual INT32 doCommand() ;
 
-      private:
-         INT32 _getRestInfo( BSONObj &extendConfig, string& extendConfigMod ) ;
-         INT32 _checkBusiness() ;
-         INT32 _readConfigProperties( const string& extendConfigMod,
-                                      BSONObj& buzDetail ) ;
-         INT32 _getClusterInfo( BSONObj& hostsInfoForCluster,
-                                BSONObj& buzInfoForCluster ) ;
-         INT32 _checkExtendConfig( const BSONObj& confProperties,
-                                   const BSONObj& hostsDetail,
-                                   const BSONObj& buzInfoForCluster,
-                                   BSONObj& extendConfig ) ;
-         INT32 _createExtendTask( const BSONObj& extendConfig,
-                                  const BSONObj& hostsInfoForCluster,
-                                  INT64& taskID ) ;
-         INT32 _generateTaskInfo( const BSONObj& hostsInfoForCluster,
-                                  const BSONObj& extendConfig,
-                                  BSONObj& taskConfig ) ;
-         INT32 _generateTaskResultInfo( const BSONObj &taskConfig,
-                                        BSONArray &resultInfo ) ;
+   private:
+      INT32 _getRestInfo( BSONObj &extendConfig, string& extendConfigMod ) ;
+      INT32 _checkBusiness() ;
+      INT32 _readConfigProperties( const string& extendConfigMod,
+                                   BSONObj& buzDetail ) ;
+      INT32 _getClusterInfo( BSONObj& hostsInfoForCluster,
+                             BSONObj& buzInfoForCluster ) ;
+      INT32 _checkExtendConfig( const BSONObj& confProperties,
+                                const BSONObj& hostsDetail,
+                                const BSONObj& buzInfoForCluster,
+                                BSONObj& extendConfig ) ;
+      INT32 _createExtendTask( const BSONObj& extendConfig,
+                               const BSONObj& hostsInfoForCluster,
+                               INT64& taskID ) ;
+      INT32 _generateTaskInfo( const BSONObj& hostsInfoForCluster,
+                               const BSONObj& extendConfig,
+                               BSONObj& taskConfig ) ;
+      INT32 _generateTaskResultInfo( const BSONObj &taskConfig,
+                                     BSONArray &resultInfo ) ;
 
-      private:
-         string _rootPath ;
-         string _localAgentHost ;
-         string _localAgentService ;
-         string _clusterName ;
-         string _businessName ;
-         string _businessType ;
-         string _deployMod ;
+   private:
+      string _rootPath ;
+      string _localAgentHost ;
+      string _localAgentService ;
+      string _clusterName ;
+      string _businessName ;
+      string _businessType ;
+      string _deployMod ;
+   } ;
+
+   class omShrinkBusinessCommand : public omAuthCommand
+   {
+   public:
+      omShrinkBusinessCommand( restAdaptor *pRestAdaptor,
+                               pmdRestSession *pRestSession,
+                               const CHAR *pRootPath,
+                               string &localAgentHost,
+                               string &localAgentService ) ;
+      ~omShrinkBusinessCommand() ;
+
+   public:
+      virtual INT32 doCommand() ;
+
+   private:
+      INT32 _getRestInfo( BSONObj &shrinkConfig ) ;
+
+      INT32 _checkBusiness() ;
+
+      INT32 _checkSdbConfig( const BSONObj &shrinkConfig ) ;
+
+      INT32 _checkConfig( const BSONObj &shrinkConfig ) ;
+
+      INT32 _createTask( vector<simpleAddressInfo> &addressList,
+                         const BSONObj &shrinkConfig,
+                         INT64 &taskID ) ;
+
+      INT32 _generateTaskInfo( vector<simpleAddressInfo> &addressList,
+                               const BSONObj &shrinkConfig,
+                               BSONObj &taskConfig ) ;
+
+      INT32 _generateTaskResultInfo( const BSONObj &shrinkConfig,
+                                     BSONArray &resultInfo ) ;
+
+   private:
+      string _rootPath ;
+      string _localAgentHost ;
+      string _localAgentService ;
+      string _clusterName ;
+      string _businessName ;
+      string _businessType ;
+      string _deployMod ;
    } ;
 
    class omLogoutCommand : public omAuthCommand

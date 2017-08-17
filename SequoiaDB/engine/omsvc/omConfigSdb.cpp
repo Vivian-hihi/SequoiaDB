@@ -863,6 +863,11 @@ namespace engine
       goto done ;
    }
 
+   #define OM_CONFIG_SDB_BUILDER_TRUE1    "true"
+   #define OM_CONFIG_SDB_BUILDER_TRUE2    "TRUE"
+   #define OM_CONFIG_SDB_BUILDER_FALSE1   "false"
+   #define OM_CONFIG_SDB_BUILDER_FALSE2   "FALSE"
+
    INT32 OmSdbConfigBuilder::_check( BSONObj& bsonConfig )
    {
       INT32 rc = SDB_OK ;
@@ -946,6 +951,15 @@ namespace engine
                string role = node->getRole() ;
                string groupName = node->getGroupName() ;
                string transaction = node->getTransaction() ;
+
+               if ( OM_CONFIG_SDB_BUILDER_TRUE1 == transaction )
+               {
+                  transaction = OM_CONFIG_SDB_BUILDER_TRUE2 ;
+               }
+               else if ( OM_CONFIG_SDB_BUILDER_FALSE1 == transaction )
+               {
+                  transaction = OM_CONFIG_SDB_BUILDER_FALSE2 ;
+               }
 
                if ( OM_NODE_ROLE_STANDALONE == role )
                {

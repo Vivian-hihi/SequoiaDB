@@ -1071,6 +1071,261 @@ namespace engine
    {
       return _taskID ;
    }
+
+   omShrinkBusinessTask::omShrinkBusinessTask( INT64 taskID )
+   {
+      _taskID   = taskID ;
+      _taskType = OM_TASK_TYPE_SHRINK_BUSINESS;
+   }
+
+   omShrinkBusinessTask::~omShrinkBusinessTask()
+   {
+   }
+
+   INT32 omShrinkBusinessTask::_removeNodeConfig( const string &businessName,
+                                                  const string &hostName,
+                                                  const string &svcname )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 configNum  = 0 ;
+      BOOLEAN isExist  = FALSE ;
+      INT64 updateNum  = -1 ;
+      SINT64 contextID = -1 ;
+      pmdEDUCB *cb       = pmdGetThreadEDUCB() ;
+      pmdKRCB *pKRCB     = pmdGetKRCB() ;
+      _SDB_DMSCB *pdmsCB = pKRCB->getDMSCB() ;
+      _SDB_RTNCB *pRtnCB = pKRCB->getRTNCB() ;
+      BSONObj condition ;
+      BSONObj selector ;
+      BSONObj sort ;
+      BSONObj hint ;
+      BSONObj configs ;
+      BSONObj updator ;
+
+      condition = BSON( OM_CONFIGURE_FIELD_BUSINESSNAME << businessName <<
+                        OM_CONFIGURE_FIELD_HOSTNAME << hostName ) ;
+
+      // query table
+      rc = rtnQuery( OM_CS_DEPLOY_CL_CONFIGURE, selector, condition, sort,
+                     hint, 0, cb, 0, 1, pdmsCB, pRtnCB, contextID );
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "fail to query table:%s,rc=%d",
+                 OM_CS_DEPLOY_CL_CONFIGURE, rc ) ;
+         goto error ;
+      }
+
+      while ( TRUE )
+      {
+         rtnContextBuf buffObj ;
+
+         rc = rtnGetMore ( contextID, 1, buffObj, cb, pRtnCB ) ;
+         if ( rc )
+         {
+            if ( SDB_DMS_EOC == rc )
+            {
+               rc = SDB_OK ;
+               break ;
+            }
+
+            contextID = -1 ;
+            PD_LOG( PDERROR, "failed to get record from table:%s,rc=%d",
+                    OM_CS_DEPLOY_CL_CONFIGURE, rc ) ;
+            goto error ;
+         }
+
+         {
+            BSONObj result( buffObj.data() ) ;
+            BSONObj tmpConfig = result.getObjectField(
+                                                   OM_CONFIGURE_FIELD_CONFIG ) ;
+
+            configs  = tmpConfig.copy() ;
+            isExist  = TRUE ;
+         }
+      }
+
+      if ( FALSE == isExist )
+      {
+         goto done ;
+      }
+
+      {
+         BSONObjBuilder updatorBuilder ;
+         BSONArrayBuilder configsBuilder ;
+         BSONObjIterator iter( configs ) ;
+
+         while ( iter.more() )
+         {
+            BSONElement ele = iter.next() ;
+            BSONObj config = ele.embeddedObject() ;
+            string tmpSvcname = config.getStringField(
+                                                OM_CONFIGURE_FIELD_SVCNAME ) ;
+
+            if ( tmpSvcname != svcname )
+            {
+               configsBuilder.append( config ) ;
+               ++configNum ;
+            }
+         }
+
+         updatorBuilder.append( OM_CONFIGURE_FIELD_CONFIG,
+                                configsBuilder.arr() ) ;
+         updator = BSON( "$set" << updatorBuilder.obj() ) ;
+      }
+
+      if ( 0 < configNum )
+      {
+         rc = rtnUpdate( OM_CS_DEPLOY_CL_CONFIGURE, condition, updator, hint,
+                         FLG_UPDATE_UPSERT | FLG_UPDATE_RETURNNUM,
+                         cb, &updateNum ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "falied to update host config,"
+                             "condition=%s,updator=%s,rc=%d",
+                    condition.toString().c_str(),
+                    updator.toString().c_str(), rc ) ;
+            goto error ;
+         }
+      }
+      else
+      {
+         rc = rtnDelete( OM_CS_DEPLOY_CL_CONFIGURE, condition, hint, 0, cb ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "failed to delete configure from table:%s,rc=%d",
+                    OM_CS_DEPLOY_CL_CONFIGURE, rc ) ;
+            goto error ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omShrinkBusinessTask::_removeConfig( const BSONObj &taskInfo,
+                                              const BSONObj &resultInfo )
+   {
+      INT32 rc = SDB_OK ;
+      string businessName = taskInfo.getStringField( OM_BSON_BUSINESS_NAME ) ;
+      string businessType = taskInfo.getStringField( OM_BSON_BUSINESS_TYPE ) ;
+
+      if ( OM_BUSINESS_SEQUOIADB == businessType )
+      {
+         BSONObjIterator iter( resultInfo ) ;
+
+         while ( iter.more() )
+         {
+            BSONElement ele = iter.next() ;
+            BSONObj config  = ele.embeddedObject() ;
+            INT32 errorNum  = config.getIntField( OM_TASKINFO_FIELD_ERRNO ) ;
+            string hostName = config.getStringField(
+                                                OM_CONFIGURE_FIELD_HOSTNAME ) ;
+            string svcname  = config.getStringField(
+                                                OM_CONFIGURE_FIELD_SVCNAME ) ;
+
+            if ( 0 == errorNum )
+            {
+               rc = _removeNodeConfig( businessName, hostName, svcname ) ;
+               if ( rc )
+               {
+                  PD_LOG( PDERROR, "remove node config failed, rc=%d", rc ) ;
+                  goto error ;
+               }
+            }
+         }
+
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omShrinkBusinessTask::_updateBizHostInfo( const string &businessName )
+   {
+      INT32 rc = SDB_OK ;
+      list <string> hostsList ;
+
+      rc = sdbGetOMManager()->getBizHostInfo( businessName, hostsList ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "get business host info failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = sdbGetOMManager()->appendBizHostInfo( businessName, hostsList ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "get business host info failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omShrinkBusinessTask::finish( BSONObj &resultInfo )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj selector ;
+      BSONObj matcher ;
+      BSONObj orderBy ;
+      BSONObj hint ;
+      BSONObj task ;
+      BSONObj taskInfo ;
+      BSONObj taskResultInfo ;
+      string businessName ;
+   
+      matcher  = BSON( OM_TASKINFO_FIELD_TASKID << _taskID ) ;
+      selector = BSON( OM_TASKINFO_FIELD_INFO << 1 ) ;
+
+      rc = queryOneTask( selector, matcher, orderBy, hint, task ) ;
+      if( rc )
+      {
+         PD_LOG( PDERROR, "get task info failed:taskID="
+                          OSS_LL_PRINT_FORMAT",rc=%d",
+                 _taskID, rc ) ;
+         goto error ;     
+      }
+
+      taskInfo = task.getObjectField( OM_TASKINFO_FIELD_INFO ) ;
+      taskResultInfo = resultInfo.getObjectField(
+                                                OM_TASKINFO_FIELD_RESULTINFO ) ;
+      rc = _removeConfig( taskInfo, taskResultInfo ) ;
+      if( rc )
+      {
+         PD_LOG( PDERROR, "remove node config failed:rc=%d", rc ) ;
+         goto error ;     
+      }
+
+      businessName = taskInfo.getStringField( OM_BSON_BUSINESS_NAME ) ;
+      rc = _updateBizHostInfo( businessName ) ;
+      if( rc )
+      {
+         PD_LOG( PDERROR, "update business host info failed:rc=%d", rc ) ;
+         goto error ;     
+      }
+      
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omShrinkBusinessTask::getType()
+   {
+      return _taskType ;
+   }
+   
+   INT64 omShrinkBusinessTask::getTaskID()
+   {
+      return _taskID ;
+   }
    
    omRemoveBusinessTask::omRemoveBusinessTask( INT64 taskID )
    {
@@ -1521,7 +1776,9 @@ namespace engine
       case OM_TASK_TYPE_EXTEND_BUSINESS:
          pTask = SDB_OSS_NEW omExtendBusinessTask( taskID ) ;
          break ;
-
+      case OM_TASK_TYPE_SHRINK_BUSINESS:
+         pTask = SDB_OSS_NEW omShrinkBusinessTask( taskID ) ;
+         break ;
       default :
          PD_LOG( PDERROR, "unknown task type:taskID="OSS_LL_PRINT_FORMAT
                  ",taskType=%d", taskID, taskType ) ;

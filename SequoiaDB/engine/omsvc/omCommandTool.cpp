@@ -513,11 +513,12 @@ namespace engine
     * @param(out) clusterName
     *
    */
-   INT32 omDatabaseTool::getBusinessInfo( const string &businessName,
-                                          BSONObj &businessInfo )
+   INT32 omDatabaseTool::getOneBusinessInfo( const string &businessName,
+                                             BSONObj &businessInfo )
    {
       INT32 rc = SDB_OK ;
-      SINT64 contextID  = -1 ;
+      BOOLEAN isExist  = FALSE ;
+      SINT64 contextID = -1 ;
       BSONObj selector ;
       BSONObj order ;
       BSONObj hint ;
@@ -525,7 +526,7 @@ namespace engine
 
       // query table
       rc = rtnQuery( OM_CS_DEPLOY_CL_BUSINESS, selector, condition, order,
-                     hint, 0, _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
+                     hint, 0, _cb, 0, 1, _pDMSCB, _pRTNCB, contextID );
       if ( rc )
       {
          PD_LOG( PDERROR, "fail to query table:%s,rc=%d",
@@ -536,7 +537,7 @@ namespace engine
       while ( TRUE )
       {
          rtnContextBuf buffObj ;
-         BSONObj tmpConf ;
+
          rc = rtnGetMore ( contextID, 1, buffObj, _cb, _pRTNCB ) ;
          if ( rc )
          {
@@ -552,8 +553,19 @@ namespace engine
             goto error ;
          }
 
-         BSONObj result( buffObj.data() ) ;
-         businessInfo = result.copy() ;
+         {
+            BSONObj result( buffObj.data() ) ;
+            businessInfo = result.copy() ;
+            isExist = TRUE ;
+         }
+      }
+
+      if ( FALSE == isExist )
+      {
+         rc = SDB_DMS_RECORD_NOTEXIST ;
+         PD_LOG( PDERROR, "business does not exist:business=%s, rc=%d",
+                 businessName.c_str(), rc ) ;
+         goto error ;
       }
 
    done:
@@ -633,133 +645,20 @@ namespace engine
       goto done ;
    }
 
-   /**
-    * Get all the address of the business
-    *
-    * @param(in)  businessName
-    *
-    * @param(out) addressList
-    *
-   */
-   INT32 omDatabaseTool::getBusinessAddress(
-                                       const string &businessName,
-                                       vector<simpleAddressInfo> &addressList )
-   {
-      INT32 rc = SDB_OK ;
-      SINT64 contextID  = -1 ;
-      BSONObj selector ;
-      BSONObj order ;
-      BSONObj hint ;
-      BSONObj condition = BSON( OM_BUSINESS_FIELD_NAME << businessName )  ;
-      string businessType = "" ;
-      string deployMod = "" ;
-
-      // query table
-      rc = rtnQuery( OM_CS_DEPLOY_CL_CONFIGURE, selector, condition, order,
-                     hint, 0, _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "fail to query table:%s,rc=%d",
-                 OM_CS_DEPLOY_CL_BUSINESS, rc ) ;
-         goto error ;
-      }
-
-      while ( TRUE )
-      {
-         rtnContextBuf buffObj ;
-         BSONObj tmpConf ;
-         rc = rtnGetMore ( contextID, 1, buffObj, _cb, _pRTNCB ) ;
-         if ( rc )
-         {
-            if ( SDB_DMS_EOC == rc )
-            {
-               rc = SDB_OK ;
-               break ;
-            }
-
-            contextID = -1 ;
-            PD_LOG( PDERROR, "failed to get record from table:%s,rc=%d",
-                    OM_CS_DEPLOY_CL_BUSINESS, rc ) ;
-            goto error ;
-         }
-
-         {
-            BSONObj result( buffObj.data() ) ;
-            string hostName = result.getStringField(
-                                                OM_CONFIGURE_FIELD_HOSTNAME ) ;
-
-            if ( 0 == businessType.length() )
-            {
-               businessType = result.getStringField( OM_BUSINESS_FIELD_TYPE ) ;
-            }
-
-            if ( 0 == deployMod.length() )
-            {
-               deployMod = result.getStringField(
-                                                OM_BUSINESS_FIELD_DEPLOYMOD ) ;
-            }
-
-            if ( OM_BUSINESS_SEQUOIADB == businessType )
-            {
-               BSONObj nodes = result.getObjectField(
-                                                   OM_CONFIGURE_FIELD_CONFIG ) ;
-               BSONObjIterator iterBson( nodes ) ;
-
-               while ( iterBson.more() )
-               {
-                  simpleAddressInfo address ;
-                  BSONElement ele = iterBson.next() ;
-                  BSONObj oneNode = ele.embeddedObject() ;
-                  string role = oneNode.getStringField( OM_CONF_DETAIL_ROLE ) ;
-
-                  address.hostName = hostName ;
-                  address.port = oneNode.getStringField(
-                                                      OM_CONF_DETAIL_SVCNAME ) ;
-                  if ( OM_DEPLOY_MOD_DISTRIBUTION == deployMod &&
-                       OM_NODE_ROLE_COORD == role )
-                  {
-                     addressList.push_back( address ) ;
-                  }
-                  else if ( OM_DEPLOY_MOD_STANDALONE == deployMod &&
-                            OM_NODE_ROLE_STANDALONE == role )
-                  {
-                     addressList.push_back( address ) ;
-                  }
-               }
-            }
-            
-         }
-      }
-
-   done:
-      if ( -1 != contextID )
-      {
-         _pRTNCB->contextDelete ( contextID, _cb ) ;
-      }
-      return rc ;
-   error:
-      goto done ;
-   }
-
    BOOLEAN omDatabaseTool::businessIsExist( const string &businessName )
    {
       INT32 rc = SDB_OK ;
       BOOLEAN isExist = FALSE ;
       BSONObj buzInfo ;
-      string businessType = "" ;
 
-      rc = getBusinessInfo( businessName, buzInfo ) ;
+      rc = getOneBusinessInfo( businessName, buzInfo ) ;
       if ( rc )
       {
          isExist = FALSE ;
       }
       else
       {
-         businessType = buzInfo.getStringField( OM_BUSINESS_FIELD_TYPE ) ;
-         if ( businessType.length() > 0 )
-         {
-            isExist = TRUE ;
-         }
+         isExist = TRUE ;
       }
 
       return isExist ;
@@ -913,6 +812,7 @@ namespace engine
       while( TRUE )
       {
          rtnContextBuf buffObj ;
+
          rc = rtnGetMore ( contextID, 1, buffObj, _cb, _pRTNCB ) ;
          if ( rc )
          {
@@ -927,9 +827,12 @@ namespace engine
                     OM_CS_DEPLOY_CL_CLUSTER, rc ) ;
             goto error ;
          }
-         BSONObj tmpConf( buffObj.data() ) ;
-         clusterInfo = tmpConf ;
-         hasFind = TRUE ;
+
+         {
+            BSONObj tmpConf( buffObj.data() ) ;
+            clusterInfo = tmpConf.copy() ;
+            hasFind = TRUE ;
+         }
       }
 
       if( FALSE == hasFind )
@@ -1065,8 +968,83 @@ namespace engine
       goto done ;
    }
 
+   INT32 omDatabaseTool::getOneNodeConfig( const string &businessName,
+                                           const string &hostName,
+                                           const string &svcname,
+                                           BSONObj &config )
+   {
+      INT32 rc = SDB_OK ;
+      SINT64 contextID = -1 ;
+      BSONObj condition = BSON( OM_CONFIGURE_FIELD_BUSINESSNAME << businessName
+                                << OM_CONFIGURE_FIELD_HOSTNAME << hostName ) ;
+      BSONObj selector ;
+      BSONObj order ;
+      BSONObj hint ;
+
+      // query table
+      rc = rtnQuery( OM_CS_DEPLOY_CL_CONFIGURE, selector, condition, order,
+                     hint, 0, _cb, 0, 1, _pDMSCB, _pRTNCB, contextID );
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "fail to query table:%s,rc=%d",
+                 OM_CS_DEPLOY_CL_CONFIGURE, rc ) ;
+         goto error ;
+      }
+
+      while ( TRUE )
+      {
+         rtnContextBuf buffObj ;
+
+         rc = rtnGetMore( contextID, 1, buffObj, _cb, _pRTNCB ) ;
+         if ( rc )
+         {
+            if ( SDB_DMS_EOC == rc )
+            {
+               rc = SDB_OK ;
+               break ;
+            }
+
+            contextID = -1 ;
+            PD_LOG( PDERROR, "failed to get record from table:%s,rc=%d",
+                    OM_CS_DEPLOY_CL_CONFIGURE, rc ) ;
+            goto error ;
+         }
+
+         {
+            BSONObj configInfo( buffObj.data() ) ;
+            BSONObj configs = configInfo.getObjectField(
+                                                   OM_CONFIGURE_FIELD_CONFIG ) ;
+            BSONObjIterator iter( configs ) ;
+
+            while ( iter.more() )
+            {
+               BSONElement ele = iter.next() ;
+               BSONObj tmpConfig = ele.embeddedObject() ;
+               string tmpSvcname = tmpConfig.getStringField(
+                                                OM_CONFIGURE_FIELD_SVCNAME ) ;
+
+               if ( tmpSvcname == svcname )
+               {
+                  config = tmpConfig.copy() ;
+                  break ;
+               }
+            }
+         }
+      }
+
+   done:
+      if( -1 != contextID )
+      {
+         _pRTNCB->contextDelete ( contextID, _cb ) ;
+         contextID = -1 ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
    /**
-    * Get one host config.
+    * Get one or more host config.
     *
     * @param(in)  hostName
     *
@@ -1085,22 +1063,17 @@ namespace engine
     *     ]
     * }
    **/
-   INT32 omDatabaseTool::getOneHostConfig( const string &hostName,
-                                           BSONObj &config )
+   INT32 omDatabaseTool::getConfigByHostName( const string &hostName,
+                                              BSONObj &config )
    {
       INT32 rc = SDB_OK ;
       SINT64 contextID = -1 ;
-      BSONObj condition ;
+      BSONObj condition = BSON( OM_CONFIGURE_FIELD_HOSTNAME << hostName ) ;
       BSONObj selector ;
       BSONObj order ;
       BSONObj hint ;
-      BSONObjBuilder condBuilder ;
       BSONObjBuilder confBuilder ;
       BSONArrayBuilder arrayBuilder ;
-
-      //build condition
-      condBuilder.append( OM_CONFIGURE_FIELD_HOSTNAME, hostName ) ;
-      condition = condBuilder.obj() ;
 
       // query table
       rc = rtnQuery( OM_CS_DEPLOY_CL_CONFIGURE, selector, condition, order,
@@ -1147,16 +1120,18 @@ namespace engine
                   ]
                }
             */
-            BSONObj hostConfig( buffObj.data() ) ;
-            businessType = hostConfig.getStringField(
+            BSONObj configure( buffObj.data() ) ;
+
+            businessType = configure.getStringField(
                                             OM_CONFIGURE_FIELD_BUSINESSTYPE ) ;
-            deployMode   = hostConfig.getStringField(
+            deployMode   = configure.getStringField(
                                             OM_CONFIGURE_FIELD_DEPLOYMODE ) ;
-            businessName = hostConfig.getStringField(
+            businessName = configure.getStringField(
                                             OM_CONFIGURE_FIELD_BUSINESSNAME ) ;
-            nodeConfig = hostConfig.getObjectField(
+            nodeConfig   = configure.getObjectField(
                                                   OM_CONFIGURE_FIELD_CONFIG ) ;
             BSONObjIterator iter( nodeConfig ) ;
+
             while ( iter.more() )
             {
                BSONObjBuilder innerBuilder ;
@@ -1200,60 +1175,42 @@ namespace engine
    }
 
    /**
-    * Get all the host config of the cluster.
+    * Get all the address of the business( seqipoadb: standalone, coord )
     *
-    * @param(in)  clusterName
+    * @param(in)  businessName
     *
-    * @param(out) config
-    * {
-    *    "HostInfo": [
-    *       {
-    *          "HostName": "host1", "ClusterName":"c1",
-    *          "Disk": [ { "Name":"dev", "Mount":"/mnt", ... }, ... ],
-    *          "Config": [
-    *             { "dbpath": "xxxx", "svcname":"11810", ... },
-    *             ...
-    *          ],
-    *          ...
-    *       }
-    *    ]
-    * }
+    * @param(out) addressList
+    *
    */
-   INT32 omDatabaseTool::getHostConfigOfCluster( const string &clusterName,
-                                                 BSONObj &config )
+   INT32 omDatabaseTool::getBusinessAddressWithConfig(
+                                       const string &businessName,
+                                       vector<simpleAddressInfo> &addressList )
    {
       INT32 rc = SDB_OK ;
-      BOOLEAN isRecordFetched = FALSE ;
-      SINT64 contextID = -1 ;
-      BSONObj condition ;
+      SINT64 contextID  = -1 ;
       BSONObj selector ;
       BSONObj order ;
       BSONObj hint ;
-      BSONObjBuilder hostsDetailBuilder ;
-      BSONObjBuilder condBuilder ;
-      BSONArrayBuilder hostArrBuilder ;
+      BSONObj condition = BSON( OM_BUSINESS_FIELD_NAME << businessName )  ;
+      string businessType = "" ;
+      string deployMod = "" ;
 
-      //build condition
-      condBuilder.append( OM_HOST_FIELD_CLUSTERNAME, clusterName ) ;
-      condition = condBuilder.obj() ;
-
-      //query table
-      rc = rtnQuery( OM_CS_DEPLOY_CL_HOST, selector, condition, order, hint, 0,
-                     _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
+      // query table
+      rc = rtnQuery( OM_CS_DEPLOY_CL_CONFIGURE, selector, condition, order,
+                     hint, 0, _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
       if ( rc )
       {
          PD_LOG( PDERROR, "fail to query table:%s,rc=%d",
-                 OM_CS_DEPLOY_CL_HOST, rc ) ;
+                 OM_CS_DEPLOY_CL_BUSINESS, rc ) ;
          goto error ;
       }
 
-      while( TRUE )
+      while ( TRUE )
       {
-         BSONObjBuilder hostBuilder ;
          rtnContextBuf buffObj ;
 
-         rc = rtnGetMore( contextID, 1, buffObj, _cb, _pRTNCB ) ;
-         if( rc )
+         rc = rtnGetMore ( contextID, 1, buffObj, _cb, _pRTNCB ) ;
+         if ( rc )
          {
             if ( SDB_DMS_EOC == rc )
             {
@@ -1263,74 +1220,169 @@ namespace engine
 
             contextID = -1 ;
             PD_LOG( PDERROR, "failed to get record from table:%s,rc=%d",
-                    OM_CS_DEPLOY_CL_HOST, rc ) ;
+                    OM_CS_DEPLOY_CL_BUSINESS, rc ) ;
             goto error ;
          }
 
          {
-            string hostName ;
-            BSONObj hostConfig ;
-            /*
-               hostInfo:
+            BSONObj result( buffObj.data() ) ;
+            string hostName = result.getStringField(
+                                                OM_CONFIGURE_FIELD_HOSTNAME ) ;
+
+            if ( 0 == businessType.length() )
+            {
+               businessType = result.getStringField( OM_BUSINESS_FIELD_TYPE ) ;
+            }
+
+            if ( 0 == deployMod.length() )
+            {
+               deployMod = result.getStringField(
+                                                OM_BUSINESS_FIELD_DEPLOYMOD ) ;
+            }
+
+            if ( OM_BUSINESS_SEQUOIADB == businessType )
+            {
+               BSONObj nodes = result.getObjectField(
+                                                   OM_CONFIGURE_FIELD_CONFIG ) ;
+               BSONObjIterator iterBson( nodes ) ;
+
+               while ( iterBson.more() )
                {
-                  "HostName": "host1", "ClusterName":"c1",
-                  "Disk":[ {"Name":"dev", "Mount":"/mnt", ... }, ... ],
-                  ...
+                  simpleAddressInfo address ;
+                  BSONElement ele = iterBson.next() ;
+                  BSONObj oneNode = ele.embeddedObject() ;
+                  string role = oneNode.getStringField( OM_CONF_DETAIL_ROLE ) ;
+
+                  address.hostName = hostName ;
+                  address.port = oneNode.getStringField(
+                                                      OM_CONF_DETAIL_SVCNAME ) ;
+                  if ( OM_DEPLOY_MOD_DISTRIBUTION == deployMod &&
+                       OM_NODE_ROLE_COORD == role )
+                  {
+                     addressList.push_back( address ) ;
+                  }
+                  else if ( OM_DEPLOY_MOD_STANDALONE == deployMod &&
+                            OM_NODE_ROLE_STANDALONE == role )
+                  {
+                     addressList.push_back( address ) ;
+                  }
                }
-            */
-            BSONObj hostInfo( buffObj.data() ) ;
-
-            hostName = hostInfo.getStringField( OM_HOST_FIELD_NAME ) ;
-            rc = getOneHostConfig( hostName, hostConfig ) ;
-            if( rc )
-            {
-               PD_LOG( PDERROR, "Failed to get host config, rc=%d", rc ) ;
-               goto error ;
             }
-            hostBuilder.appendElements( hostInfo ) ;
-            hostBuilder.appendElements( hostConfig ) ;
          }
-
-         /*
-            hostBuilder.obj():
-            {
-               "HostName": "host1", "ClusterName":"c1",
-               "Disk":[ {"Name":"dev", "Mount":"/mnt", ... }, ... ],
-               "Config":[
-                  { "BusinessName": "b1", "dbpath": "xxxx",
-                    "svcname":"11810",
-                    ...
-                  },
-                  ...
-               ],
-               ...
-            }
-         */
-         hostArrBuilder.append( hostBuilder.obj() ) ;
-         isRecordFetched = TRUE ;
       }
-
-      if( isRecordFetched == FALSE )
-      {
-         rc = SDB_DMS_RECORD_NOTEXIST ;
-         PD_LOG( PDERROR, "host is not exist: cluster=%s",
-                 clusterName.c_str() ) ;
-         goto error ;
-      }
-
-      hostsDetailBuilder.append( OM_BSON_FIELD_HOST_INFO, hostArrBuilder.arr() ) ;
-      config = hostsDetailBuilder.obj() ;
 
    done:
-      if( -1 != contextID )
+      if ( -1 != contextID )
       {
          _pRTNCB->contextDelete ( contextID, _cb ) ;
-         contextID = -1 ;
       }
       return rc ;
    error:
       goto done ;
    }
+
+   /**
+    * Get all the catalog address of the business( seqipoadb )
+    *
+    * @param(in)  businessName
+    *
+    * @param(out) addressList
+    *
+   */
+   INT32 omDatabaseTool::getCatalogAddressWithConfig(
+                                       const string &businessName,
+                                       vector<simpleAddressInfo> &addressList )
+   {
+      INT32 rc = SDB_OK ;
+      SINT64 contextID  = -1 ;
+      BSONObj selector ;
+      BSONObj order ;
+      BSONObj hint ;
+      BSONObj condition = BSON( OM_BUSINESS_FIELD_NAME << businessName )  ;
+      string businessType = "" ;
+      string deployMod = "" ;
+
+      // query table
+      rc = rtnQuery( OM_CS_DEPLOY_CL_CONFIGURE, selector, condition, order,
+                     hint, 0, _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "fail to query table:%s,rc=%d",
+                 OM_CS_DEPLOY_CL_BUSINESS, rc ) ;
+         goto error ;
+      }
+
+      while ( TRUE )
+      {
+         rtnContextBuf buffObj ;
+
+         rc = rtnGetMore ( contextID, 1, buffObj, _cb, _pRTNCB ) ;
+         if ( rc )
+         {
+            if ( SDB_DMS_EOC == rc )
+            {
+               rc = SDB_OK ;
+               break ;
+            }
+
+            contextID = -1 ;
+            PD_LOG( PDERROR, "failed to get record from table:%s,rc=%d",
+                    OM_CS_DEPLOY_CL_BUSINESS, rc ) ;
+            goto error ;
+         }
+
+         {
+            BSONObj result( buffObj.data() ) ;
+            string hostName = result.getStringField(
+                                                OM_CONFIGURE_FIELD_HOSTNAME ) ;
+
+            if ( 0 == businessType.length() )
+            {
+               businessType = result.getStringField( OM_BUSINESS_FIELD_TYPE ) ;
+            }
+
+            if ( 0 == deployMod.length() )
+            {
+               deployMod = result.getStringField(
+                                                OM_BUSINESS_FIELD_DEPLOYMOD ) ;
+            }
+
+            if ( OM_BUSINESS_SEQUOIADB == businessType &&
+                 OM_DEPLOY_MOD_DISTRIBUTION == deployMod )
+            {
+               BSONObj nodes = result.getObjectField(
+                                                   OM_CONFIGURE_FIELD_CONFIG ) ;
+               BSONObjIterator iterBson( nodes ) ;
+
+               while ( iterBson.more() )
+               {
+                  simpleAddressInfo address ;
+                  BSONElement ele = iterBson.next() ;
+                  BSONObj oneNode = ele.embeddedObject() ;
+                  string role = oneNode.getStringField( OM_CONF_DETAIL_ROLE ) ;
+
+                  address.hostName = hostName ;
+                  address.port = oneNode.getStringField(
+                                                      OM_CONF_DETAIL_SVCNAME ) ;
+                  if ( OM_NODE_ROLE_CATALOG == role )
+                  {
+                     addressList.push_back( address ) ;
+                  }
+               }
+            }
+         }
+      }
+
+   done:
+      if ( -1 != contextID )
+      {
+         _pRTNCB->contextDelete ( contextID, _cb ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
 
    INT32 omDatabaseTool::getHostUsedPort( const string &hostName,
                                           vector<string> &portList )
@@ -1339,7 +1391,7 @@ namespace engine
       BSONObj hostConfig ;
       BSONObj config ;
 
-      rc = getOneHostConfig( hostName, hostConfig ) ;
+      rc = getConfigByHostName( hostName, hostConfig ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "failed to get host config, host=%s, rc=%d",
@@ -1514,23 +1566,20 @@ namespace engine
       BSONObj hostInfoFilter = BSON( OM_CONFIGURE_FIELD_ERRNO  << "" <<
                                      OM_CONFIGURE_FIELD_DETAIL << "" ) ;
       set<string> newHostList ;
-      string businessType = "" ;
       string deployMod = "" ;
 
-      rc = getBusinessInfo( businessName, buzInfo ) ;
-      if ( rc )
+      rc = getOneBusinessInfo( businessName, buzInfo ) ;
+      if ( SDB_DMS_RECORD_NOTEXIST == rc )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "business does not exist: %s",
+                 businessName.c_str() ) ;
+         goto error ;
+      }
+      else if ( rc )
       {
          PD_LOG( PDERROR, "failed to get business info,name=%s,rc=%d",
                  businessName.c_str(), rc ) ;
-         goto error ;
-      }
-
-      businessType = buzInfo.getStringField( OM_BUSINESS_FIELD_TYPE ) ;
-      if ( businessType.empty() )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "business does not exist: %s",
-                     businessName.c_str() ) ;
          goto error ;
       }
 
@@ -1611,7 +1660,7 @@ namespace engine
                                conditionBuilder.obj() ) ;
          deleteCondition = deleteBuilder.obj() ;
 
-         rc = removeConfigure( deleteCondition ) ;
+         rc = _removeConfigure( deleteCondition ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "failed to remove configure,condition=%s,rc=%d",
@@ -1626,7 +1675,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 omDatabaseTool::removeConfigure( const BSONObj &condition )
+   INT32 omDatabaseTool::_removeConfigure( const BSONObj &condition )
    {
       INT32 rc = SDB_OK ;
       BSONObj hint ;
@@ -1652,7 +1701,7 @@ namespace engine
       BSONObj condition = BSON( OM_CONFIGURE_FIELD_BUSINESSNAME <<
             businessName << OM_CONFIGURE_FIELD_HOSTNAME << hostName ) ;
 
-      rc = removeConfigure( condition ) ;
+      rc = _removeConfigure( condition ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "failed to delete configure from table:%s,"
@@ -1850,6 +1899,145 @@ namespace engine
       goto done ;
    }
 
+   /**
+    * Get all the host config of the cluster.
+    *
+    * @param(in)  clusterName
+    *
+    * @param(out) config
+    * {
+    *    "HostInfo": [
+    *       {
+    *          "HostName": "host1", "ClusterName":"c1",
+    *          "Disk": [ { "Name":"dev", "Mount":"/mnt", ... }, ... ],
+    *          "Config": [
+    *             { "dbpath": "xxxx", "svcname":"11810", ... },
+    *             ...
+    *          ],
+    *          ...
+    *       }
+    *    ]
+    * }
+   */
+   INT32 omDatabaseTool::getHostConfigOfCluster( const string &clusterName,
+                                                 BSONObj &config )
+   {
+      INT32 rc = SDB_OK ;
+      SINT64 contextID = -1 ;
+      BSONObj condition = BSON( OM_HOST_FIELD_CLUSTERNAME << clusterName ) ;
+      BSONObj selector ;
+      BSONObj order ;
+      BSONObj hint ;
+      BSONArrayBuilder hostArrBuilder ;
+      vector<BSONObj> hostList ;
+      vector<BSONObj>::iterator hostListIter ;
+
+      //query table
+      rc = rtnQuery( OM_CS_DEPLOY_CL_HOST, selector, condition, order, hint, 0,
+                     _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "fail to query table:%s,rc=%d",
+                 OM_CS_DEPLOY_CL_HOST, rc ) ;
+         goto error ;
+      }
+
+      while( TRUE )
+      {
+         rtnContextBuf buffObj ;
+
+         rc = rtnGetMore( contextID, 1, buffObj, _cb, _pRTNCB ) ;
+         if( rc )
+         {
+            if ( SDB_DMS_EOC == rc )
+            {
+               rc = SDB_OK ;
+               break ;
+            }
+
+            contextID = -1 ;
+            PD_LOG( PDERROR, "failed to get record from table:%s,rc=%d",
+                    OM_CS_DEPLOY_CL_HOST, rc ) ;
+            goto error ;
+         }
+
+         {
+            BSONObj hostInfo( buffObj.data() ) ;
+            hostList.push_back( hostInfo.copy() ) ;
+         }
+      }
+
+      for ( hostListIter = hostList.begin(); hostListIter != hostList.end(); 
+                 ++hostListIter )
+      {
+         string hostName ;
+         BSONObjBuilder hostBuilder ;
+         BSONObj hostConfig ;
+         /*
+            hostInfo:
+            {
+               "HostName": "host1", "ClusterName":"c1",
+               "Disk":[ {"Name":"dev", "Mount":"/mnt", ... }, ... ],
+               ...
+            }
+         */
+         BSONObj hostInfo = *hostListIter ;
+
+         hostName = hostInfo.getStringField( OM_HOST_FIELD_NAME ) ;
+         rc = getConfigByHostName( hostName, hostConfig ) ;
+         if( rc )
+         {
+            PD_LOG( PDERROR, "Failed to get host config, rc=%d", rc ) ;
+            goto error ;
+         }
+         hostBuilder.appendElements( hostInfo ) ;
+         hostBuilder.appendElements( hostConfig ) ;
+
+         /*
+            hostBuilder.obj():
+            {
+               "HostName": "host1", "ClusterName":"c1",
+               "Disk":[ {"Name":"dev", "Mount":"/mnt", ... }, ... ],
+               "Config":[
+                  { "BusinessName": "b1", "dbpath": "xxxx",
+                    "svcname":"11810",
+                    ...
+                  },
+                  ...
+               ],
+               ...
+            }
+         */
+         hostArrBuilder.append( hostBuilder.obj() ) ;
+      }
+
+      if ( hostList.size() == 0 )
+      {
+         rc = SDB_DMS_RECORD_NOTEXIST ;
+         PD_LOG( PDERROR, "host is not exist: cluster=%s",
+                 clusterName.c_str() ) ;
+         goto error ;
+      }
+
+      {
+         BSONObjBuilder hostsDetailBuilder ;
+
+         hostsDetailBuilder.append( OM_BSON_FIELD_HOST_INFO,
+                                    hostArrBuilder.arr() ) ;
+         config = hostsDetailBuilder.obj() ;
+      }
+
+   done:
+      if( -1 != contextID )
+      {
+         _pRTNCB->contextDelete ( contextID, _cb ) ;
+         contextID = -1 ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
    omRestTool::omRestTool( restAdaptor *pRestAdaptor,
                            pmdRestSession *pRestSession )
    {
@@ -1924,10 +2112,10 @@ namespace engine
                                  const BSONArray &resultInfo )
    {
       INT32 rc = SDB_OK ;
-      BSONObj record ;
-
-      BSONObjBuilder builder ;
       time_t now = time( NULL ) ;
+      BSONObj record ;
+      BSONObjBuilder builder ;
+
       builder.append( OM_TASKINFO_FIELD_TASKID, taskID ) ;
       builder.append( OM_TASKINFO_FIELD_TYPE, taskType ) ;
       builder.append( OM_TASKINFO_FIELD_TYPE_DESC,

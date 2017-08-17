@@ -135,14 +135,11 @@ namespace engine
                              const string &deployMod,
                              const BSONObj &businessInfo ) ;
 
-      INT32 getBusinessInfo( const string &businessName,
-                             BSONObj &businessInfo ) ;
+      INT32 getOneBusinessInfo( const string &businessName,
+                                BSONObj &businessInfo ) ;
 
       INT32 getBusinessInfoOfCluster( const string &clusterName,
                                       BSONObj &clusterBusinessInfo ) ;
-
-      INT32 getBusinessAddress( const string &businessName,
-                                vector<simpleAddressInfo> &addressList ) ;
 
       BOOLEAN businessIsExist( const string &businessName ) ;
 
@@ -165,10 +162,17 @@ namespace engine
                                     const BOOLEAN privilege ) ;
 
       //configure
-      INT32 getOneHostConfig( const string &hostName,
+      INT32 getOneNodeConfig( const string &businessName,
+                              const string &hostName,
+                              const string &svcname,
                               BSONObj &config ) ;
-      INT32 getHostConfigOfCluster( const string &clusterName,
-                                    BSONObj &config ) ;
+      INT32 getConfigByHostName( const string &hostName,
+                                 BSONObj &config ) ;
+      INT32 getBusinessAddressWithConfig(
+                                    const string &businessName,
+                                    vector<simpleAddressInfo> &addressList ) ;
+      INT32 getCatalogAddressWithConfig( const string &businessName,
+                                    vector<simpleAddressInfo> &addressList ) ;
       INT32 getHostUsedPort( const string &hostName,
                              vector<string> &portList ) ;
 
@@ -176,14 +180,12 @@ namespace engine
                              const string &hostName,
                              const BSONObj &newConfig,
                              INT64 &updateNum ) ;
-
       INT32 addNodeConfigOfBusiness( const string &clusterName,
                                      const string &businessName,
                                      const string &businessType,
                                      const BSONObj &newConfig ) ;
       INT32 updateNodeConfigOfBusiness( const string &businessName,
                                         const BSONObj &newConfig ) ;
-      INT32 removeConfigure( const BSONObj &condition ) ;
       INT32 removeConfigure( const string &businessName,
                              const string &hostName ) ;
 
@@ -197,11 +199,17 @@ namespace engine
                                   string &hostName ) ;
       BOOLEAN isHostExistOfCluster( const string &hostName,
                                     const string &clusterName ) ;
+      //aggregation
+      INT32 getHostConfigOfCluster( const string &clusterName,
+                                    BSONObj &config ) ;
 
    private:
       //host
       INT32 _getOneHostInfo( const BSONObj &matcher, const BSONObj &selector,
                              BSONObj &hostInfo ) ;
+
+      //configure
+      INT32 _removeConfigure( const BSONObj &condition ) ;
 
    private:
 

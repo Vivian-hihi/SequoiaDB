@@ -1057,6 +1057,14 @@ namespace engine
                                                          localAgentHost,
                                                          localAgentPort ) ;
          }
+         else if( ossStrcasecmp( pSubCommand, OM_SHRINK_BUSINESS_REQ ) == 0 )
+         {
+            commandIf = SDB_OSS_NEW omShrinkBusinessCommand(
+                                                         pAdptor, this,
+                                                         _wwwRootPath.c_str(),
+                                                         localAgentHost,
+                                                         localAgentPort ) ;
+         }
          else if ( ossStrcasecmp( pSubCommand,
                                   OM_SYNC_BUSINESS_CONF_REQ ) == 0 )
          {
