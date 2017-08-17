@@ -1569,8 +1569,9 @@ function commDataGenerator()
    
    function getRandomLong( min, max )
    {
-      var value = getRandomInt( min, max );
-      return NumberLong(value);
+      var longValue = getRandomInt( min, max );
+	  var value = {"$numberLong":longValue.toString()};
+      return value;
    }
    
    function getRandomFloat( min, max )
@@ -1606,9 +1607,7 @@ function commDataGenerator()
    function getRandomDate()
    {
       var sec = getRandomInt( -2208902400, 253402128000 ); //1900-01-02 ~ 9999-12-30
-      var d = new Date( sec * 1000 );
-      var dateVal = d.getFullYear() + '-' + (d.getMonth()+1) + '-' + d.getDate();
-      
+      var dateVal = new Date( sec * 1000 ).Format("yyyy-MM-dd");
       var value = {"$date":dateVal};
       return value;
    }
@@ -1616,7 +1615,7 @@ function commDataGenerator()
    function getRandomTimestamp()
    {   
       var sec = getRandomInt( -2147397248, 2147397247 ); //1901-12-14-20.45.52 ~ 2038-01-18-03.14.07
-      var d = new Date( sec * 1000 );
+      var d = new Date( sec * 1000 ).Format("yyyy-MM-dd-hh.mm.ss");
       
       var ns = getRandomInt( 0, 1000000 ).toString();
       if( ns.length < 6 )
@@ -1625,8 +1624,7 @@ function commDataGenerator()
          for(var i = 0; i < addZero; i++ ) { ns = '0' + ns; }   
       }
       
-      var timeVal = d.getFullYear() + '-' + (d.getMonth()+1) + '-' + d.getDate() + '-' +
-                    d.getHours() + '.' +  d.getMinutes() + '.' + d.getSeconds() + '.' + ns;
+      var timeVal = d + '.' + ns;
       
       var value = {"$timestamp": timeVal};
       return value;
