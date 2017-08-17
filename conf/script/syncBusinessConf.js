@@ -201,8 +201,11 @@ function _getNodeConfig( hostRemoval, hostList, hostName, svcname, groupName )
    }
    else
    {
-      hostList[index][FIELD_ERRNO]  = rc ;
-      hostList[index][FIELD_DETAIL] = rc == SDB_OK ? "" : error.toString() ;
+      if ( hostList[index][FIELD_ERRNO] == SDB_OK && rc != SDB_OK )
+      {
+         hostList[index][FIELD_ERRNO]  = rc ;
+         hostList[index][FIELD_DETAIL] = rc == SDB_OK ? "" : error.toString() ;
+      }
       hostList[index][FIELD_CONFIG].push( config ) ;
    }
 }
