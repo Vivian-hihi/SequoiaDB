@@ -11,6 +11,7 @@ FileTest.prototype.testGetSize = function()
    var notExistFile = "/tmp/notExistFile_12429.txt" ;
    var noPermFile   = "/tmp/noPermFile_12429.txt" ;
    var normalFile   = "/tmp/normalFile_12429.txt" ;
+   var bigFile      = "/tmp/bigFile2G_12429.txt" ;
    var file ;
    var size1, size2 ;
    
@@ -48,6 +49,7 @@ FileTest.prototype.testGetSize = function()
       throw buildException( "testGetSize", null, "check get size " + this, 
                             size1, size2 ) ;
    }
+   this.file.remove( noPermFile ) ;
    
    // 测试获取正常文件大小
    if( this.isLocal )
@@ -67,10 +69,37 @@ FileTest.prototype.testGetSize = function()
       throw buildException( "testGetSize", null, "check get size " + this, 
                             size1, size2 ) ;
    }
-   
-   // 删除文件
-   this.file.remove( noPermFile ) ;
    this.file.remove( normalFile ) ;
+   
+   // 测试获取非文本文件的大小 如/usr/bin/who
+   var binaryFile = "/usr/bin/who" ;
+   size1 = parseInt( this.file.stat( binaryFile ).toObj().size ) ;
+   size2 = this.file.getSize( binaryFile ) ;
+   if( size2 !== size1 )
+   {
+      throw buildException( "testGetSize", null, "check get binary file size " + this,
+                            size1, size2 ) ;
+   }
+   
+   // 测试获取大小超过int边界的文件大小
+   try
+   {
+      this.cmd.run( "dd if=/dev/zero of=" + bigFile + " bs=1G count=2" ) ;
+   }
+   catch( e )
+   {
+      println( "disk have no space to create big file of 2G" ) ;
+      this.cmd.run( "rm -rf " + bigFile ) ;
+      return ;
+   }
+   size1 = parseInt( this.file.stat( bigFile ).toObj().size ) ;
+   size2 = this.file.getSize( bigFile ) ;
+   if( size2 !== size1 || size1 !== 2147483648 )
+   {
+      throw buildException( "testGetSize", null, "check get big file size " + this,
+                            size1 + " " + 2147483648, size2 ) ;
+   } 
+   this.file.remove( bigFile ) ;
    
    this.release() ;
 }
