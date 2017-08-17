@@ -979,7 +979,6 @@ namespace engine
       OmConfigBuilder* confBuilder = NULL ;
       string operationType = OM_REST_OPERATION_EXTEND ;
       OmBusinessInfo businessInfo ;
-      set<string> hostNames ;
       omDatabaseTool dbTool( _cb ) ;
 
       businessInfo.clusterName  = _clusterName ;
@@ -1000,18 +999,8 @@ namespace engine
          goto error ;
       }
 
-      rc = confBuilder->getHostNames( extendConfig, OM_BSON_FIELD_CONFIG,
-                                      hostNames ) ;
-      if( rc )
-      {
-         _errorMsg.setError( TRUE, omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ) ;
-         PD_LOG( PDERROR, "failed to get host names: rc=%d", rc ) ;
-         goto error ;
-      }
-
       rc = confBuilder->checkConfig( confProperties, hostsInfoForCluster,
-                                     buzInfoForCluster, hostNames,
-                                     extendConfig ) ;
+                                     buzInfoForCluster, extendConfig ) ;
       if ( SDB_OK != rc )
       {
          _errorMsg.setError( TRUE, omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ) ;
@@ -6784,7 +6773,6 @@ namespace engine
          OmConfigBuilder* confBuilder = NULL ;
          OmBusinessInfo businessInfo ;
          string operationType = OM_REST_OPERATION_DEPLOY ;
-         set<string> hostNames ;
 
          businessInfo.clusterName = _clusterName ;
          businessInfo.businessType = _businessType ;
@@ -6801,15 +6789,6 @@ namespace engine
             goto error ;
          }
 
-         rc = confBuilder->getHostNames( bsonConfValue, OM_BSON_FIELD_CONFIG,
-                                         hostNames ) ;
-         if ( SDB_OK != rc )
-         {
-            _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
-            PD_LOG( PDERROR, "failed to get host names: rc=%d", rc ) ;
-            goto error ;
-         }
-
          rc = _fillHostInfo( _clusterName, _businessName, bsonHostInfo ) ;
          if ( SDB_OK != rc )
          {
@@ -6818,8 +6797,7 @@ namespace engine
          }
 
          rc = confBuilder->checkConfig( bsonAllConf, bsonHostInfo,
-                                        clusterBusinessInfo, hostNames,
-                                        bsonConfValue ) ;
+                                        clusterBusinessInfo, bsonConfValue ) ;
          if ( SDB_OK != rc )
          {
             _errorDetail = confBuilder->getErrorDetail() ;
@@ -10810,6 +10788,8 @@ namespace engine
       }
 
       {
+         INT32 coordNum    = 0 ;
+         INT32 catalogNum  = 0 ;
          INT32 missHostNum = 0 ;
          BSONObj hostInfoList = result.getObjectField(
                                                    OM_BSON_FIELD_HOST_INFO ) ;
@@ -10820,16 +10800,36 @@ namespace engine
          {
             BSONElement ele = iter.next() ;
             BSONObj tmpConfig = ele.embeddedObject() ;
+            BSONObj nodeConfigs = tmpConfig.getObjectField(
+                                                   OM_CONFIGURE_FIELD_CONFIG ) ;
             INT32 hostErrno = tmpConfig.getIntField(
                                                 OM_CONFIGURE_FIELD_ERRNO ) ;
-            string hostName = tmpConfig.getStringField(
+            string tmpHostName = tmpConfig.getStringField(
                                                 OM_CONFIGURE_FIELD_HOSTNAME ) ;
+            BSONObjIterator configsIter( nodeConfigs ) ;
 
-            if ( FALSE == dbTool.isHostExistOfCluster( hostName,
-                                                       _clusterName ) )
+            while ( configsIter.more() )
+            {
+               BSONElement configEle = configsIter.next() ;
+               BSONObj nodeConfig = configEle.embeddedObject() ;
+               string role = nodeConfig.getStringField(
+                                                   OM_CONFIGURE_FIELD_ROLE ) ;
+
+               if ( OM_NODE_ROLE_COORD == role )
+               {
+                  ++coordNum ;
+               }
+               if ( OM_NODE_ROLE_CATALOG == role )
+               {
+                  ++catalogNum ;
+               }
+            }
+
+            if ( FALSE == dbTool.isHostExistOfClusterByAddr( tmpHostName,
+                                                             _clusterName ) )
             {
                ++missHostNum ;
-               hostsArray.append( hostName ) ;
+               hostsArray.append( tmpHostName ) ;
             }
 
             if ( SDB_OK != hostErrno )
@@ -10864,6 +10864,28 @@ namespace engine
             PD_LOG( PDERROR, _errorMsg.getError() ) ;
             goto error ;
          }
+
+         if ( 0 == coordNum )
+         {
+            rc = SDB_INVALIDARG ;
+            _errorMsg.setError( TRUE, "failed to add business, "
+                                      "missing coord node, do not add a "
+                                      "temporary coord node",
+                                errDetail.c_str(), rc ) ;
+            PD_LOG( PDERROR, _errorMsg.getError() ) ;
+            goto error ;
+         }
+         
+         if ( 0 == catalogNum )
+         {
+            rc = SDB_INVALIDARG ;
+            _errorMsg.setError( TRUE, "failed to add business, "
+                                      "missing catalog node",
+                                errDetail.c_str(), rc ) ;
+            PD_LOG( PDERROR, _errorMsg.getError() ) ;
+            goto error ;
+         }
+
       }
 
       if ( authUser.length() > 0 && authPwd.length() > 0 )

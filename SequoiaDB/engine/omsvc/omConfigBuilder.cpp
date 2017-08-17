@@ -1149,20 +1149,12 @@ namespace engine
    INT32 OmConfigBuilder::checkConfig( const BSONObj &confProperties, 
                                        const BSONObj &bsonHostInfo,
                                        const BSONObj &bsonBusinessInfo,
-                                       const set<string>& hostNames,
                                        BSONObj &newBusinessConfig )
    {
       INT32 rc = SDB_OK ;
       OmBusiness* business = NULL ;
-      BSONObj bsonBuildHost ;
 
       _bsonHostInfo = bsonHostInfo.copy() ;
-      rc = _filterGenerateHost( bsonHostInfo, hostNames, bsonBuildHost ) ;
-      if( rc )
-      {
-         PD_LOG( PDERROR, "init cluster failed:rc=%d", rc ) ;
-         goto error ;
-      }
 
       rc = _cluster.init( bsonBusinessInfo, bsonHostInfo ) ;
       if ( SDB_OK != rc )

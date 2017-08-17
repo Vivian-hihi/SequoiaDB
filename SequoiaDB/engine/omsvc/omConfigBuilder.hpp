@@ -199,7 +199,6 @@ namespace engine
       INT32 checkConfig( const BSONObj& confProperties, 
                          const BSONObj& bsonHostInfo,
                          const BSONObj& bsonBusinessInfo,
-                         const set<string>& hostNames,
                          BSONObj& newBusinessConfig ) ;
 
       virtual INT32 getHostNames( const BSONObj& bsonConfig,

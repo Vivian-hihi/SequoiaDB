@@ -1872,6 +1872,37 @@ namespace engine
       goto done ;
    }
 
+   BOOLEAN omDatabaseTool::isHostExistOfClusterByAddr(
+                                                   const string &address,
+                                                   const string &clusterName )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN isExist = FALSE ;
+      BSONObj selector ;
+      BSONObj matcher ;
+      BSONObj hostInfo ;
+   
+      matcher = BSON( "$or" << BSON_ARRAY(
+                              BSON( OM_HOST_FIELD_NAME << address ) <<
+                              BSON( OM_HOST_FIELD_IP   << address ) ) <<
+                      OM_HOST_FIELD_CLUSTERNAME << clusterName ) ;
+   
+      rc = _getOneHostInfo( matcher, selector, hostInfo ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to get host info:rc=%d", rc ) ;
+         goto error ;
+      }
+   
+      isExist = TRUE ;
+   
+   done:
+      return isExist ;
+   error:
+      goto done ;
+
+   }
+
    BOOLEAN omDatabaseTool::isHostExistOfCluster( const string &hostName,
                                                  const string &clusterName )
    {

@@ -197,6 +197,8 @@ namespace engine
       //host
       INT32 getHostNameByAddress( const string &address,
                                   string &hostName ) ;
+      BOOLEAN isHostExistOfClusterByAddr( const string &address,
+                                          const string &clusterName ) ;
       BOOLEAN isHostExistOfCluster( const string &hostName,
                                     const string &clusterName ) ;
       //aggregation
