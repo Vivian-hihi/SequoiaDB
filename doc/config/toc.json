@@ -2677,6 +2677,18 @@
                      "en": "offset"
                   },
                   {
+                     "id": 1502957162,
+                     "file": "is_null",
+                     "cn": "is null",
+                     "en": "is null"
+                  },
+                  {
+                     "id": 1502957168,
+                     "file": "isnot_null",
+                     "cn": "isnot null",
+                     "en": "isnot null"
+                  },
+                  {
                      "id": 1432190968,
                      "file": "as",
                      "cn": "as",
