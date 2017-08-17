@@ -146,40 +146,40 @@ function main(){
 		   remotehost + ":" + CMSVCNAME + "@" + remoteDstFileName,
 		   localFile, remoteFile, 448);
 		   
-	/*scpTest(localSrcFileName, 
+	scpTest(localSrcFileName, 
 		   remotehost + ":" + CMSVCNAME + "@" + remoteDstFileName,
-		   localFile, remoteFile, 0);*/
+		   localFile, remoteFile, 0);
 	
 	//remote to local
 	scpTest(remotehost + ":" + CMSVCNAME + "@" + remoteSrcFileName, 
 		    localDstFileName,
 		    remoteFile, localFile, 448);
 			
-	/*scpTest(remotehost + ":" + CMSVCNAME + "@" + remoteSrcFileName, 
+	scpTest(remotehost + ":" + CMSVCNAME + "@" + remoteSrcFileName, 
 		    localDstFileName,
-		    remoteFile, localFile, 0);*/
+		    remoteFile, localFile, 0);
 	
 	//local to local
 	scpTest(localSrcFileName, 
 		    localDstFileName,
 		    localFile, localFile, 448);
 			
-	/*scpTest(localSrcFileName, 
+	scpTest(localSrcFileName, 
 		    localDstFileName,
-		    localFile, localFile, 0);*/
+		    localFile, localFile, 0);
 	
 	//remote to remote
 	scpTest(remotehost + ":" + CMSVCNAME + "@" + remoteSrcFileName, 
 		    remotehost + ":" + CMSVCNAME + "@" + remoteDstFileName,
 		    remoteFile, remoteFile, 448);
 			
-	/*scpTest(remotehost + ":" + CMSVCNAME + "@" + remoteSrcFileName, 
+	scpTest(remotehost + ":" + CMSVCNAME + "@" + remoteSrcFileName, 
 		    remotehost + ":" + CMSVCNAME + "@" + remoteDstFileName,
-		    remoteFile, remoteFile, 0);*/
+		    remoteFile, remoteFile, 0);
 	
-	/*var readOnlyFileName = WORKDIR + "/readOnly_11338";
+	var readOnlyFileName = WORKDIR + "/readOnly_11338";
 	var readOnlylocalFile = new File(readOnlyFileName , 0444, SDB_FILE_CREATE|SDB_FILE_READONLY);
-	var readOnlyremoteFile = remote.getFile(readOnlyFileName, 0444, SDB_FILE_CREATE|SDB_FILE_READONLY);
+	var readOnlyremoteFile = remote.getFile(readOnlyFileName, 0444, SDB_FILE_CREATE|SDB_FILE_WRITEONLY);
 	try
 	{
 		File.scp(localSrcFileName, readOnlyFileName, true, 0444);
@@ -188,30 +188,27 @@ function main(){
 		scpTest(readOnlyFileName, 
 				remotehost + ":" + CMSVCNAME + "@" + remoteDstFileName,
 				readOnlylocalFile, readOnlyremoteFile, 0444);
-		remoteFile.remove(remoteDstFileName);
 		
 		//remote to local
 		scpTest(remotehost + ":" + CMSVCNAME + "@" + readOnlyFileName, 
 				localDstFileName,
 				readOnlyremoteFile, readOnlylocalFile, 0444);
-		localFile.remove(localDstFileName);
 		
 		//local to local
 		scpTest(readOnlyFileName, 
 				localDstFileName,
 				readOnlylocalFile, localFile, 0444);
-		localFile.remove(localDstFileName);
 		
 		//remote to remote
 		scpTest(remotehost + ":" + CMSVCNAME + "@" + readOnlyFileName, 
 				remotehost + ":" + CMSVCNAME + "@" + remoteDstFileName,
-				readOnlyremoteFile, readOnlyremoteFile, 0444);
-		remoteFile.remove(remoteDstFileName);		
+				readOnlyremoteFile, readOnlyremoteFile, 0444);	
 	}catch(e)
 	{
 		throw e;
 	}
-	File.remove(readOnlyFileName);*/
+	File.remove(readOnlyFileName);
+	remoteFile.remove(readOnlyFileName);
 	
 	//src only write,only for user sdbadmin
 	/*var writeOnlyFileName = WORKDIR + "/writeOnly_11338";
@@ -295,10 +292,17 @@ function scpTest(srcFileName, dstFileName, srcFile, dstFile, mode, isReplace){
       var srcMode = srcFile._getPermission(md5SrcFileName);
       var dstMode = dstFile._getPermission(md5DstFileName);
       if ( typeof(mode) == "undefined" ) { mode = srcMode; }
-     
+      
       var umask = dstFile.getUmask() ;
-      mode = mode & ~umask ; 
+      if(mode === 0)
+      {
+         mode = 416;
+      }else
+      {
+         mode = mode & ~umask ; 
+      }
       dstFile.remove(md5DstFileName);
+      
       
       if(expectMd5 !== actualMd5 || mode !== dstMode){
          throw "MD5_MODE_NOT_SAME";
