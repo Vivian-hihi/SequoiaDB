@@ -67,6 +67,7 @@ function _connectCoord( coordList, user, passwd )
    {
       try
       {
+         rc = SDB_OK ;
          PD_LOGGER.logTask( PDEVENT, sprintf( "Connect coord[?:?]",
                                               coordList[index][FIELD_HOSTNAME],
                                               coordList[index][FIELD_SVCNAME] ) ) ;
