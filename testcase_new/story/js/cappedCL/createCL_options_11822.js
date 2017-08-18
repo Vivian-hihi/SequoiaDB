@@ -17,6 +17,7 @@ function main()
    var clName4 = CHANGEDPREFIX + "_11822_CL4";
    var clName5 = CHANGEDPREFIX + "_11822_CL5";
    var clName6 = CHANGEDPREFIX + "_11822_CL6";
+   var clName7 = CHANGEDPREFIX + "_11822_CL7";
    
    //clean and createCS CL before test
    println( "---begin test---" );
@@ -49,6 +50,10 @@ function main()
    //check Caped
    var options6 = { Caped : true, Size:1024, Max:10000000, AutoIndexId:false };
    checkCreateCLOptions( csName, clName6, options6, false );
+   
+   //check no Capped
+   var options7 = { Size:1024, Max:10000000, AutoIndexId:false };
+   checkCreateCLOptions( csName, clName7, options7, false );
    
    //clean environment after test  
    println( "---end the test---" );
