@@ -144,6 +144,7 @@ namespace engine
    #define OMA_CMD_RM_COORD_RG                        "remove coordgroup"
    #define OMA_CMD_RM_DATA_RG                         "remove datagroup"
    #define OMA_CMD_EXTEND_SEQUOIADB                   "extend sequoiadb"
+   #define OMA_CMD_SHRINK_BUSINESS                    "shrink business"
    #define OMA_ROLLBACK_STANDALONE                    "rollback installed standalone"
    #define OMA_ROLLBACK_CATALOG                       "rollback installed catalog"
    #define OMA_ROLLBACK_COORD                         "rollback installed coord"
@@ -211,6 +212,7 @@ namespace engine
    #define FILE_ROLLBACK_DATA_RG            "rollbackDataRG.js"
 
    #define FILE_EXTEND_SEQUOIADB            "extendSequoiaDB.js"
+   #define FILE_SHRINK_BUSINESS             "shrinkBusiness.js"
 
    #define FILE_SYNC_BUSINESS_CONF          "syncBusinessConf.js"
 

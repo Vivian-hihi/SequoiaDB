@@ -73,6 +73,8 @@ namespace engine
       // extend business
       OMA_TASK_EXTEND_BUZ         = OM_TASK_TYPE_EXTEND_BUSINESS,
 
+      OMA_TASK_SHRINK_BUSINESS    = OM_TASK_TYPE_SHRINK_BUSINESS,
+
       OMA_TASK_TYPE_END,
       
       OMA_TASK_SUB_TYPE_BEGIN,

@@ -1502,6 +1502,20 @@ namespace engine
                goto error ;
             }
          }
+         else if( OMA_TASK_SHRINK_BUSINESS == taskType )
+         {
+            if( string( pBusinessType ) == OMA_BUS_TYPE_SEQUOIADB )
+            {
+               *type = OMA_TASK_SHRINK_BUSINESS ;
+            }
+            else
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG_MSG( PDERROR, "Unknow task sub type with name[%s], "
+                           "rc = %d", pBusinessType, rc ) ;
+               goto error ;
+            }
+         }
       }
       else
       {

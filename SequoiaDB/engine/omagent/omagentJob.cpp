@@ -174,6 +174,9 @@ namespace engine
       case OMA_TASK_EXTEND_DB:
          command = OMA_CMD_EXTEND_SEQUOIADB ;
          break ;
+      case OMA_TASK_SHRINK_BUSINESS:
+         command = OMA_CMD_SHRINK_BUSINESS ;
+         break ;
       default:
          command = "" ;
          break ;
@@ -239,8 +242,10 @@ namespace engine
             pTask = SDB_OSS_NEW _omaAsyncSubTask( taskID ) ;
             break ;
          case OMA_TASK_EXTEND_DB:
+         case OMA_TASK_SHRINK_BUSINESS:
             {
                string command = getCmdByType( taskType ) ;
+
                pTask = SDB_OSS_NEW _omaAsyncTask( taskID, command.c_str() ) ;
             }
             break ;
