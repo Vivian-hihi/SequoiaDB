@@ -14,7 +14,11 @@
 	<parameter name="REMOTEUSER"     value="sdbadmin" />
 	<parameter name="REMOTEPASSWD"   value="sdbadmin" />
    <parameter name="SCRIPTDIR"       value="/trunk/testcase_new/reliability/script" />
-   
+
+	<listeners>
+		<listener class-name="com.sequoiadb.commlib.ReliabilityInvokeMethodListener"/>
+	</listeners>
+
 	<test name="reliability_normal">
 		<packages>
 			<package name="com.sequoiadb.subcl.brokennetwork" />
