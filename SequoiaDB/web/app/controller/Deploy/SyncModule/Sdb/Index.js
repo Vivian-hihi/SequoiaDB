@@ -1,4 +1,5 @@
 ﻿//@ sourceURL=Index.js
+//"use strict" ;
 (function(){
    var sacApp = window.SdbSacManagerModule ;
    //主控制器
@@ -24,6 +25,7 @@
                getBusinessConf() ;
             },
             'failed': function( errorInfo ){
+               $scope.SyncStatus = 2 ;
                Loading.cancel() ;
                _IndexPublic.createRetryModel( $scope, errorInfo, function(){
                   syncBusinessConf() ;
@@ -60,6 +62,7 @@
                isFirst = false ;
             },
             'failed': function( errorInfo ){
+               $scope.SyncStatus = 2 ;
                Loading.cancel() ;
                _IndexPublic.createRetryModel( $scope, errorInfo, function(){
                   getBusinessConf() ;
@@ -92,27 +95,27 @@
    sacApp.controllerProvider.register( 'Deploy.Sdb.Sync.Preview.Ctrl', function( $scope, SdbSignal ){
       //同步前的信息
       $scope.BeforeSync = {
-         'hostNum': 0,
-         'nodeNum': 0,
-         'dataGroupNum': 0,
-         'dataNum': 0,
-         'cataNum': 0,
-         'coordNum': 0,
-         'minReplicaNum': 0,
-         'maxReplicaNum': 0,
+         'hostNum': '-',
+         'nodeNum': '-',
+         'dataGroupNum': '-',
+         'dataNum': '-',
+         'cataNum': '-',
+         'coordNum': '-',
+         'minReplicaNum': '-',
+         'maxReplicaNum': '-',
          'moduleMode': '-'
       } ;
 
       //同步后的信息
       $scope.AfterSync = {
-         'hostNum': 0,
-         'nodeNum': 0,
-         'dataGroupNum': 0,
-         'dataNum': 0,
-         'cataNum': 0,
-         'coordNum': 0,
-         'minReplicaNum': 0,
-         'maxReplicaNum': 0,
+         'hostNum': '-',
+         'nodeNum': '-',
+         'dataGroupNum': '-',
+         'dataNum': '-',
+         'cataNum': '-',
+         'coordNum': '-',
+         'minReplicaNum': '-',
+         'maxReplicaNum': '-',
          'moduleMode': '-'
       } ;
 
@@ -139,6 +142,14 @@
             var replicaMin = 10 ;
             var tempGroupsArr = {} ;
 
+            syncInfo['hostNum'] = 0 ;
+            syncInfo['nodeNum'] = 0 ;
+            syncInfo['dataGroupNum'] = 0 ;
+            syncInfo['dataNum'] = 0 ;
+            syncInfo['cataNum'] = 0 ;
+            syncInfo['coordNum'] = 0 ;
+            syncInfo['minReplicaNum'] = 0 ;
+            syncInfo['maxReplicaNum'] = 0 ;
             syncInfo['moduleMode'] = nodeList[0]['DeployMod'] ;
             $.each( nodeList, function( index, hostInfo ){
                ++syncInfo['hostNum'] ;
@@ -298,8 +309,8 @@
       SdbSignal.on( 'GetFinishConf', function( result ){
          $scope.NodeTable['body'] = [] ;
 
-         beforeResult = result['BeforeNodeConf'] ;
-         afterResult  = result['AfterNodeConf'] ;
+         var beforeResult = result['BeforeNodeConf'] ;
+         var afterResult  = result['AfterNodeConf'] ;
 
          //将已删除的节点传入表格body
          $.each( beforeResult, function( index, beforeNodeInfo ){

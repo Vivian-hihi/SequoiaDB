@@ -1,31 +1,13 @@
 ﻿<div ng-controller="Deploy.Sdb.Sync.Ctrl" ng-container="{}">
    <div style="padding:10px 15px;" ng-container="{offsetY:-40}">
-      <div ng-windows="form as SetNodeConfWindow.config" windows-callback="SetNodeConfWindow.callback">
-         <div class="underlineTab" style="height:50px;">
-            <ul class="left">
-               <li ng-class="{true:'active'}[SetNodeConfWindow.ShowType == 1]">
-                  <a class="linkButton" ng-click="Switch(1)">{{autoLanguage("普通")}}</a>
-               </li>
-               <li ng-class="{true:'active'}[SetNodeConfWindow.ShowType == 2]">
-                  <a class="linkButton" ng-click="Switch(2)">{{autoLanguage("高级")}}</a>
-               </li>
-               <li ng-class="{true:'active'}[SetNodeConfWindow.ShowType == 3]">
-                  <a class="linkButton" ng-click="Switch(3)">{{autoLanguage("自定义")}}</a>
-               </li>
-            </ul>
-         </div>
-         <div form-create para="form['form1']" ng-show="SetNodeConfWindow.ShowType == 1"></div>
-         <div form-create para="form['form2']" ng-show="SetNodeConfWindow.ShowType == 2"></div>
-         <div form-create para="form['form3']" ng-show="SetNodeConfWindow.ShowType == 3"></div>
-      </div>
       <div ng-container="{offsetY:-5}">
-         <div ng-controller="Deploy.Sdb.Sync.Preview.Ctrl" class="pull-left" ng-container="{width:350}">
+         <div ng-controller="Deploy.Sdb.Sync.Preview.Ctrl" class="pull-left" ng-container="{width:400}">
             <div style="height:30px;font-size:110%;font-weight:bold;">{{autoLanguage("同步信息")}}</div>
             <div class="borderBox" style="padding:10px;font-size:90%;overflow-y:auto;" ng-container="{offsetY:-30}">
                <div style="font-weight:bold;margin-bottom:10px;">{{autoLanguage("业务信息")}}</div>
                <table class="table loosen border" style="margin-bottom:15px;">
                   <tr>
-                     <td style="width:100px;">{{autoLanguage("同步集群")}}</td>
+                     <td style="width:120px;">{{autoLanguage("同步集群")}}</td>
                      <td>{{ClusterName}}</td>
                   </tr>
                   <tr>
@@ -36,6 +18,7 @@
                      <td>{{autoLanguage("同步状态")}}</td>
                      <td ng-if="SyncStatus == 0">{{autoLanguage("同步中...")}}</td>
                      <td ng-if="SyncStatus == 1">{{autoLanguage("同步完成")}}</td>
+                     <td ng-if="SyncStatus == 2"><b>{{autoLanguage("同步失败")}}</b></td>
                   </tr>
                </table>
                <div style="font-weight:bold;margin-bottom:10px;">{{autoLanguage("业务配置")}}</div>
@@ -93,7 +76,7 @@
                </table>
             </div>
          </div>
-         <div ng-controller="Deploy.Sdb.Sync.Table.Ctrl" class="pull-left" ng-container="{offsetX:-360,marginLeft:10}">
+         <div ng-controller="Deploy.Sdb.Sync.Table.Ctrl" class="pull-left" ng-container="{offsetX:-410,marginLeft:10}">
             <div style="height:30px;font-size:110%;font-weight:bold;">{{autoLanguage("节点列表")}}</div>
             <div ng-container="{offsetY:-30}" ng-table="NodeTable['options']" table-title="NodeTable['title']" table-content="nodeAttr in NodeTable['body']" table-callback="NodeTable['callback']">
                <div class="Ellipsis" table-key="type">
