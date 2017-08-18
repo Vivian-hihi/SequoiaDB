@@ -1,8 +1,8 @@
 /************************************************************
 * @Description: test case for Jira questionaire
-*				SEQUOIADBMAINSTREAM-837
-* @Modify:      Liang xuewang Init
-*				2017-07-20
+*					 SEQUOIADBMAINSTREAM-837
+* @Modify:		 Liang xuewang Init
+*					 2017-08-18
 *************************************************************/
 #include <client.hpp>
 #include <gtest/gtest.h>
@@ -26,13 +26,14 @@ TEST( createNode, bson_option )
 	rc = db.createReplicaGroup( rgName, tmpGroup ) ;
 	ASSERT_EQ( rc, SDB_OK ) << "fail to create group " << rgName ;
 
-	const char* host = HOSTNAME ;
+	rc = getLocalHost() ;
+	ASSERT_EQ( rc, SDB_OK ) << "fail to get local host name" ;
 	const char* svc = RSRVPORTBEGIN ;
 	char dbpath[100] ;
 	sprintf( dbpath, "%s%s", RSRVNODEDIR, svc ) ;
 	BSONObj option = BSON( "weight" << 100 ) ;
-	rc = tmpGroup.createNode( host, svc, dbpath, option ) ;
-	ASSERT_EQ( rc, SDB_OK ) << "fail to create node " << host << ":" << svc ;
+	rc = tmpGroup.createNode( HOST, svc, dbpath, option ) ;
+	ASSERT_EQ( rc, SDB_OK ) << "fail to create node " << HOST << ":" << svc ;
 
 	rc = tmpGroup.start() ;
 	ASSERT_EQ( rc, SDB_OK ) << "fail to start group " << rgName ;
