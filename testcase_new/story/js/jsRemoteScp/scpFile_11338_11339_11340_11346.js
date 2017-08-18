@@ -179,7 +179,7 @@ function main(){
 	
 	var readOnlyFileName = WORKDIR + "/readOnly_11338";
 	var readOnlylocalFile = new File(readOnlyFileName , 0444, SDB_FILE_CREATE|SDB_FILE_READONLY);
-	var readOnlyremoteFile = remote.getFile(readOnlyFileName, 0444, SDB_FILE_CREATE|SDB_FILE_WRITEONLY);
+	var readOnlyremoteFile = remote.getFile(readOnlyFileName, 0444, SDB_FILE_CREATE|SDB_FILE_READONLY);
 	try
 	{
 		File.scp(localSrcFileName, readOnlyFileName, true, 0444);
@@ -208,7 +208,10 @@ function main(){
 		throw e;
 	}
 	File.remove(readOnlyFileName);
-	remoteFile.remove(readOnlyFileName);
+	if(true !== commIsStandalone( db ))
+	{
+	   remoteFile.remove(readOnlyFileName);
+	}
 	
 	//src only write,only for user sdbadmin
 	/*var writeOnlyFileName = WORKDIR + "/writeOnly_11338";
