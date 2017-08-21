@@ -35,6 +35,16 @@ function main(){
    println( "remote source file name :" + remotehost + ":" + remoteSrcFileName );
    var remoteDstFileName = WORKDIR + "/dstFile_11338";
    
+   //clear env
+   if(remoteFile.exist(remoteDstFileName))
+   {
+      remoteFile.remove(remoteDstFileName);
+   }
+   if(localFile.exist(localDstFileName))
+   {
+      localFile.remove(localDstFileName);
+   }
+	
    //seqDB-11338
    scpTest(localSrcFileName, localDstFileName, localFile, localFile);
    
@@ -179,6 +189,17 @@ function main(){
 	println("check default open mode success");
 	
 	var readOnlyFileName = WORKDIR + "/readOnly_11338";
+	
+	//clear env
+	if(localFile.exist(readOnlyFileName))
+   {
+      localFile.remove(readOnlyFileName);
+   }
+	if(remoteFile.exist(readOnlyFileName))
+   {
+      remoteFile.remove(readOnlyFileName);
+   }
+    
 	var readOnlylocalFile = new File(readOnlyFileName , 0755, SDB_FILE_CREATE|SDB_FILE_READONLY);
 	var readOnlyremoteFile = remote.getFile(readOnlyFileName, 0755, SDB_FILE_CREATE|SDB_FILE_READONLY);
 	try
@@ -221,80 +242,90 @@ function main(){
 	   //src only read,only for user adbadmin
 	   var readOnlyFileName = WORKDIR + "/readOnly_11338";
 	   //local
-   	try
-   	{
-   		File.scp(localSrcFileName, readOnlyFileName, true, 0444);
-   		File.scp(readOnlyFileName, remotehost + ":" + CMSVCNAME + "@" + remoteDstFileName, true, 0444);
-   	}catch(e)
-   	{
-   		throw e;
-   	}
-   	println("check permission is only read local scp success");
-   	
-   	File.remove(readOnlyFileName);
-   	if(remoteFile.exist(remoteDstFileName))
-	   {
-	      remoteFile.remove(remoteDstFileName);
-	   }
-   	
-   	//remote
-   	try
-   	{
-   		File.scp(localSrcFileName, remotehost + ":" + CMSVCNAME + "@" + readOnlyFileName,
-   				 true, 0444);
-   		File.scp(remotehost + ":" + CMSVCNAME + "@" + readOnlyFileName, 
-   				 remotehost + ":" + CMSVCNAME + "@" + remoteDstFileName,
-   				 true, 0444);
-   	}catch(e)
-   	{
-   		throw e;
-   	}
-   	File.remove(readOnlyFileName);
-   	if(remoteFile.exist(readOnlyFileName))
-	   {
-	      remoteFile.remove(readOnlyFileName);
-	   }
+		try
+		{
+			File.scp(localSrcFileName, readOnlyFileName, true, 0444);
+			File.scp(readOnlyFileName, remotehost + ":" + CMSVCNAME + "@" + remoteDstFileName, true, 0444);
+		}catch(e)
+		{
+			throw e;
+		}
+		println("check permission is only read local scp success");
+		
+		File.remove(readOnlyFileName);
+		if(remoteFile.exist(remoteDstFileName))
+		{
+		   remoteFile.remove(remoteDstFileName);
+		}
+		
+		//remote
+		try
+		{
+			File.scp(localSrcFileName, remotehost + ":" + CMSVCNAME + "@" + readOnlyFileName,
+					 true, 0444);
+			File.scp(remotehost + ":" + CMSVCNAME + "@" + readOnlyFileName, 
+					 remotehost + ":" + CMSVCNAME + "@" + remoteDstFileName,
+					 true, 0444);
+		}catch(e)
+		{
+			throw e;
+		}
+		File.remove(readOnlyFileName);
+		if(remoteFile.exist(readOnlyFileName))
+		   {
+			  remoteFile.remove(readOnlyFileName);
+		   }
 	   if(remoteFile.exist(remoteDstFileName))
 	   {
-	      remoteFile.remove(remoteDstFileName);
+		  remoteFile.remove(remoteDstFileName);
 	   }
-   	println("check permission is read only remote scp success");
-	   
-	   //src only write,only for user sdbadmin
-	   var writeOnlyFileName = WORKDIR + "/writeOnly_11338";
+		println("check permission is read only remote scp success");
+		   
+		//src only write,only for user sdbadmin
+		var writeOnlyFileName = WORKDIR + "/writeOnly_11338";
+		
+		//clear env
+		if(File.exist(writeOnlyFileName))
+		{
+		   File.remove(writeOnlyFileName);
+		}
+		if(remoteFile.exist(writeOnlyFileName))
+		{
+		   remoteFile.remove(writeOnlyFileName);
+		}
 	
-   	//local
-   	try
-   	{
-   		File.scp(localSrcFileName, writeOnlyFileName, true, 0222);
-   		File.scp(writeOnlyFileName, remotehost + ":" + CMSVCNAME + "@" + remoteDstFileName, true, 0222);
-   		throw "NEED_AN_ERROR";
-   	}catch(e)
-   	{
-   		if(e !== -3)
-   		{
-   			throw e;
-   		}
-   	}
-   	
-   	//remote
-   	try
-   	{
-   		File.scp(localSrcFileName, remotehost + ":" + CMSVCNAME + "@" + writeOnlyFileName,
-   				 true, 0222);
-   		File.scp(remotehost + ":" + CMSVCNAME + "@" + writeOnlyFileName, 
-   				 remotehost + ":" + CMSVCNAME + "@" + remoteDstFileName,
-   				 true, 0222);
-   		throw "NEED_AN_ERROR";
-   	}catch(e)
-   	{
-   		if(e !== -3)
-   		{
-   			throw e;
-   		}
-   	}
-   	File.remove(writeOnlyFileName);
-   	println("check permission is write only success");
+		//local
+		try
+		{
+			File.scp(localSrcFileName, writeOnlyFileName, true, 0222);
+			File.scp(writeOnlyFileName, remotehost + ":" + CMSVCNAME + "@" + remoteDstFileName, true, 0222);
+			throw "NEED_AN_ERROR";
+		}catch(e)
+		{
+			if(e !== -3)
+			{
+				throw e;
+			}
+		}
+		
+		//remote
+		try
+		{
+			File.scp(localSrcFileName, remotehost + ":" + CMSVCNAME + "@" + writeOnlyFileName,
+					 true, 0222);
+			File.scp(remotehost + ":" + CMSVCNAME + "@" + writeOnlyFileName, 
+					 remotehost + ":" + CMSVCNAME + "@" + remoteDstFileName,
+					 true, 0222);
+			throw "NEED_AN_ERROR";
+		}catch(e)
+		{
+			if(e !== -3)
+			{
+				throw e;
+			}
+		}
+		File.remove(writeOnlyFileName);
+		println("check permission is write only success");
 	}
 	
 	
@@ -322,7 +353,7 @@ function main(){
 main();
 
 function scpTest(srcFileName, dstFileName, srcFile, dstFile, mode, isReplace){
-   try{
+   try{ 
       File.scp(srcFileName, dstFileName, isReplace, mode);
       
       srcIndex = srcFileName.indexOf("@");
