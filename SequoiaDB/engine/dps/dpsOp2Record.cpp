@@ -244,7 +244,7 @@ namespace engine
          goto error ;
       }
 
-      if ( !oldShardingKey.isEmpty() )
+      if ( !oldShardingKey.isEmpty() && !newShardingKey.isEmpty() )
       {
          rc = record.push( DPS_LOG_UPDATE_OLDSHARDINGKEY,
                            oldShardingKey.objsize(),
@@ -254,21 +254,21 @@ namespace engine
             PD_LOG( PDERROR, "Failed to push oldShardingKey to record, rc: %d", rc ) ;
             goto error ;
          }
-      }
 
-      // To save space,
-      // do not log new sharding key when it equals old sharding key.
-      if ( !newShardingKey.isEmpty() && newShardingKey.woCompare( oldShardingKey ) != 0 )
-      {
-         SDB_ASSERT( !oldShardingKey.isEmpty(), "must have old sharding key" ) ;
-
-         rc = record.push( DPS_LOG_UPDATE_NEWSHARDINGKEY,
-                           newShardingKey.objsize(),
-                           newShardingKey.objdata() ) ;
-         if ( SDB_OK != rc )
+         // To save space,
+         // do not log new sharding key when it equals old sharding key.
+         if ( newShardingKey.woCompare( oldShardingKey ) != 0 )
          {
-            PD_LOG( PDERROR, "Failed to push newShardingKey to record, rc: %d", rc ) ;
-            goto error ;
+            SDB_ASSERT( !oldShardingKey.isEmpty(), "must have old sharding key" ) ;
+
+            rc = record.push( DPS_LOG_UPDATE_NEWSHARDINGKEY,
+                              newShardingKey.objsize(),
+                              newShardingKey.objdata() ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "Failed to push newShardingKey to record, rc: %d", rc ) ;
+               goto error ;
+            }
          }
       }
 
