@@ -2949,6 +2949,18 @@
                      ]
                   },
                   {
+                     "id": 1501731656,
+                     "file": "sync_module",
+                     "cn": "同步业务",
+                     "en": "Sync module"
+                  },
+                  {
+                     "id": 1501731657,
+                     "file": "append_module",
+                     "cn": "发现业务",
+                     "en": "Append module"
+                  },
+                  {
                      "id": 1483944518,
                      "file": "sdb_auth",
                      "cn": "设置鉴权",
