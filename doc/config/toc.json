@@ -2949,6 +2949,12 @@
                      ]
                   },
                   {
+                     "id": 1501731655,
+                     "file": "extend_module",
+                     "cn": "扩容",
+                     "en": "Extend module"
+                  },
+                  {
                      "id": 1501731656,
                      "file": "sync_module",
                      "cn": "同步业务",
