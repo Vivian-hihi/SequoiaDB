@@ -1311,7 +1311,10 @@ namespace engine
 
       INT32 _getRestInfo() ;
 
-      INT32 _syncBusinessConfig( vector<simpleAddressInfo> &addressList ) ;
+      INT32 _checkExecResult( omRestTool &restTool, const BSONObj &result ) ;
+
+      INT32 _syncBusinessConfig( omRestTool &restTool,
+                                 vector<simpleAddressInfo> &addressList ) ;
 
       void _generateRequest( vector<simpleAddressInfo> &addressList,
                              BSONObj &request ) ;
