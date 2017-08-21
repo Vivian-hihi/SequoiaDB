@@ -123,7 +123,6 @@
 #include "utilTrace.hpp"
 
 
-
 #ifdef _WIN32
 #include <windows.h>
 #include <io.h>
@@ -437,7 +436,7 @@ static int enableRawMode(int fd)
     raw.c_cc[VMIN] = 1; raw.c_cc[VTIME] = 0; /* 1 byte, no timer */
 
     /* put terminal in raw mode after flushing */
-    if (tcsetattr(fd,TCSAFLUSH,&raw) < 0) goto error;
+    if (tcsetattr(fd,TCSADRAIN,&raw) < 0) goto error;
     rawmode = 1;
 #else
     REDIS_NOTUSED(fd);
@@ -490,7 +489,7 @@ static void disableRawMode(int fd)
     rawmode = 0;
 #else
     /* Don't even check the return value as it's too late. */
-    if (rawmode && tcsetattr(fd,TCSAFLUSH,&orig_termios) != -1)
+    if (rawmode && tcsetattr(fd,TCSADRAIN,&orig_termios) != -1)
         rawmode = 0;
 #endif
     PD_TRACE_EXIT ( SDB_DISABLERAWMODE );
@@ -826,6 +825,7 @@ static void abAppend(struct abuf *ab, const char *s, int len)
     char *newone = (char *)realloc(ab->b,ab->len+len);
 
     if (newone == NULL) return;
+
     memcpy(newone+ab->len,s,len);
     ab->b = newone;
     ab->len += len;
@@ -1374,7 +1374,7 @@ static void refreshLine(struct linenoiseState *l)
  *
  * On error writing to the terminal -1 is returned, otherwise 0. */
 PD_TRACE_DECLARE_FUNCTION ( SDB_LNEDITINSERT, "linenoiseEditInsert" )
-int linenoiseEditInsert(struct linenoiseState *l, char c) 
+int linenoiseEditInsert(struct linenoiseState *l, char c)
 {
     PD_TRACE_ENTRY ( SDB_LNEDITINSERT );
     int ret = 0;
@@ -1642,6 +1642,10 @@ static int linenoiseEdit( int stdin_fd, int stdout_fd, char *buf,
          * character that should be handled next. */
         if (c == 9 && completionCallback != NULL)
         {
+            if( !linenoiseIsStdinEmpty() )
+            {
+               continue ;
+            }
             c = completeLine(&l);
             /* Return on errors */
             if (c < 0)
@@ -1671,7 +1675,7 @@ static int linenoiseEdit( int stdin_fd, int stdout_fd, char *buf,
                      ? EAGAIN : ECANCELED ;
             ret = -1;
             goto done;
-            case 127: /* backspace in linux and delete in windows */
+        case 127: /* backspace in linux and delete in windows */
 #ifdef _WIN32
             /* delete in _WIN32*/
             /* win32read() will send 127 for DEL and 8 for BS and Ctrl-H */
@@ -2244,4 +2248,59 @@ static void setDisplayAttribute( bool enhancedDisplay, struct abuf *ab )
     }
 #endif
    PD_TRACE_EXIT ( SDB_SETDISPLAYATTRIBUTE );
+}
+
+void linenoiseClearInputBuffer( void )
+{
+#ifdef _WIN32
+   FlushConsoleInputBuffer( hIn ) ;
+#else
+   tcflush( STDIN_FILENO, TCIOFLUSH ) ;
+#endif
+}
+
+int linenoiseIsStdinEmpty()
+{
+   int ret = 1 ;
+#ifdef _WIN32
+   DWORD len = 0 ;
+   if( GetNumberOfConsoleInputEvents( hIn, &len ) )
+   {
+      if( len > 0 )
+      {
+         ret = 0 ;
+      }
+   }
+   else
+   {
+      goto error ;
+   }
+#else
+   int len = 0 ;
+   int hasEnableRawMode = rawmode ;
+
+   if( !hasEnableRawMode )
+   {
+      if( 0 != enableRawMode( STDIN_FILENO ) )
+      {
+         goto error ;
+      }
+   }
+   if( !ioctl( STDIN_FILENO, FIONREAD, &len ) )
+   {
+      if( len > 0 )
+      {
+         ret = 0 ;
+      }
+   }
+   if( !hasEnableRawMode )
+   {
+      disableRawMode( STDIN_FILENO ) ;
+   }
+#endif
+done:
+   return ret ;
+error:
+   ret = 1 ;
+   goto done ;
 }

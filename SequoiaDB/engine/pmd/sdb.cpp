@@ -53,7 +53,9 @@
 #include <boost/algorithm/string/erase.hpp>
 #include <boost/program_options.hpp>
 #include <boost/program_options/parsers.hpp>
+#include <boost/bind.hpp>
 #include "sptCommon.hpp"
+#include "sptSPScope.hpp"
 #include "utilPath.hpp"
 #include "utilPipe.hpp"
 #include "sptContainer.hpp"
@@ -67,6 +69,8 @@ using std::vector ;
 using std::string ;
 using std::bad_alloc ;
 using namespace engine ;
+
+#define ELSE_STATEMENT     "else{}"
 
 namespace po = boost::program_options ;
 po::options_description display ( "Command options" ) ;
@@ -271,9 +275,60 @@ error :
    goto done ;
 }
 
+BOOLEAN sdbdefCanContinueGetNextLine( sptScope *scope, const CHAR *str )
+{
+   BOOLEAN ret = FALSE ;
+   if( SPT_SCOPE_TYPE_SP == scope->getType() )
+   {
+      sptSPScope* spScope = dynamic_cast< sptSPScope* >( scope ) ;
+      JSContext *context = spScope->getContext() ;
+      JSObject *global = spScope->getGlobalObj() ;
+      if( NULL == spScope )
+      {
+         goto error ;
+      }
+      // If input buffer is not a compiable unit,we need to get next line.
+      if( !JS_BufferIsCompilableUnit( context, global, str, ossStrlen( str ) ) )
+      {
+         ret = TRUE ;
+      }
+      /* If stdin buffer is not emptry, it means
+       *    that user uses the copy function.
+       */
+      else if( !isStdinEmpty() )
+      {
+         string content = ELSE_STATEMENT ;
+         // Save old exception state
+         JSExceptionState *exnState = JS_SaveExceptionState( context ) ;
+         // Set reporter is null to avold print error msg
+         JSErrorReporter older = JS_SetErrorReporter( context, NULL ) ;
+         // Concatenate the else statement at the end of the str
+         content = str + content ;
+         // Try to compile script
+         if( JS_CompileScript( context, global, content.c_str(), content.size(),
+                               NULL, 0 ) )
+         {
+            ret = TRUE ;
+         }
+         else
+         {
+            ret = FALSE ;
+         }
+         // Restore error reporter and exception state
+         JS_SetErrorReporter( context, older ) ;
+         JS_RestoreExceptionState( context, exnState ) ;
+      }
+   }
+done:
+   return ret ;
+error:
+   ret = FALSE ;
+   goto done ;
+}
+
 // PD_TRACE_DECLARE_FUNCTION ( SDB_ENTERBATCHMODE, "enterBatchMode" )
-INT32 enterBatchMode( sptScope * scope , const CHAR * filename ,
-                      const CHAR * variable )
+INT32 enterBatchMode( sptScope * scope , const CHAR *filename,
+                      const CHAR *variable )
 {
    INT32    rc       = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_ENTERBATCHMODE );
@@ -364,6 +419,10 @@ INT32 enterInteractiveMode ( sptScope *scope, const CHAR *lang )
 
    // set language for dispaly help info
    sptHelp::setLanguage( lang ) ;
+
+   // set sdb defined can continue get next line function
+   setCanContinueNextLineCallback( boost::bind( sdbdefCanContinueGetNextLine,
+                                                scope, _1 ) ) ;
 
    // initialize and load the history
    historyInit () ;
