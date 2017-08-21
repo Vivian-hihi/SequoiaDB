@@ -176,10 +176,11 @@ function main(){
 	scpTest(remotehost + ":" + CMSVCNAME + "@" + remoteSrcFileName, 
 		    remotehost + ":" + CMSVCNAME + "@" + remoteDstFileName,
 		    remoteFile, remoteFile, 0);
+	println("check default open mode success");
 	
 	var readOnlyFileName = WORKDIR + "/readOnly_11338";
-	var readOnlylocalFile = new File(readOnlyFileName , 0444, SDB_FILE_CREATE|SDB_FILE_READONLY);
-	var readOnlyremoteFile = remote.getFile(readOnlyFileName, 0444, SDB_FILE_CREATE|SDB_FILE_READONLY);
+	var readOnlylocalFile = new File(readOnlyFileName , 0755, SDB_FILE_CREATE|SDB_FILE_READONLY);
+	var readOnlyremoteFile = remote.getFile(readOnlyFileName, 0755, SDB_FILE_CREATE|SDB_FILE_READONLY);
 	try
 	{
 		File.scp(localSrcFileName, readOnlyFileName, true, 0444);
@@ -208,46 +209,94 @@ function main(){
 		throw e;
 	}
 	File.remove(readOnlyFileName);
-	if(true !== commIsStandalone( db ))
+	if(remoteFile.exist(readOnlyFileName))
 	{
 	   remoteFile.remove(readOnlyFileName);
 	}
+	println("check readOnly open mode success");
 	
-	//src only write,only for user sdbadmin
-	/*var writeOnlyFileName = WORKDIR + "/writeOnly_11338";
+	var user = System.getCurrentUser().toObj().user;
+	if(user !== "root" )
+	{
+	   //src only read,only for user adbadmin
+	   var readOnlyFileName = WORKDIR + "/readOnly_11338";
+	   //local
+   	try
+   	{
+   		File.scp(localSrcFileName, readOnlyFileName, true, 0444);
+   		File.scp(readOnlyFileName, remotehost + ":" + CMSVCNAME + "@" + remoteDstFileName, true, 0444);
+   	}catch(e)
+   	{
+   		throw e;
+   	}
+   	println("check permission is only read local scp success");
+   	
+   	File.remove(readOnlyFileName);
+   	if(remoteFile.exist(remoteDstFileName))
+	   {
+	      remoteFile.remove(remoteDstFileName);
+	   }
+   	
+   	//remote
+   	try
+   	{
+   		File.scp(localSrcFileName, remotehost + ":" + CMSVCNAME + "@" + readOnlyFileName,
+   				 true, 0444);
+   		File.scp(remotehost + ":" + CMSVCNAME + "@" + readOnlyFileName, 
+   				 remotehost + ":" + CMSVCNAME + "@" + remoteDstFileName,
+   				 true, 0444);
+   	}catch(e)
+   	{
+   		throw e;
+   	}
+   	File.remove(readOnlyFileName);
+   	if(remoteFile.exist(readOnlyFileName))
+	   {
+	      remoteFile.remove(readOnlyFileName);
+	   }
+	   if(remoteFile.exist(remoteDstFileName))
+	   {
+	      remoteFile.remove(remoteDstFileName);
+	   }
+   	println("check permission is read only remote scp success");
+	   
+	   //src only write,only for user sdbadmin
+	   var writeOnlyFileName = WORKDIR + "/writeOnly_11338";
 	
-	//local
-	try
-	{
-		File.scp(localSrcFileName, writeOnlyFileName, true, 0222);
-		File.scp(writeOnlyFileName, remotehost + ":" + CMSVCNAME + "@" + remoteDstFileName, true, 0222);
-		throw "NEED_AN_ERROR";
-	}catch(e)
-	{
-		if(e !== -3)
-		{
-			throw e;
-		}
+   	//local
+   	try
+   	{
+   		File.scp(localSrcFileName, writeOnlyFileName, true, 0222);
+   		File.scp(writeOnlyFileName, remotehost + ":" + CMSVCNAME + "@" + remoteDstFileName, true, 0222);
+   		throw "NEED_AN_ERROR";
+   	}catch(e)
+   	{
+   		if(e !== -3)
+   		{
+   			throw e;
+   		}
+   	}
+   	
+   	//remote
+   	try
+   	{
+   		File.scp(localSrcFileName, remotehost + ":" + CMSVCNAME + "@" + writeOnlyFileName,
+   				 true, 0222);
+   		File.scp(remotehost + ":" + CMSVCNAME + "@" + writeOnlyFileName, 
+   				 remotehost + ":" + CMSVCNAME + "@" + remoteDstFileName,
+   				 true, 0222);
+   		throw "NEED_AN_ERROR";
+   	}catch(e)
+   	{
+   		if(e !== -3)
+   		{
+   			throw e;
+   		}
+   	}
+   	File.remove(writeOnlyFileName);
+   	println("check permission is write only success");
 	}
 	
-	//remote
-	try
-	{
-		File.scp(localSrcFileName, remotehost + ":" + CMSVCNAME + "@" + writeOnlyFileName,
-				 true, 0222);
-		File.scp(remotehost + ":" + CMSVCNAME + "@" + writeOnlyFileName, 
-				 remotehost + ":" + CMSVCNAME + "@" + remoteDstFileName,
-				 true, 0222);
-		throw "NEED_AN_ERROR";
-	}catch(e)
-	{
-		if(e !== -3)
-		{
-			throw e;
-		}
-	}
-	File.remove(writeOnlyFileName);*/
-	println("check set mode copy success");
 	
 	//seqDB-11346        
 	checkArgumentScp(localInstallPath, remotehost + ":" + CMSVCNAME + "@" + remoteDstFileName,
