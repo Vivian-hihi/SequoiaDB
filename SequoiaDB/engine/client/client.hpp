@@ -706,6 +706,7 @@ namespace sdbclient
                     using index "ageIndex" to scan data(index scan);
                     {"":null} means table scan. when hint is not provided,
                     database automatically match the optimal index to scan data
+    \param [in] flag The query flag, default to be 0. Please see the definition of follow flags for more detail
     \code
         UPDATE_KEEP_SHARDINGKEY
     \endcode
@@ -738,6 +739,7 @@ namespace sdbclient
                     {"":null} means table scan. when hint is not provided,
                     database automatically match the optimal index to scan data
     \param [in] setOnInsert The setOnInsert assigns the specified values to the fileds when insert
+    \param [in] flag The query flag, default to be 0. Please see the definition of follow flags for more detail
     \code
         UPDATE_KEEP_SHARDINGKEY
     \endcode
