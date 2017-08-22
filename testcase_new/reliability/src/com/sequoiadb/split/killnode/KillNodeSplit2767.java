@@ -107,16 +107,16 @@ public class KillNodeSplit2767 extends SdbTestBase {
             Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
 
             // 最长等待2分钟的集群环境恢复
-            Assert.assertEquals(groupMgr.checkBusiness(120), true, "failed to restore business");
+            Assert.assertEquals(groupMgr.checkBusiness(600), true, "failed to restore business");
 
             // 再次插入数据
             commSdb.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
             DBCollection cl = commSdb.getCollectionSpace(csName).getCollection(clName);
             insertData(cl, 5000, 5100);
 
-            Assert.assertEquals(destGroup.checkInspect(60), true);
-            Assert.assertEquals(srcGroup.checkInspect(60), true);
-            Assert.assertEquals(cataGroup.checkInspect(60), true);
+            Assert.assertEquals(destGroup.checkInspect(600), true);
+            Assert.assertEquals(srcGroup.checkInspect(600), true);
+            Assert.assertEquals(cataGroup.checkInspect(600), true);
 
             // 源和目标数据量比对
             checkGroupData(commSdb, destGroupName);
