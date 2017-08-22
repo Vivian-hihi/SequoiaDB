@@ -925,7 +925,7 @@ namespace replay
          match = builder.obj() ;
       }
 
-      rc = cl.update(modifier, match, hint);
+      rc = cl.update(modifier, match, hint, UPDATE_KEEP_SHARDINGKEY);
       if (SDB_OK != rc)
       {
          PD_LOG(PDERROR, "Failed to update record[%s:%s], lsn[%lld], rc=%d",
@@ -2423,7 +2423,7 @@ namespace replay
          newMatch = builder.obj() ;
       }
 
-      rc = cl.update(oldObj, newMatch, hint);
+      rc = cl.update(oldObj, newMatch, hint, UPDATE_KEEP_SHARDINGKEY);
       if (SDB_OK != rc)
       {
          PD_LOG(PDERROR, "Failed to rollback update record[%s:%s], lsn[%lld], rc=%d",
