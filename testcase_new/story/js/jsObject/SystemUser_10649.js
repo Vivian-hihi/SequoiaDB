@@ -417,16 +417,16 @@ function main()
       systems[i].testGetUserEnv() ;
       
       // 测试创建删除用户，自动创建删除用户主目录
-      // systems[i].testAddDelUser( true ) ;
+      systems[i].testAddDelUser( true ) ;
       
       // 测试创建删除用户，不创建删除用户主目录
-      // systems[i].testAddDelUser( false ) ;
+      systems[i].testAddDelUser( false ) ;
       
       // 测试创建已存在用户
       systems[i].testAddExistUser() ;
       
       // 测试修改用户属性
-      // systems[i].testSetUserConfigs() ;
+      systems[i].testSetUserConfigs() ;
       
       // 测试枚举登录用户
       systems[i].testListLoginUsers() ;
