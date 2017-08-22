@@ -1040,7 +1040,7 @@ namespace engine
             detail = BSON( SPT_ERR << "isReplace must be BOOLEAN" ) ;
             goto error ;
         }
-         optionObjBuilder.append( "isReplace", isReplace ) ;
+         optionObjBuilder.appendBool( "isReplace", isReplace ) ;
       }
 
       // get confFile
