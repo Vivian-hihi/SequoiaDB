@@ -109,8 +109,8 @@ public class DiskFullSplit2689 extends SdbTestBase {
             DBCollection cl = commSdb.getCollectionSpace(csName).getCollection(clName);
             insertData(cl, 10);
 
-            Assert.assertEquals(destGroup.checkInspect(600), true);
-            Assert.assertEquals(srcGroup.checkInspect(600), true);
+            Assert.assertEquals(destGroup.checkInspect(120), true);
+            Assert.assertEquals(srcGroup.checkInspect(60), true);
 
             long destCount = checkGroupLob(commSdb, destGroupName);
             long srcCount = checkGroupLob(commSdb, srcGroupName);
