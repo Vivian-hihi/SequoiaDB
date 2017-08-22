@@ -42,7 +42,6 @@
 
 namespace engine
 {
-#define SDB_LOB_MODE_REMOVE 0x00000010
 
    class _pmdEDUCB ;
    class _dmsStorageUnit ;
