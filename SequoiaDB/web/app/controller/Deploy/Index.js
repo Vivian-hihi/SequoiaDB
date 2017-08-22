@@ -1,4 +1,5 @@
 ﻿//@ sourceURL=Index.js
+//"use strict" ;
 (function(){
    var sacApp = window.SdbSacManagerModule ;
    //控制器
@@ -8,6 +9,7 @@
 
       //初始化
       $scope.EditHostGridOptions = { 'titleWidth': [ '200px', '200px', 100 ] } ;
+      $scope.ShowType  = 1 ;
       //集群列表
       $scope.clusterList = [] ;
       //默认选的cluster
@@ -933,6 +935,16 @@
                         return false ;
                      }
                   } ) ;
+                  if( isFind == false )
+                  {
+                     $.each( $rootScope.OmTaskList, function( index, taskInfo ){
+                        if( taskInfo['Status'] != 4 && formVal['moduleName'] == taskInfo['Info']['BusinessName'] )
+                        {
+                           isFind = true ;
+                           return false ;
+                        }
+                     } ) ;
+                  }
                   if( isFind == true )
                   {
                      return [ { 'name': 'moduleName', 'error': $scope.autoLanguage( '业务名已经存在' ) } ]
@@ -1482,6 +1494,10 @@
          }
       }
 
+      $scope.SwitchParam = function( type ){
+         $scope.ShowType = type ;
+      }
+
       //创建集群
       var createCluster = function( clusterInfo, success ){
          var data = { 'cmd': 'create cluster', 'ClusterInfo': JSON.stringify( clusterInfo ) } ;
@@ -1501,81 +1517,107 @@
 
       //创建集群 弹窗
       $scope.CreateClusterWindow = {
-         'config': {
-            'inputList': [
-               {
-                  "name": 'ClusterName',
-                  "webName": $scope.autoLanguage( '集群名' ),
-                  "type": "string",
-                  "required": true,
-                  "value": "",
-                  "valid": {
-                     'min': 1,
-                     'max': 127,
-                     'regex': '^[0-9a-zA-Z]+$'
-                  }
-               },
-               {
-                  'name': 'Desc',
-                  'webName': $scope.autoLanguage( '描述' ),
-                  'type': 'string',
-                  'value': '',
-                  'valid': {
-                     'min': 0,
-                     'max': 1024
-                  }
-               },
-               {
-                  "name": 'SdbUser',
-                  "webName": $scope.autoLanguage( '用户名' ),
-                  "type": "string",
-                  "required": true,
-                  "value": 'sdbadmin',
-                  "valid": {
-                     'min': 1,
-                     'max': 1024
-                  }
-               },
-               {
-                  "name": 'SdbPasswd',
-                  "webName": $scope.autoLanguage( '密码' ),
-                  "type": "string",
-                  "required": true,
-                  "value": 'sdbadmin',
-                  "valid": {
-                     'min': 1,
-                     'max': 1024
-                  }
-               },
-               {
-                  "name": 'SdbUserGroup',
-                  "webName": $scope.autoLanguage( '用户组' ),
-                  "type": "string",
-                  "required": true,
-                  "value": 'sdbadmin_group',
-                  "valid": {
-                     'min': 1,
-                     'max': 1024
-                  }
-               },
-               {
-                  "name": 'InstallPath',
-                  "webName": $scope.autoLanguage( '安装路径' ),
-                  "type": "string",
-                  "required": true,
-                  "value": '/opt/sequoiadb/',
-                  "valid": {
-                     'min': 1,
-                     'max': 2048
-                  }
-               }
-            ]
-         },
+         'config': [],
          'callback': {}
       } ;
 
       //打开 创建集群 弹窗
-      $scope.ShowCreateCluster = function(  ){
+      $scope.ShowCreateCluster = function(){
+         $scope.ShowType = 1 ;
+         $scope.CreateClusterWindow['config'] = [
+            {
+               'inputList': [
+                  {
+                     "name": 'ClusterName',
+                     "webName": $scope.autoLanguage( '集群名' ),
+                     "type": "string",
+                     "required": true,
+                     "value": "",
+                     "valid": {
+                        'min': 1,
+                        'max': 127,
+                        'regex': '^[0-9a-zA-Z]+$'
+                     }
+                  },
+                  {
+                     'name': 'Desc',
+                     'webName': $scope.autoLanguage( '描述' ),
+                     'type': 'string',
+                     'value': '',
+                     'valid': {
+                        'min': 0,
+                        'max': 1024
+                     }
+                  },
+                  {
+                     "name": 'SdbUser',
+                     "webName": $scope.autoLanguage( '用户名' ),
+                     "type": "string",
+                     "required": true,
+                     "value": 'sdbadmin',
+                     "valid": {
+                        'min': 1,
+                        'max': 1024
+                     }
+                  },
+                  {
+                     "name": 'SdbPasswd',
+                     "webName": $scope.autoLanguage( '密码' ),
+                     "type": "string",
+                     "required": true,
+                     "value": 'sdbadmin',
+                     "valid": {
+                        'min': 1,
+                        'max': 1024
+                     }
+                  },
+                  {
+                     "name": 'SdbUserGroup',
+                     "webName": $scope.autoLanguage( '用户组' ),
+                     "type": "string",
+                     "required": true,
+                     "value": 'sdbadmin_group',
+                     "valid": {
+                        'min': 1,
+                        'max': 1024
+                     }
+                  },
+                  {
+                     "name": 'InstallPath',
+                     "webName": $scope.autoLanguage( '安装路径' ),
+                     "type": "string",
+                     "required": true,
+                     "value": '/opt/sequoiadb/',
+                     "valid": {
+                        'min': 1,
+                        'max': 2048
+                     }
+                  }
+               ]
+            },
+            {
+               'inputList': [
+                  {
+                     "name": 'HostFile',
+                     "webName": 'HostFile',
+                     "type": "switch",
+                     "value": true,
+                     "desc": $scope.autoLanguage( '是否授权om对系统hosts文件的修改' ),
+                     "onChange": function( name, key ){
+                        $scope.CreateClusterWindow['config'][1]['inputList'][0]['value'] = !key ;
+                     }
+                  },
+                  {
+                     'name': 'RootUser',
+                     'webName': 'RootUser',
+                     'type': 'switch',
+                     'disabled': true,
+                     "value": true,
+                     "desc": $scope.autoLanguage( '是否允许om使用系统root用户' )
+                  }
+               ]
+            }
+         ]
          var num = 1 ;
          var defaultName = '' ;
          while( true )
@@ -1595,9 +1637,9 @@
             }
             ++num ;
          }
-         $scope.CreateClusterWindow['config']['inputList'][0]['value'] = defaultName ;
+         $scope.CreateClusterWindow['config'][0]['inputList'][0]['value'] = defaultName ;
          $scope.CreateClusterWindow['callback']['SetOkButton']( $scope.autoLanguage( '确定' ), function(){
-            var isAllClear = $scope.CreateClusterWindow['config'].check( function( formVal ){
+            var isAllClear = $scope.CreateClusterWindow['config'][0].check( function( formVal ){
                var isFind = false ;
                $.each( $scope.clusterList, function( index, clusterInfo ){
                   if( formVal['ClusterName'] == clusterInfo['ClusterName'] )
@@ -1617,7 +1659,11 @@
             } ) ;
             if( isAllClear )
             {
-               var formVal = $scope.CreateClusterWindow['config'].getValue() ;
+               var formVal = $scope.CreateClusterWindow['config'][0].getValue() ;
+               var formVal2 = $scope.CreateClusterWindow['config'][1].getValue() ;
+               formVal['GrantConf'] = [] ;
+               formVal['GrantConf'].push( { 'Name': 'HostFile', 'Privilege': formVal2['HostFile'] } ) ;
+               formVal['GrantConf'].push( { 'Name': 'RootUser', 'Privilege': formVal2['RootUser'] } ) ;
                createCluster( formVal, function(){
                   $location.path( '/Deploy/Index' ).search( { 'r': new Date().getTime() }  ) ;
                } ) ;
@@ -1698,6 +1744,7 @@
       $scope.ShowDeployModule = function(){
          var num = 1 ;
          var defaultName = '' ;
+         $scope.ShowType = 1 ;
          while( true )
          {
             var isFind = false ;
@@ -1715,95 +1762,123 @@
             }
             ++num ;
          }
-         $scope.DeployModuleWindow['config'] = {
-            'inputList': [
-               {
-                  "name": 'ClusterName',
-                  "webName": $scope.autoLanguage( '集群名' ),
-                  "type": "string",
-                  "required": true,
-                  "value": defaultName,
-                  "valid": {
-                     'min': 1,
-                     'max': 127,
-                     'regex': '^[0-9a-zA-Z]+$'
+         $scope.DeployModuleWindow['config'] = [
+            { 
+               'inputList': [
+                  {
+                     "name": 'ClusterName',
+                     "webName": $scope.autoLanguage( '集群名' ),
+                     "type": "string",
+                     "required": true,
+                     "value": defaultName,
+                     "valid": {
+                        'min': 1,
+                        'max': 127,
+                        'regex': '^[0-9a-zA-Z]+$'
+                     }
+                  },
+                  {
+                     'name': 'Desc',
+                     'webName': $scope.autoLanguage( '描述' ),
+                     'type': 'string',
+                     'value': '',
+                     'valid': {
+                        'min': 0,
+                        'max': 1024
+                     }
+                  },
+                  {
+                     "name": 'SdbUser',
+                     "webName": $scope.autoLanguage( '用户名' ),
+                     "type": "string",
+                     "required": true,
+                        "value": 'sdbadmin',
+                     "valid": {
+                        'min': 1,
+                        'max': 1024
+                     }
+                  },
+                  {
+                     "name": 'SdbPasswd',
+                     "webName": $scope.autoLanguage( '密码' ),
+                     "type": "string",
+                     "required": true,
+                     "value": 'sdbadmin',
+                     "valid": {
+                        'min': 1,
+                        'max': 1024
+                     }
+                  },
+                  {
+                     "name": 'SdbUserGroup',
+                     "webName": $scope.autoLanguage( '用户组' ),
+                     "type": "string",
+                     "required": true,
+                     "value": 'sdbadmin_group',
+                     "valid": {
+                        'min': 1,
+                        'max': 1024
+                     }
+                  },
+                  {
+                     "name": 'InstallPath',
+                     "webName": $scope.autoLanguage( '安装路径' ),
+                     "type": "string",
+                     "required": true,
+                     "value": '/opt/sequoiadb/',
+                     "valid": {
+                        'min': 1,
+                        'max': 2048
+                     }
                   }
-               },
-               {
-                  'name': 'Desc',
-                  'webName': $scope.autoLanguage( '描述' ),
-                  'type': 'string',
-                  'value': '',
-                  'valid': {
-                     'min': 0,
-                     'max': 1024
+               ]
+            },
+            {
+               'inputList': [
+                  {
+                     "name": 'moduleName',
+                     "webName": $scope.autoLanguage( '业务名' ),
+                     "type": "string",
+                     "required": true,
+                     "value": "myModule",
+                     "valid": {
+                        "min": 1,
+                        "max": 127,
+                        "regex": '^[0-9a-zA-Z]+$'
+                     }
+                  },
+                  {
+                     "name": 'moduleType',
+                     "webName": $scope.autoLanguage( '业务类型' ),
+                     "type": "select",
+                     "value": 0,
+                     "valid": []
+                  },
+               ]  
+            },
+            {
+               'inputList': [
+                  {
+                     "name": 'HostFile',
+                     "webName": 'HostFile',
+                     "type": "switch",
+                     "value": true,
+                     "desc": $scope.autoLanguage( '是否授权om对系统hosts文件的修改' ),
+                     "onChange": function( name, key ){
+                        $scope.DeployModuleWindow['config'][2]['inputList'][0]['value'] = !key ;
+                     }
+                  },
+                  {
+                     'name': 'RootUser',
+                     'webName': 'RootUser',
+                     'type': 'switch',
+                     'disabled': true,
+                     "value": true,
+                     "desc": $scope.autoLanguage( '是否允许om使用系统root用户' )
                   }
-               },
-               {
-                  "name": 'moduleName',
-                  "webName": $scope.autoLanguage( '业务名' ),
-                  "type": "string",
-                  "required": true,
-                  "value": "myModule",
-                  "valid": {
-                     "min": 1,
-                     "max": 127,
-                     "regex": '^[0-9a-zA-Z]+$'
-                  }
-               },
-               {
-                  "name": 'moduleType',
-                  "webName": $scope.autoLanguage( '业务类型' ),
-                  "type": "select",
-                  "value": 0,
-                  "valid": []
-               },
-               {
-                  "name": 'SdbUser',
-                  "webName": $scope.autoLanguage( '用户名' ),
-                  "type": "string",
-                  "required": true,
-                  "value": 'sdbadmin',
-                  "valid": {
-                     'min': 1,
-                     'max': 1024
-                  }
-               },
-               {
-                  "name": 'SdbPasswd',
-                  "webName": $scope.autoLanguage( '密码' ),
-                  "type": "string",
-                  "required": true,
-                  "value": 'sdbadmin',
-                  "valid": {
-                     'min': 1,
-                     'max': 1024
-                  }
-               },
-               {
-                  "name": 'SdbUserGroup',
-                  "webName": $scope.autoLanguage( '用户组' ),
-                  "type": "string",
-                  "required": true,
-                  "value": 'sdbadmin_group',
-                  "valid": {
-                     'min': 1,
-                     'max': 1024
-                  }
-               },
-               {
-                  "name": 'InstallPath',
-                  "webName": $scope.autoLanguage( '安装路径' ),
-                  "type": "string",
-                  "required": true,
-                  "value": '/opt/sequoiadb/',
-                  "valid": {
-                     'min': 1,
-                     'max': 2048
-                  }
-               }
-            ]
-         } ;
+               ]
+            }
+         ] ;
          num = 1 ;
          defaultName = '' ;
          while( true )
@@ -1833,12 +1908,12 @@
             }
             ++num ;
          }
-         $scope.DeployModuleWindow['config']['inputList'][2]['value'] = defaultName ;
+         $scope.DeployModuleWindow['config'][1]['inputList'][0]['value'] = defaultName ;
          $.each( $scope.moduleType, function( index, typeInfo ){
-            $scope.DeployModuleWindow['config']['inputList'][3]['valid'].push( { 'key': typeInfo['BusinessDesc'], 'value': index } ) ;
+            $scope.DeployModuleWindow['config'][1]['inputList'][1]['valid'].push( { 'key': typeInfo['BusinessDesc'], 'value': index } ) ;
          } ) ;
          $scope.DeployModuleWindow['callback']['SetOkButton']( $scope.autoLanguage( '确定' ), function(){
-            var isAllClear = $scope.DeployModuleWindow['config'].check( function( formVal ){
+            var isAllClear1 = $scope.DeployModuleWindow['config'][0].check( function( formVal ){
                var rv = [] ;
                var isFind = false ;
                $.each( $scope.clusterList, function( index, clusterInfo ){
@@ -1852,6 +1927,10 @@
                {
                   rv.push( { 'name': 'ClusterName', 'error': $scope.autoLanguage( '集群名已经存在' ) } ) ;
                }
+               return rv ;
+            } ) ;
+            var isAllClear2 = $scope.DeployModuleWindow['config'][1].check( function( formVal ){
+               var rv = [] ;
                isFind = false ;
                $.each( $scope.moduleList, function( index, moduleInfo ){
                   if( formVal['moduleName'] == moduleInfo['BusinessName'] )
@@ -1860,28 +1939,110 @@
                      return false ;
                   }
                } ) ;
+               if( isFind == false )
+               {
+                  $.each( $rootScope.OmTaskList, function( index, taskInfo ){
+                     if( taskInfo['Status'] != 4 && formVal['moduleName'] == taskInfo['Info']['BusinessName'] )
+                     {
+                        isFind = true ;
+                        return false ;
+                     }
+                  } ) ;
+               }
                if( isFind == true )
                {
                   rv.push( { 'name': 'moduleName', 'error': $scope.autoLanguage( '业务名已经存在' ) } ) ;
                }
                return rv ;
             } ) ;
-            if( isAllClear )
+            var isAllClear3 = $scope.DeployModuleWindow['config'][2].check() ;
+            if( isAllClear1 && isAllClear2 && isAllClear3 )
             {
-               var formVal = $scope.DeployModuleWindow['config'].getValue() ;
-               createCluster( formVal, function(){
-                  $rootScope.tempData( 'Deploy', 'ClusterName', formVal['ClusterName'] ) ;
-                  $rootScope.tempData( 'Deploy', 'ModuleName', formVal['moduleName'] ) ;
+               var formVal1 = $scope.DeployModuleWindow['config'][0].getValue() ;
+               var formVal2 = $scope.DeployModuleWindow['config'][1].getValue() ;
+               var formVal3 = $scope.DeployModuleWindow['config'][2].getValue() ;
+               $.each( formVal2, function( key, value ){
+                  formVal1[key] = value ;
+               } ) ;
+               $.each( formVal3, function( key, value ){
+                  formVal1[key] = value ;
+               } ) ;
+               createCluster( formVal1, function(){
+                  $rootScope.tempData( 'Deploy', 'ClusterName', formVal1['ClusterName'] ) ;
+                  $rootScope.tempData( 'Deploy', 'ModuleName', formVal1['moduleName'] ) ;
                   $rootScope.tempData( 'Deploy', 'Model', 'Deploy' ) ;
-                  $rootScope.tempData( 'Deploy', 'Module', $scope.moduleType[ formVal['moduleType'] ]['BusinessType'] ) ;
-                  $rootScope.tempData( 'Deploy', 'InstallPath', formVal['InstallPath'] ) ;
+                  $rootScope.tempData( 'Deploy', 'Module', $scope.moduleType[ formVal1['moduleType'] ]['BusinessType'] ) ;
+                  $rootScope.tempData( 'Deploy', 'InstallPath', formVal1['InstallPath'] ) ;
                   $location.path( '/Deploy/ScanHost' ).search( { 'r': new Date().getTime() } ) ;
                } ) ;
             }
-            return isAllClear ;
+            return isAllClear1 && isAllClear2 && isAllClear3 ;
          } ) ;
          $scope.DeployModuleWindow['callback']['SetTitle']( $scope.autoLanguage( '部署' ) ) ;
          $scope.DeployModuleWindow['callback']['Open']() ;
+      }
+
+      //设置资源授权
+      var setGrant = function( conf ){
+         var data = { 'cmd': 'grant sysconf', 'name': conf['name'], 'privilege': conf['privilege'], 'clustername': conf['clustername'] } ;
+         SdbRest.OmOperation( data, {
+            'success': function(){
+               queryCluster();
+            },
+            'failed': function( errorInfo ){
+               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                  setGrant( conf ) ;
+                  return true ;
+               } ) ;
+            }
+         } ) ;
+      }
+
+      //通过哪个cluster打开下拉菜单
+      var chooseCluster = $scope.currentCluster ;
+
+      //资源授权 弹窗
+      $scope.ResourceGrantWindow = {
+         'config': {},
+         'callback': {}
+      }
+
+      //打开 资源授权
+      $scope.ShowResourceGrant = function(){
+         $scope.ResourceGrantWindow['config'] = {
+            'inputList': [
+               {
+                  "name": 'ClusterName',
+                  "webName": $scope.autoLanguage( '集群名' ),
+                  "type": "normal",
+                  "value": $scope.clusterList[chooseCluster]['ClusterName']
+               },
+               {
+                  "name": 'HostFile',
+                  "webName": 'HostFile',
+                  "type": "switch",
+                  "value": $scope.clusterList[chooseCluster]['GrantConf'][0]['Privilege'],
+                     "desc": $scope.autoLanguage( '是否授权om对系统hosts文件的修改' ),
+                  "onChange": function( name, key ){
+                     $scope.ResourceGrantWindow['config']['inputList'][1]['value'] = !key ;
+                     setGrant( { 'name': 'HostFile', 'privilege': !key, 'clustername': $scope.clusterList[chooseCluster]['ClusterName'] } ) ;
+                  }
+               },
+               {
+                  'name': 'RootUser',
+                  'webName': 'RootUser',
+                  'type': 'switch',
+                  'disabled': true,
+                  "value": true,
+                  "desc": $scope.autoLanguage( '是否允许om使用系统root用户' )
+               }
+            ]
+         } ;
+         $scope.ResourceGrantWindow['callback']['SetCloseButton']( $scope.autoLanguage( '关闭' ), function(){
+            $scope.ResourceGrantWindow['callback']['Close']() ;
+         } ) ;
+         $scope.ResourceGrantWindow['callback']['SetTitle']( $scope.autoLanguage( '资源授权' ) ) ;
+         $scope.ResourceGrantWindow['callback']['Open']() ;
       }
 
       //逐个更新主机信息
@@ -2196,6 +2357,40 @@
 
       $scope.GotoExpansion = function(){
          $location.path( '/Deploy/SDB-ExtendConf' ).search( { 'r': new Date().getTime() } ) ;
+      }
+
+      //集群操作下拉菜单
+      $scope.ClusterDropdown = {
+         'config': [
+            { 'key': $scope.autoLanguage( '资源授权' ) },
+            { 'key': $scope.autoLanguage( '删除集群' ) }
+         ],
+         'OnClick': function( index ){
+            if( index == 0 )
+            {
+               $scope.ShowResourceGrant() ;
+               $scope.ResourceGrantWindow['config']['inputList'][0]['disabled'] = true ;
+               $scope.ResourceGrantWindow['config']['inputList'][1]['value'] = $scope.clusterList[chooseCluster]['GrantConf'][0]['Privilege'] ;
+            }
+            else
+            {
+               $scope.Components.Confirm.type = 3 ;
+               $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '是否确定删除集群：?？' ), $scope.clusterList[chooseCluster]['ClusterName'] ) ;
+               $scope.Components.Confirm.isShow = true ;
+               $scope.Components.Confirm.okText = $scope.autoLanguage( '确定' ) ;
+               $scope.Components.Confirm.ok = function(){
+                  removeCluster( chooseCluster ) ;
+               }
+            }
+            $scope.ClusterDropdown['callback']['Close']() ;
+         },
+         'callback': {}
+      } ;
+
+      //打开 集群操作下拉菜单
+      $scope.OpenClusterDropdown = function( event, index ){
+         chooseCluster = index ;
+         $scope.ClusterDropdown['callback']['Open']( event.currentTarget ) ;
       }
 
       //执行

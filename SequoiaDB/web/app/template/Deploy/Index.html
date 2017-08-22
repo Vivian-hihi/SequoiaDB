@@ -32,7 +32,6 @@
          <div ng-windows="form as ExtendWindow.config" windows-callback="ExtendWindow.callback">
             <div form-create para="form"></div>
          </div>
-
          <div ng-windows="form as SyncWindow.config" windows-callback="SyncWindow.callback">
             <div form-create para="form"></div>
          </div>
@@ -184,33 +183,71 @@
       </div>
    </div>
    <div class="pull-right" ng-container="{width:270}">
-      <div class="borderBox" style="padding:10px 10px;overflow-y:auto;overflow-x:hidden;" ng-container="{offsetY:-123}">
-         <div ng-container="{height:30}"><b>{{autoLanguage("集群")}}</b></div>
-         <div ng-container="{offsetY:-30}">
-            <ul style="list-style-type:none;margin:0;padding:0;">
-               <li class="linkButton" style="margin-bottom:10px;" ng-repeat="clusterInfo in clusterList track by $index" ng-style="{true:{'color':'#FF7547','font-weight':'bold'}}[currentCluster==$index]" ng-click="SwitchCluster($index)">
-                  <div class="pull-left" style="font-size:110%;padding-top:4px;width:18px;">
-                     <i class="fa fa-archive"></i>
-                  </div>
-                  <div class="pull-left" style="margin-left:3px;width:225px;">
-                     <div class="Ellipsis">{{clusterInfo['ClusterName']}}</div>
-                     <div class="Ellipsis" style="color:#ccc;font-size:90%;">{{clusterInfo['Desc']}}</div>
-                  </div>
-                  <div class="clear-float"></div>
-               </li>
-            </ul>
+      <div class="borderBox" style="padding:10px;overflow-y:auto;overflow-x:hidden;" ng-container="{offsetY:-119}">
+         <div><b>{{autoLanguage("集群")}}</b></div>
+         <div ng-dropdown="config in ClusterDropdown.config" dropdown-event="ClusterDropdown.event" dropdown-callback="ClusterDropdown.callback">
+            <label class="Ellipsis" style="padding:5px 10px;display:block;" ng-click="ClusterDropdown.OnClick($index)">&nbsp;{{config.key}}</label>
+         </div>
+         <div style="padding-top:8px;" ng-repeat="clusterInfo in clusterList track by $index">
+            <div style="">
+               <table class="table" style="margin-top:3px;">
+                  <tr>
+                     <td class="linkButton" style="padding-left:10px;cursor:pointer;text-decoration:none;" ng-style="{true:{'color':'#FF7547','font-weight':'bold'}}[currentCluster==$index]" ng-click="SwitchCluster($index)">
+                        <div class="Ellipsis">
+                           <i class="fa fa-archive"></i>
+                           <span>{{clusterInfo['ClusterName']}}</span>
+                        </div>
+                        <div class="Ellipsis" style="color:#ccc;font-size:90%;padding-left:0px;">{{clusterInfo['Desc']}}</div>
+                     </td>
+                     <td style="padding-left:10px;width:40px;">
+                        <button class="btn btn-default btn-lg" style="width:25px;" ng-click="OpenClusterDropdown($event,$index)">
+                           <i class="fa fa-caret-down" style=""></i>
+                        </button>
+                     </td>
+                  </tr>
+               </table>
+            </div>
          </div>
       </div>
-      <div ng-container="{marginTop:10,height:113}">
+      <div ng-container="{marginTop:10,height:109}">
          <div ng-windows="form as CreateClusterWindow.config" windows-callback="CreateClusterWindow.callback">
-            <div form-create para="form"></div>
+            <div class="underlineTab" style="height:50px;">
+               <ul class="left">
+                  <li ng-class="{true:'active'}[ShowType == 1]">
+                     <a class="linkButton" ng-click="SwitchParam(1)">{{autoLanguage("集群配置")}}</a>
+                  </li>
+                  <li ng-class="{true:'active'}[ShowType == 2]">
+                     <a class="linkButton" ng-click="SwitchParam(2)">{{autoLanguage("资源授权")}}</a>
+                  </li>
+               </ul>
+            </div>
+            <div ng-show="ShowType == 1" form-create para="form[0]"></div>
+            <div ng-show="ShowType == 2" form-create para="form[1]"></div>
          </div>
          <div ng-windows="form as RemoveClusterWindow.config" windows-callback="RemoveClusterWindow.callback">
             <div form-create para="form"></div>
          </div>
+         <div ng-windows="form as ResourceGrantWindow.config" windows-callback="ResourceGrantWindow.callback">
+            <div form-create para="form"></div>
+         </div>
 
          <div ng-windows="form as DeployModuleWindow.config" windows-callback="DeployModuleWindow.callback">
-            <div form-create para="form"></div>
+            <div class="underlineTab" style="height:50px;">
+               <ul class="left">
+                  <li ng-class="{true:'active'}[ShowType == 1]">
+                     <a class="linkButton" ng-click="SwitchParam(1)">{{autoLanguage("集群配置")}}</a>
+                  </li>
+                  <li ng-class="{true:'active'}[ShowType == 2]">
+                     <a class="linkButton" ng-click="SwitchParam(2)">{{autoLanguage("业务配置")}}</a>
+                  </li>
+                  <li ng-class="{true:'active'}[ShowType == 3]">
+                     <a class="linkButton" ng-click="SwitchParam(3)">{{autoLanguage("资源授权")}}</a>
+                  </li>
+               </ul>
+            </div>
+            <div ng-show="ShowType == 1" form-create para="form[0]"></div>
+            <div ng-show="ShowType == 2" form-create para="form[1]"></div>
+            <div ng-show="ShowType == 3" form-create para="form[2]"></div>
          </div>
          <table class="table border loosen" style="font-size:90%;">
             <tr>

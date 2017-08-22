@@ -2703,6 +2703,12 @@
                               } ) ;
                               returnValue[ inputInfo.name ] = listValue ;
                               break ;
+                           case 'switch':
+                              returnValue[ inputInfo.name ] = inputInfo.value ;
+                              break ;
+                           case 'normal':
+                              returnValue[ inputInfo.name ] = inputInfo.value ;
+                              break ;
                            }
                         } ) ;
                         return returnValue ;
