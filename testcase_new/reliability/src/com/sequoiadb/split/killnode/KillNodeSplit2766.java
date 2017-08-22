@@ -113,8 +113,8 @@ public class KillNodeSplit2766 extends SdbTestBase {
             DBCollection cl = commSdb.getCollectionSpace(csName).getCollection(clName);
             insertData(cl, 5000, 5100);
 
-            Assert.assertEquals(destGroup.checkInspect(600), true);
-            Assert.assertEquals(srcGroup.checkInspect(600), true);
+            Assert.assertEquals(destGroup.checkInspect(60), true);
+            Assert.assertEquals(srcGroup.checkInspect(60), true);
 
             // 源和目标数据量比对
             checkGroupData(commSdb, destGroupName);
