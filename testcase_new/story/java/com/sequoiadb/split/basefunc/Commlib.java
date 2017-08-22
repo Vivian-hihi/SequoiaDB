@@ -12,6 +12,7 @@ import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
+import com.sequoiadb.testcommon.SdbTestException;
 
 public class Commlib extends SdbTestBase {
 	public static ArrayList<String> groupList;
@@ -65,7 +66,7 @@ public class Commlib extends SdbTestBase {
             }
             cursor.close();
             if(!actRecs.equals(expRecs)){
-                throw new BaseException("data is different");
+                throw new SdbTestException("data is different");
             }
         } catch (BaseException e) {
             throw e;
@@ -82,7 +83,7 @@ public class Commlib extends SdbTestBase {
             DBCollection cl = dataDB.getCollectionSpace(csName).getCollection(clName);
             int actCnt = (int)cl.getCount();
             if(Math.abs(actCnt - expCnt) > offSet){
-                throw new BaseException("actual count:[" + actCnt + "]" 
+                throw new SdbTestException("actual count:[" + actCnt + "]" 
                         + "excepted count:[" + expCnt + "]"
                         + "the split result is wrong");
             }

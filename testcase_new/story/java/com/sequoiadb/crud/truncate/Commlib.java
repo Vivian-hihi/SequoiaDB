@@ -15,6 +15,7 @@ import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.DBLob;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.testcommon.SdbTestException;
 
 public class Commlib {
 	public static ArrayList<String> groupList;
@@ -189,7 +190,7 @@ public class Commlib {
 		// get all groups name
 		ArrayList<String> groupNames = sdb.getReplicaGroupNames();
 		if (groupNames.size() < 4) {
-			throw new BaseException("no groups enough to split");
+			throw new SdbTestException("no groups enough to split");
 		}
 		// find a valid destination group
 		String dstGroupName = null;

@@ -20,6 +20,7 @@ import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.crud.truncate.Commlib;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
+import com.sequoiadb.testcommon.SdbTestException;
 
 /**
  * @FileName:seqDB-10170: split时指定的group在域中不存在 
@@ -151,7 +152,7 @@ public class TestDomain10170 extends SdbTestBase {
         try{
             option.put("Group", outGroup);
             cl = cs.createCollection(clName, option);
-            throw new BaseException("creating CL shouldn't success, which's group is not in domain");
+            throw new SdbTestException("creating CL shouldn't success, which's group is not in domain");
         }catch(BaseException e){
             Assert.assertEquals(e.getErrorCode(), -216, e.getMessage());
         }
@@ -160,7 +161,7 @@ public class TestDomain10170 extends SdbTestBase {
             option.removeField("Group");
             option.put("Group", inexistGroup);
             cl = cs.createCollection(clName, option);
-            throw new BaseException("creating CL shouldn't success, which's group in an inexistent");
+            throw new SdbTestException("creating CL shouldn't success, which's group in an inexistent");
         }catch(BaseException e){
             Assert.assertEquals(e.getErrorCode(), -154, e.getMessage());
         }
@@ -179,14 +180,14 @@ public class TestDomain10170 extends SdbTestBase {
         // split (dst group not in domain)
         try{
             cl.split(srcGroup, outGroup, 50);
-            throw new BaseException("split shouldn't success, when dst group is not in domain ");
+            throw new SdbTestException("split shouldn't success, when dst group is not in domain ");
         }catch(BaseException e){
             Assert.assertEquals(e.getErrorCode(), -216, e.getMessage());
         }
         // split (dst group in an inexistent group)
         try{
             cl.split(srcGroup, inexistGroup, 50);
-            throw new BaseException("split shouldn't success, when dst group is inexistent ");
+            throw new SdbTestException("split shouldn't success, when dst group is inexistent ");
         }catch(BaseException e){
             Assert.assertEquals(e.getErrorCode(), -154, e.getMessage());
         }

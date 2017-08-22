@@ -14,6 +14,7 @@ import org.bson.types.BasicBSONList;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.testcommon.SdbTestException;
 
 /**
 * FileName: Commlib.java
@@ -65,13 +66,13 @@ public class Commlib {
             }else if(inbuff instanceof String){
                 md5.update(((String)inbuff).getBytes());
             }else{
-                throw new BaseException("invalid parameter!");
+                throw new RuntimeException("invalid parameter!");
             }
             BigInteger bi = new BigInteger(1, md5.digest());
             value = bi.toString(16);
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
-            throw new BaseException("fail to get md5!");
+            throw new SdbTestException("fail to get md5!");
         }
         return value;
     }
