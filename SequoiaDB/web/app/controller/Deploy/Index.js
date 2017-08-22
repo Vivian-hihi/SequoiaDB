@@ -1012,7 +1012,7 @@
                }
                return isAllClear ;
             } ) ;
-            $scope.InstallModule['callback']['SetTitle']( $scope.autoLanguage( '添加业务' ) ) ;
+            $scope.InstallModule['callback']['SetTitle']( $scope.autoLanguage( '创建业务' ) ) ;
             $scope.InstallModule['callback']['SetIcon']( '' ) ;
             $scope.InstallModule['callback']['Open']() ;
          }
@@ -1072,7 +1072,7 @@
                if( isFind == false )
                {
                   $.each( $rootScope.OmTaskList, function( index, taskInfo ){
-                     if( defaultName == taskInfo['Info']['BusinessName'] )
+                     if( taskInfo['Status'] != 4 && defaultName == taskInfo['Info']['BusinessName'] )
                      {
                         isFind = true ;
                         return false ;
@@ -1099,7 +1099,7 @@
                   if( isFind == false )
                   {
                      $.each( $rootScope.OmTaskList, function( index, taskInfo ){
-                        if( formVal['moduleName'] == taskInfo['Info']['BusinessName'] )
+                        if( taskInfo['Status'] != 4 && formVal['moduleName'] == taskInfo['Info']['BusinessName'] )
                         {
                            isFind = true ;
                            return false ;
@@ -1174,9 +1174,10 @@
             inputList: [
                {
                   "name": 'HostName',
-                  "webName": $scope.autoLanguage( '主机名' ),
+                  "webName": $scope.autoLanguage( '地址' ),
                   "type": "string",
                   "required": true,
+                  "desc": $scope.autoLanguage( 'coord节点或standalone所在的主机名或者IP地址' ),
                   "value": "",
                   "valid": {
                      "min": 1
@@ -1187,6 +1188,7 @@
                   "webName": $scope.autoLanguage( '服务名' ),
                   "type": "port",
                   "required": true,
+                  "desc": $scope.autoLanguage( 'coord节点或standalone端口号' ),
                   "value": '',
                   "valid": {}
                },
@@ -1199,7 +1201,7 @@
                {
                   "name": 'Passwd',
                   "webName": $scope.autoLanguage( '数据库密码' ),
-                  "type": "string",
+                  "type": "password",
                   "value": ""
                }
             ]
@@ -2359,6 +2361,34 @@
          $location.path( '/Deploy/SDB-ExtendConf' ).search( { 'r': new Date().getTime() } ) ;
       }
 
+      //添加业务下拉菜单
+      $scope.ModuleDropdown = {
+         'config': [
+            { 'key': $scope.autoLanguage( '创建业务' ) },
+            { 'key': $scope.autoLanguage( '发现业务' ) }
+         ],
+         'OnClick': function( index ){
+            if( index == 0 )
+            {
+               $scope.ShowInstallModule() ;
+            }
+            else
+            {
+               $scope.ShowAppendModule() ;
+            }
+            $scope.ModuleDropdown['callback']['Close']() ;
+         },
+         'callback': {}
+      }
+
+      //打开 添加业务下拉菜单
+      $scope.OpenModuleDropdown = function( event ){
+         if( $scope.clusterList.length > 0 )
+         {
+            $scope.ModuleDropdown['callback']['Open']( event.currentTarget ) ;
+         }
+      }
+
       //集群操作下拉菜单
       $scope.ClusterDropdown = {
          'config': [
@@ -2375,7 +2405,7 @@
             else
             {
                $scope.Components.Confirm.type = 3 ;
-               $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '是否确定删除集群：?？' ), $scope.clusterList[chooseCluster]['ClusterName'] ) ;
+               $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '是否确定删除集群: ?？' ), $scope.clusterList[chooseCluster]['ClusterName'] ) ;
                $scope.Components.Confirm.isShow = true ;
                $scope.Components.Confirm.okText = $scope.autoLanguage( '确定' ) ;
                $scope.Components.Confirm.ok = function(){

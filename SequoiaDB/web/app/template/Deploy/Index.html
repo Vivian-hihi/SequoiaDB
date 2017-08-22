@@ -35,9 +35,11 @@
          <div ng-windows="form as SyncWindow.config" windows-callback="SyncWindow.callback">
             <div form-create para="form"></div>
          </div>
+         <div ng-dropdown="config in ModuleDropdown.config" dropdown-event="ModuleDropdown.event" dropdown-callback="ModuleDropdown.callback">
+            <label class="Ellipsis" style="padding:8px 10px;display:block;" ng-click="ModuleDropdown.OnClick($index)">&nbsp;{{config.key}}</label>
+         </div>
          <div ng-container="{height:40}">
-            <button class="topBtn" ng-class="{0:'disabled'}[clusterList.length]" ng-disabled="clusterList.length==0" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1280]" ng-click="ShowInstallModule()"><i class="fa fa-plus"></i> {{autoLanguage("添加业务")}}</button>
-            <button class="topBtn" ng-class="{0:'disabled'}[clusterList.length]" ng-disabled="clusterList.length==0" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1280]" ng-click="ShowAppendModule()"><i class="fa fa-plus"></i> {{autoLanguage("发现业务")}}</button>
+            <button class="topBtn" ng-class="{true:'disabled'}[clusterList.length == 0]" ng-disabled="clusterList.length==0" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1280]" ng-click="OpenModuleDropdown($event)">{{autoLanguage("添加业务")}} <i class="fa fa-caret-down"></i></button>
             <button class="topBtn" ng-class="{true:'disabled'}[clusterList.length == 0 || ModuleNum == 0]" ng-disabled="clusterList.length==0||ModuleNum==0" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1280]" ng-click="ShowUninstallModule()"><i class="fa fa-trash-o"></i> {{autoLanguage("卸载业务")}}</button>
             <button class="topBtn" ng-class="{true:'disabled'}[clusterList.length == 0 || DistributionNum == 0]" ng-disabled="clusterList.length==0 || DistributionNum == 0" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1280]" ng-click="ShowExtendWindow()"><i class="fa fa-plus"></i> {{autoLanguage("业务扩容")}}</button>
             <button class="topBtn" ng-class="{true:'disabled'}[clusterList.length == 0 || ModuleNum == 0]" ng-disabled="clusterList.length==0 || ModuleNum == 0" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1280]" ng-click="ShowSyncWindow()"><i class="fa fa-clipboard"></i> {{autoLanguage("同步业务")}}</button>
