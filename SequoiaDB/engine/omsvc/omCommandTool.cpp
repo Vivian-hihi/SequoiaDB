@@ -1991,6 +1991,33 @@ namespace engine
       goto done ;
    }
 
+   BOOLEAN omDatabaseTool::isHostExistOfClusterByIp( const string &IP,
+                                                     const string &clusterName )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN isExist = FALSE ;
+      BSONObj selector ;
+      BSONObj matcher ;
+      BSONObj hostInfo ;
+
+      matcher = BSON( OM_HOST_FIELD_IP << IP <<
+                      OM_HOST_FIELD_CLUSTERNAME << clusterName ) ;
+
+      rc = _getOneHostInfo( matcher, selector, hostInfo ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to get host info:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      isExist = TRUE ;
+
+   done:
+      return isExist ;
+   error:
+      goto done ;
+   }
+
    /**
     * Get all the host config of the cluster.
     *

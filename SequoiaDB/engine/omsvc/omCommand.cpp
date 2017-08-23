@@ -10821,9 +10821,17 @@ namespace engine
                }
             }
 
-            if ( FALSE == dbTool.isHostExistOfClusterByAddr( tmpHostName,
-                                                             _clusterName ) )
+            if ( FALSE == dbTool.isHostExistOfCluster( tmpHostName,
+                                                       _clusterName ) )
             {
+               if ( dbTool.isHostExistOfClusterByIp( tmpHostName,
+                                                     _clusterName ) )
+               {
+                  rc = SDB_INVALIDARG ;
+                  _errorMsg.setError( TRUE, "IP mode is not supported" ) ;
+                  PD_LOG( PDERROR, _errorMsg.getError() ) ;
+                  goto error ;
+               }
                ++missHostNum ;
                hostsArray.append( tmpHostName ) ;
             }

@@ -202,6 +202,8 @@ namespace engine
                                           const string &clusterName ) ;
       BOOLEAN isHostExistOfCluster( const string &hostName,
                                     const string &clusterName ) ;
+      BOOLEAN isHostExistOfClusterByIp( const string &IP,
+                                        const string &clusterName ) ;
       //aggregation
       INT32 getHostConfigOfCluster( const string &clusterName,
                                     BSONObj &config ) ;
