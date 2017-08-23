@@ -875,6 +875,11 @@ namespace engine
                   }
                   objNewHint = tmpNewHint ;
                }
+               else
+               {
+                  pQueryMsg   = (MsgOpQuery *)pModifyMsg ;
+                  inMsg._pMsg = (MsgHeader*)pModifyMsg ;
+               }
             }
          }
          pQueryMsg->version = cataSel.getCataPtr()->getVersion() ;
