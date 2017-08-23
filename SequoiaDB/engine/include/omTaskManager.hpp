@@ -132,24 +132,7 @@ namespace engine
       private:
          INT32             _storeBusinessInfo( BSONObj &taskInfoValue ) ;
 
-      protected:
-         BOOLEAN           _isHostConfExist( const string &hostName, 
-                                             const string &businessName ) ;
-
-         INT32             _appendConfigure( const string &hostName,
-                                             const string &businessName,
-                                             BSONObj &oneNode ) ;
-
-         INT32             _insertConfigure( const string &hostName,
-                                             const string &businessName,
-                                             const string &businessType,
-                                             const string &clusterName,
-                                             const string &deployMode,
-                                             BSONObj &oneNode ) ;
-
          INT32             _updateBizHostInfo( const string &businessName ) ;
-
-         void              _updateHostOMVersion( const string &hostName ) ;
 
          INT32             _storeConfigInfo( BSONObj &taskInfoValue ) ;
 
@@ -158,7 +141,7 @@ namespace engine
          INT32             _taskType ;
    } ;
 
-   class omExtendBusinessTask : public omAddBusinessTask
+   class omExtendBusinessTask : public omTaskBase
    {
    public:
       omExtendBusinessTask( INT64 taskID ) ;
@@ -170,6 +153,10 @@ namespace engine
       virtual INT32 getType() ;
 
       virtual INT64 getTaskID() ;
+
+   private:
+      INT32 _updateBizHostInfo( const string &businessName ) ;
+      INT32 _storeConfigInfo( const BSONObj &taskInfoValue ) ;
 
    private:
       INT64 _taskID ;

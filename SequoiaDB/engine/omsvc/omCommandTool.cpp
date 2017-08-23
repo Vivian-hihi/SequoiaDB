@@ -1501,6 +1501,99 @@ namespace engine
       goto done ;
    }
 
+   BOOLEAN omDatabaseTool::isConfigExist( const string &businessName,
+                                          const string &hostName )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN isExist = FALSE ;
+      SINT64 contextID = -1 ;
+      BSONObj condition = BSON( OM_CONFIGURE_FIELD_BUSINESSNAME << businessName
+                             << OM_CONFIGURE_FIELD_HOSTNAME << hostName ) ;
+      BSONObj selector ;
+      BSONObj order ;
+      BSONObj hint ;
+
+      // query table
+      rc = rtnQuery( OM_CS_DEPLOY_CL_CONFIGURE, selector, condition, order,
+                     hint, 0, _cb, 0, 1, _pDMSCB, _pRTNCB, contextID );
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "fail to query table:%s,rc=%d",
+                 OM_CS_DEPLOY_CL_BUSINESS, rc ) ;
+         goto error ;
+      }
+
+      while ( TRUE )
+      {
+         rtnContextBuf buffObj ;
+
+         rc = rtnGetMore ( contextID, 1, buffObj, _cb, _pRTNCB ) ;
+         if ( rc )
+         {
+            if ( SDB_DMS_EOC == rc )
+            {
+               rc = SDB_OK ;
+               break ;
+            }
+
+            contextID = -1 ;
+            PD_LOG( PDERROR, "failed to get record from table:%s,rc=%d",
+                    OM_CS_DEPLOY_CL_BUSINESS, rc ) ;
+            goto error ;
+         }
+
+         isExist = TRUE ;
+      }
+
+   done:
+      if ( -1 != contextID )
+      {
+         _pRTNCB->contextDelete ( contextID, _cb ) ;
+      }
+      return isExist ;
+   error:
+      goto done ;
+   }
+
+   INT32 omDatabaseTool::insertConfigure( const string &businessName,
+                                          const string &hostName,
+                                          const string &businessType,
+                                          const string &clusterName,
+                                          const string &deployMode,
+                                          const BSONObj &oneNodeConfig )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj filter = BSON( OM_BSON_FIELD_HOST_NAME << "" <<
+                             OM_BSON_FIELD_HOST_USER << "" <<
+                             OM_BSON_FIELD_HOST_PASSWD << "" <<
+                             OM_BSON_FIELD_HOST_SSHPORT << "" ) ;
+      BSONObj oneConf = oneNodeConfig.filterFieldsUndotted( filter, false ) ;
+      BSONObj newConfigure ;
+      BSONArrayBuilder arrayBuilder ;
+
+      arrayBuilder.append( oneConf ) ;
+
+      newConfigure = BSON( OM_CONFIGURE_FIELD_BUSINESSNAME << businessName <<
+                           OM_CONFIGURE_FIELD_HOSTNAME     << hostName <<
+                           OM_CONFIGURE_FIELD_BUSINESSTYPE << businessType <<
+                           OM_CONFIGURE_FIELD_CLUSTERNAME  << clusterName <<
+                           OM_CONFIGURE_FIELD_DEPLOYMODE   << deployMode <<
+                           OM_CONFIGURE_FIELD_CONFIG << arrayBuilder.arr() ) ;
+
+      rc = rtnInsert( OM_CS_DEPLOY_CL_CONFIGURE, newConfigure, 1, 0, _cb );
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to store config into table:%s,rc=%d", 
+                 OM_CS_DEPLOY_CL_CONFIGURE, rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 omDatabaseTool::upsertConfigure( const string &businessName,
                                           const string &hostName,
                                           const BSONObj &newConfig,
@@ -1521,6 +1614,43 @@ namespace engine
                           "condition=%s,updator=%s,rc=%d",
                  condition.toString().c_str(),
                  updator.toString().c_str(), rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omDatabaseTool::appendConfigure( const string &businessName,
+                                          const string &hostName,
+                                          const BSONObj &oneNodeConfig )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj filter  = BSON( OM_BSON_FIELD_HOST_NAME << "" <<
+                              OM_BSON_FIELD_HOST_USER << "" <<
+                              OM_BSON_FIELD_HOST_PASSWD << "" <<
+                              OM_BSON_FIELD_HOST_SSHPORT << "" ) ;
+      BSONObj condition = BSON( OM_CONFIGURE_FIELD_BUSINESSNAME << businessName 
+                               << OM_CONFIGURE_FIELD_HOSTNAME << hostName ) ;
+      BSONObj updator ;
+      BSONObj hint ;
+      BSONObj config ;
+      BSONObj oneConf = oneNodeConfig.filterFieldsUndotted( filter, FALSE ) ;
+      BSONArrayBuilder arrayBuilder ;
+
+      arrayBuilder.append( oneConf ) ;
+
+      config = BSON( OM_CONFIGURE_FIELD_CONFIG  << arrayBuilder.arr() ) ;
+      updator = BSON( "$addtoset" << config ) ;
+
+      rc = rtnUpdate( OM_CS_DEPLOY_CL_CONFIGURE, condition, updator, hint,
+                      0, _cb ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to update config for %s in %s:rc=%d", 
+                 hostName.c_str(), OM_CS_DEPLOY_CL_CONFIGURE, rc ) ;
          goto error ;
       }
 

@@ -31,6 +31,7 @@
 *******************************************************************************/
 
 #include "omTaskManager.hpp"
+#include "omCommandTool.hpp"
 #include "omDef.hpp"
 #include "rtn.hpp"
 #include "msgMessage.hpp"
@@ -633,136 +634,6 @@ namespace engine
 
    }
 
-   BOOLEAN omAddBusinessTask::_isHostConfExist( const string &hostName, 
-                                                const string &businessName )
-   {
-      INT32 rc         = SDB_OK ;
-      pmdEDUCB *cb     = pmdGetThreadEDUCB() ;
-      BOOLEAN flag     = FALSE ;
-      SINT64 contextID = -1 ;
-      BSONObj selector ;
-      BSONObj matcher ;
-      BSONObj orderBy ;
-      BSONObj hint ;
-      pmdKRCB *pKRCB = pmdGetKRCB() ;
-
-      matcher = BSON( OM_CONFIGURE_FIELD_BUSINESSNAME << businessName 
-                      << OM_CONFIGURE_FIELD_HOSTNAME << hostName ) ;
-      rc = rtnQuery( OM_CS_DEPLOY_CL_CONFIGURE, selector, matcher, orderBy, 
-                     hint, 0, cb, 0, -1, pKRCB->getDMSCB(), pKRCB->getRTNCB(), 
-                     contextID ) ;
-      if ( rc )
-      {
-         PD_LOG_MSG( PDERROR, "fail to query table:%s,rc=%d", 
-                     OM_CS_DEPLOY_CL_CONFIGURE, rc ) ;
-         goto done ;
-      }
-
-      while ( TRUE )
-      {
-         rtnContextBuf buffObj ;
-         rc = rtnGetMore ( contextID, 1, buffObj, cb, pKRCB->getRTNCB() ) ;
-         if ( rc )
-         {
-            if ( SDB_DMS_EOC == rc )
-            {
-               goto done ;
-            }
-
-            contextID = -1 ;
-            PD_LOG_MSG( PDERROR, "failed to get record from table:%s,rc=%d", 
-                        OM_CS_DEPLOY_CL_TASKINFO, rc ) ;
-            goto done ;
-         }
-
-         flag = TRUE ;
-         goto done ;
-      }
-
-   done:
-      if ( -1 != contextID )
-      {
-         pKRCB->getRTNCB()->contextDelete ( contextID, cb ) ;
-      }
-      return flag ;
-   }
-
-   INT32 omAddBusinessTask::_appendConfigure( const string &hostName,
-                                              const string &businessName,
-                                              BSONObj &oneNode )
-   {
-      pmdEDUCB *cb = pmdGetThreadEDUCB() ;
-      INT32 rc     = SDB_OK ;
-      BSONArrayBuilder arrayBuilder ;
-      BSONObj filter  = BSON( OM_BSON_FIELD_HOST_NAME << "" 
-                              << OM_BSON_FIELD_HOST_USER << "" 
-                              << OM_BSON_FIELD_HOST_PASSWD << "" 
-                              << OM_BSON_FIELD_HOST_SSHPORT << "" ) ;
-      BSONObj oneConf = oneNode.filterFieldsUndotted( filter, false ) ;
-      arrayBuilder.append( oneConf ) ;
-
-      BSONObj selector = BSON( OM_CONFIGURE_FIELD_BUSINESSNAME << businessName 
-                               << OM_CONFIGURE_FIELD_HOSTNAME << hostName );
-      BSONObj tmp      = BSON( OM_CONFIGURE_FIELD_CONFIG 
-                               << arrayBuilder.arr() ) ;
-      BSONObj updator  = BSON( "$addtoset" << tmp ) ;
-      {
-         BSONObj hint ;
-         rc = rtnUpdate( OM_CS_DEPLOY_CL_CONFIGURE, selector, updator, hint,
-                         0, cb ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "failed to update config for %s in %s:rc=%d", 
-                    hostName.c_str(), OM_CS_DEPLOY_CL_CONFIGURE, rc ) ;
-            goto error ;
-         }
-      }
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 omAddBusinessTask::_insertConfigure( const string &hostName,
-                                              const string &businessName,
-                                              const string &businessType,
-                                              const string &clusterName,
-                                              const string &deployMode,
-                                              BSONObj &oneNode )
-   {
-      pmdEDUCB *cb = pmdGetThreadEDUCB() ;
-      INT32 rc     = SDB_OK ;
-      BSONArrayBuilder arrayBuilder ;
-      BSONObj filter  = BSON( OM_BSON_FIELD_HOST_NAME << "" 
-                              << OM_BSON_FIELD_HOST_USER << "" 
-                              << OM_BSON_FIELD_HOST_PASSWD << ""
-                              << OM_BSON_FIELD_HOST_SSHPORT << "" ) ;
-      BSONObj oneConf = oneNode.filterFieldsUndotted( filter, false ) ;
-      arrayBuilder.append( oneConf ) ;
-      BSONObj obj = BSON( OM_CONFIGURE_FIELD_BUSINESSNAME << businessName 
-                          << OM_CONFIGURE_FIELD_HOSTNAME << hostName 
-                          << OM_CONFIGURE_FIELD_BUSINESSTYPE << businessType
-                          << OM_CONFIGURE_FIELD_CLUSTERNAME << clusterName
-                          << OM_CONFIGURE_FIELD_DEPLOYMODE << deployMode
-                          << OM_CONFIGURE_FIELD_CONFIG << arrayBuilder.arr() ) ;
-      rc = rtnInsert( OM_CS_DEPLOY_CL_CONFIGURE, obj, 1, 0, cb );
-      if ( rc )
-      {
-         PD_LOG_MSG( PDERROR, "failed to store config into table:%s,rc=%d", 
-                     OM_CS_DEPLOY_CL_CONFIGURE, rc ) ;
-         goto error ;
-      }
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   void omAddBusinessTask::_updateHostOMVersion( const string &hostName )
-   {
-      
-   }
-
    INT32 omAddBusinessTask::_storeBusinessInfo( BSONObj &taskInfoValue )
    {
       INT32 rc = SDB_OK ;
@@ -809,28 +680,33 @@ namespace engine
 
    INT32 omAddBusinessTask::_storeConfigInfo( BSONObj &taskInfoValue )
    {
+      INT32 rc = SDB_OK ;
+      omDatabaseTool dbTool( pmdGetThreadEDUCB() ) ;
       string businessName ;
       string businessType ;
       string clusterName ;
       string deployMode ;
       BSONObj configs ;
-      INT32 rc      = SDB_OK ;
+
       businessName  = taskInfoValue.getStringField( OM_BSON_BUSINESS_NAME ) ;
       businessType  = taskInfoValue.getStringField( OM_BSON_BUSINESS_TYPE ) ;
       clusterName   = taskInfoValue.getStringField( OM_BSON_FIELD_CLUSTER_NAME ) ;
       deployMode    = taskInfoValue.getStringField( OM_BSON_DEPLOY_MOD ) ;
       configs       = taskInfoValue.getObjectField( OM_BSON_FIELD_CONFIG ) ;
+
       {
          BSONObjIterator iter( configs ) ;
+
          while ( iter.more() )
          {
             BSONElement ele = iter.next() ;
             BSONObj oneNode = ele.embeddedObject() ;
             string hostName ;
+
             hostName = oneNode.getStringField( OM_BSON_FIELD_HOST_NAME ) ;
-            if ( _isHostConfExist( hostName, businessName ) )
+            if ( dbTool.isConfigExist( businessName, hostName ) )
             {
-               rc = _appendConfigure( hostName, businessName, oneNode ) ;
+               rc = dbTool.appendConfigure( businessName, hostName, oneNode ) ;
                if ( SDB_OK != rc )
                {
                   PD_LOG( PDERROR, "append configure failed:host=%s,"
@@ -842,8 +718,9 @@ namespace engine
             }
             else
             {
-               rc = _insertConfigure( hostName, businessName, businessType, 
-                                      clusterName, deployMode, oneNode ) ;
+               rc = dbTool.insertConfigure( businessName, hostName,
+                                            businessType, clusterName,
+                                            deployMode, oneNode ) ;
                if ( SDB_OK != rc )
                {
                   PD_LOG( PDERROR, "insert configure failed:host=%s,"
@@ -854,7 +731,6 @@ namespace engine
                }
             }
 
-            _updateHostOMVersion( hostName ) ;
          }
       }
    done:
@@ -1005,8 +881,7 @@ namespace engine
       goto done ;
    }
 
-   omExtendBusinessTask::omExtendBusinessTask( INT64 taskID ) :
-         omAddBusinessTask( taskID )
+   omExtendBusinessTask::omExtendBusinessTask( INT64 taskID )
    {
       _taskID   = taskID ;
       _taskType = OM_TASK_TYPE_EXTEND_BUSINESS;
@@ -1056,6 +931,96 @@ namespace engine
          goto error ;     
       }
    
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omExtendBusinessTask::_updateBizHostInfo( const string &businessName )
+   {
+      INT32 rc = SDB_OK ;
+      list <string> hostsList ;
+
+      rc = sdbGetOMManager()->getBizHostInfo( businessName, hostsList ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "get business host info failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = sdbGetOMManager()->appendBizHostInfo( businessName, hostsList ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "get business host info failed:rc=%d", rc ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+
+   INT32 omExtendBusinessTask::_storeConfigInfo( const BSONObj &taskInfoValue )
+   {
+      INT32 rc = SDB_OK ;
+      omDatabaseTool dbTool( pmdGetThreadEDUCB() ) ;
+      string businessName ;
+      string businessType ;
+      string clusterName ;
+      string deployMode ;
+      BSONObj configs ;
+
+      businessName = taskInfoValue.getStringField( OM_BSON_BUSINESS_NAME ) ;
+      businessType = taskInfoValue.getStringField( OM_BSON_BUSINESS_TYPE ) ;
+      deployMode   = taskInfoValue.getStringField( OM_BSON_DEPLOY_MOD ) ;
+      clusterName  = taskInfoValue.getStringField( OM_BSON_FIELD_CLUSTER_NAME ) ;
+      configs      = taskInfoValue.getObjectField( OM_BSON_FIELD_CONFIG ) ;
+
+      if ( OM_BUSINESS_SEQUOIADB == businessType )
+      {
+         deployMode = OM_DEPLOY_MOD_DISTRIBUTION ;
+      }
+
+      {
+         BSONObjIterator iter( configs ) ;
+
+         while ( iter.more() )
+         {
+            BSONElement ele = iter.next() ;
+            BSONObj oneNode = ele.embeddedObject() ;
+            string hostName = oneNode.getStringField( OM_BSON_FIELD_HOST_NAME ) ;
+
+            if ( dbTool.isConfigExist( businessName, hostName ) )
+            {
+               rc = dbTool.appendConfigure( businessName, hostName, oneNode ) ;
+               if ( SDB_OK != rc )
+               {
+                  PD_LOG( PDERROR, "append configure failed:host=%s,"
+                          "business=%s, node=%s, rc=%d", 
+                          hostName.c_str(), businessName.c_str(), 
+                          oneNode.toString().c_str(), rc ) ;
+                  goto error ;
+               }
+            }
+            else
+            {
+               rc = dbTool.insertConfigure( businessName, hostName,
+                                            businessType, clusterName,
+                                            deployMode, oneNode ) ;
+               if ( rc )
+               {
+                  PD_LOG( PDERROR, "insert configure failed:host=%s,"
+                          "business=%s, node=%s, rc=%d", 
+                          hostName.c_str(), businessName.c_str(), 
+                          oneNode.toString().c_str(), rc ) ;
+                  goto error ;
+               }
+            }
+         }
+      }
+
    done:
       return rc ;
    error:

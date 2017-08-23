@@ -176,11 +176,21 @@ namespace engine
                                     vector<simpleAddressInfo> &addressList ) ;
       INT32 getHostUsedPort( const string &hostName,
                              vector<string> &portList ) ;
-
+      BOOLEAN isConfigExist( const string &businessName,
+                             const string &hostName ) ;
+      INT32 insertConfigure( const string &businessName,
+                             const string &hostName,
+                             const string &businessType,
+                             const string &clusterName,
+                             const string &deployMode,
+                             const BSONObj &oneNodeConfig ) ;
       INT32 upsertConfigure( const string &businessName,
                              const string &hostName,
                              const BSONObj &newConfig,
                              INT64 &updateNum ) ;
+      INT32 appendConfigure( const string &businessName,
+                             const string &hostName,
+                             const BSONObj &oneNodeConfig ) ;
       INT32 addNodeConfigOfBusiness( const string &clusterName,
                                      const string &businessName,
                                      const string &businessType,
