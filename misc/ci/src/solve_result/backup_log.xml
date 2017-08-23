@@ -180,7 +180,7 @@
          </then>
       </if>
       
-      <!--backup core file : node core or testcase core-->
+      <!--backup core file : node core or testcase core or bin core-->
       <if>
          <equals arg1="${TEST_TYPE}" arg2="PERFORMANCETEST_TPCC" />
          <else>
@@ -196,6 +196,12 @@
                <fileset dir="${INSTALL_DIR}">
                   <include name="database/**/*core*"/>
                   <exclude name="database/**/hamcrest-core-1.3.jar"/>
+               </fileset>
+            </copy>
+            <copy todir="${backup_basedir}/${backup_reltdir}/corefile" >
+               <fileset dir="${INSTALL_DIR}">
+                  <include name="bin/**/*core*"/>
+                  <exclude name="bin/**/hamcrest-core-1.3.jar"/>
                </fileset>
             </copy>
          </else>
