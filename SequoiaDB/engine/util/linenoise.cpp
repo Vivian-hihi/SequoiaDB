@@ -1220,8 +1220,18 @@ static void refreshMultiLine(struct linenoiseState *l)
 
     /* Clear the contents from the last line up to the top */
     coord.X = 0 ;
-    y = b.dwCursorPosition.Y - rpos + 1 ;
 
+    if( b.dwCursorPosition.Y )
+    {
+      y = b.dwCursorPosition.Y - rpos + 1 ;
+    }
+    else
+    {
+      /* If the screen has been cleaned up,
+       *  need to refresh the content from the first line.
+       */
+      y = 0 ;
+    }
     for ( int i = 0 ; i < old_rows - 1 ; ++i )
     {
         // in windows, we need to minus 1, because (X, Y) start from (0, 0)
@@ -1348,7 +1358,6 @@ static void refreshMultiLine(struct linenoiseState *l)
 
     /* record the position for next refresh */
     l->oldpos = l->pos ;
-
 #endif
 done:
     PD_TRACE_EXIT ( SDB_REFRESHMULTILINE );
