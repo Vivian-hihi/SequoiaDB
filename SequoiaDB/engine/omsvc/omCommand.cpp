@@ -10561,7 +10561,6 @@ namespace engine
    INT32 omDiscoverBusinessCommand::_checkBusinssCFG( BSONObj &configInfo )
    {
       INT32 rc = SDB_OK ;
-      INT64 taskID = -1 ;
       omDatabaseTool dbTool( _cb ) ;
 
       _clusterName = configInfo.getStringField( OM_BSON_FIELD_CLUSTER_NAME ) ;
@@ -10609,13 +10608,10 @@ namespace engine
          goto error ;
       }
 
-      taskID = dbTool.getTaskIdOfRunningBuz( _businessName ) ;
-      if( 0 <= taskID )
+      if( dbTool.hasTaskRunning() )
       {
          rc = SDB_INVALIDARG ;
-         _errorMsg.setError( TRUE, "business[%s] is exist "
-                             "in task["OSS_LL_PRINT_FORMAT"]",
-                             _businessName.c_str(), taskID ) ;
+         _errorMsg.setError( TRUE, "the task is running" ) ;
          PD_LOG( PDERROR, _errorMsg.getError() ) ;
          goto error ;
       }

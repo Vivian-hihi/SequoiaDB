@@ -126,6 +126,7 @@ namespace engine
 
       //task
       INT64 getTaskIdOfRunningBuz( const string &businessName ) ;
+      BOOLEAN hasTaskRunning() ;
 
       //business
       INT32 addBusinessInfo( const INT32 addType,

@@ -437,6 +437,7 @@ namespace engine
 
       {
          BSONObj result( buffObj.data() ) ;
+
          taskID = result.getField( OM_TASKINFO_FIELD_TASKID ).numberLong() ;
       }
 
@@ -446,6 +447,66 @@ namespace engine
          _pRTNCB->contextDelete ( contextID, _cb ) ;
       }
       return taskID ;
+   error:
+      goto done ;
+   }
+
+   /**
+    * whether the task is running
+    *
+    * @return     taskID, -1: not exist   >=0: exist
+    *
+   */
+   BOOLEAN omDatabaseTool::hasTaskRunning()
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN hasTaskRun = FALSE ;
+      SINT64 contextID = -1 ;
+      BSONObj selector ;
+      BSONObj matcher ;
+      BSONObj order ;
+      BSONObj hint ;
+      rtnContextBuf buffObj ;
+
+      //Status not in( OM_TASK_STATUS_FINISH, OM_TASK_STATUS_CANCEL )
+      //BSONArrayBuilder arrBuilder ;
+      //arrBuilder.append( OM_TASK_STATUS_FINISH ) ;
+      //arrBuilder.append( OM_TASK_STATUS_CANCEL ) ;
+      BSONObj status = BSON( "$nin" << BSON_ARRAY( OM_TASK_STATUS_FINISH <<
+                                                   OM_TASK_STATUS_CANCEL ) ) ;
+
+      matcher = BSON( OM_TASKINFO_FIELD_STATUS << status ) ;
+
+      rc = rtnQuery( OM_CS_DEPLOY_CL_TASKINFO, selector, matcher, order, hint, 
+                     0, _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to query business:rc=%d,matcher=%s", rc, 
+                 matcher.toString().c_str() ) ;
+         goto error ;
+      }
+
+      rc = rtnGetMore( contextID, 1, buffObj, _cb, _pRTNCB ) ;
+      if ( rc )
+      {
+         if( SDB_DMS_EOC != rc )
+         {
+            PD_LOG( PDERROR, "Failed to retreive record, rc = %d", rc ) ;
+            goto error ;
+         }
+
+         // notice: if rc != SDB_OK, contextID is deleted in rtnGetMore
+         goto done ;
+      }
+
+      hasTaskRun = TRUE ;
+
+   done:
+      if ( -1 != contextID )
+      {
+         _pRTNCB->contextDelete ( contextID, _cb ) ;
+      }
+      return hasTaskRun ;
    error:
       goto done ;
    }
