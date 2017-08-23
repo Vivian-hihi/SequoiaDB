@@ -143,14 +143,14 @@
             <fileset dir="@{reportdir}" includes="**/*"/>
          </replaceregexp>
          <replaceregexp match='&lt;\/error&gt;' 
-                        replace='${download_url}&lt;\/failure&gt;' 
+                        replace='${download_url}&lt;\/error&gt;' 
                         flags="g" 
                         byline="true" 
                         encoding="utf-8">
             <fileset dir="@{reportdir}" includes="**/*"/>
          </replaceregexp>
          <replaceregexp match='&lt;error(.*)&gt;' 
-                        replace='&lt;failure\1&gt;      ${ms1}      ${ms2}' 
+                        replace='&lt;error\1&gt;      ${ms1}      ${ms2}' 
                         flags="g" 
                         byline="true" 
                         encoding="utf-8">
