@@ -85,7 +85,7 @@ namespace engine
                if ( NULL != _bitmap )
                {
                   _size = size ;
-                  _bitmapSize = _bitmapSize ;
+                  _bitmapSize = bitmapSize ;
                }
             }
 
