@@ -458,7 +458,6 @@ namespace engine
 
    void* _mthMatchNode::operator new ( size_t size,
                                        _mthNodeAllocator *allocator )
-                                       throw ( const char * )
    {
       void *p = NULL ;
       if ( size > 0 )
@@ -472,11 +471,6 @@ namespace engine
          {
             p = SDB_OSS_MALLOC( size ) ;
          }
-      }
-
-      if ( NULL == p )
-      {
-         throw "allocation failure" ;
       }
 
       return p ;
