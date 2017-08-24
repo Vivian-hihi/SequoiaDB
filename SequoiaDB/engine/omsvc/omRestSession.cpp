@@ -1083,7 +1083,7 @@ namespace engine
          else
          {
             rc = SDB_INVALIDARG ;
-            PD_LOG_MSG( PDERROR, "command is unreconigzed:command=%s,rc=%d",
+            PD_LOG_MSG( PDERROR, "command is unrecognized:command=%s,rc=%d",
                         pSubCommand, rc ) ;
             _sendOpError2Web( rc, pAdptor, this, eduCB() ) ;
             goto error ;
