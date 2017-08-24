@@ -322,7 +322,7 @@ namespace engine
                goto error ;
             }
             /// if meta page has data
-            if ( _meta._version >= DMS_LOB_CURRENT_VERSION &&
+            if ( _meta._version >= DMS_LOB_META_MERGE_DATA_VERSION &&
                  _meta._lobLen > 0 &&
                  readLen > DMS_LOB_META_LENGTH )
             {

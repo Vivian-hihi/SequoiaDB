@@ -909,7 +909,7 @@ namespace engine
          }
          else if ( got )
          {
-            if ( _getMeta()._version <  DMS_LOB_CURRENT_VERSION &&
+            if ( _getMeta()._version <  DMS_LOB_META_MERGE_DATA_VERSION &&
                  0 == curTuple->columns.sequence )
             {
                PD_LOG( PDERROR, "we should not get sequence 0" ) ;
@@ -922,7 +922,7 @@ namespace engine
                                          pageSz,
                                          curTuple->columns.sequence,
                                          curTuple->columns.offset,
-                                         _getMeta()._version >= DMS_LOB_CURRENT_VERSION ) ) ;
+                                         _getMeta()._version >= DMS_LOB_META_MERGE_DATA_VERSION ) ) ;
             if ( SDB_OK != rc )
             {
                PD_LOG( PDERROR, "failed to push data to pool:%d", rc ) ;

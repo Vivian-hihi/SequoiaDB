@@ -166,7 +166,7 @@ namespace engine
             goto error ;
          }
          /// if meta page has data, push the data to pool
-         if ( meta._version >= DMS_LOB_CURRENT_VERSION &&
+         if ( meta._version >= DMS_LOB_META_MERGE_DATA_VERSION &&
               meta._lobLen > 0 &&
               readLen > DMS_LOB_META_LENGTH )
          {
@@ -405,7 +405,7 @@ namespace engine
                                 pageSize,
                                 tuples.begin()->tuple.columns.sequence,
                                 tuples.begin()->tuple.columns.offset,
-                                _getMeta()._version >= DMS_LOB_CURRENT_VERSION ) ) ;
+                                _getMeta()._version >= DMS_LOB_META_MERGE_DATA_VERSION ) ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to push data to pool:%d", rc ) ;
@@ -457,7 +457,7 @@ namespace engine
       INT32 num = 0 ;
 
       RTN_LOB_GET_SEQUENCE_NUM( curOffset(), _getPageSz(),
-                                _getMeta()._version >= DMS_LOB_CURRENT_VERSION,
+                                _getMeta()._version >= DMS_LOB_META_MERGE_DATA_VERSION,
                                 num ) ;
 
       while ( 0 < num )

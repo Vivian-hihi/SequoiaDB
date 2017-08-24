@@ -158,7 +158,10 @@ namespace engine
 
    #pragma pack(1)
 
-   #define DMS_LOB_CURRENT_VERSION           ( 2 )
+   #define DMS_LOB_META_MERGE_DATA_VERSION   ( 2 )
+
+   #define DMS_LOB_META_CURRENT_VERSION       DMS_LOB_META_MERGE_DATA_VERSION
+
    /*
       _dmsLobMeta define
    */
@@ -174,7 +177,7 @@ namespace engine
       :_lobLen( 0 ),
        _createTime( 0 ),
        _status( DMS_LOB_UNCOMPLETE ),
-       _version( DMS_LOB_CURRENT_VERSION )
+       _version( DMS_LOB_META_CURRENT_VERSION )
       {
          ossMemset( _pad, 0, sizeof( _pad ) ) ;
          SDB_ASSERT( sizeof( _dmsLobMeta ) <= DMS_LOB_META_LENGTH,
@@ -185,7 +188,7 @@ namespace engine
       {
          _lobLen = 0 ;
          _createTime = 0 ;
-         _version = DMS_LOB_CURRENT_VERSION ;
+         _version = DMS_LOB_META_CURRENT_VERSION ;
          _status = DMS_LOB_UNCOMPLETE ;
          ossMemset( _pad, 0, sizeof( _pad ) ) ;
       }

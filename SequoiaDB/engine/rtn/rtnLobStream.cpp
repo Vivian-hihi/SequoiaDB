@@ -187,7 +187,7 @@ namespace engine
       }
 
       rc = _lw.init( _lobPageSz,
-                     _meta._version >= DMS_LOB_CURRENT_VERSION ?
+                     _meta._version >= DMS_LOB_META_MERGE_DATA_VERSION ?
                      TRUE : FALSE ) ;
       if ( SDB_OK != rc )
       {
@@ -573,7 +573,7 @@ namespace engine
       UINT32 oneLoopNum = 0 ;
 
       RTN_LOB_GET_SEQUENCE_NUM( _meta._lobLen, _lobPageSz,
-                                _meta._version >= DMS_LOB_CURRENT_VERSION,
+                                _meta._version >= DMS_LOB_META_MERGE_DATA_VERSION,
                                 pieceNum ) ;
       while ( 1 < pieceNum-- )
       {
