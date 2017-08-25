@@ -48,22 +48,7 @@ if [ $? != 0 ] ; then
    exit 1
 fi
 
-../../../tools/server/php_testVersions/php_linux_$ver/bin/php -d extension=../build/dd/libsdbphp-$ver.so ../../../testcase_new/tdd/php/tools/phpunit.phar --log-junit phptest.error.txt ../../../testcase_new/tdd/php/SequoiaDB/authenticateTest.php
-if [ $? != 0 ] ; then
-   exit 1
-fi
-
 ../../../tools/server/php_testVersions/php_linux_$ver/bin/php -d extension=../build/dd/libsdbphp-$ver.so ../../../testcase_new/tdd/php/tools/phpunit.phar --log-junit phptest.error.txt ../../../testcase_new/tdd/php/SequoiaDB/procedureTest.php
-if [ $? != 0 ] ; then
-   exit 1
-fi
-
-../../../tools/server/php_testVersions/php_linux_$ver/bin/php -d extension=../build/dd/libsdbphp-$ver.so ../../../testcase_new/tdd/php/tools/phpunit.phar --log-junit phptest.error.txt ../../../testcase_new/tdd/php/SequoiaDB/transactionTest.php
-if [ $? != 0 ] ; then
-   exit 1
-fi
-
-../../../tools/server/php_testVersions/php_linux_$ver/bin/php -d extension=../build/dd/libsdbphp-$ver.so ../../../testcase_new/tdd/php/tools/phpunit.phar --log-junit phptest.error.txt ../../../testcase_new/tdd/php/SequoiaDB/backupoffline.php
 if [ $? != 0 ] ; then
    exit 1
 fi
