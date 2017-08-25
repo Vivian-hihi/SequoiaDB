@@ -19,8 +19,8 @@ import java.util.logging.Logger;
 public abstract class DBoperateTask extends OperateTask {
     int breakIndex;
     Sequoiadb db = null;
-    private String hostname=null;
 
+    private String hostname = null;
     private final static Logger log = Logger.getLogger(DBoperateTask.class.getName());
 
     public int getBreakIndex() {
@@ -37,11 +37,7 @@ public abstract class DBoperateTask extends OperateTask {
 
     @Override
     public void exec() {
-        if (hostname == null) {
-            db = MyUtil.getMySdb().getSequoiadb();
-        }else{
-            db=new Sequoiadb(hostname,"","");
-        }
+        openSdb();
         try {
             operate();
         } catch (InterruptedException e) {
@@ -50,6 +46,21 @@ public abstract class DBoperateTask extends OperateTask {
         db.close();
     }
 
+    private void openSdb() {
+        if (db == null) {
+            if (hostname == null) {
+                db = MyUtil.getMySdb().getSequoiadb();
+            } else {
+                db = new Sequoiadb(hostname, "", "");
+            }
+        } else {
+            String curHost = db.getHost();
+            if (hostname != null && !curHost.contains(hostname)) {
+                db.close();
+                db = new Sequoiadb(hostname, "", "");
+            }
+        }
+    }
 
     abstract void operate() throws InterruptedException;
 
@@ -58,18 +69,26 @@ public abstract class DBoperateTask extends OperateTask {
      * @param csName
      * @param delayMillis 每循环创建一个cl的睡眠时间，单位是毫秒
      */
-    public static DBoperateTask getTaskCreateCLInOneCs(final List<String> clNames, final String csName, final int delayMillis) {
+    public static DBoperateTask getTaskCreateCLInOneCs(final List<String> clNames, final BSONObject options, final String csName, final int delayMillis) {
         return new DBoperateTask() {
             @Override
             void operate() throws InterruptedException {
                 CollectionSpace cs = db.getCollectionSpace(csName);
                 for (int i = 0; i < clNames.size(); i++) {
                     Thread.sleep(delayMillis);
-                    cs.createCollection(clNames.get(i));
+                    if (options != null) {
+                        cs.createCollection(clNames.get(i), options);
+                    } else {
+                        cs.createCollection(clNames.get(i));
+                    }
                     breakIndex = i;
                 }
             }
         };
+    }
+
+    public static DBoperateTask getTaskCreateCLInOneCs(final List<String> clNames, final String csName, final int delayMillis) {
+        return getTaskCreateCLInOneCs(clNames, null, csName, delayMillis);
     }
 
     public static DBoperateTask getTaskCreateCLInOneCs(final List<String> clNames, final String csName) {

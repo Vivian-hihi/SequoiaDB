@@ -36,7 +36,7 @@ class IndexTestBase implements StandTestInterface {
     String clName = null;
     //array of indexes to be creating
     List<IndexBean> index2Create = new ArrayList<>(100);
-    //array of indexes already created
+    //array of indexes must be created in setup
     List<IndexBean> indexAlreadlyCreated = new ArrayList<>(100);
     //array of bson to be inserting
     static List<BSONObject> simpleBSONList = new ArrayList<>(NUM);
