@@ -40,7 +40,6 @@ function _connectSdb( addressList, user, passwd )
    {
       try
       {
-         rc = SDB_OK ;
          hostName = addressList[index][FIELD_HOSTNAME] ;
          svcname  = addressList[index][FIELD_SVCNAME] ;
          PD_LOGGER.log( PDEVENT, sprintf( "Connect sequoiadb[?:?]",
@@ -86,8 +85,6 @@ function _getNodeList( db )
       while( record = cursor.next() )
       {
          var groupInfo = record.toObj() ;
-         var groupName = groupInfo[FIELD_GROUPNAME] ;
-
          for( var index in groupInfo[FIELD_GROUP] )
          {
             var nodeInfo = groupInfo[FIELD_GROUP][index] ;
@@ -95,7 +92,6 @@ function _getNodeList( db )
 
             nodeAddress[FIELD_HOSTNAME] = nodeInfo[FIELD_HOSTNAME] ;
             nodeAddress[FIELD_SVCNAME]  = nodeInfo[FIELD_SERVICE][0][FIELD_NAME] ;
-            nodeAddress[FIELD_GROUPNAME] = groupName ;
             nodeList.push( nodeAddress ) ;
          }
       }
@@ -119,6 +115,42 @@ function _getNodeList( db )
    return nodeList ;
 }
 
+function _getNodeGroupName( hostName, svcname )
+{
+   var groupName = "" ;
+
+   try
+   {
+      var db = Sdb( hostName, svcname ) ;
+      var selector = {} ;
+      var groupInfo = {} ;
+      var cursor = null ;
+
+      selector[FIELD_GROUPNAME] = 1 ;
+      cursor = db.snapshot( SDB_SNAP_DATABASE, {}, selector ) ;
+      groupInfo = cursor.next().toObj() ;
+      groupName = groupInfo[FIELD_GROUPNAME] ;
+   }
+   catch( e )
+   {
+      rc = getLastError() ;
+      if( rc == SDB_OK )
+      {
+         rc = SDB_SYS ;
+         error = new SdbError( rc, e.message ) ;
+      }
+      else
+      {
+         error = new SdbError( rc, sprintf( "Failed to get node[?:?] group name",
+                                            hostName, svcname ) ) ;
+      }
+      PD_LOGGER.log( PDERROR, error ) ;
+      throw error ;
+   }
+
+   return groupName ;
+}
+
 function _getConfig( hostName, svcname )
 {
    var agentPort = Oma.getAOmaSvcName( hostName ) ;
@@ -128,19 +160,18 @@ function _getConfig( hostName, svcname )
    return JSON.parse( configStr ) ;
 }
 
-function _getNodeConfig( hostRemoval, hostList, hostName, svcname, groupName )
+function _getNodeConfig( hostRemoval, hostList, hostName, svcname )
 {
    var rc     = SDB_OK ;
    var error  = null ;
-   var config = {} ;
+   var config = null ;
    var clusterName  = BUS_JSON[FIELD_CLUSTER_NAME] ;
    var businessName = BUS_JSON[FIELD_BUSINESS_NAME] ;
    var deployMod ;
-   var index ;
 
    try
    {
-      index = hostRemoval[hostName] ;
+      var index = hostRemoval[hostName] ;
 
       config = _getConfig( hostName, svcname ) ;
       if( config[FIELD_ROLE] == FIELD_COORD ||
@@ -151,7 +182,7 @@ function _getNodeConfig( hostRemoval, hostList, hostName, svcname, groupName )
       }
       else if( config[FIELD_ROLE] == FIELD_DATA )
       {
-         config[FIELD_DATAGROUPNAME] = groupName ;
+         config[FIELD_DATAGROUPNAME] = _getNodeGroupName( hostName, svcname ) ;
          deployMod = OMA_DEPLOY_CLUSTER ;
       }
       else if( config[FIELD_ROLE] == OMA_DEPLOY_STANDALONE )
@@ -162,6 +193,28 @@ function _getNodeConfig( hostRemoval, hostList, hostName, svcname, groupName )
       else
       {
          return ;
+      }
+
+      if( isNaN( index ) == true )
+      {
+         var hostInfo = {} ;
+
+         index = hostList.length ;
+         hostRemoval[hostName] = index ;
+
+         hostInfo[FIELD_HOSTNAME]      = hostName ;
+         hostInfo[FIELD_CLUSTER_NAME]  = clusterName ;
+         hostInfo[FIELD_BUSINESS_NAME] = businessName ;
+         hostInfo[FIELD_BUSINESS_TYPE] = FIELD_SEQUOIADB ;
+         hostInfo[FIELD_DEPLOYMOD]     = deployMod ;
+         hostInfo[FIELD_CONFIG]        = [] ;
+
+         hostInfo[FIELD_CONFIG].push( config ) ;
+         hostList.push( hostInfo ) ;
+      }
+      else
+      {
+         hostList[index][FIELD_CONFIG].push( config ) ;
       }
    }
    catch( e )
@@ -178,35 +231,7 @@ function _getNodeConfig( hostRemoval, hostList, hostName, svcname, groupName )
                                             hostName, svcname ) ) ;
       }
       PD_LOGGER.log( PDERROR, error ) ;
-   }
-
-   if( isNaN( index ) == true )
-   {
-      var hostInfo = {} ;
-
-      index = hostList.length ;
-      hostRemoval[hostName] = index ;
-
-      hostInfo[FIELD_ERRNO]         = rc ;
-      hostInfo[FIELD_DETAIL]        = rc == SDB_OK ? "" : error.toString() ;
-      hostInfo[FIELD_HOSTNAME]      = hostName ;
-      hostInfo[FIELD_CLUSTER_NAME]  = clusterName ;
-      hostInfo[FIELD_BUSINESS_NAME] = businessName ;
-      hostInfo[FIELD_BUSINESS_TYPE] = FIELD_SEQUOIADB ;
-      hostInfo[FIELD_DEPLOYMOD]     = deployMod ;
-      hostInfo[FIELD_CONFIG]        = [] ;
-
-      hostInfo[FIELD_CONFIG].push( config ) ;
-      hostList.push( hostInfo ) ;
-   }
-   else
-   {
-      if ( hostList[index][FIELD_ERRNO] == SDB_OK && rc != SDB_OK )
-      {
-         hostList[index][FIELD_ERRNO]  = rc ;
-         hostList[index][FIELD_DETAIL] = rc == SDB_OK ? "" : error.toString() ;
-      }
-      hostList[index][FIELD_CONFIG].push( config ) ;
+      throw error ;
    }
 }
 
@@ -255,18 +280,17 @@ function _syncSdbConfig()
       nodeList = _getNodeList( db ) ;
       for( var index in nodeList )
       {
-         var hostName  = nodeList[index][FIELD_HOSTNAME] ;
-         var svcname   = nodeList[index][FIELD_SVCNAME] ;
-         var groupName = nodeList[index][FIELD_GROUPNAME] ;
+         var hostName = nodeList[index][FIELD_HOSTNAME] ;
+         var svcname  = nodeList[index][FIELD_SVCNAME] ;
    
-         _getNodeConfig( hostRemoval, hostList, hostName, svcname, groupName ) ;
+         _getNodeConfig( hostRemoval, hostList, hostName, svcname ) ;
       }
    }
    else if( nodeConfig[FIELD_ROLE] == OMA_DEPLOY_STANDALONE )
    {
       _getNodeConfig( hostRemoval, hostList,
-                      connectInfo[FIELD_HOSTNAME], connectInfo[FIELD_SVCNAME],
-                      "" ) ;
+                      connectInfo[FIELD_HOSTNAME],
+                      connectInfo[FIELD_SVCNAME] ) ;
    }
    else
    {
@@ -289,6 +313,8 @@ function main()
    var result = {} ;
 
    PD_LOGGER.log( PDEVENT, "Begin to sync business configure" ) ;
+
+   PD_LOGGER.log( PDEVENT, JSON.stringify( BUS_JSON ) ) ;
 
    var businessName = BUS_JSON[FIELD_BUSINESS_NAME] ;
    var businessType = BUS_JSON[FIELD_BUSINESS_TYPE] ;

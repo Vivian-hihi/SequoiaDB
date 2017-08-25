@@ -51,10 +51,19 @@ namespace engine
          virtual ~_rtnExtDataHandler() ;
 
       public:
-         virtual INT32 onCreate( const CHAR *clFullName, const CHAR *idxName,
-                                 pmdEDUCB* cb, SDB_DPSCB *dpsCB = NULL ) ;
-         virtual INT32 onDrop( const CHAR *clFullName, const CHAR *idxName,
-                               _pmdEDUCB *cb, SDB_DPSCB *dpscb = NULL ) ;
+         virtual INT32 onDropCS( const monCSSimple &csInfo,
+                                 _pmdEDUCB *cb ) ;
+         virtual INT32 onCreateTextIdx( const CHAR *clFullName,
+                                        const CHAR *idxName,
+                                        INT64 bufferSize,
+                                        pmdEDUCB* cb,
+                                        SDB_DPSCB *dpsCB = NULL ) ;
+
+         virtual INT32 onDropTextIdx( const CHAR *clFullName,
+                                      const CHAR *idxName,
+                                      _pmdEDUCB *cb,
+                                      SDB_DPSCB *dpscb = NULL ) ;
+
          virtual INT32 onInsert( const CHAR *clFullName, const CHAR *idxName,
                                  BSONObj &object, bson::OID &oid,
                                  INT32 flags, _pmdEDUCB* cb,

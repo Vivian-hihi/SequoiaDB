@@ -1133,7 +1133,6 @@ namespace engine
       INT16 replSize = 0 ;
       INT16 w = 1 ;
       _rtnCommand *pCommand = NULL ;
-      rtnOperatorFactory* oprFactory = NULL ;
       rtnOperator *pOperator = NULL ;
 
       rc = msgExtractQuery ( (CHAR *)msg, &flags, &pCollectionName,
@@ -1226,21 +1225,17 @@ namespace engine
                rtnQueryOptions options( matcher, selector, orderBy, hint,
                                         pCollectionName, numToSkip, numToReturn,
                                         flags ) ;
-               oprFactory = rtnGetOperatorFactory() ;
-               rc = oprFactory->create( options, &pOperator ) ;
+
+               rc = rtnGetOperatorFactory()->create( options, &pOperator ) ;
                PD_RC_CHECK( rc, PDERROR, "Create operator for query failed[ %d ]",
                             rc ) ;
                if ( pOperator )
                {
                   rtnContextBase *context = NULL ;
-                  rc = pOperator->init( options, eduCB(), sdbGetRTNCB(),
-                                        contextID, &context, FALSE ) ;
-                  PD_RC_CHECK( rc, PDERROR,
-                               "Initialize operator for query failed[ %d ]", rc ) ;
-
-                  rc = pOperator->execute() ;
-                  PD_RC_CHECK( rc, PDERROR, "Query operator execute failed[ %d ]", rc ) ;
-
+                  rc = pOperator->run( options, eduCB(), sdbGetRTNCB(),
+                                       contextID, &context, FALSE ) ;
+                  PD_RC_CHECK( rc, PDERROR, "Initialize operator for query "
+                               "failed[ %d ]", rc ) ;
                   goto done ;
                }
                else
@@ -1444,6 +1439,10 @@ namespace engine
       if ( pCommand )
       {
          rtnReleaseCommand( &pCommand ) ;
+      }
+      if ( pOperator )
+      {
+         rtnGetOperatorFactory()->release( &pOperator ) ;
       }
       PD_TRACE_EXITRC ( SDB__CLSSHDSESS__ONQYREQMSG, rc ) ;
       return rc ;

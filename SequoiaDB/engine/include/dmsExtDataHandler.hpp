@@ -41,6 +41,7 @@
 #include "core.hpp"
 #include "oss.hpp"
 #include "dpsLogWrapper.hpp"
+#include "monDMS.hpp"
 #include "../bson/oid.h"
 
 namespace engine
@@ -61,10 +62,17 @@ namespace engine
          virtual ~_IDmsExtDataHandler() {}
 
       public:
-         virtual INT32 onCreate( const CHAR *clFullName, const CHAR *idxName,
-                                 pmdEDUCB* cb, SDB_DPSCB *dpsCB = NULL ) = 0 ;
-         virtual INT32 onDrop( const CHAR *clFullName, const CHAR *idxName,
-                               _pmdEDUCB *cb, SDB_DPSCB *dpscb = NULL ) = 0 ;
+         virtual INT32 onDropCS( const monCSSimple &csInfo,
+                                 _pmdEDUCB *cb ) = 0 ;
+         virtual INT32 onCreateTextIdx( const CHAR *clFullName,
+                                        const CHAR *idxName,
+                                        INT64 bufferSize,
+                                        _pmdEDUCB* cb,
+                                        SDB_DPSCB *dpsCB = NULL ) = 0 ;
+         virtual INT32 onDropTextIdx( const CHAR *clFullName,
+                                      const CHAR *idxName,
+                                      _pmdEDUCB *cb,
+                                      SDB_DPSCB *dpscb = NULL ) = 0 ;
          virtual INT32 onInsert( const CHAR *clFullName, const CHAR *idxName,
                                  BSONObj &object, bson::OID &oid,
                                  INT32 flags, _pmdEDUCB* cb,

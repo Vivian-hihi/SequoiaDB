@@ -352,7 +352,8 @@ const CHAR* getErrDesp ( INT32 errCode )
       "The task is not existed",
       "Replica log is not archived",
       "Data source has not been initialized",
-      "Operation is incompatible with the object"
+      "Operation is incompatible with the object",
+      "This cluster is deactived"
    };
    if ( code < 0 || (UINT32)code >= (sizeof ( errDesp ) / sizeof ( CHAR* )) )
    {

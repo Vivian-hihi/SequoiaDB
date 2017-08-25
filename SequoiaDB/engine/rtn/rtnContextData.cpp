@@ -2381,11 +2381,22 @@ namespace engine
    : _rtnContextBase( contextID, eduID )
    {
       _eduCB = NULL ;
+      _remoteSessionSite = NULL ;
       _remoteSession = NULL ;
+      _subCtxID = -1 ;
    }
 
    _rtnContextTSData::~_rtnContextTSData()
    {
+      if ( _remoteSession )
+      {
+         _remoteSession->clearSubSession() ;
+         if ( _remoteSessionSite )
+         {
+            _remoteSessionSite->removeSession( _remoteSession ) ;
+         }
+      }
+
       if ( sdbGetPMDController()->getRSManager() && _eduCB )
       {
          sdbGetPMDController()->getRSManager()->unregEUD( _eduCB ) ;
@@ -2472,23 +2483,30 @@ namespace engine
       rc = rtnGetMore( _subCtxID, _options._limit, objBuff, cb, rtnCB ) ;
       if ( rc )
       {
-         if ( SDB_DMS_EOC != rc )
+         // If the return code is EOC, get another query from search engine
+         // adapter.
+         if ( SDB_DMS_EOC == rc )
+         {
+            // Another new query will be started, and in case of query success,
+            // we can go on to get more data.
+            rc = _getMoreFromRemote( cb ) ;
+            PD_RC_CHECK( rc, PDERROR, "Get more from remote failed[ %d ]",
+                         rc ) ;
+            rc = rtnGetMore( _subCtxID, _options._limit, objBuff, cb, rtnCB ) ;
+            PD_RC_CHECK( rc, PDERROR, "Get more data failed[ %d ]", rc ) ;
+         }
+         else
          {
             PD_LOG( PDERROR, "Get more data failed[ %d ]", rc ) ;
             goto error ;
          }
-
-         // If the return code is EOC, get another query from search engine
-         // adapter.
-
       }
 
-      // Append the results to the result buffer.
+      // Append the results to the result buffer, when get more succeed.
       rc = appendObjs( objBuff.data(), objBuff.size(),
                        objBuff.recordNum(), TRUE ) ;
       PD_RC_CHECK( rc, PDERROR, "Append objects to text search context "
                    "failed[ %d ]", rc ) ;
-
 
    done:
       return rc ;
@@ -2500,17 +2518,16 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       pmdRemoteSessionMgr *rsMgr = NULL ;
-      pmdRemoteSessionSite *rsSite = NULL ;
 
       // Register a remote session.
       rsMgr = sdbGetPMDController()->getRSManager() ;
       SDB_ASSERT( rsMgr, "Remote session manager is not able to be NULL" ) ;
 
       // Register the current edu in remote session manager.
-      rsSite = rsMgr->registerEDU( eduCB ) ;
+      _remoteSessionSite = rsMgr->registerEDU( eduCB ) ;
       _eduCB = eduCB ;
 
-      _remoteSession = rsSite->addSession( -1, &_rsHandler ) ;
+      _remoteSession = _remoteSessionSite->addSession( -1, &_rsHandler ) ;
       if ( !_remoteSession )
       {
          PD_LOG( PDERROR, "Add session to session site failed" ) ;
@@ -2538,6 +2555,8 @@ namespace engine
       rc = msgBuildGetMoreMsg( (CHAR **)&msg, &msgSize, numToReturn,
                                contextID, reqID, eduCB ) ;
       PD_RC_CHECK( rc, PDERROR, "Build get more message failed[ %d ]", rc ) ;
+
+      msg->opCode = MSG_SEADPT_Q_REWT_MORE_REQ ;
 
       rc = _sendToRemote( msg ) ;
       PD_RC_CHECK( rc, PDERROR, "Send get more message to remote failed[ %d ]",
@@ -2567,6 +2586,7 @@ namespace engine
       }
 
       subSession->setReqMsg( (MsgHeader *)msg, PMD_EDU_MEM_NONE ) ;
+      subSession->resetForResend() ;
       rc = _remoteSession->sendMsg( subSession ) ;
       PD_RC_CHECK( rc, PDERROR, "Send message to search engine adapter "
                    "failed[ %d ]", rc ) ;

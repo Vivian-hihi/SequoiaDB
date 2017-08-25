@@ -285,6 +285,11 @@ namespace engine
 
       void dumpInfo ( INT64 &totalFileSize );
 
+      void dumpCSInfo( const CHAR *csName, monCSSimple &csInfo,
+                       BOOLEAN searchDeleting, BOOLEAN &deleting,
+                       BOOLEAN sys = FALSE, BOOLEAN dumpCL = FALSE,
+                       BOOLEAN dumpIdx = FALSE ) ;
+
       dmsTempSUMgr *getTempSUMgr () ;
 
       dmsStatSUMgr *getStatSUMgr () ;

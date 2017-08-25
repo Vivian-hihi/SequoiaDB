@@ -52,13 +52,12 @@ namespace engine
          _rtnOperator() ;
          virtual ~_rtnOperator() ;
       public:
-         virtual INT32 init( const rtnQueryOptions &options,
-                             pmdEDUCB *eduCB,
-                             SDB_RTNCB *rtnCB,
-                             INT64 &contextID,
-                             rtnContextBase **ppContext,
-                             BOOLEAN enablePrefetch ) = 0 ;
-         virtual INT32 execute() = 0 ;
+         virtual INT32 run( const rtnQueryOptions &options,
+                            pmdEDUCB *eduCB,
+                            SDB_RTNCB *rtnCB,
+                            INT64 &contextID,
+                            rtnContextBase **ppContext,
+                            BOOLEAN enablePrefetch ) = 0 ;
    } ;
    typedef _rtnOperator rtnOperator ;
 }

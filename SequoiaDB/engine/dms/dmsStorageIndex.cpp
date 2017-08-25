@@ -464,9 +464,6 @@ namespace engine
       INT32 rc = SDB_OK ;
       UINT16 indexType = IXM_EXTENT_TYPE_NONE ;
 
-      // TODO: get the buffer size from parameter.
-      INT64 buffSize = ( 30 * 1024 * 1024 * 1024LL ) ;
-
       if ( !ixmIndexCB::generateIndexType( index, indexType ) )
       {
          PD_LOG( PDERROR, "Get index type from definition failed" ) ;
@@ -476,7 +473,10 @@ namespace engine
 
       if ( IXM_EXTENT_HAS_TYPE( indexType, IXM_EXTENT_TYPE_TEXT ) )
       {
-         rc = createTextIndex( context, index, cb, dpscb, isSys, buffSize ) ;
+         // Reuse the 'sortBufferSize' as the 'Size' option for the
+         // corresponding capped collection.
+         rc = createTextIndex( context, index, cb, dpscb,
+                               isSys, sortBufferSize ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to create text index, rc: %d", rc ) ;
       }
       else
@@ -830,8 +830,8 @@ namespace engine
             }
          }
 
-         rc = extDataHandler->onCreate( fullName, indexCB.getName(),
-                                        cb, NULL ) ;
+         rc = extDataHandler->onCreateTextIdx( fullName, indexCB.getName(),
+                                               bufferSize, cb, NULL ) ;
          PD_RC_CHECK( rc, PDERROR, "External data process of creating "
                       "text index failed[ %d ]", rc ) ;
          indexCB.setFlag ( IXM_INDEX_FLAG_NORMAL ) ;
@@ -1174,8 +1174,8 @@ namespace engine
                goto error ;
             }
 
-            rc = extDataHandler->onDrop( fullName, indexCB.getName(),
-                                         cb, NULL ) ;
+            rc = extDataHandler->onDropTextIdx( fullName, indexCB.getName(),
+                                                cb, NULL ) ;
             PD_RC_CHECK( rc, PDERROR, "External data process of dropping "
                          "text index failed[ %d ]", rc ) ;
          }

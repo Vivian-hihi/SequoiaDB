@@ -241,7 +241,9 @@ rtnFiles = [
       "rtn/rtnOperatorFactory.cpp",
       "rtn/rtnOperator.cpp",
       "rtn/rtnQueryOperator.cpp",
-      "rtn/rtnExtDataHandler.cpp"
+      "rtn/rtnExtDataHandler.cpp",
+      "rtn/rtnSimpleCondNode.cpp",
+      "rtn/rtnSimpleCondParser.cpp"
       ]
 
 msgFiles = [
