@@ -1122,7 +1122,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTAPM__INVALIDPLANS, "_optAccessPlanManager::_invalidCachedPlans" )
    void _optAccessPlanManager::_invalidSUPlans ( IDmsSUCacheHolder *pCacheHolder )
    {
-      PD_TRACE_ENTRY( SDB_OPTAPM__INVALIDCLPLANS ) ;
+      PD_TRACE_ENTRY( SDB_OPTAPM__INVALIDPLANS ) ;
 
       SDB_ASSERT( pCacheHolder, "pCacheHolder is invalid" ) ;
 
@@ -1138,6 +1138,7 @@ namespace engine
          pCachedPlanMgr->resetCacheBitmap() ;
          pCachedPlanMgr->clearCacheUnits() ;
       }
+      PD_TRACE_ENTRY( SDB_OPTAPM__INVALIDPLANS ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTAPM__INVALIDCLPLANS, "_optAccessPlanManager::_invalidCLPlans" )
