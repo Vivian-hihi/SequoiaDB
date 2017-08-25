@@ -37,6 +37,7 @@
 *******************************************************************************/
 #include "pmd.hpp"
 #include "rtn.hpp"
+#include "rtnTrace.hpp"
 #include "rtnExtDataHandler.hpp"
 
 #define RTN_CAPPED_CL_MAXRECNUM     0
@@ -53,6 +54,7 @@ namespace engine
    {
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER__ADDOPRRECORD, "_rtnExtDataHandler::_addOprRecord" )
    INT32 _rtnExtDataHandler::_addOprRecord( const CHAR *name,
                                             _dmsExtOprType oprType,
                                             pmdEDUCB *cb,
@@ -61,6 +63,7 @@ namespace engine
                                             SDB_DPSCB *dpsCB )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER__ADDOPRRECORD ) ;
       INT32 insertNum = 0 ;
       INT32 ignoreNum = 0 ;
       BSONObj objToInsert ;
@@ -130,15 +133,17 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Insert record failed[ %d ]", rc ) ;
 
    done:
+      PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER__ADDOPRRECORD, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ONDROPCS, "_rtnExtDataHandler::onDropCS" )
    INT32 _rtnExtDataHandler::onDropCS( const monCSSimple &csInfo, pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
-
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONDROPCS ) ;
       SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
       MON_CS_SIM_LIST csList ;
       vector< string > cappedCSs ;
@@ -172,9 +177,11 @@ namespace engine
          }
       }
 
+      PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER_ONDROPCS, rc ) ;
       return rc ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ONCREATETEXTIDX, "_rtnExtDataHandler::onCreateTextIdx" )
    INT32 _rtnExtDataHandler::onCreateTextIdx( const CHAR *clFullName,
                                               const CHAR *idxName,
                                               INT64 bufferSize,
@@ -182,6 +189,7 @@ namespace engine
                                               SDB_DPSCB *dpsCB )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONCREATETEXTIDX ) ;
       SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
       string cappedCSFullName = clFullName ;
       string cappedCLFullName ;
@@ -218,6 +226,7 @@ namespace engine
       rtnCB->incTextIdxVersion() ;
 
    done:
+      PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER_ONCREATETEXTIDX, rc ) ;
       return rc ;
    error:
       if ( csCreated )
@@ -228,12 +237,14 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ONDROPTEXTIDX, "_rtnExtDataHandler::onDropTextIdx" )
    INT32 _rtnExtDataHandler::onDropTextIdx( const CHAR *clFullName,
                                             const CHAR *idxName,
                                             pmdEDUCB* cb,
                                             SDB_DPSCB *dpscb )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONDROPTEXTIDX ) ;
       string cappedCSFullName = clFullName ;
       SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
 
@@ -245,17 +256,20 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Drop capped collection space failed[ %d ]",
                    rc ) ;
    done:
+      PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER_ONDROPTEXTIDX, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ONINSERT, "_rtnExtDataHandler::onInsert" )
    INT32 _rtnExtDataHandler::onInsert( const CHAR *clFullName,
                                        const CHAR *idxName, BSONObj &object,
                                        bson::OID &oid, INT32 flags,
                                        pmdEDUCB* cb, SDB_DPSCB *dpscb )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONINSERT ) ;
       string cappedCSFullName = clFullName ;
       string cappedCLFullName ;
 
@@ -268,16 +282,19 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Insert operation record failed[ %d ]", rc ) ;
 
    done:
+      PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER_ONINSERT, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ONDELETE, "_rtnExtDataHandler::onDelete" )
    INT32 _rtnExtDataHandler::onDelete( const CHAR *clFullName,
                                        const CHAR *idxName, bson::OID &oid,
                                        pmdEDUCB* cb, SDB_DPSCB *dpscb )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONDELETE ) ;
       string cappedCSFullName = clFullName ;
       string cappedCLFullName ;
 
@@ -290,17 +307,20 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Insert Operation Record failed[ %d ]", rc ) ;
 
    done:
+      PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER_ONDELETE, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ONUPDATE, "_rtnExtDataHandler::onUpdate" )
    INT32 _rtnExtDataHandler::onUpdate( const CHAR *clFullName,
                                        const CHAR *idxName, BSONObj &object,
                                        bson::OID &oid, INT32 flags,
                                        pmdEDUCB* cb, SDB_DPSCB *dpscb )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONUPDATE ) ;
       string cappedCSFullName = clFullName ;
       string cappedCLFullName ;
 
@@ -313,16 +333,19 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Insert Operation Record failed[ %d ]", rc ) ;
 
    done:
+      PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER_ONUPDATE, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ONTRUNCATE, "_rtnExtDataHandler::onTruncate" )
    INT32 _rtnExtDataHandler::onTruncate( const CHAR *clFullName,
                                          const CHAR *idxName, pmdEDUCB* cb,
                                          SDB_DPSCB *dpscb )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONTRUNCATE ) ;
       string cappedCSFullName = clFullName ;
       string cappedCLFullName ;
 
@@ -335,6 +358,7 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Insert Operation Record failed[ %d ]", rc ) ;
 
    done:
+      PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER_ONTRUNCATE, rc ) ;
       return rc ;
    error:
       goto done ;
