@@ -54,7 +54,6 @@ namespace engine
       SEADPT_SESSION_STAT_BEGIN = 1,         // Start from the beginning.
       SEADPT_SESSION_STAT_UPDATE_CL_VERSION, // Update collection version.
       SEADPT_SESSION_STAT_CONSULT,           // To find where to start.
-      SEADPT_SESSION_STAT_QUERY_LAST_LID,
       SEADPT_SESSION_STAT_QUERY_NORMAL_TBL,
       SEADPT_SESSION_STAT_QUERY_CAP_TBL,
       SEADPT_SESSION_STAT_POP_CAP,
@@ -88,12 +87,14 @@ namespace engine
       virtual void _onDetach() ;
 
    private:
+      // Consule the current progress of the indexing.
+      INT32 _progressConsult() ;
       void  _updateCLVersion( INT32 version ) ;
       void  _switchStatus( SEADPT_SESSION_STATUS newStatus ) ;
       INT32 _sendUpdateCLVersionReq() ;
+      INT32 _sendQueryReq() ;
       INT32 _sendGetmoreReq( INT64 contextID, UINT64 requestID ) ;
       INT32 _queryOrigCollection() ;
-      INT32 _queryLastCappedRecLID() ;
       INT32 _queryCappedCollection() ;
       INT32 _getExpectRLID( INT64 &expectRLID ) ;
       INT32 _cleanData( INT64 recLID ) ;

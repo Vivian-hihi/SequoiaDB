@@ -554,9 +554,7 @@ sdbSEAdptFiles = [
       "tools/seadapter/utilHttp.cpp",
       "tools/seadapter/utilESClt.cpp",
       "tools/seadapter/utilESCltMgr.cpp",
-      "util/utilCommObjBuff.cpp",
-      "rtn/rtnSimpleCondNode.cpp",
-      "rtn/rtnSimpleCondParser.cpp"
+      "util/utilCommObjBuff.cpp"
       ]
 
 #cls

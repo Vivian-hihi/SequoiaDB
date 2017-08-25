@@ -37,12 +37,10 @@
 *******************************************************************************/
 #include "msgDef.hpp"
 #include "seAdptContext.hpp"
-#include "rtnSimpleCondParser.hpp"
 
 using namespace bson ;
 
 #define DMS_ID_KEY_NAME        "_id"
-
 namespace engine
 {
    _seAdptQueryRebuilder::_seAdptQueryRebuilder()
@@ -185,6 +183,32 @@ namespace engine
       goto done ;
    }
 
+   _seAdptContextData::_seAdptContextData( const string &indexName,
+                                           const string &typeName,
+                                           utilESClt *seClt )
+   : _seAdptContextBase( indexName, typeName, seClt )
+   {
+   }
+
+   _seAdptContextData::~_seAdptContextData()
+   {
+   }
+
+   INT32 _seAdptContextData::open( const BSONObj &matcher,
+                                   const BSONObj &selector,
+                                   const BSONObj &orderBy,
+                                   const BSONObj &hint,
+                                   utilCommObjBuff &objBuff,
+                                   pmdEDUCB *eduCB )
+   {
+      return SDB_OK ;
+   }
+
+   INT32 _seAdptContextData::getMore( INT32 returnNum, utilCommObjBuff &objBuff )
+   {
+      return SDB_OK ;
+   }
+
    _seAdptContextQuery::_seAdptContextQuery( const string &indexName,
                                              const string &typeName,
                                              utilESClt *seClt )
@@ -207,54 +231,16 @@ namespace engine
       string queryCond ;
       utilCommObjBuff searchResult ;
       BSONObj inCond ;
-      BSONObj newQuery ;
       std::map< _seadptQueryRebldType, const BSONObj* > rebuildItems ;
+
       vector<_seadptQueryRebldType> rebuildType ;
       vector<BSONObj*> rebuildObjs ;
-      rtnCondNode *textNode = NULL ;
-      BSONObj textRootObj ;
-      BSONObj textObj ;
 
       objBuff.reset() ;
 
-      _condTree.parse( matcher ) ;
-      textNode = _condTree.getTextNode() ;
-      if ( !textNode )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "Text search condition not found: %s",
-                 matcher.toString().c_str() ) ;
-         goto error ;
-      }
-
-      // { "" : { "$Text" : { condition } } }
-      textRootObj = textNode->toBson() ;
-      PD_LOG( PDDEBUG, "Text query object: %s", textRootObj.toString().c_str() ) ;
-      {
-         BSONElement eleTmp = textRootObj.firstElement() ;
-         if ( Object != eleTmp.type() )
-         {
-            rc = SDB_INVALIDARG ;
-            PD_LOG( PDERROR, "Text search condition is invalid: %s",
-                    textRootObj.toString().c_str() ) ;
-            goto error ;
-         }
-
-         // { "$Text" : { condition } }
-         textObj = eleTmp.Obj() ;
-         eleTmp = textObj.firstElement() ;
-         if ( Object != eleTmp.type() )
-         {
-            rc = SDB_INVALIDARG ;
-            PD_LOG( PDERROR, "Text search condition is invalid: %s",
-                    textRootObj.toString().c_str() ) ;
-            goto error ;
-         }
-
-         // { condition }
-         queryCond = eleTmp.Obj().toString() ;
-      }
-
+      rc = _getQueryCond( matcher, queryCond ) ;
+      PD_RC_CHECK( rc, PDERROR, "Get query string from matcher failed[ %d ], "
+                   "matcher: %s", rc, matcher.toString().c_str() ) ;
       rc = _queryRebuilder.init(  matcher, selector, orderBy, hint ) ;
       PD_RC_CHECK( rc, PDERROR, "Initialize query rebuilder failed[ %d ]",
                    rc ) ;
@@ -274,21 +260,10 @@ namespace engine
 
       rc = _buildInCond( searchResult, inCond ) ;
       PD_RC_CHECK( rc, PDERROR, "Build the $in condition failed[ %d ]", rc ) ;
-
       PD_LOG( PDDEBUG, "The new in condition is: %s",
               inCond.toString().c_str() ) ;
 
-      if ( textNode )
-      {
-         rc = _condTree.updateNode( textNode, inCond.firstElement() ) ;
-         PD_RC_CHECK( rc, PDERROR, "Update condition node failed[ %d ]", rc ) ;
-      }
-
-      newQuery = _condTree.toBson() ;
-      PD_LOG( PDDEBUG, "After transformation, the query is: %s",
-              newQuery.toString().c_str() ) ;
-
-      rebuildItems[ SE_QUERY_REBLD_QUERY ] = &newQuery ;
+      rebuildItems[ SE_QUERY_REBLD_QUERY ] = &inCond ;
       rc = _queryRebuilder.rebuild( rebuildItems, objBuff ) ;
       PD_RC_CHECK( rc, PDERROR, "Rebuild the query message failed[ %d ]", rc ) ;
 

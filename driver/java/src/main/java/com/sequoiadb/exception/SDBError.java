@@ -333,8 +333,7 @@ public enum SDBError {
     SDB_STRTGY_TASK_NOT_EXISTED(        -312,    "The task is not existed"    ),
     SDB_DPS_LOG_NOT_ARCHIVED(           -313,    "Replica log is not archived"    ),
     SDB_DS_NOT_INIT(                    -314,    "Data source has not been initialized"    ),
-    SDB_OPERATION_INCOMPATIBLE(         -315,    "Operation is incompatible with the object"    ),
-    SDB_CAT_CLUSTER_IS_DEACTIVED(       -316,    "This cluster is deactived"    );
+    SDB_OPERATION_INCOMPATIBLE(         -315,    "Operation is incompatible with the object"    );
 
     private int code;
     private String desc;
@@ -678,7 +677,6 @@ public enum SDBError {
         case  -313: return SDB_DPS_LOG_NOT_ARCHIVED;
         case  -314: return SDB_DS_NOT_INIT;
         case  -315: return SDB_OPERATION_INCOMPATIBLE;
-        case  -316: return SDB_CAT_CLUSTER_IS_DEACTIVED;
         default:    return null;
         }
     }

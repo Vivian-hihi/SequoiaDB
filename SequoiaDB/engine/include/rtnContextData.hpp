@@ -312,6 +312,8 @@ namespace engine
    {
       DECLARE_RTN_CTX_AUTO_REGISTER()
 
+      #define EXT_DATA_BUF_SIZE ( 4 * 1024 * 1024 )
+
       public:
          _rtnContextTSData( INT64 contextID, UINT64 eduID ) ;
          virtual ~_rtnContextTSData() ;
@@ -333,13 +335,23 @@ namespace engine
          INT32 _waitAndProcessRemoteReply() ;
 
       private:
-         pmdEDUCB*            _eduCB ;
-         rtnQueryOptions      _options ;
-         pmdRemoteSessionSite *_remoteSessionSite ;
-         pmdRemoteSession     *_remoteSession ;
-         rtnRSHandler         _rsHandler ;
-         SINT64               _subCtxID ;    // Context to fetch data from local
-                                             // after get new query from ES.
+         pmdEDUCB*       _eduCB ;
+         rtnQueryOptions _options ;
+         pmdRemoteSession *_remoteSession ;
+         rtnRSHandler _rsHandler ;
+
+         CHAR _clName[ DMS_COLLECTION_NAME_SZ + 1 ] ;
+         BSONObj _selector ;
+         BSONObj _newMatcher ;
+         BSONObj _orderBy ;
+         BSONObj _hint ;
+         INT32 _flags ;
+         INT64 _numToSkip ;
+         INT64 _numToReturn ;
+         CHAR *_extDataBuff ;
+         UINT32 _extBuffSize ;
+         SINT64 _subCtxID ;
+         rtnContextBase *_dataContext ;
    } ;
    typedef _rtnContextTSData rtnContextTSData ;
 }

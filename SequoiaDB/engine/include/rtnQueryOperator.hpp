@@ -49,12 +49,15 @@ namespace engine
          _rtnTSQueryOperator() ;
          virtual ~_rtnTSQueryOperator() ;
 
-         INT32 run( const rtnQueryOptions &options,
-                    pmdEDUCB *eduCB,
-                    SDB_RTNCB *rtnCB,
-                    INT64 &contextID,
-                    rtnContextBase **ppContext,
-                    BOOLEAN enablePrefetch ) ;
+         INT32 init( const rtnQueryOptions &options,
+                     pmdEDUCB *eduCB,
+                     SDB_RTNCB *rtnCB,
+                     INT64 &contextID,
+                     rtnContextBase **ppContext,
+                     BOOLEAN enablePrefetch ) ;
+         INT32 execute() ;
+      private:
+         // rtnSEAdptSession _adptSession ;
    } ;
    typedef _rtnTSQueryOperator rtnTSQueryOperator ;
 }

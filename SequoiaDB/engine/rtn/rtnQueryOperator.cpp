@@ -49,12 +49,12 @@ namespace engine
 
    }
 
-   INT32 _rtnTSQueryOperator::run( const rtnQueryOptions &options,
-                                   pmdEDUCB *eduCB,
-                                   SDB_RTNCB *rtnCB,
-                                   INT64 &contextID,
-                                   rtnContextBase **ppContext,
-                                   BOOLEAN enablePrefetch )
+   INT32 _rtnTSQueryOperator::init( const rtnQueryOptions &options,
+                                    pmdEDUCB *eduCB,
+                                    SDB_RTNCB *rtnCB,
+                                    INT64 &contextID,
+                                    rtnContextBase **ppContext,
+                                    BOOLEAN enablePrefetch )
    {
       INT32 rc = SDB_OK ;
       rtnContextTSData *pContext = NULL ;
@@ -84,6 +84,11 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   INT32 _rtnTSQueryOperator::execute()
+   {
+      return SDB_OK ;
    }
 }
 

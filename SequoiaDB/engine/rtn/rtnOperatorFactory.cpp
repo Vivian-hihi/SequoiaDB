@@ -37,7 +37,6 @@
 *******************************************************************************/
 #include "rtnOperatorFactory.hpp"
 #include "rtnQueryOperator.hpp"
-#include "rtnSimpleCondParser.hpp"
 
 namespace engine
 {
@@ -62,14 +61,6 @@ namespace engine
 
       if ( RTN_QUERY_TEXT == type )
       {
-         if ( options._hint.isEmpty() )
-         {
-            rc = SDB_INVALIDARG ;
-            PD_LOG( PDERROR,
-                    "hint should be specified when using text search" ) ;
-            goto error ;
-         }
-
          opr = SDB_OSS_NEW rtnTSQueryOperator() ;
          if ( !opr )
          {
@@ -100,15 +91,32 @@ namespace engine
                                              rtnQueryType &qType )
    {
       INT32 rc = SDB_OK ;
-      rtnSimpleCondParseTree condTree ;
 
       qType = RTN_QUERY_NORMAL ;
-      rc = condTree.parse( query ) ;
-      PD_RC_CHECK( rc, PDERROR, "Parse query failed[ %d ]", rc ) ;
 
-      if ( condTree.hasTextCond())
+      BSONElement ele = query.firstElement() ;
+      if ( Object == ele.type() )
       {
-         qType = RTN_QUERY_TEXT ;
+         BSONElement subEle = ele.Obj().firstElement() ;
+         if ( 0 == ossStrcmp( FIELD_NAME_TEXT, subEle.fieldName() ) )
+         {
+            if ( 1 != query.nFields() )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR, "Only one query condition should be specified "
+                       "for text search, actually: %d", query.nFields() ) ;
+               goto error ;
+            }
+
+            qType = RTN_QUERY_TEXT ;
+            if ( ( String != subEle.type() ) && ( Object != subEle.type() ) )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR, "Query conditioin type[%d] for text "
+                       "search is wrong", subEle.type() ) ;
+               goto error ;
+            }
+         }
       }
 
    done:

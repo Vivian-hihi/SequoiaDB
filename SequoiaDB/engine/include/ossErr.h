@@ -365,5 +365,4 @@ const CHAR* getErrDesp ( INT32 errCode );
 #define SDB_DPS_LOG_NOT_ARCHIVED         -313  /**< Replica log is not archived */
 #define SDB_DS_NOT_INIT                  -314  /**< Data source has not been initialized */
 #define SDB_OPERATION_INCOMPATIBLE       -315  /**< Operation is incompatible with the object */
-#define SDB_CAT_CLUSTER_IS_DEACTIVED     -316  /**< This cluster is deactived */
 #endif /* OSSERR_H_ */

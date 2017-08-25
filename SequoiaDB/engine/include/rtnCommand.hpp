@@ -566,13 +566,12 @@ namespace engine
          virtual INT32 doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
                               _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
                               INT16 w = 1, INT64 *pContextID = NULL  ) ;
-      private:
-         INT32 _validateDef( const BSONObj &index ) ;
+
       protected:
          const CHAR              *_collectionName ;
          BSONObj                 _index ;
          INT32                   _sortBufferSize ;
-         BOOLEAN                 _textIdx ;
+
    };
 
    class _rtnDropCollection : public _rtnCommand
