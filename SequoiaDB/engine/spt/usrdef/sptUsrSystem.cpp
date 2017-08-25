@@ -1390,50 +1390,50 @@ namespace engine
                                     BSONObj & detail )
    {
       stringstream ss ;
-      ss << "Local static functions:" << endl
-         << "var system = remoteObj.getSystem()" << endl
-         << " System.ping( hostname )" << endl
-         << " System.type()" << endl
-         << " System.getReleaseInfo()" << endl
-         << " System.getHostsMap()" << endl
-         << " System.getAHostMap( hostname )" << endl
-         << " System.addAHostMap( hostname, ip, [isReplace] )" << endl
-         << " System.delAHostMap( hostname )" << endl
-         << " System.getCpuInfo()" << endl
-         << " System.snapshotCpuInfo()" << endl
-         << " System.getMemInfo()" << endl
-         << " System.snapshotMemInfo()" << endl
-         << " System.getDiskInfo()" << endl
-         << " System.snapshotDiskInfo()" << endl
-         << " System.getNetcardInfo()" << endl
-         << " System.snapshotNetcardInfo()" << endl
-         << " System.getIpTablesInfo()" << endl
-         << " System.getHostName()" << endl
-         << " System.sniffPort( port )" << endl
-         << " System.getPID()" << endl
-         << " System.getTID()" << endl
-         << " System.getEWD()" << endl
-         << " System.listProcess( [optionObj], [filterObj] )" << endl
-         << " System.isProcExist( optionObj )" << endl
-         << " System.killProcess( optionObj )" << endl
-         << " System.getUserEnv()" << endl
+      ss << "Local static functions:" << endl ;
+      ss << "var system = remoteObj.getSystem()" << endl ;
+      ss << " System.ping( hostname )" << endl ;
+      ss << " System.type()" << endl ;
+      ss << " System.getReleaseInfo()" << endl ;
+      ss << " System.getHostsMap()" << endl ;
+      ss << " System.getAHostMap( hostname )" << endl ;
+      ss << " System.addAHostMap( hostname, ip, [isReplace] )" << endl ;
+      ss << " System.delAHostMap( hostname )" << endl ;
+      ss << " System.getCpuInfo()" << endl ;
+      ss << " System.snapshotCpuInfo()" << endl ;
+      ss << " System.getMemInfo()" << endl ;
+      ss << " System.snapshotMemInfo()" << endl ;
+      ss << " System.getDiskInfo()" << endl ;
+      ss << " System.snapshotDiskInfo()" << endl ;
+      ss << " System.getNetcardInfo()" << endl ;
+      ss << " System.snapshotNetcardInfo()" << endl ;
+      ss << " System.getIpTablesInfo()" << endl ;
+      ss << " System.getHostName()" << endl ;
+      ss << " System.sniffPort( port )" << endl ;
+      ss << " System.getPID()" << endl ;
+      ss << " System.getTID()" << endl ;
+      ss << " System.getEWD()" << endl ;
+      ss << " System.listProcess( [optionObj], [filterObj] )" << endl ;
+      ss << " System.isProcExist( optionObj )" << endl ;
+      ss << " System.killProcess( optionObj )" << endl ;
+      ss << " System.getUserEnv()" << endl ;
 #if defined (_LINUX)
-         << " System.addUser( userObj )" << endl
-         << " System.addGroup( groupObj )" << endl
-         << " System.setUserConfigs( optionObj )" << endl
-         << " System.delUser( optionObj )" << endl
-         << " System.delGroup( name )" << endl
-         << " System.listLoginUsers( [optionObj], [filterObj] )" << endl
-         << " System.listAllUsers( [optionObj], [filterObj] )" << endl
-         << " System.listGroups( [optionObj], [filterObj] )" << endl
-         << " System.getCurrentUser()" << endl
-         << " System.isUserExist( username )" << endl
-         << " System.isGroupExist( groupname )" << endl
-         << " System.getProcUlimitConfigs()" << endl
-         << " System.setProcUlimitConfigs( configsObj )" << endl
-         << " System.getSystemConfigs( [type] )" << endl
+      ss << " System.addUser( userObj )" << endl ;
+      ss << " System.addGroup( groupObj )" << endl ;
+      ss << " System.setUserConfigs( optionObj )" << endl ;
+      ss << " System.delUser( optionObj )" << endl ;
+      ss << " System.delGroup( name )" << endl ;
+      ss << " System.listLoginUsers( [optionObj], [filterObj] )" << endl ;
+      ss << " System.listAllUsers( [optionObj], [filterObj] )" << endl ;
+      ss << " System.listGroups( [optionObj], [filterObj] )" << endl ;
+      ss << " System.getCurrentUser()" << endl ;
+      ss << " System.isUserExist( username )" << endl ;
+      ss << " System.isGroupExist( groupname )" << endl ;
+      ss << " System.getProcUlimitConfigs()" << endl ;
+      ss << " System.setProcUlimitConfigs( configsObj )" << endl ;
+      ss << " System.getSystemConfigs( [type] )" << endl ;
 #endif
-         << " System.runService( servicename, command, [option] )" << endl ;
+      ss << " System.runService( servicename, command, [option] )" << endl ;
       rval.getReturnVal().setValue( ss.str() ) ;
       return SDB_OK ;
    }
@@ -1443,50 +1443,50 @@ namespace engine
                                     BSONObj & detail )
    {
       stringstream ss ;
-      ss << "Remote System member functions:" << endl
-         << "   ping( hostname )" << endl
-         << "   type()" << endl
-         << "   getReleaseInfo()" << endl
-         << "   getHostsMap()" << endl
-         << "   getAHostMap( hostname )" << endl
-         << "   addAHostMap( hostname, ip, [isReplace] )" << endl
-         << "   delAHostMap( hostname )" << endl
-         << "   getCpuInfo()" << endl
-         << "   snapshotCpuInfo()" << endl
-         << "   getMemInfo()" << endl
-         << "   snapshotMemInfo()" << endl
-         << "   getDiskInfo()" << endl
-         << "   snapshotDiskInfo()" << endl
-         << "   getNetcardInfo()" << endl
-         << "   snapshotNetcardInfo()" << endl
-         << "   getIpTablesInfo()" << endl
-         << "   getHostName()" << endl
-         << "   sniffPort( port )" << endl
-         << "   getPID()" << endl
-         << "   getTID()" << endl
-         << "   getEWD()" << endl
-         << "   listProcess( [optionObj], [filterObj] )" << endl
-         << "   isProcExist( optionObj )" << endl
-         << "   killProcess( optionObj )" << endl
-         << "   getUserEnv()" << endl
-         << "   addUser( userObj )" << endl
-         << "   addGroup( groupObj )" << endl
-         << "   setUserConfigs( optionObj )" << endl
-         << "   delUser( optionObj )" << endl
-         << "   delGroup( name )" << endl
-         << "   listLoginUsers( [optionObj], [filterObj] )" << endl
-         << "   listAllUsers( [optionObj], [filterObj] )" << endl
-         << "   listGroups( [optionObj], [filterObj] )" << endl
-         << "   getCurrentUser()" << endl
-         << "   isUserExist( username )" << endl
-         << "   isGroupExist( groupname )" << endl
-         << "   getProcUlimitConfigs()" << endl
-         << "   setProcUlimitConfigs( configsObj )" << endl
-         << "   getSystemConfigs( [type] )" << endl
-         << "   buildTrusty()" << endl
-         << "   removeTrusty()" << endl
-         << "   runService( servicename, command, [option] )" << endl
-         << "   getInfo()" << endl ;
+      ss << "Remote System member functions:" << endl ;
+      ss << "   ping( hostname )" << endl ;
+      ss << "   type()" << endl ;
+      ss << "   getReleaseInfo()" << endl ;
+      ss << "   getHostsMap()" << endl ;
+      ss << "   getAHostMap( hostname )" << endl ;
+      ss << "   addAHostMap( hostname, ip, [isReplace] )" << endl ;
+      ss << "   delAHostMap( hostname )" << endl ;
+      ss << "   getCpuInfo()" << endl ;
+      ss << "   snapshotCpuInfo()" << endl ;
+      ss << "   getMemInfo()" << endl ;
+      ss << "   snapshotMemInfo()" << endl ;
+      ss << "   getDiskInfo()" << endl ;
+      ss << "   snapshotDiskInfo()" << endl ;
+      ss << "   getNetcardInfo()" << endl ;
+      ss << "   snapshotNetcardInfo()" << endl ;
+      ss << "   getIpTablesInfo()" << endl ;
+      ss << "   getHostName()" << endl ;
+      ss << "   sniffPort( port )" << endl ;
+      ss << "   getPID()" << endl ;
+      ss << "   getTID()" << endl ;
+      ss << "   getEWD()" << endl ;
+      ss << "   listProcess( [optionObj], [filterObj] )" << endl ;
+      ss << "   isProcExist( optionObj )" << endl ;
+      ss << "   killProcess( optionObj )" << endl ;
+      ss << "   getUserEnv()" << endl ;
+      ss << "   addUser( userObj )" << endl ;
+      ss << "   addGroup( groupObj )" << endl ;
+      ss << "   setUserConfigs( optionObj )" << endl ;
+      ss << "   delUser( optionObj )" << endl ;
+      ss << "   delGroup( name )" << endl ;
+      ss << "   listLoginUsers( [optionObj], [filterObj] )" << endl ;
+      ss << "   listAllUsers( [optionObj], [filterObj] )" << endl ;
+      ss << "   listGroups( [optionObj], [filterObj] )" << endl ;
+      ss << "   getCurrentUser()" << endl ;
+      ss << "   isUserExist( username )" << endl ;
+      ss << "   isGroupExist( groupname )" << endl ;
+      ss << "   getProcUlimitConfigs()" << endl ;
+      ss << "   setProcUlimitConfigs( configsObj )" << endl ;
+      ss << "   getSystemConfigs( [type] )" << endl ;
+      ss << "   buildTrusty()" << endl ;
+      ss << "   removeTrusty()" << endl ;
+      ss << "   runService( servicename, command, [option] )" << endl ;
+      ss << "   getInfo()" << endl ;
       rval.getReturnVal().setValue( ss.str() ) ;
       return SDB_OK ;
    }
