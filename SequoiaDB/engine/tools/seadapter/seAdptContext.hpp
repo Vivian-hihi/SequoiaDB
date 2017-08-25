@@ -41,6 +41,7 @@
 #include "pmdEDU.hpp"
 #include "utilCommObjBuff.hpp"
 #include "utilESClt.hpp"
+#include "rtnSimpleCondParser.hpp"
 
 namespace engine
 {
@@ -112,24 +113,6 @@ namespace engine
    } ;
    typedef _seAdptContextBase seAdptContextBase ;
 
-   // Generic data query context.
-   class _seAdptContextData : public _seAdptContextBase
-   {
-   public:
-      _seAdptContextData( const string &indexName,
-                          const string &typeName,
-                          utilESClt *seClt ) ;
-      virtual ~_seAdptContextData() ;
-
-      INT32 open( const BSONObj &matcher,
-                  const BSONObj &selector,
-                  const BSONObj &orderBy,
-                  const BSONObj &hint,
-                  utilCommObjBuff &objBuff,
-                  _pmdEDUCB *eduCB ) ;
-      INT32 getMore( INT32 returnNum, utilCommObjBuff &objBuff ) ;
-   } ;
-
    // Context for query modify.
    class _seAdptContextQuery : public _seAdptContextBase
    {
@@ -155,6 +138,7 @@ namespace engine
 
    private:
       seAdptQueryRebuilder _queryRebuilder ;
+      rtnSimpleCondParseTree _condTree ;
    } ;
    typedef _seAdptContextQuery seAdptContextQuery ;
 }

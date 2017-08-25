@@ -56,7 +56,11 @@
 using namespace bson ;
 using namespace std ;
 
-#define MAX_CL_SIZE_ALIGN_SIZE (32 * 1024 * 1024)
+#define MAX_CL_SIZE_ALIGN_SIZE            ( 32 * 1024 * 1024 )
+
+// Default size of capped collection for text index. The unit is MB. So its 30G.
+#define TEXT_INDEX_DATA_BUFF_DEFAULT_SIZE  ( 30 * 1024 )
+
 namespace engine
 {
    _rtnCommand::_rtnCommand ()
@@ -843,8 +847,8 @@ namespace engine
 
    PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCREATECS_DOIT, "_rtnCreateCollectionspace::doit" )
    INT32 _rtnCreateCollectionspace::doit ( _pmdEDUCB *cb, SDB_DMSCB *dmsCB,
-                                          SDB_RTNCB *rtnCB, SDB_DPSCB *dpsCB,
-                                          INT16 w , INT64 *pContextID )
+                                           SDB_RTNCB *rtnCB, SDB_DPSCB *dpsCB,
+                                           INT16 w , INT64 *pContextID )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__RTNCREATECS_DOIT ) ;
@@ -870,7 +874,8 @@ namespace engine
 
    _rtnCreateIndex::_rtnCreateIndex ()
    : _collectionName ( NULL ),
-     _sortBufferSize ( SDB_INDEX_SORT_BUFFER_DEFAULT_SIZE )
+     _sortBufferSize ( SDB_INDEX_SORT_BUFFER_DEFAULT_SIZE ),
+     _textIdx( FALSE )
    {
    }
 
@@ -925,6 +930,14 @@ namespace engine
          goto error ;
       }
 
+      rc = _validateDef( _index ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG ( PDERROR, "Failed to validate index definition: %s, rc: %d",
+                  _index.toString().c_str(), rc ) ;
+         goto error ;
+      }
+
       if ( hint.hasField( IXM_FIELD_NAME_SORT_BUFFER_SIZE ) )
       {
          rc = rtnGetIntElement( hint, IXM_FIELD_NAME_SORT_BUFFER_SIZE,
@@ -943,6 +956,15 @@ namespace engine
             goto error ;
          }
       }
+      else
+      {
+         // For text index, the "sort buffer size" is actually used as the 'Size'
+         // option for the corresponding capped collection.
+         if ( _textIdx )
+         {
+            _sortBufferSize = TEXT_INDEX_DATA_BUFF_DEFAULT_SIZE ;
+         }
+      }
 
    done:
       PD_TRACE_EXITRC ( SDB__RTNCREATEINDEX_INIT, rc ) ;
@@ -958,8 +980,16 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__RTNCREATEINDEX_DOIT ) ;
-
       BOOLEAN isSys = FALSE ;
+
+      // Currently only support text index in cluster.
+      if ( _textIdx && ( CMD_SPACE_SERVICE_SHARD != getFromService() ) )
+      {
+         PD_LOG( PDERROR, "Text index is only supported in cluster" ) ;
+         rc = SDB_OPERATION_INCOMPATIBLE ;
+         goto error ;
+      }
+
       if ( !pmdGetOptionCB()->authEnabled() )
       {
          isSys = TRUE ;
@@ -976,8 +1006,59 @@ namespace engine
                            "IndexDef:%s, SortBuffSize:%d",
                            _index.toString().c_str(), _sortBufferSize ) ;
       }
+
+   done:
       PD_TRACE_EXITRC ( SDB__RTNCREATEINDEX_DOIT, rc ) ;
       return rc ;
+   error:
+      goto done ;
+   }
+
+   // Check if there is mixed use of normal index and text index.
+   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCREATEINDEX__VALIDATEDEF, "_rtnCreateIndex::_validateDef" )
+   INT32 _rtnCreateIndex::_validateDef( const BSONObj &index )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNCREATEINDEX__VALIDATEDEF ) ;
+      BOOLEAN hasText = FALSE ;
+      const string textFieldVal = "text" ;
+      BSONObj idxDef = index.getObjectField( IXM_FIELD_NAME_KEY ) ;
+      BSONObjIterator itr( idxDef ) ;
+
+      while ( itr.more() )
+      {
+         BSONElement ele = itr.next() ;
+         if ( ele.eoo() )
+         {
+            PD_LOG( PDERROR, "Index definition ended unexpected. "
+                    "Definition: %s", idxDef.toString().c_str() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
+         if ( String == ele.type() && textFieldVal == ele.String() )
+         {
+            hasText = TRUE ;
+         }
+         else
+         {
+            if ( hasText )
+            {
+               PD_LOG( PDERROR, "Text index can only contain fields specified "
+                       "as text. Definition: %s", idxDef.toString().c_str() ) ;
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
+         }
+      }
+
+      _textIdx = hasText ;
+
+   done:
+      PD_TRACE_EXITRC( SDB__RTNCREATEINDEX__VALIDATEDEF, rc ) ;
+      return rc ;
+   error:
+      goto done ;
    }
 
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnDropCollection)

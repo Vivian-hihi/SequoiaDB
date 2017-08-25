@@ -39,15 +39,12 @@
 #include "rtn.hpp"
 #include "rtnExtDataHandler.hpp"
 
-#define RTN_CAPPED_CL_MAXSIZE       ( 30 * 1024 * 1024 * 1024LL )
 #define RTN_CAPPED_CL_MAXRECNUM     0
 #define RTN_FIELD_NAME_RID          "_rid"
 #define RTN_FIELD_NAME_SOURCE       "_source"
 
 namespace engine
 {
-
-
    _rtnExtDataHandler::_rtnExtDataHandler()
    {
    }
@@ -123,6 +120,9 @@ namespace engine
 
       objToInsert = objBuilder.done() ;
 
+      PD_LOG( PDDEBUG, "Operation record to insert: %s",
+              objToInsert.toString( FALSE, TRUE ).c_str() ) ;
+
       // Pass dpsCB as NULL as we don't want to write dps log. The replication
       // of external data totally relies on the original data.
       rc = rtnInsert( name, objToInsert, 1, 0,
@@ -135,10 +135,51 @@ namespace engine
       goto done ;
    }
 
-   INT32 _rtnExtDataHandler::onCreate( const CHAR *clFullName,
-                                       const CHAR *idxName,
-                                       pmdEDUCB* cb,
-                                       SDB_DPSCB *dpsCB )
+   INT32 _rtnExtDataHandler::onDropCS( const monCSSimple &csInfo, pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+
+      SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
+      MON_CS_SIM_LIST csList ;
+      vector< string > cappedCSs ;
+
+      // Traverse all the indices of all collections in the cs, to find out all
+      // the text indexes.
+      for ( MON_CL_SIM_VEC::const_iterator clItr = csInfo._clList.begin();
+            clItr != csInfo._clList.end(); ++clItr )
+      {
+         for ( MON_IDX_LIST::const_iterator idxItr = clItr->_idxList.begin();
+               idxItr != clItr->_idxList.end(); ++idxItr )
+         {
+            UINT16 idxType = IXM_EXTENT_TYPE_NONE ;
+            rc = idxItr->getIndexType( idxType ) ;
+            if ( rc )
+            {
+               // Only warning, and process the remaining ones.
+               PD_LOG( PDWARNING, "Get type of index failed[ %d ], cs[ %s ],"
+                       " cl[ %s ], index[ %s ]", rc, csInfo._name,
+                       clItr->_name, idxItr->getIndexName() ) ;
+               continue ;
+            }
+            if ( IXM_EXTENT_TYPE_TEXT == idxType )
+            {
+               string cappedCSName = string(SYS_PREFIX) + string(csInfo._name)
+                                  + string(clItr->_clname) +
+                                  idxItr->getIndexName() ;
+               rtnDropCollectionSpaceCommand( cappedCSName.c_str(), cb, dmsCB,
+                                              NULL, TRUE ) ;
+            }
+         }
+      }
+
+      return rc ;
+   }
+
+   INT32 _rtnExtDataHandler::onCreateTextIdx( const CHAR *clFullName,
+                                              const CHAR *idxName,
+                                              INT64 bufferSize,
+                                              pmdEDUCB* cb,
+                                              SDB_DPSCB *dpsCB )
    {
       INT32 rc = SDB_OK ;
       SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
@@ -153,9 +194,6 @@ namespace engine
       cappedCSFullName = SYS_PREFIX + cappedCSFullName  + string(idxName) ;
       cappedCLFullName = cappedCSFullName + "." + cappedCSFullName ;
 
-      // bufferSize parameter. Check if it's provided, if not, use the default.
-      INT64 buffSize = RTN_CAPPED_CL_MAXSIZE ;
-
       rc = rtnCreateCollectionSpaceCommand( cappedCSFullName.c_str(), cb, dmsCB,
                                             dpsCB, DMS_PAGE_SIZE_DFT,
                                             DMS_DO_NOT_CREATE_LOB,
@@ -164,7 +202,8 @@ namespace engine
                    rc ) ;
       csCreated = TRUE ;
 
-      builder.append( FIELD_NAME_SIZE, buffSize ) ;
+      // The unit of bufferSize is MB.
+      builder.append( FIELD_NAME_SIZE, ( bufferSize << 20 ) ) ;
       builder.append( FIELD_NAME_MAX, RTN_CAPPED_CL_MAXRECNUM ) ;
       // Set the OverWrite option as false.
       builder.appendBool( FIELD_NAME_OVERWRITE, FALSE ) ;
@@ -189,10 +228,10 @@ namespace engine
       goto done ;
    }
 
-   INT32 _rtnExtDataHandler::onDrop( const CHAR *clFullName,
-                                     const CHAR *idxName,
-                                     pmdEDUCB* cb,
-                                     SDB_DPSCB *dpscb )
+   INT32 _rtnExtDataHandler::onDropTextIdx( const CHAR *clFullName,
+                                            const CHAR *idxName,
+                                            pmdEDUCB* cb,
+                                            SDB_DPSCB *dpscb )
    {
       INT32 rc = SDB_OK ;
       string cappedCSFullName = clFullName ;
@@ -262,10 +301,6 @@ namespace engine
                                        pmdEDUCB* cb, SDB_DPSCB *dpscb )
    {
       INT32 rc = SDB_OK ;
-      INT32 insertNum = 0 ;
-      INT32 ignoreNum = 0 ;
-      BSONObj objToInsert ;
-      BSONObjBuilder objBuilder ;
       string cappedCSFullName = clFullName ;
       string cappedCLFullName ;
 
@@ -273,18 +308,9 @@ namespace engine
       cappedCSFullName = SYS_PREFIX + cappedCSFullName  + string(idxName) ;
       cappedCLFullName = cappedCSFullName + "." + cappedCSFullName ;
 
-      objBuilder.append( FIELD_NAME_TYPE, 3 ) ;
-      if ( oid.isSet() )
-      {
-         objBuilder.append( DMS_ID_KEY_NAME, oid ) ;
-      }
-
-      objBuilder.appendElements( object ) ;
-      objToInsert = objBuilder.done() ;
-
-      rc = rtnInsert( cappedCLFullName.c_str(), objToInsert, 1, 0,
-                      cb, &insertNum, &ignoreNum ) ;
-      PD_RC_CHECK( rc, PDERROR, "Insert record failed[ %d ]", rc ) ;
+      rc = _addOprRecord( cappedCLFullName.c_str(), DMS_EXT_UPDATE, cb,
+                          &oid, &object, NULL ) ;
+      PD_RC_CHECK( rc, PDERROR, "Insert Operation Record failed[ %d ]", rc ) ;
 
    done:
       return rc ;

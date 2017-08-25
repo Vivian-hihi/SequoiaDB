@@ -1496,6 +1496,8 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       SDB_DMS_CSCB *pCSCB = NULL ;
+      monCSSimple csInfo ;
+      BOOLEAN deleting = FALSE ;
 
       PD_TRACE_ENTRY ( SDB__SDB_DMSCB_DROPCSP2 ) ;
       if ( !pName )
@@ -1503,6 +1505,13 @@ namespace engine
          rc = SDB_INVALIDARG ;
          goto error ;
       }
+
+      // When adding the function of text search, capped collection spaces are
+      // "bound" to the original cs. So when dropping the original cs, need to
+      // find these relative capped cs and drop them also.
+      // Dump the information here, and the dropping action will be done by
+      // external data handler.
+      dumpCSInfo( pName, csInfo, TRUE, deleting, TRUE, TRUE, TRUE ) ;
 
       rc = _CSCBNameRemoveP2( pName, cb, dpsCB, pCSCB ) ;
       if ( rc )
@@ -1516,9 +1525,23 @@ namespace engine
       }
 
       pCSCB->_su->getEventHolder()->onDropCS( DMS_EVENT_MASK_ALL, cb, dpsCB ) ;
-
       // if remove file failed, we can do nothing
       rc = pCSCB->_su->remove() ;
+      if ( DMS_INVALID_SUID != csInfo._suID )
+      {
+         IDmsExtDataHandler *extDataHandler = pCSCB->_su->getExtDataHandler() ;
+         if ( extDataHandler )
+         {
+            INT32 rcTmp = extDataHandler->onDropCS( csInfo, cb ) ;
+            if ( rcTmp )
+            {
+               PD_LOG( PDERROR, "Remove external data failed(rc=%d)", rcTmp ) ;
+               // We can do nothing, do not goto error, continue to delete the
+               // CSCB.
+            }
+         }
+      }
+
       SDB_OSS_DEL pCSCB ;
       PD_RC_CHECK( rc, PDERROR,
                    "remove failed(rc=%d)", rc ) ;
@@ -1725,6 +1748,53 @@ namespace engine
          totalFileSize += su->totalSize();
       }
       PD_TRACE_EXIT ( SDB__SDB_DMSCB_DUMPINFO4 );
+   }
+
+   // Dump information of collectionspace by name. It can also dump the cs which
+   // are being dropped( but not dropped totally yet).
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_DUMPCSINFO, "_SDB_DMSCB::dumpCSInfo" )
+   void _SDB_DMSCB::dumpCSInfo( const CHAR *csName, monCSSimple &csInfo,
+                                BOOLEAN searchDeleting, BOOLEAN &deleting,
+                                BOOLEAN sys, BOOLEAN dumpCL, BOOLEAN dumpIdx )
+   {
+      PD_TRACE_ENTRY( SDB__SDB_DMSCB_DUMPCSINFO ) ;
+
+      BOOLEAN found = FALSE ;
+
+      SDB_ASSERT( csName, "collection name must not be NULL" ) ;
+      ossScopedLock _lock( &_mutex, SHARED ) ;
+
+      for ( vector<SDB_DMS_CSCB*>::iterator itr = _cscbVec.begin();
+            itr != _cscbVec.end(); ++itr )
+      {
+
+         if ( ( NULL != (*itr) ) &&
+              ( 0 == ossStrcmp( csName, (*itr)->_name ) ) )
+         {
+            found = TRUE ;
+            deleting = FALSE ;
+            (*itr)->_su->dumpInfo( csInfo, sys, TRUE, TRUE ) ;
+            break ;
+         }
+      }
+
+      // Search in the deleting list.
+      if ( FALSE == found && searchDeleting )
+      {
+         for ( vector<SDB_DMS_CSCB*>::iterator itr = _delCscbVec.begin();
+               itr != _delCscbVec.end(); ++itr )
+         {
+            if ( ( NULL != (*itr) ) &&
+                 ( 0 == ossStrcmp( csName, (*itr)->_name ) ) )
+            {
+               deleting = TRUE ;
+               (*itr)->_su->dumpInfo( csInfo, sys, TRUE, TRUE ) ;
+               break ;
+            }
+         }
+      }
+
+      PD_TRACE_EXIT( SDB__SDB_DMSCB_DUMPCSINFO ) ;
    }
 
    dmsTempSUMgr *_SDB_DMSCB::getTempSUMgr ()

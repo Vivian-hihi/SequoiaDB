@@ -51,6 +51,7 @@ namespace engine
       "Begin",
       "Update collection version",
       "Consult",
+      "Query last logical id in capped collection",
       "Query normal collection",
       "Query capped collection",
       "Pop capped collection"
@@ -170,6 +171,23 @@ namespace engine
          {
             PD_LOG( PDERROR, "Failed to extract query result, rc: %d", rc ) ;
             goto error ;
+         }
+
+         if ( SEADPT_SESSION_STAT_QUERY_LAST_LID == _status )
+         {
+            if ( 0 == docObjs.size() )
+            {
+               _lastPopLID = -1 ;
+            }
+            else
+            {
+               SDB_ASSERT( 1 == docObjs.size(),
+                           "Returned object number is wrong" ) ;
+               _lastPopLID =
+                  docObjs[0].getField(SEADPT_FIELD_NAME_ID).Number() ;
+            }
+            _switchStatus( SEADPT_SESSION_STAT_QUERY_NORMAL_TBL ) ;
+            goto done ;
          }
 
          // pop is after a query/getmore on a capped collection. A new context
@@ -407,27 +425,6 @@ namespace engine
       PD_LOG( PDDEBUG, "Indexer session detached" ) ;
    }
 
-   INT32 _seAdptIndexSession::_progressConsult()
-   {
-      INT32 rc = SDB_OK ;
-
-      // The consult logic is as follows:
-      // 1. Get a batch of records from capped collection.
-      // 2. Traverse the records, get the _lid and check if it's on ES. We can
-      //    not use the _id field to check, as there may have multiple records
-      //    with the same _id in the capped collection. We should be sure the
-      //    last one is in ES.
-      _status = SEADPT_SESSION_STAT_CONSULT ;
-      rc = _sendQueryReq() ;
-      PD_RC_CHECK( rc, PDERROR, "Send query request to data node failed[ %d ]",
-                   rc ) ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
    void _seAdptIndexSession::_updateCLVersion( INT32 version )
    {
       PD_LOG( PDDEBUG, "Change local version for collection[ %s ] from [ %d ] "
@@ -468,48 +465,6 @@ namespace engine
       PD_LOG( PDDEBUG, "Send collection[ %s ] version query to catalog "
               "succesfully", _origCLFullName.c_str() ) ;
 
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 _seAdptIndexSession::_sendQueryReq()
-   {
-      INT32 rc = SDB_OK ;
-      MsgHeader *msg = NULL ;
-      INT32 bufSize = 0 ;
-
-      // Check on ES if the index exist. If not, create one. Then begin
-      // Check on ES the status of the current index. And send query of the
-      // capped collection to data node.
-      switch ( _status )
-      {
-         case SEADPT_SESSION_STAT_CONSULT:
-         case SEADPT_SESSION_STAT_QUERY_CAP_TBL:
-            rc = msgBuildQueryMsg( (CHAR **)&msg, &bufSize,
-                                   _cappedCLFullName.c_str(),
-                                   0, 0, 0, -1, NULL, NULL ) ;
-            break ;
-         case SEADPT_SESSION_STAT_QUERY_NORMAL_TBL:
-            // of all the data from the original table, go ahead with the data
-            // in capped collection which are behind this point.
-            // We can pop all the records in the capped collection. truncate ?
-            rc = msgBuildQueryMsg( (CHAR **)&msg, &bufSize,
-                                    _origCLFullName.c_str(),
-                                    0, 0, 0, -1, NULL, &_selector ) ;
-            ((MsgOpQuery *)msg)->version = _origCLVersion ;
-            break ;
-         default:
-            SDB_ASSERT( FALSE, "Status invalid" ) ;
-            break ;
-      }
-      PD_RC_CHECK( rc, PDERROR, "Build query message failed[ %d ]", rc ) ;
-
-      msg->TID = SEADPT_TID( _sessionID ) ;
-      rc = sdbGetSeAdapterCB()->sendToDataNode( msg ) ;
-      PD_RC_CHECK( rc, PDERROR, "Send query message to data node failed[ %d ]",
-                   rc ) ;
    done:
       return rc ;
    error:
@@ -565,6 +520,34 @@ namespace engine
 
       PD_LOG( PDDEBUG, "Send query on normal collection[ %s ] to data node "
               "successfully", _origCLFullName.c_str() ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _seAdptIndexSession::_queryLastCappedRecLID()
+   {
+      INT32 rc = SDB_OK ;
+      MsgHeader *msg = NULL ;
+      INT32 bufSize = 0 ;
+      BSONObj selector ;
+      BSONObj orderBy ;
+
+      selector = BSON( "_id" << "" ) ;
+      orderBy = BSON( "_id" << -1 ) ;
+
+      rc = msgBuildQueryMsg( (CHAR **)&msg, &bufSize, _cappedCLFullName.c_str(),
+                             FLG_QUERY_WITH_RETURNDATA, 0, 0, 1, NULL,
+                             &selector, &orderBy ) ;
+      PD_RC_CHECK( rc, PDERROR, "Build query message failed[ %d ]", rc ) ;
+      msg->TID = SEADPT_TID( _sessionID ) ;
+      rc = sdbGetSeAdapterCB()->sendToDataNode( msg ) ;
+      PD_RC_CHECK( rc, PDERROR, "Send query message to data node failed[ %d ]",
+                   rc ) ;
+      PD_LOG( PDDEBUG, "Send query on capped collection[ %s ] to data node "
+              "successfully", _cappedCLFullName.c_str() ) ;
 
    done:
       return rc ;
@@ -1118,7 +1101,9 @@ namespace engine
          PD_LOG( PDEVENT, "Target index[ %s ] dose not exist on search engine. "
                  "Start to query the original collection[ %s ] and the index "
                  "will be created", _indexName.c_str(), _origIdxName.c_str() ) ;
-         _switchStatus( SEADPT_SESSION_STAT_QUERY_NORMAL_TBL ) ;
+         _switchStatus( SEADPT_SESSION_STAT_QUERY_LAST_LID ) ;
+         rc = _queryLastCappedRecLID() ;
+         PD_RC_CHECK( rc, PDERROR, "Query last logical id failed[ %d ]", rc ) ;
          goto done ;
       }
 
@@ -1137,7 +1122,9 @@ namespace engine
                       "failed[ %d ]", _indexName.c_str(), rc ) ;
          PD_LOG( PDEVENT, "Index[ %s ] dropped successfully",
                  _indexName.c_str() ) ;
-         _switchStatus( SEADPT_SESSION_STAT_QUERY_NORMAL_TBL ) ;
+         _switchStatus( SEADPT_SESSION_STAT_QUERY_LAST_LID ) ;
+         rc = _queryLastCappedRecLID() ;
+         PD_RC_CHECK( rc, PDERROR, "Query last logical id failed[ %d ]", rc ) ;
          goto done ;
       }
 
