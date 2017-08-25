@@ -39,6 +39,18 @@
 
 namespace engine
 {
+   #define SPT_FILE_COMMON_FIELD_PERMISSION     "permission"
+   #define SPT_FILE_COMMON_FIELD_MODE           "mode"
+   #define SPT_FILE_COMMON_FIELD_SIZE           "size"
+   #define SPT_FILE_COMMON_FIELD_WHERE          "where"
+   #define SPT_FILE_COMMON_FIELD_IS_REPLACE     "isReplace"
+   #define SPT_FILE_COMMON_FIELD_VALUE          "value"
+   #define SPT_FILE_COMMON_FIELD_PATHNAME       "pathname"
+   #define SPT_FILE_COMMON_FIELD_DETAIL         "detail"
+   #define SPT_FILE_COMMON_FIELD_IS_RECURSIVE   "isRecursive"
+   #define SPT_FILE_COMMON_FIELD_USERNAME       "username"
+   #define SPT_FILE_COMMON_FIELD_GROUPNAME      "groupname"
+
    class _sptUsrFileCommon: public SDBObject
    {
    public:

@@ -48,13 +48,31 @@ using namespace bson ;
 
 namespace engine
 {
+   #define OMA_REMOTE_FIELD_NAME_FID            "FID"
+   #define OMA_REMOTE_FIELD_NAME_FILENAME       "Filename"
+   #define OMA_REMOTE_FIELD_NAME_DIRNAME        "Dirname"
+   #define OMA_REMOTE_FIELD_NAME_SIZE           "Size"
+   #define OMA_REMOTE_FIELD_NAME_SEEK_SIZE      "SeekSize"
+   #define OMA_REMOTE_FIELD_NAME_CONTENT        "Content"
+   #define OMA_REMOTE_FIELD_NAME_PATHNAME       "Pathname"
+   #define OMA_REMOTE_FIELD_NAME_PERMISSION     "Permission"
+   #define OMA_REMOTE_FIELD_NAME_READ_LEN       "ReadLen"
+   #define OMA_REMOTE_FIELD_NAME_SRC            "Src"
+   #define OMA_REMOTE_FIELD_NAME_DST            "Dst"
+   #define OMA_REMOTE_FIELD_NAME_MODE           "Mode"
+   #define OMA_REMOTE_FIELD_NAME_GROUPNAME      "Groupname"
+   #define OMA_REMOTE_FIELD_NAME_MASK           "Mask"
+   #define OMA_REMOTE_FIELD_NAME_IS_EXIST       "IsExist"
+   #define OMA_REMOTE_FIELD_NAME_PATH_TYPE      "PathType"
+   #define OMA_REMOTE_FIELD_NAME_IS_EMPTY       "IsEmpty"
+   #define OMA_REMOTE_FIELD_NAME_MD5            "MD5"
+
    // function to get current thread omagent session
    static omaSession* _getThreadOmaSession()
    {
       ISession *pSession = NULL ;
       omaSession *pAgentSession = NULL ;
       pmdEDUCB *cb = NULL ;
-
 
       cb = pmdGetThreadEDUCB() ;
       if( NULL == cb )
@@ -107,22 +125,22 @@ namespace engine
       _sptUsrFileCommon *fileCommon = NULL ;
       omaSession *pAgentSession = NULL ;
       string err ;
-      UINT32 fID ;
+      UINT32 fID = 0 ;
 
       // get argument
-      if ( FALSE == _valueObj.hasField( "filename" ) )
+      if ( FALSE == _valueObj.hasField( OMA_REMOTE_FIELD_NAME_FILENAME ) )
       {
          rc = SDB_OUT_OF_BOUND ;
-         PD_LOG_MSG( PDERROR, "filename must be config" ) ;
+         PD_LOG_MSG( PDERROR, "Filename must be config" ) ;
          goto error ;
       }
-      if ( String != _valueObj.getField( "filename" ).type() )
+      if ( String != _valueObj.getField( OMA_REMOTE_FIELD_NAME_FILENAME ).type() )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "filename must be string" ) ;
+         PD_LOG_MSG( PDERROR, "Filename must be string" ) ;
          goto error ;
       }
-      filename = _valueObj.getStringField( "filename" ) ;
+      filename = _valueObj.getStringField( OMA_REMOTE_FIELD_NAME_FILENAME ) ;
 
       pAgentSession = _getThreadOmaSession() ;
       if( NULL == pAgentSession )
@@ -147,7 +165,7 @@ namespace engine
          PD_LOG_MSG( PDERROR, "%s", err.c_str() ) ;
          goto error ;
       }
-      retObj = BSON( "fID" << fID ) ;
+      retObj = BSON( OMA_REMOTE_FIELD_NAME_FID << fID ) ;
    done:
       return rc ;
    error:
@@ -160,7 +178,7 @@ namespace engine
    IMPLEMENT_OACMD_AUTO_REGISTER( _remoteFileRead )
 
    _remoteFileRead::_remoteFileRead():
-      _fID( 0 ), _size( 1024 )
+      _FID( 0 ), _size( 1024 )
    {
    }
 
@@ -175,32 +193,32 @@ namespace engine
       rc = _remoteExec::init( pInfomation ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get argument, rc: %d", rc ) ;
 
-      if( FALSE == _matchObj.hasField( "fID" ) )
+      if( FALSE == _matchObj.hasField( OMA_REMOTE_FIELD_NAME_FID ) )
       {
          rc = SDB_OUT_OF_BOUND ;
-         PD_LOG_MSG( PDERROR, "fID must be config" ) ;
+         PD_LOG_MSG( PDERROR, "FID must be config" ) ;
          goto error ;
       }
-      if( NumberInt != _matchObj.getField( "fID" ).type() )
+      if( NumberInt != _matchObj.getField( OMA_REMOTE_FIELD_NAME_FID ).type() )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "fID must be numberInt" ) ;
+         PD_LOG_MSG( PDERROR, "FID must be numberInt" ) ;
          goto error ;
       }
-      _fID = _matchObj.getIntField( "fID" ) ;
+      _FID = _matchObj.getIntField( OMA_REMOTE_FIELD_NAME_FID ) ;
 
-      if ( FALSE == _valueObj.hasField( "size" ) )
+      if ( FALSE == _valueObj.hasField( OMA_REMOTE_FIELD_NAME_SIZE ) )
       {
          _size = SPT_READ_LEN ;
       }
       else
       {
-         BSONElement element  = _valueObj.getField( "size" ) ;
+         BSONElement element  = _valueObj.getField( OMA_REMOTE_FIELD_NAME_SIZE ) ;
          if( NumberInt != element.type() &&
              NumberLong != element.type() )
          {
             rc = SDB_INVALIDARG ;
-            PD_LOG_MSG( PDERROR, "size must be number" ) ;
+            PD_LOG_MSG( PDERROR, "Size must be number" ) ;
             goto error ;
          }
          else
@@ -237,24 +255,24 @@ namespace engine
          goto error ;
       }
 
-      fileCommon = pAgentSession->getFileObjByID( _fID ) ;
+      fileCommon = pAgentSession->getFileObjByID( _FID ) ;
       if( NULL == fileCommon )
       {
          rc = SDB_IO ;
-         PD_LOG_MSG( PDERROR, "file is not opened" ) ;
+         PD_LOG_MSG( PDERROR, "File is not opened" ) ;
          goto error ;
       }
 
       // read content
-      rc = fileCommon->read( BSON( "size" << _size ), err,
-                             &buf, readLen ) ;
+      rc = fileCommon->read( BSON( SPT_FILE_COMMON_FIELD_SIZE << _size ),
+                             err, &buf, readLen ) ;
       if( SDB_OK != rc )
       {
          PD_LOG_MSG( PDERROR, "%s", err.c_str() ) ;
          goto error ;
       }
-      builder.append( "readContent", buf, readLen + 1 ) ;
-      builder.append( "readLen", readLen) ;
+      builder.append( OMA_REMOTE_FIELD_NAME_CONTENT, buf, readLen + 1 ) ;
+      builder.append( OMA_REMOTE_FIELD_NAME_READ_LEN, readLen) ;
 
       retObj = builder.obj() ;
    done:
@@ -273,7 +291,7 @@ namespace engine
    IMPLEMENT_OACMD_AUTO_REGISTER( _remoteFileWrite )
 
    _remoteFileWrite::_remoteFileWrite():
-      _fID( 0 ), _size( 0 ), _content( NULL )
+      _FID( 0 ), _size( 0 ), _content( NULL )
    {
    }
 
@@ -288,37 +306,37 @@ namespace engine
       rc = _remoteExec::init( pInfomation ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get argument, rc: %d", rc ) ;
 
-      _content = _valueObj.getStringField( "content" ) ;
+      _content = _valueObj.getStringField( OMA_REMOTE_FIELD_NAME_CONTENT ) ;
 
-      if( FALSE == _valueObj.hasField( "size" ) )
+      if( FALSE == _valueObj.hasField( OMA_REMOTE_FIELD_NAME_SIZE ) )
       {
          _size = ossStrlen( _content ) ;
       }
-      else if( NumberInt != _valueObj.getField( "size" ).type() &&
-               NumberLong != _valueObj.getField( "size" ).type() )
+      else if( NumberInt != _valueObj.getField( OMA_REMOTE_FIELD_NAME_SIZE ).type() &&
+               NumberLong != _valueObj.getField( OMA_REMOTE_FIELD_NAME_SIZE ).type() )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "size must be number" ) ;
+         PD_LOG_MSG( PDERROR, "Size must be number" ) ;
          goto error ;
       }
       else
       {
-         _size = _valueObj.getIntField( "size" ) ;
+         _size = _valueObj.getIntField( OMA_REMOTE_FIELD_NAME_SIZE ) ;
       }
 
-      if( FALSE == _matchObj.hasField( "fID" ) )
+      if( FALSE == _matchObj.hasField( OMA_REMOTE_FIELD_NAME_FID ) )
       {
          rc = SDB_OUT_OF_BOUND ;
-         PD_LOG_MSG( PDERROR, "fID must be config" ) ;
+         PD_LOG_MSG( PDERROR, "FID must be config" ) ;
          goto error ;
       }
-      if( NumberInt != _matchObj.getField( "fID" ).type() )
+      if( NumberInt != _matchObj.getField( OMA_REMOTE_FIELD_NAME_FID ).type() )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "fID must be numberInt" ) ;
+         PD_LOG_MSG( PDERROR, "FID must be numberInt" ) ;
          goto error ;
       }
-      _fID = _matchObj.getIntField( "fID" ) ;
+      _FID = _matchObj.getIntField( OMA_REMOTE_FIELD_NAME_FID ) ;
 
    done:
       return rc ;
@@ -346,11 +364,11 @@ namespace engine
          goto error ;
       }
 
-      fileCommon = pAgentSession->getFileObjByID( _fID ) ;
+      fileCommon = pAgentSession->getFileObjByID( _FID ) ;
       if( NULL == fileCommon )
       {
          rc = SDB_IO ;
-         PD_LOG_MSG( PDERROR, "file is not opened" ) ;
+         PD_LOG_MSG( PDERROR, "File is not opened" ) ;
          goto error ;
       }
 
@@ -372,7 +390,7 @@ namespace engine
    */
    IMPLEMENT_OACMD_AUTO_REGISTER( _remoteFileSeek )
 
-   _remoteFileSeek::_remoteFileSeek(): _fID( 0 ), _seekSize( 0 )
+   _remoteFileSeek::_remoteFileSeek(): _FID( 0 ), _seekSize( 0 )
    {
    }
 
@@ -386,34 +404,36 @@ namespace engine
       rc = _remoteExec::init( pInfomation ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get argument, rc: %d", rc ) ;
 
-      if( FALSE == _matchObj.hasField( "fID" ) )
+      // get FID
+      if( FALSE == _matchObj.hasField( OMA_REMOTE_FIELD_NAME_FID ) )
       {
          rc = SDB_OUT_OF_BOUND ;
-         PD_LOG_MSG( PDERROR, "fID must be config" ) ;
+         PD_LOG_MSG( PDERROR, "FID must be config" ) ;
          goto error ;
       }
-      if( NumberInt != _matchObj.getField( "fID" ).type() )
+      if( NumberInt != _matchObj.getField( OMA_REMOTE_FIELD_NAME_FID ).type() )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "fID must be numberInt" ) ;
+         PD_LOG_MSG( PDERROR, "FID must be numberInt" ) ;
          goto error ;
       }
-      _fID = _matchObj.getIntField( "fID" ) ;
+      _FID = _matchObj.getIntField( OMA_REMOTE_FIELD_NAME_FID ) ;
 
-      if( FALSE == _valueObj.hasField( "seekSize" ) )
+      // get SeekSize
+      if( FALSE == _valueObj.hasField( OMA_REMOTE_FIELD_NAME_SEEK_SIZE ) )
       {
          rc = SDB_OUT_OF_BOUND ;
-         PD_LOG_MSG( PDERROR, "seekSize must be config" ) ;
+         PD_LOG_MSG( PDERROR, "SeekSize must be config" ) ;
          goto error ;
       }
 
       {
-         BSONElement element = _valueObj.getField( "seekSize" ) ;
+         BSONElement element = _valueObj.getField( OMA_REMOTE_FIELD_NAME_SEEK_SIZE ) ;
          if( NumberInt != element.type() &&
              NumberLong != element.type() )
          {
             rc = SDB_INVALIDARG ;
-            PD_LOG_MSG( PDERROR, "seekSize must be number" ) ;
+            PD_LOG_MSG( PDERROR, "SeekSize must be number" ) ;
             goto error ;
          }
          _seekSize = element.numberLong() ;
@@ -444,11 +464,11 @@ namespace engine
          goto error ;
       }
 
-      fileCommon = pAgentSession->getFileObjByID( _fID ) ;
+      fileCommon = pAgentSession->getFileObjByID( _FID ) ;
       if( NULL == fileCommon )
       {
          rc = SDB_IO ;
-         PD_LOG_MSG( PDERROR, "file is not opened" ) ;
+         PD_LOG_MSG( PDERROR, "File is not opened" ) ;
          goto error ;
       }
 
@@ -469,7 +489,7 @@ namespace engine
    */
    IMPLEMENT_OACMD_AUTO_REGISTER( _remoteFileClose )
 
-   _remoteFileClose::_remoteFileClose(): _fID( 0 )
+   _remoteFileClose::_remoteFileClose(): _FID( 0 )
    {
    }
 
@@ -483,19 +503,20 @@ namespace engine
       rc = _remoteExec::init( pInfomation ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get argument, rc: %d", rc ) ;
 
-      if( FALSE == _matchObj.hasField( "fID" ) )
+      // get FID
+      if( FALSE == _matchObj.hasField( OMA_REMOTE_FIELD_NAME_FID ) )
       {
          rc = SDB_OUT_OF_BOUND ;
-         PD_LOG_MSG( PDERROR, "fID must be config" ) ;
+         PD_LOG_MSG( PDERROR, "FID must be config" ) ;
          goto error ;
       }
-      if( NumberInt != _matchObj.getField( "fID" ).type() )
+      if( NumberInt != _matchObj.getField( OMA_REMOTE_FIELD_NAME_FID ).type() )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "fID must be numberInt" ) ;
+         PD_LOG_MSG( PDERROR, "FID must be numberInt" ) ;
          goto error ;
       }
-      _fID = _matchObj.getIntField( "fID" ) ;
+      _FID = _matchObj.getIntField( OMA_REMOTE_FIELD_NAME_FID ) ;
    done:
       return rc ;
    error:
@@ -522,7 +543,7 @@ namespace engine
          goto error ;
       }
 
-      fileCommon = pAgentSession->getFileObjByID( _fID ) ;
+      fileCommon = pAgentSession->getFileObjByID( _FID ) ;
       if( NULL == fileCommon )
       {
          goto done ;
@@ -534,7 +555,7 @@ namespace engine
          PD_LOG_MSG( PDERROR, "%s", err.c_str() ) ;
          goto error ;
       }
-      pAgentSession->releaseFileObj( _fID ) ;
+      pAgentSession->releaseFileObj( _FID ) ;
    done:
       return rc ;
    error:
@@ -566,19 +587,19 @@ namespace engine
       string err ;
 
       // get pathname
-      if ( FALSE == _valueObj.hasField( "filepath" ) )
+      if ( FALSE == _valueObj.hasField( OMA_REMOTE_FIELD_NAME_PATHNAME ) )
       {
          rc = SDB_OUT_OF_BOUND ;
-         PD_LOG_MSG( PDERROR, "filepath must be config" ) ;
+         PD_LOG_MSG( PDERROR, "Filepath must be config" ) ;
          goto error ;
       }
-      if ( String != _valueObj.getField( "filepath" ).type() )
+      if ( String != _valueObj.getField( OMA_REMOTE_FIELD_NAME_PATHNAME ).type() )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "filepath must be string" ) ;
+         PD_LOG_MSG( PDERROR, "Filepath must be string" ) ;
          goto error ;
       }
-      filepath = _valueObj.getStringField( "filepath" ) ;
+      filepath = _valueObj.getStringField( OMA_REMOTE_FIELD_NAME_PATHNAME ) ;
 
       rc = _sptUsrFileCommon::remove( filepath, err ) ;
       if( SDB_OK != rc )
@@ -618,19 +639,19 @@ namespace engine
       string err ;
       BSONObjBuilder builder ;
 
-      if ( FALSE == _valueObj.hasField( "filepath" ) )
+      if ( FALSE == _valueObj.hasField( OMA_REMOTE_FIELD_NAME_PATHNAME ) )
       {
          rc = SDB_OUT_OF_BOUND ;
-         PD_LOG_MSG( PDERROR, "filepath must be config" ) ;
+         PD_LOG_MSG( PDERROR, "Filepath must be config" ) ;
          goto error ;
       }
-      if ( String != _valueObj.getField( "filepath" ).type() )
+      if ( String != _valueObj.getField( OMA_REMOTE_FIELD_NAME_PATHNAME ).type() )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "filepath must be string" ) ;
+         PD_LOG_MSG( PDERROR, "Filepath must be string" ) ;
          goto error ;
       }
-      filepath = _valueObj.getStringField( "filepath" ) ;
+      filepath = _valueObj.getStringField( OMA_REMOTE_FIELD_NAME_PATHNAME ) ;
 
       rc = _sptUsrFileCommon::exist( filepath, err, fileExist ) ;
       if( SDB_OK != rc )
@@ -638,7 +659,7 @@ namespace engine
          PD_LOG_MSG( PDERROR, "%s", err.c_str() ) ;
          goto error ;
       }
-      builder.appendBool( "isExist", fileExist ) ;
+      builder.appendBool( OMA_REMOTE_FIELD_NAME_IS_EXIST, fileExist ) ;
       retObj = builder.obj() ;
    done:
       return rc ;
@@ -672,33 +693,33 @@ namespace engine
       string err ;
 
       // get argument
-      if ( FALSE == _matchObj.hasField( "src" ) )
+      if ( FALSE == _matchObj.hasField( OMA_REMOTE_FIELD_NAME_SRC ) )
       {
          rc = SDB_OUT_OF_BOUND ;
          PD_LOG_MSG( PDERROR, "src is required" ) ;
          goto error ;
       }
-      if ( String != _matchObj.getField( "src" ).type() )
+      if ( String != _matchObj.getField( OMA_REMOTE_FIELD_NAME_SRC ).type() )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "src must be string" ) ;
+         PD_LOG_MSG( PDERROR, "Src must be string" ) ;
          goto error;
       }
-      src = _matchObj.getStringField( "src" ) ;
+      src = _matchObj.getStringField( OMA_REMOTE_FIELD_NAME_SRC ) ;
 
-      if ( FALSE == _valueObj.hasField( "dst" ) )
+      if ( FALSE == _valueObj.hasField( OMA_REMOTE_FIELD_NAME_DST) )
       {
          rc = SDB_OUT_OF_BOUND ;
-         PD_LOG_MSG( PDERROR, "dst is required" ) ;
+         PD_LOG_MSG( PDERROR, "Dst is required" ) ;
          goto error ;
       }
-      if ( String != _valueObj.getField( "dst" ).type() )
+      if ( String != _valueObj.getField( OMA_REMOTE_FIELD_NAME_DST ).type() )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "dst must be string" ) ;
+         PD_LOG_MSG( PDERROR, "Dst must be string" ) ;
          goto error;
       }
-      dst = _valueObj.getStringField( "dst" ) ;
+      dst = _valueObj.getStringField( OMA_REMOTE_FIELD_NAME_DST ) ;
 
       rc = _sptUsrFileCommon::copy( src, dst, _optionObj, err ) ;
       if( SDB_OK != rc )
@@ -738,33 +759,33 @@ namespace engine
       string err ;
 
       // get argument
-      if ( FALSE == _matchObj.hasField( "src" ) )
+      if ( FALSE == _matchObj.hasField( OMA_REMOTE_FIELD_NAME_SRC ) )
       {
          rc = SDB_OUT_OF_BOUND ;
-         PD_LOG_MSG( PDERROR, "src is required" ) ;
+         PD_LOG_MSG( PDERROR, "Src is required" ) ;
          goto error ;
       }
-      if ( String != _matchObj.getField( "src" ).type() )
+      if ( String != _matchObj.getField( OMA_REMOTE_FIELD_NAME_SRC ).type() )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "src must be string" ) ;
+         PD_LOG_MSG( PDERROR, "Src must be string" ) ;
          goto error ;
       }
-      src = _matchObj.getStringField( "src" ) ;
+      src = _matchObj.getStringField( OMA_REMOTE_FIELD_NAME_SRC ) ;
 
-      if ( FALSE == _valueObj.hasField( "dst" ) )
+      if ( FALSE == _valueObj.hasField( OMA_REMOTE_FIELD_NAME_DST ) )
       {
          rc = SDB_OUT_OF_BOUND ;
-         PD_LOG_MSG( PDERROR, "dst is required" ) ;
+         PD_LOG_MSG( PDERROR, "Dst is required" ) ;
          goto error ;
       }
-      if ( String != _valueObj.getField( "dst" ).type() )
+      if ( String != _valueObj.getField( OMA_REMOTE_FIELD_NAME_DST ).type() )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "dst must be string" ) ;
+         PD_LOG_MSG( PDERROR, "Dst must be string" ) ;
          goto error ;
       }
-      dst = _valueObj.getStringField( "dst" ) ;
+      dst = _valueObj.getStringField( OMA_REMOTE_FIELD_NAME_DST ) ;
 
       rc = _sptUsrFileCommon::move( src, dst, err ) ;
       if( SDB_OK != rc )
@@ -803,19 +824,19 @@ namespace engine
       string err ;
 
       // get argument
-      if ( FALSE == _valueObj.hasField( "name" ) )
+      if ( FALSE == _valueObj.hasField( OMA_REMOTE_FIELD_NAME_DIRNAME ) )
       {
          rc = SDB_OUT_OF_BOUND ;
-         PD_LOG_MSG( PDERROR, "name is required" ) ;
+         PD_LOG_MSG( PDERROR, "Dirname is required" ) ;
          goto error ;
       }
-      if ( String != _valueObj.getField( "name" ).type() )
+      if ( String != _valueObj.getField( OMA_REMOTE_FIELD_NAME_DIRNAME ).type() )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "name must be string" ) ;
+         PD_LOG_MSG( PDERROR, "Dirname must be string" ) ;
          goto error ;
       }
-      name = _valueObj.getStringField( "name" ) ;
+      name = _valueObj.getStringField( OMA_REMOTE_FIELD_NAME_DIRNAME ) ;
 
       rc = _sptUsrFileCommon::mkdir( name, _optionObj, err ) ;
       if( SDB_OK != rc )
@@ -856,7 +877,7 @@ namespace engine
       if ( TRUE == _optionObj.isEmpty() )
       {
          rc = SDB_OUT_OF_BOUND ;
-         PD_LOG_MSG( PDERROR, "optionObj must be config") ;
+         PD_LOG_MSG( PDERROR, "OptionObj must be config") ;
          goto error ;
       }
 
@@ -894,37 +915,37 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       string pathname ;
-      INT32 mode ;
+      INT32 mode = 0 ;
       string err ;
 
       // get argument
-      if ( FALSE == _matchObj.hasField( "pathname" ) )
+      if ( FALSE == _matchObj.hasField( OMA_REMOTE_FIELD_NAME_PATHNAME ) )
       {
          rc = SDB_OUT_OF_BOUND ;
-         PD_LOG_MSG( PDERROR, "filename must be config" ) ;
+         PD_LOG_MSG( PDERROR, "Pathname must be config" ) ;
          goto error ;
       }
-      if ( String != _matchObj.getField( "pathname" ).type() )
+      if ( String != _matchObj.getField( OMA_REMOTE_FIELD_NAME_PATHNAME ).type() )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "filename must be string" ) ;
+         PD_LOG_MSG( PDERROR, "Pathname must be string" ) ;
          goto error ;
       }
-      pathname = _matchObj.getStringField( "pathname" ) ;
+      pathname = _matchObj.getStringField( OMA_REMOTE_FIELD_NAME_PATHNAME ) ;
 
-      if ( FALSE == _valueObj.hasField( "mode" ) )
+      if ( FALSE == _valueObj.hasField( OMA_REMOTE_FIELD_NAME_MODE ) )
       {
          rc = SDB_OUT_OF_BOUND ;
-         PD_LOG_MSG( PDERROR, "mode must be config" ) ;
+         PD_LOG_MSG( PDERROR, "Mode must be config" ) ;
          goto error ;
       }
-      if ( NumberInt != _valueObj.getField( "mode" ).type() )
+      if ( NumberInt != _valueObj.getField( OMA_REMOTE_FIELD_NAME_MODE ).type() )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "mode must be INT32" ) ;
+         PD_LOG_MSG( PDERROR, "Mode must be INT32" ) ;
          goto error ;
       }
-      mode = _valueObj.getIntField( "mode" ) ;
+      mode = _valueObj.getIntField( OMA_REMOTE_FIELD_NAME_MODE ) ;
 
       rc = _sptUsrFileCommon::chmod( pathname, mode, _optionObj, err ) ;
       if( SDB_OK != rc )
@@ -963,19 +984,19 @@ namespace engine
       string err ;
 
       // get argument
-      if ( FALSE == _matchObj.hasField( "filename" ) )
+      if ( FALSE == _matchObj.hasField( OMA_REMOTE_FIELD_NAME_PATHNAME ) )
       {
          rc = SDB_OUT_OF_BOUND ;
-         PD_LOG_MSG( PDERROR, "filename must be config" ) ;
+         PD_LOG_MSG( PDERROR, "Pathname must be config" ) ;
          goto error ;
       }
-      if ( String != _matchObj.getField( "filename" ).type() )
+      if ( String != _matchObj.getField( OMA_REMOTE_FIELD_NAME_PATHNAME ).type() )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "filename must be string" ) ;
+         PD_LOG_MSG( PDERROR, "Pathname must be string" ) ;
          goto error ;
       }
-      pathname = _matchObj.getStringField( "filename" ) ;
+      pathname = _matchObj.getStringField( OMA_REMOTE_FIELD_NAME_PATHNAME ) ;
 
       rc = _sptUsrFileCommon::chown( pathname, _valueObj, _optionObj, err ) ;
       if( SDB_OK != rc )
@@ -1014,33 +1035,33 @@ namespace engine
       string groupname ;
       string err ;
       // get argument
-      if ( FALSE == _matchObj.hasField( "filename" ) )
+      if ( FALSE == _matchObj.hasField( OMA_REMOTE_FIELD_NAME_PATHNAME ) )
       {
          rc = SDB_OUT_OF_BOUND ;
-         PD_LOG_MSG( PDERROR, "filename must be config" ) ;
+         PD_LOG_MSG( PDERROR, "Pathname must be config" ) ;
          goto error ;
       }
-      if ( String != _matchObj.getField( "filename" ).type() )
+      if ( String != _matchObj.getField( OMA_REMOTE_FIELD_NAME_PATHNAME ).type() )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "filename must be string" ) ;
+         PD_LOG_MSG( PDERROR, "Pathname must be string" ) ;
          goto error ;
       }
-      pathname = _matchObj.getStringField( "filename" ) ;
+      pathname = _matchObj.getStringField( OMA_REMOTE_FIELD_NAME_PATHNAME ) ;
 
-      if ( FALSE == _valueObj.hasField( "groupname" ) )
+      if ( FALSE == _valueObj.hasField( OMA_REMOTE_FIELD_NAME_GROUPNAME ) )
       {
          rc = SDB_OUT_OF_BOUND ;
-         PD_LOG_MSG( PDERROR, "groupname must be config" ) ;
+         PD_LOG_MSG( PDERROR, "Groupname must be config" ) ;
          goto error ;
       }
-      if ( String != _valueObj.getField( "groupname" ).type() )
+      if ( String != _valueObj.getField( OMA_REMOTE_FIELD_NAME_GROUPNAME ).type() )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "groupname must be string" ) ;
+         PD_LOG_MSG( PDERROR, "Groupname must be string" ) ;
          goto error ;
       }
-      groupname = _valueObj.getStringField( "groupname" ) ;
+      groupname = _valueObj.getStringField( OMA_REMOTE_FIELD_NAME_GROUPNAME ) ;
 
       rc = _sptUsrFileCommon::chgrp( pathname, groupname, _optionObj, err ) ;
       if( SDB_OK != rc )
@@ -1085,7 +1106,7 @@ namespace engine
          PD_LOG_MSG( PDERROR, "%s", err.c_str() ) ;
          goto error ;
       }
-      retObj = BSON( "mask" << outStr.c_str() ) ;
+      retObj = BSON( OMA_REMOTE_FIELD_NAME_MASK << outStr.c_str() ) ;
    done:
       return rc ;
    error:
@@ -1114,22 +1135,22 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       string err ;
-      INT32 mask ;
+      INT32 mask = 0 ;
 
       // get argument
-      if ( FALSE == _valueObj.hasField( "mask" ) )
+      if ( FALSE == _valueObj.hasField( OMA_REMOTE_FIELD_NAME_MASK ) )
       {
          rc = SDB_OUT_OF_BOUND ;
-         PD_LOG_MSG( PDERROR, "mask must be config" ) ;
+         PD_LOG_MSG( PDERROR, "Mask must be config" ) ;
          goto error ;
       }
-      if ( NumberInt != _valueObj.getField( "mask" ).type() )
+      if ( NumberInt != _valueObj.getField( OMA_REMOTE_FIELD_NAME_MASK ).type() )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "mask must be INT32" ) ;
+         PD_LOG_MSG( PDERROR, "Mask must be INT32" ) ;
          goto error ;
       }
-      mask = _valueObj.getIntField( "mask" ) ;
+      mask = _valueObj.getIntField( OMA_REMOTE_FIELD_NAME_MASK ) ;
 
       rc = _sptUsrFileCommon::setUmask( mask, err ) ;
       if( SDB_OK != rc )
@@ -1204,19 +1225,19 @@ namespace engine
       string err ;
 
       // get argument
-      if ( FALSE == _matchObj.hasField( "pathname" ) )
+      if ( FALSE == _matchObj.hasField( OMA_REMOTE_FIELD_NAME_PATHNAME ) )
       {
          rc = SDB_OUT_OF_BOUND ;
-         PD_LOG_MSG( PDERROR, "pathname must be config" ) ;
+         PD_LOG_MSG( PDERROR, "Pathname must be config" ) ;
          goto error ;
       }
-      if ( String != _matchObj.getField( "pathname" ).type() )
+      if ( String != _matchObj.getField( OMA_REMOTE_FIELD_NAME_PATHNAME ).type() )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "pathname must be string" ) ;
+         PD_LOG_MSG( PDERROR, "Pathname must be string" ) ;
          goto error ;
       }
-      pathname = _matchObj.getStringField( "pathname" ) ;
+      pathname = _matchObj.getStringField( OMA_REMOTE_FIELD_NAME_PATHNAME ) ;
 
       rc = _sptUsrFileCommon::getPathType( pathname, err, pathType ) ;
       if( SDB_OK != rc )
@@ -1224,7 +1245,7 @@ namespace engine
          PD_LOG_MSG( PDERROR, "%s", err.c_str() ) ;
          goto error ;
       }
-      retObj = BSON( "pathType" << pathType ) ;
+      retObj = BSON( OMA_REMOTE_FIELD_NAME_PATH_TYPE << pathType ) ;
    done:
       return rc ;
    error:
@@ -1257,19 +1278,19 @@ namespace engine
       string err ;
 
       // get pathname
-      if ( FALSE == _matchObj.hasField( "pathname" ) )
+      if ( FALSE == _matchObj.hasField( OMA_REMOTE_FIELD_NAME_PATHNAME ) )
       {
          rc = SDB_OUT_OF_BOUND ;
-         PD_LOG_MSG( PDERROR, "pathname must be config" ) ;
+         PD_LOG_MSG( PDERROR, "Pathname must be config" ) ;
          goto error ;
       }
-      if ( String != _matchObj.getField( "pathname" ).type() )
+      if ( String != _matchObj.getField( OMA_REMOTE_FIELD_NAME_PATHNAME ).type() )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "pathname must be string" ) ;
+         PD_LOG_MSG( PDERROR, "Pathname must be string" ) ;
          goto error ;
       }
-      pathname = _matchObj.getStringField( "pathname" ) ;
+      pathname = _matchObj.getStringField( OMA_REMOTE_FIELD_NAME_PATHNAME ) ;
 
       rc = _sptUsrFileCommon::isEmptyDir( pathname, err, isEmpty ) ;
       if( SDB_OK != rc )
@@ -1277,7 +1298,7 @@ namespace engine
          PD_LOG_MSG( PDERROR, "%s", err.c_str() ) ;
          goto error ;
       }
-      retObj = BSON( "isEmpty" << isEmpty ) ;
+      retObj = BSON( OMA_REMOTE_FIELD_NAME_IS_EMPTY << isEmpty ) ;
    done:
       return rc ;
    error:
@@ -1309,19 +1330,19 @@ namespace engine
       string err ;
 
       // get argument
-      if ( FALSE == _matchObj.hasField( "filename" ) )
+      if ( FALSE == _matchObj.hasField( OMA_REMOTE_FIELD_NAME_FILENAME ) )
       {
          rc = SDB_OUT_OF_BOUND ;
-         PD_LOG_MSG( PDERROR, "filename must be config" ) ;
+         PD_LOG_MSG( PDERROR, "Filename must be config" ) ;
          goto error ;
       }
-      if ( String != _matchObj.getField( "filename" ).type() )
+      if ( String != _matchObj.getField( OMA_REMOTE_FIELD_NAME_FILENAME ).type() )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "filename must be string" ) ;
+         PD_LOG_MSG( PDERROR, "Filename must be string" ) ;
          goto error ;
       }
-      pathname = _matchObj.getStringField( "filename" ) ;
+      pathname = _matchObj.getStringField( OMA_REMOTE_FIELD_NAME_FILENAME ) ;
 
       rc = _sptUsrFileCommon::getStat( pathname, err, retObj ) ;
       if( SDB_OK != rc )
@@ -1361,26 +1382,26 @@ namespace engine
       string code ;
 
       // check, we need 1 argument filename
-      if ( FALSE == _matchObj.hasField( "filename" ) )
+      if ( FALSE == _matchObj.hasField( OMA_REMOTE_FIELD_NAME_FILENAME ) )
       {
          rc = SDB_INVALIDARG  ;
-         err = "filename must be config" ;
+         err = "Filename must be config" ;
          goto error ;
       }
-      if ( String != _matchObj.getField( "filename" ).type() )
+      if ( String != _matchObj.getField( OMA_REMOTE_FIELD_NAME_FILENAME ).type() )
       {
          rc = SDB_INVALIDARG ;
          err = "filename must be string" ;
          goto error ;
       }
-      filename = _matchObj.getStringField( "filename" ) ;
+      filename = _matchObj.getStringField( OMA_REMOTE_FIELD_NAME_FILENAME ) ;
 
       rc = _sptUsrFileCommon::md5( filename, err, code ) ;
       if( SDB_OK != rc )
       {
          goto error ;
       }
-      retObj = BSON( "md5" << code.c_str() ) ;
+      retObj = BSON( OMA_REMOTE_FIELD_NAME_MD5 << code.c_str() ) ;
    done:
       return rc ;
    error:
@@ -1415,19 +1436,19 @@ namespace engine
       string err ;
 
       // get filename
-      if ( FALSE == _matchObj.hasField( "filename" ) )
+      if ( FALSE == _matchObj.hasField( OMA_REMOTE_FIELD_NAME_FILENAME ) )
       {
          rc = SDB_OUT_OF_BOUND ;
-         PD_LOG_MSG( PDERROR, "filename must be config" ) ;
+         PD_LOG_MSG( PDERROR, "Filename must be config" ) ;
          goto error ;
       }
-      if ( String != _matchObj.getField( "filename" ).type() )
+      if ( String != _matchObj.getField( OMA_REMOTE_FIELD_NAME_FILENAME ).type() )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "filename must be string" ) ;
+         PD_LOG_MSG( PDERROR, "Filename must be string" ) ;
          goto error ;
       }
-      name = _matchObj.getStringField( "filename" ) ;
+      name = _matchObj.getStringField( OMA_REMOTE_FIELD_NAME_FILENAME ) ;
 
       rc = _sptUsrFileCommon::getFileSize( name, err, size ) ;
       if( SDB_OK != rc )
@@ -1435,7 +1456,7 @@ namespace engine
          PD_LOG_MSG( PDERROR, "%s", err.c_str() ) ;
          goto error ;
       }
-      retObj = BSON( "size" << size ) ;
+      retObj = BSON( OMA_REMOTE_FIELD_NAME_SIZE << size ) ;
    done:
       return rc ;
    error:
@@ -1468,19 +1489,19 @@ namespace engine
       INT32 permission = 0 ;
 
       // get pathname
-      if( FALSE == _valueObj.hasField( "pathname" ) )
+      if( FALSE == _valueObj.hasField( OMA_REMOTE_FIELD_NAME_PATHNAME ) )
       {
          rc = SDB_OUT_OF_BOUND ;
-         PD_LOG_MSG( PDERROR, "pathname must be config" ) ;
+         PD_LOG_MSG( PDERROR, "Pathname must be config" ) ;
          goto error ;
       }
-      else if( String != _valueObj.getField( "pathname" ).type() )
+      else if( String != _valueObj.getField( OMA_REMOTE_FIELD_NAME_PATHNAME ).type() )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "pathname must be string" ) ;
+         PD_LOG_MSG( PDERROR, "Pathname must be string" ) ;
          goto error ;
       }
-      pathname = _valueObj.getStringField( "pathname" ) ;
+      pathname = _valueObj.getStringField( OMA_REMOTE_FIELD_NAME_PATHNAME ) ;
 
       rc = _sptUsrFileCommon::getPermission( pathname, err, permission ) ;
       if( SDB_OK != rc )
@@ -1488,7 +1509,7 @@ namespace engine
          PD_LOG_MSG( PDERROR, "%s", err.c_str() ) ;
          goto error ;
       }
-      retObj = BSON( "permission" << permission ) ;
+      retObj = BSON( OMA_REMOTE_FIELD_NAME_PERMISSION << permission ) ;
    done:
       return rc ;
    error:

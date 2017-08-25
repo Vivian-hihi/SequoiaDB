@@ -540,8 +540,8 @@ Remote.prototype.getFile = function( filename, permission, openMode ) {
       }
 
       var retObj = this._runCommand( "file open", option, {},
-                                     { "filename": filename } ) ;
-      file._fID = retObj.toObj().fID ;
+                                     { "Filename": filename } ) ;
+      file._FID = retObj.toObj().FID ;
       file._filename = filename ;
    }
    return file ;
@@ -562,7 +562,7 @@ Remote.prototype._runCommand = function( command, optionObj,
    var retObj ;
    if ( 6 < arguments.length )
    {
-      setLastErrMsg( "too much arguments" ) ;
+      setLastErrMsg( "Too much arguments" ) ;
       throw SDB_INVALIDARG ;
    }
    else if ( undefined != valueObj )
@@ -595,7 +595,7 @@ _Filter.prototype.match = function( BSONArrObj ) {
    }
    else
    {
-      setLastErrMsg( "argument must be objArray" ) ;
+      setLastErrMsg( "Argument must be objArray" ) ;
       throw SDB_INVALIDARG ;
    }
 }
@@ -2353,16 +2353,16 @@ File.prototype.read = function( size ) {
       if ( undefined != size )
       {
          retObj = this._remote._runCommand( "file read", {},
-                                            { "fID": this._fID },
-                                            { "size": size } ) ;
+                                            { "FID": this._FID },
+                                            { "Size": size } ) ;
       }
       else
       {
          retObj = this._remote._runCommand( "file read", {},
-                                            { "fID": this._fID } ) ;
+                                            { "FID": this._FID } ) ;
       }
       var recvObj = retObj.toObj() ;
-      str = recvObj.readContent ;
+      str = recvObj.Content ;
    }
    else
    {
@@ -2385,11 +2385,11 @@ File.prototype.readContent = function( size )
    {
       if( undefined != size )
       {
-         retObj = this._readContent( this._remote, this._fID, size ) ;
+         retObj = this._readContent( this._remote, this._FID, size ) ;
       }
       else
       {
-         retObj = this._readContent( this._remote, this._fID ) ;
+         retObj = this._readContent( this._remote, this._FID ) ;
       }
    }
    else
@@ -2410,8 +2410,8 @@ File.prototype.write = function( content ){
 
    if ( undefined != this._remote )
    {
-      this._remote._runCommand( "file write", {}, { "fID": this._fID },
-                                { "content": content } ) ;
+      this._remote._runCommand( "file write", {}, { "FID": this._FID },
+                                { "Content": content } ) ;
    }
    else
    {
@@ -2423,7 +2423,7 @@ File.prototype.writeContent = function( content )
 {
    if( undefined != this._remote )
    {
-      this._writeContent( this._remote, this._fID, content ) ;
+      this._writeContent( this._remote, this._FID, content ) ;
    }
    else
    {
@@ -2436,20 +2436,20 @@ File.prototype.seek = function( offset, where ) {
    // check argument
    if ( undefined == offset )
    {
-      setLastErrMsg( "offset must be config" ) ;
+      setLastErrMsg( "Offset must be config" ) ;
       throw SDB_OUT_OF_BOUND ;
    }
 
    var optionObj = {} ;
    if ( undefined != where )
    {
-      optionObj.whenceStr = where ;
+      optionObj.where = where ;
    }
 
    if ( undefined != this._remote )
    {
-      this._remote._runCommand( "file seek", optionObj, { "fID": this._fID },
-                                { "seekSize": offset } ) ;
+      this._remote._runCommand( "file seek", optionObj, { "FID": this._FID },
+                                { "SeekSize": offset } ) ;
    }
    else
    {
@@ -2464,9 +2464,9 @@ File.prototype.close = function() {
    }
    else
    {
-      if( this._fID != undefined )
+      if( this._FID != undefined )
       {
-         this._remote._runCommand( "file close", {}, { "fID": this._fID } ) ;
+         this._remote._runCommand( "file close", {}, { "FID": this._FID } ) ;
       }
    }
 }
@@ -2483,7 +2483,7 @@ File.prototype.remove = function( filepath ) {
    if ( undefined != this._remote )
    {
       this._remote._runCommand( "file remove", {}, {},
-                               { "filepath" : filepath } ) ;
+                               { "Pathname" : filepath } ) ;
    }
    else
    {
@@ -2504,8 +2504,8 @@ File.prototype.exist = function( filepath ) {
    if ( undefined != this._remote )
    {
       var recvObj = this._remote._runCommand( "file is exist", {}, {},
-                                              { "filepath" : filepath } ) ;
-      isExist = recvObj.toObj().isExist ;
+                                              { "Pathname" : filepath } ) ;
+      isExist = recvObj.toObj().IsExist ;
    }
    else
    {
@@ -2519,12 +2519,12 @@ File.prototype.copy = function( src, dst, replace, mode ) {
    // check argument
    if ( undefined == src )
    {
-      setLastErrMsg( "src must be config" ) ;
+      setLastErrMsg( "Src must be config" ) ;
       throw SDB_OUT_OF_BOUND ;
    }
    if ( undefined == dst )
    {
-      setLastErrMsg( "dst must be config" ) ;
+      setLastErrMsg( "Dst must be config" ) ;
       throw SDB_OUT_OF_BOUND ;
    }
 
@@ -2537,10 +2537,10 @@ File.prototype.copy = function( src, dst, replace, mode ) {
       }
       if ( undefined != replace )
       {
-         optionObj.replace = replace ;
+         optionObj.isReplace = replace ;
       }
       this._remote._runCommand( "file copy", optionObj,
-                                { "src": src }, { "dst": dst } ) ;
+                                { "Src": src }, { "Dst": dst } ) ;
    }
    else
    {
@@ -2564,19 +2564,19 @@ File.prototype.move = function( src, dst ) {
    // check argument
    if ( undefined == src )
    {
-      setLastErrMsg( "src must be config" ) ;
+      setLastErrMsg( "Src must be config" ) ;
       throw SDB_OUT_OF_BOUND ;
    }
    if ( undefined == dst )
    {
-      setLastErrMsg( "dst must be config" ) ;
+      setLastErrMsg( "Dst must be config" ) ;
       throw SDB_OUT_OF_BOUND ;
    }
 
    if ( undefined != this._remote )
    {
-      this._remote._runCommand( "file move", {}, { "src": src },
-                              { "dst": dst } ) ;
+      this._remote._runCommand( "file move", {}, { "Src": src },
+                              { "Dst": dst } ) ;
    }
    else
    {
@@ -2589,28 +2589,25 @@ File.prototype.mkdir = function( name, mode ) {
    // check argument
    if ( undefined == name )
    {
-      setLastErrMsg( "name must be config" ) ;
+      setLastErrMsg( "Name must be config" ) ;
       throw SDB_OUT_OF_BOUND ;
    }
 
-   if ( undefined != mode )
+   if ( undefined != this._remote )
    {
-      if ( undefined != this._remote )
+      var optionObj = {} ;
+      if( undefined != mode )
       {
-         this._remote._runCommand( "file mkdir", { "mode": mode }, {},
-                                  { "name": name } ) ;
+         optionObj.mode = mode ;
       }
-      else
-      {
-         File.mkdir( name, mode ) ;
-      }
+      this._remote._runCommand( "file mkdir", optionObj, {},
+                               { "Dirname": name } ) ;
    }
    else
    {
-      if ( undefined != this._remote )
+      if( undefined != mode )
       {
-         this._remote._runCommand( "file mkdir", {}, {},
-                                  { "name": name } ) ;
+         File.mkdir( name, mode ) ;
       }
       else
       {
@@ -2624,12 +2621,12 @@ File.prototype.find = function( optionObj, filterObj ) {
    // check argument
    if ( undefined == optionObj )
    {
-      setLastErrMsg( "optionObj must be config" ) ;
+      setLastErrMsg( "OptionObj must be config" ) ;
       throw SDB_OUT_OF_BOUND  ;
    }
    if ( false == optionObj instanceof Object )
    {
-      setLastErrMsg( "optionObj must be Object" ) ;
+      setLastErrMsg( "OptionObj must be Object" ) ;
       throw SDB_INVALIDARG  ;
    }
 
@@ -2680,17 +2677,13 @@ File.prototype.chmod = function( filename, mode, recursive ) {
 
    if ( undefined != this._remote )
    {
+      var optionObj = {} ;
       if ( undefined != recursive )
       {
-         this._remote._runCommand( "file chmod", { "recursive": recursive },
-                                   { "pathname": filename },
-                                   { "mode": mode } ) ;
+         optionObj.recursive = recursive ;
       }
-      else
-      {
-         this._remote._runCommand( "file chmod", {}, { "pathname": filename },
-                                   { "mode": mode } ) ;
-      }
+      this._remote._runCommand( "file chmod", optionObj, { "Pathname": filename },
+                                { "Mode": mode } ) ;
    }
    else
    {
@@ -2732,11 +2725,11 @@ File.prototype.chown = function( filename, optionObj, recursive ) {
       if ( undefined != recursive )
       {
          this._remote._runCommand( "file chown", { "recursive": recursive },
-                                   { "filename": filename }, optionObj ) ;
+                                   { "Pathname": filename }, optionObj ) ;
       }
       else
       {
-         this._remote._runCommand( "file chown", {}, { "filename": filename },
+         this._remote._runCommand( "file chown", {}, { "Pathname": filename },
                                   optionObj ) ;
       }
    }
@@ -2759,13 +2752,13 @@ File.prototype.chgrp = function( filename, groupname, recursive ) {
       if ( undefined != recursive )
       {
          this._remote._runCommand( "file chgrp", { "recursive": recursive },
-                                   { "filename": filename },
-                                   { "groupname": groupname } ) ;
+                                   { "Pathname": filename },
+                                   { "Groupname": groupname } ) ;
       }
       else
       {
-         this._remote._runCommand( "file chgrp", {}, { "filename": filename },
-                                  { "groupname": groupname } ) ;
+         this._remote._runCommand( "file chgrp", {}, { "Pathname": filename },
+                                  { "Groupname": groupname } ) ;
       }
    }
    else
@@ -2786,13 +2779,13 @@ File.prototype.setUmask = function( mask ) {
    // check argument
    if ( undefined == mask )
    {
-      setLastErrMsg( "mask must be config" ) ;
+      setLastErrMsg( "Mask must be config" ) ;
       throw SDB_OUT_OF_BOUND ;
    }
 
    if ( undefined != this._remote )
    {
-      this._remote._runCommand( "file set umask", {}, {}, { "mask": mask } ) ;
+      this._remote._runCommand( "file set umask", {}, {}, { "Mask": mask } ) ;
    }
    else
    {
@@ -2806,7 +2799,7 @@ File.prototype.getUmask = function( base ) {
    if ( undefined != this._remote )
    {
       var recvObj = this._remote._runCommand( "file get umask" ) ;
-      var umask = parseInt( recvObj.toObj().mask, 8 ) ;
+      var umask = parseInt( recvObj.toObj().Mask, 8 ) ;
       if ( undefined != base )
       {
          if ( "string" == typeof( base ) )
@@ -2898,8 +2891,8 @@ File.prototype.isFile = function( pathname ) {
    if ( undefined != this._remote )
    {
       var recvObj = this._remote._runCommand( "file get path type", {},
-                                             { "pathname":pathname } ) ;
-      if ( "FIL" == recvObj.toObj().pathType )
+                                             { "Pathname":pathname } ) ;
+      if ( "FIL" == recvObj.toObj().PathType )
       {
          result = true ;
       }
@@ -2924,8 +2917,8 @@ File.prototype.isDir = function( pathname ) {
    if ( undefined != this._remote )
    {
       var recvObj = this._remote._runCommand( "file get path type", {},
-                                             { "pathname":pathname } ) ;
-      if ( "DIR" == recvObj.toObj().pathType )
+                                             { "Pathname":pathname } ) ;
+      if ( "DIR" == recvObj.toObj().PathType )
       {
          result = true ;
       }
@@ -2942,7 +2935,7 @@ File.prototype.isEmptyDir = function( pathname ) {
    // check argument
    if ( undefined == pathname )
    {
-      setLastErrMsg( "pathname must be config" ) ;
+      setLastErrMsg( "Pathname must be config" ) ;
       throw SDB_OUT_OF_BOUND ;
    }
 
@@ -2950,9 +2943,9 @@ File.prototype.isEmptyDir = function( pathname ) {
    if ( undefined != this._remote )
    {
       var recvObj = this._remote._runCommand( "file is empty dir", {},
-                                             { "pathname":pathname } ) ;
+                                             { "Pathname":pathname } ) ;
 
-      var isEmpty = recvObj.toObj().isEmpty ;
+      var isEmpty = recvObj.toObj().IsEmpty ;
       if ( isEmpty )
       {
          result = true ;
@@ -2974,7 +2967,7 @@ File.prototype.stat = function( filename ) {
    // check argument
    if ( undefined == filename )
    {
-      setLastErrMsg( "filename must be config" ) ;
+      setLastErrMsg( "Filename must be config" ) ;
       throw SDB_OUT_OF_BOUND ;
    }
 
@@ -2982,7 +2975,7 @@ File.prototype.stat = function( filename ) {
    if ( undefined != this._remote )
    {
       result = this._remote._runCommand( "file stat", {},
-                                        { "filename": filename } ) ;
+                                        { "Filename": filename } ) ;
    }
    else
    {
@@ -2996,7 +2989,7 @@ File.prototype.md5 = function( filename ) {
    // check argument
    if ( undefined == filename )
    {
-      setLastErrMsg( "filename must be config" ) ;
+      setLastErrMsg( "Filename must be config" ) ;
       throw SDB_OUT_OF_BOUND ;
    }
 
@@ -3004,8 +2997,8 @@ File.prototype.md5 = function( filename ) {
    if ( undefined != this._remote )
    {
       var recvObj = this._remote._runCommand( "file md5", {},
-                                           { "filename": filename } ) ;
-      result = recvObj.toObj().md5 ;
+                                              { "Filename": filename } ) ;
+      result = recvObj.toObj().MD5 ;
    }
    else
    {
@@ -3019,20 +3012,20 @@ File.prototype._getPermission = function( pathname ) {
 
    if( undefined == pathname )
    {
-      setLastErrMsg( "pathname must be config" ) ;
+      setLastErrMsg( "Pathname must be config" ) ;
       throw SDB_OUT_OF_BOUND ;
    }
    else if( "string" != typeof( pathname ) )
    {
-      setLastErrMsg( "pathname must be string" ) ;
+      setLastErrMsg( "Pathname must be string" ) ;
       throw SDB_INVALIDARG ;
    }
 
    if( undefined != this._remote )
    {
       var retObj = this._remote._runCommand( "file get permission", {}, {},
-                                             { "pathname": pathname } ).toObj() ;
-      return retObj.permission ;
+                                             { "Pathname": pathname } ).toObj() ;
+      return retObj.Permission ;
    }
    else
    {
@@ -3044,8 +3037,8 @@ File.prototype.getSize = function( filename ) {
    if( undefined != this._remote )
    {
       var retObj = this._remote._runCommand( "file get content size", {},
-                                             { "filename": filename } ).toObj() ;
-      return retObj.size ;
+                                             { "Filename": filename } ).toObj() ;
+      return retObj.Size ;
    }
    else
    {

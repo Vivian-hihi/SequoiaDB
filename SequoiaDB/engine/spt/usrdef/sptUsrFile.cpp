@@ -51,7 +51,9 @@ using namespace bson ;
 
 namespace engine
 {
+   #define SPT_FILE_PROPERTY_FILENAME   "_filename"
    #define FILE_TRANSFORM_UNIT_512K 524288
+   #define SPT_READ_LEN 1024
 
 JS_MEMBER_FUNC_DEFINE( _sptUsrFile, read )
 JS_MEMBER_FUNC_DEFINE( _sptUsrFile, seek )
@@ -135,8 +137,8 @@ JS_MAPPING_END()
    {
       INT32 rc = SDB_OK ;
       string filename ;
-      INT32 permission ;
-      INT32 iMode ;
+      INT32 permission = 0 ;
+      INT32 iMode = 0 ;
       BSONObjBuilder opBuilder ;
       string err ;
 
@@ -144,11 +146,11 @@ JS_MAPPING_END()
       rc = arg.getString( 0, filename ) ;
       if ( SDB_OUT_OF_BOUND == rc )
       {
-         detail = BSON( SPT_ERR << "filename must be config" ) ;
+         detail = BSON( SPT_ERR << "Filename must be config" ) ;
       }
       else if ( rc )
       {
-         detail = BSON( SPT_ERR << "filename must be string" ) ;
+         detail = BSON( SPT_ERR << "Filename must be string" ) ;
       }
       PD_RC_CHECK( rc, PDERROR, "Failed to get filename, rc: %d", rc ) ;
 
@@ -158,10 +160,10 @@ JS_MAPPING_END()
          rc = arg.getNative( 1, (void*)&permission, SPT_NATIVE_INT32 ) ;
          if ( rc )
          {
-            detail = BSON( SPT_ERR << "permission must be INT32" ) ;
+            detail = BSON( SPT_ERR << "Permission must be INT32" ) ;
             goto error ;
          }
-         opBuilder.append( "permission", permission ) ;
+         opBuilder.append( SPT_FILE_COMMON_FIELD_PERMISSION, permission ) ;
       }
 
       if( arg.argc() > 2 )
@@ -169,21 +171,21 @@ JS_MAPPING_END()
          rc = arg.getNative( 2, &iMode, SPT_NATIVE_INT32 ) ;
          if( SDB_OK != rc )
          {
-            detail = BSON( SPT_ERR << "mode must be int" ) ;
+            detail = BSON( SPT_ERR << "Mode must be int" ) ;
             goto error ;
          }
-         opBuilder.append( "mode", iMode ) ;
+         opBuilder.append( SPT_FILE_COMMON_FIELD_MODE, iMode ) ;
       }
 
       rc = _fileCommon.open( filename, opBuilder.obj(), err ) ;
       if ( SDB_OK != rc )
       {
          detail = BSON( SPT_ERR << err ) ;
-         PD_LOG( PDERROR, "failed to open file:%s, rc:%d",
+         PD_LOG( PDERROR, "Failed to open file:%s, rc:%d",
                  filename.c_str(), rc ) ;
          goto error ;
       }
-      rval.addSelfProperty( "_filename" )->setValue( filename ) ;
+      rval.addSelfProperty( SPT_FILE_PROPERTY_FILENAME )->setValue( filename ) ;
 
    done:
       return rc ;
@@ -260,11 +262,11 @@ JS_MAPPING_END()
       rc = arg.getString( 0, content ) ;
       if ( SDB_OUT_OF_BOUND == rc )
       {
-         detail = BSON( SPT_ERR << "content must be config" ) ;
+         detail = BSON( SPT_ERR << "Content must be config" ) ;
       }
       else if ( rc )
       {
-         detail = BSON( SPT_ERR << "content must be string" ) ;
+         detail = BSON( SPT_ERR << "Content must be string" ) ;
       }
       PD_RC_CHECK( rc, PDERROR, "Failed to get content, rc: %d", rc ) ;
 
@@ -346,7 +348,6 @@ JS_MAPPING_END()
                                          CHAR** buf, SINT64 &len )
    {
       INT32 rc = SDB_OK ;
-#define SPT_READ_LEN 1024
       SINT64 readLen = SPT_READ_LEN ;
       BSONObjBuilder optionBuilder ;
       string err ;
@@ -355,11 +356,11 @@ JS_MAPPING_END()
       rc = arg.getNative( 0, &readLen, SPT_NATIVE_INT64 ) ;
       if( SDB_OK == rc )
       {
-         optionBuilder.append( "size", readLen ) ;
+         optionBuilder.append( SPT_FILE_COMMON_FIELD_SIZE, readLen ) ;
       }
       else if( SDB_OUT_OF_BOUND != rc )
       {
-         detail = BSON( SPT_ERR << "size must be number" ) ;
+         detail = BSON( SPT_ERR << "Size must be number" ) ;
          PD_LOG( PDERROR, "Failed to get size, rc: %d", rc ) ;
          goto error ;
       }
@@ -383,46 +384,46 @@ JS_MAPPING_END()
    {
       INT32 rc = SDB_OK ;
       _sptUsrRemote *pRemote = NULL ;
-      SINT64 size = 1024 ;
-      UINT32 fID ;
-      SINT64 hasRead ;
-      SINT64 readTimes ;
+      SINT64 size = SPT_READ_LEN ;
+      UINT32 fID = 0 ;
+      SINT64 hasRead = 0 ;
+      SINT64 readTimes = 0 ;
       const CHAR* retBuf = NULL ;
 
       rc = arg.getUserObj( 0, "Remote", ( const void** )&pRemote ) ;
       if( SDB_OUT_OF_BOUND == rc )
       {
-         detail = BSON( SPT_ERR << "remoteObj must be config" ) ;
+         detail = BSON( SPT_ERR << "RemoteObj must be config" ) ;
          goto error ;
       }
       if( SDB_OK != rc )
       {
-         detail = BSON( SPT_ERR << "remoteObj must be Remote" ) ;
+         detail = BSON( SPT_ERR << "RemoteObj must be Remote" ) ;
          goto error ;
       }
 
       rc = arg.getNative( 1, (void*)&fID, SPT_NATIVE_INT32 ) ;
       if( SDB_OUT_OF_BOUND == rc )
       {
-         detail = BSON( SPT_ERR << "fID must be config" ) ;
+         detail = BSON( SPT_ERR << "FID must be config" ) ;
          goto error ;
       }
       else if( SDB_OK != rc )
       {
-         detail = BSON( SPT_ERR << "fID must be numberInt" ) ;
+         detail = BSON( SPT_ERR << "FID must be numberInt" ) ;
          goto error ;
       }
 
       rc = arg.getNative( 2, (void*)&size, SPT_NATIVE_INT64 ) ;
       if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
       {
-         detail = BSON( SPT_ERR << "size must be number" ) ;
+         detail = BSON( SPT_ERR << "Size must be number" ) ;
          goto error ;
       }
       if( size < 0 )
       {
          rc = SDB_INVALIDARG ;
-         detail = BSON( SPT_ERR << "size must be zero or positive number" ) ;
+         detail = BSON( SPT_ERR << "Size must be zero or positive number" ) ;
          goto error ;
       }
 
@@ -451,8 +452,8 @@ JS_MAPPING_END()
          }
 
          rc = pRemote->runCommand( OMA_REMOTE_FILE_READ, BSONObj(),
-                                   BSON( "fID" << fID ),
-                                   BSON( "size" << readLen ), detail, retObj ) ;
+                                   BSON( "FID" << fID ),
+                                   BSON( "Size" << readLen ), detail, retObj ) ;
          if( SDB_OK != rc )
          {
             if( 0 < readTimes && SDB_EOF == rc )
@@ -463,33 +464,33 @@ JS_MAPPING_END()
             goto error ;
          }
 
-         if( FALSE == retObj.hasField( "readContent" ) )
+         if( FALSE == retObj.hasField( "Content" ) )
          {
             rc = SDB_OUT_OF_BOUND ;
-            detail = BSON( SPT_ERR << "retObj must has field: 'readContent'" ) ;
+            detail = BSON( SPT_ERR << "RetObj must has field: 'Content'" ) ;
             goto error ;
          }
-         if( String != retObj.getField( "readContent" ).type() )
+         if( String != retObj.getField( "Content" ).type() )
          {
             rc = SDB_INVALIDARG ;
-            detail = BSON( SPT_ERR << "readContent must be string" ) ;
+            detail = BSON( SPT_ERR << "Content must be string" ) ;
             goto error ;
          }
-         retBuf = retObj.getStringField( "readContent" ) ;
+         retBuf = retObj.getStringField( "Content" ) ;
 
-         if( FALSE == retObj.hasField( "readLen" ) )
+         if( FALSE == retObj.hasField( "ReadLen" ) )
          {
             rc = SDB_OUT_OF_BOUND ;
-            detail = BSON( SPT_ERR << "retObj must has field: 'readLen'" ) ;
+            detail = BSON( SPT_ERR << "RetObj must has field: 'ReadLen'" ) ;
             goto error ;
          }
-         if( NumberLong != retObj.getField( "readLen" ).type() )
+         if( NumberLong != retObj.getField( "ReadLen" ).type() )
          {
             rc = SDB_INVALIDARG ;
-            detail = BSON( SPT_ERR << "readLen must be NumberLong" ) ;
+            detail = BSON( SPT_ERR << "ReadLen must be NumberLong" ) ;
             goto error ;
          }
-         realRead = retObj.getIntField( "readLen" ) ;
+         realRead = retObj.getIntField( "ReadLen" ) ;
 
          ossMemcpy( ( *buf ) + hasRead, retBuf, realRead ) ;
          readTimes++ ;
@@ -524,7 +525,7 @@ JS_MAPPING_END()
       }
       else if( SDB_OK != rc )
       {
-         detail = BSON( SPT_ERR << "fileContent must be FileContent" ) ;
+         detail = BSON( SPT_ERR << "FileContent must be FileContent" ) ;
          goto error ;
       }
 
@@ -548,44 +549,44 @@ JS_MAPPING_END()
       INT32 rc = SDB_OK ;
       _sptUsrRemote *pRemote = NULL ;
       sptUsrFileContent *pFileContent = NULL ;
-      UINT32 fID ;
-      SINT64 size ;
-      SINT64 hasWrite ;
+      UINT32 fID = 0 ;
+      SINT64 size = 0 ;
+      SINT64 hasWrite = 0 ;
       BSONObj retObj ;
 
       rc = arg.getUserObj( 0, "Remote", ( const void** )&pRemote ) ;
       if( SDB_OUT_OF_BOUND == rc )
       {
-         detail = BSON( SPT_ERR << "remoteObj must be config" ) ;
+         detail = BSON( SPT_ERR << "RemoteObj must be config" ) ;
          goto error ;
       }
       if( SDB_OK != rc )
       {
-         detail = BSON( SPT_ERR << "remoteObj must be Remote" ) ;
+         detail = BSON( SPT_ERR << "RemoteObj must be Remote" ) ;
          goto error ;
       }
 
       rc = arg.getNative( 1, (void*)&fID, SPT_NATIVE_INT32 ) ;
       if( SDB_OUT_OF_BOUND == rc )
       {
-         detail = BSON( SPT_ERR << "fID must be config" ) ;
+         detail = BSON( SPT_ERR << "FID must be config" ) ;
          goto error ;
       }
       else if( SDB_OK != rc )
       {
-         detail = BSON( SPT_ERR << "fID must be numberInt" ) ;
+         detail = BSON( SPT_ERR << "FID must be numberInt" ) ;
          goto error ;
       }
 
       rc = arg.getUserObj( 2, "FileContent", (const void**)&pFileContent ) ;
       if( SDB_OUT_OF_BOUND == rc )
       {
-         detail = BSON( SPT_ERR << "fileContent must be config" ) ;
+         detail = BSON( SPT_ERR << "FileContent must be config" ) ;
          goto error ;
       }
       if( SDB_OK != rc )
       {
-         detail = BSON( SPT_ERR << "fileContent must be FileContent" ) ;
+         detail = BSON( SPT_ERR << "FileContent must be FileContent" ) ;
          goto error ;
       }
 
@@ -604,11 +605,11 @@ JS_MAPPING_END()
          {
             writeSize = size - hasWrite ;
          }
-         builder.append( "content", pFileContent->getBuf() + hasWrite,
+         builder.append( "Content", pFileContent->getBuf() + hasWrite,
                          writeSize ) ;
-         builder.append( "size", writeSize ) ;
+         builder.append( "Size", writeSize ) ;
          rc = pRemote->runCommand( OMA_REMOTE_FILE_WRITE, BSONObj(),
-                                   BSON( "fID" << fID ),
+                                   BSON( "FID" << fID ),
                                    builder.obj(), detail, retObj ) ;
          hasWrite += writeSize ;
       }
@@ -635,23 +636,23 @@ JS_MAPPING_END()
       rc = arg.getNative( 0, &seekSize, SPT_NATIVE_INT64 ) ;
       if ( SDB_OUT_OF_BOUND == rc )
       {
-         detail = BSON( SPT_ERR << "offset must be config" ) ;
+         detail = BSON( SPT_ERR << "Offset must be config" ) ;
       }
       else if ( rc )
       {
-         detail = BSON( SPT_ERR << "offset must be native type" ) ;
+         detail = BSON( SPT_ERR << "Offset must be native type" ) ;
       }
       PD_RC_CHECK( rc, PDERROR, "Failed to get offset, rc: %d", rc ) ;
 
       rc = arg.getBsonobj( 1, optionObj ) ;
       if ( SDB_OUT_OF_BOUND == rc )
       {
-         detail = BSON( SPT_ERR << "optionObj must be config" ) ;
+         detail = BSON( SPT_ERR << "OptionObj must be config" ) ;
          goto error ;
       }
       else if( SDB_OK != rc )
       {
-         detail = BSON( SPT_ERR << "optionObj must be obj" );
+         detail = BSON( SPT_ERR << "OptionObj must be obj" );
          goto error ;
       }
 
@@ -687,12 +688,12 @@ JS_MAPPING_END()
       rc = arg.getBsonobj( 0, remoteInfo ) ;
       if ( SDB_OUT_OF_BOUND == rc )
       {
-         detail = BSON( SPT_ERR << "remoteInfo must be config" ) ;
+         detail = BSON( SPT_ERR << "RemoteInfo must be config" ) ;
          goto error ;
       }
       if ( SDB_OK != rc )
       {
-         detail = BSON( SPT_ERR << "remoteInfo must be obj" ) ;
+         detail = BSON( SPT_ERR << "RemoteInfo must be obj" ) ;
          goto error ;
       }
 
@@ -759,11 +760,11 @@ JS_MAPPING_END()
       rc = arg.getString( 0, fullPath ) ;
       if ( SDB_OUT_OF_BOUND == rc )
       {
-         detail = BSON( SPT_ERR << "filepath must be config" ) ;
+         detail = BSON( SPT_ERR << "Filepath must be config" ) ;
       }
       else if ( rc )
       {
-         detail = BSON( SPT_ERR << "filepath must be string" ) ;
+         detail = BSON( SPT_ERR << "Filepath must be string" ) ;
       }
       PD_RC_CHECK( rc, PDERROR, "Failed to get filepath, rc: %d", rc ) ;
 
@@ -791,11 +792,11 @@ JS_MAPPING_END()
       rc = arg.getString( 0, fullPath ) ;
       if ( SDB_OUT_OF_BOUND == rc )
       {
-         detail = BSON( SPT_ERR << "filepath must be config" ) ;
+         detail = BSON( SPT_ERR << "Filepath must be config" ) ;
       }
       else if ( rc )
       {
-         detail = BSON( SPT_ERR << "filepath must be string" ) ;
+         detail = BSON( SPT_ERR << "Filepath must be string" ) ;
       }
       PD_RC_CHECK( rc, PDERROR, "Failed to get filepath, rc: %d", rc ) ;
 
@@ -827,24 +828,24 @@ JS_MAPPING_END()
       rc = arg.getString( 0, src ) ;
       if ( SDB_OUT_OF_BOUND == rc )
       {
-         detail = BSON( SPT_ERR << "src is required" ) ;
+         detail = BSON( SPT_ERR << "Src is required" ) ;
          goto error ;
       }
       else if ( rc )
       {
-         detail = BSON( SPT_ERR << "src must be string" ) ;
+         detail = BSON( SPT_ERR << "Src must be string" ) ;
          goto error ;
       }
 
       rc = arg.getString( 1, dst ) ;
       if ( SDB_OUT_OF_BOUND == rc )
       {
-         detail = BSON( SPT_ERR << "dst is required" ) ;
+         detail = BSON( SPT_ERR << "Dst is required" ) ;
          goto error ;
       }
       else if ( rc )
       {
-         detail = BSON( SPT_ERR << "dst must be string" ) ;
+         detail = BSON( SPT_ERR << "Dst must be string" ) ;
          goto error ;
       }
 
@@ -853,10 +854,10 @@ JS_MAPPING_END()
          rc = arg.getNative( 2, (void*)&isReplace, SPT_NATIVE_INT32 ) ;
          if ( rc )
          {
-            detail = BSON( SPT_ERR << "replace must be BOOLEAN" ) ;
+            detail = BSON( SPT_ERR << "IsReplace must be BOOLEAN" ) ;
             goto error ;
          }
-         opBuilder.appendBool( "isReplace", isReplace ) ;
+         opBuilder.appendBool( SPT_FILE_COMMON_FIELD_IS_REPLACE, isReplace ) ;
       }
 
       if ( arg.argc() > 3 )
@@ -865,10 +866,10 @@ JS_MAPPING_END()
          rc = arg.getNative( 3, (void*)&mode, SPT_NATIVE_INT32 ) ;
          if ( rc )
          {
-            detail = BSON( SPT_ERR << "mode must be INT32" ) ;
+            detail = BSON( SPT_ERR << "Mode must be INT32" ) ;
             goto error ;
          }
-         opBuilder.append( "mode", mode ) ;
+         opBuilder.append( SPT_FILE_COMMON_FIELD_MODE, mode ) ;
       }
 
 
@@ -897,24 +898,24 @@ JS_MAPPING_END()
       rc = arg.getString( 0, src ) ;
       if ( SDB_OUT_OF_BOUND == rc )
       {
-         detail = BSON( SPT_ERR << "src is required" ) ;
+         detail = BSON( SPT_ERR << "Src is required" ) ;
          goto error ;
       }
       else if ( rc )
       {
-         detail = BSON( SPT_ERR << "src must be string" ) ;
+         detail = BSON( SPT_ERR << "Src must be string" ) ;
          goto error ;
       }
 
       rc = arg.getString( 1, dst ) ;
       if ( SDB_OUT_OF_BOUND == rc )
       {
-         detail = BSON( SPT_ERR << "dst is required" ) ;
+         detail = BSON( SPT_ERR << "Dst is required" ) ;
          goto error ;
       }
       else if ( rc )
       {
-         detail = BSON( SPT_ERR << "dst must be string" ) ;
+         detail = BSON( SPT_ERR << "Dst must be string" ) ;
          goto error ;
       }
 
@@ -942,12 +943,12 @@ JS_MAPPING_END()
       rc = arg.getString( 0, name ) ;
       if ( SDB_OUT_OF_BOUND == rc )
       {
-         detail = BSON( SPT_ERR << "name is required" ) ;
+         detail = BSON( SPT_ERR << "Dirname must be required" ) ;
          goto error ;
       }
       else if ( rc )
       {
-         detail = BSON( SPT_ERR << "name must be string" ) ;
+         detail = BSON( SPT_ERR << "Dirname must be string" ) ;
          goto error ;
       }
 
@@ -957,7 +958,7 @@ JS_MAPPING_END()
          rc = arg.getNative( 1, (void*)&mode, SPT_NATIVE_INT32 ) ;
          if ( rc )
          {
-            detail = BSON( SPT_ERR << "mode must be INT32" ) ;
+            detail = BSON( SPT_ERR << "Mode must be INT32" ) ;
             goto error ;
          }
          opBuilder.append( "mode", mode ) ;
@@ -1010,12 +1011,12 @@ JS_MAPPING_END()
       rc = arg.getString( 0, name ) ;
       if( SDB_OUT_OF_BOUND == rc )
       {
-         detail = BSON( SPT_ERR << "name must be config" ) ;
+         detail = BSON( SPT_ERR << "Filename must be config" ) ;
          goto error ;
       }
       if( SDB_OK != rc )
       {
-         detail = BSON( SPT_ERR << "name must be string" ) ;
+         detail = BSON( SPT_ERR << "Filename must be string" ) ;
          goto error ;
       }
 
@@ -1045,12 +1046,12 @@ JS_MAPPING_END()
       rc = arg.getBsonobj( 0, optionObj ) ;
       if ( SDB_OUT_OF_BOUND == rc )
       {
-         detail = BSON( SPT_ERR << "optionObj must be config" ) ;
+         detail = BSON( SPT_ERR << "OptionObj must be config" ) ;
          goto error ;
       }
       if ( SDB_OK != rc )
       {
-         detail = BSON( SPT_ERR << "optionObj must be BSONObj" ) ;
+         detail = BSON( SPT_ERR << "OptionObj must be BSONObj" ) ;
          goto error ;
       }
 
@@ -1082,7 +1083,7 @@ JS_MAPPING_END()
          rc = arg.getBsonobj( 0, optionObj ) ;
          if ( SDB_OK != rc )
          {
-            detail = BSON( SPT_ERR << "optionObj must be BSONObj" ) ;
+            detail = BSON( SPT_ERR << "OptionObj must be BSONObj" ) ;
             goto error ;
          }
       }
@@ -1108,31 +1109,31 @@ JS_MAPPING_END()
       BOOLEAN isRecursive = FALSE ;
       BSONObjBuilder opBuilder ;
       string pathname ;
-      INT32 mode ;
+      INT32 mode = 0 ;
       string err ;
 
       // read argument
       rc = arg.getString( 0, pathname ) ;
       if ( SDB_OUT_OF_BOUND == rc )
       {
-         detail = BSON( SPT_ERR << "filename must be config" ) ;
+         detail = BSON( SPT_ERR << "Pathname must be config" ) ;
          goto error ;
       }
       if ( SDB_OK != rc )
       {
-         detail = BSON( SPT_ERR << "filename must be string" ) ;
+         detail = BSON( SPT_ERR << "Pathname must be string" ) ;
          goto error ;
       }
 
       rc = arg.getNative( 1, &mode, SPT_NATIVE_INT32 ) ;
       if ( SDB_OUT_OF_BOUND == rc )
       {
-         detail = BSON( SPT_ERR << "mode must be config" ) ;
+         detail = BSON( SPT_ERR << "Mode must be config" ) ;
          goto error ;
       }
       if ( SDB_OK != rc )
       {
-         detail = BSON( SPT_ERR << "mode must be INT32" ) ;
+         detail = BSON( SPT_ERR << "Mode must be INT32" ) ;
          goto error ;
       }
 
@@ -1141,10 +1142,10 @@ JS_MAPPING_END()
          rc = arg.getNative( 2, &isRecursive, SPT_NATIVE_INT32 ) ;
          if ( SDB_OK != rc )
          {
-            detail = BSON( SPT_ERR << "recursive must be bool" ) ;
+            detail = BSON( SPT_ERR << "IsRecursive must be bool" ) ;
             goto error ;
          }
-         opBuilder.appendBool( "isRecursive", isRecursive ) ;
+         opBuilder.appendBool( SPT_FILE_COMMON_FIELD_IS_RECURSIVE, isRecursive ) ;
       }
 
       rc = _sptUsrFileCommon::chmod( pathname, mode, opBuilder.obj(), err ) ;
@@ -1174,24 +1175,24 @@ JS_MAPPING_END()
       rc = arg.getString( 0, pathname ) ;
       if ( SDB_OUT_OF_BOUND == rc )
       {
-         detail = BSON( SPT_ERR << "filename must be config" ) ;
+         detail = BSON( SPT_ERR << "Pathname must be config" ) ;
          goto error ;
       }
       if ( SDB_OK != rc )
       {
-         detail = BSON( SPT_ERR << "filename must be string" ) ;
+         detail = BSON( SPT_ERR << "Pathname must be string" ) ;
          goto error ;
       }
 
       rc = arg.getBsonobj( 1, ownerObj ) ;
       if ( SDB_OUT_OF_BOUND == rc )
       {
-         detail = BSON( SPT_ERR << "optionObj must be config" ) ;
+         detail = BSON( SPT_ERR << "OptionObj must be config" ) ;
          goto error ;
       }
       if ( SDB_OK != rc )
       {
-         detail = BSON( SPT_ERR << "optionObj must be BSONObj" ) ;
+         detail = BSON( SPT_ERR << "OptionObj must be BSONObj" ) ;
          goto error ;
       }
 
@@ -1200,10 +1201,10 @@ JS_MAPPING_END()
          rc = arg.getNative( 2, &isRecursive, SPT_NATIVE_INT32 ) ;
          if ( SDB_OK != rc )
          {
-            detail = BSON( SPT_ERR << "recursive must be bool" ) ;
+            detail = BSON( SPT_ERR << "IsRecursive must be bool" ) ;
             goto error ;
          }
-         opBuilder.appendBool( "isRecursive", isRecursive ) ;
+         opBuilder.appendBool( SPT_FILE_COMMON_FIELD_IS_RECURSIVE, isRecursive ) ;
       }
 
       rc = _sptUsrFileCommon::chown( pathname, ownerObj, opBuilder.obj(), err ) ;
@@ -1233,24 +1234,24 @@ JS_MAPPING_END()
       rc = arg.getString( 0, pathname ) ;
       if ( SDB_OUT_OF_BOUND == rc )
       {
-         detail = BSON( SPT_ERR << "filename must be config" ) ;
+         detail = BSON( SPT_ERR << "Pathname must be config" ) ;
          goto error ;
       }
       else if ( SDB_OK != rc )
       {
-         detail = BSON( SPT_ERR << "filename must be string" ) ;
+         detail = BSON( SPT_ERR << "Pathname must be string" ) ;
          goto error ;
       }
 
       rc = arg.getString( 1, groupname ) ;
       if ( SDB_OUT_OF_BOUND == rc )
       {
-         detail = BSON( SPT_ERR << "groupname must be config" ) ;
+         detail = BSON( SPT_ERR << "Groupname must be config" ) ;
          goto error ;
       }
       if ( SDB_OK != rc )
       {
-         detail = BSON( SPT_ERR << "groupname must be string" ) ;
+         detail = BSON( SPT_ERR << "Groupname must be string" ) ;
          goto error ;
       }
 
@@ -1259,10 +1260,10 @@ JS_MAPPING_END()
          rc = arg.getNative( 2, &isRecursive, SPT_NATIVE_INT32 ) ;
          if ( SDB_OK != rc )
          {
-            detail = BSON( SPT_ERR << "recursive must be bool" ) ;
+            detail = BSON( SPT_ERR << "IsRecursive must be bool" ) ;
             goto error ;
          }
-         opBuilder.append( "isRecursive", isRecursive ) ;
+         opBuilder.append( SPT_FILE_COMMON_FIELD_IS_RECURSIVE, isRecursive ) ;
       }
 
       rc = _sptUsrFileCommon::chgrp( pathname, groupname, opBuilder.obj(), err ) ;
@@ -1303,19 +1304,19 @@ JS_MAPPING_END()
                                 BSONObj &detail )
    {
       INT32 rc = SDB_OK ;
-      INT32 mask ;
+      INT32 mask = 0 ;
       string err ;
 
       // get argument
       rc = arg.getNative( 0, (void*)&mask, SPT_NATIVE_INT32 ) ;
       if ( SDB_OUT_OF_BOUND == rc )
       {
-         detail = BSON( SPT_ERR << "umask must be config" ) ;
+         detail = BSON( SPT_ERR << "Umask must be config" ) ;
          goto error ;
       }
       if ( SDB_OK != rc )
       {
-         detail = BSON( SPT_ERR << "umask must be INT32" ) ;
+         detail = BSON( SPT_ERR << "Umask must be INT32" ) ;
          goto error ;
       }
 
@@ -1344,12 +1345,12 @@ JS_MAPPING_END()
       rc = arg.getString( 0, pathname ) ;
       if ( SDB_OUT_OF_BOUND == rc )
       {
-         detail = BSON( SPT_ERR << "pathname must be config" ) ;
+         detail = BSON( SPT_ERR << "Pathname must be config" ) ;
          goto error ;
       }
       if ( SDB_OK != rc )
       {
-         detail = BSON( SPT_ERR << "pathname must be string" ) ;
+         detail = BSON( SPT_ERR << "Pathname must be string" ) ;
          goto error ;
       }
 
@@ -1379,12 +1380,12 @@ JS_MAPPING_END()
       rc = arg.getString( 0, pathname ) ;
       if ( SDB_OUT_OF_BOUND == rc )
       {
-         detail = BSON( SPT_ERR << "pathname must be config" ) ;
+         detail = BSON( SPT_ERR << "Pathname must be config" ) ;
          goto error ;
       }
       if ( SDB_OK != rc )
       {
-         detail = BSON( SPT_ERR << "pathname must be string" ) ;
+         detail = BSON( SPT_ERR << "Pathname must be string" ) ;
          goto error ;
       }
 
@@ -1414,12 +1415,12 @@ JS_MAPPING_END()
       rc = arg.getString( 0, pathname ) ;
       if ( SDB_OUT_OF_BOUND == rc )
       {
-         detail = BSON( SPT_ERR << "pathname must be config" ) ;
+         detail = BSON( SPT_ERR << "Pathname must be config" ) ;
          goto error ;
       }
       if ( SDB_OK != rc )
       {
-         detail = BSON( SPT_ERR << "pathname must be string" ) ;
+         detail = BSON( SPT_ERR << "Pathname must be string" ) ;
          goto error ;
       }
 
@@ -1449,12 +1450,12 @@ JS_MAPPING_END()
       rc = arg.getString( 0, pathname ) ;
       if ( SDB_OUT_OF_BOUND == rc )
       {
-         detail = BSON( SPT_ERR << "filename must be config" ) ;
+         detail = BSON( SPT_ERR << "Filename must be config" ) ;
          goto error ;
       }
       if ( SDB_OK != rc )
       {
-         detail = BSON( SPT_ERR << "filename must be string" ) ;
+         detail = BSON( SPT_ERR << "Filename must be string" ) ;
          goto error ;
       }
 
@@ -1484,14 +1485,14 @@ JS_MAPPING_END()
       if ( 0 == arg.argc() )
       {
          rc = SDB_OUT_OF_BOUND ;
-         err = "filename must be config" ;
+         err = "Filename must be config" ;
          goto error ;
       }
       rc = arg.getString( 0, filename ) ;
       if ( SDB_OK != rc )
       {
          rc = SDB_INVALIDARG ;
-         err = "filename must be string" ;
+         err = "Filename must be string" ;
          goto error ;
       }
 
@@ -1514,20 +1515,20 @@ JS_MAPPING_END()
    {
       INT32 rc = SDB_OK ;
       string filename ;
-      INT64 size ;
+      INT64 size = 0 ;
       string err ;
 
       if( 0 == arg.argc() )
       {
          rc = SDB_OUT_OF_BOUND ;
-         detail = BSON( SPT_ERR << "filename must be config" ) ;
+         detail = BSON( SPT_ERR << "Filename must be config" ) ;
          goto error ;
       }
 
       rc = arg.getString( 0, filename ) ;
       if( SDB_OK != rc )
       {
-         detail = BSON( SPT_ERR << "filename must be string" ) ;
+         detail = BSON( SPT_ERR << "Filename must be string" ) ;
          goto error ;
       }
 
@@ -1550,38 +1551,38 @@ JS_MAPPING_END()
                                   BSONObj &detail )
    {
       stringstream ss ;
-      ss << "Methods to access:" << endl
-         << " var file = new File( filename, [permission], [mode] )" << endl
-         << " var file = remoteObj.getFile()" << endl
-         << " var file = remoteObj.getFile( [filename], [permission], [mode] )" << endl
-         << "File functions:" << endl
-         << "   read( [size] )" << endl
-         << "   write( content )" << endl
-         << "   readContent( [size] )" << endl
-         << "   writeContent( fileContent )" << endl
-         << "   seek( offset, [where] ) " << endl
-         << "   close()" << endl
-         << " File.remove( filepath )" << endl
-         << " File.exist( filepath )" << endl
-         << " File.copy( src, dst, [replace], [mode] )" << endl
-         << " File.move( src, dst )" << endl
-         << " File.mkdir( name, [mode] )" << endl
-         << " File.find( optionObj, [filterObj] )" << endl
+      ss << "Methods to access:" << endl ;
+      ss << " var file = new File( filename, [permission], [mode] )" << endl ;
+      ss << " var file = remoteObj.getFile()" << endl ;
+      ss << " var file = remoteObj.getFile( [filename], [permission], [mode] )" << endl ;
+      ss << "File functions:" << endl ;
+      ss << "   read( [size] )" << endl ;
+      ss << "   write( content )" << endl ;
+      ss << "   readContent( [size] )" << endl ;
+      ss << "   writeContent( fileContent )" << endl ;
+      ss << "   seek( offset, [where] ) " << endl ;
+      ss << "   close()" << endl ;
+      ss << " File.remove( filepath )" << endl ;
+      ss << " File.exist( filepath )" << endl ;
+      ss << " File.copy( src, dst, [replace], [mode] )" << endl ;
+      ss << " File.move( src, dst )" << endl ;
+      ss << " File.mkdir( name, [mode] )" << endl ;
+      ss << " File.find( optionObj, [filterObj] )" << endl ;
 #if defined (_LINUX)
-         << " File.chmod( filename, mode, [recursive] )" << endl
-         << " File.chown( filename, optionObj, [recursive] )" << endl
-         << " File.chgrp( filename, groupname, [recursive] )" << endl
-         << " File.setUmask( umask )" << endl
-         << " File.getUmask( base )" << endl
+      ss << " File.chmod( filename, mode, [recursive] )" << endl ;
+      ss << " File.chown( filename, optionObj, [recursive] )" << endl ;
+      ss << " File.chgrp( filename, groupname, [recursive] )" << endl ;
+      ss << " File.setUmask( umask )" << endl ;
+      ss << " File.getUmask( base )" << endl ;
 #endif
-         << " File.list( [optionObj], [filterObj] )" << endl
-         << " File.isFile( pathname )" << endl
-         << " File.isDir( pathname )" << endl
-         << " File.isEmptyDir( dirName )" << endl
-         << " File.stat( filename )" << endl
-         << " File.md5( filename )" << endl
-         << " File.scp( srcFile, dstFile, [isReplace], [mode] )" << endl
-         << " File.getSize( filename )" << endl ;
+      ss << " File.list( [optionObj], [filterObj] )" << endl ;
+      ss << " File.isFile( pathname )" << endl ;
+      ss << " File.isDir( pathname )" << endl ;
+      ss << " File.isEmptyDir( dirName )" << endl ;
+      ss << " File.stat( filename )" << endl ;
+      ss << " File.md5( filename )" << endl ;
+      ss << " File.scp( srcFile, dstFile, [isReplace], [mode] )" << endl ;
+      ss << " File.getSize( filename )" << endl ;
       rval.getReturnVal().setValue( ss.str() ) ;
       return SDB_OK ;
    }

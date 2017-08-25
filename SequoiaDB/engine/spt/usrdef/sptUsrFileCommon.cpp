@@ -46,6 +46,7 @@
 #endif
 
 #define SPT_MD5_READ_LEN 1024
+#define SPT_READ_LEN     1024
 
 using namespace std ;
 using namespace bson ;
@@ -80,20 +81,21 @@ namespace engine
          if ( SDB_OK == rc && SDB_OSS_DIR == type )
          {
             rc = SDB_INVALIDARG ;
-            err = "filename must not be dir" ;
+            err = "Filename must not be dir" ;
             goto error ;
          }
       }
       // get mode
-      if ( optionObj.hasField( "permission" ) )
+      if ( optionObj.hasField( SPT_FILE_COMMON_FIELD_PERMISSION ) )
       {
          INT32 mode = 0 ;
-         if( NumberInt != optionObj.getField( "permission" ).type() )
+         if( NumberInt !=
+             optionObj.getField( SPT_FILE_COMMON_FIELD_PERMISSION ).type() )
          {
-            err = "permission must be INT32" ;
+            err = "Permission must be INT32" ;
             goto error ;
          }
-         mode = optionObj.getIntField( "permission" ) ;
+         mode = optionObj.getIntField( SPT_FILE_COMMON_FIELD_PERMISSION ) ;
 
          permission = 0 ;
 
@@ -168,34 +170,33 @@ namespace engine
                                   CHAR** buf, SINT64 &readLen )
    {
       INT32 rc = SDB_OK ;
-#define SPT_READ_LEN 1024
       SINT64 size = SPT_READ_LEN ;
 
       SDB_ASSERT( NULL == (*buf), "*buf must be null" ) ;
 
-      if( optionObj.hasField( "size" ) )
+      if( optionObj.hasField( SPT_FILE_COMMON_FIELD_SIZE ) )
       {
-         BSONElement element = optionObj.getField( "size" ) ;
+         BSONElement element = optionObj.getField( SPT_FILE_COMMON_FIELD_SIZE ) ;
          if( NumberInt != element.type() &&
              NumberLong != element.type() )
          {
             rc = SDB_INVALIDARG ;
-            err = "size must be number" ;
+            err = "Size must be number" ;
             goto error ;
          }
          size = element.numberLong() ;
          if( size < 0 )
          {
             rc = SDB_INVALIDARG ;
-            err = "size must be zero or positive number" ;
+            err = "Size must be zero or positive number" ;
             goto error ;
          }
       }
 
       if ( !_file.isOpened() )
       {
-         PD_LOG( PDERROR, "the file is not opened." ) ;
-         err = "file is not opened" ;
+         PD_LOG( PDERROR, "The file is not opened." ) ;
+         err = "File is not opened" ;
          rc = SDB_IO ;
          goto error ;
       }
@@ -234,8 +235,8 @@ namespace engine
 
       if ( !_file.isOpened() )
       {
-         PD_LOG( PDERROR, "the file is not opened." ) ;
-         err = "file is not opened" ;
+         PD_LOG( PDERROR, "The file is not opened." ) ;
+         err = "File is not opened" ;
          rc = SDB_IO ;
          goto error ;
       }
@@ -247,7 +248,7 @@ namespace engine
          if ( SDB_OK != rc )
          {
             err = getErrDesp( rc ) ;
-            PD_LOG( PDERROR, "failed to write to file:%d", rc ) ;
+            PD_LOG( PDERROR, "Failed to write to file:%d", rc ) ;
             goto error ;
          }
       }
@@ -266,20 +267,20 @@ namespace engine
 
       if ( !_file.isOpened() )
       {
-         PD_LOG( PDERROR, "the file is not opened." ) ;
-         err = "file is not opened" ;
+         PD_LOG( PDERROR, "The file is not opened." ) ;
+         err = "File is not opened" ;
          rc = SDB_IO ;
          goto error ;
       }
 
-      if( optionObj.hasField( "whenceStr" ) )
+      if( optionObj.hasField( SPT_FILE_COMMON_FIELD_WHERE ) )
       {
-         if( String != optionObj.getField( "whenceStr" ).type() )
+         if( String != optionObj.getField( SPT_FILE_COMMON_FIELD_WHERE ).type() )
          {
-            err = "where must be string(b/c/e)" ;
+            err = "Where must be string(b/c/e)" ;
             rc = SDB_INVALIDARG ;
          }
-         whenceStr = optionObj.getStringField( "whenceStr" ) ;
+         whenceStr = optionObj.getStringField( SPT_FILE_COMMON_FIELD_WHERE ) ;
       }
 
       if ( "b" == whenceStr )
@@ -296,8 +297,8 @@ namespace engine
       }
       else
       {
-         err = "where must be (b/c/e)" ;
-         PD_LOG( PDERROR, "invalid arg whence:%s", whenceStr.c_str() ) ;
+         err = "Where must be (b/c/e)" ;
+         PD_LOG( PDERROR, "Invalid arg whence:%s", whenceStr.c_str() ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -306,7 +307,7 @@ namespace engine
       if ( SDB_OK != rc )
       {
          err = getErrDesp( rc ) ;
-         PD_LOG( PDERROR, "failed to seek:%d", rc ) ;
+         PD_LOG( PDERROR, "Failed to seek:%d", rc ) ;
          goto error ;
       }
    done:
@@ -343,7 +344,7 @@ namespace engine
       if ( SDB_OK != rc )
       {
          err = "Failed to remove file:" + path ;
-         PD_LOG( PDERROR, "failed to remove file:%s, rc:%d",
+         PD_LOG( PDERROR, "Failed to remove file:%s, rc:%d",
                  path.c_str(), rc ) ;
          goto error ;
       }
@@ -354,7 +355,7 @@ namespace engine
    }
 
    INT32 _sptUsrFileCommon::exist( const string &path, string &err,
-                                  BOOLEAN &isExist )
+                                   BOOLEAN &isExist )
    {
       INT32 rc = SDB_OK ;
 
@@ -363,7 +364,7 @@ namespace engine
       rc = ossAccess( path.c_str() ) ;
       if ( SDB_OK != rc && SDB_FNE != rc )
       {
-         err = "access file failed" ;
+         err = "Access file failed" ;
          goto error ;
       }
       else if ( SDB_OK == rc )
@@ -384,25 +385,25 @@ namespace engine
       UINT32 permission = OSS_DEFAULTFILE ;
       BOOLEAN isReplace = TRUE ;
 
-      if ( optionObj.hasField( "isReplace" ) )
+      if ( optionObj.hasField( SPT_FILE_COMMON_FIELD_IS_REPLACE ) )
       {
-         if( Bool != optionObj.getField( "isReplace" ).type() )
+         if( Bool != optionObj.getField( SPT_FILE_COMMON_FIELD_IS_REPLACE ).type() )
          {
-            err = "isReplace must be bool" ;
+            err = "IsReplace must be bool" ;
             goto error ;
          }
-         isReplace = optionObj.getBoolField( "isReplace" ) ;
+         isReplace = optionObj.getBoolField( SPT_FILE_COMMON_FIELD_IS_REPLACE ) ;
       }
 
-      if ( optionObj.hasField( "mode" ) )
+      if ( optionObj.hasField( SPT_FILE_COMMON_FIELD_MODE ) )
       {
          INT32 mode = 0 ;
-         if( NumberInt != optionObj.getField( "mode" ).type() )
+         if( NumberInt != optionObj.getField( SPT_FILE_COMMON_FIELD_MODE ).type() )
          {
-            err = "mode must be NumberInt" ;
+            err = "Mode must be NumberInt" ;
             goto error ;
          }
-         mode = optionObj.getIntField( "mode" ) ;
+         mode = optionObj.getIntField( SPT_FILE_COMMON_FIELD_MODE ) ;
          permission = 0 ;
          if ( mode & 0x0001 )
          {
@@ -495,7 +496,7 @@ namespace engine
       rc = ossFileCopy( src.c_str(), dst.c_str(), permission, isReplace ) ;
       if ( rc )
       {
-         err = "copy file failed" ;
+         err = "Copy file failed" ;
          goto error ;
       }
 
@@ -511,15 +512,15 @@ namespace engine
       INT32 rc = SDB_OK ;
       UINT32 permission = OSS_DEFAULTDIR ;
 
-      if ( optionObj.hasField( "mode" ) )
+      if ( optionObj.hasField( SPT_FILE_COMMON_FIELD_MODE ) )
       {
          INT32 mode = 0 ;
-         if( NumberInt != optionObj.getField( "mode" ).type() )
+         if( NumberInt != optionObj.getField( SPT_FILE_COMMON_FIELD_MODE ).type() )
          {
-            err = "mode must be NumberInt" ;
+            err = "Mode must be NumberInt" ;
             goto error ;
          }
-         mode = optionObj.getIntField( "mode" ) ;
+         mode = optionObj.getIntField( SPT_FILE_COMMON_FIELD_MODE ) ;
 
          permission = 0 ;
          if ( mode & 0x0001 )
@@ -567,7 +568,7 @@ namespace engine
       }
       else if ( rc )
       {
-         err = "create dir failed" ;
+         err = "Create dir failed" ;
          goto error ;
       }
    done:
@@ -583,7 +584,7 @@ namespace engine
       rc = ossRenamePath( src.c_str(), dst.c_str() ) ;
       if ( rc )
       {
-         err = "rename path failed" ;
+         err = "Rename path failed" ;
          goto error ;
       }
    done:
@@ -607,26 +608,26 @@ namespace engine
       BSONObjBuilder     builder ;
       stringstream       cmd ;
 
-      if ( TRUE == optionObj.hasField( "value" ) )
+      if ( TRUE == optionObj.hasField( SPT_FILE_COMMON_FIELD_VALUE ) )
       {
-         if ( String != optionObj.getField( "value" ).type() )
+         if ( String != optionObj.getField( SPT_FILE_COMMON_FIELD_VALUE ).type() )
          {
             rc = SDB_INVALIDARG ;
-            err = "value must be string" ;
+            err = "Value must be string" ;
             goto error ;
          }
-         value = optionObj.getStringField( "value" ) ;
+         value = optionObj.getStringField( SPT_FILE_COMMON_FIELD_VALUE ) ;
       }
 
-      if ( TRUE == optionObj.hasField( "mode" ) )
+      if ( TRUE == optionObj.hasField( SPT_FILE_COMMON_FIELD_MODE ) )
       {
-         if ( String != optionObj.getField( "mode" ).type() )
+         if ( String != optionObj.getField( SPT_FILE_COMMON_FIELD_MODE ).type() )
          {
             rc = SDB_INVALIDARG ;
-            err = "mode must be string" ;
+            err = "Mode must be string" ;
             goto error ;
          }
-         findType = optionObj.getStringField( "mode" ) ;
+         findType = optionObj.getStringField( SPT_FILE_COMMON_FIELD_MODE ) ;
       }
 
       /* get the way to find file:
@@ -641,7 +642,7 @@ namespace engine
          if ( string::npos != value.find( "/", 0 ) )
          {
             rc = SDB_INVALIDARG ;
-            err = "value shouldn't contain '/'" ;
+            err = "Value shouldn't contain '/'" ;
             goto error ;
          }
          mode = " -name" ;
@@ -661,19 +662,19 @@ namespace engine
       else
       {
          rc = SDB_INVALIDARG ;
-         err = "mode must be required type" ;
+         err = "Mode must be required type" ;
          goto error ;
       }
 
-      if ( TRUE == optionObj.hasField( "pathname" ) )
+      if ( TRUE == optionObj.hasField( SPT_FILE_COMMON_FIELD_PATHNAME ) )
       {
-         if ( String != optionObj.getField( "pathname" ).type() )
+         if ( String != optionObj.getField( SPT_FILE_COMMON_FIELD_PATHNAME ).type() )
          {
             rc = SDB_INVALIDARG ;
-            err = "pathname must be string" ;
+            err = "Pathname must be string" ;
             goto error ;
          }
-         pathname = optionObj.getStringField( "pathname" ) ;
+         pathname = optionObj.getStringField( SPT_FILE_COMMON_FIELD_PATHNAME ) ;
 
       }
 
@@ -709,10 +710,10 @@ namespace engine
                      FALSE, -1, FALSE, NULL, TRUE ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to exec cmd, rc:%d, exit:%d",
+         PD_LOG( PDERROR, "Failed to exec cmd, rc:%d, exit:%d",
                  rc, exitCode ) ;
          stringstream ss ;
-         ss << "failed to exec cmd " << cmd.str() << ",rc: "
+         ss << "Failed to exec cmd " << cmd.str() << ",rc: "
             << rc
             << ",exit: "
             << exitCode ;
@@ -724,9 +725,9 @@ namespace engine
       rc = runner.read( outStr ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to read msg from cmd runner:%d", rc ) ;
+         PD_LOG( PDERROR, "Failed to read msg from cmd runner:%d", rc ) ;
          stringstream ss ;
-         ss << "failed to read msg from cmd \"" << cmd.str() << "\", rc:"
+         ss << "Failed to read msg from cmd \"" << cmd.str() << "\", rc:"
             << rc ;
          err = ss.str() ;
          goto error ;
@@ -778,15 +779,15 @@ namespace engine
       cmd << "cmd /C dir /-C /A" ;
 #endif
 
-      showDetail = optionObj.getBoolField( "detail") ;
-      if ( TRUE == optionObj.hasField( "pathname" ) )
+      showDetail = optionObj.getBoolField( SPT_FILE_COMMON_FIELD_DETAIL ) ;
+      if ( TRUE == optionObj.hasField( SPT_FILE_COMMON_FIELD_PATHNAME ) )
       {
-         if ( String != optionObj.getField( "pathname" ).type() )
+         if ( String != optionObj.getField( SPT_FILE_COMMON_FIELD_PATHNAME ).type() )
          {
             rc = SDB_INVALIDARG ;
-            err = "pathname must be string" ;
+            err = "Pathname must be string" ;
          }
-         cmd << " " << optionObj.getStringField( "pathname" ) ;
+         cmd << " " << optionObj.getStringField( SPT_FILE_COMMON_FIELD_PATHNAME ) ;
       }
 
       // run cmd
@@ -794,10 +795,10 @@ namespace engine
                         FALSE, -1, FALSE, NULL, TRUE ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to exec cmd, rc:%d, exit:%d",
+         PD_LOG( PDERROR, "Failed to exec cmd, rc:%d, exit:%d",
                  rc, exitCode ) ;
          stringstream ss ;
-         ss << "failed to exec cmd " << cmd.str() << ",rc:"
+         ss << "Failed to exec cmd " << cmd.str() << ",rc:"
             << rc
             << ",exit:"
             << exitCode ;
@@ -809,9 +810,9 @@ namespace engine
       rc = runner.read( outStr ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to read msg from cmd runner:%d", rc ) ;
+         PD_LOG( PDERROR, "Failed to read msg from cmd runner:%d", rc ) ;
          stringstream ss ;
-         ss << "failed to read msg from cmd \"" << cmd.str() << "\", rc:"
+         ss << "Failed to read msg from cmd \"" << cmd.str() << "\", rc:"
             << rc ;
          err = ss.str() ;
          goto error ;
@@ -849,7 +850,7 @@ namespace engine
       string outStr ;
       BOOLEAN isRecursive = FALSE ;
 
-      isRecursive = optionObj.getBoolField( "isRecursive" ) ;
+      isRecursive = optionObj.getBoolField( SPT_FILE_COMMON_FIELD_IS_RECURSIVE ) ;
 
       mode = mode & 0xfff ;
       // build cmd
@@ -865,10 +866,10 @@ namespace engine
                         FALSE, -1, FALSE, NULL, TRUE ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to exec cmd, rc:%d, exit:%d",
+         PD_LOG( PDERROR, "Failed to exec cmd, rc:%d, exit:%d",
                  rc, exitCode ) ;
          stringstream ss ;
-         ss << "failed to exec cmd " << cmd.str() << ",rc:"
+         ss << "Failed to exec cmd " << cmd.str() << ",rc:"
             << rc
             << ",exit:"
             << exitCode ;
@@ -912,36 +913,36 @@ namespace engine
       string outStr ;
       BOOLEAN isRecursive = FALSE ;
 
-      isRecursive = optionObj.getBoolField( "isRecursive" ) ;
+      isRecursive = optionObj.getBoolField( SPT_FILE_COMMON_FIELD_IS_RECURSIVE ) ;
 
-      if ( FALSE == ownerObj.hasField( "username" ) &&
-           FALSE == ownerObj.hasField( "groupname" ) )
+      if ( FALSE == ownerObj.hasField( SPT_FILE_COMMON_FIELD_USERNAME ) &&
+           FALSE == ownerObj.hasField( SPT_FILE_COMMON_FIELD_GROUPNAME ) )
       {
          rc = SDB_INVALIDARG ;
-         err = "username or groupname must be config" ;
+         err = "Username or groupname must be config" ;
          goto error ;
       }
 
-      if ( TRUE == ownerObj.hasField( "username" ) )
+      if ( TRUE == ownerObj.hasField( SPT_FILE_COMMON_FIELD_USERNAME ) )
       {
-         if ( String != ownerObj.getField( "username" ).type() )
+         if ( String != ownerObj.getField( SPT_FILE_COMMON_FIELD_USERNAME ).type() )
          {
             rc = SDB_INVALIDARG ;
-            err = "username must be string" ;
+            err = "Username must be string" ;
             goto error ;
          }
-         username = ownerObj.getStringField( "username" ) ;
+         username = ownerObj.getStringField( SPT_FILE_COMMON_FIELD_USERNAME ) ;
       }
 
-      if ( TRUE == ownerObj.hasField( "groupname" ) )
+      if ( TRUE == ownerObj.hasField( SPT_FILE_COMMON_FIELD_GROUPNAME ) )
       {
-         if ( String != ownerObj.getField( "groupname" ).type() )
+         if ( String != ownerObj.getField( SPT_FILE_COMMON_FIELD_GROUPNAME ).type() )
          {
             rc = SDB_INVALIDARG ;
-            err = "groupname must be string" ;
+            err = "Groupname must be string" ;
             goto error ;
          }
-         groupname = ownerObj.getStringField( "groupname" ) ;
+         groupname = ownerObj.getStringField( SPT_FILE_COMMON_FIELD_GROUPNAME ) ;
       }
 
       // build cmd
@@ -957,10 +958,10 @@ namespace engine
                         FALSE, -1, FALSE, NULL, TRUE ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to exec cmd, rc:%d, exit:%d",
+         PD_LOG( PDERROR, "Failed to exec cmd, rc:%d, exit:%d",
                  rc, exitCode ) ;
          stringstream ss ;
-         ss << "failed to exec cmd " << cmd.str() << ",rc:"
+         ss << "Failed to exec cmd " << cmd.str() << ",rc:"
             << rc
             << ",exit:"
             << exitCode ;
@@ -1002,7 +1003,7 @@ namespace engine
       string outStr ;
       BOOLEAN isRecursive = FALSE ;
 
-      isRecursive = optionObj.getBoolField( "isRecursive" ) ;
+      isRecursive = optionObj.getBoolField( SPT_FILE_COMMON_FIELD_IS_RECURSIVE ) ;
 
       // build cmd
       cmd << "chgrp" ;
@@ -1018,10 +1019,10 @@ namespace engine
                         FALSE, -1, FALSE, NULL, TRUE ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to exec cmd, rc:%d, exit:%d",
+         PD_LOG( PDERROR, "Failed to exec cmd, rc:%d, exit:%d",
                  rc, exitCode ) ;
          stringstream ss ;
-         ss << "failed to exec cmd " << cmd.str() << ",rc:"
+         ss << "Failed to exec cmd " << cmd.str() << ",rc:"
             << rc
             << ",exit:"
             << exitCode ;
@@ -1065,10 +1066,10 @@ namespace engine
                         FALSE, -1, FALSE, NULL, TRUE ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to exec cmd, rc:%d, exit:%d",
+         PD_LOG( PDERROR, "Failed to exec cmd, rc:%d, exit:%d",
                  rc, exitCode ) ;
          stringstream ss ;
-         ss << "failed to exec cmd " << cmd << ",rc:"
+         ss << "Failed to exec cmd " << cmd << ",rc:"
             << rc
             << ",exit:"
             << exitCode ;
@@ -1080,9 +1081,9 @@ namespace engine
       rc = runner.read( retStr ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to read msg from cmd runner:%d", rc ) ;
+         PD_LOG( PDERROR, "Failed to read msg from cmd runner:%d", rc ) ;
          stringstream ss ;
-         ss << "failed to read msg from cmd \"" << cmd << "\", rc:"
+         ss << "Failed to read msg from cmd \"" << cmd << "\", rc:"
             << rc ;
          err = ss.str() ;
          goto error ;
@@ -1107,7 +1108,7 @@ namespace engine
    INT32 _sptUsrFileCommon::setUmask( INT32 mask, string &err )
    {
 #if defined(_LINUX)
-      INT32              userMask ;
+      INT32              userMask = 0 ;
 
       userMask = 0 ;
       if ( mask & 0x0001 )
@@ -1277,7 +1278,7 @@ namespace engine
    }
 
    INT32 _sptUsrFileCommon::isEmptyDir( const std::string &pathname,
-                                       std::string &err, BOOLEAN &isEmpty )
+                                        std::string &err, BOOLEAN &isEmpty )
    {
       INT32 rc = SDB_OK ;
       multimap< string, string > mapFiles ;
@@ -1286,7 +1287,7 @@ namespace engine
       rc = ossAccess( pathname.c_str() ) ;
       if ( SDB_OK != rc )
       {
-         err = "pathname not exist" ;
+         err = "Pathname not exist" ;
          goto error ;
       }
 
@@ -1300,7 +1301,7 @@ namespace engine
       if ( SDB_OSS_DIR != type )
       {
          rc = SDB_INVALIDARG ;
-         err = "pathname must be dir" ;
+         err = "Pathname must be dir" ;
          goto error ;
       }
 
@@ -1343,10 +1344,10 @@ namespace engine
                         FALSE, -1, FALSE, NULL, TRUE ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to exec cmd, rc:%d, exit:%d",
+         PD_LOG( PDERROR, "Failed to exec cmd, rc:%d, exit:%d",
                  rc, exitCode ) ;
          stringstream ss ;
-         ss << "failed to exec cmd " << cmd.str() << ",rc:"
+         ss << "Failed to exec cmd " << cmd.str() << ",rc:"
             << rc
             << ",exit:"
             << exitCode ;
@@ -1358,9 +1359,9 @@ namespace engine
       rc = runner.read( outStr ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to read msg from cmd runner:%d", rc ) ;
+         PD_LOG( PDERROR, "Failed to read msg from cmd runner:%d", rc ) ;
          stringstream ss ;
-         ss << "failed to read msg from cmd \"" << cmd.str() << "\", rc:"
+         ss << "Failed to read msg from cmd \"" << cmd.str() << "\", rc:"
             << rc ;
          err = ss.str() ;
          goto error ;
@@ -1629,7 +1630,7 @@ namespace engine
                     OSS_DEFAULTFILE, file ) ;
       if ( rc )
       {
-         ss << "open file[" << filename.c_str() << "] failed: " << rc ;
+         ss << "Open file[" << filename.c_str() << "] failed: " << rc ;
          goto error ;
       }
       isOpen = TRUE ;
@@ -1734,7 +1735,7 @@ namespace engine
       if ( NULL == buf )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "buf can't be null, rc: %d", rc ) ;
+         PD_LOG( PDERROR, "Buf can't be null, rc: %d", rc ) ;
          goto error ;
       }
 
@@ -1895,7 +1896,7 @@ namespace engine
          catch( std::exception &e )
          {
             rc = SDB_SYS ;
-            PD_LOG( PDERROR, "Fail to build retObj, rc: %d, detail: %s",
+            PD_LOG( PDERROR, "Failed to build retObj, rc: %d, detail: %s",
                     rc, e.what() ) ;
             goto error ;
          }
@@ -2087,7 +2088,7 @@ namespace engine
          catch( std::exception &e )
          {
             rc = SDB_SYS ;
-            PD_LOG( PDERROR, "Fail to build retObj, rc: %d, detail: %s",
+            PD_LOG( PDERROR, "Failed to build retObj, rc: %d, detail: %s",
                     rc, e.what() ) ;
             goto error ;
          }

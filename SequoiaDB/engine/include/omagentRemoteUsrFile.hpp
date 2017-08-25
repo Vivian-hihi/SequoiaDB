@@ -75,7 +75,7 @@ namespace engine
          INT32 doit( BSONObj &retObj ) ;
 
       private:
-         UINT32 _fID ;
+         UINT32 _FID ;
          SINT64 _size ;
    } ;
 
@@ -97,7 +97,7 @@ namespace engine
          INT32 doit( BSONObj &retObj ) ;
 
       private:
-         UINT32 _fID ;
+         UINT32 _FID ;
          SINT64 _size ;
          const CHAR* _content ;
    } ;
@@ -120,7 +120,7 @@ namespace engine
          INT32 doit( BSONObj &retObj ) ;
 
       private:
-         UINT32 _fID ;
+         UINT32 _FID ;
          INT64  _seekSize ;
    } ;
 
@@ -142,7 +142,7 @@ namespace engine
          INT32 doit( BSONObj &retObj ) ;
 
       private:
-         UINT32 _fID ;
+         UINT32 _FID ;
    } ;
 
    /*
