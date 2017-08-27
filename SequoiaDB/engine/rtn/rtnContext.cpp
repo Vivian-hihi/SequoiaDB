@@ -185,7 +185,7 @@ namespace engine
                _writeOffset = ossAlign4( (UINT32)_writeOffset ) ;
             }
 
-            if ( _writeOffset + len > _writeOffset )
+            if ( _writeOffset + len > _bufferSize )
             {
                rc = _ensureBufferSize ( _writeOffset + len ) ;
                if ( SDB_OK != rc )
