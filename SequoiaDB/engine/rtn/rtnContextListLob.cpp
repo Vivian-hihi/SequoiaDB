@@ -154,6 +154,7 @@ namespace engine
       _dmsLobInfoOnPage info ;
       UINT32 read = 0 ;
       const _dmsLobMeta *meta = NULL ;
+      UINT64 modificationTime = 0 ;
       BSONObjBuilder builder ;
 
       rc = _fetcher.fetch( cb, info ) ;
@@ -186,11 +187,20 @@ namespace engine
       SDB_ASSERT( read == info._len, "impossible" ) ;
 
       meta = ( const _dmsLobMeta* )_buf ;
+      modificationTime = meta->_modificationTime ;
+      if ( 0 == modificationTime )
+      {
+         modificationTime = meta->_createTime ;
+      }
+
       builder.append( FIELD_NAME_LOB_SIZE, meta->_lobLen ) ;
       builder.appendOID( FIELD_NAME_LOB_OID, &( info._oid ) ) ;
       builder.appendTimestamp( FIELD_NAME_LOB_CREATTIME,
                                meta->_createTime,
                                (meta->_createTime - ( meta->_createTime / 1000 * 1000 ) ) * 1000) ;
+      builder.appendTimestamp( FIELD_NAME_LOB_MODIFICATION_TIME,
+                               modificationTime,
+                               (modificationTime - ( modificationTime / 1000 * 1000 ) ) * 1000) ;
       builder.appendBool( FIELD_NAME_LOB_AVAILABLE, meta->isDone() ) ;
       obj = builder.obj() ;
    done:

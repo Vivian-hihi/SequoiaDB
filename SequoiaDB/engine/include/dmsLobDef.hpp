@@ -167,19 +167,25 @@ namespace engine
    */
    struct _dmsLobMeta : public SDBObject
    {
-      SINT64      _lobLen ;
+      INT64       _lobLen ;
       UINT64      _createTime ;
       UINT8       _status ;
       UINT8       _version ;
-      CHAR        _pad[494] ;
+      UINT16      _padding ;
+      UINT64      _modificationTime ;
+      CHAR        _pad[484] ;
 
       _dmsLobMeta()
       :_lobLen( 0 ),
        _createTime( 0 ),
        _status( DMS_LOB_UNCOMPLETE ),
-       _version( DMS_LOB_META_CURRENT_VERSION )
+       _version( DMS_LOB_META_CURRENT_VERSION ),
+       _padding( 0 ),
+       _modificationTime( 0 )
       {
          ossMemset( _pad, 0, sizeof( _pad ) ) ;
+         SDB_ASSERT( sizeof( _dmsLobMeta ) == 512,
+                     "Lob meta size must be 512" ) ;
          SDB_ASSERT( sizeof( _dmsLobMeta ) <= DMS_LOB_META_LENGTH,
                      "Lob meta size must <= DMS_LOB_META_LENGTH" ) ;
       }
@@ -188,8 +194,10 @@ namespace engine
       {
          _lobLen = 0 ;
          _createTime = 0 ;
-         _version = DMS_LOB_META_CURRENT_VERSION ;
          _status = DMS_LOB_UNCOMPLETE ;
+         _version = DMS_LOB_META_CURRENT_VERSION ;
+         _padding = 0 ;
+         _modificationTime = 0 ;
          ossMemset( _pad, 0, sizeof( _pad ) ) ;
       }
 
@@ -203,6 +211,7 @@ namespace engine
          stringstream ss ;
          ss << "Len:" << _lobLen
             << ", CreateTime:" << _createTime
+            << ", ModificationTime:" << _modificationTime
             << ", Status:" << (UINT32)_status
             << ", Version:" << (UINT32)_version
             << endl ;

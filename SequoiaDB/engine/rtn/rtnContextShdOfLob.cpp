@@ -173,6 +173,27 @@ namespace engine
          goto error ;
       }
 
+      if ( _isMainShd && SDB_LOB_MODE_CREATEONLY == _mode )
+      {
+         ele = lob.getField( FIELD_NAME_LOB_CREATTIME ) ;
+         if ( NumberLong == ele.type() )
+         {
+            _meta._createTime = ele.Long() ;
+            _meta._modificationTime = _meta._createTime ;
+         }
+         else if ( !ele.eoo() )
+         {
+            PD_LOG( PDERROR, "invalid CreateTime type:%d", ele.type() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         else
+         {
+            _meta._createTime = ossGetCurrentMilliseconds() ;
+            _meta._modificationTime = _meta._createTime ;
+         }
+      }
+
       _w = w ;
       _dpsCB = dpsCB ;
       _version = version ;
@@ -358,7 +379,7 @@ namespace engine
       else if ( SDB_LOB_MODE_CREATEONLY == _mode && _isMainShd )
       {
          rc = rtnCreateLob( _fullName.c_str(),
-                            _oid, cb, _w, _dpsCB,
+                            _oid, _meta, cb, _w, _dpsCB,
                             _su, _mbContext ) ;
          if ( SDB_OK != rc )
          {
@@ -580,11 +601,16 @@ namespace engine
    void _rtnContextShdOfLob::_meta2Obj( bson::BSONObj &obj )
    {
       BSONObjBuilder builder ;
-      builder.append( FIELD_NAME_LOB_SIZE, (long long)_meta._lobLen ) ;
+      builder.append( FIELD_NAME_LOB_SIZE, (INT64)_meta._lobLen ) ;
       builder.append( FIELD_NAME_LOB_PAGE_SIZE,
                       NULL != _su ? _su->getLobPageSize() : 0 ) ;
       builder.append( FIELD_NAME_VERSION, (INT32)_meta._version ) ;
-      builder.append( FIELD_NAME_LOB_CREATTIME, (long long)_meta._createTime ) ;
+      builder.append( FIELD_NAME_LOB_CREATTIME, (INT64)_meta._createTime ) ;
+      if ( 0 == _meta._modificationTime )
+      {
+         _meta._modificationTime = _meta._createTime ;
+      }
+      builder.append( FIELD_NAME_LOB_MODIFICATION_TIME, (INT64)_meta._modificationTime ) ;
       obj = builder.obj() ;
    }
 

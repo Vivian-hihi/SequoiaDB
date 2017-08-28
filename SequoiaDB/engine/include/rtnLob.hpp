@@ -88,6 +88,7 @@ namespace engine
    /// interfaces for non-stream
    INT32 rtnCreateLob( const CHAR *fullName,
                        const bson::OID &oid,
+                       _dmsLobMeta &meta,
                        pmdEDUCB *cb,
                        SINT16 w,
                        SDB_DPSCB *dpsCB,

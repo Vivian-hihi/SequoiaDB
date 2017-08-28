@@ -345,6 +345,7 @@
 #define FIELD_NAME_LOB_OPEN_MODE             "Mode"
 #define FIELD_NAME_LOB_SIZE                  "Size"
 #define FIELD_NAME_LOB_CREATTIME             "CreateTime"
+#define FIELD_NAME_LOB_MODIFICATION_TIME     "ModificationTime"
 #define FIELD_NAME_LOB_IS_MAIN_SHD           "IsMainShard"
 #define FIELD_NAME_LOB_META_DATA             "MetaData"
 #define FIELD_NAME_LOB_LIST_PIECES_MODE      "ListPieces"

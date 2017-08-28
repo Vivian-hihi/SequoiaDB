@@ -584,6 +584,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCREATELOB, "rtnCreateLob" )
    INT32 rtnCreateLob( const CHAR *fullName,
                        const bson::OID &oid,
+                       _dmsLobMeta &meta,
                        pmdEDUCB *cb,
                        SINT16 w,
                        SDB_DPSCB *dpsCB,
@@ -593,7 +594,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNCREATELOB ) ;
       SDB_ASSERT( NULL != fullName && NULL != cb, "can not be null" ) ;
-      _dmsLobMeta meta ;
+      _dmsLobMeta tmpMeta ;
       rtnLobEnv lobEnv( fullName, cb, su, mbContext ) ;
 
       rc = lobEnv.prepareOpr( EXCLUSIVE ) ;
@@ -604,7 +605,7 @@ namespace engine
       }
 
       rc = lobEnv.getSU()->lob()->getLobMeta( oid, lobEnv.getMBContext(),
-                                              cb, meta ) ;
+                                              cb, tmpMeta ) ;
       if ( SDB_FNE == rc )
       {
          /// do nothing.
@@ -615,7 +616,7 @@ namespace engine
          PD_LOG( PDERROR, "Failed to get meta data of lob, rc:%d", rc ) ;
          goto error ;
       }
-      else if ( meta.isDone() )
+      else if ( tmpMeta.isDone() )
       {
          PD_LOG( PDERROR, "Lob[%s] exists", oid.str().c_str() ) ;
          rc = SDB_FE ;
@@ -624,12 +625,11 @@ namespace engine
       else
       {
          PD_LOG( PDINFO, "Lob[%s] meta[%s] is not available",
-                 oid.str().c_str(), meta.toString().c_str() ) ;
+                 oid.str().c_str(), tmpMeta.toString().c_str() ) ;
          rc = SDB_LOB_IS_NOT_AVAILABLE ;
          goto error ;
       }
 
-      meta.clear() ;
       rc = lobEnv.getSU()->lob()->writeLobMeta( oid, lobEnv.getMBContext(),
                                                 cb, meta, TRUE, dpsCB ) ;
       if ( SDB_OK != rc )

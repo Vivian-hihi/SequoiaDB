@@ -399,6 +399,10 @@ namespace engine
              .append( FIELD_NAME_LOB_OID, oid )
              .append( FIELD_NAME_LOB_OPEN_MODE, mode )
              .appendBool( FIELD_NAME_LOB_IS_MAIN_SHD, TRUE ) ;
+      if ( SDB_LOB_MODE_CREATEONLY == mode )
+      {
+         builder.append( FIELD_NAME_LOB_CREATTIME, (INT64)_getMeta()._createTime ) ;
+      }
       obj = builder.obj() ;
 
       _initHeader( header, MSG_BS_LOB_OPEN_REQ,
@@ -505,6 +509,23 @@ namespace engine
             goto error ;
          }
          meta._createTime = ele.Long() ;
+
+         ele = _metaObj.getField( FIELD_NAME_LOB_MODIFICATION_TIME ) ;
+         if ( NumberLong == ele.type() )
+         {
+            meta._modificationTime = ele.Long() ;
+         }
+         else if ( !ele.eoo() )
+         {
+            PD_LOG( PDERROR, "invalid meta obj:%s",
+                    _metaObj.toString( FALSE, TRUE ).c_str() ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+         else
+         {
+            meta._modificationTime = meta._createTime ;
+         }
 
          ele = _metaObj.getField( FIELD_NAME_VERSION ) ;
          if ( NumberInt == ele.type() )

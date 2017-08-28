@@ -165,6 +165,12 @@ namespace engine
             rc = SDB_LOB_IS_NOT_AVAILABLE ;
             goto error ;
          }
+
+         if ( 0 == meta._modificationTime )
+         {
+            meta._modificationTime = meta._createTime ;
+         }
+
          /// if meta page has data, push the data to pool
          if ( meta._version >= DMS_LOB_META_MERGE_DATA_VERSION &&
               meta._lobLen > 0 &&
@@ -209,19 +215,20 @@ namespace engine
                                          BOOLEAN &isNew )
    {
       INT32 rc = SDB_OK ;
+      _dmsLobMeta tmpMeta ;
       PD_TRACE_ENTRY( SDB_RTNLOCALLOBSTREAM__ENSURELOB ) ;
 
       rc = _mbContext->mbLock( EXCLUSIVE ) ;
       PD_RC_CHECK( rc, PDERROR, "dms mb context lock failed, rc: %d", rc ) ;
 
       rc = _su->lob()->getLobMeta( getOID(), _mbContext,
-                                   cb, meta ) ;
+                                   cb, tmpMeta ) ;
       if ( SDB_OK == rc )
       {
-         if ( !meta.isDone() )
+         if ( !tmpMeta.isDone() )
          {
             PD_LOG( PDINFO, "Lob[%s] meta[%s] is not available",
-                    getOID().str().c_str(), meta.toString().c_str() ) ;
+                    getOID().str().c_str(), tmpMeta.toString().c_str() ) ;
             rc = SDB_LOB_IS_NOT_AVAILABLE ;
             goto error ;
          }
@@ -245,7 +252,6 @@ namespace engine
             goto error ;
          }
 
-         meta.clear() ;
          rc = _su->lob()->writeLobMeta( getOID(), _mbContext,
                                         cb, meta, TRUE, _getDPSCB() ) ;
          if ( SDB_OK != rc )

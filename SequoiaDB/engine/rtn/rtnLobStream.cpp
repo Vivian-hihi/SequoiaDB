@@ -104,6 +104,12 @@ namespace engine
       _mode = mode ;
       _flags = flags ;
 
+      if ( SDB_LOB_MODE_CREATEONLY == mode )
+      {
+         _meta._createTime = ossGetCurrentMilliseconds() ;
+         _meta._modificationTime = _meta._createTime ;
+      }
+
       rc = _prepare( fullName, oid, mode, cb ) ;
       if ( SDB_OK != rc )
       {
@@ -119,9 +125,9 @@ namespace engine
          /// AUDIT
          PD_AUDIT_OP_WITHNAME( AUDIT_DQL, "LOB READ", AUDIT_OBJ_CL,
                                getFullName(), rc,
-                               "OID:%s, Length:%llu, CreateTime:%llu",
+                               "OID:%s, Length:%llu, CreateTime:%llu, ModificationTime:%llu",
                                getOID().toString().c_str(),
-                               _meta._lobLen, _meta._createTime ) ;
+                               _meta._lobLen, _meta._createTime, _meta._modificationTime ) ;
       }
       else if ( SDB_LOB_MODE_CREATEONLY == mode )
       {
@@ -201,10 +207,11 @@ namespace engine
    {
       BSONObjBuilder builder ;
       /// we can get nothing when mode is create.
-      builder.append( FIELD_NAME_LOB_SIZE, (long long)meta._lobLen ) ;
+      builder.append( FIELD_NAME_LOB_SIZE, meta._lobLen ) ;
       builder.append( FIELD_NAME_LOB_PAGE_SIZE, _lobPageSz ) ;
       builder.append( FIELD_NAME_VERSION, (INT32)meta._version ) ;
-      builder.append( FIELD_NAME_LOB_CREATTIME, (long long)meta._createTime ) ;
+      builder.append( FIELD_NAME_LOB_CREATTIME, (INT64)meta._createTime ) ;
+      builder.append( FIELD_NAME_LOB_MODIFICATION_TIME, (INT64)meta._modificationTime ) ;
       return builder.obj() ;
    }
 
@@ -239,7 +246,6 @@ namespace engine
 
       if ( SDB_LOB_MODE_CREATEONLY & _mode )
       {
-         ossTimestamp t ;
          _rtnLobTuple tuple ;
          /// write last data
          if ( _lw.getCachedData( tuple ) )
@@ -253,9 +259,8 @@ namespace engine
             }
          }
          /// write meta data
-         ossGetCurrentTime( t ) ;
          _meta._lobLen = _offset ;
-         _meta._createTime = t.time * 1000 + t.microtm / 1000 ;
+         _meta._modificationTime = ossGetCurrentMilliseconds() ;
          _meta._status = DMS_LOB_COMPLETE ;
          if ( _lw.getMetaPageData( tuple ) )
          {
