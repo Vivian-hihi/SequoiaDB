@@ -123,6 +123,16 @@
             <echo message="${host.NAME}   ${host.ADDR4}   @{nodecorname}&#10;" file="${report_dir}/${host.NAME}_node_core.log" append="true"/>
          </sequential>
       </for>
+      <!--detect node core from  bin -->
+      <for param="nodecorname">
+         <path>
+            <fileset dir="${INSTALL_DIR}/bin/" includes="**/*core*" />
+         </path>
+         <sequential>
+            <echo message="${host.NAME}   ${host.ADDR4}   @{nodecorname}&#10;" file="${report_dir}/${host.NAME}_node_core.log" append="true"/>
+         </sequential>
+      </for>
+      
       <!--detect node count node start-->
       <for param="dirname">
          <dirset dir="${INSTALL_DIR}/database/">
