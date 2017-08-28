@@ -164,6 +164,15 @@ SystemTest.prototype.testGetReleaseInfo = function()
       throw buildException( "testGetReleaseInfo", null, "test bit " + this, bit2, bit1 ) ;
    }
    
+   // 测试获取系统内核版本
+   var kernel_release1 = this.system.getReleaseInfo().toObj().KernelRelease ;
+   var kernel_release2 = this.cmd.run( "uname -r" ).split( "\n" )[0] ;
+   if( kernel_release1 !== kernel_release2 )
+   {
+      throw buildException( "testGetReleaseInfo", null, "test kernel release " + this,
+                            kernel_release2, kernel_release1 ) ;
+   }
+   
    this.release() ;
 }
 
