@@ -81,7 +81,7 @@ public class RangeSplitAndKillDestNode2765 extends SdbTestBase {
         }
     }
   
-    @Test
+    @Test(enabled=false)
     public void test() {
         try {
             // get the source group master hostname and port     	
