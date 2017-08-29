@@ -106,7 +106,29 @@ namespace engine
       _dmsCB = sdbGetDMSCB() ;
       const CHAR *clName = NULL ;
       dmsStorageUnitID suID = DMS_INVALID_SUID ;
-      BSONElement ele = lob.getField( FIELD_NAME_COLLECTION ) ;
+
+      // Check writable first
+      BSONElement ele = lob.getField( FIELD_NAME_LOB_OPEN_MODE ) ;
+      if ( NumberInt != ele.type() )
+      {
+         PD_LOG( PDERROR, "invalid mode type:%d", ele.type() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      _mode = ele.Int() ;
+
+      if ( SDB_LOB_MODE_R != _mode )
+      {
+         rc = _dmsCB->writable( cb ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "database is not writable, rc = %d", rc ) ;
+            goto error ;
+         }
+         _writeDMS = TRUE ;
+      }
+
+      ele = lob.getField( FIELD_NAME_COLLECTION ) ;
       if ( String != ele.type() )
       {
          PD_LOG( PDERROR, "Invalid full name type:%d", ele.type() ) ;
@@ -133,15 +155,6 @@ namespace engine
                  _fullName.c_str(), rc ) ;
          goto error ;
       }
-
-      ele = lob.getField( FIELD_NAME_LOB_OPEN_MODE ) ;
-      if ( NumberInt != ele.type() )
-      {
-         PD_LOG( PDERROR, "invalid mode type:%d", ele.type() ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-      _mode = ele.Int() ;
 
       ele = lob.getField( FIELD_NAME_LOB_OID ) ;
       if ( jstOID != ele.type() )
@@ -198,17 +211,6 @@ namespace engine
       _dpsCB = dpsCB ;
       _version = version ;
       _flags = flag ;
-
-      if ( SDB_LOB_MODE_R != _mode )
-      {
-         rc = _dmsCB->writable( cb ) ;
-         if ( rc )
-         {
-            PD_LOG( PDERROR, "database is not writable, rc = %d", rc ) ;
-            goto error ;
-         }
-         _writeDMS = TRUE ;
-      }
 
       rc = _open( cb, data, read ) ;
       if ( SDB_OK != rc )

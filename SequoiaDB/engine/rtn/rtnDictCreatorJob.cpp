@@ -306,6 +306,11 @@ namespace engine
       ossTimestamp begin ;
       ossTimestamp end ;
 
+      // Check writable before su lock
+      rc = dmsCB->writable( cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc: %d", rc ) ;
+      writable = TRUE ;
+
       /*
        * If the su is not there, the original storage unit(cs) was dropped.
        */
@@ -393,10 +398,6 @@ namespace engine
       rc = _creator->finalize( dictBuf, dictBufLen ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to finalize dictionary, rc: %d", rc ) ;
-
-      rc = dmsCB->writable( cb ) ;
-      PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc: %d", rc ) ;
-      writable = TRUE ;
 
       rc = _transferDict( su->data(), mbContext, dictBuf, dictBufLen ) ;
       PD_RC_CHECK( rc, PDERROR,

@@ -1149,6 +1149,11 @@ namespace engine
       UINT16 collectionID = DMS_INVALID_MBID ;
       UINT32 logicalID = DMS_INVALID_CLID ;
 
+      // Check writable before su lock
+      rc = dmsCB->writable( cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc = %d", rc ) ;
+      writable = TRUE ;
+
       rc = rtnResolveCollectionNameAndLock ( pCollection, dmsCB, &su,
                                              &pCollectionShortName, suID ) ;
 
@@ -1194,10 +1199,6 @@ namespace engine
          rc = SDB_OPERATION_INCOMPATIBLE ;
          goto error ;
       }
-
-      rc = dmsCB->writable( cb ) ;
-      PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc = %d", rc ) ;
-      writable = TRUE ;
 
       rc = su->data()->addCollection ( pCollectionShortName, &collectionID,
                                        attributes, cb, dpsCB, 0, sysCall,
@@ -1287,7 +1288,8 @@ namespace engine
                                  SDB_DMSCB *dmsCB,
                                  SDB_DPSCB *dpsCB,
                                  BOOLEAN isSys,
-                                 INT32 sortBufferSize )
+                                 INT32 sortBufferSize,
+                                 BOOLEAN underFullSync )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNCREATEINDEXCOMMAND ) ;
@@ -1298,6 +1300,15 @@ namespace engine
       dmsStorageUnitID suID         = DMS_INVALID_CS ;
       const CHAR *pCollectionShortName = NULL ;
       BOOLEAN writable              = FALSE ;
+
+      // If under full sync, the full sync session already block writings,
+      // So no need to check writable
+      if ( !underFullSync )
+      {
+         rc = dmsCB->writable( cb ) ;
+         PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc = %d", rc ) ;
+         writable = TRUE ;
+      }
 
       rc = rtnResolveCollectionNameAndLock ( pCollection, dmsCB, &su,
                                              &pCollectionShortName, suID ) ;
@@ -1314,10 +1325,6 @@ namespace engine
          rc = SDB_OPTION_NOT_SUPPORT ;
          goto error ;
       }
-
-      rc = dmsCB->writable( cb ) ;
-      PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc = %d", rc ) ;
-      writable = TRUE ;
 
       rc = su->createIndex ( pCollectionShortName, indexObj,
                              cb, dpsCB, isSys, NULL, sortBufferSize ) ;
@@ -1354,7 +1361,8 @@ namespace engine
                                pmdEDUCB *cb,
                                SDB_DMSCB *dmsCB,
                                SDB_DPSCB *dpsCB,
-                               BOOLEAN sysCall )
+                               BOOLEAN sysCall,
+                               BOOLEAN underFullSync )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNDROPINDEXCOMMAND ) ;
@@ -1374,6 +1382,16 @@ namespace engine
          rc = SDB_INVALIDARG ;
          goto error ;
       }
+
+      // If under full sync, the full sync session already block writings,
+      // So no need to check writable
+      if ( !underFullSync )
+      {
+         rc = dmsCB->writable( cb ) ;
+         PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc = %d", rc ) ;
+         writable = TRUE ;
+      }
+
       rc = rtnResolveCollectionNameAndLock ( pCollection, dmsCB, &su,
                                              &pCollectionShortName, suID ) ;
       if ( rc )
@@ -1382,10 +1400,6 @@ namespace engine
                   pCollection, rc ) ;
          goto error ;
       }
-
-      rc = dmsCB->writable( cb ) ;
-      PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc = %d", rc ) ;
-      writable = TRUE ;
 
       if ( identifier.type() == jstOID )
       {
@@ -1572,6 +1586,11 @@ namespace engine
       const CHAR *pCollectionShortName    = NULL ;
       BOOLEAN writable                    = FALSE ;
 
+      // Check writable before su lock
+      rc = dmsCB->writable( cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc = %d", rc ) ;
+      writable = TRUE ;
+
       rc = rtnResolveCollectionNameAndLock ( pCollection, dmsCB, &su,
                                              &pCollectionShortName, suID ) ;
       if ( rc )
@@ -1580,10 +1599,6 @@ namespace engine
                   pCollection, rc ) ;
          goto error ;
       }
-
-      rc = dmsCB->writable( cb ) ;
-      PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc = %d", rc ) ;
-      writable = TRUE ;
 
       rc = su->data()->dropCollection ( pCollectionShortName, cb, dpsCB ) ;
       if ( rc )
@@ -1625,6 +1640,11 @@ namespace engine
       dmsMBContext *context            = NULL ;
       dmsMB *mb                        = NULL ;
 
+      // Check writable before su lock
+      rc = dmsCB->writable( cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc = %d", rc ) ;
+      writable = TRUE ;
+
       rc = rtnResolveCollectionNameAndLock ( pCollection, dmsCB, &su,
                                              &pCollectionShortName, suID ) ;
       if ( rc )
@@ -1633,10 +1653,6 @@ namespace engine
                   pCollection, rc ) ;
          goto error ;
       }
-
-      rc = dmsCB->writable( cb ) ;
-      PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc = %d", rc ) ;
-      writable = TRUE ;
 
       rc = su->data()->truncateCollection( pCollectionShortName, cb, dpsCB ) ;
       if ( rc )
@@ -1837,14 +1853,15 @@ namespace engine
          goto error ;
       }
 
+      // Check writable before su lock
+      rc = dmsCB->writable( cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc: %d", rc ) ;
+      writable = TRUE ;
+
       rc = rtnResolveCollectionNameAndLock( pCollectionName, dmsCB, &su,
                                             &clShortName, suID ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to resolve collection name %s, rc: %d",
                    pCollectionName, rc ) ;
-
-      rc = dmsCB->writable( cb ) ;
-      PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc: %d", rc ) ;
-      writable = TRUE ;
 
       // pop can only be done on capped collections.
       if ( DMS_STORAGE_CAPPED != su->type() )

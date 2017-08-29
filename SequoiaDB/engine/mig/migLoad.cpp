@@ -400,6 +400,15 @@ namespace engine
 
       sendMsgToClient ( "Load start" ) ;
 
+      // Check writable before su lock
+      rc = dmsCB->writable( cb ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Database is not writable, rc = %d", rc ) ;
+         goto error;
+      }
+      writable = TRUE;
+
       rc = rtnCollectionSpaceLock ( _pParameters->pCollectionSpaceName,
                                     dmsCB,
                                     FALSE,
@@ -455,14 +464,6 @@ namespace engine
 
       // unlock
       mbContext->mbUnlock() ;
-
-      rc = dmsCB->writable( cb ) ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "Database is not writable, rc = %d", rc ) ;
-         goto error;
-      }
-      writable = TRUE;
 
       dataWorker.pMaster = this ;
       dataWorker.masterEDUID = cb->getID() ;

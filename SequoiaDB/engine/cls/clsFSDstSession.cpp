@@ -1585,6 +1585,9 @@ namespace engine
       PMD_SET_DB_STATUS( SDB_DB_FULLSYNC ) ;
       sdbGetReplCB()->getFaultEvent()->signalAll( SDB_CLS_FULL_SYNC ) ;
 
+      /// Tell the replay that the full sync is started
+      _replayer.setUnderFullSync( TRUE ) ;
+
       /// block write
       sdbGetDMSCB()->blockWrite( eduCB(), SDB_DB_FULLSYNC ) ;
    }
@@ -1611,6 +1614,9 @@ namespace engine
 
       /// unblock write
       sdbGetDMSCB()->unblockWrite( eduCB() ) ;
+
+      /// Tell the replay that the full sync is stopped
+      _replayer.setUnderFullSync( FALSE ) ;
 
       /// end full sync status
       sdbGetReplCB()->getFaultEvent()->reset() ;
