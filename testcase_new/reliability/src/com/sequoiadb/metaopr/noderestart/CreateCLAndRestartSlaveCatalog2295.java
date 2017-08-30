@@ -63,7 +63,7 @@ public class CreateCLAndRestartSlaveCatalog2295 extends SdbTestBase {
     }
 
     @Test
-    public void test() {        
+    public void test() throws InterruptedException {        
         try {
             GroupWrapper cataGroup = groupMgr.getGroupByName("SYSCatalogGroup");           
             NodeWrapper priNode = cataGroup.getSlave();
