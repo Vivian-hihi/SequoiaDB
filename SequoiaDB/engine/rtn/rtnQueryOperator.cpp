@@ -35,7 +35,7 @@
    Last Changed =
 
 *******************************************************************************/
-#include "rtnContextData.hpp"
+#include "rtnContextTS.hpp"
 #include "rtnQueryOperator.hpp"
 
 namespace engine
@@ -46,7 +46,6 @@ namespace engine
 
    _rtnTSQueryOperator::~_rtnTSQueryOperator()
    {
-
    }
 
    INT32 _rtnTSQueryOperator::run( const rtnQueryOptions &options,
@@ -57,7 +56,7 @@ namespace engine
                                    BOOLEAN enablePrefetch )
    {
       INT32 rc = SDB_OK ;
-      rtnContextTSData *pContext = NULL ;
+      rtnContextTS *pContext = NULL ;
 
       // 1. Allocate a context, and pass the options to it. Inside that context,
       // do the logic of communicate with search engine adapter.
