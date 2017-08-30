@@ -1,4 +1,5 @@
 //@ sourceURL=Add.js
+//"use strict" ;
 (function(){
    var sacApp = window.SdbSacManagerModule ;
    //控制器
@@ -13,6 +14,7 @@
       var installPath  = $rootScope.tempData( 'Deploy', 'InstallPath' ) ;
       var clusterName  = $rootScope.tempData( 'Deploy', 'ClusterName' ) ;
       var discoverConf = $rootScope.tempData( 'Deploy', 'DiscoverConf' ) ;
+      var syncConf     = $rootScope.tempData( 'Deploy', 'SyncConf' ) ;
 
       if( deployModel == null || clusterName == null || installPath == null || deplpyModule == null || addHostInfo == null )
       {
@@ -33,14 +35,19 @@
       hostList = hostList.sort( hostSort ) ;
 
       //创建步骤条
-      if( discoverConf == null )
-      {
-         $scope.stepList = _Deploy.BuildSdbStep( $scope, $location, deployModel, $scope['Url']['Action'], deplpyModule ) ;
-      }
-      else
+      if( discoverConf != null )
       {
          $scope.stepList = _Deploy.BuildSdbDiscoverStep( $scope, $location, $scope['Url']['Action'], 'sequoiadb' ) ;
       }
+      else if( syncConf != null )
+      {
+         $scope.stepList = _Deploy.BuildSdbSyncStep( $scope, $location, $scope['Url']['Action'], 'sequoiadb' ) ;
+      }
+      else
+      {
+         $scope.stepList = _Deploy.BuildSdbStep( $scope, $location, deployModel, $scope['Url']['Action'], deplpyModule ) ;
+      }
+
       if( $scope.stepList['info'].length == 0 )
       {
          $location.path( '/Deploy/Index' ).search( { 'r': new Date().getTime() } ) ;

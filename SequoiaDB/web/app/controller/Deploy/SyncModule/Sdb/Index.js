@@ -4,14 +4,22 @@
    var sacApp = window.SdbSacManagerModule ;
    //主控制器
    sacApp.controllerProvider.register( 'Deploy.Sdb.Sync.Ctrl', function( $scope, $location, $rootScope, Loading, SdbRest, SdbSignal, SdbPromise ){
+      $scope.ContainerBox = [ { offsetY: -106 }, { offsetY: -40 } ] ;
       $scope.ClusterName  = $rootScope.tempData( 'Deploy', 'ClusterName' ) ;
       $scope.ModuleName   = $rootScope.tempData( 'Deploy', 'ModuleName' ) ;
-
+      $scope.SyncConf     = $rootScope.tempData( 'Deploy', 'SyncConf' ) ;
       if( $scope.ModuleName == null || $scope.ClusterName == null )
       {
          $location.path( '/Transfer' ).search( { 'r': new Date().getTime() } ) ;
          return ;
       }
+
+      //如果从安装主机进来的，有步骤条
+      if( $scope.SyncConf != null )
+      {
+         $scope.stepList = _Deploy.BuildSdbSyncStep( $scope, $location, $scope['Url']['Action'], 'sequoiadb' ) ;
+      }
+
       //同步状态
       $scope.SyncStatus = 0 ;
 
@@ -27,10 +35,26 @@
             'failed': function( errorInfo ){
                $scope.SyncStatus = 2 ;
                Loading.cancel() ;
-               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-                  syncBusinessConf() ;
-                  return true ;
-               } ) ;
+               if( isArray( errorInfo['hosts'] ) && errorInfo['hosts'].length > 0 )
+               {
+                  $scope.Components.Confirm.type = 3 ;
+                  $scope.Components.Confirm.context = $scope.autoLanguage( '同步后的业务有主机未添加到OM中，是否前往添加主机？' ) ;
+                  $scope.Components.Confirm.isShow = true ;
+                  $scope.Components.Confirm.okText = $scope.autoLanguage( '是' ) ;
+                  $scope.Components.Confirm.ok = function(){
+                     $rootScope.tempData( 'Deploy', 'Model', 'Deploy' ) ;
+                     $rootScope.tempData( 'Deploy', 'Module', 'None' ) ;
+                     $rootScope.tempData( 'Deploy', 'SyncConf', errorInfo['hosts'] ) ;
+                     $location.path( '/Deploy/ScanHost' ).search( { 'r': new Date().getTime() } ) ;
+                  }
+               }
+               else
+               {
+                  _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                     syncBusinessConf() ;
+                     return true ;
+                  } ) ;
+               }
             }
          } ) ;
       }

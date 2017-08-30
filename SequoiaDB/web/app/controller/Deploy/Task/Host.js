@@ -1,4 +1,5 @@
 ﻿//@ sourceURL=Host.js
+//"use strict" ;
 (function(){
    var sacApp = window.SdbSacManagerModule ;
    //控制器
@@ -14,6 +15,7 @@
       $scope.ModuleType  = $rootScope.tempData( 'Deploy', 'Module' ) ;
       var installTask    = $rootScope.tempData( 'Deploy', 'HostTaskID' ) ;
       var discoverConf   = $rootScope.tempData( 'Deploy', 'DiscoverConf' ) ;
+      var syncConf       = $rootScope.tempData( 'Deploy', 'SyncConf' ) ;
 
       $scope.TaskInfo = [] ;
       //输出到表格的task数据
@@ -51,13 +53,17 @@
 
       if( $scope.DeployType != 'Task' )
       {
-         if( discoverConf == null )
+         if( discoverConf != null )
          {
-            $scope.stepList = _Deploy.BuildSdbStep( $scope, $location, $scope.DeployType, $scope['Url']['Action'], $scope.ModuleType ) ;
+            $scope.stepList = _Deploy.BuildSdbDiscoverStep( $scope, $location, $scope['Url']['Action'], 'sequoiadb' ) ;
+         }
+         else if( syncConf != null )
+         {
+            $scope.stepList = _Deploy.BuildSdbSyncStep( $scope, $location, $scope['Url']['Action'], 'sequoiadb' ) ;
          }
          else
          {
-            $scope.stepList = _Deploy.BuildSdbDiscoverStep( $scope, $location, $scope['Url']['Action'], 'sequoiadb' ) ;
+            $scope.stepList = _Deploy.BuildSdbStep( $scope, $location, $scope.DeployType, $scope['Url']['Action'], $scope.ModuleType ) ;
          }
          if( $scope.stepList['info'].length == 0 )
          {
@@ -97,6 +103,11 @@
          }
       }
 
+      //前往同步业务
+      var gotoSync = function(){
+         $location.path( '/Deploy/SDB-Sync' ).search( { 'r': new Date().getTime() } ) ;
+      }
+
       //完成
       $scope.GotoDeploy = function(){
          if( $scope.IsFinish == true )
@@ -112,6 +123,10 @@
             if( discoverConf != null )
             {
                gotoDiscover() ;
+            }
+            else if( syncConf != null )
+            {
+               gotoSync() ;
             }
             else
             {

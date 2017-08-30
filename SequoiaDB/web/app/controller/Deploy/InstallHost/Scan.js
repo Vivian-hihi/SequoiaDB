@@ -1,4 +1,5 @@
 //@ sourceURL=Scan.js
+//"use strict" ;
 (function(){
    var sacApp = window.SdbSacManagerModule ;
    //控制器
@@ -7,7 +8,7 @@
       //初始化
       var scanHostTmp        = $rootScope.tempData( 'Deploy', 'ScanHost' ) ;
       var successNum         = 0 ;
-      var hostList           = scanHostTmp == null ? [] : scanHostTmp ;
+      var hostList        = scanHostTmp == null ? [] : scanHostTmp ;
       $scope.checkedHostNum  = 0 ;
       //主机列表表格
       $scope.HostListTable = {
@@ -112,6 +113,7 @@
       var deplpyModule = $rootScope.tempData( 'Deploy', 'Module' ) ;
       var clusterName  = $rootScope.tempData( 'Deploy', 'ClusterName' ) ;
       var discoverConf = $rootScope.tempData( 'Deploy', 'DiscoverConf' ) ;
+      var syncConf     = $rootScope.tempData( 'Deploy', 'SyncConf' ) ;
 
       if( deployModel == null || clusterName == null || deplpyModule == null )
       {
@@ -119,11 +121,7 @@
          return ;
       }
 
-      if( discoverConf == null )
-      {
-         $scope.stepList = _Deploy.BuildSdbStep( $scope, $location, deployModel, $scope['Url']['Action'], deplpyModule ) ;
-      }
-      else
+      if( discoverConf != null )
       {
          $scope.stepList = _Deploy.BuildSdbDiscoverStep( $scope, $location, $scope['Url']['Action'], 'sequoiadb' ) ;
          var discoverHostList  = $rootScope.tempData( 'Deploy', 'DiscoverHostList' ) ;
@@ -137,6 +135,25 @@
                $scope.ScanForm['inputList'][0]['value'] = $scope.ScanForm['inputList'][0]['value'] + ',' + value ;
             }
          } ) ;
+      }
+      else if( syncConf != null )
+      {
+         $scope.stepList = _Deploy.BuildSdbSyncStep( $scope, $location, $scope['Url']['Action'], 'sequoiadb' ) ;
+         var syncConf  = $rootScope.tempData( 'Deploy', 'SyncConf' ) ;
+         $.each( syncConf, function( index, value ){
+            if( $scope.ScanForm['inputList'][0]['value'] == '' )
+            {
+               $scope.ScanForm['inputList'][0]['value'] = value ;
+            }
+            else
+            {
+               $scope.ScanForm['inputList'][0]['value'] = $scope.ScanForm['inputList'][0]['value'] + ',' + value ;
+            }
+         } ) ;
+      }
+      else
+      {
+         $scope.stepList = _Deploy.BuildSdbStep( $scope, $location, deployModel, $scope['Url']['Action'], deplpyModule ) ;
       }
 
       if( $scope.stepList['info'].length == 0 )

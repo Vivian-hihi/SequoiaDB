@@ -510,6 +510,7 @@
    "停止节点": "Stop Node",
    "停止刷新": "Stop Refresh",
    "同步后": "After Sync",
+   "同步后的业务有主机未添加到OM中，是否前往添加主机？": "After synchronization the host not added to the OM. Do you want to go to the add host?",
    "同步集群": "Sync Cluster",
    "同步前": "Before Sync",
    "同步失败": "Sync Failed",

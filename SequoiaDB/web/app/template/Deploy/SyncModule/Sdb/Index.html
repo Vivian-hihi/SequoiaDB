@@ -1,5 +1,6 @@
 ﻿<div ng-controller="Deploy.Sdb.Sync.Ctrl" ng-container="{}">
-   <div style="padding:10px 15px;" ng-container="{offsetY:-40}">
+   <div style="border-bottom:1px solid #eee;" step-chart="stepList" ng-show="SyncConf != null"></div>
+   <div style="padding:10px 15px;" ng-container="{'true':ContainerBox[0],'false':ContainerBox[1]}[SyncConf != null]">
       <div ng-container="{offsetY:-5}">
          <div ng-controller="Deploy.Sdb.Sync.Preview.Ctrl" class="pull-left" ng-container="{width:400}">
             <div style="height:30px;font-size:110%;font-weight:bold;">{{autoLanguage("同步信息")}}</div>
@@ -18,7 +19,7 @@
                      <td>{{autoLanguage("同步状态")}}</td>
                      <td ng-if="SyncStatus == 0">{{autoLanguage("同步中...")}}</td>
                      <td ng-if="SyncStatus == 1">{{autoLanguage("同步完成")}}</td>
-                     <td ng-if="SyncStatus == 2"><b>{{autoLanguage("同步失败")}}</b></td>
+                     <td ng-if="SyncStatus == 2"><b style="color:#D9534F;">{{autoLanguage("同步失败")}}</b></td>
                   </tr>
                </table>
                <div style="font-weight:bold;margin-bottom:10px;">{{autoLanguage("业务配置")}}</div>
@@ -30,48 +31,48 @@
                   </tr>
                   <tr>
                      <td>{{autoLanguage("部署模式")}}</td>
-                     <td ng-style="{true:{'background':'#FFFF96'}}[BeforeSync['moduleMode']!=AfterSync['moduleMode']]">{{BeforeSync['moduleMode']}}</td>
-                     <td ng-style="{true:{'background':'#FFFF96'}}[BeforeSync['moduleMode']!=AfterSync['moduleMode']]">{{AfterSync['moduleMode']}}</td>
+                     <td ng-style="{true:{'background':'#FFFF96'}}[BeforeSync['moduleMode']!=AfterSync['moduleMode']&&AfterSync['moduleMode']!='-']">{{BeforeSync['moduleMode']}}</td>
+                     <td ng-style="{true:{'background':'#FFFF96'}}[BeforeSync['moduleMode']!=AfterSync['moduleMode']&&AfterSync['moduleMode']!='-']">{{AfterSync['moduleMode']}}</td>
                   </tr>
                   <tr>
                      <td>{{autoLanguage("主机数")}}</td>
                      <td>{{BeforeSync['hostNum']}}</td>
-                     <td ng-style="{'1':{'color':'#D9534F','font-weight':'bold'},'-1':{'color':'#00CC66','font-weight':'bold'},'0':{'color':'#000','font-weight':'normal'}}[AfterSync['hostNum'] == BeforeSync['hostNum'] ? '0' : ( AfterSync['hostNum'] > BeforeSync['hostNum'] || ( BeforeSync['hostNum'] == '-' && AfterSync['hostNum'] > 0 ) ? '1' : '-1' )]">{{AfterSync['hostNum']}}</td>
+                     <td ng-style="{'1':{'color':'#D9534F','font-weight':'bold'},'-1':{'color':'#00CC66','font-weight':'bold'},'0':{'color':'#000','font-weight':'normal'}}[( AfterSync['hostNum'] == BeforeSync['hostNum'] || AfterSync['hostNum'] == '-' ) ? '0' : ( AfterSync['hostNum'] > BeforeSync['hostNum'] || ( BeforeSync['hostNum'] == '-' && AfterSync['hostNum'] > 0 ) ? '1' : '-1' )]">{{AfterSync['hostNum']}}</td>
                   </tr>
                   <tr>
                      <td>{{autoLanguage("总节点数")}}</td>
                      <td>{{BeforeSync['nodeNum']}}</td>
-                     <td ng-style="{'1':{'color':'#D9534F','font-weight':'bold'},'-1':{'color':'#00CC66','font-weight':'bold'},'0':{'color':'#000','font-weight':'normal'}}[AfterSync['nodeNum'] == BeforeSync['nodeNum'] ? '0' : ( AfterSync['nodeNum'] > BeforeSync['nodeNum'] || ( BeforeSync['nodeNum'] == '-' && AfterSync['nodeNum'] > 0 ) ? '1' : '-1' )]">{{AfterSync['nodeNum']}}</td>
+                     <td ng-style="{'1':{'color':'#D9534F','font-weight':'bold'},'-1':{'color':'#00CC66','font-weight':'bold'},'0':{'color':'#000','font-weight':'normal'}}[( AfterSync['nodeNum'] == BeforeSync['nodeNum'] || AfterSync['hostNum'] == '-' ) ? '0' : ( AfterSync['nodeNum'] > BeforeSync['nodeNum'] || ( BeforeSync['nodeNum'] == '-' && AfterSync['nodeNum'] > 0 ) ? '1' : '-1' )]">{{AfterSync['nodeNum']}}</td>
                   </tr>
                   <tr>
                      <td>{{autoLanguage("数据组数")}}</td>
                      <td>{{BeforeSync['dataGroupNum']}}</td>
-                     <td ng-style="{'1':{'color':'#D9534F','font-weight':'bold'},'-1':{'color':'#00CC66','font-weight':'bold'},'0':{'color':'#000','font-weight':'normal'}}[AfterSync['dataGroupNum'] == BeforeSync['dataGroupNum'] ? '0' : ( AfterSync['dataGroupNum'] > BeforeSync['dataGroupNum'] || ( BeforeSync['dataGroupNum'] == '-' && AfterSync['dataGroupNum'] > 0 ) ? '1' : '-1' )]">{{AfterSync['dataGroupNum']}}</td>
+                     <td ng-style="{'1':{'color':'#D9534F','font-weight':'bold'},'-1':{'color':'#00CC66','font-weight':'bold'},'0':{'color':'#000','font-weight':'normal'}}[( AfterSync['dataGroupNum'] == BeforeSync['dataGroupNum'] || AfterSync['dataGroupNum'] == '-' ) ? '0' : ( AfterSync['dataGroupNum'] > BeforeSync['dataGroupNum'] || ( BeforeSync['dataGroupNum'] == '-' && AfterSync['dataGroupNum'] > 0 ) ? '1' : '-1' )]">{{AfterSync['dataGroupNum']}}</td>
                   </tr>
                   <tr>
                      <td>{{autoLanguage("最大副本数")}}</td>
                      <td>{{BeforeSync['maxReplicaNum']}}</td>
-                     <td ng-style="{'1':{'color':'#D9534F','font-weight':'bold'},'-1':{'color':'#00CC66','font-weight':'bold'},'0':{'color':'#000','font-weight':'normal'}}[AfterSync['maxReplicaNum'] == BeforeSync['maxReplicaNum'] ? '0' : ( AfterSync['maxReplicaNum'] > BeforeSync['maxReplicaNum'] || ( BeforeSync['maxReplicaNum'] == '-' && AfterSync['maxReplicaNum'] > 0 ) ? '1' : '-1' )]">{{AfterSync['maxReplicaNum']}}</td>
+                     <td ng-style="{'1':{'color':'#D9534F','font-weight':'bold'},'-1':{'color':'#00CC66','font-weight':'bold'},'0':{'color':'#000','font-weight':'normal'}}[( AfterSync['maxReplicaNum'] == BeforeSync['maxReplicaNum'] || AfterSync['maxReplicaNum'] == '-' ) ? '0' : ( AfterSync['maxReplicaNum'] > BeforeSync['maxReplicaNum'] || ( BeforeSync['maxReplicaNum'] == '-' && AfterSync['maxReplicaNum'] > 0 ) ? '1' : '-1' )]">{{AfterSync['maxReplicaNum']}}</td>
                   </tr>
                   <tr>
                      <td>{{autoLanguage("最小副本数")}}</td>
                      <td>{{BeforeSync['minReplicaNum']}}</td>
-                     <td ng-style="{'1':{'color':'#D9534F','font-weight':'bold'},'-1':{'color':'#00CC66','font-weight':'bold'},'0':{'color':'#000','font-weight':'normal'}}[AfterSync['minReplicaNum'] == BeforeSync['minReplicaNum'] ? '0' : ( AfterSync['minReplicaNum'] > BeforeSync['minReplicaNum'] || ( BeforeSync['minReplicaNum'] == '-' && AfterSync['minReplicaNum'] > 0 ) ? '1' : '-1' )]">{{AfterSync['minReplicaNum']}}</td>
+                     <td ng-style="{'1':{'color':'#D9534F','font-weight':'bold'},'-1':{'color':'#00CC66','font-weight':'bold'},'0':{'color':'#000','font-weight':'normal'}}[( AfterSync['minReplicaNum'] == BeforeSync['minReplicaNum'] || AfterSync['minReplicaNum'] == '-' ) ? '0' : ( AfterSync['minReplicaNum'] > BeforeSync['minReplicaNum'] || ( BeforeSync['minReplicaNum'] == '-' && AfterSync['minReplicaNum'] > 0 ) ? '1' : '-1' )]">{{AfterSync['minReplicaNum']}}</td>
                   </tr>
                   <tr>
                      <td>{{autoLanguage("数据节点数")}}</td>
                      <td>{{BeforeSync['dataNum']}}</td>
-                     <td ng-style="{'1':{'color':'#D9534F','font-weight':'bold'},'-1':{'color':'#00CC66','font-weight':'bold'},'0':{'color':'#000','font-weight':'normal'}}[AfterSync['dataNum'] == BeforeSync['dataNum'] ? '0' : ( AfterSync['dataNum'] > BeforeSync['dataNum'] || ( BeforeSync['dataNum'] == '-' && AfterSync['dataNum'] > 0 ) ? '1' : '-1' )]">{{AfterSync['dataNum']}}</td>
+                     <td ng-style="{'1':{'color':'#D9534F','font-weight':'bold'},'-1':{'color':'#00CC66','font-weight':'bold'},'0':{'color':'#000','font-weight':'normal'}}[( AfterSync['dataNum'] == BeforeSync['dataNum'] || AfterSync['dataNum'] == '-' ) ? '0' : ( AfterSync['dataNum'] > BeforeSync['dataNum'] || ( BeforeSync['dataNum'] == '-' && AfterSync['dataNum'] > 0 ) ? '1' : '-1' )]">{{AfterSync['dataNum']}}</td>
                   </tr>
                   <tr>
                      <td>{{autoLanguage("协调节点数")}}</td>
                      <td>{{BeforeSync['coordNum']}}</td>
-                     <td ng-style="{'1':{'color':'#D9534F','font-weight':'bold'},'-1':{'color':'#00CC66','font-weight':'bold'},'0':{'color':'#000','font-weight':'normal'}}[AfterSync['coordNum'] == BeforeSync['coordNum'] ? '0' : ( AfterSync['coordNum'] > BeforeSync['coordNum'] || ( BeforeSync['coordNum'] == '-' && AfterSync['coordNum'] > 0 ) ? '1' : '-1' )]">{{AfterSync['coordNum']}}</td>
+                     <td ng-style="{'1':{'color':'#D9534F','font-weight':'bold'},'-1':{'color':'#00CC66','font-weight':'bold'},'0':{'color':'#000','font-weight':'normal'}}[( AfterSync['coordNum'] == BeforeSync['coordNum'] || AfterSync['coordNum'] == '-' ) ? '0' : ( AfterSync['coordNum'] > BeforeSync['coordNum'] || ( BeforeSync['coordNum'] == '-' && AfterSync['coordNum'] > 0 ) ? '1' : '-1' )]">{{AfterSync['coordNum']}}</td>
                   </tr>
                   <tr>
                      <td>{{autoLanguage("编目节点数")}}</td>
                      <td>{{BeforeSync['cataNum']}}</td>
-                     <td ng-style="{'1':{'color':'#D9534F','font-weight':'bold'},'-1':{'color':'#00CC66','font-weight':'bold'},'0':{'color':'#000','font-weight':'normal'}}[AfterSync['cataNum'] == BeforeSync['cataNum'] ? '0' : ( AfterSync['cataNum'] > BeforeSync['cataNum'] || ( BeforeSync['cataNum'] == '-' && AfterSync['cataNum'] > 0 ) ? '1' : '-1' )]">{{AfterSync['cataNum']}}</td>
+                     <td ng-style="{'1':{'color':'#D9534F','font-weight':'bold'},'-1':{'color':'#00CC66','font-weight':'bold'},'0':{'color':'#000','font-weight':'normal'}}[( AfterSync['cataNum'] == BeforeSync['cataNum'] || AfterSync['cataNum'] == '-' ) ? '0' : ( AfterSync['cataNum'] > BeforeSync['cataNum'] || ( BeforeSync['cataNum'] == '-' && AfterSync['cataNum'] > 0 ) ? '1' : '-1' )]">{{AfterSync['cataNum']}}</td>
                   </tr>
                </table>
             </div>

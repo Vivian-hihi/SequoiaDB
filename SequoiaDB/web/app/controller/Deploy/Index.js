@@ -839,6 +839,7 @@
                   var formVal = $scope.SyncWindow['config'].getValue() ;
                   $rootScope.tempData( 'Deploy', 'ModuleName',  $scope.moduleList[ formVal['moduleName'] ]['BusinessName'] ) ;
                   $rootScope.tempData( 'Deploy', 'ClusterName', $scope.clusterList[ $scope.currentCluster ]['ClusterName'] ) ;
+                  $rootScope.tempData( 'Deploy', 'InstallPath', $scope.clusterList[ $scope.currentCluster ]['InstallPath'] ) ;
                   $location.path( '/Deploy/SDB-Sync' ).search( { 'r': new Date().getTime() } ) ;
                }
                return isAllClear ;
