@@ -60,7 +60,7 @@ namespace engine
 
       // 1. Allocate a context, and pass the options to it. Inside that context,
       // do the logic of communicate with search engine adapter.
-      rc = rtnCB->contextNew( RTN_CONTEXT_TS_DATA, (rtnContext **)&pContext,
+      rc = rtnCB->contextNew( RTN_CONTEXT_TS, (rtnContext **)&pContext,
                               contextID, eduCB ) ;
       PD_RC_CHECK( rc, PDERROR, "Create text search context failed[ %d ]",
                    rc ) ;
