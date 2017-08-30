@@ -22,6 +22,7 @@
 			<package name="com.sequoiadb.split.diskfull" />
 			<package name="com.sequoiadb.metaopr.diskfull" />
 			<package name="com.sequoiadb.datasync.diskfull" />
+			<package name="com.sequoiadb.cappedCL.diskfull"/>
 		</packages>
 	</test>
 

@@ -1,6 +1,8 @@
 package com.sequoiadb.cappedCL;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.bson.BSONObject;
@@ -9,6 +11,7 @@ import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.commlib.GroupWrapper;
 import com.sequoiadb.exception.ReliabilityException;
+import org.bson.types.ObjectId;
 
 public class Utils {
 
@@ -50,5 +53,32 @@ public class Utils {
                 }
             }
         }
+    }
+
+    public static void printBeginTime(Object object) {
+        System.out.println(object.getClass().getName() + " begin at:"
+                + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
+    }
+
+    public static void printEndTime(Object object) {
+        System.out.println(object.getClass().getName() + " end at:"
+                + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
+    }
+
+    public static String getKeyStack(Exception e,Object object) {
+        StringBuffer stackBuffer = new StringBuffer();
+        StackTraceElement[] stackElements = e.getStackTrace();
+        for (int i = 0; i < stackElements.length; i++) {
+            if (stackElements[i].toString().contains(object.getClass().getName())) {
+                stackBuffer.append(stackElements[i].toString()).append("\r\n");
+            }
+        }
+        String str = stackBuffer.toString();
+        if (str.length() >= 2) {
+            return str.substring(0, str.length() - 2);
+        } else {
+            return str;
+        }
+
     }
 }
