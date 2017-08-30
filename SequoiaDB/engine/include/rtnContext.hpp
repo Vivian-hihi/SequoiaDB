@@ -81,7 +81,7 @@ namespace engine
       RTN_CONTEXT_SHARD_OF_LOB,
       RTN_CONTEXT_LIST_LOB,
       RTN_CONTEXT_OM_TRANSFER,
-      RTN_CONTEXT_TS_DATA,
+      RTN_CONTEXT_TS,            // Context of text search
 
       /// Catalog contexts
 
