@@ -2114,7 +2114,7 @@ namespace engine
       }
 
       // Enable transaction always for Catalog
-      if ( SDB_ROLE_CATALOG == dbRole )
+      if ( SDB_ROLE_CATALOG == dbRole || SDB_ROLE_OM == dbRole )
       {
          _transactionOn = TRUE ;
       }

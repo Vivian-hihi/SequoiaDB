@@ -453,6 +453,13 @@ namespace engine
          }
       }
 
+      if ( 0 == nodeList.size() )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "business no node: name=%s", pBusinessName ) ;
+         goto error ;
+      }
+
    done:
       return rc ;
    error:
@@ -1074,11 +1081,18 @@ namespace engine
                                                               localAgentHost,
                                                               localAgentPort ) ;
          }
-         else if ( ossStrcasecmp( pSubCommand,
-                                  OM_GRANT_SYSCONF_REQ ) == 0 )
+         else if ( ossStrcasecmp( pSubCommand, OM_GRANT_SYSCONF_REQ ) == 0 )
          {
             commandIf = SDB_OSS_NEW omGrantSysConfigureCommand( pAdptor,
                                                                 this ) ;
+         }
+         else if ( ossStrcasecmp( pSubCommand, OM_UNBIND_BUSINESS_REQ ) == 0 )
+         {
+            commandIf = SDB_OSS_NEW omUnbindBusinessCommand( pAdptor, this ) ;
+         }
+         else if ( ossStrcasecmp( pSubCommand, OM_UNBIND_HOST_REQ ) == 0 )
+         {
+            commandIf = SDB_OSS_NEW omUnbindHostCommand( pAdptor, this ) ;
          }
          else
          {

@@ -12740,5 +12740,321 @@ namespace engine
       restTool.sendRespone( rc, _errorMsg.getError() ) ;
       goto done ;
    }
+
+   omUnbindBusinessCommand::omUnbindBusinessCommand(
+                                                restAdaptor *pRestAdaptor,
+                                                pmdRestSession *pRestSession )
+         : omAuthCommand( pRestAdaptor, pRestSession )
+   {
+   }
+
+   omUnbindBusinessCommand::~omUnbindBusinessCommand()
+   {
+   }
+
+   INT32 omUnbindBusinessCommand::doCommand()
+   {
+      INT32 rc = SDB_OK ;
+      INT64 taskID = -1 ;
+      omRestTool restTool( _restAdaptor, _restSession ) ;
+      omDatabaseTool dbTool( _cb ) ;
+
+      _setFileLanguageSep() ;
+
+      pmdGetThreadEDUCB()->resetInfo( EDU_INFO_ERROR ) ;
+
+      rc = _getRestInfo() ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "_getRestInfo failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      if ( FALSE == dbTool.clusterIsExist( _clusterName ) )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "cluster does not exist: name=%s",
+                             _clusterName.c_str() ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      if ( FALSE == dbTool.businessIsExist( _businessName ) )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "business does not exist: name=%s",
+                             _businessName.c_str() ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      taskID = dbTool.getTaskIdOfRunningBuz( _businessName ) ;
+      if( 0 <= taskID )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "business[%s] is exist "
+                             "in task["OSS_LL_PRINT_FORMAT"]",
+                             _businessName.c_str(), taskID ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      rc = dbTool.unbindBusiness( _businessName ) ;
+      if ( rc )
+      {
+         _errorMsg.setError( TRUE, "failed to unbind business: name=%s, rc=%d",
+                             _businessName.c_str(), rc ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      restTool.sendOkRespone() ;
+
+   done:
+      return rc ;
+   error:
+      restTool.sendRespone( rc, _errorMsg.getError() ) ;
+      goto done ;
+   }
+
+   INT32 omUnbindBusinessCommand::_getRestInfo()
+   {
+      INT32 rc = SDB_OK ;
+      const CHAR *pClusterName  = NULL ;
+      const CHAR *pBusinessName = NULL ;
+
+      //ClusterName
+      _restAdaptor->getQuery( _restSession, OM_CLUSTER_FIELD_NAME,
+                              &pClusterName ) ;
+      if ( NULL == pClusterName || 0 == ossStrlen( pClusterName ) )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "get rest info failed:%s is NULL",
+                             OM_CLUSTER_FIELD_NAME ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+      _clusterName = pClusterName ;
+
+      //BusinessName
+      _restAdaptor->getQuery( _restSession, OM_BUSINESS_FIELD_NAME,
+                              &pBusinessName ) ;
+      if ( NULL == pBusinessName || 0 == ossStrlen( pBusinessName ) )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "get rest info failed:%s is NULL",
+                             OM_BUSINESS_FIELD_NAME ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+      _businessName = pBusinessName ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   omUnbindHostCommand::omUnbindHostCommand( restAdaptor *pRestAdaptor,
+                                             pmdRestSession *pRestSession )
+         : omAuthCommand( pRestAdaptor, pRestSession )
+   {
+   }
+
+   omUnbindHostCommand::~omUnbindHostCommand()
+   {
+   }
+
+   INT32 omUnbindHostCommand::doCommand()
+   {
+      INT32 rc = SDB_OK ;
+      omRestTool restTool( _restAdaptor, _restSession ) ;
+      omDatabaseTool dbTool( _cb ) ;
+      list<string> hostList ;
+
+      _setFileLanguageSep() ;
+
+      pmdGetThreadEDUCB()->resetInfo( EDU_INFO_ERROR ) ;
+
+      rc = _getRestInfo( hostList ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "_getRestInfo failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      if ( FALSE == dbTool.clusterIsExist( _clusterName ) )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "cluster does not exist: name=%s",
+                             _clusterName.c_str() ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      rc = _checkHost( hostList ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "_checkHost failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = dbTool.unbindHost( _clusterName, hostList ) ;
+      if ( rc )
+      {
+         _errorMsg.setError( TRUE, "failed to unbind host: name=%s, rc=%d",
+                             _clusterName.c_str(), rc ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      restTool.sendOkRespone() ;
+
+   done:
+      return rc ;
+   error:
+      restTool.sendRespone( rc, _errorMsg.getError() ) ;
+      goto done ;
+   }
+
+   INT32 omUnbindHostCommand::_getRestInfo( list<string> &hostList )
+   {
+      INT32 rc = SDB_OK ;
+      const CHAR *pClusterName = NULL ;
+      const CHAR *pHostInfo    = NULL ;
+      BSONObj hostInfo ;
+      BSONElement element ;
+
+      //ClusterName
+      _restAdaptor->getQuery( _restSession, OM_CLUSTER_FIELD_NAME,
+                              &pClusterName ) ;
+      if ( NULL == pClusterName || 0 == ossStrlen( pClusterName ) )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "get rest info failed:%s is NULL",
+                             OM_CLUSTER_FIELD_NAME ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+      _clusterName = pClusterName ;
+
+      //HostInfo
+      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_HOST_INFO,
+                              &pHostInfo ) ;
+      if ( NULL == pHostInfo )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "get rest info failed: %s is NULL",
+                             OM_REST_FIELD_HOST_INFO ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      rc = fromjson( pHostInfo, hostInfo ) ;
+      if ( rc )
+      {
+         _errorMsg.setError( TRUE, "failed to convert bson: json=%s,rc=%d",
+                             pHostInfo, rc ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      element = hostInfo.getField( OM_BSON_FIELD_HOST_INFO ) ;
+      if ( Array != element.type() )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "%s is not array type: type=%d",
+                             OM_BSON_FIELD_HOST_INFO, element.type() ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      {
+         BSONObjIterator i( element.embeddedObject() ) ;
+
+         while ( i.more() )
+         {
+            BSONElement ele = i.next() ;
+
+            if ( Object != ele.type() )
+            {
+               rc = SDB_INVALIDARG ;
+               _errorMsg.setError( TRUE, "host info is invalid, element of %s "
+                                         "is not Object type:type=%d",
+                                   OM_BSON_FIELD_HOST_INFO, ele.type() ) ;
+               PD_LOG( PDERROR, _errorMsg.getError() ) ;
+               goto error ;
+            }
+
+            {
+               BSONObj oneHost = ele.embeddedObject() ;
+               string hostName ;
+
+               hostName = oneHost.getStringField( OM_BSON_FIELD_HOST_NAME ) ;
+               if ( 0 == hostName.length() )
+               {
+                  rc = SDB_INVALIDARG ;
+                  _errorMsg.setError( TRUE, "rest field miss:field=%s",
+                                      OM_BSON_FIELD_HOST_NAME ) ;
+                  PD_LOG( PDERROR, _errorMsg.getError() ) ;
+                  goto error ;
+               }
+               hostList.push_back( hostName ) ;
+            }
+         }
+      }
+
+      if ( 0 == hostList.size() )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "%s no hosts", OM_BSON_FIELD_HOST_INFO ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omUnbindHostCommand::_checkHost( list<string> &hostList )
+   {
+      INT32 rc = SDB_OK ;
+      omDatabaseTool dbTool( _cb ) ;
+      list<string>::iterator iter ;
+
+      for ( iter = hostList.begin(); iter != hostList.end(); ++iter )
+      {
+         string hostName = *iter ;
+
+         if ( FALSE == dbTool.isHostExistOfClusterByAddr( hostName,
+                                                          _clusterName ) )
+         {
+            rc = SDB_INVALIDARG ;
+            _errorMsg.setError( TRUE, "host does not exist: host=%s",
+                                hostName.c_str() ) ;
+            PD_LOG( PDERROR, _errorMsg.getError() ) ;
+            goto error ;
+         }
+
+         if ( TRUE == dbTool.isConfigExistOfCluster( hostName, _clusterName ) )
+         {
+            rc = SDB_INVALIDARG ;
+            _errorMsg.setError( TRUE, "failed to unbind host, "
+                                      "the host has business: host=%s",
+                                hostName.c_str() ) ;
+            PD_LOG( PDERROR, _errorMsg.getError() ) ;
+            goto error ;
+         }
+        
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
 }
 

@@ -1355,6 +1355,44 @@ namespace engine
 
    } ;
 
+   class omUnbindBusinessCommand : public omAuthCommand
+   {
+   public:
+      omUnbindBusinessCommand( restAdaptor *pRestAdaptor,
+                               pmdRestSession *pRestSession ) ;
+
+      ~omUnbindBusinessCommand() ;
+
+      virtual INT32 doCommand() ;
+
+   private:
+      INT32 _getRestInfo() ;
+
+   private:
+      string _clusterName ;
+      string _businessName ;
+
+   } ;
+
+   class omUnbindHostCommand : public omAuthCommand
+   {
+   public:
+      omUnbindHostCommand( restAdaptor *pRestAdaptor,
+                           pmdRestSession *pRestSession ) ;
+
+      ~omUnbindHostCommand() ;
+
+      virtual INT32 doCommand() ;
+
+   private:
+      INT32 _getRestInfo( list<string> &hostList ) ;
+      INT32 _checkHost( list<string> &hostList ) ;
+
+   private:
+      string _clusterName ;
+
+   } ;
+
 }
 
 #endif /* OM_GETFILECOMMAND_HPP__ */

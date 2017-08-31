@@ -454,6 +454,8 @@ namespace engine
    #define  OM_SHRINK_BUSINESS_REQ           "shrink business"
    #define  OM_SYNC_BUSINESS_CONF_REQ        "sync business configure"
    #define  OM_GRANT_SYSCONF_REQ             "grant sysconf"
+   #define  OM_UNBIND_BUSINESS_REQ           "unbind business"
+   #define  OM_UNBIND_HOST_REQ               "unbind host"
 
    //**************************************************************************
 

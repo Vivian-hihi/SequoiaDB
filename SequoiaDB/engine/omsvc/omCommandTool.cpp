@@ -752,6 +752,26 @@ namespace engine
       goto done ;
    }
 
+   INT32 omDatabaseTool::removeBusiness( const string &businessName )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj condition = BSON( OM_BUSINESS_FIELD_NAME << businessName ) ;
+      BSONObj hint ;
+   
+      rc = rtnDelete( OM_CS_DEPLOY_CL_BUSINESS, condition, hint, 0, _cb ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to delete configure from table:%s,rc=%d",
+                 OM_CS_DEPLOY_CL_BUSINESS, rc ) ;
+         goto error ;
+      }
+   
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 omDatabaseTool::addCluster( const BSONObj &clusterInfo )
    {
       INT32 rc = SDB_OK ;
@@ -1506,50 +1526,46 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       BOOLEAN isExist = FALSE ;
-      SINT64 contextID = -1 ;
       BSONObj condition = BSON( OM_CONFIGURE_FIELD_BUSINESSNAME << businessName
                              << OM_CONFIGURE_FIELD_HOSTNAME << hostName ) ;
       BSONObj selector ;
-      BSONObj order ;
-      BSONObj hint ;
+      BSONObj configure ;
 
-      // query table
-      rc = rtnQuery( OM_CS_DEPLOY_CL_CONFIGURE, selector, condition, order,
-                     hint, 0, _cb, 0, 1, _pDMSCB, _pRTNCB, contextID );
+      rc = _getOneConfigure( condition, selector, configure ) ;
       if ( rc )
       {
-         PD_LOG( PDERROR, "fail to query table:%s,rc=%d",
-                 OM_CS_DEPLOY_CL_BUSINESS, rc ) ;
+         PD_LOG( PDERROR, "Failed to get configure info:rc=%d", rc ) ;
          goto error ;
       }
 
-      while ( TRUE )
-      {
-         rtnContextBuf buffObj ;
-
-         rc = rtnGetMore ( contextID, 1, buffObj, _cb, _pRTNCB ) ;
-         if ( rc )
-         {
-            if ( SDB_DMS_EOC == rc )
-            {
-               rc = SDB_OK ;
-               break ;
-            }
-
-            contextID = -1 ;
-            PD_LOG( PDERROR, "failed to get record from table:%s,rc=%d",
-                    OM_CS_DEPLOY_CL_BUSINESS, rc ) ;
-            goto error ;
-         }
-
-         isExist = TRUE ;
-      }
+      isExist = TRUE ;
 
    done:
-      if ( -1 != contextID )
+      return isExist ;
+   error:
+      goto done ;
+   }
+
+   BOOLEAN omDatabaseTool::isConfigExistOfCluster( const string &hostName,
+                                                   const string &clusterName )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN isExist = FALSE ;
+      BSONObj condition = BSON( OM_CONFIGURE_FIELD_CLUSTERNAME << clusterName <<
+                                OM_CONFIGURE_FIELD_HOSTNAME << hostName ) ;
+      BSONObj selector ;
+      BSONObj configure ;
+   
+      rc = _getOneConfigure( condition, selector, configure ) ;
+      if ( rc )
       {
-         _pRTNCB->contextDelete ( contextID, _cb ) ;
+         PD_LOG( PDERROR, "Failed to get configure info:rc=%d", rc ) ;
+         goto error ;
       }
+   
+      isExist = TRUE ;
+   
+   done:
       return isExist ;
    error:
       goto done ;
@@ -1660,212 +1676,6 @@ namespace engine
       goto done ;
    }
 
-   INT32 omDatabaseTool::addNodeConfigOfBusiness( const string &clusterName,
-                                                  const string &businessName,
-                                                  const string &businessType,
-                                                  const BSONObj &newConfig )
-   {
-      INT32 rc = SDB_OK ;
-      INT64 updateNum = 0 ;
-      string deployMod ;
-      BSONObj hostInfoList ;
-      BSONObjBuilder builder ;
-      BSONArrayBuilder hostLocation ;
-      BSONObj hostInfoFilter = BSON( OM_CONFIGURE_FIELD_ERRNO  << "" <<
-                                     OM_CONFIGURE_FIELD_DETAIL << "" ) ;
-
-      hostInfoList = newConfig.getObjectField( OM_BSON_FIELD_HOST_INFO ) ;
-      BSONObjIterator iter( hostInfoList ) ;
-      while ( iter.more() )
-      {
-         BSONElement ele = iter.next() ;
-         BSONObj tmpConfig = ele.embeddedObject() ;
-         BSONObj filterConfg = tmpConfig.filterFieldsUndotted( hostInfoFilter,
-                                                               FALSE ) ;
-         string hostName = filterConfg.getStringField(
-                                             OM_CONFIGURE_FIELD_HOSTNAME ) ;
-
-         if ( 0 == deployMod.length() )
-         {
-            deployMod = filterConfg.getStringField(
-                                          OM_CONFIGURE_FIELD_DEPLOYMODE ) ;
-         }
-
-         rc = upsertConfigure( businessName, hostName, filterConfg,
-                               updateNum ) ;
-         if( rc )
-         {
-            PD_LOG( PDERROR, "failed to update configure,hostname=%s,rc=%d",
-                    hostName.c_str(), rc ) ;
-            goto error ;
-         }
-
-         //used to construct business info
-         hostLocation.append( BSON( OM_CONFIGURE_FIELD_HOSTNAME <<
-                                    hostName ) ) ;
-      }
-
-      //add business
-      builder.append( OM_BUSINESS_FIELD_LOCATION, hostLocation.arr() ) ;
-      rc = addBusinessInfo( OM_BUSINESS_ADDTYPE_INSTALL, clusterName,
-                            businessName, businessType,
-                            deployMod, builder.obj() ) ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "failed to add business,name=%s,rc=%d",
-                 businessName.c_str(), rc ) ;
-         goto error ;
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   /**
-    * update node config of the business
-    *
-    * @param(in) businessName
-    *
-    * @param(in) newConfig
-    * {
-    *    "HostInfo": [
-    *       {
-    *          "BusinessName": xxx,
-    *          "BusinessType": xxx,
-    *          "ClusterName": xxx,
-    *          "DeployMod": xxx,
-    *          "HostName": xxx,
-    *          "Config": [
-    *             { "role": xxx, "svcname": xxx, "dbpath": xxx, ... },
-    *             ...
-    *          ]
-    *       },
-    *       ...
-    *    ]
-    * }
-   */
-   INT32 omDatabaseTool::updateNodeConfigOfBusiness( const string &businessName,
-                                                     const BSONObj &newConfig )
-   {
-      INT32 rc = SDB_OK ;
-      INT64 updateNum = 0 ;
-      BSONObj buzInfo ;
-      BSONObjBuilder builder ;
-      BSONArrayBuilder hostLocation ;
-      BSONObj hostInfoFilter = BSON( OM_CONFIGURE_FIELD_ERRNO  << "" <<
-                                     OM_CONFIGURE_FIELD_DETAIL << "" ) ;
-      set<string> newHostList ;
-      string deployMod = "" ;
-
-      rc = getOneBusinessInfo( businessName, buzInfo ) ;
-      if ( SDB_DMS_RECORD_NOTEXIST == rc )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "business does not exist: %s",
-                 businessName.c_str() ) ;
-         goto error ;
-      }
-      else if ( rc )
-      {
-         PD_LOG( PDERROR, "failed to get business info,name=%s,rc=%d",
-                 businessName.c_str(), rc ) ;
-         goto error ;
-      }
-
-      //host and node info by omagent
-      {
-         BSONObj hostInfoList = newConfig.getObjectField(
-                                                   OM_BSON_FIELD_HOST_INFO ) ;
-         BSONObjIterator iter( hostInfoList ) ;
-         while ( iter.more() )
-         {
-            BSONElement ele = iter.next() ;
-            BSONObj tmpConfig = ele.embeddedObject() ;
-            BSONObj filterConfg = tmpConfig.filterFieldsUndotted( hostInfoFilter,
-                                                                  FALSE ) ;
-            string hostName = filterConfg.getStringField(
-                                                OM_CONFIGURE_FIELD_HOSTNAME ) ;
-
-            if ( 0 == deployMod.length() )
-            {
-               deployMod = filterConfg.getStringField(
-                                             OM_CONFIGURE_FIELD_DEPLOYMODE ) ;
-            }
-
-            newHostList.insert( hostName ) ;
-
-            rc = upsertConfigure( businessName, hostName, filterConfg,
-                                  updateNum ) ;
-            if( rc )
-            {
-               PD_LOG( PDERROR, "failed to update configure,hostname=%s,rc=%d",
-                       hostName.c_str(), rc ) ;
-               goto error ;
-            }
-
-            //used to construct business info
-            hostLocation.append( BSON( OM_CONFIGURE_FIELD_HOSTNAME <<
-                                       hostName ) ) ;
-
-         }
-      }
-
-      //upsert business
-      {
-         BSONObj condition = BSON( OM_BUSINESS_FIELD_LOCATION << "" <<
-                                   OM_BUSINESS_FIELD_DEPLOYMOD << "" <<
-                                   OM_BUSINESS_FIELD_ID << "" ) ;
-         BSONObj businessInfo = buzInfo.filterFieldsUndotted( condition,
-                                                              FALSE ) ;
-         builder.appendElements( businessInfo ) ;
-      }
-      builder.append( OM_BUSINESS_FIELD_DEPLOYMOD, deployMod ) ;
-      builder.append( OM_BUSINESS_FIELD_LOCATION, hostLocation.arr() ) ;
-      rc = upsertBusinessInfo( businessName, builder.obj(), updateNum ) ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "failed to update business info,name=%s,rc=%d",
-                 businessName.c_str(), rc ) ;
-         goto error ;
-      }
-
-      //delete the host config that does not exist
-      {
-         BSONObj deleteCondition ;
-         BSONObjBuilder deleteBuilder ;
-         BSONObjBuilder conditionBuilder ;
-         BSONArrayBuilder notDeleteArray ;
-
-         for ( set<string>::iterator iter = newHostList.begin();
-               iter != newHostList.end(); ++iter )
-         {
-            string hostName = *iter ;
-            notDeleteArray.append( hostName ) ;
-         }
-         conditionBuilder.append( "$nin", notDeleteArray.arr() ) ;
-
-         deleteBuilder.append( OM_CONFIGURE_FIELD_BUSINESSNAME, businessName ) ;
-         deleteBuilder.append( OM_CONFIGURE_FIELD_HOSTNAME,
-                               conditionBuilder.obj() ) ;
-         deleteCondition = deleteBuilder.obj() ;
-
-         rc = _removeConfigure( deleteCondition ) ;
-         if ( rc )
-         {
-            PD_LOG( PDERROR, "failed to remove configure,condition=%s,rc=%d",
-                    deleteCondition.toString().c_str(), rc ) ;
-            goto error ;
-         }
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
    INT32 omDatabaseTool::_removeConfigure( const BSONObj &condition )
    {
       INT32 rc = SDB_OK ;
@@ -1900,6 +1710,28 @@ namespace engine
                  OM_CS_DEPLOY_CL_CONFIGURE,
                  OM_CONFIGURE_FIELD_BUSINESSNAME, businessName.c_str(),
                  OM_CONFIGURE_FIELD_HOSTNAME, hostName.c_str(), rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omDatabaseTool::removeConfigure( const string &businessName )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj condition = BSON( OM_CONFIGURE_FIELD_BUSINESSNAME
+                                       << businessName ) ;
+
+      rc = _removeConfigure( condition ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to delete configure from table:%s,"
+                          "%s=%s,rc=%d",
+                 OM_CS_DEPLOY_CL_CONFIGURE,
+                 OM_CONFIGURE_FIELD_BUSINESSNAME, businessName.c_str(), rc ) ;
          goto error ;
       }
 
@@ -2035,7 +1867,69 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
 
+   INT32 omDatabaseTool::_getOneConfigure( const BSONObj &condition,
+                                           const BSONObj &selector,
+                                           BSONObj &configure )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN isExist = FALSE ;
+      SINT64 contextID = -1 ;
+      BSONObj order ;
+      BSONObj hint ;
+
+      // query table
+      rc = rtnQuery( OM_CS_DEPLOY_CL_CONFIGURE, selector, condition, order,
+                     hint, 0, _cb, 0, 1, _pDMSCB, _pRTNCB, contextID );
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "fail to query table:%s,rc=%d",
+                 OM_CS_DEPLOY_CL_CONFIGURE, rc ) ;
+         goto error ;
+      }
+
+      while ( TRUE )
+      {
+         rtnContextBuf buffObj ;
+
+         rc = rtnGetMore ( contextID, 1, buffObj, _cb, _pRTNCB ) ;
+         if ( rc )
+         {
+            if ( SDB_DMS_EOC == rc )
+            {
+               rc = SDB_OK ;
+               break ;
+            }
+
+            contextID = -1 ;
+            PD_LOG( PDERROR, "failed to get record from table:%s,rc=%d",
+                    OM_CS_DEPLOY_CL_BUSINESS, rc ) ;
+            goto error ;
+         }
+
+         {
+            BSONObj result( buffObj.data() ) ;
+            configure = result.copy() ;
+            isExist = TRUE ;
+         }
+      }
+
+      if ( FALSE == isExist )
+      {
+         rc = SDB_DMS_RECORD_NOTEXIST ;
+         PD_LOG( PDERROR, "Failed to query host info:rc=%d", rc ) ;
+         goto error ;
+      }
+
+   done:
+      if ( -1 != contextID )
+      {
+         _pRTNCB->contextDelete ( contextID, _cb ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 omDatabaseTool::getHostNameByAddress( const string &address,
@@ -2144,6 +2038,32 @@ namespace engine
 
    done:
       return isExist ;
+   error:
+      goto done ;
+   }
+
+   INT32 omDatabaseTool::removeHost( const string &address,
+                                     const string &clusterName )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj condition ;
+      BSONObj hint ;
+   
+      condition = BSON( "$or" << BSON_ARRAY(
+                              BSON( OM_HOST_FIELD_NAME << address ) <<
+                              BSON( OM_HOST_FIELD_IP   << address ) ) <<
+                      OM_HOST_FIELD_CLUSTERNAME << clusterName ) ;
+
+      rc = rtnDelete( OM_CS_DEPLOY_CL_HOST, condition, hint, 0, _cb ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to delete host from table:%s,rc=%d",
+                 OM_CS_DEPLOY_CL_HOST, rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
    error:
       goto done ;
    }
@@ -2284,6 +2204,344 @@ namespace engine
       }
       return rc ;
    error:
+      goto done ;
+   }
+
+   /* ======================== Trans ======================== */
+   /*
+      Trans order
+      1. SYSCONFIGURE
+      2. SYSBUSINESS
+   */
+
+   INT32 omDatabaseTool::addNodeConfigOfBusiness( const string &clusterName,
+                                                  const string &businessName,
+                                                  const string &businessType,
+                                                  const BSONObj &newConfig )
+   {
+      INT32 rc = SDB_OK ;
+      INT64 updateNum = 0 ;
+      string deployMod ;
+      BSONObj hostInfoList ;
+      BSONObjBuilder builder ;
+      BSONArrayBuilder hostLocation ;
+      BSONObj hostInfoFilter = BSON( OM_CONFIGURE_FIELD_ERRNO  << "" <<
+                                     OM_CONFIGURE_FIELD_DETAIL << "" ) ;
+
+      hostInfoList = newConfig.getObjectField( OM_BSON_FIELD_HOST_INFO ) ;
+
+      rc = rtnTransBegin( _cb ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to begin trans: name=%s, rc=%d",
+                 businessName.c_str(), rc ) ;
+         goto error ;
+      }
+
+      {
+         BSONObjIterator iter( hostInfoList ) ;
+         while ( iter.more() )
+         {
+            BSONElement ele = iter.next() ;
+            BSONObj tmpConfig = ele.embeddedObject() ;
+            BSONObj filterConfg = tmpConfig.filterFieldsUndotted( hostInfoFilter,
+                                                                  FALSE ) ;
+            string hostName = filterConfg.getStringField(
+                                                OM_CONFIGURE_FIELD_HOSTNAME ) ;
+
+            if ( 0 == deployMod.length() )
+            {
+               deployMod = filterConfg.getStringField(
+                                             OM_CONFIGURE_FIELD_DEPLOYMODE ) ;
+            }
+
+            rc = upsertConfigure( businessName, hostName, filterConfg,
+                                  updateNum ) ;
+            if( rc )
+            {
+               PD_LOG( PDERROR, "failed to update configure,hostname=%s,rc=%d",
+                       hostName.c_str(), rc ) ;
+               goto error ;
+            }
+
+            //used to construct business info
+            hostLocation.append( BSON( OM_CONFIGURE_FIELD_HOSTNAME <<
+                                       hostName ) ) ;
+         }
+      }
+
+      //add business
+      builder.append( OM_BUSINESS_FIELD_LOCATION, hostLocation.arr() ) ;
+      rc = addBusinessInfo( OM_BUSINESS_ADDTYPE_INSTALL, clusterName,
+                            businessName, businessType,
+                            deployMod, builder.obj() ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to add business,name=%s,rc=%d",
+                 businessName.c_str(), rc ) ;
+         goto error ;
+      }
+
+      rc = rtnTransCommit( _cb, _pDpsCB ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to commit trans: name=%s, rc=%d",
+                 businessName.c_str(), rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      rtnTransRollback( _cb, _pDpsCB ) ;
+      goto done ;
+   }
+
+   /**
+    * update node config of the business
+    *
+    * @param(in) businessName
+    *
+    * @param(in) newConfig
+    * {
+    *    "HostInfo": [
+    *       {
+    *          "BusinessName": xxx,
+    *          "BusinessType": xxx,
+    *          "ClusterName": xxx,
+    *          "DeployMod": xxx,
+    *          "HostName": xxx,
+    *          "Config": [
+    *             { "role": xxx, "svcname": xxx, "dbpath": xxx, ... },
+    *             ...
+    *          ]
+    *       },
+    *       ...
+    *    ]
+    * }
+   */
+   INT32 omDatabaseTool::updateNodeConfigOfBusiness( const string &businessName,
+                                                     const BSONObj &newConfig )
+   {
+      INT32 rc = SDB_OK ;
+      INT64 updateNum = 0 ;
+      BSONObj buzInfo ;
+      BSONObjBuilder builder ;
+      BSONArrayBuilder hostLocation ;
+      BSONObj hostInfoFilter = BSON( OM_CONFIGURE_FIELD_ERRNO  << "" <<
+                                     OM_CONFIGURE_FIELD_DETAIL << "" ) ;
+      set<string> newHostList ;
+      string deployMod = "" ;
+
+      rc = getOneBusinessInfo( businessName, buzInfo ) ;
+      if ( SDB_DMS_RECORD_NOTEXIST == rc )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "business does not exist: %s",
+                 businessName.c_str() ) ;
+         goto error ;
+      }
+      else if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to get business info,name=%s,rc=%d",
+                 businessName.c_str(), rc ) ;
+         goto error ;
+      }
+
+      rc = rtnTransBegin( _cb ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to begin trans: name=%s, rc=%d",
+                 businessName.c_str(), rc ) ;
+         goto error ;
+      }
+
+      //host and node info by omagent
+      {
+         BSONObj hostInfoList = newConfig.getObjectField(
+                                                   OM_BSON_FIELD_HOST_INFO ) ;
+         BSONObjIterator iter( hostInfoList ) ;
+
+         while ( iter.more() )
+         {
+            BSONElement ele = iter.next() ;
+            BSONObj tmpConfig = ele.embeddedObject() ;
+            BSONObj filterConfg = tmpConfig.filterFieldsUndotted( hostInfoFilter,
+                                                                  FALSE ) ;
+            string hostName = filterConfg.getStringField(
+                                                OM_CONFIGURE_FIELD_HOSTNAME ) ;
+
+            if ( 0 == deployMod.length() )
+            {
+               deployMod = filterConfg.getStringField(
+                                             OM_CONFIGURE_FIELD_DEPLOYMODE ) ;
+            }
+
+            newHostList.insert( hostName ) ;
+
+            rc = upsertConfigure( businessName, hostName, filterConfg,
+                                  updateNum ) ;
+            if( rc )
+            {
+               PD_LOG( PDERROR, "failed to update configure: hostname=%s,rc=%d",
+                       hostName.c_str(), rc ) ;
+               goto error ;
+            }
+
+            //used to construct business info
+            hostLocation.append( BSON( OM_CONFIGURE_FIELD_HOSTNAME <<
+                                       hostName ) ) ;
+         }
+      }
+
+      //delete the host config that does not exist
+      {
+         BSONObj deleteCondition ;
+         BSONObjBuilder deleteBuilder ;
+         BSONObjBuilder conditionBuilder ;
+         BSONArrayBuilder notDeleteArray ;
+
+         for ( set<string>::iterator iter = newHostList.begin();
+               iter != newHostList.end(); ++iter )
+         {
+            string hostName = *iter ;
+            notDeleteArray.append( hostName ) ;
+         }
+         conditionBuilder.append( "$nin", notDeleteArray.arr() ) ;
+
+         deleteBuilder.append( OM_CONFIGURE_FIELD_BUSINESSNAME, businessName ) ;
+         deleteBuilder.append( OM_CONFIGURE_FIELD_HOSTNAME,
+                               conditionBuilder.obj() ) ;
+         deleteCondition = deleteBuilder.obj() ;
+
+         rc = _removeConfigure( deleteCondition ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "failed to remove configure,condition=%s,rc=%d",
+                    deleteCondition.toString().c_str(), rc ) ;
+            goto error ;
+         }
+      }
+
+      //upsert business
+      {
+         BSONObj condition = BSON( OM_BUSINESS_FIELD_LOCATION << "" <<
+                                   OM_BUSINESS_FIELD_DEPLOYMOD << "" <<
+                                   OM_BUSINESS_FIELD_ID << "" ) ;
+         BSONObj businessInfo = buzInfo.filterFieldsUndotted( condition,
+                                                              FALSE ) ;
+
+         builder.appendElements( businessInfo ) ;
+      }
+
+      builder.append( OM_BUSINESS_FIELD_DEPLOYMOD, deployMod ) ;
+      builder.append( OM_BUSINESS_FIELD_LOCATION, hostLocation.arr() ) ;
+      rc = upsertBusinessInfo( businessName, builder.obj(), updateNum ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to update business info: name=%s,rc=%d",
+                 businessName.c_str(), rc ) ;
+         goto error ;
+      }
+
+      rc = rtnTransCommit( _cb, _pDpsCB ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to commit trans: name=%s, rc=%d",
+                 businessName.c_str(), rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      rtnTransRollback( _cb, _pDpsCB ) ;
+      goto done ;
+   }
+
+   INT32 omDatabaseTool::unbindBusiness( const string &businessName )
+   {
+      INT32 rc = SDB_OK ;
+
+      rc = rtnTransBegin( _cb ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to begin trans: name=%s, rc=%d",
+                 businessName.c_str(), rc ) ;
+         goto error ;
+      }
+
+      rc = removeConfigure( businessName ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to remove configure: name=%s, rc=%d",
+                 businessName.c_str(), rc ) ;
+         goto error ;
+      }
+
+      rc = removeBusiness( businessName ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to remove business: name=%s, rc=%d",
+                 businessName.c_str(), rc ) ;
+         goto error ;
+      }
+
+      rc = rtnTransCommit( _cb, _pDpsCB ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to commit trans: name=%s, rc=%d",
+                 businessName.c_str(), rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      rtnTransRollback( _cb, _pDpsCB ) ;
+      goto done ;
+   }
+
+   INT32 omDatabaseTool::unbindHost( const string &clusterName,
+                                     list<string> &hostList )
+   {
+      INT32 rc = SDB_OK ;
+      list<string>::iterator iter ;
+
+      rc = rtnTransBegin( _cb ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to begin trans: name=%s, rc=%d",
+                 clusterName.c_str(), rc ) ;
+         goto error ;
+      }
+
+      for ( iter = hostList.begin(); iter != hostList.end(); ++iter )
+      {
+         string hostName = *iter ;
+
+         rc = removeHost( hostName, clusterName ) ;
+         if ( rc )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "failed to remove host: host=%s, rc=%d",
+                    hostName.c_str(), rc ) ;
+            goto error ;
+         }
+      }
+
+      rc = rtnTransCommit( _cb, _pDpsCB ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to commit trans: name=%s, rc=%d",
+                 clusterName.c_str(), rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      rtnTransRollback( _cb, _pDpsCB ) ;
       goto done ;
    }
 

@@ -119,6 +119,7 @@ namespace engine
       {
          _pKRCB  = pmdGetKRCB() ;
          _pRTNCB = _pKRCB->getRTNCB() ;
+         _pDpsCB = _pKRCB->getDPSCB();
          _pDMSCB = _pKRCB->getDMSCB() ;
       }
 
@@ -147,6 +148,7 @@ namespace engine
       INT32 upsertBusinessInfo( const string &businessName,
                                 const BSONObj &newBusinessInfo,
                                 INT64 &updateNum ) ;
+      INT32 removeBusiness( const string &businessName ) ;
 
       //cluster
       INT32 addCluster( const BSONObj &clusterInfo ) ;
@@ -178,6 +180,8 @@ namespace engine
                              vector<string> &portList ) ;
       BOOLEAN isConfigExist( const string &businessName,
                              const string &hostName ) ;
+      BOOLEAN isConfigExistOfCluster( const string &hostName,
+                                      const string &clusterName ) ;
       INT32 insertConfigure( const string &businessName,
                              const string &hostName,
                              const string &businessType,
@@ -191,14 +195,9 @@ namespace engine
       INT32 appendConfigure( const string &businessName,
                              const string &hostName,
                              const BSONObj &oneNodeConfig ) ;
-      INT32 addNodeConfigOfBusiness( const string &clusterName,
-                                     const string &businessName,
-                                     const string &businessType,
-                                     const BSONObj &newConfig ) ;
-      INT32 updateNodeConfigOfBusiness( const string &businessName,
-                                        const BSONObj &newConfig ) ;
       INT32 removeConfigure( const string &businessName,
                              const string &hostName ) ;
+      INT32 removeConfigure( const string &businessName ) ;
 
       //auth
       INT32 upsertAuth( const string &businessName, const string &authUser,
@@ -214,9 +213,23 @@ namespace engine
                                     const string &clusterName ) ;
       BOOLEAN isHostExistOfClusterByIp( const string &IP,
                                         const string &clusterName ) ;
+      INT32 removeHost( const string &address,
+                        const string &clusterName ) ;
+
       //aggregation
       INT32 getHostConfigOfCluster( const string &clusterName,
                                     BSONObj &config ) ;
+
+      //trans
+      INT32 addNodeConfigOfBusiness( const string &clusterName,
+                                     const string &businessName,
+                                     const string &businessType,
+                                     const BSONObj &newConfig ) ;
+      INT32 updateNodeConfigOfBusiness( const string &businessName,
+                                        const BSONObj &newConfig ) ;
+      INT32 unbindBusiness( const string &businessName ) ;
+      INT32 unbindHost( const string &clusterName,
+                        list<string> &hostList ) ;
 
    private:
       //host
@@ -224,13 +237,15 @@ namespace engine
                              BSONObj &hostInfo ) ;
 
       //configure
+      INT32 _getOneConfigure( const BSONObj &condition, const BSONObj &selector,
+                              BSONObj &configure ) ;
       INT32 _removeConfigure( const BSONObj &condition ) ;
 
    private:
-
       pmdEDUCB    *_cb ;
       SDB_RTNCB   *_pRTNCB ;
       pmdKRCB     *_pKRCB ;
+      SDB_DPSCB   *_pDpsCB ;
       SDB_DMSCB   *_pDMSCB ;
    } ;
 
