@@ -33,6 +33,7 @@
 
 #include "rtnContextShdOfLob.hpp"
 #include "rtnLobStream.hpp"
+#include "rtnLobAccessManager.hpp"
 #include "pmdEDU.hpp"
 #include "rtnTrace.hpp"
 #include "rtnLob.hpp"
@@ -58,7 +59,8 @@ namespace engine
     _su( NULL ),
     _mbContext( NULL ),
     _dmsCB( NULL ),
-    _writeDMS( FALSE )
+    _writeDMS( FALSE ),
+    _hasLobPrivilege( FALSE )
    {
       _pData = NULL ;
       _dataLen = 0 ;
@@ -211,6 +213,19 @@ namespace engine
       _dpsCB = dpsCB ;
       _version = version ;
       _flags = flag ;
+
+      if ( _isMainShd )
+      {
+         rc = sdbGetRTNLobAccessManager()->getAccessPrivilege(
+                  _fullName, _oid, _mode, contextID() ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to get lob privilege:%d", rc ) ;
+            goto error ;
+         }
+
+         _hasLobPrivilege = TRUE ;
+      }
 
       rc = _open( cb, data, read ) ;
       if ( SDB_OK != rc )
@@ -538,6 +553,12 @@ namespace engine
       _isOpened = FALSE ;
       _closeWithException = FALSE ;
 
+      if ( _hasLobPrivilege )
+      {
+         sdbGetRTNLobAccessManager()->releaseAccessPrivilege(
+            _fullName, _oid, _mode, contextID() ) ;
+         _hasLobPrivilege = FALSE ;
+      }
       if ( _mbContext && _su )
       {
          _su->data()->releaseMBContext( _mbContext ) ;
@@ -553,6 +574,7 @@ namespace engine
          _dmsCB->writeDown( cb ) ;
          _writeDMS = FALSE ;
       }
+
       return SDB_OK ; 
    }
 

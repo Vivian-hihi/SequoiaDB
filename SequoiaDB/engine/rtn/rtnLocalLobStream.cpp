@@ -37,6 +37,7 @@
 #include "dmsCB.hpp"
 #include "rtn.hpp"
 #include "rtnLob.hpp"
+#include "rtnLobAccessManager.hpp"
 
 namespace engine
 {
@@ -44,7 +45,8 @@ namespace engine
    :_mbContext( NULL ),
     _su( NULL ),
     _dmsCB( NULL ),
-    _writeDMS( FALSE )
+    _writeDMS( FALSE ),
+    _hasLobPrivilege( FALSE )
    {
    }
 
@@ -56,6 +58,12 @@ namespace engine
 
    void _rtnLocalLobStream::_closeInner( _pmdEDUCB *cb )
    {
+      if ( _hasLobPrivilege )
+      {
+         sdbGetRTNLobAccessManager()->releaseAccessPrivilege(
+            getFullName(), getOID(), _getMode() ) ;
+         _hasLobPrivilege = FALSE ;
+      }
       if ( _mbContext && _su )
       {
          _su->data()->releaseMBContext( _mbContext ) ;
@@ -112,6 +120,15 @@ namespace engine
                  clName ) ;
          goto error ;
       }
+
+      rc = sdbGetRTNLobAccessManager()->getAccessPrivilege(
+                  fullName, oid, mode ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to get lob privilege:%d", rc ) ;
+         goto error ;
+      }
+      _hasLobPrivilege = TRUE ;
 
    done:
       PD_TRACE_EXITRC( SDB_RTNLOCALLOBSTREAM__PREPARE, rc ) ;

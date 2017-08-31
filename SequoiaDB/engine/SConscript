@@ -232,6 +232,7 @@ rtnFiles = [
       "rtn/rtnContextShdOfLob.cpp",
       "rtn/rtnLobFetcher.cpp",
       "rtn/rtnContextListLob.cpp",
+      "rtn/rtnLobAccessManager.cpp",
       "rtn/rtnAlterFuncList.cpp",
       "rtn/rtnAlterFuncs.cpp",
       "rtn/rtnAlterRunner.cpp",

@@ -103,7 +103,7 @@ namespace engine
       _dmsStorageUnit   *_su ;
       _SDB_DMSCB        *_dmsCB ;
       BOOLEAN           _writeDMS ;
-
+      BOOLEAN           _hasLobPrivilege ;
    } ;
    typedef class _rtnLocalLobStream rtnLocalLobStream ;
 }

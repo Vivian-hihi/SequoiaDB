@@ -2538,5 +2538,13 @@
          </description>
       </code>
 
+      <code>
+         <name>SDB_LOB_IS_IN_USE</name>
+         <description>
+            <en>LOB is in use</en>
+            <cn>LOB当前正在使用</cn>
+         </description>
+      </code>
+
    </codelist>
 </rclist>

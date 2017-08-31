@@ -171,15 +171,22 @@ namespace engine
          return _bucketAt( index ) ;
       }
 
-      OSS_INLINE UINT32 size()
+      OSS_INLINE UINT32 size( BOOLEAN lock = TRUE )
       {
          UINT32 count = 0 ;
 
          for ( INT32 i = 0 ; i < BUCKET_NUM ; i++ )
          {
             Bucket& bucket = _bucketAt( i ) ;
-            BUCKET_SLOCK( bucket ) ;
-            count += bucket.size() ;
+            if ( lock )
+            {
+               BUCKET_SLOCK( bucket ) ;
+               count += bucket.size() ;
+            }
+            else
+            {
+               count += bucket.size() ;
+            }
          }
 
          return count ;
@@ -224,13 +231,20 @@ namespace engine
          }
       }
 
-      OSS_INLINE void clear()
+      OSS_INLINE void clear( BOOLEAN lock = TRUE )
       {
          for ( INT32 i = 0 ; i < BUCKET_NUM ; i++ )
          {
             Bucket& bucket = _bucketAt( i ) ;
-            BUCKET_XLOCK( bucket ) ;
-            bucket.clear() ;
+            if ( lock )
+            {
+               BUCKET_XLOCK( bucket ) ;
+               bucket.clear() ;
+            }
+            else
+            {
+               bucket.clear() ;
+            }
          }
       }
 
@@ -392,6 +406,14 @@ namespace engine
          _MAP_TYPE::Bucket& bucket = *bucketIt ; \
          BUCKET_XLOCK( bucket ) ;
 
+   // not lock
+   #define FOR_EACH_CMAP_BUCKET( _MAP_TYPE, _map ) \
+      for ( _MAP_TYPE::bucket_iterator bucketIt = (_map).begin() ; \
+            bucketIt != (_map).end() ; \
+            bucketIt++ ) \
+      { \
+         _MAP_TYPE::Bucket& bucket = *bucketIt ;
+
    #define FOR_EACH_CMAP_BUCKET_END }
 
    // shared lock
@@ -416,6 +438,19 @@ namespace engine
       { \
          _MAP_TYPE::Bucket& bucket = *bucketIt ; \
          BUCKET_XLOCK( bucket ) ; \
+      \
+         for ( _MAP_TYPE::map_const_iterator it = bucket.begin() ; \
+               it != bucket.end() ; \
+               it++ ) \
+         {
+
+   // not lock
+   #define FOR_EACH_CMAP_ELEMENT( _MAP_TYPE, _map ) \
+      for ( _MAP_TYPE::bucket_iterator bucketIt = (_map).begin() ; \
+            bucketIt != (_map).end() ; \
+            bucketIt++ ) \
+      { \
+         _MAP_TYPE::Bucket& bucket = *bucketIt ; \
       \
          for ( _MAP_TYPE::map_const_iterator it = bucket.begin() ; \
                it != bucket.end() ; \

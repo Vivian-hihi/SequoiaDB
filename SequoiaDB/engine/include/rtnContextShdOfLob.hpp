@@ -152,7 +152,7 @@ namespace engine
       _dmsMBContext     *_mbContext ;
       _SDB_DMSCB        *_dmsCB ;
       BOOLEAN           _writeDMS ;
-
+      BOOLEAN           _hasLobPrivilege ;
    } ;
    typedef class _rtnContextShdOfLob rtnContextShdOfLob ;
 }
