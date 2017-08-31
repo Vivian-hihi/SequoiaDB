@@ -25,23 +25,23 @@ class TestAggregate12480(unittest.TestCase):
           raise e        
                   
     def testAggregate12480(self):
-        try:  
+       try:  
           self.checkAggregate()
-        except SDBBaseError as e:
+       except SDBBaseError as e:
           print(e.detail) 
           assert False
             
     def tearDown(self):
-        try:
+       try:
           print(datetime.datetime.now())
           self.db.drop_collection_space(cs_name)
           self.db.disconnect()
-        except SDBBaseError as e:
+       except SDBBaseError as e:
           if(-34 != e.code):
              print(e.detail)
              raise e    
 			 
-	def create_cl(self):
+    def create_cl(self):
        try:
           print( '---begin to create cs---')
           self.cs = self.db.create_collection_space(cs_name)            
@@ -64,19 +64,19 @@ class TestAggregate12480(unittest.TestCase):
     def checkAggregate(self):   
        print( '---check aggregate result---' )
        try:
-           match = SON({'$match':{'name':{'$exists':1}}})
-           group = SON({'$group':{'_id':'$major','avg_age':{'$avg':'$age'},'major':{'$first':'$major'}}})
-           sort = SON({'$sort':{'avg_age':1}})
-           skip  = {'$skip':0}
-           limit = {'$limit':1}  
-           aggregate_options = [match,group,sort,skip,limit]
-           cursor = self.cl.aggregate(aggregate_options)
-           rec = cursor.next()  
-           expect = {'avg_age': 20.0, 'major': 'major0'}
-           self.assertEqual( expect,rec) 
+          match = SON({'$match':{'name':{'$exists':1}}})
+          group = SON({'$group':{'_id':'$major','avg_age':{'$avg':'$age'},'major':{'$first':'$major'}}})
+          sort = SON({'$sort':{'avg_age':1}})
+          skip  = {'$skip':0}
+          limit = {'$limit':1}  
+          aggregate_options = [match,group,sort,skip,limit]
+          cursor = self.cl.aggregate(aggregate_options)
+          rec = cursor.next()  
+          expect = {'avg_age': 20.0, 'major': 'major0'}
+          self.assertEqual( expect,rec) 
        except SDBBaseError as e:
-           print(e.detail) 
-           raise e               
+          print(e.detail) 
+          raise e               
          
 if __name__ == "__main__":
     unittest.main() 
