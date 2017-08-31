@@ -245,7 +245,6 @@ namespace engine
                PD_LOG( PDERROR, "Failed to update task[%lld]'s progress "
                        "with requestID[%lld], rc = %d",
                        _taskID, reqID, retRc ) ;
-               pOmaMgr->unregisterTaskEvent( reqID ) ;
                rc = retRc ;
                goto error ;
             }
@@ -259,7 +258,6 @@ namespace engine
             {
                PD_LOG( PDDEBUG, "Success to update task[%lld]'s progress "
                        "with requestID[%lld]", _taskID, reqID ) ;
-               pOmaMgr->unregisterTaskEvent( reqID ) ;
                goto done ;
             }
          }
@@ -270,6 +268,11 @@ namespace engine
               "progress to omsvc" ) ;
 
    done:
+      if ( 0 != reqID )
+      {
+         pOmaMgr->unregisterTaskEvent( reqID ) ;
+         reqID = 0 ;
+      }
       return rc ;
    error:
       goto done ;
