@@ -1421,13 +1421,29 @@ class collection(object):
       return result
 
    def truncate(self):
+      """truncate the collection.
+
+      Exceptions:
+         pysequoiadb.error.SDBBaseError
+      """
+
       try:
          rc = sdb.cl_truncate(self._cl)
          pysequoiadb._raise_if_error("Truncate failed", rc)
       except SDBBaseError:
             raise
 
-   def create_id_index(self, options):
+   def create_id_index(self, options = None):
+      """Create the id index.
+
+      Parameters:
+         Name         Type     Info:
+         options      dict     The configuration options for id index.
+      Exceptions:
+         pysequoiadb.error.SDBTypeError
+         pysequoiadb.error.SDBBaseError
+      """
+
       if not isinstance(options, dict):
          raise SDBTypeError("options must be an instance of dict")
 
@@ -1439,6 +1455,12 @@ class collection(object):
          raise
 
    def drop_id_index(self):
+      """Drop the id index.
+
+      Exceptions:
+         pysequoiadb.error.SDBBaseError
+      """
+
       try:
          rc = sdb.cl_drop_id_index(self._cl)
          pysequoiadb._raise_if_error("Drop id index failed", rc)
