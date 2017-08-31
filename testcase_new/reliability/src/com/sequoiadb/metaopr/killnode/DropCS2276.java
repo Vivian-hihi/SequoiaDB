@@ -1,6 +1,5 @@
 package com.sequoiadb.metaopr.killnode;
 
-import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.commlib.GroupWrapper;
@@ -12,8 +11,6 @@ import com.sequoiadb.fault.KillNode;
 import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.OperateTask;
 import com.sequoiadb.task.TaskMgr;
-import org.bson.BSONObject;
-import org.bson.util.JSON;
 import org.testng.Assert;
 import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
@@ -157,36 +154,11 @@ public class DropCS2276 extends SdbTestBase {
     }
     
     private void checkListCS(Sequoiadb db) {
-        // get expect cs name list
-        List<BSONObject> expCSNames = new ArrayList<BSONObject>();
-        expCSNames.add((BSONObject)JSON.parse("{ Name: 'reliability_test' }"));
-        
-        // get actual cs name list
-        DBCursor cursor = db.listCollectionSpaces();
-        List<BSONObject> actCSNames = new ArrayList<BSONObject>();
-        while (cursor.hasNext()) {
-            BSONObject result = cursor.getNext();
-            actCSNames.add(result);
-        }
-        cursor.close();
-        
-        // compare them
-        sortByName(actCSNames);
-        sortByName(expCSNames);
-        if (!actCSNames.equals(expCSNames)) {
-            System.out.println(actCSNames);
-            System.out.println(expCSNames);
-            Assert.fail("listCollectionSpaces() is not the expected. see details on console");
-        }
-    }
-    
-    private void sortByName(List<BSONObject> list) {
-        Collections.sort(list, new Comparator<BSONObject>() {
-            public int compare(BSONObject a, BSONObject b) {
-                String aName = (String)a.get("Name");
-                String bName = (String)b.get("Name");
-                return aName.compareTo(bName);
-            }
-        });
+    	for (int i = 0; i < CS_NUM; i++) {
+            String csName = csNameBase + "_" + i;
+    		boolean rc = db.isCollectionSpaceExist(csName);
+    		Assert.assertFalse(rc, "expected "+ csName 
+    				+" does not exist, actually exists.");
+    	}
     }
 }
