@@ -16,6 +16,10 @@
 	<parameter name="REMOTEPASSWD" value="sdbadmin" />
 	<parameter name="SCRIPTDIR" value="/trunk/testcase_new/reliability/script" />
 
+	<listeners>
+		<listener class-name="com.sequoiadb.commlib.ReliabilityInvokeMethodListener"/>
+	</listeners>
+   
 	<test name="reliability">
 		<packages>
 			<package name="com.sequoiadb.subcl.diskfull" />
