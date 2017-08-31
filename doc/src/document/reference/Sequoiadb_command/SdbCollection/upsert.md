@@ -1,5 +1,5 @@
 ##语法##
-***db.collectionspace.collection.upsert\(\<rule\>,\[cond\],\[hint\],\[setOnInsert\]\)***
+***db.collectionspace.collection.upsert\(\<rule\>,\[cond\],\[hint\],\[setOnInsert\],\[options\]\)***
 
 更新集合记录。upsert 方法跟 update 方法都是对记录进行更新，不同的是当使用 cond 参数在集合中匹配不到记录时，update 不做任何操作，而 upsert 方法会做一次插入操作。
 
