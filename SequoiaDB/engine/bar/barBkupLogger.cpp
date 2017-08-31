@@ -1801,8 +1801,8 @@ namespace engine
                pHeader->setMetaData( metaObj.objdata(), metaObj.objsize() ) ;
 
                // read data
-               rc = pLobData->readRaw( cb, _curOffset, pHeader->_dataSize,
-                                       _pExtentBuff, readLen ) ;
+               rc = pLobData->readRaw( _curOffset, pHeader->_dataSize,
+                                       _pExtentBuff, readLen, cb, FALSE ) ;
                if ( rc )
                {
                   PD_LOG( PDERROR, "Read lob file[%s, offset: %lld, len: %lld] "
@@ -1847,8 +1847,8 @@ namespace engine
                pHeader->setMetaData( metaObj.objdata(), metaObj.objsize() ) ;
 
                // read data
-               rc = pLobData->readRaw( cb, _curOffset, pHeader->_dataSize,
-                                       _pExtentBuff, readLen ) ;
+               rc = pLobData->readRaw( _curOffset, pHeader->_dataSize,
+                                       _pExtentBuff, readLen, cb, FALSE ) ;
                if ( rc )
                {
                   PD_LOG( PDERROR, "Read lob file[%s, offset: %lld, len: %lld] "
