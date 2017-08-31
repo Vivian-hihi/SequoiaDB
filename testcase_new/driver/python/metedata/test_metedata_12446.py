@@ -12,7 +12,6 @@ import datetime
 from pysequoiadb import client
 from pysequoiadb import collectionspace
 from pysequoiadb.error import (SDBTypeError, SDBBaseError, SDBEndOfCursor)
-from meteData.commlib import *
 from lib.config import *
 
 class TestCS12446(unittest.TestCase):
