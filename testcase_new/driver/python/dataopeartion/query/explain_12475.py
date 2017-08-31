@@ -22,7 +22,32 @@ class TestExplain12475(unittest.TestCase):
        except SDBBaseError as e:
           print(e.detail)
           raise e        
- 
+                  
+    def testExplain12475(self):
+        try:  
+          aIndex = {'a':1}
+          aIdxName = 'a'
+          
+          self.createIndex(aIndex,aIdxName)
+          self.checkIndex(aIdxName)
+          self.getExplain(aIdxName)
+          
+          self.dropIndex(aIdxName)
+          
+        except SDBBaseError as e:
+          print(e.detail) 
+          assert False
+            
+    def tearDown(self):
+        try:
+          print(datetime.datetime.now())
+          self.db.drop_collection_space(cs_name)
+          self.db.disconnect()
+        except SDBBaseError as e:
+          if(-34 != e.code):
+             print(e.detail)
+             raise e    
+      
     def create_cl(self):
        try:
           print( '---begin to create cs---')
@@ -93,32 +118,6 @@ class TestExplain12475(unittest.TestCase):
            self.assertEqual( expQuery,query)
        except SDBBaseError as e:
            print(e.detail) 
-           raise e               
-                  
-    def testExplain12475(self):
-        try:  
-          aIndex = {'a':1}
-          aIdxName = 'a'
-          
-          self.createIndex(aIndex,aIdxName)
-          self.checkIndex(aIdxName)
-          self.getExplain(aIdxName)
-          
-          self.dropIndex(aIdxName)
-          
-        except SDBBaseError as e:
-          print(e.detail) 
-          assert False
-            
-    def tearDown(self):
-        try:
-          print(datetime.datetime.now())
-          self.db.drop_collection_space(cs_name)
-          self.db.disconnect()
-        except SDBBaseError as e:
-          if(-34 != e.code):
-             print(e.detail)
-             raise e    
-         
+           raise e               	  
 if __name__ == "__main__":
     unittest.main() 

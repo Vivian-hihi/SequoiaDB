@@ -21,27 +21,7 @@ class TestFind12394(unittest.TestCase):
             self.insertDatas()                 
         except SDBBaseError as e:
             print(e.detail)
-            raise e        
-
-    def create_cl(self):
-        try:
-            print( '---begin to create cs---')
-            self.cs = self.db.create_collection_space(cs_name)            
-
-            self.cl = self.cs.create_collection(cl_name)
-            print( '---create cl success---' )   
-        except SDBError as e:
-            print(e.detail) 
-            raise e    
-
-    def insertDatas(self):   
-        print( '---begin to insert records---' )
-        for i in range(1,insert_nums):
-            try:
-                self.cl.insert({"_id":i,"a":"test" + str(i)})  
-            except SDBError as e:
-                print(e.detail) 
-                raise e              
+            raise e                     
 
     def testqueryAll(self):
         try:
@@ -91,6 +71,25 @@ class TestFind12394(unittest.TestCase):
             if(-34 != e.code):
                 print(e.detail)
                 raise e        
+    def create_cl(self):
+        try:
+            print( '---begin to create cs---')
+            self.cs = self.db.create_collection_space(cs_name)            
 
+            self.cl = self.cs.create_collection(cl_name)
+            print( '---create cl success---' )   
+        except SDBError as e:
+            print(e.detail) 
+            raise e    
+
+    def insertDatas(self):   
+        print( '---begin to insert records---' )
+        for i in range(1,insert_nums):
+            try:
+                self.cl.insert({"_id":i,"a":"test" + str(i)})  
+            except SDBError as e:
+                print(e.detail) 
+                raise e 
+				
 if __name__ == "__main__":
     unittest.main() 

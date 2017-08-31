@@ -23,8 +23,25 @@ class TestAggregate12480(unittest.TestCase):
        except SDBBaseError as e:
           print(e.detail)
           raise e        
- 
-    def create_cl(self):
+                  
+    def testAggregate12480(self):
+        try:  
+          self.checkAggregate()
+        except SDBBaseError as e:
+          print(e.detail) 
+          assert False
+            
+    def tearDown(self):
+        try:
+          print(datetime.datetime.now())
+          self.db.drop_collection_space(cs_name)
+          self.db.disconnect()
+        except SDBBaseError as e:
+          if(-34 != e.code):
+             print(e.detail)
+             raise e    
+			 
+	def create_cl(self):
        try:
           print( '---begin to create cs---')
           self.cs = self.db.create_collection_space(cs_name)            
@@ -60,23 +77,6 @@ class TestAggregate12480(unittest.TestCase):
        except SDBBaseError as e:
            print(e.detail) 
            raise e               
-                  
-    def testAggregate12480(self):
-        try:  
-          self.checkAggregate()
-        except SDBBaseError as e:
-          print(e.detail) 
-          assert False
-            
-    def tearDown(self):
-        try:
-          print(datetime.datetime.now())
-          self.db.drop_collection_space(cs_name)
-          self.db.disconnect()
-        except SDBBaseError as e:
-          if(-34 != e.code):
-             print(e.detail)
-             raise e    
          
 if __name__ == "__main__":
     unittest.main() 

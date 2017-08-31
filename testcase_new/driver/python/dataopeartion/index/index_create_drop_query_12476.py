@@ -23,6 +23,29 @@ class TestIndex12476(unittest.TestCase):
           print(e.detail)
           raise e        
  
+    def testIdIndex12476(self):
+       try:  
+          aIndex = {'a':1}
+          aIdxName = 'a'
+          bIndex = {'b':1}
+          bIdxName = 'b'     
+          
+          isOption = True          
+          self.createIndex(aIndex,aIdxName,isOption)
+          self.createIndex(bIndex,bIdxName,not isOption)
+          self.queryDatas(aIdxName)
+          
+          self.checkIndexes()
+          self.checkOneIndex(aIdxName)
+          self.checkOneIndex(bIdxName)
+          
+          self.dropIndex(aIdxName)
+          self.dropIndex(bIdxName)
+          self.queryDatas("")
+       except SDBBaseError as e:
+          print(e.detail) 
+          assert False
+		  
     def create_cl(self):
        try:
           print( '---begin to create cs---')
@@ -110,30 +133,7 @@ class TestIndex12476(unittest.TestCase):
            self.assertEqual( rec,exprec)                     
        except SDBBaseError as e:
            print(e.detail) 
-           raise e               
-                  
-    def testIdIndex12476(self):
-        try:  
-          aIndex = {'a':1}
-          aIdxName = 'a'
-          bIndex = {'b':1}
-          bIdxName = 'b'     
-          
-          isOption = True          
-          self.createIndex(aIndex,aIdxName,isOption)
-          self.createIndex(bIndex,bIdxName,not isOption)
-          self.queryDatas(aIdxName)
-          
-          self.checkIndexes()
-          self.checkOneIndex(aIdxName)
-          self.checkOneIndex(bIdxName)
-          
-          self.dropIndex(aIdxName)
-          self.dropIndex(bIdxName)
-          self.queryDatas("")
-        except SDBBaseError as e:
-          print(e.detail) 
-          assert False
+           raise e                              
                         
 if __name__ == "__main__":
     unittest.main() 
