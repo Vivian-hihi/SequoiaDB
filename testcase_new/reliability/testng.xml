@@ -19,7 +19,7 @@
 		<listener class-name="com.sequoiadb.commlib.ReliabilityInvokeMethodListener"/>
 	</listeners>
 
-	<test name="reliability_normal">
+	<test name="reliability_normal" preserve-order="true">
 		<packages>
 			<package name="com.sequoiadb.subcl.brokennetwork" />
 			<package name="com.sequoiadb.subcl.killnode"></package>
@@ -40,7 +40,7 @@
 		</packages>
 	</test>
 	
-	<test name="reliability_fullSync">
+	<test name="reliability_fullSync" preserve-order="true">
       <packages>
 		  <package name="com.sequoiadb.datasync.brokennetwork" />
 		  <package name="com.sequoiadb.datasync.killnode" />

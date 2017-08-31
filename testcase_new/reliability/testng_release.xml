@@ -20,7 +20,7 @@
 		<listener class-name="com.sequoiadb.commlib.ReliabilityInvokeMethodListener"/>
 	</listeners>
    
-	<test name="reliability">
+	<test name="reliability" preserve-order="true">
 		<packages>
 			<package name="com.sequoiadb.subcl.diskfull" />
 			<package name="com.sequoiadb.split.diskfull" />
