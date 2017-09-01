@@ -20,10 +20,10 @@ class Data12465(unittest.TestCase):
       self.create_cs_cl()
 
 
-   def _subtest(self,cl_list__expect,return_list_expect,upsert,**kwargs):
+   def subtest(self,cl_list__expect,return_list_expect,upsert,**kwargs):
       for i in self.original_list:
          self.cl.insert(i)
-      if kwargs.has_key("return_new") == False:
+      if "return_new" not in kwargs:
          kwargs["return_new"]=True
       
       cur=self.cl.upsert(upsert,**kwargs)
@@ -42,17 +42,13 @@ class Data12465(unittest.TestCase):
       #condition+upsert
       condition={"a":{"$et":1}}
       l=[{"a":2} for i in range(NUM)]
-      self._subtest(l,l,upsert,condition=condition)
+      self.subtest(l,l,upsert,condition=condition)
 
       self.db.drop_collection_space(self.cs_name)
 
    def check_result(self,list1,expect_list):
-      list1.sort()
-      expect_list.sort()
-      if list1!=expect_list:
-         print("actually: "+str(list1))
-         print("expect: "+str(expect_list))
-         self.fail("check result fail")
+      if not util.check_result(list1,expect_list): 
+            self.fail("check result fail")
 
    def get_result(self,cur=None):
       if cur==None:
@@ -71,13 +67,10 @@ class Data12465(unittest.TestCase):
       print("end: "+str(datetime.now()))
       self.db.disconnect()
 
+
    def check_result(self,list1,expect_list):
-      list1.sort()
-      expect_list.sort()
-      if list1!=expect_list:
-         print("actually: "+str(list1))
-         print("expect: "+str(expect_list))
-         self.fail("check result fail")
+      if not util.check_result(list1,expect_list): 
+            self.fail("check result fail")
 
    def create_cs_cl(self):
       self.cs_name=self.__class__.__name__+"_cs"

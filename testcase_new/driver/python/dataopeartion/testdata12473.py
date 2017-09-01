@@ -19,10 +19,10 @@ class Data12473(unittest.TestCase):
       self.create_cs_cl()
 
 
-   def _subtest(self,cl_list__expect,return_list_expect,update,**kwargs):
+   def subtest(self,cl_list__expect,return_list_expect,update,**kwargs):
       for i in [{"a":i,"b":i} for i in range(10)]:
          self.cl.insert(i)
-      if kwargs.has_key("return_new") == False:
+      if "return_new" not in kwargs:
          kwargs["return_new"]=True
       
       cur=self.cl.query_and_update(update,**kwargs)
@@ -45,15 +45,15 @@ class Data12473(unittest.TestCase):
       return_list_expect=[{"a":2,"b":1}]
       l=list(original_list)
       l[1]={"a":2,"b":1}
-      self._subtest(l,return_list_expect,update,condition=condition)
+      self.subtest(l,return_list_expect,update,condition=condition)
 
       #selector+update
       selector={"b":{"$include":0}}
-      self._subtest(updated_list,updated_list_a,update,selector=selector)
+      self.subtest(updated_list,updated_list_a,update,selector=selector)
 
       #order_by+update
       order_by={"_id":-1}
-      self._subtest(updated_list,updated_list,update,order_by=order_by)
+      self.subtest(updated_list,updated_list,update,order_by=order_by)
 
       #num_to_skip+update
       num_to_skip=5
@@ -63,7 +63,7 @@ class Data12473(unittest.TestCase):
             l.append({"a":i+1,"b":i})
          else:
             l.append({"a":i,"b":i})
-      self._subtest(l,updated_list[num_to_skip:],update,num_to_skip=num_to_skip)
+      self.subtest(l,updated_list[num_to_skip:],update,num_to_skip=num_to_skip)
 
       #num_to_return+update
       num_to_return=5
@@ -73,35 +73,31 @@ class Data12473(unittest.TestCase):
             l.append({"a":i+1,"b":i})
          else:
             l.append({"a":i,"b":i})
-      self._subtest(l,updated_list[:num_to_return],update,num_to_return=num_to_return)
+      self.subtest(l,updated_list[:num_to_return],update,num_to_return=num_to_return)
 
       #hint+update
       hint={"":"index"}
-      self._subtest(updated_list,updated_list,update,hint=hint)
+      self.subtest(updated_list,updated_list,update,hint=hint)
 
       #selector+update
       selector={"b":{"$include":0}}
-      self._subtest(updated_list,[{"a":i+1} for i in range(10)],update,selector=selector)
+      self.subtest(updated_list,[{"a":i+1} for i in range(10)],update,selector=selector)
       
       #return_new+update
-      self._subtest(updated_list,original_list,update,return_new=False)
+      self.subtest(updated_list,original_list,update,return_new=False)
 
       #flags+update
       QUERY_FLG_FORCE_HINT=128
       try:  
-         self._subtest(updated_list,updated_list,update,flagss=QUERY_FLG_FORCE_HINT,hint=hint)
+         self.subtest(updated_list,updated_list,update,flagss=QUERY_FLG_FORCE_HINT,hint=hint)
       except SDBBaseError as e:
          pass
          
       self.db.drop_collection_space(self.cs_name)
 
    def check_result(self,list1,expect_list):
-      list1.sort()
-      expect_list.sort()
-      if list1!=expect_list:
-         print("actually: "+str(list1))
-         print("expect: "+str(expect_list))
-         self.fail("check result fail")
+      if not util.check_result(list1,expect_list): 
+            self.fail("check result fail")
 
    def get_result(self,cur=None):
       if cur==None:
@@ -119,15 +115,6 @@ class Data12473(unittest.TestCase):
    def tearDown(self):
       print("end: "+str(datetime.now()))
       self.db.disconnect()
-
-   
-   def check_result(self,list1,expect_list):
-      list1.sort()
-      expect_list.sort()
-      if list1!=expect_list:
-         print("actually: "+str(list1))
-         print("expect: "+str(expect_list))
-         self.fail("check result fail")
 
    def create_cs_cl(self):
       self.cs_name=self.__class__.__name__+"_cs"
