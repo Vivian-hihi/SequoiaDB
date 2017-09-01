@@ -12,7 +12,7 @@ from pysequoiadb.error import (SDBTypeError, SDBBaseError, SDBEndOfCursor)
 from bson.objectid import ObjectId
 
 from lib.config import *
-import util
+from lob import util
 
 class Lob12478(unittest.TestCase):
    def setUp(self):

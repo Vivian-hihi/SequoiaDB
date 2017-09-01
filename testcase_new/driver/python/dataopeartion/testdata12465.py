@@ -10,7 +10,7 @@ from pysequoiadb.error import (SDBTypeError, SDBBaseError, SDBEndOfCursor)
 
 from bson.objectid import ObjectId
 
-import util
+from dataopeartion import util
 
 NUM=10
 class Data12465(unittest.TestCase):
