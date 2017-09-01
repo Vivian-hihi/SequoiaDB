@@ -3,7 +3,7 @@ import os
 import xmlrunner
 
 case_path = os.path.join(os.getcwd(),"")
-report_path = os.path.join(os.getcwd(), "report")
+report_path = "report"
 tmp_case_path0 = os.path.split(case_path)[0]
 tmp_case_path1 = os.path.split(case_path)[1]
 pattern_param='*.py'
