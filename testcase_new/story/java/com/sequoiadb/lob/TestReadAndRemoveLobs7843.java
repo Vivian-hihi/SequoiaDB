@@ -22,7 +22,9 @@ import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.DBLob;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.lob.TestLobSplitAndWrite7847.SplitCL;
 import com.sequoiadb.testcommon.SdbTestBase;
+import com.sequoiadb.testcommon.SdbThreadBase;
 
 /**
 * FileName: TestReadAndRemoveLobs7843.java
@@ -54,7 +56,105 @@ public class TestReadAndRemoveLobs7843 extends SdbTestBase {
 		createCL();
 	}		
 		
+	@Test
+	public void testSplitAndWrite(){	
+		putLob();
+		ReadLob readLob = new ReadLob();
+		readLob.start();
+		removeLob();
+	    if(!readLob.isSuccess()){
+	    	Assert.fail(readLob.getErrorMsg());
+	    } 	    
+	}
+	
+	
+	public class ReadLob extends SdbThreadBase{
+		@Override
+        public void exec() throws BaseException{	   
+                        
+            try(Sequoiadb db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "")){  
+            	DBCollection cl2 = db2.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
+            	String curMd5 ="";
+            	DBLob rLob = null;
+    			rLob = cl2.openLob(oid);			
+    			byte[] rbuff = new byte[1024];
+    			int readLen =0;		    
+    			ByteBuffer bytebuff = ByteBuffer.allocate((int)rLob.getSize());
+    			while ((readLen = rLob.read(rbuff)) != -1){
+    				bytebuff.put(rbuff, 0, readLen);
+    			}
+    			bytebuff.rewind();	
+    			rLob.close();
+    			curMd5 = Commlib.getMd5(bytebuff);
+    			Assert.assertEquals(curMd5, prevMd5,"the lobs md5 different");
+				
+            }catch(BaseException e){
+            	if(-4 != e.getErrorCode() && -317 != e.getErrorCode() && -268 != e.getErrorCode()&& -269 != e.getErrorCode()){    		
+    				Assert.assertTrue(false,"removeLob fail:"+e.getMessage()+e.getErrorCode());
+    			}	
+            }		
+		}
+	}	
 
+	
+	public void removeLob(){                        
+		try(Sequoiadb db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "")){  
+			DBCollection cl1 = db1.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
+            cl1.removeLob(oid);    		
+    		boolean IsNotExist = true;
+    		DBCursor cur1 = cl.listLobs();	
+    		while(cur1.hasNext()){
+    			BasicBSONObject obj = (BasicBSONObject)cur1.getNext();
+    			if (obj.getObjectId("Oid").equals(oid)){
+    				IsNotExist = false;
+    				break;
+    			}
+    		}
+    		cur1.close();
+    		Assert.assertTrue(IsNotExist,"lob remove fail");				
+         }catch(BaseException e){
+            if(-4 != e.getErrorCode() && -317 != e.getErrorCode() && -268 != e.getErrorCode()&& -269 != e.getErrorCode()){    
+    			Assert.assertTrue(false,"removeLob fail:"+e.getMessage()+e.getErrorCode());
+    		}	
+         }		
+	}
+		
+
+	@AfterClass
+	public void tearDown(){		
+		try{			
+			if(cs.isCollectionExist(clName)){
+				cs.dropCollection(clName);
+			}
+			sdb.disconnect();
+		}catch(BaseException e){			
+			Assert.assertTrue(false,"clean up failed:"+e.getMessage());
+		}finally{
+			System.out.println(this.getClass().getName()+" end at "
+					+new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:S").format(new Date()));
+		}
+	}	
+	
+
+	private void putLob(){
+		int lobsize = random.nextInt(1048576);		
+		String lobSb = Commlib.getRandomString(lobsize);		
+		DBLob lob = null;
+		try{
+			lob = cl.createLob();
+			lob.write(lobSb.getBytes());
+			oid = lob.getID();
+			prevMd5 = Commlib.getMd5(lobSb);
+		}catch(BaseException e){			
+			Assert.assertTrue(false,"write lob fail"+e.getMessage());
+		}finally{
+			if (lob != null){
+				lob.close();
+			}
+		}				
+	}
+	
+	
 	public void createCL(){
 		try{
 			if (!sdb.isCollectionSpaceExist(SdbTestBase.csName)){
@@ -76,109 +176,6 @@ public class TestReadAndRemoveLobs7843 extends SdbTestBase {
 		    Assert.assertTrue(false,"create cl fail "+e.getErrorType()+":"+e.getMessage());
 	    }
 	 }	
-	
-	
-	
-	
-	public void readLob(DBCollection newCL){
-		DBLob rLob = null;	
-		try
-		{   
-			String curMd5 ="";
-			rLob = newCL.openLob(oid);			
-			byte[] rbuff = new byte[1024];
-			int readLen =0;		    
-			ByteBuffer bytebuff = ByteBuffer.allocate((int)rLob.getSize());
-			while ((readLen = rLob.read(rbuff)) != -1){
-				bytebuff.put(rbuff, 0, readLen);
-			}
-			bytebuff.rewind();	
-			rLob.close();
-			curMd5 = Commlib.getMd5(bytebuff);
-			Assert.assertEquals(curMd5, prevMd5,"the lobs md5 different");
-		}catch(BaseException e){			
-			if(-4 != e.getErrorCode() && -269 != e.getErrorCode() && -268 != e.getErrorCode()){
-				Assert.assertTrue(false,"removeLob fail:"+e.getMessage()+e.getErrorCode());
-			}	
-		}finally{
-			if (rLob != null){
-				rLob.close();
-			}
-		}
-	}
-
-	public void removeLob(DBCollection newCL) {			
-		try{
-			newCL.removeLob(oid);
-		    boolean IsNotExist = true;
-			DBCursor cur1 = cl.listLobs();	
-			while(cur1.hasNext()){
-				BasicBSONObject obj = (BasicBSONObject)cur1.getNext();
-				if (obj.getObjectId("Oid").equals(oid)){
-					IsNotExist = false;
-					break;
-				}
-			}
-			Assert.assertTrue(IsNotExist,"lob remove fail");
-		}catch(BaseException e){			
-			if( -4 != e.getErrorCode() && -269 != e.getErrorCode() && -268 != e.getErrorCode()){
-				Assert.assertTrue(false,"removeLob fail:"+e.getMessage()+e.getErrorCode());
-			}			
-		}	
-	}
-
-	@AfterClass
-	public void tearDown(){		
-		try{			
-			if(cs.isCollectionExist(clName)){
-				cs.dropCollection(clName);
-			}
-			sdb.disconnect();
-		}catch(BaseException e){			
-			Assert.assertTrue(false,"clean up failed:"+e.getMessage());
-		}finally{
-			System.out.println(this.getClass().getName()+" end at "
-					+new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:S").format(new Date()));
-		}
-	}	
-	
-	@Test
-	private void putLob(){
-		int lobsize = random.nextInt(1048576);		
-		String lobSb = Commlib.getRandomString(lobsize);		
-		DBLob lob = null;
-		try{
-			lob = cl.createLob();
-			lob.write(lobSb.getBytes());
-			oid = lob.getID();
-			prevMd5 = Commlib.getMd5(lobSb);
-		}catch(BaseException e){			
-			Assert.assertTrue(false,"write lob fail"+e.getMessage());
-		}finally{
-			if (lob != null){
-				lob.close();
-			}
-		}				
-	}
-	
-	@Test(invocationCount = 4, threadPoolSize = 4, dependsOnMethods="putLob")
-	public void testRead(){
-		Sequoiadb db  = null;
-		try{			
-			db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-			CollectionSpace newCS = db.getCollectionSpace(SdbTestBase.csName);
-			DBCollection newCL = newCS.getCollection(clName);			
-			readLob(newCL);
-			removeLob(newCL);			
-		}catch(BaseException e){
-			Assert.assertTrue(false,e.getErrorType()+e.getMessage());			
-		}finally{
-			if (db != null){
-				db.disconnect();
-			}
-		}		
-   }
-	
 }
 
  
