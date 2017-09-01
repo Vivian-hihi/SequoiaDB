@@ -96,8 +96,9 @@ public class TestLob10424 extends SdbTestBase {
             }catch(BaseException e){
                 // -4, File Not Exist
                 // -269, LOB is not usable
+            	// -317, LOB is using
                 // both above are acceptable 
-                if(e.getErrorCode() != -4  && e.getErrorCode() != -269){
+                if(e.getErrorCode() != -4  && e.getErrorCode() != -317 && e.getErrorCode() != -269){
                     throw e;
                 }
             }finally{
