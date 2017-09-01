@@ -398,6 +398,12 @@
            templateUrl: './app/template/Deploy/SyncModule/Sdb/Index.html',
            resolve: resolveFun( [ './app/controller/Deploy/SyncModule/Sdb/Index.js' ] )
         }
+      },
+      { path: '/Deploy/SDB-ShrinkConf',
+        options: {
+           templateUrl: './app/template/Deploy/ShrinkModule/Sdb/Conf.html',
+           resolve: resolveFun( [ './app/controller/Deploy/ShrinkModule/Sdb/Conf.js' ] )
+        }
       }
    ] ;
    window.SdbSacManagerConf.defaultRoute = { redirectTo: '/Transfer' } ;

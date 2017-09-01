@@ -600,6 +600,27 @@ _Deploy.BuildSdbSyncStep = function( $scope, $location, action, deployModule ){
    return stepList ;
 }
 
+//生成业务减容步骤图
+_Deploy.BuildSdbShrinkStep = function( $scope, $location, action, deployModule ){
+   var stepList = {
+      'step': 0,
+      'info': [] 
+   } ;
+   switch( action )
+   {
+   case 'SDB-ShrinkConf':
+      stepList['step'] = 1 ;
+      break ;
+   case 'InstallModule':
+      stepList['step'] = 2 ;
+      break ;
+   }
+   stepList['info'].push( { 'text': $scope.autoLanguage( '减容配置' ), 'click': function(){ _Deploy.GotoStep( $location, 'SDB-ShrinkConf') ; } } ) ;
+   stepList['info'].push( { 'text': $scope.autoLanguage( '业务减容' ), 'click': function(){ _Deploy.GotoStep( $location, 'InstallModule'  ) ; } } ) ;
+   return stepList ;
+
+}
+
 //参数模板转换
 _Deploy.ConvertTemplate = function( templateList, level ){
    var setLevel = 0 ;

@@ -1,4 +1,5 @@
 //@ sourceURL=Conf.js
+//"use strict" ;
 (function(){
    var sacApp = window.SdbSacManagerModule ;
    //控制器
@@ -46,6 +47,12 @@
 
       //获取冗余等信息
       SdbSwap.predictCapacity = function( replica, dataGroupNum, numCatalog, numCoord, hostInfo, successCallback ){
+         //当没有数据节点时做标记
+         if( replica == 0 && dataGroupNum == 0 )
+         {
+            replica = '1' ;
+            dataGroupNum = '1' ;
+         }
          var predictInfo = {
             'ClusterName':  SdbSwap.clusterName,
             'BusinessName': $scope.ModuleName,
@@ -59,13 +66,13 @@
             ],
             'HostInfo': hostInfo
          } ;
-            
          var data = { 'cmd': 'predict capacity', 'TemplateInfo': JSON.stringify( predictInfo ) } ;
          SdbRest.OmOperation( data, {
             'success': function( result ){
                var newResult = {} ;
                newResult['TotalSize']      = result[0]['TotalSize'] ;
-               newResult['ValidSize']      = result[0]['ValidSize'] ;
+               //当没有数据节点时，可用容量为总容量
+               newResult['ValidSize']      = typeof(replica) == 'string' ? result[0]['TotalSize'] : result[0]['ValidSize'] ;
                newResult['RedundancySize'] = result[0]['TotalSize'] - result[0]['ValidSize'] ;
                newResult['Redundancy']     = result[0]['RedundancyRate'] * 100 ;
                successCallback( newResult ) ;
@@ -255,7 +262,7 @@
       $scope.ReplicaTips = false ;
       $scope.MaxReplicaNum = 0 ;
       $scope.MinReplicaNum = 0 ;
-      
+      var deployMode = '' ;
       SdbSwap.replicaNumArr.then( function( replicaNumResult ){
          if( replicaNumResult['max'] > replicaNumResult['min'])
          {
@@ -325,7 +332,8 @@
                   if( property['name'] == 'replicanum' )
                   {
                      SdbSwap.replicaNumArr.then( function( replicaNumResult ){
-                        parameter['Property'][index2]['value'] = replicaNumResult['max'] + '' ;
+                        //当没有数据节点时，将默认副本数设置为3
+                        parameter['Property'][index2]['value'] = ( replicaNumResult['max'] > 0 ? replicaNumResult['max'] : 3 ) + '' ;
                      } ) ;
                   }
                   parameter['Property'][index2]['onChange'] = function(){
@@ -579,16 +587,16 @@
                
             } ) ;
          } ) ;
-
          $.each( groups, function( index, num ){
             tempReplicaNumArr.push( num ) ;
             ++ dataGroupNum ;
          } ) ;
 
-         minReplicaNum = Math.min.apply( null, tempReplicaNumArr ) ;
-         maxReplicaNum = Math.max.apply( null, tempReplicaNumArr ) ;
-         SdbSwap.replicaNumArr.resolve( 'max', Math.max.apply( null, tempReplicaNumArr ) ) ;
-         SdbSwap.replicaNumArr.resolve( 'min', Math.min.apply( null, tempReplicaNumArr ) ) ;
+         //当没有数据节点时，最大最小副本数皆为0
+         minReplicaNum = dataGroupNum == 0 ? 0 : Math.min.apply( null, tempReplicaNumArr ) ;
+         maxReplicaNum = dataGroupNum == 0 ? 0 : Math.max.apply( null, tempReplicaNumArr ) ;
+         SdbSwap.replicaNumArr.resolve( 'max', maxReplicaNum ) ;
+         SdbSwap.replicaNumArr.resolve( 'min', minReplicaNum ) ;
 
          $scope.BeforeExtend = {
             'NumHosts':       result['BusinessHostList']['arr'].length,
@@ -604,8 +612,16 @@
             'NumData':        dataNum,
             'replicaNumArr': tempReplicaNumArr
          } ;
-
-         $scope.BeforeExtend['AverageReplica'] = Math.round( $scope.BeforeExtend['NumData'] / $scope.BeforeExtend['NumDataGroups'] ) ;
+         //当没有数据节点时，平均副本数设置为0，设置只能添加分区组
+         if( dataNum == 0 && dataGroupNum == 0 )
+         {
+            $scope.BeforeExtend['AverageReplica'] = 0 ;
+            SdbSwap.isLockExtendMode = true ;
+         }
+         else
+         {
+            $scope.BeforeExtend['AverageReplica'] = Math.round( $scope.BeforeExtend['NumData'] / $scope.BeforeExtend['NumDataGroups'] ) ;
+         }
          //计算节点分布率
          $scope.BeforeExtend['NodeSpread'] = twoDecimalPlaces( $scope.BeforeExtend['TotalNodes'] / $scope.BeforeExtend['TotalDisks'] ) ;
 	      $scope.BeforeExtend['NodeSpread'] = $scope.BeforeExtend['NodeSpread'] < 1 ? 1 : $scope.BeforeExtend['NodeSpread'] ;

@@ -5003,7 +5003,6 @@
                      {
                         scope.loadStatus['onFilter']['expre'][key] = value ;
                         scope.find() ;
-                        scope.$digest() ;
                      }
                   }
 

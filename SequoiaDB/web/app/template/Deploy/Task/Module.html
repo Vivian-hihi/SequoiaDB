@@ -74,7 +74,7 @@
                   <div class="bar" ng-class="{'0':'blue','1':'orange','2':'red','3':'green'}[BarColor]" ng-style="{'width':TaskInfo['Progress']+'%'}"></div>
                </div>
 
-               <div ng-container="{offsetY:-50,marginTop:10}" ng-if="(TaskInfo['TaskName'] == 'ADD_BUSINESS' || TaskInfo['TaskName'] == 'REMOVE_BUSINESS') && ModuleType == 'sequoiadb'" ng-table="TaskTable['options']" table-title="TaskTable['title']" table-content="installInfo in NewTaskInfo['ResultInfo']">
+               <div ng-container="{offsetY:-50,marginTop:10}" ng-if="(TaskInfo['TaskName'] == 'ADD_BUSINESS' || TaskInfo['TaskName'] == 'REMOVE_BUSINESS' || TaskInfo['TaskName'] == 'SHRINK_BUSINESS' ) && ModuleType == 'sequoiadb'" ng-table="TaskTable['options']" table-title="TaskTable['title']" table-content="installInfo in NewTaskInfo['ResultInfo']">
                   <div table-key="Status">
                      <img src="./images/loading2.gif" style="width:22px;height:22px;" ng-if="installInfo['Status'] == 1 || installInfo['Status'] == 0" />
                      <i class="fa fa-undo" style="font-size:22px;color:#F9A937;" ng-if="installInfo['Status'] == 2"></i>

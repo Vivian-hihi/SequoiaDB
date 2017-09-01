@@ -1,4 +1,5 @@
 ﻿//@ sourceURL=Module.js
+//"use strict" ;
 (function(){
    var sacApp = window.SdbSacManagerModule ;
    //控制器
@@ -23,6 +24,7 @@
       $scope.NewTaskInfo = [] ;
 
       var installTask = $rootScope.tempData( 'Deploy', 'ModuleTaskID' ) ;
+      var shrink = $rootScope.tempData( 'Deploy', 'Shrink' ) ;
       $scope.DeployType  = $rootScope.tempData( 'Deploy', 'Model' ) ;
       $scope.ModuleType  = $rootScope.tempData( 'Deploy', 'Module' ) ;
       if( $scope.DeployType == null || $scope.ModuleType == null || installTask == null )
@@ -33,7 +35,15 @@
 
       if( $scope.DeployType != 'Task' )
       {
-         $scope.stepList = _Deploy.BuildSdbStep( $scope, $location, $scope.DeployType, $scope['Url']['Action'], $scope.ModuleType ) ;
+         if( shrink == true )
+         {
+            $scope.stepList = _Deploy.BuildSdbShrinkStep( $scope, $location, $scope['Url']['Action'], 'sequoiadb' ) ;
+         }
+         else
+         {
+            $scope.stepList = _Deploy.BuildSdbStep( $scope, $location, $scope.DeployType, $scope['Url']['Action'], $scope.ModuleType ) ;
+         }
+
          if( $scope.DeployType != 'Task' && $scope.stepList['info'].length == 0 )
          {
             $location.path( '/Deploy/Index' ).search( { 'r': new Date().getTime() } ) ;

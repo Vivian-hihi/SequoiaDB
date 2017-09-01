@@ -108,7 +108,7 @@
                            <span ng-if="BeforeExtend['NumReplicaMax']>BeforeExtend['NumReplicaMin']">{{BeforeExtend['NumReplicaMin']}}-</span>{{BeforeExtend['NumReplicaMax']}}
                         </td>
                         <td ng-style="{'1':{'color':'#D9534F','font-weight':'bold'},'-1':{'color':'#00CC66','font-weight':'bold'},'0':{'color':'#000','font-weight':'normal'}}[( AfterExtend['NumReplicaMin'] == BeforeExtend['NumReplicaMin'] && AfterExtend['NumReplicaMax'] == BeforeExtend['NumReplicaMax'] ) ? '0' : ( ( AfterExtend['NumReplicaMin'] > BeforeExtend['NumReplicaMin'] || AfterExtend['NumReplicaMax'] > BeforeExtend['NumReplicaMax'] ) ? '1' : '-1' )]">
-                           <span ng-if="AfterExtend['NumReplicaMax']>AfterExtend['NumReplicaMin']">{{AfterExtend['NumReplicaMin']}}-</span>{{AfterExtend['NumReplicaMax']}}
+                           <span ng-if="AfterExtend['NumReplicaMax']>AfterExtend['NumReplicaMin']&&AfterExtend['NumReplicaMin']!=0">{{AfterExtend['NumReplicaMin']}}-</span>{{AfterExtend['NumReplicaMax']}}
                         </td>
                      </tr>
                      <tr>

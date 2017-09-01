@@ -800,6 +800,59 @@
          }
       }
 
+      //业务减容 弹窗
+      $scope.ShrinkWindow = {
+         'config': {},
+         'callback': {}
+      }
+
+      //打开 业务减容 弹窗
+      $scope.ShowShrinkWindow = function(){
+         if( $scope.clusterList.length > 0 && $scope.DistributionNum != 0 )
+         {
+            $scope.ShrinkWindow['config'] = {
+               inputList: [
+                  {
+                     "name": 'moduleName',
+                     "webName": $scope.autoLanguage( '业务名' ),
+                     "type": "select",
+                     "value": null,
+                     "valid": []
+                  }
+               ]
+            } ;
+            var clusterName = $scope.clusterList[ $scope.currentCluster ]['ClusterName'] ;
+            $.each( $scope.moduleList, function( index, moduleInfo ){
+               if( clusterName == moduleInfo['ClusterName'] && moduleInfo['BusinessType'] == 'sequoiadb' && moduleInfo['DeployMod'] == 'distribution' )
+               {
+                  if( $scope.ShrinkWindow['config']['inputList'][0]['value'] == null )
+                  {
+                     $scope.ShrinkWindow['config']['inputList'][0]['value'] = index ;
+                  }
+                  $scope.ShrinkWindow['config']['inputList'][0]['valid'].push( { 'key': moduleInfo['BusinessName'], 'value': index } )
+               }
+            } ) ;
+            $scope.ShrinkWindow['callback']['SetOkButton']( $scope.autoLanguage( '确定' ), function(){
+               var isAllClear = $scope.ShrinkWindow['config'].check() ;
+               if( isAllClear )
+               {
+                  var formVal = $scope.ShrinkWindow['config'].getValue() ;
+                  $rootScope.tempData( 'Deploy', 'Model',       'Module' ) ;
+                  $rootScope.tempData( 'Deploy', 'Module',      'sequoiadb' ) ;
+                  $rootScope.tempData( 'Deploy', 'ModuleName',  $scope.moduleList[ formVal['moduleName'] ]['BusinessName'] ) ;
+                  $rootScope.tempData( 'Deploy', 'ClusterName', $scope.clusterList[ $scope.currentCluster ]['ClusterName'] ) ;
+                  $rootScope.tempData( 'Deploy', 'Shrink', true ) ;
+                  SdbFunction.LocalData( 'SdbModuleName',  $scope.moduleList[ formVal['moduleName'] ]['BusinessName'] ) ;
+                  $location.path( '/Deploy/SDB-ShrinkConf' ).search( { 'r': new Date().getTime() } ) ;
+               }
+               return isAllClear ;
+            } ) ;
+            $scope.ShrinkWindow['callback']['SetTitle']( $scope.autoLanguage( '业务减容' ) ) ;
+            $scope.ShrinkWindow['callback']['SetIcon']( '' ) ;
+            $scope.ShrinkWindow['callback']['Open']() ;
+         }
+      }
+
       //同步业务 弹窗
       $scope.SyncWindow = {
          'config': {},
@@ -1049,7 +1102,6 @@
                      "value": 'sequoiadb',
                      "valid": [
                         { 'key': 'SequoiaDB', 'value': 'sequoiadb' },
-                        { 'key': $scope.autoLanguage( 'SequoiaSQL引擎' ), 'value': 'sequoiasql' },
                         { 'key': 'Spark', 'value': 'spark' },
                         { 'key': 'Hdfs', 'value': 'hdfs' },
                         { 'key': 'Yarn', 'value': 'yarn' }
