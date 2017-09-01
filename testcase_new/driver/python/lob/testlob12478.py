@@ -65,12 +65,22 @@ class Lob12478(unittest.TestCase):
          self.check_lob(lob,context)
 
          lob.seek(0)
-         lob.seek(lob.get_size()/2,1)
+         size=int(lob.get_size()/2)
+         lob.seek(size,1)
          context=lob.read(lob.get_size()-1)
+         if isinstance(context,str):
+            pass
+         else:
+            context=context.decode('utf-8')
+         print(type(context))
+         
+         print(context)
+         print("-----")
+         print(self.lob_context)
+
          if context not in self.lob_context:
             self.fail("seek context not in lob_context")
          lob.close()
-         
 
    def del_lob(self):
       for oid in self.oid_set:
