@@ -144,8 +144,8 @@ public class TestLobInterfaceDependency7099 extends SdbTestBase{
 			lob.close();
 			Assert.fail("expect result need throw an error but not.");
 		}catch(BaseException e){
-			//expected results to retrun to -269,then ignore exceptions
-			Assert.assertEquals(-269,e.getErrorCode(),e.getErrorCode()+e.getMessage());
+			//expected results to retrun to -317,then ignore exceptions
+			Assert.assertEquals(e.getErrorCode(),-317,e.getErrorCode()+e.getMessage());			
 		}finally{
 			if (lob != null){
 				lob.close();
