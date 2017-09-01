@@ -1,4 +1,5 @@
 ﻿//@ sourceURL=Extend.js
+//"use strict" ;
 (function(){
    var sacApp = window.SdbSacManagerModule ;
    //控制器
@@ -104,8 +105,8 @@
 
       //跳转到下一步
       $scope.GotoExtend = function(){
-         var newExtendNodeList = $.extend( true, [], extendNodeList ) ;
-         if( newExtendNodeList.length == 0 )
+         var oldExtendNodeList = extendNodeList ;
+         if( oldExtendNodeList.length == 0 )
          {
             $scope.Components.Confirm.type = 3 ;
             $scope.Components.Confirm.context = $scope.autoLanguage( '没有扩容节点，请修改扩容配置。' ) ;
@@ -116,9 +117,17 @@
             }
             return ;
          }
-         $.each( newExtendNodeList, function( index, nodeInfo ){
-            newExtendNodeList[index] = deleteJson( nodeInfo, [ '_other' ] ) ;
-            newExtendNodeList[index] = convertJsonValueString( newExtendNodeList[index] ) ;
+         var newExtendNodeList = [] ;
+         $.each( oldExtendNodeList, function( index, nodeInfo ){
+            var nodeConf = {} ;
+            $.each( nodeInfo, function( key, value ){
+               if( ( value.length > 0 || key == 'datagroupname' ) && key != '_other' )
+               {
+                  nodeConf[key] = value ;
+               }
+            } ) ;
+            nodeConf = convertJsonValueString( nodeConf ) ;
+            newExtendNodeList.push( nodeConf ) ;
          } ) ;
          var config = {
             'ClusterName':  extendConfigure['ClusterName'],

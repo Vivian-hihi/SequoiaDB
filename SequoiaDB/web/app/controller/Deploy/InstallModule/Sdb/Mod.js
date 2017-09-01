@@ -1,4 +1,5 @@
 ﻿//@ sourceURL=Mod.js
+//"use strict" ;
 (function(){
    var sacApp = window.SdbSacManagerModule ;
    //控制器
@@ -1485,7 +1486,22 @@
       }
 
       $scope.GotoInstall = function(){
-         var configure = convertConfig() ;
+         var oldConfigure = convertConfig() ;
+         var configure = {} ;
+         $.each( oldConfigure, function( key, value ){
+            configure[key] = value ;
+         } ) ;
+         configure['Config'] = [] ;
+         $.each( oldConfigure['Config'], function( nodeIndex, nodeInfo ){
+            var nodeConfig = {} ;
+            $.each( nodeInfo, function( key, value ){
+               if( value.length > 0 || key == 'datagroupname' )
+               {
+                   nodeConfig[key] = value ;
+               }
+            } ) ;
+            configure['Config'].push( nodeConfig ) ;
+         } ) ;
          if( configure )
             installSdb( configure ) ;
       }
