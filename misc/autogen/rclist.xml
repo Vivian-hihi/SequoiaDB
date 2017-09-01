@@ -2549,7 +2549,7 @@
       <code>
          <name>SDB_VALUE_OVERFLOW</name>
          <description>
-            <en>Data operations overflow</en>
+            <en>Data operation has overflowed</en>
             <cn>数值运算出现溢出</cn>
          </description>
       </code>
