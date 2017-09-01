@@ -1,7 +1,6 @@
 from pysequoiadb import client
 from pysequoiadb import collectionspace
 from pysequoiadb.error import (SDBTypeError, SDBBaseError, SDBEndOfCursor)
-import unittest
 
 def get_data_groups( db ):
    cursor = db.list_replica_groups()

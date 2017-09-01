@@ -24,6 +24,12 @@ class TestCS12446(unittest.TestCase):
       #create cs
       self.cs_name = "cs_12446"
       cl_names = ["cl_12446_1", "cl_12446_2"]
+      try:
+         self.db.drop_collection_space(self.cs_name)
+      except SDBBaseError as e:
+         if(-34 != e.code):
+            print(e.detail)
+            self.fail("drop_cs_fail")
       self.cs = self.db.create_collection_space( self.cs_name )
       
       #create cl set Compressed

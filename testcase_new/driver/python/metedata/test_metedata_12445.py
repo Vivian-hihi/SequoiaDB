@@ -41,6 +41,18 @@ class TestCS12445(unittest.TestCase):
       self.cl_group_name =  data_groups[0]
       
       #create cs
+      try:
+         self.db.drop_collection_space(self.maincs_name)
+      except SDBBaseError as e:
+         if(-34 != e.code):
+            print(e.detail)
+            self.fail("drop_cs_fail")
+      try:
+         self.db.drop_collection_space(self.subcs_name)
+      except SDBBaseError as e:
+         if(-34 != e.code):
+            print(e.detail)
+            self.fail("drop_cs_fail")
       self.maincs = self.db.create_collection_space( self.maincs_name )
       self.subcs = self.db.create_collection_space( self.subcs_name )
       

@@ -31,6 +31,12 @@ class TestCS12443(unittest.TestCase):
                   ]
       for index in range(len(self.list)):
          self.cs_name = self.list[index][0]
+         try:
+            self.db.drop_collection_space(self.cs_name)
+         except SDBBaseError as e:
+            if(-34 != e.code):
+               print(e.detail)
+               self.fail("drop_cs_fail")
          page_size = self.list[index][1]
          expect_page_size = self.list[index][2]
          expect_lob_page_size = self.list[index][3]

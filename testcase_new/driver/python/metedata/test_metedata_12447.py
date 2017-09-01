@@ -26,6 +26,12 @@ class TestCS12447(unittest.TestCase):
       #create cs
       self.cs_name = "cs_12447"
       cl_name = "cl_12447"
+      try:
+         self.db.drop_collection_space(self.cs_name)
+      except SDBBaseError as e:
+         if(-34 != e.code):
+            print(e.detail)
+            self.fail("drop_cs_fail")
       self.db.create_collection_space( self.cs_name )
       
       #get cs and create cl
