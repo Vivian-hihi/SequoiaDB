@@ -103,11 +103,11 @@ TEST( lobAbnormalTest, NotClosedLob )
    
    	// read lob when lob is not closed
    	rc = sdbOpenLob( cl, &oid, SDB_LOB_READ, &lob ) ;
-   	ASSERT_EQ( SDB_LOB_IS_NOT_AVAILABLE, rc ) << "fail to test open lob when lob is not closed" ;
+   	ASSERT_EQ( SDB_LOB_IS_IN_USE, rc ) << "fail to test open lob when lob is not closed" ;
    
    	// remove lob when lob is not closed
    	rc = sdbRemoveLob( cl, &oid ) ;
-   	ASSERT_EQ( SDB_LOB_IS_NOT_AVAILABLE, rc ) << "fail to test remove lob when lob is not closed" ;
+   	ASSERT_EQ( SDB_LOB_IS_IN_USE, rc ) << "fail to test remove lob when lob is not closed" ;
    
    	// close lob
    	rc = sdbCloseLob( &lob ) ;
