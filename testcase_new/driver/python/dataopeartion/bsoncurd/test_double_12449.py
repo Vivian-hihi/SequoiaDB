@@ -10,7 +10,7 @@ import datetime
 from pysequoiadb import client
 from pysequoiadb import collectionspace
 from pysequoiadb.error import (SDBTypeError, SDBBaseError, SDBEndOfCursor)
-from bsoncurd.commlib import *
+from dataopeartion.bsoncurd.commlib import *
 from lib.config import *
 
 class TestCS12449(unittest.TestCase):

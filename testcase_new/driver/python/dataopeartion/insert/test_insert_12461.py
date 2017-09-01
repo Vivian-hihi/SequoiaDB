@@ -8,7 +8,7 @@ import datetime
 from pysequoiadb import client
 from pysequoiadb import collectionspace
 from pysequoiadb.error import (SDBTypeError, SDBBaseError, SDBEndOfCursor)
-from insert.commlib import *
+from dataopeartion.insert.commlib import *
 from lib.config import *
 
 class TestCS12461(unittest.TestCase):
