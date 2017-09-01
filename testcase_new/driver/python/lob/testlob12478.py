@@ -72,11 +72,6 @@ class Lob12478(unittest.TestCase):
             pass
          else:
             context=context.decode('utf-8')
-         print(type(context))
-         
-         print(context)
-         print("-----")
-         print(self.lob_context)
 
          if context not in self.lob_context:
             self.fail("seek context not in lob_context")
