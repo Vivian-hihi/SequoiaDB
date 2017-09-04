@@ -1,4 +1,6 @@
-# @decription: save records 
+# @decription: save records
+# @testlink:   seqDB-12502
+# @interface:  save(self,doc)
 # @author:     liuxiaoxuan 2017-8-29
 
 import unittest

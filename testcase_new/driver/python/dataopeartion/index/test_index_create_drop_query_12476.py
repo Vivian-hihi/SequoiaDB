@@ -1,4 +1,8 @@
 # @decription: create/drop/query common index
+# @testlink:   seqDB-12476
+# @interface:  create_index(self,index_def,idx_name,is_unique,is_enforced,buffer_size)
+#              drop_index(self,idx_name)
+#              get_indexes(self,idx_name)
 # @author:     liuxiaoxuan 2017-8-30
 
 import unittest
@@ -22,30 +26,36 @@ class TestIndex12476(unittest.TestCase):
          self.insert_datas()         
       except SDBBaseError as e:
          print(e.detail)
-         raise e        
  
    def testIdIndex12476(self):
       try:  
          aIndex = {'a':1}
-         aIdxName = 'a'
-         bIndex = {'b':1}
-         bIdxName = 'b'     
-          
+         aIdxName = 'a'    
          isOption = True          
          self.create_index(aIndex,aIdxName,isOption)
-         self.create_index(bIndex,bIdxName,not isOption)
-         self.query_datas(aIdxName)
+         
+         expectResult = []
+         for i in range(11,20):
+            expectResult.append({"_id":i,"a":i,"b":"test" + str(i)})
+         expectExplainRec = ['ixscan',aIdxName]	
+         condition = {"a":{'$gt':10,'$lt':20}}		
+         self.query_datas(expectResult,condition,aIdxName)
+         self.get_explain(expectExplainRec,condition)
           
-         self.check_indexes()
-         self.check_one_index(aIdxName)
-         self.check_one_index(bIdxName)
+         expectIdxResult = [aIdxName,aIndex,isOption]
+			#self.check_indexes(expectResult)
+         self.check_indexes(expectIdxResult,aIdxName)
           
          self.drop_index(aIdxName)
-         self.drop_index(bIdxName)
-         self.query_datas("")
+			
+         tbscan = ""
+         expectExplainRec = ['tbscan',tbscan]			
+         self.query_datas(expectResult,condition,tbscan)
+         self.get_explain(expectExplainRec,condition)
+			
       except SDBBaseError as e:
          print(e.detail) 
-         assert False
+         self.fail("test idIndex failed" + e.detail)
 		 
    def tearDown(self):
       try:
@@ -66,9 +76,7 @@ class TestIndex12476(unittest.TestCase):
 			
    def create_cl(self):
       try:
-         print( '---begin to create cs---')
-         self.cs = self.db.create_collection_space(cs_name)            
-         
+         self.cs = self.db.create_collection_space(cs_name)              
          self.cl = self.cs.create_collection(cl_name)
          print( '---create cl success---' )   
       except SDBError as e:
@@ -76,7 +84,6 @@ class TestIndex12476(unittest.TestCase):
          raise e    
   
    def insert_datas(self):   
-      print( '---begin to insert records---' )
       for i in range(1,insert_nums):
          try:
             self.cl.insert({"_id":i,"a":i, "b":"test" + str(i)})  
@@ -84,72 +91,112 @@ class TestIndex12476(unittest.TestCase):
             print(e.detail) 
             raise e        
     
-   def check_one_index(self,index_name):
-      print( '---check one index---' )
+   def check_indexes(self,expectResult,index_name):
       try:
-         cursor = self.cl.get_indexes(index_name);  
-         rec = cursor.next()
-         act_idx_name = rec['IndexDef']['name']
-         exp_idx_name = index_name
-         self.assertEqual(exp_idx_name, act_idx_name,'index name is not exist')
-      except SDBBaseError as e:
-         print(e.detail) 
-         raise e             
-    
-   def check_indexes(self):
-      print( '---check all indexes---' )
-      try:
-         cursor = self.cl.get_indexes(); 
+         if index_name==None:
+            cursor = self.cl.get_indexes();
+         else:
+            cursor = self.cl.get_indexes(index_name); 			
          idxs = []
          while True:
             try:
                rec = cursor.next()
                index_name = rec['IndexDef']['name']
-               idxs.append(index_name)
-               print(index_name)
+               key = rec['IndexDef']['key']
+               isUnique = rec['IndexDef']['unique']
+               isEnforced = rec['IndexDef']['enforced']
+               self.assertEqual(index_name,expectResult[0])
+               self.assertEqual(key,expectResult[1])
+               self.assertEqual(isUnique,expectResult[2])
+               self.assertEqual(isEnforced,expectResult[2])							
             except SDBEndOfCursor:
-               break
-         if('a' not in idxs or 'b' not in idxs):
-            assert False        
+               break   
       except SDBBaseError as e:
          print(e.detail) 
          raise e             
        
    def drop_index(self,index_name):   
-      print( '---drop index---' )
       try:
          self.cl.drop_index(index_name)  
+         print('drop index success')
       except SDBBaseError as e:
          print(e.detail) 
          raise e      
       
    def create_index(self,index,index_name,isOption):   
-      print( '---create index---' )
       try:
-         isUnique = False
-         isEnforced = False
-         buffer_size = 0
-         if(isOption):
+         if isOption: 
             isUnique = True
             isEnforced = True
             buffer_size = 128
-         self.cl.create_index(index, index_name, isUnique, isEnforced, buffer_size)
+            self.cl.create_index(index, index_name, isUnique, isEnforced, buffer_size)
+         else:
+            pass 
+         print ('create index success')				
+ 
       except SDBBaseError as e:
          print(e.detail) 
          raise e       
       
-   def query_datas(self,index_name):   
-      print( '---check data with index---' )
+   def query_datas(self,expectResult,cond,index_name):   
       try:
-         rec = self.cl.query(condition={"a":{'$et':10}},\
+         cursor = self.cl.query(condition=cond,\
                              order_by={"_id":1},\
                              hint={"":index_name},\
-                             flags=1).next()
-         exprec = {"_id":10,"a":10, "b":"test" + str(10)}
-         self.assertEqual( rec,exprec)                     
+                             flags=1)
+         actResult = []							  
+         while True:
+            try:
+               rec = cursor.next()
+               actResult.append(rec)
+            except SDBEndOfCursor:
+               break  
+         self.check_result(actResult,expectResult)	                     
       except SDBBaseError as e:
          print(e.detail) 
-         raise e                              
+         raise e   
+		
+   def check_result(self,actResult,expectResult):
+      if not( len(actResult) == len(expectResult) ):
+         self.fail('actResult is not equal to expectResult')
+		
+      flag = True
+      size = len(actResult)
+      for i in range(0,size):
+         if not(actResult[i] == expectResult[i]):
+            print(actResult[i])
+            print(expectResult[i])
+            flag = False
+            break
+      self.assertEqual(flag, True)	    
+
+   def get_explain(self,expectExplainRec,cond):   
+      try:
+         cursor = self.cl.explain(condition=cond,\
+                             order_by={"_id":1},\
+                             flags=1)
+         rec = cursor.next()
+         actScanType = rec['ScanType']
+         actIndexName = rec['IndexName']
+         actExplainRec = [actScanType,actIndexName]
+         self.check_explain(actExplainRec,expectExplainRec)	                     
+      except SDBBaseError as e:
+         print(e.detail) 
+         raise e   
+		
+   def check_explain(self,actExplainRec,expectExplainRec):
+      if not( len(actExplainRec) == len(expectExplainRec) ):
+         self.fail('actExplainRec is not equal to expectExplainRec')
+		
+      flag = True
+      size = len(actExplainRec)
+      for i in range(0,size):
+         if not(actExplainRec[i] == expectExplainRec[i]):
+            print(actExplainRec[i])
+            print(expectExplainRec[i])
+            flag = False
+            break
+      self.assertEqual(flag, True)	 
                         
 if __name__ == "__main__":
     unittest.main() 

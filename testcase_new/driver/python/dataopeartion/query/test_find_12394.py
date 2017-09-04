@@ -1,4 +1,7 @@
 # @decription: find records with option FLAGS
+# @testlink:   seqDB-12394
+# @interface:  query(self,kwargs)
+#              query_one(self,kwargs)
 # @author:     liuxiaoxuan 2017-8-29
 
 import unittest

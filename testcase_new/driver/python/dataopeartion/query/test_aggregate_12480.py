@@ -1,4 +1,6 @@
 # @decription: test aggregate
+# @testlink:   seqDB-12480
+# @interface:  aggregate(self,aggregate_options)
 # @author:     liuxiaoxuan 2017-8-30
 
 import unittest

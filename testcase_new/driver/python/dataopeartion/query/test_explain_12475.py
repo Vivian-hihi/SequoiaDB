@@ -1,4 +1,6 @@
 # @decription: test explain
+# @testlink:   seqDB-12475
+# @interface:  explain(self,kwargs)
 # @author:     liuxiaoxuan 2017-8-30
 
 from bson.py3compat import (PY3,long_type)

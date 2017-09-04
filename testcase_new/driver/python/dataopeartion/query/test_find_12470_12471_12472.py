@@ -1,4 +1,7 @@
-# @decription: find records with options
+# @decription: find records with option 
+# @testlink:   seqDB-12470-12471-12474
+# @interface:  query(self,kwargs)
+#              get_count(self,condition)
 # @author:     liuxiaoxuan 2017-8-29
 
 from bson.py3compat import (PY3,long_type)
