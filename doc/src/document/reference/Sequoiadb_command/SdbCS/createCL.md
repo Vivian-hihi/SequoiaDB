@@ -88,7 +88,7 @@ Collection Space
 
       格式：`EnsureShardingIndex:true|false`
 
-    12. `IsStrictDataType` ( *Bool* )：标识对该集合的操作是否开启严格数据类型模式，默认为false(不开启)。
+    12. `StrictDataMode` ( *Bool* )：标识对该集合的操作是否开启严格数据类型模式，默认为false(不开启)。
 
 	    严格数据模式的开启标识对数值操作存在以下限制：
 
@@ -96,7 +96,7 @@ Collection Space
 	  * 数值运算出现溢出时直接报错，错误码SDB_VALUE_OVERFLOW；
 
 
-      格式：`IsStrictDataType:true|false`
+      格式：`StrictDataMode:true|false`
 
     **注意：**
 
@@ -172,7 +172,7 @@ v1.0及以上版本。
 3. 在集合空间 foo 下创建集合 bar，开启严格数据类型模式。
 
     ```lang-javascript
-    > db.foo.createCL("bar", {IsStrictDataType: true})
+    > db.foo.createCL("bar", {StrictDataMode: true})
     localhost:11810.foo.bar
     Takes 0.120450s.
     ```

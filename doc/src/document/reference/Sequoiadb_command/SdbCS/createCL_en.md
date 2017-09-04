@@ -88,6 +88,11 @@ belong to one and only one collection.
                                              
         Format: `EnsureShardingIndex:true|false`
 
+    12. `StrictDataMode` ( *Bool* ): using strict date mode in numeric operations 
+or not, default to be false.
+
+        Format: `StrictDataMode:true|false`
+
     **Note:**
 
     * The parameter `name` can not be an empty string, and can not 
@@ -156,3 +161,13 @@ Since v1.0.
     localhost:11810.foo.bar
     Takes 0.32450s.
     ```
+3. Create collection "bar" in collection space "foo" with the StrictDataMode trun on.
+	If the collection space "foo" doesn't exist, it will automatically
+   generate collection space "foo".
+
+    ```lang-javascript
+    > db.foo.createCL("bar", { StrictDataMode: true})
+    localhost:11810.foo.bar
+    Takes 0.1250s.
+    ```
+

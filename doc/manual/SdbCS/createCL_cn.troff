@@ -120,11 +120,11 @@ false。
 格式：\f[C]EnsureShardingIndex:true|false\f[]
 .RE
 .IP "12." 4
-\f[C]StrictDataModeOn\f[] ( \f[I]Bool\f[])：
+\f[C]StrictDataMode\f[] ( \f[I]Bool\f[])：
  标识对该集合的操作是否开启严格数据类型模式，默认为false(不开启)。
 .RS 4
 .PP
-格式：\f[C]StrictDataModeOn:true|false\f[]
+格式：\f[C]StrictDataMode:true|false\f[]
 .PP
 \f[B]注意：\f[]
 .IP \[bu] 2
@@ -304,7 +304,7 @@ Takes\ 0.110319s.
 在集合空间 foo 下创建集合 bar，开启严格数据类型模式。
 .nf
 \f[C]
->\ db.foo.createCL("bar", {StrictDataModeOn: true})
+>\ db.foo.createCL("bar", {StrictDataMode: true})
 localhost:11810.foo.bar
 Takes\ 0.120450s.
 \f[]

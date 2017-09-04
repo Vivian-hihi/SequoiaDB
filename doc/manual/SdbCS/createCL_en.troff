@@ -124,11 +124,11 @@ fields of the \f[C]ShardingKey\f[] or not, default to be true.
 Format: \f[C]EnsureShardingIndex:true|false\f[]
 .RE
 .IP "12." 4
-\f[C]StrictDataModeOn\f[] ( \f[I]Bool\f[] ): using strict type in numeric operations 
+\f[C]StrictDataMode\f[] ( \f[I]Bool\f[] ): using strict date mode in numeric operations 
 or not, default to be false.
 .RS 4
 .PP
-Format: \f[C]StrictDataModeOn:true|false\f[]
+Format: \f[C]StrictDataMode:true|false\f[]
 .RE
 .PP
 \f[B]Note:\f[]
@@ -299,12 +299,12 @@ Takes\ 0.32450s.
 .fi
 .RE
 .IP "3." 3
-Create collection "bar" in collection space "foo" with the StrictDataModeOn trun on.
+Create collection "bar" in collection space "foo" with the StrictDataMode trun on.
 If the collection space "foo" doesn\[aq]t exist, it will automatically generate
 collection space "foo".
 .nf
 \f[C]
->\ db.foo.createCL("bar", { StrictDataModeOn: true})
+>\ db.foo.createCL("bar", { StrictDataMode: true})
 localhost:11810.foo.bar
 Takes\ 0.1250s.
 \f[]
