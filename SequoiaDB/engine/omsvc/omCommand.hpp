@@ -1055,7 +1055,14 @@ namespace engine
                              const string &svcname,
                              const string &authUser,
                              const string &authPwd,
+                             const string &agentService,
                              BSONObj &request ) ;
+      void _parseHostMap( const BSONObj &hosts, map<string, string> &hostMap ) ;
+      void _hostName2Address( map<string, string> &hostMap,
+                              string &hostName, string &address ) ;
+      INT32 _checkSyncSdbResult( omRestTool &restTool,
+                                 const BSONObj &hostInfo,
+                                 map<string, string> &hostMap ) ;
       INT32 _syncSequoiaDB( omRestTool &restTool, const BSONObj &buzInfo ) ;
       INT32 _storeBusinessInfo( const INT32 addType,
                                 const string &deployMod,

@@ -563,6 +563,8 @@ namespace engine
    #define  OM_BSON_FIELD_DBUSER             "DbUser"
    #define  OM_BSON_FIELD_DBPASSWD           "DbPasswd"
 
+   #define OM_BSON_FIELD_HOSTS               "Hosts"
+
    #define OM_NODE_ROLE_STANDALONE           SDB_ROLE_STANDALONE_STR
    #define OM_NODE_ROLE_COORD                SDB_ROLE_COORD_STR
    #define OM_NODE_ROLE_CATALOG              SDB_ROLE_CATALOG_STR

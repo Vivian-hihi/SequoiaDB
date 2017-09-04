@@ -974,9 +974,9 @@ namespace engine
 
       businessName = taskInfoValue.getStringField( OM_BSON_BUSINESS_NAME ) ;
       businessType = taskInfoValue.getStringField( OM_BSON_BUSINESS_TYPE ) ;
-      deployMode   = taskInfoValue.getStringField( OM_BSON_DEPLOY_MOD ) ;
-      clusterName  = taskInfoValue.getStringField( OM_BSON_FIELD_CLUSTER_NAME ) ;
-      configs      = taskInfoValue.getObjectField( OM_BSON_FIELD_CONFIG ) ;
+      deployMode  = taskInfoValue.getStringField( OM_BSON_DEPLOY_MOD ) ;
+      clusterName = taskInfoValue.getStringField( OM_BSON_FIELD_CLUSTER_NAME ) ;
+      configs     = taskInfoValue.getObjectField( OM_BSON_FIELD_CONFIG ) ;
 
       if ( OM_BUSINESS_SEQUOIADB == businessType )
       {
@@ -995,7 +995,7 @@ namespace engine
             if ( dbTool.isConfigExist( businessName, hostName ) )
             {
                rc = dbTool.appendConfigure( businessName, hostName, oneNode ) ;
-               if ( SDB_OK != rc )
+               if ( rc )
                {
                   PD_LOG( PDERROR, "append configure failed:host=%s,"
                           "business=%s, node=%s, rc=%d", 

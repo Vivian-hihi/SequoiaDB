@@ -10707,6 +10707,7 @@ namespace engine
                                                      const string &svcname,
                                                      const string &authUser,
                                                      const string &authPwd,
+                                                     const string &agentService,
                                                      BSONObj &request )
    {
       BSONObjBuilder builder ;
@@ -10723,10 +10724,175 @@ namespace engine
 
       addressBuilder.append( OM_CONFIGURE_FIELD_HOSTNAME, hostName ) ;
       addressBuilder.append( OM_CONF_DETAIL_SVCNAME, svcname ) ;
+      addressBuilder.append( OM_BSON_FIELD_AGENT_PORT, agentService ) ;
       arrayBuilder.append( addressBuilder.obj() ) ;
 
       builder.append( OM_REST_FIELD_ADDRESS, arrayBuilder.arr() ) ;
       request = builder.obj() ;
+   }
+
+   void omDiscoverBusinessCommand::_parseHostMap( const BSONObj &hosts,
+                                                map<string, string> &hostMap )
+   {
+      BSONObjIterator iter( hosts ) ;
+
+      while ( iter.more() )
+      {
+         BSONElement ele  = iter.next() ;
+         BSONObj hostInfo = ele.embeddedObject() ;
+         string hostName  = hostInfo.getStringField( OM_HOST_FIELD_NAME ) ;
+         string ip        = hostInfo.getStringField( OM_HOST_FIELD_IP ) ;
+
+         hostMap[hostName] = ip ;
+      }
+   }
+
+   /*
+      try convert hostName to ip
+   */
+   void omDiscoverBusinessCommand::_hostName2Address(
+                                                   map<string, string> &hostMap,
+                                                   string &hostName,
+                                                   string &address )
+   {
+      map<string, string>::iterator iter ;
+
+      iter = hostMap.find( hostName ) ;
+      if ( iter == hostMap.end() )
+      {
+         address = hostName ;
+      }
+      else
+      {
+         address = hostMap[hostName] ;
+      }
+   }
+
+   INT32 omDiscoverBusinessCommand::_checkSyncSdbResult(
+                                                omRestTool &restTool,
+                                                const BSONObj &hostInfo,
+                                                map<string, string> &hostMap )
+   {
+      INT32 rc            = SDB_OK ;
+      INT32 lastErrno     = SDB_OK ;
+      INT32 coordNum      = 0 ;
+      INT32 catalogNum    = 0 ;
+      INT32 standaloneNum = 0 ;
+      INT32 missHostNum   = 0 ;
+      INT32 errorHostNum  = 0 ;
+      string lastErrMsg ;
+      omDatabaseTool dbTool( _cb ) ;
+      BSONArrayBuilder hostsArray ;
+      BSONObjIterator iter( hostInfo ) ;
+
+      while ( iter.more() )
+      {
+         BSONElement ele = iter.next() ;
+         BSONObj tmpConfig = ele.embeddedObject() ;
+         BSONObj nodeConfigs = tmpConfig.getObjectField(
+                                                OM_CONFIGURE_FIELD_CONFIG ) ;
+         INT32 hostErrno = tmpConfig.getIntField(
+                                             OM_CONFIGURE_FIELD_ERRNO ) ;
+         string tmpHostName = tmpConfig.getStringField(
+                                             OM_CONFIGURE_FIELD_HOSTNAME ) ;
+         BSONObjIterator configsIter( nodeConfigs ) ;
+
+         while ( configsIter.more() )
+         {
+            BSONElement configEle = configsIter.next() ;
+            BSONObj nodeConfig = configEle.embeddedObject() ;
+            string role = nodeConfig.getStringField(
+                                                OM_CONFIGURE_FIELD_ROLE ) ;
+
+            if ( OM_NODE_ROLE_COORD == role )
+            {
+               ++coordNum ;
+            }
+            else if ( OM_NODE_ROLE_CATALOG == role )
+            {
+               ++catalogNum ;
+            }
+            else if ( OM_NODE_ROLE_STANDALONE == role )
+            {
+               ++standaloneNum ;
+            }
+         }
+
+         if ( FALSE == dbTool.isHostExistOfCluster( tmpHostName,
+                                                    _clusterName ) )
+         {
+            string tmpAddress ;
+
+            if ( dbTool.isHostExistOfClusterByIp( tmpHostName,
+                                                  _clusterName ) )
+            {
+               rc = SDB_INVALIDARG ;
+               _errorMsg.setError( TRUE, "IP mode is not supported" ) ;
+               PD_LOG( PDERROR, _errorMsg.getError() ) ;
+               goto error ;
+            }
+
+            ++missHostNum ;
+
+            _hostName2Address( hostMap, tmpHostName, tmpAddress ) ;
+            hostsArray.append( tmpAddress ) ;
+         }
+
+         if ( SDB_OK != hostErrno )
+         {
+            string hostErrMsg = tmpConfig.getStringField(
+                                             OM_CONFIGURE_FIELD_DETAIL ) ;
+
+            lastErrno  = hostErrno ;
+            lastErrMsg = hostErrMsg ;
+            ++errorHostNum ;
+         }
+      }
+
+      if ( 0 < missHostNum )
+      {
+         BSONObjBuilder missHost ;
+
+         missHost.append( OM_BUSINESS_RES_HOSTS, hostsArray.arr() ) ;
+         restTool.appendResponeMsg( missHost.obj() ) ;
+
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "failed to add business, missing host" ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      if ( 0 < errorHostNum )
+      {
+         rc = lastErrno ;
+         _errorMsg.setError( TRUE, "%s, rc=%d", lastErrMsg.c_str(), rc ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      if ( 0 == coordNum && 0 == standaloneNum )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "failed to add business, "
+                                   "missing coord node, do not add a "
+                                   "temporary coord node" ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+      
+      if ( 0 == catalogNum && 0 == standaloneNum )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "failed to add business, "
+                                   "missing catalog node" ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 omDiscoverBusinessCommand::_syncSequoiaDB( omRestTool &restTool,
@@ -10737,9 +10903,11 @@ namespace engine
       string svcname ;
       string authUser ;
       string authPwd ;
+      string agentService ;
+      string errDetail ;
       BSONObj request ;
       BSONObj result ;
-      string errDetail ;
+      map<string, string> hostMap ;
       omDatabaseTool dbTool( _cb ) ;
       omTaskTool taskTool( _cb, _localAgentHost, _localAgentService ) ;
 
@@ -10747,6 +10915,12 @@ namespace engine
       svcname  = buzInfo.getStringField( OM_BSON_FIELD_SVCNAME ) ;
       authUser = buzInfo.getStringField( OM_BSON_FIELD_HOST_USER ) ;
       authPwd  = buzInfo.getStringField( OM_BSON_FIELD_HOST_PASSWD ) ;
+      agentService = buzInfo.getStringField( OM_BSON_FIELD_AGENT_PORT ) ;
+      if ( agentService.empty() )
+      {
+         agentService = "11790" ;
+      }
+
 
       {
          //try to replace the hostName with om SYSHOST table data
@@ -10768,7 +10942,8 @@ namespace engine
          }
       }
 
-      _generateRequest( hostName, svcname, authUser, authPwd, request ) ;
+      _generateRequest( hostName, svcname, authUser, authPwd, agentService,
+                        request ) ;
 
       rc = taskTool.notifyAgentMsg( CMD_ADMIN_PREFIX OM_SYNC_BUSINESS_CONF_REQ,
                                     request, errDetail, result ) ;
@@ -10780,113 +10955,15 @@ namespace engine
          goto error ;
       }
 
+      _parseHostMap( result.getObjectField( OM_BSON_FIELD_HOSTS ), hostMap ) ;
+
+      rc = _checkSyncSdbResult( restTool,
+                                result.getObjectField( OM_BSON_FIELD_HOST_INFO ),
+                                hostMap ) ;
+      if ( rc )
       {
-         INT32 lastErrno    = SDB_OK ;
-         INT32 coordNum     = 0 ;
-         INT32 catalogNum   = 0 ;
-         INT32 missHostNum  = 0 ;
-         INT32 errorHostNum = 0 ;
-         string lastErrMsg ;
-         BSONObj hostInfoList = result.getObjectField(
-                                                   OM_BSON_FIELD_HOST_INFO ) ;
-         BSONArrayBuilder hostsArray ;
-         BSONObjIterator iter( hostInfoList ) ;
-
-         while ( iter.more() )
-         {
-            BSONElement ele = iter.next() ;
-            BSONObj tmpConfig = ele.embeddedObject() ;
-            BSONObj nodeConfigs = tmpConfig.getObjectField(
-                                                   OM_CONFIGURE_FIELD_CONFIG ) ;
-            INT32 hostErrno = tmpConfig.getIntField(
-                                                OM_CONFIGURE_FIELD_ERRNO ) ;
-            string tmpHostName = tmpConfig.getStringField(
-                                                OM_CONFIGURE_FIELD_HOSTNAME ) ;
-            BSONObjIterator configsIter( nodeConfigs ) ;
-
-            while ( configsIter.more() )
-            {
-               BSONElement configEle = configsIter.next() ;
-               BSONObj nodeConfig = configEle.embeddedObject() ;
-               string role = nodeConfig.getStringField(
-                                                   OM_CONFIGURE_FIELD_ROLE ) ;
-
-               if ( OM_NODE_ROLE_COORD == role )
-               {
-                  ++coordNum ;
-               }
-               if ( OM_NODE_ROLE_CATALOG == role )
-               {
-                  ++catalogNum ;
-               }
-            }
-
-            if ( FALSE == dbTool.isHostExistOfCluster( tmpHostName,
-                                                       _clusterName ) )
-            {
-               if ( dbTool.isHostExistOfClusterByIp( tmpHostName,
-                                                     _clusterName ) )
-               {
-                  rc = SDB_INVALIDARG ;
-                  _errorMsg.setError( TRUE, "IP mode is not supported" ) ;
-                  PD_LOG( PDERROR, _errorMsg.getError() ) ;
-                  goto error ;
-               }
-               ++missHostNum ;
-               hostsArray.append( tmpHostName ) ;
-            }
-
-            if ( SDB_OK != hostErrno )
-            {
-               string hostErrMsg = tmpConfig.getStringField(
-                                                OM_CONFIGURE_FIELD_DETAIL ) ;
-
-               lastErrno  = hostErrno ;
-               lastErrMsg = hostErrMsg ;
-               ++errorHostNum ;
-            }
-         }
-
-         if ( 0 < missHostNum )
-         {
-            BSONObjBuilder missHost ;
-
-            missHost.append( OM_BUSINESS_RES_HOSTS, hostsArray.arr() ) ;
-            restTool.appendResponeMsg( missHost.obj() ) ;
-
-            rc = SDB_INVALIDARG ;
-            _errorMsg.setError( TRUE, "failed to add business, missing host" ) ;
-            PD_LOG( PDERROR, _errorMsg.getError() ) ;
-            goto error ;
-         }
-
-         if ( 0 < errorHostNum )
-         {
-            rc = lastErrno ;
-            _errorMsg.setError( TRUE, "%s, rc=%d", lastErrMsg.c_str(), rc ) ;
-            PD_LOG( PDERROR, _errorMsg.getError() ) ;
-            goto error ;
-         }
-
-         if ( 0 == coordNum )
-         {
-            rc = SDB_INVALIDARG ;
-            _errorMsg.setError( TRUE, "failed to add business, "
-                                      "missing coord node, do not add a "
-                                      "temporary coord node" ) ;
-            PD_LOG( PDERROR, _errorMsg.getError() ) ;
-            goto error ;
-         }
-         
-         if ( 0 == catalogNum )
-         {
-            rc = SDB_INVALIDARG ;
-            _errorMsg.setError( TRUE, "failed to add business, "
-                                      "missing catalog node" ) ;
-            PD_LOG( PDERROR, _errorMsg.getError() ) ;
-            goto error ;
-         }
-
+         PD_LOG( PDERROR, "failed to call _checkSyncResult: rc=%d", rc ) ;
+         goto error ;
       }
 
       if ( authUser.length() > 0 && authPwd.length() > 0 )
@@ -12367,11 +12444,12 @@ namespace engine
                                                          const BSONObj &result )
    {
       INT32 rc = SDB_OK ;
-      INT32 lastErrno    = SDB_OK ;
-      INT32 coordNum     = 0 ;
-      INT32 catalogNum   = 0 ;
-      INT32 missHostNum  = 0 ;
-      INT32 errorHostNum = 0 ;
+      INT32 lastErrno     = SDB_OK ;
+      INT32 coordNum      = 0 ;
+      INT32 catalogNum    = 0 ;
+      INT32 standaloneNum = 0 ;
+      INT32 missHostNum   = 0 ;
+      INT32 errorHostNum  = 0 ;
       string lastErrMsg ;
       BSONObj hostInfoList = result.getObjectField(
                                                 OM_BSON_FIELD_HOST_INFO ) ;
@@ -12402,9 +12480,13 @@ namespace engine
             {
                ++coordNum ;
             }
-            if ( OM_NODE_ROLE_CATALOG == role )
+            else if ( OM_NODE_ROLE_CATALOG == role )
             {
                ++catalogNum ;
+            }
+            else if ( OM_NODE_ROLE_STANDALONE == role )
+            {
+               ++standaloneNum ;
             }
          }
 
@@ -12447,7 +12529,7 @@ namespace engine
          goto error ;
       }
 
-      if ( 0 == coordNum )
+      if ( 0 == coordNum && 0 == standaloneNum )
       {
          rc = SDB_INVALIDARG ;
          _errorMsg.setError( TRUE, "failed to add business, "
@@ -12457,7 +12539,7 @@ namespace engine
          goto error ;
       }
       
-      if ( 0 == catalogNum )
+      if ( 0 == catalogNum && 0 == standaloneNum )
       {
          rc = SDB_INVALIDARG ;
          _errorMsg.setError( TRUE, "failed to add business, "

@@ -382,7 +382,6 @@ namespace engine
          list<BSONObj>::iterator iter ;
          list<BSONObj> records ;
          BSONObj result ;
-         INT32 rc = SDB_OK ;
 
          matcher = BSON( OM_CONFIGURE_FIELD_BUSINESSNAME << pBusinessName ) ;
          rc = _queryTable( OM_CS_DEPLOY_CL_CONFIGURE, selector, matcher, order, 
