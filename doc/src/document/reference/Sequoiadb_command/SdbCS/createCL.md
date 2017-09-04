@@ -88,6 +88,16 @@ Collection Space
 
       格式：`EnsureShardingIndex:true|false`
 
+    12. `IsStrictDataType` ( *Bool* )：标识对该集合的操作是否开启严格数据类型模式，默认为false(不开启)。
+
+	    严格数据模式的开启标识对数值操作存在以下限制：
+
+	   * 运算过程不改数据类型；
+	  * 数值运算出现溢出时直接报错，错误码SDB_VALUE_OVERFLOW；
+
+
+      格式：`IsStrictDataType:true|false`
+
     **注意：**
 
     * 参数 `name` 的值不能是空串、含点（.）或者美元符号（$），
@@ -129,9 +139,9 @@ Collection Space
 | ------ | ------ | --- | ------ |
 | -2 | SDB_OOM | 无可用内存。| 检查物理内存及虚拟内存的情况。|
 | -6 | SDB_INVALIDARG | 参数错误。 | 查看参数是否填写正确。|
-| -22 | SDB_DMS_EXIST | 集合已存在。 | 检查集合是否存在。|
+| -22 | SDB_DMS_EXIST | 集合已存在。| 检查集合是否存在。|
 | -34 | SDB_DMS_CS_NOTEXIST | 集合空间不存在。| 检查集合空间是否存在。|
-
+| -318 | SDB_VALUE_OVERFLOW | 数值运算出现溢出。| 检查运算过程是否存在溢出情况。|
 当异常抛出时，可以通过[getLastError()](reference/Sequoiadb_command/Global/getLastError.md)获取[错误码](reference/Sequoiadb_error_code.md)，
 或通过[getLastErrMsg()](reference/Sequoiadb_command/Global/getLastErrMsg.md)获取错误信息。
 可以参考[常见错误处理指南](troubleshooting/general/general_guide.md)了解更多内容。
@@ -158,4 +168,11 @@ v1.0及以上版本。
                       Partition:4096, Compressed:true, ReplSize:1})
     localhost:11810.foo.bar1
     Takes 0.110319s.
+    ```
+3. 在集合空间 foo 下创建集合 bar，开启严格数据类型模式。
+
+    ```lang-javascript
+    > db.foo.createCL("bar", {IsStrictDataType: true})
+    localhost:11810.foo.bar
+    Takes 0.120450s.
     ```

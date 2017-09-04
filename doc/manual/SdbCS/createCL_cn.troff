@@ -118,6 +118,13 @@ false。
 字段创建名字为"$shard"的索引，默认为true。
 .PP
 格式：\f[C]EnsureShardingIndex:true|false\f[]
+.RE
+.IP "12." 4
+\f[C]StrictDataModeOn\f[] ( \f[I]Bool\f[])：
+ 标识对该集合的操作是否开启严格数据类型模式，默认为false(不开启)。
+.RS 4
+.PP
+格式：\f[C]StrictDataModeOn:true|false\f[]
 .PP
 \f[B]注意：\f[]
 .IP \[bu] 2
@@ -244,6 +251,24 @@ T}@T{
 T}@T{
 否存在。
 T}
+T{
+5
+T}@T{
+\-318
+T}@T{
+SDB_VALUE_OVERFLOW
+T}@T{
+数值运算出现溢出。
+T}@T{
+检查集合运算
+T}
+T{
+T}@T{
+T}@T{
+T}@T{
+T}@T{
+是否存在溢出。
+T}
 .TE
 .PP
 当异常抛出时，可以通过getLastError()获取错误码，
@@ -272,6 +297,16 @@ Takes\ 0.120450s.
 \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Partition:4096,\ Compressed:true,\ ReplSize:1})
 localhost:11810.foo.bar1
 Takes\ 0.110319s.
+\f[]
+.fi
+.RE
+.IP "3." 3
+在集合空间 foo 下创建集合 bar，开启严格数据类型模式。
+.nf
+\f[C]
+>\ db.foo.createCL("bar", {StrictDataModeOn: true})
+localhost:11810.foo.bar
+Takes\ 0.120450s.
 \f[]
 .fi
 .RE

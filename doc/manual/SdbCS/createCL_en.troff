@@ -123,6 +123,13 @@ fields of the \f[C]ShardingKey\f[] or not, default to be true.
 .PP
 Format: \f[C]EnsureShardingIndex:true|false\f[]
 .RE
+.IP "12." 4
+\f[C]StrictDataModeOn\f[] ( \f[I]Bool\f[] ): using strict type in numeric operations 
+or not, default to be false.
+.RS 4
+.PP
+Format: \f[C]StrictDataModeOn:true|false\f[]
+.RE
 .PP
 \f[B]Note:\f[]
 .IP \[bu] 2
@@ -238,6 +245,25 @@ exist.
 T}@T{
 collection exist or not.
 T}
+T{
+4
+T}@T{
+\-318
+T}@T{
+SDB_VALUE_OVERFLOW
+T}@T{
+Data operation has
+T}@T{
+check if the operation 
+T}
+T{
+T}@T{
+T}@T{
+T}@T{
+overflowed.
+T}@T{
+overflows.
+T}
 .TE
 .PP
 When error happen, use getLastErrMsg() to get the error message or use
@@ -269,6 +295,18 @@ writeconcern 1.
 \ \ Partition:65535,\ ReplSize:1,\ Compressed:true,\ IsMainCL:false})
 localhost:11810.foo.bar
 Takes\ 0.32450s.
+\f[]
+.fi
+.RE
+.IP "3." 3
+Create collection "bar" in collection space "foo" with the StrictDataModeOn trun on.
+If the collection space "foo" doesn\[aq]t exist, it will automatically generate
+collection space "foo".
+.nf
+\f[C]
+>\ db.foo.createCL("bar", { StrictDataModeOn: true})
+localhost:11810.foo.bar
+Takes\ 0.1250s.
 \f[]
 .fi
 .RE
