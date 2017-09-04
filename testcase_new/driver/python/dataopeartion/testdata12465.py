@@ -9,14 +9,14 @@ from pysequoiadb import lob
 from pysequoiadb.error import (SDBTypeError, SDBBaseError, SDBEndOfCursor)
 
 from bson.objectid import ObjectId
-
+from lib import sdbconfig
 from dataopeartion import util
 
 NUM=10
 class Data12465(unittest.TestCase):
    def setUp(self):
       print("begin: "+str(datetime.now()))
-      self.db=util.get_default_client()
+      self.db=sdbconfig.default_db()
       self.create_cs_cl()
 
 

@@ -11,14 +11,13 @@ from pysequoiadb.error import (SDBTypeError, SDBBaseError, SDBEndOfCursor)
 
 from bson.objectid import ObjectId
 
-from lib.config import *
+from lib import sdbconfig
 from lob import util
 
 class Lob12478(unittest.TestCase):
    def setUp(self):
       print("begin: "+str(datetime.now()))
-      config = Config()
-      self.db = client( config.host_name, config.service )
+      self.db = sdbconfig.default_db()
       self.create_cs_cl()
 
    def test(self):
