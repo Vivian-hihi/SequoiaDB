@@ -80,9 +80,7 @@ function main()
 	
 	//$lt:{$numberLong:"9223372036854775807"}
    var findCondition4 = {a:{$abs:1,$lt:{$numberLong:"9223372036854775807"}}};
-   var expRecs4 = [{No:2,a:{$numberLong:"-9223372036854775808"}},
-	                {No:3,a:{$numberLong:"-9223372036854775808"}},
-	                {No:4,a:{$numberLong:"9223372036854775806"}}];
+   var expRecs4 = [{No:4,a:{$numberLong:"9223372036854775806"}}];
    checkResult( dbcl, findCondition4, null, expRecs4, {_id:1} );
 	
 }

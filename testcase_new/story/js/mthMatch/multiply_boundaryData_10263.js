@@ -35,7 +35,7 @@ function main()
 	            {No:2,a:{$numberLong:"-9223372036854775809"}}];
 	insertData(dbcl, doc2);
 
-   var findCondition2 = {a:{$multiply:2,$et:0}};
+   var findCondition2 = {a:{$multiply:2,$et:{$decimal: "-18446744073709551616"}}};
    var expRecs2 = [{No:2,a:{$numberLong:"-9223372036854775808"}}];
    checkResult( dbcl, findCondition2, null, expRecs2, {_id:1} );
 	

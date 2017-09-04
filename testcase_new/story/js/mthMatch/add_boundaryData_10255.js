@@ -35,8 +35,9 @@ function main()
    var doc2 = [{No:1,a:{$numberLong:"9223372036854775807"}},
 	            {No:2,a:{$numberLong:"9223372036854775806"}}];
 	insertData(dbcl, doc2);
-
-   var findCondition2 = {a:{$add:1,$et:{$numberLong:"-9223372036854775808"}}};
+   
+   //test boundary value operation
+   var findCondition2 = {a:{$add:1,$et:{$decimal:"9223372036854775808"}}};
    var expRecs2 = [{No:1,a:{$numberLong:"9223372036854775807"}}];
    checkResult( dbcl, findCondition2, null, expRecs2, {_id:1} );
 	

@@ -36,7 +36,8 @@ function main()
 	            {No:2,a:{$numberLong:"-9223372036854775807"}}];
 	insertData(dbcl, doc2);
 
-   var findCondition2 = {a:{$subtract:1,$et:{$numberLong:"9223372036854775807"}}};
+   //test bundary value operation
+   var findCondition2 = {a:{$subtract:1,$et:{$decimal:"-9223372036854775809"}}};
    var expRecs2 = [{No:1,a:{$numberLong:"-9223372036854775808"}}];
    checkResult( dbcl, findCondition2, null, expRecs2, {_id:1} );
 	
