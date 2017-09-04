@@ -26,6 +26,7 @@ class TestSave12502(unittest.TestCase):
          srcGroupName = dataGroupNames[0]
          destGroupName = dataGroupNames[1]
           
+         self.clean_cs()
          self.create_cl(srcGroupName)
          self.insert_datas()    
          self.split_cl(srcGroupName,destGroupName)
@@ -101,6 +102,13 @@ class TestSave12502(unittest.TestCase):
       groupNames.remove("SYSCoord")         
       return groupNames   
  
+   def clean_cs(self):
+      try:
+         print( '---begin to clean cs---')
+         self.db.drop_collection_space(cs_name) 
+      except SDBError as e:
+         pass	
+			
    def create_cl(self,srcGroupName):
       try:
          print( '---begin to create cs---')

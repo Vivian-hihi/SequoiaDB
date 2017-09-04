@@ -17,6 +17,7 @@ class TestIndex12476(unittest.TestCase):
          print(datetime.datetime.now())
          config = Config()
          self.db = client( config.host_name, config.service )
+         self.clean_cs()
          self.create_cl()
          self.insert_datas()         
       except SDBBaseError as e:
@@ -55,7 +56,14 @@ class TestIndex12476(unittest.TestCase):
          if(-34 != e.code):
             print(e.detail)
             raise e      	 
-		  
+
+   def clean_cs(self):
+      try:
+         print( '---begin to clean cs---')
+         self.db.drop_collection_space(cs_name) 
+      except SDBError as e:
+         pass			
+			
    def create_cl(self):
       try:
          print( '---begin to create cs---')
