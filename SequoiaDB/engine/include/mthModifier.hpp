@@ -196,6 +196,7 @@ namespace engine
       vector<INT64> *_dollarList ;
       _compareFieldNames1  _fieldCompare ;
       BOOLEAN        _ignoreTypeError ;
+      BOOLEAN        _strictDataMode ;
 
       INT32 _addModifier ( const BSONElement &ele, ModType type ) ;
       INT32 _parseElement ( const BSONElement &ele ) ;
@@ -348,6 +349,7 @@ namespace engine
          _isReplace     = FALSE ;
          _isReplaceID   = FALSE ;
          _shardingKeyGen = NULL ;
+         _strictDataMode = FALSE ;
       }
       ~_mthModifier()
       {
@@ -357,7 +359,8 @@ namespace engine
       INT32 loadPattern ( const BSONObj &modifierPattern,
                           vector<INT64> *dollarList = NULL,
                           BOOLEAN ignoreTypeError = TRUE,
-                          const BSONObj* shardingKey = NULL ) ;
+                          const BSONObj* shardingKey = NULL,
+                          BOOLEAN strictDataMode = FALSE ) ;
       void modifierSort() ;
       INT32 modify ( const BSONObj &source, BSONObj &target,
                      BSONObj *srcID = NULL,

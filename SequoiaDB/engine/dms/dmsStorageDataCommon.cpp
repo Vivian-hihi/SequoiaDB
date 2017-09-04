@@ -183,6 +183,7 @@ namespace engine
    #define DMS_MB_ATTR_COMPRESSED_STR                        "Compressed"
    #define DMS_MB_ATTR_NOIDINDEX_STR                         "NoIDIndex"
    #define DMS_MB_ATTR_CAPPED_STR                            "Capped"
+   #define DMS_MB_ATTR_STRICTDATAMODE_STR                    "StrickDataMode"
    // PD_TRACE_DECLARE_FUNCTION ( SDB__MBATTR2STRING, "mbAttr2String" )
    void mbAttr2String( UINT32 attributes, CHAR * pBuffer, INT32 bufSize )
    {
@@ -204,6 +205,11 @@ namespace engine
       {
          appendFlagString( pBuffer, bufSize, DMS_MB_ATTR_CAPPED_STR ) ;
          OSS_BIT_CLEAR( attributes, DMS_MB_ATTR_CAPPED ) ;
+      }
+      if ( OSS_BIT_TEST( attributes, DMS_MB_ATTR_STRICTDATAMODE ) )
+      {
+         appendFlagString( pBuffer, bufSize, DMS_MB_ATTR_STRICTDATAMODE_STR ) ;
+         OSS_BIT_CLEAR( attributes, DMS_MB_ATTR_STRICTDATAMODE ) ;
       }
 
       // Test other bits

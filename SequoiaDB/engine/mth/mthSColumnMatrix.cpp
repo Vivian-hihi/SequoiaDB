@@ -69,7 +69,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__MTHSCOLUMNMATRIX_LOAD, "_mthSColumnMatrix::load" )
-   INT32 _mthSColumnMatrix::load( const bson::BSONObj &obj )
+   INT32 _mthSColumnMatrix::load( const bson::BSONObj &obj, BOOLEAN strictDataMode )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__MTHSCOLUMNMATRIX_LOAD ) ;
@@ -94,7 +94,7 @@ namespace engine
          BSONObjIteratorSorted i( _pattern ) ;
          while ( i.more() )
          {
-            rc = _load( i.next() ) ;
+            rc = _load( i.next(), strictDataMode ) ;
             if ( SDB_OK != rc )
             {
                PD_LOG( PDERROR, "failed to load selector column[%s], rc:%d",
@@ -142,7 +142,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__MTHSCOLUMNMATRIX__LOAD, "_mthSColumnMatrix::_load" )
-   INT32 _mthSColumnMatrix::_load( const bson::BSONElement &e )
+   INT32 _mthSColumnMatrix::_load( const bson::BSONElement &e, BOOLEAN strictDataMode )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__MTHSCOLUMNMATRIX__LOAD ) ;
@@ -170,6 +170,7 @@ namespace engine
             goto error ;
          }
 
+         column->_setStrictDataMode( strictDataMode ) ;
          SDB_ASSERT( NULL != column, "can not be null" ) ;
          rc = _loadObj( column,
                         e.embeddedObject(),

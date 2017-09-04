@@ -3531,6 +3531,17 @@ namespace engine
                clInfo._isHash = FALSE ;
             }
          }
+         // strictDataMode flag
+         else if ( ossStrcmp( eleTmp.fieldName(),
+                              CAT_STRICTDATAMODE ) == 0 )
+         {
+            PD_CHECK( Bool == eleTmp.type(),
+                      SDB_INVALIDARG, error, PDWARNING,
+                      "Field [%s] type [%d] error",
+                      CAT_STRICTDATAMODE, eleTmp.type() ) ;
+            clInfo._strictDataMode = eleTmp.boolean() ;
+            fieldMask |= CAT_MASK_STRICTDATAMODE ;
+         }
          // group specified
          else if ( 0 == ossStrcmp( eleTmp.fieldName(),
                                    CAT_GROUP_NAME ) )
@@ -3830,6 +3841,10 @@ namespace engine
       if ( ( mask & CAT_MASK_CAPPED ) && clInfo._capped )
       {
          attribute |= DMS_MB_ATTR_CAPPED ;
+      }
+      if ( ( mask & CAT_MASK_STRICTDATAMODE ) && clInfo._strictDataMode )
+      {
+         attribute |= DMS_MB_ATTR_STRICTDATAMODE ;
       }
       mbAttr2String( attribute, szAttr, sizeof( szAttr ) - 1 ) ;
 

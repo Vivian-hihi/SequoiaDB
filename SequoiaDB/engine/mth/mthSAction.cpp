@@ -66,7 +66,7 @@ namespace engine
       }
 
       rc = ( *_buildFunc )( fieldName, e, this, builder ) ;
-      if ( SDB_OK != rc )
+      if ( SDB_VALUE_OVERFLOW != rc && SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to build column:%d", rc ) ;
          goto error ;
@@ -91,7 +91,7 @@ namespace engine
       }
 
       rc = ( *_getFunc )( fieldName, in, this, out ) ;
-      if ( SDB_OK != rc )
+      if ( SDB_VALUE_OVERFLOW != rc && SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to get column:%d", rc ) ;
          goto error ;

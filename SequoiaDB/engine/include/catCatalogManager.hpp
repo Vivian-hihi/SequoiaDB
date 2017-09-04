@@ -75,6 +75,7 @@ namespace engine
    #define CAT_MASK_CLMAXRECNUM     0x00002000
    #define CAT_MASK_CLMAXSIZE       0x00004000
    #define CAT_MASK_CLOVERWRITE     0x00008000
+   #define CAT_MASK_STRICTDATAMODE  0x00010000
 
    struct _catCollectionInfo
    {
@@ -90,6 +91,7 @@ namespace engine
       BOOLEAN     _isMainCL;
       BOOLEAN     _autoSplit ;
       BOOLEAN     _autoRebalance ;
+      BOOLEAN     _strictDataMode ;
       const CHAR * _gpSpecified ;
       INT32       _version ;
       INT32       _assignType ;

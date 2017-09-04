@@ -42,6 +42,7 @@
 #include "mthTrace.hpp"
 #include "mthDef.hpp"
 #include "../util/fromjson.hpp"
+#include "utilMath.hpp"
 
 
 using namespace bson ;
@@ -1250,20 +1251,38 @@ namespace engine
       {
          INT32 v = in.numberInt() ;
          /// - 2 ^ 31
-         if ( -2147483648 != v )
+         if ( OSS_SINT32_MIN != v )
          {
             outBuilder.append( name, 0 <= v ? v : -v ) ;
          }
          else
          {
             outBuilder.append( name, -((INT64)v) ) ;
+            rc = SDB_VALUE_OVERFLOW ;
          }
       }
       else if ( NumberLong == in.type() )
       {
          INT64 v = in.numberLong() ;
          /// return -9223372036854775808 when v is -9223372036854775808
-         outBuilder.append( name, 0 <= v ? ( INT64 )v : ( INT64 )( -v ) ) ;
+         if ( OSS_SINT64_MIN != v)
+         {
+            outBuilder.append( name, 0 <= v ? ( INT64 )v : ( INT64 )( -v ) ) ;
+         }
+         else
+         {
+            bsonDecimal decResult ;
+            rc = decResult.fromString( "9223372036854775808" ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to fromString(\"9223372036854775808\"),rc=%d",
+                       rc ) ;
+               goto error ;
+            }
+            outBuilder.append( name, decResult ) ;
+            rc = SDB_VALUE_OVERFLOW ;
+         }
+       
       }
       else if ( NumberDecimal == in.type() )
       {
@@ -1306,7 +1325,9 @@ namespace engine
             BSONObjBuilder tmpBuilder ;
             BSONElement ele = iter.next() ;
             rc = _mthAbsBasic( ele.fieldName(), ele, tmpBuilder ) ;
-            PD_RC_CHECK( rc, PDERROR, "_mthAbsBasic failed:rc=%d", rc ) ;
+            PD_CHECK( rc == SDB_OK || rc == SDB_VALUE_OVERFLOW, rc, error,
+                      PDERROR, "_mthAbsBasic failed:rc=%d", rc ) ;
+
 
             arrayBuilder.append( tmpBuilder.obj().firstElement() ) ;
          }
@@ -1316,7 +1337,8 @@ namespace engine
       else
       {
          rc = _mthAbsBasic( name, in, outBuilder ) ;
-         PD_RC_CHECK( rc, PDERROR, "_mthAbsBasic failed:rc=%d", rc ) ;
+         PD_CHECK( rc == SDB_OK || rc == SDB_VALUE_OVERFLOW, rc, error,
+                   PDERROR, "_mthAbsBasic failed:rc=%d", rc ) ;
       }
 
    done:
@@ -2064,10 +2086,54 @@ namespace engine
          FLOAT64 f = addend.numberDouble() + in.numberDouble() ;
          outBuilder.appendNumber( name, f ) ;
       }
-      else
+      else if ( NumberLong == in.type() ||
+                NumberLong == addend.type() )
       {
-         INT64 i = addend.numberLong() + in.numberLong() ;
-         outBuilder.appendIntOrLL( name, i ) ;
+         INT64 arg1 = addend.numberLong() ;
+         INT64 arg2 = in.numberLong() ;
+         INT64 i = arg1 + arg2 ;
+         if ( utilAddIsOverflow( arg1, arg2, i) )
+         {// overflow
+            bsonDecimal decimalE ;
+            bsonDecimal decimalArg ;
+            bsonDecimal result ;
+            result.init() ;
+
+            decimalE   = in.numberDecimal() ;
+            decimalArg = addend.numberDecimal() ;
+            rc = decimalE.add( decimalArg, result ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to add decimal:%s+%s,rc=%d",
+                       decimalE.toString().c_str(),
+                       decimalArg.toString().c_str(), rc ) ;
+               goto error ;
+            }
+
+            outBuilder.append( name, result ) ;
+            rc = SDB_VALUE_OVERFLOW ; // overflow
+         }
+         else
+         {
+            outBuilder.appendIntOrLL( name, i ) ;
+         }
+         
+      }
+      else // INT32
+      {
+         INT32 arg1 = addend.numberInt() ;
+         INT32 arg2 = in.numberInt() ;
+         INT32 i32 = arg1 + arg2 ;
+         INT64 i64 = (INT64)arg1 + (INT64)arg2 ;
+         if ( (INT64)i32 == i64 )
+         {
+            outBuilder.append( name, i32 );
+         }
+         else
+         {
+            outBuilder.append( name, i64 );
+            rc = SDB_VALUE_OVERFLOW ; //
+         }
       }
 
    done:
@@ -2089,7 +2155,8 @@ namespace engine
             BSONObjBuilder tmpBuilder ;
             BSONElement ele = iter.next() ;
             rc = _mthAddBasic( ele.fieldName(), ele, addend, tmpBuilder ) ;
-            PD_RC_CHECK( rc, PDERROR, "_mthAddBasic failed:rc=%d", rc ) ;
+            PD_CHECK( rc == SDB_OK || rc == SDB_VALUE_OVERFLOW, rc, error,
+                      PDERROR, "_mthAddBasic failed:rc=%d", rc ) ;
 
             arrayBuilder.append( tmpBuilder.obj().firstElement() ) ;
          }
@@ -2099,7 +2166,8 @@ namespace engine
       else
       {
          rc = _mthAddBasic( name, in, addend, outBuilder ) ;
-         PD_RC_CHECK( rc, PDERROR, "_mthAddBasic failed:rc=%d", rc ) ;
+         PD_CHECK( rc == SDB_OK || rc == SDB_VALUE_OVERFLOW, rc, error,
+                   PDERROR, "_mthAddBasic failed:rc=%d", rc ) ;
       }
 
    done:
@@ -2149,10 +2217,54 @@ namespace engine
          FLOAT64 f = in.numberDouble() - subtrahead.numberDouble() ;
          outBuilder.appendNumber( name, f ) ;
       }
-      else
+      else if ( NumberLong == in.type() ||
+                NumberLong == subtrahead.type() )
       {
-         INT64 i = in.numberLong() - subtrahead.numberLong() ;
-         outBuilder.appendIntOrLL( name, i ) ;
+         INT64 arg1 = in.numberLong() ;
+         INT64 arg2 = subtrahead.numberLong() ;
+         INT64 i = arg1 - arg2 ;
+         if ( utilSubIsOverflow( arg1, arg2, i) )
+         {// overflow
+            bsonDecimal decimalE ;
+            bsonDecimal decimalArg ;
+            bsonDecimal result ;
+            result.init() ;
+
+            decimalE   = in.numberDecimal() ;
+            decimalArg = subtrahead.numberDecimal() ;
+            rc = decimalE.sub( decimalArg, result ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to sub decimal:%s+%s,rc=%d",
+                       decimalE.toString().c_str(),
+                       decimalArg.toString().c_str(), rc ) ;
+               goto error ;
+            }
+
+            outBuilder.append( name, result ) ;
+            rc = SDB_VALUE_OVERFLOW ; // overflow
+         }
+         else
+         {
+            outBuilder.appendIntOrLL( name, i ) ;
+         }
+         
+      }
+      else // INT32
+      {
+         INT32 arg1 = in.numberInt() ;
+         INT32 arg2 = subtrahead.numberInt() ;
+         INT32 i32 = arg1 - arg2 ;
+         INT64 i64 = (INT64)arg1 - (INT64)arg2 ;
+         if ( (INT64)i32 == i64 )
+         {
+            outBuilder.append( name, i32 );
+         }
+         else
+         {
+            outBuilder.append( name, i64 );
+            rc = SDB_VALUE_OVERFLOW ; // overflow
+         }
       }
 
    done:
@@ -2174,7 +2286,8 @@ namespace engine
             BSONObjBuilder tmpBuilder ;
             BSONElement ele = iter.next() ;
             rc = _mthSubBasic( ele.fieldName(), ele, subtrahead, tmpBuilder ) ;
-            PD_RC_CHECK( rc, PDERROR, "_mthSubBasic failed:rc=%d", rc ) ;
+            PD_CHECK( rc == SDB_OK || rc == SDB_VALUE_OVERFLOW, rc, error,
+                      PDERROR, "_mthSubBasic failed:rc=%d", rc ) ;
 
             arrayBuilder.append( tmpBuilder.obj().firstElement() ) ;
          }
@@ -2184,7 +2297,8 @@ namespace engine
       else
       {
          rc = _mthSubBasic( name, in, subtrahead, outBuilder ) ;
-         PD_RC_CHECK( rc, PDERROR, "_mthSubBasic failed:rc=%d", rc ) ;
+         PD_CHECK( rc == SDB_OK || rc == SDB_VALUE_OVERFLOW, rc, error,
+                   PDERROR, "_mthSubBasic failed:rc=%d", rc ) ;
       }
 
    done:
@@ -2234,10 +2348,54 @@ namespace engine
          FLOAT64 f = multiplier.numberDouble() * in.numberDouble() ;
          outBuilder.appendNumber( name, f ) ;
       }
-      else
+      else if ( NumberLong == in.type() ||
+                NumberLong == multiplier.type() )
       {
-         INT64 i = multiplier.numberLong() * in.numberLong() ;
-         outBuilder.appendIntOrLL( name, i ) ;
+         INT64 arg1 = in.numberLong() ;
+         INT64 arg2 = multiplier.numberLong() ;
+         INT64 i = arg1 * arg2 ;
+         if ( utilMulIsOverflow( arg1, arg2, i) )
+         {// overflow
+            bsonDecimal decimalE ;
+            bsonDecimal decimalArg ;
+            bsonDecimal result ;
+            result.init() ;
+
+            decimalE   = in.numberDecimal() ;
+            decimalArg = multiplier.numberDecimal() ;
+            rc = decimalE.mul( decimalArg, result ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to sub decimal:%s+%s,rc=%d",
+                       decimalE.toString().c_str(),
+                       decimalArg.toString().c_str(), rc ) ;
+               goto error ;
+            }
+
+            outBuilder.append( name, result ) ;
+            rc = SDB_VALUE_OVERFLOW ; // overflow
+         }
+         else
+         {
+            outBuilder.appendIntOrLL( name, i ) ;
+         }
+         
+      }
+      else // INT32
+      {
+         INT32 arg1 = in.numberInt() ;
+         INT32 arg2 = multiplier.numberInt() ;
+         INT32 i32 = arg1 * arg2 ;
+         INT64 i64 = (INT64)arg1 * (INT64)arg2 ;
+         if ( (INT64)i32 == i64 )
+         {
+            outBuilder.append( name, i32 );
+         }
+         else
+         {
+            outBuilder.append( name, i64 );
+            rc = SDB_VALUE_OVERFLOW ; // overflow
+         }
       }
 
    done:
@@ -2261,7 +2419,8 @@ namespace engine
             BSONElement ele = iter.next() ;
             rc = _mthMultiplyBasic( ele.fieldName(), ele, multiplier,
                                     tmpBuilder ) ;
-            PD_RC_CHECK( rc, PDERROR, "_mthMultiplyBasic failed:rc=%d", rc ) ;
+            PD_CHECK( rc == SDB_OK || rc == SDB_VALUE_OVERFLOW, rc, error,
+                      PDERROR, "_mthMultiplyBasic failed:rc=%d", rc ) ;
 
             arrayBuilder.append( tmpBuilder.obj().firstElement() ) ;
          }
@@ -2271,7 +2430,8 @@ namespace engine
       else
       {
          rc = _mthMultiplyBasic( name, in, multiplier, outBuilder ) ;
-         PD_RC_CHECK( rc, PDERROR, "_mthMultiplyBasic failed:rc=%d", rc ) ;
+         PD_CHECK( rc == SDB_OK || rc == SDB_VALUE_OVERFLOW, rc, error,
+                   PDERROR, "_mthMultiplyBasic failed:rc=%d", rc ) ;
       }
 
    done:
@@ -2328,23 +2488,68 @@ namespace engine
 
          outBuilder.appendNumber( name, in.numberDouble() / r ) ;
       }
-      else
+      else if ( NumberLong == in.type() ||
+                NumberLong == divisor.type() )
       {
-         INT64 l = in.numberLong() ;
+         INT64 divide = in.numberLong() ;
          INT64 r = divisor.numberLong() ;
+         INT64 result ;
          if ( 0 == r )
          {
             PD_LOG( PDERROR, "invalid argument:%lld", r ) ;
             rc = SDB_SYS ; /// should not happen. so use sdb_sys.
             goto error ;
          }
-         else if ( 0 == l % r )
+         if ( !utilDivIsOverflow( divide, r ) )
          {
-            outBuilder.appendIntOrLL( name, l / r ) ;
+            result = divide / r ;
+            outBuilder.append( name, result ) ;
          }
          else
          {
-            outBuilder.appendNumber( name, l / ( FLOAT64 ) r ) ;
+            //overflow
+            bsonDecimal decResult ;
+            rc = decResult.fromString( "9223372036854775808" ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to div decimal:%lld/%lld,rc=%d",
+                       divide, r, rc ) ;
+               goto error ;
+            }
+            outBuilder.append( name, decResult ) ;
+            rc = SDB_VALUE_OVERFLOW ; // overflow
+         }
+         
+      }
+      else
+      {
+         INT32 divide = in.numberInt() ;
+         INT32 r = divisor.numberInt() ;
+         INT32 result ;
+         if ( 0 == r )
+         {
+            PD_LOG( PDERROR, "invalid argument:%lld", r ) ;
+            rc = SDB_SYS ; /// should not happen. so use sdb_sys.
+            goto error ;
+         }
+         if ( -1 == r )
+         {
+            if ( divide != (INT32)OSS_SINT32_MIN )
+            {
+               result = -divide ;
+               outBuilder.append( name, result ) ;
+            }
+            else
+            {
+               INT64 result64 = 2147483648 ;
+               outBuilder.append( name, result64 ) ;
+               rc = SDB_VALUE_OVERFLOW ; // overflow
+            }
+         }
+         else
+         {
+            result = divide / r ;
+            outBuilder.append( name, result ) ;
          }
       }
 
@@ -2367,7 +2572,8 @@ namespace engine
             BSONObjBuilder tmpBuilder ;
             BSONElement ele = iter.next() ;
             rc = _mthDivideBasic( ele.fieldName(), ele, divisor, tmpBuilder ) ;
-            PD_RC_CHECK( rc, PDERROR, "_mthDivideBasic failed:rc=%d", rc ) ;
+            PD_CHECK( rc == SDB_OK || rc == SDB_VALUE_OVERFLOW, rc, error,
+                      PDERROR, "_mthDivideBasic failed:rc=%d", rc ) ;
 
             arrayBuilder.append( tmpBuilder.obj().firstElement() ) ;
          }
@@ -2377,7 +2583,8 @@ namespace engine
       else
       {
          rc = _mthDivideBasic( name, in, divisor, outBuilder ) ;
-         PD_RC_CHECK( rc, PDERROR, "_mthDivideBasic failed:rc=%d", rc ) ;
+         PD_CHECK( rc == SDB_OK || rc == SDB_VALUE_OVERFLOW, rc, error,
+                   PDERROR, "_mthDivideBasic failed:rc=%d", rc ) ;
       }
 
    done:

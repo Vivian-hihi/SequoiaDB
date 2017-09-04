@@ -184,6 +184,7 @@ namespace engine
    #define DMS_MB_ATTR_COMPRESSED         0x00000001
    #define DMS_MB_ATTR_NOIDINDEX          0x00000002
    #define DMS_MB_ATTR_CAPPED             0x00000004
+   #define DMS_MB_ATTR_STRICTDATAMODE     0x00000008
 
 #pragma pack(4)
    /*

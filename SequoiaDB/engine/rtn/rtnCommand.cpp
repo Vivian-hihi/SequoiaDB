@@ -529,6 +529,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       BOOLEAN enSureIndex = TRUE ;
       BOOLEAN isCompressed = FALSE ;
+      BOOLEAN strictDataMode = FALSE ;
       BOOLEAN autoIndexId = TRUE ;
       BOOLEAN capped = FALSE ;
       const CHAR *compressionType = NULL ;
@@ -573,6 +574,14 @@ namespace engine
       if ( isCompressed )
       {
          _attributes |= DMS_MB_ATTR_COMPRESSED ;
+      }
+
+      // check strictDataMode
+      rtnGetBooleanElement ( matcher, FIELD_NAME_STRICTDATAMODE,
+                             strictDataMode ) ;
+      if ( strictDataMode )
+      {
+         _attributes |= DMS_MB_ATTR_STRICTDATAMODE ;
       }
 
       // Check if the compression type is specified. If yes, set the attribute.

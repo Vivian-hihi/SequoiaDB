@@ -90,6 +90,7 @@
 #define FIELD_NAME_SHARDINGKEY               "ShardingKey"
 #define FIELD_NAME_COMPRESSED                "Compressed"
 #define FIELD_NAME_COMPRESSIONTYPE           "CompressionType"
+#define FIELD_NAME_STRICTDATAMODE            "StrictDataModeOn"
 #define FIELD_NAME_COMPRESSIONTYPE_DESC      "CompressionTypeDesc"
 #define VALUE_NAME_SNAPPY                    "snappy"
 #define VALUE_NAME_LZW                       "lzw"

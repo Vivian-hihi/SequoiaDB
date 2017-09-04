@@ -341,7 +341,7 @@ namespace engine
       SDB_ASSERT( NULL != action, "can not be null" ) ;
 
       rc = mthAbs( fieldName, e, builder ) ;
-      if ( SDB_OK != rc )
+      if ( SDB_VALUE_OVERFLOW != rc && SDB_OK != rc )
       {
          PD_LOG( PDERROR, "mthAbs failed:rc=%d", rc ) ;
          goto error ;
@@ -367,7 +367,7 @@ namespace engine
       BSONObj obj ;
 
       rc = mthAbs( fieldName, in, builder ) ;
-      if ( SDB_OK != rc )
+      if ( SDB_VALUE_OVERFLOW != rc && SDB_OK != rc )
       {
          PD_LOG( PDERROR, "mthAbs failed:rc=%d", rc ) ;
          goto error ;
@@ -1090,7 +1090,7 @@ namespace engine
       SDB_ASSERT( arg.isNumber(), "must be numeric" ) ;
 
       rc = mthAdd( fieldName, e, arg, builder ) ;
-      if ( SDB_OK != rc )
+      if ( SDB_VALUE_OVERFLOW != rc && SDB_OK != rc )
       {
          PD_LOG( PDERROR, "mthAdd failed:rc=%d", rc ) ;
          goto error ;
@@ -1117,7 +1117,7 @@ namespace engine
       SDB_ASSERT( arg.isNumber(), "must be numeric" ) ;
 
       rc = mthAdd( fieldName, in, arg, builder ) ;
-      if ( SDB_OK != rc )
+      if ( SDB_VALUE_OVERFLOW != rc && SDB_OK != rc )
       {
          PD_LOG( PDERROR, "mthAdd failed:rc=%d", rc ) ;
          goto error ;
@@ -1151,7 +1151,7 @@ namespace engine
       SDB_ASSERT( arg.isNumber(), "must be numeric" ) ;
 
       rc = mthSub( fieldName, e, arg, builder ) ;
-      if ( SDB_OK != rc )
+      if ( SDB_VALUE_OVERFLOW != rc && SDB_OK != rc )
       {
          PD_LOG( PDERROR, "mthSub failed:rc=%d", rc ) ;
          goto error ;
@@ -1178,7 +1178,7 @@ namespace engine
       SDB_ASSERT( arg.isNumber(), "must be numeric" ) ;
 
       rc = mthSub( fieldName, in, arg, builder ) ;
-      if ( SDB_OK != rc )
+      if ( SDB_VALUE_OVERFLOW != rc && SDB_OK != rc )
       {
          PD_LOG( PDERROR, "mthSub failed:rc=%d", rc ) ;
          goto error ;
@@ -1211,7 +1211,7 @@ namespace engine
       SDB_ASSERT( arg.isNumber(), "must be numeric" ) ;
 
       rc = mthMultiply( fieldName, e, arg, builder ) ;
-      if ( SDB_OK != rc )
+      if ( SDB_VALUE_OVERFLOW != rc && SDB_OK != rc )
       {
          PD_LOG( PDERROR, "mthMultiply failed:rc=%d", rc ) ;
          goto error ;
@@ -1238,7 +1238,7 @@ namespace engine
       SDB_ASSERT( arg.isNumber(), "must be numeric" ) ;
 
       rc = mthMultiply( fieldName, in, arg, builder ) ;
-      if ( SDB_OK != rc )
+      if ( SDB_VALUE_OVERFLOW != rc && SDB_OK != rc )
       {
          PD_LOG( PDERROR, "mthMultiply failed:rc=%d", rc ) ;
          goto error ;
@@ -1271,7 +1271,7 @@ namespace engine
       SDB_ASSERT( arg.isNumber(), "must be numeric" ) ;
 
       rc = mthDivide( fieldName, e, arg, builder ) ;
-      if ( SDB_OK != rc )
+      if ( SDB_VALUE_OVERFLOW != rc && SDB_OK != rc )
       {
          PD_LOG( PDERROR, "mthDivide failed:rc=%d", rc ) ;
          goto error ;
@@ -1298,7 +1298,7 @@ namespace engine
       SDB_ASSERT( arg.isNumber(), "must be numeric" ) ;
 
       rc = mthDivide( fieldName, in, arg, builder ) ;
-      if ( SDB_OK != rc )
+      if ( SDB_VALUE_OVERFLOW != rc && SDB_OK != rc )
       {
          PD_LOG( PDERROR, "mthDivide failed:rc=%d", rc ) ;
          goto error ;

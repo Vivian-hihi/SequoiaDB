@@ -248,6 +248,7 @@ namespace engine
                                 INT32 direction )
    {
       INT32 rc = SDB_OK ;
+      BOOLEAN isStictType = FALSE ;
 
       SDB_ASSERT( su && mbContext && plan, "Invalid param" ) ;
 
@@ -267,6 +268,11 @@ namespace engine
                   mbContext->mb()->_flag ) ;
          rc = SDB_DMS_INCOMPATIBLE_MODE ;
          goto error ;
+      }
+      if ( OSS_BIT_TEST( mbContext->mb()->_attributes, 
+                         DMS_MB_ATTR_STRICTDATAMODE ) )
+      {
+         isStictType = TRUE ;
       }
 
       _isOpened = TRUE ;
@@ -294,7 +300,7 @@ namespace engine
       {
          try
          {
-            rc = _selector.loadPattern ( selector ) ;
+            rc = _selector.loadPattern ( selector, isStictType ) ;
          }
          catch ( std::exception &e )
          {
@@ -340,6 +346,7 @@ namespace engine
                                          INT64 numToSkip )
    {
       INT32 rc = SDB_OK ;
+      BOOLEAN strictDataMode = FALSE ;
 
       SDB_ASSERT( su && mbContext && plan && scanner, "Invalid param" ) ;
 
@@ -366,6 +373,11 @@ namespace engine
          rc = SDB_DMS_INCOMPATIBLE_MODE ;
          goto error ;
       }
+      if ( OSS_BIT_TEST( mbContext->mb()->_attributes, 
+                         DMS_MB_ATTR_STRICTDATAMODE ) )
+      {
+         strictDataMode = TRUE ;
+      }
 
       if ( _scanner )
       {
@@ -378,7 +390,7 @@ namespace engine
       {
          try
          {
-            rc = _selector.loadPattern ( selector ) ;
+            rc = _selector.loadPattern ( selector, strictDataMode ) ;
          }
          catch ( std::exception &e )
          {

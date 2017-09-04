@@ -86,6 +86,8 @@ namespace engine
 
       INT32 _setAttribute( MTH_S_ATTRIBUTE attribute ) ;
 
+      INT32 _setStrictDataMode( BOOLEAN strictDataMode ) ;
+
       INT32 _selectWithExclusion( const bson::BSONObj &obj,
                                   bson::BSONObjBuilder &builder ) ;
 
@@ -120,6 +122,7 @@ namespace engine
       CHAR *_dynamicName ;
 
       _mthSAttribute _attribute ;
+      BOOLEAN _strictDataMode ;
 
    friend class _mthSColumnMatrix ;
    } ;

@@ -43,6 +43,7 @@
 #include "rtn.hpp"
 #include "pdTrace.hpp"
 #include "mthTrace.hpp"
+#include "utilMath.hpp"
 
 using namespace bson ;
 using namespace std ;
@@ -289,25 +290,68 @@ namespace engine
          }
          else if ( NumberLong == a || NumberLong == b )
          {
-            bb.append ( in.fieldName(), in.numberLong() + elt.numberLong()) ;
-            ADD_CHG_NUMBER ( _dstChgBuilder, pRoot,
-                             in.numberLong() + elt.numberLong(), "$set" ) ;
-         }
-         else
-         {
-            INT32 result = in.numberInt() + elt.numberInt() ;
-            INT64 result64 = (INT64)in.numberInt() + (INT64)elt.numberInt() ;
-            if ( result64 != (INT64)result )
+            INT64 arg1 = in.numberLong() ;
+            INT64 arg2 = elt.numberLong() ;
+            INT64 result = arg1 + arg2 ;
+            if ( !utilAddIsOverflow( arg1, arg2, result) )
             {
-               //32 bit overflow or underflow happened
-               bb.append ( in.fieldName(), in.numberLong() + elt.numberLong()) ;
-               ADD_CHG_NUMBER ( _dstChgBuilder, pRoot,
-                                in.numberLong() + elt.numberLong(), "$set" ) ;
+               bb.append ( in.fieldName(), result) ;
+               ADD_CHG_NUMBER ( _dstChgBuilder, pRoot, result, "$set" ) ;
+            }
+            else if ( !_strictDataMode )
+            {
+               // overflow
+               bsonDecimal decimalE ;
+               bsonDecimal decimalArg ;
+               bsonDecimal decimalResult ;
+               decimalResult.init() ;
+
+               decimalE   = in.numberDecimal() ;
+               decimalArg = elt.numberDecimal() ;
+               rc = decimalE.add( decimalArg, decimalResult ) ;
+               if ( SDB_OK != rc )
+               {
+                  PD_LOG( PDERROR, "failed to add decimal:%s+%s,rc=%d",
+                          decimalE.toString().c_str(),
+                          decimalArg.toString().c_str(), rc ) ;
+                  goto error ;
+               }
+               bb.append( in.fieldName(), decimalResult ) ;
+               ADD_CHG_NUMBER ( _dstChgBuilder, pRoot, decimalResult, "$set" ) ;
             }
             else
             {
+               rc = SDB_VALUE_OVERFLOW ;
+               PD_LOG( PDERROR, "overflow or underflow happened, field: %s(%lld, inc: %lld), rc = %d",
+                       in.fieldName(), arg1, arg2, rc ) ;
+               goto error ;
+
+            }
+         }
+         else
+         {
+            INT32 arg1 = in.numberInt();
+            INT32 arg2 = elt.numberInt() ;
+
+            INT32 result = arg1 + arg2 ;
+            INT64 result64 = (INT64)arg1 + (INT64)arg2 ;
+            if ( result64 == (INT64)result )
+            {
                bb.append ( in.fieldName(), result ) ;
                ADD_CHG_NUMBER ( _dstChgBuilder, pRoot, result, "$set" ) ;
+            }
+            else if ( !_strictDataMode )
+            {
+               bb.append ( in.fieldName(), result64) ;
+               ADD_CHG_NUMBER ( _dstChgBuilder, pRoot, result64, "$set" ) ;
+            }
+            else 
+            {
+               //32 bit overflow or underflow happened
+               rc = SDB_VALUE_OVERFLOW ;
+               PD_LOG( PDERROR, "overflow or underflow happened, field: %s(%d, inc: %d), rc = %d",
+                       in.fieldName(), arg1, arg2, rc ) ;
+               goto error ;
             }
          }
       }
@@ -2040,7 +2084,8 @@ namespace engine
    INT32 _mthModifier::loadPattern ( const BSONObj &modifierPattern,
                                      vector<INT64> *dollarList,
                                      BOOLEAN ignoreTypeError,
-                                     const BSONObj* shardingKey )
+                                     const BSONObj* shardingKey,
+                                     BOOLEAN strictDataMode )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__MTHMDF_LDPTN );
@@ -2095,6 +2140,7 @@ namespace engine
       }
 
       _initialized = TRUE ;
+      _strictDataMode = strictDataMode ;
 
    done :
       PD_TRACE_EXITRC ( SDB__MTHMDF_LDPTN, rc );

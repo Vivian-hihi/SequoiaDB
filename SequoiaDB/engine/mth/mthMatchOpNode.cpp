@@ -170,6 +170,8 @@ namespace engine
       BSONObjBuilder builder ;
 
       rc = mthAbs( _fieldName.getFieldName(), in, builder ) ;
+      // ignore overflow
+      rc = ( SDB_VALUE_OVERFLOW == rc ) ? SDB_OK : rc ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "mthAbs failed:rc=%d", rc ) ;
@@ -836,6 +838,8 @@ namespace engine
       BSONObjBuilder builder ;
 
       rc = mthAdd( _fieldName.getFieldName(), in, _funcEle, builder ) ;
+       // ignore overflow
+      rc = ( SDB_VALUE_OVERFLOW == rc ) ? SDB_OK : rc ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "mthAdd failed:rc=%d", rc ) ;
@@ -908,6 +912,8 @@ namespace engine
       BSONObjBuilder builder ;
 
       rc = mthSub( _fieldName.getFieldName(), in, _funcEle, builder ) ;
+       // ignore overflow
+      rc = ( SDB_VALUE_OVERFLOW == rc ) ? SDB_OK : rc ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "mthSub failed:rc=%d", rc ) ;
@@ -980,6 +986,8 @@ namespace engine
       BSONObjBuilder builder ;
 
       rc = mthMultiply( _fieldName.getFieldName(), in, _funcEle, builder ) ;
+       // ignore overflow
+      rc = ( SDB_VALUE_OVERFLOW == rc ) ? SDB_OK : rc ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "mthMultiply failed:rc=%d", rc ) ;
@@ -1052,6 +1060,8 @@ namespace engine
       BSONObjBuilder builder ;
 
       rc = mthDivide( _fieldName.getFieldName(), in, _funcEle, builder ) ;
+       // ignore overflow
+      rc = ( SDB_VALUE_OVERFLOW == rc ) ? SDB_OK : rc ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "mthDivide failed:rc=%d", rc ) ;
