@@ -38,14 +38,14 @@ namespace engine
    {
       BOOLEAN ret = FALSE ;
       if ( l != (INT64) ((INT32) l) || r != (INT64) ((INT32) r) )
-	   {
-		   if ( r != 0 &&
-			     ( ( r == -1 && l < 0 && result < 0) ||
-			         result / r != l ) )
+      {
+         if ( r != 0 &&
+              ( ( r == -1 && l < 0 && result < 0) ||
+                result / r != l ) )
          {
             ret = TRUE ;
          }
-	   }
+      }
 
       return ret ;
    }
