@@ -48,7 +48,7 @@ function checkResult( rc )
    println("\n---Begin to check result.");
    
    //compare the records for rc[0]
-   var expA = 17.5;
+   var expA = 17;
    var actA = rc[0].current().toObj().a;
    if( expA !== actA )
    {

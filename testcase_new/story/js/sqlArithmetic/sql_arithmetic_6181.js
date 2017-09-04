@@ -54,14 +54,14 @@ function checkResult( rc )
    var expA = -2147483647;
    var expB =  2147483648;
    var expC = "-9223372036854775807";
-   var expD = "-9223372036854775808";
+   var expD = "9223372036854775808";
    var expE = -9.992007221626409e-14;
    var expF =  2.999999999999;
    
    var actA = rc[0].current().toObj()["a"];
    var actB = rc[0].current().toObj()["b"];
    var actC = String( rc[0].current().toObj()["c"]["$numberLong"] );
-   var actD = String( rc[0].current().toObj()["d"]["$numberLong"] );
+   var actD = String( rc[0].current().toObj()["d"]["$decimal"] );
    var actE = rc[0].current().toObj()["e"];
    var actF = rc[0].current().toObj()["f"];
    if( expA !== actA || expB !== actB || expC !== actC || expD !== actD
@@ -75,14 +75,14 @@ function checkResult( rc )
    //compare the records for rc[1]
    var expA = -2147483649;
    var expB =  2147483646;
-   var expC = "9223372036854775807";  //expC: "-9223372036854775809"
+   var expC = "-9223372036854775809";  //expC: "-9223372036854775809"
    var expD = "9223372036854775806";
    var expE = -2.0000000000001;
    var expF =  0.9999999999989999;
    
    var actA = rc[1].current().toObj()["a"];
    var actB = rc[1].current().toObj()["b"];
-   var actC = String( rc[1].current().toObj()["c"]["$numberLong"] );
+   var actC = String( rc[1].current().toObj()["c"]["$decimal"] );
    var actD = String( rc[1].current().toObj()["d"]["$numberLong"] );
    var actE = rc[1].current().toObj()["e"];
    var actF = rc[1].current().toObj()["f"];

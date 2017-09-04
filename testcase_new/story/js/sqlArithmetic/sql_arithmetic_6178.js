@@ -50,7 +50,7 @@ function checkResult( rc )
    var expA = 3;
    var expB = -1;
    var expC = 2;
-   var expD = 0.5;
+   var expD = 0;
    
    var actA = rc.current().toObj().a;
    var actB = rc.current().toObj().b;
