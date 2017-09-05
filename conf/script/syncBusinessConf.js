@@ -36,6 +36,14 @@ function _connectSdb( addressList, user, passwd )
    var svcname ;
    var result = {} ;
 
+   if( addressList.length == 0 )
+   {
+      rc = SDB_SYS ;
+      var error = new SdbError( rc, "coord address is empty" ) ;
+      PD_LOGGER.log( PDERROR, error ) ;
+      throw error ;
+   }
+
    for( var index in addressList )
    {
       try
@@ -46,6 +54,7 @@ function _connectSdb( addressList, user, passwd )
          PD_LOGGER.log( PDEVENT, sprintf( "Connect sequoiadb[?:?]",
                                           hostName, svcname ) ) ;
          db = new Sdb( hostName, svcname, user, passwd ) ;
+         result = addressList[index] ;
          break ;
       }
       catch( e )
@@ -65,8 +74,6 @@ function _connectSdb( addressList, user, passwd )
       throw error ;
    }
 
-   result[FIELD_HOSTNAME] = hostName ;
-   result[FIELD_SVCNAME]  = svcname ;
    result["db"] = db ;
    return result ;
 }
@@ -119,9 +126,17 @@ function _getNodeList( db )
    return nodeList ;
 }
 
-function _getConfig( hostName, svcname )
+function _getConfig( hostName, svcname, agentService )
 {
-   var agentPort = Oma.getAOmaSvcName( hostName ) ;
+   var agentPort ;
+   if( typeof( agentService ) == 'string' && agentService.length > 0 )
+   {
+      agentPort = agentService ;
+   }
+   else
+   {
+      agentPort = Oma.getAOmaSvcName( hostName ) ;
+   }
    var oma = new Oma( hostName, agentPort ) ;
    var configStr = oma.getNodeConfigs( svcname ) ;
 
@@ -210,6 +225,39 @@ function _getNodeConfig( hostRemoval, hostList, hostName, svcname, groupName )
    }
 }
 
+function _getHostMap( connectInfo )
+{
+   var hostMap = [] ;
+   var hostName = connectInfo[FIELD_HOSTNAME] ;
+   var port     = connectInfo[FIELD_AGENT_SERVICE] ;
+
+   try
+   {
+      var remote = new Remote( hostName, port ) ;
+      var remoteSys = remote.getSystem() ;
+      var maps = remoteSys.getHostsMap().toObj() ;
+      var hosts = maps[FIELD_HOSTS] ;
+
+      for( var index in hosts )
+      {
+         if( hosts[index][FIELD_HOSTNAME] != "localhost" &&
+             hosts[index][FIELD_IP2] != "127.0.0.1" )
+         {
+            var hostInfo = {} ;
+
+            hostInfo[FIELD_HOSTNAME] = hosts[index][FIELD_HOSTNAME] ;
+            hostInfo[FIELD_IP]       = hosts[index][FIELD_IP2] ;
+            hostMap.push( hostInfo ) ;
+         }
+      }
+   }
+   catch( e )
+   {
+   }
+
+   return hostMap ;
+}
+
 function _syncSdbConfig()
 {
    var result      = {}
@@ -227,10 +275,13 @@ function _syncSdbConfig()
 
    db = connectInfo["db"] ;
 
+   result[FIELD_HOSTS] = _getHostMap( connectInfo ) ;
+
    try
    {
       nodeConfig = _getConfig( connectInfo[FIELD_HOSTNAME],
-                               connectInfo[FIELD_SVCNAME] ) ;
+                               connectInfo[FIELD_SVCNAME],
+                               connectInfo[FIELD_AGENT_SERVICE] ) ;
    }
    catch( e )
    {
