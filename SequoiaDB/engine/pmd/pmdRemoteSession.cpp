@@ -1302,9 +1302,6 @@ namespace engine
    void _pmdRemoteSessionSite::handleClose( const NET_HANDLE & handle,
                                             const _MsgRouteID & id )
    {
-      PD_LOG( PDEVENT, "Connection[Handle:%u, RouteID:%s] disconnect",
-              handle, routeID2String( id ).c_str() ) ;
-
       // if assit node can't find the nodeID not to send disconnect
       if ( !eduCB()->isTransaction() &&
            FALSE == existNode( id.columns.nodeID ) )
@@ -1761,6 +1758,9 @@ namespace engine
    void _pmdRemoteSessionMgr::handleClose( const NET_HANDLE &handle,
                                            const _MsgRouteID &id )
    {
+      PD_LOG( PDEVENT, "Connection[Handle:%u, RouteID:%s] disconnect",
+              handle, routeID2String( id ).c_str() ) ;
+
       ossScopedLock lock( &_edusLatch, SHARED ) ;
       MAP_TID_2_EDU_IT it = _mapTID2EDU.begin() ;
       while ( it != _mapTID2EDU.end() )
