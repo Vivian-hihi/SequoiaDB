@@ -167,11 +167,10 @@ namespace engine
    INT32 _mthMatchFuncABS::call( const BSONElement &in, BSONObj &out )
    {
       INT32 rc = SDB_OK ;
+      INT32 flag = 0 ;
       BSONObjBuilder builder ;
 
-      rc = mthAbs( _fieldName.getFieldName(), in, builder ) ;
-      // ignore overflow
-      rc = ( SDB_VALUE_OVERFLOW == rc ) ? SDB_OK : rc ;
+      rc = mthAbs( _fieldName.getFieldName(), in, builder, flag ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "mthAbs failed:rc=%d", rc ) ;
@@ -835,11 +834,10 @@ namespace engine
    INT32 _mthMatchFuncADD::call( const BSONElement &in, BSONObj &out )
    {
       INT32 rc = SDB_OK ;
+      INT32 flag = 0 ;
       BSONObjBuilder builder ;
 
-      rc = mthAdd( _fieldName.getFieldName(), in, _funcEle, builder ) ;
-       // ignore overflow
-      rc = ( SDB_VALUE_OVERFLOW == rc ) ? SDB_OK : rc ;
+      rc = mthAdd( _fieldName.getFieldName(), in, _funcEle, builder, flag ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "mthAdd failed:rc=%d", rc ) ;
@@ -909,11 +907,10 @@ namespace engine
    INT32 _mthMatchFuncSUBTRACT::call( const BSONElement &in, BSONObj &out )
    {
       INT32 rc = SDB_OK ;
+      INT32 flag = 0 ;
       BSONObjBuilder builder ;
 
-      rc = mthSub( _fieldName.getFieldName(), in, _funcEle, builder ) ;
-       // ignore overflow
-      rc = ( SDB_VALUE_OVERFLOW == rc ) ? SDB_OK : rc ;
+      rc = mthSub( _fieldName.getFieldName(), in, _funcEle, builder, flag ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "mthSub failed:rc=%d", rc ) ;
@@ -983,11 +980,10 @@ namespace engine
    INT32 _mthMatchFuncMULTIPLY::call( const BSONElement &in, BSONObj &out )
    {
       INT32 rc = SDB_OK ;
+      INT32 flag = 0 ;
       BSONObjBuilder builder ;
 
-      rc = mthMultiply( _fieldName.getFieldName(), in, _funcEle, builder ) ;
-       // ignore overflow
-      rc = ( SDB_VALUE_OVERFLOW == rc ) ? SDB_OK : rc ;
+      rc = mthMultiply( _fieldName.getFieldName(), in, _funcEle, builder, flag ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "mthMultiply failed:rc=%d", rc ) ;
@@ -1057,11 +1053,10 @@ namespace engine
    INT32 _mthMatchFuncDIVIDE::call( const BSONElement &in, BSONObj &out )
    {
       INT32 rc = SDB_OK ;
+      INT32 flag = 0 ;
       BSONObjBuilder builder ;
 
-      rc = mthDivide( _fieldName.getFieldName(), in, _funcEle, builder ) ;
-       // ignore overflow
-      rc = ( SDB_VALUE_OVERFLOW == rc ) ? SDB_OK : rc ;
+      rc = mthDivide( _fieldName.getFieldName(), in, _funcEle, builder, flag ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "mthDivide failed:rc=%d", rc ) ;

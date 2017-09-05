@@ -3382,6 +3382,7 @@ namespace engine
       clInfo._isHash             = TRUE ;
       clInfo._isSharding         = FALSE ;
       clInfo._isMainCL           = false;
+      clInfo._strictDataMode     = FALSE ;
       clInfo._assignType         = ASSIGN_RANDOM ;
 
       fieldMask = 0 ;

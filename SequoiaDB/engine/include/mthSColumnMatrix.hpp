@@ -67,11 +67,12 @@ namespace engine
 
    private:
       /// build matirx
-      INT32 _load( const bson::BSONElement &e, BOOLEAN strictDataMode = FALSE ) ;
+      INT32 _load( const bson::BSONElement &e, BOOLEAN strictDataMode ) ;
 
       INT32 _loadObj( _mthSColumn *column,
                       const bson::BSONObj &obj,
-                      UINT32 &actionNum ) ;
+                      UINT32 &actionNum,
+                      BOOLEAN strictDataMode ) ;
 
       INT32 _loadDefaultValue( const bson::BSONElement &e ) ;
 

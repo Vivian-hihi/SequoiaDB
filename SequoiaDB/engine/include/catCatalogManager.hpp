@@ -117,6 +117,7 @@ namespace engine
          _isMainCL            = FALSE ;
          _autoSplit           = FALSE ;
          _autoRebalance       = FALSE ;
+         _strictDataMode      = FALSE ;
          _gpSpecified         = NULL ;
          _version             = 0 ;
          _assignType          = ASSIGN_RANDOM ;

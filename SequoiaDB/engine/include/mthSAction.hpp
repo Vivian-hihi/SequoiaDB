@@ -92,6 +92,17 @@ namespace engine
          return _attribute ;
       }
 
+      OSS_INLINE void setStrictDataMode( BOOLEAN strictDataMode )
+      {
+         _strictDataMode = strictDataMode ;
+         return ;
+      }
+
+      OSS_INLINE BOOLEAN getStrictDataMode() const
+      {
+         return _strictDataMode ;
+      }
+
       OSS_INLINE const bson::BSONObj &getObj()const
       {
          return _obj ;
@@ -153,6 +164,7 @@ namespace engine
       bson::BSONElement _value ;
       const CHAR *_name ;
       MTH_S_ATTRIBUTE _attribute ;
+      BOOLEAN     _strictDataMode ;
 
       /// think about placement new ?
       /// that we can use different child classes.

@@ -170,11 +170,11 @@ namespace engine
             goto error ;
          }
 
-         column->_setStrictDataMode( strictDataMode ) ;
          SDB_ASSERT( NULL != column, "can not be null" ) ;
          rc = _loadObj( column,
                         e.embeddedObject(),
-                        actionNum ) ;
+                        actionNum,
+                        strictDataMode ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to load element[%s]"
@@ -205,7 +205,8 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__MTHSCOLUMNMATRIX__LOADOBJ, "_mthSColumnMatrix::_loadObj" )
    INT32 _mthSColumnMatrix::_loadObj( _mthSColumn *column,
                                       const bson::BSONObj &obj,
-                                      UINT32 &actionNum )
+                                      UINT32 &actionNum,
+                                      BOOLEAN strictDataMode )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__MTHSCOLUMNMATRIX__LOADOBJ ) ;
@@ -253,6 +254,7 @@ namespace engine
             continue ;
          }
 
+         action->setStrictDataMode( strictDataMode ) ;
          rc = column->addAction( action ) ;
          if ( SDB_OK != rc )
          {

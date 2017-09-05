@@ -51,6 +51,10 @@ namespace engine
 
    #define MTH_OPERATOR_EYECATCHER              '$'
 
+   // basic operation flags
+   #define MTH_OPERATION_FLAG_OVERFLOW   0x00000001
+
+
 
    INT32 mthAppendString ( CHAR **ppStr, INT32 &bufLen,
                            INT32 strLen, const CHAR *newStr,
@@ -71,7 +75,7 @@ namespace engine
    BOOLEAN mthIsModValid( const BSONElement &modmEle ) ;
 
    INT32 mthAbs( const CHAR *name, const BSONElement &in,
-                 BSONObjBuilder &outBuilder ) ;
+                 BSONObjBuilder &outBuilder, INT32 &flag ) ;
 
    INT32 mthCeiling( const CHAR *name, const BSONElement &in,
                      BSONObjBuilder &outBuilder ) ;
@@ -105,17 +109,24 @@ namespace engine
                   BSONObjBuilder &outBuilder ) ;
 
    INT32 mthAdd( const CHAR *name, const BSONElement &in,
-                 const BSONElement &addend, BSONObjBuilder &outBuilder ) ;
+                 const BSONElement &addend, 
+                 BSONObjBuilder &outBuilder, 
+                 INT32 &flag ) ;
 
    INT32 mthSub( const CHAR *name, const BSONElement &in,
-                 const BSONElement &subtrahead, BSONObjBuilder &outBuilder ) ;
+                 const BSONElement &subtrahead, 
+                 BSONObjBuilder &outBuilder, 
+                 INT32 &flag ) ;
 
    INT32 mthMultiply( const CHAR *name, const BSONElement &in,
                       const BSONElement &multiplier,
-                      BSONObjBuilder &outBuilder ) ;
+                      BSONObjBuilder &outBuilder,
+                      INT32 &flag ) ;
 
    INT32 mthDivide( const CHAR *name, const BSONElement &in,
-                    const BSONElement &divisor, BSONObjBuilder &outBuilder ) ;
+                    const BSONElement &divisor, 
+                    BSONObjBuilder &outBuilder, 
+                    INT32 &flag ) ;
 
    INT32 mthType( const CHAR *name, INT32 outType, const BSONElement &in,
                   BSONObjBuilder &outBuilder ) ;

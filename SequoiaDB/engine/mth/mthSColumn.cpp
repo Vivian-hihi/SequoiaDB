@@ -48,8 +48,7 @@ namespace engine
    _mthSColumn::_mthSColumn()
    :_father( NULL ),
     _name( _staticName ),
-    _dynamicName( NULL ),
-    _strictDataMode( FALSE )
+    _dynamicName( NULL )
    {
       ossMemset( _staticName, '\0', MTH_SCOLUMN_STATIC_NAME_BUF_LEN ) ;
    }
@@ -159,18 +158,7 @@ namespace engine
                   "can not be invaild" ) ;
 
       rc = _build( e, builder ) ;
-      if ( SDB_OK == rc ||  SDB_VALUE_OVERFLOW == rc && !_strictDataMode )
-      {
-         rc = SDB_OK ;
-         goto done ;
-      }
-      else if ( SDB_VALUE_OVERFLOW == rc )
-      {
-         PD_LOG( PDERROR, "overflow or underflow happened, field: %s, value: %lld, rc = %d",
-                 _name, e.numberLong(), rc ) ;
-         goto error ;
-      }
-      else
+      if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to build column:%d", rc ) ;
          goto error ;
@@ -188,7 +176,6 @@ namespace engine
                               bson::BSONObjBuilder &builder )
    {
       INT32 rc = SDB_OK ;
-      BOOLEAN isChanged = FALSE ;
       PD_TRACE_ENTRY( SDB__MTHSCOLUMN__BUILD ) ;
       bson::BSONElement input = e ;
       bson::BSONElement output ;
@@ -199,17 +186,21 @@ namespace engine
          if ( MTH_S_IS_LAST_ACTION( i ) )
          {
             rc = _actions[i]->build( _name, input, builder ) ;
-            if ( SDB_VALUE_OVERFLOW != rc && SDB_OK != rc )
+            if ( SDB_OK == rc )
+            {
+               goto done ;
+            }
+            else
             {
                PD_LOG( PDERROR, "failed to build column:%d", rc ) ;
                goto error ;
             }
-            goto done ;
+
          }
          else
          {
             rc = _actions[i]->get( _name, input, output ) ;
-            if ( SDB_VALUE_OVERFLOW != rc && SDB_OK != rc )
+            if ( SDB_OK != rc )
             {
                PD_LOG( PDERROR, "failed to get column:%d", rc ) ;
                goto error ;
@@ -217,10 +208,6 @@ namespace engine
             input = output ;
          }
 
-         if ( SDB_VALUE_OVERFLOW == rc )
-         {
-            isChanged = TRUE ;
-         }
       }
 
       if ( !_subColumns.empty() )
@@ -233,10 +220,6 @@ namespace engine
          }
       }
 
-      if ( isChanged )
-      {
-         rc = SDB_VALUE_OVERFLOW ;
-      }
    done:
       PD_TRACE_EXITRC( SDB__MTHSCOLUMN__BUILD, rc ) ;
       return rc ;
@@ -551,10 +534,6 @@ namespace engine
       goto done ;
    }
 
-   INT32 _mthSColumn::_setStrictDataMode(BOOLEAN strictDataMode)
-   {
-      _strictDataMode = strictDataMode ;
-   }
 
 }
 

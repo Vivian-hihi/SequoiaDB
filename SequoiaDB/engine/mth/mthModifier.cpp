@@ -322,7 +322,7 @@ namespace engine
             else
             {
                rc = SDB_VALUE_OVERFLOW ;
-               PD_LOG( PDERROR, "overflow or underflow happened, field: %s(%lld, inc: %lld), rc = %d",
+               PD_LOG( PDERROR, "overflow happened, field: %s(%lld, inc: %lld), rc = %d",
                        in.fieldName(), arg1, arg2, rc ) ;
                goto error ;
 
@@ -349,7 +349,7 @@ namespace engine
             {
                //32 bit overflow or underflow happened
                rc = SDB_VALUE_OVERFLOW ;
-               PD_LOG( PDERROR, "overflow or underflow happened, field: %s(%d, inc: %d), rc = %d",
+               PD_LOG( PDERROR, "overflow happened, field: %s(%d, inc: %d), rc = %d",
                        in.fieldName(), arg1, arg2, rc ) ;
                goto error ;
             }

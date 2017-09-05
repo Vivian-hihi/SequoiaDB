@@ -43,6 +43,7 @@ namespace engine
     _getFunc( NULL ),
     _name( NULL ),
     _attribute( MTH_S_ATTR_NONE ),
+    _strictDataMode( FALSE ),
     _matcher( NULL )
    {
 
@@ -66,7 +67,7 @@ namespace engine
       }
 
       rc = ( *_buildFunc )( fieldName, e, this, builder ) ;
-      if ( SDB_VALUE_OVERFLOW != rc && SDB_OK != rc )
+      if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to build column:%d", rc ) ;
          goto error ;
@@ -91,11 +92,12 @@ namespace engine
       }
 
       rc = ( *_getFunc )( fieldName, in, this, out ) ;
-      if ( SDB_VALUE_OVERFLOW != rc && SDB_OK != rc )
+      if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to get column:%d", rc ) ;
          goto error ;
       }
+
    done:
       PD_TRACE_EXITRC( SDB__MTHSACTION_GET, rc ) ;
       return rc ;
