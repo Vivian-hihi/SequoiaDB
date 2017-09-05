@@ -88,6 +88,8 @@ class TestCS12461(unittest.TestCase):
       #query data and check
       expect_record = [{"a":1,"_id":1}]
       check_Result( self.cl, {}, expect_record, True )
+
+      self.run_tearDown = True
       
    def tearDown(self):
       if self.run_tearDown and (not sdbconfig.config.break_on_failure):

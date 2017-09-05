@@ -99,6 +99,8 @@ class TestCS12449(unittest.TestCase):
       #query data and check
       expect_type = [{"a":"double"},{"a":"double"}, {"a":"double"},{"a":"double"}]
       check_Result( self.cl, {}, {"a":{"$type":2}}, record, expect_type, False )
+
+      self.run_tearDown = True
       
    def tearDown(self):
       if self.run_tearDown and (not sdbconfig.config.break_on_failure):

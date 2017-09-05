@@ -95,6 +95,8 @@ class TestCS12450(unittest.TestCase):
       
       #query data and check
       check_Result( self.cl, {}, {}, {}, {}, False )
+
+      self.run_tearDown = True
       
    def tearDown(self):
       if self.run_tearDown and (not sdbconfig.config.break_on_failure):

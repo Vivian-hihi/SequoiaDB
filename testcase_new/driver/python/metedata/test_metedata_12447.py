@@ -75,6 +75,8 @@ class TestCS12447(unittest.TestCase):
       
       actual_cl_name4 = self.db[self.cs_name][cl_name].get_collection_name()
       self.assertEqual( actual_cl_name4, cl_name)
+
+      self.run_tearDown = True
       
    def tearDown(self):
       if self.run_tearDown and (not sdbconfig.config.break_on_failure):

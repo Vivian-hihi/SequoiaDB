@@ -94,6 +94,8 @@ class TestCS12453(unittest.TestCase):
       #json to bson   
       json = '{"$date": "2012-01-01"}'
       self.assertEqual(json, dumps(loads(json)))
+
+      self.run_tearDown = True
       
    def tearDown(self):
       if self.run_tearDown and (not sdbconfig.config.break_on_failure):

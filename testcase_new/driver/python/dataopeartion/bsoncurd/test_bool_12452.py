@@ -11,9 +11,6 @@ from dataopeartion.bsoncurd.commlib import *
 from lib import sdbconfig
 from lib import testlib
 
-from bson.json_util import loads 
-from bson.json_util import dumps
-
 class TestCS12452(unittest.TestCase):
    def setUp(self):
       testlib.print_setup_msg(self)
@@ -79,6 +76,8 @@ class TestCS12452(unittest.TestCase):
       
       #query data and check
       check_Result( self.cl, {}, {}, {}, {}, False )
+
+      self.run_tearDown = True
       
    def tearDown(self):
       if self.run_tearDown and (not sdbconfig.config.break_on_failure):

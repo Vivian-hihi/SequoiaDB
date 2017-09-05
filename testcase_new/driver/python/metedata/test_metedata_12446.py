@@ -53,6 +53,8 @@ class TestCS12446(unittest.TestCase):
                              "ShardingKey":{"a":1}, "EnsureShardingIndex":False,
                              "ShardingType":"range", "AutoIndexId":False}
       self.check_cl_snapshot_8(self.cs_name + "." + cl_names[1], except_cl_options_2)
+
+      self.run_tearDown = True
       
    def tearDown(self):
        if self.run_tearDown and (not sdbconfig.config.break_on_failure):

@@ -158,7 +158,8 @@ class TestCS12445(unittest.TestCase):
       #dropCS
       self.db.drop_collection_space(self.subcs_name)
       self.db.drop_collection_space(self.maincs_name)
-      
+
+      self.run_tearDown = True
    
    def tearDown(self):
       if self.run_tearDown and (not sdbconfig.config.break_on_failure):

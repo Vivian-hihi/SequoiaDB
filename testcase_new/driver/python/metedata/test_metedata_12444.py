@@ -42,7 +42,8 @@ class TestCS12444(unittest.TestCase):
          expect_page_size = self.list[index][3]
          expect_lob_page_size = self.list[index][4]
          expect_cs_options = {"PageSize":expect_page_size, "LobPageSize":expect_lob_page_size}
-         self.createCSAndCheck(self.cs_name, cs_options, expect_cs_options) 
+         self.createCSAndCheck(self.cs_name, cs_options, expect_cs_options)
+      self.run_tearDown = True
    
    def tearDown(self):
       if self.run_tearDown and (not sdbconfig.config.break_on_failure):

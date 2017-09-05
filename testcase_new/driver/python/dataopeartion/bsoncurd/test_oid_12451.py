@@ -106,6 +106,8 @@ class TestCS12451(unittest.TestCase):
       #json to bson   
       json = '{"$oid": "59a7bfd087310ecb73000009"}'
       self.assertEqual(json, dumps(loads(json)))
+
+      self.run_tearDown = True
       
    def tearDown(self):
       if self.run_tearDown and (not sdbconfig.config.break_on_failure):

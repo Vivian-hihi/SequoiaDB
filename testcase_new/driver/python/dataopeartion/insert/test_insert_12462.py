@@ -42,7 +42,9 @@ class TestCS12462(unittest.TestCase):
          if(-38 != e.code):
             print(e.detail)
             self.fail("check_error_code_fail")
-        
+            
+      self.run_tearDown = True
+      
    def tearDown(self):
       if self.run_tearDown and (not sdbconfig.config.break_on_failure):
          try:
