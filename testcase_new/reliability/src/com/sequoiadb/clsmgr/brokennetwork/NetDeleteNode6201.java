@@ -87,7 +87,7 @@ public class NetDeleteNode6201 extends SdbTestBase {
             coordNode.start();
 
             // 建立并行任务
-            FaultMakeTask faultTask = BrokenNetwork.getFaultMakeTask(cataPriHost, 3, 10, 15);
+            FaultMakeTask faultTask = BrokenNetwork.getFaultMakeTask(cataPriHost, 1, 10, 15);
             TaskMgr mgr = new TaskMgr(faultTask);
             mgr.addTask(new RemoveCoord());
             mgr.execute();
