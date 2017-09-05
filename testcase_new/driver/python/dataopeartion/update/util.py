@@ -1,6 +1,3 @@
-from pysequoiadb import client
-
-
 def check_result(list1,list2):
    for x in list1:
       if x not in list2:

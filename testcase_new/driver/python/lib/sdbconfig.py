@@ -1,14 +1,12 @@
-import os.path
 import json
 import os
-from pysequoiadb import client
+import os.path
 
 class SdbConfig(object):
-
    def __init__(self):
       self.get_config()
-      
-   def get_config(self): 
+
+   def get_config(self):
       config_file = os.path.join(os.getcwd(), "config.json")
       fp = open(config_file)
       configs = json.load(fp)
@@ -30,10 +28,8 @@ class SdbConfig(object):
       """
       fp.close()
 
-config=SdbConfig()
 
-def default_db():
-   return client( config.host_name, config.service )
+
 
 
 """
