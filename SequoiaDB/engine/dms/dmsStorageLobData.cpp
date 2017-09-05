@@ -518,7 +518,7 @@ namespace engine
       SDB_ASSERT( NULL != pData && offset >= 0, "invalid operation" ) ;
 
       INT32  pageID = -1 ;
-      if ( offset >= sizeof( _dmsStorageUnitHeader ) )
+      if ( offset >= (INT64)sizeof( _dmsStorageUnitHeader ) )
       {
          offset -= sizeof( _dmsStorageUnitHeader ) ;
          pageID = offset >> _logarithmic ;
@@ -670,7 +670,7 @@ namespace engine
 
       SINT64 readFromFile = 0 ;
       INT32  pageID = -1 ;
-      if ( offset >= sizeof( _dmsStorageUnitHeader ) )
+      if ( offset >= (INT64)sizeof( _dmsStorageUnitHeader ) )
       {
          offset -= sizeof( _dmsStorageUnitHeader ) ;
          pageID = offset >> _logarithmic ;
