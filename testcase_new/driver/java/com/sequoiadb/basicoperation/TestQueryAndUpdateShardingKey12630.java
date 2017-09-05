@@ -116,7 +116,7 @@ public class TestQueryAndUpdateShardingKey12630 extends SdbTestBase{
 	public void tearDown(){
 		try{
 			if(cs.isCollectionExist(clName)){
-				//cs.dropCollection(clName);
+				cs.dropCollection(clName);
 			}		
 			sdb.close();
 			System.out.println(this.getClass().getName()+" end at "
