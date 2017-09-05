@@ -210,8 +210,8 @@ class TestSelectSymbol extends PHPUnit_Framework_TestCase
       // $divide
       $findRecsArray = self::$dbh -> findRecs( self::$clDB, '$divide' );
       $this -> assertCount ( 2, $findRecsArray );
-      $this -> assertEquals( -0.1,  $findRecsArray[0]['int'] );
-      $this -> assertEquals(  0.26, $findRecsArray[1]['int'] );
+      $this -> assertEquals( 0, $findRecsArray[0]['int'] );
+      $this -> assertEquals( 0.26, $findRecsArray[1]['int'] );
       // $substr
       $findRecsArray = self::$dbh -> findRecs( self::$clDB, '$substr' );
       $this -> assertCount ( 2, $findRecsArray );
