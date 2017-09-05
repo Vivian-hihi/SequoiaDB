@@ -28,7 +28,7 @@ def assert_list_equal(self,expected, actual):
    """
    msg = "\nexpected: " + str(expected) + "\nactual: " + str(actual)
 
-   unittest.TestCase.assertSequenceEqual(self,len(expected), len(actual), msg=msg)
+   unittest.TestCase.assertEqual(self,len(expected), len(actual), msg=msg)
 
    for x in actual:
       unittest.TestCase.assertIn(self,x, expected, msg)
