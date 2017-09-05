@@ -3,7 +3,6 @@
 # @author:     LaoJingTang 2017-8-30
 import unittest
 
-from dataopeartion.update import util
 from lib import testlib
 from pysequoiadb.error import (SDBBaseError)
 
@@ -14,18 +13,18 @@ class Data12473(unittest.TestCase):
       self.db=testlib.default_db()
       self.create_cs_cl()
 
-   def subtest(self, cl_list__expect, return_list_expect, update, **kwargs):
+   def query_update_test(self, cl_list__expect, return_list_expect, update, **kwargs):
       for i in [{"a": i, "b": i} for i in range(10)]:
          self.cl.insert(i)
       if "return_new" not in kwargs:
          kwargs["return_new"] = True
 
       cur = self.cl.query_and_update(update, **kwargs)
-      list1 = self.get_result()
-      list2 = self.get_result(cur)
-      self.check_result(list1, cl_list__expect)
-      self.check_result(list2, return_list_expect)
-      self.cl.query_and_remove()
+      list1 = testlib.get_records(self.cl.query())
+      list2 = testlib.get_records(cur)
+      testlib.assert_list_equal( cl_list__expect,list1)
+      testlib.assert_list_equal(return_list_expect,list2)
+      self.cl.delete()
 
    def test(self):
       original_list = [{"a": i, "b": i} for i in range(10)]
@@ -39,15 +38,15 @@ class Data12473(unittest.TestCase):
       return_list_expect = [{"a": 2, "b": 1}]
       l = list(original_list)
       l[1] = {"a": 2, "b": 1}
-      self.subtest(l, return_list_expect, update, condition=condition)
+      self.query_update_test(l, return_list_expect, update, condition=condition)
 
       # selector+update
       selector = {"b": {"$include": 0}}
-      self.subtest(updated_list, updated_list_a, update, selector=selector)
+      self.query_update_test(updated_list, updated_list_a, update, selector=selector)
 
       # order_by+update
       order_by = {"_id": -1}
-      self.subtest(updated_list, updated_list, update, order_by=order_by)
+      self.query_update_test(updated_list, updated_list, update, order_by=order_by)
 
       # num_to_skip+update
       num_to_skip = 5
@@ -57,7 +56,7 @@ class Data12473(unittest.TestCase):
             l.append({"a": i + 1, "b": i})
          else:
             l.append({"a": i, "b": i})
-      self.subtest(l, updated_list[num_to_skip:], update, num_to_skip=num_to_skip)
+      self.query_update_test(l, updated_list[num_to_skip:], update, num_to_skip=num_to_skip)
 
       # num_to_return+update
       num_to_return = 5
@@ -67,44 +66,27 @@ class Data12473(unittest.TestCase):
             l.append({"a": i + 1, "b": i})
          else:
             l.append({"a": i, "b": i})
-      self.subtest(l, updated_list[:num_to_return], update, num_to_return=num_to_return)
+      self.query_update_test(l, updated_list[:num_to_return], update, num_to_return=num_to_return)
 
       # hint+update
       hint = {"": "index"}
-      self.subtest(updated_list, updated_list, update, hint=hint)
+      self.query_update_test(updated_list, updated_list, update, hint=hint)
 
       # selector+update
       selector = {"b": {"$include": 0}}
-      self.subtest(updated_list, [{"a": i + 1} for i in range(10)], update, selector=selector)
+      self.query_update_test(updated_list, [{"a": i + 1} for i in range(10)], update, selector=selector)
 
       # return_new+update
-      self.subtest(updated_list, original_list, update, return_new=False)
+      self.query_update_test(updated_list, original_list, update, return_new=False)
 
       # flags+update
       QUERY_FLG_FORCE_HINT = 128
       try:
-         self.subtest(updated_list, updated_list, update, flagss=QUERY_FLG_FORCE_HINT, hint=hint)
+         self.query_update_test(updated_list, updated_list, update, flagss=QUERY_FLG_FORCE_HINT, hint=hint)
       except SDBBaseError as e:
          pass
 
       self.db.drop_collection_space(self.cs_name)
-
-   def check_result(self, list1, expect_list):
-      if not util.check_result(list1, expect_list):
-         self.fail("check result fail")
-
-   def get_result(self, cur=None):
-      if cur == None:
-         cur = self.cl.query()
-      items = list()
-      while True:
-         try:
-            item = cur.next()
-            item.pop('_id')
-            items.append(item)
-         except BaseException as e:
-            break
-      return items
 
    def tearDown(self):
       testlib.print_teardown_msg(self)
