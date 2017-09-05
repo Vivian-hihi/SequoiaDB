@@ -334,6 +334,11 @@ var FIELD_CLUSTER_NAME                     = ClusterName ;
 var FIELD_CONFIG                           = Config ;
 var FIELD_HOST_INFO                        = HostInfo ;
 var FIELD_SEQUOIADB                        = "sequoiadb" ;
+var FIELD_HOSTLIST                         = "HostList" ;
+var FIELD_IP                               = IP ;
+var FIELD_HOSTS                            = Hosts ;
+var FIELD_IP2                              = Ip ;
+var FIELD_AGENT_SERVICE                    = AgentService ;
 
 
 // Async task step
