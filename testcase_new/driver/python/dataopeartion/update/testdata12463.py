@@ -20,7 +20,7 @@ class Data12463(unittest.TestCase):
       condition = {"a": {"$et": 1}}
       self.cl.update(update,condition=condition)
       l = [{"a": 2} for i in range(10)]
-      testlib.assert_list_equal(l, testlib.get_records(self.cl.query()))
+      testlib.assert_list_equal(self,l, testlib.get_records(self.cl.query()))
 
    def tearDown(self):
       print("end: " + str(datetime.now()))

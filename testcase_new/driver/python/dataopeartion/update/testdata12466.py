@@ -22,8 +22,8 @@ class Data12466(unittest.TestCase):
       cur=self.cl.upsert(upsert,**kwargs)
       list1=testlib.get_records(self.cl.query())
       list2=testlib.get_records(cur)
-      testlib.assert_list_equal(cl_list__expect,list1)
-      testlib.assert_list_equal(return_list_expect,list2)
+      testlib.assert_list_equal(self,cl_list__expect,list1)
+      testlib.assert_list_equal(self,return_list_expect,list2)
       self.cl.delete()
 
    def test(self):

@@ -1,3 +1,4 @@
+# -- coding: utf-8 --
 import unittest
 from datetime import datetime
 
@@ -19,7 +20,7 @@ def print_teardown_msg(self):
    print(str(self.__class__.__name__) + " teardown: " + str(datetime.now()))
 
 
-def assert_list_equal(expected, actual):
+def assert_list_equal(self,expected, actual):
    """
    判断两个数组是否相等，并不要求两个数组具有相同的顺序
    :param expected: list expected
@@ -27,13 +28,13 @@ def assert_list_equal(expected, actual):
    """
    msg = "\nexpected: " + str(expected) + "\nactual: " + str(actual)
 
-   unittest.TestCase.assertSequenceEqual(len(expected), len(actual), msg=msg)
+   unittest.TestCase.assertSequenceEqual(self,len(expected), len(actual), msg=msg)
 
    for x in actual:
-      unittest.TestCase.assertIn(x, expected, msg)
+      unittest.TestCase.assertIn(self,x, expected, msg)
 
    for x in expected:
-      unittest.TestCase.assertIn(x, actual, msg)
+      unittest.TestCase.assertIn(self,x, actual, msg)
 
 def get_records(cur):
    """

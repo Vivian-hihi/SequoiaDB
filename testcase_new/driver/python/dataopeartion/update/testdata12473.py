@@ -10,7 +10,7 @@ from pysequoiadb.error import (SDBBaseError)
 class Data12473(unittest.TestCase):
    def setUp(self):
       testlib.print_setup_msg(self)
-      self.db=testlib.default_db()
+      self.db = testlib.default_db()
       self.create_cs_cl()
 
    def query_update_test(self, cl_list__expect, return_list_expect, update, **kwargs):
@@ -22,8 +22,8 @@ class Data12473(unittest.TestCase):
       cur = self.cl.query_and_update(update, **kwargs)
       list1 = testlib.get_records(self.cl.query())
       list2 = testlib.get_records(cur)
-      testlib.assert_list_equal( cl_list__expect,list1)
-      testlib.assert_list_equal(return_list_expect,list2)
+      testlib.assert_list_equal(self, cl_list__expect, list1)
+      testlib.assert_list_equal(self, return_list_expect, list2)
       self.cl.delete()
 
    def test(self):
@@ -101,4 +101,3 @@ class Data12473(unittest.TestCase):
          pass
       self.cs = self.db.create_collection_space(self.cs_name)
       self.cl = self.cs.create_collection(self.cl_name)
-

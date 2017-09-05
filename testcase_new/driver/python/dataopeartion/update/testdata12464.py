@@ -18,7 +18,7 @@ class Data12464(unittest.TestCase):
          self.cl.insert(i)
       self.cl.update(update, **kwargs)
       list1 = testlib.get_records(self.cl.query())
-      testlib.assert_list_equal(list__expect,list1)
+      testlib.assert_list_equal(self,list__expect,list1)
       self.cl.delete()
 
    def test(self):
