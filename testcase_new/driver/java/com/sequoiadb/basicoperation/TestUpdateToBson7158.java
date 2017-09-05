@@ -65,6 +65,7 @@ public class TestUpdateToBson7158 extends SdbTestBase{
 		{
 			cs = sdb.getCollectionSpace(SdbTestBase.csName);			
 			cl = cs.createCollection(clName,options);
+			
 		}catch(BaseException e){
 			Assert.assertTrue(false,"create cl fail "+e.getErrorType()+":"+e.getMessage());
 		}

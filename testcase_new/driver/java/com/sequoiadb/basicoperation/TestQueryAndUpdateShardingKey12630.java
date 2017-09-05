@@ -9,6 +9,7 @@ import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.util.JSON;
 import org.testng.Assert;
+import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 
@@ -64,6 +65,10 @@ public class TestQueryAndUpdateShardingKey12630 extends SdbTestBase{
 			Assert.assertTrue(false,"connect %s failed,"+SdbTestBase.coordUrl+e.getMessage());
 		}
 		
+		if (Commlib.isStandAlone(sdb)){
+			throw new SkipException("is standalone skip testcase");
+		}
+		
 		createCL();
 		String []records = {"{a:[1,2,'test',[3,4]],no:2,b:0,c:'test0'}",
         "{a:2,no:3,b:1,c:'test2'}"}; 			
@@ -83,11 +88,11 @@ public class TestQueryAndUpdateShardingKey12630 extends SdbTestBase{
 			BSONObject matcher = new BasicBSONObject();			
 			BSONObject hint = new BasicBSONObject();
 			BSONObject update = new BasicBSONObject();
-			BSONObject uValue = new BasicBSONObject();
+			BSONObject uValue = new BasicBSONObject();			
 			sValue.put("$include", 0);			
 			selector.put("_id",sValue);
 			uValue.put("no", 11);			
-			update.put("$inc",uValue);			
+			update.put("$inc",uValue);				
 			matcher.put("b",1);	
 			
 			cl.createIndex("testIndex", "{no:1,c:1}", false, false);
@@ -111,7 +116,7 @@ public class TestQueryAndUpdateShardingKey12630 extends SdbTestBase{
 	public void tearDown(){
 		try{
 			if(cs.isCollectionExist(clName)){
-				cs.dropCollection(clName);
+				//cs.dropCollection(clName);
 			}		
 			sdb.close();
 			System.out.println(this.getClass().getName()+" end at "

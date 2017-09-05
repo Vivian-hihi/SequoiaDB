@@ -9,6 +9,7 @@ import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.util.JSON;
 import org.testng.Assert;
+import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 
@@ -45,6 +46,10 @@ public class TestUpsertShardingKey12629 extends SdbTestBase{
 			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 		}catch(BaseException e){			
 			Assert.assertTrue(false,"connect %s failed,"+SdbTestBase.coordUrl+e.getMessage());
+		}
+		
+		if (Commlib.isStandAlone(sdb)){
+			throw new SkipException("is standalone skip testcase");
 		}
 		
 		createCL();
