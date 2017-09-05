@@ -1,5 +1,6 @@
 package com.sequoiadb.clsmgr.brokennetwork;
 
+import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -17,7 +18,9 @@ import com.sequoiadb.commlib.CommLib;
 import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.commlib.GroupWrapper;
 import com.sequoiadb.commlib.SdbTestBase;
+import com.sequoiadb.commlib.Ssh;
 import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.exception.FaultException;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.BrokenNetwork;
 import com.sequoiadb.task.FaultMakeTask;
@@ -37,6 +40,7 @@ public class NetDeleteNode6201 extends SdbTestBase {
     private String coordDbPath = SdbTestBase.reservedDir;
     private String connectUrl;
     private boolean deleteFlag = false;
+    private Ssh ssh;
 
     @BeforeClass()
     public void setUp() {
@@ -48,7 +52,7 @@ public class NetDeleteNode6201 extends SdbTestBase {
             groupMgr = new GroupMgr();
 
             // CheckBusiness(true),检测当前集群环境，若存在异常返回false，
-            if (!groupMgr.checkBusiness(20)) {
+            if (!groupMgr.checkBusiness(60)) {
                 throw new SkipException("checkBusiness fail");
             }
 
@@ -77,12 +81,13 @@ public class NetDeleteNode6201 extends SdbTestBase {
             // 建立一个COORD节点
             db = new Sequoiadb(connectUrl, "", "");
             ReplicaGroup coordGroup = db.getReplicaGroup("SYSCoord");
-            Node coordNode = coordGroup.createNode(connectUrl.split(":")[0], coordPort,
+            String hostName = connectUrl.split(":")[0];
+            Node coordNode = coordGroup.createNode(hostName, coordPort,
                     coordDbPath + "/" + coordPort, new BasicBSONObject());
             coordNode.start();
 
             // 建立并行任务
-            FaultMakeTask faultTask = BrokenNetwork.getFaultMakeTask(cataPriHost, 1, 10, 15);
+            FaultMakeTask faultTask = BrokenNetwork.getFaultMakeTask(cataPriHost, 3, 10, 15);
             TaskMgr mgr = new TaskMgr(faultTask);
             mgr.addTask(new RemoveCoord());
             mgr.execute();
@@ -97,7 +102,14 @@ public class NetDeleteNode6201 extends SdbTestBase {
                 try {
                     tmpDb = new Sequoiadb(connectUrl.split(":")[0] + ":" + coordPort, "", "");
                     coordGroup.removeNode(connectUrl.split(":")[0], coordPort, null);
-                }
+                }catch(BaseException e){
+                	if( e.getErrorCode() == -155 ){ 
+                		clearNode(hostName,coordPort, coordDbPath);
+                    }
+                	else{
+                		Assert.fail("remove node failed, errMsg:" + e.getMessage());
+                	}        			
+        		}
                 finally {
                     if (tmpDb != null) {
                         tmpDb.close();
@@ -151,6 +163,41 @@ public class NetDeleteNode6201 extends SdbTestBase {
                    db.close();
                }
             }
+        }
+    }
+    
+    public void clearNode(String hostName,int svcName, String nodePath) throws ReliabilityException{    	
+        String user = "root";
+        String passwd = SdbTestBase.rootPwd;        
+        int port = 22;        
+        try {
+            ssh = new Ssh(hostName, user, passwd, port);               
+            ssh.exec("sed -n '/INSTALL_DIR/,+1p' /etc/default/sequoiadb");
+            String installFlag = ssh.getStdout().substring(0, ssh.getStdout().length() - 1);
+            String[] installPwdStr = installFlag.split("=");
+            String installPwd = installPwdStr[1];
+            
+            ssh.exec("lsof -i:" + svcName + " | sed '1d' | awk '{print $2}'");
+            if (ssh.getStdout().length() > 0) {
+            	System.out.println("-----");
+            	ssh.exec(installPwd + "bin/sdbstop -p "+ svcName);
+            }
+            
+            File dirname = new File(nodePath);
+            if(dirname.isDirectory()){
+            	ssh.exec("rm -rf "+ nodePath);
+            }
+            
+            String confDir = installPwd + "conf/local/"+ svcName;
+            File confDirName = new File(confDir);
+            if(confDirName.isDirectory()){
+            	ssh.exec("rm -rf "+ confDirName);
+            }           
+            
+        }catch (BaseException e) {
+        	Assert.fail("clear node fail"+e.getMessage() + e.getErrorCode());
+        }finally {
+            ssh.disconnect();
         }
     }
 
