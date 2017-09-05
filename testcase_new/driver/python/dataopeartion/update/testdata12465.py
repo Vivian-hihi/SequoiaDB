@@ -14,17 +14,15 @@ class Data12465(unittest.TestCase):
       self.db = testlib.default_db()
       self.create_cs_cl()
 
-   def subtest(self, cl_list__expect, return_list_expect, upsert, **kwargs):
+   def upsert_test(self, cl_list__expect, upsert, **kwargs):
       for i in self.original_list:
          self.cl.insert(i)
       if "return_new" not in kwargs:
          kwargs["return_new"] = True
 
-      cur = self.cl.upsert(upsert, **kwargs)
+      self.cl.upsert(upsert, **kwargs)
       list1 = testlib.get_records(self.cl.query())
-      list2 = testlib.get_records(cur)
       testlib.assert_list_equal(self,cl_list__expect,list1)
-      testlib.assert_list_equal(self,return_list_expect,list2)
       self.cl.delete()
 
    def test(self):
@@ -36,7 +34,7 @@ class Data12465(unittest.TestCase):
       # condition+upsert
       condition = {"a": {"$et": 1}}
       l = [{"a": 2} for i in range(NUM)]
-      self.subtest(l, l, upsert, condition=condition)
+      self.upsert_test(l, upsert, condition=condition)
 
       self.db.drop_collection_space(self.cs_name)
 
