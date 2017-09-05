@@ -203,50 +203,6 @@ namespace engine
       return SDB_OK ;
    }
 
-   INT32 _sptUsrOma::help( const _sptArguments & arg,
-                           _sptReturnVal & rval,
-                           BSONObj & detail )
-   {
-      stringstream ss ;
-      ss << "Oma functions:" << endl
-         << " Oma.getOmaInstallFile()" << endl
-         << " Oma.getOmaInstallInfo()" << endl
-         << " Oma.getOmaConfigFile()" << endl
-         << " Oma.getOmaConfigs( [confFile] )" << endl
-         << " Oma.setOmaConfigs( obj, [confFile] )" << endl
-         << " Oma.getAOmaSvcName( hostname, [confFile] )" << endl
-         << " Oma.addAOmaSvcName( hostname, svcname, [isReplace], [confFile] )"
-         << endl
-         << " Oma.delAOmaSvcName( hostname, [confFile] )" << endl
-         << " Oma.start( optionObj )" << endl
-         << endl
-         << "var oma = new Oma( [hostname], [svcname] )" << endl
-         << "   createCoord( svcname, dbpath, [config obj] )" << endl
-         << "   removeCoord( svcname, [config obj] )" << endl
-         << "   createData( svcname, dbpath, [config obj] )  -standalone" << endl
-         << "   removeData( svcname, [config obj] )          -standalone" << endl
-         << "   createOM( svcname, dbpath, [config obj] )" << endl
-         << "   removeOM( svcname, [config obj] )" << endl
-         << "   startNode( svcname )" << endl
-         << "   stopNode( svcname )" << endl
-         << "   getOmaInstallFile()" << endl
-         << "   getOmaInstallInfo()" << endl
-         << "   getOmaConfigFile()" << endl
-         << "   getOmaConfigs( [confFile] )" << endl
-         << "   setOmaConfigs( obj, [confFile] )" << endl
-         << "   getAOmaSvcName( hostname, [confFile] )" << endl
-         << "   addAOmaSvcName( hostname, svcname, [isReplace], [confFile] )"
-         << endl
-         << "   delAOmaSvcName( hostname, [confFile] )" << endl
-         << "   listNodes( optionObj, [filterObj] )" << endl
-         << "   getNodeConfigs( svcname )" << endl
-         << "   setNodeConfigs( svcname, configsObj )" << endl
-         << "   updateNodeConfigs( svcname, configsObj )" << endl
-         << "   close()" << endl ;
-      rval.getReturnVal().setValue( ss.str() ) ;
-      return SDB_OK ;
-   }
-
    INT32 _sptUsrOma::destruct()
    {
       return _assit.disconnect() ;
