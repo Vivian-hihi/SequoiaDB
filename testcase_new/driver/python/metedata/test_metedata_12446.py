@@ -8,17 +8,15 @@
 # @author:     zhaoyu 2017-8-29
 
 import unittest
-import datetime
-from pysequoiadb import client
-from pysequoiadb import collectionspace
-from pysequoiadb.error import (SDBTypeError, SDBBaseError, SDBEndOfCursor)
-from lib.config import *
+from pysequoiadb.error import (SDBBaseError, SDBEndOfCursor)
+from lib import sdbconfig
+from lib import testlib
 
 class TestCS12446(unittest.TestCase):
    def setUp(self):
-      print(datetime.datetime.now())
-      config = Config()
-      self.db = client( config.host_name, config.service )
+       testlib.print_setup_msg(self)
+       self.db = testlib.default_db()
+       self.run_tearDown = False
       
    def testCS12446(self):
       #create cs
@@ -57,28 +55,22 @@ class TestCS12446(unittest.TestCase):
       self.check_cl_snapshot_8(self.cs_name + "." + cl_names[1], except_cl_options_2)
       
    def tearDown(self):
-      try:
-         print(datetime.datetime.now())
-         self.db.drop_collection_space(self.cs_name)
-         self.db.disconnect()
-      except SDBBaseError as e:
-         if(-34 != e.code):
-            print(e.detail)
-            self.fail("tear_down_fail")
+       if self.run_tearDown and (not sdbconfig.config.break_on_failure):
+           try:
+               self.db.drop_collection_space(self.cs_name)
+               self.db.disconnect()
+           except SDBBaseError as e:
+               if(-34 != e.code):
+                   print(e.detail)
+                   self.fail("tear_down_fail")
+       testlib.print_teardown_msg(self)
             
    def check_cl_snapshot_8(self, cl_full_name, options):
       cursor = self.db.get_snapshot( 8, condition = {"Name":cl_full_name} )
       while True:
          try:
             record = cursor.next()
-            actual_keys = record.keys()
-            expect_keys = options.keys()
-            for expect_key in expect_keys:
-               has_key = False
-               for atual_key in actual_keys:
-                  if(expect_key == atual_key):
-                     self.assertEqual(record[atual_key], options[expect_key])
-                     has_key = True
-               self.assertTrue(has_key)
+            self.assertDictContainsSubset(options, record)
          except SDBEndOfCursor:
             break
+      cursor.close()

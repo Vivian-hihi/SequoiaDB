@@ -6,17 +6,15 @@
 # @author:     zhaoyu 2017-8-24
 
 import unittest
-import datetime
-from pysequoiadb import client
-from pysequoiadb import collectionspace
-from pysequoiadb.error import (SDBTypeError, SDBBaseError, SDBEndOfCursor)
-from lib.config import *
+from pysequoiadb.error import (SDBBaseError, SDBEndOfCursor)
+from lib import sdbconfig
+from lib import testlib
 
 class TestCS12444(unittest.TestCase):
    def setUp(self):
-      print(datetime.datetime.now())
-      config = Config()
-      self.db = client( config.host_name, config.service )
+      testlib.print_setup_msg(self)
+      self.db = testlib.default_db()
+      self.run_tearDown = False
       
    def testCS12444(self):
       self.list = [["cs_12444_1", 0, 524288, 65536, 524288],
@@ -47,15 +45,16 @@ class TestCS12444(unittest.TestCase):
          self.createCSAndCheck(self.cs_name, cs_options, expect_cs_options) 
    
    def tearDown(self):
-      try:
-         print(datetime.datetime.now())
-         for index in range(len(self.list)):
-            self.db.drop_collection_space(self.cs_name)
-         self.db.disconnect()
-      except SDBBaseError as e:
-         if(-34 != e.code):
-            print(e.detail)
-            self.fail("tear_down_fail") 
+      if self.run_tearDown and (not sdbconfig.config.break_on_failure):
+         try:
+            for index in range(len(self.list)):
+               self.db.drop_collection_space(self.cs_name)
+            self.db.disconnect()
+         except SDBBaseError as e:
+            if(-34 != e.code):
+               print(e.detail)
+               self.fail("tear_down_fail")
+      testlib.print_teardown_msg(self)
            
    def createCSAndCheck(self, cs_name, cs_options, expect_cs_options):
       #create cs and cl
@@ -78,18 +77,10 @@ class TestCS12444(unittest.TestCase):
       while True:
          try:
             record = cursor.next()
-            actual_cs_name = record['Name']
-            actual_keys = record.keys()
-            expect_keys = options.keys()
-            for expect_key in expect_keys:
-               has_key = False
-               for atual_key in actual_keys:
-                  if(expect_key == atual_key):
-                     self.assertEqual(record[atual_key], options[expect_key])
-                     has_key = True
-               self.assertTrue(has_key)
+            self.assertDictContainsSubset(options, record)
          except SDBEndOfCursor:
             break
+      cursor.close()
             
    def check_list_collection_spaces(self, expect_cs_name, cs_exists):
       cursor = self.db.list_collection_spaces()
@@ -101,6 +92,7 @@ class TestCS12444(unittest.TestCase):
             cs_names.append(record['Name'])
          except SDBEndOfCursor:
             break
+      cursor.close()
       if expect_cs_name in cs_names:
          flag = True
          self.assertEqual(flag, cs_exists)

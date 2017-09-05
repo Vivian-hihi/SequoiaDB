@@ -6,18 +6,16 @@
 # @author:     zhaoyu 2017-8-24
 
 import unittest
-import datetime
-from pysequoiadb import client
-from pysequoiadb import collectionspace
-from pysequoiadb.error import (SDBTypeError, SDBBaseError, SDBEndOfCursor)
-from lib.config import *
+from pysequoiadb.error import (SDBBaseError, SDBEndOfCursor)
+from lib import sdbconfig
+from lib import testlib
 
-class TestCS12442(unittest.TestCase):
+class TestCS12442(unittest.TestCase):  
    def setUp(self):
-      print(datetime.datetime.now())
-      config = Config()
-      self.db = client( config.host_name, config.service )
-      
+      testlib.print_setup_msg(self)
+      self.db = testlib.default_db()
+      self.run_tearDown = False
+
    def testCS12442(self):
       #create cs and cl
       self.cs_name = "cs_12442"
@@ -26,8 +24,7 @@ class TestCS12442(unittest.TestCase):
          self.db.drop_collection_space(self.cs_name)
       except SDBBaseError as e:
          if(-34 != e.code):
-            print(e.detail)
-            self.fail("drop_cs_fail")
+            self.fail("drop_cs_fail,detail:" + e.detail)
       self.cs = self.db.create_collection_space( self.cs_name )
       self.cs.create_collection( cl_name )
       
@@ -41,39 +38,31 @@ class TestCS12442(unittest.TestCase):
       #drop cs and check exists or not
       self.db.drop_collection_space(self.cs_name)
       self.check_list_collection_spaces(self.cs_name, False)
-      
-         
+      self.run_tearDown = True
+             
    def tearDown(self):
-      try:
-         print(datetime.datetime.now())
-         self.db.drop_collection_space(self.cs_name)
-         self.db.disconnect()
-      except SDBBaseError as e:
-         if(-34 != e.code):
-            print(e.detail)
-            self.fail("tear_down_fail")
+      if self.run_tearDown and (not sdbconfig.config.break_on_failure):
+         try:
+            self.db.drop_collection_space(self.cs_name)
+            self.db.disconnect()
+         except SDBBaseError as e:
+            if(-34 != e.code):
+               print(e.detail)
+               self.fail("tear_down_fail")
+      testlib.print_teardown_msg(self)
 
    def check_cs_snapshot_5(self, cs_name, options):
       cursor = self.db.get_snapshot( 5, condition = {"Name":cs_name})
       while True:
          try:
             record = cursor.next()
-            actual_cs_name = record['Name']
-            actual_keys = record.keys()
-            expect_keys = options.keys()
-            for expect_key in expect_keys:
-               has_key = False
-               for atual_key in actual_keys:
-                  if(expect_key == atual_key):
-                     self.assertEqual(record[atual_key], options[expect_key])
-                     has_key = True
-               self.assertTrue(has_key)
+            self.assertDictContainsSubset(options, record)
          except SDBEndOfCursor:
             break
+      cursor.close()
             
    def check_list_collection_spaces(self, expect_cs_name, cs_exists):
       cursor = self.db.list_collection_spaces()
-      flag = False
       cs_names = []
       while True:
          try:
@@ -81,8 +70,6 @@ class TestCS12442(unittest.TestCase):
             cs_names.append(record['Name'])
          except SDBEndOfCursor:
             break
+      cursor.close()
       if expect_cs_name in cs_names:
-         flag = True
-         self.assertEqual(flag, cs_exists)
-   
-      
+         self.assertTrue(cs_exists)

@@ -1,9 +1,9 @@
-# @decription: insert string data
-# @testlink:   seqDB-12450
+# @decription: insert bool data
+# @testlink:   seqDB-12451
 # @interface:  insert(record)
 #              update(rule, kwargs)
 #              delete(kwargs)
-# @author:     zhaoyu 2017-8-31
+# @author:     zhaoyu 2017-9-31
 
 import unittest
 from pysequoiadb.error import (SDBBaseError)
@@ -11,16 +11,19 @@ from dataopeartion.bsoncurd.commlib import *
 from lib import sdbconfig
 from lib import testlib
 
-class TestCS12450(unittest.TestCase):
+from bson.json_util import loads 
+from bson.json_util import dumps
+
+class TestCS12452(unittest.TestCase):
    def setUp(self):
       testlib.print_setup_msg(self)
       self.db = testlib.default_db()
       self.run_tearDown = False
       
-   def testCS12450(self):
+   def testCS12452(self):
       #create cs and cl
-      self.cs_name = "cs_12450"
-      self.cl_name = "cl_12450"
+      self.cs_name = "cs_12452"
+      self.cl_name = "cl_12452"
       try:
          self.db.drop_collection_space(self.cs_name)
       except SDBBaseError as e:
@@ -30,17 +33,14 @@ class TestCS12450(unittest.TestCase):
       self.cs = self.db.create_collection_space( self.cs_name )
       self.cl = self.cs.create_collection( self.cl_name )
       
-      #insert int data
-      data1 = "a"
-      str = "a"*1024*1024
-      data2 = ""
-      for i in range(15):
-         data2 += str
-      record = [{"a":data1},{"a":data2}]
+      #insert data
+      data1 = True
+      data2 = False
+      record = [{"a":data1}, {"a":data2} ]
       self.cl.bulk_insert( 0, record )
       
       #query data and check
-      expect_type = [{"a":"string"}, {"a":"string"}]
+      expect_type = [{"a":"bool"}, {"a":"bool"}]
       check_Result( self.cl, {}, {"a":{"$type":2}}, record, expect_type, False )
       
       #update data
@@ -76,22 +76,6 @@ class TestCS12450(unittest.TestCase):
       #delete data
       self.cl.delete(condition = {"a":data1})
       self.cl.delete(condition = {"a":{"$et":data2}})
-      
-      #query data and check
-      check_Result( self.cl, {}, {}, {}, {}, False )
-      
-      #insert out of range int
-      str = "a"*1024*1024
-      data3 = ""
-      for i in range(16):
-         data3 += str
-      record = [{"a":data3}]
-      try:
-         self.cl.bulk_insert( 0, record )
-      except SDBBaseError as e:
-         if(-24 != e.code):
-            print(e.detail)
-            self.fail("insert_fail")
       
       #query data and check
       check_Result( self.cl, {}, {}, {}, {}, False )

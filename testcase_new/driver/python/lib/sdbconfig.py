@@ -1,12 +1,14 @@
+import os.path
 import json
 import os
-import os.path
+from pysequoiadb import client
 
 class SdbConfig(object):
+
    def __init__(self):
       self.get_config()
-
-   def get_config(self):
+      
+   def get_config(self): 
       config_file = os.path.join(os.getcwd(), "config.json")
       fp = open(config_file)
       configs = json.load(fp)
@@ -17,20 +19,18 @@ class SdbConfig(object):
       self.rsrv_port_end = configs['RSRVPORTEND']
       self.rsrv_node_dir = configs['RSRVNODEDIR']
       self.work_dir = configs['WORKDIR']
+      self.break_on_failure = configs['BREAK_ON_FAILURE']
       """
-      print(self.hostName)
+      print(self.host_name)
       print(self.service)
-      print(self.changedPrefix)
-      print(self.rsrvPortBegin)
-      print(self.rsrvPortEnd)
-      print(self.rsrvNodeDir)
-      print(self.workDir)
+      print(self.changed_prefix)
+      print(self.rsrv_port_begin)
+      print(self.rsrv_port_end)
+      print(self.rsrv_node_dir)
+      print(self.work_dir)
+      print(self.break_on_failure)
       """
       fp.close()
-
-
-
-
 
 """
 if __name__ == "__main__":

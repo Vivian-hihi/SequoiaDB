@@ -12,19 +12,16 @@
 # @author:     zhaoyu 2017-8-29
 
 import unittest
-import datetime
-from pysequoiadb import client
-from pysequoiadb import collectionspace
-from pysequoiadb.error import (SDBTypeError, SDBBaseError, SDBEndOfCursor)
 from metedata.commlib import *
-from lib.config import *
+from lib import sdbconfig
+from lib import testlib
 
 
 class TestCS12445(unittest.TestCase):
    def setUp(self):
-      print(datetime.datetime.now())
-      config = Config()
-      self.db = client( config.host_name, config.service )
+      testlib.print_setup_msg(self)
+      self.db = testlib.default_db()
+      self.run_tearDown = False
       
    def testCS12445(self):
       self.maincs_name = "maincs_12445"
@@ -83,6 +80,7 @@ class TestCS12445(unittest.TestCase):
                   actual_cl_names.append(cl_name)          
          except SDBEndOfCursor:
             break
+      cursor.close()
       self.assertEqual(actual_cl_names, expect_cl_names) 
       
       #attach cl
@@ -154,23 +152,25 @@ class TestCS12445(unittest.TestCase):
                   print("cl_name:%s" %cl_name)
                   self.fail("cl_not_drop")           
          except SDBEndOfCursor:
-            break 
-      
+            break
+      cursor.close()
+
       #dropCS
       self.db.drop_collection_space(self.subcs_name)
       self.db.drop_collection_space(self.maincs_name)
       
    
    def tearDown(self):
-      try:
-         print(datetime.datetime.now())
-         self.db.drop_collection_space(self.subcs_name)
-         self.db.drop_collection_space(self.maincs_name)
-         self.db.disconnect()
-      except SDBBaseError as e:
-         if(-34 != e.code):
-            print(e.detail)
-            self.fail("tear_down_fail")
+      if self.run_tearDown and (not sdbconfig.config.break_on_failure):
+         try:
+            self.db.drop_collection_space(self.subcs_name)
+            self.db.drop_collection_space(self.maincs_name)
+            self.db.disconnect()
+         except SDBBaseError as e:
+            if(-34 != e.code):
+               print(e.detail)
+               self.fail("tear_down_fail")
+      testlib.print_teardown_msg(self)
    
    def check_cl_snapshot_8(self, cl_full_name, options):
       cursor = self.db.get_snapshot( 8, condition = {"Name":cl_full_name} )
@@ -191,6 +191,7 @@ class TestCS12445(unittest.TestCase):
                self.assertTrue(has_key)
          except SDBEndOfCursor:
             break
+      cursor.close()
       
    def check_subcl_after_detach(self, subcl_full_name):
       cursor = self.db.get_snapshot( 8, condition = {"Name":subcl_full_name} )
@@ -200,6 +201,7 @@ class TestCS12445(unittest.TestCase):
             self.assertFalse('MainCLName' in record)
          except SDBEndOfCursor:
             break
+      cursor.close()
    
    def check_maincl_after_detach(self, maincl_full_name):
       cursor = self.db.get_snapshot( 8, condition = {"Name":maincl_full_name} )
@@ -209,4 +211,5 @@ class TestCS12445(unittest.TestCase):
             atual_cataInfo = record['CataInfo']
             self.assertEqual(len(atual_cataInfo), 0)
          except SDBEndOfCursor:
-            break    
+            break
+      cursor.close()

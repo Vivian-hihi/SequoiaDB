@@ -1,26 +1,31 @@
-# @decription: insert string data
-# @testlink:   seqDB-12450
+# @decription: insert oid data
+# @testlink:   seqDB-12451
 # @interface:  insert(record)
 #              update(rule, kwargs)
 #              delete(kwargs)
 # @author:     zhaoyu 2017-8-31
 
 import unittest
+import datetime
 from pysequoiadb.error import (SDBBaseError)
+from bson.objectid import ObjectId
 from dataopeartion.bsoncurd.commlib import *
 from lib import sdbconfig
 from lib import testlib
 
-class TestCS12450(unittest.TestCase):
+from bson.json_util import loads 
+from bson.json_util import dumps
+
+class TestCS12451(unittest.TestCase):
    def setUp(self):
       testlib.print_setup_msg(self)
       self.db = testlib.default_db()
       self.run_tearDown = False
       
-   def testCS12450(self):
+   def testCS12451(self):
       #create cs and cl
-      self.cs_name = "cs_12450"
-      self.cl_name = "cl_12450"
+      self.cs_name = "cs_12451"
+      self.cl_name = "cl_12451"
       try:
          self.db.drop_collection_space(self.cs_name)
       except SDBBaseError as e:
@@ -30,33 +35,34 @@ class TestCS12450(unittest.TestCase):
       self.cs = self.db.create_collection_space( self.cs_name )
       self.cl = self.cs.create_collection( self.cl_name )
       
-      #insert int data
-      data1 = "a"
-      str = "a"*1024*1024
-      data2 = ""
-      for i in range(15):
-         data2 += str
-      record = [{"a":data1},{"a":data2}]
+      #insert data
+      data1 = ObjectId()
+      data2 = ObjectId.from_datetime(datetime.datetime(1902,1,1))
+      data3 = ObjectId.from_datetime(datetime.datetime(2037,12,31))
+      record = [{"a":data1}, {"a":data2} ,{"a":data3}]
       self.cl.bulk_insert( 0, record )
       
       #query data and check
-      expect_type = [{"a":"string"}, {"a":"string"}]
+      expect_type = [{"a":"oid"}, {"a":"oid"}, {"a":"oid"}]
       check_Result( self.cl, {}, {"a":{"$type":2}}, record, expect_type, False )
       
       #update data
       data1_after_update = 1
       data2_after_update = 0
+      data3_after_update = -1
       self.cl.update({"$set":{"a":data1_after_update}},condition = {"a":data1})
       self.cl.update({"$set":{"a":data2_after_update}},condition = {"a":data2})
+      self.cl.update({"$set":{"a":data3_after_update}},condition = {"a":data3})
       
       #query data and check
-      expect_type_after_update = [{"a":"int32"}, {"a":"int32"}]
-      record_after_update = [{"a":data1_after_update},{"a":data2_after_update}]
+      expect_type_after_update = [{"a":"int32"}, {"a":"int32"}, {"a":"int32"}]
+      record_after_update = [{"a":data1_after_update},{"a":data2_after_update}, {"a":data3_after_update}]
       check_Result( self.cl, {}, {"a":{"$type":2}}, record_after_update, expect_type_after_update, False )
       
       #update data
       self.cl.update({"$set":{"a":data1}},condition = {"a":data1_after_update})
       self.cl.update({"$set":{"a":data2}},condition = {"a":data2_after_update})
+      self.cl.update({"$set":{"a":data3}},condition = {"a":data3_after_update})
       
       #query data and check
       check_Result( self.cl, {}, {"a":{"$type":2}}, record, expect_type, False )
@@ -76,25 +82,30 @@ class TestCS12450(unittest.TestCase):
       #delete data
       self.cl.delete(condition = {"a":data1})
       self.cl.delete(condition = {"a":{"$et":data2}})
+      self.cl.delete(condition = {"a":{"$et":data3}})
       
       #query data and check
       check_Result( self.cl, {}, {}, {}, {}, False )
       
-      #insert out of range int
-      str = "a"*1024*1024
-      data3 = ""
-      for i in range(16):
-         data3 += str
-      record = [{"a":data3}]
+      """
+      #timestamp out of range
       try:
-         self.cl.bulk_insert( 0, record )
+         data4 = ObjectId.from_datetime(datetime.datetime(1901,1,1))
+         self.fail("NEED_AN_ERROR")
       except SDBBaseError as e:
-         if(-24 != e.code):
-            print(e.detail)
-            self.fail("insert_fail")
+         print(e.detail)
+      """
       
-      #query data and check
-      check_Result( self.cl, {}, {}, {}, {}, False )
+      #is_valid()
+      if(not ObjectId.is_valid(ObjectId())):
+         self.fail("check_is_valid_fail")
+         
+      if(ObjectId.is_valid("abc")):
+         self.fail("check_is_valid_fail")
+      
+      #json to bson   
+      json = '{"$oid": "59a7bfd087310ecb73000009"}'
+      self.assertEqual(json, dumps(loads(json)))
       
    def tearDown(self):
       if self.run_tearDown and (not sdbconfig.config.break_on_failure):

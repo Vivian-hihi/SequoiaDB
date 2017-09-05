@@ -4,18 +4,16 @@
 # @author:     zhaoyu 2017-8-30
 
 import unittest
-import datetime
-from pysequoiadb import client
-from pysequoiadb import collectionspace
-from pysequoiadb.error import (SDBTypeError, SDBBaseError, SDBEndOfCursor)
 from dataopeartion.insert.commlib import *
-from lib.config import *
+from lib import sdbconfig
+from lib import testlib
+from pysequoiadb.error import (SDBBaseError)
 
 class TestCS12461(unittest.TestCase):
    def setUp(self):
-      print(datetime.datetime.now())
-      config = Config()
-      self.db = client( config.host_name, config.service )
+      testlib.print_setup_msg(self)
+      self.db = testlib.default_db()
+      self.run_tearDown = False
       
    def testCS12461(self):
       #create cs and cl
@@ -92,14 +90,15 @@ class TestCS12461(unittest.TestCase):
       check_Result( self.cl, {}, expect_record, True )
       
    def tearDown(self):
-      try:
-         print(datetime.datetime.now())
-         self.db.drop_collection_space(self.cs_name)
-         self.db.disconnect()
-      except SDBBaseError as e:
-         if(-34 != e.code):
-            print(e.detail)
-            self.fail("tear_down_fail")
+      if self.run_tearDown and (not sdbconfig.config.break_on_failure):
+         try:
+            self.db.drop_collection_space(self.cs_name)
+            self.db.disconnect()
+         except SDBBaseError as e:
+            if(-34 != e.code):
+               print(e.detail)
+               self.fail("tear_down_fail")
+      testlib.print_teardown_msg(self)
             
      
       

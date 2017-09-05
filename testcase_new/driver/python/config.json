@@ -1,8 +1,9 @@
-{"HOSTNAME":"192.168.31.25",
+{"HOSTNAME":"192.168.31.7",
  "SVCNAME":11810,
  "CHANGEDPREFIX":"driver_python_test",
  "RSRVPORTBEGIN":26000,
  "RSRVPORTEND":27000,
  "RSRVNODEDIR":"/opt/sequoiadb/database/",
- "WORKDIR":"/tmp/pythontest"
+ "WORKDIR":"/tmp/pythontest",
+ "BREAK_ON_FAILURE":false
 }

@@ -13,5 +13,6 @@ def get_data_groups( db ):
             data_groups.append(group_name)       
       except SDBEndOfCursor:
          break
+   cursor.close()
    return data_groups
    

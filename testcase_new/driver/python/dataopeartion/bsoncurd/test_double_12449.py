@@ -6,23 +6,27 @@
 # @author:     zhaoyu 2017-8-31
 
 import unittest
-import datetime
-from pysequoiadb import client
-from pysequoiadb import collectionspace
-from pysequoiadb.error import (SDBTypeError, SDBBaseError, SDBEndOfCursor)
+from pysequoiadb.error import (SDBBaseError)
 from dataopeartion.bsoncurd.commlib import *
-from lib.config import *
+from lib import sdbconfig
+from lib import testlib
 
 class TestCS12449(unittest.TestCase):
    def setUp(self):
-      print(datetime.datetime.now())
-      config = Config()
-      self.db = client( config.host_name, config.service )
+      testlib.print_setup_msg(self)
+      self.db = testlib.default_db()
+      self.run_tearDown = False
       
    def testCS12449(self):
       #create cs and cl
       self.cs_name = "cs_12449"
       self.cl_name = "cl_12449"
+      try:
+         self.db.drop_collection_space(self.cs_name)
+      except SDBBaseError as e:
+         if(-34 != e.code):
+            print(e.detail)
+            self.fail("drop_cs_fail")
       self.cs = self.db.create_collection_space( self.cs_name )
       self.cl = self.cs.create_collection( self.cl_name )
       
@@ -97,11 +101,12 @@ class TestCS12449(unittest.TestCase):
       check_Result( self.cl, {}, {"a":{"$type":2}}, record, expect_type, False )
       
    def tearDown(self):
-      try:
-         print(datetime.datetime.now())
-         self.db.drop_collection_space(self.cs_name)
-         self.db.disconnect()
-      except SDBBaseError as e:
-         if(-34 != e.code):
-            print(e.detail)
-            self.fail("tear_down_fail")
+      if self.run_tearDown and (not sdbconfig.config.break_on_failure):
+         try:
+            self.db.drop_collection_space(self.cs_name)
+            self.db.disconnect()
+         except SDBBaseError as e:
+            if(-34 != e.code):
+               print(e.detail)
+               self.fail("tear_down_fail")
+      testlib.print_teardown_msg(self)
