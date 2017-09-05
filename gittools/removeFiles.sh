@@ -24,6 +24,5 @@ while read line ;do
       rm -rf $TARGETPATH
    else
       echo "$TARGETPATH is not a file nor dir"
-      exit 1
    fi
 done < $1

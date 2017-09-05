@@ -12,6 +12,8 @@ else
    echo "Usage: $0 [destinationPath]" >&2
    exit 1
 fi
+echo "Ready to remove svn dir from ${DESTPATH}, press Ctrl-C in 5 seconds to cancel the operation"
 sleep 5
+
 find ${DESTPATH} -name ".svn" -exec rm -rf {} \;
 exit 0
