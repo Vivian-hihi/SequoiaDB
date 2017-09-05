@@ -191,7 +191,7 @@ public class NetDeleteNode6201 extends SdbTestBase {
             String confDir = installPwd + "conf/local/"+ svcName;
             File confDirName = new File(confDir);
             if(confDirName.isDirectory()){
-            	ssh.exec("rm -rf "+ confDirName);
+            	ssh.exec("rm -rf "+ confDir);
             }           
             
         }catch (BaseException e) {
