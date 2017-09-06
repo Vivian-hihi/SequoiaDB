@@ -6,22 +6,19 @@ import unittest
 from lib import testlib
 from pysequoiadb.error import (SDBBaseError)
 
-
-class Data12464(unittest.TestCase):
+class Data12464(testlib.TestDataOprtBase):
    def setUp(self):
-      testlib.print_setup_msg(self)
-      self.db = testlib.default_db()
       self.create_cs_cl()
 
    def update_test(self, list__expect, update, **kwargs):
       for i in self.original_list:
          self.cl.insert(i)
       self.cl.update(update, **kwargs)
-      list1 = testlib.get_records(self.cl.query())
-      testlib.assert_list_equal(self,list__expect,list1)
+      list1 = self.get_records(self.cl.query())
+      self.assert_list_equal(list__expect,list1)
       self.cl.delete()
 
-   def test(self):
+   def test12464(self):
       self.original_list = ({"a": 0, "b": 0}, {"a": 1, "b": 1}, {"a": 2, "b": 2})
       original_list = self.original_list
       update = {"$inc": {"a": 1}}
@@ -44,16 +41,5 @@ class Data12464(unittest.TestCase):
          pass
 
    def tearDown(self):
-      testlib.print_teardown_msg(self)
-      self.db.drop_collection_space(self.cs_name)
-      self.db.disconnect()
-
-   def create_cs_cl(self):
-      self.cs_name = self.__class__.__name__ + "_cs"
-      self.cl_name = self.__class__.__name__ + "_cl"
-      try:
-         self.db.drop_collection_space(self.cs_name)
-      except BaseException as e:
-         pass
-      self.cs = self.db.create_collection_space(self.cs_name)
-      self.cl = self.cs.create_collection(self.cl_name)
+      self.drop_cs()
+      self.close_db()

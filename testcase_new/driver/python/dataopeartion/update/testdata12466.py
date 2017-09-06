@@ -7,10 +7,8 @@ from lib import testlib
 from pysequoiadb.error import (SDBBaseError)
 
 NUM=10
-class Data12466(unittest.TestCase):
+class Data12466(testlib.TestDataOprtBase):
    def setUp(self):
-      testlib.print_setup_msg(self)
-      self.db=testlib.default_db()
       self.create_cs_cl()
 
    def upsert_test(self,cl_list__expect,upsert,**kwargs):
@@ -20,11 +18,11 @@ class Data12466(unittest.TestCase):
          kwargs["return_new"]=True
       
       self.cl.upsert(upsert,**kwargs)
-      list1=testlib.get_records(self.cl.query())
-      testlib.assert_list_equal(self,cl_list__expect,list1)
+      list1=self.get_records(self.cl.query())
+      self.assert_list_equal(cl_list__expect,list1)
       self.cl.delete()
 
-   def test(self):
+   def test12466(self):
       original_list=[{"a":i,"b":i} for i in range(NUM)]
       upserted_list=[{"a":i,"b":i} for i in range(NUM)]
       upserted_list.append({"a":100})
@@ -53,19 +51,7 @@ class Data12466(unittest.TestCase):
       l.append({"a":"aaa"})
       self.upsert_test(l,upsert,condition=condition,setOnInsert=setOnInsert)
 
-      self.db.drop_collection_space(self.cs_name)
-
    def tearDown(self):
-      testlib.print_teardown_msg(self)
-      self.db.disconnect()
+      self.drop_cs()
+      self.close_db()
 
-   def create_cs_cl(self):
-      self.cs_name=self.__class__.__name__+"_cs"
-      self.cl_name=self.__class__.__name__+"_cl"
-      try:
-         self.db.drop_collection_space(self.cs_name)
-      except BaseException as e:      
-         pass
-      self.cs=self.db.create_collection_space(self.cs_name)
-      self.cl=self.cs.create_collection(self.cl_name)
-      

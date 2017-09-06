@@ -2,18 +2,14 @@
 # @testlink:   seqDB-12478
 # @author:     LaoJingTang 2017-8-30
 
-import unittest
-
 from bson.objectid import ObjectId
 from lib import testlib
 from lob import util
 from pysequoiadb.error import (SDBEndOfCursor)
 
 
-class Lob12478(unittest.TestCase):
+class Lob12478(testlib.TestDataOprtBase):
    def setUp(self):
-      testlib.print_setup_msg(self)
-      self.db = testlib.default_db()
       self.create_cs_cl()
 
    def test(self):
@@ -24,7 +20,6 @@ class Lob12478(unittest.TestCase):
       self.create_lob(10)
       self.read_lob()
       self.del_lob()
-      self.db.drop_collection_space(self.cs_name)
 
    def create_lob(self, num=10):
       self.oid_set = set()
@@ -93,15 +88,5 @@ class Lob12478(unittest.TestCase):
             "lobid: " + str(lob.get_oid()) + " except size: " + str(self.lob_size) + "actually: " + str(lob.get_size()))
 
    def tearDown(self):
-      testlib.print_teardown_msg(self)
-      self.db.disconnect()
-
-   def create_cs_cl(self):
-      self.cs_name = self.__class__.__name__ + "_cs"
-      self.cl_name = self.__class__.__name__ + "_cl"
-      try:
-         self.db.drop_collection_space(self.cs_name)
-      except BaseException as e:
-         pass
-      self.cs = self.db.create_collection_space(self.cs_name)
-      self.cl = self.cs.create_collection(self.cl_name)
+      self.drop_cs()
+      self.close_db()
