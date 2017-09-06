@@ -29,12 +29,19 @@
       <pythondriver type="install"/>
       
       <!--execute-->
+      <delete dir="${report_dir}" failonerror="false"/>
       <mkdir dir="${report_dir}"/>
-      <replace file="${testcase_dir}/run_all_case.py" token='"report"' value='"${report_dir}"'/>
+      <mkdir dir="${report_dir}/python2"/>
+      <mkdir dir="${report_dir}/python3"/>
+
       <var name="processrc" value="0"/>
-      <execallcase pyversion="python2" testcasedir="${testcase_dir}" reportdir="${report_dir}"/>
-      <execallcase pyversion="python3" testcasedir="${testcase_dir}" reportdir="${report_dir}"/>
-            
+      <replace file="${testcase_dir}/run_all_case.py" token='"report"' value='"${report_dir}/python2"'/>
+      <execallcase pyversion="python2" testcasedir="${testcase_dir}" reportdir="${report_dir}/python2"/>
+      <modifyreport reportdir="${report_dir}" layer="${testcase_type}" pyversion="python2"/>
+      
+      <replace file="${testcase_dir}/run_all_case.py" token='"${report_dir}/python2"' value='"${report_dir}/python3"'/>
+      <execallcase pyversion="python3" testcasedir="${testcase_dir}" reportdir="${report_dir}/python3"/>
+      <modifyreport reportdir="${report_dir}" layer="${testcase_type}" pyversion="python3"/>
       <pythondriver type="uninstall"/>
       
    </target>
@@ -249,4 +256,67 @@
       </sequential>
    </macrodef>
 
+   
+   <macrodef name="modifyreport">
+      <attribute name="reportdir"/>
+      <attribute name="layer" />
+      <attribute name="pyversion"/>
+      <sequential>
+         <property file="${basedir}/src/conf/test.conf" />
+         
+         <propertycopy name="testhost_list" from="${plat_form}_${TEST_TYPE}_${DEPLOY_MODE}_HOST" />
+         <var name="cluster_host_info" value=""/>
+         <for list="${testhost_list}" param="testhost">
+            <sequential>
+               <hostinfo prefix="prefix@{testhost}" host="@{testhost}"/>
+               <var name="cluster_host_info" value="${cluster_host_info} @{testhost}/${prefix@{testhost}.ADDR4}"/>
+            </sequential>
+         </for>
+         
+         
+         <hostinfo prefix="host" />
+         <var name="ms1" value="EXECUTE HOST: ${host.NAME}/${host.ADDR4}&#10;&#10;"/>    
+         <var name="ms2" value="CLUSTER HOST:${cluster_host_info}&#10;&#10;"/>            
+         <var name="backup_reltdir" value="${TEST_TYPE}_${DEPLOY_MODE}_${BUILD_NUMBER}.tar.gz"/>
+         <var name="download_url" value="&#10;DOWNLOAD DIAGLOG :&#10;http://192.168.30.185:8081/${backup_reltdir}&#10;" />
+         <replaceregexp match='&lt;\/failure&gt;' 
+                        replace='${download_url}&lt;\/failure&gt;' 
+                        flags="g" 
+                        byline="true" 
+                        encoding="utf-8">
+            <fileset dir="@{reportdir}" includes="**/*"/>
+         </replaceregexp>
+         <replaceregexp match='&lt;failure(.*)&gt;' 
+                        replace='&lt;failure\1&gt;      ${ms1}      ${ms2}' 
+                        flags="g" 
+                        byline="true" 
+                        encoding="utf-8">
+            <fileset dir="@{reportdir}" includes="**/*"/>
+         </replaceregexp>
+         <replaceregexp match='&lt;\/error&gt;' 
+                        replace='${download_url}&lt;\/error&gt;' 
+                        flags="g" 
+                        byline="true" 
+                        encoding="utf-8">
+            <fileset dir="@{reportdir}" includes="**/*"/>
+         </replaceregexp>
+         <replaceregexp match='&lt;error(.*)&gt;' 
+                        replace='&lt;error\1&gt;      ${ms1}      ${ms2}' 
+                        flags="g" 
+                        byline="true" 
+                        encoding="utf-8">
+            <fileset dir="@{reportdir}" includes="**/*"/>
+         </replaceregexp>
+
+         <replaceregexp match='classname="(.*)" name(.*)' 
+                        replace='classname="@{layer}.@{pyversion}"  name\2' 
+                        flags="g" 
+                        byline="true" 
+                        encoding="utf-8">
+            <fileset dir="@{reportdir}" includes="**/*"/>
+         </replaceregexp>
+
+      </sequential>
+   </macrodef>
+   
 </project>
