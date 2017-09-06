@@ -230,6 +230,10 @@ function _getHostMap( connectInfo )
    var hostMap = [] ;
    var hostName = connectInfo[FIELD_HOSTNAME] ;
    var port     = connectInfo[FIELD_AGENT_SERVICE] ;
+   if( typeof( port ) != 'string' || port.length == 0 )
+   {
+      port = Oma.getAOmaSvcName( hostName ) ;
+   }
 
    try
    {

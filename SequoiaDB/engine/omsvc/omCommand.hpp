@@ -1318,7 +1318,13 @@ namespace engine
 
       INT32 _getRestInfo() ;
 
-      INT32 _checkExecResult( omRestTool &restTool, const BSONObj &result ) ;
+      void _parseHostMap( const BSONObj &hosts, map<string, string> &hostMap ) ;
+
+      void _hostName2Address( map<string, string> &hostMap,
+                              string &hostName, string &address ) ;
+
+      INT32 _checkExecResult( omRestTool &restTool, const BSONObj &result,
+                              map<string, string> &hostMap ) ;
 
       INT32 _syncBusinessConfig( omRestTool &restTool,
                                  vector<simpleAddressInfo> &addressList ) ;

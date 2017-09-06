@@ -10724,7 +10724,10 @@ namespace engine
 
       addressBuilder.append( OM_CONFIGURE_FIELD_HOSTNAME, hostName ) ;
       addressBuilder.append( OM_CONF_DETAIL_SVCNAME, svcname ) ;
-      addressBuilder.append( OM_BSON_FIELD_AGENT_PORT, agentService ) ;
+      if ( FALSE == agentService.empty() )
+      {
+         addressBuilder.append( OM_BSON_FIELD_AGENT_PORT, agentService ) ;
+      }
       arrayBuilder.append( addressBuilder.obj() ) ;
 
       builder.append( OM_REST_FIELD_ADDRESS, arrayBuilder.arr() ) ;
@@ -10916,11 +10919,6 @@ namespace engine
       authUser = buzInfo.getStringField( OM_BSON_FIELD_HOST_USER ) ;
       authPwd  = buzInfo.getStringField( OM_BSON_FIELD_HOST_PASSWD ) ;
       agentService = buzInfo.getStringField( OM_BSON_FIELD_AGENT_PORT ) ;
-      if ( agentService.empty() )
-      {
-         agentService = "11790" ;
-      }
-
 
       {
          //try to replace the hostName with om SYSHOST table data
@@ -12440,8 +12438,47 @@ namespace engine
       goto done ;
    }
 
-   INT32 omSyncBusinessConfigureCommand::_checkExecResult( omRestTool &restTool,
-                                                         const BSONObj &result )
+   void omSyncBusinessConfigureCommand::_parseHostMap( const BSONObj &hosts,
+                                                map<string, string> &hostMap )
+   {
+      BSONObjIterator iter( hosts ) ;
+
+      while ( iter.more() )
+      {
+         BSONElement ele  = iter.next() ;
+         BSONObj hostInfo = ele.embeddedObject() ;
+         string hostName  = hostInfo.getStringField( OM_HOST_FIELD_NAME ) ;
+         string ip        = hostInfo.getStringField( OM_HOST_FIELD_IP ) ;
+
+         hostMap[hostName] = ip ;
+      }
+   }
+
+   /*
+      try convert hostName to ip
+   */
+   void omSyncBusinessConfigureCommand::_hostName2Address(
+                                                   map<string, string> &hostMap,
+                                                   string &hostName,
+                                                   string &address )
+   {
+      map<string, string>::iterator iter ;
+
+      iter = hostMap.find( hostName ) ;
+      if ( iter == hostMap.end() )
+      {
+         address = hostName ;
+      }
+      else
+      {
+         address = hostMap[hostName] ;
+      }
+   }
+
+   INT32 omSyncBusinessConfigureCommand::_checkExecResult(
+                                                omRestTool &restTool,
+                                                const BSONObj &result,
+                                                map<string, string> &hostMap )
    {
       INT32 rc = SDB_OK ;
       INT32 lastErrno     = SDB_OK ;
@@ -12490,12 +12527,26 @@ namespace engine
             }
          }
 
-         if ( FALSE == dbTool.isHostExistOfClusterByAddr( tmpHostName,
-                                                          _clusterName ) )
+         if ( FALSE == dbTool.isHostExistOfCluster( tmpHostName,
+                                                    _clusterName ) )
          {
+            string tmpAddress ;
+
+            if ( dbTool.isHostExistOfClusterByIp( tmpHostName,
+                                                  _clusterName ) )
+            {
+               rc = SDB_INVALIDARG ;
+               _errorMsg.setError( TRUE, "IP mode is not supported" ) ;
+               PD_LOG( PDERROR, _errorMsg.getError() ) ;
+               goto error ;
+            }
+
             ++missHostNum ;
-            hostsArray.append( tmpHostName ) ;
+
+            _hostName2Address( hostMap, tmpHostName, tmpAddress ) ;
+            hostsArray.append( tmpAddress ) ;
          }
+
 
          if ( SDB_OK != hostErrno )
          {
@@ -12562,6 +12613,7 @@ namespace engine
       BSONObj request ;
       BSONObj result ;
       string errDetail ;
+      map<string, string> hostMap ;
       omDatabaseTool dbTool( _cb ) ;
       omTaskTool taskTool( _cb, _localAgentHost, _localAgentService ) ;
 
@@ -12577,7 +12629,9 @@ namespace engine
          goto error ;
       }
 
-      rc = _checkExecResult( restTool, result ) ;
+      _parseHostMap( result.getObjectField( OM_BSON_FIELD_HOSTS ), hostMap ) ;
+
+      rc = _checkExecResult( restTool, result, hostMap ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "check result failed:rc=%d", rc ) ;
