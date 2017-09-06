@@ -47,7 +47,7 @@ namespace engine
 
    _rtnContextShdOfLob::_rtnContextShdOfLob( INT64 contextID, UINT64 eduID )
    :_rtnContextBase( contextID, eduID ),
-    _mode( SDB_LOB_MODE_R ),
+    _mode( SDB_LOB_MODE_READ ),
     _flags( 0 ),
     _isMainShd( FALSE ),
     _w( 1 ),
@@ -119,7 +119,7 @@ namespace engine
       }
       _mode = ele.Int() ;
 
-      if ( SDB_LOB_MODE_R != _mode )
+      if ( SDB_LOB_MODE_READ != _mode )
       {
          rc = _dmsCB->writable( cb ) ;
          if ( rc )
@@ -324,7 +324,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNCONTEXTSHDOFLOB__OPEN ) ;
-      if ( _isMainShd && SDB_LOB_MODE_R == _mode )
+      if ( _isMainShd && SDB_LOB_MODE_READ == _mode )
       {
          UINT32 readLen = 0 ;
          UINT32 len = _su->getLobPageSize() ;

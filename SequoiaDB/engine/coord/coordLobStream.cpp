@@ -124,7 +124,7 @@ namespace engine
       }
 
       /// set primary
-      _groupSession.getGroupSel()->setPrimary( ( SDB_LOB_MODE_R != mode ) ?
+      _groupSession.getGroupSel()->setPrimary( ( SDB_LOB_MODE_READ != mode ) ?
                                                TRUE : FALSE ) ;
       _groupSession.getGroupCtrl()->setMaxRetryTimes( LOB_MAX_RETRYTIMES ) ;
 
@@ -259,7 +259,7 @@ namespace engine
              .append( FIELD_NAME_LOB_OID, oid )
              .append( FIELD_NAME_LOB_OPEN_MODE, mode )
              .appendBool( FIELD_NAME_LOB_IS_MAIN_SHD, FALSE ) ;
-      if ( SDB_LOB_MODE_R == mode )
+      if ( SDB_LOB_MODE_READ == mode )
       {
          /// send meta data to every group.
          builder.append( FIELD_NAME_LOB_META_DATA, _metaObj ) ;

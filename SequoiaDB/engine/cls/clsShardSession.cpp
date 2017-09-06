@@ -3139,7 +3139,7 @@ namespace engine
       MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), msg->opCode,
                           "Option:%s", lob.toString().c_str() ) ;
 
-      if ( SDB_LOB_MODE_R != mode.Int() )
+      if ( SDB_LOB_MODE_READ != mode.Int() )
       {
          rc = _checkWriteStatus() ;
          if ( SDB_OK != rc )
@@ -3168,7 +3168,7 @@ namespace engine
          goto error ;
       }
 
-      if ( SDB_LOB_MODE_R != mode.Int() )
+      if ( SDB_LOB_MODE_READ != mode.Int() )
       {
          rc = _calculateW( &replSize, &( header->w ), w ) ;
          if ( SDB_OK != rc )

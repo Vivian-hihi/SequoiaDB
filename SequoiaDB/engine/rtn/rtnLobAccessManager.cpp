@@ -96,8 +96,8 @@ namespace engine
          case SDB_LOB_MODE_REMOVE:
             rc = SDB_LOB_IS_IN_USE ;
             goto error ;
-         case SDB_LOB_MODE_R:
-            if ( SDB_LOB_MODE_R != mode )
+         case SDB_LOB_MODE_READ:
+            if ( SDB_LOB_MODE_READ != mode )
             {
                rc = SDB_LOB_IS_IN_USE ;
                goto error ;
@@ -135,7 +135,7 @@ namespace engine
             goto error ;
          }
 
-         if ( SDB_LOB_MODE_R == mode )
+         if ( SDB_LOB_MODE_READ == mode )
          {
             lobAccessInfo->incRefCount() ;
          }
@@ -190,7 +190,7 @@ namespace engine
             bucket.erase( key ) ;
             SAFE_OSS_DELETE( lobAccessInfo ) ;
             break ;
-         case SDB_LOB_MODE_R:
+         case SDB_LOB_MODE_READ:
             lobAccessInfo->decRefCount() ;
             if ( 0 == lobAccessInfo->getRefCount() )
             {

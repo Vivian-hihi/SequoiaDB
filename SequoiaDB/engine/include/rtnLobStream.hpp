@@ -121,7 +121,7 @@ namespace engine
 
       OSS_INLINE BOOLEAN isReadonly() const
       {
-         return SDB_LOB_MODE_R == _mode ? TRUE : FALSE ;
+         return SDB_LOB_MODE_READ == _mode ? TRUE : FALSE ;
       }
 
       virtual void   getErrorInfo( INT32 rc,

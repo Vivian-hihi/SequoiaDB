@@ -119,7 +119,7 @@ namespace engine
          goto error ;
       }
 
-      if ( SDB_LOB_MODE_R == mode )
+      if ( SDB_LOB_MODE_READ == mode )
       {
          rc = _open4Read( cb ) ;
          /// AUDIT
@@ -449,7 +449,7 @@ namespace engine
          goto error ;
       }
 
-      if ( !( SDB_LOB_MODE_R & _mode ) )
+      if ( !( SDB_LOB_MODE_READ & _mode ) )
       {
          PD_LOG( PDERROR, "open mode[%d] does not support this operation",
                  _mode ) ;
@@ -536,7 +536,7 @@ namespace engine
          goto error ;
       }
 
-      if ( SDB_LOB_MODE_R != _mode  )
+      if ( SDB_LOB_MODE_READ != _mode  )
       {
          PD_LOG( PDERROR, "open mode[%d] does not support this operation",
                  _mode ) ;

@@ -93,7 +93,7 @@ namespace engine
       const CHAR *clName = NULL ;
       _dmsCB = sdbGetDMSCB() ;
 
-      if ( SDB_LOB_MODE_R != mode )
+      if ( SDB_LOB_MODE_READ != mode )
       {
          rc = _dmsCB->writable( cb ) ;
          if ( rc )
