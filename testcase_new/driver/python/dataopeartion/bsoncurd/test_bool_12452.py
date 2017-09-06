@@ -1,5 +1,5 @@
 # @decription: insert bool data
-# @testlink:   seqDB-12451
+# @testlink:   seqDB-12452
 # @interface:  insert(record)
 #              update(rule, kwargs)
 #              delete(kwargs)
@@ -80,7 +80,7 @@ class TestCS12452(unittest.TestCase):
       self.run_tearDown = True
       
    def tearDown(self):
-      if self.run_tearDown and (not testlib.config.break_on_failure):
+      if self.run_tearDown and (not sdbconfig.sdb_config.break_on_failure):
          try:
             self.db.drop_collection_space(self.cs_name)
             self.db.disconnect()

@@ -9,8 +9,8 @@ import unittest
 import datetime
 from pysequoiadb.error import (SDBBaseError)
 from dataopeartion.bsoncurd.commlib import *
-from lib import sdbconfig
 from lib import testlib
+from lib import sdbconfig
 
 from bson.json_util import loads 
 from bson.json_util import dumps
@@ -35,8 +35,8 @@ class TestCS12453(unittest.TestCase):
       self.cl = self.cs.create_collection( self.cl_name )
       
       #insert data
-      data1 = '{"$date":"0001-01-01"}'
-      data2 = '{"$date":"9999-12-31"}'
+      data1 = '{"$date":"0002-01-01"}'
+      data2 = '{"$date":"9998-12-31"}'
       data3 = datetime.datetime(1,1,1)
       data4 = datetime.datetime(9999,12,31) 
       record = [{"a":loads(data1)}, {"a":loads(data2)} ,{"a":data3}, {"a":data4}]
@@ -51,8 +51,8 @@ class TestCS12453(unittest.TestCase):
       data2_after_update = 0
       data3_after_update = -1
       data4_after_update = -2
-      self.cl.update({"$set":{"a":data1_after_update}},condition = {"a":data1})
-      self.cl.update({"$set":{"a":data2_after_update}},condition = {"a":data2})
+      self.cl.update({"$set":{"a":data1_after_update}},condition = {"a":loads(data1)})
+      self.cl.update({"$set":{"a":data2_after_update}},condition = {"a":loads(data2)})
       self.cl.update({"$set":{"a":data3_after_update}},condition = {"a":data3})
       self.cl.update({"$set":{"a":data4_after_update}},condition = {"a":data4})
       
@@ -62,8 +62,8 @@ class TestCS12453(unittest.TestCase):
       check_Result( self.cl, {}, {"a":{"$type":2}}, record_after_update, expect_type_after_update, False )
       
       #update data
-      self.cl.update({"$set":{"a":data1}},condition = {"a":data1_after_update})
-      self.cl.update({"$set":{"a":data2}},condition = {"a":data2_after_update})
+      self.cl.update({"$set":{"a":loads(data1)}},condition = {"a":data1_after_update})
+      self.cl.update({"$set":{"a":loads(data2)}},condition = {"a":data2_after_update})
       self.cl.update({"$set":{"a":data3}},condition = {"a":data3_after_update})
       self.cl.update({"$set":{"a":data4}},condition = {"a":data4_after_update})
       
@@ -83,8 +83,8 @@ class TestCS12453(unittest.TestCase):
       check_Result( self.cl, {}, {"a":{"$type":2}}, record, expect_type, False )
       
       #delete data
-      self.cl.delete(condition = {"a":data1})
-      self.cl.delete(condition = {"a":{"$et":data2}})
+      self.cl.delete(condition = {"a":loads(data1)})
+      self.cl.delete(condition = {"a":{"$et":loads(data2)}})
       self.cl.delete(condition = {"a":{"$et":data3}})
       self.cl.delete(condition = {"a":{"$et":data4}})
       
@@ -98,7 +98,7 @@ class TestCS12453(unittest.TestCase):
       self.run_tearDown = True
       
    def tearDown(self):
-      if self.run_tearDown and (not testlib.config.break_on_failure):
+      if self.run_tearDown and (not sdbconfig.sdb_config.break_on_failure):
          try:
             self.db.drop_collection_space(self.cs_name)
             self.db.disconnect()

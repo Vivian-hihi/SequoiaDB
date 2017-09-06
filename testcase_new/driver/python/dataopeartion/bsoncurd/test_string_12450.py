@@ -8,8 +8,8 @@
 import unittest
 from pysequoiadb.error import (SDBBaseError)
 from dataopeartion.bsoncurd.commlib import *
-from lib import sdbconfig
 from lib import testlib
+from lib import sdbconfig
 
 class TestCS12450(unittest.TestCase):
    def setUp(self):
@@ -99,7 +99,7 @@ class TestCS12450(unittest.TestCase):
       self.run_tearDown = True
       
    def tearDown(self):
-      if self.run_tearDown and (not testlib.config.break_on_failure):
+      if self.run_tearDown and (not sdbconfig.sdb_config.break_on_failure):
          try:
             self.db.drop_collection_space(self.cs_name)
             self.db.disconnect()

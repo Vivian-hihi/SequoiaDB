@@ -10,8 +10,8 @@ import datetime
 from pysequoiadb.error import (SDBBaseError)
 from bson.objectid import ObjectId
 from dataopeartion.bsoncurd.commlib import *
-from lib import sdbconfig
 from lib import testlib
+from lib import sdbconfig
 
 from bson.json_util import loads 
 from bson.json_util import dumps
@@ -110,7 +110,7 @@ class TestCS12451(unittest.TestCase):
       self.run_tearDown = True
       
    def tearDown(self):
-      if self.run_tearDown and (not testlib.config.break_on_failure):
+      if self.run_tearDown and (not sdbconfig.sdb_config.break_on_failure):
          try:
             self.db.drop_collection_space(self.cs_name)
             self.db.disconnect()
