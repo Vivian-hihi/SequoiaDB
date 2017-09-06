@@ -1242,7 +1242,6 @@ namespace engine
                        BSONObjBuilder &outBuilder, INT32 &flag )
    {
       INT32 rc = SDB_OK ;
-      flag = 0 ;
 
       if ( NumberDouble == in.type() )
       {
@@ -1317,6 +1316,7 @@ namespace engine
                  BSONObjBuilder &outBuilder, INT32 &flag )
    {
       INT32 rc = SDB_OK ;
+      flag = 0 ;
       if ( Array == in.type() )
       {
          BSONArrayBuilder arrayBuilder ;
@@ -2053,7 +2053,6 @@ namespace engine
                        INT32 &flag )
    {
       INT32 rc = SDB_OK ;
-      flag = 0 ;
 
       if ( in.eoo() )
       {
@@ -2151,6 +2150,7 @@ namespace engine
                  BSONObjBuilder &outBuilder, INT32 &flag )
    {
       INT32 rc = SDB_OK ;
+      flag = 0 ;
       if ( Array == in.type() )
       {
          BSONArrayBuilder arrayBuilder ;
@@ -2186,7 +2186,6 @@ namespace engine
                        BSONObjBuilder &outBuilder, INT32 &flag )
    {
       INT32 rc = SDB_OK ;
-      flag = 0 ;
 
       if ( in.eoo() )
       {
@@ -2284,6 +2283,7 @@ namespace engine
                  BSONObjBuilder &outBuilder, INT32 &flag )
    {
       INT32 rc = SDB_OK ;
+      flag = 0 ;
       if ( Array == in.type() )
       {
          BSONArrayBuilder arrayBuilder ;
@@ -2319,7 +2319,6 @@ namespace engine
                             BSONObjBuilder &outBuilder, INT32 &flag )
    {
       INT32 rc = SDB_OK ;
-      flag = 0 ;
 
       if ( in.eoo() )
       {
@@ -2417,6 +2416,7 @@ namespace engine
                       BSONObjBuilder &outBuilder, INT32 &flag )
    {
       INT32 rc = SDB_OK ;
+      flag = 0 ;
       if ( Array == in.type() )
       {
          BSONArrayBuilder arrayBuilder ;
@@ -2453,7 +2453,6 @@ namespace engine
                           BSONObjBuilder &outBuilder, INT32 &flag )
    {
       INT32 rc = SDB_OK ;
-      flag = 0 ;
 
       if ( in.eoo() )
       {
@@ -2573,6 +2572,7 @@ namespace engine
                     BSONObjBuilder &outBuilder, INT32 &flag )
    {
       INT32 rc = SDB_OK ;
+      flag = 0 ;
       if ( Array == in.type() )
       {
          BSONArrayBuilder arrayBuilder ;
