@@ -38,15 +38,22 @@
          <div ng-windows="form as ShrinkWindow.config" windows-callback="ShrinkWindow.callback">
             <div form-create para="form"></div>
          </div>
-         <div ng-dropdown="config in ModuleDropdown.config" dropdown-event="ModuleDropdown.event" dropdown-callback="ModuleDropdown.callback">
-            <label class="Ellipsis" style="padding:8px 10px;display:block;" ng-click="ModuleDropdown.OnClick($index)">&nbsp;{{config.key}}</label>
+         <div ng-windows="form as UnbindModuleWindow.config" windows-callback="UnbindModuleWindow.callback">
+            <div form-create para="form"></div>
+         </div>
+         <div ng-dropdown="config in AddModuleDropdown.config" dropdown-event="AddModuleDropdown.event" dropdown-callback="AddModuleDropdown.callback">
+            <span class="Ellipsis" style="padding:8px 10px;display:block;" ng-click="AddModuleDropdown.OnClick($index)">&nbsp;{{config.key}}</span>
+         </div>
+         <div ng-dropdown="config in DeleteModuleDropdown.config" dropdown-event="DeleteModuleDropdown.event" dropdown-callback="DeleteModuleDropdown.callback">
+            <span class="Ellipsis" style="padding:8px 10px;display:block;" ng-click="DeleteModuleDropdown.OnClick($index)">&nbsp;{{config.key}}</span>
+         </div>
+         <div ng-dropdown="config in EditModuleDropdown.config" dropdown-event="EditModuleDropdown.event" dropdown-callback="EditModuleDropdown.callback">
+            <span class="Ellipsis" style="padding:8px 10px;display:block;" ng-click="EditModuleDropdown.OnClick($index)">&nbsp;{{config.key}}</span>
          </div>
          <div ng-container="{height:40}">
-            <button class="topBtn" ng-class="{true:'disabled'}[clusterList.length == 0]" ng-disabled="clusterList.length==0" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1280]" ng-click="OpenModuleDropdown($event)">{{autoLanguage("添加业务")}} <i class="fa fa-caret-down"></i></button>
-            <button class="topBtn" ng-class="{true:'disabled'}[clusterList.length == 0 || ModuleNum == 0]" ng-disabled="clusterList.length==0||ModuleNum==0" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1280]" ng-click="ShowUninstallModule()"><i class="fa fa-trash-o"></i> {{autoLanguage("卸载业务")}}</button>
-            <button class="topBtn" ng-class="{true:'disabled'}[clusterList.length == 0 || DistributionNum == 0]" ng-disabled="clusterList.length==0 || DistributionNum == 0" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1280]" ng-click="ShowExtendWindow()"><i class="fa fa-plus"></i> {{autoLanguage("业务扩容")}}</button>
-            <button class="topBtn" ng-class="{true:'disabled'}[clusterList.length == 0 || DistributionNum == 0]" ng-disabled="clusterList.length==0 || DistributionNum == 0" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1280]" ng-click="ShowShrinkWindow()"><i class="fa fa-trash-o"></i> {{autoLanguage("业务减容")}}</button>
-            <button class="topBtn" ng-class="{true:'disabled'}[clusterList.length == 0 || ModuleNum == 0]" ng-disabled="clusterList.length==0 || ModuleNum == 0" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1280]" ng-click="ShowSyncWindow()"><i class="fa fa-clipboard"></i> {{autoLanguage("同步业务")}}</button>
+            <button class="topBtn" ng-class="{true:'disabled'}[clusterList.length == 0]" ng-disabled="clusterList.length==0" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1280]" ng-click="OpenAddModuleDropdown($event)">{{autoLanguage("添加业务")}} <i class="fa fa-caret-down"></i></button>
+            <button class="topBtn" ng-class="{true:'disabled'}[clusterList.length==0||ModuleNum==0]" ng-disabled="clusterList.length==0||ModuleNum==0" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1280]" ng-click="OpenDeleteModuleDropdown($event)">{{autoLanguage("删除业务")}} <i class="fa fa-caret-down"></i></button>
+            <button class="topBtn" ng-class="{true:'disabled'}[clusterList.length==0||ModuleNum==0]" ng-disabled="clusterList.length==0||ModuleNum==0" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1280]" ng-click="OpenEditModuleDropdown($event)">{{autoLanguage("修改业务")}} <i class="fa fa-caret-down"></i></button>
          </div>
 
          <div style="padding-right:15px;overflow-y:auto;border:1px solid #ccc;padding:10px;position:relative;" ng-container="{offsetY:-40}">
@@ -162,11 +169,12 @@
 
       <div ng-container="{offsetY:-50}"  ng-hide="currentPage!='host'">
          <div ng-container="{height:40}">
-            <button class="topBtn" ng-class="{0:'disabled'}[clusterList.length]" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1080]" ng-disabled="clusterList.length==0" ng-click="AddHost()"><i class="fa fa-plus"></i> {{autoLanguage("添加主机")}}</button>
-            <button class="topBtn" ng-class="{0:'disabled'}[clusterList.length]" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1080]" ng-disabled="clusterList.length==0" ng-click="RemoveHost()"><i class="fa fa-trash-o"></i> {{autoLanguage("删除主机")}}</button>
-            <button class="topBtn" ng-class="{0:'disabled'}[clusterList.length]" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1080]" ng-disabled="clusterList.length==0" ng-click="ShowUpdateHostIP()">{{autoLanguage("更新主机信息")}}</button>
-            <button class="topBtn" ng-class="{0:'disabled'}[clusterList.length]" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1080]" ng-disabled="clusterList.length==0" ng-click="SelectAll()">{{autoLanguage("全选")}}</button>
-            <button class="topBtn" ng-class="{0:'disabled'}[clusterList.length]" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1080]" ng-disabled="clusterList.length==0" ng-click="Unselect()">{{autoLanguage("反选")}}</button>
+            <button class="topBtn" ng-class="{0:'disabled'}[clusterList.length]" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1380]" ng-disabled="clusterList.length==0" ng-click="AddHost()"><i class="fa fa-plus"></i> {{autoLanguage("添加主机")}}</button>
+            <button class="topBtn" ng-class="{0:'disabled'}[clusterList.length]" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1380]" ng-disabled="clusterList.length==0" ng-click="RemoveHost()"><i class="fa fa-trash-o"></i> {{autoLanguage("删除主机")}}</button>
+            <button class="topBtn" ng-class="{0:'disabled'}[clusterList.length]" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1380]" ng-disabled="clusterList.length==0" ng-click="UnbindHost()">{{autoLanguage("解绑主机")}}</button>
+            <button class="topBtn" ng-class="{0:'disabled'}[clusterList.length]" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1380]" ng-disabled="clusterList.length==0" ng-click="ShowUpdateHostIP()">{{autoLanguage("更新主机信息")}}</button>
+            <button class="topBtn" ng-class="{0:'disabled'}[clusterList.length]" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1380]" ng-disabled="clusterList.length==0" ng-click="SelectAll()">{{autoLanguage("全选")}}</button>
+            <button class="topBtn" ng-class="{0:'disabled'}[clusterList.length]" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1380]" ng-disabled="clusterList.length==0" ng-click="Unselect()">{{autoLanguage("反选")}}</button>
          </div>
          <div ng-container="{offsetY:-40}" ng-table="HostListTable['options']" table-title="HostListTable['title']" table-content="hostInfo in HostListTable['body']" table-callback="HostListTable['callback']">
             <div class="Ellipsis" table-key="Check">
@@ -192,7 +200,7 @@
       <div class="borderBox" style="padding:10px;overflow-y:auto;overflow-x:hidden;" ng-container="{offsetY:-119}">
          <div><b>{{autoLanguage("集群")}}</b></div>
          <div ng-dropdown="config in ClusterDropdown.config" dropdown-event="ClusterDropdown.event" dropdown-callback="ClusterDropdown.callback">
-            <label class="Ellipsis" style="padding:5px 10px;display:block;" ng-click="ClusterDropdown.OnClick($index)">&nbsp;{{config.key}}</label>
+            <span class="Ellipsis" style="padding:5px 10px;display:block;" ng-click="ClusterDropdown.OnClick($index)">&nbsp;{{config.key}}</span>
          </div>
          <div style="padding-top:8px;" ng-repeat="clusterInfo in clusterList track by $index">
             <div style="">

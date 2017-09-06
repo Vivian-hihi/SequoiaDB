@@ -500,7 +500,7 @@ html,body{ width:100%; height:100%; /*overflow:hidden; */ }
 .loginPwd > .error { font-size:90%; float:left; margin-left:30px; color:#D9534F; padding-top:10px; }
 
 /* 顶部工具栏按钮 */
-.topBtn { height:26px; padding:0px 30px; margin-right:3px; border:1px solid #CCC; background:#FFF; color:#666B6F; cursor:pointer; }
+.topBtn { height:26px; padding:0px 25px; margin-right:3px; border:1px solid #CCC; background:#FFF; color:#666B6F; cursor:pointer; }
 .topBtn > i{ padding-right:4px; }
 .topBtn:hover{ border:1px solid #ABC6D3; color:#FFF; background:#2DA5FA; }
 .topBtn.disabled{ color:#AAA; background:#EEE; cursor:default; }

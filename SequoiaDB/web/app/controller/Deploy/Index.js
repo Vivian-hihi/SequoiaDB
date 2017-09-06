@@ -746,6 +746,55 @@
          }
       }
 
+      //解绑主机
+      $scope.UnbindHost = function(){
+         if( $scope.clusterList.length > 0 )
+         {
+            var hostList = { "HostInfo": [] } ;
+            var hostListTips = '' ;
+            $.each( $scope.HostList, function( index ){
+               if( $scope.HostList[index]['checked'] == true && $scope.clusterList[ $scope.currentCluster ]['ClusterName'] == $scope.HostList[index]['ClusterName'] )
+               {
+                  hostList['HostInfo'].push( { 'HostName': $scope.HostList[index]['HostName'] } ) ;
+               }
+            } ) ;
+            if( hostList['HostInfo'].length > 0 )
+            {
+               var clusterName = $scope.clusterList[ $scope.currentCluster ]['ClusterName'] ;
+               var data = { 'cmd': 'unbind host', 'ClusterName': clusterName, 'HostInfo': JSON.stringify( hostList ) } ;
+               SdbRest.OmOperation( data, {
+                  'success': function( taskInfo ){
+                     $scope.Components.Confirm.type = 4 ;
+                     $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '主机解绑成功。' ) ) ;
+                     $scope.Components.Confirm.isShow = true ;
+                     $scope.Components.Confirm.noClose = true ;
+                     $scope.Components.Confirm.normalOK = true ;
+                     $scope.Components.Confirm.okText = $scope.autoLanguage( '确定' ) ;
+                     $scope.Components.Confirm.ok = function(){
+                        $scope.Components.Confirm.normalOK = false ;
+                        $scope.Components.Confirm.isShow = false ;
+                        $scope.Components.Confirm.noClose = false ;
+                        queryHost() ;
+                     }
+                  },
+                  'failed': function( errorInfo ){
+                     _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                        $scope.UnbindHost() ;
+                        return true ;
+                     } ) ;
+                  }
+               } ) ;
+            }
+            else
+            {
+               $scope.Components.Confirm.type = 3 ;
+               $scope.Components.Confirm.context = $scope.autoLanguage( '至少选择一台的主机。' ) ;
+               $scope.Components.Confirm.isShow = true ;
+               $scope.Components.Confirm.okText = $scope.autoLanguage( '好的' ) ;
+            }
+         }
+      }
+
       //业务扩容 弹窗
       $scope.ExtendWindow = {
          'config': {},
@@ -1553,6 +1602,84 @@
          $scope.ShowType = type ;
       }
 
+      //解绑业务
+      var unbindModule = function( clusterName, businessName ){
+         var data = {
+            'cmd': 'unbind business', 'ClusterName': clusterName, 'BusinessName': businessName
+         } ;
+         SdbRest.OmOperation( data, {
+            'success': function(){
+               $scope.Components.Confirm.type = 4 ;
+               $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '业务：? 解绑成功。' ), businessName ) ;
+               $scope.Components.Confirm.isShow = true ;
+               $scope.Components.Confirm.noClose = true ;
+               $scope.Components.Confirm.normalOK = true ;
+               $scope.Components.Confirm.okText = $scope.autoLanguage( '确定' ) ;
+               $scope.Components.Confirm.ok = function(){
+                  $scope.Components.Confirm.isShow = false ;
+                  $scope.Components.Confirm.noClose = false ;
+                  $scope.Components.Confirm.normalOK = false ;
+                  queryModule() ;
+               }
+            },
+            'failed': function( errorInfo ){
+               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                  unbindModule( clusterName, businessName ) ;
+                  return true ;
+               } ) ;
+            }
+         } ) ;
+      }
+
+      //解绑业务 弹窗
+      $scope.UnbindModuleWindow = {
+         'config': {},
+         'callback': {}
+      }
+
+      //打开 解绑业务 弹窗
+      $scope.ShowUnbindModule = function(){
+         if( $scope.clusterList.length > 0 && $scope.ModuleNum != 0 )
+         {
+            var clusterName = $scope.clusterList[ $scope.currentCluster ]['ClusterName'] ;
+            $scope.UnbindModuleWindow['config'] = {
+               'inputList': [
+                  {
+                     "name": 'moduleIndex',
+                     "webName": $scope.autoLanguage( '业务名' ),
+                     "type": "select",
+                     "value": null,
+                     "valid": []
+                  }
+               ]
+            }
+            $.each( $scope.moduleList, function( index, moduleInfo ){
+               if( clusterName == moduleInfo['ClusterName'] )
+               {
+                  if( $scope.UnbindModuleWindow['config']['inputList'][0]['value'] == null )
+                  {
+                     $scope.UnbindModuleWindow['config']['inputList'][0]['value'] = index ;
+                  }
+                  $scope.UnbindModuleWindow['config']['inputList'][0]['valid'].push( { 'key': moduleInfo['BusinessName'], 'value': index } )
+               }
+            } ) ;
+            $scope.UnbindModuleWindow['callback']['SetOkButton']( $scope.autoLanguage( '确定' ), function(){
+               var isAllClear = $scope.UnbindModuleWindow['config'].check() ;
+               if( isAllClear )
+               {
+                  var formVal = $scope.UnbindModuleWindow['config'].getValue() ;
+                  var businessName = $scope.moduleList[ formVal['moduleIndex'] ]['BusinessName'] ;
+                  var clusterName = $scope.clusterList[ $scope.currentCluster ]['ClusterName'] ;
+                  unbindModule( clusterName, businessName ) ;
+               }
+               return isAllClear ;
+            } ) ;
+            $scope.UnbindModuleWindow['callback']['SetTitle']( $scope.autoLanguage( '业务解绑' ) ) ;
+            $scope.UnbindModuleWindow['callback']['Open']() ;
+         }
+      
+      }
+
       //创建集群
       var createCluster = function( clusterInfo, success ){
          var data = { 'cmd': 'create cluster', 'ClusterInfo': JSON.stringify( clusterInfo ) } ;
@@ -1568,7 +1695,6 @@
             }
          } ) ;
       }
-
 
       //创建集群 弹窗
       $scope.CreateClusterWindow = {
@@ -2077,7 +2203,7 @@
                   "webName": 'HostFile',
                   "type": "switch",
                   "value": $scope.clusterList[chooseCluster]['GrantConf'][0]['Privilege'],
-                     "desc": $scope.autoLanguage( '是否授权om对系统hosts文件的修改' ),
+                  "desc": $scope.autoLanguage( '是否授权om对系统hosts文件的修改' ),
                   "onChange": function( name, key ){
                      $scope.ResourceGrantWindow['config']['inputList'][1]['value'] = !key ;
                      setGrant( { 'name': 'HostFile', 'privilege': !key, 'clustername': $scope.clusterList[chooseCluster]['ClusterName'] } ) ;
@@ -2415,7 +2541,7 @@
       }
 
       //添加业务下拉菜单
-      $scope.ModuleDropdown = {
+      $scope.AddModuleDropdown = {
          'config': [
             { 'key': $scope.autoLanguage( '创建业务' ) },
             { 'key': $scope.autoLanguage( '发现业务' ) }
@@ -2429,16 +2555,82 @@
             {
                $scope.ShowAppendModule() ;
             }
-            $scope.ModuleDropdown['callback']['Close']() ;
+            $scope.AddModuleDropdown['callback']['Close']() ;
          },
          'callback': {}
       }
 
       //打开 添加业务下拉菜单
-      $scope.OpenModuleDropdown = function( event ){
+      $scope.OpenAddModuleDropdown = function( event ){
          if( $scope.clusterList.length > 0 )
          {
-            $scope.ModuleDropdown['callback']['Open']( event.currentTarget ) ;
+            $scope.AddModuleDropdown['callback']['Open']( event.currentTarget ) ;
+         }
+      }
+
+      //删除业务下拉菜单
+      $scope.DeleteModuleDropdown = {
+         'config': [
+            { 'key': $scope.autoLanguage( '卸载业务' ) },
+            { 'key': $scope.autoLanguage( '业务解绑' ) }
+         ],
+         'OnClick': function( index ){
+            if( index == 0 )
+            {
+               $scope.ShowUninstallModule() ;
+            }
+            else
+            {
+               $scope.ShowUnbindModule() ;
+            }
+            $scope.DeleteModuleDropdown['callback']['Close']() ;
+         },
+         'callback': {}
+      }
+
+      //打开 删除业务下拉菜单
+      $scope.OpenDeleteModuleDropdown = function( event ){
+         if( $scope.clusterList.length > 0 )
+         {
+            $scope.DeleteModuleDropdown['callback']['Open']( event.currentTarget ) ;
+         }
+      }
+
+      //修改业务下拉菜单
+      $scope.EditModuleDropdown = {
+         'config': [],
+         'OnClick': function( index ){
+            if( index == 0 )
+            {
+               $scope.ShowExtendWindow() ;
+            }
+            else if( index == 1 )
+            {
+               $scope.ShowShrinkWindow() ;
+            }
+            else
+            {
+               $scope.ShowSyncWindow() ;
+            }
+            $scope.EditModuleDropdown['callback']['Close']() ;
+         },
+         'callback': {}
+      }
+
+      //打开 修改业务下拉菜单
+      $scope.OpenEditModuleDropdown = function( event ){
+         if( $scope.clusterList.length > 0 )
+         {
+            $scope.EditModuleDropdown['config'] = [] ;
+            var disabled = false ;
+            if( $scope.DistributionNum == 0 )
+            {
+               disabled = true ;
+            }
+            $scope.EditModuleDropdown['config'].push( { 'key': $scope.autoLanguage( '业务扩容' ), 'disabled': disabled } ) ;
+            $scope.EditModuleDropdown['config'].push( { 'key': $scope.autoLanguage( '业务减容' ), 'disabled': disabled } ) ;
+            $scope.EditModuleDropdown['config'].push( { 'key': $scope.autoLanguage( '同步业务' ) } ) ;
+            $scope.EditModuleDropdown['callback']['Open']( event.currentTarget ) ;
          }
       }
 
@@ -2458,7 +2650,7 @@
             else
             {
                $scope.Components.Confirm.type = 3 ;
-               $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '是否确定删除集群: ?？' ), $scope.clusterList[chooseCluster]['ClusterName'] ) ;
+               $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '是否确定删除集群：?？' ), $scope.clusterList[chooseCluster]['ClusterName'] ) ;
                $scope.Components.Confirm.isShow = true ;
                $scope.Components.Confirm.okText = $scope.autoLanguage( '确定' ) ;
                $scope.Components.Confirm.ok = function(){

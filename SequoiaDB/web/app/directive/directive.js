@@ -5689,7 +5689,7 @@
                   //重绘当前页
                   var showCurrentPage = function(){
                      createTableContents( scope.loadStatus['page'] ) ;
-                     scope.$digest() ;
+                     //scope.$digest() ;
                   }
 
                   //接口专用排序，跟表格的标题排序不同，不会存在状态中
