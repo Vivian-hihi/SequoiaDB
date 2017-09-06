@@ -5,38 +5,45 @@
 
 import unittest
 import datetime
-from pysequoiadb import client
-from pysequoiadb import collectionspace
 from pysequoiadb.error import (SDBTypeError, SDBBaseError, SDBEndOfCursor,SDBError)
-from lib.config import *
 from bson.son import SON
+from lib import testlib
 
 cs_name = "cs_12480"
 cl_name = "cl_12480"
-insert_nums = 100
+insert_nums = 10
 class TestAggregate12480(unittest.TestCase):
    def setUp(self):
-      try:
-         print(datetime.datetime.now())
-         config = Config()
-         self.db = client( config.host_name, config.service )
-         self.clean_cs()			
-         self.create_cl()
-         self.insert_datas()         
-      except SDBBaseError as e:
-         print(e.detail)
-         raise e        
-                  
+      testlib.print_setup_msg(self)
+      self.db = testlib.default_db()
+      self.create_cl()
+      self.insert_datas()
+
    def testAggregate12480(self):
-      try:  
-         self.check_aggregate()
-      except SDBBaseError as e:
-         print(e.detail) 
-         assert False
+      match = SON({'$match': {'name': {'$exists': 1}}})
+      group = SON({'$group': {'_id': '$major', 'avg_age': {'$avg': '$age'}, 'major': {'$first': '$major'}}})
+      sort = SON({'$sort': {'avg_age': 1}})
+      skip = {'$skip': 1}
+      limit = {'$limit': 2}
+
+      list_aggr_options = [match, group, sort, skip, limit]
+      tuple_aggr_options = (match, group, sort, skip, limit)
+
+      list_cursor = self.cl.aggregate(list_aggr_options)
+      tuple_cursor = self.cl.aggregate(list_aggr_options)
+
+      list_actResult = self.get_act_result(list_cursor)
+      tuple_actResult = self.get_act_result(tuple_cursor)
+
+      expectResult = [{'avg_age': 20.0, 'major': 'major5'}, \
+                      {'avg_age': 21.0, 'major': 'major1'}]
+
+      testlib.assert_list_equal(self, list_actResult, expectResult)
+      testlib.assert_list_equal(self, tuple_actResult, expectResult)
             
    def tearDown(self):
       try:
-         print(datetime.datetime.now())
+         testlib.print_teardown_msg(self)
          self.db.drop_collection_space(cs_name)
          self.db.disconnect()
       except SDBBaseError as e:
@@ -46,47 +53,37 @@ class TestAggregate12480(unittest.TestCase):
 	
    def clean_cs(self):
       try:
-         print( '---begin to clean cs---')
-         self.db.drop_collection_space(cs_name) 
-      except SDBError as e:
+         self.db.drop_collection_space(cs_name)
+      except SDBBaseError as e:
          pass	
 			
    def create_cl(self):
+      self.clean_cs()
       try:
-         print( '---begin to create cs---')
-         self.cs = self.db.create_collection_space(cs_name)            
-    
+         self.cs = self.db.create_collection_space(cs_name)
          self.cl = self.cs.create_collection(cl_name)
-         print( '---create cl success---' )   
-      except SDBError as e:
+         print( 'create cl success' )
+      except SDBBaseError as e:
          print(e.detail) 
          raise e    
   
    def insert_datas(self):   
-      print( '---begin to insert records---' )
-      for i in range(1,insert_nums):
+      for i in range(0,insert_nums):
          try:
             self.cl.insert({"_id":i, "name":"test" + str(i),"major":"major" + str(i%10),"age":20+i%5})  
          except SDBError as e:
             print(e.detail) 
-            raise e        
-    
-   def check_aggregate(self):   
-      print( '---check aggregate result---' )
-      try:
-         match = SON({'$match':{'name':{'$exists':1}}})
-         group = SON({'$group':{'_id':'$major','avg_age':{'$avg':'$age'},'major':{'$first':'$major'}}})
-         sort = SON({'$sort':{'avg_age':1}})
-         skip  = {'$skip':0}
-         limit = {'$limit':1}  
-         aggregate_options = [match,group,sort,skip,limit]
-         cursor = self.cl.aggregate(aggregate_options)
-         rec = cursor.next()  
-         expect = {'avg_age': 20.0, 'major': 'major0'}
-         self.assertEqual( expect,rec) 
-      except SDBBaseError as e:
-         print(e.detail) 
-         raise e               
+            raise e
+
+   def get_act_result(self,cursor):
+      actResult = []
+      while True:
+         try:
+            rec = cursor.next()
+            actResult.append(rec)
+         except SDBEndOfCursor:
+            break
+      return actResult
          
 if __name__ == "__main__":
     unittest.main() 

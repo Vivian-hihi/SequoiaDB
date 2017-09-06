@@ -5,60 +5,87 @@
 
 import unittest
 import datetime
-from pysequoiadb import client
-from pysequoiadb import collectionspace
 from pysequoiadb.error import (SDBTypeError, SDBBaseError, SDBEndOfCursor,SDBError)
-from lib.config import *
 from bson.objectid import ObjectId
+from lib import testlib
 
 cs_name = "cs_12502"
 cl_name = "cl_12502"
 class TestSave12502(unittest.TestCase):
    def setUp(self):
-      try:
-         print(datetime.datetime.now())
-         config = Config()
-         self.db = client( config.host_name, config.service ) 
-         if(self.is_stand_alone()):
-            self.skipTest('current environment less than tow groups')
-         if(self.one_group_mode()):
-            self.skipTest('need at least 2 data groups')  
-             
-         dataGroupNames = self.get_data_groupnames()
-         srcGroupName = dataGroupNames[0]
-         destGroupName = dataGroupNames[1]
-          
-         self.clean_cs()
-         self.create_cl(srcGroupName)
-         self.insert_datas()    
-         self.split_cl(srcGroupName,destGroupName)
-      except SDBBaseError as e:
-         print(e.detail)
-         raise e        
+      testlib.print_setup_msg(self)
+      self.db = testlib.default_db()
+      if (self.is_stand_alone()):
+         self.skipTest('current environment less than tow groups')
+      if (self.one_group_mode()):
+         self.skipTest('need at least 2 data groups')
+
+      dataGroupNames = self.get_data_groupnames()
+      srcGroupName = dataGroupNames[0]
+      destGroupName = dataGroupNames[1]
+
+      self.create_cl(srcGroupName)
+      self.insert_datas()
+      self.split_cl(srcGroupName, destGroupName)
       
    def testSaveFields(self):   
-      print( '---begin to save records---' )
       try:
+         # insert common field without match id
          doc_commNoMatchId = {"a":"newA_withNoMatchId"}
-         doc_commNotexistId = {"a":"newA_withNotExistId","_id":ObjectId("66bb5667c5d061d6f579d000")}
-         doc_commExistId = {"a":"newA_withExistId","_id":ObjectId("53bb5667c5d061d6f579d0bb")}
-         doc_commNewField = {"newField":"upsertNewField","_id":ObjectId("53bb5667c5d061d6f579d0bc")}
-         
-         self.cl.save(doc_commNoMatchId)  
+         self.cl.save(doc_commNoMatchId)
+
+         condition1 = doc_commNoMatchId
+         expectCount1 = 1
+         self.check_result(condition1,expectCount1)
+
+         # insert common field and id not exsit
+         doc_commNotexistId = {"a": "newA_withNotExistId","_id": ObjectId("66bb5667c5d061d6f579d000")}
          self.cl.save(doc_commNotexistId)
+
+         condition2 = doc_commNotexistId
+         expectCount2 = 1
+         self.check_result(condition2, expectCount2)
+
+         # upsert common field and id exsit
+         doc_commExistId = {"a": "newA_withExistId","_id": ObjectId("53bb5667c5d061d6f579d0bb")}
          self.cl.save(doc_commExistId)
-         self.cl.save(doc_commNewField)
-          
+
+         condition3 = doc_commExistId
+         expectCount3 = 1
+         self.check_result(condition3, expectCount3)
+
+         # insert shared field without match id
          doc_shardNoMatchId = {"no":9999}
+         self.cl.save(doc_shardNoMatchId)
+
+         condition4 = doc_shardNoMatchId
+         expectCount4 = 1
+         self.check_result(condition4, expectCount4)
+
+         # insert shared field and id not exist
          doc_shardNotexistId = {"no":1001,"_id":ObjectId("92bb5667c5d061d6f580d0ab")}
-         doc_shardExistId = {"no":2002,"_id":ObjectId("53bb5667c5d061d6f579d0bb")}
-         doc_shardNewField = {"newNo":"newNo","_id":ObjectId("53bb5667c5d061d6f579d0bd")}
-          
-         self.cl.save(doc_shardNoMatchId)  
          self.cl.save(doc_shardNotexistId)
+
+         condition5 = doc_shardNotexistId
+         expectCount5 = 1
+         self.check_result(condition5, expectCount5)
+
+         # update shared field and id exist
+         doc_shardExistId = {"no":2002,"_id":ObjectId("53bb5667c5d061d6f579d0bb")}
          self.cl.save(doc_shardExistId)
-         self.cl.save(doc_shardNewField)           
-          
+
+         condition6 = doc_shardExistId
+         expectCount6 = 0
+         self.check_result(condition6, expectCount6)
+
+         # insert new field
+         doc_commNewField = {"newField": "upsertNewField"}
+         self.cl.save(doc_commNewField)
+
+         condition7 = doc_commNewField
+         expectCount7 = 1
+         self.check_result(condition7, expectCount7)
+
       except SDBError as e:
          print(e.detail) 
          raise e                    
@@ -71,7 +98,7 @@ class TestSave12502(unittest.TestCase):
       except SDBBaseError as e:
          if(-34 != e.code):
             print(e.detail)
-            raise e              
+            raise e
  
    def is_stand_alone(self):
       try:
@@ -88,7 +115,6 @@ class TestSave12502(unittest.TestCase):
       return False;
 
    def get_data_groupnames(self):
-      print( '---begin to get data group names' )
       groupNames = []
        
       cr = self.db.get_list(7)   
@@ -98,52 +124,58 @@ class TestSave12502(unittest.TestCase):
             groupNames.append(rec['GroupName'])
          except SDBEndOfCursor:
             break
-         except Exception as e:
-            raise e
       groupNames.remove("SYSCatalogGroup")
       groupNames.remove("SYSCoord")         
       return groupNames   
  
    def clean_cs(self):
       try:
-         print( '---begin to clean cs---')
-         self.db.drop_collection_space(cs_name) 
-      except SDBError as e:
+         self.db.drop_collection_space(cs_name)
+      except SDBBaseError as e:
          pass	
 			
    def create_cl(self,srcGroupName):
+      self.clean_cs()
       try:
-         print( '---begin to create cs---')
-         self.cs = self.db.create_collection_space(cs_name)            
+         self.cs = self.db.create_collection_space(cs_name)
          #create cl
          option = {"ShardingKey":{'no':1},"ShardingType":'hash',"Group":srcGroupName}
          self.cl = self.cs.create_collection(cl_name , option)
-         print( '---create cl success---' )   
-      except SDBError as e:
+         print( 'create cl success' )
+      except SDBBaseError as e:
          print(e.detail) 
          raise e    
   
    def insert_datas(self):   
-      print( '---begin to insert records---' )
       objectIds = [ObjectId("53bb5667c5d061d6f579d0bb"),\
                    ObjectId("53bb5667c5d061d6f579d0bc"),\
                    ObjectId("53bb5667c5d061d6f579d0bd"),\
                    ObjectId("53bb5667c5d061d6f579d0be"),\
                    ObjectId("53bb5667c5d061d6f579d0bf")]
-      for i in range(1,len(objectIds)):
-         try:
-            self.cl.insert({"_id":objectIds[i],"no":i,"a":"test" + str(i)})  
-         except SDBError as e:
-            print(e.detail) 
-            raise e  
+      flag = 0
+      doc = []
+      for i in range(0,len(objectIds)):
+         doc.append({"_id":objectIds[i],"no":i,"a":"test" + str(i)})
+      try:
+         self.cl.bulk_insert(flag,doc)
+      except SDBBaseError as e:
+         print(e.detail)
+         raise e
          
    def split_cl(self,srcGroupName,destGroupName):   
-      print( '---begin to split---' )
       try:
          self.cl.split_async_by_percent(srcGroupName,destGroupName,50.0)
-      except (SDBTypeError, SDBBaseError) as e:
-         print(e) 
-         raise e               
+      except SDBBaseError as e:
+         print(e.detail)
+         raise e
+
+   def check_result(self,cond,expectCount):
+      actCount = 0
+      try:
+         actCount = self.cl.get_count(condition = cond)
+         self.assertEqual(actCount,expectCount)
+      except SDBBaseError as e:
+         self.fail('check result fail: ' + e.detail)
                              
 if __name__ == "__main__":
     unittest.main() 

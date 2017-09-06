@@ -6,69 +6,39 @@
 
 import unittest
 import datetime
-from pysequoiadb import client
-from pysequoiadb import collectionspace
 from pysequoiadb.error import (SDBTypeError, SDBBaseError, SDBEndOfCursor,SDBError)
-from lib.config import *
+from lib import testlib
 
 cs_name = "cs_12394"
 cl_name = "cl_12394"
 insert_nums = 100
 class TestFind12394(unittest.TestCase):
    def setUp(self):
-      try:
-         print(datetime.datetime.now())
-         config = Config()
-         self.db = client( config.host_name, config.service )
-         self.clean_cs()
-         self.create_cl()
-         self.insert_datas()                 
-      except SDBBaseError as e:
-         print(e.detail)
-         raise e                     
+      testlib.print_setup_msg(self)
+      self.db = testlib.default_db()
+      self.create_cl()
+      self.insert_datas()
 
-   def testqueryAll(self):
-      try:
-         print("---begin to check data---") 
-         i = 1
-         cursor = self.cl.query(order_by={"_id":1} , flags=1)
-         flag = True
-         while True:
-            try:
-               rec = cursor.next()
-               exprec = {"_id":i,"a":"test" + str(i)}              
-               if(rec != exprec):
-                  flag = False
-                  print(rec)  
-                  print(exprec)
-                  break
-               i = i + 1                       
-            except SDBEndOfCursor:
-               break             
-         self.assertEqual( flag,True)           
+   def testFind12394(self):
+      # query all
+      expectAllRec = []
+      for i in range(0,insert_nums):
+         expectAllRec.append({"_id": i,"a": "test" + str(i)})
 
-      except SDBBaseError as e:
-         print(e.detail)
-         assert False
+      flag_0 = 0
+      self.query_all(expectAllRec,flag_0)
+      flag_1 = 1
+      self.query_all(expectAllRec, flag_1)
 
-   def testqueryOne(self):
-      try:
-         print("---begin to check data---")   
-         rec = self.cl.query_one(condition={"_id":{'$gt':5}},flags=10)
-         exprec = {"_id":6,"a":"test" + str(6)}
-         self.assertEqual( rec,exprec) 
-
-      except (SDBTypeError, SDBBaseError) as e:
-         print(e)
-         assert False
-
-      except SDBBaseError as e:
-         print(e.detail) 
-         assert False           
+      # query one
+      condition = {"_id":{"$gt": 5}}
+      expectOneRec = {"_id": 6,"a": "test6"}
+      flag_10 = 10
+      self.query_one(expectOneRec, condition,flag_10)
 
    def tearDown(self):
       try:
-         print(datetime.datetime.now())
+         testlib.print_teardown_msg(self)
          self.db.drop_collection_space(cs_name)
          self.db.disconnect()
       except SDBBaseError as e:
@@ -78,30 +48,53 @@ class TestFind12394(unittest.TestCase):
 				
    def clean_cs(self):
       try:
-         print( '---begin to clean cs---')
-         self.db.drop_collection_space(cs_name) 
-      except SDBError as e:
+         self.db.drop_collection_space(cs_name)
+      except SDBBaseError as e:
          pass	
 			
    def create_cl(self):
+      self.clean_cs()
       try:
-         print( '---begin to create cs---')
-         self.cs = self.db.create_collection_space(cs_name)            
-
+         self.cs = self.db.create_collection_space(cs_name)
          self.cl = self.cs.create_collection(cl_name)
-         print( '---create cl success---' )   
+         print( 'create cl success' )
       except SDBError as e:
          print(e.detail) 
          raise e    
 
-   def insert_datas(self):   
-      print( '---begin to insert records---' )
-      for i in range(1,insert_nums):
-         try:
-            self.cl.insert({"_id":i,"a":"test" + str(i)})  
-         except SDBError as e:
-            print(e.detail) 
-            raise e 
+   def insert_datas(self):
+      flag = 0
+      doc = []
+      for i in range(0,insert_nums):
+         doc.append({"_id":i,"a":"test" + str(i)})
+      try:
+         self.cl.bulk_insert(flag,doc)
+      except SDBError as e:
+         print(e.detail)
+         raise e
+
+   def query_all(self,expectRec,flag):
+      try:
+         sort = {"_id": 1}
+         cursor = self.cl.query(order_by = sort, flags = flag)
+         actRec = []
+         while True:
+            try:
+               rec = cursor.next()
+               actRec.append(rec)
+            except SDBEndOfCursor:
+               break
+         testlib.assert_list_equal(self,expectRec,actRec)
+      except SDBBaseError as e:
+         self.fail("query all error: " + e.detail)
+
+   def query_one(self,expectRec,cond,flag):
+      try:
+         sort = {"_id": 1}
+         rec = self.cl.query_one(order_by = sort,condition = cond,flags = flag)
+         self.assertEqual( rec,expectRec)
+      except SDBBaseError as e:
+         self.fail("query one error: " + e.detail)
 				
 if __name__ == "__main__":
     unittest.main() 

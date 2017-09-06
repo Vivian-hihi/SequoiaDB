@@ -7,51 +7,47 @@
 
 import unittest
 import datetime
-from pysequoiadb import client
-from pysequoiadb import collectionspace
 from pysequoiadb.error import (SDBTypeError, SDBBaseError, SDBEndOfCursor,SDBError)
-from lib.config import *
+from lib import testlib
 
 cs_name = "cs_12476"
 cl_name = "cl_12476"
 insert_nums = 100
 class TestIndex12476(unittest.TestCase):
    def setUp(self):
-      try:
-         print(datetime.datetime.now())
-         config = Config()
-         self.db = client( config.host_name, config.service )
-         self.clean_cs()
-         self.create_cl()
-         self.insert_datas()         
-      except SDBBaseError as e:
-         print(e.detail)
+      testlib.print_setup_msg(self)
+      self.db = testlib.default_db()
+      self.create_cl()
+      self.insert_datas() 
  
-   def testIdIndex12476(self):
+   def testIndex12476(self):
       try:  
          aIndex = {'a':1}
          aIdxName = 'a'    
          isOption = True          
          self.create_index(aIndex,aIdxName,isOption)
-         
+
+         condition = {"a": {'$gt': 1, '$lt': 11}}
          expectResult = []
-         for i in range(11,20):
+         for i in range(2,11):
             expectResult.append({"_id":i,"a":i,"b":"test" + str(i)})
-         expectExplainRec = ['ixscan',aIdxName]	
-         condition = {"a":{'$gt':10,'$lt':20}}		
-         self.query_datas(expectResult,condition,aIdxName)
-         self.get_explain(expectExplainRec,condition)
+         self.query_datas(expectResult, condition, aIdxName)
+
+         expScanType = 'ixscan'
+         expIdxName = aIdxName
+         expQuery = {"$and": [{ "a": {"$gt":1}},{"a": {"$lt": 11}}]}
+         expectExplainRec = {"expScanType": expScanType,"expIdxName": expIdxName,"Query": expQuery}
+         self.check_explain(expectExplainRec,condition)
           
-         expectIdxResult = [aIdxName,aIndex,isOption]
-			#self.check_indexes(expectResult)
+         expectIdxResult = {"expIdName": expIdxName,"expKey": aIndex,"expUnique": isOption,"expEnforced": isOption}
          self.check_indexes(expectIdxResult,aIdxName)
           
          self.drop_index(aIdxName)
-			
-         tbscan = ""
-         expectExplainRec = ['tbscan',tbscan]			
-         self.query_datas(expectResult,condition,tbscan)
-         self.get_explain(expectExplainRec,condition)
+         expScanType = 'tbscan'
+         expIdxName = ''
+         expectExplainRec = {"expScanType": expScanType, "expIdxName": expIdxName, "Query": expQuery}
+         self.query_datas(expectResult,condition,None)
+         self.check_explain(expectExplainRec,condition)
 			
       except SDBBaseError as e:
          print(e.detail) 
@@ -59,7 +55,7 @@ class TestIndex12476(unittest.TestCase):
 		 
    def tearDown(self):
       try:
-         print(datetime.datetime.now())
+         testlib.print_teardown_msg(self)
          self.db.drop_collection_space(cs_name)
          self.db.disconnect()
       except SDBBaseError as e:
@@ -69,16 +65,16 @@ class TestIndex12476(unittest.TestCase):
 
    def clean_cs(self):
       try:
-         print( '---begin to clean cs---')
-         self.db.drop_collection_space(cs_name) 
+         self.db.drop_collection_space(cs_name)
       except SDBError as e:
          pass			
 			
    def create_cl(self):
+      self.clean_cs()
       try:
          self.cs = self.db.create_collection_space(cs_name)              
          self.cl = self.cs.create_collection(cl_name)
-         print( '---create cl success---' )   
+         print( 'create cl success' )
       except SDBError as e:
          print(e.detail) 
          raise e    
@@ -89,14 +85,35 @@ class TestIndex12476(unittest.TestCase):
             self.cl.insert({"_id":i,"a":i, "b":"test" + str(i)})  
          except SDBError as e:
             print(e.detail) 
-            raise e        
-    
+            raise e
+
+   def create_index(self, index, index_name, isOption):
+      try:
+         if isOption:
+            isUnique = True
+            isEnforced = True
+            buffer_size = 128
+            self.cl.create_index(index, index_name, isUnique, isEnforced, buffer_size)
+         else:
+            pass
+         print ('create index success')
+
+      except SDBBaseError as e:
+         self.fail('create index fail: ' + e.detail)
+
+   def drop_index(self,index_name):   
+      try:
+         self.cl.drop_index(index_name)  
+         print('drop index success')
+      except SDBBaseError as e:
+         self.fail('drop index fail: ' + e.detail)
+
    def check_indexes(self,expectResult,index_name):
       try:
-         if index_name==None:
+         if index_name == None:
             cursor = self.cl.get_indexes();
          else:
-            cursor = self.cl.get_indexes(index_name); 			
+            cursor = self.cl.get_indexes(index_name);
          idxs = []
          while True:
             try:
@@ -105,39 +122,15 @@ class TestIndex12476(unittest.TestCase):
                key = rec['IndexDef']['key']
                isUnique = rec['IndexDef']['unique']
                isEnforced = rec['IndexDef']['enforced']
-               self.assertEqual(index_name,expectResult[0])
-               self.assertEqual(key,expectResult[1])
-               self.assertEqual(isUnique,expectResult[2])
-               self.assertEqual(isEnforced,expectResult[2])							
+               self.assertEqual(index_name,expectResult['expIdName'])
+               self.assertEqual(key,expectResult['expKey'])
+               self.assertEqual(isUnique,expectResult['expUnique'])
+               self.assertEqual(isEnforced,expectResult['expEnforced'])
             except SDBEndOfCursor:
-               break   
+               break
       except SDBBaseError as e:
-         print(e.detail) 
-         raise e             
-       
-   def drop_index(self,index_name):   
-      try:
-         self.cl.drop_index(index_name)  
-         print('drop index success')
-      except SDBBaseError as e:
-         print(e.detail) 
-         raise e      
-      
-   def create_index(self,index,index_name,isOption):   
-      try:
-         if isOption: 
-            isUnique = True
-            isEnforced = True
-            buffer_size = 128
-            self.cl.create_index(index, index_name, isUnique, isEnforced, buffer_size)
-         else:
-            pass 
-         print ('create index success')				
- 
-      except SDBBaseError as e:
-         print(e.detail) 
-         raise e       
-      
+         self.fail('check index fail: ' + e.detail)
+
    def query_datas(self,expectResult,cond,index_name):   
       try:
          cursor = self.cl.query(condition=cond,\
@@ -150,53 +143,28 @@ class TestIndex12476(unittest.TestCase):
                rec = cursor.next()
                actResult.append(rec)
             except SDBEndOfCursor:
-               break  
-         self.check_result(actResult,expectResult)	                     
+               break
+         testlib.assert_list_equal(self, actResult, expectResult)
       except SDBBaseError as e:
-         print(e.detail) 
-         raise e   
-		
-   def check_result(self,actResult,expectResult):
-      if not( len(actResult) == len(expectResult) ):
-         self.fail('actResult is not equal to expectResult')
-		
-      flag = True
-      size = len(actResult)
-      for i in range(0,size):
-         if not(actResult[i] == expectResult[i]):
-            print(actResult[i])
-            print(expectResult[i])
-            flag = False
-            break
-      self.assertEqual(flag, True)	    
+         self.fail('query fail: ' + e.detail)
 
-   def get_explain(self,expectExplainRec,cond):   
+   def check_explain(self,expectExplainRec,cond):
       try:
          cursor = self.cl.explain(condition=cond,\
                              order_by={"_id":1},\
                              flags=1)
          rec = cursor.next()
+         expScanType = expectExplainRec['expScanType']
+         expIdxName = expectExplainRec['expIdxName']
+         expQuery = expectExplainRec['Query']['$and']
          actScanType = rec['ScanType']
          actIndexName = rec['IndexName']
-         actExplainRec = [actScanType,actIndexName]
-         self.check_explain(actExplainRec,expectExplainRec)	                     
+         actQuery = rec['Query']['$and']
+         self.assertEqual(expScanType, actScanType)
+         self.assertEqual(expIdxName, actIndexName)
+         testlib.assert_list_equal(self, expQuery, actQuery)
       except SDBBaseError as e:
-         print(e.detail) 
-         raise e   
-		
-   def check_explain(self,actExplainRec,expectExplainRec):
-      if not( len(actExplainRec) == len(expectExplainRec) ):
-         self.fail('actExplainRec is not equal to expectExplainRec')
-		
-      flag = True
-      size = len(actExplainRec)
-      for i in range(0,size):
-         if not(actExplainRec[i] == expectExplainRec[i]):
-            print(actExplainRec[i])
-            print(expectExplainRec[i])
-            flag = False
-            break
-      self.assertEqual(flag, True)	 
+         self.fail('check explain fail: ' + e.detail)
                         
 if __name__ == "__main__":
     unittest.main() 
