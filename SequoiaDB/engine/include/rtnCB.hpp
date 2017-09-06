@@ -118,11 +118,7 @@ namespace engine
 
       void contextDelete ( SINT64 contextID, _pmdEDUCB *cb ) ;
 
-      OSS_INLINE rtnContext *contextFind ( SINT64 contextID )
-      {
-         std::pair<rtnContext*, bool> ret = _contextMap.find( contextID ) ;
-         return ret.second ? ret.first : NULL ;
-      }
+      rtnContext *contextFind ( SINT64 contextID, _pmdEDUCB *cb = NULL ) ;
 
       OSS_INLINE INT32 contextNum ()
       {

@@ -3240,18 +3240,10 @@ namespace engine
          goto error ;
       }
 
-      context = (rtnCB->contextFind ( header->contextID )) ;
+      context = rtnCB->contextFind ( header->contextID, eduCB() ) ;
       if ( NULL == context )
       {
          PD_LOG ( PDERROR, "context %lld does not exist", header->contextID ) ;
-         rc = SDB_RTN_CONTEXT_NOTEXIST ;
-         goto error ;
-      }
-      // make sure the context belongs to the current session
-      if ( !eduCB()->contextFind ( header->contextID ) )
-      {
-         PD_LOG ( PDERROR, "Context %lld does not owned by current session",
-                  header->contextID ) ;
          rc = SDB_RTN_CONTEXT_NOTEXIST ;
          goto error ;
       }
@@ -3362,21 +3354,13 @@ namespace engine
          goto error ;
       }
 
-      context = rtnCB->contextFind ( header->contextID ) ;
+      context = rtnCB->contextFind ( header->contextID, eduCB() ) ;
       if ( NULL == context )
       {
          PD_LOG ( PDERROR, "context %lld does not exist",
                   header->contextID ) ;
          /// lob has already been closed.
          goto done ;
-      }
-      // make sure the context belongs to the current session
-      if ( !eduCB()->contextFind ( header->contextID ) )
-      {
-         PD_LOG ( PDERROR, "Context %lld does not owned by current session",
-                  header->contextID ) ;
-         rc = SDB_RTN_CONTEXT_NOTEXIST ;
-         goto error ;
       }
 
       if ( RTN_CONTEXT_SHARD_OF_LOB != context->getType() )
@@ -3435,18 +3419,10 @@ namespace engine
          goto error ;
       }
 
-      context = rtnCB->contextFind ( header->contextID ) ;
+      context = rtnCB->contextFind ( header->contextID, eduCB() ) ;
       if ( NULL == context )
       {
          PD_LOG ( PDERROR, "context %lld does not exist",
-                  header->contextID ) ;
-         rc = SDB_RTN_CONTEXT_NOTEXIST ;
-         goto error ;
-      }
-      // make sure the context belongs to the current session
-      if ( !eduCB()->contextFind ( header->contextID ) )
-      {
-         PD_LOG ( PDERROR, "Context %lld does not owned by current session",
                   header->contextID ) ;
          rc = SDB_RTN_CONTEXT_NOTEXIST ;
          goto error ;
@@ -3533,18 +3509,10 @@ namespace engine
          goto error ;
       }
 
-      context = rtnCB->contextFind ( header->contextID ) ;
+      context = rtnCB->contextFind ( header->contextID, eduCB() ) ;
       if ( NULL == context )
       {
          PD_LOG ( PDERROR, "context %lld does not exist",
-                  header->contextID ) ;
-         rc = SDB_RTN_CONTEXT_NOTEXIST ;
-         goto error ;
-      }
-      // make sure the context belongs to the current session
-      if ( !eduCB()->contextFind ( header->contextID ) )
-      {
-         PD_LOG ( PDERROR, "Context %lld does not owned by current session",
                   header->contextID ) ;
          rc = SDB_RTN_CONTEXT_NOTEXIST ;
          goto error ;
@@ -3664,18 +3632,10 @@ namespace engine
          goto error ;
       }
 
-      context = (rtnCB->contextFind ( header->contextID )) ;
+      context = rtnCB->contextFind ( header->contextID, eduCB() ) ;
       if ( NULL == context )
       {
          PD_LOG ( PDERROR, "context %lld does not exist", header->contextID ) ;
-         rc = SDB_RTN_CONTEXT_NOTEXIST ;
-         goto error ;
-      }
-      // make sure the context belongs to the current session
-      if ( !eduCB()->contextFind ( header->contextID ) )
-      {
-         PD_LOG ( PDERROR, "Context %lld does not owned by current session",
-                  header->contextID ) ;
          rc = SDB_RTN_CONTEXT_NOTEXIST ;
          goto error ;
       }

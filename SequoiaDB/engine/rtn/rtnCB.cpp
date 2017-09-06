@@ -269,6 +269,25 @@ namespace engine
       }
    }
 
+   rtnContext* _SDB_RTNCB::contextFind ( SINT64 contextID, _pmdEDUCB *cb )
+   {
+      rtnContext *pContext = NULL ;
+      std::pair<rtnContext*, bool> ret = _contextMap.find( contextID ) ;
+      if ( ret.second )
+      {
+         if ( cb && !cb->contextFind( contextID ) )
+         {
+            PD_LOG ( PDWARNING, "Context %lld does not owned by "
+                     "current session", contextID ) ;
+         }
+         else
+         {
+            pContext = ret.first ;
+         }
+      }
+      return pContext ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_RTNCB_CONTEXTDEL, "_SDB_RTNCB::contextDelete" )
    void _SDB_RTNCB::contextDelete ( SINT64 contextID, pmdEDUCB *cb )
    {

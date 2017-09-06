@@ -281,18 +281,10 @@ namespace engine
       rtnContextLob *lobContext = NULL ;
       SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
       rtnContextBuf contextBuf ;
-      rtnContext *context = rtnCB->contextFind ( contextID ) ;
+      rtnContext *context = rtnCB->contextFind ( contextID, cb ) ;
       if ( NULL == context )
       {
          PD_LOG ( PDERROR, "Context %lld does not exist", contextID ) ;
-         rc = SDB_RTN_CONTEXT_NOTEXIST ;
-         goto error ;
-      }
-      
-      if ( !cb->contextFind ( contextID ) )
-      {
-         PD_LOG ( PDERROR, "Context %lld does not owned by current session",
-                  contextID ) ;
          rc = SDB_RTN_CONTEXT_NOTEXIST ;
          goto error ;
       }
@@ -338,7 +330,7 @@ namespace engine
       PD_TRACE_EXITRC( SDB_RTNREADLOB, rc ) ;
       return rc ;
    error:
-      if ( SDB_EOF != rc )
+      if ( SDB_EOF != rc && context )
       {
          rtnCB->contextDelete ( contextID, cb ) ;
       }
@@ -356,18 +348,10 @@ namespace engine
       PD_TRACE_ENTRY( SDB_RTNWRITELOB ) ;
       rtnContextLob *lobContext = NULL ;
       SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
-      rtnContext *context = rtnCB->contextFind ( contextID ) ;
+      rtnContext *context = rtnCB->contextFind ( contextID, cb ) ;
       if ( NULL == context )
       {
          PD_LOG ( PDERROR, "Context %lld does not exist", contextID ) ;
-         rc = SDB_RTN_CONTEXT_NOTEXIST ;
-         goto error ;
-      }
-
-      if ( !cb->contextFind ( contextID ) )
-      {
-         PD_LOG ( PDERROR, "Context %lld does not owned by current session",
-                  contextID ) ;
          rc = SDB_RTN_CONTEXT_NOTEXIST ;
          goto error ;
       }
@@ -396,7 +380,7 @@ namespace engine
       PD_TRACE_EXITRC( SDB_RTNWRITELOB, rc ) ;
       return rc ;
    error:
-      if ( -1 != contextID )
+      if ( -1 != contextID && context )
       {
          rtnCB->contextDelete ( contextID, cb ) ;
       }
@@ -413,19 +397,11 @@ namespace engine
       PD_TRACE_ENTRY( SDB_RTNCLOSELOB ) ;
       rtnContextLob *lobContext = NULL ;
       SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
-      rtnContext *context = rtnCB->contextFind ( contextID ) ;
+      rtnContext *context = rtnCB->contextFind ( contextID, cb ) ;
       if ( NULL == context )
       {
          /// context has been closed.
          goto done ;
-      }
-
-      if ( !cb->contextFind ( contextID ) )
-      {
-         PD_LOG ( PDERROR, "Context %lld does not owned by current session",
-                  contextID ) ;
-         rc = SDB_RTN_CONTEXT_NOTEXIST ;
-         goto error ;
       }
 
       if ( RTN_CONTEXT_LOB != context->getType() )
@@ -449,7 +425,7 @@ namespace engine
       }
 
    done:
-      if ( -1 != contextID )
+      if ( context )
       {
          rtnCB->contextDelete ( contextID, cb ) ;
       }
@@ -535,18 +511,10 @@ namespace engine
       PD_TRACE_ENTRY( SDB_RTNGETLOBMETADATA ) ;
       rtnContextLob *lobContext = NULL ;
       SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
-      rtnContext *context = rtnCB->contextFind ( contextID ) ;
+      rtnContext *context = rtnCB->contextFind ( contextID, cb ) ;
       if ( NULL == context )
       {
          PD_LOG ( PDERROR, "Context %lld does not exist", contextID ) ;
-         rc = SDB_RTN_CONTEXT_NOTEXIST ;
-         goto error ;
-      }
-
-      if ( !cb->contextFind ( contextID ) )
-      {
-         PD_LOG ( PDERROR, "Context %lld does not owned by current session",
-                  contextID ) ;
          rc = SDB_RTN_CONTEXT_NOTEXIST ;
          goto error ;
       }
@@ -574,7 +542,7 @@ namespace engine
       PD_TRACE_EXITRC( SDB_RTNGETLOBMETADATA, rc ) ;
       return rc ;
    error:
-      if ( -1 != contextID )
+      if ( context )
       {
          rtnCB->contextDelete ( contextID, cb ) ;
       }
