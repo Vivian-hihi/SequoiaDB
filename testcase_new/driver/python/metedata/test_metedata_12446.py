@@ -11,6 +11,7 @@ import unittest
 from pysequoiadb.error import (SDBBaseError, SDBEndOfCursor)
 from lib import sdbconfig
 from lib import testlib
+from metedata.commlib import *
 
 class TestCS12446(unittest.TestCase):
    def setUp(self):
@@ -19,6 +20,13 @@ class TestCS12446(unittest.TestCase):
        self.run_tearDown = False
       
    def testCS12446(self):
+      if is_standalone( self.db ) == True:
+         print("run mode is standalone")
+         return
+      data_groups = get_data_groups(self.db)
+      if(len(data_groups) == 1):
+         print("only one group")
+         return
       #create cs
       self.cs_name = "cs_12446"
       cl_names = ["cl_12446_1", "cl_12446_2"]

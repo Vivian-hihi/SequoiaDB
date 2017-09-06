@@ -24,6 +24,14 @@ class TestCS12445(unittest.TestCase):
       self.run_tearDown = False
       
    def testCS12445(self):
+      if is_standalone( self.db ) == True:
+         print("run mode is standalone")
+         return
+      data_groups = get_data_groups(self.db)
+      if(len(data_groups) == 1):
+         print("only one group")
+         return
+      
       self.maincs_name = "maincs_12445"
       self.subcs_name = "subcs_12445"
       self.maincl_name = "maincl_12445"
@@ -34,7 +42,6 @@ class TestCS12445(unittest.TestCase):
       self.subcl_full_name3 =  self.subcs_name + "." + self.subcl_names[2]
       
       #get data_groups
-      data_groups = get_data_groups( self.db )
       self.cl_group_name =  data_groups[0]
       
       #create cs
