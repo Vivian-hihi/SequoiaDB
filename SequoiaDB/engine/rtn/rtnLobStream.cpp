@@ -388,7 +388,7 @@ namespace engine
       }
 
       /// re array the data and try to get a complete piece.
-      rc = _lw.prepare2Write( _offset, len, buf ) ;
+      rc = _lw.prepare4Write( _offset, len, buf ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Failed to add piece to window, rc:%d", rc ) ;
@@ -491,7 +491,7 @@ namespace engine
       _pool.clear() ;
 
       /// reset the read len of a suitable value
-      rc = _lw.prepare2Read( _meta._lobLen,
+      rc = _lw.prepare4Read( _meta._lobLen,
                              _offset, len,
                              tuples ) ;
       if ( SDB_OK != rc )

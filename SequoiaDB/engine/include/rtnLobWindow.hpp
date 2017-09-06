@@ -48,8 +48,7 @@ namespace engine
    public:
       INT32 init( INT32 pageSize, BOOLEAN mergeMeta ) ;
 
-      /// for write
-      INT32 prepare2Write( SINT64 offset, UINT32 len, const CHAR *data ) ;
+      INT32 prepare4Write( INT64 offset, UINT32 len, const CHAR *data ) ;
 
       BOOLEAN getNextWriteSequences( RTN_LOB_TUPLES &tuples ) ;
 
@@ -58,10 +57,9 @@ namespace engine
       BOOLEAN getCachedData( _rtnLobTuple &tuple ) ;
 
       BOOLEAN getMetaPageData( _rtnLobTuple &tuple ) ;
-      
-      /// for read
-      INT32 prepare2Read( SINT64 lobLen,
-                          SINT64 offset,
+
+      INT32 prepare4Read( INT64 lobLen,
+                          INT64 offset,
                           UINT32 len,
                           RTN_LOB_TUPLES &tuples ) ;
    private:
@@ -71,12 +69,12 @@ namespace engine
       UINT32  _getCurDataOffset() const ;
 
    private:
-      SINT32         _pageSize ;
+      INT32          _pageSize ;
       UINT32         _logarithmic ;
       BOOLEAN        _mergeMeta ;
 
-      SINT64         _curOffset ;
-      CHAR           *_pool ;
+      INT64          _curOffset ;
+      CHAR*          _pool ;
       INT32          _cachedSz ;
       INT32          _metaSize ;
 

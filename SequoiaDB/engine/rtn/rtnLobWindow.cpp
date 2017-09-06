@@ -115,7 +115,7 @@ const UINT32 RTN_MAX_READ_LEN = DMS_PAGE_SIZE128K * 512 ;      /// 64MB
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOBWINDOW_ADDOUTPUTDATA, "_rtnLobWindow::addOutputData" )
-   INT32 _rtnLobWindow::prepare2Write( SINT64 offset, UINT32 len,
+   INT32 _rtnLobWindow::prepare4Write( INT64 offset, UINT32 len,
                                        const CHAR *data )
    {
       INT32 rc = SDB_OK ;
@@ -123,7 +123,7 @@ const UINT32 RTN_MAX_READ_LEN = DMS_PAGE_SIZE128K * 512 ;      /// 64MB
       SDB_ASSERT( 0 <= offset && NULL != data, "invalid arguments" ) ;
       SDB_ASSERT( _writeData.empty(), "the last write has not been done" ) ;
 
-      /// TOOD: seek write ?
+      /// TODO: seek write ?
       if ( offset != _curOffset + _cachedSz )
       {
          PD_LOG( PDERROR, "Invalid offset:%lld, current offset:%lld"
@@ -133,7 +133,7 @@ const UINT32 RTN_MAX_READ_LEN = DMS_PAGE_SIZE128K * 512 ;      /// 64MB
          goto error ;
       }
 
-      /// put the meta data to second page
+      /// put data in meta page to the second page
       if ( _mergeMeta && _curOffset < _pageSize - DMS_LOB_META_LENGTH )
       {
          UINT32 lastLen = _pageSize - DMS_LOB_META_LENGTH - _curOffset ;
@@ -342,8 +342,8 @@ const UINT32 RTN_MAX_READ_LEN = DMS_PAGE_SIZE128K * 512 ;      /// 64MB
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOBWINDOW_PREPARE2READ, "_rtnLobWindow::_rtnLobWindow::prepare2Read" )
-   INT32 _rtnLobWindow::prepare2Read( SINT64 lobLen,
-                                      SINT64 offset,
+   INT32 _rtnLobWindow::prepare4Read( INT64 lobLen,
+                                      INT64 offset,
                                       UINT32 len,
                                       RTN_LOB_TUPLES &tuples )
    {
