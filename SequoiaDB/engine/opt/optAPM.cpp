@@ -1138,7 +1138,7 @@ namespace engine
          pCachedPlanMgr->resetCacheBitmap() ;
          pCachedPlanMgr->clearCacheUnits() ;
       }
-      PD_TRACE_ENTRY( SDB_OPTAPM__INVALIDPLANS ) ;
+      PD_TRACE_EXIT( SDB_OPTAPM__INVALIDPLANS ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTAPM__INVALIDCLPLANS, "_optAccessPlanManager::_invalidCLPlans" )
