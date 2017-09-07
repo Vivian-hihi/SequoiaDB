@@ -15,4 +15,15 @@ def get_data_groups( db ):
          break
    cursor.close()
    return data_groups
+
+def is_standalone( db ):
+   try:
+      db.list_replica_groups()
+   except SDBBaseError as e:
+      if (-159 == e.code):
+         return True
+      else:
+         print("execute list_replica_groups happen error , e =" + e )
+         raise e
+
    
