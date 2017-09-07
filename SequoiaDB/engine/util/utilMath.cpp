@@ -22,7 +22,7 @@ namespace engine
    BOOLEAN utilSubIsOverflow( INT64 l, INT64 r, INT64 result )
    {
       BOOLEAN ret = FALSE ;
-      if( l > 0 && r < 0 && result < 0 )
+      if( l >= 0 && r < 0 && result < 0 )
       {
          ret = TRUE ;
       }

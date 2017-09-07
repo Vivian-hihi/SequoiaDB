@@ -99,6 +99,7 @@ namespace engine
       optAccessPlanManager *apm        = NULL ;
       optAccessPlan *plan              = NULL ;
       BOOLEAN writable                 = FALSE ;
+      BOOLEAN strictDataMode           = FALSE ;
       dmsScanner *pScanner             = NULL ;
       BSONObj emptyObj ;
       mthModifier modifier ;
@@ -108,23 +109,6 @@ namespace engine
       if ( updator.isEmpty() )
       {
          PD_LOG ( PDERROR, "modifier can't be empty" ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-
-      try
-      {
-         rc = modifier.loadPattern ( updator,
-                                     &dollarList,
-                                     TRUE,
-                                     shardingKey ) ;
-         PD_RC_CHECK( rc, PDERROR, "Invalid pattern is detected for updator: "
-                      "%s", updator.toString().c_str() ) ;
-      }
-      catch ( std::exception &e )
-      {
-         PD_LOG ( PDERROR, "Invalid pattern is detected for update: %s: %s",
-                  updator.toString().c_str(), e.what() ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -153,6 +137,30 @@ namespace engine
       {
          PD_LOG( PDERROR, "can not update data when autoIndexId is false" ) ;
          rc = SDB_RTN_AUTOINDEXID_IS_FALSE ;
+         goto error ;
+      }
+
+      if ( OSS_BIT_TEST( mbContext->mb()->_attributes,
+                         DMS_MB_ATTR_STRICTDATAMODE ) )
+      {
+         strictDataMode = TRUE ;
+      }
+
+      try
+      {
+         rc = modifier.loadPattern ( updator,
+                                     &dollarList,
+                                     TRUE,
+                                     shardingKey,
+                                     strictDataMode ) ;
+         PD_RC_CHECK( rc, PDERROR, "Invalid pattern is detected for updator: "
+                      "%s", updator.toString().c_str() ) ;
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG ( PDERROR, "Invalid pattern is detected for update: %s: %s",
+                  updator.toString().c_str(), e.what() ) ;
+         rc = SDB_INVALIDARG ;
          goto error ;
       }
 
