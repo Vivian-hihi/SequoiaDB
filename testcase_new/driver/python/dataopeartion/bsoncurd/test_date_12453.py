@@ -92,7 +92,10 @@ class TestCS12453(unittest.TestCase):
       check_Result( self.cl, {}, {}, {}, {}, False )
       
       #json to bson   
-      json = '{"$date": "2012-01-01"}'
+      json = '{"$date": "0001-01-01"}'
+      self.assertEqual(json, dumps(loads(json)))
+
+      json = '{"$date": "9999-12-31"}'
       self.assertEqual(json, dumps(loads(json)))
 
       self.run_tearDown = True

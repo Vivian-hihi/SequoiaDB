@@ -88,6 +88,7 @@ class TestCS12450(unittest.TestCase):
       record = [{"a":data3}]
       try:
          self.cl.bulk_insert( 0, record )
+         self.fail("need_an_error")
       except SDBBaseError as e:
          if(-24 != e.code):
             print(e.detail)
