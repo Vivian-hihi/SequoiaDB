@@ -12,7 +12,7 @@ class Lob12478(testlib.TestDataOprtBase):
    def setUp(self):
       self.create_cs_cl()
 
-   def test(self):
+   def test_lob(self):
       self.lob_size = 1024
       self.lob_context = util.random_str(self.lob_size)
       self.md5 = util.get_md5(self.lob_context)
