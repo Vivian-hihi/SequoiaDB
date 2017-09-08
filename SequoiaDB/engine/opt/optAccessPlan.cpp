@@ -752,9 +752,12 @@ namespace engine
                // Create new cached plan status for this collection
                dmsCLCachedPlanUnit *pCachedPlanUnit =
                      SDB_OSS_NEW dmsCLCachedPlanUnit( _key._mbID, 0 ) ;
-               if ( NULL != pCachedPlanUnit )
+               if ( NULL != pCachedPlanUnit &&
+                    !_cachedPlanMgr->addCacheUnit( pCachedPlanUnit,
+                                                   TRUE, FALSE ) )
                {
-                  _cachedPlanMgr->addCacheUnit( pCachedPlanUnit, TRUE, FALSE ) ;
+                  // Failed to add unit, the unit should be deleted
+                  SAFE_OSS_DELETE( pCachedPlanUnit ) ;
                }
             }
          }

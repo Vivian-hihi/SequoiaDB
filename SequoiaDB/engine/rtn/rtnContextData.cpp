@@ -85,6 +85,7 @@ namespace engine
       if ( _plan && -1 != contextID() )
       {
          _plan->release() ;
+         _plan = NULL ;
       }
       // second release mb context
       if ( _mbContext && _su )

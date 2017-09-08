@@ -278,7 +278,7 @@ namespace engine
                    SINT64 &contextID )
    {
       INT32 rc = SDB_OK ;
-      SDB_RTNCB *rtnCB = sdbGetRTNCB() ; 
+      SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
       rtnContext *context = NULL ;
       rtnContext *bkContext = NULL ;
       SINT64 old = contextID ;
@@ -697,6 +697,11 @@ namespace engine
             goto error ;
          }
       }
+
+      // The plan could be added to context, increase the reference count,
+      // so the context could use release() to free the plan
+      plan->incRefCount() ;
+
       rc = plan->optimize( su, mbContext ) ;
       PD_RC_CHECK( rc, PDERROR, "Plan optimize failed, rc: %d", rc ) ;
       PD_CHECK ( plan->getScanType() == IXSCAN && !plan->isAutoGen(),
