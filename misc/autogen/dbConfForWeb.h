@@ -57,8 +57,11 @@ class OptGenForWeb
     const char *language ;
     std::vector<OptOtherInfoEle*> optOtherInfo ;
     std::vector<OptEle*> optlist ;
+	boost::property_tree::ptree defaultTagValue ;
     void loadOtherInfoFromXML () ;
     void loadFromXML () ;
+	INT32 parseOptListTag( boost::property_tree::ptree::value_type &v,
+							   OptEle *newele ) ;
     std::string genOptions () ;
 	std::string genSupplement() ;
     void gendoc () ;

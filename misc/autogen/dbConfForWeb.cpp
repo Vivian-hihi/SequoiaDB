@@ -8,6 +8,7 @@
 
 // optlist.xml elements for web page
 #define OPTLISTTAG            "optlist"
+#define NAMETAG               "name"
 #define LONGTAG               "long"
 #define SHORTTAG              "short"
 #define TYPEOFWEBTAG          "typeofweb"
@@ -49,8 +50,11 @@ static string& replace_all ( string &str, const string& old_value, const string 
 
 OptGenForWeb::OptGenForWeb ( const char* lang ) : language( lang )
 {
-    loadFromXML () ;
-    loadOtherInfoFromXML () ;
+   defaultTagValue.put("en", "--") ;
+   defaultTagValue.put("cn", "--") ;
+
+   loadFromXML () ;
+   loadOtherInfoFromXML () ; 
 }
 
 OptGenForWeb::~OptGenForWeb ()
@@ -210,9 +214,83 @@ void OptGenForWeb::loadOtherInfoFromXML ()
     optOtherInfo.push_back ( newele ) ;
 }
 
+INT32 OptGenForWeb::parseOptListTag( ptree::value_type &v, OptEle *newele )
+{
+   INT32 rc = SDB_OK ;
+   boost::optional<string> optionalString ;
+   boost::optional<ptree &> optionalPtree ;
+
+   optionalString = v.second.get_optional<string>(HIDDENTAG) ;
+   if ( optionalString )
+   {
+      ossStrToBoolean( optionalString->c_str(), &( newele->hiddentag ) ) ;
+      
+   }
+
+   // we don't need the notes whose hidden tag is true
+   if ( newele->hiddentag )
+   {
+      rc = SDB_SYS ;
+      goto error ;
+   }
+
+   // long tag could not be null
+   optionalString = v.second.get_optional<string>(LONGTAG) ;
+   if ( optionalString )
+   {
+      newele->longtag += (*optionalString) ;
+   }
+   else
+   {
+      optionalString = v.second.get_optional<string>(NAMETAG) ;
+
+      if ( optionalString )
+      {
+         cout << "Long tag is requird for " << *optionalString << endl ;
+      }
+      else
+      {
+         cout << "Name and Long tag is requird." << endl ;
+      }
+      exit( 1 );
+   }
+
+   // if no detail tag, we don't need this note
+   optionalPtree = v.second.get_child_optional(DETAILTAG) ;
+   if ( optionalPtree )
+   {
+      newele->detailtag = optionalPtree->get<string>(language) ;
+   }
+   else
+   {
+      rc = SDB_SYS ;
+      goto error ;
+   }
+
+   // short tag can be null
+   newele->shorttag += v.second.get(SHORTTAG, "-") ;
+
+   // type tag can be null
+   newele->typeofwebtag = v.second.get(TYPEOFWEBTAG, "--") ;
+
+   // reloadable tag can be null
+   newele->reloadabletag = v.second.get_child_optional(TYPEOFRELOADABLE)
+                            .value_or(defaultTagValue).get<string>(language) ;
+
+   // reload strategy tag can be null
+   newele->reloadstrategytag = v.second.get_child_optional(TYPEOFRELOADSTRATEGY)
+                                .value_or(defaultTagValue).get<string>(language) ;
+
+done:
+   return rc;
+error:
+   goto done;
+}
+
 void OptGenForWeb::loadFromXML ()
 {
    ptree pt ;
+
    try
    {
      read_xml ( OPTXMLSRCFILE, pt ) ;
@@ -221,87 +299,59 @@ void OptGenForWeb::loadFromXML ()
    {
      cout << "Can not read src xml file, not exist or wrong directory for OptGenForWeb: "
           << e.what() << endl ;
-     exit ( 0 ) ;
+     exit ( 1 ) ;
    }
-   BOOST_FOREACH ( ptree::value_type &v, pt.get_child( OPTLISTTAG ) )
+
+   try
    {
-      BOOLEAN ishidden = FALSE ;
-      // newele will be freed on destructor or continue or catch.
-      OptEle *newele = new OptEle() ;
-      boost::optional<string> optionalString ;
-      boost::optional<ptree &> optionalPtree ;
-      ptree defaultTagValue ;
-      defaultTagValue.put("en", "--") ;
-      defaultTagValue.put("cn", "--") ;
+      BOOST_FOREACH ( ptree::value_type &v, pt.get_child( OPTLISTTAG ) )
+      {
+         OptEle *newele = new ( std::nothrow ) OptEle() ;
 
-      if ( !newele )
-      {
-          cout << "Failed to allocate memory for OptEle!" << endl ;
-          exit ( 0 ) ;
-      }
-      optionalString = v.second.get_optional<string>(HIDDENTAG) ;
-      if ( optionalString )
-      {
-         ossStrToBoolean( optionalString->c_str(), &ishidden ) ;
-      }
-      else
-      {
-         ishidden = FALSE ;
-      }
-      // we don't need the notes whose hidden tag is true
-      if ( ishidden )
-      {
-         delete newele ;
-         continue ;
-      }
-      // long tag could not be null
-      optionalString = v.second.get_optional<string>(LONGTAG) ;
-      if ( optionalString )
-      {
-         newele->longtag += (*optionalString) ;
-      }
-      else
-      {
-         cout << "Long tag is requird. " << endl ;
-         delete newele ;
-         continue ;
-      }
-
-      try
-      {
-         // if no detail tag, we don't need this note
-         optionalPtree = v.second.get_child_optional(DETAILTAG) ;
-         if ( optionalPtree )
+         if ( !newele )
          {
-            newele->detailtag = optionalPtree->get<string>(language) ;
+             cout << "Failed to allocate memory for OptEle!" << endl ;
+             exit ( 1 ) ;
          }
-         else
+
+         try
          {
+            if ( SDB_OK == parseOptListTag( v, newele ) )
+            {
+               optlist.push_back ( newele ) ;
+            }
+            else
+            {
+               if ( newele && !newele->hiddentag )
+               {
+                  cout << "skip tag " << newele->longtag << endl;  
+               }
+               delete newele ;
+            }
+         }
+         catch ( std::exception &e )
+         {
+            if ( newele && "--" != newele->longtag )
+            {
+               cout << "for tag " << newele->longtag << ", ";
+            }  
             delete newele ;
-            continue ;
+            cout << "XML format error: " << e.what()
+                 << ", unknown node name or description language, please check!"
+                 << endl ;
+            exit( 1 ) ;
          }
-         // short tag can be null
-         newele->shorttag += v.second.get(SHORTTAG, "-") ;
-         // type tag can be null
-         newele->typeofwebtag = v.second.get(TYPEOFWEBTAG, "--") ;
-         // reloadable tag can be null
-         newele->reloadabletag = v.second.get_child_optional(TYPEOFRELOADABLE)
-                                  .value_or(defaultTagValue).get<string>(language) ;
-         // reload strategy tag can be null
-         newele->reloadstrategytag = v.second.get_child_optional(TYPEOFRELOADSTRATEGY)
-                                      .value_or(defaultTagValue).get<string>(language) ;
-      }
-      catch ( std::exception& e )
-      {
-         delete newele ;
-         cout << "XML format error: " << e.what()
-              << ", unknown node name or description language,please check!"
-              << endl ;
-         exit(0) ;
-      }
 
-      optlist.push_back ( newele ) ;
+         newele = NULL ;
+      }
    }
+   catch ( std::exception &e )
+   {
+      cout << "Can not find tag " << OPTLISTTAG
+          << e.what() << endl ;
+      exit ( 1 ) ;
+   }
+
 }
 
 string OptGenForWeb::genOptions ()
