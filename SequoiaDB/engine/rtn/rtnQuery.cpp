@@ -698,10 +698,6 @@ namespace engine
          }
       }
 
-      // The plan could be added to context, increase the reference count,
-      // so the context could use release() to free the plan
-      plan->incRefCount() ;
-
       rc = plan->optimize( su, mbContext ) ;
       PD_RC_CHECK( rc, PDERROR, "Plan optimize failed, rc: %d", rc ) ;
       PD_CHECK ( plan->getScanType() == IXSCAN && !plan->isAutoGen(),
