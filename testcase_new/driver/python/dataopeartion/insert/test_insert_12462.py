@@ -9,7 +9,7 @@ from lib import sdbconfig
 from lib import testlib
 from pysequoiadb.error import (SDBBaseError)
 
-class TestCS12462(unittest.TestCase):
+class TestInsert12462(unittest.TestCase):
    def setUp(self):
       testlib.print_setup_msg(self)
       self.db = testlib.default_db()
@@ -26,7 +26,7 @@ class TestCS12462(unittest.TestCase):
       self.cs = self.db.create_collection_space( self.cs_name )
       self.cl = self.cs.create_collection( self.cl_name )
       
-   def testCS12462(self):
+   def test_insert_12462(self):
       #insert data include oid
       record = {"a":1,"_id":1}
       self.cl.insert( record )

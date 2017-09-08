@@ -14,13 +14,13 @@ from bson.json_util import loads
 from bson.json_util import dumps
 
 
-class TestCS12457(unittest.TestCase):
+class TestObject12457(unittest.TestCase):
    def setUp(self):
       testlib.print_setup_msg(self)
       self.db = testlib.default_db()
       self.run_tearDown = False
    
-   def testCS12457(self):
+   def test_object_12457(self):
       # create cs and cl
       self.cs_name = "cs_12457"
       self.cl_name = "cl_12457"

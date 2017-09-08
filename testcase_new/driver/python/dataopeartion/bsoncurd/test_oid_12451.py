@@ -16,13 +16,13 @@ from lib import sdbconfig
 from bson.json_util import loads 
 from bson.json_util import dumps
 
-class TestCS12451(unittest.TestCase):
+class TestOid12451(unittest.TestCase):
    def setUp(self):
       testlib.print_setup_msg(self)
       self.db = testlib.default_db()
       self.run_tearDown = False
       
-   def testCS12451(self):
+   def test_oid_12451(self):
       #create cs and cl
       self.cs_name = "cs_12451"
       self.cl_name = "cl_12451"

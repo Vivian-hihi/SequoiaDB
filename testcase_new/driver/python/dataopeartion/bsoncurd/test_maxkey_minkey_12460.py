@@ -16,13 +16,13 @@ from bson.max_key import MaxKey
 from bson.min_key import MinKey
 
 
-class TestCS12460(unittest.TestCase):
+class TestMinKeyMaxKey12460(unittest.TestCase):
    def setUp(self):
       testlib.print_setup_msg(self)
       self.db = testlib.default_db()
       self.run_tearDown = False
    
-   def testCS12460(self):
+   def test_minkey_maxkey_12460(self):
       # create cs and cl
       self.cs_name = "cs_12460"
       self.cl_name = "cl_12460"

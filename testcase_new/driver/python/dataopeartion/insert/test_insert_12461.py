@@ -9,13 +9,13 @@ from lib import sdbconfig
 from lib import testlib
 from pysequoiadb.error import (SDBBaseError)
 
-class TestCS12461(unittest.TestCase):
+class TestInsert12461(unittest.TestCase):
    def setUp(self):
       testlib.print_setup_msg(self)
       self.db = testlib.default_db()
       self.run_tearDown = False
       
-   def testCS12461(self):
+   def test_insert_12461(self):
       #create cs and cl
       self.cs_name = "cs_12461"
       self.cl_name = "cl_12461"

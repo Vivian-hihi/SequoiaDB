@@ -17,13 +17,13 @@ from lib import sdbconfig
 from lib import testlib
 
 
-class TestCS12445(unittest.TestCase):
+class TestMeteData12445(unittest.TestCase):
    def setUp(self):
       testlib.print_setup_msg(self)
       self.db = testlib.default_db()
       self.run_tearDown = False
       
-   def testCS12445(self):
+   def test_metedata_12445(self):
       if is_standalone( self.db ) == True:
          print("run mode is standalone")
          return

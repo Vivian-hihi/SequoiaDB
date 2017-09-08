@@ -14,13 +14,13 @@ from pysequoiadb.error import (SDBTypeError, SDBBaseError, SDBEndOfCursor)
 from lib import sdbconfig
 from lib import testlib
 
-class TestCS12447(unittest.TestCase):
+class TestMeteData12447(unittest.TestCase):
    def setUp(self):
       testlib.print_setup_msg(self)
       self.db = testlib.default_db()
       self.run_tearDown = False
       
-   def testCS12447(self):
+   def test_metedata_12447(self):
       #create cs
       self.cs_name = "cs_12447"
       cl_name = "cl_12447"

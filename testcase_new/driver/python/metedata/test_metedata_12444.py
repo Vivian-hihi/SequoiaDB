@@ -10,13 +10,13 @@ from pysequoiadb.error import (SDBBaseError, SDBEndOfCursor)
 from lib import sdbconfig
 from lib import testlib
 
-class TestCS12444(unittest.TestCase):
+class TestMeteData12444(unittest.TestCase):
    def setUp(self):
       testlib.print_setup_msg(self)
       self.db = testlib.default_db()
       self.run_tearDown = False
       
-   def testCS12444(self):
+   def test_metedata_12444(self):
       self.list = [["cs_12444_1", 0, 524288, 65536, 524288],
                    ["cs_12444_2", 4096, 262144, 4096, 262144],
                    ["cs_12444_3", 8192, 131072, 8192, 131072],

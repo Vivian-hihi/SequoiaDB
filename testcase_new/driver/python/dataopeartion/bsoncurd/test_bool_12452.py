@@ -11,13 +11,13 @@ from dataopeartion.bsoncurd.commlib import *
 from lib import sdbconfig
 from lib import testlib
 
-class TestCS12452(unittest.TestCase):
+class TestBool12452(unittest.TestCase):
    def setUp(self):
       testlib.print_setup_msg(self)
       self.db = testlib.default_db()
       self.run_tearDown = False
       
-   def testCS12452(self):
+   def test_bool_12452(self):
       #create cs and cl
       self.cs_name = "cs_12452"
       self.cl_name = "cl_12452"

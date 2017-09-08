@@ -13,13 +13,13 @@ from lib import sdbconfig
 from lib import testlib
 from metedata.commlib import *
 
-class TestCS12446(unittest.TestCase):
+class TestMeteData12446(unittest.TestCase):
    def setUp(self):
        testlib.print_setup_msg(self)
        self.db = testlib.default_db()
        self.run_tearDown = False
       
-   def testCS12446(self):
+   def test_metedata_12446(self):
       if is_standalone( self.db ) == True:
          print("run mode is standalone")
          return

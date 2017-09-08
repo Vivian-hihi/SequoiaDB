@@ -14,13 +14,13 @@ from bson.json_util import dumps
 from dataopeartion.bsoncurd.commlib import *
 import bson
 
-class TestCS9460(unittest.TestCase):
+class TestNumberLong9460(unittest.TestCase):
    def setUp(self):
       testlib.print_setup_msg(self)
       self.db = testlib.default_db()
       self.run_tearDown = False
 
-   def testCS9460(self):
+   def test_numberlong_9460(self):
       # create cs and cl
       self.cs_name = "cs_9460"
       self.cl_name = "cl_9460"
