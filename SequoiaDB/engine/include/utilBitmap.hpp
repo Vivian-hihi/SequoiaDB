@@ -76,6 +76,7 @@ namespace engine
          {
             _size = 0 ;
             _bitmapSize = 0 ;
+            _bitmap = NULL ;
 
             if ( size > 0 )
             {
