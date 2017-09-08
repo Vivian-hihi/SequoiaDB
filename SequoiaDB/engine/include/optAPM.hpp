@@ -89,6 +89,8 @@ namespace engine
          void invalidateCLPlans ( dmsCachedPlanMgr *pCachedPlanMgr,
                                   UINT32 suLID, UINT32 clLID ) ;
 
+         void invalidateAllPlans () ;
+
          UINT32 getCachedPlanCount () const ;
 
       protected :
@@ -344,6 +346,8 @@ namespace engine
                                SINT64 numToSkip,
                                SINT64 numToReturn,
                                optAccessPlan **ppPlan ) ;
+
+         void invalidateAllPlans () ;
 
       public :
          // For _IDmsEventHandler

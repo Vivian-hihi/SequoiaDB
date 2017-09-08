@@ -129,7 +129,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTAPCACHES_INVALIDSUPLANS, "_optAccessPlanCache::invalidateSUPlans" )
    void _optAccessPlanCache::invalidateSUPlans ( dmsCachedPlanMgr *pCachedPlanMgr,
-                                                  UINT32 suLID )
+                                                 UINT32 suLID )
    {
       PD_TRACE_ENTRY( SDB_OPTAPCACHES_INVALIDSUPLANS ) ;
 
@@ -246,7 +246,7 @@ namespace engine
                   }
                   else if ( clearBit && pPlan->getSULID() == suLID )
                   {
-                     // Still contains plans from the same colleciton space
+                     // Still contains plans from the same collection space
                      // could not clear the bit
                      clearBit = FALSE ;
                   }
@@ -272,6 +272,57 @@ namespace engine
       _pMonitor->decCachedPlanCount( deleteCount ) ;
 
       PD_TRACE_EXIT( SDB_OPTAPCACHES_INVALIDCLPLANS ) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTAPCACHES_INVALIDALLPLANS, "_optAccessPlanCache::invalidateAllPlans" )
+   void _optAccessPlanCache::invalidateAllPlans ()
+   {
+      PD_TRACE_ENTRY( SDB_OPTAPCACHES_INVALIDALLPLANS ) ;
+
+
+      UINT32 deleteCount = 0 ;
+
+      for ( UINT32 bucketID = 0 ; bucketID < _bucketNum ; bucketID ++ )
+      {
+         ossScopedRWLock scopedLock( _pMonitor->getClearLock(), EXCLUSIVE ) ;
+         utilHashTableBucket *pBucket = getBucket( bucketID, EXCLUSIVE ) ;
+
+         if ( NULL != pBucket )
+         {
+            optAccessPlan *pPlan = pBucket->getHead() ;
+            while ( pPlan )
+            {
+               optAccessPlan *pNextPlan = (optAccessPlan *)pPlan->getNext() ;
+               // Increase the reference count before we delete it
+               pPlan->incRefCount() ;
+
+               // Locked bucket already, safe to remove from bucket
+               if ( pBucket->removeItem( pPlan ) )
+               {
+                  // We need to test the activity ID to check if someone
+                  // else is also deleting this plan
+                  INT32 activityID = pPlan->resetActivityID() ;
+                  if ( OPT_INVALID_ACT_ID != activityID )
+                  {
+                     _pMonitor->resetActivity( activityID ) ;
+                  }
+                  deleteCount ++ ;
+               }
+               pPlan->release() ;
+               pPlan = pNextPlan ;
+            }
+
+            releaseBucket( bucketID, EXCLUSIVE ) ;
+         }
+         else
+         {
+            SDB_ASSERT( pBucket, "pBucket is invalid" ) ;
+         }
+      }
+
+      _pMonitor->decCachedPlanCount( deleteCount ) ;
+
+      PD_TRACE_EXIT( SDB_OPTAPCACHES_INVALIDALLPLANS ) ;
    }
 
    UINT32 _optAccessPlanCache::getCachedPlanCount () const
@@ -665,7 +716,6 @@ namespace engine
 
    _optAccessPlanManager::~_optAccessPlanManager ()
    {
-      clear() ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTAPM_INIT, "_optAccessPlanManager::init" )
@@ -704,6 +754,7 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB_OPTAPM_CLEAR ) ;
 
+      _planCache.invalidateAllPlans() ;
       _planCache.clear() ;
       _monitor.clear() ;
 
@@ -766,6 +817,19 @@ namespace engine
    error :
       pPlan = NULL ;
       goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTAPM_INVALIDALLPLANS, "_optAccessPlanManager::invalidateAllPlans" )
+   void _optAccessPlanManager::invalidateAllPlans ()
+   {
+      PD_TRACE_ENTRY( SDB_OPTAPM_INVALIDALLPLANS ) ;
+
+      if ( isInitialized() )
+      {
+         _planCache.invalidateAllPlans() ;
+      }
+
+      PD_TRACE_EXIT( SDB_OPTAPM_INVALIDALLPLANS ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTAPM_ONUNLOADCS, "_optAccessPlanManager::onUnloadCS" )
