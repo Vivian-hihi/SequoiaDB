@@ -21,6 +21,14 @@
          <en>Type</en>
          <cn>类型</cn>
       </stentry_type>
+      <stentry_reloadable>
+         <en>Reloadable</en>
+         <cn>动态生效</cn>
+      </stentry_reloadable>
+      <stentry_reloadstrategy>
+         <en>Reload Strategy</en>
+         <cn>生效策略</cn>
+      </stentry_reloadstrategy>
       <stentry_dest>
          <en>Description</en>
          <cn>说明</cn>

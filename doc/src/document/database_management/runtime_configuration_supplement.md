@@ -31,3 +31,7 @@ svcname=50000
 
 >**Note:**  
 >1. 当两种方式并存时，命令行参数将会覆盖配置文件中的相同的配置项。 
+
+###配置动态生效###
+
+使用 [reloadConf()](reference/Sequoiadb_command/sdb/reloadConf.md) 重新加载配置文件，并进行配置动态生效，只支持“动态生效”列为“是”的配置项，其他配置项会被忽略。
