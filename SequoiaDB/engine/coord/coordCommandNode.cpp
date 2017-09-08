@@ -2452,11 +2452,6 @@ namespace engine
             pAgent->syncSend( routeID, (void*)&updated ) ;
          }
       }
-
-   done:
-      return ;
-   error:
-      goto done ;
    }
 
    AUDIT_OBJ_TYPE _coordCMDRemoveNode::_getAuditObjectType() const
