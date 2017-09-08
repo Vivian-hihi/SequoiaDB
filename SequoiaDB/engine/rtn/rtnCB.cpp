@@ -148,12 +148,12 @@ namespace engine
 
       if ( _msgHandler )
       {
-         SDB_OSS_FREE( _msgHandler ) ;
+         SDB_OSS_DEL _msgHandler ;
       }
 
       if ( _routeAgent )
       {
-         SDB_OSS_FREE( _routeAgent ) ;
+         SDB_OSS_DEL _routeAgent ;
       }
    }
 
