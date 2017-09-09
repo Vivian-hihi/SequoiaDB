@@ -14,7 +14,6 @@ class TestMeteData12442(unittest.TestCase):
    def setUp(self):
       testlib.print_setup_msg(self)
       self.db = testlib.default_db()
-      self.run_tearDown = False
 
    def test_metedata_12442(self):
       #create cs and cl
@@ -38,17 +37,15 @@ class TestMeteData12442(unittest.TestCase):
       #drop cs and check exists or not
       self.db.drop_collection_space(self.cs_name)
       self.check_list_collection_spaces(self.cs_name, False)
-      self.run_tearDown = True
              
    def tearDown(self):
-      if self.run_tearDown and (not sdbconfig.sdb_config.break_on_failure):
-         try:
-            self.db.drop_collection_space(self.cs_name)
-            self.db.disconnect()
-         except SDBBaseError as e:
-            if(-34 != e.code):
-               print(e.detail)
-               self.fail("tear_down_fail")
+      try:
+         self.db.drop_collection_space(self.cs_name)
+         self.db.disconnect()
+      except SDBBaseError as e:
+         if(-34 != e.code):
+            print(e.detail)
+            self.fail("tear_down_fail")
       testlib.print_teardown_msg(self)
 
    def check_cs_snapshot_5(self, cs_name, options):

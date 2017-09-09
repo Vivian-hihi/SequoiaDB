@@ -22,7 +22,6 @@ class TestDecimal12459(unittest.TestCase):
    def setUp(self):
       testlib.print_setup_msg(self)
       self.db = testlib.default_db()
-      self.run_tearDown = False
    
    def test_decimal_12459(self):
       # create cs and cl
@@ -585,17 +584,14 @@ class TestDecimal12459(unittest.TestCase):
       self.assertEqual(loads(dumps(obj)).compare(obj), 0)
       self.assertEqual(dumps(loads(json)), json)
 
-      self.run_tearDown = True
-   
    def tearDown(self):
-      if self.run_tearDown and (not sdbconfig.sdb_config.break_on_failure):
-         try:
-            self.db.drop_collection_space(self.cs_name)
-            self.db.disconnect()
-         except SDBBaseError as e:
-            if (-34 != e.code):
-               print(e.detail)
-               self.fail("tear_down_fail")
+      try:
+         self.db.drop_collection_space(self.cs_name)
+         self.db.disconnect()
+      except SDBBaseError as e:
+         if (-34 != e.code):
+            print(e.detail)
+            self.fail("tear_down_fail")
       testlib.print_teardown_msg(self)
 
    def insert_decimal(self, cl, data):

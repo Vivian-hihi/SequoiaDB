@@ -14,7 +14,6 @@ class TestMeteData12444(unittest.TestCase):
    def setUp(self):
       testlib.print_setup_msg(self)
       self.db = testlib.default_db()
-      self.run_tearDown = False
       
    def test_metedata_12444(self):
       self.list = [["cs_12444_1", 0, 524288, 65536, 524288],
@@ -43,18 +42,16 @@ class TestMeteData12444(unittest.TestCase):
          expect_lob_page_size = self.list[index][4]
          expect_cs_options = {"PageSize":expect_page_size, "LobPageSize":expect_lob_page_size}
          self.createCSAndCheck(self.cs_name, cs_options, expect_cs_options)
-      self.run_tearDown = True
    
    def tearDown(self):
-      if self.run_tearDown and (not sdbconfig.sdb_config.break_on_failure):
-         try:
-            for index in range(len(self.list)):
-               self.db.drop_collection_space(self.cs_name)
-            self.db.disconnect()
-         except SDBBaseError as e:
-            if(-34 != e.code):
-               print(e.detail)
-               self.fail("tear_down_fail")
+      try:
+         for index in range(len(self.list)):
+            self.db.drop_collection_space(self.cs_name)
+         self.db.disconnect()
+      except SDBBaseError as e:
+         if(-34 != e.code):
+            print(e.detail)
+            self.fail("tear_down_fail")
       testlib.print_teardown_msg(self)
            
    def createCSAndCheck(self, cs_name, cs_options, expect_cs_options):

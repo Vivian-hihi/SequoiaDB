@@ -17,18 +17,18 @@ class TestMeteData12446(unittest.TestCase):
    def setUp(self):
        testlib.print_setup_msg(self)
        self.db = testlib.default_db()
-       self.run_tearDown = False
+       self.cs_name = "cs_12446"
       
    def test_metedata_12446(self):
-      if is_standalone( self.db ) == True:
+      if is_standalone(self.db) == True:
          print("run mode is standalone")
          return
       data_groups = get_data_groups(self.db)
-      if(len(data_groups) == 1):
+      if (len(data_groups) == 1):
          print("only one group")
          return
+      
       #create cs
-      self.cs_name = "cs_12446"
       cl_names = ["cl_12446_1", "cl_12446_2"]
       try:
          self.db.drop_collection_space(self.cs_name)
@@ -61,19 +61,16 @@ class TestMeteData12446(unittest.TestCase):
                              "ShardingKey":{"a":1}, "EnsureShardingIndex":False,
                              "ShardingType":"range", "AutoIndexId":False}
       self.check_cl_snapshot_8(self.cs_name + "." + cl_names[1], except_cl_options_2)
-
-      self.run_tearDown = True
       
    def tearDown(self):
-       if self.run_tearDown and (not sdbconfig.sdb_config.break_on_failure):
-           try:
-               self.db.drop_collection_space(self.cs_name)
-               self.db.disconnect()
-           except SDBBaseError as e:
-               if(-34 != e.code):
-                   print(e.detail)
-                   self.fail("tear_down_fail")
-       testlib.print_teardown_msg(self)
+      try:
+         self.db.drop_collection_space(self.cs_name)
+         self.db.disconnect()
+      except SDBBaseError as e:
+         if(-34 != e.code):
+            print(e.detail)
+            self.fail("tear_down_fail")
+      testlib.print_teardown_msg(self)
             
    def check_cl_snapshot_8(self, cl_full_name, options):
       cursor = self.db.get_snapshot( 8, condition = {"Name":cl_full_name} )

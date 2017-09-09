@@ -21,7 +21,15 @@ class TestMeteData12445(unittest.TestCase):
    def setUp(self):
       testlib.print_setup_msg(self)
       self.db = testlib.default_db()
-      self.run_tearDown = False
+
+      self.maincs_name = "maincs_12445"
+      self.subcs_name = "subcs_12445"
+      self.maincl_name = "maincl_12445"
+      self.subcl_names = ["subcl_12445_1","subcl_12445_2","subcl_12445_3"]
+      self.maincl_full_name =  self.maincs_name + "." + self.maincl_name
+      self.subcl_full_name1 =  self.subcs_name + "." + self.subcl_names[0]
+      self.subcl_full_name2 =  self.subcs_name + "." + self.subcl_names[1]
+      self.subcl_full_name3 =  self.subcs_name + "." + self.subcl_names[2]
       
    def test_metedata_12445(self):
       if is_standalone( self.db ) == True:
@@ -31,15 +39,6 @@ class TestMeteData12445(unittest.TestCase):
       if(len(data_groups) == 1):
          print("only one group")
          return
-      
-      self.maincs_name = "maincs_12445"
-      self.subcs_name = "subcs_12445"
-      self.maincl_name = "maincl_12445"
-      self.subcl_names = ["subcl_12445_1","subcl_12445_2","subcl_12445_3"]
-      self.maincl_full_name =  self.maincs_name + "." + self.maincl_name
-      self.subcl_full_name1 =  self.subcs_name + "." + self.subcl_names[0]
-      self.subcl_full_name2 =  self.subcs_name + "." + self.subcl_names[1]
-      self.subcl_full_name3 =  self.subcs_name + "." + self.subcl_names[2]
       
       #get data_groups
       self.cl_group_name =  data_groups[0]
@@ -165,19 +164,16 @@ class TestMeteData12445(unittest.TestCase):
       #dropCS
       self.db.drop_collection_space(self.subcs_name)
       self.db.drop_collection_space(self.maincs_name)
-
-      self.run_tearDown = True
    
    def tearDown(self):
-      if self.run_tearDown and (not sdbconfig.sdb_config.break_on_failure):
-         try:
-            self.db.drop_collection_space(self.subcs_name)
-            self.db.drop_collection_space(self.maincs_name)
-            self.db.disconnect()
-         except SDBBaseError as e:
-            if(-34 != e.code):
-               print(e.detail)
-               self.fail("tear_down_fail")
+      try:
+         self.db.drop_collection_space(self.subcs_name)
+         self.db.drop_collection_space(self.maincs_name)
+         self.db.disconnect()
+      except SDBBaseError as e:
+         if(-34 != e.code):
+            print(e.detail)
+            self.fail("tear_down_fail")
       testlib.print_teardown_msg(self)
    
    def check_cl_snapshot_8(self, cl_full_name, options):
