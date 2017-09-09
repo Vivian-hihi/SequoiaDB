@@ -3,11 +3,17 @@ import unittest
 from datetime import datetime
 
 from lib import sdbconfig
+from pysequoiadb import SDBError
 from pysequoiadb import client
+
 
 class TestDataOprtBase(unittest.TestCase):
    def __init__(self, methodName='runTest'):
       unittest.TestCase.__init__(self, methodName=methodName)
+      self.cs_name = self.__class__.__name__ + "_cs"
+      self.cl_name = self.__class__.__name__ + "_cl"
+      self.cl_name_qualified = self.cs_name + "." + self.cl_name
+      self.db_list = []
 
    @classmethod
    def setUpClass(cls):
@@ -22,36 +28,50 @@ class TestDataOprtBase(unittest.TestCase):
    def tearDownClass(cls):
       print(cls.__name__ + " teardown: " + str(datetime.now()))
 
-   def drop_cs(self):
-      self.db.drop_collection_space(self.cs_name)
-
-   def create_cs_cl(self):
+   def init_db(self):
       if not hasattr(self, "db"):
          self.db = default_db()
-      self.cs_name = self.__class__.__name__ + "_cs"
-      self.cl_name = self.__class__.__name__ + "_cl"
+
+   def drop_cs(self):
+      try:
+         self.db.drop_collection_space(self.cs_name)
+      except SDBError as e:
+         pass
+
+   def create_cs_cl(self, cs_option=0, cl_option=None):
+      if not hasattr(self, "db"):
+         self.db = default_db()
       try:
          self.db.drop_collection_space(self.cs_name)
       except BaseException as e:
          pass
-      self.cs = self.db.create_collection_space(self.cs_name)
-      self.cl = self.cs.create_collection(self.cl_name)
+      self.cs = self.db.create_collection_space(self.cs_name, options=cs_option)
+      self.cl = self.cs.create_collection(self.cl_name, options=cl_option)
 
    def assert_list_equal(self, expected, actual):
-      assert_list_equal(self,expected,actual)
+      assert_list_equal(self, expected, actual)
 
-   def get_records(self,cur):
+   def get_records(self, cur=None):
+      if cur == None:
+         if not hasattr(self, "cl"):
+            self.cl = self.db.get_collection(self.cl_name_qualified)
+         cur = self.cl.query()
       return get_records(cur)
 
    def close_db(self):
-      if hasattr(self,"db"):
+      for db in self.db_list:
+         db.disconnect()
+      if hasattr(self, "db"):
          self.db.disconnect()
+
 
 def default_db():
    return client(sdbconfig.sdb_config.host_name, sdbconfig.sdb_config.service)
 
+
 def print_setup_msg(self):
    print(str(self.__class__.__name__) + " setup: " + str(datetime.now()))
+
 
 def print_teardown_msg(self):
    print(str(self.__class__.__name__) + " teardown: " + str(datetime.now()))
@@ -73,6 +93,7 @@ def assert_list_equal(self, expected, actual):
    for x in expected:
       unittest.TestCase.assertIn(self, x, actual, msg)
 
+
 def get_records(cur):
    """
    :param cur: 游标
@@ -82,7 +103,8 @@ def get_records(cur):
    while True:
       try:
          item = cur.next()
-         item.pop('_id')
+         if "_id" in item:
+            item.pop('_id')
          items.append(item)
       except BaseException as e:
          break
