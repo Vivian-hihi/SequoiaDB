@@ -1444,7 +1444,7 @@ class collection(object):
          pysequoiadb.error.SDBBaseError
       """
 
-      if options is not None:
+      if options is None:
          options = {}
       elif not isinstance(options, dict):
          raise SDBTypeError("options must be an instance of dict")
