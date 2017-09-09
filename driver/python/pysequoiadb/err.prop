@@ -314,3 +314,6 @@
 -313 = Replica log is not archived
 -314 = Data source has not been initialized
 -315 = Operation is incompatible with the object
+-316 = This cluster is deactived
+-317 = LOB is in use
+-318 = Data operation has overflowed
