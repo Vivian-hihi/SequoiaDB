@@ -57,6 +57,10 @@ namespace engine
                   _sptReturnVal &rval,
                   bson::BSONObj &detail ) ;
 
+      INT32 readLine( const _sptArguments &arg,
+                      _sptReturnVal &rval,
+                      bson::BSONObj &detail ) ;
+
       INT32 write( const _sptArguments &arg,
                    _sptReturnVal &rval,
                    bson::BSONObj &detail ) ;

@@ -69,6 +69,8 @@ namespace engine
       INT32 read( const bson::BSONObj &optionObj, std::string &err,
                   CHAR** buf, SINT64 &readLen ) ;
 
+      INT32 readLine( std::string &err, CHAR** buf, SINT64 &readLen ) ;
+
       INT32 write( const CHAR* buf, SINT64 size, std::string &err ) ;
 
       INT32 seek( INT64 seekSize, const bson::BSONObj &optionObj,

@@ -1463,7 +1463,7 @@ namespace engine
       goto done ;
    }
 
-    /*
+   /*
       _remoteFileGetPermission implement
    */
    IMPLEMENT_OACMD_AUTO_REGISTER( _remoteFileGetPermission )
@@ -1515,4 +1515,96 @@ namespace engine
    error:
       goto done ;
    }
+
+   /*
+      _remoteFileReadLine implement
+   */
+   IMPLEMENT_OACMD_AUTO_REGISTER( _remoteFileReadLine )
+
+   _remoteFileReadLine::_remoteFileReadLine()
+   {
+   }
+
+   _remoteFileReadLine::~_remoteFileReadLine()
+   {
+   }
+
+   INT32 _remoteFileReadLine::init( const CHAR* pInfomation )
+   {
+      INT32 rc = SDB_OK ;
+
+      rc = _remoteExec::init( pInfomation ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to get argument, rc: %d", rc ) ;
+
+      if( FALSE == _matchObj.hasField( OMA_REMOTE_FIELD_NAME_FID ) )
+      {
+         rc = SDB_OUT_OF_BOUND ;
+         PD_LOG_MSG( PDERROR, "FID must be config" ) ;
+         goto error ;
+      }
+      if( NumberInt != _matchObj.getField( OMA_REMOTE_FIELD_NAME_FID ).type() )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "FID must be numberInt" ) ;
+         goto error ;
+      }
+      _FID = _matchObj.getIntField( OMA_REMOTE_FIELD_NAME_FID ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   const CHAR* _remoteFileReadLine::name()
+   {
+      return OMA_REMOTE_FILE_READ_LINE ;
+   }
+
+   INT32 _remoteFileReadLine::doit( BSONObj &retObj )
+   {
+      INT32 rc = SDB_OK ;
+      CHAR *buf = NULL ;
+      SINT64 readLen = 0 ;
+      omaSession *pAgentSession = NULL ;
+      BSONObjBuilder builder ;
+      _sptUsrFileCommon *fileCommon = NULL ;
+      string err ;
+
+      pAgentSession = _getThreadOmaSession() ;
+      if( NULL == pAgentSession )
+      {
+         rc = SDB_SYS ;
+         PD_LOG_MSG( PDERROR, "Failed to get omagent session" ) ;
+         goto error ;
+      }
+
+      fileCommon = pAgentSession->getFileObjByID( _FID ) ;
+      if( NULL == fileCommon )
+      {
+         rc = SDB_IO ;
+         PD_LOG_MSG( PDERROR, "File is not opened" ) ;
+         goto error ;
+      }
+
+      // read content
+      rc = fileCommon->readLine( err, &buf, readLen ) ;
+      if( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "%s", err.c_str() ) ;
+         goto error ;
+      }
+      builder.append( OMA_REMOTE_FIELD_NAME_CONTENT, buf, readLen + 1 ) ;
+      builder.append( OMA_REMOTE_FIELD_NAME_READ_LEN, readLen) ;
+
+      retObj = builder.obj() ;
+   done:
+      if ( NULL != buf )
+      {
+         SDB_OSS_FREE( buf ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
 }

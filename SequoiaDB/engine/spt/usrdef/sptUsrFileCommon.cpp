@@ -47,7 +47,7 @@
 
 #define SPT_MD5_READ_LEN 1024
 #define SPT_READ_LEN     1024
-
+#define SPT_BUFFER_INIT_SIZE 1024
 using namespace std ;
 using namespace bson ;
 
@@ -218,6 +218,64 @@ namespace engine
          goto error ;
       }
       (*buf)[ readLen ] = '\0' ;
+   done:
+      return rc ;
+   error:
+      if( *buf != NULL )
+      {
+         SDB_OSS_FREE( *buf ) ;
+         *buf = NULL ;
+      }
+      goto done ;
+   }
+
+   INT32 _sptUsrFileCommon::readLine( std::string &err, CHAR** buf, SINT64 &readLen )
+   {
+      INT32 rc = SDB_OK ;
+      SINT64 size = SPT_BUFFER_INIT_SIZE ;
+      SINT64 totalRead = 0 ;
+
+      SDB_ASSERT( NULL == (*buf), "*buf must be null" ) ;
+
+      if ( !_file.isOpened() )
+      {
+         PD_LOG( PDERROR, "The file is not opened." ) ;
+         err = "File is not opened" ;
+         rc = SDB_IO ;
+         goto error ;
+      }
+
+      *buf = ( CHAR* )SDB_OSS_MALLOC( size + 1 ) ;
+      {
+         CHAR readChar ;
+         SINT64 readSize ;
+         rc = ossReadN( &_file, 1, &readChar, readSize ) ;
+         while( SDB_OK == rc && readSize )
+         {
+            if( size <= totalRead )
+            {
+               *buf = ( CHAR* )SDB_OSS_REALLOC( *buf, size*2 + 1 ) ;
+               size *= 2 ;
+            }
+            (*buf)[ totalRead ] = readChar ;
+            totalRead++ ;
+            if( readChar == '\n' )
+            {
+               break ;
+            }
+            rc = ossReadN( &_file, 1, &readChar, readSize ) ;
+         }
+         if( totalRead == 0 ||
+             ( SDB_OK != rc && SDB_EOF != rc ) )
+         {
+            PD_LOG( PDERROR, "Failed to read file, %d", rc ) ;
+            goto error ;
+         }
+
+         rc = SDB_OK ;
+         (*buf)[ totalRead ] = '\0' ;
+         readLen = totalRead ;
+      }
    done:
       return rc ;
    error:

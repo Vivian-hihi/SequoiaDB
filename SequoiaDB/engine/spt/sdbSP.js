@@ -3045,4 +3045,19 @@ File.prototype.getSize = function( filename ) {
       return File.getSize( filename ) ;
    }
 }
+
+File.prototype.readLine = function() {
+   var retStr ;
+   if( undefined != this._remote )
+   {
+      var retObj = this._remote._runCommand( "file read line", {},
+                                             { "FID": this._FID } ) ;
+      retStr = retObj.toObj().Content ;
+   }
+   else
+   {
+      retStr = this._readLine() ;
+   }
+   return retStr ;
+}
 // end File

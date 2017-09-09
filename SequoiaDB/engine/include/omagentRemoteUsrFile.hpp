@@ -437,5 +437,25 @@ namespace engine
 
          INT32 doit( BSONObj &retObj ) ;
    } ;
+
+   /*
+      _remoteFileReadLine define
+   */
+   class _remoteFileReadLine : public _remoteExec
+   {
+      DECLARE_OACMD_AUTO_REGISTER()
+      public:
+         _remoteFileReadLine() ;
+
+         ~_remoteFileReadLine() ;
+
+         INT32 init( const CHAR * pInfomation ) ;
+
+         const CHAR *name() ;
+
+         INT32 doit( BSONObj &retObj ) ;
+      private:
+         UINT32 _FID ;
+   } ;
 }
 #endif

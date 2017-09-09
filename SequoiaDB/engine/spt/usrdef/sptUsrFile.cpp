@@ -58,6 +58,7 @@ namespace engine
 JS_MEMBER_FUNC_DEFINE( _sptUsrFile, read )
 JS_MEMBER_FUNC_DEFINE( _sptUsrFile, seek )
 JS_MEMBER_FUNC_DEFINE( _sptUsrFile, write )
+JS_MEMBER_FUNC_DEFINE( _sptUsrFile, readLine )
 JS_MEMBER_FUNC_DEFINE( _sptUsrFile, readContent )
 JS_MEMBER_FUNC_DEFINE( _sptUsrFile, writeContent )
 JS_MEMBER_FUNC_DEFINE( _sptUsrFile, close )
@@ -91,6 +92,7 @@ JS_STATIC_FUNC_DEFINE( _sptUsrFile, getPermission )
 JS_BEGIN_MAPPING( _sptUsrFile, "File" )
    JS_ADD_MEMBER_FUNC_WITHATTR( "_read", read, 0 )
    JS_ADD_MEMBER_FUNC_WITHATTR( "_write", write, 0 )
+   JS_ADD_MEMBER_FUNC_WITHATTR( "_readLine", readLine, 0 )
    JS_ADD_MEMBER_FUNC_WITHATTR( "_readContent", readContent, 0 )
    JS_ADD_MEMBER_FUNC_WITHATTR( "_writeContent", writeContent, 0 )
    JS_ADD_MEMBER_FUNC_WITHATTR( "_close", close, 0 )
@@ -229,7 +231,7 @@ JS_MAPPING_END()
                             _sptReturnVal &rval,
                             bson::BSONObj &detail )
    {
-     INT32 rc = SDB_OK ;
+      INT32 rc = SDB_OK ;
       SINT64 len = 0 ;
       CHAR *buf = NULL ;
 
@@ -241,6 +243,32 @@ JS_MAPPING_END()
       rval.getReturnVal().setValue( buf ) ;
    done:
       if ( NULL != buf )
+      {
+         SDB_OSS_FREE( buf ) ;
+         buf = NULL ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sptUsrFile::readLine( const _sptArguments &arg,
+                                _sptReturnVal &rval,
+                                bson::BSONObj &detail )
+   {
+      INT32 rc = SDB_OK ;
+      SINT64 len = 0 ;
+      CHAR *buf = NULL ;
+      string err ;
+      rc = _fileCommon.readLine( err, &buf, len ) ;
+      if( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << err.c_str() ) ;
+         goto error ;
+      }
+      rval.getReturnVal().setValue( buf ) ;
+   done:
+      if( NULL != buf )
       {
          SDB_OSS_FREE( buf ) ;
          buf = NULL ;
@@ -724,6 +752,7 @@ JS_MAPPING_END()
          << "   readContent( [size] )" << endl
          << "   writeContent( fileContent )"
          << "   - fileContent: a FileContent obj" << endl
+         << "   readLine()" << endl
          << "   seek( offset, [where] ) " << endl
          << "   close()" << endl
          << "   remove( filepath )" << endl
@@ -1560,6 +1589,7 @@ JS_MAPPING_END()
       ss << "   write( content )" << endl ;
       ss << "   readContent( [size] )" << endl ;
       ss << "   writeContent( fileContent )" << endl ;
+      ss << "   readLine()" << endl ;
       ss << "   seek( offset, [where] ) " << endl ;
       ss << "   close()" << endl ;
       ss << " File.remove( filepath )" << endl ;

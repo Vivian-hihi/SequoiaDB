@@ -336,6 +336,7 @@ namespace engine
    #define OMA_REMOTE_FILE_MD5                    "file md5"
    #define OMA_REMOTE_FILE_GET_CONTENT_SIZE       "file get content size"
    #define OMA_REMOTE_FILE_GET_PERMISSION         "file get permission"
+   #define OMA_REMOTE_FILE_READ_LINE              "file read line"
    #define OMA_REMOTE_OMA_TEST                    "oma test"
    #define OMA_REMOTE_OMA_GET_OMA_INSTALL_FILE    "oma get oma install file"
    #define OMA_REMOTE_OMA_GET_OMA_INSTALL_INFO    "oma get oma install info"
