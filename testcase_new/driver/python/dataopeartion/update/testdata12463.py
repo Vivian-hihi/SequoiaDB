@@ -20,6 +20,7 @@ class Data12463(testlib.TestDataOprtBase):
       self.assert_list_equal(l, self.get_records(self.cl.query()))
 
    def tearDown(self):
-      self.drop_cs()
+      if testlib.should_clear_env(self):
+         self.drop_cs()
       self.close_db()
 

@@ -1,3 +1,7 @@
+# -- coding: utf-8 --
+# @decription: test sql
+# @testlink:   12481
+# @author:     LaoJingTang
 from lib import testlib
 
 class TestSql12481(testlib.TestDataOprtBase):

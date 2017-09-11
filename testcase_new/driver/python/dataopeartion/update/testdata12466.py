@@ -52,6 +52,7 @@ class Data12466(testlib.TestDataOprtBase):
       self.upsert_test(l,upsert,condition=condition,setOnInsert=setOnInsert)
 
    def tearDown(self):
-      self.drop_cs()
+      if testlib.should_clear_env(self):
+         self.drop_cs()
       self.close_db()
 

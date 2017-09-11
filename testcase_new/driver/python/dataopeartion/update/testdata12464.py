@@ -41,5 +41,6 @@ class Data12464(testlib.TestDataOprtBase):
          pass
 
    def tearDown(self):
-      self.drop_cs()
+      if testlib.should_clear_env(self):
+         self.drop_cs()
       self.close_db()
