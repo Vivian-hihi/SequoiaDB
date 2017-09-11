@@ -110,3 +110,7 @@ def get_records(cur):
          break
    cur.close()
    return items
+
+def is_success(self):
+   return True
+
