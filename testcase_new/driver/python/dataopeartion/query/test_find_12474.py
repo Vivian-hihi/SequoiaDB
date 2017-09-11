@@ -111,7 +111,7 @@ class TestFind12474(unittest.TestCase):
          rec = self.cl.query_one(condition = cond,\
                                 selector = selection,\
                                 order_by = {"_id":1},\
-                                hint = {"":""},\
+                                hint = {"":None},\
                                 num_to_skip = skip,\
                                 num_to_return = retrn,\
                                 flags=1)
