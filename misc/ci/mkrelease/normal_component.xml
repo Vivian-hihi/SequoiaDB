@@ -157,7 +157,6 @@
                 <distributionDirectory> 
                     <allowWildcards>1</allowWildcards>                       
                     <origin>${build_project_directory}/sequoiadb/*</origin>
-                    <excludeFiles>*/compatible.sh;*/version.conf</excludeFiles>
                 </distributionDirectory>               
             </distributionFileList>
         </folder>

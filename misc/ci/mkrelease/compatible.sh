@@ -169,8 +169,8 @@ function matchConf()
    local oldVsn=$1    
    local oldEdt=$2
    local newVsn=$3
-   local newEdt=$4   
-   local compatible=1  
+   local newEdt=$4
+   local compatible=$5
    
    while read line
    do
@@ -209,12 +209,23 @@ function matchConf()
 }    
    
 #################### main entry ############################
-oldVsn=$1    
-oldEdt=$2
-newVsn=$3
-newEdt=$4
+oldVsn=$1      # om mode, it is remote host version
+oldEdt=$2      # om mode, it is remote host edition
+newVsn=$3      # om mode, it is om version
+newEdt=$4      # om mode, it is om edition
 confDirName=$5
-   
+
+confFileName=`basename "$confDirName"`
+if [ "$confFileName" == "version.conf" ]
+then
+   mode="db"
+elif [ "$confFileName" == "om_ver.conf" ]
+then
+   mode="om"
+else
+   exit 1
+fi
+
 checkVsnPara $oldVsn
 checkEdtPara $oldEdt
 checkVsnPara $newVsn
@@ -226,13 +237,22 @@ newVsn=`formatVsn $newVsn`
 vsnLen=3
 result=`compareTwoVsn $oldVsn $newVsn`
 
-if [ $result == "greater" ]; then echo false; exit 0; fi
 if [ $result == "equal" ];   then echo true;  exit 0; fi 
 if [ $result == "null" ];    then echo false; exit 2; fi
 if [ $result == "less" ]
 then 
-   isCompatible=`matchConf $oldVsn $oldEdt $newVsn $newEdt`
+   defaultCompatible="true"
+   isCompatible=`matchConf $oldVsn $oldEdt $newVsn $newEdt $defaultCompatible`
    if [ $? -ne 0 ]; then exit 3; fi
    echo $isCompatible
    exit 0
-fi  
+fi
+if [ $result == "greater" ]
+then 
+   defaultCompatible="false"
+   isCompatible=`matchConf $oldVsn $oldEdt $newVsn $newEdt $defaultCompatible`
+   if [ $? -ne 0 ]; then exit 3; fi
+   echo $isCompatible
+   exit 0
+fi
+
