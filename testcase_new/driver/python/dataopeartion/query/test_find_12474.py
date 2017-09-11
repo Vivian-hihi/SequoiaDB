@@ -15,6 +15,8 @@ class TestFind12474(unittest.TestCase):
    def setUp(self):
       testlib.print_setup_msg(self)
       self.db = testlib.default_db()
+      if (self.is_stand_alone()):
+         self.skipTest('current environment is standalone')
       self.create_cl()
       self.insert_datas()
 
@@ -66,6 +68,14 @@ class TestFind12474(unittest.TestCase):
             print(e.detail)
             raise e
 
+   def is_stand_alone(self):
+      try:
+         cursor = self.db.list_replica_groups()
+      except SDBBaseError as e:
+         if (-159 == e.code):
+            return True
+      return False
+
    def clean_cs(self):
       try:
          self.db.drop_collection_space(cs_name)
@@ -111,7 +121,7 @@ class TestFind12474(unittest.TestCase):
          rec = self.cl.query_one(condition = cond,\
                                 selector = selection,\
                                 order_by = {"_id":1},\
-                                hint = {"":None},\
+                                hint = {"":""},\
                                 num_to_skip = skip,\
                                 num_to_return = retrn,\
                                 flags=1)
@@ -119,6 +129,3 @@ class TestFind12474(unittest.TestCase):
          self.assertEqual(actResult, expectResult)
       except SDBBaseError as e:
          self.fail('query one fail: ' + e.detail)
-	   
-if __name__ == "__main__":
-    unittest.main() 

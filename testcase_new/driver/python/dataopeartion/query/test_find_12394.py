@@ -95,6 +95,3 @@ class TestFind12394(unittest.TestCase):
          self.assertEqual( rec,expectRec)
       except SDBBaseError as e:
          self.fail("query one error: " + e.detail)
-				
-if __name__ == "__main__":
-    unittest.main() 

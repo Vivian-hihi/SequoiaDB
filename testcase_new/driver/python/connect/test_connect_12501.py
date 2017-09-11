@@ -10,9 +10,12 @@ import unittest
 import datetime
 from pysequoiadb.error import (SDBTypeError, SDBBaseError, SDBEndOfCursor, SDBError)
 from lib import testlib
+import random
 
 cs_name = "cs_12501"
 cl_name = "cl_12501"
+username = 'user'
+password = 'password'
 cl_full_name = cs_name + "." + cl_name
 insert_nums = 100
 class TestConnect12501(unittest.TestCase):
@@ -108,7 +111,7 @@ class TestConnect12501(unittest.TestCase):
 
          hostname = node_name[0]
          svcname = node_name[1]
-         self.db.connect(hostname,svcname)
+         self.db.connect(hostname,svcname,user = username,password = password)
 
          # check catalog info
          cata_cl = self.db.get_collection('SYSCAT.SYSCOLLECTIONS')
@@ -127,8 +130,8 @@ class TestConnect12501(unittest.TestCase):
       self.assertEqual(expectRec['GroupName'], info['GroupName'], msg)
 
    def get_data_nodes(self):
-      try:
-         nodeAddrs = []
+      nodeAddrs = []
+      try:   
          # reconnect to coord
          self.db.disconnect()
          self.db = testlib.default_db()
@@ -156,10 +159,12 @@ class TestConnect12501(unittest.TestCase):
          hosts = self.get_data_nodes()
 
          for i in range(repeatTime):
-             # connect to a random data node
-             self.db.connect_to_hosts(hosts)
-             # check data result
-             self.check_connect_result()
+            # choose a random policy option
+            option = random.choice(['local_first','one_by_one','random'])
+            # connect to a data node with option
+            self.db.connect_to_hosts(hosts, user = username, password = password, policy = option)
+            # check data result
+            self.check_connect_result()
 
       except SDBBaseError as e:
          self.fail("connect to node fail: " + e.detail)

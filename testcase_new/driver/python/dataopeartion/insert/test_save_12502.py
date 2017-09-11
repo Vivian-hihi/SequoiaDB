@@ -177,5 +177,3 @@ class TestSave12502(unittest.TestCase):
       except SDBBaseError as e:
          self.fail('check result fail: ' + e.detail)
                              
-if __name__ == "__main__":
-    unittest.main() 

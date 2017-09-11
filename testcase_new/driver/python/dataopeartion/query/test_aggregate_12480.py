@@ -82,8 +82,7 @@ class TestAggregate12480(unittest.TestCase):
             rec = cursor.next()
             actResult.append(rec)
          except SDBEndOfCursor:
+            cursor.close()			
             break
       return actResult
-         
-if __name__ == "__main__":
-    unittest.main() 
+          

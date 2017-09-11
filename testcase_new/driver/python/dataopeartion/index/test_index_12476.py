@@ -151,7 +151,7 @@ class TestIndex12476(unittest.TestCase):
    def check_explain(self,expectExplainRec,cond):
       try:
          cursor = self.cl.explain(condition=cond,\
-                             order_by={"_id":1},\
+                             order_by={"b":1},\
                              flags=1)
          rec = cursor.next()
          expScanType = expectExplainRec['expScanType']
@@ -166,5 +166,3 @@ class TestIndex12476(unittest.TestCase):
       except SDBBaseError as e:
          self.fail('check explain fail: ' + e.detail)
                         
-if __name__ == "__main__":
-    unittest.main() 

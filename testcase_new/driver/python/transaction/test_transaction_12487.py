@@ -80,7 +80,7 @@ class TestTransaction12487(unittest.TestCase):
       self.clean_cs()
       try:
          self.cs = self.db.create_collection_space(cs_name)
-         self.cl = self.cs.create_collection(cl_name,{'Group':'group1'})
+         self.cl = self.cs.create_collection(cl_name)
          print('create cl success')
       except SDBBaseError as e:
          print(e.detail)

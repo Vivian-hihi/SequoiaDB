@@ -127,6 +127,3 @@ class TestFind12471(unittest.TestCase):
       except SDBBaseError as e:
          print(e.detail)
          # self.assertEqual(e, e, 'e not equal to e')
-
-if __name__ == "__main__":
-    unittest.main() 

@@ -76,7 +76,7 @@ class TestTransaction12488(unittest.TestCase):
     def create_cl(self):
        try:
           self.cs = self.db.create_collection_space(cs_name)
-          self.cl = self.cs.create_collection(cl_name,{'Group':'group1'})
+          self.cl = self.cs.create_collection(cl_name)
           print('create cl success')
        except SDBBaseError as e:
           self.fail('create cl fail: ' + e.detail)
@@ -133,6 +133,3 @@ class TestTransaction12488(unittest.TestCase):
              cursor.close()
              break
        return actResult
-
-if __name__ == "__main__":
-    unittest.main()

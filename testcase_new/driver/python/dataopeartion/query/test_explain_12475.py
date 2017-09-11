@@ -152,6 +152,3 @@ class TestExplain12475(unittest.TestCase):
          testlib.assert_list_equal(self, expQuery, actQuery)
       except SDBBaseError as e:
          self.fail('check explain fail: ' + e.detail)
-
-if __name__ == "__main__":
-    unittest.main() 
