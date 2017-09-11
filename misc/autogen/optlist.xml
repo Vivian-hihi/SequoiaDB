@@ -682,10 +682,7 @@
       </reloadstrategy>
       <detail>
          <en>The control strategy of data sync in repl group, value enumeration: none,keepnormal,keepall, default:keepnormal.</en>
-         <cn>1. 副本组之间数据同步控制策略,取值:none,keepnormal,keepall,默认为keepnormal。<fig></fig>
-             2. none--不开启同步控制策略。<fig></fig>
-         	   3. keepnormal--在同步日志循环覆盖前,确保正常节点已同步最老数据。<fig></fig>
-         	   4. keepall--在同步日志循环覆盖前,确保所有节点已同步最老数据。</cn>
+         <cn>副本组之间数据同步控制策略,取值:none,keepnormal,keepall,默认为keepnormal。</cn>
       </detail>
       <typeofweb>str</typeofweb>
    </opt>
