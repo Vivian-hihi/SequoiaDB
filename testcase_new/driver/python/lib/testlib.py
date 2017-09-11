@@ -111,6 +111,6 @@ def get_records(cur):
    cur.close()
    return items
 
-def is_success(self):
+def should_clear_env(self):
    return True
 

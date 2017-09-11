@@ -2,9 +2,9 @@
 # @decription: test split
 # @testlink:   seqDB-12463
 # @author:     LaoJingTang 2017-8-30
-from time import sleep
 
 from lib import testsplitbase
+from lib import testlib
 from pysequoiadb import client
 
 
@@ -127,5 +127,6 @@ class TestSplit12486(testsplitbase.TestSplitBase):
       self._split_test(split, cl_option=cl_option,insert_list=insert_list,assert_func=assert_split)
 
    def tearDown(self):
-      self.drop_cs()
+      if testlib.should_clear_env(self):
+         self.drop_cs()
       self.close_db()

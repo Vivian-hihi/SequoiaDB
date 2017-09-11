@@ -88,6 +88,6 @@ class Lob12478(testlib.TestDataOprtBase):
             "lobid: " + str(lob.get_oid()) + " except size: " + str(self.lob_size) + "actually: " + str(lob.get_size()))
 
    def tearDown(self):
-      if testlib.is_success(self):
+      if testlib.should_clear_env(self):
          self.drop_cs()
       self.close_db()
