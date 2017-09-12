@@ -69,7 +69,7 @@
             <else>               
                <for param="suitfullname">
                   <path>
-                     <dirset dir="@{testcasedir}" includes="*" excludes=""/>
+                     <dirset dir="@{testcasedir}" includes="*" excludes="lib"/>
                   </path>
                   <sequential>
                      <var name="testsuit_name" unset="true" />
