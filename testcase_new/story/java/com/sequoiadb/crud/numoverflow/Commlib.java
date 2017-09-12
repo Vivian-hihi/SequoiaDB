@@ -119,7 +119,7 @@ public class Commlib {
      *         selectorName:    field name to participate in an operation,rg:{a:1},the selectorName is "a"
      *         isVerifyDataType: if true validation data type as required,if false not validation data type 
      */
-    public static void selectorOper(DBCollection cl,int matcherValue,BSONObject sValue,String selectorName, String []expRecords,String expType,Boolean isVerifyDataType){
+    public static void selectorOper(DBCollection cl,int matcherValue,BSONObject sValue,String selectorName, String []expRecords){
 		try{			
 			DBQuery query = new DBQuery();
 			BSONObject selector = new BasicBSONObject();			
@@ -129,8 +129,7 @@ public class Commlib {
 			sValue1.put("$include",0);	
 			selector.put(selectorName, sValue);
 			selector.put("_id", sValue1);
-			query.setSelector(selector);
-			System.out.println("selector==="+selector.toString());
+			query.setSelector(selector);	
 			query.setMatcher(matcher);		
 			DBCursor cursor = cl.query(query);
 			List<BSONObject> actualList= new ArrayList<BSONObject>(); 			
@@ -147,23 +146,7 @@ public class Commlib {
 				BSONObject expRecord =(BSONObject) JSON.parse(expRecords[i]);
 				expectedList.add(expRecord);                
             }			
-			Assert.assertEquals(actualList, expectedList,"the actual query datas is error");
-	        	        
-	        if(isVerifyDataType){
-	        	String type = "";
-	        	DBCursor cursor1 = cl.query(query);
-	        	while( cursor1.hasNext() ) {
-		            BSONObject object1 = cursor1.getNext();
-		            System.out.println("slectoryName="+selectorName);
-		            type = object1.get(selectorName).getClass().toString();	            
-		            System.out.println("objecttype"+object1.get(selectorName).getClass().toString());	
-		           /* BasicBSONObject type1 = (BasicBSONObject) object.get("obj");
-		            BasicBSONObject type2 = (BasicBSONObject) type1.get("a");
-		            System.out.println("objecttype"+type2.get("b").getClass());*/		           
-		        }  		        
-		        cursor1.close(); 
-		        Assert.assertEquals(type, expType,"the numtype is error");
-	        }	        		
+			Assert.assertEquals(actualList, expectedList,"the actual query datas is error");  	              		
 		}catch(BaseException e){			
 			Assert.assertTrue(false,"operator is used as selector oper failed,"+e.getMessage());
 		}		
@@ -176,13 +159,12 @@ public class Commlib {
      *         selectorName:    field name to participate in an operation,rg:{a:1},the selectorName is "a"
      *         arithmeticValue: the value involved in the operation,rg:a+1,and the 1 is arithmeticValue
      */
-    public static void isStrictDataTypeOper(DBCollection cl,String operSymbol,BSONObject selector ){
+    public static void isStrictDataTypeOper(DBCollection cl, BSONObject selector ){
 		try{
 			DBQuery query = new DBQuery();			
 			BSONObject matcher = new BasicBSONObject();	
 			query.setSelector(selector);
-			query.setMatcher(matcher);		
-			
+			query.setMatcher(matcher);			
 			DBCursor cursor = cl.query(query);
 	        while( cursor.hasNext() ) {
 	            BSONObject object = cursor.getNext();  
@@ -223,28 +205,87 @@ public class Commlib {
 		}
     }
 		
-    public static void adsAsSelectorOper(DBCollection cl,String selectorName,String operSymbol){
+        
+    public static void checkDataType(DBCollection cl,BSONObject sValue,int matcherValue,String selectorName, String expType,Boolean isVerifyTypeToJava,String expTypeToJava) throws Exception{
 		try{
-			DBQuery query = new DBQuery();
-			BSONObject selector = new BasicBSONObject();
-			BSONObject sValue = new BasicBSONObject();	
-			BSONObject matcher = new BasicBSONObject();				
-			sValue.put(operSymbol, 1);			
-			selector.put(selectorName, sValue);		
-			query.setSelector(selector);
-			query.setMatcher(matcher);		
-			DBCursor cursor = cl.query(query);
-	        while( cursor.hasNext() ) {
-	            BSONObject object = cursor.getNext();  
-	            System.out.println("actualList"+object.toString());	            
-	        }	        
-	        cursor.close(); 	       
-		}catch(BaseException e){
-			if( e.getErrorCode() != -318 ){ 
-				Assert.assertTrue(false,"abs oper should be failed,"+e.getErrorCode()+e.getMessage());
-            }			
+			if(!selectorName.contains("$")){
+				DBQuery query = new DBQuery();
+				DBQuery query1 = new DBQuery();
+				BSONObject selector = new BasicBSONObject();
+				BSONObject selector1 = new BasicBSONObject();
+				BSONObject matcher = new BasicBSONObject();			
+				matcher.put("test",matcherValue );			
+				selector1.put(selectorName, new BasicBSONObject(sValue.toMap()));			
+				sValue.put("$type", 2);
+				selector.put(selectorName, sValue);			
+				query.setSelector(selector);
+				query.setMatcher(matcher);		
+				DBCursor cursor = cl.query(query);						
+			
+				String type = "";	
+				BSONObject object = null;
+		        while( cursor.hasNext() ) {
+		            object = cursor.getNext();
+		            BasicBSONObject obj = (BasicBSONObject) object;	          
+		            type = getType(selectorName,obj);	
+		            
+		        } 	        
+		        cursor.close(); 
+		        Assert.assertEquals(type, expType,"the numtype is error");	  
+		        
+		        //check the data type from java client
+		        if(isVerifyTypeToJava){
+	            	String typeOfJava = "";
+	            	BSONObject object1 = null;
+	            	query1.setSelector(selector1);            	
+	    			query1.setMatcher(matcher);		
+	    			DBCursor cursor1 = cl.query(query1);
+	    	        while( cursor1.hasNext() ) {
+	    	            object1 = cursor1.getNext();	    	            
+	    	            typeOfJava = object1.get(selectorName).getClass().toString(); 	    	            
+	    	        } 	        
+	    	        cursor1.close();             	
+	            	Assert.assertEquals(typeOfJava, expTypeToJava,"the numtype from java is error");
+	            }
+			}
+			
+		}catch(BaseException e){			
+			Assert.assertTrue(false,"abs is used as selector oper failed,"+e.getMessage());
 		}		
 	}
+
+	public static String getType(String inField,BasicBSONObject object) throws Exception{
+		
+		String[] tmps = inField.split("\\.");		
+		String type = null;
+		if ( tmps.length == 1 ){
+			if ( object.containsField( tmps[0])){
+				type = ((BasicBSONObject) object).getString( tmps[0]);
+			}
+		}else {
+			BSONObject subobj = object;
+			for ( int i = 0; i< tmps.length - 1; ++i){
+				if ( subobj.containsField(tmps[i])){
+					subobj = (BSONObject)subobj.get( tmps[i]);					
+				}else{
+					throw new Exception( object.toString() + "not contain:" + tmps[i]);
+				}
+			}
+			if( tmps[tmps.length -1].contains("$[0]")){
+				type = (String) ((BasicBSONList)subobj).get(0);
+			}else{
+				if( subobj.containsField(tmps[tmps.length -1])){
+					type = ((BasicBSONObject)subobj).getString(tmps[tmps.length -1]);			
+				}else{
+					throw new Exception( object.toString() + "not contain:" + tmps[tmps.length -1]);
+				}
+			}
+		}
+		
+		return type;
+		
+	}
+
 
     
 }
