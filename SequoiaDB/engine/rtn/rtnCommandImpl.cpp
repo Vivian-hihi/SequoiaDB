@@ -1251,11 +1251,22 @@ namespace engine
       {
          CHAR attrStr[ 64 + 1 ] = { 0 } ;
          mbAttr2String( attributes, attrStr, sizeof( attrStr ) - 1 ) ;
-         PD_LOG( PDEVENT, "Create collection[%s] succeed, ShardingKey:%s, "
-                 "Attr:%s(0x%08x), CompressType:%s(%d)", pCollection,
-                 shardingKey.toString().c_str(), attrStr, attributes,
-                 utilCompressType2String( (UINT8)compType ),
-                 compType ) ;
+         if ( extOptions && !extOptions->isEmpty())
+         {
+            PD_LOG( PDEVENT, "Create collection[%s] succeed, ShardingKey:%s, "
+                    "Attr:%s(0x%08x), CompressType:%s(%d), External options:%s",
+                    pCollection, shardingKey.toString().c_str(), attrStr,
+                    attributes, utilCompressType2String( (UINT8)compType ),
+                    compType, extOptions->toString().c_str() ) ;
+         }
+         else
+         {
+            PD_LOG( PDEVENT, "Create collection[%s] succeed, ShardingKey:%s, "
+                    "Attr:%s(0x%08x), CompressType:%s(%d)", pCollection,
+                    shardingKey.toString().c_str(), attrStr, attributes,
+                    utilCompressType2String( (UINT8)compType ),
+                    compType ) ;
+         }
       }
 
    done :

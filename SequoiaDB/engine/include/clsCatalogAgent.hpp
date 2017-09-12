@@ -256,7 +256,7 @@ namespace engine
          UTIL_COMPRESSOR_TYPE getCompressType() const { return _compressType ; }
          INT64 getMaxSize() const { return _maxSize ; }
          INT64 getMaxRecNum() const { return _maxRecNum ; }
-
+         BOOLEAN getOverWrite() const { return _overwrite; }
       protected:
          _clsCatalogSet    *next () ;
          INT32             next ( _clsCatalogSet * next ) ;
@@ -317,6 +317,7 @@ namespace engine
          UTIL_COMPRESSOR_TYPE _compressType ;
          INT64             _maxSize ;
          INT64             _maxRecNum ;
+         BOOLEAN           _overwrite ;
    };
    typedef class _clsCatalogSet clsCatalogSet ;
 

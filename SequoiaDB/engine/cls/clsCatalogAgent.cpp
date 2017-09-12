@@ -431,6 +431,9 @@ namespace engine
       _skSiteID = 0 ;
       _pSite = NULL ;
       _compressType = UTIL_COMPRESSOR_INVALID ;
+      _maxSize = 0 ;
+      _maxRecNum = 0 ;
+      _overwrite = FALSE ;
    }
 
    _clsCatalogSet::~_clsCatalogSet ()
@@ -532,7 +535,7 @@ namespace engine
       }
       _vecGroupID.push_back ( groupID ) ;
       _groupCount = _vecGroupID.size() ;
-      
+
    done:
       PD_TRACE_EXIT ( SDB__CLSCTSET_ADDGPID ) ;
    }
@@ -622,6 +625,9 @@ namespace engine
 
       _shardingType = CLS_CA_SHARDINGTYPE_NONE;
       _shardingKey = BSONObj() ;
+      _maxSize = 0 ;
+      _maxRecNum = 0 ;
+      _overwrite = FALSE ;
       PD_TRACE_EXIT ( SDB__CLSCTSET__CLEAR ) ;
    }
 
@@ -1597,6 +1603,46 @@ namespace engine
                  CAT_COMPRESSIONTYPE, ele.type() ) ;
          rc = SDB_SYS ;
          goto error ;
+      }
+
+      // Get the Size and Max options, if any.
+      ele = catSet.getField( CAT_CL_MAX_SIZE ) ;
+      if ( !ele.eoo() )
+      {
+         if ( !ele.isNumber() )
+         {
+            PD_LOG( PDERROR, "Type of Size option is not number: %d",
+                    ele.type() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         _maxSize = ele.numberLong() ;
+      }
+
+      ele = catSet.getField( CAT_CL_MAX_RECNUM ) ;
+      if ( !ele.eoo() )
+      {
+         if ( !ele.isNumber() )
+         {
+            PD_LOG( PDERROR, "Type of Max option is not number: %d",
+                    ele.type() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         _maxRecNum = ele.numberLong() ;
+      }
+
+      ele = catSet.getField( CAT_CL_OVERWRITE ) ;
+      if ( !ele.eoo() )
+      {
+         if ( !ele.isBoolean() )
+         {
+            PD_LOG( PDERROR, "Type of OverWrite option is not bool: %d",
+                    ele.type() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         _overwrite = ele.boolean() ;
       }
 
       //update sharding key, optional, default false

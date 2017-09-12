@@ -689,6 +689,7 @@ namespace engine
       {
          builder.append( FIELD_NAME_SIZE, set->getMaxSize() ) ;
          builder.append( FIELD_NAME_MAX, set->getMaxRecNum() ) ;
+         builder.appendBool( FIELD_NAME_OVERWRITE, set->getOverWrite() ) ;
          extOptions = builder.done() ;
       }
 
