@@ -222,13 +222,6 @@ namespace engine
             }
             _dmsCB->suUnlock( suID, SHARED ) ;
          }
-         else
-         {
-            // In case of locking cs failure, in order to be safe, set the
-            // paralla to be false. Because the collection may be a capped one.
-            // In that case, set paralla to be TRUE will result in desaster...
-            paralla = FALSE ;
-         }
       }
 
       if ( paralla )
