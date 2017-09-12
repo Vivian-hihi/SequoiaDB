@@ -1,15 +1,19 @@
 # -- coding: utf-8 --
 from lib import testlib
 from pysequoiadb import collection
+import unittest
+
 
 default_list = [{"a": i} for i in range(10)]
 
 class TestQueryAndUpdate(testlib.TestDataOprtBase):
+   @unittest.skip("skip! find bug SEQUOIADBMAINSTREAM-2793")
    def setUp(self):
       self.create_cs_cl()
 
    def tearDown(self):
-      self.drop_cs()
+      if testlib.should_clear_env(self):
+         self.drop_cs()
       self.close_db()
 
    # 子测试

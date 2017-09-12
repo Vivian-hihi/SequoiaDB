@@ -11,6 +11,8 @@ from pysequoiadb import client
 class TestSplit12486(testsplitbase.TestSplitBase):
    def setUp(self):
       self.init_db()
+      if self.is_standalone():
+         self.skipTest("skip! This testcase do not support standlone")
 
       if len(self.get_data_group()) < 2:
          print("only have signal group")

@@ -12,7 +12,8 @@ class TestTruncate12468(testlib.TestDataOprtBase):
       self.create_cs_cl()
 
    def tearDown(self):
-      self.drop_cs()
+      if testlib.should_clear_env(self):
+         self.drop_cs()
       self.close_db()
 
    def test_truncate(self):
