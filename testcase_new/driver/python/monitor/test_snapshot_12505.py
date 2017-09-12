@@ -87,6 +87,7 @@ class TestSnapshot12505(unittest.TestCase):
          try:
             rec = cursor.next()
             if cs_name == rec['Name']:
+               cursor.close()
                break
          except SDBEndOfCursor:
             cursor.close()
