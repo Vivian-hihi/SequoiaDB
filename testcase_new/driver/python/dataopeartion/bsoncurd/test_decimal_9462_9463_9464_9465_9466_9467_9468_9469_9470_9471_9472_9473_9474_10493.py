@@ -595,14 +595,12 @@ class TestDecimal12459(unittest.TestCase):
       testlib.print_teardown_msg(self)
 
    def insert_decimal(self, cl, data):
-      print('---begin to insert data')
       try:
          cl.insert(data)
       except SDBBaseError as e:
          self.fail("insert_fail,data:" + str(data))
 
    def check_result(self, cl, condition, obj, doc):
-      print('---begin to check data')
       cnt = cl.get_count(condition=condition)
       rec = cl.query(condition=condition).next()
       
