@@ -755,4 +755,136 @@ public class TestSdbFilter {
         assertEquals(matcher, obj);
         assertArrayEquals(new Filter[]{}, unhandled);
     }
+
+    @Test
+    public void testFiltersGTEAnd() {
+        Filter f1 = new GreaterThanOrEqual("tx_dt", 20160501);
+
+        Filter gte21 = new GreaterThanOrEqual("tx_br", 101000);
+        Filter lte21 = new LessThanOrEqual("tx_br", 101999);
+        Filter and21 = new And(gte21, lte21);
+
+        Filter gte22 = new GreaterThanOrEqual("tx_br", 121000);
+        Filter lte22 = new LessThanOrEqual("tx_br", 121999);
+        Filter and22 = new And(gte22, lte22);
+
+        Filter f2 = new And(and21, and22);
+
+        SdbFilter sdbFilter = SdbFilter.apply(new Filter[]{f1, f2});
+        BSONObject obj = sdbFilter.BSONObj();
+        Filter[] unhandled = sdbFilter.unhandledFilters();
+
+        BSONObject subObj1 = new BasicBSONObject();
+        subObj1.put("$gte", 101000);
+        BSONObject matcher1 = new BasicBSONObject();
+        matcher1.put("tx_br", subObj1);
+
+        BSONObject subObj2 = new BasicBSONObject();
+        subObj2.put("$lte", 101999);
+        BSONObject matcher2 = new BasicBSONObject();
+        matcher2.put("tx_br", subObj2);
+
+        BSONObject subObj3 = new BasicBSONObject();
+        subObj3.put("$gte", 121000);
+        BSONObject matcher3 = new BasicBSONObject();
+        matcher3.put("tx_br", subObj3);
+
+        BSONObject subObj4 = new BasicBSONObject();
+        subObj4.put("$lte", 121999);
+        BSONObject matcher4 = new BasicBSONObject();
+        matcher4.put("tx_br", subObj4);
+
+        BSONObject subObj5 = new BasicBSONObject();
+        subObj5.put("$gte", 20160501);
+        BSONObject matcher5 = new BasicBSONObject();
+        matcher5.put("tx_dt", subObj5);
+
+        BasicBSONList topArray = new BasicBSONList();
+        topArray.put("0", matcher1);
+        topArray.put("1", matcher2);
+        topArray.put("2", matcher3);
+        topArray.put("3", matcher4);
+        topArray.put("4", matcher5);
+
+        BSONObject matcher = new BasicBSONObject();
+        matcher.put("$and", topArray);
+
+        assertEquals(matcher, obj);
+        assertArrayEquals(new Filter[]{}, unhandled);
+    }
+
+    @Test
+    public void testFiltersGTEOr() {
+        Filter f1 = new GreaterThanOrEqual("tx_dt", 20160501);
+
+        Filter gte21 = new GreaterThanOrEqual("tx_br", 101000);
+        Filter lte21 = new LessThanOrEqual("tx_br", 101999);
+        Filter and21 = new And(gte21, lte21);
+
+        Filter gte22 = new GreaterThanOrEqual("tx_br", 121000);
+        Filter lte22 = new LessThanOrEqual("tx_br", 121999);
+        Filter and22 = new And(gte22, lte22);
+
+        Filter f2 = new Or(and21, and22);
+
+        SdbFilter sdbFilter = SdbFilter.apply(new Filter[]{f1, f2});
+        BSONObject obj = sdbFilter.BSONObj();
+        Filter[] unhandled = sdbFilter.unhandledFilters();
+
+        BSONObject subObj1 = new BasicBSONObject();
+        subObj1.put("$gte", 101000);
+        BSONObject matcher1 = new BasicBSONObject();
+        matcher1.put("tx_br", subObj1);
+
+        BSONObject subObj2 = new BasicBSONObject();
+        subObj2.put("$lte", 101999);
+        BSONObject matcher2 = new BasicBSONObject();
+        matcher2.put("tx_br", subObj2);
+
+        BSONObject andSubObj1 = new BasicBSONList();
+        andSubObj1.put("0", matcher1);
+        andSubObj1.put("1", matcher2);
+
+        BSONObject andObj1 = new BasicBSONObject();
+        andObj1.put("$and", andSubObj1);
+
+        BSONObject subObj3 = new BasicBSONObject();
+        subObj3.put("$gte", 121000);
+        BSONObject matcher3 = new BasicBSONObject();
+        matcher3.put("tx_br", subObj3);
+
+        BSONObject subObj4 = new BasicBSONObject();
+        subObj4.put("$lte", 121999);
+        BSONObject matcher4 = new BasicBSONObject();
+        matcher4.put("tx_br", subObj4);
+
+        BSONObject andSubObj2 = new BasicBSONList();
+        andSubObj2.put("0", matcher3);
+        andSubObj2.put("1", matcher4);
+
+        BSONObject andObj2 = new BasicBSONObject();
+        andObj2.put("$and", andSubObj2);
+
+        BSONObject orSubObj = new BasicBSONList();
+        orSubObj.put("0", andObj1);
+        orSubObj.put("1", andObj2);
+
+        BSONObject orObj = new BasicBSONObject();
+        orObj.put("$or", orSubObj);
+
+        BSONObject subObj5 = new BasicBSONObject();
+        subObj5.put("$gte", 20160501);
+        BSONObject matcher5 = new BasicBSONObject();
+        matcher5.put("tx_dt", subObj5);
+
+        BasicBSONList topArray = new BasicBSONList();
+        topArray.put("0", matcher5);
+        topArray.put("1", orObj);
+
+        BSONObject matcher = new BasicBSONObject();
+        matcher.put("$and", topArray);
+
+        assertEquals(matcher, obj);
+        assertArrayEquals(new Filter[]{}, unhandled);
+    }
 }

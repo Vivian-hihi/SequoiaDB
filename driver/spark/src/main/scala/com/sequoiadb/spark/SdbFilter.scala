@@ -188,7 +188,12 @@ object SdbFilter {
             case And(left, right) =>
                 val (leftObj, _) = toBSONObj(Array(left))
                 val (rightObj, _) = toBSONObj(Array(right))
-                matcher = appendAndFilter(leftObj, rightObj)
+                val andObj = appendAndFilter(leftObj, rightObj)
+                if (matcher.isEmpty) {
+                    matcher = andObj
+                } else {
+                    matcher = appendAndFilter(matcher, andObj)
+                }
             case EqualNullSafe(attribute, value) =>
                 val obj = new BasicBSONObject()
                 obj.put(ET, value)
@@ -237,7 +242,12 @@ object SdbFilter {
             case Or(left, right) =>
                 val (leftObj, _) = toBSONObj(Array(left))
                 val (rightObj, _) = toBSONObj(Array(right))
-                matcher = appendOrFilter(leftObj, rightObj)
+                val orObj = appendOrFilter(leftObj, rightObj)
+                if (matcher.isEmpty) {
+                    matcher = orObj
+                } else {
+                    matcher = appendAndFilter(matcher, orObj)
+                }
             case StringContains(attribute, value) =>
                 val subObj = Pattern.compile(".*" + value + ".*")
                 matcher = appendFilter(matcher, attribute, subObj)
