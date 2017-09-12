@@ -7,7 +7,7 @@
 getLob \- Get the LOB in collection.
 .SH SYNOPSIS
 .PP
-\f[B]\f[I]db.collectionspace.collection.getLob(<oid>)\f[]\f[]
+\f[B]\f[I]db.collectionspace.collection.getLob(<oid>,<filePath>,[forced])\f[]\f[]
 .SH CATEGORY
 .PP
 Collection
