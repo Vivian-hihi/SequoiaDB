@@ -212,21 +212,22 @@ namespace engine
                          TRUE : FALSE ;
                su->data()->releaseMBContext( mbContext ) ;
             }
-            _dmsCB->suUnlock( suID, SHARED ) ;
-         }
 
-         // Currently parallel replaying on capped collection is forbidden,
-         // because we need to be sure the records are exactly the same with
-         // the ones on primary node, including their positions.
-         // The _id type of capped collection is NumberLong, so filter it here
-         // for now.
-         if ( LOG_TYPE_DATA_INSERT == recordHeader->_type )
-         {
-            BSONElement eleTmp = obj.getField( DMS_ID_KEY_NAME ) ;
-            if ( NumberLong == eleTmp.type() )
+            // Currently parallel replaying on capped collection is forbidden,
+            // because we need to be sure the records are exactly the same with
+            // the ones on primary node, including their positions.
+            if ( DMS_STORAGE_CAPPED == su->type() )
             {
                paralla = FALSE ;
             }
+            _dmsCB->suUnlock( suID, SHARED ) ;
+         }
+         else
+         {
+            // In case of locking cs failure, in order to be safe, set the
+            // paralla to be false. Because the collection may be a capped one.
+            // In that case, set paralla to be TRUE will result in desaster...
+            paralla = FALSE ;
          }
       }
 
@@ -863,6 +864,7 @@ namespace engine
          {
             BSONObj obj ;
             const CHAR *fullname = NULL ;
+            BOOLEAN isCapped = FALSE ;
             rc = dpsRecord2Insert( (const CHAR *)recordHeader,
                                    &fullname, obj ) ;
             if ( SDB_OK != rc )
@@ -871,22 +873,54 @@ namespace engine
             }
 
             {
-               BSONElement idEle = obj.getField( DMS_ID_KEY_NAME ) ;
-               if ( idEle.eoo() )
+               dmsStorageUnit *su = NULL ;
+               const CHAR *pShortName = NULL ;
+               dmsStorageUnitID suID = DMS_INVALID_SUID ;
+               rc = rtnResolveCollectionNameAndLock( fullname, _dmsCB, &su,
+                                                     &pShortName, suID ) ;
+               PD_RC_CHECK( rc, PDERROR, "Resolve collection name[ %s ] and "
+                            "lock failed: %d", fullname, rc ) ;
+
+               isCapped = ( DMS_STORAGE_CAPPED == su->type() ) ?
+                          TRUE : FALSE ;
+               _dmsCB->suUnlock( suID, SHARED ) ;
+            }
+
+            BSONElement idEle = obj.getField( DMS_ID_KEY_NAME ) ;
+            if ( idEle.eoo() )
+            {
+               PD_LOG( PDWARNING, "replay: failed to parse"
+                       " oid from bson:[%s]",obj.toString().c_str() ) ;
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
+
+            if ( isCapped )
+            {
+               SDB_ASSERT( idEle.isNumber(),
+                           "oid should be number in capped cl" ) ;
+               if ( idEle.isNumber() )
                {
-                  PD_LOG( PDWARNING, "replay: failed to parse"
-                          " oid from bson:[%s]",obj.toString().c_str() ) ;
+                  INT64 logicID = idEle.numberLong() ;
+                  rc = rtnPopCommand( fullname, logicID, eduCB,
+                                      _dmsCB, _dpsCB, 1, -1 ) ;
+               }
+               else
+               {
+                  PD_LOG( PDERROR, "oid type[ %d ] is wrong",
+                          idEle.type() ) ;
                   rc = SDB_INVALIDARG ;
                   goto error ;
                }
-               {
-                  BSONObjBuilder selectorBuilder ;
-                  selectorBuilder.append( idEle ) ;
-                  BSONObj selector = selectorBuilder.obj() ;
-                  BSONObj hint = BSON(""<<IXM_ID_KEY_NAME) ;
-                  rc = rtnDelete( fullname, selector, hint, 0, eduCB, _dmsCB,
-                                  _dpsCB, 1 ) ;
-               }
+            }
+            else
+            {
+               BSONObjBuilder selectorBuilder ;
+               selectorBuilder.append( idEle ) ;
+               BSONObj selector = selectorBuilder.obj() ;
+               BSONObj hint = BSON(""<<IXM_ID_KEY_NAME) ;
+               rc = rtnDelete( fullname, selector, hint, 0, eduCB, _dmsCB,
+                               _dpsCB, 1 ) ;
             }
             break ;
          }
@@ -1179,6 +1213,12 @@ namespace engine
                }
             }
             break ;
+         }
+         case LOG_TYPE_DATA_POP:
+         {
+            // Pop is not able to rollback, return error.
+            rc = SDB_CLS_REPLAY_LOG_FAILED ;
+            goto error ;
          }
          default :
          {
