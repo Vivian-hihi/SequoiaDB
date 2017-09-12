@@ -22,6 +22,7 @@ class TestDecimal12459(unittest.TestCase):
    def setUp(self):
       testlib.print_setup_msg(self)
       self.db = testlib.default_db()
+      self.db.set_session_attri({"PreferedInstance": "M"})
    
    def test_decimal_12459(self):
       # create cs and cl

@@ -20,6 +20,7 @@ class TestMinKeyMaxKey12460(unittest.TestCase):
    def setUp(self):
       testlib.print_setup_msg(self)
       self.db = testlib.default_db()
+      self.db.set_session_attri({"PreferedInstance": "M"})
    
    def test_minkey_maxkey_12460(self):
       # create cs and cl

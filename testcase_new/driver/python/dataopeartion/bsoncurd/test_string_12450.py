@@ -15,6 +15,7 @@ class TestString12450(unittest.TestCase):
    def setUp(self):
       testlib.print_setup_msg(self)
       self.db = testlib.default_db()
+      self.db.set_session_attri({"PreferedInstance": "M"})
       
    def test_string_12450(self):
       #create cs and cl

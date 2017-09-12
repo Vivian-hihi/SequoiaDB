@@ -20,6 +20,7 @@ class TestOid12451(unittest.TestCase):
    def setUp(self):
       testlib.print_setup_msg(self)
       self.db = testlib.default_db()
+      self.db.set_session_attri({"PreferedInstance": "M"})
       
    def test_oid_12451(self):
       #create cs and cl
