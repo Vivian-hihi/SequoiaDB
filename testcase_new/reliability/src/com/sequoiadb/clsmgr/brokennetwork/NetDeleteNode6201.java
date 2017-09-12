@@ -39,16 +39,19 @@ public class NetDeleteNode6201 extends SdbTestBase {
     private int coordPort = 26666;
     private String coordDbPath = SdbTestBase.reservedDir;
     private String connectUrl;
+    private Sequoiadb sdb = null;
     private boolean deleteFlag = false;
+    private boolean clearFlag = false;
     private Ssh ssh;
 
     @BeforeClass()
     public void setUp() {
-        Sequoiadb sdb = new Sequoiadb(coordUrl, "", "");
+        
         try {
             System.out.println(
                     "the TestCase Name:" + this.getClass().getName() + ". the TestCase begin at:"
                             + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
+            sdb = new Sequoiadb(coordUrl, "", "");
             groupMgr = new GroupMgr();
 
             // CheckBusiness(true),检测当前集群环境，若存在异常返回false，
@@ -60,10 +63,7 @@ public class NetDeleteNode6201 extends SdbTestBase {
         catch (ReliabilityException e) {
             Assert.fail(this.getClass().getName() + " setUp error, error description:"
                     + e.getMessage() + "\r\n" + Utils.getStackString(e));
-        }
-        finally {
-            sdb.close();
-        }
+        }        
     }
 
     @Test
@@ -101,7 +101,7 @@ public class NetDeleteNode6201 extends SdbTestBase {
                 Sequoiadb tmpDb = null;
                 try {
                     tmpDb = new Sequoiadb(connectUrl.split(":")[0] + ":" + coordPort, "", "");
-                    coordGroup.removeNode(connectUrl.split(":")[0], coordPort, null);
+                    coordGroup.removeNode(connectUrl.split(":")[0], coordPort, null);                    
                 }catch(BaseException e){
                 	if( e.getErrorCode() == -155 ){ 
                 		clearNode(hostName,coordPort, coordDbPath);
@@ -115,6 +115,11 @@ public class NetDeleteNode6201 extends SdbTestBase {
                         tmpDb.close();
                     }
                 }
+                
+                // 最长等待2分钟的集群环境恢复
+                Assert.assertEquals(groupMgr.checkBusiness(600), true, "failed to restore business");
+              //Normal operating environment
+                clearFlag = true;
             }
         }
         catch (ReliabilityException e) {
@@ -129,19 +134,23 @@ public class NetDeleteNode6201 extends SdbTestBase {
     }
 
     @AfterClass
-    public void tearDown() {
-        Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+    public void tearDown() {        
         try {
+        	if (clearFlag) {                
+        		System.out.println(
+                        "the TestCase Name:" + this.getClass().getName() + ". the TestCase end at:"
+                                + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));        		
+            }     
 
         }
         catch (BaseException e) {
             Assert.fail(e.getMessage() + "\r\n" + Utils.getStackString(e));
         }
         finally {
-            sdb.close();
-            System.out.println(
-                    "the TestCase Name:" + this.getClass().getName() + ". the TestCase end at:"
-                            + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
+        	if(sdb != null){
+        		sdb.close();
+        	}         
+            
         }
     }
 
@@ -172,15 +181,14 @@ public class NetDeleteNode6201 extends SdbTestBase {
         int port = 22;        
         try {
             ssh = new Ssh(hostName, user, passwd, port);               
-            ssh.exec("sed -n '/INSTALL_DIR/,+1p' /etc/default/sequoiadb");
-            String installFlag = ssh.getStdout().substring(0, ssh.getStdout().length() - 1);
+            ssh.exec("sed -n '/INSTALL_DIR/,1p' /etc/default/sequoiadb");
+            String installFlag = ssh.getStdout().substring(0, ssh.getStdout().length() - 1);           
             String[] installPwdStr = installFlag.split("=");
             String installPwd = installPwdStr[1];
             
             ssh.exec("lsof -i:" + svcName + " | sed '1d' | awk '{print $2}'");
-            if (ssh.getStdout().length() > 0) {
-            	System.out.println("-----");
-            	ssh.exec(installPwd + "bin/sdbstop -p "+ svcName);
+            if (ssh.getStdout().length() > 0) {            	
+            	ssh.exec(installPwd + "/bin/sdbstop -p "+ svcName);
             }
             
             File dirname = new File(nodePath);
@@ -188,16 +196,18 @@ public class NetDeleteNode6201 extends SdbTestBase {
             	ssh.exec("rm -rf "+ nodePath);
             }
             
-            String confDir = installPwd + "conf/local/"+ svcName;
+            String confDir = installPwd + "/conf/local/"+ svcName;
             File confDirName = new File(confDir);
             if(confDirName.isDirectory()){
             	ssh.exec("rm -rf "+ confDir);
-            }           
+            }          
             
         }catch (BaseException e) {
         	Assert.fail("clear node fail"+e.getMessage() + e.getErrorCode());
         }finally {
-            ssh.disconnect();
+        	if(ssh != null){
+        		ssh.disconnect();
+        	}
         }
     }
 
