@@ -671,6 +671,7 @@ namespace engine
                PD_LOG( PDERROR, "Field[%s] must always be used when Capped is "
                        "true in obj[%s]",
                        FIELD_NAME_SIZE, matcher.toString().c_str() ) ;
+               rc = SDB_INVALIDARG ;
             }
             else
             {
