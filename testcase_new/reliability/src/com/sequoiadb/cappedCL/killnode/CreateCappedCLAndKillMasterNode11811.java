@@ -133,8 +133,18 @@ public class CreateCappedCLAndKillMasterNode11811 extends SdbTestBase{
 			}
 		} 	
     }
+	 
+   private void clearCsBeginning(){
+		try {
+			sdb.dropCollectionSpace(cappedCSName_11811);
+		}catch (BaseException e) {
+			if(-34 != e.getErrorCode())
+			   Assert.fail("clean capped cs failed, errMsg:" + e.getMessage());
+		}   	
+	}
 
 	private void createCappedCS() {
+		clearCsBeginning();
 		try {
 			BSONObject options = new BasicBSONObject();
 			options.put("Capped", true);

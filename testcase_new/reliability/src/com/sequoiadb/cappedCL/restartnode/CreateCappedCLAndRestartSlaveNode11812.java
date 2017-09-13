@@ -37,7 +37,7 @@ import com.sequoiadb.task.TaskMgr;
  */
 
 public class CreateCappedCLAndRestartSlaveNode11812 extends SdbTestBase{
-
+	
 	private GroupMgr groupMgr = null;
 	private Sequoiadb sdb = null;
 	private boolean clearFlag = false;
@@ -50,25 +50,25 @@ public class CreateCappedCLAndRestartSlaveNode11812 extends SdbTestBase{
 	
 	@BeforeClass
 	public void setUp() {
-        System.out.println(this.getClass().getName() + " begin at:"
+      System.out.println(this.getClass().getName() + " begin at:"
                 + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
-        try {
-			groupMgr = new GroupMgr();
-			if(!groupMgr.checkBusiness()) {
-	        	throw new SkipException("checkBusiness failed");
-	        }
-			sdb = new Sequoiadb(SdbTestBase.coordUrl,"","");
-			createCappedCS();
-			cappedCLGroupName = groupMgr.getAllDataGroupName().get(0);
-			System.out.println("group: " + cappedCLGroupName);
-		} catch (ReliabilityException e) {
-			Assert.fail(this.getClass().getName() + "setUp error, error description:" + e.getMessage());
-		}
+      try {
+         groupMgr = new GroupMgr();
+    	   if(!groupMgr.checkBusiness()) {
+            throw new SkipException("checkBusiness failed");
+		   }
+         sdb = new Sequoiadb(SdbTestBase.coordUrl,"","");
+         createCappedCS();
+         cappedCLGroupName = groupMgr.getAllDataGroupName().get(0);
+         System.out.println("group: " + cappedCLGroupName);
+      } catch (ReliabilityException e) {
+      	Assert.fail(this.getClass().getName() + "setUp error, error description:" + e.getMessage());
+      }
         
 	}
 	
-    @Test
-    public void createCLAndRestartNodeTest() {
+   @Test
+   public void createCLAndRestartNodeTest() {
     	try {
     		GroupWrapper dataGroup = groupMgr.getGroupByName(cappedCLGroupName);
 			NodeWrapper slaveNode = dataGroup.getSlave();
@@ -81,23 +81,23 @@ public class CreateCappedCLAndRestartSlaveNode11812 extends SdbTestBase{
 			Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
 			
 			//check whether the cluster is normal and lsn consistency ,the longest waiting time is 600S
-            Assert.assertEquals(groupMgr.checkBusinessWithLSN(600), true, "check LSN consistency fail");
+         Assert.assertEquals(groupMgr.checkBusinessWithLSN(600), true, "check LSN consistency fail");
             
-            //check result
-            checkCreateCLResult();
-            Utils.checkConsistency(dataGroup);
+         //check result
+         checkCreateCLResult();
+         Utils.checkConsistency(dataGroup);
             
-            //Normal operating environment
-            clearFlag = true;
+         //Normal operating environment
+         clearFlag = true;
                         
 		} catch (ReliabilityException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-    }
+   }
 
 	@AfterClass
-    public void tearDown() {
+   public void tearDown() {
     	try {
     		if(clearFlag) {
     			sdb.dropCollectionSpace(cappedCSName_11812);
@@ -111,9 +111,19 @@ public class CreateCappedCLAndRestartSlaveNode11812 extends SdbTestBase{
 	                  + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
 			}
 		}
-    }
+   }
+	 
+   private void clearCsBeginning(){
+		try {
+			sdb.dropCollectionSpace(cappedCSName_11812);
+		}catch (BaseException e) {
+			if(-34 != e.getErrorCode())
+			   Assert.fail("clean capped cs failed, errMsg:" + e.getMessage());
+		}   	
+	}	 
 	
 	private void createCappedCS() {
+		clearCsBeginning();
 		try {
 			BSONObject options = new BasicBSONObject();
 			options.put("Capped", true);
@@ -123,39 +133,39 @@ public class CreateCappedCLAndRestartSlaveNode11812 extends SdbTestBase{
 		}   
 	}
 
-    private class createCappedCLTask extends OperateTask{
+   private class createCappedCLTask extends OperateTask{
 
 		@Override
 		public void exec() throws Exception {
-            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl,"","")){
-            	CollectionSpace cappedCS = db.getCollectionSpace(cappedCSName_11812);
-            	BSONObject options = new BasicBSONObject();
-            	options.put("Capped", true);
-            	options.put("Size", 8192);
-            	options.put("AutoIndexId", false);
-            	options.put("Group", cappedCLGroupName);
-            	for(int clNo = 1; clNo <= CAPPED_CL_NUM; clNo++) {
-            		cappedCS.createCollection(cappedCLName_11812 + "_" + clNo , options); 
-            	}
-            }catch (BaseException e) {
+         try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl,"","")){
+            CollectionSpace cappedCS = db.getCollectionSpace(cappedCSName_11812);
+            BSONObject options = new BasicBSONObject();
+            options.put("Capped", true);
+            options.put("Size", 8192);
+            options.put("AutoIndexId", false);
+            options.put("Group", cappedCLGroupName);
+            for(int clNo = 1; clNo <= CAPPED_CL_NUM; clNo++) {
+            	cappedCS.createCollection(cappedCLName_11812 + "_" + clNo , options); 
+            }
+         }catch (BaseException e) {
 				throw e;
 			}
 		} 	
-    }
+   }
     
-    private void checkCreateCLResult() {
-        for (int clNo = 1; clNo <= CAPPED_CL_NUM; clNo++) {
-            String sameCLName = cappedCLName_11812 + "_" + clNo;
-            try {
-                cappedCS_11812.createCollection(sameCLName);
-            } catch (BaseException e) {
-                // -22 SDB_DMS_EXIST
-                if (-22 !=  e.getErrorCode()) {
-                    throw e;
-                }
+   private void checkCreateCLResult() {
+      for (int clNo = 1; clNo <= CAPPED_CL_NUM; clNo++) {
+         String sameCLName = cappedCLName_11812 + "_" + clNo;
+         try {
+            cappedCS_11812.createCollection(sameCLName);
+         } catch (BaseException e) {
+            // -22 SDB_DMS_EXIST
+            if (-22 !=  e.getErrorCode()) {
+               throw e;
             }
-        }
+         }
+      }
         
-    }
+   }
 	
 }
