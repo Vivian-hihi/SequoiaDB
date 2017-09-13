@@ -19,16 +19,16 @@ import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
 
 /**
-* FileName: SubtractIsSelector12573.java
+* FileName: SubtractIsSelector12585.java
 * test content:Numeric value overflow for single character using $subtract operation,
 * 				and the $subtract is used as a selector.
-* testlink case:seqDB-12573
+* testlink case:seqDB-12585
 * @author wuyan
-    * @Date    2017.9.4
+    * @Date    2017.9.11
 * @version 1.00
 */
 
-public class SubtractIsSelector12573 extends SdbTestBase{
+public class SubtractIsSelector12585 extends SdbTestBase{
 	
 	@DataProvider(name = "operData")
 	public Object[][] generateDatas(){

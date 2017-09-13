@@ -19,32 +19,33 @@ import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
 
 /**
-* FileName: AdsIsSelector12572.java
-* test content:set StrictDataType=true,Numeric value overflow for a character using $abs operation,
-* 				and the $abs is used as a selector.
-* testlink case:seqDB-12572
+* FileName: DivideIsSelector12578.java
+* test content:set StrictDataType=true,Numeric value overflow for a character using $divide operation,
+* 				and the $divide is used as a selector.
+* testlink case:seqDB-12578
 * @author wuyan
     * @Date    2017.9.4
 * @version 1.00
 */
 
-public class AdsIsSelector12572 extends SdbTestBase{
+public class DivideIsSelector12578 extends SdbTestBase{		
 	@DataProvider(name = "operData")
 	public Object[][] generateDatas(){				
 		return new Object[][]{
 			//the parameters: selectorName
 			//test int32 type numberflow
-			new Object[]{"no"},			
+			new Object[]{"no",new Integer(-1)},			
 			//test int64 type numberflow
-			new Object[]{"tlong"},			
+			new Object[]{"tlong",new Long(-1)},			
 			//test arr type numberflow	
-			new Object[]{"arr.$[0]"},	
+			new Object[]{"arr.$[0]",new Integer(-1)},	
 			//the arr type
-			new Object[]{"arr"},
+			new Object[]{"arr",new Integer(-1)},
 		};
 	}
 	
-	private String clName = "abs_selector12572";
+	
+	private String clName = "divide_selector12578";
 	private Sequoiadb sdb = null;
 	private CollectionSpace cs = null;
 	private static DBCollection cl = null;    
@@ -59,8 +60,7 @@ public class AdsIsSelector12572 extends SdbTestBase{
 			Assert.assertTrue(false,"connect %s failed,"+coordUrl+e.getMessage());
 		}
 		
-		String clOption = "{ShardingKey:{no:1},ShardingType:'hash',Partition:1024,"
-				+ "ReplSize:0,Compressed:true, StrictDataMode:true}";
+		String clOption = "{StrictDataMode:true}";
 		cs = sdb.getCollectionSpace(SdbTestBase.csName);
 		cl = Commlib.createCL(cs, clName, clOption);
 		
@@ -69,16 +69,15 @@ public class AdsIsSelector12572 extends SdbTestBase{
 	}
 	
 	@Test(dataProvider = "operData")
-	public void testAds(String selectorName){
+	public void testSubtract(String selectorName, Object sValue){
 		try{
 			BSONObject selector = new BasicBSONObject();
-			BSONObject sValue = new BasicBSONObject();		
-			String operSymbol = "$abs";	
-			sValue.put(operSymbol, 1);
-			selector.put(selectorName, sValue);			
+			BSONObject selectorValue = new BasicBSONObject();				
+			selectorValue.put("$divide", sValue);
+			selector.put(selectorName, selectorValue);			
 			Commlib.isStrictDataTypeOper(cl, selector);	
 		}catch(BaseException e){			
-			Assert.assertTrue(false,"abs is used as selector oper failed,"+e.getMessage());
+			Assert.assertTrue(false,"divide is used as selector oper failed,"+e.getMessage());
 		}		
 	}	
 		
@@ -86,20 +85,14 @@ public class AdsIsSelector12572 extends SdbTestBase{
 	public void tearDown(){
 		try{
 			System.out.println(this.getClass().getName()+" end at "
-					 +new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:S").format(new Date()));			
+					 +new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:S").format(new Date()));
+			cs = sdb.getCollectionSpace(SdbTestBase.csName);
 			if(cs.isCollectionExist(clName)){
 				cs.dropCollection(clName);
-			}			
+			}
+			sdb.close();
 		}catch(BaseException e){
 			Assert.fail("clear env failed, errMsg:" + e.getMessage());
-		}finally {
-			if (sdb != null){
-				sdb.close();
-			}
 		}
-	}
-	
-		
-	
-
+	}	
 }

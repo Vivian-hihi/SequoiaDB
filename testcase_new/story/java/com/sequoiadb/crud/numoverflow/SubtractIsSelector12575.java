@@ -34,13 +34,13 @@ public class SubtractIsSelector12575 extends SdbTestBase{
 		return new Object[][]{
 			//the parameters: selectorName
 			//test int32 type numberflow
-			new Object[]{"no"},			
+			new Object[]{"no", new Integer(1)},			
 			//test int64 type numberflow
-			new Object[]{"tlong"},			
+			new Object[]{"tlong",new Long(2)},			
 			//test arr type numberflow	
-			new Object[]{"arr.$[0]"},	
-			//the arr type
-			new Object[]{"arr"},
+			new Object[]{"arr.$[1]",new Long(-9223372036854775800L)},	
+			//the arr type numberflow
+			new Object[]{"arr",new Integer(-1)},
 		};
 	}
 	
@@ -64,21 +64,20 @@ public class SubtractIsSelector12575 extends SdbTestBase{
 		cs = sdb.getCollectionSpace(SdbTestBase.csName);
 		cl = Commlib.createCL(cs, clName, clOption);
 		
-		String []records = {"{'no':-2147483648,'tlong':{'$numberLong':'-9223372036854775808'},'arr':[-2147483648,-1.7e+304]}"};
+		String []records = {"{'no':-2147483648,'tlong':{'$numberLong':'-9223372036854775808'},'arr':[2147483647,235]}"};
 		Commlib.insert(cl, records);
 	}
 	
 	@Test(dataProvider = "operData")
-	public void testSubtract(String selectorName){
+	public void testSubtract(String selectorName, Object sValue){
 		try{
 			BSONObject selector = new BasicBSONObject();
-			BSONObject sValue = new BasicBSONObject();		
-			String operSymbol = "$subtract";	
-			sValue.put(operSymbol, 1);
-			selector.put(selectorName, sValue);			
-			Commlib.isStrictDataTypeOper(cl, operSymbol, selector);	
+			BSONObject selectorValue = new BasicBSONObject();			
+			selectorValue.put("$subtract", sValue);
+			selector.put(selectorName, selectorValue);		
+			Commlib.isStrictDataTypeOper(cl, selector);	
 		}catch(BaseException e){			
-			Assert.assertTrue(false,"abs is used as selector oper failed,"+e.getMessage());
+			Assert.assertTrue(false,"subtract is used as selector oper failed,"+e.getMessage());
 		}		
 	}	
 		
@@ -89,7 +88,7 @@ public class SubtractIsSelector12575 extends SdbTestBase{
 					 +new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:S").format(new Date()));
 			cs = sdb.getCollectionSpace(SdbTestBase.csName);
 			if(cs.isCollectionExist(clName)){
-				cs.dropCollection(clName);
+				//cs.dropCollection(clName);
 			}
 			sdb.close();
 		}catch(BaseException e){

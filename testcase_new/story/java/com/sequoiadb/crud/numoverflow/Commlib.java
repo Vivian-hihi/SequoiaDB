@@ -129,9 +129,10 @@ public class Commlib {
 			sValue1.put("$include",0);	
 			selector.put(selectorName, sValue);
 			selector.put("_id", sValue1);
+			System.out.println("selector="+selector.toString());
 			query.setSelector(selector);	
 			query.setMatcher(matcher);		
-			DBCursor cursor = cl.query(query);
+			DBCursor cursor = cl.query(query);			
 			List<BSONObject> actualList= new ArrayList<BSONObject>(); 			
 			
 	        while( cursor.hasNext() ) {
@@ -144,7 +145,8 @@ public class Commlib {
 	        List<BSONObject> expectedList= new ArrayList<BSONObject>();
 			for (int i = 0; i < expRecords.length; i++) {	
 				BSONObject expRecord =(BSONObject) JSON.parse(expRecords[i]);
-				expectedList.add(expRecord);                
+				expectedList.add(expRecord); 
+				System.out.println("exp=="+expectedList.toString());
             }			
 			Assert.assertEquals(actualList, expectedList,"the actual query datas is error");  	              		
 		}catch(BaseException e){			
@@ -206,7 +208,8 @@ public class Commlib {
     }
 		
         
-    public static void checkDataType(DBCollection cl,BSONObject sValue,int matcherValue,String selectorName, String expType,Boolean isVerifyTypeToJava,String expTypeToJava) throws Exception{
+    public static void checkDataType(DBCollection cl,BSONObject sValue,int matcherValue,String selectorName, 
+    		String expTypeToSdb,Boolean isVerifyTypeToJava,String expTypeToJava) throws Exception{
 		try{
 			if(!selectorName.contains("$")){
 				DBQuery query = new DBQuery();
@@ -231,7 +234,7 @@ public class Commlib {
 		            
 		        } 	        
 		        cursor.close(); 
-		        Assert.assertEquals(type, expType,"the numtype is error");	  
+		        Assert.assertEquals(type, expTypeToSdb,"the numtype is error");	  
 		        
 		        //check the data type from java client
 		        if(isVerifyTypeToJava){
