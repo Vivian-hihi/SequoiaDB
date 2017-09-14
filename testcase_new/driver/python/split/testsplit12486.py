@@ -3,22 +3,21 @@
 # @testlink:   seqDB-12463
 # @author:     LaoJingTang 2017-8-30
 
-from lib import testsplitbase
 from lib import testlib
 from pysequoiadb import client
 
 
-class TestSplit12486(testsplitbase.TestSplitBase):
+class TestSplit12486(testlib.SdbTestBase):
    def setUp(self):
-      self.init_db()
-      if self.is_standalone():
+      self.db_list=[]
+      if testlib.is_standalone():
          self.skipTest("skip! This testcase do not support standlone")
 
-      if len(self.get_data_group()) < 2:
+      if testlib.get_data_groups().__len__() < 2:
          print("only have signal group")
          self.skipTest("only have signal group")
 
-      l=self.get_data_group()
+      l=testlib.get_data_groups()
       self.g1 = l[0]
       self.g2 = l[1]
       self.g1_name = self.g1["GroupName"]
@@ -66,10 +65,10 @@ class TestSplit12486(testsplitbase.TestSplitBase):
          target_group_expect_list=[{"a":i} for i in range(50,100)]
       cl1 = self.get_cl_from_group_master(self.g1_name)
       cl2 = self.get_cl_from_group_master(self.g2_name)
-      r1=self.get_records(cl1.query());
-      r2=self.get_records(cl2.query());
-      self.assert_list_equal(source_group_expect_list,r1)
-      self.assert_list_equal(target_group_expect_list,r2)
+      r1=testlib.get_all_records_noid(cl1.query());
+      r2=testlib.get_all_records_noid(cl2.query());
+      self.assertListEqualUnordered(source_group_expect_list, r1)
+      self.assertListEqualUnordered(target_group_expect_list, r2)
 
    def test_async_hash_percent(self):
       """
@@ -129,6 +128,7 @@ class TestSplit12486(testsplitbase.TestSplitBase):
       self._split_test(split, cl_option=cl_option,insert_list=insert_list,assert_func=assert_split)
 
    def tearDown(self):
-      if testlib.should_clear_env(self):
+      if self.should_clean_env():
          self.drop_cs()
-      self.close_db()
+      for x in self.db_list:
+         x.disconnect()
