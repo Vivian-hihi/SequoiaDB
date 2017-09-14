@@ -12,25 +12,23 @@ from pysequoiadb.error import (SDBTypeError, SDBBaseError, SDBEndOfCursor, SDBEr
 from lib import testlib
 import random
 
-cs_name = "cs_12501"
-cl_name = "cl_12501"
-username = 'user'
-password = 'password'
-cl_full_name = cs_name + "." + cl_name
 insert_nums = 100
-class TestConnect12501(unittest.TestCase):
+class TestConnect12501(testlib.SdbTestBase):
    def setUp(self):
-      testlib.print_setup_msg(self)
-      self.db = testlib.default_db()
-      if (self.is_stand_alone()):
-         self.skipTest('current environment is standalone')
-      dataGroupNames = self.get_data_groupnames()
-      self.groupName = dataGroupNames[0]
-      self.create_cs_cl(cs_name,cl_name)
+      if testlib.is_standalone():
+         self.skipTest('current environment is standalone')  
+			
+      dataGroups = testlib.get_data_groups()
+      group = dataGroups[0]
+      self.groupName = group["GroupName"]
+		
+      cl_option = {'ReplSize': 3 ,'Group': self.groupName}
+      self.create_cs_cl(0,cl_option)
       self.insert_datas()
 
    def testConnect12501(self):
       # check catalog
+      cl_full_name = self.cl_name_qualified
       condition = {'Name': cl_full_name}
       expectResult = {'Name': cl_full_name , 'ReplSize': 3 , 'GroupName': self.groupName}
       self.get_catalog_info(condition,expectResult)
@@ -41,53 +39,8 @@ class TestConnect12501(unittest.TestCase):
       self.check_disconnect_node()
 
    def tearDown(self):
-      try:
-         testlib.print_teardown_msg(self)
-         # reconnect sdb
-         self.db = testlib.default_db()
-         self.db.drop_collection_space(cs_name)
-         self.db.disconnect()
-      except SDBBaseError as e:
-         if (-34 != e.code):
-            self.fail('teardown fail: ' + e.detail)
-
-   def is_stand_alone(self):
-      try:
-         cursor = self.db.list_replica_groups()
-      except SDBBaseError as e:
-         if(-159 == e.code):
-            return True
-      return False
-
-   def get_data_groupnames(self):
-      groupNames = []
-      cr = self.db.get_list(7)
-      while True:
-         try:
-            rec = cr.next()
-            groupNames.append(rec['GroupName'])
-         except SDBEndOfCursor:
-            break
-      groupNames.remove("SYSCatalogGroup")
-      groupNames.remove("SYSCoord")
-      return groupNames
-
-   def clean_cs(self,csname):
-      try:
-         self.db.drop_collection_space(csname)
-      except SDBBaseError as e:
-         pass
-
-   def create_cs_cl(self,csname,clname):
-      self.clean_cs(csname)
-      try:
-         self.cs = self.db.create_collection_space(csname)
-         # create cl with options
-         options = {'ReplSize': 3, 'Group': self.groupName}
-         self.cl = self.cs.create_collection(clname, options)
-         print('create cl success')
-      except SDBBaseError as e:
-         self.fail('create cl fail: ' + e.detail)
+      if self.should_clean_env():
+         self.drop_cs()    
 
    def insert_datas(self):
       flag = 0
@@ -100,23 +53,27 @@ class TestConnect12501(unittest.TestCase):
          self.fail('insert fail: ' + e.detail)
 
    def get_catalog_info(self,cond,expectRec):
+      new_db = testlib.default_db()
       try:
          # connect to catalog primary node
-         cata_rg = self.db.get_replica_group_by_name('SYSCatalogGroup')
+         cata_rg = new_db.get_replica_group_by_name('SYSCatalogGroup')
          cata_node = cata_rg.get_master().get_nodename()
          node_name = cata_node.split(":")
 
          hostname = node_name[0]
          svcname = node_name[1]
-         self.db.connect(hostname,svcname,user = username,password = password)
+         new_db.connect(hostname,svcname)
 
          # check catalog info
-         cata_cl = self.db.get_collection('SYSCAT.SYSCOLLECTIONS')
+         cl_full_name = self.cl_name_qualified
+         cata_cl = new_db.get_collection('SYSCAT.SYSCOLLECTIONS')
          actRec = cata_cl.query(condition = {'Name': cl_full_name}).next()
 
          self.check_catalog_result(expectRec, actRec)
       except SDBBaseError as e:
          self.fail('check catalog fail: ' + e.detail)
+      finally:
+         new_db.disconnect()		
 
    def check_catalog_result(self,expectRec,actRec):
       msg = str(expectRec) + " not equal " + str(actRec)
@@ -129,9 +86,6 @@ class TestConnect12501(unittest.TestCase):
    def get_data_nodes(self):
       nodeAddrs = []
       try:   
-         # reconnect to coord
-         self.db.disconnect()
-         self.db = testlib.default_db()
          # get nodes
          rg = self.db.get_replica_group_by_name(self.groupName)
          rec = rg.get_detail()
@@ -151,6 +105,7 @@ class TestConnect12501(unittest.TestCase):
       return nodeAddrs
 
    def check_connect_node(self):
+      new_db = testlib.default_db()
       try:
          repeatTime = 10
          hosts = self.get_data_nodes()
@@ -159,34 +114,37 @@ class TestConnect12501(unittest.TestCase):
             # choose a random policy option
             option = random.choice(['local_first','one_by_one','random'])
             # connect to a data node with option
-            self.db.connect_to_hosts(hosts, user = username, password = password, policy = option)
+            new_db.connect_to_hosts(hosts, policy = option)
             # check data result
-            self.check_connect_result()
-
+            self.check_connect_result(new_db)
       except SDBBaseError as e:
          self.fail("connect to node fail: " + e.detail)
+      finally:
+         new_db.disconnect()		
 
-   def check_connect_result(self):
+   def check_connect_result(self,node_db):
       try:
          # get new cl
-         new_cl = self.db.get_collection(cl_full_name)
+         cl_full_name = self.cl_name_qualified
+         new_cl = node_db.get_collection(cl_full_name)
          actCount = new_cl.get_count()
          self.assertEqual(insert_nums, actCount)
       except SDBBaseError as e:
          self.fail('check node fail: ' + e.detail)
 
    def check_disconnect_node(self):
+      new_db = testlib.default_db()
       try:
-         self.db.disconnect()
+         new_db.disconnect()
          # check disconnect
          expectRec = 0
-         self.check_disconnect_result(expectRec)
+         self.check_disconnect_result(new_db,expectRec)
       except SDBBaseError as e:
          self.fail('disconnect node fail: ' + e.detail)
 
-   def check_disconnect_result(self,expectRec):
+   def check_disconnect_result(self,new_db,expectRec):
       try:
-         actRec = self.db.is_valid()
+         actRec = new_db.is_valid()
          self.assertEqual(expectRec,actRec,'node still valid')
       except SDBBaseError as e:
          self.fail('check disconnect node fail: ' + e.detail)

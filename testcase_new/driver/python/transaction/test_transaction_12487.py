@@ -9,17 +9,12 @@ import datetime
 from pysequoiadb.error import (SDBTypeError, SDBBaseError, SDBEndOfCursor, SDBError)
 from lib import testlib
 
-cs_name = "cs_12487"
-cl_name = "cl_12487"
 insert_nums = 100
-
-class TestTransaction12487(unittest.TestCase):
+class TestTransaction12487(testlib.SdbTestBase):
    def setUp(self):
-      testlib.print_setup_msg(self)
-      self.db = testlib.default_db()
-      if (self.is_stand_alone()):
+      if testlib.is_standalone():
          self.skipTest('current environment is standalone')
-      self.create_cs_cl(cs_name,cl_name)
+      self.create_cs_cl()
 
    def testTransaction12487(self):
       # begin to do transaction
@@ -53,36 +48,8 @@ class TestTransaction12487(unittest.TestCase):
       self.check_result(condition, expectResult)
 
    def tearDown(self):
-      try:
-         testlib.print_teardown_msg(self)
-         self.db.drop_collection_space(cs_name)
-         self.db.disconnect()
-      except SDBBaseError as e:
-         if (-34 != e.code):
-            self.fail('tearDown fail: ' + e.detail)
-
-   def is_stand_alone(self):
-      try:
-         cursor = self.db.list_replica_groups()
-      except SDBBaseError as e:
-         if(-159 == e.code):
-            return True
-      return False
-
-   def clean_cs(self,csname):
-      try:
-         self.db.drop_collection_space(csname)
-      except SDBBaseError as e:
-         pass
-
-   def create_cs_cl(self,csname,clname):
-      self.clean_cs(csname)
-      try:
-         self.cs = self.db.create_collection_space(csname)
-         self.cl = self.cs.create_collection(clname)
-         print('create cl success')
-      except SDBBaseError as e:
-         self.fail('create cl fail: ' + e.detail)
+      if self.should_clean_env():
+         self.drop_cs()   
 
    def begin_transaction(self):
       try:
@@ -125,20 +92,8 @@ class TestTransaction12487(unittest.TestCase):
          else:
             cursor = self.cl.query(condition = cond, order_by = {"_id": 1})
 
-         actRec = self.get_act_result(cursor)
+         actRec = testlib.get_all_records_noid(cursor)
          # check result
-         testlib.assert_list_equal(self, expectRec, actRec)
+         self.assertListEqualUnordered(expectRec, actRec)
       except SDBBaseError as e:
          self.fail('check result fail: ' + e.detail)
-
-   def get_act_result(self, cursor):
-      actResult = []
-      while True:
-         try:
-            rec = cursor.next()
-            rec.pop('_id')
-            actResult.append(rec)
-         except SDBEndOfCursor:
-            cursor.close()
-            break
-      return actResult

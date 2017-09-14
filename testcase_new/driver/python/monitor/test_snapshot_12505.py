@@ -10,20 +10,15 @@ from pysequoiadb.error import (SDBTypeError, SDBBaseError, SDBEndOfCursor, SDBEr
 import time
 from lib import testlib
 
-cs_name = "cs_12505"
-cl_name = "cl_12505"
 snap_type_5 = 5
-class TestSnapshot12505(unittest.TestCase):
+class TestSnapshot12505(testlib.SdbTestBase):
    def setUp(self):
-      testlib.print_setup_msg(self)
-      self.db = testlib.default_db()
-      self.create_cs_cl(cs_name,cl_name)
+      self.create_cs_cl()
 
    def testSnapshot12505(self):
-      condition = [{"Name": cs_name} , None]
+      condition = [{"Name": self.cs_name} , None]
 
-      cl_full_name = cs_name + "." + cl_name
-      expectResult = {"Name": cs_name}
+      expectResult = {"Name": self.cs_name}
 
       # check snapshot with option
       self.get_snapshot_5(expectResult, condition[0])
@@ -41,28 +36,8 @@ class TestSnapshot12505(unittest.TestCase):
       self.check_reset_snapshot(condition[0])
 
    def tearDown(self):
-      try:
-         testlib.print_teardown_msg(self)
-         self.db.drop_collection_space(cs_name)
-         self.db.disconnect()
-      except SDBBaseError as e:
-         if (-34 != e.code):
-            self.fail('tearDown fail: ' + e.detail)
-
-   def clean_cs(self,csname):
-      try:
-         self.db.drop_collection_space(csname)
-      except SDBBaseError as e:
-         pass
-
-   def create_cs_cl(self,csname,clname):
-       self.clean_cs(csname)
-       try:
-          self.cs = self.db.create_collection_space(csname)
-          self.cl = self.cs.create_collection(clname)
-          print('create cl success')
-       except SDBBaseError as e:
-          self.fail('create cl fail: ' + e.detail)
+      if self.should_clean_env():
+         self.drop_cs()
 
    def get_snapshot_5(self,expectRec,cond):
       try:
@@ -84,7 +59,7 @@ class TestSnapshot12505(unittest.TestCase):
       while True:
          try:
             rec = cursor.next()
-            if cs_name == rec['Name']:
+            if self.cs_name == rec['Name']:
                cursor.close()
                break
          except SDBEndOfCursor:

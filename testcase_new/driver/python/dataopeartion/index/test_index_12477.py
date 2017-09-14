@@ -10,15 +10,10 @@ import datetime
 from pysequoiadb.error import (SDBTypeError, SDBBaseError, SDBEndOfCursor, SDBError)
 from lib import testlib
 
-cs_name = "cs_12477"
-cl_name = "cl_12477"
 insert_nums = 100
-
-class TestIdIndex12477(unittest.TestCase):
+class TestIdIndex12477(testlib.SdbTestBase):
    def setUp(self):
-      testlib.print_setup_msg(self)
-      self.db = testlib.default_db()
-      self.create_cs_cl(cs_name,cl_name)
+      self.create_cs_cl()
       self.insert_datas()
 
    def testIdIndex12477(self):
@@ -42,28 +37,8 @@ class TestIdIndex12477(unittest.TestCase):
       self.check_update_result(is_success)
 
    def tearDown(self):
-      try:
-         testlib.print_teardown_msg(self)
-         self.db.drop_collection_space(cs_name)
-         self.db.disconnect()
-      except SDBBaseError as e:
-         if (-34 != e.code):
-            self.fail('teardown fail: ' + e.detail)  
-
-   def clean_cs(self,csname):
-      try:
-         self.db.drop_collection_space(csname)
-      except SDBError as e:
-         pass
-
-   def create_cs_cl(self,csname,clname):
-      self.clean_cs(csname)
-      try:
-         self.cs = self.db.create_collection_space(csname)
-         self.cl = self.cs.create_collection(clname,{'AutoIndexId': False})
-         print('create cl success')
-      except SDBError as e:
-         self.fail('create cl fail: ' + e.detail)  
+      if self.should_clean_env():
+         self.drop_cs()  
 
    def insert_datas(self):
       doc = []

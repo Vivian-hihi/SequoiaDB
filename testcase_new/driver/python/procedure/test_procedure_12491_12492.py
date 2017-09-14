@@ -12,13 +12,10 @@ from pysequoiadb.error import (SDBTypeError, SDBBaseError, SDBEndOfCursor, SDBEr
 from bson.code import Code
 from lib import testlib
 
-
-class TestProcedure12491(unittest.TestCase):
+class TestProcedure12491(testlib.SdbTestBase):
    def setUp(self):
-      testlib.print_setup_msg(self)
-      self.db = testlib.default_db()
-      if (self.is_stand_alone()):
-         self.skipTest('current environment is standalone')
+      if testlib.is_standalone():
+         self.skipTest('current environment is standalone')  
 
    def testProcedure12491(self):
       # check create result
@@ -44,19 +41,8 @@ class TestProcedure12491(unittest.TestCase):
       self.check_remove_none_procedure(names)
 
    def tearDown(self):
-      try:
-         testlib.print_teardown_msg(self)
-         self.db.disconnect()
-      except SDBBaseError as e:
-          self.fail('tearDown fail: ' + e.detail)
-
-   def is_stand_alone(self):
-      try:
-         cursor = self.db.list_replica_groups()
-      except SDBBaseError as e:
-         if(-159 == e.code):
-            return True
-      return False
+      if self.should_clean_env():
+         self.drop_cs()   
 
    def check_create_procedure(self,code):
       try:

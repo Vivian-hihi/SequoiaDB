@@ -10,11 +10,9 @@ from lib import testlib
 
 USERNAME = "admin"
 PASSWORD = "admin"
-class TestCreateUsr12490(unittest.TestCase):
+class TestCreateUsr12490(testlib.SdbTestBase):
    def setUp(self):
-      testlib.print_setup_msg(self)
-      self.db = testlib.default_db()
-      if (self.is_stand_alone()):
+      if testlib.is_standalone():
          self.skipTest('current environment is standalone')
 
    def testCreateUsr12490(self):
@@ -29,22 +27,13 @@ class TestCreateUsr12490(unittest.TestCase):
          self.check_create_user(USERNAME, PASSWORD, not is_success)
 
    def tearDown(self):
-      try:
-         testlib.print_teardown_msg(self)
-         self.db.remove_user(USERNAME,PASSWORD)
-         self.db.disconnect()
-      except SDBBaseError as e:
-         # user or password not exist
-         if (-300 != e.code):
-            self.fail('teardown fail: ' + e.detail)
-
-   def is_stand_alone(self):
-      try:
-         cursor = self.db.list_replica_groups()
-      except SDBBaseError as e:
-         if(-159 == e.code):
-            return True
-      return False
+      if self.should_clean_env():
+         try:
+            self.db.remove_user(USERNAME,PASSWORD)
+         except SDBBaseError as e:
+            # user or password not exist
+            if (-300 != e.code):
+               self.fail('teardown fail: ' + e.detail)
 
    def check_create_user(self,username,password,is_success):
       try:

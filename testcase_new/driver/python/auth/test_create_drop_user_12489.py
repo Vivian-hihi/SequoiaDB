@@ -10,17 +10,21 @@ from pysequoiadb.error import (SDBTypeError, SDBBaseError, SDBEndOfCursor, SDBEr
 from pysequoiadb import client
 from lib import sdbconfig
 from lib import testlib
+import random
 
 USERNAME = "admin"
 PASSWORD = "admin"
-cs_name = "cs_12489"
-cl_name = "cl_12489"
-class TestCreateDropUsr12489(unittest.TestCase):
+insert_nums = 100
+class TestCreateDropUsr12489(testlib.SdbTestBase):
    def setUp(self):
-      testlib.print_setup_msg(self)
-      self.db = testlib.default_db()
-      if (self.is_stand_alone()):
-         self.skipTest('current environment is standalone')
+      if testlib.is_standalone():
+         self.skipTest('current environment is standalone')   
+		# get config	
+      self.config = sdbconfig.SdbConfig()
+		# get group
+      dataGroups = testlib.get_data_groups()
+      group = dataGroups[0]
+      self.groupName = group["GroupName"]			
 
    def testCreateDropUsr12489(self):
 
@@ -31,37 +35,57 @@ class TestCreateDropUsr12489(unittest.TestCase):
       # reconnect sdb with user
       self.check_reconnect_db(USERNAME,PASSWORD)
       # create cl
-      self.create_cl()
+      cl_option = {'ReplSize': 3 ,'Group': self.groupName}
+      self.create_cs_cl(0,cl_option)
       # check insert
-      self.check_insert()
+      self.insert_datas()
+		# check connect catalog
+      self.check_connect_catalog(USERNAME,PASSWORD)
+		# check connect node
+      self.check_connect_node(USERNAME,PASSWORD)
       # drop user
       self.db.remove_user(USERNAME, PASSWORD)
       # check drop result
       self.check_drop_user(USERNAME,PASSWORD)
 
    def tearDown(self):
-      try:
-         testlib.print_teardown_msg(self)
-         self.db.drop_collection_space(cs_name)
-         self.db.disconnect()
-      except SDBBaseError as e:
-         if (-34 != e.code):
-            self.fail('teardown fail: ' + e.detail)
+      if self.should_clean_env():
+         self.drop_cs()
+         try:
+            self.db.remove_user(USERNAME, PASSWORD)
+         except SDBBaseError as e:
+            self.assertEqual(-300, e.code, "error msg: " + e.detail)			
+	
+   # used to do connecting	
+   def get_data_nodes(self):
+      nodeAddrs = []
+      try:   
+         # get nodes
+         rg = self.db.get_replica_group_by_name(self.groupName)
+         rec = rg.get_detail()
+         groups = rec['Group']
 
-   def is_stand_alone(self):
-      try:
-         cursor = self.db.list_replica_groups()
+         for i in range(len(groups)):
+            group = groups[i]
+            host_name = group['HostName']
+            service = group['Service']
+            svc = service[0]
+            svc_name = svc['Name']
+            nodeAddrs.append({'host' : host_name , 'service': svc_name})
       except SDBBaseError as e:
-         if(-159 == e.code):
-            return True
-      return False
+         self.fail("get groupAdrr fail: " + e.detail)
+			
+      return nodeAddrs		
 
-   def check_create_user(self,username,password):
+   def insert_datas(self):
+      flag = 0
+      doc = []
+      for i in range(0, insert_nums):
+         doc.append({"a": "test" + str(i)})
       try:
-         self.db.create_user(username, password)
+         self.cl.bulk_insert(flag, doc)
       except SDBBaseError as e:
-         if(-295 != e.code):
-            self.fail('create user fail: ' + e.detail)
+         self.fail('insert fail: ' + e.detail)
 
    def check_create_user(self,username,password):
       try:
@@ -71,39 +95,57 @@ class TestCreateDropUsr12489(unittest.TestCase):
             self.fail('create user fail: ' + e.detail)
 
    def check_reconnect_db(self,username,password):
-       try:
-           config = sdbconfig.SdbConfig()
-           self.db = client(config.host_name, config.service, username, password)
-       except SDBBaseError as e:
-           self.fail('reconnect with username fail: ' + e.detail)
-
-   def clean_cs(self):
       try:
-         self.db.drop_collection_space(cs_name)
+         self.db = client(self.config.host_name, self.config.service, username, password)
       except SDBBaseError as e:
-         pass
-
-   def create_cl(self):
-      self.clean_cs()
+         self.fail('reconnect with username fail: ' + e.detail)
+	
+   # seqDB-12501, check connect(username,password)	
+   def check_connect_catalog(self,username,password):
+      new_db = testlib.client(self.config.host_name, self.config.service, username, password)
       try:
-         self.cs = self.db.create_collection_space(cs_name)
-         self.cl = self.cs.create_collection(cl_name)
-         print( 'create cl success' )
+         cata_rg = new_db.get_replica_group_by_name('SYSCatalogGroup')
+         cata_node = cata_rg.get_master().get_nodename()
+         node_name = cata_node.split(":")
+
+         hostname = node_name[0]
+         svcname = node_name[1]
+			
+         new_db.connect(hostname,svcname,user = username,password = password)
       except SDBBaseError as e:
-         print(e.detail)
-         raise e
+         self.fail("connect to catalog fail: " + e.detail)
+      finally:
+         new_db.disconnect()	
 
-   def check_insert(self):
-       flag = 0
-       doc = []
-       insert_nums = 100
-       for i in range(0, insert_nums):
-           doc.append({"a": "test" + str(i)})
-       try:
-           self.cl.bulk_insert(flag, doc)
-       except SDBBaseError as e:
-           self.fail('insert fail: ' + e.detail)
+   # seqDB-12501, check connect_to_hosts(username,password,kwargs)	
+   def check_connect_node(self,username,password):
+      new_db = testlib.client(self.config.host_name, self.config.service, username, password)
+      try:
+         repeatTime = 10
+         hosts = self.get_data_nodes()
 
+         for i in range(repeatTime):
+            # choose a random policy option
+            option = random.choice(['local_first','one_by_one','random'])
+            # connect to a data node with option
+            new_db.connect_to_hosts(hosts,user = username,password = password,policy = option)
+				# check data result
+            self.check_connect_result(new_db)
+      except SDBBaseError as e:
+         self.fail("connect to node fail: " + e.detail)
+      finally:
+         new_db.disconnect()	
+			
+   def check_connect_result(self,node_db):
+      try:
+         # get new cl
+         cl_full_name = self.cl_name_qualified
+         new_cl = node_db.get_collection(cl_full_name)
+         actCount = new_cl.get_count()
+         self.assertEqual(insert_nums, actCount)
+      except SDBBaseError as e:
+         self.fail('check node fail: ' + e.detail)		
+			
    def check_drop_user(self,username,password):
       try:
          self.db.remove_user(username, password)

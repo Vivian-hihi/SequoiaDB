@@ -8,59 +8,28 @@ import datetime
 from pysequoiadb.error import (SDBTypeError, SDBBaseError, SDBEndOfCursor, SDBError)
 from lib import testlib
 
-cs_name = "cs_12504"
-cl_name = "cl_12504"
-cl_num = 5
 insert_nums = 100
-class TestList12504(unittest.TestCase):
+class TestList12504(testlib.SdbTestBase):
    def setUp(self):
-      testlib.print_setup_msg(self)
-      self.db = testlib.default_db()
-      self.create_cs_cl(cs_name,cl_name)
+      self.create_cs_cl()
       self.insert_datas()
 
    def testList12504(self):
 
-      cl_full_name = cs_name + "." + cl_name + "_1"
+      cl_full_name = self.cl_name_qualified
       condition = [{"Name": cl_full_name} , None]
 
       # check list with option
-      expectResult1 = [cl_full_name]
-      self.get_list_4(expectResult1, condition[0])
+      expectResult = [cl_full_name]
+      self.get_list_4(expectResult, condition[0])
 
       # check list without option
-      expectResult2 = []
-      for i in range(1, cl_num + 1):
-         expectResult2.append(cs_name + "." + cl_name  + "_" + str(i))
-      self.get_list_4(expectResult2, condition[1])
+      expectResult2 = [cl_full_name]
+      self.get_list_4(expectResult, condition[1])
 
    def tearDown(self):
-      try:
-         testlib.print_teardown_msg(self)
-         self.db.drop_collection_space(cs_name)
-         self.db.disconnect()
-      except SDBBaseError as e:
-         if (-34 != e.code):
-            self.fail('tearDown cl fail: ' + e.detail) 
-
-   def clean_cs(self,csname):
-      try:
-         self.db.drop_collection_space(csname)
-      except SDBBaseError as e:
-         pass
-
-   def create_cs_cl(self,csname,clname):
-       self.clean_cs(csname)
-       try:
-          self.cs = self.db.create_collection_space(csname)
-          self.cls = []
-          # create CLs
-          for i in range(1, cl_num + 1):
-             self.cl = self.cs.create_collection(clname + "_" + str(i))
-             self.cls.append(self.cl)
-          print('create CLs success')
-       except SDBBaseError as e:
-          self.fail('create cl fail: ' + e.detail) 
+      if self.should_clean_env():
+         self.drop_cs()
 
    def insert_datas(self):
       flag = 0
@@ -68,8 +37,7 @@ class TestList12504(unittest.TestCase):
       for i in range(0,insert_nums):
          doc.append({"a":"test" + str(i)})
       try:
-         for i in range(0, cl_num):
-            self.cls[i].bulk_insert(flag,doc)
+         self.cl.bulk_insert(flag,doc)
       except SDBBaseError as e:
          self.fail('insert fail: ' + e.detail) 
 

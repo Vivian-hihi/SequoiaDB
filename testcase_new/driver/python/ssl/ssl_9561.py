@@ -9,41 +9,18 @@ from pysequoiadb import client
 from lib import sdbconfig
 from lib import testlib
 
-cs_name = "cs_9561"
-cl_name = "cl_9561"
-class TestSSL9561(unittest.TestCase):
+class TestSSL9561(testlib.SdbTestBase):
     def setUp(self):
-        testlib.print_setup_msg(self)
         self.config = sdbconfig.SdbConfig()
         self.db = client(self.config.host_name, self.config.service, '', '', False)
-        self.clean_cs(cs_name)
 
     def testSSL9561(self):
-       self.check_create_cl(cs_name,cl_name)
+       self.create_cs_cl()
        self.check_with_ssl()
 
     def tearDown(self):
-       try:
-          testlib.print_teardown_msg(self)
-          self.db.drop_collection_space(cs_name)
-          self.db.disconnect()
-       except SDBBaseError as e:
-          if (-34 != e.code):
-             self.fail('tearDown fail: ' + e.detail)
-
-    def clean_cs(self,csname):
-       try:
-          self.db.drop_collection_space(csname)
-       except SDBBaseError as e:
-          pass
-
-    def check_create_cl(self,csname,clname):
-       try:
-          self.cs = self.db.create_collection_space(csname)
-          self.cl = self.cs.create_collection(clname)
-          print('create cl success')
-       except SDBBaseError as e:
-          self.fail('create cl fail: ' + e.detail)
+      if self.should_clean_env():
+         self.drop_cs()   
 
     def check_with_ssl(self):
        new_db = None

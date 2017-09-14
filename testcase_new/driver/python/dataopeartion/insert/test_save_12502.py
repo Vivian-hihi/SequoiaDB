@@ -9,22 +9,21 @@ from pysequoiadb.error import (SDBTypeError, SDBBaseError, SDBEndOfCursor,SDBErr
 from bson.objectid import ObjectId
 from lib import testlib
 
-cs_name = "cs_12502"
-cl_name = "cl_12502"
-class TestSave12502(unittest.TestCase):
+class TestSave12502(testlib.SdbTestBase):
    def setUp(self):
-      testlib.print_setup_msg(self)
-      self.db = testlib.default_db()
-      if (self.is_stand_alone()):
-         self.skipTest('current environment less than tow groups')
-      if (self.one_group_mode()):
+      if testlib.is_standalone():
+         self.skipTest('current environment is standalone')  
+      if (2 > testlib.get_data_group_num()):
          self.skipTest('need at least 2 data groups')
 
-      dataGroupNames = self.get_data_groupnames()
-      srcGroupName = dataGroupNames[0]
-      destGroupName = dataGroupNames[1]
+      dataGroups = testlib.get_data_groups()
+      srcGroup = dataGroups[0]
+      destGroup = dataGroups[1]		
+      srcGroupName = srcGroup["GroupName"]
+      destGroupName = destGroup["GroupName"]
 
-      self.create_cs_cl(srcGroupName,cs_name,cl_name)
+      cl_option = {"ShardingKey":{'no':1},"ShardingType":'hash',"Group":srcGroupName}
+      self.create_cs_cl(0,cl_option)
       self.insert_datas()
       self.split_cl(srcGroupName, destGroupName)
       
@@ -91,58 +90,8 @@ class TestSave12502(unittest.TestCase):
          raise e                    
                 
    def tearDown(self):
-      try:
-         print(datetime.datetime.now())
-         self.db.drop_collection_space(cs_name)
-         self.db.disconnect()
-      except SDBBaseError as e:
-         if(-34 != e.code):
-            self.fail('tearDown fail: ' + e.detail) 
- 
-   def is_stand_alone(self):
-      try:
-         cursor = self.db.list_replica_groups()
-      except SDBBaseError as e:
-         if(-159 == e.code):
-            return True
-      return False           
-   
-   def one_group_mode(self):
-      size = len(self.get_data_groupnames())
-      if (2 > size):
-         return True; 
-      return False;
-
-   def get_data_groupnames(self):
-      groupNames = []
-       
-      cr = self.db.get_list(7)   
-      while True:
-         try:
-            rec = cr.next()
-            groupNames.append(rec['GroupName'])
-         except SDBEndOfCursor:
-            break
-      groupNames.remove("SYSCatalogGroup")
-      groupNames.remove("SYSCoord")         
-      return groupNames   
- 
-   def clean_cs(self,csname):
-      try:
-         self.db.drop_collection_space(csname)
-      except SDBBaseError as e:
-         pass	
-			
-   def create_cs_cl(self,srcGroupName,csname,clname):
-      self.clean_cs(csname)
-      try:
-         self.cs = self.db.create_collection_space(csname)
-         #create cl
-         option = {"ShardingKey":{'no':1},"ShardingType":'hash',"Group":srcGroupName}
-         self.cl = self.cs.create_collection(clname , option)
-         print( 'create cl success' )
-      except SDBBaseError as e:
-         self.fail('create cl fail: ' + e.detail)    
+      if self.should_clean_env():
+         self.drop_cs()    	 
   
    def insert_datas(self):   
       objectIds = [ObjectId("53bb5667c5d061d6f579d0bb"),\
