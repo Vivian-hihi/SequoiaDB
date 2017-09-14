@@ -49,7 +49,11 @@ class SdbTestBase(unittest.TestCase):
       :param expected: list expected
       :param actual: list actual
       """
-      msg = "\n" + msg + "\nexpected: " + str(expected) + "\nactual: " + str(actual)
+      if msg != None:
+         msg = "\n" + msg + "\nexpected: " + str(expected) + "\nactual: " + str(actual)
+      else:
+         msg = "\nexpected: " + str(expected) + "\nactual: " + str(actual)
+
       unittest.TestCase.assertEqual(self, len(expected), len(actual), msg=msg)
       for x in actual:
          unittest.TestCase.assertIn(self, x, expected, msg)
@@ -60,7 +64,7 @@ class SdbTestBase(unittest.TestCase):
       if not isinstance(self, unittest.TestCase):
          raise TypeError("should_clear_env() arg must be unittest.TestCase")
 
-      if self.__is_testcase_success(self):
+      if self.__is_testcase_success():
          return True
       else:
          return not sdbconfig.sdb_config.break_on_failure
@@ -97,13 +101,16 @@ class SdbTestBase(unittest.TestCase):
          print("warn: can not judge this testcase success.")
          return True
 
-__is_standlone=None
+
+__is_standlone = None
+
+
 def is_standalone():
    if __is_standlone != None:
       return __is_standlone
    else:
       try:
-         db=default_db()
+         db = default_db()
          db.list_replica_groups()
          return False
       except SDBError as e:
@@ -112,28 +119,31 @@ def is_standalone():
          else:
             raise e
       finally:
-         if db !=None:
+         if db != None:
             db.disconnect()
 
-__groups=[]
-__data_groups=[]
+
+__groups = []
+__data_groups = []
+
 
 def get_groups():
-   if __groups.__len__()>0:
+   if __groups.__len__() > 0:
       return copy(__groups)
    else:
       try:
-         db=default_db()
+         db = default_db()
          cur = db.list_replica_groups()
          r = get_all_records_noid(cur)
          __groups.extend(r)
          return copy(__groups)
       finally:
-         if db!=None:
+         if db != None:
             db.disconnect()
 
+
 def get_data_groups():
-   if __data_groups.__len__()>0:
+   if __data_groups.__len__() > 0:
       return copy(__data_groups)
    else:
       if len(__groups) == 0:
@@ -143,15 +153,18 @@ def get_data_groups():
             __data_groups.append(x)
       return copy(__data_groups)
 
+
 def get_data_group_num():
-   if __data_groups.__len__()>0:
+   if __data_groups.__len__() > 0:
       return __data_groups.__len__()
    else:
       get_data_groups()
       return __data_groups.__len__()
 
+
 def default_db():
    return client(sdbconfig.sdb_config.host_name, sdbconfig.sdb_config.service)
+
 
 def get_all_records(cur):
    """
@@ -168,6 +181,7 @@ def get_all_records(cur):
    cur.close()
    return items
 
+
 def get_all_records_noid(cur):
    items = list()
    while True:
@@ -180,6 +194,3 @@ def get_all_records_noid(cur):
          break
    cur.close()
    return items
-
-
-
