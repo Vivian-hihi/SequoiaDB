@@ -7,36 +7,30 @@
 #              delete(kwargs)
 # @author:     zhaoyu 2017-9-7
 
-import unittest
 from pysequoiadb.error import (SDBBaseError)
-from dataopeartion.bsoncurd.commlib import *
 from lib import testlib
-from lib import sdbconfig
 from bson.json_util import loads
 from bson.json_util import dumps
 from bson.decimal import Decimal
 from collections import OrderedDict
 
 
-class TestDecimal12459(unittest.TestCase):
+class TestDecimal12459(testlib.SdbTestBase):
    def setUp(self):
-      testlib.print_setup_msg(self)
-      self.db = testlib.default_db()
       self.db.set_session_attri({"PreferedInstance": "M"})
-   
-   def test_decimal_12459(self):
+      
       # create cs and cl
       self.cs_name = "cs_12459"
       self.cl_name = "cl_12459"
       try:
          self.db.drop_collection_space(self.cs_name)
       except SDBBaseError as e:
-         if (-34 != e.code):
-            print(e.detail)
-            self.fail("drop_cs_fail")
+         if -34 != e.code:
+            self.fail("drop_cs_fail,detail:" + e.detail)
       self.cs = self.db.create_collection_space(self.cs_name)
-      self.cl = self.cs.create_collection(self.cl_name, {"ReplSize":0})
+      self.cl = self.cs.create_collection(self.cl_name, {"ReplSize": 0})
 
+   def test_decimal_12459(self):
       # seqDB-9462
       obj = Decimal(2147483647, 10, 0)
       doc = OrderedDict([("a", obj), ("_id", 1)])
@@ -586,14 +580,12 @@ class TestDecimal12459(unittest.TestCase):
       self.assertEqual(dumps(loads(json)), json)
 
    def tearDown(self):
-      try:
-         self.db.drop_collection_space(self.cs_name)
-         self.db.disconnect()
-      except SDBBaseError as e:
-         if (-34 != e.code):
-            print(e.detail)
-            self.fail("tear_down_fail")
-      testlib.print_teardown_msg(self)
+      if self.should_clean_env():
+         try:
+            self.db.drop_collection_space(self.cs_name)
+         except SDBBaseError as e:
+            if -34 != e.code:
+               self.fail("tear_down_fail,detail:" + e.detail)
 
    def insert_decimal(self, cl, data):
       try:

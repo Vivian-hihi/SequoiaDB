@@ -5,34 +5,29 @@
 #              delete(kwargs)
 # @author:     Ting YU 2016-8-23/zhaoyu modify 2017-9-7
 
-import unittest
 from pysequoiadb.error import (SDBBaseError)
 from lib import testlib
-from lib import sdbconfig
 from bson.json_util import loads
 from bson.json_util import dumps
 from dataopeartion.bsoncurd.commlib import *
 import bson
 
-class TestNumberLong9460(unittest.TestCase):
+class TestNumberLong9460(testlib.SdbTestBase):
    def setUp(self):
-      testlib.print_setup_msg(self)
-      self.db = testlib.default_db()
       self.db.set_session_attri({"PreferedInstance": "M"})
 
-   def test_numberlong_9460(self):
       # create cs and cl
       self.cs_name = "cs_9460"
       self.cl_name = "cl_9460"
       try:
          self.db.drop_collection_space(self.cs_name)
       except SDBBaseError as e:
-         if (-34 != e.code):
-            print(e.detail)
-            self.fail("drop_cs_fail")
+         if -34 != e.code:
+            self.fail("drop_cs_fail,detail:" + e.detail)
       self.cs = self.db.create_collection_space(self.cs_name)
-      self.cl = self.cs.create_collection(self.cl_name, {"ReplSize":0})
-   
+      self.cl = self.cs.create_collection(self.cl_name, {"ReplSize": 0})
+
+   def test_numberlong_9460(self):
       # insert data
       data1 = -9007199254740991
       data2 = 9007199254740991
@@ -232,13 +227,11 @@ class TestNumberLong9460(unittest.TestCase):
          print(e)
    
    def tearDown(self):
-      try:
-         self.db.drop_collection_space(self.cs_name)
-         self.db.disconnect()
-      except SDBBaseError as e:
-         if (-34 != e.code):
-            print(e.detail)
-            self.fail("tear_down_fail")
-      testlib.print_teardown_msg(self)
+      if self.should_clean_env():
+         try:
+            self.db.drop_collection_space(self.cs_name)
+         except SDBBaseError as e:
+            if -34 != e.code:
+               self.fail("tear_down_fail,detail:" + e.detail)
 
  

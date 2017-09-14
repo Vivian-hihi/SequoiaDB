@@ -5,36 +5,31 @@
 #              delete(kwargs)
 # @author:     zhaoyu 2017-9-6
 
-import unittest
 from pysequoiadb.error import (SDBBaseError)
 from dataopeartion.bsoncurd.commlib import *
 from lib import testlib
-from lib import sdbconfig
 from bson.json_util import loads
 from bson.json_util import dumps
 from bson.max_key import MaxKey
 from bson.min_key import MinKey
 
 
-class TestMinKeyMaxKey12460(unittest.TestCase):
+class TestMinKeyMaxKey12460(testlib.SdbTestBase):
    def setUp(self):
-      testlib.print_setup_msg(self)
-      self.db = testlib.default_db()
       self.db.set_session_attri({"PreferedInstance": "M"})
-   
-   def test_minkey_maxkey_12460(self):
+
       # create cs and cl
       self.cs_name = "cs_12460"
       self.cl_name = "cl_12460"
       try:
          self.db.drop_collection_space(self.cs_name)
       except SDBBaseError as e:
-         if (-34 != e.code):
-            print(e.detail)
-            self.fail("drop_cs_fail")
+         if -34 != e.code:
+            self.fail("drop_cs_fail,detail:" + e.detail)
       self.cs = self.db.create_collection_space(self.cs_name)
       self.cl = self.cs.create_collection(self.cl_name)
-      
+   
+   def test_minkey_maxkey_12460(self):
       # insert data
       data1 = MaxKey()
       data2 = MinKey()
@@ -92,11 +87,9 @@ class TestMinKeyMaxKey12460(unittest.TestCase):
       self.assertEqual(json, dumps(loads(json)))
       
    def tearDown(self):
-      try:
-         self.db.drop_collection_space(self.cs_name)
-         self.db.disconnect()
-      except SDBBaseError as e:
-         if (-34 != e.code):
-            print(e.detail)
-            self.fail("tear_down_fail")
-      testlib.print_teardown_msg(self)
+      if self.should_clean_env():
+         try:
+            self.db.drop_collection_space(self.cs_name)
+         except SDBBaseError as e:
+            if -34 != e.code:
+               self.fail("tear_down_fail,detail:" + e.detail)

@@ -5,16 +5,10 @@
 #              drop_collection_space(cs_name)
 # @author:     zhaoyu 2017-8-24
 
-import unittest
 from pysequoiadb.error import (SDBBaseError, SDBEndOfCursor)
-from lib import sdbconfig
 from lib import testlib
 
-class TestMeteData12442(unittest.TestCase):
-   def setUp(self):
-      testlib.print_setup_msg(self)
-      self.db = testlib.default_db()
-
+class TestMeteData12442(testlib.SdbTestBase):
    def test_metedata_12442(self):
       #create cs and cl
       self.cs_name = "cs_12442"
@@ -22,16 +16,16 @@ class TestMeteData12442(unittest.TestCase):
       try:
          self.db.drop_collection_space(self.cs_name)
       except SDBBaseError as e:
-         if(-34 != e.code):
+         if -34 != e.code:
             self.fail("drop_cs_fail,detail:" + e.detail)
-      self.cs = self.db.create_collection_space( self.cs_name )
-      self.cs.create_collection( cl_name )
+      self.cs = self.db.create_collection_space(self.cs_name)
+      self.cs.create_collection(cl_name)
       
       #check cs exists or not
       self.check_list_collection_spaces(self.cs_name, True)
       
       #check cs options
-      cs_options = {"PageSize":65536, "LobPageSize":262144}
+      cs_options = {"PageSize": 65536, "LobPageSize": 262144}
       self.check_cs_snapshot_5(self.cs_name, cs_options)
       
       #drop cs and check exists or not
@@ -39,17 +33,15 @@ class TestMeteData12442(unittest.TestCase):
       self.check_list_collection_spaces(self.cs_name, False)
              
    def tearDown(self):
-      try:
-         self.db.drop_collection_space(self.cs_name)
-         self.db.disconnect()
-      except SDBBaseError as e:
-         if(-34 != e.code):
-            print(e.detail)
-            self.fail("tear_down_fail")
-      testlib.print_teardown_msg(self)
+      if self.should_clean_env():
+         try:
+            self.db.drop_collection_space(self.cs_name)
+         except SDBBaseError as e:
+            if -34 != e.code:
+               self.fail("tear_down_fail,detail:" + e.detail)
 
    def check_cs_snapshot_5(self, cs_name, options):
-      cursor = self.db.get_snapshot( 5, condition = {"Name":cs_name})
+      cursor = self.db.get_snapshot(5, condition={"Name": cs_name})
       while True:
          try:
             record = cursor.next()

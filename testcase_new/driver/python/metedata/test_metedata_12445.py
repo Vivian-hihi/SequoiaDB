@@ -11,53 +11,42 @@
 #              drop_collection_space(cs_name)
 # @author:     zhaoyu 2017-8-29
 
-import unittest
-from metedata.commlib import *
-from lib import sdbconfig
 from lib import testlib
+from pysequoiadb.error import (SDBBaseError, SDBEndOfCursor)
 
-
-class TestMeteData12445(unittest.TestCase):
+class TestMeteData12445(testlib.SdbTestBase):
    def setUp(self):
-      testlib.print_setup_msg(self)
-      self.db = testlib.default_db()
-
+      if testlib.is_standalone():
+         self.skipTest("run mode is standalone")
+      if testlib.get_data_group_num() == 1:
+         self.skipTest("run mode is one group")
       self.maincs_name = "maincs_12445"
       self.subcs_name = "subcs_12445"
       self.maincl_name = "maincl_12445"
-      self.subcl_names = ["subcl_12445_1","subcl_12445_2","subcl_12445_3"]
-      self.maincl_full_name =  self.maincs_name + "." + self.maincl_name
-      self.subcl_full_name1 =  self.subcs_name + "." + self.subcl_names[0]
-      self.subcl_full_name2 =  self.subcs_name + "." + self.subcl_names[1]
-      self.subcl_full_name3 =  self.subcs_name + "." + self.subcl_names[2]
+      self.subcl_names = ["subcl_12445_1", "subcl_12445_2", "subcl_12445_3"]
+      self.maincl_full_name = self.maincs_name + "." + self.maincl_name
+      self.subcl_full_name1 = self.subcs_name + "." + self.subcl_names[0]
+      self.subcl_full_name2 = self.subcs_name + "." + self.subcl_names[1]
+      self.subcl_full_name3 = self.subcs_name + "." + self.subcl_names[2]
       
    def test_metedata_12445(self):
-      if is_standalone( self.db ) == True:
-         print("run mode is standalone")
-         return
-      data_groups = get_data_groups(self.db)
-      if(len(data_groups) == 1):
-         print("only one group")
-         return
-      
+      data_groups = testlib.get_data_groups()
       #get data_groups
-      self.cl_group_name =  data_groups[0]
+      self.cl_group_name =  data_groups[0]['GroupName']
       
       #create cs
       try:
          self.db.drop_collection_space(self.maincs_name)
       except SDBBaseError as e:
-         if(-34 != e.code):
-            print(e.detail)
-            self.fail("drop_cs_fail")
+         if -34 != e.code:
+            self.fail("drop_cs_fail,detail:" + e.detail)
       try:
          self.db.drop_collection_space(self.subcs_name)
       except SDBBaseError as e:
-         if(-34 != e.code):
-            print(e.detail)
-            self.fail("drop_cs_fail")
-      self.maincs = self.db.create_collection_space( self.maincs_name )
-      self.subcs = self.db.create_collection_space( self.subcs_name )
+         if -34 != e.code:
+            self.fail("drop_cs_fail,detail:" + e.detail)
+      self.maincs = self.db.create_collection_space(self.maincs_name)
+      self.subcs = self.db.create_collection_space(self.subcs_name)
       
       #create maincl
       maincl_options = {"IsMainCL":True,"ShardingKey":{"a":1},"ShardingType":"range"}
@@ -65,9 +54,9 @@ class TestMeteData12445(unittest.TestCase):
       
       #create subcl
       self.subcs.create_collection(self.subcl_names[0])
-      subcl_options2 = {"ShardingKey":{"b":1},"ShardingType":"range","Group":self.cl_group_name,"ReplSize":-1}
+      subcl_options2 = {"ShardingKey": {"b": 1}, "ShardingType": "range", "Group": self.cl_group_name, "ReplSize": -1}
       self.subcs.create_collection(self.subcl_names[1], subcl_options2)
-      subcl_options3 = {"ShardingKey":{"_id":1},"ShardingType":"hash","Group":self.cl_group_name,"Partition":4096}
+      subcl_options3 = {"ShardingKey": {"_id": 1}, "ShardingType": "hash", "Group": self.cl_group_name, "Partition": 4096}
       self.subcs.create_collection(self.subcl_names[2], subcl_options3)
       
       #list cl
@@ -90,37 +79,36 @@ class TestMeteData12445(unittest.TestCase):
       self.assertEqual(actual_cl_names, expect_cl_names) 
       
       #attach cl
-      attach_option1 = {"LowBound":{"a":1},"UpBound":{"a":1000}}
+      attach_option1 = {"LowBound": {"a": 1}, "UpBound": {"a": 1000}}
       self.maincl.attach_collection(self.subcl_full_name1, attach_option1)
       
-      attach_option2 = {"LowBound":{"a":1000},"UpBound":{"a":2000}}
+      attach_option2 = {"LowBound": {"a": 1000}, "UpBound": {"a": 2000}}
       self.maincl.attach_collection(self.subcl_full_name2, attach_option2)
       
-      attach_option3 = {"LowBound":{"a":2000},"UpBound":{"a":3000}}
+      attach_option3 = {"LowBound": {"a": 2000}, "UpBound": {"a": 3000}}
       self.maincl.attach_collection(self.subcl_full_name3, attach_option3)
       
       #check sub cl options
-      except_subcl_options_1 = {"Attribute":0, "AttributeDesc":"", 
-                                "MainCLName":self.maincl_full_name, "Name":self.subcl_full_name1}
+      except_subcl_options_1 = {"Attribute": 0, "AttributeDesc": "",
+                                "MainCLName": self.maincl_full_name, "Name": self.subcl_full_name1}
       self.check_cl_snapshot_8(self.subcl_full_name1, except_subcl_options_1)
       
-      except_subcl_options_2 = {"Attribute":0, "AttributeDesc":"", "CataInfo":1,
-                                "MainCLName":self.maincl_full_name, "Name":self.subcl_full_name2,
-                                
-                                "EnsureShardingIndex":True, "ShardingKey":{"b":1}, "ShardingType":"range",
-                                "ReplSize":-1}
+      except_subcl_options_2 = {"Attribute": 0, "AttributeDesc": "", "CataInfo": 1,
+                                "MainCLName": self.maincl_full_name, "Name": self.subcl_full_name2,
+                                "EnsureShardingIndex": True, "ShardingKey": {"b":1}, "ShardingType": "range",
+                                "ReplSize": -1}
       self.check_cl_snapshot_8(self.subcl_full_name2, except_subcl_options_2)
       
-      except_subcl_options_3 = {"Attribute":0, "AttributeDesc":"","CataInfo":1, 
-                                "MainCLName":self.maincl_full_name, "Name":self.subcl_full_name3,
-                                "EnsureShardingIndex":True, "ShardingKey":{"_id":1}, "ShardingType":"hash",
-                                "Partition":4096}
+      except_subcl_options_3 = {"Attribute": 0, "AttributeDesc": "", "CataInfo": 1,
+                                "MainCLName": self.maincl_full_name, "Name": self.subcl_full_name3,
+                                "EnsureShardingIndex": True, "ShardingKey": {"_id": 1}, "ShardingType": "hash",
+                                "Partition": 4096}
       self.check_cl_snapshot_8(self.subcl_full_name3, except_subcl_options_3)
       
       #check main cl options
-      except_maincl_options = {"Attribute":0, "AttributeDesc":"", 
-                               "IsMainCL":True, "Name":self.maincl_full_name,
-                               "EnsureShardingIndex":True, "ShardingKey":{"a":1}, "ShardingType":"range"}
+      except_maincl_options = {"Attribute": 0, "AttributeDesc": "",
+                               "IsMainCL": True, "Name": self.maincl_full_name,
+                               "EnsureShardingIndex": True, "ShardingKey": {"a": 1}, "ShardingType": "range"}
       self.check_cl_snapshot_8(self.maincl_full_name, except_maincl_options)
       
       #detach cl
@@ -166,18 +154,16 @@ class TestMeteData12445(unittest.TestCase):
       self.db.drop_collection_space(self.maincs_name)
    
    def tearDown(self):
-      try:
-         self.db.drop_collection_space(self.subcs_name)
-         self.db.drop_collection_space(self.maincs_name)
-         self.db.disconnect()
-      except SDBBaseError as e:
-         if(-34 != e.code):
-            print(e.detail)
-            self.fail("tear_down_fail")
-      testlib.print_teardown_msg(self)
+      if self.should_clean_env():
+         try:
+            self.db.drop_collection_space(self.subcs_name)
+            self.db.drop_collection_space(self.maincs_name)
+         except SDBBaseError as e:
+            if -34 != e.code:
+               self.fail("tear_down_fail,detail:" + e.detail)
    
    def check_cl_snapshot_8(self, cl_full_name, options):
-      cursor = self.db.get_snapshot( 8, condition = {"Name":cl_full_name} )
+      cursor = self.db.get_snapshot(8, condition={"Name": cl_full_name})
       while True:
          try:
             record = cursor.next()
@@ -186,8 +172,8 @@ class TestMeteData12445(unittest.TestCase):
             for expect_key in expect_keys:
                has_key = False
                for atual_key in actual_keys:
-                  if(expect_key == atual_key):
-                     if(expect_key == "CataInfo"):
+                  if expect_key == atual_key:
+                     if expect_key == "CataInfo":
                         self.assertEqual(record[expect_key][0]["GroupName"], self.cl_group_name)
                      else:
                         self.assertEqual(record[atual_key], options[expect_key])
@@ -198,7 +184,7 @@ class TestMeteData12445(unittest.TestCase):
       cursor.close()
       
    def check_subcl_after_detach(self, subcl_full_name):
-      cursor = self.db.get_snapshot( 8, condition = {"Name":subcl_full_name} )
+      cursor = self.db.get_snapshot(8, condition={"Name": subcl_full_name})
       while True:
          try:
             record = cursor.next()
@@ -208,7 +194,7 @@ class TestMeteData12445(unittest.TestCase):
       cursor.close()
    
    def check_maincl_after_detach(self, maincl_full_name):
-      cursor = self.db.get_snapshot( 8, condition = {"Name":maincl_full_name} )
+      cursor = self.db.get_snapshot(8, condition={"Name":maincl_full_name})
       while True:
          try:
             record = cursor.next()

@@ -7,73 +7,61 @@
 #              list_collections()
 # @author:     zhaoyu 2017-8-29
 
-import unittest
 from pysequoiadb.error import (SDBBaseError, SDBEndOfCursor)
-from lib import sdbconfig
 from lib import testlib
-from metedata.commlib import *
 
-class TestMeteData12446(unittest.TestCase):
+class TestMeteData12446(testlib.SdbTestBase):
    def setUp(self):
-       testlib.print_setup_msg(self)
-       self.db = testlib.default_db()
-       self.cs_name = "cs_12446"
+      if testlib.is_standalone():
+         self.skipTest("run mode is standalone")
+      if testlib.get_data_group_num() == 1:
+         self.skipTest("run mode is one group")
+      self.cs_name = "cs_12446"
       
    def test_metedata_12446(self):
-      if is_standalone(self.db) == True:
-         print("run mode is standalone")
-         return
-      data_groups = get_data_groups(self.db)
-      if (len(data_groups) == 1):
-         print("only one group")
-         return
-      
       #create cs
       cl_names = ["cl_12446_1", "cl_12446_2"]
       try:
          self.db.drop_collection_space(self.cs_name)
       except SDBBaseError as e:
-         if(-34 != e.code):
-            print(e.detail)
-            self.fail("drop_cs_fail")
-      self.cs = self.db.create_collection_space( self.cs_name )
+         if -34 != e.code:
+            self.fail("drop_cs_fail,detail:" + e.detail)
+      self.cs = self.db.create_collection_space(self.cs_name)
       
       #create cl set Compressed
-      cl_options_1 = {"ShardingKey":{"a":1},"ShardingType":"range",
-                      "AutoIndexId":False,"EnsureShardingIndex":False,
-                      "Compressed":True,"CompressionType":"lzw"}
-      self.cs.create_collection( cl_names[0], cl_options_1)
+      cl_options_1 = {"ShardingKey": {"a": 1}, "ShardingType": "range",
+                      "AutoIndexId": False, "EnsureShardingIndex": False,
+                      "Compressed": True, "CompressionType": "lzw"}
+      self.cs.create_collection(cl_names[0], cl_options_1)
       
-      cl_options_2 = {"ShardingKey":{"a":1},"ShardingType":"range",
-                      "AutoIndexId":False,"EnsureShardingIndex":False,
-                      "Compressed":True}
-      self.cs.create_collection( cl_names[1], cl_options_2)
+      cl_options_2 = {"ShardingKey": {"a": 1}, "ShardingType": "range",
+                      "AutoIndexId": False, "EnsureShardingIndex": False,
+                      "Compressed": True}
+      self.cs.create_collection(cl_names[1], cl_options_2)
       
       #check cl
-      except_cl_options_1 = {"Attribute":3, "AttributeDesc":"Compressed | NoIDIndex",
-                             "CompressionType":1, "CompressionTypeDesc":"lzw",
-                             "ShardingKey":{"a":1}, "EnsureShardingIndex":False,
-                             "ShardingType":"range", "AutoIndexId":False}
+      except_cl_options_1 = {"Attribute": 3, "AttributeDesc": "Compressed | NoIDIndex",
+                             "CompressionType": 1, "CompressionTypeDesc": "lzw",
+                             "ShardingKey": {"a": 1}, "EnsureShardingIndex": False,
+                             "ShardingType": "range", "AutoIndexId": False}
       self.check_cl_snapshot_8(self.cs_name + "." + cl_names[0], except_cl_options_1)
       
-      except_cl_options_2 = {"Attribute":3, "AttributeDesc":"Compressed | NoIDIndex",
-                             "CompressionType":0, "CompressionTypeDesc":"snappy",
-                             "ShardingKey":{"a":1}, "EnsureShardingIndex":False,
-                             "ShardingType":"range", "AutoIndexId":False}
+      except_cl_options_2 = {"Attribute": 3, "AttributeDesc": "Compressed | NoIDIndex",
+                             "CompressionType": 0, "CompressionTypeDesc": "snappy",
+                             "ShardingKey": {"a": 1}, "EnsureShardingIndex": False,
+                             "ShardingType": "range", "AutoIndexId": False}
       self.check_cl_snapshot_8(self.cs_name + "." + cl_names[1], except_cl_options_2)
       
    def tearDown(self):
-      try:
-         self.db.drop_collection_space(self.cs_name)
-         self.db.disconnect()
-      except SDBBaseError as e:
-         if(-34 != e.code):
-            print(e.detail)
-            self.fail("tear_down_fail")
-      testlib.print_teardown_msg(self)
+      if self.should_clean_env():
+         try:
+            self.db.drop_collection_space(self.cs_name)
+         except SDBBaseError as e:
+            if -34 != e.code:
+               self.fail("tear_down_fail,detail:" + e.detail)
             
    def check_cl_snapshot_8(self, cl_full_name, options):
-      cursor = self.db.get_snapshot( 8, condition = {"Name":cl_full_name} )
+      cursor = self.db.get_snapshot(8, condition={"Name": cl_full_name})
       while True:
          try:
             record = cursor.next()
