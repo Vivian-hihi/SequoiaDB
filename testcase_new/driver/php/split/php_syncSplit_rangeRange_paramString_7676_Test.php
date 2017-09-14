@@ -129,7 +129,7 @@ class TestSyncSplit04 extends PHPUnit_Framework_TestCase
          self::$groupNames = self::$dbh -> commGetGroupNames();
          
          echo "\n---Begin to ready parameter.\n";
-         self::$csName = self::$dbh -> COMMCSNAME."7976_02";
+         self::$csName = self::$dbh -> COMMCSNAME."7676_02_string";
          self::$clName = self::$dbh -> COMMCLNAME;
          echo "   cl = ".self::$csName.".".self::$clName."\n";
          
@@ -185,12 +185,18 @@ class TestSyncSplit04 extends PHPUnit_Framework_TestCase
       
       echo "\n---Begin to connect masterNode.\n";
       $nodeDB = self::$dbh -> connect( $nodeObj );
+      $errno = self::$dbh -> getErrno();
+      $this -> assertEquals( 0, $errno );
       
       echo "\n---Begin to getCS of the sourceGroup.\n";
       $csDB  = self::$dbh -> getCS( $nodeDB, self::$csName );
+      $errno = self::$dbh -> getErrno();
+      $this -> assertEquals( 0, $errno );
       
       echo "\n---Begin to getCL of the sourceGroup.\n";
       $rgClDB = self::$dbh -> getCL( $csDB, self::$clName );
+      $errno = self::$dbh -> getErrno();
+      $this -> assertEquals( 0, $errno );
       
       //--------------------------check results of sourceGroup-------------------------
       echo "\n---Begin to find of source group.\n";
@@ -214,6 +220,8 @@ class TestSyncSplit04 extends PHPUnit_Framework_TestCase
       
       echo "\n---Begin to connect masterNode.\n";
       $nodeDB = self::$dbh -> connect( $nodeObj );
+      $errno = self::$dbh -> getErrno();
+      $this -> assertEquals( 0, $errno );
       
       echo "\n---Begin to getCS of the targetGroup.\n";
       $csDB  = self::$dbh -> getCS( $nodeDB, self::$csName );

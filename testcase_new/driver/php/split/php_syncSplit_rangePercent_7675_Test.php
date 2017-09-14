@@ -186,12 +186,18 @@ class TestSyncSplit01 extends PHPUnit_Framework_TestCase
       
       echo "\n---Begin to connect masterNode.\n";
       $nodeDB = self::$dbh -> connect( $nodeObj );
+      $errno = self::$dbh -> getErrno();
+      $this -> assertEquals( 0, $errno );
       
       echo "\n---Begin to getCS.\n";
       $csDB  = self::$dbh -> getCS( $nodeDB, self::$csName );
+      $errno = self::$dbh -> getErrno();
+      $this -> assertEquals( 0, $errno );
       
       echo "\n---Begin to getCL.\n";
       $rgClDB = self::$dbh -> getCL( $csDB, self::$clName );
+      $errno = self::$dbh -> getErrno();
+      $this -> assertEquals( 0, $errno );
       
       //--------------------------check results of sourceGroup-------------------------
       echo "\n---Begin to find of source group.\n";
@@ -215,6 +221,8 @@ class TestSyncSplit01 extends PHPUnit_Framework_TestCase
       
       echo "\n---Begin to connect masterNode.\n";
       $nodeDB = self::$dbh -> connect( $nodeObj );
+      $errno = self::$dbh -> getErrno();
+      $this -> assertEquals( 0, $errno );
       
       echo "\n---Begin to getCS.\n";
       $csDB  = self::$dbh -> getCS( $nodeDB, self::$csName );
