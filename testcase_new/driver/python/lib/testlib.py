@@ -182,13 +182,4 @@ def get_all_records_noid(cur):
    return items
 
 
-if __name__ == '__main__':
-   g=get_groups()
-   print id(g)
-   print id(__groups)
-   g=get_data_groups()
-   print id(g)
-   print id(__data_groups)
-   print get_data_group_num()
-   print is_standalone()
 
