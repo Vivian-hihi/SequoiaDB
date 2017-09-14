@@ -10,35 +10,30 @@ class Data12464Sdb(testlib.SdbTestBase):
    def setUp(self):
       self.create_cs_cl()
 
-   def update_test(self, list__expect, update, **kwargs):
-      for i in self.original_list:
-         self.cl.insert(i)
-      self.cl.update(update, **kwargs)
+   def update_test(self, record_to_insert, expect_list, update_rule, **kwargs):
+      self.cl.bulk_insert(0,record_to_insert)
+      self.cl.update(update_rule, **kwargs)
       list1 = testlib.get_all_records_noid(self.cl.query())
-      self.assertListEqualUnordered(list__expect, list1)
+      self.assertListEqualUnordered(expect_list, list1)
       self.cl.delete()
 
    def test12464(self):
-      self.original_list = ({"a": 0, "b": 0}, {"a": 1, "b": 1}, {"a": 2, "b": 2})
-      original_list = self.original_list
-      update = {"$inc": {"a": 1}}
+      record_to_insert = ({"a": 0, "b": 0}, {"a": 1, "b": 1}, {"a": 2, "b": 2})
+      update_rule = {"$inc": {"a": 1}}
 
       # condition+update
       condition = {"a": {"$et": 0}}
-      update_list = ({"a": 1, "b": 0}, {"a": 1, "b": 1}, {"a": 2, "b": 2})
-      self.update_test(update_list, update, condition=condition)
+      expect_list = ({"a": 1, "b": 0}, {"a": 1, "b": 1}, {"a": 2, "b": 2})
+      self.update_test(record_to_insert,expect_list, update_rule, condition=condition)
 
       # hint+update
       hint = {"": "index"}
-      l = ({"a": 1, "b": 0}, {"a": 2, "b": 1}, {"a": 3, "b": 2})
-      self.update_test(l, update, hint=hint)
+      expect = ({"a": 1, "b": 0}, {"a": 2, "b": 1}, {"a": 3, "b": 2})
+      self.update_test(record_to_insert,expect, update_rule, hint=hint)
 
       # flags+update
       QUERY_FLG_FORCE_HINT = 128
-      try:
-         self.update_test(l, update, flagss=QUERY_FLG_FORCE_HINT, hint=hint)
-      except SDBBaseError as e:
-         pass
+      self.update_test(record_to_insert,expect, update_rule, flagss=QUERY_FLG_FORCE_HINT, hint=hint)
 
    def tearDown(self):
       if self.should_clean_env():
