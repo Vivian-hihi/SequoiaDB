@@ -1,20 +1,22 @@
 # -- coding: utf-8 --
+"""
+ @decription:
+ @testlink:   seqDB-12468 :: 版本: 1 :: truncate所有记录
+ @author:     laojingtang
+"""
 from lib import testlib
 from pysequoiadb import collection
-import unittest
 
 
 default_list = [{"a": i} for i in range(10)]
 
 class SdbTestQueryAndUpdate(testlib.SdbTestBase):
-   @unittest.skip("skip! find bug SEQUOIADBMAINSTREAM-2793")
    def setUp(self):
       self.create_cs_cl()
 
    def tearDown(self):
-      if testlib.should_clear_env(self):
+      if self.should_clean_env():
          self.drop_cs()
-      self.close_db()
 
    # 子测试
    def __sub_test(self, expect, expect_return, insert=None, **kwargs):
@@ -27,8 +29,8 @@ class SdbTestQueryAndUpdate(testlib.SdbTestBase):
       cl.bulk_insert(0, insert)
 
       cur = cl.query_and_remove(**kwargs)
-      l = testlib.get_all_records_noid(cl.query())
       rl = testlib.get_all_records_noid(cur)
+      l = testlib.get_all_records_noid(cl.query())
       self.assertListEqualUnordered(expect, l)
       self.assertListEqualUnordered(expect_return, rl)
       cl.truncate()
