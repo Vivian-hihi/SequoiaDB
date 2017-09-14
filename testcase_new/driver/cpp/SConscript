@@ -1,156 +1,57 @@
 import os
+import re
 
 Import("env")
 Import("dllBuildEnv")
 Import("staticBuildEnv")
 
-gtestFiles = [
-      "../../../../../SequoiaDB/engine/gtest/src/gtest-all.cc"
-      ]
+gtestFiles = [ 
+   "../../../../../SequoiaDB/engine/gtest/src/gtest-all.cc" 
+]
 
-gtestMainFile = [
-      "../../../../../SequoiaDB/engine/gtest/src/gtest_main.cc"
-      ]
+testMainFile = [
+   "./common/testMain.cpp"
+]
 
-testCommonFiles = [
-        "./testcommon.cpp","./impWorker.cpp",
-        "./datasource/DS_thread.cpp"      ]
+testCommonFiles = [ 
+   "./common/testcommon.cpp",
+   "./common/impWorker.cpp",
+   "./common/arguments.cpp",
+   "./common/testBase.cpp"
+]
 
-testFiles1 = [ "./misc/decimal.cpp" ]
+testFiles = [ 
+]
 
-testFiles2 = [ "./misc/numberLong.cpp" ]
-
-testFiles3 = [ "./misc/trunOncache.cpp" ]
-
-testFiles4 = [ "./misc/time.cpp" ] 
-
-testFiles5 = [ "./datasource/DS_InvalidArgTest.cpp" ]
-
-testFiles6 = [ "./datasource/DS_InvalidConnTest.cpp" ]
-
-testFiles7 = [ "./datasource/DS_ConnTest.cpp" ]
-
-testFiles8 = [ "./datasource/DS_ThreadTest.cpp" ]
-
-testFiles9 = [ "./datasource/DS_ChecktimeTest.cpp" ]
-
-testFiles10 = [ "./datasource/DS_ClTest.cpp" ]
-
-testFiles11 = [ "./datasource/DS_InvalidUsrTest.cpp" ]
-
-#testFiles12 = [ "./datasource/DS_CoordTest.cpp" ]
-
-testFiles13 = [ "./misc/lob.cpp" ]
-
-testFiles14 = [ "./misc/code.cpp" ]
-
-testFiles15 = [ "./misc/closeAllCursors.cpp" ]
-
-testFiles16 = [ "./misc/bson_oid.cpp" ]
-
-testFiles17 = [ "./misc/date.cpp" ]
-
-testFiles18 = [ "./misc/analyze.cpp" ]
-
-testFiles19 = [ "./misc/prepareMore.cpp" ]
-
-testFiles20 = [ "./misc/JSCompatible.cpp" ]
-
-testFiles21 = [ "./ssl/sslTrue.cpp" ]
-
-testFiles22 = [ "./ssl/sslFalse.cpp" ]
-
-testFiles23 = [ "./misc/index.cpp" ]
-
-testFiles24 = [ "./misc/idIndex.cpp" ]
-
-testFiles25 = [ "./misc/attachAndDetachNode.cpp" ]
-
-testFiles26 = [ "./misc/createNode.cpp" ] 
-
-testFiles27 = [ "./misc/bson_time.cpp" ]
-
-testFiles28 = [ "./misc/sync.cpp" ]
-
-testFiles29 = [ "./misc/backup.cpp" ] 
+def getFileName( filePath ):
+   strArr = re.split( r'[/.]', filePath )
+   # last element is suffix, 
+   # second last element is the name
+   return strArr[-2]
+                      
+# add common to path
+dllBuildEnv.Append( CPPPATH=[ "./common/" ] )
+staticBuildEnv.Append( CPPPATH=[ "./common/" ] )
 
 # compile common lib
 gtestall = env.StaticLibrary('gtest', gtestFiles)
-gtestMainObj = env.Object('gtestMainObj', gtestMainFile)
 
 # dll compile
-decimal        = dllBuildEnv.Program("decimal",       [testFiles1, gtestMainObj, testCommonFiles])
-numberLong     = dllBuildEnv.Program("numberLong",    [testFiles2, gtestMainObj, testCommonFiles])
-trunOncache    = dllBuildEnv.Program("trunOncache",   [testFiles3, gtestMainObj, testCommonFiles])
-time           = dllBuildEnv.Program("time",          [testFiles4, gtestMainObj, testCommonFiles])
-DS_InvalidArgTest  = dllBuildEnv.Program("DS_InvalidArgTest", [testFiles5, gtestMainObj, testCommonFiles])
-DS_InvalidConnTest = dllBuildEnv.Program("DS_InvalidConnTest", [testFiles6, gtestMainObj, testCommonFiles])
-DS_ConnTest        = dllBuildEnv.Program("DS_ConnTest", [testFiles7, gtestMainObj, testCommonFiles])
-DS_ThreadTest      = dllBuildEnv.Program("DS_ThreadTest", [testFiles8, gtestMainObj,testCommonFiles])
-DS_ChecktimeTest   = dllBuildEnv.Program("DS_ChecktimeTest", [testFiles9, gtestMainObj, testCommonFiles])
-DS_ClTest          = dllBuildEnv.Program("DS_ClTest", [testFiles10, gtestMainObj, testCommonFiles])
-DS_InvalidUsrTest  = dllBuildEnv.Program("DS_InvalidUsrTest", [testFiles11, gtestMainObj, testCommonFiles])  
-#DS_CoordTest      = dllBuildEnv.Program("DS_CoordTest", [testFiles12, gtestMainObj, testCommonFiles])    
-lob                = dllBuildEnv.Program("lob", [testFiles13, gtestMainObj, testCommonFiles])
-code               = dllBuildEnv.Program("code", [testFiles14, gtestMainObj, testCommonFiles])
-closeAllCursors    = dllBuildEnv.Program("closeAllCursors", [testFiles15, gtestMainObj, testCommonFiles])
-bson_oid           = dllBuildEnv.Program("bson_oid", [testFiles16, gtestMainObj, testCommonFiles])
-date			   = dllBuildEnv.Program("date", [testFiles17, gtestMainObj, testCommonFiles])
-analyze			   = dllBuildEnv.Program("analyze", [testFiles18, gtestMainObj, testCommonFiles])
-prepareMore		   = dllBuildEnv.Program("prepareMore", [testFiles19, gtestMainObj, testCommonFiles])
-JSCompatible	   = dllBuildEnv.Program("JSCompatible", [testFiles20, gtestMainObj, testCommonFiles])
-sslTrue			   = dllBuildEnv.Program("sslTrue", [testFiles21, gtestMainObj, testCommonFiles])
-sslFalse           = dllBuildEnv.Program("sslFalse", [testFiles22, gtestMainObj, testCommonFiles])
-index			   = dllBuildEnv.Program("index", [testFiles23, gtestMainObj, testCommonFiles])
-idIndex			   = dllBuildEnv.Program("idIndex", [testFiles24, gtestMainObj, testCommonFiles])
-attachAndDetachNode = dllBuildEnv.Program("attachAndDetachNode", [testFiles25, gtestMainObj, testCommonFiles])
-createNode			= dllBuildEnv.Program("createNode", [testFiles26, gtestMainObj, testCommonFiles])
-bson_time			= dllBuildEnv.Program("bson_time", [testFiles27, gtestMainObj, testCommonFiles])
-sync			    = dllBuildEnv.Program("sync", [testFiles28, gtestMainObj, testCommonFiles])
-backup			 = dllBuildEnv.Program("backup", [testFiles29, gtestMainObj, testCommonFiles])
+dllPrograms = []
+for testFile in testFiles:
+   testFileName = getFileName( testFile[0] )
+   dllProgram = dllBuildEnv.Program( testFileName, [testFile, testMainFile, testCommonFiles] )
+   dllPrograms.append( dllProgram )
 
 # static compile
-# dll compile
-decimal.static       = staticBuildEnv.Program("decimal.static",      [testFiles1, gtestMainObj, testCommonFiles])
-numberLong.static    = staticBuildEnv.Program("numberLong.static",   [testFiles2, gtestMainObj, testCommonFiles])
-trunOncache.static   = staticBuildEnv.Program("trunOncache.static",  [testFiles3, gtestMainObj, testCommonFiles])
-time.static          = staticBuildEnv.Program("time.static",         [testFiles4, gtestMainObj, testCommonFiles])
-DS_InvalidArgTest.static  = staticBuildEnv.Program("DS_InvalidArgTest.static",[testFiles5, gtestMainObj, testCommonFiles])
-DS_InvalidConnTest.static = staticBuildEnv.Program("DS_InvalidConnTest.static",[testFiles6, gtestMainObj, testCommonFiles])
-DS_ConnTest.static        = staticBuildEnv.Program("DS_ConnTest.static",[testFiles7, gtestMainObj, testCommonFiles])
-DS_ThreadTest.static      = staticBuildEnv.Program("DS_ThreadTest.static",[testFiles8, gtestMainObj,testCommonFiles])
-DS_ChecktimeTest.static   = staticBuildEnv.Program("DS_ChecktimeTest.static",[testFiles9, gtestMainObj, testCommonFiles])
-DS_ClTest.static          = staticBuildEnv.Program("DS_ClTest.static",[testFiles10, gtestMainObj, testCommonFiles])
-DS_InvalidUsrTest.static  = staticBuildEnv.Program("DS_InvalidUsrTest.static",[testFiles11, gtestMainObj, testCommonFiles])
-lob.static                = staticBuildEnv.Program("lob.static",[testFiles13, gtestMainObj, testCommonFiles])
-code.static               = staticBuildEnv.Program("code.static",[testFiles14, gtestMainObj, testCommonFiles])
-closeAllCursors.static    = staticBuildEnv.Program("closeAllCursors.static",[testFiles15, gtestMainObj, testCommonFiles])
-bson_oid.static           = staticBuildEnv.Program("bson_oid.static",[testFiles16, gtestMainObj, testCommonFiles])
-date.static				  = staticBuildEnv.Program("date.static",[testFiles17, gtestMainObj, testCommonFiles])
-analyze.static			  = staticBuildEnv.Program("analyze.static",[testFiles18, gtestMainObj, testCommonFiles])
-prepareMore.static		  = staticBuildEnv.Program("prepareMore.static",[testFiles19, gtestMainObj, testCommonFiles])
-JSCompatible.static	      = staticBuildEnv.Program("JSCompatible.static",[testFiles20, gtestMainObj, testCommonFiles])
-sslTrue.static			  = staticBuildEnv.Program("sslTrue.static",[testFiles21, gtestMainObj, testCommonFiles])
-sslFalse.static           = staticBuildEnv.Program("sslFalse.static",[testFiles22, gtestMainObj, testCommonFiles])
-index.static			  = staticBuildEnv.Program("index.static", [testFiles23, gtestMainObj, testCommonFiles])
-idIndex.static			  = staticBuildEnv.Program("idIndex.static", [testFiles24, gtestMainObj, testCommonFiles])
-attachAndDetachNode.static = staticBuildEnv.Program("attachAndDetachNode.static", [testFiles25, gtestMainObj, testCommonFiles])
-createNode.static		   = staticBuildEnv.Program("createNode.static", [testFiles26, gtestMainObj, testCommonFiles])
-bson_time.static		   = staticBuildEnv.Program("bson_time.static", [testFiles27, gtestMainObj, testCommonFiles])
-sync.static				   = staticBuildEnv.Program("sync.static", [testFiles28, gtestMainObj, testCommonFiles])
-backup.static				= staticBuildEnv.Program("backup.static", [testFiles29, gtestMainObj, testCommonFiles])
+staticPrograms = []
+for testFile in testFiles:
+   testFileName = getFileName( testFile[0] ) + ".static"
+   staticProgram = staticBuildEnv.Program( testFileName, [testFile, testMainFile, testCommonFiles])
+   staticPrograms.append( staticProgram )
 
-# dll compile
-env.Install( '#/build_test',[ decimal,numberLong,trunOncache,time,DS_InvalidArgTest,
-			                  DS_InvalidConnTest,DS_ConnTest,DS_ThreadTest,DS_ChecktimeTest,DS_ClTest,DS_InvalidUsrTest,
-                              lob,code,closeAllCursors,bson_oid,date,analyze,prepareMore,JSCompatible,sslTrue,sslFalse,
-							  index,idIndex,attachAndDetachNode,createNode,bson_time,sync,backup ] )
+# dll install
+env.Install( '#/build_test', dllPrograms )
 
-# static compile
-env.Install( '#/build_test',[ decimal.static,numberLong.static,trunOncache.static,
-							  time.static,DS_InvalidArgTest.static,DS_InvalidConnTest.static,
-							  DS_ConnTest.static,DS_ThreadTest.static,DS_ChecktimeTest.static,
-							  DS_ClTest.static,DS_InvalidUsrTest.static,lob.static,code.static,closeAllCursors.static,
-							  bson_oid.static,date.static,analyze.static,prepareMore.static,JSCompatible.static,
-							  sslTrue.static,sslFalse.static,index.static,idIndex.static,attachAndDetachNode.static,
-							  createNode.static,bson_time.static,sync.static,backup.static ] )
+# static install
+env.Install( '#/build_test', staticPrograms )
