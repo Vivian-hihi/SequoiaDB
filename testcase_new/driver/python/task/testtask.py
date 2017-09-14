@@ -1,7 +1,14 @@
+# -- coding: utf-8 --
+"""
+ @decription:
+ @testlink:   测试用例 seqDB-12495 :: 版本: 1 :: 列出/取消/等待任务
+ @author:     laojingtang
+"""
+
 from lib import testlib
 import unittest
 
-class TestTask(testlib.SdbTestBase):
+class TestTask12495(testlib.SdbTestBase):
    def setUp(self):
       l=self.get_data_groups()
       self.group1_name=l[0]["GroupName"]

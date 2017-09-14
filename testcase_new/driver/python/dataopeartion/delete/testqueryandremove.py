@@ -1,7 +1,7 @@
 # -- coding: utf-8 --
 """
  @decription:
- @testlink:   seqDB-12468 :: 版本: 1 :: truncate所有记录
+ @testlink:   测试用例 seqDB-12472 :: 版本: 1 :: 查询并删除记录
  @author:     laojingtang
 """
 from lib import testlib
