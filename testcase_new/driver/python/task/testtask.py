@@ -1,20 +1,19 @@
-from lib import testsplitbase
+from lib import testlib
 import unittest
 
-class TestTask(testsplitbase.TestSplitBase):
+class TestTask(testlib.SdbTestBase):
    def setUp(self):
-      self.init_db()
-      l=self.get_data_group()
+      l=self.get_data_groups()
       self.group1_name=l[0]["GroupName"]
       self.group2_name=l[1]["GroupName"]
       cl_option = {"ShardingKey": {"a": 1}, "ShardingType": "hash", "Group": self.group1_name}
       self.create_cs_cl(cl_option=cl_option)
 
    def tearDown(self):
-      self.drop_cs()
-      self.close_db()
+      if self.should_clean_env():
+         self.drop_cs()
 
-   @unittest.skip("find bug")
+   @unittest.skip("find bug SEQUOIADBMAINSTREAM-2804")
    def test_task(self):
       list=[{"a":i} for i in range(10000)]
       self.cl.split_async_by_percent(self.group1_name,self.group2_name,50.0)
