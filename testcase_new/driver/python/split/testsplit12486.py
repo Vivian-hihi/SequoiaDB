@@ -6,7 +6,6 @@
 from lib import testlib
 from pysequoiadb import client
 
-
 class TestSplit12486(testlib.SdbTestBase):
    def setUp(self):
       self.db_list=[]
