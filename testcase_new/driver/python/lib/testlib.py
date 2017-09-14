@@ -1,5 +1,6 @@
 # -- coding: utf-8 --
 import unittest
+from copy import copy
 from datetime import datetime
 
 from lib import sdbconfig
@@ -7,30 +8,24 @@ from pysequoiadb import SDBError
 from pysequoiadb import client
 
 
-class TestDataOprtBase(unittest.TestCase):
+class SdbTestBase(unittest.TestCase):
    def __init__(self, methodName='runTest'):
       unittest.TestCase.__init__(self, methodName=methodName)
       self.cs_name = self.__class__.__name__ + "_cs"
       self.cl_name = self.__class__.__name__ + "_cl"
       self.cl_name_qualified = self.cs_name + "." + self.cl_name
-      self.db_list = []
+      self.__groups = []
+      self.__data_groups = []
 
    @classmethod
    def setUpClass(cls):
       print(cls.__name__ + " setup: " + str(datetime.now()))
-
-   # _my_result=None
-   # def run(self, result=None):
-   #    r=unittest.TestCase.run(self,result)
-   #    self.__class__._my_result=r
+      cls.db = default_db()
 
    @classmethod
    def tearDownClass(cls):
+      cls.db.disconnect()
       print(cls.__name__ + " teardown: " + str(datetime.now()))
-
-   def init_db(self):
-      if not hasattr(self, "db"):
-         self.db = default_db()
 
    def drop_cs(self):
       try:
@@ -48,57 +43,132 @@ class TestDataOprtBase(unittest.TestCase):
       self.cs = self.db.create_collection_space(self.cs_name, options=cs_option)
       self.cl = self.cs.create_collection(self.cl_name, options=cl_option)
 
-   def assert_list_equal(self, expected, actual):
-      assert_list_equal(self, expected, actual)
+   def assertListEqualUnordered(self, expected, actual, msg=None):
+      """
+      判断两个数组是否相等，并不要求两个数组具有相同的顺序
+      :param expected: list expected
+      :param actual: list actual
+      """
+      msg = "\n" + msg + "\nexpected: " + str(expected) + "\nactual: " + str(actual)
+      unittest.TestCase.assertEqual(self, len(expected), len(actual), msg=msg)
+      for x in actual:
+         unittest.TestCase.assertIn(self, x, expected, msg)
+      for x in expected:
+         unittest.TestCase.assertIn(self, x, actual, msg)
 
-   def get_records(self, cur=None):
-      if cur == None:
-         if not hasattr(self, "cl"):
-            self.cl = self.db.get_collection(self.cl_name_qualified)
-         cur = self.cl.query()
-      return get_records(cur)
+   def should_clean_env(self):
+      if not isinstance(self, unittest.TestCase):
+         raise TypeError("should_clear_env() arg must be unittest.TestCase")
 
-   def close_db(self):
-      for db in self.db_list:
-         db.disconnect()
-      if hasattr(self, "db"):
-         self.db.disconnect()
+      if self.__is_testcase_success(self):
+         return True
+      else:
+         return not sdbconfig.sdb_config.break_on_failure
 
+   def __is_testcase_success(self):
+      """
+      判断当前用例是否成功
+      :param self:
+      :return:
+      """
+      if hasattr(self, "_outcome"):
+         # for python 3.6.2
+         for x in self._outcome.errors:
+            if x[1] != None:
+               return False
+         return True
+      elif hasattr(self, "_outcomeForDoCleanups"):
+         # for python 3.3.4
+         return self._outcomeForDoCleanups.success
+      elif hasattr(self, "_resultForDoCleanups"):
+         # for python 2 unittest
+         failures_set = set()
+         failures = self._resultForDoCleanups.failures
+         errors = self._resultForDoCleanups.errors
+         for x in failures:
+            failures_set.add(x[0])
+         for x in errors:
+            failures_set.add(x[0])
+         if self in failures_set:
+            return False
+         return True
+      else:
+         # can not judge this testcase success or failed ,so think it was success
+         print("warn: can not judge this testcase success.")
+         return True
+
+__is_standlone=None
+def is_standalone():
+   if __is_standlone != None:
+      return __is_standlone
+   else:
+      try:
+         db=default_db()
+         db.list_replica_groups()
+         return False
+      except SDBError as e:
+         if e.code == -159:
+            return True
+         else:
+            raise e
+      finally:
+         if db !=None:
+            db.disconnect()
+
+__groups=[]
+__data_groups=[]
+
+def get_groups():
+   if __groups.__len__()>0:
+      return copy(__groups)
+   else:
+      try:
+         db=default_db()
+         cur = db.list_replica_groups()
+         r = get_all_records_noid(cur)
+         __groups.extend(r)
+         return copy(__groups)
+      finally:
+         if db!=None:
+            db.disconnect()
+
+def get_data_groups():
+   if __data_groups.__len__()>0:
+      return copy(__data_groups)
+   else:
+      if len(__groups) == 0:
+         get_groups()
+      for x in __groups:
+         if x["GroupName"] != "SYSCatalogGroup" and x["GroupName"] != "SYSCoord":
+            __data_groups.append(x)
+      return copy(__data_groups)
+
+def get_data_group_num():
+   if __data_groups.__len__()>0:
+      return __data_groups.__len__()
+   else:
+      get_data_groups()
+      return __data_groups.__len__()
 
 def default_db():
    return client(sdbconfig.sdb_config.host_name, sdbconfig.sdb_config.service)
 
-
-def print_setup_msg(self):
-   print(str(self.__class__.__name__) + " setup: " + str(datetime.now()))
-
-
-def print_teardown_msg(self):
-   print(str(self.__class__.__name__) + " teardown: " + str(datetime.now()))
-
-
-def assert_list_equal(self, expected, actual):
-   """
-   判断两个数组是否相等，并不要求两个数组具有相同的顺序
-   :param expected: list expected
-   :param actual: list actual
-   """
-   msg = "\nexpected: " + str(expected) + "\nactual: " + str(actual)
-
-   unittest.TestCase.assertEqual(self, len(expected), len(actual), msg=msg)
-
-   for x in actual:
-      unittest.TestCase.assertIn(self, x, expected, msg)
-
-   for x in expected:
-      unittest.TestCase.assertIn(self, x, actual, msg)
-
-
-def get_records(cur):
+def get_all_records(cur):
    """
    :param cur: 游标
    :return: 记录数组
    """
+   items = list()
+   while True:
+      try:
+         item = cur.next()
+         items.append(item)
+      except BaseException as e:
+         break
+   cur.close()
+   return items
+
+def get_all_records_noid(cur):
    items = list()
    while True:
       try:
@@ -111,6 +181,14 @@ def get_records(cur):
    cur.close()
    return items
 
-def should_clear_env(self):
-   return True
+
+if __name__ == '__main__':
+   g=get_groups()
+   print id(g)
+   print id(__groups)
+   g=get_data_groups()
+   print id(g)
+   print id(__data_groups)
+   print get_data_group_num()
+   print is_standalone()
 
