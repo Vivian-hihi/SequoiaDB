@@ -7,54 +7,27 @@
 #              close_all_cursors(self)
 # @author:     liuxiaoxuan 2017-8-29
 
-from bson.py3compat import (PY3,long_type)
-import unittest
-import datetime
-from pysequoiadb.error import (SDBTypeError, SDBBaseError, SDBEndOfCursor,SDBError)
 from lib import testlib
+from pysequoiadb.error import (SDBBaseError, SDBEndOfCursor)
 
-cs_name = "cs_12471"
-cl_name = "cl_12471"
 insert_nums = 100
 
-class TestFind12471(unittest.TestCase):
+
+class TestFind12471(testlib.SdbTestBase):
    def setUp(self):
-      testlib.print_setup_msg(self)
-      self.db = testlib.default_db()
-      self.create_cs_cl(cs_name,cl_name)
+      self.create_cs_cl()
       self.insert_datas()
 
    def testFind12471(self):
-	  #query all records
+      # query all records
       expectResult = []
-      for i in range(0,insert_nums):
-         expectResult.append({"_id":i,"a":"test" + str(i)})		   
+      for i in range(0, insert_nums):
+         expectResult.append({"_id": i, "a": "test" + str(i)})
       self.query_datas(expectResult)
 
    def tearDown(self):
-      try:
-         testlib.print_teardown_msg(self)
-         self.db.drop_collection_space(cs_name)
-         self.db.disconnect()
-      except SDBBaseError as e:
-         if(-34 != e.code):
-            self.fail('tearDown fail: ' + e.detail) 
-
-   def clean_cs(self,csname):
-      try:
-         self.db.drop_collection_space(csname)
-      except SDBBaseError as e:
-         pass
-
-   def create_cs_cl(self,csname,clname):
-      self.clean_cs(csname)
-      try:
-         self.cs = self.db.create_collection_space(csname)
-         self.cl = self.cs.create_collection(clname)
-         print( 'create cl success' )
-      except SDBBaseError as e:
-         if(-34 != e.code):
-            self.fail('create cl fail: ' + e.detail) 
+      if self.should_clean_env():
+         self.drop_cs()
 
    def insert_datas(self):
       doc = []
@@ -64,19 +37,19 @@ class TestFind12471(unittest.TestCase):
          flags = 0
          self.cl.bulk_insert(flags, doc)
       except SDBBaseError as e:
-         self.fail('insert fail: ' + e.detail) 
+         self.fail('insert fail: ' + e.detail)
 
-   def get_count(self,expectCount,cond):
+   def get_count(self, expectCount, cond):
       try:
          if cond == None:
             actCount = self.cl.get_count()
          else:
-            actCount = self.cl.get_count(condition = cond)
-         self.assertEqual(expectCount,actCount)
+            actCount = self.cl.get_count(condition=cond)
+         self.assertEqual(expectCount, actCount)
       except SDBBaseError as e:
          self.fail('get count fail: ' + e.detail)
-				
-   def query_datas(self,expectResult):
+
+   def query_datas(self, expectResult):
       cursor_one = self.cl.query()
       actResult = []
       while True:
@@ -87,7 +60,7 @@ class TestFind12471(unittest.TestCase):
          except SDBEndOfCursor:
             # self.check_next(cursor_one)
             break
-      testlib.assert_list_equal(self,expectResult, actResult)
+      self.assertListEqualUnordered(expectResult, actResult)
       cond_one = None
       expect_one = insert_nums
       self.get_count(expect_one, cond_one)
@@ -109,7 +82,7 @@ class TestFind12471(unittest.TestCase):
       # self.check_cursor_close(cursor_two)
       # self.check_cursor_close(cursor_three)
 
-   def check_next(self,cursor):
+   def check_next(self, cursor):
       try:
          cursor.next()
          self.fail("need next cursor fail")
@@ -117,7 +90,7 @@ class TestFind12471(unittest.TestCase):
          print(e.detail)
          # self.assertEqual(e, e, 'e not equal to e')
 
-   def check_cursor_close(self,cursor):
+   def check_cursor_close(self, cursor):
       try:
          cursor.current()
          self.fail("need current cursor fail")

@@ -9,19 +9,14 @@ import datetime
 from pysequoiadb.error import (SDBTypeError, SDBBaseError, SDBEndOfCursor,SDBError)
 from lib import testlib
 
-cs_name = "cs_12474"
-cl_name = "cl_12474"
-class TestFind12474(unittest.TestCase):
+class TestFind12474(testlib.SdbTestBase):
    def setUp(self):
-      testlib.print_setup_msg(self)
-      self.db = testlib.default_db()
-      if (self.is_stand_alone()):
+      if testlib.is_standalone():
          self.skipTest('current environment is standalone')
-      self.create_cs_cl(cs_name,cl_name)
+      self.create_cs_cl()
       self.insert_datas()
 
    def testQuery12474(self):
-
 	  #condition:$gt,$lt, selection:$include
       condition1 = {"a": {'$gt': 0,'$lt': 100}}
       selected1 = {"a": {"$include": 1}}
@@ -59,39 +54,10 @@ class TestFind12474(unittest.TestCase):
       self.query_one_with_kwargs(condition6,selected6,expectResult6)
 
    def tearDown(self):
-      try:
-         testlib.print_teardown_msg(self)
-         self.db.drop_collection_space(cs_name)
-         self.db.disconnect()
-      except SDBBaseError as e:
-         if(-34 != e.code):
-            self.fail('tearDown fail: ' + e.detail) 
+      if self.should_clean_env():
+         self.drop_cs()
 
-   def is_stand_alone(self):
-      try:
-         cursor = self.db.list_replica_groups()
-      except SDBBaseError as e:
-         if (-159 == e.code):
-            return True
-      return False
-
-   def clean_cs(self,csname):
-      try:
-         self.db.drop_collection_space(csname)
-      except SDBBaseError as e:
-         pass
-
-   def create_cs_cl(self,csname,clname):
-      self.clean_cs(csname)
-      try:
-         self.cs = self.db.create_collection_space(csname)
-         self.cl = self.cs.create_collection(clname)
-         print( 'create cl success' )
-      except SDBBaseError as e:
-         if(-34 != e.code):
-            self.fail('create cl fail: ' + e.detail) 
-  
-   def insert_datas(self):   
+   def insert_datas(self):
       flags = 0
       doc = [{"_id":1,"a":1},\
              {"_id":2,"a":2},\

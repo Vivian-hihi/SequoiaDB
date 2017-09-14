@@ -4,18 +4,12 @@
 # @author:     liuxiaoxuan 2017-8-30
 
 from bson.py3compat import (PY3,long_type)
-import unittest
-import datetime
 from pysequoiadb.error import (SDBTypeError, SDBBaseError, SDBEndOfCursor,SDBError)
 from lib import testlib
 
-cs_name = "cs_12475"
-cl_name = "cl_12475"
-class TestExplain12475(unittest.TestCase):
+class TestExplain12475(testlib.SdbTestBase):
    def setUp(self):
-      testlib.print_setup_msg(self)
-      self.db = testlib.default_db()
-      self.create_cs_cl(cs_name,cl_name)
+      self.create_cs_cl()
       self.insert_datas()
 
    def testExplain12475(self):
@@ -69,28 +63,8 @@ class TestExplain12475(unittest.TestCase):
       self.get_explain(expectResult6, condition6, selected6, aIdxName)
 
    def tearDown(self):
-      try:
-         testlib.print_teardown_msg(self)
-         self.db.drop_collection_space(cs_name)
-         self.db.disconnect()
-      except SDBBaseError as e:
-         if(-34 != e.code):
-            self.fail('teardown fail: ' + e.detail)   
-				
-   def clean_cs(self,csname):
-      try:
-         self.db.drop_collection_space(csname)
-      except SDBError as e:
-         pass	
-   
-   def create_cs_cl(self,csname,clname):
-      self.clean_cs(csname)
-      try:
-         self.cs = self.db.create_collection_space(csname)
-         self.cl = self.cs.create_collection(clname)
-         print( 'create cl success' )
-      except SDBError as e:
-         self.fail('create cl fail: ' + e.detail)
+      if self.should_clean_env():
+         self.drop_cs()
 
    def insert_datas(self):
       flags = 0
@@ -146,6 +120,6 @@ class TestExplain12475(unittest.TestCase):
          actQuery= rec['Query']['$and']
          self.assertEqual( expScanType,actScanType)
          self.assertEqual( expIdxName,actIdxName)
-         testlib.assert_list_equal(self, expQuery, actQuery)
+         self.assertListEqualUnordered(expQuery, actQuery)
       except SDBBaseError as e:
          self.fail('check explain fail: ' + e.detail)
