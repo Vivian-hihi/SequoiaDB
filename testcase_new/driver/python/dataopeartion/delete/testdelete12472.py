@@ -7,21 +7,20 @@
 """
 from lib import testlib
 
-class TestDelete12472(testlib.TestDataOprtBase):
+class SdbTestDelete12472(testlib.SdbTestBase):
    def setUp(self):
       self.create_cs_cl()
 
    def tearDown(self):
-      if testlib.should_clear_env(self):
+      if self.should_clean_env():
          self.drop_cs()
-      self.close_db()
 
    def __delete_test(self,insert_list,expect,**kwargs):
       cl=self.cl
       cl.bulk_insert(0,insert_list)
       cl.delete(**kwargs)
-      r=self.get_records()
-      self.assert_list_equal(expect,r)
+      r=testlib.get_all_records_noid(cl.query())
+      self.assertListEqualUnordered(expect, r)
       cl.truncate();
 
    def test_delete(self):

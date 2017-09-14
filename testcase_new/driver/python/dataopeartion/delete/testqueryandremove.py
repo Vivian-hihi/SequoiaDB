@@ -6,7 +6,7 @@ import unittest
 
 default_list = [{"a": i} for i in range(10)]
 
-class TestQueryAndUpdate(testlib.TestDataOprtBase):
+class SdbTestQueryAndUpdate(testlib.SdbTestBase):
    @unittest.skip("skip! find bug SEQUOIADBMAINSTREAM-2793")
    def setUp(self):
       self.create_cs_cl()
@@ -27,10 +27,10 @@ class TestQueryAndUpdate(testlib.TestDataOprtBase):
       cl.bulk_insert(0, insert)
 
       cur = cl.query_and_remove(**kwargs)
-      l = self.get_records()
-      rl = self.get_records(cur)
-      self.assert_list_equal(expect, l)
-      self.assert_list_equal(expect_return, rl)
+      l = testlib.get_all_records_noid(cl.query())
+      rl = testlib.get_all_records_noid(cur)
+      self.assertListEqualUnordered(expect, l)
+      self.assertListEqualUnordered(expect_return, rl)
       cl.truncate()
 
    def test_query_and_update(self):
