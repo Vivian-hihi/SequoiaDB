@@ -4,12 +4,7 @@
 # @author:     LaoJingTang
 from lib import testlib
 
-class TestSql12481(testlib.TestDataOprtBase):
-   def setUp(self):
-      self.init_db()
-
-   def tearDown(self):
-      self.close_db()
+class SdbTestSql12481(testlib.SdbTestBase):
 
    def test_select(self):
       self.create_cs_cl()
@@ -19,28 +14,28 @@ class TestSql12481(testlib.TestDataOprtBase):
       sql="select a from "+self.cl_name_qualified
       cur=db.exec_sql(sql)
       e=[{"a":1} for i in range(10)]
-      self.assert_list_equal(e,self.get_records(cur))
+      self.assertListEqualUnordered(e, testlib.get_all_records_noid(cur))
 
       #select avg
       sql="select avg(a) as avg from "+self.cl_name_qualified
       cur=db.exec_sql(sql)
-      a=self.get_records(cur)
+      a=testlib.get_all_records_noid(cur)
       e=[{"avg":1}]
-      self.assert_list_equal(e,a)
+      self.assertListEqualUnordered(e, a)
 
       #select group by
       sql="select count(a) as a from "+self.cl_name_qualified+" group by a"
       cur=db.exec_sql(sql)
-      a=self.get_records(cur)
+      a=testlib.get_all_records_noid(cur)
       e=[{"a":10}]
-      self.assert_list_equal(e,a)
+      self.assertListEqualUnordered(e, a)
 
       #select join
       sql="select t1.a,t2.a from "+self.cl_name_qualified+" as t1 inner join "+self.cl_name_qualified+" as t2 on t1.a =t2.a"
       cur=db.exec_sql(sql)
-      a=self.get_records(cur)
+      a=testlib.get_all_records_noid(cur)
       e=[{"a":1,"a":1} for i in range(100)]
-      self.assert_list_equal(e,a)
+      self.assertListEqualUnordered(e, a)
       self.drop_cs()
 
    def test_sql(self):
@@ -53,7 +48,7 @@ class TestSql12481(testlib.TestDataOprtBase):
       #list CS
       sql="list collectionspaces"
       cur=db.exec_sql(sql)
-      r=self.get_records(cur=cur)
+      r=testlib.get_all_records_noid(cur=cur)
       self.assertIn({"Name":self.cs_name},r)
 
       #create CL
@@ -63,7 +58,7 @@ class TestSql12481(testlib.TestDataOprtBase):
       #list CL
       sql="list collections"
       cur=db.exec_sql(sql)
-      r=self.get_records(cur)
+      r=testlib.get_all_records_noid(cur)
       self.assertIn({"Name":self.cl_name_qualified},r)
 
       #insert
@@ -71,27 +66,28 @@ class TestSql12481(testlib.TestDataOprtBase):
          sql="insert into "+self.cl_name_qualified+"(a) values("+str(i)+")"
          db.exec_update(sql)
       e=[{"a":i} for i in range(10)]
-      a=self.get_records()
-      self.assert_list_equal(e,a)
+      self.cl=self.db.get_collection(self.cl_name_qualified)
+      a=testlib.get_all_records_noid(self.cl.query())
+      self.assertListEqualUnordered(e, a)
 
       #update
       sql="update "+self.cl_name_qualified+" set a=0"
       db.exec_update(sql)
       e=[{"a":0} for i in range(10)]
-      a=self.get_records()
-      self.assert_list_equal(e,a)
+      a=testlib.get_all_records_noid(self.cl.query())
+      self.assertListEqualUnordered(e, a)
 
       #delete
       sql="delete from "+self.cl_name_qualified
       db.exec_update(sql)
       e=[]
-      a=self.get_records()
-      self.assert_list_equal(e,a)
+      a=testlib.get_all_records_noid(self.cl.query())
+      self.assertListEqualUnordered(e, a)
 
       #dropCs
       sql="drop collectionspace "+self.cs_name
       db.exec_update(sql)
       cur=db.list_collection_spaces()
-      r=self.get_records(cur)
+      r=testlib.get_all_records_noid(cur)
       self.assertNotIn({"Nam":self.cs_name},r)
 
