@@ -8,7 +8,7 @@ from lib import testlib
 NUM = 10
 
 
-class Data12465(testlib.TestDataOprtBase):
+class Data12465Sdb(testlib.SdbTestBase):
    def setUp(self):
       self.create_cs_cl()
 
@@ -19,8 +19,8 @@ class Data12465(testlib.TestDataOprtBase):
          kwargs["return_new"] = True
 
       self.cl.upsert(upsert, **kwargs)
-      list1 = self.get_records(self.cl.query())
-      self.assert_list_equal(cl_list__expect,list1)
+      list1 = testlib.get_all_records_noid(self.cl.query())
+      self.assertListEqualUnordered(cl_list__expect, list1)
       self.cl.delete()
 
    def test12465(self):
@@ -35,6 +35,5 @@ class Data12465(testlib.TestDataOprtBase):
       self.upsert_test(l, upsert, condition=condition)
 
    def tearDown(self):
-      if testlib.should_clear_env(self):
+      if self.should_clean_env():
          self.drop_cs()
-      self.close_db()

@@ -1,11 +1,10 @@
 # @decription: data  opeartion
 # @testlink:   seqDB-12463
 # @author:     LaoJingTang 2017-8-30
-import unittest
 
 from lib import testlib
 
-class Data12463(testlib.TestDataOprtBase):
+class Data12463Sdb(testlib.SdbTestBase):
    def setUp(self):
       self.create_cs_cl()
 
@@ -17,10 +16,9 @@ class Data12463(testlib.TestDataOprtBase):
       condition = {"a": {"$et": 1}}
       self.cl.update(update,condition=condition)
       l = [{"a": 2} for i in range(10)]
-      self.assert_list_equal(l, self.get_records(self.cl.query()))
+      self.assertListEqualUnordered(l, testlib.get_all_records_noid(self.cl.query()))
 
    def tearDown(self):
-      if testlib.should_clear_env(self):
+      if self.should_clean_env():
          self.drop_cs()
-      self.close_db()
 

@@ -6,7 +6,7 @@ import unittest
 from lib import testlib
 from pysequoiadb.error import (SDBBaseError)
 
-class Data12464(testlib.TestDataOprtBase):
+class Data12464Sdb(testlib.SdbTestBase):
    def setUp(self):
       self.create_cs_cl()
 
@@ -14,8 +14,8 @@ class Data12464(testlib.TestDataOprtBase):
       for i in self.original_list:
          self.cl.insert(i)
       self.cl.update(update, **kwargs)
-      list1 = self.get_records(self.cl.query())
-      self.assert_list_equal(list__expect,list1)
+      list1 = testlib.get_all_records_noid(self.cl.query())
+      self.assertListEqualUnordered(list__expect, list1)
       self.cl.delete()
 
    def test12464(self):
@@ -41,6 +41,5 @@ class Data12464(testlib.TestDataOprtBase):
          pass
 
    def tearDown(self):
-      if testlib.should_clear_env(self):
+      if self.should_clean_env():
          self.drop_cs()
-      self.close_db()

@@ -7,7 +7,7 @@ from pysequoiadb.error import (SDBBaseError)
 import unittest
 
 
-class Data12473(testlib.TestDataOprtBase):
+class Data12473Sdb(testlib.SdbTestBase):
    def setUp(self):
       self.create_cs_cl()
 
@@ -18,10 +18,10 @@ class Data12473(testlib.TestDataOprtBase):
          kwargs["return_new"] = True
 
       cur = self.cl.query_and_update(update, **kwargs)
-      list1 = self.get_records()
-      list2 = self.get_records(cur)
-      self.assert_list_equal(cl_list__expect, list1)
-      self.assert_list_equal(return_list_expect, list2)
+      list1 = testlib.get_all_records_noid()
+      list2 = testlib.get_all_records_noid(cur)
+      self.assertListEqualUnordered(cl_list__expect, list1)
+      self.assertListEqualUnordered(return_list_expect, list2)
       self.cl.delete()
 
    @unittest.skip("result different in standalong and cluster")
@@ -86,6 +86,5 @@ class Data12473(testlib.TestDataOprtBase):
          pass
 
    def tearDown(self):
-      if testlib.should_clear_env(self):
+      if self.should_clean_env():
          self.drop_cs()
-      self.close_db()
