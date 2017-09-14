@@ -48,8 +48,7 @@ class TestProcedure12491(unittest.TestCase):
          testlib.print_teardown_msg(self)
          self.db.disconnect()
       except SDBBaseError as e:
-          print(e.detail)
-          raise e
+          self.fail('tearDown fail: ' + e.detail)
 
    def is_stand_alone(self):
       try:

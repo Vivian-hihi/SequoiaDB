@@ -17,7 +17,7 @@ class TestSnapshot12505(unittest.TestCase):
    def setUp(self):
       testlib.print_setup_msg(self)
       self.db = testlib.default_db()
-      self.create_cl()
+      self.create_cs_cl(cs_name,cl_name)
 
    def testSnapshot12505(self):
       condition = [{"Name": cs_name} , None]
@@ -47,24 +47,22 @@ class TestSnapshot12505(unittest.TestCase):
          self.db.disconnect()
       except SDBBaseError as e:
          if (-34 != e.code):
-            print(e.detail)
-            raise e
+            self.fail('tearDown fail: ' + e.detail)
 
-   def clean_cs(self):
+   def clean_cs(self,csname):
       try:
-         self.db.drop_collection_space(cs_name)
+         self.db.drop_collection_space(csname)
       except SDBBaseError as e:
          pass
 
-   def create_cl(self):
-       self.clean_cs()
+   def create_cs_cl(self,csname,clname):
+       self.clean_cs(csname)
        try:
-          self.cs = self.db.create_collection_space(cs_name)
-          self.cl = self.cs.create_collection(cl_name)
+          self.cs = self.db.create_collection_space(csname)
+          self.cl = self.cs.create_collection(clname)
           print('create cl success')
        except SDBBaseError as e:
-          print(e.detail)
-          raise e
+          self.fail('create cl fail: ' + e.detail)
 
    def get_snapshot_5(self,expectRec,cond):
       try:

@@ -24,7 +24,7 @@ class TestSave12502(unittest.TestCase):
       srcGroupName = dataGroupNames[0]
       destGroupName = dataGroupNames[1]
 
-      self.create_cl(srcGroupName)
+      self.create_cs_cl(srcGroupName,cs_name,cl_name)
       self.insert_datas()
       self.split_cl(srcGroupName, destGroupName)
       
@@ -97,8 +97,7 @@ class TestSave12502(unittest.TestCase):
          self.db.disconnect()
       except SDBBaseError as e:
          if(-34 != e.code):
-            print(e.detail)
-            raise e
+            self.fail('tearDown fail: ' + e.detail) 
  
    def is_stand_alone(self):
       try:
@@ -128,23 +127,22 @@ class TestSave12502(unittest.TestCase):
       groupNames.remove("SYSCoord")         
       return groupNames   
  
-   def clean_cs(self):
+   def clean_cs(self,csname):
       try:
-         self.db.drop_collection_space(cs_name)
+         self.db.drop_collection_space(csname)
       except SDBBaseError as e:
          pass	
 			
-   def create_cl(self,srcGroupName):
-      self.clean_cs()
+   def create_cs_cl(self,srcGroupName,csname,clname):
+      self.clean_cs(csname)
       try:
-         self.cs = self.db.create_collection_space(cs_name)
+         self.cs = self.db.create_collection_space(csname)
          #create cl
          option = {"ShardingKey":{'no':1},"ShardingType":'hash',"Group":srcGroupName}
-         self.cl = self.cs.create_collection(cl_name , option)
+         self.cl = self.cs.create_collection(clname , option)
          print( 'create cl success' )
       except SDBBaseError as e:
-         print(e.detail) 
-         raise e    
+         self.fail('create cl fail: ' + e.detail)    
   
    def insert_datas(self):   
       objectIds = [ObjectId("53bb5667c5d061d6f579d0bb"),\
@@ -159,8 +157,7 @@ class TestSave12502(unittest.TestCase):
       try:
          self.cl.bulk_insert(flag,doc)
       except SDBBaseError as e:
-         print(e.detail)
-         raise e
+         self.fail('insert fail: ' + e.detail) 
          
    def split_cl(self,srcGroupName,destGroupName):   
       try:

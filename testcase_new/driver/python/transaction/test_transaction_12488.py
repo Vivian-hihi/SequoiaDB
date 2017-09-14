@@ -17,13 +17,13 @@ class TestTransaction12488(unittest.TestCase):
     def setUp(self):
         testlib.print_setup_msg(self)
         self.db = testlib.default_db()
-        self.clean_cs()
+        self.clean_cs(cs_name)
 
     def testTransaction12488(self):
         # begin to do transaction
         self.begin_transaction()
         # do create cl
-        self.create_cl()
+        self.create_cs_cl(cs_name,cl_name)
         # insert
         self.insert_datas()
 
@@ -58,12 +58,11 @@ class TestTransaction12488(unittest.TestCase):
           self.db.disconnect()
        except SDBBaseError as e:
           if (-34 != e.code):
-             print(e.detail)
-             raise e
+             self.fail('tearDown fail: ' + e.detail)
 
-    def clean_cs(self):
+    def clean_cs(self,csname):
        try:
-          self.db.drop_collection_space(cs_name)
+          self.db.drop_collection_space(csname)
        except SDBBaseError as e:
           pass
 
@@ -73,10 +72,10 @@ class TestTransaction12488(unittest.TestCase):
        except SDBBaseError as e:
           self.fail('begin transaction fail: ' + e.detail)
 
-    def create_cl(self):
+    def create_cs_cl(self,csname,clname):
        try:
-          self.cs = self.db.create_collection_space(cs_name)
-          self.cl = self.cs.create_collection(cl_name)
+          self.cs = self.db.create_collection_space(csname)
+          self.cl = self.cs.create_collection(clname)
           print('create cl success')
        except SDBBaseError as e:
           self.fail('create cl fail: ' + e.detail)

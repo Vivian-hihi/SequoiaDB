@@ -36,8 +36,7 @@ class TestCreateUsr12490(unittest.TestCase):
       except SDBBaseError as e:
          # user or password not exist
          if (-300 != e.code):
-            print(e.detail)
-            raise e
+            self.fail('teardown fail: ' + e.detail)
 
    def is_stand_alone(self):
       try:

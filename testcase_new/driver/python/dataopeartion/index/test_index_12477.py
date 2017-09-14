@@ -18,7 +18,7 @@ class TestIdIndex12477(unittest.TestCase):
    def setUp(self):
       testlib.print_setup_msg(self)
       self.db = testlib.default_db()
-      self.create_cl()
+      self.create_cs_cl(cs_name,cl_name)
       self.insert_datas()
 
    def testIdIndex12477(self):
@@ -48,24 +48,22 @@ class TestIdIndex12477(unittest.TestCase):
          self.db.disconnect()
       except SDBBaseError as e:
          if (-34 != e.code):
-            print(e.detail)
-            raise e
+            self.fail('teardown fail: ' + e.detail)  
 
-   def clean_cs(self):
+   def clean_cs(self,csname):
       try:
-         self.db.drop_collection_space(cs_name)
+         self.db.drop_collection_space(csname)
       except SDBError as e:
          pass
 
-   def create_cl(self):
-      self.clean_cs()
+   def create_cs_cl(self,csname,clname):
+      self.clean_cs(csname)
       try:
-         self.cs = self.db.create_collection_space(cs_name)
-         self.cl = self.cs.create_collection(cl_name,{'AutoIndexId': False})
+         self.cs = self.db.create_collection_space(csname)
+         self.cl = self.cs.create_collection(clname,{'AutoIndexId': False})
          print('create cl success')
       except SDBError as e:
-         print(e.detail)
-         raise e
+         self.fail('create cl fail: ' + e.detail)  
 
    def insert_datas(self):
       doc = []
@@ -75,8 +73,7 @@ class TestIdIndex12477(unittest.TestCase):
          flags = 0
          self.cl.bulk_insert(flags, doc)
       except SDBBaseError as e:
-         print(e.detail)
-         raise e
+         self.fail('insert fail: ' + e.detail)  
 
    def create_id_index(self, opt):
       try:

@@ -26,7 +26,7 @@ class TestConnect12501(unittest.TestCase):
          self.skipTest('current environment is standalone')
       dataGroupNames = self.get_data_groupnames()
       self.groupName = dataGroupNames[0]
-      self.create_cl()
+      self.create_cs_cl(cs_name,cl_name)
       self.insert_datas()
 
    def testConnect12501(self):
@@ -49,8 +49,7 @@ class TestConnect12501(unittest.TestCase):
          self.db.disconnect()
       except SDBBaseError as e:
          if (-34 != e.code):
-            print(e.detail)
-            raise e
+            self.fail('teardown fail: ' + e.detail)
 
    def is_stand_alone(self):
       try:
@@ -73,23 +72,22 @@ class TestConnect12501(unittest.TestCase):
       groupNames.remove("SYSCoord")
       return groupNames
 
-   def clean_cs(self):
+   def clean_cs(self,csname):
       try:
-         self.db.drop_collection_space(cs_name)
+         self.db.drop_collection_space(csname)
       except SDBBaseError as e:
          pass
 
-   def create_cl(self):
-      self.clean_cs()
+   def create_cs_cl(self,csname,clname):
+      self.clean_cs(csname)
       try:
-         self.cs = self.db.create_collection_space(cs_name)
+         self.cs = self.db.create_collection_space(csname)
          # create cl with options
          options = {'ReplSize': 3, 'Group': self.groupName}
-         self.cl = self.cs.create_collection(cl_name, options)
+         self.cl = self.cs.create_collection(clname, options)
          print('create cl success')
       except SDBBaseError as e:
-         print(e.detail)
-         raise e
+         self.fail('create cl fail: ' + e.detail)
 
    def insert_datas(self):
       flag = 0
@@ -99,8 +97,7 @@ class TestConnect12501(unittest.TestCase):
       try:
          self.cl.bulk_insert(flag, doc)
       except SDBBaseError as e:
-         print(e.detail)
-         raise e
+         self.fail('insert fail: ' + e.detail)
 
    def get_catalog_info(self,cond,expectRec):
       try:

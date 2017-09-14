@@ -15,7 +15,7 @@ class TestSession12506(unittest.TestCase):
    def setUp(self):
       testlib.print_setup_msg(self)
       self.db = testlib.default_db()
-      self.create_cl()
+      self.create_cs_cl(cs_name,cl_name)
       self.insert_datas()
 
    def testSession12506(self):
@@ -34,26 +34,24 @@ class TestSession12506(unittest.TestCase):
          self.db.disconnect()
       except SDBBaseError as e:
          if (-34 != e.code):
-            print(e.detail)
-            raise e
+            self.fail('teardown fail: ' + e.detail)
 
-   def clean_cs(self):
+   def clean_cs(self,csname):
       try:
-         self.db.drop_collection_space(cs_name)
+         self.db.drop_collection_space(csname)
       except SDBBaseError as e:
          pass
 
-   def create_cl(self):
-       self.clean_cs()
+   def create_cs_cl(self,csname,clname):
+       self.clean_cs(csname)
        try:
-          self.cs = self.db.create_collection_space(cs_name)
+          self.cs = self.db.create_collection_space(csname)
           self.cls = []
           # create cl
-          self.cl = self.cs.create_collection(cl_name)
+          self.cl = self.cs.create_collection(clname)
           print('create CLs success')
        except SDBBaseError as e:
-          print(e.detail)
-          raise e
+          self.fail('create cl fail: ' + e.detail)
 
    def insert_datas(self):
       flag = 0
@@ -63,8 +61,7 @@ class TestSession12506(unittest.TestCase):
       try:
          self.cl.bulk_insert(flag, doc)
       except SDBBaseError as e:
-         print(e.detail)
-         raise e
+         self.fail('insert fail: ' + e.detail)
 
    def check_session(self,opts):
       try:

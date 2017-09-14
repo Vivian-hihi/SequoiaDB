@@ -17,7 +17,7 @@ class TestIndex12476(unittest.TestCase):
    def setUp(self):
       testlib.print_setup_msg(self)
       self.db = testlib.default_db()
-      self.create_cl()
+      self.create_cs_cl(cs_name,cl_name)
       self.insert_datas() 
  
    def testIndex12476(self):
@@ -60,32 +60,29 @@ class TestIndex12476(unittest.TestCase):
          self.db.disconnect()
       except SDBBaseError as e:
          if(-34 != e.code):
-            print(e.detail)
-            raise e      	 
+            self.fail('teardown fail: ' + e.detail)     	 
 
-   def clean_cs(self):
+   def clean_cs(self,csname):
       try:
-         self.db.drop_collection_space(cs_name)
+         self.db.drop_collection_space(csname)
       except SDBError as e:
          pass			
 			
-   def create_cl(self):
-      self.clean_cs()
+   def create_cs_cl(self,csname,clname):
+      self.clean_cs(csname)
       try:
-         self.cs = self.db.create_collection_space(cs_name)              
-         self.cl = self.cs.create_collection(cl_name)
+         self.cs = self.db.create_collection_space(csname)              
+         self.cl = self.cs.create_collection(clname)
          print( 'create cl success' )
       except SDBError as e:
-         print(e.detail) 
-         raise e    
+         self.fail('create cl fail: ' + e.detail)  
   
    def insert_datas(self):   
       for i in range(1,insert_nums):
          try:
             self.cl.insert({"_id":i,"a":i, "b":"test" + str(i)})  
          except SDBError as e:
-            print(e.detail) 
-            raise e
+            self.fail('insert fail: ' + e.detail)
 
    def create_index(self, index, index_name, isOption):
       try:
@@ -133,10 +130,10 @@ class TestIndex12476(unittest.TestCase):
 
    def query_datas(self,expectResult,cond,index_name):   
       try:
-         cursor = self.cl.query(condition=cond,\
-                             order_by={"_id":1},\
-                             hint={"":index_name},\
-                             flags=1)
+         cursor = self.cl.query(condition = cond,\
+                             order_by = {"_id":1},\
+                             hint = {"":index_name},\
+                             flags = 1)
          actResult = []							  
          while True:
             try:
@@ -150,9 +147,9 @@ class TestIndex12476(unittest.TestCase):
 
    def check_explain(self,expectExplainRec,cond):
       try:
-         cursor = self.cl.explain(condition=cond,\
-                             order_by={"b":1},\
-                             flags=1)
+         cursor = self.cl.explain(condition = cond,\
+                             order_by = {"b":1},\
+                             flags = 1)
          rec = cursor.next()
          expScanType = expectExplainRec['expScanType']
          expIdxName = expectExplainRec['expIdxName']

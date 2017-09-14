@@ -16,10 +16,10 @@ class TestSSL9561(unittest.TestCase):
         testlib.print_setup_msg(self)
         self.config = sdbconfig.SdbConfig()
         self.db = client(self.config.host_name, self.config.service, '', '', False)
-        self.clean_cs()
+        self.clean_cs(cs_name)
 
     def testSSL9561(self):
-       self.check_create_cl()
+       self.check_create_cl(cs_name,cl_name)
        self.check_with_ssl()
 
     def tearDown(self):
@@ -29,19 +29,18 @@ class TestSSL9561(unittest.TestCase):
           self.db.disconnect()
        except SDBBaseError as e:
           if (-34 != e.code):
-             print(e.detail)
-             raise e
+             self.fail('tearDown fail: ' + e.detail)
 
-    def clean_cs(self):
+    def clean_cs(self,csname):
        try:
-          self.db.drop_collection_space(cs_name)
+          self.db.drop_collection_space(csname)
        except SDBBaseError as e:
           pass
 
-    def check_create_cl(self):
+    def check_create_cl(self,csname,clname):
        try:
-          self.cs = self.db.create_collection_space(cs_name)
-          self.cl = self.cs.create_collection(cl_name)
+          self.cs = self.db.create_collection_space(csname)
+          self.cl = self.cs.create_collection(clname)
           print('create cl success')
        except SDBBaseError as e:
           self.fail('create cl fail: ' + e.detail)

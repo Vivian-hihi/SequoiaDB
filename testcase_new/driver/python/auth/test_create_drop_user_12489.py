@@ -46,8 +46,7 @@ class TestCreateDropUsr12489(unittest.TestCase):
          self.db.disconnect()
       except SDBBaseError as e:
          if (-34 != e.code):
-            print(e.detail)
-            raise e
+            self.fail('teardown fail: ' + e.detail)
 
    def is_stand_alone(self):
       try:
