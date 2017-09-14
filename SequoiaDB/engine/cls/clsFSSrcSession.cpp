@@ -1567,6 +1567,11 @@ namespace engine
          ossScopedLock lock( &_LSNlatch ) ;
          _deqLSN.clear() ;
 
+         /// Notify fullsync, So will kick the node from sync control nodes.
+         /// In _processValidCLs, need to get lock of collection, If has some
+         /// operators hold the lock and in sync control, will occur dead wait
+         _pRepl->syncMgr()->notifyFullSync( header->routeID ) ;
+
          /// process valid collections
          _processValidCLs( validCLs ) ;
 
@@ -1589,8 +1594,6 @@ namespace engine
 
             _init = TRUE ;
             _quit = FALSE ;
-
-            _pRepl->syncMgr()->notifyFullSync( header->routeID ) ;
          }
          else
          {
