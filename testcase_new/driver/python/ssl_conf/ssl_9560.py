@@ -53,7 +53,7 @@ class TestSSL9560(unittest.TestCase):
        try:
           new_db = client(self.config.host_name, self.config.service, '', '', True)
           new_db.drop_collection_space(cs_name)
-          self.check_create_cl(new_db)
+          self.check_create_cl(new_db,cs_name,cl_name)
        except SDBBaseError as e:
           self.fail('ssl fail: ' + e.detail)
        finally:
