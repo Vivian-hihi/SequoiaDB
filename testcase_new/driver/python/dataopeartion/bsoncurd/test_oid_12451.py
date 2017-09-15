@@ -104,8 +104,4 @@ class TestOid12451(testlib.SdbTestBase):
 
    def tearDown(self):
       if self.should_clean_env():
-         try:
-            self.db.drop_collection_space(self.cs_name)
-         except SDBBaseError as e:
-            if -34 != e.code:
-               self.fail("tear_down_fail,detail:" + e.detail)
+         self.db.drop_collection_space(self.cs_name)
