@@ -327,6 +327,7 @@ namespace engine
       LogicalIDToInsert logicalID ;
       LogicalIDToInsertEle logicalIDEle( (CHAR *)(&logicalID) ) ;
       CHAR *mergedData = NULL ;
+      CHAR *writePos = NULL ;
 
       if ( !mustOID )
       {
@@ -349,13 +350,13 @@ namespace engine
          // So if there is one in the original record, it will be ignored.
          // We don't return error here because the driver always add the _id
          // field for all records...
-         INT32 ignoreSize = 0 ;
+         INT32 idSize = 0 ;
          UINT32 totalSize = logicalIDEle.size() + record.objsize() ;
          BSONElement ele = record.getField( DMS_ID_KEY_NAME ) ;
          if ( EOO != ele.type() )
          {
-            ignoreSize = ele.size() ;
-            totalSize -= ignoreSize ;
+            idSize = ele.size() ;
+            totalSize -= idSize ;
          }
 
          // The logical is unknow for now, just reserve the space for it.
@@ -364,12 +365,38 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Allocate memory[size: %u] failed, rc: %d",
                       totalSize, rc ) ;
 
+         // Set the BSONObj length.
          *(UINT32*)mergedData = totalSize ;
-         ossMemcpy( mergedData + sizeof(UINT32), logicalIDEle.rawdata(),
-                    logicalIDEle.size() ) ;
-         ossMemcpy( mergedData + sizeof(UINT32) + logicalIDEle.size(),
-                    record.objdata() + sizeof(UINT32) + ignoreSize,
-                    record.objsize() - sizeof(UINT32) - ignoreSize ) ;
+         writePos = mergedData + sizeof(UINT32) ;
+         ossMemcpy( writePos, logicalIDEle.rawdata(), logicalIDEle.size() ) ;
+         writePos += logicalIDEle.size() ;
+         // If no _id or _id is the first element of the object.
+         if ( 0 == idSize || ( ele.value() == mergedData + sizeof(UINT32) ) )
+         {
+            ossMemcpy( writePos,
+                       record.objdata() + sizeof(UINT32) + idSize,
+                       record.objsize() - sizeof(UINT32) - idSize ) ;
+         }
+         else
+         {
+            // _id is not at the beginning of the record. It may be at the end
+            // of the record, or in the middle.
+            const CHAR *copyPos = record.objdata() + sizeof(UINT32) ;
+            INT32 copyLen = ele.rawdata() - record.objdata() - sizeof(UINT32) ;
+            ossMemcpy( writePos, copyPos, copyLen ) ;
+            writePos += copyLen ;
+            // Ignore the _id.
+            copyPos += copyLen + idSize ;
+            INT32 remainLen = record.objsize() -
+                              ( copyPos - record.objdata() ) ;
+            // There is a terminator at the end of BSONObj.
+            SDB_ASSERT( remainLen >= 1,
+                        "Remain length should be greater than 0" ) ;
+            if ( remainLen > 0 )
+            {
+               ossMemcpy( writePos, copyPos, remainLen ) ;
+            }
+         }
          recordData.setData( mergedData, totalSize, FALSE, TRUE ) ;
          memReallocate = TRUE ;
       }
