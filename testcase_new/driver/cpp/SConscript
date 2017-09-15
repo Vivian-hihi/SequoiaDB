@@ -21,6 +21,7 @@ testCommonFiles = [
 ]
 
 testFiles = [ 
+   [ "./datasource/DS_connTest9505.cpp" ],
 ]
 
 def getFileName( filePath ):
