@@ -6,6 +6,7 @@ from datetime import datetime
 from lib import sdbconfig
 from pysequoiadb import SDBError
 from pysequoiadb import client
+from pysequoiadb.error import SDBBaseError
 
 
 class SdbTestBase(unittest.TestCase):
@@ -26,22 +27,6 @@ class SdbTestBase(unittest.TestCase):
    def tearDownClass(cls):
       cls.db.disconnect()
       print(cls.__name__ + " teardown: " + str(datetime.now()))
-
-   def drop_cs(self):
-      try:
-         self.db.drop_collection_space(self.cs_name)
-      except SDBError as e:
-         pass
-
-   def create_cs_cl(self, cs_option=0, cl_option=None):
-      if not hasattr(self, "db"):
-         self.db = default_db()
-      try:
-         self.db.drop_collection_space(self.cs_name)
-      except BaseException as e:
-         pass
-      self.cs = self.db.create_collection_space(self.cs_name, options=cs_option)
-      self.cl = self.cs.create_collection(self.cl_name, options=cl_option)
 
    def assertListEqualUnordered(self, expected, actual, msg=None):
       """
@@ -194,3 +179,14 @@ def get_all_records_noid(cur):
          break
    cur.close()
    return items
+
+def drop_cs(db,cs_name,ignore_not_exist=False):
+   try:
+      db.drop_collection_space(cs_name)
+   except SDBBaseError as e:
+      if ignore_not_exist==True:
+         if -34 != e.code:
+            raise e
+      else:
+         raise e
+

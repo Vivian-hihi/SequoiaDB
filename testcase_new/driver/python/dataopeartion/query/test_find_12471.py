@@ -15,7 +15,9 @@ insert_nums = 100
 
 class TestFind12471(testlib.SdbTestBase):
    def setUp(self):
-      self.create_cs_cl()
+      testlib.drop_cs(self.db, self.cs_name, ignore_not_exist=True)
+      self.cs = self.db.create_collection_space(self.cs_name)
+      self.cl = self.cs.create_collection(self.cl_name)
       self.insert_datas()
 
    def testFind12471(self):
@@ -27,7 +29,7 @@ class TestFind12471(testlib.SdbTestBase):
 
    def tearDown(self):
       if self.should_clean_env():
-         self.drop_cs()
+         self.db.drop_collection_space(self.cs_name)
 
    def insert_datas(self):
       doc = []

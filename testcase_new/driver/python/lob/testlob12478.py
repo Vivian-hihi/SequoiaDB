@@ -5,12 +5,13 @@
 from bson.objectid import ObjectId
 from lib import testlib
 from lob import util
-from pysequoiadb.error import (SDBEndOfCursor)
 
 
 class Lob12478(testlib.SdbTestBase):
    def setUp(self):
-      self.create_cs_cl()
+      testlib.drop_cs(self.db, self.cs_name, ignore_not_exist=True)
+      self.cs = self.db.create_collection_space(self.cs_name)
+      self.cl = self.cs.create_collection(self.cl_name)()
 
    def test_lob(self):
       self.lob_size = 1024

@@ -1,17 +1,18 @@
 # @decription: data  opeartion
 # @testlink:   seqDB-12464
 # @author:     LaoJingTang 2017-8-30
-import unittest
 
 from lib import testlib
-from pysequoiadb.error import (SDBBaseError)
+
 
 class Data12464Sdb(testlib.SdbTestBase):
    def setUp(self):
-      self.create_cs_cl()
+      testlib.drop_cs(self.db, self.cs_name, ignore_not_exist=True)
+      self.cs = self.db.create_collection_space(self.cs_name)
+      self.cl = self.cs.create_collection(self.cl_name)
 
    def update_test(self, record_to_insert, expect_list, update_rule, **kwargs):
-      self.cl.bulk_insert(0,record_to_insert)
+      self.cl.bulk_insert(0, record_to_insert)
       self.cl.update(update_rule, **kwargs)
       list1 = testlib.get_all_records_noid(self.cl.query())
       self.assertListEqualUnordered(expect_list, list1)
@@ -24,17 +25,17 @@ class Data12464Sdb(testlib.SdbTestBase):
       # condition+update
       condition = {"a": {"$et": 0}}
       expect_list = ({"a": 1, "b": 0}, {"a": 1, "b": 1}, {"a": 2, "b": 2})
-      self.update_test(record_to_insert,expect_list, update_rule, condition=condition)
+      self.update_test(record_to_insert, expect_list, update_rule, condition=condition)
 
       # hint+update
       hint = {"": "index"}
       expect = ({"a": 1, "b": 0}, {"a": 2, "b": 1}, {"a": 3, "b": 2})
-      self.update_test(record_to_insert,expect, update_rule, hint=hint)
+      self.update_test(record_to_insert, expect, update_rule, hint=hint)
 
       # flags+update
       QUERY_FLG_FORCE_HINT = 128
-      self.update_test(record_to_insert,expect, update_rule, flagss=QUERY_FLG_FORCE_HINT, hint=hint)
+      self.update_test(record_to_insert, expect, update_rule, flagss=QUERY_FLG_FORCE_HINT, hint=hint)
 
    def tearDown(self):
       if self.should_clean_env():
-         self.drop_cs()
+         self.db.drop_collection_space(self.cs_name)

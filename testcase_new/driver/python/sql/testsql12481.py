@@ -36,10 +36,10 @@ class SdbTestSql12481(testlib.SdbTestBase):
       a=testlib.get_all_records_noid(cur)
       e=[{"a":1,"a":1} for i in range(100)]
       self.assertListEqualUnordered(e, a)
-      self.drop_cs()
+      self.db.drop_collection_space(self.cs_name)
 
    def test_sql(self):
-      self.drop_cs()
+      self.db.drop_collection_space(self.cs_name)
       #create CS
       db=self.db
       sql="create collectionspace "+self.cs_name

@@ -5,12 +5,16 @@
 
 from bson.son import SON
 from lib import testlib
-from pysequoiadb.error import (SDBBaseError, SDBEndOfCursor, SDBError)
+from pysequoiadb.error import (SDBError)
 
 insert_nums = 10
+
+
 class TestAggregate12480(testlib.SdbTestBase):
    def setUp(self):
-      self.create_cs_cl()
+      testlib.drop_cs(self.db, self.cs_name, ignore_not_exist=True)
+      self.cs = self.db.create_collection_space(self.cs_name)
+      self.cl = self.cs.create_collection(self.cl_name)
       self.insert_datas()
 
    def testAggregate12480(self):
@@ -32,12 +36,12 @@ class TestAggregate12480(testlib.SdbTestBase):
       expectResult = [{'avg_age': 20.0, 'major': 'major5'}, \
                       {'avg_age': 21.0, 'major': 'major1'}]
 
-      self.assertListEqualUnordered(expectResult,list_actResult)
-      self.assertListEqualUnordered(expectResult,tuple_actResult)
+      self.assertListEqualUnordered(expectResult, list_actResult)
+      self.assertListEqualUnordered(expectResult, tuple_actResult)
 
    def tearDown(self):
       if self.should_clean_env():
-         self.drop_cs()
+         self.db.drop_collection_space(self.cs_name)
 
    def insert_datas(self):
       for i in range(0, insert_nums):
@@ -45,4 +49,3 @@ class TestAggregate12480(testlib.SdbTestBase):
             self.cl.insert({"_id": i, "name": "test" + str(i), "major": "major" + str(i % 10), "age": 20 + i % 5})
          except SDBError as e:
             self.fail('insert fail: ' + e.detail)
-

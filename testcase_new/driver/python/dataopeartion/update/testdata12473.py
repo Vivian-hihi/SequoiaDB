@@ -3,15 +3,17 @@
 # @author:     LaoJingTang 2017-8-30
 
 from lib import testlib
-from pysequoiadb.error import (SDBBaseError)
+
 
 class Data12473Sdb(testlib.SdbTestBase):
    def setUp(self):
-      self.create_cs_cl()
+      testlib.drop_cs(self.db, self.cs_name, ignore_not_exist=True)
+      self.cs = self.db.create_collection_space(self.cs_name)
+      self.cl = self.cs.create_collection(self.cl_name)
 
    def query_update_test(self, cl_list__expect, return_list_expect, update_rule, **kwargs):
-      records=[{"a": i, "b": i} for i in range(10)]
-      self.cl.bulk_insert(0,records)
+      records = [{"a": i, "b": i} for i in range(10)]
+      self.cl.bulk_insert(0, records)
 
       if "return_new" not in kwargs:
          kwargs["return_new"] = True
@@ -82,4 +84,4 @@ class Data12473Sdb(testlib.SdbTestBase):
 
    def tearDown(self):
       if self.should_clean_env():
-         self.drop_cs()
+         self.db.drop_collection_space(self.cs_name)
