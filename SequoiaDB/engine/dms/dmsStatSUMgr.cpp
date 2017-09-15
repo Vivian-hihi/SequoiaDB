@@ -660,7 +660,7 @@ namespace engine
          }
       }
 
-      if ( needUpdate && pEventHolder )
+      if ( needUpdate && pEventHolder && SDB_DB_NORMAL == PMD_DB_STATUS() )
       {
          BSONObj boMatcher( BSON( DMS_STAT_COLLECTION_SPACE << pOldCSName ) ) ;
          BSONObj boNewName( BSON( DMS_STAT_COLLECTION_SPACE << pNewCSName ) ) ;
@@ -712,7 +712,7 @@ namespace engine
          }
       }
 
-      if ( needDelete && pEventHolder )
+      if ( needDelete && pEventHolder && SDB_DB_NORMAL == PMD_DB_STATUS() )
       {
          const CHAR *pCSName = pEventHolder->getCSName() ;
 
@@ -777,7 +777,7 @@ namespace engine
          }
       }
 
-      if ( needUpdate && pEventHolder )
+      if ( needUpdate && pEventHolder && SDB_DB_NORMAL == PMD_DB_STATUS() )
       {
          const CHAR *pCSName = pEventHolder->getCSName() ;
          const CHAR *pOldCLName = clItem._pCLName ;
@@ -842,7 +842,7 @@ namespace engine
          }
       }
 
-      if ( needDelete && pEventHolder )
+      if ( needDelete && pEventHolder && SDB_DB_NORMAL == PMD_DB_STATUS() )
       {
          const CHAR *pCSName = pEventHolder->getCSName() ;
          const CHAR *pCLName = clItem._pCLName ;
@@ -902,7 +902,7 @@ namespace engine
          }
       }
 
-      if ( needDelete && pEventHolder )
+      if ( needDelete && pEventHolder && SDB_DB_NORMAL == PMD_DB_STATUS() )
       {
          const CHAR *pCSName = pEventHolder->getCSName() ;
          const CHAR *pCLName = clItem._pCLName ;
@@ -967,7 +967,7 @@ namespace engine
          }
       }
 
-      if ( needDelete && pEventHolder )
+      if ( needDelete && pEventHolder && SDB_DB_NORMAL == PMD_DB_STATUS() )
       {
          const CHAR *pCSName = pEventHolder->getCSName() ;
          const CHAR *pCLName = clItem._pCLName ;
