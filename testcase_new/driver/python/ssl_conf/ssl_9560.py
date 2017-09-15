@@ -24,7 +24,10 @@ class TestSSL9560(testlib.SdbTestBase):
 
     def tearDown(self):
       if self.should_clean_env():
-         self.db.drop_collection_space(self.cs_name)    
+         try:	
+            self.db.drop_collection_space(self.cs_name) 
+         except SDBBaseError as e:
+            self.assertEqual(-34, e.code, 'tearDown fail,errmsg: ' + e.detail)			
 
     def check_with_ssl(self):
        new_db = None

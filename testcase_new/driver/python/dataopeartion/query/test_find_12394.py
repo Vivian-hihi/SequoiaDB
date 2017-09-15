@@ -26,7 +26,7 @@ class TestFind12394(testlib.SdbTestBase):
       flag_1 = 1
       self.query_all(expectAllRec, flag_1)
 
-      # query onec
+      # query one
       condition = {"_id": {"$gt": 5}}
       expectOneRec = {"_id": 6, "a": "test6"}
       flag_10 = 10

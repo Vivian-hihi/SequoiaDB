@@ -172,10 +172,7 @@ public class DropDomainAndKillPrimaryCatalog2272 extends SdbTestBase {
             	try {         	
             		sdb.dropDomain(sameDomainName);            		
                 } catch (BaseException e) {                 	
-                    // -214 Domain does not exist  
-                    if (e.getErrorCode() != -214) {
-                    	Assert.fail("the error not -214: "+e.getErrorCode()+e.getErrorType());
-                    }
+                    Assert.fail("the error not -214: "+e.getErrorCode()+e.getErrorType());
                 }        		
         	}
         } 

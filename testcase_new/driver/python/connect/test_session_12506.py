@@ -11,7 +11,7 @@ class TestSession12506(testlib.SdbTestBase):
    def setUp(self):
       testlib.drop_cs(self.db, self.cs_name, ignore_not_exist = True)
       self.cs = self.db.create_collection_space(self.cs_name)
-      self.cl = self.cs.create_collection(self.cl_name)
+      self.cl = self.cs.create_collection(self.cl_name , {'ReplSize': 0})
       self.insert_datas()
 
    def test_session_12506(self):
@@ -20,8 +20,8 @@ class TestSession12506(testlib.SdbTestBase):
       self.check_session(pri_option)
 
       # slave
-      #slave_option = {'PreferedInstance': 'S'}
-      #self.check_session(slave_option)
+      slave_option = {'PreferedInstance': 'S'}
+      self.check_session(slave_option)
 
    def tearDown(self):
       if self.should_clean_env():

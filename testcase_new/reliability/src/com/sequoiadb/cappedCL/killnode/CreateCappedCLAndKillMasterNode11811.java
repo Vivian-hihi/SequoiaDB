@@ -28,7 +28,6 @@ import com.sequoiadb.fault.KillNode;
 import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.OperateTask;
 import com.sequoiadb.task.TaskMgr;
-import com.sequoiadb.cappedCL.Utils;
 
 /**
  * @FileName seqDB-11811: creating the CappedCLs when primary node is killed

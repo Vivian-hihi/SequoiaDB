@@ -19,7 +19,7 @@ class TestCreateDropUsr12489(testlib.SdbTestBase):
    def setUp(self):
       if testlib.is_standalone():
          self.skipTest('current environment is standalone')   
-		# get config	
+		# get a local config	
       self.config = sdbconfig.SdbConfig()
 		# get group
       dataGroups = testlib.get_data_groups()

@@ -18,7 +18,6 @@ import org.testng.annotations.Test;
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.cappedCL.Utils;
 import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.commlib.GroupWrapper;
 import com.sequoiadb.commlib.NodeWrapper;
