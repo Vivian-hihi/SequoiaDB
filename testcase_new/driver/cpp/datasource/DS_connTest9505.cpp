@@ -1,29 +1,29 @@
 /********************************************************************
-* @Description: testcase for datasource
-*               seqDB-9530:addCoord增加的url不符合格式要求
-*               seqDB-9531:addCoord增加的url已经存在
-*               seqDB-9532:removeCoord的url不符合格式要求
-*               seqDB-9533:removeCoord的url不存在
-*               seqDB-9505:申请到池满，再次申请连接
-*               seqDB-9515:disable后，获取连接
-*               seqDB-9516:disable后，addCoord
-*               seqDB-9506:禁用连接池后，空闲队列中的资源被回收
-*               seqDB-9507:禁用连接池后，所有队列中的资源被回收
-*               seqDB-9509:禁用连接池后，再次禁用连接池
-*               seqDB-9517:close后，获取连接
-*               seqDB-9518:close后，addCoord
-*               seqDB-9519:close后，enable连接池
-*               seqDB-9520:close后，disable连接池
-*               seqDB-9510:没有调用init，获取连接
-*               seqDB-9511:没有调用init,addCoord
-*               seqDB-9512:没有调用init，enable连接池
-*               seqDB-9513:没有调用init，disable连接池
-*               seqDB-9514:没有调用init，close连接池
-*               seqDB-9521:获取连接后，没有释放连接，disable连接池
-*               seqDB-9534:releaseConnection不属于连接池的连接
-* @Modify:      Liangxw
-*               2019-09-05
-********************************************************************/
+ * @Description: testcase for datasource
+ *               seqDB-9530:addCoord增加的url不符合格式要求
+ *               seqDB-9531:addCoord增加的url已经存在
+ *               seqDB-9532:removeCoord的url不符合格式要求
+ *               seqDB-9533:removeCoord的url不存在
+ *               seqDB-9505:申请到池满，再次申请连接
+ *               seqDB-9515:disable后，获取连接
+ *               seqDB-9516:disable后，addCoord
+ *               seqDB-9506:禁用连接池后，空闲队列中的资源被回收
+ *               seqDB-9507:禁用连接池后，所有队列中的资源被回收
+ *               seqDB-9509:禁用连接池后，再次禁用连接池
+ *               seqDB-9517:close后，获取连接
+ *               seqDB-9518:close后，addCoord
+ *               seqDB-9519:close后，enable连接池
+ *               seqDB-9520:close后，disable连接池
+ *               seqDB-9510:没有调用init，获取连接
+ *               seqDB-9511:没有调用init,addCoord
+ *               seqDB-9512:没有调用init，enable连接池
+ *               seqDB-9513:没有调用init，disable连接池
+ *               seqDB-9514:没有调用init，close连接池
+ *               seqDB-9521:获取连接后，没有释放连接，disable连接池
+ *               seqDB-9534:releaseConnection不属于连接池的连接
+ * @Modify:      Liangxw
+ *               2019-09-05
+ ********************************************************************/
 #include <gtest/gtest.h>
 #include <sdbDataSource.hpp>
 #include "DS_common.hpp"
@@ -39,7 +39,6 @@ protected:
 
    void SetUp()
    {
-      INT32 rc = SDB_OK ;
       url = ARGS->coordUrl() ;
    }
    void TearDown()

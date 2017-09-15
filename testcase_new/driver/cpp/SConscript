@@ -22,6 +22,20 @@ testCommonFiles = [
 
 testFiles = [ 
    [ "./datasource/DS_connTest9505.cpp" ],
+   [ "./datasource/DS_invalidArgTest9524.cpp" ],
+   [ "./datasource/DS_invalidConnTest9528.cpp" ],
+   [ "./datasource/DS_invalidUsrTest9522.cpp" ],  # sync
+   [ "./datasource/DS_threadTest9535.cpp", "./datasource/DS_thread.cpp" ],
+   [ "./datasource/DS_timeTest9499.cpp" ],  # sync
+   [ "./meta/domain12510_12658.cpp" ], # sync
+   [ "./meta/domain12657.cpp" ], # sync
+   [ "./meta/cs12511_12659.cpp" ],
+   [ "./meta/cl12512_12747.cpp" ],
+   [ "./meta/cl12660.cpp" ],
+   [ "./index/index12514.cpp" ],
+   [ "./index/idIndex12515.cpp" ],
+   [ "./cursor/closeCursor12685_12686.cpp" ],
+   [ "./cursor/closeAllCursors12687.cpp" ]
 ]
 
 def getFileName( filePath ):
