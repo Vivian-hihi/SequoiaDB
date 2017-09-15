@@ -9,6 +9,8 @@
 
 #include <cstdlib>
 #include <client.hpp>
-#include "../testcommon.hpp"
+#include "testcommon.hpp"
+#include "testBase.hpp"
+#include "arguments.hpp"
 
 #endif 
