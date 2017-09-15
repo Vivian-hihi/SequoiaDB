@@ -1336,6 +1336,7 @@ namespace engine
       _flags = 0 ;
       _numToReturn = -1 ;
       _numToSkip = 0 ;
+      _hintExist = FALSE ;
    }
 
    _rtnGet::~_rtnGet ()
@@ -1371,6 +1372,10 @@ namespace engine
       if ( SDB_FIELD_NOT_EXIST == rc )
       {
          rc = SDB_OK ;
+      }
+      else
+      {
+         _hintExist = TRUE ;
       }
       PD_RC_CHECK( rc, PDERROR, "Failed to get field[%s], rc: %d",
                    FIELD_NAME_HINT, rc ) ;
@@ -1505,8 +1510,9 @@ namespace engine
       BSONObj matcher ( _matcherBuff ) ;
       BSONObj orderBy ( _orderByBuff ) ;
 
-      if ( _hintObj.isEmpty() )
+      if ( !_hintExist )
       {
+         /// compatiable with old version. Old version use selector for hint
          _hintObj = BSONObj( _selectBuff ) ;
       }
 
