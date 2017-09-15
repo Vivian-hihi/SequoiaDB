@@ -12,8 +12,8 @@ from lib import sdbconfig
 from lib import testlib
 import random
 
-USERNAME = "admin"
-PASSWORD = "admin"
+username = "admin"
+password = "admin"
 insert_nums = 100
 class TestCreateDropUsr12489(testlib.SdbTestBase):
    def setUp(self):
@@ -26,35 +26,37 @@ class TestCreateDropUsr12489(testlib.SdbTestBase):
       group = dataGroups[0]
       self.groupName = group["GroupName"]			
 
-   def testCreateDropUsr12489(self):
+   def test_create_drop_user_12489(self):
 
       # create user
-      self.check_create_user(USERNAME,PASSWORD)
+      self.check_create_user(username,password)
       # disconnect sdb
       self.db.disconnect()
       # reconnect sdb with user
-      self.check_reconnect_db(USERNAME,PASSWORD)
+      self.check_reconnect_db(username,password)
       # create cl
+      testlib.drop_cs(self.db, self.cs_name, ignore_not_exist=True)
       cl_option = {'ReplSize': 3 ,'Group': self.groupName}
-      self.create_cs_cl(0,cl_option)
+      self.cs = self.db.create_collection_space(self.cs_name)
+      self.cl = self.cs.create_collection(self.cl_name,cl_option)
       # check insert
       self.insert_datas()
 		# check connect catalog
-      self.check_connect_catalog(USERNAME,PASSWORD)
+      self.check_connect_catalog(username,password)
 		# check connect node
-      self.check_connect_node(USERNAME,PASSWORD)
+      self.check_connect_node(username,password)
       # drop user
-      self.db.remove_user(USERNAME, PASSWORD)
+      self.db.remove_user(username, password)
       # check drop result
-      self.check_drop_user(USERNAME,PASSWORD)
+      self.check_drop_user(username,password)
 
    def tearDown(self):
       if self.should_clean_env():
-         self.drop_cs()
+         self.db.drop_collection_space(self.cs_name)	
          try:
-            self.db.remove_user(USERNAME, PASSWORD)
+            self.db.remove_user(username, password)
          except SDBBaseError as e:
-            self.assertEqual(-300, e.code, "error msg: " + e.detail)			
+            self.assertEqual(-300, e.code, "teardown fail,errmsg:" + e.detail)			
 	
    # used to do connecting	
    def get_data_nodes(self):
@@ -98,7 +100,7 @@ class TestCreateDropUsr12489(testlib.SdbTestBase):
       try:
          self.db = client(self.config.host_name, self.config.service, username, password)
       except SDBBaseError as e:
-         self.fail('reconnect with username fail: ' + e.detail)
+         self.fail('reconnect with username fail: ' + e.detail)	
 	
    # seqDB-12501, check connect(username,password)	
    def check_connect_catalog(self,username,password):

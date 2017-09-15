@@ -8,16 +8,14 @@ from lib import testlib
 from pysequoiadb.error import (SDBBaseError, SDBEndOfCursor, SDBError)
 
 insert_nums = 100
-
-
 class TestFind12394(testlib.SdbTestBase):
    def setUp(self):
       testlib.drop_cs(self.db,self.cs_name,ignore_not_exist=True)
-      self.cs=self.db.create_collection_space(self.cs_name)
-      self.cl=self.cs.create_collection(self.cl_name)
+      self.cs = self.db.create_collection_space(self.cs_name)
+      self.cl = self.cs.create_collection(self.cl_name)
       self.insert_datas()
 
-   def testFind12394(self):
+   def test_find_12394(self):
       # query all
       expectAllRec = []
       for i in range(0, insert_nums):
@@ -28,7 +26,7 @@ class TestFind12394(testlib.SdbTestBase):
       flag_1 = 1
       self.query_all(expectAllRec, flag_1)
 
-      # query one
+      # query onec
       condition = {"_id": {"$gt": 5}}
       expectOneRec = {"_id": 6, "a": "test6"}
       flag_10 = 10
@@ -37,7 +35,7 @@ class TestFind12394(testlib.SdbTestBase):
    def tearDown(self):
       if self.should_clean_env():
          self.db.drop_collection_space(self.cs_name)
-
+		
    def insert_datas(self):
       flag = 0
       doc = []
@@ -51,7 +49,7 @@ class TestFind12394(testlib.SdbTestBase):
    def query_all(self, expectRec, flag):
       try:
          sort = {"_id": 1}
-         cursor = self.cl.query(order_by=sort, flags=flag)
+         cursor = self.cl.query(order_by = sort, flags = flag)
          actRec = []
          while True:
             try:
@@ -66,7 +64,7 @@ class TestFind12394(testlib.SdbTestBase):
    def query_one(self, expectRec, cond, flag):
       try:
          sort = {"_id": 1}
-         rec = self.cl.query_one(order_by=sort, condition=cond, flags=flag)
+         rec = self.cl.query_one(order_by = sort, condition = cond, flags = flag)
          self.assertEqual(rec, expectRec)
       except SDBBaseError as e:
          self.fail("query one error: " + e.detail)

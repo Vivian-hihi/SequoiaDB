@@ -14,15 +14,17 @@ class TestSSL9560(testlib.SdbTestBase):
         self.config = sdbconfig.SdbConfig()
         self.db = client(self.config.host_name, self.config.service, '', '', False)
 
-    def testSSL9560(self):
+    def test_ssl_9560(self):
        # ssl = false
-       self.create_cs_cl()
+       testlib.drop_cs(self.db, self.cs_name, ignore_not_exist=True)
+       self.cs = self.db.create_collection_space(self.cs_name)
+       self.cl = self.cs.create_collection(self.cl_name)
        # ssl = true
        self.check_with_ssl()
 
     def tearDown(self):
       if self.should_clean_env():
-         self.drop_cs() 
+         self.db.drop_collection_space(self.cs_name)    
 
     def check_with_ssl(self):
        new_db = None

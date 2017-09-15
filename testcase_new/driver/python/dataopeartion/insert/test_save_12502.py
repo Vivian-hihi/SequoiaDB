@@ -7,7 +7,6 @@ from bson.objectid import ObjectId
 from lib import testlib
 from pysequoiadb.error import (SDBBaseError, SDBError)
 
-
 class TestSave12502(testlib.SdbTestBase):
    def setUp(self):
       if testlib.is_standalone():
@@ -22,13 +21,14 @@ class TestSave12502(testlib.SdbTestBase):
       destGroupName = destGroup["GroupName"]
 
       cl_option = {"ShardingKey": {'no': 1}, "ShardingType": 'hash', "Group": srcGroupName}
-      testlib.drop_cs(self.db, self.cs_name, ignore_not_exist=True)
+      testlib.drop_cs(self.db, self.cs_name, ignore_not_exist = True)
       self.cs = self.db.create_collection_space(self.cs_name)
-      self.cl = self.cs.create_collection(self.cl_name,options=cl_option)
+      self.cl = self.cs.create_collection(self.cl_name,options = cl_option)
+		
       self.insert_datas()
       self.split_cl(srcGroupName, destGroupName)
 
-   def testSaveFields(self):
+   def test_save_12502(self):
       try:
          # insert common field without match id
          doc_commNoMatchId = {"a": "newA_withNoMatchId"}
@@ -87,12 +87,12 @@ class TestSave12502(testlib.SdbTestBase):
          self.check_result(condition7, expectCount7)
 
       except SDBError as e:
-         print(e.detail)
-         raise e
-
+         self.fail('test save fail: ' + e.detail)                    
+			
    def tearDown(self):
       if self.should_clean_env():
          self.db.drop_collection_space(self.cs_name)
+         
 
    def insert_datas(self):
       objectIds = [ObjectId("53bb5667c5d061d6f579d0bb"), \
@@ -113,8 +113,7 @@ class TestSave12502(testlib.SdbTestBase):
       try:
          self.cl.split_async_by_percent(srcGroupName, destGroupName, 50.0)
       except SDBBaseError as e:
-         print(e.detail)
-         raise e
+         self.fail('split fail: ' + e.detail) 
 
    def check_result(self, cond, expectCount):
       actCount = 0

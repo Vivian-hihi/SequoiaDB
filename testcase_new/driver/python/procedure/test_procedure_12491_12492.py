@@ -3,7 +3,7 @@
 # @interface:  create_procedure(self,code)
 #              list_procedures(self,condition)
 #              eval_procedure(self,name)
-#              remove_procedures(self,name)
+#              remove_procedure(self,name)
 # @author:     liuxiaoxuan 2017-9-08
 
 import unittest
@@ -17,7 +17,7 @@ class TestProcedure12491(testlib.SdbTestBase):
       if testlib.is_standalone():
          self.skipTest('current environment is standalone')  
 
-   def testProcedure12491(self):
+   def test_procedure_12491(self):
       # check create result
       code = 'function sum(x,y) { return x + y; }'
       self.check_create_procedure(code)
@@ -42,7 +42,12 @@ class TestProcedure12491(testlib.SdbTestBase):
 
    def tearDown(self):
       if self.should_clean_env():
-         self.drop_cs()   
+         name = 'sum'
+         try:
+            self.db.remove_procedure(name)
+         except SDBBaseError as e:
+            if -233 != e.code:
+               self.fail("teardown fail,errmsg: " + e.detail)  
 
    def check_create_procedure(self,code):
       try:

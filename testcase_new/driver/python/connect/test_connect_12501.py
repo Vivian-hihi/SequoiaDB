@@ -12,8 +12,6 @@ from lib import testlib
 from pysequoiadb.error import (SDBBaseError)
 
 insert_nums = 100
-
-
 class TestConnect12501(testlib.SdbTestBase):
    def setUp(self):
       if testlib.is_standalone():
@@ -24,12 +22,12 @@ class TestConnect12501(testlib.SdbTestBase):
       self.groupName = group["GroupName"]
 
       cl_option = {'ReplSize': 3, 'Group': self.groupName}
-      testlib.drop_cs(self.db, self.cs_name, ignore_not_exist=True)
+      testlib.drop_cs(self.db, self.cs_name, ignore_not_exist = True)
       self.cs = self.db.create_collection_space(self.cs_name)
-      self.cl = self.cs.create_collection(self.cl_name,options=cl_option)
+      self.cl = self.cs.create_collection(self.cl_name,options = cl_option)
       self.insert_datas()
 
-   def testConnect12501(self):
+   def test_connect_12501(self):
       # check catalog
       cl_full_name = self.cl_name_qualified
       condition = {'Name': cl_full_name}

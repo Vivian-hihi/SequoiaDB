@@ -13,8 +13,8 @@ class TestExplain12475(testlib.SdbTestBase):
       self.cs = self.db.create_collection_space(self.cs_name)
       self.cl = self.cs.create_collection(self.cl_name)
       self.insert_datas()
-
-   def testExplain12475(self):
+	
+   def test_explain_12475(self):
       aIndex = {'a': 1}
       aIdxName = 'a'
       self.create_index(aIndex, aIdxName)
@@ -66,8 +66,8 @@ class TestExplain12475(testlib.SdbTestBase):
 
    def tearDown(self):
       if self.should_clean_env():
-         self.db.drop_collection_space(self.cs_name)
-
+         self.db.drop_collection_space(self.cs_name)		
+			
    def insert_datas(self):
       flags = 0
       doc = [{"_id": 1, "a": 1}, \

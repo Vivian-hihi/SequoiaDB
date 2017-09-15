@@ -12,22 +12,21 @@ from lib import testlib
 insert_nums = 100
 class TestTransaction12487(testlib.SdbTestBase):
    def setUp(self):
-      if testlib.is_standalone():
-         self.skipTest('current environment is standalone')
-      self.create_cs_cl()
+      testlib.drop_cs(self.db, self.cs_name, ignore_not_exist=True)
+      self.cs = self.db.create_collection_space(self.cs_name)
+      self.cl = self.cs.create_collection(self.cl_name)
 
-   def testTransaction12487(self):
+   def test_transaction_12487(self):
       # begin to do transaction
       self.begin_transaction()
 
       # insert
       self.insert_datas()
       # check insert result
-      condition = None
-      expectInsResult = []
+      expectAllResult = []
       for i in range(0, insert_nums):
-         expectInsResult.append({"a": i, "b": "test" + str(i)})
-      self.check_result(condition,expectInsResult)
+         expectAllResult.append({"a": i, "b": "test" + str(i)})
+      self.check_result(expectAllResult)
 
       # update
       rule = {'$set': {'b': 'update'}}
@@ -45,11 +44,11 @@ class TestTransaction12487(testlib.SdbTestBase):
       expectResult = []
       for i in range(12, 20):
           expectResult.append({"a": i, "b": "update"})
-      self.check_result(condition, expectResult)
+      self.check_result(expectResult,condition)
 
    def tearDown(self):
       if self.should_clean_env():
-         self.drop_cs()   
+         self.db.drop_collection_space(self.cs_name)   
 
    def begin_transaction(self):
       try:
@@ -85,7 +84,7 @@ class TestTransaction12487(testlib.SdbTestBase):
       except SDBBaseError as e:
          self.fail('commit transaction fail: ' + e.detail)
 
-   def check_result(self,cond,expectRec):
+   def check_result(self,expectRec,cond = None):
       try:
          if cond == None:
             cursor = self.cl.query(order_by = {"_id": 1})

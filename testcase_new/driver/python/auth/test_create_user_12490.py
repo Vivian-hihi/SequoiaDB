@@ -8,28 +8,28 @@ import datetime
 from pysequoiadb.error import (SDBTypeError, SDBBaseError, SDBEndOfCursor, SDBError)
 from lib import testlib
 
-USERNAME = "admin"
-PASSWORD = "admin"
+username = "admin"
+password = "admin"
 class TestCreateUsr12490(testlib.SdbTestBase):
    def setUp(self):
       if testlib.is_standalone():
          self.skipTest('current environment is standalone')
 
-   def testCreateUsr12490(self):
+   def test_create_user_12490(self):
 
       # create user at first time
       is_success = True
-      self.check_create_user(USERNAME,PASSWORD,is_success)
+      self.check_create_user(username,password,is_success)
 
       # repeat to create user
       repeat_time = 10
       for i in range(repeat_time):
-         self.check_create_user(USERNAME, PASSWORD, not is_success)
+         self.check_create_user(username, password, not is_success)
 
    def tearDown(self):
       if self.should_clean_env():
          try:
-            self.db.remove_user(USERNAME,PASSWORD)
+            self.db.remove_user(username,password)
          except SDBBaseError as e:
             # user or password not exist
             if (-300 != e.code):

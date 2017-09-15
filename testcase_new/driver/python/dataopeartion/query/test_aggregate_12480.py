@@ -8,16 +8,14 @@ from lib import testlib
 from pysequoiadb.error import (SDBError)
 
 insert_nums = 10
-
-
 class TestAggregate12480(testlib.SdbTestBase):
    def setUp(self):
-      testlib.drop_cs(self.db, self.cs_name, ignore_not_exist=True)
+      testlib.drop_cs(self.db, self.cs_name, ignore_not_exist = True)
       self.cs = self.db.create_collection_space(self.cs_name)
       self.cl = self.cs.create_collection(self.cl_name)
       self.insert_datas()
 
-   def testAggregate12480(self):
+   def test_aggregate_12480(self):
       match = SON({'$match': {'name': {'$exists': 1}}})
       group = SON({'$group': {'_id': '$major', 'avg_age': {'$avg': '$age'}, 'major': {'$first': '$major'}}})
       sort = SON({'$sort': {'avg_age': 1}})
@@ -44,8 +42,11 @@ class TestAggregate12480(testlib.SdbTestBase):
          self.db.drop_collection_space(self.cs_name)
 
    def insert_datas(self):
+      doc = []
       for i in range(0, insert_nums):
-         try:
-            self.cl.insert({"_id": i, "name": "test" + str(i), "major": "major" + str(i % 10), "age": 20 + i % 5})
-         except SDBError as e:
-            self.fail('insert fail: ' + e.detail)
+         doc.append({"_id": i, "name": "test" + str(i), "major": "major" + str(i % 10), "age": 20 + i % 5})
+      try:
+         flags = 0
+         self.cl.bulk_insert(flags, doc)
+      except SDBBaseError as e:
+         self.fail('insert fail: ' + e.detail)	

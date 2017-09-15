@@ -11,8 +11,6 @@ from lib import testlib
 from pysequoiadb.error import (SDBBaseError, SDBEndOfCursor)
 
 insert_nums = 100
-
-
 class TestFind12471(testlib.SdbTestBase):
    def setUp(self):
       testlib.drop_cs(self.db, self.cs_name, ignore_not_exist=True)
@@ -20,7 +18,7 @@ class TestFind12471(testlib.SdbTestBase):
       self.cl = self.cs.create_collection(self.cl_name)
       self.insert_datas()
 
-   def testFind12471(self):
+   def test_find_12471(self):
       # query all records
       expectResult = []
       for i in range(0, insert_nums):
@@ -46,7 +44,7 @@ class TestFind12471(testlib.SdbTestBase):
          if cond == None:
             actCount = self.cl.get_count()
          else:
-            actCount = self.cl.get_count(condition=cond)
+            actCount = self.cl.get_count(condition = cond)
          self.assertEqual(expectCount, actCount)
       except SDBBaseError as e:
          self.fail('get count fail: ' + e.detail)

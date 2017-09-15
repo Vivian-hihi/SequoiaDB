@@ -11,10 +11,12 @@ from lib import testlib
 insert_nums = 100
 class TestList12504(testlib.SdbTestBase):
    def setUp(self):
-      self.create_cs_cl()
+      testlib.drop_cs(self.db, self.cs_name, ignore_not_exist=True)
+      self.cs = self.db.create_collection_space(self.cs_name)
+      self.cl = self.cs.create_collection(self.cl_name)
       self.insert_datas()
 
-   def testList12504(self):
+   def test_list_12504(self):
 
       cl_full_name = self.cl_name_qualified
       condition = [{"Name": cl_full_name} , None]
@@ -29,8 +31,8 @@ class TestList12504(testlib.SdbTestBase):
 
    def tearDown(self):
       if self.should_clean_env():
-         self.drop_cs()
-
+         self.db.drop_collection_space(self.cs_name)
+			
    def insert_datas(self):
       flag = 0
       doc = []

@@ -11,14 +11,13 @@ from lib import testlib
 
 insert_nums = 100
 class TestTransaction12488(testlib.SdbTestBase):
-    def setUp(self):
-        self.db = testlib.default_db()
-
-    def testTransaction12488(self):
+    def test_transaction_12488(self):
         # begin to do transaction
         self.begin_transaction()
         # do create cl
-        self.create_cs_cl()
+        testlib.drop_cs(self.db, self.cs_name, ignore_not_exist=True)
+        self.cs = self.db.create_collection_space(self.cs_name)
+        self.cl = self.cs.create_collection(self.cl_name)
         # insert
         self.insert_datas()
 
@@ -36,25 +35,23 @@ class TestTransaction12488(testlib.SdbTestBase):
         expectResult = []
         for i in range(12, 20):
             expectResult.append({"a": i, "b": "update"})
-        self.check_result(condition, expectResult)
+        self.check_result( expectResult,condition)
 
         # do rollback
         self.rollback_transaction()
 
         # check rollback result
-        condition = None
         expectResult = []
-        self.check_result(condition, expectResult)
+        self.check_result(expectResult)
 
     def tearDown(self):
-      if self.should_clean_env():
-         self.drop_cs()   
+      self.db.drop_collection_space(self.cs_name)   
 
     def begin_transaction(self):
        try:
           self.db.transaction_begin()
        except SDBBaseError as e:
-          self.fail('begin transaction fail: ' + e.detail)
+          self.fail('begin transaction fail: ' + e.detail)		 
 
     def insert_datas(self):
        doc = []
@@ -84,7 +81,7 @@ class TestTransaction12488(testlib.SdbTestBase):
         except SDBBaseError as e:
             self.fail('rollback transaction fail: ' + e.detail)
 
-    def check_result(self,cond,expectRec):
+    def check_result(self,expectRec,cond = None):
        try:
           if cond == None:
               cursor = self.cl.query(order_by = {"_id": 1})
