@@ -1,5 +1,6 @@
 # -- coding: utf-8 --
 import unittest
+import xmlrunner
 from copy import copy
 from datetime import datetime
 
@@ -49,7 +50,12 @@ class SdbTestBase(unittest.TestCase):
       if not isinstance(self, unittest.TestCase):
          raise TypeError("should_clear_env() arg must be unittest.TestCase")
 
-      if self.__is_testcase_success():
+      r=True
+      try:
+         r=self.__is_testcase_success()
+      except BaseException:
+         r=True
+      if r:
          return True
       else:
          return not sdbconfig.sdb_config.break_on_failure
@@ -71,15 +77,14 @@ class SdbTestBase(unittest.TestCase):
          return self._outcomeForDoCleanups.success
       elif hasattr(self, "_resultForDoCleanups"):
          # for python 2 unittest
-         failures_set = set()
          failures = self._resultForDoCleanups.failures
          errors = self._resultForDoCleanups.errors
-         for x in failures:
-            failures_set.add(x[0])
-         for x in errors:
-            failures_set.add(x[0])
-         if self in failures_set:
-            return False
+         l=[]
+         l.extend(failures)
+         l.extend(errors)
+         for x in l:
+            if isinstance(x,xmlrunner._TestInfo) and self == x.test_method:
+               return False
          return True
       else:
          # can not judge this testcase success or failed ,so think it was success
