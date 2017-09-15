@@ -43,6 +43,7 @@
 #include "pdTrace.hpp"
 #include "optTrace.hpp"
 #include "pmd.hpp"
+#include "optPlanClearJob.hpp"
 
 namespace engine
 {
@@ -355,8 +356,7 @@ namespace engine
      _clearThread( 0 ),
      _allocateThread( 0 ),
      _cachedPlanCount( 0 ),
-     _accessTimestamp( 0 ),
-     _accessCount( 0 )
+     _accessTimestamp( 0 )
    {
       _pPlanCache = NULL ;
       _pFreeActivityIDs = NULL ;
@@ -431,7 +431,6 @@ namespace engine
 
       _cachedPlanCount.init( 0 ) ;
       _accessTimestamp.init( 0 ) ;
-      _accessCount.init( 0 ) ;
 
       _lastClearTimestamp = 0 ;
 
@@ -474,7 +473,6 @@ namespace engine
 
       _cachedPlanCount.init( 0 ) ;
       _accessTimestamp.init( 0 ) ;
-      _accessCount.init( 0 ) ;
 
       _lastClearTimestamp = 0 ;
 
@@ -489,26 +487,19 @@ namespace engine
       PD_TRACE_ENTRY( SDB_OPTCPMON_SETACT ) ;
 
       INT32 activityID = OPT_INVALID_ACT_ID ;
-      UINT32 retryTimes = 0 ;
+      BOOLEAN criticalMode = FALSE ;
 
-      while ( retryTimes < OPT_PLAN_CACHE_MAX_RETRY )
+      if ( _freeIndexEnd.peek() >= OPT_PLAN_CACHE_UINT64_LIMIT )
       {
-         if ( _freeIndexEnd.peek() >= INT32_MAX )
-         {
-            _resetFreeIndexes() ;
-            retryTimes ++ ;
-         }
-         else if ( _cachedPlanCount.peek() > _highWaterMark )
-         {
-            _clearCachedPlans() ;
-            retryTimes ++ ;
-         }
-         else
-         {
-            activityID = _allocateActivity( pPlan ) ;
-            break ;
-         }
+         criticalMode = TRUE ;
       }
+      else if ( _cachedPlanCount.peek() > _highWaterMark )
+      {
+         signalPlanClearJob() ;
+         criticalMode = TRUE ;
+      }
+
+      activityID = _allocateActivity( pPlan, criticalMode ) ;
 
       if ( OPT_INVALID_ACT_ID == activityID )
       {
@@ -526,44 +517,101 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTCPMON__RESETFREEIDX, "_optCachedPlanMonitor::_resetFreeIndexes" )
-   void _optCachedPlanMonitor::_resetFreeIndexes ()
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTCPMON_SIGNALJOB, "_optCachedPlanMonitor::signalPlanClearJob" )
+   void _optCachedPlanMonitor::signalPlanClearJob ()
    {
-      PD_TRACE_ENTRY( SDB_OPTCPMON__RESETFREEIDX ) ;
+      PD_TRACE_ENTRY( SDB_OPTCPMON_SIGNALJOB ) ;
+      _clearEvent.signal() ;
+      PD_TRACE_EXIT( SDB_OPTCPMON_SIGNALJOB ) ;
+   }
 
-      if ( _clearThread.compareAndSwap( 0, 1 ) )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTCPMON_CHKFREEIDX, "_optCachedPlanMonitor::checkFreeIndexes" )
+   void _optCachedPlanMonitor::checkFreeIndexes ()
+   {
+      PD_TRACE_ENTRY( SDB_OPTCPMON_CHKFREEIDX ) ;
+
+      if ( _freeIndexEnd.peek() >= OPT_PLAN_CACHE_UINT64_LIMIT &&
+           _clearThread.compareAndSwap( 0, 1 ) )
       {
          // Only one thread could enter this branch
 
-         // Lock the removing lock exclusively, so other threads could not
+         // Lock the clear lock exclusively, so other threads could not
          // remove plans during this procedure
          ossScopedRWLock scopedLock( &_clearLock, EXCLUSIVE ) ;
 
-         UINT32 newFreeIndexBegin = 0, newFreeIndexEnd = 0 ;
-
-         // Check again after lock
-         if ( _freeIndexEnd.peek() < INT32_MAX )
+         // Must disable the allocation
+         while ( !_allocateThread.compareAndSwap( 0, 1 ) )
          {
-            _clearThread.init( 0 ) ;
-            goto done ;
+            ossSleep( 100 ) ;
          }
 
-         newFreeIndexBegin = _freeIndexBegin.peek() % _activityNum ;
-         newFreeIndexEnd = _freeIndexEnd.peek() % _activityNum ;
-         _freeIndexBegin.init( newFreeIndexBegin ) ;
+         PD_LOG( PDDEBUG, "Cached Plan Monitor: free index is too large "
+                 "[ %llu - %llu ], need reset", _freeIndexBegin.peek(),
+                 _freeIndexEnd.peek() ) ;
+
+         // The clear lock is exclusive, safe to update the end index
+         UINT64 newFreeIndexEnd = _freeIndexEnd.peek() % _activityNum ;
          _freeIndexEnd.init( newFreeIndexEnd ) ;
 
+         // After last step, the end index is smaller than the begin index.
+         // In that case, although the thread to cache plan passed the
+         // allocating test, it is not able to allocate activity any more
+
+         // Must loop until the begin index is reset
+         UINT64 oldFreeIndexBegin = _freeIndexBegin.peek() ;
+         UINT64 tmpFreeIndexBegin = oldFreeIndexBegin ;
+         UINT64 newFreeIndexBegin = 0 ;
+         while ( TRUE )
+         {
+            newFreeIndexBegin = oldFreeIndexBegin % _activityNum ;
+            tmpFreeIndexBegin = _freeIndexBegin.compareAndSwapWithReturn(
+                                    oldFreeIndexBegin, newFreeIndexBegin ) ;
+            if ( tmpFreeIndexBegin == oldFreeIndexBegin )
+            {
+               break ;
+            }
+            oldFreeIndexBegin = tmpFreeIndexBegin ;
+         }
+
+         if ( newFreeIndexBegin > newFreeIndexEnd )
+         {
+            _freeIndexEnd.init( newFreeIndexEnd + _activityNum ) ;
+         }
+
+         PD_LOG( PDDEBUG, "Cached Plan Monitor: free index reseted "
+                 "[ %llu - %llu ]", _freeIndexBegin.peek(),
+                 _freeIndexEnd.peek() ) ;
+
+         // Allow to allocate now
+         _allocateThread.init( 0 ) ;
          _clearThread.init( 0 ) ;
       }
 
-   done :
-      PD_TRACE_EXIT( SDB_OPTCPMON__RESETFREEIDX ) ;
+      PD_TRACE_EXIT( SDB_OPTCPMON_CHKFREEIDX ) ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTCPMON__CLEARCP, "_optCachedPlanMonitor::_clearCachedPlans" )
-   void _optCachedPlanMonitor::_clearCachedPlans ()
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTCPMON_CHKACTIME, "_optCachedPlanMonitor::checkAccessTimestamp" )
+   void _optCachedPlanMonitor::checkAccessTimestamp ()
    {
-      PD_TRACE_ENTRY( SDB_OPTCPMON__CLEARCP ) ;
+      PD_TRACE_ENTRY( SDB_OPTCPMON_CHKACTIME ) ;
+
+      // Safe to reset access time if it is too large
+      // NOTE: plans with large access timestamp without reset would not pass
+      // the -EPSILON clear score test in clearing process
+      if ( _accessTimestamp.peek() > OPT_PLAN_CACHE_UINT64_LIMIT )
+      {
+         PD_LOG( PDDEBUG, "Cached Plan Monitor: access timestamp reseted" ) ;
+         _accessTimestamp.init( 0 ) ;
+         _lastClearTimestamp = 0 ;
+      }
+
+      PD_TRACE_EXIT( SDB_OPTCPMON_CHKACTIME ) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTCPMON_CLEARCP, "_optCachedPlanMonitor::clearCachedPlans" )
+   void _optCachedPlanMonitor::clearCachedPlans ()
+   {
+      PD_TRACE_ENTRY( SDB_OPTCPMON_CLEARCP ) ;
 
       if ( _clearThread.compareAndSwap( 0, 1 ) )
       {
@@ -574,13 +622,11 @@ namespace engine
          ossScopedRWLock scopedLock( &_clearLock, EXCLUSIVE ) ;
 
          UINT32 needRemoveCount = 0 ;
-         UINT64 timestampMinThreshold = 0 ;
-         UINT64 timestampMaxThreshold = 0 ;
-         UINT64 timestampFactor = 0 ;
+         double avgClearScore = 0.0 ;
          UINT64 currentTimestamp = 0 ;
-         UINT32 accessCountThreshold = 0 ;
+         UINT64 totalAccessCount = 0 ;
+         UINT64 avgAccessCount = 0 ;
          UINT32 lastClockIndex = _clockIndex ;
-         UINT32 loopCount = 0 ;
 
          // Check again after lock
          UINT32 cachedPlanCount = _cachedPlanCount.peek() ;
@@ -590,31 +636,33 @@ namespace engine
             goto done ;
          }
 
-         // Clear one cached plan in below cases :
-         // 1. last access timestamp < 1/3 * ( current timestamp -
-         //    last clear timestamp ) + last clear timestamp
-         // 2. access count < 1/3 * current average access counts
-         // 3. TODO: by result scores
-         currentTimestamp = _accessTimestamp.peek() ;
-         timestampFactor = ( currentTimestamp - _lastClearTimestamp ) *
-                           OPT_PLAN_CACHE_CLEAR_THRESHOLD ;
-         timestampMinThreshold = _lastClearTimestamp + timestampFactor ;
-         timestampMaxThreshold = currentTimestamp - timestampFactor ;
-         accessCountThreshold = _accessCount.peek() *
-                                OPT_PLAN_CACHE_CLEAR_THRESHOLD ;
-
-         accessCountThreshold = accessCountThreshold / cachedPlanCount + 1 ;
          needRemoveCount = cachedPlanCount - _lowWaterMark ;
+
+         PD_LOG( PDDEBUG, "Cached Plan Monitor: %u plans are cached, "
+                 "%u need to be removed", cachedPlanCount, needRemoveCount ) ;
+
+         // Calculate the average clear score of all cached plans
+         currentTimestamp = _accessTimestamp.inc() ;
+
+         // Total access count is difference between current timestamp and last
+         // clear timestamp since the logical timestamp is used
+         totalAccessCount = currentTimestamp - _lastClearTimestamp ;
+         totalAccessCount = OSS_MAX( 1, totalAccessCount ) ;
+
+         avgAccessCount = totalAccessCount / cachedPlanCount ;
+         avgAccessCount = OSS_MAX( 1, avgAccessCount ) ;
+
+         avgClearScore = 1.0 / (double)cachedPlanCount ;
 
          // End searching conditions:
          // 1. removed enough plans
-         // 2. loop after 4 times
-         // Note, at most 3 loops wiil clear most plans
-         while ( needRemoveCount > 0 && loopCount < 4 )
+         // 2. searched one loop
+         while ( needRemoveCount > 0 )
          {
             optCachedPlanActivity &activity = _pActivities[ _clockIndex ] ;
-            UINT64 accessTime = activity.getAccessTime() ;
-            UINT32 accessCount = activity.getAccessCount() ;
+            UINT64 accessTime = 0 ;
+            UINT32 accessCount = 0 ;
+            double curClearScore = 0.0 ;
 
             if ( activity.isEmpty() )
             {
@@ -622,45 +670,55 @@ namespace engine
                // Searched one loop
                if ( _clockIndex == lastClockIndex )
                {
-                  loopCount ++ ;
+                  break ;
                }
                continue ;
             }
 
-            if ( 0 == accessCount ||
-                 ( accessCount <= accessCountThreshold &&
-                   accessTime <= timestampMaxThreshold ) ||
-                 accessTime <= timestampMinThreshold )
+            // Calculate the clear score of current plan
+            accessTime = activity.getAccessTime() ;
+            accessCount = activity.getAccessCount() ;
+            curClearScore = (double)accessCount /
+                            (double)( currentTimestamp - accessTime ) ;
+
+            if ( curClearScore > -OSS_EPSILON &&
+                 curClearScore < avgClearScore )
             {
+               // The score is smaller than average score, clear the plan
+               // NOTE: the score < 0.0, means access time is larger than
+               // current clear time
                _pPlanCache->removeCachedPlan( activity.getPlan() ) ;
                needRemoveCount -- ;
             }
             else
             {
-               // Decrease the access count by 1/3, so the plan could be
-               // cleared finally after at most 3 rounds
-               activity.decAccessCount( accessCountThreshold ) ;
+               // Decrease the access count by average access count
+               activity.decAccessCount( avgAccessCount ) ;
             }
 
             _clockIndex = ( _clockIndex + 1 ) % _activityNum ;
-            // Searched one loop
             if ( _clockIndex == lastClockIndex )
             {
-               loopCount ++ ;
+               // Searched one loop and could be stopped
+               break ;
             }
          }
 
-         _accessCount.init( 0 ) ;
+         PD_LOG( PDDEBUG, "Cached Plan Monitor: cleared %u cached plans, "
+                 "%u left", cachedPlanCount - _lowWaterMark - needRemoveCount,
+                 _cachedPlanCount.peek() ) ;
+
          _lastClearTimestamp = _accessTimestamp.inc() ;
          _clearThread.init( 0 ) ;
       }
 
    done :
-      PD_TRACE_EXIT( SDB_OPTCPMON__CLEARCP ) ;
+      PD_TRACE_EXIT( SDB_OPTCPMON_CLEARCP ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTCPMON__ALLOCACT, "_optCachedPlanMonitor::_allocateActivity" )
-   INT32 _optCachedPlanMonitor::_allocateActivity ( optAccessPlan *pPlan )
+   INT32 _optCachedPlanMonitor::_allocateActivity ( optAccessPlan *pPlan,
+                                                    BOOLEAN criticalMode )
    {
       INT32 activityID = OPT_INVALID_ACT_ID ;
 
@@ -668,34 +726,55 @@ namespace engine
 
       // During clearing processing, to be safe, only one thread could
       // allocate activity
-      BOOLEAN singleThread = ( 1 == _clearThread.peek() ) ;
+      criticalMode |= _clearThread.compare( 1 ) ;
 
-      if ( !singleThread ||
+      if ( !criticalMode ||
            _allocateThread.compareAndSwap( 0, 1 ) )
       {
          // During clearing and the activities are full, could not allocate
          // activity for the plan
-         if ( singleThread && _freeIndexEnd.peek() == _freeIndexBegin.peek() )
+         if ( criticalMode &&
+              _freeIndexEnd.compare( _freeIndexBegin.peek() ) )
          {
             _allocateThread.init( 0 ) ;
             goto done ;
          }
 
          // Get free activity from free index
-         UINT32 freeActivityIndex = _freeIndexBegin.inc() % _activityNum ;
-         activityID = _pFreeActivityIDs[ freeActivityIndex ] ;
-         optCachedPlanActivity &activity = _pActivities[ activityID ] ;
+         UINT64 freeActivityIndex = _freeIndexBegin.inc() ;
 
-         SDB_ASSERT( activity.isEmpty(), "Activity is not empty" ) ;
-
-         pPlan->setActivityID( activityID ) ;
-         activity.setPlan( pPlan, _accessTimestamp.inc() ) ;
-         activity.incAccessCount() ;
-         _accessCount.inc() ;
-
-         if ( singleThread )
+         if ( criticalMode )
          {
             _allocateThread.init( 0 ) ;
+         }
+
+         // In critical mode, safe to allocate without checking the end index
+         // But in non-critical mode, we need to check the end index
+         if ( criticalMode ||
+              freeActivityIndex < _freeIndexEnd.peek() )
+         {
+            activityID = _pFreeActivityIDs[ freeActivityIndex % _activityNum ] ;
+            optCachedPlanActivity &activity = _pActivities[ activityID ] ;
+
+            SDB_ASSERT( activity.isEmpty(), "Activity is not empty" ) ;
+
+            pPlan->setActivityID( activityID ) ;
+            activity.setPlan( pPlan, _accessTimestamp.inc() ) ;
+            activity.incAccessCount() ;
+         }
+         else
+         {
+            // The begin index caught with the end index, which means:
+            // 1. the indexes are reseting for too large index values
+            // 2. the number of cached plans reached the maximum limitation
+
+            // The clear job is handling the first case, and the second case
+            // will be handled by the next query by notifying the clear job
+
+            // The allocated index will be reused in the next round after
+            // the end index catching up with the begin index by clearing
+
+            // Do nothing here
          }
       }
 
@@ -711,7 +790,7 @@ namespace engine
    : _planCache(),
      _monitor()
    {
-      _dmsCB = NULL ;
+      _clearJobEduID = PMD_INVALID_EDUID ;
    }
 
    _optAccessPlanManager::~_optAccessPlanManager ()
@@ -719,13 +798,11 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTAPM_INIT, "_optAccessPlanManager::init" )
-   INT32 _optAccessPlanManager::init ( SDB_DMSCB *dmsCB, UINT32 bucketNum )
+   INT32 _optAccessPlanManager::init ( UINT32 bucketNum )
    {
       INT32 rc = SDB_OK ;
 
       PD_TRACE_ENTRY( SDB_OPTAPM_INIT ) ;
-
-      SDB_ASSERT( dmsCB, "dmsCB is invalid" ) ;
 
       if ( bucketNum > 0 )
       {
@@ -736,9 +813,11 @@ namespace engine
          _monitor.initialize( &_planCache ) ;
          PD_CHECK( _monitor.isInitialized(), SDB_OOM, error, PDERROR,
                    "Failed to initialize plan cache sweeper" ) ;
-      }
 
-      _dmsCB = dmsCB ;
+         rc = startPlanClearJob( &_clearJobEduID ) ;
+         PD_RC_CHECK( rc, PDERROR, "Start cached plan clearing job thread "
+                      "failed, rc: %d", rc ) ;
+      }
 
    done :
       PD_TRACE_EXITRC( SDB_OPTAPM_INIT, rc ) ;
@@ -753,8 +832,10 @@ namespace engine
    void _optAccessPlanManager::clear ()
    {
       PD_TRACE_ENTRY( SDB_OPTAPM_CLEAR ) ;
-
-      _planCache.invalidateAllPlans() ;
+      if ( _planCache.isInitialized() )
+      {
+         _planCache.invalidateAllPlans() ;
+      }
       _planCache.clear() ;
       _monitor.clear() ;
 

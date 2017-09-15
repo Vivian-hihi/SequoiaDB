@@ -43,7 +43,6 @@
 #include "oss.hpp"
 #include "optAccessPlan.hpp"
 #include "utilHashTable.hpp"
-#include "dmsCB.hpp"
 #include "dmsCachedPlanUnit.hpp"
 #include "dmsEventHandler.hpp"
 
@@ -53,11 +52,10 @@ namespace engine
 {
 
    #define OPT_PLAN_CACHE_DFT_LOCK_NUM    ( 64 )
-   #define OPT_PLAN_CACHE_MAX_RETRY       ( 5 )
-   #define OPT_PLAN_CACHE_ACT_HIGH_PERC   ( 0.90 )
-   #define OPT_PLAN_CACHE_ACT_LOW_PERC    ( 0.70 )
+   #define OPT_PLAN_CACHE_ACT_HIGH_PERC   ( 0.80 )
+   #define OPT_PLAN_CACHE_ACT_LOW_PERC    ( 0.50 )
    #define OPT_PLAN_CACHE_AVG_BUCKET_SIZE ( 3 )
-   #define OPT_PLAN_CACHE_CLEAR_THRESHOLD ( 0.3 )
+   #define OPT_PLAN_CACHE_UINT64_LIMIT    ( 0xFFFFFFFF00000000uLL )
 
    class _optCachedPlanMonitor ;
    typedef class _optCachedPlanMonitor optCachedPlanMonitor ;
@@ -115,7 +113,6 @@ namespace engine
             _pPlan = NULL ;
             _accessTime = 0 ;
             _accessCount = 0 ;
-            _score = 0 ;
          }
 
          virtual ~_optCachedPlanActivity () {} ;
@@ -154,17 +151,10 @@ namespace engine
             }
          }
 
-         OSS_INLINE void setScore ( UINT32 score )
-         {
-            _score = score ;
-         }
-
          OSS_INLINE void clear ()
          {
             _accessTime = 0 ;
             _accessCount = 0 ;
-            _score = 0 ;
-
             _pPlan = NULL ;
          }
 
@@ -187,7 +177,6 @@ namespace engine
          optAccessPlan *   _pPlan ;
          UINT64            _accessTime ;
          UINT32            _accessCount ;
-         UINT32            _score ;
    } ;
 
    typedef class _optCachedPlanActivity optCachedPlanActivity ;
@@ -221,7 +210,6 @@ namespace engine
                optCachedPlanActivity &activity = _pActivities[ activityID ] ;
                activity.setAccessTime( _accessTimestamp.inc() ) ;
                activity.incAccessCount() ;
-               _accessCount.inc() ;
             }
          }
 
@@ -229,7 +217,7 @@ namespace engine
          {
             _pActivities[ activityID ].setPlan( NULL, 0 ) ;
 
-            UINT32 freeActivityIndex = _freeIndexEnd.inc() % _activityNum ;
+            UINT64 freeActivityIndex = _freeIndexEnd.inc() % _activityNum ;
             _pFreeActivityIDs[ freeActivityIndex ] = activityID ;
          }
 
@@ -253,19 +241,29 @@ namespace engine
             return &_clearLock ;
          }
 
+         OSS_INLINE ossEvent *getClearEvent ()
+         {
+            return &_clearEvent ;
+         }
+
+         void signalPlanClearJob () ;
+
+         void clearCachedPlans () ;
+
+         void checkFreeIndexes () ;
+
+         void checkAccessTimestamp () ;
+
       protected :
-         void _resetFreeIndexes () ;
-
-         void _clearCachedPlans () ;
-
-         INT32 _allocateActivity ( optAccessPlan *pPlan ) ;
+         INT32 _allocateActivity ( optAccessPlan *pPlan,
+                                   BOOLEAN criticalMode ) ;
 
       protected :
          // Begin to the free index, where to get free activities
-         ossAtomic32 _freeIndexBegin ;
+         ossAtomic64 _freeIndexBegin ;
 
          // End to the free index, where to return free activities
-         ossAtomic32 _freeIndexEnd ;
+         ossAtomic64 _freeIndexEnd ;
 
          // Free index
          UINT32 *_pFreeActivityIDs ;
@@ -278,6 +276,9 @@ namespace engine
 
          // Mutex to protect clearing procedure
          ossRWMutex _clearLock ;
+
+         // Clear event to signal clear job
+         ossEvent _clearEvent ;
 
          // Number of activities ( The capacity of plan cache )
          UINT32 _activityNum ;
@@ -303,9 +304,6 @@ namespace engine
          // Last timestamp to finished clearing procedure
          UINT64 _lastClearTimestamp ;
 
-         // Total access count for cached plans
-         ossAtomic64 _accessCount ;
-
          // Pointer to plan cache
          optAccessPlanCache *_pPlanCache ;
    } ;
@@ -321,7 +319,7 @@ namespace engine
 
          virtual ~_optAccessPlanManager () ;
 
-         INT32 init ( SDB_DMSCB *dmsCB, UINT32 bucketNum ) ;
+         INT32 init ( UINT32 bucketNum ) ;
 
          void clear () ;
 
@@ -333,6 +331,11 @@ namespace engine
          OSS_INLINE optAccessPlanCache *getPlanCache ()
          {
             return &_planCache ;
+         }
+
+         OSS_INLINE optCachedPlanMonitor *getPlanMonitor ()
+         {
+            return &_monitor ;
          }
 
          INT32 getAccessPlan ( dmsStorageUnit *su,
@@ -432,9 +435,9 @@ namespace engine
                                 UINT16 mbID, UINT32 clLID ) ;
 
       protected :
-         optAccessPlanCache _planCache ;
-         optCachedPlanMonitor _monitor ;
-         SDB_DMSCB *_dmsCB ;
+         optAccessPlanCache      _planCache ;
+         optCachedPlanMonitor    _monitor ;
+         EDUID                   _clearJobEduID ;
    } ;
 
    typedef _optAccessPlanManager optAccessPlanManager ;

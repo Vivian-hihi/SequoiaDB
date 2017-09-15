@@ -201,8 +201,7 @@ namespace engine
          sdbGetPMDController()->setRSManager( &_rsMgr ) ;
       }
 
-      _accessPlanManager.init( sdbGetDMSCB(),
-                               pmdGetOptionCB()->getPlanBuckets() ) ;
+      _accessPlanManager.init( pmdGetOptionCB()->getPlanBuckets() ) ;
 
    done:
       return rc ;
