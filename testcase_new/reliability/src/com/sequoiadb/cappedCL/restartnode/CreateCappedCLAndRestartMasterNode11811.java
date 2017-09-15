@@ -82,17 +82,17 @@ public class CreateCappedCLAndRestartMasterNode11811 extends SdbTestBase{
 			Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
 			
 			//check whether the cluster is normal and lsn consistency ,the longest waiting time is 600S
-            Assert.assertEquals(groupMgr.checkBusinessWithLSN(600), true, "check LSN consistency fail");
+         Assert.assertEquals(groupMgr.checkBusinessWithLSN(600), true, "check LSN consistency fail");
             
-            //check result
-            Utils.checkConsistency(dataGroup);
+         //check data consistency
+         Assert.assertEquals(dataGroup.checkInspect(60), true, "data is different on " + dataGroup.getGroupName());			 
             
-            //Normal operating environment
-            clearFlag = true;
+         //Normal operating environment
+         clearFlag = true;
                         
 		} catch (ReliabilityException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			Assert.fail("test reliabilityException: " + e.getMessage());
 		}
     }
 
@@ -108,8 +108,8 @@ public class CreateCappedCLAndRestartMasterNode11811 extends SdbTestBase{
 			if(sdb != null) {
 				sdb.close();
 				System.out.println(this.getClass().getName() + " end at:"
-	                  + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
-			}
+	               + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
+	      }
 		}
     }
 

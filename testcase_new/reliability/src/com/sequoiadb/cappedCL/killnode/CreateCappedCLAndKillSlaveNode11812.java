@@ -81,18 +81,20 @@ public class CreateCappedCLAndKillSlaveNode11812 extends SdbTestBase{
 			Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
 			
 			//check whether the cluster is normal and lsn consistency ,the longest waiting time is 600S
-            Assert.assertEquals(groupMgr.checkBusinessWithLSN(600), true, "check LSN consistency fail");
+         Assert.assertEquals(groupMgr.checkBusinessWithLSN(600), true, "check LSN consistency fail");
+         
+         //check data consistency
+         Assert.assertEquals(dataGroup.checkInspect(60), true, "data is different on " + dataGroup.getGroupName());
+			
+         //check create cl result
+         checkCreateCLResult();
             
-            //check result
-            checkCreateCLResult();
-            Utils.checkConsistency(dataGroup);
-            
-            //Normal operating environment
-            clearFlag = true;
+         //Normal operating environment
+         clearFlag = true;
                         
 		} catch (ReliabilityException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			Assert.fail("test reliabilityException: " + e.getMessage());
 		}
     }
 
@@ -117,18 +119,18 @@ public class CreateCappedCLAndKillSlaveNode11812 extends SdbTestBase{
 
 		@Override
 		public void exec() throws Exception {
-            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl,"","")){
-            	CollectionSpace cappedCS = db.getCollectionSpace(cappedCSName_11812);
-            	BSONObject options = new BasicBSONObject();
-            	options.put("Capped", true);
-            	options.put("Size", 8192);
-            	options.put("AutoIndexId", false);
-            	options.put("Group", cappedCLGroupName);
-            	for(int clNo = 1; clNo <= CAPPED_CL_NUM; clNo++) {
-            		cappedCS.createCollection(cappedCLName_11812 + "_" + clNo , options); 
-            	}
-            }catch (BaseException e) {
-            	throw e;  
+         try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl,"","")){
+            CollectionSpace cappedCS = db.getCollectionSpace(cappedCSName_11812);
+            BSONObject options = new BasicBSONObject();
+            options.put("Capped", true);
+            options.put("Size", 8192);
+            options.put("AutoIndexId", false);
+            options.put("Group", cappedCLGroupName);
+            for(int clNo = 1; clNo <= CAPPED_CL_NUM; clNo++) {
+            	cappedCS.createCollection(cappedCLName_11812 + "_" + clNo , options); 
+            }
+         }catch (BaseException e) {
+            throw e;  
 			}
 		} 	
     }
@@ -147,25 +149,24 @@ public class CreateCappedCLAndKillSlaveNode11812 extends SdbTestBase{
 		try {
 			BSONObject options = new BasicBSONObject();
 			options.put("Capped", true);
-	        cappedCS_11812 = sdb.createCollectionSpace(cappedCSName_11812,options);
+	      cappedCS_11812 = sdb.createCollectionSpace(cappedCSName_11812,options);
 		}catch (BaseException e) {
 			Assert.fail("create cappedCS failed, errMsg:" + e.getMessage());
 		}   
 	}
 	
 	private void checkCreateCLResult() {
-        for (int clNo = 1; clNo <= CAPPED_CL_NUM; clNo++) {
-            String sameCLName = cappedCLName_11812 + "_" + clNo;
-            try {
-                cappedCS_11812.createCollection(sameCLName);
-            } catch (BaseException e) {
-                // -22 SDB_DMS_EXIST
-                if (-22 !=  e.getErrorCode()) {
-                    throw e;
-                }
+      for (int clNo = 1; clNo <= CAPPED_CL_NUM; clNo++) {
+         String sameCLName = cappedCLName_11812 + "_" + clNo;
+         try {
+            cappedCS_11812.createCollection(sameCLName);
+         } catch (BaseException e) {
+            // -22 SDB_DMS_EXIST
+            if (-22 !=  e.getErrorCode()) {
+               throw e;
             }
-        }
-       
-    }
+         }
+      }
+   }
 	
  }

@@ -81,18 +81,20 @@ public class DropCappedCLAndKillMasterNode11814 extends SdbTestBase{
 			Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
 			
 			//check whether the cluster is normal and lsn consistency ,the longest waiting time is 600S
-            Assert.assertEquals(groupMgr.checkBusinessWithLSN(600), true, "check LSN consistency fail");
+         Assert.assertEquals(groupMgr.checkBusinessWithLSN(600), true, "check LSN consistency fail");
+         
+         //check data consistency
+         Assert.assertEquals(dataGroup.checkInspect(60), true, "data is different on " + dataGroup.getGroupName());
+			
+         //check result
+         checkDropCappedCLResult();
             
-            //check result
-            checkDropCappedCLResult();
-            Utils.checkConsistency(dataGroup);
-            
-            //Normal operating environment
-            clearFlag = true;
+         //Normal operating environment
+         clearFlag = true;
                         
 		} catch (ReliabilityException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			Assert.fail("test reliabilityException: " + e.getMessage());
 		}
 	}
 	
@@ -142,50 +144,50 @@ public class DropCappedCLAndKillMasterNode11814 extends SdbTestBase{
 	 }
 	    
 	 private class DropCappedCLTask extends OperateTask {
-	        @Override
-	        public void exec() throws Exception {
-	            Sequoiadb db = null;
-	            try {
-	                db = new Sequoiadb(coordUrl, "", "");
-	                CollectionSpace cappedCS = db.getCollectionSpace(cappedCSName_11814);
-	                for (int clNo = 1; clNo <= CAPPED_CL_NUM; clNo++) {
-	                    String clName = cappedCLName_11814 + "_" + clNo;
-	                    cappedCS.dropCollection(clName);
-	                    ++dropCLCounts;
-	                }
-	            } catch (BaseException e) {
-	            	System.out.println("the drop CL num is = " + dropCLCounts);
-	            } finally {
-	                if (db != null) {
-	                    db.close();
-	                }
-	            }
-	        }
+	    @Override
+	    public void exec() throws Exception {
+	       Sequoiadb db = null;
+	       try {
+	          db = new Sequoiadb(coordUrl, "", "");
+	          CollectionSpace cappedCS = db.getCollectionSpace(cappedCSName_11814);
+	          for (int clNo = 1; clNo <= CAPPED_CL_NUM; clNo++) {
+	             String clName = cappedCLName_11814 + "_" + clNo;
+	             cappedCS.dropCollection(clName);
+	             ++dropCLCounts;
+	          }
+	       } catch (BaseException e) {
+	          System.out.println("the drop CL num is = " + dropCLCounts);
+	       } finally {
+	          if (db != null) {
+	             db.close();
+	          }
+	       }
+	    }
 	 }
 	 
 	 private void checkDropCappedCLResult() {
-	        if (CAPPED_CL_NUM == dropCLCounts) {        	
-	        	try {
-	        		String sameCLName = cappedCLName_11814 + "_" + dropCLCounts;
-	                cappedCS_11814.dropCollection(sameCLName);               
-	                Assert.fail("drop the same CL failed");                
-	            } catch (BaseException e) {
-	                // -23 Collection does not exist  
-	                if (-23 !=  e.getErrorCode()) {
-	                	Assert.fail("the error not -23: " + e.getErrorCode());
-	                }
-	            }         	
-	        }else{
-	        	//drop remain CLs
-	        	for(int clNo = dropCLCounts + 1; clNo <= CAPPED_CL_NUM; clNo++){
-	        		String sameCLName = cappedCLName_11814 + "_" + clNo;
-	            	try {         	
-	            		cappedCS_11814.dropCollection(sameCLName);            		
-	                } catch (BaseException e) {                 	
-	                	Assert.fail("the error: " + e.getErrorCode() + " " + e.getMessage());
-	                }        		
+	   if (CAPPED_CL_NUM == dropCLCounts) {        	
+	      try {
+	        	String sameCLName = cappedCLName_11814 + "_" + dropCLCounts;
+	         cappedCS_11814.dropCollection(sameCLName);               
+	         Assert.fail("drop the same CL failed");                
+	      } catch (BaseException e) {
+	         // -23 Collection does not exist  
+	         if (-23 !=  e.getErrorCode()) {
+	            Assert.fail("the error not -23: " + e.getErrorCode());
+	         }
+	      }         	
+	  }else{
+	      //drop remain CLs
+	      for(int clNo = dropCLCounts + 1; clNo <= CAPPED_CL_NUM; clNo++){
+	         String sameCLName = cappedCLName_11814 + "_" + clNo;
+	            try {         	
+	            	cappedCS_11814.dropCollection(sameCLName);            		
+	            } catch (BaseException e) {                 	
+	               Assert.fail("the error: " + e.getErrorCode() + " " + e.getMessage());
+	            }        		
 	        	}
-	        } 
+	      } 
 	 } 
 	 
 }
