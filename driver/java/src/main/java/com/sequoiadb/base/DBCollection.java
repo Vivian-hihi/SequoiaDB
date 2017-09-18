@@ -1717,10 +1717,19 @@ public class DBCollection {
     public DBCursor getQueryMeta(BSONObject matcher, BSONObject orderBy,
                                  BSONObject hint, long skipRows,
                                  long returnRows, int flag) throws BaseException {
-        BSONObject hint1 = new BasicBSONObject();
-        hint1.put("Collection", this.collectionFullName);
-
-        QueryRequest request = new QueryRequest(AdminCommand.GET_QUERYMETA, matcher, hint, orderBy, hint1,
+        BSONObject newHint = new BasicBSONObject();
+        newHint.put("Collection", this.collectionFullName);       
+        if ( null == hint || hint.isEmpty() )
+        {
+            BSONObject empty = new BasicBSONObject();
+            newHint.put("Hint", empty);
+        }
+        else
+        {
+            newHint.put("Hint", hint);
+        }
+        
+        QueryRequest request = new QueryRequest(AdminCommand.GET_QUERYMETA, matcher, null, orderBy, newHint,
             skipRows, returnRows, flag);
         SdbReply response = sequoiadb.requestAndResponse(request);
 
