@@ -87,6 +87,7 @@ namespace engine
                            const BSONObj &matcher,
                            const BSONObj &updator,
                            const BSONObj &hint,
+                           BOOLEAN strictDataMode,
                            pmdEDUCB *cb,
                            UINT32 &insertNum,
                            INT64 &contextID,

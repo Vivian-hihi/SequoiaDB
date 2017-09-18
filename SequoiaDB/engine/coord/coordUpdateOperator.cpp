@@ -127,6 +127,7 @@ namespace engine
       CHAR *pSelector                  = NULL ;
       CHAR *pUpdator                   = NULL ;
       CHAR *pHint                      = NULL ;
+      BOOLEAN strictDataMode           = FALSE ;
       BSONObj boSelector ;
       BSONObj boHint ;
       BSONObj boUpdator ;
@@ -284,8 +285,13 @@ namespace engine
       // upsert
       if ( ( flag & FLG_UPDATE_UPSERT ) && 0 == _recvNum )
       {
-         rc = _upsert( pCollectionName, boSelector, boUpdator, boHint,
-                       cb, _insertedNum, contextID, buf ) ;
+         if ( OSS_BIT_TEST( cataSel.getCataPtr()->getCatalogSet()->getAttribute(), 
+                            DMS_MB_ATTR_STRICTDATAMODE ) ) 
+         {
+            strictDataMode = TRUE ;
+         }
+         rc = _upsert( pCollectionName, boSelector, boUpdator, boHint, 
+                       strictDataMode, cb, _insertedNum, contextID, buf ) ;
          if ( rc )
          {
             goto error ;
@@ -329,6 +335,7 @@ namespace engine
                                         const BSONObj &matcher,
                                         const BSONObj &updator,
                                         const BSONObj &hint,
+                                        BOOLEAN strictDataMode,
                                         pmdEDUCB *cb,
                                         UINT32 &insertNum,
                                         INT64 &contextID,
@@ -355,7 +362,7 @@ namespace engine
 
          source = matcherTree.getEqualityQueryObject() ;
 
-         rc = modifier.loadPattern( updator ) ;
+         rc = modifier.loadPattern( updator, NULL, TRUE, NULL, strictDataMode ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to load updator[%s], rc: %d",
                       updator.toString().c_str(), rc ) ;
 
