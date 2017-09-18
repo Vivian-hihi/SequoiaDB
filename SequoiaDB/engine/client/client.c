@@ -2184,7 +2184,7 @@ SDB_EXPORT INT32 sdbGetQueryMeta ( sdbCollectionHandle cHandle,
    rc = clientBuildQueryMsg ( &cs->_pSendBuffer,
                               &cs->_sendBufferSize,
                               p, 0, 0, numToSkip, numToReturn, condition,
-                              null, orderBy, &newHint,
+                              NULL, orderBy, &newHint,
                               cs->_endianConvert ) ;
    if ( SDB_OK != rc )
    {
