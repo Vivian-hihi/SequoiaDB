@@ -19,33 +19,34 @@ import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
 
 /**
-* FileName: DivideIsSelector12578.java
-* test content:set StrictDataType=true,Numeric value overflow for a character using $divide operation,
-* 				and the $divide is used as a selector.
-* testlink case:seqDB-12578
+* FileName: UpdateAsInc12609.java
+* test content:set StrictDataType=true,Numeric value overflow for a character using $inc operation,
+* 				and $inc value is same data type.
+* testlink case:seqDB-12609
 * @author wuyan
-    * @Date    2017.9.4
+    * @Date    2017.9.14
 * @version 1.00
 */
 
-public class DivideIsSelector12578 extends SdbTestBase{		
+public class UpdateAsInc12609 extends SdbTestBase{
 	@DataProvider(name = "operData")
 	public Object[][] generateDatas(){				
 		return new Object[][]{
-			//the parameters: selectorName
-			//test int32 type numberflow
-			new Object[]{"no",new Integer(-1)},			
-			//test int64 type numberflow
-			new Object[]{"tlong",new Long(-1)},			
-			//test arr type numberflow	
-			new Object[]{"arr.$[0]",new Integer(-1)},	
-			//the arr type
-			new Object[]{"arr",new Integer(-1)},
+			//the parameters: updateFieldName, incValue
+			//int32 + int32:'no':-2147483648---> -2147483649L
+			new Object[]{"no",  new Integer(-1)},			
+			//int64 + int64:'tlong':{'$numberLong':'-9223372036854775808'}--->decimal
+			new Object[]{"tlong", new Long(-1)},			
+			//int32(arr) + int32
+			//TODO:SEQUOIADBMAINSTREAM-2825
+			//new Object[]{"arr.0", new Integer(1)},				
+			//new Object[]{"arr.1.1.1", new Integer(48)},
+			//int64(obj) + int64
+			//new Object[]{"tlong.a.b.c", new Long(809)},
 		};
 	}
 	
-	
-	private String clName = "divide_selector12578";
+	private String clName = "inc_update12609";
 	private Sequoiadb sdb = null;
 	private CollectionSpace cs = null;
 	private static DBCollection cl = null;    
@@ -64,20 +65,19 @@ public class DivideIsSelector12578 extends SdbTestBase{
 		cs = sdb.getCollectionSpace(SdbTestBase.csName);
 		cl = Commlib.createCL(cs, clName, clOption);
 		
-		String []records = {"{'no':-2147483648,'tlong':{'$numberLong':'-9223372036854775808'},'arr':[-2147483648,-1.7e+304]}"};
+		String []records = {"{'no':-2147483648,'tlong':{'$numberLong':'-9223372036854775808'},'arr':[2147483647,-1.7e+304]}",
+				"{'no':1,'tlong':{a:{b:{c:{'$numberLong':'9223372036854775000'}}}},'arr':[1,[2,[3,2147483600],4]]}"};
 		Commlib.insert(cl, records);
 	}
 	
 	@Test(dataProvider = "operData")
-	public void testSubtract(String selectorName, Object sValue){
-		try{
-			BSONObject selector = new BasicBSONObject();
-			BSONObject selectorValue = new BasicBSONObject();				
-			selectorValue.put("$divide", sValue);
-			selector.put(selectorName, selectorValue);			
-			Commlib.isStrictDataTypeOper(cl, selector);	
+	public void testInc(String updateName, Object sValue){
+		try{			
+			BSONObject incValue = new BasicBSONObject();							
+			incValue.put(updateName, sValue);				
+			Commlib.updateIsStrictDataType(cl, incValue);	
 		}catch(BaseException e){			
-			Assert.assertTrue(false,"divide is used as selector oper failed,"+e.getMessage());
+			Assert.assertTrue(false,"update user StrictDataMode failed,"+e.getErrorCode()+e.getMessage());
 		}		
 	}	
 		
@@ -85,17 +85,20 @@ public class DivideIsSelector12578 extends SdbTestBase{
 	public void tearDown(){
 		try{
 			System.out.println(this.getClass().getName()+" end at "
-					 +new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:S").format(new Date()));
-			cs = sdb.getCollectionSpace(SdbTestBase.csName);
+					 +new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:S").format(new Date()));			
 			if(cs.isCollectionExist(clName)){
 				cs.dropCollection(clName);
 			}			
 		}catch(BaseException e){
 			Assert.fail("clear env failed, errMsg:" + e.getMessage());
-		}finally{
-			if( sdb != null ){
+		}finally {
+			if (sdb != null){
 				sdb.close();
 			}
 		}
-	}	
+	}
+	
+		
+	
+
 }

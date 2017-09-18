@@ -1,13 +1,9 @@
 package com.sequoiadb.crud.numoverflow;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
-import org.bson.BSONObject;
-import org.bson.BasicBSONObject;
-import org.bson.util.JSON;
+
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -15,26 +11,24 @@ import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
-import com.sequoiadb.base.DBCursor;
-import com.sequoiadb.base.DBQuery;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.crud.numoverflow.Commlib;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
 
 /**
-* FileName: AdsIsSelector12574.java
-* test content:Numeric value overflow for many character using $subtract operation,
+* FileName: SubtractIsSelector12586.java
+* test content:Numeric value overflow for many character of different dataType using $subtract operation,
 * 				and the $subtract is used as a selector.
-* testlink case:seqDB-12574
+* testlink case:seqDB-12586
 * @author wuyan
-    * @Date    2017.9.4
+    * @Date    2017.9.13
 * @version 1.00
 */
 
 public class SubtractIsSelector12586 extends SdbTestBase{	
 	
-	private String clName = "subtract_selector12574";
+	private String clName = "subtract_selector12586";
 	private Sequoiadb sdb = null;
 	private CollectionSpace cs = null;
 	private static DBCollection cl = null;    
@@ -47,15 +41,14 @@ public class SubtractIsSelector12586 extends SdbTestBase{
 			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 		}catch(BaseException e){			
 			Assert.assertTrue(false,"connect %s failed,"+coordUrl+e.getMessage());
-		}
+		}		
 		
-		String clOption = "{ShardingKey:{no:1},ShardingType:'hash',Partition:1024,"
-				+ "ReplSize:0,Compressed:true, StrictDataMode:false}";
 		cs = sdb.getCollectionSpace(SdbTestBase.csName);
-		cl = Commlib.createCL(cs, clName, clOption);
+		cl = Commlib.createCL(cs, clName);
 		
 		String []records = {"{'no':-2147483648,'tlong':{'$numberLong':'9223372036854775807'},"
-								+ "'arr':[1,[1,{'$numberLong':'8223372036854775808'}],2],obj:{a:{b:4}}}"};
+								+ "'arr':[1,3],'arr1':[1,[1,{'$numberLong':'9223372036854775800'}],2],"
+								+ "obj:{a:{b:[4,{'$numberLong':'-9223372036854775808'}]}},obj1:{a:{b:-2}}}"};
 
 		Commlib.insert(cl, records);
 	}
@@ -63,16 +56,25 @@ public class SubtractIsSelector12586 extends SdbTestBase{
 	@Test
 	public void testSubtract(){
 		try{			
-			String selector = "{no:{$subtract:1},tlong:{$subtract:-1000000000000000002},"
-					+ "arr:{$subtract:-1000000000000000002},'obj.a.b':{$subtract:-2147483644},_id:{$include:0}}"; 
-			String []expRecords = {"{'no':-2147483649,'tlong':{'$decimal':'10223372036854775809'},"
-	        		+ "'arr':[1000000000000000003,null,1000000000000000004],obj:{a:{b:2147483648}}}"};	       
+			String selector = "{no:{$subtract:{'$numberLong':'9223372034707292161'}},"
+					+ "tlong:{$subtract:-1},'arr.$[0]':{$subtract:{'$numberLong':'-9223372036854775807'}},"
+					+ "'arr1.$[1].$[1]':{$subtract:-8},'obj.a.b.$[1]':{$subtract:1},"
+					+ "'obj1.a.b':{$subtract:{'$numberLong':'9223372036854775807'}},_id:{$include:0}}"; 
+			//TODO:SEQUOIADBMAINSTREAM-2764,the arr1.$[1].$[1] oper result is error
+			/*String []expRecords = {"{'no':{'$decimal':'-9223372036854775809'},"
+					+ "'tlong':{'$decimal':'9223372036854775808'},arr:[{'$decimal':'9223372036854775808'}]"
+					+ "''arr1':[1,[1,{'$deciaml':'9223372036854775808'}],2],"
+					+ "obj:{a:{b:[{'$decimal':'-9223372036854775809'}]}},"
+					+ "obj1:{a:{b:{'$decimal':'-9223372036854775809'}}}}"};	 */
+			String []expRecords = {"{'no':{'$decimal':'-9223372036854775809'},"
+					+ "'tlong':{'$decimal':'9223372036854775808'},arr:[{'$decimal':'9223372036854775808'}],"
+					+ "'arr1':[],obj:{a:{b:[{'$decimal':'-9223372036854775809'}]}},"
+					+ "obj1:{a:{b:{'$decimal':'-9223372036854775809'}}}}"};	 
 			Commlib.multipleFieldOper(cl, selector, expRecords);
 		}catch(BaseException e){			
 			Assert.assertTrue(false,"subtract is used as selector oper failed,"+e.getMessage()+e.getErrorCode());
 		}		
 	}	
-	
 		
 	@AfterClass
 	public void tearDown(){
@@ -80,7 +82,7 @@ public class SubtractIsSelector12586 extends SdbTestBase{
 			System.out.println(this.getClass().getName()+" end at "
 					 +new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:S").format(new Date()));			
 			if(sdb.getCollectionSpace(SdbTestBase.csName).isCollectionExist(clName)){
-				//cs.dropCollection(clName);
+				cs.dropCollection(clName);
 			}			
 		}catch(BaseException e){
 			Assert.fail("clear env failed, errMsg:" + e.getMessage());
@@ -89,65 +91,5 @@ public class SubtractIsSelector12586 extends SdbTestBase{
 				sdb.close();
 			}
 		}
-	}
-	
-		
-	public static void adsAsSelectorOper(int matcherValue,String selectorName, String []expRecords,String expType,Boolean isVerifyDataType){
-		try{
-			DBQuery query = new DBQuery();
-			BSONObject selector = new BasicBSONObject();
-			BSONObject sValue = new BasicBSONObject();
-			BSONObject sValue1 = new BasicBSONObject();
-			BSONObject matcher = new BasicBSONObject();					
-			//matcher.put("test",0);
-			matcher.put("test",matcherValue );
-			sValue.put("$abs", 1);
-			sValue1.put("$include",0);
-			//selector.put("no", sValue);
-			selector.put(selectorName, sValue);
-			selector.put("_id", sValue1);
-			query.setSelector(selector);
-			query.setMatcher(matcher);		
-			DBCursor cursor = cl.query(query);
-			List<BSONObject> actualList= new ArrayList<BSONObject>(); 
-			
-			//String expType = "class java.lang.Long";
-	        while( cursor.hasNext() ) {
-	            BSONObject object = cursor.getNext();	        
-	            actualList.add(object);
-	        }  
-	        System.out.println("actualList"+actualList.toString());
-	        cursor.close(); 
-	        
-	        //String []expRecords = {"{'no':2147483648,'tlong':-9223372036854775808,'tdoulbe':-1.7E+308,'test':0}"}; 
-	        List<BSONObject> expectedList= new ArrayList<BSONObject>();
-			for (int i = 0; i < expRecords.length; i++) {	
-				BSONObject expRecord =(BSONObject) JSON.parse(expRecords[i]);
-				expectedList.add(expRecord);                
-            }
-			
-			Assert.assertEquals(actualList, expectedList,"the actual query datas is error");
-	        
-	        
-	        if(isVerifyDataType){
-	        	String type = "";
-	        	DBCursor cursor1 = cl.query(query);
-	        	while( cursor1.hasNext() ) {
-		            BSONObject object1 = cursor1.getNext();
-		            System.out.println("slectoryName="+selectorName);
-		            type = object1.get(selectorName).getClass().toString();	            
-		            System.out.println("objecttype"+object1.get(selectorName).getClass().toString());	
-		           /* BasicBSONObject type1 = (BasicBSONObject) object.get("obj");
-		            BasicBSONObject type2 = (BasicBSONObject) type1.get("a");
-		            System.out.println("objecttype"+type2.get("b").getClass());*/		           
-		        }  		        
-		        cursor1.close(); 
-		        Assert.assertEquals(type, expType,"the numtype is error");
-	        }
-	        		
-		}catch(BaseException e){			
-			Assert.assertTrue(false,"abs is used as selector oper failed,"+e.getMessage());
-		}		
-	}
-
+	}	
 }

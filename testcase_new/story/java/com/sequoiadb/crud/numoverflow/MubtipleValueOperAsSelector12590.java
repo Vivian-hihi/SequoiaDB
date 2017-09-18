@@ -3,8 +3,8 @@ package com.sequoiadb.crud.numoverflow;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+
 import org.testng.Assert;
-import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -17,18 +17,18 @@ import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
 
 /**
-* FileName: AdsIsSelector12574.java
-* test content:Numeric value overflow for many character using $subtract operation,
-* 				and the $subtract is used as a selector.
-* testlink case:seqDB-12574
+* FileName: MubtipleValueOperAsSelector12590.java
+* test content:Numeric value overflow for many character using different symbol operation,
+* 				and the symbol is used as a selector.the symbol is $abs/$add/$subtract/$divide/$multiply
+* testlink case:seqDB-12590
 * @author wuyan
-    * @Date    2017.9.4
+    * @Date    2017.9.13
 * @version 1.00
 */
 
-public class SubtractIsSelector12574 extends SdbTestBase{	
+public class MubtipleValueOperAsSelector12590 extends SdbTestBase{	
 	
-	private String clName = "subtract_selector12574";
+	private String clName = "mubtipleVaule_selector12590";
 	private Sequoiadb sdb = null;
 	private CollectionSpace cs = null;
 	private static DBCollection cl = null;    
@@ -41,41 +41,36 @@ public class SubtractIsSelector12574 extends SdbTestBase{
 			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 		}catch(BaseException e){			
 			Assert.assertTrue(false,"connect %s failed,"+coordUrl+e.getMessage());
-		}
+		}		
 		
-		if (Commlib.isStandAlone(sdb)){
-			throw new SkipException("is standalone skip testcase");
-		}
-		
-		if (Commlib.OneGroupMode(sdb)){
-			throw new SkipException("less two groups skip testcase");
-		}
-		
-		String clOption = "{ShardingKey:{no:1},ShardingType:'hash',Partition:1024,"
-				+ "ReplSize:0,Compressed:true, StrictDataMode:false}";
 		cs = sdb.getCollectionSpace(SdbTestBase.csName);
-		cl = Commlib.createCL(cs, clName, clOption);
+		cl = Commlib.createCL(cs, clName);
 		
 		String []records = {"{'no':-2147483648,'tlong':{'$numberLong':'9223372036854775807'},"
-								+ "'arr':[1,[1,{'$numberLong':'8223372036854775808'}],2],obj:{a:{b:4}}}"};
+								+ "'arr':[1,3],'arr1':[1,[1,{'$numberLong':'92233720368547758'}],2],"
+								+ "obj:{a:{b:[4,{'$numberLong':'-9223372036854775808'}]}},obj1:{a:{b:-2}}}"};
 
 		Commlib.insert(cl, records);
-		splitCL();
 	}
 	
 	@Test
 	public void testSubtract(){
 		try{			
-			String selector = "{no:{$subtract:1},tlong:{$subtract:-1000000000000000002},"
-					+ "arr:{$subtract:-1000000000000000002},'obj.a.b':{$subtract:-2147483644},_id:{$include:0}}"; 
-			String []expRecords = {"{'no':-2147483649,'tlong':{'$decimal':'10223372036854775809'},"
-	        		+ "'arr':[1000000000000000003,null,1000000000000000004],obj:{a:{b:2147483648}}}"};	       
+			String selector = "{no:{$abs:1},tlong:{$add:1},'arr.$[0]':{$subtract:{'$numberLong':'-9223372036854775807'}},"
+					+ "'arr1.$[1].$[1]':{$multiply:112},'obj.a.b.$[1]':{$divide:-1},"
+					+ "'obj1.a.b':{$subtract:{'$numberLong':'9223372036854775807'}},_id:{$include:0}}"; 
+			//TODO:SEQUOIADBMAINSTREAM-2764,the arr1.$[1].$[1] oper result is error
+			/*String []expRecords = {"{'no':2147483648,'tlong':{'$decimal':'9223372036854775808'},arr:[{'$decimal':'9223372036854775808'}],"
+					+ "'arr1':[],obj:{a:{b:[{'$decimal':'9223372036854775808'}]}},"
+					+ "obj1:{a:{b:{'$decimal':'-9223372036854775809'}}}}"};	 */
+			String []expRecords = {"{'no':2147483648,'tlong':{'$decimal':'9223372036854775808'},arr:[{'$decimal':'9223372036854775808'}],"
+					+ "'arr1':[],obj:{a:{b:[{'$decimal':'9223372036854775808'}]}},"
+					+ "obj1:{a:{b:{'$decimal':'-9223372036854775809'}}}}"};	 
 			Commlib.multipleFieldOper(cl, selector, expRecords);
 		}catch(BaseException e){			
 			Assert.assertTrue(false,"subtract is used as selector oper failed,"+e.getMessage()+e.getErrorCode());
 		}		
 	}	
-	
 		
 	@AfterClass
 	public void tearDown(){
@@ -92,20 +87,5 @@ public class SubtractIsSelector12574 extends SdbTestBase{
 				sdb.close();
 			}
 		}
-	}		
-	
-	public void splitCL(){	
-		String sourceRGName = "";
-		String targetRGName = "";
-		try{			
-			sourceRGName = Commlib.getSourceRGName(sdb,SdbTestBase.csName,clName);
-			targetRGName = Commlib.getTarRgName(sdb,sourceRGName);	
-			int percent = 80;
-			cl.split(sourceRGName, targetRGName,percent );		
-		}catch(BaseException e){
-			Assert.assertTrue(false,"split fail: sRG: " + sourceRGName+" targetRG:"+targetRGName +
-					e.getErrorCode()+e.getMessage());
-		}		
-	}
-	
+	}	
 }

@@ -34,7 +34,7 @@ public class DivideIsSelector12576 extends SdbTestBase{
 	public Object[][] generateDatas(){
 		String []expRecords1 = {"{'no':{'$numberLong':'2147483648'},'tlong':{'$numberLong':'-9223372036854775808'},'test':0}"};		
 		String []expRecords2 = {"{no: [ 2147483648] ,'obj':{'a':-2147483648},'test':1}"};	
-		String []expRecords3 = {"{no:[1,[{'$numberLong':'2147483648'}],3],obj:{a:[1,{'$numberLong':'-9223372036854775808'}]},test:3}"};
+		//String []expRecords3 = {"{no:[1,[{'$numberLong':'2147483648'}],3],obj:{a:[1,{'$numberLong':'-9223372036854775808'}]},test:3}"};
 		String []expRecords4 = {"{no:[-2147483648,{'$numberLong':'-9223372036854775808'}],obj:{a:{'$numberLong':'2147483648'}},test:1}"};		
 		String []expRecords5 = {"{no:33,obj:{a:{b:{int:2147483648,long:{'$numberLong':'-9223372036854775808'}}}},test:2}"};	
 		String []expRecords6 = {"{no:8,obj:{a:{b:{int:-2147483648,long:{'$numberLong':'-9223372036854775808'}}}},test:2}"};
@@ -105,7 +105,8 @@ public class DivideIsSelector12576 extends SdbTestBase{
 	
 	
 	@Test(dataProvider = "operData")
-	public void testSubtract(int matcherValue,Object subValue,String selectorName, String []expRecords,String expTypeToSdb,Boolean isVerifyTypeToJava,String typeToJava){
+	public void testDivide(int matcherValue,Object subValue,String selectorName, String []expRecords,
+			String expTypeToSdb,Boolean isVerifyTypeToJava,String typeToJava){
 		try{		
 			
 			BSONObject sValue = new BasicBSONObject();
@@ -119,7 +120,7 @@ public class DivideIsSelector12576 extends SdbTestBase{
 			}
 			
 		}catch(BaseException e){			
-			Assert.assertTrue(false,"subtract intData is used as selector oper failed,"+e.getMessage());
+			Assert.assertTrue(false,"dividie is used as selector oper failed,"+e.getMessage());
 		}		
 	}	
 	
@@ -130,7 +131,7 @@ public class DivideIsSelector12576 extends SdbTestBase{
 					 +new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:S").format(new Date()));			
 			CollectionSpace cs = sdb.getCollectionSpace(SdbTestBase.csName);
 			if(cs.isCollectionExist(clName)){
-				//cs.dropCollection(clName);
+				cs.dropCollection(clName);
 			}			
 		}catch(BaseException e){
 			Assert.fail("clear env failed, errMsg:" + e.getMessage());

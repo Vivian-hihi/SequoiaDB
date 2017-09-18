@@ -32,7 +32,7 @@ public class SubtractIsSelector12575 extends SdbTestBase{
 	@DataProvider(name = "operData")
 	public Object[][] generateDatas(){				
 		return new Object[][]{
-			//the parameters: selectorName
+			//the parameters: selectorName, aritValue
 			//test int32 type numberflow
 			new Object[]{"no", new Integer(1)},			
 			//test int64 type numberflow
@@ -88,11 +88,14 @@ public class SubtractIsSelector12575 extends SdbTestBase{
 					 +new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:S").format(new Date()));
 			cs = sdb.getCollectionSpace(SdbTestBase.csName);
 			if(cs.isCollectionExist(clName)){
-				//cs.dropCollection(clName);
+				cs.dropCollection(clName);
 			}
-			sdb.close();
+			
 		}catch(BaseException e){
 			Assert.fail("clear env failed, errMsg:" + e.getMessage());
-		}
-	}	
-}
+		}finally {
+			if( sdb != null ){
+				sdb.close();		}
+			}
+		}	
+	}
