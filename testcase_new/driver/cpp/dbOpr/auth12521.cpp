@@ -20,7 +20,11 @@ class auth12521 : public testBase{} ;
 // if no user, any user and passwd is permitted.
 TEST_F( auth12521, createAndDropUser )
 {
-   if( isStandalone( db ) ) return ;
+   if( isStandalone( db ) )
+   {
+      cout << "skip this test for standalone" << endl ; 
+      return ;
+   }
 
    // create user1
    INT32 rc = SDB_OK ;

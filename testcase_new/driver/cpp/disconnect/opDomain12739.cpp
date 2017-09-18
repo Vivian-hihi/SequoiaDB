@@ -25,7 +25,8 @@ protected:
    void SetUp() 
    {
       testBase::SetUp() ;
-      if( isStandalone( db ) ) return ;
+      if( isStandalone( db ) ) 
+         return ;
 
       INT32 rc = SDB_OK ;
       pDomainName = "domain12739" ;
@@ -51,7 +52,11 @@ protected:
 
 TEST_F( opDomain12739, opDoamin )
 {
-   if( isStandalone( db ) ) return ;
+   if( isStandalone( db ) )
+   {
+      cout << "skip this test for standalone" << endl ; 
+      return ;
+   }
 
    // test all interfaces of class sdbDomain except getName()
    // in the order of c++ api doc

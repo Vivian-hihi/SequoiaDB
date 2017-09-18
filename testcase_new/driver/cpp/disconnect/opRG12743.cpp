@@ -25,7 +25,8 @@ protected:
    void SetUp() 
    {
       testBase::SetUp() ;
-      if( isStandalone( db ) ) return ;
+      if( isStandalone( db ) ) 
+         return ;
 
       INT32 rc = SDB_OK ;
       pRgName = "group12743" ;
@@ -50,7 +51,11 @@ protected:
 
 TEST_F( opRG12743, opRG ) 
 {
-   if( isStandalone( db ) ) return ;
+   if( isStandalone( db ) )
+   {
+      cout << "skip this test for standalone" << endl ; 
+      return ;
+   }
 
    // test all interfaces of class sdbReplicaGroup except getNodeNum(), isCatalog(), getName()
    // in the order of c++ api doc

@@ -19,17 +19,14 @@ using namespace std ;
 class opNode12744 : public testBase 
 {
 protected:
-   sdbNode node ;
+   sdbNode node ; 
 
    void SetUp() 
    {
       testBase::SetUp() ;
 
       if( isStandalone( db ) ) 
-      {
-         db.disconnect() ;
          return ;
-      }
 
       INT32 rc = SDB_OK ;
       sdbReplicaGroup rg ;
@@ -40,12 +37,19 @@ protected:
       db.disconnect() ;
    }
 
-   void TearDown() {}
+   void TearDown() 
+   {
+      testBase::TearDown() ;
+   }
 } ;
 
 TEST_F( opNode12744, opNode ) 
 {
-   if( isStandalone( db ) ) return ;
+   if( isStandalone( db ) ) 
+   {
+      cout << "skip this test for standalone" << endl ; 
+      return ;
+   }
 
    // test all interfaces of class sdbNode except connect(), getHostName(), getServiceName(), getNodeName(), getStatus()
    // in the order of c++ api doc

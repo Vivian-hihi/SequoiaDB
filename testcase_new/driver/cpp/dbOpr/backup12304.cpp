@@ -53,12 +53,12 @@ protected:
 
 TEST_F( backup12304, backup )
 {
-   if( isStandalone(db) )
+   if( isStandalone( db ) )
    {
-      cout << "Run mode is standalone" << endl ;
+      cout << "skip this test for standalone" << endl ; 
       return ;
    }
-
+   
    // get a data group id
    INT32 rc = SDB_OK ;
    INT32 groupID ;
