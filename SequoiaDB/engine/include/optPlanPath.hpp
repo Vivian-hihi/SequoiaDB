@@ -201,6 +201,26 @@ namespace engine
             return p ;
          }
 
+         OSS_INLINE void operator delete ( void *p )
+         {
+            SDB_OSS_FREE( p ) ;
+         }
+
+         // Overload delete operator to keep compiler quiet
+         OSS_INLINE void operator delete ( void *p,
+                                           optPlanAllocator *pAllocator,
+                                           std::nothrow_t )
+         {
+            if ( pAllocator && pAllocator->isAllocatedByme( p ) )
+            {
+               // Do nothing
+            }
+            else
+            {
+               SDB_OSS_FREE( p ) ;
+            }
+         }
+
          virtual void release ( optPlanAllocator *pAllocator ) = 0 ;
 
       protected :
