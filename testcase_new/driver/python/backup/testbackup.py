@@ -28,6 +28,8 @@ class SdbTestBackup(testlib.SdbTestBase):
       self.db.remove_backup({"Name": "mybk"})
 
    def test_backup_12493(self):
+      if testlib.is_standalone():
+         self.skipTest("not support standlone mode")
       self.db.remove_backup({"Name": "mybk"})
       group_name=testlib.get_data_groups()[0]["GroupName"]
       self.db.backup_offline({"Name": "mybk","GroupName":[group_name]})
