@@ -1811,7 +1811,6 @@ namespace engine
       PD_LOG( PDEVENT, "Begin to cleanup collectionspace[%s]...",
               _pSU->CSName() ) ;
 
-      /// drop invalid collection
       MAP_SU_STATUS::iterator it ;
 
       /// if the lob is invalid, rebuild the bme
@@ -1827,6 +1826,7 @@ namespace engine
          }
       }
 
+      /// drop invalid collection
       for ( it = _clStatus.begin() ; it != _clStatus.end() ; ++it )
       {
          rtnRUInfo &info = it->second ;
