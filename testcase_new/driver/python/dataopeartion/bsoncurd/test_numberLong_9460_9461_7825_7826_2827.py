@@ -14,8 +14,6 @@ import bson
 
 class TestNumberLong9460(testlib.SdbTestBase):
    def setUp(self):
-      self.db.set_session_attri({"PreferedInstance": "M"})
-
       # create cs and cl
       self.cs_name = "cs_9460"
       self.cl_name = "cl_9460"

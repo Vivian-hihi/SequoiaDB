@@ -16,8 +16,6 @@ from bson.min_key import MinKey
 
 class TestMinKeyMaxKey12460(testlib.SdbTestBase):
    def setUp(self):
-      self.db.set_session_attri({"PreferedInstance": "M"})
-
       # create cs and cl
       self.cs_name = "cs_12460"
       self.cl_name = "cl_12460"

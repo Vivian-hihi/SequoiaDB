@@ -11,8 +11,6 @@ from lib import testlib
 
 class TestBool12452(testlib.SdbTestBase):
    def setUp(self):
-      self.db.set_session_attri({"PreferedInstance": "M"})
-      
       # create cs and cl
       self.cs_name = "cs_12452"
       self.cl_name = "cl_12452"

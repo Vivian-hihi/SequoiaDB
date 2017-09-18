@@ -14,8 +14,6 @@ from bson.json_util import dumps
 
 class TestDate12453(testlib.SdbTestBase):
    def setUp(self):
-      self.db.set_session_attri({"PreferedInstance": "M"})
-      
       # create cs and cl
       self.cs_name = "cs_12453"
       self.cl_name = "cl_12453"

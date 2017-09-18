@@ -17,9 +17,7 @@ from collections import OrderedDict
 
 class TestDecimal12459(testlib.SdbTestBase):
    def setUp(self):
-      self.db.set_session_attri({"PreferedInstance": "M"})
-      
-      # create cs and cl
+		# create cs and cl
       self.cs_name = "cs_12459"
       self.cl_name = "cl_12459"
       try:
