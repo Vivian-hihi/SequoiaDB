@@ -9,8 +9,6 @@ from pysequoiadb.error import (SDBBaseError)
 
 class TestInsert12462(testlib.SdbTestBase):
    def setUp(self):
-      self.db.set_session_attri({"PreferedInstance": "M"})
-      
       #create cs and cl
       self.cs_name = "cs_12462"
       self.cl_name = "cl_12462"
