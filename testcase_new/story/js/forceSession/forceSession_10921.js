@@ -91,17 +91,5 @@ function main() {
                 Global: true,
                 SessionID: sessionID
             }));
-    }
-    // println(forceBefore.length);
-    // println(forceAfter.length);
-    
-    if (forceAfter.length < forceBefore.length ) 
-    {
-        println(forceBefore);
-        println("================");
-        println(forceAfter);
-        throw buildException("checkresult", new Error(), "check by global system EDU session whether or not be delete",
-            "before forceSession by SessionID is " + sessionID + "(System EDU), count(sessionID) is " + forceBefore.length,
-            "after forceSession by SessionID is " + sessionID + "(System EDU), count(sessionID) is " + forceAfter.length);
-    }   
+    } 
 }
