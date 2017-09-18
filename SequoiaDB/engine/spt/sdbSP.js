@@ -2313,6 +2313,8 @@ File.scp = function( src, dst, isReplace, mode ) {
    }
    catch( e )
    {
+      srcFile.close() ;
+      dstFile.close() ;
       if( -9 == e )
       {
          println( "Success to copy file from " + src + " to " + dst ) ;
