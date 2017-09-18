@@ -2139,9 +2139,10 @@ SDB_EXPORT INT32 sdbGetQueryMeta ( sdbCollectionHandle cHandle,
    sdbConnectionStruct *connection = NULL ;
    sdbCollectionStruct *cs         = (sdbCollectionStruct*)cHandle ;
    BOOLEAN bsoninit                = FALSE ;
-   bson hint1 ;
+   bson newHint ;
+   bson_iterator itr ;
 
-   BSON_INIT( hint1 ) ;
+   /// check
    HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
    connection                      = (sdbConnectionStruct*)(cs->_connection) ;
    if ( !cs->_collectionFullName[0] || !handle )
@@ -2150,21 +2151,47 @@ SDB_EXPORT INT32 sdbGetQueryMeta ( sdbCollectionHandle cHandle,
       goto error ;
    }
 
-   BSON_APPEND( hint1, FIELD_NAME_COLLECTION,
+   /// build new hint
+   BSON_INIT( newHint ) ;
+   BSON_APPEND( newHint, FIELD_NAME_COLLECTION,
                 cs->_collectionFullName, string ) ;
-   BSON_FINISH ( hint1 ) ;
 
+   rc = bson_append_start_object( &newHint, FIELD_NAME_HINT ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_DRIVER_BSON_ERROR ;
+      goto error ;
+   }
+   if ( NULL != hint )
+   {
+      bson_iterator_init ( &itr, hint ) ;
+      while ( BSON_EOO != bson_iterator_next ( &itr ) )
+      {
+         BSON_APPEND( newHint, NULL, &itr, element ) ;
+      }
+   }
+   rc = bson_append_finish_object( &newHint ) ;
+   if ( SDB_OK != rc )
+   {
+       rc = SDB_DRIVER_BSON_ERROR ;
+       goto error ;
+   }
+
+
+   BSON_FINISH ( newHint ) ;
+
+   /// build msg
    rc = clientBuildQueryMsg ( &cs->_pSendBuffer,
                               &cs->_sendBufferSize,
                               p, 0, 0, numToSkip, numToReturn, condition,
-                              hint, orderBy, &hint1,
+                              null, orderBy, &newHint,
                               cs->_endianConvert ) ;
    if ( SDB_OK != rc )
    {
       goto error ;
    }
 
-   // send and recv
+   /// send and recv
    rc = _sendAndRecv( cs->_connection, cs->_sock, (MsgHeader*)cs->_pSendBuffer,
                       (MsgHeader**)&cs->_pReceiveBuffer,
                       &cs->_receiveBufferSize,
@@ -2174,14 +2201,14 @@ SDB_EXPORT INT32 sdbGetQueryMeta ( sdbCollectionHandle cHandle,
       goto error ;
    }
 
-   // extract revc message
+   /// extract revc message
    rc = _extract( (MsgHeader*)cs->_pReceiveBuffer, cs->_receiveBufferSize,
                   &contextID, cs->_endianConvert ) ;
    if ( SDB_OK != rc )
    {
       goto error ;
    }
-   // check return msg header
+   /// check return msg header
    CHECK_RET_MSGHEADER( cs->_pSendBuffer, cs->_pReceiveBuffer,
                         cs->_connection ) ;
    rc = updateCachedObject( rc, connection->_tb, cs->_collectionFullName ) ;
@@ -2192,17 +2219,17 @@ SDB_EXPORT INT32 sdbGetQueryMeta ( sdbCollectionHandle cHandle,
    ALLOC_HANDLE( cursor, sdbCursorStruct ) ;
    INIT_CURSOR( cursor, cs->_connection, cs, contextID ) ;
 
-   // register cursor in connection
+   /// register cursor in connection
    rc = _regCursor ( cursor->_connection, (sdbCursorHandle)cursor ) ;
    if ( SDB_OK != rc )
    {
       goto error ;
    }
-   // set output result
+   /// set output result
    *handle = (sdbCursorHandle)cursor ;
 
 done:
-   BSON_DESTROY( hint1 ) ;
+   BSON_DESTROY( newHint ) ;
    return rc ;
 error:
    if ( cursor )
