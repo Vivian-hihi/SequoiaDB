@@ -34,7 +34,7 @@ class TestMeteData12444(testlib.SdbTestBase):
          expect_page_size = self.list[index][3]
          expect_lob_page_size = self.list[index][4]
          expect_cs_options = {"PageSize": expect_page_size, "LobPageSize": expect_lob_page_size}
-         self.createCSAndCheck(self.cs_name, cs_options, expect_cs_options)
+         self.check_create_cs(self.cs_name, cs_options, expect_cs_options)
    
    def tearDown(self):
       if self.should_clean_env():
@@ -45,7 +45,7 @@ class TestMeteData12444(testlib.SdbTestBase):
             if -34 != e.code:
                self.fail("tear_down_fail,detail:" + e.detail)
            
-   def createCSAndCheck(self, cs_name, cs_options, expect_cs_options):
+   def check_create_cs(self, cs_name, cs_options, expect_cs_options):
       #create cs and cl
       cl_name = "cl"
       self.cs = self.db.create_collection_space(cs_name, cs_options)
