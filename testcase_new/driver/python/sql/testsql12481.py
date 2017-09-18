@@ -12,8 +12,7 @@ class SdbTestSql12481(testlib.SdbTestBase):
       self.cl = self.cs.create_collection(self.cl_name)
 
    def tearDown(self):
-      if self.should_clean_env():
-         self.db.drop_collection_space(self.cs_name)
+      pass
 
    def test_select(self):
       self.cl.bulk_insert(0, [{"a": 1} for i in range(10)])

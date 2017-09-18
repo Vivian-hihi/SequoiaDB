@@ -11,7 +11,7 @@ class Lob12478(testlib.SdbTestBase):
    def setUp(self):
       testlib.drop_cs(self.db, self.cs_name, ignore_not_exist=True)
       self.cs = self.db.create_collection_space(self.cs_name)
-      self.cl = self.cs.create_collection(self.cl_name)()
+      self.cl = self.cs.create_collection(self.cl_name)
 
    def test_lob(self):
       self.lob_size = 1024
@@ -84,4 +84,4 @@ class Lob12478(testlib.SdbTestBase):
 
    def tearDown(self):
       if self.should_clean_env():
-         self.drop_cs()
+         self.db.drop_collection_space(self.cs_name)
