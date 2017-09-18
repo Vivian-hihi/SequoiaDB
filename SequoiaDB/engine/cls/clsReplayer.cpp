@@ -836,7 +836,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSREP_ROLBCK, "_clsReplayer::rollback" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSREP_ROLBCK, "_clsReplayer::rollback" )
    INT32 _clsReplayer::rollback( const dpsLogRecordHeader *recordHeader,
                                  _pmdEDUCB *eduCB )
    {
@@ -1230,14 +1230,21 @@ namespace engine
          goto error ;
       }
 
+   done:
+      eduCB->resetLsn() ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "sync:rollback log[type:%d, lsn:%lld] failed, rc: %d",
-                 recordHeader->_type, recordHeader->_lsn, rc ) ;
-         goto error ;
+         dpsLogRecord record ;
+         CHAR tmpBuff[4096] = {0} ;
+         INT32 rcTmp = record.load( (const CHAR*)recordHeader ) ;
+         if ( SDB_OK == rcTmp )
+         {
+            record.dump( tmpBuff, sizeof(tmpBuff)-1, DPS_DMP_OPT_FORMATTED ) ;
+         }
+         PD_LOG( PDERROR, "sync: rollback log [type:%d, lsn:%lld, data: %s] "
+                 "failed, rc: %d", recordHeader->_type, recordHeader->_lsn,
+                 tmpBuff, rc ) ;
       }
-
-   done:
       PD_TRACE_EXITRC ( SDB__CLSREP_ROLBCK, rc );
       return rc ;
    error:
@@ -1385,7 +1392,7 @@ namespace engine
 
       /// When is $id or useSync
       if ( useSync ||
-           0 != ossStrcmp( indexJob->getIndexName(), IXM_ID_KEY_NAME ) )
+           0 == ossStrcmp( indexJob->getIndexName(), IXM_ID_KEY_NAME ) )
       {
          indexJob->doit() ;
          SDB_OSS_DEL indexJob ;

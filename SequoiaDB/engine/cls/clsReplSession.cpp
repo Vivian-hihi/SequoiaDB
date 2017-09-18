@@ -905,10 +905,12 @@ namespace engine
                                          UINT32 &num )
    {
       INT32 rc = SDB_OK ;
+      INT32 rcTmp = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSDSTREPSN__REPLG ) ;
 
       dpsLogRecordHeader *recordHeader = NULL ;
       const CHAR *log = logs ;
+      UINT32 rollbackNum = 0 ;
       num = 0 ;
       BOOLEAN needRollback = FALSE ;
       DPS_LSN expectLSN ;
@@ -1021,15 +1023,16 @@ namespace engine
       PD_TRACE_EXITRC ( SDB__CLSDSTREPSN__REPLG, rc );
       return rc ;
    error:
-      if ( _pReplBucket->waitEmptyAndRollback() )
+      if ( _pReplBucket->waitEmptyAndRollback( &rollbackNum ) )
       {
          DPS_LSN expectLSN = _pReplBucket->completeLSN() ;
-         rc = _logger->move( expectLSN.offset, expectLSN.version ) ;
-         if ( rc )
+         rcTmp = _logger->move( expectLSN.offset, expectLSN.version ) ;
+         if ( rcTmp )
          {
             PD_LOG( PDERROR, "Session[%s]: Failed to move lsn to "
                     "[%u, %llu], rc: %d, need to synchronize full data",
-                    sessionName(), expectLSN.version, expectLSN.offset ) ;
+                    sessionName(), expectLSN.version, expectLSN.offset,
+                    rcTmp ) ;
             _fullSync() ;
          }
          else
@@ -1040,16 +1043,19 @@ namespace engine
       }
       else if ( needRollback )
       {
-         rc = _rollback( log ) ;
-         if ( SDB_OK != rc )
+         rollbackNum = 1 ;
+         rcTmp = _rollback( log ) ;
+         if ( rcTmp )
          {
             PD_LOG( PDERROR, "Session[%s]: Failed to rollback[%lld, "
                     "type: %d], rc: %d, need to synchronize full data",
                     sessionName(), recordHeader->_lsn, recordHeader->_type,
-                    rc ) ;
+                    rcTmp ) ;
             _fullSync() ;
          }
       }
+      /// need to sub rollback number
+      num -= rollbackNum ;
       goto done ;
    }
 
