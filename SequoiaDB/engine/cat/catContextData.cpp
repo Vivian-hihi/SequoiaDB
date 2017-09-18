@@ -2182,6 +2182,64 @@ namespace engine
       PD_CHECK ( item, SDB_SYS, error, PDERROR,
                  "Failed to get first item from catalog set" ) ;
       attribute = cataSet.getAttribute() ;
+
+      // Check unsupported alter options for capped collection.
+      if ( OSS_BIT_TEST( attribute, DMS_MB_ATTR_CAPPED )  )
+      {
+         PD_CHECK( !( ( CAT_MASK_SHDKEY & mask ) ||
+                      ( CAT_MASK_SHDIDX & mask ) ||
+                      ( CAT_MASK_SHDTYPE & mask ) ||
+                      ( CAT_MASK_SHDPARTITION & mask ) ),
+                   SDB_OPTION_NOT_SUPPORT, error, PDERROR,
+                   "The arguments are illegal for capped collection" ) ;
+         if ( ( ( CAT_MASK_COMPRESSED & mask ) && alterInfo._isCompressed ) ||
+              ( ( CAT_MASK_COMPRESSIONTYPE & mask ) &&
+                ( UTIL_COMPRESSOR_INVALID != alterInfo._compressorType ) ) )
+         {
+            PD_LOG( PDERROR,
+                    "Compression is not supported on capped collection" ) ;
+            rc = SDB_OPTION_NOT_SUPPORT ;
+            goto error ;
+         }
+
+         if ( ( ( CAT_MASK_AUTOASPLIT & mask ) && alterInfo._autoSplit ) ||
+              ( ( CAT_MASK_AUTOINDEXID & mask ) && alterInfo._autoIndexId ) )
+         {
+            PD_LOG( PDERROR, "Autosplit|AutoIndexId is not supported "
+                    "on capped collection" ) ;
+            rc = SDB_OPTION_NOT_SUPPORT ;
+            goto error ;
+         }
+
+         if ( ( CAT_MASK_CAPPED & mask ) && !alterInfo._capped )
+         {
+            PD_LOG( PDERROR, "Can't change from capped collection to normal "
+                    "collection" ) ;
+            rc = SDB_OPTION_NOT_SUPPORT ;
+            goto error ;
+         }
+      }
+      else
+      {
+         // For normal collection, it can not be change to capped collection,
+         // or modify the Max|Size|OverWrite options.
+         if ( ( CAT_MASK_CAPPED & mask ) && alterInfo._capped )
+         {
+            PD_LOG( PDERROR, "Can't change from normal collection to capped "
+                    "collection" ) ;
+            rc = SDB_OPTION_NOT_SUPPORT ;
+            goto error ;
+         }
+         if ( ( CAT_MASK_CLMAXRECNUM & mask ) || ( CAT_MASK_CLMAXSIZE & mask )
+              || ( CAT_MASK_CLOVERWRITE & mask ) )
+         {
+            PD_LOG( PDERROR, "Max|Size|OverWrite is only supported on capped "
+                    "collection" ) ;
+            rc = SDB_OPTION_NOT_SUPPORT ;
+            goto error ;
+         }
+      }
+
       {
          std::vector<UINT32> groupLst ;
          std::map<std::string, UINT32> splitLst ;
