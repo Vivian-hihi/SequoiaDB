@@ -220,6 +220,14 @@ TEST_F( timeTest9499, trueTest9501 )
    rc = ds.getConnection( conn ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to get connection" ;
 
+   // check standalone
+   if( isStandalone( *conn ) )
+   {
+      cout << "Run mode is standalone" << endl ;
+      ds.releaseConnection( conn ) ;
+      return ;
+   }
+
    // get coord group nodes
    vector<string> nodes;
    rc = getGroupNodes( *conn, "SYSCoord", nodes ) ;
@@ -305,6 +313,14 @@ TEST_F( timeTest9499, falseTest9502 )
    rc = ds.getConnection( conn ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to get connection" ;
    ASSERT_EQ( 1, conn->isValid() ) << "fail to check connection valid" ;
+
+   // check standalone
+   if( isStandalone( *conn ) )
+   {
+      cout << "Run mode is standalone." << endl ;
+      ds.releaseConnection( conn ) ;
+      return ;
+   }
 
    // get coord group nodes
    vector<string> nodes ;

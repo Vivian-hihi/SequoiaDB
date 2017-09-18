@@ -83,17 +83,20 @@ TEST_F( clTest12512, clOpr12512 )
    ASSERT_EQ( SDB_OK, rc ) << "fail to close cursor" ;
 
    // alter cl
-   BSONObj option = BSON( "ShardingKey" << BSON( "a" << 1 ) ) ;
-   rc = cl.alterCollection( option ) ;
-   ASSERT_EQ( SDB_OK, rc ) << "fail to alter cl " << clFullName ;
-   BSONObj cond = BSON( "Name" << clFullName ) ;
-   rc = db.getSnapshot( cursor, SDB_SNAP_CATALOG, cond ) ;
-   ASSERT_EQ( SDB_OK, rc ) << "fail to get snapshot cata" ;
-   rc = cursor.next( obj ) ;
-   ASSERT_EQ( SDB_OK, rc ) << "fail to get next" ;
-   ASSERT_EQ( 1, obj.getField( "ShardingKey" ).Obj().getField( "a" ).Int() ) << "fail to check alter cl" ;
-   rc = cursor.close() ;
-   ASSERT_EQ( SDB_OK, rc ) << "fail to close cursor" ;
+   if( !isStandalone( db ) )
+   {
+      BSONObj option = BSON( "ShardingKey" << BSON( "a" << 1 ) ) ;
+      rc = cl.alterCollection( option ) ;
+      ASSERT_EQ( SDB_OK, rc ) << "fail to alter cl " << clFullName ;
+      BSONObj cond = BSON( "Name" << clFullName ) ;
+      rc = db.getSnapshot( cursor, SDB_SNAP_CATALOG, cond ) ;
+      ASSERT_EQ( SDB_OK, rc ) << "fail to get snapshot cata" ;
+      rc = cursor.next( obj ) ;
+      ASSERT_EQ( SDB_OK, rc ) << "fail to get next" ;
+      ASSERT_EQ( 1, obj.getField( "ShardingKey" ).Obj().getField( "a" ).Int() ) << "fail to check alter cl" ;
+      rc = cursor.close() ;
+      ASSERT_EQ( SDB_OK, rc ) << "fail to close cursor" ;
+   }
 
    // insert record
    BSONObj doc = BSON( "a" << 50 ) ;

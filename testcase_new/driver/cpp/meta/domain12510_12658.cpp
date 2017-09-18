@@ -110,6 +110,12 @@ TEST_F( domainTest12510, notExist12568 )
    INT32 rc = SDB_OK ;
    const CHAR* domainName = "notExistDomain12658" ;
 
+   if( isStandalone( db ) )
+   {
+      cout << "Run mode is standalone." << endl ;
+      return ;
+   }
+
    // get not exist domain
    rc = db.getDomain( domainName, domain ) ;
    ASSERT_EQ( SDB_CAT_DOMAIN_NOT_EXIST, rc )

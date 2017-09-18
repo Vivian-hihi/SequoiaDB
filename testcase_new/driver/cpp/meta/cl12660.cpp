@@ -50,6 +50,12 @@ TEST_F( clTest12660, mainCl12660 )
    sdbCollection mainCl ;
    sdbCollection subCl ;
 
+   if( isStandalone( db ) )
+   {
+      cout << "Run mode is standalone." << endl ;
+      return ;
+   }
+
    // create main cl
    BSONObj option = BSON( "ShardingKey" << BSON( "a" << 1 ) << "ShardingType" << "range" << 
                           "IsMainCL" << true << "Partition" << 1024 ) ;

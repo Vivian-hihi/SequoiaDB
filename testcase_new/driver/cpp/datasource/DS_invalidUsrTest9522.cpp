@@ -36,13 +36,6 @@ protected:
 TEST_F( invalidUsrTest9522, userInfo9522 )
 {
    INT32 rc = SDB_OK ;
-
-   // check standalone
-	if( isStandalone( db ) )
-	{
-		cout << "Run mode is standalone." << endl ;
-		return ;
-	}
    
    // init enable and get connection
 	sdb* conn = NULL ;
@@ -52,6 +45,14 @@ TEST_F( invalidUsrTest9522, userInfo9522 )
 	ASSERT_EQ( SDB_OK, rc ) << "fail to enable datasource" ;
    rc = ds.getConnection( conn ) ;
 	ASSERT_EQ( SDB_OK, rc ) << "fail to get connection" ;
+
+   // check standalone
+   if( isStandalone( *conn ) )
+   {
+      cout << "Run mode is standalone." << endl ;
+      ds.releaseConnection( conn ) ;
+      return ;
+   }
 
    // create user
    rc = conn->createUsr( "root", "sequoiadb" ) ;
