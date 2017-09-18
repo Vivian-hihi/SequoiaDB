@@ -42,7 +42,7 @@ class TestSplit12486(testlib.SdbTestBase):
 
       testlib.drop_cs(self.db, self.cs_name, ignore_not_exist=True)
       self.cs = self.db.create_collection_space(self.cs_name)
-      self.cl = self.cs.create_collection(self.cl_name,cl_option=cl_option)
+      self.cl = self.cs.create_collection(self.cl_name,options=cl_option)
 
       self.cl.bulk_insert(0, insert_list)
       # split
