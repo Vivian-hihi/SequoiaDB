@@ -18,7 +18,7 @@ class TestIndex12476(testlib.SdbTestBase):
       self.cl = self.cs.create_collection(self.cl_name)
       self.insert_datas()
 
-   def testIndex12476(self):
+   def test_index_12476(self):
       try:
          aIndex = {'a': 1}
          aIdxName = 'a'

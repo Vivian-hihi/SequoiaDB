@@ -10,6 +10,8 @@ from pysequoiadb.error import (SDBBaseError)
 
 class TestFind12474(testlib.SdbTestBase):
    def setUp(self):
+      if testlib.is_standalone():
+         self.skipTest('current environment is standalone')
       testlib.drop_cs(self.db, self.cs_name, ignore_not_exist=True)
       self.cs = self.db.create_collection_space(self.cs_name)
       self.cl = self.cs.create_collection(self.cl_name)
