@@ -1,6 +1,7 @@
 package com.sequoiadb.datasource;
 
 import java.util.List;
+import java.util.Set;
 
 
 enum Operation {
@@ -8,13 +9,14 @@ enum Operation {
     DELETE
 }
 
+// TODO: we should rename this enum, for it can't express its own meaning
 enum ItemStatus {
     IDLE,
     USED
 }
 
 interface IConnectStrategy {
-    public void init(List<String> addresses, List<Pair> _idleConnPairs, List<Pair> _usedConnPairs);
+    public void init(Set<String> addresses, List<Pair> _idleConnPairs, List<Pair> _usedConnPairs);
 
     public ConnItem pollConnItem(Operation opr);
 
@@ -31,6 +33,8 @@ interface IConnectStrategy {
        USED      <0    one connection was got out from the used pool,
                        strategy need to decrease amount of used connection with specified address
      */
+    // TODO: if user does not know which vector should the item be put to, strategy can't work.
+    // TODO: so, it not a good interface, for user need to know about the detail of the strategy.
     public void update(ItemStatus type, ConnItem item, int change);
 
     public void addAddress(String addr);

@@ -1,9 +1,6 @@
 package com.sequoiadb.datasource;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -17,23 +14,23 @@ abstract class AbstractStrategy implements IConnectStrategy {
 
 
     @Override
-    public void init(List<String> addresses, List<Pair> _idleConnPairs, List<Pair> _usedConnPairs) {
+    public void init(Set<String> addresses, List<Pair> _idleConnPairs, List<Pair> _usedConnPairs) {
         // Notice that, we won't depend on the address in used queue, for
         // some addresses may have been removed, but, they may be still in used pool.
 
         // get addresses to local
-        Iterator<String> itr1 = addresses.iterator();
-        while (itr1.hasNext()) {
-            String addr = itr1.next();
+        Iterator<String> addrItr = addresses.iterator();
+        while (addrItr.hasNext()) {
+            String addr = addrItr.next();
             if (!_addrs.contains(addr)) {
                 _addrs.add(addr);
             }
         }
         // get idle connections information
         if (_idleConnPairs != null) {
-            Iterator<Pair> itr2 = _idleConnPairs.iterator();
-            while (itr2.hasNext()) {
-                Pair pair = itr2.next();
+            Iterator<Pair> connPairItr = _idleConnPairs.iterator();
+            while (connPairItr.hasNext()) {
+                Pair pair = connPairItr.next();
                 String addr = pair.first().getAddr();
                 _idleConnItemList.add(pair.first());
                 if (!_addrs.contains(addr)) {
@@ -87,9 +84,9 @@ abstract class AbstractStrategy implements IConnectStrategy {
             Iterator<ConnItem> itr = _idleConnItemList.iterator();
             while (itr.hasNext()) {
                 ConnItem item = itr.next();
-                if (addr == item.getAddr()) {
+                if (item.getAddr().equals(addr)) {
                     list.add(item);
-                    itr.remove();//TODO:test it
+                    itr.remove();
                 }
             }
         } finally {
@@ -102,7 +99,7 @@ abstract class AbstractStrategy implements IConnectStrategy {
     public void update(ItemStatus type, ConnItem item, int change) {
         _lockForConnItemList.lock();
         try {
-            if (ItemStatus.IDLE == type && change > 0) {
+            if (type == ItemStatus.IDLE && change > 0) {
                 _idleConnItemList.add(item);
             }
         } finally {

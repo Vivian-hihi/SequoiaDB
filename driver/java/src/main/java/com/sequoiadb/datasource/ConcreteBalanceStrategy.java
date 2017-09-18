@@ -56,9 +56,9 @@ class CountInfo implements Comparable<CountInfo> {
 
     @Override
     public int compareTo(CountInfo other) {
-        if (true == this._available && false == other._available) {
+        if (this._available == true && other._available == false) {
             return -1;
-        } else if (false == this._available && true == other._available) {
+        } else if (this._available == false && other._available == true) {
             return 1;
         } else {
             if (this._count != other._count) {
@@ -73,18 +73,19 @@ class CountInfo implements Comparable<CountInfo> {
 class ConcreteBalanceStrategy implements IConnectStrategy {
 
     private HashMap<String, LinkedList<ConnItem>> _idleConnItemMap = new HashMap<String, LinkedList<ConnItem>>();
+    // _countInfoMap is used to help getting CountInfo in _countInfoSet
     private HashMap<String, CountInfo> _countInfoMap = new HashMap<String, CountInfo>();
     private TreeSet<CountInfo> _countInfoSet = new TreeSet<CountInfo>();
     private ReentrantLock _lock = new ReentrantLock();
     private static CountInfo _dumpCountInfo = new CountInfo("", 0, false);
 
     @Override
-    public void init(List<String> addresses, List<Pair> _idleConnPairs,
+    public void init(Set<String> addresses, List<Pair> _idleConnPairs,
                      List<Pair> _usedConnPairs) {
         // initialize info from giving addresses
-        Iterator<String> itr1 = addresses.iterator();
-        while (itr1.hasNext()) {
-            String addr = itr1.next();
+        Iterator<String> addrItr = addresses.iterator();
+        while (addrItr.hasNext()) {
+            String addr = addrItr.next();
             if (!_idleConnItemMap.containsKey(addr)) {
                 _idleConnItemMap.put(addr, new LinkedList<ConnItem>());
                 CountInfo obj = new CountInfo(addr, 0, false);
@@ -97,11 +98,11 @@ class ConcreteBalanceStrategy implements IConnectStrategy {
         // If a connection in idle pool has no information in _idleConnItemMap,
         // let's register this connection to _idleConnItemMap, _countInfoMap and
         // _countInfoSet.
-        Iterator<Pair> itr2 = null;
-        if (null != _idleConnPairs) {
-            itr2 = _idleConnPairs.iterator();
-            while (itr2.hasNext()) {
-                Pair pair = itr2.next();
+        Iterator<Pair> connPairItr = null;
+        if (_idleConnPairs != null) {
+            connPairItr = _idleConnPairs.iterator();
+            while (connPairItr.hasNext()) {
+                Pair pair = connPairItr.next();
                 ConnItem item = pair.first();
                 String addr = item.getAddr();
                 if (!_idleConnItemMap.containsKey(addr)) {
@@ -131,10 +132,10 @@ class ConcreteBalanceStrategy implements IConnectStrategy {
         // Notice that, we won't keep the info of connections whose address had been remove
         // from the pool. So, when _idleConnItemMap does't contain the address of a connection,
         // we will ignore that kind of connections.
-        if (null != _usedConnPairs) {
-            itr2 = _usedConnPairs.iterator();
-            while (itr2.hasNext()) {
-                Pair pair = itr2.next();
+        if (_usedConnPairs != null) {
+            connPairItr = _usedConnPairs.iterator();
+            while (connPairItr.hasNext()) {
+                Pair pair = connPairItr.next();
                 ConnItem item = pair.first();
                 String addr = item.getAddr();
                 if (_idleConnItemMap.containsKey(addr)) {
@@ -160,14 +161,15 @@ class ConcreteBalanceStrategy implements IConnectStrategy {
                 CountInfo info = null;
                 String addr = null;
                 /// get the countInfo we wanted
-                if (Operation.GET == opr) {
+                if (opr == Operation.GET) {
                     // get countInfo of connection which count is the least
                     try {
                         info = _countInfoSet.first();
                     } catch (NoSuchElementException e) {
                         info = null;
                     }
-                } else if (Operation.DELETE == opr) {
+                } else if (opr == Operation.DELETE) {
+                    // TODO: here we need lower or higher?
                     info = _countInfoSet.lower(_dumpCountInfo);
                 } else {
                     throw new BaseException(SDBError.SDB_SYS, "Invalid operation: " + opr);
@@ -216,7 +218,7 @@ class ConcreteBalanceStrategy implements IConnectStrategy {
         _lock.lock();
         try {
             info = _countInfoSet.higher(_dumpCountInfo);
-            if (null == info) {
+            if (info == null) {
                 try {
                     info = _countInfoSet.first();
                 } catch (NoSuchElementException e) {
@@ -242,7 +244,7 @@ class ConcreteBalanceStrategy implements IConnectStrategy {
         LinkedList<ConnItem> list = null;
         _lock.lock();
         try {
-            if (ItemStatus.IDLE == status) {
+            if (status == ItemStatus.IDLE) {
                 if (!_idleConnItemMap.containsKey(addr)) {
                     // maybe the information of this address was remove by "removeAddress()"
                     // so let's rebuild those information
@@ -255,14 +257,14 @@ class ConcreteBalanceStrategy implements IConnectStrategy {
                         // should never happen
                         throw new BaseException(SDBError.SDB_SYS, "Point1: the pool has no information about address: " + addr);
                     }
-                    // update the countInfo which is in the state of unavailable
+                    // set the countInfo of current address to be available
                     if (info.getAvailable() == false) {
                         _countInfoSet.remove(info);
                         info.setAvailable(true);
                         _countInfoSet.add(info);
                     }
 
-                    // push connItem into list
+                    // push connItem back to idle connItem list
                     list = _idleConnItemMap.get(addr);
                     if (list == null) {
                         // should never happen
@@ -270,8 +272,8 @@ class ConcreteBalanceStrategy implements IConnectStrategy {
                     }
                     list.add(item);
                 } else if (change < 0) {
+                    /// when we come here, the CLEAN TASK is working.
                     /// in this case, we are removing connections from idle pool
-                    /// when we come here, we the CLEAN TASK is working.
                     list = _idleConnItemMap.get(addr);
                     if (list == null) {
                         // should never happen
@@ -285,7 +287,7 @@ class ConcreteBalanceStrategy implements IConnectStrategy {
                         // should never happen
                         throw new BaseException(SDBError.SDB_SYS, "Point5: the pool has no information about address: " + addr);
                     }
-                    // when current list has not connItem any more, let's set current address unusable.
+                    // when current list has no connItem any more, let's set current address unusable.
                     if (list.size() == 0) {
                         info = _countInfoMap.get(addr);
                         _countInfoSet.remove(info);
@@ -295,14 +297,14 @@ class ConcreteBalanceStrategy implements IConnectStrategy {
                 } else {
                     throw new BaseException(SDBError.SDB_SYS, "Point1: invalid change in idle pool");
                 }
-            } else if (ItemStatus.USED == status) {
+            } else if (status == ItemStatus.USED) {
                 // when _countInfoMap does not contain this address,
                 // this address may be remove by user.
                 // see "removeAddress" for more detail.
                 if (_countInfoMap.containsKey(addr)) {
                     info = _countInfoMap.get(addr);
                     // the info may be removed when strategy removed address
-                    if (null == info) {
+                    if (info == null) {
                         // should never happen
                         throw new BaseException(SDBError.SDB_SYS, "Point6: the pool has no information about address: " + addr);
                     }
@@ -329,6 +331,8 @@ class ConcreteBalanceStrategy implements IConnectStrategy {
     public void addAddress(String addr) {
         _lock.lock();
         try {
+            // TODO: when we add a new address, the next time, we getAddress by strategy,
+            // will this new address can be get?
             List<ConnItem> list = _idleConnItemMap.get(addr);
             if (list == null) {
                 // when we have no info about address "addr", let't prepare that
@@ -352,8 +356,9 @@ class ConcreteBalanceStrategy implements IConnectStrategy {
                 list = new ArrayList<ConnItem>();
             }
             CountInfo obj = _countInfoMap.remove(addr);
-            if (obj != null)
+            if (obj != null) {
                 _countInfoSet.remove(obj);
+            }
         } finally {
             _lock.unlock();
         }

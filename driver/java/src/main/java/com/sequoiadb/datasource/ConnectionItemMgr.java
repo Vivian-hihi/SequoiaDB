@@ -51,17 +51,17 @@ class ConnectionItemMgr {
         _capacity = capacity;
         _idleItem = new TreeSet<ConnItem>();
         _usedItem = new TreeSet<ConnItem>();
-        int initNum = 0;
+        int initIdleItemCount = 0;
         if (usedItems != null) {
             Iterator<ConnItem> itr = usedItems.iterator();
             while (itr.hasNext()) {
                 _usedItem.add(itr.next());
             }
-            initNum = (capacity > _usedItem.size()) ? (capacity - _usedItem.size()) : 0;
+            initIdleItemCount = (capacity > _usedItem.size()) ? (capacity - _usedItem.size()) : 0;
         } else {
-            initNum = capacity;
+            initIdleItemCount = capacity;
         }
-        for (int i = 0; i < initNum; i++) {
+        for (int i = 0; i < initIdleItemCount; i++) {
             // we must give a sequence number to the instance of ConnItem,
             // for _idleItem is TreeSet, it won't save two instances with
             // the same content
