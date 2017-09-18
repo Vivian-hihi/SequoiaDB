@@ -46,6 +46,18 @@ testFiles = [
    [ "./disconnect/opRG12743.cpp" ],
    [ "./disconnect/opNode12744.cpp" ],
    #[ "./disconnect/opLob12745.cpp" ],
+   [ "./split/splitRange12682.cpp" ],
+   [ "./split/splitHash12683.cpp" ],
+   [ "./split/task12527.cpp" ],
+   [ "./crud/bulkInsert12540_12666.cpp" ],
+   [ "./crud/setSessionAttr12538.cpp" ],
+   [ "./crud/upsert12541.cpp" ],
+   [ "./crud/upsertShardingKey12637.cpp" ],
+   [ "./crud/truncate12667.cpp" ],
+   [ "./crud/queryOne12542.cpp" ],
+   [ "./crud/queryAndRemove12544.cpp" ],
+   [ "./crud/queryAndUpdate12543.cpp" ],
+   [ "./crud/queryAndUpdateShardingKey12636.cpp" ]
 ]
 
 def getFileName( filePath ):
@@ -53,6 +65,9 @@ def getFileName( filePath ):
    # last element is suffix, 
    # second last element is the name
    return strArr[-2]
+
+def getObjectName( filePath ):
+   return getFileName( filePath ) + ".o"
                       
 # add common to path
 dllBuildEnv.Append( CPPPATH=[ "./common/" ] )
@@ -61,18 +76,38 @@ staticBuildEnv.Append( CPPPATH=[ "./common/" ] )
 # compile common lib
 gtestall = env.StaticLibrary('gtest', gtestFiles)
 
+# complit main object file
+testMainObj = dllBuildEnv.Object( [testMainFile] )
+
+# compile common object file
+commObj = []
+for file in testCommonFiles:
+   commonFileName = getFileName( file )
+   commonFile = dllBuildEnv.Object( commonFileName, [file] )
+   commObj.append( commonFile ) 
+
+# compile test object file
+objectFiles = []
+for index in range( len(testFiles) ):
+   objectFileArr = []
+   for file in testFiles[index]:
+      objectFileName = getObjectName( file )
+      objectFile = dllBuildEnv.Object( objectFileName, [file] )
+      objectFileArr.append( objectFile )
+   objectFiles.append( objectFileArr ) 
+
 # dll compile
 dllPrograms = []
-for testFile in testFiles:
-   testFileName = getFileName( testFile[0] )
-   dllProgram = dllBuildEnv.Program( testFileName, [testFile, testMainFile, testCommonFiles] )
+for index in range( len(testFiles) ):
+   testFileName = getFileName( testFiles[index][0] )
+   dllProgram = dllBuildEnv.Program( testFileName, [objectFiles[index], testMainObj, commObj] )
    dllPrograms.append( dllProgram )
 
 # static compile
 staticPrograms = []
-for testFile in testFiles:
-   testFileName = getFileName( testFile[0] ) + ".static"
-   staticProgram = staticBuildEnv.Program( testFileName, [testFile, testMainFile, testCommonFiles])
+for index in range( len(testFiles) ):
+   testFileName = getFileName( testFiles[index][0] ) + ".static"
+   staticProgram = staticBuildEnv.Program( testFileName, [objectFiles[index], testMainObj, commObj])
    staticPrograms.append( staticProgram )
 
 # dll install
