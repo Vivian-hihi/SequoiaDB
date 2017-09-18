@@ -7,7 +7,7 @@
 forceSession \- Stop the specified session's current operation and terminate it.
 .SH SYNOPSIS
 .PP
-\f[B]\f[I]db.forceSession(<sessionID>)\f[]\f[]
+\f[B]\f[I]db.forceSession(<sessionID>, [options])\f[]\f[]
 .SH CATEGORY
 .PP
 Sequoiadb
