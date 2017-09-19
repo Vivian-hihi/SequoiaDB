@@ -162,7 +162,7 @@ public class DBCollection {
 
         InsertRequest request = new InsertRequest(collectionFullName, insertor);
         SdbReply response = sequoiadb.requestAndResponse(request);
-        sequoiadb.reportIfError(response, insertor);
+        sequoiadb.throwIfError(response, insertor);
         sequoiadb.upsertCache(collectionFullName);
         return retObj;
     }
@@ -204,7 +204,7 @@ public class DBCollection {
 
         InsertRequest request = new InsertRequest(collectionFullName, insertor, flag, ensureOID);
         SdbReply response = sequoiadb.requestAndResponse(request);
-        sequoiadb.reportIfError(response);
+        sequoiadb.throwIfError(response);
         sequoiadb.upsertCache(collectionFullName);
     }
 
@@ -507,7 +507,7 @@ public class DBCollection {
         SdbReply response = sequoiadb.requestAndResponse(request);
         if (response.getFlag() != 0) {
             String msg = "matcher = " + matcher + ", hint = " + hint;
-            sequoiadb.reportIfError(response, msg);
+            sequoiadb.throwIfError(response, msg);
         }
         sequoiadb.upsertCache(collectionFullName);
     }
@@ -1007,7 +1007,7 @@ public class DBCollection {
                     ", hint = " + hint +
                     ", skipRows = " + skipRows +
                     ", returnRows = " + returnRows;
-                sequoiadb.reportIfError(response, msg);
+                sequoiadb.throwIfError(response, msg);
             }
         }
 
@@ -1076,7 +1076,7 @@ public class DBCollection {
             if (flags == SDBError.SDB_DMS_EOC.getErrorCode()) {
                 return null;
             } else {
-                sequoiadb.reportIfError(response);
+                sequoiadb.throwIfError(response);
             }
         }
 
@@ -1228,7 +1228,7 @@ public class DBCollection {
             if (flags == SDBError.SDB_DMS_EOC.getErrorCode()) {
                 return null;
             } else {
-                sequoiadb.reportIfError(response);
+                sequoiadb.throwIfError(response);
             }
         }
         sequoiadb.upsertCache(collectionFullName);
@@ -1275,7 +1275,7 @@ public class DBCollection {
             String msg = "name = " + name +
                 ", key = " + key +
                 ", isUnique = " + isUnique;
-            sequoiadb.reportIfError(response, msg);
+            sequoiadb.throwIfError(response, msg);
         }
 
         sequoiadb.upsertCache(collectionFullName);
@@ -1396,7 +1396,7 @@ public class DBCollection {
 
         AdminRequest request = new AdminRequest(AdminCommand.DROP_INDEX, dropObj);
         SdbReply response = sequoiadb.requestAndResponse(request);
-        sequoiadb.reportIfError(response, name);
+        sequoiadb.throwIfError(response, name);
         sequoiadb.upsertCache(collectionFullName);
     }
 
@@ -1460,7 +1460,7 @@ public class DBCollection {
         if (response.getFlag() != 0) {
             String msg = "condition = " + matcher +
                 ", hint = " + hint;
-            sequoiadb.reportIfError(response, msg);
+            sequoiadb.throwIfError(response, msg);
         }
 
         sequoiadb.upsertCache(collectionFullName);
@@ -1509,7 +1509,7 @@ public class DBCollection {
                 ", destGroupName = " + destGroupName +
                 ", splitCondition = " + splitCondition +
                 ", splitEndCondition = " + splitEndCondition;
-            sequoiadb.reportIfError(response, msg);
+            sequoiadb.throwIfError(response, msg);
         }
 
         sequoiadb.upsertCache(collectionFullName);
@@ -1544,7 +1544,7 @@ public class DBCollection {
             String msg = "sourceGroupName = " + sourceGroupName +
                 ", destGroupName = " + destGroupName +
                 ", percent = " + percent;
-            sequoiadb.reportIfError(response, msg);
+            sequoiadb.throwIfError(response, msg);
         }
 
         sequoiadb.upsertCache(collectionFullName);
@@ -1594,7 +1594,7 @@ public class DBCollection {
                 ", destGroupName = " + destGroupName +
                 ", splitCondition = " + splitCondition +
                 ", splitEndCondition = " + splitEndCondition;
-            sequoiadb.reportIfError(response, msg);
+            sequoiadb.throwIfError(response, msg);
         }
 
         DBCursor cursor = new DBCursor(response, sequoiadb);
@@ -1644,7 +1644,7 @@ public class DBCollection {
             String msg = "sourceGroupName = " + sourceGroupName +
                 ", destGroupName = " + destGroupName +
                 ", percent = " + percent;
-            sequoiadb.reportIfError(response, msg);
+            sequoiadb.throwIfError(response, msg);
         }
 
         DBCursor cursor = new DBCursor(response, sequoiadb);
@@ -1684,7 +1684,7 @@ public class DBCollection {
             if (flags == SDBError.SDB_DMS_EOC.getErrorCode()) {
                 return null;
             } else {
-                sequoiadb.reportIfError(response, objs);
+                sequoiadb.throwIfError(response, objs);
             }
         }
 
@@ -1743,7 +1743,7 @@ public class DBCollection {
                     ", orderBy = " + orderBy +
                     ", skipRows = " + skipRows +
                     ", returnRows = " + returnRows;
-                sequoiadb.reportIfError(response, msg);
+                sequoiadb.throwIfError(response, msg);
             }
         }
 
@@ -1779,7 +1779,7 @@ public class DBCollection {
         if (response.getFlag() != 0) {
             String msg = "subCollectionName = " + subClFullName +
                 ", options = " + options;
-            sequoiadb.reportIfError(response, msg);
+            sequoiadb.throwIfError(response, msg);
         }
 
         sequoiadb.upsertCache(collectionFullName);
@@ -1803,7 +1803,7 @@ public class DBCollection {
 
         AdminRequest request = new AdminRequest(AdminCommand.DETACH_CL, options);
         SdbReply response = sequoiadb.requestAndResponse(request);
-        sequoiadb.reportIfError(response, subClFullName);
+        sequoiadb.throwIfError(response, subClFullName);
         sequoiadb.upsertCache(collectionFullName);
     }
 
@@ -1857,7 +1857,7 @@ public class DBCollection {
 
         AdminRequest request = new AdminRequest(AdminCommand.ALTER_COLLECTION, newObj);
         SdbReply response = sequoiadb.requestAndResponse(request);
-        sequoiadb.reportIfError(response, options);
+        sequoiadb.throwIfError(response, options);
         sequoiadb.upsertCache(collectionFullName);
     }
 
@@ -1870,7 +1870,7 @@ public class DBCollection {
             String msg = "matcher = " + matcher +
                 ", modifier = " + modifier +
                 ", hint = " + hint;
-            sequoiadb.reportIfError(response, msg);
+            sequoiadb.throwIfError(response, msg);
         }
 
         sequoiadb.upsertCache(collectionFullName);
@@ -1894,7 +1894,7 @@ public class DBCollection {
             if (flag == SDBError.SDB_DMS_EOC.getErrorCode()) {
                 return null;
             } else {
-                sequoiadb.reportIfError(response);
+                sequoiadb.throwIfError(response);
             }
         }
 
@@ -1958,7 +1958,7 @@ public class DBCollection {
 
         LobRemoveRequest request = new LobRemoveRequest(removeObj);
         SdbReply response = sequoiadb.requestAndResponse(request);
-        sequoiadb.reportIfError(response, removeObj);
+        sequoiadb.throwIfError(response, removeObj);
         sequoiadb.upsertCache(collectionFullName);
     }
 
@@ -1974,7 +1974,7 @@ public class DBCollection {
 
         AdminRequest request = new AdminRequest(AdminCommand.TRUNCATE, options);
         SdbReply response = sequoiadb.requestAndResponse(request);
-        sequoiadb.reportIfError(response, options);
+        sequoiadb.throwIfError(response, options);
         sequoiadb.upsertCache(collectionFullName);
     }
 
@@ -2011,7 +2011,7 @@ public class DBCollection {
 
         AdminRequest request = new AdminRequest(AdminCommand.POP, newObj);
         SdbReply response = sequoiadb.requestAndResponse(request);
-        sequoiadb.reportIfError(response, newObj);
+        sequoiadb.throwIfError(response, newObj);
         sequoiadb.upsertCache(collectionFullName);
     }
 }

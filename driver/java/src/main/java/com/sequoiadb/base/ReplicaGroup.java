@@ -361,7 +361,7 @@ public class ReplicaGroup {
         AdminRequest request = new AdminRequest(AdminCommand.CREATE_NODE, config);
         SdbReply response = sequoiadb.requestAndResponse(request);
         String msg = "node = " + hostName + ":" + port + ", configure = " + configure;
-        sequoiadb.reportIfError(response, msg);
+        sequoiadb.throwIfError(response, msg);
         return getNode(hostName, port);
     }
 
@@ -399,7 +399,7 @@ public class ReplicaGroup {
         AdminRequest request = new AdminRequest(AdminCommand.REMOVE_NODE, config);
         SdbReply response = sequoiadb.requestAndResponse(request);
         String msg = "node = " + hostName + ":" + port + ", configure = " + configure;
-        sequoiadb.reportIfError(response, msg);
+        sequoiadb.throwIfError(response, msg);
     }
 
     /**
@@ -460,7 +460,7 @@ public class ReplicaGroup {
         String msg = "node = " + hostName + ":" + port +
             ", dbPath = " + dbPath +
             ", configure = " + configure;
-        sequoiadb.reportIfError(response, msg);
+        sequoiadb.throwIfError(response, msg);
         return getNode(hostName, port);
     }
 
@@ -495,7 +495,7 @@ public class ReplicaGroup {
         SdbReply response = sequoiadb.requestAndResponse(request);
         String msg = "node = " + hostName + ":" + port +
             ", configure = " + configure;
-        sequoiadb.reportIfError(response, msg);
+        sequoiadb.throwIfError(response, msg);
     }
 
     /**
@@ -510,7 +510,7 @@ public class ReplicaGroup {
 
         AdminRequest request = new AdminRequest(AdminCommand.ACTIVE_GROUP, groupName);
         SdbReply response = sequoiadb.requestAndResponse(request);
-        sequoiadb.reportIfError(response, name);
+        sequoiadb.throwIfError(response, name);
     }
 
     /**
@@ -525,7 +525,7 @@ public class ReplicaGroup {
 
         AdminRequest request = new AdminRequest(AdminCommand.SHUTDOWN_GROUP, groupName);
         SdbReply response = sequoiadb.requestAndResponse(request);
-        sequoiadb.reportIfError(response, name);
+        sequoiadb.throwIfError(response, name);
     }
 
     /**

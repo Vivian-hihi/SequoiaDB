@@ -163,7 +163,7 @@ public class DBCursor implements Closeable {
                 isEOC = true;
                 return null;
             }
-            sequoiadb.reportIfError(response);
+            sequoiadb.throwIfError(response);
         }
 
         return response.getResultSet();
@@ -191,7 +191,7 @@ public class DBCursor implements Closeable {
         long[] contextIds = new long[]{contextId};
         KillContextRequest request = new KillContextRequest(contextIds);
         SdbReply response = sequoiadb.requestAndResponse(request);
-        sequoiadb.reportIfError(response);
+        sequoiadb.throwIfError(response);
         contextId = -1;
     }
 }

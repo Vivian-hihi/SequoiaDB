@@ -111,7 +111,7 @@ public class CollectionSpace {
             sequoiadb.removeCache(collectionFullName);
             return false;
         } else {
-            sequoiadb.reportIfError(response);
+            sequoiadb.throwIfError(response);
             return false; // make compiler happy
         }
     }
@@ -174,7 +174,7 @@ public class CollectionSpace {
         AdminRequest request = new AdminRequest(AdminCommand.CREATE_CL, obj);
         SdbReply response = sequoiadb.requestAndResponse(request);
         String msg = "collection = " + collectionFullName + ", options = " + options;
-        sequoiadb.reportIfError(response, msg);
+        sequoiadb.throwIfError(response, msg);
         sequoiadb.upsertCache(collectionFullName);
         return new DBCollection(sequoiadb, this, collectionName);
     }
@@ -209,7 +209,7 @@ public class CollectionSpace {
 
         AdminRequest request = new AdminRequest(AdminCommand.DROP_CL, obj);
         SdbReply response = sequoiadb.requestAndResponse(request);
-        sequoiadb.reportIfError(response, collectionName);
+        sequoiadb.throwIfError(response, collectionName);
         sequoiadb.removeCache(collectionFullName);
     }
 }

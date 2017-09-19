@@ -188,7 +188,7 @@ public class Node {
             if (flag == SDBError.SDB_NET_CANNOT_CONNECT.getErrorCode()) {
                 return NodeStatus.SDB_NODE_INACTIVE;
             } else {
-                rg.getSequoiadb().reportIfError(response);
+                rg.getSequoiadb().throwIfError(response);
             }
         }
         return NodeStatus.SDB_NODE_ACTIVE;
@@ -223,6 +223,6 @@ public class Node {
         AdminRequest request = new AdminRequest(cmd, config);
         SdbReply response = rg.getSequoiadb().requestAndResponse(request);
         String msg = "node = " + hostName + ":" + port;
-        rg.getSequoiadb().reportIfError(response, msg);
+        rg.getSequoiadb().throwIfError(response, msg);
     }
 }

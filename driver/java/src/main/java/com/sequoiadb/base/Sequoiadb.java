@@ -438,7 +438,7 @@ public class Sequoiadb implements Closeable {
         SdbReply response = requestAndResponse(request);
 
         try {
-            reportIfError(response, userName);
+            throwIfError(response, userName);
         } catch (Exception e){
             close();
             throw e;
@@ -458,7 +458,7 @@ public class Sequoiadb implements Closeable {
 
         AuthRequest request = new AuthRequest(username, password, AuthRequest.AuthType.CreateUser);
         SdbReply response = requestAndResponse(request);
-        reportIfError(response, username);
+        throwIfError(response, username);
     }
 
     /**
@@ -470,7 +470,7 @@ public class Sequoiadb implements Closeable {
     public void removeUser(String username, String password) throws BaseException {
         AuthRequest request = new AuthRequest(username, password, AuthRequest.AuthType.DeleteUser);
         SdbReply response = requestAndResponse(request);
-        reportIfError(response, username);
+        throwIfError(response, username);
     }
 
     /**
@@ -611,7 +611,7 @@ public class Sequoiadb implements Closeable {
 
         AdminRequest request = new AdminRequest(AdminCommand.CREATE_CS, obj);
         SdbReply response = requestAndResponse(request);
-        reportIfError(response);
+        throwIfError(response);
         upsertCache(csName);
         return new CollectionSpace(this, csName);
     }
@@ -632,7 +632,7 @@ public class Sequoiadb implements Closeable {
 
         AdminRequest request = new AdminRequest(AdminCommand.DROP_CS, options);
         SdbReply response = requestAndResponse(request);
-        reportIfError(response);
+        throwIfError(response);
         removeCache(csName);
     }
 
@@ -666,7 +666,7 @@ public class Sequoiadb implements Closeable {
 
         AdminRequest request = new AdminRequest(AdminCommand.LOAD_CS, newOptions);
         SdbReply response = requestAndResponse(request);
-        reportIfError(response);
+        throwIfError(response);
         upsertCache(csName);
     }
 
@@ -700,7 +700,7 @@ public class Sequoiadb implements Closeable {
 
         AdminRequest request = new AdminRequest(AdminCommand.UNLOAD_CS, newOptions);
         SdbReply response = requestAndResponse(request);
-        reportIfError(response);
+        throwIfError(response);
         removeCache(csName);
     }
 
@@ -727,7 +727,7 @@ public class Sequoiadb implements Closeable {
 
         AdminRequest request = new AdminRequest(AdminCommand.RENAME_CS, matcher);
         SdbReply response = requestAndResponse(request);
-        reportIfError(response);
+        throwIfError(response);
         removeCache(oldName);
         upsertCache(newName);
     }
@@ -770,7 +770,7 @@ public class Sequoiadb implements Closeable {
     public void sync(BSONObject options) throws BaseException {
         AdminRequest request = new AdminRequest(AdminCommand.SYNC_DB, options);
         SdbReply response = requestAndResponse(request);
-        reportIfError(response);
+        throwIfError(response);
     }
 
     /**
@@ -829,7 +829,7 @@ public class Sequoiadb implements Closeable {
             removeCache(csName);
             return false;
         } else {
-            reportIfError(response, csName);
+            throwIfError(response, csName);
             return false; // make compiler happy
         }
     }
@@ -914,7 +914,7 @@ public class Sequoiadb implements Closeable {
     public void resetSnapshot() throws BaseException {
         AdminRequest request = new AdminRequest(AdminCommand.RESET_SNAPSHOT);
         SdbReply response = requestAndResponse(request);
-        reportIfError(response);
+        throwIfError(response);
     }
 
     /**
@@ -955,7 +955,7 @@ public class Sequoiadb implements Closeable {
                 String msg = "query = " + query +
                     ", selector = " + selector +
                     ", orderBy = " + orderBy;
-                reportIfError(response, msg);
+                throwIfError(response, msg);
             }
         }
 
@@ -974,7 +974,7 @@ public class Sequoiadb implements Closeable {
     public void flushConfigure(BSONObject options) throws BaseException {
         AdminRequest request = new AdminRequest(AdminCommand.EXPORT_CONFIG, options);
         SdbReply response = requestAndResponse(request);
-        reportIfError(response);
+        throwIfError(response);
     }
 
     /**
@@ -986,7 +986,7 @@ public class Sequoiadb implements Closeable {
     public void execUpdate(String sql) throws BaseException {
         SQLRequest request = new SQLRequest(sql);
         SdbReply response = requestAndResponse(request);
-        reportIfError(response, sql);
+        throwIfError(response, sql);
     }
 
     /**
@@ -1005,7 +1005,7 @@ public class Sequoiadb implements Closeable {
             if (flag == SDBError.SDB_DMS_EOC.getErrorCode()) {
                 return null;
             } else {
-                reportIfError(response, sql);
+                throwIfError(response, sql);
             }
         }
 
@@ -1093,7 +1093,7 @@ public class Sequoiadb implements Closeable {
                 String msg = "matcher = " + matcher +
                     ", selector = " + selector +
                     ", orderBy = " + orderBy;
-                reportIfError(response, msg);
+                throwIfError(response, msg);
             }
         }
 
@@ -1138,7 +1138,7 @@ public class Sequoiadb implements Closeable {
     public void beginTransaction() throws BaseException {
         TransactionRequest request = new TransactionRequest(TransactionRequest.TransactionType.Begin);
         SdbReply response = requestAndResponse(request);
-        reportIfError(response);
+        throwIfError(response);
     }
 
     /**
@@ -1150,7 +1150,7 @@ public class Sequoiadb implements Closeable {
     public void commit() throws BaseException {
         TransactionRequest request = new TransactionRequest(TransactionRequest.TransactionType.Commit);
         SdbReply response = requestAndResponse(request);
-        reportIfError(response);
+        throwIfError(response);
     }
 
     /**
@@ -1162,7 +1162,7 @@ public class Sequoiadb implements Closeable {
     public void rollback() throws BaseException {
         TransactionRequest request = new TransactionRequest(TransactionRequest.TransactionType.Rollback);
         SdbReply response = requestAndResponse(request);
-        reportIfError(response);
+        throwIfError(response);
     }
 
     /**
@@ -1183,7 +1183,7 @@ public class Sequoiadb implements Closeable {
 
         AdminRequest request = new AdminRequest(AdminCommand.CREATE_PROCEDURE, options);
         SdbReply response = requestAndResponse(request);
-        reportIfError(response);
+        throwIfError(response);
     }
 
     /**
@@ -1202,7 +1202,7 @@ public class Sequoiadb implements Closeable {
 
         AdminRequest request = new AdminRequest(AdminCommand.REMOVE_PROCEDURE, options);
         SdbReply response = requestAndResponse(request);
-        reportIfError(response);
+        throwIfError(response);
     }
 
     /**
@@ -1290,7 +1290,7 @@ public class Sequoiadb implements Closeable {
     public void backupOffline(BSONObject options) throws BaseException {
         AdminRequest request = new AdminRequest(AdminCommand.BACKUP_OFFLINE, options);
         SdbReply response = requestAndResponse(request);
-        reportIfError(response);
+        throwIfError(response);
     }
 
     /**
@@ -1329,7 +1329,7 @@ public class Sequoiadb implements Closeable {
                     ", selector = " + selector +
                     ", orderBy = " + orderBy +
                     ", options = " + options;
-                reportIfError(response, msg);
+                throwIfError(response, msg);
             }
         }
 
@@ -1357,7 +1357,7 @@ public class Sequoiadb implements Closeable {
     public void removeBackup(BSONObject options) throws BaseException {
         AdminRequest request = new AdminRequest(AdminCommand.REMOVE_BACKUP, options);
         SdbReply response = requestAndResponse(request);
-        reportIfError(response);
+        throwIfError(response);
     }
 
     /**
@@ -1401,7 +1401,7 @@ public class Sequoiadb implements Closeable {
 
         AdminRequest request = new AdminRequest(AdminCommand.WAIT_TASK, newObj);
         SdbReply response = requestAndResponse(request);
-        reportIfError(response);
+        throwIfError(response);
     }
 
     /**
@@ -1424,7 +1424,7 @@ public class Sequoiadb implements Closeable {
 
         AdminRequest request = new AdminRequest(AdminCommand.CANCEL_TASK, newObj);
         SdbReply response = requestAndResponse(request);
-        reportIfError(response);
+        throwIfError(response);
     }
 
     /**
@@ -1501,7 +1501,7 @@ public class Sequoiadb implements Closeable {
 
         AdminRequest request = new AdminRequest(AdminCommand.SET_SESSION_ATTRIBUTE, newObj);
         SdbReply response = requestAndResponse(request);
-        reportIfError(response);
+        throwIfError(response);
     }
 
     /**
@@ -1580,7 +1580,7 @@ public class Sequoiadb implements Closeable {
 
         AdminRequest request = new AdminRequest(AdminCommand.CREATE_DOMAIN, newObj);
         SdbReply response = requestAndResponse(request);
-        reportIfError(response);
+        throwIfError(response);
         return new Domain(this, domainName);
     }
 
@@ -1600,7 +1600,7 @@ public class Sequoiadb implements Closeable {
 
         AdminRequest request = new AdminRequest(AdminCommand.DROP_DOMAIN, newObj);
         SdbReply response = requestAndResponse(request);
-        reportIfError(response);
+        throwIfError(response);
     }
 
     /**
@@ -1716,7 +1716,7 @@ public class Sequoiadb implements Closeable {
 
         AdminRequest request = new AdminRequest(AdminCommand.CREATE_GROUP, rg);
         SdbReply response = requestAndResponse(request);
-        reportIfError(response, rgName);
+        throwIfError(response, rgName);
         return getReplicaGroup(rgName);
     }
 
@@ -1732,7 +1732,7 @@ public class Sequoiadb implements Closeable {
 
         AdminRequest request = new AdminRequest(AdminCommand.REMOVE_GROUP, rg);
         SdbReply response = requestAndResponse(request);
-        reportIfError(response, rgName);
+        throwIfError(response, rgName);
     }
 
     private long getNextRequestId() {
@@ -1751,7 +1751,7 @@ public class Sequoiadb implements Closeable {
 
         AdminRequest request = new AdminRequest(AdminCommand.ACTIVE_GROUP, rg);
         SdbReply response = requestAndResponse(request);
-        reportIfError(response, rgName);
+        throwIfError(response, rgName);
     }
 
     /**
@@ -1783,7 +1783,7 @@ public class Sequoiadb implements Closeable {
 
     		AdminRequest request = new AdminRequest(AdminCommand.CREATE_CATALOG_GROUP, obj);
     		SdbReply response = requestAndResponse(request);
-    		reportIfError(response);
+    		throwIfError(response);
     }
     
     /**
@@ -1974,7 +1974,7 @@ public class Sequoiadb implements Closeable {
     }
 
     // errorMsg Object to avoid unnecessary toString() invoke when no error happened
-    void reportIfError(CommonResponse response, Object errorMsg) throws BaseException {
+    void throwIfError(CommonResponse response, Object errorMsg) throws BaseException {
         if (response.getFlag() != 0) {
             BSONObject errorObj = response.getErrorObj();
             String detail = getErrorDetail(errorObj, errorMsg);
@@ -1986,8 +1986,8 @@ public class Sequoiadb implements Closeable {
         }
     }
 
-    // dependent implementation but not invoke reportIfError(r,o) to avoid duplicate stack trace
-    void reportIfError(CommonResponse response) throws BaseException {
+    // dependent implementation but not invoke throwIfError(r,o) to avoid duplicate stack trace
+    void throwIfError(CommonResponse response) throws BaseException {
         if (response.getFlag() != 0) {
             BSONObject errorObj = response.getErrorObj();
             String detail = getErrorDetail(errorObj, null);
@@ -2016,7 +2016,7 @@ public class Sequoiadb implements Closeable {
         long[] contextIds = new long[]{-1};
         KillContextRequest request = new KillContextRequest(contextIds);
         SdbReply response = requestAndResponse(request);
-        reportIfError(response);
+        throwIfError(response);
     }
 
     @Override

@@ -89,7 +89,7 @@ public class Domain {
 
         AdminRequest request = new AdminRequest(AdminCommand.ALTER_DOMAIN, newObj);
         SdbReply response = sequoiadb.requestAndResponse(request);
-        sequoiadb.reportIfError(response);
+        sequoiadb.throwIfError(response);
     }
 
     /**
