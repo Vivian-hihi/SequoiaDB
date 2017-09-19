@@ -20,6 +20,7 @@
 #include "ossErr.h"
 #include "ossMem.h"
 #include "bsonDecimal.h"
+#include "common_decimal_fun.h"
 
 #ifdef SDB_ENGINE
 #include "pd.hpp"

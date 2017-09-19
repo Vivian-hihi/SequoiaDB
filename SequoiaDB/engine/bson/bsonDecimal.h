@@ -23,7 +23,7 @@
 #include "ossTypes.h"
 #include <string>
 #include <cstring>
-#include "common_decimal.h"
+#include "common_decimal_type.h"
 
 using namespace std;
 /** \namespace bson
