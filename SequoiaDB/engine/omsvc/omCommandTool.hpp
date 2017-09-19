@@ -54,13 +54,13 @@ namespace engine
    class omDatabaseTool ;
    class omTaskTool ;
    class omErrorTool ;
+   class omArgOptions ;
 
    struct simpleAddressInfo : public SDBObject
    {
       string hostName ;
       string port ;
    } ;
-
 
    class omXmlTool : public SDBObject
    {
@@ -127,6 +127,7 @@ namespace engine
 
       //task
       INT64 getTaskIdOfRunningBuz( const string &businessName ) ;
+      INT64 getTaskIdOfRunningHost( const string &hostName ) ;
       BOOLEAN hasTaskRunning() ;
 
       //business
@@ -205,14 +206,22 @@ namespace engine
       INT32 removeAuth( const string &businessName ) ;
 
       //host
+      INT32 upsertPackage( const string &hostName,
+                           const string &packageName,
+                           const string &installPath,
+                           const string &version ) ;
       INT32 getHostNameByAddress( const string &address,
                                   string &hostName ) ;
+      INT32 getHostInfoByAddress( const string &address,
+                                  BSONObj &hostInfo ) ;
       BOOLEAN isHostExistOfClusterByAddr( const string &address,
                                           const string &clusterName ) ;
       BOOLEAN isHostExistOfCluster( const string &hostName,
                                     const string &clusterName ) ;
       BOOLEAN isHostExistOfClusterByIp( const string &IP,
                                         const string &clusterName ) ;
+      BOOLEAN isHostHasPackage( const string &hostName,
+                                const string &packageName ) ;
       INT32 removeHost( const string &address,
                         const string &clusterName ) ;
 
@@ -221,6 +230,10 @@ namespace engine
                                     BSONObj &config ) ;
 
       //trans
+      INT32 addPackageOfHosts( set<string> &hostList,
+                               const string &packageName,
+                               const string &installPath,
+                               const string &version ) ;
       INT32 addNodeConfigOfBusiness( const string &clusterName,
                                      const string &businessName,
                                      const string &businessType,
@@ -232,6 +245,10 @@ namespace engine
                         list<string> &hostList ) ;
 
    private:
+      //task
+      INT32 _getOneTasktInfo( const BSONObj &matcher, const BSONObj &selector,
+                              BSONObj &taskInfo ) ;
+
       //host
       INT32 _getOneHostInfo( const BSONObj &matcher, const BSONObj &selector,
                              BSONObj &hostInfo ) ;
@@ -263,6 +280,8 @@ namespace engine
 
       void sendRespone( INT32 rc, const string &detail ) ;
       void sendRespone( INT32 rc, const char *pDetail ) ;
+
+      INT32 appendResponeContent( const BSONObj &content ) ;
 
       void appendResponeMsg( const BSONObj &msg ) ;
 
@@ -316,6 +335,25 @@ namespace engine
    private:
       CHAR _errorDetail[ PD_LOG_STRINGMAX + 1 ] ;
       BOOLEAN _isSet ;
+   } ;
+
+   class omArgOptions : public SDBObject
+   {
+   public:
+      omArgOptions( restAdaptor *pRestAdaptor, pmdRestSession *pRestSession ) ;
+
+      INT32 parseRestArg( const CHAR *pFormat, ... ) ;
+
+      const CHAR *getErrorMsg() ;
+
+   private:
+      INT32 _parserArg( const CHAR *pFormat, va_list &vaList ) ;
+
+   private:
+      restAdaptor      *_rest ;
+      pmdRestSession   *_session ;
+      omErrorTool       _errorMsg ;
+
    } ;
 }
 

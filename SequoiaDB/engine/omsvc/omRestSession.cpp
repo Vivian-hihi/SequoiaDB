@@ -1093,6 +1093,12 @@ namespace engine
          {
             commandIf = SDB_OSS_NEW omUnbindHostCommand( pAdptor, this ) ;
          }
+         else if ( ossStrcasecmp( pSubCommand, OM_DEPLOY_PACKAGE_REQ ) == 0 )
+         {
+            commandIf = SDB_OSS_NEW omDeployPackage( pAdptor, this,
+                                                     localAgentHost,
+                                                     localAgentPort ) ;
+         }
          else
          {
             rc = SDB_INVALIDARG ;

@@ -82,6 +82,8 @@ namespace engine
          virtual INT32     checkUpdateInfo( const BSONObj &updateInfo ) ;
 
       private:
+         void              _getOMVersion( string &version ) ;
+
          INT32             _getSuccessHost( BSONObj &resultInfo, 
                                             set<string> &successHostSet ) ;
 
@@ -183,6 +185,28 @@ namespace engine
       INT32 _removeConfig( const BSONObj &taskInfo,
                            const BSONObj &resultInfo ) ;
       INT32 _updateBizHostInfo( const string &businessName ) ;
+
+   private:
+      INT64 _taskID ;
+      INT32 _taskType ;
+
+   } ;
+
+   class omDeployPackageTask : public omTaskBase
+   {
+   public:
+      omDeployPackageTask( INT64 taskID ) ;
+      virtual ~omDeployPackageTask() ;
+   
+   public:
+      virtual INT32 finish( BSONObj &resultInfo ) ;
+   
+      virtual INT32 getType() ;
+   
+      virtual INT64 getTaskID() ;
+
+   private:
+      INT32 _addPackage( const BSONObj &taskInfo, const BSONObj &resultInfo ) ;
 
    private:
       INT64 _taskID ;

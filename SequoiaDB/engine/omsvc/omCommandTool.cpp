@@ -384,6 +384,66 @@ namespace engine
       return readBuzConfig( businessType, deployMod, sepCfg, obj ) ;
    }
 
+   INT32 omDatabaseTool::_getOneTasktInfo( const BSONObj &matcher,
+                                           const BSONObj &selector,
+                                           BSONObj &taskInfo )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN isExist = FALSE ;
+      SINT64 contextID = -1 ;
+      BSONObj order ;
+      BSONObj hint ;
+
+      rc = rtnQuery( OM_CS_DEPLOY_CL_TASKINFO, selector, matcher, order, hint,
+                     0, _cb, 0, 1, _pDMSCB, _pRTNCB, contextID ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to query task:rc=%d,condition=%s", rc,
+                 matcher.toString().c_str() ) ;
+         goto error ;
+      }
+
+      while( TRUE )
+      {
+         rtnContextBuf buffObj ;
+
+         rc = rtnGetMore ( contextID, 1, buffObj, _cb, _pRTNCB ) ;
+         if ( rc )
+         {
+            if ( SDB_DMS_EOC == rc )
+            {
+               rc = SDB_OK ;
+               break ;
+            }
+
+            PD_LOG( PDERROR, "Failed to retreive record, rc = %d", rc ) ;
+            goto error ;
+         }
+
+         {
+            BSONObj result( buffObj.data() ) ;
+            taskInfo = result.copy() ;
+            isExist = TRUE ;
+         }
+      }
+
+      if ( FALSE == isExist )
+      {
+         rc = SDB_DMS_RECORD_NOTEXIST ;
+         goto error ;
+      }
+
+   done:
+      if( -1 != contextID )
+      {
+         _pRTNCB->contextDelete ( contextID, _cb ) ;
+         contextID = -1 ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
    /**
     * Get task id of thr running business.
     *
@@ -446,6 +506,37 @@ namespace engine
       {
          _pRTNCB->contextDelete ( contextID, _cb ) ;
       }
+      return taskID ;
+   error:
+      goto done ;
+   }
+
+   
+   INT64 omDatabaseTool::getTaskIdOfRunningHost( const string &hostName )
+   {
+      INT32 rc = SDB_OK ;
+      INT64 taskID = -1 ;
+      BSONObj taskInfo ;
+      BSONObj selector ;
+      BSONObj matcher ;
+      BSONObj elemMatch = BSON( "$elemMatch" <<
+                                      BSON( OM_HOST_FIELD_NAME << hostName ) ) ;
+      BSONObj status = BSON( "$nin" << BSON_ARRAY( OM_TASK_STATUS_FINISH <<
+                                                   OM_TASK_STATUS_CANCEL ) ) ;
+
+      matcher = BSON( OM_TASKINFO_FIELD_RESULTINFO << elemMatch <<
+                      OM_TASKINFO_FIELD_STATUS << status ) ;
+
+      rc = _getOneTasktInfo( matcher, selector, taskInfo ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to get task info: rc=%d", rc ) ;
+         goto error ;
+      }
+
+      taskID = taskInfo.getField( OM_TASKINFO_FIELD_TASKID ).numberLong() ;
+
+   done:
       return taskID ;
    error:
       goto done ;
@@ -918,8 +1009,7 @@ namespace engine
 
       if( FALSE == hasFind )
       {
-         rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "cluster does not exist: %s", clusterName.c_str() ) ;
+         rc = SDB_DMS_RECORD_NOTEXIST ;
          goto error ;
       }
 
@@ -962,17 +1052,13 @@ namespace engine
    BOOLEAN omDatabaseTool::clusterIsExist( const string &clusterName )
    {
       INT32 rc = SDB_OK ;
-      BOOLEAN isExist = FALSE ;
+      BOOLEAN isExist = TRUE ;
       BSONObj clusterInfo ;
 
       rc = getClusterInfo( clusterName, clusterInfo ) ;
       if ( rc )
       {
          isExist= FALSE ;
-      }
-      else
-      {
-         isExist = TRUE ;
       }
 
       return isExist ;
@@ -1525,7 +1611,7 @@ namespace engine
                                           const string &hostName )
    {
       INT32 rc = SDB_OK ;
-      BOOLEAN isExist = FALSE ;
+      BOOLEAN isExist = TRUE ;
       BSONObj condition = BSON( OM_CONFIGURE_FIELD_BUSINESSNAME << businessName
                              << OM_CONFIGURE_FIELD_HOSTNAME << hostName ) ;
       BSONObj selector ;
@@ -1534,16 +1620,10 @@ namespace engine
       rc = _getOneConfigure( condition, selector, configure ) ;
       if ( rc )
       {
-         PD_LOG( PDERROR, "Failed to get configure info:rc=%d", rc ) ;
-         goto error ;
+         isExist = FALSE ;
       }
 
-      isExist = TRUE ;
-
-   done:
       return isExist ;
-   error:
-      goto done ;
    }
 
    BOOLEAN omDatabaseTool::isConfigExistOfCluster( const string &hostName,
@@ -1932,6 +2012,76 @@ namespace engine
       goto done ;
    }
 
+   INT32 omDatabaseTool::upsertPackage( const string &hostName,
+                                        const string &packageName,
+                                        const string &installPath,
+                                        const string &version )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj packageList ;
+      BSONObj packageInfo ;
+      BSONObj hostInfo ;
+      BSONObj condition ;
+      BSONObj selector ;
+      BSONObj updator ;
+      BSONObj hint ;
+
+      condition = BSON( OM_HOST_FIELD_NAME << hostName  ) ;
+      selector  = BSON( OM_HOST_FIELD_PACKAGES << "" ) ;
+
+      rc = _getOneHostInfo( condition, selector, hostInfo ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to get host info: host=%s, rc=%d",
+                 hostName.c_str(), rc ) ;
+         goto error ;
+      }
+
+      packageList = hostInfo.getObjectField( OM_HOST_FIELD_PACKAGES ) ;
+
+      {
+         BSONArrayBuilder packageListBuilder ;
+         BSONObjIterator iter( packageList ) ;
+
+         while ( iter.more() )
+         {
+            BSONElement ele = iter.next() ;
+            BSONObj package = ele.embeddedObject() ;
+            string tmpPackageName = package.getStringField(
+                                                OM_HOST_FIELD_PACKAGENAME ) ;
+
+            if ( packageName != tmpPackageName )
+            {
+               packageListBuilder.append( package ) ;
+            }
+         }
+
+         packageListBuilder.append(
+                     BSON( OM_HOST_FIELD_PACKAGENAME << packageName <<
+                           OM_HOST_FIELD_INSTALLPATH << installPath <<
+                           OM_HOST_FIELD_VERSION     << version ) ) ;
+
+         packageInfo = BSON( OM_HOST_FIELD_PACKAGES <<
+                             packageListBuilder.arr() ) ;
+      }
+
+      updator = BSON( "$set" << packageInfo ) ;
+
+      rc = rtnUpdate( OM_CS_DEPLOY_CL_HOST, condition, updator, hint,
+                      0, _cb ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "update table failed:table=%s,updator=%s,rc=%d",
+                 OM_CS_DEPLOY_CL_HOST, updator.toString().c_str(), rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 omDatabaseTool::getHostNameByAddress( const string &address,
                                                string &hostName )
    {
@@ -1957,12 +2107,35 @@ namespace engine
       goto done ;
    }
 
+   
+   INT32 omDatabaseTool::getHostInfoByAddress( const string &address,
+                                               BSONObj &hostInfo )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj matcher = BSON( "$or" << BSON_ARRAY(
+                                    BSON( OM_HOST_FIELD_NAME << address ) <<
+                                    BSON( OM_HOST_FIELD_IP   << address ) ) ) ;
+      BSONObj selector ;
+
+      rc = _getOneHostInfo( matcher, selector, hostInfo ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to get host info:rc=%d", rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    BOOLEAN omDatabaseTool::isHostExistOfClusterByAddr(
                                                    const string &address,
                                                    const string &clusterName )
    {
       INT32 rc = SDB_OK ;
-      BOOLEAN isExist = FALSE ;
+      BOOLEAN isExist = TRUE ;
       BSONObj selector ;
       BSONObj matcher ;
       BSONObj hostInfo ;
@@ -1975,24 +2148,17 @@ namespace engine
       rc = _getOneHostInfo( matcher, selector, hostInfo ) ;
       if ( rc )
       {
-         PD_LOG( PDERROR, "Failed to get host info:rc=%d", rc ) ;
-         goto error ;
+         isExist = FALSE ;
       }
    
-      isExist = TRUE ;
-   
-   done:
       return isExist ;
-   error:
-      goto done ;
-
    }
 
    BOOLEAN omDatabaseTool::isHostExistOfCluster( const string &hostName,
                                                  const string &clusterName )
    {
       INT32 rc = SDB_OK ;
-      BOOLEAN isExist = FALSE ;
+      BOOLEAN isExist = TRUE ;
       BSONObj selector ;
       BSONObj matcher ;
       BSONObj hostInfo ;
@@ -2003,23 +2169,17 @@ namespace engine
       rc = _getOneHostInfo( matcher, selector, hostInfo ) ;
       if ( rc )
       {
-         PD_LOG( PDERROR, "Failed to get host info:rc=%d", rc ) ;
-         goto error ;
+         isExist = FALSE ;
       }
 
-      isExist = TRUE ;
-
-   done:
       return isExist ;
-   error:
-      goto done ;
    }
 
    BOOLEAN omDatabaseTool::isHostExistOfClusterByIp( const string &IP,
                                                      const string &clusterName )
    {
       INT32 rc = SDB_OK ;
-      BOOLEAN isExist = FALSE ;
+      BOOLEAN isExist = TRUE ;
       BSONObj selector ;
       BSONObj matcher ;
       BSONObj hostInfo ;
@@ -2030,16 +2190,32 @@ namespace engine
       rc = _getOneHostInfo( matcher, selector, hostInfo ) ;
       if ( rc )
       {
-         PD_LOG( PDERROR, "Failed to get host info:rc=%d", rc ) ;
-         goto error ;
+         isExist = FALSE ;
       }
 
-      isExist = TRUE ;
-
-   done:
       return isExist ;
-   error:
-      goto done ;
+   }
+
+   BOOLEAN omDatabaseTool::isHostHasPackage( const string &hostName,
+                                             const string &packageName )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN isExist = TRUE ;
+      BSONObj selector ;
+      BSONObj matcher ;
+      BSONObj hostInfo ;
+
+      matcher = BSON( OM_HOST_FIELD_NAME << hostName <<
+                      OM_HOST_FIELD_PACKAGES"."OM_HOST_FIELD_PACKAGENAME <<
+                            packageName ) ;
+
+      rc = _getOneHostInfo( matcher, selector, hostInfo ) ;
+      if ( rc )
+      {
+         isExist = FALSE ;
+      }
+
+      return isExist ;
    }
 
    INT32 omDatabaseTool::removeHost( const string &address,
@@ -2213,6 +2389,47 @@ namespace engine
       1. SYSCONFIGURE
       2. SYSBUSINESS
    */
+
+   INT32 omDatabaseTool::addPackageOfHosts( set<string> &hostList,
+                                            const string &packageName,
+                                            const string &installPath,
+                                            const string &version )
+   {
+      INT32 rc = SDB_OK ;
+
+      rc = rtnTransBegin( _cb ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to begin trans: name=%s, rc=%d",
+                 packageName.c_str(), rc ) ;
+         goto error ;
+      }
+
+      {
+         set<string>::iterator iter ;
+
+         for( iter = hostList.begin(); iter != hostList.end(); ++iter )
+         {
+            string hostName = *iter ;
+
+            upsertPackage( hostName, packageName, installPath, version ) ;
+         }
+      }
+
+      rc = rtnTransCommit( _cb, _pDpsCB ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to commit trans: name=%s, rc=%d",
+                 packageName.c_str(), rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      rtnTransRollback( _cb, _pDpsCB ) ;
+      goto done ;
+   }
 
    INT32 omDatabaseTool::addNodeConfigOfBusiness( const string &clusterName,
                                                   const string &businessName,
@@ -2608,6 +2825,12 @@ namespace engine
 
    }
 
+   INT32 omRestTool::appendResponeContent( const BSONObj &content )
+   {
+      return _pRestAdaptor->appendHttpBody( _pRestSession, content.objdata(),
+                                            content.objsize(), 1 ) ;
+   }
+
    void omRestTool::appendResponeMsg( const BSONObj &msg )
    {
       _msgList.push_back( msg.copy() ) ;
@@ -2879,5 +3102,162 @@ namespace engine
       }
       return _errorDetail ;
    }
+
+   omArgOptions::omArgOptions( restAdaptor *pRestAdaptor,
+                               pmdRestSession *pRestSession )
+   {
+      _rest = pRestAdaptor ;
+      _session = pRestSession ;
+   }
+
+   INT32 omArgOptions::parseRestArg( const CHAR *pFormat, ... )
+   {
+      INT32 rc = SDB_OK ;
+      va_list vaList ;
+      
+      va_start( vaList, pFormat ) ;
+      rc = _parserArg( pFormat, vaList ) ;
+      va_end( vaList ) ;
+      if( rc )
+      {
+         PD_LOG( PDERROR, "failed to parse rest arg: rc=%d", rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   const CHAR *omArgOptions::getErrorMsg()
+   {
+      return _errorMsg.getError() ;
+   }
+
+   INT32 omArgOptions::_parserArg( const CHAR *pFormat, va_list &vaList )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN isOptional   = FALSE ;
+      const CHAR *specWalk = pFormat ;
+
+      while ( *specWalk )
+      {
+         CHAR character = *specWalk ;
+
+         if ( '|' == character )
+         {
+            isOptional = TRUE ;
+         }
+         else
+         {
+            const CHAR *pField = va_arg( vaList, const CHAR * ) ;
+            const CHAR *pValue = NULL ;
+
+            SDB_ASSERT( ( NULL != pField ), "pField can not null" ) ;
+
+            _rest->getQuery( _session, pField, &pValue ) ;
+            if ( NULL == pValue || 0 == ossStrlen( pValue ) )
+            {
+               if ( FALSE == isOptional )
+               {
+                  rc = SDB_INVALIDARG ;
+                  _errorMsg.setError( TRUE, "get rest info failed: %s is NULL",
+                                      pField ) ;
+                  PD_LOG( PDERROR, _errorMsg.getError() ) ;
+                  goto error ;
+               }
+               else
+               {
+                  ++specWalk ;
+                  continue ;
+               }
+            }
+
+            if ( 's' == character )
+            {
+               //string
+               string *pArg = va_arg( vaList, string * ) ;
+
+               SDB_ASSERT( ( NULL != pArg ), "pArg can not null" ) ;
+
+               *pArg = string( pValue ) ;
+            }
+            else if ( 'l' == character )
+            {
+               //int32
+               INT32 *pArg = va_arg( vaList, INT32 * ) ;
+
+               SDB_ASSERT( ( NULL != pArg ), "pArg can not null" ) ;
+
+               *pArg = ossAtoi( pValue ) ;
+            }
+            else if ( 'L' == character )
+            {
+               //int64
+               INT64 *pArg = va_arg( vaList, INT64 * ) ;
+
+               SDB_ASSERT( ( NULL != pArg ), "pArg can not null" ) ;
+
+               *pArg = ossAtoll( pValue ) ;
+            }
+            else if ( 'b' == character )
+            {
+               //bool
+               BOOLEAN *pArg = va_arg( vaList, BOOLEAN * ) ;
+               string value = string( pValue ) ;
+
+               SDB_ASSERT( ( NULL != pArg ), "pArg can not null" ) ;
+
+               if ( "true" == value || "TRUE" == value || "True" == value )
+               {
+                  *pArg = TRUE ;
+               }
+               else if ( "false" == value || "FALSE" == value ||
+                         "False" == value )
+               {
+                  *pArg = FALSE ;
+               }
+               else
+               {
+                  rc = SDB_INVALIDARG ;
+                  _errorMsg.setError( TRUE, "get rest info failed: %s invalid",
+                                      pField ) ;
+                  PD_LOG( PDERROR, _errorMsg.getError() ) ;
+                  goto error ;
+               }
+            }
+            else if ( 'j' == character )
+            {
+               //json
+               BSONObj *pArg = va_arg( vaList, BSONObj * ) ;
+
+               SDB_ASSERT( ( NULL != pArg ), "pArg can not null" ) ;
+
+               rc = fromjson( pValue, *pArg ) ;
+               if ( rc )
+               {
+                  _errorMsg.setError( TRUE, "get rest info failed: %s invalid",
+                                      pField ) ;
+                  PD_LOG( PDERROR, _errorMsg.getError() ) ;
+                  goto error ;
+               }
+            }
+            else
+            {
+               SDB_ASSERT( FALSE, "unknow type" ) ;
+            }
+
+         }
+
+         ++specWalk ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
 
 }

@@ -1406,6 +1406,41 @@ namespace engine
 
    } ;
 
+   class omDeployPackage : public omAuthCommand
+   {
+   public:
+      omDeployPackage( restAdaptor *pRestAdaptor, pmdRestSession *pRestSession,
+                       string &localAgentHost, string &localAgentService ) ;
+
+      ~omDeployPackage() ;
+
+      virtual INT32 doCommand() ;
+
+   private:
+      INT32 _check( const BSONObj &restHostInfo, BSONObj &clusterInfo,
+                    BSONObj &hostsInfo, string &packetPath ) ;
+
+      void _generateRequest( const BSONObj &clusterInfo,
+                             const BSONObj &hostInfo,
+                             const string &packetPath,
+                             BSONObj &taskConfig,
+                             BSONArray &resultInfo ) ;
+
+      INT32 _createTask( const BSONObj &taskConfig, const BSONArray &resultInfo,
+                         INT64 &taskID ) ;
+
+   private:
+      BOOLEAN  _enforced ;
+      string   _localAgentHost ;
+      string   _localAgentService ;
+      string   _clusterName ;
+      string   _packageName ;
+      string   _installPath ;
+      string   _user ;
+      string   _passwd ;
+
+   } ;
+
 }
 
 #endif /* OM_GETFILECOMMAND_HPP__ */

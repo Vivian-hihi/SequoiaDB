@@ -66,11 +66,20 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       CHAR tmpPath[ OSS_MAX_PATHSIZE + 1 ] = "" ;
+      string filter = businessType + "*" ;
+      multimap< string, string> mapFiles ;
+
       ossGetEWD( tmpPath, OSS_MAX_PATHSIZE ) ;
       utilCatPath( tmpPath, OSS_MAX_PATHSIZE, ".." ) ;
       utilCatPath( tmpPath, OSS_MAX_PATHSIZE, OM_PACKET_SUBPATH ) ;
-      string filter = businessType + "*" ;
-      multimap< string, string> mapFiles ;
+
+      if ( NULL == ossGetRealPath( tmpPath, tmpPath, OSS_MAX_PATHSIZE ) )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "path is invalid:path=%s,rc=%d", tmpPath, rc ) ;
+         goto error ;
+      }
+
       rc = ossEnumFiles( tmpPath, mapFiles, filter.c_str() ) ;
       if ( SDB_OK != rc )
       {
@@ -237,16 +246,17 @@ namespace engine
 
    const CHAR *getTaskTypeStr( INT32 type )
    {
-      static CHAR *s_taskTypeStr[ OM_TASK_TYPE_END ] =
-                                            {
-                                               OM_TASK_TYPE_ADD_HOST_STR,
-                                               OM_TASK_TYPE_REMOVE_HOST_STR,
-                                               OM_TASK_TYPE_ADD_BUSINESS_STR,
-                                               OM_TASK_TYPE_REMOVE_BUSINESS_STR,
-                                               OM_TASK_TYPE_SSQL_EXEC_STR,
-                                               OM_TASK_TYPE_EXTEND_BUSINESS_STR,
-                                               OM_TASK_TYPE_SHRINK_BUSINESS_STR
-                                            } ;
+      static CHAR *s_taskTypeStr[ OM_TASK_TYPE_END ] = {
+         OM_TASK_TYPE_ADD_HOST_STR,
+         OM_TASK_TYPE_REMOVE_HOST_STR,
+         OM_TASK_TYPE_ADD_BUSINESS_STR,
+         OM_TASK_TYPE_REMOVE_BUSINESS_STR,
+         OM_TASK_TYPE_SSQL_EXEC_STR,
+         OM_TASK_TYPE_EXTEND_BUSINESS_STR,
+         OM_TASK_TYPE_SHRINK_BUSINESS_STR,
+         OM_TASK_TYPE_DEPLOY_PACKAGE_STR,
+      } ;
+
       if ( type < OM_TASK_TYPE_END )
       {
          return s_taskTypeStr[type] ;
@@ -13184,6 +13194,361 @@ namespace engine
             goto error ;
          }
         
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   omDeployPackage::omDeployPackage( restAdaptor *pRestAdaptor,
+                                     pmdRestSession *pRestSession,
+                                     string &localAgentHost,
+                                     string &localAgentService )
+         : omAuthCommand( pRestAdaptor, pRestSession ),
+           _enforced( FALSE ),
+           _localAgentHost( localAgentHost ),
+           _localAgentService( localAgentService )
+   {
+   }
+
+   omDeployPackage::~omDeployPackage()
+   {
+   }
+
+   INT32 omDeployPackage::doCommand()
+   {
+      INT32 rc = SDB_OK ;
+      INT64 taskID = 0 ;
+      string packetPath ;
+      BSONObj restHostInfo ;
+      BSONObj clusterInfo ;
+      BSONObj hostsInfo ;
+      BSONObj taskConfig ;
+      BSONArray resultInfo ;
+      omArgOptions option( _restAdaptor, _restSession ) ;
+      omRestTool restTool( _restAdaptor, _restSession ) ;
+
+      _setFileLanguageSep() ;
+
+      pmdGetThreadEDUCB()->resetInfo( EDU_INFO_ERROR ) ;
+
+      rc = option.parseRestArg( "sssjss|b",
+                             OM_REST_FIELD_CLUSTER_NAME,  &_clusterName,
+                             OM_REST_FIELD_PACKAGENAME,   &_packageName,
+                             OM_REST_FIELD_INSTALLPATH,   &_installPath,
+                             OM_REST_FIELD_HOST_INFO,     &restHostInfo,
+                             OM_REST_FIELD_USER,          &_user,
+                             OM_REST_FIELD_PASSWORD,      &_passwd,
+                             OM_REST_FIELD_ENFORCED,      &_enforced ) ;
+      if ( rc )
+      {
+         _errorMsg.setError( TRUE, option.getErrorMsg() ) ;
+         PD_LOG( PDERROR, "failed to parse rest arg: rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = _check( restHostInfo, clusterInfo, hostsInfo, packetPath ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to check: rc=%d", rc ) ;
+         goto error ;
+      }
+
+      _generateRequest( clusterInfo, hostsInfo, packetPath,
+                        taskConfig, resultInfo ) ;
+
+      rc = _createTask( taskConfig, resultInfo, taskID ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to create task: rc=%d", rc ) ;
+         goto error ;
+      }
+
+      {
+         BSONObj result = BSON( OM_BSON_TASKID << taskID ) ;
+
+         rc = restTool.appendResponeContent( result ) ;
+         if ( rc )
+         {
+            _errorMsg.setError( TRUE, "failed to append respone content: rc=%d",
+                                rc ) ;
+            PD_LOG( PDERROR, _errorMsg.getError() ) ;
+            goto error ;
+         }
+      }
+
+      restTool.sendOkRespone() ;
+
+   done:
+      return rc ;
+   error:
+      restTool.sendRespone( rc, _errorMsg.getError() ) ;
+      goto done ;
+   }
+
+   INT32 omDeployPackage::_check( const BSONObj &restHostInfo,
+                                  BSONObj &clusterInfo,
+                                  BSONObj &hostsInfo,
+                                  string &packetPath )
+   {
+      INT32 rc = SDB_OK ;
+      omDatabaseTool dbTool( _cb ) ;
+      BSONElement hostInfoEle = restHostInfo.getField( OM_REST_BSON_HOST_INFO ) ;
+
+      if ( bson::Array != hostInfoEle.type() )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "%s is invalid, type:%d",
+                             OM_REST_BSON_HOST_INFO, hostInfoEle.type() ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      //check cluster
+      rc = dbTool.getClusterInfo( _clusterName, clusterInfo ) ;
+      if ( rc )
+      {
+         if ( SDB_DMS_RECORD_NOTEXIST == rc )
+         {
+            _errorMsg.setError( TRUE, "cluster is not exist: name=%s",
+                                _clusterName.c_str() ) ;
+         }
+         else
+         {
+            _errorMsg.setError( TRUE, "failed to get cluster info: "
+                                      "name=%s, rc=%d",
+                                _clusterName.c_str(), rc ) ;
+         }
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      //check package
+      if ( OM_BUSINESS_SEQUOIADB == _packageName )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "the host already has package: package=%s",
+                             _packageName.c_str() ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+      else if ( OM_BUSINESS_SEQUOIASQL_OLTP == _packageName )
+      {
+      }
+      else
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "invalid package: name=%s",
+                             _packageName.c_str() ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      rc = getPacketFile( _packageName, packetPath ) ;
+      if ( rc )
+      {
+         _errorMsg.setError( TRUE, "%s package is not exist",
+                             _packageName.c_str() ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      //check host
+      {
+         INT64 taskID = 0 ;
+         BSONArrayBuilder hostsInfoBuilder ;
+         BSONObjIterator iter( hostInfoEle.embeddedObject() ) ;
+
+         while ( iter.more() )
+         {
+            BSONElement ele = iter.next() ;
+            BSONObj tmpHostInfo = ele.embeddedObject() ;
+            string hostName = tmpHostInfo.getStringField(
+                                                      OM_REST_BSON_HOSTNAME ) ;
+            string user = tmpHostInfo.getStringField( OM_REST_FIELD_USER ) ;
+            string pwd = tmpHostInfo.getStringField( OM_REST_FIELD_PASSWORD ) ;
+
+            if ( FALSE == dbTool.isHostExistOfCluster( hostName,
+                                                       _clusterName ) )
+            {
+               rc = SDB_INVALIDARG ;
+               _errorMsg.setError( TRUE, "host is not exist: name=%s",
+                                   hostName.c_str() ) ;
+               PD_LOG( PDERROR, _errorMsg.getError() ) ;
+               goto error ;
+            }
+
+            if ( FALSE == _enforced &&
+                 TRUE == dbTool.isHostHasPackage( hostName, _packageName ) )
+            {
+               rc = SDB_INVALIDARG ;
+               _errorMsg.setError( TRUE, "the host already has package: "
+                                         "host=%s, package=%s",
+                                   hostName.c_str(), _packageName.c_str() ) ;
+               PD_LOG( PDERROR, _errorMsg.getError() ) ;
+               goto error ;
+            }
+
+            taskID = dbTool.getTaskIdOfRunningHost( hostName ) ;
+            if ( 0 < taskID )
+            {
+               rc = SDB_INVALIDARG ;
+               _errorMsg.setError( TRUE, "host[%s] is exist "
+                                   "in task["OSS_LL_PRINT_FORMAT"]",
+                                   hostName.c_str(), taskID ) ;
+               PD_LOG( PDERROR, _errorMsg.getError() ) ;
+               goto error ;
+            }
+
+            if ( user.empty() )
+            {
+               user = _user ;
+            }
+
+            if ( pwd.empty() )
+            {
+               pwd = _passwd ;
+            }
+
+            {
+               BSONObjBuilder newHostInfoBuilder ;
+               BSONObj hostInfo ;
+               string tmpHostName ;
+               string tmpIp ;
+               string tmpAgentService ;
+               string tmpSshPort ;               
+
+               rc = dbTool.getHostInfoByAddress( hostName, hostInfo ) ;
+               if ( rc )
+               {
+                  _errorMsg.setError( TRUE, "failed to get host info: host=%s",
+                                      hostName.c_str() ) ;
+                  PD_LOG( PDERROR, _errorMsg.getError() ) ;
+                  goto error ;
+               }
+
+               tmpHostName = hostInfo.getStringField( OM_HOST_FIELD_NAME ) ;
+               tmpIp = hostInfo.getStringField( OM_HOST_FIELD_IP ) ;
+               tmpAgentService = hostInfo.getStringField(
+                                                   OM_HOST_FIELD_AGENT_PORT ) ;
+               tmpSshPort = hostInfo.getStringField( OM_HOST_FIELD_SSHPORT ) ;
+
+               newHostInfoBuilder.append( OM_HOST_FIELD_NAME, tmpHostName ) ;
+               newHostInfoBuilder.append( OM_HOST_FIELD_IP, tmpIp ) ;
+               newHostInfoBuilder.append( OM_HOST_FIELD_AGENT_PORT,
+                                          tmpAgentService ) ; 
+               newHostInfoBuilder.append( OM_HOST_FIELD_SSHPORT, tmpSshPort ) ; 
+               newHostInfoBuilder.append( OM_HOST_FIELD_USER, user ) ; 
+               newHostInfoBuilder.append( OM_HOST_FIELD_PASSWORD, pwd ) ; 
+
+               hostsInfoBuilder.append( newHostInfoBuilder.obj() ) ;
+            }
+         }
+
+         hostsInfo = BSON( OM_REST_BSON_HOST_INFO << hostsInfoBuilder.arr() ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   void omDeployPackage::_generateRequest( const BSONObj &clusterInfo,
+                                           const BSONObj &hostInfo,
+                                           const string &packetPath,
+                                           BSONObj &taskConfig,
+                                           BSONArray &resultInfo )
+   {
+      BSONObjBuilder taskConfigBuilder ;
+      BSONArrayBuilder resultInfoBuilder ;
+      BSONElement hostInfoEle = hostInfo.getField( OM_REST_BSON_HOST_INFO ) ;
+      string sdbUser = clusterInfo.getStringField( OM_CLUSTER_FIELD_SDBUSER ) ;
+      string sdbPasswd = clusterInfo.getStringField(
+                                                OM_CLUSTER_FIELD_SDBPASSWD ) ;
+      string sdbUserGroup = clusterInfo.getStringField(
+                                             OM_CLUSTER_FIELD_SDBUSERGROUP ) ;
+      string omVersion ;
+
+      taskConfigBuilder.append( OM_TASKINFO_FIELD_CLUSTERNAME, _clusterName ) ;
+      taskConfigBuilder.append( OM_TASKINFO_FIELD_SDBUSER, sdbUser ) ;
+      taskConfigBuilder.append( OM_TASKINFO_FIELD_SDBPASSWD, sdbPasswd ) ;
+      taskConfigBuilder.append( OM_TASKINFO_FIELD_SDBUSERGROUP, sdbUserGroup ) ;
+      taskConfigBuilder.append( OM_TASKINFO_FIELD_INSTALLPACKET, packetPath ) ;
+      taskConfigBuilder.append( OM_TASKINFO_FIELD_PACKAGENAME, _packageName ) ;
+      taskConfigBuilder.append( OM_TASKINFO_FIELD_INSTALLPATH, _installPath ) ;
+      taskConfigBuilder.appendBool( OM_TASKINFO_FIELD_ENFORCED, _enforced ) ;
+
+      {
+         BSONArrayBuilder hostInfoBuilder ;
+         BSONObjIterator iter( hostInfoEle.embeddedObject() ) ;
+
+         while ( iter.more() )
+         {
+            BSONObjBuilder resultEleBuilder ;
+            BSONElement ele = iter.next() ;
+            BSONObj tmpHostInfo = ele.embeddedObject() ;
+            string hostName = tmpHostInfo.getStringField( OM_HOST_FIELD_NAME ) ;
+
+            hostInfoBuilder.append( tmpHostInfo ) ;
+
+            resultEleBuilder.append( OM_TASKINFO_FIELD_HOSTNAME, hostName ) ;
+            resultEleBuilder.append( OM_TASKINFO_FIELD_STATUS,
+                                     OM_TASK_STATUS_INIT ) ;
+            resultEleBuilder.append( OM_TASKINFO_FIELD_STATUS_DESC,
+                                     getTaskStatusStr( OM_TASK_STATUS_INIT ) ) ;
+            resultEleBuilder.append( OM_REST_RES_RETCODE, SDB_OK ) ;
+            resultEleBuilder.append( OM_REST_RES_DETAIL, "" ) ;
+
+            {
+               BSONArrayBuilder tmpEmptyBuilder ;
+
+               resultEleBuilder.append( OM_TASKINFO_FIELD_FLOW,
+                                        tmpEmptyBuilder.arr() ) ;
+            }
+
+            resultInfoBuilder.append( resultEleBuilder.obj() ) ;
+         }
+
+         taskConfigBuilder.append( OM_TASKINFO_FIELD_HOSTINFO,
+                                   hostInfoBuilder.arr() ) ;
+      }
+
+      resultInfo = resultInfoBuilder.arr() ;
+      taskConfig = taskConfigBuilder.obj() ;
+   }
+
+   INT32 omDeployPackage::_createTask( const BSONObj &taskConfig,
+                                       const BSONArray &resultInfo,
+                                       INT64 &taskID )
+   {
+      INT32 rc = SDB_OK ;
+      string errDetail ;
+      omTaskTool taskTool( _cb, _localAgentHost, _localAgentService ) ;
+
+      getMaxTaskID( taskID ) ;
+      taskID++ ;
+
+      rc = taskTool.createTask( OM_TASK_TYPE_DEPLOY_PACKAGE, taskID,
+                                getTaskTypeStr( OM_TASK_TYPE_DEPLOY_PACKAGE ),
+                                taskConfig, resultInfo ) ;
+      if( rc )
+      {
+         _errorMsg.setError( TRUE, "fail to create task:rc=%d", rc ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      rc = taskTool.notifyAgentTask( taskID, errDetail ) ;
+      if( rc )
+      {
+         removeTask( taskID ) ;
+         _errorMsg.setError( TRUE, "fail to notify agent:detail:%s,rc=%d",
+                             errDetail.c_str(), rc ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
       }
 
    done:

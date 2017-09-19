@@ -39,6 +39,126 @@
 
 namespace engine
 {
+
+//********************************** NEW **************************************
+
+   /***************** Rest field **********************/
+   #define OM_REST_FIELD_CLUSTER_NAME           "ClusterName"
+   #define OM_REST_FIELD_PACKAGENAME            "PackageName"
+   #define OM_REST_FIELD_INSTALLPATH            "InstallPath"
+   #define OM_REST_FIELD_HOST_INFO              "HostInfo"
+   #define OM_REST_FIELD_USER                   "User"
+   #define OM_REST_FIELD_PASSWORD               "Passwd"
+   #define OM_REST_FIELD_ENFORCED               "Enforced"
+
+
+   /***************** Rest bson field *****************/
+   #define OM_REST_BSON_HOST_INFO               "HostInfo"
+   #define OM_REST_BSON_HOSTNAME                "HostName"
+
+   /***************** CL table field ******************/
+
+   #define OM_PUBLIC_FIELD_CLUSTERNAME          "ClusterName"
+   #define OM_PUBLIC_FIELD_AGENT_SERVICE        "AgentService"
+   #define OM_PUBLIC_FIELD_SDBUSER              "SdbUser"
+   #define OM_PUBLIC_FIELD_SDBPASSWD            "SdbPasswd"
+   #define OM_PUBLIC_FIELD_SDBUSERGROUP         "SdbUserGroup"
+   #define OM_PUBLIC_FIELD_IP                   "IP"
+
+   /******* SYSCLUSTER *******/
+   // deploy.cluster
+   #define OM_CS_DEPLOY_CL_CLUSTER              OM_CS_DEPLOY".SYSCLUSTER"
+
+   #define OM_CLUSTER_FIELD_NAME                OM_PUBLIC_FIELD_CLUSTERNAME
+   #define OM_CLUSTER_FIELD_DESC                "Desc"
+   #define OM_CLUSTER_FIELD_SDBUSER             "SdbUser"
+   #define OM_CLUSTER_FIELD_SDBPASSWD           "SdbPasswd"
+   #define OM_CLUSTER_FIELD_SDBUSERGROUP        "SdbUserGroup"
+   #define OM_CLUSTER_FIELD_INSTALLPATH         "InstallPath"
+   #define OM_CLUSTER_FIELD_GRANTCONF           "GrantConf"
+   #define OM_CLUSTER_FIELD_GRANTNAME           "Name"
+   #define OM_CLUSTER_FIELD_PRIVILEGE           "Privilege"
+   #define OM_CLUSTER_FIELD_HOSTFILE            "HostFile"
+   #define OM_CLUSTER_FIELD_ROOTUSER            "RootUser"
+
+   #define OM_CS_DEPLOY_CL_CLUSTERIDX1          "{name:\"SYSDEPLOY_CLUSTER_IDX1\"\
+,key:{"OM_CLUSTER_FIELD_NAME":1}, unique: true, enforced: true }"
+
+   /******* SYSHOST *******/
+   #define OM_CS_DEPLOY_CL_HOST                 OM_CS_DEPLOY".SYSHOST"
+   #define OM_HOST_FIELD_NAME                   "HostName"
+   #define OM_HOST_FIELD_PACKAGES               "Packages"
+   #define OM_HOST_FIELD_PACKAGENAME            "Name"
+   #define OM_HOST_FIELD_INSTALLPATH            "InstallPath"
+   #define OM_HOST_FIELD_VERSION                "Version"
+   #define OM_HOST_FIELD_CLUSTERNAME            OM_PUBLIC_FIELD_CLUSTERNAME
+   #define OM_HOST_FIELD_IP                     OM_PUBLIC_FIELD_IP
+   #define OM_HOST_FIELD_USER                   "User"
+   #define OM_HOST_FIELD_PASSWORD               "Passwd"
+   #define OM_HOST_FIELD_TIME                   "Time"
+   #define OM_HOST_FIELD_OS                     "OS"
+   #define OM_HOST_FIELD_OMA                    "OMA"
+   #define OM_HOST_FIELD_OM_HASINSTALL          "HasInstalled"
+   #define OM_HOST_FIELD_OM_VERSION             OM_HOST_FIELD_VERSION
+   #define OM_HOST_FIELD_OM_PATH                "Path"
+   #define OM_HOST_FIELD_OM_PORT                "Port"
+   #define OM_HOST_FIELD_OM_RELEASE             "Release"
+   #define OM_HOST_FIELD_MEMORY                 "Memory"
+   #define OM_HOST_FIELD_DISK                   "Disk"
+   #define OM_HOST_FIELD_DISK_NAME              "Name"
+   #define OM_HOST_FIELD_DISK_SIZE              "Size"
+   #define OM_HOST_FIELD_DISK_MOUNT             "Mount"
+   #define OM_HOST_FIELD_DISK_FREE_SIZE         "Free"
+   #define OM_HOST_FIELD_DISK_USED              "Used"
+   #define OM_HOST_FIELD_CPU                    "CPU"
+   #define OM_HOST_FIELD_NET                    "Net"
+   #define OM_HOST_FIELD_NET_NAME               "Name"
+   #define OM_HOST_FIELD_NET_IP                 OM_PUBLIC_FIELD_IP
+   #define OM_HOST_FIELD_PORT                   "Port"
+   #define OM_HOST_FIELD_SERVICE                "Service"
+   #define OM_HOST_FIELD_SAFETY                 "Safety"
+   #define OM_HOST_FIELD_AGENT_PORT             "AgentService"
+   #define OM_HOST_FIELD_SSHPORT                "SshPort"
+
+   #define OM_CS_DEPLOY_CL_HOSTIDX1             "{name:\"SYSDEPLOY_HOST_IDX1\",\
+key: {"OM_HOST_FIELD_NAME":1}, unique: true, enforced: true }"
+
+   #define OM_CS_DEPLOY_CL_HOSTIDX2             "{name:\"SYSDEPLOY_HOST_IDX2\",\
+key: {"OM_HOST_FIELD_IP":1}, unique: true, enforced: true }"
+
+   /******* SYSTASKINFO *******/
+   #define OM_CS_DEPLOY_CL_TASKINFO             OM_CS_DEPLOY".SYSTASKINFO"
+   #define OM_TASKINFO_FIELD_TASKID             "TaskID"
+   #define OM_TASKINFO_FIELD_TYPE               "Type"
+   #define OM_TASKINFO_FIELD_TYPE_DESC          "TypeDesc"
+   #define OM_TASKINFO_FIELD_NAME               "TaskName"
+   #define OM_TASKINFO_FIELD_CREATE_TIME        "CreateTime"
+   #define OM_TASKINFO_FIELD_END_TIME           "EndTime"
+   #define OM_TASKINFO_FIELD_STATUS             "Status"
+   #define OM_TASKINFO_FIELD_STATUS_DESC        "StatusDesc"
+   #define OM_TASKINFO_FIELD_AGENTHOST          "AgentHost"
+   #define OM_TASKINFO_FIELD_AGENTPORT          OM_PUBLIC_FIELD_AGENT_SERVICE
+   #define OM_TASKINFO_FIELD_INFO               "Info"
+   #define OM_TASKINFO_FIELD_ERRNO              OP_ERRNOFIELD
+   #define OM_TASKINFO_FIELD_DETAIL             OP_ERR_DETAIL
+   #define OM_TASKINFO_FIELD_PROGRESS           "Progress"
+   #define OM_TASKINFO_FIELD_RESULTINFO         "ResultInfo"
+   #define OM_TASKINFO_FIELD_SDBUSER            OM_PUBLIC_FIELD_SDBUSER
+   #define OM_TASKINFO_FIELD_SDBPASSWD          OM_PUBLIC_FIELD_SDBPASSWD
+   #define OM_TASKINFO_FIELD_SDBUSERGROUP       OM_PUBLIC_FIELD_SDBUSERGROUP
+   #define OM_TASKINFO_FIELD_CLUSTERNAME        OM_PUBLIC_FIELD_CLUSTERNAME
+   #define OM_TASKINFO_FIELD_INSTALLPACKET      "InstallPacket"
+   #define OM_TASKINFO_FIELD_PACKAGENAME        "PackageName"
+   #define OM_TASKINFO_FIELD_HOSTINFO           "HostInfo"
+   #define OM_TASKINFO_FIELD_ENFORCED           "Enforced"
+   #define OM_TASKINFO_FIELD_HOSTNAME           "HostName"
+   #define OM_TASKINFO_FIELD_USER               "User"
+   #define OM_TASKINFO_FIELD_PASSWD             "Passwd"
+   #define OM_TASKINFO_FIELD_INSTALLPATH        "InstallPath"
+   #define OM_TASKINFO_FIELD_VERSION            "Version"
+
+//********************************** OLD **************************************
+
    #define OM_PATH_WEB                       "web"
    #define OM_PATH_CONFIG                    "config"
    #define OM_PATH_VERSION                   "version"
@@ -127,66 +247,11 @@ namespace engine
    #define OM_BUSINESS_HDFS                  "hdfs"
    #define OM_BUSINESS_YARN                  "yarn"
    #define OM_BUSINESS_SEQUOIASQL            "sequoiasql"
+   #define OM_BUSINESS_SEQUOIASQL_OLTP       "sequoiasql-oltp"
+
 
 
    #define OM_CS_DEPLOY                      "SYSDEPLOY"
-
-   // deploy.cluster
-   #define OM_CS_DEPLOY_CL_CLUSTER           OM_CS_DEPLOY".SYSCLUSTER"
-
-   #define OM_CLUSTER_FIELD_NAME             "ClusterName"
-   #define OM_CLUSTER_FIELD_DESC             "Desc"
-   #define OM_CLUSTER_FIELD_SDBUSER          "SdbUser"
-   #define OM_CLUSTER_FIELD_SDBPASSWD        "SdbPasswd"
-   #define OM_CLUSTER_FIELD_SDBUSERGROUP     "SdbUserGroup"
-   #define OM_CLUSTER_FIELD_INSTALLPATH      "InstallPath"
-   #define OM_CLUSTER_FIELD_GRANTCONF        "GrantConf"
-   #define OM_CLUSTER_FIELD_GRANTNAME        "Name"
-   #define OM_CLUSTER_FIELD_PRIVILEGE        "Privilege"
-   #define OM_CLUSTER_FIELD_HOSTFILE         "HostFile"
-   #define OM_CLUSTER_FIELD_ROOTUSER         "RootUser"
-
-   #define OM_CS_DEPLOY_CL_CLUSTERIDX1       "{name:\"SYSDEPLOY_CLUSTER_IDX1\",key: {"\
-                                             OM_CLUSTER_FIELD_NAME":1}, unique: true, enforced: true } "
-
-   // deploy.host
-   #define OM_CS_DEPLOY_CL_HOST              OM_CS_DEPLOY".SYSHOST"
-   #define OM_HOST_FIELD_NAME                "HostName"
-   #define OM_HOST_FIELD_CLUSTERNAME         OM_CLUSTER_FIELD_NAME
-   #define OM_HOST_FIELD_IP                  "IP"
-   #define OM_HOST_FIELD_USER                "User"
-   #define OM_HOST_FIELD_PASSWORD            "Passwd"
-   #define OM_HOST_FIELD_TIME                "Time"
-   #define OM_HOST_FIELD_OS                  "OS"
-   #define OM_HOST_FIELD_OMA                 "OMA"
-   #define OM_HOST_FIELD_OM_HASINSTALL       "HasInstalled"
-   #define OM_HOST_FIELD_OM_VERSION          "Version"
-   #define OM_HOST_FIELD_OM_PATH             "Path"
-   #define OM_HOST_FIELD_OM_PORT             "Port"
-   #define OM_HOST_FIELD_OM_RELEASE          "Release"
-   #define OM_HOST_FIELD_MEMORY              "Memory"
-   #define OM_HOST_FIELD_DISK                "Disk"
-   #define OM_HOST_FIELD_DISK_NAME           "Name"
-   #define OM_HOST_FIELD_DISK_SIZE           "Size"
-   #define OM_HOST_FIELD_DISK_MOUNT          "Mount"
-   #define OM_HOST_FIELD_DISK_FREE_SIZE      "Free"
-   #define OM_HOST_FIELD_DISK_USED           "Used"
-   #define OM_HOST_FIELD_CPU                 "CPU"
-   #define OM_HOST_FIELD_NET                 "Net"
-   #define OM_HOST_FIELD_NET_NAME            "Name"
-   #define OM_HOST_FIELD_NET_IP              OM_HOST_FIELD_IP
-   #define OM_HOST_FIELD_PORT                "Port"
-   #define OM_HOST_FIELD_SERVICE             "Service"
-   #define OM_HOST_FIELD_SAFETY              "Safety"
-   #define OM_HOST_FIELD_INSTALLPATH         OM_CLUSTER_FIELD_INSTALLPATH
-   #define OM_HOST_FIELD_AGENT_PORT          "AgentService"
-   #define OM_HOST_FIELD_SSHPORT             "SshPort"
-
-   #define OM_CS_DEPLOY_CL_HOSTIDX1          "{name:\"SYSDEPLOY_HOST_IDX1\",key: {"\
-                                             OM_HOST_FIELD_NAME":1}, unique: true, enforced: true } "
-
-   #define OM_CS_DEPLOY_CL_HOSTIDX2          "{name:\"SYSDEPLOY_HOST_IDX2\",key: {"\
-                                             OM_HOST_FIELD_IP":1}, unique: true, enforced: true } "
 
    // deploy.business
    #define OM_CS_DEPLOY_CL_BUSINESS          OM_CS_DEPLOY".SYSBUSINESS"
@@ -228,29 +293,6 @@ namespace engine
    #define OM_CS_DEPLOY_CL_BUSINESSAUTHIDX1  "{name:\"SYSDEPLOY_BUSINESSAUTH_IDX1\",key: {"\
                                              OM_BUSINESS_FIELD_NAME":1}, unique: true, enforced: true } "
 
-   // deploy.taskinfo
-   #define OM_CS_DEPLOY_CL_TASKINFO          OM_CS_DEPLOY".SYSTASKINFO"
-   //INT64
-   #define OM_TASKINFO_FIELD_TASKID          FIELD_NAME_TASKID
-   //INT32
-   #define OM_TASKINFO_FIELD_TYPE            "Type"
-   #define OM_TASKINFO_FIELD_TYPE_DESC       "TypeDesc"
-   #define OM_TASKINFO_FIELD_NAME            "TaskName"
-   //timestamp
-   #define OM_TASKINFO_FIELD_CREATE_TIME     "CreateTime"
-   //timestamp
-   #define OM_TASKINFO_FIELD_END_TIME        "EndTime"
-   //INT32
-   #define OM_TASKINFO_FIELD_STATUS          "Status"
-   #define OM_TASKINFO_FIELD_STATUS_DESC     "StatusDesc"
-   #define OM_TASKINFO_FIELD_AGENTHOST       "AgentHost"
-   #define OM_TASKINFO_FIELD_AGENTPORT       OM_HOST_FIELD_AGENT_PORT
-   #define OM_TASKINFO_FIELD_INFO            "Info"
-   #define OM_TASKINFO_FIELD_ERRNO           OP_ERRNOFIELD
-   #define OM_TASKINFO_FIELD_DETAIL          OP_ERR_DETAIL
-   #define OM_TASKINFO_FIELD_PROGRESS        "Progress"
-   #define OM_TASKINFO_FIELD_RESULTINFO      "ResultInfo"
-
    // strategy.business_task_property
    #define OM_CS_STRATEGY                          "SYSSTRATEGY"
    #define OM_CS_STRATEGY_CL_BUSINESS_TASK_PRO     OM_CS_STRATEGY".SYSBUSINESSTASKPROPERTY"
@@ -284,6 +326,7 @@ namespace engine
       OM_TASK_TYPE_SSQL_EXEC       = 4,
       OM_TASK_TYPE_EXTEND_BUSINESS = 5,
       OM_TASK_TYPE_SHRINK_BUSINESS = 6,
+      OM_TASK_TYPE_DEPLOY_PACKAGE  = 7,
 
       OM_TASK_TYPE_END
    } ;
@@ -295,6 +338,7 @@ namespace engine
    #define OM_TASK_TYPE_SSQL_EXEC_STR         "SSQL_EXEC"
    #define OM_TASK_TYPE_EXTEND_BUSINESS_STR   "EXTEND_BUSINESS"
    #define OM_TASK_TYPE_SHRINK_BUSINESS_STR   "SHRINK_BUSINESS"
+   #define OM_TASK_TYPE_DEPLOY_PACKAGE_STR    "DEPLOY_PACKAGE"
 
    const CHAR *getTaskTypeStr( INT32 taskType ) ;
 
@@ -456,6 +500,7 @@ namespace engine
    #define  OM_GRANT_SYSCONF_REQ             "grant sysconf"
    #define  OM_UNBIND_BUSINESS_REQ           "unbind business"
    #define  OM_UNBIND_HOST_REQ               "unbind host"
+   #define  OM_DEPLOY_PACKAGE_REQ            "deploy package"
 
    //**************************************************************************
 
@@ -475,7 +520,6 @@ namespace engine
    #define  OM_REST_FIELD_LOGIN_PASSWD       "Passwd"
    #define  OM_REST_FIELD_TIMESTAMP          "Timestamp"
    #define  OM_REST_FIELD_NEW_PASSWD         "NewPasswd"
-   #define  OM_REST_FIELD_HOST_INFO          "HostInfo"
    #define  OM_REST_FIELD_TASK_ID            "TaskID"
    #define  OM_REST_FIELD_RULE_ID            "RuleID"
    #define  OM_REST_FIELD_USER_NAME          "UserName"

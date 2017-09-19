@@ -145,6 +145,8 @@ namespace engine
 
          INT32             _initOmTables() ;
 
+         void              _getOMVersion( string &version ) ;
+
          INT32             _appendBusinessInfo( const string &businessName, 
                                                 const string &businessType, 
                                                 const string &clusterName,
@@ -155,9 +157,13 @@ namespace engine
                                               string &clusterName,
                                               string &deployMode ) ;
 
+         INT32             _appendHostPackage( const string &hostName,
+                                               const BSONObj &packageInfo ) ;
+
          INT32             _updateConfTable() ;
          INT32             _updateBusinessTable() ;
          INT32             _updateClusterTable() ;
+         INT32             _updateHostTable() ;
          INT32             _updateTable() ;
 
          INT32             _createJobs() ;

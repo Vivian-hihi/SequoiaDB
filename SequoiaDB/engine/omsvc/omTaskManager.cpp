@@ -273,6 +273,20 @@ namespace engine
       return rc ;
    }
 
+   void omAddHostTask::_getOMVersion( string &version )
+   {
+      INT32 major        = 0 ;
+      INT32 minor        = 0 ;
+      INT32 fix          = 0 ;
+      INT32 release      = 0 ;
+      const CHAR *pBuild = NULL ;
+      stringstream stream ;
+
+      ossGetVersion ( &major, &minor, &fix, &release, &pBuild ) ;
+      stream << major << "." << minor ;
+      version = stream.str() ;
+   }
+
    INT32 omAddHostTask::finish( BSONObj &resultInfo )
    {
       INT32 rc     = SDB_OK ;
@@ -287,6 +301,9 @@ namespace engine
       BSONObj orderBy ;
       BSONObj hint ;
       BSONObj taskInfo ;
+      string omVersion ;
+
+      _getOMVersion( omVersion ) ;
 
       rc = _getSuccessHost( resultInfo, successHostSet ) ;
       if ( SDB_OK != rc )
@@ -312,13 +329,39 @@ namespace engine
          BSONObjIterator iter( hosts ) ;
          while ( iter.more() )
          {
+            BSONObjBuilder oneHostBuilder ;
             BSONElement ele = iter.next() ;
             BSONObj oneHost = ele.embeddedObject() ;
             string hostName = oneHost.getStringField( OM_HOST_FIELD_NAME ) ;
+
             if ( successHostSet.find( hostName ) == successHostSet.end() )
             {
                // ignore the failure host
                continue ;
+            }
+
+            {
+               BSONObj packageInfo ;
+               BSONObj oma = oneHost.getObjectField( OM_HOST_FIELD_OMA ) ;
+               string version = oma.getStringField( OM_HOST_FIELD_OM_VERSION ) ;
+               string hostName = oneHost.getStringField( OM_HOST_FIELD_NAME ) ;
+               string installPath = oneHost.getStringField(
+                                                   OM_HOST_FIELD_INSTALLPATH ) ;
+
+               if ( version.empty() )
+               {
+                  version = omVersion ;
+               }
+
+               packageInfo = BSON(
+                           OM_HOST_FIELD_PACKAGENAME << OM_BUSINESS_SEQUOIADB <<
+                           OM_HOST_FIELD_INSTALLPATH << installPath <<
+                           OM_HOST_FIELD_VERSION << version ) ;
+
+               oneHostBuilder.appendElements( oneHost ) ;
+               oneHostBuilder.append( OM_HOST_FIELD_PACKAGES,
+                                      BSON_ARRAY( packageInfo ) ) ;
+               oneHost = oneHostBuilder.obj() ;
             }
 
             rc = rtnInsert( OM_CS_DEPLOY_CL_HOST, oneHost, 1, 0, cb ) ;
@@ -1291,7 +1334,116 @@ namespace engine
    {
       return _taskID ;
    }
+
+   omDeployPackageTask::omDeployPackageTask( INT64 taskID )
+   {
+      _taskID   = taskID ;
+      _taskType = OM_TASK_TYPE_DEPLOY_PACKAGE ;
+   }
+
+   omDeployPackageTask::~omDeployPackageTask()
+   {
+   }
+
+   INT32 omDeployPackageTask::_addPackage( const BSONObj &taskInfo,
+                                           const BSONObj &resultInfo )
+   {
+      INT32 rc = SDB_OK ;
+      string packageName ;
+      string installPath ;
+      string version ;
+      set<string> hostList ;
+      BSONObjIterator iter( resultInfo ) ;
+      omDatabaseTool dbTool( pmdGetThreadEDUCB() ) ;
+
+      while ( iter.more() )
+      {
+         BSONElement ele = iter.next() ;
+         BSONObj hostInfo  = ele.embeddedObject() ;
+         INT32 errorNum  = hostInfo.getIntField( OM_TASKINFO_FIELD_ERRNO ) ;
+         string hostName = hostInfo.getStringField(
+                                                OM_TASKINFO_FIELD_HOSTNAME ) ;
+
+         if ( SDB_OK == errorNum )
+         {
+            hostList.insert( hostName ) ;
+            if ( 0 == version.length() )
+            {
+               version = hostInfo.getStringField( OM_TASKINFO_FIELD_VERSION ) ;
+            }
+         }
+      }
+
+      packageName = taskInfo.getStringField( OM_TASKINFO_FIELD_PACKAGENAME ) ;
+      installPath = taskInfo.getStringField( OM_TASKINFO_FIELD_INSTALLPATH ) ;
+
+      rc = dbTool.addPackageOfHosts( hostList, packageName, installPath,
+                                     version ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to add package of hosts: package=%s, rc=%d",
+                 packageName.c_str(), rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omDeployPackageTask::finish( BSONObj &resultInfo )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj selector ;
+      BSONObj matcher ;
+      BSONObj orderBy ;
+      BSONObj hint ;
+      BSONObj task ;
+      BSONObj taskInfo ;
+      BSONObj taskResultInfo ;
    
+      matcher  = BSON( OM_TASKINFO_FIELD_TASKID << _taskID ) ;
+      selector = BSON( OM_TASKINFO_FIELD_INFO << 1 ) ;
+
+      rc = queryOneTask( selector, matcher, orderBy, hint, task ) ;
+      if( rc )
+      {
+         PD_LOG( PDERROR, "get task info failed:taskID="
+                          OSS_LL_PRINT_FORMAT",rc=%d",
+                 _taskID, rc ) ;
+         goto error ;
+      }
+
+      taskInfo = task.getObjectField( OM_TASKINFO_FIELD_INFO ) ;
+      taskResultInfo = resultInfo.getObjectField(
+                                                OM_TASKINFO_FIELD_RESULTINFO ) ;
+
+      rc = _addPackage( taskInfo, taskResultInfo ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to add package: taskID="
+                          OSS_LL_PRINT_FORMAT",rc=%d",
+                 _taskID, rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omDeployPackageTask::getType()
+   {
+      return _taskType ;
+   }
+   
+   INT64 omDeployPackageTask::getTaskID()
+   {
+      return _taskID ;
+   }
+
    omRemoveBusinessTask::omRemoveBusinessTask( INT64 taskID )
    {
       _taskID   = taskID ;
@@ -1743,6 +1895,9 @@ namespace engine
          break ;
       case OM_TASK_TYPE_SHRINK_BUSINESS:
          pTask = SDB_OSS_NEW omShrinkBusinessTask( taskID ) ;
+         break ;
+      case OM_TASK_TYPE_DEPLOY_PACKAGE:
+         pTask = SDB_OSS_NEW omDeployPackageTask( taskID ) ;
          break ;
       default :
          PD_LOG( PDERROR, "unknown task type:taskID="OSS_LL_PRINT_FORMAT

@@ -878,7 +878,7 @@ namespace engine
             string clusterName ;
 
             clusterName = result.getStringField( OM_CLUSTER_FIELD_NAME ) ;
-            clusterList.insert( clusterName ) ;            
+            clusterList.insert( clusterName ) ;
          }
       }
 
@@ -918,6 +918,133 @@ namespace engine
       goto done ;
    }
 
+   INT32 _omManager::_appendHostPackage( const string &hostName,
+                                         const BSONObj &packageInfo )
+   {
+      INT32 rc = SDB_OK ;
+      pmdEDUCB *cb = pmdGetThreadEDUCB() ;
+      BSONObj matcher ;
+      BSONObj updator ;
+      BSONObj hint ;
+
+      matcher = BSON( OM_HOST_FIELD_NAME << hostName ) ;
+
+      updator = BSON( "$push" <<
+                           BSON( OM_HOST_FIELD_PACKAGES << packageInfo ) ) ;
+
+      rc = rtnUpdate( OM_CS_DEPLOY_CL_HOST, matcher, updator, hint,
+                      0, cb ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "update table failed:table=%s,updator=%s,rc=%d",
+                 OM_CS_DEPLOY_CL_HOST, updator.toString().c_str(), rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   void _omManager::_getOMVersion( string &version )
+   {
+      INT32 major        = 0 ;
+      INT32 minor        = 0 ;
+      INT32 fix          = 0 ;
+      INT32 release      = 0 ;
+      const CHAR *pBuild = NULL ;
+      stringstream stream ;
+
+      ossGetVersion ( &major, &minor, &fix, &release, &pBuild ) ;
+      stream << major << "." << minor ;
+      version = stream.str() ;
+   }
+
+   INT32 _omManager::_updateHostTable()
+   {
+      INT32 rc = SDB_OK ;
+      SINT64 contextID   = -1 ;
+      pmdEDUCB *cb       = pmdGetThreadEDUCB() ;
+      pmdKRCB *pKRCB     = pmdGetKRCB() ;
+      _SDB_DMSCB *pdmsCB = pKRCB->getDMSCB() ;
+      _SDB_RTNCB *pRtnCB = pKRCB->getRTNCB() ;
+      BSONObj sort ;
+      BSONObj hint ;
+      BSONObj selector ;
+      BSONObj matcher ;
+      string omVersion ;
+
+      _getOMVersion( omVersion ) ;
+
+      matcher = BSON( OM_HOST_FIELD_PACKAGES << BSON( "$exists" << 0 ) ) ;
+
+      rc = rtnQuery( OM_CS_DEPLOY_CL_HOST, selector, matcher, sort, 
+                     hint, 0, cb, 0, -1, pdmsCB, pRtnCB, contextID ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "query table failed:table=%s,rc=%d",
+                 OM_CS_DEPLOY_CL_HOST, rc ) ;
+         goto error ;
+      }
+
+      while ( TRUE )
+      {
+         rtnContextBuf buffObj ;
+
+         rc = rtnGetMore( contextID, 1, buffObj, cb, pRtnCB ) ;
+         if ( rc )
+         {
+            if ( SDB_DMS_EOC == rc )
+            {
+               rc = SDB_OK ;
+               break ;
+            }
+
+            PD_LOG( PDERROR, "get record failed:table=%s,rc=%d",
+                    OM_CS_DEPLOY_CL_CLUSTER, rc ) ;
+            goto error ;
+         }
+
+         {
+            BSONObj package ;
+            BSONObj hostInfo( buffObj.data() ) ;
+            BSONObj oma = hostInfo.getObjectField( OM_HOST_FIELD_OMA ) ;
+            string version = oma.getStringField( OM_HOST_FIELD_OM_VERSION ) ;
+            string hostName = hostInfo.getStringField( OM_HOST_FIELD_NAME ) ;
+            string installPath = hostInfo.getStringField(
+                                                   OM_HOST_FIELD_INSTALLPATH ) ;
+
+            if ( version.empty() )
+            {
+               version = omVersion ;
+            }
+
+            package = BSON(
+                           OM_HOST_FIELD_PACKAGENAME << OM_BUSINESS_SEQUOIADB <<
+                           OM_HOST_FIELD_INSTALLPATH << installPath <<
+                           OM_HOST_FIELD_VERSION << version ) ;
+
+            rc = _appendHostPackage( hostName, package ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "failed to append host applications: rc=%d",
+                       rc ) ;
+               goto error ;
+            }
+         }
+      }
+
+   done:
+      if ( -1 != contextID )
+      {
+         pRtnCB->contextDelete ( contextID, cb ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _omManager::_updateTable()
    {
       INT32 rc = SDB_OK ;
@@ -935,6 +1062,14 @@ namespace engine
       {
          PD_LOG( PDERROR, "update table failed:table=%s,rc=%d", 
                  OM_CS_DEPLOY_CL_CLUSTER, rc ) ;
+         goto error ;
+      }
+
+      rc = _updateHostTable() ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "update table failed:table=%s,rc=%d", 
+                 OM_CS_DEPLOY_CL_HOST, rc ) ;
          goto error ;
       }
 
