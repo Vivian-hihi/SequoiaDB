@@ -35,6 +35,7 @@
 #define RTN_CONTEXTSHDOFLOB_HPP_
 
 #include "rtnContext.hpp"
+#include "rtnLobPieces.hpp"
 #include "dmsLobDef.hpp"
 
 namespace engine
@@ -123,7 +124,7 @@ namespace engine
                    const CHAR **data,
                    UINT32 &read ) ;
 
-      void _meta2Obj( bson::BSONObj &obj ) ;
+      INT32 _meta2Obj( bson::BSONObj &obj ) ;
 
       INT32 _rollback( _pmdEDUCB *cb ) ;
 
@@ -146,7 +147,8 @@ namespace engine
       const CHAR*    _pData ;
       UINT32         _dataLen ;
       INT64          _offset ;
-      std::set<UINT32> _written ;
+      std::set<UINT32>  _written ;
+      _rtnLobPiecesInfo _lobPieces ;
 
       _dmsStorageUnit   *_su ;
       _dmsMBContext     *_mbContext ;

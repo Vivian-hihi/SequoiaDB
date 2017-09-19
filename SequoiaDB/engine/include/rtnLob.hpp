@@ -61,6 +61,7 @@ namespace engine
                       pmdEDUCB *cb,
                       UINT32 len,
                       const CHAR *buf,
+                      INT64 lobOffset,
                       rtnContextBuf *errBuf = NULL ) ;
 
    INT32 rtnReadLob( SINT64 contextID,

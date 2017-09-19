@@ -342,6 +342,7 @@ namespace engine
                       pmdEDUCB *cb,
                       UINT32 len,
                       const CHAR *buf,
+                      INT64 lobOffset,
                       rtnContextBuf *errBuf )
    {
       INT32 rc = SDB_OK ;
@@ -364,8 +365,15 @@ namespace engine
          goto error ;
       }
 
+      if ( lobOffset < -1 )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "Invalid LOB offset:%d", lobOffset ) ;
+         goto error ;
+      }
+
       lobContext = ( rtnContextLob * )context ;
-      rc = lobContext->write( len, buf, cb ) ;
+      rc = lobContext->write( len, buf, lobOffset, cb ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Failed to write lob, rc: %d", rc ) ;

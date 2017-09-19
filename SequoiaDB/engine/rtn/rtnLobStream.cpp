@@ -77,7 +77,9 @@ namespace engine
     _mode( 0 ),
     _flags( 0 ),
     _lobPageSz( DMS_DO_NOT_CREATE_LOB ),
-    _offset( 0 )
+    _logarithmic( 0 ),
+    _offset( 0 ),
+    _hasPiecesInfo( FALSE )
    {
       ossMemset( _fullName, 0, DMS_COLLECTION_SPACE_NAME_SZ +
                                DMS_COLLECTION_NAME_SZ + 2 ) ;
@@ -159,6 +161,14 @@ namespace engine
          goto error ;
       }
 
+      if ( !ossIsPowerOf2( _lobPageSz, &_logarithmic ) )
+      {
+         PD_LOG( PDERROR, "Invalid page size:%d, it should be a power of 2",
+                 _lobPageSz ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
       /// if has context, need copy metaObj and data to context
       if ( context )
       {
@@ -215,6 +225,15 @@ namespace engine
       return builder.obj() ;
    }
 
+   UINT32 _rtnLobStream::_getSequence( INT64 offset ) const
+   {
+      SDB_ASSERT( isOpened(), "not opened" ) ;
+
+      return RTN_LOB_GET_SEQUENCE( offset,
+                                   _meta._version >= DMS_LOB_META_MERGE_DATA_VERSION,
+                                   _logarithmic ) ;
+   }
+
    INT32 _rtnLobStream::getMetaData( bson::BSONObj &meta )
    {
       INT32 rc = SDB_OK ;
@@ -246,62 +265,29 @@ namespace engine
 
       if ( SDB_LOB_MODE_CREATEONLY & _mode )
       {
-         _rtnLobTuple tuple ;
-         /// write last data
-         if ( _lw.getCachedData( tuple ) )
-         {
-            rc = _write( tuple, cb ) ;
-            if ( SDB_OK != rc )
-            {
-               PD_LOG( PDERROR, "failed to write lob[%s], rc:%d",
-                       _oid.str().c_str(), rc ) ;
-                goto error ;
-            }
-         }
-         /// write meta data
-         _meta._lobLen = _offset ;
-         _meta._modificationTime = ossGetCurrentMilliseconds() ;
-         _meta._status = DMS_LOB_COMPLETE ;
-         if ( _lw.getMetaPageData( tuple ) )
-         {
-            ossMemcpy( (CHAR*)tuple.data, (const CHAR*)&_meta,
-                       sizeof( _meta ) ) ;
-         }
-         else
-         {
-            tuple.tuple.columns.len = sizeof( _meta ) ;
-            tuple.tuple.columns.sequence = DMS_LOB_META_SEQUENCE ;
-            tuple.tuple.columns.offset = 0 ;
-            tuple.data = ( const CHAR* )&_meta ;
-         }
-         rc = _completeLob( tuple, cb ) ;
-         /// AUDIT
-         PD_AUDIT_OP_WITHNAME( AUDIT_DML, "LOB CREATE", AUDIT_OBJ_CL,
-                               getFullName(), rc, "OID:%s, Length:%llu",
-                               getOID().toString().c_str(),
-                               _meta._lobLen ) ;
-         /// Jduge Errors
+         rc = _close4Create( cb ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to complete lob:%d", rc ) ;
+            PD_LOG( PDERROR, "failed to close for create:%d", rc ) ;
             goto error ;
          }
-
-         PD_LOG( PDDEBUG, "lob [%s] is closed, len:%lld",
-                 getOID().str().c_str(), _offset ) ;
       }
       else if ( SDB_LOB_MODE_REMOVE & _mode )
       {
-         _rtnLobTuple tuple( 0, DMS_LOB_META_SEQUENCE, 0, NULL ) ;
          RTN_LOB_TUPLES tuples ;
+         _rtnLobTuple tuple( 0, DMS_LOB_META_SEQUENCE, 0, NULL ) ;
          tuples.push_back( tuple ) ;
+         if ( _meta._flag & DMS_LOB_META_FLAG_PIECESINFO_PAGE )
+         {
+            _rtnLobTuple piecesInfoTuple( 0, DMS_LOB_META_SEQUENCE, 0, NULL ) ;
+            tuples.push_back( piecesInfoTuple ) ;
+         }
+
          rc = _removev( tuples, cb ) ;
-         /// AUDIT
          PD_AUDIT_OP_WITHNAME( AUDIT_DML, "LOB REMOVE", AUDIT_OBJ_CL,
                                getFullName(), rc, "OID:%s, Meta:%s",
                                getOID().toString().c_str(),
                                _metaObj.toString().c_str() ) ;
-         /// Jduge Errors
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to remove meta data of lob:%d", rc ) ;
@@ -387,7 +373,7 @@ namespace engine
          goto error ;
       }
 
-      /// re array the data and try to get a complete piece.
+      // re-array the data and try to get a complete piece.
       rc = _lw.prepare4Write( _offset, len, buf ) ;
       if ( SDB_OK != rc )
       {
@@ -395,9 +381,12 @@ namespace engine
          goto error ;
       }
 
-      /// if we update offset after write,
-      /// some data will not be removed when rollback
+      // if we update offset after write,
+      // some data will not be removed when rollback
       _offset += len ;
+      // update lobLen immediately,
+      // for _offset can be set to front position by seek 
+      _meta._lobLen = OSS_MAX( _meta._lobLen, _offset ) ;
 
       while ( _lw.getNextWriteSequences( tuples )  )
       {
@@ -407,7 +396,7 @@ namespace engine
             goto error ;
          }
 
-         rc = _writev( tuples, cb ) ;
+         rc = _writeOrUpdate( tuples, cb ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to write lob[%s], rc:%d",
@@ -438,7 +427,7 @@ namespace engine
       PD_TRACE_ENTRY( SDB_RTNLOBSTREAM_READ ) ;
       UINT32 readLen = 0 ;
       RTN_LOB_TUPLES tuples ;
-      
+
       SDB_ASSERT( _meta.isDone(), "lob has not been completed yet" ) ;
 
       if ( !isOpened() )
@@ -500,7 +489,7 @@ namespace engine
          goto error ;      
       }
 
-      rc = _readv( tuples, cb ) ;
+      rc = _readv( tuples, cb, _hasPiecesInfo ? &_lobPieces : NULL ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to read lob[%s], rc:%d",
@@ -528,6 +517,9 @@ namespace engine
    INT32 _rtnLobStream::seek( SINT64 offset, _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
+
+      SDB_ASSERT( offset >= 0, "invalid offset" ) ;
+
       if ( !isOpened() )
       {
          PD_LOG( PDERROR, "lob[%s] is not opened yet",
@@ -536,7 +528,7 @@ namespace engine
          goto error ;
       }
 
-      if ( SDB_LOB_MODE_READ != _mode  )
+      if ( SDB_LOB_MODE_READ != _mode && SDB_LOB_MODE_CREATEONLY != _mode )
       {
          PD_LOG( PDERROR, "open mode[%d] does not support this operation",
                  _mode ) ;
@@ -544,13 +536,40 @@ namespace engine
          goto error ;
       }
 
-      if ( _meta._lobLen < offset )
+      if ( offset >= _meta._lobLen && SDB_LOB_MODE_READ == _mode )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
       }
 
+      if ( SDB_LOB_MODE_CREATEONLY == _mode )
+      {
+         if ( !_lw.continuous( offset ) )
+         {
+            _rtnLobTuple tuple ;
+            // write last data
+            if ( _lw.getCachedData( tuple ) )
+            {
+               rc = _writeOrUpdate( tuple, cb ) ;
+               if ( SDB_OK != rc )
+               {
+                  PD_LOG( PDERROR, "failed to write lob[%s], rc:%d",
+                          _oid.str().c_str(), rc ) ;
+                   goto error ;
+               }
+            }
+
+            if ( !_hasPiecesInfo )
+            {
+               UINT32 piece = _getSequence( _offset ) ;
+               _lobPieces.addPieces( _rtnLobPieces(0, piece) ) ;
+               _hasPiecesInfo = TRUE ;
+            }
+         }
+      }
+
       _offset = offset ;
+
    done:
       return rc ;
    error:
@@ -602,8 +621,128 @@ namespace engine
          }
          tuples.clear() ;
       }
+
    done:
       PD_TRACE_EXITRC( SDB_RTNLOBSTREAM_TRUNCATE, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnLobStream::_writeOrUpdate( const _rtnLobTuple &tuple,
+                                        _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( !_hasPiecesInfo )
+      {
+         rc = _write( tuple, cb ) ;
+      }
+      else
+      {
+         if ( !_lobPieces.hasPiece( tuple.tuple.columns.sequence ) )
+         {
+            rc = _write( tuple, cb ) ;
+            if ( SDB_OK == rc )
+            {
+               rc = _lobPieces.addPiece( tuple.tuple.columns.sequence ) ;
+               if ( SDB_OK != rc )
+               {
+                  PD_LOG( PDERROR, "Failed to add piece, rc=%d", rc ) ;
+                  goto error ;
+               }
+
+               if ( _lobPieces.requiredMem() > _lobPageSz )
+               {
+                  rc = SDB_LOB_PIECESINFO_OVERFLOW ;
+                  PD_LOG( PDERROR, "LOB pieces info require memory more than one lob page, "\
+                                   "section num=%d, piecesInfo=%s",
+                                   _lobPieces.sectionNum(), _lobPieces.toString().c_str() ) ;
+                  goto error ;
+               }
+            }
+         }
+         else
+         {
+            rc = _update( tuple, cb ) ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnLobStream::_writeOrUpdate( RTN_LOB_TUPLES &tuples,
+                                              _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( !_hasPiecesInfo )
+      {
+         rc = _writev( tuples, cb ) ;
+      }
+      else
+      {
+         RTN_LOB_TUPLES updateTuples ;
+
+         for ( RTN_LOB_TUPLES::iterator iter = tuples.begin() ;
+               iter != tuples.end() ; )
+         {
+            _rtnLobTuple& tuple = *iter ;
+            if ( _lobPieces.hasPiece( tuple.tuple.columns.sequence ) )
+            {
+               updateTuples.push_back( tuple ) ;
+               iter = tuples.erase( iter ) ;
+            }
+            else
+            {
+               ++iter ;
+            }
+         }
+
+         if ( !tuples.empty() )
+         {
+            rc = _writev( tuples, cb ) ;
+            if ( SDB_OK != rc )
+            {
+               goto error ;
+            }
+
+            for ( RTN_LOB_TUPLES::const_iterator iter = tuples.begin() ;
+                  iter != tuples.end() ; iter++ )
+            {
+               const _rtnLobTuple& tuple = *iter ;
+               rc = _lobPieces.addPiece( tuple.tuple.columns.sequence ) ;
+               if ( SDB_OK != rc )
+               {
+                  PD_LOG( PDERROR, "Failed to add piece, rc=%d", rc ) ;
+                  goto error ;
+               }
+
+               if ( _lobPieces.requiredMem() > _lobPageSz )
+               {
+                  rc = SDB_LOB_PIECESINFO_OVERFLOW ;
+                  PD_LOG( PDERROR, "LOB pieces info require memory more than one lob page, "\
+                                   "section num=%d, piecesInfo=%s",
+                                   _lobPieces.sectionNum(), _lobPieces.toString().c_str() ) ;
+                  goto error ;
+               }
+            }
+         }
+
+         if ( !updateTuples.empty() )
+         {
+            rc = _updatev( updateTuples, cb ) ;
+            if ( SDB_OK != rc )
+            {
+               goto error ;
+            }
+         }
+      }
+
+   done:
       return rc ;
    error:
       goto done ;
@@ -675,13 +814,19 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNLOBSTREAM__OPEN4READ ) ;
 
-      rc = _queryLobMeta( cb, _meta ) ;
+      rc = _queryLobMeta( cb, _meta, &_lobPieces ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Failed to open lob[%s] in collection[%s], rc:%d",
                  _oid.str().c_str(), _fullName, rc ) ;
          goto error ;
       }
+
+      if ( _lobPieces.sectionNum() > 0 )
+      {
+         _hasPiecesInfo = TRUE ;
+      }
+
    done:
       PD_TRACE_EXITRC( SDB_RTNLOBSTREAM__OPEN4READ, rc ) ;
       return rc ;
@@ -737,6 +882,173 @@ namespace engine
 
    done:
       PD_TRACE_EXITRC( SDB_RTNLOBSTREAM__OPEN4REMOVE, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnLobStream::_close4Create( _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      CHAR* buf = NULL ;
+      INT32 piecesInfoSize = 0 ;
+      _rtnLobTuple tuple ;
+
+      SDB_ASSERT( SDB_LOB_MODE_CREATEONLY & _mode, "incorrect mode" ) ;
+
+      // write last data
+      if ( _lw.getCachedData( tuple ) )
+      {
+         rc = _writeOrUpdate( tuple, cb ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to write lob[%s], rc:%d",
+                    _oid.str().c_str(), rc ) ;
+             goto error ;
+         }
+      }
+
+      if ( _hasPiecesInfo )
+      {
+         piecesInfoSize = _lobPieces.requiredMem() ;
+         if( piecesInfoSize > _lobPageSz )
+         {
+            PD_LOG( PDERROR, "LOB pieces info require memory more than one lob page, "\
+                             "section num=%d, piecesInfo=%s",
+                             _lobPieces.sectionNum(), _lobPieces.toString().c_str() ) ;
+            rc = SDB_LOB_PIECESINFO_OVERFLOW ;
+            goto error ;
+         }
+
+         if ( piecesInfoSize > 0 && _lobPieces.sectionNum() == 1 )
+         {
+            UINT32 last = _getSequence( _meta._lobLen ) ;
+            _rtnLobPieces pieces = _lobPieces.getSection( 0 ) ;
+            if ( 0 == pieces.first && last == pieces.last )
+            {
+               // no skipped piece, so no need to save pieces info
+               piecesInfoSize= 0 ;
+            }
+         }
+      }
+
+      // write lob pieces info page
+      if ( piecesInfoSize > DMS_LOB_META_PIECESINFO_LEN )
+      {         
+         buf = (CHAR*) SDB_OSS_MALLOC( piecesInfoSize ) ;
+         if ( NULL == buf )
+         {
+            rc = SDB_OOM ;
+            PD_LOG( PDERROR, "failed to alloc memory for lob pieces info, rc=%d", rc ) ;
+            goto error ;
+         }
+
+         rc = _lobPieces.saveTo( buf, piecesInfoSize ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to save lob pieces info, rc=%d", rc ) ;
+            goto error ;
+         }
+
+         tuple.tuple.columns.len = piecesInfoSize ;
+         tuple.tuple.columns.sequence = DMS_LOB_PIECESINFO_SEQUENCE ;
+         tuple.tuple.columns.offset = 0 ;
+         tuple.data = ( const CHAR* )buf ;
+
+         rc = _write( tuple, cb ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to write lob pieces, rc=%d", rc ) ;
+            goto error ;
+         }
+
+         _meta._piecesInfoNum = _lobPieces.sectionNum() ;
+         _meta._flag |= DMS_LOB_META_FLAG_PIECESINFO_PAGE ;
+      }
+
+      // write meta data
+      // _meta._lobLen is already updated
+      _meta._modificationTime = ossGetCurrentMilliseconds() ;
+      _meta._status = DMS_LOB_COMPLETE ;
+      if ( _lw.getMetaPageData( tuple ) )
+      {
+         if ( piecesInfoSize > 0 &&
+              piecesInfoSize <= DMS_LOB_META_PIECESINFO_LEN )
+         {
+            CHAR* piecesInfoBuf = (CHAR*)tuple.data + DMS_LOB_META_LENGTH 
+                                  - piecesInfoSize ;
+
+            rc = _lobPieces.saveTo( piecesInfoBuf, piecesInfoSize ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to save lob pieces info, rc=%d", rc ) ;
+               goto error ;
+            }
+
+            _meta._piecesInfoNum = _lobPieces.sectionNum() ;
+            _meta._flag |= DMS_LOB_META_FLAG_PIECESINFO_INSIDE ;
+         }
+
+         ossMemcpy( (CHAR*)tuple.data, (const CHAR*)&_meta,
+                     sizeof( _meta ) ) ;
+      }
+      else if ( piecesInfoSize > 0 &&
+                piecesInfoSize <= DMS_LOB_META_PIECESINFO_LEN )
+      {
+         SDB_ASSERT( NULL == buf, "impossible" ) ;
+
+         buf = (CHAR*) SDB_OSS_MALLOC( DMS_LOB_META_LENGTH ) ;
+         if ( NULL == buf )
+         {
+            rc = SDB_OOM ;
+            PD_LOG( PDERROR, "failed to alloc memory for lob pieces info, rc=%d", rc ) ;
+            goto error ;
+         }
+
+         _meta._piecesInfoNum = _lobPieces.sectionNum() ;
+         _meta._flag |= DMS_LOB_META_FLAG_PIECESINFO_INSIDE ;
+
+         ossMemcpy( buf, (const CHAR*)&_meta, sizeof( _meta ) ) ;
+
+         CHAR* piecesInfoBuf = buf + DMS_LOB_META_LENGTH 
+                               - piecesInfoSize ;
+
+         rc = _lobPieces.saveTo( piecesInfoBuf, piecesInfoSize ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to save lob pieces info, rc=%d", rc ) ;
+            goto error ;
+         }
+
+         tuple.tuple.columns.len = DMS_LOB_META_LENGTH ;
+         tuple.tuple.columns.sequence = DMS_LOB_META_SEQUENCE ;
+         tuple.tuple.columns.offset = 0 ;
+         tuple.data = ( const CHAR* )buf ;
+      }
+      else
+      {
+         tuple.tuple.columns.len = sizeof( _meta ) ;
+         tuple.tuple.columns.sequence = DMS_LOB_META_SEQUENCE ;
+         tuple.tuple.columns.offset = 0 ;
+         tuple.data = ( const CHAR* )&_meta ;
+      }
+
+      rc = _completeLob( tuple, cb ) ;
+      PD_AUDIT_OP_WITHNAME( AUDIT_DML, "LOB CREATE", AUDIT_OBJ_CL,
+                            getFullName(), rc, "OID:%s, Length:%llu",
+                            getOID().toString().c_str(),
+                            _meta._lobLen ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to complete lob:%d", rc ) ;
+         goto error ;
+      }
+
+      PD_LOG( PDDEBUG, "lob [%s] is closed, len:%lld",
+              getOID().str().c_str(), _offset ) ;
+
+   done:
+      SAFE_OSS_FREE( buf ) ;
       return rc ;
    error:
       goto done ;

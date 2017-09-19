@@ -129,7 +129,7 @@ namespace engine
       const MsgOpLob *header = NULL ;
       BSONObj obj ;
       UINT32 len = 0 ;
-      SINT64 offset = -1 ;
+      INT64 offset = -1 ;
       const CHAR *data = NULL ;
       contextID = -1 ;
 
@@ -146,7 +146,7 @@ namespace engine
                           "ContextID:%lld, Len:%u, Offset:%llu",
                           header->contextID, len, offset ) ;
 
-      rc = rtnWriteLob( header->contextID, cb, len, data, buf ) ;
+      rc = rtnWriteLob( header->contextID, cb, len, data, offset, buf ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to write lob:%d", rc ) ;

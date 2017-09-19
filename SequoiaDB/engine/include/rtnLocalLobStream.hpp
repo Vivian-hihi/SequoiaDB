@@ -61,7 +61,8 @@ namespace engine
                               _pmdEDUCB *cb ) ;
 
       virtual INT32 _queryLobMeta( _pmdEDUCB *cb,
-                                   _dmsLobMeta &meta ) ;
+                                   _dmsLobMeta &meta,
+                                   _rtnLobPiecesInfo* piecesInfo = NULL ) ;
 
       virtual INT32 _ensureLob( _pmdEDUCB *cb,
                                 _dmsLobMeta &meta,
@@ -75,13 +76,20 @@ namespace engine
       virtual INT32 _writev( const RTN_LOB_TUPLES &tuples,
                              _pmdEDUCB *cb ) ;
 
+      virtual INT32 _update( const _rtnLobTuple &tuple,
+                             _pmdEDUCB *cb ) ;
+
+      virtual INT32 _updatev( const RTN_LOB_TUPLES &tuples,
+                             _pmdEDUCB *cb ) ;
+
       virtual INT32 _completeLob( const _rtnLobTuple &tuple,
                                   _pmdEDUCB *cb ) ;
 
       virtual INT32 _rollback( _pmdEDUCB *cb ) ;
 
       virtual INT32 _readv( const RTN_LOB_TUPLES &tuples,
-                            _pmdEDUCB *cb ) ;
+                            _pmdEDUCB *cb,
+                            const _rtnLobPiecesInfo* piecesInfo = NULL ) ;
 
       virtual INT32 _queryAndInvalidateMetaData( _pmdEDUCB *cb,
                                                  _dmsLobMeta &meta ) ;
@@ -94,6 +102,9 @@ namespace engine
       INT32 _read( const _rtnLobTuple &tuple,
                    _pmdEDUCB *cb,
                    CHAR *buf ) ;
+
+      INT32 _queryPiecesInfoFromPage( _pmdEDUCB *cb, INT32 length,
+                                      _rtnLobPiecesInfo& piecesInfo ) ;
 
    private:
       void        _closeInner( _pmdEDUCB *cb ) ;

@@ -16,7 +16,7 @@
 
    Source File Name = rtnLobAccessManager.hpp
 
-   Descriptive Name =
+   Descriptive Name = LOB access manager
 
    Dependencies: N/A
 

@@ -74,6 +74,7 @@ namespace engine
 
       INT32 write( UINT32 len,
                    const CHAR *buf,
+                   INT64 lobOffset,
                    _pmdEDUCB *cb ) ;
 
       INT32 close( _pmdEDUCB *cb ) ;

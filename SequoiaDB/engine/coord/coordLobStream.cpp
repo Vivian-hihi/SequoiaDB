@@ -75,7 +75,8 @@ namespace engine
    :_metaGroup( 0 ),
     _alignBuf( 0 ),
     _pResource( pResource ),
-    _timeout( timeout )
+    _timeout( timeout ),
+    _emptyPageBuf( NULL )
    {
       _pageSize = 0 ;
       SDB_ASSERT( _pResource, "Resource can't be NULL" ) ;
@@ -86,6 +87,7 @@ namespace engine
       pmdEDUCB *cb = pmdGetThreadEDUCB() ;
       _closeSubStreamsWithException( cb ) ;
       _clearMsgData() ;
+      _releaseEmptyPageBuf() ;
    }
 
    void _coordLobStream::getErrorInfo( INT32 rc,
@@ -483,13 +485,14 @@ namespace engine
 
    //PD_TRACE_DECLARE_FUNCTION( COORD_LOBSTREAM_QUERYLOBMETA, "_coordLobStream::_queryLobMeta" )
    INT32 _coordLobStream::_queryLobMeta( _pmdEDUCB *cb,
-                                         _dmsLobMeta &meta )
+                                         _dmsLobMeta &meta,
+                                         _rtnLobPiecesInfo* piecesInfo )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( COORD_LOBSTREAM_QUERYLOBMETA ) ;
 
       try
-      { 
+      {
          BSONElement ele = _metaObj.getField( FIELD_NAME_LOB_SIZE ) ;
          if ( NumberLong != ele.type() )
          {
@@ -533,7 +536,69 @@ namespace engine
             meta._version = (UINT8)ele.numberInt() ;
          }
 
+         ele = _metaObj.getField( FIELD_NAME_LOB_FLAG ) ;
+         if ( NumberInt == ele.type() )
+         {
+            meta._flag = (UINT32)ele.Int() ;
+         }
+         else if ( !ele.eoo() )
+         {
+            PD_LOG( PDERROR, "invalid meta obj:%s",
+                    _metaObj.toString( FALSE, TRUE ).c_str() ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+
+         ele = _metaObj.getField( FIELD_NAME_LOB_PIECESINFONUM ) ;
+         if ( NumberInt == ele.type() )
+         {
+            meta._piecesInfoNum = ele.Int() ;
+         }
+         else if ( !ele.eoo() )
+         {
+            PD_LOG( PDERROR, "invalid meta obj:%s",
+                    _metaObj.toString( FALSE, TRUE ).c_str() ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+
          meta._status = DMS_LOB_COMPLETE ;
+
+         if ( NULL != piecesInfo )
+         {
+            if ( meta._flag & DMS_LOB_META_FLAG_PIECESINFO_INSIDE )
+            {
+               ele = _metaObj.getField( FIELD_NAME_LOB_PIECESINFO ) ;
+               if ( Array == ele.type() )
+               {
+                  BSONArray array( ele.embeddedObject() );
+                  rc = piecesInfo->readFrom( array ) ;
+                  if ( SDB_OK != rc )
+                  {
+                     PD_LOG( PDERROR, "invalid pieces info array:%s",
+                             array.toString( FALSE, TRUE ).c_str() ) ;
+                     goto error ;
+                  }
+               }
+               else if ( !ele.eoo() )
+               {
+                  PD_LOG( PDERROR, "invalid meta obj:%s",
+                          _metaObj.toString( FALSE, TRUE ).c_str() ) ;
+                  rc = SDB_SYS ;
+                  goto error ;
+               }
+            }
+            else if ( meta._flag & DMS_LOB_META_FLAG_PIECESINFO_PAGE )
+            {
+               INT32 length = meta._piecesInfoNum * (INT32)sizeof( _rtnLobPieces ) ;
+               rc = _queryPiecesInfoFromPage( cb, length, *piecesInfo ) ;
+               if ( SDB_OK != rc )
+               {
+                  PD_LOG( PDERROR, "Failed to query pieces info from page, rc=%d", rc ) ;
+                  goto error ;
+               }
+            }
+         }
       }
       catch ( std::exception &e )
       {
@@ -544,6 +609,81 @@ namespace engine
 
    done:
       PD_TRACE_EXITRC( COORD_LOBSTREAM_QUERYLOBMETA, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _coordLobStream::_queryPiecesInfoFromPage(
+                      _pmdEDUCB *cb, INT32 length,
+                      _rtnLobPiecesInfo& piecesInfo ) 
+   {
+      INT32 rc = SDB_OK ;
+      MsgOpReply* reply = NULL ;
+      const MsgLobTuple* begin = NULL ;
+      UINT32 tupleSize = 0 ;
+      const MsgLobTuple* tuple = NULL ;
+      const CHAR* data = NULL ;
+      BOOLEAN got = FALSE ;
+
+      _rtnLobTuple t( (UINT32)length, DMS_LOB_PIECESINFO_SEQUENCE, 0, NULL ) ;
+
+      rc = _read( t, cb, &reply ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to read pieces info page, rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = msgExtractReadResult( reply, &begin, &tupleSize ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to extract read reply, rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = msgExtractTuplesAndData( &begin, &tupleSize,
+                                    &tuple, &data, &got ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to extract tuple from reply, rc=%d", rc ) ;
+         goto error ;
+      }
+
+      if ( !got )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "failed to extract tuple from reply, rc=%d", rc ) ;
+         goto error ;
+      }
+
+      if ( DMS_LOB_PIECESINFO_SEQUENCE != tuple->columns.sequence )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "we should get sequence %u",
+                 DMS_LOB_PIECESINFO_SEQUENCE ) ;
+         goto error ;
+      }
+
+      if ( length != tuple->columns.len || 0 != tuple->columns.offset )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "we should get [length:%d, offset:%d], " \
+                          "actually get [length:%d, offset:%d]",
+                          length, 0,
+                          tuple->columns.offset, tuple->columns.len ) ;
+         goto error ;
+      }
+
+      rc = piecesInfo.readFrom( data, length ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to read pieces info from reply, rc=%d", rc ) ;
+         goto error ;
+      }
+
+   done:
+      SAFE_OSS_FREE( reply ) ;
       return rc ;
    error:
       goto done ;
@@ -597,12 +737,16 @@ namespace engine
       goto done ;
    }
 
-   //PD_TRACE_DECLARE_FUNCTION( COORD_LOBSTREAM_WRITE, "_coordLobStream::_write" )
-   INT32 _coordLobStream::_write( const _rtnLobTuple &tuple,
-                                  _pmdEDUCB *cb )
+   //PD_TRACE_DECLARE_FUNCTION( COORD_LOBSTREAM_WRITEOP, "_coordLobStream::_writeOp" )
+   INT32 _coordLobStream::_writeOp( const _rtnLobTuple &tuple,
+                                    INT32 opCode,
+                                    _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( COORD_LOBSTREAM_WRITE ) ;
+      PD_TRACE_ENTRY( COORD_LOBSTREAM_WRITEOP ) ;
+
+      SDB_ASSERT( MSG_BS_LOB_WRITE_REQ == opCode || MSG_BS_LOB_UPDATE_REQ == opCode,
+                  "only support write or update operation" ) ;
 
       MsgOpLob header ;
       UINT32 groupID = 0 ;
@@ -616,7 +760,7 @@ namespace engine
       /// reset retry times
       pCtrl->resetRetry() ;
 
-      _initHeader( header, MSG_BS_LOB_WRITE_REQ,
+      _initHeader( header, opCode,
                    0, -1,
                    sizeof( header ) +
                    sizeof( _MsgLobTuple ) +
@@ -678,18 +822,22 @@ namespace engine
       } while ( TRUE ) ;
    done:
       _clearMsgData() ;
-      PD_TRACE_EXITRC( COORD_LOBSTREAM_WRITE, rc ) ;
+      PD_TRACE_EXITRC( COORD_LOBSTREAM_WRITEOP, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
-   //PD_TRACE_DECLARE_FUNCTION( COORD_LOBSTREAM_WRITEV, "_coordLobStream::_writev" )
-   INT32 _coordLobStream::_writev( const RTN_LOB_TUPLES &tuples,
-                                   _pmdEDUCB *cb )
+   //PD_TRACE_DECLARE_FUNCTION( COORD_LOBSTREAM_WRITEVOP, "_coordLobStream::_writevOp" )
+   INT32 _coordLobStream::_writevOp( const RTN_LOB_TUPLES &tuples,
+                                     INT32 opCode,
+                                     _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( COORD_LOBSTREAM_WRITEV ) ;
+      PD_TRACE_ENTRY( COORD_LOBSTREAM_WRITEVOP ) ;
+
+      SDB_ASSERT( MSG_BS_LOB_WRITE_REQ == opCode || MSG_BS_LOB_UPDATE_REQ == opCode,
+                  "only support write or update operation" ) ;
 
       DONE_LST doneLst ;
       BOOLEAN reshard = TRUE ;
@@ -703,7 +851,7 @@ namespace engine
       pCtrl->resetRetry() ;
 
       /// will reassign length
-      _initHeader( header, MSG_BS_LOB_WRITE_REQ,
+      _initHeader( header, opCode,
                    0, -1 ) ;
 
       do
@@ -784,7 +932,150 @@ namespace engine
 
    done:
       _clearMsgData() ;
+      PD_TRACE_EXITRC( COORD_LOBSTREAM_WRITEVOP, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   //PD_TRACE_DECLARE_FUNCTION( COORD_LOBSTREAM_WRITE, "_coordLobStream::_write" )
+   INT32 _coordLobStream::_write( const _rtnLobTuple &tuple,
+                                  _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( COORD_LOBSTREAM_WRITE ) ;
+      rc = _writeOp( tuple, MSG_BS_LOB_WRITE_REQ, cb ) ;
+      PD_TRACE_EXITRC( COORD_LOBSTREAM_WRITE, rc ) ;
+      return rc ;
+   }
+
+   //PD_TRACE_DECLARE_FUNCTION( COORD_LOBSTREAM_WRITEV, "_coordLobStream::_writev" )
+   INT32 _coordLobStream::_writev( const RTN_LOB_TUPLES &tuples,
+                                   _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( COORD_LOBSTREAM_WRITEV ) ;
+      rc = _writevOp( tuples, MSG_BS_LOB_WRITE_REQ, cb ) ;
       PD_TRACE_EXITRC( COORD_LOBSTREAM_WRITEV, rc ) ;
+      return rc ;
+   }
+
+   //PD_TRACE_DECLARE_FUNCTION( COORD_LOBSTREAM_UPDATE, "_coordLobStream::_update" )
+   INT32 _coordLobStream::_update( const _rtnLobTuple &tuple,
+                                   _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( COORD_LOBSTREAM_UPDATE ) ;
+      rc = _writeOp( tuple, MSG_BS_LOB_UPDATE_REQ, cb ) ;
+      PD_TRACE_EXITRC( COORD_LOBSTREAM_UPDATE, rc ) ;
+      return rc ;
+   }
+
+   //PD_TRACE_DECLARE_FUNCTION( COORD_LOBSTREAM_UPDATEV, "_coordLobStream::_updatev" )
+   INT32 _coordLobStream::_updatev( const RTN_LOB_TUPLES &tuples,
+                                _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( COORD_LOBSTREAM_UPDATEV ) ;
+      rc = _writevOp( tuples, MSG_BS_LOB_UPDATE_REQ, cb ) ;
+      PD_TRACE_EXITRC( COORD_LOBSTREAM_UPDATEV, rc ) ;
+      return rc ;
+   }
+
+   //PD_TRACE_DECLARE_FUNCTION( COORD_LOBSTREAM__READ, "_coordLobStream::_read" )
+   INT32 _coordLobStream::_read( const _rtnLobTuple& tuple,
+                                 _pmdEDUCB *cb, MsgOpReply** reply )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( COORD_LOBSTREAM__READ ) ;
+
+      SDB_ASSERT( NULL != reply, "invalid reply" ) ;
+
+      MsgOpLob header ;
+      BOOLEAN needReshard = TRUE ;
+
+      coordGroupSessionCtrl *pCtrl = _groupSession.getGroupCtrl() ;
+      pmdRemoteSession *pSession = _groupSession.getSession() ;
+      pmdSubSession *pSub = NULL ;
+
+      *reply = NULL ;
+      pCtrl->resetRetry() ;
+
+      _initHeader( header, MSG_BS_LOB_READ_REQ, 0, -1 ) ;
+
+      do
+      {
+         _clearMsgData() ;
+         INT32 tag = RETRY_TAG_NULL ;
+         header.version = _cataInfo->getVersion() ;
+
+         if ( needReshard )
+         {
+            rc = _shardSingleData( header, tuple, FALSE, cb ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to shard tuple:%d", rc ) ;
+               goto error ;
+            }
+            needReshard = FALSE ;
+         }
+
+         for ( DATA_GROUPS::iterator itr = _dataGroups.begin();
+               itr != _dataGroups.end();
+               ++itr )
+         {
+            const dataGroup &dg = itr->second ;
+            if ( !dg.hasData() )
+            {
+               continue ;
+            }
+
+            header.header.messageLength = sizeof( MsgHeader ) + dg.bodyLen ;
+            header.contextID = dg.contextID ;
+
+            pSub = pSession->addSubSession( dg.id.value ) ;
+            pSub->setReqMsg( &( header.header ), PMD_EDU_MEM_NONE ) ;
+            pSub->addIODatas( dg.body ) ;
+
+            rc = pSession->sendMsg( pSub ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Send msg to node[%d:%d] failed, rc:%d",
+                       dg.id.columns.groupID, dg.id.columns.nodeID, rc ) ;
+               goto error ;
+            }
+         }
+
+         rc = _getReply( cb, FALSE, tag ) ;
+         pCtrl->incRetry() ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to get reply msg, rc: %d", rc ) ;
+            goto error ;
+         }
+
+         if ( RETRY_TAG_NULL == tag )
+         {
+            SDB_ASSERT( 1 == _results.size(), "impossible" ) ;
+            *reply = _results.empty() ? NULL : *( _results.begin() ) ;
+            _results.erase( _results.begin() ) ;
+            break ;
+         }
+         else
+         {
+            rc = _reopenSubStreams( cb ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to reopen sub streams:%d", rc ) ;
+               goto error ;
+            }
+            needReshard = TRUE ;
+         }
+      } while ( TRUE ) ;
+
+   done:
+      _clearMsgData() ;
+      PD_TRACE_EXITRC( COORD_LOBSTREAM__READ, rc ) ;
       return rc ;
    error:
       goto done ;
@@ -792,7 +1083,8 @@ namespace engine
 
    //PD_TRACE_DECLARE_FUNCTION( COORD_LOBSTREAM_READV, "_coordLobStream::_readv" )
    INT32 _coordLobStream::_readv( const RTN_LOB_TUPLES &tuples,
-                                  _pmdEDUCB *cb )
+                                  _pmdEDUCB *cb,
+                                  const _rtnLobPiecesInfo* piecesInfo )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( COORD_LOBSTREAM_READV ) ;
@@ -800,10 +1092,58 @@ namespace engine
       DONE_LST doneLst ; 
       BOOLEAN needReshard = TRUE ;
       MsgOpLob header ;
+      RTN_LOB_TUPLES newTuples ;
 
       coordGroupSessionCtrl *pCtrl = _groupSession.getGroupCtrl() ;
       pmdRemoteSession *pSession = _groupSession.getSession() ;
       pmdSubSession *pSub = NULL ;
+
+      if ( NULL != piecesInfo )
+      {
+         INT32 pageSize = 0 ;
+         rc = _getLobPageSize( pageSize ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to get page size of lob:%d", rc ) ;
+            goto error ;
+         }
+
+         for ( RTN_LOB_TUPLES::const_iterator iter = tuples.begin() ;
+               iter != tuples.end() ; iter++ )
+         {
+            const _rtnLobTuple& t = *iter ;
+            if ( !piecesInfo->hasPiece( t.tuple.columns.sequence ) )
+            {
+               rc = _ensureEmptyPageBuf( pageSize ) ;
+               if ( SDB_OK != rc )
+               {
+                  goto error ;
+               }
+ 
+               rc = _getPool().push( _emptyPageBuf, t.tuple.columns.len,
+                                     RTN_LOB_GET_OFFSET_OF_LOB(
+                                         pageSize,
+                                         t.tuple.columns.sequence,
+                                         t.tuple.columns.offset,
+                                         _getMeta()._version >= DMS_LOB_META_MERGE_DATA_VERSION ) ) ;
+               if ( SDB_OK != rc )
+               {
+                  PD_LOG( PDERROR, "failed to push data to pool:%d", rc ) ;
+                  goto error ;
+               }
+            }
+            else
+            {
+               newTuples.push_back( t ) ;
+            }
+         }
+
+         if ( newTuples.empty() )
+         {
+            _getPool().pushDone() ;
+            goto done ;
+         }
+      }
 
       /// reset retry times
       pCtrl->resetRetry() ;
@@ -819,7 +1159,8 @@ namespace engine
 
          if ( needReshard )
          {
-            rc = _shardData( header, tuples, FALSE, doneLst, cb ) ;
+            rc = _shardData( header, NULL == piecesInfo ? tuples : newTuples,
+                             FALSE, doneLst, cb ) ;
             if ( SDB_OK != rc )
             {
                PD_LOG( PDERROR, "failed to shard pieces:%d", rc ) ;
@@ -968,77 +1309,9 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( COORD_LOBSTREAM_COMPLETELOB ) ;
-      const _MsgLobTuple &t = tuple.tuple ;
-      const subStream *sub = NULL ;
-      netIOVec iov ;
-      MsgOpLob header ;
-
-      coordGroupSessionCtrl *pCtrl = _groupSession.getGroupCtrl() ;
-      pmdRemoteSession *pSession = _groupSession.getSession() ;
-      pmdSubSession *pSub = NULL ;
-
-      /// reset retry times
-      pCtrl->resetRetry() ;
-
-      _initHeader( header,
-                   MSG_BS_LOB_UPDATE_REQ,
-                   0, -1,
-                   sizeof( header ) +
-                   sizeof( _MsgLobTuple ) +
-                   t.columns.len ) ;
-      _pushLobHeader( &header, BSONObj(), iov ) ;
-      _pushLobData( &t, sizeof( _MsgLobTuple ), iov ) ;
-      _pushLobData( tuple.data, t.columns.len, iov ) ;
-
-      do
-      {
-         _clearMsgData() ;
-         INT32 tag = RETRY_TAG_NULL ;
-         header.version = _cataInfo->getVersion() ;
-         RTN_COORD_LOB_GET_SUBSTREAM( _metaGroup, sub ) ;
-
-         header.contextID = sub->contextID ;
-
-         pSub = pSession->addSubSession( sub->id.value ) ;
-         pSub->setReqMsg( &( header.header ), PMD_EDU_MEM_NONE ) ;
-         pSub->addIODatas( iov ) ;
-
-         rc = pSession->sendMsg( pSub ) ;
-         if ( rc )
-         {
-            PD_LOG( PDERROR, "Send msg to node[%d:%d] failed, rc:%d",
-                    sub->id.columns.groupID, sub->id.columns.nodeID, rc ) ;
-            goto error ;
-         }
-
-         rc = _getReply( cb, TRUE, tag ) ;
-         pCtrl->incRetry() ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "Failed to get reply msg, rc: %d", rc ) ;
-            goto error ;
-         }
-
-         if ( RETRY_TAG_NULL == tag )
-         {
-            break ;
-         }
-         else
-         {
-            rc = _reopenSubStreams( cb ) ;
-            if ( SDB_OK != rc )
-            {
-               PD_LOG( PDERROR, "Failed to reopen sub streams, rc: %d", rc ) ;
-               goto error ;
-            }
-         }
-      } while ( TRUE ) ;
-
-   done:
+      rc = _update( tuple, cb ) ;
       PD_TRACE_EXITRC( COORD_LOBSTREAM_COMPLETELOB, rc ) ;
       return rc ;
-   error:
-      goto done ;
    }
 
    INT32 _coordLobStream::_close( _pmdEDUCB *cb )
@@ -1594,6 +1867,51 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION( COORD_LOBSTREAM_SHARDSINGLEDATA, "_coordLobStream::_shardSingleData" )
+   INT32 _coordLobStream::_shardSingleData( const MsgOpLob &header,
+                                            const _rtnLobTuple& tuple,
+                                            BOOLEAN isWrite,
+                                            _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( COORD_LOBSTREAM_SHARDSINGLEDATA ) ;
+
+      const subStream *sub = NULL ;
+      UINT32 groupID = 0 ;
+      dataGroup *dg = NULL ;
+      const MsgLobTuple& t = tuple.tuple ;
+
+      _dataGroups.clear() ;
+
+      rc = _cataInfo->getLobGroupID( getOID(),
+                                     t.columns.sequence,
+                                     groupID ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to get destination:%d", rc ) ;
+         goto error ;
+      }
+
+      RTN_COORD_LOB_GET_SUBSTREAM( groupID, sub ) ;
+
+      dg = &( _dataGroups[groupID] ) ;
+      if ( !dg->hasData() )
+      {
+         _pushLobHeader( &header, BSONObj(), dg->body ) ;
+         dg->bodyLen += sizeof( MsgOpLob ) - sizeof( MsgHeader ) ;
+      }
+      dg->addData( t, isWrite ? tuple.data : NULL ) ;
+      dg->contextID = sub->contextID ;
+      dg->id = sub->id ;
+
+   done:
+      PD_TRACE_EXITRC( COORD_LOBSTREAM_SHARDSINGLEDATA, rc ) ;
+      return rc ;
+   error:
+      _dataGroups.clear() ;
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION( COORD_LOBSTREAM_HANDLEREADRESULTS, "_coordLobStream::_handleReadResults" )
    INT32 _coordLobStream::_handleReadResults( _pmdEDUCB *cb,
                                               DONE_LST &doneLst )
@@ -1734,7 +2052,7 @@ namespace engine
       if ( !obj.isEmpty() )
       {
          iov.push_back( netIOV( obj.objdata(), obj.objsize() ) ) ;
-	      UINT32 alignedLen = ossRoundUpToMultipleX( obj.objsize(), 4 ) ;
+         UINT32 alignedLen = ossRoundUpToMultipleX( obj.objsize(), 4 ) ;
          if ( ( UINT32 )obj.objsize() < alignedLen )
          {
             iov.push_back( netIOV( &_alignBuf, alignedLen - obj.objsize() ) ) ;
@@ -1774,5 +2092,27 @@ namespace engine
       return ;
    }
 
+   INT32 _coordLobStream::_ensureEmptyPageBuf( INT32 pageSize )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( NULL == _emptyPageBuf )
+      {
+         _emptyPageBuf = (CHAR*)SDB_OSS_MALLOC( pageSize ) ;
+         if ( NULL == _emptyPageBuf )
+         {
+            rc = SDB_OOM ;
+            PD_LOG( PDERROR, "Failed to malloc empty page buf, rc=%d", rc ) ;
+         }
+         ossMemset( _emptyPageBuf, 0, pageSize ) ;
+      }
+
+      return rc ;
+   }
+
+   void _coordLobStream::_releaseEmptyPageBuf()
+   {
+      SAFE_OSS_FREE( _emptyPageBuf ) ;
+   }
 }
 

@@ -359,6 +359,22 @@ namespace engine
                rc = SDB_LOB_IS_NOT_AVAILABLE ;
                goto error ;
             }
+
+            if ( _meta._flag & DMS_LOB_META_FLAG_PIECESINFO_INSIDE )
+            {
+               INT32 length = _meta._piecesInfoNum * (INT32)sizeof( _rtnLobPieces ) ;
+               const CHAR* pieces = (const CHAR*)
+                  ( _buf + len + DMS_LOB_META_LENGTH - length ) ;
+
+               rc = _lobPieces.readFrom( pieces, length ) ;
+               if ( SDB_OK != rc )
+               {
+                  PD_LOG( PDINFO, "Failed to read pieces info of Lob[%s]",
+                          getOID().str().c_str() ) ;
+                  goto error ;
+               }
+            }
+
             /// if meta page has data
             if ( _meta._version >= DMS_LOB_META_MERGE_DATA_VERSION &&
                  _meta._lobLen > 0 &&
@@ -421,7 +437,12 @@ namespace engine
 
       if ( _isMainShd )
       {
-         _meta2Obj( _metaObj ) ;
+         rc = _meta2Obj( _metaObj ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to build meta obj:%d", rc ) ;
+            goto error ;
+         }
 
          if ( _pData )
          {
@@ -622,20 +643,52 @@ namespace engine
       return rc ;
    }
 
-   void _rtnContextShdOfLob::_meta2Obj( bson::BSONObj &obj )
+   INT32 _rtnContextShdOfLob::_meta2Obj( bson::BSONObj &obj )
    {
-      BSONObjBuilder builder ;
-      builder.append( FIELD_NAME_LOB_SIZE, (INT64)_meta._lobLen ) ;
-      builder.append( FIELD_NAME_LOB_PAGE_SIZE,
-                      NULL != _su ? _su->getLobPageSize() : 0 ) ;
-      builder.append( FIELD_NAME_VERSION, (INT32)_meta._version ) ;
-      builder.append( FIELD_NAME_LOB_CREATTIME, (INT64)_meta._createTime ) ;
-      if ( 0 == _meta._modificationTime )
+      INT32 rc = SDB_OK ;
+
+      try
       {
-         _meta._modificationTime = _meta._createTime ;
+         BSONObjBuilder builder ;
+         builder.append( FIELD_NAME_LOB_SIZE, (INT64)_meta._lobLen ) ;
+         builder.append( FIELD_NAME_LOB_PAGE_SIZE,
+                         NULL != _su ? _su->getLobPageSize() : 0 ) ;
+         builder.append( FIELD_NAME_VERSION, (INT32)_meta._version ) ;
+         builder.append( FIELD_NAME_LOB_CREATTIME, (INT64)_meta._createTime ) ;
+         if ( 0 == _meta._modificationTime )
+         {
+            _meta._modificationTime = _meta._createTime ;
+         }
+         builder.append( FIELD_NAME_LOB_MODIFICATION_TIME, (INT64)_meta._modificationTime ) ;
+         builder.append( FIELD_NAME_LOB_FLAG, (INT32)_meta._flag ) ;
+         builder.append( FIELD_NAME_LOB_PIECESINFONUM, _meta._piecesInfoNum ) ;
+         if ( _meta._flag & DMS_LOB_META_FLAG_PIECESINFO_INSIDE &&
+              SDB_LOB_MODE_READ == _mode )
+         {
+            SDB_ASSERT( !_lobPieces.empty(), "empty pieces info" ) ;
+            BSONArray array ;
+            rc = _lobPieces.saveTo( array ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to build pieces info array, rc=%d", rc ) ;
+               goto error ;
+            }
+
+            builder.append( FIELD_NAME_LOB_PIECESINFO, array ) ;
+         }
+         obj = builder.obj() ;
       }
-      builder.append( FIELD_NAME_LOB_MODIFICATION_TIME, (INT64)_meta._modificationTime ) ;
-      obj = builder.obj() ;
+      catch ( std::exception& e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "unexpected exception happened: %s", e.what() ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _rtnContextShdOfLob::_extendBuf( UINT32 len )

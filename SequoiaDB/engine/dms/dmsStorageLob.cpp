@@ -931,8 +931,8 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__DMSSTORAGELOB__ALLOCATEPAGE ) ;
       SDB_ASSERT( NULL != record._oid && 0 <= record._sequence &&
-                  record._dataLen + record._offset <= getLobdPageSize() &&
-                  0 == record._offset, "invalid lob record" ) ;
+                  record._dataLen + record._offset <= getLobdPageSize(),
+                  "invalid lob record" ) ;
 
       rc = _findFreeSpace( 1, page, context ) ;
       if ( SDB_OK != rc )

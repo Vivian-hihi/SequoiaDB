@@ -367,4 +367,6 @@ const CHAR* getErrDesp ( INT32 errCode );
 #define SDB_OPERATION_INCOMPATIBLE       -315  /**< Operation is incompatible with the object */
 #define SDB_CAT_CLUSTER_IS_DEACTIVED     -316  /**< This cluster is deactived */
 #define SDB_LOB_IS_IN_USE                -317  /**< LOB is in use */
+#define SDB_VALUE_OVERFLOW               -318  /**< Data operation is overflowed */
+#define SDB_LOB_PIECESINFO_OVERFLOW      -319  /**< LOB's pieces info is overflowed */
 #endif /* OSSERR_H_ */

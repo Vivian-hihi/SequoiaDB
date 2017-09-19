@@ -147,11 +147,23 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCONTEXTLOB_WRITE, "_rtnContextLob::write" )
    INT32 _rtnContextLob::write( UINT32 len,
                                 const CHAR *buf,
+                                INT64 lobOffset,
                                 _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNCONTEXTLOB_WRITE ) ;
       SDB_ASSERT( NULL != _stream, "can not be null" ) ;
+
+      if ( -1 != lobOffset )
+      {
+         rc = _stream->seek( lobOffset, cb ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to seek lob:%d", rc ) ;
+            goto error ;
+         }
+      }
+
       rc = _stream->write( len, buf, cb ) ;
       if ( SDB_OK != rc )
       {

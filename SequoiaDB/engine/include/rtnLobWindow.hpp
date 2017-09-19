@@ -48,6 +48,10 @@ namespace engine
    public:
       INT32 init( INT32 pageSize, BOOLEAN mergeMeta ) ;
 
+      BOOLEAN continuous( INT64 offset ) const ;
+
+      UINT32 getLobSequence() const ;
+
       INT32 prepare4Write( INT64 offset, UINT32 len, const CHAR *data ) ;
 
       BOOLEAN getNextWriteSequences( RTN_LOB_TUPLES &tuples ) ;
@@ -64,9 +68,8 @@ namespace engine
                           RTN_LOB_TUPLES &tuples ) ;
    private:
       BOOLEAN _getNextWriteSequence( _rtnLobTuple &tuple ) ;
-
+      BOOLEAN _hasData() const ;
       UINT32  _getCurDataPageSize() const ;
-      UINT32  _getCurDataOffset() const ;
 
    private:
       INT32          _pageSize ;
@@ -80,7 +83,6 @@ namespace engine
 
       /// reuse rtnLobPiece to keep write data.
       _rtnLobTuple   _writeData ;
-      BOOLEAN        _analysisCache ;
    } ;
    typedef class _rtnLobWindow rtnLobWindow ;
 }

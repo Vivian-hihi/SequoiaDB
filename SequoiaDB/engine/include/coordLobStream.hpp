@@ -67,7 +67,8 @@ namespace engine
                                  _pmdEDUCB *cb ) ;
 
          virtual INT32 _queryLobMeta( _pmdEDUCB *cb,
-                                      _dmsLobMeta &meta ) ;
+                                      _dmsLobMeta &meta,
+                                      _rtnLobPiecesInfo* piecesInfo = NULL ) ;
 
          virtual INT32 _ensureLob( _pmdEDUCB *cb,
                                    _dmsLobMeta &meta,
@@ -81,8 +82,15 @@ namespace engine
          virtual INT32 _writev( const RTN_LOB_TUPLES &tuples,
                                 _pmdEDUCB *cb ) ;
 
+         virtual INT32 _update( const _rtnLobTuple &tuple,
+                                _pmdEDUCB *cb ) ;
+
+         virtual INT32 _updatev( const RTN_LOB_TUPLES &tuples,
+                                _pmdEDUCB *cb ) ;
+
          virtual INT32 _readv( const RTN_LOB_TUPLES &tuples,
-                               _pmdEDUCB *cb ) ;
+                               _pmdEDUCB *cb,
+                               const _rtnLobPiecesInfo* piecesInfo = NULL ) ;
 
          virtual INT32 _completeLob( const _rtnLobTuple &tuple,
                                      _pmdEDUCB *cb ) ;
@@ -216,6 +224,11 @@ namespace engine
                            const DONE_LST &doneLst,
                            _pmdEDUCB *cb ) ;
 
+         INT32 _shardSingleData( const MsgOpLob &header,
+                                 const _rtnLobTuple& tuple,
+                                 BOOLEAN isWrite,
+                                 _pmdEDUCB *cb ) ;
+
          INT32 _handleReadResults( _pmdEDUCB *cb, DONE_LST &doneLst ) ;
 
          INT32 _add2DoneLstFromReply( DONE_LST &doneLst ) ;
@@ -239,6 +252,23 @@ namespace engine
                            INT32 bsonLen,
                            INT64 contextID,
                            INT32 msgLen = -1 ) ;
+
+         INT32 _writeOp( const _rtnLobTuple &tuple, INT32 opCode,
+                         _pmdEDUCB *cb ) ;
+
+         INT32 _writevOp( const RTN_LOB_TUPLES &tuples, INT32 opCode,
+                          _pmdEDUCB *cb ) ;
+
+         INT32 _read( const _rtnLobTuple& tuple,
+                      _pmdEDUCB *cb, MsgOpReply** reply ) ;
+
+         INT32 _queryPiecesInfoFromPage( _pmdEDUCB *cb, INT32 length,
+                                         _rtnLobPiecesInfo& piecesInfo ) ;
+
+         INT32 _ensureEmptyPageBuf( INT32 pageSize ) ;
+
+         void  _releaseEmptyPageBuf() ;
+
       private:
          CoordCataInfoPtr _cataInfo ;
          CoordGroupMap    _mapGroupInfo ;
@@ -262,6 +292,7 @@ namespace engine
          coordGroupHandler    _groupHandler ;
          coordRemoteHandler   _remoteHandler ;
 
+         CHAR*                _emptyPageBuf ;
    } ;
    typedef _coordLobStream coordLobStream ;
 

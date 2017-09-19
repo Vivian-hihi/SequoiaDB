@@ -354,7 +354,9 @@ const CHAR* getErrDesp ( INT32 errCode )
       "Data source has not been initialized",
       "Operation is incompatible with the object",
       "This cluster is deactived",
-      "LOB is in use"
+      "LOB is in use",
+      "Data operation is overflowed",
+      "LOB's pieces info is overflowed"
    };
    if ( code < 0 || (UINT32)code >= (sizeof ( errDesp ) / sizeof ( CHAR* )) )
    {

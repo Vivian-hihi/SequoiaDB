@@ -54,6 +54,7 @@ namespace engine
    #define DMS_LOB_VERSION_1                 1
    #define DMS_LOB_CUR_VERSION               2
    #define DMS_LOB_META_SEQUENCE             0
+   #define DMS_LOB_PIECESINFO_SEQUENCE       0xFFFFFFFF
 
    #define DMS_LOB_COMPLETE                  1
    #define DMS_LOB_UNCOMPLETE                0
@@ -62,6 +63,7 @@ namespace engine
       Lob meta fixed size, 1K
    */
    #define DMS_LOB_META_LENGTH               ( 1024 )
+   #define DMS_LOB_META_PIECESINFO_LEN       ( 256 )
 
    #define RTN_LOB_GET_SEQUENCE( offset, isMerge, log ) \
      ( (isMerge) ? ( ( (INT64)(offset)+DMS_LOB_META_LENGTH) >> (log) ) : \
@@ -162,6 +164,9 @@ namespace engine
 
    #define DMS_LOB_META_CURRENT_VERSION       DMS_LOB_META_MERGE_DATA_VERSION
 
+   #define DMS_LOB_META_FLAG_PIECESINFO_INSIDE 0x00000001
+   #define DMS_LOB_META_FLAG_PIECESINFO_PAGE   0x00000002
+
    /*
       _dmsLobMeta define
    */
@@ -173,7 +178,9 @@ namespace engine
       UINT8       _version ;
       UINT16      _padding ;
       UINT64      _modificationTime ;
-      CHAR        _pad[484] ;
+      UINT32      _flag ;
+      INT32       _piecesInfoNum ;
+      CHAR        _pad[476] ;
 
       _dmsLobMeta()
       :_lobLen( 0 ),
@@ -181,7 +188,9 @@ namespace engine
        _status( DMS_LOB_UNCOMPLETE ),
        _version( DMS_LOB_META_CURRENT_VERSION ),
        _padding( 0 ),
-       _modificationTime( 0 )
+       _modificationTime( 0 ),
+       _flag( 0 ),
+       _piecesInfoNum( 0 )
       {
          ossMemset( _pad, 0, sizeof( _pad ) ) ;
          SDB_ASSERT( sizeof( _dmsLobMeta ) == 512,
@@ -198,6 +207,8 @@ namespace engine
          _version = DMS_LOB_META_CURRENT_VERSION ;
          _padding = 0 ;
          _modificationTime = 0 ;
+         _flag = 0 ;
+         _piecesInfoNum = 0 ;
          ossMemset( _pad, 0, sizeof( _pad ) ) ;
       }
 

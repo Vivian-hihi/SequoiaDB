@@ -37,6 +37,7 @@
 #include "dmsLobDef.hpp"
 #include "rtnLobWindow.hpp"
 #include "rtnLobDataPool.hpp"
+#include "rtnLobPieces.hpp"
 #include "msgDef.hpp"
 #include "../bson/bson.hpp"
 
@@ -141,23 +142,27 @@ namespace engine
          return _lobPageSz ;
       }
 
-   protected:
-      _dpsLogWrapper *_getDPSCB()
+      OSS_INLINE _dpsLogWrapper *_getDPSCB()
       {
          return _dpsCB ;
       }
 
-      _rtnLobDataPool &_getPool()
+      OSS_INLINE _rtnLobDataPool &_getPool()
       {
          return _pool ;
       }
 
-      INT32 _getMode() const
+      OSS_INLINE _rtnLobPiecesInfo &_getPiecesInfo()
+      {
+         return _lobPieces ;
+      }
+
+      OSS_INLINE INT32 _getMode() const
       {
          return _mode ;
       }
 
-      INT32 _getFlags() const
+      OSS_INLINE INT32 _getFlags() const
       {
          return _flags ;
       }
@@ -169,7 +174,8 @@ namespace engine
                               _pmdEDUCB *cb ) = 0 ;
 
       virtual INT32 _queryLobMeta( _pmdEDUCB *cb,
-                                   _dmsLobMeta &meta ) = 0 ;
+                                   _dmsLobMeta &meta,
+                                   _rtnLobPiecesInfo* piecesInfo = NULL ) = 0 ;
 
       virtual INT32 _ensureLob( _pmdEDUCB *cb,
                                 _dmsLobMeta &meta,
@@ -183,8 +189,15 @@ namespace engine
       virtual INT32 _writev( const RTN_LOB_TUPLES &tuples,
                              _pmdEDUCB *cb ) = 0 ;
 
+      virtual INT32 _update( const _rtnLobTuple &tuple,
+                             _pmdEDUCB *cb ) = 0 ;
+
+      virtual INT32 _updatev( const RTN_LOB_TUPLES &tuples,
+                             _pmdEDUCB *cb ) = 0 ;
+
       virtual INT32 _readv( const RTN_LOB_TUPLES &tuples,
-                            _pmdEDUCB *cb ) = 0 ;
+                            _pmdEDUCB *cb,
+                            const _rtnLobPiecesInfo* piecesInfo = NULL ) = 0 ;
 
       virtual INT32 _completeLob( const _rtnLobTuple &tuple,
                                   _pmdEDUCB *cb ) = 0 ;
@@ -211,12 +224,22 @@ namespace engine
 
       INT32 _open4Remove( _pmdEDUCB *cb ) ;
 
+      INT32 _close4Create( _pmdEDUCB *cb ) ;
+
       bson::BSONObj _meta2Obj( const _dmsLobMeta &meta ) const ;
+
+      UINT32 _getSequence( INT64 offset ) const ;
+
+      INT32 _writeOrUpdate( const _rtnLobTuple &tuple,
+                            _pmdEDUCB *cb ) ;
+
+      INT32 _writeOrUpdate( RTN_LOB_TUPLES &tuples,
+                            _pmdEDUCB *cb ) ;
 
    private:
       CHAR                 _fullName[ DMS_COLLECTION_SPACE_NAME_SZ +
                                       DMS_COLLECTION_NAME_SZ + 2 ] ;
-      _dpsLogWrapper       *_dpsCB ;
+      _dpsLogWrapper*      _dpsCB ;
       bson::OID            _oid ;
       _dmsLobMeta          _meta ;
       bson::BSONObj        _metaObj ;
@@ -225,8 +248,12 @@ namespace engine
       _rtnLobWindow        _lw ;
       UINT32               _mode ;
       INT32                _flags ;
-      SINT32               _lobPageSz ;
-      SINT64               _offset ;
+      INT32                _lobPageSz ;
+      UINT32               _logarithmic ;
+      INT64                _offset ;
+
+      _rtnLobPiecesInfo    _lobPieces ;
+      BOOLEAN              _hasPiecesInfo ;
    } ;
    typedef class _rtnLobStream rtnLobStream ;
 }

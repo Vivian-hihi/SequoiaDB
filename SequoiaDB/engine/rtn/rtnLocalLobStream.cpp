@@ -139,8 +139,9 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOCALLOBSTREAM__QUERYLOBMETA, "_rtnLocalLobStream::_queryLobMeta" )
-   INT32 _rtnLocalLobStream::_queryLobMeta(  _pmdEDUCB *cb,
-                                             _dmsLobMeta &meta )
+   INT32 _rtnLocalLobStream::_queryLobMeta( _pmdEDUCB *cb,
+                                            _dmsLobMeta &meta,
+                                            _rtnLobPiecesInfo* piecesInfo )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNLOCALLOBSTREAM__QUERYLOBMETA ) ;
@@ -204,6 +205,33 @@ namespace engine
             }
             _getPool().pushDone() ;
          }
+
+         if ( NULL != piecesInfo )
+         {
+            INT32 length = meta._piecesInfoNum * (INT32)sizeof( _rtnLobPieces ) ;
+
+            if ( meta._flag & DMS_LOB_META_FLAG_PIECESINFO_INSIDE )
+            {
+               const CHAR* piecesInfoBuf = (const CHAR*)
+                                           ( buf + DMS_LOB_META_LENGTH - length ) ;
+               rc = piecesInfo->readFrom( piecesInfoBuf, length ) ;
+               if ( SDB_OK != rc )
+               {
+                  PD_LOG( PDERROR, "Failed to read pieces info from meta, rc:%d", rc ) ;
+                  goto error ;
+               }
+            }
+            else if ( meta._flag & DMS_LOB_META_FLAG_PIECESINFO_PAGE )
+            {
+               rc = _queryPiecesInfoFromPage( cb, length, *piecesInfo ) ;
+               if ( SDB_OK != rc )
+               {
+                  PD_LOG( PDERROR, "Failed to read pieces info from page, rc:%d", rc ) ;
+                  goto error ;
+               }
+            }
+         }
+
          goto done ;
       }
       else
@@ -221,6 +249,53 @@ namespace engine
 
    done:
       PD_TRACE_EXITRC( SDB_RTNLOCALLOBSTREAM__QUERYLOBMETA, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnLocalLobStream::_queryPiecesInfoFromPage( _pmdEDUCB *cb, INT32 length,
+                                                       _rtnLobPiecesInfo& piecesInfo )
+   {
+      INT32 rc = SDB_OK ;
+      UINT32 readLen = 0 ;
+      CHAR* buf = NULL ;
+      dmsLobRecord record ;
+
+      buf = (CHAR*)SDB_OSS_MALLOC( length ) ;
+      if ( NULL == buf )
+      {
+         rc = SDB_OOM ;
+         PD_LOG( PDERROR, "Failed to malloc, rc=%d", rc ) ;
+         goto error ;
+      }
+
+      record.set( &getOID(), DMS_LOB_PIECESINFO_SEQUENCE, 0, length, NULL ) ;
+
+      rc = _su->lob()->read( record, _mbContext, cb, buf, readLen ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to get meta of lob, rc:%d", rc ) ;
+         goto error ;
+      }
+
+      if ( (INT32)readLen < length )
+      {
+         PD_LOG( PDERROR, "Read lob[%s]'s pieces info page len is less than "
+                 "pieces info length[%d]", getOID().str().c_str(), length ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      rc = piecesInfo.readFrom( buf, length ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to read pieces info, rc:%d", rc ) ;
+         goto error ;
+      }
+
+   done:
+      SAFE_OSS_FREE( buf ) ;
       return rc ;
    error:
       goto done ;
@@ -294,24 +369,9 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNLOCALLOBSTREAM__COMPLETELOB ) ;
-      dmsLobRecord record ;
-      const MsgLobTuple &t = tuple.tuple ;
-
-      record.set( &getOID(), t.columns.sequence, t.columns.offset,
-                  t.columns.len, ( const CHAR * )tuple.data ) ;
-
-      rc = _su->lob()->update( record, _mbContext, cb, _getDPSCB() ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to write to lob:%d", rc ) ;
-         goto error ;
-      }
-
-   done:
+      rc = _update( tuple, cb ) ;
       PD_TRACE_EXITRC( SDB_RTNLOCALLOBSTREAM__COMPLETELOB, rc ) ;
       return rc ;
-   error:
-      goto done ;
    }
 
    INT32 _rtnLocalLobStream::_getLobPageSize( INT32 &pageSize )
@@ -320,37 +380,6 @@ namespace engine
       pageSize = _su->getLobPageSize() ;
       return SDB_OK ;
    }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOCALLOBSTREAM__WRITEV, "_rtnLocalLobStream::_writev" )
-   INT32 _rtnLocalLobStream::_writev( const RTN_LOB_TUPLES &tuples,
-                                      _pmdEDUCB *cb )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB_RTNLOCALLOBSTREAM__WRITEV ) ;
-      for ( RTN_LOB_TUPLES::const_iterator itr = tuples.begin() ;
-            itr != tuples.end() ;
-            ++itr ) 
-      {
-         SDB_ASSERT( !itr->empty(), "can not be empty" ) ;
-         if ( cb->isInterrupted() )
-         {
-            rc = SDB_INTERRUPT ;
-            goto error ;
-         }
-
-         rc = _write( *itr, cb ) ;
-         if ( SDB_OK != rc )
-         {
-            goto error ;
-         }
-      }
-   done:
-      PD_TRACE_EXITRC( SDB_RTNLOCALLOBSTREAM__WRITEV, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOCALLOBSTREAM__WRITE, "_rtnLocalLobStream::_write" )
    INT32 _rtnLocalLobStream::_write( const _rtnLobTuple &tuple,
@@ -382,9 +411,101 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOCALLOBSTREAM__WRITEV, "_rtnLocalLobStream::_writev" )
+   INT32 _rtnLocalLobStream::_writev( const RTN_LOB_TUPLES &tuples,
+                                      _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNLOCALLOBSTREAM__WRITEV ) ;
+
+      for ( RTN_LOB_TUPLES::const_iterator itr = tuples.begin() ;
+            itr != tuples.end() ;
+            ++itr ) 
+      {
+         SDB_ASSERT( !itr->empty(), "can not be empty" ) ;
+         if ( cb->isInterrupted() )
+         {
+            rc = SDB_INTERRUPT ;
+            goto error ;
+         }
+
+         rc = _write( *itr, cb ) ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+      }
+
+   done:
+      PD_TRACE_EXITRC( SDB_RTNLOCALLOBSTREAM__WRITEV, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOCALLOBSTREAM__UPDATE, "_rtnLocalLobStream::_update" )
+   INT32 _rtnLocalLobStream::_update( const _rtnLobTuple &tuple,
+                                      _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNLOCALLOBSTREAM__UPDATE ) ;
+
+      dmsLobRecord record ;
+      const MsgLobTuple &t = tuple.tuple ;
+
+      record.set( &getOID(), t.columns.sequence, t.columns.offset,
+                  t.columns.len, ( const CHAR * )tuple.data ) ;
+
+      rc = _su->lob()->update( record, _mbContext, cb, _getDPSCB() ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to update to lob:%d", rc ) ;
+         goto error ;
+      }
+
+   done:
+      PD_TRACE_EXITRC( SDB_RTNLOCALLOBSTREAM__UPDATE, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOCALLOBSTREAM__UPDATEV, "_rtnLocalLobStream::_updatev" )
+   INT32 _rtnLocalLobStream::_updatev( const RTN_LOB_TUPLES &tuples,
+                                       _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNLOCALLOBSTREAM__UPDATEV ) ;
+
+      for ( RTN_LOB_TUPLES::const_iterator itr = tuples.begin() ;
+            itr != tuples.end() ;
+            ++itr ) 
+      {
+         SDB_ASSERT( !itr->empty(), "can not be empty" ) ;
+         if ( cb->isInterrupted() )
+         {
+            rc = SDB_INTERRUPT ;
+            goto error ;
+         }
+
+         rc = _update( *itr, cb ) ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+      }
+
+   done:
+      PD_TRACE_EXITRC( SDB_RTNLOCALLOBSTREAM__UPDATEV, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOCALLOBSTREAM__READV, "_rtnLocalLobStream::_readv" )
    INT32 _rtnLocalLobStream::_readv( const RTN_LOB_TUPLES &tuples,
-                                     _pmdEDUCB *cb )
+                                     _pmdEDUCB *cb,
+                                     const _rtnLobPiecesInfo* piecesInfo )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNLOCALLOBSTREAM__READV ) ;
@@ -410,16 +531,26 @@ namespace engine
          goto error ;
       }
 
-      for ( RTN_LOB_TUPLES::const_iterator itr = tuples.begin() ;
-            itr != tuples.end() ;
-            ++itr )
+      for ( RTN_LOB_TUPLES::const_iterator iter = tuples.begin() ;
+            iter != tuples.end() ;
+            ++iter )
       {
-         rc = _read( *itr, cb, buf + readSize ) ;
-         if ( SDB_OK != rc )
+         const _rtnLobTuple& t = *iter ;
+
+         if ( NULL != piecesInfo &&
+              !piecesInfo->hasPiece( t.tuple.columns.sequence ) )
          {
-            goto error ;
+            ossMemset( buf + readSize, 0, t.tuple.columns.len ) ;
          }
-         readSize += itr->tuple.columns.len ;
+         else
+         {
+            rc = _read( t, cb, buf + readSize ) ;
+            if ( SDB_OK != rc )
+            {
+               goto error ;
+            }
+         }
+         readSize += t.tuple.columns.len ;
       }
 
       SDB_ASSERT( readSize == needLen, "impossible" ) ;

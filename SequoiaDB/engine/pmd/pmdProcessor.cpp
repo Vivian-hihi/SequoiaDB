@@ -819,7 +819,7 @@ namespace engine
    {
       INT32 rc         = SDB_OK ;
       UINT32 len       = 0 ;
-      SINT64 offset    = -1 ;
+      INT64 offset     = -1 ;
       const CHAR *data = NULL ;
       const MsgOpLob *header = NULL ;
 
@@ -836,7 +836,7 @@ namespace engine
                           "ContextID:%lld, Len:%u, Offset:%llu",
                           header->contextID, len, offset ) ;
 
-      rc = rtnWriteLob( header->contextID, eduCB(), len, data ) ;
+      rc = rtnWriteLob( header->contextID, eduCB(), len, data, offset ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to write lob:%d", rc ) ;
