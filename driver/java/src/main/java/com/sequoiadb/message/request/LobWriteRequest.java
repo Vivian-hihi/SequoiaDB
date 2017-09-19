@@ -27,10 +27,10 @@ public class LobWriteRequest extends LobRequest {
     private static final int FIXED_LENGTH = 68; // LOB_HEADER_LENGTH + 16
     private int bufLen;
     private static final int sequence = 0;
-    private static final long offset = -1;
+    private long offset;
     private ByteBuffer buffer;
 
-    public LobWriteRequest(long contextId, byte[] buf, int off, int len) {
+    public LobWriteRequest(long contextId, byte[] buf, int off, int len, long lobOffset) {
         opCode = MsgOpCode.LOB_WRITE_REQ;
         length = FIXED_LENGTH;
 
@@ -45,6 +45,7 @@ public class LobWriteRequest extends LobRequest {
         bufLen = len;
         buffer = ByteBuffer.wrap(buf, off, len);
         length += Helper.alignedSize(len);
+        this.offset = lobOffset;
     }
 
     @Override

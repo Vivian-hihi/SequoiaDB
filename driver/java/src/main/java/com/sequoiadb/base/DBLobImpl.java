@@ -57,12 +57,13 @@ class DBLobImpl implements DBLob {
     private ObjectId _id;
     private int _mode;
     private int _pageSize;
-    private long _size;
+    private long _lobSize;
     private long _createTime;
-    private long _readOffset = 0;
+    private long _currentOffset = 0;
     private long _cachedOffset = -1;
     private ByteBuffer _cachedDataBuff = null;
     private boolean _isOpened = false;
+    private boolean _seekWrite = false;
 
     /* when first open/create DBLob, sequoiadb return the contextID for the
      * further reading/writing/close
@@ -139,7 +140,7 @@ class DBLobImpl implements DBLob {
         }
 
         _mode = mode;
-        _readOffset = 0;
+        _currentOffset = 0;
 
         _open();
         _isOpened = true;
@@ -158,13 +159,13 @@ class DBLobImpl implements DBLob {
         _sdb.reportIfError(response, openLob);
 
         BSONObject obj = response.getMetaInfo();
-        _size = (Long) obj.get(FIELD_NAME_LOB_SIZE);
+        _lobSize = (Long) obj.get(FIELD_NAME_LOB_SIZE);
         _createTime = (Long) obj.get(FIELD_NAME_LOB_CREATTIME);
         _pageSize = (Integer) obj.get(FIELD_NAME_LOB_PAGESIZE);
         _cachedDataBuff = response.getData();
         if (_cachedDataBuff != null) {
-            _readOffset = 0;
-            _cachedOffset = _readOffset;
+            _currentOffset = 0;
+            _cachedOffset = _currentOffset;
         }
         _contextID = response.getContextId();
     }
@@ -186,7 +187,7 @@ class DBLobImpl implements DBLob {
      */
     @Override
     public long getSize() {
-        return _size;
+        return _lobSize;
     }
 
     /**
@@ -399,37 +400,41 @@ class DBLobImpl implements DBLob {
             throw new BaseException(SDBError.SDB_LOB_NOT_OPEN, "lob is not open");
         }
 
-        if (_mode != SDB_LOB_READ) {
+        if (_mode != SDB_LOB_READ && _mode != SDB_LOB_CREATEONLY) {
             throw new BaseException(SDBError.SDB_OPTION_NOT_SUPPORT, "seek() is not supported"
                 + " in mode=" + _mode);
         }
 
         if (SDB_LOB_SEEK_SET == seekType) {
-            if (size < 0 || size > _size) {
-                throw new BaseException(SDBError.SDB_INVALIDARG, "out of bound");
+            if (size < 0 || (size >= _lobSize && _mode == SDB_LOB_READ)) {
+                throw new BaseException(SDBError.SDB_INVALIDARG, "out of bound, lobSize=" + _lobSize);
             }
 
-            _readOffset = size;
+            _currentOffset = size;
         } else if (SDB_LOB_SEEK_CUR == seekType) {
-            if ((_size < _readOffset + size)
-                || (_readOffset + size < 0)) {
-                throw new BaseException(SDBError.SDB_INVALIDARG, "out of bound");
+            if ((_currentOffset + size >= _lobSize && _mode == SDB_LOB_READ)
+                || (_currentOffset + size < 0)) {
+                throw new BaseException(SDBError.SDB_INVALIDARG, "out of bound, lobSize=" + _lobSize);
             }
 
-            _readOffset += size;
+            _currentOffset += size;
         } else if (SDB_LOB_SEEK_END == seekType) {
-            if (size < 0 || size > _size) {
-                throw new BaseException(SDBError.SDB_INVALIDARG, "out of bound");
+            if (size < 0 || (size > _lobSize && _mode == SDB_LOB_READ)) {
+                throw new BaseException(SDBError.SDB_INVALIDARG, "out of bound, lobSize=" + _lobSize);
             }
 
-            _readOffset = _size - size;
+            _currentOffset = _lobSize - size;
         } else {
             throw new BaseException(SDBError.SDB_INVALIDARG, "unreconigzed seekType: " + seekType);
+        }
+
+        if (_mode == SDB_LOB_CREATEONLY) {
+            _seekWrite = true;
         }
     }
 
     private int _reviseReadLen(int needLen) {
-        int mod = (int) (_readOffset & (_pageSize - 1));
+        int mod = (int) (_currentOffset & (_pageSize - 1));
         // when "needLen" is great than (2^31 - 1) - 3,
         // alignedLen" will be less than 0, but we should not worry
         // about this, because before we finish using the cached data,
@@ -450,21 +455,21 @@ class DBLobImpl implements DBLob {
         int remaining = (_cachedDataBuff != null) ? _cachedDataBuff.remaining() : 0;
         return (_cachedDataBuff != null && 0 < remaining &&
             0 <= _cachedOffset &&
-            _cachedOffset <= _readOffset &&
-            _readOffset < (_cachedOffset + remaining));
+            _cachedOffset <= _currentOffset &&
+            _currentOffset < (_cachedOffset + remaining));
     }
 
     private int _readInCache(byte[] buf, int off, int needRead) {
         if (needRead > buf.length - off) {
             throw new BaseException(SDBError.SDB_SYS, "buf size is to small");
         }
-        int readInCache = (int) (_cachedOffset + _cachedDataBuff.remaining() - _readOffset);
+        int readInCache = (int) (_cachedOffset + _cachedDataBuff.remaining() - _currentOffset);
         readInCache = readInCache <= needRead ? readInCache : needRead;
-        // if we had used "lobSeek" to adjust "_readOffset",
+        // if we had used "lobSeek" to adjust "_currentOffset",
         // let's adjust the right place to copy data
-        if (_readOffset > _cachedOffset) {
+        if (_currentOffset > _cachedOffset) {
             int currentPos = _cachedDataBuff.position();
-            int newPos = currentPos + (int) (_readOffset - _cachedOffset);
+            int newPos = currentPos + (int) (_currentOffset - _cachedOffset);
             _cachedDataBuff.position(newPos);
         }
         // copy the data from cache out to the buf for user
@@ -473,7 +478,7 @@ class DBLobImpl implements DBLob {
             // TODO: shell we need to reuse the ByteBuffer ?
             _cachedDataBuff = null;
         } else {
-            _cachedOffset = _readOffset + readInCache;
+            _cachedOffset = _currentOffset + readInCache;
         }
         return readInCache;
     }
@@ -489,7 +494,7 @@ class DBLobImpl implements DBLob {
             onceRead = _readInCache(buf, off, needRead);
             totalRead += onceRead;
             needRead -= onceRead;
-            _readOffset += onceRead;
+            _currentOffset += onceRead;
             return totalRead;
         }
 
@@ -500,7 +505,7 @@ class DBLobImpl implements DBLob {
         // page align
         alignedLen = _reviseReadLen(needRead);
 
-        LobReadRequest request = new LobReadRequest(_contextID, alignedLen, _readOffset);
+        LobReadRequest request = new LobReadRequest(_contextID, alignedLen, _currentOffset);
         LobReadResponse response = _sdb.requestAndResponse(request, LobReadResponse.class);
 
         int rc = response.getFlag();
@@ -511,9 +516,9 @@ class DBLobImpl implements DBLob {
         }
 
         long offsetInEngine = response.getOffset();
-        if (_readOffset != offsetInEngine) {
+        if (_currentOffset != offsetInEngine) {
             throw new BaseException(SDBError.SDB_SYS,
-                "local read offset(" + _readOffset +
+                "local read offset(" + _currentOffset +
                     ") is not equal with what we expect(" + offsetInEngine + ")");
         }
 
@@ -533,12 +538,12 @@ class DBLobImpl implements DBLob {
         if (needRead < retLobLen) {
             _cachedDataBuff.get(buf, off, needRead);
             totalRead += needRead;
-            _readOffset += needRead;
-            _cachedOffset = _readOffset;
+            _currentOffset += needRead;
+            _cachedOffset = _currentOffset;
         } else {
             _cachedDataBuff.get(buf, off, retLobLen);
             totalRead += retLobLen;
-            _readOffset += retLobLen;
+            _currentOffset += retLobLen;
             _cachedOffset = -1;
             _cachedDataBuff = null;
         }
@@ -551,10 +556,10 @@ class DBLobImpl implements DBLob {
         int onceRead = 0;
         int totalRead = 0;
         // when no data for return
-        if (_readOffset == _size) {
+        if (_currentOffset == _lobSize) {
             return -1;
         }
-        while (needRead > 0 && _readOffset < _size) {
+        while (needRead > 0 && _currentOffset < _lobSize) {
             onceRead = _onceRead(b, offset, needRead);
             if (onceRead == -1) {
                 if (totalRead == 0) {
@@ -576,14 +581,12 @@ class DBLobImpl implements DBLob {
             return;
         }
 
-        LobWriteRequest request = new LobWriteRequest(_contextID, input, off, len);
+        long offset = _seekWrite ? _currentOffset : -1;
+        LobWriteRequest request = new LobWriteRequest(_contextID, input, off, len, offset);
         SdbReply response = _sdb.requestAndResponse(request);
-
-        int flag = response.getFlag();
-        if (0 != flag) {
-            throw new BaseException(flag);
-        }
-
-        _size += len;
+        _sdb.reportIfError(response);
+        _currentOffset += len;
+        _lobSize = Math.max(_lobSize, _currentOffset);
+        _seekWrite = false;
     }
 }

@@ -1,6 +1,9 @@
 package com.sequoiadb.test;
 
 import com.sequoiadb.base.CollectionSpace;
+import com.sequoiadb.base.Sequoiadb;
+import org.bson.BSONObject;
+import org.bson.BasicBSONObject;
 import org.bson.types.ObjectId;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -20,7 +23,10 @@ public abstract class SingleCSTestCase extends SingleTestCase {
         if (sdb.isCollectionSpaceExist(csName)) {
             sdb.dropCollectionSpace(csName);
         }
-        cs = sdb.createCollectionSpace(csName);
+
+        BSONObject options = new BasicBSONObject();
+        options.put("LobPageSize", Sequoiadb.SDB_PAGESIZE_4K);
+        cs = sdb.createCollectionSpace(csName, options);
     }
 
     @AfterClass
