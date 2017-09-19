@@ -334,12 +334,21 @@ var FIELD_CLUSTER_NAME                     = ClusterName ;
 var FIELD_CONFIG                           = Config ;
 var FIELD_HOST_INFO                        = HostInfo ;
 var FIELD_SEQUOIADB                        = "sequoiadb" ;
+var FIELD_SEQUOIASQL_OLTP                  = "sequoiasql-oltp" ;
 var FIELD_HOSTLIST                         = "HostList" ;
 var FIELD_IP                               = IP ;
 var FIELD_HOSTS                            = Hosts ;
 var FIELD_IP2                              = Ip ;
 var FIELD_AGENT_SERVICE                    = AgentService ;
-
+var FIELD_PACKAGE_NAME                     = "PackageName" ;
+var FIELD_SDBUSERGROUP                     = SdbUserGroup ;
+var FIELD_SDBPASSWD                        = SdbPasswd ;
+var FIELD_SDBUSER                          = SdbUser ;
+var FIELD_INSTALL_PACKET                   = InstallPacket ;
+var FIELD_SSH_PORT                         = SshPort ;
+var FIELD_INSTALL_PATH                     = InstallPath ;
+var FIELD_VERSION                          = Version ;
+var FIELD_ENFORCED                         = "Enforced" ;
 
 // Async task step
 var STEP_GENERATE_PLAN                     = "Generate plan" ;
