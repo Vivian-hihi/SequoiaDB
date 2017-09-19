@@ -177,6 +177,9 @@ namespace engine
       case OMA_TASK_SHRINK_BUSINESS:
          command = OMA_CMD_SHRINK_BUSINESS ;
          break ;
+      case OMA_TASK_DEPLOY_PACKAGE:
+         command = OMA_CMD_DEOLOY_PACKAGE ;
+         break ;
       default:
          command = "" ;
          break ;
@@ -243,6 +246,7 @@ namespace engine
             break ;
          case OMA_TASK_EXTEND_DB:
          case OMA_TASK_SHRINK_BUSINESS:
+         case OMA_TASK_DEPLOY_PACKAGE:
             {
                string command = getCmdByType( taskType ) ;
 

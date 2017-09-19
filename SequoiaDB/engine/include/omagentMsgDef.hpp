@@ -80,6 +80,7 @@
 #define OMA_FIELD_IP                               "IP"
 #define OMA_FIELD_IP2                              "Ip"
 #define OMA_FIELD_INFO                             "Info"
+#define OMA_FIELD_OMA                              "OMA"
 
 
 #define OMA_FIELD_PING                             "Ping"

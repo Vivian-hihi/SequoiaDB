@@ -598,7 +598,6 @@ namespace engine
       INT64 _taskID ;
    } ;
 
-
    /*
       shrink business
    */
@@ -613,6 +612,32 @@ namespace engine
 
    public:
       virtual const CHAR* name() { return OMA_CMD_SHRINK_BUSINESS ; }
+      virtual INT32 init( const CHAR *pInstallInfo ) ;
+      virtual INT32 convertResult( const BSONObj& itemInfo,
+                                   BSONObj& taskInfo ) ;
+
+   private:
+      void _aggrFlowArray( const BSONObj& array1, const BSONObj& array2,
+                           BSONArray& out ) ;
+
+   private:
+      INT64 _taskID ;
+   } ;
+
+   /*
+      deploy package
+   */
+   class _omaDeployPackage : public _omaCommand
+   {
+
+   DECLARE_OACMD_AUTO_REGISTER() ;
+
+   public:
+      _omaDeployPackage() ;
+      virtual ~_omaDeployPackage() ;
+
+   public:
+      virtual const CHAR* name() { return OMA_CMD_DEOLOY_PACKAGE ; }
       virtual INT32 init( const CHAR *pInstallInfo ) ;
       virtual INT32 convertResult( const BSONObj& itemInfo,
                                    BSONObj& taskInfo ) ;

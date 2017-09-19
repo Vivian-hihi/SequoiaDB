@@ -73,12 +73,16 @@ namespace engine
       // extend business
       OMA_TASK_EXTEND_BUZ         = OM_TASK_TYPE_EXTEND_BUSINESS,
 
+      // shrink business
       OMA_TASK_SHRINK_BUSINESS    = OM_TASK_TYPE_SHRINK_BUSINESS,
+
+      // deploy package
+      OMA_TASK_DEPLOY_PACKAGE     = OM_TASK_TYPE_DEPLOY_PACKAGE,
 
       OMA_TASK_TYPE_END,
       
       OMA_TASK_SUB_TYPE_BEGIN,
-      OMA_TASK_INSTALL_DB         = 10, 
+      OMA_TASK_INSTALL_DB         = 10,
       OMA_TASK_REMOVE_DB          = 11,
       OMA_TASK_INSTALL_ZN         = 12, // install zookeeper business
       OMA_TASK_REMOVE_ZN          = 13, // remove zookeeper business
