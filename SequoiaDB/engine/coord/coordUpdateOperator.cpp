@@ -196,7 +196,20 @@ namespace engine
                                               isChanged, cb,
                                               boSelector,
                                               keepShardingKey ) ;
-            if ( rc )
+            if ( SDB_UPDATE_SHARD_KEY == rc && !cataSel.hasUpdated() )
+            {
+               rc = cataSel.updateCataInfo( pCollectionName, cb ) ;
+               if ( rc )
+               {
+                  PD_LOG( PDERROR, "Update collection[%s]'s catalog info "
+                          "failed in update operator, rc: %d",
+                          pCollectionName, rc ) ;
+                  goto error ;
+               }
+               _groupSession.getGroupCtrl()->incRetry() ;
+               goto retry ;
+            }
+            else if ( rc )
             {
                PD_LOG( PDERROR, "Kick sharding key for collection[%s] "
                        "failed, rc: %d", pCollectionName, rc ) ;
@@ -285,12 +298,12 @@ namespace engine
       // upsert
       if ( ( flag & FLG_UPDATE_UPSERT ) && 0 == _recvNum )
       {
-         if ( OSS_BIT_TEST( cataSel.getCataPtr()->getCatalogSet()->getAttribute(), 
-                            DMS_MB_ATTR_STRICTDATAMODE ) ) 
+         if ( OSS_BIT_TEST( cataSel.getCataPtr()->getCatalogSet()->getAttribute(),
+                            DMS_MB_ATTR_STRICTDATAMODE ) )
          {
             strictDataMode = TRUE ;
          }
-         rc = _upsert( pCollectionName, boSelector, boUpdator, boHint, 
+         rc = _upsert( pCollectionName, boSelector, boUpdator, boHint,
                        strictDataMode, cb, _insertedNum, contextID, buf ) ;
          if ( rc )
          {

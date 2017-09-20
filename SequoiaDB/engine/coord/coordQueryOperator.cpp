@@ -849,6 +849,20 @@ namespace engine
             rc = _generateNewHint( cataSel.getCataPtr(), objQuery,
                                    objHint, tmpNewHint, isChanged,
                                    isEmpty, cb, keepShardingKey ) ;
+            if ( SDB_UPDATE_SHARD_KEY == rc && !cataSel.hasUpdated() )
+            {
+               rc = cataSel.updateCataInfo( pCollectionName, cb ) ;
+               if ( rc )
+               {
+                  PD_LOG( PDERROR, "Update collection[%s]'s catalog info "
+                          "failed in update operator, rc: %d",
+                          pCollectionName, rc ) ;
+                  goto error ;
+               }
+               _groupSession.getGroupCtrl()->incRetry() ;
+               goto retry ;
+            }
+
             if ( SDB_OK != rc )
             {
                PD_LOG( PDERROR, "Generate new hint failed, rc: %d", rc ) ;
