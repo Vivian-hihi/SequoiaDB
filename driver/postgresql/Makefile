@@ -20,7 +20,7 @@ EXTERNAL_SOURCE = $(EXTERNAL_PATH)/client.c  $(EXTERNAL_PATH)/oss.c     $(EXTERN
                   $(EXTERNAL_PATH)/timestampValid.c                     $(EXTERNAL_PATH)/cJSON_ext.c \
                   $(EXTERNAL_PATH)/cJSON_iterator.c
 
-BSON_HEADER = $(BSON_PATH)/sdbbson.h $(BSON_PATH)/encoding.h $(BSON_PATH)/common_decimal.h 
+BSON_HEADER = $(BSON_PATH)/sdbbson.h $(BSON_PATH)/encoding.h $(BSON_PATH)/common_decimal.h $(BSON_PATH)/common_decimal_fun.h $(BSON_PATH)/common_decimal_type.h 
 
 EXTERNAL_HEADER = $(EXTERNAL_PATH)/client.h   $(EXTERNAL_PATH)/jstobs.h  $(EXTERNAL_PATH)/base64c.h \
                   $(EXTERNAL_PATH)/core.h     $(EXTERNAL_PATH)/ossErr.h  $(EXTERNAL_PATH)/ossFeat.h \
