@@ -164,27 +164,28 @@ public class DropDomainAndKillPrimaryCatalog2272 extends SdbTestBase {
                 	e.printStackTrace();
                 	Assert.fail("expErrno=-214, actErrno= "+ e.getErrorCode() +", "+ e.getMessage());
                 }
-            }         	
-        } else if (DOMAIN_NUM == (count + 1)) {
-			//drop domain fail,the count+1 maybe success, maybe fail
-        	try {
-	    		String sameDomainName = preDomainName + "_" + count;
-	            sdb.dropDomain(sameDomainName);  
-        	} catch (BaseException e) { 
-                if (e.getErrorCode() != -214) { //-214:SDB_CAT_DOMAIN_NOT_EXIST
-                	e.printStackTrace();
-                	Assert.fail("expErrno=-214, actErrno= "+ e.getErrorCode() +", "+ e.getMessage());
-                }
-        	}
-        } else {
-        	for( int i = count + 2; i< DOMAIN_NUM; i++){
+            }    
+        } else {        	
+        	for( int i = count; i< DOMAIN_NUM; i++){
         		String sameDomainName = preDomainName + "_" + i;
-            	try {         	
-            		sdb.dropDomain(sameDomainName);            		
-                } catch (BaseException e) { 
-                	e.printStackTrace();
-                	Assert.fail(e.getMessage());
-                }        		
+        		if (i == count) {      	
+                	try {
+                        sdb.dropDomain(sameDomainName);                             
+                    } catch (BaseException e) { 
+                        if (e.getErrorCode() != -214) { 
+                        	e.printStackTrace();
+                        	Assert.fail("expErrno=-214, actErrno= "+ e.getErrorCode() +", "+ e.getMessage());
+                        }
+                    } 
+        		} else {
+                	try {         	
+                		sdb.dropDomain(sameDomainName);            		
+                    } catch (BaseException e) { 
+                    	e.printStackTrace();
+                    	Assert.fail(e.getMessage());
+                    }  
+        			
+        		}      		
         	}
         } 
         checkListDomain();
