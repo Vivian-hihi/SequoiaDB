@@ -195,7 +195,7 @@ public class TestLobInterfaceDependency7099 extends SdbTestBase{
 		//the generating buff length is 1024k
 		String lobBytes = getRandomString(1024);
 		readAfterCreateLob(lobBytes);
-		writeAfterSeekLob(lobBytes);
+		//writeAfterSeekLob(lobBytes);
 		writeAfterOpenLob(lobBytes);
 	}	
 	
