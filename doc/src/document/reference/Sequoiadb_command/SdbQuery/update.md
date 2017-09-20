@@ -1,5 +1,5 @@
 ##语法##
-***query.update( \<update\>, [returnNew] )***
+***query.update( \<rule\>, [returnNew], [options] )***
 
 更新查询后的结果集。
 
