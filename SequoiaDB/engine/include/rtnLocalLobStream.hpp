@@ -103,8 +103,6 @@ namespace engine
                    _pmdEDUCB *cb,
                    CHAR *buf ) ;
 
-      INT32 _queryPiecesInfoFromPage( _pmdEDUCB *cb, INT32 length,
-                                      _rtnLobPiecesInfo& piecesInfo ) ;
 
    private:
       void        _closeInner( _pmdEDUCB *cb ) ;

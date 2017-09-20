@@ -277,12 +277,6 @@ namespace engine
          RTN_LOB_TUPLES tuples ;
          _rtnLobTuple tuple( 0, DMS_LOB_META_SEQUENCE, 0, NULL ) ;
          tuples.push_back( tuple ) ;
-         if ( _meta._flag & DMS_LOB_META_FLAG_PIECESINFO_PAGE )
-         {
-            _rtnLobTuple piecesInfoTuple( 0, DMS_LOB_META_SEQUENCE, 0, NULL ) ;
-            tuples.push_back( piecesInfoTuple ) ;
-         }
-
          rc = _removev( tuples, cb ) ;
          PD_AUDIT_OP_WITHNAME( AUDIT_DML, "LOB REMOVE", AUDIT_OBJ_CL,
                                getFullName(), rc, "OID:%s, Meta:%s",
@@ -652,11 +646,12 @@ namespace engine
                   goto error ;
                }
 
-               if ( _lobPieces.requiredMem() > _lobPageSz )
+               if ( _lobPieces.requiredMem() > DMS_LOB_META_PIECESINFO_LEN )
                {
                   rc = SDB_LOB_PIECESINFO_OVERFLOW ;
-                  PD_LOG( PDERROR, "LOB pieces info require memory more than one lob page, "\
+                  PD_LOG( PDERROR, "LOB pieces info require memory more than %d bytes, "\
                                    "section num=%d, piecesInfo=%s",
+                                   DMS_LOB_META_PIECESINFO_LEN,
                                    _lobPieces.sectionNum(), _lobPieces.toString().c_str() ) ;
                   goto error ;
                }
@@ -721,11 +716,12 @@ namespace engine
                   goto error ;
                }
 
-               if ( _lobPieces.requiredMem() > _lobPageSz )
+               if ( _lobPieces.requiredMem() > DMS_LOB_META_PIECESINFO_LEN )
                {
                   rc = SDB_LOB_PIECESINFO_OVERFLOW ;
-                  PD_LOG( PDERROR, "LOB pieces info require memory more than one lob page, "\
+                  PD_LOG( PDERROR, "LOB pieces info require memory more than %d bytes, "\
                                    "section num=%d, piecesInfo=%s",
+                                   DMS_LOB_META_PIECESINFO_LEN,
                                    _lobPieces.sectionNum(), _lobPieces.toString().c_str() ) ;
                   goto error ;
                }
@@ -911,10 +907,11 @@ namespace engine
       if ( _hasPiecesInfo )
       {
          piecesInfoSize = _lobPieces.requiredMem() ;
-         if( piecesInfoSize > _lobPageSz )
+         if( piecesInfoSize > DMS_LOB_META_PIECESINFO_LEN )
          {
-            PD_LOG( PDERROR, "LOB pieces info require memory more than one lob page, "\
+            PD_LOG( PDERROR, "LOB pieces info require memory more than %d bytes, "\
                              "section num=%d, piecesInfo=%s",
+                             DMS_LOB_META_PIECESINFO_LEN,
                              _lobPieces.sectionNum(), _lobPieces.toString().c_str() ) ;
             rc = SDB_LOB_PIECESINFO_OVERFLOW ;
             goto error ;
@@ -932,48 +929,13 @@ namespace engine
          }
       }
 
-      // write lob pieces info page
-      if ( piecesInfoSize > DMS_LOB_META_PIECESINFO_LEN )
-      {         
-         buf = (CHAR*) SDB_OSS_MALLOC( piecesInfoSize ) ;
-         if ( NULL == buf )
-         {
-            rc = SDB_OOM ;
-            PD_LOG( PDERROR, "failed to alloc memory for lob pieces info, rc=%d", rc ) ;
-            goto error ;
-         }
-
-         rc = _lobPieces.saveTo( buf, piecesInfoSize ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "failed to save lob pieces info, rc=%d", rc ) ;
-            goto error ;
-         }
-
-         tuple.tuple.columns.len = piecesInfoSize ;
-         tuple.tuple.columns.sequence = DMS_LOB_PIECESINFO_SEQUENCE ;
-         tuple.tuple.columns.offset = 0 ;
-         tuple.data = ( const CHAR* )buf ;
-
-         rc = _write( tuple, cb ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "failed to write lob pieces, rc=%d", rc ) ;
-            goto error ;
-         }
-
-         _meta._piecesInfoNum = _lobPieces.sectionNum() ;
-         _meta._flag |= DMS_LOB_META_FLAG_PIECESINFO_PAGE ;
-      }
-
       // write meta data
       // _meta._lobLen is already updated
       _meta._modificationTime = ossGetCurrentMilliseconds() ;
       _meta._status = DMS_LOB_COMPLETE ;
       if ( _lw.getMetaPageData( tuple ) )
       {
-         if ( piecesInfoSize > 0 &&
-              piecesInfoSize <= DMS_LOB_META_PIECESINFO_LEN )
+         if ( piecesInfoSize > 0 )
          {
             CHAR* piecesInfoBuf = (CHAR*)tuple.data + DMS_LOB_META_LENGTH 
                                   - piecesInfoSize ;
@@ -992,8 +954,7 @@ namespace engine
          ossMemcpy( (CHAR*)tuple.data, (const CHAR*)&_meta,
                      sizeof( _meta ) ) ;
       }
-      else if ( piecesInfoSize > 0 &&
-                piecesInfoSize <= DMS_LOB_META_PIECESINFO_LEN )
+      else if ( piecesInfoSize > 0 )
       {
          SDB_ASSERT( NULL == buf, "impossible" ) ;
 

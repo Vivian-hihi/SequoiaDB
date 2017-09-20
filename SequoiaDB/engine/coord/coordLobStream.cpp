@@ -564,39 +564,27 @@ namespace engine
 
          meta._status = DMS_LOB_COMPLETE ;
 
-         if ( NULL != piecesInfo )
+         if ( NULL != piecesInfo &&
+              meta._flag & DMS_LOB_META_FLAG_PIECESINFO_INSIDE )
          {
-            if ( meta._flag & DMS_LOB_META_FLAG_PIECESINFO_INSIDE )
+            ele = _metaObj.getField( FIELD_NAME_LOB_PIECESINFO ) ;
+            if ( Array == ele.type() )
             {
-               ele = _metaObj.getField( FIELD_NAME_LOB_PIECESINFO ) ;
-               if ( Array == ele.type() )
+               BSONArray array( ele.embeddedObject() );
+               rc = piecesInfo->readFrom( array ) ;
+               if ( SDB_OK != rc )
                {
-                  BSONArray array( ele.embeddedObject() );
-                  rc = piecesInfo->readFrom( array ) ;
-                  if ( SDB_OK != rc )
-                  {
-                     PD_LOG( PDERROR, "invalid pieces info array:%s",
-                             array.toString( FALSE, TRUE ).c_str() ) ;
-                     goto error ;
-                  }
-               }
-               else if ( !ele.eoo() )
-               {
-                  PD_LOG( PDERROR, "invalid meta obj:%s",
-                          _metaObj.toString( FALSE, TRUE ).c_str() ) ;
-                  rc = SDB_SYS ;
+                  PD_LOG( PDERROR, "invalid pieces info array:%s",
+                          array.toString( FALSE, TRUE ).c_str() ) ;
                   goto error ;
                }
             }
-            else if ( meta._flag & DMS_LOB_META_FLAG_PIECESINFO_PAGE )
+            else if ( !ele.eoo() )
             {
-               INT32 length = meta._piecesInfoNum * (INT32)sizeof( _rtnLobPieces ) ;
-               rc = _queryPiecesInfoFromPage( cb, length, *piecesInfo ) ;
-               if ( SDB_OK != rc )
-               {
-                  PD_LOG( PDERROR, "Failed to query pieces info from page, rc=%d", rc ) ;
-                  goto error ;
-               }
+               PD_LOG( PDERROR, "invalid meta obj:%s",
+                       _metaObj.toString( FALSE, TRUE ).c_str() ) ;
+               rc = SDB_SYS ;
+               goto error ;
             }
          }
       }
@@ -609,81 +597,6 @@ namespace engine
 
    done:
       PD_TRACE_EXITRC( COORD_LOBSTREAM_QUERYLOBMETA, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 _coordLobStream::_queryPiecesInfoFromPage(
-                      _pmdEDUCB *cb, INT32 length,
-                      _rtnLobPiecesInfo& piecesInfo ) 
-   {
-      INT32 rc = SDB_OK ;
-      MsgOpReply* reply = NULL ;
-      const MsgLobTuple* begin = NULL ;
-      UINT32 tupleSize = 0 ;
-      const MsgLobTuple* tuple = NULL ;
-      const CHAR* data = NULL ;
-      BOOLEAN got = FALSE ;
-
-      _rtnLobTuple t( (UINT32)length, DMS_LOB_PIECESINFO_SEQUENCE, 0, NULL ) ;
-
-      rc = _read( t, cb, &reply ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to read pieces info page, rc=%d", rc ) ;
-         goto error ;
-      }
-
-      rc = msgExtractReadResult( reply, &begin, &tupleSize ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to extract read reply, rc=%d", rc ) ;
-         goto error ;
-      }
-
-      rc = msgExtractTuplesAndData( &begin, &tupleSize,
-                                    &tuple, &data, &got ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to extract tuple from reply, rc=%d", rc ) ;
-         goto error ;
-      }
-
-      if ( !got )
-      {
-         rc = SDB_SYS ;
-         PD_LOG( PDERROR, "failed to extract tuple from reply, rc=%d", rc ) ;
-         goto error ;
-      }
-
-      if ( DMS_LOB_PIECESINFO_SEQUENCE != tuple->columns.sequence )
-      {
-         rc = SDB_SYS ;
-         PD_LOG( PDERROR, "we should get sequence %u",
-                 DMS_LOB_PIECESINFO_SEQUENCE ) ;
-         goto error ;
-      }
-
-      if ( length != tuple->columns.len || 0 != tuple->columns.offset )
-      {
-         rc = SDB_SYS ;
-         PD_LOG( PDERROR, "we should get [length:%d, offset:%d], " \
-                          "actually get [length:%d, offset:%d]",
-                          length, 0,
-                          tuple->columns.offset, tuple->columns.len ) ;
-         goto error ;
-      }
-
-      rc = piecesInfo.readFrom( data, length ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to read pieces info from reply, rc=%d", rc ) ;
-         goto error ;
-      }
-
-   done:
-      SAFE_OSS_FREE( reply ) ;
       return rc ;
    error:
       goto done ;

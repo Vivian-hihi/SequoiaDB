@@ -206,29 +206,18 @@ namespace engine
             _getPool().pushDone() ;
          }
 
-         if ( NULL != piecesInfo )
+         if ( NULL != piecesInfo &&
+              meta._flag & DMS_LOB_META_FLAG_PIECESINFO_INSIDE )
          {
             INT32 length = meta._piecesInfoNum * (INT32)sizeof( _rtnLobPieces ) ;
+            const CHAR* piecesInfoBuf = (const CHAR*)
+                                        ( buf + DMS_LOB_META_LENGTH - length ) ;
 
-            if ( meta._flag & DMS_LOB_META_FLAG_PIECESINFO_INSIDE )
+            rc = piecesInfo->readFrom( piecesInfoBuf, length ) ;
+            if ( SDB_OK != rc )
             {
-               const CHAR* piecesInfoBuf = (const CHAR*)
-                                           ( buf + DMS_LOB_META_LENGTH - length ) ;
-               rc = piecesInfo->readFrom( piecesInfoBuf, length ) ;
-               if ( SDB_OK != rc )
-               {
-                  PD_LOG( PDERROR, "Failed to read pieces info from meta, rc:%d", rc ) ;
-                  goto error ;
-               }
-            }
-            else if ( meta._flag & DMS_LOB_META_FLAG_PIECESINFO_PAGE )
-            {
-               rc = _queryPiecesInfoFromPage( cb, length, *piecesInfo ) ;
-               if ( SDB_OK != rc )
-               {
-                  PD_LOG( PDERROR, "Failed to read pieces info from page, rc:%d", rc ) ;
-                  goto error ;
-               }
+               PD_LOG( PDERROR, "Failed to read pieces info from meta, rc:%d", rc ) ;
+               goto error ;
             }
          }
 
@@ -249,53 +238,6 @@ namespace engine
 
    done:
       PD_TRACE_EXITRC( SDB_RTNLOCALLOBSTREAM__QUERYLOBMETA, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 _rtnLocalLobStream::_queryPiecesInfoFromPage( _pmdEDUCB *cb, INT32 length,
-                                                       _rtnLobPiecesInfo& piecesInfo )
-   {
-      INT32 rc = SDB_OK ;
-      UINT32 readLen = 0 ;
-      CHAR* buf = NULL ;
-      dmsLobRecord record ;
-
-      buf = (CHAR*)SDB_OSS_MALLOC( length ) ;
-      if ( NULL == buf )
-      {
-         rc = SDB_OOM ;
-         PD_LOG( PDERROR, "Failed to malloc, rc=%d", rc ) ;
-         goto error ;
-      }
-
-      record.set( &getOID(), DMS_LOB_PIECESINFO_SEQUENCE, 0, length, NULL ) ;
-
-      rc = _su->lob()->read( record, _mbContext, cb, buf, readLen ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "Failed to get meta of lob, rc:%d", rc ) ;
-         goto error ;
-      }
-
-      if ( (INT32)readLen < length )
-      {
-         PD_LOG( PDERROR, "Read lob[%s]'s pieces info page len is less than "
-                 "pieces info length[%d]", getOID().str().c_str(), length ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-
-      rc = piecesInfo.readFrom( buf, length ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "Failed to read pieces info, rc:%d", rc ) ;
-         goto error ;
-      }
-
-   done:
-      SAFE_OSS_FREE( buf ) ;
       return rc ;
    error:
       goto done ;

@@ -262,9 +262,6 @@ namespace engine
          INT32 _read( const _rtnLobTuple& tuple,
                       _pmdEDUCB *cb, MsgOpReply** reply ) ;
 
-         INT32 _queryPiecesInfoFromPage( _pmdEDUCB *cb, INT32 length,
-                                         _rtnLobPiecesInfo& piecesInfo ) ;
-
          INT32 _ensureEmptyPageBuf( INT32 pageSize ) ;
 
          void  _releaseEmptyPageBuf() ;
