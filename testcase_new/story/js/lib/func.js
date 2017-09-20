@@ -1716,8 +1716,8 @@ Date.prototype.Format = function(fmt)
 /**********************************************************************
 @Description:  make dir in host( can be used to make WORKDIR )
 @author:       Liangxw
-@usage:        1¡¢commMakeDir( COORDHOSTNAME, WORKDIR )
-               2¡¢commMakeDir( "localhost", WORKDIR )
+@usage:        1. commMakeDir( COORDHOSTNAME, WORKDIR )
+               2. commMakeDir( "localhost", WORKDIR )
 ***********************************************************************/
 function commMakeDir( host, dir )
 {
