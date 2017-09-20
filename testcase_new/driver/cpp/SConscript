@@ -58,6 +58,8 @@ testFiles = [
    [ "./crud/queryAndRemove12544.cpp" ],
    [ "./crud/queryAndUpdate12543.cpp" ],
    [ "./crud/queryAndUpdateShardingKey12636.cpp" ],
+   [ "./crud/updateShardingKey12635.cpp" ],
+   [ "./crud/crud12513.cpp" ],
    [ "./decimal/absAndGetSign8892.cpp" ],
    [ "./decimal/add8895.cpp" ],
    [ "./decimal/append8865.cpp" ],
@@ -71,7 +73,14 @@ testFiles = [
    [ "./decimal/mod8904.cpp" ],
    [ "./decimal/mul8898.cpp" ],
    [ "./decimal/sub8897.cpp" ],
-   [ "./decimal/zero8877.cpp" ]
+   [ "./decimal/zero8877.cpp" ],
+   [ "./paramVerify/csFuncParamTest12719.cpp" ],
+   [ "./paramVerify/clFuncParamTest12671.cpp" ],
+   [ "./paramVerify/rgFuncParamTest12729.cpp" ],  # sync
+   [ "./cls/rgOpr12688_12693.cpp" ],  # sync
+   [ "./cls/nodeOpr12689_12692.cpp" ],  # sync
+   [ "./cls/attachDetachNode12553.cpp" ],  # sync
+   [ "./cls/masterSlave12690.cpp" ]  # sync
 ]
 
 def getFileName( filePath ):
