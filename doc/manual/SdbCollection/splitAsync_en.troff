@@ -10,7 +10,7 @@ operation, a task ID will be returned immediately after the task
 is created.
 .SH SYNOPSIS
 .PP
-\f[B]\f[I]db.collectionspace.collection.splitAsync(<percent(0~100)|cond>,[endcondition])\f[]\f[]
+\f[B]\f[I]db.collectionspace.collection.splitAsync(<source group>,<target group>,<percent(0~100)|cond>,[endcondition])\f[]\f[]
 .SH CATEGORY
 .PP
 Collection
