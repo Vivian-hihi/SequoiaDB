@@ -159,20 +159,31 @@ public class DropDomainAndKillPrimaryCatalog2272 extends SdbTestBase {
         		String sameDomainName = preDomainName + "_" + (count - 1);
                 sdb.dropDomain(sameDomainName);               
                 Assert.fail("drop the same Domain should be fail");                
-            } catch (BaseException e) {
-                // -214 Domain does not exist  
-                if (e.getErrorCode() != -214) {
-                	Assert.fail("the error not -214: "+e.getErrorCode()+e.getMessage());
+            } catch (BaseException e) { 
+                if (e.getErrorCode() != -214) { //-214:SDB_CAT_DOMAIN_NOT_EXIST
+                	e.printStackTrace();
+                	Assert.fail("expErrno=-214, actErrno= "+ e.getErrorCode() +", "+ e.getMessage());
                 }
             }         	
-        }else{
-			//drop domain fail,the count is not equals DOMAIN_NUM
-        	for( int i = count; i< DOMAIN_NUM; i++){
+        } else if (DOMAIN_NUM == (count + 1)) {
+			//drop domain fail,the count+1 maybe success, maybe fail
+        	try {
+	    		String sameDomainName = preDomainName + "_" + count;
+	            sdb.dropDomain(sameDomainName);  
+        	} catch (BaseException e) { 
+                if (e.getErrorCode() != -214) { //-214:SDB_CAT_DOMAIN_NOT_EXIST
+                	e.printStackTrace();
+                	Assert.fail("expErrno=-214, actErrno= "+ e.getErrorCode() +", "+ e.getMessage());
+                }
+        	}
+        } else {
+        	for( int i = count + 2; i< DOMAIN_NUM; i++){
         		String sameDomainName = preDomainName + "_" + i;
             	try {         	
             		sdb.dropDomain(sameDomainName);            		
-                } catch (BaseException e) {                 	
-                    Assert.fail("the error not -214: "+e.getErrorCode()+e.getErrorType());
+                } catch (BaseException e) { 
+                	e.printStackTrace();
+                	Assert.fail(e.getMessage());
                 }        		
         	}
         } 
