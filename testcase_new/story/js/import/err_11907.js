@@ -1,7 +1,7 @@
 /*******************************************************************
 *@Description : test import importOnce error
-*               seqDB-11907:使用import importOnce导入不存在的文件
-*               seqDB-11909:使用import importOnce导入非js文件
+*               seqDB-11907:浣跨敤import importOnce瀵煎叆涓嶅瓨鍦ㄧ殑鏂囦欢
+*               seqDB-11909:浣跨敤import importOnce瀵煎叆闈瀓s鏂囦欢
 *@author      : Liang XueWang 
 *******************************************************************/
 // test import importOnce not exist file

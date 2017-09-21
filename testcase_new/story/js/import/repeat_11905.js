@@ -1,7 +1,7 @@
 /*******************************************************************
 *@Description : test repeat import importOnce js file
-*               seqDB-11905:使用import重复导入文件
-*               seqDB-11906:使用importOnce重复导入文件
+*               seqDB-11905:浣跨敤import閲嶅瀵煎叆鏂囦欢
+*               seqDB-11906:浣跨敤importOnce閲嶅瀵煎叆鏂囦欢
 *@author      : Liang XueWang 
 *******************************************************************/
 // js file to repeat import

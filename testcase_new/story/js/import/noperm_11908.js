@@ -1,6 +1,6 @@
 /*******************************************************************
 *@Description : test import importOnce no permission file
-*               seqDB-11908:使用import importOnce导入无权限的文件
+*               seqDB-11908:浣跨敤import importOnce瀵煎叆鏃犳潈闄愮殑鏂囦欢
 *@author      : Liang XueWang 
 *******************************************************************/
 // js file with no permission

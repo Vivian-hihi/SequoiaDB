@@ -1,6 +1,6 @@
 /*******************************************************************
 *@Description : test nest import importOnce js file
-*               seqDB-11904:使用import importOnce导入嵌套js文件
+*               seqDB-11904:浣跨敤import importOnce瀵煎叆宓屽js鏂囦欢
 *@author      : Liang XueWang 
 *******************************************************************/
 // js file nest import, A import B

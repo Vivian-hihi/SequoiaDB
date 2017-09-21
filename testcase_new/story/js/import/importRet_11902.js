@@ -1,7 +1,7 @@
 /******************************************************************************
 *@Description : test import js file with return and no return
-*               seqDB-11902:使用import、importOnce导入js文件（无返回值）
-*               seqDB-11903:使用import importOnce导入js文件（有返回值）
+*               seqDB-11902:浣跨敤import銆乮mportOnce瀵煎叆js鏂囦欢锛堟棤杩斿洖鍊硷級
+*               seqDB-11903:浣跨敤import importOnce瀵煎叆js鏂囦欢锛堟湁杩斿洖鍊硷級
 *@author      : Liang XueWang 
 ******************************************************************************/
 // create js file without ret and with ret

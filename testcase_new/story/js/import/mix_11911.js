@@ -1,6 +1,6 @@
 /*******************************************************************
 *@Description : test mix import importOnce js file
-*               seqDB-11911:混合使用import importOnce导入文件
+*               seqDB-11911:娣峰悎浣跨敤import importOnce瀵煎叆鏂囦欢
 *@author      : Liang XueWang 
 *******************************************************************/
 // js file to mix, first import then importOnce

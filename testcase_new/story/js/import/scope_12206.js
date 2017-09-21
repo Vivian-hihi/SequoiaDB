@@ -1,6 +1,6 @@
 /***********************************************************************
 *@Description : test import importOnce js file, check scope
-*               seqDB-12206:在函数中使用import importOnce，检查作用域
+*               seqDB-12206:鍦ㄥ嚱鏁颁腑浣跨敤import importOnce锛屾鏌ヤ綔鐢ㄥ煙
 *@author      : Liang XueWang 
 ***********************************************************************/
 // js file to test import scope
