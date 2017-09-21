@@ -108,7 +108,7 @@ INT32 main ( INT32 argc, CHAR **argv )
    }
 
    // create record list using objList
-   sample::createRecordList ( objList, NUM_RECORD ) ;
+   createRecordList ( objList, NUM_RECORD ) ;
    // insert obj and free memory that allocated by createRecordList
    for ( count = 0; count < NUM_RECORD; count++ )
    {
