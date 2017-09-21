@@ -507,7 +507,15 @@ namespace engine
       PD_TRACE_EXITRC( SDB_RTNREMOVELOB, rc ) ;
       return rc ;
    error:
-     goto done ;
+      {
+         INT32 rcTmp = SDB_OK ;
+         rcTmp = stream.closeWithException( cb ) ;
+         if ( SDB_OK != rcTmp )
+         {
+            PD_LOG( PDERROR, "failed to close lob with exception:%d", rcTmp ) ;
+         }
+      }
+      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNGETLOBMETADATA, "rtnGetLobMetaData" )
@@ -723,7 +731,8 @@ namespace engine
                             pmdEDUCB *cb,
                             dmsLobMeta &meta,
                             dmsStorageUnit *su,
-                            dmsMBContext *mbContext )
+                            dmsMBContext *mbContext,
+                            BOOLEAN allowUncompleted )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNGETLOBMETADATA2 ) ;
@@ -746,7 +755,7 @@ namespace engine
          goto error ;
       }
 
-      if ( !meta.isDone() )
+      if ( !meta.isDone() && !allowUncompleted )
       {
          PD_LOG( PDINFO, "Lob[%s] meta[%s] is not available",
                  oid.str().c_str(), meta.toString().c_str() ) ;
@@ -856,7 +865,8 @@ namespace engine
                                    SDB_DPSCB *dpsCB,
                                    dmsLobMeta &meta,
                                    dmsStorageUnit *su,
-                                   dmsMBContext *mbContext )
+                                   dmsMBContext *mbContext,
+                                   BOOLEAN allowUncompleted )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNQUERYANDINVALIDAGELOB ) ;
@@ -881,10 +891,17 @@ namespace engine
 
       if ( !lobMeta.isDone() )
       {
-         PD_LOG( PDINFO, "Lob[%s] meta[%s] is not available",
-                 oid.str().c_str(), meta.toString().c_str() ) ;
-         rc = SDB_LOB_IS_NOT_AVAILABLE ;
-         goto error ;
+         if ( allowUncompleted )
+         {
+            goto done ;
+         }
+         else
+         {
+            PD_LOG( PDINFO, "Lob[%s] meta[%s] is not available",
+                    oid.str().c_str(), meta.toString().c_str() ) ;
+            rc = SDB_LOB_IS_NOT_AVAILABLE ;
+            goto error ;
+         }
       }
 
       meta = lobMeta ;

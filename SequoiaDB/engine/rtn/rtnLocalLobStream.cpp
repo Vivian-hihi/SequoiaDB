@@ -141,6 +141,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOCALLOBSTREAM__QUERYLOBMETA, "_rtnLocalLobStream::_queryLobMeta" )
    INT32 _rtnLocalLobStream::_queryLobMeta( _pmdEDUCB *cb,
                                             _dmsLobMeta &meta,
+                                            BOOLEAN allowUncompleted,
                                             _rtnLobPiecesInfo* piecesInfo )
    {
       INT32 rc = SDB_OK ;
@@ -176,7 +177,7 @@ namespace engine
          }
          /// copy data
          ossMemcpy( (void*)&meta, buf, sizeof( meta ) ) ;
-         if ( !meta.isDone() )
+         if ( !meta.isDone() && !allowUncompleted )
          {
             PD_LOG( PDINFO, "Lob[%s] meta[%s] is not available",
                     getOID().str().c_str(), meta.toString().c_str() ) ;
@@ -590,7 +591,8 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNLOCALLOBSTREAM__QUERYANDINVALIDATEMETADATA ) ;
       rc = rtnQueryAndInvalidateLob( getFullName(), getOID(),
-                                     cb, 1, _getDPSCB(), meta ) ;
+                                     cb, 1, _getDPSCB(), meta,
+                                     NULL, NULL, TRUE ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to invalidate lob:%d", rc ) ;

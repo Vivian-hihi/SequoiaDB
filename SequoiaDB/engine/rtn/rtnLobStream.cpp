@@ -328,6 +328,18 @@ namespace engine
             goto error ;
          }
       }
+      else if ( SDB_LOB_MODE_REMOVE & _mode )
+      {
+         PD_LOG( PDERROR, "Lob[%s] is closed with exception, invalidate meta data",
+                 getOID().str().c_str() ) ;
+         rc = _queryAndInvalidateMetaData( cb, _meta ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to invalidate lob[%s], rc:%d",
+                    _oid.str().c_str(), rc ) ;
+            goto error ;
+         }
+      }
       else
       {
          PD_LOG( PDWARNING, "Lob[%s] is closed with exception, mode:0x%08x",
@@ -810,7 +822,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNLOBSTREAM__OPEN4READ ) ;
 
-      rc = _queryLobMeta( cb, _meta, &_lobPieces ) ;
+      rc = _queryLobMeta( cb, _meta, FALSE, &_lobPieces ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Failed to open lob[%s] in collection[%s], rc:%d",
@@ -868,7 +880,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNLOBSTREAM__OPEN4REMOVE ) ;
 
-      rc = _queryAndInvalidateMetaData( cb, _meta ) ;
+      rc = _queryLobMeta( cb, _meta, TRUE ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to open lob[%s] in collection[%s], rc:%d",

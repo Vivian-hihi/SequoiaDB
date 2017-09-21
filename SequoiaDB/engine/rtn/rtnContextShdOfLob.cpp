@@ -71,16 +71,25 @@ namespace engine
    {
       _pmdEDUCB *cb = pmdGetThreadEDUCB() ;
 
-      if ( _closeWithException &&
-           SDB_LOB_MODE_CREATEONLY == _mode )
+      if ( _closeWithException )
       {
-         SDB_ASSERT( cb->getID() == eduID(), "impossible" ) ;
-         _rollback( cb ) ;
-      }
-      else if ( _closeWithException )
-      {
-         PD_LOG( PDWARNING, "Lob[%s] is closed with exception, mode:0x%08x",
-                 getOID().str().c_str(), _mode ) ;
+         if ( SDB_LOB_MODE_CREATEONLY == _mode )
+         {
+            SDB_ASSERT( cb->getID() == eduID(), "impossible" ) ;
+            _rollback( cb ) ;
+         }
+         else if ( SDB_LOB_MODE_REMOVE == _mode && _isMainShd )
+         {
+            rtnQueryAndInvalidateLob( _fullName.c_str(),
+                                      _oid, cb, _w,
+                                      _dpsCB, _meta,
+                                      _su, _mbContext ) ;
+         }
+         else
+         {
+            PD_LOG( PDWARNING, "Lob[%s] is closed with exception, mode:0x%08x",
+                    getOID().str().c_str(), _mode ) ;
+         }
       }
 
       close( cb ) ;
@@ -424,13 +433,12 @@ namespace engine
       }
       else if ( _isMainShd && SDB_LOB_MODE_REMOVE == _mode )
       {
-         rc = rtnQueryAndInvalidateLob( _fullName.c_str(),
-                                        _oid, cb, _w,
-                                        _dpsCB, _meta,
-                                        _su, _mbContext ) ;
+         rc = rtnGetLobMetaData( _fullName.c_str(),
+                                 _oid, cb, _meta,
+                                 _su, _mbContext, TRUE ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to invalidate lob:%d", rc ) ;
+            PD_LOG( PDERROR, "failed to get lob meta data:%d", rc ) ;
             goto error ;
          }
       }

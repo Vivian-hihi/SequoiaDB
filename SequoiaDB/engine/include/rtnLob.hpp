@@ -101,7 +101,8 @@ namespace engine
                             pmdEDUCB *cb,
                             dmsLobMeta &meta,
                             dmsStorageUnit *su = NULL,
-                            dmsMBContext *mbContext = NULL ) ;
+                            dmsMBContext *mbContext = NULL,
+                            BOOLEAN allowUncompleted = FALSE ) ;
 
    INT32 rtnWriteLob( const CHAR *fullName,
                       const bson::OID &oid,
@@ -164,7 +165,8 @@ namespace engine
                                    SDB_DPSCB *dpsCB,
                                    dmsLobMeta &meta,
                                    dmsStorageUnit *su = NULL,
-                                   dmsMBContext *mbContext = NULL ) ;
+                                   dmsMBContext *mbContext = NULL,
+                                   BOOLEAN allowUncompleted = FALSE ) ;
 
 
 }

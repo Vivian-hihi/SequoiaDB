@@ -357,19 +357,24 @@ namespace engine
          goto error ;
       }
 
-   done:
+      rc = stream.close( cb ) ;
+      if ( SDB_OK != rc )
       {
-         INT32 rcTmp = SDB_OK ;
-         rcTmp = stream.close( cb ) ;
-         if ( SDB_OK != rcTmp )
-         {
-            PD_LOG( PDERROR, "failed to remove lob:%d", rcTmp ) ;
-            rc = rc == SDB_OK ? rcTmp : rc ;
-         }
+         PD_LOG( PDERROR, "failed to remove lob:%d", rc ) ;
       }
+
+   done:
       PD_TRACE_EXITRC( COORD_REMOVELOB_EXE, rc ) ;
       return rc ;
    error:
+      {
+         INT32 rcTmp = SDB_OK ;
+         rcTmp = stream.closeWithException( cb ) ;
+         if ( SDB_OK != rcTmp )
+         {
+            PD_LOG( PDERROR, "failed to close lob with exception:%d", rcTmp ) ;
+         }
+      }
       goto done ;
    }
 }

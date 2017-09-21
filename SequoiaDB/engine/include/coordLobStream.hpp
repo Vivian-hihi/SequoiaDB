@@ -68,6 +68,7 @@ namespace engine
 
          virtual INT32 _queryLobMeta( _pmdEDUCB *cb,
                                       _dmsLobMeta &meta,
+                                      BOOLEAN allowUncompleted = FALSE,
                                       _rtnLobPiecesInfo* piecesInfo = NULL ) ;
 
          virtual INT32 _ensureLob( _pmdEDUCB *cb,

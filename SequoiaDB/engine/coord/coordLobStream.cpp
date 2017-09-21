@@ -486,10 +486,12 @@ namespace engine
    //PD_TRACE_DECLARE_FUNCTION( COORD_LOBSTREAM_QUERYLOBMETA, "_coordLobStream::_queryLobMeta" )
    INT32 _coordLobStream::_queryLobMeta( _pmdEDUCB *cb,
                                          _dmsLobMeta &meta,
+                                         BOOLEAN allowUncompleted,
                                          _rtnLobPiecesInfo* piecesInfo )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( COORD_LOBSTREAM_QUERYLOBMETA ) ;
+      (void)allowUncompleted ;
 
       try
       {
@@ -1459,7 +1461,7 @@ namespace engine
    INT32 _coordLobStream::_queryAndInvalidateMetaData( _pmdEDUCB *cb,
                                                        _dmsLobMeta &meta )
    {
-      return _queryLobMeta( cb, meta ) ;
+      return _queryLobMeta( cb, meta, TRUE ) ;
    }
 
    //PD_TRACE_DECLARE_FUNCTION( COORD_LOBSTREAM_REMOVEV, "_coordLobStream::_removev" )
