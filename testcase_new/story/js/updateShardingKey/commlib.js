@@ -373,7 +373,7 @@ function getGroupName(db, mustBePrimary)
 *@Description: get the informations of the srcGroups and targetGroups,then split cl with different options,
                only split 1 times
                return the informations of the srcGroups and targetGroups
-*@author£ºYan Wu 2015/10/26
+*@authorï¼šYan Wu 2015/10/26
 *@parameters:
              startCondition:start condition of split,if the typeof is number,then percentage split,if the typeof is object, 
              then range split
@@ -419,7 +419,7 @@ function clSplit( csName, clName, startCondition, endCondition )
 /************************************
 *@Description: get SrcGroup and TargetGroup info,the groups information
                include GroupName,HostName and svcname
-*@author£ºwuyan 2015/10/14
+*@authorï¼šwuyan 2015/10/14
 *@return array[][] ex:
         [0]
            {"GroupName":"XXXX"}
@@ -467,7 +467,7 @@ function getSplitGroups(csName,clName,targetGrMaxNums)
 
 /************************************
 *@Description: get SrcGroup name,update getPG to getSrcGroup
-*@author£ºwuyan 2015/10/14
+*@authorï¼šwuyan 2015/10/14
 **************************************/
 function getSrcGroup( csName, clName )
 {
