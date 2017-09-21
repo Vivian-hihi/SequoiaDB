@@ -2657,16 +2657,17 @@ namespace engine
       string updateDetail ;
       string updateHostName ;
       BSONObj resultInfo = taskInfo.getObjectField( OMA_FIELD_RESULTINFO ) ;
-      BSONObj condition  = BSON( OMA_FIELD_ERRNO << "" <<
-                                 OMA_FIELD_DETAIL << "" <<
-                                 OMA_FIELD_PROGRESS << "" <<
+      BSONObj condition  = BSON( OMA_FIELD_ERRNO      << "" <<
+                                 OMA_FIELD_DETAIL     << "" <<
+                                 OMA_FIELD_PROGRESS   << "" <<
                                  OMA_FIELD_RESULTINFO << "" ) ;
-      BSONObj oneResultCondition = BSON( OMA_FIELD_HOSTNAME << "" <<
-                                         OMA_FIELD_VERSION << "" <<
-                                         OMA_FIELD_STATUS << 0 <<
+      BSONObj oneResultCondition = BSON( OMA_FIELD_HOSTNAME   << "" <<
+                                         OMA_FIELD_IP         << "" <<
+                                         OMA_FIELD_VERSION    << "" <<
+                                         OMA_FIELD_STATUS     << 0  <<
                                          OMA_FIELD_STATUSDESC << "" <<
-                                         OMA_FIELD_ERRNO << 0 <<
-                                         OMA_FIELD_DETAIL << ""  ) ;
+                                         OMA_FIELD_ERRNO      << 0  <<
+                                         OMA_FIELD_DETAIL     << ""  ) ;
       BSONObj updateFlow = itemInfo.getObjectField( OMA_FIELD_FLOW ) ;
       BSONObj nodeResult = itemInfo.filterFieldsUndotted(
                                                     oneResultCondition, TRUE ) ;

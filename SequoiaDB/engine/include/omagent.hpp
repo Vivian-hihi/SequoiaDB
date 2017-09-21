@@ -66,6 +66,7 @@ namespace engine
       string _sshPort ;
       string _agentService ;
       string _installPath ;
+      string _version ;
    } ;
    typedef struct _AddHostItem AddHostItem ;
    

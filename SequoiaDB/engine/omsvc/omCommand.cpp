@@ -13491,10 +13491,13 @@ namespace engine
             BSONElement ele = iter.next() ;
             BSONObj tmpHostInfo = ele.embeddedObject() ;
             string hostName = tmpHostInfo.getStringField( OM_HOST_FIELD_NAME ) ;
+            string hostIP = tmpHostInfo.getStringField( OM_HOST_FIELD_IP ) ;
 
             hostInfoBuilder.append( tmpHostInfo ) ;
 
             resultEleBuilder.append( OM_TASKINFO_FIELD_HOSTNAME, hostName ) ;
+            resultEleBuilder.append( OM_TASKINFO_FIELD_IP, hostIP ) ;
+            
             resultEleBuilder.append( OM_TASKINFO_FIELD_STATUS,
                                      OM_TASK_STATUS_INIT ) ;
             resultEleBuilder.append( OM_TASKINFO_FIELD_STATUS_DESC,
