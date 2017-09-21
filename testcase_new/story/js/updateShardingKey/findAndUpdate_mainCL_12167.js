@@ -17,14 +17,6 @@ function main()
       println( "run mode is standalone" );
       return;
    }
-   
-   //less two groups no split
-   var allGroupName = getGroupName(db,true);         
-   if( 1 === allGroupName.length )
-   {
-      println("--least two groups");
-      return ;
-   } 
       
    //clean environment before test
    commDropCS( db, csName, true, "Failed to drop CS.");    

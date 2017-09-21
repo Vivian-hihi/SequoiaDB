@@ -4,7 +4,7 @@
 *@createDate:  2015.5.20
 **************************************/
 function insertData( dbcl, condition )
-{  
+{
    try
    {
       dbcl.insert(condition);
@@ -24,20 +24,20 @@ function insertData( dbcl, condition )
 function updateData( dbcl, updateCondition, findCondition, hint, ShardingKeyFlag )
 {
    if ( typeof(findCondition) == "undefined" ) { findCondition = {} ; }
-   if ( typeof(hint) == "undefined" ) { hint = {} ; } 
-   if ( typeof(ShardingKeyFlag) == "undefined" ) { ShardingKeyFlag = "" ; }  
-   
+   if ( typeof(hint) == "undefined" ) { hint = {} ; }
+   if ( typeof(ShardingKeyFlag) == "undefined" ) { ShardingKeyFlag = "" ; }
+
    try
    {
-      if( "" !== ShardingKeyFlag ) 
-      {  
+      if( "" !== ShardingKeyFlag )
+      {
          dbcl.update( updateCondition, findCondition, hint, {KeepShardingKey:ShardingKeyFlag} );
       }
       else
       {
          dbcl.update( updateCondition, findCondition, hint);
       }
-      
+
       println( "---update data success" ) ;
    }
    catch(e)
@@ -53,10 +53,10 @@ function updateData( dbcl, updateCondition, findCondition, hint, ShardingKeyFlag
 **************************************/
 function upsertData( dbcl, upsertCondition, findCondition, hint, setOnInsert, ShardingKeyFlag )
 {
-   if ( typeof(findCondition) == "undefined" ) { findCondition = {} ; }  
-   if ( typeof(setOnInsert) == "undefined" ) { setOnInsert = {} ; } 
-   if ( typeof(hint) == "undefined" ) { hint = {} ; } 
-   if ( typeof(ShardingKeyFlag) == "undefined" ) { ShardingKeyFlag = "" ; } 
+   if ( typeof(findCondition) == "undefined" ) { findCondition = {} ; }
+   if ( typeof(setOnInsert) == "undefined" ) { setOnInsert = {} ; }
+   if ( typeof(hint) == "undefined" ) { hint = {} ; }
+   if ( typeof(ShardingKeyFlag) == "undefined" ) { ShardingKeyFlag = "" ; }
    try
    {
       dbcl.upsert( upsertCondition, findCondition, hint, setOnInsert, {KeepShardingKey:ShardingKeyFlag} );
@@ -64,6 +64,7 @@ function upsertData( dbcl, upsertCondition, findCondition, hint, setOnInsert, Sh
    }
    catch(e)
    {
+      print(e);
       throw buildException("upsertData()",e,"upsert", "upsert success","upsert fail");
    }
 }
@@ -77,22 +78,22 @@ function upsertData( dbcl, upsertCondition, findCondition, hint, setOnInsert, Sh
 function updateDataError( dbcl, operation,updateCondition, findCondition, hint )
 {
    if ( typeof(findCondition) == "undefined" ) { findCondition = {} ; }
-   if ( typeof(hint) == "undefined" ) { hint = {} ; }    
-   
+   if ( typeof(hint) == "undefined" ) { hint = {} ; }
+
    try
    {
-      if ( operation === "update" ) 
+      if ( operation === "update" )
 		{
 			dbcl.update( updateCondition, findCondition, hint, {KeepShardingKey:true} );
 		}
-		else if ( operation === "findAndUpdate" ) 
+		else if ( operation === "findAndUpdate" )
 		{
-			dbcl.find(findCondition).update( updateCondition, true, {KeepShardingKey:true} ).toArray();  			
-		} 
-		else if ( operation === "upsert" ) 
+			dbcl.find(findCondition).update( updateCondition, true, {KeepShardingKey:true} ).toArray();
+		}
+		else if ( operation === "upsert" )
 		{
-			dbcl.upsert( updateCondition, findCondition, null, {KeepShardingKey:true} );					
-		}                
+			dbcl.upsert( updateCondition, findCondition,hint, null, {KeepShardingKey:true} );
+		}
       throw "---update shardingKey should be wrong" ;
    }
    catch(e)
@@ -100,7 +101,7 @@ function updateDataError( dbcl, operation,updateCondition, findCondition, hint )
       if ( -178 != e )
       {
          throw buildException("updateDataError()",e);
-      }      
+      }
    }
 }
 
@@ -112,20 +113,20 @@ function updateDataError( dbcl, operation,updateCondition, findCondition, hint )
 function findAndUpdateData( dbcl, findCondition, updateCondition,  returnFlag, ShardingKeyFlag )
 {
    if ( typeof(findCondition) == "undefined" ) { findCondition = {} ; }
-   if ( typeof(returnFlag) == "undefined" ) { returnFlag = false ; } 
-   if ( typeof(ShardingKeyFlag) == "undefined" ) { ShardingKeyFlag = {KeepShardingKey: false} ; }  
-   
+   if ( typeof(returnFlag) == "undefined" ) { returnFlag = false ; }
+   if ( typeof(ShardingKeyFlag) == "undefined" ) { ShardingKeyFlag = {KeepShardingKey: false} ; }
+
    try
    {
-      if( true == ShardingKeyFlag ) 
-      {           
+      if( true == ShardingKeyFlag )
+      {
          dbcl.find(findCondition).update( updateCondition, returnFlag, {KeepShardingKey:true} ).toArray();
       }
       else
       {println("----")
          dbcl.find(findCondition).update( updateCondition, returnFlag, {KeepShardingKey:false} ).toArray();
       }
-      
+
       println( "---query And update data success" ) ;
    }
    catch(e)
@@ -153,14 +154,14 @@ function sortFindData(dbcl, findCondition, findCondition2 )
 }
 
 /************************************
-*@Description: get actual result and check it 
+*@Description: get actual result and check it
 **************************************/
 function checkResult( dbcl, findCondition, findCondition2, expRecs)
 {
    var rc = sortFindData(dbcl, findCondition, findCondition2);
-   
+
    println("---check the updateResult");
-   checkRec( rc, expRecs );   
+   checkRec( rc, expRecs );
 }
 
 /****************************************************
@@ -169,15 +170,14 @@ function checkResult( dbcl, findCondition, findCondition2, expRecs)
               2016-3-3 yan WU init
 ****************************************************/
 function checkRec( rc, expRecs )
-{				
+{
 	//get actual records to array
-	var actRecs = [];
+    var actRecs = [];
    while( rc.next() )
    {
-		actRecs.push( rc.current().toObj() );		 
+		actRecs.push( rc.current().toObj() );
    }
-  
-   
+
    //check count
 	if( actRecs.length !== expRecs.length )
    {
@@ -185,7 +185,7 @@ function checkRec( rc, expRecs )
    	throw buildException("check count", null, "",
 									expRecs.length, actRecs.length);
    }
-   
+
    //check every records every fields,expRecs as compare source
    for( var i in expRecs )
    {
@@ -196,18 +196,18 @@ function checkRec( rc, expRecs )
    		if( JSON.stringify(actRec[f]) !== JSON.stringify(expRec[f]) )
 	   	{
 	   		println("\nerror occurs in "+(parseInt(i)+1)+"th record, in field '"+f+"'");
-	   		println("\nactual recs in cl= "+JSON.stringify(actRecs)+"\n\nexpect recs= "+JSON.stringify(expRecs));   		
+	   		println("\nactual recs in cl= "+JSON.stringify(actRecs)+"\n\nexpect recs= "+JSON.stringify(expRecs));
 	   		throw buildException("checkRec()", "check data by expRecs ERROR");
 	   	}
    	}
    }
-   
+
    //check every records every fields,actRecs as compare source
    for( var i in actRecs )
    {
    	var actRec = actRecs[i];
    	var expRec = expRecs[i];
-   	
+
    	for ( var f in actRec )
    	{
    	   if(f == "_id")
@@ -217,7 +217,7 @@ function checkRec( rc, expRecs )
    		if( JSON.stringify(actRec[f]) !== JSON.stringify(expRec[f]) )
 	   	{
 	   		println("\nerror occurs in "+(parseInt(i)+1)+"th record, in field '"+f+"'");
-	   		println("\nactual recs in cl= "+JSON.stringify(actRecs)+"\n\nexpect recs= "+JSON.stringify(expRecs));   		
+	   		println("\nactual recs in cl= "+JSON.stringify(actRecs)+"\n\nexpect recs= "+JSON.stringify(expRecs));
 	   		throw buildException("checkRec()", "check data by actRecs ERROR");
 	   	}
    	}
@@ -227,9 +227,9 @@ function checkRec( rc, expRecs )
 
 /************************************
 *@Description: check result when the expect result of update data is failed.
-*@author:      zhaoyu 
+*@author:      zhaoyu
 *@createDate:  2016/5/16
-*@parameters:               
+*@parameters:
 **************************************/
 function invalidDataUpdateCheckResult( dbcl, invalidDoc, expRecs )
 {
@@ -246,16 +246,16 @@ function invalidDataUpdateCheckResult( dbcl, invalidDoc, expRecs )
       }
       else
    	{
-   	    println("--check result is ok!");   		
+   	    println("--check result is ok!");
    	}
-   
+
    }
 }
 
 /************************************
 *@Description: get group name and service name .
-*@author:      wuyan 
-*@createDate:  2015/10/20           
+*@author:      wuyan
+*@createDate:  2015/10/20
 **************************************/
 function getGroupName(db, mustBePrimary)
 {
@@ -272,20 +272,20 @@ function getGroupName(db, mustBePrimary)
    var arrGroupName = Array();
    for (var i=1 ; i != RGname.length ; ++i )
    {
-      var eRGname = eval('('+RGname[i]+')') ;   
+      var eRGname = eval('('+RGname[i]+')') ;
       if( 1000 <= eRGname["GroupID"] )
       {
          arrGroupName[j] = Array();
          var primaryNodeID = eRGname["PrimaryNode"] ;
          var groups = eRGname["Group"] ;
          for ( var m = 0; m < groups.length; m++ )
-         {  
+         {
             if ( true == mustBePrimary )
             {
                var nodeID = groups[m]["NodeID"] ;
                if ( primaryNodeID != nodeID )
                   continue ;
-            }               
+            }
             arrGroupName[j].push(eRGname["GroupName"]) ;
             arrGroupName[j].push(groups[m]["HostName"]) ;
             arrGroupName[j].push(groups[m]["Service"][0]["Name"]) ;
@@ -299,27 +299,27 @@ function getGroupName(db, mustBePrimary)
 
 /************************************
 *@Description: create maincl .
-*@author:      wuyan 
-*@createDate:  2015/10/20             
+*@author:      wuyan
+*@createDate:  2015/10/20
 **************************************/
 function createMainCL( csName, mainCLName, shardingKey )
 {
    println("---Begin to create MainCL.");
-   
+
    var options = { ShardingKey: shardingKey, IsMainCL:true, ReplSize:0 } ;
-   var mainCL = commCreateCLByOption( db, csName, mainCLName, options, false, 
-                                      true, "Failed to create mainCL." );                                  
-   return mainCL ; 
+   var mainCL = commCreateCLByOption( db, csName, mainCLName, options, false,
+                                      true, "Failed to create mainCL." );
+   return mainCL ;
 }
 
 function createCL( csName, clName, shardingKey, shardingType)
 {
    if ( typeof( shardingType ) == "undefined" ) { shardingType = "hash"; }
    println("---Begin to create cl.");
-      
-   var options  = { ShardingKey: shardingKey, ShardingType: shardingType, AutoSplit: true, 
+
+   var options  = { ShardingKey: shardingKey, ShardingType: shardingType, AutoSplit: true,
                     ReplSize:0, Compressed:true } ;
-   var dbcl = commCreateCLByOption( db, csName, clName, options, false, 
+   var dbcl = commCreateCLByOption( db, csName, clName, options, true,
                                      true, "Failed to create cl." );
    return dbcl ;
 }
@@ -344,20 +344,20 @@ function getGroupName(db, mustBePrimary)
    var arrGroupName = Array();
    for (var i=1 ; i != RGname.length ; ++i )
    {
-      var eRGname = eval('('+RGname[i]+')') ;   
+      var eRGname = eval('('+RGname[i]+')') ;
       if( 1000 <= eRGname["GroupID"] )
       {
          arrGroupName[j] = Array();
          var primaryNodeID = eRGname["PrimaryNode"] ;
          var groups = eRGname["Group"] ;
          for ( var m = 0; m < groups.length; m++ )
-         {  
+         {
             if ( true == mustBePrimary )
             {
                var nodeID = groups[m]["NodeID"] ;
                if ( primaryNodeID != nodeID )
                   continue ;
-            }               
+            }
             arrGroupName[j].push(eRGname["GroupName"]) ;
             arrGroupName[j].push(groups[m]["HostName"]) ;
             arrGroupName[j].push(groups[m]["Service"][0]["Name"]) ;
@@ -373,17 +373,17 @@ function getGroupName(db, mustBePrimary)
 *@Description: get the informations of the srcGroups and targetGroups,then split cl with different options,
                only split 1 times
                return the informations of the srcGroups and targetGroups
-*@authorï¼šYan Wu 2015/10/26
+*@author£ºYan Wu 2015/10/26
 *@parameters:
-             startCondition:start condition of split,if the typeof is number,then percentage split,if the typeof is object, 
+             startCondition:start condition of split,if the typeof is number,then percentage split,if the typeof is object,
              then range split
              endCondition:object of end condition
 *@return array[][] ex:
         [0]
            {"GroupName":"XXXX"}
            {"HostName":"XXXX"}
-           {"svcname":"XXXX"}           
-        [N]            
+           {"svcname":"XXXX"}
+        [N]
 **************************************/
 function clSplit( csName, clName, startCondition, endCondition )
 {
@@ -391,22 +391,22 @@ function clSplit( csName, clName, startCondition, endCondition )
 	{
 	   var targetGroupNums = 1;
       var groupsInfo = getSplitGroups(csName,clName,targetGroupNums);
-      var srcGrName = groupsInfo[0].GroupName;            
+      var srcGrName = groupsInfo[0].GroupName;
       var tarGrName = groupsInfo[1].GroupName;
       var CL = db.getCS(csName).getCL(clName);
-      println("---begin split") 
+      println("---begin split")
 		if ( typeof(startCondition) === "number" ) //percentage split
 		{
 			CL.split( srcGrName, tarGrName, startCondition );
 		}
 		else if ( typeof(startCondition) === "object" && endCondition === undefined ) //range split without end condition
 		{
-			CL.split( srcGrName, tarGrName, startCondition );			
+			CL.split( srcGrName, tarGrName, startCondition );
 		}
 		else if ( typeof(startCondition) === "object" && typeof(endCondition) === "object" ) //range split with end condition
 		{
 			CL.split( srcGrName, tarGrName, startCondition, endCondition );
-		}		
+		}
 	}
 	catch ( e )
 	{
@@ -419,26 +419,26 @@ function clSplit( csName, clName, startCondition, endCondition )
 /************************************
 *@Description: get SrcGroup and TargetGroup info,the groups information
                include GroupName,HostName and svcname
-*@authorï¼šwuyan 2015/10/14
+*@author£ºwuyan 2015/10/14
 *@return array[][] ex:
         [0]
            {"GroupName":"XXXX"}
            {"HostName":"XXXX"}
-           {"svcname":"XXXX"}           
+           {"svcname":"XXXX"}
         [N]
            ...
 **************************************/
 function getSplitGroups(csName,clName,targetGrMaxNums)
 {
-   var allGroupInfo =  getGroupName(db, true);    
+   var allGroupInfo =  getGroupName(db, true);
    var srcGroupName = getSrcGroup(csName, clName );
    var splitGroups = new Array();
-   if( targetGrMaxNums >= allGroupInfo.length-1 ) 
+   if( targetGrMaxNums >= allGroupInfo.length-1 )
    {
-      targetGrMaxNums = allGroupInfo.length-1;      
+      targetGrMaxNums = allGroupInfo.length-1;
    }
    var index =1;
-   
+
    for( var i = 0 ; i != allGroupInfo.length ; ++i )
    {
       if( srcGroupName == allGroupInfo[i][0] )
@@ -446,28 +446,28 @@ function getSplitGroups(csName,clName,targetGrMaxNums)
          splitGroups[0] = new Object();
 			splitGroups[0].GroupName = allGroupInfo[i][0];
 			splitGroups[0].HostName = allGroupInfo[i][1];
-			splitGroups[0].svcname = allGroupInfo[i][2];	
+			splitGroups[0].svcname = allGroupInfo[i][2];
       }
-      else 
+      else
       {
          if (index > targetGrMaxNums)
          {
             continue;
-         }      
+         }
          splitGroups[index] = new Object();
 			splitGroups[index].GroupName = allGroupInfo[i][0];
 			splitGroups[index].HostName = allGroupInfo[i][1];
-			splitGroups[index].svcname = allGroupInfo[i][2];			          
-         index++;                  
+			splitGroups[index].svcname = allGroupInfo[i][2];
+         index++;
       }
-   }   
+   }
    return splitGroups;
-   
+
 }
 
 /************************************
 *@Description: get SrcGroup name,update getPG to getSrcGroup
-*@authorï¼šwuyan 2015/10/14
+*@author£ºwuyan 2015/10/14
 **************************************/
 function getSrcGroup( csName, clName )
 {
@@ -479,12 +479,12 @@ function getSrcGroup( csName, clName )
       {
          var clInfoObj = clInfo.current().toObj();
          var srcGroupName = clInfoObj.CataInfo[0].GroupName;
-      }                   
+      }
       return srcGroupName;
    }
    catch( e )
    {
-      println( "failed to get source group, cl name: " + clFullName ) ;     
+      println( "failed to get source group, cl name: " + clFullName ) ;
       throw e ;
    }
 }

@@ -5,6 +5,7 @@
 *@createdate:  2017.8.16
 **************************************/
 var clName = CHANGEDPREFIX + "_updateShardingKey_12157";
+var csName="12157_cs";
 function main()
 {
    if( true == commIsStandalone( db ) )
@@ -13,12 +14,12 @@ function main()
       return;
    }
 
-   //clean environment before test
-   commDropCL( db, COMMCSNAME, clName, true, true,"drop CL in the beginning" ) ;
-   
-   //create cl
+   commDropCS(db, csName, true, "Failed to drop CS.");
+
+   commCreateCS( db, csName, false, "Failed to create CS.");  
+
    var shardingKey = {no:1};
-   var dbcl = createCL( COMMCSNAME, clName, shardingKey );
+   var dbcl = createCL( csName, clName, shardingKey );
    
    //insert data 	
    var doc = [{no:{ "$timestamp" : "2017-07-29-13.14.26.124233" },a:"testa1",b:1},
@@ -38,8 +39,7 @@ function main()
    checkResult( dbcl, null,null, expRecs, {_id:1} ); 	
    
    // drop collectionspace in clean
-   commDropCL( db, COMMCSNAME, clName, false, false,
-             "drop colleciton in the end" );
-   
+    commDropCS(db,csName)
+
 }
 main();
