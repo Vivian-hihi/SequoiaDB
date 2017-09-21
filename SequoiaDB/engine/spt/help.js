@@ -4,7 +4,7 @@ Bson.prototype.help = function() {
    println("   toJson() - convert to json string") ;
 }
 
-var help = function( val ) {
+const help = function( val ) {
    if ( val == undefined )
    {
    	  println("   --Connect to database:");
@@ -39,7 +39,7 @@ var help = function( val ) {
    }
 }
 
-var _help = function( className, funcName, isInstance ) {
+const _help = function( className, funcName, isInstance ) {
    if ( isInstance == undefined )
    {
       isInstance = false ;
@@ -60,7 +60,7 @@ Sdb.help = function( func ) {
 }
 
 Sdb.prototype.help = function( func ) {
-   _help( "Sdb", func, true ) ;   
+   _help( "Sdb", func, true ) ;
 }
 
 // SdbNode
@@ -69,7 +69,7 @@ SdbNode.help = function( func ) {
 }
 
 SdbNode.prototype.help = function( func ) {
-   _help( "SdbNode", func, true ) ;   
+   _help( "SdbNode", func, true ) ;
 }
 
 // SdbReplicaGroup
@@ -78,7 +78,7 @@ SdbReplicaGroup.help = function( func ) {
 }
 
 SdbReplicaGroup.prototype.help = function( func ) {
-   _help( "SdbReplicaGroup", func, true ) ;   
+   _help( "SdbReplicaGroup", func, true ) ;
 }
 
 // SdbCS
@@ -87,7 +87,7 @@ SdbCS.help = function( func ) {
 }
 
 SdbCS.prototype.help = function( func ) {
-   _help( "SdbCS", func, true ) ;   
+   _help( "SdbCS", func, true ) ;
 }
 
 // SdbCollection
@@ -114,7 +114,7 @@ SdbDomain.help = function( func ) {
 }
 
 SdbDomain.prototype.help = function( func ) {
-   _help( "SdbDomain", func, true ) ; 
+   _help( "SdbDomain", func, true ) ;
 }
 
 // SdbQuery
@@ -159,7 +159,7 @@ SdbDC.help = function( func ) {
 
 SdbDC.prototype.help = function( func ) {
    // _help( "SdbDC", func, true ) ;
-   
+
    // TODO: add troff file of dc, and remove the follow info.
    if ( func == undefined )
    {

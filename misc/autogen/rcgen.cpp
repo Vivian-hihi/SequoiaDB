@@ -460,7 +460,7 @@ void RCGen::genJS ()
    fout << "/* Error Constants */" << endl ;
    for ( int i = 0 ; i < conslist.size() ; i++ )
    {
-      fout << "var " << setw(maxErrorNameWidth + 2) << conslist[i].first << " = "
+      fout << "const " << setw(maxErrorNameWidth + 2) << conslist[i].first << " = "
          << setw(6) << conslist[i].second << ";" << endl ;
    }
    fout << endl ;
@@ -468,7 +468,7 @@ void RCGen::genJS ()
    fout << "/* Error Codes */" << endl ;
    for ( int i = 0 ; i < errcodes.size() ; i++ )
    {
-      fout << "var " << setw(maxErrorNameWidth + 2) << errcodes[i].name << " = "
+      fout << "const " << setw(maxErrorNameWidth + 2) << errcodes[i].name << " = "
          << setw(6) << -(i + 1) << "; // "
          << errcodes[i].getDesc(language) << ";" << endl ;
    }
