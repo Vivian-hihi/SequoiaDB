@@ -19,7 +19,7 @@ function main()
    //clean environment before test
    commDropCS( db, csName, true, "Failed to drop CS.");    
    
-   //create maincl¡¢subcl  
+   //create maincl/subcl  
    commCreateCS( db, csName, false, "Failed to create CS.");  
    var mainclShardingKey = {a:1}; 
    var mainCL = createMainCL( csName, mainCLName, mainclShardingKey ); 
