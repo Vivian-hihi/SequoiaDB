@@ -98,18 +98,21 @@ function getNodeList( groupName )
 function checkCappedCL( csName, clName, nodeList )
 {
 	var repeatTime = 10;
+	var clSize = 0;
 	for(var i = 0; i < repeatTime; i++){
 		  var j = i % nodeList.length;
 		  println("j: " + j);
 		  var catadb = new Sdb( nodeList[j] );
-	      var cursor = catadb.SYSCAT.SYSCOLLECTIONS.find({ 'Name' : csName + "." + clName});
-          if(cursor == null){
+	      clSize = catadb.SYSCAT.SYSCOLLECTIONS.count({ 'Name' : csName + "." + clName});
+			//judge the current node exist CL or not 
+          if(clSize == 0){
 			  // wait for the slave node sync
-			  sleep(5 * 60 * 1000);//5 mins		
-              cursor = catadb.SYSCAT.SYSCOLLECTIONS.find({ 'Name' : csName + "." + clName});			  
+			  sleep(2 * 60 * 1000);//2 mins		
+           clSize = catadb.SYSCAT.SYSCOLLECTIONS.count({ 'Name' : csName + "." + clName});			  
 		  }
           
-		  if(cursor != null){
+		  if(clSize != 0){
+			   var cursor = catadb.SYSCAT.SYSCOLLECTIONS.find({ 'Name' : csName + "." + clName});
 			   var obj    = cursor.next().toObj();
                var attributeDesc = obj.AttributeDesc;
                var max    = obj.Max;
@@ -119,11 +122,11 @@ function checkCappedCL( csName, clName, nodeList )
 	           {
 		          throw buildException( "check cappedCL attributeDesc", null, "check cappedCL attributeDesc", "NoIDIndex | Capped",  attributeDesc);
 	           }
-	          cursor.close();
-	          catadb.close();  
+	          cursor.close(); 
 		  }else{
 			  throw buildException( "check cappedCL failed , cursor is null");
 		  }
+		  catadb.close();  
 	}
 	  
 }
