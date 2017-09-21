@@ -1224,7 +1224,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( COORD_LOBSTREAM_COMPLETELOB ) ;
-      rc = _update( tuple, cb ) ;
+      rc = _write( tuple, cb ) ;
       PD_TRACE_EXITRC( COORD_LOBSTREAM_COMPLETELOB, rc ) ;
       return rc ;
    }

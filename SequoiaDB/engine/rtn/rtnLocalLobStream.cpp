@@ -253,9 +253,6 @@ namespace engine
       _dmsLobMeta tmpMeta ;
       PD_TRACE_ENTRY( SDB_RTNLOCALLOBSTREAM__ENSURELOB ) ;
 
-      rc = _mbContext->mbLock( EXCLUSIVE ) ;
-      PD_RC_CHECK( rc, PDERROR, "dms mb context lock failed, rc: %d", rc ) ;
-
       rc = _su->lob()->getLobMeta( getOID(), _mbContext,
                                    cb, tmpMeta ) ;
       if ( SDB_OK == rc )
@@ -278,28 +275,10 @@ namespace engine
       else
       {
          rc = SDB_OK ;
-         if ( !dmsAccessAndFlagCompatiblity ( _mbContext->mb()->_flag,
-                                              DMS_ACCESS_TYPE_INSERT ) )
-         {
-            PD_LOG ( PDERROR, "Incompatible collection mode: %d",
-                     _mbContext->mb()->_flag ) ;
-            rc = SDB_DMS_INCOMPATIBLE_MODE ;
-            goto error ;
-         }
-
-         rc = _su->lob()->writeLobMeta( getOID(), _mbContext,
-                                        cb, meta, TRUE, _getDPSCB() ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "Failed to write lob meta, rc:%d", rc ) ;
-            goto error ;
-         }
          isNew = TRUE ;
       }
 
    done:
-      _mbContext->mbUnlock() ;
-
       PD_TRACE_EXITRC( SDB_RTNLOCALLOBSTREAM__ENSURELOB, rc ) ;
       return rc ;
    error:
@@ -312,7 +291,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNLOCALLOBSTREAM__COMPLETELOB ) ;
-      rc = _update( tuple, cb ) ;
+      rc = _write( tuple, cb ) ;
       PD_TRACE_EXITRC( SDB_RTNLOCALLOBSTREAM__COMPLETELOB, rc ) ;
       return rc ;
    }

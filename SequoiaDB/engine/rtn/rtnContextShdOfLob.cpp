@@ -420,16 +420,26 @@ namespace engine
       }
       else if ( SDB_LOB_MODE_CREATEONLY == _mode && _isMainShd )
       {
-         rc = rtnCreateLob( _fullName.c_str(),
-                            _oid, _meta, cb, _w, _dpsCB,
-                            _su, _mbContext ) ;
-         if ( SDB_OK != rc )
+         _dmsLobMeta meta ;
+
+         rc = rtnGetLobMetaData( _fullName.c_str(),
+                                 _oid, cb, meta,
+                                 _su, _mbContext ) ;
+         if ( SDB_FNE == rc )
          {
-            PD_LOG( PDERROR, "failed to create lob:%d", rc ) ;
+            rc = SDB_OK ;
+         }
+         else if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to get lob meta data:%d", rc ) ;
             goto error ;
          }
-
-         _written.insert( DMS_LOB_META_SEQUENCE ) ;
+         else
+         {
+            rc = SDB_FE ;
+            PD_LOG( PDERROR, "Lob[%s] exists", _oid.str().c_str() ) ;
+            goto error ;
+         }
       }
       else if ( _isMainShd && SDB_LOB_MODE_REMOVE == _mode )
       {
