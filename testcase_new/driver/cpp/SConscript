@@ -38,6 +38,7 @@ testFiles = [
    [ "./cursor/closeAllCursors12687.cpp" ],
    [ "./dbOpr/auth12521.cpp" ],
    [ "./dbOpr/backup12304.cpp" ],
+   [ "./dbOpr/procedure12522.cpp" ],
    [ "./disconnect/opCL12741.cpp" ],
    [ "./disconnect/opSdb12531.cpp" ],
    [ "./disconnect/opDomain12739.cpp" ],
@@ -77,6 +78,9 @@ testFiles = [
    [ "./paramVerify/csFuncParamTest12719.cpp" ],
    [ "./paramVerify/clFuncParamTest12671.cpp" ],
    [ "./paramVerify/rgFuncParamTest12729.cpp" ],  # sync
+   [ "./paramVerify/dbFuncParamTest12694.cpp" ],
+   [ "./paramVerify/lobFuncParamTest12556.cpp" ],
+   [ "./paramVerify/initClientParamTest12736.cpp" ],
    [ "./cls/rgOpr12688_12693.cpp" ],  # sync
    [ "./cls/nodeOpr12689_12692.cpp" ],  # sync
    [ "./cls/attachDetachNode12553.cpp" ],  # sync

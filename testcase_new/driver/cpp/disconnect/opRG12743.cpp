@@ -32,6 +32,7 @@ protected:
       pRgName = "group12743" ;
       rc = db.createReplicaGroup( pRgName, rg ) ;
       ASSERT_EQ( SDB_OK, rc ) << "fail to create rg" ;
+
       db.disconnect() ;
    }
 
@@ -74,7 +75,7 @@ TEST_F( opRG12743, opRG )
    EXPECT_EQ( SDB_NOT_CONNECTED, rc ) << "get slave shouldn't succeed" ;
 
    // get node
-   //rc = rg.getNode( "localhost", node ) ; // TODO: rc = -6, not reasonable
+   rc = rg.getNode( "localhost:1234", node ) ; // TODO: api bug, nodeName not hostName
    //EXPECT_EQ( SDB_NOT_CONNECTED, rc ) << "get node(1) shouldn't succeed" ;
    rc = rg.getNode( "localhost", "1234", node ) ;
    EXPECT_EQ( SDB_NOT_CONNECTED, rc ) << "get node(2) shouldn't succeed" ;

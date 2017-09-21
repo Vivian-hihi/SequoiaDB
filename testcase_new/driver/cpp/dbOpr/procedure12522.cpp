@@ -10,33 +10,22 @@
 #include <vector>
 #include "testcommon.hpp"
 #include "arguments.hpp"
+#include "testBase.hpp"
 
 using namespace sdbclient ;
 using namespace bson ;
 using namespace std ;
 
-class procedure12522 : public testing::Test 
-{
-protected:
-   sdb db ;
-   arguments* args ;
-
-   void SetUp()
-   {
-      INT32 rc = SDB_OK ;
-      args = arguments::getInstance() ;
-      rc = db.connect( args->hostname(), args->svcname(), args->user(), args->passwd() ) ;
-      ASSERT_EQ( SDB_OK, rc ) << "fail to connect db" ;
-   }
-
-   void TearDown()
-   {
-      db.disconnect() ;
-   }
-};
+class procedure12522 : public testBase {} ;
 
 TEST_F( procedure12522, testProcedure )
 {
+   if( isStandalone( db ) )
+   {
+      cout << "skip this test for standalone" << endl ; 
+      return ;
+   }
+
    // create procedure
    INT32 rc = SDB_OK ;
    string funcName = "sum12522" ;
@@ -64,7 +53,7 @@ TEST_F( procedure12522, testProcedure )
    SDB_SPD_RES_TYPE type = SDB_SPD_RES_TYPE_NUMBER ;
    BSONObj errmsg ;
    string evalCode = funcName + "( 1, 2 )" ;
-   rc = db.evalJS( evalCode.c_str(), type, evalCursor, errmsg ) ; // TODO: check type
+   rc = db.evalJS( evalCode.c_str(), type, evalCursor, errmsg ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to call procedure, errmsg: " << errmsg ; 
 
    // check return
@@ -76,8 +65,11 @@ TEST_F( procedure12522, testProcedure )
    ASSERT_EQ( expReturn, actReturn ) << "result that procedure returns is wrong" ;
    rc = evalCursor.close() ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to close evalCursor" ;
+   ASSERT_EQ( SDB_SPD_RES_TYPE_NUMBER, type ) << "precedure return type is wrong" ;
    
    // remove procedure
    rc = db.rmProcedure( funcName.c_str() ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to remove procedure" ; // TODO: check procedure was deleted!
+   rc = db.evalJS( evalCode.c_str(), type, evalCursor, errmsg ) ;
+   ASSERT_EQ( SDB_SPT_EVAL_FAIL, rc ) << "call procedure shouldn't succeed after deletion" ;
 }

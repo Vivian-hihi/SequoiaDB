@@ -55,14 +55,14 @@ protected:
 
 TEST_F( opCL12741, opCL )
 {
-   // test all interfaces of class sdbCollection except getCollectionName(), getCSName(), getFullName(), create(), drop()
+   // test all interfaces of class sdbCollection except getCollectionName(), getCSName(), getFullName(), create(), drop(), pop()
    // in the order of c++ api doc
    
    // count
    INT32 rc = SDB_OK ;
    SINT64 count ;
-   //rc = cl.getCount( count ) ; // TODO: core for bug
-   //EXPECT_EQ( SDB_NOT_CONNECTED, rc ) << "getCount shouldn't be executed" ;
+   rc = cl.getCount( count ) ;
+   EXPECT_EQ( SDB_NOT_CONNECTED, rc ) << "getCount shouldn't be executed" ;
 
    // split
    BSONObj splitStartCond = BSON( "a" << 0 ) ;
@@ -169,8 +169,5 @@ TEST_F( opCL12741, opCL )
    EXPECT_EQ( SDB_NOT_CONNECTED, rc ) << "create id index shouldn't be executed" ;
    rc = cl.dropIdIndex() ;
    EXPECT_EQ( SDB_NOT_CONNECTED, rc ) << "drop id index shouldn't be executed" ;
-
-   // capped cl
-   //rc = cl.pop() ; //TODO: core for bug
-   //EXPECT_EQ( SDB_NOT_CONNECTED, rc ) << "pop shouldn't be executed" ;
+   // TODO: api bug, pop() shouldn't be exposed
 }

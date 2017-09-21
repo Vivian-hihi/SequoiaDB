@@ -19,6 +19,7 @@ public:
 
    const CHAR* hostName() ;
    const CHAR* svcName() ;
+   const INT32 port() ;
    const CHAR* user() ;
    const CHAR* passwd() ;
 
@@ -37,6 +38,7 @@ public:
 private:
    CHAR _hostName[ MAX_ARG_LEN ] ;
    CHAR _svcName[ MAX_ARG_LEN ] ;
+   INT32 _port ;
    CHAR _user[ MAX_ARG_LEN ] ;
    CHAR _passwd[ MAX_ARG_LEN ] ;
 

@@ -165,8 +165,8 @@ TEST_F( opSdb12531, opSdb )
    sdbDataCenter dc ;
    rc = db.getDC( dc ) ;
    EXPECT_EQ( SDB_NOT_CONNECTED, rc ) << "get dc shouldn't be executed" ;
-   // rc = db.syncDB() ; // TODO: core for bug
+   rc = db.syncDB() ; 
    EXPECT_EQ( SDB_NOT_CONNECTED, rc ) << "syncDB shouldn't be executed" ;
-   // rc = db.analyze() ; // TODO: core for bug
+   rc = db.analyze() ;
    EXPECT_EQ( SDB_NOT_CONNECTED, rc ) << "analyze shouldn't be executed" ;
 }

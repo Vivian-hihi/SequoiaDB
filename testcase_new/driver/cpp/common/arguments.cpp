@@ -57,6 +57,7 @@ arguments::arguments()
          _forceClear = atoi( g_argvs[i+1].c_str() ) ? TRUE : FALSE ;
    }
    sprintf( _coordUrl, "%s%s%s", _hostName, ":", _svcName ) ;
+   sscanf( _svcName, "%d", &_port ) ; // TODO: if svcName is not number, how to map?
 }
 
 void arguments::print()
@@ -81,6 +82,11 @@ const CHAR* arguments::hostName()
 const CHAR* arguments::svcName() 
 {
    return _svcName ;
+}
+
+const INT32 arguments::port()
+{
+   return _port ;
 }
 
 const CHAR* arguments::user() 

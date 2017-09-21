@@ -23,8 +23,8 @@ class opLob12745 : public testBase
 protected:
    const char *pCsName ;
    const char *pClName ;
+   sdbCollection cl ;
    sdbLob wLob ;
-   sdbLob rLob ;
 
    void SetUp()
    {
@@ -33,7 +33,6 @@ protected:
       pCsName = "opLob12745" ;
       pClName = "opLob12745" ;
       sdbCollectionSpace cs ;
-      sdbCollection cl ;
 
       INT32 rc = SDB_OK ;
       rc = db.createCollectionSpace( pCsName, SDB_PAGESIZE_4K, cs ) ;
@@ -41,7 +40,8 @@ protected:
       rc = cs.createCollection( pClName, cl ) ;
       ASSERT_EQ( SDB_OK, rc ) << "fail to create cl" ;
       rc = cl.createLob( wLob ) ;
-      ASSERT_EQ( SDB_OK, rc ) << "fail to create lob" ;
+      ASSERT_EQ( SDB_OK, rc ) << "fail to create wLob" ;
+
       db.disconnect() ;
    }
 
@@ -57,20 +57,36 @@ protected:
       }
       testBase::TearDown() ;
    }
+
+   INT32 createAndWriteALob( sdbLob &lob, OID &oid )
+   {
+      INT32 rc = SDB_OK ;
+      CHAR buf[BUF_LEN] ;
+
+      rc = cl.createLob( lob ) ;
+      CHECK_RC( SDB_OK, rc, "fail to create lob" ) ;
+
+      rc = lob.write( buf, BUF_LEN ) ; CHECK_RC( SDB_OK, rc, "fail to write lob" ) ; 
+      rc = lob.getOid( oid ) ;
+      CHECK_RC( SDB_OK, rc, "fail to get lob oid" ) ;
+      rc = lob.close() ;
+      CHECK_RC( SDB_OK, rc, "fail to close lob" ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
 } ;
 
 TEST_F( opLob12745, opLob )
 {
    // test all interfaces of class sdbLob except close(), isClosed(), getOid(), getSize(), getCreateTime()
+   // read() and seek() would succeed because when openLob() is executed, lob is in cache.
+   // if call read()/seek() by wLob, rc would be -6.
    // in the order of c++ api doc
 
    INT32 rc = SDB_OK ;
    CHAR buf[BUF_LEN] ;
-   UINT32 read ;
-   //rc = lob.read( BUF_LEN, buf, &read ) ; // TODO: rc = -6, not reasonable
-   //EXPECT_EQ( SDB_NOT_CONNECTED, rc ) << "read lob shouldn't succeed" ;
    rc = wLob.write( buf, BUF_LEN ) ;
    EXPECT_EQ( SDB_NOT_CONNECTED, rc ) << "write lob shouldn't succeed" ;
-   //rc = lob.seek( 0, SDB_LOB_SEEK_CUR ) ; // TODO: no doc to know what SDB_LOB_SEEK is!// TODO: rc = -6, not reasonable
-   //EXPECT_EQ( SDB_NOT_CONNECTED, rc ) << "seek lob shouldn't succeed" ;
 }
