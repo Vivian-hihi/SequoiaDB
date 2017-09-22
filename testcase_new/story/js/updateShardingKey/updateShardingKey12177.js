@@ -12,20 +12,30 @@
 var clName = CHANGEDPREFIX + "_cl_12177";
 
 function main() {
-    commDropCL(db,COMMCSNAME,clName);
+    if (true == commIsStandalone(db)) {
+        println("run mode is standalone");
+        return;
+    }
+
+    var allGroupName = getGroupName(db, true);
+    if (1 === allGroupName.length) {
+        println("--least two groups");
+        return;
+    }
+    commDropCL(db, COMMCSNAME, clName);
     var mycl = createCL(COMMCSNAME, clName, {a: 1});
     //insert data
-    var docs = [{a: 1},{a:1024}];
+    var docs = [{a: 1}, {a: 1024}];
     insertData(mycl, docs);
 
     clSplit(COMMCSNAME, clName, 50);
     //updateData
-    updateDataError(mycl,"upsert",{$set: {a: "test"}},{"a": {"$et": 1}})
+    updateDataError(mycl, "upsert", {$set: {a: "test"}}, {"a": {"$et": 1}})
 
     //check the update result
     var expRecs = docs;
     checkResult(mycl, null, {}, expRecs);
 
-    commDropCL(db,COMMCSNAME,clName);
+    commDropCL(db, COMMCSNAME, clName);
 }
 main();
