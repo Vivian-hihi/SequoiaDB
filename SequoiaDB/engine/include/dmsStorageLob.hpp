@@ -121,6 +121,11 @@ namespace engine
                     _pmdEDUCB *cb,
                     SDB_DPSCB *dpscb ) ;
 
+      INT32 writeOrUpdate( const dmsLobRecord &record,
+                           dmsMBContext *mbContext,
+                           _pmdEDUCB *cb,
+                           SDB_DPSCB *dpscb ) ;
+
       INT32 remove( const dmsLobRecord &record,
                     dmsMBContext *mbContext,
                     _pmdEDUCB *cb,
@@ -159,6 +164,37 @@ namespace engine
       OSS_INLINE const CHAR*   _clFullName ( const CHAR *clName,
                                              CHAR *clFullName,
                                              UINT32 fullNameLen ) ;
+
+      /*
+         Caller must hold lock with EXCLUSIVE
+      */
+      INT32 _updateWithPage( const dmsLobRecord &record,
+                             DMS_LOB_PAGEID pageID,
+                             const CHAR *pFullName,
+                             dmsMBContext *mbContext,
+                             BOOLEAN canUnLock,
+                             _pmdEDUCB *cb,
+                             SDB_DPSCB *dpscb ) ;
+
+      /*
+         1. Caller must hold lock with EXCLUSIVE
+         2. pageID is taken by _writeWithPage no matter
+            whether it succeeds or not
+      */
+      INT32 _writeWithPage( const dmsLobRecord &record,
+                            DMS_LOB_PAGEID &pageID,
+                            const CHAR *pFullName,
+                            dmsMBContext *mbContext,
+                            BOOLEAN canUnLock,
+                            _pmdEDUCB *cb,
+                            dpsMergeInfo &info,
+                            SDB_DPSCB *dpscb ) ;
+
+      INT32 _writeInner( const dmsLobRecord &record,
+                         dmsMBContext *mbContext,
+                         _pmdEDUCB *cb,
+                         SDB_DPSCB *dpscb,
+                         BOOLEAN updateWhenExist ) ;
 
    private:
       virtual INT32  _onCreate( OSSFILE *file, UINT64 curOffSet ) ;
@@ -216,10 +252,6 @@ namespace engine
       INT32 _fillPage( const dmsLobRecord &record,
                        DMS_LOB_PAGEID page,
                        dmsMBContext *mbContext ) ;
-
-      INT32 _findPage( const dmsLobRecord &record,
-                      dmsMBContext *mbContext,
-                      DMS_LOB_PAGEID &page ) ;
 
       /// only release space of page. will not change other meta data.
       INT32 _releasePage( DMS_LOB_PAGEID page, dmsMBContext *mbContext ) ;
