@@ -42,7 +42,7 @@ const SDB_COORD_GROUP_NAME         = "SYSCoord" ;
 const SDB_CATALOG_GROUP_NAME       = "SYSCatalogGroup" ;
 const SDB_SPARE_GROUP_NAME         = "SYSSpare" ;
 
-const SDB_PRINT_JSON_FORMAT        = true ;
+var SDB_PRINT_JSON_FORMAT          = true ;
 
 const SDB_JSON_PARSE               = JSON.parse ;
 // end Global Constants
