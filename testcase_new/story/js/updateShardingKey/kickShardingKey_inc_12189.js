@@ -6,6 +6,12 @@
 var clName = CHANGEDPREFIX + "_kickShardingKey_12189";
 function main()
 {
+   if( true == commIsStandalone( db ) )
+   {
+      println( "run mode is standalone" );
+      return;
+   }
+   
    //clean environment before test
    commDropCL( db, COMMCSNAME, clName, true, true,"drop CL in the beginning" ) ;
    
