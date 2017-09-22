@@ -529,7 +529,7 @@ namespace engine
                                 pmdEDUCB *cb,
                                 SDB_DPSCB *dpscb )
    {
-      return _writeInner( record, mbContext, cb, dpscb, FALSE ) ;
+      return _writeInner( record, mbContext, cb, dpscb, FALSE, NULL ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGELOB_UPDATEWITHPAGE, "_dmsStorageLob::_updateWithPage" )
@@ -845,7 +845,8 @@ namespace engine
                                       dmsMBContext *mbContext,
                                       _pmdEDUCB *cb,
                                       SDB_DPSCB *dpscb,
-                                      BOOLEAN updateWhenExist )
+                                      BOOLEAN updateWhenExist,
+                                      BOOLEAN *pHasUpdated )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__DMSSTORAGELOB_WRITEINNER ) ;
@@ -952,6 +953,10 @@ namespace engine
                     "rc: %d", record.toString().c_str(), fullName, rc ) ;
             goto error ;
          }
+         if ( pHasUpdated )
+         {
+            *pHasUpdated = FALSE ;
+         }
       }
       /// update
       else
@@ -972,6 +977,10 @@ namespace engine
                     record.toString().c_str(), foundPage,
                     fullName, rc ) ;
             goto error ;
+         }
+         if ( pHasUpdated )
+         {
+            *pHasUpdated = TRUE ;
          }
       }
 
@@ -998,9 +1007,10 @@ namespace engine
    INT32 _dmsStorageLob::writeOrUpdate( const dmsLobRecord &record,
                                         dmsMBContext *mbContext,
                                         _pmdEDUCB *cb,
-                                        SDB_DPSCB *dpscb )
+                                        SDB_DPSCB *dpscb,
+                                        BOOLEAN *pHasUpdated )
    {
-      return _writeInner( record, mbContext, cb, dpscb, TRUE ) ;
+      return _writeInner( record, mbContext, cb, dpscb, TRUE, pHasUpdated ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGELOB_READ, "_dmsStorageLob::read" )

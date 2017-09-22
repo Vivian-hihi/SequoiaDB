@@ -124,7 +124,8 @@ namespace engine
       INT32 writeOrUpdate( const dmsLobRecord &record,
                            dmsMBContext *mbContext,
                            _pmdEDUCB *cb,
-                           SDB_DPSCB *dpscb ) ;
+                           SDB_DPSCB *dpscb,
+                           BOOLEAN *pHasUpdated = NULL ) ;
 
       INT32 remove( const dmsLobRecord &record,
                     dmsMBContext *mbContext,
@@ -194,7 +195,8 @@ namespace engine
                          dmsMBContext *mbContext,
                          _pmdEDUCB *cb,
                          SDB_DPSCB *dpscb,
-                         BOOLEAN updateWhenExist ) ;
+                         BOOLEAN updateWhenExist,
+                         BOOLEAN *pHasUpdated ) ;
 
    private:
       virtual INT32  _onCreate( OSSFILE *file, UINT64 curOffSet ) ;
