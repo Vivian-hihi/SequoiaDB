@@ -131,7 +131,7 @@ public class GroupWrapper {
 
                 ssh.exec(ssh.getSdbInstallDir()
                         + "/bin/sdb -s \"var db = new Sdb;var rg = db.getRG('" + groupName
-                        + "');rg.reelect();\"");
+                        + "');rg.reelect(300);\"");
                 if (!groupMgr.checkBusiness(120)) {
                     throw new ReliabilityException(
                             "After execute reelect,check business have an error");
