@@ -84,9 +84,6 @@ public class DropCappedCLAndKillMasterNode11814 extends SdbTestBase{
          
          //check data consistency
          Assert.assertEquals(dataGroup.checkInspect(60), true, "data is different on " + dataGroup.getGroupName());
-			
-         //check result
-         checkDropCappedCLResult();
             
          //Normal operating environment
          clearFlag = true;
@@ -163,30 +160,5 @@ public class DropCappedCLAndKillMasterNode11814 extends SdbTestBase{
 	       }
 	    }
 	 }
-	 
-	 private void checkDropCappedCLResult() {
-	   if (CAPPED_CL_NUM == dropCLCounts) {        	
-	      try {
-	        	String sameCLName = cappedCLName_11814 + "_" + dropCLCounts;
-	         cappedCS_11814.dropCollection(sameCLName);               
-	         Assert.fail("drop the same CL failed");                
-	      } catch (BaseException e) {
-	         // -23 Collection does not exist  
-	         if (-23 !=  e.getErrorCode()) {
-	            Assert.fail("the error not -23: " + e.getErrorCode());
-	         }
-	      }         	
-	  }else{
-	      //drop remain CLs
-	      for(int clNo = dropCLCounts + 1; clNo <= CAPPED_CL_NUM; clNo++){
-	         String sameCLName = cappedCLName_11814 + "_" + clNo;
-	            try {         	
-	            	cappedCS_11814.dropCollection(sameCLName);            		
-	            } catch (BaseException e) {                 	
-	               Assert.fail("the error: " + e.getErrorCode() + " " + e.getMessage());
-	            }        		
-	        	}
-	      } 
-	 } 
 	 
 }

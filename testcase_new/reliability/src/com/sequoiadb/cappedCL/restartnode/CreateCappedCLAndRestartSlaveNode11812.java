@@ -84,9 +84,6 @@ public class CreateCappedCLAndRestartSlaveNode11812 extends SdbTestBase{
          
          //check data consistency
          Assert.assertEquals(dataGroup.checkInspect(60), true, "data is different on " + dataGroup.getGroupName());			 
-			
-         //check result
-         checkCreateCLResult();
             
          //Normal operating environment
          clearFlag = true;
@@ -152,21 +149,6 @@ public class CreateCappedCLAndRestartSlaveNode11812 extends SdbTestBase{
 				throw e;
 			}
 		} 	
-   }
-    
-   private void checkCreateCLResult() {
-      for (int clNo = 1; clNo <= CAPPED_CL_NUM; clNo++) {
-         String sameCLName = cappedCLName_11812 + "_" + clNo;
-         try {
-            cappedCS_11812.createCollection(sameCLName);
-         } catch (BaseException e) {
-            // -22 SDB_DMS_EXIST
-            if (-22 !=  e.getErrorCode()) {
-               throw e;
-            }
-         }
-      }
-        
    }
 	
 }

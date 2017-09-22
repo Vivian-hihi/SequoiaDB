@@ -84,9 +84,6 @@ public class CreateCappedCLAndKillMasterNode11811 extends SdbTestBase{
           
          //check data consistency
          Assert.assertEquals(dataGroup.checkInspect(60), true, "data is different on " + dataGroup.getGroupName());			 
-				
-         //check create cl result
-         checkCreateCLResult();
             
          //Normal operating environment
          clearFlag = true;
@@ -155,17 +152,4 @@ public class CreateCappedCLAndKillMasterNode11811 extends SdbTestBase{
 		}   
 	}
 	
-	private void checkCreateCLResult() {
-      for (int clNo = 1; clNo <= successCLCounts; clNo++) {
-         String sameCLName = cappedCLName_11811 + "_" + clNo;
-         try {
-            cappedCS_11811.createCollection(sameCLName);
-         } catch (BaseException e) {
-            // -22 SDB_DMS_EXIST
-            if (-22 !=  e.getErrorCode()) {
-               throw e;
-            }
-         }
-      }
-   }
 }
