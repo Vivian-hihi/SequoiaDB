@@ -9,6 +9,8 @@ import com.sequoiadb.commlib.SdbTestBase;
 import com.sequoiadb.datasync.Utils;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.ReliabilityException;
+import com.sequoiadb.exception.SDBError ;
+
 import com.sequoiadb.fault.DiskFull;
 import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.OperateTask;
@@ -96,7 +98,7 @@ public class OprLobAndAddNode3172 extends SdbTestBase {
             GroupWrapper dataGroup = groupMgr.getGroupByName(clGroupName);
             NodeWrapper slvNode = dataGroup.getSlave();
 
-            FaultMakeTask faultTask = DiskFull.getFaultMakeTask(slvNode.hostName(), SdbTestBase.reservedDir, 0, 10, null, 80);
+            FaultMakeTask faultTask = DiskFull.getFaultMakeTask(slvNode.hostName(), slvNode.dbPath(), 0, 10, null, 80);
             TaskMgr mgr = new TaskMgr(faultTask);
             OprLobTask oTask = new OprLobTask();
             AddNodeTask aTask = new AddNodeTask();
@@ -175,7 +177,9 @@ public class OprLobAndAddNode3172 extends SdbTestBase {
                     cl.removeLob(lastOid);
                 }
             } catch (BaseException e) {
-                throw e;
+                if (e.getErrorCode() != -11) {
+                    throw e;
+                }
             } finally {
                 if (db != null) {
                     db.close();

@@ -80,7 +80,7 @@ public class CreateCL3156 extends SdbTestBase {
             GroupWrapper dataGroup = groupMgr.getGroupByName(clGroupName);
             NodeWrapper priNode = dataGroup.getMaster();
 
-            FaultMakeTask faultTask = DiskFull.getFaultMakeTask(priNode.hostName(), SdbTestBase.reservedDir, 0, 10);
+            FaultMakeTask faultTask = DiskFull.getFaultMakeTask(priNode.hostName(), priNode.dbPath(), 0, 10);
             TaskMgr mgr = new TaskMgr(faultTask);
             CreateCLTask cTask = new CreateCLTask();
             mgr.addTask(cTask);
