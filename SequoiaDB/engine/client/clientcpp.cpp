@@ -860,6 +860,7 @@ do                                                            \
          ((_sdbCursorImpl*)(*it))->_setCollection ( NULL ) ;
       }
       _cursors.clear() ;
+
       if ( _connection )
       {
          _connection->_unregCollection ( this ) ;
