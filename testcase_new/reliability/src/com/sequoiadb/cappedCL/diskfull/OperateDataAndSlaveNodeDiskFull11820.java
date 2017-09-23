@@ -85,7 +85,7 @@ public class OperateDataAndSlaveNodeDiskFull11820 extends SdbTestBase {
             System.out.println(priNode.hostName());
 
             //set tasks
-            FaultMakeTask faultTask = DiskFull.getFaultMakeTask(priNode.hostName(), SdbTestBase.reservedDir, 5, 10);
+            FaultMakeTask faultTask = DiskFull.getFaultMakeTask(priNode.hostName(), SdbTestBase.reservedDir, 0, 10);
             taskMgr = new TaskMgr(faultTask);
             taskMgr.addTask(new InsertTask());
             taskMgr.addTask(new PopTask());
@@ -225,7 +225,7 @@ public class OperateDataAndSlaveNodeDiskFull11820 extends SdbTestBase {
 
     public void createOperateDataCL(Sequoiadb db) {
         BSONObject csOption = (BSONObject)JSON.parse("{Capped:true}");
-        BSONObject clOption = (BSONObject)JSON.parse("{Capped:true,Size:100,Max:0,AutoIndexId:false,Group:'"+dataGroup.getGroupName()+"'}");
+        BSONObject clOption = (BSONObject)JSON.parse("{Capped:true,Size:2000,Max:0,AutoIndexId:false,Group:'"+dataGroup.getGroupName()+"'}");
         db.createCollectionSpace(CSNAME,csOption).createCollection(CLNAME,clOption);
     }
 
