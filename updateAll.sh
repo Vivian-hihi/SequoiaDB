@@ -270,7 +270,7 @@ while [ "$1" != "" ]; do
       -start )            startSdb=1
                           ;;
       -dbpath )           shift
-                          homePath=$1
+                          homePath=$(readlink -f $1)
                           ;;
       -full )             runAll=1
                           ;;
