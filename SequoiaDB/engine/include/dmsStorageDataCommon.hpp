@@ -648,7 +648,6 @@ namespace engine
       if ( SHARED == _mbLockType || EXCLUSIVE == _mbLockType )
       {
          ossUnlatch( _latch, (OSS_LATCH_MODE)_mbLockType ) ;
-         _resumeType = _mbLockType ;
          _mbLockType = -1 ;
       }
       return SDB_OK ;

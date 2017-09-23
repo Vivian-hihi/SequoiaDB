@@ -281,11 +281,13 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__DMSMBCONTEXT_PAUSE ) ;
+
+      _resumeType = _mbLockType ;
       if ( SHARED == _mbLockType || EXCLUSIVE == _mbLockType )
       {
-         _resumeType = _mbLockType ;
          rc = mbUnlock() ;
       }
+
       PD_TRACE_EXITRC ( SDB__DMSMBCONTEXT_PAUSE, rc ) ;
       return rc ;
    }
