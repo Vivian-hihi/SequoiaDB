@@ -40,7 +40,7 @@ testFiles = [
    [ "./dbOpr/backup12304.cpp" ],
    [ "./dbOpr/procedure12522.cpp" ],
    [ "./dbOpr/evalJS12525.cpp" ],
-   [ "./dbOpr/trans12520_12675.cpp" ],
+   [ "./dbOpr/trans12520_12675.cpp" ],  # config
    [ "./dbOpr/sql12676_12678.cpp" ],
    [ "./disconnect/opCL12741.cpp" ],
    [ "./disconnect/opSdb12531.cpp" ],
@@ -93,7 +93,12 @@ testFiles = [
    [ "./lob/lobSeek12663.cpp" ],
    [ "./lob/lobClose12554_12665.cpp" ],
    [ "./lob/closeAllCursors11063.cpp" ],
-   [ "./lob/lobMode12737_12738.cpp" ]
+   [ "./lob/lobMode12737_12738.cpp" ],
+   [ "./misc/analyze11667.cpp" ],
+   [ "./misc/sync12237.cpp" ],
+   [ "./misc/flushConf12476.cpp" ],
+   [ "./ssl/sslFalse9649.cpp" ],
+   [ "./ssl/sslTrue9648.cpp" ]  # config
 ]
 
 def getFileName( filePath ):
