@@ -277,7 +277,7 @@ namespace engine
       if ( SDB_LOB_MODE_CREATEONLY == _mode ||
            SDB_LOB_MODE_WRITE == _mode )
       {
-         rc = _close4CreateOrWrite( cb ) ;
+         rc = _writeLobMeta( cb ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to close for create:%d", rc ) ;
@@ -328,7 +328,7 @@ namespace engine
          goto done ;
       }
 
-      if ( SDB_LOB_MODE_CREATEONLY & _mode ) 
+      if ( SDB_LOB_MODE_CREATEONLY == _mode ) 
       {
          PD_LOG( PDERROR, "Lob[%s] is closed with exception, rollback",
                  getOID().str().c_str() ) ;
@@ -340,7 +340,19 @@ namespace engine
             goto error ;
          }
       }
-      else if ( SDB_LOB_MODE_REMOVE & _mode )
+      else if ( SDB_LOB_MODE_WRITE == _mode )
+      {
+         PD_LOG( PDERROR, "Lob[%s] is closed with exception, write meta data",
+                 getOID().str().c_str() ) ;
+         rc = _writeLobMeta( cb, FALSE ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to write meta data of lob[%s], rc:%d",
+                    _oid.str().c_str(), rc ) ;
+            goto error ;
+         }
+      }
+      else if ( SDB_LOB_MODE_REMOVE == _mode )
       {
          PD_LOG( PDERROR, "Lob[%s] is closed with exception, invalidate meta data",
                  getOID().str().c_str() ) ;
@@ -940,20 +952,20 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOBSTREAM__CLOSE4CREATEORWRITE, "_rtnLobStream::_close4CreateOrWrite" )
-   INT32 _rtnLobStream::_close4CreateOrWrite( _pmdEDUCB *cb )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOBSTREAM__WRITELOBMETA, "_rtnLobStream::_writeLobMeta" )
+   INT32 _rtnLobStream::_writeLobMeta( _pmdEDUCB *cb, BOOLEAN withData )
    {
       INT32 rc = SDB_OK ;
       CHAR* buf = NULL ;
       INT32 piecesInfoSize = 0 ;
       _rtnLobTuple tuple ;
-      PD_TRACE_ENTRY( SDB_RTNLOBSTREAM__CLOSE4CREATEORWRITE ) ;
+      PD_TRACE_ENTRY( SDB_RTNLOBSTREAM__WRITELOBMETA ) ;
 
       SDB_ASSERT( SDB_LOB_MODE_CREATEONLY == _mode ||
-                  SDB_LOB_MODE_WRITE, "incorrect mode" ) ;
+                  SDB_LOB_MODE_WRITE == _mode, "incorrect mode" ) ;
 
       // write last data
-      if ( _lw.getCachedData( tuple ) )
+      if ( withData && _lw.getCachedData( tuple ) )
       {
          rc = _writeOrUpdate( tuple, cb ) ;
          if ( SDB_OK != rc )
@@ -993,7 +1005,7 @@ namespace engine
       // _meta._lobLen is already updated
       _meta._modificationTime = ossGetCurrentMilliseconds() ;
       _meta._status = DMS_LOB_COMPLETE ;
-      if ( _lw.getMetaPageData( tuple ) )
+      if ( withData && _lw.getMetaPageData( tuple ) )
       {
          if ( piecesInfoSize > 0 )
          {
@@ -1055,7 +1067,9 @@ namespace engine
       }
 
       rc = _completeLob( tuple, cb ) ;
-      PD_AUDIT_OP_WITHNAME( AUDIT_DML, "LOB CREATE", AUDIT_OBJ_CL,
+      PD_AUDIT_OP_WITHNAME( AUDIT_DML,
+                            SDB_LOB_MODE_CREATEONLY == _mode ? "LOB CREATE" : "LOB WRITE",
+                            AUDIT_OBJ_CL,
                             getFullName(), rc, "OID:%s, Length:%llu",
                             getOID().toString().c_str(),
                             _meta._lobLen ) ;
@@ -1070,7 +1084,7 @@ namespace engine
 
    done:
       SAFE_OSS_FREE( buf ) ;
-      PD_TRACE_EXITRC( SDB_RTNLOBSTREAM__CLOSE4CREATEORWRITE, rc ) ;
+      PD_TRACE_EXITRC( SDB_RTNLOBSTREAM__WRITELOBMETA, rc ) ;
       return rc ;
    error:
       goto done ;

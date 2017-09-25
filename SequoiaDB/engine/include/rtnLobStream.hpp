@@ -227,7 +227,7 @@ namespace engine
 
       INT32 _open4Remove( _pmdEDUCB *cb ) ;
 
-      INT32 _close4CreateOrWrite( _pmdEDUCB *cb ) ;
+      INT32 _writeLobMeta( _pmdEDUCB *cb, BOOLEAN withData = TRUE ) ;
 
       bson::BSONObj _meta2Obj( const _dmsLobMeta &meta ) const ;
 

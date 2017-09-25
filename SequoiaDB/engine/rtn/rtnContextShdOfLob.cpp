@@ -74,8 +74,7 @@ namespace engine
 
       if ( _closeWithException )
       {
-         if ( SDB_LOB_MODE_CREATEONLY == _mode ||
-              SDB_LOB_MODE_WRITE == _mode )
+         if ( SDB_LOB_MODE_CREATEONLY == _mode )
          {
             SDB_ASSERT( cb->getID() == eduID(), "impossible" ) ;
             _rollback( cb ) ;
@@ -289,7 +288,11 @@ namespace engine
          goto error ;
       }
 
-      _written.insert( sequence ) ;
+      if ( SDB_LOB_MODE_CREATEONLY == _mode )
+      {
+         _written.insert( sequence ) ;
+      }
+
    done:
       PD_TRACE_EXITRC( SDB__RTNCONTEXTSHDOFLOB_WRITE, rc ) ;
       return rc ;
@@ -348,6 +351,13 @@ namespace engine
 
          SDB_ASSERT( NULL != newCache.lobMeta(), "new lob meta cache is null" ) ;
 
+         rc = metaCache->cache( *( newCache.lobMeta() ) ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to cache lob meta, rc=%d", rc ) ;
+            goto error ;
+         }
+
          if ( newCache.lobMeta()->hasPiecesInfo() )
          {
             ossMemcpy( (void*)data, newCache.lobMeta(), DMS_LOB_META_LENGTH ) ;
@@ -364,13 +374,6 @@ namespace engine
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to write lob:%d", rc ) ;
-            goto error ;
-         }
-
-         rc = metaCache->cache( *( newCache.lobMeta() ) ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "Failed to cache lob meta, rc=%d", rc ) ;
             goto error ;
          }
 

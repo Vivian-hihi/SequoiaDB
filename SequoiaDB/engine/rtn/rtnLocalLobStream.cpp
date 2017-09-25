@@ -574,6 +574,13 @@ namespace engine
 
          SDB_ASSERT( NULL != newCache.lobMeta(), "new lob meta cache is null" ) ;
 
+         rc = metaCache->cache( *( newCache.lobMeta() ) ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to cache lob meta, rc=%d", rc ) ;
+            goto error ;
+         }
+
          if ( newCache.lobMeta()->hasPiecesInfo() )
          {
             ossMemcpy( (void*)tuple.data, newCache.lobMeta(), DMS_LOB_META_LENGTH ) ;
@@ -587,13 +594,6 @@ namespace engine
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to update to lob:%d", rc ) ;
-            goto error ;
-         }
-
-         rc = metaCache->cache( *( newCache.lobMeta() ) ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "Failed to cache lob meta, rc=%d", rc ) ;
             goto error ;
          }
 
