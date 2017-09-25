@@ -1316,6 +1316,9 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       SDB_DMS_CSCB *pCSCB = NULL ;
+      monCSSimple csInfo ;
+      BOOLEAN deleting = FALSE ;
+      IDmsExtDataHandler *extDataHandler = NULL ;
 
       PD_TRACE_ENTRY ( SDB__SDB_DMSCB_DELCS ) ;
 
@@ -1324,6 +1327,8 @@ namespace engine
          rc = SDB_INVALIDARG ;
          goto error ;
       }
+
+      dumpCSInfo( pName, csInfo, TRUE, deleting, TRUE, TRUE, TRUE ) ;
 
       rc = _CSCBNameRemove ( pName, cb, dpsCB, onlyEmpty, pCSCB ) ;
       if ( rc )
@@ -1336,14 +1341,37 @@ namespace engine
          goto error ;
       }
 
+      if ( DMS_INVALID_SUID != pCSCB->_su->CSID() )
+      {
+         extDataHandler = pCSCB->_su->getExtDataHandler() ;
+      }
+
       if ( removeFile )
       {
          pCSCB->_su->getEventHolder()->onDropCS( DMS_EVENT_MASK_ALL, cb, dpsCB ) ;
+
+         if ( extDataHandler )
+         {
+            INT32 rcTmp = extDataHandler->onDropCS( csInfo, cb ) ;
+            if ( rcTmp )
+            {
+               PD_LOG( PDERROR, "Remove external data failed(rc=%d)", rcTmp ) ;
+            }
+         }
+
          rc = pCSCB->_su->remove() ;
       }
       else
       {
          pCSCB->_su->getEventHolder()->onUnloadCS( DMS_EVENT_MASK_ALL, cb, dpsCB ) ;
+         if ( extDataHandler )
+         {
+            INT32 rcTmp = extDataHandler->onUnloadCS( csInfo, cb ) ;
+            if ( rcTmp )
+            {
+               PD_LOG( PDERROR, "Unload external data failed(rc=%d)", rcTmp ) ;
+            }
+         }
          pCSCB->_su->close() ;
       }
 

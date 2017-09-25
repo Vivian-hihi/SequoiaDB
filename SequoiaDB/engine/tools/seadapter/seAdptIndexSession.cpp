@@ -40,8 +40,10 @@
 #include "seAdptMgr.hpp"
 
 #define SEADPT_FIELD_NAME_RID        "_rid"
-#define SEADPT_NORMAL_CL_DONE_ID     "SDBCOMMIT"
+#define SEADPT_COMMIT_ID             "SDBCOMMIT"
+#define SEADPT_FIELD_NAME_LID        "_lid"
 #define SEADPT_NORMAL_CL_DONE_BODY   "{}"
+#define SEADPT_TID(sessionID)          ((UINT32)(sessionID & 0xFFFFFFFF))
 
 namespace engine
 {
@@ -52,6 +54,7 @@ namespace engine
       "Update collection version",
       "Consult",
       "Query last logical id in capped collection",
+      "Compare last logical id",
       "Query normal collection",
       "Query capped collection",
       "Pop capped collection"
@@ -70,32 +73,31 @@ namespace engine
    }
 
    BEGIN_OBJ_MSG_MAP( _seAdptIndexSession, _pmdAsyncSession)
-      ON_MSG( MSG_BS_QUERY_RES, _onResMsg )
-      ON_MSG( MSG_BS_GETMORE_RES, _onResMsg )
-      ON_MSG( MSG_CAT_QUERY_CATALOG_RSP, _onCatalogResMsg )
+      ON_MSG( MSG_BS_QUERY_RES, handleQueryRes )
+      ON_MSG( MSG_BS_GETMORE_RES, handleGetMoreRes )
    END_OBJ_MSG_MAP()
 
    _seAdptIndexSession::_seAdptIndexSession( UINT64 sessionID,
-                                             netRouteAgent *rtAgent,
                                              const seIndexTask *task )
    : _pmdAsyncSession( sessionID )
    {
-      SDB_ASSERT( rtAgent && task, "Route agent or index task is NULL" ) ;
-      _esClt = NULL ;
-      _rtAgent = rtAgent ;
-      _status = SEADPT_SESSION_STAT_BEGIN ;
-      _startLID = -1 ;
-      _lastPopLID = -1 ;
-      _requestID = 1 ;
-      _quit = FALSE ;
+      SDB_ASSERT( task && task->_indexDef.valid() && !task->_indexDef.isEmpty(),
+                  "Index definition is invalid" ) ;
+
       _origCLFullName = task->_origCSName + "." + task->_origCLName ;
       _cappedCLFullName = task->_cappedCSName + "." + task->_cappedCLName ;
+      _origCLVersion = -1 ;
       _origIdxName = task->_origIdxName ;
       _indexName = task->_esIdxName ;
       _typeName = task->_esTypeName ;
       _indexDef = task->_indexDef.copy() ;
+      _esClt = NULL ;
+      _status = SEADPT_SESSION_STAT_CONSULT ;
+      _lastPopLID = -1 ;
+      _quit = FALSE ;
       _queryCtxID = -1 ;
       _queryBusy = FALSE ;
+      _expectLID = -1 ;
    }
 
    _seAdptIndexSession::~_seAdptIndexSession()
@@ -138,7 +140,8 @@ namespace engine
       {
          _quit = TRUE ;
          PD_LOG( PDEVENT, "Query target collection[ %s ] dose not exist any "
-                 "more. Task ready to exit",
+                 "more. Task ready to exit. Index on search engine will be "
+                 "dropped.",
                  ( SEADPT_SESSION_STAT_QUERY_NORMAL_TBL == _status ) ?
                  _origCLFullName.c_str() : _cappedCLFullName.c_str() ) ;
          rc = _ensureESClt() ;
@@ -158,6 +161,16 @@ namespace engine
       }
       else if ( SDB_OK != reply->flags )
       {
+         // If we find the node is not primary when pop, switch may have
+         // happened. So quit the current indexing work.
+         if ( SEADPT_SESSION_STAT_POP_CAP == _status )
+         {
+            PD_LOG( PDEVENT, "Node is not primary when pop. Switch of primary "
+                    "may have happened. Exiting current indexing work..." ) ;
+            _quit = TRUE ;
+            goto done ;
+         }
+
          rc = reply->flags ;
          PD_LOG( PDERROR, "Query failed[ %d ]. Current status[ %s ]",
                  rc, _seadptStatus2Desp( _status ) ) ;
@@ -178,6 +191,7 @@ namespace engine
             if ( 0 == docObjs.size() )
             {
                _lastPopLID = -1 ;
+               _expectLID = 0 ;
             }
             else
             {
@@ -185,9 +199,64 @@ namespace engine
                            "Returned object number is wrong" ) ;
                _lastPopLID =
                   docObjs[0].getField(SEADPT_FIELD_NAME_ID).Number() ;
+               _expectLID = _lastPopLID ;
+               PD_LOG( PDDEBUG, "Last logical id in capped collection[ %s ] is "
+                       "[ %lld ]", _cappedCLFullName.c_str(), _lastPopLID ) ;
             }
             _switchStatus( SEADPT_SESSION_STAT_QUERY_NORMAL_TBL ) ;
             goto done ;
+         }
+         else if ( SEADPT_SESSION_STAT_COMP_LAST_LID == _status )
+         {
+            if ( 0 == docObjs.size() )
+            {
+               if ( 0 == _expectLID )
+               {
+                  _lastPopLID = -1 ;
+                  _switchStatus( SEADPT_SESSION_STAT_QUERY_CAP_TBL ) ;
+                  _setQueryBusyFlag( FALSE ) ;
+                  goto done ;
+               }
+               else
+               {
+                  // ERROR, need to start from beginning
+                  PD_LOG( PDERROR, "The expected logical id is [ %lld ], but "
+                          "the capped collection [ %s ] is empty. Begin to "
+                          "start all over again", _expectLID,
+                          _cappedCLFullName.c_str() ) ;
+                  rc = _startOver() ;
+                  PD_RC_CHECK( rc, PDERROR, "Restart the index work "
+                               "failed[ %d ]", rc ) ;
+                  goto done ;
+               }
+            }
+            else
+            {
+               SDB_ASSERT( 1 == docObjs.size(),
+                           "Returned object number is wrong" ) ;
+               INT64 lastLID =
+                  docObjs[0].getField(SEADPT_FIELD_NAME_ID).Number() ;
+               if ( _expectLID >= lastLID )
+               {
+                  _lastPopLID = _expectLID ;
+                  _switchStatus( SEADPT_SESSION_STAT_QUERY_CAP_TBL ) ;
+                  _setQueryBusyFlag( FALSE ) ;
+                  goto done ;
+               }
+               else
+               {
+                  // ERROR
+                  // need to clean the index and start over
+                  PD_LOG( PDERROR, "The expected logical id is [ %lld ], but "
+                          "the actual last logical id in capped collection "
+                          "[ %s ] is [ %lld ]. Begin to start all over again",
+                          _expectLID, _cappedCLFullName.c_str(), lastLID ) ;
+                  rc = _startOver() ;
+                  PD_RC_CHECK( rc, PDERROR, "Restart the index work "
+                               "failed[ %d ]", rc ) ;
+                  goto done ;
+               }
+            }
          }
 
          // pop is after a query/getmore on a capped collection. A new context
@@ -205,11 +274,7 @@ namespace engine
          }
 
          rc = _sendGetmoreReq( contextID, msg->requestID ) ;
-         if ( rc )
-         {
-            PD_LOG( PDERROR, "Failed to get more records, rc: %d", rc ) ;
-            goto error ;
-         }
+         PD_RC_CHECK( rc, PDERROR, "Send get more request failed[ %d ]", rc ) ;
       }
 
    done:
@@ -253,73 +318,6 @@ namespace engine
       goto done ;
    }
 
-   INT32 _seAdptIndexSession::_onResMsg( NET_HANDLE handle, MsgHeader *msg )
-   {
-      INT32 rc = SDB_OK ;
-      // TODO: The version of the collection may have changed. What to do then?
-      if ( MSG_BS_GETMORE_RES == msg->opCode )
-      {
-         rc = handleGetMoreRes( handle, msg ) ;
-         if ( rc )
-         {
-            PD_LOG( PDERROR, "Failed to handle query respond, rc: %d", rc ) ;
-            goto error ;
-         }
-      }
-      else if ( MSG_BS_QUERY_RES == msg->opCode )
-      {
-         rc = handleQueryRes( handle, msg ) ;
-         if ( rc )
-         {
-            PD_LOG( PDERROR, "Failed to handle query respond, rc: %d", rc ) ;
-            goto error ;
-         }
-      }
-      else
-      {
-         SDB_ASSERT( FALSE, "Invalid mesage" ) ;
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 _seAdptIndexSession::_onCatalogResMsg( NET_HANDLE handle,
-                                                MsgHeader *msg )
-   {
-      INT32 rc = SDB_OK ;
-      INT32 flag = 0 ;
-      INT64 contextID = -1 ;
-      INT32 startFrom = 0 ;
-      INT32 numReturned = 0 ;
-      vector<BSONObj> docObjs ;
-      INT32 version = 0 ;
-
-      SDB_ASSERT( SEADPT_SESSION_STAT_UPDATE_CL_VERSION == _status,
-                  "Status is wrong" ) ;
-
-      rc = msgExtractReply( (CHAR *)msg, &flag, &contextID, &startFrom,
-                            &numReturned, docObjs ) ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Failed to extract query result, rc: %d", rc ) ;
-         goto error ;
-      }
-
-      SDB_ASSERT( 1 == docObjs.size(),
-                  "Respond size from catalog is wrong" ) ;
-      version = docObjs[0].getIntField( FIELD_NAME_VERSION ) ;
-      _updateCLVersion( version ) ;
-      _switchStatus( SEADPT_SESSION_STAT_CONSULT ) ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
    void _seAdptIndexSession::onRecieve( const NET_HANDLE netHandle,
                                         MsgHeader *msg )
    {
@@ -330,9 +328,12 @@ namespace engine
       return _quit ;
    }
 
+   // Called by pmdAsyncSessionAgentEntryPoint. It will be invoked every one
+   // second.
    void _seAdptIndexSession::onTimer( UINT64 timerID, UINT32 interval )
    {
       INT32 rc = SDB_OK ;
+      BOOLEAN inUpdate = FALSE ;
 
       if ( _quit )
       {
@@ -343,9 +344,20 @@ namespace engine
       switch ( _status )
       {
          case SEADPT_SESSION_STAT_BEGIN:
-            rc = _sendUpdateCLVersionReq() ;
-            PD_RC_CHECK( rc, PDERROR, "Update collection version failed" ) ;
-            _switchStatus( SEADPT_SESSION_STAT_UPDATE_CL_VERSION ) ;
+            if ( !inUpdate )
+            {
+               INT32 clVersion = -1 ;
+               inUpdate = TRUE ;
+               rc = sdbGetSeAdapterCB()->syncUpdateCLVersion( _origCLFullName.c_str(),
+                                                              OSS_ONE_SEC, eduCB(),
+                                                              clVersion ) ;
+               PD_RC_CHECK( rc, PDERROR, "Update collection version failed" ) ;
+               PD_LOG( PDDEBUG, "Change cl[ %s ] version from [ %d ] to [ %d ]"
+                       "accorrding to catalog", _origCLFullName.c_str(),
+                       _origCLVersion, clVersion ) ;
+               _origCLVersion = clVersion ;
+               _switchStatus( SEADPT_SESSION_STAT_QUERY_NORMAL_TBL ) ;
+            }
             break ;
          case SEADPT_SESSION_STAT_CONSULT:
             rc = _consult() ;
@@ -353,19 +365,27 @@ namespace engine
             {
                PD_LOG( PDERROR, "Consult failed[ %d ]. Try to start from the "
                        "beginning...", rc ) ;
-               _switchStatus( SEADPT_SESSION_STAT_BEGIN ) ;
+               // _switchStatus( SEADPT_SESSION_STAT_BEGIN ) ;
+               _startOver() ;
                goto error ;
             }
-            break ;
-         case SEADPT_SESSION_STAT_UPDATE_CL_VERSION:
-            rc = _sendUpdateCLVersionReq() ;
-            PD_RC_CHECK( rc, PDERROR, "Update collection version failed" ) ;
             break ;
          case SEADPT_SESSION_STAT_QUERY_NORMAL_TBL:
             // Only when the query is not in progress that we start a fresh
             // query.
             if ( !_isQueryBusy() )
             {
+               INT32 clVersion = -1 ;
+               rc = sdbGetSeAdapterCB()->syncUpdateCLVersion( _origCLFullName.c_str(),
+                                                              OSS_ONE_SEC, eduCB(),
+                                                              clVersion ) ;
+               PD_RC_CHECK( rc, PDERROR, "Update collection version "
+                            "failed[ %d ]" ) ;
+               PD_LOG( PDDEBUG, "Change cl[ %s ] version from [ %d ] to [ %d ]"
+                       "accorrding to catalog", _origCLFullName.c_str(),
+                       _origCLVersion, clVersion ) ;
+               _origCLVersion = clVersion ;
+
                rc = _queryOrigCollection() ;
                PD_RC_CHECK( rc, PDERROR,
                             "Query original collection[ %s ] failed[ %d ]",
@@ -376,7 +396,12 @@ namespace engine
          case SEADPT_SESSION_STAT_QUERY_CAP_TBL:
             if ( !_isQueryBusy() )
             {
-               rc = _queryCappedCollection() ;
+               BSONObj condition ;
+               if ( _lastPopLID >= 0 )
+               {
+                  condition = BSON( "_id" << BSON( "$gt" << _lastPopLID ) ) ;
+               }
+               rc = _queryCappedCollection( condition ) ;
                PD_RC_CHECK( rc, PDERROR,
                             "Query capped collection[ %s ] failed[ %d ]",
                             _cappedCLFullName.c_str(), rc ) ;
@@ -395,29 +420,40 @@ namespace engine
 
    void _seAdptIndexSession::_onAttach()
    {
-      BSONObjBuilder builder ;
-      BSONObjIterator idxItr( _indexDef ) ;
-
-      builder.append( SEADPT_FIELD_NAME_ID, "" ) ;
-      while ( idxItr.more() )
+      try
       {
-         BSONElement ele = idxItr.next() ;
-         const CHAR *fieldName = ele.fieldName() ;
-         SDB_ASSERT( 0 != ossStrcmp( fieldName, SEADPT_FIELD_NAME_ID ),
-                     "Text index should not include _id" ) ;
-         builder.append( fieldName, "" ) ;
+         // Build the selector for querying the original collection.
+         BSONObjBuilder builder ;
+         BSONObjIterator idxItr( _indexDef ) ;
+
+         builder.append( SEADPT_FIELD_NAME_ID, "" ) ;
+         while ( idxItr.more() )
+         {
+            BSONElement ele = idxItr.next() ;
+            const CHAR *fieldName = ele.fieldName() ;
+            SDB_ASSERT( 0 != ossStrcmp( fieldName, SEADPT_FIELD_NAME_ID ),
+                        "Text index should not include _id" ) ;
+            builder.append( fieldName, "" ) ;
+         }
+
+         _selector = builder.obj() ;
+
+         PD_LOG( PDDEBUG, "Selector for the original collection: %s",
+                 _selector.toString().c_str() ) ;
+
+         PD_LOG( PDEVENT, "New index task starts: original collection[ %s ], "
+                 "index[ %s ], capped collection[ %s ], search engine "
+                 "index[ %s ], search engine type[ %s ]",
+                 _origCLFullName.c_str(), _origIdxName.c_str(),
+                 _cappedCLFullName.c_str(), _indexName.c_str(),
+                 _typeName.c_str() ) ;
       }
-
-      _selector = builder.obj() ;
-
-      PD_LOG( PDDEBUG, "Selector for the original collection: %s",
-              _selector.toString().c_str() ) ;
-
-      PD_LOG( PDEVENT, "New index task starts for original collection[%s], "
-              "index[%s], capped collection[%s], search engine index[%s], "
-              "search engine type[%s]", _origCLFullName.c_str(),
-              _origIdxName.c_str(), _cappedCLFullName.c_str(),
-              _indexName.c_str(), _typeName.c_str() ) ;
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Exception occurred: %s", e.what() ) ;
+         // In case of exception, quit.
+         _quit = TRUE ;
+      }
    }
 
    void _seAdptIndexSession::_onDetach()
@@ -440,36 +476,6 @@ namespace engine
       _status = newStatus ;
    }
 
-   INT32 _seAdptIndexSession::_sendUpdateCLVersionReq()
-   {
-      INT32 rc = SDB_OK ;
-      MsgHeader *msg = NULL ;
-      INT32 buffSize = 0 ;
-      pmdEDUCB *cb = eduCB() ;
-      BSONObj query ;
-      BSONObj selector ;
-      INT32 flag = FLG_QUERY_WITH_RETURNDATA ;
-
-      query = BSON( FIELD_NAME_NAME << _origCLFullName.c_str() ) ;
-      selector = BSON( FIELD_NAME_VERSION << "" ) ;
-
-      rc = msgBuildQueryCatalogReqMsg( (CHAR **)&msg, &buffSize, flag, 0, 0,
-                                       -1, cb->getTID(), &query, &selector,
-                                       NULL, NULL, cb ) ;
-      PD_RC_CHECK( rc, PDERROR, "Build query catalog message failed[ %d ]",
-                   rc ) ;
-      msg->TID = SEADPT_TID( _sessionID ) ;
-      rc = sdbGetSeAdapterCB()->sendToCataNode( msg ) ;
-      PD_RC_CHECK( rc, PDERROR, "Send collection[ %s ] version query to catalog"
-                   " failed[ %d ]", _origCLFullName.c_str(), rc ) ;
-      PD_LOG( PDDEBUG, "Send collection[ %s ] version query to catalog "
-              "succesfully", _origCLFullName.c_str() ) ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
 
    INT32 _seAdptIndexSession::_sendGetmoreReq( INT64 contextID,
                                                UINT64 requestID )
@@ -535,8 +541,10 @@ namespace engine
       BSONObj selector ;
       BSONObj orderBy ;
 
-      selector = BSON( "_id" << "" ) ;
-      orderBy = BSON( "_id" << -1 ) ;
+      // In the capped colleciton, the field name of logical id is '_id', and
+      // the original '_id' is named '_rid'.
+      selector = BSON( SEADPT_FIELD_NAME_ID << "" ) ;
+      orderBy = BSON( SEADPT_FIELD_NAME_ID << -1 ) ;
 
       rc = msgBuildQueryMsg( (CHAR **)&msg, &bufSize, _cappedCLFullName.c_str(),
                              FLG_QUERY_WITH_RETURNDATA, 0, 0, 1, NULL,
@@ -555,19 +563,13 @@ namespace engine
       goto done ;
    }
 
-   INT32 _seAdptIndexSession::_queryCappedCollection()
+   INT32 _seAdptIndexSession::_queryCappedCollection( BSONObj &condition )
    {
       INT32 rc = SDB_OK ;
       MsgHeader *msg = NULL ;
       INT32 bufSize = 0 ;
-      BSONObj condition ;
 
-      if ( _lastPopLID >= 0 )
-      {
-         condition = BSON( "_id" << BSON( "$gt" << _lastPopLID ) ) ;
-         PD_LOG( PDDEBUG, "Query condition: %s",
-                 condition.toString().c_str() ) ;
-      }
+      PD_LOG( PDDEBUG, "Query condition: %s", condition.toString().c_str() ) ;
 
       rc = msgBuildQueryMsg( (CHAR **)&msg, &bufSize,
                              _cappedCLFullName.c_str(),
@@ -581,25 +583,6 @@ namespace engine
                    rc ) ;
       PD_LOG( PDDEBUG, "Send query on capped collection[ %s ] to data node "
               "successfully", _cappedCLFullName.c_str() ) ;
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   // Check on ES, to get the next expected record LID.
-   INT32 _seAdptIndexSession::_getExpectRLID( INT64 &expectRLID )
-   {
-      INT32 rc = SDB_OK ;
-      BOOLEAN normalCLDone = FALSE ;
-
-      // First, check if the normal collection end mark record is there.
-      // If yes, continue with capped collection.
-      // Otherwise, restart from the beginning.
-      rc = _chkDoneMark( normalCLDone ) ;
-      PD_RC_CHECK( rc, PDERROR, "Check normal collection done mark "
-                   "failed[ %d ]", rc ) ;
-
    done:
       return rc ;
    error:
@@ -644,6 +627,7 @@ namespace engine
    INT32 _seAdptIndexSession::_parseSrcData( const BSONObj &origObj,
                                              _dmsExtOprType &oprType,
                                              const CHAR **origOID,
+                                             INT64 &logicalID,
                                              BSONObj &sourceObj )
    {
       INT32 rc = SDB_OK ;
@@ -653,6 +637,7 @@ namespace engine
 
       try
       {
+         BSONElement lidField = origObj.getField( SEADPT_FIELD_NAME_ID ) ;
          type = origObj.getIntField( FIELD_NAME_TYPE ) ;
 
          if ( type < DMS_EXT_INSERT || type > DMS_EXT_TRUNCATE )
@@ -664,6 +649,7 @@ namespace engine
          }
 
          oprType = ( _dmsExtOprType )type ;
+         logicalID = lidField.Long() ;
          *origOID = origObj.getStringField( SEADPT_FIELD_NAME_RID ) ;
          if ( 0 == ossStrcmp( *origOID, "" ) )
          {
@@ -674,7 +660,7 @@ namespace engine
          }
 
          sourceObj = origObj.getObjectField( "_source" ) ;
-         if ( sourceObj.isEmpty() || !sourceObj.isValid() )
+         if ( !sourceObj.isEmpty() && !sourceObj.isValid() )
          {
             PD_LOG( PDERROR, "_source field is invalid. Object: %s",
                     origObj.toString().c_str() ) ;
@@ -714,8 +700,9 @@ namespace engine
       if ( SDB_DMS_EOC == reply->flags )
       {
          // When reach to the end of the original collection, switch to capped
-         // collection.
-         rc = _markNormalCLDone() ;
+         // collection. Write an end mark of _lid : -1.
+         BSONObj emptyObj = BSON( SEADPT_FIELD_NAME_LID << _expectLID ) ;
+         rc = _markProgress( emptyObj ) ;
          PD_RC_CHECK( rc, PDERROR, "Write end mark for normal collection[ %s ] "
                       "on search engine failed[ %d ]",
                       _origCLFullName.c_str(), rc ) ;
@@ -791,11 +778,7 @@ namespace engine
       }
 
       rc = _sendGetmoreReq( contextID, msg->requestID ) ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Failed to get more request, rc: %d", rc ) ;
-         goto error ;
-      }
+      PD_RC_CHECK( rc, PDERROR, "Send get more request failed[ %d ]", rc ) ;
 
    done:
       return rc ;
@@ -819,6 +802,7 @@ namespace engine
       INT32 numReturned = 0 ;
       INT64 nextLastLID = -1 ;
       vector<BSONObj> docObjs ;
+      INT64 logicalID = -1 ;
 
       // If reach end of the capped collection, start another query on it. It
       // will be started in onTimer.
@@ -880,7 +864,7 @@ namespace engine
 
          // Parse and the original object into 4 items: operation type, id,
          // source data( the real data to be indexed on Elasticsearch ).
-         rc = _parseSrcData( *itr, oprType, &origOID, sourceObj ) ;
+         rc = _parseSrcData( *itr, oprType, &origOID, logicalID, sourceObj ) ;
          PD_RC_CHECK( rc, PDERROR, "Get id string and source object "
                       "failed[ %d ]", rc ) ;
          switch ( oprType )
@@ -922,6 +906,12 @@ namespace engine
          }
       }
 
+      if ( -1 != logicalID )
+      {
+         rc = _updateProgress( logicalID ) ;
+         PD_RC_CHECK( rc, PDERROR, "Update progress failed[ %d ]", rc ) ;
+      }
+
       // After each batch of data processed successfully, pop the last batch of
       // data out. If -1 == _lastPopLID, it's the first time. We do not pop in
       // this round, just to fetch the next batch of results.
@@ -947,33 +937,18 @@ namespace engine
       goto done ;
    }
 
-   // Compare records from capped collection, and compare with data on ES, to
+   // Compare records from capped collection and data on ES, to
    // find the last one which has been index on ES successfully.
    INT32 _seAdptIndexSession::_getLastIndexedLID( NET_HANDLE handle,
                                                   MsgHeader *msg )
    {
       INT32 rc = SDB_OK ;
-      INT32 flag = 0 ;
-      INT64 contextID = 0 ;
-      INT32 startFrom = 0 ;
-      INT32 numReturned = 0 ;
       vector<BSONObj> docObjs ;
       string queryStr ;
 
       MsgOpReply *reply = (MsgOpReply *)msg ;
 
-      if ( SDB_DMS_EOC == reply->flags )
-      {
-         // If reach end of the capped collection, and find out all the records
-         // have been indexed on ES, then there is no data loss on ES. Let's
-         // just go on from the current position.
-         // We may process the last record once again. but that's OK.
-         PD_LOG( PDDEBUG, "All data has been indexed on search engine "
-                 "succesfully. Start normal sync now." ) ;
-         _switchStatus( SEADPT_SESSION_STAT_QUERY_CAP_TBL ) ;
-         goto done ;
-      }
-      else if ( SDB_OK != reply->flags )
+      if ( SDB_OK != reply->flags )
       {
          rc = reply->flags ;
          PD_LOG( PDERROR, "Get more data from capped collection[ %s ] failed"
@@ -984,29 +959,7 @@ namespace engine
          goto error ;
       }
 
-      rc = msgExtractReply( (CHAR *)msg, &flag, &contextID, &startFrom,
-                            &numReturned, docObjs ) ;
-      PD_RC_CHECK( rc, PDERROR, "Extract reply failed[ %d ]", rc ) ;
-
-      for ( vector<BSONObj>::iterator itr = docObjs.end() - 1;
-            itr != docObjs.begin() - 1; --itr )
-      {
-         BOOLEAN found = FALSE ;
-         BSONElement ele = itr->getField( SEADPT_FIELD_NAME_ID ) ;
-         SDB_ASSERT( NumberLong == ele.type(), "Element type is wrong" ) ;
-         rc = _findRecWithLID( ele.Long(), found ) ;
-         PD_RC_CHECK( rc, PDERROR, "Find record with _id[ %lld ] on search "
-                      "engine failed[ %d ]", ele.Long(), rc ) ;
-         if ( !found )
-         {
-            // If not found, the targe document dose not exist on search engine.
-            // And that's the record where should we start.
-            PD_LOG( PDDEBUG, "Sucessfully found the logical id to start "
-                    "from[ %lld ]", ele.Long() ) ;
-            _switchStatus( SEADPT_SESSION_STAT_QUERY_CAP_TBL ) ;
-            break ;
-         }
-      }
+      _switchStatus( SEADPT_SESSION_STAT_QUERY_CAP_TBL ) ;
 
    done:
       return rc ;
@@ -1016,30 +969,28 @@ namespace engine
 
    // Write a mark record on elasticsearch to specify all the data in the normal
    // collection has been indexed.
-   INT32 _seAdptIndexSession::_markNormalCLDone()
+   INT32 _seAdptIndexSession::_markProgress( BSONObj &infoObj )
    {
       INT32 rc = SDB_OK ;
 
-      if ( !_esClt )
-      {
-         rc = sdbGetSeAdapterCB()->getSeCltMgr()->getSeClt( &_esClt ) ;
-         if ( rc )
-         {
-            PD_LOG( PDERROR, "Failed to get search engine client, rc: %d",
-                    rc ) ;
-            goto error ;
-         }
-      }
-
+      rc = _ensureESClt() ;
+      PD_RC_CHECK( rc, PDERROR, "The search engine client is not active[ %d ]",
+                   rc ) ;
       rc = _esClt->indexDocument( _indexName.c_str(), _typeName.c_str(),
-                                  SEADPT_NORMAL_CL_DONE_ID,
-                                  SEADPT_NORMAL_CL_DONE_BODY ) ;
+                                  SEADPT_COMMIT_ID,
+                                  infoObj.toString().c_str() ) ;
       PD_RC_CHECK( rc, PDERROR, "Index document failed[ %d ]", rc ) ;
 
    done:
       return rc ;
    error:
       goto done ;
+   }
+
+   INT32 _seAdptIndexSession::_updateProgress( INT64 logicalID )
+   {
+      BSONObj lidObj = BSON( SEADPT_FIELD_NAME_LID << logicalID ) ;
+      return _markProgress( lidObj ) ;
    }
 
    INT32 _seAdptIndexSession::_chkDoneMark( BOOLEAN &found )
@@ -1059,7 +1010,7 @@ namespace engine
 
       rc = _esClt->documentExist( _indexName.c_str(),
                                   _typeName.c_str(),
-                                  SEADPT_NORMAL_CL_DONE_ID,
+                                  SEADPT_COMMIT_ID,
                                   found ) ;
       PD_RC_CHECK( rc, PDERROR, "Check document existense failed[ %d ]", rc ) ;
 
@@ -1069,70 +1020,96 @@ namespace engine
       goto done ;
    }
 
+   // The consult step and strategy is as follows:
+   // First, check if the index exist on ES. If not, then need to do full
+   // indexing.
+   // If index exists, check the commit mark. If not found, it means the
+   // last indexing process is interrupted when processiong data of the
+   // original collection. In this case, we do not know where to start. So
+   // we start all around.
+   // If index exists and the commit mark is found, get the _lid in it.
+   // Suggest it's called m. Get the last logical id in the capped
+   // collection. Suggest it's n.
+   // (1) If n does not exist( capped collection is empty), and m is not -1,
+   //     start all around.
+   // (2) If m is -1 and n is greate than 0, start all around.
+   // (3) If m is greater than n, start all around.
+   // (4) If m is less than or equal to n, continue to fetch data from capped
+   //     collection with logical id greater than m.
    INT32 _seAdptIndexSession::_consult()
    {
-      // First, check if the index exist on ES. If not, then need to do full
-      // indexing.
-      // If index exists, check the original collection end mark. If not found,
-      // drop the index and do full indexing.
-      // If index exists and the end mark is found, then go on to find the
-      // logical id of the last indexed document.
-
       INT32 rc = SDB_OK ;
       BOOLEAN found = FALSE ;
+      BSONObj resultObj ;
+      BSONElement lidEle ;
+      BSONObj condition ;
 
       rc = _ensureESClt() ;
       PD_RC_CHECK( rc, PDERROR, "The search engine client is not active[ %d ]",
                    rc ) ;
 
-      // 1. Check if the index exists on ES.
-      // 2. Compare the index logical id. If not the same, drop it and do full
-      //    index.
-      // 3. Get normal collection end mark. If it's not there, drop the index on
-      //    search engine, and do full index.
-      // 4. If the right index is there, then try to check the last successfully
-      //    indexed document. We want its logical ID. Send a query to data node,
-      //    fetch some data, and compare.
+      // 1. Check index existence.
       rc = _esClt->indexExist( _indexName.c_str(), found ) ;
       PD_RC_CHECK( rc, PDERROR, "Check index[ %s ] existence on search engine "
                    "failed[ %d ]", _indexName.c_str(), rc ) ;
       if ( !found )
       {
          PD_LOG( PDEVENT, "Target index[ %s ] dose not exist on search engine. "
-                 "Start to query the original collection[ %s ] and the index "
-                 "will be created", _indexName.c_str(), _origIdxName.c_str() ) ;
-         _switchStatus( SEADPT_SESSION_STAT_QUERY_LAST_LID ) ;
+                 "Start all over again and the index will be re-created",
+                 _indexName.c_str() ) ;
+
          rc = _queryLastCappedRecLID() ;
-         PD_RC_CHECK( rc, PDERROR, "Query last logical id failed[ %d ]", rc ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Query last logical id failed[ %d ]", rc ) ;
+            goto error ;
+         }
+         _switchStatus( SEADPT_SESSION_STAT_QUERY_LAST_LID ) ;
          goto done ;
       }
 
-      rc = _esClt->documentExist( _indexName.c_str(),
-                                  _typeName.c_str(),
-                                  SEADPT_NORMAL_CL_DONE_ID,
-                                  found ) ;
-      PD_RC_CHECK( rc, PDERROR, "Check document existense failed[ %d ]", rc ) ;
-      if ( !found )
+      try
       {
-         PD_LOG( PDEVENT, "End mark of original collection for index[ %s ] "
-                 "dose not exist. Index will be dropped and recreated",
-                 _indexName.c_str() ) ;
-         rc = _esClt->dropIndex( _indexName.c_str() ) ;
-         PD_RC_CHECK( rc, PDERROR, "Drop index[ %s ] on search engine "
-                      "failed[ %d ]", _indexName.c_str(), rc ) ;
-         PD_LOG( PDEVENT, "Index[ %s ] dropped successfully",
-                 _indexName.c_str() ) ;
-         _switchStatus( SEADPT_SESSION_STAT_QUERY_LAST_LID ) ;
+         rc = _esClt->getDocument( _indexName.c_str(), _typeName.c_str(),
+                                   SEADPT_COMMIT_ID, resultObj, FALSE ) ;
+         if ( SDB_INVALIDARG == rc )
+         {
+            PD_LOG( PDEVENT, "Commit mark for index[ %s ] "
+                    "dose not exist. Index will be dropped and recreated",
+                    _indexName.c_str() ) ;
+            rc = _esClt->dropIndex( _indexName.c_str() ) ;
+            PD_RC_CHECK( rc, PDERROR, "Drop index[ %s ] on search engine "
+                         "failed[ %d ]", _indexName.c_str(), rc ) ;
+            PD_LOG( PDEVENT, "Index[ %s ] dropped successfully",
+                    _indexName.c_str() ) ;
+            rc = _queryLastCappedRecLID() ;
+            PD_RC_CHECK( rc, PDERROR, "Query last logical id failed[ %d ]", rc ) ;
+            _switchStatus( SEADPT_SESSION_STAT_QUERY_LAST_LID ) ;
+            goto done ;
+         }
+         else if ( rc )
+         {
+            PD_LOG( PDERROR, "Check commit mark on search engine failed[ %d ]",
+                    rc ) ;
+            goto error ;
+         }
+
+         // Get the commit logical id as expect logical id.
+         lidEle = resultObj.getField( SEADPT_FIELD_NAME_LID ) ;
+         PD_LOG( PDDEBUG, "Commit object: %s", resultObj.toString().c_str() ) ;
+         _expectLID = lidEle.numberLong() ;
+
          rc = _queryLastCappedRecLID() ;
          PD_RC_CHECK( rc, PDERROR, "Query last logical id failed[ %d ]", rc ) ;
+         _switchStatus( SEADPT_SESSION_STAT_COMP_LAST_LID ) ;
          goto done ;
       }
-
-      PD_LOG( PDEVENT, "Begin to query the original collection[ %s ]...",
-              _origCLFullName.c_str() ) ;
-      rc = _queryCappedCollection() ;
-      PD_RC_CHECK( rc, PDERROR, "Send query of capped collection failed[ %d ]",
-                   rc ) ;
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Exception occurred: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
 
    done:
       return rc ;
@@ -1189,6 +1166,39 @@ namespace engine
                  _origCLFullName.c_str() ) ;
          _quit = TRUE ;
       }
+   }
+
+   // Start all over again. If the index exists, it will be dropped and
+   // re-created later.
+   INT32 _seAdptIndexSession::_startOver()
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN found = FALSE ;
+
+      rc = _ensureESClt() ;
+      PD_RC_CHECK( rc, PDERROR, "The search engine client is not active[ %d ]",
+                   rc ) ;
+
+      rc = _esClt->indexExist( _indexName.c_str(), found ) ;
+      PD_RC_CHECK( rc, PDERROR, "Check index[ %s ] existence on search engine "
+                   "failed[ %d ]", _indexName.c_str(), rc ) ;
+
+      if ( found )
+      {
+         rc = _esClt->dropIndex( _indexName.c_str() ) ;
+         PD_RC_CHECK( rc, PDERROR, "Drop index[ %s ] on search engine "
+                         "failed[ %d ]", _indexName.c_str(), rc ) ;
+         PD_LOG( PDEVENT, "Index[ %s ] dropped successfully",
+                 _indexName.c_str() ) ;
+      }
+
+      // _switchStatus( SEADPT_SESSION_STAT_BEGIN ) ;
+      _switchStatus( SEADPT_SESSION_STAT_CONSULT ) ;
+      _setQueryBusyFlag( FALSE ) ;
+
+   done:
+      return rc ;
+   error: goto done ;
    }
 }
 

@@ -107,24 +107,33 @@ namespace engine
          goto error ;
       }
 
-      // 1. Append operation type.
-      objBuilder.append( FIELD_NAME_TYPE, oprType ) ;
-      // 2. Append the _id as _rid.
-      if ( oidRequired )
+      try
       {
-         objBuilder.append( RTN_FIELD_NAME_RID, dataOID->str().c_str() ) ;
-      }
+         // 1. Append operation type.
+         objBuilder.append( FIELD_NAME_TYPE, oprType ) ;
+         // 2. Append the _id as _rid.
+         if ( oidRequired )
+         {
+            objBuilder.append( RTN_FIELD_NAME_RID, dataOID->str().c_str() ) ;
+         }
 
-      // 3. Append data if necessarry.
-      if ( dataRequired )
+         // 3. Append data if necessarry.
+         if ( dataRequired )
+         {
+            objBuilder.append( RTN_FIELD_NAME_SOURCE, *dataObj ) ;
+         }
+
+         objToInsert = objBuilder.done() ;
+
+         PD_LOG( PDDEBUG, "Operation record to insert: %s",
+                 objToInsert.toString( FALSE, TRUE ).c_str() ) ;
+      }
+      catch ( std::exception &e )
       {
-         objBuilder.append( RTN_FIELD_NAME_SOURCE, *dataObj ) ;
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Exception occurred: %s", e.what() ) ;
+         goto error ;
       }
-
-      objToInsert = objBuilder.done() ;
-
-      PD_LOG( PDDEBUG, "Operation record to insert: %s",
-              objToInsert.toString( FALSE, TRUE ).c_str() ) ;
 
       // Pass dpsCB as NULL as we don't want to write dps log. The replication
       // of external data totally relies on the original data.
@@ -139,14 +148,12 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ONDROPCS, "_rtnExtDataHandler::onDropCS" )
-   INT32 _rtnExtDataHandler::onDropCS( const monCSSimple &csInfo, pmdEDUCB *cb )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER__GETTEXTIDXCSLIST, "_rtnExtDataHandler::_getTextIdxCSList" )
+   void _rtnExtDataHandler::_getTextIdxCSList( const monCSSimple &csInfo,
+                                               vector<string> &csNameVec )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONDROPCS ) ;
-      SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
-      MON_CS_SIM_LIST csList ;
-      vector< string > cappedCSs ;
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER__GETTEXTIDXCSLIST ) ;
 
       // Traverse all the indices of all collections in the cs, to find out all
       // the text indexes.
@@ -156,13 +163,18 @@ namespace engine
          for ( MON_IDX_LIST::const_iterator idxItr = clItr->_idxList.begin();
                idxItr != clItr->_idxList.end(); ++idxItr )
          {
+            INT32 rcTmp = SDB_OK ;
             UINT16 idxType = IXM_EXTENT_TYPE_NONE ;
-            rc = idxItr->getIndexType( idxType ) ;
-            if ( rc )
+            rcTmp = idxItr->getIndexType( idxType ) ;
+            if ( rcTmp )
             {
-               // Only warning, and process the remaining ones.
-               PD_LOG( PDWARNING, "Get type of index failed[ %d ], cs[ %s ],"
-                       " cl[ %s ], index[ %s ]", rc, csInfo._name,
+               if ( SDB_OK == rc )
+               {
+                  rc = rcTmp ;
+               }
+               // Only logging error, and process the remaining ones.
+               PD_LOG( PDERROR, "Get type of index failed[ %d ], cs[ %s ],"
+                       " cl[ %s ], index[ %s ]", rcTmp, csInfo._name,
                        clItr->_name, idxItr->getIndexName() ) ;
                continue ;
             }
@@ -171,13 +183,86 @@ namespace engine
                string cappedCSName = string(SYS_PREFIX) + string(csInfo._name)
                                   + string(clItr->_clname) +
                                   idxItr->getIndexName() ;
-               rtnDropCollectionSpaceCommand( cappedCSName.c_str(), cb, dmsCB,
-                                              NULL, TRUE ) ;
+               csNameVec.push_back( cappedCSName ) ;
             }
          }
       }
 
+      PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER__GETTEXTIDXCSLIST, rc ) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ONDROPCS, "_rtnExtDataHandler::onDropCS" )
+   INT32 _rtnExtDataHandler::onDropCS( const monCSSimple &csInfo, pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONDROPCS ) ;
+      SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
+      vector< string > cappedCSs ;
+      BOOLEAN hasTextIdx = FALSE ;
+      SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
+
+      // It may fail when dropping some of the related collection spaces. In
+      // that case, we logging the error, and remember the first error code, and
+      // continue with the remainning ones. At the end, return the first error
+      // code, if any.
+
+      _getTextIdxCSList( csInfo, cappedCSs ) ;
+      hasTextIdx = cappedCSs.size() > 0 ? TRUE : FALSE ;
+      for ( vector<string>::iterator itr = cappedCSs.begin();
+            itr != cappedCSs.end(); ++itr )
+      {
+         INT32 rcTmp = rtnDropCollectionSpaceCommand( itr->c_str(), cb,
+                                                      dmsCB, NULL, TRUE ) ;
+         if ( rcTmp )
+         {
+            if ( SDB_OK == rc )
+            {
+               rc = rcTmp ;
+            }
+            // Only logging error, and process the remaining ones.
+            PD_LOG( PDERROR, "Drop collection space[ %s ] failed[ %d ]",
+                    itr->c_str(), rcTmp ) ;
+            continue ;
+         }
+      }
+
+      if ( hasTextIdx )
+      {
+         rtnCB->incTextIdxVersion() ;
+      }
+
       PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER_ONDROPCS, rc ) ;
+      return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ONUNLOADCS, "_rtnExtDataHandler::onUnloadCS" )
+   INT32 _rtnExtDataHandler::onUnloadCS( const monCSSimple &csInfo,
+                                         pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONUNLOADCS ) ;
+      SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
+      vector< string > cappedCSs ;
+
+      _getTextIdxCSList( csInfo, cappedCSs ) ;
+      for ( vector<string>::iterator itr = cappedCSs.begin();
+            itr != cappedCSs.end(); ++itr )
+      {
+         INT32 rcTmp = rtnUnloadCollectionSpace( itr->c_str(), cb, dmsCB ) ;
+         if ( rcTmp )
+         {
+            if ( SDB_OK == rc )
+            {
+               rc = rcTmp ;
+            }
+            // Only logging error, and process the remaining ones.
+            PD_LOG( PDERROR, "Unload collection space[ %s ] failed[ %d ]",
+                    itr->c_str(), rcTmp ) ;
+            continue ;
+         }
+      }
+
+      PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER_ONUNLOADCS, rc ) ;
       return rc ;
    }
 
@@ -210,12 +295,21 @@ namespace engine
                    rc ) ;
       csCreated = TRUE ;
 
-      // The unit of bufferSize is MB.
-      builder.append( FIELD_NAME_SIZE, ( bufferSize << 20 ) ) ;
-      builder.append( FIELD_NAME_MAX, RTN_CAPPED_CL_MAXRECNUM ) ;
-      // Set the OverWrite option as false.
-      builder.appendBool( FIELD_NAME_OVERWRITE, FALSE ) ;
-      extOptions = builder.done() ;
+      try
+      {
+         // The unit of bufferSize is MB.
+         builder.append( FIELD_NAME_SIZE, ( bufferSize << 20 ) ) ;
+         builder.append( FIELD_NAME_MAX, RTN_CAPPED_CL_MAXRECNUM ) ;
+         // Set the OverWrite option as false.
+         builder.appendBool( FIELD_NAME_OVERWRITE, FALSE ) ;
+         extOptions = builder.done() ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Exception occurred: %s", e.what() ) ;
+         goto error ;
+      }
 
       rc = rtnCreateCollectionCommand( cappedCLFullName.c_str(),
                                        DMS_MB_ATTR_NOIDINDEX,
@@ -247,6 +341,7 @@ namespace engine
       PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONDROPTEXTIDX ) ;
       string cappedCSFullName = clFullName ;
       SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
+      SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
 
       cappedCSFullName.erase( cappedCSFullName.find("."), 1 ) ;
       cappedCSFullName = SYS_PREFIX + cappedCSFullName  + string(idxName) ;
@@ -255,6 +350,7 @@ namespace engine
                                           dpscb, FALSE ) ;
       PD_RC_CHECK( rc, PDERROR, "Drop capped collection space failed[ %d ]",
                    rc ) ;
+      rtnCB->incTextIdxVersion() ;
    done:
       PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER_ONDROPTEXTIDX, rc ) ;
       return rc ;

@@ -43,49 +43,45 @@
 #include "pmdAsyncSession.hpp"
 #include "pmdAsyncHandler.hpp"
 #include "utilESCltMgr.hpp"
+#include "seAdptMsgHandler.hpp"
 
-#define SEADPT_FIELD_NAME              "name"
-#define SEADPT_TID(sessionID)          ((UINT32)(sessionID & 0xFFFFFFFF))
 namespace engine
 {
    class _seAdptCB ;
 
    enum SEADPT_SESSION_TYPE
    {
-      SEADPT_SESSION_INDEX = 1
-   } ;
-
-   enum SEADPT_INNER_SESSION_TID
-   {
-      SEADPT_TID_INDEXER = 1
+      SEADPT_SESSION_INDEX = 1      // Indexer session for one text index.
    } ;
 
    enum SEADPT_IDX_UPDATE_STEP
    {
       SEADPT_IDX_UPDATE_BEGIN = 1,
-      SEADPT_IDX_UPDATE_QUERY,
       SEADPT_IDX_UPDATE_START_TASK
    } ;
 
-   struct _seAdptSessionInfo : public SDBObject
+   struct _seAdptSessionInfo
    {
-      INT32       type ;
-      INT32       startType ;
-      INT32       innerTid ;
-      UINT64      sessionID ;
-      void*       data ;
+      SEADPT_SESSION_TYPE  type ;
+      INT32                startType ;
+      INT32                innerTid ;
+      UINT64               sessionID ;
+      void*                data ;
    } ;
    typedef _seAdptSessionInfo seAdptSessionInfo ;
 
-   // Service sessions manager. It manages the sessions which started by client
-   // connections.
+   /*
+    * Service sessions manager. It manages the sessions which started by client
+    * connections, or connections for text search from SDB data node.
+    * One listener is created during startup, and one seperate session will be
+    * created for each client connection.
+    */
    class _seSvcSessionMgr : public _pmdAsycSessionMgr
    {
    public:
-      _seSvcSessionMgr( _seAdptCB *pAdptCB ) ;
+      _seSvcSessionMgr() {}
       virtual ~_seSvcSessionMgr() {}
 
-      virtual INT32 handleSessionTimeout( UINT32 timerID, UINT32 interval ) ;
       virtual UINT64 makeSessionID( const NET_HANDLE &handle,
                                     const MsgHeader *header ) ;
 
@@ -104,15 +100,14 @@ namespace engine
       }
       virtual void _onPushMsgFailed( INT32 rc, const MsgHeader *pReq,
                                      const NET_HANDLE &handle,
-                                     pmdAsyncSession *pSession )
-      {
-      }
+                                     pmdAsyncSession *pSession ) ;
+
+      // Called by the thread of EDU_TYPE_SE_SERVICE, when a new connection
+      // comes.
       virtual pmdAsyncSession* _createSession( SDB_SESSION_TYPE sessionType,
                                                INT32 startType,
                                                UINT64 sessionID,
                                                void *data = NULL ) ;
-   private:
-      _seAdptCB *_pAdptCB ;
    } ;
    typedef _seSvcSessionMgr seSvcSessionMgr ;
 
@@ -140,46 +135,54 @@ namespace engine
          _origIdxName = origIdxName ;
          _esIdxName = esIdxName ;
          _esTypeName = esTypeName ;
-         _indexDef = indexKey ;
+         _indexDef = indexKey.copy() ;
+      }
+
+      BOOLEAN valid() const
+      {
+         return ( !_origCSName.empty() && !_origCLName.empty() &&
+                  !_cappedCSName.empty() && !_cappedCLName.empty() &&
+                  !_origIdxName.empty() && !_esIdxName.empty() &&
+                  !_esTypeName.empty() && !_indexDef.isEmpty() &&
+                  _indexDef.valid() ) ;
       }
 
       std::string toString() const
       {
-         std::stringstream ss ;
-         ss << "Original cs[" << _origCSName << "], "
-            << "original cl[" << _origCLName << "], "
-            << "capped cs[" << _cappedCSName << "], "
-            << "capped cl[" << _cappedCLName << "], "
-            << "es index[" << _esIdxName << "], "
-            << "es type[" << _esTypeName << "], "
-            << "original index[" << _origIdxName << ", "
-            << _indexDef.toString() << "]" ;
-         return ss.str() ;
+         try
+         {
+            std::stringstream ss ;
+            ss << "Original cs[" << _origCSName << "], "
+               << "original cl[" << _origCLName << "], "
+               << "capped cs[" << _cappedCSName << "], "
+               << "capped cl[" << _cappedCLName << "], "
+               << "es index[" << _esIdxName << "], "
+               << "es type[" << _esTypeName << "], "
+               << "original index[" << _origIdxName << ", "
+               << _indexDef.toString() << "]" ;
+            return ss.str() ;
+         }
+         catch ( std::exception &e )
+         {
+            return "" ;
+         }
       }
    } ;
    typedef _seIndexTask seIndexTask ;
 
+   // Manager of seAdptIndexSession.
    class _seIndexSessionMgr : public _pmdAsycSessionMgr
    {
-      typedef map<UINT64, seIndexTask> OBJ_PROCESS_MAP ;
-
    public:
       _seIndexSessionMgr( _seAdptCB *pAdptCB ) ;
       virtual ~_seIndexSessionMgr() ;
 
-      virtual INT32 handleSessionTimeout( UINT32 timerID, UINT32 interval ) ;
-      virtual INT32 handleSessionClose( const NET_HANDLE handle ) ;
-
       virtual UINT64 makeSessionID( const NET_HANDLE &handle,
                                     const MsgHeader *header ) ;
-      virtual void onSessionDestoryed( pmdAsyncSession *pSession ) ;
-
-      BOOLEAN isIndexTimerStarted() const ;
-      void startIndexTimer( UINT32 interval ) ;
-      void stopIndexTimer() ;
 
       INT64 getIndexVersion() { return _indexVersion; }
       INT32 updateIndexInfo( BSONObj &obj ) ;
+      void  stopAllIndexer() ;
 
    protected:
       virtual SDB_SESSION_TYPE _prepareCreate( UINT64 sessionID,
@@ -200,7 +203,6 @@ namespace engine
       _seAdptCB            *_pAdptCB ;
       list<seIndexTask>    _taskList ;       // All the tasks according to the last update.
       list<seIndexTask>    _newTaskList ;    // Tasks that must start this round.
-      OBJ_PROCESS_MAP      _objProcessMap ;
       INT64                _indexVersion ;
       UINT32               _indexSessionTimer ;
       UINT32               _innerSessionID ;
@@ -210,6 +212,12 @@ namespace engine
 
    /*
     * Key control block of search engine adapter.
+    * It takes care of the following things:
+    * (1) Register the adapter on SDB data node, both at startup and when a
+    *     network break happens.
+    * (2) Check for text index udpates.
+    * (2) Use the seIndexSessionMgr to manage all the indexer sessions. The
+    *     index session manager does not have a seperated thread.
     */
    class _seAdptCB : public _pmdObjBase, public _IControlBlock
    {
@@ -239,16 +247,26 @@ namespace engine
       seIndexSessionMgr*   getIdxSessionMgr() ;
       netRouteAgent*       getIdxRouteAgent() ;
 
-      INT32 startInnerSession( INT32 type, INT32 innerTID, void *data = NULL ) ;
+      INT32 startInnerSession( SEADPT_SESSION_TYPE type,
+                               INT32 innerTID, void *data = NULL ) ;
+      void  cleanInnerSession( INT32 type ) ;
       INT32 sendToDataNode( MsgHeader *msg ) ;
-      INT32 sendToCataNode( MsgHeader *msg ) ;
       BOOLEAN isDataNodePrimary() { return _peerPrimary ; }
-      UINT32 getDataNodeGID() { return _peerGroupID ; }
+      void setDataNodePrimary( BOOLEAN isPrimary )
+      {
+         _peerPrimary = isPrimary ;
+      }
+
+      const CHAR *getDataNodeGrpName() { return _peerGroupName ; }
+
+      INT32 syncUpdateCLVersion( const CHAR *collectionName, INT64 millsec,
+                                 pmdEDUCB *cb, INT32 &version ) ;
 
    private:
       INT32 _initSdbAddr() ;
       INT32 _initSearchEngineAddr() ;
       INT32 _sendRegisterMsg() ;
+      INT32 _resumeRegister() ;
       INT32 _startEDU( INT32 type, EDU_STATUS waitStatus,
                        void *args, BOOLEAN regSys ) ;
 
@@ -258,9 +276,15 @@ namespace engine
       INT32 _startInnerSession( INT32 type, pmdAsycSessionMgr *pSessionMgr ) ;
       INT32 _sendIdxUpdateReq() ;
       INT32 _onIdxUpdateRes( NET_HANDLE handle, MsgHeader *msg ) ;
+      INT32 _onRemoteDisconnect( NET_HANDLE handle, MsgHeader *msg ) ;
+      INT32 _setTimers() ;
+      void  _killTimer( UINT32 timerID ) ;
+      INT32 _onCatalogResMsg( NET_HANDLE handle, MsgHeader *msg ) ;
+      INT32 _sendCataQueryReq( const BSONObj &query, const BSONObj &selector,
+                               UINT64 requestID, _pmdEDUCB *cb ) ;
 
    private:
-      pmdAsyncMsgHandler      _indexMsgHandler ;
+      indexMsgHandler         _indexMsgHandler ;
       pmdAsyncMsgHandler      _svcMsgHandler ;
       pmdAsyncTimerHandler    _indexTimerHandler ;
       pmdAsyncTimerHandler    _svcTimerHandler ;
@@ -272,7 +296,6 @@ namespace engine
       CHAR                    _serviceName[ OSS_MAX_SERVICENAME + 1 ] ;
 
       ossEvent                _attachEvent ;
-      UINT32                  _oneSecTimer ;
       MsgRouteID              _dataNodeID ;
       MsgRouteID              _cataNodeID ;
       BOOLEAN                 _peerPrimary ;    // If the connected data node is
@@ -281,14 +304,18 @@ namespace engine
                                                 // role of the node may change,
                                                 // so need to update this member
                                                 // accorrdingly.
-      UINT32                  _peerGroupID ;
+      CHAR                    _peerGroupName[ OSS_MAX_GROUPNAME_SIZE + 1 ] ;
 
       utilESCltMgr            _seCltMgr ;
       MsgRouteID              _selfRouteID ;
       ossSpinSLatch           _seLatch ;
       VECINNERPARAM           _vecInnerSessionParam ;
-
-      INT64                   _textIdxVersion ;
+      UINT32                  _regTimerID ;        // For register adapter on data node.
+      UINT32                  _idxUpdateTimerID ;  // For text index information update.
+      UINT32                  _oneSecTimerID ;     // For session check by session managers.
+      INT32                   _clVersion ;
+      ossSpinSLatch           _verUpdateLock ;
+      ossEvent                _cataEvent ;
    } ;
    typedef _seAdptCB seAdptCB ;
 

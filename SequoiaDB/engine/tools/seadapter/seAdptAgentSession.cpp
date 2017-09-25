@@ -41,10 +41,7 @@
 
 namespace engine
 {
-   #define TEXT_QUERY_COND_KEY      "$text"
-
    BEGIN_OBJ_MSG_MAP( _seAdptAgentSession, _pmdAsyncSession)
-      ON_MSG( MSG_AUTH_VERIFY_REQ, _onAuthReq )
       ON_MSG( MSG_BS_QUERY_REQ, _onOPMsg )
       ON_MSG( MSG_BS_GETMORE_REQ, _onOPMsg )
    END_OBJ_MSG_MAP()
@@ -91,7 +88,6 @@ namespace engine
 
    void _seAdptAgentSession::_onDetach()
    {
-      PD_LOG( PDDEBUG, "Indexer session detached" ) ;
    }
 
    INT32 _seAdptAgentSession::_onOPMsg( NET_HANDLE handle, MsgHeader *msg )
@@ -110,8 +106,7 @@ namespace engine
       switch ( msg->opCode )
       {
          case MSG_BS_QUERY_REQ:
-         case MSG_SEADPT_Q_REWT_REQ:
-            rc = _onRewriteQuery( msg, objBuff ) ;
+            rc = _onQueryReq( msg, objBuff ) ;
             if ( SDB_OK == rc )
             {
                msgBody = objBuff.data() ;
@@ -119,8 +114,7 @@ namespace engine
             }
             break ;
          case MSG_BS_GETMORE_REQ:
-         case MSG_SEADPT_Q_REWT_MORE_REQ:
-            rc = _onRewriteQueryMore( msg, objBuff ) ;
+            rc = _onGetmoreReq( msg, objBuff ) ;
             if ( SDB_OK == rc )
             {
                msgBody = objBuff.data() ;
@@ -159,111 +153,12 @@ namespace engine
       return FALSE ;
    }
 
-   // Generic query request handler.
-   INT32 _seAdptAgentSession::_onQueryReqMsg( MsgHeader *msg,
-                                              utilCommObjBuff &objBuff )
-   {
-      INT32 rc = SDB_OK ;
-      INT32 flag = 0 ;
-      CHAR *pCollectionName = NULL ;
-      SINT64 numToSkip = 0 ;
-      SINT64 numToReturn = 0 ;
-      CHAR *pQuery = NULL ;
-      CHAR *pFieldSelector = NULL ;
-      CHAR *pOrderBy = NULL ;
-      CHAR *pHint = NULL ;
-      BSONObj query ;
-      BSONObj selector ;
-      BSONObj orderBy ;
-      BSONObj hint ;
-      std::string indexName ;
-      std::string typeName ;
-      std::string result ;
-
-      objBuff.reset() ;
-      _scrollID = "" ;
-
-      rc = msgExtractQuery( (CHAR *)msg, &flag, &pCollectionName,
-                            &numToSkip, &numToReturn, &pQuery,
-                            &pFieldSelector, &pOrderBy, &pHint ) ;
-      PD_RC_CHECK( rc, PDERROR, "Parse query request failed[ %d ]", rc ) ;
-
-      if ( _isCommand( pCollectionName ) )
-      {
-         goto done ;
-      }
-
-      try
-      {
-         BSONObj matcher( pQuery ) ;
-         std::string queryCond ;
-         PD_LOG( PDEVENT, "Matcher: %s", matcher.toString().c_str() ) ;
-
-         rc = _getQueryCond( matcher, queryCond ) ;
-         PD_RC_CHECK( rc, PDERROR, "Get query condition from matcher "
-                      "failed[ %d ], matcher: %s",
-                      rc, matcher.toString().c_str() ) ;
-
-         if ( !_esClt )
-         {
-            rc = _seCltMgr->getSeClt( &_esClt ) ;
-            PD_RC_CHECK( rc, PDERROR, "Get search engine client failed[ %d ]",
-                         rc ) ;
-         }
-
-         rc = _getIndexAndType( pCollectionName, pHint,
-                                msg->routeID.columns.groupID,
-                                indexName, typeName ) ;
-         PD_RC_CHECK( rc, PDERROR,
-                      "Get index name type from message failed[ %d ]", rc ) ;
-
-         if ( _esClt )
-         {
-            rc = _esClt->initScroll( _scrollID, indexName.c_str(),
-                                     typeName.c_str(),
-                                     queryCond, objBuff ) ;
-            PD_RC_CHECK( rc, PDERROR, "Initialize scroll failed[ %d ]", rc ) ;
-         }
-
-         PD_LOG( PDEVENT, "Result: %s", result.c_str() ) ;
-      }
-      catch ( std::exception &e )
-      {
-         PD_LOG ( PDERROR, "Session[%s] failed to create matcher for QUERY: %s",
-                  sessionName(), e.what() ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   // Handle get more message, return more results, until the end.
-   INT32 _seAdptAgentSession::_onGetMoreReqMsg( MsgHeader *msg,
-                                                utilCommObjBuff &objBuff )
-   {
-      INT32 rc = SDB_OK ;
-      BSONObj obj ;
-
-      rc = _esClt->scrollNext( _scrollID, objBuff ) ;
-      PD_RC_CHECK( rc, PDERROR, "Scroll with id[ %s ] failed[ %d ]",
-                   _scrollID.c_str(), rc ) ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   // Handle message MSG_SEADPT_Q_REWT_REQ.
+   // Handle query message from data node.
    // It will analyze the original query, fetch the neccessary data, and rewrite
    // the items, then return the new message.
-   INT32 _seAdptAgentSession::_onRewriteQuery( MsgHeader *msg,
-                                               utilCommObjBuff &objBuff,
-                                               pmdEDUCB *eduCB )
+   INT32 _seAdptAgentSession::_onQueryReq( MsgHeader *msg,
+                                           utilCommObjBuff &objBuff,
+                                           pmdEDUCB *eduCB )
    {
       INT32 rc = SDB_OK ;
       INT32 flag = 0 ;
@@ -310,9 +205,8 @@ namespace engine
             _context = NULL ;
          }
 
-         rc = _getIndexAndType( pCollectionName, pHint,
-                                msg->routeID.columns.groupID,
-                                indexName, typeName ) ;
+         rc = _getIndexName( pCollectionName, pHint, indexName ) ;
+         typeName = sdbGetSeAdapterCB()->getDataNodeGrpName() ;
 
          _context = SDB_OSS_NEW seAdptContextQuery( indexName, typeName,
                                                     _esClt ) ;
@@ -348,9 +242,9 @@ namespace engine
    }
 
    // Generate another new message.
-   INT32 _seAdptAgentSession::_onRewriteQueryMore( MsgHeader *msg,
-                                                   utilCommObjBuff &objBuff,
-                                                   pmdEDUCB *eduCB )
+   INT32 _seAdptAgentSession::_onGetmoreReq( MsgHeader *msg,
+                                             utilCommObjBuff &objBuff,
+                                             pmdEDUCB *eduCB )
    {
       INT32 rc = SDB_OK ;
 
@@ -394,31 +288,14 @@ namespace engine
       return _onOPMsg( handle, msg ) ;
    }
 
-   INT32 _seAdptAgentSession::_onAuthReq( NET_HANDLE handle, MsgHeader* msg )
-   {
-      MsgOpReply reply ;
-      rtnContextBuf buffObj ;
 
-      reply.header.opCode = MAKE_REPLY_TYPE( msg->opCode ) ;
-      reply.header.messageLength = sizeof( MsgOpReply ) ;
-      reply.header.requestID = msg->requestID ;
-      reply.header.TID = msg->TID ;
-      reply.header.routeID.value = 0 ;
-      reply.flags = SDB_OK ;
-
-      return _reply( &reply, buffObj.data(), buffObj.size() );
-   }
-
-   INT32 _seAdptAgentSession::_getIndexAndType( const CHAR *pCollectionName,
-                                                const CHAR *pHint,
-                                                UINT32 groupID,
-                                                std::string &indexName,
-                                                std::string &typeName )
+   INT32 _seAdptAgentSession::_getIndexName( const CHAR *pCollectionName,
+                                             const CHAR *pHint,
+                                             std::string &indexName )
    {
       INT32 rc = SDB_OK ;
       std::string::size_type pos1 = 0 ;
       std::string::size_type pos2 = 0 ;
-      CHAR type[ UTIL_SE_MAX_TYPE_SZ + 1 ] = { 0 } ;
 
       indexName = std::string( pCollectionName ) ;
 
@@ -453,9 +330,6 @@ namespace engine
          rc = SDB_SYS ;
          goto error ;
       }
-
-      ossItoa( groupID, type, UTIL_SE_MAX_TYPE_SZ ) ;
-      typeName = string( type ) ;
 
    done:
       return rc ;

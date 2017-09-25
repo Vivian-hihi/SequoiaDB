@@ -80,6 +80,19 @@ namespace engine
       SAFE_OSS_FREE( p ) ;
    }
 
+   void _rtnCondNode::operator delete( void *p,
+                                       rtnCondNodeAllocator *allocator )
+   {
+      if ( NULL != allocator && allocator->isAllocatedByme( p ) )
+      {
+         // do nothing
+      }
+      else
+      {
+         SAFE_OSS_FREE( p ) ;
+      }
+   }
+
    void _rtnCondNode::init( const CHAR *fieldName )
    {
       _fieldName = fieldName ;

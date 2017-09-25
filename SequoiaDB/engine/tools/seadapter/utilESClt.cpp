@@ -51,6 +51,7 @@ using namespace bson ;
 #define ES_HITS_KEY              "_hits"
 #define ES_TOTAL_KEY             "total"
 #define ES_SCROLL_ID_KEY         "_scroll_id"
+#define ES_SOURCE_KEY            "_source"
 
 // For arguments check.
 #define ES_CLT_ARG_CHK1( index )                         \
@@ -292,8 +293,30 @@ namespace engine
                                      const CHAR *id, const CHAR *newData )
    {
       INT32 rc = SDB_OK ;
+      const CHAR *reply = NULL ;
+      INT32 replyLen = 0 ;
+      BSONObj bsonObj ;
+      HTTP_STATUS_CODE status = 0 ;
+      CHAR url[ UTIL_SE_MAX_URL_SIZE ] = { 0 } ;
 
       ES_CLT_ARG_CHK4( index, type, id, newData ) ;
+
+      // Plus 2 bytes for '/'
+      if ( strlen( index ) + strlen( type ) + strlen( id ) + 2
+           > UTIL_SE_MAX_URL_SIZE )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "Url length is too long, max: %d, actual: %d",
+                 UTIL_SE_MAX_URL_SIZE,
+                 strlen( index ) + strlen( type ) + strlen( id ) + 2 ) ;
+         goto error ;
+      }
+
+      // Get the full url for operation.
+      ossSnprintf( url, UTIL_SE_MAX_URL_SIZE, "%s/%s/%s", index, type, id ) ;
+      rc = _http.post( url, newData, &status, &reply, &replyLen ) ;
+      rc = _processReply( rc, reply, replyLen, bsonObj ) ;
+      PD_RC_CHECK( rc, PDERROR, "Process request reply failed[ %d ]", rc ) ;
 
    done:
       return rc ;
@@ -344,32 +367,17 @@ namespace engine
 
       oss << index << "/" << type << "/" << id ;
       rc = _http.get( oss.str().c_str(), NULL, &status, &reply, &replyLen ) ;
+      rc = _processReply( rc, reply, replyLen, fullObj ) ;
+      PD_RC_CHECK( rc, PDERROR, "Process request reply failed[ %d ]", rc ) ;
+
       if ( withMeta )
       {
-         rc = _processReply( rc, reply, replyLen, result ) ;
-         PD_RC_CHECK( rc, PDERROR, "Process request reply failed[ %d ]", rc ) ;
+         result = fullObj ;
       }
       else
       {
-         rc = _processReply( rc, reply,replyLen, fullObj ) ;
-         PD_RC_CHECK( rc, PDERROR, "Process request reply failed[ %d ]", rc ) ;
-
-         rc = _getResultObjs( fullObj, objBuff ) ;
-         PD_RC_CHECK( rc, PDERROR, "Get result objects failed[ %d ]" ) ;
-         SDB_ASSERT( objBuff.getObjNum() <= 1, "Should be only one object" ) ;
-
-         if ( 0 == objBuff.getObjNum() )
-         {
-            PD_LOG( PDERROR, "No document found" ) ;
-            rc = SDB_DMS_EOC ;
-            goto error ;
-         }
-         if ( 1 == objBuff.getObjNum() )
-         {
-            rc = objBuff.nextObj( result ) ;
-            PD_RC_CHECK( rc, PDERROR, "Get next BSONObject in buffer "
-                         "failed[ %d ]", rc ) ;
-         }
+         rc = _removeDocMeta( fullObj, result ) ;
+         PD_RC_CHECK( rc, PDERROR, "Remove document meta failed[ %d ]", rc ) ;
       }
 
    done:
@@ -655,24 +663,33 @@ namespace engine
       rc = resultObjs.reset() ;
       PD_RC_CHECK( rc, PDERROR, "Initialize result buffer failed[ %d ]", rc ) ;
 
-      PD_LOG( PDDEBUG, "Result object: %s", replyObj.toString().c_str() ) ;
+      try
       {
-         BSONElement hitsObj = replyObj.getField( "hits" ) ;
-         if ( Object == hitsObj.type() )
+         PD_LOG( PDDEBUG, "Result object: %s", replyObj.toString().c_str() ) ;
          {
-            BSONObj hitsObj2 = hitsObj.embeddedObject() ;
-            BSONElement hitsEle2 = hitsObj2.getField( "hits" ) ;
-            if ( Array == hitsEle2.type() )
+            BSONElement hitsObj = replyObj.getField( "hits" ) ;
+            if ( Object == hitsObj.type() )
             {
-               vector<BSONElement> hitObjs = hitsEle2.Array() ;
-               for ( vector<BSONElement>::iterator itr = hitObjs.begin();
-                     itr != hitObjs.end(); ++itr )
+               BSONObj hitsObj2 = hitsObj.embeddedObject() ;
+               BSONElement hitsEle2 = hitsObj2.getField( "hits" ) ;
+               if ( Array == hitsEle2.type() )
                {
-                  BSONObj sourceObj = itr->embeddedObject() ;
-                  resultObjs.appendObj( sourceObj ) ;
+                  vector<BSONElement> hitObjs = hitsEle2.Array() ;
+                  for ( vector<BSONElement>::iterator itr = hitObjs.begin();
+                        itr != hitObjs.end(); ++itr )
+                  {
+                     BSONObj sourceObj = itr->embeddedObject() ;
+                     resultObjs.appendObj( sourceObj ) ;
+                  }
                }
             }
          }
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Exception occurred: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
       }
 
    done:
@@ -694,6 +711,28 @@ namespace engine
       {
          hitNum = 0 ;
       }
+   }
+
+   INT32 _utilESClt::_removeDocMeta( const BSONObj &fullObj, BSONObj &newObj )
+   {
+      INT32 rc = SDB_OK ;
+
+      try
+      {
+         BSONElement ele = fullObj.getField( ES_SOURCE_KEY ) ;
+         newObj = ele.Obj() ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Exception occurred: %s", e.what() ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 }
 

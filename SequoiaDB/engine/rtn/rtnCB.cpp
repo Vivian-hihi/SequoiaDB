@@ -121,6 +121,9 @@ namespace engine
 
    void _rtnMsgHandler::handleClose( const NET_HANDLE &handle, _MsgRouteID id )
    {
+      SDB_ASSERT( _pRSManager, "Remote session manager can't be NULL" ) ;
+
+      _pRSManager->handleClose( handle, id ) ;
    }
 
    void _rtnMsgHandler::handleConnect( const NET_HANDLE &handle,
@@ -130,10 +133,13 @@ namespace engine
    }
 
    _SDB_RTNCB::_SDB_RTNCB()
-      : _contextIdGenerator( 0 )
+      : _contextIdGenerator( 0 ),
+        _textIdxVersion((INT64)RTN_INIT_TEXT_INDEX_VERSION)
    {
       _enableMixCmp = FALSE ;
-      _textIdxVersion = ossGetCurrentProcessID() ;
+      _msgHandler = NULL ;
+      _routeAgent = NULL ;
+      _extNodeId = 0 ;
    }
 
    _SDB_RTNCB::~_SDB_RTNCB()
@@ -180,7 +186,8 @@ namespace engine
          _msgHandler = SDB_OSS_NEW rtnMsgHandler( &_rsMgr ) ;
          if ( !_msgHandler )
          {
-            PD_LOG( PDERROR, "Allocate memory for message handler failed" ) ;
+            PD_LOG( PDERROR, "Allocate memory for message handler failed, "
+                    "size[ %d ]", sizeof( rtnMsgHandler ) ) ;
             rc = SDB_OOM ;
             goto error ;
          }
@@ -190,7 +197,8 @@ namespace engine
          _routeAgent = SDB_OSS_NEW netRouteAgent( _msgHandler ) ;
          if ( !_routeAgent )
          {
-            PD_LOG( PDERROR, "Allocate memory for route agent failed" ) ;
+            PD_LOG( PDERROR, "Allocate memory for route agent failed, "
+                    "size[ %d ]", sizeof( netRouteAgent ) ) ;
             rc = SDB_OOM ;
             goto error ;
          }
@@ -206,6 +214,18 @@ namespace engine
    done:
       return rc ;
    error:
+      // In case of error, we can release resources here, or leave it to the
+      // fini or destructor.
+      if ( _msgHandler )
+      {
+         SDB_OSS_DEL _msgHandler ;
+         _msgHandler = NULL ;
+      }
+      if ( _routeAgent )
+      {
+         SDB_OSS_DEL _routeAgent ;
+         _routeAgent = NULL ;
+      }
       goto done ;
    }
 
@@ -217,8 +237,6 @@ namespace engine
       {
          pmdEDUMgr *eduMgr = pmdGetKRCB()->getEDUMgr() ;
          EDUID eduID = PMD_INVALID_EDUID ;
-         // Register the net frame in pmdController for monitor by heartbeat.
-         sdbGetPMDController()->registerNet( _routeAgent->getFrame() ) ;
          // TODO: change the edu type.
          rc = eduMgr->startEDU( EDU_TYPE_COORDNETWORK, (void *)_routeAgent,
                                 &eduID ) ;

@@ -475,8 +475,8 @@ namespace engine
       {
          // Reuse the 'sortBufferSize' as the 'Size' option for the
          // corresponding capped collection.
-         rc = createTextIndex( context, index, cb, dpscb,
-                               isSys, sortBufferSize ) ;
+         rc = _createTextIndex( context, index, cb, dpscb,
+                                isSys, sortBufferSize ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to create text index, rc: %d", rc ) ;
       }
       else
@@ -736,12 +736,12 @@ namespace engine
       goto done ;
    }
 
-   INT32 _dmsStorageIndex::createTextIndex( dmsMBContext *context,
-                                            const BSONObj &index,
-                                            pmdEDUCB *cb,
-                                            SDB_DPSCB *dpsCB,
-                                            BOOLEAN isSys,
-                                            INT64 bufferSize )
+   INT32 _dmsStorageIndex::_createTextIndex( dmsMBContext *context,
+                                             const BSONObj &index,
+                                             pmdEDUCB *cb,
+                                             SDB_DPSCB *dpsCB,
+                                             BOOLEAN isSys,
+                                             INT64 bufferSize )
    {
       INT32 rc = SDB_OK ;
       INT32 indexID = 0 ;
@@ -755,6 +755,8 @@ namespace engine
       UINT32 logRecSize = 0 ;
       string extDataName ;
       const CHAR *indexName = NULL ;
+      INT32 rc1 = 0 ;
+      SDB_DPSCB *dropDps = NULL ;
       IDmsExtDataHandler *extDataHandler = _pDataSu->getExtDataHandler() ;
 
       if ( !extDataHandler )
@@ -857,7 +859,7 @@ namespace engine
                                                    DMS_FILE_IDX,
                                                    cb->isDoRollback() ) ;
       }
-      // dropDps =
+      dropDps = dpsCB ;
 
       flushPages( ctlBlockExtent, 1, isSyncDeep() ) ;
 
@@ -881,10 +883,21 @@ namespace engine
    done:
       return rc ;
    error:
-      // TODO:
+      if ( DMS_INVALID_EXTENT != ctlBlockExtent )
+      {
+         releaseExtent ( ctlBlockExtent, TRUE ) ;
+      }
+      if ( SDB_OK == rc )
+      {
+         _pDataSu->flushMME( isSyncDeep() ) ;
+      }
       goto done ;
    error_after_create:
-      // TODO:
+      rc1 = dropIndex ( context, indexName, cb, dropDps, isSys ) ;
+      if ( rc1 )
+      {
+         PD_LOG ( PDERROR, "Failed to clean up invalid index, rc = %d", rc1 ) ;
+      }
       goto done ;
    }
 
@@ -1443,8 +1456,9 @@ namespace engine
          goto error ;
       }
 
-      // Get the _id from the insert object.
+      try
       {
+         // Get the _id from the insert object.
          BSONElement ele = inputObj.getField( DMS_ID_KEY_NAME ) ;
          if ( EOO == ele.type() )
          {
@@ -1455,30 +1469,40 @@ namespace engine
          }
 
          oid = ele.OID() ;
-      }
-
-      {
-         ixmIndexKeyGen keygen( indexCB, GEN_OBJ_KEEP_FIELD_NAME ) ;
-         // If any field is an array, it should keep that format instead of
-         // being breaking into seperate objects.
-         rc = keygen.getKeys( inputObj, keySet, NULL, TRUE, FALSE ) ;
-         PD_RC_CHECK( rc, PDERROR, "Generate key from object failed[ %d ]",
-                      rc ) ;
-
-         SDB_ASSERT( 1 == keySet.size(), "Key set size should be 1" ) ;
 
          {
-            BSONObjSet::iterator it = keySet.begin();
-            BSONObj object( *it ) ;
-            CHAR fullName[DMS_COLLECTION_FULL_NAME_SZ + 1] = {0} ;
+            ixmIndexKeyGen keygen( indexCB, GEN_OBJ_KEEP_FIELD_NAME ) ;
+            // If any field is an array, it should keep that format instead of
+            // being breaking into seperate objects.
+            rc = keygen.getKeys( inputObj, keySet, NULL, TRUE, FALSE, TRUE ) ;
+            PD_RC_CHECK( rc, PDERROR, "Generate key from object failed[ %d ]",
+                         rc ) ;
 
-            _pDataSu->_clFullName( context->mb()->_collectionName, fullName,
-                                   sizeof(fullName) ) ;
-            rc = extDataHandler->onInsert( fullName, indexCB->getName(),
-                                           object, oid, 0, cb ) ;
-            PD_RC_CHECK( rc, PDERROR, "External data process of text index "
-                         "insertion failed[ %d ]", rc) ;
+            SDB_ASSERT( keySet.size() <= 1, "Key set size should be 1" ) ;
+            if ( 0 == keySet.size() )
+            {
+               // No index key in the record, ignore.
+               goto done ;
+            }
+            {
+               BSONObjSet::iterator it = keySet.begin();
+               BSONObj object( *it ) ;
+               CHAR fullName[DMS_COLLECTION_FULL_NAME_SZ + 1] = {0} ;
+
+               _pDataSu->_clFullName( context->mb()->_collectionName, fullName,
+                                      sizeof(fullName) ) ;
+               rc = extDataHandler->onInsert( fullName, indexCB->getName(),
+                                              object, oid, 0, cb ) ;
+               PD_RC_CHECK( rc, PDERROR, "External data process of text index "
+                            "insertion failed[ %d ]", rc) ;
+            }
          }
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Exception occurred: %s", e.what() ) ;
+         goto error ;
       }
 
    done:
@@ -1509,6 +1533,7 @@ namespace engine
          goto error ;
       }
 
+      try
       {
          BSONElement ele = inputObj.getField( DMS_ID_KEY_NAME ) ;
          if ( EOO == ele.type() )
@@ -1519,17 +1544,23 @@ namespace engine
             goto error ;
          }
          oid = ele.OID() ;
+
+         {
+            CHAR fullName[DMS_COLLECTION_FULL_NAME_SZ + 1] = {0} ;
+
+            _pDataSu->_clFullName( context->mb()->_collectionName, fullName,
+                                   sizeof(fullName) ) ;
+            rc = extDataHandler->onDelete( fullName, indexCB->getName(),
+                                           oid, cb ) ;
+            PD_RC_CHECK( rc, PDERROR, "External data process of text index "
+                         "deletion failed[ %d ]", rc) ;
+         }
       }
-
+      catch ( std::exception &e )
       {
-         CHAR fullName[DMS_COLLECTION_FULL_NAME_SZ + 1] = {0} ;
-
-         _pDataSu->_clFullName( context->mb()->_collectionName, fullName,
-                                sizeof(fullName) ) ;
-         rc = extDataHandler->onDelete( fullName, indexCB->getName(),
-                                        oid, cb ) ;
-         PD_RC_CHECK( rc, PDERROR, "External data process of text index "
-                      "deletion failed[ %d ]", rc) ;
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Exception occurred: %s", e.what() ) ;
+         goto error ;
       }
 
    done:
@@ -1561,6 +1592,7 @@ namespace engine
          goto error ;
       }
 
+      try
       {
          BSONElement ele = newObj.getField( DMS_ID_KEY_NAME ) ;
          if ( EOO == ele.type() )
@@ -1572,27 +1604,33 @@ namespace engine
          }
 
          oid = ele.OID() ;
-      }
-
-      {
-         ixmIndexKeyGen keygen( indexCB, GEN_OBJ_KEEP_FIELD_NAME ) ;
-         rc = keygen.getKeys( newObj, keySet, NULL, TRUE, FALSE ) ;
-         PD_RC_CHECK( rc, PDERROR, "Generate key from object failed[ %d ]", rc ) ;
-
-         SDB_ASSERT( 1 == keySet.size(), "Key set size should be 1" ) ;
 
          {
-            BSONObjSet::iterator it = keySet.begin();
-            BSONObj object( *it ) ;
-            CHAR fullName[DMS_COLLECTION_FULL_NAME_SZ + 1] = {0} ;
+            ixmIndexKeyGen keygen( indexCB, GEN_OBJ_KEEP_FIELD_NAME ) ;
+            rc = keygen.getKeys( newObj, keySet, NULL, TRUE, FALSE ) ;
+            PD_RC_CHECK( rc, PDERROR, "Generate key from object failed[ %d ]", rc ) ;
 
-            _pDataSu->_clFullName( context->mb()->_collectionName, fullName,
-                                   sizeof(fullName) ) ;
-            rc = extDataHandler->onUpdate( fullName, indexCB->getName(),
-                                           object, oid, 0, cb ) ;
-            PD_RC_CHECK( rc, PDERROR, "External data process of text index "
-                         "updating failed[ %d ]", rc) ;
+            SDB_ASSERT( 1 == keySet.size(), "Key set size should be 1" ) ;
+
+            {
+               BSONObjSet::iterator it = keySet.begin();
+               BSONObj object( *it ) ;
+               CHAR fullName[DMS_COLLECTION_FULL_NAME_SZ + 1] = {0} ;
+
+               _pDataSu->_clFullName( context->mb()->_collectionName, fullName,
+                                      sizeof(fullName) ) ;
+               rc = extDataHandler->onUpdate( fullName, indexCB->getName(),
+                                              object, oid, 0, cb ) ;
+               PD_RC_CHECK( rc, PDERROR, "External data process of text index "
+                            "updating failed[ %d ]", rc) ;
+            }
          }
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Exception occurred: %s", e.what() ) ;
+         goto error ;
       }
 
    done:

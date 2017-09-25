@@ -67,42 +67,28 @@ namespace engine
 
       INT32 _onOPMsg ( NET_HANDLE handle, MsgHeader * msg ) ;
       BOOLEAN _isCommand ( const CHAR *name ) ;
-      INT32 _onQueryReqMsg( MsgHeader *msg,
-                            utilCommObjBuff &objBuff ) ;
-      INT32 _onGetMoreReqMsg( MsgHeader *msg,
-                              utilCommObjBuff &objBuff ) ;
-      INT32 _onRewriteQuery( MsgHeader *msg,
-                             utilCommObjBuff &objBuff,
-                             pmdEDUCB *eduCB = NULL ) ;
 
-      INT32 _onRewriteQueryMore( MsgHeader *msg,
-                                 utilCommObjBuff &objBuff,
-                                 pmdEDUCB *eduCB = NULL ) ;
+      INT32 _onQueryReq( MsgHeader *msg,
+                         utilCommObjBuff &objBuff,
+                         pmdEDUCB *eduCB = NULL ) ;
 
-      INT32 _onKillContextReqMsg( NET_HANDLE handle,
-                                  MsgHeader *msg ) ;
-      INT32 _onRebuildIdxReqMsg() ;
+      INT32 _onGetmoreReq( MsgHeader *msg,
+                           utilCommObjBuff &objBuff,
+                           pmdEDUCB *eduCB = NULL ) ;
 
       INT32 _reply( MsgOpReply *header, const CHAR *buff, UINT32 size ) ;
       INT32 _defaultMsgFunc ( NET_HANDLE handle, MsgHeader *msg ) ;
 
-      INT32 _onAuthReq( NET_HANDLE handle, MsgHeader *msg ) ;
-
    private:
-      INT32 _getIndexAndType( const CHAR *pCollectionName,
-                              const CHAR *pHint,
-                              UINT32 groupID,
-                              std::string &indexName,
-                              std::string &typeName ) ;
+      INT32 _getIndexName( const CHAR *pCollectionName,
+                           const CHAR *pHint,
+                           std::string &indexName ) ;
       INT32 _getQueryCond( const BSONObj &matcher, std::string &queryStr ) ;
-      INT32 _buildInCond( const utilCommObjBuff &objBuff, BSONObj &condition ) ;
 
-      INT32 _doOnSE() ;
    private:
-      utilESCltMgr *_seCltMgr ;
-      utilESClt *_esClt ;
-      std::string _scrollID ;
-      utilCommObjBuff _resultObjs ;
+      utilESCltMgr      *_seCltMgr ;
+      utilESClt         *_esClt ;
+      std::string       _scrollID ;
       seAdptContextBase *_context ;
    } ;
    typedef _seAdptAgentSession seAdptAgentSession ;

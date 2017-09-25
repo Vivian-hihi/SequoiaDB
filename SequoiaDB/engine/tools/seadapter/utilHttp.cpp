@@ -94,6 +94,8 @@
 #define REST_STRING_CHUNKED_END "0\r\n\r\n"
 #define REST_STRING_CHUNKED_END_SIZE (sizeof( REST_STRING_CHUNKED_END ) - 1)
 
+#define REST_OPRATION_TIMEOUT    3000
+
 namespace engine
 {
    _utilHttp::_utilHttp()
@@ -251,13 +253,6 @@ namespace engine
       if ( !_validMethod( method ) )
       {
          PD_LOG( PDERROR, "Invalid http method[ %s ]", method ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-
-      if ( !endUrl )
-      {
-         PD_LOG( PDERROR, "Url information for request is empty" ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -466,7 +461,7 @@ namespace engine
       /// Where /test.php is the URN and www.mariequantier.com is the URL.
       INT32 dataSize = 0 ;
 
-      SDB_ASSERT( endUrl, "Url information should not be NULL" ) ;
+      SDB_ASSERT( method, "method should not be NULL" ) ;
 
       if ( !requestStr.empty() )
       {
@@ -726,7 +721,7 @@ namespace engine
       while ( headerSize < HTTP_MAX_HEADER_SIZE )
       {
          rc = _socket->recv( _recvBuf + headerSize, remainSize,
-                             curRecvSize, OSS_SOCKET_DFT_TIMEOUT, 0, FALSE ) ;
+                             curRecvSize, REST_OPRATION_TIMEOUT, 0, FALSE ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to receive data, rc: %d", rc ) ;
          _recvBuf[ headerSize + curRecvSize + 1 ] = '\0' ;
          headFound = _checkEndOfHeader( _recvBuf + headerSize,
@@ -814,7 +809,7 @@ namespace engine
          while ( bodyRemainLen > 0 )
          {
             rc = _socket->recv( _recvBuf + totalRecv, bodyRemainLen,
-                                curRecvSize, OSS_SOCKET_DFT_TIMEOUT,
+                                curRecvSize, REST_OPRATION_TIMEOUT,
                                 0, FALSE ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to receive data, rc: %d", rc ) ;
             bodyRemainLen -= curRecvSize ;

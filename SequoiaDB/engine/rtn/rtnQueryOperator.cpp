@@ -82,6 +82,11 @@ namespace engine
    done:
       return rc ;
    error:
+      // In case of error, delete the context, if it has been allocated.
+      if ( pContext )
+      {
+         rtnCB->contextDelete( contextID, eduCB ) ;
+      }
       goto done ;
    }
 }

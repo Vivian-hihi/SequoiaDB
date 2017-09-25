@@ -133,7 +133,7 @@ namespace engine
                              const string &query,
                              const CHAR **ppReply, INT32 *replyLen ) ;
          void _getHitNum( const BSONObj &fullResult, INT64 &hitNum ) ;
-
+         INT32 _removeDocMeta( const BSONObj &fullObj, BSONObj &newObj ) ;
 
       private:
          utilHttp _http;

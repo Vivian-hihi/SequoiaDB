@@ -89,7 +89,6 @@ namespace engine
       pmdKRCB *krcb = pmdGetKRCB() ;
       UINT32 startTimerCount = 0 ;
       CHAR verText[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
-      INT32 delSig[] = { 17, 0 } ;
       po::variables_map vm ;
 
       rc = pmdResolveArguments( argc, argv ) ;
@@ -120,8 +119,7 @@ namespace engine
       }
 
       rc = pmdEnableSignalEvent( sdbGetSeAdptOptions()->getDiagLogPath(),
-                                 (PMD_ON_QUIT_FUNC)pmdOnQuit,
-                                 delSig ) ;
+                                 (PMD_ON_QUIT_FUNC)pmdOnQuit, NULL ) ;
       PD_RC_CHECK( rc, PDERROR, "Enable trap failed[ %d ]", rc ) ;
 
       PMD_REGISTER_CB( sdbGetSeAdapterCB() ) ;

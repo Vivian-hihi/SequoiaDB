@@ -99,6 +99,7 @@ namespace engine
          rtnRSHandler         _rsHandler ;
          SINT64               _subCtxID ;    // Context to fetch data from local
                                              // after get new query from ES.
+         UINT64               _extNodeId ;
    } ;
    typedef _rtnContextTS rtnContextTS ;
 }

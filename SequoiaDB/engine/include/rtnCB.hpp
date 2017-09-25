@@ -56,7 +56,7 @@
 
 #include "netMsgHandler.hpp"
 
-#define SDB_EXT_DATA_NODE_ID           999999999
+#define RTN_INIT_TEXT_INDEX_VERSION    -1
 
 namespace engine
 {
@@ -78,9 +78,10 @@ namespace engine
                                       BOOLEAN isPositive ) ;
 
       protected:
-         _pmdRemoteSessionMgr                *_pRSManager ;
+         _pmdRemoteSessionMgr    *_pRSManager ;
    } ;
    typedef _rtnMsgHandler rtnMsgHandler ;
+
    /*
       _SDB_RTNCB define
    */
@@ -89,16 +90,23 @@ namespace engine
    private :
       typedef utilConcurrentMap<INT64, rtnContext*> RTN_CTX_MAP ;
 
-      ossAtomicSigned64 _contextIdGenerator ;
-      RTN_CTX_MAP       _contextMap ;
+      ossAtomicSigned64    _contextIdGenerator ;
+      RTN_CTX_MAP          _contextMap ;
 
-      BOOLEAN           _enableMixCmp ;
+      BOOLEAN              _enableMixCmp ;
       optAccessPlanManager _accessPlanManager ;
 
-      pmdRemoteSessionMgr _rsMgr ;
-      rtnMsgHandler     *_msgHandler ;
-      netRouteAgent     *_routeAgent ;  // For communication with search engine adapter.
-      INT64             _textIdxVersion ;
+      // The following members are used for communication with search engine
+      // adapter when do text searching. Search engine adapter use the shard
+      // plane to get data from data node, and data node use this new plane to
+      // send text search request to adapter.
+      ossSpinSLatch        _mutex ;        // Lock for protection of accessing
+                                          // index information.
+      pmdRemoteSessionMgr  _rsMgr ;
+      rtnMsgHandler        *_msgHandler ;
+      netRouteAgent        *_routeAgent ;
+      ossAtomicSigned64    _textIdxVersion ;
+      UINT64               _extNodeId ;
 
    public :
       _SDB_RTNCB() ;
@@ -201,11 +209,28 @@ namespace engine
 
       OSS_INLINE INT64 getTextIdxVersion()
       {
-         return _textIdxVersion ;
+         return _textIdxVersion.peek() ;
       }
       OSS_INLINE void incTextIdxVersion()
       {
-         ++_textIdxVersion ;
+         _textIdxVersion.inc() ;
+      }
+      OSS_INLINE void increaseTextIdxVerUpTo( INT64 newVersion )
+      {
+         _textIdxVersion.swapLesserThan( newVersion) ;
+      }
+      OSS_INLINE void updateExtNodeId( UINT64 newID )
+      {
+         ossScopedLock lock( &_mutex, EXCLUSIVE ) ;
+         if ( 0 != newID && newID != _extNodeId )
+         {
+            _extNodeId = newID ;
+         }
+      }
+      OSS_INLINE UINT64 getExtNodeId()
+      {
+         ossScopedLock lock( &_mutex, SHARED ) ;
+         return _extNodeId ;
       }
 
       OSS_INLINE optAccessPlanManager *getAPM ()

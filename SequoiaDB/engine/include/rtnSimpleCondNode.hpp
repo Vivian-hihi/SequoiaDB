@@ -79,8 +79,10 @@ namespace engine
 
       public:
          void* operator new( size_t size, rtnCondNodeAllocator *allocator ) ;
-         // Invoked by release.
+         // Invoked by release. Do NOT call directly.
          void operator delete( void *p ) ;
+         // Just avoid warning when compiling on windows.
+         void operator delete( void *p, rtnCondNodeAllocator *allocator ) ;
 
          virtual void init( const CHAR *fieldName ) ;
          virtual INT32 addChild( _rtnCondNode *child ) ;

@@ -80,6 +80,7 @@ namespace engine
       _remoteSessionSite = NULL ;
       _remoteSession = NULL ;
       _subCtxID = -1 ;
+      _extNodeId = 0 ;
    }
 
    _rtnContextTS::~_rtnContextTS()
@@ -96,6 +97,11 @@ namespace engine
       if ( sdbGetPMDController()->getRSManager() && _eduCB )
       {
          sdbGetPMDController()->getRSManager()->unregEUD( _eduCB ) ;
+      }
+
+      if ( -1 != _subCtxID )
+      {
+         pmdGetKRCB()->getRTNCB()->contextDelete( _subCtxID, _eduCB ) ;
       }
    }
 
@@ -144,7 +150,7 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Build query message from options failed[ %d ]",
                    rc ) ;
 
-      queryMsg->opCode = MSG_SEADPT_Q_REWT_REQ ;
+      queryMsg->opCode = MSG_BS_QUERY_REQ ;
 
       // Send query message to search engine adapter.
       rc = _sendToRemote( queryMsg ) ;
@@ -183,6 +189,9 @@ namespace engine
          // adapter.
          if ( SDB_DMS_EOC == rc )
          {
+            rtnCB->contextDelete( _subCtxID, cb ) ;
+            _subCtxID = -1 ;
+
             // Another new query will be started, and in case of query success,
             // we can go on to get more data.
             rc = _getMoreFromRemote( cb ) ;
@@ -214,6 +223,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       pmdRemoteSessionMgr *rsMgr = NULL ;
+      SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
 
       // Register a remote session.
       rsMgr = sdbGetPMDController()->getRSManager() ;
@@ -231,7 +241,15 @@ namespace engine
          goto error ;
       }
 
-      (void)_remoteSession->addSubSession( SDB_EXT_DATA_NODE_ID ) ;
+      _extNodeId = rtnCB->getExtNodeId() ;
+      if ( 0 == _extNodeId )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "External data service may have exit" ) ;
+         goto error ;
+      }
+
+      (void)_remoteSession->addSubSession( _extNodeId ) ;
 
    done:
       return rc ;
@@ -252,7 +270,7 @@ namespace engine
                                contextID, reqID, eduCB ) ;
       PD_RC_CHECK( rc, PDERROR, "Build get more message failed[ %d ]", rc ) ;
 
-      msg->opCode = MSG_SEADPT_Q_REWT_MORE_REQ ;
+      msg->opCode = MSG_BS_GETMORE_REQ ;
 
       rc = _sendToRemote( msg ) ;
       PD_RC_CHECK( rc, PDERROR, "Send get more message to remote failed[ %d ]",
@@ -273,7 +291,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       pmdSubSession *subSession = NULL ;
 
-      subSession = _remoteSession->getSubSession( SDB_EXT_DATA_NODE_ID ) ;
+      subSession = _remoteSession->getSubSession( _extNodeId ) ;
       if ( !subSession )
       {
          PD_LOG( PDERROR, "Sub session does not exist" ) ;
@@ -308,7 +326,7 @@ namespace engine
       rc = _remoteSession->waitReply( TRUE ) ;
       PD_RC_CHECK( rc, PDERROR, "Wait reply failed[ %d ]", rc ) ;
 
-      subSession = _remoteSession->getSubSession( SDB_EXT_DATA_NODE_ID ) ;
+      subSession = _remoteSession->getSubSession( _extNodeId ) ;
       if ( !subSession )
       {
          PD_LOG( PDERROR, "Get subsession of search engine adapter "

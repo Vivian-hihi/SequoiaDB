@@ -55,6 +55,7 @@ namespace engine
       SEADPT_SESSION_STAT_UPDATE_CL_VERSION, // Update collection version.
       SEADPT_SESSION_STAT_CONSULT,           // To find where to start.
       SEADPT_SESSION_STAT_QUERY_LAST_LID,
+      SEADPT_SESSION_STAT_COMP_LAST_LID,
       SEADPT_SESSION_STAT_QUERY_NORMAL_TBL,
       SEADPT_SESSION_STAT_QUERY_CAP_TBL,
       SEADPT_SESSION_STAT_POP_CAP,
@@ -66,8 +67,7 @@ namespace engine
    {
       DECLARE_OBJ_MSG_MAP()
    public:
-      _seAdptIndexSession( UINT64 sessionID, netRouteAgent *rtAgent,
-                           const seIndexTask *task ) ;
+      _seAdptIndexSession( UINT64 sessionID, const seIndexTask *task ) ;
       virtual ~_seAdptIndexSession() ;
 
       virtual EDU_TYPES eduType() const ;
@@ -90,29 +90,27 @@ namespace engine
    private:
       void  _updateCLVersion( INT32 version ) ;
       void  _switchStatus( SEADPT_SESSION_STATUS newStatus ) ;
-      INT32 _sendUpdateCLVersionReq() ;
       INT32 _sendGetmoreReq( INT64 contextID, UINT64 requestID ) ;
       INT32 _queryOrigCollection() ;
       INT32 _queryLastCappedRecLID() ;
-      INT32 _queryCappedCollection() ;
-      INT32 _getExpectRLID( INT64 &expectRLID ) ;
+      INT32 _queryCappedCollection( BSONObj &condition ) ;
       INT32 _cleanData( INT64 recLID ) ;
       INT32 _parseSrcData( const BSONObj &origObj, _dmsExtOprType &oprType,
-                           const CHAR **origOID, BSONObj &sourceObj ) ;
+                           const CHAR **origOID, INT64 &logicalID,
+                           BSONObj &sourceObj ) ;
       INT32 _processNormalCLRecords( NET_HANDLE handle, MsgHeader *msg ) ;
 
       INT32 _processCappedCLRecords( NET_HANDLE handle, MsgHeader *msg ) ;
       INT32 _getLastIndexedLID( NET_HANDLE handle, MsgHeader *msg ) ;
-      INT32 _markNormalCLDone() ;
+      INT32 _markProgress( BSONObj &infoObj ) ;
+      INT32 _updateProgress( INT64 logicalID ) ;
 
       // Check if the mark of normal collection end has been written in ES.
       INT32 _chkDoneMark( BOOLEAN &found ) ;
       INT32 _consult() ;
       INT32 _ensureESClt() ;
       void _onSDBEOC() ;
-
-      INT32 _onResMsg( NET_HANDLE handle, MsgHeader *msg ) ;
-      INT32 _onCatalogResMsg( NET_HANDLE handle, MsgHeader *msg ) ;
+      INT32 _startOver() ;
       void  _setQueryBusyFlag( BOOLEAN busy ) { _queryBusy = busy; }
       BOOLEAN _isQueryBusy() { return _queryBusy ; }
 
@@ -128,22 +126,17 @@ namespace engine
       BSONObj                 _indexDef ;
       BSONObj                 _selector ; // Should contain _id and index fields.
       utilESClt               *_esClt ;
-      netRouteAgent           *_rtAgent ;
       SEADPT_SESSION_STATUS   _status ;
-      INT64                   _startLID ;
       INT64                   _lastPopLID ;
       // Whether the session should quit. If the targe collection dosn't exist
       // any more, it means the index has been dropped. In this case, this
       // session should quit.
       BOOLEAN                 _quit ;
-      UINT64                  _requestID ;
-      BOOLEAN                 _indexCappedData ;
-      BOOLEAN                 _indexInProgress ;
-      ossRWMutex              _progressLatch ;
       INT64                   _queryCtxID ;
       BOOLEAN                 _queryBusy ;   // Where one query is in progress.
                                              // A new query can be started only
                                              // when it's FALSE.
+      INT64                   _expectLID ;
    } ;
    typedef _seAdptIndexSession seAdptIndexSession ;
 
@@ -154,17 +147,9 @@ namespace engine
       std::ostringstream lidStr ;
       lidStr << logicalID ;
 
-      if ( !_esClt )
-      {
-         rc = sdbGetSeAdapterCB()->getSeCltMgr()->getSeClt( &_esClt ) ;
-         if ( rc )
-         {
-            PD_LOG( PDERROR, "Failed to get search engine client, rc: %d",
-                    rc ) ;
-            goto error ;
-         }
-      }
-
+      rc = _ensureESClt() ;
+      PD_RC_CHECK( rc, PDERROR, "The search engine client is not active[ %d ]",
+                   rc ) ;
       rc = _esClt->documentExist( _indexName.c_str(), _typeName.c_str(),
                                   SEADPT_FIELD_NAME_ID, lidStr.str().c_str(),
                                   found ) ;

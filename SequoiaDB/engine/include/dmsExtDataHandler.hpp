@@ -64,6 +64,8 @@ namespace engine
       public:
          virtual INT32 onDropCS( const monCSSimple &csInfo,
                                  _pmdEDUCB *cb ) = 0 ;
+         virtual INT32 onUnloadCS( const monCSSimple &csInfo,
+                                   _pmdEDUCB *cb ) = 0 ;
          virtual INT32 onCreateTextIdx( const CHAR *clFullName,
                                         const CHAR *idxName,
                                         INT64 bufferSize,

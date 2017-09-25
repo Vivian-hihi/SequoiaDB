@@ -53,6 +53,8 @@ namespace engine
       public:
          virtual INT32 onDropCS( const monCSSimple &csInfo,
                                  _pmdEDUCB *cb ) ;
+         virtual INT32 onUnloadCS( const monCSSimple &csInfo,
+                                   _pmdEDUCB *cb ) ;
          virtual INT32 onCreateTextIdx( const CHAR *clFullName,
                                         const CHAR *idxName,
                                         INT64 bufferSize,
@@ -84,6 +86,8 @@ namespace engine
                               const bson::OID *dataOID,
                               const BSONObj *dataObj,
                               SDB_DPSCB *dpsCB = NULL ) ;
+         void _getTextIdxCSList( const monCSSimple &csInfo,
+                                 vector<string> &csNameVec ) ;
    } ;
    typedef _rtnExtDataHandler rtnExtDataHandler ;
 
