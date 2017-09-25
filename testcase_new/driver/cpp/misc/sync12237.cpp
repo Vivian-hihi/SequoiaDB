@@ -94,6 +94,11 @@ TEST_F( syncTest12237, legalOption12237 )
 TEST_F( syncTest12237, illegalOption12237 )
 {
 	INT32 rc = SDB_OK ;
+   if( isStandalone( db ) )
+   {
+      cout << "Run mode is standalone" << endl ;
+      return ;
+   }
 
 	// sync with invalid option
 	BSONObj option = BSON( "HostName" << "InvalidHost" ) ;

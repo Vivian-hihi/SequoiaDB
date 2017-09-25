@@ -34,6 +34,11 @@ protected:
 
 TEST_F( evalJSTest12525, void12525 )
 {
+   if( isStandalone( db ) )
+   {
+      cout << "Run mode is standalone" << endl ;
+      return ; 
+   }
    INT32 rc = SDB_OK ;
    
    const CHAR* code = "" ;
@@ -52,6 +57,11 @@ TEST_F( evalJSTest12525, void12525 )
 
 TEST_F( evalJSTest12525, str12525 )
 {
+   if( isStandalone( db ) )
+   {
+      cout << "Run mode is standalone" << endl ;
+      return ; 
+   }
    INT32 rc = SDB_OK ;
   
    const CHAR* code = "a = \"abc\"" ;
@@ -71,6 +81,11 @@ TEST_F( evalJSTest12525, str12525 )
 
 TEST_F( evalJSTest12525, number12525 )
 {
+   if( isStandalone( db ) )
+   {
+      cout << "Run mode is standalone" << endl ;
+      return ; 
+   }
    INT32 rc = SDB_OK ;
 
    const CHAR* code = "a = 123" ;
@@ -90,6 +105,11 @@ TEST_F( evalJSTest12525, number12525 )
 
 TEST_F( evalJSTest12525, obj12525 )
 {
+   if( isStandalone( db ) )
+   {
+      cout << "Run mode is standalone" << endl ;
+      return ; 
+   }
    INT32 rc = SDB_OK ;
 
    const CHAR* code = "a = { a: 1 }" ;
@@ -109,6 +129,11 @@ TEST_F( evalJSTest12525, obj12525 )
 
 TEST_F( evalJSTest12525, bool12525 )
 {
+   if( isStandalone( db ) )
+   {
+      cout << "Run mode is standalone" << endl ;
+      return ; 
+   }
    INT32 rc = SDB_OK ;
    const CHAR* code = "a = true" ;
    SDB_SPD_RES_TYPE type ;
@@ -127,6 +152,11 @@ TEST_F( evalJSTest12525, bool12525 )
 
 TEST_F( evalJSTest12525, recordSet12525 )
 {
+   if( isStandalone( db ) )
+   {
+      cout << "Run mode is standalone" << endl ;
+      return ; 
+   }
    INT32 rc = SDB_OK ;
 
    sdbCollectionSpace cs ;
@@ -159,6 +189,11 @@ TEST_F( evalJSTest12525, recordSet12525 )
 
 TEST_F( evalJSTest12525, cs12525 )
 {
+   if( isStandalone( db ) )
+   {
+      cout << "Run mode is standalone" << endl ;
+      return ; 
+   }
    INT32 rc = SDB_OK ;
 
    sdbCollectionSpace cs ;
@@ -186,6 +221,11 @@ TEST_F( evalJSTest12525, cs12525 )
 
 TEST_F( evalJSTest12525, cl12525 )
 {
+   if( isStandalone( db ) )
+   {
+      cout << "Run mode is standalone" << endl ;
+      return ; 
+   }
    INT32 rc = SDB_OK ;
    
    sdbCollectionSpace cs ;
