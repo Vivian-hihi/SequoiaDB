@@ -173,7 +173,7 @@ public class Ssh {
      * @throws ReliabilityException
      */
     public void waitBackgroudCMDDown(int channelId) throws ReliabilityException {
-        waitBackgroudCMDDown(channelId, Integer.MAX_VALUE);
+        waitBackgroudCMDDown(channelId, CHANNEL_CONNECT_TIMEOUT);
     }
 
     /**
