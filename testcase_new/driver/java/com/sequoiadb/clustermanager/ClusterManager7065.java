@@ -227,17 +227,30 @@ public class ClusterManager7065 extends SdbTestBase{
 		//get master and slave
 		String actualMasterNodeName = null;
 		String actualSlaveNodeName = null;
+		Node master = null;		
+		
 		try{
 			for(int i=0;i<120;i++){
-				if(dataRG.getMaster() == null){
-					try {
-						System.out.println("i:"+i);
-						Thread.sleep(3000);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
+				try{
+					master = dataRG.getMaster();
+					if ( master == null ) {
+						try {
+							Thread.sleep(3000);
+						} catch (InterruptedException e) {							
+							e.printStackTrace();
+						}
 					}
-				}else{
-					break;
+					
+				}catch(BaseException e){
+					if(e.getErrorCode() == -155){						
+						try {
+							Thread.sleep(3000);
+						} catch (InterruptedException e1) {							
+							e1.printStackTrace();
+						}
+					}else{
+						Assert.fail("get master fail:" + e.getMessage());
+					}
 				}
 			}
 			actualMasterNodeName = dataRG.getMaster().getNodeName();
