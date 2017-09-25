@@ -134,7 +134,7 @@
             <customErrorMessage>${msg(Upgrade.ErrorMsg.excuteComatibleSh)}</customErrorMessage>
             <name>is_compatible</name>
             <exec>${installdir}/tmp_${time}/compatible.sh</exec>
-            <execArgs>${old_version} ${old_edition} ${new_version} ${new_edition} ${installdir}/tmp_${time}/version.conf</execArgs>           
+            <execArgs>${old_version} ${old_edition} ${new_version} ${new_edition} --db</execArgs>           
         </setInstallerVariableFromScriptOutput>
         <deleteFile path="${installdir}/tmp_${time}"/>              
                                                                                                     
