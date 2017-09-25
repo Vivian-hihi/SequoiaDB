@@ -102,21 +102,10 @@ namespace engine
                             const CHAR *data,
                             _pmdEDUCB *eduCB ) ;
 
-      OSS_INLINE BOOLEAN isUnderFullSync () const
-      {
-         return _underFullSync ;
-      }
-
-      OSS_INLINE void setUnderFullSync ( BOOLEAN underFullSync )
-      {
-         _underFullSync = underFullSync ;
-      }
-
    private:
       _SDB_DMSCB              *_dmsCB ;
       _dpsLogWrapper          *_dpsCB ;
       monDBCB                 *_monDBCB ;
-      BOOLEAN                 _underFullSync ;
 
    } ;
    typedef class _clsReplayer clsReplayer ;

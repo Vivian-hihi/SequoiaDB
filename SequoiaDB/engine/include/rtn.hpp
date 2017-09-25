@@ -351,8 +351,7 @@ namespace engine
                                  SDB_DMSCB *dmsCB,
                                  SDB_DPSCB *dpsCB,
                                  BOOLEAN isSys = FALSE,
-                                 INT32 sortBufferSize = SDB_INDEX_SORT_BUFFER_DEFAULT_SIZE,
-                                 BOOLEAN underFullSync = FALSE ) ;
+                                 INT32 sortBufferSize = SDB_INDEX_SORT_BUFFER_DEFAULT_SIZE ) ;
 
    INT32 rtnDropCollectionCommand ( const CHAR *pCollection,
                                     _pmdEDUCB *cb,
@@ -393,8 +392,7 @@ namespace engine
                                pmdEDUCB *cb,
                                SDB_DMSCB *dmsCB,
                                SDB_DPSCB *dpsCB,
-                               BOOLEAN sysCall = FALSE,
-                               BOOLEAN underFullSync = FALSE ) ;
+                               BOOLEAN sysCall = FALSE ) ;
 
    INT32 rtnGetCount ( const CHAR *pCollection,
                        const BSONObj &matcher,

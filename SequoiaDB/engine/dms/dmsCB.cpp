@@ -1049,6 +1049,52 @@ namespace engine
       }
    }
 
+   INT32 _SDB_DMSCB::registerFullSync( _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+
+   retry:
+      /// Full-sync can't blockWrite, because create/drop index when
+      /// full-sync need to writable
+      _stateMtx.get() ;
+
+      if ( DMS_STATE_NORMAL != _dmsCBState )
+      {
+         _stateMtx.release() ;
+
+         rc = SDB_DMS_STATE_NOT_COMPATIBLE ;
+         while ( cb )
+         {
+            if ( cb->isInterrupted() )
+            {
+               rc = SDB_APP_INTERRUPT ;
+               break ;
+            }
+            rc = _blockEvent.wait( OSS_ONE_SEC ) ;
+            if ( SDB_OK == rc )
+            {
+               goto retry ;
+            }
+         }
+      }
+      else
+      {
+         _dmsCBState = DMS_STATE_FULLSYNC ;
+         PMD_SET_DB_STATUS( SDB_DB_FULLSYNC ) ;
+
+         _stateMtx.release() ;
+      }
+
+      return rc ;
+   }
+
+   void _SDB_DMSCB::fullSyncDown( _pmdEDUCB *cb )
+   {
+      ossScopedLock lock( &_stateMtx ) ;
+      _dmsCBState = DMS_STATE_NORMAL ;
+      PMD_SET_DB_STATUS( SDB_DB_NORMAL ) ;
+   }
+
    INT32 _SDB_DMSCB::registerBackup( _pmdEDUCB *cb, BOOLEAN offline )
    {
       INT32 rc = SDB_OK ;

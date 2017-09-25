@@ -1299,8 +1299,7 @@ namespace engine
                                  SDB_DMSCB *dmsCB,
                                  SDB_DPSCB *dpsCB,
                                  BOOLEAN isSys,
-                                 INT32 sortBufferSize,
-                                 BOOLEAN underFullSync )
+                                 INT32 sortBufferSize )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNCREATEINDEXCOMMAND ) ;
@@ -1312,14 +1311,9 @@ namespace engine
       const CHAR *pCollectionShortName = NULL ;
       BOOLEAN writable              = FALSE ;
 
-      // If under full sync, the full sync session already block writings,
-      // So no need to check writable
-      if ( !underFullSync )
-      {
-         rc = dmsCB->writable( cb ) ;
-         PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc = %d", rc ) ;
-         writable = TRUE ;
-      }
+      rc = dmsCB->writable( cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc = %d", rc ) ;
+      writable = TRUE ;
 
       rc = rtnResolveCollectionNameAndLock ( pCollection, dmsCB, &su,
                                              &pCollectionShortName, suID ) ;
@@ -1372,8 +1366,7 @@ namespace engine
                                pmdEDUCB *cb,
                                SDB_DMSCB *dmsCB,
                                SDB_DPSCB *dpsCB,
-                               BOOLEAN sysCall,
-                               BOOLEAN underFullSync )
+                               BOOLEAN sysCall )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNDROPINDEXCOMMAND ) ;
@@ -1394,14 +1387,9 @@ namespace engine
          goto error ;
       }
 
-      // If under full sync, the full sync session already block writings,
-      // So no need to check writable
-      if ( !underFullSync )
-      {
-         rc = dmsCB->writable( cb ) ;
-         PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc = %d", rc ) ;
-         writable = TRUE ;
-      }
+      rc = dmsCB->writable( cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc = %d", rc ) ;
+      writable = TRUE ;
 
       rc = rtnResolveCollectionNameAndLock ( pCollection, dmsCB, &su,
                                              &pCollectionShortName, suID ) ;

@@ -55,8 +55,7 @@ namespace engine
    INT32 startIndexJob ( RTN_JOB_TYPE type,
                          const dpsLogRecordHeader *recordHeader,
                          _dpsLogWrapper *dpsCB,
-                         BOOLEAN isRollBack,
-                         BOOLEAN underFullSync ) ;
+                         BOOLEAN isRollBack ) ;
 
    _clsReplayer::_clsReplayer( BOOLEAN useDps )
    {
@@ -67,7 +66,6 @@ namespace engine
          _dpsCB = sdbGetDPSCB() ;
       }
       _monDBCB = pmdGetKRCB()->getMonDBCB () ;
-      _underFullSync = FALSE ;
    }
 
    _clsReplayer::~_clsReplayer()
@@ -540,13 +538,13 @@ namespace engine
             /// rebuild the index can be very time-consuming.
             /// we create a sub thread to handle it.
             startIndexJob ( RTN_JOB_CREATE_INDEX, recordHeader,
-                            _dpsCB, FALSE, _underFullSync ) ;
+                            _dpsCB, FALSE ) ;
             break ;
          }
          case LOG_TYPE_IX_DELETE :
          {
             startIndexJob ( RTN_JOB_DROP_INDEX, recordHeader,
-                            _dpsCB, FALSE, _underFullSync ) ;
+                            _dpsCB, FALSE ) ;
             break ;
          }
          case LOG_TYPE_CL_RENAME :
@@ -1027,13 +1025,13 @@ namespace engine
          case LOG_TYPE_IX_CRT :
          {
             startIndexJob ( RTN_JOB_DROP_INDEX, recordHeader,
-                            _dpsCB, TRUE, _underFullSync ) ;
+                            _dpsCB, TRUE ) ;
             break ;
          }
          case LOG_TYPE_IX_DELETE :
          {
             startIndexJob ( RTN_JOB_CREATE_INDEX, recordHeader,
-                            _dpsCB, TRUE, _underFullSync ) ;
+                            _dpsCB, TRUE ) ;
             break ;
          }
          case LOG_TYPE_CL_RENAME :
@@ -1328,8 +1326,7 @@ namespace engine
    INT32 startIndexJob ( RTN_JOB_TYPE type,
                          const dpsLogRecordHeader *recordHeader,
                          _dpsLogWrapper *dpsCB,
-                         BOOLEAN isRollBack,
-                         BOOLEAN underFullSync )
+                         BOOLEAN isRollBack )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_STARTINXJOB );
@@ -1383,8 +1380,7 @@ namespace engine
       indexJob = SDB_OSS_NEW rtnIndexJob( type, fullname,
                                           index, dpsCB,
                                           recordHeader->_lsn,
-                                          isRollBack,
-                                          underFullSync ) ;
+                                          isRollBack ) ;
       if ( NULL == indexJob )
       {
          PD_LOG ( PDERROR, "Failed to alloc memory for indexJob" ) ;
