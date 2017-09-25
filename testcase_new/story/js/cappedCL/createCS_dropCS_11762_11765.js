@@ -90,18 +90,34 @@ function getNodeList( groupName )
 
 function checkCappedCS( csName, nodeList)
 {
-	for( var i in nodeList )
-   {
-	   var catadb = new Sdb( nodeList[i] );
-	   var cursor = catadb.SYSCAT.SYSCOLLECTIONSPACES.find({ 'Name' : csName });
-	   var type = cursor.next().toObj().Type;
-	   if( type !== 1 )
-	   {
-		   throw buildException( "check cappedCS", null, "check cappedCS", "1",  type);
+	var repeatTime = 10;
+	var clSize = 0;
+	for(var i = 0; i < repeatTime; i++){
+		var j = i % nodeList.length;
+		println("j: " + j);
+		var catadb = new Sdb( nodeList[j] );
+	   clSize = catadb.SYSCAT.SYSCOLLECTIONSPACES.count({ 'Name' : csName});
+	   //judge the current node exist CL or not 
+      if(clSize == 0){
+	      // wait for the slave node sync
+	      sleep(2 * 60 * 1000);//2 mins		
+         clSize = catadb.SYSCAT.SYSCOLLECTIONSPACES.count({ 'Name' : csName});			  
 	   }
-	   cursor.close();
-	   catadb.close();
-   }
+          
+	   if(clSize != 0){
+	   	var cursor = catadb.SYSCAT.SYSCOLLECTIONSPACES.find({ 'Name' : csName});
+		   var type = cursor.next().toObj().Type;
+	      if( type !== 1 )
+	      {
+		      throw buildException( "check cappedCS", null, "check cappedCS", "1",  type);
+	      }
+	      cursor.close(); 
+	   }else{
+	      throw buildException( "check cappedCL failed , cursor is null");
+      }
+	   catadb.close();  
+	}
+
 }
 
 function checkDropCS( csName, nodeList)
