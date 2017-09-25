@@ -136,7 +136,6 @@ public class RestartNode2741 extends SdbTestBase {
                     Assert.assertEquals(cl.getCount("{sk:{$gte:0,$lt:6000}}"), 6000);
                 }
                 taskCursor.close();
-                
             }else {
             	//切分任务建立失败，数据全部在源组上
             	long srcCount = getGroupData(commSdb, srcGroupName);
