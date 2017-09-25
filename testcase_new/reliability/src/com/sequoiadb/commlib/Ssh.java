@@ -127,7 +127,7 @@ public class Ssh {
         try {
             channel = session.openChannel("exec");
             ((ChannelExec) channel).setCommand(command);
-            getResult(channel, Integer.MAX_VALUE);
+            getResult(channel, CHANNEL_CONNECT_TIMEOUT);
             if (exitStatus != 0) {
                 throw new ReliabilityException("ssh failed to execute commond '" + command
                         + "',stderr:" + stderr + " ,stdout:" + stdout + ",errcode: " + exitStatus);
@@ -195,6 +195,8 @@ public class Ssh {
             getResult(channel, timeOutSecond);
         } catch (IOException e) {
             throw new FaultException(e);
+        } catch (JSchException e) {
+            throw new FaultException(e);
         } finally {
             channel.disconnect();
         }
@@ -230,18 +232,14 @@ public class Ssh {
 
     }
 
-    private void getResult(Channel channel, long timeOut) throws IOException {
+    private void getResult(Channel channel, long timeOut) throws IOException, JSchException {
         StringBuffer stdoutBf = new StringBuffer();
         StringBuffer stderrBf = new StringBuffer();
         InputStream er = ((ChannelExec) channel).getErrStream();
         InputStream in = channel.getInputStream();
         byte[] tmp = new byte[1024];
         long timer = System.currentTimeMillis();
-        try {
-            channel.connect(60 * 1000);
-        } catch (JSchException e) {
-            log.severe(e.toString());
-        }
+        channel.connect(CHANNEL_CONNECT_TIMEOUT);
         while (true) {
             while (in.available() > 0) {
                 int i = in.read(tmp, 0, 1024);
