@@ -8,6 +8,9 @@ package com.sequoiadb.task;
 
 import com.sequoiadb.exception.ReliabilityException;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+
 public abstract class Task extends Thread {
 
     public enum TaskStatus {
@@ -87,25 +90,15 @@ public abstract class Task extends Thread {
     }
 
     public String getErrorMsg() {
-        String reStr = "";
-        if (exception == null) {
-            return reStr;
-        }
-
-        // errorMsg
-        reStr += getName();
-        reStr += " ErrMsg: ";
-        reStr += exception.getMessage();
-        reStr += "\r\n";
-
-        reStr += "StackTrace: \r\n";
-        // stackMsg
-        StringBuffer stackBuffer = new StringBuffer();
-        StackTraceElement[] stackElements = exception.getStackTrace();
-        for (int j = 0; j < stackElements.length; j++) {
-            stackBuffer.append(stackElements[j].toString()).append("\r\n");
-        }
-        reStr += stackBuffer.toString();
-        return reStr;
+        if (exception == null)
+            return "";
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        PrintStream printStream = new PrintStream(bytes);
+        printStream.println();
+        printStream.println("------SDB Task: "+getName()+" err msg start: ");
+        exception.printStackTrace(printStream);
+        printStream.println("------SDB Task: "+getName()+" err msg end.");
+        printStream.flush();
+        return bytes.toString();
     }
 }
