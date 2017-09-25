@@ -35,6 +35,7 @@
 #define RTN_LOCALLOBSTREAM_HPP_
 
 #include "rtnLobStream.hpp"
+#include "rtnLobAccessManager.hpp"
 
 namespace engine
 {
@@ -107,13 +108,17 @@ namespace engine
 
    private:
       void        _closeInner( _pmdEDUCB *cb ) ;
+      INT32       _queryLobMeta4Write( _pmdEDUCB *cb,
+                                   _dmsLobMeta &meta,
+                                   _rtnLobPiecesInfo* piecesInfo ) ;
 
    private:
-      _dmsMBContext     *_mbContext ;
-      _dmsStorageUnit   *_su ;
-      _SDB_DMSCB        *_dmsCB ;
-      BOOLEAN           _writeDMS ;
-      BOOLEAN           _hasLobPrivilege ;
+      _dmsMBContext*       _mbContext ;
+      _dmsStorageUnit*     _su ;
+      _SDB_DMSCB*          _dmsCB ;
+      _rtnLobAccessInfo*   _accessInfo ;
+      BOOLEAN              _writeDMS ;
+      BOOLEAN              _hasLobPrivilege ;
    } ;
    typedef class _rtnLocalLobStream rtnLocalLobStream ;
 }

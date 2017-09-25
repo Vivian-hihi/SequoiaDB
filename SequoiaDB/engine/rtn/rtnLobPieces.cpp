@@ -296,6 +296,17 @@ namespace engine
       INT32 rc = SDB_OK ;
 
       SDB_ASSERT( pieces.first <= pieces.last, "incorrect piece" ) ;
+      if ( pieces.first > pieces.last )
+      {
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      if ( _sections.empty() )
+      {
+         _sections.push_back( pieces ) ;
+         goto done ;
+      }
 
       for ( UINT32 i = pieces.first ; i <= pieces.last ; i++ )
       {
@@ -376,10 +387,19 @@ namespace engine
       SDB_ASSERT( NULL != buf, "buf is null" ) ;
       SDB_ASSERT( length % sizeof(_rtnLobPieces) == 0, "incorrect length" ) ;
 
+      _sections.clear() ;
+      return mergeFrom( buf, length ) ;
+   }
+
+   INT32 _rtnLobPiecesInfo::mergeFrom( const CHAR* buf, INT32 length )
+   {
+      INT32 rc = SDB_OK ;
+
+      SDB_ASSERT( NULL != buf, "buf is null" ) ;
+      SDB_ASSERT( length % sizeof(_rtnLobPieces) == 0, "incorrect length" ) ;
+
       _rtnLobPieces* src = (_rtnLobPieces*)buf ;
       INT32 size = length / (INT32)sizeof( _rtnLobPieces ) ;
-
-      _sections.clear() ;
 
       for ( INT32 i = 0 ; i < size ; i++ )
       {

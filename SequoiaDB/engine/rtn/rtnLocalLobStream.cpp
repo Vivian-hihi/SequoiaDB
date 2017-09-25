@@ -45,6 +45,7 @@ namespace engine
    :_mbContext( NULL ),
     _su( NULL ),
     _dmsCB( NULL ),
+    _accessInfo( NULL ),
     _writeDMS( FALSE ),
     _hasLobPrivilege( FALSE )
    {
@@ -122,7 +123,8 @@ namespace engine
       }
 
       rc = sdbGetRTNLobAccessManager()->getAccessPrivilege(
-                  fullName, oid, mode ) ;
+                  fullName, oid, mode, -1,
+                  SDB_LOB_MODE_WRITE == _getMode() ? &_accessInfo : NULL ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to get lob privilege:%d", rc ) ;
@@ -150,6 +152,17 @@ namespace engine
       UINT32 readLen = 0 ;
       CHAR *buf = NULL ;
       dmsLobRecord record ;
+
+      if ( SDB_LOB_MODE_WRITE == _getMode() )
+      {
+         rc = _queryLobMeta4Write( cb, meta, piecesInfo ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to query meta for write, rc: %d", rc ) ;
+            goto error ;
+         }
+         goto done ;
+      }
 
       _getPool().clear() ;
 
@@ -208,7 +221,7 @@ namespace engine
          }
 
          if ( NULL != piecesInfo &&
-              meta._flag & DMS_LOB_META_FLAG_PIECESINFO_INSIDE )
+              meta.hasPiecesInfo() )
          {
             INT32 length = meta._piecesInfoNum * (INT32)sizeof( _rtnLobPieces ) ;
             const CHAR* piecesInfoBuf = (const CHAR*)
@@ -239,6 +252,140 @@ namespace engine
 
    done:
       PD_TRACE_EXITRC( SDB_RTNLOCALLOBSTREAM__QUERYLOBMETA, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnLocalLobStream::_queryLobMeta4Write( _pmdEDUCB *cb,
+                                   _dmsLobMeta &meta,
+                                   _rtnLobPiecesInfo* piecesInfo )
+   {
+      INT32 rc = SDB_OK ;
+      _rtnLobMetaCache* metaCache = NULL ;
+      const _dmsLobMeta* cachedMeta = NULL ;
+      BOOLEAN accessInfoLocked = FALSE ;
+      SDB_ASSERT( NULL != _accessInfo, "_accessInfo is null" ) ;
+      SDB_ASSERT( SDB_LOB_MODE_WRITE == _getMode(), "should be write mode" ) ;
+
+      _accessInfo->lock() ;
+      accessInfoLocked = TRUE ;
+
+      metaCache = _accessInfo->getMetaCache() ;
+      if ( NULL == metaCache )
+      {
+         metaCache = SDB_OSS_NEW _rtnLobMetaCache() ;
+         if ( NULL == metaCache )
+         {
+            rc = SDB_OOM ;
+            PD_LOG( PDERROR, "Failed to new _rtnLobMetaCache, rc:%d", rc ) ;
+            goto error ;
+         }
+         _accessInfo->setMetaCache( metaCache ) ;
+      }
+
+      cachedMeta = metaCache->lobMeta() ;
+      if ( NULL == cachedMeta )
+      {
+         UINT32 readLen = 0 ;
+         UINT32 len = DMS_LOB_META_LENGTH ;
+         CHAR* buf = NULL ;
+         dmsLobRecord record ;
+
+         _getPool().clear() ;
+
+         rc = _getPool().allocate( len, &buf ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to alloc buffer[%u], rc: %d",
+                    len, rc ) ;
+            goto error ;
+         }
+
+         record.set( &getOID(), DMS_LOB_META_SEQUENCE, 0, len, NULL ) ;
+
+         rc = _su->lob()->read( record, _mbContext, cb, buf, readLen ) ;
+         if ( SDB_OK == rc )
+         {
+            if ( readLen < sizeof( meta ) )
+            {
+               PD_LOG( PDERROR, "Read lob[%s]'s meta page len is less than "
+                       "meta size[%u]", getOID().str().c_str(),
+                       sizeof( meta ) ) ;
+               rc = SDB_SYS ;
+               goto error ;
+            }
+
+            ossMemcpy( &meta, buf, sizeof( meta ) ) ;
+
+            if ( !meta.isDone() )
+            {
+               PD_LOG( PDINFO, "Lob[%s] meta[%s] is not available",
+                       getOID().str().c_str(), meta.toString().c_str() ) ;
+               rc = SDB_LOB_IS_NOT_AVAILABLE ;
+               goto error ;
+            }
+
+            if ( meta.hasPiecesInfo() && NULL != piecesInfo )
+            {
+               INT32 length = meta._piecesInfoNum * (INT32)sizeof( _rtnLobPieces ) ;
+               const CHAR* pieces = (const CHAR*)
+                  ( buf + DMS_LOB_META_LENGTH - length ) ;
+
+               rc = piecesInfo->readFrom( pieces, length ) ;
+               if ( SDB_OK != rc )
+               {
+                  PD_LOG( PDINFO, "Failed to read pieces info of Lob[%s]",
+                          getOID().str().c_str() ) ;
+                  goto error ;
+               }
+            }
+
+            rc = metaCache->cache( *(_dmsLobMeta*)buf ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDINFO, "Failed to cache meta data of Lob[%s]",
+                       getOID().str().c_str() ) ;
+               goto error ;
+            }
+         }
+         else
+         {
+            if ( SDB_LOB_SEQUENCE_NOT_EXIST == rc )
+            {
+               rc = SDB_FNE ;
+            }
+            else if ( SDB_FNE != rc )
+            {
+               PD_LOG( PDERROR, "Failed to get meta of lob, rc:%d", rc ) ;
+            }
+            goto error ;
+         }
+      }
+      else
+      {
+         ossMemcpy( &meta, cachedMeta, sizeof( meta ) ) ;
+
+         if ( meta.hasPiecesInfo() && NULL != piecesInfo )
+         {
+            INT32 length = meta._piecesInfoNum *
+                           (INT32)sizeof( _rtnLobPieces ) ;
+            rc = piecesInfo->readFrom( (CHAR*)cachedMeta + DMS_LOB_META_LENGTH - length,
+                                      length ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "Failed to read lob pieces info, rc:%d", rc ) ;
+               goto error ;
+            }
+         }
+      }
+
+   done:
+      if ( accessInfoLocked )
+      {
+         _accessInfo->unlock() ;
+         accessInfoLocked = FALSE ;
+      }
       return rc ;
    error:
       goto done ;
@@ -291,7 +438,14 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNLOCALLOBSTREAM__COMPLETELOB ) ;
-      rc = _write( tuple, cb ) ;
+      if ( SDB_LOB_MODE_CREATEONLY == _getMode() )
+      {
+         rc = _write( tuple, cb ) ;
+      }
+      else if ( SDB_LOB_MODE_WRITE == _getMode() )
+      {
+         rc = _update( tuple, cb ) ;
+      }
       PD_TRACE_EXITRC( SDB_RTNLOCALLOBSTREAM__COMPLETELOB, rc ) ;
       return rc ;
    }
@@ -370,6 +524,7 @@ namespace engine
                                       _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
+      BOOLEAN accessInfoLocked = FALSE ;
       PD_TRACE_ENTRY( SDB_RTNLOCALLOBSTREAM__UPDATE ) ;
 
       dmsLobRecord record ;
@@ -378,14 +533,88 @@ namespace engine
       record.set( &getOID(), t.columns.sequence, t.columns.offset,
                   t.columns.len, ( const CHAR * )tuple.data ) ;
 
-      rc = _su->lob()->update( record, _mbContext, cb, _getDPSCB() ) ;
-      if ( SDB_OK != rc )
+      if ( DMS_LOB_META_SEQUENCE == t.columns.sequence &&
+           SDB_LOB_MODE_WRITE == _getMode() &&
+           0 == t.columns.offset &&
+           t.columns.len >= sizeof(_dmsLobMeta) )
       {
-         PD_LOG( PDERROR, "failed to update to lob:%d", rc ) ;
-         goto error ;
+         _rtnLobMetaCache newCache ;
+         _rtnLobMetaCache* metaCache = NULL ;
+         const _dmsLobMeta* meta = (const _dmsLobMeta*)tuple.data ;
+         if ( meta->hasPiecesInfo() && t.columns.len < DMS_LOB_META_LENGTH )
+         {
+            rc = SDB_SYS ;
+            PD_LOG( PDERROR, "Invalid lob meta data length:%d, rc=%d",
+                    t.columns.len, rc ) ;
+            goto error ;
+         }
+
+         SDB_ASSERT( NULL != _accessInfo, "_accessInfo is null" ) ;
+
+         _accessInfo->lock() ;
+         accessInfoLocked = TRUE ;
+
+         metaCache = _accessInfo->getMetaCache() ;
+         SDB_ASSERT( NULL != metaCache, "metaCache is null" ) ;
+         SDB_ASSERT( NULL != metaCache->lobMeta(), "lob meta cache is null" ) ;
+
+         rc = newCache.cache( *(metaCache->lobMeta()) ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to cache lob meta, rc=%d", rc ) ;
+            goto error ;
+         }
+
+         rc = newCache.merge( *meta, _su->getLobPageSize() ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to merge lob meta data, rc=%d", rc ) ;
+            goto error ;
+         }
+
+         SDB_ASSERT( NULL != newCache.lobMeta(), "new lob meta cache is null" ) ;
+
+         if ( newCache.lobMeta()->hasPiecesInfo() )
+         {
+            ossMemcpy( (void*)tuple.data, newCache.lobMeta(), DMS_LOB_META_LENGTH ) ;
+         }
+         else
+         {
+            ossMemcpy( (void*)tuple.data, newCache.lobMeta(), sizeof( meta ) ) ;
+         }
+
+         rc = _su->lob()->update( record, _mbContext, cb, _getDPSCB() ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to update to lob:%d", rc ) ;
+            goto error ;
+         }
+
+         rc = metaCache->cache( *( newCache.lobMeta() ) ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to cache lob meta, rc=%d", rc ) ;
+            goto error ;
+         }
+
+         _accessInfo->unlock() ;
+         accessInfoLocked = FALSE ;
+      }
+      else
+      {
+         rc = _su->lob()->update( record, _mbContext, cb, _getDPSCB() ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to update to lob:%d", rc ) ;
+            goto error ;
+         }
       }
 
    done:
+      if ( accessInfoLocked )
+      {
+         _accessInfo->unlock() ;
+      }
       PD_TRACE_EXITRC( SDB_RTNLOCALLOBSTREAM__UPDATE, rc ) ;
       return rc ;
    error:

@@ -36,9 +36,12 @@
 
 namespace engine
 {
-   _rtnLobAccessInfo::_rtnLobAccessInfo( const bson::OID& oid, UINT32 mode, INT64 contextId )
+   _rtnLobAccessInfo::_rtnLobAccessInfo( const bson::OID& oid,
+                                         UINT32 mode,
+                                         INT64 contextId )
       : _mode( mode ),
-        _refCount( 0 )
+        _refCount( 0 ),
+        _metaCache( NULL )
    {
       _oid = oid ;
       if ( SDB_LOB_MODE_CREATEONLY == mode ||
@@ -54,6 +57,14 @@ namespace engine
 
    _rtnLobAccessInfo::~_rtnLobAccessInfo()
    {
+      SAFE_OSS_DELETE( _metaCache ) ;
+   }
+
+   void _rtnLobAccessInfo::setMetaCache( _rtnLobMetaCache* metaCache )
+   {
+      SDB_ASSERT( NULL == _metaCache, "_metaCache is not null" ) ;
+
+      _metaCache = metaCache ;
    }
 
    _rtnLobAccessManager::_rtnLobAccessManager()
@@ -77,67 +88,109 @@ namespace engine
       FOR_EACH_CMAP_BUCKET_END
    }
 
-   INT32 _rtnLobAccessManager::getAccessPrivilege( std::string clName, const bson::OID& oid, UINT32 mode, INT64 contextId )
+   INT32 _rtnLobAccessManager::getAccessPrivilege( std::string clName,
+                                                   const bson::OID& oid,
+                                                   UINT32 mode,
+                                                   INT64 contextId,
+                                                   _rtnLobAccessInfo** accessInfo )
    {
       INT32 rc = SDB_OK ;
-      _rtnLobAccessKey key( clName, oid ) ;
 
-      RTN_LOB_MAP::Bucket& bucket = _lobMap.getBucket( key ) ;
-      BUCKET_XLOCK( bucket ) ;
-
-      RTN_LOB_MAP::map_const_iterator lobIter = bucket.find( key ) ;
-      if ( lobIter != bucket.end() )
+      if ( !SDB_IS_VALID_LOB_MODE( mode ) )
       {
-         _rtnLobAccessInfo* lobAccessInfo = lobIter->second ;
-         switch ( lobAccessInfo->getMode() )
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Invalid LOB access mode: %u", mode ) ;
+         goto error ;
+      }
+
+      {
+         _rtnLobAccessKey key( clName, oid ) ;
+
+         RTN_LOB_MAP::Bucket& bucket = _lobMap.getBucket( key ) ;
+         BUCKET_XLOCK( bucket ) ;
+
+         RTN_LOB_MAP::map_const_iterator lobIter = bucket.find( key ) ;
+         if ( lobIter != bucket.end() )
          {
-         case SDB_LOB_MODE_CREATEONLY:
-            // pass through
-         case SDB_LOB_MODE_REMOVE:
-            rc = SDB_LOB_IS_IN_USE ;
-            goto error ;
-         case SDB_LOB_MODE_READ:
-            if ( SDB_LOB_MODE_READ != mode )
+            _rtnLobAccessInfo* lobAccessInfo = lobIter->second ;
+            switch ( lobAccessInfo->getMode() )
             {
+            case SDB_LOB_MODE_CREATEONLY:
+               // pass through
+            case SDB_LOB_MODE_REMOVE:
                rc = SDB_LOB_IS_IN_USE ;
                goto error ;
+            case SDB_LOB_MODE_READ:
+               if ( SDB_LOB_MODE_READ != mode )
+               {
+                  rc = SDB_LOB_IS_IN_USE ;
+                  goto error ;
+               }
+               else
+               {
+                  lobAccessInfo->lock();
+                  lobAccessInfo->incRefCount() ;
+                  lobAccessInfo->unlock();
+                  break ;
+               }
+            case SDB_LOB_MODE_WRITE:
+               if ( SDB_LOB_MODE_WRITE != mode )
+               {
+                  rc = SDB_LOB_IS_IN_USE ;
+                  goto error ;
+               }
+               else
+               {
+                  lobAccessInfo->lock();
+                  lobAccessInfo->incRefCount() ;
+                  lobAccessInfo->unlock();
+                  break ;
+               }
+            default:
+               SDB_ASSERT( FALSE, "invalid mode" ) ;
+               rc = SDB_SYS ;
+               PD_LOG( PDERROR, "Invalid LOB access mode: %u",
+                       lobAccessInfo->getMode() ) ;
+               goto error ;
             }
-            else
+
+            if ( NULL != accessInfo )
+            {
+               *accessInfo = lobAccessInfo ;
+            }
+         }
+         else
+         {
+            _rtnLobAccessInfo* lobAccessInfo =
+               SDB_OSS_NEW _rtnLobAccessInfo( oid, mode, contextId ) ;
+            if ( NULL == lobAccessInfo )
+            {
+               rc = SDB_OOM ;
+               PD_LOG( PDERROR, "Failed to alloc _rtnLobAccessInfo, rc=%d", rc ) ;
+               goto error ;
+            }
+
+            if ( SDB_LOB_MODE_READ == mode ||
+                 SDB_LOB_MODE_WRITE == mode )
             {
                lobAccessInfo->incRefCount() ;
-               break ;
             }
-         default:
-            SDB_ASSERT( FALSE, "invalid mode" ) ;
-            rc = SDB_SYS ;
-            PD_LOG( PDERROR, "Invalid LOB access mode: %u", lobAccessInfo->getMode() ) ;
-            goto error ;
-         }
-      }
-      else
-      {
-         _rtnLobAccessInfo* lobAccessInfo = SDB_OSS_NEW _rtnLobAccessInfo( oid, mode, contextId ) ;
-         if ( NULL == lobAccessInfo )
-         {
-            rc = SDB_OOM ;
-            PD_LOG( PDERROR, "Failed to alloc _rtnLobAccessInfo, rc=%d", rc ) ;
-            goto error ;
-         }
 
-         try
-         {
-            bucket.insert( RTN_LOB_MAP::value_type( key, lobAccessInfo ) ) ;
-         }
-         catch ( std::exception& e )
-         {
-            rc = SDB_SYS ;
-            PD_LOG( PDERROR, "Unexpected error happened: %s", e.what() ) ;
-            goto error ;
-         }
+            try
+            {
+               bucket.insert( RTN_LOB_MAP::value_type( key, lobAccessInfo ) ) ;
+            }
+            catch ( std::exception& e )
+            {
+               rc = SDB_SYS ;
+               PD_LOG( PDERROR, "Unexpected error happened: %s", e.what() ) ;
+               goto error ;
+            }
 
-         if ( SDB_LOB_MODE_READ == mode )
-         {
-            lobAccessInfo->incRefCount() ;
+            if ( NULL != accessInfo )
+            {
+               *accessInfo = lobAccessInfo ;
+            }
          }
       }
 
@@ -147,7 +200,10 @@ namespace engine
       goto done ;
    }
 
-   INT32 _rtnLobAccessManager::releaseAccessPrivilege( std::string clName, const bson::OID& oid, UINT32 mode, INT64 contextId )
+   INT32 _rtnLobAccessManager::releaseAccessPrivilege( std::string clName,
+                                                       const bson::OID& oid,
+                                                       UINT32 mode,
+                                                       INT64 contextId )
    {
       INT32 rc = SDB_OK ;
       _rtnLobAccessKey key( clName, oid ) ;
@@ -166,7 +222,8 @@ namespace engine
          {
             SDB_ASSERT( mode == lobAccessInfo->getMode(), "incorrect mode" ) ;
             rc = SDB_SYS ;
-            PD_LOG( PDERROR, "Invalid LOB access mode: %u, %u", mode, lobAccessInfo->getMode() ) ;
+            PD_LOG( PDERROR, "Invalid LOB access mode: %u, %u",
+                    mode, lobAccessInfo->getMode() ) ;
             goto error ;
          }
 
@@ -191,17 +248,38 @@ namespace engine
             SAFE_OSS_DELETE( lobAccessInfo ) ;
             break ;
          case SDB_LOB_MODE_READ:
+            lobAccessInfo->lock();
             lobAccessInfo->decRefCount() ;
-            if ( 0 == lobAccessInfo->getRefCount() )
+            if ( lobAccessInfo->getRefCount() <= 0 )
             {
                bucket.erase( key ) ;
+               lobAccessInfo->unlock();
                SAFE_OSS_DELETE( lobAccessInfo ) ;
+            }
+            else
+            {
+               lobAccessInfo->unlock();
+            }
+            break ;
+         case SDB_LOB_MODE_WRITE:
+            lobAccessInfo->lock();
+            lobAccessInfo->decRefCount() ;
+            if ( lobAccessInfo->getRefCount() <= 0 )
+            {
+               bucket.erase( key ) ;
+               lobAccessInfo->unlock();
+               SAFE_OSS_DELETE( lobAccessInfo ) ;
+            }
+            else
+            {
+               lobAccessInfo->unlock();
             }
             break ;
          default:
             SDB_ASSERT( FALSE, "invalid mode" ) ;
             rc = SDB_SYS ;
-            PD_LOG( PDERROR, "Invalid LOB access mode: %u", lobAccessInfo->getMode() ) ;
+            PD_LOG( PDERROR, "Invalid LOB access mode: %u",
+                    lobAccessInfo->getMode() ) ;
             goto error ;
          }
       }

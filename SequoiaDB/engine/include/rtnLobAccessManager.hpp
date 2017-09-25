@@ -36,6 +36,7 @@
 #include "oss.hpp"
 #include "ossUtil.hpp"
 #include "utilConcurrentMap.hpp"
+#include "rtnLobMetaCache.hpp"
 #include "../bson/bson.hpp"
 #include <string>
 
@@ -58,14 +59,34 @@ namespace engine
       OSS_INLINE INT32              getRefCount() const { return _refCount ; }
       OSS_INLINE INT64              getContextId() const { return _contextId ; }
 
-      OSS_INLINE void               incRefCount() { _refCount++ ; }
-      OSS_INLINE void               decRefCount() { _refCount-- ; }
+   public:
+      OSS_INLINE void lock()
+      {
+         _lock.get() ;
+      }
+      OSS_INLINE void unlock()
+      {
+         _lock.release() ;
+      }
+      OSS_INLINE _rtnLobMetaCache* getMetaCache()
+      {
+         return _metaCache ;
+      }
+      void setMetaCache( _rtnLobMetaCache* metaCache ) ;
 
    private:
-      bson::OID   _oid ;
-      UINT32      _mode ;
-      INT32       _refCount ;
-      INT64       _contextId ;
+      OSS_INLINE void incRefCount() { _refCount++ ; }
+      OSS_INLINE void decRefCount() { _refCount-- ; }
+
+   private:
+      bson::OID         _oid ;
+      UINT32            _mode ;
+      INT32             _refCount ;
+      INT64             _contextId ;
+      ossSpinXLatch     _lock ;
+      _rtnLobMetaCache* _metaCache ;
+
+      friend class _rtnLobAccessManager ;
    } ;
    typedef _rtnLobAccessInfo rtnLobAccessInfo ;
 
@@ -121,8 +142,11 @@ namespace engine
       ~_rtnLobAccessManager() ;
 
    public:
-      INT32 getAccessPrivilege( std::string clName, const bson::OID& oid, UINT32 mode, INT64 contextId = -1 ) ;
-      INT32 releaseAccessPrivilege( std::string clName, const bson::OID& oid, UINT32 mode, INT64 contextId = -1 ) ;
+      INT32 getAccessPrivilege( std::string clName, const bson::OID& oid,
+                                      UINT32 mode, INT64 contextId = -1,
+                                      _rtnLobAccessInfo** accessInfo = NULL ) ;
+      INT32 releaseAccessPrivilege( std::string clName, const bson::OID& oid,
+                                           UINT32 mode, INT64 contextId = -1 ) ;
 
    private:
       RTN_LOB_MAP _lobMap ;

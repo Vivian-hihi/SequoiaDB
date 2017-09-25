@@ -33,7 +33,7 @@
 
 #include "rtnContextShdOfLob.hpp"
 #include "rtnLobStream.hpp"
-#include "rtnLobAccessManager.hpp"
+#include "rtnLobMetaCache.hpp"
 #include "pmdEDU.hpp"
 #include "rtnTrace.hpp"
 #include "rtnLob.hpp"
@@ -56,6 +56,7 @@ namespace engine
     _closeWithException( TRUE ),
     _buf( NULL ),
     _bufLen( 0 ),
+    _accessInfo( NULL ),
     _su( NULL ),
     _mbContext( NULL ),
     _dmsCB( NULL ),
@@ -73,7 +74,8 @@ namespace engine
 
       if ( _closeWithException )
       {
-         if ( SDB_LOB_MODE_CREATEONLY == _mode )
+         if ( SDB_LOB_MODE_CREATEONLY == _mode ||
+              SDB_LOB_MODE_WRITE == _mode )
          {
             SDB_ASSERT( cb->getID() == eduID(), "impossible" ) ;
             _rollback( cb ) ;
@@ -127,6 +129,13 @@ namespace engine
          goto error ;
       }
       _mode = ele.Int() ;
+
+      if ( !SDB_IS_VALID_LOB_MODE( _mode ) )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "Invalid LOB mode: %d", _mode ) ;
+         goto error ;
+      }
 
       if ( SDB_LOB_MODE_READ != _mode )
       {
@@ -226,7 +235,8 @@ namespace engine
       if ( _isMainShd )
       {
          rc = sdbGetRTNLobAccessManager()->getAccessPrivilege(
-                  _fullName, _oid, _mode, contextID() ) ;
+                  _fullName, _oid, _mode, contextID(),
+                  SDB_LOB_MODE_WRITE == _mode ? &_accessInfo : NULL ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to get lob privilege:%d", rc ) ;
@@ -295,17 +305,96 @@ namespace engine
                                       _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
+      BOOLEAN accessInfoLocked = FALSE ;
       PD_TRACE_ENTRY( SDB__RTNCONTEXTSHDOFLOB_UPDATE ) ;
-      rc = rtnUpdateLob( _fullName.c_str(),
-                         _oid, sequence,
-                         offset, len, data, cb,
-                         _w, _dpsCB, _su, _mbContext ) ;
-      if ( SDB_OK != rc )
+
+      if ( DMS_LOB_META_SEQUENCE == sequence &&
+           SDB_LOB_MODE_WRITE == _mode &&
+           0 == offset && len >= sizeof(_dmsLobMeta) )
       {
-         PD_LOG( PDERROR, "failed to write lob:%d", rc ) ;
-         goto error ;
+         _rtnLobMetaCache newCache ;
+         _rtnLobMetaCache* metaCache = NULL ;
+         const _dmsLobMeta* meta = (const _dmsLobMeta*)data ;
+         if ( meta->hasPiecesInfo() && len < DMS_LOB_META_LENGTH )
+         {
+            rc = SDB_SYS ;
+            PD_LOG( PDERROR, "Invalid lob meta data length:%d, rc=%d",
+                    len, rc ) ;
+            goto error ;
+         }
+
+         SDB_ASSERT( NULL != _accessInfo, "_accessInfo is null" ) ;
+
+         _accessInfo->lock() ;
+         accessInfoLocked = TRUE ;
+
+         metaCache = _accessInfo->getMetaCache() ;
+         SDB_ASSERT( NULL != metaCache, "metaCache is null" ) ;
+         SDB_ASSERT( NULL != metaCache->lobMeta(), "lob meta cache is null" ) ;
+
+         rc = newCache.cache( *(metaCache->lobMeta()) ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to cache lob meta, rc=%d", rc ) ;
+            goto error ;
+         }
+
+         rc = newCache.merge( *meta, _su->getLobPageSize() ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to merge lob meta data, rc=%d", rc ) ;
+            goto error ;
+         }
+
+         SDB_ASSERT( NULL != newCache.lobMeta(), "new lob meta cache is null" ) ;
+
+         if ( newCache.lobMeta()->hasPiecesInfo() )
+         {
+            ossMemcpy( (void*)data, newCache.lobMeta(), DMS_LOB_META_LENGTH ) ;
+         }
+         else
+         {
+            ossMemcpy( (void*)data, newCache.lobMeta(), sizeof( meta ) ) ;
+         }
+
+         rc = rtnUpdateLob( _fullName.c_str(),
+                            _oid, sequence,
+                            offset, len, data, cb,
+                            _w, _dpsCB, _su, _mbContext ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to write lob:%d", rc ) ;
+            goto error ;
+         }
+
+         rc = metaCache->cache( *( newCache.lobMeta() ) ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to cache lob meta, rc=%d", rc ) ;
+            goto error ;
+         }
+
+         _accessInfo->unlock() ;
+         accessInfoLocked = FALSE ;
       }
+      else
+      {      
+         rc = rtnUpdateLob( _fullName.c_str(),
+                            _oid, sequence,
+                            offset, len, data, cb,
+                            _w, _dpsCB, _su, _mbContext ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to write lob:%d", rc ) ;
+            goto error ;
+         }
+      }
+
    done:
+      if ( accessInfoLocked )
+      {
+         _accessInfo->unlock() ;
+      }
       PD_TRACE_EXITRC( SDB__RTNCONTEXTSHDOFLOB_UPDATE, rc ) ;
       return rc ;
    error:
@@ -332,6 +421,7 @@ namespace engine
                                      UINT32 &read )
    {
       INT32 rc = SDB_OK ;
+      BOOLEAN accessInfoLocked = FALSE ;
       PD_TRACE_ENTRY( SDB__RTNCONTEXTSHDOFLOB__OPEN ) ;
       if ( _isMainShd && SDB_LOB_MODE_READ == _mode )
       {
@@ -369,7 +459,7 @@ namespace engine
                goto error ;
             }
 
-            if ( _meta._flag & DMS_LOB_META_FLAG_PIECESINFO_INSIDE )
+            if ( _meta.hasPiecesInfo() )
             {
                INT32 length = _meta._piecesInfoNum * (INT32)sizeof( _rtnLobPieces ) ;
                const CHAR* pieces = (const CHAR*)
@@ -417,6 +507,123 @@ namespace engine
             }
             goto error ;
          }
+      }
+      else if ( _isMainShd && SDB_LOB_MODE_WRITE == _mode )
+      {
+         _rtnLobMetaCache* metaCache = NULL ;
+         const _dmsLobMeta* meta = NULL ;
+         SDB_ASSERT( NULL != _accessInfo, "_accessInfo is null" ) ;
+
+         _accessInfo->lock() ;
+         accessInfoLocked = TRUE ;
+
+         metaCache = _accessInfo->getMetaCache() ;
+         if ( NULL == metaCache )
+         {
+            metaCache = SDB_OSS_NEW _rtnLobMetaCache() ;
+            if ( NULL == metaCache )
+            {
+               rc = SDB_OOM ;
+               PD_LOG( PDERROR, "Failed to new _rtnLobMetaCache, rc:%d", rc ) ;
+               goto error ;
+            }
+            _accessInfo->setMetaCache( metaCache ) ;
+         }
+
+         meta = metaCache->lobMeta() ;
+         if ( NULL == meta )
+         {
+            UINT32 readLen = 0 ;
+            UINT32 len = DMS_LOB_META_LENGTH ;
+            dmsLobRecord record ;
+
+            record.set( &_oid, DMS_LOB_META_SEQUENCE, 0, len, NULL ) ;
+
+            rc = _extendBuf( len ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Failed to extend buf[%u], rc:%d", len, rc ) ;
+               goto error ;
+            }
+
+            rc = _su->lob()->read( record, _mbContext, cb, _buf, readLen ) ;
+            if ( SDB_OK == rc )
+            {
+               if ( readLen < sizeof( _meta ) )
+               {
+                  PD_LOG( PDERROR, "Read lob[%s]'s meta page len is less than "
+                          "meta size[%u]", getOID().str().c_str(),
+                          sizeof( _meta ) ) ;
+                  rc = SDB_SYS ;
+                  goto error ;
+               }
+
+               ossMemcpy( (void*)&_meta, _buf, sizeof( _meta ) ) ;
+
+               if ( !_meta.isDone() )
+               {
+                  PD_LOG( PDINFO, "Lob[%s] meta[%s] is not available",
+                          getOID().str().c_str(), _meta.toString().c_str() ) ;
+                  rc = SDB_LOB_IS_NOT_AVAILABLE ;
+                  goto error ;
+               }
+
+               if ( _meta.hasPiecesInfo() )
+               {
+                  INT32 length = _meta._piecesInfoNum * (INT32)sizeof( _rtnLobPieces ) ;
+                  const CHAR* pieces = (const CHAR*)
+                     ( _buf + DMS_LOB_META_LENGTH - length ) ;
+
+                  rc = _lobPieces.readFrom( pieces, length ) ;
+                  if ( SDB_OK != rc )
+                  {
+                     PD_LOG( PDINFO, "Failed to read pieces info of Lob[%s]",
+                             getOID().str().c_str() ) ;
+                     goto error ;
+                  }
+               }
+
+               rc = metaCache->cache( *(_dmsLobMeta*)_buf ) ;
+               if ( SDB_OK != rc )
+               {
+                  PD_LOG( PDINFO, "Failed to cache meta data of Lob[%s]",
+                          getOID().str().c_str() ) ;
+                  goto error ;
+               }
+            }
+            else
+            {
+               if ( SDB_LOB_SEQUENCE_NOT_EXIST == rc )
+               {
+                  rc = SDB_FNE ;
+               }
+               else if ( SDB_FNE != rc )
+               {
+                  PD_LOG( PDERROR, "Failed to get meta of lob, rc:%d", rc ) ;
+               }
+               goto error ;
+            }
+         }
+         else
+         {
+            ossMemcpy( &_meta, meta, sizeof( _meta ) ) ;
+
+            if ( _meta.hasPiecesInfo() )
+            {
+               INT32 length = _meta._piecesInfoNum *
+                              (INT32)sizeof( _rtnLobPieces ) ;
+               rc = _lobPieces.readFrom( (CHAR*)meta + DMS_LOB_META_LENGTH - length,
+                                         length ) ;
+               if ( SDB_OK != rc )
+               {
+                  PD_LOG( PDERROR, "Failed to read lob pieces info, rc:%d", rc ) ;
+                  goto error ;
+               }
+            }
+         }
+
+         _accessInfo->unlock() ;
+         accessInfoLocked = FALSE ;
       }
       else if ( SDB_LOB_MODE_CREATEONLY == _mode && _isMainShd )
       {
@@ -493,6 +700,10 @@ namespace engine
       read = _metaObj.objsize() ;
 
    done:
+      if ( accessInfoLocked )
+      {
+         _accessInfo->unlock() ;
+      }
       PD_TRACE_EXITRC( SDB__RTNCONTEXTSHDOFLOB__OPEN, rc ) ;
       return rc ;
    error:
@@ -680,8 +891,9 @@ namespace engine
          builder.append( FIELD_NAME_LOB_MODIFICATION_TIME, (INT64)_meta._modificationTime ) ;
          builder.append( FIELD_NAME_LOB_FLAG, (INT32)_meta._flag ) ;
          builder.append( FIELD_NAME_LOB_PIECESINFONUM, _meta._piecesInfoNum ) ;
-         if ( _meta._flag & DMS_LOB_META_FLAG_PIECESINFO_INSIDE &&
-              SDB_LOB_MODE_READ == _mode )
+         if ( _meta.hasPiecesInfo() &&
+              ( SDB_LOB_MODE_READ == _mode || 
+                SDB_LOB_MODE_WRITE == _mode ) )
          {
             SDB_ASSERT( !_lobPieces.empty(), "empty pieces info" ) ;
             BSONArray array ;

@@ -83,6 +83,7 @@ namespace engine
       INT32          requiredMem() const ;
       INT32          saveTo( const CHAR* buf, INT32 length ) const ;
       INT32          readFrom( const CHAR* buf, INT32 length ) ;
+      INT32          mergeFrom( const CHAR* buf, INT32 length ) ;
       INT32          saveTo( bson::BSONArray& array ) const ;
       INT32          readFrom( const bson::BSONArray& array ) ;
       std::string    toString() const ;
@@ -90,6 +91,7 @@ namespace engine
    public:
       OSS_INLINE BOOLEAN empty() const { return _sections.empty() ; }
       OSS_INLINE INT32   sectionNum() const { return (INT32)_sections.size() ; }
+      OSS_INLINE void    clear() { _sections.clear() ; }
 
    private:
       INT32 _findPiece( UINT32 piece ) const ;

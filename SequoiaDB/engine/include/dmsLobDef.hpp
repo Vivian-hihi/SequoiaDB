@@ -216,6 +216,11 @@ namespace engine
          return ( DMS_LOB_COMPLETE == _status ) ? TRUE : FALSE ;
       }
 
+      BOOLEAN hasPiecesInfo() const
+      {
+         return ( _flag & DMS_LOB_META_FLAG_PIECESINFO_INSIDE ) ? TRUE : FALSE ;
+      }
+
       string toString() const
       {
          stringstream ss ;

@@ -106,6 +106,13 @@ namespace engine
       _mode = mode ;
       _flags = flags ;
 
+      if ( !SDB_IS_VALID_LOB_MODE( mode ) )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "Invalid LOB mode: %d", mode ) ;
+         goto error ;
+      }
+
       if ( SDB_LOB_MODE_CREATEONLY == mode )
       {
          _meta._createTime = ossGetCurrentMilliseconds() ;
@@ -130,6 +137,10 @@ namespace engine
                                "OID:%s, Length:%llu, CreateTime:%llu, ModificationTime:%llu",
                                getOID().toString().c_str(),
                                _meta._lobLen, _meta._createTime, _meta._modificationTime ) ;
+      }
+      else if ( SDB_LOB_MODE_WRITE == mode )
+      {
+         rc = _open4Write( cb ) ;
       }
       else if ( SDB_LOB_MODE_CREATEONLY == mode )
       {
@@ -263,16 +274,17 @@ namespace engine
          goto done ;
       }
 
-      if ( SDB_LOB_MODE_CREATEONLY & _mode )
+      if ( SDB_LOB_MODE_CREATEONLY == _mode ||
+           SDB_LOB_MODE_WRITE == _mode )
       {
-         rc = _close4Create( cb ) ;
+         rc = _close4CreateOrWrite( cb ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to close for create:%d", rc ) ;
             goto error ;
          }
       }
-      else if ( SDB_LOB_MODE_REMOVE & _mode )
+      else if ( SDB_LOB_MODE_REMOVE == _mode )
       {
          RTN_LOB_TUPLES tuples ;
          _rtnLobTuple tuple( 0, DMS_LOB_META_SEQUENCE, 0, NULL ) ;
@@ -371,7 +383,8 @@ namespace engine
          goto error ;
       }
 
-      if ( !( SDB_LOB_MODE_CREATEONLY & _mode ) )
+      if ( SDB_LOB_MODE_CREATEONLY != _mode &&
+           SDB_LOB_MODE_WRITE != _mode )
       {
          PD_LOG( PDERROR, "open mode[%d] does not support this operation",
                  _mode ) ;
@@ -534,7 +547,9 @@ namespace engine
          goto error ;
       }
 
-      if ( SDB_LOB_MODE_READ != _mode && SDB_LOB_MODE_CREATEONLY != _mode )
+      if ( SDB_LOB_MODE_READ != _mode &&
+           SDB_LOB_MODE_CREATEONLY != _mode &&
+           SDB_LOB_MODE_WRITE != _mode )
       {
          PD_LOG( PDERROR, "open mode[%d] does not support this operation",
                  _mode ) ;
@@ -548,7 +563,8 @@ namespace engine
          goto error ;
       }
 
-      if ( SDB_LOB_MODE_CREATEONLY == _mode )
+      if ( SDB_LOB_MODE_CREATEONLY == _mode ||
+           SDB_LOB_MODE_WRITE == _mode )
       {
          if ( !_lw.continuous( offset ) )
          {
@@ -816,32 +832,6 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOBSTREAM__OPEN4READ, "_rtnLobStream::_open4Read" )
-   INT32 _rtnLobStream::_open4Read( _pmdEDUCB *cb )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB_RTNLOBSTREAM__OPEN4READ ) ;
-
-      rc = _queryLobMeta( cb, _meta, FALSE, &_lobPieces ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "Failed to open lob[%s] in collection[%s], rc:%d",
-                 _oid.str().c_str(), _fullName, rc ) ;
-         goto error ;
-      }
-
-      if ( _lobPieces.sectionNum() > 0 )
-      {
-         _hasPiecesInfo = TRUE ;
-      }
-
-   done:
-      PD_TRACE_EXITRC( SDB_RTNLOBSTREAM__OPEN4READ, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOBSTREAM__OPEN4CREATE, "_rtnLobStream::_open4Create" )
    INT32 _rtnLobStream::_open4Create( _pmdEDUCB *cb )
    {
@@ -874,6 +864,61 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOBSTREAM__OPEN4READ, "_rtnLobStream::_open4Read" )
+   INT32 _rtnLobStream::_open4Read( _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNLOBSTREAM__OPEN4READ ) ;
+
+      rc = _queryLobMeta( cb, _meta, FALSE, &_lobPieces ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to open lob[%s] in collection[%s], rc:%d",
+                 _oid.str().c_str(), _fullName, rc ) ;
+         goto error ;
+      }
+
+      if ( _lobPieces.sectionNum() > 0 )
+      {
+         _hasPiecesInfo = TRUE ;
+      }
+
+   done:
+      PD_TRACE_EXITRC( SDB_RTNLOBSTREAM__OPEN4READ, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOBSTREAM__OPEN4WRITE, "_rtnLobStream::_open4Write" )
+   INT32 _rtnLobStream::_open4Write( _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNLOBSTREAM__OPEN4WRITE ) ;
+
+      rc = _queryLobMeta( cb, _meta, FALSE, &_lobPieces ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to open lob[%s] in collection[%s], rc:%d",
+                 _oid.str().c_str(), _fullName, rc ) ;
+         goto error ;
+      }
+
+      if ( _lobPieces.sectionNum() > 0 )
+      {
+         _hasPiecesInfo = TRUE ;
+      }
+
+      // jump to the end of lob
+      _offset = _meta._lobLen ;
+
+   done:
+      PD_TRACE_EXITRC( SDB_RTNLOBSTREAM__OPEN4WRITE, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOBSTREAM__OPEN4REMOVE, "_rtnLobStream::_open4Remove" )
    INT32 _rtnLobStream::_open4Remove( _pmdEDUCB *cb )
    {
@@ -895,14 +940,17 @@ namespace engine
       goto done ;
    }
 
-   INT32 _rtnLobStream::_close4Create( _pmdEDUCB *cb )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOBSTREAM__CLOSE4CREATEORWRITE, "_rtnLobStream::_close4CreateOrWrite" )
+   INT32 _rtnLobStream::_close4CreateOrWrite( _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
       CHAR* buf = NULL ;
       INT32 piecesInfoSize = 0 ;
       _rtnLobTuple tuple ;
+      PD_TRACE_ENTRY( SDB_RTNLOBSTREAM__CLOSE4CREATEORWRITE ) ;
 
-      SDB_ASSERT( SDB_LOB_MODE_CREATEONLY & _mode, "incorrect mode" ) ;
+      SDB_ASSERT( SDB_LOB_MODE_CREATEONLY == _mode ||
+                  SDB_LOB_MODE_WRITE, "incorrect mode" ) ;
 
       // write last data
       if ( _lw.getCachedData( tuple ) )
@@ -1022,6 +1070,7 @@ namespace engine
 
    done:
       SAFE_OSS_FREE( buf ) ;
+      PD_TRACE_EXITRC( SDB_RTNLOBSTREAM__CLOSE4CREATEORWRITE, rc ) ;
       return rc ;
    error:
       goto done ;

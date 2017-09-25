@@ -592,10 +592,15 @@ enum SDB_LOB_MODE
 {
    SDB_LOB_MODE_CREATEONLY = 0x00000001,
    SDB_LOB_MODE_READ       = 0x00000004,
-   SDB_LOB_MODE_WRITE      = 0x00000008, /// not supported yet.
+   SDB_LOB_MODE_WRITE      = 0x00000008,
    SDB_LOB_MODE_REMOVE     = 0x00000010
 } ;
 
+#define SDB_IS_VALID_LOB_MODE( mode ) \
+   ( SDB_LOB_MODE_READ == ( mode ) || \
+     SDB_LOB_MODE_CREATEONLY == ( mode ) || \
+     SDB_LOB_MODE_WRITE == ( mode ) || \
+     SDB_LOB_MODE_REMOVE == ( mode ) )
 
 #define SDB_ANALYZE_MODE_SAMPLE     ( 1 )
 #define SDB_ANALYZE_MODE_FULL       ( 2 )

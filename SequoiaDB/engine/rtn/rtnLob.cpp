@@ -750,8 +750,11 @@ namespace engine
                                               cb, meta ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "Failed to read lob[%s] in collection[%s], rc:%d",
-                 oid.str().c_str(), fullName, rc ) ;
+         if ( SDB_FNE != rc )
+         {
+            PD_LOG( PDERROR, "Failed to read lob[%s] in collection[%s], rc:%d",
+                    oid.str().c_str(), fullName, rc ) ;
+         }
          goto error ;
       }
 

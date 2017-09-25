@@ -567,7 +567,7 @@ namespace engine
          meta._status = DMS_LOB_COMPLETE ;
 
          if ( NULL != piecesInfo &&
-              meta._flag & DMS_LOB_META_FLAG_PIECESINFO_INSIDE )
+              meta.hasPiecesInfo() )
          {
             ele = _metaObj.getField( FIELD_NAME_LOB_PIECESINFO ) ;
             if ( Array == ele.type() )
@@ -1224,7 +1224,14 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( COORD_LOBSTREAM_COMPLETELOB ) ;
-      rc = _write( tuple, cb ) ;
+      if ( SDB_LOB_MODE_CREATEONLY == _getMode() )
+      {
+         rc = _write( tuple, cb ) ;
+      }
+      else if ( SDB_LOB_MODE_WRITE == _getMode() )
+      {
+         rc = _update( tuple, cb ) ;
+      }
       PD_TRACE_EXITRC( COORD_LOBSTREAM_COMPLETELOB, rc ) ;
       return rc ;
    }

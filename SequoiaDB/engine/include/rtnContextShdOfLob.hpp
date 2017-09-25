@@ -36,6 +36,7 @@
 
 #include "rtnContext.hpp"
 #include "rtnLobPieces.hpp"
+#include "rtnLobAccessManager.hpp"
 #include "dmsLobDef.hpp"
 
 namespace engine
@@ -131,30 +132,31 @@ namespace engine
       INT32 _extendBuf( UINT32 len ) ;
 
    private:
-      std::string    _fullName ;
-      bson::OID      _oid ;
-      BSONObj        _metaObj ;
-      INT32          _mode ;
-      INT32          _flags ;
-      BOOLEAN        _isMainShd ;
-      SINT16         _w ;
-      SINT32         _version ;
-      _dmsLobMeta    _meta ;
-      SDB_DPSCB      *_dpsCB ;
-      BOOLEAN        _closeWithException ;
-      CHAR           *_buf ;
-      UINT32         _bufLen ;
-      const CHAR*    _pData ;
-      UINT32         _dataLen ;
-      INT64          _offset ;
-      std::set<UINT32>  _written ;
-      _rtnLobPiecesInfo _lobPieces ;
+      std::string          _fullName ;
+      bson::OID            _oid ;
+      BSONObj              _metaObj ;
+      INT32                _mode ;
+      INT32                _flags ;
+      BOOLEAN              _isMainShd ;
+      SINT16               _w ;
+      SINT32               _version ;
+      _dmsLobMeta          _meta ;
+      SDB_DPSCB*           _dpsCB ;
+      BOOLEAN              _closeWithException ;
+      CHAR*                _buf ;
+      UINT32               _bufLen ;
+      const CHAR*          _pData ;
+      UINT32               _dataLen ;
+      INT64                _offset ;
+      std::set<UINT32>     _written ;
+      _rtnLobPiecesInfo    _lobPieces ;
+      _rtnLobAccessInfo*   _accessInfo ;
 
-      _dmsStorageUnit   *_su ;
-      _dmsMBContext     *_mbContext ;
-      _SDB_DMSCB        *_dmsCB ;
-      BOOLEAN           _writeDMS ;
-      BOOLEAN           _hasLobPrivilege ;
+      _dmsStorageUnit*     _su ;
+      _dmsMBContext*       _mbContext ;
+      _SDB_DMSCB*          _dmsCB ;
+      BOOLEAN              _writeDMS ;
+      BOOLEAN              _hasLobPrivilege ;
    } ;
    typedef class _rtnContextShdOfLob rtnContextShdOfLob ;
 }

@@ -219,13 +219,15 @@ namespace engine
                            _pmdEDUCB *cb,
                            UINT32 &readLen ) ;
 
+      INT32 _open4Create( _pmdEDUCB *cb ) ;
+
       INT32 _open4Read( _pmdEDUCB *cb ) ;
 
-      INT32 _open4Create( _pmdEDUCB *cb ) ;
+      INT32 _open4Write( _pmdEDUCB *cb ) ;
 
       INT32 _open4Remove( _pmdEDUCB *cb ) ;
 
-      INT32 _close4Create( _pmdEDUCB *cb ) ;
+      INT32 _close4CreateOrWrite( _pmdEDUCB *cb ) ;
 
       bson::BSONObj _meta2Obj( const _dmsLobMeta &meta ) const ;
 
