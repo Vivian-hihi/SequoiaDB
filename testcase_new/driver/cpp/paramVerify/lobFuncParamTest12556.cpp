@@ -81,7 +81,7 @@ TEST_F( lobFuncParamTest, lengthZero12556 )
    rc = cl.openLob( rlob, oid ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to open lob" ;
    rc = rlob.read( 0, rBuf, &read ) ;
-   ASSERT_EQ( SDB_INVALIDARG, rc ) << "fail to read lob" ;
+   ASSERT_EQ( SDB_OK, rc ) << "fail to read lob" ;
    rc = rlob.close() ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to close lob" ;
    ASSERT_EQ( 0, read ) << "read lob size is wrong" ;
