@@ -758,6 +758,8 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSDSTREPSN__RLBCK );
+      dpsTransCB *pTransCB = pmdGetKRCB()->getTransCB() ;
+
       const dpsLogRecordHeader *header = (const dpsLogRecordHeader *)log;
       PD_LOG( PDDEBUG, "Session[%s]: Begin to rollback lsn:[%lld, %d]",
               sessionName(), header->_lsn, header->_version ) ;
@@ -770,13 +772,14 @@ namespace engine
       }
 
       // rollback trans info
-      if ( !sdbGetTransCB()->isNeedSyncTrans() )
+      if ( pTransCB && pTransCB->isTransOn() &&
+           !pTransCB->isNeedSyncTrans() )
       {
          dpsLogRecord record ;
          record.load( log ) ;
-         if ( !sdbGetTransCB()->rollbackTransInfoFromLog( record ) )
+         if ( !pTransCB->rollbackTransInfoFromLog( record ) )
          {
-            sdbGetTransCB()->setIsNeedSyncTrans( TRUE ) ;
+            pTransCB->setIsNeedSyncTrans( TRUE ) ;
          }
       }
 
