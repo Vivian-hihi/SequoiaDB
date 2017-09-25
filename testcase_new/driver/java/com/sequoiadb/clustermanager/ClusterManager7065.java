@@ -234,16 +234,18 @@ public class ClusterManager7065 extends SdbTestBase{
 				try{
 					master = dataRG.getMaster();
 					if ( master == null ) {
-						try {
+						try {							
 							Thread.sleep(3000);
 						} catch (InterruptedException e) {							
 							e.printStackTrace();
 						}
+					}else{
+						break;
 					}
 					
 				}catch(BaseException e){
 					if(e.getErrorCode() == -155){						
-						try {
+						try {							
 							Thread.sleep(3000);
 						} catch (InterruptedException e1) {							
 							e1.printStackTrace();
