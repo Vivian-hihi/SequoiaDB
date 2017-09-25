@@ -24,6 +24,8 @@ do { \
    } \
 } while( 0 ) ;
 
+#define SDB_TEST_ERROR -10000
+
 void printMsg( const CHAR* fmt, ... ) ;
 
 INT32 createNormalCsCl( sdb& db, sdbCollectionSpace& cs, sdbCollection& cl,

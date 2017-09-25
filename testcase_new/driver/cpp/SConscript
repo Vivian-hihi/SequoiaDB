@@ -108,7 +108,23 @@ testFiles = [
    [ "./misc/sync12237.cpp" ],
    [ "./misc/flushConf12476.cpp" ],
    [ "./ssl/sslFalse9649.cpp" ],
-   [ "./ssl/sslTrue9648.cpp" ]  # config
+   [ "./ssl/sslTrue9648.cpp" ],  # config
+   [ "./misc/testConnectRepeatly12509.cpp" ],
+   [ "./monitor/getListContexts12526.cpp" ],
+   [ "./monitor/getListSessions12526.cpp" ],
+   [ "./monitor/getListCsCl12526.cpp" ],
+   [ "./monitor/getListStorageUnits12526.cpp" ],
+   [ "./monitor/getListGroups12526.cpp" ],
+   [ "./monitor/getListTransaction12526.cpp" ],
+   [ "./monitor/getSnapshotContexts12662.cpp" ],
+   [ "./monitor/getSnapshotSessions12662.cpp" ],
+   [ "./monitor/getSnapshotCsCl12662.cpp" ],
+   [ "./monitor/getSnapshotDB12662.cpp" ],
+   [ "./monitor/getSnapshotSYS12662.cpp" ],
+   [ "./monitor/getSnapshotCata12662.cpp" ],
+   [ "./monitor/getSnapshotTransaction12662.cpp" ],
+   [ "./monitor/resetSnapshot12664.cpp" ],
+   [ "./misc/getLastAliveTime12655.cpp" ]
 ]
 
 def getFileName( filePath ):
