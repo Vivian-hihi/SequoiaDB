@@ -121,6 +121,9 @@ namespace engine
                                  // extent data area( the extent header
                                  // excluded). Always 4 byte aligned.
       UINT32         _recNo ;
+      ossSpinXLatch  _latch ; // Protection of concurrent modification of this
+                              // structure.
+
       _dmsExtentInfo()
       {
          reset() ;
@@ -193,12 +196,13 @@ namespace engine
 
       virtual INT32 postDataRestored( dmsMBContext * context ) ;
 
+      virtual void syncMemToMmap() ;
+
    private:
       virtual const CHAR* _getEyeCatcher() const ;
       virtual INT32 _onOpened() ;
       virtual void _onClosed() ;
       virtual void _onRestore() ;
-      virtual INT32 _onFlushDirty( BOOLEAN force, BOOLEAN sync ) ;
 
       virtual INT32 _onCollectionTruncated( dmsMBContext *context ) ;
       virtual INT32 _prepareAddCollection( const BSONObj *extOption,
