@@ -4,6 +4,7 @@ import com.sequoiadb.base.*;
 import com.sequoiadb.datasource.DatasourceOptions;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.test.common.Constants;
+import com.sequoiadb.test.common.Helper;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.junit.*;
@@ -42,6 +43,32 @@ public class SequoiadbDatasourceTest {
 
     @After
     public void tearDown() throws Exception {
+        ds.close();
+    }
+
+    // jira-2136
+    @Test
+    @Ignore
+    public void jira2136_transactionRollback() throws InterruptedException {
+        DatasourceOptions dsOpts = new DatasourceOptions();
+        dsOpts.setMaxCount(1);
+        dsOpts.setDeltaIncCount(1);
+        dsOpts.setMaxIdleCount(1);
+        ds.updateDatasourceOptions(dsOpts);
+        Sequoiadb db = ds.getConnection();
+        String csName = "jira2136";
+        String clName = "jira2136";
+        CollectionSpace cs = Helper.getOrCreateCollectionSpace(db, csName, null);
+        DBCollection cl = Helper.getOrCreateCollection(cs, clName, new BasicBSONObject("ReplSize", 0));
+        db.beginTransaction();
+        cl.insert(new BasicBSONObject("a",1));
+        ds.releaseConnection(db);
+        db = ds.getConnection();
+        cl = db.getCollectionSpace(csName).getCollection(clName);
+        long recordCount = cl.getCount();
+        Assert.assertEquals(0, recordCount);
+        db.dropCollectionSpace(csName);
+        ds.releaseConnection(db);
     }
 
     /*
