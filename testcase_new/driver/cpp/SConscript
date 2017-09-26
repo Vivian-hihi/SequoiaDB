@@ -36,7 +36,7 @@ testFiles = [
    [ "./index/idIndex12515.cpp" ],
    [ "./cursor/closeCursor12685_12686.cpp" ],
    [ "./cursor/closeAllCursors12687.cpp" ],
-   [ "./dbOpr/auth12521.cpp" ],
+   [ "./dbOpr/auth12521.cpp" ], # sync
    [ "./dbOpr/backup12304.cpp" ],
    [ "./dbOpr/procedure12522.cpp" ],
    [ "./dbOpr/evalJS12525.cpp" ],
@@ -115,14 +115,14 @@ testFiles = [
    [ "./monitor/getListCsCl12526.cpp" ],
    [ "./monitor/getListStorageUnits12526.cpp" ],
    [ "./monitor/getListGroups12526.cpp" ],
-   [ "./monitor/getListTransaction12526.cpp" ],
+   [ "./monitor/getListTransaction12526.cpp" ], # config
    [ "./monitor/getSnapshotContexts12662.cpp" ],
    [ "./monitor/getSnapshotSessions12662.cpp" ],
    [ "./monitor/getSnapshotCsCl12662.cpp" ],
    [ "./monitor/getSnapshotDB12662.cpp" ],
    [ "./monitor/getSnapshotSYS12662.cpp" ],
    [ "./monitor/getSnapshotCata12662.cpp" ],
-   [ "./monitor/getSnapshotTransaction12662.cpp" ],
+   [ "./monitor/getSnapshotTransaction12662.cpp" ], # config
    [ "./monitor/resetSnapshot12664.cpp" ],
    [ "./misc/getLastAliveTime12655.cpp" ]
 ]
