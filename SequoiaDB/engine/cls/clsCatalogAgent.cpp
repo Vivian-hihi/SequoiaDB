@@ -1455,9 +1455,12 @@ namespace engine
             rc = _splitItem( newItem, endKey, NULL, endKeyObj, BSONObj(),
                              item->_groupID, item->_groupName.c_str(),
                              newItemRemoved ) ;
-            if ( newItemRemoved )
+            if ( !newItemRemoved )
             {
-               SAFE_OSS_DELETE( newItem ) ;
+               // The new item had been added, should be freed by destructor
+               // If the new item is removed again, will be error, free it in
+               // error label
+               newItem = NULL ;
             }
             PD_RC_CHECK( rc, PDERROR, "Sub split failed, rc: %d", rc ) ;
          }
