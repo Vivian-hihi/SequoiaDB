@@ -63,7 +63,7 @@ namespace engine
       virtual INT32 getString( UINT32 pos, std::string &value,
                                BOOLEAN strict = TRUE ) const = 0 ;
       virtual INT32 getBsonobj( UINT32 pos, bson::BSONObj &value ) const = 0 ;
-      virtual INT32 getUserObj( UINT32 pos, const std::string &className,
+      virtual INT32 getUserObj( UINT32 pos, const _sptObjDesc &objDesc,
                                 const void** value ) const = 0 ;
       virtual sptPrivateData* getPrivateData() const = 0 ;
 
@@ -78,7 +78,7 @@ namespace engine
       virtual BOOLEAN isNull( UINT32 pos ) const = 0 ;
       virtual BOOLEAN isVoid( UINT32 pos ) const = 0 ;
       virtual BOOLEAN isUserObj( UINT32 pos,
-                                 const std::string &className ) const = 0 ;
+                                 const _sptObjDesc &objDesc ) const = 0 ;
       virtual string getUserObjClassName( UINT32 pos ) const = 0 ;
    } ;
    typedef class _sptArguments sptArguments ;

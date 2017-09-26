@@ -173,7 +173,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _sptSPArguments::getUserObj( UINT32 pos, const std::string &className,
+   INT32 _sptSPArguments::getUserObj( UINT32 pos, const _sptObjDesc &objDesc,
                                       const void** value ) const
    {
       INT32 rc = SDB_OK ;
@@ -209,10 +209,11 @@ namespace engine
          goto error ;
       }
 
-      if( className != sptGetObjFactory()->getClassName( _context, jsObj ) )
+      if( string( objDesc.getJSClassName() ) !=
+            sptGetObjFactory()->getClassName( _context, jsObj ) )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "jsObj className must be: %s", className.c_str() ) ;
+         PD_LOG( PDERROR, "jsObj className must be: %s", objDesc.getJSClassName() ) ;
          goto error ;
       }
 
@@ -324,7 +325,7 @@ namespace engine
    }
 
    BOOLEAN _sptSPArguments::isUserObj( UINT32 pos,
-                                       const std::string &className ) const
+                                       const _sptObjDesc &objDesc ) const
    {
       jsval *val = NULL ;
       JSObject *jsObj = NULL ;
@@ -333,7 +334,8 @@ namespace engine
            NULL != ( val = _getValAtPos( pos ) ) &&
            JSVAL_IS_OBJECT( *val ) &&
            NULL != ( jsObj = JSVAL_TO_OBJECT( *val ) ) &&
-           className == sptGetObjFactory()->getClassName( _context, jsObj ) )
+           string( objDesc.getJSClassName() ) ==
+           sptGetObjFactory()->getClassName( _context, jsObj ) )
       {
          return TRUE ;
       }

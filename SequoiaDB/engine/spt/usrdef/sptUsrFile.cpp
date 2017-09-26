@@ -320,7 +320,7 @@ JS_MAPPING_END()
       CHAR *buf = NULL ;
       sptUsrFileContent *fileContent = NULL ;
 
-      if( arg.isUserObj( 0, "Remote" ) )
+      if( arg.isUserObj( 0, _sptUsrRemote::__desc ) )
       {
          rc = _readContentRemote( arg, detail, &buf, len ) ;
       }
@@ -334,7 +334,12 @@ JS_MAPPING_END()
       }
 
       fileContent = SDB_OSS_NEW sptUsrFileContent() ;
-      fileContent->init( buf, len ) ;
+      rc = fileContent->init( buf, len ) ;
+      if( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << "Failed to init FileContent obj" ) ;
+         goto error ;
+      }
 
       rval.setUsrObjectVal<sptUsrFileContent>( fileContent ) ;
    done:
@@ -353,7 +358,7 @@ JS_MAPPING_END()
    {
       INT32 rc = SDB_OK ;
 
-      if( arg.isUserObj( 0, "Remote" ) )
+      if( arg.isUserObj( 0, _sptUsrRemote::__desc ) )
       {
          rc = _writeContentRemote( arg, detail ) ;
       }
@@ -418,7 +423,7 @@ JS_MAPPING_END()
       SINT64 readTimes = 0 ;
       const CHAR* retBuf = NULL ;
 
-      rc = arg.getUserObj( 0, "Remote", ( const void** )&pRemote ) ;
+      rc = arg.getUserObj( 0, _sptUsrRemote::__desc, ( const void** )&pRemote ) ;
       if( SDB_OUT_OF_BOUND == rc )
       {
          detail = BSON( SPT_ERR << "RemoteObj must be config" ) ;
@@ -545,7 +550,8 @@ JS_MAPPING_END()
       sptUsrFileContent *pFileContent = NULL ;
       string err ;
 
-      rc = arg.getUserObj( 0, "FileContent", (const void**)&pFileContent ) ;
+      rc = arg.getUserObj( 0, _sptUsrFileContent::__desc,
+                           (const void**)&pFileContent ) ;
       if( SDB_OUT_OF_BOUND == rc )
       {
          detail = BSON( SPT_ERR << "FileContent must be config" ) ;
@@ -582,7 +588,7 @@ JS_MAPPING_END()
       SINT64 hasWrite = 0 ;
       BSONObj retObj ;
 
-      rc = arg.getUserObj( 0, "Remote", ( const void** )&pRemote ) ;
+      rc = arg.getUserObj( 0, _sptUsrRemote::__desc, ( const void** )&pRemote ) ;
       if( SDB_OUT_OF_BOUND == rc )
       {
          detail = BSON( SPT_ERR << "RemoteObj must be config" ) ;
@@ -606,7 +612,8 @@ JS_MAPPING_END()
          goto error ;
       }
 
-      rc = arg.getUserObj( 2, "FileContent", (const void**)&pFileContent ) ;
+      rc = arg.getUserObj( 2, _sptUsrFileContent::__desc,
+                           (const void**)&pFileContent ) ;
       if( SDB_OUT_OF_BOUND == rc )
       {
          detail = BSON( SPT_ERR << "FileContent must be config" ) ;
