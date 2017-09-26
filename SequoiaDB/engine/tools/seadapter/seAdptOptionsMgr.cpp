@@ -188,10 +188,15 @@ namespace engine
                  TRUE, FALSE, _seHost ) ;
       rdxString( pEX, SDB_SEADPT_SE_PORT, _seService,
                  sizeof( _seService ), TRUE, FALSE, _seService ) ;
-      rdxString( pEX, SDB_SEADPT_SERVICE_NAME, _serviceName,
-                 sizeof( _serviceName ), TRUE, FALSE, _serviceName ) ;
 
       return getResult() ;
+   }
+
+   void _seAdptOptionsMgr::setSvcName( const CHAR *svcName )
+   {
+      SDB_ASSERT( svcName, "Service name can't be NULL" ) ;
+      ossStrncpy( _serviceName, svcName, OSS_MAX_SERVICENAME ) ;
+      _serviceName[ OSS_MAX_SERVICENAME ] = '\0' ;
    }
 
    PDLEVEL _seAdptOptionsMgr::getDiagLevel() const

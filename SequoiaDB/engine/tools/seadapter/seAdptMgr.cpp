@@ -52,6 +52,9 @@
 #define SEADPT_INIT_TEXT_INDEX_VERSION          -1
 #define SEADPT_IDX_UPDATE_INTERVAL              ( 5 * OSS_ONE_SEC )
 #define SEADPT_CAT_RETRY_MAX_TIMES              3
+#define SEADPT_PORT_STR_SZ                      10
+#define SEADPT_MAX_PORT                         65535
+#define SEADPT_SVC_PORT_PLUS                    7
 
 namespace engine
 {
@@ -394,24 +397,13 @@ namespace engine
    INT32 _seAdptCB::init()
    {
       INT32 rc = SDB_OK ;
-      MsgRouteID svcRtID = _selfRouteID ;
       std::string seSvcPath ;
-      const CHAR *hostName = pmdGetKRCB()->getHostName() ;
 
       // register config handler to se adapter options.
       _options.setConfigHandler( pmdGetKRCB() ) ;
 
-      // Create listener socket. This is for searching and command processing.
-      svcRtID.columns.groupID = SDB_SEADPT_GRP_ID ;
-      svcRtID.columns.nodeID = SDB_SEADPT_NODE_ID ;
-      svcRtID.columns.serviceID = SDB_SEADPT_SVC_ID ;
-      _svcRtAgent.updateRoute( svcRtID, hostName, _options.getSvcName() ) ;
-      rc = _svcRtAgent.listen( svcRtID ) ;
-      PD_RC_CHECK( rc, PDERROR, "Create listener for hostname[ %s ] and "
-                   "service[ %s ] failed[ %d ]",
-                   hostName, _options.getSvcName(), rc ) ;
-      PD_LOG( PDEVENT, "Create search engine adapter listener[ServiceName: %s] "
-              "successfully", _options.getSvcName() ) ;
+      rc = _startSvcListener() ;
+      PD_RC_CHECK( rc, PDERROR, "Start service listener failed[ %d ]", rc ) ;
 
       // Init sdb data node address.
       rc = _initSdbAddr() ;
@@ -806,6 +798,58 @@ namespace engine
 
       rc = _indexNetRtAgent.syncSend( _cataNodeID, (void *)msg ) ;
       PD_RC_CHECK( rc, PDERROR, "Send message to cata node failed[ %d ]", rc ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _seAdptCB::_startSvcListener()
+   {
+      INT32 rc = SDB_OK ;
+      MsgRouteID svcRtID = _selfRouteID ;
+      const CHAR *hostName = pmdGetKRCB()->getHostName() ;
+      UINT16 sdbPort = 0 ;
+
+      // Use a fixed node id and a random service port for the adapter.
+      // Try to use port starting from [ sdb_service + 7 ], find one that
+      // can be used, or return error if we can't.
+
+      ossSocket::getPort( _options.getDbService(), sdbPort ) ;
+
+      // Create listener socket. This is for searching and command processing.
+      svcRtID.columns.groupID = SDB_SEADPT_GRP_ID ;
+      svcRtID.columns.nodeID = SDB_SEADPT_NODE_ID ;
+      svcRtID.columns.serviceID = SDB_SEADPT_SVC_ID ;
+
+      for ( UINT16 svcPort = sdbPort + SEADPT_SVC_PORT_PLUS;
+            svcPort <= SEADPT_MAX_PORT; ++svcPort )
+      {
+         CHAR svcPortStr[ SEADPT_PORT_STR_SZ ] = { 0 } ;
+         ossItoa( svcPort, svcPortStr, SEADPT_PORT_STR_SZ ) ;
+
+         _svcRtAgent.updateRoute( svcRtID, hostName, svcPortStr ) ;
+
+         rc = _svcRtAgent.listen( svcRtID ) ;
+         if ( rc )
+         {
+            _svcRtAgent.delRoute( svcRtID ) ;
+            if ( SEADPT_MAX_PORT == svcPort )
+            {
+               PD_RC_CHECK( rc, PDERROR, "Create listener for adapter service "
+                            "failed[ %d ]", rc ) ;
+               goto error ;
+            }
+         }
+         else
+         {
+            _options.setSvcName( svcPortStr ) ;
+            PD_LOG( PDEVENT, "Create search engine adapter listener"
+                    "[ServiceName: %s] successfully", _options.getSvcName() ) ;
+            break ;
+         }
+      }
 
    done:
       return rc ;

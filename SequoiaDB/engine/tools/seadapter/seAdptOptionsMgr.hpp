@@ -51,6 +51,7 @@ namespace engine
 
       INT32 init( INT32 argc, CHAR **argv, const CHAR *exePath ) ;
 
+      void setSvcName( const CHAR *svcName ) ;
       const CHAR* getCfgFileName() const { return _cfgFileName ; }
       const CHAR* getSvcName() const { return _serviceName ; }
       const CHAR* getDbHost() const { return _dbHost ; }
