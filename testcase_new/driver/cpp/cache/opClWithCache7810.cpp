@@ -19,6 +19,8 @@ using namespace sdbclient ;
 using namespace bson ;
 using namespace std ;
 
+#define CACHE_TIME_INT 2000 /*millisecond*/
+
 class turnOnCache7810 : public testBase 
 {
 protected:
@@ -31,10 +33,9 @@ protected:
    {
       INT32 rc = SDB_OK ;
 
-      // init client
+      // turn off cache
       sdbClientConf conf ;
-      conf.enableCacheStrategy = TRUE ;
-      conf.cacheTimeInterval = 0 ;
+      conf.enableCacheStrategy = FALSE ;
       rc = initClient( &conf );
       ASSERT_EQ( SDB_OK, rc ) << "fail to initClient" ;
 
@@ -47,6 +48,12 @@ protected:
       ASSERT_EQ( SDB_OK, rc ) << "fail to create cs" ;
       rc = cs.createCollection( pClName, cl ) ;
       ASSERT_EQ( SDB_OK, rc ) << "fail to create cl" ;
+
+      // turn on cache
+      conf.enableCacheStrategy = TRUE ;
+      conf.cacheTimeInterval = CACHE_TIME_INT / 1000 ;
+      rc = initClient( &conf );
+      ASSERT_EQ( SDB_OK, rc ) << "fail to initClient" ;
    }
 
    void TearDown() 
@@ -82,13 +89,13 @@ TEST_F( turnOnCache7810, testUpdateTimeStamp )
    clock_t outCacheTime, inCacheTime ;
    rc = getElapesdTimeOfGetCl( outCacheTime ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
-   //ossSleep( 600 ) ;
+
+   ossSleep( CACHE_TIME_INT / 2 ) ;
    BSONObj doc = BSON( "a" << 1 ) ;
    rc = cl.insert( doc ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
-   //ossSleep( 600 ) ;
-   // if cl would be keep for 1s, 0.6 + 0.6s can make cl out the cache.
-   // TODO: i don't know how long it would be keep.
+   ossSleep( CACHE_TIME_INT / 2 ) ;
+
    rc = getElapesdTimeOfGetCl( inCacheTime ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
    ASSERT_LT( inCacheTime, outCacheTime ) ;

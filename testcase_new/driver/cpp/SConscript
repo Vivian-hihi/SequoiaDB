@@ -97,7 +97,7 @@ testFiles = [
    [ "./cache/dropClWithCache7807.cpp" ],
    [ "./cache/dropCsWithCache7808.cpp" ],
    [ "./cache/dropClWithCache7809.cpp" ],
-   # [ "./cache/opClWithCache7810.cpp" ],
+   [ "./cache/opClWithCache7810.cpp" ],
    [ "./cache/getMulClAfterDropCsWithCache7812.cpp" ],
    [ "./lob/lobOpr12516.cpp" ],
    [ "./lob/lobSeek12663.cpp" ],

@@ -29,10 +29,9 @@ protected:
    {
       INT32 rc = SDB_OK ;
 
-      // init client
+      // turn off cache
       sdbClientConf conf ;
-      conf.enableCacheStrategy = TRUE ;
-      conf.cacheTimeInterval = 0 ;
+      conf.enableCacheStrategy = FALSE ;
       rc = initClient( &conf );
       ASSERT_EQ( SDB_OK, rc ) << "fail to initClient" ;
 
@@ -51,6 +50,12 @@ protected:
       sdbCollection cl ;
       rc = cs.createCollection( pClName, cl ) ;
       ASSERT_EQ( SDB_OK, rc ) << "fail to create cl" ;
+
+      // turn on cache
+      conf.enableCacheStrategy = TRUE ;
+      conf.cacheTimeInterval = 0 ;
+      rc = initClient( &conf );
+      ASSERT_EQ( SDB_OK, rc ) << "fail to initClient" ;
 
       clFullNameStr = string( pCsName ) + "." + string( pClName ) ;
    }
@@ -86,6 +91,7 @@ TEST_F( turnOnCache7803, getCollection )
 {
    INT32 rc = SDB_OK ;
    clock_t outCacheTime, inCacheTime ;
+
    rc = getElapesdTimeOfGetCl( outCacheTime ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
    rc = getElapesdTimeOfGetCl( inCacheTime ) ;

@@ -1,8 +1,8 @@
 /**************************************************************
  * @Description: turn on cache and get cs
  *               seqDB-7801 : turn on cache and get cs
- *               seqDB-7804 : turn on cache and get cs 
- *                            when it's cache time out
+ *               seqDB-7804 : turn on cache and get cs when 
+ *                            it's cache time out
  * @Modify     : Suqiang Ling
  *               2017-09-11
  ***************************************************************/
@@ -20,6 +20,8 @@ using namespace sdbclient ;
 using namespace bson ;
 using namespace std ;
 
+#define CACHE_TIME_INT 1000 /*millisecond*/
+
 class turnOnCache7801 : public testBase 
 {
 protected:
@@ -29,10 +31,9 @@ protected:
    {
       INT32 rc = SDB_OK ;
 
-      // init client
+      // turn off cache
       sdbClientConf conf ;
-      conf.enableCacheStrategy = TRUE ;
-      conf.cacheTimeInterval = 0 ;
+      conf.enableCacheStrategy = FALSE ;
       rc = initClient( &conf );
       ASSERT_EQ( SDB_OK, rc ) << "fail to initClient" ;
 
@@ -43,6 +44,12 @@ protected:
       ASSERT_EQ( SDB_OK, rc ) << "fail to connect db" ;
       rc = db.createCollectionSpace( pCsName, SDB_PAGESIZE_4K, cs ) ;
       ASSERT_EQ( SDB_OK, rc ) << "fail to create cs" ;
+
+      // turn on cache
+      conf.enableCacheStrategy = TRUE ;
+      conf.cacheTimeInterval = CACHE_TIME_INT / 1000 ;
+      rc = initClient( &conf );
+      ASSERT_EQ( SDB_OK, rc ) << "fail to initClient" ;
    }
 
    void TearDown() 
@@ -83,10 +90,10 @@ TEST_F( turnOnCache7801, getCollectionSpace )
    ASSERT_EQ( SDB_OK, rc ) ;
    ASSERT_LT( inCacheTime, outCacheTime );
    
-   ossSleep( 0 ) ; // sleep utill cl not in cache // TODO: i don't know the time length
+   ossSleep( CACHE_TIME_INT ) ; // sleep utill cl not in cache 
    clock_t outCacheTime2 ;
    rc = getElapesdTimeOfGetCs( outCacheTime2 ) ; // seqDB-7804
    ASSERT_EQ( SDB_OK, rc ) ;
 
-   //ASSERT_LT( inCacheTime, outCacheTime2 );
+   ASSERT_LT( inCacheTime, outCacheTime2 );
 }

@@ -1,6 +1,7 @@
 /**************************************************************
  * @Description: turn on cache and get multi cl after drop cs
- *               seqDB-7812 : turn on cache and get multi cl after drop cs
+ *               seqDB-7812 : turn on cache and get multi cl 
+ *                            after drop cs
  * @Modify     : Suqiang Ling
  *               2017-09-11
  ***************************************************************/

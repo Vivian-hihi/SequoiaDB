@@ -28,7 +28,7 @@ protected:
    {
       INT32 rc = SDB_OK ;
 
-      // init client
+      // turn on cache
       sdbClientConf conf ;
       conf.enableCacheStrategy = TRUE ;
       conf.cacheTimeInterval = 0 ;

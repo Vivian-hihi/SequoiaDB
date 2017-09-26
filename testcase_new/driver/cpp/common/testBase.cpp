@@ -13,7 +13,6 @@ using namespace sdbclient ;
 void testBase::SetUp()
 {
    INT32 rc = SDB_OK ;
-   forceClear = ARGS->forceClear() ;
    rc = db.connect( ARGS->hostName(), ARGS->svcName(), ARGS->user(), ARGS->passwd() ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to connect sdb" ;
 }
@@ -25,5 +24,5 @@ void testBase::TearDown()
 
 BOOLEAN testBase::shouldClear()
 {
-   return ( !HasFailure() || forceClear ) ;
+   return ( !HasFailure() || ARGS->forceClear() ) ;
 }

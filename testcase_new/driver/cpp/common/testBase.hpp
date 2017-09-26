@@ -23,9 +23,6 @@ protected:
 
    BOOLEAN shouldClear() ;
 
-private:
-   BOOLEAN forceClear ;
-
 } ;
 
 #endif // TESTBASE_HPP_
