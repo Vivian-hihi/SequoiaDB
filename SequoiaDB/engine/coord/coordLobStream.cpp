@@ -403,7 +403,7 @@ namespace engine
              .appendBool( FIELD_NAME_LOB_IS_MAIN_SHD, TRUE ) ;
       if ( SDB_LOB_MODE_CREATEONLY == mode )
       {
-         builder.append( FIELD_NAME_LOB_CREATTIME, (INT64)_getMeta()._createTime ) ;
+         builder.append( FIELD_NAME_LOB_CREATETIME, (INT64)_getMeta()._createTime ) ;
       }
       obj = builder.obj() ;
 
@@ -505,7 +505,7 @@ namespace engine
          }
          meta._lobLen = ele.Long() ;
 
-         ele = _metaObj.getField( FIELD_NAME_LOB_CREATTIME ) ;
+         ele = _metaObj.getField( FIELD_NAME_LOB_CREATETIME ) ;
          if ( NumberLong != ele.type() )
          {
             PD_LOG( PDERROR, "invalid meta obj:%s",

@@ -231,7 +231,7 @@ namespace engine
       builder.append( FIELD_NAME_LOB_SIZE, meta._lobLen ) ;
       builder.append( FIELD_NAME_LOB_PAGE_SIZE, _lobPageSz ) ;
       builder.append( FIELD_NAME_VERSION, (INT32)meta._version ) ;
-      builder.append( FIELD_NAME_LOB_CREATTIME, (INT64)meta._createTime ) ;
+      builder.append( FIELD_NAME_LOB_CREATETIME, (INT64)meta._createTime ) ;
       builder.append( FIELD_NAME_LOB_MODIFICATION_TIME, (INT64)meta._modificationTime ) ;
       return builder.obj() ;
    }

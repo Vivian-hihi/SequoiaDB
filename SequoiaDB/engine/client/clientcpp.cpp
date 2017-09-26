@@ -3103,7 +3103,7 @@ error:
          goto error ;
       }
       // createTime
-      ele = obj.getField( FIELD_NAME_LOB_CREATTIME ) ;
+      ele = obj.getField( FIELD_NAME_LOB_CREATETIME ) ;
       bType = ele.type() ;
       if ( NumberLong == bType )
       {

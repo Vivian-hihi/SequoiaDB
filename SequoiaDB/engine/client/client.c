@@ -8877,7 +8877,7 @@ SDB_EXPORT INT32 sdbOpenLob( sdbCollectionHandle cHandle,
          goto error ;
       }
 
-      bType = bson_find( &bsonItr, &obj, FIELD_NAME_LOB_CREATTIME ) ;
+      bType = bson_find( &bsonItr, &obj, FIELD_NAME_LOB_CREATETIME ) ;
       if ( BSON_LONG == bType )
       {
          lobStruct->_createTime = bson_iterator_long( &bsonItr ) ;

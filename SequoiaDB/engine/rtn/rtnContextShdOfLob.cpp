@@ -207,7 +207,7 @@ namespace engine
 
       if ( _isMainShd && SDB_LOB_MODE_CREATEONLY == _mode )
       {
-         ele = lob.getField( FIELD_NAME_LOB_CREATTIME ) ;
+         ele = lob.getField( FIELD_NAME_LOB_CREATETIME ) ;
          if ( NumberLong == ele.type() )
          {
             _meta._createTime = ele.Long() ;
@@ -886,7 +886,7 @@ namespace engine
          builder.append( FIELD_NAME_LOB_PAGE_SIZE,
                          NULL != _su ? _su->getLobPageSize() : 0 ) ;
          builder.append( FIELD_NAME_VERSION, (INT32)_meta._version ) ;
-         builder.append( FIELD_NAME_LOB_CREATTIME, (INT64)_meta._createTime ) ;
+         builder.append( FIELD_NAME_LOB_CREATETIME, (INT64)_meta._createTime ) ;
          if ( 0 == _meta._modificationTime )
          {
             _meta._modificationTime = _meta._createTime ;
