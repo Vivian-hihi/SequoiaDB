@@ -381,6 +381,9 @@ namespace engine
       {
          PD_LOG ( PDERROR, "Failed to listen on %s:%s, error:%s", hostName,
                   serviceName, e.what() ) ;
+         // In case of listen error, close the _acceptor, then the user is able
+         // to try to listen again.
+         closeListen() ;
          rc = SDB_NET_CANNOT_LISTEN ;
          goto error ;
       }
