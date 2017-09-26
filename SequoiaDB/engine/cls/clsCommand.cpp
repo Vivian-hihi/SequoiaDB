@@ -327,7 +327,14 @@ namespace engine
          pCatAgent->clear( _subCLName ) ;
          pCatAgent->release_w() ;
       }
-      sdbGetClsCB()->invalidateCata( _collectionName ) ;
+
+      // Clear cached main-collection plans
+      rtnCB->getAPM()->invalidateCLPlans( _collectionName ) ;
+
+      // Tell secondary nodes to clear catalog and plan caches
+      sdbGetClsCB()->invalidateCache ( _collectionName,
+                                       DPS_LOG_INVALIDCATA_TYPE_CATA |
+                                       DPS_LOG_INVALIDCATA_TYPE_PLAN ) ;
       sdbGetClsCB()->invalidateCata( _subCLName ) ;
       return SDB_OK ;
    }
@@ -369,8 +376,14 @@ namespace engine
       pCatAgent->lock_w() ;
       pCatAgent->clear( _collectionName ) ;
       pCatAgent->release_w() ;
-      
-      sdbGetClsCB()->invalidateCata( _collectionName ) ;
+
+      // Clear cached main-collection plans
+      rtnCB->getAPM()->invalidateCLPlans( _collectionName ) ;
+
+      // Tell secondary nodes to clear catalog and plan caches
+      sdbGetClsCB()->invalidateCache( _collectionName,
+                                      DPS_LOG_INVALIDCATA_TYPE_CATA |
+                                      DPS_LOG_INVALIDCATA_TYPE_PLAN ) ;
       sdbGetClsCB()->invalidateCata( _subCLName ) ;
       return SDB_OK ;
    }

@@ -1513,5 +1513,41 @@
       <hidden>true</hidden>
    </opt>
 
+   <opt>
+      <name>PMD_OPTION_PLAN_CACHE_LEVEL</name>
+      <long>plancachelevel</long>
+      <description>
+         <en>Specify the cache level of query plans, 0 for no cache, 1 for caching original query, 2 for caching normalized query, 3 for caching parameterized query, 4 for caching parameterized query with fuzzy-matched operators. Default is 3</en>
+         <cn>指定查询计划的缓存级别，0为不缓存，1为缓存原查询计划，2为缓存泛化后的查询计划，3为缓存参数化的查询计划，4为缓存参数化并带操作符模糊匹配的查询计划。默认是3。</cn>
+      </description>
+      <reloadable>
+         <en>Yes</en>
+         <cn>是</cn>
+      </reloadable>
+      <reloadstrategy>
+         <en>takes effect upon next query</en>
+         <cn>下次查询生效</cn>
+      </reloadstrategy>
+      <detail>
+         <en>1. Specify the cache level of query plans. Value is 0/1/2/3/4. Default is 3.<fig></fig>
+             2. 0: No cache.<fig></fig>
+             3. 1: Caching plan with original query.<fig></fig>
+             4. 2: Caching plan with normalized query.<fig></fig>
+             5. 3: Caching plan with parameterized query.<fig></fig>
+             6. 4: Caching plan with parameterized query and fuzzy-matched operators.
+         </en>
+         <cn>1、指定查询计划的缓存级别，默认是3。<fig></fig>
+             2、0: 不缓存查询计划。<fig></fig>
+             3、1: 缓存原查询计划。<fig></fig>
+             4、2: 缓存泛化后的查询计划。<fig></fig>
+             5、3: 缓存参数化的查询计划。<fig></fig>
+             6、4: 缓存参数化并带操作符模糊匹配的查询计划。
+         </cn>
+      </detail>
+      <type>int</type>
+      <default>3</default>
+      <hidden>false</hidden>
+   </opt>
+
 </optlist>
 

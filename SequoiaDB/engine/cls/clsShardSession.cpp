@@ -819,8 +819,9 @@ namespace engine
       INT32 rc = SDB_OK ;
       MsgOpUpdate *pUpdate = (MsgOpUpdate*)msg ;
       INT32 flags = 0 ;
+      CHAR mainCLName[ DMS_COLLECTION_FULL_NAME_SZ + 1 ] = { 0 } ;
       CHAR *pCollectionName = NULL ;
-      CHAR *pSelectorBuffer = NULL ;
+      CHAR *pMatcherBuffer = NULL ;
       CHAR *pUpdatorBuffer = NULL ;
       CHAR *pHintBuffer = NULL ;
       INT16 w = 0 ;
@@ -835,7 +836,7 @@ namespace engine
       }
 
       rc = msgExtractUpdate( (CHAR*)msg, &flags, &pCollectionName,
-                             &pSelectorBuffer, &pUpdatorBuffer, &pHintBuffer );
+                             &pMatcherBuffer, &pUpdatorBuffer, &pHintBuffer );
       if ( SDB_OK != rc )
       {
          PD_LOG ( PDERROR, "Extract update message failed[rc:%d] in "
@@ -844,9 +845,8 @@ namespace engine
       }
       _pCollectionName = pCollectionName ;
 
-      rc = _checkCLStatusAndGetSth( pCollectionName,
-                                    pUpdate->version,
-                                    &_isMainCL, &replSize ) ;
+      rc = _checkCLStatusAndGetSth( pCollectionName, pUpdate->version,
+                                    &_isMainCL, &replSize, mainCLName ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
@@ -861,7 +861,8 @@ namespace engine
 
       try
       {
-         BSONObj selector( pSelectorBuffer );
+         BSONObj dummy ;
+         BSONObj matcher( pMatcherBuffer );
          BSONObj updator( pUpdatorBuffer );
          BSONObj hint( pHintBuffer );
 
@@ -870,10 +871,16 @@ namespace engine
                              "Collection:%s, Matcher:%s, Updator:%s, Hint:%s, "
                              "Flag:0x%08x(%u)",
                              pCollectionName,
-                             selector.toString().c_str(),
+                             matcher.toString().c_str(),
                              updator.toString().c_str(),
                              hint.toString().c_str(),
                              flags, flags ) ;
+
+         // Construct query options
+         // matcher, selector, order, hint, collection, skip, limit, flag
+         rtnQueryOptions options( matcher, dummy, dummy, hint, pCollectionName,
+                                  0, -1, flags ) ;
+         options.setMainCLName( mainCLName ) ;
 
          /*
          PD_LOG ( PDDEBUG, "Session[%s] Update: selctor: %s\nupdator: %s\n"
@@ -882,10 +889,9 @@ namespace engine
 
          if ( _isMainCL )
          {
-            rc = _updateToMainCL( pCollectionName, selector, updator, hint,
-                                  flags, _pEDUCB, _pDmsCB, _pDpsCB, w,
+            rc = _updateToMainCL( options, updator, _pEDUCB, _pDmsCB, _pDpsCB, w,
                                   ( pUpdate->flags & FLG_UPDATE_RETURNNUM ) ?
-                                  &updateNum : NULL );
+                                  &updateNum : NULL ) ;
          }
          else
          {
@@ -899,8 +905,7 @@ namespace engine
                goto error ;
             }
 
-            rc = rtnUpdate( pCollectionName, selector, updator, hint,
-                            flags, _pEDUCB, _pDmsCB, _pDpsCB, w,
+            rc = rtnUpdate( options, updator, _pEDUCB, _pDmsCB, _pDpsCB, w,
                             ( pUpdate->flags & FLG_UPDATE_RETURNNUM ) ?
                             &updateNum : NULL, NULL,
                             shardingKey.isEmpty() ? NULL : &shardingKey ) ;
@@ -1022,8 +1027,9 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSSHDSESS__ONDELREQMSG ) ;
       INT32 flags = 0 ;
+      CHAR mainCLName[ DMS_COLLECTION_FULL_NAME_SZ + 1 ] = { 0 } ;
       CHAR *pCollectionName = NULL ;
-      CHAR *pDeletorBuffer = NULL ;
+      CHAR *pMatcherBuffer = NULL ;
       CHAR *pHintBuffer = NULL ;
       MsgOpDelete * pDelete = (MsgOpDelete*)msg ;
       INT16 w = 0 ;
@@ -1038,7 +1044,7 @@ namespace engine
       }
 
       rc = msgExtractDelete ( (CHAR *)msg , &flags, &pCollectionName,
-                              &pDeletorBuffer, &pHintBuffer ) ;
+                              &pMatcherBuffer, &pHintBuffer ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG ( PDERROR, "Session[%s] extract delete msg failed[rc:%d]",
@@ -1047,9 +1053,8 @@ namespace engine
       }
       _pCollectionName = pCollectionName ;
 
-      rc = _checkCLStatusAndGetSth( pCollectionName,
-                                    pDelete->version,
-                                    &_isMainCL, &replSize ) ;
+      rc = _checkCLStatusAndGetSth( pCollectionName, pDelete->version,
+                                    &_isMainCL, &replSize, mainCLName ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
@@ -1064,14 +1069,16 @@ namespace engine
 
       try
       {
-         BSONObj deletor ( pDeletorBuffer ) ;
+         BSONObj dummy ;
+         BSONObj matcher ( pMatcherBuffer ) ;
          BSONObj hint ( pHintBuffer ) ;
+
          // add last op info
          MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), msg->opCode,
                              "Collection:%s, Deletor:%s, Hint:%s, "
                              "Flag:0x%08x(%u)",
                              pCollectionName,
-                             deletor.toString().c_str(),
+                             matcher.toString().c_str(),
                              hint.toString().c_str(),
                              flags, flags ) ;
 
@@ -1080,18 +1087,20 @@ namespace engine
                   sessionName(), deletor.toString().c_str(),
                   hint.toString().c_str() ) ; */
 
+         // matcher, selector, order, hint, collection, skip, limit, flag
+         rtnQueryOptions options( matcher, dummy, dummy, hint, pCollectionName,
+                                  0, -1, flags ) ;
+         options.setMainCLName( mainCLName ) ;
+
          if ( _isMainCL )
          {
-            rc = _deleteToMainCL( pCollectionName, deletor, hint, flags,
-                                  _pEDUCB, _pDmsCB, _pDpsCB, w,
+            rc = _deleteToMainCL( options, _pEDUCB, _pDmsCB, _pDpsCB, w,
                                   ( pDelete->flags & FLG_DELETE_RETURNNUM ) ?
-                                  &delNum : NULL );
+                                  &delNum : NULL ) ;
          }
          else
          {
-
-            rc = rtnDelete( pCollectionName, deletor, hint, flags, _pEDUCB,
-                            _pDmsCB, _pDpsCB, w,
+            rc = rtnDelete( options, _pEDUCB, _pDmsCB, _pDpsCB, w,
                             ( pDelete->flags & FLG_DELETE_RETURNNUM ) ?
                             &delNum : NULL ) ;
          }
@@ -1148,6 +1157,7 @@ namespace engine
 
       if ( !rtnIsCommand ( pCollectionName ) )
       {
+         CHAR mainCLName[ DMS_COLLECTION_FULL_NAME_SZ + 1 ] = { 0 } ;
          rtnContextBase *pContext = NULL ;
          _pCollectionName = pCollectionName ;
 
@@ -1160,9 +1170,9 @@ namespace engine
                goto error ;
             }
 
-            rc = _checkCLStatusAndGetSth( pCollectionName,
-                                          pQuery->version,
-                                          &_isMainCL, &replSize ) ;
+            rc = _checkCLStatusAndGetSth( pCollectionName, pQuery->version,
+                                          &_isMainCL, &replSize,
+                                          mainCLName ) ;
             if ( SDB_OK != rc )
             {
                goto error ;
@@ -1182,9 +1192,8 @@ namespace engine
             {
                goto error ;
             }
-            rc = _checkCLStatusAndGetSth( pCollectionName,
-                                          pQuery->version,
-                                          &_isMainCL, NULL ) ;
+            rc = _checkCLStatusAndGetSth( pCollectionName, pQuery->version,
+                                          &_isMainCL, NULL, mainCLName ) ;
             if ( SDB_OK != rc )
             {
                goto error ;
@@ -1197,6 +1206,7 @@ namespace engine
             BSONObj selector ( pFieldSelector ) ;
             BSONObj orderBy ( pOrderByBuffer ) ;
             BSONObj hint ( pHintBuffer ) ;
+
             // add last op info
             MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), msg->opCode,
                                 "Collection:%s, Matcher:%s, Selector:%s, "
@@ -1209,6 +1219,13 @@ namespace engine
                                 hint.toString().c_str(),
                                 numToSkip, numToReturn,
                                 flags, flags ) ;
+
+            // Construct query options
+            // matcher, selector, order, hint, collection, skip, limit, flag
+            rtnQueryOptions options( matcher, selector, orderBy, hint,
+                                     pCollectionName, numToSkip, numToReturn,
+                                     flags ) ;
+            options.setMainCLName( mainCLName ) ;
 
             /*
             PD_LOG ( PDDEBUG, "Session[%s] Query: matcher: %s\nselector: "
@@ -1223,10 +1240,6 @@ namespace engine
                // will be executed.
                // In the long run, the explain and normal query may also be
                // abstracted into operators.
-               rtnQueryOptions options( matcher, selector, orderBy, hint,
-                                        pCollectionName, numToSkip, numToReturn,
-                                        flags ) ;
-
                rc = rtnGetOperatorFactory()->create( options, &pOperator ) ;
                PD_RC_CHECK( rc, PDERROR, "Create operator for query failed[ %d ]",
                             rc ) ;
@@ -1241,16 +1254,13 @@ namespace engine
                }
                else
                {
-                  rc = rtnQuery( pCollectionName, selector, matcher, orderBy,
-                                 hint, flags, _pEDUCB, numToSkip, numToReturn,
-                                 _pDmsCB, _pRtnCB, contextID, &pContext, TRUE ) ;
+                  rc = rtnQuery( options, _pEDUCB, _pDmsCB, _pRtnCB, contextID,
+                                 &pContext, TRUE ) ;
                }
             }
             else
             {
-               rc = _queryToMainCL( pCollectionName, selector, matcher,
-                                    orderBy, hint, flags, _pEDUCB, numToSkip,
-                                    numToReturn, contextID, &pContext, w ) ;
+               rc = _queryToMainCL( options, _pEDUCB, contextID, &pContext, w ) ;
             }
 
             if ( rc )
@@ -1934,15 +1944,8 @@ namespace engine
       goto done;
    }
 
-   INT32 _clsShdSession::_queryToMainCL( const CHAR *pCollectionName,
-                                         const BSONObj &selector,
-                                         const BSONObj &matcher,
-                                         const BSONObj &orderBy,
-                                         const BSONObj &hint,
-                                         SINT32 flags,
+   INT32 _clsShdSession::_queryToMainCL( rtnQueryOptions &options,
                                          pmdEDUCB *cb,
-                                         SINT64 numToSkip,
-                                         SINT64 numToReturn,
                                          SINT64 &contextID,
                                          _rtnContextBase **ppContext,
                                          INT16 w )
@@ -1953,26 +1956,23 @@ namespace engine
       rtnContextMainCL *pContextMainCL = NULL;
       BOOLEAN includeShardingOrder = FALSE;
       SINT64 tmpContextID = -1 ;
-      _rtnQueryOptions options( matcher,
-                                selector,
-                                orderBy,
-                                hint,
-                                pCollectionName,
-                                ( FLG_QUERY_EXPLAIN & flags ) ?
-                                0 : numToSkip,
-                                ( FLG_QUERY_EXPLAIN & flags ) ?
-                                -1 : numToReturn,
-                                flags ) ;
 
-      SDB_ASSERT( pCollectionName, "collection name can't be NULL!" ) ;
-      SDB_ASSERT( cb, "educb can't be NULL!" );
+      SDB_ASSERT( options._fullName, "collection name can't be NULL!" ) ;
+      SDB_ASSERT( cb, "educb can't be NULL!" ) ;
 
-      rc = _includeShardingOrder( pCollectionName, orderBy,
+      // Adjust skip and limit for explain
+      if ( FLG_QUERY_EXPLAIN & options._flag )
+      {
+         options._skip = 0 ;
+         options._limit = -1 ;
+      }
+
+      rc = _includeShardingOrder( options._fullName, options._orderBy,
                                   includeShardingOrder );
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to check order-key(rc=%d)", rc );
 
-      rc = _getSubCLList( matcher, pCollectionName,
+      rc = _getSubCLList( options._query, options._fullName,
                           boNewMatcher, strSubCLList );
       if ( rc != SDB_OK )
       {
@@ -1983,7 +1983,7 @@ namespace engine
 
       if ( includeShardingOrder )
       {
-         rc = _sortSubCLListByBound( pCollectionName, strSubCLList ) ;
+         rc = _sortSubCLListByBound( options._fullName, strSubCLList ) ;
          if ( rc )
          {
             /// can't optimize
@@ -1998,8 +1998,8 @@ namespace engine
                    "Failed to create new main-collection context(rc=%d)",
                    rc );
 
-      if ( OSS_BIT_TEST(flags, FLG_QUERY_PREPARE_MORE ) &&
-           !OSS_BIT_TEST(flags, FLG_QUERY_MODIFY ) )
+      if ( OSS_BIT_TEST( options._flag, FLG_QUERY_PREPARE_MORE ) &&
+           !OSS_BIT_TEST( options._flag, FLG_QUERY_MODIFY ) )
       {
          pContextMainCL->setPrepareMoreData( TRUE ) ;
       }
@@ -2015,9 +2015,9 @@ namespace engine
                    "Open main-collection context failed(rc=%d)",
                    rc );
 
-      if ( FLG_QUERY_EXPLAIN & flags )
+      if ( FLG_QUERY_EXPLAIN & options._flag )
       {
-         rc = _aggregateMainCLExplaining( pCollectionName, cb,
+         rc = _aggregateMainCLExplaining( options._fullName, cb,
                                           tmpContextID,
                                           contextID ) ;
          if ( SDB_OK != rc )
@@ -2259,11 +2259,8 @@ namespace engine
       goto done ;
    }
 
-   INT32 _clsShdSession::_updateToMainCL( const CHAR *pCollectionName,
-                                          const BSONObj &selector,
+   INT32 _clsShdSession::_updateToMainCL( rtnQueryOptions &options,
                                           const BSONObj &updator,
-                                          const BSONObj &hint,
-                                          SINT32 flags,
                                           pmdEDUCB *cb,
                                           SDB_DMSCB *pDmsCB,
                                           SDB_DPSCB *pDpsCB,
@@ -2271,15 +2268,15 @@ namespace engine
                                           INT64 *pUpdateNum )
    {
       INT32 rc = SDB_OK;
-      BSONObj boNewSelector;
+      BSONObj boNewMatcher;
       const CHAR *pSubCLName = NULL ;
       vector< string > strSubCLList ;
       vector< string >::iterator iterSubCLSet ;
       INT64 updateNum = 0 ;
       INT64 numTmp = 0 ;
 
-      rc = _getSubCLList( selector, pCollectionName,
-                          boNewSelector, strSubCLList ) ;
+      rc = _getSubCLList( options._query, options._fullName,
+                          boNewMatcher, strSubCLList ) ;
       if ( rc != SDB_OK )
       {
          goto error;
@@ -2293,20 +2290,24 @@ namespace engine
          pSubCLName = (*iterSubCLSet).c_str() ;
          BSONObj shardingKey ;
 
+         // Construct query options for sub-collection
+         rtnQueryOptions subCLOptions( options ) ;
+         subCLOptions.setMainCLQuery( options._fullName, pSubCLName ) ;
+         subCLOptions._query = boNewMatcher ;
+
          rc = _getShardingKey( pSubCLName, shardingKey ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to get sharding key of collection[%s], rc=%d",
-                    pCollectionName, rc ) ;
+                    options._fullName, rc ) ;
             goto error ;
          }
 
-         rc = rtnUpdate( pSubCLName, boNewSelector, updator,
-                         hint, flags, cb, pDmsCB, pDpsCB, w, &numTmp, NULL,
-                         shardingKey.isEmpty() ? NULL : &shardingKey ) ;
+         rc = rtnUpdate( subCLOptions, updator, cb, pDmsCB, pDpsCB, w, &numTmp,
+                         NULL, shardingKey.isEmpty() ? NULL : &shardingKey ) ;
          if ( rc )
          {
-            rc = _processSubCLResult( rc, pSubCLName, _pCollectionName ) ;
+            rc = _processSubCLResult( rc, pSubCLName, options._fullName ) ;
             if ( SDB_OK == rc )
             {
                continue ;
@@ -2317,7 +2318,7 @@ namespace engine
          {
             PD_LOG( PDERROR, "Session[%s]: Update on sub-collection[%s] of "
                     "main-collection[%s] failed, rc: %d",
-                    sessionName(), pSubCLName, _pCollectionName, rc ) ;
+                    sessionName(), pSubCLName, options._fullName, rc ) ;
             goto error ;
          }
 
@@ -2336,23 +2337,23 @@ namespace engine
       goto done ;
    }
 
-   INT32 _clsShdSession::_deleteToMainCL ( const CHAR *pCollectionName,
-                                           const BSONObj &deletor,
-                                           const BSONObj &hint, INT32 flags,
+   INT32 _clsShdSession::_deleteToMainCL ( rtnQueryOptions &options,
                                            pmdEDUCB *cb,
-                                           SDB_DMSCB *dmsCB, SDB_DPSCB *dpsCB,
-                                           INT16 w, INT64 *pDelNum )
+                                           SDB_DMSCB *dmsCB,
+                                           SDB_DPSCB *dpsCB,
+                                           INT16 w,
+                                           INT64 *pDelNum )
    {
       INT32 rc = SDB_OK ;
       const CHAR *pSubCLName = NULL ;
-      BSONObj boNewDeletor ;
+      BSONObj boNewMatcher ;
       vector< string > strSubCLList ;
       vector< string >::iterator iterSubCLSet ;
       INT64 delNum = 0 ;
       INT64 numTmp = 0 ;
 
-      rc = _getSubCLList( deletor, pCollectionName,
-                          boNewDeletor, strSubCLList ) ;
+      rc = _getSubCLList( options._query, options._fullName,
+                          boNewMatcher, strSubCLList ) ;
       if ( rc != SDB_OK )
       {
          goto error;
@@ -2364,11 +2365,15 @@ namespace engine
          numTmp = 0 ;
          pSubCLName = (*iterSubCLSet).c_str() ;
 
-         rc = rtnDelete( pSubCLName, boNewDeletor, hint,
-                         flags, cb, dmsCB, dpsCB, w, &numTmp ) ;
+         // Construct query options for sub-collection
+         rtnQueryOptions subCLOptions( options ) ;
+         subCLOptions.setMainCLQuery( options._fullName, pSubCLName ) ;
+         subCLOptions._query = boNewMatcher ;
+
+         rc = rtnDelete( subCLOptions, cb, dmsCB, dpsCB, w, &numTmp ) ;
          if ( rc )
          {
-            rc = _processSubCLResult( rc, pSubCLName, _pCollectionName ) ;
+            rc = _processSubCLResult( rc, pSubCLName, options._fullName ) ;
             if ( SDB_OK == rc )
             {
                continue ;
@@ -2379,7 +2384,7 @@ namespace engine
          {
             PD_LOG( PDERROR, "Session[%s]: Delete on sub-collection[%s] of "
                     "main-collection[%s] failed, rc: %d", sessionName(),
-                    pSubCLName, _pCollectionName, rc ) ;
+                    pSubCLName, options._fullName, rc ) ;
             goto error ;
          }
 
@@ -2756,6 +2761,14 @@ namespace engine
          ++iter ;
       }
 
+      // Clear cached main-collection plans
+      // Note: cached sub-collection plans are cleared inside create-index
+      // of sub-collections
+      _pRtnCB->getAPM()->invalidateCLPlans( _pCollectionName ) ;
+
+      // Tell secondary nodes to clear cached main-collection plans
+      sdbGetClsCB()->invalidatePlan( _pCollectionName ) ;
+
    done:
       return rc ;
    error:
@@ -2839,6 +2852,14 @@ namespace engine
       {
          rc = SDB_OK ;
       }
+
+      // Clear cached main-collection plans
+      // Note: cached sub-collection plans are cleared inside drop-index
+      // of sub-collections
+      _pRtnCB->getAPM()->invalidateCLPlans( _pCollectionName ) ;
+
+      // Tell secondary nodes to clear cached main-collection plans
+      sdbGetClsCB()->invalidatePlan( _pCollectionName ) ;
 
    done:
       return rc ;
@@ -3920,6 +3941,11 @@ namespace engine
          ++iterSubCL ;
       }
 
+      _pRtnCB->getAPM()->invalidateCLPlans( pMainCLName ) ;
+
+      // Tell secondary nodes to clear cached main-collection plans
+      sdbGetClsCB()->invalidatePlan( pMainCLName ) ;
+
    done :
       return rc ;
    error :
@@ -4100,7 +4126,8 @@ namespace engine
    INT32 _clsShdSession::_checkCLStatusAndGetSth( const CHAR *name,
                                                   INT32 version,
                                                   BOOLEAN *isMainCL,
-                                                  INT16 *w )
+                                                  INT16 *w,
+                                                  CHAR *mainCLName )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__CLSSHDSESS__CHECKCLSANDGET ) ;
@@ -4148,7 +4175,12 @@ namespace engine
       replSize = set->getW() ;
       curVer = set->getVersion() ;
       groupCount = set->groupCount() ;
-      mainCL = set->isMainCL();
+      mainCL = set->isMainCL() ;
+      if ( NULL != mainCLName && !set->getMainCLName().empty() )
+      {
+         ossStrncpy( mainCLName, set->getMainCLName().c_str(),
+                     DMS_COLLECTION_FULL_NAME_SZ ) ;
+      }
       _pCatAgent->release_r () ;
       agentLocked = FALSE ;
 

@@ -67,7 +67,7 @@ namespace engine
    BSONObj rtnNullKeyNameObj( const BSONObj &obj ) ;
 
    INT32 rtnGetIXScanner ( const CHAR *pCollectionShortName,
-                           _optAccessPlan *plan,
+                           optAccessPlanRuntime *planRuntime,
                            _dmsStorageUnit *su,
                            _dmsMBContext *mbContext,
                            _pmdEDUCB *cb,
@@ -75,14 +75,14 @@ namespace engine
                            DMS_ACCESS_TYPE accessType ) ;
 
    INT32 rtnGetTBScanner ( const CHAR *pCollectionShortName,
-                           _mthMatchTree &matcher,
+                           optAccessPlanRuntime *planRuntime,
                            _dmsStorageUnit *su,
                            _dmsMBContext *mbContext,
                            _pmdEDUCB *cb,
                            _dmsScanner **ppScanner,
                            DMS_ACCESS_TYPE accessType ) ;
 
-   INT32 rtnGetIndexSeps( _optAccessPlan *plan,
+   INT32 rtnGetIndexSeps( optAccessPlanRuntime *planRuntime,
                           _dmsStorageUnit *su,
                           _dmsMBContext *mbContext,
                           _pmdEDUCB *cb,
@@ -115,14 +115,20 @@ namespace engine
                           INT32 flags, pmdEDUCB *cb, SDB_DMSCB *dmsCB,
                           SDB_DPSCB *dpsCB, INT16 w = 1 ) ;
 
-   INT32 rtnUpdate ( const CHAR *pCollectionName, const BSONObj &selector,
+   INT32 rtnUpdate ( const CHAR *pCollectionName, const BSONObj &matcher,
                      const BSONObj &updator, const BSONObj &hint, INT32 flags,
                      pmdEDUCB *cb, INT64 *pUpdateNum = NULL,
                      INT32 *pInsertNum = NULL,
                      const BSONObj *shardingKey = NULL ) ;
 
-   INT32 rtnUpdate ( const CHAR *pCollectionName, const BSONObj &selector,
+   INT32 rtnUpdate ( const CHAR *pCollectionName, const BSONObj &matcher,
                      const BSONObj &updator, const BSONObj &hint, INT32 flags,
+                     pmdEDUCB *cb, SDB_DMSCB *dmsCB, SDB_DPSCB *dpsCB,
+                     INT16 w = 1, INT64 *pUpdateNum = NULL,
+                     INT32 *pInsertNum = NULL,
+                     const BSONObj *shardingKey = NULL ) ;
+
+   INT32 rtnUpdate ( rtnQueryOptions &options, const BSONObj &updator,
                      pmdEDUCB *cb, SDB_DMSCB *dmsCB, SDB_DPSCB *dpsCB,
                      INT16 w = 1, INT64 *pUpdateNum = NULL,
                      INT32 *pInsertNum = NULL,
@@ -130,12 +136,16 @@ namespace engine
 
    INT32 rtnUpsertSet( const BSONElement& setOnInsert, BSONObj& target ) ;
 
-   INT32 rtnDelete ( const CHAR *pCollectionName, const BSONObj &deletor,
+   INT32 rtnDelete ( const CHAR *pCollectionName, const BSONObj &matcher,
                      const BSONObj &hint, INT32 flags, pmdEDUCB *cb,
                      INT64 *pDelNum = NULL ) ;
 
-   INT32 rtnDelete ( const CHAR *pCollectionName, const BSONObj &deletor,
+   INT32 rtnDelete ( const CHAR *pCollectionName, const BSONObj &matcher,
                      const BSONObj &hint, INT32 flags, pmdEDUCB *cb,
+                     SDB_DMSCB *dmsCB, SDB_DPSCB *dpsCB, INT16 w = 1,
+                     INT64 *pDelNum = NULL ) ;
+
+   INT32 rtnDelete ( rtnQueryOptions &options, pmdEDUCB *cb,
                      SDB_DMSCB *dmsCB, SDB_DPSCB *dpsCB, INT16 w = 1,
                      INT64 *pDelNum = NULL ) ;
 
@@ -171,6 +181,14 @@ namespace engine
                     pmdEDUCB *cb,
                     SINT64 numToSkip,
                     SINT64 numToReturn,
+                    SDB_DMSCB *dmsCB,
+                    SDB_RTNCB *rtnCB,
+                    SINT64 &contextID,
+                    rtnContextBase **ppContext = NULL,
+                    BOOLEAN enablePrefetch = FALSE ) ;
+
+   INT32 rtnQuery ( rtnQueryOptions &options,
+                    pmdEDUCB *cb,
                     SDB_DMSCB *dmsCB,
                     SDB_RTNCB *rtnCB,
                     SINT64 &contextID,
@@ -504,14 +522,7 @@ namespace engine
                           INT32 objNum, SINT32 flags, pmdEDUCB *cb,
                           SDB_DMSCB *dmsCB, SINT64 &contextID ) ;
 
-   INT32 rtnExplain( const CHAR *pCollectionName,
-                     const BSONObj &selector,
-                     const BSONObj &matcher,
-                     const BSONObj &orderBy,
-                     const BSONObj &hint,
-                     SINT32 flags,
-                     SINT64 numToSkip,
-                     SINT64 numToReturn,
+   INT32 rtnExplain( rtnQueryOptions &options,
                      pmdEDUCB *cb, SDB_DMSCB *dmsCB,
                      SDB_RTNCB *rtnCB, INT64 &contextID,
                      rtnContextBase **ppContext = NULL ) ;
@@ -546,8 +557,6 @@ namespace engine
                       _SDB_DMSCB *dmsCB,
                       _SDB_RTNCB *rtnCB,
                       _dpsLogWrapper *dpsCB ) ;
-
-   INT32 rtnClearStats ( pmdEDUCB *cb, _SDB_DMSCB *dmsCB ) ;
 
    INT32 rtnReloadCLStats ( dmsStorageUnit *pSU, dmsMBContext *mbContext,
                             pmdEDUCB *cb, _SDB_DMSCB *dmsCB ) ;

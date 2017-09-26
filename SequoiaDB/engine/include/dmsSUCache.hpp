@@ -39,6 +39,7 @@
 
 #include "core.hpp"
 #include "oss.hpp"
+#include "dms.hpp"
 #include "utilSUCache.hpp"
 #include "utilBitmap.hpp"
 
@@ -55,71 +56,113 @@ namespace engine
    /*
       _dmsStatCache define
     */
+   /// _dmsStatCache stores statistics of collections and indexes
    class _dmsStatCache : public dmsSUCache
    {
       public :
-         _dmsStatCache( IDmsSUCacheHolder *pHolder = NULL )
-         : dmsSUCache( DMS_CACHE_TYPE_STAT, UTIL_SU_CACHE_UNIT_CLSTAT, pHolder )
-         {
-         }
-
-         virtual ~_dmsStatCache () {}
+         _dmsStatCache( IDmsSUCacheHolder *pHolder = NULL ) ;
+         virtual ~_dmsStatCache () ;
    } ;
 
    typedef class _dmsStatCache dmsStatCache ;
 
    /*
-      _dmsCachedPlanIndex define
+      _dmsCachedPlanMgr define
     */
+   /// _dmsCachedPlanMgr stores bitmap indexes of cached plans of collections
    class _dmsCachedPlanMgr : public dmsSUCache
    {
       public :
          _dmsCachedPlanMgr ( IDmsSUCacheHolder *pHolder,
-                             UINT32 bucketNum )
-         : dmsSUCache( DMS_CACHE_TYPE_PLAN, UTIL_SU_CACHE_UNIT_CLPLAN, pHolder ),
-           _cacheBitmap( bucketNum )
-         {
-            if ( _cacheBitmap.getSize() > 0 )
-            {
-               _bucketModulo = bucketNum - 1 ;
-            }
-         }
+                             UINT32 bucketNum,
+                             BOOLEAN needParam ) ;
+         virtual ~_dmsCachedPlanMgr () ;
 
-         virtual ~_dmsCachedPlanMgr () {}
-
-         void setCacheBitmapForPlan( UINT32 hashCode )
+         OSS_INLINE void setCacheBitmapForPlan( UINT32 hashCode )
          {
             setCacheBitmap( hashCode & _bucketModulo ) ;
          }
 
-         void setCacheBitmap ( UINT32 bucketID )
+         OSS_INLINE void setCacheBitmap ( UINT32 bucketID )
          {
             _cacheBitmap.setBit( bucketID ) ;
          }
 
-         void clearCacheBit ( UINT32 bucketID )
+         OSS_INLINE void clearCacheBit ( UINT32 bucketID )
          {
             _cacheBitmap.clearBit( bucketID ) ;
          }
 
-         BOOLEAN testCacheBitMap ( UINT32 bucketID )
+         OSS_INLINE BOOLEAN testCacheBitmap ( UINT32 bucketID )
          {
             return _cacheBitmap.testBit( bucketID ) ;
          }
 
-         void resetCacheBitmap ()
+         OSS_INLINE void resetCacheBitmap ()
          {
             _cacheBitmap.resetBitmap() ;
          }
 
-         UINT32 getBucketNum () const
+         OSS_INLINE UINT32 getBucketNum () const
          {
             return _cacheBitmap.getSize() ;
          }
 
+         OSS_INLINE BOOLEAN testParamInvalidBitmap ( UINT16 mbID )
+         {
+            if ( _paramInvalidBitmap.getSize() <= mbID )
+            {
+               return TRUE ;
+            }
+            return _paramInvalidBitmap.testBit( mbID ) ;
+         }
+
+         OSS_INLINE void clearParamInvalidBit ( UINT16 mbID )
+         {
+            _paramInvalidBitmap.clearBit( mbID ) ;
+         }
+
+         OSS_INLINE void setParamInvalidBit ( UINT16 mbID )
+         {
+            _paramInvalidBitmap.setBit( mbID ) ;
+         }
+
+         OSS_INLINE void resetParamInvalidBitmap ()
+         {
+            _paramInvalidBitmap.resetBitmap() ;
+         }
+
+         OSS_INLINE BOOLEAN testMainCLInvalidBitmap ( UINT16 mbID )
+         {
+            if ( _mainCLInvalidBitmap.getSize() <= mbID )
+            {
+               return TRUE ;
+            }
+            return _mainCLInvalidBitmap.testBit( mbID ) ;
+         }
+
+         OSS_INLINE void clearMainCLInvalidBit ( UINT16 mbID )
+         {
+            _mainCLInvalidBitmap.clearBit( mbID ) ;
+         }
+
+         OSS_INLINE void setMainCLInvalidBit ( UINT16 mbID )
+         {
+            _mainCLInvalidBitmap.setBit( mbID ) ;
+         }
+
+         OSS_INLINE void resetMainCLInvalidBitmap ()
+         {
+            _mainCLInvalidBitmap.resetBitmap() ;
+         }
+
+         INT32 createCLCachedPlanUnit ( UINT16 mbID ) ;
+
       protected :
          UINT32 _bucketModulo ;
          utilBitmap _cacheBitmap ;
+         utilBitmap _paramInvalidBitmap ;
+         utilBitmap _mainCLInvalidBitmap ;
    } ;
 
    typedef class _dmsCachedPlanMgr dmsCachedPlanMgr ;

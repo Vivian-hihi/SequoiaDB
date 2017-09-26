@@ -90,6 +90,7 @@ namespace engine
    #define PMD_DFT_CACHE_MERGE_SZ      (0)
    #define PMD_DFT_OPT_EST_CACHE_SIZE  (10)
    #define PMD_DFT_ENABLE_MIX_CMP      (FALSE)
+   #define PMD_DFT_PLAN_CACHE_LEVEL    ( 3 )
 
    /*
       _pmdCfgExchange implement
@@ -1496,6 +1497,7 @@ namespace engine
       _perfStat = FALSE ;
       _optEstCacheSize = PMD_DFT_OPT_EST_CACHE_SIZE ;
       _enableMixCmp = PMD_DFT_ENABLE_MIX_CMP ;
+      _optPlanCacheLevel = PMD_DFT_PLAN_CACHE_LEVEL ;
 
 #ifdef SDB_ENTERPRISE
 
@@ -1720,7 +1722,7 @@ namespace engine
                    FALSE, TRUE, TRUE, FALSE ) ;
       // --planbuckets
       rdxUInt( pEX, PMD_OPTION_PLAN_BUCKETS, _planBucketNum,
-               FALSE, TRUE, 500, FALSE ) ;
+               FALSE, FALSE, 500, FALSE ) ;
       // --optimeout
       rdxUInt( pEX, PMD_OPTION_OPERATOR_TIMEOUT, _oprtimeout, FALSE, TRUE,
                PMD_OPTION_OPR_TIME_DEFAULT, FALSE ) ;
@@ -1806,6 +1808,11 @@ namespace engine
       // --enablemixcmp
       rdxBooleanS( pEX, PMD_OPTION_ENABLE_MIX_CMP, _enableMixCmp, FALSE,
                    TRUE, PMD_DFT_ENABLE_MIX_CMP, TRUE ) ;
+
+      // --optcachelevel
+      rdxUInt( pEX, PMD_OPTION_PLAN_CACHE_LEVEL, _optPlanCacheLevel, FALSE,
+               TRUE, PMD_DFT_PLAN_CACHE_LEVEL, FALSE ) ;
+      rdvMinMax( pEX, _optPlanCacheLevel, 0, 4, TRUE ) ;
 
       // end map
 

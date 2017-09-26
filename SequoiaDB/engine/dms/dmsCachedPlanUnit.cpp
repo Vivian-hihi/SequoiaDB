@@ -49,11 +49,15 @@ namespace engine
    _dmsCLCachedPlanUnit::_dmsCLCachedPlanUnit ()
    : _utilSUCacheUnit()
    {
+      _paramInvalidCount = 0 ;
+      _mainCLInvalidCount = 0 ;
    }
 
    _dmsCLCachedPlanUnit::_dmsCLCachedPlanUnit ( UINT16 mbID, UINT64 createTime )
    : _utilSUCacheUnit( mbID, createTime )
    {
+      _paramInvalidCount = 0 ;
+      _mainCLInvalidCount = 0 ;
    }
 
    _dmsCLCachedPlanUnit::~_dmsCLCachedPlanUnit ()

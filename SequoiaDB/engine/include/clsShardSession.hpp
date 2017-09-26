@@ -99,7 +99,8 @@ namespace engine
          INT32 _checkCLStatusAndGetSth( const CHAR *name,
                                         INT32 version,
                                         BOOLEAN *isMainCL = NULL,
-                                        INT16 *w = NULL ) ;
+                                        INT16 *w = NULL,
+                                        CHAR *mainCLName = NULL ) ;
 
          /// valid: replSize == NULL and clientW != NULL
          ///        replSize != NULL and clientW == NULL
@@ -181,33 +182,23 @@ namespace engine
                                 INT16 w, INT32 &insertedNum,
                                 INT32 &ignoredNum ) ;
 
-         INT32 _queryToMainCL( const CHAR *pCollectionName,
-                               const BSONObj &selector,
-                               const BSONObj &matcher,
-                               const BSONObj &orderBy,
-                               const BSONObj &hint,
-                               SINT32 flags,
+         INT32 _queryToMainCL( rtnQueryOptions &options,
                                pmdEDUCB *cb,
-                               SINT64 numToSkip,
-                               SINT64 numToReturn,
                                SINT64 &contextID,
                                _rtnContextBase **ppContext = NULL,
                                INT16 w = 1 ) ;
-         INT32 _updateToMainCL( const CHAR *pCollectionName,
-                                const BSONObj &selector,
+         INT32 _updateToMainCL( rtnQueryOptions &options,
                                 const BSONObj &updator,
-                                const BSONObj &hint,
-                                SINT32 flags,
                                 pmdEDUCB *cb,
                                 SDB_DMSCB *pDmsCB,
                                 SDB_DPSCB *pDpsCB,
                                 INT16 w,
                                 INT64 *pUpdateNum = NULL );
-         INT32 _deleteToMainCL ( const CHAR *pCollectionName,
-                                 const BSONObj &deletor,
-                                 const BSONObj &hint,
-                                 INT32 flags, pmdEDUCB *cb,
-                                 SDB_DMSCB *dmsCB, SDB_DPSCB *dpsCB, INT16 w,
+         INT32 _deleteToMainCL ( rtnQueryOptions &options,
+                                 pmdEDUCB *cb,
+                                 SDB_DMSCB *dmsCB,
+                                 SDB_DPSCB *dpsCB,
+                                 INT16 w,
                                  INT64 *pDelNum = NULL );
          INT32 _runOnMainCL( const CHAR *pCommandName,
                              _rtnCommand *pCommand,

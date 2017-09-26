@@ -42,6 +42,7 @@
 #include "core.hpp"
 #include "oss.hpp"
 #include "optAccessPlan.hpp"
+#include "optAccessPlanRuntime.hpp"
 #include "utilHashTable.hpp"
 #include "dmsCachedPlanUnit.hpp"
 #include "dmsEventHandler.hpp"
@@ -88,6 +89,8 @@ namespace engine
                                   UINT32 suLID, UINT32 clLID ) ;
 
          void invalidateAllPlans () ;
+
+         void invalidateCLPlans ( const CHAR *pCLFullName ) ;
 
          UINT32 getCachedPlanCount () const ;
 
@@ -312,16 +315,27 @@ namespace engine
       _optAccessPlanManager define
     */
    class _optAccessPlanManager : public SDBObject,
-                                 public _IDmsEventHandler
+                                 public _IDmsEventHandler,
+                                 public _mthMatchConfigHolder
    {
       public :
          _optAccessPlanManager () ;
 
          virtual ~_optAccessPlanManager () ;
 
-         INT32 init ( UINT32 bucketNum ) ;
+         INT32 init ( UINT32 bucketNum,
+                      OPT_PLAN_CACHE_LEVEL cacheLevel,
+                      BOOLEAN enableMixCmp ) ;
+
+         INT32 reinit ( OPT_PLAN_CACHE_LEVEL cacheLevel,
+                        BOOLEAN enableMixCmp ) ;
 
          void clear () ;
+
+         OSS_INLINE OPT_PLAN_CACHE_LEVEL getCacheLevel () const
+         {
+            return _cacheLevel ;
+         }
 
          OSS_INLINE BOOLEAN isInitialized () const
          {
@@ -338,17 +352,20 @@ namespace engine
             return &_monitor ;
          }
 
-         INT32 getAccessPlan ( dmsStorageUnit *su,
+         // Try to get access plan from cache, if could not get access plan
+         // from cache, create one
+         INT32 getAccessPlan ( const rtnQueryOptions &options,
+                               dmsStorageUnit *su,
                                dmsMBContext *mbContext,
-                               const CHAR *pCLFullName,
-                               const BSONObj &selector,
-                               const BSONObj &matcher,
-                               const BSONObj &orderBy,
-                               const BSONObj &hint,
-                               SINT32 flags,
-                               SINT64 numToSkip,
-                               SINT64 numToReturn,
-                               optAccessPlan **ppPlan ) ;
+                               optAccessPlanRuntime &planRuntime ) ;
+
+         // Create access plan directly without caching
+         INT32 getTempAccessPlan ( const rtnQueryOptions &options,
+                                   dmsStorageUnit *su,
+                                   dmsMBContext *mbContext,
+                                   optAccessPlanRuntime &planRuntime ) ;
+
+         void invalidateCLPlans ( const CHAR *pCLFullName ) ;
 
          void invalidateAllPlans () ;
 
@@ -418,15 +435,70 @@ namespace engine
          }
 
       protected :
+         INT32 _getCLAccessPlan ( const rtnQueryOptions &options,
+                                  dmsStorageUnit *su,
+                                  dmsMBContext *mbContext,
+                                  optAccessPlanRuntime &planRuntime ) ;
+
+         INT32 _getCLAccessPlan ( const rtnQueryOptions &options,
+                                  OPT_PLAN_CACHE_LEVEL cacheLevel,
+                                  dmsStorageUnit *su,
+                                  dmsMBContext *mbContext,
+                                  optAccessPlanRuntime &planRuntime ) ;
+
+         INT32 _getMainCLAccessPlan ( const rtnQueryOptions &options,
+                                      dmsStorageUnit *su,
+                                      dmsMBContext *mbContext,
+                                      optAccessPlanRuntime &planRuntime ) ;
+
+         INT32 _prepareAccessPlanKey ( dmsStorageUnit *su,
+                                       dmsMBContext *mbContext,
+                                       optAccessPlanKey &planKey,
+                                       mthMatchHelper &matchHelper,
+                                       optAccessPlanRuntime &planRuntime ) ;
+
          INT32 _createAccessPlan ( dmsStorageUnit *su,
                                    dmsMBContext *mbContext,
-                                   const optAccessPlanKey &planKey,
-                                   optAccessPlan **ppPlan ) ;
+                                   optAccessPlanKey &planKey,
+                                   optAccessPlanRuntime &planRuntime,
+                                   mthMatchHelper &matchHelper,
+                                   optGeneralAccessPlan **ppPlan,
+                                   BOOLEAN needCache ) ;
 
-         INT32 _getAccessPlan ( const optAccessPlanKey &planKey,
-                                optAccessPlan **ppPlan ) ;
+         INT32 _getCachedAccessPlan ( const optAccessPlanKey &planKey,
+                                      optAccessPlan **ppPlan ) ;
 
          BOOLEAN _cacheAccessPlan ( optAccessPlan *pPlan ) ;
+
+         // Helpers for parameterized plans
+         INT32 _validateParamPlan ( dmsStorageUnit *su,
+                                    dmsMBContext *mbContext,
+                                    optAccessPlanKey &planKey,
+                                    optAccessPlanRuntime &planRuntime,
+                                    mthMatchHelper &matchHelper,
+                                    optGeneralAccessPlan *plan ) ;
+
+         // Helpers for main-collection plans
+         INT32 _createMainCLPlan ( optAccessPlanKey &planKey,
+                                   const rtnQueryOptions &subOptions,
+                                   dmsStorageUnit *su,
+                                   dmsMBContext *mbContext,
+                                   optAccessPlanRuntime &planRuntime,
+                                   mthMatchHelper &matchHelper,
+                                   optMainCLAccessPlan **ppPlan ) ;
+
+         INT32 _validateMainCLPlan ( optMainCLAccessPlan *mainPlan,
+                                     const rtnQueryOptions &subOptions,
+                                     dmsStorageUnit *su,
+                                     dmsMBContext *mbContext,
+                                     optAccessPlanRuntime &planRuntime ) ;
+
+         INT32 _bindMainCLPlan ( optMainCLAccessPlan *mainPlan,
+                                 const rtnQueryOptions &subOptions,
+                                 dmsStorageUnit *su,
+                                 dmsMBContext *mbContext,
+                                 optAccessPlanRuntime &planRuntime,
+                                 mthMatchHelper &matchHelper ) ;
 
          // Helpers for _IDmsEventHandler
          void _invalidSUPlans ( IDmsSUCacheHolder *pCacheHolder ) ;
@@ -435,9 +507,14 @@ namespace engine
                                 UINT16 mbID, UINT32 clLID ) ;
 
       protected :
+         ossSpinXLatch           _reinitLatch ;
          optAccessPlanCache      _planCache ;
          optCachedPlanMonitor    _monitor ;
          EDUID                   _clearJobEduID ;
+
+         // Configured options
+         UINT32                  _cacheBucketNum ;
+         OPT_PLAN_CACHE_LEVEL    _cacheLevel ;
    } ;
 
    typedef _optAccessPlanManager optAccessPlanManager ;

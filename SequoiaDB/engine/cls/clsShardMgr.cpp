@@ -436,16 +436,13 @@ namespace engine
    {
       if ( primary && SDB_EVT_OCCUR_BEFORE == type )
       {
-         pmdEDUCB *cb = pmdGetThreadEDUCB() ;
-         _SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
-
          // clear catalog info
          _pCatAgent->lock_w() ;
          _pCatAgent->clearAll() ;
          _pCatAgent->release_w() ;
 
          // Clear statistics
-         rtnClearStats( cb, dmsCB ) ;
+         pmdGetKRCB()->getDMSCB()->clearSUCaches( DMS_EVENT_MASK_ALL ) ;
       }
       else if ( primary && SDB_EVT_OCCUR_AFTER == type )
       {

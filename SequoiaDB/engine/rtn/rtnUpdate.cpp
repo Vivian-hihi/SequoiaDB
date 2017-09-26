@@ -52,7 +52,7 @@ namespace engine
 {
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNUPDATE1, "rtnUpdate" )
-   INT32 rtnUpdate ( const CHAR *pCollectionName, const BSONObj &selector,
+   INT32 rtnUpdate ( const CHAR *pCollectionName, const BSONObj &matcher,
                      const BSONObj &updator, const BSONObj &hint, INT32 flags,
                      pmdEDUCB *cb, INT64 *pUpdateNum, INT32 *pInsertNum,
                      const BSONObj *shardingKey )
@@ -68,7 +68,7 @@ namespace engine
          dpsCB = NULL ;
       }
 
-      rc = rtnUpdate ( pCollectionName, selector, updator, hint, flags, cb,
+      rc = rtnUpdate ( pCollectionName, matcher, updator, hint, flags, cb,
                        dmsCB, dpsCB, 1, pUpdateNum, pInsertNum, shardingKey ) ;
 
       PD_TRACE_EXITRC ( SDB_RTNUPDATE1, rc ) ;
@@ -76,16 +76,34 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNUPDATE2, "rtnUpdate" )
-   INT32 rtnUpdate ( const CHAR *pCollectionName, const BSONObj &selector,
+   INT32 rtnUpdate ( const CHAR *pCollectionName, const BSONObj &matcher,
                      const BSONObj &updator, const BSONObj &hint, INT32 flags,
                      pmdEDUCB *cb, SDB_DMSCB *dmsCB, SDB_DPSCB *dpsCB,
                      INT16 w, INT64 *pUpdateNum, INT32 *pInsertNum,
                      const BSONObj *shardingKey )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB_RTNUPDATE2 ) ;
+      PD_TRACE_ENTRY( SDB_RTNUPDATE2 ) ;
+      BSONObj dummy ;
+      // matcher, selector, order, hint, collection, skip, limit, flag
+      rtnQueryOptions options( matcher, dummy, dummy, hint, pCollectionName,
+                               0, -1, flags ) ;
+      rc = rtnUpdate( options, updator, cb, dmsCB, dpsCB, w, pUpdateNum,
+                      pInsertNum, shardingKey ) ;
+      PD_TRACE_EXITRC( SDB_RTNUPDATE2, rc ) ;
+      return rc ;
+   }
 
-      SDB_ASSERT ( pCollectionName, "collection name can't be NULL" ) ;
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNUPDATE_OPTIONS, "rtnUpdate" )
+   INT32 rtnUpdate ( rtnQueryOptions &options, const BSONObj &updator,
+                     pmdEDUCB *cb, SDB_DMSCB *dmsCB, SDB_DPSCB *dpsCB,
+                     INT16 w, INT64 *pUpdateNum, INT32 *pInsertNum,
+                     const BSONObj *shardingKey )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_RTNUPDATE_OPTIONS ) ;
+
+      SDB_ASSERT ( options._fullName, "collection name can't be NULL" ) ;
       SDB_ASSERT ( cb, "educb can't be NULL" ) ;
       SDB_ASSERT ( dmsCB, "dmsCB can't be NULL" ) ;
 
@@ -97,13 +115,13 @@ namespace engine
       dmsStorageUnitID suID            = DMS_INVALID_CS ;
       const CHAR *pCollectionShortName = NULL ;
       optAccessPlanManager *apm        = NULL ;
-      optAccessPlan *plan              = NULL ;
       BOOLEAN writable                 = FALSE ;
       BOOLEAN strictDataMode           = FALSE ;
       dmsScanner *pScanner             = NULL ;
       BSONObj emptyObj ;
       mthModifier modifier ;
       vector<INT64> dollarList ;
+      optAccessPlanRuntime planRuntime ;
 
       // updator is modifier
       if ( updator.isEmpty() )
@@ -122,15 +140,15 @@ namespace engine
       }
       writable = TRUE;
 
-      rc = rtnResolveCollectionNameAndLock ( pCollectionName, dmsCB, &su,
+      rc = rtnResolveCollectionNameAndLock ( options._fullName, dmsCB, &su,
                                              &pCollectionShortName, suID ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to resolve collection name %s, rc: %d",
-                   pCollectionName, rc ) ;
+                   options._fullName, rc ) ;
 
       // get mb context
       rc = su->data()->getMBContext( &mbContext, pCollectionShortName, -1 ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get collection[%s] mb context, "
-                   "rc: %d", pCollectionName, rc ) ;
+                   "rc: %d", options._fullName, rc ) ;
 
       if ( OSS_BIT_TEST( mbContext->mb()->_attributes,
                          DMS_MB_ATTR_NOIDINDEX ) )
@@ -168,26 +186,20 @@ namespace engine
       SDB_ASSERT ( apm, "apm shouldn't be NULL" ) ;
 
       // plan is released when exiting the function
-      rc = apm->getAccessPlan( su, mbContext, pCollectionName,
-                               emptyObj,
-                               selector, // FIXME: this is the matcher
-                               emptyObj, // orderBy
-                               hint,     // hint
-                               0, 0, -1, // flags, numToSkip, numToReturn
-                               &plan ) ;
+      rc = apm->getAccessPlan( options, su, mbContext, planRuntime ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get access plan for %s for update, "
-                   "rc: %d", pCollectionName, rc ) ;
+                   "rc: %d", options._fullName, rc ) ;
 
-      if ( plan->getScanType() == TBSCAN )
+      if ( planRuntime.getScanType() == TBSCAN )
       {
-         rc = rtnGetTBScanner( pCollectionShortName, plan->getMatcher(), su,
+         rc = rtnGetTBScanner( pCollectionShortName, &planRuntime, su,
                                mbContext, cb, &pScanner,
                                DMS_ACCESS_TYPE_UPDATE ) ;
       }
-      else if ( plan->getScanType() == IXSCAN )
+      else if ( planRuntime.getScanType() == IXSCAN )
       {
-         rc = rtnGetIXScanner( pCollectionShortName, plan, su, mbContext, cb,
-                               &pScanner, DMS_ACCESS_TYPE_UPDATE ) ;
+         rc = rtnGetIXScanner( pCollectionShortName, &planRuntime, su, mbContext,
+                               cb, &pScanner, DMS_ACCESS_TYPE_UPDATE ) ;
       }
       else
       {
@@ -232,11 +244,11 @@ namespace engine
 
       // if we didn't update anything, let's attempt to insert if we are doing
       // upsert
-      if ( ( 0 == numUpdatedRecords ) && ( FLG_UPDATE_UPSERT & flags ) )
+      if ( ( 0 == numUpdatedRecords ) && ( FLG_UPDATE_UPSERT & options._flag ) )
       {
-         BSONObj source = plan->getMatcher().getEqualityQueryObject() ;
+         BSONObj source = planRuntime.getMatchTree()->getEqualityQueryObject() ;
          PD_LOG ( PDDEBUG, "equality query object: %s",
-                     source.toString().c_str() ) ;
+                  source.toString().c_str() ) ;
 
          BSONObj target ;
          // upsertor means generate a new record from empty source
@@ -248,9 +260,10 @@ namespace engine
             goto error ;
          }
          PD_LOG ( PDDEBUG, "modified equality query object: %s",
-                     target.toString().c_str() ) ;
+                  target.toString().c_str() ) ;
 
-         BSONElement setOnInsert = hint.getField( FIELD_NAME_SET_ON_INSERT ) ;
+         BSONElement setOnInsert =
+                        options._hint.getField( FIELD_NAME_SET_ON_INSERT ) ;
          if ( !setOnInsert.eoo() )
          {
             rc = rtnUpsertSet( setOnInsert, target ) ;
@@ -285,10 +298,7 @@ namespace engine
       {
          su->data()->releaseMBContext( mbContext ) ;
       }
-      if ( plan )
-      {
-         plan->release() ;
-      }
+      planRuntime.releasePlan() ;
       if ( DMS_INVALID_CS != suID )
       {
          dmsCB->suUnlock ( suID ) ;
@@ -304,7 +314,7 @@ namespace engine
             rc = dpsCB->completeOpr( cb, w ) ;
          }
       }
-      PD_TRACE_EXITRC ( SDB_RTNUPDATE2, rc ) ;
+      PD_TRACE_EXITRC ( SDB_RTNUPDATE_OPTIONS, rc ) ;
       return rc ;
    error :
       goto done ;

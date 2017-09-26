@@ -306,21 +306,13 @@ namespace engine
       rtnContextBase *contextObj = NULL ;
       if ( !_subs.empty() )
       {
+         // Construct query options of sub-collection
          const string &clName = *( _subs.begin() ) ;
-         rc = rtnQuery( clName.c_str(),
-                        _options._selector,
-                        _options._query,
-                        _options._orderBy,
-                        _options._hint,
-                        _options._flag,
-                        cb,
-                        _options._skip,
-                        _options._limit,
-                        sdbGetDMSCB(),
-                        rtnCB,
-                        context,
-                        &contextObj,
-                        TRUE ) ;
+         rtnQueryOptions subCLOptions( _options ) ;
+         subCLOptions.setMainCLQuery( _options._fullName, clName.c_str() ) ;
+
+         rc = rtnQuery( subCLOptions, cb, sdbGetDMSCB(), rtnCB, context,
+                        &contextObj, TRUE ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to query on cl:%s, rc:%d",

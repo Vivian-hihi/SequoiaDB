@@ -160,6 +160,13 @@ namespace engine
                                      const dmsEventIdxItem &idxItem,
                                      pmdEDUCB *cb, SDB_DPSCB *dpsCB ) ;
 
+         virtual INT32 onClearSUCaches ( IDmsEventHolder *pEventHolder,
+                                         IDmsSUCacheHolder *pCacheHolder ) ;
+
+         virtual INT32 onClearCLCaches ( IDmsEventHolder *pEventHolder,
+                                         IDmsSUCacheHolder *pCacheHolder,
+                                         const dmsEventCLItem &clItem ) ;
+
          OSS_INLINE virtual UINT32 getMask ()
          {
             return DMS_EVENT_MASK_STAT ;

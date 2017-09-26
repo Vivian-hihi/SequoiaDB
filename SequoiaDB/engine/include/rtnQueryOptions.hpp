@@ -54,11 +54,12 @@ namespace engine
       _rtnQueryOptions()
       :_fullName( NULL ),
        _fullNameBuf( NULL ),
+       _mainCLName( NULL ),
+       _mainCLNameBuf( NULL ),
        _skip( 0 ),
        _limit( -1 ),
        _flag( 0 )
       {
-
       }
 
       _rtnQueryOptions( const CHAR *query,
@@ -75,6 +76,8 @@ namespace engine
        _hint( hint ),
        _fullName( fullName ),
        _fullNameBuf( NULL ),
+       _mainCLName( NULL ),
+       _mainCLNameBuf( NULL ),
        _skip( skip ),
        _limit( limit ),
        _flag( flag )
@@ -96,6 +99,8 @@ namespace engine
        _hint( hint ),
        _fullName( fullName ),
        _fullNameBuf( NULL ),
+       _mainCLName( NULL ),
+       _mainCLNameBuf( NULL ),
        _skip( skip ),
        _limit( limit ),
        _flag( flag )
@@ -110,6 +115,8 @@ namespace engine
        _hint( o._hint ),
        _fullName( o._fullName ),
        _fullNameBuf( NULL ),
+       _mainCLName( o._mainCLName ),
+       _mainCLNameBuf( NULL ),
        _skip( o._skip ),
        _limit( o._limit ),
        _flag( o._flag )
@@ -126,9 +133,13 @@ namespace engine
                         INT32 &buffSize,
                         IExecutor *cb = NULL ) const ;
 
-      INT32 getOwned() ;
+      virtual INT32 getOwned() ;
 
       string toString() const ;
+
+      void setCLFullName ( const CHAR *clFullName ) ;
+      void setMainCLName ( const CHAR *mainCLName ) ;
+      void setMainCLQuery ( const CHAR *mainCLName, const CHAR *subCLName ) ;
 
    public:
       bson::BSONObj _query ;
@@ -137,6 +148,8 @@ namespace engine
       bson::BSONObj _hint ;
       const CHAR *_fullName ;
       CHAR *_fullNameBuf ;
+      const CHAR *_mainCLName ;
+      CHAR *_mainCLNameBuf ;
       SINT64 _skip ;
       SINT64 _limit ;
       INT32 _flag ;

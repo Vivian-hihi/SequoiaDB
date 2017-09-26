@@ -55,7 +55,7 @@ namespace engine
       virtual std::string      name() const ;
       virtual RTN_CONTEXT_TYPE getType() const ;
       virtual _dmsStorageUnit*  getSU () { return NULL ; }
-      virtual _optAccessPlan *getPlan() { return _planForExplain ; }
+      virtual _optAccessPlanRuntime *getPlanRuntime() { return _planForExplain ; }
 
       INT32 open( const BSONObj &orderBy,
                   rtnContext *context,
@@ -84,7 +84,7 @@ namespace engine
       _mthSelector _selector ;
       /// WARNING: do not use this plan to do anything
       ///  except keeping plan for explaining. -- yunwu.
-      _optAccessPlan *_planForExplain ;
+      _optAccessPlanRuntime *_planForExplain ;
    } ;
    typedef class _rtnContextSort rtnContextSort ;
 }

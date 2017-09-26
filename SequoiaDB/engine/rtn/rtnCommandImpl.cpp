@@ -533,18 +533,23 @@ namespace engine
       return NULL ;
    }
 
-   INT32 rtnGetIndexSeps( optAccessPlan *plan, dmsStorageUnit *su,
+   INT32 rtnGetIndexSeps( optAccessPlanRuntime *planRuntime,
+                          dmsStorageUnit *su,
                           dmsMBContext *mbContext, pmdEDUCB * cb,
                           vector < BSONObj > &idxBlocks,
                           std::vector< dmsRecordID > &idxRIDs )
    {
       INT32 rc = SDB_OK ;
+
+      SDB_ASSERT( planRuntime, "planRuntime is invalid" ) ;
+
       idxBlocks.clear() ;
       idxRIDs.clear() ;
 
-      SDB_ASSERT( IXSCAN == plan->getScanType(), "Scan type must be IXSCAN" ) ;
+      SDB_ASSERT( IXSCAN == planRuntime->getScanType(),
+                  "Scan type must be IXSCAN" ) ;
 
-      ixmIndexCB indexCB( plan->getIndexCBExtent(), su->index(), NULL ) ;
+      ixmIndexCB indexCB( planRuntime->getIndexCBExtent(), su->index(), NULL ) ;
 
       if ( !mbContext->isMBLock() )
       {
@@ -559,24 +564,24 @@ namespace engine
          rc = SDB_SYS ;
          goto error ;
       }
-      if ( indexCB.getLogicalID() != plan->getIndexLID() )
+      if ( indexCB.getLogicalID() != planRuntime->getIndexLID() )
       {
          PD_LOG( PDERROR, "Index[extent id: %d] logical id[%d] is not "
-                 "expected[%d]", plan->getIndexCBExtent(),
-                 indexCB.getLogicalID(), plan->getIndexLID() ) ;
+                 "expected[%d]", planRuntime->getIndexCBExtent(),
+                 indexCB.getLogicalID(), planRuntime->getIndexLID() ) ;
          rc = SDB_IXM_NOTEXIST ;
          goto error ;
       }
 
       {
-         BSONObj startObj = plan->getPredList()->startKey() ;
-         BSONObj endObj = plan->getPredList()->endKey() ;
+         BSONObj startObj = planRuntime->getPredList()->startKey() ;
+         BSONObj endObj = planRuntime->getPredList()->endKey() ;
          BSONObj prevObj ;
          dmsRecordID prevRid ;
-         if ( plan->getDirection() < 0 )
+         if ( planRuntime->getDirection() < 0 )
          {
             startObj = endObj ;
-            endObj = plan->getPredList()->startKey() ;
+            endObj = planRuntime->getPredList()->startKey() ;
          }
          Ordering order = Ordering::make( indexCB.keyPattern() ) ;
          dmsExtentID rootID = indexCB.getRoot() ;
@@ -751,23 +756,26 @@ namespace engine
    }
 
    static INT32 rtnGetIndexblocks( dmsStorageUnit *su ,
-                                   optAccessPlan *plan,
+                                   optAccessPlanRuntime *planRuntime,
                                    pmdEDUCB * cb,
                                    rtnContextDump *context,
                                    dmsMBContext *mbContext )
    {
       INT32 rc = SDB_OK ;
+
+      SDB_ASSERT( planRuntime, "planRuntime is invalid" ) ;
+
       std::vector < BSONObj > idxBlocks ;
       std::vector < dmsRecordID > idxRIDs ;
 
-      rc = rtnGetIndexSeps( plan, su, mbContext, cb, idxBlocks, idxRIDs ) ;
+      rc = rtnGetIndexSeps( planRuntime, su, mbContext, cb, idxBlocks, idxRIDs ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get idnex seps, rc: %d", rc ) ;
 
       {
-         ixmIndexCB indexCB( plan->getIndexCBExtent(), su->index(), NULL ) ;
+         ixmIndexCB indexCB( planRuntime->getIndexCBExtent(), su->index(), NULL ) ;
          rc = monDumpIndexblocks( idxBlocks, idxRIDs, indexCB.getName(),
                                   indexCB.getLogicalID(),
-                                  plan->getDirection(),
+                                  planRuntime->getDirection(),
                                   context ) ;
          PD_RC_CHECK( rc, PDERROR, "Dump indexblocks failed, rc: %d", rc ) ;
       }
@@ -793,9 +801,14 @@ namespace engine
       dmsStorageUnit *su = NULL ;
       const CHAR *pCollectionShortName = NULL ;
       dmsMBContext *mbContext = NULL ;
+      optAccessPlanRuntime planRuntime ;
       optAccessPlanManager *apm = NULL ;
-      optAccessPlan *plan = NULL ;
-      BSONObj emptyObj ;
+      BSONObj dummy ;
+
+      // Construct options
+      // matcher, selector, order, hint, collection, skip, limit, flag
+      rtnQueryOptions options( match, dummy, orderby, hint, pCollectionName,
+                               0, -1, 0 ) ;
 
       // This prevents other sessions drop the collectionspace during accessing
       rc = rtnResolveCollectionNameAndLock ( pCollectionName, dmsCB, &su,
@@ -810,14 +823,7 @@ namespace engine
       SDB_ASSERT ( apm, "apm shouldn't be NULL" ) ;
 
       // plan is released in context destructor
-      rc = apm->getAccessPlan( su, mbContext,
-                               pCollectionName,
-                               emptyObj,
-                               match,
-                               orderby,  // orderBy
-                               hint,     // hint
-                               0, 0, -1, // flags, numToSkip, numToReturn
-                               &plan ) ;
+      rc = apm->getAccessPlan( options, su, mbContext, planRuntime ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get access plan for %s, "
                    "context %lld, rc: %d", pCollectionName,
                    context->contextID(), rc ) ;
@@ -826,19 +832,19 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Failed to lock collection[%s], rc: %d",
                    pCollectionName, rc ) ;
 
-      if ( TBSCAN == plan->getScanType() )
+      if ( TBSCAN == planRuntime.getScanType() )
       {
          rc = _rtnGetDatablocks( su, cb, context, mbContext,
                                  pCollectionShortName ) ;
       }
-      else if ( IXSCAN == plan->getScanType() )
+      else if ( IXSCAN == planRuntime.getScanType() )
       {
-         rc = rtnGetIndexblocks( su, plan, cb, context, mbContext ) ;
+         rc = rtnGetIndexblocks( su, &planRuntime, cb, context, mbContext ) ;
       }
       else
       {
          PD_LOG( PDERROR, "Collection access plan scan type error: %d",
-                 plan->getScanType() ) ;
+                 planRuntime.getScanType() ) ;
          rc = SDB_SYS ;
          goto error ;
       }
@@ -851,10 +857,7 @@ namespace engine
       {
          su->data()->releaseMBContext( mbContext ) ;
       }
-      if ( plan )
-      {
-         plan->release() ;
-      }
+      planRuntime.releasePlan() ;
       if ( DMS_INVALID_CS != suID )
       {
          dmsCB->suUnlock( suID ) ;

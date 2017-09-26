@@ -39,6 +39,7 @@
 #include "dmsStorageUnit.hpp"
 #include "dmsScanner.hpp"
 #include "mthModifier.hpp"
+#include "mthMatchRuntime.hpp"
 #include "pmd.hpp"
 #include "pdTrace.hpp"
 #include "dmsTrace.hpp"
@@ -796,8 +797,9 @@ namespace engine
                {
                   bucketNum = ossRoundUpToMultipleX( bucketNum,
                                                      UTIL_HASH_TABLE_BUCKET_UNIT ) ;
-                  _pSUCaches[ type ] =
-                        SDB_OSS_NEW dmsCachedPlanMgr( this, bucketNum ) ;
+                  _pSUCaches[ type ] = SDB_OSS_NEW dmsCachedPlanMgr( this,
+                                                                     bucketNum,
+                                                                     TRUE ) ;
                }
                break ;
             }
@@ -1529,7 +1531,7 @@ namespace engine
    INT32 _dmsStorageUnit::updateRecords ( const CHAR *pName,
                                           pmdEDUCB *cb,
                                           SDB_DPSCB *dpscb,
-                                          _mthMatchTree *matcher,
+                                          mthMatchRuntime *matchRuntime,
                                           mthModifier &modifier,
                                           SINT64 &numRecords,
                                           SINT64 maxUpdate,
@@ -1558,7 +1560,7 @@ namespace engine
          dmsRecordID recordID ;
          ossValuePtr recordDataPtr = 0 ;
          numRecords = 0 ;
-         dmsTBScanner tbScanner( _pDataSu, context, matcher,
+         dmsTBScanner tbScanner( _pDataSu, context, matchRuntime,
                                  DMS_ACCESS_TYPE_UPDATE, maxUpdate ) ;
          while ( SDB_OK == ( rc = tbScanner.advance( recordID, generator,
                                                      cb ) ) )
@@ -1597,7 +1599,7 @@ namespace engine
    INT32 _dmsStorageUnit::deleteRecords ( const CHAR *pName,
                                           pmdEDUCB * cb,
                                           SDB_DPSCB *dpscb,
-                                          _mthMatchTree *matcher,
+                                          mthMatchRuntime *matchRuntime,
                                           SINT64 &numRecords,
                                           SINT64 maxDelete,
                                           dmsMBContext *context )
@@ -1625,7 +1627,7 @@ namespace engine
          dmsRecordID recordID ;
          ossValuePtr recordDataPtr = 0 ;
          numRecords = 0 ;
-         dmsTBScanner tbScanner( _pDataSu, context, matcher,
+         dmsTBScanner tbScanner( _pDataSu, context, matchRuntime,
                                  DMS_ACCESS_TYPE_DELETE, maxDelete ) ;
          while ( SDB_OK == ( rc = tbScanner.advance( recordID, generator,
                                                      cb ) ) )

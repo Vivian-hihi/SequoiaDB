@@ -42,9 +42,31 @@ using namespace bson ;
 
 namespace engine
 {
+
+   // compare to sort operators
    BOOLEAN mthCompareNode( _mthMatchNode * left, _mthMatchNode * right )
    {
-      return left->getWeight() < right->getWeight() ;
+      if ( left->getWeight() < right->getWeight() )
+      {
+         return TRUE ;
+      }
+      else if ( left->getWeight() > right->getWeight() )
+      {
+         return FALSE ;
+      }
+      else
+      {
+         INT32 res = ossStrcmp( left->getFieldName(), right->getFieldName() ) ;
+         if ( res < 0 )
+         {
+            return TRUE ;
+         }
+         else if ( res > 0 )
+         {
+            return FALSE ;
+         }
+      }
+      return left->getType() < right->getType() ;
    }
 
    void mthContextClearRecordInfoSafe( _mthMatchTreeContext *context )
@@ -66,6 +88,8 @@ namespace engine
       _hasReturnMatch        = FALSE ;
       _isUseElement          = FALSE ;
       _isDollarListEnabled   = FALSE ;
+
+      _parameters            = NULL ;
    }
 
    _mthMatchTreeContext::~_mthMatchTreeContext()
@@ -396,6 +420,24 @@ namespace engine
       return result.str() ;
    }
 
+   BSONElement _mthMatchTreeContext::getParameter ( INT8 index )
+   {
+      if ( NULL != _parameters )
+      {
+         return _parameters->getParam( index ) ;
+      }
+      return BSONElement() ;
+   }
+
+   BOOLEAN _mthMatchTreeContext::paramDoneByPred ( INT8 index )
+   {
+      if ( _parameters )
+      {
+         return _parameters->isDoneByPred( index ) ;
+      }
+      return FALSE ;
+   }
+
    //********************** _mthMatchNodeIterator ***************************
    _mthMatchNodeIterator::_mthMatchNodeIterator( _mthMatchNode *node )
    {
@@ -435,19 +477,64 @@ namespace engine
    }
 
    //********************** _mthNodeConfig **************************
-   const _mthNodeConfig *mthGetDefaultNodeConfig ()
+   const mthNodeConfig *mthGetDefaultNodeConfigPtr ()
    {
-      static _mthNodeConfig defaultConfig ;
+      static mthNodeConfig defaultConfig ;
 
       return &defaultConfig ;
    }
 
-   //********************** _mthMatchNode ***************************
-   _mthMatchNode::_mthMatchNode( _mthNodeAllocator *allocator )
-                 :_allocator( allocator ), _parent( NULL ),
-                 _idx_in_parent( -1 ), _isUnderLogicNot( FALSE )
+   const mthNodeConfig &mthGetDefaultNodEConfig ()
    {
-      _config = mthGetDefaultNodeConfig() ;
+      return (*mthGetDefaultNodeConfigPtr()) ;
+   }
+
+   //********************** _mthMatchConfig *************************
+   _mthMatchConfig::_mthMatchConfig ()
+   {
+      _matchConfig = mthGetDefaultNodeConfigPtr() ;
+   }
+
+   _mthMatchConfig::_mthMatchConfig ( const mthNodeConfig *configPtr )
+   {
+      if ( NULL == configPtr )
+      {
+         _matchConfig = mthGetDefaultNodeConfigPtr() ;
+      }
+      else
+      {
+         _matchConfig = configPtr ;
+      }
+   }
+
+   _mthMatchConfig::~_mthMatchConfig ()
+   {
+      _matchConfig = NULL ;
+   }
+
+   _mthMatchConfigHolder::_mthMatchConfigHolder ()
+   : _mthMatchConfig( &_stackMatchConfig )
+   {
+      setMatchConfig( mthGetDefaultNodEConfig() ) ;
+   }
+
+   _mthMatchConfigHolder::_mthMatchConfigHolder ( const mthNodeConfig &config )
+   : _mthMatchConfig( &_stackMatchConfig )
+   {
+      setMatchConfig( config ) ;
+   }
+
+   _mthMatchConfigHolder::~_mthMatchConfigHolder ()
+   {
+   }
+
+   //********************** _mthMatchNode ***************************
+   _mthMatchNode::_mthMatchNode( _mthNodeAllocator *allocator,
+                                 const mthNodeConfig *config )
+                 :_mthMatchConfig( config ), _allocator( allocator ),
+                  _parent( NULL ), _idx_in_parent( -1 ),
+                  _isUnderLogicNot( FALSE )
+   {
    }
 
    _mthMatchNode::~_mthMatchNode()
@@ -626,7 +713,7 @@ namespace engine
       return FALSE ;
    }
 
-   INT32 _mthMatchNode::calcPredicate( _rtnPredicateSet &predicateSet )
+   INT32 _mthMatchNode::calcPredicate( rtnPredicateSet &predicateSet )
    {
       UINT32 i = 0 ;
       for ( ; i < _children.size() ; i++ )

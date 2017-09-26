@@ -110,7 +110,7 @@ namespace engine
       EN_MATCH_ATTR_RETURNMATCH        = 201,
       EN_MATCH_ATTR_EXPAND             = 202,
 
-      EN_MATCH_OP_FUNC_END,
+      EN_MATCH_OP_FUNC_END             = 250,
    } ;
 
    #define MTH_OPERATOR_STR_AND                 "$and"
@@ -178,6 +178,11 @@ namespace engine
    #define MTH_WEIGHT_ELEMMATCH                 450
    #define MTH_WEIGHT_REGEX                     1000000
    #define MTH_WEIGHT_ISNULL                    250
+
+   #define MTH_FIELD_CONFIG                  "MatchConfig"
+   #define MTH_FIELD_CONF_MIXCMP             "EnableMixCmp"
+   #define MTH_FIELD_CONF_PARAM              "Parameterized"
+   #define MTH_FIELD_CONF_FUZZYOPTR          "FuzzyOptr"
 
    template <UINT32 nameSize = MTH_MATCH_FIELD_STATIC_NAME_LEN >
    class _mthMatchFieldName
@@ -257,7 +262,7 @@ namespace engine
          _mthMatchTreeContext() ;
          ~_mthMatchTreeContext() ;
 
-         void  clear() ;
+         void clear() ;
          void clearRecordInfo() ;
 
          //****array attribute relate*******
@@ -293,6 +298,14 @@ namespace engine
 
          string toString() ;
 
+         OSS_INLINE void bindParameters ( rtnParamList *parameters )
+         {
+            _parameters = parameters ;
+         }
+
+         BSONElement getParameter ( INT8 index ) ;
+         BOOLEAN paramDoneByPred ( INT8 index ) ;
+
       private:
          INT32 _replaceDollar() ;
 
@@ -316,6 +329,10 @@ namespace engine
          // record the array's index
          _utilArray< INT32 > _elements ;
          /* array attribute relate */
+
+      protected :
+         // parameters
+         rtnParamList *_parameters ;
    } ;
 
    void mthContextClearRecordInfoSafe( _mthMatchTreeContext *context ) ;
@@ -350,19 +367,115 @@ namespace engine
    {
       _mthNodeConfig ()
       {
-         _mixCmp = FALSE ;
+         _enableMixCmp = FALSE ;
+         _enableParameterized = FALSE ;
+         _enableFuzzyOptr = FALSE ;
       }
 
-      BOOLEAN _mixCmp ;
-   } _mthNodeConfig ;
+      BOOLEAN _enableMixCmp ;
+      BOOLEAN _enableParameterized ;
+      BOOLEAN _enableFuzzyOptr ;
+   } mthNodeConfig ;
 
-   const _mthNodeConfig *mthGetDefaultNodeConfig () ;
+   const mthNodeConfig *mthGetDefaultNodeConfigPtr () ;
+   const mthNodeConfig &mthGetDefaultNodEConfig () ;
 
-   class _mthMatchNode
+   // Wrapper for mthNodeConfig
+   class _mthMatchConfig
+   {
+      public :
+         _mthMatchConfig () ;
+         _mthMatchConfig ( const mthNodeConfig *configPtr ) ;
+         virtual ~_mthMatchConfig () ;
+
+      public :
+         OSS_INLINE const mthNodeConfig *getMatchConfigPtr () const
+         {
+            return _matchConfig ;
+         }
+
+         OSS_INLINE BOOLEAN mthEnabledMixCmp () const
+         {
+            return _matchConfig->_enableMixCmp ;
+         }
+
+         OSS_INLINE BOOLEAN mthEnabledParameterized () const
+         {
+            return _matchConfig->_enableParameterized ;
+         }
+
+         OSS_INLINE BOOLEAN mthEnabledFuzzyOptr () const
+         {
+            return _matchConfig->_enableFuzzyOptr ;
+         }
+
+         OSS_INLINE void confToBSON ( BSONObjBuilder &builder ) const
+         {
+            BSONObjBuilder confBuilder(
+                           builder.subobjStart( MTH_FIELD_CONFIG ) ) ;
+            confBuilder.appendBool( MTH_FIELD_CONF_MIXCMP,
+                                    mthEnabledMixCmp() ) ;
+            confBuilder.appendBool( MTH_FIELD_CONF_PARAM,
+                                    mthEnabledParameterized() ) ;
+            confBuilder.appendBool( MTH_FIELD_CONF_FUZZYOPTR,
+                                    mthEnabledFuzzyOptr() ) ;
+            confBuilder.done() ;
+         }
+
+      protected :
+         const mthNodeConfig * _matchConfig ;
+   } ;
+
+   class _mthMatchConfigHolder : public _mthMatchConfig
+   {
+      public :
+         _mthMatchConfigHolder () ;
+         _mthMatchConfigHolder ( const mthNodeConfig &config ) ;
+         virtual ~_mthMatchConfigHolder () ;
+
+      public :
+         OSS_INLINE const mthNodeConfig &getMatchConfig () const
+         {
+            return _stackMatchConfig ;
+         }
+
+         OSS_INLINE mthNodeConfig &getMatchConfig ()
+         {
+            return _stackMatchConfig ;
+         }
+
+         OSS_INLINE void setMatchConfig ( const mthNodeConfig &config )
+         {
+            _stackMatchConfig._enableMixCmp = config._enableMixCmp ;
+            _stackMatchConfig._enableParameterized = config._enableParameterized ;
+            _stackMatchConfig._enableFuzzyOptr = config._enableFuzzyOptr ;
+         }
+
+         OSS_INLINE void setMthEnableMixCmp ( BOOLEAN enableMixCmp )
+         {
+            _stackMatchConfig._enableMixCmp = enableMixCmp ;
+         }
+
+         OSS_INLINE void setMthEnableParameterized ( BOOLEAN enableParameterized )
+         {
+            _stackMatchConfig._enableParameterized = enableParameterized ;
+         }
+
+         OSS_INLINE void setMthEnableFuzzyOptr ( BOOLEAN enableFuzzyOptr )
+         {
+            _stackMatchConfig._enableFuzzyOptr = enableFuzzyOptr ;
+         }
+
+      protected :
+         mthNodeConfig _stackMatchConfig ;
+   } ;
+
+   class _mthMatchNode : public _mthMatchConfig
    {
       friend class _mthMatchNodeIterator ;
       public:
-         _mthMatchNode( _mthNodeAllocator *allocator ) ;
+         _mthMatchNode( _mthNodeAllocator *allocator,
+                        const mthNodeConfig *config ) ;
          virtual ~_mthMatchNode() ;
 
       public:
@@ -392,6 +505,8 @@ namespace engine
                                 BOOLEAN &result ) = 0 ;
          virtual BSONObj toBson() = 0 ;
 
+         virtual BSONObj toParamBson ( const rtnParamList &parameters ) = 0 ;
+
          virtual void setWeight( UINT32 weight ) = 0 ;
 
          virtual UINT32 getWeight() = 0 ;
@@ -403,7 +518,7 @@ namespace engine
 
          virtual BOOLEAN hasDollarFieldName() ;
 
-         virtual INT32 calcPredicate( _rtnPredicateSet &predicateSet ) ;
+         virtual INT32 calcPredicate ( rtnPredicateSet &predicateSet ) ;
 
          virtual INT32 extraEqualityMatches( BSONObjBuilder &builder ) ;
 
@@ -424,14 +539,8 @@ namespace engine
 
          _mthMatchNode *getParent() ;
 
-         OSS_INLINE void setConfig( const _mthNodeConfig *config )
-         {
-            _config = config ? config : mthGetDefaultNodeConfig() ;
-         }
-
       protected:
          _mthNodeAllocator *_allocator ;
-         const _mthNodeConfig *_config ;
 
          _mthMatchNode *_parent ;
          UINT32 _idx_in_parent ;

@@ -358,11 +358,11 @@ namespace engine
                                   const BSONElement &beValue,
                                   BOOLEAN included ) const ;
 
-         OSS_INLINE BOOLEAN isBestIndex ( const optIndexStat &indexStat ) const
+         OSS_INLINE BOOLEAN isBestIndex ( const optIndexStat *indexStat ) const
          {
             if ( _bestIndexStat )
             {
-               return indexStat.getIndexStat() == _bestIndexStat ;
+               return indexStat->getIndexStat() == _bestIndexStat ;
             }
             return FALSE ;
          }

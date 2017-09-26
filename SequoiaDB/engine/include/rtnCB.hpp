@@ -93,7 +93,6 @@ namespace engine
       ossAtomicSigned64    _contextIdGenerator ;
       RTN_CTX_MAP          _contextMap ;
 
-      BOOLEAN              _enableMixCmp ;
       optAccessPlanManager _accessPlanManager ;
 
       // The following members are used for communication with search engine
@@ -199,7 +198,7 @@ namespace engine
 
       OSS_INLINE BOOLEAN isEnabledMixCmp () const
       {
-         return _enableMixCmp ;
+         return this->_accessPlanManager.mthEnabledMixCmp() ;
       }
 
       OSS_INLINE netRouteAgent* getRTAgent()

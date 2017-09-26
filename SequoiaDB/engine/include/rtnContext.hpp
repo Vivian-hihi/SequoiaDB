@@ -45,7 +45,7 @@
 #include "ossAtomic.hpp"
 #include "dmsCB.hpp"
 #include "dpsLogWrapper.hpp"
-#include "mthMatchTree.hpp"
+#include "mthMatchRuntime.hpp"
 #include "mthSelector.hpp"
 #include "rtnContextBuff.hpp"
 #include "utilMap.hpp"
@@ -113,6 +113,7 @@ namespace engine
 
    class _pmdEDUCB ;
    class _dmsStorageUnit ;
+   class _optAccessPlanRuntime ;
    class _optAccessPlan ;
    class _SDB_DMSCB ;
    class _dmsMBContext ;
@@ -247,7 +248,10 @@ namespace engine
          monContextCB*     getMonCB () { return &_monCtxCB ; }
          ossRWMutex*       dataLock () { return &_dataLock ; }
          _mthSelector&     getSelector () { return _selector ; }
-         _mthMatchTree*    getMatcher () { return _matcher ; }
+         _mthMatchTree*    getMatcher ()
+         {
+            return _matcher ;
+         }
 
          INT32    append( const BSONObj &result ) ;
          INT32    appendObjs( const CHAR *pObjBuff,
@@ -313,7 +317,7 @@ namespace engine
          virtual std::string      name() const = 0 ;
          virtual RTN_CONTEXT_TYPE getType () const = 0 ;
          virtual _dmsStorageUnit* getSU () = 0 ;
-         virtual _optAccessPlan*  getPlan () { return NULL ; }
+         virtual _optAccessPlanRuntime* getPlanRuntime () { return NULL ; }
          virtual BOOLEAN          isWrite() const { return FALSE ; }
 
       protected:

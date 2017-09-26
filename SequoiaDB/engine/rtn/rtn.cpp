@@ -1285,7 +1285,7 @@ namespace engine
    }
 
    INT32 rtnGetIXScanner ( const CHAR *pCollectionShortName,
-                           optAccessPlan *plan,
+                           optAccessPlanRuntime *planRuntime,
                            dmsStorageUnit *su,
                            dmsMBContext *mbContext,
                            pmdEDUCB *cb,
@@ -1297,12 +1297,11 @@ namespace engine
       SDB_ASSERT ( pCollectionShortName, "collection name can't be NULL" ) ;
       SDB_ASSERT ( su, "su can't be NULL" ) ;
       SDB_ASSERT ( cb, "cb can't be NULL" ) ;
-      SDB_ASSERT ( plan, "plan can't be NULL" ) ;
+      SDB_ASSERT ( planRuntime, "planRuntime can't be NULL" ) ;
       SDB_ASSERT ( mbContext, "mb context can't be NULL" ) ;
       SDB_ASSERT ( ppScanner, "Scanner can't be NULL" ) ;
 
-      rtnPredicateList *predList = NULL ;
-      _mthMatchTree *matcher     = NULL ;
+      mthMatchRuntime *matchRuntime = NULL ;
       rtnIXScanner * scanner     = NULL ;
 
       // first shared lock to get metadata
@@ -1315,32 +1314,31 @@ namespace engine
       }
 
       {
+         rtnPredicateList *predList = NULL ;
          // for index scan, we maintain context by runtime instead of by DMS
-         ixmIndexCB indexCB ( plan->getIndexCBExtent(), su->index(), NULL ) ;
+         ixmIndexCB indexCB ( planRuntime->getIndexCBExtent(), su->index(), NULL ) ;
          if ( !indexCB.isInitialized() )
          {
             PD_LOG ( PDERROR, "unable to get proper index control block" ) ;
             rc = SDB_SYS ;
             goto error ;
          }
-         if ( indexCB.getLogicalID() != plan->getIndexLID() )
+         if ( indexCB.getLogicalID() != planRuntime->getIndexLID() )
          {
             PD_LOG( PDERROR, "Index[extent id: %d] logical id[%d] is not "
-                    "expected[%d]", plan->getIndexCBExtent(),
-                    indexCB.getLogicalID(), plan->getIndexLID() ) ;
+                    "expected[%d]", planRuntime->getIndexCBExtent(),
+                    indexCB.getLogicalID(), planRuntime->getIndexLID() ) ;
             rc = SDB_IXM_NOTEXIST ;
             goto error ;
          }
 
          // get the predicate list
-         predList = plan->getPredList() ;
+         predList = planRuntime->getPredList() ;
          SDB_ASSERT ( predList, "predList can't be NULL" ) ;
+
          // get the matcher from plan instead of manually loading it
-         if ( plan->getMatcher().isInitialized() &&
-              FALSE == plan->getMatcher().isMatchesAll() )
-         {
-            matcher = &plan->getMatcher() ;
-         }
+         matchRuntime = planRuntime->getMatchRuntime( TRUE ) ;
+
          // allocate scanner, delete at end of the function
          scanner = SDB_OSS_NEW rtnIXScanner ( &indexCB, predList, su, cb ) ;
          if ( !scanner )
@@ -1352,8 +1350,8 @@ namespace engine
       }
       mbContext->mbUnlock() ;
 
-      *ppScanner = SDB_OSS_NEW dmsIXScanner( su->data(), mbContext, matcher,
-                                             scanner, TRUE,
+      *ppScanner = SDB_OSS_NEW dmsIXScanner( su->data(), mbContext,
+                                             matchRuntime, scanner, TRUE,
                                              accessType ) ;
       if ( !(*ppScanner) )
       {
@@ -1375,7 +1373,7 @@ namespace engine
    }
 
    INT32 rtnGetTBScanner ( const CHAR *pCollectionShortName,
-                           _mthMatchTree &matcher,
+                           optAccessPlanRuntime *planRuntime,
                            dmsStorageUnit *su,
                            dmsMBContext *mbContext,
                            pmdEDUCB *cb,
@@ -1383,7 +1381,7 @@ namespace engine
                            DMS_ACCESS_TYPE accessType )
    {
       INT32 rc                 = SDB_OK ;
-      _mthMatchTree *pMatcher  = matcher.isMatchesAll() ? NULL : &matcher ;
+      mthMatchRuntime *matchRuntime = planRuntime->getMatchRuntime() ;
 
       SDB_ASSERT ( pCollectionShortName, "collection name can't be NULL" ) ;
       SDB_ASSERT ( su, "su can't be NULL" ) ;
@@ -1391,8 +1389,8 @@ namespace engine
       SDB_ASSERT ( cb, "cb can't be NULL" ) ;
       SDB_ASSERT ( ppScanner, "scanner can't be NULL" ) ;
 
-      *ppScanner = SDB_OSS_NEW dmsTBScanner( su->data(), mbContext, pMatcher,
-                                             accessType ) ;
+      *ppScanner = SDB_OSS_NEW dmsTBScanner( su->data(), mbContext,
+                                             matchRuntime, accessType ) ;
       if ( !(*ppScanner) )
       {
          PD_LOG( PDERROR, "Unable to allocate memory for dms tbscanner" ) ;

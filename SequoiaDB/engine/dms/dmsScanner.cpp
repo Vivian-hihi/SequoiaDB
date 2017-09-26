@@ -53,13 +53,14 @@ namespace engine
       _dmsScanner implement
    */
    _dmsScanner::_dmsScanner( dmsStorageDataCommon *su, dmsMBContext *context,
-                             _mthMatchTree *match, DMS_ACCESS_TYPE accessType )
+                             mthMatchRuntime *matchRuntime,
+                             DMS_ACCESS_TYPE accessType )
    {
       SDB_ASSERT( su, "storage data can't be NULL" ) ;
       SDB_ASSERT( context, "context can't be NULL" ) ;
       _pSu = su ;
       _context = context ;
-      _match = match ;
+      _matchRuntime = matchRuntime ;
       _accessType = accessType ;
    }
 
@@ -72,11 +73,14 @@ namespace engine
    /*
       _dmsExtScanner implement
    */
-   _dmsExtScanner::_dmsExtScanner( dmsStorageDataCommon *su, dmsMBContext *context,
-                                   _mthMatchTree *match, dmsExtentID curExtentID,
+   _dmsExtScanner::_dmsExtScanner( dmsStorageDataCommon *su,
+                                   dmsMBContext *context,
+                                   mthMatchRuntime *matchRuntime,
+                                   dmsExtentID curExtentID,
                                    DMS_ACCESS_TYPE accessType,
                                    INT64 maxRecords, INT64 skipNum )
-   :_dmsScanner( su, context, match, accessType ), _curRecordPtr( NULL )
+   :_dmsScanner( su, context, matchRuntime, accessType ),
+    _curRecordPtr( NULL )
    {
       _maxRecords          = maxRecords ;
       _skipNum             = skipNum ;
@@ -236,7 +240,7 @@ namespace engine
       }
 
       // skip extent all
-      if ( !_match && _skipNum > 0 && _skipNum >= _extent->_recCount )
+      if ( !_matchRuntime && _skipNum > 0 && _skipNum >= _extent->_recCount )
       {
          _skipNum -= _extent->_recCount ;
          _next = DMS_INVALID_OFFSET ;
@@ -308,7 +312,7 @@ namespace engine
          }
          SDB_ASSERT( !_curRecordPtr->isDeleted(), "record can't be deleted" ) ;
 
-         if ( !_match && _skipNum > 0 )
+         if ( !_matchRuntime && _skipNum > 0 )
          {
             --_skipNum ;
          }
@@ -325,15 +329,17 @@ namespace engine
             generator.setDataPtr( recordDataPtr ) ;
 
             // math
-            if ( _match )
+            if ( _matchRuntime && _matchRuntime->getMatchTree() )
             {
                result = TRUE ;
                try
                {
+                  _mthMatchTree *matcher = _matchRuntime->getMatchTree() ;
+                  rtnParamList *parameters = _matchRuntime->getParametersPointer() ;
                   BSONObj obj( recordData.data() ) ;
                   //do not clear dollarlist flag
                   mthContextClearRecordInfoSafe( mthContext ) ;
-                  rc = _match->matches( obj, result, mthContext ) ;
+                  rc = matcher->matches( obj, result, mthContext, parameters ) ;
                   if ( rc )
                   {
                      PD_LOG( PDERROR, "Failed to match record, rc: %d", rc ) ;
@@ -445,12 +451,12 @@ namespace engine
 
    _dmsCappedExtScanner::_dmsCappedExtScanner( _dmsStorageDataCapped *su,
                                                dmsMBContext *context,
-                                               _mthMatchTree *match,
+                                               mthMatchRuntime *matchRuntime,
                                                dmsExtentID curExtentID,
                                                DMS_ACCESS_TYPE accessType,
                                                INT64 maxRecords,
                                                INT64 skipNum )
-   : _dmsScanner( su, context, match, accessType )
+   : _dmsScanner( su, context, matchRuntime, accessType )
    {
       _maxRecords = maxRecords ;
       _skipNum = skipNum ;
@@ -557,7 +563,7 @@ namespace engine
       currExtRecNum = ( _curRID._extent == _workExtInfo->getID() ) ?
                        _workExtInfo->_recCount : _extent->_recCount ;
 
-      if ( !_match && _skipNum > 0 && _skipNum >= currExtRecNum &&
+      if ( !_matchRuntime && _skipNum > 0 && _skipNum >= currExtRecNum &&
            ( _curRID._extent != _context->mb()->_lastExtentID ) )
       {
          _skipNum -= currExtRecNum ;
@@ -580,7 +586,7 @@ namespace engine
 
          _next += record->getSize() ;
 
-         if ( !_match && _skipNum > 0 )
+         if ( !_matchRuntime && _skipNum > 0 )
          {
             --_skipNum ;
          }
@@ -596,15 +602,17 @@ namespace engine
             recordDataPtr = ( ossValuePtr )recordData.data() ;
             generator.setDataPtr( recordDataPtr ) ;
 
-            if ( _match )
+            if ( _matchRuntime && _matchRuntime->getMatchTree() )
             {
                result = TRUE ;
                try
                {
+                  _mthMatchTree *matcher = _matchRuntime->getMatchTree() ;
+                  rtnParamList *parameters = _matchRuntime->getParametersPointer() ;
                   BSONObj obj( recordData.data() ) ;
                   //do not clear dollarlist flag
                   mthContextClearRecordInfoSafe( mthContext ) ;
-                  rc = _match->matches( obj, result, mthContext ) ;
+                  rc = matcher->matches( obj, result, mthContext, parameters ) ;
                   if ( rc )
                   {
                      PD_LOG( PDERROR, "Failed to match record, rc: %d", rc ) ;
@@ -698,11 +706,13 @@ namespace engine
    /*
       _dmsTBScanner implement
    */
-   _dmsTBScanner::_dmsTBScanner( dmsStorageDataCommon *su, dmsMBContext *context,
-                                 _mthMatchTree *match, DMS_ACCESS_TYPE accessType,
+   _dmsTBScanner::_dmsTBScanner( dmsStorageDataCommon *su,
+                                 dmsMBContext *context,
+                                 mthMatchRuntime *matchRuntime,
+                                 DMS_ACCESS_TYPE accessType,
                                  INT64 maxRecords, INT64 skipNum )
-   :_dmsScanner( su, context, match, accessType ),
-    _extScanner( su, context, match, DMS_INVALID_EXTENT, accessType,
+   :_dmsScanner( su, context, matchRuntime, accessType ),
+    _extScanner( su, context, matchRuntime, DMS_INVALID_EXTENT, accessType,
                  maxRecords, skipNum )
    {
       _curExtentID   = DMS_INVALID_EXTENT ;
@@ -799,12 +809,13 @@ namespace engine
    */
    _dmsIXSecScanner::_dmsIXSecScanner( dmsStorageDataCommon *su,
                                        dmsMBContext *context,
-                                       _mthMatchTree *match,
+                                       mthMatchRuntime *matchRuntime,
                                        rtnIXScanner *scanner,
                                        DMS_ACCESS_TYPE accessType,
                                        INT64 maxRecords,
                                        INT64 skipNum )
-   :_dmsScanner( su, context, match, accessType ), _curRecordPtr( NULL )
+   :_dmsScanner( su, context, matchRuntime, accessType ),
+    _curRecordPtr( NULL )
    {
       _maxRecords          = maxRecords ;
       _skipNum             = skipNum ;
@@ -1088,7 +1099,7 @@ namespace engine
          }
 
          // don't read data
-         if ( !_match )
+         if ( !_matchRuntime )
          {
             if ( _skipNum > 0 )
             {
@@ -1190,15 +1201,17 @@ namespace engine
          generator.setDataPtr( recordDataPtr ) ;
 
          // math
-         if ( _match )
+         if ( _matchRuntime && _matchRuntime->getMatchTree() )
          {
             result = TRUE ;
             try
             {
+               _mthMatchTree *matcher = _matchRuntime->getMatchTree() ;
+               rtnParamList *parameters = _matchRuntime->getParametersPointer() ;
                BSONObj obj ( recordData.data() ) ;
                //do not clear dollarlist flag
                mthContextClearRecordInfoSafe( mthContext ) ;
-               rc = _match->matches( obj, result, mthContext ) ;
+               rc = matcher->matches( obj, result, mthContext, parameters ) ;
                if ( rc )
                {
                   PD_LOG( PDERROR, "Failed to match record, rc: %d", rc ) ;
@@ -1334,13 +1347,15 @@ namespace engine
    */
    _dmsIXScanner::_dmsIXScanner( dmsStorageDataCommon *su,
                                  dmsMBContext *context,
-                                 _mthMatchTree *match, rtnIXScanner *scanner,
+                                 mthMatchRuntime *matchRuntime,
+                                 rtnIXScanner *scanner,
                                  BOOLEAN ownedScanner,
                                  DMS_ACCESS_TYPE accessType,
                                  INT64 maxRecords,
                                  INT64 skipNum )
-   :_dmsScanner( su, context, match, accessType ),
-    _secScanner( su, context, match, scanner, accessType, maxRecords, skipNum )
+   :_dmsScanner( su, context, matchRuntime, accessType ),
+    _secScanner( su, context, matchRuntime, scanner, accessType, maxRecords,
+                 skipNum )
    {
       _scanner       = scanner ;
       _eof           = FALSE ;

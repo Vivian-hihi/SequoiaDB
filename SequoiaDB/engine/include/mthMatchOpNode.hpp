@@ -486,10 +486,12 @@ namespace engine
    } ;
 
    typedef _utilList< _mthMatchFunc* > MTH_FUNC_LIST ;
+
    class _mthMatchOpNode : public _mthMatchNode
    {
       public:
-         _mthMatchOpNode( _mthNodeAllocator *allocator ) ;
+         _mthMatchOpNode( _mthNodeAllocator *allocator,
+                          const mthNodeConfig *config ) ;
          virtual ~_mthMatchOpNode() ;
 
       public: /* from parent */
@@ -506,7 +508,7 @@ namespace engine
          virtual void evalEstimation ( const optCollectionStat *pCollectionStat,
                                        double &selectivity, UINT32 &cpuCost ) ;
 
-         virtual INT32 calcPredicate( _rtnPredicateSet &predicateSet ) ;
+         virtual INT32 calcPredicate( rtnPredicateSet &predicateSet ) ;
 
          virtual INT32 extraEqualityMatches( BSONObjBuilder &builder ) ;
 
@@ -518,7 +520,33 @@ namespace engine
                                 _mthMatchTreeContext &context,
                                 BOOLEAN &result ) ;
 
-         virtual BSONObj toBson() ;
+         OSS_INLINE virtual BSONObj toBson ()
+         {
+            static rtnParamList s_emptyParameters ;
+            return _toBson( s_emptyParameters ) ;
+         }
+
+         OSS_INLINE virtual BSONObj toParamBson ( const rtnParamList &parameters )
+         {
+            return _toBson( parameters ) ;
+         }
+
+         OSS_INLINE virtual void setFuzzyOpType ( EN_MATCH_OP_FUNC_TYPE nodeType )
+         {
+            // Do nothing
+         }
+
+        OSS_INLINE virtual void setFuzzyIndex ( INT8 fuzzyIndex )
+        {
+           // Do nothing
+        }
+
+        OSS_INLINE virtual void setParamIndex ( INT8 paramIndex )
+        {
+           _paramIndex = paramIndex ;
+        }
+
+        virtual void setDoneByPred ( BOOLEAN doneByPred ) ;
 
       public:
          INT32 addFunc( _mthMatchFunc *func ) ;
@@ -554,6 +582,10 @@ namespace engine
             return FALSE ;
          }
 
+         virtual BSONObj _toBson ( const rtnParamList &parameters ) ;
+
+         BOOLEAN _parameterize ( rtnParamList &parameters ) ;
+
       protected:
          INT32 _execute( const CHAR *pFieldName, const BSONObj &obj,
                          BOOLEAN isArrayObj,
@@ -580,6 +612,47 @@ namespace engine
 
          BOOLEAN _isNot() ;
 
+         OSS_INLINE virtual BOOLEAN _isFuzzyType ()
+         {
+            return FALSE ;
+         }
+
+         OSS_INLINE virtual INT8 _getFuzzyIndex ()
+         {
+            return -1 ;
+         }
+
+         OSS_INLINE BOOLEAN _canSelfParameterize ()
+         {
+            // No functions, no $field, no $x, no $return, no $expand
+            return ( _funcList.size() == 0 &&
+                     !_isCompareField &&
+                     !_hasDollarFieldName &&
+                     !_hasReturnMatch &&
+                     !_hasExpand ) ;
+         }
+
+         OSS_INLINE virtual INT32 _addPredicate ( _rtnPredicateSet &predicateSet,
+                                                  const CHAR *fieldName )
+         {
+            return predicateSet.addPredicate( fieldName,
+                                              _toMatch,
+                                              getBSONOpType(),
+                                              _isUnderLogicNot,
+                                              mthEnabledMixCmp(),
+                                              mthEnabledParameterized(),
+                                              _paramIndex,
+                                              -1 ) ;
+         }
+
+         OSS_INLINE virtual void _toParamBson ( BSONObjBuilder &builder,
+                                                const rtnParamList &parameters )
+         {
+            SDB_ASSERT( !parameters.isEmpty(), "parameters is invalid" ) ;
+            builder.appendAs( parameters.getParam( _paramIndex ),
+                              getOperatorStr() ) ;
+         }
+
       protected:
          MTH_FUNC_LIST _funcList ;
          BSONElement _toMatch ;
@@ -592,13 +665,137 @@ namespace engine
          INT32 _offset ;
          INT32 _len ;
 
+         INT8 _paramIndex ;
+
          BOOLEAN _addedToPred ;
+         BOOLEAN _doneByPred ;
+   } ;
+
+   // Type of fuzzy operators
+   #define MTH_FUZZY_TYPE_EXCLUSIVE    ( -1 )
+   #define MTH_FUZZY_TYPE_INCLUSIVE    ( -2 )
+   // It is fuzzy now, but the original type is exclusive or inclusive
+   #define MTH_FUZZY_TYPE_FUZZY_EXC    ( -3 )
+   #define MTH_FUZZY_TYPE_FUZZY_INC    ( -4 )
+
+   // In the parameters, TRUE means inclusive, FALSE means exclusive
+   extern BSONObj _mthFuzzyIncOptr ;
+   extern BSONObj _mthFuzzyExcOptr ;
+
+   class _mthMatchFuzzyOpNode : public _mthMatchOpNode
+   {
+      public :
+         _mthMatchFuzzyOpNode ( _mthNodeAllocator *allocator,
+                                const mthNodeConfig *config ) ;
+
+         virtual ~_mthMatchFuzzyOpNode () ;
+
+      public :
+         virtual BOOLEAN isTotalConverted () ;
+
+         OSS_INLINE virtual INT32 getType ()
+         {
+            return _isExclusive() ? _getExcType() : _getIncType () ;
+         }
+
+         virtual INT32 getBSONOpType ()
+         {
+            return _isExclusive() ? _getExcBSONOpType() : _getIncBSONOpType() ;
+         }
+
+         virtual const CHAR *getOperatorStr ()
+         {
+            if ( _fuzzyOpType >= 0 )
+            {
+               return _getIncOperatorStr() ;
+            }
+            else if ( MTH_FUZZY_TYPE_INCLUSIVE == _fuzzyOpType ||
+                      MTH_FUZZY_TYPE_FUZZY_INC == _fuzzyOpType )
+            {
+               return _getIncOperatorStr() ;
+            }
+            return _getExcOperatorStr() ;
+         }
+
+         virtual UINT32 getWeight ()
+         {
+            return _isExclusive() ? _getExcWeight() : _getIncWeight() ;
+         }
+
+         virtual void setFuzzyOpType ( EN_MATCH_OP_FUNC_TYPE nodeType ) ;
+
+         OSS_INLINE virtual void setFuzzyIndex ( INT8 fuzzyIndex )
+         {
+            _fuzzyOpType = fuzzyIndex ;
+         }
+
+      protected :
+         virtual BOOLEAN _isExclusive ()
+         {
+            return MTH_FUZZY_TYPE_EXCLUSIVE == _fuzzyOpType ;
+         }
+
+         virtual INT32 _valueMatch ( const BSONElement &left,
+                                     const BSONElement &right,
+                                     BOOLEAN mixCmp,
+                                     _mthMatchTreeContext &context,
+                                     BOOLEAN &result ) ;
+
+         virtual INT32 _getIncType () = 0 ;
+         virtual INT32 _getExcType () = 0 ;
+         virtual INT32 _getIncBSONOpType () = 0 ;
+         virtual INT32 _getExcBSONOpType () = 0 ;
+         virtual const CHAR *_getIncOperatorStr () = 0 ;
+         virtual const CHAR *_getExcOperatorStr () = 0 ;
+         virtual UINT32 _getIncWeight () = 0 ;
+         virtual UINT32 _getExcWeight () = 0 ;
+
+         virtual INT32 _incValueMatch ( const BSONElement &left,
+                                        const BSONElement &right,
+                                        BOOLEAN mixCmp,
+                                        _mthMatchTreeContext &context,
+                                        BOOLEAN &result ) = 0 ;
+
+         virtual INT32 _excValueMatch ( const BSONElement &left,
+                                        const BSONElement &right,
+                                        BOOLEAN mixCmp,
+                                        _mthMatchTreeContext &context,
+                                        BOOLEAN &result ) = 0 ;
+
+         OSS_INLINE virtual BOOLEAN _isFuzzyOpType ()
+         {
+            return MTH_FUZZY_TYPE_FUZZY_EXC == _fuzzyOpType ||
+                   MTH_FUZZY_TYPE_FUZZY_INC == _fuzzyOpType ;
+         }
+
+         OSS_INLINE virtual INT32 _addPredicate ( _rtnPredicateSet &predicateSet,
+                                                  const CHAR *fieldName )
+         {
+            return predicateSet.addPredicate( fieldName,
+                                              _toMatch,
+                                              getBSONOpType(),
+                                              _isUnderLogicNot,
+                                              mthEnabledMixCmp(),
+                                              mthEnabledParameterized(),
+                                              _paramIndex,
+                                              _fuzzyOpType >= 0 ?
+                                                    _fuzzyOpType : -1 ) ;
+         }
+
+         virtual void _toParamBson ( BSONObjBuilder &builder,
+                                     const rtnParamList &parameters ) ;
+
+      protected :
+         // If < 0, it is type of operator
+         // If >= 0, it is index of parameter
+         INT8 _fuzzyOpType ;
    } ;
 
    class _mthMatchOpNodeET : public _mthMatchOpNode
    {
       public:
-         _mthMatchOpNodeET(  _mthNodeAllocator *allocator ) ;
+         _mthMatchOpNodeET( _mthNodeAllocator *allocator,
+                            const mthNodeConfig *config ) ;
          virtual ~_mthMatchOpNodeET() ;
 
       public:
@@ -623,7 +820,8 @@ namespace engine
    class _mthMatchOpNodeNE : public _mthMatchOpNodeET
    {
       public:
-         _mthMatchOpNodeNE( _mthNodeAllocator *allocator ) ;
+         _mthMatchOpNodeNE( _mthNodeAllocator *allocator,
+                            const mthNodeConfig *config ) ;
          virtual ~_mthMatchOpNodeNE() ;
 
       public:
@@ -643,100 +841,138 @@ namespace engine
                                         double &selectivity, UINT32 &cpuCost ) ;
    } ;
 
-   class _mthMatchOpNodeLT : public _mthMatchOpNode
+   class _mthMatchOpNodeLT : public _mthMatchFuzzyOpNode
    {
       public:
-         _mthMatchOpNodeLT( _mthNodeAllocator *allocator ) ;
+         _mthMatchOpNodeLT( _mthNodeAllocator *allocator,
+                            const mthNodeConfig *config ) ;
          virtual ~_mthMatchOpNodeLT() ;
 
       public:
-         virtual INT32 getType() ;
-         virtual INT32 getBSONOpType () ;
-         virtual const CHAR *getOperatorStr() ;
-         virtual UINT32 getWeight() ;
-         virtual BOOLEAN isTotalConverted() ;
          virtual void release() ;
 
       protected:
-         virtual INT32 _valueMatch( const BSONElement &left,
-                                    const BSONElement &right,
-                                    BOOLEAN mixCmp,
-                                    _mthMatchTreeContext &context,
-                                    BOOLEAN &result ) ;
          virtual void _evalEstimation ( const optCollectionStat *pCollectionStat,
                                         double &selectivity, UINT32 &cpuCost ) ;
+
+         OSS_INLINE virtual INT32 _getIncType ()
+         {
+            return (INT32)EN_MATCH_OPERATOR_LTE ;
+         }
+
+         OSS_INLINE virtual INT32 _getExcType ()
+         {
+            return (INT32)EN_MATCH_OPERATOR_LT ;
+         }
+
+         OSS_INLINE virtual INT32 _getIncBSONOpType ()
+         {
+            return BSONObj::LTE ;
+         }
+
+         OSS_INLINE virtual INT32 _getExcBSONOpType ()
+         {
+            return BSONObj::LT ;
+         }
+
+         OSS_INLINE virtual const CHAR *_getIncOperatorStr ()
+         {
+            return MTH_OPERATOR_STR_LTE ;
+         }
+
+         OSS_INLINE virtual const CHAR *_getExcOperatorStr ()
+         {
+            return MTH_OPERATOR_STR_LT ;
+         }
+
+         OSS_INLINE virtual UINT32 _getIncWeight ()
+         {
+            return MTH_WEIGHT_LTE ;
+         }
+
+         OSS_INLINE virtual UINT32 _getExcWeight ()
+         {
+            return MTH_WEIGHT_LT ;
+         }
+
+         virtual INT32 _incValueMatch ( const BSONElement &left,
+                                        const BSONElement &right,
+                                        BOOLEAN mixCmp,
+                                        _mthMatchTreeContext &context,
+                                        BOOLEAN &result ) ;
+
+         virtual INT32 _excValueMatch ( const BSONElement &left,
+                                        const BSONElement &right,
+                                        BOOLEAN mixCmp,
+                                        _mthMatchTreeContext &context,
+                                        BOOLEAN &result ) ;
    } ;
 
-   class _mthMatchOpNodeLTE : public _mthMatchOpNode
+   class _mthMatchOpNodeGT : public _mthMatchFuzzyOpNode
    {
       public:
-         _mthMatchOpNodeLTE( _mthNodeAllocator *allocator ) ;
-         virtual ~_mthMatchOpNodeLTE() ;
-
-      public:
-         virtual INT32 getType() ;
-         virtual INT32 getBSONOpType () ;
-         virtual const CHAR *getOperatorStr() ;
-         virtual UINT32 getWeight() ;
-         virtual BOOLEAN isTotalConverted() ;
-         virtual void release() ;
-
-      protected:
-         virtual INT32 _valueMatch( const BSONElement &left,
-                                    const BSONElement &right,
-                                    BOOLEAN mixCmp,
-                                    _mthMatchTreeContext &context,
-                                    BOOLEAN &result ) ;
-         virtual void _evalEstimation ( const optCollectionStat *pCollectionStat,
-                                        double &selectivity, UINT32 &cpuCost ) ;
-   } ;
-
-   class _mthMatchOpNodeGT : public _mthMatchOpNode
-   {
-      public:
-         _mthMatchOpNodeGT( _mthNodeAllocator *allocator ) ;
+         _mthMatchOpNodeGT( _mthNodeAllocator *allocator,
+                            const mthNodeConfig *config ) ;
          virtual ~_mthMatchOpNodeGT() ;
 
       public:
-         virtual INT32 getType() ;
-         virtual INT32 getBSONOpType () ;
-         virtual const CHAR *getOperatorStr() ;
-         virtual UINT32 getWeight() ;
-         virtual BOOLEAN isTotalConverted() ;
          virtual void release() ;
 
       protected:
-         virtual INT32 _valueMatch( const BSONElement &left,
-                                    const BSONElement &right,
-                                    BOOLEAN mixCmp,
-                                    _mthMatchTreeContext &context,
-                                    BOOLEAN &result ) ;
          virtual void _evalEstimation ( const optCollectionStat *pCollectionStat,
                                         double &selectivity, UINT32 &cpuCost ) ;
-   } ;
 
-   class _mthMatchOpNodeGTE : public _mthMatchOpNode
-   {
-      public:
-         _mthMatchOpNodeGTE( _mthNodeAllocator *allocator ) ;
-         virtual ~_mthMatchOpNodeGTE() ;
+         OSS_INLINE virtual INT32 _getIncType ()
+         {
+            return (INT32)EN_MATCH_OPERATOR_GTE ;
+         }
 
-      public:
-         virtual INT32 getType() ;
-         virtual INT32 getBSONOpType () ;
-         virtual const CHAR *getOperatorStr() ;
-         virtual UINT32 getWeight() ;
-         virtual BOOLEAN isTotalConverted() ;
-         virtual void release() ;
+         OSS_INLINE virtual INT32 _getExcType ()
+         {
+            return (INT32)EN_MATCH_OPERATOR_GT ;
+         }
 
-      protected:
-         virtual INT32 _valueMatch( const BSONElement &left,
-                                    const BSONElement &right,
-                                    BOOLEAN mixCmp,
-                                    _mthMatchTreeContext &context,
-                                    BOOLEAN &result ) ;
-         virtual void _evalEstimation ( const optCollectionStat *pCollectionStat,
-                                        double &selectivity, UINT32 &cpuCost ) ;
+         OSS_INLINE virtual INT32 _getIncBSONOpType ()
+         {
+            return BSONObj::GTE ;
+         }
+
+         OSS_INLINE virtual INT32 _getExcBSONOpType ()
+         {
+            return BSONObj::GT ;
+         }
+
+         OSS_INLINE virtual const CHAR *_getIncOperatorStr ()
+         {
+            return MTH_OPERATOR_STR_GTE ;
+         }
+
+         OSS_INLINE virtual const CHAR *_getExcOperatorStr ()
+         {
+            return MTH_OPERATOR_STR_GT ;
+         }
+
+         OSS_INLINE virtual UINT32 _getIncWeight ()
+         {
+            return MTH_WEIGHT_GTE ;
+         }
+
+         OSS_INLINE virtual UINT32 _getExcWeight ()
+         {
+            return MTH_WEIGHT_GT ;
+         }
+
+         virtual INT32 _incValueMatch ( const BSONElement &left,
+                                        const BSONElement &right,
+                                        BOOLEAN mixCmp,
+                                        _mthMatchTreeContext &context,
+                                        BOOLEAN &result ) ;
+
+         virtual INT32 _excValueMatch ( const BSONElement &left,
+                                        const BSONElement &right,
+                                        BOOLEAN mixCmp,
+                                        _mthMatchTreeContext &context,
+                                        BOOLEAN &result ) ;
    } ;
 
    class _mthMatchOpNodeRegex ;
@@ -744,7 +980,8 @@ namespace engine
    class _mthMatchOpNodeIN : public _mthMatchOpNode
    {
       public:
-         _mthMatchOpNodeIN( _mthNodeAllocator *allocator ) ;
+         _mthMatchOpNodeIN( _mthNodeAllocator *allocator,
+                            const mthNodeConfig *config ) ;
          virtual ~_mthMatchOpNodeIN() ;
 
       public:
@@ -781,7 +1018,8 @@ namespace engine
    class _mthMatchOpNodeNIN : public _mthMatchOpNodeIN
    {
       public:
-         _mthMatchOpNodeNIN( _mthNodeAllocator *allocator ) ;
+         _mthMatchOpNodeNIN( _mthNodeAllocator *allocator,
+                             const mthNodeConfig *config ) ;
          virtual ~_mthMatchOpNodeNIN() ;
 
       public:
@@ -803,7 +1041,8 @@ namespace engine
    class _mthMatchOpNodeALL : public _mthMatchOpNodeIN
    {
       public:
-         _mthMatchOpNodeALL( _mthNodeAllocator *allocator ) ;
+         _mthMatchOpNodeALL( _mthNodeAllocator *allocator,
+                             const mthNodeConfig *config ) ;
          virtual ~_mthMatchOpNodeALL() ;
 
       public:
@@ -836,7 +1075,8 @@ namespace engine
    class _mthMatchOpNodeEXISTS : public _mthMatchOpNode
    {
       public:
-         _mthMatchOpNodeEXISTS( _mthNodeAllocator *allocator ) ;
+         _mthMatchOpNodeEXISTS( _mthNodeAllocator *allocator,
+                                const mthNodeConfig *config ) ;
          virtual ~_mthMatchOpNodeEXISTS() ;
 
       public:
@@ -863,7 +1103,8 @@ namespace engine
    class _mthMatchOpNodeMOD : public _mthMatchOpNode
    {
       public:
-         _mthMatchOpNodeMOD( _mthNodeAllocator *allocator ) ;
+         _mthMatchOpNodeMOD( _mthNodeAllocator *allocator,
+                             const mthNodeConfig *config ) ;
          virtual ~_mthMatchOpNodeMOD() ;
 
       public:
@@ -894,7 +1135,8 @@ namespace engine
    class _mthMatchOpNodeTYPE : public _mthMatchOpNode
    {
       public:
-         _mthMatchOpNodeTYPE( _mthNodeAllocator *allocator ) ;
+         _mthMatchOpNodeTYPE( _mthNodeAllocator *allocator,
+                              const mthNodeConfig *config ) ;
          virtual ~_mthMatchOpNodeTYPE() ;
 
       public:
@@ -921,7 +1163,8 @@ namespace engine
    class _mthMatchOpNodeISNULL : public _mthMatchOpNode
    {
       public:
-         _mthMatchOpNodeISNULL( _mthNodeAllocator *allocator ) ;
+         _mthMatchOpNodeISNULL( _mthNodeAllocator *allocator,
+                                const mthNodeConfig *config ) ;
          virtual ~_mthMatchOpNodeISNULL() ;
 
       public:
@@ -948,7 +1191,8 @@ namespace engine
    class _mthMatchOpNodeEXPAND : public _mthMatchOpNode
    {
       public:
-         _mthMatchOpNodeEXPAND( _mthNodeAllocator *allocator ) ;
+         _mthMatchOpNodeEXPAND( _mthNodeAllocator *allocator,
+                                const mthNodeConfig *config ) ;
          virtual ~_mthMatchOpNodeEXPAND() ;
 
       public:
@@ -959,7 +1203,7 @@ namespace engine
          virtual BOOLEAN isTotalConverted() ;
          virtual void release() ;
 
-         virtual INT32 calcPredicate( _rtnPredicateSet &predicateSet ) ;
+         virtual INT32 calcPredicate( rtnPredicateSet &predicateSet ) ;
 
       protected:
          virtual INT32 _valueMatch( const BSONElement &left,
@@ -978,7 +1222,8 @@ namespace engine
    class _mthMatchOpNodeELEMMATCH : public _mthMatchOpNode
    {
       public:
-         _mthMatchOpNodeELEMMATCH( _mthNodeAllocator *allocator ) ;
+         _mthMatchOpNodeELEMMATCH( _mthNodeAllocator *allocator,
+                                   const mthNodeConfig *config ) ;
          virtual ~_mthMatchOpNodeELEMMATCH() ;
 
       public:
@@ -988,6 +1233,12 @@ namespace engine
          virtual UINT32 getWeight() ;
          virtual BOOLEAN isTotalConverted() ;
          virtual void release() ;
+
+         void parameterize ( vector<BSONElement> &parameters )
+         {
+            // Do nothing
+            return ;
+         }
 
       protected:
          virtual INT32 _init( const CHAR *fieldName,
@@ -1008,7 +1259,8 @@ namespace engine
    class _mthMatchOpNodeRegex : public _mthMatchOpNode
    {
       public:
-         _mthMatchOpNodeRegex( _mthNodeAllocator *allocator ) ;
+         _mthMatchOpNodeRegex( _mthNodeAllocator *allocator,
+                               const mthNodeConfig *config ) ;
          virtual ~_mthMatchOpNodeRegex() ;
 
       public:
@@ -1023,7 +1275,6 @@ namespace engine
          virtual INT32 getType() ;
          virtual INT32 getBSONOpType () ;
          virtual const CHAR *getOperatorStr() ;
-         virtual BSONObj toBson() ;
          virtual BOOLEAN isTotalConverted() ;
          virtual UINT32 getWeight() ;
          virtual void release() ;
@@ -1033,6 +1284,7 @@ namespace engine
 
       protected:
          virtual void _clear() ;
+         virtual BSONObj _toBson ( const rtnParamList &parameters ) ;
          virtual INT32 _valueMatch( const BSONElement &left,
                                     const BSONElement &right,
                                     BOOLEAN mixCmp,

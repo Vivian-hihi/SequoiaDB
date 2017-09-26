@@ -116,7 +116,7 @@ namespace engine
       // We don't know the setting of enableMixCmp in data groups, we need a
       // larger range to cover all cases, so use mix-compare mode
       rc = _predicateSet.addPredicate( pFieldName, beField, opType, FALSE,
-                                       TRUE ) ;
+                                       TRUE, FALSE, -1, -1 ) ;
 
       PD_TRACE_EXITRC ( SDB_CLSCATAPREDICATETREE_ADDPREDICATE, rc ) ;
       return rc ;

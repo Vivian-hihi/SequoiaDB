@@ -1417,7 +1417,7 @@ namespace engine
          goto done ;
       }
 
-      rtnClearStats( eduCB(), dmsCB ) ;
+      dmsCB->clearSUCaches( DMS_EVENT_MASK_ALL ) ;
 
       _quit = TRUE ;
 

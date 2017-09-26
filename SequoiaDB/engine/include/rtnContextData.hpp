@@ -41,7 +41,7 @@
 #include "rtnContext.hpp"
 #include "rtnQueryOptions.hpp"
 #include "rtnQueryModifier.hpp"
-#include "optAccessPlan.hpp"
+#include "optAccessPlanRuntime.hpp"
 
 namespace engine
 {
@@ -64,24 +64,29 @@ namespace engine
          dmsExtentID       lastExtLID () const { return _lastExtLID ; }
 
          virtual INT32 open( _dmsStorageUnit *su, _dmsMBContext *mbContext,
-                             _optAccessPlan *plan, _pmdEDUCB *cb,
+                             _pmdEDUCB *cb,
                              const BSONObj &selector, INT64 numToReturn = -1,
                              INT64 numToSkip = 0,
                              const BSONObj *blockObj = NULL,
                              INT32 direction = 1 ) ;
 
-         INT32 openTraversal( _dmsStorageUnit *su, _dmsMBContext *mbContext,
-                              _optAccessPlan *plan, _rtnIXScanner *scanner,
+         INT32 openTraversal( _dmsStorageUnit *su,
+                              _dmsMBContext *mbContext,
+                              _rtnIXScanner *scanner,
                               _pmdEDUCB *cb, const BSONObj &selector,
                               INT64 numToReturn = -1, INT64 numToSkip = 0 ) ;
 
          void setQueryModifier ( rtnQueryModifier* modifier ) ;
 
+         OSS_INLINE virtual optAccessPlanRuntime *getPlanRuntime ()
+         {
+            return &_planRuntime ;
+         }
+
       public:
          virtual std::string      name() const ;
          virtual RTN_CONTEXT_TYPE getType () const ;
          virtual _dmsStorageUnit* getSU () { return _su ; }
-         virtual _optAccessPlan*  getPlan () { return _plan ; }
          virtual BOOLEAN          isWrite() const ;
 
       protected:
@@ -113,11 +118,13 @@ namespace engine
                                     std::vector< dmsRecordID > &indexRIDs ) ;
          INT32    _parseRID( const BSONElement &ele, dmsRecordID &rid ) ;
 
-         INT32    _openTBScan ( _dmsStorageUnit *su, _dmsMBContext *mbContext,
-                                _optAccessPlan *plan, _pmdEDUCB *cb,
+         INT32    _openTBScan ( _dmsStorageUnit *su,
+                                _dmsMBContext *mbContext,
+                                _pmdEDUCB *cb,
                                 const BSONObj *blockObj ) ;
-         INT32    _openIXScan ( _dmsStorageUnit *su, _dmsMBContext *mbContext,
-                                _optAccessPlan *plan, _pmdEDUCB *cb,
+         INT32    _openIXScan ( _dmsStorageUnit *su,
+                                _dmsMBContext *mbContext,
+                                _pmdEDUCB *cb,
                                 const BSONObj *blockObj,
                                 INT32 direction ) ;
 
@@ -129,19 +136,19 @@ namespace engine
          INT32 _prepareNormalTbScan( _pmdEDUCB * cb,
                                      DMS_ACCESS_TYPE accessType,
                                      vector<INT64>* dollarList,
-                                     _mthMatchTree *matcher,
+                                     mthMatchRuntime *matchRuntime,
                                      mthSelector *selector ) ;
          INT32 _prepareCappedTbScan( _pmdEDUCB * cb,
                                      DMS_ACCESS_TYPE accessType,
                                      vector<INT64>* dollarList,
-                                     _mthMatchTree *matcher,
+                                     mthMatchRuntime *matchRuntime,
                                      mthSelector *selector) ;
 
       protected:
          _SDB_DMSCB                 *_dmsCB ;
          _dmsStorageUnit            *_su ;
          _dmsMBContext              *_mbContext ;
-         _optAccessPlan             *_plan ;
+         optAccessPlanRuntime       _planRuntime ;
          optScanType                _scanType ;
 
          // rest number of records to expect, -1 means select all
@@ -177,7 +184,7 @@ namespace engine
          virtual ~_rtnContextParaData () ;
 
          virtual INT32 open( _dmsStorageUnit *su, _dmsMBContext *mbContext,
-                             _optAccessPlan *plan, _pmdEDUCB *cb,
+                             _pmdEDUCB *cb,
                              const BSONObj &selector, INT64 numToReturn = -1,
                              INT64 numToSkip = 0,
                              const BSONObj *blockObj = NULL,

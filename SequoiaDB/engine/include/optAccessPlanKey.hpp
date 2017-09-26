@@ -44,9 +44,11 @@
 #include "../bson/bson.h"
 #include "ossUtil.hpp"
 #include "utilHashTable.hpp"
+#include "utilList.hpp"
 #include "rtnQueryOptions.hpp"
 #include "dms.hpp"
 #include "dmsStorageUnit.hpp"
+#include "mthMatchRuntime.hpp"
 
 using namespace bson ;
 
@@ -54,28 +56,101 @@ namespace engine
 {
 
    /*
+      _optAccessPlanInfoBase define
+    */
+   class _optAccessPlanInfoBase
+   {
+      public :
+         _optAccessPlanInfoBase ()
+         {
+            _suID = DMS_INVALID_SUID ;
+            _suLID = DMS_INVALID_LOGICCSID ;
+            _clLID = DMS_INVALID_CLID ;
+            _mbID = DMS_INVALID_MBID ;
+         }
+
+         _optAccessPlanInfoBase ( const _optAccessPlanInfoBase &info )
+         {
+            _suID = info._suID ;
+            _suLID = info._suLID ;
+            _clLID = info._clLID ;
+            _mbID = info._mbID ;
+         }
+
+         virtual ~_optAccessPlanInfoBase ()
+         {
+         }
+
+         OSS_INLINE virtual dmsStorageUnitID getSUID () const
+         {
+            return _suID ;
+         }
+
+         OSS_INLINE virtual UINT32 getSULID () const
+         {
+            return _suLID ;
+         }
+
+         OSS_INLINE virtual UINT16 getCLMBID () const
+         {
+            return _mbID ;
+         }
+
+         OSS_INLINE virtual UINT32 getCLLID () const
+         {
+            return _clLID ;
+         }
+
+         OSS_INLINE virtual void setCSInfo ( dmsStorageUnit *su )
+         {
+            if ( NULL != su )
+            {
+               _suID = su->CSID() ;
+               _suLID = su->LogicalCSID() ;
+            }
+         }
+
+         OSS_INLINE virtual void setCLInfo ( dmsMBContext *mbContext )
+         {
+            if ( NULL != mbContext )
+            {
+               _mbID = mbContext->mbID() ;
+               _clLID = mbContext->clLID() ;
+            }
+         }
+
+      protected :
+         dmsStorageUnitID        _suID ;
+         UINT32                  _suLID ;
+         UINT32                  _clLID ;
+         UINT16                  _mbID ;
+   } ;
+
+   /*
       _optAccessPlanKey define
     */
-   class _optAccessPlanKey : public _utilHashTableKey,
-                             public _rtnQueryOptions
+   class _optAccessPlanKey : public _rtnQueryOptions,
+                             public _utilHashTableKey,
+                             public _optAccessPlanInfoBase
    {
-      friend class _optAccessPlan ;
-
       public :
-         _optAccessPlanKey ( const CHAR *pCLFullName,
-                             const BSONObj &selector,
-                             const BSONObj &matcher,
-                             const BSONObj &orderBy,
-                             const BSONObj &hint,
-                             SINT32 flags,
-                             SINT64 numToSkip,
-                             SINT64 numToReturn,
-                             BOOLEAN needGetOwned ) ;
+         _optAccessPlanKey ( const rtnQueryOptions &options,
+                             OPT_PLAN_CACHE_LEVEL cacheLevel ) ;
 
-         _optAccessPlanKey ( const _optAccessPlanKey &planKey,
-                             BOOLEAN needGetOwned ) ;
+         _optAccessPlanKey ( _optAccessPlanKey &planKey ) ;
 
-         virtual ~_optAccessPlanKey () {}
+         virtual ~_optAccessPlanKey () ;
+
+         OSS_INLINE virtual INT32 getOwned ()
+         {
+            _normalizedQuery = _normalizedQuery.getOwned() ;
+            return _rtnQueryOptions::getOwned() ;
+         }
+
+         OSS_INLINE const CHAR *getCLFullName () const
+         {
+            return _fullName ;
+         }
 
          OSS_INLINE virtual UINT32 getKeyCode () const
          {
@@ -94,63 +169,101 @@ namespace engine
 
          virtual BOOLEAN isEqual ( const _optAccessPlanKey &key ) const ;
 
-         OSS_INLINE dmsStorageUnitID getSUID () const
+         OSS_INLINE const BSONObj &getQuery () const
          {
-            return _suID ;
+            return _query ;
          }
 
-         OSS_INLINE UINT32 getSULID () const
+         OSS_INLINE const BSONObj &getNormalizedQuery () const
          {
-            return _suLID ;
+            return _normalizedQuery ;
          }
 
-         OSS_INLINE UINT16 getCLMBID () const
+         OSS_INLINE const BSONObj &getOrderBy () const
          {
-            return _mbID ;
+            return _orderBy ;
          }
 
-         OSS_INLINE UINT32 getCLLID () const
+         OSS_INLINE const BSONObj &getHint () const
          {
-            return _clLID ;
+            return _hint ;
          }
 
-         void generateKeyCode ( dmsStorageUnit *su, dmsMBContext *mbContext )
+         OSS_INLINE const BSONObj &getSelector () const
          {
-            _setCSInfo( su ) ;
-            _setCLInfo( mbContext ) ;
+            return _selector ;
+         }
 
-            _generateKeyCodeInternal() ;
+         OSS_INLINE INT32 getFlag () const
+         {
+            return _flag ;
+         }
+
+         OSS_INLINE SINT64 getSkip () const
+         {
+            return _skip ;
+         }
+
+         OSS_INLINE SINT64 getLimit () const
+         {
+            return _limit ;
+         }
+
+         OSS_INLINE OPT_PLAN_CACHE_LEVEL getCacheLevel () const
+         {
+            return _cacheLevel ;
+         }
+
+         OSS_INLINE BOOLEAN isValid () const
+         {
+            return _isValid ;
+         }
+
+         OSS_INLINE void generateKeyCode ( dmsStorageUnit *su, dmsMBContext *mbContext )
+         {
+            setCSInfo( su ) ;
+            setCLInfo( mbContext ) ;
+
+            if ( _cacheLevel > OPT_PLAN_NOCACHE )
+            {
+               // Key code is not needed for no-cache mode
+               _generateKeyCodeInternal() ;
+            }
 
             _isValid = TRUE ;
          }
 
-      protected :
-         OSS_INLINE void _setCSInfo ( dmsStorageUnit *su )
+         INT32 normalize ( mthMatchHelper &matchHelper,
+                           mthMatchRuntime *matchRuntime ) ;
+
+         OSS_INLINE const CHAR *getCacheLevelName () const
          {
-            SDB_ASSERT( su, "su is invalid" ) ;
-            _suID = su->CSID() ;
-            _suLID = su->LogicalCSID() ;
+            switch ( _cacheLevel )
+            {
+               case OPT_PLAN_ORIGINAL :
+                  return OPT_CACHE_ORIGINAL_NAME ;
+               case OPT_PLAN_NORMALIZED :
+                  return OPT_CACHE_NORMALIZED_NAME ;
+               case OPT_PLAN_PARAMETERIZED :
+                  return OPT_CACHE_PARAMETERIZED_NAME ;
+               case OPT_PLAN_FUZZYOPTR :
+                  return OPT_CACHE_FUZZYOPTR_NAME ;
+               default :
+                  break ;
+            }
+            return OPT_CACHE_NOCACHE_NAME ;
          }
 
-         OSS_INLINE void _setCLInfo ( dmsMBContext *mbContext )
-         {
-            SDB_ASSERT( mbContext, "su is invalid" ) ;
-            _mbID = mbContext->mbID() ;
-            _clLID = mbContext->clLID() ;
-         }
+      protected :
 
          void _generateKeyCodeInternal () ;
 
          UINT32 _generateKeyCodeHash () ;
 
-         UINT32 _generateKeyCodeMD5 () ;
-
       protected :
-         BOOLEAN           _isValid ;
-         dmsStorageUnitID  _suID ;
-         UINT32            _suLID ;
-         UINT32            _clLID ;
-         UINT16            _mbID ;
+         BOOLEAN                 _isValid ;
+         OPT_PLAN_CACHE_LEVEL    _cacheLevel ;
+         BSONObj                 _normalizedQuery ;
    } ;
 
    typedef class _optAccessPlanKey optAccessPlanKey ;

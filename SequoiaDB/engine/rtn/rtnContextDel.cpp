@@ -660,7 +660,15 @@ namespace engine
       _pCatAgent->lock_w () ;
       _pCatAgent->clear ( _name ) ;
       _pCatAgent->release_w () ;
-      pmdGetKRCB()->getClsCB()->invalidateCata( _name ) ;
+
+      // Clear cached main-collection plans
+      _pRtncb->getAPM()->invalidateCLPlans( _name ) ;
+
+      // Tell secondary nodes to clear catalog and plan caches
+      sdbGetClsCB()->invalidateCache( _name,
+                                      DPS_LOG_INVALIDCATA_TYPE_CATA |
+                                      DPS_LOG_INVALIDCATA_TYPE_PLAN ) ;
+
       _isOpened = FALSE ;
       rc = SDB_DMS_EOC ;
 

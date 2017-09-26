@@ -67,39 +67,23 @@ namespace engine
    } ;
 
    /*
-      _utilBitmap define and implement
+      _utilBitmapBase define and implement
     */
-   class _utilBitmap : public SDBObject
+   class _utilBitmapBase : public SDBObject
    {
       public :
-         _utilBitmap ( UINT32 size )
+         _utilBitmapBase ()
          {
             _size = 0 ;
             _bitmapSize = 0 ;
             _bitmap = NULL ;
-
-            if ( size > 0 )
-            {
-               UINT32 bitmapSize = ( size + UTIL_BITMAP_UNIT_MODULO ) /
-                                   UTIL_BITMAP_UNIT_SIZE ;
-               _bitmap = (UINT8 *)SDB_OSS_MALLOC( bitmapSize ) ;
-               if ( NULL != _bitmap )
-               {
-                  _size = size ;
-                  _bitmapSize = bitmapSize ;
-               }
-            }
-
-            resetBitmap() ;
          }
 
-         virtual ~_utilBitmap ()
+         virtual ~_utilBitmapBase ()
          {
-            if ( NULL != _bitmap )
-            {
-               SDB_OSS_FREE( _bitmap ) ;
-               _bitmap = NULL ;
-            }
+            _size = 0 ;
+            _bitmapSize = 0 ;
+            _bitmap = NULL ;
          }
 
          OSS_INLINE void setBit ( UINT32 index )
@@ -150,6 +134,9 @@ namespace engine
          }
 
       protected :
+         virtual void _allocateBitmap ( UINT32 size ) = 0 ;
+         virtual void _freeBitmap () = 0 ;
+
          OSS_INLINE UINT32 _calcUnitIndex ( UINT32 index ) const
          {
             // Find the index to the unit in bitmap
@@ -168,7 +155,74 @@ namespace engine
          UINT8 *_bitmap ;
    } ;
 
+   /*
+      _utilBitmap define and implement
+    */
+   class _utilBitmap : public _utilBitmapBase
+   {
+      public :
+         _utilBitmap ( UINT32 size )
+         : _utilBitmapBase()
+         {
+            _allocateBitmap( size ) ;
+         }
+
+         virtual ~_utilBitmap ()
+         {
+            _freeBitmap() ;
+         }
+
+      protected :
+         OSS_INLINE virtual void _allocateBitmap ( UINT32 size )
+         {
+            if ( size > 0 )
+            {
+               UINT32 bitmapSize = ( size + UTIL_BITMAP_UNIT_MODULO ) /
+                                   UTIL_BITMAP_UNIT_SIZE ;
+               _bitmap = (UINT8 *)SDB_OSS_MALLOC( bitmapSize ) ;
+               if ( NULL != _bitmap )
+               {
+                  _size = size ;
+                  _bitmapSize = bitmapSize ;
+               }
+            }
+
+            resetBitmap() ;
+         }
+
+         OSS_INLINE virtual void _freeBitmap ()
+         {
+            SAFE_OSS_FREE( _bitmap ) ;
+            _size = 0 ;
+            _bitmapSize = 0 ;
+         }
+   } ;
+
    typedef class _utilBitmap utilBitmap ;
+
+   /*
+      _utilStackBitmap define and implement
+    */
+   template < UINT32 BITMAPSIZE >
+   class _utilStackBitmap : public _utilBitmapBase
+   {
+      public :
+         _utilStackBitmap ()
+         : _utilBitmapBase()
+         {
+            _size = BITMAPSIZE * UTIL_BITMAP_UNIT_SIZE ;
+            _bitmapSize = BITMAPSIZE ;
+            _bitmap = &( _bitmapBuf ) ;
+         }
+
+         virtual ~_utilStackBitmap ()
+         {
+            _bitmap = NULL ;
+         }
+
+      protected :
+         UINT8 _bitmapBuf[ BITMAPSIZE ] ;
+   } ;
 
 }
 

@@ -148,21 +148,24 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTSCAN__PREEVAL, "_optScanNode::_preEvaluate" )
    void _optScanNode::_preEvaluate ( const BSONObj &selector,
-                                     _mthMatchTree &matcher,
-                                     optCollectionStat &collectionStat )
+                                     mthMatchHelper &matchHelper,
+                                     optCollectionStat *collectionStat )
    {
       PD_TRACE_ENTRY( SDB_OPTSCAN__PREEVAL ) ;
 
-      _inputRecords = OPT_ROUND_NUM_DEF( collectionStat.getTotalRecords(),
+      SDB_ASSERT( collectionStat, "collectionStat is invalid" ) ;
+
+      _inputRecords = OPT_ROUND_NUM_DEF( collectionStat->getTotalRecords(),
                                          DMS_STAT_DEF_TOTAL_RECORDS ) ;
-      _inputPages = OPT_ROUND_NUM( collectionStat.getTotalDataPages() ) ;
-      _inputRecordSize = OPT_ROUND_NUM( (UINT32)ceil( (double)collectionStat.getTotalDataSize() /
-                                                      (double)_inputRecords ) ) ;
+      _inputPages = OPT_ROUND_NUM( collectionStat->getTotalDataPages() ) ;
+      _inputRecordSize = OPT_ROUND_NUM(
+                  (UINT32)ceil( (double)collectionStat->getTotalDataSize() /
+                                (double)_inputRecords ) ) ;
 
-      _pageSize = collectionStat.getPageSize() ;
-      _inputNumFields = collectionStat.getAvgNumFields() ;
+      _pageSize = collectionStat->getPageSize() ;
+      _inputNumFields = collectionStat->getAvgNumFields() ;
 
-      matcher.getEstimation( &collectionStat, _mthSelectivity, _mthCPUCost ) ;
+      matchHelper.getEstimation( collectionStat, _mthSelectivity, _mthCPUCost ) ;
 
       _outputNumFields = selector.nFields() ;
 
@@ -209,12 +212,14 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTTBSCAN_PREEVAL, "_optTbScanNode::preEvaluate" )
    void _optTbScanNode::preEvaluate ( const BSONObj &selector,
-                                      _mthMatchTree &matcher,
-                                      optCollectionStat &collectionStat )
+                                      mthMatchHelper &matchHelper,
+                                      optCollectionStat *collectionStat )
    {
       PD_TRACE_ENTRY( SDB_OPTTBSCAN_PREEVAL ) ;
 
-      _preEvaluate( selector, matcher, collectionStat ) ;
+      SDB_ASSERT( collectionStat, "collectionStat is invalid" ) ;
+
+      _preEvaluate( selector, matchHelper, collectionStat ) ;
       _isCandidate = TRUE ;
 
       PD_TRACE_EXIT( SDB_OPTTBSCAN_PREEVAL ) ;
@@ -281,7 +286,7 @@ namespace engine
 
          _indexExtID = indexCB.getExtentID() ;
          _indexLID = indexCB.getLogicalID() ;
-         indexCB.getIndexID( _indexOID ) ;
+         _keyPattern = indexCB.keyPattern().copy() ;
       }
       else
       {
@@ -308,21 +313,24 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTIXSCAN_PREEVAL, "_optIxScanNode::preEvaluate" )
    void _optIxScanNode::preEvaluate ( const BSONObj &selector,
-                                      _mthMatchTree &matcher,
+                                      mthMatchHelper &matchHelper,
                                       const BSONObj &boOrder,
                                       OPT_PLAN_PATH_PRIORITY priority,
-                                      optCollectionStat &collectionStat,
-                                      optIndexStat &indexStat )
+                                      optCollectionStat *collectionStat,
+                                      optIndexStat *indexStat )
    {
       PD_TRACE_ENTRY( SDB_OPTIXSCAN_PREEVAL ) ;
 
-      _preEvaluate( selector, matcher, collectionStat ) ;
-      _indexPages = indexStat.getIndexPages() ;
-      _indexLevels = indexStat.getIndexLevels() ;
+      SDB_ASSERT( collectionStat, "collectionStat is invalid" ) ;
+      SDB_ASSERT( indexStat,"indexStat is invalid" ) ;
 
-      BOOLEAN isBestIndex = collectionStat.isBestIndex( indexStat ) ;
+      _preEvaluate( selector, matchHelper, collectionStat ) ;
+      _indexPages = indexStat->getIndexPages() ;
+      _indexLevels = indexStat->getIndexLevels() ;
 
-      _evalPredEstimation( matcher, boOrder, isBestIndex, indexStat ) ;
+      BOOLEAN isBestIndex = collectionStat->isBestIndex( indexStat ) ;
+
+      _evalPredEstimation( matchHelper, boOrder, isBestIndex, indexStat ) ;
 
       switch ( priority )
       {
@@ -437,18 +445,21 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTIXSCAN_EVALPREDEST, "_optIxScanNode::_evalPredEstimation" )
-   void _optIxScanNode::_evalPredEstimation ( _mthMatchTree &matcher,
+   void _optIxScanNode::_evalPredEstimation ( mthMatchHelper &matchHelper,
                                               const BSONObj &boOrder,
                                               BOOLEAN isBestIndex,
-                                              const optIndexStat &indexStat )
+                                              const optIndexStat *indexStat )
    {
       PD_TRACE_ENTRY( SDB_OPTIXSCAN_EVALPREDEST ) ;
+
+      SDB_ASSERT( matchHelper.getMatchTree(), "matchTree is invalid" ) ;
+      SDB_ASSERT( indexStat, "indexStat is invalid" ) ;
 
       UINT32 iterIdx = 0,
              matchedFields = 0,
              matchedOrders = 0 ;
       BOOLEAN startIncluded = TRUE, stopIncluded = TRUE ;
-      const BSONObj &keyPattern = indexStat.getKeyPattern() ;
+      const BSONObj &keyPattern = indexStat->getKeyPattern() ;
       UINT32 keyNum = (UINT32)keyPattern.nFields() ;
 
       rtnStatPredList predicateList ;
@@ -463,11 +474,12 @@ namespace engine
 
       // The statistics of index are invalid, we need to evaluate each predicate
       // in the predicate set
-      BOOLEAN fieldOnly = !indexStat.isValid() ;
+      BOOLEAN fieldOnly = !indexStat->isValid() ;
 
-      RTN_PREDICATE_MAP &predicates = matcher.getPredicates() ;
+      mthMatchTree *matcher = matchHelper.getMatchTree() ;
+      RTN_PREDICATE_MAP &predicates = matchHelper.getPredicates() ;
 
-      if ( !matcher.isEstimated() )
+      if ( !matchHelper.isEstimated() )
       {
          // The matcher has not been estimated, which could not be used
          // to evaluate predicates
@@ -543,9 +555,9 @@ namespace engine
             {
                // Evaluate the predicate for this field only
                BOOLEAN curIsAllRange = FALSE ;
-               double curSelectivity =  indexStat.evalPredicate(
-                     pFieldName, curPredicate, matcher.enabledMixCmp(),
-                     curIsAllRange ) ;
+               double curSelectivity =  indexStat->evalPredicate(
+                        pFieldName, curPredicate, matchHelper.mthEnabledMixCmp(),
+                        curIsAllRange ) ;
 
                predSelectivity *= curSelectivity ;
                if ( iterIdx == 0 )
@@ -581,14 +593,14 @@ namespace engine
          else if ( isBestIndex )
          {
             // The best index has been evaluated and cached in matcher
-            matcher.getPredSelectivity( predSelectivity, scanSelectivity ) ;
+            matchHelper.getPredSelectivity( predSelectivity, scanSelectivity ) ;
          }
          else
          {
             // The predicates contain multiple start stop key-pairs, evaluate
             // each of them
-            predSelectivity = indexStat.evalPredicateList(
-                  pFirstField, predicateList, matcher.enabledMixCmp(),
+            predSelectivity = indexStat->evalPredicateList(
+                  pFirstField, predicateList, matchHelper.mthEnabledMixCmp(),
                   scanSelectivity ) ;
          }
       }
@@ -604,7 +616,7 @@ namespace engine
       }
 
       // we try to set matchall only when all fields converted into predicates
-      if ( matcher.totallyConverted() )
+      if ( matcher->totallyConverted() )
       {
          _matchAll = ( 0 == predicates.size() ) ||
                      ( ( 0 != matchedFields ) &&
@@ -612,8 +624,8 @@ namespace engine
                          matchedFields <= keyNum ) ;
       }
 
-      if ( matcher.isInitialized() && _matchAll &&
-           !matcher.hasExpand() && !matcher.hasReturnMatch() )
+      if ( matcher->isInitialized() && _matchAll &&
+           !matcher->hasExpand() && !matcher->hasReturnMatch() )
       {
          _needMatch = FALSE ;
       }
@@ -927,13 +939,16 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTSCANPATH_CRTTBSCAN, "_optPlanPath::createTbScan" )
    INT32 _optScanPath::createTbScan ( const CHAR *pCollection,
                                       const BSONObj &selector,
-                                      _mthMatchTree &matcher,
+                                      mthMatchHelper &matchHelper,
                                       INT32 estCacheSize,
-                                      optCollectionStat &collectionStat )
+                                      optCollectionStat *collectionStat )
    {
       INT32 rc = SDB_OK ;
 
       PD_TRACE_ENTRY( SDB_OPTSCANPATH_CRTTBSCAN ) ;
+
+      SDB_ASSERT( pCollection, "pCollection is invalid" ) ;
+      SDB_ASSERT( collectionStat, "collectionStat is invalid" ) ;
 
       optTbScanNode *pTbScan = NULL ;
 
@@ -952,7 +967,7 @@ namespace engine
       _pScanNode = pTbScan ;
       _sortRequired = FALSE ;
 
-      pTbScan->preEvaluate( selector, matcher, collectionStat ) ;
+      pTbScan->preEvaluate( selector, matchHelper, collectionStat ) ;
 
    done :
       PD_TRACE_EXITRC( SDB_OPTSCANPATH_CRTTBSCAN, rc ) ;
@@ -966,16 +981,20 @@ namespace engine
    INT32 _optScanPath::createIxScan ( const CHAR *pCollection,
                                       const ixmIndexCB &indexCB,
                                       const BSONObj &selector,
-                                      _mthMatchTree &matcher,
+                                      mthMatchHelper &matchHelper,
                                       const BSONObj &boOrder,
                                       OPT_PLAN_PATH_PRIORITY priority,
                                       INT32 estCacheSize,
-                                      optCollectionStat &collectionStat,
-                                      optIndexStat &indexStat )
+                                      optCollectionStat *collectionStat,
+                                      optIndexStat *indexStat )
    {
       INT32 rc = SDB_OK ;
 
       PD_TRACE_ENTRY( SDB_OPTSCANPATH_CRTIXSCAN ) ;
+
+      SDB_ASSERT( pCollection, "pCollection is invalid" ) ;
+      SDB_ASSERT( collectionStat, "collectionStat is invalid" ) ;
+      SDB_ASSERT( indexStat, "indexStat is invalid" ) ;
 
       optIxScanNode *pIdxScan = NULL ;
 
@@ -994,7 +1013,7 @@ namespace engine
       _pScanNode = pIdxScan ;
       _sortRequired = FALSE ;
 
-      pIdxScan->preEvaluate( selector, matcher, boOrder, priority,
+      pIdxScan->preEvaluate( selector, matchHelper, boOrder, priority,
                              collectionStat, indexStat ) ;
 
    done :

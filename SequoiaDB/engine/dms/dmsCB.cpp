@@ -1934,6 +1934,12 @@ namespace engine
          _latchVec[ suID ]->release_w() ;
       }
 
+      if ( OSS_BIT_TEST( mask, DMS_EVENT_MASK_PLAN ) )
+      {
+         // Make sure main-collection plans are invalidated
+         sdbGetRTNCB()->getAPM()->invalidateAllPlans() ;
+      }
+
       PD_TRACE_EXIT ( SDB__SDB_DMSCB_CLRSUCACHES ) ;
    }
 

@@ -39,7 +39,6 @@
 #include "rtnContextSort.hpp"
 #include "rtn.hpp"
 #include "rtnIXScanner.hpp"
-#include "optAccessPlan.hpp"
 #include "dmsScanner.hpp"
 #include "dmsStorageUnit.hpp"
 #include "pdTrace.hpp"
@@ -60,7 +59,6 @@ namespace engine
       _dmsCB            = NULL ;
       _su               = NULL ;
       _mbContext        = NULL ;
-      _plan             = NULL ;
       _scanType         = UNKNOWNSCAN ;
       _numToReturn      = -1 ;
       _numToSkip        = 0 ;
@@ -82,11 +80,7 @@ namespace engine
          _scanner = NULL ;
       }
       // first release plan
-      if ( _plan && -1 != contextID() )
-      {
-         _plan->release() ;
-         _plan = NULL ;
-      }
+      _planRuntime.releasePlan() ;
       // second release mb context
       if ( _mbContext && _su )
       {
@@ -123,9 +117,9 @@ namespace engine
 
    void _rtnContextData::_toString( stringstream & ss )
    {
-      if ( _su && _plan )
+      if ( _su && _planRuntime.getPlan() )
       {
-         ss << ",Collection:" << _plan->getCLFullName() ;
+         ss << ",Collection:" << _planRuntime.getCLFullName() ;
       }
       ss << ",ScanType:" << ( ( TBSCAN == _scanType ) ? "TBSCAN" : "IXSCAN" ) ;
       if ( _numToReturn > 0 )
@@ -140,32 +134,32 @@ namespace engine
 
    INT32 _rtnContextData::_openIXScan( dmsStorageUnit *su,
                                        dmsMBContext *mbContext,
-                                       optAccessPlan *plan,
                                        pmdEDUCB *cb,
                                        const BSONObj *blockObj,
                                        INT32 direction )
    {
       INT32 rc = SDB_OK ;
+
       rtnPredicateList *predList = NULL ;
 
       // for index scan, we maintain context by runtime instead of by DMS
-      ixmIndexCB indexCB ( plan->getIndexCBExtent(), su->index(), NULL ) ;
+      ixmIndexCB indexCB ( _planRuntime.getIndexCBExtent(), su->index(), NULL ) ;
       if ( !indexCB.isInitialized() )
       {
          PD_LOG ( PDERROR, "unable to get proper index control block" ) ;
          rc = SDB_SYS ;
          goto error ;
       }
-      if ( indexCB.getLogicalID() != plan->getIndexLID() )
+      if ( indexCB.getLogicalID() != _planRuntime.getIndexLID() )
       {
          PD_LOG( PDERROR, "Index[extent id: %d] logical id[%d] is not "
-                 "expected[%d]", plan->getIndexCBExtent(),
-                 indexCB.getLogicalID(), plan->getIndexLID() ) ;
+                 "expected[%d]", _planRuntime.getIndexCBExtent(),
+                 indexCB.getLogicalID(), _planRuntime.getIndexLID() ) ;
          rc = SDB_IXM_NOTEXIST ;
          goto error ;
       }
       // get the predicate list
-      predList = plan->getPredList() ;
+      predList = _planRuntime.getPredList() ;
       SDB_ASSERT ( predList, "predList can't be NULL" ) ;
 
       // create scanner
@@ -209,7 +203,6 @@ namespace engine
 
    INT32 _rtnContextData::_openTBScan( dmsStorageUnit *su,
                                        dmsMBContext *mbContext,
-                                       optAccessPlan *plan,
                                        pmdEDUCB * cb,
                                        const BSONObj *blockObj )
    {
@@ -242,7 +235,7 @@ namespace engine
    }
 
    INT32 _rtnContextData::open( dmsStorageUnit *su, dmsMBContext *mbContext,
-                                optAccessPlan *plan, pmdEDUCB *cb,
+                                pmdEDUCB *cb,
                                 const BSONObj &selector, INT64 numToReturn,
                                 INT64 numToSkip,
                                 const BSONObj *blockObj,
@@ -251,7 +244,8 @@ namespace engine
       INT32 rc = SDB_OK ;
       BOOLEAN isStictType = FALSE ;
 
-      SDB_ASSERT( su && mbContext && plan, "Invalid param" ) ;
+      SDB_ASSERT( su && mbContext, "Invalid param" ) ;
+      SDB_ASSERT( _planRuntime.getPlan(), "Invalid plan" ) ;
 
       if ( _isOpened )
       {
@@ -279,20 +273,20 @@ namespace engine
       _isOpened = TRUE ;
       _hitEnd = FALSE ;
 
-      if ( TBSCAN == plan->getScanType() )
+      if ( TBSCAN == _planRuntime.getScanType() )
       {
-         rc = _openTBScan( su, mbContext, plan, cb, blockObj ) ;
+         rc = _openTBScan( su, mbContext, cb, blockObj ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to open tbscan, rc: %d", rc ) ;
       }
-      else if ( IXSCAN == plan->getScanType() )
+      else if ( IXSCAN == _planRuntime.getScanType() )
       {
-         rc = _openIXScan( su, mbContext, plan, cb, blockObj, direction ) ;
+         rc = _openIXScan( su, mbContext, cb, blockObj, direction ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to open ixscan, rc: %d", rc ) ;
       }
       else
       {
          rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Unknow scan type: %d", plan->getScanType() ) ;
+         PD_LOG( PDERROR, "Unknow scan type: %d", _planRuntime.getScanType() ) ;
          goto error ;
       }
 
@@ -313,13 +307,11 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Invalid pattern is detected for select: "
                       "%s, rc: %d", selector.toString().c_str(), rc ) ;
       }
-      _matcher = &( plan->getMatcher() ) ;
 
       _dmsCB = pmdGetKRCB()->getDMSCB() ;
       _su = su ;
       _mbContext = mbContext ;
-      _plan = plan ;
-      _scanType = plan->getScanType() ;
+      _scanType = _planRuntime.getScanType() ;
       _numToReturn = numToReturn ;
       _numToSkip = numToSkip > 0 ? numToSkip : 0 ;
 
@@ -339,7 +331,6 @@ namespace engine
 
    INT32 _rtnContextData::openTraversal( dmsStorageUnit *su,
                                          dmsMBContext *mbContext,
-                                         optAccessPlan *plan,
                                          rtnIXScanner *scanner,
                                          pmdEDUCB *cb,
                                          const BSONObj &selector,
@@ -349,14 +340,14 @@ namespace engine
       INT32 rc = SDB_OK ;
       BOOLEAN strictDataMode = FALSE ;
 
-      SDB_ASSERT( su && mbContext && plan && scanner, "Invalid param" ) ;
+      SDB_ASSERT( su && mbContext && scanner, "Invalid param" ) ;
 
       if ( _isOpened )
       {
          rc = SDB_DMS_CONTEXT_IS_OPEN ;
          goto error ;
       }
-      if ( IXSCAN != plan->getScanType() )
+      if ( IXSCAN != _planRuntime.getScanType() )
       {
          rc = SDB_INVALIDARG ;
          PD_LOG( PDERROR, "Open traversal must IXSCAN" ) ;
@@ -403,13 +394,11 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Invalid pattern is detected for select: "
                       "%s, rc: %d", selector.toString().c_str(), rc ) ;
       }
-      _matcher = &( plan->getMatcher() ) ;
 
       _dmsCB = pmdGetKRCB()->getDMSCB() ;
       _su = su ;
       _mbContext = mbContext ;
-      _plan = plan ;
-      _scanType = plan->getScanType() ;
+      _scanType = _planRuntime.getScanType() ;
       _numToReturn = numToReturn ;
       _numToSkip = numToSkip > 0 ? numToSkip : 0 ;
 
@@ -577,7 +566,7 @@ namespace engine
    INT32 _rtnContextData::_prepareNormalTbScan( pmdEDUCB * cb,
                                                 DMS_ACCESS_TYPE accessType,
                                                 vector<INT64>* dollarList,
-                                                _mthMatchTree *matcher,
+                                                mthMatchRuntime *matchRuntime,
                                                 mthSelector *selector )
    {
       INT32 rc = SDB_OK ;
@@ -609,8 +598,8 @@ namespace engine
             goto error ;
          }
 
-         dmsExtScanner extScanner( _su->data(), _mbContext, matcher, _extentID,
-                                   accessType, _numToReturn,
+         dmsExtScanner extScanner( _su->data(), _mbContext, matchRuntime,
+                                   _extentID, accessType, _numToReturn,
                                    _numToSkip ) ;
 
          while ( SDB_OK == ( rc = extScanner.advance( recordID, generator,
@@ -727,7 +716,7 @@ namespace engine
    INT32 _rtnContextData::_prepareCappedTbScan( pmdEDUCB * cb,
                                                 DMS_ACCESS_TYPE accessType,
                                                 vector<INT64>* dollarList,
-                                                _mthMatchTree *matcher,
+                                                mthMatchRuntime *matchRuntime,
                                                 mthSelector *selector )
    {
       INT32 rc = SDB_OK ;
@@ -750,7 +739,7 @@ namespace engine
       {
          _mthMatchTreeContext mthContext ;
          dmsCappedExtScanner extScanner( (dmsStorageDataCapped *)_su->data(),
-                                         _mbContext, matcher, _extentID,
+                                         _mbContext, matchRuntime, _extentID,
                                          DMS_ACCESS_TYPE_FETCH, _numToReturn,
                                          _numToSkip ) ;
          while ( SDB_OK == (rc = extScanner.advance( recordID, generator,
@@ -827,18 +816,14 @@ namespace engine
       goto done ;
    }
 
-   INT32 _rtnContextData::_prepareByTBScan( pmdEDUCB * cb,
-                                            DMS_ACCESS_TYPE accessType,
-                                            vector<INT64>* dollarList )
+   INT32 _rtnContextData::_prepareByTBScan ( pmdEDUCB * cb,
+                                             DMS_ACCESS_TYPE accessType,
+                                             vector<INT64>* dollarList )
    {
       INT32 rc                = SDB_OK ;
-      _mthMatchTree *matcher  = NULL ;
+      mthMatchRuntime *matchRuntime = _planRuntime.getMatchRuntime( TRUE ) ;
       mthSelector *selector   = NULL ;
 
-      if ( _matcher && _matcher->isInitialized() && !_matcher->isMatchesAll() )
-      {
-         matcher = _matcher ;
-      }
       if ( _selector.isInitialized() )
       {
          selector = &_selector ;
@@ -862,12 +847,12 @@ namespace engine
       if ( DMS_STORAGE_CAPPED == _su->type() )
       {
          rc = _prepareCappedTbScan( cb, accessType, dollarList,
-                                    matcher, selector ) ;
+                                    matchRuntime, selector ) ;
       }
       else
       {
          rc = _prepareNormalTbScan( cb, accessType, dollarList,
-                                    matcher, selector ) ;
+                                    matchRuntime, selector ) ;
       }
       if ( rc && SDB_DMS_EOC != rc )
       {
@@ -886,7 +871,7 @@ namespace engine
    {
       INT32 rc                   = SDB_OK ;
       rtnIXScanner *scanner      = _scanner ;
-      _mthMatchTree *matcher     = NULL ;
+      mthMatchRuntime *matchRuntime = _planRuntime.getMatchRuntime( TRUE ) ;
       mthSelector *selector      = NULL ;
       monAppCB * pMonAppCB       = cb ? cb->getMonAppCB() : NULL ;
       BOOLEAN hasLocked          = _mbContext->isMBLock() ;
@@ -895,10 +880,6 @@ namespace engine
       dmsRecordID rid ;
       BSONObj dataRecord ;
 
-      if ( _matcher && _matcher->isInitialized() && !_matcher->isMatchesAll() )
-      {
-         matcher = _matcher ;
-      }
       if ( _selector.isInitialized() )
       {
          selector = &_selector ;
@@ -929,8 +910,8 @@ namespace engine
             goto error ;
          }
 
-         dmsIXSecScanner secScanner( _su->data(), _mbContext, matcher, scanner,
-                                     accessType, _numToReturn,
+         dmsIXSecScanner secScanner( _su->data(), _mbContext, matchRuntime,
+                                     scanner, accessType, _numToReturn,
                                      _numToSkip ) ;
          if ( _indexBlockScan )
          {
@@ -1256,7 +1237,7 @@ namespace engine
    }
 
    INT32 _rtnContextParaData::open( dmsStorageUnit *su, dmsMBContext *mbContext,
-                                    optAccessPlan *plan, pmdEDUCB *cb,
+                                    pmdEDUCB *cb,
                                     const BSONObj &selector, INT64 numToReturn,
                                     INT64 numToSkip, const BSONObj *blockObj,
                                     INT32 direction )
@@ -1268,7 +1249,7 @@ namespace engine
          _step = 1 ;
       }
 
-      rc = _rtnContextData::open( su, mbContext, plan, cb, selector,
+      rc = _rtnContextData::open( su, mbContext, cb, selector,
                                   numToReturn, numToSkip, blockObj,
                                   direction ) ;
       if ( rc )
@@ -1295,7 +1276,7 @@ namespace engine
       }
       else if ( IXSCAN == _scanType && FALSE == _indexBlockScan )
       {
-         rc = rtnGetIndexSeps( plan, su, mbContext, cb, _indexBlocks,
+         rc = rtnGetIndexSeps( &_planRuntime, su, mbContext, cb, _indexBlocks,
                                _indexRIDs ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to get index seperations, rc: %d",
                       rc ) ;
@@ -1367,10 +1348,10 @@ namespace engine
       dmsMBContext *mbContext = NULL ;
       rtnContextData *dataContext = NULL ;
 
-      rc = _su->data()->getMBContext( &mbContext, _plan->getCLMBID(),
+      rc = _su->data()->getMBContext( &mbContext, _planRuntime.getCLMBID(),
                                       DMS_INVALID_CLID, -1 ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get dms mb context, rc: %d", rc ) ;
-      PD_CHECK( _plan->getCLLID() == mbContext->clLID(), SDB_DMS_NOTEXIST,
+      PD_CHECK( _planRuntime.getCLLID() == mbContext->clLID(), SDB_DMS_NOTEXIST,
                 error, PDERROR, "Failed to get dms mb context, rc: %d",
                 SDB_DMS_NOTEXIST ) ;
 
@@ -1379,12 +1360,14 @@ namespace engine
       if ( !dataContext )
       {
          rc = SDB_OOM ;
-         PD_LOG( PDERROR, "Alloc sub context outof memory" ) ;
+         PD_LOG( PDERROR, "Alloc sub context out of memory" ) ;
          goto error ;
       }
       _vecContext.push_back( dataContext ) ;
 
-      rc = dataContext->open( _su, mbContext, _plan, cb, selector,
+      dataContext->getPlanRuntime()->inheritRuntime( &_planRuntime ) ;
+
+      rc = dataContext->open( _su, mbContext, cb, selector,
                               numToReturn, 0, blockObj, _direction ) ;
       PD_RC_CHECK( rc, PDERROR, "Open sub context failed, blockObj: %s, "
                    "rc: %d", blockObj->toString().c_str(), rc ) ;
@@ -1727,7 +1710,7 @@ namespace engine
       {
          /// WARNING: do not use this plan to do anything
          ///  except keeping plan for explain. -- yunwu.
-         _planForExplain = ( ( _rtnContextData * )context )->getPlan() ;
+         _planForExplain = ( ( _rtnContextData * )context )->getPlanRuntime() ;
       }
 
       _dataContext = context ;
@@ -2159,7 +2142,7 @@ namespace engine
       BSONObj dummy ;
       INT64 queryContextID = -1 ;
       rtnContextBuf ctxBuf ;
-      _optAccessPlan *plan = NULL ;
+      optAccessPlanRuntime *planRuntime = NULL ;
       const CHAR* hostName = NULL ;
       stringstream ss ;
       _rtnContextBase *contextOfQuery = NULL ;
@@ -2184,27 +2167,32 @@ namespace engine
          goto error ;
       }
 
-      plan = contextOfQuery->getPlan() ;
-      if ( NULL == plan )
+      planRuntime = contextOfQuery->getPlanRuntime() ;
+      if ( NULL == planRuntime ||
+           NULL == planRuntime->getPlan() )
       {
          PD_LOG( PDERROR, "plan should not be NULL" ) ;
          rc = SDB_SYS ;
          goto error ;
       }
 
-      _builder.append( FIELD_NAME_NAME, _options._fullName ) ;
-      _builder.append( FIELD_NAME_SCANTYPE, IXSCAN == plan->getScanType() ?
+      _builder.append( FIELD_NAME_NAME,
+                       _options._fullName ) ;
+      _builder.append( FIELD_NAME_SCANTYPE,
+                       IXSCAN == planRuntime->getScanType() ?
                        VALUE_NAME_IXSCAN : VALUE_NAME_TBSCAN ) ;
       _builder.append( FIELD_NAME_INDEXNAME,
-                       plan->getIndexName() ) ;
-      _builder.appendBool( FIELD_NAME_USE_EXT_SORT, plan->sortRequired() ) ;
+                       planRuntime->getIndexName() ) ;
+      _builder.appendBool( FIELD_NAME_USE_EXT_SORT,
+                           planRuntime->sortRequired() ) ;
       _builder.append( FIELD_NAME_QUERY,
-                       plan->getMatcher().getParsedQuery() ) ;
-      if ( IXSCAN == plan->getScanType() &&
-           NULL != plan->getPredList() )
+                       planRuntime->getMatchTree()->getParsedQuery(
+                                         planRuntime->getParameters() ) ) ;
+      if ( IXSCAN == planRuntime->getScanType() &&
+           NULL != planRuntime->getPredList() )
       {
          _builder.append( FIELD_NAME_IX_BOUND,
-                          plan->getPredList()->getBound() ) ;
+                          planRuntime->getPredList()->getBound() ) ;
       }
       else
       {
@@ -2212,7 +2200,7 @@ namespace engine
       }
 
       _builder.appendBool( FIELD_NAME_NEED_MATCH,
-                           !plan->getMatcher().isMatchesAll() ) ;
+                           !planRuntime->getMatchTree()->isMatchesAll() ) ;
 
       hostName = pmdGetKRCB()->getHostName() ;
       ss << hostName << ":" << pmdGetOptionCB()->getServiceAddr() ;
@@ -2222,7 +2210,12 @@ namespace engine
       if ( _needDetail )
       {
          BSONObjBuilder subBuilder( _builder.subobjStart( FIELD_NAME_DETAIL ) ) ;
-         plan->toBSON( subBuilder ) ;
+         planRuntime->getPlan()->toBSON( subBuilder ) ;
+         if ( !planRuntime->getParameters().isEmpty() )
+         {
+            subBuilder.append( OPT_FIELD_PARAMETERS,
+                               planRuntime->getParameters().toBSON() ) ;
+         }
          subBuilder.done() ;
       }
 

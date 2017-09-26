@@ -52,6 +52,8 @@ using namespace bson ;
 namespace engine
 {
 
+   #define DMS_PARAM_INVALID_THRESHOLD ( 5 )
+
    /*
       _dmsCLCachedPlanUnit define
     */
@@ -76,6 +78,36 @@ namespace engine
          }
 
          OSS_INLINE virtual void clearSubUnits () {}
+
+         OSS_INLINE void incParamInvalid ()
+         {
+            _paramInvalidCount ++ ;
+         }
+
+         OSS_INLINE BOOLEAN isParamInvalid () const
+         {
+            return _paramInvalidCount > DMS_PARAM_INVALID_THRESHOLD ;
+         }
+
+         OSS_INLINE void incMainCLInvalid ()
+         {
+            _mainCLInvalidCount ++ ;
+         }
+
+         OSS_INLINE void setMainCLInvalid ()
+         {
+            _mainCLInvalidCount = DMS_PARAM_INVALID_THRESHOLD + 1 ;
+         }
+
+         OSS_INLINE BOOLEAN isMainCLInvalid ()
+         {
+            return _mainCLInvalidCount > DMS_PARAM_INVALID_THRESHOLD ;
+         }
+
+      protected :
+         UINT8    _paramInvalidCount ;
+         UINT8    _mainCLInvalidCount ;
+         CHAR     _mainCLName[ DMS_COLLECTION_FULL_NAME_SZ + 1 ] ;
    } ;
 
    typedef class _dmsCLCachedPlanUnit dmsCLCachedPlanUnit ;

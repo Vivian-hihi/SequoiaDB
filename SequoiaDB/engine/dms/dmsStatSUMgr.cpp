@@ -990,6 +990,67 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSSTATSUMGR_ONCLRSUCACHES, "_dmsStatSUMgr::onClearSUCaches" )
+   INT32 _dmsStatSUMgr::onClearSUCaches ( IDmsEventHolder *pEventHolder,
+                                          IDmsSUCacheHolder *pCacheHolder )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_DMSSTATSUMGR_ONCLRSUCACHES ) ;
+
+      SDB_ASSERT( pEventHolder, "Event holder is invalid" ) ;
+
+      PD_CHECK( _initialized, SDB_INVALIDARG, error, PDWARNING,
+                "Statistics SU is not initialized" ) ;
+
+      if ( pCacheHolder )
+      {
+         dmsSUCache *pCache = pCacheHolder->getSUCache( DMS_CACHE_TYPE_STAT ) ;
+         if ( pCache )
+         {
+            pCache->clearCacheUnits() ;
+         }
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB_DMSSTATSUMGR_ONCLRSUCACHES, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSSTATSUMGR_ONCLRCLCACHES, "_dmsStatSUMgr::onClearCLCaches" )
+   INT32 _dmsStatSUMgr::onClearCLCaches ( IDmsEventHolder *pEventHolder,
+                                          IDmsSUCacheHolder *pCacheHolder,
+                                          const dmsEventCLItem &clItem )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_DMSSTATSUMGR_ONCLRCLCACHES ) ;
+
+      SDB_ASSERT( pEventHolder, "Event holder is invalid" ) ;
+
+      PD_CHECK( _initialized, SDB_INVALIDARG, error, PDWARNING,
+                "Statistics SU is not initialized" ) ;
+
+      if ( pCacheHolder )
+      {
+         dmsSUCache *pCache = pCacheHolder->getSUCache( DMS_CACHE_TYPE_STAT ) ;
+         if ( pCache )
+         {
+            pCache->removeCacheUnit( clItem._mbID, TRUE ) ;
+         }
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB_DMSSTATSUMGR_ONCLRCLCACHES, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
    INT32 _dmsStatSUMgr::_ensureStatMetadata ( pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;

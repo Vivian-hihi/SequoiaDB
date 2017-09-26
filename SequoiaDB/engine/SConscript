@@ -288,7 +288,8 @@ dmsFiles = [
       "dms/dmsIndexBuilderImpl.cpp",
       "dms/dmsStatSUMgr.cpp",
       "dms/dmsStatUnit.cpp",
-      "dms/dmsCachedPlanUnit.cpp"
+      "dms/dmsCachedPlanUnit.cpp",
+      "dms/dmsSUCache.cpp"
       ]
 
 ixmFiles = [
@@ -302,6 +303,7 @@ mthFiles = [
       "mth/mthMatchNode.cpp",
       "mth/mthMatchOpNode.cpp",
       "mth/mthMatchTree.cpp",
+      "mth/mthMatchRuntime.cpp",
       "mth/mthMatchLogicNode.cpp",
       "mth/mthModifier.cpp",
       "mth/mthSelector.cpp",
@@ -320,7 +322,8 @@ mthFiles = [
       "mth/parsers/mthElemMatchOneParser.cpp",
       "mth/parsers/mthMathParser.cpp",
       "mth/parsers/mthStrParser.cpp",
-      "mth/parsers/mthCastParser.cpp"
+      "mth/parsers/mthCastParser.cpp",
+      "mth/parsers/mthMatchNormalizer.cpp"
       ]
 
 optFiles = [
@@ -333,7 +336,8 @@ optFiles = [
       "opt/optStatUnit.cpp",
       "opt/optAPM.cpp",
       "opt/optAccessPlanKey.cpp",
-      "opt/optPlanClearJob.cpp"
+      "opt/optPlanClearJob.cpp",
+      "opt/optAccessPlanRuntime.cpp"
       ]
 
 monFiles = [

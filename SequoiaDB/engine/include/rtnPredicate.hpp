@@ -41,6 +41,7 @@
 #include "core.hpp"
 #include "oss.hpp"
 #include "../bson/bson.h"
+#include "pd.hpp"
 #include <string>
 #include <vector>
 #include <map>
@@ -49,6 +50,80 @@ using namespace bson ;
 using namespace std ;
 namespace engine
 {
+
+   // For parameters
+   // Used internal: { $param : paramIndex }
+   #define RTN_PARAMETER_STR                    "$param"
+
+   // Each query could have no more than 16 parameters
+   #define RTN_MAX_PARAM_NUM                    ( 16 )
+
+   class _rtnParamList : public SDBObject
+   {
+      protected :
+         typedef struct _rtnParam
+         {
+            _rtnParam ()
+            {
+               _doneByPred = FALSE ;
+            }
+
+            BSONElement _param ;
+            BOOLEAN     _doneByPred ;
+         } _rtnParam, rtnParam ;
+
+      public :
+         _rtnParamList () ;
+
+         virtual ~_rtnParamList () ;
+
+         BSONObj toBSON () const ;
+         string toString () const ;
+
+         OSS_INLINE BOOLEAN isEmpty () const
+         {
+            return _paramNum <= 0 ;
+         }
+
+         OSS_INLINE void clearParams ()
+         {
+            _paramNum = 0 ;
+         }
+
+         OSS_INLINE INT8 getCurIndex () const
+         {
+            return _paramNum ;
+         }
+
+         OSS_INLINE BOOLEAN canParameterize () const
+         {
+            return _paramNum < RTN_MAX_PARAM_NUM ;
+         }
+
+         INT8 addParam ( const BSONElement &param ) ;
+
+         BSONElement getParam ( INT8 index ) const
+         {
+            SDB_ASSERT( index >= 0 && index < _paramNum,
+                        "index is invalid" ) ;
+            return _params[ index ]._param ;
+         }
+
+         void setDoneByPred ( INT8 index ) ;
+
+         OSS_INLINE BOOLEAN isDoneByPred ( INT8 index ) const
+         {
+            SDB_ASSERT( index >= 0 && index < _paramNum,
+                        "index is invalid" ) ;
+            return _params[ index ]._doneByPred ;
+         }
+
+      protected :
+         INT8        _paramNum ;
+         rtnParam    _params[ RTN_MAX_PARAM_NUM ] ;
+   } ;
+
+   typedef class _rtnParamList rtnParamList ;
 
    INT32 rtnKeyCompare ( const BSONElement &l, const BSONElement &r ) ;
 
@@ -66,14 +141,17 @@ namespace engine
       rtnKeyBoundary ()
       {
          _inclusive = FALSE ;
+         _parameterized = FALSE ;
       }
       rtnKeyBoundary ( const BSONElement &bound, BOOLEAN inclusive )
       {
          _bound = bound ;
          _inclusive = inclusive ;
+         _parameterized = FALSE ;
       }
       BSONElement _bound ;
       BOOLEAN _inclusive ;
+      BOOLEAN _parameterized ;
       BOOLEAN operator==( const rtnKeyBoundary &r ) const
       {
          return _inclusive == r._inclusive &&
@@ -190,6 +268,8 @@ namespace engine
       RTN_SSK_RANGE_POS compare ( rtnStartStopKey &key, INT32 dir ) const ;
    } ;
 
+   typedef vector< rtnStartStopKey > RTN_SSKEY_LIST ;
+
    // if we want to find the max bound of start keys, we want to return the one
    // list of start/stop key that doesn't intersect with each other on one field
    class rtnPredicate : public SDBObject
@@ -209,22 +289,27 @@ namespace engine
       BOOLEAN _allRange ;
       double _selectivity ;
 
+      INT8 _paramIndex ;
+      INT8 _fuzzyIndex ;
+
       // this is used when creating new bsonobject in the class
       BSONObj addObj ( const BSONObj &o )
       {
          _objData.push_back(o) ;
          return o ;
       }
-      void finishOperation ( const vector<rtnStartStopKey> &newkeys,
+      void finishOperation ( const RTN_SSKEY_LIST &newkeys,
                              const rtnPredicate &other ) ;
    public:
-      vector<rtnStartStopKey> _startStopKeys ;
+      RTN_SSKEY_LIST _startStopKeys ;
       rtnPredicate ( )
       {
          rtnPredicate ( BSONObj().firstElement(), 0, FALSE, TRUE ) ;
       }
       rtnPredicate ( const BSONElement &e, INT32 opType, BOOLEAN isNot,
-                     BOOLEAN mixCmp ) ;
+                     BOOLEAN mixCmp,
+                     INT8 paramIndex = -1,
+                     INT8 fuzzyOptr = -1 ) ;
       ~rtnPredicate ()
       {
          _startStopKeys.clear() ;
@@ -294,7 +379,7 @@ namespace engine
          if ( -1 == _allEqualFlag )
          {
             UINT32 equalCount = 0 ;
-            for ( vector<rtnStartStopKey>::iterator iterSSKey = _startStopKeys.begin();
+            for ( RTN_SSKEY_LIST::iterator iterSSKey = _startStopKeys.begin() ;
                   iterSSKey != _startStopKeys.end() ;
                   iterSSKey ++ )
             {
@@ -351,6 +436,8 @@ namespace engine
          _selectivity = selectivity ;
       }
 
+      BOOLEAN bindParameters ( rtnParamList &parameters ) ;
+
    protected :
       // Helper functions for create predicate
       INT32 _initIN ( const BSONElement &e, BOOLEAN isNot,
@@ -372,7 +459,10 @@ namespace engine
       INT32 _initMinRange ( BOOLEAN startIncluded ) ;
    } ;
 
+   typedef vector< rtnPredicate > RTN_PREDICATE_LIST ;
+   typedef vector< RTN_PREDICATE_LIST > RTN_PARAM_PREDICATE_LIST ;
    typedef map< string, rtnPredicate > RTN_PREDICATE_MAP ;
+   typedef map< string, RTN_PREDICATE_LIST > RTN_PARAM_PREDICATE_MAP ;
 
    // This set is created when receiving a query. It contains user search
    // condition predicates from user input for all fields
@@ -380,15 +470,19 @@ namespace engine
    {
    public:
       const rtnPredicate &predicate ( const CHAR *fieldName ) const ;
+      const RTN_PREDICATE_LIST &paramPredicate ( const CHAR *fieldName ) const ;
       const RTN_PREDICATE_MAP &predicates() const { return _predicates ; }
       RTN_PREDICATE_MAP &predicates() { return _predicates ; }
       INT32 matchLevelForIndex ( const BSONObj &keyPattern ) const ;
       INT32 addPredicate ( const CHAR *fieldName, const BSONElement &e,
-                           INT32 opType, BOOLEAN isNot, BOOLEAN mixCmp ) ;
+                           INT32 opType, BOOLEAN isNot, BOOLEAN mixCmp,
+                           BOOLEAN addToParam, INT8 paramIndex,
+                           INT8 fuzzyIndex ) ;
       UINT32 getSize () const { return _predicates.size() ; }
       void clear()
       {
          _predicates.clear() ;
+         _paramPredicates.clear() ;
       }
       string toString() const ;
 
@@ -396,6 +490,7 @@ namespace engine
 
    private:
       RTN_PREDICATE_MAP _predicates ;
+      RTN_PARAM_PREDICATE_MAP _paramPredicates ;
    } ;
    typedef class _rtnPredicateSet rtnPredicateSet ;
 
@@ -410,35 +505,84 @@ namespace engine
    // each index key on disk will be sent to matchesKey function to match
    class _rtnPredicateList : public SDBObject
    {
-   public:
-      _rtnPredicateList ( const rtnPredicateSet &predSet,
-                          const _ixmIndexCB *indexCB,
-                          int direction ) ;
-      UINT32 size() { return _predicates.size(); }
-      BSONObj startKey() const ;
-      BSONObj endKey() const ;
-      BSONObj obj() const ;
-      BOOLEAN matchesKey ( const BSONObj &key ) const ;
-      string toString() const ;
-      BSONObj getBound() const ;
-      INT32 getDirection() const
-      {
-         return _direction;
-      }
-      void setDirection ( INT32 dir )
-      {
-         _direction = dir ;
-      }
-   private :
-      INT32 matchingLowElement ( const BSONElement &e, INT32 i,
-                                 BOOLEAN direction,
-                                 BOOLEAN &lowEquality ) const ;
-      BOOLEAN matchesElement ( const BSONElement &e, INT32 i,
-                               BOOLEAN direction ) const ;
-      vector <rtnPredicate> _predicates ;
-      INT32 _direction ;
-      BSONObj _keyPattern ;
-      friend class _rtnPredicateListIterator ;
+   public :
+         _rtnPredicateList () ;
+
+         virtual ~_rtnPredicateList () ;
+
+         void clear () ;
+
+         // Build the fixed predicate list
+         INT32 initialize ( const rtnPredicateSet &predSet,
+                            const BSONObj &keyPattern,
+                            INT32 direction,
+                            UINT32 &addedLevel ) ;
+
+         // Build the predicate list with parameters, and generate
+         // parameterized predicate list to bind parameters quickly for
+         // similar queries in the future
+         INT32 initialize ( const rtnPredicateSet &predSet,
+                            const BSONObj &keyPattern,
+                            INT32 direction,
+                            rtnParamList &parameters,
+                            RTN_PARAM_PREDICATE_LIST &paramPredList ) ;
+
+         // Build the predicate list from parameterized predicate list with
+         // current parameters
+         INT32 initialize ( const RTN_PARAM_PREDICATE_LIST &paramPredList,
+                            const BSONObj &keyPattern,
+                            INT32 direction,
+                            rtnParamList &parameters ) ;
+
+         UINT32 size() { return _predicates.size(); }
+         BSONObj startKey() const ;
+         BSONObj endKey() const ;
+         BSONObj obj() const ;
+         BOOLEAN matchesKey ( const BSONObj &key ) const ;
+         string toString() const ;
+         BSONObj getBound() const ;
+
+         OSS_INLINE INT32 getDirection() const
+         {
+            return _direction ;
+         }
+
+         OSS_INLINE void setDirection ( INT32 dir )
+         {
+            _direction = dir ;
+         }
+
+         OSS_INLINE BOOLEAN isInitialized () const
+         {
+            return _initialized ;
+         }
+
+         OSS_INLINE BOOLEAN isFixedPredList () const
+         {
+            return _fixedPredList ;
+         }
+
+      protected :
+         void _addPredicate ( const BSONElement &e,
+                              INT32 direction,
+                              const rtnPredicate &pred ) ;
+
+         void _addEmptyPredicate () ;
+
+         INT32 matchingLowElement ( const BSONElement &e, INT32 i,
+                                    BOOLEAN direction,
+                                    BOOLEAN &lowEquality ) const ;
+         BOOLEAN matchesElement ( const BSONElement &e, INT32 i,
+                                  BOOLEAN direction ) const ;
+
+      protected :
+         BOOLEAN _initialized ;
+         BOOLEAN _fixedPredList ;
+         RTN_PREDICATE_LIST _predicates ;
+         INT32 _direction ;
+         BSONObj _keyPattern ;
+
+         friend class _rtnPredicateListIterator ;
    } ;
    typedef class _rtnPredicateList rtnPredicateList ;
 

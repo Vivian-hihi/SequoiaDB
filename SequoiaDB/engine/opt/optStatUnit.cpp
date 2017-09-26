@@ -321,7 +321,8 @@ namespace engine
       {
          selectivity = 0.0 ;
 
-         for ( vector<rtnStartStopKey>::iterator iterSSKey = predicate._startStopKeys.begin();
+         for ( RTN_SSKEY_LIST::iterator iterSSKey =
+                                          predicate._startStopKeys.begin() ;
                iterSSKey != predicate._startStopKeys.end() ;
                iterSSKey ++ )
          {
@@ -405,7 +406,8 @@ namespace engine
          if ( pPredicate )
          {
             double tmpScanSel = 0.0, tmpPredSel = 0.0 ;
-            for ( vector<rtnStartStopKey>::const_iterator iterSSKey = pPredicate->_startStopKeys.begin();
+            for ( RTN_SSKEY_LIST::const_iterator iterSSKey =
+                                          pPredicate->_startStopKeys.begin() ;
                   iterSSKey != pPredicate->_startStopKeys.end() ;
                   iterSSKey ++ )
             {

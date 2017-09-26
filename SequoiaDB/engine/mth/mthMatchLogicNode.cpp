@@ -42,8 +42,9 @@ using namespace bson ;
 
 namespace engine
 {
-   _mthMatchLogicNode::_mthMatchLogicNode( _mthNodeAllocator *allocator )
-                      :_mthMatchNode( allocator )
+   _mthMatchLogicNode::_mthMatchLogicNode( _mthNodeAllocator *allocator,
+                                           const mthNodeConfig *config )
+                      :_mthMatchNode( allocator, config )
    {
    }
 
@@ -126,9 +127,26 @@ namespace engine
       return builder.obj() ;
    }
 
+   BSONObj _mthMatchLogicNode::toParamBson ( const rtnParamList &toParamBson )
+   {
+      BSONObjBuilder builder ;
+      BSONArrayBuilder sub( builder.subarrayStart( getOperatorStr() ) ) ;
+      MATCHNODE_VECTOR::iterator iter = _children.begin() ;
+      while ( iter != _children.end() )
+      {
+         sub << ( *iter )->toParamBson( toParamBson ) ;
+         iter++ ;
+      }
+
+      sub.doneFast() ;
+
+      return builder.obj() ;
+   }
+
    //*******************_mthMatchLogicAndNode***********************
-   _mthMatchLogicAndNode::_mthMatchLogicAndNode( _mthNodeAllocator *allocator )
-                         :_mthMatchLogicNode( allocator )
+   _mthMatchLogicAndNode::_mthMatchLogicAndNode( _mthNodeAllocator *allocator,
+                                                 const mthNodeConfig *config )
+                         :_mthMatchLogicNode( allocator, config )
    {
    }
 
@@ -227,8 +245,9 @@ namespace engine
    }
 
    //*******************_mthMatchLogicAndNode***********************
-   _mthMatchLogicOrNode::_mthMatchLogicOrNode( _mthNodeAllocator *allocator )
-                        :_mthMatchLogicNode( allocator )
+   _mthMatchLogicOrNode::_mthMatchLogicOrNode( _mthNodeAllocator *allocator,
+                                               const mthNodeConfig *config )
+                        :_mthMatchLogicNode( allocator, config )
    {
    }
 
@@ -291,7 +310,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _mthMatchLogicOrNode::calcPredicate( _rtnPredicateSet &predicateSet )
+   INT32 _mthMatchLogicOrNode::calcPredicate( rtnPredicateSet &predicateSet )
    {
       // Logic or do not have predicatekey.
       return SDB_OK ;
@@ -341,8 +360,9 @@ namespace engine
    }
 
    //*******************_mthMatchLogicNotNode***************************
-   _mthMatchLogicNotNode::_mthMatchLogicNotNode( _mthNodeAllocator *allocator )
-                         :_mthMatchLogicAndNode( allocator )
+   _mthMatchLogicNotNode::_mthMatchLogicNotNode( _mthNodeAllocator *allocator,
+                                                 const mthNodeConfig *config )
+                         :_mthMatchLogicAndNode( allocator, config )
    {
    }
 
@@ -390,7 +410,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _mthMatchLogicNotNode::calcPredicate( _rtnPredicateSet &predicateSet )
+   INT32 _mthMatchLogicNotNode::calcPredicate( rtnPredicateSet &predicateSet )
    {
       // Logic not do not have predicatekey.
       return SDB_OK ;

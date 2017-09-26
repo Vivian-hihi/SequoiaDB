@@ -238,33 +238,6 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCLEARSTATS, "rtnClearStats" )
-   INT32 rtnClearStats ( pmdEDUCB *cb, _SDB_DMSCB *dmsCB )
-   {
-      INT32 rc = SDB_OK ;
-
-      PD_TRACE_ENTRY( SDB_RTNCLEARSTATS ) ;
-
-      rtnAnalyzeParam param ;
-      param._mode = SDB_ANALYZE_MODE_CLEAR ;
-
-      if ( SDB_ROLE_DATA != pmdGetDBRole() &&
-           SDB_ROLE_STANDALONE != pmdGetDBRole() )
-      {
-         goto done ;
-      }
-
-      // rtnCB and dpsCB are not required
-      rc = rtnAnalyze( NULL, NULL, NULL, param, cb, dmsCB, NULL, NULL ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to reload statistics, rc: %d", rc ) ;
-
-   done :
-      PD_TRACE_EXITRC( SDB_RTNCLEARSTATS, rc ) ;
-      return rc ;
-   error :
-      goto done ;
-   }
-
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNRELOADCLSTATS, "rtnReloadCLStats" )
    INT32 rtnReloadCLStats ( dmsStorageUnit *pSU, dmsMBContext *mbContext,
                             pmdEDUCB *cb, _SDB_DMSCB *dmsCB )
@@ -291,7 +264,7 @@ namespace engine
 
          rc = _rtnReloadCLStats( &monCS, &monCL, pStatCache, cb, dmsCB, NULL ) ;
          PD_RC_CHECK( rc, PDWARNING, "Failed to load statistics for collection "
-                   "[%s], rc: %d", monCL._name, rc ) ;
+                      "[%s], rc: %d", monCL._name, rc ) ;
       }
 
    done :
@@ -407,7 +380,7 @@ namespace engine
          csLockType = EXCLUSIVE ;
       }
 
-      rc = dmsCB->nameToSUAndLock ( pCSName, suID, &pSU, csLockType, OSS_ONE_SEC ) ;
+      rc = dmsCB->nameToSUAndLock( pCSName, suID, &pSU, csLockType, OSS_ONE_SEC ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get collection space [%s], rc: %d",
                    pCSName, rc ) ;
 

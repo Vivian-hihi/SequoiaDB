@@ -41,7 +41,7 @@
 
 #include "core.hpp"
 #include "oss.hpp"
-#include "mthMatchTree.hpp"
+#include "mthMatchRuntime.hpp"
 #include "optStatUnit.hpp"
 #include "optCommon.hpp"
 #include "utilAllocator.hpp"
@@ -297,8 +297,8 @@ namespace engine
 
       protected :
          void _preEvaluate ( const BSONObj &selector,
-                             _mthMatchTree &matcher,
-                             optCollectionStat &collectionStat ) ;
+                             mthMatchHelper &matchHelper,
+                             optCollectionStat *collectionStat ) ;
 
          void _evalOutRecordSize () ;
 
@@ -346,8 +346,8 @@ namespace engine
          virtual ~_optTbScanNode () {}
 
          void preEvaluate ( const BSONObj &selector,
-                            _mthMatchTree &matcher,
-                            optCollectionStat &collectionStat ) ;
+                            mthMatchHelper &matchHelper,
+                            optCollectionStat *collectionStat ) ;
 
          virtual void evaluate () ;
 
@@ -396,11 +396,11 @@ namespace engine
          virtual ~_optIxScanNode () {}
 
          void preEvaluate ( const BSONObj &selector,
-                            _mthMatchTree &matcher,
+                            mthMatchHelper &matchHelper,
                             const BSONObj &boOrder,
                             OPT_PLAN_PATH_PRIORITY priority,
-                            optCollectionStat &collectionStat,
-                            optIndexStat &indexStat ) ;
+                            optCollectionStat *collectionStat,
+                            optIndexStat *indexStat ) ;
 
          virtual void evaluate () ;
 
@@ -439,6 +439,11 @@ namespace engine
             return _indexLID ;
          }
 
+         OSS_INLINE BSONObj getKeyPattern () const
+         {
+            return _keyPattern ;
+         }
+
          OSS_INLINE virtual optScanType getScanType () const
          {
             return IXSCAN ;
@@ -456,11 +461,21 @@ namespace engine
             }
          }
 
+         OSS_INLINE double getScanSelectivity () const
+         {
+            return _scanSelectivity ;
+         }
+
+         OSS_INLINE double getPredSelectivity () const
+         {
+            return _predSelectivity ;
+         }
+
       protected :
-         void _evalPredEstimation ( _mthMatchTree &matcher,
+         void _evalPredEstimation ( mthMatchHelper &matchHelper,
                                     const BSONObj &boOrder,
                                     BOOLEAN isBestIndex,
-                                    const optIndexStat &indexStat ) ;
+                                    const optIndexStat *indexStat ) ;
 
          virtual void _toBSON ( BSONObjBuilder &builder ) const ;
 
@@ -487,7 +502,7 @@ namespace engine
          // Information of index
          dmsExtentID       _indexExtID ;
          dmsExtentID       _indexLID ;
-         OID               _indexOID ;
+         BSONObj           _keyPattern ;
 
          // The range to scan the index: from the start key to the stop key
          // of each key-pairs in the predicates
@@ -695,19 +710,19 @@ namespace engine
 
          INT32 createTbScan ( const CHAR *pCollection,
                               const BSONObj &selector,
-                              _mthMatchTree &matcher,
+                              mthMatchHelper &matchHelper,
                               INT32 estCacheSize,
-                              optCollectionStat &collectionStat ) ;
+                              optCollectionStat *collectionStat ) ;
 
          INT32 createIxScan ( const CHAR *pCollection,
                               const ixmIndexCB &indexCB,
                               const BSONObj &selector,
-                              _mthMatchTree &matcher,
+                              mthMatchHelper &matchHelper,
                               const BSONObj &boOrder,
                               OPT_PLAN_PATH_PRIORITY priority,
                               INT32 estCacheSize,
-                              optCollectionStat &collectionStat,
-                              optIndexStat &indexStat ) ;
+                              optCollectionStat *collectionStat,
+                              optIndexStat *indexStat ) ;
 
          OSS_INLINE BOOLEAN isCandidate () const
          {
@@ -716,28 +731,45 @@ namespace engine
 
          OSS_INLINE BOOLEAN isMatchAll () const
          {
-            return ( _pScanNode && OPT_PLAN_IDX_SCAN == _pScanNode->getType() ) ?
-                   ((optIxScanNode *)_pScanNode)->isMatchAll() : FALSE ;
+            return isIxScan() ?
+                   ((optIxScanNode *)_pScanNode)->isMatchAll() :
+                   FALSE ;
          }
 
          OSS_INLINE INT32 getDirection () const
          {
-            return ( _pScanNode && OPT_PLAN_IDX_SCAN == _pScanNode->getType() ) ?
-                   ((optIxScanNode *)_pScanNode)->getDirection() : 1 ;
+            return isIxScan() ?
+                   ((optIxScanNode *)_pScanNode)->getDirection() :
+                   1 ;
          }
 
          OSS_INLINE dmsExtentID getIndexExtID () const
          {
-            return ( _pScanNode && OPT_PLAN_IDX_SCAN == _pScanNode->getType() ) ?
+            return isIxScan() ?
                    ((optIxScanNode *)_pScanNode)->getIndexExtID() :
                    DMS_INVALID_EXTENT ;
          }
 
          OSS_INLINE dmsExtentID getIndexLID () const
          {
-            return ( _pScanNode && OPT_PLAN_IDX_SCAN == _pScanNode->getType() ) ?
+            return isIxScan() ?
                    ((optIxScanNode *)_pScanNode)->getIndexLID() :
                    DMS_INVALID_EXTENT ;
+         }
+
+         OSS_INLINE BSONObj getKeyPattern () const
+         {
+            return isIxScan() ?
+                   ((optIxScanNode *)_pScanNode)->getKeyPattern() :
+                   BSONObj() ;
+         }
+
+         OSS_INLINE double getSelectivity () const
+         {
+            return isIxScan() ?
+                   ((optIxScanNode *)_pScanNode)->getScanSelectivity() :
+                   ( _pScanNode ? _pScanNode->getMthSelctivity() :
+                                  OPT_PRED_DEFAULT_SELECTIVITY ) ;
          }
 
          OSS_INLINE BOOLEAN isSortRequired () const
@@ -747,8 +779,9 @@ namespace engine
 
          OSS_INLINE const CHAR *getIndexName () const
          {
-            return ( _pScanNode && OPT_PLAN_IDX_SCAN == _pScanNode->getType() ) ?
-                   ((optIxScanNode *)_pScanNode)->getIndexName() : "" ;
+            return isIxScan() ?
+                   ((optIxScanNode *)_pScanNode)->getIndexName() :
+                   "" ;
          }
 
          OSS_INLINE optScanType getScanType () const
@@ -768,6 +801,12 @@ namespace engine
             _optPlanPath::clearPath() ;
             _pScanNode = NULL ;
             _sortRequired = FALSE ;
+         }
+
+         OSS_INLINE BOOLEAN isIxScan () const
+         {
+            return ( _pScanNode &&
+                     OPT_PLAN_IDX_SCAN == _pScanNode->getType() ) ;
          }
 
       protected :

@@ -59,7 +59,7 @@ namespace engine
 
    #define DMS_STAT_IDX_INDEX                  "Index"
 
-   #define DMS_STAT_IDX_MCV                   "MCV"
+   #define DMS_STAT_IDX_MCV                    "MCV"
 
    #define DMS_STAT_DEF_VERSION                ( 0 )
    #define DMS_STAT_DEF_AVG_NUM_FIELDS         ( 10 )

@@ -547,6 +547,7 @@ namespace engine
          OSS_INLINE INT32 getOptEstCacheSize() const { return _optEstCacheSize ; }
          OSS_INLINE BOOLEAN isEnabledMixCmp() const { return _enableMixCmp ; }
          OSS_INLINE UINT32  getDataErrorOp() const { return _dataErrorOp ; }
+         OSS_INLINE UINT32 getPlanCacheLevel() const { return _optPlanCacheLevel ; }
 
          std::string getOmAddr() const ;
 
@@ -634,6 +635,7 @@ namespace engine
          BOOLEAN     _perfStat ;
          INT32       _optEstCacheSize ;
          BOOLEAN     _enableMixCmp ;
+         UINT32      _optPlanCacheLevel ;
 
 #ifdef SDB_ENTERPRISE
 

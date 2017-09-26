@@ -55,6 +55,59 @@ namespace bson
 }
 namespace engine
 {
+   /*
+      _rtnParamList implement
+    */
+   _rtnParamList::_rtnParamList ()
+   {
+      _paramNum = 0 ;
+   }
+
+   _rtnParamList::~_rtnParamList ()
+   {
+   }
+
+   BSONObj _rtnParamList::toBSON () const
+   {
+      BSONObjBuilder builder ;
+      BSONArrayBuilder subBuilder(
+                  builder.subarrayStart( RTN_PARAMETER_STR ) ) ;
+      for ( INT8 i = 0 ; i < _paramNum ; i ++ )
+      {
+         subBuilder.append( _params[ i ]._param ) ;
+      }
+      subBuilder.done() ;
+      return builder.obj() ;
+   }
+
+   string _rtnParamList::toString () const
+   {
+      return toBSON().toString( FALSE, TRUE ) ;
+   }
+
+   INT8 _rtnParamList::addParam ( const BSONElement &param )
+   {
+      if ( _paramNum < RTN_MAX_PARAM_NUM )
+      {
+         _params[ _paramNum ]._param = param ;
+         _params[ _paramNum ]._doneByPred = FALSE ;
+         return ( _paramNum ++ ) ;
+      }
+      return -1 ;
+   }
+
+   void _rtnParamList::setDoneByPred ( INT8 index )
+   {
+      if ( index >= 0 &&
+           index < _paramNum )
+      {
+         _params[ index ]._doneByPred = TRUE ;
+      }
+   }
+
+   /*
+      Static minimum and maximum keys in range predicates
+    */
    static BSONObj _rtnKeyBuildMinTypeObj ( BSONType type ) ;
    static BSONObj _rtnKeyBuildMaxTypeObj ( BSONType type ) ;
 
@@ -367,7 +420,7 @@ namespace engine
          if ( _init )
             _result.push_back ( _tail ) ;
       }
-      const vector<rtnStartStopKey> &result() const
+      const RTN_SSKEY_LIST &result() const
       {
          return _result ;
       }
@@ -404,7 +457,7 @@ namespace engine
       }
       BOOLEAN _init ;
       rtnStartStopKey _tail ;
-      vector<rtnStartStopKey> _result ;
+      RTN_SSKEY_LIST _result ;
    } ;
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNSSKEY_TOSTRING, "rtnStartStopKey::toString" )
@@ -947,7 +1000,7 @@ namespace engine
       return result.isValid() ;
    }
 
-   void rtnPredicate::finishOperation ( const vector<rtnStartStopKey> &newkeys,
+   void rtnPredicate::finishOperation ( const RTN_SSKEY_LIST &newkeys,
                                         const rtnPredicate &other )
    {
       _startStopKeys = newkeys ;
@@ -964,9 +1017,9 @@ namespace engine
                       (rtnPredicate &right)
    {
       PD_TRACE_ENTRY ( SDB_RTNPRED_OPEQU ) ;
-      vector<rtnStartStopKey> newKeySet ;
-      vector<rtnStartStopKey>::iterator i = _startStopKeys.begin() ;
-      vector<rtnStartStopKey>::iterator j = right._startStopKeys.begin() ;
+      RTN_SSKEY_LIST newKeySet ;
+      RTN_SSKEY_LIST::iterator i = _startStopKeys.begin() ;
+      RTN_SSKEY_LIST::iterator j = right._startStopKeys.begin() ;
       while ( i != _startStopKeys.end() && j != right._startStopKeys.end())
       {
          rtnStartStopKey overlap ;
@@ -992,6 +1045,8 @@ namespace engine
                       (const rtnPredicate &right)
    {
       finishOperation(right._startStopKeys, right) ;
+      _paramIndex = right._paramIndex ;
+      _fuzzyIndex = right._fuzzyIndex ;
       _isInitialized = right._isInitialized ;
       return *this ;
    }
@@ -1003,8 +1058,8 @@ namespace engine
    {
       PD_TRACE_ENTRY ( SDB_RTNPRED_OPOREQ ) ;
       startStopKeyUnionBuilder b ;
-      vector<rtnStartStopKey>::const_iterator i = _startStopKeys.begin() ;
-      vector<rtnStartStopKey>::const_iterator j =
+      RTN_SSKEY_LIST::const_iterator i = _startStopKeys.begin() ;
+      RTN_SSKEY_LIST::const_iterator j =
                         right._startStopKeys.begin() ;
       while ( i != _startStopKeys.end() && j != right._startStopKeys.end())
       {
@@ -1038,9 +1093,9 @@ namespace engine
                       (const rtnPredicate &right)
    {
       PD_TRACE_ENTRY ( SDB_RTNPRED_OPMINUSEQ ) ;
-      vector<rtnStartStopKey> newKeySet ;
-      vector<rtnStartStopKey>::iterator i = _startStopKeys.begin() ;
-      vector<rtnStartStopKey>::const_iterator j =
+      RTN_SSKEY_LIST newKeySet ;
+      RTN_SSKEY_LIST::iterator i = _startStopKeys.begin() ;
+      RTN_SSKEY_LIST::const_iterator j =
                         right._startStopKeys.begin() ;
       while ( i != _startStopKeys.end() && j != right._startStopKeys.end())
       {
@@ -1197,7 +1252,8 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNPRED_RTNPRED, "rtnPredicate::rtnPredicate" )
    rtnPredicate::rtnPredicate ( const BSONElement &e, INT32 opType,
-                                BOOLEAN isNot, BOOLEAN mixCmp )
+                                BOOLEAN isNot, BOOLEAN mixCmp,
+                                INT8 paramIndex, INT8 fuzzyIndex )
    {
       PD_TRACE_ENTRY ( SDB_RTNPRED_RTNPRED ) ;
 
@@ -1211,6 +1267,9 @@ namespace engine
       _evaluated = FALSE ;
       _allRange = TRUE ;
       _selectivity = OPT_PRED_DEFAULT_SELECTIVITY ;
+
+      _paramIndex = paramIndex ;
+      _fuzzyIndex = fuzzyIndex ;
 
       if ( e.eoo() )
       {
@@ -1284,9 +1343,9 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_RTNPRED_REVERSE ) ;
       result._objData = _objData ;
       result._startStopKeys.clear() ;
-      for ( vector<rtnStartStopKey>::const_reverse_iterator i =
-            _startStopKeys.rbegin();
-            i != _startStopKeys.rend(); ++i )
+      for ( RTN_SSKEY_LIST::const_reverse_iterator i = _startStopKeys.rbegin() ;
+            i != _startStopKeys.rend();
+            ++ i )
       {
          rtnStartStopKey temp ;
          temp._startKey = i->_stopKey ;
@@ -1303,16 +1362,58 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_RTNPRED_TOSTRING ) ;
       StringBuilder buf ;
       buf << "{ " ;
-      for ( vector<rtnStartStopKey>::const_iterator i =
-                       _startStopKeys.begin();
-            i != _startStopKeys.end();
-            i++ )
+      for ( RTN_SSKEY_LIST::const_iterator i = _startStopKeys.begin() ;
+            i != _startStopKeys.end() ;
+            ++ i )
       {
          buf << i->toString() << " " ;
       }
       buf << " }" ;
       PD_TRACE_EXIT ( SDB_RTNPRED_TOSTRING ) ;
       return buf.str() ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNPRED_BINDPARAM, "rtnPredicate::bindParameters" )
+   BOOLEAN rtnPredicate::bindParameters ( rtnParamList &parameters )
+   {
+      BOOLEAN res = FALSE ;
+
+      PD_TRACE_ENTRY( SDB_RTNPRED_BINDPARAM ) ;
+
+      if ( _paramIndex >= 0 )
+      {
+         // Bind the start and stop key pairs with specified parameters
+         for ( RTN_SSKEY_LIST::iterator i = _startStopKeys.begin() ;
+               i != _startStopKeys.end();
+               ++ i )
+         {
+            if ( i->_startKey._parameterized )
+            {
+               i->_startKey._bound = parameters.getParam( _paramIndex ) ;
+               if ( _fuzzyIndex >= 0 )
+               {
+                  i->_startKey._inclusive =
+                        parameters.getParam( _fuzzyIndex ).booleanSafe() ;
+               }
+            }
+            if ( i->_stopKey._parameterized )
+            {
+               i->_stopKey._bound = parameters.getParam( _paramIndex ) ;
+               if ( _fuzzyIndex >= 0 )
+               {
+                  i->_stopKey._inclusive =
+                        parameters.getParam( _fuzzyIndex ).booleanSafe() ;
+               }
+            }
+         }
+         // Mark the parameter matching is done by predicates
+         parameters.setDoneByPred( _paramIndex ) ;
+         res = TRUE ;
+      }
+
+      PD_TRACE_EXIT( SDB_RTNPRED_BINDPARAM ) ;
+
+      return res ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPRED__INITIN, "_rtnPredicateSet::_initIN" )
@@ -1331,7 +1432,7 @@ namespace engine
          // for IN statement without isNot or if the element type is array
          // and we want equality match {c1:{$et:[1,2,3]}}
          set<BSONElement, element_cmp_lt> vals ;
-         vector<rtnPredicate> regexes ;
+         RTN_PREDICATE_LIST regexes ;
          BSONObjIterator i ( e.embeddedObject() ) ;
 
          // if e is an empty array. just add it to vals.(this will be add to
@@ -1380,7 +1481,7 @@ namespace engine
          }
 
          // and then union with regular expression
-         for ( vector<rtnPredicate>::const_iterator i = regexes.begin();
+         for ( RTN_PREDICATE_LIST::const_iterator i = regexes.begin();
                i!=regexes.end(); i++ )
          {
             *this |= *i ;
@@ -1463,6 +1564,12 @@ namespace engine
       else
       {
          _startStopKeys.push_back ( rtnStartStopKey( e ) ) ;
+         if ( -1 != _paramIndex )
+         {
+            rtnStartStopKey &keyPair = _startStopKeys.back() ;
+            keyPair._startKey._parameterized = TRUE ;
+            keyPair._stopKey._parameterized = TRUE ;
+         }
       }
 
       PD_TRACE_EXITRC( SDB__RTNPRED__INITET, rc ) ;
@@ -1563,6 +1670,11 @@ namespace engine
          keyPair._stopKey._inclusive = inclusive ;
 
          keyPair._majorType = e.type() ;
+
+         if ( -1 != _paramIndex )
+         {
+            keyPair._stopKey._parameterized = TRUE ;
+         }
       }
 
    done :
@@ -1631,6 +1743,11 @@ namespace engine
          keyPair._stopKey._inclusive = stopInclusive ;
 
          keyPair._majorType = e.type() ;
+
+         if ( -1 != _paramIndex )
+         {
+            keyPair._startKey._parameterized = TRUE ;
+         }
       }
 
    done :
@@ -1842,8 +1959,8 @@ namespace engine
       for ( ; it != _predicates.end(); ++it )
       {
          BSONArrayBuilder sub( builder.subarrayStart( it->first ) ) ;
-         const vector<rtnStartStopKey> &range = it->second._startStopKeys ;
-         vector<rtnStartStopKey>::const_iterator ssItr = range.begin() ;
+         const RTN_SSKEY_LIST &range = it->second._startStopKeys ;
+         RTN_SSKEY_LIST::const_iterator ssItr = range.begin() ;
          for ( ; ssItr != range.end(); ++ssItr )
          {
             sub << ssItr->toBson() ;
@@ -1853,27 +1970,60 @@ namespace engine
       return builder.obj() ;
    }
 
+   static const rtnPredicate &_rtnGetGenericPredicate ()
+   {
+      static rtnPredicate genericPredicate( BSONObj().firstElement(), 0,
+                                            FALSE, TRUE ) ;
+      return genericPredicate ;
+   }
+
+   static RTN_PREDICATE_LIST _rtnGetGenericPredicateList ()
+   {
+      RTN_PREDICATE_LIST predicateList ;
+      predicateList.push_back( _rtnGetGenericPredicate() ) ;
+      return predicateList ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPRED_PRED, "_rtnPredicateSet::predicate" )
    const rtnPredicate &_rtnPredicateSet::predicate (const CHAR *fieldName) const
    {
       PD_TRACE_ENTRY ( SDB__RTNPRED_PRED ) ;
-
-      static rtnPredicate genericPredicate( BSONObj().firstElement(), 0,
-                                            FALSE, TRUE ) ;
-
       const rtnPredicate *pRet = NULL ;
       RTN_PREDICATE_MAP::const_iterator f = _predicates.find(fieldName);
       if ( _predicates.end() == f )
       {
          // we assign rtnPredicate object to a static pointer
          // this memory is not released until process terminate
-         pRet = &genericPredicate ;
+         pRet = &( _rtnGetGenericPredicate() ) ;
       }
       else
       {
          pRet = &(f->second) ;
       }
       PD_TRACE_EXIT ( SDB__RTNPRED_PRED ) ;
+      return *pRet ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPRED_PARAMPRED, "_rtnPredicateSet::paramPredicate" )
+   const RTN_PREDICATE_LIST &_rtnPredicateSet::paramPredicate (const CHAR *fieldName) const
+   {
+      PD_TRACE_ENTRY ( SDB__RTNPRED_PARAMPRED ) ;
+
+      static RTN_PREDICATE_LIST genericPredList = _rtnGetGenericPredicateList() ;
+
+      const RTN_PREDICATE_LIST *pRet = NULL ;
+      RTN_PARAM_PREDICATE_MAP::const_iterator f = _paramPredicates.find( fieldName );
+      if ( _paramPredicates.end() == f )
+      {
+         // we assign rtnPredicate object to a static pointer
+         // this memory is not released until process terminate
+         pRet = &genericPredList ;
+      }
+      else
+      {
+         pRet = &(f->second) ;
+      }
+      PD_TRACE_EXIT ( SDB__RTNPRED_PARAMPRED ) ;
       return *pRet ;
    }
 
@@ -1899,12 +2049,13 @@ namespace engine
    INT32 _rtnPredicateSet::addPredicate ( const CHAR *fieldName,
                                           const BSONElement &e,
                                           INT32 opType, BOOLEAN isNot,
-                                          BOOLEAN mixCmp )
+                                          BOOLEAN mixCmp, BOOLEAN addToParam,
+                                          INT8 paramIndex, INT8 fuzzyIndex )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__RTNPREDSET_ADDPRED ) ;
       std::pair< RTN_PREDICATE_MAP::iterator, BOOLEAN > ret ;
-      rtnPredicate pred ( e, opType, isNot, mixCmp ) ;
+      rtnPredicate pred ( e, opType, isNot, mixCmp, paramIndex, fuzzyIndex ) ;
       if ( !pred.isInit() )
       {
          PD_LOG ( PDERROR, "Failed to add predicate %s: %s",
@@ -1913,11 +2064,27 @@ namespace engine
          goto error ;
       }
 
-      ret = _predicates.insert( std::make_pair( fieldName, pred ) ) ;
+      ret = _predicates.insert( make_pair( fieldName, pred ) ) ;
       if ( !(ret.second) )
       {
          ret.first->second &= pred ;
       }
+
+      if ( addToParam )
+      {
+         RTN_PARAM_PREDICATE_MAP::iterator iter = _paramPredicates.find( fieldName ) ;
+         if ( iter == _paramPredicates.end() )
+         {
+            RTN_PREDICATE_LIST predList ;
+            predList.push_back( pred ) ;
+            _paramPredicates.insert( make_pair( fieldName, predList ) ) ;
+         }
+         else
+         {
+            iter->second.push_back( pred ) ;
+         }
+      }
+
    done :
       PD_TRACE_EXITRC ( SDB__RTNPREDSET_ADDPRED, rc ) ;
       return rc ;
@@ -1925,53 +2092,338 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPREDLIST__RTNPREDLIST, "_rtnPredicateList::_rtnPredicateList" )
-   _rtnPredicateList::_rtnPredicateList ( const rtnPredicateSet &predSet,
-                                          const _ixmIndexCB *indexCB,
-                                          INT32 direction )
+   _rtnPredicateList::_rtnPredicateList ()
    {
-      PD_TRACE_ENTRY ( SDB__RTNPREDLIST__RTNPREDLIST ) ;
-      _direction = direction>0?1:-1 ;
-      _keyPattern = indexCB->keyPattern() ;
-      static rtnStartStopKey s_emptyStartStopKey( 0 ) ;
-      BSONObjIterator i(_keyPattern) ;
+      _initialized = FALSE ;
+      _fixedPredList = FALSE ;
+      _direction = 1 ;
+   }
+
+   _rtnPredicateList::~_rtnPredicateList ()
+   {
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPREDLIST_CLEAR, "_rtnPredicateList::clear" )
+   void _rtnPredicateList::clear ()
+   {
+      _predicates.clear() ;
+      _keyPattern = BSONObj() ;
+      _direction = 1 ;
+      _initialized = FALSE ;
+      _fixedPredList = FALSE ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPREDLIST_INIT, "_rtnPredicateList::initialize" )
+   INT32 _rtnPredicateList::initialize ( const rtnPredicateSet &predSet,
+                                         const BSONObj &keyPattern,
+                                         INT32 direction,
+                                         UINT32 &addedLevel )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__RTNPREDLIST_INIT ) ;
+
+      SDB_ASSERT( !_initialized, "Should not be initialized" ) ;
+
+      // Set direction and key pattern first
+      _direction = direction > 0 ? 1 : -1 ;
+      _keyPattern = keyPattern ;
+
+      addedLevel = 0 ;
+
+      BSONObjIterator i( _keyPattern ) ;
       while ( i.more() )
       {
          BSONElement e = i.next() ;
          const rtnPredicate &pred = predSet.predicate ( e.fieldName() ) ;
          if ( pred.isEmpty() )
          {
-            rtnPredicate emptyPred ;
-            emptyPred._startStopKeys.push_back( s_emptyStartStopKey ) ;
-            _predicates.push_back( emptyPred ) ;
+            _addEmptyPredicate() ;
             break ;
          }
-         // num is the number defined in index {c1:1}
-         INT32 num = (INT32)e.number() ;
-         // if index is defined as forward and direction is forward, then we
-         // have forward
-         // if index is defined as forward and direction is backward, then we
-         // scan backward
-         // if index is defined as backward and direction is forward, then we
-         // scan backward
-         // if index is defined as backward and direction is backward, then we
-         // scan forward
-         BOOLEAN forward = ((num>=0?1:-1)*(direction>=0?1:-1)>0) ;
-         if ( forward )
+         _addPredicate( e, direction, pred ) ;
+         addedLevel ++ ;
+      }
+
+      _fixedPredList = TRUE ;
+      _initialized = TRUE ;
+
+      PD_TRACE_EXITRC( SDB__RTNPREDLIST_INIT, rc ) ;
+      return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPREDLIST_INIT_PARAM, "_rtnPredicateList::initialize" )
+   INT32 _rtnPredicateList::initialize ( const rtnPredicateSet &predSet,
+                                         const BSONObj &keyPattern,
+                                         INT32 direction,
+                                         rtnParamList &parameters,
+                                         RTN_PARAM_PREDICATE_LIST &paramPredList )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( SDB__RTNPREDLIST_INIT_PARAM ) ;
+
+      SDB_ASSERT( !_initialized, "Should not be initialized" ) ;
+
+      BOOLEAN containParamPred = FALSE ;
+      BOOLEAN needAddPred = TRUE ;
+
+      // Set direction and key pattern first
+      _direction = direction > 0 ? 1 : -1 ;
+      _keyPattern = keyPattern ;
+
+      BSONObjIterator i( _keyPattern ) ;
+      while ( i.more() )
+      {
+         BSONElement e = i.next() ;
+         const RTN_PREDICATE_LIST &predicates =
+                                 predSet.paramPredicate( e.fieldName() ) ;
+         if ( predicates.empty() )
          {
-            _predicates.push_back ( pred ) ;
+            _addEmptyPredicate() ;
+            continue ;
          }
          else
          {
-            // if we want to scan backward, we need to reverse the predicate
-            // i.e. startKey to stopKey, stopKey to startKey
-            // first we push an empty predicate into list, then reverse the
-            // existing predicate to replace it
-            _predicates.push_back ( rtnPredicate () ) ;
-            pred.reverse ( _predicates.back() ) ;
+            // Construct the parameterized predicates
+            // 1. merge non-parameterized predicates into one predicate
+            // 2. save the parameterized predicates in the list for the similar
+            //    queries in the future
+            rtnPredicate pred, nonParamPred ;
+            BOOLEAN containNonParamPred = FALSE ;
+            BOOLEAN nonParamPredEmpty = FALSE ;
+            BOOLEAN paramPredEmpty = FALSE ;
+
+            RTN_PREDICATE_LIST paramList ;
+            RTN_PREDICATE_LIST::const_iterator iter = predicates.begin () ;
+            if ( iter != predicates.end() )
+            {
+               pred = (*iter) ;
+               if ( !pred.bindParameters( parameters ) )
+               {
+                  nonParamPred = pred ;
+                  containNonParamPred = TRUE ;
+               }
+               else
+               {
+                  paramList.push_back( pred ) ;
+               }
+               ++ iter ;
+               for ( ;
+                     iter != predicates.end() && !nonParamPredEmpty ;
+                     ++ iter )
+               {
+                  rtnPredicate currentPred = (*iter) ;
+                  if ( !currentPred.bindParameters( parameters ) )
+                  {
+                     // Merge non-parameterized predicates
+                     if ( containNonParamPred )
+                     {
+                        nonParamPred &= currentPred ;
+                        if ( nonParamPred.isEmpty() )
+                        {
+                           nonParamPredEmpty = TRUE ;
+                        }
+                     }
+                     else
+                     {
+                        nonParamPred = currentPred ;
+                        containNonParamPred = TRUE ;
+                     }
+                  }
+                  else
+                  {
+                     // The predicate is parameterized, save for the future
+                     // queries
+                     paramList.push_back( currentPred ) ;
+                  }
+
+                  // Stop merging predicates when it is already empty
+                  if ( !paramPredEmpty )
+                  {
+                     pred &= currentPred ;
+                     if ( pred.isEmpty() )
+                     {
+                        paramPredEmpty = TRUE ;
+                     }
+                  }
+               }
+
+               if ( containNonParamPred )
+               {
+                  if ( nonParamPredEmpty )
+                  {
+                     // Non-parameterized predicates are already empty
+                     // No need to consider parameterized predicates
+                     paramList.clear() ;
+                     paramList.push_back( nonParamPred ) ;
+                  }
+                  else
+                  {
+                     if ( !paramList.empty() )
+                     {
+                        containParamPred = TRUE ;
+                     }
+                     paramList.push_back( nonParamPred ) ;
+                  }
+               }
+               else if ( !paramList.empty() )
+               {
+                  containParamPred = TRUE ;
+               }
+
+               paramPredList.push_back( paramList ) ;
+            }
+
+            if ( needAddPred && pred.isEmpty() )
+            {
+               // The current generated predicate is empty
+               // No need for generate predicate list, but still need to
+               // generate parameterized predicate list if the empty predicate
+               // is not generated by non-parameterized predicates
+               _addEmptyPredicate() ;
+               needAddPred = FALSE ;
+               if ( nonParamPredEmpty )
+               {
+                  break ;
+               }
+            }
+            else if ( needAddPred )
+            {
+               _addPredicate( e, direction, pred ) ;
+            }
          }
       }
-      PD_TRACE_EXIT ( SDB__RTNPREDLIST__RTNPREDLIST ) ;
+
+      // Check if contain parameterized predicates
+      // If not, mark the predicate list is fixed
+      if ( !containParamPred )
+      {
+         _fixedPredList = TRUE ;
+      }
+      _initialized = TRUE ;
+
+      PD_TRACE_EXITRC( SDB__RTNPREDLIST_INIT_PARAM, rc ) ;
+      return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPREDLIST_INIT_PARAMLIST, "_rtnPredicateList::_rtnPredicateList" )
+   INT32 _rtnPredicateList::initialize ( const RTN_PARAM_PREDICATE_LIST &paramPredList,
+                                         const BSONObj &keyPattern,
+                                         INT32 direction,
+                                         rtnParamList &parameters )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( SDB__RTNPREDLIST_INIT_PARAMLIST ) ;
+
+      // Set direction and key pattern first
+      _direction = direction > 0 ? 1 : -1 ;
+      _keyPattern = keyPattern ;
+
+      RTN_PARAM_PREDICATE_LIST::const_iterator iter = paramPredList.begin() ;
+      BSONObjIterator i( _keyPattern ) ;
+      while ( i.more() )
+      {
+         BSONElement e = i.next() ;
+         if ( iter == paramPredList.end() )
+         {
+            _addEmptyPredicate() ;
+            break ;
+         }
+         else
+         {
+            rtnPredicate pred ;
+
+            RTN_PREDICATE_LIST::const_iterator predIter = iter->begin () ;
+            if ( predIter != iter->end() )
+            {
+               // Build the predicates with parameters
+               pred = (*predIter) ;
+               pred.bindParameters( parameters ) ;
+               ++ predIter ;
+               for ( ; predIter != iter->end() ; ++ predIter )
+               {
+                  rtnPredicate currentPred = (*predIter) ;
+                  currentPred.bindParameters( parameters ) ;
+                  pred &= currentPred ;
+                  if ( pred.isEmpty() )
+                  {
+                     // The predicate is empty already
+                     // No need to process other parameters
+                     break ;
+                  }
+               }
+            }
+
+            if ( pred.isEmpty() )
+            {
+               _addEmptyPredicate() ;
+               break ;
+            }
+            else
+            {
+               _addPredicate( e, direction, pred ) ;
+            }
+         }
+         ++ iter ;
+      }
+
+      _initialized = TRUE ;
+
+      PD_TRACE_EXITRC( SDB__RTNPREDLIST_INIT_PARAMLIST, rc ) ;
+      return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPREDLIST__ADDPRED, "_rtnPredicateList::_addPredicate" )
+   void _rtnPredicateList::_addPredicate ( const BSONElement &e,
+                                           INT32 direction,
+                                           const rtnPredicate &pred )
+   {
+      PD_TRACE_ENTRY( SDB__RTNPREDLIST__ADDPRED ) ;
+
+      // num is the number defined in index {c1:1}
+      INT32 num = (INT32)e.number() ;
+
+      // if index is defined as forward and direction is forward, then we
+      // have forward
+      // if index is defined as forward and direction is backward, then we
+      // scan backward
+      // if index is defined as backward and direction is forward, then we
+      // scan backward
+      // if index is defined as backward and direction is backward, then we
+      // scan forward
+      BOOLEAN forward = ((num>=0?1:-1)*(direction>=0?1:-1)>0) ;
+      if ( forward )
+      {
+         _predicates.push_back ( pred ) ;
+      }
+      else
+      {
+         // if we want to scan backward, we need to reverse the predicate
+         // i.e. startKey to stopKey, stopKey to startKey
+         // first we push an empty predicate into list, then reverse the
+         // existing predicate to replace it
+         _predicates.push_back ( rtnPredicate () ) ;
+         pred.reverse ( _predicates.back() ) ;
+      }
+
+      PD_TRACE_EXIT( SDB__RTNPREDLIST__ADDPRED ) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPREDLIST__ADDEMPPRED, "_rtnPredicateList::_addEmptyPredicate" )
+   void _rtnPredicateList::_addEmptyPredicate ()
+   {
+      PD_TRACE_ENTRY( SDB__RTNPREDLIST__ADDEMPPRED ) ;
+
+      static rtnStartStopKey s_emptyStartStopKey( 0 ) ;
+
+      rtnPredicate emptyPred ;
+      emptyPred._startStopKeys.push_back( s_emptyStartStopKey ) ;
+
+      _predicates.push_back( emptyPred ) ;
+
+      PD_TRACE_EXIT( SDB__RTNPREDLIST__ADDEMPPRED ) ;
    }
 
    // get the start key of first start/stopkey in each predicate column
@@ -1980,7 +2432,7 @@ namespace engine
    {
       PD_TRACE_ENTRY ( SDB__RTNPREDLIST_STARTKEY ) ;
       BSONObjBuilder b ;
-      for ( vector<rtnPredicate>::const_iterator i = _predicates.begin() ;
+      for ( RTN_PREDICATE_LIST::const_iterator i = _predicates.begin() ;
             i != _predicates.end(); i++ )
       {
          const rtnStartStopKey &key = i->_startStopKeys.front() ;
@@ -1995,7 +2447,7 @@ namespace engine
    {
       PD_TRACE_ENTRY ( SDB__RTNPREDLIST_ENDKEY ) ;
       BSONObjBuilder b ;
-      for ( vector<rtnPredicate>::const_iterator i = _predicates.begin() ;
+      for ( RTN_PREDICATE_LIST::const_iterator i = _predicates.begin() ;
             i != _predicates.end(); i++ )
       {
          const rtnStartStopKey &key = i->_startStopKeys.back() ;
@@ -2013,10 +2465,10 @@ namespace engine
       for ( INT32 i = 0; i<(INT32)_predicates.size(); i++ )
       {
          BSONArrayBuilder a ( b.subarrayStart("") ) ;
-         for ( vector<rtnStartStopKey>::const_iterator j =
-               _predicates[i]._startStopKeys.begin() ;
+         for ( RTN_SSKEY_LIST::const_iterator j =
+                                    _predicates[i]._startStopKeys.begin() ;
                j != _predicates[i]._startStopKeys.end() ;
-               j++ )
+               ++ j )
          {
             a << BSONArray ( BSON_ARRAY ( j->_startKey._bound <<
                        j->_stopKey._bound ).clientReadable() ) ;

@@ -136,7 +136,6 @@ namespace engine
       : _contextIdGenerator( 0 ),
         _textIdxVersion((INT64)RTN_INIT_TEXT_INDEX_VERSION)
    {
-      _enableMixCmp = FALSE ;
       _msgHandler = NULL ;
       _routeAgent = NULL ;
       _extNodeId = 0 ;
@@ -177,8 +176,6 @@ namespace engine
 
       sdbGetDMSCB()->setIxmKeySorterCreator( creator ) ;
 
-      _enableMixCmp = pmdGetOptionCB()->isEnabledMixCmp() ;
-
       // Remote session manager should be enabled on data node to support text
       // search.
       if ( SDB_ROLE_DATA == pmdGetDBRole() )
@@ -209,7 +206,15 @@ namespace engine
          sdbGetPMDController()->setRSManager( &_rsMgr ) ;
       }
 
-      _accessPlanManager.init( pmdGetOptionCB()->getPlanBuckets() ) ;
+      // The error of initialization of APM could be ignore
+      // Only data and catalog nodes could initialize plan cache
+      _accessPlanManager.init(
+            ( SDB_ROLE_DATA == pmdGetDBRole() ||
+              SDB_ROLE_CATALOG == pmdGetDBRole() ||
+              SDB_ROLE_STANDALONE == pmdGetDBRole() ) ?
+             pmdGetOptionCB()->getPlanBuckets() : 0,
+            (OPT_PLAN_CACHE_LEVEL) pmdGetOptionCB()->getPlanCacheLevel(),
+            pmdGetOptionCB()->isEnabledMixCmp() ) ;
 
    done:
       return rc ;
@@ -275,15 +280,9 @@ namespace engine
 
    void _SDB_RTNCB::onConfigChange ()
    {
-      BOOLEAN enableMixCmp = _enableMixCmp ;
-
-      _enableMixCmp = pmdGetOptionCB()->isEnabledMixCmp() ;
-
-      if ( _enableMixCmp != enableMixCmp )
-      {
-         // parameter changed, need to clear cached plans
-         sdbGetDMSCB()->clearSUCaches( DMS_EVENT_MASK_PLAN ) ;
-      }
+      _accessPlanManager.reinit(
+            (OPT_PLAN_CACHE_LEVEL) pmdGetOptionCB()->getPlanCacheLevel(),
+            pmdGetOptionCB()->isEnabledMixCmp() ) ;
    }
 
    rtnContext* _SDB_RTNCB::contextFind ( SINT64 contextID, _pmdEDUCB *cb )

@@ -142,6 +142,38 @@ namespace engine
    double optConvertStrToScalar ( const CHAR *pValue, UINT32 valueSize,
                                   UINT8 low, UINT8 high ) ;
 
+   /*
+      OPT_PLAN_CACHE_LEVEL define
+    */
+   enum OPT_PLAN_CACHE_LEVEL
+   {
+      OPT_PLAN_NOCACHE = 0,
+      OPT_PLAN_ORIGINAL,
+      OPT_PLAN_NORMALIZED,
+      OPT_PLAN_PARAMETERIZED,
+      OPT_PLAN_FUZZYOPTR
+   } ;
+
+   #define OPT_FIELD_IS_CACHED            "Cached"
+   #define OPT_FIELD_HASH_CODE            "HashCode"
+   #define OPT_FIELD_REFERENCE_COUNT      "RefCount"
+   #define OPT_FIELD_NORMAIZED_MATCH      "NormalizedQuery"
+   #define OPT_FIELD_PARAMETERS           "Parameters"
+   #define OPT_FIELD_IS_PARAM_VALID       "ParamValid"
+   #define OPT_FIELD_PLAN_PATH            "PlanPath"
+   #define OPT_FIELD_PARAM_RECORDS        "ParamRecords"
+   #define OPT_FIELD_PARAM_QUERY          "Query"
+   #define OPT_FIELD_PLAN_SCORE           "Score"
+   #define OPT_FIELD_IS_MAINCL_VALID      "MainCLValid"
+   #define OPT_FIELD_SUBCL_RECORDS        "SubCLRecords"
+   #define OPT_FIELD_SUBCL_NAME           "SubCL"
+   #define OPT_FIELD_CACHELEVEL           "CacheLevel"
+   #define OPT_CACHE_NOCACHE_NAME         "OPT_PLAN_NOCACHE"
+   #define OPT_CACHE_ORIGINAL_NAME        "OPT_PLAN_ORIGINAL"
+   #define OPT_CACHE_NORMALIZED_NAME      "OPT_PLAN_NORMALZIED"
+   #define OPT_CACHE_PARAMETERIZED_NAME   "OPT_PLAN_PARAMETERIZED"
+   #define OPT_CACHE_FUZZYOPTR_NAME       "OPT_PLAN_FUZZYOPTR"
+
 }
 
 #endif //OPTCOMMON_HPP__

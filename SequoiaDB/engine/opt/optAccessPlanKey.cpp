@@ -40,7 +40,8 @@
 #include "pdTrace.hpp"
 #include "optTrace.hpp"
 #include "pmd.hpp"
-#include "utilBsonHash.hpp"
+#include "mthMatchTree.hpp"
+#include "mthMatchNormalizer.hpp"
 
 using namespace bson ;
 
@@ -50,52 +51,36 @@ namespace engine
    /*
       _optAccessPlanKey implement
     */
-   _optAccessPlanKey::_optAccessPlanKey ( const CHAR *pCLFullName,
-                                          const BSONObj &selector,
-                                          const BSONObj &matcher,
-                                          const BSONObj &orderBy,
-                                          const BSONObj &hint,
-                                          SINT32 flags,
-                                          SINT64 numToSkip,
-                                          SINT64 numToReturn,
-                                          BOOLEAN needGetOwned )
-   : _rtnQueryOptions( matcher, selector, orderBy, hint, pCLFullName,
-                       numToSkip, numToReturn, flags )
+   _optAccessPlanKey::_optAccessPlanKey ( const rtnQueryOptions &options,
+                                          OPT_PLAN_CACHE_LEVEL cacheLevel )
+   : _rtnQueryOptions( options ),
+     _optAccessPlanInfoBase()
    {
-      SDB_ASSERT( pCLFullName, "pCLFullName is invalid" ) ;
+      SDB_ASSERT( _fullName, "pCLFullName is invalid" ) ;
 
-      if ( needGetOwned )
-      {
-         getOwned() ;
-      }
-
-      // Note: only the cached plan needs these properties
-      _suID = DMS_INVALID_SUID ;
-      _suLID = DMS_INVALID_LOGICCSID ;
-      _clLID = DMS_INVALID_CLID ;
-      _mbID = DMS_INVALID_MBID ;
+      // Selector, skip and limit is not used to generate keys, reset them
+      _selector = BSONObj() ;
+      _skip = 0 ;
+      _limit = -1 ;
 
       _isValid = FALSE ;
+      _cacheLevel = cacheLevel ;
    }
 
-   _optAccessPlanKey::_optAccessPlanKey ( const _optAccessPlanKey &planKey,
-                                          BOOLEAN needGetOwned )
-   : _rtnQueryOptions( planKey )
+   _optAccessPlanKey::_optAccessPlanKey ( _optAccessPlanKey &planKey )
+   : _rtnQueryOptions( planKey ),
+     _optAccessPlanInfoBase( planKey )
    {
-      if ( needGetOwned )
-      {
-         getOwned() ;
-      }
-
-      _suID = planKey._suID ;
-      _suLID = planKey._suLID ;
-      _clLID = planKey._clLID ;
-      _mbID = planKey._mbID ;
-
       // No need to re-calculate
       _keyCode = planKey._keyCode ;
 
       _isValid = FALSE ;
+      _cacheLevel = planKey._cacheLevel ;
+      _normalizedQuery = planKey._normalizedQuery ;
+   }
+
+   _optAccessPlanKey::~_optAccessPlanKey ()
+   {
    }
 
    BOOLEAN _optAccessPlanKey::isEqual ( const _optAccessPlanKey &planKey ) const
@@ -111,16 +96,37 @@ namespace engine
       }
 
       // Check the IDs of Collection Space and Collection
-      if ( _suID != planKey._suID || _suLID != planKey._suLID ||
-           _mbID != planKey._mbID || _clLID != planKey._clLID )
+      if ( DMS_INVALID_SUID == _suID && DMS_INVALID_SUID == planKey._suID &&
+           0 != ossStrncmp( _fullName, planKey._fullName,
+                            DMS_COLLECTION_FULL_NAME_SZ ) )
+      {
+         return FALSE ;
+      }
+      else if ( _suID != planKey._suID || _suLID != planKey._suLID ||
+                _mbID != planKey._mbID || _clLID != planKey._clLID )
+      {
+         return FALSE ;
+      }
+
+      if ( _cacheLevel != planKey._cacheLevel )
       {
          return FALSE ;
       }
 
       // User query must be identical
-      if ( !_query.shallowEqual( planKey._query ) )
+      if ( _normalizedQuery.isEmpty() )
       {
-         return FALSE ;
+         if ( !_query.shallowEqual( planKey._query ) )
+         {
+            return FALSE ;
+         }
+      }
+      else
+      {
+         if ( !_normalizedQuery.shallowEqual( planKey._normalizedQuery ) )
+         {
+            return FALSE ;
+         }
       }
 
       // Order by must be identical
@@ -180,6 +186,56 @@ namespace engine
       return TRUE ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTAPKEY_NORMALIZE, "_optAccessPlanKey::normalize" )
+   INT32 _optAccessPlanKey::normalize ( mthMatchHelper &matchHelper,
+                                        mthMatchRuntime *matchRuntime )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_OPTAPKEY_NORMALIZE ) ;
+
+      BSONObjBuilder normalBuilder ;
+      BOOLEAN invalidMatcher = FALSE ;
+
+      SDB_ASSERT( matchRuntime, "matchRuntime is invalid" ) ;
+
+      // Copy the query
+      matchRuntime->setQuery( _query, TRUE ) ;
+
+      rc = matchHelper.normalizeQuery( matchRuntime->getQuery(),
+                                       normalBuilder,
+                                       matchRuntime->getParameters(),
+                                       invalidMatcher ) ;
+      if ( SDB_OK == rc )
+      {
+         _normalizedQuery = normalBuilder.obj() ;
+
+         // No parameters have been found, decrease the cache level
+         if ( matchRuntime->getParameters().isEmpty() &&
+              _cacheLevel >= OPT_PLAN_PARAMETERIZED )
+         {
+            _cacheLevel = OPT_PLAN_NORMALIZED ;
+            matchHelper.setMthEnableFuzzyOptr( FALSE ) ;
+            matchHelper.setMthEnableParameterized( FALSE ) ;
+         }
+         goto done ;
+      }
+
+      PD_CHECK( !invalidMatcher, rc, error, PDERROR,
+                "The matcher %s is invalid",
+                _query.toString( FALSE, TRUE ).c_str() ) ;
+
+      // Ignore errors, goto full generation for original cache level
+      _cacheLevel = OPT_PLAN_ORIGINAL ;
+      rc = SDB_OK ;
+
+   done :
+      PD_TRACE_EXITRC( SDB_OPTAPKEY_NORMALIZE, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
    void _optAccessPlanKey::_generateKeyCodeInternal ()
    {
       setKeyCode( _generateKeyCodeHash() ) ;
@@ -190,15 +246,29 @@ namespace engine
       UINT32 keyCode = 0 ;
 
       // Information of collection space and collection
-      keyCode = ossHash( (CHAR *)&_suID, sizeof( _suID ), 5 ) ;
-      keyCode ^= ossHash( (CHAR *)&_suLID, sizeof( _suLID ), 5 ) ;
-      keyCode ^= ossHash( (CHAR *)&_mbID, sizeof( _mbID ), 5 ) ;
-      keyCode ^= ossHash( (CHAR *)&_clLID, sizeof( _clLID ), 5 ) ;
+      if ( DMS_INVALID_SUID != _suID )
+      {
+         keyCode = ossHash( (CHAR *)&_suID, sizeof( _suID ), 5 ) ;
+         keyCode ^= ossHash( (CHAR *)&_suLID, sizeof( _suLID ), 5 ) ;
+         keyCode ^= ossHash( (CHAR *)&_mbID, sizeof( _mbID ), 5 ) ;
+         keyCode ^= ossHash( (CHAR *)&_clLID, sizeof( _clLID ), 5 ) ;
+      }
+      else
+      {
+         keyCode = ossHash( _fullName ) ;
+      }
+
+      keyCode ^= ossHash( (CHAR *)&_cacheLevel, sizeof( _cacheLevel ), 5 ) ;
 
       // Query
-      if ( !_query.isEmpty() )
+      if ( _normalizedQuery.isEmpty() && !_query.isEmpty() )
       {
          keyCode ^= ossHash( _query.objdata(), _query.objsize() ) ;
+      }
+      else if ( !_normalizedQuery.isEmpty() )
+      {
+         keyCode ^= ossHash( _normalizedQuery.objdata(),
+                             _normalizedQuery.objsize() ) ;
       }
 
       // Order-By
@@ -215,38 +285,6 @@ namespace engine
          if ( e.isABSONObj() )
             continue ;
          keyCode ^= ossHash( e.value(), e.valuesize() ) ;
-      }
-
-      return keyCode ;
-   }
-
-   UINT32 _optAccessPlanKey::_generateKeyCodeMD5 ()
-   {
-      UINT32 keyCode = _utilBSONHasher::hashStr( _fullName ) ;
-      UINT32 matcherCode = _utilBSONHasher::hashObj( _query ) ;
-
-      keyCode = _utilBSONHasher::hashCombine( keyCode, matcherCode ) ;
-
-      if ( !_orderBy.isEmpty() )
-      {
-         UINT32 orderByCode = _utilBSONHasher::hashObj( _orderBy ) ;
-         keyCode = _utilBSONHasher::hashCombine( keyCode, orderByCode ) ;
-      }
-
-      if ( !_hint.isEmpty() )
-      {
-         BSONObjIterator itr( _hint ) ;
-         while( itr.more() )
-         {
-            BSONElement e = itr.next() ;
-            UINT32 hintCode = 0 ;
-            if ( e.isABSONObj() )
-            {
-               continue ;
-            }
-            hintCode = _utilBSONHasher::hashElement( e ) ;
-            keyCode = _utilBSONHasher::hashCombine( keyCode, hintCode ) ;
-         }
       }
 
       return keyCode ;

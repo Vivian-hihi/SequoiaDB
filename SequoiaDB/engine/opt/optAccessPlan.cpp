@@ -54,29 +54,166 @@ namespace engine
    /*
       _optAccessPlan implement
     */
-   _optAccessPlan::_optAccessPlan ( const optAccessPlanKey &planKey,
-                                    BOOLEAN needGetOwned )
+   _optAccessPlan::_optAccessPlan ( optAccessPlanKey &planKey,
+                                    const mthNodeConfig &config )
    : _utilHashTableItem(),
-     _key( planKey, needGetOwned ),
-     _scanPath( &_planAllocator ),
+     _mthMatchTreeStackHolder(),
+     _mthMatchRuntimeHolder(),
+     _key( planKey ),
      _activityID( OPT_INVALID_ACT_ID ),
      _refCount( 0 )
    {
       _isInitialized = FALSE ;
       _hintFailed = FALSE ;
-      _predList = NULL ;
       _isAutoPlan = FALSE ;
-      _autoHint = FALSE ;
 
-      _useCount = 0 ;
+      _matchTree->setMatchConfig( config ) ;
+   }
 
+   _optAccessPlan::~_optAccessPlan ()
+   {
+      UINT32 refCount = getRefCount() ;
+      if ( refCount != 0 )
+      {
+         PD_LOG ( PDWARNING, "Plan[%s] is deleted when use count is "
+                  "not 0: %d", toString().c_str(), refCount ) ;
+      }
+      getMatchTree()->clear() ;
+      deleteMatchRuntime() ;
+   }
+
+   void _optAccessPlan::release ()
+   {
+      // If the plan is cached, decrease the reference count
+      // If the plan is not cached, delete it when
+      // 1. reference count is 0, means it is allocated by new outside APM
+      //    and had been never added to cache
+      // 2. reference count is 1, means it is the last reference
+      if ( isCached() )
+      {
+         decRefCount() ;
+      }
+      else if ( getRefCount() == 0 ||
+                decRefCount() == 1 )
+      {
+         SDB_ASSERT( getRefCount() == 0, "Invalid ref count" ) ;
+         SDB_OSS_DEL this ;
+      }
+   }
+
+   std::string _optAccessPlan::toString () const
+   {
+      stringstream ss ;
+      ss << "CollectionName:" << _key.getCLFullName()
+         << ",IndexName:" << getIndexName()
+         << ",OrderBy:" << _key.getOrderBy().toString().c_str()
+         << ",Query:" << _key.getQuery().toString().c_str()
+         << ",Hint:" << _key.getHint().toString().c_str()
+         << ",HintFailed:" << _hintFailed
+         << ",Direction:" << getDirection()
+         << ",ScanType:" << ( TBSCAN == getScanType() ? "TBSCAN" : "IXSCAN" )
+         << ",Valid:" << _key.isValid()
+         << ",AutoPlan:" << _isAutoPlan
+         << ",HashValue:" << _key.getKeyCode()
+         << ",Count:" << getRefCount()
+         << ",SortRequired:" << sortRequired() ;
+      return ss.str() ;
+   }
+
+   void _optAccessPlan::toBSON ( BSONObjBuilder &builder ) const
+   {
+      builder.appendBool( OPT_FIELD_IS_CACHED, isCached() ) ;
+      builder.append( OPT_FIELD_CACHELEVEL, _key.getCacheLevelName() ) ;
+      builder.append( OPT_FIELD_HASH_CODE, getKeyCode() ) ;
+      builder.append( OPT_FIELD_NORMAIZED_MATCH,
+                      _key.getNormalizedQuery().isEmpty() ?
+                      _key.getQuery() :
+                      _key.getNormalizedQuery() ) ;
+      builder.append( OPT_FIELD_PLAN_SCORE, getScore() ) ;
+
+      if ( NULL != _matchTree )
+      {
+         _matchTree->confToBSON( builder ) ;
+      }
+
+      _toBSONInternal( builder ) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTACPLAN__PREMTHTREE, "_optAccessPlan::_prepareMatchTree" )
+   INT32 _optAccessPlan::_prepareMatchTree ( mthMatchHelper &matchHelper )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__OPTACPLAN__PREMTHTREE ) ;
+
+      matchHelper.setMatchTree( getMatchTree() ) ;
+
+      switch ( _key.getCacheLevel() )
+      {
+         case OPT_PLAN_NOCACHE :
+         case OPT_PLAN_ORIGINAL :
+         {
+            // Load pattern directly
+            rc = getMatchTree()->loadPattern( _key.getQuery(), FALSE ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to load query, rc: %d", rc ) ;
+
+            rc = getMatchTree()->calcPredicate( matchHelper.getPredicateSet() ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to set predicate, rc: %d", rc ) ;
+
+            break ;
+         }
+         case OPT_PLAN_NORMALIZED :
+         case OPT_PLAN_PARAMETERIZED :
+         case OPT_PLAN_FUZZYOPTR :
+         {
+            // Load pattern from normalizer
+            rc = getMatchTree()->loadPattern( matchHelper.getQuery(),
+                                              matchHelper.getNormalizer() ) ;
+            PD_RC_CHECK ( rc, PDERROR, "Failed to load query, rc: %d", rc ) ;
+
+            rc = getMatchTree()->calcPredicate( matchHelper.getPredicateSet() ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to set predicate, rc: %d",
+                         rc ) ;
+
+            break ;
+         }
+         default :
+         {
+            SDB_ASSERT( FALSE, "Invalid cache level" ) ;
+            break ;
+         }
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB__OPTACPLAN__PREMTHTREE, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   /*
+      _optGeneralAccessPlan implement
+    */
+   _optGeneralAccessPlan::_optGeneralAccessPlan ( optAccessPlanKey &planKey,
+                                                  const mthNodeConfig &config )
+   : _optAccessPlan( planKey, config ),
+     _scanPath( &_planAllocator )
+   {
       _cachedPlanMgr = NULL ;
    }
 
-   INT32 _optAccessPlan::_checkOrderBy ()
+   _optGeneralAccessPlan::~_optGeneralAccessPlan ()
+   {
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTGENACPLAN__CHKORDER, "_optGeneralAccessPlan::_checkOrderBy" )
+   INT32 _optGeneralAccessPlan::_checkOrderBy ()
    {
       INT32 rc = SDB_OK ;
-      BSONObjIterator iter( _key._orderBy ) ;
+
+      PD_TRACE_ENTRY( SDB__OPTGENACPLAN__CHKORDER ) ;
+
+      BSONObjIterator iter( _key.getOrderBy() ) ;
       while ( iter.more() )
       {
          BSONElement ele = iter.next() ;
@@ -104,25 +241,30 @@ namespace engine
          }
       }
 
-   done:
+   done :
+      PD_TRACE_EXITRC( SDB__OPTGENACPLAN__CHKORDER, rc ) ;
       return rc ;
-   error:
+   error :
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTACCPLAN__ESTIXPLAN_NAME, "_optAccessPlan::_estimateIxScanPlan" )
-   INT32 _optAccessPlan::_estimateIxScanPlan ( dmsStorageUnit *su,
-                                               dmsMBContext *mbContext,
-                                               optCollectionStat &collectionStat,
-                                               const CHAR *pIndexName,
-                                               OPT_PLAN_PATH_PRIORITY priority,
-                                               UINT64 sortBufferSize,
-                                               INT32 estCacheSize,
-                                               optScanPath &ixScanPath )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTGENACPLAN__ESTIXPLAN_NAME, "_optGeneralAccessPlan::_estimateIxScanPlan" )
+   INT32 _optGeneralAccessPlan::_estimateIxScanPlan ( dmsStorageUnit *su,
+                                                      dmsMBContext *mbContext,
+                                                      optCollectionStat *collectionStat,
+                                                      mthMatchHelper &matchHelper,
+                                                      const CHAR *pIndexName,
+                                                      OPT_PLAN_PATH_PRIORITY priority,
+                                                      UINT64 sortBufferSize,
+                                                      INT32 estCacheSize,
+                                                      optScanPath &ixScanPath )
    {
       INT32 rc = SDB_OK ;
 
-      PD_TRACE_ENTRY( SDB__OPTACCPLAN__ESTIXPLAN_NAME ) ;
+      PD_TRACE_ENTRY( SDB__OPTGENACPLAN__ESTIXPLAN_NAME ) ;
+
+      SDB_ASSERT( collectionStat, "collection is invalid" ) ;
+      SDB_ASSERT( pIndexName, "pIndexName is invalid" ) ;
 
       dmsExtentID indexCBExtent = DMS_INVALID_EXTENT ;
 
@@ -130,77 +272,83 @@ namespace engine
       rc = su->index()->getIndexCBExtent( mbContext, pIndexName,
                                           indexCBExtent ) ;
       PD_RC_CHECK( rc, PDWARNING, "Failed to get index extent ID from "
-                   "collection [%s], index [%s], rc: %d", _key._fullName,
+                   "collection [%s], index [%s], rc: %d", _key.getCLFullName(),
                    pIndexName, rc ) ;
 
-      rc = _estimateIxScanPlan( su, collectionStat, indexCBExtent,
+      rc = _estimateIxScanPlan( su, collectionStat, matchHelper, indexCBExtent,
                                 priority, sortBufferSize, estCacheSize,
                                 ixScanPath ) ;
       PD_RC_CHECK( rc, PDWARNING, "Failed to estimate ixscan plan for "
-                   "collection [%s], index: [%s], rc: %d", _key._fullName,
+                   "collection [%s], index: [%s], rc: %d", _key.getCLFullName(),
                    pIndexName, rc ) ;
 
    done :
-      PD_TRACE_EXITRC( SDB__OPTACCPLAN__ESTIXPLAN_NAME, rc ) ;
+      PD_TRACE_EXITRC( SDB__OPTGENACPLAN__ESTIXPLAN_NAME, rc ) ;
       return rc ;
    error :
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTACCPLAN__ESTIXPLAN_OID, "_optAccessPlan::_estimateIxScanPlan" )
-   INT32 _optAccessPlan::_estimateIxScanPlan ( dmsStorageUnit *su,
-                                               dmsMBContext *mbContext,
-                                               optCollectionStat &collectionStat,
-                                               const OID &indexOID,
-                                               OPT_PLAN_PATH_PRIORITY priority,
-                                               UINT64 sortBufferSize,
-                                               INT32 estCacheSize,
-                                               optScanPath &ixScanPath )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTGENACPLAN__ESTIXPLAN_OID, "_optGeneralAccessPlan::_estimateIxScanPlan" )
+   INT32 _optGeneralAccessPlan::_estimateIxScanPlan ( dmsStorageUnit *su,
+                                                      dmsMBContext *mbContext,
+                                                      optCollectionStat *collectionStat,
+                                                      mthMatchHelper &matchHelper,
+                                                      const OID &indexOID,
+                                                      OPT_PLAN_PATH_PRIORITY priority,
+                                                      UINT64 sortBufferSize,
+                                                      INT32 estCacheSize,
+                                                      optScanPath &ixScanPath )
    {
       INT32 rc = SDB_OK ;
 
-      PD_TRACE_ENTRY( SDB__OPTACCPLAN__ESTIXPLAN_OID ) ;
+      PD_TRACE_ENTRY( SDB__OPTGENACPLAN__ESTIXPLAN_OID ) ;
+
+      SDB_ASSERT( collectionStat, "collection is invalid" ) ;
 
       dmsExtentID indexCBExtent = DMS_INVALID_EXTENT ;
 
       // Search by OID
       rc = su->index()->getIndexCBExtent( mbContext, indexOID, indexCBExtent ) ;
       PD_RC_CHECK( rc, PDWARNING, "Failed to get index extent ID from "
-                   "collection [%s], index [%s], rc: %d", _key._fullName,
+                   "collection [%s], index [%s], rc: %d", _key.getCLFullName(),
                    indexOID.toString().c_str(), rc ) ;
 
-      rc = _estimateIxScanPlan( su, collectionStat, indexCBExtent,
+      rc = _estimateIxScanPlan( su, collectionStat, matchHelper, indexCBExtent,
                                 priority, sortBufferSize, estCacheSize,
                                 ixScanPath ) ;
       PD_RC_CHECK( rc, PDWARNING, "Failed to estimate ixscan plan for "
-                   "collection [%s], index: [%s], rc: %d", _key._fullName,
+                   "collection [%s], index: [%s], rc: %d", _key.getCLFullName(),
                    indexOID.toString().c_str(), rc ) ;
 
    done :
-      PD_TRACE_EXITRC( SDB__OPTACCPLAN__ESTIXPLAN_OID, rc ) ;
+      PD_TRACE_EXITRC( SDB__OPTGENACPLAN__ESTIXPLAN_OID, rc ) ;
       return rc ;
    error :
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTACCPLAN__ESTIXPLAN, "_optAccessPlan::_estimateIxScanPlan" )
-   INT32 _optAccessPlan::_estimateIxScanPlan ( dmsStorageUnit *su,
-                                               optCollectionStat &collectionStat,
-                                               dmsExtentID indexCBExtent,
-                                               OPT_PLAN_PATH_PRIORITY priority,
-                                               UINT64 sortBufferSize,
-                                               INT32 estCacheSize,
-                                               optScanPath &ixScanPath )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTGENACPLAN__ESTIXPLAN, "_optGeneralAccessPlan::_estimateIxScanPlan" )
+   INT32 _optGeneralAccessPlan::_estimateIxScanPlan ( dmsStorageUnit *su,
+                                                      optCollectionStat *collectionStat,
+                                                      mthMatchHelper &matchHelper,
+                                                      dmsExtentID indexCBExtent,
+                                                      OPT_PLAN_PATH_PRIORITY priority,
+                                                      UINT64 sortBufferSize,
+                                                      INT32 estCacheSize,
+                                                      optScanPath &ixScanPath )
    {
       INT32 rc = SDB_OK ;
 
-      PD_TRACE_ENTRY( SDB__OPTACCPLAN__ESTIXPLAN ) ;
+      PD_TRACE_ENTRY( SDB__OPTGENACPLAN__ESTIXPLAN ) ;
+
+      SDB_ASSERT( collectionStat, "collection is invalid" ) ;
 
       ixmIndexCB indexCB ( indexCBExtent, su->index(), NULL ) ;
 
       PD_CHECK( indexCB.isInitialized(), SDB_DMS_INIT_INDEX, error, PDWARNING,
                 "Index [%d] in collection [%s] is invalid", indexCBExtent,
-                _key._fullName ) ;
+                _key.getCLFullName() ) ;
 
       PD_CHECK( indexCB.getFlag() == IXM_INDEX_FLAG_NORMAL,
                 SDB_IXM_UNEXPECTED_STATUS, error, PDDEBUG,
@@ -208,12 +356,13 @@ namespace engine
 
       try
       {
-         optIndexStat indexStat( collectionStat, indexCB ) ;
+         optIndexStat indexStat( *collectionStat, indexCB ) ;
 
-         rc = ixScanPath.createIxScan( _key._fullName, indexCB, _key._selector,
-                                       _matcher, _key._orderBy, priority,
+         rc = ixScanPath.createIxScan( _key.getCLFullName(), indexCB,
+                                       _key.getSelector(), matchHelper,
+                                       _key.getOrderBy(), priority,
                                        estCacheSize, collectionStat,
-                                       indexStat ) ;
+                                       &indexStat ) ;
          PD_RC_CHECK( rc, PDWARNING,
                       "Failed to create index scan node, rc: %d", rc ) ;
       }
@@ -228,53 +377,57 @@ namespace engine
 
       if ( ixScanPath.isCandidate() )
       {
-         ixScanPath.evaluate( _key._orderBy, _key._skip, _key._limit,
-                              sortBufferSize ) ;
+         ixScanPath.evaluate( _key.getOrderBy(), _key.getSkip(),
+                              _key.getLimit(), sortBufferSize ) ;
       }
 
    done :
-       PD_TRACE_EXITRC( SDB__OPTACCPLAN__ESTIXPLAN, rc ) ;
+       PD_TRACE_EXITRC( SDB__OPTGENACPLAN__ESTIXPLAN, rc ) ;
       return rc ;
    error :
       ixScanPath.clearPath() ;
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTACCPLAN__ESTTBPLAN, "_optAccessPlan::_estimateTbScanPlan" )
-   INT32 _optAccessPlan::_estimateTbScanPlan ( optCollectionStat &collectionStat,
-                                               UINT64 sortBufferSize,
-                                               INT32 estCacheSize,
-                                               optScanPath &tbScanPath )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTGENACPLAN__ESTTBPLAN, "_optGeneralAccessPlan::_estimateTbScanPlan" )
+   INT32 _optGeneralAccessPlan::_estimateTbScanPlan ( optCollectionStat *collectionStat,
+                                                      mthMatchHelper &matchHelper,
+                                                      UINT64 sortBufferSize,
+                                                      INT32 estCacheSize,
+                                                      optScanPath &tbScanPath )
    {
       INT32 rc = SDB_OK ;
 
-      PD_TRACE_ENTRY( SDB__OPTACCPLAN__ESTTBPLAN ) ;
+      PD_TRACE_ENTRY( SDB__OPTGENACPLAN__ESTTBPLAN ) ;
 
-      rc = tbScanPath.createTbScan( _key._fullName, _key._selector, _matcher,
-                                    estCacheSize, collectionStat ) ;
+      SDB_ASSERT( collectionStat, "collection is invalid" ) ;
+
+      rc = tbScanPath.createTbScan( _key.getCLFullName(), _key.getSelector(),
+                                    matchHelper, estCacheSize,
+                                    collectionStat ) ;
       PD_RC_CHECK( rc, PDWARNING,
                    "Failed to create index scan node, rc: %d", rc ) ;
 
-      tbScanPath.evaluate( _key._orderBy, _key._skip, _key._limit,
-                           sortBufferSize ) ;
+      tbScanPath.evaluate( _key.getOrderBy(), _key.getSkip(),
+                           _key.getLimit(), sortBufferSize ) ;
 
    done :
-       PD_TRACE_EXITRC( SDB__OPTACCPLAN__ESTTBPLAN, rc ) ;
+       PD_TRACE_EXITRC( SDB__OPTGENACPLAN__ESTTBPLAN, rc ) ;
       return rc ;
    error :
       tbScanPath.clearPath() ;
       goto done ;
    }
 
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTACCPLAN_ESTHINTPLANS, "_optAccessPlan::_estimateHintPlans" )
-   INT32 _optAccessPlan::_estimateHintPlans ( dmsStorageUnit *su,
-                                              dmsMBContext *mbContext,
-                                              dmsStatCache *statCache )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTGENACPLAN__ESTHINTPLANS, "_optGeneralAccessPlan::_estimateHintPlans" )
+   INT32 _optGeneralAccessPlan::_estimateHintPlans ( dmsStorageUnit *su,
+                                                     dmsMBContext *mbContext,
+                                                     mthMatchHelper &matchHelper,
+                                                     dmsStatCache *statCache )
    {
       INT32 rc = SDB_OK ;
 
-      PD_TRACE_ENTRY( SDB__OPTACCPLAN_ESTHINTPLANS ) ;
+      PD_TRACE_ENTRY( SDB__OPTGENACPLAN__ESTHINTPLANS ) ;
 
       UINT64 sortBufferSize = pmdGetOptionCB()->getSortBufSize() * 1024 * 1024 ;
       INT32 estCacheSize = pmdGetOptionCB()->getOptEstCacheSize() ;
@@ -285,14 +438,15 @@ namespace engine
       optScanPath bestPath( &_planAllocator ) ;
 
       BOOLEAN sortedIdxRequired =
-            ( !_key._orderBy.isEmpty() ) &&
-            ( OSS_BIT_TEST( _key._flag, FLG_QUERY_MODIFY ) ||
-              OSS_BIT_TEST( _key._flag, FLG_QUERY_FORCE_IDX_BY_SORT ) ) ;
+            ( !_key.getOrderBy().isEmpty() ) &&
+            ( OSS_BIT_TEST( _key.getFlag(), FLG_QUERY_MODIFY ) ||
+              OSS_BIT_TEST( _key.getFlag(), FLG_QUERY_FORCE_IDX_BY_SORT ) ) ;
 
       UINT32 validHints = 0 ;
-      BSONObjIterator iter( _key._hint ) ;
+      BSONObjIterator iter( _key.getHint() ) ;
 
-      PD_LOG ( PDDEBUG, "Hint is provided: %s", _key._hint.toString().c_str() ) ;
+      PD_LOG ( PDDEBUG, "Hint is provided: %s",
+               _key.getHint().toString().c_str() ) ;
 
       rc = SDB_RTN_INVALID_HINT ;
 
@@ -316,14 +470,15 @@ namespace engine
 
                   PD_LOG ( PDDEBUG, "Try to use index: %s", pIndexName ) ;
 
-                  rc = _estimateIxScanPlan( su, mbContext, collectionStat,
-                                            pIndexName, priority, sortBufferSize,
-                                            estCacheSize, ixScanPath ) ;
+                  rc = _estimateIxScanPlan( su, mbContext, &collectionStat,
+                                            matchHelper, pIndexName, priority,
+                                            sortBufferSize, estCacheSize,
+                                            ixScanPath ) ;
                   if ( SDB_OK != rc )
                   {
                      PD_LOG( PDWARNING, "Failed to estimate index scan for "
                              "collection [%s], index [%s], rc: %d",
-                             _key._fullName, pIndexName, rc ) ;
+                             _key.getCLFullName(), pIndexName, rc ) ;
                      break ;
                   }
 
@@ -357,14 +512,15 @@ namespace engine
                PD_LOG ( PDDEBUG, "Try to use index: %s",
                         indexOID.toString().c_str() ) ;
 
-               rc = _estimateIxScanPlan( su, mbContext, collectionStat,
-                                         indexOID, priority, sortBufferSize,
-                                         estCacheSize, ixScanPath ) ;
+               rc = _estimateIxScanPlan( su, mbContext, &collectionStat,
+                                         matchHelper, indexOID, priority,
+                                         sortBufferSize, estCacheSize,
+                                         ixScanPath ) ;
                if ( SDB_OK != rc )
                {
                   PD_LOG( PDWARNING, "Failed to estimate index scan for "
                           "collection [%s], index OID [%s], rc: %d",
-                          _key._fullName, indexOID.toString().c_str(), rc ) ;
+                          _key.getCLFullName(), indexOID.toString().c_str(), rc ) ;
                   break ;
                }
 
@@ -387,12 +543,14 @@ namespace engine
                validHints ++ ;
 
                // if we use null in the hint, we use tbscan
-               rc = _estimateTbScanPlan( collectionStat, sortBufferSize,
-                                         estCacheSize, tbScanPath ) ;
+               rc = _estimateTbScanPlan( &collectionStat, matchHelper,
+                                         sortBufferSize, estCacheSize,
+                                         tbScanPath ) ;
                if ( SDB_OK != rc )
                {
                   PD_LOG( PDWARNING, "Failed to estimate table scan for "
-                          "collection [%s], rc: %d", _key._fullName, rc ) ;
+                          "collection [%s], rc: %d", _key.getCLFullName(),
+                          rc ) ;
                   break ;
                }
 
@@ -432,27 +590,27 @@ namespace engine
          goto error ;
       }
 
-      rc = _usePath( su, bestPath ) ;
+      rc = _usePath( su, matchHelper, bestPath ) ;
       PD_RC_CHECK( rc, PDWARNING, "Failed to use hint path, rc: %d", rc ) ;
 
    done :
-      PD_TRACE_EXITRC( SDB__OPTACCPLAN_ESTHINTPLANS, rc ) ;
+      PD_TRACE_EXITRC( SDB__OPTGENACPLAN__ESTHINTPLANS, rc ) ;
       return rc ;
    error :
       _hintFailed = TRUE ;
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTACCPLAN__ESTPLANS, "_optAccessPlan::_estimatePlans" )
-   INT32 _optAccessPlan::_estimatePlans ( dmsStorageUnit *su,
-                                          dmsMBContext *mbContext,
-                                          dmsStatCache *statCache )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTGENACPLAN__ESTPLANS, "_optGeneralAccessPlan::_estimatePlans" )
+   INT32 _optGeneralAccessPlan::_estimatePlans ( dmsStorageUnit *su,
+                                                 dmsMBContext *mbContext,
+                                                 mthMatchHelper &matchHelper,
+                                                 dmsStatCache *statCache )
    {
       INT32 rc = SDB_OK ;
 
-      PD_TRACE_ENTRY( SDB__OPTACCPLAN__ESTPLANS ) ;
+      PD_TRACE_ENTRY( SDB__OPTGENACPLAN__ESTPLANS ) ;
 
-      const rtnPredicateSet &predicateSet = _matcher.getPredicateSet() ;
       UINT64 sortBufferSize = pmdGetOptionCB()->getSortBufSize() * 1024 * 1024 ;
       INT32 estCacheSize = pmdGetOptionCB()->getOptEstCacheSize() ;
 
@@ -468,21 +626,23 @@ namespace engine
       optScanType scanType = UNKNOWNSCAN ;
       OPT_PLAN_PATH_PRIORITY priority = OPT_PLAN_DEFAULT_PRIORITY ;
 
-      if ( !_key._orderBy.isEmpty() &&
-           ( OSS_BIT_TEST( _key._flag, FLG_QUERY_MODIFY ) ||
-             OSS_BIT_TEST( _key._flag, FLG_QUERY_FORCE_IDX_BY_SORT ) ) )
+      if ( !_key.getOrderBy().isEmpty() &&
+           ( OSS_BIT_TEST( _key.getFlag(), FLG_QUERY_MODIFY ) ||
+             OSS_BIT_TEST( _key.getFlag(), FLG_QUERY_FORCE_IDX_BY_SORT ) ) )
       {
          // Have order-by and with query flags to required sorted index
          priority = OPT_PLAN_SORTED_IDX_REQUIRED ;
       }
-      else if ( _autoHint && _hintFailed &&
-                ( predicateSet.getSize() > 0 || !_key._orderBy.isEmpty() ) )
+      else if ( _autoHint &&
+                _hintFailed &&
+                ( !matchHelper.isPredicateSetEmpty() ||
+                  !_key.getOrderBy().isEmpty() ) )
       {
          // Have hints, predicates or order-by, which could prefer index-scan
-         if ( OSS_BIT_TEST( _key._flag, FLG_QUERY_FORCE_HINT ) )
+         if ( OSS_BIT_TEST( _key.getFlag(), FLG_QUERY_FORCE_HINT ) )
          {
             // Must use index
-            if ( !_key._orderBy.isEmpty() )
+            if ( !_key.getOrderBy().isEmpty() )
             {
                priority = OPT_PLAN_SORTED_IDX_REQUIRED ;
             }
@@ -502,14 +662,14 @@ namespace engine
            priority == OPT_PLAN_DEFAULT_PRIORITY )
       {
          // Estimate table scan
-         rc = _estimateTbScanPlan( collectionStat, sortBufferSize,
-                                   estCacheSize, tbScanPath ) ;
+         rc = _estimateTbScanPlan( &collectionStat, matchHelper,
+                                   sortBufferSize, estCacheSize, tbScanPath ) ;
          PD_RC_CHECK( rc, PDWARNING, "Failed to estimate table scan for "
-                      "collection [%s], rc: %d", _key._fullName, rc ) ;
+                      "collection [%s], rc: %d", _key.getCLFullName(), rc ) ;
       }
 
-      if ( predicateSet.getSize() > 0 ||
-           !_key._orderBy.isEmpty() )
+      if ( !matchHelper.isPredicateSetEmpty() ||
+           !_key.getOrderBy().isEmpty() )
       {
          // We had found a best index earlier, check it first
          if ( collectionStat.getBestIndexName() )
@@ -517,15 +677,16 @@ namespace engine
             const CHAR *pIndexName = collectionStat.getBestIndexName() ;
             optScanPath ixScanPath( &_planAllocator ) ;
 
-            rc = _estimateIxScanPlan( su, mbContext, collectionStat, pIndexName,
-                                      priority, sortBufferSize, estCacheSize,
+            rc = _estimateIxScanPlan( su, mbContext, &collectionStat,
+                                      matchHelper, pIndexName, priority,
+                                      sortBufferSize, estCacheSize,
                                       ixScanPath ) ;
 
             if ( SDB_OK != rc )
             {
                PD_LOG( PDWARNING, "Failed to estimate index scan for "
-                       "collection [%s], index [%s], rc: %d", _key._fullName,
-                       pIndexName, rc ) ;
+                       "collection [%s], index [%s], rc: %d",
+                       _key.getCLFullName(), pIndexName, rc ) ;
             }
             else
             {
@@ -557,8 +718,8 @@ namespace engine
             {
                // Continue to evaluate the rest of indexes
                PD_LOG( PDWARNING, "Failed to get index extent ID from "
-                       "collection [%s], index [%d], rc: %d", _key._fullName,
-                       idx, rc ) ;
+                       "collection [%s], index [%d], rc: %d",
+                       _key.getCLFullName(), idx, rc ) ;
                continue ;
             }
             if ( bestIdxExtID == indexCBExtent )
@@ -567,15 +728,15 @@ namespace engine
                continue ;
             }
 
-            rc = _estimateIxScanPlan( su, collectionStat, indexCBExtent,
-                                      priority, sortBufferSize, estCacheSize,
-                                      ixScanPath ) ;
+            rc = _estimateIxScanPlan( su, &collectionStat, matchHelper,
+                                      indexCBExtent, priority, sortBufferSize,
+                                      estCacheSize, ixScanPath ) ;
             if ( SDB_OK != rc )
             {
                // Continue to evaluate the rest of indexes
                PD_LOG( PDWARNING, "Failed to estimate index scan for "
-                       "collection [%s], index [%d], rc: %d", _key._fullName,
-                       idx, rc ) ;
+                       "collection [%s], index [%d], rc: %d",
+                       _key.getCLFullName(), idx, rc ) ;
                continue ;
             }
             if ( ixScanPath.isCandidate() &&
@@ -623,7 +784,7 @@ namespace engine
       }
 
       scanType = bestPath.getScanType() ;
-      rc = _usePath( su, bestPath ) ;
+      rc = _usePath( su, matchHelper, bestPath ) ;
       if ( SDB_OK != rc && IXSCAN == scanType )
       {
          PD_LOG( PDWARNING, "Failed to use index scan, rc: %d", rc ) ;
@@ -641,7 +802,7 @@ namespace engine
             {
                PD_LOG( PDWARNING, "TblScan is not estimated" ) ;
             }
-            rc = _usePath( su, tbScanPath ) ;
+            rc = _usePath( su, matchHelper, tbScanPath ) ;
          }
       }
       PD_RC_CHECK( rc, PDWARNING, "Failed to use scan path, rc: %d", rc ) ;
@@ -649,29 +810,35 @@ namespace engine
       PD_LOG( PDDEBUG, "Optimizer: Use plan %s", _scanPath.toString().c_str() ) ;
 
    done :
-      PD_TRACE_EXITRC( SDB__OPTACCPLAN__ESTPLANS, rc ) ;
+      PD_TRACE_EXITRC( SDB__OPTGENACPLAN__ESTPLANS, rc ) ;
       return rc ;
    error :
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTACCPLAN__USEPATH, "_optAccessPlan::_usePath" )
-   INT32 _optAccessPlan::_usePath ( dmsStorageUnit *su,
-                                    optScanPath &path )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTGENACPLAN__USEPATH, "_optGeneralAccessPlan::_usePath" )
+   INT32 _optGeneralAccessPlan::_usePath ( dmsStorageUnit *su,
+                                           mthMatchHelper &matchHelper,
+                                           optScanPath &path )
    {
       INT32 rc = SDB_OK ;
 
-      PD_TRACE_ENTRY( SDB__OPTACCPLAN__USEPATH ) ;
+      PD_TRACE_ENTRY( SDB__OPTGENACPLAN__USEPATH ) ;
+
+      SDB_ASSERT( _matchRuntime, "matchRuntime is invalid" ) ;
 
       dmsExtentID idxExtID = path.getIndexExtID() ;
       optScanPath emptyPath( &_planAllocator ) ;
 
       // Clear earlier settings
-      SAFE_OSS_DELETE( _predList ) ;
+      _matchRuntime->clearPredList() ;
       _scanPath.swap( emptyPath ) ;
 
       PD_CHECK( !path.isEmpty(), SDB_SYS, error, PDWARNING,
                 "Try to use unknown path" ) ;
+
+      rc = bindMatchRuntime( _matchRuntime ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to bind match runtime, rc: %d", rc ) ;
 
       if ( DMS_INVALID_EXTENT != idxExtID )
       {
@@ -681,46 +848,46 @@ namespace engine
                    "Failed to use index at extent %d", idxExtID ) ;
 
          // Create predicate list
-         _predList = SDB_OSS_NEW rtnPredicateList ( _matcher.getPredicateSet(),
-                                                    &indexCB,
-                                                    path.getDirection() ) ;
-         PD_CHECK( _predList, SDB_OOM, error, PDWARNING,
-                   "Failed to allocate memory for rtnPredicateList" ) ;
+         rc = _matchRuntime->generatePredList( matchHelper,
+                                               indexCB.keyPattern(),
+                                               path.getDirection() ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to generate predicate list, rc: %d",
+                      rc ) ;
 
          // Note: below processing should not be failed
 
          // Set if we need further match
-         if ( !_matcher.isMatchesAll() && path.isMatchAll() )
+         if ( !getMatchTree()->isMatchesAll() && path.isMatchAll() )
          {
-            _matcher.setMatchesAll( TRUE ) ;
+            getMatchTree()->setMatchesAll( TRUE ) ;
          }
       }
 
       _scanPath.swap( path ) ;
 
    done :
-      PD_TRACE_EXITRC( SDB__OPTACCPLAN__USEPATH, rc ) ;
+      PD_TRACE_EXITRC( SDB__OPTGENACPLAN__USEPATH, rc ) ;
       return rc ;
    error :
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTACCPLAN__PREPAREOPT, "_optAccessPlan::_prepareOptimize" )
-   INT32 _optAccessPlan::_prepareOptimize ( dmsStorageUnit *su,
-                                            dmsMBContext *mbContext )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTGENACPLAN__PREPARESUCACHES, "_optGeneralAccessPlan::_prepareSUCaches" )
+   INT32 _optGeneralAccessPlan::_prepareSUCaches ( dmsStorageUnit *su,
+                                                   dmsMBContext *mbContext )
    {
       INT32 rc = SDB_OK ;
 
-      PD_TRACE_ENTRY( SDB__OPTACCPLAN__PREPAREOPT ) ;
+      PD_TRACE_ENTRY( SDB__OPTGENACPLAN__PREPARESUCACHES ) ;
 
       dmsStatCache *statCache = NULL ;
-
+      UINT16 mbID = _key.getCLMBID() ;
       BOOLEAN needCacheStat = FALSE, needCachedPlan = FALSE ;
 
       // Check if statistics need to be loaded
       statCache = su->getStatCache() ;
       if ( NULL != statCache &&
-           UTIL_SU_CACHE_UNIT_STATUS_EMPTY == statCache->getStatus( _key._mbID ) )
+           UTIL_SU_CACHE_UNIT_STATUS_EMPTY == statCache->getStatus( mbID ) )
       {
          needCacheStat = TRUE ;
       }
@@ -728,8 +895,7 @@ namespace engine
       // Check if cached plan status need to be added
       _cachedPlanMgr = su->getCachedPlanMgr() ;
       if ( NULL != _cachedPlanMgr &&
-           UTIL_SU_CACHE_UNIT_STATUS_EMPTY ==
-                 _cachedPlanMgr->getStatus( _key._mbID ) )
+           UTIL_SU_CACHE_UNIT_STATUS_EMPTY == _cachedPlanMgr->getStatus( mbID ) )
       {
          needCachedPlan = TRUE ;
       }
@@ -749,16 +915,8 @@ namespace engine
 
             if ( needCachedPlan )
             {
-               // Create new cached plan status for this collection
-               dmsCLCachedPlanUnit *pCachedPlanUnit =
-                     SDB_OSS_NEW dmsCLCachedPlanUnit( _key._mbID, 0 ) ;
-               if ( NULL != pCachedPlanUnit &&
-                    !_cachedPlanMgr->addCacheUnit( pCachedPlanUnit,
-                                                   TRUE, FALSE ) )
-               {
-                  // Failed to add unit, the unit should be deleted
-                  SAFE_OSS_DELETE( pCachedPlanUnit ) ;
-               }
+               // Create cached plan status
+               _cachedPlanMgr->createCLCachedPlanUnit( mbID ) ;
             }
          }
 
@@ -768,20 +926,21 @@ namespace engine
       }
 
    done :
-      PD_TRACE_EXITRC( SDB__OPTACCPLAN__PREPAREOPT, rc ) ;
+      PD_TRACE_EXITRC( SDB__OPTGENACPLAN__PREPARESUCACHES, rc ) ;
       return rc ;
 
    error :
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTACCPLAN_OPT, "_optAccessPlan::optimize" )
-   INT32 _optAccessPlan::optimize ( dmsStorageUnit *su,
-                                    dmsMBContext *mbContext )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTGENACPLAN_OPT, "_optGeneralAccessPlan::optimize" )
+   INT32 _optGeneralAccessPlan::optimize ( dmsStorageUnit *su,
+                                           dmsMBContext *mbContext,
+                                           mthMatchHelper &matchHelper )
    {
       INT32 rc = SDB_OK ;
 
-      PD_TRACE_ENTRY ( SDB__OPTACCPLAN_OPT ) ;
+      PD_TRACE_ENTRY ( SDB__OPTGENACPLAN_OPT ) ;
 
       SDB_ASSERT( su, "su is invalid" ) ;
       SDB_ASSERT( mbContext, "mbContext is invalid" ) ;
@@ -790,49 +949,55 @@ namespace engine
 
       BOOLEAN mbLocked = FALSE ;
 
+      // Check order-by
       rc = _checkOrderBy() ;
       PD_RC_CHECK( rc, PDERROR, "failed to check orderby", rc ) ;
 
-      // First let's build matcher
-      rc = _matcher.loadPattern ( _key._query ) ;
-      PD_RC_CHECK ( rc, (SDB_RTN_INVALID_PREDICATES==rc) ? PDINFO : PDERROR,
-                    "Failed to load query, rc = %d", rc ) ;
+      // Prepare the match runtime for optimize
+      rc = _prepareMatchTree( matchHelper ) ;
+      PD_RC_CHECK ( rc, PDERROR, "Failed to load query, rc: %d", rc ) ;
 
       // Lock the mbContext, then we could access the statistics informations
       if ( !mbContext->isMBLock() )
       {
          rc = mbContext->mbLock( SHARED ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to lock mbContext [%s], rc: %d",
-                      _key._fullName, rc ) ;
+                      _key.getCLFullName(), rc ) ;
          mbLocked = TRUE ;
       }
 
-      rc = _prepareOptimize( su, mbContext ) ;
+      // Prepare statistics and plan caches, etc
+      rc = _prepareSUCaches( su, mbContext ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to prepare for optimize, rc: %d", rc ) ;
 
-      if ( _key._hint.isEmpty() )
+      // Check hints
+      if ( _key.getHint().isEmpty() )
       {
-         rc = _estimatePlans( su, mbContext, statCache ) ;
+         // No hints, evaluate the plans directly
+         _isAutoPlan = TRUE ;
+         rc = _estimatePlans( su, mbContext, matchHelper, statCache ) ;
       }
       else
       {
          // Evaluate hints first
-         rc = _estimateHintPlans( su, mbContext, statCache ) ;
+         rc = _estimateHintPlans( su, mbContext, matchHelper, statCache ) ;
          if ( SDB_OK != rc &&
               SDB_RTN_QUERYMODIFY_SORT_NO_IDX != rc )
          {
             // Hint failed, could evaluate with all candidate plans again
             // Without sorted index should be reported
-            rc = _estimatePlans( su, mbContext, statCache ) ;
+            _isAutoPlan = TRUE ;
+            rc = _estimatePlans( su, mbContext, matchHelper, statCache ) ;
          }
       }
 
       PD_RC_CHECK( rc, PDERROR, "Failed to create candidate plans, rc: %d", rc ) ;
 
+      // Done evaluation, mark the plan valid
       _isInitialized = TRUE ;
       _key.setValid( TRUE ) ;
 
-      // Clear hint failed
+      // Clear hint failing marks
       if ( _autoHint && _hintFailed && IXSCAN == getScanType() )
       {
          _hintFailed = FALSE ;
@@ -845,50 +1010,492 @@ namespace engine
       {
          mbContext->mbUnlock() ;
       }
-      PD_TRACE_EXITRC ( SDB__OPTACCPLAN_OPT, rc );
+      PD_TRACE_EXITRC( SDB__OPTGENACPLAN_OPT, rc ) ;
       return rc ;
 
    error :
       goto done ;
    }
 
-   void _optAccessPlan::release()
+   void _optGeneralAccessPlan::_toBSONInternal ( BSONObjBuilder &builder ) const
    {
-      // If the plan is cached, decrease the reference count
-      // If the plan is not cached, delete it when
-      // 1. reference count is 0, means it is allocated by new outside APM
-      //    and had been never added to cache
-      // 2. reference count is 1, means it is the last reference
-      if ( isCached() )
-      {
-         decRefCount() ;
-      }
-      else if ( getRefCount() == 0 ||
-                decRefCount() == 1 )
-      {
-         SDB_ASSERT( getRefCount() == 0, "Invalid ref count" ) ;
-         SDB_OSS_DEL this ;
-      }
+      builder.appendBool( OPT_FIELD_IS_PARAM_VALID, isParamValid() ) ;
+      BSONObjBuilder pathBuilder( builder.subobjStart( OPT_FIELD_PLAN_PATH ) ) ;
+      _scanPath.toBSON( pathBuilder ) ;
+      pathBuilder.done() ;
    }
 
-   std::string _optAccessPlan::toString() const
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTGENACPLAN_BINDMTHRTM, "_optGeneralAccessPlan::bindMatchRuntime" )
+   INT32 _optGeneralAccessPlan::bindMatchRuntime ( mthMatchRuntime *matchRuntime )
    {
-      stringstream ss ;
-      ss << "CollectionName:" << _key._fullName
-         << ",IndexName:" << _scanPath.getIndexName()
-         << ",OrderBy:" << _key._orderBy.toString().c_str()
-         << ",Query:" << _key._query.toString().c_str()
-         << ",Hint:" << _key._hint.toString().c_str()
-         << ",HintFailed:" << _hintFailed
-         << ",Direction:" << _scanPath.getDirection()
-         << ",ScanType:" << ( TBSCAN == _scanPath.getScanType() ? "TBSCAN" : "IXSCAN" )
-         << ",Valid:" << _key._isValid
-         << ",AutoPlan:" << _isAutoPlan
-         << ",HashValue:" << _key._keyCode
-         << ",Count:" << getRefCount()
-         << ",SortRequired:" << _scanPath.isSortRequired()
-         << ",AutoHint:" << _autoHint ;
-      return ss.str() ;
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__OPTGENACPLAN_BINDMTHRTM ) ;
+
+      matchRuntime->setMatchTree( getMatchTree() ) ;
+
+      PD_TRACE_EXITRC( SDB__OPTGENACPLAN_BINDMTHRTM, rc ) ;
+
+      return rc ;
+   }
+
+   /*
+      _optParamAccessPlan implement
+    */
+   _optParamAccessPlan::_optParamAccessPlan ( optAccessPlanKey &planKey,
+                                              const mthNodeConfig &config )
+   : _optGeneralAccessPlan( planKey, config ),
+     _mthParamPredListStackHolder(),
+     _paramValidCount( 0 )
+   {
+      SDB_ASSERT( _key.getCacheLevel() >= OPT_PLAN_PARAMETERIZED,
+                  "Invalid cache level" ) ;
+
+      _isParamValid = FALSE ;
+      _score = 0.0 ;
+   }
+
+   _optParamAccessPlan::~_optParamAccessPlan ()
+   {
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTPARAMACPLAN_VALIDPARAM, "_optParamAccessPlan::validateParameterized" )
+   BOOLEAN _optParamAccessPlan::validateParameterized ( const _optAccessPlan &plan )
+   {
+      BOOLEAN result = FALSE ;
+
+      PD_TRACE_ENTRY( SDB__OPTPARAMACPLAN_VALIDPARAM ) ;
+
+      if ( plan.getScanType() == getScanType() &&
+           plan.getIndexCBExtent() == getIndexCBExtent() &&
+           plan.getIndexLID() == getIndexLID() &&
+           plan.getDirection() == getDirection() )
+      {
+         _saveParam( plan.getKey().getQuery(), plan.getScore() ) ;
+         result = TRUE ;
+      }
+      else
+      {
+         PD_LOG( PDDEBUG, "Plan generated is different from parameterized "
+                 "plan: [%s] vs [%s]", toString().c_str(),
+                 plan.toString().c_str() ) ;
+         result = FALSE ;
+      }
+
+      PD_TRACE_EXIT( SDB__OPTPARAMACPLAN_VALIDPARAM ) ;
+
+      return result ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTPARAMACPLAN_MARKINVALID, "_optParamAccessPlan::markParamInvalid" )
+   INT32 _optParamAccessPlan::markParamInvalid ( dmsMBContext *mbContext )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__OPTPARAMACPLAN_MARKINVALID ) ;
+
+      if ( NULL != _cachedPlanMgr )
+      {
+         UINT16 mbID = mbContext->mbID() ;
+         BOOLEAN isSharedLocked = mbContext->isMBLock( SHARED ) ;
+
+         rc = mbContext->mbLock( EXCLUSIVE ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to lock mbContext [%s] exclusive, "
+                      "rc: %d", getCLFullName(), rc ) ;
+
+         dmsCLCachedPlanUnit *pCachedPlanUnit =
+               (dmsCLCachedPlanUnit *)_cachedPlanMgr->getCacheUnit( mbID ) ;
+         if ( NULL != pCachedPlanUnit )
+         {
+            pCachedPlanUnit->incParamInvalid() ;
+            if ( pCachedPlanUnit->isParamInvalid() )
+            {
+               _cachedPlanMgr->setParamInvalidBit( mbID ) ;
+               PD_LOG( PDDEBUG, "Mark collection [%s] parameterize invalid",
+                       getCLFullName() ) ;
+            }
+         }
+
+         if ( isSharedLocked )
+         {
+            rc = mbContext->mbLock( SHARED ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to lock mbContext [%s] shared, "
+                         "rc: %d", getCLFullName(), rc ) ;
+         }
+         else
+         {
+            mbContext->mbUnlock() ;
+         }
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB__OPTPARAMACPLAN_MARKINVALID, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTPARAMACPLAN_BINDMTHRTM, "_optParamAccessPlan::bindMatchRuntime" )
+   INT32 _optParamAccessPlan::bindMatchRuntime ( mthMatchRuntime *matchRuntime )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__OPTPARAMACPLAN_BINDMTHRTM ) ;
+
+      matchRuntime->setMatchTree( getMatchTree() ) ;
+      matchRuntime->setParamPredList( getParamPredList() ) ;
+
+      PD_TRACE_EXITRC( SDB__OPTPARAMACPLAN_BINDMTHRTM, rc ) ;
+
+      return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTPARAMACPLAN__SAVEPARAM, "_optParamAccessPlan::_saveParam" )
+   void _optParamAccessPlan::_saveParam ( const BSONObj &query, double score )
+   {
+      PD_TRACE_ENTRY( SDB__OPTPARAMACPLAN__SAVEPARAM ) ;
+
+      UINT32 paramIndex = _paramValidCount.inc() ;
+      if ( paramIndex < OPT_PARAM_VALID_PLAN_NUM )
+      {
+         // Save the specified plan for validation
+         _records[ paramIndex ]._query = query.copy() ;
+         _records[ paramIndex ]._score = score ;
+
+         if ( paramIndex == OPT_PARAM_VALID_PLAN_NUM - 1 )
+         {
+            // The parameterized plan could be validated, so calculate the
+            // score which is the standard difference of each specified plan
+            // to validate the parameterized plan
+            double avgScores = 0.0 ;
+            double diffScores = 0.0 ;
+            for ( UINT32 i = 0 ; i < OPT_PARAM_VALID_PLAN_NUM ; i++ )
+            {
+               avgScores += _records[i]._score ;
+            }
+            avgScores /= (double)OPT_PARAM_VALID_PLAN_NUM ;
+            for ( UINT32 i = 0 ; i < OPT_PARAM_VALID_PLAN_NUM ; i++ )
+            {
+               double tmp = _records[i]._score - avgScores ;
+               diffScores += ( tmp * tmp ) ;
+            }
+            _score = sqrt( diffScores / (double)OPT_PARAM_VALID_PLAN_NUM ) ;
+            _isParamValid = TRUE ;
+
+            PD_LOG( PDDEBUG, "Validate parameterized plan [%s]: score [%.6f]",
+                    toString().c_str(), _score ) ;
+         }
+      }
+
+      PD_TRACE_EXIT( SDB__OPTPARAMACPLAN__SAVEPARAM ) ;
+   }
+
+   /*
+      _optMainCLAccessPlan implement
+    */
+   _optMainCLAccessPlan::_optMainCLAccessPlan ( optAccessPlanKey &planKey,
+                                                const mthNodeConfig &config )
+   : _optAccessPlan( planKey, config ),
+     _mthParamPredListStackHolder(),
+     _mainCLValidCount( 0 )
+   {
+      _scanType = TBSCAN ;
+      _indexName[0] = '\0' ;
+      _direction = 1 ;
+      _sortRequired = FALSE ;
+      _isMainCLValid = TRUE ;
+      _score = 0.0 ;
+   }
+
+   _optMainCLAccessPlan::~_optMainCLAccessPlan ()
+   {
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTMAINACPLAN_PREPAREBINDSUB, "_optMainCLAccessPlan::prepareBindSubCL" )
+   INT32 _optMainCLAccessPlan::prepareBindSubCL ( mthMatchHelper &matchHelper )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__OPTMAINACPLAN_PREPAREBINDSUB ) ;
+
+      // Prepare the match runtime for optimize
+      rc = _prepareMatchTree( matchHelper ) ;
+      PD_RC_CHECK ( rc, PDERROR, "Failed to load query, rc: %d", rc ) ;
+
+   done :
+      PD_TRACE_EXITRC( SDB__OPTMAINACPLAN_PREPAREBINDSUB, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTMAINACPLAN_BINDSUBACPLAN, "_optMainCLAccessPlan::bindSubCLAccessPlan" )
+   INT32 _optMainCLAccessPlan::bindSubCLAccessPlan ( mthMatchHelper &matchHelper,
+                                                     optGeneralAccessPlan *subPlan )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__OPTMAINACPLAN_BINDSUBACPLAN ) ;
+
+      SDB_ASSERT( _matchRuntime, "_matchRuntime is invalid" ) ;
+
+      _scanType = subPlan->getScanType() ;
+      if ( IXSCAN == _scanType )
+      {
+         // Copy the name and key pattern of indexes for validate other
+         // sub-collections
+         ossStrncpy( _indexName, subPlan->getIndexName(), IXM_INDEX_NAME_SIZE ) ;
+         _keyPattern = subPlan->getKeyPattern().copy() ;
+      }
+      else
+      {
+         _indexName[0] = '\0' ;
+      }
+      _direction = subPlan->getDirection() ;
+      _sortRequired = subPlan->sortRequired() ;
+
+      _hintFailed = subPlan->isHintFailed() ;
+      _isAutoPlan = subPlan->isAutoGen() ;
+
+      _saveSubCL( subPlan->getCLFullName(), subPlan->getScore() ) ;
+
+      rc = bindMatchRuntime( _matchRuntime ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to bind match runtime, rc: %d", rc ) ;
+
+      // Only need to bind predicates for index-scan plan
+      if ( IXSCAN == subPlan->getScanType() &&
+           NULL == _matchRuntime->getPredList() )
+      {
+         rc = _matchRuntime->generatePredList( matchHelper, _keyPattern,
+                                               _direction ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to generate predicate list, rc: %d",
+                      rc ) ;
+      }
+
+      // Bind finished, set the plan validated
+      _isInitialized = TRUE ;
+      _key.setValid( TRUE ) ;
+
+   done :
+      PD_TRACE_EXITRC( SDB__OPTMAINACPLAN_BINDSUBACPLAN, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTMAINCLACPLAN_VALIDSUBCL_PLAN, "_optMainCLAccessPlan::validateSubCL" )
+   BOOLEAN _optMainCLAccessPlan::validateSubCL ( const optGeneralAccessPlan *plan )
+   {
+      BOOLEAN result = FALSE ;
+
+      PD_TRACE_ENTRY( SDB__OPTMAINCLACPLAN_VALIDSUBCL_PLAN ) ;
+
+      SDB_ASSERT( plan, "plan is invalid" ) ;
+
+      if ( _scanType == plan->getScanType() &&
+           _direction == plan->getDirection() &&
+           _sortRequired == plan->sortRequired() &&
+           0 == ossStrncmp( _indexName, plan->getIndexName(),
+                            IXM_INDEX_NAME_SIZE ) &&
+           _keyPattern.shallowEqual( plan->getKeyPattern() ) )
+      {
+         _saveSubCL( plan->getCLFullName(), plan->getScore() ) ;
+         result = TRUE ;
+      }
+
+      PD_TRACE_EXIT( SDB__OPTMAINCLACPLAN_VALIDSUBCL_PLAN ) ;
+
+      return result ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTMAINCLACPLAN_VALIDSUBCL_SU, "_optMainCLAccessPlan::validateSubCL" )
+   INT32 _optMainCLAccessPlan::validateSubCL ( dmsStorageUnit *su,
+                                               dmsMBContext *mbContext,
+                                               dmsExtentID &indexExtID,
+                                               dmsExtentID &indexLID )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__OPTMAINCLACPLAN_VALIDSUBCL_SU ) ;
+
+      BOOLEAN mbLocked = FALSE ;
+
+      indexExtID = DMS_INVALID_EXTENT ;
+      indexLID = DMS_INVALID_EXTENT ;
+
+      if ( IXSCAN == getScanType() )
+      {
+         if ( !mbContext->isMBLock() )
+         {
+            rc = mbContext->mbLock( SHARED ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to lock mb context, rc: %d", rc ) ;
+            mbLocked = TRUE ;
+         }
+
+         rc = su->index()->getIndexCBExtent( mbContext, _indexName, indexExtID ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get index, rc: %d", rc ) ;
+
+         {
+            ixmIndexCB indexCB( indexExtID, su->index(), mbContext ) ;
+
+            PD_CHECK( indexCB.isInitialized(),
+                      SDB_DMS_INIT_INDEX, error, PDWARNING,
+                      "Index [%s] is invalid", _indexName ) ;
+            PD_CHECK( indexCB.getFlag() == IXM_INDEX_FLAG_NORMAL,
+                      SDB_IXM_UNEXPECTED_STATUS, error, PDDEBUG,
+                      "Index [%s] is not normal status", _indexName ) ;
+
+            if ( !_keyPattern.shallowEqual( indexCB.keyPattern() ) )
+            {
+               rc = SDB_IXM_NOTEXIST ;
+               PD_LOG( PDERROR, "Index not exists" ) ;
+               goto error ;
+            }
+
+            indexLID = indexCB.getLogicalID() ;
+         }
+      }
+
+   done :
+      if ( mbLocked )
+      {
+         mbContext->mbUnlock() ;
+      }
+      PD_TRACE_EXITRC( SDB__OPTMAINCLACPLAN_VALIDSUBCL_SU, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTMAINCLACPLAN_MARKINVALID, "_optParamAccessPlan::markMainCLInvalid" )
+   INT32 _optMainCLAccessPlan::markMainCLInvalid ( dmsCachedPlanMgr *pCachedPlanMgr,
+                                                   dmsMBContext *mbContext,
+                                                   BOOLEAN markInvalid )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__OPTMAINCLACPLAN_MARKINVALID ) ;
+
+      if ( NULL != pCachedPlanMgr )
+      {
+         dmsCLCachedPlanUnit *pCachedPlanUnit = NULL ;
+         UINT16 mbID = mbContext->mbID() ;
+         BOOLEAN isSharedLocked = mbContext->isMBLock( SHARED ) ;
+
+         rc = mbContext->mbLock( EXCLUSIVE ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to lock mbContext [%s] exclusive, "
+                      "rc: %d", getCLFullName(), rc ) ;
+
+         pCachedPlanUnit = (dmsCLCachedPlanUnit *)
+                           pCachedPlanMgr->getCacheUnit( mbID ) ;
+
+         if ( markInvalid )
+         {
+            if ( NULL != pCachedPlanUnit )
+            {
+               pCachedPlanUnit->setMainCLInvalid() ;
+            }
+            pCachedPlanMgr->setMainCLInvalidBit( mbID ) ;
+            PD_LOG( PDDEBUG, "Mark collection [%s] parameterize invalid",
+                    getCLFullName() ) ;
+         }
+         else
+         {
+            if ( NULL != pCachedPlanUnit )
+            {
+               pCachedPlanUnit->incMainCLInvalid() ;
+               if ( pCachedPlanUnit->isMainCLInvalid() )
+               {
+                  pCachedPlanMgr->setMainCLInvalidBit( mbID ) ;
+                  PD_LOG( PDDEBUG, "Mark collection [%s] parameterize invalid",
+                          getCLFullName() ) ;
+               }
+            }
+         }
+
+         if ( isSharedLocked )
+         {
+            rc = mbContext->mbLock( SHARED ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to lock mbContext [%s] shared, "
+                         "rc: %d", getCLFullName(), rc ) ;
+         }
+         else
+         {
+            mbContext->mbUnlock() ;
+         }
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB__OPTMAINCLACPLAN_MARKINVALID, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTMAINCLACPLAN_BINDMTHRTM, "_optMainCLAccessPlan::bindMatchRuntime" )
+   INT32 _optMainCLAccessPlan::bindMatchRuntime ( mthMatchRuntime *matchRuntime )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__OPTMAINCLACPLAN_BINDMTHRTM ) ;
+
+      matchRuntime->setMatchTree( getMatchTree() ) ;
+      matchRuntime->setParamPredList( getParamPredList() ) ;
+
+      PD_TRACE_EXITRC( SDB__OPTMAINCLACPLAN_BINDMTHRTM, rc ) ;
+
+      return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTMAINCLACPLAN__SAVESUBCL, "_optMainCLAccessPlan::_saveSubCL" )
+   void _optMainCLAccessPlan::_saveSubCL ( const CHAR *pSubCLName, double score )
+   {
+      PD_TRACE_ENTRY( SDB__OPTMAINCLACPLAN__SAVESUBCL ) ;
+
+      UINT32 paramIndex = _mainCLValidCount.inc() ;
+      if ( paramIndex < OPT_MAINCL_VALID_PLAN_NUM )
+      {
+         // Save the specified plan for validation
+         ossStrncpy( _records[ paramIndex ]._subCLName, pSubCLName,
+                     DMS_COLLECTION_FULL_NAME_SZ ) ;
+         _records[ paramIndex ]._score = score ;
+
+         if ( paramIndex == OPT_PARAM_VALID_PLAN_NUM - 1 )
+         {
+            // The parameterized plan could be validated, so calculate the
+            // score which is the standard difference of each specified plan
+            // to validate the parameterized plan
+            double avgScores = 0.0 ;
+            double diffScores = 0.0 ;
+            for ( UINT32 i = 0 ; i < OPT_PARAM_VALID_PLAN_NUM ; i++ )
+            {
+               avgScores += _records[i]._score ;
+            }
+            avgScores /= (double)OPT_PARAM_VALID_PLAN_NUM ;
+            for ( UINT32 i = 0 ; i < OPT_PARAM_VALID_PLAN_NUM ; i++ )
+            {
+               double tmp = _records[i]._score - avgScores ;
+               diffScores += ( tmp * tmp ) ;
+            }
+            _score = sqrt( diffScores / (double)OPT_PARAM_VALID_PLAN_NUM ) ;
+            _isMainCLValid = TRUE ;
+
+            PD_LOG( PDDEBUG, "Validate main-collection plan [%s]: score [%.6f]",
+                    toString().c_str(), _score ) ;
+         }
+      }
+
+      PD_TRACE_EXIT( SDB__OPTMAINCLACPLAN__SAVESUBCL ) ;
+   }
+
+   void _optMainCLAccessPlan::_toBSONInternal ( BSONObjBuilder &builder ) const
+   {
+      builder.appendBool( OPT_FIELD_IS_MAINCL_VALID, isMainCLValid() ) ;
    }
 
 }

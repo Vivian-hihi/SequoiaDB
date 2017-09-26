@@ -689,6 +689,11 @@ namespace engine
                }
             }
 
+            if ( OSS_BIT_TEST( type, DPS_LOG_INVALIDCATA_TYPE_PLAN ) )
+            {
+
+            }
+
             rc = SDB_OK ;
             break ;
          }

@@ -39,7 +39,7 @@
 #include "rtn.hpp"
 #include "dmsStorageUnit.hpp"
 #include "ossTypes.hpp"
-#include "optAccessPlan.hpp"
+#include "optAccessPlanRuntime.hpp"
 #include "rtnIXScanner.hpp"
 #include "pmd.hpp"
 #include "pmdCB.hpp"
@@ -53,7 +53,7 @@ namespace engine
 {
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNDEL1, "rtnDelete" )
-   INT32 rtnDelete ( const CHAR *pCollectionName, const BSONObj &deletor,
+   INT32 rtnDelete ( const CHAR *pCollectionName, const BSONObj &matcher,
                      const BSONObj &hint, INT32 flags, pmdEDUCB *cb,
                      INT64 *pDelNum )
    {
@@ -68,7 +68,7 @@ namespace engine
          dpsCB = NULL ;
       }
 
-      rc = rtnDelete ( pCollectionName, deletor, hint, flags, cb,
+      rc = rtnDelete ( pCollectionName, matcher, hint, flags, cb,
                        dmsCB, dpsCB, 1, pDelNum ) ;
 
       PD_TRACE_EXITRC ( SDB_RTNDEL1, rc ) ;
@@ -76,15 +76,31 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNDEL2, "rtnDelete" )
-   INT32 rtnDelete ( const CHAR *pCollectionName, const BSONObj &deletor,
+   INT32 rtnDelete ( const CHAR *pCollectionName, const BSONObj &matcher,
                      const BSONObj &hint, INT32 flags, pmdEDUCB *cb,
                      SDB_DMSCB *dmsCB, SDB_DPSCB *dpsCB, INT16 w,
                      INT64 *pDelNum )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB_RTNDEL2 ) ;
+      PD_TRACE_ENTRY( SDB_RTNDEL2 ) ;
+      BSONObj dummy ;
+      // matcher, selector, order, hint, collection, skip, limit, flag
+      rtnQueryOptions options( matcher, dummy, dummy, hint, pCollectionName,
+                               0, -1, flags ) ;
+      rc = rtnDelete( options, cb, dmsCB, dpsCB, w, pDelNum ) ;
+      PD_TRACE_EXITRC( SDB_RTNDEL2, rc ) ;
+      return rc ;
+   }
 
-      SDB_ASSERT ( pCollectionName, "collection name can't be NULL" ) ;
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNDEL_OPTIONS, "rtnDelete" )
+   INT32 rtnDelete ( rtnQueryOptions &options, pmdEDUCB *cb,
+                     SDB_DMSCB *dmsCB, SDB_DPSCB *dpsCB, INT16 w,
+                     INT64 *pDelNum )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_RTNDEL_OPTIONS ) ;
+
+      SDB_ASSERT ( options._fullName, "collection name can't be NULL" ) ;
       SDB_ASSERT ( cb, "educb can't be NULL" ) ;
       SDB_ASSERT ( dmsCB, "dmsCB can't be NULL" ) ;
 
@@ -93,13 +109,12 @@ namespace engine
       dmsMBContext   *mbContext           = NULL ;
       dmsStorageUnitID suID               = DMS_INVALID_CS ;
       optAccessPlanManager *apm           = NULL ;
-      optAccessPlan *plan                 = NULL ;
       const CHAR *pCollectionShortName    = NULL ;
       dmsScanner *pScanner                = NULL ;
       BOOLEAN writable                    = FALSE ;
       INT64 delNum                        = 0 ;
 
-      BSONObj emptyObj ;
+      optAccessPlanRuntime planRuntime ;
 
       rc = dmsCB->writable( cb ) ;
       if ( rc )
@@ -109,15 +124,15 @@ namespace engine
       }
       writable = TRUE;
 
-      rc = rtnResolveCollectionNameAndLock ( pCollectionName, dmsCB, &su,
+      rc = rtnResolveCollectionNameAndLock ( options._fullName, dmsCB, &su,
                                              &pCollectionShortName, suID ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to resolve collection name %s, rc: %d",
-                   pCollectionName, rc ) ;
+                   options._fullName, rc ) ;
 
       // get mb context
       rc = su->data()->getMBContext( &mbContext, pCollectionShortName, -1 ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get collection[%s] mb context, "
-                   "rc: %d", pCollectionName, rc ) ;
+                   "rc: %d", options._fullName, rc ) ;
 
       if ( OSS_BIT_TEST( mbContext->mb()->_attributes,
                          DMS_MB_ATTR_NOIDINDEX ) )
@@ -131,26 +146,21 @@ namespace engine
       SDB_ASSERT ( apm, "apm shouldn't be NULL" ) ;
 
       // plan is released when exiting the function
-      rc = apm->getAccessPlan( su, mbContext, pCollectionName,
-                               emptyObj,
-                               deletor,
-                               emptyObj, // orderBy
-                               hint,     // hint
-                               0, 0, -1, // flags, numToSkip, numToReturn
-                               &plan ) ;
+      rc = apm->getAccessPlan( options, su, mbContext, planRuntime ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get access plan for %s for delete, "
-                   "rc: %d", pCollectionName, rc ) ;
+                   "rc: %d", options._fullName, rc ) ;
 
-      if ( plan->getScanType() == TBSCAN )
+      if ( planRuntime.getScanType() == TBSCAN )
       {
-         rc = rtnGetTBScanner( pCollectionShortName, plan->getMatcher(), su,
+         rc = rtnGetTBScanner( pCollectionShortName, &planRuntime, su,
                                mbContext, cb, &pScanner,
                                DMS_ACCESS_TYPE_DELETE ) ;
       }
-      else if ( plan->getScanType() == IXSCAN )
+      else if ( planRuntime.getScanType() == IXSCAN )
       {
-         rc = rtnGetIXScanner( pCollectionShortName, plan, su, mbContext, cb,
-                               &pScanner, DMS_ACCESS_TYPE_DELETE ) ;
+         rc = rtnGetIXScanner( pCollectionShortName, &planRuntime, su,
+                               mbContext, cb, &pScanner,
+                               DMS_ACCESS_TYPE_DELETE ) ;
       }
       else
       {
@@ -200,10 +210,7 @@ namespace engine
       {
          su->data()->releaseMBContext( mbContext ) ;
       }
-      if ( plan )
-      {
-         plan->release() ;
-      }
+      planRuntime.releasePlan() ;
       if ( DMS_INVALID_CS != suID )
       {
          dmsCB->suUnlock ( suID ) ;
@@ -219,7 +226,7 @@ namespace engine
             rc = dpsCB->completeOpr( cb, w ) ;
          }
       }
-      PD_TRACE_EXITRC ( SDB_RTNDEL2, rc ) ;
+      PD_TRACE_EXITRC ( SDB_RTNDEL_OPTIONS, rc ) ;
       return rc ;
    error :
       goto done ;
@@ -279,23 +286,29 @@ namespace engine
       }
 
       {
-         optAccessPlanKey planKey( pCollectionName, dummy, dummy, dummy, hint,
-                                   0, 0, -1, FALSE ) ;
-         optAccessPlan plan( planKey, FALSE ) ;
+         optAccessPlanRuntime planRuntime ;
+         // matcher, selector, order, hint, collection, skip, limit, flag
+         rtnQueryOptions options( dummy, dummy, dummy, hint, pCollectionName,
+                                  0, -1, 0 ) ;
+         rc = sdbGetRTNCB()->getAPM()->getTempAccessPlan( options, su,
+                                                          mbContext,
+                                                          planRuntime ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get access plan, rc: %d", rc ) ;
 
-         rc = plan.optimize( su, mbContext ) ;
-         PD_RC_CHECK( rc, PDERROR, "Plan optimize failed, rc: %d", rc ) ;
-         PD_CHECK ( plan.getScanType() == IXSCAN && !plan.isAutoGen(),
+         // Must apply the hint to find index-scan plan
+         PD_CHECK ( planRuntime.getScanType() == IXSCAN &&
+                    !planRuntime.isAutoGen(),
                     SDB_INVALIDARG, error, PDERROR,
-                    "Unable to generate access plan by index %s",
-                    pIndexName ) ;
+                    "Unable to generate access plan by index %s", pIndexName ) ;
 
-         SDB_ASSERT( plan.getPredList(), "predList can't be NULL" ) ;
+         SDB_ASSERT( NULL != planRuntime.getPredList(),
+                     "predList can't be NULL" ) ;
+
          // set traversal direction
-         plan.getPredList()->setDirection ( dir ) ;
+         planRuntime.getPredList()->setDirection ( dir ) ;
 
-         rc = rtnGetIXScanner( pCollectionShortName, &plan, su, mbContext, cb,
-                               &pScanner, DMS_ACCESS_TYPE_DELETE ) ;
+         rc = rtnGetIXScanner( pCollectionShortName, &planRuntime, su, mbContext,
+                               cb, &pScanner, DMS_ACCESS_TYPE_DELETE ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to get dms ixscanner, rc: %d", rc ) ;
 
          // relocate key

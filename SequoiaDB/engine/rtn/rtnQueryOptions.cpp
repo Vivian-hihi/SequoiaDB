@@ -46,24 +46,17 @@ namespace engine
 {
    _rtnQueryOptions::~_rtnQueryOptions()
    {
-      if ( NULL != _fullNameBuf )
-      {
-         SDB_OSS_FREE( _fullNameBuf ) ;
-      }
-
+      SAFE_OSS_FREE( _fullNameBuf ) ;
+      SAFE_OSS_FREE( _mainCLNameBuf ) ;
       _fullName = NULL ;
-      _fullNameBuf = NULL ;
+      _mainCLName = NULL ;
    }
 
    INT32 _rtnQueryOptions::getOwned()
    {
       INT32 rc = SDB_OK ;
-      if ( NULL != _fullNameBuf )
-      {
-         SDB_OSS_FREE( _fullNameBuf ) ;
-         _fullNameBuf = NULL ;
-      }
 
+      SAFE_OSS_FREE( _fullNameBuf ) ;
       if ( NULL != _fullName )
       {
          _fullNameBuf = ossStrdup( _fullName ) ;
@@ -73,8 +66,19 @@ namespace engine
             goto error ;
          }
       }
-
       _fullName = _fullNameBuf ;
+
+      SAFE_OSS_FREE( _mainCLNameBuf ) ;
+      if ( NULL != _mainCLName )
+      {
+         _mainCLNameBuf = ossStrdup( _mainCLName ) ;
+         if ( NULL == _mainCLNameBuf )
+         {
+            rc = SDB_OOM ;
+            goto error ;
+         }
+      }
+
       _query = _query.getOwned() ;
       _selector = _selector.getOwned() ;
       _orderBy = _orderBy.getOwned() ;
@@ -85,6 +89,43 @@ namespace engine
       goto done ;
    }
 
+   void _rtnQueryOptions::setCLFullName ( const CHAR *clFullName )
+   {
+      SAFE_OSS_DELETE( _fullNameBuf ) ;
+      if ( NULL != clFullName && '\0' != clFullName[0] )
+      {
+         _fullName = clFullName ;
+      }
+      else
+      {
+         _fullName = NULL ;
+      }
+   }
+
+   void _rtnQueryOptions::setMainCLName ( const CHAR *mainCLName )
+   {
+      SAFE_OSS_DELETE( _mainCLNameBuf ) ;
+      if ( NULL != mainCLName && '\0' != mainCLName[0] )
+      {
+         _mainCLName = mainCLName ;
+      }
+      else
+      {
+         _mainCLName = NULL ;
+      }
+   }
+
+   void _rtnQueryOptions::setMainCLQuery( const CHAR *mainCLName,
+                                          const CHAR *subCLName )
+   {
+      SDB_ASSERT( NULL != mainCLName && '\0' != mainCLName[0],
+                  "Invalid main-collection name" ) ;
+      SDB_ASSERT( NULL != subCLName && '\0' != subCLName[0],
+                  "Invalid sub-collection name" ) ;
+      setMainCLName( mainCLName ) ;
+      setCLFullName( subCLName ) ;
+   }
+
    _rtnQueryOptions &_rtnQueryOptions::operator=( const _rtnQueryOptions &o )
    {
       _query = o._query ;
@@ -92,11 +133,9 @@ namespace engine
       _orderBy = o._orderBy ;
       _hint = o._hint ;
       _fullName = o._fullName ;
-      if ( NULL != _fullNameBuf )
-      {
-         SDB_OSS_FREE( _fullNameBuf ) ;
-         _fullNameBuf = NULL ;
-      }
+      SAFE_OSS_FREE( _fullNameBuf ) ;
+      _mainCLName = o._mainCLName ;
+      SAFE_OSS_FREE( _mainCLNameBuf ) ;
       _skip = o._skip ;
       _limit = o._limit ;
       _flag = o._flag ;
@@ -116,6 +155,10 @@ namespace engine
          ss << ", Skip: " << _skip ;
          ss << ", Limit: " << _limit ;
          ss << ", Flags: " << _flag ;
+         if ( NULL != _mainCLName )
+         {
+            ss << ", MainCLName: " << _mainCLName ;
+         }
       }
       return ss.str() ;
    }

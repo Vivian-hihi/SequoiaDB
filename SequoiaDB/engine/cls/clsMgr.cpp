@@ -911,6 +911,40 @@ namespace engine
       return _shdObj.clearAllData () ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSMGR_INVALIDCACHE, "_clsMgr::invalidateCache" )
+   INT32 _clsMgr::invalidateCache ( const CHAR * name, UINT8 type )
+   {
+      INT32 rc = SDB_CLS_NOT_PRIMARY ;
+
+      PD_TRACE_ENTRY ( SDB__CLSMGR_INVALIDCACHE );
+
+      if ( isPrimary() )
+      {
+         /// write sync cata info log
+         SDB_DPSCB *dpsCB = pmdGetKRCB()->getDPSCB() ;
+         dpsMergeInfo info ;
+         info.setInfoEx( ~0, ~0, DMS_INVALID_EXTENT, NULL ) ;
+         dpsLogRecord &record = info.getMergeBlock().record() ;
+         rc = dpsInvalidCata2Record( type, name, NULL, record ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to build invalid-cata log:%d",rc ) ;
+            goto error ;
+         }
+         rc = dpsCB->prepare(info ) ;
+         if ( SDB_OK == rc )
+         {
+            dpsCB->writeData( info ) ;
+         }
+      }
+
+   done:
+      PD_TRACE_EXITRC ( SDB__CLSMGR_INVALIDCACHE, rc );
+      return rc ;
+   error:
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSMGR_INVDATACAT, "_clsMgr::invalidateCata" )
    INT32 _clsMgr::invalidateCata( const CHAR * name )
    {
@@ -924,8 +958,8 @@ namespace engine
          dpsMergeInfo info ;
          info.setInfoEx( ~0, ~0, DMS_INVALID_EXTENT, NULL ) ;
          dpsLogRecord &record = info.getMergeBlock().record() ;
-         rc = dpsInvalidCata2Record( DPS_LOG_INVALIDCATA_TYPE_CATA, name, NULL,
-                                     record ) ;
+         UINT8 type = DPS_LOG_INVALIDCATA_TYPE_CATA ;
+         rc = dpsInvalidCata2Record( type, name, NULL, record ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to build invalid-cata log:%d",rc ) ;
@@ -964,6 +998,42 @@ namespace engine
       PD_TRACE_EXITRC( SDB__CLSMGR_INVALIDSTAT, rc ) ;
       return rc ;
    error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSMGR_INVALIDPLAN, "_clsMgr::invalidatePlan" )
+   INT32 _clsMgr::invalidatePlan( const CHAR * name )
+   {
+      INT32 rc = SDB_CLS_NOT_PRIMARY ;
+
+      PD_TRACE_ENTRY ( SDB__CLSMGR_INVALIDPLAN );
+
+      if ( isPrimary() )
+      {
+         /// write sync cata info log
+         SDB_DPSCB *dpsCB = pmdGetKRCB()->getDPSCB() ;
+         dpsMergeInfo info ;
+         info.setInfoEx( ~0, ~0, DMS_INVALID_EXTENT, NULL ) ;
+         dpsLogRecord &record = info.getMergeBlock().record() ;
+         UINT8 type = DPS_LOG_INVALIDCATA_TYPE_PLAN ;
+         rc = dpsInvalidCata2Record( type, name, NULL, record ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to build invalid-cata log:%d",rc ) ;
+            goto error ;
+         }
+         rc = dpsCB->prepare(info ) ;
+         if ( SDB_OK == rc )
+         {
+            dpsCB->writeData( info ) ;
+         }
+      }
+
+   done:
+      PD_TRACE_EXITRC ( SDB__CLSMGR_INVALIDPLAN, rc );
+      return rc ;
+
+   error:
       goto done ;
    }
 

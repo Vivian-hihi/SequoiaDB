@@ -430,9 +430,11 @@ namespace engine
 
       if ( isOpened() )
       {
-         if ( _matcher && !_matcher->getMatchPattern().isEmpty() )
+         if ( _matcher &&
+              !_matcher->getMatchPattern().isEmpty() )
          {
-            ss << ",Matcher:" << _matcher->getMatchPattern().toString() ;
+            ss << ",Matcher:" <<
+               _matcher->getMatchPattern().toString() ;
          }
 
          _toString( ss ) ;
