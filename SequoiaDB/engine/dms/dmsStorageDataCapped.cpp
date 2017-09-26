@@ -156,8 +156,6 @@ namespace engine
             const dmsExtent *extent = extRW.readPtr<dmsExtent>() ;
             if ( extent && extent->validate( i ) )
             {
-               // If the record number in the extent header is 0, it means the
-               // header is not updated yet. So let's sync.
                if ( 0 == extent->_recCount )
                {
                   SDB_ASSERT( extent->_lastRecordOffset,
@@ -173,6 +171,39 @@ namespace engine
       }
       dmsStorageDataCommon::_onRestore() ;
       PD_TRACE_EXIT( SDB__DMSSTORAGEDATACAPPED__ONRESTORE ) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACAPPED__ONFLUSHDIRTY, "_dmsStorageDataCapped::_onFlushDirty" )
+   INT32 _dmsStorageDataCapped::_onFlushDirty( BOOLEAN force, BOOLEAN sync )
+   {
+      PD_TRACE_ENTRY( SDB__DMSSTORAGEDATACAPPED__ONFLUSHDIRTY ) ;
+      // For capped collections, flush the working extent information when flush
+      // dirty.
+      for ( UINT16 i = 0 ; i < DMS_MME_SLOTS; ++i )
+      {
+         if ( DMS_IS_MB_INUSE( _dmsMME->_mbList[i]._flag ) )
+         {
+            dmsExtentInfo *workExtInfo = getWorkExtInfo( i ) ;
+            dmsExtentID extentID = workExtInfo->_id ;
+            // The working extent is invalid before any records insert into a
+            // new created collection. So only sync when it's valid.
+            if ( DMS_INVALID_EXTENT != extentID )
+            {
+               dmsExtRW extRW = extent2RW( extentID, i ) ;
+               extRW.setNothrow( TRUE ) ;
+               const dmsExtent *extent = extRW.readPtr<dmsExtent>() ;
+               if ( extent->_recCount != workExtInfo->_recCount ||
+                    extent->_lastRecordOffset != workExtInfo->_lastRecordOffset
+                    || extent->_freeSpace != (INT32)workExtInfo->_freeSpace )
+               {
+                  _syncWorkExtInfo( i ) ;
+               }
+            }
+         }
+      }
+      dmsStorageDataCommon::_onFlushDirty( force, sync ) ;
+      PD_TRACE_EXIT( SDB__DMSSTORAGEDATACAPPED__ONFLUSHDIRTY ) ;
+      return SDB_OK ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACAPPED__ONCOLLECTIONTRUNCATED, "_dmsStorageDataCapped::_onCollectionTruncated" )
@@ -1229,49 +1260,6 @@ namespace engine
       return SDB_OK ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACAPPED_SYNCMEMTOMMAP, "_dmsStorageDataCapped::syncMemToMmap" )
-   void _dmsStorageDataCapped::syncMemToMmap()
-   {
-      PD_TRACE_ENTRY( SDB__DMSSTORAGEDATACAPPED_SYNCMEMTOMMAP ) ;
-      // For capped collections, sync the working extent information to mmap.
-      for ( UINT16 i = 0 ; i < DMS_MME_SLOTS; ++i )
-      {
-         if ( DMS_IS_MB_INUSE( _dmsMME->_mbList[i]._flag ) )
-         {
-            dmsExtentInfo *workExtInfo = getWorkExtInfo( i ) ;
-            dmsExtentID extentID = workExtInfo->_id ;
-            // The working extent is invalid before any records insert into a
-            // new created collection. So only sync when it's valid.
-            if ( DMS_INVALID_EXTENT != extentID )
-            {
-               dmsExtRW extRW = extent2RW( extentID, i ) ;
-               // The following latch is for protection with working extent
-               // switching. Before taking the latch, switching may have
-               // happened. So check the current extent id in working extent
-               // information structure with the one we took above. If they are
-               // not equal, then switching do have happened. In that case, the
-               // formal extent information has been flushed by that thread.
-               // For the new working extent, leave it and wait for next time
-               // to sync.
-               ossScopedLock lock( &(workExtInfo->_latch) ) ;
-               if ( extentID == workExtInfo->_id )
-               {
-                  extRW.setNothrow( TRUE ) ;
-                  const dmsExtent *extent = extRW.readPtr<dmsExtent>() ;
-                  if ( extent->_recCount != workExtInfo->_recCount ||
-                       extent->_lastRecordOffset != workExtInfo->_lastRecordOffset
-                       || extent->_freeSpace != (INT32)workExtInfo->_freeSpace )
-                  {
-                     _syncWorkExtInfo( i ) ;
-                  }
-               }
-            }
-         }
-      }
-      dmsStorageDataCommon::syncMemToMmap() ;
-      PD_TRACE_EXIT( SDB__DMSSTORAGEDATACAPPED_SYNCMEMTOMMAP ) ;
-   }
-
    // Flush the extent information to mmap.
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACAPPED__SYNCWORKEXTINFO, "_dmsStorageDataCapped::_syncWorkExtInfo" )
    INT32 _dmsStorageDataCapped::_syncWorkExtInfo( UINT16 collectionID )
@@ -1342,21 +1330,18 @@ namespace engine
          goto error ;
       }
 
+      // If currently attached to a valid extent, need to detach first.
+      if ( DMS_INVALID_EXTENT != currWorkExt )
       {
-         ossScopedLock lock( &(workExtInfo->_latch) ) ;
-         // If currently attached to a valid extent, need to detach first.
-         if ( DMS_INVALID_EXTENT != currWorkExt )
-         {
-            rc = _detachWorkExt( context->mbID(), TRUE ) ;
-            PD_RC_CHECK( rc, PDERROR,
-                         "Failed to detach working extent, rc: %d", rc ) ;
-            detached = TRUE ;
-         }
-
-         rc = _attachWorkExt( context->mbID(), extID ) ;
+         rc = _detachWorkExt( context->mbID(), TRUE ) ;
          PD_RC_CHECK( rc, PDERROR,
-                      "Failed to attach to new working extent, rc: %d", rc ) ;
+                      "Failed to detach working extent, rc: %d", rc ) ;
+         detached = TRUE ;
       }
+
+      rc = _attachWorkExt( context->mbID(), extID ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to attach to new working extent, rc: %d", rc ) ;
 
    done:
       PD_TRACE_EXITRC( SDB__DMSSTORAGEDATACAPPED__SWITCHWORKEXT, rc ) ;
