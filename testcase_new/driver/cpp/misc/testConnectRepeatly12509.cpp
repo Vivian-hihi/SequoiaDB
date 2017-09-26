@@ -27,38 +27,43 @@ protected:
 TEST_F( testConnectRepeatly12509, test )
 {
    INT32 rc = SDB_OK ;
-   sdbReplicaGroup rg ;
+   BOOLEAN isValid = FALSE ;
 
    rc = db.connect( ARGS->hostName(), ARGS->port() ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
-   rc = db.getReplicaGroup( "SYSCatalogGroup", rg ) ;
+   rc = db.isValid( &isValid ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
+   ASSERT_EQ( TRUE, isValid ) ;
    db.disconnect() ;
 
    rc = db.connect( ARGS->hostName(), ARGS->port(), ARGS->user(), ARGS->passwd() ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
-   rc = db.getReplicaGroup( "SYSCatalogGroup", rg ) ;
+   rc = db.isValid( &isValid ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
+   ASSERT_EQ( TRUE, isValid ) ;
    db.disconnect() ;
 
    rc = db.connect( ARGS->hostName(), ARGS->svcName() ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
-   rc = db.getReplicaGroup( "SYSCatalogGroup", rg ) ;
+   rc = db.isValid( &isValid ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
+   ASSERT_EQ( TRUE, isValid ) ;
    db.disconnect() ;
 
    // connect repeatly
    rc = db.connect( ARGS->hostName(), ARGS->svcName(), ARGS->user(), ARGS->passwd() ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
-   rc = db.getReplicaGroup( "SYSCatalogGroup", rg ) ;
+   rc = db.isValid( &isValid ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
+   ASSERT_EQ( TRUE, isValid ) ;
 
    const CHAR *pConnAddrs[1] ;
    pConnAddrs[0] = ARGS->coordUrl() ;
    rc = db.connect( pConnAddrs, 1, ARGS->user(), ARGS->passwd() ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
-   rc = db.getReplicaGroup( "SYSCatalogGroup", rg ) ;
+   rc = db.isValid( &isValid ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
+   ASSERT_EQ( TRUE, isValid ) ;
 
    // disconnect repeatly
    db.disconnect() ;
