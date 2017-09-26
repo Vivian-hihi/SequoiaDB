@@ -35,7 +35,7 @@ function main()
    var explainRecs1 = [{Name:COMMCSNAME + "." + COMMCLNAME,
 	                    ScanType:"tbscan",
 	                    IndexName:"",
-	                    Query:{$and:[{a:{$add:2,$gt:10}},{a:{$subtract:7,$lt:20}}]},
+	                    Query:{$and:[{a:{$subtract:7,$lt:20}},{a:{$add:2,$gt:10}}]},
 	                    IXBound:null,
 	                    NeedMatch:true}];
    checkExplainResult( dbcl, findCondition1, null, {No:1}, explainRecs1 );

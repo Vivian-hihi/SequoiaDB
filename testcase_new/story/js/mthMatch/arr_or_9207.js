@@ -37,7 +37,7 @@ function main()
                        ScanType:"tbscan",
                        IndexName:"",
                        UseExtSort:false,
-                       Query:{$or:[{b:{$et:1}},{"c":{$et:{d:1}}},{e:{$abs:1,$et:200}},{$and:[{f:{$type:1,$et:2}},{c:{$type:1,$et:3}}]},{a:{$regex:"^string$",$options:"i"}}]},
+                       Query:{$or:[{b:{$et:1}},{"c":{$et:{d:1}}},{e:{$abs:1,$et:200}},{$and:[{c:{$type:1,$et:3}},{f:{$type:1,$et:2}}]},{a:{$regex:"^string$",$options:"i"}}]},
                        IXBound:null,
                        NeedMatch:true}];
    checkExplainResult( dbcl, findCondition1, null, null, explainExpRecs1 );

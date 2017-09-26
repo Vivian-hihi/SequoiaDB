@@ -38,7 +38,7 @@ function main()
                        ScanType:"tbscan",
                        IndexName:"",
                        UseExtSort:false,
-                       Query:{$or:[{a:{$gt:9}},{a:{$lt:2}}]},
+                       Query:{$or:[{a:{$lt:2}},{a:{$gt:9}}]},
                        IXBound:null,
                        NeedMatch:true}];
    checkExplainResult( dbcl, findCondition1, null, null, explainExpRecs1 );
@@ -52,7 +52,7 @@ function main()
                        ScanType:"ixscan",
                        IndexName:"a",
                        UseExtSort:false,
-                       Query:{$and:[{a:{$gt:3}},{a:{$lt:6}}]},
+                       Query:{$and:[{a:{$lt:6}},{a:{$gt:3}}]},
                        IXBound:{a:[[3,6]]},
                        NeedMatch:false}];
    checkExplainResult( dbcl, findCondition2, null, null, explainExpRecs2 );
@@ -66,7 +66,7 @@ function main()
                        ScanType:"tbscan",
                        IndexName:"",
                        UseExtSort:false,
-                       Query:{$not:[{a:{$gt:1}},{a:{$lt:10}}]},
+                       Query:{$not:[{a:{$lt:10}},{a:{$gt:1}}]},
                        IXBound:null,
                        NeedMatch:true}];
    checkExplainResult( dbcl, findCondition3, null, null, explainExpRecs3 );
@@ -82,7 +82,7 @@ function main()
                        ScanType:"ixscan",
                        IndexName:"a",
                        UseExtSort:false,
-                       Query:{$and:[{a:{$gt:1}},{a:{$lt:10}},{a:{$mod:[2,1]}},{a:{$exists:1}}]},
+                       Query:{$and:[{a:{$lt:10}},{a:{$gt:1}},{a:{$mod:[2,1]}},{a:{$exists:1}}]},
                        IXBound:{a:[[1,10]]},
                        NeedMatch:true}];
    checkExplainResult( dbcl, findCondition4, null, null, explainExpRecs4 );
