@@ -42,6 +42,7 @@
 #include "pmdProc.hpp"
 #include "seAdptDef.hpp"
 #include "seAdptMgr.hpp"
+#include "omagentDef.hpp"
 
 namespace engine
 {
@@ -53,7 +54,7 @@ namespace engine
       rc = ossGetEWD( exePath, OSS_MAX_PATHSIZE ) ;
       if ( rc )
       {
-         std::cerr << "Get module path failed: " << rc << std::endl ;
+         ossPrintf( "Get module path failed[ %d ]", rc ) ;
          goto error ;
       }
 
@@ -64,7 +65,59 @@ namespace engine
       }
       else if ( rc )
       {
-         PD_LOG( PDERROR, "Initialize configuration failed[ %d ]", rc ) ;
+         ossPrintf( "Initialize configuration failed[ %d ]", rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 buildDialogPath( CHAR *dialogPath, UINT32 bufSize )
+   {
+      // Create the log file directory.
+      INT32 rc = SDB_OK ;
+      CHAR currentPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+
+      if ( bufSize < OSS_MAX_PATHSIZE + 1 )
+      {
+         ossPrintf( "Path buffer size is too small: %u", bufSize ) ;
+         goto error ;
+      }
+
+      rc = ossGetEWD( currentPath, OSS_MAX_PATHSIZE ) ;
+      if ( rc )
+      {
+         ossPrintf( "Get working directory failed: %d", rc ) ;
+         goto error ;
+      }
+
+      ossChDir( currentPath ) ;
+
+      // conf/log
+      rc = utilBuildFullPath( currentPath, SDBCM_LOG_PATH,
+                              OSS_MAX_PATHSIZE, dialogPath ) ;
+      if ( rc )
+      {
+         ossPrintf( "Build log path failed: %d", rc ) ;
+         goto error ;
+      }
+
+      // conf/log/SERVICE
+      rc = utilCatPath( dialogPath, OSS_MAX_PATHSIZE,
+                        sdbGetSeAdptOptions()->getDbService() ) ;
+      if ( rc )
+      {
+         ossPrintf( "Build log path failed: %d", rc ) ;
+         goto error ;
+      }
+
+      rc = ossMkdir( dialogPath ) ;
+      if ( rc && SDB_FE != rc )
+      {
+         ossPrintf( "Make dialog path[ %s ] failed: %d", dialogPath, rc ) ;
          goto error ;
       }
 
@@ -89,6 +142,7 @@ namespace engine
       pmdKRCB *krcb = pmdGetKRCB() ;
       UINT32 startTimerCount = 0 ;
       CHAR verText[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+      CHAR dialogPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
       po::variables_map vm ;
 
       rc = pmdResolveArguments( argc, argv ) ;
@@ -104,7 +158,25 @@ namespace engine
          goto error ;
       }
 
-      sdbEnablePD( sdbGetSeAdptOptions()->getDiagLogPath() ) ;
+      rc = buildDialogPath( dialogPath, OSS_MAX_PATHSIZE + 1 ) ;
+      if ( rc )
+      {
+         ossPrintf( "Failed to build dialog path(error=%d), exit"OSS_NEWLINE,
+                    rc ) ;
+         goto error ;
+      }
+
+      // conf/log/SERVICE/sdbseadapter.log
+      rc = utilCatPath( dialogPath, OSS_MAX_PATHSIZE,
+                        SDB_SEADPT_LOG_FILE_NAME ) ;
+      if ( rc )
+      {
+         ossPrintf( "Failed to build dialog path failed(error=%d), "
+                    "exit"OSS_NEWLINE, rc ) ;
+         goto error ;
+      }
+
+      sdbEnablePD( dialogPath ) ;
       setPDLevel( (PDLEVEL)( sdbGetSeAdptOptions()->getDiagLevel() ) ) ;
 
       ossSprintVersion( "Version", verText, OSS_MAX_PATHSIZE, FALSE ) ;
@@ -118,8 +190,8 @@ namespace engine
          PD_LOG( PDEVENT, "All configs:\n%s", configs.c_str() ) ;
       }
 
-      rc = pmdEnableSignalEvent( sdbGetSeAdptOptions()->getDiagLogPath(),
-                                 (PMD_ON_QUIT_FUNC)pmdOnQuit, NULL ) ;
+      rc = pmdEnableSignalEvent( dialogPath, (PMD_ON_QUIT_FUNC)pmdOnQuit,
+                                 NULL ) ;
       PD_RC_CHECK( rc, PDERROR, "Enable trap failed[ %d ]", rc ) ;
 
       PMD_REGISTER_CB( sdbGetSeAdapterCB() ) ;

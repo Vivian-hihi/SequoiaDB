@@ -40,7 +40,6 @@ namespace engine
 {
    #define SDB_SEADPT_PROCESS_NAME     "sdbseadapter"
    #define SDB_SEADPT_ROLE_SHORT_STR   "A"
-   #define SDB_SEADPT_SERVICE_NAME     "svcname"
    #define SDB_SEADPT_DNODE_HOST       "datanodehost"
    #define SDB_SEADPT_DNODE_PORT       "datasvcname"
    #define SDB_SEADPT_DIAGLEVEL        "diaglevel"
@@ -52,6 +51,7 @@ namespace engine
 
    #define SDB_SEADPT_EXE_FILE_NAME    "sdbseadapter"
    #define SDB_SEADPT_CFG_FILE_NAME    SDB_SEADPT_EXE_FILE_NAME".conf"
+   #define SDB_SEADPT_LOG_DIR          "log"
    #define SDB_SEADPT_LOG_FILE_NAME    SDB_SEADPT_EXE_FILE_NAME".log"
 }
 

@@ -58,7 +58,6 @@ namespace engine
       const CHAR* getDbService() const { return _dbService ; }
       const CHAR* getSeHost() const { return _seHost ; }
       const CHAR* getSeService() const { return _seService ; }
-      const CHAR* getDiagLogPath() const { return _diagLogPath ; }
       PDLEVEL     getDiagLevel() const ;
 
    protected:
@@ -66,7 +65,6 @@ namespace engine
 
    private:
       CHAR     _cfgFileName[ OSS_MAX_PATHSIZE + 1 ] ;
-      CHAR     _diagLogPath[ OSS_MAX_PATHSIZE + 1 ] ;
       CHAR     _serviceName[ OSS_MAX_SERVICENAME + 1 ] ;
       CHAR     _dbHost[ OSS_MAX_HOSTNAME + 1 ] ;
       CHAR     _dbService[ OSS_MAX_SERVICENAME + 1 ] ;

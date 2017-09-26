@@ -48,16 +48,13 @@
    ( SDB_SEADPT_DNODE_HOST, boost::program_options::value<string>(), "Data node address" ) \
    ( SDB_SEADPT_DNODE_PORT, boost::program_options::value<string>(), "Data node service name or port" ) \
    ( SDB_SEADPT_SE_HOST, boost::program_options::value<string>(), "Search engine address" ) \
-   ( SDB_SEADPT_SE_PORT, boost::program_options::value<string>(), "Search engine service name or port" ) \
-   ( SDB_SEADPT_SERVICE_NAME, boost::program_options::value<string>(), "Local service name or port" ) \
-   ( PMD_OPTION_DIAGLOGPATH, boost::program_options::value<string>(), "Diagnostic log file path" )
+   ( SDB_SEADPT_SE_PORT, boost::program_options::value<string>(), "Search engine service name or port" )
 
 namespace engine
 {
    _seAdptOptionsMgr::_seAdptOptionsMgr()
    {
       ossMemset( _cfgFileName, 0, sizeof( _cfgFileName ) ) ;
-      ossMemset( _diagLogPath, 0, sizeof( _diagLogPath ) ) ;
       ossMemset( _serviceName, 0, sizeof( _serviceName ) ) ;
       ossMemset( _dbHost, 0, sizeof( _dbHost ) ) ;
       ossMemset( _dbService, 0, sizeof( _dbService ) ) ;
@@ -146,15 +143,15 @@ namespace engine
          if ( vmFromCmd.count( PMD_OPTION_CONFPATH ) )
          {
             // Read the configuration file specified by command failed.
-            std::cerr << "Read configuration file[ " << _cfgFileName
+            std::cerr << "ERROR: Read configuration file[ " << _cfgFileName
                       << "] failed[ " << rc << " ]" << std::endl ;
             goto error ;
          }
          else
          {
             // Read the default configuration file failed.
-            std::cerr << "Read default configuration file[ " << _cfgFileName
-                      << " ] failed[ " << rc << " ]" << std::endl ;
+            std::cerr << "ERROR: Read default configuration file[ "
+               << _cfgFileName << " ] failed[ " << rc << " ]" << std::endl ;
             goto error ;
          }
       }
@@ -162,7 +159,8 @@ namespace engine
       rc = pmdCfgRecord::init( &vmFromFile, &vmFromCmd ) ;
       if ( rc )
       {
-         PD_LOG( PDERROR, "Init configuration record failed[ %d ]", rc ) ;
+         std::cerr << "ERROR: Init configuration record failed[ " << rc
+            << " ]" << std::endl ;
          goto error ;
       }
 
@@ -176,8 +174,6 @@ namespace engine
    {
       resetResult() ;
 
-      rdxString( pEX, PMD_OPTION_DIAGLOGPATH, _diagLogPath,
-                 sizeof( _diagLogPath ), TRUE, FALSE, _diagLogPath ) ;
       rdxString( pEX, SDB_SEADPT_DNODE_HOST, _dbHost,
                  sizeof( _dbHost ), TRUE, FALSE , _dbHost ) ;
       rdxString( pEX, SDB_SEADPT_DNODE_PORT, _dbService,
