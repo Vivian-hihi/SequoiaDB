@@ -75,7 +75,7 @@ TEST_F( lobFuncParamTest, lengthZero12556 )
    ASSERT_EQ( SDB_OK, rc ) << "fail to get oid" ;
 
    sdbLob rlob ;
-   CHAR *rBuf ;
+   CHAR rBuf[8] = { 0 } ;
    UINT32 read ;
 
    rc = cl.openLob( rlob, oid ) ;
