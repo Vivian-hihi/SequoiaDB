@@ -1443,13 +1443,19 @@ namespace engine
                *type = OMA_TASK_INSTALL_DB ;
                goto done ;
             }
+            else if ( string(OMA_BUS_TYPE_SEQUOIASQL_OLTP) ==
+                                                         string(pBusinessType) )
+            {
+               *type = OMA_TASK_ADD_BUS ;
+               goto done ;
+            }
             else if ( string(OMA_BUS_TYPE_ZOOKEEPER) == string(pBusinessType) )
             {
                *type = OMA_TASK_INSTALL_ZN ;
                goto done ;
             }
-            else if ( string(OMA_BUS_TYPE_SEQUOIASQL) == string(pBusinessType) &&
-                      string(OM_SEQUOIASQL_DEPLOY_OLAP) == string(pDeployMode) )
+            else if ( string(OMA_BUS_TYPE_SEQUOIASQL_OLAP) ==
+                                                         string(pBusinessType) )
             {
                *type = OMA_TASK_INSTALL_SSQL_OLAP ;
                goto done ;

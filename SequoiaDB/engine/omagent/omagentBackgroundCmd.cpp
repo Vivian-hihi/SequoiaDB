@@ -2205,6 +2205,192 @@ namespace engine
    }
 
    /*
+      add business
+   */
+   IMPLEMENT_OACMD_AUTO_REGISTER( _omaAddBusiness )
+
+   _omaAddBusiness::_omaAddBusiness()
+   {
+   }
+
+   _omaAddBusiness::~_omaAddBusiness()
+   {
+   }
+
+   INT32 _omaAddBusiness::init( const CHAR *pInstallInfo )
+   {
+      INT32 rc = SDB_OK ;
+      stringstream ss ;
+      BSONObj bus( pInstallInfo ) ;
+   
+      // build js file arguments
+      ss << "var " << JS_ARG_BUS << " = " 
+         << bus.toString( FALSE, TRUE ).c_str() << " ; " ;
+   
+      _jsFileArgs = ss.str() ;
+      PD_LOG( PDDEBUG, "Extend SequoiaDB argument: %s",
+              _jsFileArgs.c_str() ) ;
+   
+      // add js file
+      rc = addJsFile( FILE_ADD_BUSINESS, _jsFileArgs.c_str() ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to add js file[%s], rc = %d ",
+                 FILE_ADD_BUSINESS, rc ) ;
+         goto error ;
+      }
+         
+   done:
+      return rc ;
+   error:
+     goto done ;
+
+   }
+
+   INT32 _omaAddBusiness::convertResult( const BSONObj& itemInfo,
+                                         BSONObj& taskInfo )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 updateErrno = SDB_OK ;
+      INT32 updateProgress = 0 ;
+      INT32 errnoNum = taskInfo.getIntField( OMA_FIELD_ERRNO ) ;
+      INT32 progress = taskInfo.getIntField( OMA_FIELD_PROGRESS ) ;
+      string detail  = taskInfo.getStringField( OMA_FIELD_DETAIL ) ;
+      string updateDetail ;
+      string updateHostName ;
+      BSONObj resultInfo = taskInfo.getObjectField( OMA_FIELD_RESULTINFO ) ;
+      BSONObj condition  = BSON( OMA_FIELD_ERRNO      << "" <<
+                                 OMA_FIELD_DETAIL     << "" <<
+                                 OMA_FIELD_PROGRESS   << "" <<
+                                 OMA_FIELD_RESULTINFO << "" ) ;
+      BSONObj oneResultCondition = BSON( OMA_FIELD_HOSTNAME    << "" <<
+                                         OMA_FIELD_PORT        << "" <<
+                                         OMA_FIELD_STATUS      << 0 <<
+                                         OMA_FIELD_STATUSDESC  << "" <<
+                                         OMA_FIELD_ERRNO       << 0 <<
+                                         OMA_FIELD_DETAIL      << ""  ) ;
+      BSONObj updateFlow = itemInfo.getObjectField( OMA_FIELD_FLOW ) ;
+      BSONObj nodeResult = itemInfo.filterFieldsUndotted(
+                                                    oneResultCondition, TRUE ) ;
+      BSONObj taskInfo2 = taskInfo.filterFieldsUndotted( condition, FALSE ) ;
+      BSONObjBuilder newTaskInfo ;
+      BSONArrayBuilder newResultInfo ;
+
+      rc = omaGetStringElement( itemInfo, OMA_FIELD_HOSTNAME, updateHostName ) ;
+      if( rc )
+      {
+         rc = SDB_OK ;
+         goto done ;
+      }
+
+      rc = omaGetIntElement( itemInfo, OMA_FIELD_ERRNO, updateErrno ) ;
+      if( rc )
+      {
+         rc = SDB_OK ;
+         updateErrno = SDB_OK ;
+      }
+
+      rc = omaGetIntElement( itemInfo, OMA_FIELD_PROGRESS, updateProgress ) ;
+      if( rc )
+      {
+         rc = SDB_OK ;
+         updateProgress = -1 ;
+      }
+
+      rc = omaGetStringElement( itemInfo, OMA_FIELD_DETAIL, updateDetail ) ;
+      if( rc )
+      {
+         rc = SDB_OK ;
+         updateDetail = "" ;
+      }
+
+      {
+         BSONObjIterator resultIter( resultInfo ) ;
+
+         while( resultIter.more() )
+         {
+            BSONElement resultEle = resultIter.next() ;
+            BSONObj oneResult = resultEle.embeddedObject() ;
+            string hostName = oneResult.getStringField( OMA_FIELD_HOSTNAME ) ;
+
+            if( updateHostName == hostName )
+            {
+               BSONObjBuilder newOneResultInfoBuilder ;
+               BSONArray newFlowArray ;
+               BSONObj flow = oneResult.getObjectField( OMA_FIELD_FLOW ) ;
+               if( errnoNum == SDB_OK && updateErrno )
+               {
+                  errnoNum  = updateErrno ;
+                  detail = updateDetail ;
+               }
+               if( updateProgress > 0 )
+               {
+                  progress += updateProgress ;
+               }
+               if( progress > 100 )
+               {
+                  progress = 100 ;
+               }
+               else if( progress < 0 )
+               {
+                  progress = 0 ;
+               }
+               _aggrFlowArray( flow, updateFlow, newFlowArray ) ;
+               newOneResultInfoBuilder.appendElements( nodeResult ) ;
+               newOneResultInfoBuilder.append( OMA_FIELD_FLOW, newFlowArray ) ;
+               newResultInfo.append( newOneResultInfoBuilder.obj() ) ;
+            }
+            else
+            {
+               newResultInfo.append( oneResult ) ;
+            }
+         }
+      }
+
+      newTaskInfo.append( OMA_FIELD_ERRNO, errnoNum ) ;
+      newTaskInfo.append( OMA_FIELD_DETAIL, detail ) ;
+      newTaskInfo.append( OMA_FIELD_PROGRESS, progress ) ;
+      newTaskInfo.append( OMA_FIELD_RESULTINFO, newResultInfo.arr() ) ;
+      newTaskInfo.appendElements( taskInfo2 ) ;
+
+      taskInfo = newTaskInfo.obj() ;
+
+   done:
+      return rc ;
+   }
+
+   void _omaAddBusiness::_aggrFlowArray( const BSONObj& array1,
+                                         const BSONObj& array2,
+                                         BSONArray& out )
+   {
+      BSONArrayBuilder arrayBuilder ;
+
+      {
+         BSONObjIterator iter( array1 ) ;
+
+         while( iter.more() )
+         {
+            BSONElement ele = iter.next() ;
+
+            arrayBuilder.append( ele.String() ) ;
+         }
+      }
+
+      {
+         BSONObjIterator iter( array2 ) ;
+
+         while( iter.more() )
+         {
+            BSONElement ele = iter.next() ;
+
+            arrayBuilder.append( ele.String() ) ;
+         }
+      }
+
+      out = arrayBuilder.arr() ;
+   }
+
+   /*
      _omaExtendDB implement
    */
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaExtendDB )

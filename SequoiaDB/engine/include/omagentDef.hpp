@@ -146,6 +146,7 @@ namespace engine
    #define OMA_CMD_EXTEND_SEQUOIADB                   "extend sequoiadb"
    #define OMA_CMD_SHRINK_BUSINESS                    "shrink business"
    #define OMA_CMD_DEOLOY_PACKAGE                     "deploy package"
+   #define OMA_CMD_ADD_BUSINESS                       "add business"
    #define OMA_ROLLBACK_STANDALONE                    "rollback installed standalone"
    #define OMA_ROLLBACK_CATALOG                       "rollback installed catalog"
    #define OMA_ROLLBACK_COORD                         "rollback installed coord"
@@ -212,6 +213,7 @@ namespace engine
    #define FILE_ROLLBACK_COORD              "rollbackCoord.js"
    #define FILE_ROLLBACK_DATA_RG            "rollbackDataRG.js"
 
+   #define FILE_ADD_BUSINESS                "addBusiness.js"
    #define FILE_EXTEND_SEQUOIADB            "extendSequoiaDB.js"
    #define FILE_SHRINK_BUSINESS             "shrinkBusiness.js"
 

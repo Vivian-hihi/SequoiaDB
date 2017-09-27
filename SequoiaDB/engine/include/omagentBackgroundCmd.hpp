@@ -573,6 +573,32 @@ namespace engine
    } ;
 
    /*
+      add business
+   */
+   class _omaAddBusiness : public _omaCommand
+   {
+   DECLARE_OACMD_AUTO_REGISTER() ;
+
+   public:
+      _omaAddBusiness() ;
+      virtual ~_omaAddBusiness() ;
+
+   public:
+      virtual const CHAR* name() { return OMA_CMD_ADD_BUSINESS ; }
+      virtual INT32 init( const CHAR *pInstallInfo ) ;
+      virtual INT32 convertResult( const BSONObj& itemInfo,
+                                   BSONObj& taskInfo ) ;
+
+   private:
+      void _aggrFlowArray( const BSONObj& array1, const BSONObj& array2,
+                           BSONArray& out ) ;
+
+   private:
+      INT64 _taskID ;
+
+   } ;
+
+   /*
       extend sequoiadb
    */
    class _omaExtendDB : public _omaCommand

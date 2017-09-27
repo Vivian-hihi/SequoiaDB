@@ -171,6 +171,9 @@ namespace engine
       string command ;
       switch( taskType )
       {
+      case OMA_TASK_ADD_BUS:
+         command = OMA_CMD_ADD_BUSINESS ;
+         break ;
       case OMA_TASK_EXTEND_DB:
          command = OMA_CMD_EXTEND_SEQUOIADB ;
          break ;
@@ -245,6 +248,7 @@ namespace engine
             pTask = SDB_OSS_NEW _omaAsyncSubTask( taskID ) ;
             break ;
          case OMA_TASK_EXTEND_DB:
+         case OMA_TASK_ADD_BUS:
          case OMA_TASK_SHRINK_BUSINESS:
          case OMA_TASK_DEPLOY_PACKAGE:
             {
