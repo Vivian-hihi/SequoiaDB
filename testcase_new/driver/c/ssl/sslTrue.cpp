@@ -1,88 +1,78 @@
 /**************************************************************
-* @Description: test case for Jira questionaire
-*				( manual test case,not in CI )
-*				SEQUOIADBMAINSTREAM-1958
-*				test ssl with ssl is allowed in configure file
-* @Modify:      Liang xuewang Init
-*               2016-11-10
-**************************************************************/
+ * @Description: test case for Jira questionaire
+ *				     SEQUOIADBMAINSTREAM-1958
+ *				     test ssl with ssl is allowed in configure file
+ * @Modify:      Liang xuewang Init
+ *               2016-11-10
+ **************************************************************/
 #include <gtest/gtest.h>
 #include <client.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../common/testcommon.hpp"
+#include "testcommon.hpp"
+#include "arguments.hpp"
 
-const char* CsModName = "sslTestCs" ;
-char CsName[100] ;
-char ClName[] = "sslTestCl" ;
-sdbConnectionHandle connection = 0 ;
-sdbCSHandle cs = 0 ;
-sdbCollectionHandle cl = 0 ;
+const CHAR* csName = "sslTestCs" ;
+const CHAR* clName = "sslTestCl" ;
+sdbConnectionHandle db ;
+sdbCSHandle cs ;
+sdbCollectionHandle cl ;
 
 // 测试开启ssl，使用sdbSecureConnect正常连接创建集合空间、集合
-TEST( ssl, sdbSecureConnect )
+TEST( sslTrue, sdbSecureConnect )
 {
-	int rc = SDB_OK ;
+   INT32 rc = SDB_OK ;
 
-	// 使用ssl连接sdb并创建集合空间、集合
-	getConf() ;
-	rc = sdbSecureConnect( HOSTNAME, SVCNAME, USER, PASSWD, &connection ) ;
-	ASSERT_EQ( SDB_OK, rc ) << "fail to secure connect when ssl is open" ;
+   // 使用ssl连接sdb并创建集合空间、集合
+   rc = sdbSecureConnect( ARGS->hostName(), ARGS->svcName(), ARGS->user(), ARGS->passwd(), &db ) ;
+   ASSERT_EQ( SDB_OK, rc ) << "fail to secure connect when ssl is open" ;
+   rc = sdbCreateCollectionSpace( db, csName, SDB_PAGESIZE_4K, &cs ) ;
+   ASSERT_EQ( SDB_OK, rc ) << "fail to create cs " << csName ;
+   rc = sdbCreateCollection( cs, clName, &cl ) ;
+   ASSERT_EQ( SDB_OK, rc ) << "fail to create cl " << clName ;
 
-	getUniqueName( CsModName, CsName ) ;
-	rc = sdbCreateCollectionSpace( connection, CsName, SDB_PAGESIZE_4K, &cs ) ;
-	ASSERT_EQ( SDB_OK, rc ) << "fail to create cs " << CsName ;
+   // 删除集合、集合空间、断开连接
+   rc = sdbDropCollection( cs, clName ) ;
+   ASSERT_EQ( SDB_OK, rc ) << "fail to drop cl " << clName ;
 
-	rc = sdbCreateCollection( cs, ClName, &cl ) ;
-	ASSERT_EQ( SDB_OK, rc ) << "fail to create cl " << ClName ;
+   rc = sdbDropCollectionSpace( db, csName ) ;
+   ASSERT_EQ( SDB_OK, rc ) << "fail to drop cs " << csName ;
 
-	// 删除集合、集合空间、断开连接
-	rc = sdbDropCollection( cs, ClName ) ;
-	ASSERT_EQ( SDB_OK, rc ) << "fail to drop cl " << ClName ;
-	
-	rc = sdbDropCollectionSpace( connection, CsName ) ;
-	ASSERT_EQ( SDB_OK, rc ) << "fail to drop cs " << CsName ;
-
-	sdbDisconnect( connection ) ;
-	// 释放句柄
-	sdbReleaseCollection( cl ) ;
-	sdbReleaseCS( cs ) ;
-	sdbReleaseConnection( connection ) ;
+   sdbDisconnect( db ) ;
+   sdbReleaseCollection( cl ) ;
+   sdbReleaseCS( cs ) ;
+   sdbReleaseConnection( db ) ;
 }
 
 // 测试开启ssl，使用sdbSecureConnect1正常连接创建集合空间、集合
-TEST( ssl, sdbSecureConnect1 )
+TEST( sslTrue, sdbSecureConnect1 )
 {
-	int rc = SDB_OK ;
+   INT32 rc = SDB_OK ;
 
-	// 使用ssl连接sdb并创建集合空间、集合
-	getConf() ;
-	char ConnAddr[200] ;
-	sprintf( ConnAddr, "%s:%s", HOSTNAME, SVCNAME ) ;
-	const char* ConnAddrs[1] ;
-	ConnAddrs[0] = ConnAddr ;
-	int arrSize = sizeof( ConnAddrs ) / sizeof( ConnAddrs[0] ) ;
-	rc = sdbSecureConnect1( ConnAddrs, arrSize, USER, PASSWD, &connection ) ;
-	ASSERT_EQ( SDB_OK, rc ) << "fail to secure connect when ssl is open again" ;
-	
-	getUniqueName( CsModName, CsName ) ;
-	rc = sdbCreateCollectionSpace( connection, CsName, SDB_PAGESIZE_4K, &cs ) ;
-	ASSERT_EQ( SDB_OK, rc ) << "fail to create cs " << CsName ;
+   // 使用ssl连接sdb并创建集合空间、集合
+   CHAR connAddr[200] ;
+   sprintf( connAddr, "%s:%s", ARGS->hostName(), ARGS->svcName() ) ;
+   const CHAR* connAddrs[1] ;
+   connAddrs[0] = connAddr ;
+   INT32 arrSize = sizeof(connAddrs) / sizeof(connAddrs[0]) ;
+   rc = sdbSecureConnect1( connAddrs, arrSize, ARGS->user(), ARGS->passwd(), &db ) ;
+   ASSERT_EQ( SDB_OK, rc ) << "fail to secure connect when ssl is open" ;
 
-	rc = sdbCreateCollection( cs, ClName, &cl ) ;
-	ASSERT_EQ( SDB_OK, rc ) << "fail to create cl " << ClName ;
+   rc = sdbCreateCollectionSpace( db, csName, SDB_PAGESIZE_4K, &cs ) ;
+   ASSERT_EQ( SDB_OK, rc ) << "fail to create cs " << csName ;
 
-	// 删除集合、集合空间、断开连接
-	rc = sdbDropCollection( cs, ClName ) ;
-	ASSERT_EQ( SDB_OK, rc ) << "fail to drop cl " << ClName ;
+   rc = sdbCreateCollection( cs, clName, &cl ) ;
+   ASSERT_EQ( SDB_OK, rc ) << "fail to create cl " << clName ;
 
-	rc = sdbDropCollectionSpace( connection, CsName ) ;
-	ASSERT_EQ( SDB_OK, rc ) << "fail to drop cs " << CsName ;
-	
-	sdbDisconnect( connection ) ;
-	// 释放句柄
-	sdbReleaseCollection( cl ) ;
-    sdbReleaseCS( cs ) ;
- 	sdbReleaseConnection( connection ) ;
+   // 删除集合、集合空间、断开连接
+   rc = sdbDropCollection( cs, clName ) ;
+   ASSERT_EQ( SDB_OK, rc ) << "fail to drop cl " << clName ;
+   rc = sdbDropCollectionSpace( db, csName ) ;
+   ASSERT_EQ( SDB_OK, rc ) << "fail to drop cs " << csName ;
+
+   sdbDisconnect( db ) ;
+   sdbReleaseCollection( cl ) ;
+   sdbReleaseCS( cs ) ;
+   sdbReleaseConnection( db ) ;
 } 

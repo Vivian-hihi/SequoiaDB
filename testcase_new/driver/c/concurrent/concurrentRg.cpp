@@ -1,155 +1,121 @@
-/*************************************************
-* @Description: test case for c driver
-*				( manual test case,not in CI )
-*				concurrent test with multi rg
-* @Modify:      Liang xuewang Init
-*				2016-11-10
-*************************************************/
+/*********************************************************
+ * @Description: test case for c driver
+ *				     concurrent test with multi rg
+ *               sync test, no need to check standalone
+ * @Modify:      Liang xuewang Init
+ *				     2016-11-10
+ *********************************************************/
 #include <gtest/gtest.h>
 #include <client.h>
-#include "../common/impWorker.hpp"
-#include "../common/testcommon.hpp"
+#include "impWorker.hpp"
+#include "testcommon.hpp"
+#include "testBase.hpp"
+#include "arguments.hpp"
 
-using import::Worker ;
-using import::WorkerRoutine ;
-using import::WorkerArgs ;
+using namespace import ;
 
 #define ThreadNum 5
 
-sdbConnectionHandle db = SDB_INVALID_HANDLE ;
-sdbReplicaGroupHandle rg[ThreadNum] = { 0 } ;
-char* rgName[ThreadNum] ;
-
-int setup()
+class concurrentRgTest : public testBase
 {
-	int rc = SDB_OK ;
-	
-	// make rgName
-   	for( int i = 0;i < ThreadNum;++i )
-   	{
-    	char temp[50] = "lxw_datagroup" ;
-      	char number[10] ;
-      	sprintf( number, "%d", i ) ;
-      	strcat( temp, number ) ;
-      	rgName[i] = strdup( temp ) ;
-   	}
+protected:
+   sdbReplicaGroupHandle rg[ ThreadNum ] ;
+   CHAR* rgName[ ThreadNum ] ;
 
-   	// connect to sdb
-	getConf() ;
-	rc = sdbConnect( HOSTNAME, SVCNAME, USER, PASSWD, &db ) ;
-	CHECK_RC( rc, "fail to connect sdb in the beginning, rc = %d\n", rc ) ;
+   void SetUp()
+   {
+      testBase::SetUp() ;
+      INT32 rc = SDB_OK ;
 
-	// create replicaGroup
-	for( int i = 0;i < ThreadNum;++i )
-	{
-		rc = sdbCreateReplicaGroup( db, rgName[i], &rg[i] ) ;
-	   	CHECK_RC( rc, "fail to create rg %s, rc = %d\n", rgName[i], rc ) ;
-	}
+      for( INT32 i = 0;i < ThreadNum;++i )
+      {
+         CHAR tmp[50] = { 0 } ;
+         sprintf( tmp, "%s%d", "concurrentRgTestRg", i ) ;
+         rgName[i] = strdup( tmp ) ;
+      }
 
-	// get local ip address to prepare create node 
-	getHost() ;
-done:
-	return rc ;
-error:
-	goto done ;
-}
-
-int teardown()
-{
-	int rc = SDB_OK ;
-
- 	for( int i = 0;i < ThreadNum;++i )
-	{
-		// remove rg
-		rc = sdbRemoveReplicaGroup( db, rgName[i] ) ;
-		CHECK_RC( rc, "fail to remove rg %s, rc = %d\n", rgName[i], rc ) ;
-		// release handle
-		sdbReleaseReplicaGroup( rg[i] ) ;
-		// free malloc space(strdup)
-    	free( rgName[i] ) ;
-	}
-
-	// disconnect
-   	sdbDisconnect( db ) ;
-	sdbReleaseConnection( db ) ;
-
-done:
-	return rc ;
-error:
-	goto done ;
-}
+      for( INT32 i = 0;i < ThreadNum;++i )
+      {
+         rc = sdbCreateReplicaGroup( db, rgName[i], &rg[i] ) ;
+         ASSERT_EQ( SDB_OK, rc ) << "fail to create rg " << rgName[i] ;
+      }
+   }
+   void TearDown()
+   {
+      INT32 rc = SDB_OK ;
+   
+      for( INT32 i = 0;i < ThreadNum;++i )
+      {
+         rc = sdbRemoveReplicaGroup( db, rgName[i] ) ;
+         ASSERT_EQ( SDB_OK, rc ) << "fail to remove rg " << rgName[i] ;
+         sdbReleaseReplicaGroup( rg[i] ) ;
+         free( rgName[i] ) ;
+      }
+      testBase::TearDown() ;
+   }
+} ;
 
 class ThreadArg : public WorkerArgs
 {
 public:
-	sdbReplicaGroupHandle rg ;	// replicaGroup
-	int rid ;				    // rg id
+   sdbReplicaGroupHandle rg ;	// replicaGroup
+   INT32 rid ;				    // rg id
 } ;
 
 void func_rg( ThreadArg* arg )
 {
-	sdbReplicaGroupHandle rg = arg->rg ;
-   	int i = arg->rid ;
-   
-   	// make svcName1 2
-   	char svcName1[10] ;
-   	sprintf( svcName1, "%d", atoi(RSRVPORTBEGIN)+i*10 ) ;
-   	char svcName2[10] ;
-   	sprintf( svcName2, "%d", atoi(RSRVPORTBEGIN)+i*10+5 ) ;
-   
-   	// make dbPath1 2
-   	char dbPath1[100], dbPath2[100] ;
-   	sprintf( dbPath1, "%s%s%s", RSRVNODEDIR, "data/", svcName1 ) ;
-   	sprintf( dbPath2, "%s%s%s", RSRVNODEDIR, "data/", svcName2 ) ;
-   
-   	// create node1 2
-   	int rc = SDB_OK ;
-   	rc = sdbCreateNode( rg, HOST, svcName1, dbPath1, NULL ) ;
-   	ASSERT_EQ( rc, SDB_OK ) << "fail to create node1 in rg " << i << ",ip: " << HOST 
-							<< ",svcname: " << svcName1 << ",dbpath: " << dbPath1 ;
+   sdbReplicaGroupHandle rg = arg->rg ;
+   INT32 i = arg->rid ;
+   INT32 rc = SDB_OK ;
+   CHAR hostName[100] ;
+   rc = getLocalHost( hostName, 100 ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
 
-   	rc = sdbCreateNode( rg, HOST, svcName2, dbPath2, NULL ) ;
-   	ASSERT_EQ( rc, SDB_OK ) << "fail to create node2 in rg " << i << ",ip: " << HOST
-						    << ",svcname: " << svcName2 << ",dbpath: " << dbPath2 ;
-   
-   	// start rg
-   	rc = sdbStartReplicaGroup( rg ) ;
-   	ASSERT_EQ( rc, SDB_OK ) << "fail to start rg " << i ;
-   
-   	// stop rg
-   	rc = sdbStopReplicaGroup( rg ) ;
-   	ASSERT_EQ( rc, SDB_OK ) << "fail to stop rg " << i ;
- 
-   	// remove node1 success
-   	// cannot remove node2 which is the only one node in rg
-   	rc = sdbRemoveNode( rg, HOST, svcName1, NULL ) ;
-   	ASSERT_EQ( rc, SDB_OK ) << "fail to remove rg " << i ;
-   	rc = sdbRemoveNode( rg, HOST, svcName2, NULL ) ;
-   	ASSERT_EQ( rc, SDB_CATA_RM_NODE_FORBIDDEN ) << "fail to test remove node2 in rg " << i ;
+   CHAR svcName1[10] ;
+   sprintf( svcName1, "%d", atoi( ARGS->rsrvPortBegin() ) + i * 10 ) ;
+   CHAR svcName2[10] ;
+   sprintf( svcName2, "%d", atoi( ARGS->rsrvPortBegin() ) + i * 10 + 10 ) ;
+
+   CHAR dbPath1[100], dbPath2[100] ;
+   sprintf( dbPath1, "%s%s%s", ARGS->rsrvNodeDir(), "data/", svcName1 ) ;
+   sprintf( dbPath2, "%s%s%s", ARGS->rsrvNodeDir(), "data/", svcName2 ) ;
+
+   rc = sdbCreateNode( rg, hostName, svcName1, dbPath1, NULL ) ;
+   ASSERT_EQ( SDB_OK, rc ) << "fail to create node1 in rg " << i << ",node: " << hostName << ":"
+                           << svcName1 << " dbpath: " << dbPath1 ;
+
+   rc = sdbCreateNode( rg, hostName, svcName2, dbPath2, NULL ) ;
+   ASSERT_EQ( SDB_OK, rc ) << "fail to create node2 in rg " << i << ",node: " << hostName << ":"
+                           << svcName2 << " dbpath: " << dbPath2 ;
+
+   rc = sdbStartReplicaGroup( rg ) ;
+   ASSERT_EQ( SDB_OK, rc ) << "fail to start rg " << i ;
+
+   rc = sdbStopReplicaGroup( rg ) ;
+   ASSERT_EQ( SDB_OK, rc ) << "fail to stop rg " << i ;
+
+   // remove node1 success
+   // cannot remove node2 which is the only one node in rg
+   rc = sdbRemoveNode( rg, hostName, svcName1, NULL ) ;
+   ASSERT_EQ( SDB_OK, rc ) << "fail to remove node1 in rg " << i ;
+   rc = sdbRemoveNode( rg, hostName, svcName2, NULL ) ;
+   ASSERT_EQ( SDB_CATA_RM_NODE_FORBIDDEN, rc ) << "fail to test remove node2 in rg " << i ;
 }
 
-TEST( ConcurrentTest,ReplicaGroup )
+TEST_F( concurrentRgTest, replicaGroup )
 {
-	int rc = SDB_OK ;
-	rc = setup() ;
-	ASSERT_EQ( rc, SDB_OK ) ;
-
-   	// create multi thread to operate different rg
-	Worker * workers[ThreadNum] ;
-	ThreadArg arg[ThreadNum] ;
-	for( int i = 0;i < ThreadNum;++i )
-	{
-		arg[i].rg = rg[i] ;
-		arg[i].rid = i ; 
-		workers[i] = new Worker( (WorkerRoutine)func_rg, &arg[i], false ) ;
-		workers[i]->start() ;
-	}
-	for( int i = 0;i < ThreadNum;++i )
-	{
-		workers[i]->waitStop() ;
-		delete workers[i] ;
-	}
-
-	rc = teardown() ;
-	ASSERT_EQ( rc, SDB_OK ) ;
+   Worker* workers[ThreadNum] ;
+   ThreadArg arg[ThreadNum] ;
+   for( INT32 i = 0;i < ThreadNum;++i )
+   {
+      arg[i].rg = rg[i] ;
+      arg[i].rid = i ; 
+      workers[i] = new Worker( (WorkerRoutine)func_rg, &arg[i], false ) ;
+      workers[i]->start() ;
+   }
+   for( INT32 i = 0;i < ThreadNum;++i )
+   {
+      workers[i]->waitStop() ;
+      delete workers[i] ;
+   }
 }

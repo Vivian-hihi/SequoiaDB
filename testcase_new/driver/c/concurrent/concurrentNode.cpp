@@ -1,156 +1,127 @@
-/****************************************************
-* @Description: test case for c driver
-*               ( manual test case,not in CI )
-*				concurrent test with multi node
-* @Modify:      Liang xuewang Init
-*				2016-11-10
-****************************************************/
+/********************************************************
+ * @Description: test case for c driver
+ *				     concurrent test with multi node
+ *               sync test, no need to check standalone
+ * @Modify:      Liang xuewang Init
+ *				     2016-11-10
+ ********************************************************/
 #include <gtest/gtest.h>
 #include <client.h>
-#include "../common/impWorker.hpp"
-#include "../common/testcommon.hpp"
+#include "impWorker.hpp"
+#include "testcommon.hpp"
+#include "testBase.hpp"
+#include "arguments.hpp"
 
-using import::Worker ;
-using import::WorkerRoutine ;
-using import::WorkerArgs ;
+using namespace import ;
 
 #define ThreadNum 5
 
-sdbConnectionHandle db = SDB_INVALID_HANDLE ;
-sdbReplicaGroupHandle rg = SDB_INVALID_HANDLE ;
-sdbNodeHandle node[ThreadNum] = { 0 } ;
-const char* rgName = "lxwgroup" ;
-char* svcName[ThreadNum] ;
-char* dbPath[ThreadNum] ;
-
-int setup()
+class concurrentNodeTest : public testBase
 {
-	int rc = SDB_OK ;
+protected:
+   sdbReplicaGroupHandle rg ;
+   const CHAR* rgName ;
+   CHAR* svcName[ ThreadNum ] ;
+   CHAR* dbPath[ ThreadNum ] ;
+   sdbNodeHandle node[ ThreadNum ] ;
 
-   	// connect to sdb
-	getConf() ;
-	getHost() ;
-	rc = sdbConnect( HOSTNAME, SVCNAME, USER, PASSWD, &db ) ;
-	CHECK_RC( rc, "fail to connect sdb in the beginning, rc = %d\n", rc ) ;
+   void SetUp()
+   {
+      testBase::SetUp() ;
+      INT32 rc = SDB_OK ;
+      rgName = "concurrentNodeTestRg" ;
+      rc = sdbCreateReplicaGroup( db, rgName, &rg ) ;
+      ASSERT_EQ( SDB_OK, rc ) << "fail to create rg " << rgName ;
+      
+      for( INT32 i = 0;i < ThreadNum;i++)
+      {  
+         INT32 portBegin ;
+         sscanf( ARGS->rsrvPortBegin(), "%d", &portBegin ) ;
+         INT32 number = portBegin + i*10 ;
+         CHAR tmp[10] ;
+         sprintf( tmp, "%d", number ) ;
+         svcName[i] = strdup( tmp ) ;
+      }
 
-	// create replicaGroup
-	rc = sdbCreateReplicaGroup( db, rgName, &rg ) ;
-	CHECK_RC( rc, "fail to create rg %s in the begining, rc = %d\n", rgName, rc ) ;
-	
-	// make svcName
-	for( int i = 0;i < ThreadNum;i++)
-	{
-		int port_begin ;
-	   	sscanf(RSRVPORTBEGIN,"%d",&port_begin) ;
-	   	int number = port_begin + i*10 ;
-	   	char temp[10] ;
-	   	sprintf( temp, "%d", number ) ;
-	   	svcName[i] = strdup( temp ) ;
-	}
-
-	// make dbPath
-	for( int i = 0;i < ThreadNum;i++)
-	{
-	   	char temp[100] ;
-	   	sprintf( temp, "%s%s", RSRVNODEDIR, svcName[i] ) ;
-	   	dbPath[i] = strdup( temp ) ;
-	}
-	
-	// create node and get node
-	for( int i = 0;i < ThreadNum;i++)
-	{
-	   	rc = sdbCreateNode( rg, HOST, svcName[i], dbPath[i], NULL ) ;
-	   	CHECK_RC( rc, "fail to create node %s:%s, dbpath: %s, rc = %d\n", HOST, svcName[i], dbPath[i], rc ) ;
-	   	rc = sdbGetNodeByHost( rg, HOST, svcName[i], &node[i] ) ;
-	   	CHECK_RC( rc, "fail to get node %s:%s, rc = %d\n", HOST, svcName[i], rc ) ;
-	}
-
-done:
-	return rc ;
-error:
-	goto done ;
-}
-
-int teardown()
-{
-	int rc = SDB_OK ;
-	
-   	// remove rg
-   	rc = sdbRemoveReplicaGroup( db, rgName ) ;
-   	CHECK_RC( rc, "fail to remove rg %s in the end, rc = %d\n", rgName, rc ) ;
-	for( int i = 0;i < ThreadNum;++i )
-	{
-		// release handle
-		sdbReleaseNode( node[i] ) ;
-		// free malloc space(strdup)
-    	free( svcName[i] ) ;
-    	free( dbPath[i] ) ;
-	}
-
-	// disconnect
-   	sdbDisconnect(db) ;
-	sdbReleaseReplicaGroup( rg ) ;
-	sdbReleaseConnection( db ) ;
-
-done:
-	return rc ;
-error:
-	goto done ;
-}
+      for( INT32 i = 0;i < ThreadNum;i++)
+      {
+         CHAR tmp[100] ;
+         sprintf( tmp, "%s%s%s", ARGS->rsrvNodeDir(), "data/", svcName[i] ) ;
+         dbPath[i] = strdup( tmp ) ;
+      }
+   
+      CHAR hostName[100] ;
+      rc = getLocalHost( hostName, 100 ) ;
+      ASSERT_EQ( SDB_OK, rc ) ;
+      for( INT32 i = 0;i < ThreadNum;i++)
+      {
+         rc = sdbCreateNode( rg, hostName, svcName[i], dbPath[i], NULL ) ;
+         ASSERT_EQ( SDB_OK, rc ) << "fail to create node " << hostName << ":" << svcName[i] 
+                                 << "dbPath: " << dbPath[i] ;
+         rc = sdbGetNodeByHost( rg, hostName, svcName[i], &node[i] ) ;
+         ASSERT_EQ( SDB_OK, rc ) << "fail to get node " << hostName << ":" << svcName[i] ;
+      }
+   }
+   void TearDown()
+   {
+      INT32 rc = SDB_OK ;
+   
+      rc = sdbRemoveReplicaGroup( db, rgName ) ;
+      ASSERT_EQ( SDB_OK, rc ) << "fail to remove rg " << rgName ;
+      for( INT32 i = 0;i < ThreadNum;++i )
+      {  
+         sdbReleaseNode( node[i] ) ;
+         free( svcName[i] ) ;
+         free( dbPath[i] ) ;
+      }
+      sdbReleaseReplicaGroup( rg ) ;
+      testBase::TearDown() ;
+   }
+} ;
 
 class ThreadArg : public WorkerArgs
 {
 public:
-	sdbNodeHandle node ;	    // node
-	int tid ;				    // thread id
+   sdbNodeHandle node ;	    // node
+   INT32 tid ;				    // thread id
 } ;
 
 void func_node( ThreadArg* arg )
 {
-   	sdbNodeHandle node = arg->node ;
-   	int i = arg->tid ;
-   	int rc = SDB_OK ;
-   	getHost() ;
+   sdbNodeHandle node = arg->node ;
+   INT32 i = arg->tid ;
+   INT32 rc = SDB_OK ;
+   CHAR hostName[100] ;
+   rc = getLocalHost( hostName, 100 ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
 
-   	// get node address
-   	const char *host, *svc, *nodeName ;
-   	int nodeId ;
-   	rc = sdbGetNodeAddr( node, &host, &svc, &nodeName, &nodeId ) ;
-   	ASSERT_EQ( rc, SDB_OK ) << "fail to get node addr,i = " << i ;
-   	ASSERT_STREQ( host, HOST ) << "fail to check host of node,i = " << i ;
-   	ASSERT_STREQ( svc, svcName[i] ) << "fail to check svc name of node, i = " << i ;
-   	printf( "%d: nodeName = %s nodeId = %d\n", i, nodeName, nodeId ) ;
-   
-   	// start node
-   	rc = sdbStartNode( node ) ;
-   	ASSERT_EQ( rc, SDB_OK ) << "fail to start node " << i ;
-   	// stop node
-   	rc = sdbStopNode( node ) ;
-   	ASSERT_EQ( rc, SDB_OK ) << "fail to stop node " << i ;
+   const CHAR *host, *svc, *nodeName ;
+   INT32 nodeId ;
+   rc = sdbGetNodeAddr( node, &host, &svc, &nodeName, &nodeId ) ;
+   ASSERT_EQ( SDB_OK, rc ) << "fail to get node addr,i = " << i ;
+   ASSERT_STREQ( hostName, host ) << "fail to check host of node,i = " << i ;
+   printf( "%d: nodeName = %s nodeId = %d\n", i, nodeName, nodeId ) ;
+
+   rc = sdbStartNode( node ) ;
+   ASSERT_EQ( SDB_OK, rc ) << "fail to start node " << i ;
+   rc = sdbStopNode( node ) ;
+   ASSERT_EQ( SDB_OK, rc ) << "fail to stop node " << i ;
 }
 
-TEST( ConcurrentTest, Node )
+TEST_F( concurrentNodeTest, node )
 {
-	int rc = SDB_OK ;
-	rc = setup() ;
-	ASSERT_EQ( rc, SDB_OK ) ;
-
-   	// create multi thread to operate different node
-	Worker * workers[ThreadNum] ;
-	ThreadArg arg[ThreadNum] ;
-	for( int i = 0;i < ThreadNum;++i )
-	{
-		arg[i].node = node[i] ;
-		arg[i].tid = i ; 
-		workers[i] = new Worker( (WorkerRoutine)func_node, &arg[i], false ) ;
-		workers[i]->start() ;
-	}
-	for( int i = 0;i < ThreadNum;++i )
-	{
-		workers[i]->waitStop() ;
-		delete workers[i] ;
-	}
-	
-	rc = teardown() ;
-	ASSERT_EQ( rc, SDB_OK ) ;
+   Worker * workers[ThreadNum] ;
+   ThreadArg arg[ThreadNum] ;
+   for( INT32 i = 0;i < ThreadNum;++i )
+   {
+      arg[i].node = node[i] ;
+      arg[i].tid = i ; 
+      workers[i] = new Worker( (WorkerRoutine)func_node, &arg[i], false ) ;
+      workers[i]->start() ;
+   }
+   for( INT32 i = 0;i < ThreadNum;++i )
+   {
+      workers[i]->waitStop() ;
+      delete workers[i] ;
+   }
 }
