@@ -41,13 +41,14 @@ using namespace std ;
 
 class dbFuncParamTest : public testBase {} ;
 
+// comment some part of code for bug JIRA-2870
 TEST_F( dbFuncParamTest, connect12694 )
 {
    INT32 rc = SDB_OK ;
    const CHAR *pConnAddrs[1] ;
    pConnAddrs[0] = ARGS->coordUrl() ;
-//TODO: bug: Segmentation fault
-//   // pHostName NULL
+
+//   // pHostName NULL // TODO: bug
 //   rc = db.connect( NULL, ARGS->port() ) ; 
 //   EXPECT_EQ( SDB_INVALIDARG, rc ) ;
 //   rc = db.connect( NULL, ARGS->port() , ARGS->user(), ARGS->passwd() ) ;
@@ -56,8 +57,8 @@ TEST_F( dbFuncParamTest, connect12694 )
 //   EXPECT_EQ( SDB_INVALIDARG, rc ) ;
 //   rc = db.connect( NULL, ARGS->svcName(), ARGS->user(), ARGS->passwd() ) ;
 //   EXPECT_EQ( SDB_INVALIDARG, rc ) ;
-//TODO: bug: Segmentation fault
-//   // pServiceName NULL
+
+//   // pServiceName NULL // TODO: bug
 //   const CHAR *pNullSvcName = NULL ;
 //   rc = db.connect( ARGS->hostName(), pNullSvcName ) ;
 //   EXPECT_EQ( SDB_INVALIDARG, rc ) ;
@@ -71,20 +72,20 @@ TEST_F( dbFuncParamTest, connect12694 )
    EXPECT_EQ( SDB_INVALIDARG, rc ) ;
    rc = db.connect( pConnAddrs, 1, NULL, ARGS->passwd() ) ;
    EXPECT_EQ( SDB_INVALIDARG, rc ) ;
-//TODO: bug: Segmentation fault
-//   // pPasswd NULL
+
+//   // pPasswd NULL // TODO: bug
 //   rc = db.connect( ARGS->hostName(), ARGS->port() , ARGS->user(), NULL ) ;
 //   EXPECT_EQ( SDB_INVALIDARG, rc ) ;
 //   rc = db.connect( ARGS->hostName(), ARGS->svcName(), ARGS->user(), NULL ) ;
 //   EXPECT_EQ( SDB_INVALIDARG, rc ) ;
 //   rc = db.connect( pConnAddrs, 1, ARGS->user(), NULL ) ;
 //   EXPECT_EQ( SDB_INVALIDARG, rc ) ;
-//TODO: bug: no check, rc = -79
-//   // invalid pConnAddrs
-//   const CHAR **pNullConnAddrs = NULL ;
-//   rc = db.connect( pNullConnAddrs, 1, ARGS->user(), ARGS->passwd() ) ;
-//   EXPECT_EQ( SDB_INVALIDARG, rc ) ;
-//   const CHAR *pInvalidUrlConnAddrs[1] ;
+   // invalid pConnAddrs
+   const CHAR **pNullConnAddrs = NULL ;
+   rc = db.connect( pNullConnAddrs, 1, ARGS->user(), ARGS->passwd() ) ;
+   EXPECT_EQ( SDB_INVALIDARG, rc ) ;
+
+//   const CHAR *pInvalidUrlConnAddrs[1] ; // TODO: bug
 //   pInvalidUrlConnAddrs[0] = "localhost11810" ;
 //   rc = db.connect( pInvalidUrlConnAddrs, 1, ARGS->user(), ARGS->passwd() ) ;
 //   EXPECT_EQ( SDB_INVALIDARG, rc ) ;
