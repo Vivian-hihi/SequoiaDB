@@ -15,7 +15,10 @@ import com.sequoiadb.exception.FaultException;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.task.FaultMakeTask;
 
+import java.io.BufferedReader ;
 import java.io.IOException;
+import java.io.InputStream ;
+import java.io.InputStreamReader ;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
@@ -219,9 +222,17 @@ public class BrokenNetwork extends Fault {
         Runtime rt = Runtime.getRuntime();
         try {
             Process pr = rt.exec(cmd);
-            pr.waitFor();
-            int exitcode = pr.exitValue();
-            pr.destroy();
+            InputStream stderr = pr.getErrorStream();
+            InputStream stdin = pr.getInputStream() ;
+            InputStreamReader isIn = new InputStreamReader(stdin);
+            InputStreamReader isErr = new InputStreamReader(stderr);
+            BufferedReader brIn = new BufferedReader(isIn);
+            BufferedReader byErr = new BufferedReader(isErr);
+            
+            String line = null;
+            while((line = brIn.readLine()) != null);
+            while((line = byErr.readLine()) != null);
+            int exitcode = pr.waitFor();
             if (exitcode == 0) {
                 return true;
             }
