@@ -241,7 +241,7 @@ public class GetConnectionTest extends DataSourceTestBase{
 			option = (SequoiadbOption) datasource.getDatasourceOptions();
 			oldPoolSize = option.getMaxCount();
 			//申请到池满
-			for(int i = 0; i < oldPoolSize; ++i){
+			for(int i = 0; i < oldPoolSize - 1; ++i){
 				Sequoiadb db = datasource.getConnection();
 				Assert.assertEquals(db.isValid(), true);
 				dbs.add(db);
@@ -258,8 +258,9 @@ public class GetConnectionTest extends DataSourceTestBase{
 				Sequoiadb db = dbs.get(k);
 				Assert.assertEquals(db.isValid(), true);
 			}
-			Assert.assertEquals(datasource.getUsedConnNum(), oldPoolSize);
+			Assert.assertEquals(datasource.getUsedConnNum(), oldPoolSize - 1);
 		}catch(InterruptedException e){
+		    System.out.println("current get connection number " + dbs.size());
 			Assert.assertFalse(true, e.getMessage());
 		}catch(BaseException e){
 			e.printStackTrace();
