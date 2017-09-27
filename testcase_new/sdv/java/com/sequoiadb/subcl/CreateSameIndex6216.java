@@ -263,7 +263,7 @@ public class CreateSameIndex6216 extends SdbTestBase{
 		try{
 			BSONObject matcher = (BSONObject) JSON.parse("{time:{$gt:200,$lt:400}}");
 			BSONObject options = (BSONObject) JSON.parse("{Run:true}");
-			BSONObject query = (BSONObject) JSON.parse("{$and:[{time:{$gt:200}},{time:{$lt:400}}]}");
+			BSONObject query = (BSONObject) JSON.parse("{$and:[{time:{$lt:400}},{time:{$gt:200}}]}");
 			expRes = maincl.explain(matcher, null, null, null, 0, -1, 0, options);			
 			while(expRes.hasNext()){
 				expDets=(BasicBSONList) expRes.getNext().get("SubCollections");
@@ -272,8 +272,7 @@ public class CreateSameIndex6216 extends SdbTestBase{
 				String name = (String) expDet.get("IndexName");
 				queryDetail = (BSONObject) JSON.parse(expDet.get("Query").toString());
 				if(!scanType.equals("ixscan")||!indexName.equals(name)||!queryDetail.equals(query)){
-					System.out.println("scanType: " + scanType + " " + "name: " + name + " " + "Detail: " + JSON.parse(queryDetail.toString()));
-					Assert.fail("query().explain() has false");
+					Assert.fail("scanType: " + scanType + " " + "name: " + name + " " + "Detail: " + JSON.parse(queryDetail.toString()));
 				}
 			}
 		}catch(BaseException e){

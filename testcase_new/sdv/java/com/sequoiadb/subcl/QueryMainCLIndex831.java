@@ -175,7 +175,7 @@ public class QueryMainCLIndex831 extends SdbTestBase{
 			BSONObject matcher = (BSONObject) JSON.parse("{a:{$gt:200,$lt:800}}");
 			BSONObject options = (BSONObject) JSON.parse("{Run:true}");
           
-			BSONObject query = (BSONObject) JSON.parse("{$and:[{a:{$gt:200}},{a:{$lt:800}}]}");
+			BSONObject query = (BSONObject) JSON.parse("{$and:[{a:{$lt:800}},{a:{$gt:200}}]}");
 			expRes = maincl.explain(matcher, null, null, null, 0, -1, 0, options);			
 			while(expRes.hasNext()){
 				expDets=(BasicBSONList) expRes.getNext().get("SubCollections");
@@ -184,8 +184,7 @@ public class QueryMainCLIndex831 extends SdbTestBase{
 				String indexName = (String) expDet.get("IndexName");
 				queryDetail = (BSONObject) JSON.parse(expDet.get("Query").toString());
 				if(!scanType.equals("ixscan")||!indexName.equals(index)||!queryDetail.equals(query)){
-					System.out.println("scanType: " + scanType + " " + "name: " + indexName + " " + "Detail: " + JSON.parse(queryDetail.toString()));
-					Assert.fail("query().explain() has false");
+					Assert.fail("scanType: " + scanType + " " + "name: " + indexName + " " + "Detail: " + JSON.parse(queryDetail.toString()));
 				}
 			}
 		}catch(BaseException e){
