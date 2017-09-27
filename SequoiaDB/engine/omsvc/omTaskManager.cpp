@@ -374,7 +374,7 @@ namespace engine
                   goto error ;
                }
             }
-            clusterName = oneHost.getStringField( OM_BSON_FIELD_CLUSTER_NAME ) ;
+            clusterName = oneHost.getStringField( OM_BSON_CLUSTER_NAME ) ;
             sdbGetOMManager()->updateClusterVersion( clusterName ) ;
          }
       }
@@ -566,7 +566,7 @@ namespace engine
                goto error ;
             }
 
-            clusterName = oneHost.getStringField( OM_BSON_FIELD_CLUSTER_NAME ) ;
+            clusterName = oneHost.getStringField( OM_BSON_CLUSTER_NAME ) ;
             sdbGetOMManager()->updateClusterVersion( clusterName ) ;
          }
       }
@@ -693,7 +693,7 @@ namespace engine
       businessName  = taskInfoValue.getStringField( OM_BSON_BUSINESS_NAME );
       deployMod     = taskInfoValue.getStringField( OM_BSON_DEPLOY_MOD ) ;
       businessType  = taskInfoValue.getStringField( OM_BSON_BUSINESS_TYPE );
-      clusterName   = taskInfoValue.getStringField( OM_BSON_FIELD_CLUSTER_NAME ) ;
+      clusterName   = taskInfoValue.getStringField( OM_BSON_CLUSTER_NAME ) ;
 
       builder.append( OM_BUSINESS_FIELD_NAME, businessName ) ;
       builder.append( OM_BUSINESS_FIELD_TYPE, businessType ) ;
@@ -733,7 +733,7 @@ namespace engine
 
       businessName  = taskInfoValue.getStringField( OM_BSON_BUSINESS_NAME ) ;
       businessType  = taskInfoValue.getStringField( OM_BSON_BUSINESS_TYPE ) ;
-      clusterName   = taskInfoValue.getStringField( OM_BSON_FIELD_CLUSTER_NAME ) ;
+      clusterName   = taskInfoValue.getStringField( OM_BSON_CLUSTER_NAME ) ;
       deployMode    = taskInfoValue.getStringField( OM_BSON_DEPLOY_MOD ) ;
       configs       = taskInfoValue.getObjectField( OM_BSON_FIELD_CONFIG ) ;
 
@@ -1018,7 +1018,7 @@ namespace engine
       businessName = taskInfoValue.getStringField( OM_BSON_BUSINESS_NAME ) ;
       businessType = taskInfoValue.getStringField( OM_BSON_BUSINESS_TYPE ) ;
       deployMode  = taskInfoValue.getStringField( OM_BSON_DEPLOY_MOD ) ;
-      clusterName = taskInfoValue.getStringField( OM_BSON_FIELD_CLUSTER_NAME ) ;
+      clusterName = taskInfoValue.getStringField( OM_BSON_CLUSTER_NAME ) ;
       configs     = taskInfoValue.getObjectField( OM_BSON_FIELD_CONFIG ) ;
 
       if ( OM_BUSINESS_SEQUOIADB == businessType )

@@ -42,6 +42,13 @@ namespace engine
 
 //********************************** NEW **************************************
 
+   /*
+   get business config and get business template
+   operation type
+   */
+   #define  OM_FIELD_OPERATION_DEPLOY           "deploy"
+   #define  OM_FIELD_OPERATION_EXTEND           "extend"
+
    /***************** Rest field **********************/
    #define OM_REST_FIELD_CLUSTER_NAME           "ClusterName"
    #define OM_REST_FIELD_PACKAGENAME            "PackageName"
@@ -50,11 +57,36 @@ namespace engine
    #define OM_REST_FIELD_USER                   "User"
    #define OM_REST_FIELD_PASSWORD               "Passwd"
    #define OM_REST_FIELD_ENFORCED               "Enforced"
+   #define OM_REST_FIELD_CONFIGINFO             "ConfigInfo"
+   #define OM_REST_FIELD_OPERATION_TYPE         "OperationType"
 
+   /***************** Bson field *****************/
+   #define OM_BSON_HOST_INFO                    "HostInfo"
+   #define OM_BSON_HOSTNAME                     "HostName"
+   #define OM_BSON_IP                           "IP"
+   #define OM_BSON_DBPATH                       "dbpath"
+   #define OM_BSON_PORT                         "port"
+   #define OM_BSON_SVCNAME                      "svcname"
+   #define OM_BSON_ROLE                         "role"
+   #define OM_BSON_DATAGROUPNAME                "datagroupname"
+   #define OM_BSON_CLUSTER_NAME                 "ClusterName"
+   #define OM_BSON_BUSINESS_NAME                "BusinessName"
+   #define OM_BSON_BUSINESS_TYPE                "BusinessType"
+   #define OM_BSON_DEPLOY_MOD                   "DeployMod"
+   #define OM_BSON_OPERATION_TYPE               "OperationType"
+   #define OM_BSON_BUSINESS_INFO                "BusinessInfo"
+   #define OM_BSON_PROPERTY                     "Property"
+   #define OM_BSON_NAME                         "Name"
+   #define OM_BSON_VALUE                        "Value"
+   #define OM_BSON_CONFIG                       "Config"
+   #define OM_BSON_ZOOID                        "zooid"
 
-   /***************** Rest bson field *****************/
-   #define OM_REST_BSON_HOST_INFO               "HostInfo"
-   #define OM_REST_BSON_HOSTNAME                "HostName"
+   /***************** XML field *****************/
+   #define OM_XML_FIELD_BUSINESS_TYPE           "BusinessType"
+   #define OM_XML_FIELD_DEPLOY_MOD              "DeployMod"
+   #define OM_XML_FIELD_PROPERTY                "Property"
+   #define OM_XML_FIELD_SEPARATE_CONFIG         "SeparateConfig"
+   #define OM_XML_FIELD_NAME                    "Name"
 
    /***************** CL table field ******************/
 
@@ -64,9 +96,14 @@ namespace engine
    #define OM_PUBLIC_FIELD_SDBPASSWD            "SdbPasswd"
    #define OM_PUBLIC_FIELD_SDBUSERGROUP         "SdbUserGroup"
    #define OM_PUBLIC_FIELD_IP                   "IP"
+   #define OM_PUBLIC_FIELD_BUSINESS_TYPE        "BusinessType"
+   #define OM_PUBLIC_FIELD_BUSINESS_NAME        "BusinessName"
+   #define OM_PUBLIC_FIELD_DEPLOY_MOD           "DeployMod"
+   #define OM_PUBLIC_FIELD_SSHPORT              "SshPort"
+   #define OM_PUBLIC_FIELD_USER                 "User"
+   #define OM_PUBLIC_FIELD_PASSWD               "Passwd"
 
    /******* SYSCLUSTER *******/
-   // deploy.cluster
    #define OM_CS_DEPLOY_CL_CLUSTER              OM_CS_DEPLOY".SYSCLUSTER"
 
    #define OM_CLUSTER_FIELD_NAME                OM_PUBLIC_FIELD_CLUSTERNAME
@@ -84,6 +121,25 @@ namespace engine
    #define OM_CS_DEPLOY_CL_CLUSTERIDX1          "{name:\"SYSDEPLOY_CLUSTER_IDX1\"\
 ,key:{"OM_CLUSTER_FIELD_NAME":1}, unique: true, enforced: true }"
 
+   /******* SYSBUSINESS *******/
+   #define OM_CS_DEPLOY_CL_BUSINESS             OM_CS_DEPLOY".SYSBUSINESS"
+
+   #define OM_BUSINESS_FIELD_NAME               OM_PUBLIC_FIELD_BUSINESS_NAME
+   #define OM_BUSINESS_FIELD_TYPE               OM_PUBLIC_FIELD_BUSINESS_TYPE
+   #define OM_BUSINESS_FIELD_DEPLOYMOD          OM_PUBLIC_FIELD_DEPLOY_MOD
+   #define OM_BUSINESS_FIELD_CLUSTERNAME        OM_PUBLIC_FIELD_CLUSTERNAME
+   #define OM_BUSINESS_FIELD_TIME               "Time"
+   #define OM_BUSINESS_FIELD_ADDTYPE            "AddtionType"
+   #define OM_BUSINESS_FIELD_INFO               "BusinessInfo"
+   #define OM_BUSINESS_FIELD_LOCATION           "Location"
+   #define OM_BUSINESS_FIELD_ID                 "_id"
+
+   #define OM_BUSINESS_ADDTYPE_DISCOVERY        1
+   #define OM_BUSINESS_ADDTYPE_INSTALL          0
+
+   #define OM_CS_DEPLOY_CL_BUSINESSIDX1         "{name:\"SYSDEPLOY_BUSINESS_IDX1\"\
+,key:{"OM_BUSINESS_FIELD_NAME":1}, unique: true, enforced: true }"
+
    /******* SYSHOST *******/
    #define OM_CS_DEPLOY_CL_HOST                 OM_CS_DEPLOY".SYSHOST"
    #define OM_HOST_FIELD_NAME                   "HostName"
@@ -93,8 +149,8 @@ namespace engine
    #define OM_HOST_FIELD_VERSION                "Version"
    #define OM_HOST_FIELD_CLUSTERNAME            OM_PUBLIC_FIELD_CLUSTERNAME
    #define OM_HOST_FIELD_IP                     OM_PUBLIC_FIELD_IP
-   #define OM_HOST_FIELD_USER                   "User"
-   #define OM_HOST_FIELD_PASSWORD               "Passwd"
+   #define OM_HOST_FIELD_USER                   OM_PUBLIC_FIELD_USER
+   #define OM_HOST_FIELD_PASSWORD               OM_PUBLIC_FIELD_PASSWD
    #define OM_HOST_FIELD_TIME                   "Time"
    #define OM_HOST_FIELD_OS                     "OS"
    #define OM_HOST_FIELD_OMA                    "OMA"
@@ -118,7 +174,7 @@ namespace engine
    #define OM_HOST_FIELD_SERVICE                "Service"
    #define OM_HOST_FIELD_SAFETY                 "Safety"
    #define OM_HOST_FIELD_AGENT_PORT             "AgentService"
-   #define OM_HOST_FIELD_SSHPORT                "SshPort"
+   #define OM_HOST_FIELD_SSHPORT                OM_PUBLIC_FIELD_SSHPORT
 
    #define OM_CS_DEPLOY_CL_HOSTIDX1             "{name:\"SYSDEPLOY_HOST_IDX1\",\
 key: {"OM_HOST_FIELD_NAME":1}, unique: true, enforced: true }"
@@ -138,6 +194,7 @@ key: {"OM_HOST_FIELD_IP":1}, unique: true, enforced: true }"
    #define OM_TASKINFO_FIELD_STATUS_DESC        "StatusDesc"
    #define OM_TASKINFO_FIELD_AGENTHOST          "AgentHost"
    #define OM_TASKINFO_FIELD_AGENTPORT          OM_PUBLIC_FIELD_AGENT_SERVICE
+   #define OM_TASKINFO_FIELD_AGENT_SERVICE      OM_PUBLIC_FIELD_AGENT_SERVICE
    #define OM_TASKINFO_FIELD_INFO               "Info"
    #define OM_TASKINFO_FIELD_ERRNO              OP_ERRNOFIELD
    #define OM_TASKINFO_FIELD_DETAIL             OP_ERR_DETAIL
@@ -153,10 +210,15 @@ key: {"OM_HOST_FIELD_IP":1}, unique: true, enforced: true }"
    #define OM_TASKINFO_FIELD_ENFORCED           "Enforced"
    #define OM_TASKINFO_FIELD_HOSTNAME           "HostName"
    #define OM_TASKINFO_FIELD_IP                 "IP"
-   #define OM_TASKINFO_FIELD_USER               "User"
-   #define OM_TASKINFO_FIELD_PASSWD             "Passwd"
+   #define OM_TASKINFO_FIELD_USER               OM_PUBLIC_FIELD_USER
+   #define OM_TASKINFO_FIELD_PASSWD             OM_PUBLIC_FIELD_PASSWD
    #define OM_TASKINFO_FIELD_INSTALLPATH        "InstallPath"
    #define OM_TASKINFO_FIELD_VERSION            "Version"
+   #define OM_TASKINFO_FIELD_CONFIG             "Config"
+   #define OM_TASKINFO_FIELD_SSHPORT            OM_PUBLIC_FIELD_SSHPORT
+   #define OM_TASKINFO_FIELD_BUSINESS_TYPE      OM_PUBLIC_FIELD_BUSINESS_TYPE
+   #define OM_TASKINFO_FIELD_BUSINESS_NAME      OM_PUBLIC_FIELD_BUSINESS_NAME
+   #define OM_TASKINFO_FIELD_DEPLOY_MOD         OM_PUBLIC_FIELD_DEPLOY_MOD
 
 //********************************** OLD **************************************
 
@@ -248,30 +310,12 @@ key: {"OM_HOST_FIELD_IP":1}, unique: true, enforced: true }"
    #define OM_BUSINESS_HDFS                  "hdfs"
    #define OM_BUSINESS_YARN                  "yarn"
    #define OM_BUSINESS_SEQUOIASQL            "sequoiasql"
+   #define OM_BUSINESS_SEQUOIASQL_OLAP       "sequoiasql-olap"
    #define OM_BUSINESS_SEQUOIASQL_OLTP       "sequoiasql-oltp"
 
 
 
    #define OM_CS_DEPLOY                      "SYSDEPLOY"
-
-   // deploy.business
-   #define OM_CS_DEPLOY_CL_BUSINESS          OM_CS_DEPLOY".SYSBUSINESS"
-   #define OM_BUSINESS_FIELD_NAME            "BusinessName"
-   #define OM_BUSINESS_FIELD_TYPE            "BusinessType"
-   #define OM_BUSINESS_FIELD_DEPLOYMOD       "DeployMod"
-   #define OM_BUSINESS_FIELD_CLUSTERNAME     OM_HOST_FIELD_CLUSTERNAME
-   #define OM_BUSINESS_FIELD_TIME            "Time"
-   /* mark the business is discovery or not */
-   #define OM_BUSINESS_FIELD_ADDTYPE         "AddtionType"
-   #define OM_BUSINESS_FIELD_INFO            "BusinessInfo"
-   #define OM_BUSINESS_FIELD_LOCATION        "Location"
-   #define OM_BUSINESS_FIELD_ID              "_id"
-
-   #define OM_BUSINESS_ADDTYPE_DISCOVERY     1
-   #define OM_BUSINESS_ADDTYPE_INSTALL       0
-
-   #define OM_CS_DEPLOY_CL_BUSINESSIDX1      "{name:\"SYSDEPLOY_BUSINESS_IDX1\",key: {"\
-                                             OM_BUSINESS_FIELD_NAME":1}, unique: true, enforced: true } "
 
    // deploy.configure
    #define OM_CS_DEPLOY_CL_CONFIGURE         OM_CS_DEPLOY".SYSCONFIGURE"
@@ -407,13 +451,6 @@ key: {"OM_HOST_FIELD_IP":1}, unique: true, enforced: true }"
    #define  OM_AGENT_DEFAULT_PORT            SDBCM_DFT_PORT
 
    /*
-      get business config and get business template
-      operation type
-   */
-   #define  OM_REST_OPERATION_DEPLOY         "deploy"
-   #define  OM_REST_OPERATION_EXTEND         "extend"
-
-   /*
       get business config, operation type is extend
    */
    #define OM_REST_DEPLOYMOD_HORIZONTAL      "horizontal"
@@ -508,7 +545,6 @@ key: {"OM_HOST_FIELD_IP":1}, unique: true, enforced: true }"
    //*********************param between rest and om****************************
    //field names
    #define  OM_REST_CLUSTER_INFO             "ClusterInfo"
-   #define  OM_BSON_FIELD_CLUSTER_NAME       OM_HOST_FIELD_CLUSTERNAME
    #define  OM_BSON_FIELD_CLUSTER_DESC       OM_CLUSTER_FIELD_DESC
    #define  OM_BSON_FIELD_SDB_USER           OM_CLUSTER_FIELD_SDBUSER
    #define  OM_BSON_FIELD_SDB_PASSWD         OM_CLUSTER_FIELD_SDBPASSWD
@@ -529,7 +565,6 @@ key: {"OM_HOST_FIELD_IP":1}, unique: true, enforced: true }"
    #define  OM_REST_FIELD_NICE               "Nice"
    #define  OM_REST_FIELD_ADDRESS            "Address"
 
-   #define  OM_BSON_FIELD_BUSINESS_INFO      "BusinessInfo"
    #define  OM_BSON_FIELD_HOST_INFO          OM_REST_FIELD_HOST_INFO
    #define  OM_BSON_FIELD_HOST_IP            OM_HOST_FIELD_IP
    #define  OM_BSON_FIELD_HOST_NAME          OM_HOST_FIELD_NAME
@@ -578,17 +613,12 @@ key: {"OM_HOST_FIELD_IP":1}, unique: true, enforced: true }"
    #define  OM_BUSINESS_CONFIG_SUBDIR        "config"
    #define  OM_BUSINESS_FILE_NAME            "business"
    #define  OM_BSON_BUSINESS_LIST            "BusinessList"
-   #define  OM_BSON_BUSINESS_TYPE            OM_BUSINESS_FIELD_TYPE
-   #define  OM_BSON_BUSINESS_NAME            OM_BUSINESS_FIELD_NAME
-   #define  OM_REST_CONFIG_INFO              "ConfigInfo"
    #define  OM_BSON_TASKID                   "TaskID"
    #define  OM_BSON_TASKTYPE                 "TaskType"
    #define  OM_BSON_FIELD_SVCNAME            FIELD_NAME_SERVICE_NAME
    #define  OM_BSON_FIELD_ROLE               FIELD_NAME_ROLE
    #define  OM_REST_BUSINESS_NAME            OM_BSON_BUSINESS_NAME
    #define  OM_REST_SVCNAME                  FIELD_NAME_SERVICE_NAME
-   #define  OM_REST_CLUSTER_NAME             OM_BSON_FIELD_CLUSTER_NAME
-   #define  OM_BSON_BUSINESS_INFO            OM_BUSINESS_FIELD_INFO
    #define  OM_REST_HOST_NAME                OM_BSON_FIELD_HOST_NAME
    #define  OM_REST_ISFORCE                  "IsForce"
    #define  OM_SDB_AUTH_USER                 "AuthUser"
@@ -627,12 +657,11 @@ key: {"OM_HOST_FIELD_IP":1}, unique: true, enforced: true }"
    #define  OM_XMLATTR_KEY                   "<xmlattr>"
    #define  OM_XMLATTR_TYPE                  "<xmlattr>.type"
    #define  OM_XMLATTR_TYPE_ARRAY            "array"
-   #define  OM_EXTEND_TEMPLATE_FILE_NAME     "_"OM_REST_OPERATION_EXTEND
+   #define  OM_EXTEND_TEMPLATE_FILE_NAME     "_"OM_FIELD_OPERATION_EXTEND
    #define  OM_TEMPLATE_FILE_NAME            "_template"
    #define  OM_REST_BUSINESS_TYPE            OM_BSON_BUSINESS_TYPE
    #define  OM_BSON_DEPLOY_MOD_LIST          "DeployModList"
    #define  OM_BSON_DEPLOY_MOD               "DeployMod"
-   #define  OM_BSON_OPERATION_TYPE           "OperationType"
    #define  OM_BSON_SEPARATE_CONFIG          "SeparateConfig"
    #define  OM_BSON_PROPERTY_ARRAY           "Property"
    #define  OM_BSON_PROPERTY_NAME            "Name"

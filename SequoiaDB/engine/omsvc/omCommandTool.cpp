@@ -219,9 +219,9 @@ namespace engine
       templateFile = _rootPath + OSS_FILE_SEP + OM_BUSINESS_CONFIG_SUBDIR
                            + OSS_FILE_SEP + businessType ;
 
-      if( operationType == OM_REST_OPERATION_EXTEND )
+      if( operationType == OM_FIELD_OPERATION_EXTEND )
       {
-         templateFile = templateFile + "_"OM_REST_OPERATION_EXTEND ;
+         templateFile = templateFile + "_"OM_FIELD_OPERATION_EXTEND ;
       }
 
       templateFile = templateFile + OM_TEMPLATE_FILE_NAME + _languageFileSep
@@ -624,7 +624,7 @@ namespace engine
       builder.appendElements( businessInfo ) ;
       buzRecord = builder.obj() ;
 
-      if ( FALSE == clusterIsExist( clusterName ) )
+      if ( FALSE == isClusterExist( clusterName ) )
       {
          rc = SDB_OM_CLUSTER_NOT_EXIST ;
          PD_LOG( PDERROR, "cluster does not exist,name:%s",
@@ -632,7 +632,7 @@ namespace engine
          goto error ;
       }
 
-      if ( TRUE == businessIsExist( businessName ) )
+      if ( TRUE == isBusinessExist( businessName ) )
       {
          rc = SDB_INVALIDARG ;
          PD_LOG( PDERROR, "business already exist,name:%s",
@@ -715,8 +715,8 @@ namespace engine
       if ( FALSE == isExist )
       {
          rc = SDB_DMS_RECORD_NOTEXIST ;
-         PD_LOG( PDERROR, "business does not exist:business=%s, rc=%d",
-                 businessName.c_str(), rc ) ;
+         PD_LOG( PDWARNING, "business does not exist: business=%s",
+                 businessName.c_str() ) ;
          goto error ;
       }
 
@@ -735,24 +735,23 @@ namespace engine
     *
     * @param(in)  clusterName
     *
-    * @param(out) clusterBusinessInfo
+    * @param(out) buzInfoList
     *
    */
    INT32 omDatabaseTool::getBusinessInfoOfCluster(
                                                 const string &clusterName,
-                                                BSONObj &clusterBusinessInfo )
+                                                list<BSONObj> &buzInfoList )
    {
-      BSONObjBuilder bsonBuilder ;
-      BSONArrayBuilder arrayBuilder ;
+      INT32 rc = SDB_OK ;
+      SINT64 contextID = -1 ;
       BSONObj selector ;
       BSONObj matcher ;
       BSONObj order ;
       BSONObj hint ;
       BSONObj result ;
-      SINT64 contextID = -1 ;
-      INT32 rc         = SDB_OK ;
 
       matcher = BSON( OM_BUSINESS_FIELD_CLUSTERNAME << clusterName ) ;
+
       rc = rtnQuery( OM_CS_DEPLOY_CL_BUSINESS, selector, matcher, order, hint, 
                      0, _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
       if ( rc )
@@ -765,6 +764,7 @@ namespace engine
       while ( TRUE )
       {
          rtnContextBuf buffObj ;
+
          rc = rtnGetMore ( contextID, 1, buffObj, _cb, _pRTNCB ) ;
          if ( rc )
          {
@@ -780,12 +780,12 @@ namespace engine
             goto error ;
          }
 
-         BSONObj result( buffObj.data() ) ;
-         arrayBuilder.append( result ) ;
-      }
+         {
+            BSONObj result( buffObj.data() ) ;
 
-      bsonBuilder.append( OM_BSON_FIELD_BUSINESS_INFO, arrayBuilder.arr() ) ;
-      clusterBusinessInfo = bsonBuilder.obj() ;
+            buzInfoList.push_back( result.copy() ) ;
+         }
+      }
 
    done:
       if ( -1 != contextID )
@@ -797,10 +797,12 @@ namespace engine
       goto done ;
    }
 
-   BOOLEAN omDatabaseTool::businessIsExist( const string &businessName )
+   BOOLEAN omDatabaseTool::isBusinessExistOfCluster(
+                                                   const string &clusterName,
+                                                   const string &businessName )
    {
       INT32 rc = SDB_OK ;
-      BOOLEAN isExist = FALSE ;
+      BOOLEAN isExist = TRUE ;
       BSONObj buzInfo ;
 
       rc = getOneBusinessInfo( businessName, buzInfo ) ;
@@ -808,9 +810,26 @@ namespace engine
       {
          isExist = FALSE ;
       }
-      else
+
+      if ( clusterName != buzInfo.getStringField(
+                                             OM_BUSINESS_FIELD_CLUSTERNAME ) )
       {
-         isExist = TRUE ;
+         isExist = FALSE ;
+      }
+
+      return isExist ;
+   }
+
+   BOOLEAN omDatabaseTool::isBusinessExist( const string &businessName )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN isExist = TRUE ;
+      BSONObj buzInfo ;
+
+      rc = getOneBusinessInfo( businessName, buzInfo ) ;
+      if ( rc )
+      {
+         isExist = FALSE ;
       }
 
       return isExist ;
@@ -870,7 +889,7 @@ namespace engine
       BSONObjBuilder recordBuilder ;
       BSONElement grantConfEle ;
       BSONObj record ;
-      BSONObj filter = BSON( OM_BSON_FIELD_CLUSTER_NAME  << "" <<
+      BSONObj filter = BSON( OM_BSON_CLUSTER_NAME        << "" <<
                              OM_BSON_FIELD_CLUSTER_DESC  << "" <<
                              OM_BSON_FIELD_SDB_USER      << "" <<
                              OM_BSON_FIELD_SDB_PASSWD    << "" <<
@@ -1049,7 +1068,7 @@ namespace engine
       goto done ;
    }
 
-   BOOLEAN omDatabaseTool::clusterIsExist( const string &clusterName )
+   BOOLEAN omDatabaseTool::isClusterExist( const string &clusterName )
    {
       INT32 rc = SDB_OK ;
       BOOLEAN isExist = TRUE ;
@@ -2246,26 +2265,9 @@ namespace engine
 
    /**
     * Get all the host config of the cluster.
-    *
-    * @param(in)  clusterName
-    *
-    * @param(out) config
-    * {
-    *    "HostInfo": [
-    *       {
-    *          "HostName": "host1", "ClusterName":"c1",
-    *          "Disk": [ { "Name":"dev", "Mount":"/mnt", ... }, ... ],
-    *          "Config": [
-    *             { "dbpath": "xxxx", "svcname":"11810", ... },
-    *             ...
-    *          ],
-    *          ...
-    *       }
-    *    ]
-    * }
    */
-   INT32 omDatabaseTool::getHostConfigOfCluster( const string &clusterName,
-                                                 BSONObj &config )
+   INT32 omDatabaseTool::getHostInfoByCluster( const string &clusterName,
+                                               list<BSONObj> &hostList )
    {
       INT32 rc = SDB_OK ;
       SINT64 contextID = -1 ;
@@ -2273,9 +2275,6 @@ namespace engine
       BSONObj selector ;
       BSONObj order ;
       BSONObj hint ;
-      BSONArrayBuilder hostArrBuilder ;
-      vector<BSONObj> hostList ;
-      vector<BSONObj>::iterator hostListIter ;
 
       //query table
       rc = rtnQuery( OM_CS_DEPLOY_CL_HOST, selector, condition, order, hint, 0,
@@ -2308,68 +2307,9 @@ namespace engine
 
          {
             BSONObj hostInfo( buffObj.data() ) ;
+
             hostList.push_back( hostInfo.copy() ) ;
          }
-      }
-
-      for ( hostListIter = hostList.begin(); hostListIter != hostList.end(); 
-                 ++hostListIter )
-      {
-         string hostName ;
-         BSONObjBuilder hostBuilder ;
-         BSONObj hostConfig ;
-         /*
-            hostInfo:
-            {
-               "HostName": "host1", "ClusterName":"c1",
-               "Disk":[ {"Name":"dev", "Mount":"/mnt", ... }, ... ],
-               ...
-            }
-         */
-         BSONObj hostInfo = *hostListIter ;
-
-         hostName = hostInfo.getStringField( OM_HOST_FIELD_NAME ) ;
-         rc = getConfigByHostName( hostName, hostConfig ) ;
-         if( rc )
-         {
-            PD_LOG( PDERROR, "Failed to get host config, rc=%d", rc ) ;
-            goto error ;
-         }
-         hostBuilder.appendElements( hostInfo ) ;
-         hostBuilder.appendElements( hostConfig ) ;
-
-         /*
-            hostBuilder.obj():
-            {
-               "HostName": "host1", "ClusterName":"c1",
-               "Disk":[ {"Name":"dev", "Mount":"/mnt", ... }, ... ],
-               "Config":[
-                  { "BusinessName": "b1", "dbpath": "xxxx",
-                    "svcname":"11810",
-                    ...
-                  },
-                  ...
-               ],
-               ...
-            }
-         */
-         hostArrBuilder.append( hostBuilder.obj() ) ;
-      }
-
-      if ( hostList.size() == 0 )
-      {
-         rc = SDB_DMS_RECORD_NOTEXIST ;
-         PD_LOG( PDERROR, "host is not exist: cluster=%s",
-                 clusterName.c_str() ) ;
-         goto error ;
-      }
-
-      {
-         BSONObjBuilder hostsDetailBuilder ;
-
-         hostsDetailBuilder.append( OM_BSON_FIELD_HOST_INFO,
-                                    hostArrBuilder.arr() ) ;
-         config = hostsDetailBuilder.obj() ;
       }
 
    done:

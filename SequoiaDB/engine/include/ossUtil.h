@@ -92,6 +92,7 @@ INT32 ossStrToInt ( const CHAR *pBuffer, INT32 *number ) ;
 #define ossStrrchr(x,y) strrchr(x,y)
 #define ossStrchr(x,y) strchr(x,y)
 #define ossAtoi(x) atoi(x)
+#define ossAtof(x) atof(x)
 #define ossIsspace(c) isspace(c)
 
 #define ossItoa(x,y,z) if (y) { ossSnprintf(y, z, "%d", (INT32)(x) );}

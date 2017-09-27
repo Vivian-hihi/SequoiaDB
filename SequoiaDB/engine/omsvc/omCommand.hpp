@@ -127,8 +127,8 @@ namespace engine
       omExtendBusinessCommand( restAdaptor *pRestAdaptor,
                                pmdRestSession *pRestSession,
                                const CHAR *pRootPath,
-                               string& localAgentHost,
-                               string& localAgentService ) ;
+                               string &localAgentHost,
+                               string &localAgentService ) ;
       ~omExtendBusinessCommand() ;
 
    public:
@@ -569,107 +569,90 @@ namespace engine
 
    } ;
 
-   class omConfigBusinessCommand : public omGetBusinessTemplateCommand
+   class omGetBusinessConfigCommand : public omAuthCommand
    {
-      public:
-         omConfigBusinessCommand( restAdaptor *pRestAdaptor,
+   public:
+      omGetBusinessConfigCommand( restAdaptor *pRestAdaptor,
                                   pmdRestSession *pRestSession,
-                                  const CHAR *pRootPath,
-                                  const CHAR *pSubPath ) ;
-         virtual ~omConfigBusinessCommand() ;
+                                  string &rootPath ) ;
 
-      public:
-         virtual INT32  doCommand() ;
+      ~omGetBusinessConfigCommand() ;
 
-      protected:
-         INT32          _fillHostInfo( string clusterName, string businessName,
-                                       BSONObj &bsonHostInfo ) ;
+      virtual INT32 doCommand() ;
 
-         INT32          _checkBusiness( string businessName,
-                                        const string &businessType,
-                                        const string &deployMod,
-                                        const string &clusterName ) ;
+   private:
+      INT32 _checkRestInfo( const BSONObj &templateInfo ) ;
 
-         INT32          _buildConfigFilePath( const string &businessType,
-                                              const string &deployMod,
-                                              const string &separateConfig,
-                                              string &configFilePath) ;
+      INT32 _checkTemplate( BSONObj &deployModInfo ) ;
 
-      private:
-         INT32          _generateConfig( const BSONObj &bsonTemplate,
-                                         const BSONObj &bsonHostInfo,
-                                         const BSONObj &bsonConfigItem,
-                                         const BSONObj &bsonHostList,
-                                         BSONObj &bsonConfig ) ;
-         void           _addProperties( BSONObjBuilder &builder,
-                                        const BSONObj &bsonTemplate,
-                                        const BSONObj &bsonConfDetail ) ;
-         INT32          _getConfigDetail( const BSONObj &bsonTemplate,
-                                        BSONObj &bsonConfDetail ) ;
-         INT32          _getTemplateInfo( BSONObj &bsonTemplate,
-                                          BSONObj &bsonHostInfo,
-                                          BSONObj &bsonHostList ) ;
-         INT32          _fillTemplateInfo( BSONObj &bsonTemplate ) ;
-         INT32          _getPropertyNameValue( BSONObj &bsonTemplate,
-                                               string propertyName,
-                                               string &value ) ;
-         INT32          _getHostConfig( string hostName, string businessName,
-                                        BSONObj &config ) ;
+      INT32 _check( const BSONObj &templateInfo, BSONObj &deployModInfo ) ;
 
-         INT32          _getExistBusiness( const string &businessName,
-                                           string &businessType,
-                                           string &deployMod,
-                                           string &clusterName ) ;
-      protected:
-         string         _clusterName ;
-         string         _deployMod ;
-         string         _businessType ;
-         string         _businessName ;
-         string         _operationType ;
+      INT32 _getPropertyValue( const BSONObj &property, const string &name,
+                               string &value ) ;
 
+      INT32 _getDeployProperty( const BSONObj &templateInfo,
+                                const BSONObj &deployModInfo,
+                                BSONObj &deployProperty ) ;
+
+      INT32 _getBuzInfoOfCluster( BSONObj &buzInfoOfCluster ) ;
+
+      INT32 _getHostInfoOfCluster( BSONObj &hostsInfoOfCluster ) ;
+
+      INT32 _generateRequest( omRestTool &restTool,
+                              const BSONObj &templateInfo,
+                              const BSONObj &deployModInfo ) ;
+
+   private:
+      string _rootPath ;
+      string _clusterName ;
+      string _deployMod ;
+      string _businessType ;
+      string _businessName ;
+      string _operationType ;
    } ;
 
-   class omInstallBusinessReq : public omConfigBusinessCommand
+   class omAddBusinessCommand : public omAuthCommand
    {
-      public:
-         omInstallBusinessReq( restAdaptor *pRestAdaptor,
-                               pmdRestSession *pRestSession,
-                               const CHAR *pRootPath,
-                               const CHAR *pSubPath,
-                               string localAgentHost,
-                               string localAgentService ) ;
-         virtual ~omInstallBusinessReq() ;
+   public:
+      omAddBusinessCommand( restAdaptor *pRestAdaptor,
+                            pmdRestSession *pRestSession,
+                            string &rootPath,
+                            string &path,
+                            string &localAgentHost,
+                            string &localAgentService ) ;
 
-      public:
-         virtual INT32  doCommand() ;
+      ~omAddBusinessCommand() ;
 
-      private:
-         INT32          _combineConfDetail( string businessType,
-                                            string clusterType,
-                                            BSONObj &bsonConfDetail ) ;
-         INT32          _extractHostInfo( set<string>& hostNames,
-                                          BSONObj &bsonHostInfo ) ;
+      virtual INT32 doCommand() ;
 
-         INT32          _applyInstallRequest( const BSONObj &bsonConfValue,
-                                              UINT64 taskID ) ;
+   private:
+      INT32 _checkRestInfo( const BSONObj &configInfo ) ;
 
-         INT32          _sendMsgToLocalAgent( omManager *om,
-                                              pmdRemoteSession *remoteSession,
-                                              MsgHeader *pMsg ) ;
-         INT32          _compeleteConfValue( const BSONObj &bsonHostInfo,
-                                             BSONObj &bsonConfValue ) ;
-         void           _clearSession( omManager *om,
-                                       pmdRemoteSession *remoteSession) ;
-         INT32          _getRestInfo( BSONObj &bsonConfValue ) ;
+      INT32 _checkTemplate() ;
 
-         INT32          _generateTaskInfo( const BSONObj &bsonConfValue,
-                                           BSONObj &taskInfo,
-                                           BSONArray &resultInfo ) ;
+      INT32 _getBuzInfoOfCluster( BSONObj &buzInfoOfCluster ) ;
 
-         INT32          _notifyAgentTask( INT64 taskID ) ;
-      private:
-         string         _localAgentHost ;
-         string         _localAgentService ;
+      INT32 _getHostInfoOfCluster( BSONObj &hostsInfoOfCluster ) ;
+
+      INT32 _checkConfig( BSONObj &deployConfig ) ;
+
+      INT32 _check( BSONObj &configInfo ) ;
+
+      INT32 _generateRequest( const BSONObj &configInfo,
+                              BSONObj &taskConfig,
+                              BSONArray &resultInfo ) ;
+
+      INT32 _createTask( const BSONObj &taskConfig, const BSONArray &resultInfo,
+                         INT64 &taskID ) ;
+
+   private:
+      string _rootPath ;
+      string _localAgentHost ;
+      string _localAgentService ;
+      string _clusterName ;
+      string _businessName ;
+      string _businessType ;
+      string _deployMod ;
    } ;
 
    class omListTaskCommand : public omAuthCommand

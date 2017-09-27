@@ -32,6 +32,7 @@
 #include "omConfigBuilder.hpp"
 #include "omConfigSdb.hpp"
 #include "omConfigZoo.hpp"
+#include "omConfigSsqlOltp.hpp"
 #include "omConfigSsqlOlap.hpp"
 #include "omDef.hpp"
 #include "ossSocket.hpp"
@@ -43,6 +44,7 @@
 namespace engine
 {
    #define OM_CONF_VALUE_INT_TYPE         "int"
+   #define OM_CONF_VALUE_DOUBLE_TYPE      "double"
    #define OM_INT32_MAXVALUE_STR          "2147483647"
    #define OM_GENERATOR_DOT               ","
    #define OM_GENERATOR_LINE              "-"
@@ -173,12 +175,12 @@ namespace engine
          goto error ;
       }
 
-      rc = getValueAsString( confTemplate, OM_BSON_FIELD_CLUSTER_NAME, 
+      rc = getValueAsString( confTemplate, OM_BSON_CLUSTER_NAME, 
                              _clusterName ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG_MSG( PDERROR, "Template miss bson field[%s]", 
-                     OM_BSON_FIELD_CLUSTER_NAME ) ;
+                     OM_BSON_CLUSTER_NAME ) ;
          goto error ;
       }
 
@@ -394,7 +396,8 @@ namespace engine
 
    bool OmRangeValidator::isValid( const string &value ) const
    {
-      if ( _type == OM_CONF_VALUE_INT_TYPE )
+      if ( OM_CONF_VALUE_INT_TYPE == _type ||
+           OM_CONF_VALUE_DOUBLE_TYPE == _type )
       {
          if ( !_isNumber( value.c_str() ) )
          {
@@ -434,6 +437,13 @@ namespace engine
 
          return ( leftInt - rightInt ) ;
       }
+      else if ( OM_CONF_VALUE_DOUBLE_TYPE == _type )
+      {
+         INT32 leftDouble  = ossAtof( left.c_str() ) ;
+         INT32 rightDouble = ossAtof( right.c_str() ) ;
+
+         return ( leftDouble - rightDouble ) ;
+      }
 
       return left.compare( right ) ;
    }
@@ -453,9 +463,20 @@ namespace engine
       string::size_type posTmp = value.find( OM_GENERATOR_LINE ) ;
       if( string::npos != posTmp )
       {
-         rv = SDB_OSS_NEW OmRangeValidator( _type,
-                                            value.substr(0,posTmp).c_str(), 
-                                            value.substr(posTmp+1).c_str() ) ;
+         string::size_type posTmp2 = value.find( OM_GENERATOR_LINE, posTmp+1 ) ;
+
+         if( string::npos != posTmp2 )
+         {
+            rv = SDB_OSS_NEW OmRangeValidator( _type,
+                                               value.substr(0,posTmp2).c_str(), 
+                                               value.substr(posTmp2+1).c_str() ) ;
+         }
+         else
+         {
+            rv = SDB_OSS_NEW OmRangeValidator( _type,
+                                               value.substr(0,posTmp).c_str(), 
+                                               value.substr(posTmp+1).c_str() ) ;
+         }
       }
       else
       {
@@ -465,7 +486,7 @@ namespace engine
       return rv ;
    }
 
-   INT32 OmConfValidator::init( const string &type, const string &validateStr )
+    INT32 OmConfValidator::init( const string &type, const string &validateStr )
    {
       _clear() ;
 
@@ -769,52 +790,49 @@ namespace engine
       INT32 rc = SDB_OK ;
       OmConfigBuilder* _builder = NULL ;
 
-      if ( businessInfo.businessType == OM_BUSINESS_SEQUOIADB )
+      if ( OM_BUSINESS_SEQUOIADB == businessInfo.businessType )
       {
-         if( operationType == OM_REST_OPERATION_DEPLOY )
+         if( OM_FIELD_OPERATION_DEPLOY == operationType )
          {
             _builder = SDB_OSS_NEW OmSdbConfigBuilder( businessInfo ) ;
          }
-         else if( operationType == OM_REST_OPERATION_EXTEND )
+         else if( OM_FIELD_OPERATION_EXTEND == operationType )
          {
             _builder = SDB_OSS_NEW OmExtendSdbConfigBuilder( businessInfo ) ;
          }
          else
          {
             rc = SDB_INVALIDARG ;
-            PD_LOG_MSG( PDERROR, "invalid deploy mode: %s", businessInfo.deployMode.c_str() ) ;
+            PD_LOG_MSG( PDERROR, "invalid deploy mode: %s",
+                        businessInfo.deployMode.c_str() ) ;
             goto error ;
          }
       }
-      else if ( businessInfo.businessType == OM_BUSINESS_SEQUOIASQL )
+      else if ( OM_BUSINESS_SEQUOIASQL_OLTP == businessInfo.businessType )
       {
-         if ( OM_SEQUOIASQL_DEPLOY_OLAP == businessInfo.deployMode )
-         {
-            _builder = SDB_OSS_NEW OmSsqlOlapConfigBuilder( businessInfo ) ;
-         }
-         else
-         {
-            rc = SDB_INVALIDARG ;
-            PD_LOG_MSG( PDERROR, "invalid deploy mode: %s", businessInfo.deployMode.c_str() ) ;
-            goto error ;
-         }
+         _builder = SDB_OSS_NEW OmSsqlOltpConfigBuilder( businessInfo ) ;
       }
-      else if ( businessInfo.businessType == OM_BUSINESS_ZOOKEEPER )
+      else if ( OM_BUSINESS_SEQUOIASQL_OLAP == businessInfo.businessType )
+      {
+         _builder = SDB_OSS_NEW OmSsqlOlapConfigBuilder( businessInfo ) ;
+      }
+      else if ( OM_BUSINESS_ZOOKEEPER == businessInfo.businessType )
       {
          _builder = SDB_OSS_NEW OmZooConfigBuilder( businessInfo ) ;
       }
       else
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "invalid business type: %s", businessInfo.businessType.c_str() ) ;
+         PD_LOG_MSG( PDERROR, "invalid business type: %s",
+                     businessInfo.businessType.c_str() ) ;
          goto error ;
       }
 
       if ( NULL == _builder )
       {
          rc = SDB_OOM ;
-         PD_LOG_MSG( PDERROR, "failed to create config builder because of out of memory, "
-                     "business type is %s",
+         PD_LOG_MSG( PDERROR, "failed to create config builder, out of memory: "
+                              "businessType=%s",
                      businessInfo.businessType.c_str() ) ;
          goto error ;
       }
@@ -914,7 +932,7 @@ namespace engine
          goto error ;
       }
 
-      if( _operationType == OM_REST_OPERATION_DEPLOY )
+      if( _operationType == OM_FIELD_OPERATION_DEPLOY )
       {
          //delete in ~Omcluster
          business = SDB_OSS_NEW OmBusiness( _businessInfo ) ;
@@ -936,7 +954,7 @@ namespace engine
             goto error ;
          }
       }
-      else if( _operationType == OM_REST_OPERATION_EXTEND )
+      else if( _operationType == OM_FIELD_OPERATION_EXTEND )
       {
          rc = _cluster.getBusiness( _businessInfo.businessName, business ) ;
          if( rc )
@@ -971,7 +989,7 @@ namespace engine
          confBuilder.append( OM_BSON_BUSINESS_NAME, _businessInfo.businessName ) ;
          confBuilder.append( OM_BSON_BUSINESS_TYPE, _businessInfo.businessType ) ;
          confBuilder.append( OM_BSON_DEPLOY_MOD, _businessInfo.deployMode ) ;
-         confBuilder.append( OM_BSON_FIELD_CLUSTER_NAME, _businessInfo.clusterName ) ;
+         confBuilder.append( OM_BSON_CLUSTER_NAME, _businessInfo.clusterName ) ;
          bsonConfig = confBuilder.obj() ;
       }
       
@@ -1170,7 +1188,7 @@ namespace engine
          goto error ;
       }
 
-      if( _operationType == OM_REST_OPERATION_DEPLOY )
+      if( _operationType == OM_FIELD_OPERATION_DEPLOY )
       {
          rc = _cluster.getBusiness( _businessInfo.businessName, business) ;
          if ( SDB_OK == rc )
@@ -1200,7 +1218,7 @@ namespace engine
          }
 
       }
-      else if( _operationType == OM_REST_OPERATION_EXTEND )
+      else if( _operationType == OM_FIELD_OPERATION_EXTEND )
       {
          rc = _cluster.getBusiness( _businessInfo.businessName, business ) ;
          if( rc )

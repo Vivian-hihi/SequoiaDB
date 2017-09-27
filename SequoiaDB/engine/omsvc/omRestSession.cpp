@@ -905,13 +905,15 @@ namespace engine
          }
          else if ( ossStrcasecmp( pSubCommand, OM_CONFIG_BUSINESS_REQ ) == 0 )
          {
-            commandIf = SDB_OSS_NEW omConfigBusinessCommand( pAdptor, this, 
-                                       _wwwRootPath.c_str(), pFilePath ) ;
+            commandIf = SDB_OSS_NEW omGetBusinessConfigCommand( pAdptor, this, 
+                                                                _wwwRootPath ) ;
          }
          else if ( ossStrcasecmp( pSubCommand, OM_INSTALL_BUSINESS_REQ) == 0 )
          {
-            commandIf = SDB_OSS_NEW omInstallBusinessReq( pAdptor, this, 
-                                       _wwwRootPath.c_str(), pFilePath, 
+            string filePath( pFilePath ) ;
+
+            commandIf = SDB_OSS_NEW omAddBusinessCommand( pAdptor, this, 
+                                       _wwwRootPath, filePath, 
                                        localAgentHost, localAgentPort ) ;
          }
          else if ( ossStrcasecmp( pSubCommand, OM_LIST_NODE_REQ ) == 0 )

@@ -280,7 +280,7 @@ namespace engine
          arrayBuilder.append( result ) ;
       }
 
-      bsonBuilder.append( OM_BSON_FIELD_BUSINESS_INFO, arrayBuilder.arr() ) ;
+      bsonBuilder.append( OM_BSON_BUSINESS_INFO, arrayBuilder.arr() ) ;
       clusterBusinessInfo = bsonBuilder.obj() ;
 
    done:

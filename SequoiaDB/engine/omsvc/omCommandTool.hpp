@@ -142,9 +142,12 @@ namespace engine
                                 BSONObj &businessInfo ) ;
 
       INT32 getBusinessInfoOfCluster( const string &clusterName,
-                                      BSONObj &clusterBusinessInfo ) ;
+                                      list<BSONObj> &buzInfoList ) ;
 
-      BOOLEAN businessIsExist( const string &businessName ) ;
+      BOOLEAN isBusinessExistOfCluster( const string &clusterName,
+                                        const string &businessName ) ;
+
+      BOOLEAN isBusinessExist( const string &businessName ) ;
 
       INT32 upsertBusinessInfo( const string &businessName,
                                 const BSONObj &newBusinessInfo,
@@ -159,7 +162,7 @@ namespace engine
       INT32 updateClusterInfo( const string &clusterName,
                                const BSONObj &clusterInfo ) ;
 
-      BOOLEAN clusterIsExist( const string &clusterName ) ;
+      BOOLEAN isClusterExist( const string &clusterName ) ;
 
       INT32 updateClusterGrantConf( const string &clusterName,
                                     const string &grantName,
@@ -214,6 +217,8 @@ namespace engine
                                   string &hostName ) ;
       INT32 getHostInfoByAddress( const string &address,
                                   BSONObj &hostInfo ) ;
+      INT32 getHostInfoByCluster( const string &clusterName,
+                                  list<BSONObj> &hostList ) ;
       BOOLEAN isHostExistOfClusterByAddr( const string &address,
                                           const string &clusterName ) ;
       BOOLEAN isHostExistOfCluster( const string &hostName,
@@ -224,10 +229,6 @@ namespace engine
                                 const string &packageName ) ;
       INT32 removeHost( const string &address,
                         const string &clusterName ) ;
-
-      //aggregation
-      INT32 getHostConfigOfCluster( const string &clusterName,
-                                    BSONObj &config ) ;
 
       //trans
       INT32 addPackageOfHosts( set<string> &hostList,

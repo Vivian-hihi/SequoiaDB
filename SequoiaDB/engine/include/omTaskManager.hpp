@@ -118,29 +118,29 @@ namespace engine
 
    class omAddBusinessTask : public omTaskBase
    {
-      public:
-         omAddBusinessTask( INT64 taskID ) ;
-         virtual ~omAddBusinessTask() ;
+   public:
+      omAddBusinessTask( INT64 taskID ) ;
+      virtual ~omAddBusinessTask() ;
 
-      public:
-         virtual INT32     finish( BSONObj &resultInfo ) ;
+   public:
+      virtual INT32     finish( BSONObj &resultInfo ) ;
 
-         virtual INT32     getType() ;
+      virtual INT32     getType() ;
 
-         virtual INT64     getTaskID() ;
+      virtual INT64     getTaskID() ;
 
-         virtual INT32     checkUpdateInfo( const BSONObj &updateInfo ) ;
+      virtual INT32     checkUpdateInfo( const BSONObj &updateInfo ) ;
 
-      private:
-         INT32             _storeBusinessInfo( BSONObj &taskInfoValue ) ;
+   private:
+      INT32             _storeBusinessInfo( BSONObj &taskInfoValue ) ;
 
-         INT32             _updateBizHostInfo( const string &businessName ) ;
+      INT32             _updateBizHostInfo( const string &businessName ) ;
 
-         INT32             _storeConfigInfo( BSONObj &taskInfoValue ) ;
+      INT32             _storeConfigInfo( BSONObj &taskInfoValue ) ;
 
-      private:
-         INT64             _taskID ;
-         INT32             _taskType ;
+   private:
+      INT64             _taskID ;
+      INT32             _taskType ;
    } ;
 
    class omExtendBusinessTask : public omTaskBase
