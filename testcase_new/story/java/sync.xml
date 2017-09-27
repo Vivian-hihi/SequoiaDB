@@ -15,14 +15,14 @@
       <packages>
          <package name="com.sequoiadb.crud.backup" />
 		 <package name="com.sequoiadb.serial" />
-		 <package name="com.sequoiadb.cappedCL" />
+		 <package name="com.sequoiadb.cappedCL" />   
+		 <package name="com.sequoiadb.datasourceserial" />
       </packages>    
    </test>
    <test name="consistency" >
       <packages>
          <package name="com.sequoiadb.metadataconsistency.cluster"/>
       </packages>
-	  
    </test>
 </suite>
    
