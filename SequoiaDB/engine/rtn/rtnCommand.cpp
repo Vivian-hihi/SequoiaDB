@@ -545,6 +545,24 @@ namespace engine
                   "creation, rc = %d", FIELD_NAME_NAME, rc ) ;
          goto error ;
       }
+
+      // creating partition cl in standalone is meaningless
+      if ( SDB_ROLE_STANDALONE == pmdGetDBRole() )
+      {
+         if ( matcher.hasField( FIELD_NAME_SHARDINGKEY )     ||
+              matcher.hasField( FIELD_NAME_SHARDTYPE )       ||
+              matcher.hasField( FIELD_NAME_ENSURE_SHDINDEX ) ||
+              matcher.hasField( FIELD_NAME_ISMAINCL )        ||
+              matcher.hasField( FIELD_NAME_PARTITION )       ||
+              matcher.hasField( FIELD_NAME_DOMAIN_AUTO_SPLIT ) )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "Can't create partition cl in standalone, rc: %d",
+                    rc ) ;
+            goto error ;
+         }
+      }
+
       // ensure sharding key
       rc = rtnGetBooleanElement( matcher, FIELD_NAME_ENSURE_SHDINDEX,
                                  enSureIndex ) ;
@@ -555,6 +573,7 @@ namespace engine
       }
       PD_RC_CHECK( rc, PDERROR, "Field[%s] value is error in obj[%s]",
                    FIELD_NAME_ENSURE_SHDINDEX, matcher.toString().c_str() ) ;
+
       // if we want to create sharding key index, let's do it
       if ( enSureIndex )
       {
@@ -568,6 +587,7 @@ namespace engine
                       FIELD_NAME_SHARDINGKEY,
                       matcher.toString().c_str() ) ;
       }
+
       // check the attribute, we don't care the return code
       rtnGetBooleanElement ( matcher, FIELD_NAME_COMPRESSED,
                              isCompressed ) ;
