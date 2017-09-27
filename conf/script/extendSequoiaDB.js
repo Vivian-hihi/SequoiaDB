@@ -504,7 +504,8 @@ function _createNode( coordList, user, passwd, hostName, svcname, dbpath,
       rc = getLastError() ;
       if( rc )
       {
-         var error = new SdbError( rc, "Failed to create node" ) ;
+         var error = new SdbError( rc, sprintf( "Failed to create node ?[?:?]",
+                                                role, hostName, svcname ) ) ;
          PD_LOGGER.logTask( PDERROR, error ) ;
          throw error ;
       }

@@ -80,6 +80,9 @@ function _checkInstall( PD_LOGGER, md5, hostName, agentPort, installPath )
       {
          var fileObj = remote.getFile( md5File ) ;
          var remoteMd5 = fileObj.read() ;
+         remoteMd5 = remoteMd5.replace( /\r\n/g, '' ) ;
+         remoteMd5 = remoteMd5.replace( /\n/g, '' ) ;
+
          if ( md5 === remoteMd5 )
          {
             installStatus = 1 ;
@@ -126,6 +129,11 @@ function _getLocalPackageMd5( packagePath )
    }
 }
 
+function _getAgentPort( hostName )
+{
+   return Oma.getAOmaSvcName( hostName ) ;
+}
+
 function GeneratePlan( taskID )
 {
    var PD_LOGGER = new Logger( "sequoiasql-oltp.js" ) ;
@@ -150,7 +158,7 @@ function GeneratePlan( taskID )
 
    if( isTypeOf( planInfo[FIELD_HOST_INFO], "object" ) == false )
    {
-      var error = new SdbError( SDB_CLS_NOT_PRIMARY,
+      var error = new SdbError( SDB_SYS,
                                 sprintf( "Invalid argument, ? is not object",
                                          FIELD_HOST_INFO ) ) ;
       PD_LOGGER.logTask( PDERROR, error ) ;
@@ -165,7 +173,7 @@ function GeneratePlan( taskID )
       var installConfig = {} ;
       var hostInfo  = planInfo[FIELD_HOST_INFO][index] ;
       var hostName  = hostInfo[FIELD_HOSTNAME] ;
-      var agentPort = hostInfo[FIELD_AGENT_SERVICE] ;
+      var agentPort = _getAgentPort( hostName ) ;
       var installStatus = 0 ;
 
       if ( false == enforced )
@@ -223,7 +231,7 @@ function SendPackage( taskID )
 
    var installPacket = taskInfo[FIELD_INSTALL_PACKET] ;
    var hostName      = hostInfo[FIELD_HOSTNAME] ;
-   var agentPort     = hostInfo[FIELD_AGENT_SERVICE] ;
+   var agentPort     = _getAgentPort( hostName ) ;
    var destPath      = '/tmp/packet' ;
    var destFileAddr  = hostName + ':' + agentPort + '@' + destPath +
                        '/sequoiasql-oltp.run' ;
@@ -462,7 +470,7 @@ function run()
    var taskID = 0 ;
    var result = {} ;
 
-   taskID = BUS_JSON[TaskID] ;
+   taskID = BUS_JSON[FIELD_TASKID] ;
 
    PD_LOGGER.setTaskId( taskID ) ;
 
