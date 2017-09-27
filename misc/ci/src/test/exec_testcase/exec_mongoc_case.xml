@@ -152,7 +152,7 @@
                   <env key="LD_LIBRARY_PATH" path="@{ldlibrarypath}:@{testcasedir}/lib" />       
                   <env key="MONGOC_TEST_HOST" value="localhost:11817" />
                </exec>
-               <markinlog casename ="${testcasedir}/test-mongo" marktype="end"/>
+               <markinlog casename ="@{testcasedir}/test-mongo" marktype="end"/>
             </else>
          </if>
          
