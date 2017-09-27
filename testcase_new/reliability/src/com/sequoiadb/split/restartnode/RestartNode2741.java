@@ -11,7 +11,6 @@ import com.sequoiadb.commlib.SdbTestBase;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.NodeRestart;
-import com.sequoiadb.split.brokennetwork.Utils;
 import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.OperateTask;
 import com.sequoiadb.task.TaskMgr;
@@ -123,19 +122,16 @@ public class RestartNode2741 extends SdbTestBase {
             //比对结果
             if (isSplitComplete) {
             	//切分任务已执行完后，再执行源和目标数据量比对
-                DBCursor taskCursor = commSdb.listTasks((BSONObject) JSON.parse("{Name:'" + csName + "." + clName + "'}"), null, null, null);
-                while(taskCursor.hasNext()){
-                    int splitBound = getBound(commSdb);
+            	Utils.waitSplit(commSdb, cl.getFullName());
+            	int splitBound = getBound(commSdb);
 
-                    long destCount = getGroupData(commSdb, destGroupName);
-                    Assert.assertEquals(destCount, 6000 - splitBound);
+                long destCount = getGroupData(commSdb, destGroupName);
+                Assert.assertEquals(destCount, 6000 - splitBound);
 
-                    long srcCount = getGroupData(commSdb, srcGroupName);
-                    Assert.assertEquals(srcCount, splitBound);
-                    Assert.assertEquals(srcCount + destCount, totalCount);
-                    Assert.assertEquals(cl.getCount("{sk:{$gte:0,$lt:6000}}"), 6000);
-                }
-                taskCursor.close();
+                long srcCount = getGroupData(commSdb, srcGroupName);
+                Assert.assertEquals(srcCount, splitBound);
+                Assert.assertEquals(srcCount + destCount, totalCount);
+                Assert.assertEquals(cl.getCount("{sk:{$gte:0,$lt:6000}}"), 6000);
             }else {
             	//切分任务建立失败，数据全部在源组上
             	long srcCount = getGroupData(commSdb, srcGroupName);
