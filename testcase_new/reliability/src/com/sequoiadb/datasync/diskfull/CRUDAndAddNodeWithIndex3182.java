@@ -254,21 +254,21 @@ public class CRUDAndAddNodeWithIndex3182 extends SdbTestBase {
 
 		@Override
 		public void init() {
-
+		    db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+		    List<String> hosts = groupMgr.getAllHosts();
+		    Random ran = new Random();
+		    randomHost = hosts.get(ran.nextInt(hosts.size()));
+		    randomPort = ran.nextInt(reservedPortEnd - reservedPortBegin) + reservedPortBegin;
+		    Utils.makeReplicaLogFull(clGroupName);
+		    ReplicaGroup randomGroup = db.getReplicaGroup(clGroupName);
+		    String nodePath = SdbTestBase.reservedDir + "/data/" + randomPort;
+		    Node newNode = randomGroup.createNode(randomHost, randomPort, nodePath, (BSONObject) null);
+		    newNode.start();
 		}
 
 		@Override
 		public void exec() throws Exception {
-			db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-			List<String> hosts = groupMgr.getAllHosts();
-			Random ran = new Random();
-			randomHost = hosts.get(ran.nextInt(hosts.size()));
-			randomPort = ran.nextInt(reservedPortEnd - reservedPortBegin) + reservedPortBegin;
-			Utils.makeReplicaLogFull(clGroupName);
-			ReplicaGroup randomGroup = db.getReplicaGroup(clGroupName);
-			String nodePath = SdbTestBase.reservedDir + "/data/" + randomPort;
-			Node newNode = randomGroup.createNode(randomHost, randomPort, nodePath, (BSONObject) null);
-			newNode.start();
+		    // TODO: 正在同步
 		}
 
 		@Override
