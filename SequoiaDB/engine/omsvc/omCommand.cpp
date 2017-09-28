@@ -5683,17 +5683,13 @@ namespace engine
       }
 
       //get rest specified hosts list
+      rc = confBuilder->getHostNames( templateInfo, OM_BSON_HOST_INFO,
+                                      hostNames ) ;
+      if( rc )
       {
-         BSONObj hostList = templateInfo.getObjectField( OM_BSON_HOST_INFO ) ;
-
-         rc = confBuilder->getHostNames( hostList, OM_BSON_HOST_INFO,
-                                         hostNames ) ;
-         if( rc )
-         {
-            _errorMsg.setError( TRUE, omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ) ;
-            PD_LOG( PDERROR, "failed to get host names: rc=%d", rc ) ;
-            goto error ;
-         }
+         _errorMsg.setError( TRUE, omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ) ;
+         PD_LOG( PDERROR, "failed to get host names: rc=%d", rc ) ;
+         goto error ;
       }
 
       rc = confBuilder->generateConfig( deployProperty, buzTemplate,
@@ -6514,39 +6510,42 @@ namespace engine
    void omQueryTaskCommand::_modifyTaskInfo( BSONObj &task )
    {
       string clusterName ;
+      string businessType ;
       string businessName ;
+      string deployMod ;
       BSONObjBuilder resultBuilder ;
-      BSONElement businessEle ;
-      BSONElement clusterEle ;
-
-      BSONObj info ;
+      BSONObjBuilder newTaskInfo ;
       BSONObj tmp ;
-
+      BSONObj taskInfo ;
       BSONObj filter = BSON( OM_TASKINFO_FIELD_INFO << "" ) ;
 
-      clusterEle = task.getFieldDotted(
-                        OM_TASKINFO_FIELD_INFO"."OM_BSON_CLUSTER_NAME ) ;
-      if ( clusterEle.type() == String )
+      taskInfo = task.getObjectField( OM_TASKINFO_FIELD_INFO ) ;
+
+      clusterName  = taskInfo.getStringField( OM_BSON_CLUSTER_NAME ) ;
+      businessType = taskInfo.getStringField( OM_BSON_BUSINESS_TYPE ) ;
+      businessName = taskInfo.getStringField( OM_BSON_BUSINESS_NAME ) ;
+      deployMod    = taskInfo.getStringField( OM_BSON_DEPLOY_MOD ) ;
+
+      newTaskInfo.append( OM_BSON_CLUSTER_NAME, clusterName ) ;
+
+      if ( 0 < businessName.length() )
       {
-         clusterName  = clusterEle.String() ;
+         newTaskInfo.append( OM_BSON_BUSINESS_NAME, businessName ) ;
       }
 
-      businessEle = task.getFieldDotted(
-                      OM_TASKINFO_FIELD_INFO"."OM_BSON_BUSINESS_NAME ) ;
-      if ( businessEle.type() == String )
+      if ( 0 < businessType.length() )
       {
-         businessName = businessEle.String() ;
+         newTaskInfo.append( OM_BSON_BUSINESS_TYPE, businessType ) ;
+         newTaskInfo.append( OM_BSON_DEPLOY_MOD   , deployMod ) ;
       }
-
-      info = BSON( OM_BSON_CLUSTER_NAME  << clusterName <<
-                   OM_BSON_BUSINESS_NAME << businessName ) ;
 
       tmp = task.filterFieldsUndotted( filter, false ) ;
 
       resultBuilder.appendElements( tmp ) ;
+
       if ( task.hasField( OM_TASKINFO_FIELD_INFO ) )
       {
-         resultBuilder.append( OM_TASKINFO_FIELD_INFO, info ) ;
+         resultBuilder.append( OM_TASKINFO_FIELD_INFO, newTaskInfo.obj() ) ;
       }
 
       task = resultBuilder.obj() ;
