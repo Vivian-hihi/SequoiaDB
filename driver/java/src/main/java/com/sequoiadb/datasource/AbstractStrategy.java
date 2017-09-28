@@ -96,11 +96,11 @@ abstract class AbstractStrategy implements IConnectStrategy {
     }
 
     @Override
-    public void update(ItemStatus type, ConnItem item, int change) {
+    public void update(ItemStatus itemStatus, ConnItem connItem, int incDecItemCount) {
         _lockForConnItemList.lock();
         try {
-            if (type == ItemStatus.IDLE && change > 0) {
-                _idleConnItemList.add(item);
+            if (itemStatus == ItemStatus.IDLE && incDecItemCount > 0) {
+                _idleConnItemList.add(connItem);
             }
         } finally {
             _lockForConnItemList.unlock();

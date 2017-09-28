@@ -23,7 +23,7 @@ interface IConnectStrategy {
     public String getAddress();
 
     /*
-     ItemStatus  change  meaning
+     ItemStatus  incDecItemCount  meaning
        IDLE      >0    one connection had been add to idle pool,
                        strategy need to record the info of that idle connection.
        IDLE      <0    one connection had been removed from idle pool,
@@ -35,7 +35,7 @@ interface IConnectStrategy {
      */
     // TODO: if user does not know which vector should the item be put to, strategy can't work.
     // TODO: so, it not a good interface, for user need to know about the detail of the strategy.
-    public void update(ItemStatus type, ConnItem item, int change);
+    public void update(ItemStatus itemStatus, ConnItem connItem, int incDecItemCount);
 
     public void addAddress(String addr);
 

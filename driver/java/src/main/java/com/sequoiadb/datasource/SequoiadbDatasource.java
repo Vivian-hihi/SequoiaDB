@@ -213,20 +213,27 @@ public class SequoiadbDatasource {
                 if (0 == _abnormalAddrs.size()) {
                     return;
                 }
-                Iterator<String> itr = _abnormalAddrs.iterator();
+                Iterator<String> abnormalAddressItr = _abnormalAddrs.iterator();
                 ConfigOptions nwOpt = new ConfigOptions();
                 String addr = "";
                 nwOpt.setConnectTimeout(100); // 100ms
                 nwOpt.setMaxAutoConnectRetryTime(0);
-                while (itr.hasNext()) {
+                while (abnormalAddressItr.hasNext()) {
+                    addr = abnormalAddressItr.next();
                     try {
-                        addr = itr.next();
                         @SuppressWarnings("unused")
                         Sequoiadb sdb = new Sequoiadb(addr, _username, _password, nwOpt);
+                        try {
+                            sdb.close();
+                        } catch (Exception e) {
+                            // do nothing
+                        }
                     } catch (BaseException e) {
                         continue;
                     }
-                    _abnormalAddrs.remove(addr);
+                    // remove the address from abnormal address set
+                    abnormalAddressItr.remove();
+                    // add the address to normal address set
                     _normalAddrs.add(addr);
                     _strategy.addAddress(addr);
                 }
