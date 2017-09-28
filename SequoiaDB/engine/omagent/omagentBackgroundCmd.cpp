@@ -124,6 +124,7 @@ namespace engine
          bob.append( OMA_FIELD_SSHPORT, _addHostInfo._item._sshPort.c_str() ) ;
          bob.append( OMA_FIELD_AGENTSERVICE, _addHostInfo._item._agentService.c_str() ) ;
          bob.append( OMA_FIELD_INSTALLPATH, _addHostInfo._item._installPath.c_str() ) ;
+         bob.append( OMA_FIELD_VERSION, _addHostInfo._item._version.c_str() ) ;
          subObj = bob.obj() ;
 
          // build retObj

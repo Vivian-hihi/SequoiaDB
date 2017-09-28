@@ -160,6 +160,133 @@ function _getLocalDBPacketMD5( install_packet )
    }
 }
 
+function _getSdbVersion()
+{
+   try
+   {
+      var cmd = new Cmd() ;
+      var sdbcmPath = adaptPath( installPath ) + OMA_PROG_BIN_SDBCM ;
+      var str = cmd.run( sdbcmPath + " --version ", "", OMA_GTE_VERSION_TIME ) ;
+      var beg = str.indexOf( OMA_MISC_OM_VERSION ) ;
+      var end = str.indexOf( '\n' ) ;
+      var len = OMA_MISC_OM_VERSION.length ;
+
+      version = str.substring( beg + len, end ) ;
+   }
+   catch ( e )
+   {
+      // version 1.8 sp1 and other versions older then 1.8 need this error msg
+      if ( ( (1 == e) && (null == str) ) || ( SDB_TIMEOUT) == e )
+         errMsg = "The OM Agent is not compatible" ;
+      else
+         errMsg = "Failed to get OM Agent's version" ;
+      SYSEXPHANDLE( e ) ;
+      rc = GETLASTERROR() ;
+      PD_LOG( arguments, PDERROR, FILE_NAME_CHECK_HOST,
+              sprintf( errMsg + ", rc: ?, detail: ?", rc, GETLASTERRMSG() ) ) ;
+      exception_handle( rc, errMsg ) ;
+   }
+
+   return version.split( '.' ) ;
+}
+
+function _getLocalInstallPath()
+{
+   var installPath ;
+
+   try
+   {
+      var localInstallInfo = eval( '(' + Oma.getOmaInstallInfo() + ')' ) ;
+      if ( null == localInstallInfo || "undefined" == typeof( localInstallInfo ) )
+         exception_handle( SDB_INVALIDARG, "Invalid db install info in localhost" ) ;
+      installPath = localInstallInfo[INSTALL_DIR] ;
+   }
+   catch ( e )
+   {
+      // when no install info in /etc/default/sequoiadb
+      SYSEXPHANDLE( e ) ;
+      errMsg = sprintf( "Failed to get db install info in localhost[?]", localIP ) ;
+      rc = GETLASTERROR() ;
+      PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_ADD_HOST_CHECK_INFO,
+               sprintf( errMsg + ", rc: ?, detail: ?", rc, GETLASTERRMSG() ) ) ;
+      exception_handle( rc, errMsg ) ;
+   }
+
+   return installPath ;
+}
+
+function _getLocalVersion()
+{
+   var installPath = _getLocalInstallPath() ;
+   var version ;
+
+   try
+   {
+      var cmd = new Cmd() ;
+      var sdbcmPath = adaptPath( installPath ) + OMA_PROG_BIN_SDBCM ;
+      var str = cmd.run( sdbcmPath + " --version ", "", OMA_GTE_VERSION_TIME ) ;
+      var beg = str.indexOf( OMA_MISC_OM_VERSION ) ;
+      var end = str.indexOf( '\n' ) ;
+      var len = OMA_MISC_OM_VERSION.length ;
+
+      version = str.substring( beg + len, end ) ;
+   }
+   catch ( e )
+   {
+      // version 1.8 sp1 and other versions older then 1.8 need this error msg
+      if ( ( (1 == e) && (null == str) ) || ( SDB_TIMEOUT) == e )
+         errMsg = "The OM Agent is not compatible" ;
+      else
+         errMsg = "Failed to get OM Agent's version" ;
+      SYSEXPHANDLE( e ) ;
+      rc = GETLASTERROR() ;
+      PD_LOG( arguments, PDERROR, FILE_NAME_CHECK_HOST,
+              sprintf( errMsg + ", rc: ?, detail: ?", rc, GETLASTERRMSG() ) ) ;
+      exception_handle( rc, errMsg ) ;
+   }
+
+   return version.split( '.' ) ;
+}
+
+function _checkCompatible( remoteVersion, omVersion )
+{
+   var installPath = _getLocalInstallPath() ;
+   var rc = false ;
+
+   try
+   {
+      var cmd = new Cmd() ;
+      var exec = adaptPath( installPath ) + 'compatible.sh' ;
+      var args = remoteVersion + ' E ' + omVersion + ' E --om' ;
+      var str = cmd.run( exec, args, OMA_GTE_VERSION_TIME ) ;
+      str = str.replace( /\r\n/g, '' ) ;
+      str = str.replace( /\n/g, '' ) ;
+      if ( str === 'true' )
+      {
+         rc = true ;
+      }
+      else if ( str !== 'false' )
+      {
+         rc = SDB_SYS ;
+         errMsg = sprintf( "Failed to get compatible", localIP ) ;
+         PD_LOG( arguments, PDERROR, FILE_NAME_CHECK_HOST,
+                 sprintf( errMsg + ", rc: ?, detail: ?", rc, GETLASTERRMSG() ) ) ;
+         exception_handle( rc, errMsg ) ;
+      }
+   }
+   catch ( e )
+   {
+      SYSEXPHANDLE( e ) ;
+      errMsg = sprintf( "Failed to get compatible", localIP ) ;
+      rc = GETLASTERROR() ;
+      PD_LOG( arguments, PDERROR, FILE_NAME_CHECK_HOST,
+              sprintf( errMsg + ", rc: ?, detail: ?", rc, GETLASTERRMSG() ) ) ;
+      exception_handle( rc, errMsg ) ;
+   }
+
+   return rc ;
+}
+
 /* *****************************************************************************
 @discretion: judge whether need to add current host
 @author: Tanzhaobo
@@ -304,22 +431,30 @@ function _needToAdd( ssh, install_packet, install_sdb_user, install_path, agentS
       PD_LOG2( task_id, arguments, PDWARNING, FILE_NAME_ADD_HOST, errMsg ) ;
       return true ;
    }
-   // get local install packet's md5
-   try
+
+   var remoteVersion = BUS_JSON[FIELD_HOST_INFO][Version].split( '.' ) ;
+   var localVersion  = _getLocalVersion() ;
+
+   if( remoteVersion.length < 2 )
    {
-      local_md5 = _getLocalDBPacketMD5( install_packet ) ;
+      return false ;
    }
-   catch( e )
+
+   remoteVersion = remoteVersion[0] + '.' + remoteVersion[1] ;
+   localVersion  = localVersion[0]  + '.' + localVersion[1] ;
+
+   if( _checkCompatible( remoteVersion, localVersion ) )
    {
-      return true ;
+      PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_ADD_HOST,
+               'version compatible' ) ;
+      return false ;
    }
-   if ( local_md5 != remote_md5 )
-   {
-      errMsg = sprintf( "Remote install info's md5[?] is not the same with the one[?] we " +
-                        "are going to install", remote_md5, local_md5 ) ;
-      PD_LOG2( task_id, arguments, PDWARNING, FILE_NAME_ADD_HOST, errMsg ) ;
-      return true ;
-   }
+
+   rc = SDB_SYS ;
+   errMsg = sprintf( "Version incompatible" ) ;
+   PD_LOG2( task_id, arguments, PDSEVERE, FILE_NAME_ADD_HOST,
+            sprintf( errMsg + ", rc: ?, detail: ?", rc, GETLASTERRMSG() ) ) ;
+   exception_handle( rc, errMsg ) ;
 
    return false ;
 }
@@ -699,6 +834,7 @@ function main()
    }
    else
    {
+
       PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_ADD_HOST,
                sprintf( "Need to install SequoiaDB in target host[?]", ip ) ) ;
       PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_ADD_HOST,

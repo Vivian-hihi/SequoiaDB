@@ -373,6 +373,14 @@ namespace engine
             PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                       "Get field[%s] failed, rc: %d",
                       OMA_FIELD_PASSWD, rc ) ;
+
+            {
+               BSONObj omaInfo = item.getObjectField( OMA_FIELD_OMA ) ;
+
+               hostInfo._item._version = omaInfo.getStringField(
+                                                         OMA_FIELD_VERSION ) ;
+            }
+
             hostInfo._item._passwd = pStr ;
             // SshPort
             rc = omaGetStringElement( item, OMA_FIELD_SSHPORT, &pStr ) ;
