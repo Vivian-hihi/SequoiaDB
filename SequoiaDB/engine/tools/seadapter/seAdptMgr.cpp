@@ -331,11 +331,21 @@ namespace engine
    {
       return 0 ;
    }
-   void _seIndexSessionMgr::_onPushMsgFailed( INT32 rc, const MsgHeader *pReq,
-                                              const NET_HANDLE &handle,
-                                              pmdAsyncSession *pSession )
+
+   INT32 _seIndexSessionMgr::onErrorHanding( INT32 rc,
+                                             const MsgHeader *pReq,
+                                             const NET_HANDLE &handle,
+                                             UINT64 sessionID,
+                                             pmdAsyncSession *pSession )
    {
-      // do nothing
+      INT32 ret = SDB_OK ;
+
+      if ( 0 == sessionID )
+      {
+         ret = rc ;
+      }
+
+      return ret ;
    }
 
    pmdAsyncSession* _seIndexSessionMgr::_createSession( SDB_SESSION_TYPE sessionType,

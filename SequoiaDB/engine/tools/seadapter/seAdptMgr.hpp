@@ -183,6 +183,12 @@ namespace engine
       virtual UINT64 makeSessionID( const NET_HANDLE &handle,
                                     const MsgHeader *header ) ;
 
+      virtual INT32  onErrorHanding( INT32 rc,
+                                     const MsgHeader *pReq,
+                                     const NET_HANDLE &handle,
+                                     UINT64 sessionID,
+                                     pmdAsyncSession *pSession ) ;
+
       INT64 getIndexVersion() { return _indexVersion; }
       INT32 updateIndexInfo( BSONObj &obj ) ;
       void  stopAllIndexer() ;
@@ -193,9 +199,7 @@ namespace engine
                                                INT32 opCode ) ;
       virtual BOOLEAN _canReuse( SDB_SESSION_TYPE sessionType ) ;
       virtual UINT32 _maxCacheSize() const ;
-      virtual void _onPushMsgFailed( INT32 rc, const MsgHeader *pReq,
-                                     const NET_HANDLE &handle,
-                                     pmdAsyncSession *pSession ) ;
+
       virtual pmdAsyncSession* _createSession( SDB_SESSION_TYPE sessionType,
                                                INT32 startType,
                                                UINT64 sessionID,
