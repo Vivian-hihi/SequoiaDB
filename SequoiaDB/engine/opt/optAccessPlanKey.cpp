@@ -222,8 +222,12 @@ namespace engine
       }
 
       PD_CHECK( !invalidMatcher, rc, error, PDERROR,
-                "The matcher %s is invalid",
+                "The matcher [%s] is invalid",
                 _query.toString( FALSE, TRUE ).c_str() ) ;
+
+      PD_LOG( PDDEBUG, "Failed to normalize query [%s] with normalizer, change "
+              "the cache level to OPT_PLAN_ORIGINAL, rc: %d",
+              _query.toString( FALSE, TRUE ).c_str(), rc ) ;
 
       // Ignore errors, goto full generation for original cache level
       _cacheLevel = OPT_PLAN_ORIGINAL ;

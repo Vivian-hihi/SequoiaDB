@@ -530,9 +530,15 @@ namespace engine
       try
       {
          rc = _parseObject( matcher ) ;
-         PD_RC_CHECK( rc, _invalidMatcher ? PDERROR : PDDEBUG,
-                      "Failed to parse query [%s], rc: %d",
-                      matcher.toString( FALSE, TRUE ).c_str(), rc ) ;
+         if ( SDB_OK != rc )
+         {
+            if ( _invalidMatcher )
+            {
+               PD_LOG( PDERROR, "Failed to parse query [%s], rc: %d",
+                       matcher.toString( FALSE, TRUE ).c_str(), rc ) ;
+            }
+            goto error ;
+         }
 
          if ( _itemNumber > 0 )
          {
@@ -622,11 +628,13 @@ namespace engine
                          SDB_INVALIDARG, invalidate, PDERROR,
                          "Failed to parse element [%s]",
                          element.toString( FALSE, TRUE ).c_str() ) ;
-               // Too complex for normalizer
-               PD_CHECK( Object != element.type() && Array != element.type(),
-                         SDB_INVALIDARG, error, PDDEBUG,
-                         "Failed to parse element [%s]",
-                         element.toString( FALSE, TRUE ).c_str() ) ;
+               if ( Object == element.type() ||
+                    Array == element.type() )
+               {
+                  // Too complex for normalizer to parse embedded objects
+                  rc = SDB_INVALIDARG ;
+                  goto error ;
+               }
                rc = _addOpItem( fieldName, EN_MATCH_OPERATOR_ET,
                                 MTH_OPERATOR_STR_ET, element,
                                 emptyFuncList ) ;
@@ -634,10 +642,16 @@ namespace engine
             }
          }
 
-         PD_RC_CHECK( rc, _invalidMatcher ? PDERROR : PDDEBUG,
-                      "Failed to parse element [%s], rc: %d",
+         if ( SDB_OK != rc )
+         {
+            if ( _invalidMatcher )
+            {
+               PD_LOG( PDERROR, "Failed to parse element [%s], rc: %d",
                       element.toString( FALSE, TRUE ).c_str(),
                       rc ) ;
+            }
+            goto error ;
+         }
       }
 
    done :
@@ -681,10 +695,16 @@ namespace engine
                }
             }
 
-            PD_RC_CHECK( rc, _invalidMatcher ? PDERROR : PDDEBUG,
-                         "Failed to parse element [%s], rc: %d",
+            if ( SDB_OK != rc )
+            {
+               if ( _invalidMatcher )
+               {
+                  PD_LOG( PDERROR, "Failed to parse element [%s], rc: %d",
                          arrayElement.toString( FALSE, TRUE ).c_str(),
                          rc ) ;
+               }
+               goto error ;
+            }
          }
       }
       catch ( std::exception &e )
@@ -781,7 +801,10 @@ namespace engine
                         funcList.clear() ;
                         regex = NULL ;
                         options = NULL ;
-                        PD_RC_CHECK( rc, PDDEBUG, "Failed to add item, rc: %d", rc ) ;
+                        if ( SDB_OK != rc )
+                        {
+                           goto error ;
+                        }
                      }
                   }
                   else if ( opCode == EN_MATCH_OPERATOR_OPTIONS )
@@ -797,7 +820,10 @@ namespace engine
                         funcList.clear() ;
                         regex = NULL ;
                         options = NULL ;
-                        PD_RC_CHECK( rc, PDDEBUG, "Failed to add item, rc: %d", rc ) ;
+                        if ( SDB_OK != rc )
+                        {
+                           goto error ;
+                        }
                      }
                   }
                   else
@@ -809,7 +835,10 @@ namespace engine
                         rc = _addRegexItem( fieldName, regex, "", funcList ) ;
                         funcList.clear() ;
                         regex = NULL ;
-                        PD_RC_CHECK( rc, PDDEBUG, "Failed to add item, rc: %d", rc ) ;
+                        if ( SDB_OK != rc )
+                        {
+                           goto error ;
+                        }
                      }
                      else if ( options != NULL )
                      {
@@ -818,15 +847,20 @@ namespace engine
                                 element.toString( FALSE, TRUE ).c_str() ) ;
                         goto invalidate ;
                      }
-                     PD_CHECK( Object != subElement.type() &&
-                               Array != subElement.type(),
-                               SDB_INVALIDARG, error, PDDEBUG,
-                               "Failed to parse element [%s]",
-                               subElement.toString( FALSE, TRUE ).c_str() ) ;
+                     if ( Object == subElement.type() ||
+                          Array == subElement.type() )
+                     {
+                        // Too complex for normalizer to parse embedded objects
+                        rc = SDB_INVALIDARG ;
+                        goto error ;
+                     }
                      rc = _addOpItem( fieldName, opCode, subFieldName,
                                       subElement, funcList ) ;
                      funcList.clear() ;
-                     PD_RC_CHECK( rc, PDDEBUG, "Failed to add item, rc: %d", rc ) ;
+                     if ( SDB_OK != rc )
+                     {
+                        goto error ;
+                     }
                   }
                }
                else if ( opCode >= EN_MATCH_FUNC_ABS &&
@@ -848,9 +882,8 @@ namespace engine
             PD_CHECK( funcList.empty(), SDB_INVALIDARG, invalidate, PDERROR,
                       "Failed to parse query: %s",
                       element.toString( FALSE, TRUE ).c_str() ) ;
+            // Too complex for normalizer to parse embedded objects
             rc = SDB_INVALIDARG ;
-            PD_LOG( PDDEBUG, "Failed to parse element [%s]",
-                      element.toString( FALSE, TRUE ).c_str() ) ;
             goto error ;
          }
          else
@@ -863,7 +896,10 @@ namespace engine
                funcList.clear() ;
                regex = NULL ;
                options = NULL ;
-               PD_RC_CHECK( rc, PDDEBUG, "Failed to add item, rc: %d", rc ) ;
+               if ( SDB_OK != rc )
+               {
+                  goto error ;
+               }
             }
             else if ( options != NULL )
             {

@@ -165,12 +165,12 @@ namespace engine
 
       // Normalize the query with simple parser
       rc = _normalizer.normalize( query, normalBuilder, parameters ) ;
-      PD_RC_CHECK( rc, PDDEBUG, "Failed to normalize query [%s] with simple "
-                   "parser, rc: %d", query.toString( FALSE, TRUE ).c_str(),
-                   rc ) ;
+      invalidMatcher = _normalizer.isInvalidMatcher() ;
+      PD_RC_CHECK( rc, invalidMatcher ? PDERROR : PDDEBUG,
+                   "Failed to normalize query [%s] with normalizer, rc: %d",
+                   query.toString( FALSE, TRUE ).c_str(), rc ) ;
 
    done :
-      invalidMatcher = _normalizer.isInvalidMatcher() ;
       PD_TRACE_EXITRC( SDB__MTHHELP_GENSIMMTH, rc ) ;
       return rc ;
 
