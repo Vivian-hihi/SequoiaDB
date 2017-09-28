@@ -1177,19 +1177,22 @@ namespace engine
       while ( itr != _vecInnerSessionParam.end() )
       {
          seAdptSessionInfo &info = *itr ;
-         if ( info.type != type || pSessionMgr->getSession( info.sessionID,
-                                                            info.startType,
-                                                            NET_INVALID_HANDLE,
-                                                            FALSE, 0, NULL ) )
+         if ( info.type != type ||
+              SDB_OK == pSessionMgr->getSession( info.sessionID,
+                                                 info.startType,
+                                                 NET_INVALID_HANDLE,
+                                                 FALSE, 0, NULL,
+                                                 NULL ) )
          {
             ++itr ;
             continue ;
          }
 
-         pSession = pSessionMgr->getSession( info.sessionID, info.startType,
-                                             NET_INVALID_HANDLE, TRUE, 0,
-                                             info.data ) ;
-         if ( pSession )
+         rc = pSessionMgr->getSession( info.sessionID, info.startType,
+                                       NET_INVALID_HANDLE, TRUE, 0,
+                                       info.data,
+                                       &pSession ) ;
+         if ( SDB_OK == rc )
          {
             PD_LOG( PDEVENT, "Create inner session[%s] succeed",
                     pSession->sessionName() ) ;
@@ -1197,9 +1200,8 @@ namespace engine
             continue ;
          }
 
-         PD_LOG( PDERROR, "Create inner session[TID:%d] failed",
-                 info.innerTid ) ;
-         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Create inner session[TID:%d] failed, rc: %d",
+                 info.innerTid, rc ) ;
          ++itr ;
       }
 
