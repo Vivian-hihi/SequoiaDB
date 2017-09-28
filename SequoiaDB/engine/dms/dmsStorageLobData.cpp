@@ -365,16 +365,17 @@ namespace engine
                  rightSize ) ;
 
          INT64 extentSize = rightSize - _fileSz ;
+         INT64 tmpFileSz = _fileSz ;
          rc = extend( extentSize ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "Extend file[%s] to size[%lld] from size[%lld] "
                     "failed, rc: %d", _fileName.c_str(), rightSize,
-                    _fileSz, rc ) ;
+                    tmpFileSz, rc ) ;
             goto error ;
          }
          PD_LOG( PDEVENT, "Extend file[%s] to size[%lld] from size[%lld] "
-                 "succeed", _fileName.c_str(), rightSize, _fileSz ) ;
+                 "succeed", _fileName.c_str(), rightSize, tmpFileSz ) ;
          reGetSize = TRUE ;
       }
 
