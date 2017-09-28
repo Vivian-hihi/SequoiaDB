@@ -80,7 +80,7 @@ error:
 }
 
 // get a slave data node which is on the same machine with coord
-INT32 createSlaveNode( sdbConnectionHandle db, sdbReplicaGroupHandle rg, sdbNodeHandle node, 
+INT32 createSlaveNode( sdbConnectionHandle db, sdbReplicaGroupHandle& rg, sdbNodeHandle& node, 
                        const CHAR** host, const CHAR** svc, const CHAR** nodeName, INT32* nodeId )
 {
    INT32 rc = SDB_OK ;
