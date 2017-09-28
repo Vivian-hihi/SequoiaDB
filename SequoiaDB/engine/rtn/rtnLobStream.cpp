@@ -1069,10 +1069,10 @@ namespace engine
          piecesInfoSize = _lobPieces.requiredMem() ;
          if( piecesInfoSize > DMS_LOB_META_PIECESINFO_LEN )
          {
-            PD_LOG( PDERROR, "LOB pieces info require memory more than %d bytes, "\
-                             "section num=%d, piecesInfo=%s",
-                             DMS_LOB_META_PIECESINFO_LEN,
-                             _lobPieces.sectionNum(), _lobPieces.toString().c_str() ) ;
+            PD_LOG( PDERROR, "LOB pieces info require memory more than %d "
+                    "bytes, section num=%d, piecesInfo=%s",
+                    DMS_LOB_META_PIECESINFO_LEN,
+                    _lobPieces.sectionNum(), _lobPieces.toString().c_str() ) ;
             rc = SDB_LOB_PIECESINFO_OVERFLOW ;
             goto error ;
          }
