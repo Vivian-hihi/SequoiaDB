@@ -71,12 +71,25 @@ namespace engine
       return SDB_SESSION_SE_AGENT ;
    }
 
-   void _seSvcSessionMgr::_onPushMsgFailed( INT32 rc, const MsgHeader *pReq,
-                                            const NET_HANDLE &handle,
-                                            pmdAsyncSession *pSession )
+   INT32 _seSvcSessionMgr::onErrorHanding( INT32 rc,
+                                           const MsgHeader *pReq,
+                                           const NET_HANDLE &handle,
+                                           UINT64 sessionID,
+                                           pmdAsyncSession *pSession )
    {
-      // In case of error, let reply the error to the client.
-      _reply( handle, rc, pReq ) ;
+      INT32 ret = SDB_OK ;
+
+      if ( 0 != sessionID )
+      {
+         // In case of error, let reply the error to the client.
+         ret = _reply( handle, rc, pReq ) ;
+      }
+      else
+      {
+         ret = rc  ;
+      }
+
+      return ret ;
    }
 
    pmdAsyncSession* _seSvcSessionMgr::_createSession( SDB_SESSION_TYPE sessionType,

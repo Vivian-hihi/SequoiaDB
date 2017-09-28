@@ -85,6 +85,12 @@ namespace engine
       virtual UINT64 makeSessionID( const NET_HANDLE &handle,
                                     const MsgHeader *header ) ;
 
+      virtual INT32  onErrorHanding( INT32 rc,
+                                     const MsgHeader *pReq,
+                                     const NET_HANDLE &handle,
+                                     UINT64 sessionID,
+                                     pmdAsyncSession *pSession ) ;
+
    protected:
       virtual SDB_SESSION_TYPE _prepareCreate( UINT64 sessionID,
                                                INT32 startType,
@@ -98,9 +104,6 @@ namespace engine
       {
          return 0 ;
       }
-      virtual void _onPushMsgFailed( INT32 rc, const MsgHeader *pReq,
-                                     const NET_HANDLE &handle,
-                                     pmdAsyncSession *pSession ) ;
 
       // Called by the thread of EDU_TYPE_SE_SERVICE, when a new connection
       // comes.
