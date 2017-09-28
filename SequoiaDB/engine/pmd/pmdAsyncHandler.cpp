@@ -246,7 +246,8 @@ namespace engine
       // if opcode is disconnect or interrupt, we don't expect to create
       // new session
       if ( MSG_BS_DISCONNECT == header->opCode ||
-           MSG_BS_INTERRUPTE == header->opCode )
+           MSG_BS_INTERRUPTE == header->opCode ||
+           MSG_BS_INTERRUPTE_SELF == header->opCode )
       {
          bCreate = FALSE ;
       }
@@ -256,13 +257,14 @@ namespace engine
       // Find the associated session if exist
       // If the session doesn't exist, we'll check bCreate, if bCreate=TRUE it
       // will create one, otherwise will not
-      pSession = _pSessionMgr->getSession( sessionID ,
-                                           PMD_SESSION_PASSIVE,
-                                           handle, bCreate,
-                                           header->opCode,
-                                           NULL ) ;
+      rc = _pSessionMgr->getSession( sessionID ,
+                                     PMD_SESSION_PASSIVE,
+                                     handle, bCreate,
+                                     header->opCode,
+                                     NULL,
+                                     &pSession ) ;
       // Determine whether a session is created or retreived
-      if ( NULL == pSession )
+      if ( rc )
       {
          // If session is not retreived
          if ( !bCreate )
@@ -272,15 +274,23 @@ namespace engine
                _pSessionMgr->onNoneSessionDisconnect( sessionID ) ;
             }
             // It's okay if we don't expect one
+            rc = SDB_OK ;
             goto done ;
          }
          // Otherwise log the message
-         PD_LOG ( PDERROR, "Failed to create session[ID:%lld]",
-                  sessionID ) ;
-         // if pSession is not allocated, there is only one possible scenario
-         // that is out of memory
-         rc = SDB_OOM ;
-         goto error ;
+         PD_LOG ( PDERROR, "Failed to create session[ID:%lld], rc: %d",
+                  sessionID, rc ) ;
+
+         rc = _pSessionMgr->onErrorHanding( rc, header, handle,
+                                            sessionID, NULL ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+         else
+         {
+            goto done ;
+         }
       }
 
       // On recieve
@@ -322,14 +332,24 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG ( PDERROR, "Failed to push message, rc = %d", rc ) ;
-         goto error ;
+
+         rc = _pSessionMgr->onErrorHanding( rc, header, handle,
+                                            sessionID, pSession ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+         else
+         {
+            goto done ;
+         }
       }
 
    done:
       PD_TRACE_EXITRC ( SDB__PMDMSGHND_HNDSNMSG, rc ) ;
-      return rc;
+      return rc ;
    error:
-      goto done;
+      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDMSGHND_HNDMAINMSG, "_pmdAsyncMsgHandler::_handleMainMsg" )
@@ -352,7 +372,16 @@ namespace engine
          PD_LOG ( PDERROR, "Failed to allocate memory for new msg for %d bytes",
                   header->messageLength ) ;
          rc = SDB_OOM ;
-         goto error ;
+
+         rc = _pSessionMgr->onErrorHanding( rc, header, handle, 0, NULL ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+         else
+         {
+            goto done ;
+         }
       }
 
       newHeader = ( MsgHeader * )newMsg ;
