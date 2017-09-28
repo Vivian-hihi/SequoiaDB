@@ -43,13 +43,16 @@ protected:
    void TearDown()
    {
       INT32 rc = SDB_OK ;
-   
-      for( INT32 i = 0;i < ThreadNum;++i )
-      {
-         rc = sdbRemoveReplicaGroup( db, rgName[i] ) ;
-         ASSERT_EQ( SDB_OK, rc ) << "fail to remove rg " << rgName[i] ;
-         sdbReleaseReplicaGroup( rg[i] ) ;
-         free( rgName[i] ) ;
+  
+      if( !HasFailure() )
+      { 
+         for( INT32 i = 0;i < ThreadNum;++i )
+         {
+            rc = sdbRemoveReplicaGroup( db, rgName[i] ) ;
+            ASSERT_EQ( SDB_OK, rc ) << "fail to remove rg " << rgName[i] ;
+            sdbReleaseReplicaGroup( rg[i] ) ;
+            free( rgName[i] ) ;
+         }
       }
       testBase::TearDown() ;
    }

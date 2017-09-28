@@ -65,16 +65,19 @@ protected:
    void TearDown()
    {
       INT32 rc = SDB_OK ;
-   
-      rc = sdbRemoveReplicaGroup( db, rgName ) ;
-      ASSERT_EQ( SDB_OK, rc ) << "fail to remove rg " << rgName ;
-      for( INT32 i = 0;i < ThreadNum;++i )
-      {  
-         sdbReleaseNode( node[i] ) ;
-         free( svcName[i] ) ;
-         free( dbPath[i] ) ;
+
+      if( !HasFailure() )
+      {   
+         rc = sdbRemoveReplicaGroup( db, rgName ) ;
+         ASSERT_EQ( SDB_OK, rc ) << "fail to remove rg " << rgName ;
+         for( INT32 i = 0;i < ThreadNum;++i )
+         {  
+            sdbReleaseNode( node[i] ) ;
+            free( svcName[i] ) ;
+            free( dbPath[i] ) ;
+         }
+         sdbReleaseReplicaGroup( rg ) ;
       }
-      sdbReleaseReplicaGroup( rg ) ;
       testBase::TearDown() ;
    }
 } ;

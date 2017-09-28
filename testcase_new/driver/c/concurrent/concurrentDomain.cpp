@@ -60,13 +60,15 @@ protected:
    void TearDown()
    {
       INT32 rc = SDB_OK ;
-               
-      for( INT32 i = 0;i < ThreadNum;i++ )
-      {        
-         rc = sdbDropDomain( db, domainName[i] ) ;
-         ASSERT_EQ( SDB_OK, rc ) << "fail to drop domain " << domainName[i] ;
-         sdbReleaseDomain( domain[i] ) ;
-         free( domainName[i] ) ;
+      if( !HasFailure() )
+      {              
+         for( INT32 i = 0;i < ThreadNum;i++ )
+         {        
+            rc = sdbDropDomain( db, domainName[i] ) ;
+            ASSERT_EQ( SDB_OK, rc ) << "fail to drop domain " << domainName[i] ;
+            sdbReleaseDomain( domain[i] ) ;
+            free( domainName[i] ) ;
+         }
       }
       testBase::TearDown() ;
    }
