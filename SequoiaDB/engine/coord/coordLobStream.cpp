@@ -1398,7 +1398,16 @@ namespace engine
             }
          }
 
-         rc = _getReply( cb, TRUE, tag ) ;
+         if ( isReadonly() )
+         {
+            set< INT32 > setIgnore ;
+            setIgnore.insert( SDB_RTN_CONTEXT_NOTEXIST ) ;
+            rc = _getReply( cb, TRUE, tag, &setIgnore ) ;
+         }
+         else
+         {
+            rc = _getReply( cb, TRUE, tag ) ;
+         }
          pCtrl->incRetry() ;
          if ( SDB_OK != rc )
          {
@@ -1697,7 +1706,8 @@ namespace engine
    //PD_TRACE_DECLARE_FUNCTION( COORD_LOBSTREAM_GETREPLY, "_coordLobStream::_getReply" )
    INT32 _coordLobStream::_getReply( _pmdEDUCB *cb,
                                      BOOLEAN nodeSpecified,
-                                     INT32 &tag )
+                                     INT32 &tag,
+                                     set< INT32 > *pIgoreErr )
    {
       INT32 rc = SDB_OK ;
       INT32 flags = SDB_OK ;
@@ -1731,7 +1741,8 @@ namespace engine
          flags = pReply->flags ;
          id = pReply->header.routeID ;
 
-         if ( SDB_OK == flags )
+         if ( SDB_OK == flags ||
+              ( pIgoreErr && pIgoreErr->count( flags ) > 0 ) )
          {
             /// pReply will be released by _clearMsgData()    
             _results.push_back( pReply ) ;

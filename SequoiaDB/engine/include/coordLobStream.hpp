@@ -212,7 +212,8 @@ namespace engine
 
          INT32 _getReply( _pmdEDUCB *cb,
                           BOOLEAN nodeSpecified,
-                          INT32 &tag ) ;
+                          INT32 &tag,
+                          set< INT32 > *pIgoreErr = NULL ) ;
 
          void _clearMsgData() ;
 
