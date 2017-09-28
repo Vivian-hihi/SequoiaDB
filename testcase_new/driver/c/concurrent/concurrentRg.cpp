@@ -75,9 +75,9 @@ void func_rg( ThreadArg* arg )
    ASSERT_EQ( SDB_OK, rc ) ;
 
    CHAR svcName1[10] ;
-   sprintf( svcName1, "%d", atoi( ARGS->rsrvPortBegin() ) + i * 10 ) ;
+   sprintf( svcName1, "%d", atoi( ARGS->rsrvPortBegin() ) + 2 * i * 10 ) ;
    CHAR svcName2[10] ;
-   sprintf( svcName2, "%d", atoi( ARGS->rsrvPortBegin() ) + i * 10 + 10 ) ;
+   sprintf( svcName2, "%d", atoi( ARGS->rsrvPortBegin() ) + 2 * i * 10 + 10 ) ;
 
    CHAR dbPath1[100], dbPath2[100] ;
    sprintf( dbPath1, "%s%s%s", ARGS->rsrvNodeDir(), "data/", svcName1 ) ;
