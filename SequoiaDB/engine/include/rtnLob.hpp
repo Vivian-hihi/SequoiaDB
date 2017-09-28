@@ -72,6 +72,12 @@ namespace engine
                      UINT32 &read,
                      rtnContextBuf *errBuf = NULL ) ;
 
+   INT32 rtnLockLob( SINT64 contextID,
+                     pmdEDUCB *cb,
+                     INT64 offset,
+                     INT64 length,
+                     rtnContextBuf *errBuf = NULL ) ;
+
    INT32 rtnCloseLob( SINT64 contextID,
                       pmdEDUCB *cb,
                       rtnContextBuf *errBuf = NULL ) ;

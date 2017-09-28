@@ -75,6 +75,11 @@ namespace engine
       _rtnLobPiecesInfo() ;
       ~_rtnLobPiecesInfo() ;
 
+   private:
+      // disallow copy and assign
+      _rtnLobPiecesInfo( const _rtnLobPiecesInfo& ) ;
+      void operator=( const _rtnLobPiecesInfo& ) ;
+
    public:
       INT32          addPiece( UINT32 piece ) ;
       INT32          addPieces( const _rtnLobPieces& pieces ) ;

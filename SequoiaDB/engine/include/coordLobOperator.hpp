@@ -86,6 +86,22 @@ namespace engine
    typedef _coordReadLob coordReadLob ;
 
    /*
+      _coordLockLob define
+   */
+   class _coordLockLob : public _coordOperator
+   {
+      public:
+         _coordLockLob() ;
+         virtual ~_coordLockLob() ;
+      public:
+         virtual INT32 execute( MsgHeader *pMsg,
+                                pmdEDUCB *cb,
+                                INT64 &contextID,
+                                rtnContextBuf *buf ) ;
+   } ;
+   typedef _coordLockLob coordLockLob ;
+
+   /*
       _coordCloseLob define
    */
    class _coordCloseLob : public _coordOperator

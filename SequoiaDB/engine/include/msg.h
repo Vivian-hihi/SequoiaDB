@@ -327,6 +327,8 @@ enum MSG_TYPE
    MSG_BS_LOB_UPDATE_RES               = MAKE_REPLY_TYPE( MSG_BS_LOB_UPDATE_REQ ),
    MSG_BS_LOB_CLOSE_REQ                = 8006,
    MSG_BS_LOB_CLOSE_RES                = MAKE_REPLY_TYPE( MSG_BS_LOB_CLOSE_REQ ),
+   MSG_BS_LOB_LOCK_REQ                 = 8007,
+   MSG_BS_LOB_LOCK_RES                 = MAKE_REPLY_TYPE( MSG_BS_LOB_LOCK_REQ ),
    MSG_LOB_END                         = 8999,
 
    MSG_OM_BEGIN                        = 9000,

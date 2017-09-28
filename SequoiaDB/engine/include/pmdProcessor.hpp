@@ -93,6 +93,7 @@ namespace engine
          INT32                   _onWriteLobMsg( MsgHeader *msg ) ;
          INT32                   _onReadLobMsg( MsgHeader *msg,
                                                 rtnContextBuf &buffObj ) ;
+         INT32                   _onLockLobMsg( MsgHeader *msg ) ;
          INT32                   _onCloseLobMsg( MsgHeader *msg ) ;
          INT32                   _onRemoveLobMsg( MsgHeader *msg,
                                                   SDB_DPSCB *dpsCB ) ;

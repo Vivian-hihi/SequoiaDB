@@ -152,6 +152,9 @@ namespace engine
             case MSG_BS_LOB_READ_REQ:
                rc = _onReadLobMsg( msg, contextBuff ) ;
                break ;
+            case MSG_BS_LOB_LOCK_REQ:
+               rc = _onLockLobMsg( msg ) ;
+               break ;
             case MSG_BS_LOB_CLOSE_REQ:
                rc = _onCloseLobMsg( msg ) ;
                break ;
@@ -886,6 +889,37 @@ namespace engine
       goto done ;
    }
 
+   INT32 _pmdDataProcessor::_onLockLobMsg( MsgHeader *msg )
+   {
+      INT32 rc = SDB_OK ;
+      const MsgOpLob *header = NULL ;
+      INT64 offset = 0 ;
+      INT64 length = -1 ;
+
+      rc = msgExtractLockLobRequest( ( const CHAR * )msg, &header, &offset, &length ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to extract close msg:%d", rc ) ;
+         goto error ;
+      }
+
+      // add last op info
+      MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), msg->opCode,
+                          "ContextID:%lld", header->contextID ) ;
+
+      rc = rtnLockLob( header->contextID, eduCB(), offset, length ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to lock lob:%d", rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _pmdDataProcessor::_onCloseLobMsg( MsgHeader *msg )
    {
       INT32 rc = SDB_OK ;
@@ -1222,6 +1256,16 @@ namespace engine
          case MSG_BS_LOB_READ_REQ :
          {
             coordReadLob opr ;
+            rc = opr.init( pResource, eduCB() ) ;
+            PD_RC_CHECK( rc, PDERROR, "Init operator[%s] failed, rc: %d",
+                         opr.getName(), rc ) ;
+            needRollback = opr.needRollback() ;
+            rc = opr.execute( msg, eduCB(), contextID, &contextBuff ) ;
+            break ;
+         }
+         case MSG_BS_LOB_LOCK_REQ :
+         {
+            coordLockLob opr ;
             rc = opr.init( pResource, eduCB() ) ;
             PD_RC_CHECK( rc, PDERROR, "Init operator[%s] failed, rc: %d",
                          opr.getName(), rc ) ;

@@ -395,6 +395,60 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOCKLOB, "rtnLockLob" )
+   INT32 rtnLockLob( SINT64 contextID,
+                     pmdEDUCB *cb,
+                     INT64 offset,
+                     INT64 length,
+                     rtnContextBuf *errBuf )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNLOCKLOB ) ;
+      rtnContextLob *lobContext = NULL ;
+      SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
+      rtnContext *context = rtnCB->contextFind ( contextID, cb ) ;
+      if ( NULL == context )
+      {
+         PD_LOG ( PDERROR, "Context %lld does not exist", contextID ) ;
+         rc = SDB_RTN_CONTEXT_NOTEXIST ;
+         goto error ;
+      }
+
+      if ( RTN_CONTEXT_LOB != context->getType() )
+      {
+         PD_LOG( PDERROR, "It is not a lob context, invalid context type:%d"
+                 ", contextID:%lld", context->getType(), contextID ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      if ( offset < 0 || length < -1 )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "Invalid LOB section(offset:%lld, length:%lld)",
+                 offset, length ) ;
+         goto error ;
+      }
+
+      lobContext = ( rtnContextLob * )context ;
+      rc = lobContext->lock( cb, offset, length ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to lock lob, rc:%d", rc ) ;
+         if ( errBuf )
+         {
+            lobContext->getErrorInfo( rc, cb, *errBuf ) ;
+         }
+         goto error ;
+      }
+
+   done:
+      PD_TRACE_EXITRC( SDB_RTNLOCKLOB, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCLOSELOB, "rtnCloseLob" )
    INT32 rtnCloseLob( SINT64 contextID,
                       pmdEDUCB *cb,

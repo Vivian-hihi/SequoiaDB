@@ -38,6 +38,7 @@
 #include "rtnLobWindow.hpp"
 #include "rtnLobDataPool.hpp"
 #include "rtnLobPieces.hpp"
+#include "rtnLobSections.hpp"
 #include "msgDef.hpp"
 #include "../bson/bson.hpp"
 
@@ -75,6 +76,10 @@ namespace engine
                   _rtnContextBase *context,
                   _pmdEDUCB *cb,
                   UINT32 &read ) ;
+
+      INT32 lock( _pmdEDUCB *cb,
+                  INT64 offset,
+                  INT64 length ) ;
  
       /// buf may be invalid when do next read.
       /// copy data to your own buf if necessary.
@@ -129,6 +134,16 @@ namespace engine
                                    _pmdEDUCB *cb,
                                    _rtnContextBuf *buf )
       {
+      }
+
+      OSS_INLINE INT64 uniqueId() const
+      {
+         return _uniqueId ;
+      }
+
+      OSS_INLINE void setUniqueId( INT64 uniqueId )
+      {
+         _uniqueId = uniqueId ;
       }
 
    protected:
@@ -203,6 +218,10 @@ namespace engine
       virtual INT32 _completeLob( const _rtnLobTuple &tuple,
                                   _pmdEDUCB *cb ) = 0 ;
 
+      virtual INT32 _lock( _pmdEDUCB *cb,
+                           INT64 offset,
+                           INT64 length ) = 0 ;
+
       virtual INT32 _close( _pmdEDUCB *cb ) = 0 ;
 
       virtual INT32 _rollback( _pmdEDUCB *cb ) { return SDB_SYS ; }
@@ -240,6 +259,7 @@ namespace engine
                             _pmdEDUCB *cb ) ;
 
    private:
+      INT64                _uniqueId ;
       CHAR                 _fullName[ DMS_COLLECTION_SPACE_NAME_SZ +
                                       DMS_COLLECTION_NAME_SZ + 2 ] ;
       _dpsLogWrapper*      _dpsCB ;
@@ -257,6 +277,9 @@ namespace engine
 
       _rtnLobPiecesInfo    _lobPieces ;
       BOOLEAN              _hasPiecesInfo ;
+
+      _rtnLobSections      _lobSections ;
+      BOOLEAN              _wholeLobLocked ;
    } ;
    typedef class _rtnLobStream rtnLobStream ;
 }

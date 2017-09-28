@@ -2546,6 +2546,50 @@ error:
    goto done ;
 }
 
+// PD_TRACE_DECLARE_FUNCTION ( SDB_MSGEXTRACTLOCKLOBREQ, "msgExtractLockLobRequest" )
+INT32 msgExtractLockLobRequest( const CHAR *pBuffer, const MsgOpLob **header,
+                                INT64 *offset, INT64 *len )
+{
+   INT32 rc = SDB_OK ;
+   PD_TRACE_ENTRY( SDB_MSGEXTRACTLOCKLOBREQ ) ;
+   SDB_ASSERT( NULL != pBuffer && NULL != header &&
+               NULL != len && NULL != offset, "cat not be null" ) ;
+
+   BSONObj lob ;
+   BSONElement ele ;
+
+   rc = msgExtractLobRequest( pBuffer, header, lob, NULL, NULL ) ;
+   if ( SDB_OK != rc )
+   {
+      PD_LOG( PDERROR, "failed to extract lob msg:%d", rc ) ;
+      goto error ;
+   }
+
+   ele = lob.getField( FIELD_NAME_LOB_OFFSET ) ;
+   if ( NumberLong != ele.type() )
+   {
+      PD_LOG( PDERROR, "invalid offset type:%d", ele.type() ) ;
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+   *offset = ele.Long() ;
+
+   ele = lob.getField( FIELD_NAME_LOB_LENGTH ) ;
+   if ( NumberLong != ele.type() )
+   {
+      PD_LOG( PDERROR, "invalid length type:%d", ele.type() ) ;
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+   *len = ele.Long() ;
+
+done:
+   PD_TRACE_EXITRC( SDB_MSGEXTRACTLOCKLOBREQ, rc ) ;
+   return rc ;
+error:
+   goto done ;
+}
+
 // PD_TRACE_DECLARE_FUNCTION ( SDB_MSGEXTRACTCLOSELOBREQ, "msgExtractCloseLobRequest" )
 INT32 msgExtractCloseLobRequest( const CHAR *pBuffer, const MsgOpLob **header )
 {

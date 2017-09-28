@@ -62,7 +62,7 @@ namespace engine
       if ( _hasLobPrivilege )
       {
          sdbGetRTNLobAccessManager()->releaseAccessPrivilege(
-            getFullName(), getOID(), _getMode() ) ;
+            getFullName(), getOID(), _getMode(), uniqueId() ) ;
          _hasLobPrivilege = FALSE ;
       }
       if ( _mbContext && _su )
@@ -123,7 +123,7 @@ namespace engine
       }
 
       rc = sdbGetRTNLobAccessManager()->getAccessPrivilege(
-                  fullName, oid, mode, -1,
+                  fullName, oid, mode, uniqueId(),
                   SDB_LOB_MODE_WRITE == _getMode() ? &_accessInfo : NULL ) ;
       if ( SDB_OK != rc )
       {
@@ -808,6 +808,54 @@ namespace engine
       }
    done:
       PD_TRACE_EXITRC( SDB_RTNLOCALLOBSTREAM__QUERYANDINVALIDATEMETADATA, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnLocalLobStream::_lock( _pmdEDUCB *cb,
+                             INT64 offset,
+                             INT64 length )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN locked = TRUE ;
+
+      if ( -1 == uniqueId() )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "invalid unique id, rc=%d", rc ) ;
+         goto error ;
+      }
+
+      if ( SDB_LOB_MODE_WRITE != _getMode() )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "LOB can only be locked in write mode, rc=%d", rc ) ;
+         goto error ;
+      }
+
+      SDB_ASSERT( NULL != _accessInfo, "_accessInfo is null" ) ;
+
+      _accessInfo->lock() ;
+      locked = TRUE ;
+
+      rc = _accessInfo->lockSection( _rtnLobSection( offset, length, uniqueId() ) ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to lock section[%lld, %lld, %lld], rc=%d",
+                 offset, length, uniqueId(), rc ) ;
+         goto error ;
+      }
+
+      _accessInfo->unlock() ;
+      locked = FALSE ;
+
+   done:
+      if ( locked )
+      {
+         _accessInfo->unlock() ;
+         locked = FALSE ;
+      }
       return rc ;
    error:
       goto done ;

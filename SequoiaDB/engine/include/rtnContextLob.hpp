@@ -77,6 +77,10 @@ namespace engine
                    INT64 lobOffset,
                    _pmdEDUCB *cb ) ;
 
+      INT32 lock( _pmdEDUCB *cb,
+                  INT64 offset,
+                  INT64 length ) ;
+
       INT32 close( _pmdEDUCB *cb ) ;
 
       INT32 getLobMetaData( BSONObj &meta ) ;

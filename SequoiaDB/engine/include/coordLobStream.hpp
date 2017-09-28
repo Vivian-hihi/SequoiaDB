@@ -104,6 +104,10 @@ namespace engine
          virtual INT32 _removev( const RTN_LOB_TUPLES &tuples,
                                  _pmdEDUCB *cb ) ;
 
+         virtual INT32 _lock( _pmdEDUCB *cb,
+                              INT64 offset,
+                              INT64 length ) ;
+
          virtual INT32 _close( _pmdEDUCB *cb ) ;
 
       private:

@@ -1236,6 +1236,96 @@ namespace engine
       return rc ;
    }
 
+   //PD_TRACE_DECLARE_FUNCTION( COORD_LOBSTREAM_LOCK, "_coordLobStream::_lock" )
+   INT32 _coordLobStream::_lock( _pmdEDUCB *cb,
+                             INT64 offset,
+                             INT64 length )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( COORD_LOBSTREAM_LOCK ) ;
+
+      MsgOpLob header ;
+      UINT32 groupID = 0 ;
+      const subStream *sub = NULL ;
+      netIOVec iov ;
+      BSONObjBuilder builder ;
+      BSONObj obj ;
+
+      coordGroupSessionCtrl *pCtrl = _groupSession.getGroupCtrl() ;
+      pmdRemoteSession *pSession = _groupSession.getSession() ;
+      pmdSubSession *pSub = NULL ;
+
+      /// reset retry times
+      pCtrl->resetRetry() ;
+
+      builder.append( FIELD_NAME_LOB_OFFSET, offset )
+             .append( FIELD_NAME_LOB_LENGTH, length ) ;
+      obj = builder.obj() ;
+
+      _initHeader( header, MSG_BS_LOB_LOCK_REQ,
+                   ossRoundUpToMultipleX( obj.objsize(), 4 ),
+                   -1 ) ;
+      _pushLobHeader( &header, obj, iov ) ;
+
+      do
+      {
+         _clearMsgData() ;
+         INT32 tag = RETRY_TAG_NULL ;
+         header.version = _cataInfo->getVersion() ;
+         rc = _cataInfo->getLobGroupID( getOID(),
+                                        DMS_LOB_META_SEQUENCE,
+                                        groupID ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to get destination:%d", rc ) ;
+            goto error ;
+         }
+
+         RTN_COORD_LOB_GET_SUBSTREAM( groupID, sub ) ;
+         header.contextID = sub->contextID ;
+
+         pSub = pSession->addSubSession( sub->id.value ) ;
+         pSub->setReqMsg( &( header.header ), PMD_EDU_MEM_NONE ) ;
+         pSub->addIODatas( iov ) ;
+
+         rc = pSession->sendMsg( pSub ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Send msg to node[%d:%d] failed, rc:%d",
+                    sub->id.columns.groupID, sub->id.columns.nodeID, rc ) ;
+            goto error ;
+         }
+
+         rc = _getReply( cb, TRUE, tag ) ;
+         pCtrl->incRetry() ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to get reply msg, rc: %d", rc ) ;
+            goto error ;
+         }
+
+         if ( RETRY_TAG_NULL == tag )
+         {
+            break ;
+         }
+         else
+         {
+            rc = _reopenSubStreams( cb ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "Failed to reopen sub streams, rc: %d", rc ) ;
+               goto error ;
+            }
+         }
+      } while ( TRUE ) ;
+   done:
+      _clearMsgData() ;
+      PD_TRACE_EXITRC( COORD_LOBSTREAM_LOCK, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _coordLobStream::_close( _pmdEDUCB *cb )
    {
       return _closeSubStreams( cb, FALSE ) ;

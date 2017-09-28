@@ -325,7 +325,10 @@ INT32 msgExtractWriteLobRequest( const CHAR *pBuffer, const MsgOpLob **header,
                                  UINT32 *len, SINT64 *offset, const CHAR **data ) ;
 
 INT32 msgExtractReadLobRequest( const CHAR *pBuffer, const MsgOpLob **header,
-                                 UINT32 *len, SINT64 *offset ) ;
+                                UINT32 *len, SINT64 *offset ) ;
+
+INT32 msgExtractLockLobRequest( const CHAR *pBuffer, const MsgOpLob **header,
+                                INT64 *offset, INT64 *len ) ;
 
 INT32 msgExtractCloseLobRequest( const CHAR *pBuffer, const MsgOpLob **header ) ;
 

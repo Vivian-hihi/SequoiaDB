@@ -38,26 +38,28 @@ namespace engine
 {
    _rtnLobAccessInfo::_rtnLobAccessInfo( const bson::OID& oid,
                                          UINT32 mode,
-                                         INT64 contextId )
-      : _mode( mode ),
-        _refCount( 0 ),
-        _metaCache( NULL )
+                                         INT64 accessId )
+   : _mode( mode ),
+     _refCount( 0 ),
+     _metaCache( NULL ),
+     _lobSections( NULL )
    {
       _oid = oid ;
       if ( SDB_LOB_MODE_CREATEONLY == mode ||
            SDB_LOB_MODE_REMOVE == mode )
       {
-         _contextId = contextId ;
+         _accessId = accessId ;
       }
       else
       {
-         _contextId = -1 ;
+         _accessId = -1 ;
       }
    }
 
    _rtnLobAccessInfo::~_rtnLobAccessInfo()
    {
       SAFE_OSS_DELETE( _metaCache ) ;
+      SAFE_OSS_DELETE( _lobSections ) ;
    }
 
    void _rtnLobAccessInfo::setMetaCache( _rtnLobMetaCache* metaCache )
@@ -65,6 +67,103 @@ namespace engine
       SDB_ASSERT( NULL == _metaCache, "_metaCache is not null" ) ;
 
       _metaCache = metaCache ;
+   }
+
+   INT32 _rtnLobAccessInfo::lockSection( const _rtnLobSection& section )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( SDB_LOB_MODE_WRITE != _mode )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Only support in write mode, rc=%d", rc );
+         goto error ;
+      }
+
+      // whole lob is already locked
+      if ( -1 != _accessId )
+      {
+         if ( section.accessId != _accessId )
+         {
+            rc = SDB_LOB_LOCK_CONFLICTED ;
+            PD_LOG( PDERROR, "Whole LOB[%s] is already locked by [%lld], rc=%d",
+                    _oid.str().c_str(), _accessId, rc ) ;
+            goto error ;
+         }
+         else
+         {
+            // whole lob is locked by the same accessId
+            goto done ;
+         }
+      }
+
+      // lock whole lob
+      if ( -1 == section.length )
+      {
+         if ( NULL != _lobSections &&
+              _lobSections->conflicted( section.accessId ) )
+         {
+            rc = SDB_LOB_LOCK_CONFLICTED ;
+            PD_LOG( PDERROR, "Failed to lock whole LOB[%s], rc=%d",
+                    _oid.str().c_str(), rc ) ;
+            goto error ;
+         }
+
+         _accessId = section.accessId ;
+         goto done ;
+      }
+
+      if ( NULL == _lobSections )
+      {
+         _lobSections = SDB_OSS_NEW _rtnLobSections() ;
+         if ( NULL == _lobSections )
+         {
+            rc = SDB_OOM ;
+            PD_LOG( PDERROR, "Failed to create lob sections, rc=%d", rc ) ;
+            goto error ;
+         }
+      }
+
+      rc = _lobSections->addSection( section ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to add section, rc=%d", rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnLobAccessInfo::unlockSectionByAccessId( INT64 accessId )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( SDB_LOB_MODE_WRITE != _mode )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Only support in write mode, rc=%d", rc );
+         goto error ;
+      }
+
+      if ( -1 != _accessId && accessId == _accessId )
+      {
+         _accessId = -1 ;
+      }
+
+      if ( NULL == _lobSections )
+      {
+         goto done ;
+      }
+
+      _lobSections->delSectionById( accessId ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    _rtnLobAccessManager::_rtnLobAccessManager()
@@ -91,7 +190,7 @@ namespace engine
    INT32 _rtnLobAccessManager::getAccessPrivilege( std::string clName,
                                                    const bson::OID& oid,
                                                    UINT32 mode,
-                                                   INT64 contextId,
+                                                   INT64 accessId,
                                                    _rtnLobAccessInfo** accessInfo )
    {
       INT32 rc = SDB_OK ;
@@ -134,6 +233,13 @@ namespace engine
                   break ;
                }
             case SDB_LOB_MODE_WRITE:
+               if ( accessId <= -1 )
+               {
+                  rc = SDB_SYS ;
+                  PD_LOG( PDERROR, "Invalid LOB accessId[%lld] in write mode",
+                          accessId ) ;
+                  goto error ;
+               }
                if ( SDB_LOB_MODE_WRITE != mode )
                {
                   rc = SDB_LOB_IS_IN_USE ;
@@ -162,7 +268,7 @@ namespace engine
          else
          {
             _rtnLobAccessInfo* lobAccessInfo =
-               SDB_OSS_NEW _rtnLobAccessInfo( oid, mode, contextId ) ;
+               SDB_OSS_NEW _rtnLobAccessInfo( oid, mode, accessId ) ;
             if ( NULL == lobAccessInfo )
             {
                rc = SDB_OOM ;
@@ -203,7 +309,7 @@ namespace engine
    INT32 _rtnLobAccessManager::releaseAccessPrivilege( std::string clName,
                                                        const bson::OID& oid,
                                                        UINT32 mode,
-                                                       INT64 contextId )
+                                                       INT64 accessId )
    {
       INT32 rc = SDB_OK ;
       _rtnLobAccessKey key( clName, oid ) ;
@@ -227,15 +333,15 @@ namespace engine
             goto error ;
          }
 
-         if ( -1 != contextId &&
-              -1 != lobAccessInfo->getContextId() &&
-              contextId != lobAccessInfo->getContextId() )
+         if ( -1 != accessId &&
+              -1 != lobAccessInfo->getAccessId() &&
+              accessId != lobAccessInfo->getAccessId() )
          {
-            SDB_ASSERT( contextId != lobAccessInfo->getContextId(), 
-                        "incorrect contextId" ) ;
+            SDB_ASSERT( accessId != lobAccessInfo->getAccessId(), 
+                        "incorrect accessId" ) ;
             rc = SDB_SYS ;
-            PD_LOG( PDERROR, "Invalid LOB access contextId: %lld, %lld",
-                    contextId, lobAccessInfo->getContextId() ) ;
+            PD_LOG( PDERROR, "Invalid LOB access id: %lld, %lld",
+                    accessId, lobAccessInfo->getAccessId() ) ;
             goto error ;
          }
 
@@ -262,7 +368,22 @@ namespace engine
             }
             break ;
          case SDB_LOB_MODE_WRITE:
+            if ( accessId <= -1 )
+            {
+               rc = SDB_SYS ;
+               PD_LOG( PDERROR, "Invalid LOB accessId[%lld] in write mode",
+                       accessId ) ;
+               goto error ;
+            }
             lobAccessInfo->lock();
+            rc = lobAccessInfo->unlockSectionByAccessId( accessId ) ;
+            if ( SDB_OK != rc )
+            {
+               lobAccessInfo->unlock();
+               PD_LOG( PDERROR, "Failed to unlock LOB section by access id: %lld, rc=%d",
+                       accessId, rc ) ;
+               goto error ;
+            }
             lobAccessInfo->decRefCount() ;
             if ( lobAccessInfo->getRefCount() <= 0 )
             {

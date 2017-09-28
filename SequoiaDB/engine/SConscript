@@ -236,6 +236,7 @@ rtnFiles = [
       "rtn/rtnLobAccessManager.cpp",
       "rtn/rtnLobPieces.cpp",
       "rtn/rtnLobMetaCache.cpp",
+      "rtn/rtnLobSections.cpp",
       "rtn/rtnAlterFuncList.cpp",
       "rtn/rtnAlterFuncs.cpp",
       "rtn/rtnAlterRunner.cpp",

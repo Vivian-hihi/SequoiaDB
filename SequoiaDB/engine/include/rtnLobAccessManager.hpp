@@ -37,6 +37,7 @@
 #include "ossUtil.hpp"
 #include "utilConcurrentMap.hpp"
 #include "rtnLobMetaCache.hpp"
+#include "rtnLobSections.hpp"
 #include "../bson/bson.hpp"
 #include <string>
 
@@ -45,7 +46,7 @@ namespace engine
    class _rtnLobAccessInfo: public SDBObject
    {
    public:
-      _rtnLobAccessInfo( const bson::OID& oid, UINT32 mode, INT64 contextId = -1 ) ;
+      _rtnLobAccessInfo( const bson::OID& oid, UINT32 mode, INT64 accessId = -1 ) ;
       ~_rtnLobAccessInfo() ;
 
    private:
@@ -57,9 +58,8 @@ namespace engine
       OSS_INLINE const bson::OID&   getOID() const { return _oid ; }
       OSS_INLINE UINT32             getMode() const { return _mode ; }
       OSS_INLINE INT32              getRefCount() const { return _refCount ; }
-      OSS_INLINE INT64              getContextId() const { return _contextId ; }
+      OSS_INLINE INT64              getAccessId() const { return _accessId ; }
 
-   public:
       OSS_INLINE void lock()
       {
          _lock.get() ;
@@ -74,6 +74,9 @@ namespace engine
       }
       void setMetaCache( _rtnLobMetaCache* metaCache ) ;
 
+      INT32 lockSection( const _rtnLobSection& section ) ;
+      INT32 unlockSectionByAccessId( INT64 accessId ) ;
+
    private:
       OSS_INLINE void incRefCount() { _refCount++ ; }
       OSS_INLINE void decRefCount() { _refCount-- ; }
@@ -82,9 +85,10 @@ namespace engine
       bson::OID         _oid ;
       UINT32            _mode ;
       INT32             _refCount ;
-      INT64             _contextId ;
+      INT64             _accessId ;
       ossSpinXLatch     _lock ;
       _rtnLobMetaCache* _metaCache ;
+      _rtnLobSections*  _lobSections ;
 
       friend class _rtnLobAccessManager ;
    } ;
@@ -143,10 +147,10 @@ namespace engine
 
    public:
       INT32 getAccessPrivilege( std::string clName, const bson::OID& oid,
-                                      UINT32 mode, INT64 contextId = -1,
+                                      UINT32 mode, INT64 accessId = -1,
                                       _rtnLobAccessInfo** accessInfo = NULL ) ;
       INT32 releaseAccessPrivilege( std::string clName, const bson::OID& oid,
-                                           UINT32 mode, INT64 contextId = -1 ) ;
+                                           UINT32 mode, INT64 accessId = -1 ) ;
 
    private:
       RTN_LOB_MAP _lobMap ;

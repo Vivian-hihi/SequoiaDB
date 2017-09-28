@@ -167,6 +167,8 @@ namespace engine
 
          INT32 _onUpdateLobReq( MsgHeader *msg ) ;
 
+         INT32 _onLockLobReq( MsgHeader *msg ) ;
+
          INT32 _onCloseLobReq( MsgHeader *msg ) ;
 
          INT32 _onRemoveLobReq( MsgHeader *msg ) ;

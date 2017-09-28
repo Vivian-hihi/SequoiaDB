@@ -382,8 +382,6 @@ namespace engine
 
    INT32 _rtnLobPiecesInfo::readFrom( const CHAR* buf, INT32 length )
    {
-      INT32 rc = SDB_OK ;
-
       SDB_ASSERT( NULL != buf, "buf is null" ) ;
       SDB_ASSERT( length % sizeof(_rtnLobPieces) == 0, "incorrect length" ) ;
 

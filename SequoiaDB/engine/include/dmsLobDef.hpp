@@ -54,7 +54,6 @@ namespace engine
    #define DMS_LOB_VERSION_1                 1
    #define DMS_LOB_CUR_VERSION               2
    #define DMS_LOB_META_SEQUENCE             0
-   #define DMS_LOB_PIECESINFO_SEQUENCE       0xFFFFFFFF
 
    #define DMS_LOB_COMPLETE                  1
    #define DMS_LOB_UNCOMPLETE                0

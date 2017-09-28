@@ -80,6 +80,7 @@ namespace engine
       ON_MSG ( MSG_BS_LOB_OPEN_REQ, _onOPMsg )
       ON_MSG ( MSG_BS_LOB_WRITE_REQ, _onOPMsg )
       ON_MSG ( MSG_BS_LOB_READ_REQ, _onOPMsg )
+      ON_MSG ( MSG_BS_LOB_LOCK_REQ, _onOPMsg )
       ON_MSG ( MSG_BS_LOB_CLOSE_REQ, _onOPMsg )
       ON_MSG ( MSG_BS_LOB_REMOVE_REQ, _onOPMsg )
       ON_MSG ( MSG_CAT_GRP_CHANGE_NTY, _onCatalogChangeNtyMsg )
@@ -439,6 +440,9 @@ namespace engine
                break ;
             case MSG_BS_LOB_READ_REQ:
                rc = _onReadLobReq( msg, buffObj ) ;
+               break ;
+            case MSG_BS_LOB_LOCK_REQ:
+               rc = _onLockLobReq( msg ) ;
                break ;
             case MSG_BS_LOB_CLOSE_REQ:
                rc = _onCloseLobReq( msg ) ;
@@ -3354,9 +3358,105 @@ namespace engine
            SDB_CLS_DATA_NODE_CAT_VER_OLD != rc &&
            SDB_CLS_NO_CATALOG_INFO != rc )
       {
-         // Do not re-create
-         _pCollectionName = NULL ;
-         rtnCB->contextDelete( context->contextID(), _pEDUCB ) ;
+         // do not delete main shard context
+         if ( NULL == lobContext || !lobContext->isMainShard() )
+         {
+            // Do not re-create
+            _pCollectionName = NULL ;
+            rtnCB->contextDelete( context->contextID(), _pEDUCB ) ;
+         }
+      }
+      goto done ;
+   }
+
+   INT32 _clsShdSession::_onLockLobReq( MsgHeader *msg )
+   {
+      INT32 rc = SDB_OK ;
+      const MsgOpLob *header = NULL ;
+      rtnContextShdOfLob *lobContext = NULL ;
+      rtnContext *context = NULL ;
+      SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
+      INT64 offset = 0 ;
+      INT64 length = -1 ;
+
+      rc = msgExtractLockLobRequest( ( const CHAR * )msg, &header, &offset, &length ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to extract lock msg:%d", rc ) ;
+         goto error ;
+      }
+
+      context = rtnCB->contextFind ( header->contextID, eduCB() ) ;
+      if ( NULL == context )
+      {
+         PD_LOG ( PDERROR, "context %lld does not exist",
+                  header->contextID ) ;
+         rc = SDB_RTN_CONTEXT_NOTEXIST ;
+         goto error ;
+      }
+
+      if ( RTN_CONTEXT_SHARD_OF_LOB != context->getType() )
+      {
+         PD_LOG( PDERROR, "invalid context type:%d", context->getType() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      lobContext = ( rtnContextShdOfLob * )context ;
+      _pCollectionName = lobContext->getFullName() ;
+
+      // add last op info
+      MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), msg->opCode,
+                          "ContextID:%lld, Collection:%s",
+                          header->contextID, _pCollectionName ) ;
+
+      rc = _checkWriteStatus() ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDWARNING, "failed to check write status:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = _checkCLStatusAndGetSth( lobContext->getFullName(),
+                                    header->version,
+                                    &_isMainCL, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+      /// do not check version coz we will not
+      ///  change any thing except close the context.
+      lobContext = ( rtnContextShdOfLob * )context ;
+
+      // add last op info
+      MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), msg->opCode,
+                          "ContextID:%lld, Collection:%s",
+                          header->contextID,
+                          lobContext->getFullName() ) ;
+
+      rc = lobContext->lock( _pEDUCB, offset, length ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to lock lob:%d", rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      if ( NULL != context &&
+           SDB_CLS_COORD_NODE_CAT_VER_OLD != rc &&
+           SDB_CLS_DATA_NODE_CAT_VER_OLD != rc &&
+           SDB_CLS_NO_CATALOG_INFO != rc )
+      {
+         // do not delete main shard context
+         if ( NULL == lobContext || !lobContext->isMainShard() )
+         {
+            // Do not re-create
+            _pCollectionName = NULL ;
+            rtnCB->contextDelete( context->contextID(), _pEDUCB ) ;
+         }
       }
       goto done ;
    }
@@ -3502,9 +3602,13 @@ namespace engine
            SDB_CLS_DATA_NODE_CAT_VER_OLD != rc &&
            SDB_CLS_NO_CATALOG_INFO != rc )
       {
-         // Do not re-create
-         _pCollectionName = NULL ;
-         rtnCB->contextDelete ( context->contextID(), _pEDUCB ) ;
+         // do not delete main shard context
+         if ( NULL == lobContext || !lobContext->isMainShard() )
+         {
+            // Do not re-create
+            _pCollectionName = NULL ;
+            rtnCB->contextDelete ( context->contextID(), _pEDUCB ) ;
+         }
       }
       goto done ;
    }
@@ -3622,9 +3726,13 @@ namespace engine
            SDB_CLS_DATA_NODE_CAT_VER_OLD != rc &&
            SDB_CLS_NO_CATALOG_INFO != rc )
       {
-         // Do not re-create
-         _pCollectionName = NULL ;
-         rtnCB->contextDelete ( context->contextID(), _pEDUCB ) ;
+         // do not delete main shard context
+         if ( NULL == lobContext || !lobContext->isMainShard() )
+         {
+            // Do not re-create
+            _pCollectionName = NULL ;
+            rtnCB->contextDelete ( context->contextID(), _pEDUCB ) ;
+         }
       }
       goto done ;
    }
@@ -3745,9 +3853,13 @@ namespace engine
            SDB_CLS_DATA_NODE_CAT_VER_OLD != rc &&
            SDB_CLS_NO_CATALOG_INFO != rc )
       {
-         // Do not re-create
-         _pCollectionName = NULL ;
-         rtnCB->contextDelete( context->contextID(), _pEDUCB ) ;
+         // do not delete main shard context
+         if ( NULL == lobContext || !lobContext->isMainShard() )
+         {
+            // Do not re-create
+            _pCollectionName = NULL ;
+            rtnCB->contextDelete( context->contextID(), _pEDUCB ) ;
+         }
       }
       goto done ;
    }

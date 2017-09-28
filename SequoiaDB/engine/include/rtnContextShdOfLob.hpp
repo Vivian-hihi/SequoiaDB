@@ -88,6 +88,10 @@ namespace engine
                     const CHAR *data,
                     _pmdEDUCB *cb ) ;
 
+      INT32 lock( _pmdEDUCB *cb,
+                  INT64 offset,
+                  INT64 length ) ;
+
       INT32 close( _pmdEDUCB *cb ) ;
 
    public:
@@ -99,6 +103,11 @@ namespace engine
       INT32 getMode() const
       {
          return _mode ;
+      }
+
+      BOOLEAN isMainShard() const
+      {
+         return _isMainShd ;
       }
 
       SINT32 getVersion() const

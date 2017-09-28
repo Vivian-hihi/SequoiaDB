@@ -2562,5 +2562,13 @@
          </description>
       </code>
 
+      <code>
+         <name>SDB_LOB_LOCK_CONFLICTED</name>
+         <description>
+            <en>LOB lock is conflicted</en>
+            <cn>LOB锁冲突</cn>
+         </description>
+      </code>
+
    </codelist>
 </rclist>

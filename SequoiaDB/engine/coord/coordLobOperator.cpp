@@ -222,6 +222,57 @@ namespace engine
    }
 
    /*
+      _coordLockLob implement
+   */
+   _coordLockLob::_coordLockLob()
+   {
+      const static string s_name( "LockLob" ) ;
+      setName( s_name ) ;
+   }
+
+   _coordLockLob::~_coordLockLob()
+   {
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( COORD_LOCKLOB_EXE, "_coordLockLob::execute" )
+   INT32 _coordLockLob::execute( MsgHeader *pMsg,
+                                 pmdEDUCB *cb,
+                                 INT64 &contextID,
+                                 rtnContextBuf *buf )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( COORD_LOCKLOB_EXE ) ;
+      const MsgOpLob *header = NULL ;
+      INT64 offset = 0 ;
+      INT64 length = -1 ;
+      contextID = -1 ;
+
+      rc = msgExtractLockLobRequest( (const CHAR*)pMsg, &header, &offset, &length ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to extract msg:%d", rc ) ;
+         goto error ;
+      } 
+
+      // add last op info
+      MON_SAVE_OP_DETAIL( cb->getMonAppCB(), pMsg->opCode,
+                          "ContextID:%lld", header->contextID ) ;
+
+      rc = rtnLockLob( header->contextID, cb, offset, length, buf ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to lock lob:%d", rc ) ;
+         goto error ;
+      }
+
+   done:
+      PD_TRACE_EXITRC( COORD_LOCKLOB_EXE, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   /*
       _coordCloseLob implement
    */
    _coordCloseLob::_coordCloseLob()

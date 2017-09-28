@@ -801,6 +801,47 @@ namespace engine
                                 _w, _dpsCB, _su, _mbContext ) ;
    }
 
+   INT32 _rtnContextShdOfLob::lock( _pmdEDUCB *cb,
+                                    INT64 offset,
+                                    INT64 length )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN locked= FALSE ;
+
+      if ( SDB_LOB_MODE_WRITE != _mode )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "LOB can only be locked in write mode, rc=%d", rc ) ;
+         goto error ;
+      }
+
+      SDB_ASSERT( NULL != _accessInfo, "_accessInfo is null" ) ;
+
+      _accessInfo->lock() ;
+      locked = TRUE ;
+
+      rc = _accessInfo->lockSection( _rtnLobSection( offset, length, contextID() ) ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to lock section[%lld, %lld, %lld], rc=%d",
+                 offset, length, contextID(), rc ) ;
+         goto error ;
+      }
+
+      _accessInfo->unlock() ;
+      locked = FALSE ;
+
+   done:
+      if ( locked )
+      {
+         _accessInfo->unlock() ;
+         locked = FALSE ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _rtnContextShdOfLob::close( _pmdEDUCB *cb )
    {
       _isOpened = FALSE ;

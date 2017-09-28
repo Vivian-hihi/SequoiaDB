@@ -72,14 +72,16 @@ using namespace bson ;
 namespace engine
 {
    _rtnLobStream::_rtnLobStream()
-   :_dpsCB( NULL ),
+   :_uniqueId( -1 ),
+    _dpsCB( NULL ),
     _opened( FALSE ),
     _mode( 0 ),
     _flags( 0 ),
     _lobPageSz( DMS_DO_NOT_CREATE_LOB ),
     _logarithmic( 0 ),
     _offset( 0 ),
-    _hasPiecesInfo( FALSE )
+    _hasPiecesInfo( FALSE ),
+    _wholeLobLocked( FALSE )
    {
       ossMemset( _fullName, 0, DMS_COLLECTION_SPACE_NAME_SZ +
                                DMS_COLLECTION_NAME_SZ + 2 ) ;
@@ -404,6 +406,30 @@ namespace engine
          goto error ;
       }
 
+      if ( SDB_LOB_MODE_WRITE == _mode && !_wholeLobLocked )
+      {
+         if ( _lobSections.sectionNum() > 0 )
+         {
+            if ( !_lobSections.completelyContains( _rtnLobSection( _offset, len, uniqueId() ) ) )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR, "Write not locked section[%lld, %u] in write mode, rc=%d",\
+                       _offset, len, rc ) ;
+               goto error ;
+            }
+         }
+         else
+         {
+            // lock the whole lob
+            rc = lock( cb, 0, -1 ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "Failed to lock the whole lob, rc=%d", rc ) ;
+               goto error ;
+            }
+         }
+      }
+
       // re-array the data and try to get a complete piece.
       rc = _lw.prepare4Write( _offset, len, buf ) ;
       if ( SDB_OK != rc )
@@ -542,6 +568,68 @@ namespace engine
       return rc ;
    error:
       closeWithException( cb ) ;
+      goto done ;
+   }
+
+   INT32 _rtnLobStream::lock( _pmdEDUCB *cb,
+                              INT64 offset,
+                              INT64 length )
+   {
+      INT32 rc = SDB_OK ;
+      _rtnLobSection section( offset, length, uniqueId() ) ;
+
+      if ( SDB_LOB_MODE_WRITE != _mode )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "LOB can only be locked in write mode, rc=%d", rc ) ;
+         goto error ;
+      }
+
+      if ( 0 == length || length < -1 )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "Invalid lock length:%lld, rc=%d", length, rc ) ;
+         goto error ;
+      }
+
+      if ( _wholeLobLocked )
+      {
+         // nothing to do
+         goto done ;
+      }
+
+      if ( -1 != length && _lobSections.completelyContains( section ) )
+      {
+         // already lock
+         goto done ;
+      }
+
+      rc = _lock( cb, offset, length ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to lock LOB[%d] in (offset:%lld, length:%lld), rc=%d",
+                 _oid.str().c_str(), offset, length, rc) ;
+         goto error ;
+      }
+
+      if ( -1 == length )
+      {
+         _wholeLobLocked = TRUE ;
+      }
+      else
+      {
+         rc = _lobSections.addSection( section ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDWARNING, "Failed to add section in lob stream, rc=%d", rc ) ;
+            // It's OK because we already locked section in access manager
+            rc = SDB_OK ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
       goto done ;
    }
 
