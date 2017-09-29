@@ -424,11 +424,5 @@ namespace engine
    error:
       goto done ;
    }
-
-   _rtnLobAccessManager* sdbGetRTNLobAccessManager()
-   {
-      static _rtnLobAccessManager _lobAccessManager ;
-      return &_lobAccessManager ;
-   }
 }
 

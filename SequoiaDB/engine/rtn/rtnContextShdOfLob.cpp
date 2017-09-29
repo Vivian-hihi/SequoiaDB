@@ -233,7 +233,7 @@ namespace engine
 
       if ( _isMainShd )
       {
-         rc = sdbGetRTNLobAccessManager()->getAccessPrivilege(
+         rc = sdbGetRTNCB()->getLobAccessManager()->getAccessPrivilege(
                   _fullName, _oid, _mode, contextID(),
                   SDB_LOB_MODE_WRITE == _mode ? &_accessInfo : NULL ) ;
          if ( SDB_OK != rc )
@@ -869,7 +869,7 @@ namespace engine
 
       if ( _hasLobPrivilege )
       {
-         sdbGetRTNLobAccessManager()->releaseAccessPrivilege(
+         sdbGetRTNCB()->getLobAccessManager()->releaseAccessPrivilege(
             _fullName, _oid, _mode, contextID() ) ;
          _hasLobPrivilege = FALSE ;
       }

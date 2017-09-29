@@ -41,6 +41,7 @@
 #include "core.hpp"
 #include "oss.hpp"
 #include "rtnContext.hpp"
+#include "rtnLobAccessManager.hpp"
 #include "ossLatch.hpp"
 #include "ossAtomic.hpp"
 #include "pd.hpp"
@@ -94,6 +95,8 @@ namespace engine
       RTN_CTX_MAP          _contextMap ;
 
       optAccessPlanManager _accessPlanManager ;
+
+      _rtnLobAccessManager _lobAccessManager ;
 
       // The following members are used for communication with search engine
       // adapter when do text searching. Search engine adapter use the shard
@@ -235,6 +238,11 @@ namespace engine
       OSS_INLINE optAccessPlanManager *getAPM ()
       {
          return &_accessPlanManager ;
+      }
+
+      OSS_INLINE _rtnLobAccessManager* getLobAccessManager()
+      {
+         return &_lobAccessManager ;
       }
 
    } ;

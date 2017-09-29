@@ -61,7 +61,7 @@ namespace engine
    {
       if ( _hasLobPrivilege )
       {
-         sdbGetRTNLobAccessManager()->releaseAccessPrivilege(
+         sdbGetRTNCB()->getLobAccessManager()->releaseAccessPrivilege(
             getFullName(), getOID(), _getMode(), uniqueId() ) ;
          _hasLobPrivilege = FALSE ;
       }
@@ -122,7 +122,7 @@ namespace engine
          goto error ;
       }
 
-      rc = sdbGetRTNLobAccessManager()->getAccessPrivilege(
+      rc = sdbGetRTNCB()->getLobAccessManager()->getAccessPrivilege(
                   fullName, oid, mode, uniqueId(),
                   SDB_LOB_MODE_WRITE == _getMode() ? &_accessInfo : NULL ) ;
       if ( SDB_OK != rc )

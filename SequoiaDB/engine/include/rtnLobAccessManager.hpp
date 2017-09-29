@@ -157,7 +157,6 @@ namespace engine
    } ;
    typedef _rtnLobAccessManager rtnLobAccessManager ;
 
-   _rtnLobAccessManager* sdbGetRTNLobAccessManager() ;
 }
 
 #endif /* RTN_LOB_ACCESS_MANAGER_HPP_ */
