@@ -170,6 +170,8 @@ namespace engine
 
          virtual BOOLEAN isValid () const = 0 ;
 
+         virtual UINT64 getCreateTime () const = 0 ;
+
       protected :
          INT32 _evalKeyPair ( const dmsIndexStat *pIndexStat,
                               rtnStatPredList::iterator &predIter,
@@ -235,6 +237,11 @@ namespace engine
                                       INT32 majorType,
                                       BOOLEAN mixCmp,
                                       double &scanSelectivity ) const ;
+
+         OSS_INLINE virtual UINT64 getCreateTime () const
+         {
+            return ( isValid() ? _pIndexStat->getCreateTime() : 0 ) ;
+         }
 
       protected :
          const optCollectionStat &  _collectionStat ;
@@ -331,6 +338,11 @@ namespace engine
          OSS_INLINE virtual BOOLEAN isValid () const
          {
             return ( _pCollectionStat != NULL ) ;
+         }
+
+         OSS_INLINE virtual UINT64 getCreateTime () const
+         {
+            return ( isValid() ? _pCollectionStat->getCreateTime() : 0 ) ;
          }
 
          INT32 initCurStat ( _dmsMBContext *mbContext ) ;

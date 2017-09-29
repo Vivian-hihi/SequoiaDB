@@ -73,6 +73,10 @@ namespace engine
 #define OPT_NODE_FIELD_START_COST      "StartCost"
 #define OPT_NODE_FIELD_RUN_COST        "RunCost"
 #define OPT_NODE_FIELD_TOTAL_COST      "TotalCost"
+#define OPT_NODE_FIELD_CL_STAT_EST     "CLEstFromStat"
+#define OPT_NODE_FIELD_CL_STAT_TIME    "CLStatTime"
+#define OPT_NODE_FIELD_IX_STAT_EST     "IXEstFromStat"
+#define OPT_NODE_FIELD_IX_STAT_TIME    "IXStatTime"
 
 #define OPT_NODE_ALLOCATOR_SIZE        1024
 
@@ -332,6 +336,10 @@ namespace engine
          INT32             _estCacheSize ;
 
          BOOLEAN           _isCandidate ;
+
+         // If the estimation is based on statistics
+         BOOLEAN           _clFromStat ;
+         UINT64            _clStatTime ;
    } ;
 
    typedef class _optScanNode optScanNode ;
@@ -528,6 +536,10 @@ namespace engine
          // Number of records will be output from index
          // ( based on _predSelectivity )
          UINT64            _idxOutRecords ;
+
+         // If the estimation is based on statistics
+         BOOLEAN           _ixFromStat ;
+         UINT64            _ixStatTime ;
    } ;
 
    typedef class _optIxScanNode optIxScanNode ;

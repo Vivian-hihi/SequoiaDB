@@ -144,6 +144,9 @@ namespace engine
       _isCandidate = FALSE ;
 
       _estCacheSize = estCacheSize ;
+
+      _clFromStat = FALSE ;
+      _clStatTime = 0 ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTSCAN__PREEVAL, "_optScanNode::_preEvaluate" )
@@ -168,6 +171,12 @@ namespace engine
       matchHelper.getEstimation( collectionStat, _mthSelectivity, _mthCPUCost ) ;
 
       _outputNumFields = selector.nFields() ;
+
+      if ( collectionStat->isValid() )
+      {
+         _clFromStat = TRUE ;
+         _clStatTime = collectionStat->getCreateTime() ;
+      }
 
       PD_TRACE_EXIT( SDB_OPTSCAN__PREEVAL ) ;
    }
@@ -267,6 +276,10 @@ namespace engine
       _toInputBSON( builder ) ;
       _toOutputBSON( builder ) ;
       _toEstimateBSON( builder ) ;
+
+      builder.appendBool( OPT_NODE_FIELD_CL_STAT_EST, _clFromStat ) ;
+      builder.appendTimestamp( OPT_NODE_FIELD_CL_STAT_TIME, _clStatTime,
+                               ( _clStatTime - ( _clStatTime / 1000 * 1000 ) ) * 1000 ) ;
    }
 
    /*
@@ -309,6 +322,9 @@ namespace engine
 
       _idxReadRecords = 0 ;
       _idxOutRecords = 0 ;
+
+      _ixFromStat = FALSE ;
+      _ixStatTime = 0 ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTIXSCAN_PREEVAL, "_optIxScanNode::preEvaluate" )
@@ -367,6 +383,12 @@ namespace engine
             }
             break;
          }
+      }
+
+      if ( indexStat->isValid() )
+      {
+         _ixFromStat = TRUE ;
+         _ixStatTime = indexStat->getCreateTime() ;
       }
 
       PD_TRACE_EXIT( SDB_OPTIXSCAN_PREEVAL ) ;
@@ -442,6 +464,13 @@ namespace engine
       _toIndexBSON( builder ) ;
       _toOutputBSON( builder ) ;
       _toEstimateBSON( builder ) ;
+
+      builder.appendBool( OPT_NODE_FIELD_CL_STAT_EST, _clFromStat ) ;
+      builder.appendTimestamp( OPT_NODE_FIELD_CL_STAT_TIME, _clStatTime,
+                               ( _clStatTime - ( _clStatTime / 1000 * 1000 ) ) * 1000 ) ;
+      builder.appendBool( OPT_NODE_FIELD_IX_STAT_EST, _ixFromStat ) ;
+      builder.appendTimestamp( OPT_NODE_FIELD_IX_STAT_TIME, _ixStatTime,
+                               ( _ixStatTime - ( _ixStatTime / 1000 * 1000 ) ) * 1000 ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTIXSCAN_EVALPREDEST, "_optIxScanNode::_evalPredEstimation" )
