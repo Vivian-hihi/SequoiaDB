@@ -152,7 +152,7 @@ namespace engine
                   PD_PACK_STRING ( pCollectionName ),
                   PD_PACK_STRING ( pTargetName ),
                   PD_PACK_STRING ( pSourceName ),
-                  PD_PACK_STRING ( _splitKey.toString().c_str() ) ) ;
+                  PD_PACK_BSON ( _splitKey ) ) ;
 
    done:
       PD_TRACE_EXITRC ( SDB__CLSSPLIT_INIT, rc ) ;

@@ -38,8 +38,10 @@
 #include "ossUtil.hpp"
 #include "pdTraceAnalysis.hpp"
 #include "pd.hpp"
+#include "../bson/bson.h"
 #include <math.h>
 
+using namespace bson ;
 using namespace engine ;
 
 #define PD_FUNC_RECORD_TITLE \
@@ -1264,78 +1266,102 @@ INT32 _pdTraceParser::_outputTraceRecordByFMT( OSSFILE *out,
 
       switch ( pArgs->getType() )
       {
-       case PD_TRACE_ARGTYPE_NULL :
-         length += ossSnprintf( _pFormatBuf + length,
-                                _bufSize - length,
-                                "\tNULL"OSS_NEWLINE ) ;
-         break ;
-       case PD_TRACE_ARGTYPE_CHAR :
-         length += ossSnprintf( _pFormatBuf + length,
-                                _bufSize - length,
-                                "\t%c"OSS_NEWLINE,
-                                *(pArgs->argData()) ) ;
-         break ;
-       case PD_TRACE_ARGTYPE_BYTE :
-         length += ossSnprintf( _pFormatBuf + length,
-                                _bufSize - length,
-                                "\t0x%x"OSS_NEWLINE,
-                                (UINT32)(*(pArgs->argData())) ) ;
-         break ;
-       case PD_TRACE_ARGTYPE_SHORT :
-         length += ossSnprintf( _pFormatBuf + length,
-                                _bufSize - length,
-                                "\t%d"OSS_NEWLINE,
-                                (INT32)(*(INT16*)pArgs->argData()) ) ;
-         break ;
-       case PD_TRACE_ARGTYPE_USHORT :
-         length += ossSnprintf( _pFormatBuf + length,
-                                _bufSize - length,
-                                "\t%u"OSS_NEWLINE,
-                                (UINT32)(*(UINT16*)pArgs->argData()) ) ;
-         break ;
-       case PD_TRACE_ARGTYPE_INT :
-         length += ossSnprintf( _pFormatBuf + length,
-                                _bufSize - length,
-                                "\t%d"OSS_NEWLINE,
-                                *(INT32*)pArgs->argData() ) ;
-         break ;
-       case PD_TRACE_ARGTYPE_UINT :
-         length += ossSnprintf( _pFormatBuf + length,
-                                _bufSize - length,
-                                "\t%u"OSS_NEWLINE,
-                                *(UINT32*)pArgs->argData() ) ;
-         break ;
-       case PD_TRACE_ARGTYPE_LONG :
-         length += ossSnprintf( _pFormatBuf + length,
-                                _bufSize - length,
-                                "\t%lld"OSS_NEWLINE,
-                                *(INT64*)pArgs->argData() ) ;
-         break ;
-       case PD_TRACE_ARGTYPE_ULONG :
-         length += ossSnprintf( _pFormatBuf + length,
-                                _bufSize - length,
-                                "\t%llu"OSS_NEWLINE,
-                                *(UINT64*)pArgs->argData() ) ;
-         break ;
-       case PD_TRACE_ARGTYPE_FLOAT :
-         length += ossSnprintf( _pFormatBuf + length,
-                                _bufSize - length,
-                                "\t%f"OSS_NEWLINE,
-                                *(FLOAT32*)pArgs->argData() ) ;
-         break ;
-       case PD_TRACE_ARGTYPE_DOUBLE :
-         length += ossSnprintf( _pFormatBuf + length,
-                                _bufSize - length,
-                                "\t%f"OSS_NEWLINE,
-                                *(FLOAT64*)pArgs->argData() ) ;
-         break ;
-       case PD_TRACE_ARGTYPE_STRING :
-         length += ossSnprintf( _pFormatBuf + length,
-                                _bufSize - length,
-                                "\t%s"OSS_NEWLINE,
-                                pArgs->argData() ) ;
-         break ;
-       case PD_TRACE_ARGTYPE_RAW :
+         case PD_TRACE_ARGTYPE_NULL :
+         {
+            length += ossSnprintf( _pFormatBuf + length,
+                                   _bufSize - length,
+                                   "\tNULL"OSS_NEWLINE ) ;
+            break ;
+         }
+         case PD_TRACE_ARGTYPE_CHAR :
+         {
+            length += ossSnprintf( _pFormatBuf + length,
+                                   _bufSize - length,
+                                   "\t%c"OSS_NEWLINE,
+                                   *(pArgs->argData()) ) ;
+            break ;
+         }
+         case PD_TRACE_ARGTYPE_BYTE :
+         {
+            length += ossSnprintf( _pFormatBuf + length,
+                                   _bufSize - length,
+                                   "\t0x%x"OSS_NEWLINE,
+                                   (UINT32)(*(pArgs->argData())) ) ;
+            break ;
+         }
+         case PD_TRACE_ARGTYPE_SHORT :
+         {
+            length += ossSnprintf( _pFormatBuf + length,
+                                   _bufSize - length,
+                                   "\t%d"OSS_NEWLINE,
+                                   (INT32)(*(INT16*)pArgs->argData()) ) ;
+            break ;
+         }
+         case PD_TRACE_ARGTYPE_USHORT :
+         {
+            length += ossSnprintf( _pFormatBuf + length,
+                                   _bufSize - length,
+                                   "\t%u"OSS_NEWLINE,
+                                   (UINT32)(*(UINT16*)pArgs->argData()) ) ;
+            break ;
+         }
+         case PD_TRACE_ARGTYPE_INT :
+         {
+            length += ossSnprintf( _pFormatBuf + length,
+                                   _bufSize - length,
+                                   "\t%d"OSS_NEWLINE,
+                                   *(INT32*)pArgs->argData() ) ;
+            break ;
+         }
+         case PD_TRACE_ARGTYPE_UINT :
+         {
+            length += ossSnprintf( _pFormatBuf + length,
+                                   _bufSize - length,
+                                   "\t%u"OSS_NEWLINE,
+                                   *(UINT32*)pArgs->argData() ) ;
+            break ;
+         }
+         case PD_TRACE_ARGTYPE_LONG :
+         {
+            length += ossSnprintf( _pFormatBuf + length,
+                                   _bufSize - length,
+                                   "\t%lld"OSS_NEWLINE,
+                                   *(INT64*)pArgs->argData() ) ;
+            break ;
+         }
+         case PD_TRACE_ARGTYPE_ULONG :
+         {
+            length += ossSnprintf( _pFormatBuf + length,
+                                   _bufSize - length,
+                                   "\t%llu"OSS_NEWLINE,
+                                   *(UINT64*)pArgs->argData() ) ;
+            break ;
+         }
+         case PD_TRACE_ARGTYPE_FLOAT :
+         {
+            length += ossSnprintf( _pFormatBuf + length,
+                                   _bufSize - length,
+                                   "\t%f"OSS_NEWLINE,
+                                   *(FLOAT32*)pArgs->argData() ) ;
+            break ;
+         }
+         case PD_TRACE_ARGTYPE_DOUBLE :
+         {
+            length += ossSnprintf( _pFormatBuf + length,
+                                   _bufSize - length,
+                                   "\t%f"OSS_NEWLINE,
+                                   *(FLOAT64*)pArgs->argData() ) ;
+            break ;
+         }
+         case PD_TRACE_ARGTYPE_STRING :
+         {
+            length += ossSnprintf( _pFormatBuf + length,
+                                   _bufSize - length,
+                                   "\t%s"OSS_NEWLINE,
+                                   pArgs->argData() ) ;
+            break ;
+         }
+         case PD_TRACE_ARGTYPE_RAW :
          {
             INT32 rawSize = pArgs->dataSize() ;
             length += ossSnprintf( _pFormatBuf + length,
@@ -1354,9 +1380,26 @@ INT32 _pdTraceParser::_outputTraceRecordByFMT( OSSFILE *out,
                                    OSS_NEWLINE ) ;
             break ;
          }
-       case PD_TRACE_ARGTYPE_NONE :
-       default :
-         break ;
+         case PD_TRACE_ARGTYPE_BSONRAW :
+         {
+            try
+            {
+               BSONObj argument( pArgs->argData() ) ;
+               length += ossSnprintf( _pFormatBuf + length,
+                                      _bufSize - length,
+                                      "\t%s"OSS_NEWLINE,
+                                      argument.toString( FALSE, TRUE ).c_str() ) ;
+            }
+            catch ( std::exception &e )
+            {
+               // Just log, continue process
+               PD_LOG ( PDERROR, "Failed to print BSON object: %s", e.what() ) ;
+            }
+            break ;
+         }
+         case PD_TRACE_ARGTYPE_NONE :
+         default :
+            break ;
       }
 
       pArgs = ( pdTraceArgument* )( ( const CHAR* )pArgs +

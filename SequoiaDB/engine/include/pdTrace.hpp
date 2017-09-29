@@ -199,7 +199,8 @@ enum _pdTraceArgumentType
    PD_TRACE_ARGTYPE_FLOAT,
    PD_TRACE_ARGTYPE_DOUBLE,
    PD_TRACE_ARGTYPE_STRING,
-   PD_TRACE_ARGTYPE_RAW
+   PD_TRACE_ARGTYPE_RAW,
+   PD_TRACE_ARGTYPE_BSONRAW
 } ;
 typedef _pdTraceArgumentType pdTraceArgumentType ;
 
@@ -579,6 +580,7 @@ typedef struct _pdTraceArgTuple pdTraceArgTuple ;
 #define PD_PACK_FLOAT(x) 
 #define PD_PACK_DOUBLE(x) 
 #define PD_PACK_STRING(x) 
+#define PD_PACK_BSON(x) 
 
 #else
 
@@ -601,6 +603,7 @@ typedef struct _pdTraceArgTuple pdTraceArgTuple ;
 #define PD_PACK_DOUBLE(x) _pdTraceArgTuple ( PD_TRACE_ARGTYPE_DOUBLE, &x, 8 )
 #define PD_PACK_STRING(x) _pdTraceArgTuple ( PD_TRACE_ARGTYPE_STRING, x, ossStrlen(x)+1 )
 #define PD_PACK_RAW(x,y)  _pdTraceArgTuple ( PD_TRACE_ARGTYPE_RAW, x, y )
+#define PD_PACK_BSON(x)   _pdTraceArgTuple ( PD_TRACE_ARGTYPE_BSONRAW, x.objdata(), x.objsize() )
 
 #define PD_TRACE_ENTRY(funcCode)                                    \
    do {                                                             \

@@ -178,7 +178,7 @@ namespace engine
             {
                BSONObj bsGrpInfo( buffObj.data() );
                PD_TRACE1 ( SDB_CATNODEMGR_ACTIVE,
-                           PD_PACK_STRING ( bsGrpInfo.toString().c_str() ) ) ;
+                           PD_PACK_BSON ( bsGrpInfo ) ) ;
                rc = parseIDInfo( bsGrpInfo ) ;
                if ( rc )
                {
@@ -565,7 +565,7 @@ namespace engine
       }
 
       PD_TRACE1 ( SDB_CATNODEMGR_REGREQ,
-                  PD_PACK_STRING ( boReq.toString().c_str() ) ) ;
+                  PD_PACK_BSON ( boReq ) ) ;
 
       // don't use _pCatCB->primaryCheck(), because reg msg will send by
       // on timer
@@ -1107,7 +1107,7 @@ namespace engine
             break;
          }
          PD_TRACE1 ( SDB_CATNODEMGR_PARSECATCONF,
-                     PD_PACK_STRING ( boGroupInfo.toString().c_str() ) ) ;
+                     PD_PACK_BSON ( boGroupInfo ) ) ;
          if ( 0 != boGroupInfo.nFields() )
          {
             rc = saveGroupInfo( boGroupInfo, 1 );
@@ -1218,7 +1218,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_CATNODEMGR_GETNODEINFOBYCONF ) ;
       PD_TRACE1 ( SDB_CATNODEMGR_GETNODEINFOBYCONF,
-                  PD_PACK_STRING ( boConf.toString().c_str() ) ) ;
+                  PD_PACK_BSON ( boConf ) ) ;
       do
       {
          try
@@ -1395,7 +1395,7 @@ namespace engine
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_CATNODEMGR_PARSEIDINFO ) ;
       PD_TRACE1 ( SDB_CATNODEMGR_PARSEIDINFO,
-                  PD_PACK_STRING ( obj.toString().c_str() ) ) ;
+                  PD_PACK_BSON ( obj ) ) ;
       try
       {
          MsgRouteID routeID;
@@ -1558,7 +1558,7 @@ namespace engine
       const CHAR *strShardServiceName  = NULL ;
       PD_TRACE_ENTRY ( SDB_CATNODEMGR_GETNODEINFO ) ;
       PD_TRACE1 ( SDB_CATNODEMGR_GETNODEINFO,
-                  PD_PACK_STRING ( boReq.toString().c_str() ) ) ;
+                  PD_PACK_BSON ( boReq ) ) ;
       try
       {
          BSONObj boSelector;
@@ -1670,7 +1670,7 @@ namespace engine
          {
             BSONObj boGrpInfo ( buffObj.data() ) ;
             PD_TRACE1 ( SDB_CATNODEMGR_GETNODEINFO,
-                        PD_PACK_STRING ( boGrpInfo.toString().c_str() ) ) ;
+                        PD_PACK_BSON ( boGrpInfo ) ) ;
             // first let's get all elements in the group
             BSONElement beGroup = boGrpInfo.getField( CAT_GROUP_NAME );
             // make sure it exists and array type
