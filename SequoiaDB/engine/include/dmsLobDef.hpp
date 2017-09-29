@@ -62,7 +62,7 @@ namespace engine
       Lob meta fixed size, 1K
    */
    #define DMS_LOB_META_LENGTH               ( 1024 )
-   #define DMS_LOB_META_PIECESINFO_LEN       ( 320 )
+   #define DMS_LOB_META_PIECESINFO_MAX_LEN   ( 320 )
 
    #define RTN_LOB_GET_SEQUENCE( offset, isMerge, log ) \
      ( (isMerge) ? ( ( (INT64)(offset)+DMS_LOB_META_LENGTH) >> (log) ) : \

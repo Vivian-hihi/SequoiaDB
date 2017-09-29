@@ -774,12 +774,12 @@ namespace engine
                   goto error ;
                }
 
-               if ( _lobPieces.requiredMem() > DMS_LOB_META_PIECESINFO_LEN )
+               if ( _lobPieces.requiredMem() > DMS_LOB_META_PIECESINFO_MAX_LEN )
                {
                   rc = SDB_LOB_PIECESINFO_OVERFLOW ;
                   PD_LOG( PDERROR, "LOB pieces info require memory more than %d bytes, "\
                                    "section num=%d, piecesInfo=%s",
-                                   DMS_LOB_META_PIECESINFO_LEN,
+                                   DMS_LOB_META_PIECESINFO_MAX_LEN,
                                    _lobPieces.sectionNum(), _lobPieces.toString().c_str() ) ;
                   goto error ;
                }
@@ -844,12 +844,12 @@ namespace engine
                   goto error ;
                }
 
-               if ( _lobPieces.requiredMem() > DMS_LOB_META_PIECESINFO_LEN )
+               if ( _lobPieces.requiredMem() > DMS_LOB_META_PIECESINFO_MAX_LEN )
                {
                   rc = SDB_LOB_PIECESINFO_OVERFLOW ;
                   PD_LOG( PDERROR, "LOB pieces info require memory more than %d bytes, "\
                                    "section num=%d, piecesInfo=%s",
-                                   DMS_LOB_META_PIECESINFO_LEN,
+                                   DMS_LOB_META_PIECESINFO_MAX_LEN,
                                    _lobPieces.sectionNum(), _lobPieces.toString().c_str() ) ;
                   goto error ;
                }
@@ -1067,11 +1067,11 @@ namespace engine
       if ( _hasPiecesInfo )
       {
          piecesInfoSize = _lobPieces.requiredMem() ;
-         if( piecesInfoSize > DMS_LOB_META_PIECESINFO_LEN )
+         if( piecesInfoSize > DMS_LOB_META_PIECESINFO_MAX_LEN )
          {
             PD_LOG( PDERROR, "LOB pieces info require memory more than %d "
                     "bytes, section num=%d, piecesInfo=%s",
-                    DMS_LOB_META_PIECESINFO_LEN,
+                    DMS_LOB_META_PIECESINFO_MAX_LEN,
                     _lobPieces.sectionNum(), _lobPieces.toString().c_str() ) ;
             rc = SDB_LOB_PIECESINFO_OVERFLOW ;
             goto error ;

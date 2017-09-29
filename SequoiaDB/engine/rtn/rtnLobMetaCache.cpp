@@ -169,12 +169,12 @@ namespace engine
          }
       }
 
-      if ( info.requiredMem() > DMS_LOB_META_PIECESINFO_LEN )
+      if ( info.requiredMem() > DMS_LOB_META_PIECESINFO_MAX_LEN )
       {
          rc = SDB_LOB_PIECESINFO_OVERFLOW ;
          PD_LOG( PDERROR, "LOB pieces info require memory more than %d bytes, "\
                           "section num=%d, piecesInfo=%s",
-                          DMS_LOB_META_PIECESINFO_LEN,
+                          DMS_LOB_META_PIECESINFO_MAX_LEN,
                           info.sectionNum(), info.toString().c_str() ) ;
          goto error ;
       }
