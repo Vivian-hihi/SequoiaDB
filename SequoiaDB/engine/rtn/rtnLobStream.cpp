@@ -773,12 +773,18 @@ namespace engine
       if ( !_hasPiecesInfo )
       {
          rc = _write( tuple, cb ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to write lob piece, rc=%d", rc ) ;
+            goto error ;
+         }
       }
       else
       {
          if ( !_lobPieces.hasPiece( tuple.tuple.columns.sequence ) )
          {
-            rc = _write( tuple, cb ) ;
+            BOOLEAN orUpdate = SDB_LOB_MODE_WRITE == _mode ? TRUE : FALSE ;
+            rc = _write( tuple, cb, orUpdate ) ;
             if ( SDB_OK == rc )
             {
                rc = _lobPieces.addPiece( tuple.tuple.columns.sequence ) ;
@@ -791,17 +797,27 @@ namespace engine
                if ( _lobPieces.requiredMem() > DMS_LOB_META_PIECESINFO_MAX_LEN )
                {
                   rc = SDB_LOB_PIECESINFO_OVERFLOW ;
-                  PD_LOG( PDERROR, "LOB pieces info require memory more than %d bytes, "\
-                                   "section num=%d, piecesInfo=%s",
-                                   DMS_LOB_META_PIECESINFO_MAX_LEN,
-                                   _lobPieces.sectionNum(), _lobPieces.toString().c_str() ) ;
+                  PD_LOG( PDERROR, "LOB pieces info require memory more than "\
+                          "%d bytes, section num=%d, piecesInfo=%s",
+                          DMS_LOB_META_PIECESINFO_MAX_LEN,
+                          _lobPieces.sectionNum(), _lobPieces.toString().c_str() ) ;
                   goto error ;
                }
+            }
+            else
+            {
+               PD_LOG( PDERROR, "Failed to write lob piece, rc=%d", rc ) ;
+               goto error ;
             }
          }
          else
          {
             rc = _update( tuple, cb ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "Failed to update lob piece, rc=%d", rc ) ;
+               goto error ;
+            }
          }
       }
 
@@ -819,6 +835,11 @@ namespace engine
       if ( !_hasPiecesInfo )
       {
          rc = _writev( tuples, cb ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to write lob pieces, rc=%d", rc ) ;
+            goto error ;
+         }
       }
       else
       {
@@ -841,9 +862,11 @@ namespace engine
 
          if ( !tuples.empty() )
          {
-            rc = _writev( tuples, cb ) ;
+            BOOLEAN orUpdate = SDB_LOB_MODE_WRITE == _mode ? TRUE : FALSE ;
+            rc = _writev( tuples, cb, orUpdate ) ;
             if ( SDB_OK != rc )
             {
+               PD_LOG( PDERROR, "Failed to write lob pieces, rc=%d", rc ) ;
                goto error ;
             }
 
@@ -861,10 +884,10 @@ namespace engine
                if ( _lobPieces.requiredMem() > DMS_LOB_META_PIECESINFO_MAX_LEN )
                {
                   rc = SDB_LOB_PIECESINFO_OVERFLOW ;
-                  PD_LOG( PDERROR, "LOB pieces info require memory more than %d bytes, "\
-                                   "section num=%d, piecesInfo=%s",
-                                   DMS_LOB_META_PIECESINFO_MAX_LEN,
-                                   _lobPieces.sectionNum(), _lobPieces.toString().c_str() ) ;
+                  PD_LOG( PDERROR, "LOB pieces info require memory more than "\
+                          "%d bytes, section num=%d, piecesInfo=%s",
+                          DMS_LOB_META_PIECESINFO_MAX_LEN,
+                          _lobPieces.sectionNum(), _lobPieces.toString().c_str() ) ;
                   goto error ;
                }
             }
@@ -875,6 +898,7 @@ namespace engine
             rc = _updatev( updateTuples, cb ) ;
             if ( SDB_OK != rc )
             {
+               PD_LOG( PDERROR, "Failed to update lob pieces, rc=%d", rc ) ;
                goto error ;
             }
          }

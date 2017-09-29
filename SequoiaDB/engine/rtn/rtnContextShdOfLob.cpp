@@ -274,21 +274,36 @@ namespace engine
                                      UINT32 offset,
                                      UINT32 len,
                                      const CHAR *data,
-                                     _pmdEDUCB *cb )
+                                     _pmdEDUCB *cb,
+                                     BOOLEAN orUpdate )
    {
       INT32 rc = SDB_OK ;
+      BOOLEAN updated = FALSE ;
       PD_TRACE_ENTRY( SDB__RTNCONTEXTSHDOFLOB_WRITE ) ;
-      rc = rtnWriteLob( _fullName.c_str(),
-                        _oid, sequence,
-                        offset, len, data, cb,
-                        _w, _dpsCB, _su, _mbContext ) ;
+
+      if ( orUpdate )
+      {
+         rc = rtnWriteOrUpdateLob( _fullName.c_str(),
+                                   _oid, sequence,
+                                   offset, len, data, cb,
+                                   _w, _dpsCB, _su, _mbContext,
+                                   &updated ) ;
+      }
+      else
+      {
+         rc = rtnWriteLob( _fullName.c_str(),
+                           _oid, sequence,
+                           offset, len, data, cb,
+                           _w, _dpsCB, _su, _mbContext ) ;
+      }
+
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to write lob:%d", rc ) ;
          goto error ;
       }
 
-      if ( SDB_LOB_MODE_CREATEONLY == _mode )
+      if ( SDB_LOB_MODE_CREATEONLY == _mode && !updated )
       {
          _written.insert( sequence ) ;
       }

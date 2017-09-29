@@ -71,7 +71,8 @@ namespace engine
                    UINT32 offset,
                    UINT32 len,
                    const CHAR *data,
-                   _pmdEDUCB *cb ) ;
+                   _pmdEDUCB *cb,
+                   BOOLEAN orUpdate = FALSE ) ;
 
       INT32 readv( const MsgLobTuple *tuples,
                    UINT32 cnt,

@@ -459,7 +459,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOCALLOBSTREAM__WRITE, "_rtnLocalLobStream::_write" )
    INT32 _rtnLocalLobStream::_write( const _rtnLobTuple &tuple,
-                                     _pmdEDUCB *cb )
+                                     _pmdEDUCB *cb, BOOLEAN orUpdate )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNLOCALLOBSTREAM__WRITE ) ;
@@ -470,8 +470,18 @@ namespace engine
                   tuple.tuple.columns.offset,
                   tuple.tuple.columns.len,
                   tuple.data ) ;
-      rc = _su->lob()->write( record, _mbContext, cb,
-                              _getDPSCB() ) ;
+
+      if ( orUpdate )
+      {
+         rc = _su->lob()->writeOrUpdate( record, _mbContext, cb,
+                                         _getDPSCB() ) ;
+      }
+      else
+      {
+         rc = _su->lob()->write( record, _mbContext, cb,
+                                 _getDPSCB() ) ;
+      }
+
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to write lob[%s],"
@@ -489,7 +499,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOCALLOBSTREAM__WRITEV, "_rtnLocalLobStream::_writev" )
    INT32 _rtnLocalLobStream::_writev( const RTN_LOB_TUPLES &tuples,
-                                      _pmdEDUCB *cb )
+                                      _pmdEDUCB *cb, BOOLEAN orUpdate )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNLOCALLOBSTREAM__WRITEV ) ;
@@ -505,7 +515,7 @@ namespace engine
             goto error ;
          }
 
-         rc = _write( *itr, cb ) ;
+         rc = _write( *itr, cb, orUpdate ) ;
          if ( SDB_OK != rc )
          {
             goto error ;

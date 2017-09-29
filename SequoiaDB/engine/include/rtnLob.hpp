@@ -122,6 +122,19 @@ namespace engine
                       dmsStorageUnit *su = NULL,
                       dmsMBContext *mbContext = NULL ) ;
 
+   INT32 rtnWriteOrUpdateLob( const CHAR *fullName,
+                              const bson::OID &oid,
+                              UINT32 sequence,
+                              UINT32 offset,
+                              UINT32 len,
+                              const CHAR *data,
+                              pmdEDUCB *cb,
+                              SINT16 w,
+                              SDB_DPSCB *dpsCB,
+                              dmsStorageUnit *su = NULL,
+                              dmsMBContext *mbContext = NULL,
+                              BOOLEAN* hasUpdated = NULL ) ;
+
    INT32 rtnUpdateLob( const CHAR *fullName,
                        const bson::OID &oid,
                        UINT32 sequence,

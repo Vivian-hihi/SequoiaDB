@@ -3256,6 +3256,7 @@ namespace engine
       SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
       INT16 w = 0 ;
       INT16 wWhenOpen = 0 ;
+      BOOLEAN orUpdate = FALSE ;
 
       rc = msgExtractLobRequest( ( const CHAR * )msg,
                                  &header, obj,
@@ -3312,6 +3313,11 @@ namespace engine
          goto error ;
       }
 
+      if ( header->flags & FLG_LOBWRITE_OR_UPDATE )
+      {
+         orUpdate = TRUE ;
+      }
+
       while ( TRUE )
       {
          BOOLEAN got = FALSE ;
@@ -3332,7 +3338,7 @@ namespace engine
          rc = lobContext->write( curTuple->columns.sequence,
                                  curTuple->columns.offset,
                                  curTuple->columns.len,
-                                 data, _pEDUCB ) ;
+                                 data, _pEDUCB, orUpdate ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to write lob:%d", rc ) ;

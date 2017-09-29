@@ -655,13 +655,16 @@ namespace engine
    //PD_TRACE_DECLARE_FUNCTION( COORD_LOBSTREAM_WRITEOP, "_coordLobStream::_writeOp" )
    INT32 _coordLobStream::_writeOp( const _rtnLobTuple &tuple,
                                     INT32 opCode,
-                                    _pmdEDUCB *cb )
+                                    _pmdEDUCB *cb,
+                                    BOOLEAN orUpdate )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( COORD_LOBSTREAM_WRITEOP ) ;
 
       SDB_ASSERT( MSG_BS_LOB_WRITE_REQ == opCode || MSG_BS_LOB_UPDATE_REQ == opCode,
                   "only support write or update operation" ) ;
+      SDB_ASSERT( !orUpdate || MSG_BS_LOB_WRITE_REQ == opCode,
+                  "only support orUpdate in write operation" ) ;
 
       MsgOpLob header ;
       UINT32 groupID = 0 ;
@@ -683,6 +686,11 @@ namespace engine
       _pushLobHeader( &header, BSONObj(), iov ) ;
       _pushLobData( tuple.tuple.data, sizeof( tuple.tuple ), iov ) ;
       _pushLobData( tuple.data, tuple.tuple.columns.len, iov ) ;
+
+      if ( orUpdate && MSG_BS_LOB_WRITE_REQ == opCode )
+      {
+         header.flags |= FLG_LOBWRITE_OR_UPDATE ;
+      }
 
       do
       {
@@ -746,13 +754,16 @@ namespace engine
    //PD_TRACE_DECLARE_FUNCTION( COORD_LOBSTREAM_WRITEVOP, "_coordLobStream::_writevOp" )
    INT32 _coordLobStream::_writevOp( const RTN_LOB_TUPLES &tuples,
                                      INT32 opCode,
-                                     _pmdEDUCB *cb )
+                                     _pmdEDUCB *cb,
+                                     BOOLEAN orUpdate )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( COORD_LOBSTREAM_WRITEVOP ) ;
 
       SDB_ASSERT( MSG_BS_LOB_WRITE_REQ == opCode || MSG_BS_LOB_UPDATE_REQ == opCode,
                   "only support write or update operation" ) ;
+      SDB_ASSERT( !orUpdate || MSG_BS_LOB_WRITE_REQ == opCode,
+                  "only support orUpdate in write operation" ) ;
 
       DONE_LST doneLst ;
       BOOLEAN reshard = TRUE ;
@@ -768,6 +779,11 @@ namespace engine
       /// will reassign length
       _initHeader( header, opCode,
                    0, -1 ) ;
+
+      if ( orUpdate && ( MSG_BS_LOB_WRITE_REQ == opCode ) )
+      {
+         header.flags |= FLG_LOBWRITE_OR_UPDATE ;
+      }
 
       do
       {
@@ -855,22 +871,22 @@ namespace engine
 
    //PD_TRACE_DECLARE_FUNCTION( COORD_LOBSTREAM_WRITE, "_coordLobStream::_write" )
    INT32 _coordLobStream::_write( const _rtnLobTuple &tuple,
-                                  _pmdEDUCB *cb )
+                                  _pmdEDUCB *cb, BOOLEAN orUpdate )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( COORD_LOBSTREAM_WRITE ) ;
-      rc = _writeOp( tuple, MSG_BS_LOB_WRITE_REQ, cb ) ;
+      rc = _writeOp( tuple, MSG_BS_LOB_WRITE_REQ, cb, orUpdate ) ;
       PD_TRACE_EXITRC( COORD_LOBSTREAM_WRITE, rc ) ;
       return rc ;
    }
 
    //PD_TRACE_DECLARE_FUNCTION( COORD_LOBSTREAM_WRITEV, "_coordLobStream::_writev" )
    INT32 _coordLobStream::_writev( const RTN_LOB_TUPLES &tuples,
-                                   _pmdEDUCB *cb )
+                                   _pmdEDUCB *cb, BOOLEAN orUpdate )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( COORD_LOBSTREAM_WRITEV ) ;
-      rc = _writevOp( tuples, MSG_BS_LOB_WRITE_REQ, cb ) ;
+      rc = _writevOp( tuples, MSG_BS_LOB_WRITE_REQ, cb, orUpdate ) ;
       PD_TRACE_EXITRC( COORD_LOBSTREAM_WRITEV, rc ) ;
       return rc ;
    }

@@ -73,10 +73,12 @@ namespace engine
       virtual INT32 _getLobPageSize( INT32 &pageSize ) ;
 
       virtual INT32 _write( const _rtnLobTuple &tuple, 
-                            _pmdEDUCB *cb ) ;
+                            _pmdEDUCB *cb,
+                            BOOLEAN orUpdate = FALSE ) ;
 
       virtual INT32 _writev( const RTN_LOB_TUPLES &tuples,
-                             _pmdEDUCB *cb ) ;
+                             _pmdEDUCB *cb,
+                             BOOLEAN orUpdate = FALSE ) ;
 
       virtual INT32 _update( const _rtnLobTuple &tuple,
                              _pmdEDUCB *cb ) ;

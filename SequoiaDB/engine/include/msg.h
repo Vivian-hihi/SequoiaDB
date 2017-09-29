@@ -732,6 +732,8 @@ typedef struct _MsgOpAggregate
 #define FLG_LOBREAD_PRIMARY               0x00000001
 /// open with return data( when mode = read )
 #define FLG_LOBOPEN_WITH_RETURNDATA       0X00000002
+/// write or update in write operation( when mode = write )
+#define FLG_LOBWRITE_OR_UPDATE            0x00000004
 
 /// when it is open reg |MsgOpLob|bsonobj|
 /// when it is open res |MsgOpReply|bsonobj|

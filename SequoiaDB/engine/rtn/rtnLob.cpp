@@ -737,6 +737,55 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNWRITEORUPDATELOB, "rtnWriteOrUpdateLob" ) 
+   INT32 rtnWriteOrUpdateLob( const CHAR *fullName,
+                              const bson::OID &oid,
+                              UINT32 sequence,
+                              UINT32 offset,
+                              UINT32 len,
+                              const CHAR *data,
+                              pmdEDUCB *cb,
+                              SINT16 w,
+                              SDB_DPSCB *dpsCB,
+                              dmsStorageUnit *su,
+                              dmsMBContext *mbContext,
+                              BOOLEAN* hasUpdated )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNWRITEORUPDATELOB ) ;
+      SDB_ASSERT( NULL != fullName && NULL != cb, "can not be null" ) ;
+      _dmsLobRecord record ;
+      rtnLobEnv lobEnv( fullName, cb, su, mbContext ) ;
+
+      rc = lobEnv.prepareOpr( -1 ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to prepare to write or update lob, rc:%d", rc ) ;
+         goto error ;
+      }
+
+      record.set( &oid, sequence, offset, len, data ) ;
+      rc = lobEnv.getSU()->lob()->writeOrUpdate( record, lobEnv.getMBContext(),
+                                                 cb, dpsCB, hasUpdated ) ;
+
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to write or update lob, rc:%d", rc ) ;
+         goto error ;
+      }
+
+      if ( NULL != dpsCB )
+      {
+         dpsCB->completeOpr( cb, w ) ;
+      }
+
+   done:
+      PD_TRACE_EXITRC( SDB_RTNWRITEORUPDATELOB, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCLOSELOB2, "rtnCloseLob" )
    INT32 rtnCloseLob( const CHAR *fullName,
                       const bson::OID &oid,
