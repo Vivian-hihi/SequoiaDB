@@ -576,6 +576,7 @@ namespace engine
                               INT64 length )
    {
       INT32 rc = SDB_OK ;
+      std::vector<INT64> offsets ;  // for rollbacking
       _rtnLobSection section( offset, length, uniqueId() ) ;
 
       if ( SDB_LOB_MODE_WRITE != _mode )
@@ -594,14 +595,28 @@ namespace engine
 
       if ( _wholeLobLocked )
       {
-         // nothing to do
+         // the whole lob is locked, nothing to do
          goto done ;
       }
 
-      if ( -1 != length && _lobSections.completelyContains( section ) )
+      if ( -1 != length )
       {
-         // already lock
-         goto done ;
+         if ( _lobSections.completelyContains( section ) )
+         {
+            // already locked
+            goto done ;
+         }
+         else
+         {
+            // add to local firstly,
+            // record offsets for rollbacking if error happens
+            rc = _lobSections.addSection( section, &offsets ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "Failed to add section in lob stream, rc=%d", rc ) ;
+               goto error ;
+            }
+         }
       }
 
       rc = _lock( cb, offset, length ) ;
@@ -616,20 +631,19 @@ namespace engine
       {
          _wholeLobLocked = TRUE ;
       }
-      else
-      {
-         rc = _lobSections.addSection( section ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDWARNING, "Failed to add section in lob stream, rc=%d", rc ) ;
-            // It's OK because we already locked section in access manager
-            rc = SDB_OK ;
-         }
-      }
 
    done:
       return rc ;
    error:
+      if ( !offsets.empty() )
+      {
+         // rollback
+         std::vector<INT64>::const_iterator iter ;
+         for ( iter = offsets.begin() ; iter != offsets.end() ; iter++ )
+         {
+            _lobSections.delSectionByOffset( *iter ) ;
+         }
+      }
       goto done ;
    }
 

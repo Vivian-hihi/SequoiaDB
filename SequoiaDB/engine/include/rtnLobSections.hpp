@@ -36,6 +36,7 @@
 #include "oss.hpp"
 #include "ossUtil.hpp"
 #include <map>
+#include <vector>
 #include <string>
 
 namespace engine
@@ -137,13 +138,16 @@ namespace engine
       BOOLEAN completelyContains( const _rtnLobSection& section ) const ;
       BOOLEAN conflicted( INT64 accessId ) const ;
       _rtnLobSection find( INT64 offset ) const ;
-      INT32   addSection( const _rtnLobSection& section ) ;
+      INT32   addSection( const _rtnLobSection& section,
+                          std::vector<INT64>* offsets = NULL ) ;
       void    delSectionById( INT64 accessId ) ;
+      void    delSectionByOffset( INT64 offset ) ;
 
       OSS_INLINE INT32 sectionNum() const { return (INT32)_sections.size() ; }
 
    private:
-      INT32   _addSection( const _rtnLobSection& section ) ;
+      INT32   _addSection( const _rtnLobSection& section,
+                           std::vector<INT64>& offsets ) ;
 
    private:
       typedef std::map<INT64, _rtnLobSection> LOB_SECTIONS_TYPE ;

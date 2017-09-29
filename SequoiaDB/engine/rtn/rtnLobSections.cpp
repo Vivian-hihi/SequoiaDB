@@ -186,13 +186,21 @@ namespace engine
       return section ;
    }
 
-   INT32 _rtnLobSections::addSection( const _rtnLobSection& section )
+   INT32 _rtnLobSections::addSection( const _rtnLobSection& section,
+                                      std::vector<INT64>* offsets )
    {
       INT32 rc = SDB_OK ;
+      std::vector<INT64> tmp ;
+
+      std::vector<INT64>* off = offsets ;
+      if ( NULL == off )
+      {
+         off = &tmp ;
+      }
 
       try
       {
-         rc = _addSection( section ) ;
+         rc = _addSection( section, *off ) ;
          if ( SDB_OK != rc )
          {
             goto error ;
@@ -208,10 +216,21 @@ namespace engine
    done:
       return rc ;
    error:
+      if ( !off->empty() )
+      {
+         // rollback
+         std::vector<INT64>::const_iterator iter ;
+         for ( iter = offsets->begin() ; iter != offsets->end() ; iter++ )
+         {
+            delSectionByOffset( *iter ) ;
+         }
+         off->clear() ;
+      }
       goto done ;
    }
 
-   INT32 _rtnLobSections::_addSection( const _rtnLobSection& section )
+   INT32 _rtnLobSections::_addSection( const _rtnLobSection& section,
+                                       std::vector<INT64>& offsets )
    {
       INT32 rc = SDB_OK ;
       LOB_SECTIONS_TYPE tmp ;
@@ -221,6 +240,8 @@ namespace engine
       SDB_ASSERT( section.offset >= 0 &&
                   section.length > 0 &&
                   section.accessId >= 0, "invalid section" ) ;
+
+      offsets.clear() ;
 
       LOB_SECTIONS_TYPE::const_iterator iter ;
       for ( iter = _sections.begin() ; iter != _sections.end() ; iter++ )
@@ -294,11 +315,13 @@ namespace engine
          for ( iter = tmp.begin() ; iter != tmp.end() ; iter++ )
          {
             const _rtnLobSection& cur = iter->second ;
+            offsets.push_back( cur.offset ) ;
             _sections.insert( LOB_SECTIONS_TYPE::value_type( cur.offset, cur ) ) ;
          }
       }
       else
       {
+         offsets.push_back( sec.offset ) ;
          _sections.insert( LOB_SECTIONS_TYPE::value_type( sec.offset, sec ) ) ;
       }
 
@@ -323,6 +346,11 @@ namespace engine
             iter++ ;
          }
       }
+   }
+
+   void _rtnLobSections::delSectionByOffset( INT64 offset )
+   {
+      _sections.erase( offset ) ;
    }
 }
 
