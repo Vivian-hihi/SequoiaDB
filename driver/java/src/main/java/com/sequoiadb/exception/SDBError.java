@@ -337,7 +337,8 @@ public enum SDBError {
     SDB_CAT_CLUSTER_IS_DEACTIVED(       -316,    "This cluster is deactived"    ),
     SDB_LOB_IS_IN_USE(                  -317,    "LOB is in use"    ),
     SDB_VALUE_OVERFLOW(                 -318,    "Data operation is overflowed"    ),
-    SDB_LOB_PIECESINFO_OVERFLOW(        -319,    "LOB's pieces info is overflowed"    );
+    SDB_LOB_PIECESINFO_OVERFLOW(        -319,    "LOB's pieces info is overflowed"    ),
+    SDB_LOB_LOCK_CONFLICTED(            -320,    "LOB lock is conflicted"    );
 
     private int code;
     private String desc;
@@ -685,6 +686,7 @@ public enum SDBError {
         case  -317: return SDB_LOB_IS_IN_USE;
         case  -318: return SDB_VALUE_OVERFLOW;
         case  -319: return SDB_LOB_PIECESINFO_OVERFLOW;
+        case  -320: return SDB_LOB_LOCK_CONFLICTED;
         default:    return null;
         }
     }

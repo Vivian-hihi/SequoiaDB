@@ -1,5 +1,6 @@
 package com.sequoiadb.base;
 
+import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.test.SingleCSCLTestCase;
 import org.bson.BSONObject;
 import org.bson.types.ObjectId;
@@ -339,7 +340,7 @@ public class TestLob extends SingleCSCLTestCase {
 
         int begin = 1024 * 3 + 11;
         int step = 1024 * 4 * 2;
-        int max = 1024 * 1024;
+        int max = 1024 * 256;
         ArrayList<Integer> posList = new ArrayList<>();
         for (int pos = begin; pos <= max; pos += step) {
             posList.add(pos);
@@ -381,6 +382,153 @@ public class TestLob extends SingleCSCLTestCase {
             assertEquals(str, str2);
         }
         lob.close();
+
+        cl.removeLob(id);
+        cursor = cl.listLobs();
+        assertFalse(cursor.hasNext());
+    }
+
+    @Test
+    public void testLobOpenWrite() {
+        String str = "Hello, world!";
+
+        ObjectId id = ObjectId.get();
+        DBLob lob = cl.createLob(id);
+        lob.close();
+
+        lob = cl.openLob(id, DBLob.SDB_LOB_WRITE);
+        lob.write(str.getBytes());
+        lob.lock(0, -1);
+        lob.close();
+
+        long lobSize = lob.getSize();
+
+        DBCursor cursor = cl.listLobs();
+        assertTrue(cursor.hasNext());
+        BSONObject obj = cursor.getNext();
+        ObjectId oid = (ObjectId) obj.get("Oid");
+        assertEquals(id, oid);
+        assertFalse(cursor.hasNext());
+
+        lob = cl.openLob(id);
+        assertEquals(lobSize, lob.getSize());
+        byte[] bytes = new byte[(int) lob.getSize()];
+        lob.read(bytes);
+        lob.close();
+
+        String s = new String(bytes);
+        assertEquals(str, s);
+
+        cl.removeLob(id);
+        cursor = cl.listLobs();
+        assertFalse(cursor.hasNext());
+    }
+
+    @Test
+    public void testLobOpenWrite2() {
+        ObjectId id = ObjectId.get();
+        DBLob lob = cl.createLob(id);
+        lob.close();
+
+        lob = cl.openLob(id, DBLob.SDB_LOB_WRITE);
+        lob.lock(100, 5);
+        lob.lock(90, 5);
+        lob.lock(80,5);
+        lob.lock(115, 5);
+        lob.lock(110, 10);
+        lob.lock(112, 5);
+        lob.lock(75, 10);
+        lob.lock(87, 20);
+        lob.close();
+
+        lob = cl.openLob(id, DBLob.SDB_LOB_WRITE);
+        lob.lock(100, 5);
+        lob.lock(90, 5);
+        lob.lock(80,5);
+        lob.lock(115, 5);
+        lob.lock(110, 10);
+        lob.lock(112, 5);
+        lob.lock(75, 10);
+        lob.lock(87, 20);
+        lob.close();
+    }
+
+    @Test
+    public void testLobOpenWrite3() {
+        ObjectId id = ObjectId.get();
+        DBLob lob = cl.createLob(id);
+        lob.close();
+
+        DBLob lob1 = cl.openLob(id, DBLob.SDB_LOB_WRITE);
+        DBLob lob2 = cl.openLob(id, DBLob.SDB_LOB_WRITE);
+
+        lob1.lock(100, 10);
+
+        lob2.lock(90,10);
+        lob2.lock(110,10);
+        try {
+            lob2.lock(90, 20);
+            fail("failure expected");
+        } catch (BaseException e) {
+            System.out.println(e);
+        }
+        try {
+            lob2.lock(105, 10);
+            fail("failure expected");
+        } catch (BaseException e) {
+            System.out.println(e);
+        }
+
+        lob1.close();
+
+        lob2.lock(90, 20);
+        lob2.lock(105, 10);
+        lob2.close();
+    }
+
+    @Test
+    public void testLobOpenWrite4() {
+        String str1 = "Hello, world!";
+        int offset1 = 1024 * 256 * 2 + 1024 * 2;
+        String str2 = "LOB random write";
+        int offset2 = offset1 - str2.length() * 2;
+
+        ObjectId id = ObjectId.get();
+        DBLob lob = cl.createLob(id);
+        lob.close();
+
+        DBLob lob1 = cl.openLob(id, DBLob.SDB_LOB_WRITE);
+        DBLob lob2 = cl.openLob(id, DBLob.SDB_LOB_WRITE);
+
+        lob1.lockAndSeek(offset1, str1.length());
+        lob1.write(str1.getBytes());
+
+        lob2.lockAndSeek(offset2, str2.length());
+        lob2.write(str2.getBytes());
+
+        lob1.close();
+        lob2.close();
+
+        long lobSize = lob1.getSize();
+
+        DBCursor cursor = cl.listLobs();
+        assertTrue(cursor.hasNext());
+        BSONObject obj = cursor.getNext();
+        ObjectId oid = (ObjectId) obj.get("Oid");
+        assertEquals(id, oid);
+        assertFalse(cursor.hasNext());
+
+        lob = cl.openLob(id);
+        assertEquals(lobSize, lob.getSize());
+        byte[] bytes = new byte[(int) lob.getSize()];
+        lob.read(bytes);
+        lob.close();
+
+        String s1 = new String(bytes, offset1, str1.length());
+        assertEquals(str1, s1);
+
+        String s2 = new String(bytes, offset2, str2.length());
+        assertEquals(str2, s2);
 
         cl.removeLob(id);
         cursor = cl.listLobs();

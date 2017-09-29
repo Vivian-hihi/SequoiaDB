@@ -18,10 +18,7 @@ package com.sequoiadb.base;
 
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.SDBError;
-import com.sequoiadb.message.request.LobCloseRequest;
-import com.sequoiadb.message.request.LobOpenRequest;
-import com.sequoiadb.message.request.LobReadRequest;
-import com.sequoiadb.message.request.LobWriteRequest;
+import com.sequoiadb.message.request.*;
 import com.sequoiadb.message.response.LobOpenResponse;
 import com.sequoiadb.message.response.LobReadResponse;
 import com.sequoiadb.message.response.SdbReply;
@@ -42,7 +39,6 @@ class DBLobImpl implements DBLob {
     final static String FIELD_NAME_LOB_CREATTIME = "CreateTime";
     final static String FIELD_NAME_LOB_PAGESIZE = "LobPageSize";
     final static int SDB_LOB_CREATEONLY = 0x00000001;
-    final static int SDB_LOB_READ = 0x00000004;
 
     // the max lob data size to send for one message
     private final static int SDB_LOB_MAX_WRITE_DATA_LENGTH = 2097152; // 2M;
@@ -121,11 +117,13 @@ class DBLobImpl implements DBLob {
             throw new BaseException(SDBError.SDB_INVALIDARG, "lob have opened: id = " + _id);
         }
 
-        if (SDB_LOB_CREATEONLY != mode && SDB_LOB_READ != mode) {
+        if (mode != SDB_LOB_CREATEONLY &&
+            mode != SDB_LOB_READ &&
+            mode != SDB_LOB_WRITE) {
             throw new BaseException(SDBError.SDB_INVALIDARG, "mode is unsupported: " + mode);
         }
 
-        if (SDB_LOB_READ == mode) {
+        if (mode == SDB_LOB_READ || mode == SDB_LOB_WRITE) {
             if (null == id) {
                 throw new BaseException(SDBError.SDB_INVALIDARG, "id must be specify"
                     + " in mode:" + mode);
@@ -133,7 +131,7 @@ class DBLobImpl implements DBLob {
         }
 
         _id = id;
-        if (SDB_LOB_CREATEONLY == mode) {
+        if (mode == SDB_LOB_CREATEONLY) {
             if (null == _id) {
                 _id = ObjectId.get();
             }
@@ -166,6 +164,10 @@ class DBLobImpl implements DBLob {
         if (_cachedDataBuff != null) {
             _currentOffset = 0;
             _cachedOffset = _currentOffset;
+        }
+        if (_mode == SDB_LOB_WRITE) {
+            // move to the end of lob
+            _currentOffset = _lobSize;
         }
         _contextID = response.getContextId();
     }
@@ -400,7 +402,9 @@ class DBLobImpl implements DBLob {
             throw new BaseException(SDBError.SDB_LOB_NOT_OPEN, "lob is not open");
         }
 
-        if (_mode != SDB_LOB_READ && _mode != SDB_LOB_CREATEONLY) {
+        if (_mode != SDB_LOB_READ &&
+            _mode != SDB_LOB_CREATEONLY &&
+            _mode != SDB_LOB_WRITE) {
             throw new BaseException(SDBError.SDB_OPTION_NOT_SUPPORT, "seek() is not supported"
                 + " in mode=" + _mode);
         }
@@ -428,9 +432,49 @@ class DBLobImpl implements DBLob {
             throw new BaseException(SDBError.SDB_INVALIDARG, "unreconigzed seekType: " + seekType);
         }
 
-        if (_mode == SDB_LOB_CREATEONLY) {
+        if (_mode == SDB_LOB_CREATEONLY || _mode == SDB_LOB_WRITE) {
             _seekWrite = true;
         }
+    }
+
+    /**
+     * @param offset lock start position
+     * @param length lock length
+     * @throws com.sequoiadb.exception.BaseException.
+     * @fn lock(long offset, long length)
+     * @brief lock LOB section for writing
+     */
+    @Override
+    public void lock(long offset, long length) throws BaseException {
+        if (!_isOpened) {
+            throw new BaseException(SDBError.SDB_LOB_NOT_OPEN, "lob is not open");
+        }
+
+        if (offset < 0 || length < -1 || length == 0) {
+            throw new BaseException(SDBError.SDB_INVALIDARG,
+                "out of bound, offset=" + offset + ", length=" + length);
+        }
+
+        if (_mode != SDB_LOB_WRITE) {
+            return;
+        }
+
+        LobLockRequest request = new LobLockRequest(_contextID, offset, length);
+        SdbReply response = _sdb.requestAndResponse(request);
+        _sdb.throwIfError(response);
+    }
+
+    /**
+     * @param offset lock start position
+     * @param length lock length
+     * @throws com.sequoiadb.exception.BaseException.
+     * @fn lock(long offset, long length)
+     * @brief lock LOB section for writing and seek to the start position
+     */
+    @Override
+    public void lockAndSeek(long offset, long length) throws BaseException {
+        lock(offset, length);
+        seek(offset, SDB_LOB_SEEK_SET);
     }
 
     private int _reviseReadLen(int needLen) {

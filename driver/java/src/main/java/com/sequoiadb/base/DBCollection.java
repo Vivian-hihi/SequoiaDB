@@ -1932,17 +1932,35 @@ public class DBCollection {
 
     /**
      * @param id the lob's id.
+     * @param mode open mode:
+     *             DBLob.SDB_LOB_READ for reading,
+     *             DBLob.SDB_LOB_WRITE for writing.
      * @return DBLob object
      * @throws com.sequoiadb.exception.BaseException.
-     * @fn DBLob openLob( ObjectId id )
+     * @fn DBLob openLob( ObjectId id ) for reading or writing
      * @brief open an exist lob with id
      */
-    public DBLob openLob(ObjectId id) throws BaseException {
+    public DBLob openLob(ObjectId id, int mode) throws BaseException {
+        if (mode != DBLob.SDB_LOB_READ && mode != DBLob.SDB_LOB_WRITE) {
+            throw new BaseException(SDBError.SDB_INVALIDARG, "mode is unsupported: " + mode);
+        }
+
         DBLobImpl lob = new DBLobImpl(this);
-        lob.open(id, DBLobImpl.SDB_LOB_READ);
+        lob.open(id, mode);
         // upsert cache
         sequoiadb.upsertCache(collectionFullName);
         return lob;
+    }
+
+    /**
+     * @param id the lob's id.
+     * @return DBLob object
+     * @throws com.sequoiadb.exception.BaseException.
+     * @fn DBLob openLob( ObjectId id ) for reading
+     * @brief open an exist lob with id
+     */
+    public DBLob openLob(ObjectId id) throws BaseException {
+        return openLob(id, DBLob.SDB_LOB_READ);
     }
 
     /**

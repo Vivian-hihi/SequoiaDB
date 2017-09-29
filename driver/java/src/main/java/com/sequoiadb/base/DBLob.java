@@ -19,6 +19,7 @@ package com.sequoiadb.base;
 import com.sequoiadb.exception.BaseException;
 import org.bson.types.ObjectId;
 
+import java.io.Closeable;
 import java.io.InputStream;
 import java.io.OutputStream;
 
@@ -26,7 +27,7 @@ import java.io.OutputStream;
  * @class DBLob
  * @brief Operation interfaces of DBLob.
  */
-public interface DBLob {
+public interface DBLob extends Closeable {
     /**
      * @memberof SDB_LOB_SEEK_SET 0
      * @brief Change the position from the beginning of lob
@@ -44,6 +45,18 @@ public interface DBLob {
      * @brief Change the position from the end of lob
      */
     int SDB_LOB_SEEK_END = 2;
+
+    /**
+     * @memberof SDB_LOB_READ
+     * @brief LOB open mode for reading
+     */
+    int SDB_LOB_READ = 0x00000004;
+
+    /**
+     * @memberof SDB_LOB_WRITE
+     * @brief LOB open mode for writing
+     */
+    int SDB_LOB_WRITE = 0x00000008;
 
     /**
      * @return the lob's id
@@ -131,11 +144,11 @@ public interface DBLob {
     int read(byte[] b, int off, int len) throws BaseException;
 
     /**
-     * @param size     the adding size.
+     * @param size the adding size.
      * @param seekType SDB_LOB_SEEK_SET/SDB_LOB_SEEK_CUR/SDB_LOB_SEEK_END
      * @throws com.sequoiadb.exception.BaseException.
      * @fn seek(long size, int seekType)
-     * @brief change the read position of the lob. The new position is
+     * @brief change the read or write position of the lob. The new position is
      * obtained by adding size to the position specified by
      * seekType. If seekType is set to SDB_LOB_SEEK_SET,
      * SDB_LOB_SEEK_CUR, or SDB_LOB_SEEK_END, the offset is
@@ -143,6 +156,24 @@ public interface DBLob {
      * of lob, or the end of lob.
      */
     void seek(long size, int seekType) throws BaseException;
+
+    /**
+     * @param offset lock start position
+     * @param length lock length
+     * @throws com.sequoiadb.exception.BaseException.
+     * @fn lock(long offset, long length)
+     * @brief lock LOB section for write mode
+     */
+    void lock(long offset, long length) throws BaseException;
+
+    /**
+     * @param offset lock start position
+     * @param length lock length
+     * @throws com.sequoiadb.exception.BaseException.
+     * @fn lock(long offset, long length)
+     * @brief lock LOB section for write mode and seek to the start position
+     */
+    void lockAndSeek(long offset, long length) throws BaseException;
 
     /**
      * @param null
