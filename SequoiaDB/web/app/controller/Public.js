@@ -198,7 +198,7 @@
             $rootScope.tempData( 'Deploy', 'Model', 'Task' ) ;
             $rootScope.tempData( 'Deploy', 'Module', 'None' ) ;
             var params = { 'r': new Date().getTime() } ;
-            if( taskInfo['TaskName'] == 'ADD_HOST' || taskInfo['TaskName'] == 'REMOVE_HOST' )
+            if( taskInfo['TaskName'] == 'ADD_HOST' || taskInfo['TaskName'] == 'REMOVE_HOST' || taskInfo['TaskName'] == 'DEPLOY_PACKAGE' )
             {
                $rootScope.tempData( 'Deploy', 'HostTaskID', taskInfo['TaskID'] ) ;
                $location.path( '/Deploy/InstallHost' ).search( params ) ;

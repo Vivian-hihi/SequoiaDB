@@ -61,6 +61,10 @@
          {
             $scope.stepList = _Deploy.BuildSdbSyncStep( $scope, $location, $scope['Url']['Action'], 'sequoiadb' ) ;
          }
+         else if( $scope.DeployType == 'Package' )
+         {
+            $scope.stepList = _Deploy.BuildDeployPackageStep( $scope, $location, $scope['Url']['Action'], $scope.DeployType ) ;
+         }
          else
          {
             $scope.stepList = _Deploy.BuildSdbStep( $scope, $location, $scope.DeployType, $scope['Url']['Action'], $scope.ModuleType ) ;

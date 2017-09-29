@@ -404,6 +404,12 @@
            templateUrl: './app/template/Deploy/ShrinkModule/Sdb/Conf.html',
            resolve: resolveFun( [ './app/controller/Deploy/ShrinkModule/Sdb/Conf.js' ] )
         }
+      },
+      { path: '/Deploy/Package',
+        options: {
+           templateUrl: './app/template/Deploy/DeployPackage/Conf.html',
+           resolve: resolveFun( [ './app/controller/Deploy/DeployPackage/Conf.js' ] )
+        }
       }
    ] ;
    window.SdbSacManagerConf.defaultRoute = { redirectTo: '/Transfer' } ;

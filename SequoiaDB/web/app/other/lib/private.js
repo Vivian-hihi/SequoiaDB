@@ -618,7 +618,26 @@ _Deploy.BuildSdbShrinkStep = function( $scope, $location, action, deployModule )
    stepList['info'].push( { 'text': $scope.autoLanguage( '减容配置' ), 'click': function(){ _Deploy.GotoStep( $location, 'SDB-ShrinkConf') ; } } ) ;
    stepList['info'].push( { 'text': $scope.autoLanguage( '业务减容' ), 'click': function(){ _Deploy.GotoStep( $location, 'InstallModule'  ) ; } } ) ;
    return stepList ;
+}
 
+//生成部署安装包步骤图
+_Deploy.BuildDeployPackageStep = function( $scope, $location, action, deployModule ){
+   var stepList = {
+      'step': 0,
+      'info': []
+   }
+   switch( action )
+   {
+   case 'Package':
+      stepList['step'] = 1 ;
+      break ;
+   case 'InstallHost':
+      stepList['step'] = 2 ;
+      break ;
+   }
+   stepList['info'].push( { 'text': $scope.autoLanguage( '配置' ), 'click': function(){ _Deploy.GotoStep( $location, 'Package') ; } } ) ;
+   stepList['info'].push( { 'text': $scope.autoLanguage( '部署' ), 'click': function(){ _Deploy.GotoStep( $location, 'InstallHost'  ) ; } } ) ;
+   return stepList ;
 }
 
 //参数模板转换

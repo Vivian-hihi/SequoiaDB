@@ -692,3 +692,5 @@ button,select,input,textarea{ outline:none; }
 .nav-new div:hover{ color:#00B8E6; cursor:pointer; }
 .borderChoose { border:3px solid #FFF; }
 .borderChoose:active { border:3px solid #80C0FF; }
+
+.grayColor { color: gray; }

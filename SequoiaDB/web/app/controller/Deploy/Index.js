@@ -41,23 +41,26 @@
             'Error.Flag':       $scope.autoLanguage( '状态' ),
             'HostName':         $scope.autoLanguage( '主机名' ),
             'IP':               $scope.autoLanguage( 'IP地址' ),
-            'BusinessName':     $scope.autoLanguage( '业务' )
+            'BusinessName':     $scope.autoLanguage( '业务' ),
+            'Packages':         $scope.autoLanguage( '包' )
          },
          'body': [],
          'options': {
             'width': {
                'Check':          '30px',
                'Error.Flag':     '60px',
-               'HostName':       30,
-               'IP':             30,
-               'BusinessName':   40
+               'HostName':       '25%',
+               'IP':             '25%',
+               'BusinessName':   '25%',
+               'Packages':       '25%'
             },
             'sort': {
                'Check':                 false,
                'Error.Flag':            true,
                'HostName':              true,
                'IP':                    true,
-               'BusinessName':          true
+               'BusinessName':          true,
+               'Packages':              true
             },
             'max': 50,
             'filter': {
@@ -65,7 +68,8 @@
                'Error.Flag':        'indexof',
                'HostName':          'indexof',
                'IP':                'indexof',
-               'BusinessName':      'indexof'
+               'BusinessName':      'indexof',
+               'Packages':          'indexof'
             }
          },
          'callback': {}
@@ -795,6 +799,50 @@
          }
       }
 
+      //前往部署安装包
+      $scope.DeployPackage = function(){
+         if( $scope.HostListTable['body'].length > 0 )
+         {
+            var hostList = [] ;
+            $.each( $scope.HostList, function( index ){
+               if( $scope.HostList[index]['checked'] == true && $scope.clusterList[ $scope.currentCluster ]['ClusterName'] == $scope.HostList[index]['ClusterName'] )
+               {
+                  hostList.push(
+                     {
+                        'HostName': $scope.HostList[index]['HostName'],
+                        'IP': $scope.HostList[index]['IP'],
+                        'User': $scope.HostList[index]['User'],
+                        'Packages': $scope.HostList[index]['Packages']
+                     } 
+                  ) ;
+               }
+            } ) ;
+            if( hostList.length > 0 )
+            {
+               $rootScope.tempData( 'Deploy', 'Model',  'Package' ) ;
+               $rootScope.tempData( 'Deploy', 'Module', 'None' ) ;
+               $rootScope.tempData( 'Deploy', 'HostList', hostList ) ;
+               $rootScope.tempData( 'Deploy', 'ClusterName', $scope.clusterList[ $scope.currentCluster ]['ClusterName'] ) ;
+               $location.path( '/Deploy/Package' ).search( { 'r': new Date().getTime() } ) ;
+            }
+            else
+            {
+               $scope.Components.Confirm.type = 3 ;
+               $scope.Components.Confirm.context = $scope.autoLanguage( '至少选择一台的主机。' ) ;
+               $scope.Components.Confirm.isShow = true ;
+               $scope.Components.Confirm.okText = $scope.autoLanguage( '好的' ) ;
+            }
+            
+         }
+         else
+         {
+            $scope.Components.Confirm.type = 3 ;
+            $scope.Components.Confirm.context = $scope.autoLanguage( '当前集群没有安装主机。' ) ;
+            $scope.Components.Confirm.isShow = true ;
+            $scope.Components.Confirm.okText = $scope.autoLanguage( '好的' ) ;
+         }
+      }
+
       //业务扩容 弹窗
       $scope.ExtendWindow = {
          'config': {},
@@ -1305,6 +1353,13 @@
                   "webName": $scope.autoLanguage( '数据库密码' ),
                   "type": "password",
                   "value": ""
+               },
+               {
+                  "name": 'AgentService',
+                  "webName": $scope.autoLanguage( '代理端口' ),
+                  "type": "port",
+                  "value": '11790',
+                  "valid": {}
                }
             ]
          }

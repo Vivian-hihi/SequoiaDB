@@ -171,6 +171,7 @@
          <div ng-container="{height:40}">
             <button class="topBtn" ng-class="{0:'disabled'}[clusterList.length]" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1380]" ng-disabled="clusterList.length==0" ng-click="AddHost()"><i class="fa fa-plus"></i> {{autoLanguage("添加主机")}}</button>
             <button class="topBtn" ng-class="{0:'disabled'}[clusterList.length]" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1380]" ng-disabled="clusterList.length==0" ng-click="RemoveHost()"><i class="fa fa-trash-o"></i> {{autoLanguage("删除主机")}}</button>
+            <button class="topBtn" ng-class="{0:'disabled'}[clusterList.length]" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1380]" ng-disabled="clusterList.length==0" ng-click="DeployPackage()">{{autoLanguage("部署包")}}</button>
             <button class="topBtn" ng-class="{0:'disabled'}[clusterList.length]" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1380]" ng-disabled="clusterList.length==0" ng-click="UnbindHost()">{{autoLanguage("解绑主机")}}</button>
             <button class="topBtn" ng-class="{0:'disabled'}[clusterList.length]" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1380]" ng-disabled="clusterList.length==0" ng-click="ShowUpdateHostIP()">{{autoLanguage("更新主机信息")}}</button>
             <button class="topBtn" ng-class="{0:'disabled'}[clusterList.length]" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1380]" ng-disabled="clusterList.length==0" ng-click="SelectAll()">{{autoLanguage("全选")}}</button>
@@ -191,6 +192,11 @@
                   <span ng-repeat="installInfo in moduleInfo['Location'] track by $index" ng-if="hostInfo['HostName']==installInfo['HostName']">
                      <a class="linkButton" ng-if="moduleInfo['BusinessType']=='sequoiadb'" ng-click="GotoDataModule(moduleInfo['ClusterName'],moduleInfo['BusinessType'],moduleInfo['DeployMod'],moduleInfo['BusinessName'])">{{moduleInfo['BusinessName']}}</a><span style="color:#666;" ng-if="moduleInfo['BusinessType']!='sequoiadb'">{{moduleInfo['BusinessName']}}</span>&nbsp;
                   </span>
+               </span>
+            </div>
+            <div table-key="Packages">
+               <span class="Ellipsis badge badge-info ng-binding" style="font-size:90%;margin:3px 4px 3px 0;" ng-repeat="packageInfo in hostInfo['Packages'] track by $index">
+                  {{packageInfo['Name']}}
                </span>
             </div>
          </div>
