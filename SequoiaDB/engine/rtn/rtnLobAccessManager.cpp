@@ -33,6 +33,8 @@
 #include "rtnLobAccessManager.hpp"
 #include "msgDef.h"
 #include "pd.hpp"
+#include "pdTrace.hpp"
+#include "rtnTrace.hpp"
 
 namespace engine
 {
@@ -69,9 +71,11 @@ namespace engine
       _metaCache = metaCache ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOBACCESSINFO_LOCKSECTION, "_rtnLobAccessInfo::lockSection" )
    INT32 _rtnLobAccessInfo::lockSection( const _rtnLobSection& section )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNLOBACCESSINFO_LOCKSECTION ) ;
 
       if ( SDB_LOB_MODE_WRITE != _mode )
       {
@@ -132,14 +136,17 @@ namespace engine
       }
 
    done:
+      PD_TRACE_EXITRC( SDB_RTNLOBACCESSINFO_LOCKSECTION, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOBACCESSINFO_UNLOCKSECTIONBYACCESSID, "_rtnLobAccessInfo::unlockSectionByAccessId" )
    INT32 _rtnLobAccessInfo::unlockSectionByAccessId( INT64 accessId )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNLOBACCESSINFO_UNLOCKSECTIONBYACCESSID ) ;
 
       if ( SDB_LOB_MODE_WRITE != _mode )
       {
@@ -161,6 +168,7 @@ namespace engine
       _lobSections->delSectionById( accessId ) ;
 
    done:
+      PD_TRACE_EXITRC( SDB_RTNLOBACCESSINFO_UNLOCKSECTIONBYACCESSID, rc ) ;
       return rc ;
    error:
       goto done ;
@@ -187,6 +195,7 @@ namespace engine
       FOR_EACH_CMAP_BUCKET_END
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOBACCESSMGR_GETACCESSPRIVILEGE, "_rtnLobAccessManager::getAccessPrivilege" )
    INT32 _rtnLobAccessManager::getAccessPrivilege( std::string clName,
                                                    const bson::OID& oid,
                                                    UINT32 mode,
@@ -194,6 +203,7 @@ namespace engine
                                                    _rtnLobAccessInfo** accessInfo )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNLOBACCESSMGR_GETACCESSPRIVILEGE ) ;
 
       if ( !SDB_IS_VALID_LOB_MODE( mode ) )
       {
@@ -301,17 +311,20 @@ namespace engine
       }
 
    done:
+      PD_TRACE_EXITRC( SDB_RTNLOBACCESSMGR_GETACCESSPRIVILEGE, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOBACCESSMGR_RELEASEACCESSPRIVILEGE, "_rtnLobAccessManager::releaseAccessPrivilege" )
    INT32 _rtnLobAccessManager::releaseAccessPrivilege( std::string clName,
                                                        const bson::OID& oid,
                                                        UINT32 mode,
                                                        INT64 accessId )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNLOBACCESSMGR_RELEASEACCESSPRIVILEGE ) ;
       _rtnLobAccessKey key( clName, oid ) ;
 
       RTN_LOB_MAP::Bucket& bucket = _lobMap.getBucket( key ) ;
@@ -406,6 +419,7 @@ namespace engine
       }
 
    done:
+      PD_TRACE_EXITRC( SDB_RTNLOBACCESSMGR_RELEASEACCESSPRIVILEGE, rc ) ;
       return rc ;
    error:
       goto done ;

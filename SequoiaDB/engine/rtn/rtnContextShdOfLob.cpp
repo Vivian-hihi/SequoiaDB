@@ -816,12 +816,14 @@ namespace engine
                                 _w, _dpsCB, _su, _mbContext ) ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCONTEXTSHDOFLOB_LOCK, "_rtnContextShdOfLob::lock" )
    INT32 _rtnContextShdOfLob::lock( _pmdEDUCB *cb,
                                     INT64 offset,
                                     INT64 length )
    {
       INT32 rc = SDB_OK ;
       BOOLEAN locked= FALSE ;
+      PD_TRACE_ENTRY( SDB__RTNCONTEXTSHDOFLOB_LOCK ) ;
 
       if ( SDB_LOB_MODE_WRITE != _mode )
       {
@@ -852,13 +854,16 @@ namespace engine
          _accessInfo->unlock() ;
          locked = FALSE ;
       }
+      PD_TRACE_EXITRC( SDB__RTNCONTEXTSHDOFLOB_LOCK, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCONTEXTSHDOFLOB_CLOSE, "_rtnContextShdOfLob::close" )
    INT32 _rtnContextShdOfLob::close( _pmdEDUCB *cb )
    {
+      PD_TRACE_ENTRY( SDB__RTNCONTEXTSHDOFLOB_CLOSE ) ;
       _isOpened = FALSE ;
       _closeWithException = FALSE ;
 
@@ -884,7 +889,8 @@ namespace engine
          _writeDMS = FALSE ;
       }
 
-      return SDB_OK ; 
+      PD_TRACE_EXIT( SDB__RTNCONTEXTSHDOFLOB_CLOSE ) ;
+      return SDB_OK ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCONTEXTSHDOFLOB__ROLLBACK, "_rtnContextShdOfLob::_rollback" )

@@ -257,7 +257,7 @@ namespace engine
       INT32 _writeOrUpdate( const _rtnLobTuple &tuple,
                             _pmdEDUCB *cb ) ;
 
-      INT32 _writeOrUpdate( RTN_LOB_TUPLES &tuples,
+      INT32 _writeOrUpdateV( RTN_LOB_TUPLES &tuples,
                             _pmdEDUCB *cb ) ;
 
    private:

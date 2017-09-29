@@ -823,12 +823,14 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOCALLOBSTREAM__LOCK, "_rtnLocalLobStream::_lock" )
    INT32 _rtnLocalLobStream::_lock( _pmdEDUCB *cb,
                              INT64 offset,
                              INT64 length )
    {
       INT32 rc = SDB_OK ;
       BOOLEAN locked = TRUE ;
+      PD_TRACE_ENTRY( SDB_RTNLOCALLOBSTREAM__LOCK ) ;
 
       if ( -1 == uniqueId() )
       {
@@ -866,6 +868,7 @@ namespace engine
          _accessInfo->unlock() ;
          locked = FALSE ;
       }
+      PD_TRACE_EXITRC( SDB_RTNLOCALLOBSTREAM__LOCK, rc ) ;
       return rc ;
    error:
       goto done ;

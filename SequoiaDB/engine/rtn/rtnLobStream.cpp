@@ -453,7 +453,7 @@ namespace engine
             goto error ;
          }
 
-         rc = _writeOrUpdate( tuples, cb ) ;
+         rc = _writeOrUpdateV( tuples, cb ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to write lob[%s], rc:%d",
@@ -571,11 +571,13 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOBSTREAM_LOCK, "_rtnLobStream::lock" )
    INT32 _rtnLobStream::lock( _pmdEDUCB *cb,
                               INT64 offset,
                               INT64 length )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNLOBSTREAM_LOCK ) ;
       std::vector<INT64> offsets ;  // for rollbacking
       _rtnLobSection section( offset, length, uniqueId() ) ;
 
@@ -633,6 +635,7 @@ namespace engine
       }
 
    done:
+      PD_TRACE_EXITRC( SDB_RTNLOBSTREAM_LOCK, rc ) ;
       return rc ;
    error:
       if ( !offsets.empty() )
@@ -647,9 +650,11 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOBSTREAM_SEEK, "_rtnLobStream::seek" )
    INT32 _rtnLobStream::seek( SINT64 offset, _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNLOBSTREAM_SEEK ) ;
 
       SDB_ASSERT( offset >= 0, "invalid offset" ) ;
 
@@ -707,6 +712,7 @@ namespace engine
       _offset = offset ;
 
    done:
+      PD_TRACE_EXITRC( SDB_RTNLOBSTREAM_SEEK, rc ) ;
       return rc ;
    error:
       goto done ;
@@ -765,10 +771,12 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOBSTREAM_WRITEORUPDATE, "_rtnLobStream::_writeOrUpdate" )
    INT32 _rtnLobStream::_writeOrUpdate( const _rtnLobTuple &tuple,
                                         _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNLOBSTREAM_WRITEORUPDATE ) ;
 
       if ( !_hasPiecesInfo )
       {
@@ -822,15 +830,18 @@ namespace engine
       }
 
    done:
+      PD_TRACE_EXITRC( SDB_RTNLOBSTREAM_WRITEORUPDATE, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
-   INT32 _rtnLobStream::_writeOrUpdate( RTN_LOB_TUPLES &tuples,
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOBSTREAM_WRITEORUPDATEV, "_rtnLobStream::_writeOrUpdateV" )
+   INT32 _rtnLobStream::_writeOrUpdateV( RTN_LOB_TUPLES &tuples,
                                               _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNLOBSTREAM_WRITEORUPDATEV ) ;
 
       if ( !_hasPiecesInfo )
       {
@@ -905,6 +916,7 @@ namespace engine
       }
 
    done:
+      PD_TRACE_EXITRC( SDB_RTNLOBSTREAM_WRITEORUPDATEV, rc ) ;
       return rc ;
    error:
       goto done ;
