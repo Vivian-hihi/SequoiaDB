@@ -127,7 +127,7 @@ testFiles = [
    [ "./monitor/getSnapshotSYS12662.cpp" ],
    [ "./monitor/getSnapshotCata12662.cpp" ],
    [ "./monitor/getSnapshotTransaction12662.cpp" ], # config
-   [ "./monitor/resetSnapshot12664.cpp" ],
+   [ "./monitor/resetSnapshot12664.cpp" ], # config
    [ "./date/date11754.cpp" ],
    [ "./date/dateTime12219_12220.cpp" ],
    [ "./numberLong/numberLong7822.cpp" ]
