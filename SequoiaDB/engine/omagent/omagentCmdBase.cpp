@@ -140,7 +140,7 @@ namespace engine
       if ( bus ) para += bus ;
       if ( sys ) para += sys ;
       if ( env ) para += env ;
-      if ( other ) para += other ; 
+      if ( other ) para += other ;
       _jsFiles.push_back( pair<string, string>( name, para ) ) ;
 
    done:
@@ -174,7 +174,7 @@ namespace engine
          rc = setJsFile( it->first.c_str() ) ;
          if ( rc )
          {
-            PD_LOG_MSG ( PDERROR, "Failed to set js file[%s], rc = %d", 
+            PD_LOG_MSG ( PDERROR, "Failed to set js file[%s], rc = %d",
                          it->first.c_str(), rc ) ;
             goto error ;
          }
@@ -202,7 +202,6 @@ namespace engine
    {
       // add some common files
       addJsFile ( FILE_DEFINE ) ;
-      addJsFile ( FILE_ERROR ) ;
       addJsFile ( FILE_COMMON ) ;
       addJsFile ( FILE_LOG ) ;
       addJsFile ( FILE_FUNC ) ;
@@ -246,7 +245,7 @@ namespace engine
       if ( rc )
       {
          // we come here for one of the follow reasons:
-         // a. we throw exception out from js file 
+         // a. we throw exception out from js file
          // b. eval fail for js syntax error
          errmsg = _scope->getLastErrMsg() ;
          rc = _scope->getLastError() ;

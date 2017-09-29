@@ -176,7 +176,6 @@ namespace engine
       oma js file
    */
    #define FILE_DEFINE                      "define.js"
-   #define FILE_ERROR                       "error.js"
    #define FILE_COMMON                      "common.js"
    #define FILE_LOG                         "log.js"
    #define FILE_FUNC                        "func.js"

@@ -191,7 +191,6 @@ then
 fi
 
 js_file_define="${SCRIPT_PATH}/define.js"
-js_file_error="${SCRIPT_PATH}/error.js"
 js_file_common="${SCRIPT_PATH}/common.js"
 js_file_log="${SCRIPT_PATH}/log.js"
 js_file_func="${SCRIPT_PATH}/func.js"
@@ -199,7 +198,7 @@ js_file_item="${SCRIPT_PATH}/checkHostItem.js"
 js_file_om_define="${SCRIPT_PATH}/ombuild/define.js"
 js_file_build_ombuild="${SCRIPT_PATH}/ombuild/ombuild.js"
 
-js_file="${js_file_define};${js_file_error};${js_file_common};"
+js_file="${js_file_define};${js_file_common};"
 js_file="${js_file};${js_file_log};${js_file_func};${js_file_item};"
 js_file="${js_file};${js_file_om_define};${js_file_build_ombuild};"
 

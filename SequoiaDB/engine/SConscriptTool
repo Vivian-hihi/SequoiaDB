@@ -701,7 +701,6 @@ toolEnv.Install( '#/bin', sdbcmd )
 toolEnv.Install( '#/bin', sdbcmart )
 toolEnv.Install( '#/bin', sdbcmtop )
 toolEnv.Install( '#/bin', sdblobtool )
-toolEnv.Install( '#/conf/script/', "spt/error.js" )
 if linux:
    toolEnv.Install( '#/bin', sdbtop )
 toolEnv.Install( '#/tools', sdbload2 )
