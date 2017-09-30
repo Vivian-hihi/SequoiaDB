@@ -56,7 +56,7 @@ testFiles = [
    [ "./misc/prepareMore.cpp" ],
    [ "./misc/procedure.cpp" ],
    [ "./misc/restAbnormal.cpp" ],
-   [ "./misc/socketMutex.cpp" ],
+  #[ "./misc/socketMutex.cpp" ],
    [ "./misc/turnonCache.cpp" ],
    [ "./misc/sync.cpp" ],
    [ "./load/loadUnloadCS.cpp" ],
