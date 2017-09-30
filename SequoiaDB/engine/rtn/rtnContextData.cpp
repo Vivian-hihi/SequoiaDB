@@ -2148,11 +2148,7 @@ namespace engine
       _rtnContextBase *contextOfQuery = NULL ;
       ossTime userTime, sysTime ;
 
-      rc = rtnQuery( _options._fullName, _options._selector,
-                     _options._query, _options._orderBy,
-                     _options._hint, _options._flag,
-                     cb, _options._skip, _options._limit,
-                     sdbGetDMSCB(), sdbGetRTNCB(),
+      rc = rtnQuery( _options, cb, sdbGetDMSCB(), sdbGetRTNCB(),
                      queryContextID, &contextOfQuery ) ;
       if ( SDB_OK != rc )
       {
