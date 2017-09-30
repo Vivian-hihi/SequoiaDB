@@ -72,6 +72,7 @@ public class Insert2183 extends SdbTestBase {
             GroupWrapper cataGroup = groupMgr.getGroupByName("SYSCatalogGroup");
             String cataPriHost = cataGroup.getMaster().hostName();
             clGroup = groupMgr.getAllDataGroupName().get(0);
+            //clGroup = "group4";
             dataGroup = groupMgr.getGroupByName(clGroup);
             dataPriHost = dataGroup.getMaster().hostName();
             if (cataPriHost.equals(dataPriHost) && !cataGroup.changePrimary()) {
@@ -96,7 +97,7 @@ public class Insert2183 extends SdbTestBase {
     public void test() {
         Sequoiadb db = null;
         try {
-            FaultMakeTask faultTask = BrokenNetwork.getFaultMakeTask(dataGroup, 3, 1);
+            FaultMakeTask faultTask = BrokenNetwork.getFaultMakeTask(dataGroup, 3, 10);
             TaskMgr mgr = new TaskMgr(faultTask);
             String safeUrl = CommLib.getSafeCoordUrl(dataPriHost);
             InsertTask iTask = new InsertTask(safeUrl);
