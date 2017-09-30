@@ -28,6 +28,7 @@ function main()
    println( "---check sharding---" )
    var hashOptions = { Capped:true, Size:1024, Max:10000000, AutoIndexId:false, ShardingKey:{ "age":1 },ShardingType:"hash", Partition: 1024 };
    createCappedCL( csName, clName1, hashOptions );
+	
    var rangeOptions = { Capped:true, Size:1024, Max:10000000, AutoIndexId:false, ShardingKey:{ "age":1 },ShardingType:"hash", Partition: 1024 };
    createCappedCL( csName, clName2, rangeOptions );
    
@@ -39,6 +40,7 @@ function main()
    checkCappedAlter( dbcl, alterOption1 );
    var alterOption2 = { ShardingKey:{a:1}, ShardingType:"range" };
    checkCappedAlter( dbcl, alterOption2 );
+	checkSnapshot(csName, clName3);
    
    //clean environment after test  
    println( "---end the test---" );
@@ -74,5 +76,25 @@ function checkCappedAlter( dbcl, options )
       {
          throw buildException("checkCappedAlter()",e,"check cappedCL alter", "-32", e );
       }
+   }
+}
+
+function checkSnapshot(csName , clName)
+{
+	try
+   {
+		var cl_full_name = csName + '.' + clName;
+		var options = {Name : cl_full_name};
+      var rec = db.snapshot( 8, options );
+      var shardingType = rec.current().toObj().ShardingType;
+		var shardingKey = rec.current().toObj().ShardingKey;
+		if(shardingType != undefined || shardingKey != undefined)
+		{
+			throw "CHECK SNAPSHOT FAILED";
+		}
+   }
+   catch( e )
+   {
+      throw buildException("checkSnapshot()",e,"check snapshot", e, e );
    }
 }
