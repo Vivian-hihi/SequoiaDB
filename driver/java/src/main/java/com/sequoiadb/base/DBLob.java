@@ -80,6 +80,13 @@ public interface DBLob extends Closeable {
     long getCreateTime();
 
     /**
+     * @return the lob's last modification time
+     * @fn long getModificationTime()
+     * @brief get the last modification time of lob
+     */
+    long getModificationTime();
+
+    /**
      * @param in the input stream.
      * @throws com.sequoiadb.exception.BaseException
      * @fn void write( InputStream in )
@@ -170,7 +177,7 @@ public interface DBLob extends Closeable {
      * @param offset lock start position
      * @param length lock length
      * @throws com.sequoiadb.exception.BaseException.
-     * @fn lock(long offset, long length)
+     * @fn lockAndSeek(long offset, long length)
      * @brief lock LOB section for write mode and seek to the start position
      */
     void lockAndSeek(long offset, long length) throws BaseException;

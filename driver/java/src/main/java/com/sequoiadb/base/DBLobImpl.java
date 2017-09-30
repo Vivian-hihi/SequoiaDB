@@ -36,7 +36,8 @@ class DBLobImpl implements DBLob {
     final static String FIELD_NAME_LOB_OPEN_MODE = "Mode";
     final static String FIELD_NAME_LOB_OID = "Oid";
     final static String FIELD_NAME_LOB_SIZE = "Size";
-    final static String FIELD_NAME_LOB_CREATTIME = "CreateTime";
+    final static String FIELD_NAME_LOB_CREATE_TIME = "CreateTime";
+    final static String FIELD_NAME_LOB_MODIFICATION_TIME = "ModificationTime";
     final static String FIELD_NAME_LOB_PAGESIZE = "LobPageSize";
     final static int SDB_LOB_CREATEONLY = 0x00000001;
 
@@ -55,6 +56,7 @@ class DBLobImpl implements DBLob {
     private int _pageSize;
     private long _lobSize;
     private long _createTime;
+    private long _modificationTime;
     private long _currentOffset = 0;
     private long _cachedOffset = -1;
     private ByteBuffer _cachedDataBuff = null;
@@ -158,7 +160,12 @@ class DBLobImpl implements DBLob {
 
         BSONObject obj = response.getMetaInfo();
         _lobSize = (Long) obj.get(FIELD_NAME_LOB_SIZE);
-        _createTime = (Long) obj.get(FIELD_NAME_LOB_CREATTIME);
+        _createTime = (Long) obj.get(FIELD_NAME_LOB_CREATE_TIME);
+        if (obj.containsField(FIELD_NAME_LOB_MODIFICATION_TIME)) {
+            _modificationTime = (Long)obj.get(FIELD_NAME_LOB_MODIFICATION_TIME);
+        } else {
+            _modificationTime = _createTime;
+        }
         _pageSize = (Integer) obj.get(FIELD_NAME_LOB_PAGESIZE);
         _cachedDataBuff = response.getData();
         if (_cachedDataBuff != null) {
@@ -200,6 +207,16 @@ class DBLobImpl implements DBLob {
     @Override
     public long getCreateTime() {
         return _createTime;
+    }
+
+    /**
+     * @return the lob's last modification time
+     * @fn long getModificationTime()
+     * @brief get the last modification time of lob
+     */
+    @Override
+    public long getModificationTime() {
+        return _modificationTime;
     }
 
     /**
