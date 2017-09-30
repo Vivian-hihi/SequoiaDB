@@ -1914,24 +1914,41 @@ namespace engine
    {
       PD_TRACE_ENTRY ( SDB__SDB_DMSCB_CLRSUCACHES ) ;
 
-      ossScopedLock _lock( &_mutex, SHARED ) ;
+      MON_CS_SIM_LIST monCSList ;
+      dumpInfo( monCSList, TRUE, FALSE, FALSE ) ;
+      clearSUCaches( monCSList, mask ) ;
 
-      CSCB_MAP_CONST_ITER it ;
+      PD_TRACE_EXIT ( SDB__SDB_DMSCB_CLRSUCACHES ) ;
+   }
 
-      for ( it = _cscbNameMap.begin() ;
-            it != _cscbNameMap.end() ;
-            it++ )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_CLRSUCACHES_CSLIST, "_SDB_DMSCB::clearSUCaches" )
+   void _SDB_DMSCB::clearSUCaches ( const MON_CS_SIM_LIST &monCSList,
+                                    UINT32 mask )
+   {
+      PD_TRACE_ENTRY ( SDB__SDB_DMSCB_CLRSUCACHES_CSLIST ) ;
+
+      for ( MON_CS_SIM_LIST::const_iterator csIter = monCSList.begin() ;
+            csIter != monCSList.end() ;
+            csIter ++ )
       {
-         dmsStorageUnitID suID = (*it).second ;
+         INT32 rc = SDB_OK ;
+         dmsStorageUnit *pSU = NULL ;
+         const monCSSimple &monCS = (*csIter) ;
+         const CHAR *pCSName = monCS._name ;
+         dmsStorageUnitID suID = monCS._suID ;
+         dmsEventSUItem suItem( pCSName, suID, monCS._logicalID ) ;
 
-         SDB_DMS_CSCB *cscb = _cscbVec[ suID ] ;
-         if ( !cscb )
+         rc = verifySUAndLock( &suItem, &pSU, EXCLUSIVE, OSS_ONE_SEC ) ;
+         if ( SDB_OK != rc )
          {
+            PD_LOG( PDDEBUG, "Failed to get storage unit [%s], rc: %d",
+                    pCSName, rc ) ;
             continue ;
          }
-         _latchVec[ suID ]->lock_w() ;
-         cscb->_su->getEventHolder()->onClearSUCaches( mask ) ;
-         _latchVec[ suID ]->release_w() ;
+
+         pSU->getEventHolder()->onClearSUCaches( mask ) ;
+
+         suUnlock( suID, EXCLUSIVE ) ;
       }
 
       if ( OSS_BIT_TEST( mask, DMS_EVENT_MASK_PLAN ) )
@@ -1940,7 +1957,7 @@ namespace engine
          sdbGetRTNCB()->getAPM()->invalidateAllPlans() ;
       }
 
-      PD_TRACE_EXIT ( SDB__SDB_DMSCB_CLRSUCACHES ) ;
+      PD_TRACE_EXIT ( SDB__SDB_DMSCB_CLRSUCACHES_CSLIST ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_DISPATCHDICTJOB, "_SDB_DMSCB::dispatchDictJob" )

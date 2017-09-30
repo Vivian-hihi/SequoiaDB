@@ -112,15 +112,6 @@ namespace engine
                                     _SDB_DMSCB *dmsCB,
                                     _SDB_RTNCB *rtnCB ) ;
 
-   static INT32 _rtnClearAllStats ( const MON_CS_SIM_LIST &monCSList,
-                                    _SDB_DMSCB *dmsCB ) ;
-
-   static INT32 _rtnClearCSStats ( dmsStorageUnit *pSU ) ;
-
-   static INT32 _rtnClearCLStats ( const monCSSimple *pMonCS,
-                                   const monCLSimple *pMonCL,
-                                   dmsStatCache *pStatCache ) ;
-
    static INT32 _rtnAnalyzeAllStats ( const MON_CS_SIM_LIST &monCSList,
                                       const rtnAnalyzeParam &param,
                                       pmdEDUCB *cb,
@@ -148,6 +139,7 @@ namespace engine
    static INT32 _rtnAnalyzeCLInternal ( dmsStorageUnit *pSU,
                                         dmsMBContext *mbContext,
                                         UINT32 sampleRecords,
+                                        BOOLEAN clearPlans,
                                         pmdEDUCB *cb,
                                         _SDB_DMSCB *dmsCB,
                                         _SDB_RTNCB *rtnCB,
@@ -169,6 +161,7 @@ namespace engine
                                            ixmIndexCB *indexCB,
                                            UINT32 sampleRecords,
                                            BOOLEAN needUpdateCL,
+                                           BOOLEAN clearPlans,
                                            CHAR *pSortBuf,
                                            pmdEDUCB *cb,
                                            _SDB_DMSCB *dmsCB,
@@ -295,9 +288,6 @@ namespace engine
                 "Do not support generating default statistics on all "
                 "collection spaces" ) ;
 
-      // Clear cached plans
-      dmsCB->clearSUCaches( DMS_EVENT_MASK_PLAN ) ;
-
       if ( param._mode == SDB_ANALYZE_MODE_RELOAD )
       {
          // Dump all information here, reload statistics is a quick process
@@ -323,8 +313,9 @@ namespace engine
       }
       else if ( param._mode == SDB_ANALYZE_MODE_CLEAR )
       {
-         rc = _rtnClearAllStats( monCSList, dmsCB ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to clear statistics, rc: %d", rc ) ;
+         // Clear cached plans and statistics
+         dmsCB->clearSUCaches( monCSList,
+                               DMS_EVENT_MASK_PLAN | DMS_EVENT_MASK_STAT ) ;
       }
       else
       {
@@ -361,6 +352,7 @@ namespace engine
       monCSSimple monCS ;
       dmsStorageUnitID suID = DMS_INVALID_CS ;
       dmsStorageUnit *pSU = NULL ;
+      dmsStatCache *pStatCache = NULL ;
 
       OSS_LATCH_MODE csLockType = SHARED ;
 
@@ -375,6 +367,11 @@ namespace engine
       PD_CHECK( !dmsIsSysCSName( pCSName ), SDB_INVALIDARG, error, PDERROR,
                 "Could not analyze SYS collection space [%s]", pCSName ) ;
 
+      // Check if statistics cache is ready for collection space
+      pStatCache = pSU->getStatCache() ;
+      PD_CHECK( pStatCache, SDB_INVALIDARG, error, PDERROR,
+                "No statistics manger in storage unit [%s]", pCSName ) ;
+
       if ( param._mode == SDB_ANALYZE_MODE_CLEAR )
       {
          csLockType = EXCLUSIVE ;
@@ -385,9 +382,6 @@ namespace engine
                    pCSName, rc ) ;
 
       suLocked = TRUE ;
-
-      // Clear cached plans
-      pSU->getEventHolder()->onClearSUCaches( DMS_EVENT_MASK_PLAN ) ;
 
       if ( param._mode == SDB_ANALYZE_MODE_RELOAD )
       {
@@ -416,7 +410,8 @@ namespace engine
       }
       else if ( param._mode == SDB_ANALYZE_MODE_CLEAR )
       {
-         _rtnClearCSStats( pSU ) ;
+         pSU->getEventHolder()->onClearSUCaches( DMS_EVENT_MASK_PLAN |
+                                                 DMS_EVENT_MASK_STAT ) ;
       }
       else
       {
@@ -460,6 +455,7 @@ namespace engine
 
       dmsStorageUnitID suID = DMS_INVALID_SUID ;
       dmsStorageUnit *pSU = NULL ;
+      dmsStatCache *pStatCache = NULL ;
       dmsMBContext *mbContext = NULL ;
 
       const CHAR *pCSName = NULL ;
@@ -486,6 +482,11 @@ namespace engine
       PD_CHECK( !dmsIsSysCLName( pCLName ), SDB_INVALIDARG, error, PDERROR,
                 "Could not analyze SYS collection [%s]", pCLFullName ) ;
 
+      // Check if statistics cache is ready for collection space
+      pStatCache = pSU->getStatCache() ;
+      PD_CHECK( pStatCache, SDB_INVALIDARG, error, PDERROR,
+                "No statistics manger in storage unit [%s]", pCSName ) ;
+
       pSU->dumpInfo( monCS, FALSE, FALSE, FALSE ) ;
 
       if ( param._mode == SDB_ANALYZE_MODE_RELOAD ||
@@ -498,18 +499,10 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Failed to get collection [%s], rc: %d",
                    pCLFullName, rc ) ;
 
-      {
-         // Clear cached plans
-         dmsEventCLItem clItem( pCLName, mbContext->mbID(),
-                                mbContext->clLID() ) ;
-         pSU->getEventHolder()->onClearCLCaches( DMS_EVENT_MASK_PLAN, clItem ) ;
-      }
-
       if ( param._mode == SDB_ANALYZE_MODE_RELOAD )
       {
-         dmsStatCache *pStatCache = pSU->getStatCache() ;
-         PD_CHECK( pStatCache, SDB_INVALIDARG, error, PDERROR,
-                   "No statistics manger in storage unit [%s]", pCSName ) ;
+         dmsEventCLItem clItem( pCLName, mbContext->mbID(),
+                                mbContext->clLID() ) ;
 
          // Get index list here, reload statistics will be a quick process
          pSU->dumpInfo( monCL, mbContext->mbID(), TRUE ) ;
@@ -518,19 +511,18 @@ namespace engine
                                  cb, dmsCB, rtnCB ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to reload statistics for "
                       "collection [%s], rc: %d", pCLFullName, rc ) ;
+
+         // Clear cached plans based on old statistics
+         pSU->getEventHolder()->onClearCLCaches( DMS_EVENT_MASK_PLAN, clItem ) ;
       }
       else if ( param._mode == SDB_ANALYZE_MODE_CLEAR )
       {
-         dmsStatCache *pStatCache = pSU->getStatCache() ;
-         PD_CHECK( pStatCache, SDB_INVALIDARG, error, PDERROR,
-                   "No statistics manger in storage unit [%s]", pCSName ) ;
+         dmsEventCLItem clItem( pCLName, mbContext->mbID(),
+                                mbContext->clLID() ) ;
 
-         // Don't need index
-         pSU->dumpInfo( monCL, mbContext->mbID(), FALSE ) ;
-
-         rc = _rtnClearCLStats( &monCS, &monCL, pStatCache ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to clear statistics for "
-                      "collection [%s], rc: %d", pCLFullName, rc ) ;
+         // Clear cached plans and statistics
+         pSU->getEventHolder()->onClearCLCaches( DMS_EVENT_MASK_PLAN |
+                                                 DMS_EVENT_MASK_STAT, clItem ) ;
       }
       else
       {
@@ -622,52 +614,53 @@ namespace engine
       PD_CHECK( !dmsIsSysCLName( pCLName ), SDB_INVALIDARG, error, PDERROR,
                 "Could not analyze SYS collection [%s]", pCLFullName ) ;
 
+      // Check if statistics cache is ready for collection space
+      pStatCache = pSU->getStatCache() ;
+      PD_CHECK( pStatCache, SDB_INVALIDARG, error, PDERROR,
+                "No statistics manger in storage unit [%s]", pCSName ) ;
+
       // Dump CS information
       pSU->dumpInfo( monCS, FALSE, FALSE, FALSE ) ;
 
+      // Reload and clear mode acquire exclusive lock
       if ( param._mode == SDB_ANALYZE_MODE_RELOAD ||
            param._mode == SDB_ANALYZE_MODE_CLEAR )
       {
          clLockType = EXCLUSIVE ;
       }
 
+      // Get mbContext
       rc = pSU->data()->getMBContext( &mbContext, pCLName, clLockType ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get collection [%s], rc: %d",
                    pCLFullName, rc ) ;
-
-      {
-         // Clear cached plans
-         dmsEventCLItem clItem( pCLName, mbContext->mbID(),
-                                mbContext->clLID() ) ;
-         pSU->getEventHolder()->onClearCLCaches( DMS_EVENT_MASK_PLAN, clItem ) ;
-      }
 
       pSU->dumpInfo( monCL, mbContext->mbID(), FALSE ) ;
 
       if ( param._mode == SDB_ANALYZE_MODE_RELOAD )
       {
+         dmsEventCLItem clItem( pCLName, mbContext->mbID(),
+                                mbContext->clLID() ) ;
+
          pSU->getIndex( mbContext->mb(), pIndexName, monIX ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to get index [%s %s], rc: %d",
                       pCLFullName, pIndexName, rc ) ;
-
-         pStatCache = pSU->getStatCache() ;
-         PD_CHECK( pStatCache, SDB_INVALIDARG, error, PDERROR,
-                   "No statistics manger in storage unit [%s]", pCSName ) ;
 
          rc = _rtnReloadIdxStat( &monCS, &monCL, &monIX, pStatCache,
                                  cb, dmsCB, rtnCB ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to reload statistics for "
                       "index [%s %s], rc: %d", pCLFullName, pIndexName, rc ) ;
+
+         // Clear cached plans based on old statistics
+         pSU->getEventHolder()->onClearCLCaches( DMS_EVENT_MASK_PLAN, clItem ) ;
       }
       else if ( param._mode == SDB_ANALYZE_MODE_CLEAR )
       {
-         pStatCache = pSU->getStatCache() ;
-         PD_CHECK( pStatCache, SDB_INVALIDARG, error, PDERROR,
-                   "No statistics manger in storage unit [%s]", pCSName ) ;
+         dmsEventCLItem clItem( pCLName, mbContext->mbID(),
+                                mbContext->clLID() ) ;
 
-         rc = _rtnClearCLStats( &monCS, &monCL, pStatCache ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to clear statistics for "
-                      "index [%s %s], rc: %d", pCLFullName, pIndexName, rc ) ;
+         // Clear cached plans and statistics
+         pSU->getEventHolder()->onClearCLCaches( DMS_EVENT_MASK_PLAN |
+                                                 DMS_EVENT_MASK_STAT, clItem ) ;
       }
       else
       {
@@ -818,11 +811,8 @@ namespace engine
 
       suLocked = TRUE ;
 
-      pStatCache = pSU->getStatCache() ;
-      PD_CHECK( pStatCache, SDB_INVALIDARG, error, PDERROR,
-                "No statistics manger in storage unit [%s]", pCSName ) ;
-
-      pStatCache->clearCacheUnits() ;
+      // Clear current statistics caches
+      pSU->getEventHolder()->onClearSUCaches( DMS_EVENT_MASK_STAT ) ;
 
       if ( pInputStatCache )
       {
@@ -838,6 +828,9 @@ namespace engine
          }
          pStatCache->setStatus( UTIL_SU_CACHE_UNIT_STATUS_CACHED ) ;
       }
+
+      // Clear current plan caches based on old statistics
+      pSU->getEventHolder()->onClearSUCaches( DMS_EVENT_MASK_PLAN ) ;
 
    done :
       if ( suLocked )
@@ -998,62 +991,6 @@ namespace engine
 
    error :
       goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCLEARALLSTATS, "_rtnClearAllStats" )
-   INT32 _rtnClearAllStats ( const MON_CS_SIM_LIST &monCSList,
-                             _SDB_DMSCB *dmsCB )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNCLEARALLSTATS ) ;
-
-      for ( MON_CS_SIM_LIST::iterator iterCS = monCSList.begin() ;
-            iterCS != monCSList.end() ;
-            ++ iterCS )
-      {
-         const monCSSimple *pMonCS = &(*iterCS) ;
-         _rtnReplaceCSStats( pMonCS, NULL, FALSE, dmsCB ) ;
-      }
-
-      PD_TRACE_EXITRC( SDB__RTNCLEARALLSTATS, rc ) ;
-      return rc ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCLEARCSSTATS, "_rtnClearCSStats" )
-   INT32 _rtnClearCSStats ( dmsStorageUnit *pSU )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNCLEARCSSTATS ) ;
-
-      SDB_ASSERT( pSU, "pSU is invalid" ) ;
-
-      dmsStatCache *pStatCache = pSU->getStatCache() ;
-
-      if ( NULL != pStatCache )
-      {
-         pStatCache->clearCacheUnits() ;
-      }
-
-      PD_TRACE_EXITRC( SDB__RTNCLEARCSSTATS, rc ) ;
-      return rc ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCLEARCLSTATS, "_rtnClearCLStats" )
-   INT32 _rtnClearCLStats ( const monCSSimple *pMonCS,
-                            const monCLSimple *pMonCL,
-                            dmsStatCache *pStatCache )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNCLEARCLSTATS ) ;
-
-      SDB_ASSERT( pMonCS, "pMonCS is invalid" ) ;
-      SDB_ASSERT( pMonCL, "pMonCL is invalid" ) ;
-      SDB_ASSERT( pStatCache, "pStatCache is invalid" ) ;
-
-      pStatCache->removeCacheUnit( pMonCL->_blockID, TRUE ) ;
-
-      PD_TRACE_EXITRC( SDB__RTNCLEARCLSTATS, rc ) ;
-      return rc ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNANALYZEALLSTATS, "_rtnAnalyzeAllStats" )
@@ -1268,8 +1205,8 @@ namespace engine
       sampleRecords = _rtnGetSampleRecords( mbContext->mbStat()->_totalRecords,
                                             param ) ;
 
-      rc = _rtnAnalyzeCLInternal( pSU, mbContext, sampleRecords, cb, dmsCB,
-                                  rtnCB, dpsCB ) ;
+      rc = _rtnAnalyzeCLInternal( pSU, mbContext, sampleRecords, TRUE, cb,
+                                  dmsCB, rtnCB, dpsCB ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to analyze collection [%s.%s], rc: %d",
                    pCSName, pCLName, rc ) ;
 
@@ -1349,6 +1286,7 @@ namespace engine
    INT32 _rtnAnalyzeCLInternal ( dmsStorageUnit *pSU,
                                  dmsMBContext *mbContext,
                                  UINT32 sampleRecords,
+                                 BOOLEAN clearPlans,
                                  pmdEDUCB *cb,
                                  _SDB_DMSCB *dmsCB,
                                  _SDB_RTNCB *rtnCB,
@@ -1414,6 +1352,15 @@ namespace engine
                                              rtnCB, dpsCB ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to update collection statistics "
                    "[%s.%s], rc: %d", pCSName, pCLName, rc ) ;
+
+      if ( clearPlans )
+      {
+         dmsEventCLItem clItem( pCLName, mbContext->mbID(),
+                                mbContext->clLID() ) ;
+
+         // Clear cached plans based on old statistics
+         pSU->getEventHolder()->onClearCLCaches( DMS_EVENT_MASK_PLAN, clItem ) ;
+      }
 
    done :
       SAFE_OSS_DELETE( pCollectionStat ) ;
@@ -1518,9 +1465,9 @@ namespace engine
             allocatedBuf = TRUE ;
          }
 
-         rc = _rtnAnalyzeIndexInternal( pSU, mbContext, &indexCB,
-                                        sampleRecords, needUpdateCL, pSortBuf,
-                                        cb, dmsCB, rtnCB, dpsCB ) ;
+         rc = _rtnAnalyzeIndexInternal( pSU, mbContext, &indexCB, sampleRecords,
+                                        needUpdateCL, TRUE, pSortBuf, cb, dmsCB,
+                                        rtnCB, dpsCB ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to analyze index [%s.%s %s], "
                       "rc: %d", pCSName, pCLName, pIXName, rc ) ;
       }
@@ -1558,6 +1505,7 @@ namespace engine
                                     ixmIndexCB *indexCB,
                                     UINT32 sampleRecords,
                                     BOOLEAN needUpdateCL,
+                                    BOOLEAN clearPlans,
                                     CHAR *pSortBuf,
                                     pmdEDUCB *cb,
                                     _SDB_DMSCB *dmsCB,
@@ -1592,8 +1540,8 @@ namespace engine
       if ( needUpdateCL )
       {
          // Re-analyze collection statistics if needed
-         rc = _rtnAnalyzeCLInternal( pSU, mbContext, sampleRecords, cb, dmsCB,
-                                     rtnCB, dpsCB ) ;
+         rc = _rtnAnalyzeCLInternal( pSU, mbContext, sampleRecords, FALSE, cb,
+                                     dmsCB, rtnCB, dpsCB ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to analyze collection [%s.%s], "
                       "rc: %d", pCSName, pCLName, rc ) ;
 
@@ -1664,6 +1612,15 @@ namespace engine
       rc = pStatSUMgr->updateIndexStat( pTmpIdxStat, cb, dmsCB, rtnCB, dpsCB ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to update index statistics "
                    "[%s.%s %s], rc: %d", pCSName, pCLName, pIXName, rc ) ;
+
+      if ( clearPlans )
+      {
+         dmsEventCLItem clItem( pCLName, mbContext->mbID(),
+                                mbContext->clLID() ) ;
+
+         // Clear cached plans based on old statistics
+         pSU->getEventHolder()->onClearCLCaches( DMS_EVENT_MASK_PLAN, clItem ) ;
+      }
 
    done :
       SAFE_OSS_DELETE( pIndexStat ) ;
