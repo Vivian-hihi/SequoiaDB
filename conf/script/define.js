@@ -339,6 +339,7 @@ var FIELD_IP                               = IP ;
 var FIELD_HOSTS                            = Hosts ;
 var FIELD_IP2                              = Ip ;
 var FIELD_AGENT_SERVICE                    = AgentService ;
+var FIELD_PACKAGES                         = "Packages" ;
 var FIELD_PACKAGE_NAME                     = "PackageName" ;
 var FIELD_SDBUSERGROUP                     = SdbUserGroup ;
 var FIELD_SDBPASSWD                        = SdbPasswd ;
