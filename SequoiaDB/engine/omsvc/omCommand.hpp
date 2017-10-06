@@ -840,25 +840,31 @@ namespace engine
          INT32          _removeCluster( const string &clusterName ) ;
    } ;
 
-   class omRemoveHostCommand : public omStartBusinessCommand
+   class omRemoveHostCommand : public omAuthCommand
    {
-      public:
-         omRemoveHostCommand( restAdaptor *pRestAdaptor,
-                              pmdRestSession *pRestSession,
-                              string localAgentHost,
-                              string localAgentService ) ;
-         virtual ~omRemoveHostCommand() ;
+   public:
+      omRemoveHostCommand( restAdaptor *pRestAdaptor,
+                           pmdRestSession *pRestSession,
+                           string &localAgentHost,
+                           string &localAgentService ) ;
 
-      public:
-         virtual INT32  doCommand() ;
+      virtual ~omRemoveHostCommand() ;
 
-      private:
-         INT32          _generateTaskInfo( list<string> &hostNameList,
-                                           BSONObj &taskInfo,
-                                           BSONArray &resultInfo ) ;
-         INT32          _getHostExistBusinessFlag( const string &hostName,
-                                                   BOOLEAN &flag ) ;
-         INT32          _getHostName( list<string> &hostNameList ) ;
+      virtual INT32  doCommand() ;
+
+   private:
+      INT32 _check( const BSONObj &hostList ) ;
+
+      INT32 _generateRequest( const BSONObj &hostList,
+                              BSONObj &taskConfig, BSONArray &resultInfo ) ;
+
+      INT32 _createTask( const BSONObj &taskConfig, const BSONArray &resultInfo,
+                         INT64 &taskID ) ;
+
+   private:
+      string _clusterName ;
+      string _localAgentHost ;
+      string _localAgentService ;
    } ;
 
    class omRemoveBusinessCommand : public omStartBusinessCommand

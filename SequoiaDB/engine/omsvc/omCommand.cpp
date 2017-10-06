@@ -7899,11 +7899,12 @@ namespace engine
    // *****************omRemoveHostCommand *****************************
    omRemoveHostCommand::omRemoveHostCommand( restAdaptor *pRestAdaptor,
                                              pmdRestSession *pRestSession,
-                                             string localAgentHost,
-                                             string localAgentService )
-                       :omStartBusinessCommand( pRestAdaptor, pRestSession,
-                                                localAgentHost,
-                                                localAgentService )
+                                             string &localAgentHost,
+                                             string &localAgentService )
+               : omAuthCommand( pRestAdaptor, pRestSession ),
+                 _localAgentHost( localAgentHost ),
+                 _localAgentService( localAgentService )
+
    {
    }
 
@@ -7911,269 +7912,263 @@ namespace engine
    {
    }
 
-   INT32 omRemoveHostCommand::_getHostName( list<string> &hostNameList )
-   {
-      INT32 rc              = SDB_OK ;
-      const CHAR *pHostInfo = NULL ;
-      BSONObj bsonHostInfo ;
-      BSONElement element ;
-      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_HOST_INFO,
-                              &pHostInfo ) ;
-      if ( NULL == pHostInfo )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "rest field [%s] is null",
-                     OM_REST_FIELD_HOST_INFO ) ;
-         goto error ;
-      }
-
-      rc = fromjson( pHostInfo, bsonHostInfo ) ;
-      if ( rc )
-      {
-         PD_LOG_MSG( PDERROR, "change rest field to BSONObj failed:src=%s,"
-                     "rc=%d", pHostInfo, rc ) ;
-         goto error ;
-      }
-
-      element = bsonHostInfo.getField( OM_BSON_FIELD_HOST_INFO ) ;
-      if ( element.type() != Array )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "%s is not Array type",
-                     OM_BSON_FIELD_HOST_INFO ) ;
-         goto error ;
-      }
-      {
-         BSONObjIterator i( element.embeddedObject() ) ;
-         while ( i.more() )
-         {
-            string hostName ;
-            BSONObjBuilder builder ;
-            BSONObj tmp ;
-            BSONElement ele = i.next() ;
-            if ( ele.type() != Object )
-            {
-               rc = SDB_INVALIDARG ;
-               PD_LOG_MSG( PDERROR, "element of %s is not Object type"
-                           ":type=%d", OM_BSON_FIELD_HOST_INFO, ele.type() ) ;
-               goto error ;
-            }
-            BSONObj oneHost = ele.embeddedObject() ;
-
-            hostNameList.push_back(
-                           oneHost.getStringField( OM_BSON_FIELD_HOST_NAME ) ) ;
-         }
-      }
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 omRemoveHostCommand::_getHostExistBusinessFlag( const string &hostName,
-                                                         BOOLEAN &flag )
-   {
-      BSONObj selector ;
-      BSONObj matcher ;
-      BSONObj order ;
-      BSONObj hint ;
-      BSONObj result ;
-      SINT64 contextID = -1 ;
-      INT32 rc         = SDB_OK ;
-
-      matcher = BSON( OM_CONFIGURE_FIELD_HOSTNAME << hostName ) ;
-      rc = rtnQuery( OM_CS_DEPLOY_CL_CONFIGURE, selector, matcher, order, hint,
-                     0, _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
-      if ( rc )
-      {
-         PD_LOG_MSG( PDERROR, "fail to query table:%s,rc=%d",
-                     OM_CS_DEPLOY_CL_CONFIGURE, rc ) ;
-         goto error ;
-      }
-
-      while ( TRUE )
-      {
-         rtnContextBuf buffObj ;
-         rc = rtnGetMore ( contextID, 1, buffObj, _cb, _pRTNCB ) ;
-         if ( rc )
-         {
-            if ( SDB_DMS_EOC == rc )
-            {
-               rc = SDB_OK ;
-               flag = FALSE ;
-               break ;
-            }
-
-            contextID = -1 ;
-            PD_LOG_MSG( PDERROR, "failed to get record from table:%s,rc=%d",
-                        OM_CS_DEPLOY_CL_CONFIGURE, rc ) ;
-            goto error ;
-         }
-
-         flag = TRUE ;
-         break ;
-      }
-   done:
-      if ( -1 != contextID )
-      {
-         _pRTNCB->contextDelete ( contextID, _cb ) ;
-      }
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 omRemoveHostCommand::_generateTaskInfo( list<string> &hostNameList,
-                                                 BSONObj &taskInfo,
-                                                 BSONArray &resultInfo )
-   {
-      INT32 rc = SDB_OK ;
-      BSONArrayBuilder taskArrayBuilder ;
-      BSONArrayBuilder resultArrayBuilder ;
-      list<string>::iterator iter = hostNameList.begin() ;
-      while ( iter != hostNameList.end() )
-      {
-         BSONObj oneHostInfo ;
-         BSONObjBuilder resultBuilder ;
-         BSONObj oneResultInfo ;
-         string hostName = *iter ;
-         simpleHostInfo hostInfo ;
-         BOOLEAN isHostExist = FALSE ;
-         BOOLEAN isHostExistBusiness = FALSE ;
-         rc = _getHostInfo( hostName, hostInfo, isHostExist ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "get host info failed:host=%s,rc=%d",
-                    hostName.c_str(), rc ) ;
-            goto error ;
-         }
-
-         if ( !isHostExist )
-         {
-            rc = SDB_DMS_RECORD_NOTEXIST ;
-            PD_LOG_MSG( PDERROR, "host is not exist:host=%s:rc=%d",
-                        hostName.c_str(), rc ) ;
-            goto done ;
-         }
-
-         rc = _getHostExistBusinessFlag( hostName, isHostExistBusiness ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "_getHostExistBusinessFlag failed:host=%s,rc=%d",
-                    hostName.c_str(), rc ) ;
-            goto error ;
-         }
-
-         if ( isHostExistBusiness )
-         {
-            rc = SDB_INVALIDARG ;
-            PD_LOG_MSG( PDERROR, "business exist when removeing host,"
-                        "business should be removed first:host=%s",
-                        hostName.c_str() ) ;
-            goto error ;
-         }
-
-         if ( _isHostExistInTask( hostName ) )
-         {
-            rc = SDB_INVALIDARG ;
-            PD_LOG_MSG( PDERROR, "host is exist in task:host=%s",
-                        hostName.c_str() ) ;
-            goto error ;
-         }
-
-         oneHostInfo = BSON( OM_HOST_FIELD_NAME << hostInfo.hostName
-                             << OM_HOST_FIELD_IP << hostInfo.ip
-                             << OM_BSON_CLUSTER_NAME
-                             << hostInfo.clusterName
-                             << OM_BSON_FIELD_HOST_USER << hostInfo.user
-                             << OM_BSON_FIELD_HOST_PASSWD << hostInfo.passwd
-                             << OM_BSON_FIELD_INSTALL_PATH
-                             << hostInfo.installPath
-                             << OM_BSON_FIELD_HOST_SSHPORT
-                             << hostInfo.sshPort ) ;
-         taskArrayBuilder.append( oneHostInfo ) ;
-
-         resultBuilder.append( OM_HOST_FIELD_IP, hostInfo.ip ) ;
-         resultBuilder.append( OM_HOST_FIELD_NAME, hostInfo.hostName ) ;
-         resultBuilder.append( OM_TASKINFO_FIELD_STATUS, OM_TASK_STATUS_INIT ) ;
-         resultBuilder.append( OM_TASKINFO_FIELD_STATUS_DESC,
-                               OM_TASK_STATUS_INIT_STR ) ;
-         resultBuilder.append( OM_REST_RES_RETCODE, 0 ) ;
-         resultBuilder.append( OM_REST_RES_DETAIL, "" ) ;
-         {
-            BSONArrayBuilder tmpEmptyBuilder ;
-            resultBuilder.append( OM_TASKINFO_FIELD_FLOW,
-                                  tmpEmptyBuilder.arr() ) ;
-         }
-
-         oneResultInfo = resultBuilder.obj() ;
-         resultArrayBuilder.append( oneResultInfo ) ;
-         iter++ ;
-      }
-
-      taskInfo = BSON( OM_BSON_FIELD_HOST_INFO << taskArrayBuilder.arr() ) ;
-      resultInfo = resultArrayBuilder.arr() ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
    INT32 omRemoveHostCommand::doCommand()
    {
       INT32 rc = SDB_OK ;
-      list<string> hostNameList ;
-      BSONObj taskInfo ;
-      BSONArray resultInfo ;
       INT64 taskID = 0 ;
-      rc = _getHostName( hostNameList ) ;
-      if ( SDB_OK != rc )
+      string packetPath ;
+      BSONObj restHostInfo ;
+      BSONObj clusterInfo ;
+      BSONObj hostsInfo ;
+      BSONObj taskConfig ;
+      BSONArray resultInfo ;
+      omArgOptions option( _restAdaptor, _restSession ) ;
+      omRestTool restTool( _restAdaptor, _restSession ) ;
+
+      _setFileLanguageSep() ;
+
+      pmdGetThreadEDUCB()->resetInfo( EDU_INFO_ERROR ) ;
+
+      rc = option.parseRestArg( "j", OM_REST_FIELD_HOST_INFO, &restHostInfo ) ;
+      if ( rc )
       {
-         PD_LOG( PDERROR, "_getHostName failed:rc=%d", rc ) ;
+         _errorMsg.setError( TRUE, option.getErrorMsg() ) ;
+         PD_LOG( PDERROR, "failed to parse rest arg: rc=%d", rc ) ;
          goto error ;
       }
 
-      rc = _generateTaskInfo( hostNameList, taskInfo, resultInfo ) ;
-      if ( SDB_OK != rc )
+      rc = _check( restHostInfo ) ;
+      if ( rc )
       {
-         PD_LOG( PDERROR, "generate task info failed:rc=%d", rc ) ;
+         PD_LOG( PDERROR, "failed to check: rc=%d", rc ) ;
          goto error ;
       }
+
+      rc = _generateRequest( restHostInfo, taskConfig, resultInfo ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to generate task request: rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = _createTask( taskConfig, resultInfo, taskID ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to create task: rc=%d", rc ) ;
+         goto error ;
+      }
+
+      {
+         BSONObj result = BSON( OM_BSON_TASKID << taskID ) ;
+
+         rc = restTool.appendResponeContent( result ) ;
+         if ( rc )
+         {
+            _errorMsg.setError( TRUE, "failed to append respone content: rc=%d",
+                                rc ) ;
+            PD_LOG( PDERROR, _errorMsg.getError() ) ;
+            goto error ;
+         }
+      }
+
+      restTool.sendOkRespone() ;
+
+   done:
+      return rc ;
+   error:
+      restTool.sendRespone( rc, _errorMsg.getError() ) ;
+      goto done ;
+   }
+
+   INT32 omRemoveHostCommand::_check( const BSONObj &hostList )
+   {
+      INT32 rc = SDB_OK ;
+      INT64 taskID = -1 ;
+      omDatabaseTool dbTool( _cb ) ;
+      BSONObj hostInfo = hostList.getObjectField( OM_BSON_HOST_INFO ) ;
+      BSONObjIterator iter( hostInfo ) ;
+
+      _clusterName = hostList.getStringField( OM_BSON_CLUSTER_NAME ) ;
+      if ( FALSE == dbTool.isClusterExist( _clusterName ) )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "cluster does not exist: %s",
+                             _clusterName.c_str() ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      while ( iter.more() )
+      {
+         string hostName ;
+         BSONObj hostInfo ;
+         BSONElement ele = iter.next() ;
+
+         if ( Object != ele.type() )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "element of %s is not Object type"
+                        ":type=%d", OM_BSON_FIELD_HOST_INFO, ele.type() ) ;
+            goto error ;
+         }
+
+         hostInfo = ele.embeddedObject() ;
+         hostName = hostInfo.getStringField( OM_BSON_HOSTNAME ) ;
+
+         //check host exist
+         if( FALSE == dbTool.isHostExistOfCluster( hostName, _clusterName ) )
+         {
+            rc = SDB_INVALIDARG ;
+            _errorMsg.setError( TRUE, "the cluster does not have this host: "
+                                      "cluster=%s, host=%s",
+                                _clusterName.c_str(), hostName.c_str() ) ;
+            PD_LOG( PDERROR, _errorMsg.getError() ) ;
+            goto error ;
+         }
+
+         //check configure has not host
+         if ( TRUE == dbTool.isConfigExistOfCluster( hostName, _clusterName ) )
+         {
+            rc = SDB_INVALIDARG ;
+            _errorMsg.setError( TRUE, "failed to unbind host, "
+                                      "the host has business: host=%s",
+                                hostName.c_str() ) ;
+            PD_LOG( PDERROR, _errorMsg.getError() ) ;
+            goto error ;
+         }
+
+         //check task has not host
+         taskID = dbTool.getTaskIdOfRunningHost( hostName ) ;
+         if ( 0 <= taskID )
+         {
+            rc = SDB_INVALIDARG ;
+            _errorMsg.setError( TRUE, "host[%s] is exist "
+                                "in task["OSS_LL_PRINT_FORMAT"]",
+                                hostName.c_str(), taskID ) ;
+            PD_LOG( PDERROR, _errorMsg.getError() ) ;
+            goto error ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omRemoveHostCommand::_generateRequest( const BSONObj &hostList,
+                                               BSONObj &taskConfig,
+                                               BSONArray &resultInfo )
+   {
+      INT32 rc = SDB_OK ;
+      omDatabaseTool dbTool( _cb ) ;
+      BSONObjBuilder taskConfigBuilder ;
+      BSONArrayBuilder resultInfoBuilder ;
+      BSONObj hostInfo = hostList.getObjectField( OM_BSON_HOST_INFO ) ;
+      BSONObj condition = BSON( OM_HOST_FIELD_NAME << "" <<
+                                OM_HOST_FIELD_IP   << "" <<
+                                OM_HOST_FIELD_CLUSTERNAME << "" <<
+                                OM_HOST_FIELD_USER << "" <<
+                                OM_HOST_FIELD_PASSWD << "" <<
+                                OM_HOST_FIELD_SSHPORT << "" <<
+                                OM_HOST_FIELD_PACKAGES << "" ) ;
+
+      {
+         BSONArrayBuilder hostInfoBuilder ;
+         BSONObjIterator iter( hostInfo ) ;
+
+         while ( iter.more() )
+         {
+            string hostName ;
+            string ip ;
+            BSONElement ele = iter.next() ;
+            BSONObj tmpHostInfo = ele.embeddedObject() ;
+            BSONObj hostInfo ;
+            BSONObjBuilder resultEleBuilder ;
+
+            hostName = tmpHostInfo.getStringField( OM_BSON_HOSTNAME ) ;
+
+            rc = dbTool.getHostInfoByAddress( hostName, hostInfo ) ;
+            if ( rc )
+            {
+               _errorMsg.setError( TRUE, "failed to get host info: host=%s",
+                                   hostName.c_str() ) ;
+               PD_LOG( PDERROR, _errorMsg.getError() ) ;
+               goto error ;
+            }
+
+            ip = hostInfo.getStringField( OM_HOST_FIELD_IP ) ;
+            hostInfo = hostInfo.filterFieldsUndotted( condition, TRUE ) ;
+
+            hostInfoBuilder.append( hostInfo ) ;
+
+            resultEleBuilder.append( OM_TASKINFO_FIELD_HOSTNAME, hostName ) ;
+            resultEleBuilder.append( OM_TASKINFO_FIELD_IP, ip ) ;
+            
+            resultEleBuilder.append( OM_TASKINFO_FIELD_STATUS,
+                                     OM_TASK_STATUS_INIT ) ;
+            resultEleBuilder.append( OM_TASKINFO_FIELD_STATUS_DESC,
+                                     getTaskStatusStr( OM_TASK_STATUS_INIT ) ) ;
+            resultEleBuilder.append( OM_REST_RES_RETCODE, SDB_OK ) ;
+            resultEleBuilder.append( OM_REST_RES_DETAIL, "" ) ;
+
+            {
+               BSONArrayBuilder tmpEmptyBuilder ;
+
+               resultEleBuilder.append( OM_TASKINFO_FIELD_FLOW,
+                                        tmpEmptyBuilder.arr() ) ;
+            }
+
+            resultInfoBuilder.append( resultEleBuilder.obj() ) ;
+         }
+
+         taskConfigBuilder.append( OM_TASKINFO_FIELD_HOSTINFO,
+                                   hostInfoBuilder.arr() ) ;
+      }
+
+      taskConfig = taskConfigBuilder.obj() ;
+      resultInfo = resultInfoBuilder.arr() ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omRemoveHostCommand::_createTask( const BSONObj &taskConfig,
+                                           const BSONArray &resultInfo,
+                                           INT64 &taskID )
+   {
+      INT32 rc = SDB_OK ;
+      string errDetail ;
+      omTaskTool taskTool( _cb, _localAgentHost, _localAgentService ) ;
 
       getMaxTaskID( taskID ) ;
       taskID++ ;
 
-      rc = createTask( OM_TASK_TYPE_REMOVE_HOST, taskID,
-                       getTaskTypeStr( OM_TASK_TYPE_REMOVE_HOST ),
-                       _localAgentHost, _localAgentService,
-                       taskInfo, resultInfo ) ;
-      if ( SDB_OK != rc )
+      rc = taskTool.createTask( OM_TASK_TYPE_REMOVE_HOST, taskID,
+                                getTaskTypeStr( OM_TASK_TYPE_REMOVE_HOST ),
+                                taskConfig, resultInfo ) ;
+      if( rc )
       {
-         PD_LOG( PDERROR, "fail to createTask:rc=%d", rc ) ;
+         _errorMsg.setError( TRUE, "fail to create task:rc=%d", rc ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
          goto error ;
       }
 
-      rc = _notifyAgentTask( taskID ) ;
-      if ( SDB_OK != rc )
+      rc = taskTool.notifyAgentTask( taskID, errDetail ) ;
+      if( rc )
       {
          removeTask( taskID ) ;
-         PD_LOG( PDERROR, "fail to _notifyAgentTask:rc=%d", rc ) ;
+         _errorMsg.setError( TRUE, "fail to notify agent:detail:%s,rc=%d",
+                             errDetail.c_str(), rc ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
          goto error ;
-      }
-
-      {
-         BSONObj result = BSON( OM_BSON_TASKID << (long long)taskID ) ;
-         _restAdaptor->appendHttpBody( _restSession, result.objdata(),
-                                       result.objsize(), 1 ) ;
-         _sendOKRes2Web() ;
       }
 
    done:
       return rc ;
    error:
-      _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
-      _sendErrorRes2Web( rc, _errorDetail ) ;
       goto done ;
    }
 

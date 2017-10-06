@@ -80,6 +80,10 @@ namespace engine
    #define OM_BSON_VALUE                        "Value"
    #define OM_BSON_CONFIG                       "Config"
    #define OM_BSON_ZOOID                        "zooid"
+   #define OM_BSON_USER                         "User"
+   #define OM_BSON_PASSWD                       "Passwd"
+   #define OM_BSON_INSTALL_PATH                 "InstallPath"
+   #define OM_BSON_SSHPORT                      "SshPort"
 
    /***************** XML field *****************/
    #define OM_XML_FIELD_BUSINESS_TYPE           "BusinessType"
@@ -150,6 +154,7 @@ namespace engine
    #define OM_HOST_FIELD_CLUSTERNAME            OM_PUBLIC_FIELD_CLUSTERNAME
    #define OM_HOST_FIELD_IP                     OM_PUBLIC_FIELD_IP
    #define OM_HOST_FIELD_USER                   OM_PUBLIC_FIELD_USER
+   #define OM_HOST_FIELD_PASSWD                 OM_PUBLIC_FIELD_PASSWD
    #define OM_HOST_FIELD_PASSWORD               OM_PUBLIC_FIELD_PASSWD
    #define OM_HOST_FIELD_TIME                   "Time"
    #define OM_HOST_FIELD_OS                     "OS"
