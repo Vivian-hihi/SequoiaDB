@@ -275,7 +275,8 @@ namespace engine
          bob.append( OMA_FIELD_PASSWD, _removeHostInfo._item._passwd.c_str() ) ;
          bob.append( OMA_FIELD_SSHPORT, _removeHostInfo._item._sshPort.c_str() ) ;
          bob.append( OMA_FIELD_CLUSTERNAME, _removeHostInfo._item._clusterName.c_str() ) ;
-         bob.append( OMA_FIELD_INSTALLPATH, _removeHostInfo._item._installPath.c_str() ) ;
+         bob.appendArray( OMA_FIELD_PACKAGES, _removeHostInfo._item._packages ) ;
+
          retObj1 = bob.obj() ;
          retObj2 = BSON( OMA_FIELD_TASKID << _removeHostInfo._taskID ) ;
       }

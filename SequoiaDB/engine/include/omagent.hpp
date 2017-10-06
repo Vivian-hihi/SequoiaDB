@@ -104,7 +104,7 @@ namespace engine
       string _passwd ;
       string _sshPort ;
       string _clusterName ;
-      string _installPath ;
+      BSONObj _packages ;
    } ;
    typedef struct _RemoveHostItem RemoveHostItem ;
 

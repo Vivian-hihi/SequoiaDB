@@ -59,6 +59,7 @@
 #define OMA_FIELD_TRANSACTION_ID                   "TransactionID" /* OM_BSON_FIELD_TRANSACTION_ID */
 #define OMA_FIELD_PACKET_PATH                      "PacketPath"
 #define OMA_FIELD_CONFIG                           "Config" /* OM_CONFIGURE_FIELD_CONFIG */
+#define OMA_FIELD_PACKAGES                         "Packages"
 
 #define OMA_FIELD_ZOOID3                           "zooid"
 #define OMA_FIELD_INSTALLPATH3                     "installpath"

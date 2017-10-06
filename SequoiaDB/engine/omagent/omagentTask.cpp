@@ -1013,12 +1013,9 @@ namespace engine
                       "Get field[%s] failed, rc: %d",
                       OMA_FIELD_CLUSTERNAME, rc ) ;
             hostInfo._item._clusterName = pStr ;
-            // InstallPath
-            rc = omaGetStringElement( item, OMA_FIELD_INSTALLPATH, &pStr ) ;
-            PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                      "Get field[%s] failed, rc: %d",
-                      OMA_FIELD_INSTALLPATH, rc ) ;
-            hostInfo._item._installPath = pStr ;
+
+            hostInfo._item._packages = item.getObjectField(
+                                                   OMA_FIELD_PACKAGES ).copy() ;
 
             _removeHostInfo.push_back( hostInfo ) ;
          }
