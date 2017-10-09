@@ -32,7 +32,25 @@ function main()
    
    popCheckLogicalID(dbcl, logicalIDs[0]+1, -1);
    popCheckLogicalID(dbcl, logicalIDs[0]+1, 1);
-   
+	
+	//SEQUOIADBMAINSTREAM-2575,补充测试
+	//_id: 0,1024,2048,3072,4096 increasing
+	removeAllDatas(dbcl);
+   stringLength = 968;
+   insertFixedLengthDatas( dbcl, recordNum, stringLength, string );
+	
+	sortConf = {_id:1};
+   limitConf = 2;
+   logicalIDs = getLogicalID(dbcl, null, null, sortConf, limitConf, null);
+	
+	//pop from 1024 and check
+	pop( dbcl, logicalIDs[1], -1 );
+	popCheckLogicalID(dbcl, logicalIDs[1], -1);
+	
+	//pop from 0 and check
+	pop( dbcl, logicalIDs[0], -1 );
+	popCheckLogicalID(dbcl, logicalIDs[0], -1);
+	
    commDropCS( db, csName, true, "drop CS in the end" );
 }
 

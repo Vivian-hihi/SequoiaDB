@@ -336,7 +336,21 @@ function insertFixedLengthDatas( dbcl, recordNum, stringLength, string )
    return records;
    
 }
-
+/************************************
+*@Description: truncate datas
+*@author:      liuxiaoxuan
+*@createDate:  2017.10.09
+**************************************/
+function removeAllDatas( dbcl )
+{
+   try
+   {
+      dbcl.truncate();
+   }catch(e)
+   {
+      throw buildException("truncate", e, null, null, e);
+   }
+}
 /************************************
 *@Description: generate strings
 *@author:      zhaoyu
