@@ -1101,7 +1101,7 @@ namespace engine
          {
             len += ossSnprintf( outBuf + len, outSize - len,
                                 " Type   : %s(%d)"OSS_NEWLINE,
-                                 "LOB_REMOVE", LOG_TYPE_LOB_WRITE ) ;
+                                 "LOB_REMOVE", LOG_TYPE_LOB_REMOVE ) ;
 
             dpsLogRecord::iterator itr ;
             itr = this->find( DPS_LOG_PUBLIC_FULLNAME ) ;
@@ -1191,7 +1191,7 @@ namespace engine
          {
             len += ossSnprintf( outBuf + len, outSize - len,
                                 " Type   : %s(%d)"OSS_NEWLINE,
-                                 "LOB_U", LOG_TYPE_LOB_WRITE ) ;
+                                 "LOB_U", LOG_TYPE_LOB_UPDATE ) ;
 
             dpsLogRecord::iterator itr ;
             itr = this->find( DPS_LOG_PUBLIC_FULLNAME ) ;
