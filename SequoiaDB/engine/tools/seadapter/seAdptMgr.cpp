@@ -834,11 +834,12 @@ namespace engine
       MsgRouteID svcRtID = _selfRouteID ;
       const CHAR *hostName = pmdGetKRCB()->getHostName() ;
       UINT16 sdbPort = 0 ;
+      BOOLEAN success = FALSE ;
 
       // Use a fixed node id and a random service port for the adapter.
-      // Try to use port starting from [ sdb_service + 7 ], find one that
-      // can be used, or return error if we can't.
-
+      // Try to use port starting from [ sdb_service + 7|8|9 ], skipping the
+      // ones end with 0. Find one that can be used, or return error if we
+      // can't.
       ossSocket::getPort( _options.getDbService(), sdbPort ) ;
 
       // Create listener socket. This is for searching and command processing.
@@ -846,9 +847,16 @@ namespace engine
       svcRtID.columns.nodeID = SDB_SEADPT_NODE_ID ;
       svcRtID.columns.serviceID = SDB_SEADPT_SVC_ID ;
 
-      for ( UINT16 svcPort = sdbPort + SEADPT_SVC_PORT_PLUS;
-            svcPort <= SEADPT_MAX_PORT; ++svcPort )
+      INT32 svcPort = sdbPort + SEADPT_SVC_PORT_PLUS;
+      while ( svcPort <= SEADPT_MAX_PORT )
       {
+         // Skip the ports end with 0, for they may be used by sdb nodes.
+         if ( 0 == svcPort % 10 )
+         {
+            svcPort += SEADPT_SVC_PORT_PLUS ;
+            continue ;
+         }
+
          CHAR svcPortStr[ SEADPT_PORT_STR_SZ ] = { 0 } ;
          ossItoa( svcPort, svcPortStr, SEADPT_PORT_STR_SZ ) ;
 
@@ -868,10 +876,16 @@ namespace engine
          else
          {
             _options.setSvcName( svcPortStr ) ;
+            success = TRUE ;
             PD_LOG( PDEVENT, "Create search engine adapter listener"
                     "[ServiceName: %s] successfully", _options.getSvcName() ) ;
             break ;
          }
+         ++svcPort ;
+      }
+      if ( !success )
+      {
+         goto error ;
       }
 
    done:

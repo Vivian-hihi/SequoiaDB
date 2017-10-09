@@ -115,10 +115,17 @@ namespace engine
       }
 
       rc = ossMkdir( dialogPath ) ;
-      if ( rc && SDB_FE != rc )
+      if ( rc )
       {
-         ossPrintf( "Make dialog path[ %s ] failed: %d", dialogPath, rc ) ;
-         goto error ;
+         if ( SDB_FE != rc )
+         {
+            ossPrintf( "Make dialog path[ %s ] failed: %d", dialogPath, rc ) ;
+            goto error ;
+         }
+         else
+         {
+            rc = SDB_OK ;
+         }
       }
 
    done:
