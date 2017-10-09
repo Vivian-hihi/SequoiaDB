@@ -367,11 +367,6 @@ namespace engine
       PD_CHECK( !dmsIsSysCSName( pCSName ), SDB_INVALIDARG, error, PDERROR,
                 "Could not analyze SYS collection space [%s]", pCSName ) ;
 
-      // Check if statistics cache is ready for collection space
-      pStatCache = pSU->getStatCache() ;
-      PD_CHECK( pStatCache, SDB_INVALIDARG, error, PDERROR,
-                "No statistics manger in storage unit [%s]", pCSName ) ;
-
       if ( param._mode == SDB_ANALYZE_MODE_CLEAR )
       {
          csLockType = EXCLUSIVE ;
@@ -382,6 +377,11 @@ namespace engine
                    pCSName, rc ) ;
 
       suLocked = TRUE ;
+
+      // Check if statistics cache is ready for collection space
+      pStatCache = pSU->getStatCache() ;
+      PD_CHECK( pStatCache, SDB_INVALIDARG, error, PDERROR,
+                "No statistics manger in storage unit [%s]", pCSName ) ;
 
       if ( param._mode == SDB_ANALYZE_MODE_RELOAD )
       {
