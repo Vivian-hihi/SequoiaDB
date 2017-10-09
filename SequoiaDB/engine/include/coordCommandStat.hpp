@@ -125,8 +125,6 @@ namespace engine
       public:
          _coordCMDGetQueryMeta() ;
          virtual ~_coordCMDGetQueryMeta() ;
-
-         virtual BOOLEAN openEmptyContext() const { return TRUE ; }
    } ;
    typedef _coordCMDGetQueryMeta coordCMDGetQueryMeta ;
 
