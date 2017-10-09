@@ -1591,6 +1591,7 @@ namespace engine
                          const UINT32 &hash,
                          const UINT32 &len,
                          const CHAR *data,
+                         const UINT32 &pageSize,
                          const DMS_LOB_PAGEID &pageID,
                          const DPS_TRANS_ID &transID,
                          const DPS_LSN_OFFSET &preTransLsn,
@@ -1673,6 +1674,15 @@ namespace engine
          goto error ;
       }
 
+      rc = record.push( DPS_LOG_LOB_PAGE_SIZE,
+                        sizeof( UINT32 ),
+                        ( const CHAR * )( &pageSize ) ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to push page size to record, rc:%d", rc ) ;
+         goto error ;
+      }
+
       rc = dpsPushTran( transID, preTransLsn, relatedLSN, record ) ;
       if ( SDB_OK != rc )
       {
@@ -1697,7 +1707,8 @@ namespace engine
                          UINT32 &len,
                          UINT32 &hash,
                          const CHAR **data,
-                         DMS_LOB_PAGEID &pageID )
+                         DMS_LOB_PAGEID &pageID,
+                         UINT32* pageSize )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__DPS_RECORD2LOBW ) ;
@@ -1798,6 +1809,19 @@ namespace engine
       }
       pageID = *( ( DMS_LOB_PAGEID * )( itr.value() ) ) ;
       }
+
+      if ( NULL != pageSize )
+      {
+         dpsLogRecord::iterator itr = record.find( DPS_LOG_LOB_PAGE_SIZE ) ;
+         if ( !itr.valid() )
+         {
+            PD_LOG( PDERROR, "failed to find page size tag in record" ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+         *pageSize = *( ( UINT32 * )( itr.value() ) ) ;
+      }
+      
    done:
       PD_TRACE_EXITRC( SDB__DPS_RECORD2LOBW, rc ) ;
       return rc ;
@@ -1815,6 +1839,7 @@ namespace engine
                           const CHAR *data,
                           const UINT32 &oldLen,
                           const CHAR *oldData,
+                          const UINT32 &pageSize,
                           const DMS_LOB_PAGEID &pageID,
                           const DPS_TRANS_ID &transID,
                           const DPS_LSN_OFFSET &preTransLsn,
@@ -1915,6 +1940,15 @@ namespace engine
          goto error ;
       }
 
+      rc = record.push( DPS_LOG_LOB_PAGE_SIZE,
+                        sizeof ( UINT32 ),
+                        (const CHAR*)( &pageSize ) ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to push page size to record, rc:%d", rc ) ;
+         goto error ;
+      }
+
       rc = dpsPushTran( transID, preTransLsn, relatedLSN, record ) ;
       if ( SDB_OK != rc )
       {
@@ -1941,7 +1975,8 @@ namespace engine
                          const CHAR **data,
                          UINT32 &oldLen,
                          const CHAR **oldData,
-                         DMS_LOB_PAGEID &pageID )
+                         DMS_LOB_PAGEID &pageID,
+                         UINT32* pageSize )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__DPS_RECORD2LOBU ) ;
@@ -2062,6 +2097,19 @@ namespace engine
       }
       pageID = *( ( DMS_LOB_PAGEID * )( itr.value() ) ) ;
       }
+
+      if ( NULL != pageSize )
+      {
+         dpsLogRecord::iterator itr = record.find( DPS_LOG_LOB_PAGE_SIZE ) ;
+         if ( !itr.valid() )
+         {
+            PD_LOG( PDERROR, "failed to find page size tag in record" ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+         *pageSize = *( ( UINT32 * )( itr.value() ) ) ;
+      }
+
    done:
       PD_TRACE_EXITRC( SDB__DPS_RECORD2LOBU, rc ) ;
       return rc ;
@@ -2077,6 +2125,7 @@ namespace engine
                           const UINT32 &hash,
                           const UINT32 &len,
                           const CHAR *data,
+                          const UINT32 &pageSize,
                           const DMS_LOB_PAGEID &page,
                           const DPS_TRANS_ID &transID,
                           const DPS_LSN_OFFSET &preTransLsn,
@@ -2159,6 +2208,15 @@ namespace engine
          goto error ;
       }
 
+      rc = record.push( DPS_LOG_LOB_PAGE_SIZE,
+                        sizeof( UINT32 ),
+                        ( const CHAR * )( &pageSize ) ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to push page size to record, rc:%d", rc ) ;
+         goto error ;
+      }
+
       rc = dpsPushTran( transID, preTransLsn, relatedLSN, record ) ;
       if ( SDB_OK != rc )
       {
@@ -2183,7 +2241,8 @@ namespace engine
                           UINT32 &len,
                           UINT32 &hash,
                           const CHAR **data,
-                          DMS_LOB_PAGEID &pageID )
+                          DMS_LOB_PAGEID &pageID,
+                          UINT32* pageSize )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__DPS_RECORD2LOBRM ) ;
@@ -2282,6 +2341,19 @@ namespace engine
       }
       pageID = *( ( DMS_LOB_PAGEID * )( itr.value() ) ) ;
       }
+
+      if ( NULL != pageSize )
+      {
+         dpsLogRecord::iterator itr = record.find( DPS_LOG_LOB_PAGE_SIZE ) ;
+         if ( !itr.valid() )
+         {
+            PD_LOG( PDERROR, "failed to find page size tag in record" ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+         *pageSize = *( ( UINT32 * )( itr.value() ) ) ;
+      }
+
    done:
       PD_TRACE_EXITRC( SDB__DPS_RECORD2LOBRM, rc ) ;
       return rc ;

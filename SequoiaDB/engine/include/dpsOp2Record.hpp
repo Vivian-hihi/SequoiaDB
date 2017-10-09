@@ -207,6 +207,7 @@ namespace engine
                          const UINT32 &hash,
                          const UINT32 &len,
                          const CHAR *data,
+                         const UINT32 &pageSize,
                          const DMS_LOB_PAGEID &pageID,
                          const DPS_TRANS_ID &transID,
                          const DPS_LSN_OFFSET &preTransLsn,
@@ -221,7 +222,8 @@ namespace engine
                          UINT32 &len,
                          UINT32 &hash,
                          const CHAR **data,
-                         DMS_LOB_PAGEID &pageID ) ;
+                         DMS_LOB_PAGEID &pageID,
+                         UINT32* pageSize = NULL ) ;
 
    INT32 dpsLobU2Record(  const CHAR *fullName,
                           const bson::OID *oid,
@@ -232,6 +234,7 @@ namespace engine
                           const CHAR *data,
                           const UINT32 &oldLen,
                           const CHAR *oldData,
+                          const UINT32 &pageSize,
                           const DMS_LOB_PAGEID &pageID,
                           const DPS_TRANS_ID &transID,
                           const DPS_LSN_OFFSET &preTransLsn,
@@ -248,7 +251,8 @@ namespace engine
                          const CHAR **data,
                          UINT32 &oldLen,
                          const CHAR **oldData,
-                         DMS_LOB_PAGEID &pageID ) ;
+                         DMS_LOB_PAGEID &pageID,
+                         UINT32* pageSize = NULL ) ;
 
    INT32 dpsLobRm2Record( const CHAR *fullName,
                           const bson::OID *oid,
@@ -257,6 +261,7 @@ namespace engine
                           const UINT32 &hash,
                           const UINT32 &len,
                           const CHAR *data,
+                          const UINT32 &pageSize,
                           const DMS_LOB_PAGEID &page,
                           const DPS_TRANS_ID &transID,
                           const DPS_LSN_OFFSET &preTransLsn,
@@ -271,7 +276,8 @@ namespace engine
                           UINT32 &len,
                           UINT32 &hash,
                           const CHAR **data,
-                          DMS_LOB_PAGEID &page ) ;
+                          DMS_LOB_PAGEID &page,
+                          UINT32* pageSize = NULL ) ;
 
    INT32 dpsLobTruncate2Record( const CHAR *fullName,
                                 dpsLogRecord &record ) ;

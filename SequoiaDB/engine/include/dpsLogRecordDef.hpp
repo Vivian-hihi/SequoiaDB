@@ -164,6 +164,7 @@ namespace engine
       DPS_LOG_LOB_PAGE,
       DPS_LOG_LOB_OLD_LEN,
       DPS_LOG_LOB_OLD_DATA,
+      DPS_LOG_LOB_PAGE_SIZE
    } ;
 
    enum DPS_LOG_ANALYZE

@@ -559,6 +559,7 @@ namespace engine
       utilCacheContext cContext ;
       UINT32 newestMask = 0 ;
       UINT32 orgBlkLen = 0 ;
+      UINT32 pageSize = _data.pageSize() ;
 
       if ( DMS_LOB_INVALID_PAGEID == pageID )
       {
@@ -671,6 +672,7 @@ namespace engine
                               record._data,
                               oldLen,
                               oldData,
+                              pageSize,
                               pageID,
                               transID,
                               preTransLsn,
@@ -861,6 +863,7 @@ namespace engine
       DPS_TRANS_ID transID = DPS_INVALID_TRANS_ID ;
       DPS_LSN_OFFSET preTransLsn = DPS_INVALID_LSN_OFFSET ;
       DPS_LSN_OFFSET relatedLsn = DPS_INVALID_LSN_OFFSET ;
+      UINT32 pageSize = _data.pageSize() ;
       BOOLEAN locked = FALSE ;
 
       if ( _needDelayOpen )
@@ -881,6 +884,7 @@ namespace engine
                               record._hash,
                               record._dataLen,
                               record._data,
+                              pageSize,
                               page,
                               transID,
                               preTransLsn,
@@ -1205,6 +1209,7 @@ namespace engine
       UINT32 dirtyLen = 0 ;
       UINT64 beginLSN = 0 ;
       UINT64 endLSN = 0 ;
+      UINT32 pageSize = _data.pageSize() ;
 
       if ( _needDelayOpen )
       {
@@ -1228,6 +1233,7 @@ namespace engine
                                record._hash,
                                oldLen,
                                oldData,
+                               pageSize,
                                page,
                                transID,
                                preTransLsn,
@@ -1356,6 +1362,7 @@ namespace engine
                                record._hash,
                                oldLen,
                                oldData,
+                               pageSize,
                                page,
                                transID,
                                preTransLsn,

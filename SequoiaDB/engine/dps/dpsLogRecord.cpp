@@ -1095,6 +1095,21 @@ namespace engine
             len += ossSnprintf( outBuf + len, outSize - len,
                                 " Page   : %d"OSS_NEWLINE,
                                 *( ( SINT32 * )( itr.value() ) ) ) ;
+
+            itr = this->find( DPS_LOG_LOB_PAGE_SIZE ) ;
+            if ( itr.valid() )
+            {
+               len += ossSnprintf( outBuf + len, outSize - len,
+                                " PageSize : %d"OSS_NEWLINE,
+                                *( ( UINT32 * )( itr.value() ) ) ) ;
+            }
+            else
+            {
+               len += ossSnprintf ( outBuf + len, outSize - len,
+                                    " PageSize : %s"OSS_NEWLINE,
+                                    "Not found" ) ;
+            }
+
             break ;
          }
          case LOG_TYPE_LOB_REMOVE :
@@ -1185,6 +1200,21 @@ namespace engine
             len += ossSnprintf( outBuf + len, outSize - len,
                                 " Page   : %d"OSS_NEWLINE,
                                 *( ( SINT32 * )( itr.value() ) ) ) ;
+
+            itr = this->find( DPS_LOG_LOB_PAGE_SIZE ) ;
+            if ( itr.valid() )
+            {
+               len += ossSnprintf( outBuf + len, outSize - len,
+                                " PageSize : %d"OSS_NEWLINE,
+                                *( ( UINT32 * )( itr.value() ) ) ) ;
+            }
+            else
+            {
+               len += ossSnprintf ( outBuf + len, outSize - len,
+                                    " PageSize : %s"OSS_NEWLINE,
+                                    "Not found" ) ;
+            }
+
             break ;
          }
          case LOG_TYPE_LOB_UPDATE :
@@ -1288,6 +1318,21 @@ namespace engine
             len += ossSnprintf( outBuf + len, outSize - len,
                                 " Page   : %d"OSS_NEWLINE,
                                 *( ( SINT32 * )( itr.value() ) ) ) ;
+
+            itr = this->find( DPS_LOG_LOB_PAGE_SIZE ) ;
+            if ( itr.valid() )
+            {
+               len += ossSnprintf( outBuf + len, outSize - len,
+                                " PageSize : %d"OSS_NEWLINE,
+                                *( ( UINT32 * )( itr.value() ) ) ) ;
+            }
+            else
+            {
+               len += ossSnprintf ( outBuf + len, outSize - len,
+                                    " PageSize : %s"OSS_NEWLINE,
+                                    "Not found" ) ;
+            }
+
             break ;
          }
          default:
