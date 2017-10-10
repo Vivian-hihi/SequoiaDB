@@ -1937,7 +1937,7 @@ public class DBCollection {
      *             DBLob.SDB_LOB_WRITE for writing.
      * @return DBLob object
      * @throws com.sequoiadb.exception.BaseException.
-     * @fn DBLob openLob( ObjectId id ) for reading or writing
+     * @fn DBLob openLob( ObjectId id, int mode ) for reading or writing
      * @brief open an exist lob with id
      */
     public DBLob openLob(ObjectId id, int mode) throws BaseException {
