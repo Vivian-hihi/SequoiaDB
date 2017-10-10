@@ -1492,10 +1492,14 @@ namespace engine
                *type = OMA_TASK_REMOVE_ZN ;
                goto done ;
             }
-            else if ( OMA_BUS_TYPE_SEQUOIASQL == string(pBusinessType) &&
-                      OM_SEQUOIASQL_DEPLOY_OLAP == string(pDeployMode) )
+            else if ( OMA_BUS_TYPE_SEQUOIASQL_OLAP == string(pBusinessType) )
             {
                *type = OMA_TASK_REMOVE_SSQL_OLAP ;
+               goto done ;
+            }
+            else if ( OMA_BUS_TYPE_SEQUOIASQL_OLTP == string(pBusinessType) )
+            {
+               *type = OMA_TASK_REMOVE_BUS ;
                goto done ;
             }
             else

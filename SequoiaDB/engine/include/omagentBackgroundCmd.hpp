@@ -595,7 +595,31 @@ namespace engine
 
    private:
       INT64 _taskID ;
+   } ;
 
+   /*
+      remove business
+   */
+   class _omaRemoveBusiness : public _omaCommand
+   {
+   DECLARE_OACMD_AUTO_REGISTER() ;
+
+   public:
+      _omaRemoveBusiness() ;
+      virtual ~_omaRemoveBusiness() ;
+
+   public:
+      virtual const CHAR* name() { return OMA_CMD_REMOVE_BUSINESS ; }
+      virtual INT32 init( const CHAR *pInstallInfo ) ;
+      virtual INT32 convertResult( const BSONObj& itemInfo,
+                                   BSONObj& taskInfo ) ;
+
+   private:
+      void _aggrFlowArray( const BSONObj& array1, const BSONObj& array2,
+                           BSONArray& out ) ;
+
+   private:
+      INT64 _taskID ;
    } ;
 
    /*
