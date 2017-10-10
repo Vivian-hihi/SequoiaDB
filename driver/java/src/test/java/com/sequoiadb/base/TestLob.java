@@ -2,13 +2,12 @@ package com.sequoiadb.base;
 
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.test.SingleCSCLTestCase;
+import com.sequoiadb.test.TestConfig;
 import org.bson.BSONObject;
 import org.bson.types.ObjectId;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
-import java.io.UnsupportedEncodingException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -89,11 +88,11 @@ public class TestLob extends SingleCSCLTestCase {
         assertFalse(cursor.hasNext());
     }
 
-    @Test @Ignore
+    @Test
     public void testLob3() {
         int bytesNum = 1000 * 1000 + 3000;
-        int step = 1001;
-        int offset = 1024 * 2 ;
+        int step = 3003;
+        int offset = 1024 * 2;
         byte[] bytes = new byte[bytesNum];
         Random rand = new Random();
         rand.nextBytes(bytes);
@@ -351,7 +350,7 @@ public class TestLob extends SingleCSCLTestCase {
 
         ObjectId id = ObjectId.get();
         DBLob lob = cl.createLob(id);
-        while (!writePos.isEmpty()){
+        while (!writePos.isEmpty()) {
             int index = rand.nextInt(writePos.size());
             int pos = writePos.remove(index);
             lob.seek(pos, DBLob.SDB_LOB_SEEK_SET);
@@ -372,7 +371,7 @@ public class TestLob extends SingleCSCLTestCase {
         assertEquals(lobSize, lob.getSize());
 
         ArrayList<Integer> readPos = new ArrayList<>(posList);
-        while (!readPos.isEmpty()){
+        while (!readPos.isEmpty()) {
             int index = rand.nextInt(readPos.size());
             int pos = readPos.remove(index);
             lob.seek(pos, DBLob.SDB_LOB_SEEK_SET);
@@ -433,7 +432,7 @@ public class TestLob extends SingleCSCLTestCase {
         lob = cl.openLob(id, DBLob.SDB_LOB_WRITE);
         lob.lock(100, 5);
         lob.lock(90, 5);
-        lob.lock(80,5);
+        lob.lock(80, 5);
         lob.lock(115, 5);
         lob.lock(110, 10);
         lob.lock(112, 5);
@@ -444,7 +443,7 @@ public class TestLob extends SingleCSCLTestCase {
         lob = cl.openLob(id, DBLob.SDB_LOB_WRITE);
         lob.lock(100, 5);
         lob.lock(90, 5);
-        lob.lock(80,5);
+        lob.lock(80, 5);
         lob.lock(115, 5);
         lob.lock(110, 10);
         lob.lock(112, 5);
@@ -464,8 +463,8 @@ public class TestLob extends SingleCSCLTestCase {
 
         lob1.lock(100, 10);
 
-        lob2.lock(90,10);
-        lob2.lock(110,10);
+        lob2.lock(90, 10);
+        lob2.lock(110, 10);
         try {
             lob2.lock(90, 20);
             fail("failure expected");
@@ -529,6 +528,113 @@ public class TestLob extends SingleCSCLTestCase {
 
         String s2 = new String(bytes, offset2, str2.length());
         assertEquals(str2, s2);
+
+        cl.removeLob(id);
+        cursor = cl.listLobs();
+        assertFalse(cursor.hasNext());
+    }
+
+    class LobWriter implements Runnable {
+        private int index;
+        private String csName;
+        private String clName;
+        private ObjectId id;
+        private byte[] data;
+        private int offset;
+        private int length;
+
+        public LobWriter(int index, String csName, String clName, ObjectId id, byte[] data, int offset, int length) {
+            this.index = index;
+            this.csName = csName;
+            this.clName = clName;
+            this.id = id;
+            this.data = data;
+            this.offset = offset;
+            this.length = length;
+        }
+
+        @Override
+        public void run() {
+            try (Sequoiadb sdb = new Sequoiadb(TestConfig.getSingleHost(),
+                Integer.valueOf(TestConfig.getSinglePort()),
+                TestConfig.getSingleUsername(),
+                TestConfig.getSinglePassword())) {
+                DBCollection cl = sdb.getCollectionSpace(csName)
+                    .getCollection(clName);
+                try (DBLob lob = cl.openLob(id, DBLob.SDB_LOB_WRITE)) {
+                    lob.lockAndSeek(offset, length);
+                    lob.write(data, offset, length);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw e;
+            }
+            System.out.println(
+                String.format("Thread[%d]: offset=%d, length=%d",
+                    index, offset, length));
+        }
+    }
+
+    @Test
+    public void testConcurrentWrite() {
+        int bytesNum = 1024 * 1024 * 5;
+        byte[] bytes = new byte[bytesNum];
+        Random rand = new Random();
+        rand.nextBytes(bytes);
+
+        ObjectId id = ObjectId.get();
+        DBLob lob = cl.createLob(id);
+        lob.close();
+
+        int threadNum = 7;
+        Thread[] threads = new Thread[threadNum];
+        int offset = 0;
+        for (int i = 0; i < threadNum; i++) {
+            int length;
+            if (i < threadNum - 1) {
+                length = bytesNum / threadNum;
+            } else {
+                length = bytesNum - offset;
+            }
+            threads[i] = new Thread(
+                new LobWriter(i, cl.getCSName(), cl.getName(), id, bytes, offset, length));
+            offset += length;
+        }
+
+        PerfTimer timer = new PerfTimer();
+        timer.start();
+
+        for (Thread thread : threads) {
+            thread.start();
+        }
+
+        for (Thread thread : threads) {
+            try {
+                thread.join();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        timer.stop();
+        System.out.println(
+            String.format("Concurrent writing lob costs %dms in %d thread(s)",
+                timer.duration(), threadNum));
+
+        DBCursor cursor = cl.listLobs();
+        assertTrue(cursor.hasNext());
+        BSONObject obj = cursor.getNext();
+        ObjectId oid = (ObjectId) obj.get("Oid");
+        assertEquals(id, oid);
+        assertFalse(cursor.hasNext());
+
+        lob = cl.openLob(id);
+        assertEquals(bytesNum, lob.getSize());
+        byte[] bytes2 = new byte[(int) lob.getSize()];
+        lob.read(bytes2);
+        lob.close();
+
+        assertArrayEquals(bytes, bytes2);
 
         cl.removeLob(id);
         cursor = cl.listLobs();
