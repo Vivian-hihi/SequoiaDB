@@ -51,6 +51,7 @@ namespace engine
 
    /***************** Rest field **********************/
    #define OM_REST_FIELD_CLUSTER_NAME           "ClusterName"
+   #define OM_REST_FIELD_BUSINESS_NAME          "BusinessName"
    #define OM_REST_FIELD_PACKAGENAME            "PackageName"
    #define OM_REST_FIELD_INSTALLPATH            "InstallPath"
    #define OM_REST_FIELD_HOST_INFO              "HostInfo"
@@ -224,6 +225,17 @@ key: {"OM_HOST_FIELD_IP":1}, unique: true, enforced: true }"
    #define OM_TASKINFO_FIELD_BUSINESS_TYPE      OM_PUBLIC_FIELD_BUSINESS_TYPE
    #define OM_TASKINFO_FIELD_BUSINESS_NAME      OM_PUBLIC_FIELD_BUSINESS_NAME
    #define OM_TASKINFO_FIELD_DEPLOY_MOD         OM_PUBLIC_FIELD_DEPLOY_MOD
+   #define OM_TASKINFO_FIELD_AUTH_USER          "AuthUser"
+   #define OM_TASKINFO_FIELD_AUTH_PASSWD        "AuthPasswd"
+
+   /******* SYSBUSINESSAUTH *******/
+   #define OM_CS_DEPLOY_CL_BUSINESS_AUTH        OM_CS_DEPLOY".SYSBUSINESSAUTH"
+   #define OM_AUTH_FIELD_BUSINESS_NAME          OM_PUBLIC_FIELD_BUSINESS_NAME
+   #define OM_AUTH_FIELD_USER                   OM_PUBLIC_FIELD_USER
+   #define OM_AUTH_FIELD_PASSWD                 OM_PUBLIC_FIELD_PASSWD
+   #define OM_CS_DEPLOY_CL_BUSINESSAUTHIDX1     "{name:\"SYSDEPLOY_BUSINESSAUTH\
+_IDX1\",key: {"OM_BUSINESS_FIELD_NAME":1}, unique: true, enforced: true }"
+
 
 //********************************** OLD **************************************
 
@@ -334,14 +346,6 @@ key: {"OM_HOST_FIELD_IP":1}, unique: true, enforced: true }"
    #define OM_CONFIGURE_FIELD_ERRNO          "errno"
    #define OM_CONFIGURE_FIELD_DETAIL         "detail"
    #define OM_CONFIGURE_FIELD_ROLE           "role"
-
-   // deploy.business_auth
-   #define OM_CS_DEPLOY_CL_BUSINESS_AUTH     OM_CS_DEPLOY".SYSBUSINESSAUTH"
-   #define OM_BUSINESSAUTH_BUSINESSNAME      OM_BUSINESS_FIELD_NAME
-   #define OM_BUSINESSAUTH_USER              OM_HOST_FIELD_USER
-   #define OM_BUSINESSAUTH_PASSWD            OM_HOST_FIELD_PASSWORD
-   #define OM_CS_DEPLOY_CL_BUSINESSAUTHIDX1  "{name:\"SYSDEPLOY_BUSINESSAUTH_IDX1\",key: {"\
-                                             OM_BUSINESS_FIELD_NAME":1}, unique: true, enforced: true } "
 
    // strategy.business_task_property
    #define OM_CS_STRATEGY                          "SYSSTRATEGY"

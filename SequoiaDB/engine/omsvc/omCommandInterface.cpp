@@ -119,8 +119,8 @@ namespace engine
          }
 
          BSONObj result( buffObj.data() ) ;
-         authUser   = result.getStringField( OM_BUSINESSAUTH_USER ) ;
-         authPasswd = result.getStringField( OM_BUSINESSAUTH_PASSWD ) ;
+         authUser   = result.getStringField( OM_AUTH_FIELD_USER ) ;
+         authPasswd = result.getStringField( OM_AUTH_FIELD_PASSWD ) ;
          break ;
       }
    done:

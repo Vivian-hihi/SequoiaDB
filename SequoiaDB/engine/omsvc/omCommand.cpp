@@ -1240,8 +1240,8 @@ namespace engine
 
       _getBusinessAuth( _businessName, authUser, authPwd ) ;
 
-      valueBuilder.append( OM_BUSINESSAUTH_USER, authUser ) ;
-      valueBuilder.append( OM_BUSINESSAUTH_PASSWD, authPwd ) ;
+      valueBuilder.append( OM_AUTH_FIELD_USER, authUser ) ;
+      valueBuilder.append( OM_AUTH_FIELD_PASSWD, authPwd ) ;
 
       valueBuilder.appendElements( commons ) ;
       taskConfig = valueBuilder.obj() ;
@@ -1746,8 +1746,8 @@ namespace engine
 
       _getBusinessAuth( _businessName, authUser, authPwd ) ;
 
-      valueBuilder.append( OM_BUSINESSAUTH_USER, authUser ) ;
-      valueBuilder.append( OM_BUSINESSAUTH_PASSWD, authPwd ) ;
+      valueBuilder.append( OM_AUTH_FIELD_USER, authUser ) ;
+      valueBuilder.append( OM_AUTH_FIELD_PASSWD, authPwd ) ;
 
       valueBuilder.appendElements( commons ) ;
       valueBuilder.append( OM_CONFIGURE_FIELD_BUSINESSTYPE, _businessType ) ;
@@ -8172,330 +8172,6 @@ namespace engine
       goto done ;
    }
 
-   // *****************omRemoveBusinessCommand *****************************
-   omRemoveBusinessCommand::omRemoveBusinessCommand( restAdaptor *pRestAdaptor,
-                                                   pmdRestSession *pRestSession,
-                                                   string localAgentHost,
-                                                   string localAgentService )
-                           :omStartBusinessCommand( pRestAdaptor, pRestSession,
-                                                    localAgentHost,
-                                                    localAgentService )
-   {
-   }
-
-   omRemoveBusinessCommand::~omRemoveBusinessCommand()
-   {
-   }
-
-   INT32 omRemoveBusinessCommand::_getBusinessExistFlag(
-                                     const string &businessName, BOOLEAN &flag )
-   {
-      INT32 rc = SDB_OK ;
-      BSONObj businessInfo ;
-      rc = _getBusinessInfo( businessName, businessInfo ) ;
-      if ( SDB_OK != rc )
-      {
-         if ( SDB_DMS_EOC == rc )
-         {
-            rc   = SDB_OK ;
-            flag = false ;
-            goto done ;
-         }
-
-         PD_LOG( PDERROR, "get businessInfo failed:business=%s,rc=%d",
-                 businessName.c_str(), rc ) ;
-         goto error ;
-      }
-
-      flag = TRUE ;
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 omRemoveBusinessCommand::_generateTaskInfo( string businessName,
-                                                     BSONObj &nodeInfos,
-                                                     BSONObj &taskInfo,
-                                                     BSONArray &resultInfo )
-   {
-      INT32 rc = SDB_OK ;
-      BSONObjBuilder taskInfoBuilder ;
-      taskInfoBuilder.appendElements( nodeInfos ) ;
-
-      string authUser ;
-      string authPasswd ;
-      BSONObj businessInfo ;
-      string clusterName ;
-      string type ;
-      string deployMod ;
-      rc = _getBusinessInfo( businessName, businessInfo ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "get business info failed:business=%s",
-                 businessName.c_str() ) ;
-         goto error ;
-      }
-
-      _getBusinessAuth( businessName, authUser, authPasswd ) ;
-
-      clusterName = businessInfo.getStringField(
-                                               OM_BUSINESS_FIELD_CLUSTERNAME ) ;
-      type        = businessInfo.getStringField( OM_BUSINESS_FIELD_TYPE ) ;
-      deployMod   = businessInfo.getStringField( OM_BUSINESS_FIELD_DEPLOYMOD ) ;
-
-      taskInfoBuilder.append( OM_BSON_CLUSTER_NAME, clusterName ) ;
-      taskInfoBuilder.append( OM_BSON_BUSINESS_TYPE, type ) ;
-      taskInfoBuilder.append( OM_BSON_BUSINESS_NAME, businessName ) ;
-      taskInfoBuilder.append( OM_BSON_DEPLOY_MOD, deployMod ) ;
-      {
-         BSONArrayBuilder arrayBuilder ;
-         BSONObj condition ;
-         if ( type == OM_BUSINESS_SEQUOIADB )
-         {
-            taskInfoBuilder.append( OM_SDB_AUTH_USER, authUser ) ;
-            taskInfoBuilder.append( OM_SDB_AUTH_PASSWD, authPasswd ) ;
-            condition = BSON( OM_BSON_FIELD_HOST_NAME << ""
-                              << OM_CONF_DETAIL_SVCNAME << ""
-                              << OM_CONF_DETAIL_ROLE << ""
-                              << OM_CONF_DETAIL_DATAGROUPNAME << "" ) ;
-         }
-         else if ( type == OM_BUSINESS_ZOOKEEPER )
-         {
-            string sdbUser ;
-            string sdbPasswd ;
-            string sdbUserGroup ;
-            BSONObj clusterInfo ;
-            rc = _getClusterInfo( clusterName, clusterInfo ) ;
-            if ( SDB_OK != rc )
-            {
-               PD_LOG( PDERROR, "get cluster info failed:cluster=%s",
-                       clusterName.c_str() ) ;
-               goto error ;
-            }
-
-            sdbUser      = clusterInfo.getStringField(
-                                               OM_CLUSTER_FIELD_SDBUSER ) ;
-            sdbPasswd    = clusterInfo.getStringField(
-                                               OM_CLUSTER_FIELD_SDBPASSWD ) ;
-            sdbUserGroup = clusterInfo.getStringField(
-                                               OM_CLUSTER_FIELD_SDBUSERGROUP ) ;
-            taskInfoBuilder.append( OM_CLUSTER_FIELD_SDBUSER, sdbUser ) ;
-            taskInfoBuilder.append( OM_CLUSTER_FIELD_SDBPASSWD, sdbPasswd ) ;
-            taskInfoBuilder.append( OM_CLUSTER_FIELD_SDBUSERGROUP,
-                                    sdbUserGroup ) ;
-            condition = BSON( OM_BSON_FIELD_HOST_NAME << ""
-                              << OM_ZOO_CONF_DETAIL_ZOOID << "" ) ;
-         }
-         else if ( type == OM_BUSINESS_SEQUOIASQL &&
-                   deployMod == OM_SEQUOIASQL_DEPLOY_OLAP )
-         {
-            string sdbUser ;
-            string sdbPasswd ;
-            string sdbUserGroup ;
-            BSONObj clusterInfo ;
-            rc = _getClusterInfo( clusterName, clusterInfo ) ;
-            if ( SDB_OK != rc )
-            {
-               PD_LOG( PDERROR, "get cluster info failed:cluster=%s",
-                       clusterName.c_str() ) ;
-               goto error ;
-            }
-
-            sdbUser = clusterInfo.getStringField( OM_CLUSTER_FIELD_SDBUSER ) ;
-            sdbPasswd = clusterInfo.getStringField( OM_CLUSTER_FIELD_SDBPASSWD ) ;
-            sdbUserGroup = clusterInfo.getStringField( OM_CLUSTER_FIELD_SDBUSERGROUP ) ;
-            taskInfoBuilder.append( OM_CLUSTER_FIELD_SDBUSER, sdbUser ) ;
-            taskInfoBuilder.append( OM_CLUSTER_FIELD_SDBPASSWD, sdbPasswd ) ;
-            taskInfoBuilder.append( OM_CLUSTER_FIELD_SDBUSERGROUP, sdbUserGroup ) ;
-
-            condition = BSON( OM_BSON_FIELD_HOST_NAME << ""
-                              << OM_SSQL_OLAP_CONF_ROLE << "" ) ;
-         }
-         else
-         {
-            SDB_ASSERT( FALSE, type.c_str() ) ;
-         }
-
-         taskInfo = taskInfoBuilder.obj() ;
-
-         BSONObj nodes = nodeInfos.getObjectField( OM_BSON_FIELD_CONFIG ) ;
-         BSONObjIterator iter( nodes ) ;
-         while ( iter.more() )
-         {
-            BSONElement ele = iter.next() ;
-            BSONObj oneNode = ele.embeddedObject() ;
-
-            BSONObj tmp = oneNode.filterFieldsUndotted( condition, true ) ;
-            BSONObjBuilder builder ;
-            builder.appendElements( tmp ) ;
-            builder.append( OM_TASKINFO_FIELD_STATUS, OM_TASK_STATUS_INIT ) ;
-            builder.append( OM_TASKINFO_FIELD_STATUS_DESC,
-                            getTaskStatusStr( OM_TASK_STATUS_INIT ) ) ;
-            builder.append( OM_REST_RES_RETCODE, SDB_OK ) ;
-            builder.append( OM_REST_RES_DETAIL, "" ) ;
-            {
-               BSONArrayBuilder tmpEmptyBuilder ;
-               builder.append( OM_TASKINFO_FIELD_FLOW, tmpEmptyBuilder.arr() ) ;
-            }
-
-            BSONObj result = builder.obj() ;
-            arrayBuilder.append( result ) ;
-         }
-
-         resultInfo = arrayBuilder.arr() ;
-      }
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   BOOLEAN omRemoveBusinessCommand::_isDiscoveredBusiness(
-                                                      BSONObj &businessInfo )
-   {
-      BSONElement eleAddType ;
-      eleAddType = businessInfo.getField( OM_BUSINESS_FIELD_ADDTYPE ) ;
-      if ( eleAddType.isNumber() )
-      {
-         INT32 addType = eleAddType.Int() ;
-         if ( OM_BUSINESS_ADDTYPE_DISCOVERY == addType )
-         {
-            return TRUE ;
-         }
-      }
-
-      return FALSE ;
-   }
-
-   INT32 omRemoveBusinessCommand::doCommand()
-   {
-      BSONObj nodeInfos ;
-      INT64 taskID ;
-      BOOLEAN isBusinessExistNode = FALSE ;
-      INT32 rc                    = SDB_OK ;
-      const CHAR *pBusinessName   = NULL ;
-      BSONObj businessInfo ;
-      _restAdaptor->getQuery( _restSession, OM_REST_BUSINESS_NAME,
-                              &pBusinessName ) ;
-      if ( NULL == pBusinessName || 0 == ossStrlen( pBusinessName ) )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "rest field:%s is null", OM_REST_BUSINESS_NAME ) ;
-         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
-         _sendErrorRes2Web( rc, _errorDetail ) ;
-         goto error ;
-      }
-
-      rc = _getBusinessInfo( pBusinessName, businessInfo ) ;
-      if ( SDB_OK != rc )
-      {
-         if ( SDB_DMS_EOC == rc )
-         {
-            PD_LOG_MSG( PDERROR, "business is not exist:business=%s,rc=%d",
-                        pBusinessName, rc ) ;
-            _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
-            _sendErrorRes2Web( rc, _errorDetail ) ;
-         }
-         else
-         {
-            PD_LOG_MSG( PDERROR, "get business failed:business=%s,rc=%d",
-                        pBusinessName, rc ) ;
-            _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
-            _sendErrorRes2Web( rc, _errorDetail ) ;
-            goto error ;
-         }
-      }
-
-      if ( _isDiscoveredBusiness( businessInfo ) )
-      {
-         INT32 addType = 0 ;
-         string businessType ;
-         rc = SDB_INVALIDARG ;
-         addType      = businessInfo.getIntField( OM_BUSINESS_FIELD_ADDTYPE ) ;
-         businessType = businessInfo.getStringField( OM_BUSINESS_FIELD_TYPE ) ;
-         PD_LOG_MSG( PDERROR, "discovered business could not be removed:"
-                     "business=%s,type=%s,addType=%d",
-                     pBusinessName, businessType.c_str(), addType ) ;
-         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
-         _sendErrorRes2Web( rc, _errorDetail ) ;
-         goto error ;
-      }
-
-      {
-         string tmp = pBusinessName ;
-         if ( _isBusinessExistInTask( tmp ) )
-         {
-            rc = SDB_INVALIDARG ;
-            _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
-            _sendErrorRes2Web( rc, _errorDetail ) ;
-            goto done ;
-         }
-
-         pmdGetThreadEDUCB()->resetInfo( EDU_INFO_ERROR ) ;
-      }
-
-      rc = _getNodeInfo( pBusinessName, nodeInfos, isBusinessExistNode ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "get node info failed:business=%s,rc=%d",
-                 pBusinessName, rc ) ;
-         _sendErrorRes2Web( rc, _errorDetail ) ;
-         goto error ;
-      }
-
-      {
-         BSONObj taskInfo ;
-         BSONArray resultInfo ;
-         rc = _generateTaskInfo( pBusinessName, nodeInfos, taskInfo,
-                                 resultInfo ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "generate task info failed:rc=%d", rc ) ;
-            _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
-            _sendErrorRes2Web( rc, _errorDetail ) ;
-            goto error ;
-         }
-
-         getMaxTaskID( taskID ) ;
-         taskID++ ;
-
-         rc = createTask( OM_TASK_TYPE_REMOVE_BUSINESS, taskID,
-                          getTaskTypeStr( OM_TASK_TYPE_REMOVE_BUSINESS ),
-                          _localAgentHost, _localAgentService,
-                          taskInfo, resultInfo ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "fail to _saveTask:rc=%d", rc ) ;
-            _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
-            _sendErrorRes2Web( rc, _errorDetail ) ;
-            goto error ;
-         }
-      }
-
-      rc = _notifyAgentTask( taskID ) ;
-      if ( SDB_OK != rc )
-      {
-         removeTask( taskID ) ;
-         PD_LOG( PDERROR, "fail to _notifyAgentTask:rc=%d", rc ) ;
-         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
-         _sendErrorRes2Web( rc, _errorDetail ) ;
-         goto error ;
-      }
-
-      {
-         BSONObj result = BSON( OM_BSON_TASKID << (long long)taskID ) ;
-         _restAdaptor->appendHttpBody( _restSession, result.objdata(),
-                                       result.objsize(), 1 ) ;
-         _sendOKRes2Web() ;
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
    // *****************omGetFileCommand *****************************
    omQueryHostStatusCommand::omQueryHostStatusCommand(
                                                    restAdaptor *pRestAdaptor,
@@ -9711,11 +9387,11 @@ namespace engine
          }
       }
 
-      selector = BSON( OM_BUSINESSAUTH_BUSINESSNAME << businessName ) ;
+      selector = BSON( OM_AUTH_FIELD_BUSINESS_NAME << businessName ) ;
       {
-         BSONObj tmp = BSON( OM_BUSINESSAUTH_BUSINESSNAME << businessName
-                             << OM_BUSINESSAUTH_USER << userName
-                             << OM_BUSINESSAUTH_PASSWD << passwd ) ;
+         BSONObj tmp = BSON( OM_AUTH_FIELD_BUSINESS_NAME << businessName
+                             << OM_AUTH_FIELD_USER << userName
+                             << OM_AUTH_FIELD_PASSWD << passwd ) ;
          updator = BSON( "$set" << tmp ) ;
       }
 
@@ -9765,7 +9441,7 @@ namespace engine
          goto error ;
       }
 
-      deletor = BSON( OM_BUSINESSAUTH_BUSINESSNAME << pBusinessName ) ;
+      deletor = BSON( OM_AUTH_FIELD_BUSINESS_NAME << pBusinessName ) ;
       rc = rtnDelete( OM_CS_DEPLOY_CL_BUSINESS_AUTH, deletor, hint, 0, _cb ) ;
       if ( SDB_OK != rc )
       {
@@ -9797,7 +9473,7 @@ namespace engine
 
    void omQueryBusinessAuthCommand::_sendAuthInfo2Web( list<BSONObj> &authInfo )
    {
-      BSONObj filter = BSON( OM_BUSINESSAUTH_PASSWD << 1 ) ;
+      BSONObj filter = BSON( OM_AUTH_FIELD_PASSWD << 1 ) ;
       list<BSONObj>::iterator iter = authInfo.begin() ;
       while ( iter != authInfo.end() )
       {
@@ -10224,8 +9900,8 @@ namespace engine
       builder.append( OM_BUSINESS_FIELD_NAME, _businessName ) ;
       builder.append( OM_BUSINESS_FIELD_TYPE, _businessType ) ;
       
-      builder.append( OM_BUSINESSAUTH_USER, authUser ) ;
-      builder.append( OM_BUSINESSAUTH_PASSWD, authPwd ) ;
+      builder.append( OM_AUTH_FIELD_USER, authUser ) ;
+      builder.append( OM_AUTH_FIELD_PASSWD, authPwd ) ;
 
       addressBuilder.append( OM_CONFIGURE_FIELD_HOSTNAME, hostName ) ;
       addressBuilder.append( OM_CONF_DETAIL_SVCNAME, svcname ) ;
@@ -12173,8 +11849,8 @@ namespace engine
       builder.append( OM_BUSINESS_FIELD_NAME, _businessName ) ;
       builder.append( OM_BUSINESS_FIELD_TYPE, _businessType ) ;
       
-      builder.append( OM_BUSINESSAUTH_USER, authUser ) ;
-      builder.append( OM_BUSINESSAUTH_PASSWD, authPwd ) ;
+      builder.append( OM_AUTH_FIELD_USER, authUser ) ;
+      builder.append( OM_AUTH_FIELD_PASSWD, authPwd ) ;
 
       for ( iter = addressList.begin(); iter != addressList.end(); ++iter )
       {

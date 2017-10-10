@@ -294,7 +294,7 @@ namespace engine
       BSONObj result ;
       INT32 rc = SDB_OK ;
 
-      matcher = BSON( OM_BUSINESSAUTH_BUSINESSNAME << pBusinessName ) ;
+      matcher = BSON( OM_AUTH_FIELD_BUSINESS_NAME << pBusinessName ) ;
       rc = _queryTable( OM_CS_DEPLOY_CL_BUSINESS_AUTH, selector, matcher, order, 
                         hint, 0, 0, -1, records ) ;
       if ( rc )
@@ -315,8 +315,8 @@ namespace engine
       else if ( records.size() == 1 )
       {
          result = *( records.begin() ) ;
-         user   = result.getStringField( OM_BUSINESSAUTH_USER ) ;
-         passwd = result.getStringField( OM_BUSINESSAUTH_PASSWD ) ;
+         user   = result.getStringField( OM_AUTH_FIELD_USER ) ;
+         passwd = result.getStringField( OM_AUTH_FIELD_PASSWD ) ;
       }
       //if do not have any record. just leave it empty
    done:

@@ -602,6 +602,84 @@ namespace engine
       goto done ;
    }
 
+   INT32 omDatabaseTool::getMaxTaskID( INT64 &taskID )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj selector ;
+      BSONObj matcher ;
+      BSONObj orderBy ;
+      BSONObj hint ;
+      SINT64 contextID   = -1 ;
+
+      taskID = 0 ;
+
+      selector = BSON( OM_TASKINFO_FIELD_TASKID << 1 ) ;
+      orderBy  = BSON( OM_TASKINFO_FIELD_TASKID << -1 ) ;
+
+      rc = rtnQuery( OM_CS_DEPLOY_CL_TASKINFO, selector, matcher, orderBy,
+                     hint, 0, _cb, 0, 1, _pDMSCB, _pRTNCB, contextID ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "get taskid failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      {
+         BSONElement ele ;
+         rtnContextBuf buffObj ;
+         rc = rtnGetMore ( contextID, 1, buffObj, _cb, _pRTNCB ) ;
+         if ( rc )
+         {
+            if ( SDB_DMS_EOC == rc )
+            {
+               rc = SDB_OK ;
+               goto done ;
+            }
+
+            PD_LOG( PDERROR, "failed to get record from table:%s,rc=%d",
+                    OM_CS_DEPLOY_CL_TASKINFO, rc ) ;
+            goto error ;
+         }
+
+         {
+            BSONObj result( buffObj.data() ) ;
+
+            ele    = result.getField( OM_TASKINFO_FIELD_TASKID ) ;
+            taskID = ele.numberLong() ;
+         }
+      }
+
+   done:
+      if ( -1 != contextID )
+      {
+         _pRTNCB->contextDelete( contextID, _cb ) ;
+         contextID = -1 ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omDatabaseTool::removeTask( INT64 taskID )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj deletor = BSON( OM_TASKINFO_FIELD_TASKID << taskID ) ;
+      BSONObj hint ;
+
+      rc = rtnDelete( OM_CS_DEPLOY_CL_TASKINFO, deletor, hint, 0, _cb ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "rtnDelete task failed:taskID="OSS_LL_PRINT_FORMAT
+                          ",rc=%d",
+                 taskID, rc ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 omDatabaseTool::addBusinessInfo( const INT32 addType,
                                           const string &clusterName,
                                           const string &businessName,
@@ -1229,6 +1307,65 @@ namespace engine
       goto done ;
    }
 
+   INT32 omDatabaseTool::getConfigByBusiness( const string &businessName,
+                                              list<BSONObj> &configList )
+   {
+      INT32 rc = SDB_OK ;
+      SINT64 contextID = -1 ;
+      BSONObj condition ;
+      BSONObj selector ;
+      BSONObj order ;
+      BSONObj hint ;
+
+      condition = BSON( OM_CONFIGURE_FIELD_BUSINESSNAME << businessName ) ;
+
+      // query table
+      rc = rtnQuery( OM_CS_DEPLOY_CL_CONFIGURE, selector, condition, order,
+                     hint, 0, _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "fail to query table:%s,rc=%d",
+                 OM_CS_DEPLOY_CL_CONFIGURE, rc ) ;
+         goto error ;
+      }
+
+      while ( TRUE )
+      {
+         rtnContextBuf buffObj ;
+
+         rc = rtnGetMore( contextID, 1, buffObj, _cb, _pRTNCB ) ;
+         if ( rc )
+         {
+            if ( SDB_DMS_EOC == rc )
+            {
+               rc = SDB_OK ;
+               break ;
+            }
+
+            contextID = -1 ;
+            PD_LOG( PDERROR, "failed to get record from table:%s,rc=%d",
+                    OM_CS_DEPLOY_CL_CONFIGURE, rc ) ;
+            goto error ;
+         }
+
+         {
+            BSONObj configure( buffObj.data() ) ;
+
+            configList.push_back( configure.copy() ) ;
+         }
+      }
+
+   done:
+      if( -1 != contextID )
+      {
+         _pRTNCB->contextDelete ( contextID, _cb ) ;
+         contextID = -1 ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
    /**
     * Get one or more host config.
     *
@@ -1840,17 +1977,74 @@ namespace engine
       goto done ;
    }
 
+   INT32 omDatabaseTool::getAuth( const string &businessName,
+                                  string &authUser, string &authPasswd )
+   {
+      INT32 rc = SDB_OK ;
+      SINT64 contextID = -1 ;
+      BSONObj selector ;
+      BSONObj order ;
+      BSONObj hint ;
+      BSONObj condition = BSON( OM_BUSINESS_FIELD_NAME << businessName )  ;
+
+      // query table
+      rc = rtnQuery( OM_CS_DEPLOY_CL_BUSINESS_AUTH, selector, condition, order,
+                     hint, 0, _cb, 0, 1, _pDMSCB, _pRTNCB, contextID );
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "fail to query table:%s,rc=%d",
+                 OM_CS_DEPLOY_CL_BUSINESS_AUTH, rc ) ;
+         goto error ;
+      }
+
+      while ( TRUE )
+      {
+         rtnContextBuf buffObj ;
+
+         rc = rtnGetMore ( contextID, 1, buffObj, _cb, _pRTNCB ) ;
+         if ( rc )
+         {
+            if ( SDB_DMS_EOC == rc )
+            {
+               rc = SDB_OK ;
+               break ;
+            }
+   
+            contextID = -1 ;
+            PD_LOG( PDERROR, "failed to get record from table:%s,rc=%d",
+                    OM_CS_DEPLOY_CL_BUSINESS_AUTH, rc ) ;
+            goto error ;
+         }
+
+         {
+            BSONObj result( buffObj.data() ) ;
+
+            authUser = result.getStringField( OM_AUTH_FIELD_USER ) ;
+            authPasswd = result.getStringField( OM_AUTH_FIELD_PASSWD ) ;
+         }
+      }
+
+   done:
+      if ( -1 != contextID )
+      {
+         _pRTNCB->contextDelete ( contextID, _cb ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 omDatabaseTool::upsertAuth( const string &businessName,
                                      const string &authUser,
                                      const string &authPasswd )
    {
       INT32 rc = SDB_OK ;
       INT64 updateNum = 0 ;
-      BSONObj condition = BSON( OM_BUSINESSAUTH_BUSINESSNAME << businessName ) ;
+      BSONObj condition = BSON( OM_AUTH_FIELD_BUSINESS_NAME << businessName ) ;
       BSONObj updator = BSON( "$replace" <<
-            BSON( OM_BUSINESSAUTH_BUSINESSNAME << businessName <<
-                  OM_BUSINESSAUTH_USER << authUser <<
-                  OM_BUSINESSAUTH_PASSWD << authPasswd ) ) ;
+            BSON( OM_AUTH_FIELD_BUSINESS_NAME << businessName <<
+                  OM_AUTH_FIELD_USER << authUser <<
+                  OM_AUTH_FIELD_PASSWD << authPasswd ) ) ;
       BSONObj hint ;
 
       if ( authUser.empty() )
@@ -1888,7 +2082,7 @@ namespace engine
    INT32 omDatabaseTool::removeAuth( const string &businessName )
    {
       INT32 rc = SDB_OK ;
-      BSONObj condition = BSON( OM_BUSINESSAUTH_BUSINESSNAME << businessName ) ;
+      BSONObj condition = BSON( OM_AUTH_FIELD_BUSINESS_NAME << businessName ) ;
       BSONObj hint ;
 
       rc = rtnDelete( OM_CS_DEPLOY_CL_BUSINESS_AUTH, condition, hint, 0, _cb ) ;
@@ -1897,7 +2091,7 @@ namespace engine
          PD_LOG( PDERROR, "failed to delete configure from table:%s,"
                           "%s=%s,%s=%s,rc=%d",
                  OM_CS_DEPLOY_CL_BUSINESS_AUTH,
-                 OM_BUSINESSAUTH_BUSINESSNAME, businessName.c_str(), rc ) ;
+                 OM_AUTH_FIELD_BUSINESS_NAME, businessName.c_str(), rc ) ;
          goto error ;
       }
 

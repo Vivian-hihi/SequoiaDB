@@ -129,6 +129,8 @@ namespace engine
       INT64 getTaskIdOfRunningBuz( const string &businessName ) ;
       INT64 getTaskIdOfRunningHost( const string &hostName ) ;
       BOOLEAN hasTaskRunning() ;
+      INT32 getMaxTaskID( INT64 &taskID ) ;
+      INT32 removeTask( INT64 taskID ) ;
 
       //business
       INT32 addBusinessInfo( const INT32 addType,
@@ -173,6 +175,8 @@ namespace engine
                               const string &hostName,
                               const string &svcname,
                               BSONObj &config ) ;
+      INT32 getConfigByBusiness( const string &businessName,
+                                 list<BSONObj> &configList ) ;
       INT32 getConfigByHostName( const string &hostName,
                                  BSONObj &config ) ;
       INT32 getBusinessAddressWithConfig(
@@ -204,6 +208,8 @@ namespace engine
       INT32 removeConfigure( const string &businessName ) ;
 
       //auth
+      INT32 getAuth( const string &businessName,
+                     string &authUser, string &authPasswd ) ;
       INT32 upsertAuth( const string &businessName, const string &authUser,
                         const string &authPasswd ) ;
       INT32 removeAuth( const string &businessName ) ;

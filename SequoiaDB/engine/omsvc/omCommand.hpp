@@ -867,34 +867,43 @@ namespace engine
       string _localAgentService ;
    } ;
 
-   class omRemoveBusinessCommand : public omStartBusinessCommand
+   class omRemoveBusinessCommand : public omAuthCommand
    {
-      public:
-         omRemoveBusinessCommand( restAdaptor *pRestAdaptor,
-                                  pmdRestSession *pRestSession,
-                                  string localAgentHost,
-                                  string localAgentService ) ;
-         virtual ~omRemoveBusinessCommand() ;
+   public:
+      omRemoveBusinessCommand( restAdaptor *pRestAdaptor,
+                               pmdRestSession *pRestSession,
+                               string localAgentHost,
+                               string localAgentService ) ;
 
-      public:
-         virtual INT32  doCommand() ;
+      virtual ~omRemoveBusinessCommand() ;
 
-      private:
-         INT32          _getBusinessExistFlag( const string &businessName,
-                                               BOOLEAN &flag ) ;
+      virtual INT32 doCommand() ;
 
-         INT32          _getHostNameInfo( const string &businessName,
-                                       map<string, simpleHostInfo> &mapHosts) ;
-         INT32          _generateRequest( string businessName,
-                                          BSONObj &nodeInfos,
-                                          BSONObj &request ) ;
+   private:
+      BOOLEAN _isDiscoveredBusiness( BSONObj &buzInfo ) ;
 
-         INT32          _generateTaskInfo( string businessName,
-                                           BSONObj &nodeInfos,
-                                           BSONObj &taskInfo,
-                                           BSONArray &resultInfo ) ;
+      INT32 _check( BSONObj &buzInfo ) ;
 
-         BOOLEAN        _isDiscoveredBusiness( BSONObj &businessInfo ) ;
+      INT32 _generateTaskConfig( list<BSONObj> &configList,
+                                 BSONObj &taskConfig ) ;
+
+      void _generateResultInfo( list<BSONObj> &configList,
+                                BSONArray &resultInfo ) ;
+
+      INT32 _generateRequest( const BSONObj &buzInfo,
+                              BSONObj &taskConfig, BSONArray &resultInfo ) ;
+
+      INT32 _createTask( const BSONObj &taskConfig,
+                         const BSONArray &resultInfo,
+                         INT64 &taskID ) ;
+      
+   private:
+      string _clusterName ;
+      string _businessName ;
+      string _businessType ;
+      string _deployMod ;
+      string _localAgentHost ;
+      string _localAgentService ;
    } ;
 
    class omQueryHostStatusCommand : public omStartBusinessCommand
