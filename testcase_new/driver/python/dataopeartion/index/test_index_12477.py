@@ -59,13 +59,15 @@ class TestIdIndex12477(testlib.SdbTestBase):
          else:
             self.cl.create_id_index(options=opt)
       except SDBBaseError as e:
-         self.fail('create index fail: ' + e.detail)
+         if not -247 == e.code:
+            self.fail('create index fail: ' + e.detail)
 
    def drop_id_index(self):
       try:
          self.cl.drop_id_index()
       except SDBBaseError as e:
-         self.fail('drop index fail: ' + e.detail)
+         if not -47 == e.code:		
+            self.fail('drop index fail: ' + e.detail)
 
    def check_update_result(self, is_success):
       try:

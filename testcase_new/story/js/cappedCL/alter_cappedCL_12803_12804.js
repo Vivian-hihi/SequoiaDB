@@ -9,6 +9,12 @@ main();
 
 function main()
 {
+	if(commIsStandalone(db))
+	{
+		println('skip standlone');
+		return;
+	}
+	
    var csName = COMMCSNAME + "12803_12804";
    commDropCS( db, csName, true, "drop CS in the beginning" );
    

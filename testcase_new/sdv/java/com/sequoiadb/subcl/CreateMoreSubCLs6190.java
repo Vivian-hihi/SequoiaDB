@@ -143,7 +143,7 @@ public class CreateMoreSubCLs6190 extends SdbTestBase{
 			}
 			maincl.bulkInsert(insertor,1);			
 			BSONObject order = new BasicBSONObject();
-			order.put("a", 1);			
+			order.put("time", 1);			
 			cursor = maincl.query(null, null, order, null);
 			BSONObject res = null;
 			BSONObject expBso = null;
@@ -152,8 +152,9 @@ public class CreateMoreSubCLs6190 extends SdbTestBase{
 				res = cursor.getNext();
 				res.removeField("_id");
 				expBso=insertor.get(j);
-				expBso.removeField("_id");
+				expBso.removeField("_id");	
 				if(!(res.toString().equals(expBso.toString()))){
+					System.out.println("act: " + res.toString() + "\n" + "expect: " + expBso.toString());
 					Assert.fail("failed to check data ");
 				}
 				j++;
