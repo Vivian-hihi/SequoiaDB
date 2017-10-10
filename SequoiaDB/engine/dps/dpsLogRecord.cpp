@@ -1103,12 +1103,6 @@ namespace engine
                                 " PageSize : %d"OSS_NEWLINE,
                                 *( ( UINT32 * )( itr.value() ) ) ) ;
             }
-            else
-            {
-               len += ossSnprintf ( outBuf + len, outSize - len,
-                                    " PageSize : %s"OSS_NEWLINE,
-                                    "Not found" ) ;
-            }
 
             break ;
          }
@@ -1207,12 +1201,6 @@ namespace engine
                len += ossSnprintf( outBuf + len, outSize - len,
                                 " PageSize : %d"OSS_NEWLINE,
                                 *( ( UINT32 * )( itr.value() ) ) ) ;
-            }
-            else
-            {
-               len += ossSnprintf ( outBuf + len, outSize - len,
-                                    " PageSize : %s"OSS_NEWLINE,
-                                    "Not found" ) ;
             }
 
             break ;
@@ -1325,12 +1313,6 @@ namespace engine
                len += ossSnprintf( outBuf + len, outSize - len,
                                 " PageSize : %d"OSS_NEWLINE,
                                 *( ( UINT32 * )( itr.value() ) ) ) ;
-            }
-            else
-            {
-               len += ossSnprintf ( outBuf + len, outSize - len,
-                                    " PageSize : %s"OSS_NEWLINE,
-                                    "Not found" ) ;
             }
 
             break ;
