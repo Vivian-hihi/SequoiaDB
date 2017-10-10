@@ -60,7 +60,7 @@ TEST_F( lobModeTest12737, createMode12737 )
    ASSERT_EQ( SDB_INVALIDARG, rc ) << "fail to test read with createMode" ;
    
    rc = lob.seek( 0, SDB_LOB_SEEK_SET ) ;
-   ASSERT_EQ( SDB_INVALIDARG, rc ) << "fail to test seek with createMode" ;
+   ASSERT_EQ( SDB_OK, rc ) << "fail to test seek with createMode" ;
 
    rc = lob.close() ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to close lob" ;
