@@ -253,7 +253,7 @@ namespace engine
          if ( rc )
          {
             INT32 bucketStatus = (INT32)pBucket->getStatus() ;
-            PD_LOG( PDWARNING, "Wait repl bucket empty failed, it's "
+            PD_LOG( PDWARNING, "Wait repl bucket empty failed, its "
                     "status[%s(%d)] is error",
                     clsGetReplBucketStatusDesp( bucketStatus ),
                     bucketStatus ) ;
