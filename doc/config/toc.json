@@ -2045,6 +2045,18 @@
                            "file": "stopNode",
                            "cn": "stopNode()",
                            "en": "stopNode()"
+                        },
+                        {
+                           "id": 1507622478,
+                           "file": "startAllNodes",
+                           "cn": "startAllNodes()",
+                           "en": "startAllNodes()"
+                        },
+                        {
+                           "id": 1507622490,
+                           "file": "stopAllNodes",
+                           "cn": "stopAllNodes()",
+                           "en": "stopAllNodes()"
                         }
                      ]
                   },
