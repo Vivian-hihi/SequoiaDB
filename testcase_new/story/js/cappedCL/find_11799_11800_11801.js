@@ -48,18 +48,34 @@ function main()
    
    //check count
    checkCountResult( dbcl, {}, 23 );
+	
+	//$gt
+	var gtObj = { a: { $gt: 100}};
+   var results1 = [  {a:1001.02, b:1},
+                     {a:{$decimal: "20170519.09"}, b:1, c:"aaa"}, 
+                     {a:{$numberLong:"9223372036854775807"}, b:1, c:"aaa"},
+							{a:[102.03,103.4,104.5], b:2, c:"aaa"},
+                     {a:[1001], b:2, c:"aaa"}];
+   checkFindResult( dbcl, gtObj, results1 );
+   checkCountResult( dbcl, gtObj, 5 );
    
    //$in
    var inObj = { a: { $in: [ 10, "z"]}};
-   var results1 = [  {a:10, b:1, c:"aaa"},
+   var results2 = [  {a:10, b:1, c:"aaa"},
                      {a:[10,11,12], b:2},
                      {a:["z"], b:2, c:"aaa"}];
-   checkFindResult( dbcl, inObj, results1 );
+   checkFindResult( dbcl, inObj, results2 );
    checkCountResult( dbcl, inObj, 3 );
+	
+	//$and
+   var andObj = {$and:[{a:10},{b:1}]};
+   var results3 = [{a:10, b:1, c:"aaa"}];
+   checkFindResult( dbcl, andObj, results3 );
+   checkCountResult( dbcl, andObj, 1 );
    
    //$ne
    var neObj = { b: { $ne: 1 }};
-   var results2 = [  {a:"abc", b:2},
+   var results4 = [  {a:"abc", b:2},
                      {a:{ MinKey:1 }, b:2, c:"aaa"},
                      {a:{ MaxKey:1 }, b:2, c:"aaa"},
                      {a:true, b:2},
@@ -70,12 +86,12 @@ function main()
                      {a:[1001], b:2, c:"aaa"},
                      {a:["a","b","c"], b:2},
                      {a:["z"], b:2, c:"aaa"}];
-   checkFindResult( dbcl, neObj, results2 );
+   checkFindResult( dbcl, neObj, results4 );
    checkCountResult( dbcl, neObj, 11 );
    
    //isNull
    var isnullObj = { c: {$isnull:1}};
-   var results3 = [  {a:1001.02, b:1},
+   var results5 = [  {a:1001.02, b:1},
                      {a:{$date: "2017-05-19"}, b:1},
                      {a:{$regex:"^z",$options:"i"}, b:1},
                      {a:"abc", b:2},
@@ -83,12 +99,12 @@ function main()
                      {a:[10,11,12], b:2},
                      {a:["a","b","c"], b:2},
                      {b:1}]
-   checkFindResult( dbcl, isnullObj, results3 );
+   checkFindResult( dbcl, isnullObj, results5 );
    checkCountResult( dbcl, isnullObj, 8 );
    
    //$exists
    var existsObj = { c: {$exists: 1}};
-   var results4 = [  {a:10, b:1, c:"aaa"},
+   var results6 = [  {a:10, b:1, c:"aaa"},
                      {a:100, b:1, c:"aaa"},
                      {a:{$decimal: "20170519.09"}, b:1, c:"aaa"}, 
                      {a:{$numberLong:"9223372036854775807"}, b:1, c:"aaa"},
@@ -103,12 +119,12 @@ function main()
                      {a:[102.03,103.4,104.5], b:2, c:"aaa"},
                      {a:[1001], b:2, c:"aaa"},
                      {a:["z"], b:2, c:"aaa"}];
-   checkFindResult( dbcl, existsObj, results4 );
+   checkFindResult( dbcl, existsObj, results6 );
    checkCountResult( dbcl, existsObj, 15 );
    
    //$add
    var addObj = { b: { "$add": 10} };
-   var results5 = [  {a:10, b:11, c:"aaa"},
+   var results7 = [  {a:10, b:11, c:"aaa"},
                      {a:100, b:11, c:"aaa"},
                      {a:1001.02, b:11},
                      {a:{$decimal: "20170519.09"}, b:11, c:"aaa"}, 
@@ -131,11 +147,11 @@ function main()
                      {a:["a","b","c"], b:12},
                      {a:["z"], b:12, c:"aaa"},
                      {b:11}];
-   checkSelectResult( dbcl, addObj, results5 );
+   checkSelectResult( dbcl, addObj, results7 );
    
    //$expand
    var expandObj = {a: {$expand: 1}}
-   var results6 = [  {a:10, b:1, c:"aaa"},
+   var results8 = [  {a:10, b:1, c:"aaa"},
                      {a:100, b:1, c:"aaa"},
                      {a:1001.02, b:1},
                      {a:{$decimal: "20170519.09"}, b:1, c:"aaa"}, 
@@ -164,11 +180,11 @@ function main()
                      {a:"c", b:2},
                      {a:"z", b:2, c:"aaa"},
                      {b:1}];
-   checkFindResult( dbcl, expandObj, results6 );
+   checkFindResult( dbcl, expandObj, results8 );
    
    //$include
    var includeObj = { a: { $include: 1} };
-   var results7 =  [{a:10},
+   var results9 =  [{a:10},
                      {a:100},
                      {a:1001.02},
                      {a:{$decimal: "20170519.09"}}, 
@@ -191,17 +207,17 @@ function main()
                      {a:["a","b","c"]},
                      {a:["z"]},
                      {}];
-   checkSelectResult( dbcl, includeObj, results7 );
+   checkSelectResult( dbcl, includeObj, results9 );
    
    //findOne
    var findObj = {};
-   var results8 = {a:10, b:1, c:"aaa"};
-   checkFindOneResult( dbcl, findObj, results8 );
+   var results10 = {a:10, b:1, c:"aaa"};
+   checkFindOneResult( dbcl, findObj, results10 );
    
    //findOne $et
    var etObj = { a: {$et: "a"}};
-   var results9 = {a:["a","b","c"], b:2};
-   checkFindOneResult( dbcl, etObj, results9 );
+   var results11 = {a:["a","b","c"], b:2};
+   checkFindOneResult( dbcl, etObj, results11 );
    
    //clean environment after test  
    println( "---end the test---" );
