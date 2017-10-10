@@ -3256,6 +3256,54 @@ error:
    goto done ;
 }
 
+INT32 clientBuildLockLobMsg( CHAR ** ppBuffer, INT32 *bufferSize,
+                             INT64 offset, INT64 length,
+                             SINT32 flags, SINT16 w,
+                             SINT64 contextID, UINT64 reqID,
+                             BOOLEAN endianConvert )
+{
+   INT32 rc = SDB_OK ;
+   bson obj ;
+
+   bson_init( &obj ) ;
+
+   rc = bson_append_long( &obj, FIELD_NAME_LOB_OFFSET, offset ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_DRIVER_BSON_ERROR ;
+      goto error ;
+   }
+
+   rc = bson_append_long( &obj, FIELD_NAME_LOB_LENGTH, length ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_DRIVER_BSON_ERROR ;
+      goto error ;
+   }
+
+   rc = bson_finish( &obj ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_DRIVER_BSON_ERROR ;
+      goto error ;
+   }
+
+   rc = clientBuildLobMsg( ppBuffer, bufferSize,
+                           MSG_BS_LOB_LOCK_REQ, &obj,
+                           flags, w, contextID, reqID, NULL,
+                           NULL, NULL, endianConvert ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+done:
+   bson_destroy( &obj ) ;
+   return rc ;
+error:
+   goto done ;
+}
+
 INT32 clientBuildReadLobMsg( CHAR **ppBuffer, INT32 *bufferSize,
                              UINT32 len, SINT64 lobOffset,
                              SINT32 flags, SINT64 contextID,

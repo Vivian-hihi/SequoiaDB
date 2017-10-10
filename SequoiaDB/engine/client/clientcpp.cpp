@@ -2910,6 +2910,7 @@ error:
       ((_sdbLobImpl*)*lob)->_mode = SDB_LOB_CREATEONLY ;
       ((_sdbLobImpl*)*lob)->_lobSize = 0 ;
       ((_sdbLobImpl*)*lob)->_createTime = 0 ;
+      ((_sdbLobImpl*)*lob)->_modificationTime = 0 ;
 
    done:
       if ( locked )
@@ -2992,9 +2993,11 @@ error:
       goto done ;
    }
 
-   INT32 _sdbCollectionImpl::openLob( _sdbLob **lob, const bson::OID &oid )
+   INT32 _sdbCollectionImpl::openLob( _sdbLob **lob, const bson::OID &oid,
+                                          SDB_LOB_OPEN_MODE mode )
    {
       INT32 rc = SDB_OK ;
+      INT32 flag = 0 ;
       BSONObjBuilder bob ;
       BSONObj obj ;
       BSONElement ele ;
@@ -3010,12 +3013,24 @@ error:
          rc = SDB_INVALIDARG ;
          goto error ;
       }
+
+      if ( SDB_LOB_READ != mode && SDB_LOB_WRITE != mode )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      if ( SDB_LOB_READ == mode )
+      {
+         flag |= FLG_LOBOPEN_WITH_RETURNDATA ;
+      }
+
       // append info
       try
       {
          bob.append( FIELD_NAME_COLLECTION, _collectionFullName ) ;
          bob.appendOID( FIELD_NAME_LOB_OID, (bson::OID *)&oid ) ;
-         bob.append( FIELD_NAME_LOB_OPEN_MODE, SDB_LOB_READ ) ;
+         bob.append( FIELD_NAME_LOB_OPEN_MODE, mode ) ;
          obj = bob.obj() ;
       }
       catch ( std::exception &e )
@@ -3025,7 +3040,7 @@ error:
       }
       // build msg
       rc = clientBuildOpenLobMsgCpp( &_pSendBuffer, &_sendBufferSize,
-                                     obj.objdata(), FLG_LOBOPEN_WITH_RETURNDATA,
+                                     obj.objdata(), flag,
                                      1, 0, _connection->_endianConvert ) ;
       if ( SDB_OK != rc )
       {
@@ -3084,7 +3099,7 @@ error:
       ((_sdbLobImpl*)*lob)->_oid = oid ;
       ((_sdbLobImpl*)*lob)->_contextID = contextID ;
       ((_sdbLobImpl*)*lob)->_isOpen = TRUE ;
-      ((_sdbLobImpl*)*lob)->_mode = SDB_LOB_READ ;
+      ((_sdbLobImpl*)*lob)->_mode = mode ;
       ((_sdbLobImpl*)*lob)->_currentOffset = 0 ;
       ((_sdbLobImpl*)*lob)->_cachedOffset = -1 ;
       ((_sdbLobImpl*)*lob)->_cachedSize =0 ;
@@ -3113,6 +3128,18 @@ error:
       {
          rc = SDB_SYS ;
          goto error ;
+      }
+      // modificationTime
+      ele = obj.getField( FIELD_NAME_LOB_MODIFICATION_TIME ) ;
+      bType = ele.type() ;
+      if ( NumberLong == bType )
+      {
+         ((_sdbLobImpl*)*lob)->_modificationTime = ele.numberLong() ;
+      }
+      else
+      {
+         ((_sdbLobImpl*)*lob)->_modificationTime =
+            ((_sdbLobImpl*)*lob)->_createTime ;
       }
       // lob pageSize
       ele = obj.getField( FIELD_NAME_LOB_PAGE_SIZE ) ;
@@ -5041,7 +5068,9 @@ error :
    _isOpen( FALSE ),
    _contextID ( -1 ),
    _mode( -1 ),
+   _seekWrite( FALSE ),
    _createTime( -1 ),
+   _modificationTime( -1 ),
    _lobSize( -1 ),
    _currentOffset( 0 ),
    _cachedOffset( 0 ),
@@ -5427,6 +5456,11 @@ error :
          rc = SDB_LOB_NOT_OPEN ;
          goto error ;
       }
+      if ( -1 == _contextID )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
       // check argument
       if ( NULL == buf )
       {
@@ -5434,7 +5468,7 @@ error :
          goto error ;
       }
 
-      if ( SDB_LOB_CREATEONLY != _mode )
+      if ( SDB_LOB_CREATEONLY != _mode && SDB_LOB_WRITE != _mode )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
@@ -5447,10 +5481,11 @@ error :
       // build msg
       do
       {
+         INT64 offset = _seekWrite ? _currentOffset : -1 ;
          UINT32 sendLen = maxSendLen <= len - totalLen ?
                           maxSendLen : len - totalLen ;
          rc = clientBuildWriteLobMsg( &_pSendBuffer, &_sendBufferSize,
-                                      buf + totalLen, sendLen, -1, 0, 1,
+                                      buf + totalLen, sendLen, offset, 0, 1,
                                       _contextID, 0,
                                       _connection->_endianConvert ) ;
          if ( SDB_OK != rc )
@@ -5478,9 +5513,12 @@ error :
          _connection->unlock() ;
 
          totalLen += sendLen ;
+
+         _currentOffset += sendLen ;
+         _lobSize = OSS_MAX( _lobSize, _currentOffset ) ;
+         _seekWrite = FALSE ;
       } while ( totalLen < len ) ;
-      // for read lob's size while creating a lob and write things to it
-      _lobSize += len ;
+
    done:
       if ( locked )
       {
@@ -5511,7 +5549,14 @@ error :
          rc = SDB_LOB_NOT_OPEN ;
          goto error ;
       }
-      if ( SDB_LOB_READ != _mode || -1 == _contextID )
+      if ( -1 == _contextID )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      if ( SDB_LOB_READ != _mode &&
+           SDB_LOB_CREATEONLY != _mode &&
+           SDB_LOB_WRITE != _mode )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
@@ -5519,7 +5564,7 @@ error :
       // set seek point
       if ( SDB_LOB_SEEK_SET == whence )
       {
-         if ( size < 0 || _lobSize < size )
+         if ( size < 0 || ( _lobSize < size && SDB_LOB_READ == _mode ) )
          {
             rc = SDB_INVALIDARG ;
             goto error ;
@@ -5528,7 +5573,7 @@ error :
       }
       else if ( SDB_LOB_SEEK_CUR == whence )
       {
-         if ( _lobSize < size + _currentOffset ||
+         if ( ( _lobSize < size + _currentOffset && SDB_LOB_READ == _mode ) ||
               size + _currentOffset < 0 )
          {
             rc = SDB_INVALIDARG ;
@@ -5538,7 +5583,7 @@ error :
       }
       else if ( SDB_LOB_SEEK_END == whence )
       {
-         if ( size < 0 || _lobSize < size )
+         if ( size < 0 || ( _lobSize < size && SDB_LOB_READ == _mode ) )
          {
             rc = SDB_INVALIDARG ;
             goto error ;
@@ -5550,6 +5595,112 @@ error :
          rc = SDB_INVALIDARG ;
          goto error ;
       }
+
+      if ( SDB_LOB_CREATEONLY == _mode || SDB_LOB_WRITE == _mode )
+      {
+         _seekWrite = TRUE ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sdbLobImpl::lock( INT64 offset, INT64 length )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN locked = FALSE ;
+      INT64 contextID = -1 ;
+      BOOLEAN result = FALSE ;
+
+      if ( !_connection && !_isOpen )
+      {
+         rc = SDB_DMS_CONTEXT_IS_CLOSE ;
+         goto error ;
+      }
+      if (  !_connection )
+      {
+         rc = SDB_NOT_CONNECTED ;
+         goto error;
+      }
+      if ( !_isOpen )
+      {
+         rc = SDB_LOB_NOT_OPEN ;
+         goto error ;
+      }
+      if ( -1 == _contextID )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      if ( offset < 0 || length < -1 || length == 0)
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      if ( SDB_LOB_WRITE != _mode )
+      {
+         goto done ;
+      }
+
+      rc = clientBuildLockLobMsg( &_pSendBuffer, &_sendBufferSize,
+                                  offset, length, 0, 1,
+                                  _contextID, 0,
+                                  _connection->_endianConvert ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+      _connection->lock() ;
+      locked = TRUE ;
+      // send msg
+      rc = _connection->_send ( _pSendBuffer ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+      // receive and extract msg from engine
+      rc = _connection->_recvExtract ( &_pReceiveBuffer, &_receiveBufferSize,
+                                       contextID, result ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
+      _connection->unlock() ;
+      locked = FALSE ;
+
+   done:
+      if ( locked )
+      {
+         _connection->unlock() ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sdbLobImpl::lockAndSeek( INT64 offset, INT64 length )
+   {
+      INT32 rc = SDB_OK ;
+
+      rc = lock( offset, length ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+      rc = seek( offset, SDB_LOB_SEEK_SET ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
    done:
       return rc ;
    error:
@@ -5598,6 +5749,11 @@ error :
    UINT64 _sdbLobImpl::getCreateTime ()
    {
       return _createTime ;
+   }
+
+   UINT64 _sdbLobImpl::getModificationTime()
+   {
+      return _modificationTime ;
    }
 
    /*

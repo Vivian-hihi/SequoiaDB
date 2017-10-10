@@ -262,6 +262,11 @@ INT32 clientBuildWriteLobMsg( CHAR **ppBuffer, INT32 *bufferSize,
                               SINT64 offset, SINT32 flags, SINT16 w,
                               SINT64 contextID, UINT64 reqID,
                               BOOLEAN endianConvert ) ;
+INT32 clientBuildLockLobMsg( CHAR ** ppBuffer, INT32 *bufferSize,
+                              INT64 offset, INT64 length,
+                              SINT32 flags, SINT16 w,
+                              SINT64 contextID, UINT64 reqID,
+                              BOOLEAN endianConvert ) ;
 INT32 clientBuildCloseLobMsg( CHAR **ppBuffer, INT32 *bufferSize,
                               SINT32 flags, SINT16 w,
                               SINT64 contextID, UINT64 reqID,

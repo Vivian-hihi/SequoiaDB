@@ -93,7 +93,8 @@
 enum _SDB_LOB_OPEN_MODE
 {
    SDB_LOB_CREATEONLY = 0x00000001, /**< Open a new lob only */
-   SDB_LOB_READ = 0x00000004        /**< Open an existing lob to read */
+   SDB_LOB_READ       = 0x00000004, /**< Open an existing lob to read */
+   SDB_LOB_WRITE      = 0x00000008  /**< Open an existing lob to write */
 } ;
 typedef enum _SDB_LOB_OPEN_MODE SDB_LOB_OPEN_MODE ;
 
@@ -448,7 +449,8 @@ namespace sdbclient
 
       virtual INT32 removeLob( const bson::OID &oid ) = 0 ;
 
-      virtual INT32 openLob( sdbLob &lob, const bson::OID &oid ) = 0 ;
+      virtual INT32 openLob( sdbLob &lob, const bson::OID &oid,
+                             SDB_LOB_OPEN_MODE mode = SDB_LOB_READ ) = 0 ;
 
       virtual INT32 listLobs( sdbCursor &cursor ) = 0 ;
 
@@ -1391,15 +1393,17 @@ namespace sdbclient
     \brief Open an existing large object for reading.
     \param [in] oid The id of the large object
     \param [out] lob The large object to get
+    \param [in] lob open mode, should be SDB_LOB_READ or SDB_LOB_WRITE
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
     \note Need to close lob to release resource, after opening a lob.
 */
-    INT32 openLob( sdbLob &lob, const bson::OID &oid )
+    INT32 openLob( sdbLob &lob, const bson::OID &oid,
+                   SDB_LOB_OPEN_MODE mode = SDB_LOB_READ )
     {
        if ( !pCollection )
          return SDB_NOT_CONNECTED ;
-       return pCollection->openLob( lob, oid ) ;
+       return pCollection->openLob( lob, oid, mode ) ;
     }
 
 /** \fn INT32 listLobs( sdbCursor &cursor )
@@ -2681,6 +2685,10 @@ namespace sdbclient
 
       virtual INT32 seek ( SINT64 size, SDB_LOB_SEEK whence ) = 0 ;
 
+      virtual INT32 lock( INT64 offset, INT64 length ) = 0 ;
+
+      virtual INT32 lockAndSeek( INT64 offset, INT64 length ) = 0 ;
+
       virtual INT32 isClosed( BOOLEAN &flag ) = 0 ;
 
       virtual INT32 getOid( bson::OID &oid ) = 0 ;
@@ -2696,6 +2704,8 @@ namespace sdbclient
       virtual SINT64 getSize() = 0 ;
 
       virtual UINT64 getCreateTime () = 0 ;
+
+      virtual UINT64 getModificationTime() = 0 ;
 
    } ;
 
@@ -2784,6 +2794,34 @@ namespace sdbclient
          if ( !pLob )
             return SDB_NOT_CONNECTED ;
          return pLob->seek( size, whence ) ;
+      }
+
+/** \fn INT32 lock ( INT64 offset, INT64 length )
+    \brief lock LOB section for write mode.
+    \param [in] offset The lock start position
+    \param [in] length The lock length
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+      INT32 lock ( INT64 offset, INT64 length )
+      {
+         if ( !pLob )
+            return SDB_NOT_CONNECTED ;
+         return pLob->lock( offset, length ) ;
+      }
+
+/** \fn INT32 lockAndSeek ( INT64 offset, INT64 length )
+    \brief lock LOB section for write mode and seek to the start position.
+    \param [in] offset The lock start position
+    \param [in] length The lock lengthand seek to the start position
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+      INT32 lockAndSeek ( INT64 offset, INT64 length )
+      {
+         if ( !pLob )
+            return SDB_NOT_CONNECTED ;
+         return pLob->lockAndSeek( offset, length ) ;
       }
 
 /** \fn INT32 isClosed( BOOLEAN &flag )
@@ -2886,6 +2924,16 @@ namespace sdbclient
          return pLob->getCreateTime() ;
       }
 
+/** \fn UINT64 getModificationTime ()
+    \brief Get lob's last modification time.
+    \retval The modification time in milliseconds of lob or -1 when the lob does not be opened or has been closed
+*/
+      UINT64 getModificationTime ()
+      {
+         if ( !pLob )
+            return -1 ;
+         return pLob->getModificationTime() ;
+      }
    } ;
 
    class DLLEXPORT _sdb

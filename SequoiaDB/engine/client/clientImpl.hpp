@@ -448,11 +448,13 @@ namespace sdbclient
 
       virtual INT32 removeLob( const bson::OID &oid ) ;
 
-      INT32 openLob( _sdbLob **lob, const bson::OID &oid ) ;
+      INT32 openLob( _sdbLob **lob, const bson::OID &oid,
+                     SDB_LOB_OPEN_MODE mode = SDB_LOB_READ ) ;
 
-      virtual INT32 openLob( sdbLob &lob, const bson::OID &oid )
+      virtual INT32 openLob( sdbLob &lob, const bson::OID &oid,
+                             SDB_LOB_OPEN_MODE mode = SDB_LOB_READ )
       {
-         return openLob( &lob.pLob, oid ) ;
+         return openLob( &lob.pLob, oid, mode ) ;
       }
 
       INT32 listLobs ( _sdbCursor **cursor ) ;
@@ -863,8 +865,10 @@ namespace sdbclient
       BOOLEAN                 _isOpen ;
       SINT64                  _contextID ;
       INT32                   _mode ;
+      BOOLEAN                 _seekWrite ;
       bson::OID                _oid ;
       UINT64                  _createTime ;
+      UINT64                  _modificationTime ;
       SINT64                  _lobSize ;
       SINT64                  _currentOffset ;
       SINT64                  _cachedOffset ;
@@ -896,6 +900,10 @@ namespace sdbclient
 
       virtual INT32 seek ( SINT64 size, SDB_LOB_SEEK whence ) ;
 
+      virtual INT32 lock( INT64 offset, INT64 length ) ;
+
+      virtual INT32 lockAndSeek( INT64 offset, INT64 length ) ;
+
       virtual INT32 isClosed( BOOLEAN &flag ) ;
 
       virtual INT32 getOid( bson::OID &oid ) ;
@@ -911,6 +919,8 @@ namespace sdbclient
       virtual SINT64 getSize() ;
 
       virtual UINT64 getCreateTime () ;
+
+      virtual UINT64 getModificationTime() ;
 
    } ;
 
