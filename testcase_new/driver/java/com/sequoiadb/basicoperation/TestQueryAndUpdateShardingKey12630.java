@@ -99,8 +99,15 @@ public class TestQueryAndUpdateShardingKey12630 extends SdbTestBase{
 			hint.put("", "testIndex");
 			int skipRows = 0;
             int returnRows = -1;
-			int flag = DBQuery.FLG_QUERY_KEEP_SHARDINGKEY_IN_UPDATE;
-			cl.queryAndUpdate(matcher, selector, orderBy, hint, update, skipRows, returnRows, flag, true);
+			int flag = DBQuery.FLG_QUERY_KEEP_SHARDINGKEY_IN_UPDATE;        
+			
+			DBCursor dbCursor = cl.queryAndUpdate(matcher, selector, orderBy, hint, update, skipRows, returnRows, flag, true);
+			List<BSONObject> actualList= new ArrayList<BSONObject>();
+	        while( dbCursor.hasNext() ) {
+	            BSONObject obj = dbCursor.getNext();
+	            actualList.add(obj);
+	        }	        
+	        dbCursor.close();
 					
             //check update results
         	String []expRecords = {"{a:[1,2,'test',[3,4]],no:2,b:0,c:'test0'}",
@@ -150,7 +157,7 @@ public class TestQueryAndUpdateShardingKey12630 extends SdbTestBase{
 		//insert records	
 		for( int i = 0; i < records.length;i++){			
 			try{
-				cl.insert(records[i]);
+				cl.insert(records[i]);				
 			}catch(BaseException e){
 				Assert.assertTrue(false,"insert Datas fail "+e.getMessage());
 			}
@@ -170,7 +177,7 @@ public class TestQueryAndUpdateShardingKey12630 extends SdbTestBase{
 	        while( cursor.hasNext() ) {
 	            BSONObject object = cursor.getNext();
 	            actualList.add(object);
-	        }   
+	        } 	        
 	        cursor.close();
 	        Assert.assertEquals(actualList.equals(expectedList),true,"check datas are unequal\n"
 	        						+"actDatas: "+actualList.toString()
