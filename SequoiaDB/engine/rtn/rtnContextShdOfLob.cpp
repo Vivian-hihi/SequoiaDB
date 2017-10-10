@@ -379,7 +379,7 @@ namespace engine
          }
          else
          {
-            ossMemcpy( (void*)data, newCache.lobMeta(), sizeof( meta ) ) ;
+            ossMemcpy( (void*)data, newCache.lobMeta(), sizeof( _dmsLobMeta ) ) ;
          }
 
          rc = rtnUpdateLob( _fullName.c_str(),
@@ -396,7 +396,7 @@ namespace engine
          accessInfoLocked = FALSE ;
       }
       else
-      {      
+      {
          rc = rtnUpdateLob( _fullName.c_str(),
                             _oid, sequence,
                             offset, len, data, cb,
@@ -840,7 +840,7 @@ namespace engine
       rc = _accessInfo->lockSection( _rtnLobSection( offset, length, contextID() ) ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "Failed to lock section[%lld, %lld, %lld], rc=%d",
+         PD_LOG( PDERROR, "Failed to lock section[offset: %lld, length: %lld, accessId: %lld], rc=%d",
                  offset, length, contextID(), rc ) ;
          goto error ;
       }

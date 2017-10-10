@@ -67,7 +67,7 @@ namespace engine
       }
       else
       {
-         ossMemcpy( _metaBuf, &meta, sizeof( meta ) ) ;
+         ossMemcpy( _metaBuf, &meta, sizeof( _dmsLobMeta ) ) ;
       }
 
    done:

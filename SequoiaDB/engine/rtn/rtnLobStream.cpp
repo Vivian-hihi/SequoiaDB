@@ -430,6 +430,18 @@ namespace engine
          }
       }
 
+      if ( SDB_LOB_MODE_WRITE == _mode && !_hasPiecesInfo )
+      {
+         UINT32 piece = _getSequence( _offset ) ;
+         rc = _lobPieces.addPieces( _rtnLobPieces(0, piece) ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to add pieces, rc=%d", rc ) ;
+            goto error ;
+         }
+         _hasPiecesInfo = TRUE ;
+      }
+
       // re-array the data and try to get a complete piece.
       rc = _lw.prepare4Write( _offset, len, buf ) ;
       if ( SDB_OK != rc )
@@ -703,7 +715,12 @@ namespace engine
             if ( !_hasPiecesInfo )
             {
                UINT32 piece = _getSequence( _offset ) ;
-               _lobPieces.addPieces( _rtnLobPieces(0, piece) ) ;
+               rc = _lobPieces.addPieces( _rtnLobPieces(0, piece) ) ;
+               if ( SDB_OK != rc )
+               {
+                  PD_LOG( PDERROR, "Failed to add pieces, rc=%d", rc ) ;
+                  goto error ;
+               }
                _hasPiecesInfo = TRUE ;
             }
          }
@@ -1054,13 +1071,13 @@ namespace engine
          goto error ;
       }
 
+      // jump to the end of lob
+      _offset = _meta._lobLen ;
+
       if ( _lobPieces.sectionNum() > 0 )
       {
          _hasPiecesInfo = TRUE ;
       }
-
-      // jump to the end of lob
-      _offset = _meta._lobLen ;
 
    done:
       PD_TRACE_EXITRC( SDB_RTNLOBSTREAM__OPEN4WRITE, rc ) ;
@@ -1127,7 +1144,8 @@ namespace engine
             goto error ;
          }
 
-         if ( piecesInfoSize > 0 && _lobPieces.sectionNum() == 1 )
+         if ( SDB_LOB_MODE_CREATEONLY == _mode &&
+              piecesInfoSize > 0 && _lobPieces.sectionNum() == 1 )
          {
             UINT32 last = _getSequence( _meta._lobLen ) ;
             _rtnLobPieces pieces = _lobPieces.getSection( 0 ) ;

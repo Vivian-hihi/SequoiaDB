@@ -597,7 +597,7 @@ namespace engine
          }
          else
          {
-            ossMemcpy( (void*)tuple.data, newCache.lobMeta(), sizeof( meta ) ) ;
+            ossMemcpy( (void*)tuple.data, newCache.lobMeta(), sizeof( _dmsLobMeta ) ) ;
          }
 
          rc = _su->lob()->update( record, _mbContext, cb, _getDPSCB() ) ;
