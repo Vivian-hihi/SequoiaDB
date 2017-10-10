@@ -35,7 +35,8 @@
 #include "ossIO.hpp"
 #include "ossLatch.hpp"
 #include <openssl/crypto.h>
-
+#include "sptUsrSystemCommon.hpp"
+#include "utilStr.hpp"
 using namespace std ;
 
 #define SPT_COPY_BUF_SIZE  8192
@@ -47,8 +48,8 @@ namespace engine
    #define SPT_AUTH_KEYBOARD     0x0002
    #define SPT_AUTH_PUBKEY       0x0004
 
-   #define SPT_PUBLICKEY_FILE    "~/.ssh/id_rsa.pub"
-   #define SPT_PRIVATEKEY_FILE   "~/.ssh/id_rsa"
+   #define SPT_PUBLICKEY_FILE    "./.ssh/id_rsa.pub"
+   #define SPT_PRIVATEKEY_FILE   "./.ssh/id_rsa"
 
    #define MAX_OUT_STRING_LEN    ( 1024 * 1024 )
    #define READ_OUT_STR_LINE_LEN ( 1024 )
@@ -230,9 +231,40 @@ namespace engine
       }
       else
       {
+         string homePath ;
+         string err ;
+         CHAR publicKeyFile[ OSS_MAX_PATHSIZE + 1 ] ;
+         CHAR privateKeyFile[ OSS_MAX_PATHSIZE + 1 ] ;
+         rc = _sptUsrSystemCommon::getHomePath( homePath, err ) ;
+         if( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "%s", err.c_str() ) ;
+            goto error ;
+         }
+
+         // build public key file path
+         rc = utilBuildFullPath( homePath.c_str(), SPT_PUBLICKEY_FILE,
+                                 OSS_MAX_PATHSIZE, publicKeyFile ) ;
+         if( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to build public key file path, rc: %d",
+                    rc ) ;
+            goto error ;
+         }
+
+         // build private key file path
+         rc = utilBuildFullPath( homePath.c_str(), SPT_PRIVATEKEY_FILE,
+                                 OSS_MAX_PATHSIZE, privateKeyFile ) ;
+         if( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to build private key file path, rc: %d",
+                    rc ) ;
+            goto error ;
+         }
+
          rc = libssh2_userauth_publickey_fromfile( _session, _usr.c_str(),
-                                                   SPT_PUBLICKEY_FILE,
-                                                   SPT_PRIVATEKEY_FILE,
+                                                   publicKeyFile,
+                                                   privateKeyFile,
                                                    "" ) ;
       }
       if ( SDB_OK != rc )
