@@ -1654,7 +1654,7 @@ namespace engine
          {
             if ( SDB_DMS_EOC != rc )
             {
-               PD_LOG ( PDERROR, "Failed to get more from colleciton %s, "
+               PD_LOG ( PDERROR, "Failed to get more from collection %s, "
                         "rc = %d", CAT_NODE_INFO_COLLECTION, rc ) ;
             }
             else
@@ -1744,7 +1744,7 @@ namespace engine
                      {
                         rc = SDB_CAT_CORRUPTION ;
                         PD_LOG( PDERROR, "Failed to get the field: %s",
-                                CAT_HOST_FIELD_NAME );
+                                CAT_SERVICE_FIELD_NAME );
                         goto error ;
                      }
                      strShardServiceNameTmp = getShardServiceName(beServiceTmp);
