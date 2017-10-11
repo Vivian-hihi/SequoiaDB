@@ -47,7 +47,7 @@ public class SubclUseOper12607 extends SdbTestBase{
 		String []expRecords3 = {"{'no':[2147483647,{'$numberLong':'-9223372036854775808'}],'test':8}"};
 		String []expRecords4 = {"{'no':[2147483647,[-21474836478]],'test':12}"};
 		String []expRecords5 = {"{'no':{a:{b:{'$numberLong':'9223372036854775807'}}},'test':13}"};
-		String []expRecords6 = {"{'no':[2147483647,[-21474836478]],'test':12}","{'no':[2147483647,{'$numberLong':'-9223372036854775808'}],'test':8}"};
+		String []expRecords6 = {"{'no':[2147483647,{'$numberLong':'-9223372036854775808'}],'test':8}","{'no':[2147483647,[-21474836478]],'test':12}"};
 		
 		return new Object[][]{
 			//the parameters: String opertors, Object operValue, String matcherName, String[] expRecords

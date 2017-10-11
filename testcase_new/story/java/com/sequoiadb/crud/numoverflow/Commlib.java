@@ -340,13 +340,17 @@ public class Commlib {
 			DBQuery query = new DBQuery();				
 			BSONObject selector = new BasicBSONObject();	
 			BSONObject sValue = new BasicBSONObject();
-			BSONObject matcher = new BasicBSONObject();				
+			BSONObject matcher = new BasicBSONObject();
+			BSONObject sort = new BasicBSONObject();
 			sValue.put("$include",0);			
 			selector.put("_id", sValue);
-			matcher.put(matcherName,matcherValue );				
+			matcher.put(matcherName,matcherValue );
+			sort.put("test", 1);
 			query.setMatcher(matcher);	
 			query.setSelector(selector);
-			DBCursor cursor = cl.query(query);			
+			query.setOrderBy(sort);
+			DBCursor cursor = cl.query(query);
+			System.out.println("matcher====:"+matcher.toString());
 			List<BSONObject> actualList= new ArrayList<BSONObject>(); 			
 			
 	        while( cursor.hasNext() ) {
