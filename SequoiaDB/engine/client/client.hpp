@@ -1390,7 +1390,7 @@ namespace sdbclient
     }
 
 /** \fn INT32 openLob( sdbLob &lob, const bson::OID &oid )
-    \brief Open an existing large object for reading.
+    \brief Open an existing large object for reading or writing.
     \param [in] oid The id of the large object
     \param [out] lob The large object to get
     \param [in] lob open mode, should be SDB_LOB_READ or SDB_LOB_WRITE
