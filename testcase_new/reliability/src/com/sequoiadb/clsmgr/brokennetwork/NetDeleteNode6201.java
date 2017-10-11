@@ -20,7 +20,6 @@ import com.sequoiadb.commlib.GroupWrapper;
 import com.sequoiadb.commlib.SdbTestBase;
 import com.sequoiadb.commlib.Ssh;
 import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.exception.FaultException;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.BrokenNetwork;
 import com.sequoiadb.task.FaultMakeTask;
@@ -96,25 +95,18 @@ public class NetDeleteNode6201 extends SdbTestBase {
 
             // 最长等待2分钟的集群环境恢复
             Assert.assertEquals(groupMgr.checkBusiness(600), true, "failed to restore business");
-
-            if (!groupMgr.checkResidu()) {
-                Sequoiadb tmpDb = null;
-                try {
-                    tmpDb = new Sequoiadb(connectUrl.split(":")[0] + ":" + coordPort, "", "");
+            
+            if (!groupMgr.checkResidu()) {        
+                try {                    
                     coordGroup.removeNode(connectUrl.split(":")[0], coordPort, null);                    
                 }catch(BaseException e){
                 	if( e.getErrorCode() == -155 ){ 
-                		clearNode(hostName,coordPort, coordDbPath);
+                		clearNode(hostName,coordPort);
                     }
                 	else{
                 		Assert.fail("remove node failed, errMsg:" + e.getMessage());
                 	}        			
-        		}
-                finally {
-                    if (tmpDb != null) {
-                        tmpDb.close();
-                    }
-                }
+        		}                
                 
                 // 最长等待2分钟的集群环境恢复
                 Assert.assertEquals(groupMgr.checkBusiness(600), true, "failed to restore business");
@@ -175,7 +167,7 @@ public class NetDeleteNode6201 extends SdbTestBase {
         }
     }
     
-    public void clearNode(String hostName,int svcName, String nodePath) throws ReliabilityException{    	
+    public void clearNode(String hostName,int svcName) throws ReliabilityException{    	
         String user = "root";
         String passwd = SdbTestBase.rootPwd;        
         int port = 22;        
@@ -191,9 +183,10 @@ public class NetDeleteNode6201 extends SdbTestBase {
             	ssh.exec(installPwd + "/bin/sdbstop -p "+ svcName);
             }
             
-            File dirname = new File(nodePath);
+            String actNodePath = coordDbPath + "/" + svcName;
+            File dirname = new File(actNodePath);
             if(dirname.isDirectory()){
-            	ssh.exec("rm -rf "+ nodePath);
+            	ssh.exec("rm -rf "+ actNodePath);
             }
             
             String confDir = installPwd + "/conf/local/"+ svcName;
@@ -203,7 +196,7 @@ public class NetDeleteNode6201 extends SdbTestBase {
             }          
             
         }catch (BaseException e) {
-        	Assert.fail("clear node fail"+e.getMessage() + e.getErrorCode());
+        	Assert.fail("clear node fail:  coordDbPath="+coordDbPath+"\n"+e.getMessage() + e.getErrorCode());
         }finally {
         	if(ssh != null){
         		ssh.disconnect();
