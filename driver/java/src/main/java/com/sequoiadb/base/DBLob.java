@@ -166,7 +166,7 @@ public interface DBLob extends Closeable {
 
     /**
      * @param offset lock start position
-     * @param length lock length
+     * @param length lock length, -1 means lock to the end of lob
      * @throws com.sequoiadb.exception.BaseException.
      * @fn lock(long offset, long length)
      * @brief lock LOB section for write mode
@@ -175,7 +175,7 @@ public interface DBLob extends Closeable {
 
     /**
      * @param offset lock start position
-     * @param length lock length
+     * @param length lock length, -1 means lock to the end of lob
      * @throws com.sequoiadb.exception.BaseException.
      * @fn lockAndSeek(long offset, long length)
      * @brief lock LOB section for write mode and seek to the offset position

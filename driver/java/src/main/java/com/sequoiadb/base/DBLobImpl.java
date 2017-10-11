@@ -453,7 +453,7 @@ class DBLobImpl implements DBLob {
 
     /**
      * @param offset lock start position
-     * @param length lock length
+     * @param length lock length, -1 means lock to the end of lob
      * @throws com.sequoiadb.exception.BaseException.
      * @fn lock(long offset, long length)
      * @brief lock LOB section for writing
@@ -480,9 +480,9 @@ class DBLobImpl implements DBLob {
 
     /**
      * @param offset lock start position
-     * @param length lock length
+     * @param length lock length, -1 means lock to the end of lob
      * @throws com.sequoiadb.exception.BaseException.
-     * @fn lock(long offset, long length)
+     * @fn lockAndSeek(long offset, long length)
      * @brief lock LOB section for writing and seek to the offset position
      */
     @Override
