@@ -73,10 +73,12 @@ public class DBLobTest {
         lob.close();
 
         long createTime = lob.getCreateTime();
+        long modificationTime = lob.getModificationTime();
         long size = lob.getSize();
         ObjectId id = lob.getID();
         SDBTestHelper.println("id:" + id);
         SDBTestHelper.println("createTime:" + SDBTestHelper.millisToDate(createTime));
+        SDBTestHelper.println("modificationTime:" + SDBTestHelper.millisToDate(modificationTime));
         SDBTestHelper.println("lobSize:" + size);
         assertEquals(0, size);
     }

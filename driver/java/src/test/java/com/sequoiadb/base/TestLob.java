@@ -534,6 +534,68 @@ public class TestLob extends SingleCSCLTestCase {
         assertFalse(cursor.hasNext());
     }
 
+    @Test
+    public void testLobOpenWrite5() {
+        ObjectId id = ObjectId.get();
+        DBLob lob = cl.createLob(id);
+        lob.close();
+
+        DBLob lob1 = cl.openLob(id, DBLob.SDB_LOB_WRITE);
+        DBLob lob2 = cl.openLob(id, DBLob.SDB_LOB_WRITE);
+
+        lob1.lock(100, -1);
+
+        try {
+            lob2.lock(90, 11);
+            fail("failure expected");
+        } catch (BaseException e) {
+            System.out.println(e);
+        }
+
+        lob2.lock(90, 10);
+
+        lob1.close();
+
+        lob2.lock(90, 20);
+        lob2.close();
+    }
+
+    @Test
+    public void testLobOpenWrite6() {
+        String str = "Hello, world!";
+
+        ObjectId id = ObjectId.get();
+        DBLob lob = cl.createLob(id);
+        lob.write("test".getBytes());
+        lob.close();
+
+        lob = cl.openLob(id, DBLob.SDB_LOB_WRITE);
+        lob.write(str.getBytes());
+        lob.close();
+
+        long lobSize = lob.getSize();
+
+        DBCursor cursor = cl.listLobs();
+        assertTrue(cursor.hasNext());
+        BSONObject obj = cursor.getNext();
+        ObjectId oid = (ObjectId) obj.get("Oid");
+        assertEquals(id, oid);
+        assertFalse(cursor.hasNext());
+
+        lob = cl.openLob(id);
+        assertEquals(lobSize, lob.getSize());
+        byte[] bytes = new byte[(int) lob.getSize()];
+        lob.read(bytes);
+        lob.close();
+
+        String s = new String(bytes);
+        assertEquals(str, s);
+
+        cl.removeLob(id);
+        cursor = cl.listLobs();
+        assertFalse(cursor.hasNext());
+    }
+
     class LobWriter implements Runnable {
         private int index;
         private String csName;

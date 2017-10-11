@@ -172,10 +172,7 @@ class DBLobImpl implements DBLob {
             _currentOffset = 0;
             _cachedOffset = _currentOffset;
         }
-        if (_mode == SDB_LOB_WRITE) {
-            // move to the end of lob
-            _currentOffset = _lobSize;
-        }
+
         _contextID = response.getContextId();
     }
 
