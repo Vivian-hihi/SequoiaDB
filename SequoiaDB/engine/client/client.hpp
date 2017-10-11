@@ -2799,7 +2799,7 @@ namespace sdbclient
 /** \fn INT32 lock ( INT64 offset, INT64 length )
     \brief lock LOB section for write mode.
     \param [in] offset The lock start position
-    \param [in] length The lock length
+    \param [in] length The lock length, -1 means lock to the end of lob
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
@@ -2813,7 +2813,7 @@ namespace sdbclient
 /** \fn INT32 lockAndSeek ( INT64 offset, INT64 length )
     \brief lock LOB section for write mode and seek to the offset position.
     \param [in] offset The lock start position
-    \param [in] length The lock length
+    \param [in] length The lock length, -1 means lock to the end of lob
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
