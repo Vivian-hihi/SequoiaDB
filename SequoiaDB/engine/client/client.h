@@ -41,7 +41,8 @@ SDB_EXTERN_C_START
 enum _SDB_LOB_OPEN_MODE
 {
    SDB_LOB_CREATEONLY = 0x00000001, /**< Open a new lob only */
-   SDB_LOB_READ = 0x00000004        /**< Open an existing lob to read */
+   SDB_LOB_READ       = 0x00000004, /**< Open an existing lob to read */
+   SDB_LOB_WRITE      = 0x00000008  /**< Open an existing lob to write */
 } ;
 typedef enum _SDB_LOB_OPEN_MODE SDB_LOB_OPEN_MODE ;
 
@@ -2227,10 +2228,10 @@ SDB_EXPORT INT32 sdbForceSession( sdbConnectionHandle cHandle,
                           const bson_oid_t *oid,
                           INT32 mode,
                           sdbLobHandle *lobHandle )
-    \brief create a large object
+    \brief create a large object or open a large object to read or write
     \param [in] cHandle The collection handle
     \param [in] oid The object id
-    \param [in] mode The open mode: SDB_LOB_CREATEONLY/SDB_LOB_READ
+    \param [in] mode The open mode: SDB_LOB_CREATEONLY/SDB_LOB_READ/SDB_LOB_WRITE
     \param [out] lobHandle The handle of object
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
@@ -2253,6 +2254,34 @@ SDB_EXPORT INT32 sdbOpenLob( sdbCollectionHandle cHandle,
 SDB_EXPORT INT32 sdbWriteLob( sdbLobHandle lobHandle,
                               const CHAR *buf,
                               UINT32 len ) ;
+
+/** \fn INT32 sdbLockLob( sdbLobHandle lobHandle,
+                          INT64 offset, 
+                          INT64 length )
+    \brief lock LOB section for write mode
+    \param [in] lobHandle The large object handle
+    \param [in] offset The lock start position
+    \param [in] length The lock length
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbLockLob( sdbLobHandle lobHandle,
+                             INT64 offset,
+                             INT64 length ) ;
+
+/** \fn INT32 sdbLockAndSeekLob( sdbLobHandle lobHandle,
+                                 INT64 offset, 
+                                 INT64 length )
+    \brief lock LOB section for write mode and seek to the offset position
+    \param [in] lobHandle The large object handle
+    \param [in] offset The lock start position
+    \param [in] length The lock length
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbLockAndSeekLob( sdbLobHandle lobHandle,
+                                    INT64 offset,
+                                    INT64 length ) ;
 
 /** \fn INT32 sdbReadLob( sdbLobHandle lobHandle,
                           UINT32 len,
@@ -2305,19 +2334,28 @@ SDB_EXPORT INT32 sdbGetLobSize( sdbLobHandle lobHandle,
                                    UINT64 *millis )
     \brief get lob's create time
     \param [in] lobHandle The large object handle
-    \param [out] millis The create time in milliseconds of lob,
-                 while open a new lob, the create time is 0
+    \param [out] millis The create time in milliseconds of lob
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
-
 SDB_EXPORT INT32 sdbGetLobCreateTime( sdbLobHandle lobHandle,
                                       UINT64 *millis ) ;
+
+/** \fn INT32 sdbGetLobModificationTime( sdbLobHandle lobHandle,
+                                         UINT64 *millis )
+    \brief get lob's last modification time
+    \param [in] lobHandle The large object handle
+    \param [out] millis The modification time in milliseconds of lob
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbGetLobModificationTime( sdbLobHandle lobHandle,
+                                            UINT64 *millis ) ;
 
 /** \fn INT32 sdbSeekLob( sdbLobHandle lobHandle,
                           SINT64 size,
                           SDB_LOB_SEEK whence )
-    \brief seek the place to read
+    \brief seek the place to read or write
     \param [in] lobHandle The large object handle
     \param [in] size The size of seek
     \param [in] whence The whence of seek

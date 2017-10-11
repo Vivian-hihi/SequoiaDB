@@ -181,6 +181,11 @@ if ( handle )                        \
            lob->_currentOffset = 0 ;\
            lob->_dataCache = NULL ;\
            lob->_cachedSize = 0 ;\
+           lob->_lobSize = 0 ;\
+           lob->_pageSize = 0 ;\
+           lob->_createTime = 0 ;\
+           lob->_modificationTime = 0 ;\
+           lob->_seekWrite = FALSE ;\
         } while ( FALSE )
 
 #define LOB_ALIGNED_LEN 524288
@@ -8770,7 +8775,8 @@ SDB_EXPORT INT32 sdbOpenLob( sdbCollectionHandle cHandle,
    }
 
    if ( SDB_LOB_CREATEONLY != mode &&
-        SDB_LOB_READ != mode )
+        SDB_LOB_READ != mode &&
+        SDB_LOB_WRITE != mode )
    {
       rc = SDB_INVALIDARG ;
       goto error ;
@@ -8858,47 +8864,55 @@ SDB_EXPORT INT32 sdbOpenLob( sdbCollectionHandle cHandle,
    ossMemcpy( lobStruct->_oid, oid, 12 ) ;
    lobStruct->_contextID = contextID ;
    lobStruct->_mode = mode ;
-   lobStruct->_lobSize = 0 ;
-   lobStruct->_createTime = 0 ;
 
    _regSocket( cs->_connection, &lobStruct->_sock ) ;
 
-   if ( SDB_LOB_READ & mode )
+   // get meta info from the return object
+   bType = bson_find( &bsonItr, &obj, FIELD_NAME_LOB_SIZE ) ;
+   if ( BSON_INT == bType || BSON_LONG == bType )
    {
-      // get meta info from the return object
-      bType = bson_find( &bsonItr, &obj, FIELD_NAME_LOB_SIZE ) ;
-      if ( BSON_INT == bType || BSON_LONG == bType )
-      {
-         lobStruct->_lobSize = bson_iterator_long( &bsonItr ) ;
-      }
-      else
-      {
-         rc = SDB_SYS ;
-         goto error ;
-      }
+      lobStruct->_lobSize = bson_iterator_long( &bsonItr ) ;
+   }
+   else
+   {
+      rc = SDB_SYS ;
+      goto error ;
+   }
 
-      bType = bson_find( &bsonItr, &obj, FIELD_NAME_LOB_CREATETIME ) ;
-      if ( BSON_LONG == bType )
-      {
-         lobStruct->_createTime = bson_iterator_long( &bsonItr ) ;
-      }
-      else
-      {
-         rc = SDB_SYS ;
-         goto error ;
-      }
+   bType = bson_find( &bsonItr, &obj, FIELD_NAME_LOB_CREATETIME ) ;
+   if ( BSON_LONG == bType )
+   {
+      lobStruct->_createTime = bson_iterator_long( &bsonItr ) ;
+   }
+   else
+   {
+      rc = SDB_SYS ;
+      goto error ;
+   }
 
-      bType = bson_find( &bsonItr, &obj, FIELD_NAME_LOB_PAGE_SIZE ) ;
-      if ( BSON_INT == bType )
-      {
-         lobStruct->_pageSize =  bson_iterator_int( &bsonItr ) ;
-      }
-      else
-      {
-         rc = SDB_SYS ;
-         goto error ;
-      }
-      {
+   bType = bson_find( &bsonItr, &obj, FIELD_NAME_LOB_MODIFICATION_TIME ) ;
+   if ( BSON_LONG == bType )
+   {
+      lobStruct->_modificationTime = bson_iterator_long( &bsonItr ) ;
+   }
+   else
+   {
+      lobStruct->_modificationTime = lobStruct->_createTime ;
+   }
+
+   bType = bson_find( &bsonItr, &obj, FIELD_NAME_LOB_PAGE_SIZE ) ;
+   if ( BSON_INT == bType )
+   {
+      lobStruct->_pageSize =  bson_iterator_int( &bsonItr ) ;
+   }
+   else
+   {
+      rc = SDB_SYS ;
+      goto error ;
+   }
+
+   if ( SDB_LOB_READ == mode )
+   {
       // when mode is SDB_LOB_READ, we add flag "FLG_LOBOPEN_WITH_RETURNDATA"
       // to the message send for engine, so, when open lob, the data will be
       // return at the same time, the return message format is as below:
@@ -8941,8 +8955,13 @@ SDB_EXPORT INT32 sdbOpenLob( sdbCollectionHandle cHandle,
          lobStruct->_cachedSize = tuple->columns.len ;
          lobStruct->_dataCache = body ;
       }
-      }
    }
+   else if ( SDB_LOB_WRITE == mode )
+   {
+      // move to the end of lob
+      lobStruct->_currentOffset = lobStruct->_lobSize ;
+   }
+
    *lobHandle = (sdbLobHandle)lobStruct ;
 
 done:
@@ -8974,7 +8993,8 @@ SDB_EXPORT INT32 sdbWriteLob( sdbLobHandle lobHandle,
       goto error ;
    }
 
-   if ( SDB_LOB_CREATEONLY != lob->_mode )
+   if ( SDB_LOB_CREATEONLY != lob->_mode &&
+        SDB_LOB_WRITE != lob->_mode )
    {
       rc = SDB_INVALIDARG ;
       goto error ;
@@ -8987,10 +9007,11 @@ SDB_EXPORT INT32 sdbWriteLob( sdbLobHandle lobHandle,
 
    do
    {
+      INT64 offset = lob->_seekWrite ? lob->_currentOffset : -1 ;
       UINT32 sendLen = maxSendLen <= len - totalLen ?
                        maxSendLen : len - totalLen ;
       rc = clientBuildWriteLobMsg( &(lob->_pSendBuffer), &lob->_sendBufferSize,
-                                   buf + totalLen, sendLen, -1, 0, 1,
+                                   buf + totalLen, sendLen, offset, 0, 1,
                                    lob->_contextID, 0,
                                    lob->_endianConvert ) ;
       if ( SDB_OK != rc )
@@ -9021,9 +9042,95 @@ SDB_EXPORT INT32 sdbWriteLob( sdbLobHandle lobHandle,
       CHECK_RET_MSGHEADER( lob->_pSendBuffer, lob->_pReceiveBuffer,
                            lob->_connection ) ;
       totalLen += sendLen ;
+
+      lob->_currentOffset += sendLen ;
+      lob->_lobSize = OSS_MAX( lob->_lobSize, lob->_currentOffset ) ;
+      lob->_seekWrite = FALSE ;
    } while ( totalLen < len ) ;
-   // for get lob's size while create a lob for writing
-   lob->_lobSize += len ;
+
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
+SDB_EXPORT INT32 sdbLockLob( sdbLobHandle lobHandle,
+                             INT64 offset,
+                             INT64 length )
+{
+   INT32 rc = SDB_OK ;
+   sdbLobStruct *lob = ( sdbLobStruct * )lobHandle ;
+   INT64 contextID = -1 ;
+
+   HANDLE_CHECK( lobHandle, lob, SDB_HANDLE_TYPE_LOB ) ;
+
+   if ( offset < 0 || length < -1 || length == 0)
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   if ( SDB_LOB_WRITE != lob->_mode )
+   {
+      goto done ;
+   }
+
+   rc = clientBuildLockLobMsg( &(lob->_pSendBuffer), &(lob->_sendBufferSize),
+                               offset, length, 0, 1,
+                               lob->_contextID, 0,
+                               lob->_endianConvert ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+   // send and recv
+   rc = _sendAndRecv( lob->_connection, lob->_sock,
+                      (MsgHeader*)lob->_pSendBuffer,
+                      (MsgHeader**)&lob->_pReceiveBuffer,
+                      &lob->_receiveBufferSize,
+                      TRUE, lob->_endianConvert ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+   // extract revc message
+   rc = _extract( (MsgHeader*)lob->_pReceiveBuffer, lob->_receiveBufferSize,
+                  &contextID, lob->_endianConvert ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+   // check return msg header
+   CHECK_RET_MSGHEADER( lob->_pSendBuffer, lob->_pReceiveBuffer,
+                        lob->_connection ) ;
+
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
+SDB_EXPORT INT32 sdbLockAndSeekLob( sdbLobHandle lobHandle,
+                                    INT64 offset,
+                                    INT64 length )
+{
+   INT32 rc = SDB_OK ;
+
+   rc = sdbLockLob( lobHandle, offset, length ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+   rc = sdbSeekLob( lobHandle, offset, SDB_LOB_SEEK_SET ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
 done:
    return rc ;
 error:
@@ -9448,7 +9555,15 @@ SDB_EXPORT INT32 sdbSeekLob( sdbLobHandle lobHandle,
 
    HANDLE_CHECK( lobHandle, lob, SDB_HANDLE_TYPE_LOB ) ;
 
-   if ( SDB_LOB_READ != lob->_mode || -1 == lob->_contextID )
+   if ( -1 == lob->_contextID )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   if ( SDB_LOB_READ != lob->_mode &&
+        SDB_LOB_CREATEONLY != lob->_mode &&
+        SDB_LOB_WRITE != lob->_mode )
    {
       rc = SDB_INVALIDARG ;
       goto error ;
@@ -9456,7 +9571,7 @@ SDB_EXPORT INT32 sdbSeekLob( sdbLobHandle lobHandle,
 
    if ( SDB_LOB_SEEK_SET == whence )
    {
-      if ( size < 0 || lob->_lobSize < size )
+      if ( size < 0 || ( lob->_lobSize < size && SDB_LOB_READ == lob->_mode ) )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
@@ -9465,7 +9580,8 @@ SDB_EXPORT INT32 sdbSeekLob( sdbLobHandle lobHandle,
    }
    else if ( SDB_LOB_SEEK_CUR == whence )
    {
-      if ( lob->_lobSize < size + lob->_currentOffset ||
+      if ( ( lob->_lobSize < size + lob->_currentOffset &&
+             SDB_LOB_READ == lob->_mode ) ||
            size + lob->_currentOffset < 0 )
       {
          rc = SDB_INVALIDARG ;
@@ -9475,7 +9591,7 @@ SDB_EXPORT INT32 sdbSeekLob( sdbLobHandle lobHandle,
    }
    else if ( SDB_LOB_SEEK_END == whence )
    {
-      if ( size < 0 || lob->_lobSize < size )
+      if ( size < 0 || ( lob->_lobSize < size && SDB_LOB_READ == lob->_mode ) )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
@@ -9488,6 +9604,12 @@ SDB_EXPORT INT32 sdbSeekLob( sdbLobHandle lobHandle,
       rc = SDB_INVALIDARG ;
       goto error ;
    }
+
+   if ( SDB_LOB_CREATEONLY == lob->_mode || SDB_LOB_WRITE == lob->_mode )
+   {
+      lob->_seekWrite = TRUE ;
+   }
+
 done:
    return rc ;
 error:
@@ -9518,6 +9640,22 @@ SDB_EXPORT INT32 sdbGetLobCreateTime( sdbLobHandle lobHandle,
    HANDLE_CHECK( lobHandle, lob, SDB_HANDLE_TYPE_LOB ) ;
 
    *millis = lob->_createTime ;
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
+SDB_EXPORT INT32 sdbGetLobModificationTime( sdbLobHandle lobHandle,
+                                      UINT64 *millis )
+{
+   INT32 rc = SDB_OK ;
+   sdbLobStruct *lob = ( sdbLobStruct * )lobHandle ;
+
+   HANDLE_CHECK( lobHandle, lob, SDB_HANDLE_TYPE_LOB ) ;
+
+   *millis = lob->_modificationTime ;
+
 done:
    return rc ;
 error:
