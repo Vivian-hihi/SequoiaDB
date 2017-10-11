@@ -2811,9 +2811,9 @@ namespace sdbclient
       }
 
 /** \fn INT32 lockAndSeek ( INT64 offset, INT64 length )
-    \brief lock LOB section for write mode and seek to the start position.
+    \brief lock LOB section for write mode and seek to the offset position.
     \param [in] offset The lock start position
-    \param [in] length The lock lengthand seek to the start position
+    \param [in] length The lock length
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
