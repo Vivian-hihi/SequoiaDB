@@ -600,6 +600,13 @@ namespace engine
          goto error ;
       }
 
+      if ( offset < 0 )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "Invalid lock offset:%lld, rc=%d", offset, rc ) ;
+         goto error ;
+      }
+
       if ( 0 == length || length < -1 )
       {
          rc = SDB_INVALIDARG ;
@@ -611,6 +618,14 @@ namespace engine
       {
          // the whole lob is locked, nothing to do
          goto done ;
+      }
+
+      // endlessly lock from offset
+      if ( ( offset > 0 && -1 == length ) || OSS_SINT64_MAX == length )
+      {
+         // subtract offset to avoid section.end() overflow
+         length = OSS_SINT64_MAX - offset ;
+         section.length = length ;
       }
 
       if ( -1 != length )
@@ -1070,9 +1085,6 @@ namespace engine
                  _oid.str().c_str(), _fullName, rc ) ;
          goto error ;
       }
-
-      // jump to the end of lob
-      _offset = _meta._lobLen ;
 
       if ( _lobPieces.sectionNum() > 0 )
       {

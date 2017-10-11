@@ -146,10 +146,10 @@ namespace engine
       ~_rtnLobAccessManager() ;
 
    public:
-      INT32 getAccessPrivilege( std::string clName, const bson::OID& oid,
+      INT32 getAccessPrivilege( const std::string& clName, const bson::OID& oid,
                                       UINT32 mode, INT64 accessId = -1,
                                       _rtnLobAccessInfo** accessInfo = NULL ) ;
-      INT32 releaseAccessPrivilege( std::string clName, const bson::OID& oid,
+      INT32 releaseAccessPrivilege( const std::string& clName, const bson::OID& oid,
                                            UINT32 mode, INT64 accessId = -1 ) ;
 
    private:

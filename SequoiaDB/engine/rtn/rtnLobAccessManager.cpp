@@ -102,7 +102,7 @@ namespace engine
       }
 
       // lock whole lob
-      if ( -1 == section.length )
+      if ( -1 == section.length && 0 == section.offset )
       {
          if ( NULL != _lobSections &&
               _lobSections->conflicted( section.accessId ) )
@@ -196,7 +196,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOBACCESSMGR_GETACCESSPRIVILEGE, "_rtnLobAccessManager::getAccessPrivilege" )
-   INT32 _rtnLobAccessManager::getAccessPrivilege( std::string clName,
+   INT32 _rtnLobAccessManager::getAccessPrivilege( const std::string& clName,
                                                    const bson::OID& oid,
                                                    UINT32 mode,
                                                    INT64 accessId,
@@ -318,7 +318,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOBACCESSMGR_RELEASEACCESSPRIVILEGE, "_rtnLobAccessManager::releaseAccessPrivilege" )
-   INT32 _rtnLobAccessManager::releaseAccessPrivilege( std::string clName,
+   INT32 _rtnLobAccessManager::releaseAccessPrivilege( const std::string& clName,
                                                        const bson::OID& oid,
                                                        UINT32 mode,
                                                        INT64 accessId )

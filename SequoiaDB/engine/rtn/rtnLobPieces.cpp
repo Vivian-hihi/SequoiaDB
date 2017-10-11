@@ -352,7 +352,7 @@ namespace engine
       return ( sectionNum() * (INT32)sizeof( _rtnLobPieces ) ) ;
    }
 
-   INT32 _rtnLobPiecesInfo::saveTo( const CHAR* buf, INT32 length ) const
+   INT32 _rtnLobPiecesInfo::saveTo( CHAR* buf, INT32 length ) const
    {
       INT32 rc = SDB_OK ;
       _rtnLobPieces* dest = (_rtnLobPieces*)buf ;

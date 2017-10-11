@@ -86,7 +86,7 @@ namespace engine
       BOOLEAN        hasPiece( UINT32 piece ) const ;
       _rtnLobPieces  getSection( INT32 index ) const ;
       INT32          requiredMem() const ;
-      INT32          saveTo( const CHAR* buf, INT32 length ) const ;
+      INT32          saveTo( CHAR* buf, INT32 length ) const ;
       INT32          readFrom( const CHAR* buf, INT32 length ) ;
       INT32          mergeFrom( const CHAR* buf, INT32 length ) ;
       INT32          saveTo( bson::BSONArray& array ) const ;
