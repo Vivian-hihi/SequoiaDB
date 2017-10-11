@@ -178,7 +178,7 @@ public interface DBLob extends Closeable {
      * @param length lock length
      * @throws com.sequoiadb.exception.BaseException.
      * @fn lockAndSeek(long offset, long length)
-     * @brief lock LOB section for write mode and seek to the start position
+     * @brief lock LOB section for write mode and seek to the offset position
      */
     void lockAndSeek(long offset, long length) throws BaseException;
 

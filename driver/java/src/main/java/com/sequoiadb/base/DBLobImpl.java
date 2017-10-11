@@ -486,7 +486,7 @@ class DBLobImpl implements DBLob {
      * @param length lock length
      * @throws com.sequoiadb.exception.BaseException.
      * @fn lock(long offset, long length)
-     * @brief lock LOB section for writing and seek to the start position
+     * @brief lock LOB section for writing and seek to the offset position
      */
     @Override
     public void lockAndSeek(long offset, long length) throws BaseException {
