@@ -8956,11 +8956,6 @@ SDB_EXPORT INT32 sdbOpenLob( sdbCollectionHandle cHandle,
          lobStruct->_dataCache = body ;
       }
    }
-   else if ( SDB_LOB_WRITE == mode )
-   {
-      // move to the end of lob
-      lobStruct->_currentOffset = lobStruct->_lobSize ;
-   }
 
    *lobHandle = (sdbLobHandle)lobStruct ;
 
