@@ -23,6 +23,7 @@ TEST(lob, lob_global_test)
    #define BUFSIZE2 (1024 * 1024 * 2)
    SINT64 lobSize = -1 ;
    UINT64 createTime = -1 ;
+   UINT64 modificationTime = -1 ;
    CHAR buf[BUFSIZE1] = { 0 } ;
    CHAR readBuf[BUFSIZE2] = { 0 } ;
    UINT32 readCount = 0 ;
@@ -49,8 +50,10 @@ TEST(lob, lob_global_test)
    ASSERT_EQ( 0, lobSize ) ;
    // get lob create time
    rc = sdbGetLobCreateTime( lob, &createTime ) ;
-   ASSERT_EQ( 0, createTime ) ;
-   ASSERT_EQ( 0, createTime ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   rc = sdbGetLobModificationTime( lob, &modificationTime ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   ASSERT_EQ( createTime, modificationTime ) ;
    // write lob 
    rc = sdbWriteLob( lob, buf, BUFSIZE1 ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
@@ -68,7 +71,6 @@ TEST(lob, lob_global_test)
    // get lob create time
    rc = sdbGetLobCreateTime( lob, &createTime ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
-   ASSERT_EQ( 0, createTime ) ;
    // close lob
    rc = sdbCloseLob ( &lob ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
