@@ -1,3 +1,19 @@
+#   Copyright (C) 2012-2017 SequoiaDB Ltd.
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+
+"""Module of lob for python driver of SequoiaDB
+"""
 try:
    from . import sdb
 except ImportError:
@@ -5,13 +21,16 @@ except ImportError:
 
 import bson
 from bson.objectid import ObjectId
-from bson.py3compat import (PY3, str_type)
+from bson.py3compat import (PY3, str_type, long_type)
 import pysequoiadb
 from pysequoiadb.cursor import cursor
 from pysequoiadb import error
 from pysequoiadb.common import const
 from pysequoiadb.error import (SDBBaseError, SDBTypeError, SDBSystemError,
                                InvalidParameter)
+
+LOB_READ  = int(0x00000004)
+LOB_WRITE = int(0x00000008)
 
 class lob(object):
 
@@ -75,7 +94,7 @@ class lob(object):
       return oid
 
    def get_create_time(self):
-      """get create-time of lob
+      """get create time of lob
 
       Return Values:
          a long int of time
@@ -84,11 +103,61 @@ class lob(object):
       """
       try:
          rc, mms = sdb.lob_get_create_time(self._handle) ;
-         pysequoiadb._raise_if_error("Failed to get createtime of lob", rc)
+         pysequoiadb._raise_if_error("Failed to get create time of lob", rc)
       except SDBBaseError:
          raise
 
       return mms
+
+   def get_modification_time(self):
+      """get the last modification time of lob
+
+      Return Values:
+         a long int of time
+      Exceptions:
+         pysequoiadb.error.SDBBaseError
+      """
+      rc, mms = sdb.lob_get_modification_time(self._handle) ;
+      pysequoiadb._raise_if_error("Failed to get modification time of lob", rc)
+      return mms
+
+   def lock(self, offset, length):
+      """lock lob data section.
+
+      Parameters:
+          Name        Type                Info:
+         offset    long(int in python3)   The lock start position
+         length    long(int in python3)   The lock length, -1 means lock from offset to the end of lob
+      Exceptions:
+         pysequoiadb.error.SDBTypeError
+         pysequoiadb.error.SDBBaseError
+      """
+      if not isinstance(offset, (int, long_type)):
+         raise SDBTypeError("seek_pos must be an instance of long/int")
+      if not isinstance(length, (int, long_type)):
+         raise SDBTypeError("seek_pos must be an instance of long/int")
+
+      rc = sdb.lob_lock(self._handle, offset, length)
+      pysequoiadb._raise_if_error("Failed to lock lob", rc)
+
+   def lock_and_seek(self, offset, length):
+      """lock lob data section and seek to the offset position.
+
+      Parameters:
+          Name        Type                Info:
+         offset    long(int in python3)   The lock start position
+         length    long(int in python3)   The lock length, -1 means lock from offset to the end of lob
+      Exceptions:
+         pysequoiadb.error.SDBTypeError
+         pysequoiadb.error.SDBBaseError
+      """
+      if not isinstance(offset, (int, long_type)):
+         raise SDBTypeError("seek_pos must be an instance of long/int")
+      if not isinstance(length, (int, long_type)):
+         raise SDBTypeError("seek_pos must be an instance of long/int")
+
+      rc = sdb.lob_lock_and_seek(self._handle, offset, length)
+      pysequoiadb._raise_if_error("Failed to lock lob", rc)
 
    def seek(self, seek_pos, whence = 0) :
       """seek in lob.

@@ -2219,7 +2219,7 @@ error:
    goto done ;
 }
 
-__METHOD_IMP(cl_get_lob)
+__METHOD_IMP(cl_open_lob)
 {
    INT32 rc           = SDB_OK ;
    PYOBJECT *obj      = NULL ;
@@ -2228,8 +2228,9 @@ __METHOD_IMP(cl_get_lob)
    sdbLob *lob        = NULL ;
    const CHAR *str_id = NULL ;
    bson::OID oid;
+   INT32 mode = SDB_LOB_READ ;
 
-   if ( !PARSE_PYTHON_ARGS(args, "OOs", &obj, &obj_lob, &str_id) )
+   if ( !PARSE_PYTHON_ARGS(args, "OOsi", &obj, &obj_lob, &str_id, &mode) )
    {
       rc = SDB_INVALIDARG ;
       goto error ;
@@ -2239,7 +2240,7 @@ __METHOD_IMP(cl_get_lob)
    CAST_PYOBJECT_TO_COBJECT( obj_lob, sdbLob, lob ) ;
    oid.init(str_id) ;
 
-   rc = cl->openLob(*lob, oid) ;
+   rc = cl->openLob(*lob, oid, (SDB_LOB_OPEN_MODE)mode) ;
 
 done:
    return MAKE_RETURN_INT(rc) ;
@@ -3290,6 +3291,52 @@ error:
    goto done ;
 }
 
+__METHOD_IMP(lob_lock)
+{
+   INT32 rc = SDB_OK ;
+   PYOBJECT *obj = NULL ;
+   sdbLob *lob   = NULL ;
+   INT64 offset = 0 ;
+   INT64 length = 0 ;
+
+   if ( !PARSE_PYTHON_ARGS(args, "Oll", &obj, &offset, &length))
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT(obj, sdbLob, lob) ;
+   rc = lob->lock(offset, length) ;
+
+done:
+   return MAKE_RETURN_INT( rc ) ;
+error:
+   goto done ;
+}
+
+__METHOD_IMP(lob_lock_and_seek)
+{
+   INT32 rc = SDB_OK ;
+   PYOBJECT *obj = NULL ;
+   sdbLob *lob   = NULL ;
+   INT64 offset = 0 ;
+   INT64 length = 0 ;
+
+   if ( !PARSE_PYTHON_ARGS(args, "Oll", &obj, &offset, &length))
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT(obj, sdbLob, lob) ;
+   rc = lob->lockAndSeek(offset, length) ;
+
+done:
+   return MAKE_RETURN_INT( rc ) ;
+error:
+   goto done ;
+}
+
 __METHOD_IMP(lob_get_create_time)
 {
    INT32 rc = SDB_OK ;
@@ -3305,6 +3352,28 @@ __METHOD_IMP(lob_get_create_time)
 
    CAST_PYOBJECT_TO_COBJECT(obj, sdbLob, lob) ;
    rc = lob->getCreateTime(&ms) ;
+
+done:
+   return MAKE_RETURN_INT_ULLONG( rc, ms ) ;
+error:
+   goto done ;
+}
+
+__METHOD_IMP(lob_get_modification_time)
+{
+   INT32 rc = SDB_OK ;
+   UINT64 ms = 0;
+   PYOBJECT *obj = NULL ;
+   sdbLob  *lob  = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS(args, "O", &obj) )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT(obj, sdbLob, lob) ;
+   ms = lob->getModificationTime() ;
 
 done:
    return MAKE_RETURN_INT_ULLONG( rc, ms ) ;
@@ -3785,7 +3854,7 @@ static PyMethodDef sequoiadb_methods[] = {
    {"cl_attach_collection",            cl_attach_collection,            METH_VARARGS},
    {"cl_detach_collection",            cl_detach_collection,            METH_VARARGS},
    {"cl_create_lob",                   cl_create_lob,                   METH_VARARGS},
-   {"cl_get_lob",                      cl_get_lob,                      METH_VARARGS},
+   {"cl_open_lob",                     cl_open_lob,                     METH_VARARGS},
    {"cl_remove_lob",                   cl_remove_lob,                   METH_VARARGS},
    {"cl_list_lobs",                    cl_list_lobs,                    METH_VARARGS},
    {"cl_explain",                      cl_explain,                      METH_VARARGS},
@@ -3831,9 +3900,12 @@ static PyMethodDef sequoiadb_methods[] = {
    {"lob_read",                        lob_read,                        METH_VARARGS},
    {"lob_write",                       lob_write,                       METH_VARARGS},
    {"lob_seek",                        lob_seek,                        METH_VARARGS},
+   {"lob_lock",                        lob_lock,                        METH_VARARGS},
+   {"lob_lock_and_seek",               lob_lock_and_seek,               METH_VARARGS},
    {"lob_get_size",                    lob_get_size,                    METH_VARARGS},
    {"lob_get_oid",                     lob_get_oid,                     METH_VARARGS},
    {"lob_get_create_time",             lob_get_create_time,             METH_VARARGS},
+   {"lob_get_modification_time",       lob_get_modification_time,       METH_VARARGS},
 
    /** data center */
    {"create_dc",                       create_dc,                       METH_VARARGS},

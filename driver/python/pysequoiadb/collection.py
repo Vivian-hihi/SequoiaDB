@@ -25,7 +25,7 @@ from bson.objectid import ObjectId
 import pysequoiadb
 from bson.py3compat import (PY3, str_type, long_type)
 from pysequoiadb.cursor import cursor
-from pysequoiadb.lob import lob
+from pysequoiadb.lob import (lob, LOB_READ, LOB_WRITE)
 from pysequoiadb import error
 from pysequoiadb.common import const
 from pysequoiadb.error import (SDBBaseError,
@@ -1152,12 +1152,15 @@ class collection(object):
 
       return obj
 
-   def get_lob(self, oid):
-      """get the specified lob.
+   def open_lob(self, oid, mode = LOB_READ):
+      """open the specified lob to read or write.
 
       Parameters:
          Name     Type                 Info:
          oid      str/bson.ObjectId    The specified oid
+         mode     int                  The open mode:
+                                       lob.LOB_READ
+                                       lob.LOB_WRITE
       Return values:
          a lob object
       Exceptions:
@@ -1171,14 +1174,34 @@ class collection(object):
          str_id = str(oid)
       else:
          str_id = oid
+
+      if not isinstance(mode, int):
+         raise SDBTypeError("mode must be an instance of int")
+      if mode != LOB_READ and mode != LOB_WRITE:
+         raise SDBTypeError("mode must be lob.LOB_READ or lob.LOB_WRITE")
+
       try:
          obj = lob()
-         rc = sdb.cl_get_lob(self._cl, obj._handle, str_id)
+         rc = sdb.cl_open_lob(self._cl, obj._handle, str_id, mode)
          pysequoiadb._raise_if_error("Failed to get specified lob", rc)
       except SDBBaseError:
          raise
 
       return obj
+
+   def get_lob(self, oid):
+      """get the specified lob.
+
+      Parameters:
+         Name     Type                 Info:
+         oid      str/bson.ObjectId    The specified oid
+      Return values:
+         a lob object
+      Exceptions:
+         pysequoiadb.error.SDBTypeError
+         pysequoiadb.error.SDBBaseError
+      """
+      return self.open_lob(oid, LOB_READ)
 
    def remove_lob(self, oid):
       """remove lob.
