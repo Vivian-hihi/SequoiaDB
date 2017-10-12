@@ -583,7 +583,7 @@ TEST( lob, lob_write_getSize_getCreateTime_then_close )
    ASSERT_EQ(0, lobSize);
    // get create time
    createTime = lob.getCreateTime();
-   ASSERT_EQ(0, createTime);
+   ASSERT_NE(0, createTime);
    // write
    memset( buf, 'a', bufSize ) ;
    rc = lob.write( buf, bufSize ) ;
@@ -602,7 +602,7 @@ TEST( lob, lob_write_getSize_getCreateTime_then_close )
    ASSERT_EQ(lobSize, writeNum);
    // get create time
    createTime = lob.getCreateTime();
-   ASSERT_EQ(0, createTime);
+   ASSERT_NE(0, createTime);
    // close
    rc = lob.close();
    ASSERT_EQ(SDB_OK, rc);

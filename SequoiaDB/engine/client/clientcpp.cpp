@@ -2812,6 +2812,8 @@ error:
       INT32 rc = SDB_OK ;
       BSONObjBuilder bob ;
       BSONObj obj ;
+      BSONElement ele ;
+      BSONType bType ;
       SINT64 contextID = -1 ;
       BOOLEAN result = FALSE ;
       BOOLEAN locked = FALSE ;
@@ -2911,6 +2913,54 @@ error:
       ((_sdbLobImpl*)*lob)->_lobSize = 0 ;
       ((_sdbLobImpl*)*lob)->_createTime = 0 ;
       ((_sdbLobImpl*)*lob)->_modificationTime = 0 ;
+
+      ele = obj.getField( FIELD_NAME_LOB_SIZE ) ;
+      bType = ele.type() ;
+      if ( NumberInt == bType || NumberLong == bType )
+      {
+         ((_sdbLobImpl*)*lob)->_lobSize = ele.numberLong() ;
+      }
+      else
+      {
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      // createTime
+      ele = obj.getField( FIELD_NAME_LOB_CREATETIME ) ;
+      bType = ele.type() ;
+      if ( NumberLong == bType )
+      {
+         ((_sdbLobImpl*)*lob)->_createTime = ele.numberLong() ;
+      }
+      else
+      {
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      // modificationTime
+      ele = obj.getField( FIELD_NAME_LOB_MODIFICATION_TIME ) ;
+      bType = ele.type() ;
+      if ( NumberLong == bType )
+      {
+         ((_sdbLobImpl*)*lob)->_modificationTime = ele.numberLong() ;
+      }
+      else
+      {
+         ((_sdbLobImpl*)*lob)->_modificationTime =
+            ((_sdbLobImpl*)*lob)->_createTime ;
+      }
+      // lob pageSize
+      ele = obj.getField( FIELD_NAME_LOB_PAGE_SIZE ) ;
+      bType = ele.type() ;
+      if ( NumberInt == bType )
+      {
+         ((_sdbLobImpl*)*lob)->_pageSize =  ele.numberInt() ;
+      }
+      else
+      {
+         rc = SDB_SYS ;
+         goto error ;
+      }
 
    done:
       if ( locked )
