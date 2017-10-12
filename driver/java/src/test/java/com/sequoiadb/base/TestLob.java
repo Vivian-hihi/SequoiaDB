@@ -17,6 +17,8 @@ import java.util.Random;
 import static org.junit.Assert.*;
 
 public class TestLob extends SingleCSCLTestCase {
+    private static final String FIELD_HAS_PIECES_INFO = "HasPiecesInfo";
+
     @Before
     public void setUp() {
         cl.truncate();
@@ -316,6 +318,10 @@ public class TestLob extends SingleCSCLTestCase {
         BSONObject obj = cursor.getNext();
         ObjectId oid = (ObjectId) obj.get("Oid");
         assertEquals(id, oid);
+        if (obj.containsField(FIELD_HAS_PIECES_INFO)) {
+            Boolean hasPiecesInfo = (Boolean) obj.get(FIELD_HAS_PIECES_INFO);
+            assertTrue(hasPiecesInfo);
+        }
         assertFalse(cursor.hasNext());
 
         lob = cl.openLob(id);
@@ -397,7 +403,6 @@ public class TestLob extends SingleCSCLTestCase {
 
         lob = cl.openLob(id, DBLob.SDB_LOB_WRITE);
         lob.write(str.getBytes());
-        lob.lock(0, -1);
         lob.close();
 
         long lobSize = lob.getSize();
@@ -596,6 +601,64 @@ public class TestLob extends SingleCSCLTestCase {
         assertFalse(cursor.hasNext());
     }
 
+    @Test
+    public void testLobOpenWrite7() {
+        int bytesNum = 1024 * 1024 * 4;
+        byte[] bytes = new byte[bytesNum];
+        Random rand = new Random();
+        rand.nextBytes(bytes);
+
+        int offset = bytesNum / 2;
+
+        ObjectId id = ObjectId.get();
+        try (DBLob lob = cl.createLob(id)) {
+            lob.seek(offset, DBLob.SDB_LOB_SEEK_SET);
+            lob.write(bytes, offset, bytesNum - offset);
+        }
+
+        try (DBCursor cursor = cl.listLobs()) {
+            assertTrue(cursor.hasNext());
+            BSONObject obj = cursor.getNext();
+            ObjectId oid = (ObjectId) obj.get("Oid");
+            assertEquals(id, oid);
+            if (obj.containsField(FIELD_HAS_PIECES_INFO)) {
+                Boolean hasPiecesInfo = (Boolean) obj.get(FIELD_HAS_PIECES_INFO);
+                assertTrue(hasPiecesInfo);
+            }
+            assertFalse(cursor.hasNext());
+        }
+
+        long lobSize;
+        try (DBLob lob = cl.openLob(id, DBLob.SDB_LOB_WRITE)) {
+            lob.write(bytes, 0, offset);
+            lobSize = lob.getSize();
+        }
+
+        try (DBCursor cursor = cl.listLobs()) {
+            assertTrue(cursor.hasNext());
+            BSONObject obj = cursor.getNext();
+            ObjectId oid = (ObjectId) obj.get("Oid");
+            assertEquals(id, oid);
+            if (obj.containsField(FIELD_HAS_PIECES_INFO)) {
+                Boolean hasPiecesInfo = (Boolean) obj.get(FIELD_HAS_PIECES_INFO);
+                assertFalse(hasPiecesInfo);
+            }
+            assertFalse(cursor.hasNext());
+        }
+
+        try (DBLob lob = cl.openLob(id)) {
+            assertEquals(lobSize, lob.getSize());
+            byte[] bytes2 = new byte[(int) lob.getSize()];
+            lob.read(bytes2);
+            assertArrayEquals(bytes, bytes2);
+        }
+
+        cl.removeLob(id);
+        try (DBCursor cursor = cl.listLobs()) {
+            assertFalse(cursor.hasNext());
+        }
+    }
+
     class LobWriter implements Runnable {
         private int index;
         private String csName;
@@ -688,6 +751,10 @@ public class TestLob extends SingleCSCLTestCase {
         BSONObject obj = cursor.getNext();
         ObjectId oid = (ObjectId) obj.get("Oid");
         assertEquals(id, oid);
+        if (obj.containsField(FIELD_HAS_PIECES_INFO)) {
+            Boolean hasPiecesInfo = (Boolean) obj.get(FIELD_HAS_PIECES_INFO);
+            assertFalse(hasPiecesInfo);
+        }
         assertFalse(cursor.hasNext());
 
         lob = cl.openLob(id);
