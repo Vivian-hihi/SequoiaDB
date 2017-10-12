@@ -5,12 +5,11 @@
 *@testlinkCase:seqDB-12812
 **************************************/
 function main(){
-   var localhost = toolGetLocalhost();
-   println("localhost:" + localhost);
-   
+ 
    var remotehost = toolGetRemotehost();
-   println( "remotehost:" + remotehost );
-   var remote = new Remote( remotehost, CMSVCNAME );
+	var remotehostName = remotehost["hostname"];
+   println( "remotehostName:" + remotehostName );
+   var remote = new Remote( remotehostName , CMSVCNAME );
    var remoteFile = remote.getFile();
 	//WORKDIR: /tmp/jstest
    if(!remoteFile.exist(WORKDIR))

@@ -99,7 +99,6 @@ function readAndCheckNotEmptyFile(fileName, expectContent, fileMode)
       {
    	   var actRow = actContent[i];
    	   var expRow = expectContent[i];
-			println('actRow: ' + actRow + " expRow: " + expRow);
          if( actRow !== expRow )
 	   	{
 	   		throw buildException("check content error", e, "check error", actRow, expRow);
