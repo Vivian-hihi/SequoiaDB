@@ -78,6 +78,7 @@ namespace engine
             goto error ;
          }
       }
+      _mainCLName = _mainCLNameBuf ;
 
       _query = _query.getOwned() ;
       _selector = _selector.getOwned() ;

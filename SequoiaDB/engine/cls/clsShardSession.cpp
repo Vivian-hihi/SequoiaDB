@@ -3088,6 +3088,12 @@ namespace engine
             tmp.append( ele ) ;
          }
 
+         ele = obj.getField( FIELD_NAME_DETAIL ) ;
+         if ( !ele.eoo () )
+         {
+            tmp.append( ele ) ;
+         }
+
          arrBuilder << tmp.obj() ;
       }
 
