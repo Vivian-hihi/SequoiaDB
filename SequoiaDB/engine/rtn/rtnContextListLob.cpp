@@ -202,6 +202,9 @@ namespace engine
                                modificationTime,
                                (modificationTime - ( modificationTime / 1000 * 1000 ) ) * 1000) ;
       builder.appendBool( FIELD_NAME_LOB_AVAILABLE, meta->isDone() ) ;
+#ifdef _DEBUG
+      builder.appendBool( FIELD_NAME_LOB_HAS_PIECESINFO, meta->hasPiecesInfo() ) ;
+#endif
       obj = builder.obj() ;
    done:
       PD_TRACE_EXITRC( SDB__RTNCONTEXTLISTLOB__GETMETAINFO, rc ) ;

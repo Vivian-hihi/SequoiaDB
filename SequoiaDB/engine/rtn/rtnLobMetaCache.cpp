@@ -36,7 +36,8 @@
 namespace engine
 {
    _rtnLobMetaCache::_rtnLobMetaCache()
-      : _metaBuf( NULL )
+      : _metaBuf( NULL ),
+        _needMerge( FALSE )
    {
    }
 

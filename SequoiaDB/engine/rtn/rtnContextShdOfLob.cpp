@@ -330,7 +330,6 @@ namespace engine
            SDB_LOB_MODE_WRITE == _mode &&
            0 == offset && len >= sizeof(_dmsLobMeta) )
       {
-         _rtnLobMetaCache newCache ;
          _rtnLobMetaCache* metaCache = NULL ;
          const _dmsLobMeta* meta = (const _dmsLobMeta*)data ;
          if ( meta->hasPiecesInfo() && len < DMS_LOB_META_LENGTH )
@@ -350,36 +349,50 @@ namespace engine
          SDB_ASSERT( NULL != metaCache, "metaCache is null" ) ;
          SDB_ASSERT( NULL != metaCache->lobMeta(), "lob meta cache is null" ) ;
 
-         rc = newCache.cache( *(metaCache->lobMeta()) ) ;
-         if ( SDB_OK != rc )
+         if ( metaCache->needMerge() )
          {
-            PD_LOG( PDERROR, "Failed to cache lob meta, rc=%d", rc ) ;
-            goto error ;
-         }
+            _rtnLobMetaCache newCache ;
 
-         rc = newCache.merge( *meta, _su->getLobPageSize() ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "Failed to merge lob meta data, rc=%d", rc ) ;
-            goto error ;
-         }
+            rc = newCache.cache( *(metaCache->lobMeta()) ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "Failed to cache lob meta, rc=%d", rc ) ;
+               goto error ;
+            }
 
-         SDB_ASSERT( NULL != newCache.lobMeta(), "new lob meta cache is null" ) ;
+            rc = newCache.merge( *meta, _su->getLobPageSize() ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "Failed to merge lob meta data, rc=%d", rc ) ;
+               goto error ;
+            }
 
-         rc = metaCache->cache( *( newCache.lobMeta() ) ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "Failed to cache lob meta, rc=%d", rc ) ;
-            goto error ;
-         }
+            SDB_ASSERT( NULL != newCache.lobMeta(), "new lob meta cache is null" ) ;
 
-         if ( newCache.lobMeta()->hasPiecesInfo() )
-         {
-            ossMemcpy( (void*)data, newCache.lobMeta(), DMS_LOB_META_LENGTH ) ;
+            rc = metaCache->cache( *( newCache.lobMeta() ) ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "Failed to cache lob meta, rc=%d", rc ) ;
+               goto error ;
+            }
+
+            if ( newCache.lobMeta()->hasPiecesInfo() )
+            {
+               ossMemcpy( (void*)data, newCache.lobMeta(), DMS_LOB_META_LENGTH ) ;
+            }
+            else
+            {
+               ossMemcpy( (void*)data, newCache.lobMeta(), sizeof( _dmsLobMeta ) ) ;
+            }
          }
          else
          {
-            ossMemcpy( (void*)data, newCache.lobMeta(), sizeof( _dmsLobMeta ) ) ;
+            rc = metaCache->cache( *meta ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "Failed to cache lob meta, rc=%d", rc ) ;
+               goto error ;
+            }
          }
 
          rc = rtnUpdateLob( _fullName.c_str(),
@@ -546,6 +559,10 @@ namespace engine
                goto error ;
             }
             _accessInfo->setMetaCache( metaCache ) ;
+         }
+         else
+         {
+            metaCache->setNeedMerge( TRUE ) ;
          }
 
          meta = metaCache->lobMeta() ;

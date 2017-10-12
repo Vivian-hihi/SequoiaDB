@@ -283,6 +283,10 @@ namespace engine
          }
          _accessInfo->setMetaCache( metaCache ) ;
       }
+      else
+      {
+         metaCache->setNeedMerge( TRUE ) ;
+      }
 
       cachedMeta = metaCache->lobMeta() ;
       if ( NULL == cachedMeta )
@@ -548,7 +552,6 @@ namespace engine
            0 == t.columns.offset &&
            t.columns.len >= sizeof(_dmsLobMeta) )
       {
-         _rtnLobMetaCache newCache ;
          _rtnLobMetaCache* metaCache = NULL ;
          const _dmsLobMeta* meta = (const _dmsLobMeta*)tuple.data ;
          if ( meta->hasPiecesInfo() && t.columns.len < DMS_LOB_META_LENGTH )
@@ -568,36 +571,49 @@ namespace engine
          SDB_ASSERT( NULL != metaCache, "metaCache is null" ) ;
          SDB_ASSERT( NULL != metaCache->lobMeta(), "lob meta cache is null" ) ;
 
-         rc = newCache.cache( *(metaCache->lobMeta()) ) ;
-         if ( SDB_OK != rc )
+         if ( metaCache->needMerge() )
          {
-            PD_LOG( PDERROR, "Failed to cache lob meta, rc=%d", rc ) ;
-            goto error ;
-         }
+            _rtnLobMetaCache newCache ;
+            rc = newCache.cache( *(metaCache->lobMeta()) ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "Failed to cache lob meta, rc=%d", rc ) ;
+               goto error ;
+            }
 
-         rc = newCache.merge( *meta, _su->getLobPageSize() ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "Failed to merge lob meta data, rc=%d", rc ) ;
-            goto error ;
-         }
+            rc = newCache.merge( *meta, _su->getLobPageSize() ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "Failed to merge lob meta data, rc=%d", rc ) ;
+               goto error ;
+            }
 
-         SDB_ASSERT( NULL != newCache.lobMeta(), "new lob meta cache is null" ) ;
+            SDB_ASSERT( NULL != newCache.lobMeta(), "new lob meta cache is null" ) ;
 
-         rc = metaCache->cache( *( newCache.lobMeta() ) ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "Failed to cache lob meta, rc=%d", rc ) ;
-            goto error ;
-         }
+            rc = metaCache->cache( *( newCache.lobMeta() ) ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "Failed to cache lob meta, rc=%d", rc ) ;
+               goto error ;
+            }
 
-         if ( newCache.lobMeta()->hasPiecesInfo() )
-         {
-            ossMemcpy( (void*)tuple.data, newCache.lobMeta(), DMS_LOB_META_LENGTH ) ;
+            if ( newCache.lobMeta()->hasPiecesInfo() )
+            {
+               ossMemcpy( (void*)tuple.data, newCache.lobMeta(), DMS_LOB_META_LENGTH ) ;
+            }
+            else
+            {
+               ossMemcpy( (void*)tuple.data, newCache.lobMeta(), sizeof( _dmsLobMeta ) ) ;
+            }
          }
          else
          {
-            ossMemcpy( (void*)tuple.data, newCache.lobMeta(), sizeof( _dmsLobMeta ) ) ;
+            rc = metaCache->cache( *meta ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "Failed to cache lob meta, rc=%d", rc ) ;
+               goto error ;
+            }
          }
 
          rc = _su->lob()->update( record, _mbContext, cb, _getDPSCB() ) ;

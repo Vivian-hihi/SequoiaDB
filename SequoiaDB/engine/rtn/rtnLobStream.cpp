@@ -614,6 +614,14 @@ namespace engine
          goto error ;
       }
 
+      if ( length > 0 && offset + length < 0 )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "Lock length overflowed, offset:%lld, length:%lld, rc=%d",
+                 offset, length, rc ) ;
+         goto error ;
+      }
+
       if ( _wholeLobLocked )
       {
          // the whole lob is locked, nothing to do
@@ -621,7 +629,7 @@ namespace engine
       }
 
       // endlessly lock from offset
-      if ( ( offset > 0 && -1 == length ) || OSS_SINT64_MAX == length )
+      if ( offset > 0 && -1 == length )
       {
          // subtract offset to avoid section.end() overflow
          length = OSS_SINT64_MAX - offset ;
@@ -1156,8 +1164,7 @@ namespace engine
             goto error ;
          }
 
-         if ( SDB_LOB_MODE_CREATEONLY == _mode &&
-              piecesInfoSize > 0 && _lobPieces.sectionNum() == 1 )
+         if ( piecesInfoSize > 0 && _lobPieces.sectionNum() == 1 )
          {
             UINT32 last = _getSequence( _meta._lobLen ) ;
             _rtnLobPieces pieces = _lobPieces.getSection( 0 ) ;
@@ -1165,8 +1172,15 @@ namespace engine
             {
                // no skipped piece, so no need to save pieces info
                piecesInfoSize= 0 ;
+               _meta._piecesInfoNum = 0 ;
+               OSS_BIT_CLEAR(_meta._flag, DMS_LOB_META_FLAG_PIECESINFO_INSIDE ) ;
             }
          }
+      }
+      else
+      {
+         _meta._piecesInfoNum = 0 ;
+         OSS_BIT_CLEAR(_meta._flag, DMS_LOB_META_FLAG_PIECESINFO_INSIDE ) ;
       }
 
       // write meta data
@@ -1228,6 +1242,8 @@ namespace engine
       }
       else
       {
+         SDB_ASSERT( !_meta.hasPiecesInfo(), "invalid piecesinfo flag" ) ;
+         SDB_ASSERT( 0 == _meta._piecesInfoNum, "invalid piecesinfo num" ) ;
          tuple.tuple.columns.len = sizeof( _meta ) ;
          tuple.tuple.columns.sequence = DMS_LOB_META_SEQUENCE ;
          tuple.tuple.columns.offset = 0 ;

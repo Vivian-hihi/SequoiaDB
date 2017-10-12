@@ -60,9 +60,18 @@ namespace engine
       {
          return (_dmsLobMeta*)_metaBuf ;
       }
+      OSS_INLINE BOOLEAN needMerge() const
+      {
+         return _needMerge ;
+      }
+      OSS_INLINE void setNeedMerge( BOOLEAN needMerge )
+      {
+         _needMerge = needMerge ;
+      }
 
    private:
       CHAR*       _metaBuf ;
+      BOOLEAN     _needMerge ;
    } ;
 }
 
