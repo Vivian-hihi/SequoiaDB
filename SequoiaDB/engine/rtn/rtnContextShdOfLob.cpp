@@ -401,7 +401,7 @@ namespace engine
                             _w, _dpsCB, _su, _mbContext ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to write lob:%d", rc ) ;
+            PD_LOG( PDERROR, "failed to update lob:%d", rc ) ;
             goto error ;
          }
 
@@ -416,7 +416,7 @@ namespace engine
                             _w, _dpsCB, _su, _mbContext ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to write lob:%d", rc ) ;
+            PD_LOG( PDERROR, "failed to update lob:%d", rc ) ;
             goto error ;
          }
       }

@@ -133,7 +133,7 @@ namespace engine
       }
       else
       {
-         UINT32 last = RTN_LOB_GET_SEQUENCE( cachedMeta->_lobLen,
+         UINT32 last = RTN_LOB_GET_SEQUENCE( cachedMeta->_lobLen - 1,
                                              mergeData,
                                              logarithmic ) ;
          rc = info.addPieces( _rtnLobPieces( 0, last ) ) ;
@@ -159,7 +159,7 @@ namespace engine
       }
       else
       {
-         UINT32 last = RTN_LOB_GET_SEQUENCE( meta._lobLen,
+         UINT32 last = RTN_LOB_GET_SEQUENCE( meta._lobLen - 1,
                                              mergeData,
                                              logarithmic ) ;
          rc = info.addPieces( _rtnLobPieces( 0, last ) ) ;
@@ -183,7 +183,7 @@ namespace engine
       if ( info.sectionNum() == 1 )
       {
          UINT32 last = RTN_LOB_GET_SEQUENCE(
-                           OSS_MAX( cachedMeta->_lobLen, meta._lobLen ),
+                           OSS_MAX( cachedMeta->_lobLen, meta._lobLen ) - 1,
                            mergeData,
                            logarithmic ) ;
          _rtnLobPieces pieces = info.getSection( 0 ) ;

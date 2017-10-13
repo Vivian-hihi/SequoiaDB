@@ -432,7 +432,7 @@ namespace engine
 
       if ( SDB_LOB_MODE_WRITE == _mode && !_hasPiecesInfo )
       {
-         UINT32 piece = _getSequence( _offset ) ;
+         UINT32 piece = _getSequence( _meta._lobLen - 1 ) ;
          rc = _lobPieces.addPieces( _rtnLobPieces(0, piece) ) ;
          if ( SDB_OK != rc )
          {
@@ -737,7 +737,7 @@ namespace engine
 
             if ( !_hasPiecesInfo )
             {
-               UINT32 piece = _getSequence( _offset ) ;
+               UINT32 piece = _getSequence( _meta._lobLen - 1 ) ;
                rc = _lobPieces.addPieces( _rtnLobPieces(0, piece) ) ;
                if ( SDB_OK != rc )
                {
@@ -1166,7 +1166,7 @@ namespace engine
 
          if ( piecesInfoSize > 0 && _lobPieces.sectionNum() == 1 )
          {
-            UINT32 last = _getSequence( _meta._lobLen ) ;
+            UINT32 last = _getSequence( _meta._lobLen - 1 ) ;
             _rtnLobPieces pieces = _lobPieces.getSection( 0 ) ;
             if ( 0 == pieces.first && last == pieces.last )
             {
