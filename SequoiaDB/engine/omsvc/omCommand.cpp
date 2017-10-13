@@ -8030,7 +8030,7 @@ namespace engine
          if ( TRUE == dbTool.isConfigExistOfCluster( hostName, _clusterName ) )
          {
             rc = SDB_INVALIDARG ;
-            _errorMsg.setError( TRUE, "failed to unbind host, "
+            _errorMsg.setError( TRUE, "failed to remove host, "
                                       "the host has business: host=%s",
                                 hostName.c_str() ) ;
             PD_LOG( PDERROR, _errorMsg.getError() ) ;

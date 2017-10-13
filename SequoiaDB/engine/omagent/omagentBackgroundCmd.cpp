@@ -2266,7 +2266,7 @@ namespace engine
                                  OMA_FIELD_PROGRESS   << "" <<
                                  OMA_FIELD_RESULTINFO << "" ) ;
       BSONObj oneResultCondition = BSON( OMA_FIELD_HOSTNAME    << "" <<
-                                         OMA_FIELD_PORT        << "" <<
+                                         OMA_FIELD_PORT2       << "" <<
                                          OMA_FIELD_STATUS      << 0 <<
                                          OMA_FIELD_STATUSDESC  << "" <<
                                          OMA_FIELD_ERRNO       << 0 <<
@@ -2452,7 +2452,7 @@ namespace engine
                                  OMA_FIELD_PROGRESS   << "" <<
                                  OMA_FIELD_RESULTINFO << "" ) ;
       BSONObj oneResultCondition = BSON( OMA_FIELD_HOSTNAME    << "" <<
-                                         OMA_FIELD_PORT        << "" <<
+                                         OMA_FIELD_PORT2       << "" <<
                                          OMA_FIELD_STATUS      << 0 <<
                                          OMA_FIELD_STATUSDESC  << "" <<
                                          OMA_FIELD_ERRNO       << 0 <<

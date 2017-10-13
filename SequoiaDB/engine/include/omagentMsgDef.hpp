@@ -176,6 +176,7 @@
 #define OMA_FIELD_NET                              "Net"
 #define OMA_FIELD_NETCARDS                         "Netcards"
 #define OMA_FIELD_PORT                             "Port"
+#define OMA_FIELD_PORT2                            "port"
 #define OMA_FIELD_SERVICE                          "Service"
 #define OMA_FIELD_SAFETY                           "Safety"
 #define OMA_FIELD_SERVERINFO                       "ServerInfo"
