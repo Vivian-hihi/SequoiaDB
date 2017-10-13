@@ -349,6 +349,8 @@ var FIELD_SSH_PORT                         = SshPort ;
 var FIELD_INSTALL_PATH                     = InstallPath ;
 var FIELD_VERSION                          = Version ;
 var FIELD_ENFORCED                         = "Enforced" ;
+var FIELD_PORT                             = Port ;
+var FIELD_PORT2                            = "port" ;
 
 // Async task step
 var STEP_GENERATE_PLAN                     = "Generate plan" ;

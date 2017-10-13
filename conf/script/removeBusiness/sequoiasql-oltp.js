@@ -42,14 +42,6 @@
       RET_JSON: the format is: {"errno":0,"detail":""}
 */
 
-/*
-var SYS_STEP = "Generate plan" ;
-var BUS_JSON = {"TaskID":206,"Type":3,"TypeDesc":"REMOVE_BUSINESS","TaskName":"REMOVE_BUSINESS","CreateTime":{"$timestamp":"2017-10-09-19.54.16.000000"},"EndTime":{"$timestamp":"2017-10-09-19.54.16.000000"},"Status":0,"StatusDesc":"INIT","AgentHost":"ubuntu-jw-01","AgentService":"11790","Info":{"ClusterName":"myCluster1","BusinessType":"sequoiasql-oltp","BusinessName":"myModule1","DeployMod":"","Config":[{"dbpath":"/opt/sequoiasqloltp/database/5432","port":"5432","shared_buffers":"128MB","log_timezone":"PRC","datestyle":"iso, ymd","timezone":"PRC","lc_messages":"zh_CN.UTF-8","lc_monetary":"zh_CN","lc_numeric":"zh_CN","lc_time":"zh_CN","default_text_search_config":"pg_catalog.simple","InstallPath":"/opt/sequoiasqloltp/","ClusterName":"myCluster1","HostName":"ubuntu-jw-02","IP":"192.168.3.232","Passwd":"123","SshPort":"22","User":"root"}]},"errno":0,"detail":"","Progress":0,"ResultInfo":[{"HostName":"ubuntu-jw-02","Status":0,"StatusDesc":"INIT","errno":0,"detail":"","Flow":[]}]}
-
-var SYS_STEP = "Doit" ;
-var BUS_JSON = {"TaskID":206,"Info":{"ClusterName":"myCluster1","BusinessType":"sequoiasql-oltp","BusinessName":"myModule1","Config":{"dbpath":"/opt/sequoiasqloltp/database/5432","port":"5432","shared_buffers":"128MB","log_timezone":"PRC","datestyle":"iso, ymd","timezone":"PRC","lc_messages":"zh_CN.UTF-8","lc_monetary":"zh_CN","lc_numeric":"zh_CN","lc_time":"zh_CN","default_text_search_config":"pg_catalog.simple","InstallPath":"/opt/sequoiasqloltp/","ClusterName":"myCluster1","HostName":"ubuntu-jw-02","IP":"192.168.3.232","Passwd":"123","SshPort":"22","User":"root","AgentService":"11790"}},"ResultInfo":{"HostName":"ubuntu-jw-02","Status":0,"StatusDesc":"INIT","errno":0,"detail":"","Flow":[],"Progress":90}}
-*/
-
 function _getAgentPort( hostName )
 {
    return Oma.getAOmaSvcName( hostName ) ;
@@ -144,9 +136,97 @@ function _runRemoteCmd( cmd, command, arg, timeout )
    return error ;
 }
 
-function _checkData()
+function _execSql( PD_LOGGER, port, cmd, installPath, sql, database )
 {
-   return true ;
+   var result = null ;
+
+   if( typeof( database ) != 'string' || database.length == 0 )
+   {
+      database = 'postgres' ;
+   }
+
+   try
+   {
+      result = ExecSsql( cmd, installPath, port, database, sql ) ;
+   }
+   catch( e )
+   {
+      PD_LOGGER.logTask( PDERROR, e ) ;
+      throw e ;
+   }
+
+   return result['value'] ;
+}
+
+function _checkData( PD_LOGGER, resultInfo, port, cmd, installPath )
+{
+   import( '../conf/script/lib/parsePostgres.js' ) ;
+   //import( './lib/parsePostgres.js' ) ;
+
+   var dbList = null ;
+   var tableList = null ;
+
+   try
+   {
+      //get list of database
+      dbList = _execSql( PD_LOGGER, port, cmd, installPath, '\\l' ) ;
+   }
+   catch( e )
+   {
+      var error = new SdbError( SDB_SYS, "Failed to get list of database" ) ;
+      resultInfo[FIELD_ERRNO]  = error.getErrCode() ;
+      resultInfo[FIELD_DETAIL] = getErr( error.getErrCode() ) ;
+      resultInfo[FIELD_STATUS] = STATUS_FAIL ;
+      resultInfo[FIELD_STATUS_DESC] = DESC_STATUS_FAIL ;
+      resultInfo[FIELD_FLOW].push( error.getErrMsg() ) ;
+      PD_LOGGER.logTask( PDERROR, error ) ;
+      return true ;
+   }
+
+   for( var index in dbList )
+   {
+      var dbInfo = dbList[index] ;
+
+      if( dbInfo[FIELD_NAME] == 'template0' ||
+          dbInfo[FIELD_NAME] == 'template1' )
+      {
+         continue ;
+      }
+
+      try
+      {
+         //get list of relations
+         tableList = _execSql( PD_LOGGER, port, cmd,
+                               installPath, '\\d', dbInfo[FIELD_NAME] ) ;
+      }
+      catch( e )
+      {
+         var error = new SdbError( SDB_SYS, "Failed to get list of relations" ) ;
+         resultInfo[FIELD_ERRNO]  = error.getErrCode() ;
+         resultInfo[FIELD_DETAIL] = getErr( error.getErrCode() ) ;
+         resultInfo[FIELD_STATUS] = STATUS_FAIL ;
+         resultInfo[FIELD_STATUS_DESC] = DESC_STATUS_FAIL ;
+         resultInfo[FIELD_FLOW].push( error.getErrMsg() ) ;
+         PD_LOGGER.logTask( PDERROR, error ) ;
+         return true ;
+      }
+
+      if( tableList.length > 0 )
+      {
+         var error = new SdbError( SDB_SYS, "Failed to delete instance" +
+                                            ", instance has data" ) ;
+         resultInfo[FIELD_ERRNO]  = error.getErrCode() ;
+         resultInfo[FIELD_DETAIL] = getErr( error.getErrCode() ) ;
+         resultInfo[FIELD_STATUS] = STATUS_FAIL ;
+         resultInfo[FIELD_STATUS_DESC] = DESC_STATUS_FAIL ;
+         resultInfo[FIELD_FLOW].push( error.getErrMsg() ) ;
+         PD_LOGGER.logTask( PDERROR, error ) ;
+         return true ;
+      }
+
+   }
+
+   return false ;
 }
 
 function RemoveBusiness( PD_LOGGER )
@@ -161,6 +241,7 @@ function RemoveBusiness( PD_LOGGER )
 
    var hostName      = config[FIELD_HOSTNAME] ;
    var dbpath        = config[FIELD_DBPATH] ;
+   var port          = config[FIELD_PORT2] ;
    var agentPort     = config[FIELD_AGENT_SERVICE] ;
    var installPath   = config[FIELD_INSTALL_PATH] ;
    var ctlFile       = installPath + '/bin/sdb_sql_ctl' ;
@@ -172,9 +253,9 @@ function RemoveBusiness( PD_LOGGER )
    var args    = '' ;
    var timeout = 600000 ;
 
-   PD_LOGGER.logTask( PDEVENT, sprintf( "Begin to create instance [?]",
+   PD_LOGGER.logTask( PDEVENT, sprintf( "Begin to remove business [?]",
                                         hostName ) ) ;
-   resultInfo[FIELD_FLOW].push( sprintf( "Begin to create instance [?]",
+   resultInfo[FIELD_FLOW].push( sprintf( "Begin to remove business [?]",
                                          hostName ) ) ;
 
    try
@@ -185,8 +266,7 @@ function RemoveBusiness( PD_LOGGER )
    catch( e )
    {
       error = _getErrorMsg( getLastError(), e,
-                            sprintf( "Failed to get remote file obj: " +
-                                     "host [?:?]",
+                            sprintf( "Failed to get remote obj: host [?:?]",
                                      hostName, agentPort ) ) ;
       resultInfo[FIELD_ERRNO]  = error.getErrCode() ;
       resultInfo[FIELD_DETAIL] = getErr( error.getErrCode() ) ;
@@ -203,24 +283,15 @@ function RemoveBusiness( PD_LOGGER )
    libraryCmd += installPath + '/lib ;' ;
    exec = libraryCmd + exec ;
 
+   if( _checkData( PD_LOGGER, resultInfo, port, cmd, installPath ) )
+   {
+      return resultInfo ;
+   }
+
    PD_LOGGER.logTask( PDEVENT, sprintf( "Begin to delete instance [?]",
                                         hostName ) ) ;
    resultInfo[FIELD_FLOW].push( sprintf( "Begin to delete instance [?]",
                                          hostName ) ) ;
-
-   if( false == _checkData() )
-   {
-      error = new SdbError( SDB_SYS, sprintf( "Failed to delete instance [?]," +
-                                              " instance has data",
-                                              hostName ) ) ;
-      resultInfo[FIELD_ERRNO]  = error.getErrCode() ;
-      resultInfo[FIELD_DETAIL] = getErr( error.getErrCode() ) ;
-      resultInfo[FIELD_STATUS] = STATUS_FAIL ;
-      resultInfo[FIELD_STATUS_DESC] = DESC_STATUS_FAIL ;
-      resultInfo[FIELD_FLOW].push( error.getErrMsg() ) ;
-      PD_LOGGER.logTask( PDERROR, error ) ;
-      return resultInfo ;
-   }
 
    //del
    args = '' ;
@@ -237,9 +308,9 @@ function RemoveBusiness( PD_LOGGER )
       return resultInfo ;
    }
 
-   PD_LOGGER.logTask( PDEVENT, sprintf( "Finish to delete instance [?]",
+   PD_LOGGER.logTask( PDEVENT, sprintf( "Finish to remove business [?]",
                                         hostName ) ) ;
-   resultInfo[FIELD_FLOW].push( sprintf( "Finish to delete instance [?]",
+   resultInfo[FIELD_FLOW].push( sprintf( "Finish to remove business [?]",
                                          hostName ) ) ;
 
    return resultInfo ;
@@ -326,5 +397,9 @@ function run()
       throw error ;
    }
 
+   //print( "\n\n" + JSON.stringify( result, null, 3 ) + "\n\n" ) ;
+
    return result ;
 }
+
+//run() ;
