@@ -389,6 +389,7 @@ namespace engine
       }
       else if( OM_BUSINESS_SEQUOIASQL_OLTP == _businessType )
       {
+         filter = BSON( OM_BSON_PORT << "" ) ;
       }
 
       for ( iter = configList.begin(); iter != configList.end(); ++iter )
