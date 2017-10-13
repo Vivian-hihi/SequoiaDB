@@ -1981,6 +1981,7 @@ namespace engine
          }
       }
 
+      PD_TRACE_EXIT( SDB__SDB_DMSCB_DISPATCHDICTJOB ) ;
       return foundJob ;
    }
 
