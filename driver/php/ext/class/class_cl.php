@@ -54,6 +54,8 @@ class SequoiaCL
    define( "SDB_LOB_CREATEONLY",                         0x00000001 ) ;
    /** Open an existing lob to read. */
    define( "SDB_LOB_READ",                               0x00000004 ) ;
+   /** Open an existing lob to write. */
+   define( "SDB_LOB_WRITE",                              0x00000008 ) ;
 
    /**
     * Drop collection.
@@ -874,13 +876,14 @@ class SequoiaCL
    public function dropIdIndex(){}
 
    /**
-    * Create a large object.
+    * Create a large object or open a large object to read or write.
     *
     * @param $oid the string argument. The object id.
     *
     * @param $mode an integer argument. The open mode: @code
     *                                                  SDB_LOB_CREATEONLY
     *                                                  SDB_LOB_READ
+    *                                                  SDB_LOB_WRITE
     *                                                  @endcode
     *
     * @return Returns a new SequoiaLob object.
