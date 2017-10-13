@@ -357,7 +357,7 @@ function InstallPackage( taskID )
    var destPath      = '/tmp/packet/sequoiasql-oltp.run' ;
    var options = "" ;
 
-   options += " --mode unattended " + " --prefix " + installPath ;
+   options += " --mode unattended --installmode cover " + " --prefix " + installPath ;
    options += " --username " + sdbUser + " --userpasswd " + sdbPasswd ;
    options += " --groupname " + sdbUserGroup ;
 
