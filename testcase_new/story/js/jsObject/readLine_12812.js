@@ -57,7 +57,7 @@ function readAndCheckEmptyFile(remote, emptyFileName)
          throw buildException("readAndCheckEmptyFile()", e, "read empty file", "Failed", "Success");
       }
    }
-   File.remove(emptyFileName);
+   remoteFile.remove(emptyFileName);
 }
 
 function writeContentToFile(remote, writeFileName, content)
