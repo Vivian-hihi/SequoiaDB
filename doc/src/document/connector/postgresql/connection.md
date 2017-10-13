@@ -11,7 +11,7 @@ foo=# create extension sdb_fdw;
 2) 配置与SequoiaDB连接参数
 
 ```lang-javascript
-foo=# create server sdb_server foreign data wrapper sdb_fdw options(address '127.0.0.1', service '11810', user 'sdbadmin', password 'mypassword', preferedinstance '2', transaction 'off');
+foo=# create server sdb_server foreign data wrapper sdb_fdw options(address '127.0.0.1', service '11810', user 'sdbadmin', password 'mypassword', preferedinstance 'A', transaction 'off');
 ```
 
 >**Note:** 
