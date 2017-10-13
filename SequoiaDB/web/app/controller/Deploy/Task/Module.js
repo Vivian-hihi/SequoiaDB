@@ -39,6 +39,10 @@
          {
             $scope.stepList = _Deploy.BuildSdbShrinkStep( $scope, $location, $scope['Url']['Action'], 'sequoiadb' ) ;
          }
+         else if( $scope.ModuleType == 'sequoiasql-oltp' )
+         {
+            $scope.stepList = _Deploy.BuildSdbOltpStep( $scope, $location, $scope['Url']['Action'] ) ;
+         }
          else
          {
             $scope.stepList = _Deploy.BuildSdbStep( $scope, $location, $scope.DeployType, $scope['Url']['Action'], $scope.ModuleType ) ;
@@ -108,6 +112,21 @@
                'Flow':        '40%'
             } ;
          }
+         else if( moduleType == 'sequoiasql-oltp' )
+         {
+            $scope.TaskTable['title'] = {
+               'Status':         '',
+               'HostName':       $scope.autoLanguage( '主机名' ),
+               'StatusDesc':     $scope.autoLanguage( '状态' ),
+               'Flow':           $scope.autoLanguage( '描述' )
+            } ;
+            $scope.TaskTable['options']['width'] = {
+               'Status':      '24px',
+               'HostName':    '35%',
+               'StatusDesc':  '30%',
+               'Flow':        '35%'
+            } ;
+         }
       }
 
       setTaskTable( $scope.ModuleType ) ;
@@ -125,6 +144,10 @@
          else if( $scope.ModuleType == 'zookeeper' )
          {
             $location.path( '/Deploy/ZKP-Mod' ).search( { 'r': new Date().getTime() } ) ;
+         }
+         else if( $scope.ModuleType == 'sequoiasql-oltp' )
+         {
+            $location.path( '/Deploy/OLTP-Mod' ).search( { 'r': new Date().getTime() } ) ;
          }
       }
 
@@ -179,18 +202,7 @@
                   //因为从任务管理器跳转进来的，是不知道任务是什么业务的，所以通过字段来判断
                   if( $scope.ModuleType == 'None' )
                   {
-                     if( typeof( $scope.TaskInfo['ResultInfo'][0]['role'] ) != 'undefined' && typeof( $scope.TaskInfo['ResultInfo'][0]['svcname'] ) != 'undefined' )
-                     {
-                        $scope.ModuleType = 'sequoiadb' ;
-                     }
-                     else if( typeof( $scope.TaskInfo['ResultInfo'][0]['role'] ) != 'undefined' )
-                     {
-                        $scope.ModuleType = 'sequoiasql' ;
-                     }
-                     else if( typeof( $scope.TaskInfo['ResultInfo'][0]['zooid'] ) != 'undefined' )
-                     {
-                        $scope.ModuleType = 'zookeeper' ;
-                     }
+                     $scope.ModuleType = taskInfo[0]['Info']['BusinessType'] ;
                      setTaskTable( $scope.ModuleType ) ;
                   }
 
@@ -223,7 +235,7 @@
                         $scope.BarColor = 2 ;
                      }
                   }
-                  else if( $scope.ModuleType == 'zookeeper' || $scope.ModuleType == 'sequoiasql' )
+                  else if( $scope.ModuleType == 'zookeeper' || $scope.ModuleType == 'sequoiasql' || $scope.ModuleType == 'sequoiasql-oltp' )
                   {
                      $.each( $scope.TaskInfo['ResultInfo'], function( index, nodeInfo ){
                         if( nodeInfo['errno'] != 0 )

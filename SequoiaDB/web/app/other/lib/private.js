@@ -81,6 +81,21 @@ _IndexPublic.closeRetryModel = function( $scope ){
 
 //创建错误重试弹窗
 _IndexPublic.createRetryModel = function( $scope, errorInfo, okFun, title, context, okText, closeText ){
+
+   var defaultError ;
+
+   if( errorInfo )
+   {
+      if( errorInfo['cmd'].length == 0 )
+      {
+         defaultError = sprintf( $scope.autoLanguage( '错误码: ?, ?。需要重试吗?' ), errorInfo['errno'], errorInfo['detail'].length > 0? errorInfo['detail'] : errorInfo['description'] ) ;
+      }
+      else
+      {
+         defaultError = sprintf( $scope.autoLanguage( '执行命令: ?, 错误码: ?, ?。需要重试吗?' ), errorInfo['cmd'], errorInfo['errno'], errorInfo['detail'].length > 0? errorInfo['detail'] : errorInfo['description'] ) ;
+      }
+   }
+
    $scope.Components.Confirm.isShow = true ;
    $scope.Components.Confirm.type = 1 ;
    $scope.Components.Confirm.noOK = false ;
@@ -88,7 +103,7 @@ _IndexPublic.createRetryModel = function( $scope, errorInfo, okFun, title, conte
    $scope.Components.Confirm.title = typeof( title ) == 'string' ? title : $scope.autoLanguage( '获取数据失败' ) ;
    $scope.Components.Confirm.okText = typeof( okText ) == 'string' ? okText : $scope.autoLanguage( '重试' ) ;
    $scope.Components.Confirm.closeText = typeof( closeText ) == 'string' ? closeText : $scope.autoLanguage( '取消' ) ;
-   $scope.Components.Confirm.context = typeof( context ) == 'string' ? context : sprintf( $scope.autoLanguage( '错误码: ?, ?。需要重试吗?' ), errorInfo['errno'], errorInfo['detail'].length > 0? errorInfo['detail'] : errorInfo['description'] ) ;
+   $scope.Components.Confirm.context = typeof( context ) == 'string' ? context : defaultError ;
    $scope.Components.Confirm.ok = function(){
       if( okFun() == true )
       {
@@ -410,7 +425,7 @@ _Deploy.BuildSdbStep = function( $scope, $location, deployModel, action, deployM
          break ;
       }
       stepList['info'].push( { 'text': $scope.autoLanguage( '扫描主机' ), 'click': function(){ _Deploy.GotoStep( $location, 'ScanHost' ); } } ) ;
-      stepList['info'].push( { 'text': $scope.autoLanguage( '添加主机' ), 'click': function(){ _Deploy.GotoStep( $location, 'AddHost'  ); } } ) ;
+      stepList['info'].push( { 'text': $scope.autoLanguage( '检查主机' ), 'click': function(){ _Deploy.GotoStep( $location, 'AddHost'  ); } } ) ;
       stepList['info'].push( { 'text': $scope.autoLanguage( '安装主机' ), 'click': function(){ _Deploy.GotoStep( $location, 'InstallHost'  ); } } ) ;
       break ;
    }
@@ -490,7 +505,7 @@ _Deploy.BuildSdbStep = function( $scope, $location, deployModel, action, deployM
          break ;
       }
       stepList['info'].push( { 'text': $scope.autoLanguage( '扫描主机' ), 'click': function(){ _Deploy.GotoStep( $location, 'ScanHost' ); } } ) ;
-      stepList['info'].push( { 'text': $scope.autoLanguage( '添加主机' ), 'click': function(){ _Deploy.GotoStep( $location, 'AddHost'  ); } } ) ;
+      stepList['info'].push( { 'text': $scope.autoLanguage( '检查主机' ), 'click': function(){ _Deploy.GotoStep( $location, 'AddHost'  ); } } ) ;
       stepList['info'].push( { 'text': $scope.autoLanguage( '安装主机' ), 'click': function(){ _Deploy.GotoStep( $location, 'Install'  ); } } ) ;
       if( deployModule == 'sequoiadb' )
       {
@@ -565,7 +580,7 @@ _Deploy.BuildSdbDiscoverStep = function( $scope, $location, action, deployModule
       break ;
    }
    stepList['info'].push( { 'text': $scope.autoLanguage( '扫描主机' ), 'click': function(){ _Deploy.GotoStep( $location, 'ScanHost') ; } } ) ;
-   stepList['info'].push( { 'text': $scope.autoLanguage( '添加主机' ), 'click': function(){ _Deploy.GotoStep( $location, 'AddHost' ) ; } } ) ;
+   stepList['info'].push( { 'text': $scope.autoLanguage( '检查主机' ), 'click': function(){ _Deploy.GotoStep( $location, 'AddHost' ) ; } } ) ;
    stepList['info'].push( { 'text': $scope.autoLanguage( '安装主机' ), 'click': function(){ _Deploy.GotoStep( $location, 'InstallHost' ) ; } } ) ;
    stepList['info'].push( { 'text': $scope.autoLanguage( '发现业务' ), 'click': function(){ _Deploy.GotoStep( $location, 'SDB-Discover'  ) ; } } ) ;
    return stepList ;
@@ -594,7 +609,7 @@ _Deploy.BuildSdbSyncStep = function( $scope, $location, action, deployModule ){
       break ;
    }
    stepList['info'].push( { 'text': $scope.autoLanguage( '扫描主机' ), 'click': function(){ _Deploy.GotoStep( $location, 'ScanHost') ; } } ) ;
-   stepList['info'].push( { 'text': $scope.autoLanguage( '添加主机' ), 'click': function(){ _Deploy.GotoStep( $location, 'AddHost' ) ; } } ) ;
+   stepList['info'].push( { 'text': $scope.autoLanguage( '检查主机' ), 'click': function(){ _Deploy.GotoStep( $location, 'AddHost' ) ; } } ) ;
    stepList['info'].push( { 'text': $scope.autoLanguage( '安装主机' ), 'click': function(){ _Deploy.GotoStep( $location, 'InstallHost' ) ; } } ) ;
    stepList['info'].push( { 'text': $scope.autoLanguage( '同步业务' ), 'click': function(){ _Deploy.GotoStep( $location, 'SDB-Sync'  ) ; } } ) ;
    return stepList ;
@@ -620,6 +635,26 @@ _Deploy.BuildSdbShrinkStep = function( $scope, $location, action, deployModule )
    return stepList ;
 }
 
+//生成安装SSQL-OLTP步骤图
+_Deploy.BuildSdbOltpStep = function( $scope, $location, action, deployModule ){
+   var stepList = {
+      'step': 0,
+      'info': []
+   }
+   switch( action )
+   {
+   case 'OLTP-Mod':
+      stepList['step'] = 1 ;
+      break ;
+   case 'InstallModule':
+      stepList['step'] = 2 ;
+      break ;
+   }
+   stepList['info'].push( { 'text': $scope.autoLanguage( '配置业务' ), 'click': function(){ _Deploy.GotoStep( $location, 'OLTP-Mod') ; } } ) ;
+   stepList['info'].push( { 'text': $scope.autoLanguage( '安装业务' ), 'click': function(){ _Deploy.GotoStep( $location, 'InstallModule'  ) ; } } ) ;
+   return stepList ;
+}
+
 //生成部署安装包步骤图
 _Deploy.BuildDeployPackageStep = function( $scope, $location, action, deployModule ){
    var stepList = {
@@ -641,7 +676,7 @@ _Deploy.BuildDeployPackageStep = function( $scope, $location, action, deployModu
 }
 
 //参数模板转换
-_Deploy.ConvertTemplate = function( templateList, level ){
+_Deploy.ConvertTemplate = function( templateList, level, canEmpty, checkConfType ){
    var setLevel = 0 ;
    if( typeof( level ) != 'undefined' )
    {
@@ -664,6 +699,11 @@ _Deploy.ConvertTemplate = function( templateList, level ){
             'type':     '',
             'valid':    ''
          } ;
+         if( checkConfType == true )
+         {
+            newTemplateInfo['confType'] = templateInfo['ConfType'] ;
+         }
+
          if( templateInfo['Display'] == 'select box' )
          {
             newTemplateInfo['type'] = 'select' ;
@@ -679,12 +719,24 @@ _Deploy.ConvertTemplate = function( templateList, level ){
             {
                newTemplateInfo['type'] = 'int' ;
                newTemplateInfo['valid'] = {} ;
-               if( templateInfo['Valid'] !== '' && templateInfo['Valid'].indexOf('-') !== -1 )
+               var pos1 = templateInfo['Valid'].indexOf( '-' ) ;
+               if( templateInfo['Valid'] !== '' && pos1 !== -1 )
 			      {
-				      var splitValue = templateInfo['Valid'].split( '-' ) ;
-				      var minValue = splitValue[0] ;
-				      var maxValue = splitValue[1] ;
-				      if( isNaN( minValue ) == false )
+                  var minValue ;
+                  var maxValue ;
+                  var pos2 = templateInfo['Valid'].indexOf( '-', pos1 + 1 ) ;
+                  if( pos2 == -1 )
+                  {
+                     var splitValue = templateInfo['Valid'].split( '-' ) ;
+                     minValue = splitValue[0] ;
+                     maxValue = splitValue[1] ;
+                  }
+                  else
+                  {
+                     minValue = templateInfo['Valid'].substr( 0, pos2 ) ;
+                     maxValue = templateInfo['Valid'].substr( pos2 + 1 ) ;
+                  }
+                  if( isNaN( minValue ) == false )
                   {
                      newTemplateInfo['valid']['min'] = parseInt( minValue ) ;
                   }
@@ -692,7 +744,46 @@ _Deploy.ConvertTemplate = function( templateList, level ){
                   {
                      newTemplateInfo['valid']['max'] = parseInt( maxValue ) ;
                   }
+               }
+               else if ( canEmpty === true )
+               {
+                  newTemplateInfo['valid']['empty'] = true ;
+               }
+            }
+            else if( templateInfo['Type'] == 'double' )
+            {
+               newTemplateInfo['type'] = 'double' ;
+               newTemplateInfo['valid'] = {} ;
+               var pos1 = templateInfo['Valid'].indexOf( '-' ) ;
+               if( templateInfo['Valid'] !== '' && pos1 !== -1 )
+			      {
+                  var minValue ;
+				      var maxValue ;
+                  var pos2 = templateInfo['Valid'].indexOf( '-', pos1 + 1 ) ;
+                  if( pos2 == -1 )
+                  {
+				         var splitValue = templateInfo['Valid'].split( '-' ) ;
+				         minValue = splitValue[0] ;
+				         maxValue = splitValue[1] ;
+                  }
+                  else
+                  {
+                     minValue = templateInfo['Valid'].substr( 0, pos2 ) ;
+                     maxValue = templateInfo['Valid'].substr( pos2 + 1 ) ;
+                  }
+                  if( isNaN( minValue ) == false )
+                  {
+                     newTemplateInfo['valid']['min'] = parseFloat( minValue ) ;
+                  }
+                  if( isNaN( maxValue ) == false )
+                  {
+                     newTemplateInfo['valid']['max'] = parseFloat( maxValue ) ;
+                  }
 			      }
+               else if ( canEmpty === true )
+               {
+                  newTemplateInfo['valid']['empty'] = true ;
+               }
             }
             else if( templateInfo['Type'] === 'port' )
 		      {

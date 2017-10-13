@@ -801,45 +801,90 @@
 
       //前往部署安装包
       $scope.DeployPackage = function(){
-         if( $scope.HostListTable['body'].length > 0 )
+         var hostList = [] ;
+         $.each( $scope.HostList, function( index ){
+            if( $scope.HostList[index]['checked'] == true && $scope.clusterList[ $scope.currentCluster ]['ClusterName'] == $scope.HostList[index]['ClusterName'] )
+            {
+               hostList.push(
+                  {
+                     'HostName': $scope.HostList[index]['HostName'],
+                     'IP': $scope.HostList[index]['IP'],
+                     'User': $scope.HostList[index]['User'],
+                     'Packages': $scope.HostList[index]['Packages']
+                  } 
+               ) ;
+            }
+         } ) ;
+         if( hostList.length > 0 )
          {
-            var hostList = [] ;
-            $.each( $scope.HostList, function( index ){
-               if( $scope.HostList[index]['checked'] == true && $scope.clusterList[ $scope.currentCluster ]['ClusterName'] == $scope.HostList[index]['ClusterName'] )
-               {
-                  hostList.push(
-                     {
-                        'HostName': $scope.HostList[index]['HostName'],
-                        'IP': $scope.HostList[index]['IP'],
-                        'User': $scope.HostList[index]['User'],
-                        'Packages': $scope.HostList[index]['Packages']
-                     } 
-                  ) ;
-               }
-            } ) ;
-            if( hostList.length > 0 )
-            {
-               $rootScope.tempData( 'Deploy', 'Model',  'Package' ) ;
-               $rootScope.tempData( 'Deploy', 'Module', 'None' ) ;
-               $rootScope.tempData( 'Deploy', 'HostList', hostList ) ;
-               $rootScope.tempData( 'Deploy', 'ClusterName', $scope.clusterList[ $scope.currentCluster ]['ClusterName'] ) ;
-               $location.path( '/Deploy/Package' ).search( { 'r': new Date().getTime() } ) ;
-            }
-            else
-            {
-               $scope.Components.Confirm.type = 3 ;
-               $scope.Components.Confirm.context = $scope.autoLanguage( '至少选择一台的主机。' ) ;
-               $scope.Components.Confirm.isShow = true ;
-               $scope.Components.Confirm.okText = $scope.autoLanguage( '好的' ) ;
-            }
-            
+            $rootScope.tempData( 'Deploy', 'Model',  'Package' ) ;
+            $rootScope.tempData( 'Deploy', 'Module', 'None' ) ;
+            $rootScope.tempData( 'Deploy', 'HostList', hostList ) ;
+            $rootScope.tempData( 'Deploy', 'ClusterName', $scope.clusterList[ $scope.currentCluster ]['ClusterName'] ) ;
+            $location.path( '/Deploy/Package' ).search( { 'r': new Date().getTime() } ) ;
          }
          else
          {
             $scope.Components.Confirm.type = 3 ;
-            $scope.Components.Confirm.context = $scope.autoLanguage( '当前集群没有安装主机。' ) ;
+            $scope.Components.Confirm.context = $scope.autoLanguage( '至少选择一台的主机。' ) ;
             $scope.Components.Confirm.isShow = true ;
             $scope.Components.Confirm.okText = $scope.autoLanguage( '好的' ) ;
+         }
+      }
+
+      //删除主机 下拉菜单
+      $scope.RemoveHostDropdown = {
+         'config': [],
+         'OnClick': function( index ){
+            if( index == 0 )
+            {
+               $scope.RemoveHost() ;
+            }
+            else if( index == 1 )
+            {
+               $scope.UnbindHost() ;
+            }
+            $scope.RemoveHostDropdown['callback']['Close']() ;
+         },
+         'callback': {}
+      }
+
+      //打开 删除主机下拉菜单
+      $scope.OpenRemoveHost = function( event ){
+         if( $scope.clusterList.length > 0 )
+         {
+            $scope.RemoveHostDropdown['config'] = [] ;
+            $scope.RemoveHostDropdown['config'].push( { 'key': $scope.autoLanguage( '卸载主机' ) } ) ;
+            $scope.RemoveHostDropdown['config'].push( { 'key': $scope.autoLanguage( '解绑主机' ) } ) ;
+            $scope.RemoveHostDropdown['callback']['Open']( event.currentTarget ) ;
+         }
+      }
+
+      //编辑主机 下拉菜单
+      $scope.EditHostDropdown = {
+         'config': [],
+         'OnClick': function( index ){
+            if( index == 0 )
+            {
+               $scope.DeployPackage() ;
+            }
+            else if( index == 1 )
+            {
+               $scope.ShowUpdateHostIP() ;
+            }
+            $scope.EditHostDropdown['callback']['Close']() ;
+         },
+         'callback': {}
+      }
+
+      //打开 修改主机下拉菜单
+      $scope.OpenEditHostDropdown = function( event ){
+         if( $scope.clusterList.length > 0 )
+         {
+            $scope.EditHostDropdown['config'] = [] ;
+            $scope.EditHostDropdown['config'].push( { 'key': $scope.autoLanguage( '部署包' ) } ) ;
+            $scope.EditHostDropdown['config'].push( { 'key': $scope.autoLanguage( '更新主机信息' ) } ) ;
+            $scope.EditHostDropdown['callback']['Open']( event.currentTarget ) ;
          }
       }
 
@@ -1115,6 +1160,40 @@
                   if( $scope.moduleType[ formVal['moduleType'] ]['BusinessType'] == 'sequoiadb' )
                   {
                      $location.path( '/Deploy/SDB-Conf' ).search( { 'r': new Date().getTime() } ) ;
+                  }
+                  //当业务类型是OLTP时
+                  else if( $scope.moduleType[ formVal['moduleType'] ]['BusinessType'] == 'sequoiasql-oltp' )
+                  {
+                     var checkSqlHost = 0 ;
+                     $.each( $scope.HostList, function( index, hostInfo ){
+                        if( hostInfo['ClusterName'] == $scope.clusterList[ $scope.currentCluster ]['ClusterName'] )
+                        {
+                           $.each( hostInfo['Packages'], function( packIndex, packInfo ){
+                              if( packInfo['Name'] == 'sequoiasql-oltp' )
+                              {
+                                 ++checkSqlHost ;
+                              }
+                           } ) ;
+                        }
+                     } ) ;
+                     if( checkSqlHost == 0 )
+                     {
+                        $scope.Components.Confirm.type = 3 ;
+                        $scope.Components.Confirm.context = $scope.autoLanguage( '创建 SequoiaSQL OLTP 业务需要主机已经部署 SequoiaSQL OLTP 包。' ) ;
+                        $scope.Components.Confirm.isShow = true ;
+                        $scope.Components.Confirm.okText = $scope.autoLanguage( '好的' ) ;
+                     }
+                     else
+                     {
+                        var businessConf = {} ;
+                        businessConf['ClusterName'] = $scope.clusterList[ $scope.currentCluster ]['ClusterName'] ;
+                        businessConf['BusinessName'] = formVal['moduleName'] ;
+                        businessConf['BusinessType'] = $scope.moduleType[ formVal['moduleType'] ]['BusinessType'] ;
+                        businessConf['DeployMod'] = '' ;
+                        businessConf['Property'] = [] ;
+                        $rootScope.tempData( 'Deploy', 'ModuleConfig', businessConf ) ;
+                        $location.path( '/Deploy/OLTP-Mod' ).search( { 'r': new Date().getTime() } ) ;
+                     }
                   }
                   else if( $scope.moduleType[ formVal['moduleType'] ]['BusinessType'] == 'sequoiasql' )
                   {

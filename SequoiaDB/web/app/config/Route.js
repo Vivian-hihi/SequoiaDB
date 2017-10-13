@@ -369,6 +369,12 @@
            resolve: resolveFun( [ './app/controller/Deploy/ExtendModule/Sdb/Install.js' ] )
         }
       },
+      { path: '/Deploy/OLTP-Mod',
+        options: {
+           templateUrl: './app/template/Deploy/InstallModule/OLTP/Mod.html',
+           resolve: resolveFun( [ './app/controller/Deploy/InstallModule/OLTP/Mod.js' ] )
+        }
+      },
       { path: '/Deploy/ZKP-Mod',
         options: {
            templateUrl: './app/template/Deploy/InstallModule/Zookeeper/Mod.html',
