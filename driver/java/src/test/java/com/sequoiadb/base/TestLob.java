@@ -659,6 +659,48 @@ public class TestLob extends SingleCSCLTestCase {
         }
     }
 
+    @Test
+    public void testLobOpenWrite8() {
+        String str = "1234567890";
+        String str2 = "abcde";
+        String str3 = "12345abcde";
+
+        ObjectId id = ObjectId.get();
+        DBLob lob = cl.createLob(id);
+        lob.close();
+
+        lob = cl.openLob(id, DBLob.SDB_LOB_WRITE);
+        lob.write(str.getBytes());
+        lob.close();
+
+        lob = cl.openLob(id, DBLob.SDB_LOB_WRITE);
+        lob.lockAndSeek(5, -1);
+        lob.write(str2.getBytes());
+        lob.close();
+
+        long lobSize = lob.getSize();
+
+        DBCursor cursor = cl.listLobs();
+        assertTrue(cursor.hasNext());
+        BSONObject obj = cursor.getNext();
+        ObjectId oid = (ObjectId) obj.get("Oid");
+        assertEquals(id, oid);
+        assertFalse(cursor.hasNext());
+
+        lob = cl.openLob(id);
+        assertEquals(lobSize, lob.getSize());
+        byte[] bytes = new byte[(int) lob.getSize()];
+        lob.read(bytes);
+        lob.close();
+
+        String s = new String(bytes);
+        assertEquals(str3, s);
+
+        cl.removeLob(id);
+        cursor = cl.listLobs();
+        assertFalse(cursor.hasNext());
+    }
+
     class LobWriter implements Runnable {
         private int index;
         private String csName;
@@ -680,6 +722,9 @@ public class TestLob extends SingleCSCLTestCase {
 
         @Override
         public void run() {
+            System.out.println(
+                String.format("Thread[%d]: offset=%d, length=%d",
+                    index, offset, length));
             try (Sequoiadb sdb = new Sequoiadb(TestConfig.getSingleHost(),
                 Integer.valueOf(TestConfig.getSinglePort()),
                 TestConfig.getSingleUsername(),
@@ -691,12 +736,11 @@ public class TestLob extends SingleCSCLTestCase {
                     lob.write(data, offset, length);
                 }
             } catch (Exception e) {
-                e.printStackTrace();
-                throw e;
+                throw new RuntimeException(
+                    String.format("Thread[%d]: offset=%d, length=%d",
+                        index, offset, length), e
+                );
             }
-            System.out.println(
-                String.format("Thread[%d]: offset=%d, length=%d",
-                    index, offset, length));
         }
     }
 
