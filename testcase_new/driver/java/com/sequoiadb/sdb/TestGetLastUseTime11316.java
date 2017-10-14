@@ -10,6 +10,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
+import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
@@ -25,6 +26,7 @@ public class TestGetLastUseTime11316 extends SdbTestBase{
 	private String clName = "cl_11316";
 	private static Sequoiadb sdb = null;
 	private CollectionSpace cs = null;
+	private DBCollection cl ;
 	
 	@BeforeClass
 	public void setUp( ){
@@ -42,7 +44,8 @@ public class TestGetLastUseTime11316 extends SdbTestBase{
 	public void testLastUseTime(){
 		try{
 			long beforeTime = sdb.getLastUseTime();		
-			createCL();		
+			createCL();	
+			insertDatas();
 			long afterTime = sdb.getLastUseTime();
 	
 			if (beforeTime >= afterTime)
@@ -82,11 +85,26 @@ public class TestGetLastUseTime11316 extends SdbTestBase{
 		try
 		{
 			cs = sdb.getCollectionSpace(SdbTestBase.csName);			
-			cs.createCollection(clName);
+			cl = cs.createCollection(clName);
 		}catch(BaseException e){
 			Assert.assertTrue(false,"create cl fail "+e.getErrorType()+":"+e.getMessage());
 		}
 	}
 	
+	public void insertDatas(){
+		//insert records
+		String []records = {"{'no':-2147483648,'tlong':9223372036854775807,'tf':1.7e+308,'td':{'$decimal':'123.45'},boolt:true}",
+		        "{no:0,numlong:{'$numberLong':'-9223372036854775808'},oid:{ '$oid':'123abcd00ef12358902300ef'},tfm:-1.7E+308}",
+		        "{no:1,numlongm:{'$numberLong':'9223372036854775807'},'ts':'test',reg:{'$regex':'^张','$options':'i'},tc:'可能会被调'}",
+		        "{no:2147483647,date:{'$date':'2012-01-01'},time:{'$timestamp':'2012-01-01-13.14.26.124233'},arr:['abc',345,true]}"};
+		
+		for( int i = 0; i < records.length;i++){
+			try{				
+				cl.insert(records[i]);				
+			}catch(BaseException e){
+				Assert.assertTrue(false,"insert jsonDatas fail "+e.getMessage());
+			}
+		}		
+	}
 	
 }
