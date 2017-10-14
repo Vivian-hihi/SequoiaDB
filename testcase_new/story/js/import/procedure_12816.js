@@ -38,6 +38,7 @@ function createImportOnceFile()
     }  
 }
 
+/*
 // creat import importOnce file
 createImportFile() ;
 createImportOnceFile() ;
@@ -77,3 +78,4 @@ if( result !== 2 )
 // remove file   
 removeFile( importFile ) ;
 removeFile( importOnceFile ) ;
+*/
