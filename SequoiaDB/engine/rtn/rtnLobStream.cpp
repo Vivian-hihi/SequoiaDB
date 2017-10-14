@@ -210,7 +210,8 @@ namespace engine
 
       rc = _lw.init( _lobPageSz,
                      _meta._version >= DMS_LOB_META_MERGE_DATA_VERSION ?
-                     TRUE : FALSE ) ;
+                     TRUE : FALSE,
+                     SDB_LOB_MODE_WRITE == mode ? FALSE : TRUE ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Failed to init stream window, rc:%d", rc ) ;
@@ -659,7 +660,7 @@ namespace engine
       rc = _lock( cb, offset, length ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "Failed to lock LOB[%d] in (offset:%lld, length:%lld), rc=%d",
+         PD_LOG( PDERROR, "Failed to lock LOB[%s] in (offset:%lld, length:%lld), rc=%d",
                  _oid.str().c_str(), offset, length, rc) ;
          goto error ;
       }

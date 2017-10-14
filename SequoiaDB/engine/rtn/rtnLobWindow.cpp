@@ -44,6 +44,7 @@ const UINT32 RTN_MAX_READ_LEN = DMS_PAGE_SIZE128K * 512 ;      /// 64MB
    :_pageSize( DMS_DO_NOT_CREATE_LOB ),
     _logarithmic( 0 ),
     _mergeMeta( FALSE ),
+    _metaPageDataCached( FALSE ),
     _curOffset( 0 ),
     _pool( NULL ),
     _cachedSz( 0 ),
@@ -84,7 +85,9 @@ const UINT32 RTN_MAX_READ_LEN = DMS_PAGE_SIZE128K * 512 ;      /// 64MB
       return _pageSize - DMS_LOB_META_LENGTH ;
    }
 
-   INT32 _rtnLobWindow::init( INT32 pageSize, BOOLEAN mergeMeta )
+   INT32 _rtnLobWindow::init( INT32 pageSize,
+                              BOOLEAN mergeMeta,
+                              BOOLEAN metaPageDataCached )
    {
       INT32 rc = SDB_OK ;
       SDB_ASSERT( DMS_DO_NOT_CREATE_LOB < pageSize,
@@ -112,6 +115,7 @@ const UINT32 RTN_MAX_READ_LEN = DMS_PAGE_SIZE128K * 512 ;      /// 64MB
 
       _pageSize = pageSize ;
       _mergeMeta = mergeMeta ;
+      _metaPageDataCached = metaPageDataCached ;
 
    done:
       return rc ;
@@ -157,7 +161,8 @@ const UINT32 RTN_MAX_READ_LEN = DMS_PAGE_SIZE128K * 512 ;      /// 64MB
       }
 
       // put data in meta page to the second page of _pool
-      if ( _mergeMeta && _curOffset < _pageSize - DMS_LOB_META_LENGTH )
+      if ( _metaPageDataCached && _mergeMeta &&
+           _curOffset < _pageSize - DMS_LOB_META_LENGTH )
       {
          UINT32 lastLen = _pageSize - DMS_LOB_META_LENGTH - _curOffset ;
          CHAR *pCurMeta = _pool + _pageSize + DMS_LOB_META_LENGTH + _curOffset ;
@@ -193,13 +198,12 @@ const UINT32 RTN_MAX_READ_LEN = DMS_PAGE_SIZE128K * 512 ;      /// 64MB
       else
       {
          // join cached data and write data.
-         UINT32 curPageSize = _getCurDataPageSize() ;
          UINT32 curOffsetInPage = RTN_LOB_GET_OFFSET_IN_SEQUENCE( _curOffset,
                                                                   _mergeMeta,
                                                                   _pageSize ) ;
-         UINT32 curPageRemainSize = curPageSize - curOffsetInPage - (UINT32)_cachedSz ;
+         UINT32 curPageRemainSize = _pageSize - curOffsetInPage - (UINT32)_cachedSz ;
 
-         SDB_ASSERT( (UINT32)_cachedSz + curOffsetInPage < curPageSize, "impossible" ) ;
+         SDB_ASSERT( (UINT32)_cachedSz + curOffsetInPage < _pageSize, "impossible" ) ;
 
          UINT32 mvSize = curPageRemainSize <= len ? curPageRemainSize : len ;
          ossMemcpy( _pool + curOffsetInPage + _cachedSz, data, mvSize ) ;
@@ -242,11 +246,10 @@ const UINT32 RTN_MAX_READ_LEN = DMS_PAGE_SIZE128K * 512 ;      /// 64MB
       BOOLEAN hasNext = FALSE ;
       MsgLobTuple &t = tuple.tuple ;
 
-      UINT32 curPageSize = _getCurDataPageSize() ;
       UINT32 curOffsetInPage = RTN_LOB_GET_OFFSET_IN_SEQUENCE( _curOffset,
                                                                _mergeMeta,
                                                                _pageSize ) ;
-      UINT32 curPageRemainSize = curPageSize - curOffsetInPage ;
+      UINT32 curPageRemainSize = _pageSize - curOffsetInPage ;
 
       if ( 0 == _cachedSz )
       {
@@ -305,12 +308,11 @@ const UINT32 RTN_MAX_READ_LEN = DMS_PAGE_SIZE128K * 512 ;      /// 64MB
    {
       if ( !_writeData.empty() )
       {
-         UINT32 curPageSize = _getCurDataPageSize() ;
          UINT32 curOffsetInPage = RTN_LOB_GET_OFFSET_IN_SEQUENCE( _curOffset,
                                                                   _mergeMeta,
                                                                   _pageSize ) ;
 
-         SDB_ASSERT( curOffsetInPage + _cachedSz + _writeData.tuple.columns.len < curPageSize,
+         SDB_ASSERT( curOffsetInPage + _cachedSz + _writeData.tuple.columns.len < _pageSize,
                      "Write data len must less than data page remain size" ) ;
          SDB_ASSERT( 0 == _cachedSz, "Cached size must be 0" ) ;
          SDB_ASSERT( _curOffset == _writeData.tuple.columns.offset, "incorrect offset" ) ;
@@ -340,7 +342,7 @@ const UINT32 RTN_MAX_READ_LEN = DMS_PAGE_SIZE128K * 512 ;      /// 64MB
                                                          _pageSize ) ;
       tuple.data = _pool + t.columns.offset ;
 
-      SDB_ASSERT( t.columns.offset + _cachedSz < _getCurDataPageSize(),
+      SDB_ASSERT( t.columns.offset + _cachedSz < _pageSize,
                   "incorrect cached data" ) ;
 
       _curOffset += _cachedSz ;

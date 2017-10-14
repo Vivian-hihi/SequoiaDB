@@ -228,6 +228,8 @@ namespace engine
             << ", ModificationTime:" << _modificationTime
             << ", Status:" << (UINT32)_status
             << ", Version:" << (UINT32)_version
+            << ", Flag:" << _flag
+            << ", PiecesInfoNum:" << _piecesInfoNum
             << endl ;
          return ss.str() ;
       }

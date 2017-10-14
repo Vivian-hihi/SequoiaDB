@@ -543,6 +543,7 @@ namespace engine
 
       dmsLobRecord record ;
       const MsgLobTuple &t = tuple.tuple ;
+      CHAR* buf = NULL ;
 
       record.set( &getOID(), t.columns.sequence, t.columns.offset,
                   t.columns.len, ( const CHAR * )tuple.data ) ;
@@ -597,13 +598,36 @@ namespace engine
                goto error ;
             }
 
+            buf = (CHAR*)SDB_OSS_MALLOC( record._dataLen > DMS_LOB_META_LENGTH ?
+                                         record._dataLen : DMS_LOB_META_LENGTH ) ;
+            if ( NULL == buf )
+            {
+               rc = SDB_OOM ;
+               PD_LOG( PDERROR, "Failed to malloc buf, rc=%d", rc ) ;
+               goto error ;
+            }
+            ossMemset( buf, 0, DMS_LOB_META_LENGTH ) ;
+
+            // copy record data to buf,
+            // because in local stream,
+            // tuple.data actually is rtnLobStream->_meta
+            // we can't directly override its memory,
+            // especially when newCache has pieces info,
+            // it will override memory after rtnLobStream->_meta
+            ossMemcpy( buf, record._data, record._dataLen ) ;
+            record._data = (const CHAR*)buf ;
+
             if ( newCache.lobMeta()->hasPiecesInfo() )
             {
-               ossMemcpy( (void*)tuple.data, newCache.lobMeta(), DMS_LOB_META_LENGTH ) ;
+               ossMemcpy( (void*)record._data, newCache.lobMeta(), DMS_LOB_META_LENGTH ) ;
+               if ( record._dataLen < DMS_LOB_META_LENGTH )
+               {
+                  record._dataLen = DMS_LOB_META_LENGTH ;
+               }
             }
             else
             {
-               ossMemcpy( (void*)tuple.data, newCache.lobMeta(), sizeof( _dmsLobMeta ) ) ;
+               ossMemcpy( (void*)record._data, newCache.lobMeta(), sizeof( _dmsLobMeta ) ) ;
             }
          }
          else
@@ -641,6 +665,7 @@ namespace engine
       {
          _accessInfo->unlock() ;
       }
+      SAFE_OSS_FREE( buf ) ;
       PD_TRACE_EXITRC( SDB_RTNLOCALLOBSTREAM__UPDATE, rc ) ;
       return rc ;
    error:

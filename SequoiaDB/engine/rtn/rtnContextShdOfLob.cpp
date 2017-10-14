@@ -378,7 +378,15 @@ namespace engine
 
             if ( newCache.lobMeta()->hasPiecesInfo() )
             {
-               ossMemcpy( (void*)data, newCache.lobMeta(), DMS_LOB_META_LENGTH ) ;
+               if ( len < DMS_LOB_META_LENGTH )
+               {
+                  data = (const CHAR*)newCache.lobMeta() ;
+                  len = DMS_LOB_META_LENGTH ;
+               }
+               else
+               {
+                  ossMemcpy( (void*)data, newCache.lobMeta(), DMS_LOB_META_LENGTH ) ;
+               }
             }
             else
             {
