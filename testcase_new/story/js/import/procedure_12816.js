@@ -12,7 +12,7 @@ function createImportFile()
 {
     try
     {
-        var file = new File( importFile ) ;
+        var file = new File( importFile, 0744 ) ;
         file.write( "1+2" ) ;
         file.close() ;
     }
@@ -27,7 +27,7 @@ function createImportOnceFile()
 {
     try
     {
-        var file = new File( importOnceFile ) ;
+        var file = new File( importOnceFile, 0744 ) ;
         file.write( "1*2" ) ;
         file.close() ;
     }
@@ -38,7 +38,6 @@ function createImportOnceFile()
     }  
 }
 
-/*
 // creat import importOnce file
 createImportFile() ;
 createImportOnceFile() ;
@@ -78,4 +77,3 @@ if( result !== 2 )
 // remove file   
 removeFile( importFile ) ;
 removeFile( importOnceFile ) ;
-*/
