@@ -583,8 +583,8 @@ namespace engine
          }
 
          virtual BSONObj _toBson ( const rtnParamList &parameters ) ;
-
-         BOOLEAN _parameterize ( rtnParamList &parameters ) ;
+         virtual void _toParamBson ( BSONObjBuilder &builder,
+                                     const rtnParamList &parameters ) ;
 
       protected:
          INT32 _execute( const CHAR *pFieldName, const BSONObj &obj,
@@ -612,17 +612,12 @@ namespace engine
 
          BOOLEAN _isNot() ;
 
-         OSS_INLINE virtual BOOLEAN _isFuzzyType ()
-         {
-            return FALSE ;
-         }
-
-         OSS_INLINE virtual INT8 _getFuzzyIndex ()
+         OSS_INLINE virtual INT8 _getFuzzyIndex () const
          {
             return -1 ;
          }
 
-         OSS_INLINE BOOLEAN _canSelfParameterize ()
+         OSS_INLINE BOOLEAN _canSelfParameterize () const
          {
             // No functions, no $field, no $x, no $return, no $expand
             return ( _funcList.size() == 0 &&
@@ -643,14 +638,6 @@ namespace engine
                                               mthEnabledParameterized(),
                                               _paramIndex,
                                               -1 ) ;
-         }
-
-         OSS_INLINE virtual void _toParamBson ( BSONObjBuilder &builder,
-                                                const rtnParamList &parameters )
-         {
-            SDB_ASSERT( !parameters.isEmpty(), "parameters is invalid" ) ;
-            builder.appendAs( parameters.getParam( _paramIndex ),
-                              getOperatorStr() ) ;
          }
 
       protected:
@@ -762,10 +749,9 @@ namespace engine
                                         _mthMatchTreeContext &context,
                                         BOOLEAN &result ) = 0 ;
 
-         OSS_INLINE virtual BOOLEAN _isFuzzyOpType ()
+         OSS_INLINE virtual INT8 _getFuzzyIndex () const
          {
-            return MTH_FUZZY_TYPE_FUZZY_EXC == _fuzzyOpType ||
-                   MTH_FUZZY_TYPE_FUZZY_INC == _fuzzyOpType ;
+            return ( _fuzzyOpType >= 0 ? _fuzzyOpType : -1 ) ;
          }
 
          OSS_INLINE virtual INT32 _addPredicate ( _rtnPredicateSet &predicateSet,
@@ -1233,12 +1219,6 @@ namespace engine
          virtual UINT32 getWeight() ;
          virtual BOOLEAN isTotalConverted() ;
          virtual void release() ;
-
-         void parameterize ( vector<BSONElement> &parameters )
-         {
-            // Do nothing
-            return ;
-         }
 
       protected:
          virtual INT32 _init( const CHAR *fieldName,

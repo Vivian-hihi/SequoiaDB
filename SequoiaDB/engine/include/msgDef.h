@@ -391,6 +391,11 @@
 #define FIELD_OP_VALUE_KEEP                  "keep"
 #define FIELD_OP_VALUE_REPLACE               "replace"
 
+// For parameters
+// Used internal: { $param : paramIndex, $ctype : canonicalType }
+#define FIELD_NAME_PARAM                     "$param"
+#define FIELD_NAME_CTYPE                     "$ctype"
+
 #define IXM_FIELD_NAME_KEY                   "key"
 #define IXM_FIELD_NAME_NAME                  "name"
 #define IXM_FIELD_NAME_UNIQUE                "unique"

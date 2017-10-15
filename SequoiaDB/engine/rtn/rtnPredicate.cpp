@@ -43,6 +43,7 @@
 #include <sstream>
 #include "mthCommon.hpp"
 #include "optCommon.hpp"
+#include "msgDef.hpp"
 #include "../bson/util/builder.h"
 #include <boost/noncopyable.hpp>
 
@@ -70,8 +71,7 @@ namespace engine
    BSONObj _rtnParamList::toBSON () const
    {
       BSONObjBuilder builder ;
-      BSONArrayBuilder subBuilder(
-                  builder.subarrayStart( RTN_PARAMETER_STR ) ) ;
+      BSONArrayBuilder subBuilder( builder.subarrayStart( FIELD_NAME_PARAM ) ) ;
       for ( INT8 i = 0 ; i < _paramNum ; i ++ )
       {
          subBuilder.append( _params[ i ]._param ) ;

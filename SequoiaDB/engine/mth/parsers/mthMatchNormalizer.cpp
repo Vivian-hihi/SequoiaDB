@@ -41,6 +41,7 @@
 #include "pdTrace.hpp"
 #include "mthTrace.hpp"
 #include "rtnCB.hpp"
+#include "msgDef.hpp"
 
 using namespace bson ;
 
@@ -294,17 +295,31 @@ namespace engine
             opName = _getFuzzyOpStr() ;
          }
 
-         // Generate $param field { $param : x, $type : y }
-         // 1. If it is not mix-compare mode, we need $type in the normalized
-         //    query, since the mix or max keys in predicates generated with
-         //    different data type will be different
+         // Generate $param field { $param : x, $ctype : y }
+         // 1. If it is not mix-compare mode, we need $ctype ( canonical type )
+         //    in the normalized query, since the mix or max keys in predicates
+         //    generated with different data type will be different
          // 2. If it is mix-compare mode, the $type could be ignore, since the
          //    mix or max keys are the same with different data type
          BSONObjBuilder paramBuilder( subBuilder.subobjStart( opName ) ) ;
-         paramBuilder.append( RTN_PARAMETER_STR, (INT32)_paramIndex ) ;
+         if ( -1 == _fuzzyIndex )
+         {
+            paramBuilder.append( FIELD_NAME_PARAM, (INT32)_paramIndex ) ;
+         }
+         else
+         {
+            // Generate $param field with fuzzy operator
+            // $param : [ paramIndex, fuzzyIndex ]
+            BSONArrayBuilder paramArrBuilder(
+                  paramBuilder.subarrayStart( FIELD_NAME_PARAM ) ) ;
+            paramArrBuilder.append( (INT32)_paramIndex ) ;
+            paramArrBuilder.append( (INT32)_fuzzyIndex ) ;
+            paramArrBuilder.done() ;
+         }
          if ( !config->_enableMixCmp )
          {
-            paramBuilder.append( MTH_OPERATOR_STR_TYPE, (INT32)_element.type() ) ;
+            paramBuilder.append( FIELD_NAME_CTYPE,
+                                 (INT32)_element.canonicalType() ) ;
          }
          paramBuilder.done() ;
       }

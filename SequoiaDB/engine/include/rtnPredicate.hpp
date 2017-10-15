@@ -51,10 +51,6 @@ using namespace std ;
 namespace engine
 {
 
-   // For parameters
-   // Used internal: { $param : paramIndex }
-   #define RTN_PARAMETER_STR                    "$param"
-
    // Each query could have no more than 16 parameters
    #define RTN_MAX_PARAM_NUM                    ( 16 )
 

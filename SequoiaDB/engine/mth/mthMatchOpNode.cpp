@@ -42,6 +42,7 @@
 #include "mthTrace.hpp"
 #include "mthDef.hpp"
 #include "mthCommon.hpp"
+#include "msgDef.hpp"
 
 using namespace bson ;
 
@@ -2682,24 +2683,7 @@ namespace engine
       }
       else if ( _paramIndex != -1 )
       {
-         if ( parameters.isEmpty() )
-         {
-            BSONObj paramObj ;
-            if ( mthEnabledMixCmp() )
-            {
-               paramObj = BSON( RTN_PARAMETER_STR << _paramIndex <<
-                                MTH_OPERATOR_STR_FIELD << _toMatch.type() ) ;
-            }
-            else
-            {
-               paramObj = BSON( RTN_PARAMETER_STR << _paramIndex ) ;
-            }
-            b.append( getOperatorStr(), paramObj ) ;
-         }
-         else
-         {
-            _toParamBson( b, parameters ) ;
-         }
+         _toParamBson( b, parameters ) ;
       }
       else
       {
@@ -2711,35 +2695,42 @@ namespace engine
       return builder.obj() ;
    }
 
-   BOOLEAN _mthMatchOpNode::_parameterize ( rtnParamList &parameters )
+   void _mthMatchOpNode::_toParamBson ( BSONObjBuilder &builder,
+                                        const rtnParamList &parameters )
    {
-      // The operator could be parameterized in below cases:
-      // 1. no functions, no field, ...
-      // 3. simple data type
-      if ( _canSelfParameterize() &&
-           parameters.canParameterize() )
-      {
-         switch ( _toMatch.type() )
-         {
-            case Bool :
-            case NumberDouble :
-            case NumberInt :
-            case NumberLong :
-            case NumberDecimal :
-            case Date :
-            case Timestamp :
-            case String :
-            case jstOID :
-            {
-               _paramIndex = parameters.addParam( _toMatch ) ;
-               return TRUE ;
-            }
-            default :
-               break ;
-         }
-      }
+      SDB_ASSERT( -1 != _paramIndex, "_paramIndex is invalid" ) ;
 
-      return FALSE ;
+      if ( parameters.isEmpty() )
+      {
+         // Generate $param fields { $param : x, $ctype : y }
+         BSONObjBuilder paramBuilder( builder.subobjStart( getOperatorStr() ) ) ;
+         if ( -1 == _getFuzzyIndex() )
+         {
+            paramBuilder.append( FIELD_NAME_PARAM, (INT32)_paramIndex ) ;
+         }
+         else
+         {
+            // Generate $param field with fuzzy operator
+            // $param : [ paramIndex, fuzzyIndex ]
+            BSONArrayBuilder paramArrBuilder(
+                  paramBuilder.subarrayStart( FIELD_NAME_PARAM ) ) ;
+            paramArrBuilder.append( (INT32)_paramIndex ) ;
+            paramArrBuilder.append( (INT32)_getFuzzyIndex() ) ;
+            paramArrBuilder.done() ;
+         }
+         if ( mthEnabledMixCmp() )
+         {
+            paramBuilder.append( FIELD_NAME_CTYPE,
+                                 (INT32)_toMatch.canonicalType() ) ;
+         }
+         paramBuilder.done() ;
+      }
+      else
+      {
+         // Bind the parameters into output BSON
+         builder.appendAs( parameters.getParam( _paramIndex ),
+                           getOperatorStr() ) ;
+      }
    }
 
    //*******************_mthMatchFuzzyOpNode  ******************
@@ -2887,11 +2878,28 @@ namespace engine
    void _mthMatchFuzzyOpNode::_toParamBson ( BSONObjBuilder &builder,
                                              const rtnParamList &parameters )
    {
-      SDB_ASSERT( !parameters.isEmpty(), "parameters is invalid" ) ;
-      const CHAR *opStr = NULL ;
-      if ( _fuzzyOpType >= 0 )
+      SDB_ASSERT( -1 != _paramIndex, "_paramIndex is invalid" ) ;
+
+      if ( parameters.isEmpty() )
       {
-         if ( parameters.getParam( _fuzzyOpType ).booleanSafe() )
+         return _mthMatchOpNode::_toParamBson( builder, parameters ) ;
+      }
+      else
+      {
+         const CHAR *opStr = NULL ;
+         if ( _fuzzyOpType >= 0 )
+         {
+            if ( parameters.getParam( _fuzzyOpType ).booleanSafe() )
+            {
+               opStr = _getIncOperatorStr() ;
+            }
+            else
+            {
+               opStr = _getExcOperatorStr() ;
+            }
+         }
+         else if ( MTH_FUZZY_TYPE_INCLUSIVE == _fuzzyOpType ||
+                   MTH_FUZZY_TYPE_FUZZY_INC == _fuzzyOpType )
          {
             opStr = _getIncOperatorStr() ;
          }
@@ -2899,17 +2907,8 @@ namespace engine
          {
             opStr = _getExcOperatorStr() ;
          }
+         builder.appendAs( parameters.getParam( _paramIndex ), opStr ) ;
       }
-      else if ( MTH_FUZZY_TYPE_INCLUSIVE == _fuzzyOpType ||
-                MTH_FUZZY_TYPE_FUZZY_INC == _fuzzyOpType )
-      {
-         opStr = _getIncOperatorStr() ;
-      }
-      else
-      {
-         opStr = _getExcOperatorStr() ;
-      }
-      builder.appendAs( parameters.getParam( _paramIndex ), opStr ) ;
    }
 
    //*******************_mthMatchOpNodeET***********************
