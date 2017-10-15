@@ -130,7 +130,8 @@ namespace engine
       return "" ;
    }
 
-   INT32 _coordNodeCMD2Phase::notifyCatalogChange2AllNodes( pmdEDUCB *cb )
+   INT32 _coordNodeCMD2Phase::notifyCatalogChange2AllNodes( pmdEDUCB *cb,
+                                                            BOOLEAN exceptSelf )
    {
       INT32 rc = SDB_OK ;
       INT32 rcTmp = SDB_OK ;
@@ -162,7 +163,7 @@ namespace engine
          goto error ;
       }
 
-      _pResource->updateGroupList( grpLst, cb, NULL, FALSE, TRUE, TRUE ) ;
+      _pResource->updateGroupList( grpLst, cb, NULL, FALSE, FALSE, TRUE ) ;
 
       // get nodes
       rc = coordGetGroupNodes( _pResource, cb, BSONObj(), NODE_SEL_ALL,
@@ -173,6 +174,13 @@ namespace engine
          PD_LOG( PDWARNING, "Not found any node" ) ;
          rc = SDB_CLS_NODE_NOT_EXIST ;
          goto error ;
+      }
+      if ( exceptSelf )
+      {
+         MsgRouteID routeID ;
+         routeID = pmdGetNodeID() ;
+         routeID.columns.serviceID = MSG_ROUTE_SHARD_SERVCIE ;
+         nodes.erase( routeID.value ) ;
       }
 
       /// send msg
@@ -2102,14 +2110,15 @@ namespace engine
 
       CoordGroupInfoPtr groupPtr ;
 
-      /// update group info, ignored error
+      // update group info on local node, in case that it isn't registered
+      // in the cluster. ignored error.
       _pResource->updateGroupInfo( pArgs->_targetName.c_str(),
                                    groupPtr, cb ) ;
 
       if ( 0 == pArgs->_targetName.compare( CATALOG_GROUPNAME ) )
       {
-         // notify all nodes
-         notifyCatalogChange2AllNodes( cb ) ;
+         // notify all nodes, except local node
+         notifyCatalogChange2AllNodes( cb, TRUE ) ;
       }
 
       PD_TRACE_EXIT ( COORD_CREATENODE_COMPLETE ) ;
@@ -2416,14 +2425,15 @@ namespace engine
 
       CoordGroupInfoPtr groupPtr ;
 
-      /// update group info, ignored error
+      // update group info on local node, in case that it isn't registered
+      // in the cluster. ignored error.
       _pResource->updateGroupInfo( pArgs->_targetName.c_str(),
                                    groupPtr, cb ) ;
 
       if ( 0 == pArgs->_targetName.compare( CATALOG_GROUPNAME ) )
       {
-         // notify all nodes
-         notifyCatalogChange2AllNodes( cb ) ;
+         // notify all nodes, except local node
+         notifyCatalogChange2AllNodes( cb, TRUE ) ;
       }
 
       PD_TRACE_EXIT ( COORD_REMOVENODE_DOCOMPLETE ) ;

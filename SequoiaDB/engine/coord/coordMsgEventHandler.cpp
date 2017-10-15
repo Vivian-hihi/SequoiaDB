@@ -72,34 +72,9 @@ namespace engine
       INT32 rc = SDB_OK ;
 
       // main cb msg
-      if ( header->TID == 0 )
+      if ( 0 == header->TID || ! IS_REPLY_TYPE( header->opCode ) )
       {
-         CHAR *pNewMsg = NULL ;
-         SDB_ASSERT( _pMainCB, "Main cb can't be NULL" ) ;
-         if ( !_pMainCB )
-         {
-            PD_LOG( PDERROR, "Main cb handler is null when recv "
-                    "msg[opCode:%d]", header->opCode ) ;
-            rc = SDB_SYS ;
-            goto error ;
-         }
-         pNewMsg = (CHAR*)SDB_OSS_MALLOC( header->messageLength + 1 ) ;
-         if ( !pNewMsg )
-         {
-            rc = SDB_OOM ;
-            PD_LOG( PDERROR, "Failed to alloc memory for msg[opCode: %d, "
-                    "len: %d], rc: %d", header->opCode, header->messageLength,
-                    rc ) ;
-            goto error ;
-         }
-
-         // copy msg
-         ossMemcpy( pNewMsg, msg, header->messageLength ) ;
-         pNewMsg[ header->messageLength ] = 0 ;
-         // push event
-         _pMainCB->postEvent( pmdEDUEvent( PMD_EDU_EVENT_MSG,
-                                           PMD_EDU_MEM_ALLOC,
-                                           pNewMsg, (UINT64)handle ) ) ;
+         _postMsg( handle, header, msg ) ;
       }
       // session msg
       else
@@ -120,11 +95,25 @@ namespace engine
       goto done ;
    }
 
-   void _coordMsgHandler::handleClose( const NET_HANDLE &handle, _MsgRouteID id )
+   void _coordMsgHandler::handleClose( const NET_HANDLE &handle,
+                                       _MsgRouteID id )
    {
       SDB_ASSERT( _pRSManager, "Remote session manager can't be NULL" ) ;
-
       _pRSManager->handleClose( handle, id ) ;
+
+      MsgOpReply msg ;
+      msg.contextID = -1 ;
+      msg.flags = SDB_NETWORK_CLOSE ;
+      msg.header.messageLength = sizeof( MsgOpReply ) ;
+      msg.header.opCode = MSG_COM_REMOTE_DISC ;
+      msg.header.requestID = 0 ;
+      msg.header.routeID.value = id.value ;
+      msg.header.TID = 0 ;
+      msg.numReturned = 0 ;
+      msg.startFrom = 0 ;
+
+      _postMsg( handle, (_MsgHeader *)&msg ) ;
+      PD_LOG ( PDDEBUG, "posting event handle close %u", (UINT32)handle ) ;
    }
 
    void _coordMsgHandler::handleConnect( const NET_HANDLE &handle,
@@ -134,6 +123,58 @@ namespace engine
       SDB_ASSERT( _pRSManager, "Remote session manager can't be NULL" ) ;
 
       _pRSManager->handleConnect( handle, id, isPositive ) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__COORDMSGHDL__POSTMSG, "_coordMsgHandler::_postMsg" )
+   INT32 _coordMsgHandler::_postMsg( const NET_HANDLE &handle,
+                                     const MsgHeader *header,
+                                     const CHAR *msg )
+   {
+      PD_TRACE_ENTRY ( SDB__COORDMSGHDL__POSTMSG );
+
+      CHAR *pNewMsg = NULL ;
+      INT32 rc = SDB_OK ;
+
+      SDB_ASSERT( _pMainCB, "Main cb can't be NULL" ) ;
+      if ( !_pMainCB )
+      {
+         PD_LOG( PDERROR, "Main cb handler is null when recv "
+                 "msg[opCode:%d]", header->opCode ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      pNewMsg = (CHAR*)SDB_OSS_MALLOC( header->messageLength + 1 ) ;
+      if ( !pNewMsg )
+      {
+         rc = SDB_OOM ;
+         PD_LOG( PDERROR, "Failed to alloc memory for msg[opCode: %d, "
+                 "len: %d], rc: %d", header->opCode, header->messageLength,
+                 rc ) ;
+         goto error ;
+      }
+
+      // copy msg
+      if ( NULL == msg )
+      {
+         ossMemcpy( (void *)pNewMsg, header, header->messageLength ) ;
+      }
+      else
+      {
+         ossMemcpy( pNewMsg, msg, header->messageLength ) ;
+      }
+      pNewMsg[ header->messageLength ] = 0 ;
+
+      // push event
+      _pMainCB->postEvent( pmdEDUEvent( PMD_EDU_EVENT_MSG,
+                                        PMD_EDU_MEM_ALLOC,
+                                        pNewMsg,
+                                        (UINT64)handle ) ) ;
+   done:
+      PD_TRACE_EXITRC ( SDB__COORDMSGHDL__POSTMSG, rc );
+      return rc ;
+   error:
+      goto done ;
    }
 
    /*
@@ -166,7 +207,7 @@ namespace engine
          return ;
       }
       PMD_EVENT_MESSAGES *eventMsg = (PMD_EVENT_MESSAGES *)
-         SDB_OSS_MALLOC( sizeof (PMD_EVENT_MESSAGES ) ) ;
+      SDB_OSS_MALLOC( sizeof (PMD_EVENT_MESSAGES ) ) ;
 
       if ( NULL == eventMsg )
       {

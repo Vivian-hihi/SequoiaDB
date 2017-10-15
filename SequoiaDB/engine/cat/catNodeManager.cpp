@@ -587,7 +587,8 @@ namespace engine
       }
       else if ( realRole != nodeRole )
       {
-         PD_LOG( PDERROR, "The register node role[%d] is unexpected[%d]",
+         PD_LOG( PDERROR,
+                 "The register node role[%d] is unexpected [%d]",
                  nodeRole, realRole ) ;
          rc = SDB_CAT_AUTH_FAILED ;
          goto error ;
@@ -692,13 +693,16 @@ namespace engine
       }
 
       /// repl
-      pSvcL = getServiceName( beSvcL, MSG_ROUTE_REPL_SERVICE ) ;
-      pSvcR = getServiceName( beSvcR, MSG_ROUTE_REPL_SERVICE ) ;
-      if ( 0 != ossStrcmp( pSvcL, pSvcR ) )
+      if ( role == SDB_ROLE_DATA || role == SDB_ROLE_CATALOG )
       {
-         PD_LOG( PDERROR, "Repl service is not the same" ) ;
-         rc = SDB_CLS_NODE_NOT_EXIST ;
-         goto error ;
+         pSvcL = getServiceName( beSvcL, MSG_ROUTE_REPL_SERVICE ) ;
+         pSvcR = getServiceName( beSvcR, MSG_ROUTE_REPL_SERVICE ) ;
+         if ( 0 != ossStrcmp( pSvcL, pSvcR ) )
+         {
+            PD_LOG( PDERROR, "Repl service is not the same" ) ;
+            rc = SDB_CLS_NODE_NOT_EXIST ;
+            goto error ;
+         }
       }
 
       /// cat

@@ -91,7 +91,6 @@ pmdFiles = [
       "pmd/pmdSyncMgr.cpp",
       "pmd/pmdEnv.cpp",
       "pmd/pmdOptionsMgr.cpp",
-      "pmd/pmdCoord.cpp",
       "pmd/pmdStartup.cpp",
       "pmd/pmdBackgroundJob.cpp",
       "pmd/pmdDpsTransRollback.cpp",
@@ -409,7 +408,8 @@ clsFiles = [
       "cls/clsReelection.cpp",
       "cls/clsDCMgr.cpp",
       "cls/clsLocalValidation.cpp",
-      "cls/clsStorageCheckJob.cpp"
+      "cls/clsStorageCheckJob.cpp",
+      "cls/clsRegAssit.cpp"
       ]
 
 dpsFiles = [

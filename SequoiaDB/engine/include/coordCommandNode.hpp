@@ -78,7 +78,8 @@ namespace engine
 
       protected:
 
-         INT32         notifyCatalogChange2AllNodes( pmdEDUCB *cb ) ;
+         INT32         notifyCatalogChange2AllNodes( pmdEDUCB *cb,
+                                             BOOLEAN exceptSelf = FALSE ) ;
 
       private:
          virtual AUDIT_OBJ_TYPE     _getAuditObjectType() const ;

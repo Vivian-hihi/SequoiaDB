@@ -38,6 +38,17 @@
 
 namespace engine
 {
+   #define PMD_ASYNC_NET_TIMEOUT_MS 4294967295
+
+   class asyncTimeoutHandler : public _netTimeoutHandler
+   {
+      public:
+         void handleTimeout( const UINT32 &millisec,
+                             const UINT32 &id )
+         {
+            return ;
+         }
+   } ;
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDASYNCNETEP, "pmdAsyncNetEntryPoint" )
    INT32 pmdAsyncNetEntryPoint ( pmdEDUCB *cb, void *pData )
@@ -47,6 +58,8 @@ namespace engine
       pmdEDUMgr *pEDUMgr = cb->getEDUMgr () ;
       _netRouteAgent *pRouteAgent = (_netRouteAgent *)pData;
       BOOLEAN hasReg = FALSE ;
+      asyncTimeoutHandler timeHandler ;
+      UINT32 timerid = 0 ;
 
       rc = pEDUMgr->activateEDU( cb ) ;
       if ( SDB_OK != rc )
@@ -55,6 +68,10 @@ namespace engine
                   cb->getType(), cb->getID() ) ;
          goto error ;
       }
+
+      rc = pRouteAgent->addTimer( PMD_ASYNC_NET_TIMEOUT_MS,
+                                  &timeHandler, timerid ) ;
+      PD_RC_CHECK( rc, PDERROR, "Add coord timer failed, rc: %d", rc ) ;
 
       //start run
       PD_LOG ( PDEVENT, "Run %s[Type: %d] ...", getEDUName( cb->getType() ),
@@ -80,6 +97,7 @@ namespace engine
    done:
       if ( hasReg )
       {
+         pRouteAgent->removeTimer( timerid ) ;
          pEDUMgr->deleteIOService ( pRouteAgent->ioservice() ) ;
       }
       PD_TRACE_EXITRC ( SDB_PMDASYNCNETEP, rc );

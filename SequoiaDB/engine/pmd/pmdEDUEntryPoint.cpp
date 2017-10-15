@@ -105,8 +105,11 @@ namespace engine
          ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_CATNETWORK, TRUE,
                                 pmdAsyncNetEntryPoint,
                                 "CatalogNetwork" ),
+         ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_COORDMGR, TRUE,
+                                pmdCBMgrEntryPoint,
+                                "CoordMgr" ),
          ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_COORDNETWORK, TRUE,
-                                pmdCoordNetWorkEntryPoint,
+                                pmdAsyncNetEntryPoint,
                                 "CoordNetwork" ),
          ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_DPSROLLBACK, TRUE,
                                 pmdDpsTransRollbackEntryPoint,
@@ -132,6 +135,10 @@ namespace engine
          ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_DBMONITOR, TRUE,
                                 pmdDBMonitorEntryPoint,
                                 "DBMonitor" ),
+
+         ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_RTNNETWORK, TRUE,
+                                pmdAsyncNetEntryPoint,
+                                "RtnNetwork" ),
 #if defined (_LINUX)
          ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_SIGNALTEST, TRUE,
                                 pmdSignalTestEntryPoint,

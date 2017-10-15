@@ -60,6 +60,10 @@ namespace engine
          virtual void  handleConnect( const NET_HANDLE &handle,
                                       _MsgRouteID id,
                                       BOOLEAN isPositive ) ;
+      protected:
+         INT32 _postMsg( const NET_HANDLE &handle,
+                         const MsgHeader *header,
+                         const CHAR *msg = NULL ) ;
 
       protected:
          _pmdRemoteSessionMgr                *_pRSManager ;

@@ -39,6 +39,8 @@
 #include "coordUtil.hpp"
 #include "pdTrace.hpp"
 #include "coordTrace.hpp"
+#include "pmdEnv.hpp"
+#include "msg.hpp"
 
 using namespace bson ;
 
@@ -70,18 +72,19 @@ namespace engine
 
       CoordGroupList groupLst ;
       SET_ROUTEID sendNodes ;
+      MsgRouteID routeID ;
       ROUTE_RC_MAP failedNodes ;
 
       pmdRemoteSession *pRemote     = _groupSession.getSession() ;
       pmdSubSession *pSub           = NULL ;
       SET_ROUTEID::iterator it ;
 
-      // local run msg
+      // run msg on local node, in case that it isn't registered in the cluster.
       rtnMsg( (MsgOpMsg *)pMsg ) ;
 
       // list all groups
       rc = _pResource->updateGroupList( groupLst, cb, NULL,
-                                        FALSE, TRUE, TRUE ) ;
+                                        FALSE, FALSE, TRUE ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get all group list, rc: %d", rc ) ;
 
       // get nodes
@@ -94,6 +97,12 @@ namespace engine
          rc = SDB_CLS_NODE_NOT_EXIST ;
          goto error ;
       }
+
+      // erase local node, because rtnMsg() has been executed on
+      // local node already
+      routeID = pmdGetNodeID() ;
+      routeID.columns.serviceID = MSG_ROUTE_SHARD_SERVCIE ;
+      sendNodes.erase( routeID.value ) ;
 
       /// clear
       _groupSession.clear() ;

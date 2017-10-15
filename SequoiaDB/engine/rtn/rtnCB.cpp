@@ -242,12 +242,12 @@ namespace engine
       {
          pmdEDUMgr *eduMgr = pmdGetKRCB()->getEDUMgr() ;
          EDUID eduID = PMD_INVALID_EDUID ;
-         // TODO: change the edu type.
-         rc = eduMgr->startEDU( EDU_TYPE_COORDNETWORK, (void *)_routeAgent,
+
+         rc = eduMgr->startEDU( EDU_TYPE_RTNNETWORK, (void *)_routeAgent,
                                 &eduID ) ;
          PD_RC_CHECK( rc, PDERROR, "Start external search network failed[ %d ]",
                       rc ) ;
-         eduMgr->regSystemEDU( EDU_TYPE_COORDNETWORK, eduID ) ;
+         eduMgr->regSystemEDU( EDU_TYPE_RTNNETWORK, eduID ) ;
          rc = eduMgr->waitUntil( eduID, PMD_EDU_RUNNING ) ;
          PD_RC_CHECK( rc, PDERROR, "Wait external search net active failed[ %d ]",
                       rc ) ;

@@ -45,6 +45,7 @@
 #include "clsTrace.hpp"
 #include "dpsOp2Record.hpp"
 #include "pmdStartup.hpp"
+#include "clsRegAssit.hpp"
 
 using namespace bson ;
 
@@ -493,8 +494,8 @@ namespace engine
    BEGIN_OBJ_MSG_MAP( _clsMgr, _pmdObjBase )
       ON_MSG ( MSG_CAT_REG_RES, _onCatRegisterRes )
       ON_MSG ( MSG_CAT_QUERY_TASK_RSP, _onCatQueryTaskRes )
-      ON_EVENT( PMD_EDU_EVENT_STEP_DOWN, _onStepDown )      
-      ON_EVENT( PMD_EDU_EVENT_STEP_UP, _onStepUp )      
+      ON_EVENT( PMD_EDU_EVENT_STEP_DOWN, _onStepDown )
+      ON_EVENT( PMD_EDU_EVENT_STEP_UP, _onStepUp )
       //ON_EVENT FUCTION MAP
    END_OBJ_MSG_MAP()
 
@@ -1432,83 +1433,16 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSMGR__SNDREGMSG );
-      pmdKRCB *pKRCB = pmdGetKRCB () ;
-      BSONObjBuilder bsonBuilder ;
-      const CHAR* hostName = pmdGetKRCB()->getHostName() ;
-
-      bsonBuilder.append ( CAT_TYPE_FIELD_NAME,  (INT32)(pKRCB->getDBRole()) ) ;
-      bsonBuilder.append ( CAT_HOST_FIELD_NAME, hostName ) ;
-      bsonBuilder.append ( PMD_OPTION_DBPATH, pKRCB->getDBPath() ) ;
-
-      BSONArrayBuilder subServiceBuild( bsonBuilder.subarrayStart(
-         CAT_SERVICE_FIELD_NAME ) ) ;
-
-      /// local
-      BSONObjBuilder subLocalBuild( subServiceBuild.subobjStart() ) ;
-      subLocalBuild.append ( CAT_SERVICE_TYPE_FIELD_NAME ,
-                            (INT32)MSG_ROUTE_LOCAL_SERVICE ) ;
-      subLocalBuild.append ( CAT_SERVICE_NAME_FIELD_NAME,
-                            pKRCB->getSvcname() ) ;
-      subLocalBuild.done() ;
-
-      /// repl
-      BSONObjBuilder subReplBuild( subServiceBuild.subobjStart() ) ;
-      subReplBuild.append ( CAT_SERVICE_TYPE_FIELD_NAME ,
-                            (INT32)_replServiceID ) ;
-      subReplBuild.append ( CAT_SERVICE_NAME_FIELD_NAME,
-                            _replServiceName ) ;
-      subReplBuild.done() ;
-
-      /// shard
-      BSONObjBuilder subShdBuild( subServiceBuild.subobjStart() ) ;
-      subShdBuild.append ( CAT_SERVICE_TYPE_FIELD_NAME ,
-                           (INT32)_shardServiceID) ;
-      subShdBuild.append ( CAT_SERVICE_NAME_FIELD_NAME,
-                           _shdServiceName) ;
-      subShdBuild.done() ;
-
-      /// cata
-      BSONObjBuilder subCataBuild( subServiceBuild.subobjStart() ) ;
-      subCataBuild.append ( CAT_SERVICE_TYPE_FIELD_NAME ,
-                            (INT32)MSG_ROUTE_CAT_SERVICE ) ;
-      subCataBuild.append ( CAT_SERVICE_NAME_FIELD_NAME,
-                            pKRCB->getOptionCB()->catService() ) ;
-      subCataBuild.done() ;
-
-      subServiceBuild.done() ;
-
-      // append IP address
-      ossIPInfo ipInfo ;
-      if ( ipInfo.getIPNum() > 0 )
-      {
-         BSONArrayBuilder subIPBuild( bsonBuilder.subarrayStart(
-            CAT_IP_FIELD_NAME ) ) ;
-
-         ossIP* ip = ipInfo.getIPs() ;
-         for ( INT32 i = ipInfo.getIPNum(); i > 0; i-- )
-         {
-            // skip loopback IP
-            if (0 != ossStrncmp( ip->ipAddr, OSS_LOOPBACK_IP,
-                                 ossStrlen(OSS_LOOPBACK_IP)) )
-            {
-               subIPBuild.append( ip->ipAddr ) ;
-            }
-            ip++ ;
-         }
-
-         // support 'localhost' and '127.0.0.1' for node's hostname
-         subIPBuild.append( OSS_LOOPBACK_IP ) ;
-         subIPBuild.append( OSS_LOCALHOST ) ;
-
-         subIPBuild.done() ;
-      }
-
-      BSONObj regObj = bsonBuilder.obj () ;
-      UINT32 length = regObj.objsize () + sizeof ( MsgCatRegisterReq ) ;
-      // free by end of the function
-      CHAR * buff = (CHAR *)SDB_OSS_MALLOC ( length ) ;
+      clsRegAssit regAssit ;
+      UINT32 length = 0 ;
+      CHAR *buff = NULL ;
       MsgCatRegisterReq *pReq = NULL ;
 
+      BSONObj regObj = regAssit.buildRequestObj () ;
+      length = regObj.objsize () + sizeof ( MsgCatRegisterReq ) ;
+
+      // free by end of the function
+      buff = (CHAR *)SDB_OSS_MALLOC ( length ) ;
       if ( buff == NULL )
       {
          PD_LOG ( PDERROR, "Failed to allocate memroy for register req" ) ;
@@ -1587,7 +1521,11 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSMGR__ONCATREGRES );
-      NodeID nodeID ;
+      UINT32 groupID = INVALID_GROUPID ;
+      UINT16 nodeID = INVALID_NODEID ;
+      const CHAR *hostname = NULL ;
+      NodeID routeID ;
+      clsRegAssit regAssit ;
 
       // have register succeed
       if ( _regTimerID == CLS_INVALID_TIMERID )
@@ -1607,54 +1545,46 @@ namespace engine
          goto error ;
       }
 
+      //get nodeid
+      rc = regAssit.extractResponseMsg ( msg ) ;
+      PD_RC_CHECK( rc, PDERROR, "Node register response error, rc: %d", rc ) ;
+      groupID = regAssit.getGroupID () ;
+      nodeID = regAssit.getNodeID () ;
+      hostname = regAssit.getHostname () ;
+
+      //Kill register timer
+      killTimer ( _regTimerID ) ;
+      _regTimerID = CLS_INVALID_TIMERID ;
+      _regFailedTimes = 0 ;
+
+      //Update the net route agent the local id
+      _selfNodeID.columns.groupID = groupID ;
+      _selfNodeID.columns.nodeID = nodeID ;
+      _shdObj.setNodeID( _selfNodeID ) ;
+      PD_LOG ( PDEVENT, "Register succeed, groupID:%u, nodeID:%u",
+               _selfNodeID.columns.groupID,
+               _selfNodeID.columns.nodeID ) ;
+
+      /*
+       * The node can be created by hostname or ip,
+       * so the actual 'HostName' maybe current host's name or ip address.
+       * Here we ensure the KRCB's HostName is consistent with catalog.
+       */
+      pmdGetKRCB()->setHostName( hostname ) ;
+
       {
-         //get nodeid
-         BSONObj object ( MSG_GET_INNER_REPLY_DATA(msg) ) ;
-         BSONElement gidEl = object.getField ( CAT_GROUPID_NAME ) ;
-         BSONElement nidEl = object.getField ( CAT_NODEID_NAME ) ;
-
-         if ( gidEl.type() != NumberInt || nidEl.type() != NumberInt )
-         {
-            rc = SDB_SYS ;
-            PD_LOG ( PDERROR, "Node register response error" ) ;
-            goto error ;
-         }
-
-         //Kill register timer
-         killTimer ( _regTimerID ) ;
-         _regTimerID = CLS_INVALID_TIMERID ;
-         _regFailedTimes = 0 ;
-
-         //Update the net route agent the local id
-         _selfNodeID.columns.groupID = (UINT32)gidEl.Int () ;
-         _selfNodeID.columns.nodeID = (UINT32)nidEl.Int () ;
-         _shdObj.setNodeID( _selfNodeID ) ;
-         PD_LOG ( PDEVENT, "Register succeed, groupID:%u, nodeID:%u",
-                  _selfNodeID.columns.groupID,
-                  _selfNodeID.columns.nodeID ) ;
-
-         BSONElement hostEle = object.getField ( CAT_HOST_FIELD_NAME ) ;
-         if ( hostEle.type() == String )
-         {
-            /*
-             * The node can be created by hostname or ip,
-             * so the actual 'HostName' maybe current host's name or ip address.
-             * Here we ensure the KRCB's HostName is consistent with catalog.
-             */
-            pmdGetKRCB()->setHostName( hostEle.String().c_str() ) ;
-         }
-
          /// update dc base info
+         BSONObj msgObject ( MSG_GET_INNER_REPLY_DATA( msg ) ) ;
          if ( msgIsInnerOpReply( msg ) &&
               msg->messageLength > (INT32)sizeof( MsgOpReply ) +
-              object.objsize() + 5 )
+              msgObject.objsize() + 5 )
          {
             MsgOpReply *pReply = ( MsgOpReply* )msg ;
             if ( pReply->numReturned > 1 )
             {
                clsDCBaseInfo *pInfo = _shdObj.getDCMgr()->getDCBaseInfo() ;
                BSONObj objDCInfo( ( const CHAR* )msg + sizeof( MsgOpReply ) +
-                                  ossAlign4( (UINT32)object.objsize() ) ) ;
+                                  ossAlign4( (UINT32)msgObject.objsize() ) ) ;
                _shdObj.getDCMgr()->updateDCBaseInfo( objDCInfo ) ;
 
                pmdGetKRCB()->setDBReadonly( pInfo->isReadonly() ) ;
@@ -1663,11 +1593,11 @@ namespace engine
          }
       }
 
-      nodeID.value = _selfNodeID.value ;
-      nodeID.columns.serviceID = _replServiceID ;
-      _replNetRtAgent.setLocalID ( nodeID ) ;
-      nodeID.columns.serviceID = _shardServiceID ;
-      _shardNetRtAgent.setLocalID ( nodeID ) ;
+      routeID.value = _selfNodeID.value ;
+      routeID.columns.serviceID = _replServiceID ;
+      _replNetRtAgent.setLocalID ( routeID ) ;
+      routeID.columns.serviceID = _shardServiceID ;
+      _shardNetRtAgent.setLocalID ( routeID ) ;
 
       // set global id
       pmdSetNodeID( _selfNodeID ) ;
