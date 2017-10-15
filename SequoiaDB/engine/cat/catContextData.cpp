@@ -888,8 +888,10 @@ namespace engine
 
                pUnlinkSubCLTask->addIgnoreRC( SDB_DMS_NOTEXIST ) ;
 
-               rc = catCollectionsInSameSpace ( clName.c_str(), clName.size(),
-                                                subCLName.c_str(), subCLName.size() ,
+               rc = rtnCollectionsInSameSpace ( clName.c_str(),
+                                                clName.size(),
+                                                subCLName.c_str(),
+                                                subCLName.size() ,
                                                 inSameSpace ) ;
                PD_RC_CHECK( rc, PDERROR,
                             "Failed to check whether main and sub collections "
@@ -929,8 +931,10 @@ namespace engine
 
                if ( externalMainCL.find( mainCLName ) == externalMainCL.end() )
                {
-                  rc = catCollectionsInSameSpace ( mainCLName.c_str(), mainCLName.size(),
-                                                   clName.c_str(), clName.size() ,
+                  rc = rtnCollectionsInSameSpace ( mainCLName.c_str(),
+                                                   mainCLName.size(),
+                                                   clName.c_str(),
+                                                   clName.size() ,
                                                    inSameSpace ) ;
                   PD_RC_CHECK( rc, PDERROR,
                                "Failed to check whether main and sub collections "
@@ -1091,7 +1095,7 @@ namespace engine
                 _targetName.c_str() ) ;
 
       // split collection full name to csname and clname
-      rc = catResolveCollectionName( _targetName.c_str(),
+      rc = rtnResolveCollectionName( _targetName.c_str(),
                                      _targetName.size(),
                                      szSpace, DMS_COLLECTION_SPACE_NAME_SZ,
                                      szCollection, DMS_COLLECTION_NAME_SZ );

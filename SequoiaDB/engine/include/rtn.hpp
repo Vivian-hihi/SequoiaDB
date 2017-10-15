@@ -566,6 +566,23 @@ namespace engine
                             const CHAR *pIndexName,
                             _dpsLogWrapper *dpsCB ) ;
 
+   /* Split collection full name to cs name and cl name */
+   INT32 rtnResolveCollectionName( const CHAR *pInput, UINT32 inputLen,
+                                   CHAR *pSpaceName, UINT32 spaceNameSize,
+                                   CHAR *pCollectionName,
+                                   UINT32 collectionNameSize ) ;
+
+   /* Split collection full name to find cs name */
+   INT32 rtnResolveCollectionSpaceName ( const CHAR *pInput,
+                                         UINT32 inputLen,
+                                         CHAR *pSpaceName,
+                                         UINT32 spaceNameSize ) ;
+
+   /* Check whether collections in the same space */
+   INT32 rtnCollectionsInSameSpace ( const CHAR *pCLNameA, UINT32 lengthA,
+                                     const CHAR *pCLNameB, UINT32 lengthB,
+                                     BOOLEAN &inSameSpace ) ;
+
 }
 
 #endif

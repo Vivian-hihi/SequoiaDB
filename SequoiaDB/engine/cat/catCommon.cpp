@@ -232,77 +232,6 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATRESOLVECOLLECTIONNAME, "catResolveCollectionName" )
-   INT32 catResolveCollectionName ( const CHAR *pInput, UINT32 inputLen,
-                                    CHAR *pSpaceName, UINT32 spaceNameSize,
-                                    CHAR *pCollectionName,
-                                    UINT32 collectionNameSize )
-   {
-      INT32 rc = SDB_OK ;
-      UINT32 curPos = 0 ;
-      UINT32 i = 0 ;
-      PD_TRACE_ENTRY ( SDB_CATRESOLVECOLLECTIONNAME ) ;
-      while ( pInput[curPos] != '.' )
-      {
-         if ( curPos >= inputLen || i >= spaceNameSize )
-         {
-            rc = SDB_INVALIDARG ;
-            goto error ;
-         }
-         pSpaceName[ i++ ] = pInput[ curPos++ ] ;
-      }
-      pSpaceName[i] = '\0' ;
-
-      i = 0 ;
-      ++curPos ;
-      while ( curPos < inputLen )
-      {
-         if ( i >= collectionNameSize )
-         {
-            rc = SDB_INVALIDARG ;
-            goto error ;
-         }
-         pCollectionName[ i++ ] = pInput[ curPos++ ] ;
-      }
-      pCollectionName[i] = '\0' ;
-
-   done:
-      PD_TRACE_EXITRC ( SDB_CATRESOLVECOLLECTIONNAME, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATRESOLVECOLLECTIONSPACENAME, "catResolveCollectionSpaceName" )
-   INT32 catResolveCollectionSpaceName ( const CHAR *pInput,
-                                         UINT32 inputLen,
-                                         CHAR *pSpaceName,
-                                         UINT32 spaceNameSize )
-   {
-      INT32 rc = SDB_OK ;
-      UINT32 curPos = 0 ;
-      UINT32 i = 0 ;
-
-      PD_TRACE_ENTRY ( SDB_CATRESOLVECOLLECTIONSPACENAME ) ;
-      while ( pInput[curPos] != '.' )
-      {
-         if ( curPos >= inputLen || i >= spaceNameSize )
-         {
-            rc = SDB_INVALIDARG ;
-            goto error ;
-         }
-         pSpaceName[ i++ ] = pInput[ curPos++ ] ;
-      }
-      pSpaceName[i] = '\0' ;
-
-   done:
-      PD_TRACE_EXITRC ( SDB_CATRESOLVECOLLECTIONSPACENAME, rc ) ;
-      return rc ;
-
-   error:
-      goto done ;
-   }
-
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATQUERYANDGETMORE, "catQueryAndGetMore" )
    INT32 catQueryAndGetMore ( MsgOpReply **ppReply,
                               const CHAR *collectionName,
@@ -1012,7 +941,7 @@ namespace engine
 
       PD_TRACE_ENTRY ( SDB_CATDELCLFROMCS ) ;
 
-      rc = catResolveCollectionName( clFullName.c_str(), clFullName.size(),
+      rc = rtnResolveCollectionName( clFullName.c_str(), clFullName.size(),
                                      szCSName, DMS_COLLECTION_SPACE_NAME_SZ,
                                      szCLName, DMS_COLLECTION_NAME_SZ ) ;
       PD_RC_CHECK( rc, PDWARNING, "Resolve collection name[%s] failed, rc: %d",
@@ -2443,39 +2372,6 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCLINSAMECS, "catCollectionsInSameSpace" )
-   INT32 catCollectionsInSameSpace ( const CHAR *pCLName_1, UINT32 length_1,
-                                     const CHAR *pCLName_2, UINT32 length_2,
-                                     BOOLEAN &inSameSpace )
-   {
-      INT32 rc = SDB_OK ;
-
-      PD_TRACE_ENTRY ( SDB_CATCLINSAMECS ) ;
-
-      CHAR csName_1[ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] = {0} ;
-      CHAR csName_2[ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] = {0} ;
-
-      rc = catResolveCollectionSpaceName( pCLName_1, length_1,
-                                          csName_1, DMS_COLLECTION_SPACE_NAME_SZ ) ;
-      if ( SDB_OK != rc )
-      {
-         goto error ;
-      }
-      rc = catResolveCollectionSpaceName( pCLName_2, length_2,
-                                          csName_2, DMS_COLLECTION_SPACE_NAME_SZ ) ;
-      if ( SDB_OK != rc )
-      {
-         goto error ;
-      }
-      inSameSpace = ( ossStrcmp(csName_1, csName_2) == 0 ) ;
-
-   done :
-      PD_TRACE_EXITRC ( SDB_CATCLINSAMECS, rc ) ;
-      return rc ;
-   error :
-      goto done ;
-   }
-
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATGETANDLOCKDOMAIN, "catGetAndLockDomain" )
    INT32 catGetAndLockDomain ( const std::string &domainName, BSONObj &boDomain,
                                _pmdEDUCB *cb,
@@ -2962,7 +2858,7 @@ namespace engine
       CHAR szCollection[ DMS_COLLECTION_NAME_SZ + 1 ] = {0} ;
 
       // split collection full name to csname and clname
-      rc = catResolveCollectionName( clName.c_str(),
+      rc = rtnResolveCollectionName( clName.c_str(),
                                      clName.size(),
                                      szSpace, DMS_COLLECTION_SPACE_NAME_SZ,
                                      szCollection, DMS_COLLECTION_NAME_SZ ) ;
@@ -3307,7 +3203,7 @@ namespace engine
             ++ iter )
       {
          string &subCLName = (*iter) ;
-         rc = catResolveCollectionName( subCLName.c_str(), subCLName.size(),
+         rc = rtnResolveCollectionName( subCLName.c_str(), subCLName.size(),
                                         szCSName, DMS_COLLECTION_SPACE_NAME_SZ,
                                         szCLName, DMS_COLLECTION_NAME_SZ ) ;
          PD_RC_CHECK( rc, PDWARNING,

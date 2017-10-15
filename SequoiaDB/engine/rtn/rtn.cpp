@@ -1697,5 +1697,109 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNRESOLVECOLLECTIONNAME, "rtnResolveCollectionName" )
+   INT32 rtnResolveCollectionName ( const CHAR *pInput, UINT32 inputLen,
+                                    CHAR *pSpaceName, UINT32 spaceNameSize,
+                                    CHAR *pCollectionName,
+                                    UINT32 collectionNameSize )
+   {
+      INT32 rc = SDB_OK ;
+      UINT32 curPos = 0 ;
+      UINT32 i = 0 ;
+      PD_TRACE_ENTRY ( SDB_RTNRESOLVECOLLECTIONNAME ) ;
+      while ( pInput[curPos] != '.' )
+      {
+         if ( curPos >= inputLen || i >= spaceNameSize )
+         {
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         pSpaceName[ i++ ] = pInput[ curPos++ ] ;
+      }
+      pSpaceName[i] = '\0' ;
+
+      i = 0 ;
+      ++curPos ;
+      while ( curPos < inputLen )
+      {
+         if ( i >= collectionNameSize )
+         {
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         pCollectionName[ i++ ] = pInput[ curPos++ ] ;
+      }
+      pCollectionName[i] = '\0' ;
+
+   done:
+      PD_TRACE_EXITRC ( SDB_RTNRESOLVECOLLECTIONNAME, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNRESOLVECOLLECTIONSPACENAME, "rtnResolveCollectionSpaceName" )
+   INT32 rtnResolveCollectionSpaceName ( const CHAR *pInput,
+                                         UINT32 inputLen,
+                                         CHAR *pSpaceName,
+                                         UINT32 spaceNameSize )
+   {
+      INT32 rc = SDB_OK ;
+      UINT32 curPos = 0 ;
+      UINT32 i = 0 ;
+
+      PD_TRACE_ENTRY ( SDB_RTNRESOLVECOLLECTIONSPACENAME ) ;
+      while ( pInput[curPos] != '.' )
+      {
+         if ( curPos >= inputLen || i >= spaceNameSize )
+         {
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         pSpaceName[ i++ ] = pInput[ curPos++ ] ;
+      }
+      pSpaceName[i] = '\0' ;
+
+   done:
+      PD_TRACE_EXITRC ( SDB_RTNRESOLVECOLLECTIONSPACENAME, rc ) ;
+      return rc ;
+
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCLINSAMECS, "rtnCollectionsInSameSpace" )
+   INT32 rtnCollectionsInSameSpace ( const CHAR *pCLNameA, UINT32 lengthA,
+                                     const CHAR *pCLNameB, UINT32 lengthB,
+                                     BOOLEAN &inSameSpace )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( SDB_RTNCLINSAMECS ) ;
+
+      CHAR csNameA[ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] = {0} ;
+      CHAR csNameB[ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] = {0} ;
+
+      rc = rtnResolveCollectionSpaceName( pCLNameA, lengthA, csNameA,
+                                          DMS_COLLECTION_SPACE_NAME_SZ ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+      rc = rtnResolveCollectionSpaceName( pCLNameB, lengthB, csNameB,
+                                          DMS_COLLECTION_SPACE_NAME_SZ ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+      inSameSpace = ( ossStrcmp( csNameA, csNameB ) == 0 ) ;
+
+   done :
+      PD_TRACE_EXITRC ( SDB_RTNCLINSAMECS, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
 }
 
