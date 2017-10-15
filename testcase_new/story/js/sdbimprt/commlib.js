@@ -41,13 +41,15 @@ function getCoordAdrr()
 {
    println("\n---Begin to get coord address.");
    
-   var tmpInfo = db.exec("select NodeName from $SNAPSHOT_SYSTEM where GroupName='SYSCoord'")
-                   .current().toObj()["ErrNodes"];
    var nodeArray = [];
-   for( i = 0; i < tmpInfo.length; i++ )
+   var rc = db.exec("select NodeName from $SNAPSHOT_SYSTEM where GroupName='SYSCoord'")
+   while( rc.next() )
    {
-      nodeInfo = tmpInfo[i]["NodeName"];
-      nodeArray.push( nodeInfo );
+      var nodeName = rc.current().toObj().NodeName;
+      if( nodeName !== undefined )
+      {
+         nodeArray.push( nodeName );
+      }
    }
    return nodeArray;
 }
