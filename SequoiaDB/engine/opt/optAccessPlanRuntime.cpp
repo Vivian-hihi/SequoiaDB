@@ -73,6 +73,7 @@ namespace engine
    : _mthMatchRuntimeHolder()
    {
       _plan = NULL ;
+      _isNewPlan = FALSE ;
       _ownedPlanInfo = FALSE ;
       _planInfo = NULL ;
    }
@@ -86,6 +87,7 @@ namespace engine
    {
       deleteMatchRuntime() ;
       SAFE_OSS_DELETE( _planInfo ) ;
+      _isNewPlan = FALSE ;
       releasePlan() ;
    }
 

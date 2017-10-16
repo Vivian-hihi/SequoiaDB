@@ -122,7 +122,6 @@ namespace engine
 
    void _optAccessPlan::toBSON ( BSONObjBuilder &builder ) const
    {
-      builder.appendBool( OPT_FIELD_IS_CACHED, isCached() ) ;
       builder.append( OPT_FIELD_CACHELEVEL, _key.getCacheLevelName() ) ;
       builder.append( OPT_FIELD_HASH_CODE, getKeyCode() ) ;
       builder.append( OPT_FIELD_NORMAIZED_MATCH,

@@ -119,7 +119,7 @@ namespace engine
          {
             // The plan is reused, increase the reference count
             planRuntime->_plan->incRefCount() ;
-            setPlan( planRuntime->_plan ) ;
+            setPlan( planRuntime->_plan, planRuntime->_isNewPlan ) ;
             setMatchRuntime( planRuntime->getMatchRuntime() ) ;
          }
 
@@ -166,9 +166,10 @@ namespace engine
             return getMatchRuntime()->getParameters() ;
          }
 
-         OSS_INLINE void setPlan ( optAccessPlan *plan )
+         OSS_INLINE void setPlan ( optAccessPlan *plan, BOOLEAN isNewPlan )
          {
             _plan = plan ;
+            _isNewPlan = isNewPlan ;
          }
 
          INT32 bindParamPlan ( mthMatchHelper &matchHelper,
@@ -180,6 +181,11 @@ namespace engine
          }
 
          void releasePlan () ;
+
+         OSS_INLINE BOOLEAN isNewPlan () const
+         {
+            return _isNewPlan ;
+         }
 
          OSS_INLINE optScanType getScanType () const
          {
@@ -249,7 +255,11 @@ namespace engine
          }
 
       protected :
+         // Pointer to the access plan
          optAccessPlan *         _plan ;
+
+         // Mark the plan is new created or got from cache
+         BOOLEAN                 _isNewPlan ;
 
          // Used for main CL plan, bind sub-collection and index
          BOOLEAN                 _ownedPlanInfo ;

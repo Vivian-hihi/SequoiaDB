@@ -154,7 +154,10 @@ namespace engine
       OPT_PLAN_FUZZYOPTR
    } ;
 
-   #define OPT_FIELD_IS_CACHED            "Cached"
+   #define OPT_FIELD_CACHE_STATUS         "CacheStatus"
+   #define OPT_CACHE_STATUS_NOCACHE       "NoCache"
+   #define OPT_CACHE_STATUS_NEWCACHE      "NewCache"
+   #define OPT_CACHE_STATUS_HITCACHE      "HitCache"
    #define OPT_FIELD_HASH_CODE            "HashCode"
    #define OPT_FIELD_REFERENCE_COUNT      "RefCount"
    #define OPT_FIELD_NORMAIZED_MATCH      "NormalizedQuery"

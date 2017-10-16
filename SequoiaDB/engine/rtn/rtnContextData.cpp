@@ -2206,6 +2206,20 @@ namespace engine
       if ( _needDetail )
       {
          BSONObjBuilder subBuilder( _builder.subobjStart( FIELD_NAME_DETAIL ) ) ;
+
+         if ( planRuntime->getPlan()->isCached() )
+         {
+            subBuilder.append( OPT_FIELD_CACHE_STATUS,
+                               planRuntime->isNewPlan() ?
+                               OPT_CACHE_STATUS_NEWCACHE :
+                               OPT_CACHE_STATUS_HITCACHE ) ;
+         }
+         else
+         {
+            subBuilder.append( OPT_FIELD_CACHE_STATUS,
+                               OPT_CACHE_STATUS_NOCACHE ) ;
+         }
+
          planRuntime->getPlan()->toBSON( subBuilder ) ;
          if ( !planRuntime->getParameters().isEmpty() )
          {

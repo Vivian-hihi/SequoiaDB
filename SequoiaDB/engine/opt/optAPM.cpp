@@ -1413,7 +1413,7 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Failed to create access plan, rc: %d",
                       rc ) ;
 
-         planRuntime.setPlan( pPlan ) ;
+         planRuntime.setPlan( pPlan, TRUE ) ;
       }
       else
       {
@@ -1438,7 +1438,7 @@ namespace engine
          }
          else
          {
-            planRuntime.setPlan( pPlan ) ;
+            planRuntime.setPlan( pPlan, FALSE ) ;
          }
       }
 
@@ -1549,7 +1549,7 @@ namespace engine
             else
             {
                // Set the plan
-               planRuntime.setPlan( pPlan ) ;
+               planRuntime.setPlan( pPlan, FALSE ) ;
             }
          }
       }
