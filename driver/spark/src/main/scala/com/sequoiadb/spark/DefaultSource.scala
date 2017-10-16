@@ -62,11 +62,13 @@ class DefaultSource extends DataSourceRegister
                                 data: DataFrame): BaseRelation = {
         val config = SdbConfig(parameters)
 
+        // if it return true, that means we should write the data into collection
         if (isCollectionWritable(config, mode)) {
-            // if it return true, that means we should write the data into collection
+            // get schema for execution
+            val schema = data.schema
             data.foreachPartition(it => {
                 // always write through coord node which specified in config
-                new SdbWriter(config).write(it, data.schema)
+                new SdbWriter(config).write(it, schema)
             })
         }
 
