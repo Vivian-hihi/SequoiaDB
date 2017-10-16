@@ -1086,6 +1086,31 @@ namespace engine
       return result ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTPARAMACPLAN_CHKSAVEDPARAM, "_optParamAccessPlan::checkSavedParam" )
+   BOOLEAN _optParamAccessPlan::checkSavedParam ( const optAccessPlanKey &key )
+   {
+      BOOLEAN res = FALSE ;
+
+      PD_TRACE_ENTRY( SDB__OPTPARAMACPLAN_CHKSAVEDPARAM ) ;
+
+      UINT32 savedCount = _paramValidCount.peek() ;
+
+      savedCount = OSS_MIN( OPT_PARAM_VALID_PLAN_NUM, savedCount ) ;
+
+      for ( UINT32 i = 0 ; i < savedCount ; i++ )
+      {
+         if ( key.getQuery().shallowEqual( _records[ i ]._query ) )
+         {
+            res = TRUE ;
+            break ;
+         }
+      }
+
+      PD_TRACE_EXIT( SDB__OPTPARAMACPLAN_CHKSAVEDPARAM ) ;
+
+      return res ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTPARAMACPLAN_MARKINVALID, "_optParamAccessPlan::markParamInvalid" )
    INT32 _optParamAccessPlan::markParamInvalid ( dmsMBContext *mbContext )
    {

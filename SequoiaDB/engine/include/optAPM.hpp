@@ -476,7 +476,7 @@ namespace engine
                                     optAccessPlanKey &planKey,
                                     optAccessPlanRuntime &planRuntime,
                                     mthMatchHelper &matchHelper,
-                                    optGeneralAccessPlan *plan ) ;
+                                    optParamAccessPlan *plan ) ;
 
          // Helpers for main-collection plans
          INT32 _createMainCLPlan ( optAccessPlanKey &planKey,

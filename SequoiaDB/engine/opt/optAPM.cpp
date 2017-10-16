@@ -1419,9 +1419,12 @@ namespace engine
       {
          if ( pPlan->getCacheLevel() >= OPT_PLAN_PARAMETERIZED )
          {
+            optParamAccessPlan *paramPlan = dynamic_cast<optParamAccessPlan *>( pPlan ) ;
+            SDB_ASSERT( paramPlan, "paramPlan is invalid" ) ;
+
             // Plan is parameterized, bind the parameters
             rc = _validateParamPlan( su, mbContext, planKey, planRuntime,
-                                     matchHelper, pPlan ) ;
+                                     matchHelper, paramPlan ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to validate parameterized plan, "
                          "rc: %d", rc ) ;
          }
@@ -1780,7 +1783,7 @@ namespace engine
                                                      optAccessPlanKey &planKey,
                                                      optAccessPlanRuntime &planRuntime,
                                                      mthMatchHelper &matchHelper,
-                                                     optGeneralAccessPlan *plan )
+                                                     optParamAccessPlan *plan )
    {
       INT32 rc = SDB_OK ;
 
@@ -1794,7 +1797,7 @@ namespace engine
 
       // access plan is parameterized validated or has the same original query
       if ( plan->isParamValid() ||
-           planKey.getQuery().shallowEqual( plan->getKey().getQuery() ) )
+           plan->checkSavedParam( planKey ) )
       {
          rc = planRuntime.bindParamPlan( matchHelper, plan ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to bind parameterized plan, rc: %d",

@@ -459,6 +459,8 @@ namespace engine
 
          virtual BOOLEAN validateParameterized ( const _optAccessPlan &plan ) ;
 
+         virtual BOOLEAN checkSavedParam ( const optAccessPlanKey &key ) ;
+
          virtual INT32 markParamInvalid ( dmsMBContext *mbContext ) ;
 
          virtual INT32 bindMatchRuntime ( mthMatchRuntime *matchRuntime ) ;
