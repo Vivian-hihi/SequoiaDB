@@ -403,7 +403,7 @@ class DBLobImpl implements DBLob {
      * @param seekType SDB_LOB_SEEK_SET/SDB_LOB_SEEK_CUR/SDB_LOB_SEEK_END
      * @throws BaseException.
      * @fn seek(long size, int seekType)
-     * @brief change the read position of the lob. The new position is
+     * @brief change the read or write position of the lob. The new position is
      * obtained by adding <code>size</code> to the position
      * specified by <code>seekType</code>. If <code>seekType</code>
      * is set to SDB_LOB_SEEK_SET, SDB_LOB_SEEK_CUR, or SDB_LOB_SEEK_END,
