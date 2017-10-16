@@ -97,8 +97,8 @@ public class ClusterManager7072 extends SdbTestBase{
 		try{
 			dataRGAdd.createNode(coordIP, dataPortAdd1, dataPathAdd1, dataConfigue );
 			Assert.fail("expect result need throw an error but not.");
-		}catch(BaseException e){
-			if(-157 != e.getErrorCode()){
+		}catch(BaseException e){			
+			if(-145 != e.getErrorCode()){
 			Assert.assertTrue(false,"create node, errMsg:" + e.getMessage());
 			}
 		}
