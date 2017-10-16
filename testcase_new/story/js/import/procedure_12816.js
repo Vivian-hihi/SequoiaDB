@@ -12,6 +12,8 @@ function createImportFile()
 {
     try
     {
+        var cmd = new Cmd() ;
+        cmd.run( "rm -rf " + importFile ) ;
         var file = new File( importFile, 0744 ) ;
         file.write( "1+2" ) ;
         file.close() ;
@@ -27,6 +29,8 @@ function createImportOnceFile()
 {
     try
     {
+        var cmd = new Cmd() ;
+        cmd.run( "rm -rf " + importOnceFile ) ;
         var file = new File( importOnceFile, 0744 ) ;
         file.write( "1*2" ) ;
         file.close() ;
