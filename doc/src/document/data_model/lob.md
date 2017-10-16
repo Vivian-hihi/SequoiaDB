@@ -12,12 +12,21 @@ LOB 记录的存储格式：
 
 目前 LOB 的存储格式为二进制类型。
 
-##支持的操作##
+##功能##
+
+支持LOB的顺序读写和随机读写，支持LOB的打开读操作和打开写操作，支持并发读和并发写。
+
+- 在创建LOB时，LOB对象不可读，也不可删除。
+- 在打开读LOB时，LOB对象不可写，也不可删除，可以并发读。
+- 在打开写LOB时，LOB对象不可读，也不可删除，可以并发写。并发写时需要按写入的数据段加锁并seek到加锁的数据段后写入数据，可以覆盖原有数据写入。并发锁定的数据段不能重叠。可查看各驱动API的lock和lockAndSeek接口。
+- 在删除LOB时，LOB对象不可读写。
+
+##SequoiaDB Shell支持的操作##
 
 | 操作 | 参见 | 备注 |
 | ---- | ---- | ---- |
 | 创建 | [SdbCollection.putLob()](reference/Sequoiadb_command/SdbCollection/putLob.md) | 向集合中创建一个 LOB 记录。LOB 记录一旦创建完毕，其内容无法再做更改。 |
-| 读取 | [SdbCollection.getLob()](reference/Sequoiadb_command/SdbCollection/getLob.md) | 从集合中读取某个 LOB 记录。另外，[C API](driver/c_driver/c_api.md) 中提供对 LOB 记录的 seek 操作。 |
+| 读取 | [SdbCollection.getLob()](reference/Sequoiadb_command/SdbCollection/getLob.md) | 从集合中读取某个 LOB 记录。驱动中提供对 LOB 记录的 seek 操作。 |
 | 删除 | [SdbCollection.deleteLob()](reference/Sequoiadb_command/SdbCollection/deleteLob.md) | 删除集合中的某个 LOB 对象。 |
 | 列表 | [SdbCollection.listLobs()](reference/Sequoiadb_command/SdbCollection/listLobs.md) | 列出集合中所有 LOB 对象。 |
 
