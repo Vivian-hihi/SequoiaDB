@@ -42,42 +42,53 @@ function createImportOnceFile()
     }  
 }
 
-// creat import importOnce file
-createImportFile() ;
-createImportOnceFile() ;
+function main()
+{
+    if( commIsStandalone( db ) )
+    {
+        println( "Run mode is Standalone, cannot use procedure" ) ;
+        return ;
+    }
 
-// create procedure to import file and test
-try
-{
-    db.createProcedure( function testImport( file ) { return import( file ) } ) ;
-    var result = db.eval( "testImport( \"" + importFile + "\" )" ) ;
-    db.removeProcedure( "testImport" ) ;
-}
-catch( e )
-{
-    throw buildException( null, null, "test import in procedure", 0, e ) ;    
-}
-if( result !== 3 )
-{
-    throw buildException( null, null, "test procedure result", 3, result ) ;
+    // creat import importOnce file
+    createImportFile() ;
+    createImportOnceFile() ;
+
+    // create procedure to import file and test
+    try
+    {
+        db.createProcedure( function testImport( file ) { return import( file ) } ) ;
+        var result = db.eval( "testImport( \"" + importFile + "\" )" ) ;
+        db.removeProcedure( "testImport" ) ;
+    }
+    catch( e )
+    {
+        throw buildException( null, null, "test import in procedure", 0, e ) ;    
+    }
+    if( result !== 3 )
+    {
+        throw buildException( null, null, "test procedure result", 3, result ) ;
+    }
+
+    // create procedure to importOnce file and test
+    try
+    {
+        db.createProcedure( function testImportOnce( file ) { return importOnce( file ) } ) ;
+        var result = db.eval( "testImportOnce( \"" + importOnceFile + "\" )" ) ;
+        db.removeProcedure( "testImportOnce" ) ;
+    }
+    catch( e )
+    {
+        throw buildException( null, null, "test importOnce in procedure", 0, e ) ;    
+    }
+    if( result !== 2 )
+    {
+        throw buildException( null, null, "test procedure result", 2, result ) ;
+    }
+
+    // remove file   
+    removeFile( importFile ) ;
+    removeFile( importOnceFile ) ;
 }
 
-// create procedure to importOnce file and test
-try
-{
-    db.createProcedure( function testImportOnce( file ) { return importOnce( file ) } ) ;
-    var result = db.eval( "testImportOnce( \"" + importOnceFile + "\" )" ) ;
-    db.removeProcedure( "testImportOnce" ) ;
-}
-catch( e )
-{
-    throw buildException( null, null, "test importOnce in procedure", 0, e ) ;    
-}
-if( result !== 2 )
-{
-    throw buildException( null, null, "test procedure result", 2, result ) ;
-}
-
-// remove file   
-removeFile( importFile ) ;
-removeFile( importOnceFile ) ;
+main()
