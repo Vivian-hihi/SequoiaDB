@@ -127,6 +127,7 @@ public class Ssh {
         try {
             channel = session.openChannel("exec");
             ((ChannelExec) channel).setCommand(command);
+            channel.setInputStream( null ) ;
             getResult(channel, CHANNEL_CONNECT_TIMEOUT);
             if (exitStatus != 0) {
                 throw new ReliabilityException("ssh failed to execute commond '" + command
@@ -154,6 +155,7 @@ public class Ssh {
         try {
             channel = session.openChannel("exec");
             ((ChannelExec) channel).setCommand(command);
+            channel.setInputStream( null ) ;
             channel.connect(CHANNEL_CONNECT_TIMEOUT);
             backgroundCMD.put(channel.getId(), channel);
             return channel.getId();
