@@ -49,10 +49,10 @@ using namespace bson ;
 namespace engine
 {
    _clsRegAssit::_clsRegAssit()
+   :_groupID( INVALID_GROUPID ),
+    _nodeID( INVALID_NODEID ),
+    _hostname( NULL )
    {
-      _groupID = INVALID_GROUPID ;
-      _nodeID = INVALID_NODEID ;
-      _hostname = NULL ;
    }
 
    _clsRegAssit::~_clsRegAssit()
