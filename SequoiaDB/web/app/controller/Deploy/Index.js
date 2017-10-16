@@ -724,7 +724,10 @@
             } ) ;
             if( hostList.length > 0 )
             {
-               var data = { 'cmd': 'remove host', 'HostInfo': JSON.stringify( { 'HostInfo': hostList } ) } ;
+               var data = {
+                  'cmd': 'remove host',
+                  'HostInfo': JSON.stringify( { 'ClusterName': $scope.clusterList[ $scope.currentCluster ]['ClusterName'], 'HostInfo': hostList } )
+               } ;
                SdbRest.OmOperation( data, {
                   'success': function( taskInfo ){
                      $rootScope.tempData( 'Deploy', 'Model', 'Task' ) ;
