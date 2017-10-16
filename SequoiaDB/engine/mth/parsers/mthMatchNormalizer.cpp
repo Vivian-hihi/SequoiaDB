@@ -369,7 +369,7 @@ namespace engine
       // Operators with below cases could be parameterized
       // 1. have no functions
       // 2. have no ".$" matches in field name
-      // 3. $et, $gt, $gte, $lt, $lte, $ne
+      // 3. $et, $gt, $gte, $lt, $lte
       // 4. simple data types
       if ( _funcList.empty() &&
            NULL == ossStrstr( _fieldName, ".$" ) )
@@ -384,7 +384,6 @@ namespace engine
             {
                switch ( _element.type() )
                {
-                  case Bool :
                   case NumberDouble :
                   case NumberInt :
                   case NumberLong :
