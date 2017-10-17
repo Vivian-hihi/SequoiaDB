@@ -250,7 +250,7 @@ namespace engine
 
       INT32 _writeLobMeta( _pmdEDUCB *cb, BOOLEAN withData = TRUE ) ;
 
-      bson::BSONObj _meta2Obj( const _dmsLobMeta &meta ) const ;
+      INT32 _meta2Obj( bson::BSONObj& obj ) const ;
 
       UINT32 _getSequence( INT64 offset ) const ;
 

@@ -185,7 +185,12 @@ namespace engine
       /// if has context, need copy metaObj and data to context
       if ( context )
       {
-         _metaObj = _meta2Obj( _meta ) ;
+         rc = _meta2Obj( _metaObj ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to get meta obj, rc:%d", rc ) ;
+            goto error ;
+         }
          rc = context->append( _metaObj ) ;
          if ( rc )
          {
@@ -227,16 +232,48 @@ namespace engine
       goto done ;
    }
 
-   BSONObj _rtnLobStream::_meta2Obj( const _dmsLobMeta &meta ) const
+   INT32 _rtnLobStream::_meta2Obj( bson::BSONObj& obj ) const
    {
-      BSONObjBuilder builder ;
-      /// we can get nothing when mode is create.
-      builder.append( FIELD_NAME_LOB_SIZE, meta._lobLen ) ;
-      builder.append( FIELD_NAME_LOB_PAGE_SIZE, _lobPageSz ) ;
-      builder.append( FIELD_NAME_VERSION, (INT32)meta._version ) ;
-      builder.append( FIELD_NAME_LOB_CREATETIME, (INT64)meta._createTime ) ;
-      builder.append( FIELD_NAME_LOB_MODIFICATION_TIME, (INT64)meta._modificationTime ) ;
-      return builder.obj() ;
+      INT32 rc = SDB_OK ;
+
+      try
+      {
+         BSONObjBuilder builder ;
+         /// we can get nothing when mode is create.
+         builder.append( FIELD_NAME_LOB_SIZE, _meta._lobLen ) ;
+         builder.append( FIELD_NAME_LOB_PAGE_SIZE, _lobPageSz ) ;
+         builder.append( FIELD_NAME_VERSION, (INT32)_meta._version ) ;
+         builder.append( FIELD_NAME_LOB_CREATETIME, (INT64)_meta._createTime ) ;
+         builder.append( FIELD_NAME_LOB_MODIFICATION_TIME, (INT64)_meta._modificationTime ) ;
+         builder.append( FIELD_NAME_LOB_FLAG, (INT32)_meta._flag ) ;
+         builder.append( FIELD_NAME_LOB_PIECESINFONUM, _meta._piecesInfoNum ) ;
+         if ( _meta.hasPiecesInfo() )
+         {
+            SDB_ASSERT( !_lobPieces.empty(), "empty pieces info" ) ;
+            BSONArray array ;
+            rc = _lobPieces.saveTo( array ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to build pieces info array, rc=%d", rc ) ;
+               goto error ;
+            }
+
+            builder.append( FIELD_NAME_LOB_PIECESINFO, array ) ;
+         }
+
+         obj = builder.obj() ;
+      }
+      catch ( std::exception& e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "unexpected exception happened: %s", e.what() ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto error ;
    }
 
    UINT32 _rtnLobStream::_getSequence( INT64 offset ) const
@@ -254,17 +291,24 @@ namespace engine
       if ( !isOpened() )
       {
          rc = SDB_INVALIDARG ;
-         goto done ;
+         goto error ;
       }
 
       if ( _metaObj.isEmpty() )
       {
-         _metaObj = _meta2Obj( _meta ) ;
+         rc = _meta2Obj( _metaObj ) ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
       }
 
       meta = _metaObj ;
+
    done:
       return rc ;
+   error:
+      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOBSTREAM_CLOSE, "_rtnLobStream::close" )
