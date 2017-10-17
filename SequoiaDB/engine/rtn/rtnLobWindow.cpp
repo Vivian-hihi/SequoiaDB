@@ -203,7 +203,7 @@ const UINT32 RTN_MAX_READ_LEN = DMS_PAGE_SIZE128K * 512 ;      /// 64MB
                                                                   _pageSize ) ;
          UINT32 curPageRemainSize = _pageSize - curOffsetInPage - (UINT32)_cachedSz ;
 
-         SDB_ASSERT( (UINT32)_cachedSz + curOffsetInPage < _pageSize, "impossible" ) ;
+         SDB_ASSERT( (UINT32)_cachedSz + curOffsetInPage < (UINT32)_pageSize, "impossible" ) ;
 
          UINT32 mvSize = curPageRemainSize <= len ? curPageRemainSize : len ;
          ossMemcpy( _pool + curOffsetInPage + _cachedSz, data, mvSize ) ;
@@ -312,7 +312,7 @@ const UINT32 RTN_MAX_READ_LEN = DMS_PAGE_SIZE128K * 512 ;      /// 64MB
                                                                   _mergeMeta,
                                                                   _pageSize ) ;
 
-         SDB_ASSERT( curOffsetInPage + _cachedSz + _writeData.tuple.columns.len < _pageSize,
+         SDB_ASSERT( curOffsetInPage + (UINT32)_cachedSz + _writeData.tuple.columns.len < (UINT32)_pageSize,
                      "Write data len must less than data page remain size" ) ;
          SDB_ASSERT( 0 == _cachedSz, "Cached size must be 0" ) ;
          SDB_ASSERT( _curOffset == _writeData.tuple.columns.offset, "incorrect offset" ) ;
