@@ -3203,6 +3203,21 @@ error:
          rc = SDB_SYS ;
          goto error ;
       }
+      ele = obj.getField( FIELD_NAME_LOB_FLAG ) ;
+      if ( NumberInt == ele.type() )
+      {
+         ((_sdbLobImpl*)*lob)->_flag = (UINT32)ele.numberInt() ;
+      }
+      ele = obj.getField( FIELD_NAME_LOB_PIECESINFONUM ) ;
+      if ( NumberInt == ele.type() )
+      {
+         ((_sdbLobImpl*)*lob)->_piecesInfoNum = ele.numberInt() ;
+      }
+      ele = obj.getField( FIELD_NAME_LOB_PIECESINFO ) ;
+      if ( Array == ele.type() )
+      {
+         ((_sdbLobImpl*)*lob)->_piecesInfo = BSONArray( ele.embeddedObject() ) ;
+      }
       /// prepare cache from return data
       {
       // the return message format is as below:
@@ -5126,6 +5141,8 @@ error :
    _cachedOffset( 0 ),
    _cachedSize( 0 ),
    _pageSize( 0 ),
+   _flag( 0 ),
+   _piecesInfoNum( 0 ),
    _dataCache( NULL )
    {
       _oid = OID() ;
@@ -5804,6 +5821,16 @@ error :
    UINT64 _sdbLobImpl::getModificationTime()
    {
       return _modificationTime ;
+   }
+
+   INT32 _sdbLobImpl::getPiecesInfoNum()
+   {
+      return _piecesInfoNum ;
+   }
+
+   bson::BSONArray _sdbLobImpl::getPiecesInfo()
+   {
+      return _piecesInfo ;
    }
 
    /*

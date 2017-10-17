@@ -874,6 +874,9 @@ namespace sdbclient
       SINT64                  _cachedOffset ;
       UINT32                  _cachedSize ;
       UINT32                  _pageSize ;
+      UINT32                  _flag ;
+      INT32                   _piecesInfoNum ;
+      bson::BSONArray         _piecesInfo ;
       const CHAR              *_dataCache ;
 
       void _setConnection( _sdb *pConnection ) ;
@@ -921,6 +924,10 @@ namespace sdbclient
       virtual UINT64 getCreateTime () ;
 
       virtual UINT64 getModificationTime() ;
+
+      virtual INT32 getPiecesInfoNum() ;
+
+      virtual bson::BSONArray getPiecesInfo() ;
 
    } ;
 

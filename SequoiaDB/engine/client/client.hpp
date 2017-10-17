@@ -2707,6 +2707,10 @@ namespace sdbclient
 
       virtual UINT64 getModificationTime() = 0 ;
 
+      virtual INT32 getPiecesInfoNum() = 0 ;
+
+      virtual bson::BSONArray getPiecesInfo() = 0 ;
+
    } ;
 
    /** \class  sdbLob
@@ -2933,6 +2937,20 @@ namespace sdbclient
          if ( !pLob )
             return -1 ;
          return pLob->getModificationTime() ;
+      }
+
+      INT32 getPiecesInfoNum()
+      {
+         if ( !pLob )
+            return -1 ;
+         return pLob->getPiecesInfoNum() ;
+      }
+
+      bson::BSONArray getPiecesInfo()
+      {
+         if ( !pLob )
+            return bson::BSONArray() ;
+         return pLob->getPiecesInfo() ;
       }
    } ;
 
