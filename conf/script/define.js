@@ -307,6 +307,7 @@ var FIELD_COORD                            = "coord" ;
 var FIELD_COORD2                           = "Coord" ;
 var FIELD_CATALOG                          = "catalog" ;
 var FIELD_DATA                             = "data" ;
+var FIELD_STANDALONE                       = "standalone" ;
 var FIELD_INFO                             = Info ;
 var FIELD_DATAGROUPNAME                    = "datagroupname" ;
 var FIELD_STATUS                           = Status ;
@@ -351,6 +352,9 @@ var FIELD_VERSION                          = Version ;
 var FIELD_ENFORCED                         = "Enforced" ;
 var FIELD_PORT                             = Port ;
 var FIELD_PORT2                            = "port" ;
+var FIELD_FROM                             = "From" ;
+var FIELD_TO                               = "To" ;
+var FIELD_OPTIONS                          = "Options" ;
 
 // Async task step
 var STEP_GENERATE_PLAN                     = "Generate plan" ;

@@ -584,9 +584,32 @@ function ExecSsql( cmd, installPath, port, database, arg, timeout )
    var result = ParseSSQL( output ) ;
    if( result['rc'] != true )
    {
-      error = new SdbError( SDB_SYS, "failed to parse sql result" ) ;
+      error = new SdbError( SDB_SYS, "failed to exec sql" ) ;
       throw error ;
    }
 
    return result ;
 }
+/*
+function test()
+{
+   var error = null ;
+   var remote = new Remote( 'localhost', '11790' ) ;
+   var cmd = remote.getCmd() ;
+   var installPath = '/opt/sequoiasqloltp' ;
+   var sql = '\\d' ;
+
+   try
+   {
+      var result = ExecSsql( cmd, installPath, "5432", "postgres", sql ) ;
+      print( "\nResult:\n" + JSON.stringify( result, null, 3 ) + "\n\n" ) ;
+   }
+   catch( e )
+   {
+      print( "\nError:\n" + e.toString()+ "\n\n" );
+   }
+}
+
+test() ;
+*/
+

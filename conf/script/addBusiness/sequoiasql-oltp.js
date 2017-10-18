@@ -43,16 +43,6 @@
       RET_JSON: the format is: {"errno":0,"detail":""}
 */
 
- //    var SYS_STEP = "Generate plan" ;
-//      var BUS_JSON = {"TaskID":90,"Type":2,"TypeDesc":"ADD_BUSINESS","TaskName":"ADD_BUSINESS","Status":0,"StatusDesc":"INIT","AgentHost":"ubuntu-jw-01","AgentService":"11790","Info":{"SdbUser":"sdbadmin","SdbPasswd":"sdbadmin","SdbUserGroup":"sdbadmin_group","ClusterName":"myCluster1","BusinessType":"sequoiasql-oltp","BusinessName":"myModule1","DeployMod":"","Config":[{"HostName":"ubuntu-jw-01","dbpath":"/sequoiasql-oltp/database/5432","port":"5432","shared_buffers":"128MB","log_timezone":"PRC","datestyle":"iso, ymd","timezone":"PRC","lc_messages":"zh_CN.UTF-8","lc_monetary":"zh_CN","lc_numeric":"zh_CN","lc_time":"zh_CN","default_text_search_config":"pg_catalog.simple","InstallPath":"/opt/sequoiasqloltp"}]},"errno":0,"detail":"","Progress":0,"ResultInfo":[{"HostName":"ubuntu-jw-01","port":"5432","Status":0,"StatusDesc":"INIT","errno":0,"detail":"","Flow":[]}]}
-
-
-
-//var SYS_STEP = "Doit" ;
-//var BUS_JSON = {"TaskID":100,"Info":{"ClusterName":"myCluster1","BusinessType":"sequoiasql-oltp","BusinessName":"myModule1","Config":{"HostName":"ubuntu-jw-01","dbpath":"/opt/sequoiasql-oltp/database/5432","port":"5432","shared_buffers":"128MB","log_timezone":"PRC","datestyle":"iso, ymd","timezone":"PRC","lc_messages":"zh_CN.UTF-8","lc_monetary":"zh_CN","lc_numeric":"zh_CN","lc_time":"zh_CN","default_text_search_config":"pg_catalog.simple","InstallPath":"/opt/sequoiasqloltp","AgentService":"11790"}},"ResultInfo":{"HostName":"ubuntu-jw-01","port":"5432","Status":0,"StatusDesc":"INIT","errno":0,"detail":"","Flow":[],"Progress":90}}
-
-
-
 function _getAgentPort( hostName )
 {
    return Oma.getAOmaSvcName( hostName ) ;
@@ -191,6 +181,22 @@ function _setPostgresqlConf( remote, hostName, confPath, configs )
    return error ;
 }
 
+function _getLogMessage( PD_LOGGER, cmd, installPath, businessName )
+{
+   var error = null ;
+   var logFile = installPath + '/' + businessName + '.log' ;
+   var timeout = 600000 ;
+
+   error = _runRemoteCmd( cmd, 'cat', logFile, timeout ) ;
+   if ( error !== null )
+   {
+      PD_LOGGER.logTask( PDERROR, error ) ;
+      return null ;
+   }
+
+   return cmd.getLastOut() ;
+}
+
 function CreateInst( PD_LOGGER )
 {
    var taskInfo   = BUS_JSON[FIELD_INFO] ;
@@ -297,6 +303,12 @@ function CreateInst( PD_LOGGER )
    error = _runRemoteCmd( cmd, exec, args, timeout ) ;
    if ( error !== null )
    {
+      var logMsg = _getLogMessage( PD_LOGGER, cmd, installPath, businessName ) ;
+      if( logMsg !== null )
+      {
+         PD_LOGGER.logTask( PDERROR, logMsg ) ;
+      }
+
       resultInfo[FIELD_ERRNO]  = error.getErrCode() ;
       resultInfo[FIELD_DETAIL] = getErr( error.getErrCode() ) ;
       resultInfo[FIELD_STATUS] = STATUS_FAIL ;

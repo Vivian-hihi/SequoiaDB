@@ -35,7 +35,7 @@ function main()
    if ( false == File.exist( importFile ) )
    {
       var error = new SdbError( SDB_INVALIDARG,
-                                sprintf( "Invalid business name [?]",
+                                sprintf( "Invalid business type [?]",
                                          businessType ) ) ;
       PD_LOGGER.logTask( PDERROR, error ) ;
       throw error ;
