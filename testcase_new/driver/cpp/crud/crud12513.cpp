@@ -73,13 +73,14 @@ TEST_F( crudTest12513, crud12513 )
  
    // query doc without _id
    cond = BSON( "a" << 2 ) ;
-   rc = cl.query( cursor, cond ) ;
+   sdbCursor cursor1 ;
+   rc = cl.query( cursor1, cond ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to query" ;
-   rc = cursor.next( obj ) ;
+   rc = cursor1.next( obj ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to get next" ;
    ASSERT_EQ( jstOID, obj.getField( "_id" ).type() ) << "fail to check _id" ;
    ASSERT_EQ( 2, obj.getField( "a" ).Int() ) << "fail to check a" ;
-   rc = cursor.close() ;
+   rc = cursor1.close() ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to close cursor" ;
 
    // update and check
@@ -87,21 +88,23 @@ TEST_F( crudTest12513, crud12513 )
    rc = cl.update( rule, cond ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to update" ;
    cond = BSON( "a" << 3 ) ;
-   rc = cl.query( cursor, cond ) ;
+   sdbCursor cursor2 ;
+   rc = cl.query( cursor2, cond ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to query" ;
-   rc = cursor.next( obj ) ;
+   rc = cursor2.next( obj ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to get next" ;
    ASSERT_EQ( 3, obj.getField( "a" ).Int() ) << "fail to check a" ;
-   rc = cursor.close() ;
+   rc = cursor2.close() ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to close cursor" ;
 
    // del and check
    rc = cl.del( cond ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to del" ;
-   rc = cl.query( cursor, cond ) ;
+   sdbCursor cursor3 ;
+   rc = cl.query( cursor3, cond ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to query" ;
-   rc = cursor.next( obj ) ;
+   rc = cursor3.next( obj ) ;
    ASSERT_EQ( SDB_DMS_EOC, rc ) << "fail to check del" ;
-   rc = cursor.close() ;
+   rc = cursor3.close() ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to close cursor" ;
 }

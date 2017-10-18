@@ -54,9 +54,22 @@ TEST_F( updateShardingKeyTest12635, update12635 )
       cout << "Run mode is standalone" << endl ;
       return ;
    }
+   
+   // get data groups
+   vector<string> groups ;
+   rc = getGroups( db, groups ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   if( groups.size() < 2 )
+   {
+      cout << "data group num: " << groups.size() << " too few" << endl ;
+      return ; 
+   }
+   const CHAR* srcGroup = groups[0].c_str() ;
+   const CHAR* dstGroup = groups[1].c_str() ;
 
    // create split cl
-   BSONObj option = BSON( "ShardingKey" << BSON( "a" << 1 ) << "ShardingType" << "hash" ) ;
+   BSONObj option = BSON( "ShardingKey" << BSON( "a" << 1 ) << "ShardingType" << "range" <<
+                          "Group" << srcGroup ) ;
    rc = cs.createCollection( clName, option, cl ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to create cl " << clName ;
 
@@ -65,7 +78,7 @@ TEST_F( updateShardingKeyTest12635, update12635 )
    rc = cl.insert( doc ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to insert" ;
    
-   // update ShardingKey
+   // update ShardingKey before split
    BSONObj cond = BSON( "a" << 1 ) ;
    BSONObj rule = BSON( "$set" << BSON( "a" << 10 << "b" << 10 ) ) ;
    rc = cl.update( rule, cond, _sdbStaticObject, UPDATE_KEEP_SHARDINGKEY ) ;
@@ -83,4 +96,16 @@ TEST_F( updateShardingKeyTest12635, update12635 )
    ASSERT_EQ( 10, obj.getField( "b" ).Int() ) << "fail to check b" ;
    rc = cursor.close() ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to close cursor1" ;
+
+   // split cl
+   BSONObj begin = BSON( "a" << 10 ) ;
+   BSONObj end = BSON( "a" << 30 ) ;
+   rc = cl.split( srcGroup, dstGroup, begin, end ) ;
+   ASSERT_EQ( SDB_OK, rc ) << "fail to split" ;
+
+   // update ShardingKey after split
+   cond = BSON( "a" << 10 ) ;
+   rule = BSON( "$set" << BSON( "a" << 15 ) ) ;
+   rc = cl.update( rule, cond, _sdbStaticObject, UPDATE_KEEP_SHARDINGKEY ) ;
+   ASSERT_EQ( SDB_UPDATE_SHARD_KEY, rc ) << "fail to test update after split" ;
 }

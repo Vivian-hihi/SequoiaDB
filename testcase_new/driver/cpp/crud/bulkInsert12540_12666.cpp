@@ -79,13 +79,14 @@ TEST_F( bulkInsertTest12540, bulkInsert12540 )
    ASSERT_EQ( SDB_OK, rc ) << "fail to close cursor" ;
 
    // query doc without _id, check _id
+   sdbCursor cursor1 ;
    cond = BSON( "a" << 2 ) ;
-   rc = cl.query( cursor, cond ) ;
+   rc = cl.query( cursor1, cond ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to query doc" ;
-   rc = cursor.next( obj ) ;
+   rc = cursor1.next( obj ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to get next" ;
    ASSERT_EQ( jstOID, obj.getField( "_id" ).type() ) << "fail to check _id" ;
-   rc = cursor.close() ;
+   rc = cursor1.close() ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to close cursor" ;
 
    // drop cl
