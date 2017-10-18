@@ -29,14 +29,14 @@ const CHAR *pSvcName       = ARGS->svcName() ;
 const CHAR *pUser          = ARGS->user() ;
 const CHAR *pPassword      = ARGS->passwd() ;
 
+const INT32 rid = 10;
+
 const CHAR *pGroupName     = "testGroupInCpp" ;
-const CHAR *pNodeHostName  = "susetzb" ;
-const CHAR *pNodeSvcName   = "31100" ;
-const CHAR *pNodePath      = "/opt/sequoiadb/database/data/31100" ;
-const CHAR *pNodeHostName2 = "susetzb" ;
-const CHAR *pNodeSvcName2  = "31200" ;
-const CHAR *pNodePath2     = "/opt/sequoiadb/database/data/31200" ;
+
+#define NODE1_NAME (atoi( ARGS->rsrvPortBegin() ) + 2 * rid * 10)
+#define NODE2_NAME (atoi( ARGS->rsrvPortBegin() ) + 2 * rid * 10 + 10)
 #define tmp_buf_size 1024
+
 CHAR tmp_buf[tmp_buf_size + 1] = { 0 } ;
 
 /*
@@ -105,12 +105,23 @@ void replicaGroupTest::SetUpTestCase()
    bson_init( &option ) ;
    bson_append_int( &option, "logfilenum", 1 ) ;
    bson_finish( &option ) ;
-   rc = sdbCreateNode( rg, pNodeHostName, pNodeSvcName, pNodePath, &option ) ;
+
+   CHAR hostName[100] ;
+   rc = getLocalHost( hostName, 100 ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   CHAR svcName1[10] ;
+   sprintf( svcName1, "%d", NODE1_NAME);
+
+   CHAR dbPath1[100];
+   sprintf( dbPath1, "%s%s%s", ARGS->rsrvNodeDir(), "data/", svcName1 ) ;
+
+   rc = sdbCreateNode( rg, hostName, svcName1, dbPath1, &option ) ;
    bson_destroy( &option ) ;
    if ( SDB_OK != rc )
    {
       sprintf( tmp_buf, "Error: Failed to create data node[%s:%s] in replica group[%s], "
-               "rc = %d", pNodeHostName, pNodeSvcName, pGroupName, rc ) ;
+               "rc = %d", hostName, svcName1, pGroupName, rc ) ;
       cout << tmp_buf << endl ;
       return ;
    }
@@ -119,7 +130,7 @@ void replicaGroupTest::SetUpTestCase()
    if ( SDB_OK != rc )
    {
       sprintf( tmp_buf, "Error: Failed to start data node[%s:%s] in replica group, "
-               "rc = %d", pNodeHostName, pNodeSvcName, rc ) ;
+               "rc = %d", hostName, svcName1, rc ) ;
       cout << tmp_buf << endl ;
       return ;
    }
@@ -159,12 +170,23 @@ void replicaGroupTest::SetUp()
    bson_init( &option ) ;
    bson_append_int( &option, "logfilenum", 1 ) ;
    bson_finish( &option ) ;
-   rc = sdbCreateNode( rg, pNodeHostName, pNodeSvcName2, pNodePath2, &option ) ;
+
+   CHAR hostName[100] ;
+   rc = getLocalHost( hostName, 100 ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   CHAR svcName2[10] ;
+   sprintf( svcName2, "%d", NODE2_NAME) ;
+
+   CHAR dbPath2[100] ;
+   sprintf( dbPath2, "%s%s%s", ARGS->rsrvNodeDir(), "data/", svcName2 ) ;
+
+   rc = sdbCreateNode( rg, hostName, svcName2, dbPath2, &option ) ;
    if ( SDB_OK != rc )
    {
       sprintf( tmp_buf, "Error: Failed to create data node[%s:%s] in "
-               "replica group[%s], rc = %d", pNodeHostName,
-               pNodeSvcName2, pGroupName, rc ) ;
+               "replica group[%s], rc = %d", hostName,
+               svcName2, pGroupName, rc ) ;
       cout << tmp_buf << endl ;
       return ;
    }
@@ -191,11 +213,18 @@ void replicaGroupTest::TearDown()
    if ( FALSE == is_cluster )
       return ;
 
-   rc = sdbRemoveNode( rg, pNodeHostName2, pNodeSvcName2, NULL ) ;
+   CHAR hostName[100] ;
+   rc = getLocalHost( hostName, 100 ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   CHAR svcName2[10] ;
+   sprintf( svcName2, "%d", atoi( ARGS->rsrvPortBegin() ) + 2 * rid * 10 + 10 ) ;
+
+   rc = sdbRemoveNode( rg, hostName, svcName2, NULL ) ;
    if ( SDB_OK != rc )
    {
       sprintf( tmp_buf, "Error: Failed to remove data node[%s:%s] in replica "
-               "group[%s], rc = %d", pNodeHostName2, pNodeSvcName2,
+               "group[%s], rc = %d", hostName, svcName2,
                pGroupName, rc ) ;
       cout << tmp_buf << endl ;
    }
@@ -209,6 +238,7 @@ INT32 _tmain( INT32 argc, CHAR* argv[] )
    testing::InitGoogleTest( &argc, argv ) ;
    return RUN_ALL_TESTS() ;
 }
+
 
 TEST_F( replicaGroupTest, init_test )
 {
@@ -261,23 +291,31 @@ TEST_F( replicaGroupTest, detachNode )
 
    INT32 rc = SDB_OK ;
    sdbNodeHandle node ;
+
+   CHAR hostName[100] ;
+   rc = getLocalHost( hostName, 100 ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   CHAR svcName2[10] ;
+   sprintf( svcName2, "%d", NODE2_NAME ) ;
+
    // detach node 
-   rc = sdbDetachNode( rg, pNodeHostName2, pNodeSvcName2, NULL ) ;
+   rc = sdbDetachNode( rg, hostName, svcName2, NULL ) ;
    ASSERT_EQ( SDB_OK, rc ) << "Failed to detach data node from group " <<
       pGroupName << ", rc = " << rc ;
 
    // check
-   rc = sdbGetNodeByHost( rg, pNodeHostName2, pNodeSvcName2, &node ) ;
+   rc = sdbGetNodeByHost( rg, hostName, svcName2, &node ) ;
    ASSERT_EQ( SDB_CLS_NODE_NOT_EXIST, rc ) << "What we expect is "
       "SDB_CLS_NODE_NOT_EXIST, but rc = " << rc ;
 
    // attach node
-   rc = sdbAttachNode( rg, pNodeHostName2, pNodeSvcName2, NULL ) ;
+   rc = sdbAttachNode( rg, hostName, svcName2, NULL ) ;
    ASSERT_EQ( SDB_OK, rc ) << "Failed to attach data node to group " <<
       pGroupName << ", rc = " << rc ;
   
    // check 
-   rc = sdbGetNodeByHost( rg, pNodeHostName2, pNodeSvcName2, &node ) ;
+   rc = sdbGetNodeByHost( rg, hostName, svcName2, &node ) ;
    ASSERT_EQ( SDB_OK, rc ) << "Failed to get data node from group " <<
       pGroupName << ", rc = " << rc ;
 
