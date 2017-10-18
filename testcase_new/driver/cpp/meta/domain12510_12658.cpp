@@ -53,7 +53,8 @@ TEST_F( domainTest12510, normalOpr12510 )
    ASSERT_EQ( SDB_OK, rc ) << "fail to create domain " << domainName ;
 
    // get domain
-   rc = db.getDomain( domainName, domain ) ;
+   sdbDomain domain1 ;
+   rc = db.getDomain( domainName, domain1 ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to get domain " << domainName ;
 
    // get domain name

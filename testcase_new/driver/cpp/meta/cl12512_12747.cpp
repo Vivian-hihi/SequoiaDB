@@ -55,7 +55,8 @@ TEST_F( clTest12512, clOpr12512 )
    ASSERT_EQ( SDB_OK, rc ) << "fail to create cl " << clName ;
 
    // use db to get cl with clfullname
-   rc = db.getCollection( clFullName, cl ) ;
+   sdbCollection cl1 ;
+   rc = db.getCollection( clFullName, cl1 ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to get cl " << clFullName ;
 
    // get name
@@ -89,12 +90,13 @@ TEST_F( clTest12512, clOpr12512 )
       rc = cl.alterCollection( option ) ;
       ASSERT_EQ( SDB_OK, rc ) << "fail to alter cl " << clFullName ;
       BSONObj cond = BSON( "Name" << clFullName ) ;
-      rc = db.getSnapshot( cursor, SDB_SNAP_CATALOG, cond ) ;
+      sdbCursor cursor1 ;
+      rc = db.getSnapshot( cursor1, SDB_SNAP_CATALOG, cond ) ;
       ASSERT_EQ( SDB_OK, rc ) << "fail to get snapshot cata" ;
-      rc = cursor.next( obj ) ;
+      rc = cursor1.next( obj ) ;
       ASSERT_EQ( SDB_OK, rc ) << "fail to get next" ;
       ASSERT_EQ( 1, obj.getField( "ShardingKey" ).Obj().getField( "a" ).Int() ) << "fail to check alter cl" ;
-      rc = cursor.close() ;
+      rc = cursor1.close() ;
       ASSERT_EQ( SDB_OK, rc ) << "fail to close cursor" ;
    }
 
@@ -103,14 +105,16 @@ TEST_F( clTest12512, clOpr12512 )
    rc = cl.insert( doc ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to insert doc into cl " << clFullName ;
 
-   // use cs to get cl 
-   rc = db.getCollectionSpace( csName, cs ) ;
+   // use cs to get cl
+   sdbCollectionSpace cs1 ;
+   rc = db.getCollectionSpace( csName, cs1 ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to get cs " << csName ;
-   rc = cs.getCollection( clName, cl ) ;
+   sdbCollection cl2 ;
+   rc = cs1.getCollection( clName, cl2 ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to get cl " << clName ;
 
    // drop cl
-   rc = cs.dropCollection( clName ) ;
+   rc = cs1.dropCollection( clName ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to drop cl " << clName ;
 }
 

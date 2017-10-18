@@ -39,7 +39,8 @@ TEST_F( csTest12511, csOpr12511 )
    ASSERT_EQ( SDB_OK, rc ) << "fail to create cs " << csName ;
 
    // get cs
-   rc = db.getCollectionSpace( csName, cs ) ;
+   sdbCollectionSpace cs1 ;
+   rc = db.getCollectionSpace( csName, cs1 ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to get cs " << csName ;
 
    // get cs name
