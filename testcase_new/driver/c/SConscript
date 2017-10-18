@@ -82,7 +82,10 @@ testFiles = [
    [ "./tdd/selector_query.cpp" ],
    [ "./tdd/shard.cpp" ],
    [ "./tdd/snapshot.cpp" ],
-   [ "./tdd/lobTest.cpp" ]
+   [ "./tdd/lobTest.cpp" ],
+   [ "./crud/updateShardingKey.cpp" ],
+   [ "./crud/queryAndUpdateShardingKey.cpp" ],
+   [ "./crud/upsertShardingKey.cpp"]
 ]
 
 def getFileName( filePath ):
