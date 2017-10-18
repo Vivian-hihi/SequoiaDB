@@ -219,6 +219,13 @@ namespace engine
             return _isValid ;
          }
 
+         OSS_INLINE BOOLEAN isSortedIdxRequired () const
+         {
+            return ( ( !_orderBy.isEmpty() ) &&
+                     ( OSS_BIT_TEST( _flag, FLG_QUERY_MODIFY ) ||
+                       OSS_BIT_TEST( _flag, FLG_QUERY_FORCE_IDX_BY_SORT ) ) ) ;
+         }
+
          OSS_INLINE void generateKeyCode ( dmsStorageUnit *su, dmsMBContext *mbContext )
          {
             setCSInfo( su ) ;

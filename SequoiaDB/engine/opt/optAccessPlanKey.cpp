@@ -136,12 +136,14 @@ namespace engine
       }
 
       // Query with modifier should use index to sort
-      if ( ( OSS_BIT_TEST( _flag, FLG_QUERY_MODIFY ) ||
-             OSS_BIT_TEST( _flag, FLG_QUERY_FORCE_IDX_BY_SORT ) ) &&
-           ( OSS_BIT_TEST( planKey._flag, FLG_QUERY_MODIFY ) ||
-             OSS_BIT_TEST( planKey._flag, FLG_QUERY_FORCE_IDX_BY_SORT ) ) )
+      if ( _flag != planKey._flag )
       {
-         return FALSE ;
+         BOOLEAN lhsFlag = isSortedIdxRequired() ? TRUE : FALSE ;
+         BOOLEAN rhsFlag = planKey.isSortedIdxRequired() ? TRUE : FALSE ;
+         if ( lhsFlag != rhsFlag )
+         {
+            return FALSE ;
+         }
       }
 
       /// Hint must compare field by field, and need ignore object field and

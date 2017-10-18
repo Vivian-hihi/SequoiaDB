@@ -134,6 +134,8 @@ namespace engine
                       _key.getOrderBy().toString( FALSE, TRUE ).c_str() ) ;
       builder.append( OPT_FIELD_HINT,
                       _key.getHint().toString( FALSE, TRUE ).c_str() ) ;
+      builder.appendBool( OPT_FIELD_SORTED_IDX_REQURED,
+                          _key.isSortedIdxRequired() ) ;
 
       if ( cacheInfo )
       {
@@ -450,10 +452,7 @@ namespace engine
       UINT64 bestEstimateCost = OSS_UINT64_MAX ;
       optScanPath bestPath( &_planAllocator ) ;
 
-      BOOLEAN sortedIdxRequired =
-            ( !_key.getOrderBy().isEmpty() ) &&
-            ( OSS_BIT_TEST( _key.getFlag(), FLG_QUERY_MODIFY ) ||
-              OSS_BIT_TEST( _key.getFlag(), FLG_QUERY_FORCE_IDX_BY_SORT ) ) ;
+      BOOLEAN sortedIdxRequired = _key.isSortedIdxRequired() ;
 
       UINT32 validHints = 0 ;
       BSONObjIterator iter( _key.getHint() ) ;
