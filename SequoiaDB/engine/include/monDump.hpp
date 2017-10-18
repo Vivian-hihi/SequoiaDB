@@ -498,6 +498,42 @@ namespace engine
    } ;
    typedef _monBackupFetch monBackupFetch ;
 
+   /*
+      _monAccessPlansFetch define
+    */
+   class _monAccessPlansFetch : public rtnFetchBase
+   {
+      DECLARE_FETCH_AUTO_REGISTER()
+
+      public:
+         _monAccessPlansFetch () ;
+         virtual ~_monAccessPlansFetch () ;
+
+         virtual INT32 init ( pmdEDUCB *cb,
+                              BOOLEAN isCurrent,
+                              BOOLEAN isDetail,
+                              UINT32 addInfoMask,
+                              const BSONObj obj = BSONObj() ) ;
+
+         virtual const CHAR* getName () const ;
+
+      public :
+         virtual BOOLEAN isHitEnd () const ;
+         virtual INT32 fetch ( BSONObj &obj ) ;
+
+      protected :
+         INT32 _fetchNext ( BSONObj &obj ) ;
+
+      private :
+         UINT32               _addInfoMask ;
+         BSONObj              _sysInfo ;
+         BOOLEAN              _hitEnd ;
+         UINT32               _pos ;
+         vector<BSONObj>      _cachedPlanList ;
+   } ;
+
+   typedef _monAccessPlansFetch monAccessPlansFetch ;
+
 }
 
 #endif //MONDUMP_HPP_

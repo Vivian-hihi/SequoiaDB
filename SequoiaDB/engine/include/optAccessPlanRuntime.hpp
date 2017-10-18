@@ -48,6 +48,68 @@ using namespace bson ;
 
 namespace engine
 {
+   class _optAccessPlanManager ;
+   typedef class _optAccessPlanManager optAccessPlanManager ;
+
+   /*
+      _optQueryActivity define
+    */
+   class _optQueryActivity : public SDBObject
+   {
+      public :
+         _optQueryActivity () ;
+
+         _optQueryActivity ( INT64 contextID,
+                             MON_OPERATION_TYPES optrType,
+                             ossTick startTSTick,
+                             ossTickDelta queryTimeTick ) ;
+
+         virtual ~_optQueryActivity () ;
+
+         void clear () ;
+
+         _optQueryActivity & operator = ( const _optQueryActivity & activity ) ;
+
+         void toBSON ( BSONObjBuilder &builder ) const ;
+
+         OSS_INLINE INT64 getContextID () const
+         {
+            return _contextID ;
+         }
+
+         OSS_INLINE MON_OPERATION_TYPES getOptrType () const
+         {
+            return _optrType ;
+         }
+
+         OSS_INLINE const ossTick & getStartTSTick () const
+         {
+            return _startTSTick ;
+         }
+
+         OSS_INLINE const ossTickDelta & getQueryTimeTick () const
+         {
+            return _queryTimeTick ;
+         }
+
+         OSS_INLINE BOOLEAN isValid () const
+         {
+            return ( -1 != _contextID ||
+                     MON_COUNTER_OPERATION_NONE != _optrType ) ;
+         }
+
+      protected :
+         INT64                _contextID ;
+         MON_OPERATION_TYPES  _optrType ;
+         ossTick              _startTSTick ;
+         ossTickDelta         _queryTimeTick ;
+   } ;
+
+   typedef class _optQueryActivity optQueryActivity ;
+
+   /*
+      _optAccessPlanInfo define
+    */
    class _optAccessPlanInfo : public SDBObject,
                               public _optAccessPlanInfoBase
    {
@@ -119,7 +181,8 @@ namespace engine
          {
             // The plan is reused, increase the reference count
             planRuntime->_plan->incRefCount() ;
-            setPlan( planRuntime->_plan, planRuntime->_isNewPlan ) ;
+            setPlan( planRuntime->_plan, planRuntime->_apm,
+                     planRuntime->_isNewPlan ) ;
             setMatchRuntime( planRuntime->getMatchRuntime() ) ;
          }
 
@@ -166,9 +229,12 @@ namespace engine
             return getMatchRuntime()->getParameters() ;
          }
 
-         OSS_INLINE void setPlan ( optAccessPlan *plan, BOOLEAN isNewPlan )
+         OSS_INLINE void setPlan ( optAccessPlan *plan,
+                                   optAccessPlanManager *apm,
+                                   BOOLEAN isNewPlan )
          {
             _plan = plan ;
+            _apm = apm ;
             _isNewPlan = isNewPlan ;
          }
 
@@ -254,9 +320,20 @@ namespace engine
                                _plan->getCLLID() ;
          }
 
+         void setQueryActivity ( INT64 contextID,
+                                 MON_OPERATION_TYPES optrType,
+                                 ossTick startTSTick,
+                                 ossTickDelta queryTimeTick ) ;
+
       protected :
-         // Pointer to the access plan
+         // Pointer to access plan
          optAccessPlan *         _plan ;
+
+         // Pointer to access plan manager
+         optAccessPlanManager *  _apm ;
+
+         // Whether query activity is set
+         BOOLEAN                 _hasQueryActivity ;
 
          // Mark the plan is new created or got from cache
          BOOLEAN                 _isNewPlan ;

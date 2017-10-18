@@ -326,7 +326,8 @@ namespace engine
          virtual BOOLEAN   _canPrefetch () const { return FALSE ; }
          virtual void      _toString( stringstream &ss ) {}
          BOOLEAN           _canPrepareMoreData() const { return _canPrepareMore ;}
-         INT32             _prepareMoreData( _pmdEDUCB *cb );
+         INT32             _prepareMoreData( _pmdEDUCB *cb ) ;
+         INT32             _prepareDataWithMon ( _pmdEDUCB *cb ) ;
 
       protected:
          OSS_INLINE void _empty () ;

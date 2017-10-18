@@ -461,6 +461,7 @@
 #define CMD_NAME_SNAPSHOT_CATA               "snapshot catalog"
 #define CMD_NAME_SNAPSHOT_TRANSACTIONS       "snapshot transactions"
 #define CMD_NAME_SNAPSHOT_TRANSACTIONS_CUR   "snapshot transactions current"
+#define CMD_NAME_SNAPSHOT_ACCESSPLANS        "snapshot accessplans"
 #define CMD_NAME_TEST_COLLECTION             "test collection"
 #define CMD_NAME_TEST_COLLECTIONSPACE        "test collectionspace"
 #define CMD_NAME_CREATE_GROUP                "create group"
@@ -519,6 +520,7 @@
 #define CMD_NAME_SNAPSHOT_CATA_INTR          "SNAPSHOT_CATA"
 #define CMD_NAME_SNAPSHOT_TRANS_INTR         "SNAPSHOT_TRANS"
 #define CMD_NAME_SNAPSHOT_TRANSCUR_INTR      "SNAPSHOT_TRANS_CUR"
+#define CMD_NAME_SNAPSHOT_ACCESSPLANS_INTR   "SNAPSHOT_ACCESSPLANS"
 
 #define CMD_NAME_LIST_COLLECTION_INTR        "LIST_CL"
 #define CMD_NAME_LIST_SPACE_INTR             "LIST_CS"

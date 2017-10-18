@@ -748,6 +748,86 @@ namespace engine
       return MON_MASK_NODE_NAME | MON_MASK_GROUP_NAME ;
    }
 
+   IMPLEMENT_CMD_AUTO_REGISTER( _rtnSnapshotAccessPlans )
+   _rtnSnapshotAccessPlans::_rtnSnapshotAccessPlans ()
+   {
+   }
+
+   _rtnSnapshotAccessPlans::~_rtnSnapshotAccessPlans ()
+   {
+   }
+
+   const CHAR *_rtnSnapshotAccessPlans::name ()
+   {
+      return NAME_SNAPSHOT_ACCESSPLANS ;
+   }
+
+   RTN_COMMAND_TYPE _rtnSnapshotAccessPlans::type ()
+   {
+      return CMD_SNAPSHOT_ACCESSPLANS ;
+   }
+
+   INT32 _rtnSnapshotAccessPlans::_getFetchType() const
+   {
+      return RTN_FETCH_ACCESSPLANS ;
+   }
+
+   BOOLEAN _rtnSnapshotAccessPlans::_isCurrent() const
+   {
+      /// for include system
+      if ( CMD_SPACE_SERVICE_LOCAL == getFromService() )
+      {
+         return TRUE ;
+      }
+      return FALSE ;
+   }
+
+   UINT32 _rtnSnapshotAccessPlans::_addInfoMask() const
+   {
+      return MON_MASK_NODE_NAME | MON_MASK_GROUP_NAME ;
+   }
+
+   const CHAR* _rtnSnapshotAccessPlans::getIntrCMDName()
+   {
+      return CMD_NAME_SNAPSHOT_ACCESSPLANS_INTR ;
+   }
+
+   IMPLEMENT_CMD_AUTO_REGISTER( _rtnSnapshotAccessPlansInner )
+   _rtnSnapshotAccessPlansInner::_rtnSnapshotAccessPlansInner ()
+   {
+   }
+
+   _rtnSnapshotAccessPlansInner::~_rtnSnapshotAccessPlansInner ()
+   {
+   }
+
+   const CHAR *_rtnSnapshotAccessPlansInner::name ()
+   {
+      return CMD_NAME_SNAPSHOT_ACCESSPLANS_INTR ;
+   }
+   RTN_COMMAND_TYPE _rtnSnapshotAccessPlansInner::type ()
+   {
+      return CMD_SNAPSHOT_ACCESSPLANS ;
+   }
+
+   INT32 _rtnSnapshotAccessPlansInner::_getFetchType() const
+   {
+      return RTN_FETCH_ACCESSPLANS ;
+   }
+
+   BOOLEAN _rtnSnapshotAccessPlansInner::_isCurrent() const
+   {
+      /// for include system
+      if ( CMD_SPACE_SERVICE_LOCAL == getFromService() )
+      {
+         return TRUE ;
+      }
+      return FALSE ;
+   }
+
+   UINT32 _rtnSnapshotAccessPlansInner::_addInfoMask() const
+   {
+      return MON_MASK_NODE_NAME | MON_MASK_GROUP_NAME ;
+   }
+
 }
-
-

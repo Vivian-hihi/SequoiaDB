@@ -120,22 +120,36 @@ namespace engine
       return ss.str() ;
    }
 
-   void _optAccessPlan::toBSON ( BSONObjBuilder &builder ) const
+   void _optAccessPlan::toBSON ( BSONObjBuilder &builder, BOOLEAN detail,
+                                 BOOLEAN cacheInfo ) const
    {
       builder.append( OPT_FIELD_CACHELEVEL, _key.getCacheLevelName() ) ;
-      builder.append( OPT_FIELD_HASH_CODE, getKeyCode() ) ;
-      builder.append( OPT_FIELD_NORMAIZED_MATCH,
-                      _key.getNormalizedQuery().isEmpty() ?
-                      _key.getQuery() :
-                      _key.getNormalizedQuery() ) ;
-      builder.append( OPT_FIELD_PLAN_SCORE, getScore() ) ;
 
-      if ( NULL != _matchTree )
+      // Selector, skip and limit are not used in cached
+      builder.append( OPT_FIELD_NORMAIZED_QUERY,
+                      _key.getNormalizedQuery().isEmpty() ?
+                      _key.getQuery().toString( FALSE, TRUE ).c_str() :
+                      _key.getNormalizedQuery().toString( FALSE, TRUE ).c_str() ) ;
+      builder.append( OPT_FIELD_ORDERBY,
+                      _key.getOrderBy().toString( FALSE, TRUE ).c_str() ) ;
+      builder.append( OPT_FIELD_HINT,
+                      _key.getHint().toString( FALSE, TRUE ).c_str() ) ;
+
+      if ( cacheInfo )
       {
-         _matchTree->confToBSON( builder ) ;
+         builder.append( OPT_FIELD_HASH_CODE, getKeyCode() ) ;
+         builder.append( OPT_FIELD_PLAN_SCORE, getScore() ) ;
+         builder.append( OPT_FIELD_PLAN_REF_COUNT, (INT32)getRefCount() ) ;
       }
 
-      _toBSONInternal( builder ) ;
+      if ( detail )
+      {
+         if ( NULL != _matchTree )
+         {
+            _matchTree->confToBSON( builder ) ;
+         }
+         _toBSONInternal( builder ) ;
+      }
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTACPLAN__PREMTHTREE, "_optAccessPlan::_prepareMatchTree" )
@@ -1018,7 +1032,7 @@ namespace engine
 
    void _optGeneralAccessPlan::_toBSONInternal ( BSONObjBuilder &builder ) const
    {
-      builder.appendBool( OPT_FIELD_IS_PARAM_VALID, isParamValid() ) ;
+      builder.appendBool( OPT_FIELD_PARAM_PLAN_VALID, isParamValid() ) ;
       BSONObjBuilder pathBuilder( builder.subobjStart( OPT_FIELD_PLAN_PATH ) ) ;
       _scanPath.toBSON( pathBuilder ) ;
       pathBuilder.done() ;
@@ -1519,7 +1533,7 @@ namespace engine
 
    void _optMainCLAccessPlan::_toBSONInternal ( BSONObjBuilder &builder ) const
    {
-      builder.appendBool( OPT_FIELD_IS_MAINCL_VALID, isMainCLValid() ) ;
+      builder.appendBool( OPT_FIELD_MAINCL_PLAN_VALID, isMainCLValid() ) ;
    }
 
 }

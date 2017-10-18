@@ -391,5 +391,36 @@ namespace engine
    } ;
    typedef _coordCMDSnapshotCataIntr coordCMDSnapshotCataIntr ;
 
+   /*
+      _coordCMDSnapshotAccessPlans define
+    */
+   class _coordCMDSnapshotAccessPlans : public _coordCMDMonBase
+   {
+      COORD_DECLARE_CMD_AUTO_REGISTER() ;
+
+      public :
+         _coordCMDSnapshotAccessPlans () ;
+         virtual ~_coordCMDSnapshotAccessPlans () ;
+
+      private:
+         virtual const CHAR *getIntrCMDName () ;
+         virtual const CHAR *getInnerAggrContent () ;
+   } ;
+
+   typedef _coordCMDSnapshotAccessPlans coordCMDSnapshotAccessPlans ;
+
+   /*
+      _coordCMDSnapshotAccessPlansIntr define
+    */
+   class _coordCMDSnapshotAccessPlansIntr : public _coordCMDSnapshotIntrBase
+   {
+      COORD_DECLARE_CMD_AUTO_REGISTER() ;
+      public:
+         _coordCMDSnapshotAccessPlansIntr () ;
+         virtual ~_coordCMDSnapshotAccessPlansIntr () ;
+   } ;
+
+   typedef _coordCMDSnapshotAccessPlansIntr coordCMDSnapshotAccessPlansIntr ;
+
 }
 #endif // COORD_COMMAND_SNAPSHOT_HPP__

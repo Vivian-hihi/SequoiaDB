@@ -522,5 +522,43 @@ namespace engine
    {
    }
 
+   /*
+      _coordCMDSnapshotAccessPlans implement
+   */
+   COORD_IMPLEMENT_CMD_AUTO_REGISTER( _coordCMDSnapshotAccessPlans,
+                                      CMD_NAME_SNAPSHOT_ACCESSPLANS,
+                                      TRUE ) ;
+   _coordCMDSnapshotAccessPlans::_coordCMDSnapshotAccessPlans ()
+   {
+   }
+
+   _coordCMDSnapshotAccessPlans::~_coordCMDSnapshotAccessPlans ()
+   {
+   }
+
+   const CHAR* _coordCMDSnapshotAccessPlans::getIntrCMDName ()
+   {
+      return CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_ACCESSPLANS_INTR ;
+   }
+
+   const CHAR* _coordCMDSnapshotAccessPlans::getInnerAggrContent()
+   {
+      return NULL ;
+   }
+
+   /*
+      _coordCMDSnapshotAccessPlansIntr implement
+   */
+   COORD_IMPLEMENT_CMD_AUTO_REGISTER( _coordCMDSnapshotAccessPlansIntr,
+                                      CMD_NAME_SNAPSHOT_ACCESSPLANS_INTR,
+                                      TRUE ) ;
+   _coordCMDSnapshotAccessPlansIntr::_coordCMDSnapshotAccessPlansIntr ()
+   {
+   }
+
+   _coordCMDSnapshotAccessPlansIntr::~_coordCMDSnapshotAccessPlansIntr ()
+   {
+   }
+
 }
 

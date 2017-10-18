@@ -104,7 +104,8 @@ namespace engine
       SDB_ASSERT ( cb, "educb can't be NULL" ) ;
       SDB_ASSERT ( dmsCB, "dmsCB can't be NULL" ) ;
 
-      SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
+      pmdKRCB *krcb                       = pmdGetKRCB() ;
+      SDB_RTNCB *rtnCB                    = krcb->getRTNCB() ;
       dmsStorageUnit *su                  = NULL ;
       dmsMBContext   *mbContext           = NULL ;
       dmsStorageUnitID suID               = DMS_INVALID_CS ;
@@ -115,6 +116,10 @@ namespace engine
       INT64 delNum                        = 0 ;
 
       optAccessPlanRuntime planRuntime ;
+
+      ossTick startTime ;
+      monContextCB monCtxCB ;
+      BOOLEAN monStarted = FALSE ;
 
       rc = dmsCB->writable( cb ) ;
       if ( rc )
@@ -170,6 +175,14 @@ namespace engine
       }
       PD_RC_CHECK( rc, PDERROR, "Failed to get dms scanner, rc: %d", rc ) ;
 
+      if ( cb->getMonConfigCB()->timestampON )
+      {
+         monCtxCB.recordStartTimestamp() ;
+      }
+
+      startTime = krcb->getCurTime() ;
+      monStarted = TRUE ;
+
       // delete
       {
          _mthRecordGenerator generator ;
@@ -198,6 +211,15 @@ namespace engine
       }
 
    done :
+      if ( monStarted )
+      {
+         ossTick endTime = krcb->getCurTime() ;
+         ossTickDelta delta = endTime - startTime ;
+         monCtxCB.monOperationTimeInc( MON_TOTAL_WRITE_TIME, delta ) ;
+         planRuntime.setQueryActivity( -1, MON_DELETE,
+                                       monCtxCB._startTimestampTick,
+                                       monCtxCB.queryTimeSpent ) ;
+      }
       if ( pDelNum )
       {
          *pDelNum = delNum ;

@@ -114,13 +114,9 @@ namespace engine
       pPlan->incRefCount() ;
       if ( removeItem( pPlan ) )
       {
-         // We need to test the activity ID to check if
+         // We need to reset the activity ID to check if
          // someone else is also deleting this plan
-         INT32 activityID = pPlan->resetActivityID() ;
-         if ( OPT_INVALID_ACT_ID != activityID )
-         {
-            _pMonitor->resetActivity( activityID ) ;
-         }
+         _pMonitor->resetActivity( pPlan->resetActivityID() ) ;
          _pMonitor->decCachedPlanCount( 1 ) ;
       }
       pPlan->release() ;
@@ -163,13 +159,9 @@ namespace engine
                      // Locked bucket already, safe to remove from bucket
                      if ( pBucket->removeItem( pPlan ) )
                      {
-                        // We need to test the activity ID to check if someone
+                        // We need to reset the activity ID to check if someone
                         // else is also deleting this plan
-                        INT32 activityID = pPlan->resetActivityID() ;
-                        if ( OPT_INVALID_ACT_ID != activityID )
-                        {
-                           _pMonitor->resetActivity( activityID ) ;
-                        }
+                        _pMonitor->resetActivity( pPlan->resetActivityID() ) ;
                         deleteCount ++ ;
                      }
 
@@ -230,13 +222,9 @@ namespace engine
                      // Locked bucket already, safe to remove from bucket
                      if ( pBucket->removeItem( pPlan ) )
                      {
-                        // We need to test the activity ID to check if someone
+                        // We need to reset the activity ID to check if someone
                         // else is also deleting this plan
-                        INT32 activityID = pPlan->resetActivityID() ;
-                        if ( OPT_INVALID_ACT_ID != activityID )
-                        {
-                           _pMonitor->resetActivity( activityID ) ;
-                        }
+                        _pMonitor->resetActivity( pPlan->resetActivityID() ) ;
                         deleteCount ++ ;
                      }
                      else if ( clearBit )
@@ -306,13 +294,9 @@ namespace engine
                // Locked bucket already, safe to remove from bucket
                if ( pBucket->removeItem( pPlan ) )
                {
-                  // We need to test the activity ID to check if someone
+                  // We need to reset the activity ID to check if someone
                   // else is also deleting this plan
-                  INT32 activityID = pPlan->resetActivityID() ;
-                  if ( OPT_INVALID_ACT_ID != activityID )
-                  {
-                     _pMonitor->resetActivity( activityID ) ;
-                  }
+                  _pMonitor->resetActivity( pPlan->resetActivityID() ) ;
                   deleteCount ++ ;
                }
                pPlan->release() ;
@@ -363,13 +347,9 @@ namespace engine
                   // Locked bucket already, safe to remove from bucket
                   if ( pBucket->removeItem( pPlan ) )
                   {
-                     // We need to test the activity ID to check if someone
+                     // We need to reset the activity ID to check if someone
                      // else is also deleting this plan
-                     INT32 activityID = pPlan->resetActivityID() ;
-                     if ( OPT_INVALID_ACT_ID != activityID )
-                     {
-                        _pMonitor->resetActivity( activityID ) ;
-                     }
+                     _pMonitor->resetActivity( pPlan->resetActivityID() ) ;
                      deleteCount ++ ;
                   }
                   pPlan->release() ;
@@ -398,6 +378,74 @@ namespace engine
       return _pMonitor->getCachedPlanCount() ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTCPCACHE_GETCPLIST, "_optAccessPlanCache::getCachedPlanList" )
+   INT32 _optAccessPlanCache::getCachedPlanList ( vector<BSONObj> &cachedPlanList )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_OPTCPCACHE_GETCPLIST ) ;
+
+      for ( UINT32 bucketID = 0 ; bucketID < _bucketNum ; bucketID ++ )
+      {
+         utilHashTableBucket *pBucket = getBucket( bucketID, SHARED ) ;
+
+         SDB_ASSERT( pBucket, "pBucket is invalid" ) ;
+
+         optAccessPlan *pPlan = pBucket->getHead() ;
+         while ( pPlan )
+         {
+            BSONObjBuilder planBuilder ;
+            BSONObj planObj ;
+
+            const CHAR *clFullName = pPlan->getCLFullName() ;
+            CHAR csName [ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] = { 0 } ;
+
+            rc = rtnResolveCollectionSpaceName( clFullName,
+                                                ossStrlen( clFullName ),
+                                                csName,
+                                                DMS_COLLECTION_SPACE_NAME_SZ ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to resolve collection space "
+                         "name, rc: %d", rc ) ;
+
+            planBuilder.append( FIELD_NAME_COLLECTION,
+                                pPlan->getCLFullName() ) ;
+            planBuilder.append( FIELD_NAME_COLLECTIONSPACE, csName ) ;
+            planBuilder.append( FIELD_NAME_SCANTYPE,
+                                IXSCAN == pPlan->getScanType() ?
+                                VALUE_NAME_IXSCAN : VALUE_NAME_TBSCAN ) ;
+            planBuilder.append( FIELD_NAME_INDEXNAME,
+                                pPlan->getIndexName() ) ;
+            planBuilder.appendBool( FIELD_NAME_USE_EXT_SORT,
+                                    pPlan->sortRequired() ) ;
+
+            pPlan->toBSON( planBuilder, FALSE, TRUE ) ;
+
+            if ( NULL != _pMonitor )
+            {
+               const optCachedPlanActivity *activity =
+                           _pMonitor->getActivity( pPlan->getActivityID() ) ;
+               if ( NULL != activity )
+               {
+                  activity->toBSON( planBuilder ) ;
+               }
+            }
+
+            planObj = planBuilder.obj() ;
+            cachedPlanList.push_back( planObj ) ;
+
+            pPlan = (optAccessPlan *)pPlan->getNext() ;
+         }
+
+         releaseBucket( bucketID, SHARED ) ;
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB_OPTCPCACHE_GETCPLIST, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
    void _optAccessPlanCache::afterAddItem ( UINT32 bucketID,
                                             optAccessPlan *pPlan )
    {
@@ -412,6 +460,109 @@ namespace engine
 
       pPlan->incRefCount() ;
       _pMonitor->setCachedPlanActivity( pPlan ) ;
+   }
+
+   /*
+      _optCachedPlanActivity implement
+    */
+   _optCachedPlanActivity::_optCachedPlanActivity ()
+   {
+      _pPlan = NULL ;
+      _lastAccessTime = 0 ;
+      _periodAccessCount = 0 ;
+      _accessCount = 0 ;
+      _totalQueryTimeTick.clear() ;
+   }
+
+   _optCachedPlanActivity::~_optCachedPlanActivity ()
+   {
+   }
+
+   void _optCachedPlanActivity::clear ()
+   {
+      _lastAccessTime = 0 ;
+      _periodAccessCount = 0 ;
+      _accessCount = 0 ;
+      _totalQueryTimeTick.clear() ;
+      _maxQueryActivity.clear() ;
+      _minQueryActivity.clear() ;
+      _pPlan = NULL ;
+   }
+
+   void _optCachedPlanActivity::setPlan ( optAccessPlan *pPlan,
+                                          UINT64 timestamp )
+   {
+      _pPlan = pPlan ;
+      _lastAccessTime = timestamp ;
+      _periodAccessCount = 0 ;
+      _accessCount = 0 ;
+      _totalQueryTimeTick.clear() ;
+      _maxQueryActivity.clear() ;
+      _minQueryActivity.clear() ;
+   }
+
+   void _optCachedPlanActivity::decPeriodAccessCount ( UINT32 count )
+   {
+      if ( _periodAccessCount > count )
+      {
+         _periodAccessCount -= count ;
+      }
+      else
+      {
+         _periodAccessCount = 0 ;
+      }
+   }
+
+   void _optCachedPlanActivity::setQueryActivity (
+                                    const optQueryActivity &queryActivity )
+   {
+      if ( !isEmpty() )
+      {
+         _totalQueryTimeTick += queryActivity.getQueryTimeTick() ;
+         if ( queryActivity.getQueryTimeTick() <
+                           _minQueryActivity.getQueryTimeTick() ||
+              !_minQueryActivity.isValid() )
+         {
+            _minQueryActivity = queryActivity ;
+         }
+         if ( queryActivity.getQueryTimeTick() >
+                           _maxQueryActivity.getQueryTimeTick() ||
+              !_maxQueryActivity.isValid() )
+         {
+            _maxQueryActivity = queryActivity ;
+         }
+      }
+   }
+
+   void _optCachedPlanActivity::toBSON ( BSONObjBuilder &builder ) const
+   {
+      ossTickConversionFactor factor ;
+      UINT32 seconds = 0, microseconds = 0 ;
+      double totalQueryTime = 0.0, avgQueryTime = 0.0 ;
+      UINT32 accessCount = getAccessCount() ;
+
+      _totalQueryTimeTick.convertToTime( factor, seconds, microseconds ) ;
+      totalQueryTime = (double)( seconds ) +
+                       (double)( microseconds ) / (double)( OSS_ONE_MILLION ) ;
+      avgQueryTime = totalQueryTime / (double)accessCount ;
+
+      builder.append( OPT_FIELD_PLAN_ACCESS_COUNT, (INT32)( accessCount ) ) ;
+
+      builder.append( OPT_FIELD_TOTAL_QUERY_TIME, totalQueryTime ) ;
+      builder.append( OPT_FIELD_AVG_QUERY_TIME, avgQueryTime ) ;
+
+      if ( _maxQueryActivity.isValid() )
+      {
+         BSONObjBuilder maxBuilder( builder.subobjStart( OPT_FIELD_MAX_QUERY ) ) ;
+         _maxQueryActivity.toBSON( maxBuilder ) ;
+         maxBuilder.done() ;
+      }
+      if ( _minQueryActivity.isValid() )
+      {
+         BSONObjBuilder minBuilder( builder.subobjStart( OPT_FIELD_MIN_QUERY ) ) ;
+         _minQueryActivity.toBSON( minBuilder ) ;
+         minBuilder.done() ;
+      }
    }
 
    /*
@@ -743,8 +894,8 @@ namespace engine
             }
 
             // Calculate the clear score of current plan
-            accessTime = activity.getAccessTime() ;
-            accessCount = activity.getAccessCount() ;
+            accessTime = activity.getLastAccessTime() ;
+            accessCount = activity.getPeriodAccessCount() ;
             curClearScore = (double)accessCount /
                             (double)( currentTimestamp - accessTime ) ;
 
@@ -760,7 +911,7 @@ namespace engine
             else
             {
                // Decrease the access count by average access count
-               activity.decAccessCount( avgAccessCount ) ;
+               activity.decPeriodAccessCount( avgAccessCount ) ;
             }
 
             _clockIndex = ( _clockIndex + 1 ) % _activityNum ;
@@ -1088,6 +1239,24 @@ namespace engine
       PD_TRACE_EXIT( SDB_OPTAPM_INVALIDALLPLANS ) ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTAPM_SETQUERYACT, "_optAccessPlanManager::setQueryActivity" )
+   void _optAccessPlanManager::setQueryActivity( INT32 activityID,
+                                                 const optQueryActivity &queryActivity )
+   {
+      PD_TRACE_ENTRY( SDB_OPTAPM_SETQUERYACT ) ;
+
+      if ( isInitialized() )
+      {
+         optCachedPlanActivity *activity = _monitor.getActivity( activityID ) ;
+         if ( NULL != activity )
+         {
+            activity->setQueryActivity( queryActivity ) ;
+         }
+      }
+
+      PD_TRACE_EXIT( SDB_OPTAPM_SETQUERYACT ) ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTAPM_ONUNLOADCS, "_optAccessPlanManager::onUnloadCS" )
    INT32 _optAccessPlanManager::onUnloadCS ( IDmsEventHolder *pEventHolder,
                                              IDmsSUCacheHolder *pCacheHolder,
@@ -1413,7 +1582,7 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Failed to create access plan, rc: %d",
                       rc ) ;
 
-         planRuntime.setPlan( pPlan, TRUE ) ;
+         planRuntime.setPlan( pPlan, this, TRUE ) ;
       }
       else
       {
@@ -1441,7 +1610,7 @@ namespace engine
          }
          else
          {
-            planRuntime.setPlan( pPlan, FALSE ) ;
+            planRuntime.setPlan( pPlan, this, FALSE ) ;
          }
       }
 
@@ -1552,7 +1721,7 @@ namespace engine
             else
             {
                // Set the plan
-               planRuntime.setPlan( pPlan, FALSE ) ;
+               planRuntime.setPlan( pPlan, this, FALSE ) ;
             }
          }
       }
@@ -1757,12 +1926,9 @@ namespace engine
             // dropCL didn't
             if ( !pPlan->isCached() )
             {
-               INT32 activityID = pPlan->resetActivityID() ;
-               if ( OPT_INVALID_ACT_ID != activityID )
-               {
-                  _monitor.resetActivity( activityID ) ;
-               }
-               // NOTE: no need to dec cached plan count, The dropCL will do it
+               _monitor.resetActivity( pPlan->resetActivityID() ) ;
+               // NOTE: no need to decrease cached plan count, The dropCL
+               // will do it
                cached = FALSE ;
             }
          }

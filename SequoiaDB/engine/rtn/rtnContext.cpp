@@ -585,7 +585,7 @@ namespace engine
       {
          cb->getMonAppCB()->reset() ;
       }
-      rc = _prepareData( cb ) ;
+      rc = _prepareDataWithMon( cb ) ;
       _prefetchRet = rc ;
       if ( rc && SDB_DMS_EOC != rc )
       {
@@ -646,7 +646,7 @@ namespace engine
          INT32 currentPreparedSize ;
          UINT64 currentTime ;
 
-         rc = _prepareData( cb ) ;
+         rc = _prepareDataWithMon( cb ) ;
          if ( SDB_OK != rc )
          {
             goto error ;
@@ -678,6 +678,23 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   INT32 _rtnContextBase::_prepareDataWithMon ( _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+
+      pmdKRCB *krcb = pmdGetKRCB() ;
+      ossTick startTime = krcb->getCurTime() ;
+
+      rc = _prepareData( cb ) ;
+
+      ossTick endTime = krcb->getCurTime() ;
+      ossTickDelta delta = endTime - startTime ;
+
+      _monCtxCB.monOperationTimeInc( MON_TOTAL_READ_TIME, delta ) ;
+
+      return rc ;
    }
 
    INT32 _rtnContextBase::getMore( INT32 maxNumToReturn,
@@ -741,7 +758,7 @@ namespace engine
          }
          else
          {
-            rc = _prepareData( cb ) ;
+            rc = _prepareDataWithMon( cb ) ;
          }
 
          if ( rc && SDB_DMS_EOC != rc )

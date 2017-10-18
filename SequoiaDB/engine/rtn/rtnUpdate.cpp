@@ -107,7 +107,8 @@ namespace engine
       SDB_ASSERT ( cb, "educb can't be NULL" ) ;
       SDB_ASSERT ( dmsCB, "dmsCB can't be NULL" ) ;
 
-      SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
+      pmdKRCB *krcb                    = pmdGetKRCB() ;
+      SDB_RTNCB *rtnCB                 = krcb->getRTNCB() ;
       SINT64 numUpdatedRecords         = 0 ;
       INT32  insertNum                 = 0 ;
       dmsStorageUnit *su               = NULL ;
@@ -121,7 +122,12 @@ namespace engine
       BSONObj emptyObj ;
       mthModifier modifier ;
       vector<INT64> dollarList ;
+
       optAccessPlanRuntime planRuntime ;
+
+      ossTick startTime ;
+      monContextCB monCtxCB ;
+      BOOLEAN monStarted = FALSE ;
 
       // updator is modifier
       if ( updator.isEmpty() )
@@ -209,6 +215,14 @@ namespace engine
       }
       PD_RC_CHECK( rc, PDERROR, "Failed to get dms scanner, rc: %d", rc ) ;
 
+      if ( cb->getMonConfigCB()->timestampON )
+      {
+         monCtxCB.recordStartTimestamp() ;
+      }
+
+      startTime = krcb->getCurTime() ;
+      monStarted = TRUE ;
+
       // update
       {
          _mthRecordGenerator generator ;
@@ -282,6 +296,15 @@ namespace engine
       }
 
    done :
+      if ( monStarted )
+      {
+         ossTick endTime = krcb->getCurTime() ;
+         ossTickDelta delta = endTime - startTime ;
+         monCtxCB.monOperationTimeInc( MON_TOTAL_WRITE_TIME, delta ) ;
+         planRuntime.setQueryActivity( -1, MON_UPDATE,
+                                       monCtxCB._startTimestampTick,
+                                       monCtxCB.queryTimeSpent ) ;
+      }
       if ( pUpdateNum )
       {
          *pUpdateNum = numUpdatedRecords ;

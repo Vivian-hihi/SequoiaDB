@@ -143,7 +143,8 @@ namespace engine
 
          std::string toString () const ;
 
-         virtual void toBSON ( BSONObjBuilder &builder ) const ;
+         virtual void toBSON ( BSONObjBuilder &builder, BOOLEAN detail,
+                               BOOLEAN cacheInfo ) const ;
 
          /// Plan cache related
          OSS_INLINE virtual const optAccessPlanKey &getKey () const
@@ -180,11 +181,6 @@ namespace engine
          {
             // No need to check
             _activityID.init( activityID ) ;
-         }
-
-         OSS_INLINE BOOLEAN resetActivityID ( INT32 oldID, INT32 newID )
-         {
-            return _activityID.compareAndSwap( oldID, newID ) ;
          }
 
          OSS_INLINE INT32 resetActivityID ()

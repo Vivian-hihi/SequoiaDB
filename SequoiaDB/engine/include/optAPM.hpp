@@ -94,6 +94,8 @@ namespace engine
 
          UINT32 getCachedPlanCount () const ;
 
+         INT32 getCachedPlanList ( vector<BSONObj> &cachedPlanList ) ;
+
       protected :
          virtual void afterAddItem ( UINT32 bucketID, optAccessPlan *pPlan ) ;
 
@@ -111,64 +113,45 @@ namespace engine
    class _optCachedPlanActivity : public SDBObject
    {
       public :
-         _optCachedPlanActivity ()
-         {
-            _pPlan = NULL ;
-            _accessTime = 0 ;
-            _accessCount = 0 ;
-         }
+         _optCachedPlanActivity () ;
 
-         virtual ~_optCachedPlanActivity () {} ;
+         virtual ~_optCachedPlanActivity () ;
 
-         OSS_INLINE void setPlan ( optAccessPlan *pPlan, UINT64 timestamp )
-         {
-            _pPlan = pPlan ;
-            _accessTime = timestamp ;
-            _accessCount = 0 ;
-         }
+         void clear () ;
+
+         void setPlan ( optAccessPlan *pPlan, UINT64 timestamp ) ;
 
          OSS_INLINE optAccessPlan *getPlan ()
          {
             return _pPlan ;
          }
 
-         OSS_INLINE void setAccessTime ( UINT64 accessTime )
+         OSS_INLINE void setLastAccessTime ( UINT64 lastAccessTime )
          {
-            _accessTime = accessTime ;
+            _lastAccessTime = lastAccessTime ;
          }
 
          OSS_INLINE void incAccessCount ()
          {
             _accessCount ++ ;
+            _periodAccessCount ++ ;
          }
 
-         OSS_INLINE void decAccessCount ( UINT32 count )
-         {
-            if ( _accessCount > count )
-            {
-               _accessCount -= count ;
-            }
-            else
-            {
-               _accessCount = 0 ;
-            }
-         }
-
-         OSS_INLINE void clear ()
-         {
-            _accessTime = 0 ;
-            _accessCount = 0 ;
-            _pPlan = NULL ;
-         }
+         void decPeriodAccessCount ( UINT32 count ) ;
 
          OSS_INLINE BOOLEAN isEmpty () const
          {
             return ( NULL == _pPlan ) ;
          }
 
-         OSS_INLINE UINT64 getAccessTime () const
+         OSS_INLINE UINT64 getLastAccessTime () const
          {
-            return _accessTime ;
+            return _lastAccessTime ;
+         }
+
+         OSS_INLINE UINT32 getPeriodAccessCount () const
+         {
+            return _periodAccessCount ;
          }
 
          OSS_INLINE UINT32 getAccessCount () const
@@ -176,10 +159,18 @@ namespace engine
             return _accessCount ;
          }
 
+         void setQueryActivity ( const optQueryActivity &queryActivity ) ;
+
+         void toBSON ( BSONObjBuilder &builder ) const ;
+
       protected :
          optAccessPlan *   _pPlan ;
-         UINT64            _accessTime ;
+         UINT64            _lastAccessTime ;
+         UINT32            _periodAccessCount ;
          UINT32            _accessCount ;
+         ossTickDelta      _totalQueryTimeTick ;
+         optQueryActivity  _maxQueryActivity ;
+         optQueryActivity  _minQueryActivity ;
    } ;
 
    typedef class _optCachedPlanActivity optCachedPlanActivity ;
@@ -211,17 +202,28 @@ namespace engine
             if ( OPT_INVALID_ACT_ID != activityID )
             {
                optCachedPlanActivity &activity = _pActivities[ activityID ] ;
-               activity.setAccessTime( _accessTimestamp.inc() ) ;
+               activity.setLastAccessTime( _accessTimestamp.inc() ) ;
                activity.incAccessCount() ;
             }
          }
 
-         OSS_INLINE void resetActivity ( UINT32 activityID )
+         OSS_INLINE optCachedPlanActivity *getActivity ( INT32 activityID )
          {
-            _pActivities[ activityID ].setPlan( NULL, 0 ) ;
+            if ( OPT_INVALID_ACT_ID != activityID )
+            {
+               return &( _pActivities[ activityID ] ) ;
+            }
+            return NULL ;
+         }
 
-            UINT64 freeActivityIndex = _freeIndexEnd.inc() % _activityNum ;
-            _pFreeActivityIDs[ freeActivityIndex ] = activityID ;
+         OSS_INLINE void resetActivity ( INT32 activityID )
+         {
+            if ( OPT_INVALID_ACT_ID != activityID )
+            {
+               _pActivities[ activityID ].setPlan( NULL, 0 ) ;
+               UINT64 freeActivityIndex = _freeIndexEnd.inc() % _activityNum ;
+               _pFreeActivityIDs[ freeActivityIndex ] = activityID ;
+            }
          }
 
          OSS_INLINE UINT32 getCachedPlanCount () const
@@ -368,6 +370,9 @@ namespace engine
          void invalidateCLPlans ( const CHAR *pCLFullName ) ;
 
          void invalidateAllPlans () ;
+
+         void setQueryActivity ( INT32 activityID,
+                                 const optQueryActivity &queryActivity ) ;
 
       public :
          // For _IDmsEventHandler

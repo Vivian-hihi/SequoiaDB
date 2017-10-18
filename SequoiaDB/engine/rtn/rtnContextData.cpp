@@ -79,8 +79,13 @@ namespace engine
          SDB_OSS_DEL _scanner ;
          _scanner = NULL ;
       }
-      // first release plan
+
+      // first set activity and release plan
+      _planRuntime.setQueryActivity( contextID(), MON_SELECT,
+                                     _monCtxCB._startTimestampTick,
+                                     _monCtxCB.queryTimeSpent ) ;
       _planRuntime.releasePlan() ;
+
       // second release mb context
       if ( _mbContext && _su )
       {
@@ -2220,7 +2225,7 @@ namespace engine
                                OPT_CACHE_STATUS_NOCACHE ) ;
          }
 
-         planRuntime->getPlan()->toBSON( subBuilder ) ;
+         planRuntime->getPlan()->toBSON( subBuilder, TRUE, FALSE ) ;
          if ( !planRuntime->getParameters().isEmpty() )
          {
             subBuilder.append( OPT_FIELD_PARAMETERS,

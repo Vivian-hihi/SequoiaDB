@@ -3097,5 +3097,151 @@ namespace engine
       goto done ;
    }
 
-}
+   /*
+      _monCachedPlanFetch implement
+    */
+   IMPLEMENT_FETCH_AUTO_REGISTER( _monAccessPlansFetch, RTN_FETCH_ACCESSPLANS )
+   _monAccessPlansFetch::_monAccessPlansFetch ()
+   {
+      _hitEnd = TRUE ;
+      _pos = 0 ;
+   }
 
+   _monAccessPlansFetch::~_monAccessPlansFetch ()
+   {
+   }
+
+   INT32 _monAccessPlansFetch::init ( pmdEDUCB *cb,
+                                      BOOLEAN isCurrent,
+                                      BOOLEAN isDetail,
+                                      UINT32 addInfoMask,
+                                      const BSONObj obj )
+   {
+      INT32 rc = SDB_OK ;
+
+      pmdKRCB *krcb = pmdGetKRCB() ;
+      _SDB_RTNCB *rtnCB = krcb->getRTNCB() ;
+      optAccessPlanManager *apm = rtnCB->getAPM() ;
+
+      try
+      {
+         if ( apm->isInitialized() )
+         {
+            optAccessPlanCache *planCache = apm->getPlanCache() ;
+
+            if ( addInfoMask != 0 )
+            {
+               BSONObjBuilder infoBuilder ;
+
+               /// add system info
+               rc = monAppendSystemInfo( infoBuilder, addInfoMask ) ;
+               PD_RC_CHECK( rc, PDERROR, "Failed to append system info, "
+                            "rc: %d", rc ) ;
+
+               _sysInfo = infoBuilder.obj() ;
+               _addInfoMask = addInfoMask ;
+            }
+
+            rc = planCache->getCachedPlanList( _cachedPlanList ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to get list of cached plans, "
+                         "rc: %d", rc ) ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Failed to create BSON objects for access plans: %s",
+                 e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      _hitEnd = _cachedPlanList.empty() ? TRUE : FALSE ;
+      _pos = 0 ;
+
+   done :
+      return rc ;
+   error :
+      _cachedPlanList.clear() ;
+      goto done ;
+   }
+
+   const CHAR* _monAccessPlansFetch::getName () const
+   {
+      return CMD_NAME_SNAPSHOT_ACCESSPLANS ;
+   }
+
+   BOOLEAN _monAccessPlansFetch::isHitEnd () const
+   {
+      return _hitEnd ;
+   }
+
+   INT32 _monAccessPlansFetch::fetch ( BSONObj &obj )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( _hitEnd )
+      {
+         rc = SDB_DMS_EOC ;
+         goto error ;
+      }
+
+      rc = _fetchNext( obj ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+   done :
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   INT32 _monAccessPlansFetch::_fetchNext ( BSONObj &obj )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( _pos >= _cachedPlanList.size() )
+      {
+         _hitEnd = TRUE ;
+         rc = SDB_DMS_EOC ;
+         goto error ;
+      }
+
+      if ( 0 == _addInfoMask )
+      {
+         obj = _cachedPlanList[ _pos++ ] ;
+      }
+      else
+      {
+         try
+         {
+            BSONObjBuilder builder( MON_DUMP_DFT_BUILDER_SZ / 2 ) ;
+
+            /// add system info
+            builder.appendElements( _sysInfo ) ;
+            builder.appendElements( _cachedPlanList[ _pos++ ] ) ;
+
+            obj = builder.obj() ;
+         }
+         catch ( std::exception &e )
+         {
+            PD_LOG ( PDERROR, "Failed to create BSON objects for "
+                     "backups: %s", e.what() ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+      }
+
+      if ( _pos >= _cachedPlanList.size() )
+      {
+         _hitEnd = TRUE ;
+      }
+
+   done :
+      return rc ;
+   error :
+      goto done ;
+   }
+
+}

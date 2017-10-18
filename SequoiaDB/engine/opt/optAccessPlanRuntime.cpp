@@ -40,11 +40,88 @@
 #include "pdTrace.hpp"
 #include "optTrace.hpp"
 #include "pmd.hpp"
+#include "optAPM.hpp"
+#include "rtnCB.hpp"
 
 using namespace bson ;
 
 namespace engine
 {
+
+   /*
+      _optQueryActivity implement
+    */
+   _optQueryActivity::_optQueryActivity ()
+   {
+      clear() ;
+   }
+
+   _optQueryActivity::_optQueryActivity ( INT64 contextID,
+                                          MON_OPERATION_TYPES optrType,
+                                          ossTick startTSTick,
+                                          ossTickDelta queryTimeTick )
+   {
+      _contextID = contextID ;
+      _optrType = optrType ;
+      _startTSTick = startTSTick ;
+      _queryTimeTick = queryTimeTick ;
+   }
+
+   _optQueryActivity::~_optQueryActivity ()
+   {
+      clear() ;
+   }
+
+   void _optQueryActivity::clear ()
+   {
+      _contextID = -1 ;
+      _optrType = MON_COUNTER_OPERATION_NONE ;
+      _startTSTick.clear() ;
+      _queryTimeTick.clear() ;
+   }
+
+   _optQueryActivity & _optQueryActivity::operator = (
+                                       const _optQueryActivity & activity )
+   {
+      _contextID = activity._contextID ;
+      _optrType = activity._optrType ;
+      _startTSTick = activity._startTSTick ;
+      _queryTimeTick = activity._queryTimeTick ;
+      return (*this) ;
+   }
+
+   void _optQueryActivity::toBSON ( BSONObjBuilder &builder ) const
+   {
+      ossTickConversionFactor factor ;
+      UINT32 seconds = 0, microseconds = 0 ;
+      double queryTime = 0.0 ;
+      CHAR timestampStr[ OSS_TIMESTAMP_STRING_LEN + 1 ] = { 0 } ;
+      ossTimestamp startTime ;
+
+      _queryTimeTick.convertToTime( factor, seconds, microseconds ) ;
+      queryTime = (double)( seconds ) +
+                  (double)( microseconds ) / (double)( OSS_ONE_MILLION ) ;
+
+      _startTSTick.convertToTimestamp( startTime ) ;
+      ossTimestampToString( startTime, timestampStr ) ;
+
+      builder.append( OPT_FIELD_CONTEXT_ID, _contextID ) ;
+      switch ( _optrType )
+      {
+         case MON_UPDATE :
+            builder.append( OPT_FIELD_QUERY_TYPE, OPT_QUERY_TYPE_UPDATE ) ;
+            break ;
+         case MON_DELETE :
+            builder.append( OPT_FIELD_QUERY_TYPE, OPT_QUERY_TYPE_DELETE ) ;
+            break ;
+         default :
+            builder.append( OPT_FIELD_QUERY_TYPE, OPT_QUERY_TYPE_SELECT ) ;
+            break ;
+      }
+
+      builder.append( OPT_QUERY_TIME_SPENT, queryTime ) ;
+      builder.append( OPT_QUERY_START_TIME, timestampStr ) ;
+   }
 
    /*
       _optAccessPlanInfo implement
@@ -73,7 +150,9 @@ namespace engine
    : _mthMatchRuntimeHolder()
    {
       _plan = NULL ;
+      _apm = NULL ;
       _isNewPlan = FALSE ;
+      _hasQueryActivity = FALSE ;
       _ownedPlanInfo = FALSE ;
       _planInfo = NULL ;
    }
@@ -86,8 +165,10 @@ namespace engine
    void _optAccessPlanRuntime::clear ()
    {
       deleteMatchRuntime() ;
-      SAFE_OSS_DELETE( _planInfo ) ;
+      deletePlanInfo() ;
       _isNewPlan = FALSE ;
+      _hasQueryActivity = FALSE ;
+      _apm = NULL ;
       releasePlan() ;
    }
 
@@ -213,6 +294,20 @@ namespace engine
       {
          _plan->release() ;
          _plan = NULL ;
+      }
+   }
+
+   void _optAccessPlanRuntime::setQueryActivity ( INT64 contextID,
+                                                  MON_OPERATION_TYPES optrType,
+                                                  ossTick startTSTick,
+                                                  ossTickDelta queryTimeTick )
+   {
+      if ( NULL != _plan && NULL != _apm && !_hasQueryActivity )
+      {
+         optQueryActivity queryActivity( contextID, optrType, startTSTick,
+                                         queryTimeTick ) ;
+         _apm->setQueryActivity( _plan->getActivityID(), queryActivity ) ;
+         _hasQueryActivity = TRUE ;
       }
    }
 

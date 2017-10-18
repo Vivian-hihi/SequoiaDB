@@ -796,7 +796,8 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
+      pmdKRCB *krcb = pmdGetKRCB() ;
+      SDB_RTNCB *rtnCB = krcb->getRTNCB() ;
       dmsStorageUnitID suID = DMS_INVALID_CS ;
       dmsStorageUnit *su = NULL ;
       const CHAR *pCollectionShortName = NULL ;
@@ -804,6 +805,10 @@ namespace engine
       optAccessPlanRuntime planRuntime ;
       optAccessPlanManager *apm = NULL ;
       BSONObj dummy ;
+
+      ossTick startTime ;
+      monContextCB monCtxCB ;
+      BOOLEAN monStarted = FALSE ;
 
       // Construct options
       // matcher, selector, order, hint, collection, skip, limit, flag
@@ -827,6 +832,14 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Failed to get access plan for %s, "
                    "context %lld, rc: %d", pCollectionName,
                    context->contextID(), rc ) ;
+
+      if ( cb->getMonConfigCB()->timestampON )
+      {
+         monCtxCB.recordStartTimestamp() ;
+      }
+
+      startTime = krcb->getCurTime() ;
+      monStarted = TRUE ;
 
       rc = mbContext->mbLock( SHARED ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to lock collection[%s], rc: %d",
@@ -856,6 +869,15 @@ namespace engine
       if ( su && mbContext )
       {
          su->data()->releaseMBContext( mbContext ) ;
+      }
+      if ( monStarted )
+      {
+         ossTick endTime = krcb->getCurTime() ;
+         ossTickDelta delta = endTime - startTime ;
+         monCtxCB.monOperationTimeInc( MON_TOTAL_WRITE_TIME, delta ) ;
+         planRuntime.setQueryActivity( -1, MON_SELECT,
+                                       monCtxCB._startTimestampTick,
+                                       monCtxCB.queryTimeSpent ) ;
       }
       planRuntime.releasePlan() ;
       if ( DMS_INVALID_CS != suID )

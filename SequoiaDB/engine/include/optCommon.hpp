@@ -154,28 +154,49 @@ namespace engine
       OPT_PLAN_FUZZYOPTR
    } ;
 
-   #define OPT_FIELD_CACHE_STATUS         "CacheStatus"
-   #define OPT_CACHE_STATUS_NOCACHE       "NoCache"
-   #define OPT_CACHE_STATUS_NEWCACHE      "NewCache"
-   #define OPT_CACHE_STATUS_HITCACHE      "HitCache"
    #define OPT_FIELD_HASH_CODE            "HashCode"
    #define OPT_FIELD_REFERENCE_COUNT      "RefCount"
-   #define OPT_FIELD_NORMAIZED_MATCH      "NormalizedQuery"
+   #define OPT_FIELD_NORMAIZED_QUERY      "NormalizedQuery"
+   #define OPT_FIELD_ORDERBY              "OrderBy"
+   #define OPT_FIELD_HINT                 "Hint"
    #define OPT_FIELD_PARAMETERS           "Parameters"
-   #define OPT_FIELD_IS_PARAM_VALID       "ParamValid"
+   #define OPT_FIELD_PARAM_PLAN_VALID     "ParamPlanValid"
+   #define OPT_FIELD_MAINCL_PLAN_VALID    "MainCLPlanValid"
    #define OPT_FIELD_PLAN_PATH            "PlanPath"
-   #define OPT_FIELD_PARAM_RECORDS        "ParamRecords"
    #define OPT_FIELD_PARAM_QUERY          "Query"
    #define OPT_FIELD_PLAN_SCORE           "Score"
-   #define OPT_FIELD_IS_MAINCL_VALID      "MainCLValid"
-   #define OPT_FIELD_SUBCL_RECORDS        "SubCLRecords"
-   #define OPT_FIELD_SUBCL_NAME           "SubCL"
+   #define OPT_FIELD_TOTAL_QUERY_TIME     "TotalQueryTime"
+   #define OPT_FIELD_AVG_QUERY_TIME       "AvgQueryTime"
+   #define OPT_FIELD_PLAN_REF_COUNT       "RefCount"
+   #define OPT_FIELD_PLAN_ACCESS_COUNT    "AccessCount"
+
+   // Explain for cache status
+   #define OPT_FIELD_CACHE_STATUS         "CacheStatus"
+   // Not cached
+   #define OPT_CACHE_STATUS_NOCACHE       "NoCache"
+   // New created into cache
+   #define OPT_CACHE_STATUS_NEWCACHE      "NewCache"
+   // Hit cache
+   #define OPT_CACHE_STATUS_HITCACHE      "HitCache"
+
+   // Explain for cache level ( --plancachelevel )
    #define OPT_FIELD_CACHELEVEL           "CacheLevel"
    #define OPT_CACHE_NOCACHE_NAME         "OPT_PLAN_NOCACHE"
    #define OPT_CACHE_ORIGINAL_NAME        "OPT_PLAN_ORIGINAL"
    #define OPT_CACHE_NORMALIZED_NAME      "OPT_PLAN_NORMALZIED"
    #define OPT_CACHE_PARAMETERIZED_NAME   "OPT_PLAN_PARAMETERIZED"
    #define OPT_CACHE_FUZZYOPTR_NAME       "OPT_PLAN_FUZZYOPTR"
+
+   // Explain for query activity
+   #define OPT_FIELD_MAX_QUERY            "MaxTimeSpentQuery"
+   #define OPT_FIELD_MIN_QUERY            "MinTimeSpentQuery"
+   #define OPT_FIELD_CONTEXT_ID           FIELD_NAME_CONTEXTID
+   #define OPT_FIELD_QUERY_TYPE           "QueryType"
+   #define OPT_QUERY_TYPE_SELECT          "SELECT"
+   #define OPT_QUERY_TYPE_UPDATE          "UPDATE"
+   #define OPT_QUERY_TYPE_DELETE          "DELETE"
+   #define OPT_QUERY_TIME_SPENT           FIELD_NAME_QUERYTIMESPENT
+   #define OPT_QUERY_START_TIME           FIELD_NAME_STARTTIMESTAMP
 
 }
 
