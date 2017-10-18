@@ -38,8 +38,9 @@ TEST( decimal8865, append )
 
    bsonDecimal dec2( dec1 ); // seqDB-8872
 
-   bsonDecimal dec3( dec1 );
-   dec3.init(); // seqDB-8875
+   bsonDecimal dec3;
+   dec3.init(); 
+   dec3.fromDouble( 123.12345 ); // seqDB-8875
 
    bsonDecimal dec4;
    dec4.init( 10, 3 ); // seqDB-8876
@@ -74,7 +75,7 @@ TEST( decimal8865, append )
    //check
    ASSERT_STREQ( "104",          aDec.toString().c_str() ); // seqDB-8886
    ASSERT_STREQ( "104",          bDec.toString().c_str() ); 
-   ASSERT_STREQ( "0",            cDec.toString().c_str() ); 
+   ASSERT_STREQ( "123.12345",    cDec.toString().c_str() ); 
    ASSERT_STREQ( "0.123",        dDec.toString().c_str() ); 
    ASSERT_STREQ( "12345.7",      eDec.toString().c_str() ); 
    ASSERT_STREQ( "12345.1235",   fDec.toString().c_str() );      
