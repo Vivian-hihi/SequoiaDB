@@ -126,7 +126,7 @@ namespace engine
       builder.append( OPT_FIELD_CACHELEVEL, _key.getCacheLevelName() ) ;
 
       // Selector, skip and limit are not used in cached
-      builder.append( OPT_FIELD_NORMAIZED_QUERY,
+      builder.append( FIELD_NAME_FORMATTED_QUERY,
                       _key.getNormalizedQuery().isEmpty() ?
                       _key.getQuery().toString( FALSE, TRUE ).c_str() :
                       _key.getNormalizedQuery().toString( FALSE, TRUE ).c_str() ) ;

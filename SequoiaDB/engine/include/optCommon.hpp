@@ -156,7 +156,6 @@ namespace engine
 
    #define OPT_FIELD_HASH_CODE            "HashCode"
    #define OPT_FIELD_REFERENCE_COUNT      "RefCount"
-   #define OPT_FIELD_NORMAIZED_QUERY      "NormalizedQuery"
    #define OPT_FIELD_ORDERBY              "OrderBy"
    #define OPT_FIELD_HINT                 "Hint"
    #define OPT_FIELD_SORTED_IDX_REQURED   "SortedIndexRequired"

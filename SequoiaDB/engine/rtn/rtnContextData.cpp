@@ -2144,12 +2144,12 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNCONTEXTEXPLAIN__PREPARETOEXPLAIN ) ;
-      BSONObj dummy ;
       INT64 queryContextID = -1 ;
       rtnContextBuf ctxBuf ;
       optAccessPlanRuntime *planRuntime = NULL ;
       const CHAR* hostName = NULL ;
       stringstream ss ;
+      BSONObj formattedQuery ;
       _rtnContextBase *contextOfQuery = NULL ;
       ossTime userTime, sysTime ;
 
@@ -2186,9 +2186,13 @@ namespace engine
                        planRuntime->getIndexName() ) ;
       _builder.appendBool( FIELD_NAME_USE_EXT_SORT,
                            planRuntime->sortRequired() ) ;
-      _builder.append( FIELD_NAME_QUERY,
-                       planRuntime->getMatchTree()->getParsedQuery(
-                                         planRuntime->getParameters() ) ) ;
+
+      formattedQuery = planRuntime->getMatchTree()->getParsedQuery(
+                                             planRuntime->getParameters() ) ;
+      _builder.append( FIELD_NAME_QUERY, formattedQuery ) ;
+      _builder.append( FIELD_NAME_FORMATTED_QUERY,
+                       formattedQuery.toString( FALSE, TRUE ).c_str() ) ;
+
       if ( IXSCAN == planRuntime->getScanType() &&
            NULL != planRuntime->getPredList() )
       {

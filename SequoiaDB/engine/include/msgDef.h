@@ -366,6 +366,7 @@
 #define FIELD_NAME_RTYPE                     "ReturnType"
 #define FIELD_NAME_IX_BOUND                  "IXBound"
 #define FIELD_NAME_QUERY                     "Query"
+#define FIELD_NAME_FORMATTED_QUERY           "FormattedQuery"
 #define FIELD_NAME_NEED_MATCH                "NeedMatch"
 #define FIELD_NAME_RTYPE                     "ReturnType"
 #define FIELD_NAME_ONLY_DETACH               "OnlyDetach"
