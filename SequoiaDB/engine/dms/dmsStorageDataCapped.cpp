@@ -964,7 +964,6 @@ namespace engine
       _mbStatInfo[mbID]._totalDataFreeSpace = extent->_freeSpace ;
       _mbStatInfo[mbID]._totalOrgDataLen -= totalSize ;
       _mbStatInfo[mbID]._totalDataLen -= totalSize ;
-      _mbStatInfo[mbID]._totalDataPages -= DMS_CAP_EXTENT_PG_NUM ;
 
       rc = _freeExtent( context, extID ) ;
       PD_RC_CHECK( rc, PDERROR, "Free extent[%d] failed: %d", extID, rc ) ;
