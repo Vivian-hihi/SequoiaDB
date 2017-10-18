@@ -68,15 +68,21 @@ namespace engine
    {
    }
 
-   BSONObj _rtnParamList::toBSON () const
+   void _rtnParamList::toBSON ( BSONObjBuilder &builder ) const
    {
-      BSONObjBuilder builder ;
-      BSONArrayBuilder subBuilder( builder.subarrayStart( FIELD_NAME_PARAM ) ) ;
+      BSONArrayBuilder subBuilder(
+                  builder.subarrayStart( FIELD_NAME_PARAMETERS ) ) ;
       for ( INT8 i = 0 ; i < _paramNum ; i ++ )
       {
          subBuilder.append( _params[ i ]._param ) ;
       }
       subBuilder.done() ;
+   }
+
+   BSONObj _rtnParamList::toBSON () const
+   {
+      BSONObjBuilder builder ;
+      toBSON( builder ) ;
       return builder.obj() ;
    }
 

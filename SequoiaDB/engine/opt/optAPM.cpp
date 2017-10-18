@@ -1850,7 +1850,8 @@ namespace engine
       if ( isParameterized )
       {
          // Validate self
-         pPlan->validateParameterized( *pPlan ) ;
+         BSONObj paramArr = planRuntime.getParameters().toBSON() ;
+         pPlan->validateParameterized( *pPlan, paramArr ) ;
       }
 
       // Set the outputs
@@ -1959,11 +1960,21 @@ namespace engine
                    plan->getCacheLevel() >= OPT_PLAN_PARAMETERIZED,
                    "plan is invalid" ) ;
 
+      BSONObj paramArr ;
       optGeneralAccessPlan *tempPlan = NULL ;
 
-      // access plan is parameterized validated or has the same original query
-      if ( plan->isParamValid() ||
-           plan->checkSavedParam( planKey ) )
+      // access plan is parameterized validated
+      if ( plan->isParamValid() )
+      {
+         rc = planRuntime.bindParamPlan( matchHelper, plan ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to bind parameterized plan, rc: %d",
+                      rc ) ;
+         goto done ;
+      }
+
+      // access plan has the same parameters
+      paramArr = planRuntime.getParameters().toBSON() ;
+      if ( plan->checkSavedParam( paramArr ) )
       {
          rc = planRuntime.bindParamPlan( matchHelper, plan ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to bind parameterized plan, rc: %d",
@@ -1979,7 +1990,7 @@ namespace engine
       tempPlan = dynamic_cast<optGeneralAccessPlan *>( planRuntime.getPlan() ) ;
       SDB_ASSERT( tempPlan, "subPlan is invalid " ) ;
 
-      if ( plan->validateParameterized( *tempPlan ) )
+      if ( plan->validateParameterized( *tempPlan, paramArr ) )
       {
          // Do nothing
       }

@@ -1072,7 +1072,8 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTPARAMACPLAN_VALIDPARAM, "_optParamAccessPlan::validateParameterized" )
-   BOOLEAN _optParamAccessPlan::validateParameterized ( const _optAccessPlan &plan )
+   BOOLEAN _optParamAccessPlan::validateParameterized ( const _optAccessPlan &plan,
+                                                        const BSONObj &paramArr )
    {
       BOOLEAN result = FALSE ;
 
@@ -1083,7 +1084,7 @@ namespace engine
            plan.getIndexLID() == getIndexLID() &&
            plan.getDirection() == getDirection() )
       {
-         _saveParam( plan.getKey().getQuery(), plan.getScore() ) ;
+         _saveParam( paramArr, plan.getScore() ) ;
          result = TRUE ;
       }
       else
@@ -1100,7 +1101,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTPARAMACPLAN_CHKSAVEDPARAM, "_optParamAccessPlan::checkSavedParam" )
-   BOOLEAN _optParamAccessPlan::checkSavedParam ( const optAccessPlanKey &key )
+   BOOLEAN _optParamAccessPlan::checkSavedParam ( const BSONObj &paramArr )
    {
       BOOLEAN res = FALSE ;
 
@@ -1112,7 +1113,7 @@ namespace engine
 
       for ( UINT32 i = 0 ; i < savedCount ; i++ )
       {
-         if ( key.getQuery().shallowEqual( _records[ i ]._query ) )
+         if ( paramArr.shallowEqual( _records[ i ]._paramArr ) )
          {
             res = TRUE ;
             break ;
@@ -1189,7 +1190,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTPARAMACPLAN__SAVEPARAM, "_optParamAccessPlan::_saveParam" )
-   void _optParamAccessPlan::_saveParam ( const BSONObj &query, double score )
+   void _optParamAccessPlan::_saveParam ( const BSONObj &paramArr, double score )
    {
       PD_TRACE_ENTRY( SDB__OPTPARAMACPLAN__SAVEPARAM ) ;
 
@@ -1197,7 +1198,7 @@ namespace engine
       if ( paramIndex < OPT_PARAM_VALID_PLAN_NUM )
       {
          // Save the specified plan for validation
-         _records[ paramIndex ]._query = query.copy() ;
+         _records[ paramIndex ]._paramArr = paramArr.copy() ;
          _records[ paramIndex ]._score = score ;
 
          if ( paramIndex == OPT_PARAM_VALID_PLAN_NUM - 1 )

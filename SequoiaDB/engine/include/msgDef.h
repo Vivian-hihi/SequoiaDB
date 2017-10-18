@@ -395,6 +395,7 @@
 // Used internal: { $param : paramIndex, $ctype : canonicalType }
 #define FIELD_NAME_PARAM                     "$param"
 #define FIELD_NAME_CTYPE                     "$ctype"
+#define FIELD_NAME_PARAMETERS                "Parameters"
 
 #define IXM_FIELD_NAME_KEY                   "key"
 #define IXM_FIELD_NAME_NAME                  "name"

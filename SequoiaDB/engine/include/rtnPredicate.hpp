@@ -73,6 +73,7 @@ namespace engine
 
          virtual ~_rtnParamList () ;
 
+         void toBSON ( BSONObjBuilder &builder ) const ;
          BSONObj toBSON () const ;
          string toString () const ;
 

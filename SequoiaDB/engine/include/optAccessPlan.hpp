@@ -334,7 +334,8 @@ namespace engine
             return FALSE ;
          }
 
-         OSS_INLINE virtual BOOLEAN validateParameterized ( const _optAccessPlan &plan )
+         OSS_INLINE virtual BOOLEAN validateParameterized ( const _optAccessPlan &plan,
+                                                            const BSONObj &paramArr )
          {
             return FALSE ;
          }
@@ -428,7 +429,7 @@ namespace engine
                _score = OPT_PRED_DEFAULT_SELECTIVITY ;
             }
 
-            BSONObj _query ;
+            BSONObj _paramArr ;
             double _score ;
          } _optParamRecord, optParamRecord ;
 
@@ -453,16 +454,17 @@ namespace engine
             return _isParamValid ;
          }
 
-         virtual BOOLEAN validateParameterized ( const _optAccessPlan &plan ) ;
+         virtual BOOLEAN validateParameterized ( const _optAccessPlan &plan,
+                                                 const BSONObj &paramArr ) ;
 
-         virtual BOOLEAN checkSavedParam ( const optAccessPlanKey &key ) ;
+         virtual BOOLEAN checkSavedParam ( const BSONObj &paramArr ) ;
 
          virtual INT32 markParamInvalid ( dmsMBContext *mbContext ) ;
 
          virtual INT32 bindMatchRuntime ( mthMatchRuntime *matchRuntime ) ;
 
       protected :
-         void _saveParam ( const BSONObj &query, double score ) ;
+         void _saveParam ( const BSONObj &paramArr, double score ) ;
 
       protected :
          optParamRecord    _records[ OPT_PARAM_VALID_PLAN_NUM ] ;

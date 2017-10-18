@@ -2228,8 +2228,7 @@ namespace engine
          planRuntime->getPlan()->toBSON( subBuilder, TRUE, FALSE ) ;
          if ( !planRuntime->getParameters().isEmpty() )
          {
-            subBuilder.append( OPT_FIELD_PARAMETERS,
-                               planRuntime->getParameters().toBSON() ) ;
+            planRuntime->getParameters().toBSON( subBuilder ) ;
          }
          subBuilder.done() ;
       }

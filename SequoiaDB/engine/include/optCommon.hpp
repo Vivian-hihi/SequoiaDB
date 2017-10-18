@@ -160,7 +160,6 @@ namespace engine
    #define OPT_FIELD_ORDERBY              "OrderBy"
    #define OPT_FIELD_HINT                 "Hint"
    #define OPT_FIELD_SORTED_IDX_REQURED   "SortedIndexRequired"
-   #define OPT_FIELD_PARAMETERS           "Parameters"
    #define OPT_FIELD_PARAM_PLAN_VALID     "ParamPlanValid"
    #define OPT_FIELD_MAINCL_PLAN_VALID    "MainCLPlanValid"
    #define OPT_FIELD_PLAN_PATH            "PlanPath"
