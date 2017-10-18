@@ -1393,6 +1393,28 @@ namespace SequoiaDB
             return lob;
         }
 
+        /** \fn DBLob OpenLob(ObjectId id, int mode)
+         * \brief Open an existing lob with the speceifed oid
+         * \param id The oid of the existing lob
+         * \param mode Open mode:
+         *              DBLob.SDB_LOB_READ for reading,
+         *              DBLob.SDB_LOB_WRITE for writing.
+         * \exception SequoiaDB.BaseException
+         * \exception System.Exception
+         */
+        public DBLob OpenLob(ObjectId id, int mode)
+        {
+            if (mode != DBLob.SDB_LOB_READ && mode != DBLob.SDB_LOB_WRITE)
+            {
+                throw new BaseException((int)Errors.errors.SDB_INVALIDARG, "mode is unsupported: " + mode);
+            }
+            DBLob lob = new DBLob(this);
+            lob.Open(id, mode);
+            // upsert cache
+            sdb.UpsertCache(collectionFullName);
+            return lob;
+        }
+
         /** \fn DBLob OpenLob(ObjectId id)
          * \brief Open an existing lob with the speceifed oid
          * \param id The oid of the existing lob
@@ -1401,11 +1423,7 @@ namespace SequoiaDB
          */
         public DBLob OpenLob(ObjectId id)
         {
-            DBLob lob = new DBLob(this);
-            lob.Open(id, DBLob.SDB_LOB_READ);
-            // upsert cache
-            sdb.UpsertCache(collectionFullName);
-            return lob;
+            return OpenLob(id, DBLob.SDB_LOB_READ);
         }
 
         /** \fn DBLob RemoveLob(ObjectId id)
