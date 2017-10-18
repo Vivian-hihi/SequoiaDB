@@ -78,10 +78,11 @@ TEST_F( turnOnCache7807, dropCollection )
    ASSERT_EQ( SDB_OK, rc ) << "fail to drop cl" ;
    db2.disconnect() ;
 
-   ossSleep( CACHE_TIME_INT ) ; 
-   rc = db.getCollectionSpace( pCsName, cs ) ;
+   ossSleep( CACHE_TIME_INT ) ;
+   sdbCollectionSpace cs1 ; 
+   rc = db.getCollectionSpace( pCsName, cs1 ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to get cs" ;
    sdbCollection cl ;
-   rc = cs.getCollection( pClName, cl ) ;
+   rc = cs1.getCollection( pClName, cl ) ;
    ASSERT_EQ( SDB_DMS_NOTEXIST, rc ) ;
 }
