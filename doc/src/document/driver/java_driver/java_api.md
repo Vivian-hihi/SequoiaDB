@@ -7,6 +7,19 @@
 * 删除接口 - 不再兼容 
 * 废弃接口 - 保持兼容性
 
+**Version 2.10**
+
+1. com.sequoiadb.base.DBCollection接口变更：
+
+	* 增加openLob(ObjectId id, int mode)方法，其中mode取值为DBLob.SDB_LOB_READ或DBLob.SDB_LOB_WRITE。
+
+2. com.sequoiadb.base.DBLob接口变更：
+
+	* 增加lock方法。
+ 	* 增加lockAndSeek方法。
+	* 增加getModificationTime方法。
+	* seek方法原来只能在读lob模式下使用，现在该方法支持在创建的lob或写lob模式下使用。
+
 **Version 2.9**
 
 1. com.sequoiadb.base.Sequoiadb接口变更： 
