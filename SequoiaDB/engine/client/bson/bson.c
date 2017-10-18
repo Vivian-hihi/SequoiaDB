@@ -716,6 +716,24 @@ SDB_EXPORT int bson_sprint_iterator ( char **pbuf, int *left, bson_iterator *i,
          CHECK_LEFT ( left )
          break;
       }
+      case BSON_DBREF:
+      {
+         char oidhex[25] ;
+         bson_oid_to_string( bson_iterator_dbref_oid( i ), oidhex ) ;
+
+         bson_sprint_raw_concat ( pbuf, left, "{ \"$db\" : \"", 0 ) ;
+         CHECK_LEFT ( left )
+         bson_sprint_raw_concat ( pbuf, left, bson_iterator_dbref( i ), 1 ) ;
+         CHECK_LEFT ( left )
+         bson_sprint_raw_concat ( pbuf, left, "\", \"$id\" : \"", 0 ) ;
+         CHECK_LEFT ( left )
+         bson_sprint_raw_concat ( pbuf, left, oidhex, 0 ) ;
+         CHECK_LEFT ( left )
+         bson_sprint_raw_concat ( pbuf, left, "\" }", 0 ) ;
+         CHECK_LEFT ( left )
+
+         break ;
+      }
       default:
          return 0 ;
    }
@@ -893,6 +911,12 @@ SDB_EXPORT int bson_sprint_length_iterator ( bson_iterator *i )
       int len = bson_sprint_length_raw ( bson_iterator_value ( i ), 0 ) ;
       if ( 0 == len ) return 0 ;
       total += len ;
+      break ;
+   }
+   case BSON_DBREF :
+   {
+      /* { "$db" : "xxxx", "$id" : "<24-digits oid>" } */
+      total += ( 64 + strlen ( bson_iterator_dbref ( i ) ) * 2 ) ;
       break ;
    }
    default :
@@ -1564,6 +1588,15 @@ SDB_EXPORT const char *bson_iterator_regex_opts( const bson_iterator *i ) {
     const char *p = bson_iterator_value( i );
     return p + strlen( p ) + 1;
 
+}
+
+SDB_EXPORT const char *bson_iterator_dbref( const bson_iterator *i ) {
+    return bson_iterator_value( i ) + 4;
+}
+
+SDB_EXPORT bson_oid_t *bson_iterator_dbref_oid( const bson_iterator *i ) {
+    const char *p = bson_iterator_dbref( i );
+    return ( bson_oid_t * )( p + strlen( p ) + 1 );
 }
 
 SDB_EXPORT void bson_iterator_subobject( const bson_iterator *i, bson *sub ) {

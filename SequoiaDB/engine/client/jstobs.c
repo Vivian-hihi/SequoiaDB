@@ -1986,6 +1986,24 @@ static BOOLEAN bsonConvertJson ( CHAR **pbuf,
          CHECK_LEFT ( left )
          break ;
       }
+      case BSON_DBREF:
+      {
+         bson_oid_to_string( bson_iterator_dbref_oid( &i ), oidhex ) ;
+
+         bsonConvertJsonRawConcat ( pbuf, left, "{ \"$db\" : \"", FALSE ) ;
+         CHECK_LEFT ( left )
+         bsonConvertJsonRawConcat ( pbuf, left, bson_iterator_dbref( &i ),
+                                    TRUE ) ;
+         CHECK_LEFT ( left )
+         bsonConvertJsonRawConcat ( pbuf, left, "\", \"$id\" : \"", FALSE ) ;
+         CHECK_LEFT ( left )
+         bsonConvertJsonRawConcat ( pbuf, left, oidhex, FALSE ) ;
+         CHECK_LEFT ( left )
+         bsonConvertJsonRawConcat ( pbuf, left, "\" }", 0 ) ;
+         CHECK_LEFT ( left )
+
+         break ;
+      }
       default:
          return FALSE ;
       }
