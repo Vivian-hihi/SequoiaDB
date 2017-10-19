@@ -85,7 +85,40 @@ class TestSave12502(testlib.SdbTestBase):
          condition7 = doc_commNewField
          expectCount7 = 1
          self.check_result(condition7, expectCount7)
+			
+			#SEQUOIADBMAINSTREAM-2770,check match _id not ObjectId
+         #_id : int			
+         mthIntegerId = {"a": "Interger", "_id": 1}
+         self.cl.save(mthIntegerId)
 
+         condition1 = mthIntegerId
+         expectCount1 = 1
+         self.check_result(condition1, expectCount1)
+			
+         #_id : float
+         mthFloatId = {"a": "Float", "_id": 2017.1019}
+         self.cl.save(mthFloatId)
+
+         condition2 = mthFloatId
+         expectCount2 = 1
+         self.check_result(condition2, expectCount2)
+			
+			#_id : string
+         mthStringId = {"a": "String", "_id": 'testtesttesttesttest'}
+         self.cl.save(mthStringId)
+
+         condition3 = mthStringId
+         expectCount3 = 1
+         self.check_result(condition3, expectCount3)
+			
+			#_id : object
+         mthObjId = {"a": "Object", "_id": {'object' : '123'}}
+         self.cl.save(mthObjId)
+
+         condition4 = mthObjId
+         expectCount4 = 1
+         self.check_result(condition4, expectCount4)
+			
       except SDBError as e:
          self.fail('test save fail: ' + e.detail)                    
 			
