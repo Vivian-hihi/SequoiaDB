@@ -522,6 +522,7 @@ Remote.prototype.getFile = function( filename, permission, openMode ) {
    var option = {} ;
    file._remote = this ;
 
+
    if ( 1 <= arguments.length )
    {
       if ( "string" != typeof( filename ) )
@@ -2682,7 +2683,7 @@ File.prototype.chmod = function( filename, mode, recursive ) {
       var optionObj = {} ;
       if ( undefined != recursive )
       {
-         optionObj.recursive = recursive ;
+         optionObj.isRecursive = recursive ;
       }
       this._remote._runCommand( "file chmod", optionObj, { "Pathname": filename },
                                 { "Mode": mode } ) ;
@@ -3062,4 +3063,5 @@ File.prototype.readLine = function() {
    }
    return retStr ;
 }
+
 // end File
