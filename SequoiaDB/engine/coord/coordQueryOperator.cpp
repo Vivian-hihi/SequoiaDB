@@ -704,7 +704,6 @@ namespace engine
       const CHAR* pLastMsg    = NULL ;
       CHAR *pModifyMsg        = NULL ;
       INT32 modifyMsgSize     = 0 ;
-      BOOLEAN needReset       = FALSE ;
 
       BOOLEAN isUpdate        = FALSE ;
       INT32 flags             = 0 ;
@@ -774,8 +773,17 @@ namespace engine
          }
          else
          {
+            BOOLEAN needReset       = FALSE ;
+            if ( FLG_QUERY_STRINGOUT & pQueryMsg->flags )
+            {
+               needReset = TRUE ;
+            }
+            else
+            {
+               rtnNeedResetSelector( objSelector, objOrderby, needReset ) ;
+            }
+
             // build new selector
-            rtnNeedResetSelector( objSelector, objOrderby, needReset ) ;
             if ( needReset )
             {
                static BSONObj emptyObj = BSONObj() ;
@@ -807,6 +815,11 @@ namespace engine
                pQueryMsg->numToReturn += pQueryMsg->numToSkip ;
             }
             pQueryMsg->numToSkip = 0 ;
+
+            if ( FLG_QUERY_STRINGOUT & pQueryMsg->flags )
+            {
+               _pContext->getSelector().setStringOutput( TRUE ) ;
+            }
          }
          PD_RC_CHECK( rc, PDERROR, "Open context failed, rc: %d", rc ) ;
       }

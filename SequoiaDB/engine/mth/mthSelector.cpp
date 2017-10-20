@@ -158,6 +158,8 @@ namespace engine
          goto error ;
       }
 
+      other.setStringOutput( getStringOutput() ) ;
+
       clear() ;
    done:
       PD_TRACE_EXITRC( SDB__MTHSELECTOR_MOVE, rc ) ;

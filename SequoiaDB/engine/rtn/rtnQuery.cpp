@@ -556,6 +556,11 @@ namespace engine
             // dmsCB will be writedown by dataContext
             writable = FALSE ;
          }
+
+         if ( options._flag & FLG_QUERY_STRINGOUT )
+         {
+            dataContext->getSelector().setStringOutput( TRUE ) ;
+         }
       }
       else
       {
@@ -575,6 +580,11 @@ namespace engine
          suID = DMS_INVALID_CS ;
          mbContext = NULL ;
 
+         if ( options._flag & FLG_QUERY_STRINGOUT )
+         {
+            dataContext->getSelector().setStringOutput( TRUE ) ;
+         }
+
          rc = rtnSort ( (rtnContext**)&dataContext, options._orderBy, cb,
                         options._skip, options._limit, contextID ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to sort, rc: %d", rc ) ;
@@ -584,11 +594,6 @@ namespace engine
       if ( cb->getMonConfigCB()->timestampON )
       {
          dataContext->getMonCB()->recordStartTimestamp() ;
-      }
-
-      if ( options._flag & FLG_QUERY_STRINGOUT )
-      {
-         dataContext->getSelector().setStringOutput( TRUE ) ;
       }
 
       if ( ppContext )
