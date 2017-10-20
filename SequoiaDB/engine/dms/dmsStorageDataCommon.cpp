@@ -456,6 +456,7 @@ namespace engine
    void _dmsRecordRW::_doneAddr()
    {
       BOOLEAN oldThrow = _rw.isNothrow() ;
+      _rw.setNothrow( TRUE ) ;
       /// Need to read the overflow rid
       UINT32 len = DMS_RECORD_METADATA_SZ + sizeof( dmsRecordID ) ;
       _ptr = (const dmsRecord*)_rw.readPtr( _rid._offset, len ) ;
