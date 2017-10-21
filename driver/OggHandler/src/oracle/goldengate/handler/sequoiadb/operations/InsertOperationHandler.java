@@ -53,13 +53,15 @@ public class InsertOperationHandler
         for (ListIterator localListIterator = op.iterator(); localListIterator.hasNext();)
         {
             Col c = (Col)localListIterator.next();
-            if ((!c.isMissing()) || (!this.handlerProperties.getIgnoreMissingColumns()))
+            if (!c.isMissing())
             {
                 Object columnValue = DB.getColumnValue(c, false);
-                if (this.handlerProperties.getChangeFieldToLowCase())
-                    obj.put(c.getOriginalName().toLowerCase(), columnValue);
-                else
-                    obj.put(c.getOriginalName(), columnValue);
+                if (columnValue != null || !this.handlerProperties.getIgnoreMissingColumns()) {
+                    if (this.handlerProperties.getChangeFieldToLowCase())
+                        obj.put(c.getOriginalName().toLowerCase(), columnValue);
+                    else
+                        obj.put(c.getOriginalName(), columnValue);
+                }
             }
         }
         return obj;

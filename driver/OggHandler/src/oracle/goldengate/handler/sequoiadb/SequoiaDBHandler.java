@@ -46,7 +46,7 @@ public class SequoiaDBHandler
         }
         catch (Exception e)
         {
-            throw new ConfigException("Unable to connect to mongo db instance. Configured Server address list ", e);
+            throw new ConfigException("Unable to connect to SequoiaDB instance. Configured Server address list ", e);
         }
         setMode("op");
 
