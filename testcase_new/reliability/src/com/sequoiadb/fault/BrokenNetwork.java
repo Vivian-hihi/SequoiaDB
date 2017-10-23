@@ -219,28 +219,27 @@ public class BrokenNetwork extends Fault {
         else {
             cmd = "ping " + host + " -c 2 -w 2";
         }
-        BufferedReader brIn = null;
+        
         Process pr = null;
-        // BufferedReader byErr = null;
-        // Runtime rt = Runtime.getRuntime();
+        Runtime rt = Runtime.getRuntime();
+        
+        BufferedReader brIn = null;
+        BufferedReader byErr = null;
+        
         try {
-            ProcessBuilder pb = new ProcessBuilder(cmd);
-            pb.redirectErrorStream(true);
-
-            // Process pr = rt.exec(cmd);
-            pr = pb.start();
-
-            // InputStream stderr = pr.getErrorStream();
+            pr = rt.exec(cmd);
+            InputStream stderr = pr.getErrorStream();
             InputStream stdin = pr.getInputStream() ;
             InputStreamReader isIn = new InputStreamReader(stdin);
-            // InputStreamReader isErr = new InputStreamReader(stderr);
+            InputStreamReader isErr = new InputStreamReader(stderr);
             brIn = new BufferedReader(isIn);
-            // byErr = new BufferedReader(isErr);
+            byErr = new BufferedReader(isErr);
             
             String line = null;
             while((line = brIn.readLine()) != null);
-            // while((line = byErr.readLine()) != null);
+            while((line = byErr.readLine()) != null);
             int exitcode = pr.waitFor();
+            System.out.println("exitcode: " + exitcode);
             if (exitcode == 0) {
                 return true;
             }
@@ -254,6 +253,13 @@ public class BrokenNetwork extends Fault {
             if (brIn != null) {
                 try {
                     brIn.close();
+                } catch (IOException e){
+                    e.printStackTrace();
+                }
+            }
+            if (byErr != null) {
+                try {
+                	byErr.close();
                 } catch (IOException e){
                     e.printStackTrace();
                 }
