@@ -1097,9 +1097,30 @@ namespace engine
          }
          else if ( ossStrcasecmp( pSubCommand, OM_DEPLOY_PACKAGE_REQ ) == 0 )
          {
-            commandIf = SDB_OSS_NEW omDeployPackage( pAdptor, this,
-                                                     localAgentHost,
-                                                     localAgentPort ) ;
+            commandIf = SDB_OSS_NEW omDeployPackageCommand( pAdptor, this,
+                                                            localAgentHost,
+                                                            localAgentPort ) ;
+         }
+         else if ( ossStrcasecmp( pSubCommand,
+                                  OM_CREATE_RELATIONSHIP_REQ ) == 0 )
+         {
+            commandIf = SDB_OSS_NEW omCreateRelationshipCommand(
+                                                            pAdptor, this,
+                                                            localAgentHost,
+                                                            localAgentPort ) ;
+         }
+         else if ( ossStrcasecmp( pSubCommand,
+                                  OM_REMOVE_RELATIONSHIP_REQ ) == 0 )
+         {
+            commandIf = SDB_OSS_NEW omRemoveRelationshipCommand(
+                                                            pAdptor, this,
+                                                            localAgentHost,
+                                                            localAgentPort ) ;
+
+         }
+         else if ( ossStrcasecmp( pSubCommand, OM_LIST_RELATIONSHIP_REQ ) == 0 )
+         {
+            commandIf = SDB_OSS_NEW omListRelationshipCommand( pAdptor, this ) ;
          }
          else
          {

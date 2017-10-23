@@ -12373,10 +12373,10 @@ namespace engine
       goto done ;
    }
 
-   omDeployPackage::omDeployPackage( restAdaptor *pRestAdaptor,
-                                     pmdRestSession *pRestSession,
-                                     string &localAgentHost,
-                                     string &localAgentService )
+   omDeployPackageCommand::omDeployPackageCommand( restAdaptor *pRestAdaptor,
+                                                   pmdRestSession *pRestSession,
+                                                   string &localAgentHost,
+                                                   string &localAgentService )
          : omAuthCommand( pRestAdaptor, pRestSession ),
            _enforced( FALSE ),
            _localAgentHost( localAgentHost ),
@@ -12384,11 +12384,11 @@ namespace engine
    {
    }
 
-   omDeployPackage::~omDeployPackage()
+   omDeployPackageCommand::~omDeployPackageCommand()
    {
    }
 
-   INT32 omDeployPackage::doCommand()
+   INT32 omDeployPackageCommand::doCommand()
    {
       INT32 rc = SDB_OK ;
       INT64 taskID = 0 ;
@@ -12459,10 +12459,10 @@ namespace engine
       goto done ;
    }
 
-   INT32 omDeployPackage::_check( const BSONObj &restHostInfo,
-                                  BSONObj &clusterInfo,
-                                  BSONObj &hostsInfo,
-                                  string &packetPath )
+   INT32 omDeployPackageCommand::_check( const BSONObj &restHostInfo,
+                                         BSONObj &clusterInfo,
+                                         BSONObj &hostsInfo,
+                                         string &packetPath )
    {
       INT32 rc = SDB_OK ;
       omDatabaseTool dbTool( _cb ) ;
@@ -12659,11 +12659,11 @@ namespace engine
       goto done ;
    }
 
-   void omDeployPackage::_generateRequest( const BSONObj &clusterInfo,
-                                           const BSONObj &hostInfo,
-                                           const string &packetPath,
-                                           BSONObj &taskConfig,
-                                           BSONArray &resultInfo )
+   void omDeployPackageCommand::_generateRequest( const BSONObj &clusterInfo,
+                                                  const BSONObj &hostInfo,
+                                                  const string &packetPath,
+                                                  BSONObj &taskConfig,
+                                                  BSONArray &resultInfo )
    {
       BSONObjBuilder taskConfigBuilder ;
       BSONArrayBuilder resultInfoBuilder ;
@@ -12726,9 +12726,9 @@ namespace engine
       taskConfig = taskConfigBuilder.obj() ;
    }
 
-   INT32 omDeployPackage::_createTask( const BSONObj &taskConfig,
-                                       const BSONArray &resultInfo,
-                                       INT64 &taskID )
+   INT32 omDeployPackageCommand::_createTask( const BSONObj &taskConfig,
+                                              const BSONArray &resultInfo,
+                                              INT64 &taskID )
    {
       INT32 rc = SDB_OK ;
       string errDetail ;

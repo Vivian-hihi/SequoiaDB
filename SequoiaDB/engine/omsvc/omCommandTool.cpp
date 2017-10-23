@@ -2197,7 +2197,7 @@ namespace engine
 
             contextID = -1 ;
             PD_LOG( PDERROR, "failed to get record from table:%s,rc=%d",
-                    OM_CS_DEPLOY_CL_BUSINESS, rc ) ;
+                    OM_CS_DEPLOY_CL_CONFIGURE, rc ) ;
             goto error ;
          }
 
@@ -2211,7 +2211,7 @@ namespace engine
       if ( FALSE == isExist )
       {
          rc = SDB_DMS_RECORD_NOTEXIST ;
-         PD_LOG( PDERROR, "Failed to query host info:rc=%d", rc ) ;
+         PD_LOG( PDWARNING, "Failed to query info:rc=%d", rc ) ;
          goto error ;
       }
 
@@ -2320,7 +2320,6 @@ namespace engine
       goto done ;
    }
 
-   
    INT32 omDatabaseTool::getHostInfoByAddress( const string &address,
                                                BSONObj &hostInfo )
    {
@@ -2512,6 +2511,247 @@ namespace engine
          _pRTNCB->contextDelete ( contextID, _cb ) ;
          contextID = -1 ;
       }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   
+   INT32 omDatabaseTool::_getOneRelationship( const BSONObj &condition,
+                                              const BSONObj &selector,
+                                              BSONObj &info )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN isExist = FALSE ;
+      SINT64 contextID = -1 ;
+      BSONObj order ;
+      BSONObj hint ;
+
+      rc = rtnQuery( OM_CS_DEPLOY_CL_RELATIONSHIP, selector, condition, order,
+                     hint, 0, _cb, 0, 1, _pDMSCB, _pRTNCB, contextID );
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "fail to query table:%s,rc=%d",
+                 OM_CS_DEPLOY_CL_RELATIONSHIP, rc ) ;
+         goto error ;
+      }
+
+      while ( TRUE )
+      {
+         rtnContextBuf buffObj ;
+
+         rc = rtnGetMore ( contextID, 1, buffObj, _cb, _pRTNCB ) ;
+         if ( rc )
+         {
+            if ( SDB_DMS_EOC == rc )
+            {
+               rc = SDB_OK ;
+               break ;
+            }
+
+            contextID = -1 ;
+            PD_LOG( PDERROR, "failed to get record from table:%s,rc=%d",
+                    OM_CS_DEPLOY_CL_RELATIONSHIP, rc ) ;
+            goto error ;
+         }
+
+         {
+            BSONObj result( buffObj.data() ) ;
+
+            info = result.copy() ;
+            isExist = TRUE ;
+         }
+      }
+
+      if ( FALSE == isExist )
+      {
+         rc = SDB_DMS_RECORD_NOTEXIST ;
+         PD_LOG( PDWARNING, "Failed to query info:rc=%d", rc ) ;
+         goto error ;
+      }
+
+   done:
+      if( -1 != contextID )
+      {
+         _pRTNCB->contextDelete ( contextID, _cb ) ;
+         contextID = -1 ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omDatabaseTool::createRelationship( const string &fromBuzName,
+                                             const string &toBuzName,
+                                             const BSONObj &options )
+   {
+      INT32 rc = SDB_OK ;
+      time_t now = time( NULL ) ;
+      BSONObj record ;
+      BSONObjBuilder builder ;
+   
+      builder.append( OM_RELATIONSHIP_FIELD_FROM, fromBuzName ) ;
+      builder.append( OM_RELATIONSHIP_FIELD_TO, toBuzName ) ;
+      builder.append( OM_RELATIONSHIP_FIELD_OPTIONS, options ) ;
+      builder.appendTimestamp( OM_RELATIONSHIP_FIELD_CREATETIME,
+                               (unsigned long long)now * 1000, 0 ) ;
+   
+      record = builder.obj() ;
+      rc = rtnInsert( OM_CS_DEPLOY_CL_RELATIONSHIP, record, 1, 0, _cb ) ;
+      if( rc )
+      {
+         PD_LOG( PDERROR, "insert task failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   BOOLEAN omDatabaseTool::isRelationshipExist( const string &fromBuzName,
+                                                const string &toBuzName )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN isExist = TRUE ;
+      BSONObj condition = BSON( OM_RELATIONSHIP_FIELD_FROM << fromBuzName <<
+                                OM_RELATIONSHIP_FIELD_TO   << toBuzName ) ;
+      BSONObj selector ;
+      BSONObj info ;
+
+      rc = _getOneRelationship( condition, selector, info ) ;
+      if ( rc )
+      {
+         isExist = FALSE ;
+      }
+
+      return isExist ;
+   }
+
+   BOOLEAN omDatabaseTool::isRelationshipExistByBusiness(
+                                                   const string &businessName )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN isExist = TRUE ;
+      BSONObj condition = BSON( "$or" << BSON_ARRAY(
+                        BSON( OM_RELATIONSHIP_FIELD_FROM << businessName ) <<
+                        BSON( OM_RELATIONSHIP_FIELD_TO   << businessName ) ) ) ;
+      BSONObj selector ;
+      BSONObj info ;
+
+      rc = _getOneRelationship( condition, selector, info ) ;
+      if ( rc )
+      {
+         isExist = FALSE ;
+      }
+
+      return isExist ;
+   }
+
+   INT32 omDatabaseTool::getRelationshipOptions( const string &fromBuzName,
+                                                 const string &toBuzName,
+                                                 BSONObj &options )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj condition = BSON( OM_RELATIONSHIP_FIELD_FROM << fromBuzName <<
+                                OM_RELATIONSHIP_FIELD_TO   << toBuzName ) ;
+      BSONObj selector ;
+      BSONObj info ;
+
+      rc = _getOneRelationship( condition, selector, info ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to get info, from=%s, to=%d",
+                 fromBuzName.c_str(), toBuzName.c_str(), rc ) ;
+         goto error ;
+      }
+
+      options = info.getObjectField( OM_RELATIONSHIP_FIELD_OPTIONS ).copy() ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omDatabaseTool::getRelationshipList( list<BSONObj> &relationshipList )
+   {
+      INT32 rc = SDB_OK ;
+      SINT64 numToSkip   = 0 ;
+      SINT64 numToReturn = -1 ;
+      SINT64 contextID   = -1 ;
+      BSONObj condition ;
+      BSONObj selector ;
+      BSONObj order ;
+      BSONObj hint ;
+      BSONObj filter = BSON( "_id" << "" ) ;
+
+      rc = rtnQuery( OM_CS_DEPLOY_CL_RELATIONSHIP, selector, condition, order,
+                     hint, 0, _cb, numToSkip, numToReturn,
+                     _pDMSCB, _pRTNCB, contextID );
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "fail to query table:%s,rc=%d",
+                 OM_CS_DEPLOY_CL_RELATIONSHIP, rc ) ;
+         goto error ;
+      }
+
+      while ( TRUE )
+      {
+         rtnContextBuf buffObj ;
+
+         rc = rtnGetMore ( contextID, 1, buffObj, _cb, _pRTNCB ) ;
+         if ( rc )
+         {
+            if ( SDB_DMS_EOC == rc )
+            {
+               rc = SDB_OK ;
+               break ;
+            }
+
+            contextID = -1 ;
+            PD_LOG( PDERROR, "failed to get record from table:%s,rc=%d",
+                    OM_CS_DEPLOY_CL_RELATIONSHIP, rc ) ;
+            goto error ;
+         }
+
+         {
+            BSONObj result( buffObj.data() ) ;
+            BSONObj newResult = result.filterFieldsUndotted( filter, FALSE ) ;
+
+            relationshipList.push_back( newResult.copy() ) ;
+         }
+      }
+
+   done:
+      if( -1 != contextID )
+      {
+         _pRTNCB->contextDelete ( contextID, _cb ) ;
+         contextID = -1 ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omDatabaseTool::removeRelationship( const string &fromBuzName,
+                                             const string &toBuzName )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj condition = BSON( OM_RELATIONSHIP_FIELD_FROM << fromBuzName <<
+                                OM_RELATIONSHIP_FIELD_TO   << toBuzName ) ;
+      BSONObj hint ;
+
+      rc = rtnDelete( OM_CS_DEPLOY_CL_RELATIONSHIP, condition, hint, 0, _cb ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to remove relationship: rc=%d",
+                 OM_CS_DEPLOY_CL_RELATIONSHIP, rc ) ;
+         goto error ;
+      }
+
+   done:
       return rc ;
    error:
       goto done ;

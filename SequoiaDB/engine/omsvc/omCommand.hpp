@@ -1404,13 +1404,15 @@ namespace engine
 
    } ;
 
-   class omDeployPackage : public omAuthCommand
+   class omDeployPackageCommand : public omAuthCommand
    {
    public:
-      omDeployPackage( restAdaptor *pRestAdaptor, pmdRestSession *pRestSession,
-                       string &localAgentHost, string &localAgentService ) ;
+      omDeployPackageCommand( restAdaptor *pRestAdaptor,
+                              pmdRestSession *pRestSession,
+                              string &localAgentHost,
+                              string &localAgentService ) ;
 
-      ~omDeployPackage() ;
+      ~omDeployPackageCommand() ;
 
       virtual INT32 doCommand() ;
 
@@ -1439,6 +1441,83 @@ namespace engine
 
    } ;
 
+   class omCreateRelationshipCommand : public omAuthCommand
+   {
+   public:
+      omCreateRelationshipCommand( restAdaptor *pRestAdaptor,
+                                   pmdRestSession *pRestSession,
+                                   string &localAgentHost,
+                                   string &localAgentService ) ;
+
+      ~omCreateRelationshipCommand() ;
+
+      virtual INT32 doCommand() ;
+
+   private:
+      INT32 _check( BSONObj &fromBuzInfo, BSONObj &toBuzInfo ) ;
+
+      INT32 _createRelationship( const BSONObj &options,
+                                 const BSONObj &fromBuzInfo,
+                                 const BSONObj &toBuzInfo ) ;
+
+      INT32 _generateRequest( const BSONObj &options,
+                              const BSONObj &fromBuzInfo,
+                              const BSONObj &toBuzInfo,
+                              BSONObj &request ) ;
+
+   private:
+      string _localAgentHost ;
+      string _localAgentService ;
+      string _fromBuzName ;
+      string _toBuzName ;
+   } ;
+
+   class omRemoveRelationshipCommand : public omAuthCommand
+   {
+   public:
+      omRemoveRelationshipCommand( restAdaptor *pRestAdaptor,
+                                   pmdRestSession *pRestSession,
+                                   string &localAgentHost,
+                                   string &localAgentService ) ;
+
+      ~omRemoveRelationshipCommand() ;
+
+      virtual INT32 doCommand() ;
+
+   private:
+      INT32 _check( BSONObj &options, BSONObj &fromBuzInfo,
+                    BSONObj &toBuzInfo ) ;
+
+      INT32 _removeRelationship( const BSONObj &options,
+                                 const BSONObj &fromBuzInfo,
+                                 const BSONObj &toBuzInfo ) ;
+
+      INT32 _generateRequest( const BSONObj &options,
+                              const BSONObj &fromBuzInfo,
+                              const BSONObj &toBuzInfo,
+                              BSONObj &request ) ;
+
+   private:
+      string _localAgentHost ;
+      string _localAgentService ;
+      string _fromBuzName ;
+      string _toBuzName ;
+   } ;
+
+   class omListRelationshipCommand : public omAuthCommand
+   {
+   public:
+      omListRelationshipCommand( restAdaptor *pRestAdaptor,
+                                 pmdRestSession *pRestSession ) ;
+
+      ~omListRelationshipCommand() ;
+
+      virtual INT32 doCommand() ;
+
+   private:
+
+   private:
+   } ;
 }
 
 #endif /* OM_GETFILECOMMAND_HPP__ */

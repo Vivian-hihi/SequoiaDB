@@ -418,6 +418,19 @@ namespace engine
          goto error ;
       }
 
+      // SYSDEPLOY.SYSRELATIONSHIP
+      rc = _createCollection ( OM_CS_DEPLOY_CL_RELATIONSHIP, cb ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      rc = _createCollectionIndex ( OM_CS_DEPLOY_CL_RELATIONSHIP,
+                                    OM_CS_DEPLOY_CL_RELATIONSHIPIDX1, cb ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
       pAuthCB = pmdGetKRCB()->getAuthCB() ;
       rc = pAuthCB->needAuthenticate( cb, need ) ;
       if ( SDB_OK != rc )

@@ -42,6 +42,8 @@ namespace engine
 
 //********************************** NEW **************************************
 
+   #define OM_CS_DEPLOY                         "SYSDEPLOY"
+
    /*
    get business config and get business template
    operation type
@@ -60,6 +62,9 @@ namespace engine
    #define OM_REST_FIELD_ENFORCED               "Enforced"
    #define OM_REST_FIELD_CONFIGINFO             "ConfigInfo"
    #define OM_REST_FIELD_OPERATION_TYPE         "OperationType"
+   #define OM_REST_FIELD_FROM                   "From"
+   #define OM_REST_FIELD_TO                     "To"
+   #define OM_REST_FIELD_OPTIONS                "Options"
 
    /***************** Bson field *****************/
    #define OM_BSON_HOST_INFO                    "HostInfo"
@@ -79,12 +84,20 @@ namespace engine
    #define OM_BSON_PROPERTY                     "Property"
    #define OM_BSON_NAME                         "Name"
    #define OM_BSON_VALUE                        "Value"
+   #define OM_BSON_INFO                         "Info"
    #define OM_BSON_CONFIG                       "Config"
    #define OM_BSON_ZOOID                        "zooid"
    #define OM_BSON_USER                         "User"
+   #define OM_BSON_USER2                        "user"
    #define OM_BSON_PASSWD                       "Passwd"
+   #define OM_BSON_PASSWORD                     "Password"
+   #define OM_BSON_PASSWORD2                    "password"
    #define OM_BSON_INSTALL_PATH                 "InstallPath"
    #define OM_BSON_SSHPORT                      "SshPort"
+   #define OM_BSON_ADDRESS                      "Address"
+   #define OM_BSON_FROM                         "From"
+   #define OM_BSON_TO                           "To"
+   #define OM_BSON_OPTIONS                      "Options"
 
    /***************** XML field *****************/
    #define OM_XML_FIELD_BUSINESS_TYPE           "BusinessType"
@@ -107,6 +120,7 @@ namespace engine
    #define OM_PUBLIC_FIELD_SSHPORT              "SshPort"
    #define OM_PUBLIC_FIELD_USER                 "User"
    #define OM_PUBLIC_FIELD_PASSWD               "Passwd"
+   #define OM_PUBLIC_FIELD_HOSTNAME             "HostName"
 
    /******* SYSCLUSTER *******/
    #define OM_CS_DEPLOY_CL_CLUSTER              OM_CS_DEPLOY".SYSCLUSTER"
@@ -145,9 +159,25 @@ namespace engine
    #define OM_CS_DEPLOY_CL_BUSINESSIDX1         "{name:\"SYSDEPLOY_BUSINESS_IDX1\"\
 ,key:{"OM_BUSINESS_FIELD_NAME":1}, unique: true, enforced: true }"
 
+   /******* SYSCONFIGURE *******/
+   #define OM_CS_DEPLOY_CL_CONFIGURE            OM_CS_DEPLOY".SYSCONFIGURE"
+   #define OM_CONFIGURE_FIELD_HOSTNAME          OM_PUBLIC_FIELD_HOSTNAME
+   #define OM_CONFIGURE_FIELD_BUSINESSNAME      OM_PUBLIC_FIELD_BUSINESS_NAME
+   #define OM_CONFIGURE_FIELD_BUSINESSTYPE      OM_PUBLIC_FIELD_BUSINESS_TYPE
+   #define OM_CONFIGURE_FIELD_CLUSTERNAME       OM_PUBLIC_FIELD_CLUSTERNAME
+   #define OM_CONFIGURE_FIELD_DEPLOYMODE        OM_PUBLIC_FIELD_DEPLOY_MOD
+   #define OM_CONFIGURE_FIELD_CONFIG            "Config"
+   #define OM_CONFIGURE_FIELD_SVCNAME           "svcname"
+   #define OM_CONFIGURE_FIELD_ERRNO             "errno"
+   #define OM_CONFIGURE_FIELD_DETAIL            "detail"
+   #define OM_CONFIGURE_FIELD_ROLE              "role"
+   #define OM_CONFIGURE_FIELD_PORT              "Port"
+   #define OM_CONFIGURE_FIELD_PORT2             "port"
+   #define OM_CONFIGURE_FIELD_INSTALLPATH       "InstallPath"
+
    /******* SYSHOST *******/
    #define OM_CS_DEPLOY_CL_HOST                 OM_CS_DEPLOY".SYSHOST"
-   #define OM_HOST_FIELD_NAME                   "HostName"
+   #define OM_HOST_FIELD_NAME                   OM_PUBLIC_FIELD_HOSTNAME
    #define OM_HOST_FIELD_PACKAGES               "Packages"
    #define OM_HOST_FIELD_PACKAGENAME            "Name"
    #define OM_HOST_FIELD_INSTALLPATH            "InstallPath"
@@ -236,6 +266,15 @@ key: {"OM_HOST_FIELD_IP":1}, unique: true, enforced: true }"
    #define OM_CS_DEPLOY_CL_BUSINESSAUTHIDX1     "{name:\"SYSDEPLOY_BUSINESSAUTH\
 _IDX1\",key: {"OM_BUSINESS_FIELD_NAME":1}, unique: true, enforced: true }"
 
+   /******* SYSRELATIONSHIP *******/
+   #define OM_CS_DEPLOY_CL_RELATIONSHIP         OM_CS_DEPLOY".SYSRELATIONSHIP"
+   #define OM_RELATIONSHIP_FIELD_FROM           "From"
+   #define OM_RELATIONSHIP_FIELD_TO             "To"
+   #define OM_RELATIONSHIP_FIELD_OPTIONS        "Options"
+   #define OM_RELATIONSHIP_FIELD_CREATETIME     "CreateTime"
+   #define OM_CS_DEPLOY_CL_RELATIONSHIPIDX1     "{name:\"SYSDEPLOY_RELATIONSHIP\
+_IDX1\",key: {"OM_RELATIONSHIP_FIELD_FROM":1,"OM_RELATIONSHIP_FIELD_TO":1}, \
+unique: true, enforced: true }"
 
 //********************************** OLD **************************************
 
@@ -331,21 +370,6 @@ _IDX1\",key: {"OM_BUSINESS_FIELD_NAME":1}, unique: true, enforced: true }"
    #define OM_BUSINESS_SEQUOIASQL_OLTP       "sequoiasql-oltp"
 
 
-
-   #define OM_CS_DEPLOY                      "SYSDEPLOY"
-
-   // deploy.configure
-   #define OM_CS_DEPLOY_CL_CONFIGURE         OM_CS_DEPLOY".SYSCONFIGURE"
-   #define OM_CONFIGURE_FIELD_HOSTNAME       OM_HOST_FIELD_NAME
-   #define OM_CONFIGURE_FIELD_BUSINESSNAME   OM_BUSINESS_FIELD_NAME
-   #define OM_CONFIGURE_FIELD_BUSINESSTYPE   OM_BUSINESS_FIELD_TYPE
-   #define OM_CONFIGURE_FIELD_CLUSTERNAME    OM_BUSINESS_FIELD_CLUSTERNAME
-   #define OM_CONFIGURE_FIELD_DEPLOYMODE     OM_BUSINESS_FIELD_DEPLOYMOD
-   #define OM_CONFIGURE_FIELD_CONFIG         "Config"
-   #define OM_CONFIGURE_FIELD_SVCNAME        PMD_OPTION_SVCNAME
-   #define OM_CONFIGURE_FIELD_ERRNO          "errno"
-   #define OM_CONFIGURE_FIELD_DETAIL         "detail"
-   #define OM_CONFIGURE_FIELD_ROLE           "role"
 
    // strategy.business_task_property
    #define OM_CS_STRATEGY                          "SYSSTRATEGY"
@@ -548,6 +572,10 @@ _IDX1\",key: {"OM_BUSINESS_FIELD_NAME":1}, unique: true, enforced: true }"
    #define  OM_UNBIND_BUSINESS_REQ           "unbind business"
    #define  OM_UNBIND_HOST_REQ               "unbind host"
    #define  OM_DEPLOY_PACKAGE_REQ            "deploy package"
+
+   #define  OM_CREATE_RELATIONSHIP_REQ       "create relationship"
+   #define  OM_REMOVE_RELATIONSHIP_REQ       "remove relationship"
+   #define  OM_LIST_RELATIONSHIP_REQ         "list relationship"
 
    //**************************************************************************
 

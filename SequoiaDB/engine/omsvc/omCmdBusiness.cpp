@@ -152,6 +152,15 @@ namespace engine
          goto error ;
       }
 
+      if ( TRUE == dbTool.isRelationshipExistByBusiness( _businessName ) )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "business has relationship: name=%s",
+                             _businessName.c_str() ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
       taskID = dbTool.getTaskIdOfRunningBuz( _businessName ) ;
       if( 0 <= taskID )
       {
@@ -330,7 +339,6 @@ namespace engine
                BSONElement ele = configIter.next() ;
                BSONObj nodeInfo = ele.embeddedObject() ;
 
-               // << temporary, Todo: delete
                if ( OM_BUSINESS_SEQUOIADB == _businessType &&
                     0 == ossStrlen( nodeInfo.getStringField(
                                                    OM_CONF_DETAIL_CATANAME ) ) )
@@ -340,11 +348,10 @@ namespace engine
                                                       OM_CONF_DETAIL_SVCNAME ) ;
                   INT32 iSvcName = ossAtoi( svcName.c_str() ) ;
                   INT32 iCatName = iSvcName + MSG_ROUTE_CAT_SERVICE ;
-                  ossItoa( iCatName, catName, OM_INT32_LENGTH ) ;
 
+                  ossItoa( iCatName, catName, OM_INT32_LENGTH ) ;
                   configInfoBuilder.append( OM_CONF_DETAIL_CATANAME, catName ) ;
                }
-               // >>
 
                configInfoBuilder.appendElements( nodeInfo ) ;
                configInfoBuilder.appendElements( hostInfo ) ;

@@ -236,6 +236,20 @@ namespace engine
       INT32 removeHost( const string &address,
                         const string &clusterName ) ;
 
+      //relationship
+      INT32 createRelationship( const string &fromBuzName,
+                                const string &toBuzName,
+                                const BSONObj &options ) ;
+      BOOLEAN isRelationshipExist( const string &fromBuzName,
+                                   const string &toBuzName ) ;
+      BOOLEAN isRelationshipExistByBusiness( const string &businessName ) ;
+      INT32 getRelationshipOptions( const string &fromBuzName,
+                                    const string &toBuzName,
+                                    BSONObj &options ) ;
+      INT32 getRelationshipList( list<BSONObj> &relationshipList ) ;
+      INT32 removeRelationship( const string &fromBuzName,
+                                const string &toBuzName ) ;
+
       //trans
       INT32 addPackageOfHosts( set<string> &hostList,
                                const string &packageName,
@@ -264,6 +278,11 @@ namespace engine
       INT32 _getOneConfigure( const BSONObj &condition, const BSONObj &selector,
                               BSONObj &configure ) ;
       INT32 _removeConfigure( const BSONObj &condition ) ;
+
+      //relationship
+      INT32 _getOneRelationship( const BSONObj &condition,
+                                 const BSONObj &selector,
+                                 BSONObj &info ) ;
 
    private:
       pmdEDUCB    *_cb ;
