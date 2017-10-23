@@ -228,6 +228,40 @@ namespace engine
 
    } ;
 
+   /************************** create relationship ************************/
+   /*
+      _omaCreateRelationship
+   */
+   class _omaCreateRelationship : public _omaCommand
+   {
+   DECLARE_OACMD_AUTO_REGISTER()
+
+   public:
+      _omaCreateRelationship() ;
+      ~_omaCreateRelationship() ;
+
+      virtual const CHAR* name () { return OMA_CMD_CREATE_RELATIONSHIP ; }
+      virtual INT32 init ( const CHAR *pInfo ) ;
+
+   } ;
+
+   /************************** remove relationship ************************/
+   /*
+      _omaRemoveRelationship
+   */
+   class _omaRemoveRelationship : public _omaCommand
+   {
+   DECLARE_OACMD_AUTO_REGISTER()
+
+   public:
+      _omaRemoveRelationship() ;
+      ~_omaRemoveRelationship() ;
+
+      virtual const CHAR* name () { return OMA_CMD_REMOVE_RELATIONSHIP ; }
+      virtual INT32 init ( const CHAR *pInfo ) ;
+
+   } ;
+
 } // namespace engine
 
 

@@ -125,6 +125,9 @@ namespace engine
 
    #define OMA_CMD_SYNC_BUSINESS_CONF                 OM_SYNC_BUSINESS_CONF_REQ
 
+   #define OMA_CMD_CREATE_RELATIONSHIP                OM_CREATE_RELATIONSHIP_REQ
+   #define OMA_CMD_REMOVE_RELATIONSHIP                OM_REMOVE_RELATIONSHIP_REQ
+
    /*
       oma background command
    */
@@ -221,6 +224,9 @@ namespace engine
    #define FILE_DEPLOY_PACKAGE              "deployPackage.js"
 
    #define FILE_SYNC_BUSINESS_CONF          "syncBusinessConf.js"
+
+   #define FILE_CREATE_RELATIONSHIP         "createRelationship.js"
+   #define FILE_REMOVE_RELATIONSHIP         "removeRelationship.js"
 
    #define FILE_INIT_ENV                    "initEnv.js"
    #define FILE_INSTALL_ZOOKEEPER           "installZNode.js"
