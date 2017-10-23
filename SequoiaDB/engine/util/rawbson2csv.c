@@ -683,14 +683,15 @@ void setPrintfLog( void (*pFun)( const CHAR *pFunc,
    _pPrintfLogFun = (UTIL_PLOG)pFun ;
 }
 
-INT32 getCSVSize ( CHAR delChar, CHAR delField,
+INT32 getCSVSize ( CHAR delChar, CHAR *delField, INT32 delFieldSize,
                    CHAR *pbson, INT32 *pCSVSize,
                    BOOLEAN includeBinary,
                    BOOLEAN includeRegex,
                    BOOLEAN kickNull )
 {
    INT32 rc = SDB_OK ;
-   rc = bson2csv( delChar, delField, pbson, NULL, pCSVSize,
+   rc = bson2csv( delChar, delField, delFieldSize,
+                  pbson, NULL, pCSVSize,
                   includeBinary,
                   includeRegex,
                   kickNull ) ;
@@ -706,8 +707,8 @@ error:
    goto done ;
 }
 
-INT32 bson2csv( CHAR delChar, CHAR delField, CHAR *pbson,
-                CHAR **ppBuffer, INT32 *pCSVSize,
+INT32 bson2csv( CHAR delChar, CHAR *delField, INT32 delFieldSize,
+                CHAR *pbson, CHAR **ppBuffer, INT32 *pCSVSize,
                 BOOLEAN includeBinary,
                 BOOLEAN includeRegex,
                 BOOLEAN kickNull )
@@ -735,7 +736,8 @@ INT32 bson2csv( CHAR delChar, CHAR delField, CHAR *pbson,
       }
       else
       {
-         rc = _appendString( delChar, TRUE, &delField, 1, ppBuffer, pCSVSize ) ;
+         rc = _appendString( delChar, TRUE, delField,
+                             delFieldSize, ppBuffer, pCSVSize ) ;
          if ( rc )
          {
             UTIL_RAW2BSON_PRINTF_LOG( "Failed to call appendString, rc=%d",

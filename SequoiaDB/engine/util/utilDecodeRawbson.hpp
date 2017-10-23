@@ -58,7 +58,7 @@ class utilDecodeBson : public SDBObject
 {
 private:
    CHAR _delChar ;
-   CHAR _delField ;
+   std::string _delField ;
    BOOLEAN _includeBinary ;
    BOOLEAN _includeRegex ;
    BOOLEAN _kickNull ;
@@ -81,7 +81,7 @@ private:
 public:
    utilDecodeBson() ;
    ~utilDecodeBson() ;
-   INT32 init( CHAR delChar, CHAR delField,
+   INT32 init( CHAR delChar, std::string delField,
                BOOLEAN includeBinary,
                BOOLEAN includeRegex,
                BOOLEAN kickNull,

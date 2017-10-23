@@ -149,7 +149,7 @@ namespace exprt
    #define DEFAULT_HOSTNAME         "localhost"
    #define DEFAULT_SVCNAME          "11810"
    #define DEFAULT_DELCHAR_CHAR     '"'
-   #define DEFAULT_DELFIELD_CHAR    ','
+   #define DEFAULT_DELFIELD_CHAR    ","
    #define DEFAULT_FILELIMIT        ( 16LL * 1024 * 1024 * 1024 ) // 16G
 
    #define FILELIMIT_MAX            ( 16LL * 1024 * 1024 * 1024 * 1024 ) // 16T
@@ -303,7 +303,6 @@ namespace exprt
       rc = SDB_INVALIDARG ;
       goto done ;
    }
- 
 
    expOptions::expOptions() : _cmdParsed     (FALSE),
                               _confParsed    (FALSE),
@@ -591,7 +590,7 @@ namespace exprt
       }
       return i ;
    }
-        
+
    static INT32 getDel( const string &rawChar, CHAR &chr ) 
    {
       INT32 rc = SDB_OK ;
@@ -634,12 +633,158 @@ namespace exprt
       goto done ;
    }
 
+   static INT32 _convertAsciiChar( const string& in, string& out )
+   {
+      INT32 rc = SDB_OK ;
+      stringstream ss ;
+      const CHAR* str = in.c_str() ;
+      INT32 len = in.length() ;
+      BOOLEAN hasEscape = false ;
+      BOOLEAN hasHex = false ;
+
+      while ( len > 0 )
+      {
+         CHAR ch = *str ;
+
+         if ( '\\' == ch )
+         {
+            CHAR nextCh = *( str + 1 ) ;
+            str++ ;
+            len-- ;
+
+            // escape ascii char
+            if ( isdigit( nextCh ) )
+            {
+               INT64 c = 0 ;
+
+               while ( len > 0 && isdigit( *str ) )
+               {
+                  c = c * 10 + ( *str - '0' ) ;
+                  // the max ascii is 127
+                  if ( c < 0 || c > 127 )
+                  {
+                     rc = SDB_INVALIDARG ;
+                     goto error ;
+                  }
+                  str++ ;
+                  len-- ;
+               }
+
+               ss << ( CHAR )c ;
+               hasEscape = true ;
+               continue ;
+            }
+            else if ( 'n' == nextCh )
+            {
+               str++ ;
+               len-- ;
+               ss << '\n' ;
+               hasEscape = true ;
+               continue ;
+            }
+            else if ( 'r' == nextCh )
+            {
+               str++ ;
+               len-- ;
+               ss << '\r' ;
+               hasEscape = true ;
+               continue ;
+            }
+            else if ( 't' == nextCh )
+            {
+               str++ ;
+               len-- ;
+               ss << '\t' ;
+               hasEscape = true ;
+               continue ;
+            }
+            else if ( '\\' == nextCh )
+            {
+               str++ ;
+               len-- ;
+               ss << '\\' ;
+               hasEscape = true ;
+               continue ;
+            }
+
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         // detect 0x
+         else if ( '0' == ch )
+         {
+            CHAR nextCh = *( str + 1 ) ;
+            str++ ;
+            len-- ;
+
+            if ( 'x' == nextCh )
+            {
+               INT64 c = 0 ;
+
+               str++ ;
+               len-- ;
+
+               if ( !isxdigit( *str ) )
+               {
+                  rc = SDB_INVALIDARG ;
+                  goto error ;
+               }
+
+               while ( len > 0 && isxdigit( *str ) )
+               {
+                  if ( '0' == *str && len > 1 && 'x' == *( str + 1 ) )
+                  {
+                     break ;
+                  }
+
+                  c = c * 16 + hexValue( *str ) ;
+
+                  // the max ascii is 127
+                  if ( c < 0 || c > 127 )
+                  {
+                     rc = SDB_INVALIDARG ;
+                     goto error ;
+                  }
+                  str++ ;
+                  len-- ;
+               }
+
+               ss << ( CHAR )c ;
+               hasHex = true ;
+
+               continue ;
+            }
+         }
+
+         ss << ch ;
+         str++ ;
+         len-- ;
+      }
+
+      if ( true == hasEscape && true == hasHex )
+      {
+         cerr << "doesn't support value in mixed format for option \""  OPTION_DELFIELD "\"" 
+              << endl ;
+         PD_LOG( PDERROR, "Doesn't support value in mixed format for option \""  
+                          OPTION_DELFIELD "\"" ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      out = ss.str() ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    // check and set the delimiter options
    INT32 expOptions::_setDelOptions() 
    {
       INT32 rc = SDB_OK ;
 
-      if ( _has(OPTION_DELCHAR) )   
+      if ( _has(OPTION_DELCHAR) )
       { 
          string rawStr = _get<string>(OPTION_DELCHAR) ; 
          rc = getDel( rawStr, _delChar ) ;
@@ -652,10 +797,12 @@ namespace exprt
             goto error ;
          }
       }
-      if ( _has(OPTION_DELFIELD) )   
+      if ( _has(OPTION_DELFIELD) )
       { 
-         string rawStr = _get<string>(OPTION_DELFIELD) ; 
-         rc = getDel( rawStr, _delField ) ;
+         string rawStr = _get<string>(OPTION_DELFIELD) ;
+
+         rc = _convertAsciiChar( rawStr, _delField ) ;
+
          if ( SDB_OK != rc )
          {
             cerr << "invalid value for option \""  OPTION_DELFIELD "\"" 
@@ -676,8 +823,7 @@ namespace exprt
          }
       }
 
-      if ( ' ' == _delChar  || '\t' == _delChar || 
-           ' ' == _delField || '\t' == _delField )
+      if ( ' ' == _delChar  || '\t' == _delChar )
       {
          cerr << "option \""  OPTION_DELCHAR "\" or "
               << "option \"" OPTION_DELFIELD "\" " 
@@ -689,7 +835,7 @@ namespace exprt
          goto error ;
       }
 
-      if ( _delChar == _delField )
+      if ( _delField.find( _delChar ) != string::npos )
       {
          cerr << "option \"" << OPTION_DELCHAR << "\" cant be same as "
               << "option \"" << OPTION_DELFIELD  << "\"" << endl ;
@@ -705,7 +851,7 @@ namespace exprt
                  OPTION_DELCHAR, OPTION_DELRECORD ) ;
          goto error ;
       }
-      if ( 1 == _delRecord.size() && _delField == _delRecord[0] )
+      if ( _delField == _delRecord )
       {
          cerr << "option \"" << OPTION_DELFIELD << "\" cant be same as "
               << "option \"" << OPTION_DELRECORD << "\"" << endl ;

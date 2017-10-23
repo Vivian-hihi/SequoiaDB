@@ -178,7 +178,7 @@ error:
    goto done ;
 }
 
-INT32 utilDecodeBson::init( CHAR delChar, CHAR delField,
+INT32 utilDecodeBson::init( CHAR delChar, std::string delField,
                             BOOLEAN includeBinary,
                             BOOLEAN includeRegex,
                             BOOLEAN kickNull,
@@ -186,10 +186,10 @@ INT32 utilDecodeBson::init( CHAR delChar, CHAR delField,
                             const CHAR *pFloatFmt )
 {
    INT32 rc = SDB_OK ;
-   if ( delChar == delField )
+   if ( delField.find( delChar ) != std::string::npos )
    {
       rc = SDB_INVALIDARG ;
-      PD_LOG ( PDERROR, "delchar does not like delfield" ) ;
+      PD_LOG ( PDERROR, "delfield can not contain delchar" ) ;
       goto error ;
    }
    else if ( UTIL_DE_STR_SPACE == delChar )
@@ -202,19 +202,6 @@ INT32 utilDecodeBson::init( CHAR delChar, CHAR delField,
    {
       rc = SDB_INVALIDARG ;
       PD_LOG ( PDERROR, "delchar can not be a tab" ) ;
-      goto error ;
-   }
-
-   if ( UTIL_DE_STR_SPACE == delField )
-   {
-      rc = SDB_INVALIDARG ;
-      PD_LOG ( PDERROR, "delfield can not be a space" ) ;
-      goto error ;
-   }
-   else if ( UTIL_DE_STR_TABLE == delField )
-   {
-      rc = SDB_INVALIDARG ;
-      PD_LOG ( PDERROR, "delfield can not be a tab" ) ;
       goto error ;
    }
 
@@ -252,7 +239,7 @@ error:
 }
 
 utilDecodeBson::utilDecodeBson() : _delChar(0),
-                                   _delField(0),
+                                   _delField(),
                                    _includeBinary(FALSE),
                                    _includeRegex(FALSE),
                                    _kickNull(FALSE),
@@ -456,8 +443,8 @@ error:
 INT32 utilDecodeBson::parseCSVSize( CHAR *pbson, INT32 *pCSVSize )
 {
    INT32 rc = SDB_OK ;
-   rc = getCSVSize( _delChar, _delField, pbson, pCSVSize,
-                    _includeBinary, _includeRegex, _kickNull ) ;
+   rc = getCSVSize( _delChar, ossStrdup( _delField.c_str() ), _delField.size(),
+                    pbson, pCSVSize, _includeBinary, _includeRegex, _kickNull ) ;
    if ( rc )
    {
       PD_LOG ( PDERROR, "Failed to get csv size, rc = %d", rc ) ;
@@ -578,7 +565,8 @@ INT32 utilDecodeBson::bsonCovertCSV( CHAR *pbson,
       }
    }
    bson_finish ( &obj ) ;
-   rc = bson2csv( _delChar, _delField, obj.data, ppBuffer, pCSVSize,
+   rc = bson2csv( _delChar, ossStrdup( _delField.c_str() ), _delField.size(),
+                  obj.data, ppBuffer, pCSVSize,
                   _includeBinary, _includeRegex, _kickNull ) ;
    if ( rc )
    {

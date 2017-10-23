@@ -91,7 +91,7 @@ namespace exprt
       inline INT64   skip()               const { return _skip; }
       inline INT64   limit()              const { return _limit; }
       inline CHAR    delChar()            const { return _delChar ; }
-      inline CHAR    delField()           const { return _delField ; }
+      inline string  delField()           const { return _delField ; }
       inline BOOLEAN errorStop()          const { return _errorStop ; }
       inline BOOLEAN useSSL()             const { return _useSSL ; }
       inline BOOLEAN includeBinary()      const { return _includeBinary ; }
@@ -164,7 +164,7 @@ namespace exprt
 
       /* CSV */
       CHAR           _delChar ;
-      CHAR           _delField ;
+      string         _delField ;
       BOOLEAN        _headLine ; 
       BOOLEAN        _includeBinary ;
       BOOLEAN        _includeRegex ;
