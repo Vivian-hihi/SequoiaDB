@@ -102,8 +102,11 @@
             <dirset dir="${srccode_dir}/doc/build/output" includes="SequoiaDB_usermanals_v*"/>
          </path>
          <sequential>
-            <zip destfile="@{fullpathname}.zip" 
-                 basedir="${srccode_dir}/doc/build/output" includes="SequoiaDB_usermanals_v*/**/*"/>
+            <basename file="@{fullpathname}" property="pathname"/>
+            <exec executable="Rar.exe" dir="${srccode_dir}/doc/build/output" failonerror="true" logError="true">
+               <arg value="/c" />
+               <arg value=' a -k -r -s @{pathname} .zip @{pathname}' />
+            </exec>
             <copy todir="${WORKSPACE}/release" failonerror="true" >
                <fileset dir="${srccode_dir}/doc/build/output" includes="SequoiaDB_usermanals_v*.zip"/>
             </copy>
