@@ -2725,7 +2725,6 @@ namespace engine
                {
                   PD_LOG_MSG ( PDERROR, "Failed to build object: %s, rc: %d",
                                e.toString().c_str(), rc ) ;
-                  rc = SDB_INVALIDARG ;
                   goto error ;
                }
                // call bb.done() to close the builder
@@ -2751,7 +2750,6 @@ namespace engine
                {
                   PD_LOG_MSG ( PDERROR, "Failed to build array: %s, rc: %d",
                                e.toString().c_str(), rc ) ;
-                  rc = SDB_INVALIDARG ;
                   goto error ;
                }
                ba.done() ;
