@@ -297,8 +297,8 @@ TEST( turnonCache, getCollectionSpaceOfTimeOut )
    const CHAR* csName = "turnonCacheTestCs" ;
    clock_t diff1, diff2 ;
    
-   //初始化客户端，启用缓存，超时100ms
-   rc = connect( &db, 100 ) ;
+   //初始化客户端，启用缓存，超时1s
+   rc = connect( &db, 1 ) ;
    ASSERT_EQ( SDB_OK, rc ) ; 
    rc = sdbCreateCollectionSpace( db, csName, SDB_PAGESIZE_4K, &cs ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to create cs " << csName ;
@@ -308,7 +308,7 @@ TEST( turnonCache, getCollectionSpaceOfTimeOut )
    ASSERT_EQ( SDB_OK, rc ) ;
       
    //睡眠让cache超时
-   ossSleep( 1000 ) ;
+   ossSleep( 2000 ) ;
    
    // 再次统计获取CS的时间
    rc = getTimeofGetCS( db, csName, &cs2, &diff2 ) ;
@@ -335,8 +335,8 @@ TEST( turnonCache, getCollectionOfTimeOut )
    const CHAR* clName = "turnonCacheTestCl" ;
    clock_t diff1, diff2 ;
    
-   //初始化客户端，启用缓存，超时100ms
-   rc = connect( &db, 100 ) ;
+   //初始化客户端，启用缓存，超时1s
+   rc = connect( &db, 1 ) ;
    ASSERT_EQ( SDB_OK, rc ) ; 
    rc = sdbCreateCollectionSpace( db, csName, SDB_PAGESIZE_4K, &cs ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
@@ -348,7 +348,7 @@ TEST( turnonCache, getCollectionOfTimeOut )
    ASSERT_EQ( SDB_OK, rc ) ;
    
    // 让cache超时
-   ossSleep( 1000 ) ;
+   ossSleep( 2000 ) ;
    rc = getTimeofGetCLByName( cs, clName, &cl2, &diff2 ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
    ASSERT_LT( diff1, diff2 ) ;
@@ -524,7 +524,7 @@ TEST( turnonCache, getCLOfTimeOutandDropbyOtherConn )
    ASSERT_EQ( SDB_OK, rc ) << "fail to drop cl " << clName ;
    
    // 让cache超时
-   ossSleep( 1000 ) ;
+   ossSleep( 2000 ) ;
    rc = sdbGetCollection( db, fullName, &cl1 ) ;
    ASSERT_EQ( SDB_DMS_NOTEXIST, rc ) << "fail to check drop cl" ;
    rc = sdbGetCollection1( cs, clName, &cl1 ) ;
@@ -563,7 +563,7 @@ TEST( turnonCache, getCSOfTimeOutandDropbyOtherConn )
    ASSERT_EQ( SDB_OK, rc ) << "fail to drop cs " << csName ;
    
    // 让cache超时
-   ossSleep( 1000 ) ;
+   ossSleep( 2000 ) ;
 
    rc = sdbGetCollectionSpace( db, csName, &cs1 ) ;
    ASSERT_EQ( SDB_DMS_CS_NOTEXIST, rc ) << "fail to check drop cs" ;
