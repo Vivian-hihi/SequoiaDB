@@ -102,7 +102,6 @@
             <dirset dir="${srccode_dir}/doc/build/output" includes="SequoiaDB_usermanals_v*"/>
          </path>
          <sequential>
-            <echo message="SequoiaDB_usermanals : @{fullpathname}"/>
             <tar destfile="@{fullpathname}.tar.gz" 
                  longfile="gnu" compression="gzip" 
                  basedir="${srccode_dir}/doc/build/output" includes="SequoiaDB_usermanals_v*/**/*"/>
