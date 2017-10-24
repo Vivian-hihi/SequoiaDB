@@ -539,7 +539,8 @@ namespace engine
                   if( pc )
                   {
                      JSScript *script = fp->script() ;
-                     privateData->SetErrInfo( JS_GetScriptFilename( cx, script),
+                     const CHAR* scriptFileName = JS_GetScriptFilename( cx, script) ;
+                     privateData->SetErrInfo( scriptFileName ? scriptFileName: "(nofile)",
                                               JS_PCToLineNumber( cx,
                                                                  script,
                                                                  pc ) ) ;

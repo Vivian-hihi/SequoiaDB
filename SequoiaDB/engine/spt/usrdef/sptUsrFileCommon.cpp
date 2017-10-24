@@ -32,7 +32,7 @@
 *******************************************************************************/
 #include "pd.hpp"
 #include "ossMem.hpp"
-#include "ossPrimitiveFileOp.hpp"
+#include "ossFile.hpp"
 #include "ossCmdRunner.hpp"
 #include "ossIO.hpp"
 #include "ossPath.hpp"
@@ -1619,20 +1619,20 @@ namespace engine
    INT32 _sptUsrFileCommon::readFile( const string &filename,
                                       string &err, CHAR **pBuf, INT64 &readSize )
    {
-      ossPrimitiveFileOp op ;
-      ossPrimitiveFileOp::offsetType offset ;
+      ossFile file ;
+      INT64 size ;
       INT32 rc = SDB_OK ;
 
       SDB_ASSERT ( pBuf, "Invalid arguments" ) ;
 
-      rc = op.Open ( filename.c_str() , OSS_PRIMITIVE_FILE_OP_READ_ONLY ) ;
+      rc = file.open ( filename.c_str() , OSS_READONLY, OSS_DEFAULTFILE ) ;
       if ( rc != SDB_OK )
       {
          err = "Can't open file: %s" + filename ;
          goto error ;
       }
 
-      rc = op.getSize ( &offset ) ;
+      rc = file.getFileSize( size ) ;
       if ( rc != SDB_OK )
       {
          err = "Failed to get file's size" ;
@@ -1644,7 +1644,7 @@ namespace engine
          SDB_OSS_FREE( *pBuf ) ;
          *pBuf = NULL ;
       }
-      *pBuf = (CHAR *) SDB_OSS_MALLOC ( offset.offset + 1 ) ;
+      *pBuf = (CHAR *) SDB_OSS_MALLOC ( size + 1 ) ;
       if ( ! *pBuf )
       {
          rc = SDB_OOM ;
@@ -1652,18 +1652,16 @@ namespace engine
          goto error ;
       }
 
-      rc = op.Read ( offset.offset , *pBuf , NULL ) ;
+      rc = file.readN( *pBuf, size, readSize ) ;
       if ( rc != SDB_OK )
       {
          err = "Failed to read file" ;
          goto error ;
       }
-      (*pBuf)[ offset.offset ] = 0 ;
-
-      readSize = offset.offset ;
+      (*pBuf)[ readSize ] = 0 ;
 
    done :
-      op.Close() ;
+      file.close() ;
       return rc ;
    error :
       goto done ;
