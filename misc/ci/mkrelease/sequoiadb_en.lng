@@ -36,13 +36,14 @@ Install.ErrorMsg.DeleteUser.error=Failed to delete user:${username}
 Install.ErrorMsg.IntallationOM.error=Create OM failed
 Install.ErrorMsg.checkDisk.error=There is not enough disk space for installation. It needs at lease 1.3G.
 Install.ErrorMsg.StartCM.error=Failed to start cm, execute: service sdbcm start.
+Install.ErrorMsg.CheckInstallmodeAndUpgrade.error=the parameter 'upgrade' is deprecated, please use 'installmode'.
 
 Install.WarnMsg.CheckUmask=Umask abnormal! Current umask = ${full_mask}, recommended value is 0022
 Install.WarnMsg.checkHostname=Hostname may be null!
 Install.WarnMsg.checkHostnameIp=Hostname ${machine_hostname} can't be resolved to local ip address! Please check file /etc/hosts.
 
-Upgrade.Paramers.Upgrade.Explanation=upgrade or cover
-Upgrade.Paramers.Upgrade.Check=Invalid parameter: --installmode ${installmode}, should be upgrade or cover
+Upgrade.Paramers.Upgrade.Explanation=Do you want to upgrade or cover
+Upgrade.Paramers.Upgrade.Check=Invalid parameter: --upgrade ${upgrade_param}, should be true or false
 
 Upgrade.NormalMsg.BeginUpgrade=Begin to upgrade package ......
 Upgrade.NormalMsg.CheckList=**************************  check list *************************************
