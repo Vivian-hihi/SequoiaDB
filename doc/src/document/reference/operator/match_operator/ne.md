@@ -8,6 +8,10 @@
 
 $ne 选择满足“<字段名>”的值不等于（!=）指定“<值>”的记录。
 
+> **Note:**
+>
+> $ne 不能匹配给定字段名不存在的记录，如果需要匹配字段名不存在的记录，请使用 [$exists](reference/operator/match_operator/exists.md)。
+
 ##示例##
 
 * 查询集合 foo.bar 中“age”字段值不等于 20 的记录：
