@@ -59,6 +59,7 @@ testFiles = [
   #[ "./misc/socketMutex.cpp" ],
    [ "./misc/turnonCache.cpp" ],
    [ "./misc/sync.cpp" ],
+   [ "./misc/snapshotTrans.cpp" ], # conf
    [ "./load/loadUnloadCS.cpp" ],
    [ "./load/reloadConf.cpp" ],
    [ "./load/rename.cpp" ],
