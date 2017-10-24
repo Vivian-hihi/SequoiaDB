@@ -78,19 +78,20 @@ namespace engine
    END_OBJ_MSG_MAP()
 
    _seAdptIndexSession::_seAdptIndexSession( UINT64 sessionID,
-                                             const seIndexTask *task )
+                                             const seIndexMeta *idxMeta )
    : _pmdAsyncSession( sessionID )
    {
-      SDB_ASSERT( task && task->_indexDef.valid() && !task->_indexDef.isEmpty(),
+      SDB_ASSERT( idxMeta && idxMeta->getIdxDef().valid()
+                  && !idxMeta->getIdxDef().isEmpty(),
                   "Index definition is invalid" ) ;
 
-      _origCLFullName = task->_origCSName + "." + task->_origCLName ;
-      _cappedCLFullName = task->_cappedCSName + "." + task->_cappedCLName ;
+      _origCLFullName = idxMeta->getOrigCLName() ;
+      _cappedCLFullName = idxMeta->getCappedCLName() ;
       _origCLVersion = -1 ;
-      _origIdxName = task->_origIdxName ;
-      _indexName = task->_esIdxName ;
-      _typeName = task->_esTypeName ;
-      _indexDef = task->_indexDef.copy() ;
+      _origIdxName = idxMeta->getOrigIdxName();
+      _indexName = idxMeta->getEsIdxName() ;
+      _typeName = idxMeta->getEsTypeName() ;
+      _indexDef = idxMeta->getIdxDef().copy() ;
       _esClt = NULL ;
       _status = SEADPT_SESSION_STAT_CONSULT ;
       _lastPopLID = -1 ;
@@ -380,7 +381,7 @@ namespace engine
                                                               OSS_ONE_SEC, eduCB(),
                                                               clVersion ) ;
                PD_RC_CHECK( rc, PDERROR, "Update collection version "
-                            "failed[ %d ]" ) ;
+                            "failed[ %d ]", rc ) ;
                PD_LOG( PDDEBUG, "Change cl[ %s ] version from [ %d ] to [ %d ]"
                        "accorrding to catalog", _origCLFullName.c_str(),
                        _origCLVersion, clVersion ) ;
@@ -774,7 +775,6 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Index record on search engine "
                       "failed[ %d ], id: %s", rc,
                       idEle.toString().c_str() ) ;
-         // TODO: what to do if error happened? Restart from the beginning?
       }
 
       rc = _sendGetmoreReq( contextID, msg->requestID ) ;
@@ -896,7 +896,11 @@ namespace engine
                             origOID ) ;
                break ;
             case DMS_EXT_TRUNCATE:
-               // TODO:
+               rc = _esClt->deleteAllByType( _indexName.c_str(),
+                                             _typeName.c_str() ) ;
+               PD_RC_CHECK( rc, PDERROR, "Delete all documents for index[ %s ] "
+                            "and type[ %s ] failed[ %d ]", _indexName.c_str(),
+                            _typeName.c_str(), rc ) ;
                break ;
             default:
                PD_LOG( PDERROR, "Invalid operation type[ %d ] in source data",

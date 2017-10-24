@@ -42,6 +42,7 @@
 #include "seAdptIndexSession.hpp"
 #include "seAdptDef.hpp"
 #include "msgMessage.hpp"
+#include "seAdptUtil.hpp"
 
 #define DATA_NODE_GRP_ID                        10000
 #define DATA_NODE_ID                            10000
@@ -114,10 +115,8 @@ namespace engine
    _seIndexSessionMgr::_seIndexSessionMgr( _seAdptCB *pAdptCB )
    {
       _pAdptCB = pAdptCB ;
-      _indexVersion = SEADPT_INIT_TEXT_INDEX_VERSION ;
       _indexSessionTimer = NET_INVALID_TIMER_ID ;
       _innerSessionID = 0 ;
-      _updateStep = SEADPT_IDX_UPDATE_BEGIN ;
    }
 
    _seIndexSessionMgr::~_seIndexSessionMgr()
@@ -130,158 +129,48 @@ namespace engine
       return ossPack32To64( PMD_BASE_HANDLE_ID, header->TID ) ;
    }
 
-   INT32 _seIndexSessionMgr::updateIndexInfo( BSONObj &obj )
+   INT32 _seIndexSessionMgr::refreshTasks( BSONObj &obj )
    {
       INT32 rc = SDB_OK ;
       BSONElement ele ;
-      BOOLEAN isPrimary = FALSE ;
-      INT64 peerVersion = -1 ;
+      seIdxMetaMgr* idxMetaCache = _pAdptCB->getIdxMetaCache() ;
 
       try
       {
-         ele = obj.getField( FIELD_NAME_IS_PRIMARY ) ;
-         if ( EOO == ele.type() )
+         // Check if all the indices in the cache are in the task list. If not,
+         // add them.
+         idxMetaCache->lock( SHARED ) ;
+         TASK_SESSION_MAP taskMapTmp ;
+         const IDX_META_MAP* metaMap = idxMetaCache->getIdxMetaMap() ;
+
+         for ( IDX_META_MAP_CITR mItr = metaMap->begin();
+               mItr != metaMap->end(); ++mItr )
          {
-            PD_LOG( PDERROR, "Get peer node role failed" ) ;
-            rc = SDB_SYS ;
-            goto error ;
-         }
-         else
-         {
-            isPrimary = ele.Bool() ;
-            if ( isPrimary )
+            for ( IDX_META_VEC_CITR vItr = mItr->second.begin();
+                  vItr != mItr->second.end(); ++vItr )
             {
-               if ( !_pAdptCB->isDataNodePrimary() )
+               TASK_SESSION_ITEM* taskItem = _findTask( &*vItr ) ;
+               if ( !taskItem )
                {
-                  PD_LOG( PDEVENT, "Peer node is primary. Search engine adapter"
-                          " switch from READONLY mode to READWRITE mode" ) ;
-                  _pAdptCB->setDataNodePrimary( TRUE ) ;
-               }
-            }
-            else
-            {
-               if ( _pAdptCB->isDataNodePrimary() )
-               {
-                  PD_LOG( PDEVENT, "Peer node is not primary. Search engine "
-                          "adapter switch from READWRITE mode to READONLY "
-                          "mode" ) ;
-                  _pAdptCB->setDataNodePrimary( FALSE ) ;
-                  stopAllIndexer() ;
-                  // Reset the index version. If the mode change to full again,
-                  // new indexing work should be started.
-                  _indexVersion = SEADPT_INIT_TEXT_INDEX_VERSION ;
-               }
-               // If data node is slave, no indexing work should be started.
-               // So just return.
-               goto done ;
-            }
-         }
-
-         ele = obj.getField( FIELD_NAME_VERSION ) ;
-         if ( EOO == ele.type() )
-         {
-            PD_LOG( PDERROR, "Get peer text index version failed" ) ;
-            rc = SDB_SYS ;
-            goto error ;
-         }
-         else
-         {
-            peerVersion = ele.numberLong() ;
-            if ( peerVersion != _indexVersion )
-            {
-               BSONElement idxEles = obj.getField( FIELD_NAME_INDEXES ) ;
-               if ( EOO == idxEles.type() )
-               {
-                  PD_LOG( PDERROR, "No index information found" ) ;
-                  rc = SDB_SYS ;
-                  goto error ;
-               }
-
-               {
-                  list<seIndexTask> newFullList ;
-                  vector<BSONElement> idxElements = idxEles.Array() ;
-
-                  _newTaskList.clear() ;
-
-                  for ( vector<BSONElement>::iterator itr = idxElements.begin();
-                        itr != idxElements.end(); ++itr )
-                  {
-                     BOOLEAN foundIdx = FALSE ;
-                     const CHAR *csName =
-                        itr->Obj().getStringField( FIELD_NAME_COLLECTIONSPACE ) ;
-                     const CHAR *clName =
-                        itr->Obj().getStringField( FIELD_NAME_COLLECTION ) ;
-                     const CHAR *cappedCSName =
-                        itr->Obj().getStringField( SEADPT_NAME_CAPPED_COLLECTIONSPACE ) ;
-                     const CHAR *cappedCLName =
-                        itr->Obj().getStringField( SEADPT_NAME_CAPPED_COLLECTION ) ;
-                     BSONObj idxDef =
-                        itr->Obj().getObjectField( FIELD_NAME_INDEX ) ;
-                     BSONObj key = idxDef.getObjectField( IXM_FIELD_NAME_KEY ) ;
-                     const CHAR *idxName =
-                           idxDef.getStringField( IXM_FIELD_NAME_NAME ) ;
-                     string esIdxName = string(csName) + string(clName) +
-                                        string(idxName) ;
-                     string( _pAdptCB->getDataNodeGrpName() ) ;
-
-                     seIndexTask newTask( csName, clName, idxName, cappedCSName,
-                                       cappedCLName, esIdxName,
-                                       string( _pAdptCB->getDataNodeGrpName() ),
-                                       key ) ;
-                     newFullList.push_back( newTask ) ;
-
-                     // Loop through the index information list, to check if this
-                     // index is already there.
-                     for ( list<seIndexTask>::iterator itr = _taskList.begin();
-                           itr != _taskList.end(); ++itr )
-                     {
-                        // Check if it's in the current task list. If not, start
-                        // a new task.
-                        if ( csName == itr->_origCSName &&
-                             clName == itr->_origCLName &&
-                             idxName == itr->_origIdxName &&
-                             key == itr->_indexDef )
-                        {
-                           // _newTaskList.push_back( newTask ) ;
-                           foundIdx = TRUE ;
-                           break ;
-                        }
-                     }
-
-                     if ( !foundIdx )
-                     {
-                        _newTaskList.push_back( newTask ) ;
-                        PD_LOG( PDEVENT, "New index task added: %s",
-                                newTask.toString().c_str() ) ;
-                     }
-
-                     // For new indices, start new indexing task, and then replace
-                     // the whole old index information.
-                  }
-                  _taskList.clear() ;
-                  _taskList = newFullList ;
-               }
-
-               for ( list<seIndexTask>::iterator itr = _newTaskList.begin() ;
-                     itr != _newTaskList.end(); ++itr )
-               {
+                  // If not found in the task list, start the task, and
+                  // insert into the task list.
+                  UINT64 sessionID = _newSessionID() ;
                   _pAdptCB->startInnerSession( SEADPT_SESSION_INDEX,
-                                               _getInnerSessionID(),
-                                               (void *)(&*itr) ) ;
+                                               sessionID,
+                                               (void *)(&*vItr ) ) ;
+                  taskMapTmp.insert( TASK_SESSION_ITEM(sessionID, *vItr ) ) ;
                }
-
-               PD_LOG( PDDEBUG, "Change local version from [ %d ] to [ %d ]",
-                       _indexVersion, peerVersion ) ;
-               _indexVersion = peerVersion ;
-            }
-            else
-            {
-               PD_LOG( PDDEBUG, "Text index version are the same[%lld], no need "
-                       "for updating", _indexVersion ) ;
+               else
+               {
+                  // If found, insert the original item into task list, as
+                  // we are generating the full task map.
+                  taskMapTmp.insert( *taskItem ) ;
+               }
             }
          }
 
-         _updateStep = SEADPT_IDX_UPDATE_START_TASK ;
+         _taskSessionMap = taskMapTmp ;
+         idxMetaCache->unlock( SHARED ) ;
       }
       catch ( std::exception &e )
       {
@@ -289,6 +178,7 @@ namespace engine
          PD_LOG( PDERROR, "Exception occurred: %s", e.what() ) ;
          goto error ;
       }
+
    done:
       return rc ;
    error:
@@ -303,8 +193,8 @@ namespace engine
       _pAdptCB->cleanInnerSession( SEADPT_SESSION_INDEX ) ;
 
       // Clean all the remaining task, and release all indexing sessions.
-      _taskList.clear() ;
-      _newTaskList.clear() ;
+      // _taskSet.clear() ;
+      _taskSessionMap.clear() ;
 
       MAPSESSION_IT it = _mapSession.begin () ;
       while ( it != _mapSession.end() )
@@ -348,6 +238,11 @@ namespace engine
       return ret ;
    }
 
+   void _seIndexSessionMgr::onSessionDestoryed( pmdAsyncSession *pSession )
+   {
+      _taskSessionMap.erase( pSession->sessionID() ) ;
+   }
+
    pmdAsyncSession* _seIndexSessionMgr::_createSession( SDB_SESSION_TYPE sessionType,
                                                         INT32 startType,
                                                         UINT64 sessionID,
@@ -361,10 +256,10 @@ namespace engine
       }
       else if ( SDB_SESSION_SE_INDEX == sessionType )
       {
-         seIndexTask *task = (seIndexTask *)data ;
-         if ( task->valid() )
+         seIndexMeta *idxMeta = (seIndexMeta *)data ;
+         if ( idxMeta->valid() )
          {
-            pSession = SDB_OSS_NEW seAdptIndexSession( sessionID, task ) ;
+            pSession = SDB_OSS_NEW seAdptIndexSession( sessionID, idxMeta ) ;
          }
       }
       else
@@ -373,6 +268,22 @@ namespace engine
       }
 
       return pSession ;
+   }
+
+   TASK_SESSION_ITEM* _seIndexSessionMgr::_findTask( const seIndexMeta *idxMeta )
+   {
+      TASK_SESSION_ITEM* item = NULL ;
+      for ( TASK_SESSION_MAP_ITR itr = _taskSessionMap.begin() ;
+            itr != _taskSessionMap.end(); ++itr )
+      {
+         if ( *idxMeta == itr->second )
+         {
+            item = &*itr ;
+            break ;
+         }
+      }
+
+      return item ;
    }
 
    BEGIN_OBJ_MSG_MAP( _seAdptCB, _pmdObjBase )
@@ -401,6 +312,7 @@ namespace engine
       _idxUpdateTimerID = NET_INVALID_TIMER_ID ;
       _oneSecTimerID = NET_INVALID_TIMER_ID ;
       _clVersion = -1 ;
+      _localIdxVer = -1 ;
    }
 
    _seAdptCB::~_seAdptCB()
@@ -620,18 +532,15 @@ namespace engine
    }
 
    INT32 _seAdptCB::startInnerSession( SEADPT_SESSION_TYPE type,
-                                       INT32 innerTID, void *data )
+                                       UINT64 sessionID, void *data )
    {
       ossScopedLock lock ( &_seLatch, EXCLUSIVE ) ;
 
       seAdptSessionInfo info ;
       info.type = type ;
       info.startType = PMD_SESSION_ACTIVE ;
-      info.innerTid = innerTID ;
       info.data = data ;
-
-      // Rule should be the same with makeSessionID.
-      info.sessionID = ossPack32To64 ( PMD_BASE_HANDLE_ID, innerTID ) ;
+      info.sessionID = sessionID ;
 
       _vecInnerSessionParam.push_back ( info ) ;
 
@@ -791,6 +700,9 @@ namespace engine
             goto error ;
          }
 
+         rc = flag ;
+         PD_RC_CHECK( rc, PDERROR, "Error returned from catalog[ %d ]", rc ) ;
+
          SDB_ASSERT( 1 == numReturned && 1 == docObjs.size(),
                      "Respond size from catalog is wrong" ) ;
          _clVersion = docObjs[0].getIntField( FIELD_NAME_VERSION ) ;
@@ -821,6 +733,259 @@ namespace engine
 
       rc = _indexNetRtAgent.syncSend( _cataNodeID, (void *)msg ) ;
       PD_RC_CHECK( rc, PDERROR, "Send message to cata node failed[ %d ]", rc ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _seAdptCB::_updateIndexInfo( BSONObj &obj, BOOLEAN &updated )
+   {
+      INT32 rc = SDB_OK ;
+      INT64 peerVersion = -1 ;
+      BOOLEAN isPrimary = FALSE ;
+
+      PD_LOG( PDDEBUG, "Index information object: %s",
+              obj.toString().c_str() ) ;
+
+      try
+      {
+         BSONElement ele ;
+
+         ele = obj.getField( FIELD_NAME_IS_PRIMARY ) ;
+         if ( EOO == ele.type() )
+         {
+            PD_LOG( PDERROR, "Get peer node role failed" ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+         else
+         {
+            isPrimary = ele.Bool() ;
+            if ( isPrimary )
+            {
+               if ( !isDataNodePrimary() )
+               {
+                  PD_LOG( PDEVENT, "Peer node is primary. Search engine adapter"
+                          " switch from READONLY mode to READWRITE mode" ) ;
+                  setDataNodePrimary( TRUE ) ;
+               }
+            }
+            else
+            {
+               if ( isDataNodePrimary() )
+               {
+                  PD_LOG( PDEVENT, "Peer node is not primary. Search engine "
+                          "adapter switch from READWRITE mode to READONLY "
+                          "mode" ) ;
+                  setDataNodePrimary( FALSE ) ;
+                  _idxSessionMgr.stopAllIndexer() ;
+                  // Reset the index version. If the mode change to full again,
+                  // new indexing work should be started.
+                  _localIdxVer = SEADPT_INIT_TEXT_INDEX_VERSION ;
+               }
+               // If data node is slave, no indexing work should be started.
+               // So just return.
+               goto done ;
+            }
+         }
+
+         ele = obj.getField( FIELD_NAME_VERSION ) ;
+         if ( EOO == ele.type() )
+         {
+            PD_LOG( PDERROR, "Get peer text index version failed" ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+         else
+         {
+            peerVersion = ele.numberLong() ;
+            if ( peerVersion != _localIdxVer )
+            {
+               BSONElement idxEles = obj.getField( FIELD_NAME_INDEXES ) ;
+               if ( EOO == idxEles.type() )
+               {
+                  PD_LOG( PDERROR, "No index information found" ) ;
+                  rc = SDB_SYS ;
+                  goto error ;
+               }
+
+               {
+                  vector<BSONElement> idxElements = idxEles.Array() ;
+                  for ( vector<BSONElement>::iterator itr = idxElements.begin();
+                        itr != idxElements.end(); ++itr )
+                  {
+                     seIndexMeta idxMeta ;
+                     seIndexMeta *oldMeta = NULL ;
+                     rc = _parseIndexInfo( &*itr, idxMeta ) ;
+                     if ( rc )
+                     {
+                        PD_LOG( PDERROR, "Parse index definition failed[ %d ]",
+                                rc ) ;
+                        continue ;
+                     }
+
+                     // Update to the new version.
+                     idxMeta.setVersion( peerVersion ) ;
+                     // Lock the cache, try to find the index meta. If found,
+                     // update its version number. If not, add it to the cache.
+                     _idxMetaCache.lock( EXCLUSIVE ) ;
+                     oldMeta = _idxMetaCache.getIdxMeta( idxMeta ) ;
+                     if ( !oldMeta )
+                     {
+                        // No need to take lock on this temporary cache.
+                        _idxMetaCache.addIdxMeta( idxMeta.getOrigCLName().c_str(),
+                                                  idxMeta ) ;
+                        PD_LOG( PDDEBUG, "New index metadata added: %s",
+                                idxMeta.toString().c_str() ) ;
+                     }
+                     else
+                     {
+                        oldMeta->setVersion( peerVersion ) ;
+                     }
+                     _idxMetaCache.unlock( EXCLUSIVE ) ;
+                  }
+
+                  PD_LOG( PDDEBUG, "Change local version from [ %d ] to [ %d ]",
+                          _localIdxVer, peerVersion ) ;
+                  _localIdxVer = peerVersion ;
+                  updated = TRUE ;
+
+                  _idxMetaCache.lock( EXCLUSIVE ) ;
+                  _idxMetaCache.cleanByVer( peerVersion ) ;
+                  _idxMetaCache.unlock( EXCLUSIVE ) ;
+               }
+            }
+            else
+            {
+               updated = FALSE ;
+               PD_LOG( PDDEBUG, "Text index version are the same[%lld], no need "
+                       "for updating", _localIdxVer ) ;
+            }
+         }
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Parse index information failed: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _seAdptCB::_parseIndexInfo( const BSONElement *ele,
+                                     seIndexMeta &idxMeta )
+   {
+      INT32 rc = SDB_OK ;
+      seAdptNameParser nameParser ;
+      const CHAR *clName = NULL ;
+      const CHAR *idxName = NULL  ;
+      const CHAR *cappedCLName = NULL ;
+      BSONObj idxDef ;
+      BSONObj key ;
+      BSONElement lidEle ;
+      UINT32 clLogicalID = 0 ;
+      UINT32 idxLogicalID = 0 ;
+
+      try
+      {
+         BSONObj idxObj = ele->Obj() ;
+         clName = idxObj.getStringField( FIELD_NAME_COLLECTION ) ;
+         if ( 0 == ossStrlen( clName ) )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "Collection name not found in index infor" ) ;
+            goto error ;
+         }
+
+         cappedCLName = idxObj.getStringField( SEADPT_NAME_CAPPED_COLLECTION ) ;
+         if ( 0 == ossStrlen( cappedCLName ) )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR,
+                    "Capped collection name not found in index info" ) ;
+            goto error ;
+         }
+
+         idxDef = idxObj.getObjectField( FIELD_NAME_INDEX ) ;
+         if ( idxDef.isEmpty() )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "No valid index definition in index info" ) ;
+            goto error ;
+         }
+
+         key = idxDef.getObjectField( IXM_FIELD_NAME_KEY ) ;
+         if ( key.isEmpty() )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "No valid key definition in index info" ) ;
+            goto error ;
+         }
+
+         idxName = idxDef.getStringField( IXM_FIELD_NAME_NAME ) ;
+         if ( 0 == ossStrlen( idxName ) )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "Get index name from definition failed" ) ;
+            goto error ;
+         }
+
+         rc = nameParser.parse( clName, idxName ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Parse collection[ %s ] and "
+                    "index[ %s ] names failed[ %d ], skip ",
+                    clName, idxName, rc ) ;
+            goto error ;
+         }
+
+         lidEle = idxObj.getField( FIELD_NAME_LOGICAL_ID ) ;
+         if ( Array != lidEle.type() )
+         {
+            rc = SDB_SYS ;
+            PD_LOG( PDERROR, "Get logical id array from definition failed" ) ;
+            goto error ;
+         }
+
+         {
+            BSONObj lidObj = lidEle.embeddedObject() ;
+            if ( 2 != lidObj.nFields() )
+            {
+               rc = SDB_SYS ;
+               PD_LOG( PDERROR, "Logical id field size is not as expected. "
+                       "Expected: 2, Actual: %d", lidObj.nFields() ) ;
+            }
+            else
+            {
+               clLogicalID = (UINT32)lidObj.getIntField( "0" ) ;
+               idxLogicalID = (UINT32)lidObj.getIntField( "1" ) ;
+            }
+         }
+
+         idxMeta.setCLName( clName ) ;
+         idxMeta.setIdxName( idxName ) ;
+         idxMeta.setCappedCLName( cappedCLName ) ;
+         rc = idxMeta.setIdxDef( key ) ;
+         PD_RC_CHECK( rc, PDERROR, "Set index difinition failed[ %d ]", rc ) ;
+
+         idxMeta.setCLLogicalID( clLogicalID ) ;
+         idxMeta.setIdxLogicalID( idxLogicalID ) ;
+
+         idxMeta.setESIdxName( nameParser.getTargetIdxName() ) ;
+         idxMeta.setESIdxType( _peerGroupName ) ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Unexpected exception happed: %s", e.what() ) ;
+         goto error ;
+      }
 
    done:
       return rc ;
@@ -1035,6 +1200,7 @@ namespace engine
       INT32 numReturned = 0 ;
       vector<BSONObj> objVec ;
       BSONObj cataInfoObj ;
+
       string cataHost ;
       string cataSvc ;
       const CHAR *peerGrpName = NULL ;
@@ -1056,6 +1222,8 @@ namespace engine
          rc = msgExtractReply( (CHAR *)msg, &flag, &contextID, &startFrom,
                                &numReturned, objVec ) ;
          PD_RC_CHECK( rc, PDERROR, "Extract register reply failed[ %d ]", rc ) ;
+         rc = flag ;
+         PD_RC_CHECK( rc, PDERROR, "Error returned from data node[ %d ]", rc ) ;
          if ( 1 != objVec.size() )
          {
             PD_LOG( PDERROR, "Register reply is not as expected" ) ;
@@ -1214,8 +1382,8 @@ namespace engine
             continue ;
          }
 
-         PD_LOG( PDERROR, "Create inner session[TID:%d] failed, rc: %d",
-                 info.innerTid, rc ) ;
+         PD_LOG( PDERROR, "Create inner session[TID:%lld] failed, rc: %d",
+                 info.sessionID, rc ) ;
          ++itr ;
       }
 
@@ -1237,7 +1405,7 @@ namespace engine
       try
       {
          msgBody =
-            BSON( FIELD_NAME_VERSION << _idxSessionMgr.getIndexVersion() ) ;
+            BSON( FIELD_NAME_VERSION << _localIdxVer ) ;
       }
       catch ( std::exception &e )
       {
@@ -1286,10 +1454,15 @@ namespace engine
       INT32 numReturned = 0 ;
       vector<BSONObj> objVec ;
       BSONElement ele ;
+      BOOLEAN updated = FALSE ;
 
       rc = msgExtractReply( (CHAR *)msg, &flag, &contextID, &startFrom,
                             &numReturned, objVec ) ;
-      PD_RC_CHECK( rc, PDERROR, "Extract register reply failed[ %d ]", rc ) ;
+      PD_RC_CHECK( rc, PDERROR, "Extract index update reply failed[ %d ]",
+                   rc ) ;
+      rc = flag ;
+      PD_RC_CHECK( rc, PDERROR, "Index update request failed[ %d ]", rc ) ;
+
       if ( 1 != objVec.size() )
       {
          PD_LOG( PDERROR, "Register reply is not as expected" ) ;
@@ -1297,14 +1470,22 @@ namespace engine
          goto error ;
       }
 
-      rc = _idxSessionMgr.updateIndexInfo( objVec[0] ) ;
-      PD_RC_CHECK( rc, PDERROR, "Update text index information failed[ %d ]",
+      rc = _updateIndexInfo( objVec[0], updated ) ;
+      PD_RC_CHECK( rc, PDERROR, "Update indices information failed[ %d ]",
                    rc ) ;
 
-      // Once finish updating the local text indices information, try to start
-      // new pending sessions, if any.
-      rc = _startInnerSession( SEADPT_SESSION_INDEX, &_idxSessionMgr ) ;
-      PD_RC_CHECK( rc, PDERROR, "Start inner session failed[ %d ]", rc ) ;
+      if ( updated && isDataNodePrimary() )
+      {
+         rc = _idxSessionMgr.refreshTasks( objVec[0] ) ;
+         PD_RC_CHECK( rc, PDERROR, "Update text index information failed[ %d ]",
+                      rc ) ;
+
+         // Once finish updating the local text indices information, try to start
+         // new pending sessions, if any.
+         rc = _startInnerSession( SEADPT_SESSION_INDEX, &_idxSessionMgr ) ;
+         PD_RC_CHECK( rc, PDERROR, "Start inner session failed[ %d ]", rc ) ;
+      }
+
    done:
       return rc ;
    error:
@@ -1321,6 +1502,10 @@ namespace engine
          _killTimer( _idxUpdateTimerID ) ;
          _idxUpdateTimerID = NET_INVALID_TIMER_ID ;
       }
+
+      _idxMetaCache.lock( EXCLUSIVE ) ;
+      _idxMetaCache.clear() ;
+      _idxMetaCache.unlock( EXCLUSIVE ) ;
 
       _idxSessionMgr.stopAllIndexer() ;
 

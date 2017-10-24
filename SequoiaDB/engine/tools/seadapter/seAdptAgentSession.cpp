@@ -38,6 +38,7 @@
 #include "seAdptAgentSession.hpp"
 #include "rtnContextBuff.hpp"
 #include "msgMessage.hpp"
+#include "seAdptUtil.hpp"
 
 namespace engine
 {
@@ -144,15 +145,6 @@ namespace engine
       goto done ;
    }
 
-   BOOLEAN _seAdptAgentSession::_isCommand ( const CHAR *name )
-   {
-      if ( name && name[0] == '$' )
-      {
-         return TRUE ;
-      }
-      return FALSE ;
-   }
-
    // Handle query message from data node.
    // It will analyze the original query, fetch the neccessary data, and rewrite
    // the items, then return the new message.
@@ -169,14 +161,12 @@ namespace engine
       CHAR *pFieldSelector = NULL ;
       CHAR *pOrderBy = NULL ;
       CHAR *pHint = NULL ;
-      BSONObj query ;
-      BSONObj selector ;
-      BSONObj orderBy ;
-      BSONObj hint ;
 
       string indexName ;
       string typeName ;
       utilCommObjBuff resultObjs ;
+      seIdxMetaMgr *idxMetaCache = NULL ;
+      BOOLEAN cacheLocked = FALSE ;
 
       rc = msgExtractQuery( (CHAR *)msg, &flag, &pCollectionName,
                             &numToSkip, &numToReturn, &pQuery, &pFieldSelector,
@@ -190,6 +180,9 @@ namespace engine
          BSONObj selector ( pFieldSelector ) ;
          BSONObj orderBy ( pOrderBy ) ;
          BSONObj hint ( pHint ) ;
+         IDX_META_VEC idxMetas ;
+         seAdptNameParser nameParser ;
+         const CHAR *origIdxName = NULL ;
 
          if ( !_esClt )
          {
@@ -205,11 +198,67 @@ namespace engine
             _context = NULL ;
          }
 
-         rc = _getIndexName( pCollectionName, pHint, indexName ) ;
+         idxMetaCache = sdbGetSeAdapterCB()->getIdxMetaCache() ;
+         idxMetaCache->lock( SHARED ) ;
+         cacheLocked = TRUE ;
+         rc = idxMetaCache->getIdxMetas( pCollectionName, idxMetas ) ;
+         PD_RC_CHECK( rc, PDERROR, "Get index meta data for collection[ %s ] "
+                      "failed[ %d ]", pCollectionName, rc ) ;
+
+         // If there is only one index, use it for the search.
+         // If there are more than one index, name of the index to be used
+         // should be specified in the hint. Otherwise, error will be returned.
+         if ( 0 == idxMetas.size() )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "No index on the collection[ %s ]",
+                    pCollectionName ) ;
+            goto error ;
+         }
+         else if ( 1 == idxMetas.size() )
+         {
+            indexName = idxMetas.front().getEsIdxName() ;
+         }
+         else
+         {
+            if ( hint.isEmpty() )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR, "Text index name should be specified in hint "
+                       "when there are multiple text indices") ;
+               goto error ;
+            }
+
+            if ( 1 != hint.nFields() )
+            {
+               PD_LOG( PDERROR, "1 object is expected in hint. Actual[ %d ]",
+                       hint.nFields() ) ;
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
+
+            origIdxName = hint.getStringField( "" );
+            if ( 0 == ossStrcmp( origIdxName, "" ) )
+            {
+               PD_LOG( PDERROR, "No valid index name specified in hint" ) ;
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
+
+            rc = nameParser.parse( pCollectionName, origIdxName ) ;
+            PD_RC_CHECK( rc, PDERROR, "Parse collection[ %s ] and "
+                         "index[ %s ] names failed[ %d ], skip ",
+                         pCollectionName, origIdxName, rc ) ;
+            indexName = nameParser.getTargetIdxName() ;
+         }
+
+         idxMetaCache->unlock() ;
+         cacheLocked = FALSE ;
+
          typeName = sdbGetSeAdapterCB()->getDataNodeGrpName() ;
 
-         _context = SDB_OSS_NEW seAdptContextQuery( indexName, typeName,
-                                                    _esClt ) ;
+         _context = SDB_OSS_NEW seAdptContextQuery( indexName,
+                                                    typeName, _esClt ) ;
          if ( !_context )
          {
             PD_LOG( PDERROR, "Allocate memory for context failed" ) ;
@@ -231,6 +280,11 @@ namespace engine
       }
 
    done:
+      if ( cacheLocked )
+      {
+         SDB_ASSERT( idxMetaCache, "Index meta cache should not be NULL" ) ;
+         idxMetaCache->unlock( SHARED ) ;
+      }
       return rc ;
    error:
       if ( _context )
@@ -286,55 +340,6 @@ namespace engine
                                                 MsgHeader * msg )
    {
       return _onOPMsg( handle, msg ) ;
-   }
-
-
-   INT32 _seAdptAgentSession::_getIndexName( const CHAR *pCollectionName,
-                                             const CHAR *pHint,
-                                             std::string &indexName )
-   {
-      INT32 rc = SDB_OK ;
-      std::string::size_type pos1 = 0 ;
-      std::string::size_type pos2 = 0 ;
-
-      indexName = std::string( pCollectionName ) ;
-
-      pos1 = indexName.find( '.' ) ;
-      pos2 = indexName.rfind( '.' ) ;
-      if ( ( std::string::npos == pos1 ) || ( pos1 != pos2 )
-           || ( 0 == pos1 ) || ( ossStrlen( pCollectionName ) == pos1 ) )
-      {
-         PD_LOG( PDERROR, "Collection name format is wrong: %s",
-                 pCollectionName ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-
-      // Erase the dot and the the index name.
-      indexName.erase( pos1, 1 ) ;
-      try
-      {
-         BSONObj hintObj( pHint ) ;
-         if ( 1 != hintObj.nFields() )
-         {
-            PD_LOG( PDERROR, "1 object is expected in hint. Actual[ %d ]",
-                    hintObj.nFields() ) ;
-            rc = SDB_INVALIDARG ;
-            goto error ;
-         }
-         indexName += string( hintObj.getStringField( "" ) ) ;
-      }
-      catch ( std::exception &e )
-      {
-         PD_LOG( PDERROR, "Exception occurred: %s", e.what() ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
    }
 
    INT32 _seAdptAgentSession::_getQueryCond( const BSONObj &matcher,

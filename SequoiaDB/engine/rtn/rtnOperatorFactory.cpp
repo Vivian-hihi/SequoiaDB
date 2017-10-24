@@ -62,14 +62,6 @@ namespace engine
 
       if ( RTN_QUERY_TEXT == type )
       {
-         if ( options._hint.isEmpty() )
-         {
-            rc = SDB_INVALIDARG ;
-            PD_LOG( PDERROR,
-                    "hint should be specified when using text search" ) ;
-            goto error ;
-         }
-
          opr = SDB_OSS_NEW rtnTSQueryOperator() ;
          if ( !opr )
          {

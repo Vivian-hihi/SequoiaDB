@@ -44,6 +44,7 @@
 #include "ossSocket.hpp"
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
+#include "toolsTrace.hpp"
 
 namespace engine
 {

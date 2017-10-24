@@ -45,7 +45,6 @@
 
 using namespace bson ;
 
-#define CLS_NAME_CAPPED_COLLECTIONSPACE      "CappedCS"
 #define CLS_NAME_CAPPED_COLLECTION           "CappedCL"
 
 namespace engine
@@ -2709,7 +2708,13 @@ namespace engine
       localVersion = rtnCB->getTextIdxVersion() ;
       if ( RTN_INIT_TEXT_INDEX_VERSION == localVersion )
       {
-         rtnCB->increaseTextIdxVerUpTo( peerVersion + 1 ) ;
+         if ( FALSE == rtnCB->updateTextIdxVersion( RTN_INIT_TEXT_INDEX_VERSION,
+                                                    peerVersion + 1 ) )
+         {
+            PD_LOG( PDERROR, "Update text index version failed" ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
          localVersion = rtnCB->getTextIdxVersion() ;
       }
 
@@ -2768,11 +2773,98 @@ namespace engine
       goto done ;
    }
 
-   // Dump all text indices information, together with the node role and index
-   // text version.
-   // The text indices information will only be dumped when the node is primary.
-   // So the adapter connectiong to slavery node will get none text index
-   // information, and no indexing job will be started.
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR__BUILDTEXTIDXOBJ, "_clsShardMgr::_buildTextIdxObj" )
+   INT32 _clsShardMgr::_buildTextIdxObj( const monCSSimple *csInfo,
+                                         const monCLSimple *clInfo,
+                                         const monIndex *idxInfo,
+                                         BSONObjBuilder &builder )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__CLSSHDMGR__BUILDTEXTIDXOBJ ) ;
+
+      string cappedCSName = string(SYS_PREFIX) +
+                            string(csInfo->_name) +
+                            string(clInfo->_clname) +
+                            idxInfo->getIndexName() ;
+      string cappedCLName = cappedCSName + "." +
+                            cappedCSName ;
+
+      try
+      {
+         builder.append( FIELD_NAME_COLLECTION, clInfo->_name ) ;
+         builder.append( CLS_NAME_CAPPED_COLLECTION, cappedCLName ) ;
+         builder.appendObject( FIELD_NAME_INDEX,
+                               idxInfo->_indexDef.objdata(),
+                               idxInfo->_indexDef.objsize() ) ;
+
+         // Append logical ids of cl and index as an array. They are used by
+         // the adapter to identify different indices with the same meta data.
+         BSONArrayBuilder lidObjs( builder.subarrayStart( FIELD_NAME_LOGICAL_ID ) ) ;
+         lidObjs.append( clInfo->_logicalID ) ;
+         lidObjs.append( idxInfo->_indexLID ) ;
+         lidObjs.done() ;
+
+         builder.done() ;
+
+#ifdef _DEBUG
+         PD_LOG( PDDEBUG, "Text index info: %s",
+                 builder.done().toString().c_str() ) ;
+#endif /* _DEBUG */
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Unexpected exception happened: %s", e.what() ) ;
+         goto error ;
+      }
+
+   done:
+      PD_TRACE_EXITRC( SDB__CLSSHDMGR__BUILDTEXTIDXOBJ, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   /*
+     Dump all text indices information, together with the node role and index
+     text version.
+     The text indices information will only be dumped when the node is primary.
+     So the adapter connectiong to slavery node will get none text index
+     information, and no indexing job will be started.
+
+    The result object is as follows:
+
+    {
+       "IsPrimary" : TRUE | FALSE,
+       "Version" : version_number,
+       "Indexes" : [
+          {
+             "Collection" : collection_full_name,
+             "CappedCL"   : capped_collection_full_name,
+             "Index"      :
+                {
+                   index_definition
+                },
+             "LogicalID"  : [
+                cl_logical_id, index_logical_id
+             ]
+          },
+          ...
+          {
+             "Collection" : collection_full_name,
+             "CappedCL"   : capped_collection_full_name,
+             "Index"      :
+                {
+                   index_definition
+                },
+             "LogicalID"  : [
+                cl_logical_id, index_logical_id
+             ]
+          }
+       ]
+    }
+   *
+   */
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR__DUMPTEXTIDXINFO, "_clsShardMgr::_dumpTextIdxInfo" )
    INT32 _clsShardMgr::_dumpTextIdxInfo( INT64 localVersion, BSONObj &obj,
                                          BOOLEAN onlyVersion )
@@ -2791,8 +2883,9 @@ namespace engine
          builder.appendBool( FIELD_NAME_IS_PRIMARY, isPrimary ) ;
          builder.append( FIELD_NAME_VERSION, localVersion ) ;
 
-         // Only dump index info on primary node.
-         if ( isPrimary && !onlyVersion )
+         // Dump text indices information both on primary and slave nodes.
+         // The adapters need to cache them for searching.
+         if ( !onlyVersion )
          {
             BSONArrayBuilder indexObjs( builder.subarrayStart( FIELD_NAME_INDEXES ) ) ;
 
@@ -2812,33 +2905,25 @@ namespace engine
                      if ( rcTmp )
                      {
                         // Only warning, and process the remaining ones.
-                        PD_LOG( PDWARNING, "Get type of index failed[ %d ], cs[ %s ],"
+                        PD_LOG( PDERROR, "Get type of index failed[ %d ], cs[ %s ],"
                                 " cl[ %s ], index[ %s ]", rcTmp, csItr->_name,
                                 clItr->_name, idxItr->getIndexName() ) ;
                         continue ;
                      }
-                     if ( IXM_EXTENT_TYPE_TEXT == idxType )
+                     // Only dump text indices in normal status.
+                     if ( IXM_INDEX_FLAG_NORMAL == idxItr->_indexFlag &&
+                          IXM_EXTENT_TYPE_TEXT == idxType )
                      {
-                        string cappedCSName = string(SYS_PREFIX) + string(csItr->_name)
-                                           + string(clItr->_clname) +
-                                           idxItr->getIndexName() ;
                         BSONObjBuilder subBuilder( indexObjs.subobjStart() ) ;
-                        subBuilder.append( FIELD_NAME_COLLECTIONSPACE,
-                                           csItr->_name ) ;
-                        subBuilder.append( CLS_NAME_CAPPED_COLLECTIONSPACE,
-                                           cappedCSName ) ;
-                        subBuilder.append( FIELD_NAME_COLLECTION, clItr->_clname ) ;
-                        subBuilder.append( CLS_NAME_CAPPED_COLLECTION,
-                                           cappedCSName  ) ;
-                        subBuilder.appendObject( FIELD_NAME_INDEX,
-                                                 idxItr->_indexDef.objdata(),
-                                                 idxItr->_indexDef.objsize() ) ;
-                        subBuilder.done() ;
-
-#ifdef _DEBUG
-                        PD_LOG( PDDEBUG, "Text index info: %s",
-                                subBuilder.done().toString().c_str() ) ;
-#endif /* _DEBUG */
+                        rc = _buildTextIdxObj( &*csItr, &*clItr, &*idxItr,
+                                               subBuilder ) ;
+                        if ( rc )
+                        {
+                           PD_LOG( PDERROR, "Build text index object failed[ %d ]",
+                                   rc ) ;
+                           // do not goto error, continue with the remainning
+                           // indices
+                        }
                      }
                   }
                }

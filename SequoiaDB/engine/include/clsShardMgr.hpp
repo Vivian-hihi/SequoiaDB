@@ -43,6 +43,7 @@
 #include "sdbInterface.hpp"
 #include "clsDCMgr.hpp"
 #include "utilMap.hpp"
+#include "monDMS.hpp"
 
 using namespace bson ;
 
@@ -259,6 +260,10 @@ namespace engine
          INT32 _onHandleClose( NET_HANDLE handle, MsgHeader* msg ) ;
          INT32 _onAuthReqMsg( NET_HANDLE handle, MsgHeader * msg ) ;
          INT32 _onTextIdxInfoReqMsg( NET_HANDLE handle, MsgHeader * msg ) ;
+         INT32 _buildTextIdxObj( const monCSSimple *csInfo,
+                                 const monCLSimple *clInfo,
+                                 const monIndex *idxInfo,
+                                 BSONObjBuilder &builder ) ;
          INT32 _dumpTextIdxInfo( INT64 localVersion, BSONObj &obj,
                                  BOOLEAN onlyVersion = FALSE ) ;
 

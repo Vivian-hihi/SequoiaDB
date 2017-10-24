@@ -217,9 +217,10 @@ namespace engine
       {
          _textIdxVersion.inc() ;
       }
-      OSS_INLINE void increaseTextIdxVerUpTo( INT64 newVersion )
+      OSS_INLINE BOOLEAN updateTextIdxVersion( INT64 oldVersion,
+                                               INT64 newVersion )
       {
-         _textIdxVersion.swapLesserThan( newVersion) ;
+         return _textIdxVersion.compareAndSwap( oldVersion, newVersion ) ;
       }
       OSS_INLINE void updateExtNodeId( UINT64 newID )
       {

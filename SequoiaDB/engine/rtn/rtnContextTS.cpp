@@ -121,7 +121,7 @@ namespace engine
    }
 
    INT32 _rtnContextTS::open( const rtnQueryOptions &options,
-                                  pmdEDUCB *eduCB )
+                              pmdEDUCB *eduCB )
    {
       INT32 rc = SDB_OK ;
       MsgHeader *queryMsg = NULL ;
@@ -341,6 +341,9 @@ namespace engine
                             &numReturned, objList ) ;
       PD_RC_CHECK( rc, PDERROR, "Extract query respond message failed[ %d ]",
                    rc ) ;
+      rc = flag ;
+      PD_RC_CHECK( rc, PDERROR, "Error returned from remote[ %d ]", rc ) ;
+
       // 4 objects are expected: matcher, selector, order by, hint.
       if ( objList.size() != 4 )
       {

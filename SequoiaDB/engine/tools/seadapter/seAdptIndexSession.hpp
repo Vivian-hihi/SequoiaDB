@@ -67,7 +67,7 @@ namespace engine
    {
       DECLARE_OBJ_MSG_MAP()
    public:
-      _seAdptIndexSession( UINT64 sessionID, const seIndexTask *task ) ;
+      _seAdptIndexSession( UINT64 sessionID, const seIndexMeta *idxMeta ) ;
       virtual ~_seAdptIndexSession() ;
 
       virtual EDU_TYPES eduType() const ;

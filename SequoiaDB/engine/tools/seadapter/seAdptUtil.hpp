@@ -1,7 +1,7 @@
 /*******************************************************************************
 
 
-   Copyright (C) 2011-2016 SequoiaDB Ltd.
+   Copyright (C) 2011-2017 SequoiaDB Ltd.
 
    This program is free software: you can redistribute it and/or modify
    it under the term of the GNU Affero General Public License, version 3,
@@ -15,7 +15,9 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program. If not, see <http://www.gnu.org/license/>.
 
-   Source File Name = seAdptDef.hpp
+   Source File Name = seAdptUtil.hpp
+
+   Descriptive Name = Search Engine Adapter Util.
 
    When/how to use: this program may be used on binary and text-formatted
    versions of PMD component. This file contains main function for sdbcm,
@@ -28,33 +30,35 @@
    Change Activity:
    defect Date        Who Description
    ====== =========== === ==============================================
-          04/14/2017  YSD  Initial Draft
+          10/01/2017  YSD  Initial Draft
 
    Last Changed =
 
 *******************************************************************************/
-#ifndef SEADPT_DEF_HPP_
-#define SEADPT_DEF_HPP_
+#ifndef SEADPT_UTIL_HPP__
+#define SEADPT_UTIL_HPP__
+
+#include "core.hpp"
+#include "seAdptDef.hpp"
 
 namespace engine
 {
-   #define SDB_SEADPT_PROCESS_NAME     "sdbseadapter"
-   #define SDB_SEADPT_ROLE_SHORT_STR   "A"
-   #define SDB_SEADPT_DNODE_HOST       "datanodehost"
-   #define SDB_SEADPT_DNODE_PORT       "datasvcname"
-   #define SDB_SEADPT_DIAGLEVEL        "diaglevel"
-   #define SDB_SEADPT_SE_HOST          "searchenginehost"
-   #define SDB_SEADPT_SE_PORT          "searchengineport"
-   #define SDB_SEADPT_GRP_ID           65536
-   #define SDB_SEADPT_NODE_ID          0
-   #define SDB_SEADPT_SVC_ID           0
-   #define SDB_SEADPT_MAX_IDXNAME_SZ   255
+   // Parse the original collection and index name into target index name.
+   class _seAdptNameParser
+   {
+      public:
+         _seAdptNameParser() ;
+         ~_seAdptNameParser() ;
 
-   #define SDB_SEADPT_EXE_FILE_NAME    "sdbseadapter"
-   #define SDB_SEADPT_CFG_FILE_NAME    SDB_SEADPT_EXE_FILE_NAME".conf"
-   #define SDB_SEADPT_LOG_DIR          "log"
-   #define SDB_SEADPT_LOG_FILE_NAME    SDB_SEADPT_EXE_FILE_NAME".log"
+         INT32 parse( const CHAR *clFullName, const CHAR *idxName ) ;
+         void reset() ;
+         const CHAR* getTargetIdxName() ;
+
+      private:
+         CHAR _targetIdxName[ SDB_SEADPT_MAX_IDXNAME_SZ + 1 ] ;
+   } ;
+   typedef _seAdptNameParser seAdptNameParser ;
 }
 
-#endif /* SEADPT_DEF_HPP_ */
+#endif /* SEADPT_UTIL_HPP__ */
 

@@ -44,6 +44,7 @@
 #include "pmdAsyncHandler.hpp"
 #include "utilESCltMgr.hpp"
 #include "seAdptMsgHandler.hpp"
+#include "seAdptIdxMetaMgr.hpp"
 
 namespace engine
 {
@@ -54,17 +55,10 @@ namespace engine
       SEADPT_SESSION_INDEX = 1      // Indexer session for one text index.
    } ;
 
-   enum SEADPT_IDX_UPDATE_STEP
-   {
-      SEADPT_IDX_UPDATE_BEGIN = 1,
-      SEADPT_IDX_UPDATE_START_TASK
-   } ;
-
    struct _seAdptSessionInfo
    {
       SEADPT_SESSION_TYPE  type ;
       INT32                startType ;
-      INT32                innerTid ;
       UINT64               sessionID ;
       void*                data ;
    } ;
@@ -114,68 +108,12 @@ namespace engine
    } ;
    typedef _seSvcSessionMgr seSvcSessionMgr ;
 
-   // Each text index is bind with a task. It's held by
-   struct _seIndexTask
-   {
-      string _origCSName ;
-      string _origCLName ;
-      string _cappedCSName ;
-      string _cappedCLName ;
-      string _origIdxName ;
-      string _esIdxName ;
-      string _esTypeName ;
-      BSONObj _indexDef ;  // Used for fetching data from original collection.
-
-      _seIndexTask( string origCSName, string origCLName,
-                    string origIdxName, string cappedCSName,
-                    string cappedCLName, string esIdxName,
-                    string esTypeName, BSONObj &indexKey )
-      {
-         _origCSName = origCSName ;
-         _origCLName = origCLName ;
-         _cappedCSName = cappedCSName ;
-         _cappedCLName = cappedCLName ;
-         _origIdxName = origIdxName ;
-         _esIdxName = esIdxName ;
-         _esTypeName = esTypeName ;
-         _indexDef = indexKey.copy() ;
-      }
-
-      BOOLEAN valid() const
-      {
-         return ( !_origCSName.empty() && !_origCLName.empty() &&
-                  !_cappedCSName.empty() && !_cappedCLName.empty() &&
-                  !_origIdxName.empty() && !_esIdxName.empty() &&
-                  !_esTypeName.empty() && !_indexDef.isEmpty() &&
-                  _indexDef.valid() ) ;
-      }
-
-      std::string toString() const
-      {
-         try
-         {
-            std::stringstream ss ;
-            ss << "Original cs[" << _origCSName << "], "
-               << "original cl[" << _origCLName << "], "
-               << "capped cs[" << _cappedCSName << "], "
-               << "capped cl[" << _cappedCLName << "], "
-               << "es index[" << _esIdxName << "], "
-               << "es type[" << _esTypeName << "], "
-               << "original index[" << _origIdxName << ", "
-               << _indexDef.toString() << "]" ;
-            return ss.str() ;
-         }
-         catch ( std::exception &e )
-         {
-            return "" ;
-         }
-      }
-   } ;
-   typedef _seIndexTask seIndexTask ;
-
+   typedef pair<const UINT64, seIndexMeta>      TASK_SESSION_ITEM ;
    // Manager of seAdptIndexSession.
    class _seIndexSessionMgr : public _pmdAsycSessionMgr
    {
+      typedef map<UINT64, seIndexMeta>          TASK_SESSION_MAP ;
+      typedef TASK_SESSION_MAP::iterator        TASK_SESSION_MAP_ITR ;
    public:
       _seIndexSessionMgr( _seAdptCB *pAdptCB ) ;
       virtual ~_seIndexSessionMgr() ;
@@ -189,8 +127,9 @@ namespace engine
                                      UINT64 sessionID,
                                      pmdAsyncSession *pSession ) ;
 
-      INT64 getIndexVersion() { return _indexVersion; }
-      INT32 updateIndexInfo( BSONObj &obj ) ;
+      virtual void onSessionDestoryed( pmdAsyncSession *pSession ) ;
+
+      INT32 refreshTasks( BSONObj &obj ) ;
       void  stopAllIndexer() ;
 
    protected:
@@ -204,16 +143,19 @@ namespace engine
                                                INT32 startType,
                                                UINT64 sessionID,
                                                void *data = NULL ) ;
-      UINT32 _getInnerSessionID() { return ++_innerSessionID ; }
+      UINT64 _newSessionID()
+      {
+         ++_innerSessionID ;
+         return ossPack32To64( PMD_BASE_HANDLE_ID, _innerSessionID ) ;
+      }
+
+      TASK_SESSION_ITEM* _findTask( const seIndexMeta *idxMeta ) ;
 
    private:
       _seAdptCB            *_pAdptCB ;
-      list<seIndexTask>    _taskList ;       // All the tasks according to the last update.
-      list<seIndexTask>    _newTaskList ;    // Tasks that must start this round.
-      INT64                _indexVersion ;
+      TASK_SESSION_MAP     _taskSessionMap ;
       UINT32               _indexSessionTimer ;
       UINT32               _innerSessionID ;
-      SEADPT_IDX_UPDATE_STEP _updateStep ;
    } ;
    typedef _seIndexSessionMgr seIndexSessionMgr ;
 
@@ -231,6 +173,7 @@ namespace engine
       friend class _seIndexSessionMgr ;
       DECLARE_OBJ_MSG_MAP()
       typedef std::vector<_seAdptSessionInfo>    VECINNERPARAM ;
+
    public:
       _seAdptCB() ;
       virtual ~_seAdptCB() ;
@@ -253,9 +196,10 @@ namespace engine
       seSvcSessionMgr*     getSeAgentMgr() ;
       seIndexSessionMgr*   getIdxSessionMgr() ;
       netRouteAgent*       getIdxRouteAgent() ;
+      seIdxMetaMgr*        getIdxMetaCache() { return &_idxMetaCache ; }
 
       INT32 startInnerSession( SEADPT_SESSION_TYPE type,
-                               INT32 innerTID, void *data = NULL ) ;
+                               UINT64 sessionID, void *data = NULL ) ;
       void  cleanInnerSession( INT32 type ) ;
       INT32 sendToDataNode( MsgHeader *msg ) ;
       BOOLEAN isDataNodePrimary() { return _peerPrimary ; }
@@ -268,7 +212,6 @@ namespace engine
 
       INT32 syncUpdateCLVersion( const CHAR *collectionName, INT64 millsec,
                                  pmdEDUCB *cb, INT32 &version ) ;
-
    private:
       INT32 _startSvcListener() ;
       INT32 _initSdbAddr() ;
@@ -290,6 +233,8 @@ namespace engine
       INT32 _onCatalogResMsg( NET_HANDLE handle, MsgHeader *msg ) ;
       INT32 _sendCataQueryReq( const BSONObj &query, const BSONObj &selector,
                                UINT64 requestID, _pmdEDUCB *cb ) ;
+      INT32 _updateIndexInfo( BSONObj &obj, BOOLEAN &updated ) ;
+      INT32 _parseIndexInfo( const BSONElement *ele, seIndexMeta &idxMeta ) ;
 
    private:
       indexMsgHandler         _indexMsgHandler ;
@@ -324,6 +269,9 @@ namespace engine
       INT32                   _clVersion ;
       ossSpinSLatch           _verUpdateLock ;
       ossEvent                _cataEvent ;
+
+      INT64                   _localIdxVer ;
+      seIdxMetaMgr            _idxMetaCache ;
    } ;
    typedef _seAdptCB seAdptCB ;
 

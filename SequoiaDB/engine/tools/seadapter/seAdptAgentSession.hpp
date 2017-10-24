@@ -66,7 +66,6 @@ namespace engine
       virtual void _onDetach() ;
 
       INT32 _onOPMsg ( NET_HANDLE handle, MsgHeader * msg ) ;
-      BOOLEAN _isCommand ( const CHAR *name ) ;
 
       INT32 _onQueryReq( MsgHeader *msg,
                          utilCommObjBuff &objBuff,
@@ -80,9 +79,6 @@ namespace engine
       INT32 _defaultMsgFunc ( NET_HANDLE handle, MsgHeader *msg ) ;
 
    private:
-      INT32 _getIndexName( const CHAR *pCollectionName,
-                           const CHAR *pHint,
-                           std::string &indexName ) ;
       INT32 _getQueryCond( const BSONObj &matcher, std::string &queryStr ) ;
 
    private:
