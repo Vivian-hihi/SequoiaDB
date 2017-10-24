@@ -130,7 +130,7 @@ function toolInitFile( local, filename, per, mode, errno )
         }
         if( openErr !== 0 )
         {
-            throw buildException( "toolInitFile", 0, "init file", openErr, 0 ) ;
+            throw openErr ;
         }
     }
     catch( e )
@@ -148,7 +148,7 @@ function toolInitFile( local, filename, per, mode, errno )
         file.write( "abc" ) ;
         if( writeErr !== 0 )
         {
-           throw buildException( "toolInitFile", 0, "write file", writeErr, 0 ) ; 
+           throw writeErr ; 
         }
     }
     catch( e )
@@ -167,7 +167,7 @@ function toolInitFile( local, filename, per, mode, errno )
         file.read() ;
         if( readErr !== 0 )
         {
-           throw buildException( "toolInitFile", 0, "read file", readErr, 0 ) ; 
+           throw readErr ; 
         }
     }
     catch( e )
