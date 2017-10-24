@@ -66,7 +66,7 @@ namespace engine
    static OSS_THREAD_LOCAL BOOLEAN  __hasSetErrNo__      = FALSE ;
    static OSS_THREAD_LOCAL BOOLEAN  __hasSetErrObj__     = FALSE ;
    static OSS_THREAD_LOCAL BOOLEAN  __needClearErrorInfo__ = FALSE ;
-
+   static OSS_THREAD_LOCAL BOOLEAN  __ignoreErrorPrefix__ = FALSE ;
    /*
       Local Functions Define
    */
@@ -390,6 +390,16 @@ namespace engine
    void sdbSetPrintError( BOOLEAN print )
    {
       __printError__ = print ;
+   }
+
+   BOOLEAN sdbNeedIgnoreErrorPrefix()
+   {
+      return __ignoreErrorPrefix__ ;
+   }
+
+   void sdbSetIgnoreErrorPrefix( BOOLEAN ignore )
+   {
+      __ignoreErrorPrefix__ = ignore ;
    }
 
    void sdbSetReadData( BOOLEAN hasRead )

@@ -674,11 +674,18 @@ JS_MAPPING_END()
       pScope->pushJSFileNameToStack( fullPath ) ;
 
       {
+         INT32 evalFlags = SPT_EVAL_FLAG_NONE ;
+         if( TRUE == sdbNeedIgnoreErrorPrefix() )
+         {
+            evalFlags |= SPT_EVAL_FLAG_IGNORE_ERR_PREFIX ;
+         }
          // need to save old err print flag to recover
          BOOLEAN saveOldPrintFlag = sdbNeedPrintError() ;
+         BOOLEAN saveOldIgnoreFlag = sdbNeedIgnoreErrorPrefix() ;
          rc = pScope->eval( content.c_str(), ( UINT32 )content.length(),
-                            fullPath.c_str(), 1, SPT_EVAL_FLAG_NONE, &pResultVal ) ;
+                            fullPath.c_str(), 1, evalFlags, &pResultVal ) ;
          sdbSetPrintError( saveOldPrintFlag ) ;
+         sdbSetIgnoreErrorPrefix( saveOldIgnoreFlag ) ;
       }
       pScope->popJSFileNameFromStack() ;
 

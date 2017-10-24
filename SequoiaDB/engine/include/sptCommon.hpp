@@ -91,6 +91,9 @@ namespace engine
    BOOLEAN  sdbNeedPrintError() ;
    void     sdbSetPrintError( BOOLEAN print ) ;
 
+   BOOLEAN  sdbNeedIgnoreErrorPrefix() ;
+   void     sdbSetIgnoreErrorPrefix( BOOLEAN ignore ) ;
+
    void     sdbSetReadData( BOOLEAN hasRead ) ;
    BOOLEAN  sdbHasReadData() ;
 

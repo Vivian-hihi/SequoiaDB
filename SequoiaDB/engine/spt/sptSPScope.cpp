@@ -782,6 +782,8 @@ namespace engine
 
       // set error report
       sdbSetPrintError( ( flag & SPT_EVAL_FLAG_PRINT ) ? TRUE : FALSE ) ;
+      sdbSetIgnoreErrorPrefix( ( flag & SPT_EVAL_FLAG_IGNORE_ERR_PREFIX ) ?
+                               TRUE : FALSE ) ;
       sdbSetNeedClearErrorInfo( TRUE ) ;
 
       if ( !JS_EvaluateScript( _context, _global, code,
@@ -838,7 +840,8 @@ namespace engine
 
          if ( NULL != strException )
          {
-            std::stringstream ss ;
+            std::stringstream errMsg ;
+            std::stringstream errPrefix ;
             sptPrivateData *privateData  = NULL ;
 
             // get privateData to get exception filename and lineno
@@ -851,19 +854,26 @@ namespace engine
             if( NULL != privateData && privateData->isSetErrInfo() )
             {
                {
-                  ss << privateData->getErrFileName().c_str() << ":"
-                     << privateData->getErrLineno() << " " ;
+                  errPrefix << privateData->getErrFileName().c_str() << ":"
+                            << privateData->getErrLineno() << " " ;
                }
-               ss << "uncaught exception: "
-                  << strException << endl
-                  << sdbGetErrMsg() ;
+               if( flag & SPT_EVAL_FLAG_IGNORE_ERR_PREFIX && !sdbIsErrMsgEmpty() )
+               {
+                  errMsg << sdbGetErrMsg() ;
+               }
+               else
+               {
+                  errMsg << "uncaught exception: "
+                         << strException << endl
+                         << sdbGetErrMsg() ;
+               }
             }
             /*
              * Branch 2: throw obj
-             *    unable to determine if the obj type is Erro
+             *    unable to determine if the obj type is Error
              *
              * TODO: find a way to determine if the obj type is Error
-            */
+             */
             else if( JSVAL_IS_OBJECT( exception ) )
             {
                CHAR *errfileName = NULL ;
@@ -894,23 +904,31 @@ namespace engine
                      errLineno = (UINT32) JSVAL_TO_INT( lineNumber ) ;
                   }
                }
-               ss << ( errfileName ? string( errfileName ): "(nofile)" ) << ":"
-                  << errLineno << " "
-                  << strException ;
+               errPrefix << ( errfileName ? string( errfileName ): "(nofile)" ) << ":"
+                         << errLineno << " " ;
+               errMsg << strException ;
             }
             /*
              *Branch 3: Throw other type, such as string
              */
             else
             {
-               ss << ( filename ? string( filename ): "(nofile)" )
-                  << ":"
-                  << lineno << " "
-                  << "uncaught exception: "
-                  << strException ;
+               errPrefix << ( filename ? string( filename ): "(nofile)" )
+                         << ":"
+                         << lineno << " " ;
+               errMsg << "uncaught exception: "
+                      << strException ;
             }
 
-            std::string errInfo = ss.str() ;
+            std::string errInfo ;
+            if( flag & SPT_EVAL_FLAG_IGNORE_ERR_PREFIX )
+            {
+               errInfo = errMsg.str() ;
+            }
+            else
+            {
+               errInfo = errPrefix.str() + errMsg.str() ;
+            }
             _rval.setError( errInfo ) ;
             SAFE_JS_FREE( _context, strException ) ;
          }
