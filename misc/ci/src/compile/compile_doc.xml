@@ -102,10 +102,10 @@
             <dirset dir="${srccode_dir}/doc/build/output" includes="SequoiaDB_usermanuals_v*"/>
          </path>
          <sequential>
-            <zip destfile="@{fullpathname}.zip" 
-                 basedir="${srccode_dir}/doc/build/output" includes="SequoiaDB_usermanuals_v*/**/*"/>
+            <tar destfile="@{fullpathname}.tar.gz" 
+                 basedir="${srccode_dir}/doc/build/output" includes="SequoiaDB_usermanuals_v*/**/*" compression="gzip"/>
             <copy todir="${WORKSPACE}/release" failonerror="true" >
-               <fileset dir="${srccode_dir}/doc/build/output" includes="SequoiaDB_usermanuals_v*.zip"/>
+               <fileset dir="${srccode_dir}/doc/build/output" includes="SequoiaDB_usermanuals_v*.tar.gz"/>
             </copy>
          </sequential>
       </for>
