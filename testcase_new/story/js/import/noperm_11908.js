@@ -39,7 +39,7 @@ function main()
 	}
 	catch( e )
 	{
-   	if( e !== 13 )
+   	if( e !== -3 )
     	{
       	throw buildException( null, null, "import no perm file", 13, e ) ;
     	}
@@ -52,7 +52,7 @@ function main()
 	}
 	catch( e )
 	{
-   	if( e !== 13 )
+   	if( e !== -3 )
     	{
       	throw buildException( null, null, "importOnce no perm file", 13, e ) ;
     	}

@@ -14,7 +14,7 @@ try
 }
 catch( e )
 {
-    if( e !== 2 )
+    if( e !== -4 )
     {
         throw buildException( null, null,
               "import not exist file " + notExistFile, 2, e ) ;
@@ -28,7 +28,7 @@ try
 }
 catch( e )
 {
-    if( e !== 2 )
+    if( e !== -4 )
     {
         throw buildException( null, null,
               "importOnce not exist file " + notExistFile, -4, e ) ;
