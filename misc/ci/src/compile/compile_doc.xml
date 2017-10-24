@@ -99,19 +99,13 @@
       </exec>
       <for param="fullpathname">
          <path>
-            <dirset dir="${srccode_dir}/doc/build/output" includes="SequoiaDB_usermanals_v*"/>
+            <dirset dir="${srccode_dir}/doc/build/output" includes="SequoiaDB_usermanuals_v*"/>
          </path>
          <sequential>
-            <basename file="@{fullpathname}" property="pathname"/>
-            <delete dir="${srccode_dir}/doc/build/output/build_zip.bat" failonerror="false" />
-            <echo file="${srccode_dir}/doc/build/output/build_zip.bat" 
-                  message='"cmd /E:ON /V:ON /T:0E /K C:\SetEnv.cmd &amp;&amp; a -k -r -s ${pathname}.zip ${pathname}"' />
-            <exec executable="Rar.exe" dir="${srccode_dir}/doc/build/output" failonerror="true" logError="true">
-               <arg value="/c" />
-               <arg value=' build_zip.bat ' />
-            </exec>
+            <zip destfile="@{fullpathname}.zip" 
+                 basedir="${srccode_dir}/doc/build/output" includes="SequoiaDB_usermanuals_v*/**/*"/>
             <copy todir="${WORKSPACE}/release" failonerror="true" >
-               <fileset dir="${srccode_dir}/doc/build/output" includes="SequoiaDB_usermanals_v*.zip"/>
+               <fileset dir="${srccode_dir}/doc/build/output" includes="SequoiaDB_usermanuals_v*.zip"/>
             </copy>
          </sequential>
       </for>
