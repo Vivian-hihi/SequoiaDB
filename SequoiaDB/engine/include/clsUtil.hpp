@@ -48,15 +48,11 @@ using namespace std ;
 
 namespace engine
 {
-   void clsStrcpy( const CHAR *src, CHAR *dst, const UINT32 &dstLen ) ;
 
    CLS_SYNC_STATUS clsSyncWindow( const DPS_LSN &remoteLsn,
                                   const DPS_LSN &fileBeginLsn,
                                   const DPS_LSN &memBeginLSn,
                                   const DPS_LSN &endLsn ) ;
-
-   void clsJoin2Full( const CHAR *cs, const CHAR *collection,
-                      CHAR *full ) ;
 
    INT32 clsString2Strategy( const CHAR *str, INT32 &sty ) ;
 
@@ -65,5 +61,5 @@ namespace engine
 
 }
 
-#endif
+#endif //CLSUTIL_HPP_
 

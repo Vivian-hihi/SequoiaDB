@@ -112,8 +112,7 @@ namespace engine
       _lastOpEndTime = rhs._lastOpEndTime ;
       _readTimeSpent = rhs._readTimeSpent ;
       _writeTimeSpent = rhs._writeTimeSpent ;
-      ossMemcpy( _lastOpDetail, rhs._lastOpDetail,
-               sizeof( _lastOpDetail ) ) ;
+      ossStrcpy( _lastOpDetail, rhs._lastOpDetail ) ;
 
       return *this ;
    }

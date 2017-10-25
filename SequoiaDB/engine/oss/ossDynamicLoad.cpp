@@ -254,7 +254,9 @@ error :
    goto done ;
 }
 
-INT32 _ossModuleHandle::patchModuleName( const CHAR* name, CHAR *patchedName, UINT32 size )
+INT32 _ossModuleHandle::patchModuleName( const CHAR* name,
+                                         CHAR *patchedName,
+                                         UINT32 size )
 {
    INT32 rc = SDB_OK ;
    SDB_ASSERT( name, "Module name can not be NULL" ) ;
@@ -262,11 +264,7 @@ INT32 _ossModuleHandle::patchModuleName( const CHAR* name, CHAR *patchedName, UI
 
    const CHAR *ptr = NULL ;
    INT32 patchedNameLen = 0 ;
-#ifdef _WINDOWS
    INT32 tailLen = ossStrlen(LIB_END_STR) ;
-#else
-   INT32 tailLen = ossStrlen(LIB_END_STR) ;
-#endif
 
    ossMemset( patchedName, 0, size ) ;
    // patch begin
@@ -274,9 +272,10 @@ INT32 _ossModuleHandle::patchModuleName( const CHAR* name, CHAR *patchedName, UI
    ptr = ossStrstr( name, LIB_START_STR ) ;
    if ( ptr != name )
    {
-      ossMemcpy( patchedName, LIB_START_STR, ossStrlen(LIB_START_STR) ) ;
+      /// not exist, add prefix
+      ossStrncpy( patchedName, LIB_START_STR, size - 1 ) ;
    }
-#endif
+#endif //_LINUX
 
    patchedNameLen = ossStrlen( patchedName ) ;
    ptr = ossStrrchr( name, '.' ) ;

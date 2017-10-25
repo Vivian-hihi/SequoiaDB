@@ -431,7 +431,8 @@ namespace engine
             if ( pIndexName )
             {
                ossMemset( _pIndexName, 0, sizeof( _pIndexName ) ) ;
-               ossMemcpy( _pIndexName, pIndexName, ossStrlen( pIndexName ) ) ;
+               ossStrncpy( _pIndexName, pIndexName,
+                           sizeof( _pIndexName ) - 1 ) ;
             }
             else
             {

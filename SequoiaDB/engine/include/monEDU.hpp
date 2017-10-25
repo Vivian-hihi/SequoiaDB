@@ -122,9 +122,9 @@ namespace engine
          _tid            = rhs._tid ;
          _queueSize      = rhs._queueSize ;
          _processEventCount = rhs._processEventCount ;
-         ossMemcpy( _eduStatus, rhs._eduStatus, sizeof( _eduStatus ) ) ;
-         ossMemcpy( _eduType, rhs._eduType, sizeof( _eduType ) ) ;
-         ossMemcpy( _eduName, rhs._eduName, sizeof(_eduName));
+         ossStrcpy( _eduStatus, rhs._eduStatus ) ;
+         ossStrcpy( _eduType, rhs._eduType ) ;
+         ossStrcpy( _eduName, rhs._eduName ) ;
          _eduContextList = rhs._eduContextList ;
          _monApplCB      = rhs._monApplCB ;
          _threadHdl      = rhs._threadHdl ;

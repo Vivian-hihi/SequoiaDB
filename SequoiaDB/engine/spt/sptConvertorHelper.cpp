@@ -310,11 +310,11 @@ INT32 getCLNameFromObj( JSContext *cx, JSObject *obj,
       rc = SDB_OOM ;
       goto error ;
    }
-
-   ossMemcpy( *clName, cs, csLen ) ;
-   (*clName)[ csLen ] = '.' ;
-   ossMemcpy( *clName + csLen + 1, collection, clLen + 1 ) ;
+   ossSnprintf( *clName, clLen + csLen + 1, "%s.%s",
+                cs, collection ) ;
+   (*clName)[clLen + csLen + 1] = '\0' ;
    }
+
 done:
    if ( NULL != collection )
    {
@@ -445,11 +445,11 @@ INT32 getRNNameFromObj( JSContext *cx, JSObject *obj,
       rc = SDB_OOM ;
       goto error ;
    }
-
-   ossMemcpy( *rnName, rgName, rgLen ) ;
-   (*rnName)[rgLen] = ':' ;
-   ossMemcpy( *rnName + rgLen + 1, nodeName, nodeLen + 1 ) ;
+   ossSnprintf( *rnName, nodeLen + rgLen + 1, "%s:%s",
+                rgName, nodeName ) ;
+   (*rnName)[nodeLen + rgLen + 1] = '\0' ;
    }
+
 done:
    if ( NULL != nodeName )
    {

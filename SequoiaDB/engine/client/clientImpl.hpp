@@ -119,7 +119,7 @@ namespace sdbclient
       CHAR _collectionName      [ CLIENT_COLLECTION_NAMESZ+1 ] ;
       CHAR _collectionFullName  [ CLIENT_COLLECTION_NAMESZ +
                                   CLIENT_CS_NAMESZ +
-                                  1 ] ;
+                                  1 + 1 ] ;
       INT32 _setName ( const CHAR *pCollectionFullName ) ;
       void _setConnection ( _sdb *connection ) ;
       void* _getConnection () ;

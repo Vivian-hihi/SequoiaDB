@@ -336,11 +336,12 @@ namespace engine
       BSONObjBuilder builder ;
       builder.appendNull( "" ) ;
       BSONObj hint = builder.obj() ;
-      CHAR fullName[DMS_COLLECTION_NAME_SZ +
-                    DMS_COLLECTION_SPACE_NAME_SZ + 2] = {0} ;
-      clsJoin2Full( cs, collection, fullName ) ;
+      CHAR fullName[DMS_COLLECTION_FULL_NAME_SZ + 1] = {0} ;
       SDB_RTNCB *pRtnCB = pmdGetKRCB()->getRTNCB() ;
       rtnContextLobFetcher *pContextLob = NULL ;
+
+      ossSnprintf( fullName, DMS_COLLECTION_FULL_NAME_SZ, "%s.%s",
+                   cs, collection ) ;
 
       if ( -1 != _contextID )
       {
@@ -511,20 +512,20 @@ namespace engine
          BSONElement ele = obj.getField( CLS_FS_CS_NAME ) ;
          if ( ele.eoo() || String != ele.type() )
          {
-            PD_LOG( PDWARNING, "Session[%s]: failed to parse cs element",
-                    sessionName() ) ;
+            PD_LOG( PDWARNING, "Session[%s]: Failed to parse cs element[%s]",
+                    sessionName(), ele.toString().c_str() ) ;
             rc = SDB_INVALIDARG ;
             goto error ;
          }
-         if ( len < ele.String().length() + 1 )
+         if ( len < ele.valuestrsize() )
          {
-            PD_LOG( PDWARNING, "Session[%s]: name's is too long. %s",
-                    sessionName(), ele.String().c_str() ) ;
+            PD_LOG( PDWARNING, "Session[%s]: CS Name[%s] is too long",
+                    sessionName(), ele.valuestr() ) ;
             rc = SDB_INVALIDARG ;
             goto error ;
          }
-         ossMemcpy( cs, ele.String().c_str(), ele.String().length() ) ;
-         cs[ele.String().length()] = '\0' ;
+         ossStrncpy( cs, ele.valuestr(), len - 1 ) ;
+         cs[ len - 1 ] = '\0' ;
       }
       catch ( std::exception &e )
       {
@@ -552,21 +553,20 @@ namespace engine
          BSONElement ele = obj.getField( CLS_FS_COLLECTION_NAME ) ;
          if ( ele.eoo() || String != ele.type() )
          {
-            PD_LOG( PDWARNING, "Session[%s]: failed to parse collection element",
-                    sessionName() ) ;
+            PD_LOG( PDWARNING, "Session[%s]: Failed to parse collection "
+                    "element[%s]", sessionName(), ele.toString().c_str() ) ;
             rc = SDB_INVALIDARG ;
             goto error ;
          }
-         if ( len < ele.String().length() + 1 )
+         if ( len < ele.valuestrsize() )
          {
-            PD_LOG( PDWARNING, "Session[%s]: name's is too long. %s",
-                    sessionName(), ele.String().c_str() ) ;
+            PD_LOG( PDWARNING, "Session[%s]: CL Name[%s] is too long",
+                    sessionName(), ele.valuestr() ) ;
             rc = SDB_INVALIDARG ;
             goto error ;
          }
-         ossMemcpy( collection, ele.String().c_str(),
-                    ele.String().length() ) ;
-         collection[ele.String().length()] = '\0';
+         ossStrncpy( collection, ele.valuestr(), len - 1 ) ;
+         collection[ len - 1 ] = '\0' ;
       }
       catch ( std::exception &e )
       {

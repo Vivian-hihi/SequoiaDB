@@ -330,6 +330,7 @@ INT32 hash_table_create_node( const CHAR *key, htbNode **node )
       rc = SDB_OOM ;
       goto error ;
    }
+   ossStrcpy( ptr, key ) ;
    (*node)->name = ptr ;
 
 done:
@@ -608,7 +609,6 @@ INT32 insertCachedObject( hashTable *tb, const CHAR *key )
       goto error ;
    }
 
-   ossMemcpy( node->name, key, ossStrlen( key ) + 1 ) ;
    curTime = (UINT64)time( NULL ) ;
    node->lastTime = curTime ;
 
@@ -711,7 +711,7 @@ INT32 updateCachedObject( const INT32 code, hashTable *tb, const CHAR *key )
    htbNode *node  = NULL ;
    UINT64 curTime = 0 ;
    CHAR *pos      = NULL ;
-   CHAR csName[ CLINET_CS_NAME_SIZE ] = { 0 } ;
+   CHAR csName[ CLINET_CS_NAME_SIZE + 1 ] = { 0 } ;
 
    if ( !cacheEnabled )
    {
@@ -738,11 +738,16 @@ INT32 updateCachedObject( const INT32 code, hashTable *tb, const CHAR *key )
       pos = ossStrchr( key, '.' ) ;
       if ( NULL != pos )
       {
-         ossMemcpy( csName, key, pos - key ) ;
+         UINT32 csLen = pos - key ;
+         if ( csLen > CLINET_CS_NAME_SIZE )
+         {
+            csLen = CLINET_CS_NAME_SIZE ;
+         }
+         ossStrncpy( csName, key, csLen ) ;
       }
       else
       {
-         ossMemcpy( csName, key, ossStrlen( key ) + 1 ) ;
+         ossStrncpy( csName, key, CLINET_CS_NAME_SIZE ) ;
       }
       removeCachedObject( tb, csName, TRUE ) ;
    }
@@ -752,7 +757,12 @@ INT32 updateCachedObject( const INT32 code, hashTable *tb, const CHAR *key )
       if ( NULL != pos )
       {
          // update collection space in cache
-         ossMemcpy( csName, key, pos - key ) ;
+         UINT32 csLen = pos - key ;
+         if ( csLen > CLINET_CS_NAME_SIZE )
+         {
+            csLen = CLINET_CS_NAME_SIZE ;
+         }
+         ossStrncpy( csName, key, csLen ) ;
          rc = hash_table_fetch( tb, csName, &node ) ;
          if ( SDB_OK != rc )
          {

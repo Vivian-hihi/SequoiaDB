@@ -498,7 +498,7 @@ INT32 resolveArgument ( po::options_description &desc, INT32 argc, CHAR **argv )
          rc = SDB_INVALIDARG ;
          goto error ;
       }
-      ossMemcpy ( gIndexPath, indexPath, OSS_MAX_PATHSIZE ) ;
+      ossStrncpy ( gIndexPath, indexPath, OSS_MAX_PATHSIZE ) ;
    }
    else
    {

@@ -67,7 +67,7 @@ namespace engine
       UINT32 len = ossStrlen( name ) + 1 ; /// +1 for '\0'
       if ( len < MTH_SCOLUMN_STATIC_NAME_BUF_LEN )
       {
-         ossMemcpy( _staticName, name, len ) ;
+         ossStrcpy( _staticName, name ) ;
       }
       else
       {
@@ -79,7 +79,7 @@ namespace engine
             goto error ;
          }
 
-         ossMemcpy( _dynamicName, name, len ) ;
+         ossStrcpy( _dynamicName, name ) ;
          _name = _dynamicName ;
       }
    done:

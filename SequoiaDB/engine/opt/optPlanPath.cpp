@@ -295,7 +295,7 @@ namespace engine
       if ( indexCB.isInitialized() )
       {
          const CHAR *pIndexName = indexCB.getName() ;
-         ossMemcpy( _pIndexName, pIndexName, ossStrlen( pIndexName ) ) ;
+         ossStrncpy( _pIndexName, pIndexName, sizeof( _pIndexName ) - 1 ) ;
 
          _indexExtID = indexCB.getExtentID() ;
          _indexLID = indexCB.getLogicalID() ;

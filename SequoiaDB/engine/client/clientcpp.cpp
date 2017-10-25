@@ -800,26 +800,25 @@ do                                                            \
    INT32 _sdbCollectionImpl::_setName ( const CHAR *pCollectionFullName )
    {
       INT32 rc                 = SDB_OK ;
-      INT32 collectionSpaceLen = 0 ;
-      INT32 collectionLen      = 0 ;
-      INT32 fullLen            = 0 ;
       CHAR *pDot               = NULL ;
       CHAR *pDot1              = NULL ;
       CHAR collectionFullName [ CLIENT_COLLECTION_NAMESZ +
                                 CLIENT_CS_NAMESZ +
-                                1 ] ;
+                                1 + 1 ] = { 0 } ;
+
       ossMemset ( _collectionSpaceName, 0, sizeof ( _collectionSpaceName ) );
       ossMemset ( _collectionName, 0, sizeof ( _collectionName ) ) ;
       ossMemset ( _collectionFullName, 0, sizeof ( _collectionFullName ) ) ;
       if ( !pCollectionFullName ||
-           (fullLen = ossStrlen ( pCollectionFullName )) >
+           ossStrlen ( pCollectionFullName ) >
            CLIENT_COLLECTION_NAMESZ + CLIENT_CS_NAMESZ + 1 )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
       }
-      ossMemset ( collectionFullName, 0, sizeof ( collectionFullName ) ) ;
-      ossStrncpy ( collectionFullName, pCollectionFullName, fullLen ) ;
+
+      ossStrncpy ( collectionFullName, pCollectionFullName,
+                   sizeof( collectionFullName ) - 1 ) ;
       pDot = (CHAR*)ossStrchr ( (CHAR*)collectionFullName, '.' ) ;
       pDot1 = (CHAR*)ossStrrchr ( (CHAR*)collectionFullName, '.' ) ;
       if ( !pDot || (pDot != pDot1) )
@@ -830,15 +829,14 @@ do                                                            \
       *pDot = 0 ;
       ++pDot ;
 
-      collectionSpaceLen = ossStrlen ( collectionFullName ) ;
-      collectionLen      = ossStrlen ( pDot ) ;
-      if ( collectionSpaceLen <= CLIENT_CS_NAMESZ &&
-           collectionLen <= CLIENT_COLLECTION_NAMESZ )
+      if ( ossStrlen ( collectionFullName ) <= CLIENT_CS_NAMESZ &&
+           ossStrlen ( pDot ) <= CLIENT_COLLECTION_NAMESZ )
       {
-         ossMemcpy ( _collectionSpaceName, collectionFullName,
-                     collectionSpaceLen ) ;
-         ossMemcpy ( _collectionName, pDot, collectionLen ) ;
-         ossMemcpy ( _collectionFullName, pCollectionFullName, fullLen ) ;
+         ossStrncpy( _collectionSpaceName, collectionFullName,
+                     CLIENT_CS_NAMESZ ) ;
+         ossStrncpy( _collectionName, pDot, CLIENT_COLLECTION_NAMESZ ) ;
+         ossStrncpy( _collectionFullName, pCollectionFullName,
+                     sizeof( _collectionFullName ) - 1 ) ;
       }
       else
       {
@@ -4413,14 +4411,14 @@ error:
    INT32 _sdbCollectionSpaceImpl::_setName ( const CHAR *pCollectionSpaceName )
    {
       INT32 rc = SDB_OK ;
-      INT32 nameLength = ossStrlen ( pCollectionSpaceName ) ;
-      if ( nameLength > CLIENT_CS_NAMESZ )
+      if ( ossStrlen ( pCollectionSpaceName ) > CLIENT_CS_NAMESZ )
       {
          rc = SDB_INVALIDARG ;
          goto exit ;
       }
       ossMemset ( _collectionSpaceName, 0, sizeof ( _collectionSpaceName ) ) ;
-      ossMemcpy ( _collectionSpaceName, pCollectionSpaceName, nameLength );
+      ossStrncpy( _collectionSpaceName, pCollectionSpaceName,
+                  CLIENT_CS_NAMESZ );
    exit:
       return rc ;
    }
@@ -4766,14 +4764,13 @@ error :
    INT32 _sdbDomainImpl::_setName ( const CHAR *pDomainName )
    {
       INT32 rc = SDB_OK ;
-      INT32 nameLength = ossStrlen ( pDomainName ) ;
-      if ( nameLength > CLIENT_DOMAIN_NAMESZ )
+      if ( ossStrlen ( pDomainName ) > CLIENT_DOMAIN_NAMESZ )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
       }
       ossMemset ( _domainName, 0, sizeof(_domainName) ) ;
-      ossMemcpy ( _domainName, pDomainName, nameLength ) ;
+      ossStrncpy( _domainName, pDomainName, CLIENT_DOMAIN_NAMESZ ) ;
    done :
       return rc ;
    error :
@@ -4925,19 +4922,17 @@ error :
                                         const CHAR *pBusinessName )
    {
       INT32 rc = SDB_OK ;
-      INT32 nameLength = ossStrlen( pClusterName ) +
-                         ossStrlen( pBusinessName ) + 1 ;
-      const CHAR *pStr = ":" ;
-      if ( nameLength > CLIENT_DC_NAMESZ )
+                          ;
+      if ( ossStrlen( pClusterName ) + ossStrlen( pBusinessName ) + 1 >
+           CLIENT_DC_NAMESZ )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
       }
+
       ossMemset ( _dcName, 0, sizeof(_dcName) ) ;
-      ossMemcpy( _dcName, pClusterName, ossStrlen(pClusterName) ) ;
-      ossMemcpy( _dcName + ossStrlen(pClusterName), pStr, 1 ) ;
-      ossMemcpy( _dcName + ossStrlen(pClusterName) + 1, pBusinessName,
-                 ossStrlen(pBusinessName) ) ;
+      ossSnprintf( _dcName, CLIENT_DC_NAMESZ, "%s:%s",
+                   pClusterName, pBusinessName ) ;
    done :
       return rc ;
    error :

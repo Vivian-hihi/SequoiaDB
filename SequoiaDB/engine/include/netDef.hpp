@@ -110,7 +110,7 @@ namespace engine
                      "the addr of _status must be aligned 4 bytes!" );
          _id = node._id ;
          _isActive = node._isActive ;
-         ossMemcpy( _host, node._host, OSS_MAX_HOSTNAME+1 ) ;
+         ossStrcpy( _host, node._host ) ;
          for ( UINT32 i = 0; i < MSG_ROUTE_SERVICE_TYPE_MAX; i++ )
          {
             _service[i] = node._service[i];
@@ -122,7 +122,7 @@ namespace engine
          _id = node._id ;
          _isActive = node._isActive ;
          _status = node._status ;
-         ossMemcpy( _host, node._host, OSS_MAX_HOSTNAME+1 ) ;
+         ossStrcpy( _host, node._host ) ;
          for ( UINT32 i = 0; i < MSG_ROUTE_SERVICE_TYPE_MAX; i++ )
          {
             _service[i] = node._service[i];

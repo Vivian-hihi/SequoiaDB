@@ -446,7 +446,7 @@ namespace engine
       }
       _monCollectionSpace ( const _monCollectionSpace &right )
       {
-         ossMemcpy ( _name, right._name, sizeof(_name) ) ;
+         ossStrcpy ( _name, right._name ) ;
          _collections = right._collections ;
          _pageSize = right._pageSize ;
          _clNum    = right._clNum ;
@@ -482,7 +482,7 @@ namespace engine
       }
       _monCollectionSpace &operator= (const _monCollectionSpace &right)
       {
-         ossMemcpy ( _name, right._name, sizeof(_name) ) ;
+         ossStrcpy ( _name, right._name ) ;
          _collections = right._collections ;
          _pageSize = right._pageSize ;
          _clNum    = right._clNum ;

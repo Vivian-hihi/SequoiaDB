@@ -241,8 +241,8 @@ INT32 _fmpController::_handleOneLoop( const BSONObj &obj,
       if ( !localService.eoo() && String == localService.type() &&
            0 == ossStrlen(FMP_COORD_SERVICE) )
       {
-         ossMemcpy( FMP_COORD_SERVICE, localService.valuestrsafe(),
-                    ossStrlen( localService.valuestrsafe() ) + 1 ) ;
+         ossStrncpy( FMP_COORD_SERVICE, localService.valuestrsafe(),
+                     OSS_MAX_SERVICENAME ) ;
       }
       BSONElement localUser = obj.getField( FMP_LOCAL_USERNAME ) ;
       if ( String == localUser.type() )

@@ -193,12 +193,10 @@ namespace engine
             PD_LOG( PDWARNING, "parse [%s] err", CAT_HOST_FIELD_NAME ) ;
             goto error ;
          }
-         {
-         UINT32 len = node.String().size() < OSS_MAX_HOSTNAME ?
-                      node.String().size() : OSS_MAX_HOSTNAME ;
-         ossMemcpy( route._host, node.String().c_str(), len ) ;
-         route._host[len] = '\0';
-         }
+         ossStrncpy( route._host, node.valuestrsafe(),
+                     OSS_MAX_HOSTNAME ) ;
+         route._host[ OSS_MAX_HOSTNAME ] = '\0' ;
+
          /// Status
          node = next.getField( CAT_STATUS_NAME ) ;
          if ( node.eoo() || SDB_CAT_GRP_ACTIVE == node.numberInt() )
