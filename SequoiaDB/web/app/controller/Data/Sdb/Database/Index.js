@@ -447,16 +447,12 @@
          {
             return ;
          }
-         var domainInput = [] ;
+         var domainInput = [ { 'key': '', 'value': '' } ] ;
          if( domainList.length > 0 )
          {
             $.each( domainList, function( index, domainInfo ){
                domainInput.push( { 'key': domainInfo['Name'], 'value': domainInfo['Name'] } ) ;
             } ) ;
-         }
-         else
-         {
-            domainInput = [ { 'key': '', 'value': '' } ] ;
          }
          $scope.Components.Modal.icon = 'fa-plus' ;
          $scope.Components.Modal.title = $scope.autoLanguage( '创建集合空间' ) ;
