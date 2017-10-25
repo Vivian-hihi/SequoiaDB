@@ -62,6 +62,8 @@
       {
          $scope.boxHeight = ( moduleMode == 'distribution' ) ? { 'offsetY': -311 } : { 'offsetY': -221 } ;
       }
+      //域列表
+      var domainList = [] ;
       //集合空间列表
       $scope.CsTable = {
          'title': {
@@ -139,6 +141,30 @@
          'config': {},
          'callback': {}
       } ;
+
+      //获取域列表
+      if( $scope.moduleMode == 'distribution' )
+      {
+         var getDomainList = function(){
+            var data = { 'cmd': 'list domains' } ;
+            SdbRest.DataOperation( data, {
+               'success': function( domains ){
+                  //存在域时才执行
+                  if( domains.length > 0 )
+                  {
+                     domainList = domains ;
+                  }
+               },
+               'failed': function( errorInfo ){
+                  _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                     getDomainList() ;
+                     return true ;
+                  } ) ;
+               }
+            }, { 'showLoading': false } ) ;
+         }
+         getDomainList() ;
+      }
 
       var setClTableTitle = function(){
          if( $scope.isHideSubCl == true || moduleMode == 'standalone' )
@@ -421,6 +447,17 @@
          {
             return ;
          }
+         var domainInput = [] ;
+         if( domainList.length > 0 )
+         {
+            $.each( domainList, function( index, domainInfo ){
+               domainInput.push( { 'key': domainInfo['Name'], 'value': domainInfo['Name'] } ) ;
+            } ) ;
+         }
+         else
+         {
+            domainInput = [ { 'key': '', 'value': '' } ] ;
+         }
          $scope.Components.Modal.icon = 'fa-plus' ;
          $scope.Components.Modal.title = $scope.autoLanguage( '创建集合空间' ) ;
          $scope.Components.Modal.isShow = true ;
@@ -455,13 +492,10 @@
                {
                   "name": "Domain",
                   "webName": $scope.autoLanguage( '所属域' ),
-                  "type": "string",
+                  "type": "select",
                   "desc": $scope.autoLanguage( '所属域必须已经存在。' ),
-                  "value": "",
-                  "valid": {
-                     "min": 0,
-                     "ban": "SYSDOMAIN"
-                  }
+                  "value": domainInput[0]['value'],
+                  "valid": domainInput
                },
                {
                   "name": "LobPageSize",
