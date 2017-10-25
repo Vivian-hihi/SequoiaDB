@@ -26,7 +26,7 @@ function main()
 	
 	//updateShardingKey use $replace
 	var updateCondition = {$replace:{no:5,a:{$date:"2017-07-20"}}};
-	updateData( dbcl, updateCondition )
+	updateData( dbcl, updateCondition, {},{}, true );
 	
 	//check the update result
 	var expRecs = [{no:5,a:{$date:"2017-07-20"}},
