@@ -310,9 +310,8 @@ INT32 getCLNameFromObj( JSContext *cx, JSObject *obj,
       rc = SDB_OOM ;
       goto error ;
    }
-   ossSnprintf( *clName, clLen + csLen + 1, "%s.%s",
+   ossSnprintf( *clName, clLen + csLen + 2, "%s.%s",
                 cs, collection ) ;
-   (*clName)[clLen + csLen + 2] = '\0' ;
    }
 
 done:
@@ -382,7 +381,7 @@ INT32 getRNNameFromObj( JSContext *cx, JSObject *obj,
    JSString *jsRGName = NULL ;
    CHAR *nodeName = NULL ;
    CHAR *rgName = NULL ;
-   
+
    if ( !JS_GetProperty( cx, obj, "_nodename", &valName ) )
    {
       rc = SDB_SYS ;
@@ -445,9 +444,8 @@ INT32 getRNNameFromObj( JSContext *cx, JSObject *obj,
       rc = SDB_OOM ;
       goto error ;
    }
-   ossSnprintf( *rnName, nodeLen + rgLen + 1, "%s:%s",
+   ossSnprintf( *rnName, nodeLen + rgLen + 2, "%s:%s",
                 rgName, nodeName ) ;
-   (*rnName)[nodeLen + rgLen + 2] = '\0' ;
    }
 
 done:
