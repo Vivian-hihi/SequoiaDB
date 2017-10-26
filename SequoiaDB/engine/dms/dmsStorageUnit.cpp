@@ -2214,44 +2214,38 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU__GETINDEX, "_dmsStorageUnit::_getIndex" )
-   INT32 _dmsStorageUnit::_getIndex ( const dmsMB *mb,
-                                      const CHAR *pIndexName,
-                                      monIndex &resultIndex )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_GETINDEX, "_dmsStorageUnit::getIndex" )
+   INT32 _dmsStorageUnit::getIndex ( dmsMBContext *context,
+                                     const CHAR *pIndexName,
+                                     _monIndex &resultIndex )
    {
-      INT32 rc = SDB_IXM_NOTEXIST ;
-      UINT32 indexID = 0 ;
+      INT32 rc                     = SDB_OK ;
+      BOOLEAN lockContext          = FALSE ;
 
-      PD_TRACE_ENTRY ( SDB__DMSSU__GETINDEX ) ;
+      PD_TRACE_ENTRY ( SDB__DMSSU_GETINDEX ) ;
 
-      SDB_ASSERT( mb, "mb can't be NULL" ) ;
+      SDB_ASSERT( context, "context can't be NULL" ) ;
       SDB_ASSERT( pIndexName, "Index name can't be NULL" ) ;
 
-      for ( indexID = 0 ; indexID < DMS_COLLECTION_MAX_INDEX ; ++indexID )
+      if ( !context->isMBLock() )
       {
-         if ( DMS_INVALID_EXTENT == mb->_indexExtent[indexID] )
-         {
-            break ;
-         }
-
-         ixmIndexCB indexCB ( mb->_indexExtent[indexID], _pIndexSu, NULL ) ;
-         if ( 0 == ossStrcmp( indexCB.getName(), pIndexName ) )
-         {
-            resultIndex._indexFlag = indexCB.getFlag () ;
-            resultIndex._scanExtLID = indexCB.scanExtLID () ;
-            resultIndex._indexLID = indexCB.getLogicalID () ;
-            resultIndex._version = indexCB.version () ;
-            // copy the index def to it's owned buffer
-            resultIndex._indexDef = indexCB.getDef().copy () ;
-
-            rc = SDB_OK ;
-            break ;
-         }
+         rc = context->mbLock( SHARED ) ;
+         PD_RC_CHECK( rc, PDERROR, "dms mb context lock failed, rc: %d", rc ) ;
+         lockContext = TRUE ;
       }
 
-      PD_TRACE_EXITRC ( SDB__DMSSU__GETINDEX, rc ) ;
+      rc = _getIndex( context->mb(), pIndexName, resultIndex ) ;
 
+   done :
+      if ( lockContext )
+      {
+         context->mbUnlock() ;
+      }
+      PD_TRACE_EXITRC ( SDB__DMSSU_GETINDEX, rc ) ;
       return rc ;
+
+   error :
+      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_DUMPINFO_CLSIMVEC, "_dmsStorageUnit::dumpInfo" )
@@ -2839,38 +2833,44 @@ namespace engine
       return rc ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_GETINDEX, "_dmsStorageUnit::getIndex" )
-   INT32 _dmsStorageUnit::getIndex ( dmsMBContext *context,
-                                     const CHAR *pIndexName,
-                                     _monIndex &resultIndex )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU__GETINDEX, "_dmsStorageUnit::_getIndex" )
+   INT32 _dmsStorageUnit::_getIndex ( const dmsMB *mb,
+                                      const CHAR *pIndexName,
+                                      monIndex &resultIndex )
    {
-      INT32 rc                     = SDB_OK ;
-      BOOLEAN lockContext          = FALSE ;
+      INT32 rc = SDB_IXM_NOTEXIST ;
+      UINT32 indexID = 0 ;
 
-      PD_TRACE_ENTRY ( SDB__DMSSU_GETINDEX ) ;
+      PD_TRACE_ENTRY ( SDB__DMSSU__GETINDEX ) ;
 
-      SDB_ASSERT( context, "context can't be NULL" ) ;
+      SDB_ASSERT( mb, "mb can't be NULL" ) ;
       SDB_ASSERT( pIndexName, "Index name can't be NULL" ) ;
 
-      if ( !context->isMBLock() )
+      for ( indexID = 0 ; indexID < DMS_COLLECTION_MAX_INDEX ; ++indexID )
       {
-         rc = context->mbLock( SHARED ) ;
-         PD_RC_CHECK( rc, PDERROR, "dms mb context lock failed, rc: %d", rc ) ;
-         lockContext = TRUE ;
+         if ( DMS_INVALID_EXTENT == mb->_indexExtent[indexID] )
+         {
+            break ;
+         }
+
+         ixmIndexCB indexCB ( mb->_indexExtent[indexID], _pIndexSu, NULL ) ;
+         if ( 0 == ossStrcmp( indexCB.getName(), pIndexName ) )
+         {
+            resultIndex._indexFlag = indexCB.getFlag () ;
+            resultIndex._scanExtLID = indexCB.scanExtLID () ;
+            resultIndex._indexLID = indexCB.getLogicalID () ;
+            resultIndex._version = indexCB.version () ;
+            // copy the index def to it's owned buffer
+            resultIndex._indexDef = indexCB.getDef().copy () ;
+
+            rc = SDB_OK ;
+            break ;
+         }
       }
 
-      rc = _getIndex( context->mb(), pIndexName, resultIndex ) ;
+      PD_TRACE_EXITRC ( SDB__DMSSU__GETINDEX, rc ) ;
 
-   done :
-      if ( lockContext )
-      {
-         context->mbUnlock() ;
-      }
-      PD_TRACE_EXITRC ( SDB__DMSSU_GETINDEX, rc ) ;
       return rc ;
-
-   error :
-      goto done ;
    }
 
    void _dmsStorageUnit::setSyncConfig( UINT32 syncInterval,
