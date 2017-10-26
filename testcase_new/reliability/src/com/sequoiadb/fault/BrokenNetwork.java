@@ -99,7 +99,7 @@ public class BrokenNetwork extends Fault {
             ssh.disconnect();
 
             while (true) {
-                if (!ping(host)) {
+                if (ping(host)) {
                     break;
                 }
             }
