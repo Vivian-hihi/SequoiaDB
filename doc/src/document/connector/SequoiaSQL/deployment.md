@@ -166,42 +166,61 @@
 
 ##SequoiaSQL 开机自启动##
 
-1. 切换用户
+1. 安装 SequoiaSQL 时，会自动添加系统服务：Ssql-oltp。该服务在启动时，会自动拉起相关的实例，在实例进程异常退出时，也会自动拉起实例。
 
-   添加服务需要root权限
-
-   ```lang-javascript
-   $ su root
-   ```
-
-2. 添加服务
-
-   ```lang-javascript
-   $ bin/sdb_sql_ctl addsvc sequoiasql myinst
-   Adding service myinst ...
-   ok
-   ```
-   
    >**Note:**   
-   >addsvc添加服务时，默认开机自启动。 
+   >系统服务名为 Ssql-oltp[i]，i 为小于 50 的数值或者为空。在安装包执行结束时，会打印出该版本对应的服务名。
 
-3. 查看服务运行状态
+   当添加一个新实例时，会自动加入 service 的管理中。
 
    ```lang-javascript
-   $ service sequoiasql status
-   server is running (PID: 20502)
+   $ bin/sdb_sql_ctl addinst myinst -D pg_data
+   Adding instance myinst ...
+   ok
    ```
 
-4. 启停服务
+2. 如果不想实例纳入服务的管理：
 
    ```lang-javascript
-   $ service sequoiasql stop
-   Stopping SequoiaSQL (PID: 20502) ...
+   $ bin/sdb_sql_ctl delfromsvc myinst
+   Deleting instance myinst from service ...
    ok
    ```
    
+   或者在添加实例的时候指定参数--addtosvc：
+
    ```lang-javascript
-   $ service sequoiasql start
-   Starting SequoiaSQL ...
-   ok (PID: 2956)
+   $ bin/sdb_sql_ctl addinst myinst -D pg_data --addtosvc=false
+   Adding instance myinst ...
+   ok
+   ```
+
+3. 添加实例到服务
+
+   ```lang-javascript
+   $ bin/sdb_sql_ctl addtosvc myinst
+   Adding instance myinst to service ...
+   ok
+   ```   
+
+4. 查看服务运行状态
+
+   ```lang-javascript
+   $ service Ssql-oltp status
+   Status of service Ssql-oltp: 
+   running. (PID: 14756)
+   ```
+
+5. 启停服务
+
+   ```lang-javascript
+   $ service Ssql-oltp stop
+   Stoping service Ssql-oltp ...
+   ok.
+   ```
+   
+   ```lang-javascript
+   $ service Ssql-oltp start
+   Starting service Ssql-oltp ...
+   ok. (PID: 4822)
    ```
