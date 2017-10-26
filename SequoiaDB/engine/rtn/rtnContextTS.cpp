@@ -341,15 +341,33 @@ namespace engine
                             &numReturned, objList ) ;
       PD_RC_CHECK( rc, PDERROR, "Extract query respond message failed[ %d ]",
                    rc ) ;
-      rc = flag ;
-      PD_RC_CHECK( rc, PDERROR, "Error returned from remote[ %d ]", rc ) ;
 
-      // 4 objects are expected: matcher, selector, order by, hint.
-      if ( objList.size() != 4 )
+      try
       {
-         PD_LOG( PDERROR, "Respond message size is wrong, expect[ %d ], "
-                 "actual[ %d ]", 4, objList.size() ) ;
+         rc = flag ;
+         if ( rc )
+         {
+            if ( 0 != objList.size() )
+            {
+               PD_LOG_MSG( PDERROR, "Error returned from remote: %s",
+                           objList.front().toString().c_str() ) ;
+               goto error ;
+            }
+         }
+
+         // 4 objects are expected: matcher, selector, order by, hint.
+         if ( objList.size() != 4 )
+         {
+            PD_LOG( PDERROR, "Respond message size is wrong, expect[ %d ], "
+                    "actual[ %d ]", 4, objList.size() ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+      }
+      catch ( std::exception &e )
+      {
          rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Unexpected exception happened: %s", e.what() ) ;
          goto error ;
       }
 

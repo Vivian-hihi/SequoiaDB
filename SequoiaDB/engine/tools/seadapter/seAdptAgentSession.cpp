@@ -39,6 +39,7 @@
 #include "rtnContextBuff.hpp"
 #include "msgMessage.hpp"
 #include "seAdptUtil.hpp"
+#include "utilCommon.hpp"
 
 namespace engine
 {
@@ -57,6 +58,14 @@ namespace engine
 
    _seAdptAgentSession::~_seAdptAgentSession()
    {
+      if ( _esClt )
+      {
+         _seCltMgr->releaseClt( &_esClt ) ;
+      }
+      if ( _context )
+      {
+         SDB_OSS_DEL _context ;
+      }
    }
 
    SDB_SESSION_TYPE _seAdptAgentSession::sessionType() const
@@ -101,30 +110,25 @@ namespace engine
       INT32 bodySize = 0 ;
       utilCommObjBuff objBuff ;
 
-      PD_LOG( PDEVENT, "Session[ %s ] process message for client thread[ %u ]",
-              sessionName(), msg->TID ) ;
-
-      switch ( msg->opCode )
+      rc = objBuff.init() ;
+      if ( rc )
       {
-         case MSG_BS_QUERY_REQ:
-            rc = _onQueryReq( msg, objBuff ) ;
-            if ( SDB_OK == rc )
-            {
-               msgBody = objBuff.data() ;
-               bodySize = objBuff.dataSize() ;
-            }
-            break ;
-         case MSG_BS_GETMORE_REQ:
-            rc = _onGetmoreReq( msg, objBuff ) ;
-            if ( SDB_OK == rc )
-            {
-               msgBody = objBuff.data() ;
-               bodySize = objBuff.dataSize() ;
-            }
-            break ;
-         default:
-            break ;
-
+         PD_LOG( PDERROR, "Initialize result buffer failed[ %d ]", rc ) ;
+      }
+      else
+      {
+         switch ( msg->opCode )
+         {
+            case MSG_BS_QUERY_REQ:
+               rc = _onQueryReq( msg, objBuff ) ;
+               break ;
+            case MSG_BS_GETMORE_REQ:
+               rc = _onGetmoreReq( msg, objBuff ) ;
+               break ;
+            default:
+               rc = SDB_UNKNOWN_MESSAGE ;
+               break ;
+         }
       }
 
       reply.header.opCode = MAKE_REPLY_TYPE( msg->opCode ) ;
@@ -132,9 +136,33 @@ namespace engine
       reply.header.requestID = msg->requestID ;
       reply.header.TID = msg->TID ;
       reply.header.routeID.value = 0 ;
-      reply.numReturned = objBuff.getObjNum() ;
-      reply.flags = rc ;
 
+      if ( objBuff.valid() )
+      {
+         if ( SDB_OK != rc )
+         {
+            if ( 0 == objBuff.getObjNum() )
+            {
+               _errorInfo =
+                  utilGetErrorBson( rc, _pEDUCB->getInfo( EDU_INFO_ERROR ) ) ;
+               objBuff.appendObj( _errorInfo ) ;
+            }
+         }
+
+         // Maybe data, maybe the error message.
+         if ( objBuff.getObjNum() > 0 )
+         {
+            msgBody = objBuff.data() ;
+            bodySize = objBuff.dataSize() ;
+            reply.numReturned = objBuff.getObjNum() ;
+         }
+      }
+      else
+      {
+         reply.numReturned = 0 ;
+      }
+
+      reply.flags = rc ;
       reply.header.messageLength += bodySize ;
       rc = _reply( &reply, msgBody, bodySize ) ;
       PD_RC_CHECK( rc, PDERROR, "Reply the message failed[ %d ]" ) ;
@@ -181,14 +209,28 @@ namespace engine
          BSONObj orderBy ( pOrderBy ) ;
          BSONObj hint ( pHint ) ;
          IDX_META_VEC idxMetas ;
-         seAdptNameParser nameParser ;
-         const CHAR *origIdxName = NULL ;
+         const CHAR *hintIdxName = NULL ;
+
+         // If hint is used, get the index name from it.
+         if ( !hint.isEmpty() )
+         {
+            hintIdxName = hint.getStringField( "" );
+            if ( 0 == ossStrlen( hintIdxName ) )
+            {
+               PD_LOG_MSG( PDERROR, "No valid index name specified in hint" ) ;
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
+         }
 
          if ( !_esClt )
          {
             rc = _seCltMgr->getSeClt( &_esClt ) ;
-            PD_RC_CHECK( rc, PDERROR, "Get search engine client failed[ %d ]",
-                         rc ) ;
+            if ( rc )
+            {
+               PD_LOG_MSG( PDERROR, "Connect to search engine failed[ %d ]", rc ) ;
+               goto error ;
+            }
          }
 
          // Free the original context.
@@ -202,8 +244,13 @@ namespace engine
          idxMetaCache->lock( SHARED ) ;
          cacheLocked = TRUE ;
          rc = idxMetaCache->getIdxMetas( pCollectionName, idxMetas ) ;
-         PD_RC_CHECK( rc, PDERROR, "Get index meta data for collection[ %s ] "
-                      "failed[ %d ]", pCollectionName, rc ) ;
+         if ( rc )
+         {
+            PD_LOG_MSG( PDERROR, "No index information found for collection"
+                        "[ %s ], rc[ %d ]", pCollectionName, rc ) ;
+            goto error ;
+         }
+
 
          // If there is only one index, use it for the search.
          // If there are more than one index, name of the index to be used
@@ -211,45 +258,54 @@ namespace engine
          if ( 0 == idxMetas.size() )
          {
             rc = SDB_INVALIDARG ;
-            PD_LOG( PDERROR, "No index on the collection[ %s ]",
-                    pCollectionName ) ;
+            PD_LOG_MSG( PDERROR, "No index information found for "
+                        "collection[ %s ]", pCollectionName ) ;
             goto error ;
          }
          else if ( 1 == idxMetas.size() )
          {
+            const CHAR *idxName = idxMetas.front().getOrigIdxName().c_str() ;
+            if ( hintIdxName )
+            {
+               if ( 0 != ossStrcmp( idxName, hintIdxName ) )
+               {
+                  rc = SDB_INVALIDARG ;
+                  PD_LOG_MSG( PDERROR, "Index name specified in hint[ %s ] dose "
+                              "not match the actual name[ %s ]", hintIdxName,
+                              idxName ) ;
+                  goto error ;
+               }
+            }
             indexName = idxMetas.front().getEsIdxName() ;
          }
          else
          {
-            if ( hint.isEmpty() )
+            if ( !hintIdxName )
             {
                rc = SDB_INVALIDARG ;
-               PD_LOG( PDERROR, "Text index name should be specified in hint "
-                       "when there are multiple text indices") ;
+               PD_LOG_MSG( PDERROR, "Text index name should be specified in "
+                           "hint when there are multiple text indices") ;
                goto error ;
             }
 
-            if ( 1 != hint.nFields() )
+            for ( IDX_META_VEC_CITR itr = idxMetas.begin();
+                  itr != idxMetas.end(); ++itr )
             {
-               PD_LOG( PDERROR, "1 object is expected in hint. Actual[ %d ]",
-                       hint.nFields() ) ;
-               rc = SDB_INVALIDARG ;
-               goto error ;
+               if ( 0 == ossStrcmp( itr->getOrigIdxName().c_str(),
+                                    hintIdxName ) )
+               {
+                  indexName = itr->getEsIdxName() ;
+                  break ;
+               }
             }
 
-            origIdxName = hint.getStringField( "" );
-            if ( 0 == ossStrcmp( origIdxName, "" ) )
+            if ( indexName.empty() )
             {
-               PD_LOG( PDERROR, "No valid index name specified in hint" ) ;
                rc = SDB_INVALIDARG ;
+               PD_LOG_MSG( PDERROR, "Index specified in hint[ %s ] dose not "
+                           "exist on search engine", hintIdxName ) ;
                goto error ;
             }
-
-            rc = nameParser.parse( pCollectionName, origIdxName ) ;
-            PD_RC_CHECK( rc, PDERROR, "Parse collection[ %s ] and "
-                         "index[ %s ] names failed[ %d ], skip ",
-                         pCollectionName, origIdxName, rc ) ;
-            indexName = nameParser.getTargetIdxName() ;
          }
 
          idxMetaCache->unlock() ;
@@ -261,22 +317,27 @@ namespace engine
                                                     typeName, _esClt ) ;
          if ( !_context )
          {
-            PD_LOG( PDERROR, "Allocate memory for context failed" ) ;
             rc = SDB_OOM ;
+            PD_LOG_MSG( PDERROR, "Allocate memory for query context failed, "
+                        "size[ %d ]", sizeof( seAdptContextQuery ) ) ;
             goto error ;
          }
 
          rc = _context->open( matcher, selector, orderBy,
                               hint, objBuff, eduCB ) ;
-         PD_RC_CHECK( rc, PDERROR,
-                      "Open context for rewrite query failed[ %d ]", rc ) ;
+         if ( rc )
+         {
+            PD_LOG_MSG( PDERROR, "Open context for rewrite query failed[ %d ]",
+                        rc ) ;
+            goto error ;
+         }
       }
       catch ( std::exception &e )
       {
-         PD_LOG( PDERROR, "Session[ %s ] create BSON objects for query items "
-                 "failed: %s", sessionName(), e.what() ) ;
+         PD_LOG_MSG( PDERROR, "Session[ %s ] create BSON objects for query "
+                     "items failed: %s", sessionName(), e.what() ) ;
          rc = SDB_INVALIDARG ;
-         goto done ;
+         goto error ;
       }
 
    done:

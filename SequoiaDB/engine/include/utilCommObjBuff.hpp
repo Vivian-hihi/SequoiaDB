@@ -61,6 +61,7 @@ namespace engine
          // If extentSize is 0, the default strategy is to double the space.
          INT32 init( UINT32 size = UTIL_OBJBUFF_DFT_SIZE,
                      UINT32 extendSize = 0 ) ;
+         BOOLEAN valid() const ;
          INT32 reset() ;
          INT32 realloc( UINT32 size ) ;
          INT32 appendObj( const BSONObj &obj) ;

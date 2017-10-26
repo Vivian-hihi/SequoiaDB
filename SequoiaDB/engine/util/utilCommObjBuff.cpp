@@ -88,11 +88,17 @@ namespace engine
 
       _buffSize = size ;
       _extendSize = extendSize ;
+      _init = TRUE ;
 
    done:
       return rc ;
    error:
       goto done ;
+   }
+
+   BOOLEAN _utilCommObjBuff::valid() const
+   {
+      return _init ;
    }
 
    INT32 _utilCommObjBuff::reset()

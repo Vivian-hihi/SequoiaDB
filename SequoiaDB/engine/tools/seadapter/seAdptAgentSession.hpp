@@ -86,6 +86,7 @@ namespace engine
       utilESClt         *_esClt ;
       std::string       _scrollID ;
       seAdptContextBase *_context ;
+      BSONObj           _errorInfo ;
    } ;
    typedef _seAdptAgentSession seAdptAgentSession ;
 }
