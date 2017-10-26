@@ -94,11 +94,11 @@ class TestFind12471(testlib.SdbTestBase):
          cursor.next()
          self.fail("need next cursor fail")
       except SDBBaseError as e:
-         self.assertEqual(str(e), 'SequoiaDB Error: Failed to get next record', 'e: ' + str(e))
+         self.assertEqual(-31, e.code, 'the error is not -31: ' + str(e.code))
 
    def check_close_cursor_current(self, cursor):
       try:
          cursor.current()
          self.fail("need current cursor fail")
       except SDBBaseError as e:
-         self.assertEqual(str(e), 'SequoiaDB Error: Failed to get current record', 'e: ' + str(e))
+         self.assertEqual(-31, e.code, 'the error is not -31: ' + str(e.code))
