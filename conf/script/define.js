@@ -255,6 +255,7 @@ var OMA_FILE_PSQL_FIFO_FILE                = "result.fifo" ;
 var OMA_FILE_TEMP_ADD_HOST_CHECK           = OMA_PATH_TEMP_TEMP_DIR + "addHostCheckEnvResult" ;
 var OMA_FILE_SDBCM_CONF                    = "sdbcm.conf" ;
 var OMA_FILE_SDBCM_CONF2                   = "conf/sdbcm.conf" ;
+var OMA_FILE_ERROR                         = "error.js" ;
 var OMA_FILE_LOG                           = "log.js" ;
 var OMA_FILE_COMMON                        = "common.js" ;
 var OMA_FILE_DEFINE                        = "define.js" ;
@@ -355,6 +356,7 @@ var FIELD_PORT2                            = "port" ;
 var FIELD_FROM                             = "From" ;
 var FIELD_TO                               = "To" ;
 var FIELD_OPTIONS                          = "Options" ;
+var FIELD_ADDRESS                          = "address" ;
 
 // Async task step
 var STEP_GENERATE_PLAN                     = "Generate plan" ;

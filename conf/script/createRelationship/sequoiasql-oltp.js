@@ -81,6 +81,8 @@ function _relationWithSequoiaDB( PD_LOGGER )
    var toBuz         = BUS_JSON[FIELD_TO] ;
    var toBuzInfo     = toBuz[FIELD_INFO] ;
    var toBuzConfig   = toBuz[FIELD_CONFIG] ;
+   var user          = toBuz[FIELD_USER] ;
+   var passwd        = toBuz[FIELD_PASSWD] ;
    var toBuzName     = toBuzInfo[FIELD_BUSINESS_NAME] ;
    var options       = BUS_JSON[FIELD_OPTIONS] ;
    var remote, cmd, hostName, agentPort, port, installPath, address, serverName ;
@@ -132,11 +134,62 @@ function _relationWithSequoiaDB( PD_LOGGER )
       PD_LOGGER.log( PDERROR, error ) ;
       throw error ;
    }
-   else if( address.length == 1 )
+
+   if( typeof( options[FIELD_ADDRESS] ) == "string" &&
+       strTrim( options[FIELD_ADDRESS] ).length > 0 )
    {
+      //custom address
+      var addressStr = '' ;
+      options[FIELD_ADDRESS] = strTrim( options[FIELD_ADDRESS] ) ;
+
+      var customList = options[FIELD_ADDRESS].split( ',' ) ;
+
+      for( var i in customList )
+      {
+         var customInfo = strTrim( customList[i] ).split( ':' ) ;
+         var isBuzAddress = false ;
+
+         if( customInfo.length != 2 )
+         {
+            var error = new SdbError( SDB_SYS,
+                                      sprintf( "Invalid address [?]",
+                                               options[FIELD_ADDRESS] ) ) ;
+            PD_LOGGER.log( PDERROR, error ) ;
+            throw error ;
+         }
+
+         for( var index in address )
+         {
+            if( customInfo[0] == address[index][FIELD_HOSTNAME] &&
+                customInfo[1] == address[index][FIELD_SVCNAME] )
+            {
+               isBuzAddress = true ;
+               break ;
+            }
+         }
+
+         if( isBuzAddress == false )
+         {
+            var error = new SdbError( SDB_SYS,
+                                      sprintf( "Invalid address [?:?], " +
+                                               "not a business address",
+                                               customInfo[0],
+                                               customInfo[1] ) ) ;
+            PD_LOGGER.log( PDERROR, error ) ;
+            throw error ;
+         }
+
+         if( i > 0 )
+         {
+            addressStr += ',' ;
+         }
+         addressStr = sprintf( '?:?', customInfo[0], customInfo[1] ) ;
+      }
+
+      PD_LOGGER.log( PDEVENT, 'server address: ' + addressStr ) ;
+
       serialize = sprintf( 'address \'?\', service \'?\'',
-                           address[0][FIELD_HOSTNAME],
-                           address[0][FIELD_SVCNAME] ) ;
+                           addressStr, '0' ) ;
    }
    else
    {
@@ -151,6 +204,9 @@ function _relationWithSequoiaDB( PD_LOGGER )
          addressStr = sprintf( '?:?', address[index][FIELD_HOSTNAME],
                                       address[index][FIELD_SVCNAME] ) ;
       }
+
+      PD_LOGGER.log( PDEVENT, 'server address: ' + addressStr ) ;
+
       serialize = sprintf( 'address \'?\', service \'?\'',
                            addressStr, '0' ) ;
    }
@@ -158,9 +214,18 @@ function _relationWithSequoiaDB( PD_LOGGER )
    //serialize options
    for( var key in options )
    {
+      if( key == FIELD_ADDRESS )
+      {
+         continue ;
+      }
       var optionStr = sprintf( '? \'?\'', key, options[key] ) ;
 
       serialize += ', ' + optionStr ;
+   }
+
+   if( typeof( user ) == 'string' )
+   {
+      serialize += sprintf( ', user \'?\', password \'?\'', user, passwd ) ;
    }
 
    //connect remote agent
