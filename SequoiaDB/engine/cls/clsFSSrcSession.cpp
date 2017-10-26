@@ -1174,7 +1174,7 @@ namespace engine
          curCollection = ossPack32To64 ( su->LogicalCSID(),
                                          mbContext->clLID() ) ;
          /// get indexes
-         rc = su->getIndexes( collection, _indexs, mbContext ) ;
+         rc = su->getIndexes( mbContext, _indexs ) ;
          if ( rc )
          {
             PD_LOG( PDWARNING, "Session[%s]:Failed to get indexs of "

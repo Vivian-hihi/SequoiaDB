@@ -253,7 +253,7 @@ namespace engine
          monCLSimple monCL ;
 
          pSU->dumpInfo( monCS, FALSE, FALSE, FALSE ) ;
-         pSU->dumpInfo( monCL, mbContext->mbID(), TRUE ) ;
+         pSU->dumpInfo( monCL, mbContext, TRUE ) ;
 
          rc = _rtnReloadCLStats( &monCS, &monCL, pStatCache, cb, dmsCB, NULL ) ;
          PD_RC_CHECK( rc, PDWARNING, "Failed to load statistics for collection "
@@ -505,7 +505,7 @@ namespace engine
                                 mbContext->clLID() ) ;
 
          // Get index list here, reload statistics will be a quick process
-         pSU->dumpInfo( monCL, mbContext->mbID(), TRUE ) ;
+         pSU->dumpInfo( monCL, mbContext, TRUE ) ;
 
          rc = _rtnReloadCLStats( &monCS, &monCL, pStatCache,
                                  cb, dmsCB, rtnCB ) ;
@@ -527,7 +527,7 @@ namespace engine
       else
       {
          // Get index list later, analyze process will be long time
-         pSU->dumpInfo( monCL, mbContext->mbID(), FALSE ) ;
+         pSU->dumpInfo( monCL, mbContext, FALSE ) ;
 
          // Unlock first
          pSU->data()->releaseMBContext( mbContext ) ;
@@ -634,14 +634,14 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Failed to get collection [%s], rc: %d",
                    pCLFullName, rc ) ;
 
-      pSU->dumpInfo( monCL, mbContext->mbID(), FALSE ) ;
+      pSU->dumpInfo( monCL, mbContext, FALSE ) ;
 
       if ( param._mode == SDB_ANALYZE_MODE_RELOAD )
       {
          dmsEventCLItem clItem( pCLName, mbContext->mbID(),
                                 mbContext->clLID() ) ;
 
-         pSU->getIndex( mbContext->mb(), pIndexName, monIX ) ;
+         pSU->getIndex( mbContext, pIndexName, monIX ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to get index [%s %s], rc: %d",
                       pCLFullName, pIndexName, rc ) ;
 
@@ -666,7 +666,7 @@ namespace engine
       {
          UINT32 sampleRecords = 0 ;
 
-         pSU->getIndex( mbContext->mb(), pIndexName, monIX ) ;
+         pSU->getIndex( mbContext, pIndexName, monIX ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to get index [%s %s], rc: %d",
                       pCLFullName, pIndexName, rc ) ;
 
@@ -1199,7 +1199,7 @@ namespace engine
                 mbContext->mbID(), mbContext->clLID() ) ;
 
       // Dump index list
-      pSU->getIndexes( mbContext->mb(), monIdxList ) ;
+      pSU->getIndexes( mbContext, monIdxList ) ;
 
       // Analyze collection
       sampleRecords = _rtnGetSampleRecords( mbContext->mbStat()->_totalRecords,

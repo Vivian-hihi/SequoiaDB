@@ -330,15 +330,13 @@ namespace engine
          void     dumpInfo ( MON_CL_SIM_LIST &clList,
                              BOOLEAN sys = FALSE ) ;
          INT32    dumpInfo ( monCLSimple &collection,
-                             UINT16 mbID,
+                             dmsMBContext *context,
                              BOOLEAN dumpIdx = FALSE ) ;
          void     dumpInfo ( MON_CL_SIM_VEC &clList,
                              BOOLEAN sys = FALSE,
                              BOOLEAN dumpIdx = FALSE ) ;
          void     dumpInfo ( MON_CL_LIST &clList,
                              BOOLEAN sys = FALSE ) ;
-         INT32    dumpInfo ( monCollection &collection,
-                             UINT16 mbID ) ;
          void     dumpInfo ( monStorageUnit &storageUnit ) ;
          void     dumpInfo ( monCSSimple &collectionSpace,
                              BOOLEAN sys = FALSE,
@@ -351,21 +349,32 @@ namespace engine
                                   vector< dmsExtentID > &segExtents,
                                   dmsMBContext *context = NULL ) ;
 
-         INT32    getIndexes ( const CHAR *pName,
-                               MON_IDX_LIST &resultIndexes,
-                               dmsMBContext *context = NULL ) ;
-
-         INT32    getIndex ( const CHAR *pName,
-                             const CHAR *pIndexName,
-                             _monIndex &resultIndex,
-                             dmsMBContext *context = NULL ) ;
-
-         INT32    getIndexes ( const dmsMB *mb,
+         INT32    getIndexes ( dmsMBContext *context,
                                MON_IDX_LIST &resultIndexes ) ;
 
-         INT32    getIndex ( const dmsMB *mb,
+         INT32    getIndexes ( const CHAR *pName,
+                               MON_IDX_LIST &resultIndexes ) ;
+
+         INT32    getIndex ( dmsMBContext *context,
                              const CHAR *pIndexName,
-                             monIndex &resultIndex ) ;
+                             _monIndex &resultIndex ) ;
+
+      protected :
+         // Dump helper functions
+         // NOTE: Should be called after mbContext is locked or
+         //       metadataLatch is locked
+         INT32    _dumpCLInfo ( monCollection &collection,
+                                UINT16 mbID ) ;
+
+         INT32    _dumpCLInfo ( monCLSimple &collection,
+                                UINT16 mbID ) ;
+
+         INT32    _getIndexes ( const dmsMB *mb,
+                                MON_IDX_LIST &resultIndexes ) ;
+
+         INT32    _getIndex ( const dmsMB *mb,
+                              const CHAR *pIndexName,
+                              monIndex &resultIndex ) ;
 
       // only for LOAD
       public:
