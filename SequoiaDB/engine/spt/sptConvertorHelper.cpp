@@ -312,7 +312,7 @@ INT32 getCLNameFromObj( JSContext *cx, JSObject *obj,
    }
    ossSnprintf( *clName, clLen + csLen + 1, "%s.%s",
                 cs, collection ) ;
-   (*clName)[clLen + csLen + 1] = '\0' ;
+   (*clName)[clLen + csLen + 2] = '\0' ;
    }
 
 done:
@@ -447,7 +447,7 @@ INT32 getRNNameFromObj( JSContext *cx, JSObject *obj,
    }
    ossSnprintf( *rnName, nodeLen + rgLen + 1, "%s:%s",
                 rgName, nodeName ) ;
-   (*rnName)[nodeLen + rgLen + 1] = '\0' ;
+   (*rnName)[nodeLen + rgLen + 2] = '\0' ;
    }
 
 done:
