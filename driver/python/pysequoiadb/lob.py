@@ -16,7 +16,7 @@
 """
 try:
     from . import sdb
-except ImportError:
+except:
     raise Exception("Cannot find extension: sdb")
 
 import bson
@@ -24,7 +24,8 @@ import pysequoiadb
 from bson.py3compat import (str_type, long_type)
 from pysequoiadb.common import const
 from pysequoiadb.error import (SDBBaseError, SDBTypeError, SDBSystemError,
-                               InvalidParameter)
+                               SDBInvalidArgument, raise_if_error)
+from pysequoiadb.errcode import (SDB_OOM, SDB_INVALIDARG)
 
 LOB_READ = int(0x00000004)
 LOB_WRITE = int(0x00000008)
@@ -35,15 +36,12 @@ class lob(object):
         try:
             self._handle = sdb.create_lob()
         except SystemError:
-            raise SDBSystemError("Failed to create lob", const.SDB_OOM)
+            raise SDBSystemError(SDB_OOM, "Failed to create lob")
 
     def __del__(self):
         if self._handle is not None:
-            try:
-                rc = sdb.release_lob(self._handle)
-                pysequoiadb._raise_if_error("Failed to release lob", rc)
-            except SDBBaseError:
-                raise
+            rc = sdb.release_lob(self._handle)
+            raise_if_error(rc, "Failed to release lob")
             self._handle = None
 
     def close(self):
@@ -52,11 +50,8 @@ class lob(object):
         Exceptions:
            pysequoiadb.error.SDBBaseError
         """
-        try:
-            rc = sdb.lob_close(self._handle)
-            pysequoiadb._raise_if_error("Failed to close lob", rc)
-        except SDBBaseError:
-            raise
+        rc = sdb.lob_close(self._handle)
+        raise_if_error(rc, "Failed to close lob")
 
     def get_size(self):
         """get the size of lob.
@@ -66,11 +61,8 @@ class lob(object):
         Exceptions:
            pysequoiadb.error.SDBBaseError
         """
-        try:
-            rc, size = sdb.lob_get_size(self._handle)
-            pysequoiadb._raise_if_error("Failed to get size of lob", rc)
-        except SDBBaseError:
-            raise
+        rc, size = sdb.lob_get_size(self._handle)
+        raise_if_error(rc, "Failed to get size of lob")
         return size
 
     def get_oid(self):
@@ -81,12 +73,8 @@ class lob(object):
         Exceptions:
            pysequoiadb.error.SDBBaseError
         """
-        try:
-            rc, id_str = sdb.lob_get_oid(self._handle)
-            pysequoiadb._raise_if_error("Failed to get oid of lob", rc)
-        except SDBBaseError:
-            raise
-
+        rc, id_str = sdb.lob_get_oid(self._handle)
+        raise_if_error(rc, "Failed to get oid of lob")
         oid = bson.ObjectId(id_str)
         return oid
 
@@ -98,12 +86,8 @@ class lob(object):
         Exceptions:
            pysequoiadb.error.SDBBaseError
         """
-        try:
-            rc, mms = sdb.lob_get_create_time(self._handle);
-            pysequoiadb._raise_if_error("Failed to get create time of lob", rc)
-        except SDBBaseError:
-            raise
-
+        rc, mms = sdb.lob_get_create_time(self._handle)
+        raise_if_error(rc, "Failed to get create time of lob")
         return mms
 
     def get_modification_time(self):
@@ -114,8 +98,8 @@ class lob(object):
         Exceptions:
            pysequoiadb.error.SDBBaseError
         """
-        rc, mms = sdb.lob_get_modification_time(self._handle);
-        pysequoiadb._raise_if_error("Failed to get modification time of lob", rc)
+        rc, mms = sdb.lob_get_modification_time(self._handle)
+        raise_if_error(rc, "Failed to get modification time of lob")
         return mms
 
     def lock(self, offset, length):
@@ -126,7 +110,6 @@ class lob(object):
            offset    long(int in python3)   The lock start position
            length    long(int in python3)   The lock length, -1 means lock from offset to the end of lob
         Exceptions:
-           pysequoiadb.error.SDBTypeError
            pysequoiadb.error.SDBBaseError
         """
         if not isinstance(offset, (int, long_type)):
@@ -135,7 +118,7 @@ class lob(object):
             raise SDBTypeError("seek_pos must be an instance of long/int")
 
         rc = sdb.lob_lock(self._handle, offset, length)
-        pysequoiadb._raise_if_error("Failed to lock lob", rc)
+        raise_if_error(rc, "Failed to lock lob")
 
     def lock_and_seek(self, offset, length):
         """lock lob data section and seek to the offset position.
@@ -145,7 +128,6 @@ class lob(object):
            offset    long(int in python3)   The lock start position
            length    long(int in python3)   The lock length, -1 means lock from offset to the end of lob
         Exceptions:
-           pysequoiadb.error.SDBTypeError
            pysequoiadb.error.SDBBaseError
         """
         if not isinstance(offset, (int, long_type)):
@@ -154,7 +136,7 @@ class lob(object):
             raise SDBTypeError("seek_pos must be an instance of long/int")
 
         rc = sdb.lob_lock_and_seek(self._handle, offset, length)
-        pysequoiadb._raise_if_error("Failed to lock lob", rc)
+        raise_if_error(rc, "Failed to lock lob")
 
     def seek(self, seek_pos, whence=0):
         """seek in lob.
@@ -167,7 +149,6 @@ class lob(object):
                                             1 means seek from currend position to end of lob
                                             2 means seek from end to begin of lob
         Exceptions:
-           pysequoiadb.error.SDBTypeError
            pysequoiadb.error.SDBBaseError
         """
         if not isinstance(seek_pos, int):
@@ -175,51 +156,41 @@ class lob(object):
         if not isinstance(whence, int):
             raise SDBTypeError("seek_pos must be an instance of int")
         if whence not in (0, 1, 2):
-            raise InvalidParameter("value of whence is in valid",
-                                   const.SDB_INVALIDARG)
-        try:
-            rc = sdb.lob_seek(self._handle, seek_pos, whence)
-            pysequoiadb._raise_if_error("Failed to seek lob", rc)
-        except SDBBaseError:
-            raise
+            raise SDBInvalidArgument(SDB_INVALIDARG, "value of whence is in valid")
 
-    def read(self, len):
+        rc = sdb.lob_seek(self._handle, seek_pos, whence)
+        raise_if_error(rc, "Failed to seek lob")
+
+    def read(self, length):
         """ream data from lob.
 
         Parameters:
            Name     Type                 Info:
-           len      int                  The length of data to be read
+           length   int                  The length of data to be read
         Return Values:
            binary data of read
         Exceptions:
-           pysequoiadb.error.SDBTypeError
            pysequoiadb.error.SDBBaseError
         """
-        if not isinstance(len, int):
+        if not isinstance(length, int):
             raise SDBTypeError("len must be an instance of int")
-        try:
-            rc, data = sdb.lob_read(self._handle, len)
-            pysequoiadb._raise_if_error("Failed to read data from lob", rc)
-        except SDBBaseError:
-            raise
+
+        rc, data = sdb.lob_read(self._handle, length)
+        raise_if_error(rc, "Failed to read data from lob")
         return data
 
-    def write(self, data, len):
+    def write(self, data, length):
         """write data into lob.
 
         Parameters:
            Name     Type                 Info:
            data     str                  The data to be written
-           len      int                  The length of data to be written
+           length   int                  The length of data to be written
         Exceptions:
-           pysequoiadb.error.SDBTypeError
            pysequoiadb.error.SDBBaseError
         """
         if not isinstance(data, str_type):
             raise SDBTypeError("data should be byte or string")
 
-        try:
-            rc = sdb.lob_write(self._handle, data, len)
-            pysequoiadb._raise_if_error("Failed to write data to lob", rc)
-        except SDBBaseError:
-            raise
+        rc = sdb.lob_write(self._handle, data, length)
+        raise_if_error(rc, "Failed to write data to lob")
