@@ -255,7 +255,6 @@ var OMA_FILE_PSQL_FIFO_FILE                = "result.fifo" ;
 var OMA_FILE_TEMP_ADD_HOST_CHECK           = OMA_PATH_TEMP_TEMP_DIR + "addHostCheckEnvResult" ;
 var OMA_FILE_SDBCM_CONF                    = "sdbcm.conf" ;
 var OMA_FILE_SDBCM_CONF2                   = "conf/sdbcm.conf" ;
-var OMA_FILE_ERROR                         = "error.js" ;
 var OMA_FILE_LOG                           = "log.js" ;
 var OMA_FILE_COMMON                        = "common.js" ;
 var OMA_FILE_DEFINE                        = "define.js" ;
