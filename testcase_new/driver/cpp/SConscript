@@ -39,7 +39,7 @@ testFiles = [
    [ "./dbOpr/auth12521.cpp" ], # sync
    [ "./dbOpr/backup12304.cpp" ],
    [ "./dbOpr/procedure12522.cpp" ],
-   [ "./dbOpr/evalJS12525.cpp" ],
+   #[ "./dbOpr/evalJS12525.cpp" ],
    [ "./dbOpr/trans12520_12675.cpp" ],  # config
    [ "./dbOpr/sql12676_12678.cpp" ],
    [ "./disconnect/opCL12741.cpp" ],
