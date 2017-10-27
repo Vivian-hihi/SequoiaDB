@@ -41,7 +41,6 @@
 
 import sys
 
-from bson.son import SON
 from pysequoiadb.client import client
 from pysequoiadb.error import (SDBBaseError,
                                SDBTypeError,
