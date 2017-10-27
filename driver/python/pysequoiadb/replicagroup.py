@@ -22,11 +22,15 @@ except:
 
 import bson
 from bson.py3compat import (str_type)
-from pysequoiadb import common
-from pysequoiadb.common import const
+from pysequoiadb.errcode import SDB_OOM
 from pysequoiadb.error import (SDBBaseError, SDBTypeError, raise_if_error)
 from pysequoiadb.replicanode import replicanode
-from pysequoiadb.errcode import SDB_OOM
+
+NODE_STATUS_ALL = 0
+NODE_STATUS_ACTIVE = 1
+NODE_STATUS_INACTIVE = 2
+NODE_STATUS_UNKNOWN = 3
+TRUE = 1
 
 
 class replicagroup(object):
@@ -109,7 +113,7 @@ class replicagroup(object):
         if not isinstance(node_status, int):
             raise SDBTypeError("node status be an instance of int")
 
-        if node_status not in common.NODE_STATUS.available_options():
+        if node_status not in (NODE_STATUS_ALL, NODE_STATUS_ACTIVE, NODE_STATUS_INACTIVE, NODE_STATUS_UNKNOWN):
             raise SDBTypeError("node status invalid")
 
         rc, node_num = sdb.gp_get_nodenum(self._group, node_status)
@@ -303,7 +307,7 @@ class replicagroup(object):
         iscatalog = False
         rc, is_cata = sdb.gp_is_catalog(self._group)
         raise_if_error(rc, "Failed to check if is catalog")
-        if const.TRUE == is_cata:
+        if TRUE == is_cata:
             iscatalog = True
         return iscatalog
 

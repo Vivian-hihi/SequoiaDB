@@ -12,12 +12,12 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-from pysequoiadb.errcode import *
 from bson.py3compat import (text_type, str_type)
+from pysequoiadb.errcode import *
 
 
 class SDBBaseError(Exception):
-    """Base Exception of Python Driver for SequoiaDB
+    """Base Exception for SequoiaDB
     """
 
     def __init__(self, code, detail=None):
@@ -62,6 +62,7 @@ class SDBBaseError(Exception):
 class SDBTypeError(SDBBaseError):
     """Type Error of SequoiaDB
     """
+
     def __init__(self, detail):
         SDBBaseError.__init__(self, SDB_INVALIDARG, detail)
 
@@ -117,8 +118,10 @@ class SDBUnknownError(SDBBaseError):
 class SDBError(SDBBaseError):
     """General Error of SequoiaDB
     """
+
     def __init__(self, code, detail):
         SDBBaseError.__init__(self, code, detail)
+
 
 io_error = [
     SDB_IO,

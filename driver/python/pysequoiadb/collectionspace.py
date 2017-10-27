@@ -26,7 +26,6 @@ from bson.py3compat import (PY3, str_type)
 from pysequoiadb.collection import collection
 from pysequoiadb.cursor import cursor
 from pysequoiadb import error
-from pysequoiadb.common import const
 from pysequoiadb.error import (SDBBaseError, SDBTypeError, raise_if_error)
 from pysequoiadb.errcode import SDB_OOM
 

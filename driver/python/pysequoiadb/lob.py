@@ -20,12 +20,10 @@ except:
     raise Exception("Cannot find extension: sdb")
 
 import bson
-import pysequoiadb
 from bson.py3compat import (str_type, long_type)
-from pysequoiadb.common import const
-from pysequoiadb.error import (SDBBaseError, SDBTypeError, SDBSystemError,
-                               SDBInvalidArgument, raise_if_error)
 from pysequoiadb.errcode import (SDB_OOM, SDB_INVALIDARG)
+from pysequoiadb.error import (SDBTypeError, SDBSystemError,
+                               SDBInvalidArgument, raise_if_error)
 
 LOB_READ = int(0x00000004)
 LOB_WRITE = int(0x00000008)

@@ -264,8 +264,8 @@ class client(object):
         if "local_first" == policy:
             for ip in hosts:
                 if ("localhost" in ip.values() or
-                        local in ip.values() or
-                        ip['host'] in local_ip):
+                            local in ip.values() or
+                            ip['host'] in local_ip):
 
                     host = ip['host']
                     svc = ip['service']
@@ -873,7 +873,7 @@ class client(object):
         bson_configure = bson.BSON.encode(configure)
 
         rc = sdb.sdb_create_replica_cata_group(self._client, host, service,
-                                                   path, bson_configure)
+                                               path, bson_configure)
         raise_if_error(rc, "Failed to create catalog group")
 
     def exec_update(self, sql):

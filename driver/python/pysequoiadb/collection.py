@@ -26,7 +26,6 @@ import pysequoiadb
 from bson.py3compat import (PY3, str_type, long_type)
 from pysequoiadb.cursor import cursor
 from pysequoiadb.lob import (lob, LOB_READ, LOB_WRITE)
-from pysequoiadb.common import const
 from pysequoiadb.error import (SDBBaseError,
                                SDBTypeError,
                                SDBSystemError,
@@ -424,7 +423,7 @@ class collection(object):
                 flags = kwargs.get("flags")
 
         rc = sdb.cl_upsert(self._cl, bson_rule, bson_condition, bson_hint,
-                               bson_setOnInsert, flags)
+                           bson_setOnInsert, flags)
         raise_if_error(rc, "Failed to update")
 
     def save(self, doc):
@@ -815,7 +814,7 @@ class collection(object):
             enforced = 1
 
         rc = sdb.cl_create_index(self._cl, bson_index_def, idx_name,
-                                     is_unique, is_enforced, buffer_size)
+                                 is_unique, is_enforced, buffer_size)
         raise_if_error(rc, "Failed to create index")
 
     def get_indexes(self, idx_name=None):

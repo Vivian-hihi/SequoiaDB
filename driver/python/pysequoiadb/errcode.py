@@ -18,6 +18,9 @@
 
 
 class Errcode(object):
+    """Errcode of SequoiaDB.
+    """
+
     def __init__(self, name, code, desc):
         self.__name = name
         self.__code = code
@@ -25,17 +28,25 @@ class Errcode(object):
 
     @property
     def name(self):
+        """Name of this error code.
+        """
         return self.__name
 
     @property
     def code(self):
+        """Code of this error code.
+        """
         return self.__code
 
     @property
     def desc(self):
+        """Description of this error code.
+        """
         return self.__desc
 
     def __eq__(self, other):
+        """Errcode can euqlas to Errcode and int.
+        """
         if isinstance(other, Errcode):
             return self.code == other.code
         elif isinstance(other, int):
@@ -44,6 +55,8 @@ class Errcode(object):
             return False
 
     def __ne__(self, other):
+        """Errcode can not euqlas to Errcode and int.
+        """
         return not self.__eq__(other)
 
     def __repr__(self):

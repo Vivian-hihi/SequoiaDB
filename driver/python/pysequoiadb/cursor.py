@@ -20,10 +20,8 @@ except:
 from collections import OrderedDict
 
 import bson
-import pysequoiadb
-from pysequoiadb.common import const
-from pysequoiadb.error import (SDBBaseError, SDBEndOfCursor, SDBTypeError, raise_if_error)
 from pysequoiadb.errcode import SDB_OOM
+from pysequoiadb.error import (SDBBaseError, SDBTypeError, raise_if_error)
 
 
 class cursor(object):

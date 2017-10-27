@@ -21,7 +21,6 @@ except:
     raise Exception("Cannot find extension: sdb")
 
 import pysequoiadb
-from pysequoiadb.common import const
 from pysequoiadb.error import (SDBBaseError, raise_if_error)
 from pysequoiadb.errcode import SDB_OOM
 
