@@ -97,8 +97,12 @@ public class NetDeleteNode6201 extends SdbTestBase {
             Assert.assertEquals(groupMgr.checkBusiness(600), true, "failed to restore business");
             
             if (!groupMgr.checkResidu()) {        
-                try {                    
-                    coordGroup.removeNode(connectUrl.split(":")[0], coordPort, null);                    
+                try {
+                    //再次remove前要求上一个remove node context关闭，方法：重启编目主节点
+                    ReplicaGroup rg=db.getReplicaGroup("SYSCatalogGroup");
+                    rg.getMaster().stop();
+                    rg.start();
+                    coordGroup.removeNode(connectUrl.split(":")[0], coordPort, null);
                 }catch(BaseException e){
                 	if( e.getErrorCode() == -155 ){ 
                 		clearNode(hostName,coordPort);
