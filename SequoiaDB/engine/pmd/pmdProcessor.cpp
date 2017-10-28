@@ -1336,7 +1336,7 @@ namespace engine
       {
          coordTransRollback rollbackOpr ;
          INT32 rcTmp = rollbackOpr.init( pResource, eduCB() ) ;
-         PD_RC_CHECK( rc, PDERROR, "Init operator[%s] failed, rc: %d",
+         PD_RC_CHECK( rcTmp, PDERROR, "Init operator[%s] failed, rc: %d",
                       rollbackOpr.getName(), rcTmp ) ;
 
          rollbackOpr.rollback( eduCB() ) ;
