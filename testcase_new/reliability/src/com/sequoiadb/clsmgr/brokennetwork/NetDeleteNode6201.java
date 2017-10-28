@@ -66,7 +66,7 @@ public class NetDeleteNode6201 extends SdbTestBase {
     }
 
     @Test
-    public void test() {
+    public void test() throws InterruptedException {
         Sequoiadb db = null;
         try {
             GroupWrapper cataGroup = groupMgr.getGroupByName("SYSCatalogGroup");
@@ -98,14 +98,15 @@ public class NetDeleteNode6201 extends SdbTestBase {
             
             if (!groupMgr.checkResidu()) {        
                 try {
-                    //再次remove前要求上一个remove node context关闭，方法：重启编目主节点
-                    ReplicaGroup rg=db.getReplicaGroup("SYSCatalogGroup");
-                    rg.getMaster().stop();
-                    rg.start();
                     coordGroup.removeNode(connectUrl.split(":")[0], coordPort, null);
                 }catch(BaseException e){
                 	if( e.getErrorCode() == -155 ){ 
                 		clearNode(hostName,coordPort);
+                    }
+                    else if(e.getErrorCode() == -147){
+                        //再次remove前要求上一个remove node context关闭,睡眠五分钟等待context关闭
+                        Thread.sleep(5*60*1000);
+                        coordGroup.removeNode(connectUrl.split(":")[0], coordPort, null);
                     }
                 	else{
                 		Assert.fail("remove node failed, errMsg:" + e.getMessage());
