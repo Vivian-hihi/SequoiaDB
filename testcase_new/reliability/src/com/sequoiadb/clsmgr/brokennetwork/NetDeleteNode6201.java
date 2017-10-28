@@ -106,7 +106,16 @@ public class NetDeleteNode6201 extends SdbTestBase {
                     else if(e.getErrorCode() == -147){
                         //再次remove前要求上一个remove node context关闭,睡眠五分钟等待context关闭
                         Thread.sleep(5*60*1000);
-                        coordGroup.removeNode(connectUrl.split(":")[0], coordPort, null);
+                        try {
+                            coordGroup.removeNode(connectUrl.split(":")[0], coordPort, null);
+                        }catch (BaseException e1)
+                        {
+                            if( e1.getErrorCode() == -155 ){
+                                clearNode(hostName,coordPort);
+                            }else {
+                                throw e1;
+                            }
+                        }
                     }
                 	else{
                 		Assert.fail("remove node failed, errMsg:" + e.getMessage());
