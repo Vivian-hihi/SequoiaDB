@@ -116,7 +116,6 @@ ossFiles = [
       "oss/ossEDU.cpp",
       "oss/ossSocket.cpp",
       "oss/ossIO.cpp",
-      "oss/ossFile.cpp",
       "oss/ossVer.cpp",
       "oss/ossMem.cpp",
       "oss/ossProc.cpp",
