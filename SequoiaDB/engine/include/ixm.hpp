@@ -334,12 +334,6 @@ namespace engine
       void setLogicalID( dmsExtentID logicalID ) ;
       void clearLogicID() ;
 
-      UINT16 indexType() const
-      {
-         SDB_ASSERT ( _isInitialized,
-                      "index details must be initialized first" ) ;
-         return _extent->_type ;
-      }
       UINT16 getMBID () const
       {
          SDB_ASSERT ( _isInitialized,
