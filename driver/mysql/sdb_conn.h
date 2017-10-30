@@ -37,6 +37,8 @@ public:
 
    int rollback_transaction() ;
 
+   bool is_transaction() ;
+
 private:
    sdbclient::sdb                   connection ;
    bool                             transactionon ;

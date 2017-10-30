@@ -79,6 +79,11 @@ int sdb_conn::rollback_transaction()
    return 0 ;
 }
 
+bool sdb_conn::is_transaction()
+{
+   return transactionon ;
+}
+
 
 sdb_conn_ref_ptr::sdb_conn_ref_ptr( sdb_conn * connection )
 {

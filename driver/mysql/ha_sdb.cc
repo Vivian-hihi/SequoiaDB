@@ -1420,6 +1420,10 @@ error:
 
 int ha_sdb::delete_all_rows(void)
 {
+   if ( connection->is_transaction())
+   {
+      return cl.del();
+   }
    return this->truncate() ;
 }
 
