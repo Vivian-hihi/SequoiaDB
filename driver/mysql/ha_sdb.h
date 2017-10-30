@@ -229,6 +229,10 @@ public:
                                           TABLE *altered_table,
                                           Alter_inplace_info *ha_alter_info) ;
 
+   const Item *cond_push( const Item *cond ) ;
+
+   Item *idx_cond_push( uint keyno, Item* idx_cond ) ;
+
 
 private:
 
@@ -322,6 +326,7 @@ private:
    sdbclient::sdbCollection                  cl ;
    sdbclient::sdbCursor                      cursor ;
    bson::BSONObj                             cur_rec ;
+   bson::BSONObj                             condition ;
    int                                       keynr ; //use for index_scan
    uint32                                    str_field_buf_size ;
    char                                      *str_field_buf ;

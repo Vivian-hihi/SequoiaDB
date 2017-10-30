@@ -27,6 +27,7 @@
 #include "sdb_conf.h"
 #include "sdb_def.h"
 #include "sdb_util.h"
+//#include "sdb_condition.h"
 
 using namespace sdbclient ;
 
@@ -40,6 +41,7 @@ using namespace sdbclient ;
 #define SDB_STR_BUF_SIZE         SDB_STR_BUF_STEP_SIZE
 
 static char *sdb_addr ;
+bson::BSONObj empty_obj ;
 
 ha_sdb::ha_sdb(handlerton * hton, TABLE_SHARE * table_arg)
    :handler(hton, table_arg)
@@ -82,7 +84,7 @@ ulong ha_sdb::index_flags( uint inx, uint part, bool all_parts ) const
    // TODO: SUPPORT SORT
    //return ( HA_READ_NEXT | HA_READ_ORDER | HA_READ_RANGE | HA_DO_INDEX_COND_PUSHDOWN ) ;
    return ( HA_READ_NEXT | HA_READ_RANGE | HA_DO_INDEX_COND_PUSHDOWN
-            | HA_READ_ORDER ) ;
+            | HA_READ_ORDER | HA_KEYREAD_ONLY ) ;
 }
 
 uint ha_sdb::max_supported_record_length() const
@@ -285,7 +287,8 @@ int ha_sdb::row_to_obj( uchar *buf,  bson::BSONObj & obj )
          case MYSQL_TYPE_DATE:
             {
                struct timeval tm ;
-               (*field)->get_timestamp( &tm, NULL ) ;
+               int warnings= 0;
+               (*field)->get_timestamp( &tm, &warnings ) ;
                bson::Date_t dt( (longlong)(tm.tv_sec*1000) + tm.tv_usec/1000 ) ;
                obj_builder.appendDate( (*field)->field_name, dt ) ;
                break ;
@@ -294,7 +297,8 @@ int ha_sdb::row_to_obj( uchar *buf,  bson::BSONObj & obj )
          case MYSQL_TYPE_TIMESTAMP:
             {
                struct timeval tm ;
-               (*field)->get_timestamp( &tm, NULL ) ;
+               int warnings= 0;
+               (*field)->get_timestamp( &tm, &warnings ) ;
                obj_builder.appendTimestamp( (*field)->field_name,
                                             tm.tv_sec*1000,
                                             tm.tv_usec ) ;
@@ -854,18 +858,17 @@ int ha_sdb::index_read_map( uchar *buf, const uchar *key_ptr,
 {
    int rc = 0 ;
    int errnum = 0 ;
-   bson::BSONObj matchObj ;
    bson::BSONObj orderbyObj ;
-   if ( NULL != key_ptr && keynr >= 0 )
+   if ( condition.isEmpty() && NULL != key_ptr && keynr >= 0 )
    {
       build_match_obj( (uint)keynr, key_ptr,
                        keypart_map, find_flag,
-                       matchObj ) ;
+                       condition ) ;
    }
       //sort
       //(gdb) p range_scan_direction 
       //$69 = handler::RANGE_SCAN_ASC
-   rc = cl.query( cursor, matchObj ) ;
+   rc = cl.query( cursor, condition ) ;
    if ( rc )
    {
       goto error ;
@@ -896,6 +899,7 @@ int ha_sdb::index_read_map( uchar *buf, const uchar *key_ptr,
          }
    }
 done:
+   condition = empty_obj ;
    return errnum ;
 error:
    goto done ;
@@ -931,7 +935,8 @@ int ha_sdb::rnd_init(bool scan)
 {
    int rc = 0 ;
    stats.records= 0;
-   rc = cl.query( cursor ) ;
+   rc = cl.query( cursor, condition ) ;
+   condition = empty_obj ;
    return rc ;
 }
 
@@ -948,6 +953,7 @@ int ha_sdb::obj_to_row( bson::BSONObj &obj, uchar *buf )
    int rc = 0 ;
    bool read_all ;
    my_bitmap_map *org_bitmap;
+   memset( buf, 0, table->s->null_bytes ) ;
 
    read_all= !bitmap_is_clear_all(table->write_set) ;
 
@@ -963,11 +969,11 @@ int ha_sdb::obj_to_row( bson::BSONObj &obj, uchar *buf )
       }
 
       (*field)->reset() ;
-      (*field)->set_tmp_null() ;
       bson::BSONElement befield ;
       befield = obj.getField( (*field)->field_name ) ;
-      if ( befield.eoo() )
+      if ( befield.eoo() || befield.isNull() )
       {
+         (*field)->set_null() ;
          continue ;
       }
       switch ( befield.type() )
@@ -1065,7 +1071,6 @@ int ha_sdb::obj_to_row( bson::BSONObj &obj, uchar *buf )
             goto error ;
       }
    }
-   memset( buf, 0, table->s->null_bytes ) ;
 done:
    dbug_tmp_restore_column_map(table->write_set, org_bitmap);
    return rc ;
@@ -1346,7 +1351,7 @@ int ha_sdb::create_index( Alter_inplace_info *ha_alter_info )
 
       //TODO: parse primary-key-index ;
       rc = cl.createIndex( keyObj, keyInfo->name, FALSE, FALSE ) ;
-      if ( rc && rc != SDB_IXM_REDEF )
+      if ( rc && rc != SDB_IXM_REDEF && rc != SDB_IXM_EXIST_COVERD_ONE )
       {
          goto error ;
       }
@@ -1586,6 +1591,32 @@ void ha_sdb::unlock_row()
    //       unlock by _id or completed-record?
 }
 
+const Item *ha_sdb::cond_push( const Item *cond )
+{
+   const Item *remain_cond = cond ;
+   //sdb_condition_info sdb_condition ;
+   if ( cond->used_tables() & ~table->pos_in_table_list->map() )
+   {
+      goto done ;
+   }
+
+   /*sdb_parse_condtion( cond, &sdb_condition ) ;
+   condition = sdb_condition.cond_obj ;
+   if ( !sdb_condition.has_unsupported )
+   {
+      //TODO: build unanalysable condition
+      remain_cond = NULL ;
+   }*/
+
+done:
+   return remain_cond;
+}
+
+Item *ha_sdb::idx_cond_push(uint keyno, Item* idx_cond)
+{
+   return idx_cond;
+}
+
 static handler *sdb_create_handler(handlerton *hton,
                                     TABLE_SHARE *table, 
                                     MEM_ROOT *mem_root)
@@ -1704,7 +1735,7 @@ static int sdb_init_func(void *p)
    sdb_hton->state= SHOW_OPTION_YES ;
    sdb_hton->db_type= DB_TYPE_PARTITION_DB ;
    sdb_hton->create= sdb_create_handler ;
-   sdb_hton->flags= (HTON_CAN_RECREATE | HTON_SUPPORT_LOG_TABLES | 
+   sdb_hton->flags= ( HTON_SUPPORT_LOG_TABLES | 
                      HTON_NO_PARTITION) ;
    sdb_hton->commit = sdb_commit ;
    sdb_hton->rollback = sdb_rollback ;
