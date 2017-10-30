@@ -517,7 +517,7 @@ namespace engine
             rc = SDB_INVALIDARG ;
             goto error ;
          }
-         if ( len < ele.valuestrsize() )
+         if ( len < (UINT32)ele.valuestrsize() )
          {
             PD_LOG( PDWARNING, "Session[%s]: CS Name[%s] is too long",
                     sessionName(), ele.valuestr() ) ;
@@ -558,7 +558,7 @@ namespace engine
             rc = SDB_INVALIDARG ;
             goto error ;
          }
-         if ( len < ele.valuestrsize() )
+         if ( len < (UINT32)ele.valuestrsize() )
          {
             PD_LOG( PDWARNING, "Session[%s]: CL Name[%s] is too long",
                     sessionName(), ele.valuestr() ) ;
