@@ -180,6 +180,7 @@
                         else
                         {
                            ++hostInfo['CanNotUseNum'] ;
+                           filterDiskList.push( diskInfo ) ;
                         }
                      } ) ;
                      $.each( filterDiskList, function( index2, diskInfo ){

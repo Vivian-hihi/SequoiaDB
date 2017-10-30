@@ -41,6 +41,24 @@
          <div ng-windows="form as UnbindModuleWindow.config" windows-callback="UnbindModuleWindow.callback">
             <div form-create para="form"></div>
          </div>
+         <div ng-windows="form as CreateRelationWindow.config" windows-callback="CreateRelationWindow.callback">
+            <div form-create para="form"></div>
+         </div>
+         <div ng-windows="form as RemoveRelationWindow.config" windows-callback="RemoveRelationWindow.callback">
+            <div form-create para="form"></div>
+         </div>
+         <div ng-windows="list as RelationshipWindow.config" windows-callback="RelationshipWindow.callback">
+            <table class="table loosen border">
+               <tr>
+                  <td style="width:50%;background-color:#F1F4F5;">{{autoLanguage("关联业务名")}}</td>
+                  <td style="width:50%;background-color:#F1F4F5;">{{autoLanguage("被关联业务名")}}</td>
+               </tr>
+               <tr ng-repeat="info in list track by $index">
+                  <td>{{info['From']}}</td>
+                  <td>{{info['To']}}</td>
+               </tr>
+            </table>
+         </div>
          <div ng-dropdown="config in AddModuleDropdown.config" dropdown-event="AddModuleDropdown.event" dropdown-callback="AddModuleDropdown.callback">
             <span class="Ellipsis" style="padding:8px 10px;display:block;" ng-click="AddModuleDropdown.OnClick($index)">&nbsp;{{config.key}}</span>
          </div>
@@ -50,10 +68,14 @@
          <div ng-dropdown="config in EditModuleDropdown.config" dropdown-event="EditModuleDropdown.event" dropdown-callback="EditModuleDropdown.callback">
             <span class="Ellipsis" style="padding:8px 10px;display:block;" ng-click="EditModuleDropdown.OnClick($index)">&nbsp;{{config.key}}</span>
          </div>
+         <div ng-dropdown="config in RelationDropdown.config" dropdown-event="RelationDropdown.event" dropdown-callback="RelationDropdown.callback">
+            <span class="Ellipsis" style="padding:8px 10px;display:block;" ng-click="RelationDropdown.OnClick($index)">&nbsp;{{config.key}}</span>
+         </div>
          <div ng-container="{height:40}">
-            <button class="topBtn" ng-class="{true:'disabled'}[clusterList.length == 0]" ng-disabled="clusterList.length==0" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1160]" ng-click="OpenAddModuleDropdown($event)">{{autoLanguage("添加业务")}} <i class="fa fa-caret-down"></i></button>
-            <button class="topBtn" ng-class="{true:'disabled'}[clusterList.length==0||ModuleNum==0]" ng-disabled="clusterList.length==0||ModuleNum==0" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1160]" ng-click="OpenDeleteModuleDropdown($event)">{{autoLanguage("删除业务")}} <i class="fa fa-caret-down"></i></button>
-            <button class="topBtn" ng-class="{true:'disabled'}[clusterList.length==0||ModuleNum==0]" ng-disabled="clusterList.length==0||ModuleNum==0" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1160]" ng-click="OpenEditModuleDropdown($event)">{{autoLanguage("修改业务")}} <i class="fa fa-caret-down"></i></button>
+            <button class="topBtn" ng-class="{true:'disabled'}[clusterList.length == 0]" ng-disabled="clusterList.length==0" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1240]" ng-click="OpenAddModuleDropdown($event)">{{autoLanguage("添加业务")}} <i class="fa fa-caret-down"></i></button>
+            <button class="topBtn" ng-class="{true:'disabled'}[clusterList.length==0||ModuleNum==0]" ng-disabled="clusterList.length==0||ModuleNum==0" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1240]" ng-click="OpenDeleteModuleDropdown($event)">{{autoLanguage("删除业务")}} <i class="fa fa-caret-down"></i></button>
+            <button class="topBtn" ng-class="{true:'disabled'}[clusterList.length==0||ModuleNum==0]" ng-disabled="clusterList.length==0||ModuleNum==0" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1240]" ng-click="OpenEditModuleDropdown($event)">{{autoLanguage("修改业务")}} <i class="fa fa-caret-down"></i></button>
+            <button class="topBtn" ng-class="{true:'disabled'}[clusterList.length==0||ModuleNum==0]" ng-disabled="clusterList.length==0||ModuleNum==0" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1240]" ng-click="OpenRelationDropdown($event)">{{autoLanguage("关联业务")}} <i class="fa fa-caret-down"></i></button>
          </div>
 
          <div style="padding-right:15px;overflow-y:auto;border:1px solid #ccc;padding:10px;position:relative;" ng-container="{offsetY:-40}">
@@ -73,16 +95,23 @@
                   <div class="pull-left" ng-container="{offsetX:-100,height:40}">
                      <div class="Ellipsis2" style="font-weight:bold;height:21px;">
                         <span ng-if="moduleInfo['BusinessType']=='sequoiadb'&&moduleInfo['DeployMod']=='distribution'">
-                           <a class="linkButton" style="font-size:100%;" ng-if="moduleInfo['authority']" ng-attr="{'data-desc':autoLanguage('鉴权已开启。')}" ng-click="OpenShowAuthorityDropdown($event,moduleInfo['BusinessName'])">
+                           <a class="linkButton" style="font-size:90%;" ng-if="moduleInfo['authority']" ng-attr="{'data-desc':autoLanguage('鉴权已开启。')}" ng-click="OpenShowAuthorityDropdown($event,moduleInfo['BusinessName'])">
                               <i class="fa fa-lock"></i>
                               <span>{{autoLanguage("鉴权")}} </span>
                            </a>
-                           <a class="linkButton" style="font-size:100%;" ng-if="moduleInfo['authority'] == undefined" ng-click="ShowSetAuthority(moduleInfo['BusinessName'])" ng-attr="{'data-desc':autoLanguage('未开启鉴权，点击设置。')}">
+                           <a class="linkButton" style="font-size:90%;" ng-if="moduleInfo['authority'] == undefined" ng-click="ShowSetAuthority(moduleInfo['BusinessName'])" ng-attr="{'data-desc':autoLanguage('未开启鉴权，点击设置。')}">
                               <i class="fa fa-unlock"></i>
                               <span>{{autoLanguage("鉴权")}} </span>
                            </a>
                            <span style="color:#ccc;font-size:100%;font-weight:normal;">|</span>
                         </span>
+                        <span ng-if="moduleInfo['Relationship'].length>0">
+                           <a class="linkButton" style="font-size:90%;" ng-click="ShowRelationship(moduleInfo['BusinessName'])">
+                              <span>{{autoLanguage("关联信息")}}</span>
+                           </a>
+                           <span style="color:#ccc;font-size:100%;font-weight:normal;">|</span>
+                        </span>
+
                         <a class="linkButton" ng-if="moduleInfo['BusinessType']=='sequoiadb'" ng-click="GotoDataModule(moduleInfo['ClusterName'],moduleInfo['BusinessType'],moduleInfo['DeployMod'],moduleInfo['BusinessName'])">{{moduleInfo['BusinessName']}}</a>
                         <span style="color:#666;" ng-if="moduleInfo['BusinessType']!='sequoiadb'">{{moduleInfo['BusinessName']}}</span>
                      </div>
@@ -95,7 +124,7 @@
                   <i class="fa fa-circle" style="color:#00CC66;" ng-if="moduleInfo['Error']['Flag']==0"></i><i class="fa fa-circle error" ng-if="moduleInfo['Error']['Flag']!=0"></i>&nbsp;<span style="font-weight:bold;color:#006699;" ng-if="moduleInfo['Error']['Flag']==0">{{autoLanguage("正常运行...")}}</span><span style="font-weight:bold;color:#006699;" ng-if="moduleInfo['Error']['Flag']!=0">{{moduleInfo['Error']['Message']}}</span>
                </div>
 
-               <div ng-container="{offsetY:-100,marginTop:10,height:'auto'}" ng-if="moduleInfo['BusinessType']=='sequoiadb'">
+               <div ng-container="{offsetY:-100,marginTop:10,height:'auto'}" ng-if="moduleInfo['BusinessType']=='sequoiadb' || moduleInfo['BusinessType']=='sequoiasql-oltp'">
 
                   <div class="pull-left" style="max-width:650px;" ng-container="{width:'50%',height:140,offsetX:-30,marginRight:30}">
                      <div class="Ellipsis" style="height:35px;">
@@ -123,12 +152,34 @@
 
                   </div>
 
-                  <div class="pull-left" style="max-width:650px;min-height:130px;" ng-container="{width:'50%',height:'30w'}">
+                  <div class="pull-left" style="max-width:650px;min-height:130px;" ng-container="{width:'50%',height:'30w'}" ng-if="moduleInfo['BusinessType']=='sequoiadb'">
                      <div style="height:20px;">
-                        <!--<a class="linkButton" ng-click="GotoMonitorModule(moduleInfo['ClusterName'],moduleInfo['BusinessType'],moduleInfo['DeployMod'],moduleInfo['BusinessName'])">{{sprintf(autoLanguage("一共 ? 个节点"),moduleInfo['BusinessInfo']['NodeList'].length)}}</a>-->
                         {{sprintf(autoLanguage("一共 ? 个节点"),moduleInfo['BusinessInfo']['NodeList'].length)}}
                      </div>
                      <div ng-container="{offsetY:-20}" create-chart="moduleInfo['Chart']['Module']"></div>
+                  </div>
+                  <div class="pull-left" style="max-width:650px;min-height:145px;" ng-container="{width:'50%',height:'30w'}" ng-if="moduleInfo['BusinessType']=='sequoiasql-oltp'">
+                     <div style="height:20px;margin-bottom:15px;">
+                        {{autoLanguage("业务关联信息")}}
+                     </div>
+                     <div ng-if="moduleInfo['Relationship'].length>0">
+                        <div class="Ellipsis" style="margin-right:15px;" ng-container="{width:'100%',height:34}" ng-repeat="relationship in moduleInfo['Relationship'] track by $index" ng-if="$index < 3">
+                           <span style="font-size:90%;" class="badge badge-info">
+                              {{relationship['From']}}
+                              <i style="font-size:17px;padding:0 5px;" class="fa fa-long-arrow-right"></i>
+                              {{relationship['To']}}
+                           </span>
+                        </div>
+                        <div class="Ellipsis" style="margin-right:15px;" ng-if="moduleInfo['Relationship'].length>3">
+                           <span class="linkButton" style="font-size:90%;" ng-click="ShowRelationship(moduleInfo['BusinessName'])">
+                              {{autoLanguage("更多")}}...
+                           </span>
+                        </div>
+                     </div>
+                     <div ng-if="moduleInfo['Relationship'].length==0">
+                        <i class="fa fa-exclamation-circle" style="color:#45B0E4;font-size:20px;"></i>
+                        <span>{{autoLanguage("当前业务没有关联信息")}}</span>
+                     </div>
                   </div>
 
                   <div class="clear-float"></div>
@@ -200,7 +251,7 @@
             </div>
             <div table-key="Packages">
                <span class="Ellipsis badge badge-info ng-binding" style="font-size:90%;margin:3px 4px 3px 0;" ng-repeat="packageInfo in hostInfo['Packages'] track by $index">
-                  {{packageInfo['Name']}}
+                  {{abbreviate(packageInfo['Name'])}}<span ng-if="packageInfo['Version'].length>0">-{{packageInfo['Version']}}</span>
                </span>
             </div>
          </div>

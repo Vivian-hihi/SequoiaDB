@@ -2422,21 +2422,22 @@
                         }
                         else if( typeof( valid ) == 'object' )
                         {
+                           var num = parseInt( value ) ;
                            var min = valid.min ;
                            var max = valid.max ;
                            var ban = valid.ban ;
                            var step = valid.step ;
-                           if( typeof( min ) == 'number' && value < min )
+                           if( typeof( min ) == 'number' && num < min )
                            {
                               error = sprintf( $scope.Setting['Text']['int']['min'], name, min ) ;
                               rc = false ;
                            }
-                           else if( typeof( max ) == 'number' && value > max )
+                           else if( typeof( max ) == 'number' && num > max )
                            {
                               error = sprintf( $scope.Setting['Text']['int']['max'], name, max ) ;
                               rc = false ;
                            }
-                           else if( typeof( ban ) == 'number' && value == ban )
+                           else if( typeof( ban ) == 'number' && num == ban )
                            {
                               error = sprintf( $scope.Setting['Text']['int']['ban'], name, ban ) ;
                               rc = false ;
@@ -2444,7 +2445,7 @@
                            else if( isArray( ban ) )
                            {
                               $.each( ban, function( index, banInt ){
-                                 if( value == banInt )
+                                 if( num == banInt )
                                  {
                                     error = sprintf( $scope.Setting['Text']['int']['ban'], name, banInt ) ;
                                     rc = false ;
@@ -2452,7 +2453,7 @@
                                  }
                               } ) ;
                            }
-                           else if( typeof( step ) == 'number' && value % step != 0 )
+                           else if( typeof( step ) == 'number' && num % step != 0 )
                            {
                               error = sprintf( $scope.Setting['Text']['int']['step'], name, step ) ;
                               rc = false ;
@@ -2470,39 +2471,40 @@
                         }
                         else if( typeof( valid ) == 'object' )
                         {
+                           var num = parseFloat( value ) ;
                            var min = valid.min ;
                            var max = valid.max ;
                            var ban = valid.ban ;
                            var step = valid.step ;
-                           if( typeof( min ) == 'number' && value < min )
+                           if( typeof( min ) == 'number' && num < min )
                            {
                               error = sprintf( $scope.Setting['Text']['double']['min'], name, min ) ;
                               rc = false ;
                            }
-                           else if( typeof( max ) == 'number' && value > max )
+                           else if( typeof( max ) == 'number' && num > max )
                            {
                               error = sprintf( $scope.Setting['Text']['double']['max'], name, max ) ;
                               rc = false ;
                            }
-                           else if( typeof( ban ) == 'number' && value == ban )
+                           else if( typeof( ban ) == 'number' && num == ban )
                            {
                               error = sprintf( $scope.Setting['Text']['double']['ban'], name, ban ) ;
                               rc = false ;
                            }
                            else if( isArray( ban ) )
                            {
-                              $.each( ban, function( index, banInt ){
-                                 if( value == banInt )
+                              $.each( ban, function( index, banFloat ){
+                                 if( num == banFloat )
                                  {
-                                    error = sprintf( $scope.Setting['Text']['double']['ban'], name, banInt ) ;
+                                    error = sprintf( $scope.Setting['Text']['double']['ban'], name, banFloat ) ;
                                     rc = false ;
                                     return false ;
                                  }
                               } ) ;
                            }
-                           else if( typeof( step ) == 'number' && value % step != 0 )
+                           else if( typeof( step ) == 'number' && num % step != 0 )
                            {
-                              error = sprintf( $scope.Setting['Text']['int']['step'], name, step ) ;
+                              error = sprintf( $scope.Setting['Text']['double']['step'], name, step ) ;
                               rc = false ;
                            }
                         }
@@ -5472,6 +5474,7 @@
                   var resizeTableHeaders = function(){
                      //列宽度
                      var widthList = scope.loadStatus['width'] ;
+
                      //修改标题宽度
                      $( '> td', titleEle ).each( function( index, ele ){
                         var td = $( ele ) ;
@@ -5790,8 +5793,8 @@
                      var trim = event.currentTarget ;
                      scope.loadStatus['onMove']['isMove'] = true ;
                      scope.loadStatus['onMove']['mouseX'] = event['pageX'] ;
-                     scope.loadStatus['onMove']['prevWidth'] = $( trim ).prev().width() ;
-                     scope.loadStatus['onMove']['nextWidth'] = $( trim ).next().width() ;
+                     scope.loadStatus['onMove']['prevWidth'] = $( trim ).prev().width() - 1 ;
+                     scope.loadStatus['onMove']['nextWidth'] = $( trim ).next().width() - 1 ;
                      scope.loadStatus['onMove']['key'] = $( trim ).attr( 'table-key' ) ;
                      scope.loadStatus['onMove']['nextKey'] = getNextKey( scope.table['title'], scope.loadStatus['onMove']['key'] ) ;
                      $( tableEle ).css( { '-moz-user-select': 'none', '-webkit-user-select': 'none', '-ms-user-select': 'none', '-khtml-user-select': 'none', 'user-select': 'none' } ) ;
@@ -5806,6 +5809,8 @@
                         var offsetX = event['pageX'] - scope.loadStatus['onMove']['mouseX'] ;
                         var key = scope.loadStatus['onMove']['key'] ;
                         var nextKey = scope.loadStatus['onMove']['nextKey'] ;
+
+                        offsetX = fixedNumber( offsetX, 0 ) ;
                         if( offsetX < 0 && scope.loadStatus['onMove']['prevWidth'] > minWidth && scope.loadStatus['onMove']['prevWidth'] + offsetX < minWidth )
                         {
                            offsetX = minWidth - scope.loadStatus['onMove']['prevWidth'] ;

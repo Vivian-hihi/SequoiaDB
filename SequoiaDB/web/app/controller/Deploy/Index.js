@@ -34,6 +34,8 @@
       var host_module_table = [] ;
       //循环查询的业务
       var autoQueryModuleIndex = [] ;
+      //关联关系列表
+      $scope.RelationshipList = [] ;
       //主机表格
       $scope.HostListTable = {
          'title': {
@@ -78,6 +80,32 @@
       //清空Deploy域的数据
       $rootScope.tempData( 'Deploy' ) ;
 
+      //获取业务关联关系
+      var getRelationship = function(){
+         var data = { 'cmd': 'list relationship' } ;
+         SdbRest.OmOperation( data, {
+            'success': function( result ){
+               $scope.RelationshipList = result ;
+               $.each( $scope.moduleList, function( index, moduleInfo ){
+                  moduleInfo['Relationship'] = [] ;
+                  $.each( $scope.RelationshipList, function( index2, relationInfo ){
+                     if( relationInfo['From'] == moduleInfo['BusinessName'] || relationInfo['To'] == moduleInfo['BusinessName'] )
+                     {
+                        moduleInfo['Relationship'].push( relationInfo ) ;
+                     }
+                  } ) ;
+               } ) ;
+            },
+            'failed': function( errorInfo ){
+               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                  getRelationship() ;
+                  return true ;
+               } ) ;
+            }
+         }, {
+            'showLoading': false
+         } ) ;
+      }
 
       //计算每个业务的资源
       var countModule_Host = function(){
@@ -470,6 +498,8 @@
                $scope.moduleList = moduleList ;
                host_module_table = [] ;
                autoQueryModuleIndex = [] ;
+               //获取业务关联信息
+               getRelationship() ;
                $.each( $scope.moduleList, function( index, moduleInfo ){
 
                   var colorId = clusterIsExist( moduleInfo['ClusterName'] ) ;
@@ -2769,6 +2799,372 @@
             $scope.EditModuleDropdown['config'].push( { 'key': $scope.autoLanguage( '同步业务' ) } ) ;
             $scope.EditModuleDropdown['callback']['Open']( event.currentTarget ) ;
          }
+      }
+
+      //创建关联
+      var createRelation = function( config ){
+         var option = {} ;
+         option['transaction']      = config['transaction'] ;
+         option['preferedinstance'] = config['preferedinstance'] ;
+
+         if( config['address'].length > 0 )
+         {
+            option['address'] = '' ;
+            $.each( config['address'], function( index, value ){
+               option['address'].length == 0 ? option['address'] = value : option['address'] = option['address'] + ',' + value ;
+            } ) ;
+         }
+         
+         var data = {
+            'cmd'    : 'create relationship',
+            'From'   : config['From'],
+            'To'     : config['To'],
+            'Options': JSON.stringify( option )
+         }
+         SdbRest.OmOperation( data, {
+            'success': function( result ){
+               $scope.Components.Confirm.type = 4 ;
+               $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '?、?关联成功。' ), config['From'], config['To'] ) ;
+               $scope.Components.Confirm.isShow = true ;
+               $scope.Components.Confirm.noClose = true ;
+               $scope.Components.Confirm.normalOK = true ;
+               $scope.Components.Confirm.okText = $scope.autoLanguage( '确定' ) ;
+               $scope.Components.Confirm.ok = function(){
+                  $scope.Components.Confirm.isShow = false ;
+                  $scope.Components.Confirm.noClose = false ;
+                  $scope.Components.Confirm.normalOK = false ;
+                  getRelationship() ;
+               }
+            },
+            'failed': function( errorInfo ){
+               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                  createRelation( config ) ;
+                  return true ;
+               } ) ;
+            }
+         }, {
+            'showLoading': false
+         } ) ;
+      }
+
+      //解除关联
+      var removeRelation = function( config ){
+         var data = {
+            'cmd' : 'remove relationship',
+            'From': config['From'],
+            'To'  : config['To']
+         }
+         SdbRest.OmOperation( data, {
+            'success': function( SetAuthorityResult ){
+               $scope.Components.Confirm.type = 4 ;
+               $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '?、?解除关联成功。' ), config['From'], config['To'] ) ;
+               $scope.Components.Confirm.isShow = true ;
+               $scope.Components.Confirm.noClose = true ;
+               $scope.Components.Confirm.normalOK = true ;
+               $scope.Components.Confirm.okText = $scope.autoLanguage( '确定' ) ;
+               $scope.Components.Confirm.ok = function(){
+                  $scope.Components.Confirm.isShow = false ;
+                  $scope.Components.Confirm.noClose = false ;
+                  $scope.Components.Confirm.normalOK = false ;
+                  getRelationship() ;
+               }
+            },
+            'failed': function( errorInfo ){
+               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                  removeRelation( config ) ;
+                  return true ;
+               } ) ;
+            }
+         }, {
+            'showLoading': false
+         } ) ;
+      }
+
+      //关联操作 下拉菜单
+      $scope.RelationDropdown = {
+         'config': [],
+         'OnClick': function( index ){
+            if( index == 0 )
+            {
+               $scope.OpenCreateRelation() ;
+            }
+            else if( index == 1 )                
+            {
+               $scope.OpenRemoveRelation() ;
+            }
+            $scope.RelationDropdown['callback']['Close']() ;
+         },
+         'callback': {}
+      } ;
+
+      //是否禁用创建关联按钮
+      var createRelationDisabled = false ;
+
+      //打开 关联操作 下拉菜单
+      $scope.OpenRelationDropdown = function(){
+         var disabled = false ;
+         var sqlModule = 0 ;
+         var sdbModule = 0 ;
+         $.each( $scope.moduleList, function( index, moduleInfo ){
+            if( moduleInfo['ClusterName'] == $scope.clusterList[ $scope.currentCluster ]['ClusterName'] )
+            {
+               if( moduleInfo['BusinessType'] == 'sequoiadb' )
+               {
+                  ++sdbModule ;
+               }
+               else if( moduleInfo['BusinessType'] == 'sequoiasql-oltp' )
+               {
+                  ++sqlModule ;
+               }
+            }
+            else
+            {
+               return ;
+            }
+         } ) ;
+         if( sqlModule == 0 || sdbModule == 0 )
+         {
+            createRelationDisabled = true ;
+         }
+         else
+         {
+            createRelationDisabled = false ;
+         }
+         $scope.RelationDropdown['config'] = [] ;
+         $scope.RelationDropdown['config'].push( { 'key': $scope.autoLanguage( '创建关联' ), 'disabled': createRelationDisabled } ) ;
+
+         if( $scope.RelationshipList.length == 0 )
+         {
+            disabled = true ;
+         }
+         $scope.RelationDropdown['config'].push( { 'key': $scope.autoLanguage( '解除关联' ), 'disabled': disabled } ) ;
+         $scope.RelationDropdown['callback']['Open']( event.currentTarget ) ;
+      }
+
+      //创建关联 弹窗
+      $scope.CreateRelationWindow = {
+         'config': {},
+         'callback': {}
+      } ;
+
+      //打开 创建关联 弹窗
+      $scope.OpenCreateRelation= function(){
+         if( createRelationDisabled == true )
+         {
+            return ;
+         }
+
+         //被关联的业务
+         var chooseModule = -1 ;
+         
+         //选择被关联业务之后查询该业务下的coord节点
+         var listCoordNodes = function( index ){
+            $scope.CreateRelationWindow['config']['inputList'][5]['valid']['list'] = [] ;
+            $.each( $scope.moduleList[index]['BusinessInfo']['NodeList'], function( nodeIndex, nodeInfo ){
+               if( nodeInfo['Role'] == 'coord' || nodeInfo['Role'] == 'standalone' )
+               {
+                  $scope.CreateRelationWindow['config']['inputList'][5]['valid']['list'].push( {
+                     'key': nodeInfo['HostName'] + ':' + nodeInfo['ServiceName'],
+                     'value': nodeInfo['HostName'] + ':' + nodeInfo['ServiceName'],
+                     'checked': false
+                  } ) ;
+               }
+               else
+               {
+                  return ;
+               }
+            } ) ;
+         }
+
+         $scope.CreateRelationWindow['config'] = {
+            inputList: [
+               {
+                  "name": "Type",
+                  "webName": $scope.autoLanguage( '关联类型' ),
+                  "required": true,
+                  "type": "select",
+                  "value": 0,
+                  "valid": [
+                     { 'key': 'SequoiaSQL-OLTP - SequoiaDB', 'value': 0 }
+                  ]
+               },
+               {
+                  "name": "From",
+                  "webName": $scope.autoLanguage( '关联业务名' ),
+                  "required": true,
+                  "type": "select",
+                  "value": '',
+                  "valid": []
+               },
+               {
+                  "name": "To",
+                  "webName": $scope.autoLanguage( '被关联业务名' ),
+                  "required": true,
+                  "type": "select",
+                  "value": chooseModule,
+                  "valid":[],
+                  "onChange": function( name, key, value ){
+                     listCoordNodes( value ) ;
+                  }
+               },
+               {
+                  "name": "preferedinstance",
+                  "webName": "preferedinstance",
+                  "type": "select",
+                  "value": 's',
+                  "valid":[
+                     { 'key': 's', 'value': 's' },
+                     { 'key': 'm', 'value': 'm' },
+                     { 'key': 'a', 'value': 'a' },
+                     { 'key': '1', 'value': '1' },
+                     { 'key': '2', 'value': '2' },
+                     { 'key': '3', 'value': '3' },
+                     { 'key': '4', 'value': '4' },
+                     { 'key': '5', 'value': '5' },
+                     { 'key': '6', 'value': '6' },
+                     { 'key': '7', 'value': '7' }
+                  ]
+               },
+               {
+                  "name": "transaction",
+                  "webName": "transaction",
+                  "type": "select",
+                  "value": "on",
+                  "valid":[
+                     { 'key': 'on', 'value': 'on' },
+                     { 'key': 'off', 'value': 'off' }
+                  ]
+               },
+               {
+                  "name": "address",
+                  "webName": $scope.autoLanguage( '选择被关联节点' ),
+                  "type": "multiple",
+                  "value": [],
+                  "valid": {
+                     'min': 0,
+                     'list': []
+                  }
+               }
+            ]
+         } ;
+
+         
+         $.each( $scope.moduleList, function( index, moduleInfo ){
+            if( moduleInfo['ClusterName'] == $scope.clusterList[ $scope.currentCluster ]['ClusterName'] )
+            {
+               if( moduleInfo['BusinessType'] == 'sequoiasql-oltp' )
+               {
+                  $scope.CreateRelationWindow['config']['inputList'][1]['valid'].push(
+                     { 'key': moduleInfo['BusinessName'], 'value': moduleInfo['BusinessName'] }
+                  ) ;
+               }
+               else if( moduleInfo['BusinessType'] == 'sequoiadb' )
+               {
+                  //将第一个业务作为默认选项
+                  if( chooseModule == -1 )
+                  {
+                     chooseModule = index ;
+                     $scope.CreateRelationWindow['config']['inputList'][2]['value'] = chooseModule ;
+                     listCoordNodes( chooseModule ) ;
+                  }
+                  $scope.CreateRelationWindow['config']['inputList'][2]['valid'].push(
+                     { 'key': moduleInfo['BusinessName'], 'value': index }
+                  ) ;
+               }
+               else
+               {
+                  return ;
+               }
+            }
+            else
+            {
+               return ;
+            }
+         } ) ;
+         $scope.CreateRelationWindow['config']['inputList'][1]['value'] = $scope.CreateRelationWindow['config']['inputList'][1]['valid'][0]['value'] ;
+         $scope.CreateRelationWindow['callback']['SetOkButton']( $scope.autoLanguage( '确定' ), function(){
+            var isAllClear = $scope.CreateRelationWindow['config'].check() ;
+            if( isAllClear )
+            {
+               var formVal = $scope.CreateRelationWindow['config'].getValue() ;
+               formVal['To'] = $scope.moduleList[formVal['To']]['BusinessName'] ;
+               createRelation( formVal ) ;               
+            }
+            return isAllClear ;
+         } ) ;
+         $scope.CreateRelationWindow['callback']['SetTitle']( $scope.autoLanguage( '创建关联' ) ) ;
+         $scope.CreateRelationWindow['callback']['Open']() ;
+      }
+      
+      //解除关联 弹窗
+      $scope.RemoveRelationWindow = {
+         'config': {},
+         'callback': {}
+      } ;
+
+      //打开 解除关联 弹窗
+      $scope.OpenRemoveRelation= function(){
+         if( $scope.RelationshipList.length == 0 )
+         {
+            return;
+         }
+         $scope.RemoveRelationWindow['config'] = {
+            inputList: [
+               {
+                  "name": "Type",
+                  "webName": $scope.autoLanguage( '关联类型' ),
+                  "required": true,
+                  "type": "select",
+                  "value": 0,
+                  "valid": [
+                     { 'key': 'SequoiaSQL-OLTP - SequoiaDB', 'value': 0 }
+                  ]
+               },
+               {
+                  "name": "Relationship",
+                  "webName": $scope.autoLanguage( '关联的业务' ),
+                  "type": "select",
+                  "required": true,
+                  "value": 0,
+                  "valid": []
+               }
+            ]
+         } ;
+         $.each( $scope.RelationshipList, function( index, relationInfo ){
+            $scope.RemoveRelationWindow['config']['inputList'][1]['valid'].push(
+               { 'key': relationInfo['From'] + '，' + relationInfo['To'], 'value': index }
+            ) ;
+         } ) ;
+         $scope.RemoveRelationWindow['callback']['SetOkButton']( $scope.autoLanguage( '确定' ), function(){
+            var isAllClear = $scope.RemoveRelationWindow['config'].check() ;
+            if( isAllClear )
+            {
+               var formVal = $scope.RemoveRelationWindow['config'].getValue() ;
+               removeRelation( $scope.RelationshipList[formVal['Relationship']] ) ;
+            }
+            return isAllClear ;
+         } ) ;
+         $scope.RemoveRelationWindow['callback']['SetTitle']( $scope.autoLanguage( '解除关联' ) ) ;
+         $scope.RemoveRelationWindow['callback']['Open']() ;
+      }
+
+      //关联信息 弹窗
+      $scope.RelationshipWindow = {
+         'config': [],
+         'callback': {}
+      } ;
+      
+      //打开 关联信息 弹窗
+      $scope.ShowRelationship = function( moduleName ){
+         $scope.RelationshipWindow['config'] = [] ;
+         $.each( $scope.RelationshipList, function( index, info ){
+            if( moduleName == info['From'] || moduleName == info['To'] )
+            {
+               $scope.RelationshipWindow['config'].push( info ) ;
+            }
+         } ) ;
+         $scope.RelationshipWindow['callback']['SetTitle']( $scope.autoLanguage( '关联信息' ) ) ;
+         $scope.RelationshipWindow['callback']['Open']() ;
       }
 
       //集群操作下拉菜单
