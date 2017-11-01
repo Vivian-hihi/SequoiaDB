@@ -88,8 +88,7 @@ namespace DriverTest
             }
             //groupName = "db3";
             group = sdb.GetReplicaGroup(groupName);
-            //SequoiaDB.Node master = group.GetMaster();
-            SequoiaDB.Node master = null;
+            SequoiaDB.Node master = group.GetMaster();
             SequoiaDB.Node slave = group.GetSlave();
             Console.WriteLine("group is: " + groupName + ", master is: " + master.NodeName + ", slave is: " + slave.NodeName);
         }
