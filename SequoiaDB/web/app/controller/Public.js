@@ -115,6 +115,19 @@
          while( random == $rootScope.onResize ) random = Math.random() ;
          $rootScope.onResize = random ;
       } ;
+      //Package包名缩写
+      $rootScope.abbreviate = function( name ){
+         var newName = name ;
+         if( name == 'sequoiadb' )
+         {
+            newName = 'sdb' ;
+         }
+         else if( name == 'sequoiasql-oltp' )
+         {
+            newName = 'ssql-oltp' ;
+         }
+         return newName ;
+      }
       //禁止F5做全局刷新，改成局部刷新
       $(document).bind("keydown",function(e){
          switch( e.keyCode )  
