@@ -39,6 +39,8 @@
         <setInstallerVariable name="sys_conf_file" value="/etc/default/sequoiadb" persist="1"/>
         <setInstallerVariable name="exist_installation" value="false"/>
         <setInstallerVariable name="project.rollbackBackupDirectory" value="${installdir}/rollback/BackupDir_${time}"/>
+        <setInstallerVariable name="newsysconf_default" value="/usr/lib/systemd/system"/>
+        <setInstallerVariable name="newsysconf_ubuntu" value="/lib/systemd/system"/>
     </initializationActionList>
 
     <functionDefinitionList>
@@ -293,6 +295,85 @@
             <parameterList>
                 <stringParameter name="envFile" value="" default=""/>
             </parameterList>
+        </actionDefinition>
+        <actionDefinition name="getSysType">
+            <actionList>
+                <getSymLinkTarget variable="pid1_fullpath">
+                    <link>/proc/1/exe</link>
+                </getSymLinkTarget>
+                <setInstallerVariableFromRegEx>
+                    <name>pid1_exe</name>
+                    <pattern>(.*)/(.*)</pattern>
+                    <substitution>\2</substitution>
+                    <text>${pid1_fullpath}</text>
+                </setInstallerVariableFromRegEx>
+                <globalVariables names="${type}"/>
+                <setInstallerVariable name="${type}" value="unknown"/>
+                <setInstallerVariable name="${type}" value="SysV">
+                    <ruleList>
+                        <compareValues value1="${pid1_exe}" logic="equals" value2="init"/>
+                    </ruleList>
+                </setInstallerVariable>
+                <setInstallerVariable name="${type}" value="systemd">
+                    <ruleList>
+                        <compareValues value1="${pid1_exe}" logic="equals" value2="systemd"/>
+                    </ruleList>
+                </setInstallerVariable>
+            </actionList>
+                <parameterList>
+                    <stringParameter name="type" value="" default=""/>
+                </parameterList>
+        </actionDefinition>
+        <actionDefinition name="addDefaultService">
+            <actionList>
+                <addUnixService>
+                    <customErrorMessage>${msg(Install.ErrorMsg.CreateLinuxService.error)}</customErrorMessage>
+                    <name>sdbcm</name>
+                    <program>${installdir}/sequoiadb</program>
+                </addUnixService>
+            </actionList>
+        </actionDefinition>
+        <actionDefinition name="delDefaultService">
+            <actionList>
+                <removeUnixService name="sdbcm"/>
+            </actionList>
+        </actionDefinition>
+        <actionDefinition name="addSystemdService">
+            <actionList>
+                <substitute>
+                    <files>${installdir}/sdbcm.service</files>
+                    <type>exact</type>
+                    <substitutionList>
+                        <substitution pattern="/opt/sequoiadb" value="${installdir}"/>
+                    </substitutionList>
+                </substitute>
+                <copyFile>
+                    <destination>${newsysconf_default}/sdbcm.service</destination>
+                    <origin>${installdir}/sdbcm.service</origin>
+                    <ruleList>
+                        <fileTest condition="is_not_empty" path="${newsysconf_default}"/>
+                    </ruleList>
+                </copyFile>
+                <copyFile>
+                    <destination>${newsysconf_ubuntu}/sdbcm.service</destination>
+                    <origin>${installdir}/sdbcm.service</origin>
+                    <ruleList>
+                        <fileTest condition="is_not_empty" path="${newsysconf_ubuntu}"/>
+                    </ruleList>
+                </copyFile>
+                <deleteFile path="${installdir}/sdbcm.service"/>
+                <runProgram>
+                    <program>systemctl</program>
+                    <programArguments>enable sdbcm.service</programArguments>
+                    <customErrorMessage>${msg(Install.ErrorMsg.CreateLinuxService.error)}</customErrorMessage>
+                </runProgram>
+            </actionList>
+        </actionDefinition>
+        <actionDefinition name="delSystemdService">
+            <actionList>
+                <deleteFile path="${newsysconf_default}/sdbcm.service"/>
+                <deleteFile path="${newsysconf_default}/sdbcm.service"/>
+            </actionList>
         </actionDefinition>
     </functionDefinitionList>
 
@@ -707,10 +788,20 @@
             </actionList>
         </if>
 
-        <!--other-->
-        <removeUnixService>
-            <name>sdbcm</name>
-        </removeUnixService>
+        <!--remove service-->
+        <getSysType type="sys_type"/>
+        <if>
+            <conditionRuleList>
+                <compareValues value1="${sys_type}" logic="equals" value2="systemd"/>
+            </conditionRuleList>
+            <actionList>
+                <delSystemdService/>
+            </actionList>
+            <elseActionList>
+                <delDefaultService/>
+            </elseActionList>
+        </if>
+
         <deleteFile path="${installdir}/packet/${installerFilename}"/>
     </preUninstallationActionList>
 
@@ -719,7 +810,6 @@
         <deleteEnv envFile="~${username}/.bashrc"/>
         <deleteEnv envFile="~${username}/.profile"/>
         <deleteEnv envFile="~${username}/.bash_profile"/>
-
     </postUninstallationActionList>
 
     <installerFilename>${product_shortname}-${product_version}-${platform}${enterpriseversion}-installer.${platform_exec_suffix}</installerFilename>
