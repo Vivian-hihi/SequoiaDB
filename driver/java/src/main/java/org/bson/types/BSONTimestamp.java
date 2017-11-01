@@ -99,7 +99,7 @@ public class BSONTimestamp implements Serializable {
     	DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd-HH.mm.ss");
     	String strDate = formatter.format(_time);
 
-        return "{ $timestamp : " + strDate + "." + _inc + "}";
+        return "{ $timestamp: " + strDate + "." + _inc + " }";
     }
 
     /**
