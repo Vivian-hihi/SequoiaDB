@@ -152,7 +152,9 @@ namespace SequoiaDB
                     throw new BaseException("SDB_CLS_GRP_NOT_EXIST");
             }
             else
+            {
                 throw new BaseException("SDB_SYS");
+            }
         }
 
         /** \fn Node CreateNode(string hostName, int port, string dbpath,
@@ -270,30 +272,36 @@ namespace SequoiaDB
             {
                 BsonDocument detail = GetDetail();
                 if (!detail[SequoiadbConstants.FIELD_PRIMARYNODE].IsInt32)
+                {
                     throw new BaseException("SDB_SYS");
+                }
                 primaryNode = detail[SequoiadbConstants.FIELD_PRIMARYNODE].AsInt32;
                 if (!detail[SequoiadbConstants.FIELD_GROUP].IsBsonArray)
+                {
                     throw new BaseException("SDB_SYS");
+                }
                 BsonArray nodes = detail[SequoiadbConstants.FIELD_GROUP].AsBsonArray;
                 foreach (BsonDocument node in nodes)
-                { 
+                {
                     if (!node[SequoiadbConstants.FIELD_NODEID].IsInt32)
+                    {
                         throw new BaseException("SDB_SYS");
+                    }
                     int nodeID = node[SequoiadbConstants.FIELD_NODEID].AsInt32;
                     if (nodeID == primaryNode)
                     {
                         return ExtractNode(node);
                     }
                 }
-                return null;
+                throw new BaseException("SDB_CLS_NODE_NOT_EXIST");
             }
             catch (KeyNotFoundException)
             {
-                return null;
+                throw new BaseException("SDB_SYS");
             }
             catch (FormatException)
             {
-                throw new BaseException("SDB_INVALIDARG");
+                throw new BaseException("SDB_SYS");
             }
         }
 
@@ -312,20 +320,30 @@ namespace SequoiaDB
             {
                 BsonDocument detail = GetDetail();
                 if (!detail[SequoiadbConstants.FIELD_PRIMARYNODE].IsInt32)
+                {
                     throw new BaseException("SDB_CLS_NODE_NOT_EXIST");
+                }
                 primaryID = detail[SequoiadbConstants.FIELD_PRIMARYNODE].AsInt32;
                 if (!detail[SequoiadbConstants.FIELD_GROUP].IsBsonArray)
+                {
                     throw new BaseException("SDB_SYS");
+                }
                 BsonArray nodes = detail[SequoiadbConstants.FIELD_GROUP].AsBsonArray;
                 foreach (BsonDocument node in nodes)
                 {
                     if (!node[SequoiadbConstants.FIELD_NODEID].IsInt32)
+                    {
                         throw new BaseException("SDB_SYS");
+                    }
                     int nodeID = node[SequoiadbConstants.FIELD_NODEID].AsInt32;
                     if (nodeID != primaryID)
+                    {
                         nodeList.Add(node);
+                    }
                     else
+                    {
                         primaryNode = node;
+                    }
                 }
                 if (nodeList.Count > 0)
                 {
@@ -333,16 +351,22 @@ namespace SequoiaDB
                     int slaveID = rnd.Next() % nodeList.Count;
                     return ExtractNode(nodeList[slaveID]);
                 }
-                else
+                else if (primaryNode != null)
+                {
                     return ExtractNode(primaryNode);
+                }
+                else
+                {
+                    throw new BaseException("SDB_CLS_NODE_NOT_EXIST");
+                }
             }
             catch (KeyNotFoundException)
             {
-                return null;
+                throw new BaseException("SDB_SYS");
             }
             catch (FormatException)
             {
-                throw new BaseException("SDB_INVALIDARG");
+                throw new BaseException("SDB_SYS");
             }
         }
 
@@ -566,7 +590,7 @@ namespace SequoiaDB
                         return new Node(this, hostName, int.Parse(svcname), nodeID);
                     }
                 }
-                return null;
+                throw new BaseException("SDB_CLS_NODE_NOT_EXIST");
             }
             catch(KeyNotFoundException)
             {
@@ -574,7 +598,7 @@ namespace SequoiaDB
             }
             catch (FormatException)
             {
-                throw new BaseException("SDB_INVALIDARG");
+                throw new BaseException("SDB_SYS");
             }
         }
 
