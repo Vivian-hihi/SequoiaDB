@@ -432,7 +432,8 @@ class DBLobImpl implements DBLob {
         } else if (SDB_LOB_SEEK_CUR == seekType) {
             if ((_currentOffset + size >= _lobSize && _mode == SDB_LOB_READ)
                 || (_currentOffset + size < 0)) {
-                throw new BaseException(SDBError.SDB_INVALIDARG, "out of bound, lobSize=" + _lobSize);
+                throw new BaseException(SDBError.SDB_INVALIDARG,
+                        "out of bound, _currentOffset=" + _currentOffset + ", lobSize=" + _lobSize);
             }
 
             _currentOffset += size;

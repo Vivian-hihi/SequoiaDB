@@ -27,8 +27,6 @@ public class SDBGetRG {
         if (!isCluster)
             return;
         sdb = new Sequoiadb(Constants.COOR_NODE_CONN, "", "");
-        rg = sdb.getReplicaGroup(1000);
-        Name = rg.getGroupName();
     }
 
     @AfterClass
@@ -42,6 +40,8 @@ public class SDBGetRG {
     public void setUp() throws Exception {
         if (!isCluster)
             return;
+        rg = sdb.getReplicaGroup(1000);
+        Name = rg.getGroupName();
         groupID = Constants.GROUPID;
         groupName = Name;
     }
@@ -109,6 +109,15 @@ public class SDBGetRG {
             return;
         }
         assertTrue(false);
+    }
+
+    @Test
+    public void getMasterAndSlaveNodeTest() {
+//        groupName = "db3";
+        rg = sdb.getReplicaGroup(groupName);
+        Node master = rg.getMaster();
+        Node slave = rg.getSlave();
+        System.out.println(String.format("group is: %s, master is: %s, slave is: %s", groupName, master.getNodeName(), slave.getNodeName()));
     }
 
 }
