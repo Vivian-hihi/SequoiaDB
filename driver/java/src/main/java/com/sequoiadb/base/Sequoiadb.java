@@ -438,7 +438,7 @@ public class Sequoiadb implements Closeable {
         SdbReply response = requestAndResponse(request);
 
         try {
-            throwIfError(response, userName);
+            throwIfError(response, "failed to authenticate " + userName);
         } catch (Exception e){
             close();
             throw e;
