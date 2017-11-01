@@ -6090,20 +6090,7 @@ static JSBool sdb_eval( JSContext *cx, uintN argc, jsval *vp )
          rc = sdbGetCollectionSpace ( *connection , name , cs ) ;
          REPORT_RC ( SDB_OK == rc , "sdbGetCollectionSpace" , rc ) ;
 
-         csObj = JS_NewObject ( cx , &cs_class , 0 , 0 ) ;
-         VERIFY ( csObj ) ;
-         valConn = JS_THIS ( cx , vp ) ;
-         VERIFY( JS_DefineProperty( cx, csObj, "_conn", valConn,
-                                    0, 0, JSPROP_READONLY ) ) ;
-         //VERIFY ( JS_SetProperty ( cx , csObj , "_conn" , &valConn ) ) ;
-         VERIFY ( JS_SetPrivate ( cx , csObj , cs ) ) ;
-         jscsname = JS_NewStringCopyN( cx, name, ossStrlen(name) );
-         valCSName = STRING_TO_JSVAL ( jscsname ) ;
-         VERIFY ( JS_SetProperty ( cx , csObj , "_name" , &valCSName ) ) ;
-         valCS = OBJECT_TO_JSVAL ( csObj ) ;
-         VERIFY( JS_DefineProperty( cx, JS_THIS_OBJECT ( cx , vp ),
-                                    name, valCS,
-                                    0, 0, JSPROP_READONLY ) ) ;
+
          /* VERIFY ( JS_SetProperty ( cx, JS_THIS_OBJECT ( cx , vp ),
                   name, &valCS ) ) ; */
 
@@ -6115,6 +6102,21 @@ static JSBool sdb_eval( JSContext *cx, uintN argc, jsval *vp )
          ret = get_cl_and_setproperty( cx, vp, &valCS, *cs,
                                        clName, jsname ) ;
          VERIFY( ret ) ;
+
+         csObj = JS_NewObject ( cx , &cs_class , 0 , 0 ) ;
+         VERIFY ( csObj ) ;
+         valConn = JS_THIS ( cx , vp ) ;
+         VERIFY( JS_DefineProperty( cx, csObj, "_conn", valConn,
+                                    0, 0, JSPROP_READONLY ) ) ;
+         //VERIFY ( JS_SetProperty ( cx , csObj , "_conn" , &valConn ) ) ;
+         jscsname = JS_NewStringCopyN( cx, name, ossStrlen(name) );
+         valCSName = STRING_TO_JSVAL ( jscsname ) ;
+         VERIFY ( JS_SetProperty ( cx , csObj , "_name" , &valCSName ) ) ;
+         valCS = OBJECT_TO_JSVAL ( csObj ) ;
+         VERIFY( JS_DefineProperty( cx, JS_THIS_OBJECT ( cx , vp ),
+                                    name, valCS,
+                                    0, 0, JSPROP_READONLY ) ) ;
+         VERIFY ( JS_SetPrivate ( cx , csObj , cs ) ) ;
       }
       else if ( FMP_RES_TYPE_RG == valueType )
       {
@@ -6927,12 +6929,12 @@ static JSBool sdb_start_rg ( JSContext *cx , uintN argc , jsval *vp )
    UINT32                  count      = 0 ;
    sdbReplicaGroupHandle * rg         = NULL ;
    sdbConnectionHandle *   connection = NULL ;
-   
+
    if ( argc < 1 )
    {
       REPORT ( FALSE, "Sdb.startRG(<name>): wrong arguments" ) ;
    }
-   
+
    connection = ( sdbConnectionHandle * )
          JS_GetPrivate ( cx, JS_THIS_OBJECT ( cx, vp ) ) ;
    REPORT ( connection, "Sdb.startRG: no connection handle" ) ;
