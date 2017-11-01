@@ -98,62 +98,6 @@
       <ConfType>NORMAL</ConfType>
    </FILLER>
    <FILLER>
-      <Name>lc_messages</Name>
-      <WebName>lc messages</WebName>
-      <Type>style</Type>
-      <Default>zh_CN.UTF-8</Default>
-      <Valid></Valid>
-      <Display>text box</Display>
-      <Edit>true</Edit>
-      <Desc>locale for system error message strings</Desc>
-      <Level>0</Level>
-      <DynamicEdit>false</DynamicEdit>
-      <BatchEdit>false</BatchEdit>
-      <ConfType>NORMAL</ConfType>
-   </FILLER>
-   <FILLER>
-      <Name>lc_monetary</Name>
-      <WebName>lc monetary</WebName>
-      <Type>string</Type>
-      <Default>zh_CN</Default>
-      <Valid></Valid>
-      <Display>text box</Display>
-      <Edit>true</Edit>
-      <Desc>locale for monetary formatting</Desc>
-      <Level>0</Level>
-      <DynamicEdit>false</DynamicEdit>
-      <BatchEdit>false</BatchEdit>
-      <ConfType>NORMAL</ConfType>
-   </FILLER>
-   <FILLER>
-      <Name>lc_numeric</Name>
-      <WebName>lc numeric</WebName>
-      <Type>string</Type>
-      <Default>zh_CN</Default>
-      <Valid></Valid>
-      <Display>text box</Display>
-      <Edit>true</Edit>
-      <Desc>locale for number formatting</Desc>
-      <Level>0</Level>
-      <DynamicEdit>false</DynamicEdit>
-      <BatchEdit>false</BatchEdit>
-      <ConfType>NORMAL</ConfType>
-   </FILLER>
-   <FILLER>
-      <Name>lc_time</Name>
-      <WebName>lc time</WebName>
-      <Type>string</Type>
-      <Default>zh_CN</Default>
-      <Valid></Valid>
-      <Display>text box</Display>
-      <Edit>true</Edit>
-      <Desc>locale for time formatting</Desc>
-      <Level>0</Level>
-      <DynamicEdit>false</DynamicEdit>
-      <BatchEdit>false</BatchEdit>
-      <ConfType>NORMAL</ConfType>
-   </FILLER>
-   <FILLER>
       <Name>default_text_search_config</Name>
       <WebName>default text search config</WebName>
       <Type>string</Type>
@@ -2560,6 +2504,62 @@
       <Display>edit box</Display>
       <Edit>true</Edit>
       <Desc>actually, defaults to database encoding</Desc>
+      <Level>1</Level>
+      <DynamicEdit>false</DynamicEdit>
+      <BatchEdit>false</BatchEdit>
+      <ConfType>connection</ConfType>
+   </FILLER>
+   <FILLER>
+      <Name>lc_monetary</Name>
+      <WebName>lc messages</WebName>
+      <Type>string</Type>
+      <Default></Default>
+      <Valid></Valid>
+      <Display>edit box</Display>
+      <Edit>true</Edit>
+      <Desc>locale for system error message strings</Desc>
+      <Level>1</Level>
+      <DynamicEdit>false</DynamicEdit>
+      <BatchEdit>false</BatchEdit>
+      <ConfType>connection</ConfType>
+   </FILLER>
+   <FILLER>
+      <Name>lc_monetary</Name>
+      <WebName>lc monetary</WebName>
+      <Type>string</Type>
+      <Default></Default>
+      <Valid></Valid>
+      <Display>edit box</Display>
+      <Edit>true</Edit>
+      <Desc> locale for monetary formatting</Desc>
+      <Level>1</Level>
+      <DynamicEdit>false</DynamicEdit>
+      <BatchEdit>false</BatchEdit>
+      <ConfType>connection</ConfType>
+   </FILLER>
+   <FILLER>
+      <Name>lc_numeric</Name>
+      <WebName>lc numeric</WebName>
+      <Type>string</Type>
+      <Default></Default>
+      <Valid></Valid>
+      <Display>edit box</Display>
+      <Edit>true</Edit>
+      <Desc>locale for number formatting</Desc>
+      <Level>1</Level>
+      <DynamicEdit>false</DynamicEdit>
+      <BatchEdit>false</BatchEdit>
+      <ConfType>connection</ConfType>
+   </FILLER>
+   <FILLER>
+      <Name>lc_time</Name>
+      <WebName>lc time</WebName>
+      <Type>string</Type>
+      <Default></Default>
+      <Valid></Valid>
+      <Display>edit box</Display>
+      <Edit>true</Edit>
+      <Desc>locale for time formatting</Desc>
       <Level>1</Level>
       <DynamicEdit>false</DynamicEdit>
       <BatchEdit>false</BatchEdit>
