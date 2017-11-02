@@ -22,6 +22,7 @@ public class BaseException extends RuntimeException {
 
     private static final long serialVersionUID = -6115487863398926195L;
 
+    private int errcode;
     private SDBError error;
     private String detail;
 
@@ -34,6 +35,7 @@ public class BaseException extends RuntimeException {
      */
     public BaseException(SDBError error, String detail, Throwable e) {
         super(e);
+        this.errcode = error.getErrorCode();
         this.error = error;
         this.detail = detail;
     }
@@ -44,7 +46,9 @@ public class BaseException extends RuntimeException {
      * @since 2.8
      */
     public BaseException(SDBError error, String detail) {
-        this(error, detail, null);
+        this.errcode = error.getErrorCode();
+        this.error = error;
+        this.detail = detail;
     }
 
     /**
@@ -61,7 +65,7 @@ public class BaseException extends RuntimeException {
      * @since 2.8
      */
     public BaseException(SDBError error) {
-        this(error, null, null);
+        this(error, (String) null);
     }
 
 
@@ -70,7 +74,7 @@ public class BaseException extends RuntimeException {
      * @since 2.8
      */
     public BaseException(int errCode) {
-        this(SDBError.getSDBError(errCode));
+        this(errCode, (String) null);
     }
 
 
@@ -80,7 +84,9 @@ public class BaseException extends RuntimeException {
      * @since 2.8
      */
     public BaseException(int errCode, String detail) {
-        this(SDBError.getSDBError(errCode), detail, null);
+        this.errcode = errCode;
+        this.error = SDBError.getSDBError(errCode);
+        this.detail = detail;
     }
 
     /**
@@ -88,13 +94,7 @@ public class BaseException extends RuntimeException {
      * @deprecated
      */
     public BaseException(String errorType, Object... objs) {
-        try {
-            this.error = SDBError.valueOf(errorType);
-        } catch (Exception e) {
-            // nothing to do
-        }
-
-        this.detail = Arrays.toString(objs);
+        this(SDBError.valueOf(errorType), Arrays.toString(objs));
     }
 
     /**
@@ -102,7 +102,7 @@ public class BaseException extends RuntimeException {
      * @deprecated
      */
     public BaseException(int errorCode, Object... objs) {
-        this(SDBError.getSDBError(errorCode), Arrays.toString(objs));
+        this(errorCode, Arrays.toString(objs));
     }
 
 
@@ -116,12 +116,12 @@ public class BaseException extends RuntimeException {
             if (error != null) {
                 return error.toString() + ", detail: " + detail;
             } else {
-                return detail;
+                return getErrorType() + "(" + errcode + "), detail: " + detail;
             }
         } else if (error != null) {
             return error.toString();
         } else {
-            return "Unknown Error";
+            return getErrorType() + "(" + errcode + ")";
         }
     }
 
@@ -130,7 +130,7 @@ public class BaseException extends RuntimeException {
      * @brief Get the error type.
      */
     public String getErrorType() {
-        return error != null ? error.getErrorType() : "Unknown Type";
+        return error != null ? error.getErrorType() : "SDB_UNKNOWN";
     }
 
     /**
@@ -138,6 +138,6 @@ public class BaseException extends RuntimeException {
      * @brief Get the error code.
      */
     public int getErrorCode() {
-        return error != null ? error.getErrorCode() : 0;
+        return errcode;
     }
 }
