@@ -139,7 +139,7 @@
                   g._status = NORMAL ;
                   if( typeof( g._lastErrorEvent ) == 'function' )
                   {
-                     g._lastErrorEvent( { "errno": -15, "description": "Network error", "detail": "Network error, request status unknown." } ) ;
+                     g._lastErrorEvent( { "cmd": '', "errno": -15, "description": "Network error", "detail": "Network error, request status unknown." } ) ;
                      g._lastErrorEvent = null ;
                   }
                }
@@ -225,6 +225,11 @@
          {
             Loading.create() ;
          }
+         var cmd = '' ;
+         if( typeof( data['cmd'] ) == 'string' )
+         {
+            cmd = data['cmd'] ;
+         }
          $.ajax( { 'type': type, 'url': url, 'data': data, 'success': function( json, textStatus, jqXHR ){
             json = trim( json ) ;
             if( json.length == 0 && typeof( failed ) === 'function' )
@@ -232,7 +237,7 @@
                //收到响应，但是没有任何数据
                try
                {
-                  failed( { "errno": -10, "description": "System error", "detail": "No rest response data." } ) ;
+                  failed( { "errno": -10, "description": "System error", "detail": "No rest response data.", "cmd": cmd } ) ;
                }
                catch( e )
                {
@@ -257,7 +262,7 @@
                   {
                      try
                      {
-                        failed( { "errno": -10, "description": "System error", "detail": "Rest response data error." } ) ;
+                        failed( { "errno": -10, "description": "System error", "detail": "Rest response data error.", "cmd": cmd } ) ;
                      }
                      catch( e )
                      {
@@ -312,6 +317,7 @@
                else if( typeof( failed ) === 'function' )
                {
                   //其他错误
+                  jsonArr[0]['cmd'] = cmd ;
                   try
                   {
                      failed( jsonArr[0] ) ;
