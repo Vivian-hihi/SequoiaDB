@@ -1147,7 +1147,6 @@ error:
 int ha_sdb::rnd_pos( uchar *buf, uchar *pos )
 {
    int rc = 0 ;
-   bson::BSONObj objTmp ;
    bson::BSONObjBuilder objBuilder ;
    bson::OID tmpOid( (const char *)pos ) ;
    objBuilder.appendOID( "_id", &tmpOid ) ;
@@ -1161,7 +1160,7 @@ int ha_sdb::rnd_pos( uchar *buf, uchar *pos )
    }
 
    ha_statistic_increment( &SSV::ha_read_rnd_count ) ;
-   rc = next_row( tmpCursor, objTmp, buf ) ;
+   rc = next_row( tmpCursor, cur_rec, buf ) ;
    if ( rc )
    {
       goto error ;
