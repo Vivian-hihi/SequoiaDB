@@ -1,19 +1,22 @@
 package com.sequoiadb.base;
 
+import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.exception.SDBError;
 import org.bson.*;
 import org.bson.io.Bits;
 import org.bson.types.*;
 import org.bson.util.JSON;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
+import javax.xml.bind.DatatypeConverter;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.UUID;
+import java.util.*;
 import java.util.regex.Pattern;
 
 import static org.junit.Assert.*;
@@ -229,5 +232,97 @@ public class TestBSON {
         BSONObject obj2 = (BSONObject) JSON.parse(json);
 
         assertEquals(obj, obj2);
+    }
+
+    @Test
+    public void testNumberLong() {
+        BSONObject exp = (BSONObject) JSON.parse("{'no':{'$numberLong':'8223372036854775296'}}");
+        BSONObject exp2 = (BSONObject) JSON.parse("{'no':{'$numberLong':'8223372036854775807'}}");
+        System.out.println(exp.equals(exp2));
+        Long v1 = 8223372036854775296L;
+        Long v2 = 8223372036854775807L;
+        Long v3 = 8223372036854775807L;
+        System.out.println(v3.equals(v2));
+
+        BasicBSONList array = new BasicBSONList();
+        array.put(0, "a");
+        array.put(1, "b");
+
+        BSONObject obj = new BasicBSONObject();
+        obj.put("arr", array);
+
+        System.out.println(obj.toString());
+
+        obj = (BSONObject) JSON.parse("{ a: {\"$binary\": \"aGVsbG8gd29ybGQ\", \"$type\": \"1\" } }");
+        System.out.println(obj.get("a"));
+        Binary bin = (Binary) obj.get("a");
+        String str = new String(bin.getData());
+        System.out.println(str);
+
+        byte[] data = DatatypeConverter.parseBase64Binary("aGVsbG8gd29ybGQ");
+        System.out.println(Arrays.equals(bin.getData(), data));
+    }
+
+    @Test @Ignore
+    public void testDate() throws ParseException {
+       try (Sequoiadb sdb = new Sequoiadb("192.168.20.54", 50000, "", "")) {
+            DBCollection cl = sdb.getCollectionSpace("foo").getCollection("bar");
+            cl.delete((BSONObject) null);
+
+            BSONObject obj = new BasicBSONObject();
+            obj.put("a", 1);
+            obj.put("b", 1);
+            cl.insert(obj);
+
+            try (Sequoiadb sdb1 = new Sequoiadb("192.168.20.54", 40000, "", "")) {
+                DBCollection cl1 = sdb1.getCollectionSpace("foo").getCollection("bar");
+                BSONObject matcher = new BasicBSONObject();
+                matcher.put("a", 1);
+                BSONObject up = new BasicBSONObject();
+                up.put("b", 1);
+                BSONObject updator = new BasicBSONObject();
+                updator.put("$inc", up);
+                cl1.update(matcher, updator, null);
+            }
+
+           try (Sequoiadb sdb1 = new Sequoiadb("192.168.20.54", 41000, "", "")) {
+               DBCollection cl1 = sdb1.getCollectionSpace("foo").getCollection("bar");
+               BSONObject matcher = new BasicBSONObject();
+               matcher.put("a", 1);
+               BSONObject up = new BasicBSONObject();
+               up.put("b", 2);
+               BSONObject updator = new BasicBSONObject();
+               updator.put("$inc", up);
+               cl1.update(matcher, updator, null);
+           }
+
+           BSONObject matcher = new BasicBSONObject();
+           obj.put("a", 1);
+           DBCursor cursor = cl.query(matcher, null, null, null);
+           while (cursor.hasNext()) {
+               BSONObject rec = cursor.getNext();
+               System.out.println(rec);
+           }
+
+           byte[] bytes = new byte[1024 * 1024 * 16];
+           new Random().nextBytes(bytes);
+           Binary bin = new Binary(bytes);
+           BSONObject binObj = new BasicBSONObject("bin", bin);
+           try {
+               cl.insert(binObj);
+           } catch (BaseException e) {
+               if (e.getErrorCode() != SDBError.SDB_DMS_RECORD_TOO_BIG.getErrorCode()) {
+                   e.printStackTrace();
+               }
+           }
+
+           cursor = cl.query(matcher, null, null, null);
+           while (cursor.hasNext()) {
+               BSONObject rec = cursor.getNext();
+               System.out.println(rec);
+               int b = (Integer) rec.get("b");
+               assertEquals(1, b);
+           }
+        }
     }
 }
