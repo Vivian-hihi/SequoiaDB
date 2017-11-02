@@ -18,6 +18,10 @@ package com.sequoiadb.exception;
 
 import java.util.Arrays;
 
+/**
+ * @class BaseException
+ * @brief Base exception of SequoiaDB.
+ */
 public class BaseException extends RuntimeException {
 
     private static final long serialVersionUID = -6115487863398926195L;
