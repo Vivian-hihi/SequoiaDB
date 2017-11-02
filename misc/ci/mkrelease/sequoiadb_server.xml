@@ -749,14 +749,6 @@
         <include file="normal_component.xml" />
     </componentList>
 
-    <postUninstallerCreationActionList>
-        <changeOwnerAndGroup>
-            <files>${installdir}/uninstall.dat</files>
-            <group>${groupname}</group>
-            <owner>${username}</owner>
-        </changeOwnerAndGroup>
-    </postUninstallerCreationActionList>
-
     <preUninstallationActionList>
         <!--stop process-->
         <runProgram>
