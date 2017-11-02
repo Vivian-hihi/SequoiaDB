@@ -3425,7 +3425,7 @@ SDB_EXPORT INT32 sdbGetNodeMaster ( sdbReplicaGroupHandle cHandle,
    if ( BSON_INT != bson_find ( &it, &result, CAT_PRIMARY_NAME ) )
    {
       // cannot find primary
-      rc = SDB_SYS ;
+      rc = SDB_CLS_NODE_NOT_EXIST ;
       goto error ;
    }
    primaryNode = bson_iterator_int ( &it ) ;
@@ -3433,7 +3433,7 @@ SDB_EXPORT INT32 sdbGetNodeMaster ( sdbReplicaGroupHandle cHandle,
    if ( BSON_ARRAY != bson_find ( &it, &result, CAT_GROUP_NAME ) )
    {
       // the Group is not array
-      rc = SDB_CLS_NODE_NOT_EXIST ;
+      rc = SDB_SYS ;
       goto error ;
    }
    // walk through Group and find out the NodeID
