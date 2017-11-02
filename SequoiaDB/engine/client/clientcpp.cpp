@@ -4069,7 +4069,7 @@ error:
       if ( ele.type() != Array )
       {
          // the replica group is not array
-         rc = SDB_SYS ;
+         rc = SDB_CLS_NODE_NOT_EXIST ;
          goto error ;
       }
       {
