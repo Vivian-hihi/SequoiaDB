@@ -636,13 +636,13 @@ namespace engine
          e = obj.getField( FIELD_NAME_ANALYZE_NUM ) ;
          if ( NumberInt == e.type() )
          {
-            INT32 sampleNum = e.numberInt() ;
+            UINT32 sampleNum = (UINT32)e.numberInt() ;
             if ( sampleNum > SDB_ANALYZE_SAMPLE_MAX ||
                  sampleNum < SDB_ANALYZE_SAMPLE_MIN )
             {
-               PD_LOG( PDERROR, "Field[%s] %d is out of range [ %d - %d ]",
-                       sampleNum, SDB_ANALYZE_SAMPLE_MIN,
-                       SDB_ANALYZE_SAMPLE_MAX ) ;
+               PD_LOG( PDERROR, "Field[%s] %u is out of range [ %d - %d ]",
+                       FIELD_NAME_ANALYZE_NUM, sampleNum,
+                       SDB_ANALYZE_SAMPLE_MIN, SDB_ANALYZE_SAMPLE_MAX ) ;
                rc = SDB_INVALIDARG ;
                goto error ;
             }
@@ -658,7 +658,7 @@ namespace engine
                  samplePercent <= 0.0 )
             {
                PD_LOG( PDERROR, "Field[%s] %.2f is out of range ( %.2f - %.2f ]",
-                       samplePercent, 0.0, 100.0 ) ;
+                       FIELD_NAME_ANALYZE_PERCENT, samplePercent, 0.0, 100.0 ) ;
                rc = SDB_INVALIDARG ;
                goto error ;
             }

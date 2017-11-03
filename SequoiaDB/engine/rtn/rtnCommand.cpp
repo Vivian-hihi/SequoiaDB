@@ -3956,8 +3956,8 @@ namespace engine
                  _param._sampleNum < SDB_ANALYZE_SAMPLE_MIN )
             {
                PD_LOG( PDERROR, "Field[%s] %d is out of range [ %d - %d ]",
-                       _param._sampleNum, SDB_ANALYZE_SAMPLE_MIN,
-                       SDB_ANALYZE_SAMPLE_MAX ) ;
+                       FIELD_NAME_ANALYZE_NUM, _param._sampleNum,
+                       SDB_ANALYZE_SAMPLE_MIN, SDB_ANALYZE_SAMPLE_MAX ) ;
                rc = SDB_INVALIDARG ;
                goto error ;
             }
