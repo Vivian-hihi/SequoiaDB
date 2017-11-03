@@ -41,7 +41,7 @@ public class SelectSQL12621 extends SdbTestBase{
 		String []expRecords2 = {"{'long':{'$numberLong':'-1657091634361260'}}"};
 		String []expRecords3 = {"{'no':124480 }"};
 		String []expRecords4 = {"{'no':126418.944 }"};
-		String []expRecords5 = {"{'long':{'$numberLong':'-153722867959680'}}"};
+		String []expRecords5 = {"{'long':-1.5372286795968E14}"};
 		
 		return new Object[][]{
 			//the parameters: sql,expRecords

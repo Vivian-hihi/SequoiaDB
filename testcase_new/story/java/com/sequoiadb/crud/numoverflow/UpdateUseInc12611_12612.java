@@ -45,8 +45,8 @@ public class UpdateUseInc12611_12612 extends SdbTestBase{
 	@DataProvider(name = "operData")
 	public Object[][] generateIntDatas(){
 		String []expRecords1 = {"{'no':-2147493648,'long':{'$numberLong':'-9223372036854775808'},'test':1}"};
-		String []expRecords2 = {"{'no':-1073746824,'long':{'$numberLong':'-9223372036854775808'},'test':1}"};
-		String []expRecords3 = {"{'no':-1073746824,'long':{'$decimal':'-9223372037928522632'},'test':1}"};
+		String []expRecords2 = {"{'no':{'$numberLong':'-1073746824'},'long':{'$numberLong':'-9223372036854775808'},'test':1}"};
+		String []expRecords3 = {"{'no':{'$numberLong':'-1073746824'},'long':{'$decimal':'-9223372037928522632'},'test':1}"};
 		String []expRecords4 = {"{'no':{a:{b:2147493647}},'string':'123','test':2}"};
 		String []expRecords5 = {"{'no':[-2147483648,[3221225471],{'$numberLong':'9223372036854775807'}],test:3}"};
 		String []expRecords6 = {"{'no':[-2147483648,[3221225471],{'$decimal':'9223372036854775808'}],test:3}"};

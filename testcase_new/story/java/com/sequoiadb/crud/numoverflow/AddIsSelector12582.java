@@ -39,7 +39,7 @@ public class AddIsSelector12582 extends SdbTestBase{
 		String []expRecords1 = {"{'no':-2147483649,'tlong':{'$numberLong':'-9223372036854775808'},'test':0}"};
 		String []expRecords2 = {"{'no':-2147483648,'tlong':{'$numberLong':'-1'},'test':0}"};
 		String []expRecords3 = {"{'no':2147483647,'long':{'$decimal':'9223372036854775808'},'test':1}"};
-		String []expRecords4 = {"{'no':2147483646,'long':{'$numberLong':'9223372036854775807'},'test':1}"};
+		String []expRecords4 = {"{'no':{'$numberLong':'2147483646'},'long':{'$numberLong':'9223372036854775807'},'test':1}"};
 		String []expRecords5 = {"{'no':[2147483147.5],'test':2}"};
 		String []expRecords6 = {"{'no':[{'$numberLong':'8223372036854775808'}],'test':2}"};
 		String expJavaLong = "class java.lang.Long";

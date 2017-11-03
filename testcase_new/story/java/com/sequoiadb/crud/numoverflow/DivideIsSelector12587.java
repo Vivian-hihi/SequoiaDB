@@ -38,10 +38,10 @@ public class DivideIsSelector12587 extends SdbTestBase{
 	public Object[][] generateIntDatas(){
 		String []expRecords1 = {"{'no':2147483648,'tlong':{'$numberLong':'-9223372036854775808'},'test':0}"};
 		String []expRecords2 = {"{'no':-2147483648,'tlong':{'$decimal':'9223372036854775808'},'test':0}"};
-		String []expRecords3 = {"{'no':-214748364,'long':{'$numberLong':'9223372036854775807'},test:1}"};
+		String []expRecords3 = {"{'no':{'$numberLong':'-214748364'},'long':{'$numberLong':'9223372036854775807'},test:1}"};
 		String []expRecords4 = {"{'no':2147483647,'long':{'$numberLong':'-922337203685477580'},test:1}"};
 		String []expRecords5 = {"{'no':[82233720368547758070.0],'test':2}"};
-		String []expRecords6 = {"{'no':[[1024]],obj:{a:{b:1073741573}},'test':3}"};
+		String []expRecords6 = {"{'no':[[1024]],obj:{a:{b:{'$numberLong':'1073741573'}}},'test':3}"};
 		String expJavaLong = "class java.lang.Long";
 		String expJavaDouble = "class java.lang.Double";
 		String expJavaDecimal = "class org.bson.types.BSONDecimal";

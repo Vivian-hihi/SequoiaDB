@@ -36,12 +36,12 @@ public class DivideIsSelector12576 extends SdbTestBase{
 		String []expRecords2 = {"{no: [ 2147483648] ,'obj':{'a':-2147483648},'test':1}"};	
 		//String []expRecords3 = {"{no:[1,[{'$numberLong':'2147483648'}],3],obj:{a:[1,{'$numberLong':'-9223372036854775808'}]},test:3}"};
 		String []expRecords4 = {"{no:[-2147483648,{'$numberLong':'-9223372036854775808'}],obj:{a:{'$numberLong':'2147483648'}},test:1}"};		
-		String []expRecords5 = {"{no:33,obj:{a:{b:{int:2147483648,long:{'$numberLong':'-9223372036854775808'}}}},test:2}"};	
-		String []expRecords6 = {"{no:8,obj:{a:{b:{int:-2147483648,long:{'$numberLong':'-9223372036854775808'}}}},test:2}"};
+		String []expRecords5 = {"{no:{'$numberLong':'33'},obj:{a:{b:{int:{'$numberLong':'2147483648'},long:{'$numberLong':'-9223372036854775808'}}}},test:2}"};	
+		String []expRecords6 = {"{no:{'$numberLong':'8'},obj:{a:{b:{int:-2147483648,long:{'$numberLong':'-9223372036854775808'}}}},test:2}"};
 		
 		String []expRecords01 = {"{'no':-2147483648,'tlong':{'$decimal':'9223372036854775808'},'test':0}"};
 		String []expRecords02 = {"{'no':[{'$decimal':'9223372036854775808'}],'obj':{a:-2147483648},'test':1}"};	
-		String []expRecords03 = {"{no:33,obj:{a:{b:{int:-2147483648,"
+		String []expRecords03 = {"{no:{'$numberLong':'33'},obj:{a:{b:{int:-2147483648,"
 											+ "long:{'$decimal':'9223372036854775808'}}}},test:2}"};
 		String []expRecords04 = {"{no:[1,[-2147483648],3],obj:{a:[{'$decimal':'9223372036854775808'}]},test:3}"};		
 		String expDecimalType = "decimal";	

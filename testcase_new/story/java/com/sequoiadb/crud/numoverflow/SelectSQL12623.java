@@ -38,7 +38,7 @@ public class SelectSQL12623 extends SdbTestBase{
 	@DataProvider(name = "operData")
 	public Object[][] generateIntDatas(){
 		String []expRecords1 = {"{'no':8589930496}"};
-		String []expRecords2 = {"{'no':5704704}"};
+		String []expRecords2 = {"{'no':5704704.0}"};
 		String []expRecords3 = {"{'long':{$decimal:'-13835058055282163712'} }"};
 		String []expRecords4 = {"{'no':{$numberLong:'239331856416158720'} }"};
 		

@@ -33,7 +33,7 @@ public class AddIsSelector12579 extends SdbTestBase{
 	
 	@DataProvider(name = "operData")
 	public Object[][] generateDatas(){
-		String []expRecords1 = {"{'no':-3638,'tlong':{'$numberLong':'-6854775808'},'test':0}"};		
+		String []expRecords1 = {"{'no':{'$numberLong':'-3638'},'tlong':{'$numberLong':'-6854775808'},'test':0}"};		
 		String []expRecords2 = {"{no:-4.0,arr:[4.01],arr1:[1,'test',['0.01',{'$numberLong':'8'}]],test:1}"};	
 		String []expRecords3 = {"{'no':-3648,'tlong':-7.15477582E9,'test':0}"};
 		String []expRecords4 = {"{no:{a:{c:{'$decimal':'6854778929.711'}}},obj:{a:{b:{a1:10.00,a2:3}}},test:2}"};		
