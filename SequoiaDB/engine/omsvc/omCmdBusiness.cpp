@@ -42,8 +42,115 @@ using namespace boost::property_tree;
 
 namespace engine
 {
+   // ***************** omUnbindBusinessCommand *****************************
+   omUnbindBusinessCommand::omUnbindBusinessCommand(
+                                                restAdaptor *pRestAdaptor,
+                                                pmdRestSession *pRestSession )
+         : omAuthCommand( pRestAdaptor, pRestSession )
+   {
+   }
 
-   // *****************omRemoveBusinessCommand *****************************
+   omUnbindBusinessCommand::~omUnbindBusinessCommand()
+   {
+   }
+
+   INT32 omUnbindBusinessCommand::doCommand()
+   {
+      INT32 rc = SDB_OK ;
+      omArgOptions option( _restAdaptor, _restSession ) ;
+      omRestTool restTool( _restAdaptor, _restSession ) ;
+      omDatabaseTool dbTool( _cb ) ;
+
+      _setFileLanguageSep() ;
+
+      pmdGetThreadEDUCB()->resetInfo( EDU_INFO_ERROR ) ;
+
+      rc = option.parseRestArg( "ss",
+                                OM_REST_FIELD_CLUSTER_NAME, &_clusterName,
+                                OM_REST_FIELD_BUSINESS_NAME, &_businessName ) ;
+      if ( rc )
+      {
+         _errorMsg.setError( TRUE, option.getErrorMsg() ) ;
+         PD_LOG( PDERROR, "failed to parse rest arg: rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = _check() ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to check: rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = dbTool.unbindBusiness( _businessName ) ;
+      if ( rc )
+      {
+         _errorMsg.setError( TRUE, "failed to unbind business: name=%s, rc=%d",
+                             _businessName.c_str(), rc ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      restTool.sendOkRespone() ;
+
+   done:
+      return rc ;
+   error:
+      restTool.sendRespone( rc, _errorMsg.getError() ) ;
+      goto done ;
+   }
+
+   INT32 omUnbindBusinessCommand::_check()
+   {
+      INT32 rc = SDB_OK ;
+      INT64 taskID = -1 ;
+      omDatabaseTool dbTool( _cb ) ;
+
+      if ( FALSE == dbTool.isClusterExist( _clusterName ) )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "cluster does not exist: name=%s",
+                             _clusterName.c_str() ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      if ( FALSE == dbTool.isBusinessExist( _businessName ) )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "business does not exist: name=%s",
+                             _businessName.c_str() ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      if ( TRUE == dbTool.isRelationshipExistByBusiness( _businessName ) )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "business has relationship: name=%s",
+                             _businessName.c_str() ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      taskID = dbTool.getTaskIdOfRunningBuz( _businessName ) ;
+      if( 0 <= taskID )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "business[%s] is exist "
+                             "in task["OSS_LL_PRINT_FORMAT"]",
+                             _businessName.c_str(), taskID ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // ***************** omRemoveBusinessCommand *****************************
    omRemoveBusinessCommand::omRemoveBusinessCommand( restAdaptor *pRestAdaptor,
                                                    pmdRestSession *pRestSession,
                                                    string localAgentHost,

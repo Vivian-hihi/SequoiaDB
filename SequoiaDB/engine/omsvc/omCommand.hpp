@@ -1377,7 +1377,7 @@ namespace engine
       virtual INT32 doCommand() ;
 
    private:
-      INT32 _getRestInfo() ;
+      INT32 _check() ;
 
    private:
       string _clusterName ;
