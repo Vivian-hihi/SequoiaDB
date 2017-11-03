@@ -89,16 +89,16 @@ public class TestQueryAndRemove7089 extends SdbTestBase{
                     bson.put("age", random.nextDouble());
                     bson.put("bin", str.getBytes());
                     bson.put("num", random.nextInt(100));
-                    bson.put("weight", random.nextFloat());
+                    bson.put("weight", 0.1314);
                 } else if (i%3 == 1) {
                     bson.put("age", random.nextDouble());
                     bson.put("bin", str.getBytes());
                     bson.put("num", random.nextInt(100));
-                    bson.put("weight", random.nextFloat());
+                    bson.put("weight", 3.1415);
                     bson.put("name", i + "lisi");
                 } else if (i%3 == 2) {
                     bson.put("num", random.nextInt(100));
-                    bson.put("weight", random.nextFloat());
+                    bson.put("weight", 6.999);
                     bson.put("name", i + "lisi");
                     bson.put("bin", str.getBytes());
                     bson.put("age", random.nextDouble());
