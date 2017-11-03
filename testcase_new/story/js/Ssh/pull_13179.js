@@ -232,7 +232,8 @@ function main()
    var remotehost = toolGetRemotehost() ;
    println( "ssh hostname: " + remotehost ) ;
    
-   if( !checkSsh( remotehost, sdbUser, sdbPasswd, sshPort ) )
+   if( !checkSsh( remotehost, sdbUser, sdbPasswd, sshPort ) ||
+       !checkCmUser( remotehost, sdbUser ) )
    {
       return ;
    }

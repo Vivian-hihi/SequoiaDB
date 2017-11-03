@@ -98,6 +98,31 @@ function checkSsh( hostname, user, passwd, port )
 }
 
 /******************************************************************************
+*@Description : check cm user
+*@author      : Liang XueWang            
+******************************************************************************/
+function checkCmUser( hostname, user )
+{
+   try
+   {
+      var remote = new Remote( hostname, CMSVCNAME ) ;
+      var system = remote.getSystem() ;
+      var actual = system.getCurrentUser().toObj().user ;
+      remote.close() ;
+      if( user !== actual )
+      {
+         println( "cm user is " + actual + ", not " + user ) ;
+         return false ;
+      } 
+      return true ;
+   }
+   catch( e )
+   {
+      throw buildException( "checkCmUser", e, "check cm user " + hostname, 0, e ) ;
+   }
+}
+
+/******************************************************************************
 *@Description : get ip address of hostname
 *@author      : Liang XueWang            
 ******************************************************************************/
