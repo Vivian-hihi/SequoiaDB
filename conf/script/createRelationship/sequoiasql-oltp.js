@@ -135,14 +135,14 @@ function _relationWithSequoiaDB( PD_LOGGER )
       throw error ;
    }
 
-   if( typeof( options[FIELD_ADDRESS] ) == "string" &&
-       strTrim( options[FIELD_ADDRESS] ).length > 0 )
+   if( typeof( options[FIELD_ADDRESS2] ) == "string" &&
+       strTrim( options[FIELD_ADDRESS2] ).length > 0 )
    {
       //custom address
       var addressStr = '' ;
-      options[FIELD_ADDRESS] = strTrim( options[FIELD_ADDRESS] ) ;
+      options[FIELD_ADDRESS2] = strTrim( options[FIELD_ADDRESS2] ) ;
 
-      var customList = options[FIELD_ADDRESS].split( ',' ) ;
+      var customList = options[FIELD_ADDRESS2].split( ',' ) ;
 
       for( var i in customList )
       {
@@ -153,7 +153,7 @@ function _relationWithSequoiaDB( PD_LOGGER )
          {
             var error = new SdbError( SDB_SYS,
                                       sprintf( "Invalid address [?]",
-                                               options[FIELD_ADDRESS] ) ) ;
+                                               options[FIELD_ADDRESS2] ) ) ;
             PD_LOGGER.log( PDERROR, error ) ;
             throw error ;
          }
@@ -214,7 +214,7 @@ function _relationWithSequoiaDB( PD_LOGGER )
    //serialize options
    for( var key in options )
    {
-      if( key == FIELD_ADDRESS )
+      if( key == FIELD_ADDRESS2 )
       {
          continue ;
       }

@@ -328,6 +328,7 @@ var FIELD_NAME                             = Name ;
 var FIELD_CMD                              = "cmd" ;
 var FIELD_SAC_TASKID                       = "sactaskid" ;
 var FIELD_ADDRESS                          = "Address" ;
+var FIELD_ADDRESS2                         = "address" ;
 var FIELD_BUSINESS_NAME                    = BusinessName ;
 var FIELD_BUSINESS_TYPE                    = BusinessType ;
 var FIELD_CLUSTER_NAME                     = ClusterName ;
@@ -355,7 +356,6 @@ var FIELD_PORT2                            = "port" ;
 var FIELD_FROM                             = "From" ;
 var FIELD_TO                               = "To" ;
 var FIELD_OPTIONS                          = "Options" ;
-var FIELD_ADDRESS                          = "address" ;
 
 // Async task step
 var STEP_GENERATE_PLAN                     = "Generate plan" ;
