@@ -169,7 +169,7 @@ public class TestProcedure7121 extends SdbTestBase{
         }
         String code = "function sum_7121(x, y){ var z = x + y;}";
         String evalCode = "sum_7121(0.5, -2)";
-        testEvalWithReturnType(code, evalCode, Sequoiadb.SptReturnType.TYPE_VOID);
+        testEvalWithReturnType(code, evalCode, Sequoiadb.SptReturnType.TYPE_NUMBER);
         code = "function sum_7121(x, y){ return x*y;}";
         evalCode = "sum_7121(0.13,0.3)";
         testEvalWithReturnType(code, evalCode, Sequoiadb.SptReturnType.TYPE_NUMBER);
