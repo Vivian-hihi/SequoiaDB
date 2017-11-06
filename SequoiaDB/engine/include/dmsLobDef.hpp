@@ -46,7 +46,6 @@
 namespace engine
 {
    #define DMS_LOB_OID_LEN                   12 
-   #define DMS_LOB_DATA_MAP_BLK_LEN          DMS_PAGE_SIZE256B
    #define DMS_LOB_INVALID_PAGEID            DMS_INVALID_EXTENT
 
    typedef SINT32 DMS_LOB_PAGEID ;
@@ -254,7 +253,7 @@ namespace engine
       UINT32         _clLogicalID ;
       UINT16         _mbID ;
       BYTE           _status ;
-      CHAR           _pad2[211];  /// sizeof( _dmsLobDataMapBlk ) == 256B
+      CHAR           _pad2[25];  /// sizeof( _dmsLobDataMapBlk ) == 64B
 
       _dmsLobDataMapBlk()
       :_sequence( 0 ),
@@ -267,7 +266,7 @@ namespace engine
       {
          ossMemset( this, 0, sizeof( _pad1 ) + sizeof( _oid ) ) ;
          ossMemset( _pad2, 0, sizeof( _pad2 ) ) ;
-         SDB_ASSERT( 256 == sizeof( _dmsLobDataMapBlk ),
+         SDB_ASSERT( 64 == sizeof( _dmsLobDataMapBlk ),
                      "invalid blk" ) ;
       }
 
