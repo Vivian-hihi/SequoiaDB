@@ -273,7 +273,7 @@ namespace engine
    done:
       return rc ;
    error:
-      goto error ;
+      goto done ;
    }
 
    UINT32 _rtnLobStream::_getSequence( INT64 offset ) const
