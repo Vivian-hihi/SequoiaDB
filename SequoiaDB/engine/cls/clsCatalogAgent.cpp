@@ -1048,7 +1048,6 @@ namespace engine
    BOOLEAN _clsCatalogSet::isKeyOnBoundary ( const BSONObj &obj,
                                              UINT32* pGroupID )
    {
-      INT32 rc              = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSCTSET_ISKEYONBD ) ;
       BOOLEAN result        = FALSE ;
 
@@ -1058,8 +1057,13 @@ namespace engine
          result = FALSE ;
          goto done ;
       }
-      PD_CHECK ( _mapItems.size() >= 1, SDB_SYS, error, PDERROR,
+      if ( _mapItems.size() < 1 )
+      {
+         PD_LOG( PDERROR, "Failed to check key boundary : "
                  "there must be at least 1 range for the collection" ) ;
+         result = FALSE ;
+         goto error ;
+      }
       {
          // find the upper bound of the requested key
          // We have to use lower_bound here because {MaxKey} will not be matched
@@ -1107,7 +1111,7 @@ namespace engine
          }
       }
    done :
-      PD_TRACE_EXITRC ( SDB__CLSCTSET_ISKEYONBD, rc ) ;
+      PD_TRACE_EXIT ( SDB__CLSCTSET_ISKEYONBD ) ;
       return result ;
    error :
       goto done ;
