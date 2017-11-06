@@ -148,7 +148,7 @@ namespace exprt
    
    #define DEFAULT_HOSTNAME         "localhost"
    #define DEFAULT_SVCNAME          "11810"
-   #define DEFAULT_DELCHAR_CHAR     '"'
+   #define DEFAULT_DELCHAR_CHAR     "\""
    #define DEFAULT_DELFIELD_CHAR    ","
    #define DEFAULT_FILELIMIT        ( 16LL * 1024 * 1024 * 1024 ) // 16G
 
@@ -787,7 +787,9 @@ namespace exprt
       if ( _has(OPTION_DELCHAR) )
       { 
          string rawStr = _get<string>(OPTION_DELCHAR) ; 
-         rc = getDel( rawStr, _delChar ) ;
+
+         rc = _convertAsciiChar( rawStr, _delChar ) ;
+
          if ( SDB_OK != rc )
          {
             cerr << "invalid value for option \""  OPTION_DELCHAR "\"" 
@@ -814,28 +816,21 @@ namespace exprt
       }
       if ( _has(OPTION_DELRECORD) )   
       { 
-         // delRecord can be one char or a string
-         CHAR chr = 0 ;
-         _delRecord = _get<string>(OPTION_DELRECORD) ; 
-         if ( SDB_OK == getDel( _delRecord, chr ) )
+         string rawStr = _get<string>(OPTION_DELRECORD) ;
+
+         rc = _convertAsciiChar( rawStr, _delRecord ) ;
+
+         if ( SDB_OK != rc )
          {
-            _delRecord = string( 1, chr ) ;
+            cerr << "invalid value for option \""  OPTION_DELFIELD "\"" 
+                 << endl ;
+            PD_LOG( PDERROR, "Invalid value for option \""  
+                             OPTION_DELFIELD "\"" ) ;
+            goto error ;
          }
       }
 
-      if ( ' ' == _delChar  || '\t' == _delChar )
-      {
-         cerr << "option \""  OPTION_DELCHAR "\" or "
-              << "option \"" OPTION_DELFIELD "\" " 
-              << "cant be space or tab"
-              << endl ;
-         PD_LOG( PDERROR, "option \""  OPTION_DELCHAR "\" or "
-                          "option \"" OPTION_DELFIELD "\" " 
-                          "cant be space or tab" ) ;
-         goto error ;
-      }
-
-      if ( _delField.find( _delChar ) != string::npos )
+      if ( _delChar.size() > 0 && string::npos != _delField.find( _delChar ) )
       {
          cerr << "option \"" << OPTION_DELCHAR << "\" cant be same as "
               << "option \"" << OPTION_DELFIELD  << "\"" << endl ;
@@ -843,7 +838,7 @@ namespace exprt
                  OPTION_DELCHAR, OPTION_DELFIELD ) ;
          goto error ;
       }
-      if ( 1 == _delRecord.size() && _delChar == _delRecord[0] )
+      if ( _delChar.size() > 0 && string::npos != _delRecord.find( _delChar ) )
       {
          cerr << "option \"" << OPTION_DELCHAR << "\" cant be same as "
               << "option \"" << OPTION_DELRECORD  << "\"" << endl ;
@@ -859,7 +854,7 @@ namespace exprt
                  OPTION_DELFIELD, OPTION_DELRECORD ) ;
          goto error ;
       }
-      
+
    done:
       return rc ;
    error:

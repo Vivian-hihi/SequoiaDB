@@ -57,7 +57,7 @@ struct fieldResolve : public SDBObject
 class utilDecodeBson : public SDBObject
 {
 private:
-   CHAR _delChar ;
+   std::string _delChar ;
    std::string _delField ;
    BOOLEAN _includeBinary ;
    BOOLEAN _includeRegex ;
@@ -81,7 +81,7 @@ private:
 public:
    utilDecodeBson() ;
    ~utilDecodeBson() ;
-   INT32 init( CHAR delChar, std::string delField,
+   INT32 init( std::string delChar, std::string delField,
                BOOLEAN includeBinary,
                BOOLEAN includeRegex,
                BOOLEAN kickNull,
