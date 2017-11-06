@@ -80,12 +80,14 @@ public class TestProcedure7121 extends SdbTestBase{
             this.sdb.crtJSProcedure(code);
             DBCursor cursor =  this.sdb.listProcedures((BSONObject) JSON.parse("{\"name\":\"sum_7121\"}"));
             BSONObject actual = new BasicBSONObject();
-            String expected = "{ \"name\" : \"sum_7121\" , \"func\" : { \"$code\" : \"function sum_7121(x, y){return x/y;}\"}}";
+            String expected = "{ \"name\" : \"sum_7121\" , \"func\" : { \"$code\" : \"function sum_7121(x, y){return x/y;}\" } }";
             //expected.put("func", rcfunc);
             while(cursor.hasNext()) {
                 actual = cursor.getNext();
                 actual.removeField("_id");
                 actual.removeField("funcType");
+                System.out.println(actual.toString());
+                System.out.println(expected);
                 Assert.assertEquals(actual.toString(), expected);
                 //actual.removeField("func");
                // Assert.assertEquals(actual, expected);
@@ -169,7 +171,7 @@ public class TestProcedure7121 extends SdbTestBase{
         }
         String code = "function sum_7121(x, y){ var z = x + y;}";
         String evalCode = "sum_7121(0.5, -2)";
-        testEvalWithReturnType(code, evalCode, Sequoiadb.SptReturnType.TYPE_NUMBER);
+        testEvalWithReturnType(code, evalCode, Sequoiadb.SptReturnType.TYPE_VOID);
         code = "function sum_7121(x, y){ return x*y;}";
         evalCode = "sum_7121(0.13,0.3)";
         testEvalWithReturnType(code, evalCode, Sequoiadb.SptReturnType.TYPE_NUMBER);
