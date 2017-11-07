@@ -712,7 +712,7 @@ void setPrintfLog( void (*pFun)( const CHAR *pFunc,
    _pPrintfLogFun = (UTIL_PLOG)pFun ;
 }
 
-INT32 getCSVSize ( const CHAR *delChar, CHAR *delField, INT32 delFieldSize,
+INT32 getCSVSize ( const CHAR *delChar, const CHAR *delField, INT32 delFieldSize,
                    CHAR *pbson, INT32 *pCSVSize,
                    BOOLEAN includeBinary,
                    BOOLEAN includeRegex,
@@ -737,7 +737,7 @@ error:
    goto done ;
 }
 
-INT32 bson2csv( const CHAR *delChar, CHAR *delField, INT32 delFieldSize,
+INT32 bson2csv( const CHAR *delChar, const CHAR *delField, INT32 delFieldSize,
                 CHAR *pbson, CHAR **ppBuffer, INT32 *pCSVSize,
                 BOOLEAN includeBinary,
                 BOOLEAN includeRegex,
