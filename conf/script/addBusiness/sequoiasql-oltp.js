@@ -263,6 +263,12 @@ function CreateInst( PD_LOGGER )
    error = _runRemoteCmd( cmd, exec, args, timeout ) ;
    if ( error !== null )
    {
+      var logMsg = _getLogMessage( PD_LOGGER, cmd, installPath, businessName ) ;
+      if( logMsg !== null )
+      {
+         PD_LOGGER.logTask( PDERROR, logMsg ) ;
+      }
+
       resultInfo[FIELD_ERRNO]  = error.getErrCode() ;
       resultInfo[FIELD_DETAIL] = getErr( error.getErrCode() ) ;
       resultInfo[FIELD_STATUS] = STATUS_FAIL ;
