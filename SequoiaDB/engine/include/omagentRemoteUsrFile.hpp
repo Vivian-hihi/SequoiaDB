@@ -77,6 +77,7 @@ namespace engine
       private:
          UINT32 _FID ;
          SINT64 _size ;
+         BOOLEAN _isBinary ;
    } ;
 
    /*
@@ -98,7 +99,7 @@ namespace engine
 
       private:
          UINT32 _FID ;
-         SINT64 _size ;
+         SINT32 _size ;
          const CHAR* _content ;
    } ;
 

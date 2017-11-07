@@ -66,6 +66,7 @@ namespace engine
    #define OMA_REMOTE_FIELD_NAME_PATH_TYPE      "PathType"
    #define OMA_REMOTE_FIELD_NAME_IS_EMPTY       "IsEmpty"
    #define OMA_REMOTE_FIELD_NAME_MD5            "MD5"
+   #define OMA_REMOTE_FIELD_NAME_IS_BINARY      "IsBinary"
 
    // function to get current thread omagent session
    static omaSession* _getThreadOmaSession()
@@ -178,7 +179,7 @@ namespace engine
    IMPLEMENT_OACMD_AUTO_REGISTER( _remoteFileRead )
 
    _remoteFileRead::_remoteFileRead():
-      _FID( 0 ), _size( 1024 )
+      _FID( 0 ), _size( 1024 ), _isBinary( FALSE )
    {
    }
 
@@ -192,6 +193,21 @@ namespace engine
 
       rc = _remoteExec::init( pInfomation ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get argument, rc: %d", rc ) ;
+
+      // Check flags to determine if need to return data using binary type
+      if( _optionObj.hasField( OMA_REMOTE_FIELD_NAME_IS_BINARY ) )
+      {
+         BSONElement ele ;
+         ele = _optionObj.getField( OMA_REMOTE_FIELD_NAME_IS_BINARY ) ;
+         if( Bool == ele.type() )
+         {
+            _isBinary = _optionObj.getBoolField( OMA_REMOTE_FIELD_NAME_IS_BINARY ) ;
+         }
+         else
+         {
+            _isBinary = _optionObj.getIntField( OMA_REMOTE_FIELD_NAME_IS_BINARY ) ;
+         }
+      }
 
       if( FALSE == _matchObj.hasField( OMA_REMOTE_FIELD_NAME_FID ) )
       {
@@ -271,8 +287,15 @@ namespace engine
          PD_LOG_MSG( PDERROR, "%s", err.c_str() ) ;
          goto error ;
       }
-      builder.append( OMA_REMOTE_FIELD_NAME_CONTENT, buf, readLen + 1 ) ;
-      builder.append( OMA_REMOTE_FIELD_NAME_READ_LEN, readLen) ;
+      if( _isBinary )
+      {
+         builder.appendBinData( OMA_REMOTE_FIELD_NAME_CONTENT, readLen,
+                                BinDataGeneral, buf ) ;
+      }
+      else
+      {
+         builder.append( OMA_REMOTE_FIELD_NAME_CONTENT, buf ) ;
+      }
 
       retObj = builder.obj() ;
    done:
@@ -302,26 +325,24 @@ namespace engine
    INT32 _remoteFileWrite::init( const CHAR * pInfomation )
    {
       INT32 rc = SDB_OK ;
-
+      BSONElement ele ;
       rc = _remoteExec::init( pInfomation ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get argument, rc: %d", rc ) ;
 
-      _content = _valueObj.getStringField( OMA_REMOTE_FIELD_NAME_CONTENT ) ;
+      ele = _valueObj.getField( OMA_REMOTE_FIELD_NAME_CONTENT );
 
-      if( FALSE == _valueObj.hasField( OMA_REMOTE_FIELD_NAME_SIZE ) )
+      if( String == ele.type() )
       {
+         _content = ele.valuestr() ;
          _size = ossStrlen( _content ) ;
       }
-      else if( NumberInt != _valueObj.getField( OMA_REMOTE_FIELD_NAME_SIZE ).type() &&
-               NumberLong != _valueObj.getField( OMA_REMOTE_FIELD_NAME_SIZE ).type() )
+      else if( BinData == ele.type() )
       {
-         rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "Size must be number" ) ;
-         goto error ;
+         _content = ele.binData( _size ) ;
       }
       else
       {
-         _size = _valueObj.getIntField( OMA_REMOTE_FIELD_NAME_SIZE ) ;
+         PD_LOG_MSG( PDERROR, "Content must be binary or string" ) ;
       }
 
       if( FALSE == _matchObj.hasField( OMA_REMOTE_FIELD_NAME_FID ) )

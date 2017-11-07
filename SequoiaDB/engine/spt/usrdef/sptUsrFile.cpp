@@ -474,7 +474,8 @@ JS_MAPPING_END()
       {
          BSONObj retObj ;
          SINT64 readLen = 0 ;
-         SINT64 realRead = 0 ;
+         SINT32 realRead = 0 ;
+         BSONElement ele ;
          if( size - hasRead > FILE_TRANSFORM_UNIT_512K )
          {
             readLen = FILE_TRANSFORM_UNIT_512K ;
@@ -484,7 +485,8 @@ JS_MAPPING_END()
             readLen = size - hasRead ;
          }
 
-         rc = pRemote->runCommand( OMA_REMOTE_FILE_READ, BSONObj(),
+         rc = pRemote->runCommand( OMA_REMOTE_FILE_READ,
+                                   BSON( "IsBinary" << TRUE ),
                                    BSON( "FID" << fID ),
                                    BSON( "Size" << readLen ), detail, retObj ) ;
          if( SDB_OK != rc )
@@ -503,27 +505,14 @@ JS_MAPPING_END()
             detail = BSON( SPT_ERR << "RetObj must has field: 'Content'" ) ;
             goto error ;
          }
-         if( String != retObj.getField( "Content" ).type() )
+         ele = retObj.getField( "Content" ) ;
+         if( BinData != ele.type() )
          {
             rc = SDB_INVALIDARG ;
-            detail = BSON( SPT_ERR << "Content must be string" ) ;
+            detail = BSON( SPT_ERR << "Content must be binary" ) ;
             goto error ;
          }
-         retBuf = retObj.getStringField( "Content" ) ;
-
-         if( FALSE == retObj.hasField( "ReadLen" ) )
-         {
-            rc = SDB_OUT_OF_BOUND ;
-            detail = BSON( SPT_ERR << "RetObj must has field: 'ReadLen'" ) ;
-            goto error ;
-         }
-         if( NumberLong != retObj.getField( "ReadLen" ).type() )
-         {
-            rc = SDB_INVALIDARG ;
-            detail = BSON( SPT_ERR << "ReadLen must be NumberLong" ) ;
-            goto error ;
-         }
-         realRead = retObj.getIntField( "ReadLen" ) ;
+         retBuf = ele.binData( realRead );
 
          ossMemcpy( ( *buf ) + hasRead, retBuf, realRead ) ;
          readTimes++ ;
@@ -629,7 +618,7 @@ JS_MAPPING_END()
       hasWrite = 0 ;
       while( size > hasWrite )
       {
-         SINT64 writeSize ;
+         SINT32 writeSize ;
          BSONObjBuilder builder ;
 
          if( size - hasWrite > FILE_TRANSFORM_UNIT_512K )
@@ -640,10 +629,10 @@ JS_MAPPING_END()
          {
             writeSize = size - hasWrite ;
          }
-         builder.append( "Content", pFileContent->getBuf() + hasWrite,
-                         writeSize ) ;
-         builder.append( "Size", writeSize ) ;
-         rc = pRemote->runCommand( OMA_REMOTE_FILE_WRITE, BSONObj(),
+         builder.appendBinData( "Content", writeSize, BinDataGeneral,
+                                pFileContent->getBuf() + hasWrite ) ;
+         rc = pRemote->runCommand( OMA_REMOTE_FILE_WRITE,
+                                   BSONObj(),
                                    BSON( "FID" << fID ),
                                    builder.obj(), detail, retObj ) ;
          hasWrite += writeSize ;
