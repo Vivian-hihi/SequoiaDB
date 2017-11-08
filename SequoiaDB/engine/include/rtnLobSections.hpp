@@ -75,6 +75,12 @@ namespace engine
          accessId = other.accessId ;
       }
 
+      OSS_INLINE void reset()
+      {
+         offset = -1 ;
+         length = -1 ;
+      }
+
       OSS_INLINE INT64 start() const
       {
          return offset ;

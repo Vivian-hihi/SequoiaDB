@@ -253,6 +253,7 @@ namespace engine
             if ( overlapped )
             {
                tmp.insert( LOB_SECTIONS_TYPE::value_type( sec.offset, sec ) ) ;
+               sec.reset() ;
             }
             break ;
          }
@@ -291,6 +292,7 @@ namespace engine
                else
                {
                   // no upper section
+                  sec.reset() ;
                   break ;
                }
             }
@@ -304,6 +306,7 @@ namespace engine
             else
             {
                // sec is inside of current section
+               sec.reset() ;
                break ;
             }
          }
@@ -317,6 +320,11 @@ namespace engine
             const _rtnLobSection& cur = iter->second ;
             offsets.push_back( cur.offset ) ;
             _sections.insert( LOB_SECTIONS_TYPE::value_type( cur.offset, cur ) ) ;
+         }
+         if ( sec.valid() )
+         {
+            offsets.push_back( sec.offset ) ;
+            _sections.insert( LOB_SECTIONS_TYPE::value_type( sec.offset, sec ) ) ;
          }
       }
       else
