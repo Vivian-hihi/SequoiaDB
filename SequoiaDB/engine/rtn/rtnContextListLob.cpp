@@ -34,6 +34,7 @@
 #include "rtnContextListLob.hpp"
 #include "rtnTrace.hpp"
 #include "rtnLob.hpp"
+#include "rtnLobPieces.hpp"
 
 using namespace bson ;
 
@@ -204,6 +205,34 @@ namespace engine
       builder.appendBool( FIELD_NAME_LOB_AVAILABLE, meta->isDone() ) ;
 #ifdef _DEBUG
       builder.appendBool( FIELD_NAME_LOB_HAS_PIECESINFO, meta->hasPiecesInfo() ) ;
+      if ( meta->hasPiecesInfo() && info._len >= DMS_LOB_META_LENGTH )
+      {
+         BSONArray array ;
+         _rtnLobPiecesInfo piecesInfo ;
+
+         INT32 length = meta->_piecesInfoNum * (INT32)sizeof( _rtnLobPieces ) ;
+         const CHAR* piecesInfoBuf = (const CHAR*)
+                                     ( _buf + DMS_LOB_META_LENGTH - length ) ;
+
+         rc = piecesInfo.readFrom( piecesInfoBuf, length ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to read pieces info of lob[%s], rc:%d",
+                    info._oid.str().c_str(), rc ) ;
+            goto error ;
+         }
+
+         rc = piecesInfo.saveTo( array ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to save pieces info of lob[%s], rc:%d",
+                    info._oid.str().c_str(), rc ) ;
+            goto error ;
+         }
+
+         builder.append( FIELD_NAME_LOB_PIECESINFONUM, meta->_piecesInfoNum ) ;
+         builder.appendArray( FIELD_NAME_LOB_PIECESINFO, array ) ;
+      }
 #endif
       obj = builder.obj() ;
    done:
