@@ -3012,7 +3012,7 @@
                   "name": "preferedinstance",
                   "webName": "preferedinstance",
                   "type": "select",
-                  "value": 's',
+                  "value": 'a',
                   "valid":[
                      { 'key': 's', 'value': 's' },
                      { 'key': 'm', 'value': 'm' },
@@ -3030,7 +3030,7 @@
                   "name": "transaction",
                   "webName": "transaction",
                   "type": "select",
-                  "value": "on",
+                  "value": "off",
                   "valid":[
                      { 'key': 'on', 'value': 'on' },
                      { 'key': 'off', 'value': 'off' }
