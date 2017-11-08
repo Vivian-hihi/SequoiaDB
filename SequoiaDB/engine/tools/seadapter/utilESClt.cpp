@@ -553,11 +553,11 @@ namespace engine
 
       ES_CLT_ARG_CHK2( index, type ) ;
 
-      uri << index << "/" << type << "/_query" ;
+      uri << index << "/" << type << "/_delete_by_query" ;
       data << "{\"query\":{\"match_all\":{}}}" ;
 
-      rc = _http.remove( uri.str().c_str(), data.str().c_str(),
-                         &status, &reply, &replyLen ) ;
+      rc = _http.post( uri.str().c_str(), data.str().c_str(),
+                       &status, &reply, &replyLen ) ;
       rc = _processReply( rc, reply, replyLen, resultObj ) ;
       PD_RC_CHECK( rc, PDERROR, "Process request reply failed[ %d ]", rc ) ;
 

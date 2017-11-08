@@ -2786,12 +2786,10 @@ namespace engine
       string cappedCSName ;
       string cappedCLName ;
 
-      rc = rtnExtDataHandler::buildNames( clInfo->_name,
-                                          idxInfo->getIndexName(),
-                                          cappedCSName,
-                                          cappedCLName ) ;
-      PD_RC_CHECK( rc, PDERROR, "Build names for text index information "
-                   "failed[ %d ]", rc ) ;
+      rtnExtDataHandler::buildNames( clInfo->_csname, clInfo->_clname,
+                                     idxInfo->getIndexName(),
+                                     cappedCSName,
+                                     cappedCLName ) ;
 
       try
       {

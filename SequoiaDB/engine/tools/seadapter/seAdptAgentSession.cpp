@@ -408,36 +408,45 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      BSONElement ele = matcher.firstElement() ;
-      if ( Object == ele.type() )
+      try
       {
-         BSONElement subEle = ele.Obj().firstElement() ;
-         if ( 0 == ossStrcmp( FIELD_NAME_TEXT, subEle.fieldName() ) )
+         BSONElement ele = matcher.firstElement() ;
+         if ( Object == ele.type() )
          {
-            if ( 1 != matcher.nFields() )
+            BSONElement subEle = ele.Obj().firstElement() ;
+            if ( 0 == ossStrcmp( FIELD_NAME_TEXT, subEle.fieldName() ) )
             {
-               rc = SDB_INVALIDARG ;
-               PD_LOG( PDERROR, "Only one query condition should be specified "
-                       "for text search, actually: %d", matcher.nFields() ) ;
-               goto error ;
-            }
+               if ( 1 != matcher.nFields() )
+               {
+                  rc = SDB_INVALIDARG ;
+                  PD_LOG( PDERROR, "Only one query condition should be specified "
+                          "for text search, actually: %d", matcher.nFields() ) ;
+                  goto error ;
+               }
 
-            if ( String == subEle.type() )
-            {
-               queryStr = subEle.valuestr() ;
-            }
-            else if ( Object == subEle.type() )
-            {
-               queryStr = subEle.Obj().jsonString() ;
-            }
-            else
-            {
-               rc = SDB_INVALIDARG ;
-               PD_LOG( PDERROR, "Query conditioin type[%d] for text "
-                       "search is wrong", subEle.type() ) ;
-               goto error ;
+               if ( String == subEle.type() )
+               {
+                  queryStr = subEle.valuestr() ;
+               }
+               else if ( Object == subEle.type() )
+               {
+                  queryStr = subEle.Obj().jsonString() ;
+               }
+               else
+               {
+                  rc = SDB_INVALIDARG ;
+                  PD_LOG( PDERROR, "Query conditioin type[%d] for text "
+                          "search is wrong", subEle.type() ) ;
+                  goto error ;
+               }
             }
          }
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Unexpected exception happened: %s", e.what() ) ;
+         goto error ;
       }
 
    done:

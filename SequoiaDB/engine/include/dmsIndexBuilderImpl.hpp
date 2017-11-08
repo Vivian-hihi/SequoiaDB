@@ -32,6 +32,7 @@
 #define DMS_INDEX_BUILDER_IMPL_HPP_
 
 #include "dmsIndexBuilder.hpp"
+#include "dmsExtDataHandler.hpp"
 #include "../bson/ordering.h"
 #include "../bson/bsonobj.h"
 
@@ -81,9 +82,11 @@ namespace engine
    } ;
    typedef class _dmsIndexSortingBuilder dmsIndexSortingBuilder ;
 
-   // Extend index builder, currently for text indices. As index data are in
-   // external system( ElasticSearch, for example ), nothing that much as normal
-   // indices is done. We want the index on ES to be re-created.
+   // Extended index builder, currently for text indices.
+   // The rebuild of text index is very different with normal indices.
+   // The main task is to create the corresponding capped cs and cl. No scanning
+   // of the original collection is needed. After creating the capped
+   // collection, the operation records can be inserted into it.
    class _dmsIndexExtBuilder : public _dmsIndexBuilder
    {
    public:
@@ -95,12 +98,18 @@ namespace engine
       ~_dmsIndexExtBuilder() ;
 
    private:
+      virtual INT32 _onInit() ;
       INT32 _build() ;
+      void _reset() ;
+
+   private:
+      IDmsExtDataHandler *_extHandle ;
+      CHAR _csName[ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] ;
+      CHAR _clName[ DMS_COLLECTION_NAME_SZ + 1 ] ;
+      CHAR _idxName[ IXM_INDEX_NAME_SIZE + 1 ] ;
    } ;
    typedef _dmsIndexExtBuilder dmsIndexExtBuilder ;
-
 }
-
 
 #endif /* DMS_INDEX_BUILDER_IMPL_HPP_ */
 

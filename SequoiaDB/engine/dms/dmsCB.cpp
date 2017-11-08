@@ -50,8 +50,10 @@
 #include "dpsOp2Record.hpp"
 #include "rtn.hpp"
 #include "ossLatch.hpp"
+#include "rtnExtDataHandler.hpp"
 
 #include <list>
+
 using namespace std;
 namespace engine
 {
@@ -1384,13 +1386,11 @@ namespace engine
    INT32 _SDB_DMSCB::_delCollectionSpace( const CHAR * pName, _pmdEDUCB * cb,
                                           SDB_DPSCB * dpsCB,
                                           BOOLEAN removeFile,
-                                          BOOLEAN onlyEmpty )
+                                          BOOLEAN onlyEmpty,
+                                          monCSSimple *csInfo )
    {
       INT32 rc = SDB_OK ;
       SDB_DMS_CSCB *pCSCB = NULL ;
-      monCSSimple csInfo ;
-      BOOLEAN deleting = FALSE ;
-      IDmsExtDataHandler *extDataHandler = NULL ;
 
       PD_TRACE_ENTRY ( SDB__SDB_DMSCB_DELCS ) ;
 
@@ -1399,8 +1399,6 @@ namespace engine
          rc = SDB_INVALIDARG ;
          goto error ;
       }
-
-      dumpCSInfo( pName, csInfo, TRUE, deleting, TRUE, TRUE, TRUE ) ;
 
       rc = _CSCBNameRemove ( pName, cb, dpsCB, onlyEmpty, pCSCB ) ;
       if ( rc )
@@ -1413,37 +1411,19 @@ namespace engine
          goto error ;
       }
 
-      if ( DMS_INVALID_SUID != pCSCB->_su->CSID() )
+      if ( csInfo )
       {
-         extDataHandler = pCSCB->_su->getExtDataHandler() ;
+         pCSCB->_su->dumpInfo( *csInfo, TRUE, TRUE, TRUE ) ;
       }
 
       if ( removeFile )
       {
          pCSCB->_su->getEventHolder()->onDropCS( DMS_EVENT_MASK_ALL, cb, dpsCB ) ;
-
-         if ( extDataHandler )
-         {
-            INT32 rcTmp = extDataHandler->onDropCS( csInfo, cb ) ;
-            if ( rcTmp )
-            {
-               PD_LOG( PDERROR, "Remove external data failed(rc=%d)", rcTmp ) ;
-            }
-         }
-
          rc = pCSCB->_su->remove() ;
       }
       else
       {
          pCSCB->_su->getEventHolder()->onUnloadCS( DMS_EVENT_MASK_ALL, cb, dpsCB ) ;
-         if ( extDataHandler )
-         {
-            INT32 rcTmp = extDataHandler->onUnloadCS( csInfo, cb ) ;
-            if ( rcTmp )
-            {
-               PD_LOG( PDERROR, "Unload external data failed(rc=%d)", rcTmp ) ;
-            }
-         }
          pCSCB->_su->close() ;
       }
 
@@ -1464,15 +1444,50 @@ namespace engine
    INT32 _SDB_DMSCB::dropCollectionSpace ( const CHAR *pName, _pmdEDUCB *cb,
                                            SDB_DPSCB *dpsCB )
    {
+      monCSSimple csInfo ;
+
       aquireCSMutex( pName ) ;
-      INT32 rc = _delCollectionSpace( pName, cb, dpsCB, TRUE, FALSE ) ;
+      INT32 rc = _delCollectionSpace( pName, cb, dpsCB, TRUE, FALSE, &csInfo ) ;
       releaseCSMutex( pName ) ;
+
+      {
+         rtnExtDataHandler *extDataHandler = getRtnExtDataHandler() ;
+         INT32 rcTmp = extDataHandler->onDropCS( csInfo, cb ) ;
+         if ( rcTmp )
+         {
+            PD_LOG( PDERROR, "External operation of drop cs failed, rc: %d",
+                    rcTmp ) ;
+         }
+      }
+
       return rc ;
    }
 
    INT32 _SDB_DMSCB::unloadCollectonSpace( const CHAR *pName, _pmdEDUCB *cb )
    {
-      return _delCollectionSpace( pName, cb, NULL, FALSE, FALSE ) ;
+      INT32 rc = SDB_OK ;
+      monCSSimple csInfo ;
+
+      rc = _delCollectionSpace( pName, cb, NULL, FALSE, FALSE, &csInfo ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      {
+         rtnExtDataHandler *extDataHandler = getRtnExtDataHandler() ;
+         INT32 rcTmp = extDataHandler->onUnloadCS( csInfo, cb ) ;
+         if ( rcTmp )
+         {
+            PD_LOG( PDERROR, "External operation of unload cs failed, rc: %d",
+                    rcTmp ) ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _SDB_DMSCB::dropEmptyCollectionSpace( const CHAR *pName,
@@ -1594,12 +1609,11 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_DROPCSP2, "_SDB_DMSCB::dropCollectionSpaceP2" )
    INT32 _SDB_DMSCB::dropCollectionSpaceP2 ( const CHAR *pName, _pmdEDUCB *cb,
-                                             SDB_DPSCB *dpsCB )
+                                             SDB_DPSCB *dpsCB,
+                                             monCSSimple *csInfo )
    {
       INT32 rc = SDB_OK ;
       SDB_DMS_CSCB *pCSCB = NULL ;
-      monCSSimple csInfo ;
-      BOOLEAN deleting = FALSE ;
 
       PD_TRACE_ENTRY ( SDB__SDB_DMSCB_DROPCSP2 ) ;
       if ( !pName )
@@ -1607,13 +1621,6 @@ namespace engine
          rc = SDB_INVALIDARG ;
          goto error ;
       }
-
-      // When adding the function of text search, capped collection spaces are
-      // "bound" to the original cs. So when dropping the original cs, need to
-      // find these relative capped cs and drop them also.
-      // Dump the information here, and the dropping action will be done by
-      // external data handler.
-      dumpCSInfo( pName, csInfo, TRUE, deleting, TRUE, TRUE, TRUE ) ;
 
       rc = _CSCBNameRemoveP2( pName, cb, dpsCB, pCSCB ) ;
       if ( rc )
@@ -1626,23 +1633,19 @@ namespace engine
          goto error ;
       }
 
+      // When adding the function of text search, capped collection spaces are
+      // "bound" to the original cs. So when dropping the original cs, need to
+      // find these relative capped cs and drop them also.
+      // Dump the information here, and the dropping action will be done by
+      // external data handler.
+      if ( csInfo )
+      {
+         pCSCB->_su->dumpInfo( *csInfo, TRUE, TRUE, TRUE ) ;
+      }
+
       pCSCB->_su->getEventHolder()->onDropCS( DMS_EVENT_MASK_ALL, cb, dpsCB ) ;
       // if remove file failed, we can do nothing
       rc = pCSCB->_su->remove() ;
-      if ( DMS_INVALID_SUID != csInfo._suID )
-      {
-         IDmsExtDataHandler *extDataHandler = pCSCB->_su->getExtDataHandler() ;
-         if ( extDataHandler )
-         {
-            INT32 rcTmp = extDataHandler->onDropCS( csInfo, cb ) ;
-            if ( rcTmp )
-            {
-               PD_LOG( PDERROR, "Remove external data failed(rc=%d)", rcTmp ) ;
-               // We can do nothing, do not goto error, continue to delete the
-               // CSCB.
-            }
-         }
-      }
 
       SDB_OSS_DEL pCSCB ;
       PD_RC_CHECK( rc, PDERROR,

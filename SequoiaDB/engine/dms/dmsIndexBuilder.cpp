@@ -133,6 +133,29 @@ namespace engine
       _unique = _indexCB->unique() ;
       _dropDups = _indexCB->dropDups() ;
 
+      rc = _onInit()  ;
+      if ( rc && SDB_DMS_EOC != rc )
+      {
+         PD_LOG( PDERROR, "Post init operation failed, rc: %d", rc ) ;
+         goto error ;
+      }
+
+   done:
+      _mbContext->mbUnlock() ;
+      return rc ;
+   error:
+      if ( NULL != _indexCB )
+      {
+         SDB_OSS_DEL( _indexCB ) ;
+         _indexCB = NULL ;
+      }
+      goto done ;
+   }
+
+   INT32 _dmsIndexBuilder::_onInit()
+   {
+      INT32 rc = SDB_OK ;
+
       /// start rebuilding
       _currentExtentID = _mbContext->mb()->_firstExtentID ;
       if ( DMS_INVALID_EXTENT == _currentExtentID )
@@ -148,14 +171,8 @@ namespace engine
       }
 
    done:
-      _mbContext->mbUnlock() ;
       return rc ;
    error:
-      if ( NULL != _indexCB )
-      {
-         SDB_OSS_DEL( _indexCB ) ;
-         _indexCB = NULL ;
-      }
       goto done ;
    }
 

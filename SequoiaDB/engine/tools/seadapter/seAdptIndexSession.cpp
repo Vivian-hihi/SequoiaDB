@@ -42,8 +42,7 @@
 #define SEADPT_FIELD_NAME_RID        "_rid"
 #define SEADPT_COMMIT_ID             "SDBCOMMIT"
 #define SEADPT_FIELD_NAME_LID        "_lid"
-#define SEADPT_NORMAL_CL_DONE_BODY   "{}"
-#define SEADPT_TID(sessionID)          ((UINT32)(sessionID & 0xFFFFFFFF))
+#define SEADPT_TID(sessionID)        ((UINT32)(sessionID & 0xFFFFFFFF))
 
 namespace engine
 {
@@ -75,6 +74,7 @@ namespace engine
    BEGIN_OBJ_MSG_MAP( _seAdptIndexSession, _pmdAsyncSession)
       ON_MSG( MSG_BS_QUERY_RES, handleQueryRes )
       ON_MSG( MSG_BS_GETMORE_RES, handleGetMoreRes )
+      ON_MSG( MSG_BS_KILL_CONTEXT_RES, handleKillCtxRes )
    END_OBJ_MSG_MAP()
 
    _seAdptIndexSession::_seAdptIndexSession( UINT64 sessionID,
@@ -164,7 +164,7 @@ namespace engine
       {
          // If we find the node is not primary when pop, switch may have
          // happened. So quit the current indexing work.
-         if ( SEADPT_SESSION_STAT_POP_CAP == _status )
+         if ( SDB_CLS_NOT_PRIMARY == reply->flags )
          {
             PD_LOG( PDEVENT, "Node is not primary when pop. Switch of primary "
                     "may have happened. Exiting current indexing work..." ) ;
@@ -200,6 +200,9 @@ namespace engine
                            "Returned object number is wrong" ) ;
                _lastPopLID =
                   docObjs[0].getField(SEADPT_FIELD_NAME_ID).Number() ;
+               // Remember the logical id of the last record in capped
+               // collection. After finishing processing the original
+               // collection, we'll start here.
                _expectLID = _lastPopLID ;
                PD_LOG( PDDEBUG, "Last logical id in capped collection[ %s ] is "
                        "[ %lld ]", _cappedCLFullName.c_str(), _lastPopLID ) ;
@@ -237,7 +240,7 @@ namespace engine
                            "Returned object number is wrong" ) ;
                INT64 lastLID =
                   docObjs[0].getField(SEADPT_FIELD_NAME_ID).Number() ;
-               if ( _expectLID >= lastLID )
+               if ( _expectLID <= lastLID )
                {
                   _lastPopLID = _expectLID ;
                   _switchStatus( SEADPT_SESSION_STAT_QUERY_CAP_TBL ) ;
@@ -319,6 +322,20 @@ namespace engine
       goto done ;
    }
 
+   INT32 _seAdptIndexSession::handleKillCtxRes( NET_HANDLE handle,
+                                                MsgHeader *msg )
+   {
+      MsgOpReply *reply = (MsgOpReply *)msg ;
+
+      if ( SDB_OK != reply->flags )
+      {
+         PD_LOG( PDERROR, "Kill context request processing failed[ %d ]",
+                 reply->flags ) ;
+      }
+
+      return SDB_OK ;
+   }
+
    void _seAdptIndexSession::onRecieve( const NET_HANDLE netHandle,
                                         MsgHeader *msg )
    {
@@ -334,7 +351,6 @@ namespace engine
    void _seAdptIndexSession::onTimer( UINT64 timerID, UINT32 interval )
    {
       INT32 rc = SDB_OK ;
-      BOOLEAN inUpdate = FALSE ;
 
       if ( _quit )
       {
@@ -345,10 +361,8 @@ namespace engine
       switch ( _status )
       {
          case SEADPT_SESSION_STAT_BEGIN:
-            if ( !inUpdate )
             {
                INT32 clVersion = -1 ;
-               inUpdate = TRUE ;
                rc = sdbGetSeAdapterCB()->syncUpdateCLVersion( _origCLFullName.c_str(),
                                                               OSS_ONE_SEC, eduCB(),
                                                               clVersion ) ;
@@ -397,16 +411,27 @@ namespace engine
          case SEADPT_SESSION_STAT_QUERY_CAP_TBL:
             if ( !_isQueryBusy() )
             {
-               BSONObj condition ;
-               if ( _lastPopLID >= 0 )
+               try
                {
-                  condition = BSON( "_id" << BSON( "$gt" << _lastPopLID ) ) ;
+                  BSONObj condition ;
+                  if ( _lastPopLID >= 0 )
+                  {
+                     condition = BSON( "_id" << BSON( "$gt" << _lastPopLID ) ) ;
+                  }
+                  rc = _queryCappedCollection( condition ) ;
+                  PD_RC_CHECK( rc, PDERROR,
+                               "Query capped collection[ %s ] failed[ %d ]",
+                               _cappedCLFullName.c_str(), rc ) ;
+                  _setQueryBusyFlag( TRUE ) ;
                }
-               rc = _queryCappedCollection( condition ) ;
-               PD_RC_CHECK( rc, PDERROR,
-                            "Query capped collection[ %s ] failed[ %d ]",
-                            _cappedCLFullName.c_str(), rc ) ;
-               _setQueryBusyFlag( TRUE ) ;
+               catch ( std::exception &e )
+               {
+                  rc = SDB_SYS ;
+                  PD_LOG( PDERROR, "Unexpected exception occurred when query "
+                          "capped collection[ %s ], error: %s",
+                          _cappedCLFullName.c_str(), e.what() ) ;
+                  goto error ;
+               }
             }
             break ;
          default:
@@ -542,21 +567,30 @@ namespace engine
       BSONObj selector ;
       BSONObj orderBy ;
 
-      // In the capped colleciton, the field name of logical id is '_id', and
-      // the original '_id' is named '_rid'.
-      selector = BSON( SEADPT_FIELD_NAME_ID << "" ) ;
-      orderBy = BSON( SEADPT_FIELD_NAME_ID << -1 ) ;
+      try
+      {
+         // In the capped collection, the field name of logical id is '_id', and
+         // the original '_id' is named '_rid'.
+         selector = BSON( SEADPT_FIELD_NAME_ID << "" ) ;
+         orderBy = BSON( SEADPT_FIELD_NAME_ID << -1 ) ;
 
-      rc = msgBuildQueryMsg( (CHAR **)&msg, &bufSize, _cappedCLFullName.c_str(),
-                             FLG_QUERY_WITH_RETURNDATA, 0, 0, 1, NULL,
-                             &selector, &orderBy ) ;
-      PD_RC_CHECK( rc, PDERROR, "Build query message failed[ %d ]", rc ) ;
-      msg->TID = SEADPT_TID( _sessionID ) ;
-      rc = sdbGetSeAdapterCB()->sendToDataNode( msg ) ;
-      PD_RC_CHECK( rc, PDERROR, "Send query message to data node failed[ %d ]",
-                   rc ) ;
-      PD_LOG( PDDEBUG, "Send query on capped collection[ %s ] to data node "
-              "successfully", _cappedCLFullName.c_str() ) ;
+         rc = msgBuildQueryMsg( (CHAR **)&msg, &bufSize, _cappedCLFullName.c_str(),
+                                FLG_QUERY_WITH_RETURNDATA, 0, 0, 1, NULL,
+                                &selector, &orderBy ) ;
+         PD_RC_CHECK( rc, PDERROR, "Build query message failed[ %d ]", rc ) ;
+         msg->TID = SEADPT_TID( _sessionID ) ;
+         rc = sdbGetSeAdapterCB()->sendToDataNode( msg ) ;
+         PD_RC_CHECK( rc, PDERROR, "Send query message to data node failed[ %d ]",
+                      rc ) ;
+         PD_LOG( PDDEBUG, "Send query on capped collection[ %s ] to data node "
+               "successfully", _cappedCLFullName.c_str() ) ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Unexpected exception happened: %s", e.what() ) ;
+         goto error ;
+      }
 
    done:
       return rc ;
@@ -599,11 +633,20 @@ namespace engine
       BSONObj query ;
       BSONObjBuilder builder ;
 
-      builder.append( FIELD_NAME_COLLECTION, _cappedCLFullName.c_str() ) ;
-      builder.appendIntOrLL( FIELD_NAME_LOGICAL_ID, recLID ) ;
-      builder.appendIntOrLL( FIELD_NAME_DIRECTION, 1 ) ;
+      try
+      {
+         builder.append( FIELD_NAME_COLLECTION, _cappedCLFullName.c_str() ) ;
+         builder.appendIntOrLL( FIELD_NAME_LOGICAL_ID, recLID ) ;
+         builder.appendIntOrLL( FIELD_NAME_DIRECTION, 1 ) ;
 
-      query = builder.done() ;
+         query = builder.done() ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Unexpected exception happened: %s", e.what() ) ;
+         goto error ;
+      }
 
       rc = msgBuildQueryMsg( (CHAR **)&msg, &msgLen,
                              CMD_ADMIN_PREFIX CMD_NAME_POP,
@@ -651,23 +694,27 @@ namespace engine
 
          oprType = ( _dmsExtOprType )type ;
          logicalID = lidField.Long() ;
-         *origOID = origObj.getStringField( SEADPT_FIELD_NAME_RID ) ;
-         if ( 0 == ossStrcmp( *origOID, "" ) )
+         if ( DMS_EXT_TRUNCATE != oprType )
          {
-            PD_LOG( PDERROR, "_rid for the original record is invalid. "
-                    "Object: %s", origObj.toString().c_str() ) ;
-            rc = SDB_SYS ;
-            goto done ;
+            *origOID = origObj.getStringField( SEADPT_FIELD_NAME_RID ) ;
+            if ( 0 == ossStrcmp( *origOID, "" ) )
+            {
+               PD_LOG( PDERROR, "_rid for the original record is invalid. "
+                     "Object: %s", origObj.toString().c_str() ) ;
+               rc = SDB_SYS ;
+               goto done ;
+            }
+
+            sourceObj = origObj.getObjectField( "_source" ) ;
+            if ( !sourceObj.isEmpty() && !sourceObj.isValid() )
+            {
+               PD_LOG( PDERROR, "_source field is invalid. Object: %s",
+                       origObj.toString().c_str() ) ;
+               rc = SDB_SYS ;
+               goto error ;
+            }
          }
 
-         sourceObj = origObj.getObjectField( "_source" ) ;
-         if ( !sourceObj.isEmpty() && !sourceObj.isValid() )
-         {
-            PD_LOG( PDERROR, "_source field is invalid. Object: %s",
-                    origObj.toString().c_str() ) ;
-            rc = SDB_SYS ;
-            goto error ;
-         }
          PD_LOG( PDDEBUG, "Operation type: %d, _id: %s, _source: %s", oprType,
                  *origOID, sourceObj.toString().c_str() ) ;
       }
@@ -698,87 +745,96 @@ namespace engine
       vector<BSONObj> docObjs ;
       BOOLEAN idExist = TRUE ;
 
-      if ( SDB_DMS_EOC == reply->flags )
+      try
       {
-         // When reach to the end of the original collection, switch to capped
-         // collection. Write an end mark of _lid : -1.
-         BSONObj emptyObj = BSON( SEADPT_FIELD_NAME_LID << _expectLID ) ;
-         rc = _markProgress( emptyObj ) ;
-         PD_RC_CHECK( rc, PDERROR, "Write end mark for normal collection[ %s ] "
-                      "on search engine failed[ %d ]",
-                      _origCLFullName.c_str(), rc ) ;
-         PD_LOG( PDDEBUG, "Write end mark for normal collection[ %s ] on "
-                 "search engine successfully", _origCLFullName.c_str() ) ;
-         _switchStatus( SEADPT_SESSION_STAT_QUERY_CAP_TBL ) ;
-         _setQueryBusyFlag( FALSE ) ;
-         goto done ;
-      }
-      else if ( SDB_DMS_CS_NOTEXIST == reply->flags ||
-                SDB_DMS_NOTEXIST == reply->flags )
-      {
-         _quit = TRUE ;
-         goto done ;
-      }
-      else if ( SDB_OK != reply->flags )
-      {
-         rc = reply->flags ;
-         PD_LOG( PDERROR, "Get more failed[ %d ]", rc ) ;
-         goto error ;
-      }
-
-      rc = msgExtractReply( (CHAR *)msg, &flag, &contextID, &startFrom,
-                            &numReturned, docObjs ) ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Failed to extract query result, rc: %d", rc ) ;
-         goto error ;
-      }
-
-      rc = _ensureESClt() ;
-      PD_RC_CHECK( rc, PDERROR, "The search engine client is not active[ %d ]",
-                   rc ) ;
-
-      for ( vector<BSONObj>::const_iterator itr = docObjs.begin();
-            itr != docObjs.end(); ++itr )
-      {
-         BSONObj newNameObj ;
-         string idStr ;
-         BSONObjBuilder builder ;
-         BSONObj sourceObj ;
-         BSONElement idEle ;
-         OID id ;
-         BSONElement sourceEle ;
-
-         idExist = itr->getObjectID( idEle ) ;
-         if ( !idExist )
+         if ( SDB_DMS_EOC == reply->flags )
          {
-            PD_LOG( PDERROR, "_id dose not exist in source object" ) ;
-            rc = SDB_SYS ;
+            // When reach to the end of the original collection, switch to capped
+            // collection. Write an end mark of _lid : -1.
+            BSONObj emptyObj = BSON( SEADPT_FIELD_NAME_LID << _expectLID ) ;
+            rc = _markProgress( emptyObj ) ;
+            PD_RC_CHECK( rc, PDERROR, "Write end mark for normal collection[ %s ] "
+                  "on search engine failed[ %d ]",
+                         _origCLFullName.c_str(), rc ) ;
+            PD_LOG( PDDEBUG, "Write end mark for normal collection[ %s ] on "
+                  "search engine successfully", _origCLFullName.c_str() ) ;
+            _switchStatus( SEADPT_SESSION_STAT_QUERY_CAP_TBL ) ;
+            _setQueryBusyFlag( FALSE ) ;
+            goto done ;
+         }
+         else if ( SDB_DMS_CS_NOTEXIST == reply->flags ||
+                   SDB_DMS_NOTEXIST == reply->flags )
+         {
+            _quit = TRUE ;
+            goto done ;
+         }
+         else if ( SDB_OK != reply->flags )
+         {
+            rc = reply->flags ;
+            PD_LOG( PDERROR, "Get more failed[ %d ]", rc ) ;
             goto error ;
          }
 
-         for ( BSONObj::iterator eleItr = itr->begin(); eleItr.more(); )
+         rc = msgExtractReply( (CHAR *)msg, &flag, &contextID, &startFrom,
+                               &numReturned, docObjs ) ;
+         if ( rc )
          {
-            BSONElement ele = eleItr.next() ;
-            if ( jstOID != ele.type() )
-            {
-               builder.append( ele ) ;
-            }
+            PD_LOG( PDERROR, "Failed to extract query result, rc: %d", rc ) ;
+            goto error ;
          }
 
-         sourceObj = builder.done() ;
+         rc = _ensureESClt() ;
+         PD_RC_CHECK( rc, PDERROR, "The search engine client is not active[ %d ]",
+                      rc ) ;
 
-         // For data in the original collection, the only operation is insertion.
-         rc = _esClt->indexDocument( _indexName.c_str(), _typeName.c_str(),
-                                     idEle.OID().toString().c_str(),
-                                     sourceObj.toString().c_str() ) ;
-         PD_RC_CHECK( rc, PDERROR, "Index record on search engine "
-                      "failed[ %d ], id: %s", rc,
-                      idEle.toString().c_str() ) ;
+         for ( vector<BSONObj>::const_iterator itr = docObjs.begin();
+               itr != docObjs.end(); ++itr )
+         {
+            BSONObj newNameObj ;
+            string idStr ;
+            BSONObjBuilder builder ;
+            BSONObj sourceObj ;
+            BSONElement idEle ;
+            OID id ;
+            BSONElement sourceEle ;
+
+            idExist = itr->getObjectID( idEle ) ;
+            if ( !idExist )
+            {
+               PD_LOG( PDERROR, "_id dose not exist in source object" ) ;
+               rc = SDB_SYS ;
+               goto error ;
+            }
+
+            for ( BSONObj::iterator eleItr = itr->begin(); eleItr.more(); )
+            {
+               BSONElement ele = eleItr.next() ;
+               if ( jstOID != ele.type() )
+               {
+                  builder.append( ele ) ;
+               }
+            }
+
+            sourceObj = builder.done() ;
+
+            // For data in the original collection, the only operation is insertion.
+            rc = _esClt->indexDocument( _indexName.c_str(), _typeName.c_str(),
+                                        idEle.OID().toString().c_str(),
+                                        sourceObj.toString().c_str() ) ;
+            PD_RC_CHECK( rc, PDERROR, "Index record on search engine "
+                  "failed[ %d ], id: %s", rc,
+                         idEle.toString().c_str() ) ;
+         }
+
+         rc = _sendGetmoreReq( contextID, msg->requestID ) ;
+         PD_RC_CHECK( rc, PDERROR, "Send get more request failed[ %d ]", rc ) ;
       }
-
-      rc = _sendGetmoreReq( contextID, msg->requestID ) ;
-      PD_RC_CHECK( rc, PDERROR, "Send get more request failed[ %d ]", rc ) ;
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Unexpected exception happened: %s", e.what() ) ;
+         goto error ;
+      }
 
    done:
       return rc ;
@@ -836,78 +892,78 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "The search engine client is not active[ %d ]",
                    rc ) ;
 
-      if ( docObjs.size() > 0 )
+      try
       {
-         try
+         if ( docObjs.size() > 0 )
          {
             BSONObj lastObj = docObjs.back() ;
             BSONElement lidEle = lastObj.getField( SEADPT_FIELD_NAME_ID ) ;
             nextLastLID = lidEle.Long() ;
          }
-         catch ( std::exception &e )
+
+         for ( vector<BSONObj>::const_iterator itr = docObjs.begin();
+               itr != docObjs.end(); ++itr )
          {
-            PD_LOG( PDERROR, "Exception occurred: %s", e.what() ) ;
-            rc = SDB_SYS ;
-            goto error ;
+            BSONObj newNameObj ;
+            string idStr ;
+            BSONObj sourceObj ;
+            _dmsExtOprType oprType = DMS_EXT_INVALID ;
+            const CHAR *origOID = NULL ;
+            BSONElement sourceEle ;
+
+            // Parse and the original object into 4 items: operation type, id,
+            // source data( the real data to be indexed on Elasticsearch ).
+            rc = _parseSrcData( *itr, oprType, &origOID, logicalID, sourceObj ) ;
+            PD_RC_CHECK( rc, PDERROR, "Get id string and source object "
+                         "failed[ %d ]", rc ) ;
+            switch ( oprType )
+            {
+               case DMS_EXT_INSERT:
+                  rc = _esClt->indexDocument( _indexName.c_str(),
+                                              _typeName.c_str(),
+                                              origOID,
+                                              sourceObj.toString().c_str() ) ;
+                  PD_RC_CHECK( rc, PDERROR, "Index record on search engine "
+                               "failed[ %d ], id: %s", rc,
+                               origOID ) ;
+                  break ;
+               case DMS_EXT_DELETE:
+                  rc = _esClt->deleteDocument( _indexName.c_str(),
+                                               _typeName.c_str(),
+                                               origOID ) ;
+                  PD_RC_CHECK( rc, PDERROR, "Delete document on search engine "
+                               "failed[ %d ], _id: %s", rc,
+                               origOID ) ;
+                  break ;
+               case DMS_EXT_UPDATE:
+                  rc = _esClt->updateDocument( _indexName.c_str(),
+                                               _typeName.c_str(),
+                                               origOID,
+                                               sourceObj.toString().c_str()  ) ;
+                  PD_RC_CHECK( rc, PDERROR, "Update document on search engine "
+                               "failed[ %d ], id: %s", rc,
+                               origOID ) ;
+                  break ;
+               case DMS_EXT_TRUNCATE:
+                  rc = _esClt->deleteAllByType( _indexName.c_str(),
+                                                _typeName.c_str() ) ;
+                  PD_RC_CHECK( rc, PDERROR, "Delete all documents for index[ %s ] "
+                               "and type[ %s ] failed[ %d ]", _indexName.c_str(),
+                               _typeName.c_str(), rc ) ;
+                  break ;
+               default:
+                  PD_LOG( PDERROR, "Invalid operation type[ %d ] in source data",
+                          oprType ) ;
+                  rc = SDB_INVALIDARG ;
+                  goto error ;
+            }
          }
       }
-
-      for ( vector<BSONObj>::const_iterator itr = docObjs.begin();
-            itr != docObjs.end(); ++itr )
+      catch ( std::exception &e )
       {
-         BSONObj newNameObj ;
-         string idStr ;
-         BSONObj sourceObj ;
-         _dmsExtOprType oprType = DMS_EXT_INVALID ;
-         const CHAR *origOID = NULL ;
-         BSONElement sourceEle ;
-
-         // Parse and the original object into 4 items: operation type, id,
-         // source data( the real data to be indexed on Elasticsearch ).
-         rc = _parseSrcData( *itr, oprType, &origOID, logicalID, sourceObj ) ;
-         PD_RC_CHECK( rc, PDERROR, "Get id string and source object "
-                      "failed[ %d ]", rc ) ;
-         switch ( oprType )
-         {
-            case DMS_EXT_INSERT:
-               rc = _esClt->indexDocument( _indexName.c_str(),
-                                           _typeName.c_str(),
-                                           origOID,
-                                           sourceObj.toString().c_str() ) ;
-               PD_RC_CHECK( rc, PDERROR, "Index record on search engine "
-                            "failed[ %d ], id: %s", rc,
-                            origOID ) ;
-               break ;
-            case DMS_EXT_DELETE:
-               rc = _esClt->deleteDocument( _indexName.c_str(),
-                                            _typeName.c_str(),
-                                            origOID ) ;
-               PD_RC_CHECK( rc, PDERROR, "Delete document on search engine "
-                            "failed[ %d ], _id: %s", rc,
-                            origOID ) ;
-               break ;
-            case DMS_EXT_UPDATE:
-               rc = _esClt->updateDocument( _indexName.c_str(),
-                                            _typeName.c_str(),
-                                            origOID,
-                                            sourceObj.toString().c_str()  ) ;
-               PD_RC_CHECK( rc, PDERROR, "Update document on search engine "
-                            "failed[ %d ], id: %s", rc,
-                            origOID ) ;
-               break ;
-            case DMS_EXT_TRUNCATE:
-               rc = _esClt->deleteAllByType( _indexName.c_str(),
-                                             _typeName.c_str() ) ;
-               PD_RC_CHECK( rc, PDERROR, "Delete all documents for index[ %s ] "
-                            "and type[ %s ] failed[ %d ]", _indexName.c_str(),
-                            _typeName.c_str(), rc ) ;
-               break ;
-            default:
-               PD_LOG( PDERROR, "Invalid operation type[ %d ] in source data",
-                       oprType ) ;
-               rc = SDB_INVALIDARG ;
-               goto error ;
-         }
+         PD_LOG( PDERROR, "Unexpected exception occurred: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
       }
 
       if ( -1 != logicalID )
@@ -980,10 +1036,19 @@ namespace engine
       rc = _ensureESClt() ;
       PD_RC_CHECK( rc, PDERROR, "The search engine client is not active[ %d ]",
                    rc ) ;
-      rc = _esClt->indexDocument( _indexName.c_str(), _typeName.c_str(),
-                                  SEADPT_COMMIT_ID,
-                                  infoObj.toString().c_str() ) ;
-      PD_RC_CHECK( rc, PDERROR, "Index document failed[ %d ]", rc ) ;
+      try
+      {
+         rc = _esClt->indexDocument( _indexName.c_str(), _typeName.c_str(),
+                                     SEADPT_COMMIT_ID,
+                                     infoObj.toString().c_str() ) ;
+         PD_RC_CHECK( rc, PDERROR, "Index document failed[ %d ]", rc ) ;
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Unexpected exception occurred: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
 
    done:
       return rc ;
@@ -1028,7 +1093,7 @@ namespace engine
    // First, check if the index exist on ES. If not, then need to do full
    // indexing.
    // If index exists, check the commit mark. If not found, it means the
-   // last indexing process is interrupted when processiong data of the
+   // last indexing process is interrupted when processing data of the
    // original collection. In this case, we do not know where to start. So
    // we start all around.
    // If index exists and the commit mark is found, get the _lid in it.
@@ -1036,7 +1101,7 @@ namespace engine
    // collection. Suggest it's n.
    // (1) If n does not exist( capped collection is empty), and m is not -1,
    //     start all around.
-   // (2) If m is -1 and n is greate than 0, start all around.
+   // (2) If m is -1 and n is greater than 0, start all around.
    // (3) If m is greater than n, start all around.
    // (4) If m is less than or equal to n, continue to fetch data from capped
    //     collection with logical id greater than m.
@@ -1153,8 +1218,13 @@ namespace engine
       goto done ;
    }
 
-   void _seAdptIndexSession::_onSDBEOC()
+   INT32 _seAdptIndexSession::_onSDBEOC()
    {
+      INT32 rc = SDB_OK ;
+      MsgHeader *msg = NULL ;
+      INT32 bufSize = 0 ;
+      UINT64 requestID = 0 ;
+
       if ( SEADPT_SESSION_STAT_CONSULT == _status ||
            SEADPT_SESSION_STAT_QUERY_NORMAL_TBL == _status )
       {
@@ -1170,6 +1240,20 @@ namespace engine
                  _origCLFullName.c_str() ) ;
          _quit = TRUE ;
       }
+
+      rc = msgBuildKillContextsMsg( (CHAR **)&msg, &bufSize, requestID,
+                                    1, &_queryCtxID ) ;
+      PD_RC_CHECK( rc, PDERROR, "Build kill context message failed[ %d ]",
+                   rc ) ;
+      msg->TID = SEADPT_TID( _sessionID ) ;
+      rc = sdbGetSeAdapterCB()->sendToDataNode( msg ) ;
+      PD_RC_CHECK( rc, PDERROR, "Send kill context message to data node "
+                   "failed[ %d ]", rc ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    // Start all over again. If the index exists, it will be dropped and

@@ -379,7 +379,7 @@ namespace engine
                                              dmsExtentID indexExtentID)
    : _dmsIndexBuilder( indexSU, dataSU, mbContext, eduCB, indexExtentID )
    {
-
+      _reset() ;
    }
 
    _dmsIndexExtBuilder::~_dmsIndexExtBuilder()
@@ -387,9 +387,123 @@ namespace engine
 
    }
 
+   INT32 _dmsIndexExtBuilder::_onInit()
+   {
+      INT32 rc = SDB_OK ;
+
+      SDB_ASSERT( IXM_EXTENT_HAS_TYPE( IXM_EXTENT_TYPE_TEXT,
+                                       _indexCB->getIndexType() ),
+                  "Not text index" ) ;
+
+      _extHandle = _suData->getExtDataHandler() ;
+      PD_CHECK( _extHandle, SDB_SYS, error, PDERROR,
+                "External data handle is NULL" ) ;
+
+      ossStrncpy( _csName, _suData->getSuName(),
+                  DMS_COLLECTION_SPACE_NAME_SZ ) ;
+      ossStrncpy( _clName, _mbContext->mb()->_collectionName,
+                  DMS_COLLECTION_NAME_SZ ) ;
+      ossStrncpy( _idxName, _indexCB->getName(), IXM_INDEX_NAME_SIZE ) ;
+
+      // We are going to create the capped cs and cl. During the whole process,
+      // on use of the index is allowed.
+      if ( IXM_INDEX_FLAG_INVALID != _indexCB->getFlag() )
+      {
+         _indexCB->setFlag( IXM_INDEX_FLAG_INVALID ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      if ( _indexCB )
+      {
+         SDB_OSS_DEL _indexCB ;
+         _indexCB = NULL ;
+      }
+      _reset() ;
+      goto done ;
+   }
+
    INT32 _dmsIndexExtBuilder::_build()
    {
-      return SDB_OK ;
+      INT32 rc = SDB_OK ;
+      BOOLEAN mbLocked = FALSE ;
+      BOOLEAN hasRebuild = FALSE ;
+      INT32 idxID = 0 ;
+
+      rc = _extHandle->onRebuildTextIdx( _csName, _clName, _idxName, _eduCB ) ;
+      PD_RC_CHECK( rc, PDERROR, "External handle on text index rebuild "
+                   "failed: %d", rc ) ;
+      hasRebuild = TRUE ;
+
+      // Now we need to set the index as valid.
+      // As we do not take any lock before this place, the cs/cl/index may have
+      // been dropped already. So after taking the lock, we need to check again
+      // if this is the original index.
+      rc = _mbContext->mbLock( EXCLUSIVE ) ;
+      PD_RC_CHECK( rc, PDERROR, "dms mb context lock failed, rc: %d", rc ) ;
+      mbLocked = TRUE ;
+      for ( idxID = 0; idxID < DMS_COLLECTION_MAX_INDEX; ++idxID )
+      {
+         if ( DMS_INVALID_EXTENT == _mbContext->mb()->_indexExtent[idxID] )
+         {
+            break ;
+         }
+         ixmIndexCB indexCBTmp( _mbContext->mb()->_indexExtent[idxID], _suIndex,
+                                _mbContext ) ;
+         // Check if this is the original index by comparing the logical id.
+         if ( _indexLID == indexCBTmp.getLogicalID() )
+         {
+            break ;
+         }
+      }
+
+      if ( DMS_COLLECTION_MAX_INDEX == idxID )
+      {
+         // Didn't find this index. It may have been dropped. Need to undo what
+         // has been done here, and nothing more should be done with the
+         // indexCB.
+         rc = SDB_DMS_INVALID_INDEXCB ;
+         goto error ;
+      }
+
+      // Now we have done the external operation and everything is going
+      // smoothly. Set set the index as CREATING and it will be set as NORMAL
+      // in _finish() of dmsIndexRebuilder.
+      _indexCB->setFlag( IXM_INDEX_FLAG_CREATING ) ;
+
+   done:
+      if ( mbLocked )
+      {
+         _mbContext->mbUnlock() ;
+      }
+      return rc ;
+   error:
+      if ( hasRebuild )
+      {
+         // Unlock before external operation.
+         if ( mbLocked )
+         {
+            _mbContext->mbUnlock() ;
+            mbLocked = FALSE ;
+         }
+         INT32 rcTmp = _extHandle->onDropTextIdx( _csName, _clName, _idxName,
+                                                  _eduCB, NULL ) ;
+         if ( rcTmp )
+         {
+            PD_LOG( PDERROR, "External operation on drop text index failed, "
+                    "rc: %d", rcTmp ) ;
+         }
+      }
+      goto done ;
+   }
+
+   void _dmsIndexExtBuilder::_reset()
+   {
+      _extHandle = NULL ;
+      ossMemset( _csName, 0, DMS_COLLECTION_SPACE_NAME_SZ + 1 ) ;
+      ossMemset( _clName, 0, DMS_COLLECTION_NAME_SZ + 1 ) ;
+      ossMemset( _idxName, 0, IXM_INDEX_NAME_SIZE + 1 ) ;
    }
 }
 

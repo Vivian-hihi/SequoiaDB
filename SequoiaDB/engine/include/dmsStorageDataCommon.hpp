@@ -1029,8 +1029,8 @@ namespace engine
 
       protected:
          OSS_INLINE const CHAR* _clFullName ( const CHAR *clName,
-                                                CHAR *clFullName,
-                                                UINT32 fullNameLen ) ;
+                                              CHAR *clFullName,
+                                              UINT32 fullNameLen ) ;
          OSS_INLINE void _overflowSize( UINT32 &size ) ;
 
          void _attach ( _dmsStorageIndex *pIndexSu ) ;

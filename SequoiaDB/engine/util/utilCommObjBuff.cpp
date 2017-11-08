@@ -146,27 +146,35 @@ namespace engine
       INT32 rc = SDB_OK ;
       CHAR *writePos = NULL ;
 
-      // The object may be very bit, in which case we may extend the buffer
-      // multiple times.
-      while ( !_enough( ossAlign4( (UINT32)obj.objsize() ) ) )
+      try
       {
-         if ( _buffSize >= _sizeLimit )
+         // The object may be very bit, in which case we may extend the buffer
+         // multiple times.
+         while ( !_enough( ossAlign4( (UINT32)obj.objsize() ) ) )
          {
-            rc = SDB_SYS ;
-            PD_LOG( PDERROR, "Buffer is not enough, rc: %d", rc ) ;
-            goto error ;
+            if ( _buffSize >= _sizeLimit )
+            {
+               rc = SDB_SYS ;
+               PD_LOG( PDERROR, "Buffer is not enough, rc: %d", rc ) ;
+               goto error ;
+            }
+
+            rc = _extendBuff() ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to extend object buffer, rc: %d",
+                         rc ) ;
          }
 
-         rc = _extendBuff() ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to extend object buffer, rc: %d",
-                      rc ) ;
+         writePos = _buff + _writePos ;
+         ossMemcpy( writePos, obj.objdata(), obj.objsize() ) ;
+         _objNum++ ;
+         _writePos += ossAlign4( (UINT32)obj.objsize() ) ;
       }
-
-      // TODO: need to align
-      writePos = _buff + _writePos ;
-      ossMemcpy( writePos, obj.objdata(), obj.objsize() ) ;
-      _objNum++ ;
-      _writePos += ossAlign4( (UINT32)obj.objsize() ) ;
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Unexpected exception happened: %s", e.what() ) ;
+         goto error ;
+      }
 
    done:
       return rc ;
@@ -179,27 +187,35 @@ namespace engine
       INT32 rc = SDB_OK ;
       CHAR *writePos = NULL ;
 
-      // The object may be very bit, in which case we may extend the buffer
-      // multiple times.
-      while ( !_enough( ossAlign4( (UINT32)obj->objsize() ) ) )
+      try
       {
-         if ( _buffSize >= _sizeLimit )
+         // The object may be very big, in which case we may extend the buffer
+         // multiple times.
+         while ( !_enough( ossAlign4( (UINT32)obj->objsize() ) ) )
          {
-            rc = SDB_SYS ;
-            PD_LOG( PDERROR, "Buffer is not enough, rc: %d", rc ) ;
-            goto error ;
+            if ( _buffSize >= _sizeLimit )
+            {
+               rc = SDB_SYS ;
+               PD_LOG( PDERROR, "Buffer is not enough, rc: %d", rc ) ;
+               goto error ;
+            }
+
+            rc = _extendBuff() ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to extend object buffer, rc: %d",
+                         rc ) ;
          }
 
-         rc = _extendBuff() ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to extend object buffer, rc: %d",
-                      rc ) ;
+         writePos = _buff + _writePos ;
+         ossMemcpy( writePos, obj->objdata(), obj->objsize() ) ;
+         _objNum++ ;
+         _writePos += ossAlign4( (UINT32)obj->objsize() ) ;
       }
-
-      // TODO: need to align
-      writePos = _buff + _writePos ;
-      ossMemcpy( writePos, obj->objdata(), obj->objsize() ) ;
-      _objNum++ ;
-      _writePos += ossAlign4( (UINT32)obj->objsize() ) ;
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Unexpected exception happened: %s", e.what() ) ;
+         goto error ;
+      }
 
    done:
       return rc ;

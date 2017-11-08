@@ -175,7 +175,8 @@ namespace engine
                                    this, NULL ) ;
                if ( indexCB.isInitialized() )
                {
-                  if ( IXM_EXTENT_TYPE_TEXT == indexCB.getIndexType() )
+                  if ( IXM_EXTENT_HAS_TYPE( IXM_EXTENT_TYPE_TEXT,
+                                            indexCB.getIndexType() ) )
                   {
                      _pDataSu->_mbStatInfo[i]._textIdxNum++ ;
                   }
@@ -468,43 +469,6 @@ namespace engine
                                         BOOLEAN isSys,
                                         INT32 sortBufferSize )
    {
-      INT32 rc = SDB_OK ;
-      UINT16 indexType = IXM_EXTENT_TYPE_NONE ;
-
-      if ( !ixmIndexCB::generateIndexType( index, indexType ) )
-      {
-         PD_LOG( PDERROR, "Get index type from definition failed" ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-
-      if ( IXM_EXTENT_HAS_TYPE( indexType, IXM_EXTENT_TYPE_TEXT ) )
-      {
-         // Reuse the 'sortBufferSize' as the 'Size' option for the
-         // corresponding capped collection.
-         rc = _createTextIndex( context, index, cb, dpscb,
-                                isSys, sortBufferSize ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to create text index, rc: %d", rc ) ;
-      }
-      else
-      {
-         rc = _createIndex( context, index, cb, dpscb, isSys, sortBufferSize ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to create index, rc: %d", rc ) ;
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 _dmsStorageIndex::_createIndex( dmsMBContext *context,
-                                         const BSONObj &index,
-                                         pmdEDUCB * cb,
-                                         SDB_DPSCB *dpscb,
-                                         BOOLEAN isSys,
-                                         INT32 sortBufferSize )
-   {
       INT32 rc                     = SDB_OK ;
       dmsExtentID extentID         = DMS_INVALID_EXTENT ;
       dmsExtentID rootExtentID     = DMS_INVALID_EXTENT ;
@@ -599,6 +563,7 @@ namespace engine
 
       {
          // initialize index control block, set flag to invalid
+         BOOLEAN textIdx = FALSE ;
          ixmIndexCB indexCB ( extentID, index, context->mbID(), this,
                               context ) ;
          // verify the index control block is initialized
@@ -615,6 +580,8 @@ namespace engine
          indexLID = context->mb()->_indexHWCount ;
          indexCB.setLogicalID( indexLID ) ;
          indexDef = indexCB.getDef().getOwned() ;
+         textIdx = IXM_EXTENT_HAS_TYPE( IXM_EXTENT_TYPE_TEXT,
+                                        indexCB.getIndexType() ) ;
 
          // calc the reserve size
          if ( dpscb )
@@ -649,6 +616,11 @@ namespace engine
          if ( indexCB.unique() )
          {
             context->mbStat()->_uniqueIdxNum++ ;
+         }
+
+         if ( textIdx )
+         {
+            context->mbStat()->_textIdxNum++ ;
          }
       }
 
@@ -735,172 +707,6 @@ namespace engine
       }
       goto done ;
    error_after_create :
-      rc1 = dropIndex ( context, indexName, cb, dropDps, isSys ) ;
-      if ( rc1 )
-      {
-         PD_LOG ( PDERROR, "Failed to clean up invalid index, rc = %d", rc1 ) ;
-      }
-      goto done ;
-   }
-
-   INT32 _dmsStorageIndex::_createTextIndex( dmsMBContext *context,
-                                             const BSONObj &index,
-                                             pmdEDUCB *cb,
-                                             SDB_DPSCB *dpsCB,
-                                             BOOLEAN isSys,
-                                             INT64 bufferSize )
-   {
-      INT32 rc = SDB_OK ;
-      INT32 indexID = 0 ;
-      dmsExtentID ctlBlockExtent = DMS_INVALID_EXTENT ;
-      dmsExtentID indexLID = DMS_INVALID_EXTENT ;
-      BSONObj indexDef ;
-      CHAR fullName[DMS_COLLECTION_FULL_NAME_SZ + 1] = {0} ;
-      dpsMergeInfo info ;
-      dpsLogRecord &record = info.getMergeBlock().record() ;
-      dpsTransCB *pTransCB = pmdGetKRCB()->getTransCB() ;
-      UINT32 logRecSize = 0 ;
-      string extDataName ;
-      const CHAR *indexName = NULL ;
-      INT32 rc1 = 0 ;
-      SDB_DPSCB *dropDps = NULL ;
-      IDmsExtDataHandler *extDataHandler = _pDataSu->getExtDataHandler() ;
-
-      if ( !extDataHandler )
-      {
-         SDB_ASSERT( FALSE, "External data handler is NULL" ) ;
-         PD_LOG( PDERROR, "External data handler is NULL" ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-
-      rc = _verifyTextIdxDef( index ) ;
-      PD_RC_CHECK( rc, PDERROR, "Verify text index definition failed[%d]",
-                   rc ) ;
-
-      // Allocate the metadata page for index.
-      rc = reserveExtent( context->mbID(), ctlBlockExtent, context ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to reserve extent for collection[%u], "
-                   "rc: %d", context->mbID(), rc ) ;
-
-      rc = context->mbLock( EXCLUSIVE ) ;
-      PD_RC_CHECK( rc, PDERROR, "dms mb context lock failed, rc: %d", rc ) ;
-
-      if ( !dmsAccessAndFlagCompatiblity ( context->mb()->_flag,
-                                           DMS_ACCESS_TYPE_CRT_INDEX ) )
-      {
-         PD_LOG ( PDERROR, "Incompatible collection mode: %d",
-                  context->mb()->_flag ) ;
-         rc = SDB_DMS_INCOMPATIBLE_MODE ;
-         goto error ;
-      }
-
-      indexName = index.getStringField( IXM_FIELD_NAME_NAME ) ;
-      rc = _allocateIdxID( context, index, indexID ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to get a valid index id, rc: %d", rc ) ;
-
-      {
-         SDB_ASSERT( DMS_INVALID_EXTENT != ctlBlockExtent,
-                     "Extent id is invalid" ) ;
-         ixmIndexCB indexCB( ctlBlockExtent, index, context->mbID(),
-                             this, context ) ;
-         if ( !indexCB.isInitialized() )
-         {
-            PD_LOG( PDERROR, "Failed to initialize index" ) ;
-            rc = SDB_DMS_INIT_INDEX ;
-            goto error ;
-         }
-
-         indexLID = context->mb()->_indexHWCount ;
-         indexCB.setLogicalID( indexLID ) ;
-
-         _pDataSu->_clFullName( context->mb()->_collectionName, fullName,
-                                sizeof(fullName) ) ;
-
-         // calc the reserve size
-         if ( dpsCB )
-         {
-            indexDef = indexCB.getDef().getOwned() ;
-            rc = dpsIXCrt2Record( fullName, indexDef, record ) ;
-            PD_RC_CHECK( rc, PDERROR, "Failed to build record:%d", rc ) ;
-
-            rc = dpsCB->checkSyncControl( record.alignedLen(), cb ) ;
-            PD_RC_CHECK( rc, PDERROR, "Check sync control failed, rc: %d",
-                         rc ) ;
-
-            logRecSize = record.alignedLen() ;
-            rc = pTransCB->reservedLogSpace( logRecSize, cb );
-            if ( rc )
-            {
-               PD_LOG( PDERROR, "Failed to reserved log space(length=%u)",
-                       logRecSize ) ;
-               logRecSize = 0 ;
-               goto error ;
-            }
-         }
-
-         rc = extDataHandler->onCreateTextIdx( fullName, indexCB.getName(),
-                                               bufferSize, cb, NULL ) ;
-         PD_RC_CHECK( rc, PDERROR, "External data process of creating "
-                      "text index failed[ %d ]", rc ) ;
-         indexCB.setFlag ( IXM_INDEX_FLAG_NORMAL ) ;
-         context->mbStat()->_textIdxNum++ ;
-      }
-
-      context->mb()->_indexExtent[indexID] = ctlBlockExtent ;
-      context->mb()->_numIndexes++ ;
-      context->mb()->_indexHWCount++ ;
-
-      if ( dpsCB )
-      {
-         rc = _pDataSu->_logDPS( dpsCB, info, cb, context,
-                                 DMS_INVALID_EXTENT, TRUE, DMS_FILE_IDX ) ;
-         if ( rc )
-         {
-            PD_LOG( PDERROR, "Failed to insert ixcrt into log, rc: %d", rc ) ;
-            goto error_after_create ;
-         }
-      }
-      else if ( cb->getLsnCount() > 0 )
-      {
-         context->mbStat()->updateLastLSNWithComp( cb->getEndLsn(),
-                                                   DMS_FILE_IDX,
-                                                   cb->isDoRollback() ) ;
-      }
-      dropDps = dpsCB ;
-
-      flushPages( ctlBlockExtent, 1, isSyncDeep() ) ;
-
-      rc = context->mbLock( EXCLUSIVE ) ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "failed to lock mb, rc: %d", rc ) ;
-         goto error_after_create ;
-      }
-
-      if ( _pDataSu->_pEventHolder )
-      {
-         dmsEventCLItem clItem( context->mb()->_collectionName,
-                                context->mbID(),
-                                context->clLID() ) ;
-         dmsEventIdxItem idxItem ( indexName, indexLID, index ) ;
-         _pDataSu->_pEventHolder->onCreateIndex( DMS_EVENT_MASK_ALL, clItem,
-                                                 idxItem, cb, dpsCB ) ;
-      }
-
-   done:
-      return rc ;
-   error:
-      if ( DMS_INVALID_EXTENT != ctlBlockExtent )
-      {
-         releaseExtent ( ctlBlockExtent, TRUE ) ;
-      }
-      if ( SDB_OK == rc )
-      {
-         _pDataSu->flushMME( isSyncDeep() ) ;
-      }
-      goto done ;
-   error_after_create:
       rc1 = dropIndex ( context, indexName, cb, dropDps, isSys ) ;
       if ( rc1 )
       {
@@ -1091,6 +897,9 @@ namespace engine
       dpsLogRecord &record  = info.getMergeBlock().record() ;
       UINT32 logRecSize            = 0 ;
       BSONObj indexDef ;
+      CHAR clName[ DMS_COLLECTION_NAME_SZ ] = { 0 } ;
+      CHAR idxName[ IXM_INDEX_NAME_SIZE ] = { 0 } ;
+      IDmsExtDataHandler *extDataHandler = NULL ;
 
       rc = context->mbLock( EXCLUSIVE ) ;
       if ( rc )
@@ -1181,11 +990,13 @@ namespace engine
             }
          }
 
+         // If it's text index, let's gather information for external operation.
          if ( IXM_EXTENT_HAS_TYPE( indexCB.getIndexType(),
                                    IXM_EXTENT_TYPE_TEXT ) )
          {
-            string extDataName ;
-            IDmsExtDataHandler *extDataHandler = NULL ;
+            ossStrncpy( clName, context->mb()->_collectionName,
+                        DMS_COLLECTION_NAME_SZ ) ;
+            ossStrncpy( idxName, indexCB.getName(), IXM_INDEX_NAME_SIZE ) ;
             extDataHandler = _pDataSu->getExtDataHandler() ;
             if ( !extDataHandler )
             {
@@ -1194,11 +1005,6 @@ namespace engine
                rc = SDB_SYS ;
                goto error ;
             }
-
-            rc = extDataHandler->onDropTextIdx( fullName, indexCB.getName(),
-                                                cb, NULL ) ;
-            PD_RC_CHECK( rc, PDERROR, "External data process of dropping "
-                         "text index failed[ %d ]", rc ) ;
          }
 
          // truncate index, do remove root
@@ -1218,7 +1024,7 @@ namespace engine
             context->mbStat()->_uniqueIdxNum-- ;
          }
 
-         if ( IXM_EXTENT_TYPE_TEXT == indexCB.getIndexType() )
+         if ( extDataHandler )
          {
             context->mbStat()->_textIdxNum-- ;
          }
@@ -1256,6 +1062,14 @@ namespace engine
          context->mbStat()->updateLastLSNWithComp( cb->getEndLsn(),
                                                    DMS_FILE_IDX,
                                                    cb->isDoRollback() ) ;
+      }
+
+      if ( extDataHandler )
+      {
+         rc = extDataHandler->onDropTextIdx( getSuName(), clName, idxName,
+                                             cb, NULL ) ;
+         PD_RC_CHECK( rc, PDERROR, "External data process of dropping "
+                      "text index failed[ %d ]", rc ) ;
       }
 
    done :
@@ -1486,7 +1300,7 @@ namespace engine
          {
             ixmIndexKeyGen keygen( indexCB, GEN_OBJ_KEEP_FIELD_NAME ) ;
             // If any field is an array, it should keep that format instead of
-            // being breaking into seperate objects.
+            // being breaking into separate objects.
             rc = keygen.getKeys( inputObj, keySet, NULL, TRUE, FALSE, TRUE ) ;
             PD_RC_CHECK( rc, PDERROR, "Generate key from object failed[ %d ]",
                          rc ) ;
@@ -1500,11 +1314,9 @@ namespace engine
             {
                BSONObjSet::iterator it = keySet.begin();
                BSONObj object( *it ) ;
-               CHAR fullName[DMS_COLLECTION_FULL_NAME_SZ + 1] = {0} ;
-
-               _pDataSu->_clFullName( context->mb()->_collectionName, fullName,
-                                      sizeof(fullName) ) ;
-               rc = extDataHandler->onInsert( fullName, indexCB->getName(),
+               rc = extDataHandler->onInsert( getSuName(),
+                                              context->mb()->_collectionName,
+                                              indexCB->getName(),
                                               object, oid, 0, cb ) ;
                PD_RC_CHECK( rc, PDERROR, "External data process of text index "
                             "insertion failed[ %d ]", rc) ;
@@ -1558,16 +1370,13 @@ namespace engine
          }
          oid = ele.OID() ;
 
-         {
-            CHAR fullName[DMS_COLLECTION_FULL_NAME_SZ + 1] = {0} ;
+         rc = extDataHandler->onDelete( getSuName(),
+                                        context->mb()->_collectionName,
+                                        indexCB->getName(),
+                                        oid, cb ) ;
 
-            _pDataSu->_clFullName( context->mb()->_collectionName, fullName,
-                                   sizeof(fullName) ) ;
-            rc = extDataHandler->onDelete( fullName, indexCB->getName(),
-                                           oid, cb ) ;
-            PD_RC_CHECK( rc, PDERROR, "External data process of text index "
-                         "deletion failed[ %d ]", rc) ;
-         }
+         PD_RC_CHECK( rc, PDERROR, "External data process of text index "
+                      "deletion failed[ %d ]", rc) ;
       }
       catch ( std::exception &e )
       {
@@ -1628,11 +1437,9 @@ namespace engine
             {
                BSONObjSet::iterator it = keySet.begin();
                BSONObj object( *it ) ;
-               CHAR fullName[DMS_COLLECTION_FULL_NAME_SZ + 1] = {0} ;
-
-               _pDataSu->_clFullName( context->mb()->_collectionName, fullName,
-                                      sizeof(fullName) ) ;
-               rc = extDataHandler->onUpdate( fullName, indexCB->getName(),
+               rc = extDataHandler->onUpdate( getSuName(),
+                                              context->mb()->_collectionName,
+                                              indexCB->getName(),
                                               object, oid, 0, cb ) ;
                PD_RC_CHECK( rc, PDERROR, "External data process of text index "
                             "updating failed[ %d ]", rc) ;
@@ -1672,14 +1479,10 @@ namespace engine
       }
 
       indexCB->setFlag( IXM_INDEX_FLAG_TRUNCATING ) ;
-
-      {
-         CHAR fullName[DMS_COLLECTION_FULL_NAME_SZ + 1] = {0} ;
-         _pDataSu->_clFullName( context->mb()->_collectionName, fullName,
-                                sizeof(fullName) ) ;
-         rc = extDataHandler->onTruncate( fullName, indexCB->getName(), cb ) ;
-         PD_RC_CHECK( rc, PDERROR, "Truncate text index failed[ %d ]", rc ) ;
-      }
+      rc = extDataHandler->onTruncate( getSuName(),
+                                       context->mb()->_collectionName,
+                                       indexCB->getName(), cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Truncate text index failed[ %d ]", rc ) ;
 
       indexCB->setFlag( IXM_INDEX_FLAG_NORMAL ) ;
 

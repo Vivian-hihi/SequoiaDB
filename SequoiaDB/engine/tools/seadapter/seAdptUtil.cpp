@@ -40,7 +40,7 @@
 #include "ossUtil.hpp"
 #include <string>
 
-#define SYS_PREFIX         "SYS"
+#define SYS_PREFIX         "sys"
 
 namespace engine
 {
@@ -78,8 +78,9 @@ namespace engine
          goto error ;
       }
 
-      _targetIdxName = SYS_PREFIX + std::string( clFullName, pos1 - clFullName )
-                       + "_" + std::string( pos1 + 1 ) + "_" + idxName ;
+      _targetIdxName = SYS_PREFIX"_" +
+                       std::string( clFullName, pos1 - clFullName ) +
+                       "_" + std::string( pos1 + 1 ) + "_" + idxName ;
 
       // The name is in the format of csName_clName_idxName. One more byte
       if ( _targetIdxName.length() > SDB_SEADPT_MAX_IDXNAME_SZ )

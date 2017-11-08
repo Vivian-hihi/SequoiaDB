@@ -76,6 +76,7 @@ namespace engine
 
       INT32 handleQueryRes( NET_HANDLE handle, MsgHeader* msg ) ;
       INT32 handleGetMoreRes( NET_HANDLE handle, MsgHeader *msg ) ;
+      INT32 handleKillCtxRes( NET_HANDLE handle, MsgHeader *msg ) ;
 
       // Called by net io thread.
       virtual void onRecieve( const NET_HANDLE netHandle, MsgHeader * msg ) ;
@@ -109,7 +110,7 @@ namespace engine
       INT32 _chkDoneMark( BOOLEAN &found ) ;
       INT32 _consult() ;
       INT32 _ensureESClt() ;
-      void _onSDBEOC() ;
+      INT32 _onSDBEOC() ;
       INT32 _startOver() ;
       void  _setQueryBusyFlag( BOOLEAN busy ) { _queryBusy = busy; }
       BOOLEAN _isQueryBusy() { return _queryBusy ; }

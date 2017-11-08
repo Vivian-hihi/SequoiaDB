@@ -1572,6 +1572,7 @@ namespace engine
       SDB_ASSERT ( pCollectionSpace, "collection space can't be NULL" );
       SDB_ASSERT ( dmsCB, "dms control block can't be NULL" );
       UINT32 length = ossStrlen ( pCollectionSpace ) ;
+      monCSSimple csInfo ;
       if ( length <= 0 || length > DMS_SU_NAME_SZ )
       {
          PD_LOG ( PDERROR, "Invalid length for collectionspace: %s, rc: %d",
@@ -1580,11 +1581,34 @@ namespace engine
          goto error ;
       }
       dmsCB->aquireCSMutex( pCollectionSpace ) ;
-      rc = dmsCB->dropCollectionSpaceP2( pCollectionSpace, cb, dpsCB );
+      rc = dmsCB->dropCollectionSpaceP2( pCollectionSpace, cb,
+                                         dpsCB, &csInfo ) ;
       dmsCB->releaseCSMutex( pCollectionSpace ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to drop cs(name:%s, rc=%d)",
                    pCollectionSpace, rc ) ;
+
+      // When using text indices, some capped collections are bounded to the
+      // original collection space. We need to drop all of them at the same
+      // time.
+      // Note: That can NOT be done in the protection of the mutex above.
+      // As the external onDropCS operation will drop collection space, it will
+      // also try to take mutex on that collection space. If the hash values of
+      // the names of this collection space and that one equal, dead lock will
+      // happen when trying to acquire cs mutex of that collection.
+      if ( DMS_INVALID_SUID != csInfo._suID )
+      {
+         rtnExtDataHandler *extDataHandler = getRtnExtDataHandler() ;
+         if ( extDataHandler )
+         {
+            INT32 rcTmp = extDataHandler->onDropCS( csInfo, cb ) ;
+            if ( rcTmp )
+            {
+               PD_LOG( PDERROR, "Remove external data failed(rc=%d)", rcTmp ) ;
+               // We can do nothing at this place. Do not goto error.
+            }
+         }
+      }
 
       PD_LOG( PDEVENT, "Drop collectionspace[%s] succeed", pCollectionSpace ) ;
 

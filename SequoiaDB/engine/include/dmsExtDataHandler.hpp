@@ -64,29 +64,44 @@ namespace engine
       public:
          virtual INT32 onDropCS( const monCSSimple &csInfo,
                                  _pmdEDUCB *cb ) = 0 ;
+
          virtual INT32 onUnloadCS( const monCSSimple &csInfo,
                                    _pmdEDUCB *cb ) = 0 ;
-         virtual INT32 onCreateTextIdx( const CHAR *clFullName,
+
+         virtual INT32 onCreateTextIdx( const CHAR *csName,
+                                        const CHAR *clName,
                                         const CHAR *idxName,
-                                        INT64 bufferSize,
                                         _pmdEDUCB* cb,
                                         SDB_DPSCB *dpsCB = NULL ) = 0 ;
-         virtual INT32 onDropTextIdx( const CHAR *clFullName,
+
+         virtual INT32 onDropTextIdx( const CHAR *csName,
+                                      const CHAR *clName,
                                       const CHAR *idxName,
                                       _pmdEDUCB *cb,
                                       SDB_DPSCB *dpscb = NULL ) = 0 ;
-         virtual INT32 onInsert( const CHAR *clFullName, const CHAR *idxName,
-                                 BSONObj &object, bson::OID &oid,
-                                 INT32 flags, _pmdEDUCB* cb,
+
+         virtual INT32 onRebuildTextIdx( const CHAR *csName,
+                                         const CHAR *clName,
+                                         const CHAR *idxName,
+                                         _pmdEDUCB *cb,
+                                         SDB_DPSCB *dpscb = NULL ) = 0 ;
+
+         virtual INT32 onInsert( const CHAR *csName, const CHAR *clName,
+                                 const CHAR *idxName, BSONObj &object,
+                                 bson::OID &oid, INT32 flags, _pmdEDUCB* cb,
                                  SDB_DPSCB *dpscb = NULL ) = 0 ;
-         virtual INT32 onDelete( const CHAR *clFullName, const CHAR *idxName,
-                                 bson::OID &oid, _pmdEDUCB* cb,
-                                 SDB_DPSCB *dpscb = NULL ) = 0 ;
-         virtual INT32 onUpdate( const CHAR *clFullName, const CHAR *idxName,
-                                 BSONObj &object, bson::OID &oid, INT32 flags,
+
+         virtual INT32 onDelete( const CHAR *csName, const CHAR *clName,
+                                 const CHAR *idxName, bson::OID &oid,
                                  _pmdEDUCB* cb, SDB_DPSCB *dpscb = NULL ) = 0 ;
-         virtual INT32 onTruncate( const CHAR *clFullName, const CHAR *idxName,
-                                   _pmdEDUCB* cb,
+
+         virtual INT32 onUpdate( const CHAR *csName, const CHAR *clName,
+                                 const CHAR *idxName, BSONObj &object,
+                                 bson::OID &oid, INT32 flags,
+                                 _pmdEDUCB* cb, SDB_DPSCB *dpscb = NULL ) = 0 ;
+
+         virtual INT32 onTruncate( const CHAR *csName, const CHAR *clname,
+                                   const CHAR *idxName, _pmdEDUCB* cb,
                                    SDB_DPSCB *dpscb = NULL ) = 0 ;
    } ;
    typedef _IDmsExtDataHandler IDmsExtDataHandler ;

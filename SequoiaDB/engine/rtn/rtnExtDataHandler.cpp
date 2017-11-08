@@ -39,6 +39,9 @@
 #include "rtnTrace.hpp"
 #include "rtnExtDataHandler.hpp"
 
+// Currently we set the size limit of capped collection to 30GB. This may change
+// in the future.
+#define RTN_CAPPED_CL_MAXSIZE       ( 30 * 1024 * 1024 * 1024LL )
 #define RTN_CAPPED_CL_MAXRECNUM     0
 #define RTN_FIELD_NAME_RID          "_rid"
 #define RTN_FIELD_NAME_SOURCE       "_source"
@@ -177,11 +180,13 @@ namespace engine
                        clItr->_name, idxItr->getIndexName() ) ;
                continue ;
             }
-            if ( IXM_EXTENT_TYPE_TEXT == idxType )
+            if ( IXM_EXTENT_HAS_TYPE( IXM_EXTENT_TYPE_TEXT, idxType ) )
             {
-               string cappedCSName = string(SYS_PREFIX) + string(csInfo._name)
-                                  + string(clItr->_clname) +
-                                  idxItr->getIndexName() ;
+               string cappedCSName ;
+               string cappedCLName ;
+               buildNames( csInfo._name, clItr->_clname,
+                           idxItr->getIndexName(), cappedCSName,
+                           cappedCLName ) ;
                csNameVec.push_back( cappedCSName ) ;
             }
          }
@@ -266,102 +271,77 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ONCREATETEXTIDX, "_rtnExtDataHandler::onCreateTextIdx" )
-   INT32 _rtnExtDataHandler::onCreateTextIdx( const CHAR *clFullName,
+   INT32 _rtnExtDataHandler::onCreateTextIdx( const CHAR *csName,
+                                              const CHAR *clName,
                                               const CHAR *idxName,
-                                              INT64 bufferSize,
                                               pmdEDUCB* cb,
                                               SDB_DPSCB *dpsCB )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONCREATETEXTIDX ) ;
-      SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
-      string cappedCSFullName = clFullName ;
+      string cappedCSName ;
       string cappedCLFullName ;
-      BOOLEAN csCreated = FALSE ;
       BSONObj extOptions ;
       BSONObjBuilder builder ;
-      SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
       SDB_DB_STATUS dbStatus = pmdGetKRCB()->getDBStatus() ;
 
-      if ( SDB_DB_REBUILDING == dbStatus || SDB_DB_FULLSYNC == dbStatus )
+      // During the full sync, let the capped collections to sync by themselves.
+      if ( SDB_DB_FULLSYNC == dbStatus )
       {
          goto done ;
       }
 
-      rc = buildNames( clFullName, idxName,
-                        cappedCSFullName, cappedCLFullName ) ;
-      PD_RC_CHECK( rc, PDERROR, "Build external data names failed[ %d ]", rc ) ;
+      buildNames( csName, clName, idxName, cappedCSName, cappedCLFullName ) ;
 
-      rc = rtnCreateCollectionSpaceCommand( cappedCSFullName.c_str(), cb, dmsCB,
-                                            dpsCB, DMS_PAGE_SIZE_DFT,
-                                            DMS_DO_NOT_CREATE_LOB,
-                                            DMS_STORAGE_CAPPED, TRUE ) ;
-      PD_RC_CHECK( rc, PDERROR, "Create capped collection space failed[ %d ]",
-                   rc ) ;
-      csCreated = TRUE ;
-
-      try
-      {
-         // The unit of bufferSize is MB.
-         builder.append( FIELD_NAME_SIZE, ( bufferSize << 20 ) ) ;
-         builder.append( FIELD_NAME_MAX, RTN_CAPPED_CL_MAXRECNUM ) ;
-         // Set the OverWrite option as false.
-         builder.appendBool( FIELD_NAME_OVERWRITE, FALSE ) ;
-         extOptions = builder.done() ;
-      }
-      catch ( std::exception &e )
-      {
-         rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Exception occurred: %s", e.what() ) ;
-         goto error ;
-      }
-
-      rc = rtnCreateCollectionCommand( cappedCLFullName.c_str(),
-                                       DMS_MB_ATTR_NOIDINDEX | DMS_MB_ATTR_CAPPED,
-                                       cb, dmsCB, dpsCB,
-                                       UTIL_COMPRESSOR_INVALID, 0,
-                                       TRUE, &extOptions ) ;
-      PD_RC_CHECK( rc, PDERROR, "Create capped collection failed[ %d ]", rc ) ;
-      rtnCB->incTextIdxVersion() ;
+      rc = _prepareCSAndCL( cappedCSName.c_str(), cappedCLFullName.c_str(),
+                            cb, dpsCB ) ;
+      PD_RC_CHECK( rc, PDERROR, "Create capped collection[ %s.%s ] "
+                   "failed[ %d ]",
+                   cappedCSName.c_str(), cappedCLFullName.c_str(), rc ) ;
 
    done:
       PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER_ONCREATETEXTIDX, rc ) ;
       return rc ;
    error:
-      if ( csCreated )
-      {
-         rtnDropCollectionSpaceCommand( cappedCSFullName.c_str(), cb,
-                                        dmsCB, dpsCB, TRUE ) ;
-      }
       goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ONDROPTEXTIDX, "_rtnExtDataHandler::onDropTextIdx" )
-   INT32 _rtnExtDataHandler::onDropTextIdx( const CHAR *clFullName,
+   INT32 _rtnExtDataHandler::onDropTextIdx( const CHAR *csName,
+                                            const CHAR *clName,
                                             const CHAR *idxName,
                                             pmdEDUCB* cb,
                                             SDB_DPSCB *dpscb )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONDROPTEXTIDX ) ;
-      string cappedCSFullName = clFullName ;
+      string cappedCSName ;
       string cappedCLName ;
       SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
       SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
       SDB_DB_STATUS dbStatus = pmdGetKRCB()->getDBStatus() ;
 
-      if ( SDB_DB_REBUILDING == dbStatus || SDB_DB_FULLSYNC == dbStatus )
+      if ( SDB_DB_FULLSYNC == dbStatus )
       {
          goto done ;
       }
 
-      rc = buildNames( clFullName, idxName, cappedCSFullName, cappedCLName ) ;
-      PD_RC_CHECK( rc, PDERROR, "Build external data names failed[ %d ]", rc ) ;
+      buildNames( csName, clName, idxName, cappedCSName, cappedCLName ) ;
 
-      rc = rtnDropCollectionSpaceCommand( cappedCSFullName.c_str(), cb, dmsCB,
-                                          dpscb, FALSE ) ;
-      PD_RC_CHECK( rc, PDERROR, "Drop capped collection space failed[ %d ]",
-                   rc ) ;
+      rc = rtnDropCollectionSpaceCommand( cappedCSName.c_str(), cb, dmsCB,
+                                          dpscb, TRUE ) ;
+      if ( SDB_DMS_CS_NOTEXIST == rc )
+      {
+         PD_LOG( PDWARNING, "Capped collection space[ %s ] not found when "
+                 "dropping text index[ %s ] of collection[ %s.%s ]",
+                 cappedCSName.c_str(), idxName, csName, clName ) ;
+         rc = SDB_OK ;
+      }
+      else
+      {
+         PD_RC_CHECK( rc, PDERROR, "Drop capped collection space failed[ %d ]",
+                      rc ) ;
+      }
       rtnCB->incTextIdxVersion() ;
    done:
       PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER_ONDROPTEXTIDX, rc ) ;
@@ -370,8 +350,65 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ONREBUILDTEXTIDX, "_rtnExtDataHandler::onRebuildTextIdx" )
+   INT32 _rtnExtDataHandler::onRebuildTextIdx( const CHAR *csName,
+                                               const CHAR *clName,
+                                               const CHAR *idxName,
+                                               _pmdEDUCB *cb,
+                                               SDB_DPSCB *dpscb )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONREBUILDTEXTIDX ) ;
+      string cappedCSName ;
+      string cappedCLName ;
+      pmdKRCB *krcb = pmdGetKRCB() ;
+      SDB_DB_STATUS dbStatus = krcb->getDBStatus() ;
+      SDB_DMSCB *dmsCB = krcb->getDMSCB() ;
+
+      // In case of full sync, leave all the capped collections to sync by
+      // themselves, because we want them to be exactly the same with the ones
+      // on primary node.
+      if ( SDB_DB_FULLSYNC == dbStatus )
+      {
+         goto done ;
+      }
+
+      buildNames( csName, clName, idxName, cappedCSName, cappedCLName ) ;
+
+      // In case of rebuilding, we don't know whether the capped collections are
+      // valid or not. So we directly drop and re-create the capped collection
+      // again.
+      if ( SDB_DB_REBUILDING == dbStatus )
+      {
+         rc = rtnDropCollectionSpaceCommand( cappedCSName.c_str(), cb,
+                                             dmsCB, dpscb, TRUE ) ;
+         if ( SDB_DMS_CS_NOTEXIST == rc )
+         {
+            PD_LOG( PDINFO, "Capped collection space[ %s ] not found when "
+                    "trying to drop it", cappedCSName.c_str() ) ;
+         }
+         else
+         {
+            PD_RC_CHECK( rc, PDERROR, "Drop collectionspace[ %s ] failed[ %d ]",
+                         cappedCSName.c_str(), rc);
+         }
+      }
+
+      rc = _prepareCSAndCL( cappedCSName.c_str(), cappedCLName.c_str(),
+                            cb, dpscb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Create capped collection[ %s.%s ] "
+                   "failed[ %d ]",
+                   cappedCSName.c_str(), cappedCLName.c_str(), rc ) ;
+
+   done:
+      PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER_ONREBUILDTEXTIDX, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ONINSERT, "_rtnExtDataHandler::onInsert" )
-   INT32 _rtnExtDataHandler::onInsert( const CHAR *clFullName,
+   INT32 _rtnExtDataHandler::onInsert( const CHAR *csName, const CHAR *clName,
                                        const CHAR *idxName, BSONObj &object,
                                        bson::OID &oid, INT32 flags,
                                        pmdEDUCB* cb, SDB_DPSCB *dpscb )
@@ -380,7 +417,7 @@ namespace engine
       PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONINSERT ) ;
       pmdKRCB *krcb = pmdGetKRCB() ;
       SDB_DB_STATUS dbStatus = krcb->getDBStatus() ;
-      string cappedCSFullName = clFullName ;
+      string cappedCSName ;
       string cappedCLFullName ;
 
       if ( SDB_DB_REBUILDING == dbStatus || SDB_DB_FULLSYNC == dbStatus )
@@ -388,9 +425,7 @@ namespace engine
          goto done ;
       }
 
-      rc = buildNames( clFullName, idxName,
-                        cappedCSFullName, cappedCLFullName ) ;
-      PD_RC_CHECK( rc, PDERROR, "Build external data names failed[ %d ]" ) ;
+      buildNames( csName, clName, idxName, cappedCSName, cappedCLFullName ) ;
 
       rc = _addOprRecord( cappedCLFullName.c_str(), DMS_EXT_INSERT, cb,
                           &oid, &object, NULL ) ;
@@ -404,7 +439,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ONDELETE, "_rtnExtDataHandler::onDelete" )
-   INT32 _rtnExtDataHandler::onDelete( const CHAR *clFullName,
+   INT32 _rtnExtDataHandler::onDelete( const CHAR *csName, const CHAR *clName,
                                        const CHAR *idxName, bson::OID &oid,
                                        pmdEDUCB* cb, SDB_DPSCB *dpscb )
    {
@@ -412,7 +447,7 @@ namespace engine
       PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONDELETE ) ;
       pmdKRCB *krcb = pmdGetKRCB() ;
       SDB_DB_STATUS dbStatus = krcb->getDBStatus() ;
-      string cappedCSFullName = clFullName ;
+      string cappedCSName ;
       string cappedCLFullName ;
 
       if ( SDB_DB_REBUILDING == dbStatus || SDB_DB_FULLSYNC == dbStatus )
@@ -420,9 +455,7 @@ namespace engine
          goto done ;
       }
 
-      rc = buildNames( clFullName, idxName,
-                        cappedCSFullName, cappedCLFullName ) ;
-      PD_RC_CHECK( rc, PDERROR, "Build external data names failed[ %d ]" ) ;
+      buildNames( csName, clName, idxName, cappedCSName, cappedCLFullName ) ;
 
       rc = _addOprRecord( cappedCLFullName.c_str(), DMS_EXT_DELETE, cb,
                           &oid, NULL, NULL ) ;
@@ -436,7 +469,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ONUPDATE, "_rtnExtDataHandler::onUpdate" )
-   INT32 _rtnExtDataHandler::onUpdate( const CHAR *clFullName,
+   INT32 _rtnExtDataHandler::onUpdate( const CHAR *csName, const CHAR *clName,
                                        const CHAR *idxName, BSONObj &object,
                                        bson::OID &oid, INT32 flags,
                                        pmdEDUCB* cb, SDB_DPSCB *dpscb )
@@ -445,7 +478,7 @@ namespace engine
       PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONUPDATE ) ;
       pmdKRCB *krcb = pmdGetKRCB() ;
       SDB_DB_STATUS dbStatus = krcb->getDBStatus() ;
-      string cappedCSFullName = clFullName ;
+      string cappedCSName ;
       string cappedCLFullName ;
 
       if ( SDB_DB_REBUILDING == dbStatus || SDB_DB_FULLSYNC == dbStatus )
@@ -453,9 +486,7 @@ namespace engine
          goto done ;
       }
 
-      rc = buildNames( clFullName, idxName,
-                        cappedCSFullName, cappedCLFullName ) ;
-      PD_RC_CHECK( rc, PDERROR, "Build external data names failed[ %d ]" ) ;
+      buildNames( csName, clName, idxName, cappedCSName, cappedCLFullName ) ;
 
       rc = _addOprRecord( cappedCLFullName.c_str(), DMS_EXT_UPDATE, cb,
                           &oid, &object, NULL ) ;
@@ -469,7 +500,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ONTRUNCATE, "_rtnExtDataHandler::onTruncate" )
-   INT32 _rtnExtDataHandler::onTruncate( const CHAR *clFullName,
+   INT32 _rtnExtDataHandler::onTruncate( const CHAR *csName, const CHAR *clName,
                                          const CHAR *idxName, pmdEDUCB* cb,
                                          SDB_DPSCB *dpscb )
    {
@@ -477,17 +508,25 @@ namespace engine
       PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONTRUNCATE ) ;
       pmdKRCB *krcb = pmdGetKRCB() ;
       SDB_DB_STATUS dbStatus = krcb->getDBStatus() ;
-      string cappedCSFullName = clFullName ;
+      string cappedCSName ;
       string cappedCLFullName ;
 
-      if ( SDB_DB_REBUILDING == dbStatus || SDB_DB_FULLSYNC == dbStatus )
+      if ( SDB_DB_FULLSYNC == dbStatus )
       {
          goto done ;
       }
 
-      rc = buildNames( clFullName, idxName,
-                        cappedCSFullName, cappedCLFullName ) ;
-      PD_RC_CHECK( rc, PDERROR, "Build external data names failed[ %d ]" ) ;
+      buildNames( csName, clName, idxName, cappedCSName, cappedCLFullName ) ;
+
+      // In case of rebuilding, we are not sure if the capped collection is
+      // valid or not.
+      if ( SDB_DB_REBUILDING == dbStatus )
+      {
+         rc = rtnTruncCollectionCommand( cappedCLFullName.c_str(), cb,
+                                         krcb->getDMSCB(), NULL ) ;
+         PD_RC_CHECK( rc, PDERROR, "Truncate collection[ %s ] failed[ %d ]",
+                      cappedCLFullName.c_str(), rc ) ;
+      }
 
       rc = _addOprRecord( cappedCLFullName.c_str(), DMS_EXT_TRUNCATE, cb,
                           NULL, NULL, NULL ) ;
@@ -501,24 +540,83 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER__BUILDNAMES, "_rtnExtDataHandler::buildNames" )
-   INT32 _rtnExtDataHandler::buildNames( const CHAR *origCLFullName,
-                                         const CHAR *idxName,
-                                         string &cappedCSName,
-                                         string &cappedCLName )
+   void _rtnExtDataHandler::buildNames( const CHAR *csName,
+                                        const CHAR *clName,
+                                        const CHAR *idxName,
+                                        string &cappedCSName,
+                                        string &cappedCLName )
    {
       PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER__BUILDNAMES )  ;
-      SDB_ASSERT( origCLFullName, "Collection name can't be NULL")  ;
+      SDB_ASSERT( csName, "Collection space name can't be NULL")  ;
+      SDB_ASSERT( clName, "Collection name can't be NULL")  ;
       SDB_ASSERT( idxName, "Index name can't be NULL" ) ;
 
-      cappedCSName = origCLFullName ;
-
-      cappedCSName.replace( cappedCSName.find("."), 1, "_" ) ;
-      cappedCSName = string(SYS_PREFIX) + string("_") + cappedCSName
-                     + string("_") + string(idxName) ;
+      cappedCSName = string( SYS_PREFIX ) + "_" + csName + "_" +
+                     clName + "_" + idxName ;
       cappedCLName = cappedCSName + "." + cappedCSName ;
 
       PD_TRACE_EXIT( SDB__RTNEXTDATAHANDLER__BUILDNAMES ) ;
-      return SDB_OK ;
+   }
+
+   INT32 _rtnExtDataHandler::_prepareCSAndCL( const CHAR *csName,
+                                              const CHAR *clName,
+                                              pmdEDUCB *cb,
+                                              SDB_DPSCB *dpsCB )
+   {
+      INT32 rc = SDB_OK ;
+      SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
+      SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
+      BOOLEAN csCreated = FALSE ;
+      BSONObjBuilder builder ;
+      BSONObj extOptions ;
+
+      rc = rtnCreateCollectionSpaceCommand( csName, cb, dmsCB,
+                                            dpsCB, DMS_PAGE_SIZE_DFT,
+                                            DMS_DO_NOT_CREATE_LOB,
+                                            DMS_STORAGE_CAPPED, TRUE ) ;
+      PD_RC_CHECK( rc, PDERROR, "Create capped collection space failed[ %d ]",
+                   rc ) ;
+
+      csCreated = TRUE ;
+
+      try
+      {
+         builder.append( FIELD_NAME_SIZE, RTN_CAPPED_CL_MAXSIZE ) ;
+         builder.append( FIELD_NAME_MAX, RTN_CAPPED_CL_MAXRECNUM ) ;
+         // Set the OverWrite option as false.
+         builder.appendBool( FIELD_NAME_OVERWRITE, FALSE ) ;
+         extOptions = builder.done() ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Exception occurred: %s", e.what() ) ;
+         goto error ;
+      }
+
+      rc = rtnCreateCollectionCommand( clName,
+                                       DMS_MB_ATTR_NOIDINDEX | DMS_MB_ATTR_CAPPED,
+                                       cb, dmsCB, dpsCB,
+                                       UTIL_COMPRESSOR_INVALID, 0,
+                                       TRUE, &extOptions ) ;
+      PD_RC_CHECK( rc, PDERROR, "Create capped collection[ %s ] failed[ %d ]",
+                   clName, rc ) ;
+      rtnCB->incTextIdxVersion() ;
+
+   done:
+      return rc ;
+   error:
+      if ( csCreated )
+      {
+         INT32 rcTmp = rtnDropCollectionSpaceCommand( csName, cb, dmsCB,
+                                                      dpsCB, TRUE ) ;
+         if ( rcTmp )
+         {
+            PD_LOG( PDERROR, "Drop collectionspace[ %s ] failed[ %d ]",
+                    csName, rcTmp ) ;
+         }
+      }
+      goto done ;
    }
 
    rtnExtDataHandler* getRtnExtDataHandler()

@@ -237,7 +237,8 @@ namespace engine
 
       INT32 _delCollectionSpace ( const CHAR *pName, _pmdEDUCB *cb,
                                   SDB_DPSCB *dpsCB, BOOLEAN removeFile,
-                                  BOOLEAN onlyEmpty ) ;
+                                  BOOLEAN onlyEmpty,
+                                  monCSSimple *csInfo = NULL ) ;
 
    public:
       _SDB_DMSCB() ;
@@ -315,7 +316,8 @@ namespace engine
                                           SDB_DPSCB *dpsCB );
 
       INT32 dropCollectionSpaceP2 ( const CHAR *pName, _pmdEDUCB *cb,
-                                    SDB_DPSCB *dpsCB );
+                                    SDB_DPSCB *dpsCB,
+                                    monCSSimple *csInfo = NULL ) ;
 
       BOOLEAN dispatchDictJob( dmsDictJob &job ) ;
       void pushDictJob( dmsDictJob job ) ;

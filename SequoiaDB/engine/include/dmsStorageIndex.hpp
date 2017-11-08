@@ -143,13 +143,6 @@ namespace engine
                                 BOOLEAN isSys,
                                 INT32 sortBufferSize ) ;
 
-         INT32    _createTextIndex( _dmsMBContext *context,
-                                    const BSONObj &indexDef,
-                                    _pmdEDUCB *cb,
-                                    SDB_DPSCB *dpsCB,
-                                    BOOLEAN isSys = FALSE,
-                                    INT64 bufferSize = DMS_DFT_TEXTINDEX_BUFF_SIZE ) ;
-
          // if indexLID == DMS_INALID_EXTENT, it will get from index cb
          INT32    _rebuildIndex ( _dmsMBContext *context,
                                   dmsExtentID indexExtentID,

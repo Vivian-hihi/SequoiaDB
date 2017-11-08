@@ -53,37 +53,50 @@ namespace engine
       public:
          virtual INT32 onDropCS( const monCSSimple &csInfo,
                                  _pmdEDUCB *cb ) ;
+
          virtual INT32 onUnloadCS( const monCSSimple &csInfo,
                                    _pmdEDUCB *cb ) ;
-         virtual INT32 onCreateTextIdx( const CHAR *clFullName,
+
+         virtual INT32 onCreateTextIdx( const CHAR *csName,
+                                        const CHAR *clName,
                                         const CHAR *idxName,
-                                        INT64 bufferSize,
                                         pmdEDUCB* cb,
                                         SDB_DPSCB *dpsCB = NULL ) ;
 
-         virtual INT32 onDropTextIdx( const CHAR *clFullName,
+         virtual INT32 onDropTextIdx( const CHAR *csName,
+                                      const CHAR *clName,
                                       const CHAR *idxName,
                                       _pmdEDUCB *cb,
                                       SDB_DPSCB *dpscb = NULL ) ;
 
-         virtual INT32 onInsert( const CHAR *clFullName, const CHAR *idxName,
-                                 BSONObj &object, bson::OID &oid,
-                                 INT32 flags, _pmdEDUCB* cb,
+         virtual INT32 onRebuildTextIdx( const CHAR *csName,
+                                         const CHAR *clName,
+                                         const CHAR *idxName,
+                                         _pmdEDUCB *cb,
+                                         SDB_DPSCB *dpscb = NULL ) ;
+
+         virtual INT32 onInsert( const CHAR *csName, const CHAR *clName,
+                                 const CHAR *idxName, BSONObj &object,
+                                 bson::OID &oid, INT32 flags, _pmdEDUCB* cb,
                                  SDB_DPSCB *dpscb = NULL ) ;
-         virtual INT32 onDelete( const CHAR *clFullName, const CHAR *idxName,
-                                 bson::OID &oid, _pmdEDUCB* cb,
-                                 SDB_DPSCB *dpscb = NULL ) ;
-         virtual INT32 onUpdate( const CHAR *clFullName, const CHAR *idxName,
-                                 BSONObj &object, bson::OID &oid, INT32 flags,
+
+         virtual INT32 onDelete( const CHAR *csName, const CHAR *clName,
+                                 const CHAR *idxName, bson::OID &oid,
                                  _pmdEDUCB* cb, SDB_DPSCB *dpscb = NULL ) ;
-         virtual INT32 onTruncate( const CHAR *clFullName, const CHAR *idxName,
-                                   _pmdEDUCB* cb,
+
+         virtual INT32 onUpdate( const CHAR *csName, const CHAR *clName,
+                                 const CHAR *idxName, BSONObj &object,
+                                 bson::OID &oid, INT32 flags, _pmdEDUCB* cb,
+                                 SDB_DPSCB *dpscb = NULL ) ;
+
+         virtual INT32 onTruncate( const CHAR *csName, const CHAR *clName,
+                                   const CHAR *idxName, _pmdEDUCB* cb,
                                    SDB_DPSCB *dpscb = NULL ) ;
 
-         static INT32 buildNames( const CHAR *origCLFullName,
-                                  const CHAR *idxName,
-                                  string &cappedCSName,
-                                  string &cappedCLName ) ;
+         static void buildNames( const CHAR *csName, const CHAR *clName,
+                                 const CHAR *idxName, string &cappedCSName,
+                                 string &cappedCLName ) ;
+
       private:
          INT32 _addOprRecord( const CHAR *name,
                               _dmsExtOprType oprType,
@@ -91,8 +104,12 @@ namespace engine
                               const bson::OID *dataOID,
                               const BSONObj *dataObj,
                               SDB_DPSCB *dpsCB = NULL ) ;
+
          void _getTextIdxCSList( const monCSSimple &csInfo,
                                  vector<string> &csNameVec ) ;
+
+         INT32 _prepareCSAndCL( const CHAR *csName, const CHAR *clName,
+                                pmdEDUCB *cb, SDB_DPSCB *dpsCB ) ;
    } ;
    typedef _rtnExtDataHandler rtnExtDataHandler ;
 
