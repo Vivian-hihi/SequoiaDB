@@ -450,6 +450,7 @@ namespace engine
       UINT32      _totalLobPages ;
       UINT64      _totalLobs ;
       UINT32      _uniqueIdxNum ;
+      UINT32      _textIdxNum ;
       UINT8       _lastCompressRatio ;
       UINT64      _totalOrgDataLen ;
       UINT64      _totalDataLen ;
@@ -479,6 +480,7 @@ namespace engine
          _totalLobPages          = 0 ;
          _totalLobs              = 0 ;
          _uniqueIdxNum           = 0 ;
+         _textIdxNum             = 0 ;
          _lastCompressRatio      = 100 ;
          _totalOrgDataLen        = 0 ;
          _totalDataLen           = 0 ;

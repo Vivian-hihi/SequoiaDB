@@ -173,9 +173,16 @@ namespace engine
                }
                ixmIndexCB indexCB( _pDataSu->_dmsMME->_mbList[i]._indexExtent[ j ],
                                    this, NULL ) ;
-               if ( indexCB.isInitialized() && indexCB.unique() )
+               if ( indexCB.isInitialized() )
                {
-                  _pDataSu->_mbStatInfo[i]._uniqueIdxNum++ ;
+                  if ( IXM_EXTENT_TYPE_TEXT == indexCB.getIndexType() )
+                  {
+                     _pDataSu->_mbStatInfo[i]._textIdxNum++ ;
+                  }
+                  if ( indexCB.unique() )
+                  {
+                     _pDataSu->_mbStatInfo[i]._uniqueIdxNum++ ;
+                  }
                }
             }
          }
@@ -837,6 +844,7 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "External data process of creating "
                       "text index failed[ %d ]", rc ) ;
          indexCB.setFlag ( IXM_INDEX_FLAG_NORMAL ) ;
+         context->mbStat()->_textIdxNum++ ;
       }
 
       context->mb()->_indexExtent[indexID] = ctlBlockExtent ;
@@ -1208,6 +1216,11 @@ namespace engine
          if ( indexCB.unique() )
          {
             context->mbStat()->_uniqueIdxNum-- ;
+         }
+
+         if ( IXM_EXTENT_TYPE_TEXT == indexCB.getIndexType() )
+         {
+            context->mbStat()->_textIdxNum-- ;
          }
 
          // release index control block extent

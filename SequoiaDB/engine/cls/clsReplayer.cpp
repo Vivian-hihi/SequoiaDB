@@ -208,7 +208,10 @@ namespace engine
             rc = su->data()->getMBContext( &mbContext, pShortName, SHARED ) ;
             if ( SDB_OK == rc )
             {
-               paralla = mbContext->mbStat()->_uniqueIdxNum <= 1 ?
+               // For collection who has text indices, parallel replay should
+               // also be forbidden. Otherwise, the records in the capped col
+               paralla = ( mbContext->mbStat()->_uniqueIdxNum <= 1 &&
+                           0 == mbContext->mbStat()->_textIdxNum ) ?
                          TRUE : FALSE ;
                su->data()->releaseMBContext( mbContext ) ;
             }
