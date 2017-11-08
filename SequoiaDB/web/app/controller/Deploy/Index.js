@@ -533,9 +533,6 @@
                   if( moduleInfo['BusinessType'] == 'sequoiadb' && moduleInfo['ClusterName'] == $scope.clusterList[ $scope.currentCluster ]['ClusterName'] )
                   {
                      autoQueryModuleIndex.push( index ) ;
-                     getNodesList( index ) ;
-                     getCollectionInfo( index, $scope.currentCluster ) ;
-                     getErrNodes( index, $scope.currentCluster ) ;
                   }
                } ) ;
                $scope.SwitchCluster( $scope.currentCluster ) ;
@@ -1787,7 +1784,7 @@
                   $scope.Components.Confirm.isShow = false ;
                   $scope.Components.Confirm.noClose = false ;
                   $scope.Components.Confirm.normalOK = false ;
-                  queryModule() ;
+                  $location.path( '/Deploy/Index' ).search( { 'r': new Date().getTime() }  ) ;
                }
             },
             'failed': function( errorInfo ){
