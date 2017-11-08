@@ -79,6 +79,11 @@ namespace engine
          virtual INT32 onTruncate( const CHAR *clFullName, const CHAR *idxName,
                                    _pmdEDUCB* cb,
                                    SDB_DPSCB *dpscb = NULL ) ;
+
+         static INT32 buildNames( const CHAR *origCLFullName,
+                                  const CHAR *idxName,
+                                  string &cappedCSName,
+                                  string &cappedCLName ) ;
       private:
          INT32 _addOprRecord( const CHAR *name,
                               _dmsExtOprType oprType,

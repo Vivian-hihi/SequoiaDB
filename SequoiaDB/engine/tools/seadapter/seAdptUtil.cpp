@@ -38,12 +38,14 @@
 #include "seAdptUtil.hpp"
 #include "pd.hpp"
 #include "ossUtil.hpp"
+#include <string>
+
+#define SYS_PREFIX         "SYS"
 
 namespace engine
 {
    _seAdptNameParser::_seAdptNameParser()
    {
-      ossMemset( _targetIdxName, 0, SDB_SEADPT_MAX_IDXNAME_SZ + 1 ) ;
    }
 
    _seAdptNameParser::~_seAdptNameParser()
@@ -56,8 +58,6 @@ namespace engine
       const CHAR dot = '.' ;
       const CHAR *pos1 = NULL ;
       const CHAR *pos2 = NULL ;
-      UINT32 writePos = 0 ;
-      UINT32 writeLen = 0 ;
 
       if ( !clFullName || !idxName )
       {
@@ -72,29 +72,24 @@ namespace engine
       if ( !pos1 || ( pos1 != pos2 ) || ( pos1 == clFullName )
            || ( pos1 == ( clFullName + ossStrlen( clFullName ) - 1 ) ) )
       {
-                  PD_LOG( PDERROR, "Collection name format is wrong: %s",
+         PD_LOG( PDERROR, "Collection name format is wrong: %s",
                  clFullName ) ;
          rc = SDB_SYS ;
          goto error ;
       }
 
-      if ( ossStrlen( clFullName ) - 1 + ossStrlen( idxName )
-           > SDB_SEADPT_MAX_IDXNAME_SZ )
+      _targetIdxName = SYS_PREFIX + std::string( clFullName, pos1 - clFullName )
+                       + "_" + std::string( pos1 + 1 ) + "_" + idxName ;
+
+      // The name is in the format of csName_clName_idxName. One more byte
+      if ( _targetIdxName.length() > SDB_SEADPT_MAX_IDXNAME_SZ )
       {
          PD_LOG( PDERROR, "Names are too long, collection: %s, index: %s",
                  clFullName, idxName ) ;
+         _targetIdxName.clear() ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
-
-      writeLen = pos1 - clFullName ;
-      ossStrncpy( _targetIdxName, clFullName, writeLen ) ;
-      writePos += writeLen ;
-      // Skip the dot.
-      writeLen = ossStrlen( clFullName ) - ( pos1 + 1 - clFullName ) ;
-      ossStrncat( _targetIdxName + writePos, pos1 + 1, writeLen ) ;
-      writePos += writeLen ;
-      ossStrncat( _targetIdxName + writePos, idxName, ossStrlen( idxName ) ) ;
 
    done:
       return rc ;
@@ -104,12 +99,12 @@ namespace engine
 
    void _seAdptNameParser::reset()
    {
-      ossMemset( _targetIdxName, 0, SDB_SEADPT_MAX_IDXNAME_SZ + 1 ) ;
+      _targetIdxName.clear() ;
    }
 
    const CHAR* _seAdptNameParser::getTargetIdxName()
    {
-      return _targetIdxName ;
+      return _targetIdxName.c_str() ;
    }
 }
 

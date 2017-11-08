@@ -1,6 +1,5 @@
 /*******************************************************************************
 
-
    Copyright (C) 2011-2017 SequoiaDB Ltd.
 
    This program is free software: you can redistribute it and/or modify
@@ -282,10 +281,16 @@ namespace engine
       BSONObj extOptions ;
       BSONObjBuilder builder ;
       SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
+      SDB_DB_STATUS dbStatus = pmdGetKRCB()->getDBStatus() ;
 
-      cappedCSFullName.erase( cappedCSFullName.find("."), 1 ) ;
-      cappedCSFullName = SYS_PREFIX + cappedCSFullName  + string(idxName) ;
-      cappedCLFullName = cappedCSFullName + "." + cappedCSFullName ;
+      if ( SDB_DB_REBUILDING == dbStatus || SDB_DB_FULLSYNC == dbStatus )
+      {
+         goto done ;
+      }
+
+      rc = buildNames( clFullName, idxName,
+                        cappedCSFullName, cappedCLFullName ) ;
+      PD_RC_CHECK( rc, PDERROR, "Build external data names failed[ %d ]", rc ) ;
 
       rc = rtnCreateCollectionSpaceCommand( cappedCSFullName.c_str(), cb, dmsCB,
                                             dpsCB, DMS_PAGE_SIZE_DFT,
@@ -312,7 +317,7 @@ namespace engine
       }
 
       rc = rtnCreateCollectionCommand( cappedCLFullName.c_str(),
-                                       DMS_MB_ATTR_NOIDINDEX,
+                                       DMS_MB_ATTR_NOIDINDEX | DMS_MB_ATTR_CAPPED,
                                        cb, dmsCB, dpsCB,
                                        UTIL_COMPRESSOR_INVALID, 0,
                                        TRUE, &extOptions ) ;
@@ -340,11 +345,18 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONDROPTEXTIDX ) ;
       string cappedCSFullName = clFullName ;
+      string cappedCLName ;
       SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
       SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
+      SDB_DB_STATUS dbStatus = pmdGetKRCB()->getDBStatus() ;
 
-      cappedCSFullName.erase( cappedCSFullName.find("."), 1 ) ;
-      cappedCSFullName = SYS_PREFIX + cappedCSFullName  + string(idxName) ;
+      if ( SDB_DB_REBUILDING == dbStatus || SDB_DB_FULLSYNC == dbStatus )
+      {
+         goto done ;
+      }
+
+      rc = buildNames( clFullName, idxName, cappedCSFullName, cappedCLName ) ;
+      PD_RC_CHECK( rc, PDERROR, "Build external data names failed[ %d ]", rc ) ;
 
       rc = rtnDropCollectionSpaceCommand( cappedCSFullName.c_str(), cb, dmsCB,
                                           dpscb, FALSE ) ;
@@ -366,12 +378,19 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONINSERT ) ;
+      pmdKRCB *krcb = pmdGetKRCB() ;
+      SDB_DB_STATUS dbStatus = krcb->getDBStatus() ;
       string cappedCSFullName = clFullName ;
       string cappedCLFullName ;
 
-      cappedCSFullName.erase( cappedCSFullName.find("."), 1 ) ;
-      cappedCSFullName = SYS_PREFIX + cappedCSFullName  + string(idxName) ;
-      cappedCLFullName = cappedCSFullName + "." + cappedCSFullName ;
+      if ( SDB_DB_REBUILDING == dbStatus || SDB_DB_FULLSYNC == dbStatus )
+      {
+         goto done ;
+      }
+
+      rc = buildNames( clFullName, idxName,
+                        cappedCSFullName, cappedCLFullName ) ;
+      PD_RC_CHECK( rc, PDERROR, "Build external data names failed[ %d ]" ) ;
 
       rc = _addOprRecord( cappedCLFullName.c_str(), DMS_EXT_INSERT, cb,
                           &oid, &object, NULL ) ;
@@ -391,12 +410,19 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONDELETE ) ;
+      pmdKRCB *krcb = pmdGetKRCB() ;
+      SDB_DB_STATUS dbStatus = krcb->getDBStatus() ;
       string cappedCSFullName = clFullName ;
       string cappedCLFullName ;
 
-      cappedCSFullName.erase( cappedCSFullName.find("."), 1 ) ;
-      cappedCSFullName = SYS_PREFIX + cappedCSFullName  + string(idxName) ;
-      cappedCLFullName = cappedCSFullName + "." + cappedCSFullName ;
+      if ( SDB_DB_REBUILDING == dbStatus || SDB_DB_FULLSYNC == dbStatus )
+      {
+         goto done ;
+      }
+
+      rc = buildNames( clFullName, idxName,
+                        cappedCSFullName, cappedCLFullName ) ;
+      PD_RC_CHECK( rc, PDERROR, "Build external data names failed[ %d ]" ) ;
 
       rc = _addOprRecord( cappedCLFullName.c_str(), DMS_EXT_DELETE, cb,
                           &oid, NULL, NULL ) ;
@@ -417,12 +443,19 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONUPDATE ) ;
+      pmdKRCB *krcb = pmdGetKRCB() ;
+      SDB_DB_STATUS dbStatus = krcb->getDBStatus() ;
       string cappedCSFullName = clFullName ;
       string cappedCLFullName ;
 
-      cappedCSFullName.erase( cappedCSFullName.find("."), 1 ) ;
-      cappedCSFullName = SYS_PREFIX + cappedCSFullName  + string(idxName) ;
-      cappedCLFullName = cappedCSFullName + "." + cappedCSFullName ;
+      if ( SDB_DB_REBUILDING == dbStatus || SDB_DB_FULLSYNC == dbStatus )
+      {
+         goto done ;
+      }
+
+      rc = buildNames( clFullName, idxName,
+                        cappedCSFullName, cappedCLFullName ) ;
+      PD_RC_CHECK( rc, PDERROR, "Build external data names failed[ %d ]" ) ;
 
       rc = _addOprRecord( cappedCLFullName.c_str(), DMS_EXT_UPDATE, cb,
                           &oid, &object, NULL ) ;
@@ -442,12 +475,19 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONTRUNCATE ) ;
+      pmdKRCB *krcb = pmdGetKRCB() ;
+      SDB_DB_STATUS dbStatus = krcb->getDBStatus() ;
       string cappedCSFullName = clFullName ;
       string cappedCLFullName ;
 
-      cappedCSFullName.erase( cappedCSFullName.find("."), 1 ) ;
-      cappedCSFullName = SYS_PREFIX + cappedCSFullName  + string(idxName) ;
-      cappedCLFullName = cappedCSFullName + "." + cappedCSFullName ;
+      if ( SDB_DB_REBUILDING == dbStatus || SDB_DB_FULLSYNC == dbStatus )
+      {
+         goto done ;
+      }
+
+      rc = buildNames( clFullName, idxName,
+                        cappedCSFullName, cappedCLFullName ) ;
+      PD_RC_CHECK( rc, PDERROR, "Build external data names failed[ %d ]" ) ;
 
       rc = _addOprRecord( cappedCLFullName.c_str(), DMS_EXT_TRUNCATE, cb,
                           NULL, NULL, NULL ) ;
@@ -458,6 +498,27 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER__BUILDNAMES, "_rtnExtDataHandler::buildNames" )
+   INT32 _rtnExtDataHandler::buildNames( const CHAR *origCLFullName,
+                                         const CHAR *idxName,
+                                         string &cappedCSName,
+                                         string &cappedCLName )
+   {
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER__BUILDNAMES )  ;
+      SDB_ASSERT( origCLFullName, "Collection name can't be NULL")  ;
+      SDB_ASSERT( idxName, "Index name can't be NULL" ) ;
+
+      cappedCSName = origCLFullName ;
+
+      cappedCSName.replace( cappedCSName.find("."), 1, "_" ) ;
+      cappedCSName = string(SYS_PREFIX) + string("_") + cappedCSName
+                     + string("_") + string(idxName) ;
+      cappedCLName = cappedCSName + "." + cappedCSName ;
+
+      PD_TRACE_EXIT( SDB__RTNEXTDATAHANDLER__BUILDNAMES ) ;
+      return SDB_OK ;
    }
 
    rtnExtDataHandler* getRtnExtDataHandler()

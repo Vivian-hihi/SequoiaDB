@@ -40,6 +40,7 @@
 
 #include "core.hpp"
 #include "seAdptDef.hpp"
+#include <string>
 
 namespace engine
 {
@@ -55,7 +56,7 @@ namespace engine
          const CHAR* getTargetIdxName() ;
 
       private:
-         CHAR _targetIdxName[ SDB_SEADPT_MAX_IDXNAME_SZ + 1 ] ;
+         std::string _targetIdxName ;
    } ;
    typedef _seAdptNameParser seAdptNameParser ;
 }

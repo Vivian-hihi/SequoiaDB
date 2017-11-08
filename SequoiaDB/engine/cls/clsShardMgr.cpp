@@ -42,6 +42,7 @@
 #include "rtnQueryOptions.hpp"
 #include "pdTrace.hpp"
 #include "clsTrace.hpp"
+#include "rtnExtDataHandler.hpp"
 
 using namespace bson ;
 
@@ -2782,12 +2783,15 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__CLSSHDMGR__BUILDTEXTIDXOBJ ) ;
 
-      string cappedCSName = string(SYS_PREFIX) +
-                            string(csInfo->_name) +
-                            string(clInfo->_clname) +
-                            idxInfo->getIndexName() ;
-      string cappedCLName = cappedCSName + "." +
-                            cappedCSName ;
+      string cappedCSName ;
+      string cappedCLName ;
+
+      rc = rtnExtDataHandler::buildNames( clInfo->_name,
+                                          idxInfo->getIndexName(),
+                                          cappedCSName,
+                                          cappedCLName ) ;
+      PD_RC_CHECK( rc, PDERROR, "Build names for text index information "
+                   "failed[ %d ]", rc ) ;
 
       try
       {
