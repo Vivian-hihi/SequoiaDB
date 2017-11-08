@@ -72,7 +72,7 @@ class DefaultSource extends DataSourceRegister
             })
         }
 
-        SdbRelation(sqlContext, config)
+        SdbRelation(sqlContext, config, Option(data.schema))
     }
 
     // Check whether a collection is writable for the given mode
