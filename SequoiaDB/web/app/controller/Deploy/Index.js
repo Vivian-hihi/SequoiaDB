@@ -331,6 +331,7 @@
          {
             return ;
          }
+
          var clusterName = $scope.moduleList[moduleIndex]['ClusterName'] ;
          var moduleName = $scope.moduleList[moduleIndex]['BusinessName'] ;
          var moduleMode = $scope.moduleList[moduleIndex]['DeployMod'] ;
@@ -2258,7 +2259,14 @@
          }
          $scope.DeployModuleWindow['config'][1]['inputList'][0]['value'] = defaultName ;
          $.each( $scope.moduleType, function( index, typeInfo ){
-            $scope.DeployModuleWindow['config'][1]['inputList'][1]['valid'].push( { 'key': typeInfo['BusinessDesc'], 'value': index } ) ;
+            if( typeInfo['BusinessType'] == 'sequoiadb' )
+            {
+               $scope.DeployModuleWindow['config'][1]['inputList'][1]['valid'].push( { 'key': typeInfo['BusinessDesc'], 'value': index } ) ;
+            }
+            else
+            {
+               return ;
+            }
          } ) ;
          $scope.DeployModuleWindow['callback']['SetOkButton']( $scope.autoLanguage( '确定' ), function(){
             var isAllClear1 = $scope.DeployModuleWindow['config'][0].check( function( formVal ){
@@ -2906,20 +2914,13 @@
          var sqlModule = 0 ;
          var sdbModule = 0 ;
          $.each( $scope.moduleList, function( index, moduleInfo ){
-            if( moduleInfo['ClusterName'] == $scope.clusterList[ $scope.currentCluster ]['ClusterName'] )
+            if( moduleInfo['BusinessType'] == 'sequoiadb' )
             {
-               if( moduleInfo['BusinessType'] == 'sequoiadb' )
-               {
-                  ++sdbModule ;
-               }
-               else if( moduleInfo['BusinessType'] == 'sequoiasql-oltp' )
-               {
-                  ++sqlModule ;
-               }
+               ++sdbModule ;
             }
-            else
+            else if( moduleInfo['BusinessType'] == 'sequoiasql-oltp' )
             {
-               return ;
+               ++sqlModule ;
             }
          } ) ;
          if( sqlModule == 0 || sdbModule == 0 )
@@ -3050,31 +3051,24 @@
 
          
          $.each( $scope.moduleList, function( index, moduleInfo ){
-            if( moduleInfo['ClusterName'] == $scope.clusterList[ $scope.currentCluster ]['ClusterName'] )
+            if( moduleInfo['BusinessType'] == 'sequoiasql-oltp' )
             {
-               if( moduleInfo['BusinessType'] == 'sequoiasql-oltp' )
+               $scope.CreateRelationWindow['config']['inputList'][1]['valid'].push(
+                  { 'key': moduleInfo['BusinessName'], 'value': moduleInfo['BusinessName'] }
+               ) ;
+            }
+            else if( moduleInfo['BusinessType'] == 'sequoiadb' )
+            {
+               //将第一个业务作为默认选项
+               if( chooseModule == -1 )
                {
-                  $scope.CreateRelationWindow['config']['inputList'][1]['valid'].push(
-                     { 'key': moduleInfo['BusinessName'], 'value': moduleInfo['BusinessName'] }
-                  ) ;
+                  chooseModule = index ;
+                  $scope.CreateRelationWindow['config']['inputList'][2]['value'] = chooseModule ;
+                  listCoordNodes( chooseModule ) ;
                }
-               else if( moduleInfo['BusinessType'] == 'sequoiadb' )
-               {
-                  //将第一个业务作为默认选项
-                  if( chooseModule == -1 )
-                  {
-                     chooseModule = index ;
-                     $scope.CreateRelationWindow['config']['inputList'][2]['value'] = chooseModule ;
-                     listCoordNodes( chooseModule ) ;
-                  }
-                  $scope.CreateRelationWindow['config']['inputList'][2]['valid'].push(
-                     { 'key': moduleInfo['BusinessName'], 'value': index }
-                  ) ;
-               }
-               else
-               {
-                  return ;
-               }
+               $scope.CreateRelationWindow['config']['inputList'][2]['valid'].push(
+                  { 'key': moduleInfo['BusinessName'], 'value': index }
+               ) ;
             }
             else
             {
