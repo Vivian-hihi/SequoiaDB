@@ -80,7 +80,27 @@ namespace engine
       BOOLEAN           _eoc ;
    } ;
    typedef class _dmsIndexSortingBuilder dmsIndexSortingBuilder ;
+
+   // Extend index builder, currently for text indices. As index data are in
+   // external system( ElasticSearch, for example ), nothing that much as normal
+   // indices is done. We want the index on ES to be re-created.
+   class _dmsIndexExtBuilder : public _dmsIndexBuilder
+   {
+   public:
+      _dmsIndexExtBuilder( _dmsStorageIndex* indexSU,
+                           _dmsStorageData* dataSU,
+                           _dmsMBContext* mbContext,
+                           _pmdEDUCB* eduCB,
+                           dmsExtentID indexExtentID ) ;
+      ~_dmsIndexExtBuilder() ;
+
+   private:
+      INT32 _build() ;
+   } ;
+   typedef _dmsIndexExtBuilder dmsIndexExtBuilder ;
+
 }
+
 
 #endif /* DMS_INDEX_BUILDER_IMPL_HPP_ */
 

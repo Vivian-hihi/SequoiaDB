@@ -372,5 +372,24 @@ namespace engine
       goto done;
    }
 
+   _dmsIndexExtBuilder::_dmsIndexExtBuilder( dmsStorageIndex* indexSU,
+                                             dmsStorageData* dataSU,
+                                             dmsMBContext* mbContext,
+                                             pmdEDUCB* eduCB,
+                                             dmsExtentID indexExtentID)
+   : _dmsIndexBuilder( indexSU, dataSU, mbContext, eduCB, indexExtentID )
+   {
+
+   }
+
+   _dmsIndexExtBuilder::~_dmsIndexExtBuilder()
+   {
+
+   }
+
+   INT32 _dmsIndexExtBuilder::_build()
+   {
+      return SDB_OK ;
+   }
 }
 
