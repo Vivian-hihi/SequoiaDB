@@ -81,7 +81,7 @@ function checkLSN(db, group)
    var LSNs = new Array();
    for(var j= 0; j< nodesInGroup.length; j++)
    {
-      //检查cl统计表信息
+      //获取各节点lsn
       var clStatFlag = false;
       var hostName = nodesInGroup[j].HostName;
       var serviceName = nodesInGroup[j].Service[0].Name;
@@ -91,6 +91,7 @@ function checkLSN(db, group)
       LSNs.push(currentLSN);
    }
    
+   //比较各节点lsn
    for(var j=0; j< LSNs.length -1; j++)
    {
       if(LSNs[j] === LSNs[j+1])
