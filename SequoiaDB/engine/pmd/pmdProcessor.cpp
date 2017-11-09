@@ -161,6 +161,9 @@ namespace engine
             case MSG_BS_LOB_REMOVE_REQ:
                rc = _onRemoveLobMsg( msg, getDPSCB() ) ;
                break ;
+            case MSG_BS_LOB_TRUNCATE_REQ:
+               rc = _onTruncateLobMsg( msg, getDPSCB() ) ;
+               break ;
             case MSG_AUTH_CRTUSR_REQ:
             case MSG_AUTH_DELUSR_REQ:
                rc = SDB_RTN_COORD_ONLY ;
@@ -987,6 +990,46 @@ namespace engine
       goto done ;
    }
 
+   INT32 _pmdDataProcessor::_onTruncateLobMsg( MsgHeader *msg, SDB_DPSCB *dpsCB )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj meta ;
+      const MsgOpLob *header = NULL ;
+
+      rc = msgExtractTruncateLobRequest( ( const CHAR * )msg, &header,
+                                         meta ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to extract truncate msg:%d", rc ) ;
+         goto error ;
+      }
+
+      try
+      {
+         // add last op info
+         MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), msg->opCode,
+                             "Option:%s", meta.toString().c_str() ) ;
+
+         rc = rtnTruncateLob( meta, header->flags, header->w, eduCB(), dpsCB ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to truncate lob:%d", rc ) ;
+            goto error ;
+         }
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _pmdDataProcessor::_onInterruptMsg( MsgHeader *msg, SDB_DPSCB *dpsCB )
    {
       PD_LOG ( PDEVENT, "Session[%s, %lld] recieved interrupt msg",
@@ -1286,6 +1329,16 @@ namespace engine
          case MSG_BS_LOB_REMOVE_REQ :
          {
             coordRemoveLob opr ;
+            rc = opr.init( pResource, eduCB() ) ;
+            PD_RC_CHECK( rc, PDERROR, "Init operator[%s] failed, rc: %d",
+                         opr.getName(), rc ) ;
+            needRollback = opr.needRollback() ;
+            rc = opr.execute( msg, eduCB(), contextID, &contextBuff ) ;
+            break ;
+         }
+         case MSG_BS_LOB_TRUNCATE_REQ:
+         {
+            coordTruncateLob opr ;
             rc = opr.init( pResource, eduCB() ) ;
             PD_RC_CHECK( rc, PDERROR, "Init operator[%s] failed, rc: %d",
                          opr.getName(), rc ) ;

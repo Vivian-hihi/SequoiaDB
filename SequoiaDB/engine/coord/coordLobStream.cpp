@@ -1244,7 +1244,8 @@ namespace engine
       {
          rc = _write( tuple, cb ) ;
       }
-      else if ( SDB_LOB_MODE_WRITE == _getMode() )
+      else if ( SDB_LOB_MODE_WRITE == _getMode() ||
+                SDB_LOB_MODE_TRUNCATE == _getMode() )
       {
          rc = _update( tuple, cb ) ;
       }

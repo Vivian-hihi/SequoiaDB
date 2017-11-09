@@ -83,6 +83,8 @@ namespace engine
    public:
       INT32          addPiece( UINT32 piece ) ;
       INT32          addPieces( const _rtnLobPieces& pieces ) ;
+      INT32          delPiece( UINT32 piece ) ;
+      INT32          delPieces( const _rtnLobPieces& pieces ) ;
       BOOLEAN        hasPiece( UINT32 piece ) const ;
       _rtnLobPieces  getSection( INT32 index ) const ;
       INT32          requiredMem() const ;

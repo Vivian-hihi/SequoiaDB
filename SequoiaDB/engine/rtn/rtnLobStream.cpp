@@ -71,6 +71,27 @@ using namespace bson ;
 
 namespace engine
 {
+
+   static OSS_INLINE CHAR* _rtnLobOpName( SDB_LOB_MODE mode )
+   {
+      switch( mode )
+      {
+      case SDB_LOB_MODE_CREATEONLY:
+         return "LOB CREATE" ;
+      case SDB_LOB_MODE_READ:
+         return "LOB READ" ;
+      case SDB_LOB_MODE_WRITE:
+         return "LOB WRITE" ;
+      case SDB_LOB_MODE_REMOVE:
+         return "LOB REMOVE" ;
+      case SDB_LOB_MODE_TRUNCATE:
+         return "LOB TRUNCATE" ;
+      default:
+         SDB_ASSERT( FALSE, "Invalid mode" ) ;
+         return "LOB UNKNOWN" ;
+      }
+   }
+
    _rtnLobStream::_rtnLobStream()
    :_uniqueId( -1 ),
     _dpsCB( NULL ),
@@ -81,7 +102,8 @@ namespace engine
     _logarithmic( 0 ),
     _offset( 0 ),
     _hasPiecesInfo( FALSE ),
-    _wholeLobLocked( FALSE )
+    _wholeLobLocked( FALSE ),
+    _truncated( FALSE )
    {
       ossMemset( _fullName, 0, DMS_COLLECTION_SPACE_NAME_SZ +
                                DMS_COLLECTION_NAME_SZ + 2 ) ;
@@ -151,6 +173,10 @@ namespace engine
       else if ( SDB_LOB_MODE_REMOVE == mode )
       {
          rc = _open4Remove( cb ) ;
+      }
+      else if ( SDB_LOB_MODE_TRUNCATE == mode )
+      {
+         rc = _open4Truncate( cb ) ;
       }
       else
       {
@@ -224,6 +250,7 @@ namespace engine
       }
 
       _opened = TRUE ;
+
    done:
       PD_TRACE_EXITRC( SDB_RTNLOBSTREAM_OPEN, rc ) ;
       return rc ;
@@ -348,6 +375,15 @@ namespace engine
          }
          PD_LOG( PDDEBUG, "lob [%s] is removed",
                  getOID().str().c_str() ) ;
+      }
+      else if ( SDB_LOB_MODE_TRUNCATE == _mode && _truncated )
+      {
+         rc = _writeLobMeta( cb, FALSE ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to close for truncate:%d", rc ) ;
+            goto error ;
+         }
       }
 
       rc = _close( cb ) ;
@@ -804,24 +840,44 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOBSTREAM_TRUNCATE, ""_rtnLobStream::truncate" )
-   INT32 _rtnLobStream::truncate( SINT64 len,
+   INT32 _rtnLobStream::truncate( INT64 len,
                                   _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNLOBSTREAM_TRUNCATE ) ;
-      SDB_ASSERT( SDB_LOB_MODE_REMOVE == _mode && 0 == len,
-                  "do not support other params now" ) ;
+      SDB_ASSERT( ( SDB_LOB_MODE_REMOVE == _mode && 0 == len ) ||
+                  SDB_LOB_MODE_TRUNCATE == _mode,
+                  "invalid mode or len" ) ;
 
       RTN_LOB_TUPLES tuples ;
-      UINT32 pieceNum = 0 ;
+      UINT32 lastPiece = 0 ;
+      UINT32 startPiece = 0 ;
       UINT32 oneLoopNum = 0 ;
 
-      RTN_LOB_GET_SEQUENCE_NUM( _meta._lobLen, _lobPageSz,
-                                _meta._version >= DMS_LOB_META_MERGE_DATA_VERSION,
-                                pieceNum ) ;
-      while ( 1 < pieceNum-- )
+      if ( len < 0 )
       {
-         tuples.push_back( _rtnLobTuple( 0, pieceNum, 0, NULL ) ) ;
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "Invalid truncate length: %lld", len ) ;
+         goto error ;
+      }
+
+      if ( len >= _meta._lobLen )
+      {
+         // nothing to do
+         goto done ;
+      }
+
+      lastPiece = ( _meta._lobLen > 0 ) ?
+                  _getSequence( _meta._lobLen - 1 ) :
+                  _getSequence( 0 ) ;
+      startPiece = ( len > 0 ) ?
+                   _getSequence( len - 1 ) :
+                   _getSequence( 0 ) ;
+
+      // do not remove start piece
+      for ( UINT32 i = lastPiece ; i > startPiece ; i-- )
+      {
+         tuples.push_back( _rtnLobTuple( 0, i, 0, NULL ) ) ;
          ++oneLoopNum ;
 
          if ( 1000 == oneLoopNum )
@@ -829,7 +885,7 @@ namespace engine
             rc = _removev( tuples, cb ) ;
             if ( SDB_OK != rc )
             {
-               PD_LOG( PDERROR, "failed to truncate lob:%d", rc ) ;
+               PD_LOG( PDERROR, "Failed to remove lob pieces, rc=%d", rc ) ;
                goto error ;
             }
 
@@ -843,10 +899,26 @@ namespace engine
          rc = _removev( tuples, cb ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to truncate lob:%d", rc ) ;
+            PD_LOG( PDERROR, "Failed to remove lob pieces, rc=%d", rc ) ;
             goto error ;
          }
          tuples.clear() ;
+      }
+
+      if ( SDB_LOB_MODE_TRUNCATE == _mode )
+      {
+         if ( _hasPiecesInfo && startPiece < lastPiece )
+         {
+            rc = _lobPieces.delPieces( _rtnLobPieces( startPiece + 1, lastPiece ) ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "Failed to delete pieces, rc=%d", rc ) ;
+               goto error ;
+            }
+         }
+
+         _meta._lobLen = len ;
+         _truncated = TRUE ;
       }
 
    done:
@@ -1172,6 +1244,32 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOBSTREAM__OPEN4TRUNCATE, "_rtnLobStream::_open4Truncate" )
+   INT32 _rtnLobStream::_open4Truncate( _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNLOBSTREAM__OPEN4TRUNCATE ) ;
+
+      rc = _queryLobMeta( cb, _meta, FALSE, &_lobPieces ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to open lob[%s] in collection[%s], rc:%d",
+                 _oid.str().c_str(), _fullName, rc ) ;
+         goto error ;
+      }
+
+      if ( _lobPieces.sectionNum() > 0 )
+      {
+         _hasPiecesInfo = TRUE ;
+      }
+
+   done:
+      PD_TRACE_EXITRC( SDB_RTNLOBSTREAM__OPEN4TRUNCATE, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOBSTREAM__WRITELOBMETA, "_rtnLobStream::_writeLobMeta" )
    INT32 _rtnLobStream::_writeLobMeta( _pmdEDUCB *cb, BOOLEAN withData )
    {
@@ -1182,7 +1280,8 @@ namespace engine
       PD_TRACE_ENTRY( SDB_RTNLOBSTREAM__WRITELOBMETA ) ;
 
       SDB_ASSERT( SDB_LOB_MODE_CREATEONLY == _mode ||
-                  SDB_LOB_MODE_WRITE == _mode, "incorrect mode" ) ;
+                  SDB_LOB_MODE_WRITE == _mode ||
+                  SDB_LOB_MODE_TRUNCATE == _mode, "incorrect mode" ) ;
 
       // write last data
       if ( withData && _lw.getCachedData( tuple ) )
@@ -1297,7 +1396,7 @@ namespace engine
 
       rc = _completeLob( tuple, cb ) ;
       PD_AUDIT_OP_WITHNAME( AUDIT_DML,
-                            SDB_LOB_MODE_CREATEONLY == _mode ? "LOB CREATE" : "LOB WRITE",
+                            _rtnLobOpName( (SDB_LOB_MODE)_mode ),
                             AUDIT_OBJ_CL,
                             getFullName(), rc, "OID:%s, Length:%llu",
                             getOID().toString().c_str(),

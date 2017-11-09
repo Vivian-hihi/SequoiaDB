@@ -446,7 +446,8 @@ namespace engine
       {
          rc = _write( tuple, cb ) ;
       }
-      else if ( SDB_LOB_MODE_WRITE == _getMode() )
+      else if ( SDB_LOB_MODE_WRITE == _getMode() ||
+                SDB_LOB_MODE_TRUNCATE == _getMode() )
       {
          rc = _update( tuple, cb ) ;
       }
@@ -810,11 +811,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNLOCALLOBSTREAM__ROLLBACK ) ;
       dmsLobRecord piece ;
-      INT32 num = 0 ;
-
-      RTN_LOB_GET_SEQUENCE_NUM( curOffset(), _getPageSz(),
-                                _getMeta()._version >= DMS_LOB_META_MERGE_DATA_VERSION,
-                                num ) ;
+      INT32 num = _getSequence( curOffset() ) ;
 
       while ( 0 < num )
       {

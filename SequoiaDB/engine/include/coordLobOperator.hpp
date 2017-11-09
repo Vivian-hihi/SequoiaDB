@@ -132,6 +132,22 @@ namespace engine
                                 rtnContextBuf *buf ) ;
    } ;
    typedef _coordRemoveLob coordRemoveLob ;
+
+   /*
+      _coordTruncateLob define
+   */
+   class _coordTruncateLob : public _coordOperator
+   {
+      public:
+         _coordTruncateLob() ;
+         virtual ~_coordTruncateLob() ;
+      public:
+         virtual INT32 execute( MsgHeader *pMsg,
+                                pmdEDUCB *cb,
+                                INT64 &contextID,
+                                rtnContextBuf *buf ) ;
+   } ;
+   typedef _coordTruncateLob coordTruncateLob ;
 }
 
 #endif // COORD_LOB_OPERATOR_HPP__

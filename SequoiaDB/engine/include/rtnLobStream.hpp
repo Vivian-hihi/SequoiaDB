@@ -90,7 +90,7 @@ namespace engine
       INT32 seek( SINT64 offset,
                   _pmdEDUCB *cb ) ;
 
-      INT32 truncate( SINT64 len,
+      INT32 truncate( INT64 len,
                       _pmdEDUCB *cb ) ;
 
       INT32 closeWithException( _pmdEDUCB *cb ) ;
@@ -182,6 +182,8 @@ namespace engine
          return _flags ;
       }
 
+      UINT32 _getSequence( INT64 offset ) const ;
+
    private:
       virtual INT32 _prepare( const CHAR *fullName,
                               const bson::OID &oid,
@@ -248,11 +250,11 @@ namespace engine
 
       INT32 _open4Remove( _pmdEDUCB *cb ) ;
 
+      INT32 _open4Truncate( _pmdEDUCB *cb ) ;
+
       INT32 _writeLobMeta( _pmdEDUCB *cb, BOOLEAN withData = TRUE ) ;
 
       INT32 _meta2Obj( bson::BSONObj& obj ) const ;
-
-      UINT32 _getSequence( INT64 offset ) const ;
 
       INT32 _writeOrUpdate( const _rtnLobTuple &tuple,
                             _pmdEDUCB *cb ) ;
@@ -282,6 +284,7 @@ namespace engine
 
       _rtnLobSections      _lobSections ;
       BOOLEAN              _wholeLobLocked ;
+      BOOLEAN              _truncated ;
    } ;
    typedef class _rtnLobStream rtnLobStream ;
 }

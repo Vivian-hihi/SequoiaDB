@@ -323,6 +323,105 @@ namespace engine
       goto done ;
    }
 
+   INT32 _rtnLobPiecesInfo::delPiece( UINT32 piece )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 index = LOB_PIECES_INVALID_INDEX ;
+
+      if ( _sections.empty() )
+      {
+         goto done ;
+      }
+
+      try
+      {
+         index = _findPiece( piece ) ;
+         if ( LOB_PIECES_INVALID_INDEX == index )
+         {
+            // no this piece
+            goto done ;
+         }
+         else
+         {
+            _rtnLobPieces& p = _sections[ index ] ;
+            SDB_ASSERT( p.contains( piece ), "incorrect index" ) ;
+
+            if ( p.first == p.last ) // only this piece
+            {
+               SDB_ASSERT( piece == p.first, "incorrect index" ) ;
+               _sections.erase( _sections.begin() + index ) ;
+            }
+            else if ( piece == p.first ) // left border
+            {
+               p.first = piece + 1 ;
+            }
+            else if ( piece == p.last ) //right border
+            {
+               p.last = piece - 1 ;
+            }
+            else // inside
+            {
+               // split into 2 pieces
+               _sections.insert( _sections.begin() + index + 1, _rtnLobPieces( piece + 1, p.last ) ) ;
+               p.last = piece - 1 ;
+            }
+         }
+      }
+      catch( std::exception& e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "unexpected exception happened: %s", e.what() ) ;
+         goto error ;
+      }
+
+#ifdef _DEBUG
+      for ( INT32 i = 1; i < (INT32)_sections.size() ; i++ )
+      {
+         const _rtnLobPieces& prev = _sections[ i - 1 ] ;
+         const _rtnLobPieces& curr = _sections[ i ] ;
+
+         SDB_ASSERT( curr.first <= curr.last, "incorrect piece" ) ;
+         SDB_ASSERT( prev.last < curr.first, "incorrect section" ) ;
+      }
+#endif
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnLobPiecesInfo::delPieces( const _rtnLobPieces& pieces )
+   {
+      INT32 rc = SDB_OK ;
+
+      SDB_ASSERT( pieces.first <= pieces.last, "incorrect piece" ) ;
+      if ( pieces.first > pieces.last )
+      {
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      if ( _sections.empty() )
+      {
+         goto done ;
+      }
+
+      for ( UINT32 i = pieces.last ; i >= pieces.first; i-- )
+      {
+         rc = delPiece( i ) ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    BOOLEAN _rtnLobPiecesInfo::hasPiece( UINT32 piece ) const
    {
       INT32 index = _findPiece( piece ) ;

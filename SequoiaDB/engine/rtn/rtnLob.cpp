@@ -572,6 +572,89 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNTRUNCATELOB, "rtnTruncateLob" )
+   INT32 rtnTruncateLob( const BSONObj &meta,
+                         INT32 flags,
+                         SINT16 w,
+                         _pmdEDUCB *cb,
+                         SDB_DPSCB *dpsCB )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNTRUNCATELOB ) ;
+      _rtnLocalLobStream stream ;
+      BSONElement ele ;
+      string fullName ;
+      bson::OID oid ;
+      INT64 length = 0 ;
+
+      ele = meta.getField( FIELD_NAME_COLLECTION ) ;
+      if ( bson::String != ele.type() )
+      {
+         PD_LOG( PDERROR, "Invalid type of full name:%s",
+                 meta.toString( FALSE, TRUE ).c_str() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      fullName = ele.String() ;
+
+      ele = meta.getField( FIELD_NAME_LOB_OID ) ;
+      if ( bson::jstOID != ele.type() )
+      {
+         PD_LOG( PDERROR, "Invalid type of full oid:%s",
+                 meta.toString( FALSE, TRUE ).c_str() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      oid = ele.OID() ;
+
+      ele = meta.getField( FIELD_NAME_LOB_LENGTH ) ;
+      if ( bson::NumberLong != ele.type() )
+      {
+         PD_LOG( PDERROR, "invalid type of field \"Length\":%s",
+                 meta.toString( FALSE, TRUE ).c_str() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      length = ele.numberLong() ;
+
+      rc = stream.open( fullName.c_str(),
+                        oid, SDB_LOB_MODE_TRUNCATE,
+                        flags, NULL, cb ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to truncate lob:%s, rc:%d",
+                 oid.str().c_str(), rc ) ;
+         goto error ;
+      }
+
+      rc = stream.truncate( length, cb ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Faield to truncate lob, rc:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = stream.close( cb ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to truncate lob, rc:%d", rc ) ;
+         goto error ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB_RTNTRUNCATELOB, rc ) ;
+      return rc ;
+   error:
+      {
+         INT32 rcTmp = SDB_OK ;
+         rcTmp = stream.closeWithException( cb ) ;
+         if ( SDB_OK != rcTmp )
+         {
+            PD_LOG( PDERROR, "failed to close lob with exception:%d", rcTmp ) ;
+         }
+      }
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNGETLOBMETADATA, "rtnGetLobMetaData" )
    INT32 rtnGetLobMetaData( SINT64 contextID,
                             pmdEDUCB *cb, 

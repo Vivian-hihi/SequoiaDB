@@ -88,6 +88,12 @@ namespace engine
                        _pmdEDUCB *cb,
                        SDB_DPSCB *dpsCB ) ;
 
+   INT32 rtnTruncateLob( const BSONObj &lob,
+                         INT32 flags,
+                         SINT16 w,
+                         _pmdEDUCB *cb,
+                         SDB_DPSCB *dpsCB ) ;
+
    INT32 rtnGetLobMetaData( SINT64 contextID,
                             pmdEDUCB *cb,
                             BSONObj &meta ) ;

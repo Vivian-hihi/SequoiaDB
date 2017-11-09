@@ -64,20 +64,12 @@ namespace engine
    #define DMS_LOB_META_PIECESINFO_MAX_LEN   ( 320 )
 
    #define RTN_LOB_GET_SEQUENCE( offset, isMerge, log ) \
-     ( (isMerge) ? ( ( (INT64)(offset)+DMS_LOB_META_LENGTH) >> (log) ) : \
+     ( (isMerge) ? ( ( (INT64)(offset) + DMS_LOB_META_LENGTH ) >> (log) ) : \
                    ( ( ( (INT64)offset) >> (log) ) + 1 ) )
 
    #define RTN_LOB_GET_OFFSET_IN_SEQUENCE( offset, isMerge, pagesize ) \
-     ( (isMerge) ? ( ((INT64)(offset)+DMS_LOB_META_LENGTH) & ((pagesize)-1) ) : \
+     ( (isMerge) ? ( ((INT64)(offset) + DMS_LOB_META_LENGTH ) & ((pagesize)-1) ) : \
                    ( (INT64)(offset) & ((pagesize)-1) ) )
-
-   #define RTN_LOB_GET_SEQUENCE_NUM( len, pagesize, isMerge, num )\
-     do\
-     {\
-       INT64 tmpLen = (isMerge) ? ( (len) + DMS_LOB_META_LENGTH ) : \
-                                  ( (len) + (pagesize) ) ; \
-       num = ( tmpLen + (pagesize) - 1 ) / (pagesize) ; \
-     } while ( FALSE )
 
    #define RTN_LOB_GET_OFFSET_OF_LOB( pageSz, sequence, offsetInSeq, isMerge ) \
       ( (isMerge) ? ( (SINT64)(sequence)*(SINT64)(pageSz)+ \

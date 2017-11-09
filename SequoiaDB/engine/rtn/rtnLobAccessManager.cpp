@@ -48,7 +48,8 @@ namespace engine
    {
       _oid = oid ;
       if ( SDB_LOB_MODE_CREATEONLY == mode ||
-           SDB_LOB_MODE_REMOVE == mode )
+           SDB_LOB_MODE_REMOVE == mode ||
+           SDB_LOB_MODE_TRUNCATE == mode )
       {
          _accessId = accessId ;
       }
@@ -227,6 +228,8 @@ namespace engine
             case SDB_LOB_MODE_CREATEONLY:
                // pass through
             case SDB_LOB_MODE_REMOVE:
+               // pass through
+            case SDB_LOB_MODE_TRUNCATE:
                rc = SDB_LOB_IS_IN_USE ;
                goto error ;
             case SDB_LOB_MODE_READ:
@@ -363,6 +366,8 @@ namespace engine
          case SDB_LOB_MODE_CREATEONLY:
             // pass through
          case SDB_LOB_MODE_REMOVE:
+            // pass through
+         case SDB_LOB_MODE_TRUNCATE:
             bucket.erase( key ) ;
             SAFE_OSS_DELETE( lobAccessInfo ) ;
             break ;

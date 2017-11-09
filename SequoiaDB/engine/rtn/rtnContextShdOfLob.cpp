@@ -462,11 +462,14 @@ namespace engine
       INT32 rc = SDB_OK ;
       BOOLEAN accessInfoLocked = FALSE ;
       PD_TRACE_ENTRY( SDB__RTNCONTEXTSHDOFLOB__OPEN ) ;
-      if ( _isMainShd && SDB_LOB_MODE_READ == _mode )
+      if ( _isMainShd &&
+           ( SDB_LOB_MODE_READ == _mode ||
+             SDB_LOB_MODE_TRUNCATE == _mode ) )
       {
          UINT32 readLen = 0 ;
          UINT32 len = _su->getLobPageSize() ;
          dmsLobRecord record ;
+         BOOLEAN withData = ( SDB_LOB_MODE_READ == _mode ) ? TRUE : FALSE ;
 
          record.set( &_oid, DMS_LOB_META_SEQUENCE, 0, len, NULL ) ;
 
@@ -514,7 +517,8 @@ namespace engine
             }
 
             /// if meta page has data
-            if ( _meta._version >= DMS_LOB_META_MERGE_DATA_VERSION &&
+            if ( withData &&
+                 _meta._version >= DMS_LOB_META_MERGE_DATA_VERSION &&
                  _meta._lobLen > 0 &&
                  readLen > DMS_LOB_META_LENGTH )
             {
@@ -983,7 +987,8 @@ namespace engine
          builder.append( FIELD_NAME_LOB_PIECESINFONUM, _meta._piecesInfoNum ) ;
          if ( _meta.hasPiecesInfo() &&
               ( SDB_LOB_MODE_READ == _mode || 
-                SDB_LOB_MODE_WRITE == _mode ) )
+                SDB_LOB_MODE_WRITE == _mode ||
+                SDB_LOB_MODE_TRUNCATE == _mode ) )
          {
             SDB_ASSERT( !_lobPieces.empty(), "empty pieces info" ) ;
             BSONArray array ;

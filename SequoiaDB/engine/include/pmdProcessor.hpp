@@ -97,6 +97,8 @@ namespace engine
          INT32                   _onCloseLobMsg( MsgHeader *msg ) ;
          INT32                   _onRemoveLobMsg( MsgHeader *msg,
                                                   SDB_DPSCB *dpsCB ) ;
+         INT32                   _onTruncateLobMsg( MsgHeader *msg,
+                                                    SDB_DPSCB *dpsCB ) ;
          INT32                   _onInterruptMsg( MsgHeader *msg,
                                                   SDB_DPSCB *dpsCB ) ;
          INT32                   _onInterruptSelfMsg() ;

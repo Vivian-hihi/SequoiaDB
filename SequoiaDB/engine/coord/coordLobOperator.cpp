@@ -394,15 +394,11 @@ namespace engine
                  ele.__oid().str().c_str(), rc ) ;
          goto error ;
       }
-      else
-      {
-         /// do nothing.
-      }
 
       rc = stream.truncate( 0, cb ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "faield to truncate lob:%d", rc ) ;
+         PD_LOG( PDERROR, "faield to remove lob pieces:%d", rc ) ;
          /// get error info
          stream.getErrorInfo( rc, cb, buf ) ;
          goto error ;
@@ -416,6 +412,124 @@ namespace engine
 
    done:
       PD_TRACE_EXITRC( COORD_REMOVELOB_EXE, rc ) ;
+      return rc ;
+   error:
+      {
+         INT32 rcTmp = SDB_OK ;
+         rcTmp = stream.closeWithException( cb ) ;
+         if ( SDB_OK != rcTmp )
+         {
+            PD_LOG( PDERROR, "failed to close lob with exception:%d", rcTmp ) ;
+         }
+      }
+      goto done ;
+   }
+
+   /*
+      _coordTruncateLob implement
+   */
+   _coordTruncateLob::_coordTruncateLob()
+   {
+      const static string s_name( "TruncateLob" ) ;
+      setName( s_name ) ;
+   }
+
+   _coordTruncateLob::~_coordTruncateLob()
+   {
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( COORD_TRUNCATELOB_EXE, "_coordTruncateLob::execute" )
+   INT32 _coordTruncateLob::execute( MsgHeader *pMsg,
+                                     pmdEDUCB *cb,
+                                     INT64 &contextID,
+                                     rtnContextBuf *buf )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( COORD_TRUNCATELOB_EXE ) ;
+
+      const MsgOpLob *header = NULL ;
+      BSONObj obj ;
+      BSONElement ele ;
+      string fullName ;
+      bson::OID oid ;
+      INT64 length = 0 ;
+      coordLobStream stream( _pResource, getTimeout() ) ;
+      contextID = -1 ;
+
+      rc = msgExtractTruncateLobRequest( (const CHAR*)pMsg, &header,
+                                         obj ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to extract truncate msg:%d", rc ) ;
+         goto error ;
+      }
+
+      ele = obj.getField( FIELD_NAME_COLLECTION ) ;
+      if ( String != ele.type() )
+      {
+         PD_LOG( PDERROR, "invalid type of field \"Collection\":%s",
+                 obj.toString( FALSE, TRUE ).c_str() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      fullName = ele.String() ;
+
+      ele = obj.getField( FIELD_NAME_LOB_OID ) ;
+      if ( jstOID != ele.type() )
+      {
+         PD_LOG( PDERROR, "invalid type of field \"Oid\":%s",
+                 obj.toString( FALSE, TRUE ).c_str() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      oid = ele.OID() ;
+
+      ele = obj.getField( FIELD_NAME_LOB_LENGTH ) ;
+      if ( NumberLong != ele.type() )
+      {
+         PD_LOG( PDERROR, "invalid type of field \"Length\":%s",
+                 obj.toString( FALSE, TRUE ).c_str() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      length = ele.numberLong() ;
+
+      // add last op info
+      MON_SAVE_OP_DETAIL( cb->getMonAppCB(), pMsg->opCode,
+                          "Option:%s", obj.toString().c_str() ) ;
+
+      /// release operator's groupSession to improve perfermance
+      _groupSession.release() ;
+      /// then open stream, will init it's groupSession
+      rc = stream.open( fullName.c_str(),
+                        oid, SDB_LOB_MODE_TRUNCATE,
+                        header->flags,
+                        NULL,
+                        cb ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to truncate lob:%s, rc:%d",
+                 oid.str().c_str(), rc ) ;
+         goto error ;
+      }
+
+      rc = stream.truncate( length, cb ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "faield to truncate lob:%d", rc ) ;
+         /// get error info
+         stream.getErrorInfo( rc, cb, buf ) ;
+         goto error ;
+      }
+
+      rc = stream.close( cb ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to truncate lob:%d", rc ) ;
+      }
+
+   done:
+      PD_TRACE_EXITRC( COORD_TRUNCATELOB_EXE, rc ) ;
       return rc ;
    error:
       {
