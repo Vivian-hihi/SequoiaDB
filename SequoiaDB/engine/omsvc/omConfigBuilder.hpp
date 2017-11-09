@@ -160,6 +160,7 @@ namespace engine
       OmConfProperty*   getConfProperty( const string &name ) const ;
       string            getDefaultValue( const string &name ) ;
       INT32             checkValue( const string &name, const string &value ) ;
+      void              setForce() ;
 
    public:
       virtual bool      isPrivateProperty( const string& name ) const = 0 ;      
@@ -169,6 +170,8 @@ namespace engine
       virtual void      _reset() ;
 
    protected:
+      //allow set configure not exist
+      BOOLEAN _force ;
       map<string, OmConfProperty*> _properties ;
    } ;
    
@@ -176,7 +179,7 @@ namespace engine
    {
    protected:
       OmConfigBuilder( const OmBusinessInfo& businessInfo ):
-         _businessInfo( businessInfo ), _business( NULL ) {}
+         _force( FALSE ), _businessInfo( businessInfo ), _business( NULL ) {}
 
    public:
       virtual ~OmConfigBuilder() {}
@@ -199,7 +202,8 @@ namespace engine
       INT32 checkConfig( const BSONObj& confProperties, 
                          const BSONObj& bsonHostInfo,
                          const BSONObj& bsonBusinessInfo,
-                         BSONObj& newBusinessConfig ) ;
+                         BSONObj& newBusinessConfig,
+                         BOOLEAN force = FALSE ) ;
 
       virtual INT32 getHostNames( const BSONObj& bsonConfig,
                                   const CHAR *pFieldName,
@@ -220,6 +224,8 @@ namespace engine
       virtual INT32 _check( BSONObj& bsonConfig ) = 0 ;
 
    protected:
+      //allow set configure not exist
+      BOOLEAN           _force ;
       //The config and node info for all hosts of the cluster
       BSONObj           _bsonHostInfo ;
       OmBusinessInfo    _businessInfo ;

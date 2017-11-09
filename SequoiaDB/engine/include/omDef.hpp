@@ -65,6 +65,7 @@ namespace engine
    #define OM_REST_FIELD_FROM                   "From"
    #define OM_REST_FIELD_TO                     "To"
    #define OM_REST_FIELD_OPTIONS                "Options"
+   #define OM_REST_FIELD_FORCE                  "Force"
 
    /***************** Bson field *****************/
    #define OM_BSON_HOST_INFO                    "HostInfo"

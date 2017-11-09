@@ -5744,7 +5744,8 @@ namespace engine
                      : omAuthCommand( pRestAdaptor, pRestSession ),
                      _rootPath( rootPath ),
                      _localAgentHost( localAgentHost ),
-                     _localAgentService( localAgentService )
+                     _localAgentService( localAgentService ),
+                     _force( FALSE )
    {
    }
 
@@ -5766,7 +5767,8 @@ namespace engine
 
       pmdGetThreadEDUCB()->resetInfo( EDU_INFO_ERROR ) ;
 
-      rc = option.parseRestArg( "j", OM_REST_FIELD_CONFIGINFO, &configInfo ) ;
+      rc = option.parseRestArg( "j|b", OM_REST_FIELD_CONFIGINFO, &configInfo,
+                                       OM_REST_FIELD_FORCE, &_force ) ;
       if ( rc )
       {
          _errorMsg.setError( TRUE, option.getErrorMsg() ) ;
@@ -6081,7 +6083,8 @@ namespace engine
       }
 
       rc = confBuilder->checkConfig( buzTemplate, hostListOfCluster,
-                                     buzListOfCluster, deployConfig ) ;
+                                     buzListOfCluster, deployConfig,
+                                     _force ) ;
       if ( rc )
       {
          _errorMsg.setError( TRUE, confBuilder->getErrorDetail().c_str() ) ;

@@ -646,6 +646,7 @@ namespace engine
                          INT64 &taskID ) ;
 
    private:
+      BOOLEAN _force ;
       string _rootPath ;
       string _localAgentHost ;
       string _localAgentService ;
