@@ -69,6 +69,43 @@ function analyze( db, options )
 }
 
 /************************************
+*@Description: 检查主备节点lsn是否一致
+*@author:      zhaoyu
+*@createDate:  2017.11.8
+**************************************/
+function checkLSN(db, group)
+{
+   var rg = db.getRG(group);
+   var rgDetail = eval( "(" + rg.getDetail().toArray()[0] + ")");
+   var nodesInGroup = rgDetail.Group;
+   var LSNs = new Array();
+   for(var j= 0; j< nodesInGroup.length; j++)
+   {
+      //检查cl统计表信息
+      var clStatFlag = false;
+      var hostName = nodesInGroup[j].HostName;
+      var serviceName = nodesInGroup[j].Service[0].Name;
+      var data = new Sdb(hostName, serviceName);
+      var getSnapshot6 = eval( "(" + data.snapshot(6).toArray()[0] + ")" );
+      var currentLSN = getSnapshot6.CurrentLSN.Offset;
+      LSNs.push(currentLSN);
+   }
+   
+   for(var j=0; j< LSNs.length -1; j++)
+   {
+      if(LSNs[j] === LSNs[j+1])
+      {
+         var checkLSN = true;
+      }else
+      {
+         var checkLSN = false;
+         break;
+      }
+   }
+   return checkLSN;
+}
+
+/************************************
 *@Description: 检查统计信息
 *@author:      zhaoyu
 *@createDate:  2017.11.8
@@ -79,28 +116,17 @@ function checkStat( db, csName, clName, indexName, clExistStat, indexExistStat )
    if( indexExistStat == undefined ){ indexExistStat = true;}
    var groups = commGetCLGroups( db, csName + "." + clName );
    
-   //检查CL所在组的主备节点的lsn是否一致
-   if(groups.length > 0)
-   {
-      var lsnCheck = false;
-      while(!lsnCheck)
-      {
-         var business = commCheckBusiness( groups );
-         for(var i=0; i< business.length; i++)
-         {
-            lsnCheck = business[i][0].LSNCheck;
-            if( lsnCheck !== true )
-            {
-               sleep(3000);
-               break;
-            }
-         }
-      }
-   }
-   
    //检查组内各节点cl统计表信息及索引统计表信息
    for(var i= 0; i< groups.length; i++)
    {
+      //检查CL所在组的主备节点的lsn是否一致
+      var lsnFlag = false;
+      while(!lsnFlag)
+      {
+         lsnFlag = checkLSN(db, groups[i]);
+         println("lsnFlag:" + lsnFlag);
+      }
+      
       var rg = db.getRG(groups[i]);
       var rgDetail = eval( "(" + rg.getDetail().toArray()[0] + ")");
       var nodesInGroup = rgDetail.Group;
@@ -160,7 +186,8 @@ function checkStat( db, csName, clName, indexName, clExistStat, indexExistStat )
             var actualIndexName = indexStat.Index;
             if(actualCSName === csName && 
                actualCLName === clName &&  
-               actualIndexName === indexName )
+               actualIndexName === indexName &&
+               indexStat.hasOwnProperty('MCV'))
             {
                indexStatFlag = true;
             }
