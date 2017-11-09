@@ -6,8 +6,9 @@
 **************************************/
 function main()
 {
-   csName = COMMCSNAME + "_11397";
-   clName = COMMCLNAME + "_11397";
+   var csName = COMMCSNAME + "_11397";
+   var clName = COMMCLNAME + "_11397";
+   var insertNum = 2000;
    
    //清理环境
    commDropCS( db, csName, true, "drop cs before test" );
@@ -20,14 +21,14 @@ function main()
    commCreateIndex( dbcl, "a", {a:1});
    
    //插入记录
-	insertDatas( dbcl );
+	insertDatas( dbcl, insertNum );
 	
 	//检查统计信息
    checkStat( db, csName, clName, "a", false, false );
    
    //检查主备节点访问计划
    var findConf = {a:9000};
-   var expExplains = [{ScanType:"ixscan", IndexName:"a", ReturnNum:10001}];
+   var expExplains = [{ScanType:"ixscan", IndexName:"a", ReturnNum:insertNum}];
    
    db.setSessionAttr( { PreferedInstance: "m" } );
    checkExplain( db, csName, clName, findConf, null, null, expExplains )
@@ -45,7 +46,7 @@ function main()
    
    //检查主备节点访问计划
    var findConf = {a:9000};
-   var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:10001}];
+   var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}];
    
    db.setSessionAttr( { PreferedInstance: "m" } );
    checkExplain( db, csName, clName, findConf, null, null, expExplains )
@@ -67,14 +68,14 @@ function main()
    commCreateCS( db, csName, true);
    var dbcl = commCreateCL( db, csName, clName);
    commCreateIndex( dbcl, "a", {a:1});
-   insertDatas( dbcl );
+   insertDatas( dbcl, insertNum );
    
    //检查统计信息
    checkStat( db, csName, clName, "a", false, false );
    
    //检查主备节点访问计划
    var findConf = {a:9000};
-   var expExplains = [{ScanType:"ixscan", IndexName:"a", ReturnNum:10001}];
+   var expExplains = [{ScanType:"ixscan", IndexName:"a", ReturnNum:insertNum}];
    
    db.setSessionAttr( { PreferedInstance: "m" } );
    checkExplain( db, csName, clName, findConf, null, null, expExplains )

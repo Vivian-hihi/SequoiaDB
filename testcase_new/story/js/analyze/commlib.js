@@ -1,53 +1,43 @@
 /************************************
-*@Description: 插入20000条记录,数据页超过10页
+*@Description: 插入2000条记录,数据页超过10页
 *@author:      zhaoyu
 *@createDate:  2017.11.8
 **************************************/
-function insertDatas( dbcl )
+function insertDatas( dbcl, insertNum )
 {  
    try
    {
-      //插入10000条不同记录
-      for(var j=0;j<1;j++)
+      //插入不同记录
+      var doc = [];
+      for(var i=0;i<insertNum;i++)
       {
-         var doc = [];
-         for(var i=0;i<10000;i++)
-         {
-            doc.push({a:j*10000+i,b:j*10000+i,c:"test"+j*10000+i});
-         }
-         dbcl.insert(doc);
+         doc.push({a:i,a0:i,a1:i,a2:i,a3:i,a4:i,a5:i,a6:i,a7:i,a8:i,a9:i,
+                   a10:i,a11:i,a12:i,a13:i,a14:i,a15:i,a16:i,a17:i,a18:i,a19:i,
+                   a20:i,a21:i,a22:i,a23:i,a24:i,a25:i,a26:i,a27:i,a28:i,a29:i,
+                   a30:i,a31:i,a32:i,a33:i,a34:i,a35:i,a36:i,a37:i,a38:i,a39:i,
+                   a40:i,a41:i,a42:i,a43:i,a44:i,a45:i,a46:i,a47:i,a48:i,a49:i,
+                   a50:i,a51:i,a52:i,a53:i,a54:i,a55:i,a56:i,a57:i,a58:i,a59:i,
+                   a60:i,a61:i,a62:i,a63:i,a64:i,a65:i,a66:i,a67:i,a68:i,a69:i});
       }
+      dbcl.insert(doc);
+      
       //插入10000条相同的记录
-      for(var j=0;j<1;j++)
+      var doc = [];
+      for(var i=0;i<insertNum;i++)
       {
-         var doc = [];
-         for(var i=0;i<10000;i++)
-         {
-            doc.push({a:9000,b:9000,c:"test"+9000});
-         }
-         dbcl.insert(doc);
+         doc.push({a:9000,a0:9000,a1:9000,a2:9000,a3:9000,a4:9000,a5:9000,a6:9000,a7:9000,a8:9000,a9:9000,
+                   a10:9000,a11:9000,a12:9000,a13:9000,a14:9000,a15:9000,a16:9000,a17:9000,a18:9000,a19:9000,
+                   a20:9000,a21:9000,a22:9000,a23:9000,a24:9000,a25:9000,a26:9000,a27:9000,a28:9000,a29:9000,
+                   a30:9000,a31:9000,a32:9000,a33:9000,a34:9000,a35:9000,a36:9000,a37:9000,a38:9000,a39:9000,
+                   a40:9000,a41:9000,a42:9000,a43:9000,a44:9000,a45:9000,a46:9000,a47:9000,a48:9000,a49:9000,
+                   a50:9000,a51:9000,a52:9000,a53:9000,a54:9000,a55:9000,a56:9000,a57:9000,a58:9000,a59:9000,
+                   a60:9000,a61:9000,a62:9000,a63:9000,a64:9000,a65:9000,a66:9000,a67:9000,a68:9000,a69:9000});
       }
+      dbcl.insert(doc);
    }
    catch(e)
    {
       throw buildException("insertDatas()", e, "insert", "insert success", e);
-   }
-}
-
-/************************************
-*@Description: 插入1条记录
-*@author:      zhaoyu
-*@createDate:  2017.11.8
-**************************************/
-function insertOneData( dbcl )
-{  
-   try
-   {
-      dbcl.insert({a:"a", b:"b", c:"c"});
-   }
-   catch(e)
-   {
-      throw buildException("insertOneData()", e, "insert", "insert success", e);
    }
 }
 
