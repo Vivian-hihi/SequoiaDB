@@ -1855,53 +1855,6 @@ namespace engine
       PD_TRACE_EXIT ( SDB__SDB_DMSCB_DUMPINFO4 );
    }
 
-   // Dump information of collectionspace by name. It can also dump the cs which
-   // are being dropped( but not dropped totally yet).
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_DUMPCSINFO, "_SDB_DMSCB::dumpCSInfo" )
-   void _SDB_DMSCB::dumpCSInfo( const CHAR *csName, monCSSimple &csInfo,
-                                BOOLEAN searchDeleting, BOOLEAN &deleting,
-                                BOOLEAN sys, BOOLEAN dumpCL, BOOLEAN dumpIdx )
-   {
-      PD_TRACE_ENTRY( SDB__SDB_DMSCB_DUMPCSINFO ) ;
-
-      BOOLEAN found = FALSE ;
-
-      SDB_ASSERT( csName, "collection name must not be NULL" ) ;
-      ossScopedLock _lock( &_mutex, SHARED ) ;
-
-      for ( vector<SDB_DMS_CSCB*>::iterator itr = _cscbVec.begin();
-            itr != _cscbVec.end(); ++itr )
-      {
-
-         if ( ( NULL != (*itr) ) &&
-              ( 0 == ossStrcmp( csName, (*itr)->_name ) ) )
-         {
-            found = TRUE ;
-            deleting = FALSE ;
-            (*itr)->_su->dumpInfo( csInfo, sys, TRUE, TRUE ) ;
-            break ;
-         }
-      }
-
-      // Search in the deleting list.
-      if ( FALSE == found && searchDeleting )
-      {
-         for ( vector<SDB_DMS_CSCB*>::iterator itr = _delCscbVec.begin();
-               itr != _delCscbVec.end(); ++itr )
-         {
-            if ( ( NULL != (*itr) ) &&
-                 ( 0 == ossStrcmp( csName, (*itr)->_name ) ) )
-            {
-               deleting = TRUE ;
-               (*itr)->_su->dumpInfo( csInfo, sys, TRUE, TRUE ) ;
-               break ;
-            }
-         }
-      }
-
-      PD_TRACE_EXIT( SDB__SDB_DMSCB_DUMPCSINFO ) ;
-   }
-
    dmsTempSUMgr *_SDB_DMSCB::getTempSUMgr ()
    {
       return &_tempSUMgr ;
