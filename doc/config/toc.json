@@ -1227,6 +1227,12 @@
                      "en": "Sdb",
                      "contents": [
                         {
+                           "id": 1496923440,
+                           "file": "analyze",
+                           "cn": "analyze()",
+                           "en": "analyze()"
+                        },
+                        {
                            "id": 1432190768,
                            "file": "backupOffline",
                            "cn": "backupOffline()",
@@ -1489,12 +1495,6 @@
                            "file": "sync",
                            "cn": "sync()",
                            "en": "sync()"
-                        },
-                        {
-                           "id": 1496923440,
-                           "file": "analyze",
-                           "cn": "analyze()",
-                           "en": "analyze()"
                         },
                         {
                            "id": 1483064791,

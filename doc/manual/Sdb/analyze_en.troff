@@ -25,9 +25,11 @@ Analyze Collections and Indexs to collect statistics information.
        \fBMode\fR
 .br
               Analyze mode. 1 in default.
-              1 and 2 analyze with samples, 3 generate default
-              statistics, 4 reload statistics into memory cache,
-              5 clear statistics cache.
+              Mode 1 will analyze with data samples.
+              Mode 2 will analyze with full data.
+              Mode 3 will generate default statistics.
+              Mode 4 will reload statistics into memory cache.
+              Mode 5 will clear statistics from memory cache.
 .br
               Mode:1.
 .sp 2
@@ -41,9 +43,9 @@ Analyze Collections and Indexs to collect statistics information.
        \fBCollection\fR
 .br
               Specify the collection to analyze. Could not be used with
-              CollectionSpace option.
+              CollectionSpace option. Should be full name of collection.
 .br
-              Collection:"bar"
+              Collection:"foo.bar"
 .sp 2
        \fBIndex\fR
 .br
