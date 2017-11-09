@@ -181,12 +181,6 @@ namespace engine
       EDU_TYPE_RESTAGENT,
       EDU_TYPE_FAPAGENT,
 
-      EDU_TYPE_SEADPTMGR,
-      EDU_TYPE_SE_SERVICE,
-      EDU_TYPE_SE_INDEXR,
-      EDU_TYPE_SE_INDEX,
-      EDU_TYPE_SE_AGENT,
-
       // Agent EDU Type END
       EDU_TYPE_AGENT_END,
 
@@ -197,6 +191,14 @@ namespace engine
       EDU_TYPE_PREFETCHER,
 
       EDU_TYPE_MAIN,
+
+      // edu for search engine adapter.
+      EDU_TYPE_SEADPTMGR,
+      EDU_TYPE_SE_SERVICE,
+      EDU_TYPE_SE_INDEXR,
+      EDU_TYPE_SE_INDEX,
+      EDU_TYPE_SE_AGENT,
+
       EDU_TYPE_UNKNOWN,
       EDU_TYPE_MAXIMUM = EDU_TYPE_UNKNOWN
    } ;
