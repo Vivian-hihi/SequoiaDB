@@ -35,6 +35,23 @@ function insertDatas( dbcl )
 }
 
 /************************************
+*@Description: 插入1条记录
+*@author:      zhaoyu
+*@createDate:  2017.11.8
+**************************************/
+function insertOneData( dbcl )
+{  
+   try
+   {
+      dbcl.insert({a:"a", b:"b", c:"c"});
+   }
+   catch(e)
+   {
+      throw buildException("insertOneData()", e, "insert", "insert success", e);
+   }
+}
+
+/************************************
 *@Description: 执行统计
 *@author:      zhaoyu
 *@createDate:  2017.11.8
@@ -61,6 +78,27 @@ function checkStat( db, csName, clName, indexName, clExistStat, indexExistStat )
    if( clExistStat == undefined ){ clExistStat = true;}
    if( indexExistStat == undefined ){ indexExistStat = true;}
    var groups = commGetCLGroups( db, csName + "." + clName );
+   
+   //检查CL所在组的主备节点的lsn是否一致
+   if(groups.length > 0)
+   {
+      var lsnCheck = false;
+      while(!lsnCheck)
+      {
+         var business = commCheckBusiness( groups );
+         for(var i=0; i< business.length; i++)
+         {
+            lsnCheck = business[i][0].LSNCheck;
+            if( lsnCheck !== true )
+            {
+               sleep(3000);
+               break;
+            }
+         }
+      }
+   }
+   
+   //检查组内各节点cl统计表信息及索引统计表信息
    for(var i= 0; i< groups.length; i++)
    {
       var rg = db.getRG(groups[i]);
@@ -68,16 +106,20 @@ function checkStat( db, csName, clName, indexName, clExistStat, indexExistStat )
       var nodesInGroup = rgDetail.Group;
       for(var j= 0; j< nodesInGroup.length; j++)
       {
+         //检查cl统计表信息
          var clStatFlag = false;
-         var indexStatFlag = false;
          var hostName = nodesInGroup[j].HostName;
          var serviceName = nodesInGroup[j].Service[0].Name;
          var data = new Sdb(hostName, serviceName);
          var clStats = data.SYSSTAT.SYSCOLLECTIONSTAT.find().toArray();
+         
+         //需要检查cl统计表信息时，统计表信息不能为空
          if(clExistStat === true && clStats.length <1)
          {
             throw "NO_CL_STAT";
-         } 
+         }
+         
+         //cl统计表信息中存在统计信息且数据页不小于10
          for(var k= 0; k< clStats.length; k++ )
          {
             var clStat = eval( "(" + clStats[k] + ")");
@@ -91,19 +133,25 @@ function checkStat( db, csName, clName, indexName, clExistStat, indexExistStat )
                clStatFlag = true;
             }
          }
-            
+         
+         //是否存在cl统计表信息与预期结果校验   
          if((clExistStat ^ clStatFlag) === 1)
          {
-            println("clExistStat:" + clExistStat);
-            println("clStatFlag:" + clStatFlag);
+            println("hostName:" + hostName + "\nserviceName:" + serviceName + "\nclExistStat:" + clExistStat + "\nclStatFlag:" + clStatFlag);
             throw "NO_CL_STAT";
          } 
          
+         //检查索引统计表信息
+         var indexStatFlag = false;
          var indexStats = data.SYSSTAT.SYSINDEXSTAT.find().toArray();
+         
+         //需要检查索引统计表信息时，统计表信息不能为空
          if(indexExistStat === true && indexStats.length <1)
          {
             throw "NO_INDEX_STAT";
          }
+         
+         //索引统计表信息中存在统计信息
          for(var h= 0; h< indexStats.length; h++ )
          {
             var indexStat = eval( "(" + indexStats[h] + ")");
@@ -117,15 +165,16 @@ function checkStat( db, csName, clName, indexName, clExistStat, indexExistStat )
                indexStatFlag = true;
             }
          }
-          
+         
+         //是否存在索引统计表信息与预期结果校验  
          if((indexExistStat ^ indexStatFlag) === 1)
          {
-            println("indexExistStat:" + indexExistStat);
-            println("indexStatFlag:" + indexStatFlag);
+            println("hostName:" + hostName + "\nserviceName:" + serviceName + "\nindexExistStat:" + indexExistStat + "\nindexStatFlag:" + indexStatFlag);
             throw "NO_INDEX_STAT";
          }  
       } 
    }
+   
 }
 
 /************************************
