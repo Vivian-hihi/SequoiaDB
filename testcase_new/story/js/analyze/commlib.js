@@ -125,7 +125,6 @@ function checkStat( db, csName, clName, indexName, clExistStat, indexExistStat )
       while(!lsnFlag)
       {
          lsnFlag = checkLSN(db, groups[i]);
-         println("lsnFlag:" + lsnFlag);
       }
       
       var rg = db.getRG(groups[i]);
