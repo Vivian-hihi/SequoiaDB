@@ -1,5 +1,5 @@
 /************************************
-*@Description: 插入2000条记录,数据页超过10页
+*@Description: 插入记录,数据页超过10页
 *@author:      zhaoyu
 *@createDate:  2017.11.8
 **************************************/
@@ -21,7 +21,7 @@ function insertDatas( dbcl, insertNum )
       }
       dbcl.insert(doc);
       
-      //插入10000条相同的记录
+      //插入相同的记录
       var doc = [];
       for(var i=0;i<insertNum;i++)
       {
