@@ -605,9 +605,11 @@ typedef struct _pdTraceArgTuple pdTraceArgTuple ;
 #define PD_PACK_RAW(x,y)  _pdTraceArgTuple ( PD_TRACE_ARGTYPE_RAW, x, y )
 #define PD_PACK_BSON(x)   _pdTraceArgTuple ( PD_TRACE_ARGTYPE_BSONRAW, x.objdata(), x.objsize() )
 
+extern BOOLEAN g_isTraceStarted ;
+
 #define PD_TRACE_ENTRY(funcCode)                                    \
    do {                                                             \
-      if ( sdbGetPDTraceCB()->isStarted() )                         \
+      if ( g_isTraceStarted )                                       \
       {                                                             \
          pdTraceArgTuple argTuple[PD_TRACE_MAX_ARG_NUM] ;           \
          ossMemset ( &argTuple[0], 0, sizeof(argTuple) ) ;          \
@@ -618,7 +620,7 @@ typedef struct _pdTraceArgTuple pdTraceArgTuple ;
 
 #define PD_TRACE_EXIT(funcCode)                                     \
    do {                                                             \
-      if ( sdbGetPDTraceCB()->isStarted() )                         \
+      if ( g_isTraceStarted )                                       \
       {                                                             \
          pdTraceArgTuple argTuple[PD_TRACE_MAX_ARG_NUM] ;           \
          ossMemset ( &argTuple[0], 0, sizeof(argTuple) ) ;          \
@@ -629,7 +631,7 @@ typedef struct _pdTraceArgTuple pdTraceArgTuple ;
 
 #define PD_TRACE_EXITRC(funcCode,rc)                                \
    do {                                                             \
-      if ( sdbGetPDTraceCB()->isStarted() )                         \
+      if ( g_isTraceStarted )                                       \
       {                                                             \
          pdTraceArgTuple argTuple[PD_TRACE_MAX_ARG_NUM] ;           \
          ossMemset ( &argTuple[0], 0, sizeof(argTuple) ) ;          \
@@ -641,7 +643,7 @@ typedef struct _pdTraceArgTuple pdTraceArgTuple ;
 
 #define PD_TRACE_FUNC(funcCode,file,line,pack0,pack1,pack2,pack3,pack4,pack5,pack6,pack7,pack8) \
    do {                                                             \
-      if ( sdbGetPDTraceCB()->isStarted() )                         \
+      if ( g_isTraceStarted )                                       \
       {                                                             \
          pdTraceArgTuple argTuple[PD_TRACE_MAX_ARG_NUM] ;           \
          argTuple[0] = pack0 ;                                      \

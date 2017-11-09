@@ -49,6 +49,8 @@
 
 using namespace engine ;
 
+BOOLEAN g_isTraceStarted = FALSE ;
+
 // extract high 32 bit as function component mask, and OR with
 // cb->_componentMask, if the result is 0 that means the component is not what
 // we want
@@ -405,6 +407,7 @@ INT32 _pdTraceCB::start ( UINT64 size,
 
    /// set started
    _traceStarted = TRUE ;
+   g_isTraceStarted = TRUE ;
 
 done :
    _metaOpr.swap( 0 ) ;
@@ -423,6 +426,7 @@ void _pdTraceCB::stop()
    if ( _traceStarted )
    {
       _traceStarted = FALSE ;
+      g_isTraceStarted = FALSE ;
       PD_LOG ( PDEVENT, "Trace stops" ) ;
 
       // wait until there's no one write into the buffer
@@ -445,6 +449,7 @@ void _pdTraceCB::destroy()
    if ( _traceStarted )
    {
       _traceStarted = FALSE ;
+      g_isTraceStarted = FALSE ;
       PD_LOG ( PDEVENT, "Trace stops" ) ;
 
       // wait until there's no one write into the buffer
@@ -583,6 +588,7 @@ void _pdTraceCB::_removeAllTidFilter()
 void _pdTraceCB::_reset ()
 {
    _traceStarted = FALSE ;
+   g_isTraceStarted = FALSE ;
 
    if ( _pBuffer )
    {
