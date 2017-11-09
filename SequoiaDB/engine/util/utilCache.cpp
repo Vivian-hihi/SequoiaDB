@@ -34,7 +34,7 @@
 #include "utilCache.hpp"
 #include "ossUtil.hpp"
 #include "pd.hpp"
-#include "pdTrace.h"
+#include "pdTrace.hpp"
 #include "utilTrace.hpp"
 
 namespace engine
