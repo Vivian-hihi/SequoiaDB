@@ -25,10 +25,7 @@ import org.bson.BasicBSONObject;
 import org.bson.types.BasicBSONList;
 
 import java.net.InetAddress;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
 /**
  * @class ReplicaGroup
@@ -126,100 +123,217 @@ public class ReplicaGroup {
      * @brief Get the master node of current replica group.
      */
     public Node getMaster() throws BaseException {
-        BSONObject group = sequoiadb.getDetailById(id);
-
-        Object primaryNodeObj = group.get(SdbConstants.FIELD_NAME_PRIMARY);
-        if (primaryNodeObj == null) {
-            throw new BaseException(SDBError.SDB_CLS_NODE_NOT_EXIST);
-        }
-        Object groupInfoObj = group.get(SdbConstants.FIELD_NAME_GROUP);
+        // get information of nodes from catalog
+        BSONObject groupInfoObj = sequoiadb.getDetailById(id);
         if (groupInfoObj == null) {
-            return null;
+            throw new BaseException(SDBError.SDB_CLS_GRP_NOT_EXIST,
+                    String.format("no information of group id[%d]", id));
         }
-
+        // check the nodes in current group
+        Object nodesInfoArr = groupInfoObj.get(SdbConstants.FIELD_NAME_GROUP);
+        if (nodesInfoArr == null || !(nodesInfoArr instanceof BasicBSONList)) {
+            throw new BaseException(SDBError.SDB_SYS,
+                    String.format("invalid content[%s] of field[%s]",
+                            nodesInfoArr == null ? "null" : nodesInfoArr.toString(), SdbConstants.FIELD_NAME_GROUP));
+        }
+        BasicBSONList nodesInfoList = (BasicBSONList) nodesInfoArr;
+        if (nodesInfoList.isEmpty()) {
+            throw new BaseException(SDBError.SDB_CLS_EMPTY_GROUP);
+        }
+        // check and extract the information of primary node
+        Object primaryNodeObj = groupInfoObj.get(SdbConstants.FIELD_NAME_PRIMARY);
+        if (primaryNodeObj == null ) {
+            throw new BaseException(SDBError.SDB_RTN_NO_PRIMARY_FOUND);
+        } else if (!(primaryNodeObj instanceof Number)) {
+            throw new BaseException(SDBError.SDB_SYS, "invalid primary node's information: " + primaryNodeObj.toString());
+        } else if (primaryNodeObj.equals(Integer.valueOf(-1))){ // TODO: test it
+            throw new BaseException(SDBError.SDB_RTN_NO_PRIMARY_FOUND);
+        }
         BSONObject primaryData = null;
         Object nodeId;
-
-        BasicBSONList nodeInfos = (BasicBSONList) groupInfoObj;
-        for (Object nodeInfoObj : nodeInfos) {
+        for (Object nodeInfoObj : nodesInfoList) {
             BSONObject nodeInfo = (BSONObject) nodeInfoObj;
             nodeId = nodeInfo.get(SdbConstants.FIELD_NAME_NODEID);
             if (nodeId == null) {
-                throw new BaseException(SDBError.SDB_SYS);
+                throw new BaseException(SDBError.SDB_SYS, "node id can not be null");
             }
             if (nodeId.equals(primaryNodeObj)) {
                 primaryData = nodeInfo;
                 break;
             }
         }
-
-        if (primaryData != null) {
-            nodeId = primaryData.get(SdbConstants.FIELD_NAME_NODEID);
-            String hostName = primaryData.get(
-                    SdbConstants.FIELD_NAME_HOST).toString();
-            int port = getNodePort(primaryData);
-            return new Node(hostName, port, Integer.parseInt(nodeId.toString()), this);
+        // try to get the meta information of primary node.
+        if (primaryData == null) {
+            throw new BaseException(SDBError.SDB_SYS, "no information about the primary node in node array");
         }
-        return null;
+        nodeId = primaryData.get(SdbConstants.FIELD_NAME_NODEID);
+        if (nodeId == null || !(nodeId instanceof Number)) {
+            throw new BaseException(SDBError.SDB_SYS,
+                    String.format("invalid content[%s] of field[%s]",
+                            nodeId == null ? "null" : nodeId.toString(), SdbConstants.FIELD_NAME_NODEID));
+        }
+        Object hostNameObj = primaryData.get(SdbConstants.FIELD_NAME_HOST);
+        if (hostNameObj == null || !(hostNameObj instanceof String)) {
+            throw new BaseException(SDBError.SDB_SYS,
+                    String.format("invalid content[%s] of field[%s]",
+                            hostNameObj == null ? "null" : hostNameObj.toString(), SdbConstants.FIELD_NAME_HOST));
+        }
+        String hostName = hostNameObj.toString();
+        int port = getNodePort(primaryData);
+        return new Node(hostName, port, Integer.parseInt(nodeId.toString()), this);
     }
 
     /**
      * @return the slave node
      * @throws com.sequoiadb.exception.BaseException
      * @fn Node getSlave()
-     * @brief Get the random slave of current replica group.
+     * @brief Get the random slave node of current replica group, when have no slave node, return master node.
      */
     public Node getSlave() throws BaseException {
-        BSONObject group = sequoiadb.getDetailById(id);
-        if (group == null) {
-            return null;
+        List<Integer> list = new ArrayList<Integer>(2);
+        Random rand = new Random();
+        int pos1 = rand.nextInt(7) + 1;
+        int pos2 = pos1 % 7 + 1;
+        list.add(pos1);
+        list.add(pos2);
+        return getSlave(list, true);
+    }
+
+    /**
+     * @param positions The positions of nodes, can be 1-7.
+     * @return the slave node
+     * @throws com.sequoiadb.exception.BaseException
+     * @fn Node getSlave(int... positions)
+     * @brief Get the slave node in the specified positions,
+     *         when have no slave node in the specified positions, return master node.
+     */
+    public Node getSlave(int... positions) throws BaseException {
+        List<Integer> list = null;
+        if (positions == null || positions.length == 0) {
+            return getSlave();
+        } else {
+            list = new ArrayList<Integer>();
+            for(int pos : positions) {
+                list.add(pos);
+            }
+            return getSlave(list, false);
         }
 
-        Object primaryNodeObj = group.get(SdbConstants.FIELD_NAME_PRIMARY);
-        if (primaryNodeObj == null) {
-            throw new BaseException(SDBError.SDB_CLS_NODE_NOT_EXIST);
+    }
+
+    private Node getSlave(List<Integer> positions, boolean enforce) throws BaseException {
+        // check arguments
+        if (positions == null) {
+            throw new BaseException(SDBError.SDB_INVALIDARG, "position list can not be null");
         }
-
-        Object groupInfoObj = group.get(SdbConstants.FIELD_NAME_GROUP);
-        if (groupInfoObj == null) {
-            return null;
-        }
-
-        List<BSONObject> slaves = new ArrayList<>();
-        BSONObject primaryData = null;
-
-        BasicBSONList nodeInfos = (BasicBSONList) groupInfoObj;
-        for (Object nodeInfoObj : nodeInfos) {
-            BSONObject nodeInfo = (BSONObject) nodeInfoObj;
-            Object nodeId = nodeInfo.get(SdbConstants.FIELD_NAME_NODEID);
-            if (nodeId == null)
-                throw new BaseException(SDBError.SDB_SYS);
-            if (nodeId.equals(primaryNodeObj)) {
-                primaryData = nodeInfo;
-            } else {
-                slaves.add(nodeInfo);
+        List<Integer> validPositions = new ArrayList<Integer>();
+        for(int pos : positions) {
+            if (pos < 1 || pos > 7) {
+                throw new BaseException(SDBError.SDB_INVALIDARG,
+                        String.format("invalid position(%d) in the list", pos));
+            }
+            if (!validPositions.contains(pos)) {
+                validPositions.add(pos);
             }
         }
-
-        if (slaves.size() != 0) {
-            Random rand = new Random();
-            BSONObject randNode = slaves.get(rand.nextInt(slaves.size()));
-            int nodeId = Integer.parseInt(randNode.get(
-                    SdbConstants.FIELD_NAME_NODEID).toString());
-            String hostName = randNode.get(SdbConstants.FIELD_NAME_HOST)
-                    .toString();
-            int port = getNodePort(randNode);
-            return new Node(hostName, port, nodeId, this);
-        } else if (primaryData != null) {
-            int nodeId = Integer.parseInt(primaryData.get(
-                    SdbConstants.FIELD_NAME_NODEID).toString());
-            String hostName = primaryData.get(
-                    SdbConstants.FIELD_NAME_HOST).toString();
-            int port = getNodePort(primaryData);
-            return new Node(hostName, port, nodeId, this);
-        } else {
-            return null;
+        if (validPositions.size() < 1 || validPositions.size() > 7) {
+            throw new BaseException(SDBError.SDB_INVALIDARG,
+                    String.format("the number of valid position in the list is %d, it should be in [1, 7]",
+                            validPositions.size()));
         }
+        // get information of nodes from catalog
+        BSONObject groupInfoObj = sequoiadb.getDetailById(id);
+        if (groupInfoObj == null) {
+            throw new BaseException(SDBError.SDB_CLS_GRP_NOT_EXIST,
+                    String.format("no information of group id[%d]", id));
+        }
+        // check the nodes in current group
+        Object nodesInfoArr = groupInfoObj.get(SdbConstants.FIELD_NAME_GROUP);
+        if (nodesInfoArr == null || !(nodesInfoArr instanceof BasicBSONList)) {
+            throw new BaseException(SDBError.SDB_SYS,
+                    String.format("invalid content[%s] of field[%s]",
+                            nodesInfoArr == null ? "null" : nodesInfoArr.toString(), SdbConstants.FIELD_NAME_GROUP));
+        }
+        BasicBSONList nodesInfoList = (BasicBSONList) nodesInfoArr;
+        if (nodesInfoList.isEmpty()) {
+            throw new BaseException(SDBError.SDB_CLS_EMPTY_GROUP);
+        }
+        // check whether there has primary or not
+        Object primaryNodeId = groupInfoObj.get(SdbConstants.FIELD_NAME_PRIMARY);
+        boolean hasPrimary = true;
+        if (primaryNodeId == null) {
+            hasPrimary = false;
+        } else if (!(primaryNodeId instanceof Number)) {
+            throw new BaseException(SDBError.SDB_SYS, "invalid primary node's information: " + primaryNodeId.toString());
+        } else if (primaryNodeId.equals(Integer.valueOf(-1))){
+            hasPrimary = false;
+        }
+        // try to mark the position of primary node in the nodes list,
+        // the value of position is [1, 7]
+        int primaryNodePosition = 0;
+        for (int i = 0; i < nodesInfoList.size(); i++) {
+            BSONObject nodeInfo = (BSONObject) nodesInfoList.get(i);
+            Object nodeIdValue = nodeInfo.get(SdbConstants.FIELD_NAME_NODEID);
+            if (nodeIdValue == null) {
+                throw new BaseException(SDBError.SDB_SYS, "node id can not be null");
+            }
+            if (hasPrimary && nodeIdValue.equals(primaryNodeId)) {
+                primaryNodePosition = i + 1;
+            }
+        }
+        if (hasPrimary && primaryNodePosition == 0) {
+            throw new BaseException(SDBError.SDB_SYS, "have no primary node in nodes list");
+        }
+        // get a node for return
+        String hostName;
+        int port = -1;
+        int nodeId = -1;
+        int nodeIndex = -1 ;
+        BSONObject nodeInfoObj = null;
+        int nodeCount = nodesInfoList.size();
+        if (nodeCount == 1) {
+            nodeInfoObj = (BSONObject)nodesInfoList.get(0);
+        } else if (validPositions.size() == 1) {
+            // position is start from 1, so we need to decrease 1
+            nodeIndex = (validPositions.get(0) - 1) % nodeCount;
+            nodeInfoObj = (BSONObject)nodesInfoList.get(nodeIndex);
+        } else {
+            // when have primary, let's remove it's position first
+            List<Integer> myPositionListCopy = new ArrayList<Integer>(validPositions);
+            if (hasPrimary) {
+                Iterator<Integer> itr = myPositionListCopy.iterator();
+                while(itr.hasNext()) {
+                    int pos = itr.next();
+                    if (pos <= nodeCount) {
+                        if (primaryNodePosition == pos) {
+                            itr.remove();
+                        }
+                    } else {
+                        if (primaryNodePosition == (pos - 1) % nodeCount + 1) {
+                            itr.remove();
+                        }
+                    }
+                }
+            }
+            int position = 0;
+            Random rand = new Random();
+            if (myPositionListCopy.size() > 0) {
+                position = rand.nextInt(myPositionListCopy.size());
+                position = myPositionListCopy.get(position);
+            } else {
+                position = rand.nextInt(validPositions.size());
+                position = validPositions.get(position);
+                if (enforce) {
+                    position += 1;
+                }
+            }
+            nodeIndex = (position - 1) % nodeCount;
+            nodeInfoObj = (BSONObject)nodesInfoList.get(nodeIndex);
+        }
+        nodeId = Integer.parseInt(nodeInfoObj.get(SdbConstants.FIELD_NAME_NODEID).toString());
+        hostName = nodeInfoObj.get(SdbConstants.FIELD_NAME_HOST).toString();
+        port = getNodePort(nodeInfoObj);
+        return new Node(hostName, port, nodeId, this);
     }
 
     /**
@@ -542,18 +656,20 @@ public class ReplicaGroup {
             throw new BaseException(SDBError.SDB_SYS, "invalid information of node");
         }
         Object services = node.get(SdbConstants.FIELD_NAME_GROUPSERVICE);
-        if (services == null)
+        if (services == null) {
             throw new BaseException(SDBError.SDB_SYS, node.toString());
+        }
         BasicBSONList serviceInfos = (BasicBSONList) services;
-        if (serviceInfos.size() == 0)
-            throw new BaseException(SDBError.SDB_CLS_NODE_NOT_EXIST);
+        if (serviceInfos.size() == 0) {
+            throw new BaseException(SDBError.SDB_SYS, node.toString());
+        }
         int port = -1;
         for (Object obj : serviceInfos) {
             BSONObject service = (BSONObject) obj;
             if (service.get(SdbConstants.FIELD_NAME_SERVICETYPE)
-                    .toString().equals("0")) {
+                .toString().equals("0")) {
                 port = Integer.parseInt(service.get(
-                        SdbConstants.FIELD_NAME_SERVICENAME).toString());
+                    SdbConstants.FIELD_NAME_SERVICENAME).toString());
                 break;
             }
         }

@@ -6,9 +6,14 @@ import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.SDBError;
 import com.sequoiadb.test.common.Constants;
+import org.bson.BSONObject;
+import org.bson.types.BasicBSONList;
 import org.junit.*;
 
+import java.util.Random;
+
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 public class SDBGetRG {
@@ -115,11 +120,69 @@ public class SDBGetRG {
     public void getMasterAndSlaveNodeTest() {
         if (!isCluster)
             return;
-//        groupName = "db3";
+        groupName = "SYSCatalogGroup";
         rg = sdb.getReplicaGroup(groupName);
-        Node master = rg.getMaster();
-        Node slave = rg.getSlave();
-        System.out.println(String.format("group is: %s, master is: %s, slave is: %s", groupName, master.getNodeName(), slave.getNodeName()));
+        BSONObject detail = rg.getDetail();
+        BasicBSONList nodeList = (BasicBSONList)detail.get("Group");
+        int nodeCount = nodeList.size();
+        assertTrue(nodeCount != 0);
+
+        Node master = null;
+        Node slave = null;
+
+        // case 1
+        master = rg.getMaster();
+        slave = rg.getSlave();
+        System.out.println(String.format("case1: group is: %s, master is: %s, slave is: %s", groupName,
+                master == null ? null : master.getNodeName(),
+                slave == null ? null : slave.getNodeName()));
+        if (nodeCount == 1) {
+            assertEquals(master.getNodeName(), slave.getNodeName());
+        } else {
+            assertNotEquals(master.getNodeName(), slave.getNodeName());
+        }
+
+        // case 2
+        slave = rg.getSlave(1,2,3,4,5,6,7);
+        System.out.println(String.format("case2: group is: %s, master is: %s, slave is: %s", groupName,
+                master == null ? null : master.getNodeName(),
+                slave == null ? null : slave.getNodeName()));
+        if (nodeCount == 1) {
+            assertEquals(master.getNodeName(), slave.getNodeName());
+        } else {
+            assertNotEquals(master.getNodeName(), slave.getNodeName());
+        }
+
+        // case 3
+        Random random = new Random();
+        int pos1 = random.nextInt(7) + 1;
+        int pos2 = 0;
+        while(true) {
+            pos2 = random.nextInt(7) + 1;
+            if (pos2 != pos1) {
+                break;
+            }
+        }
+        slave = rg.getSlave(pos1, pos2);
+        System.out.println(String.format("case3: group is: %s, master is: %s, slave is: %s", groupName,
+                master == null ? null : master.getNodeName(),
+                slave == null ? null : slave.getNodeName()));
+        if (nodeCount == 1) {
+            assertEquals(master.getNodeName(), slave.getNodeName());
+        } else {
+            assertNotEquals(master.getNodeName(), slave.getNodeName());
+        }
+
+        // case 4
+        slave= rg.getSlave(null);
+        System.out.println(String.format("case4: group is: %s, master is: %s, slave is: %s", groupName,
+                master == null ? null : master.getNodeName(),
+                slave == null ? null : slave.getNodeName()));
+        if (nodeCount == 1) {
+            assertEquals(master.getNodeName(), slave.getNodeName());
+        } else {
+            assertNotEquals(master.getNodeName(), slave.getNodeName());
+        }
     }
 
 }
