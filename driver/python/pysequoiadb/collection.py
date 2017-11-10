@@ -1136,6 +1136,29 @@ class collection(object):
         rc = sdb.cl_remove_lob(self._cl, str_id)
         raise_if_error(rc, "Failed to remove lob")
 
+    def truncate_lob(self, oid, length):
+        """truncate lob.
+
+        Parameters:
+           Name     Type                 Info:
+           oid      str/bson.ObjectId    The oid of the lob to be truncated.
+           length   int/long             The truncate length
+        Exceptions:
+           pysequoiadb.error.SDBBaseError
+        """
+        if isinstance(oid, bson.ObjectId):
+            str_id = str(oid)
+        elif isinstance(oid, str):
+            str_id = oid
+        else:
+            raise SDBTypeError("oid must be an instance of str or bson.ObjectId")
+
+        if not isinstance(length, (int, long_type)):
+            raise SDBTypeError("length must be an instance of int or long")
+
+        rc = sdb.cl_truncate_lob(self._cl, str_id, length)
+        raise_if_error(rc, "Failed to truncate lob")
+
     def list_lobs(self):
         """list all lobs.
 

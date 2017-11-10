@@ -90,6 +90,7 @@ __METHOD_DECLARE(cl_detach_collection) ;
 __METHOD_DECLARE(cl_create_lob) ;
 __METHOD_DECLARE(cl_open_lob) ;
 __METHOD_DECLARE(cl_remove_lob) ;
+__METHOD_DECLARE(cl_truncate_lob);
 __METHOD_DECLARE(cl_list_lobs) ;
 __METHOD_DECLARE(cl_truncate) ;
 __METHOD_DECLARE(cl_create_id_index) ;
