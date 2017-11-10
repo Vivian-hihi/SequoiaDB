@@ -64,6 +64,8 @@ function main()
    checkExplain( db, csName, newClName, findConf, null, null, expExplains )
 	
 	println("check result after rename success!");
+	
+	commDropCS( db, csName, true, "drop CS in the end" );
 }
 
 function renameCL( csName, oldClName, newClName )

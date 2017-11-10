@@ -66,13 +66,15 @@ function main()
    checkExplain( db, newCsName, clName, findConf, null, null, expExplains )
 	
 	println("check result after rename success!");
+	
+	commDropCS( db, csName, true, "drop CS in the end" );
+	commDropCS( db, csName_new, true, "drop CS in the end" );
 }
 
 function renameCS( oldCsName, newCsName )
 {
    try
    {
-		println("oldCsName: " + oldCsName);
       db.renameCS( oldCsName, newCsName );
    }
 	catch(e)

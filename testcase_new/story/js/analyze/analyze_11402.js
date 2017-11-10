@@ -83,6 +83,8 @@ function main()
    checkExplain( db, csName, clName, findConf, null, null, expExplains )
 	
    println("check result after analyze success!");
+	
+	commDropCS( db, csName, true, "drop CS in the end" );
 }
 
 function splitCL( csName, clName, srcGroup, destGroup )

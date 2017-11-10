@@ -6,6 +6,12 @@
 **************************************/
 function main()
 {
+	if(commIsStandalone(db))
+	{
+		println("skip standalone environment");
+		return;
+	}
+	
    var csName = COMMCSNAME + "11611";
 	commDropCS( db, csName, true, "drop CS in the beginning" );
 	
@@ -18,13 +24,15 @@ function main()
 	var clName2 = COMMCLNAME + "11611_2";
 	var dbcl2 = commCreateCL( db, csName, clName2 );
 
-	var clOption = {ShardingKey:{a:1}, ShardingType:"hash"};
-	var clName3 = COMMCLNAME + "11611_hash";
-	var dbcl3 = commCreateCLByOption( db, csName, clName3, clOption, true );
+	var clName3 = COMMCLNAME + "11611_3";
+	var dbcl3 = commCreateCL( db, csName, clName3 );
 	
-	var clOption = {ShardingKey:{a:1}, ShardingType:"range"};
-	var clName4 = COMMCLNAME + "11611_range";
-	var dbcl4 = commCreateCLByOption( db, csName, clName4, clOption, true );
+	var clName4 = COMMCLNAME + "11611_4";
+	var dbcl4 = commCreateCL( db, csName, clName4 );
+	
+	//create index
+	commCreateIndex( dbcl3, "a", {a : 1}, false );
+	commCreateIndex( dbcl4, "a", {a : 1}, false );
 	
 	var insertNums = 3000;
 	// include datas , but no index
@@ -35,28 +43,28 @@ function main()
 	//check before invoke analyze
 	checkStat( db, csName, clName1, "", false, false );
    checkStat( db, csName, clName2, "", false, false );
-	checkStat( db, csName, clName3, "$shard", false, false );
-	checkStat( db, csName, clName4, "$shard", false, false );
+	checkStat( db, csName, clName3, "a", false, false );
+	checkStat( db, csName, clName4, "a", false, false );
 	
 	//check the query explain of master/slave nodes 
 	var findConf = {a : 9000};
 	
    var expExplains1 = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
    var expExplains2 = [{ScanType:"tbscan", IndexName:"", ReturnNum:0}];
-   var expExplains3 = [{ScanType:"ixscan", IndexName:"$shard", ReturnNum:insertNums}];
-	var expExplains4 = [{ScanType:"ixscan", IndexName:"$shard", ReturnNum:0}];
+   var expExplains3 = [{ScanType:"ixscan", IndexName:"a", ReturnNum:insertNums}];
+	var expExplains4 = [{ScanType:"ixscan", IndexName:"a", ReturnNum:0}];
    
    db.setSessionAttr( { PreferedInstance: "m" } );
-   checkExplain( db, csName, clName1, findConf, null, null, expExplains1 )
-	checkExplain( db, csName, clName2, findConf, null, null, expExplains2 )
-	checkExplain( db, csName, clName3, findConf, null, null, expExplains3 )
-	checkExplain( db, csName, clName4, findConf, null, null, expExplains4 )
+   checkExplain( db, csName, clName1, findConf, null, null, expExplains1 );
+	checkExplain( db, csName, clName2, findConf, null, null, expExplains2 );
+	checkExplain( db, csName, clName3, findConf, null, null, expExplains3 );
+	checkExplain( db, csName, clName4, findConf, null, null, expExplains4 );
    
    db.setSessionAttr( { PreferedInstance: "s" } );
-   checkExplain( db, csName, clName1, findConf, null, null, expExplains1 )
-	checkExplain( db, csName, clName2, findConf, null, null, expExplains2 )
-	checkExplain( db, csName, clName3, findConf, null, null, expExplains3 )
-	checkExplain( db, csName, clName4, findConf, null, null, expExplains4 )
+   checkExplain( db, csName, clName1, findConf, null, null, expExplains1 );
+	checkExplain( db, csName, clName2, findConf, null, null, expExplains2 );
+	checkExplain( db, csName, clName3, findConf, null, null, expExplains3 );
+	checkExplain( db, csName, clName4, findConf, null, null, expExplains4 );
 	
 	println("check result before analyze success!");
    
@@ -74,8 +82,8 @@ function main()
    //check after analyze
 	checkStat( db, csName, clName1, "", true, false );
    checkStat( db, csName, clName2, "", false, false );
-	checkStat( db, csName, clName3, "$shard", true, true );
-	checkStat( db, csName, clName4, "$shard", false, false );
+	checkStat( db, csName, clName3, "a", true, true );
+	checkStat( db, csName, clName4, "c", false, false );
    
    //check the query explain of master/slave nodes 
 	var findConf = {a : 9000};
@@ -83,19 +91,19 @@ function main()
    var expExplains1 = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
    var expExplains2 = [{ScanType:"tbscan", IndexName:"", ReturnNum:0}];
 	var expExplains3 = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
-	var expExplains4 = [{ScanType:"ixscan", IndexName:"$shard", ReturnNum:0}];
+	var expExplains4 = [{ScanType:"ixscan", IndexName:"a", ReturnNum:0}];
    
    db.setSessionAttr( { PreferedInstance: "m" } );
-   checkExplain( db, csName, clName1, findConf, null, null, expExplains1 )
-	checkExplain( db, csName, clName2, findConf, null, null, expExplains2 )
-	checkExplain( db, csName, clName3, findConf, null, null, expExplains3 )
-	checkExplain( db, csName, clName4, findConf, null, null, expExplains4 )
+   checkExplain( db, csName, clName1, findConf, null, null, expExplains1 );
+	checkExplain( db, csName, clName2, findConf, null, null, expExplains2 );
+	checkExplain( db, csName, clName3, findConf, null, null, expExplains3 );
+	checkExplain( db, csName, clName4, findConf, null, null, expExplains4 );
    
    db.setSessionAttr( { PreferedInstance: "s" } );
-   checkExplain( db, csName, clName1, findConf, null, null, expExplains1 )
-	checkExplain( db, csName, clName2, findConf, null, null, expExplains2 )
-	checkExplain( db, csName, clName3, findConf, null, null, expExplains3 )
-	checkExplain( db, csName, clName4, findConf, null, null, expExplains4 )
+   checkExplain( db, csName, clName1, findConf, null, null, expExplains1 );
+	checkExplain( db, csName, clName2, findConf, null, null, expExplains2 );
+	checkExplain( db, csName, clName3, findConf, null, null, expExplains3 );
+	checkExplain( db, csName, clName4, findConf, null, null, expExplains4 );
 	
 	//analyze table below SYSSTAT 
 	var options1 = {Collection: "SYSSTAT.SYSCOLLECTIONSTAT"};
@@ -105,6 +113,8 @@ function main()
    checkAnalyzeInvalidResult(options2);
 	
    println("check result after analyze success!");
+	
+	commDropCS( db, csName, true, "drop CS in the end" );
 }
 
 function checkAnalyzeInvalidResult( options )

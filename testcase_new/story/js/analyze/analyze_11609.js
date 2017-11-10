@@ -42,16 +42,16 @@ function main()
    var expExplains2 = [{ScanType:"ixscan", IndexName:"bc", ReturnNum:insertNums}];
    
    db.setSessionAttr( { PreferedInstance: "m" } );
-   checkExplain( db, csName, clName1, findConf1, null, null, expExplains1 )
-	checkExplain( db, csName, clName1, findConf2, null, null, expExplains2 )
-	checkExplain( db, csName, clName2, findConf1, null, null, expExplains1 )
-	checkExplain( db, csName, clName2, findConf2, null, null, expExplains2 )
+   checkExplain( db, csName, clName1, findConf1, null, null, expExplains1 );
+	checkExplain( db, csName, clName1, findConf2, null, null, expExplains2 );
+	checkExplain( db, csName, clName2, findConf1, null, null, expExplains1 );
+	checkExplain( db, csName, clName2, findConf2, null, null, expExplains2 );
    
    db.setSessionAttr( { PreferedInstance: "s" } );
-   checkExplain( db, csName, clName1, findConf1, null, null, expExplains1 )
-	checkExplain( db, csName, clName1, findConf2, null, null, expExplains2 )
-	checkExplain( db, csName, clName2, findConf1, null, null, expExplains1 )
-	checkExplain( db, csName, clName2, findConf2, null, null, expExplains2 )
+   checkExplain( db, csName, clName1, findConf1, null, null, expExplains1 );
+	checkExplain( db, csName, clName1, findConf2, null, null, expExplains2 );
+	checkExplain( db, csName, clName2, findConf1, null, null, expExplains1 );
+	checkExplain( db, csName, clName2, findConf2, null, null, expExplains2 );
 	
 	println("check result before analyze success!");
    
@@ -74,17 +74,19 @@ function main()
    var expExplains2 = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
    
    db.setSessionAttr( { PreferedInstance: "m" } );
-   checkExplain( db, csName, clName1, findConf1, null, null, expExplains1 )
-	checkExplain( db, csName, clName1, findConf2, null, null, expExplains2 )
-	checkExplain( db, csName, clName2, findConf1, null, null, expExplains1 )
-	checkExplain( db, csName, clName2, findConf2, null, null, expExplains2 )
+   checkExplain( db, csName, clName1, findConf1, null, null, expExplains1 );
+	checkExplain( db, csName, clName1, findConf2, null, null, expExplains2 );
+	checkExplain( db, csName, clName2, findConf1, null, null, expExplains1 );
+	checkExplain( db, csName, clName2, findConf2, null, null, expExplains2 );
    
    db.setSessionAttr( { PreferedInstance: "s" } );
-   checkExplain( db, csName, clName1, findConf1, null, null, expExplains1 )
-	checkExplain( db, csName, clName1, findConf2, null, null, expExplains2 )
-	checkExplain( db, csName, clName2, findConf1, null, null, expExplains1 )
-	checkExplain( db, csName, clName2, findConf2, null, null, expExplains2 )
+   checkExplain( db, csName, clName1, findConf1, null, null, expExplains1 );
+	checkExplain( db, csName, clName1, findConf2, null, null, expExplains2 );
+	checkExplain( db, csName, clName2, findConf1, null, null, expExplains1 );
+	checkExplain( db, csName, clName2, findConf2, null, null, expExplains2 );
    
    println("check result after analyze success!");
+	
+	commDropCS( db, csName, true, "drop CS in the end" );
 }
 main();

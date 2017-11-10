@@ -82,6 +82,8 @@ function main()
 	checkExplain( db, csName, clName, findConf2, null, null, expExplains2 )
 	
    println("check result after analyze success!");
+	
+	commDropCS( db, csName, true, "drop CS in the end" );
 }
 
 function alterCL( csName, clName )
