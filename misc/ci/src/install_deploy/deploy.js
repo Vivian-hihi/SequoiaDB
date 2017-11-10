@@ -262,7 +262,7 @@ function checkeDataPrimary( db, rgname )
       } 
       catch(e)
       {
-         if( e !== -155 ) 
+         if( e !== -10 ) 
          {
             println("excute: db.getRG(" + rgname + ").getMaster()");
             throw e;  
