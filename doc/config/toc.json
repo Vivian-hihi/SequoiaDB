@@ -2606,9 +2606,9 @@
             },
             {
                "id": 1510278739,
-               "dir": "SQL",
-               "cn": "SQL",
-               "en": "SQL",
+               "dir": "SQL_grammar",
+               "cn": "SQL语法",
+               "en": "SQL Grammar",
                "contents": [
                   {
                      "id": 1510279692,
