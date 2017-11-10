@@ -1357,6 +1357,43 @@ error:
    goto done ;
 }
 
+static JSBool collection_truncate_lob( JSContext *cx , uintN argc , jsval *vp )
+{
+   engine::sdbClearErrorInfo() ;
+   INT32 rc = SDB_OK ;
+   JSBool ret = JS_TRUE ;
+   sdbCollectionHandle *collection = NULL ;
+   JSString *jsOid = NULL ;
+   CHAR *oidStr = NULL ;
+   bson_oid_t oid ;
+   double dLength = 0 ;
+   INT64 length = 0 ;
+
+   collection = (sdbCollectionHandle *)
+      JS_GetPrivate ( cx , JS_THIS_OBJECT ( cx , vp ) ) ;
+   REPORT ( collection , "SdbCollection.truncateLob(): no collection handle" ) ;
+
+   ret = JS_ConvertArguments ( cx , argc , JS_ARGV ( cx , vp ) ,
+                               "SI" , &jsOid, &dLength ) ;
+   REPORT ( ret , "SdbCollection.truncateLob(): wrong arguments" ) ;
+
+   length = dLength ;
+
+   oidStr = (CHAR *) JS_EncodeString ( cx , jsOid ) ;
+   VERIFY( oidStr ) ;
+   bson_oid_from_string( &oid, oidStr ) ;
+
+   rc = sdbTruncateLob( *collection, &oid, length ) ;
+   REPORT_RC( SDB_OK == rc, "SdbCollection.truncateLob(): failed to truncate lob", rc ) ;
+
+   JS_SET_RVAL ( cx , vp , JSVAL_VOID ) ;
+done:
+   SAFE_JS_FREE( cx, oidStr ) ;
+   return ret ;
+error:
+   goto done ;
+}
+
 // PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_LIST_LOBS, "collection_list_lobs" )
 static JSBool collection_list_lobs( JSContext *cx , uintN argc , jsval *vp )
 {
@@ -2820,6 +2857,7 @@ static JSFunctionSpec collection_functions[] = {
     JS_FS ( "putLob", collection_put_lob, 1, 0 ) ,
     JS_FS ( "getLob", collection_get_lob, 1, 0 ) ,
     JS_FS ( "deleteLob", collection_delete_lob, 1, 0 ) ,
+    JS_FS ( "truncateLob", collection_truncate_lob, 2, 0 ) ,
     JS_FS ( "listLobs", collection_list_lobs, 1, 0 ) ,
     JS_FS ( "listLobPieces", collection_list_lob_pieces, 1, 0 ) ,
     JS_FS ( "truncate", collection_truncate, 0, 0 ),

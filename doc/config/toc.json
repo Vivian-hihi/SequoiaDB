@@ -1729,6 +1729,12 @@
                            "en": "truncate()"
                         },
                         {
+                           "id": 1510277748,
+                           "file": "truncateLob",
+                           "cn": "truncateLob()",
+                           "en": "truncateLob()"
+                        },
+                        {
                            "id": 1432190847,
                            "file": "update",
                            "cn": "update()",
