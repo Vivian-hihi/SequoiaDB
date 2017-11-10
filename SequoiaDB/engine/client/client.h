@@ -2319,6 +2319,18 @@ SDB_EXPORT INT32 sdbCloseLob( sdbLobHandle *lobHandle ) ;
 SDB_EXPORT INT32 sdbRemoveLob( sdbCollectionHandle cHandle,
                                const bson_oid_t *oid ) ;
 
+/** \fn INT32 sdbTruncateLob( sdbCollectionHandle cHandle,
+                            const bson_oid_t *oid, INT64 length )
+    \brief truncate lob
+    \param [in] cHandle The handle of collection
+    \param [in] oid The large object id
+    \param [in] length The truncate length
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbTruncateLob( sdbCollectionHandle cHandle,
+                               const bson_oid_t *oid, INT64 length ) ;
+
 /** \fn INT32 sdbGetLobSize( sdbLobHandle lobHandle,
                              SINT64 *size )
     \brief get the lob's size

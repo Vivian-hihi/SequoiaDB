@@ -9537,6 +9537,114 @@ error:
    goto done ;
 }
 
+SDB_EXPORT INT32 sdbTruncateLob( sdbCollectionHandle cHandle,
+                                 const bson_oid_t *oid, INT64 length )
+{
+   INT32 rc                        = SDB_OK ;
+   SINT64 contextID                = -1 ;
+   bson meta ;
+   sdbConnectionStruct *connection = NULL ;
+   sdbCollectionStruct *cs         = (sdbCollectionStruct*)cHandle ;
+
+   bson_init( &meta ) ;
+   HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
+   connection                      = (sdbConnectionStruct*)(cs->_connection) ;
+   if ( NULL == oid )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   if ( length < 0 )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   if ( !cs->_collectionFullName[0] || NULL == oid )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   if ( NULL == oid )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   rc = bson_append_string( &meta, FIELD_NAME_COLLECTION,
+                            cs->_collectionFullName ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_DRIVER_BSON_ERROR ;
+      goto error ;
+   }
+
+   rc = bson_append_oid( &meta, FIELD_NAME_LOB_OID, oid ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_DRIVER_BSON_ERROR ;
+      goto error ;
+   }
+
+   rc = bson_append_long( &meta, FIELD_NAME_LOB_LENGTH, length) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_DRIVER_BSON_ERROR ;
+      goto error ;
+   }
+
+   rc = bson_finish( &meta ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_DRIVER_BSON_ERROR ;
+      goto error ;
+   }
+
+   rc = clientBuildTruncateLobMsg( &cs->_pSendBuffer, &cs->_sendBufferSize,
+                                   &meta, 0, 1, 0, cs->_endianConvert ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+   // send and recv
+   rc = _sendAndRecv( cs->_connection, cs->_sock,
+                      (MsgHeader*)cs->_pSendBuffer,
+                      (MsgHeader**)&cs->_pReceiveBuffer,
+                      &cs->_receiveBufferSize,
+                      TRUE, cs->_endianConvert ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+   // extract revc message
+   rc = _extract( (MsgHeader*)cs->_pReceiveBuffer, cs->_receiveBufferSize,
+                  &contextID, cs->_endianConvert ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+   // check the return header
+   CHECK_RET_MSGHEADER( cs->_pSendBuffer, cs->_pReceiveBuffer,
+                        cs->_connection ) ;
+
+   rc = updateCachedObject( rc, connection->_tb, cs->_collectionFullName ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+done:
+   bson_destroy( &meta ) ;
+   return rc ;
+error:
+   goto done ;
+}
+
 SDB_EXPORT INT32 sdbSeekLob( sdbLobHandle lobHandle,
                              SINT64 size,
                              SDB_LOB_SEEK whence )

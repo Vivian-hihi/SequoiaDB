@@ -3041,6 +3041,82 @@ error:
       goto done ;
    }
 
+   INT32 _sdbCollectionImpl::truncateLob( const bson::OID &oid, INT64 length )
+   {
+      INT32 rc = SDB_OK ;
+      SINT64 contextID = -1 ;
+      BOOLEAN result = FALSE ;
+      BOOLEAN locked = FALSE ;
+      BSONObjBuilder bob ;
+      BSONObj meta ;
+
+      // check
+      if ( '\0' == _collectionFullName[0] || NULL == _connection )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      if ( length < 0 )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      // append info
+      try
+      {
+         bob.append( FIELD_NAME_COLLECTION, _collectionFullName ) ;
+         bob.appendOID( FIELD_NAME_LOB_OID, (OID *)(&oid) ) ;
+         bob.append( FIELD_NAME_LOB_LENGTH, length ) ;
+         meta = bob.obj() ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_DRIVER_BSON_ERROR ;
+         goto error ;
+      }
+      // build msg
+      rc = clientBuildTruncateLobMsgCpp( &_pSendBuffer, &_sendBufferSize,
+                                         meta.objdata(), 0, 1, 0,
+                                         _connection->_endianConvert ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+      _connection->lock() ;
+      locked = TRUE ;
+      // send msg
+      rc = _connection->_send ( _pSendBuffer ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+      // receive and extract msg
+      rc = _connection->_recvExtract ( &_pReceiveBuffer, &_receiveBufferSize,
+                                       contextID, result ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
+      rc = updateCachedObject( rc, _connection->_getCachedContainer(),
+                               _collectionFullName ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+   done:
+      if ( locked )
+         _connection->unlock() ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _sdbCollectionImpl::openLob( _sdbLob **lob, const bson::OID &oid,
                                           SDB_LOB_OPEN_MODE mode )
    {

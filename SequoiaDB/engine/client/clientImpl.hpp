@@ -448,6 +448,8 @@ namespace sdbclient
 
       virtual INT32 removeLob( const bson::OID &oid ) ;
 
+      virtual INT32 truncateLob( const bson::OID &oid, INT64 length ) ;
+
       INT32 openLob( _sdbLob **lob, const bson::OID &oid,
                      SDB_LOB_OPEN_MODE mode = SDB_LOB_READ ) ;
 

@@ -449,6 +449,8 @@ namespace sdbclient
 
       virtual INT32 removeLob( const bson::OID &oid ) = 0 ;
 
+      virtual INT32 truncateLob( const bson::OID &oid, INT64 length ) = 0 ;
+
       virtual INT32 openLob( sdbLob &lob, const bson::OID &oid,
                              SDB_LOB_OPEN_MODE mode = SDB_LOB_READ ) = 0 ;
 
@@ -1387,6 +1389,20 @@ namespace sdbclient
        if ( !pCollection )
          return SDB_NOT_CONNECTED ;
        return pCollection->removeLob( oid ) ;
+    }
+
+/** \fn INT32 truncateLob( const bson::OID &oid, INT64 length )
+    \brief truncate large object to specified length.
+    \param [in] oid The id of the large object
+    \param [in] length The truncate length
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+    INT32 truncateLob( const bson::OID &oid, INT64 length )
+    {
+       if ( !pCollection )
+         return SDB_NOT_CONNECTED ;
+       return pCollection->truncateLob( oid, length ) ;
     }
 
 /** \fn INT32 openLob( sdbLob &lob, const bson::OID &oid )
