@@ -73,22 +73,20 @@ function main()
    
    //check the query explain of master/slave nodes 
 	var findConf1 = {a : 9000};
-   var expExplains1 = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
+	var findConf2 = {b : 9000, c : 'test9000'};
+   var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
 	
-   var findConf2 = {b : 9000, c : 'test9000'};
-   var expExplains2 = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
-   
    db.setSessionAttr( { PreferedInstance: "m" } );
-   checkExplain( dbcl1, findConf1, null, null, expExplains1 );
-	checkExplain( dbcl1, findConf2, null, null, expExplains2 );
-	checkExplain( dbcl2, findConf1, null, null, expExplains1 );
-	checkExplain( dbcl2, findConf2, null, null, expExplains2 );
+   checkExplain( dbcl1, findConf1, null, null, expExplains );
+	checkExplain( dbcl1, findConf2, null, null, expExplains );
+	checkExplain( dbcl2, findConf1, null, null, expExplains );
+	checkExplain( dbcl2, findConf2, null, null, expExplains );
    
    db.setSessionAttr( { PreferedInstance: "s" } );
-   checkExplain( dbcl1, findConf1, null, null, expExplains1 );
-	checkExplain( dbcl1, findConf2, null, null, expExplains2 );
-	checkExplain( dbcl2, findConf1, null, null, expExplains1 );
-	checkExplain( dbcl2, findConf2, null, null, expExplains2 );
+   checkExplain( dbcl1, findConf1, null, null, expExplains );
+	checkExplain( dbcl1, findConf2, null, null, expExplains );
+	checkExplain( dbcl2, findConf1, null, null, expExplains );
+	checkExplain( dbcl2, findConf2, null, null, expExplains );
    
    println("check result after analyze success!");
 	
