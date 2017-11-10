@@ -86,11 +86,58 @@ namespace DriverTest
             {
                 return;
             }
-            //groupName = "db3";
+            groupName = "SYSCatalogGroup";
             group = sdb.GetReplicaGroup(groupName);
-            SequoiaDB.Node master = group.GetMaster();
-            SequoiaDB.Node slave = group.GetSlave();
-            Console.WriteLine("group is: " + groupName + ", master is: " + master.NodeName + ", slave is: " + slave.NodeName);
+            BsonDocument detail = group.GetDetail();
+            BsonArray nodeList = (BsonArray)detail["Group"];
+            int nodeCount = nodeList.Count;
+            Assert.IsTrue(nodeCount != 0);
+
+            SequoiaDB.Node master = null;
+            SequoiaDB.Node slave = null;
+
+            // case 1
+            master = group.GetMaster();
+            slave = group.GetSlave();
+            Console.WriteLine(String.Format("case1: group is: {0}, master is: {1}, slave is: {2}", groupName,
+                    master == null ? null : master.NodeName,
+                    slave == null ? null : slave.NodeName));
+            if (nodeCount == 1) {
+                Assert.AreEqual(master.NodeName, slave.NodeName);
+            } else {
+                Assert.AreNotEqual(master.NodeName, slave.NodeName);
+            }
+
+            // case 2
+            slave = group.GetSlave(1,2,3,4,5,6,7);
+            Console.WriteLine(String.Format("case2: group is: {0}, master is: {1}, slave is: {2}", groupName,
+                    master == null ? null : master.NodeName,
+                    slave == null ? null : slave.NodeName));
+            if (nodeCount == 1) {
+                Assert.AreEqual(master.NodeName, slave.NodeName);
+            } else {
+                Assert.AreNotEqual(master.NodeName, slave.NodeName);
+            }
+
+            // case 3
+            Random random = new Random();
+            int pos1 = random.Next(7) + 1;
+            int pos2 = 0;
+            while(true) {
+                pos2 = random.Next(7) + 1;
+                if (pos2 != pos1) {
+                    break;
+                }
+            }
+            slave = group.GetSlave(pos1, pos2);
+            Console.WriteLine(String.Format("case3: group is: {0}, master is: {1}, slave is: {2}", groupName,
+                    master == null ? null : master.NodeName,
+                    slave == null ? null : slave.NodeName));
+            if (nodeCount == 1) {
+                Assert.AreEqual(master.NodeName, slave.NodeName);
+            } else {
+                Assert.AreNotEqual(master.NodeName, slave.NodeName);
+            }
         }
 
         [TestMethod()]
