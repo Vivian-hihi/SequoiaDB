@@ -39,7 +39,7 @@ function main()
 	println("check result before analyze success!");
 
    //执行统计
-   analyze( db );
+   analyze( db, {CollectionSpace : csName} );
    
    //检查统计信息
    checkStat( db, csName, clName, "a", true, true );

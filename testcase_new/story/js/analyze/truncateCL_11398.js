@@ -37,7 +37,7 @@ function main()
 	println("check result before analyze success!");
 
    //执行统计
-   analyze( db, null );
+   analyze( db, {Collection: COMMCSNAME + "." + clName} );
    
    //检查统计信息
    checkStat( db, COMMCSNAME, clName, "a", true, true );

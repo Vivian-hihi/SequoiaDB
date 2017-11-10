@@ -6,20 +6,19 @@
 **************************************/
 function main()
 {
+	var csName = COMMCSNAME + "_11608";
    var clName1 = COMMCLNAME + "_11608_1";
    var clName2 = COMMCLNAME + "_11608_2";
    var clName3 = COMMCLNAME + "_11608_3";
    var insertNum = 2000;
    
    //清理环境
-   commDropCL( db, COMMCSNAME, clName1, true, true,"drop CL in the beginning" ) ;
-   commDropCL( db, COMMCSNAME, clName2, true, true,"drop CL in the beginning" ) ;
-   commDropCL( db, COMMCSNAME, clName3, true, true,"drop CL in the beginning" ) ;
+   commDropCS( db, csName);
    
    //创建cl
-   var dbcl1 = commCreateCL( db, COMMCSNAME, clName1);
-   var dbcl2 = commCreateCL( db, COMMCSNAME, clName2);
-   var dbcl3 = commCreateCL( db, COMMCSNAME, clName3);
+   var dbcl1 = commCreateCL( db, csName, clName1);
+   var dbcl2 = commCreateCL( db, csName, clName2);
+   var dbcl3 = commCreateCL( db, csName, clName3);
    
    //创建索引
    commCreateIndex( dbcl1, "a", {a:1});
@@ -32,13 +31,13 @@ function main()
 	insertDatas( dbcl3, insertNum );
 	
 	//检查统计信息
-   checkStat( db, COMMCSNAME, clName1, "a", false, false );
+   checkStat( db, csName, clName1, "a", false, false );
    println("check cl:" + clName1 + " before analyze success!");
    
-   checkStat( db, COMMCSNAME, clName2, "a", false, false );
+   checkStat( db, csName, clName2, "a", false, false );
    println("check cl:" + clName2 + " before analyze success!");
    
-   checkStat( db, COMMCSNAME, clName3, "a", false, false );
+   checkStat( db, csName, clName3, "a", false, false );
    println("check cl:" + clName3 + " before analyze success!");
    
    //检查主备节点访问计划
@@ -46,26 +45,26 @@ function main()
    var expExplains = [{ScanType:"ixscan", IndexName:"a", ReturnNum:insertNum}];
    
    db.setSessionAttr( { PreferedInstance: "m" } );
-   checkExplain( db, COMMCSNAME, clName1, findConf, null, null, expExplains );
-   checkExplain( db, COMMCSNAME, clName2, findConf, null, null, expExplains );
-   checkExplain( db, COMMCSNAME, clName3, findConf, null, null, expExplains );
+   checkExplain( db, csName, clName1, findConf, null, null, expExplains );
+   checkExplain( db, csName, clName2, findConf, null, null, expExplains );
+   checkExplain( db, csName, clName3, findConf, null, null, expExplains );
    
    db.setSessionAttr( { PreferedInstance: "s" } );
-   checkExplain( db, COMMCSNAME, clName1, findConf, null, null, expExplains );
-   checkExplain( db, COMMCSNAME, clName2, findConf, null, null, expExplains );
-   checkExplain( db, COMMCSNAME, clName3, findConf, null, null, expExplains );
+   checkExplain( db, csName, clName1, findConf, null, null, expExplains );
+   checkExplain( db, csName, clName2, findConf, null, null, expExplains );
+   checkExplain( db, csName, clName3, findConf, null, null, expExplains );
    
    //执行统计
-   analyze( db, {CollectionSpace: COMMCSNAME} );
+   analyze( db, {CollectionSpace: csName} );
    
    //检查统计信息
-   checkStat( db, COMMCSNAME, clName1, "a", true, true );
+   checkStat( db, csName, clName1, "a", true, true );
    println("check cl:" + clName1 + " after analyze success!");
    
-   checkStat( db, COMMCSNAME, clName2, "a", true, true );
+   checkStat( db, csName, clName2, "a", true, true );
    println("check cl:" + clName2 + " after analyze success!");
    
-   checkStat( db, COMMCSNAME, clName3, "a", true, true );
+   checkStat( db, csName, clName3, "a", true, true );
    println("check cl:" + clName3 + " after analyze success!");
    
    //检查主备节点访问计划
@@ -73,27 +72,27 @@ function main()
    var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}];
    
    db.setSessionAttr( { PreferedInstance: "m" } );
-   checkExplain( db, COMMCSNAME, clName1, findConf, null, null, expExplains );
-   checkExplain( db, COMMCSNAME, clName2, findConf, null, null, expExplains );
-   checkExplain( db, COMMCSNAME, clName3, findConf, null, null, expExplains );
+   checkExplain( db, csName, clName1, findConf, null, null, expExplains );
+   checkExplain( db, csName, clName2, findConf, null, null, expExplains );
+   checkExplain( db, csName, clName3, findConf, null, null, expExplains );
    
    db.setSessionAttr( { PreferedInstance: "s" } );
-   checkExplain( db, COMMCSNAME, clName1, findConf, null, null, expExplains );
-   checkExplain( db, COMMCSNAME, clName2, findConf, null, null, expExplains );
-   checkExplain( db, COMMCSNAME, clName3, findConf, null, null, expExplains );
+   checkExplain( db, csName, clName1, findConf, null, null, expExplains );
+   checkExplain( db, csName, clName2, findConf, null, null, expExplains );
+   checkExplain( db, csName, clName3, findConf, null, null, expExplains );
 
    //truncate 其中一个cl的记录,再次执行统计
    dbcl1.truncate();
-   analyze( db, {CollectionSpace: COMMCSNAME} );
+   analyze( db, {CollectionSpace: csName} );
    
    //检查统计信息
-   checkStat( db, COMMCSNAME, clName1, "a", false, false );
+   checkStat( db, csName, clName1, "a", false, false );
    println("check cl:" + clName1 + " after truncate cl success!");
    
-   checkStat( db, COMMCSNAME, clName2, "a", true, true );
+   checkStat( db, csName, clName2, "a", true, true );
    println("check cl:" + clName2 + " after truncate cl success!");
    
-   checkStat( db, COMMCSNAME, clName3, "a", true, true );
+   checkStat( db, csName, clName3, "a", true, true );
    println("check cl:" + clName3 + " after truncate cl success!");
    
    //检查主备节点访问计划
@@ -102,27 +101,27 @@ function main()
    var expExplains2 = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}];
    
    db.setSessionAttr( { PreferedInstance: "m" } );
-   checkExplain( db, COMMCSNAME, clName1, findConf, null, null, expExplains1 );
-   checkExplain( db, COMMCSNAME, clName2, findConf, null, null, expExplains2 );
-   checkExplain( db, COMMCSNAME, clName3, findConf, null, null, expExplains2 );
+   checkExplain( db, csName, clName1, findConf, null, null, expExplains1 );
+   checkExplain( db, csName, clName2, findConf, null, null, expExplains2 );
+   checkExplain( db, csName, clName3, findConf, null, null, expExplains2 );
    
    db.setSessionAttr( { PreferedInstance: "s" } );
-   checkExplain( db, COMMCSNAME, clName1, findConf, null, null, expExplains1 );
-   checkExplain( db, COMMCSNAME, clName2, findConf, null, null, expExplains2 );
-   checkExplain( db, COMMCSNAME, clName3, findConf, null, null, expExplains2 );
+   checkExplain( db, csName, clName1, findConf, null, null, expExplains1 );
+   checkExplain( db, csName, clName2, findConf, null, null, expExplains2 );
+   checkExplain( db, csName, clName3, findConf, null, null, expExplains2 );
    
    //删除其中一个cl中的索引,再次执行统计
    commDropIndex( dbcl3, "a" );
-   analyze( db, {CollectionSpace: COMMCSNAME} );
+   analyze( db, {CollectionSpace: csName} );
    
    //检查统计信息
-   checkStat( db, COMMCSNAME, clName1, "a", false, false );
+   checkStat( db, csName, clName1, "a", false, false );
    println("check cl:" + clName1 + " after drop index success!");
    
-   checkStat( db, COMMCSNAME, clName2, "a", true, true );
+   checkStat( db, csName, clName2, "a", true, true );
    println("check cl:" + clName2 + " after drop index success!");
    
-   checkStat( db, COMMCSNAME, clName3, "a", true, false );
+   checkStat( db, csName, clName3, "a", true, false );
    println("check cl:" + clName3 + " after drop index success!");
    
    //检查主备节点访问计划
@@ -132,22 +131,22 @@ function main()
    var expExplains3 = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}];
    
    db.setSessionAttr( { PreferedInstance: "m" } );
-   checkExplain( db, COMMCSNAME, clName1, findConf, null, null, expExplains1 );
-   checkExplain( db, COMMCSNAME, clName2, findConf, null, null, expExplains2 );
-   checkExplain( db, COMMCSNAME, clName3, findConf, null, null, expExplains3 );
+   checkExplain( db, csName, clName1, findConf, null, null, expExplains1 );
+   checkExplain( db, csName, clName2, findConf, null, null, expExplains2 );
+   checkExplain( db, csName, clName3, findConf, null, null, expExplains3 );
    
    db.setSessionAttr( { PreferedInstance: "s" } );
-   checkExplain( db, COMMCSNAME, clName1, findConf, null, null, expExplains1 );
-   checkExplain( db, COMMCSNAME, clName2, findConf, null, null, expExplains2 );
-   checkExplain( db, COMMCSNAME, clName3, findConf, null, null, expExplains3 );
+   checkExplain( db, csName, clName1, findConf, null, null, expExplains1 );
+   checkExplain( db, csName, clName2, findConf, null, null, expExplains2 );
+   checkExplain( db, csName, clName3, findConf, null, null, expExplains3 );
    
    //删除其他2个cl，再次执行统计
-   commDropCL( db, COMMCSNAME, clName1, true, true,"drop CL in the beginning" ) ;
-   commDropCL( db, COMMCSNAME, clName3, true, true,"drop CL in the beginning" ) ;
-   analyze( db, {CollectionSpace: COMMCSNAME} );
+   commDropCL( db, csName, clName1, true, true,"drop CL in the beginning" ) ;
+   commDropCL( db, csName, clName3, true, true,"drop CL in the beginning" ) ;
+   analyze( db, {CollectionSpace: csName} );
    
    //检查统计信息
-   checkStat( db, COMMCSNAME, clName2, "a", true, true );
+   checkStat( db, csName, clName2, "a", true, true );
    println("check only one cl:" + clName2 + " success!");
    
    //检查主备节点访问计划
@@ -155,15 +154,13 @@ function main()
    var expExplains2 = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}];
    
    db.setSessionAttr( { PreferedInstance: "m" } );
-   checkExplain( db, COMMCSNAME, clName2, findConf, null, null, expExplains2 );
+   checkExplain( db, csName, clName2, findConf, null, null, expExplains2 );
    
    db.setSessionAttr( { PreferedInstance: "s" } );
-   checkExplain( db, COMMCSNAME, clName2, findConf, null, null, expExplains2 );
+   checkExplain( db, csName, clName2, findConf, null, null, expExplains2 );
    
    //清空环境
-   commDropCL( db, COMMCSNAME, clName1, true, true,"drop CL in the end" ) ;
-   commDropCL( db, COMMCSNAME, clName2, true, true,"drop CL in the end" ) ;
-   commDropCL( db, COMMCSNAME, clName3, true, true,"drop CL in the end" ) ;
+   commDropCS( db, csName);
   
  }
  main()
