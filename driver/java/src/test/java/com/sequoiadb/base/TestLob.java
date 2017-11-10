@@ -8,6 +8,8 @@ import org.bson.types.ObjectId;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.nio.Buffer;
+import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -701,6 +703,45 @@ public class TestLob extends SingleCSCLTestCase {
         assertFalse(cursor.hasNext());
     }
 
+    @Test
+    public void testLobOpenWrite9() {
+        String str = "1234567890";
+
+        ObjectId id = ObjectId.get();
+        DBLob lob = cl.createLob(id);
+        lob.close();
+
+        lob = cl.openLob(id, DBLob.SDB_LOB_WRITE);
+        lob.lock(10, 5);
+        lob.lock(5, 7);
+        lob.seek(5, DBLob.SDB_LOB_SEEK_SET);
+        lob.write(str.getBytes());
+        lob.close();
+
+        long lobSize = lob.getSize();
+
+        DBCursor cursor = cl.listLobs();
+        assertTrue(cursor.hasNext());
+        BSONObject obj = cursor.getNext();
+        ObjectId oid = (ObjectId) obj.get("Oid");
+        assertEquals(id, oid);
+        assertFalse(cursor.hasNext());
+
+        lob = cl.openLob(id);
+        assertEquals(lobSize, lob.getSize());
+        byte[] bytes = new byte[(int) lob.getSize() - 5];
+        lob.seek(5, DBLob.SDB_LOB_SEEK_SET);
+        lob.read(bytes);
+        lob.close();
+
+        String s = new String(bytes);
+        assertEquals(str, s);
+
+        cl.removeLob(id);
+        cursor = cl.listLobs();
+        assertFalse(cursor.hasNext());
+    }
+
     class LobWriter implements Runnable {
         private int index;
         private String csName;
@@ -812,5 +853,125 @@ public class TestLob extends SingleCSCLTestCase {
         cl.removeLob(id);
         cursor = cl.listLobs();
         assertFalse(cursor.hasNext());
+    }
+
+    @Test
+    public void testLobTruncate() {
+        int bytesNum = 1024 * 1024 * 2;
+        byte[] bytes = new byte[bytesNum];
+        Random rand = new Random();
+        rand.nextBytes(bytes);
+
+        ObjectId id = ObjectId.get();
+        DBLob lob = cl.createLob(id);
+        lob.write(bytes);
+        lob.close();
+
+        long lobSize = lob.getSize();
+
+        DBCursor cursor = cl.listLobs();
+        assertTrue(cursor.hasNext());
+        BSONObject obj = cursor.getNext();
+        ObjectId oid = (ObjectId) obj.get("Oid");
+        assertEquals(id, oid);
+        if (obj.containsField(FIELD_HAS_PIECES_INFO)) {
+            Boolean hasPiecesInfo = (Boolean) obj.get(FIELD_HAS_PIECES_INFO);
+            assertFalse(hasPiecesInfo);
+        }
+        assertFalse(cursor.hasNext());
+
+        lob = cl.openLob(id);
+        assertEquals(lobSize, lob.getSize());
+        byte[] bytes2 = new byte[(int)lobSize];
+        lob.read(bytes2);
+        lob.close();
+        assertArrayEquals(bytes, bytes2);
+
+        long truncatedLength = bytesNum / 2;
+        cl.truncateLob(id, truncatedLength);
+
+        lob = cl.openLob(id);
+        assertEquals(truncatedLength, lob.getSize());
+        byte[] bytes3 = new byte[(int)truncatedLength];
+        lob.read(bytes3);
+        lob.close();
+
+        byte[] truncatedBytes = Arrays.copyOf(bytes, (int)truncatedLength);
+        assertArrayEquals(truncatedBytes, bytes3);
+
+        cl.removeLob(id);
+        cursor = cl.listLobs();
+        assertFalse(cursor.hasNext());
+    }
+
+    @Test
+    public void testLobTruncate2() {
+        int bytesNum = 1024 * 1024;
+        int writeNum = 1024 * 20; // 3KB
+        int skipNum = 1024 * 6; // 6KB
+
+        byte[] bytes = new byte[bytesNum];
+        Random rand = new Random();
+        rand.nextBytes(bytes);
+        byte[] zeroBytes = new byte[skipNum];
+        ByteBuffer buffer = ByteBuffer.allocate(bytesNum);
+
+        long lobSize;
+
+        ObjectId id = ObjectId.get();
+        try (DBLob lob = cl.createLob(id)) {
+            int offset = 0;
+            while (offset + writeNum + skipNum < bytesNum) {
+                buffer.put(bytes, offset, writeNum);
+                lob.write(bytes, offset, writeNum);
+                offset += writeNum;
+                buffer.put(zeroBytes, 0, skipNum);
+                lob.seek(offset + skipNum, DBLob.SDB_LOB_SEEK_SET);
+                offset += skipNum;
+            }
+
+            lobSize = lob.getSize();
+        }
+
+        DBLob lob = cl.openLob(id);
+        assertEquals(lobSize, lob.getSize());
+        byte[] bytes2 = new byte[(int)lobSize];
+        lob.read(bytes2);
+        lob.close();
+
+        byte[] bytes3 = Arrays.copyOf(buffer.array(), (int)lobSize);
+
+        assertEquals(bytes3.length, bytes2.length);
+        for (int i = 0; i < bytes3.length; i++) {
+            // skip bytes by seek may not be 0, so don't compare
+            if (bytes3[i] != 0) {
+                assertEquals(bytes3[i], bytes2[i]);
+            }
+        }
+
+        long offset = lobSize;
+        int truncateNum = 1024 * 11;
+        while (offset - truncateNum > 0) {
+            offset -= truncateNum;
+            cl.truncateLob(id, offset);
+
+            lob = cl.openLob(id);
+            assertEquals(offset, lob.getSize());
+            byte[] bytes4 = new byte[(int)offset];
+            lob.read(bytes4);
+            lob.close();
+
+            byte[] bytes5 = Arrays.copyOf(buffer.array(), (int)offset);
+
+            assertEquals(bytes5.length, bytes4.length);
+            for (int i = 0; i < bytes5.length; i++) {
+                // skip bytes by seek may not be 0, so don't compare
+                if (bytes5[i] != 0) {
+                    assertEquals(bytes5[i], bytes4[i]);
+                }
+            }
+        }
+
+        cl.removeLob(id);
     }
 }

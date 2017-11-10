@@ -93,6 +93,9 @@ public final class MsgOpCode {
     public static final int LOB_LOCK_REQ = 8007;
     public static final int LOB_LOCK_RESP = RESP_MASK | LOB_LOCK_REQ;
 
+    public static final int LOB_TRUNCATE_REQ = 8008;
+    public static final int LOB_TRUNCATE_RESP = RESP_MASK | LOB_TRUNCATE_REQ;
+
     // fake OpCode for SysInfoHeader msg
     public static final int SYS_INFO_REQ = 0xFFFFFFFF;
     public static final int SYS_INFO_RESP = 0xFFFFFFFF;

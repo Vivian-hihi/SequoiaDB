@@ -1964,9 +1964,9 @@ public class DBCollection {
     }
 
     /**
-     * @param id the lob's id.
+     * @param lobId the lob's id.
      * @throws com.sequoiadb.exception.BaseException.
-     * @fn removeLob(ObjectId id)
+     * @fn removeLob(ObjectId lobId)
      * @brief remove an exist lob
      */
     public void removeLob(ObjectId lobId) throws BaseException {
@@ -1977,6 +1977,29 @@ public class DBCollection {
         LobRemoveRequest request = new LobRemoveRequest(removeObj);
         SdbReply response = sequoiadb.requestAndResponse(request);
         sequoiadb.throwIfError(response, removeObj);
+        sequoiadb.upsertCache(collectionFullName);
+    }
+
+    /**
+     * @param lobId the lob's id.
+     * @param length the truncate length
+     * @throws com.sequoiadb.exception.BaseException.
+     * @fn truncateLob(ObjectId lobId, long length)
+     * @brief truncate an exist lob
+     */
+    public void truncateLob(ObjectId lobId, long length) throws BaseException {
+        if (length < 0) {
+            throw new BaseException(SDBError.SDB_INVALIDARG, "Invalid length");
+        }
+
+        BSONObject truncateObj = new BasicBSONObject();
+        truncateObj.put(SdbConstants.FIELD_COLLECTION, collectionFullName);
+        truncateObj.put(DBLobImpl.FIELD_NAME_LOB_OID, lobId);
+        truncateObj.put(DBLobImpl.FIELD_NAME_LOB_LENGTH, length);
+
+        LobTruncateRequest request = new LobTruncateRequest(truncateObj);
+        SdbReply response = sequoiadb.requestAndResponse(request);
+        sequoiadb.throwIfError(response, truncateObj);
         sequoiadb.upsertCache(collectionFullName);
     }
 

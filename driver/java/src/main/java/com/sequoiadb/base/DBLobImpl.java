@@ -39,6 +39,7 @@ class DBLobImpl implements DBLob {
     final static String FIELD_NAME_LOB_CREATE_TIME = "CreateTime";
     final static String FIELD_NAME_LOB_MODIFICATION_TIME = "ModificationTime";
     final static String FIELD_NAME_LOB_PAGESIZE = "LobPageSize";
+    final static String FIELD_NAME_LOB_LENGTH = "Length";
     final static int SDB_LOB_CREATEONLY = 0x00000001;
 
     // the max lob data size to send for one message
