@@ -26,7 +26,9 @@ function main()
 	
 	//insert
 	var insertNums = 3000;
-   insertDatas( dbcl, insertNums );
+	var sameValues = 9000;
+   insertDiffDatas( dbcl, insertNums );
+	insertSameDatas( dbcl, insertNums, sameValues );
 	
 	//check before invoke analyze
 	checkStat( db, csName, clName, "b", false, false );
@@ -36,10 +38,10 @@ function main()
    var expExplains = [{ScanType:"ixscan", IndexName:"b", ReturnNum:insertNums}];
    
    db.setSessionAttr( { PreferedInstance: "m" } );
-   checkExplain( db, csName, clName, findConf, null, null, expExplains )
+   checkExplain( dbcl, findConf, null, null, expExplains )
 	
    db.setSessionAttr( { PreferedInstance: "s" } );
-   checkExplain( db, csName, clName, findConf, null, null, expExplains )
+   checkExplain( dbcl, findConf, null, null, expExplains )
 	
 	println("check result before analyze success!");
 	
@@ -56,15 +58,15 @@ function main()
    var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
 	
    db.setSessionAttr( { PreferedInstance: "m" } );
-   checkExplain( db, csName, clName, findConf1, null, null, expExplains )
-	checkExplain( db, csName, clName, findConf2, null, null, expExplains )
+   checkExplain( dbcl, findConf1, null, null, expExplains )
+	checkExplain( dbcl, findConf2, null, null, expExplains )
    
    db.setSessionAttr( { PreferedInstance: "s" } );
-   checkExplain( db, csName, clName, findConf1, null, null, expExplains )
-	checkExplain( db, csName, clName, findConf2, null, null, expExplains )
+   checkExplain( dbcl, findConf1, null, null, expExplains )
+	checkExplain( dbcl, findConf2, null, null, expExplains )
 
 	//alter cl
-	alterCL(csName, clName);
+	alterCL( dbcl );
 	
 	//check after alter
 	var findConf1 = {b : 9000};
@@ -74,24 +76,23 @@ function main()
    var expExplains2 = [{ScanType:"ixscan", IndexName:"$shard", ReturnNum:insertNums}];
 	
    db.setSessionAttr( { PreferedInstance: "m" } );
-   checkExplain( db, csName, clName, findConf1, null, null, expExplains1 )
-	checkExplain( db, csName, clName, findConf2, null, null, expExplains2 )
+   checkExplain( dbcl, findConf1, null, null, expExplains1 )
+	checkExplain( dbcl, findConf2, null, null, expExplains2 )
    
    db.setSessionAttr( { PreferedInstance: "s" } );
-   checkExplain( db, csName, clName, findConf1, null, null, expExplains1 )
-	checkExplain( db, csName, clName, findConf2, null, null, expExplains2 )
+   checkExplain( dbcl, findConf1, null, null, expExplains1 )
+	checkExplain( dbcl, findConf2, null, null, expExplains2 )
 	
    println("check result after analyze success!");
 	
 	commDropCS( db, csName, true, "drop CS in the end" );
 }
 
-function alterCL( csName, clName )
+function alterCL( dbcl )
 {
    try
    {
-		var cl = db.getCS(csName).getCL(clName);
-      cl.alter( {ShardingKey: {a : 1}, ShardingType: "hash"} );
+      dbcl.alter( {ShardingKey: {a : 1}, ShardingType: "hash"} );
    }
 	catch(e)
    {

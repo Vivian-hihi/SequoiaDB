@@ -14,7 +14,7 @@ function main()
 {
    var csName = COMMCSNAME + "_11608";
    var clName = COMMCLNAME + "_11608";
-   var insertNum = 2000;
+   var insertNums = 2000;
    
    //清理环境
    commDropCL( db, csName, clName, true, true,"drop CL in the beginning" ) ;
@@ -34,7 +34,7 @@ function main()
    
    //删除索引，插入数据，执行统计
    commDropIndex( dbcl, "a" );
-   insertDatas( dbcl, insertNum );
+   insertDiffDatas( dbcl, insertNums );
    analyze( db, {CollectionSpace: csName} );
    
    //检查统计信息

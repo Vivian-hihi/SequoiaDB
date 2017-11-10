@@ -38,7 +38,9 @@ function main()
 	
 	//insert
 	var insertNums = 3000;
-   insertDatas( dbcl, insertNums );
+	var sameValues = 9000;
+   insertDiffDatas( dbcl, insertNums );
+	insertSameDatas( dbcl, insertNums, sameValues );
 	
 	//check before invoke analyze
 	checkStat( db, csName, clName, "ac", false, false );
@@ -48,10 +50,10 @@ function main()
    var expExplains = [{ScanType:"ixscan", IndexName:"ac", ReturnNum:insertNums}];
    
    db.setSessionAttr( { PreferedInstance: "m" } );
-   checkExplain( db, csName, clName, findConf, null, null, expExplains )
+   checkExplain( dbcl, findConf, null, null, expExplains )
 	
    db.setSessionAttr( { PreferedInstance: "s" } );
-   checkExplain( db, csName, clName, findConf, null, null, expExplains )
+   checkExplain( dbcl, findConf, null, null, expExplains )
 	
 	println("check result before analyze success!");
 	
@@ -67,32 +69,31 @@ function main()
    var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
   
    db.setSessionAttr( { PreferedInstance: "m" } );
-   checkExplain( db, csName, clName, findConf, null, null, expExplains )
+   checkExplain( dbcl, findConf, null, null, expExplains )
    
    db.setSessionAttr( { PreferedInstance: "s" } );
-   checkExplain( db, csName, clName, findConf, null, null, expExplains )
+   checkExplain( dbcl, findConf, null, null, expExplains )
 	
 	//split cl
-	splitCL(csName, clName, srcGroupName, destGroupName);
+	splitCL(dbcl, srcGroupName, destGroupName);
 	
 	//check after split
    db.setSessionAttr( { PreferedInstance: "m" } );
-   checkExplain( db, csName, clName, findConf, null, null, expExplains )
+   checkExplain( dbcl, findConf, null, null, expExplains )
    
    db.setSessionAttr( { PreferedInstance: "s" } );
-   checkExplain( db, csName, clName, findConf, null, null, expExplains )
+   checkExplain( dbcl, findConf, null, null, expExplains )
 	
    println("check result after analyze success!");
 	
 	commDropCS( db, csName, true, "drop CS in the end" );
 }
 
-function splitCL( csName, clName, srcGroup, destGroup )
+function splitCL( dbcl, srcGroup, destGroup )
 {
    try
    {
-		var cl = db.getCS(csName).getCL(clName);
-      cl.split( srcGroup, destGroup, 50 );
+      dbcl.split( srcGroup, destGroup, 50 );
    }
 	catch(e)
    {

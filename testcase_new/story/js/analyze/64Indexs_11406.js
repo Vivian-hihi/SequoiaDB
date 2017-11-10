@@ -8,6 +8,7 @@ function main()
 {
    var clName = COMMCLNAME + "_11406";
    var insertNum = 2000;
+	var sameValues = 9000;
    
    //清理环境
    commDropCL( db, COMMCSNAME, clName, true, true,"drop CL in the beginning" ) ;
@@ -24,7 +25,8 @@ function main()
    }
    
    //插入记录
-   insertDatas( dbcl, insertNum );
+	insertDiffDatas( dbcl, insertNum );
+	insertSameDatas( dbcl, insertNum, sameValues );
    
    //执行统计
    analyze( db, {Collection:COMMCSNAME + "." + clName} );
@@ -43,10 +45,10 @@ function main()
       var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}];
       
       db.setSessionAttr( { PreferedInstance: "m" } );
-      checkExplain( db, COMMCSNAME, clName, findConf, null, null, expExplains );
+      checkExplain( dbcl, findConf, null, null, expExplains );
       
       db.setSessionAttr( { PreferedInstance: "s" } );
-      checkExplain( db, COMMCSNAME, clName, findConf, null, null, expExplains ); 
+      checkExplain( dbcl, findConf, null, null, expExplains ); 
    }
    println("check result after analyze success!");
    
@@ -70,10 +72,10 @@ function main()
       var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}];
       
       db.setSessionAttr( { PreferedInstance: "m" } );
-      checkExplain( db, COMMCSNAME, clName, findConf, null, null, expExplains );
+      checkExplain( dbcl, findConf, null, null, expExplains );
       
       db.setSessionAttr( { PreferedInstance: "s" } );
-      checkExplain( db, COMMCSNAME, clName, findConf, null, null, expExplains ); 
+      checkExplain( dbcl, findConf, null, null, expExplains ); 
    }
    println("check result drop index success!");
    

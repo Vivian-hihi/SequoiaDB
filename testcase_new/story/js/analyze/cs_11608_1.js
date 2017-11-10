@@ -11,6 +11,7 @@ function main()
    var clName2 = COMMCLNAME + "_11608_2";
    var clName3 = COMMCLNAME + "_11608_3";
    var insertNum = 2000;
+	var sameValues = 9000;
    
    //清理环境
    commDropCS( db, csName);
@@ -26,9 +27,12 @@ function main()
    commCreateIndex( dbcl3, "a", {a:1});
    
    //插入记录
-	insertDatas( dbcl1, insertNum );
-	insertDatas( dbcl2, insertNum );
-	insertDatas( dbcl3, insertNum );
+	insertDiffDatas( dbcl1, insertNum );
+	insertSameDatas( dbcl1, insertNum, sameValues );
+	insertDiffDatas( dbcl2, insertNum );
+	insertSameDatas( dbcl2, insertNum, sameValues );
+	insertDiffDatas( dbcl3, insertNum );
+	insertSameDatas( dbcl3, insertNum, sameValues );
 	
 	//检查统计信息
    checkStat( db, csName, clName1, "a", false, false );
@@ -45,14 +49,14 @@ function main()
    var expExplains = [{ScanType:"ixscan", IndexName:"a", ReturnNum:insertNum}];
    
    db.setSessionAttr( { PreferedInstance: "m" } );
-   checkExplain( db, csName, clName1, findConf, null, null, expExplains );
-   checkExplain( db, csName, clName2, findConf, null, null, expExplains );
-   checkExplain( db, csName, clName3, findConf, null, null, expExplains );
+   checkExplain( dbcl1, findConf, null, null, expExplains );
+   checkExplain( dbcl2, findConf, null, null, expExplains );
+   checkExplain( dbcl3, findConf, null, null, expExplains );
    
    db.setSessionAttr( { PreferedInstance: "s" } );
-   checkExplain( db, csName, clName1, findConf, null, null, expExplains );
-   checkExplain( db, csName, clName2, findConf, null, null, expExplains );
-   checkExplain( db, csName, clName3, findConf, null, null, expExplains );
+   checkExplain( dbcl1, findConf, null, null, expExplains );
+   checkExplain( dbcl2, findConf, null, null, expExplains );
+   checkExplain( dbcl3, findConf, null, null, expExplains );
    
    //执行统计
    analyze( db, {CollectionSpace: csName} );
@@ -72,14 +76,14 @@ function main()
    var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}];
    
    db.setSessionAttr( { PreferedInstance: "m" } );
-   checkExplain( db, csName, clName1, findConf, null, null, expExplains );
-   checkExplain( db, csName, clName2, findConf, null, null, expExplains );
-   checkExplain( db, csName, clName3, findConf, null, null, expExplains );
+   checkExplain( dbcl1, findConf, null, null, expExplains );
+   checkExplain( dbcl2, findConf, null, null, expExplains );
+   checkExplain( dbcl3, findConf, null, null, expExplains );
    
    db.setSessionAttr( { PreferedInstance: "s" } );
-   checkExplain( db, csName, clName1, findConf, null, null, expExplains );
-   checkExplain( db, csName, clName2, findConf, null, null, expExplains );
-   checkExplain( db, csName, clName3, findConf, null, null, expExplains );
+   checkExplain( dbcl1, findConf, null, null, expExplains );
+   checkExplain( dbcl2, findConf, null, null, expExplains );
+   checkExplain( dbcl3, findConf, null, null, expExplains );
 
    //truncate 其中一个cl的记录,再次执行统计
    dbcl1.truncate();
@@ -101,14 +105,14 @@ function main()
    var expExplains2 = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}];
    
    db.setSessionAttr( { PreferedInstance: "m" } );
-   checkExplain( db, csName, clName1, findConf, null, null, expExplains1 );
-   checkExplain( db, csName, clName2, findConf, null, null, expExplains2 );
-   checkExplain( db, csName, clName3, findConf, null, null, expExplains2 );
+   checkExplain( dbcl1, findConf, null, null, expExplains1 );
+   checkExplain( dbcl2, findConf, null, null, expExplains2 );
+   checkExplain( dbcl3, findConf, null, null, expExplains2 );
    
    db.setSessionAttr( { PreferedInstance: "s" } );
-   checkExplain( db, csName, clName1, findConf, null, null, expExplains1 );
-   checkExplain( db, csName, clName2, findConf, null, null, expExplains2 );
-   checkExplain( db, csName, clName3, findConf, null, null, expExplains2 );
+   checkExplain( dbcl1, findConf, null, null, expExplains1 );
+   checkExplain( dbcl2, findConf, null, null, expExplains2 );
+   checkExplain( dbcl3, findConf, null, null, expExplains2 );
    
    //删除其中一个cl中的索引,再次执行统计
    commDropIndex( dbcl3, "a" );
@@ -131,14 +135,14 @@ function main()
    var expExplains3 = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}];
    
    db.setSessionAttr( { PreferedInstance: "m" } );
-   checkExplain( db, csName, clName1, findConf, null, null, expExplains1 );
-   checkExplain( db, csName, clName2, findConf, null, null, expExplains2 );
-   checkExplain( db, csName, clName3, findConf, null, null, expExplains3 );
+   checkExplain( dbcl1, findConf, null, null, expExplains1 );
+   checkExplain( dbcl2, findConf, null, null, expExplains2 );
+   checkExplain( dbcl3, findConf, null, null, expExplains3 );
    
    db.setSessionAttr( { PreferedInstance: "s" } );
-   checkExplain( db, csName, clName1, findConf, null, null, expExplains1 );
-   checkExplain( db, csName, clName2, findConf, null, null, expExplains2 );
-   checkExplain( db, csName, clName3, findConf, null, null, expExplains3 );
+   checkExplain( dbcl1, findConf, null, null, expExplains1 );
+   checkExplain( dbcl2, findConf, null, null, expExplains2 );
+   checkExplain( dbcl3, findConf, null, null, expExplains3 );
    
    //删除其他2个cl，再次执行统计
    commDropCL( db, csName, clName1, true, true,"drop CL in the beginning" ) ;
@@ -154,10 +158,10 @@ function main()
    var expExplains2 = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}];
    
    db.setSessionAttr( { PreferedInstance: "m" } );
-   checkExplain( db, csName, clName2, findConf, null, null, expExplains2 );
+   checkExplain( dbcl2, findConf, null, null, expExplains2 );
    
    db.setSessionAttr( { PreferedInstance: "s" } );
-   checkExplain( db, csName, clName2, findConf, null, null, expExplains2 );
+   checkExplain( dbcl2, findConf, null, null, expExplains2 );
    
    //清空环境
    commDropCS( db, csName);

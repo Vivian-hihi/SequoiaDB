@@ -23,9 +23,14 @@ function main()
 	commCreateIndex( dbcl1, "bc", {b : 1, c : 1}, false )
 	commCreateIndex( dbcl2, "bc", {b : -1, c : -1}, false )
 
+	//insert datas
 	var insertNums = 3000;
-   insertDatas( dbcl1, insertNums );
-	insertDatas( dbcl2, insertNums );
+	var sameValues = 9000;
+	
+   insertDiffDatas( dbcl1, insertNums );
+	insertSameDatas( dbcl1, insertNums, sameValues );
+   insertDiffDatas( dbcl2, insertNums );
+	insertSameDatas( dbcl2, insertNums, sameValues );
 	
 	//check before invoke analyze
 	checkStat( db, csName, clName1, "$shard", false, false );
@@ -42,16 +47,16 @@ function main()
    var expExplains2 = [{ScanType:"ixscan", IndexName:"bc", ReturnNum:insertNums}];
    
    db.setSessionAttr( { PreferedInstance: "m" } );
-   checkExplain( db, csName, clName1, findConf1, null, null, expExplains1 );
-	checkExplain( db, csName, clName1, findConf2, null, null, expExplains2 );
-	checkExplain( db, csName, clName2, findConf1, null, null, expExplains1 );
-	checkExplain( db, csName, clName2, findConf2, null, null, expExplains2 );
+   checkExplain( dbcl1, findConf1, null, null, expExplains1 );
+	checkExplain( dbcl1, findConf2, null, null, expExplains2 );
+	checkExplain( dbcl2, findConf1, null, null, expExplains1 );
+	checkExplain( dbcl2, findConf2, null, null, expExplains2 );
    
    db.setSessionAttr( { PreferedInstance: "s" } );
-   checkExplain( db, csName, clName1, findConf1, null, null, expExplains1 );
-	checkExplain( db, csName, clName1, findConf2, null, null, expExplains2 );
-	checkExplain( db, csName, clName2, findConf1, null, null, expExplains1 );
-	checkExplain( db, csName, clName2, findConf2, null, null, expExplains2 );
+   checkExplain( dbcl1, findConf1, null, null, expExplains1 );
+	checkExplain( dbcl1, findConf2, null, null, expExplains2 );
+	checkExplain( dbcl2, findConf1, null, null, expExplains1 );
+	checkExplain( dbcl2, findConf2, null, null, expExplains2 );
 	
 	println("check result before analyze success!");
    
@@ -74,16 +79,16 @@ function main()
    var expExplains2 = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
    
    db.setSessionAttr( { PreferedInstance: "m" } );
-   checkExplain( db, csName, clName1, findConf1, null, null, expExplains1 );
-	checkExplain( db, csName, clName1, findConf2, null, null, expExplains2 );
-	checkExplain( db, csName, clName2, findConf1, null, null, expExplains1 );
-	checkExplain( db, csName, clName2, findConf2, null, null, expExplains2 );
+   checkExplain( dbcl1, findConf1, null, null, expExplains1 );
+	checkExplain( dbcl1, findConf2, null, null, expExplains2 );
+	checkExplain( dbcl2, findConf1, null, null, expExplains1 );
+	checkExplain( dbcl2, findConf2, null, null, expExplains2 );
    
    db.setSessionAttr( { PreferedInstance: "s" } );
-   checkExplain( db, csName, clName1, findConf1, null, null, expExplains1 );
-	checkExplain( db, csName, clName1, findConf2, null, null, expExplains2 );
-	checkExplain( db, csName, clName2, findConf1, null, null, expExplains1 );
-	checkExplain( db, csName, clName2, findConf2, null, null, expExplains2 );
+   checkExplain( dbcl1, findConf1, null, null, expExplains1 );
+	checkExplain( dbcl1, findConf2, null, null, expExplains2 );
+	checkExplain( dbcl2, findConf1, null, null, expExplains1 );
+	checkExplain( dbcl2, findConf2, null, null, expExplains2 );
    
    println("check result after analyze success!");
 	

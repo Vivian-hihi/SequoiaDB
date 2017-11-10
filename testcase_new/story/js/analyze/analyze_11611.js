@@ -34,11 +34,16 @@ function main()
 	commCreateIndex( dbcl3, "a", {a : 1}, false );
 	commCreateIndex( dbcl4, "a", {a : 1}, false );
 	
+	//insert datas
 	var insertNums = 3000;
+	var sameValues = 9000;
+	
 	// include datas , but no index
-   insertDatas( dbcl1, insertNums );
+   insertDiffDatas( dbcl1, insertNums );
+	insertSameDatas( dbcl1, insertNums, sameValues );
 	// include datas and index
-	insertDatas( dbcl3, insertNums );
+	insertDiffDatas( dbcl3, insertNums );
+	insertSameDatas( dbcl3, insertNums, sameValues );
 	
 	//check before invoke analyze
 	checkStat( db, csName, clName1, "", false, false );
@@ -55,16 +60,16 @@ function main()
 	var expExplains4 = [{ScanType:"ixscan", IndexName:"a", ReturnNum:0}];
    
    db.setSessionAttr( { PreferedInstance: "m" } );
-   checkExplain( db, csName, clName1, findConf, null, null, expExplains1 );
-	checkExplain( db, csName, clName2, findConf, null, null, expExplains2 );
-	checkExplain( db, csName, clName3, findConf, null, null, expExplains3 );
-	checkExplain( db, csName, clName4, findConf, null, null, expExplains4 );
+   checkExplain( dbcl1, findConf, null, null, expExplains1 );
+	checkExplain( dbcl2, findConf, null, null, expExplains2 );
+	checkExplain( dbcl3, findConf, null, null, expExplains3 );
+	checkExplain( dbcl4, findConf, null, null, expExplains4 );
    
    db.setSessionAttr( { PreferedInstance: "s" } );
-   checkExplain( db, csName, clName1, findConf, null, null, expExplains1 );
-	checkExplain( db, csName, clName2, findConf, null, null, expExplains2 );
-	checkExplain( db, csName, clName3, findConf, null, null, expExplains3 );
-	checkExplain( db, csName, clName4, findConf, null, null, expExplains4 );
+   checkExplain( dbcl1, findConf, null, null, expExplains1 );
+	checkExplain( dbcl2, findConf, null, null, expExplains2 );
+	checkExplain( dbcl3, findConf, null, null, expExplains3 );
+	checkExplain( dbcl4, findConf, null, null, expExplains4 );
 	
 	println("check result before analyze success!");
    
@@ -94,16 +99,16 @@ function main()
 	var expExplains4 = [{ScanType:"ixscan", IndexName:"a", ReturnNum:0}];
    
    db.setSessionAttr( { PreferedInstance: "m" } );
-   checkExplain( db, csName, clName1, findConf, null, null, expExplains1 );
-	checkExplain( db, csName, clName2, findConf, null, null, expExplains2 );
-	checkExplain( db, csName, clName3, findConf, null, null, expExplains3 );
-	checkExplain( db, csName, clName4, findConf, null, null, expExplains4 );
+   checkExplain( dbcl1, findConf, null, null, expExplains1 );
+	checkExplain( dbcl2, findConf, null, null, expExplains2 );
+	checkExplain( dbcl3, findConf, null, null, expExplains3 );
+	checkExplain( dbcl4, findConf, null, null, expExplains4 );
    
    db.setSessionAttr( { PreferedInstance: "s" } );
-   checkExplain( db, csName, clName1, findConf, null, null, expExplains1 );
-	checkExplain( db, csName, clName2, findConf, null, null, expExplains2 );
-	checkExplain( db, csName, clName3, findConf, null, null, expExplains3 );
-	checkExplain( db, csName, clName4, findConf, null, null, expExplains4 );
+   checkExplain( dbcl1, findConf, null, null, expExplains1 );
+	checkExplain( dbcl2, findConf, null, null, expExplains2 );
+	checkExplain( dbcl3, findConf, null, null, expExplains3 );
+	checkExplain( dbcl4, findConf, null, null, expExplains4 );
 	
 	//analyze table below SYSSTAT 
 	var options1 = {Collection: "SYSSTAT.SYSCOLLECTIONSTAT"};

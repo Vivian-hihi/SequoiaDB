@@ -1,15 +1,15 @@
 ﻿/************************************
-*@Description: 插入记录,数据页超过10页
+*@Description: 插入不同记录,数据页超过10页
 *@author:      zhaoyu
 *@createDate:  2017.11.8
 **************************************/
-function insertDatas( dbcl, insertNum )
+function insertDiffDatas( dbcl, insertNum )
 {  
    try
    {
       //插入不同记录
       var doc = [];
-      for(var i=0;i<insertNum;i++)
+      for(var i = 0; i < insertNum; i++)
       {
          doc.push({a:i,a0:i,a1:i,a2:i,a3:i,a4:i,a5:i,a6:i,a7:i,a8:i,a9:i,
                    a10:i,a11:i,a12:i,a13:i,a14:i,a15:i,a16:i,a17:i,a18:i,a19:i,
@@ -21,25 +21,40 @@ function insertDatas( dbcl, insertNum )
 						 b:i,c:"test" + i});
       }
       dbcl.insert(doc);
-      
+   }
+   catch(e)
+   {
+      throw buildException("insertDiffDatas()", e, "insert", "insert success", e);
+   }
+}
+
+/************************************
+*@Description: 插入相同记录,数据页超过10页
+*@author:      zhaoyu
+*@createDate:  2017.11.8
+**************************************/
+function insertSameDatas( dbcl, insertNum, value )
+{  
+   try
+   {
       //插入相同的记录
       var doc = [];
-      for(var i=0;i<insertNum;i++)
+      for(var i = 0;i < insertNum; i++)
       {
-         doc.push({a:9000,a0:9000,a1:9000,a2:9000,a3:9000,a4:9000,a5:9000,a6:9000,a7:9000,a8:9000,a9:9000,
-                   a10:9000,a11:9000,a12:9000,a13:9000,a14:9000,a15:9000,a16:9000,a17:9000,a18:9000,a19:9000,
-                   a20:9000,a21:9000,a22:9000,a23:9000,a24:9000,a25:9000,a26:9000,a27:9000,a28:9000,a29:9000,
-                   a30:9000,a31:9000,a32:9000,a33:9000,a34:9000,a35:9000,a36:9000,a37:9000,a38:9000,a39:9000,
-                   a40:9000,a41:9000,a42:9000,a43:9000,a44:9000,a45:9000,a46:9000,a47:9000,a48:9000,a49:9000,
-                   a50:9000,a51:9000,a52:9000,a53:9000,a54:9000,a55:9000,a56:9000,a57:9000,a58:9000,a59:9000,
-                   a60:9000,a61:9000,a62:9000,a63:9000,a64:9000,a65:9000,a66:9000,a67:9000,a68:9000,a69:9000,
-						 b:9000,c:"test9000"});
+         doc.push({a:value,a0:value,a1:value,a2:value,a3:value,a4:value,a5:value,a6:value,a7:value,a8:value,a9:value,
+                   a10:value,a11:value,a12:value,a13:value,a14:value,a15:value,a16:value,a17:value,a18:value,a19:value,
+                   a20:value,a21:value,a22:value,a23:value,a24:value,a25:value,a26:value,a27:value,a28:value,a29:value,
+                   a30:value,a31:value,a32:value,a33:value,a34:value,a35:value,a36:value,a37:value,a38:value,a39:value,
+                   a40:value,a41:value,a42:value,a43:value,a44:value,a45:value,a46:value,a47:value,a48:value,a49:value,
+                   a50:value,a51:value,a52:value,a53:value,a54:value,a55:value,a56:value,a57:value,a58:value,a59:value,
+                   a60:value,a61:value,a62:value,a63:value,a64:value,a65:value,a66:value,a67:value,a68:value,a69:value,
+						 b:value,c:"test" + value});
       }
       dbcl.insert(doc);
    }
    catch(e)
    {
-      throw buildException("insertDatas()", e, "insert", "insert success", e);
+      throw buildException("insertSameDatas()", e, "insert", "insert success", e);
    }
 }
 
@@ -201,12 +216,13 @@ function checkStat( db, csName, clName, indexName, clExistStat, indexExistStat )
 *@author:      zhaoyu
 *@createDate:  2017.11.8
 **************************************/
-function checkExplain( db, csName, clName, findConf, sortConf, hintConf, expExplains )
+function checkExplain( dbcl, findConf, sortConf, hintConf, expExplains )
 {
    if ( typeof(findConf) == "undefined" ) { findConf = null; }
    if ( typeof(sortConf) == "undefined" ) { sortConf = null; }
    if ( typeof(hintConf) == "undefined" ) { hintConf = null; }
-   var rc = db.getCS(csName).getCL(clName).find(findConf).sort(sortConf).hint(hintConf).explain({Run:true}).toArray();
+	
+	var rc = dbcl.find(findConf).sort(sortConf).hint(hintConf).explain({Run:true}).toArray();
    for(var i= 0; i< rc.length; i++)
    {
       var actExplain = eval("(" + rc[i] + ")");

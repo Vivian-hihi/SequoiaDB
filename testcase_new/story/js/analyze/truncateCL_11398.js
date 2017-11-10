@@ -8,6 +8,7 @@ function main()
 {
    var clName = COMMCLNAME + "_11398";
    var insertNum = 2000;
+	var sameValues = 9000;
    
    //清理环境
    commDropCL( db, COMMCSNAME, clName, true, true,"drop CL in the beginning" ) ;
@@ -19,7 +20,8 @@ function main()
    commCreateIndex( dbcl, "a", {a:1});
    
    //插入记录
-	insertDatas( dbcl, insertNum );
+	insertDiffDatas( dbcl, insertNum );
+	insertSameDatas( dbcl, insertNum, sameValues );
 	
 	//检查统计信息
    checkStat( db, COMMCSNAME, clName, "a", false, false );
@@ -29,10 +31,10 @@ function main()
    var expExplains = [{ScanType:"ixscan", IndexName:"a", ReturnNum:insertNum}];
    
    db.setSessionAttr( { PreferedInstance: "m" } );
-   checkExplain( db, COMMCSNAME, clName, findConf, null, null, expExplains );
+   checkExplain( dbcl, findConf, null, null, expExplains );
    
    db.setSessionAttr( { PreferedInstance: "s" } );
-   checkExplain( db, COMMCSNAME, clName, findConf, null, null, expExplains );
+   checkExplain( dbcl, findConf, null, null, expExplains );
 	
 	println("check result before analyze success!");
 
@@ -47,10 +49,10 @@ function main()
    var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}];
    
    db.setSessionAttr( { PreferedInstance: "m" } );
-   checkExplain( db, COMMCSNAME, clName, findConf, null, null, expExplains );
+   checkExplain( dbcl, findConf, null, null, expExplains );
    
    db.setSessionAttr( { PreferedInstance: "s" } );
-   checkExplain( db, COMMCSNAME, clName, findConf, null, null, expExplains );
+   checkExplain( dbcl, findConf, null, null, expExplains );
    
    println("check result after analyze success!");
    
@@ -66,15 +68,16 @@ function main()
    var expExplains = [{ScanType:"ixscan", IndexName:"a", ReturnNum:0}];
    
    db.setSessionAttr( { PreferedInstance: "m" } );
-   checkExplain( db, COMMCSNAME, clName, findConf, null, hintConf, expExplains );
+   checkExplain( dbcl, findConf, null, hintConf, expExplains );
    
    db.setSessionAttr( { PreferedInstance: "s" } );
-   checkExplain( db, COMMCSNAME, clName, findConf, null, hintConf, expExplains );
+   checkExplain( dbcl, findConf, null, hintConf, expExplains );
    
    println("check result after truncate cl success!");
    
    //再次插入相同数据
-   insertDatas( dbcl, insertNum );
+   insertDiffDatas( dbcl, insertNum );
+	insertSameDatas( dbcl, insertNum, sameValues );
    
    //检查统计信息
    checkStat( db, COMMCSNAME, clName, "a", false, false );
@@ -84,10 +87,10 @@ function main()
    var expExplains = [{ScanType:"ixscan", IndexName:"a", ReturnNum:insertNum}];
    
    db.setSessionAttr( { PreferedInstance: "m" } );
-   checkExplain( db, COMMCSNAME, clName, findConf, null, null, expExplains );
+   checkExplain( dbcl, findConf, null, null, expExplains );
    
    db.setSessionAttr( { PreferedInstance: "s" } );
-   checkExplain( db, COMMCSNAME, clName, findConf, null, null, expExplains );
+   checkExplain( dbcl, findConf, null, null, expExplains );
    
    println("check result after create the same index success!");
    

@@ -9,6 +9,7 @@ function main()
    var csName = COMMCSNAME + "_11397";
    var clName = COMMCLNAME + "_11397";
    var insertNum = 2000;
+	var sameValues = 9000;
    
    //清理环境
    commDropCS( db, csName, true, "drop cs before test" );
@@ -21,7 +22,8 @@ function main()
    commCreateIndex( dbcl, "a", {a:1});
    
    //插入记录
-	insertDatas( dbcl, insertNum );
+	insertDiffDatas( dbcl, insertNum );
+	insertSameDatas( dbcl, insertNum, sameValues );
 	
 	//检查统计信息
    checkStat( db, csName, clName, "a", false, false );
@@ -31,10 +33,10 @@ function main()
    var expExplains = [{ScanType:"ixscan", IndexName:"a", ReturnNum:insertNum}];
    
    db.setSessionAttr( { PreferedInstance: "m" } );
-   checkExplain( db, csName, clName, findConf, null, null, expExplains )
+   checkExplain( dbcl, findConf, null, null, expExplains )
    
    db.setSessionAttr( { PreferedInstance: "s" } );
-   checkExplain( db, csName, clName, findConf, null, null, expExplains )
+   checkExplain( dbcl, findConf, null, null, expExplains )
 	
 	println("check result before analyze success!");
 
@@ -49,10 +51,10 @@ function main()
    var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}];
    
    db.setSessionAttr( { PreferedInstance: "m" } );
-   checkExplain( db, csName, clName, findConf, null, null, expExplains )
+   checkExplain( dbcl, findConf, null, null, expExplains )
    
    db.setSessionAttr( { PreferedInstance: "s" } );
-   checkExplain( db, csName, clName, findConf, null, null, expExplains )
+   checkExplain( dbcl, findConf, null, null, expExplains )
    
    println("check result after analyze success!");
    
@@ -68,7 +70,9 @@ function main()
    commCreateCS( db, csName, true);
    var dbcl = commCreateCL( db, csName, clName);
    commCreateIndex( dbcl, "a", {a:1});
-   insertDatas( dbcl, insertNum );
+   
+	insertDiffDatas( dbcl, insertNum );
+	insertSameDatas( dbcl, insertNum, sameValues );
    
    //检查统计信息
    checkStat( db, csName, clName, "a", false, false );
@@ -78,10 +82,10 @@ function main()
    var expExplains = [{ScanType:"ixscan", IndexName:"a", ReturnNum:insertNum}];
    
    db.setSessionAttr( { PreferedInstance: "m" } );
-   checkExplain( db, csName, clName, findConf, null, null, expExplains )
+   checkExplain( dbcl, findConf, null, null, expExplains )
    
    db.setSessionAttr( { PreferedInstance: "s" } );
-   checkExplain( db, csName, clName, findConf, null, null, expExplains )
+   checkExplain( dbcl, findConf, null, null, expExplains )
    
    println("check result after create the same index success!");
    

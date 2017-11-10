@@ -26,7 +26,9 @@ function main()
 	commCreateIndex( dbcl, "a", {a : 1}, false )
 
 	var insertNums = 3000;
-   insertDatas( dbcl, insertNums );
+	var sameValues = 9000;
+   insertDiffDatas( dbcl, insertNums );
+	insertSameDatas( dbcl, insertNums, sameValues );
 	
 	//check before invoke analyze
 	checkStat( db, csName, clName, "a", false, false );
@@ -34,7 +36,7 @@ function main()
 	//check the query explain before analyze
 	var findConf = {a : 9000};
    var expExplains = [{ScanType:"ixscan", IndexName:"a", ReturnNum:insertNums}];
-   checkExplain( db, csName, clName, findConf, null, null, expExplains )
+   checkExplain( dbcl, findConf, null, null, expExplains )
 	
 	println("check result before analyze success!");
    
@@ -48,7 +50,7 @@ function main()
    //check the query explain after analyze
 	var findConf = {a : 9000};
    var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
-   checkExplain( db, csName, clName, findConf, null, null, expExplains )
+   checkExplain( dbcl, findConf, null, null, expExplains )
 	
    println("check result after analyze success!");
 	
@@ -63,7 +65,8 @@ function main()
 	//check analyze result
 	var findConf = {a : 9000};
    var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
-   checkExplain( db, newCsName, clName, findConf, null, null, expExplains )
+	var newCL = db.getCS(newCsName).getCL(clName);
+   checkExplain( newCL, findConf, null, null, expExplains )
 	
 	println("check result after rename success!");
 	
