@@ -98,15 +98,17 @@ function checkLSN(db, group)
       LSNs.push(currentLSN);
    }
    
+   var checkLSN = true;
+
    //比较各节点lsn
    for(var j=0; j< LSNs.length -1; j++)
    {
       if(LSNs[j] === LSNs[j+1])
       {
-         var checkLSN = true;
+         checkLSN = true;
       }else
       {
-         var checkLSN = false;
+         checkLSN = false;
          break;
       }
    }
