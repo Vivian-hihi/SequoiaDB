@@ -593,10 +593,12 @@ namespace sdbclient
          return getMaster ( &node.pNode ) ;
       }
 
-      INT32 getSlave ( _sdbNode **node ) ;
-      INT32 getSlave ( sdbNode &node )
+      INT32 getSlave ( _sdbNode **node,
+                       const vector<INT32>& positions = _sdbStaticVec ) ;
+      INT32 getSlave ( sdbNode &node,
+                       const vector<INT32>& positions = _sdbStaticVec )
       {
-         return getSlave ( &node.pNode ) ;
+         return getSlave( &node.pNode, positions ) ;
       }
 
       INT32 getNode ( const CHAR *pNodeName,

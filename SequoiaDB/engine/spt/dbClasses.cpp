@@ -3176,7 +3176,34 @@ static JSBool rg_get_slave ( JSContext *cx, uintN argc, jsval *vp )
    const CHAR *            nodeName          = NULL ;
    INT32                   nodeID            = -1 ;
    jsval                   valNodeID         = JSVAL_VOID ;
+   jsval                   *argv             = JS_ARGV( cx, vp ) ;
+   INT32 positionsArray[7]                   = { 0 } ;
+   INT32 positionsCount                      = 0 ;
 
+   // check and get arguments
+   if ( argc > 0 && argc <= 7 )
+   {
+      INT32 i = 0 ;
+      for ( ; i < argc; i++ )
+      {
+         if ( JSVAL_IS_INT( argv[i] ) )
+         {
+            positionsArray[i] = JSVAL_TO_INT( argv[i] ) ;
+            positionsCount++ ;
+         }
+         else
+         {
+            rc = SDB_INVALIDARG ;
+            REPORT_RC_MSG ( FALSE, "", rc, "RG.getSlave(): arguments should be the positions of nodes" ) ;
+         }
+      }
+   }
+   else if ( argc > 7)
+   {
+      rc = SDB_INVALIDARG ;
+      REPORT_RC_MSG ( FALSE, "", rc, "RG.getSlave(): the amount of nodes can not exceed 7" ) ;
+   }
+   // get rg handle
    rg = (sdbReplicaGroupHandle *)JS_GetPrivate ( cx,
                                                  JS_THIS_OBJECT ( cx, vp ) ) ;
    REPORT ( rg, "RG.getSlave(): no replica group handle" ) ;
@@ -3187,7 +3214,14 @@ static JSBool rg_get_slave ( JSContext *cx, uintN argc, jsval *vp )
    VERIFY ( rn ) ;
    *rn = SDB_INVALID_HANDLE ;
 
-   rc = sdbGetNodeSlave ( *rg, rn ) ;
+   if ( argc == 0 )
+   {
+      rc = sdbGetNodeSlave ( *rg, rn ) ;
+   }
+   else
+   {
+      rc = sdbGetNodeSlave1 ( *rg, positionsArray, positionsCount, rn ) ;
+   }
    REPORT_RC ( SDB_OK == rc, "RG.getSlave()", rc ) ;
 
    rc = sdbGetNodeAddr ( *rn, &hostName, &serviceName,

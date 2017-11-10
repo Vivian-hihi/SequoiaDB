@@ -113,6 +113,7 @@ namespace sdbclient
 {
    const static bson::BSONObj _sdbStaticObject ;
    const static bson::OID _sdbStaticOid ;
+   const static std::vector<INT32> _sdbStaticVec ;
    class _sdbCursor ;
    class _sdbCollection ;
    class sdb ;
@@ -1709,8 +1710,10 @@ namespace sdbclient
       virtual INT32 getMaster ( sdbNode &node ) = 0 ;
 
       // get one of the slave node
-      virtual INT32 getSlave ( _sdbNode **node ) = 0 ;
-      virtual INT32 getSlave ( sdbNode &node ) = 0 ;
+      virtual INT32 getSlave ( _sdbNode **node,
+                               const vector<INT32>& positions = _sdbStaticVec ) = 0 ;
+      virtual INT32 getSlave ( sdbNode &node,
+                               const vector<INT32>& positions = _sdbStaticVec ) = 0 ;
 
       // get a given node by name
       virtual INT32 getNode ( const CHAR *pNodeName,
@@ -1858,32 +1861,36 @@ namespace sdbclient
          return pReplicaGroup->getMaster ( node ) ;
       }
 
-/* \fn INT32 getSlave ( _sdbNode **node )
+/* \fn INT32 getSlave ( _sdbNode **node, const vector<INT32>& positions )
     \brief Get one of slave node of the current replica group,
            if no slave exists then get master
+    \param [in] positions The positions of nodes
     \param [out] node The slave node
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
-      INT32 getSlave ( _sdbNode **node )
+      INT32 getSlave ( _sdbNode **node,
+                       const vector<INT32>& positions = _sdbStaticVec )
       {
          if ( !pReplicaGroup )
             return SDB_NOT_CONNECTED ;
-         return pReplicaGroup->getSlave ( node ) ;
+         return pReplicaGroup->getSlave ( node, positions ) ;
       }
 
-/** \fn  INT32 getSlave ( sdbNode &node )
+/** \fn  INT32 getSlave ( sdbNode &node, const vector<INT32>& positions )
     \brief Get one of slave node of the current replica group,
            if no slave exists then get master
+    \param [in] positions The positions of nodes
     \param [out] node The slave node
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
-      INT32 getSlave ( sdbNode &node )
+      INT32 getSlave ( sdbNode &node,
+                       const vector<INT32>& positions = _sdbStaticVec )
       {
          if ( !pReplicaGroup )
             return SDB_NOT_CONNECTED ;
-         return pReplicaGroup->getSlave ( node ) ;
+         return pReplicaGroup->getSlave ( node, positions ) ;
       }
 
 /* \fn INT32 getNode ( const CHAR *pNodeName,

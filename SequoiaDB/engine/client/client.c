@@ -3390,13 +3390,6 @@ error :
    goto done ;
 }
 
-/*
-static INT32 _sdbRGExtractNode ( SOCKET sock,
-                                 sdbNodeHandle *handle,
-                                 const CHAR *data,
-                                 BOOLEAN endianConvert )
-*/
-
 SDB_EXPORT INT32 sdbGetNodeMaster ( sdbReplicaGroupHandle cHandle,
                                     sdbNodeHandle *handle )
 {
@@ -3405,6 +3398,7 @@ SDB_EXPORT INT32 sdbGetNodeMaster ( sdbReplicaGroupHandle cHandle,
    INT32 primaryNode       = -1 ;
    sdbRGStruct *r          = (sdbRGStruct*)cHandle ;
    BOOLEAN bsoninit        = FALSE ;
+   bson_type bType         = BSON_EOO ;
    bson_iterator it ;
    bson result ;
 
@@ -3412,23 +3406,19 @@ SDB_EXPORT INT32 sdbGetNodeMaster ( sdbReplicaGroupHandle cHandle,
    HANDLE_CHECK( cHandle, r, SDB_HANDLE_TYPE_REPLICAGROUP ) ;
    if ( !handle )
    {
-      rc = SDB_INVALIDARG;
+      rc = SDB_INVALIDARG ;
      goto error ;
    }
 
    rc = _sdbGetReplicaGroupDetail ( cHandle, &result ) ;
    if ( SDB_OK != rc )
    {
+      if ( SDB_DMS_EOC == rc )
+      {
+         rc = SDB_CLS_GRP_NOT_EXIST ;
+      }
       goto error ;
    }
-
-   if ( BSON_INT != bson_find ( &it, &result, CAT_PRIMARY_NAME ) )
-   {
-      // cannot find primary
-      rc = SDB_CLS_NODE_NOT_EXIST ;
-      goto error ;
-   }
-   primaryNode = bson_iterator_int ( &it ) ;
    // extract the primary node and find out the node id
    if ( BSON_ARRAY != bson_find ( &it, &result, CAT_GROUP_NAME ) )
    {
@@ -3436,6 +3426,39 @@ SDB_EXPORT INT32 sdbGetNodeMaster ( sdbReplicaGroupHandle cHandle,
       rc = SDB_SYS ;
       goto error ;
    }
+   {
+      const CHAR *groupList = bson_iterator_value ( &it ) ;
+      bson_iterator i ;
+      bson_iterator_from_buffer ( &i, groupList ) ;
+      // loop for all elements in Group
+      if ( BSON_EOO == bson_iterator_next ( &i ) )
+      {
+         rc = SDB_CLS_EMPTY_GROUP ;
+         goto error ;
+      }
+   }
+   // check has primary or not
+   bType = bson_find ( &it, &result, CAT_PRIMARY_NAME ) ;
+   if ( BSON_EOO == bType )
+   {       
+      // cannot find primary         
+      rc = SDB_RTN_NO_PRIMARY_FOUND ;         
+      goto error ;      
+   }
+   if ( BSON_INT != bType )
+   {
+      rc = SDB_SYS ;
+      goto error ;
+   }
+   primaryNode = bson_iterator_int ( &it ) ;
+   if ( -1 == primaryNode )
+   {
+      // cannot find primary         
+      rc = SDB_RTN_NO_PRIMARY_FOUND ;
+      goto error ;
+   }
+   // extract the primary node and find out the node id
+   bson_find ( &it, &result, CAT_GROUP_NAME ) ;
    // walk through Group and find out the NodeID
    {
       const CHAR *groupList = bson_iterator_value ( &it ) ;
@@ -3445,10 +3468,10 @@ SDB_EXPORT INT32 sdbGetNodeMaster ( sdbReplicaGroupHandle cHandle,
       while ( bson_iterator_next ( &i ) )
       {
          bson intObj ;
-       BSON_INIT( intObj ) ;
+         bson_init( &intObj ) ;
          // make sure each element is object and construct intObj object
          // bson_init_finished_data does not accept const CHAR*,
-         // however since we are NOT going to perform any change, it's afe to
+         // however since we are NOT going to perform any change, it's safe to
          // cast const CHAR* to CHAR* here
          if ( BSON_OBJECT == (signed int)bson_iterator_type ( &i ) &&
               BSON_OK == bson_init_finished_data ( &intObj,
@@ -3469,7 +3492,6 @@ SDB_EXPORT INT32 sdbGetNodeMaster ( sdbReplicaGroupHandle cHandle,
                break ;
             }
          }
-
          bson_destroy ( &intObj ) ;
       }
    }
@@ -3484,9 +3506,9 @@ SDB_EXPORT INT32 sdbGetNodeMaster ( sdbReplicaGroupHandle cHandle,
    }
    else
    {
-      // if we find primary id but cannot find primary node in list, return
-      // primary not found
-      rc = SDB_CLS_NODE_NOT_EXIST ;
+      // it is impossible for us to find primary id but cannot
+      // find primary node in list
+      rc = SDB_SYS ;         
       goto error ;
    }
 done :
@@ -3497,147 +3519,260 @@ error :
    goto done ;
 }
 
-SDB_EXPORT INT32 sdbGetNodeSlave ( sdbReplicaGroupHandle cHandle,
-                                   sdbNodeHandle *handle )
+static INT32 _sdbGetNodeSlave ( sdbReplicaGroupHandle cHandle,
+                                const INT32 *positionsArray,
+                                INT32 positionsCount,
+                                BOOLEAN enforce,
+                                sdbNodeHandle *handle )
 {
-   INT32 rc                = SDB_OK ;
-   const CHAR *primaryData = NULL ;
-   INT32 primaryNode       = -1 ;
-   sdbRGStruct *r          = (sdbRGStruct*)cHandle ;
-   BOOLEAN bsoninit        = FALSE ;
+   INT32 rc                      = SDB_OK ;
+   sdbRGStruct *r                = (sdbRGStruct*)cHandle ;
+   BOOLEAN hasPrimary            = TRUE ;
+   const CHAR *nodeDatas[7]      = { NULL } ;
+   INT32 nodeCount               = 0 ;
+   INT32 validPositions[7]       = { 0 } ;
+   INT32 validPositionsCount     = 0 ;
+   INT32 primaryNodePosition     = 0 ;
+   INT32 primaryNodeId           = -1 ;
+   bson_type bType               = BSON_EOO ;
    bson_iterator it ;
    bson result ;
+   INT32 i = 0, j = 0 ;
 
-   BSON_INIT( result );
+   bson_init( &result ) ;
    HANDLE_CHECK( cHandle, r, SDB_HANDLE_TYPE_REPLICAGROUP ) ;
    if ( !handle )
    {
-      rc = SDB_INVALIDARG;
-      goto error;
+      rc = SDB_INVALIDARG ;
+      goto error ;
    }
-
+   // check arguments
+   if ( NULL == positionsArray || positionsCount <= 0 || positionsCount > 7 )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+   for ( i = 0 ; i < positionsCount ; i++ )
+   {
+      BOOLEAN hasContained = FALSE ;
+      INT32 pos = positionsArray[i] ;
+      if ( pos < 1 || pos > 7 )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      for ( j = 0 ; j < validPositionsCount ; j++ )
+      {
+         if ( pos == validPositions[j] )
+         {
+            hasContained = TRUE ;
+            break ;
+         }
+      }
+      if ( !hasContained )
+      {
+         validPositions[validPositionsCount++] = pos ;
+      }
+   }
+   // get detail of group from catalog
    rc = _sdbGetReplicaGroupDetail ( cHandle, &result ) ;
    if ( SDB_OK != rc )
    {
+      if ( SDB_DMS_EOC == rc )         
+      {            
+         rc = SDB_CLS_GRP_NOT_EXIST ;
+      }
       goto error ;
    }
-
-   if ( BSON_INT == bson_find ( &it, &result, CAT_PRIMARY_NAME ) )
+   // check group's info
+   if ( BSON_ARRAY != bson_find ( &it, &result, CAT_GROUP_NAME ) )
+   {
+      rc = SDB_SYS ;
+      goto error ;
+   }
+   {
+      const CHAR *groupList = bson_iterator_value ( &it ) ;
+      bson_iterator i ;
+      bson_iterator_from_buffer ( &i, groupList ) ;
+      // loop for all elements in Group
+      if ( BSON_EOO == bson_iterator_next ( &i ) )
+      {
+         rc = SDB_CLS_EMPTY_GROUP ;
+         goto error ;
+      }
+   }
+   bType = bson_find ( &it, &result, CAT_PRIMARY_NAME ) ;
+   if ( BSON_EOO == bType )
+   {
+      hasPrimary = FALSE ;
+   }
+   else if ( BSON_INT != bType )
+   {
+      rc = SDB_SYS ;
+      goto error ;
+   }
+   else
    {
       // get the primary node and skip it later
-      primaryNode = bson_iterator_int ( &it ) ;
+      primaryNodeId = bson_iterator_int ( &it ) ;
+      if ( -1 == primaryNodeId )
+      {
+         hasPrimary = FALSE ;
+      }
    }
    // walk through Group and skip primary node, and pickup a random one
    if ( BSON_ARRAY != bson_find ( &it, &result, CAT_GROUP_NAME ) )
    {
-      // the Group is not array
       rc = SDB_SYS ;
       goto error ;
    }
-
    {
       const CHAR *groupList = bson_iterator_value ( &it ) ;
       bson_iterator i ;
-      BOOLEAN first = TRUE ;
-      INT32 totalNum = -1 ;
-      INT32 fetchNum = -1 ;
       bson intObj ;
-      BOOLEAN bsoninit = FALSE ;
 
-      do{
-            totalNum = 0 ;
-            bson_iterator_from_buffer ( &i, groupList ) ;
-            // loop for all elements in Group
-            while ( bson_iterator_next ( &i ) )
+      // loop for all elements in Group
+      bson_iterator_from_buffer ( &i, groupList ) ;
+      while ( bson_iterator_next ( &i ) )
+      {
+         bson_init( &intObj ) ;
+         // make sure each element is object and construct intObj object
+         // bson_init_finished_data does not accept const CHAR*,
+         // however since we are NOT going to perform any change, it's safe
+         // to cast const CHAR* to CHAR* here
+         if ( BSON_OBJECT == (signed int)bson_iterator_type ( &i ) &&
+              BSON_OK == bson_init_finished_data ( &intObj,
+                            (CHAR*)bson_iterator_value ( &i ) ) )
+         {
+            
+            bson_iterator k ;
+            // look for "NodeID" in each object
+            if ( BSON_INT != bson_find ( &k, &intObj, CAT_NODEID_NAME ) )
             {
-               BSON_INIT( intObj );
-
-               // make sure each element is object and construct intObj object
-               // bson_init_finished_data does not accept const CHAR*,
-               // however since we are NOT going to perform any change, it's safe
-               // to cast const CHAR* to CHAR* here
-               if ( BSON_OBJECT == (signed int)bson_iterator_type ( &i ) &&
-                    BSON_OK == bson_init_finished_data ( &intObj,
-                                  (CHAR*)bson_iterator_value ( &i ) ) )
-               {
-                  bson_iterator k ;
-                  // look for "NodeID" in each object
-                  if ( BSON_INT != bson_find ( &k, &intObj, CAT_NODEID_NAME ) )
-                  {
-                     rc = SDB_SYS ;
-                     goto error ;
-                  }
-                  // if we find the master, let's skip it, otherwise let's push to
-                  // vector
-                  if ( primaryNode != bson_iterator_int ( &k ) )
-                  {
-                     if ( !first && totalNum == fetchNum )
-                     {
-                        // if it's second time we get here, let's compare whether we
-                        // want to take this one
-                        primaryData = intObj.data ;
-                        break ;
-                     }
-                     ++totalNum ;
-                  }
-                  else
-                  {
-                     // if this is master
-                     if ( !first && -1 == fetchNum )
-                     {
-                        // if it's second time we get here and there's no slave found
-                        // in previous run, let's get the primary
-                        primaryData = intObj.data ;
-                        break ;
-                     }
-                  }
-               } // if ( BSON_OBJECT == (signed int)bson_iterator_type ( &i ) &&
-
-             bson_destroy ( &intObj ) ;
-             bsoninit = FALSE ;
-            } // while ( bson_iterator_next ( &i ) )
-
-            if ( bsoninit )
-            {
-               bson_destroy ( &intObj ) ;
+               bson_destroy( &intObj ) ;
+               rc = SDB_SYS ;
+               goto error ;
             }
-
-            if ( first )
+            nodeDatas[nodeCount] = intObj.data ;
+            nodeCount++ ;
+            // if we find the master, let's mark it's position
+            if ( hasPrimary && primaryNodeId == bson_iterator_int ( &k ) )
             {
-               // if it's first run, let's mark it already run and randomly pick a
-               // slave
-               first = FALSE ;
-               if ( totalNum )
-               {
-                  fetchNum = _sdbRand() % totalNum ;
-               }
+               primaryNodePosition = nodeCount ;
             }
-            else
-            {
-               break;
-            }
-         }while(TRUE);
+         }
+         else
+         {
+            bson_destroy ( &intObj ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+         bson_destroy ( &intObj ) ;
+      } // while ( bson_iterator_next ( &i ) )
    }
 
-   // if we can't find any slave nor primary, something wrong
-   if ( !primaryData )
+   // check
+   if ( hasPrimary && 0 == primaryNodePosition )
    {
-      rc = SDB_CLS_NODE_NOT_EXIST ;
-      goto error ;
+      rc = SDB_SYS ;
+      goto error ;    
    }
-
-   rc = _sdbRGExtractNode ( cHandle, handle, primaryData,
-                            r->_endianConvert ) ;
-   if ( SDB_OK != rc )
+   // Build sdbNode based on hostname and service name
+   if ( 1 == nodeCount )
    {
-      goto error ;
+      rc = _sdbRGExtractNode ( cHandle, handle, nodeDatas[0],
+                               r->_endianConvert ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }   
    }
+   else if ( 1 == validPositionsCount )
+   {
+      INT32 idx = ( validPositions[0] - 1 ) % nodeCount ;
+      rc = _sdbRGExtractNode ( cHandle, handle, nodeDatas[idx],
+                               r->_endianConvert ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+   }
+   else
+   {
+      INT32 position = 0 ;
+      INT32 nodeIndex = -1 ;
+      INT32 rand = _sdbRand() ;
+      INT32 validPositionsCopy[7]   = { 0 } ;
+      INT32 validPositionsCopyCount = 0 ;
+      for ( i = 0 ; i < validPositionsCount ; i++ )
+      {
+         INT32 pos = validPositions[i] ;
+         if ( pos <= nodeCount )
+         {
+            if ( primaryNodePosition != pos )
+            {
+               validPositionsCopy[validPositionsCopyCount++] = pos ;
+            }
+         }
+         else
+         {
+            if ( primaryNodePosition != ( pos - 1 ) % nodeCount + 1 )
+            {
+               validPositionsCopy[validPositionsCopyCount++] = pos ;
+            }
+         }
+      }
+      if ( validPositionsCopyCount > 0 )
+      {
+         position = rand % validPositionsCopyCount ;
+         position = validPositionsCopy[position];
+      }
+      else
+      {
+         position = rand % validPositionsCount ;
+         position = validPositions[position] ;
+         if ( enforce )
+         {
+            position += 1 ;
+         }
+      }
+      nodeIndex = ( position - 1 ) % nodeCount ;
+      rc = _sdbRGExtractNode( cHandle, handle, nodeDatas[nodeIndex],
+                              r->_endianConvert ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+   }
+   
 done :
-   BSON_DESTROY( result ) ;
+   bson_destroy( &result ) ;
    return rc ;
 error :
    SET_INVALID_HANDLE( handle ) ;
    goto done ;
+}
+
+SDB_EXPORT INT32 sdbGetNodeSlave1 ( sdbReplicaGroupHandle cHandle,
+                                    const INT32 *positionsArray,
+                                    INT32 positionsCount,
+                                    sdbNodeHandle *handle )
+{
+   return _sdbGetNodeSlave( cHandle, positionsArray,
+                            positionsCount, FALSE, handle ) ;
+}
+
+SDB_EXPORT INT32 sdbGetNodeSlave ( sdbReplicaGroupHandle cHandle,
+                                   sdbNodeHandle *handle )
+{
+   INT32 positionsArray[2] = { 0 } ;
+   INT32 positionsCount = 2 ;
+   INT32 pos1 = _sdbRand() % 7 + 1 ;
+   INT32 pos2 = pos1 % 7 + 1 ;
+   positionsArray[0] = pos1 ;
+   positionsArray[1] = pos2 ;
+   return _sdbGetNodeSlave( cHandle, positionsArray,
+                            positionsCount, TRUE, handle ) ;
 }
 
 SDB_EXPORT INT32 sdbGetNodeByName ( sdbReplicaGroupHandle cHandle,

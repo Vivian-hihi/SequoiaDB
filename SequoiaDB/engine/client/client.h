@@ -685,6 +685,26 @@ SDB_EXPORT INT32 sdbGetNodeMaster ( sdbReplicaGroupHandle cHandle,
 SDB_EXPORT INT32 sdbGetNodeSlave ( sdbReplicaGroupHandle cHandle,
                                    sdbNodeHandle *handle ) ;
 
+/** \fn INT32 sdbGetNodeSlave1 ( sdbReplicaGroupHandle cHandle,
+                                 const INT32 *positionsArray,
+                                 INT32 positionsCount,
+                                 sdbNodeHandle *handle )
+    \brief Get one of slave node of the specified replica group,
+           if no slave exists then get master
+    \param [in] cHandle The replica group handle
+    \param [in] positionsArray The array of node's position, the array elements
+                can be 1-7.
+    \param [in] positionsCount The amount of node's position.                  
+    \param [out] handle The slave node handle
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbGetNodeSlave1 ( sdbReplicaGroupHandle cHandle,
+                                    const INT32 *positionsArray,
+                                    INT32 positionsCount,
+                                    sdbNodeHandle *handle ) ;
+
+
 /** \fn INT32 sdbGetNodeByName ( sdbReplicaGroupHandle cHandle,
                                  const CHAR *pNodeName,
                                  sdbNodeHandle *handle )
