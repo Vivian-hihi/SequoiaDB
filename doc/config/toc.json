@@ -2761,6 +2761,12 @@
                            "file": "right_outer_join",
                            "cn": "right outer join",
                            "en": "right outer join"
+                        },
+                        {
+                           "id": 1445318584,
+                           "file": "hint",
+                           "cn": "hint()",
+                           "en": "hint()"
                         }
                      ]
                   },
@@ -2835,12 +2841,6 @@
                            "file": "mergearrayset",
                            "cn": "mergearrayset()",
                            "en": "mergearrayset()"
-                        },
-                        {
-                           "id": 1445318584,
-                           "file": "hint",
-                           "cn": "hint()",
-                           "en": "hint()"
                         }
                      ]
                   },

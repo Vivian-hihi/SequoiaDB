@@ -11,7 +11,7 @@
 | field1_name | string | 字段名。 | 是 |
 | value1 | string | 字段值。 | 是 |
 | condition | expression | 条件，只对符合条件的记录更新。 | 是 |
-| hint1 | [hint](reference/SQL_grammar/hint.md) | 指定执行方式。 | 是 |
+| hint1 | [hint](reference/SQL_grammar/modifier/hint.md) | 指定执行方式。 | 是 |
 
 ##返回值##
 无。
