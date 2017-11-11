@@ -35,8 +35,9 @@ function main()
 	
 	//check the query explain before analyze
 	var findConf = {a : 9000};
+	var actExplains = getCommonExplain( dbcl, findConf);
    var expExplains = [{ScanType:"ixscan", IndexName:"a", ReturnNum:insertNums}];
-   checkExplain( dbcl, findConf, null, null, expExplains )
+   checkExplain( actExplains, expExplains )
 	
 	println("check result before analyze success!");
    
@@ -49,8 +50,9 @@ function main()
    
    //check the query explain after analyze
 	var findConf = {a : 9000};
+	var actExplains = getCommonExplain( dbcl, findConf);
    var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
-   checkExplain( dbcl, findConf, null, null, expExplains )
+   checkExplain( actExplains, expExplains )
 	
    println("check result after analyze success!");
 	
@@ -66,7 +68,8 @@ function main()
 	var findConf = {a : 9000};
    var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
 	var newCL = db.getCS(newCsName).getCL(clName);
-   checkExplain( newCL, findConf, null, null, expExplains )
+	var actExplains = getCommonExplain( newCL, findConf);
+   checkExplain( actExplains, expExplains )
 	
 	println("check result after rename success!");
 	

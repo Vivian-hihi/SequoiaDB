@@ -26,13 +26,14 @@ function main()
    
    //检查主备节点访问计划
    var findConf = {a:1000};
+   var actExplains = getCommonExplain( dbcl, findConf);
    var expExplains = [{ScanType:"ixscan", IndexName:"a", ReturnNum:1}];
    
    db.setSessionAttr( { PreferedInstance: "m" } );
-   checkExplain( dbcl, findConf, null, null, expExplains )
+   checkExplain( actExplains, expExplains )
    
    db.setSessionAttr( { PreferedInstance: "s" } );
-   checkExplain( dbcl, findConf, null, null, expExplains )
+   checkExplain( actExplains, expExplains )
 	
 	println("check result before analyze success!");
 
@@ -44,13 +45,14 @@ function main()
    
    //检查主备节点访问计划
    var findConf = {a:1000};
+   var actExplains = getCommonExplain( dbcl, findConf);
    var expExplains = [{ScanType:"ixscan", IndexName:"a", ReturnNum:1}];
    
    db.setSessionAttr( { PreferedInstance: "m" } );
-   checkExplain( dbcl, findConf, null, null, expExplains )
+   checkExplain( actExplains, expExplains )
    
    db.setSessionAttr( { PreferedInstance: "s" } );
-   checkExplain( dbcl, findConf, null, null, expExplains )
+   checkExplain( actExplains, expExplains )
    
    println("check result after analyze success!");
    

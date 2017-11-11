@@ -9,6 +9,7 @@ function main()
    var clName = COMMCLNAME + "_11406";
    var insertNum = 2000;
 	var sameValues = 9000;
+	var indexNum = 63;
    
    //清理环境
    commDropCL( db, COMMCSNAME, clName, true, true,"drop CL in the beginning" ) ;
@@ -17,7 +18,7 @@ function main()
    var dbcl = commCreateCL( db, COMMCSNAME, clName);
    
    //创建索引
-   for(var i=0; i<63; i++)
+   for(var i=0; i<indexNum; i++)
    {
       var obj = {};
       obj["a" + i] = 1;
@@ -32,50 +33,52 @@ function main()
    analyze( db, {Collection:COMMCSNAME + "." + clName} );
    
    //检查统计信息
-   for(var i=0; i<63; i++)
+   for(var i=0; i<indexNum; i++)
    {
       checkStat( db, COMMCSNAME, clName, "a" + i, true, true );
    }
    
    //检查主备节点访问计划
-   for(var i=0; i<63; i++)
+   for(var i=0; i<indexNum; i++)
    {
       var findConf= {};
-      findConf["a" + i] = 9000;
+      findConf["a" + i] = sameValues;
+      var actExplains = getCommonExplain( dbcl, findConf);
       var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}];
       
       db.setSessionAttr( { PreferedInstance: "m" } );
-      checkExplain( dbcl, findConf, null, null, expExplains );
+      checkExplain( actExplains, expExplains );
       
       db.setSessionAttr( { PreferedInstance: "s" } );
-      checkExplain( dbcl, findConf, null, null, expExplains ); 
+      checkExplain( actExplains, expExplains ); 
    }
    println("check result after analyze success!");
    
    //删除索引
-   for(var i=0; i<63; i++)
+   for(var i=0; i<indexNum; i++)
    {
       commDropIndex( dbcl, "a" + i );
    }
    
    //检查统计信息
-   for(var i=0; i<64; i++)
+   for(var i=0; i<indexNum; i++)
    {
       checkStat( db, COMMCSNAME, clName, "a" + i, true, false );
    }
    
    //检查主备节点访问计划
-   for(var i=0; i<64; i++)
+   for(var i=0; i<indexNum; i++)
    {
       var findConf= {};
-      findConf["a" + i] = 9000;
+      findConf["a" + i] = sameValues;
+      var actExplains = getCommonExplain( dbcl, findConf);
       var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}];
       
       db.setSessionAttr( { PreferedInstance: "m" } );
-      checkExplain( dbcl, findConf, null, null, expExplains );
+      checkExplain( actExplains, expExplains );
       
       db.setSessionAttr( { PreferedInstance: "s" } );
-      checkExplain( dbcl, findConf, null, null, expExplains ); 
+      checkExplain( actExplains, expExplains ); 
    }
    println("check result drop index success!");
    

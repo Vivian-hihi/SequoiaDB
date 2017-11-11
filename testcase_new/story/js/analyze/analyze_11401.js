@@ -35,13 +35,14 @@ function main()
 	
 	//check the query explain of master/slave nodes 
 	var findConf = {b : 9000};
+	var actExplains = getCommonExplain( dbcl, findConf);
    var expExplains = [{ScanType:"ixscan", IndexName:"b", ReturnNum:insertNums}];
    
    db.setSessionAttr( { PreferedInstance: "m" } );
-   checkExplain( dbcl, findConf, null, null, expExplains )
+   checkExplain( actExplains, expExplains )
 	
    db.setSessionAttr( { PreferedInstance: "s" } );
-   checkExplain( dbcl, findConf, null, null, expExplains )
+   checkExplain( actExplains, expExplains )
 	
 	println("check result before analyze success!");
 	
@@ -55,33 +56,37 @@ function main()
    //check the query explain of master/slave nodes 
 	var findConf1 = {b : 9000};
 	var findConf2 = {a : 9000};
+	var actExplains1 = getCommonExplain( dbcl, findConf1);
+	var actExplains2 = getCommonExplain( dbcl, findConf2);
    var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
 	
    db.setSessionAttr( { PreferedInstance: "m" } );
-   checkExplain( dbcl, findConf1, null, null, expExplains )
-	checkExplain( dbcl, findConf2, null, null, expExplains )
+   checkExplain( actExplains1, expExplains )
+	checkExplain( actExplains2, expExplains )
    
    db.setSessionAttr( { PreferedInstance: "s" } );
-   checkExplain( dbcl, findConf1, null, null, expExplains )
-	checkExplain( dbcl, findConf2, null, null, expExplains )
+   checkExplain( actExplains1, expExplains )
+	checkExplain( actExplains2, expExplains )
 
 	//alter cl
 	alterCL( dbcl );
 	
 	//check after alter
 	var findConf1 = {b : 9000};
+	var actExplains1 = getCommonExplain( dbcl, findConf1);
    var expExplains1 = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
 	
 	var findConf2 = {a : 9000};
+	var actExplains2 = getCommonExplain( dbcl, findConf2);
    var expExplains2 = [{ScanType:"ixscan", IndexName:"$shard", ReturnNum:insertNums}];
 	
    db.setSessionAttr( { PreferedInstance: "m" } );
-   checkExplain( dbcl, findConf1, null, null, expExplains1 )
-	checkExplain( dbcl, findConf2, null, null, expExplains2 )
+   checkExplain( actExplains1, expExplains1 )
+	checkExplain( actExplains2, expExplains2 )
    
    db.setSessionAttr( { PreferedInstance: "s" } );
-   checkExplain( dbcl, findConf1, null, null, expExplains1 )
-	checkExplain( dbcl, findConf2, null, null, expExplains2 )
+   checkExplain( actExplains1, expExplains1 )
+	checkExplain( actExplains2, expExplains2 )
 	
    println("check result after analyze success!");
 	

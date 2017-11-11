@@ -45,18 +45,21 @@ function main()
    println("check cl:" + clName3 + " before analyze success!");
    
    //检查主备节点访问计划
-   var findConf = {a:9000};
+   var findConf = {a:sameValues};
+   var actExplains1 = getCommonExplain( dbcl1, findConf);
+   var actExplains2 = getCommonExplain( dbcl2, findConf);
+   var actExplains3 = getCommonExplain( dbcl3, findConf);
    var expExplains = [{ScanType:"ixscan", IndexName:"a", ReturnNum:insertNum}];
    
    db.setSessionAttr( { PreferedInstance: "m" } );
-   checkExplain( dbcl1, findConf, null, null, expExplains );
-   checkExplain( dbcl2, findConf, null, null, expExplains );
-   checkExplain( dbcl3, findConf, null, null, expExplains );
+   checkExplain( actExplains1, expExplains );
+   checkExplain( actExplains2, expExplains );
+   checkExplain( actExplains3, expExplains );
    
    db.setSessionAttr( { PreferedInstance: "s" } );
-   checkExplain( dbcl1, findConf, null, null, expExplains );
-   checkExplain( dbcl2, findConf, null, null, expExplains );
-   checkExplain( dbcl3, findConf, null, null, expExplains );
+   checkExplain( actExplains1, expExplains );
+   checkExplain( actExplains2, expExplains );
+   checkExplain( actExplains3, expExplains );
    
    //执行统计
    analyze( db, {CollectionSpace: csName} );
@@ -72,18 +75,21 @@ function main()
    println("check cl:" + clName3 + " after analyze success!");
    
    //检查主备节点访问计划
-   var findConf = {a:9000};
+   var findConf = {a:sameValues};
+   var actExplains1 = getCommonExplain( dbcl1, findConf);
+   var actExplains2 = getCommonExplain( dbcl2, findConf);
+   var actExplains3 = getCommonExplain( dbcl3, findConf);
    var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}];
    
    db.setSessionAttr( { PreferedInstance: "m" } );
-   checkExplain( dbcl1, findConf, null, null, expExplains );
-   checkExplain( dbcl2, findConf, null, null, expExplains );
-   checkExplain( dbcl3, findConf, null, null, expExplains );
+   checkExplain( actExplains1, expExplains );
+   checkExplain( actExplains2, expExplains );
+   checkExplain( actExplains3, expExplains );
    
    db.setSessionAttr( { PreferedInstance: "s" } );
-   checkExplain( dbcl1, findConf, null, null, expExplains );
-   checkExplain( dbcl2, findConf, null, null, expExplains );
-   checkExplain( dbcl3, findConf, null, null, expExplains );
+   checkExplain( actExplains1, expExplains );
+   checkExplain( actExplains2, expExplains );
+   checkExplain( actExplains3, expExplains );
 
    //truncate 其中一个cl的记录,再次执行统计
    dbcl1.truncate();
@@ -100,19 +106,22 @@ function main()
    println("check cl:" + clName3 + " after truncate cl success!");
    
    //检查主备节点访问计划
-   var findConf = {a:9000};
+   var findConf = {a:sameValues};
+   var actExplains1 = getCommonExplain( dbcl1, findConf);
+   var actExplains2 = getCommonExplain( dbcl2, findConf);
+   var actExplains3 = getCommonExplain( dbcl3, findConf);
    var expExplains1 = [{ScanType:"ixscan", IndexName:"a", ReturnNum:0}];
    var expExplains2 = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}];
    
    db.setSessionAttr( { PreferedInstance: "m" } );
-   checkExplain( dbcl1, findConf, null, null, expExplains1 );
-   checkExplain( dbcl2, findConf, null, null, expExplains2 );
-   checkExplain( dbcl3, findConf, null, null, expExplains2 );
+   checkExplain( actExplains1, expExplains1 );
+   checkExplain( actExplains2, expExplains2 );
+   checkExplain( actExplains3, expExplains2 );
    
    db.setSessionAttr( { PreferedInstance: "s" } );
-   checkExplain( dbcl1, findConf, null, null, expExplains1 );
-   checkExplain( dbcl2, findConf, null, null, expExplains2 );
-   checkExplain( dbcl3, findConf, null, null, expExplains2 );
+   checkExplain( actExplains1, expExplains1 );
+   checkExplain( actExplains2, expExplains2 );
+   checkExplain( actExplains3, expExplains2 );
    
    //删除其中一个cl中的索引,再次执行统计
    commDropIndex( dbcl3, "a" );
@@ -129,20 +138,23 @@ function main()
    println("check cl:" + clName3 + " after drop index success!");
    
    //检查主备节点访问计划
-   var findConf = {a:9000};
+   var findConf = {a:sameValues};
+   var actExplains1 = getCommonExplain( dbcl1, findConf);
+   var actExplains2 = getCommonExplain( dbcl2, findConf);
+   var actExplains3 = getCommonExplain( dbcl3, findConf);
    var expExplains1 = [{ScanType:"ixscan", IndexName:"a", ReturnNum:0}];
    var expExplains2 = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}];
    var expExplains3 = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}];
    
    db.setSessionAttr( { PreferedInstance: "m" } );
-   checkExplain( dbcl1, findConf, null, null, expExplains1 );
-   checkExplain( dbcl2, findConf, null, null, expExplains2 );
-   checkExplain( dbcl3, findConf, null, null, expExplains3 );
+   checkExplain( actExplains1, expExplains1 );
+   checkExplain( actExplains2, expExplains2 );
+   checkExplain( actExplains3, expExplains3 );
    
    db.setSessionAttr( { PreferedInstance: "s" } );
-   checkExplain( dbcl1, findConf, null, null, expExplains1 );
-   checkExplain( dbcl2, findConf, null, null, expExplains2 );
-   checkExplain( dbcl3, findConf, null, null, expExplains3 );
+   checkExplain( actExplains1, expExplains1 );
+   checkExplain( actExplains2, expExplains2 );
+   checkExplain( actExplains3, expExplains3 );
    
    //删除其他2个cl，再次执行统计
    commDropCL( db, csName, clName1, true, true,"drop CL in the beginning" ) ;
@@ -154,14 +166,15 @@ function main()
    println("check only one cl:" + clName2 + " success!");
    
    //检查主备节点访问计划
-   var findConf = {a:9000};
+   var findConf = {a:sameValues};
+   var actExplains2 = getCommonExplain( dbcl2, findConf);
    var expExplains2 = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}];
    
    db.setSessionAttr( { PreferedInstance: "m" } );
-   checkExplain( dbcl2, findConf, null, null, expExplains2 );
+   checkExplain( actExplains2, expExplains2 );
    
    db.setSessionAttr( { PreferedInstance: "s" } );
-   checkExplain( dbcl2, findConf, null, null, expExplains2 );
+   checkExplain( actExplains2, expExplains2 );
    
    //清空环境
    commDropCS( db, csName);

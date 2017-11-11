@@ -216,33 +216,86 @@ function checkStat( db, csName, clName, indexName, clExistStat, indexExistStat )
 }
 
 /************************************
-*@Description: 检查访问计划
+*@Description: 按组获取表访问计划
 *@author:      zhaoyu
-*@createDate:  2017.11.8
+*@createDate:  2017.11.10
 **************************************/
-function checkExplain( dbcl, findConf, sortConf, hintConf, expExplains )
+function getCommonExplain( dbcl, findConf, sortConf, hintConf )
 {
    if ( typeof(findConf) == "undefined" ) { findConf = null; }
    if ( typeof(sortConf) == "undefined" ) { sortConf = null; }
    if ( typeof(hintConf) == "undefined" ) { hintConf = null; }
-	
-	var rc = dbcl.find(findConf).sort(sortConf).hint(hintConf).explain({Run:true}).toArray();
+   
+   //保存所有访问计划
+   var explains = new Array();
+   var rc = dbcl.find(findConf).sort(sortConf).hint(hintConf).explain({Run:true}).toArray();
+   var groupExplains = eval("(" + rc + ")");
+   var explainObj = {};
+   for( var f in groupExplains )
+	{
+	   if((f == "ScanType") || (f == "IndexName") || (f == "ReturnNum"))
+	   {
+	      explainObj[f] = groupExplains[f];     
+	   }
+	}
+	explains.push(explainObj);
+   return explains;
+   
+}
+
+/************************************
+*@Description: 按组获取表访问计划
+*@author:      zhaoyu
+*@createDate:  2017.11.10
+**************************************/
+function getSplitExplain( dbcl, findConf, sortConf, hintConf )
+{
+   if ( typeof(findConf) == "undefined" ) { findConf = null; }
+   if ( typeof(sortConf) == "undefined" ) { sortConf = null; }
+   if ( typeof(hintConf) == "undefined" ) { hintConf = null; }
+   
+   //保存所有访问计划
+   var explains = new Array();
+   var rc = dbcl.find(findConf).sort(sortConf).hint(hintConf).explain({Run:true}).toArray();
    for(var i= 0; i< rc.length; i++)
    {
-      var actExplain = eval("(" + rc[i] + ")");
-      var expExplain = expExplains[i];
-      for ( var f in expExplain )
+      var groupExplains = eval("(" + rc[i] + ")");
+      var explainObj = {};
+      for( var f in groupExplains )
    	{
-   	   if((f == "ScanType") || (f == "IndexName") || (f == "ReturnNum"))
+   	   if((f == "GroupName") || (f == "ScanType") || (f == "IndexName") || (f == "ReturnNum"))
    	   {
-   	      if( JSON.stringify(actExplain[f]) !== JSON.stringify(expExplain[f]) )
-	   	   {
-	   	      throw buildException("check explain", "CHECK_EXPLAIN_FAIL", "check explain failed!", 
-	   		                     "\nactual value= " + JSON.stringify(actExplain[f]),
-	   		                     "\nexpect value= "+JSON.stringify(expExplain[f]));
-	   	   }
+   	      explainObj[f] = groupExplains[f];     
    	   }
    	}
+   	explains.push(explainObj);
+   }
+   return explains;
+   
+}
+
+/************************************
+*@Description: 校验访问计划
+*@author:      zhaoyu
+*@createDate:  2017.11.8
+**************************************/
+function checkExplain( actExplains, expExplains )
+{
+   //校验长度
+   if(actExplains.length !== expExplains.length)
+   {
+      throw buildException("check count", "COUNT_ERR", "check count failed!",
+									expExplains.length, actExplains.length);
+   }
+   
+   //校验访问计划，不校验元素顺序
+   for(var i=0; i< expExplains.length; i++)
+   {
+      if(JSON.stringify(actExplains).indexOf(JSON.stringify(expExplains[i])) === -1)
+      {
+         throw buildException("checkMainclExplain", "CHECK_EXPLAIN_FAIL", "check explain failed!", 
+	   		                  JSON.stringify(expExplains[i]), JSON.stringify(actExplains));
+      }
    }
    
 }

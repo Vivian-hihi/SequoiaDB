@@ -27,14 +27,15 @@ function main()
    checkStat( db, COMMCSNAME, clName, "a", false, false );
    
    //检查主备节点访问计划
-   var findConf = {a:9000};
+   var findConf = {a:sameValues};
+   var actExplains = getCommonExplain( dbcl, findConf);
    var expExplains = [{ScanType:"ixscan", IndexName:"a", ReturnNum:insertNum}];
    
    db.setSessionAttr( { PreferedInstance: "m" } );
-   checkExplain( dbcl, findConf, null, null, expExplains );
+   checkExplain( actExplains, expExplains );
    
    db.setSessionAttr( { PreferedInstance: "s" } );
-   checkExplain( dbcl, findConf, null, null, expExplains );
+   checkExplain( actExplains, expExplains );
 	
 	println("check result before analyze success!");
 
@@ -45,14 +46,15 @@ function main()
    checkStat( db, COMMCSNAME, clName, "a", true, true );
    
    //检查主备节点访问计划
-   var findConf = {a:9000};
+   var findConf = {a:sameValues};
+   var actExplains = getCommonExplain( dbcl, findConf);
    var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}];
    
    db.setSessionAttr( { PreferedInstance: "m" } );
-   checkExplain( dbcl, findConf, null, null, expExplains );
+   checkExplain( actExplains, expExplains );
    
    db.setSessionAttr( { PreferedInstance: "s" } );
-   checkExplain( dbcl, findConf, null, null, expExplains );
+   checkExplain( actExplains, expExplains );
    
    println("check result after analyze success!");
    
@@ -63,15 +65,16 @@ function main()
    checkStat( db, COMMCSNAME, clName, "a", false, false );
    
    //检查主备节点访问计划
-   var findConf = {a:9000};
+   var findConf = {a:sameValues};
    var hintConf = {"":"a"};
+   var actExplains = getCommonExplain( dbcl, findConf, null, hintConf);
    var expExplains = [{ScanType:"ixscan", IndexName:"a", ReturnNum:0}];
    
    db.setSessionAttr( { PreferedInstance: "m" } );
-   checkExplain( dbcl, findConf, null, hintConf, expExplains );
+   checkExplain( actExplains, expExplains );
    
    db.setSessionAttr( { PreferedInstance: "s" } );
-   checkExplain( dbcl, findConf, null, hintConf, expExplains );
+   checkExplain( actExplains, expExplains );
    
    println("check result after truncate cl success!");
    
@@ -83,14 +86,15 @@ function main()
    checkStat( db, COMMCSNAME, clName, "a", false, false );
    
    //检查主备节点访问计划
-   var findConf = {a:9000};
+   var findConf = {a:sameValues};
+   var actExplains = getCommonExplain( dbcl, findConf);
    var expExplains = [{ScanType:"ixscan", IndexName:"a", ReturnNum:insertNum}];
    
    db.setSessionAttr( { PreferedInstance: "m" } );
-   checkExplain( dbcl, findConf, null, null, expExplains );
+   checkExplain( actExplains, expExplains );
    
    db.setSessionAttr( { PreferedInstance: "s" } );
-   checkExplain( dbcl, findConf, null, null, expExplains );
+   checkExplain( actExplains, expExplains );
    
    println("check result after create the same index success!");
    

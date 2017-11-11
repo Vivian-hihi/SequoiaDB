@@ -40,13 +40,14 @@ function main()
 	
 	//check the query explain of master/slave nodes 
 	var findConf = {a : 9000};
+	var actExplains = getCommonExplain( dbcl, findConf);
    var expExplains = [{ScanType:"ixscan", IndexName:"a", ReturnNum:insertNums}];
    
    db.setSessionAttr( { PreferedInstance: "m" } );
-   checkExplain( dbcl, findConf, null, null, expExplains );
+   checkExplain( actExplains, expExplains );
 	
    db.setSessionAttr( { PreferedInstance: "s" } );
-   checkExplain( dbcl, findConf, null, null, expExplains );
+   checkExplain( actExplains, expExplains );
 	
 	println("check result before analyze success!");
 	
@@ -59,13 +60,14 @@ function main()
    
    //check the query explain of master/slave nodes 
 	var findConf = {a : 9000};
+	var actExplains = getCommonExplain( dbcl, findConf);
    var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
 	
    db.setSessionAttr( { PreferedInstance: "m" } );
-   checkExplain( dbcl, findConf, null, null, expExplains );
+   checkExplain( actExplains, expExplains );
    
    db.setSessionAttr( { PreferedInstance: "s" } );
-   checkExplain( dbcl, findConf, null, null, expExplains );
+   checkExplain( actExplains, expExplains );
 
 	//analyze invalid groups
 	var options1 = {GroupName : "SYSCoord"};
