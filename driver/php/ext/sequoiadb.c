@@ -212,6 +212,7 @@ const zend_function_entry clFun[] = {
    //lob
    PHP_ME( SequoiaCL, openLob,        NULL, ZEND_ACC_PUBLIC )
    PHP_ME( SequoiaCL, removeLob,      NULL, ZEND_ACC_PUBLIC )
+   PHP_ME( SequoiaCL, truncateLob,    NULL, ZEND_ACC_PUBLIC )
    PHP_ME( SequoiaCL, listLob,        NULL, ZEND_ACC_PUBLIC )
    PHP_ME( SequoiaCL, listLobPieces,  NULL, ZEND_ACC_PUBLIC )
    PHP_MALIAS( SequoiaCL, deleteIndex, dropIndex,

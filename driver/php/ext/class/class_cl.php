@@ -924,6 +924,29 @@ class SequoiaCL
    public function removeLob( string $oid ){}
 
    /**
+    * Truncate lob
+    *
+    * @param $oid the string argument. The object id.
+    *
+    * @param $length the integer argument. The truncate length.
+    *
+    * @return Returns the result, default return array.
+    *
+    * @retval array   array( 'errno' => 0 )
+    * @retval string  { "errno": 0 }
+    *
+    * Example:
+    * @code
+    * $err = $cl -> truncateLob( "123456789012345678901234", 10 ) ;
+    * if( $err['errno'] != 0 ) {
+    *    echo "Failed to truncate lob, error code: ".$err['errno'] ;
+    *    return ;
+    * }
+    * @endcode
+   */
+   public function truncateLob( string $oid, integer|SequoiaINT64 $length ){}
+
+   /**
     * List all the lobs' meta data in current collection.
     *
     * @param $condition	an array or the string argument. This parameter is reserved and must be null.

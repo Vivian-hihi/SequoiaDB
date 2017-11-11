@@ -1630,6 +1630,48 @@ error:
    goto done ;
 }
 
+PHP_METHOD( SequoiaCL, truncateLob )
+{
+   INT32 rc = SDB_OK ;
+   PHP_LONG oidLen = 0 ;
+   INT64 length    = 0 ;
+   CHAR *pOid      = NULL ;
+   zval *pLength   = NULL ;
+   zval *pThisObj  = getThis() ;
+   sdbCollectionHandle cl = SDB_INVALID_HANDLE ;
+   bson_oid_t bot ;
+
+   PHP_SET_ERRNO_OK( FALSE, pThisObj ) ;
+
+   if ( PHP_GET_PARAMETERS( "sz", &pOid, &oidLen, &pLength ) == FAILURE )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   rc = php_zval2Long( pLength, &length TSRMLS_CC ) ;
+   if ( rc )
+   {
+      goto error ;
+   }
+
+   PHP_READ_HANDLE( pThisObj, cl, sdbCollectionHandle,
+                    SDB_CL_HANDLE_NAME, clDesc ) ;
+   bson_oid_from_string( &bot, pOid ) ;
+   rc = sdbTruncateLob( cl, &bot, length ) ;
+   if( rc )
+   {
+      goto error ;
+   }
+
+done:
+   PHP_RETURN_AUTO_ERROR( FALSE, pThisObj, rc ) ;
+   return ;
+error:
+   PHP_SET_ERROR( FALSE, pThisObj, rc ) ;
+   goto done ;
+}
+
 PHP_METHOD( SequoiaCL, listLob )
 {
    INT32 rc = SDB_OK ;
