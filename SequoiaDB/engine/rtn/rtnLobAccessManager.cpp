@@ -44,7 +44,7 @@ namespace engine
    : _mode( mode ),
      _refCount( 0 ),
      _metaCache( NULL ),
-     _lobSections( NULL )
+     _lockSections( NULL )
    {
       _oid = oid ;
       if ( SDB_LOB_MODE_CREATEONLY == mode ||
@@ -62,7 +62,7 @@ namespace engine
    _rtnLobAccessInfo::~_rtnLobAccessInfo()
    {
       SAFE_OSS_DELETE( _metaCache ) ;
-      SAFE_OSS_DELETE( _lobSections ) ;
+      SAFE_OSS_DELETE( _lockSections ) ;
    }
 
    void _rtnLobAccessInfo::setMetaCache( _rtnLobMetaCache* metaCache )
@@ -103,10 +103,10 @@ namespace engine
       }
 
       // lock whole lob
-      if ( -1 == section.length && 0 == section.offset )
+      if ( 0 == section.offset && OSS_SINT64_MAX == section.length )
       {
-         if ( NULL != _lobSections &&
-              _lobSections->conflicted( section.accessId ) )
+         if ( NULL != _lockSections &&
+              _lockSections->conflicted( section.accessId ) )
          {
             rc = SDB_LOB_LOCK_CONFLICTED ;
             PD_LOG( PDERROR, "Failed to lock whole LOB[%s], rc=%d",
@@ -115,13 +115,12 @@ namespace engine
          }
 
          _accessId = section.accessId ;
-         goto done ;
       }
 
-      if ( NULL == _lobSections )
+      if ( NULL == _lockSections )
       {
-         _lobSections = SDB_OSS_NEW _rtnLobSections() ;
-         if ( NULL == _lobSections )
+         _lockSections = SDB_OSS_NEW _rtnLobSections() ;
+         if ( NULL == _lockSections )
          {
             rc = SDB_OOM ;
             PD_LOG( PDERROR, "Failed to create lob sections, rc=%d", rc ) ;
@@ -129,7 +128,7 @@ namespace engine
          }
       }
 
-      rc = _lobSections->addSection( section ) ;
+      rc = _lockSections->addSection( section ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Failed to add section, rc=%d", rc ) ;
@@ -161,12 +160,12 @@ namespace engine
          _accessId = -1 ;
       }
 
-      if ( NULL == _lobSections )
+      if ( NULL == _lockSections )
       {
          goto done ;
       }
 
-      _lobSections->delSectionById( accessId ) ;
+      _lockSections->delSectionById( accessId ) ;
 
    done:
       PD_TRACE_EXITRC( SDB_RTNLOBACCESSINFO_UNLOCKSECTIONBYACCESSID, rc ) ;

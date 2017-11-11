@@ -35,6 +35,7 @@
 
 #include "oss.hpp"
 #include "ossUtil.hpp"
+#include "../bson/bson.h"
 #include <map>
 #include <vector>
 #include <string>
@@ -125,10 +126,16 @@ namespace engine
             return FALSE ;
          }
       }
+
+      INT32 toBSONObj( bson::BSONObj& obj, BOOLEAN withAccessId = FALSE ) const ;
+      INT32 fromBSONObj( bson::BSONObj& obj, INT64 accessId = -1 ) ;
    } ;
 
    class _rtnLobSections: public SDBObject
    {
+   private:
+      typedef std::map<INT64, _rtnLobSection> LOB_SECTIONS_TYPE ;
+
    public:
       _rtnLobSections() ;
       ~_rtnLobSections() ;
@@ -139,6 +146,102 @@ namespace engine
       void operator=( const _rtnLobSections& ) ;
 
    public:
+      class iterator: public SDBObject
+      {
+         friend class _rtnLobSections ;
+
+      public:
+         iterator()
+         {
+         }
+
+         iterator( const iterator& other )
+         {
+            iter = other.iter ;
+         }
+
+         bool operator== ( const iterator& other ) const
+         {
+            return ( iter == other.iter ) ;
+         }
+
+         bool operator!= ( const iterator& other ) const
+         {
+            return ( iter != other.iter ) ;
+         }
+
+         iterator& operator= ( const iterator& other )
+         {
+            iter = other.iter ;
+            return *this ;
+         }
+
+         iterator& operator++ ()
+         {
+            iter++;
+            return *this ;
+         }
+
+         iterator operator++ ( int )
+         {
+            iterator tmp( *this ) ;
+            ++(*this) ;
+            return tmp ;
+         }
+
+         iterator& operator-- ()
+         {
+            iter--;
+            return *this ;
+         }
+
+         iterator operator-- ( int )
+         {
+            iterator tmp( *this ) ;
+            --(*this) ;
+            return tmp ;
+         }
+
+         const _rtnLobSection& operator-> ()
+         {
+            return iter->second ;
+         }
+
+         const _rtnLobSection& operator* ()
+         {
+            return iter->second ;
+         }
+      private:
+         iterator( LOB_SECTIONS_TYPE::const_iterator it )
+         {
+            iter = it ;
+         }
+
+      private:
+         LOB_SECTIONS_TYPE::const_iterator iter ;
+      } ;
+
+      iterator begin() const
+      {
+         return iterator( _sections.begin() );
+      }
+
+      iterator end() const
+      {
+         return iterator( _sections.end() );
+      }
+
+   public:
+      OSS_INLINE BOOLEAN isEmpty() const
+      {
+         return _sections.empty() ? TRUE : FALSE ;
+      }
+
+      OSS_INLINE INT32 sectionNum() const
+      {
+         return (INT32)_sections.size() ;
+      }
+
       std::string toString() const ;
       BOOLEAN overlapped( const _rtnLobSection& section ) const ;
       BOOLEAN completelyContains( const _rtnLobSection& section ) const ;
@@ -149,14 +252,14 @@ namespace engine
       void    delSectionById( INT64 accessId ) ;
       void    delSectionByOffset( INT64 offset ) ;
 
-      OSS_INLINE INT32 sectionNum() const { return (INT32)_sections.size() ; }
+      INT32 saveTo( bson::BSONArray& array, BOOLEAN withAccessId = FALSE ) const ;
+      INT32 readFrom( bson::BSONArray& array, INT64 accessId = -1 ) ;
 
    private:
       INT32   _addSection( const _rtnLobSection& section,
                            std::vector<INT64>& offsets ) ;
 
    private:
-      typedef std::map<INT64, _rtnLobSection> LOB_SECTIONS_TYPE ;
       LOB_SECTIONS_TYPE       _sections ;
    } ;
 }

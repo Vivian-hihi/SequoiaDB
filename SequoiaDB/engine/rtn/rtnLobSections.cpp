@@ -32,10 +32,106 @@
 *******************************************************************************/
 #include "rtnLobSections.hpp"
 #include "pd.hpp"
+#include "msgDef.h"
 #include <sstream>
+
+using namespace bson ;
 
 namespace engine
 {
+   INT32 _rtnLobSection::toBSONObj( bson::BSONObj& obj, BOOLEAN withAccessId ) const
+   {
+      INT32 rc = SDB_OK ;
+
+      try
+      {
+         BSONObjBuilder builder ;
+
+         builder.append( FIELD_NAME_LOB_OFFSET, offset ) ;
+         builder.append( FIELD_NAME_LOB_LENGTH, length ) ;
+         if ( withAccessId )
+         {
+            builder.append( FIELD_NAME_LOB_ACCESSID, accessId ) ;
+         }
+
+         obj = builder.obj() ;
+      }
+      catch( std::exception& e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Unexpected exception happened: %s, rc=%d",
+                 e.what(), rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnLobSection::fromBSONObj( bson::BSONObj& obj, INT64 accessId )
+   {
+      INT32 rc = SDB_OK ;
+
+      try
+      {
+         BSONElement ele ;
+
+         ele = obj.getField( FIELD_NAME_LOB_OFFSET ) ;
+         if ( NumberLong != ele.type() )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "Invalid \"%s\" field type: %d",
+                    FIELD_NAME_LOB_OFFSET, ele.type() ) ;
+            goto error ;
+         }
+         offset = ele.numberLong() ;
+
+         ele = obj.getField( FIELD_NAME_LOB_LENGTH ) ;
+         if ( NumberLong != ele.type() )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "Invalid \"%s\" field type: %d",
+                    FIELD_NAME_LOB_LENGTH, ele.type() ) ;
+            goto error ;
+         }
+         length = ele.numberLong() ;
+
+         if ( -1 != accessId )
+         {
+            this->accessId = accessId ;
+         }
+         else
+         {
+            ele = obj.getField( FIELD_NAME_LOB_ACCESSID ) ;
+            if ( NumberLong == ele.type() )
+            {
+               this->accessId = ele.numberLong() ;
+            }
+            else if ( EOO != ele.type() )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR, "Invalid \"%s\" field type: %d",
+                       FIELD_NAME_LOB_ACCESSID, ele.type() ) ;
+               goto error ;
+            }
+         }
+      }
+      catch( std::exception& e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Unexpected exception happened: %s, rc=%d",
+                 e.what(), rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    _rtnLobSections::_rtnLobSections()
    {
    }
@@ -359,6 +455,95 @@ namespace engine
    void _rtnLobSections::delSectionByOffset( INT64 offset )
    {
       _sections.erase( offset ) ;
+   }
+
+   INT32 _rtnLobSections::saveTo( bson::BSONArray& array, BOOLEAN withAccessId ) const
+   {
+      INT32 rc = SDB_OK ;
+
+      try
+      {
+         BSONArrayBuilder builder ;
+
+         for ( LOB_SECTIONS_TYPE::const_iterator iter = _sections.begin() ;
+               iter != _sections.end() ; iter++ )
+         {
+            const _rtnLobSection& sec = iter->second ;
+            BSONObj obj ;
+            rc = sec.toBSONObj( obj, withAccessId ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "Failed to convert LobSection to BSONObj, rc=%d", rc ) ;
+               goto error ;
+            }
+            builder.append( obj ) ;
+         }
+
+         array = builder.arr() ;
+      }
+      catch( std::exception& e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Unexpected exception happened: %s, rc=%d",
+                 e.what(), rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnLobSections::readFrom( bson::BSONArray& array, INT64 accessId )
+   {
+      INT32 rc = SDB_OK ;
+
+      try
+      {
+         BSONObjIterator iter( array );
+         while ( iter.more() )
+         {
+            _rtnLobSection sec ;
+            BSONObj obj ;
+
+            BSONElement ele = iter.next() ;
+            if ( Object != ele.type() )
+            {
+               rc = SDB_SYS ;
+               PD_LOG( PDERROR, "Invalid element type: %d", ele.type() ) ;
+               goto error ;
+            }
+
+            obj = ele.embeddedObject() ;
+
+            rc = sec.fromBSONObj( obj, accessId ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "Failed to read LobSection from array, rc=%d", rc ) ;
+               goto error ;
+            }
+
+            rc = addSection( sec ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "Failed to add LobSection, rc=%d", rc ) ;
+               goto error ;
+            }
+         }
+      }
+      catch( std::exception& e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Unexpected exception happened: %s, rc=%d",
+                 e.what(), rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 }
 

@@ -135,6 +135,8 @@ namespace engine
                    const CHAR **data,
                    UINT32 &read ) ;
 
+      INT32 _parseOpenArgs( const bson::BSONObj &lob ) ;
+
       INT32 _meta2Obj( bson::BSONObj &obj ) ;
 
       INT32 _rollback( _pmdEDUCB *cb ) ;
@@ -161,12 +163,14 @@ namespace engine
       std::set<UINT32>     _written ;
       _rtnLobPiecesInfo    _lobPieces ;
       _rtnLobAccessInfo*   _accessInfo ;
+      _rtnLobSections      _lockSections ;
 
       _dmsStorageUnit*     _su ;
       _dmsMBContext*       _mbContext ;
       _SDB_DMSCB*          _dmsCB ;
       BOOLEAN              _writeDMS ;
       BOOLEAN              _hasLobPrivilege ;
+      BOOLEAN              _reopened ;
    } ;
    typedef class _rtnContextShdOfLob rtnContextShdOfLob ;
 }

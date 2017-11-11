@@ -172,6 +172,11 @@ namespace engine
          return _lobPieces ;
       }
 
+      OSS_INLINE _rtnLobSections &_getLockSections()
+      {
+         return _lockSections ;
+      }
+
       OSS_INLINE INT32 _getMode() const
       {
          return _mode ;
@@ -282,7 +287,7 @@ namespace engine
       _rtnLobPiecesInfo    _lobPieces ;
       BOOLEAN              _hasPiecesInfo ;
 
-      _rtnLobSections      _lobSections ;
+      _rtnLobSections      _lockSections ;
       BOOLEAN              _wholeLobLocked ;
       BOOLEAN              _truncated ;
    } ;

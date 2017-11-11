@@ -202,6 +202,10 @@ namespace engine
                                   _pmdEDUCB *cb,
                                   UINT32 *pSpecGroupID = NULL ) ;
 
+         INT32 _getSubStream( UINT32 groupID,
+                              const subStream** sub,
+                              _pmdEDUCB *cb ) ;
+
          INT32 _extractMeta( const MsgOpReply *header,
                              bson::BSONObj &obj,
                              _rtnLobDataPool::tuple &dataTuple ) ;
@@ -298,6 +302,7 @@ namespace engine
          coordRemoteHandler   _remoteHandler ;
 
          CHAR*                _emptyPageBuf ;
+         BOOLEAN              _mainStreamOpened ;
    } ;
    typedef _coordLobStream coordLobStream ;
 

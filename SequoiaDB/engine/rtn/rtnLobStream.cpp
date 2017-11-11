@@ -489,9 +489,9 @@ namespace engine
 
       if ( SDB_LOB_MODE_WRITE == _mode && !_wholeLobLocked )
       {
-         if ( _lobSections.sectionNum() > 0 )
+         if ( _lockSections.sectionNum() > 0 )
          {
-            if ( !_lobSections.completelyContains( _rtnLobSection( _offset, len, uniqueId() ) ) )
+            if ( !_lockSections.completelyContains( _rtnLobSection( _offset, len, uniqueId() ) ) )
             {
                rc = SDB_INVALIDARG ;
                PD_LOG( PDERROR, "Write not locked section[%lld, %u] in write mode, rc=%d",\
@@ -710,30 +710,27 @@ namespace engine
       }
 
       // endlessly lock from offset
-      if ( offset > 0 && -1 == length )
+      if ( -1 == length )
       {
          // subtract offset to avoid section.end() overflow
          length = OSS_SINT64_MAX - offset ;
          section.length = length ;
       }
 
-      if ( -1 != length )
+      if ( _lockSections.completelyContains( section ) )
       {
-         if ( _lobSections.completelyContains( section ) )
+         // already locked
+         goto done ;
+      }
+      else
+      {
+         // add to local firstly,
+         // record offsets for rollbacking if error happens
+         rc = _lockSections.addSection( section, &offsets ) ;
+         if ( SDB_OK != rc )
          {
-            // already locked
-            goto done ;
-         }
-         else
-         {
-            // add to local firstly,
-            // record offsets for rollbacking if error happens
-            rc = _lobSections.addSection( section, &offsets ) ;
-            if ( SDB_OK != rc )
-            {
-               PD_LOG( PDERROR, "Failed to add section in lob stream, rc=%d", rc ) ;
-               goto error ;
-            }
+            PD_LOG( PDERROR, "Failed to add section in lob stream, rc=%d", rc ) ;
+            goto error ;
          }
       }
 
@@ -745,7 +742,7 @@ namespace engine
          goto error ;
       }
 
-      if ( -1 == length )
+      if ( OSS_SINT64_MAX == length && 0 == offset )
       {
          _wholeLobLocked = TRUE ;
       }
@@ -760,7 +757,7 @@ namespace engine
          std::vector<INT64>::const_iterator iter ;
          for ( iter = offsets.begin() ; iter != offsets.end() ; iter++ )
          {
-            _lobSections.delSectionByOffset( *iter ) ;
+            _lockSections.delSectionByOffset( *iter ) ;
          }
       }
       goto done ;

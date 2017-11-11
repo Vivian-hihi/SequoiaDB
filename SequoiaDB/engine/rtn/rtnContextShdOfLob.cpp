@@ -61,7 +61,8 @@ namespace engine
     _mbContext( NULL ),
     _dmsCB( NULL ),
     _writeDMS( FALSE ),
-    _hasLobPrivilege( FALSE )
+    _hasLobPrivilege( FALSE ),
+    _reopened( FALSE )
    {
       _pData = NULL ;
       _dataLen = 0 ;
@@ -119,23 +120,15 @@ namespace engine
       const CHAR *clName = NULL ;
       dmsStorageUnitID suID = DMS_INVALID_SUID ;
 
+      rc = _parseOpenArgs( lob ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Invalid open arguments: %s, rc=%d",
+                 lob.toString().c_str(), rc ) ;
+         goto error ;
+      }
+
       // Check writable first
-      BSONElement ele = lob.getField( FIELD_NAME_LOB_OPEN_MODE ) ;
-      if ( NumberInt != ele.type() )
-      {
-         PD_LOG( PDERROR, "invalid mode type:%d", ele.type() ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-      _mode = ele.Int() ;
-
-      if ( !SDB_IS_VALID_LOB_MODE( _mode ) )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "Invalid LOB mode: %d", _mode ) ;
-         goto error ;
-      }
-
       if ( SDB_LOB_MODE_READ != _mode )
       {
          rc = _dmsCB->writable( cb ) ;
@@ -146,15 +139,6 @@ namespace engine
          }
          _writeDMS = TRUE ;
       }
-
-      ele = lob.getField( FIELD_NAME_COLLECTION ) ;
-      if ( String != ele.type() )
-      {
-         PD_LOG( PDERROR, "Invalid full name type:%d", ele.type() ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-      _fullName.assign( ele.valuestr() ) ;
 
       rc = rtnResolveCollectionNameAndLock( _fullName.c_str(),
                                             _dmsCB, &_su,
@@ -173,57 +157,6 @@ namespace engine
          PD_LOG( PDERROR, "Failed to get collection[%s] mb context, rc: %d",
                  _fullName.c_str(), rc ) ;
          goto error ;
-      }
-
-      ele = lob.getField( FIELD_NAME_LOB_OID ) ;
-      if ( jstOID != ele.type() )
-      {
-         PD_LOG( PDERROR, "Invalid oid type:%d", ele.type() ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-      ossMemcpy( &_oid, &( ele.__oid() ), sizeof( _oid ) ) ;
-
-      ele = lob.getField( FIELD_NAME_LOB_IS_MAIN_SHD ) ;
-      if ( Bool != ele.type() )
-      {
-         PD_LOG( PDERROR, "Invalid \"isMainShd\" type:%d", ele.type() ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-      _isMainShd = ele.Bool() ;
-
-      ele = lob.getField( FIELD_NAME_LOB_META_DATA ) ;
-      if ( Object == ele.type() )
-      {
-         _metaObj = ele.embeddedObject() ;
-      }
-      else if ( !ele.eoo() )
-      {
-         PD_LOG( PDERROR, "invalid meta obj type:%d", ele.type() ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-
-      if ( _isMainShd && SDB_LOB_MODE_CREATEONLY == _mode )
-      {
-         ele = lob.getField( FIELD_NAME_LOB_CREATETIME ) ;
-         if ( NumberLong == ele.type() )
-         {
-            _meta._createTime = ele.Long() ;
-            _meta._modificationTime = _meta._createTime ;
-         }
-         else if ( !ele.eoo() )
-         {
-            PD_LOG( PDERROR, "invalid CreateTime type:%d", ele.type() ) ;
-            rc = SDB_INVALIDARG ;
-            goto error ;
-         }
-         else
-         {
-            _meta._createTime = ossGetCurrentMilliseconds() ;
-            _meta._modificationTime = _meta._createTime ;
-         }
       }
 
       _w = w ;
@@ -253,6 +186,11 @@ namespace engine
       }
       _isOpened = TRUE ;
       _hitEnd = FALSE ;
+
+      if ( _isMainShd && _reopened )
+      {
+         PD_LOG( PDEVENT, "Reopened main shard" ) ;
+      }
 
       /// write down
       if ( _writeDMS )
@@ -452,6 +390,125 @@ namespace engine
          << ",Mode:" << _mode
          << ",IsMainShard:" << _isMainShd
          << ",BuffLen:" << _bufLen ;
+   }
+
+   INT32 _rtnContextShdOfLob::_parseOpenArgs( const bson::BSONObj &lob )
+   {
+      INT32 rc = SDB_OK ;
+
+      BSONElement ele = lob.getField( FIELD_NAME_LOB_OPEN_MODE ) ;
+      if ( NumberInt != ele.type() )
+      {
+         PD_LOG( PDERROR, "invalid mode type:%d", ele.type() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      _mode = ele.Int() ;
+
+      if ( !SDB_IS_VALID_LOB_MODE( _mode ) )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "Invalid LOB mode: %d", _mode ) ;
+         goto error ;
+      }
+
+      ele = lob.getField( FIELD_NAME_COLLECTION ) ;
+      if ( String != ele.type() )
+      {
+         PD_LOG( PDERROR, "Invalid full name type:%d", ele.type() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      _fullName = ele.String() ;
+
+      ele = lob.getField( FIELD_NAME_LOB_OID ) ;
+      if ( jstOID != ele.type() )
+      {
+         PD_LOG( PDERROR, "Invalid oid type:%d", ele.type() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      _oid = ele.OID() ;
+
+      ele = lob.getField( FIELD_NAME_LOB_IS_MAIN_SHD ) ;
+      if ( Bool != ele.type() )
+      {
+         PD_LOG( PDERROR, "Invalid \"isMainShd\" type:%d", ele.type() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      _isMainShd = ele.Bool() ;
+
+      ele = lob.getField( FIELD_NAME_LOB_REOPENED ) ;
+      if ( Bool == ele.type() )
+      {
+         _reopened = ele.Bool() ;
+      }
+      else if ( !ele.eoo() )
+      {
+         PD_LOG( PDERROR, "invalid \"Reopened\" type:%d", ele.type() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      ele = lob.getField( FIELD_NAME_LOB_META_DATA ) ;
+      if ( Object == ele.type() )
+      {
+         _metaObj = ele.embeddedObject() ;
+      }
+      else if ( !ele.eoo() )
+      {
+         PD_LOG( PDERROR, "invalid meta obj type:%d", ele.type() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      if ( _isMainShd && SDB_LOB_MODE_CREATEONLY == _mode )
+      {
+         ele = lob.getField( FIELD_NAME_LOB_CREATETIME ) ;
+         if ( NumberLong == ele.type() )
+         {
+            _meta._createTime = ele.Long() ;
+            _meta._modificationTime = _meta._createTime ;
+         }
+         else if ( !ele.eoo() )
+         {
+            PD_LOG( PDERROR, "invalid CreateTime type:%d", ele.type() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         else
+         {
+            _meta._createTime = ossGetCurrentMilliseconds() ;
+            _meta._modificationTime = _meta._createTime ;
+         }
+      }
+
+      if ( _isMainShd && _reopened )
+      {
+         ele = lob.getField( FIELD_NAME_LOB_LOCK_SECTIONS ) ;
+         if ( Array == ele.type() )
+         {
+            BSONArray array = BSONArray( ele.embeddedObject() ) ;
+            rc = _lockSections.readFrom( array, contextID() ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "Failed to read lock sections, rc=%d", rc ) ;
+               goto error ;
+            }
+         }
+         else if ( !ele.eoo() )
+         {
+            PD_LOG( PDERROR, "invalid LockSections type:%d", ele.type() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCONTEXTSHDOFLOB__OPEN, "_rtnContextShdOfLob::_open" )
@@ -671,6 +728,23 @@ namespace engine
 
          _accessInfo->unlock() ;
          accessInfoLocked = FALSE ;
+
+         if ( !_lockSections.isEmpty() )
+         {
+            for ( _rtnLobSections::iterator it = _lockSections.begin() ;
+                  it != _lockSections.end() ;
+                  it++ )
+            {
+               const _rtnLobSection& sec = *it;
+
+               rc = lock( cb, sec.offset, sec.length ) ;
+               if ( SDB_OK != rc )
+               {
+                  PD_LOG( PDERROR, "Failed to lock lob sections, rc:%d", rc ) ;
+                  goto error ;
+               }
+            }
+         }
       }
       else if ( SDB_LOB_MODE_CREATEONLY == _mode && _isMainShd )
       {
@@ -862,6 +936,7 @@ namespace engine
       }
 
       SDB_ASSERT( NULL != _accessInfo, "_accessInfo is null" ) ;
+      SDB_ASSERT( length > 0, "length <= 0" ) ;
 
       _accessInfo->lock() ;
       locked = TRUE ;

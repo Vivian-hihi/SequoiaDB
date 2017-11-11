@@ -88,7 +88,7 @@ namespace engine
       INT64             _accessId ;
       ossSpinXLatch     _lock ;
       _rtnLobMetaCache* _metaCache ;
-      _rtnLobSections*  _lobSections ;
+      _rtnLobSections*  _lockSections ;
 
       friend class _rtnLobAccessManager ;
    } ;

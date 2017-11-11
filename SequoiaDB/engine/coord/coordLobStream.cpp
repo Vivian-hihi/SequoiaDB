@@ -76,7 +76,8 @@ namespace engine
     _alignBuf( 0 ),
     _pResource( pResource ),
     _timeout( timeout ),
-    _emptyPageBuf( NULL )
+    _emptyPageBuf( NULL ),
+    _mainStreamOpened( FALSE )
    {
       _pageSize = 0 ;
       SDB_ASSERT( _pResource, "Resource can't be NULL" ) ;
@@ -405,6 +406,23 @@ namespace engine
       {
          builder.append( FIELD_NAME_LOB_CREATETIME, (INT64)_getMeta()._createTime ) ;
       }
+      if ( _mainStreamOpened )
+      {
+         builder.appendBool( FIELD_NAME_LOB_REOPENED, TRUE ) ;
+         if ( SDB_LOB_MODE_WRITE == _getMode() &&
+              !_getLockSections().isEmpty() )
+         {
+            BSONArray array ;
+            rc = _getLockSections().saveTo( array ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "Failed to save LobSections, rc=%d", rc ) ;
+               goto error ;
+            }
+
+            builder.appendArray( FIELD_NAME_LOB_LOCK_SECTIONS, array ) ;
+         }
+      }
       obj = builder.obj() ;
 
       _initHeader( header, MSG_BS_LOB_OPEN_REQ,
@@ -450,29 +468,38 @@ namespace engine
       _add2Subs( reply->header.routeID.columns.groupID,
                  reply->contextID, reply->header.routeID ) ;
 
-      rc = _extractMeta( reply, _metaObj, dataTuple ) ;
-      if ( dataTuple.data && dataTuple.len > 0 )
+      if ( !_mainStreamOpened )
       {
-         /// push data to pool
-         rc = _getPool().push( dataTuple.data,
-                               dataTuple.len,
-                               dataTuple.offset ) ;
-         if ( rc )
+         rc = _extractMeta( reply, _metaObj, dataTuple ) ;
+         if ( dataTuple.data && dataTuple.len > 0 )
          {
-            PD_LOG( PDERROR, "Push data to pool failed, rc:%d", rc ) ;
+            /// push data to pool
+            rc = _getPool().push( dataTuple.data,
+                                  dataTuple.len,
+                                  dataTuple.offset ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Push data to pool failed, rc:%d", rc ) ;
+               goto error ;
+            }
+            _getPool().pushDone() ;
+
+            _getPool().entrust( ( CHAR * )( *_results.begin() ) ) ;
+            _results.erase( _results.begin() ) ;
+         }
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to extract meta data from reply msg:%d",
+                    rc ) ;
             goto error ;
          }
-         _getPool().pushDone() ;
-
-         _getPool().entrust( ( CHAR * )( *_results.begin() ) ) ;
-         _results.erase( _results.begin() ) ;
       }
-      if ( SDB_OK != rc )
+      else
       {
-         PD_LOG( PDERROR, "failed to extract meta data from reply msg:%d",
-                 rc ) ;
-         goto error ;
+         PD_LOG( PDEVENT, "Reopened main stream" ) ;
       }
+
+      _mainStreamOpened = TRUE ;
 
    done:
       _clearMsgData() ;
@@ -480,6 +507,56 @@ namespace engine
       return rc ;
    error:
       _getPool().clear() ;
+      goto done ;
+   }
+
+   //PD_TRACE_DECLARE_FUNCTION( COORD_LOBSTREAM_GETSUBSTREAM, "_coordLobStream::_getSubStream" )
+   INT32 _coordLobStream::_getSubStream( UINT32 groupID, const subStream** sub, _pmdEDUCB* cb )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( COORD_LOBSTREAM_GETSUBSTREAM ) ;
+
+      SDB_ASSERT( NULL != sub, "sub is null" ) ;
+
+      SUB_STREAMS::iterator itr = _subs.find( groupID ) ;
+      if ( _subs.end() == itr )
+      {
+         if ( groupID == _metaGroup )
+         {
+            rc = _openMainStream( getFullName(), getOID(),
+                                  _getMode(), cb ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "failed to open main stream in group[%d], "
+                       "rc: %d", groupID, rc ) ;
+               goto error ;
+            }
+         }
+         else
+         {
+            rc = _openOtherStreams( getFullName(), getOID(),
+                                    _getMode(), cb, &groupID ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "failed to open other stream in group[%d], "
+                       "rc: %d", groupID, rc ) ;
+               goto error ;
+            }
+         }
+         itr = _subs.find( groupID ) ;
+         if ( _subs.end() == itr )
+         {
+            PD_LOG( PDERROR, "group:%d is not in sub streams", groupID ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+      }
+      *sub = &( itr->second ) ;
+
+   done:
+      PD_TRACE_EXITRC( COORD_LOBSTREAM_GETSUBSTREAM, rc ) ;
+      return rc ;
+   error:
       goto done ;
    }
 
@@ -706,7 +783,14 @@ namespace engine
             goto error ;
          }
 
-         RTN_COORD_LOB_GET_SUBSTREAM( groupID, sub ) ;
+         //RTN_COORD_LOB_GET_SUBSTREAM( groupID, sub ) ;
+         rc = _getSubStream( groupID, &sub, cb ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to get sub stream:%d", rc ) ;
+            goto error ;
+         }
+
          header.contextID = sub->contextID ;
 
          pSub = pSession->addSubSession( sub->id.value ) ;
@@ -1298,7 +1382,14 @@ namespace engine
             goto error ;
          }
 
-         RTN_COORD_LOB_GET_SUBSTREAM( groupID, sub ) ;
+         //RTN_COORD_LOB_GET_SUBSTREAM( groupID, sub ) ;
+         rc = _getSubStream( groupID, &sub, cb ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to get sub stream:%d", rc ) ;
+            goto error ;
+         }
+
          header.contextID = sub->contextID ;
 
          pSub = pSession->addSubSession( sub->id.value ) ;
@@ -1886,7 +1977,13 @@ namespace engine
             goto error ;
          }
 
-         RTN_COORD_LOB_GET_SUBSTREAM( groupID, sub ) ;
+         //RTN_COORD_LOB_GET_SUBSTREAM( groupID, sub ) ;
+         rc = _getSubStream( groupID, &sub, cb ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to get sub stream:%d", rc ) ;
+            goto error ;
+         }
 
          dg = &( _dataGroups[groupID] ) ;
          if ( !dg->hasData() )
@@ -1932,7 +2029,13 @@ namespace engine
          goto error ;
       }
 
-      RTN_COORD_LOB_GET_SUBSTREAM( groupID, sub ) ;
+      //RTN_COORD_LOB_GET_SUBSTREAM( groupID, sub ) ;
+      rc = _getSubStream( groupID, &sub, cb ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to get sub stream:%d", rc ) ;
+         goto error ;
+      }
 
       dg = &( _dataGroups[groupID] ) ;
       if ( !dg->hasData() )
