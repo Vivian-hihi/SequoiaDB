@@ -3522,11 +3522,12 @@ error :
 static INT32 _sdbGetNodeSlave ( sdbReplicaGroupHandle cHandle,
                                 const INT32 *positionsArray,
                                 INT32 positionsCount,
-                                BOOLEAN enforce,
+                                BOOLEAN forcedInput,
                                 sdbNodeHandle *handle )
 {
    INT32 rc                      = SDB_OK ;
    sdbRGStruct *r                = (sdbRGStruct*)cHandle ;
+   BOOLEAN needGeneratePosition  = FALSE ;
    BOOLEAN hasPrimary            = TRUE ;
    const CHAR *nodeDatas[7]      = { NULL } ;
    INT32 nodeCount               = 0 ;
@@ -3547,31 +3548,38 @@ static INT32 _sdbGetNodeSlave ( sdbReplicaGroupHandle cHandle,
       goto error ;
    }
    // check arguments
-   if ( NULL == positionsArray || positionsCount <= 0 || positionsCount > 7 )
+   if ( FALSE == forcedInput && NULL == positionsArray && 0 == positionsCount )
+   {
+      needGeneratePosition = TRUE ;
+   }
+   else if ( NULL == positionsArray || positionsCount <= 0 || positionsCount > 7 )
    {
       rc = SDB_INVALIDARG ;
       goto error ;
    }
-   for ( i = 0 ; i < positionsCount ; i++ )
+   if ( !needGeneratePosition )
    {
-      BOOLEAN hasContained = FALSE ;
-      INT32 pos = positionsArray[i] ;
-      if ( pos < 1 || pos > 7 )
+      for ( i = 0 ; i < positionsCount ; i++ )
       {
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-      for ( j = 0 ; j < validPositionsCount ; j++ )
-      {
-         if ( pos == validPositions[j] )
+         BOOLEAN hasContained = FALSE ;
+         INT32 pos = positionsArray[i] ;
+         if ( pos < 1 || pos > 7 )
          {
-            hasContained = TRUE ;
-            break ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
          }
-      }
-      if ( !hasContained )
-      {
-         validPositions[validPositionsCount++] = pos ;
+         for ( j = 0 ; j < validPositionsCount ; j++ )
+         {
+            if ( pos == validPositions[j] )
+            {
+               hasContained = TRUE ;
+               break ;
+            }
+         }
+         if ( !hasContained )
+         {
+            validPositions[validPositionsCount++] = pos ;
+         }
       }
    }
    // get detail of group from catalog
@@ -3670,14 +3678,25 @@ static INT32 _sdbGetNodeSlave ( sdbReplicaGroupHandle cHandle,
          bson_destroy ( &intObj ) ;
       } // while ( bson_iterator_next ( &i ) )
    }
-
    // check
    if ( hasPrimary && 0 == primaryNodePosition )
    {
       rc = SDB_SYS ;
       goto error ;    
    }
-   // Build sdbNode based on hostname and service name
+   // try to generate slave node's positions
+   if ( needGeneratePosition )
+   {
+      for ( i = 0 ; i < nodeCount; i++ )
+      {
+         if ( hasPrimary && primaryNodePosition == i + 1 )
+         {
+            continue ;
+         }
+         validPositions[validPositionsCount++] = i + 1 ;
+      }
+   }
+   // build sdbNode
    if ( 1 == nodeCount )
    {
       rc = _sdbRGExtractNode ( cHandle, handle, nodeDatas[0],
@@ -3685,7 +3704,7 @@ static INT32 _sdbGetNodeSlave ( sdbReplicaGroupHandle cHandle,
       if ( SDB_OK != rc )
       {
          goto error ;
-      }   
+      }
    }
    else if ( 1 == validPositionsCount )
    {
@@ -3702,36 +3721,53 @@ static INT32 _sdbGetNodeSlave ( sdbReplicaGroupHandle cHandle,
       INT32 position = 0 ;
       INT32 nodeIndex = -1 ;
       INT32 rand = _sdbRand() ;
-      INT32 validPositionsCopy[7]   = { 0 } ;
-      INT32 validPositionsCopyCount = 0 ;
+      INT32 flags[7] = { 0 } ;
+      INT32 includePrimaryPositions[7]   = { 0 } ;
+      INT32 includePrimaryPositionsCount = 0 ;
+      INT32 excludePrimaryPositions[7]   = { 0 } ;
+      INT32 excludePrimaryPositionsCount = 0 ;
+      
       for ( i = 0 ; i < validPositionsCount ; i++ )
       {
          INT32 pos = validPositions[i] ;
          if ( pos <= nodeCount )
          {
-            if ( primaryNodePosition != pos )
+            nodeIndex = pos - 1 ;
+            if ( flags[nodeIndex] == 0 )
             {
-               validPositionsCopy[validPositionsCopyCount++] = pos ;
+               flags[nodeIndex] = 1 ;
+               includePrimaryPositions[includePrimaryPositionsCount++] = pos ;
+               if ( hasPrimary && primaryNodePosition != pos )
+               {
+                  excludePrimaryPositions[excludePrimaryPositionsCount++] = pos ;
+               }             
             }
          }
          else
          {
-            if ( primaryNodePosition != ( pos - 1 ) % nodeCount + 1 )
+            nodeIndex = ( pos - 1 ) % nodeCount ;
+            if ( flags[nodeIndex] == 0 )
             {
-               validPositionsCopy[validPositionsCopyCount++] = pos ;
+               flags[nodeIndex] = 1 ;
+               includePrimaryPositions[includePrimaryPositionsCount++] = pos ;
+               if ( hasPrimary && 
+                    primaryNodePosition != nodeIndex + 1 )
+               {
+                  excludePrimaryPositions[excludePrimaryPositionsCount++] = pos ;
+               }
             }
          }
       }
-      if ( validPositionsCopyCount > 0 )
+      if ( excludePrimaryPositionsCount > 0 )
       {
-         position = rand % validPositionsCopyCount ;
-         position = validPositionsCopy[position];
+         position = rand % excludePrimaryPositionsCount ;
+         position = excludePrimaryPositions[position] ;
       }
       else
       {
-         position = rand % validPositionsCount ;
-         position = validPositions[position] ;
-         if ( enforce )
+         position = rand % includePrimaryPositionsCount ;
+         position = includePrimaryPositions[position] ;
+         if ( needGeneratePosition )
          {
             position += 1 ;
          }
@@ -3759,20 +3795,13 @@ SDB_EXPORT INT32 sdbGetNodeSlave1 ( sdbReplicaGroupHandle cHandle,
                                     sdbNodeHandle *handle )
 {
    return _sdbGetNodeSlave( cHandle, positionsArray,
-                            positionsCount, FALSE, handle ) ;
+                            positionsCount, TRUE, handle ) ;
 }
 
 SDB_EXPORT INT32 sdbGetNodeSlave ( sdbReplicaGroupHandle cHandle,
                                    sdbNodeHandle *handle )
 {
-   INT32 positionsArray[2] = { 0 } ;
-   INT32 positionsCount = 2 ;
-   INT32 pos1 = _sdbRand() % 7 + 1 ;
-   INT32 pos2 = pos1 % 7 + 1 ;
-   positionsArray[0] = pos1 ;
-   positionsArray[1] = pos2 ;
-   return _sdbGetNodeSlave( cHandle, positionsArray,
-                            positionsCount, TRUE, handle ) ;
+   return _sdbGetNodeSlave( cHandle, NULL, 0, FALSE, handle ) ;
 }
 
 SDB_EXPORT INT32 sdbGetNodeByName ( sdbReplicaGroupHandle cHandle,

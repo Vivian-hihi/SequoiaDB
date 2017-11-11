@@ -4154,12 +4154,12 @@ error:
       BSONElement ele ;
       vector<const CHAR*> nodeDatas ;
       vector<INT32>::const_iterator it ;
-      vector<INT32> nodePositions ;
+      vector<INT32> validPositions ;
       INT32 nodeCount = 0 ;
       INT32 primaryNodeId = -1 ;
       INT32 primaryNodePosition = 0 ;
       BOOLEAN hasPrimary = TRUE ;
-      BOOLEAN enforce = FALSE ;
+      BOOLEAN needGeneratePosition = FALSE ;
 
       // check arguments
       if ( !_connection || !node )
@@ -4169,14 +4169,14 @@ error:
       }
       for ( it = positions.begin(); it != positions.end(); it++ )
       {
-         vector<INT32>::iterator it_inner = nodePositions.begin() ;
+         vector<INT32>::iterator it_inner = validPositions.begin() ;
          BOOLEAN hasContained = FALSE ;
          if ( *it < 1 || *it > 7 )
          {
             rc = SDB_INVALIDARG ;
             goto error ;
          }
-         for ( ; it_inner != nodePositions.end(); it_inner++ )
+         for ( ; it_inner != validPositions.end(); it_inner++ )
          {
             if ( *it == *it_inner )
             {
@@ -4186,18 +4186,14 @@ error:
          }
          if ( !hasContained )
          {
-            nodePositions.push_back( *it ) ;
+            validPositions.push_back( *it ) ;
          }
       }
       // when user do not specify any positions,
       // we add 2 to select a slave node
-      if ( nodePositions.size() == 0 )
+      if ( validPositions.size() == 0 )
       {
-         INT32 pos1 = _sdbRand() % 7 + 1 ;
-         INT32 pos2 = pos1 % 7 + 1 ;
-         nodePositions.push_back( pos1 ) ;
-         nodePositions.push_back( pos2 ) ;
-         enforce = TRUE ;
+         needGeneratePosition = TRUE ;
       }
       // get detail of group from catalog
       rc = getDetail ( result ) ;
@@ -4290,8 +4286,21 @@ error:
          rc = SDB_SYS ;
          goto error ;
       }
-      // Build sdbNode based on hostname and service name
+      // try to generate slave node's positions
       nodeCount = nodeDatas.size() ;
+      if ( needGeneratePosition )
+      {
+         INT32 i = 0 ;
+         for ( ; i < nodeCount ; i++ )
+         {
+            if ( hasPrimary && primaryNodePosition == i + 1 )
+            {
+               continue ;
+            }
+            validPositions.push_back( i + 1 ) ;
+         }
+      }
+      // Build sdbNode based on hostname and service name
       if ( nodeCount == 1 )
       {
          rc = _extractNode ( node, nodeDatas[0] ) ;
@@ -4300,9 +4309,9 @@ error:
             goto error ;
          }
       }
-      else if ( nodePositions.size() == 1 )
+      else if ( validPositions.size() == 1 )
       {
-         INT32 idx = ( nodePositions[0] - 1 ) % nodeCount ;
+         INT32 idx = ( validPositions[0] - 1 ) % nodeCount ;
          rc = _extractNode ( node, nodeDatas[idx] ) ;
          if ( rc )
          {
@@ -4311,54 +4320,56 @@ error:
       }
       else
       {
-         INT32 rand = _sdbRand() ;
          INT32 position = 0 ;
          INT32 nodeIndex = -1 ;
-         vector<INT32> nodePositionsCopy = nodePositions ;
-         if ( hasPrimary )
+         INT32 flags[7] = { 0 } ;
+         INT32 rand = _sdbRand() ;
+         vector<INT32> includePrimaryPositions ;
+         vector<INT32> excludePrimaryPositions ;
+         vector<INT32>::iterator it = validPositions.begin() ;
+         for ( ; it != validPositions.end() ; it++ )
          {
-            vector<INT32>::iterator it = nodePositionsCopy.begin() ;
-            // remove the position of primary nodes in the vector
-            while ( it != nodePositionsCopy.end() )
+            INT32 pos = *it ;
+            if ( pos <= nodeCount )
             {
-               INT32 pos = *it ;
-               if ( pos <= nodeCount )
+               nodeIndex = pos - 1 ;
+               if ( flags[nodeIndex] == 0 )
                {
-                  if ( primaryNodePosition == pos )
+                  flags[nodeIndex] = 1 ;
+                  includePrimaryPositions.push_back( pos ) ;
+                  if ( hasPrimary && primaryNodePosition != pos )
                   {
-                     it = nodePositionsCopy.erase( it ) ;
-                  }
-                  else
-                  {
-                     it++ ;
+                     excludePrimaryPositions.push_back( pos ) ;
                   }
                }
-               else
+            }
+            else
+            {
+               nodeIndex = ( pos - 1 ) % nodeCount ;
+               if ( flags[nodeIndex] == 0 )
                {
-                  if ( primaryNodePosition == ( pos - 1 ) % nodeCount + 1 )
+                  flags[nodeIndex] = 1 ;
+                  includePrimaryPositions.push_back( pos ) ;
+                  if ( hasPrimary && primaryNodePosition != nodeIndex + 1 )
                   {
-                     it = nodePositionsCopy.erase( it ) ;         
-                  }
-                  else
-                  {
-                     it++ ;
+                     excludePrimaryPositions.push_back( pos ) ;
                   }
                }
             }
          }
          // after removing, let's select a slave node
-         if ( nodePositionsCopy.size() > 0 )
+         if ( excludePrimaryPositions.size() > 0 )
          {
-            position = rand % nodePositionsCopy.size() ;
-            position = nodePositionsCopy[position] ;
+            position = rand % excludePrimaryPositions.size() ;
+            position = excludePrimaryPositions[position] ;
          }
          else
          {
-            position = rand % nodePositions.size() ;
-            position = nodePositions[position] ;
-            if ( enforce )
+            position = rand % includePrimaryPositions.size() ;
+            position = includePrimaryPositions[position] ;
+            if ( needGeneratePosition )
             {
-               position += 1 ;   
+               position += 1 ;
             }
          }
          nodeIndex = ( position - 1 ) % nodeCount ;
