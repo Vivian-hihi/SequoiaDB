@@ -49,6 +49,7 @@
 #include "dms.hpp"
 #include "dmsStorageUnit.hpp"
 #include "mthMatchRuntime.hpp"
+#include "optAccessPlanHelper.hpp"
 
 using namespace bson ;
 
@@ -240,7 +241,7 @@ namespace engine
             _isValid = TRUE ;
          }
 
-         INT32 normalize ( mthMatchHelper &matchHelper,
+         INT32 normalize ( optAccessPlanHelper &planHelper,
                            mthMatchRuntime *matchRuntime ) ;
 
          OSS_INLINE const CHAR *getCacheLevelName () const

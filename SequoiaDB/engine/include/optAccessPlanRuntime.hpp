@@ -238,7 +238,7 @@ namespace engine
             _isNewPlan = isNewPlan ;
          }
 
-         INT32 bindParamPlan ( mthMatchHelper &matchHelper,
+         INT32 bindParamPlan ( optAccessPlanHelper &planHelper,
                                optAccessPlan *plan ) ;
 
          OSS_INLINE optAccessPlan *getPlan ()

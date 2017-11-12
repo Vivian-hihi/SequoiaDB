@@ -49,138 +49,6 @@ namespace engine
 {
 
    /*
-      _mthMatchHelper implement
-    */
-   _mthMatchHelper::_mthMatchHelper ( OPT_PLAN_CACHE_LEVEL cacheLevel,
-                                      const mthNodeConfig &config )
-   : _mthMatchTreeHolder(),
-     _mthMatchConfigHolder( config ),
-     _normalizer( getMatchConfigPtr() )
-   {
-      _cacheLevel = cacheLevel ;
-
-      // Adjust with cache level
-      setMthEnableParameterized( config._enableParameterized &&
-                                 ( cacheLevel >= OPT_PLAN_PARAMETERIZED ) ) ;
-      setMthEnableFuzzyOptr( config._enableFuzzyOptr &&
-                             ( cacheLevel >= OPT_PLAN_FUZZYOPTR ) ) ;
-
-      _isEstimated      = FALSE ;
-      _estSelectivity   = OPT_MTH_DEFAULT_SELECTIVITY ;
-      _predSelectivity  = OPT_MTH_DEFAULT_SELECTIVITY ;
-      _scanSelectivity  = OPT_MTH_DEFAULT_SELECTIVITY ;
-      _estCPUCost       = OPT_MTH_OPTR_DEFAULT_SELECTIVITY ;
-
-   }
-
-   _mthMatchHelper::~_mthMatchHelper ()
-   {
-      clear() ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__MTHHELP_CLEAR, "_mthMatchHelper::clear" )
-   void _mthMatchHelper::clear ()
-   {
-      _mthMatchTreeHolder::setMatchTree( NULL ) ;
-      _predicateSet.clear() ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__MTHHELP_SETMTH, "_mthMatchHelper::setMatcher" )
-   void _mthMatchHelper::setMatchTree ( _mthMatchTree *matchTree )
-   {
-      PD_TRACE_ENTRY( SDB__MTHHELP_SETMTH ) ;
-
-      _mthMatchTreeHolder::setMatchTree( matchTree ) ;
-      _predicateSet.clear() ;
-
-      _isEstimated         = FALSE ;
-      _estSelectivity      = OPT_MTH_DEFAULT_SELECTIVITY ;
-      _predSelectivity     = OPT_MTH_DEFAULT_SELECTIVITY ;
-      _scanSelectivity     = OPT_MTH_DEFAULT_SELECTIVITY ;
-      _estCPUCost          = OPT_MTH_OPTR_DEFAULT_SELECTIVITY ;
-
-      PD_TRACE_EXIT( SDB__MTHHELP_SETMTH ) ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__MTHHELP_GETEST, "_mthMatchHelper::getEstimation" )
-   void _mthMatchHelper::getEstimation ( optCollectionStat *pCollectionStat,
-                                         double &estSelectivity,
-                                         UINT32 &estCPUCost )
-   {
-      PD_TRACE_ENTRY( SDB__MTHHELP_GETEST ) ;
-
-      if ( !_isEstimated )
-      {
-         _evalEstimation( pCollectionStat ) ;
-      }
-      estSelectivity = _estSelectivity ;
-      estCPUCost = _estCPUCost ;
-
-      PD_TRACE_EXIT( SDB__MTHHELP_GETEST ) ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__MTHHELP__EVALEST, "_mthMatchHelper::_evalEstimation" )
-   void _mthMatchHelper::_evalEstimation ( optCollectionStat *pCollectionStat )
-   {
-      PD_TRACE_ENTRY( SDB__MTHHELP__EVALEST ) ;
-
-      double predSelectivity = OPT_MTH_DEFAULT_SELECTIVITY ;
-      double scanSelectivity = OPT_MTH_DEFAULT_SELECTIVITY ;
-      double tmpSelectivity = OPT_MTH_DEFAULT_SELECTIVITY ;
-      UINT32 tmpCPUCost = OPT_MTH_DEFAULT_CPU_COST ;
-
-      if ( _matchTree != NULL )
-      {
-         if ( pCollectionStat )
-         {
-            predSelectivity = pCollectionStat->evalPredicateSet(
-                  _predicateSet, mthEnabledMixCmp(), scanSelectivity ) ;
-         }
-         _matchTree->evalEstimation( pCollectionStat, tmpSelectivity,
-                                     tmpCPUCost ) ;
-         tmpSelectivity *= predSelectivity ;
-      }
-
-      _estSelectivity = OPT_ROUND_SELECTIVITY( tmpSelectivity ) ;
-      _predSelectivity = OPT_ROUND_SELECTIVITY( predSelectivity ) ;
-      _scanSelectivity = OPT_ROUND_SELECTIVITY( scanSelectivity ) ;
-      _estCPUCost = tmpCPUCost ;
-      _isEstimated = TRUE ;
-
-      PD_TRACE_EXIT( SDB__MTHHELP__EVALEST ) ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__MTHHELP_GENSIMMTH, "_mthMatchHelper::generateSimpleMatcher" )
-   INT32 _mthMatchHelper::normalizeQuery ( const BSONObj &query,
-                                           BSONObjBuilder &normalBuilder,
-                                           rtnParamList &parameters,
-                                           BOOLEAN &invalidMatcher )
-   {
-      INT32 rc = SDB_OK ;
-
-      PD_TRACE_ENTRY( SDB__MTHHELP_GENSIMMTH ) ;
-
-      // No need to be copied
-      _query = query ;
-
-      // Normalize the query with simple parser
-      rc = _normalizer.normalize( query, normalBuilder, parameters ) ;
-      invalidMatcher = _normalizer.isInvalidMatcher() ;
-      PD_RC_CHECK( rc, invalidMatcher ? PDERROR : PDDEBUG,
-                   "Failed to normalize query [%s] with normalizer, rc: %d",
-                   query.toString( FALSE, TRUE ).c_str(), rc ) ;
-
-   done :
-      PD_TRACE_EXITRC( SDB__MTHHELP_GENSIMMTH, rc ) ;
-      return rc ;
-
-   error :
-      _normalizer.clear() ;
-      parameters.clearParams() ;
-      goto done ;
-   }
-
-   /*
       _mthMatchRuntime implement
     */
    _mthMatchRuntime::_mthMatchRuntime ()
@@ -208,9 +76,10 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__MTHRTM_GENPREDLST, "_mthMatchRuntime::generatePredList" )
-   INT32 _mthMatchRuntime::generatePredList ( mthMatchHelper &matchHelper,
+   INT32 _mthMatchRuntime::generatePredList ( const rtnPredicateSet &predicateSet,
                                               const BSONObj &keyPattern,
-                                              INT32 direction )
+                                              INT32 direction,
+                                              mthMatchNormalizer &normalizer )
    {
       INT32 rc = SDB_OK ;
 
@@ -220,7 +89,6 @@ namespace engine
 
       if ( NULL != _matchTree )
       {
-         rtnPredicateSet &predicateSet = matchHelper.getPredicateSet() ;
          RTN_PARAM_PREDICATE_LIST *paramPredList = getParamPredList() ;
 
          // Create predicate list
@@ -230,8 +98,7 @@ namespace engine
             // Not parameterized, initialize with predicate set
             rc = _predList.initialize( predicateSet, keyPattern, direction,
                                        addedLevel ) ;
-            matchHelper.getNormalizer().setDoneByPred( keyPattern,
-                                                       addedLevel ) ;
+            normalizer.setDoneByPred( keyPattern, addedLevel ) ;
          }
          else if ( paramPredList->empty() )
          {

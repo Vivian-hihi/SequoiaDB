@@ -41,9 +41,9 @@
 
 #include "core.hpp"
 #include "oss.hpp"
-#include "mthMatchRuntime.hpp"
-#include "optStatUnit.hpp"
 #include "optCommon.hpp"
+#include "optAccessPlanHelper.hpp"
+#include "optStatUnit.hpp"
 #include "utilAllocator.hpp"
 
 using namespace std ;
@@ -301,7 +301,7 @@ namespace engine
 
       protected :
          void _preEvaluate ( const BSONObj &selector,
-                             mthMatchHelper &matchHelper,
+                             optAccessPlanHelper &planHelper,
                              optCollectionStat *collectionStat ) ;
 
          void _evalOutRecordSize () ;
@@ -354,7 +354,7 @@ namespace engine
          virtual ~_optTbScanNode () {}
 
          void preEvaluate ( const BSONObj &selector,
-                            mthMatchHelper &matchHelper,
+                            optAccessPlanHelper &planHelper,
                             optCollectionStat *collectionStat ) ;
 
          virtual void evaluate () ;
@@ -404,7 +404,7 @@ namespace engine
          virtual ~_optIxScanNode () {}
 
          void preEvaluate ( const BSONObj &selector,
-                            mthMatchHelper &matchHelper,
+                            optAccessPlanHelper &planHelper,
                             const BSONObj &boOrder,
                             OPT_PLAN_PATH_PRIORITY priority,
                             optCollectionStat *collectionStat,
@@ -480,7 +480,7 @@ namespace engine
          }
 
       protected :
-         void _evalPredEstimation ( mthMatchHelper &matchHelper,
+         void _evalPredEstimation ( optAccessPlanHelper &planHelper,
                                     const BSONObj &boOrder,
                                     BOOLEAN isBestIndex,
                                     const optIndexStat *indexStat ) ;
@@ -722,14 +722,14 @@ namespace engine
 
          INT32 createTbScan ( const CHAR *pCollection,
                               const BSONObj &selector,
-                              mthMatchHelper &matchHelper,
+                              optAccessPlanHelper &planHelper,
                               INT32 estCacheSize,
                               optCollectionStat *collectionStat ) ;
 
          INT32 createIxScan ( const CHAR *pCollection,
                               const ixmIndexCB &indexCB,
                               const BSONObj &selector,
-                              mthMatchHelper &matchHelper,
+                              optAccessPlanHelper &planHelper,
                               const BSONObj &boOrder,
                               OPT_PLAN_PATH_PRIORITY priority,
                               INT32 estCacheSize,

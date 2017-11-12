@@ -189,7 +189,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTAPKEY_NORMALIZE, "_optAccessPlanKey::normalize" )
-   INT32 _optAccessPlanKey::normalize ( mthMatchHelper &matchHelper,
+   INT32 _optAccessPlanKey::normalize ( optAccessPlanHelper &planHelper,
                                         mthMatchRuntime *matchRuntime )
    {
       INT32 rc = SDB_OK ;
@@ -204,10 +204,10 @@ namespace engine
       // Copy the query
       matchRuntime->setQuery( _query, TRUE ) ;
 
-      rc = matchHelper.normalizeQuery( matchRuntime->getQuery(),
-                                       normalBuilder,
-                                       matchRuntime->getParameters(),
-                                       invalidMatcher ) ;
+      rc = planHelper.normalizeQuery( matchRuntime->getQuery(),
+                                      normalBuilder,
+                                      matchRuntime->getParameters(),
+                                      invalidMatcher ) ;
       if ( SDB_OK == rc )
       {
          _normalizedQuery = normalBuilder.obj() ;
@@ -217,8 +217,8 @@ namespace engine
               _cacheLevel >= OPT_PLAN_PARAMETERIZED )
          {
             _cacheLevel = OPT_PLAN_NORMALIZED ;
-            matchHelper.setMthEnableFuzzyOptr( FALSE ) ;
-            matchHelper.setMthEnableParameterized( FALSE ) ;
+            planHelper.setMthEnableFuzzyOptr( FALSE ) ;
+            planHelper.setMthEnableParameterized( FALSE ) ;
          }
          goto done ;
       }

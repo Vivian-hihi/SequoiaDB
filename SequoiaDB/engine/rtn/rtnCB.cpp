@@ -214,6 +214,8 @@ namespace engine
               SDB_ROLE_STANDALONE == pmdGetDBRole() ) ?
              pmdGetOptionCB()->getPlanBuckets() : 0,
             (OPT_PLAN_CACHE_LEVEL) pmdGetOptionCB()->getPlanCacheLevel(),
+            pmdGetOptionCB()->getSortBufSize(),
+            pmdGetOptionCB()->getOptCostThreshold(),
             pmdGetOptionCB()->isEnabledMixCmp() ) ;
 
    done:
@@ -282,6 +284,8 @@ namespace engine
    {
       _accessPlanManager.reinit(
             (OPT_PLAN_CACHE_LEVEL) pmdGetOptionCB()->getPlanCacheLevel(),
+            pmdGetOptionCB()->getSortBufSize(),
+            pmdGetOptionCB()->getOptCostThreshold(),
             pmdGetOptionCB()->isEnabledMixCmp() ) ;
    }
 

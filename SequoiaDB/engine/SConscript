@@ -337,7 +337,8 @@ optFiles = [
       "opt/optAPM.cpp",
       "opt/optAccessPlanKey.cpp",
       "opt/optPlanClearJob.cpp",
-      "opt/optAccessPlanRuntime.cpp"
+      "opt/optAccessPlanRuntime.cpp",
+      "opt/optAccessPlanHelper.cpp"
       ]
 
 monFiles = [

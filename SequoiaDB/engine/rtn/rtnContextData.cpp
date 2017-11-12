@@ -1683,7 +1683,7 @@ namespace engine
       SDB_ASSERT( NULL != cb, "possible" ) ;
       SDB_ASSERT( NULL != context, "impossible" ) ;
       INT32 rc = SDB_OK ;
-      UINT64 sortBufSz = pmdGetOptionCB()->getSortBufSize() ;
+      UINT64 sortBufSz = sdbGetRTNCB()->getAPM()->getSortBufferSize() ;
       SINT64 limit = numToReturn ;
 
       if ( 0 < limit && 0 < numToSkip )

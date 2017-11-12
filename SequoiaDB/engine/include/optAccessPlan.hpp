@@ -230,7 +230,7 @@ namespace engine
       protected :
          virtual void _toBSONInternal ( BSONObjBuilder &builder ) const = 0 ;
 
-         virtual INT32 _prepareMatchTree ( mthMatchHelper &matchHelper ) ;
+         virtual INT32 _prepareMatchTree ( optAccessPlanHelper &planHelper ) ;
 
       protected :
          optAccessPlanKey  _key ;
@@ -266,7 +266,7 @@ namespace engine
 
          INT32 optimize ( dmsStorageUnit *su,
                           dmsMBContext *mbContext,
-                          mthMatchHelper &matchHelper ) ;
+                          optAccessPlanHelper &planHelper ) ;
 
          OSS_INLINE virtual OPT_PLAN_TYPE getPlanType () const
          {
@@ -352,18 +352,18 @@ namespace engine
 
          INT32 _estimateHintPlans ( dmsStorageUnit *su,
                                     dmsMBContext *mbContext,
-                                    mthMatchHelper &matchHelper,
+                                    optAccessPlanHelper &planHelper,
                                     dmsStatCache *statCache ) ;
 
          INT32 _estimatePlans ( dmsStorageUnit *su,
                                 dmsMBContext *mbContext,
-                                mthMatchHelper &matchHelper,
+                                optAccessPlanHelper &planHelper,
                                 dmsStatCache *statCache ) ;
 
          INT32 _estimateIxScanPlan ( dmsStorageUnit *su,
                                      dmsMBContext *mbContext,
                                      optCollectionStat *collectionStat,
-                                     mthMatchHelper &matchHelper,
+                                     optAccessPlanHelper &planHelper,
                                      const CHAR *pIndexName,
                                      OPT_PLAN_PATH_PRIORITY priority,
                                      UINT64 sortBufferSize,
@@ -373,7 +373,7 @@ namespace engine
          INT32 _estimateIxScanPlan ( dmsStorageUnit *su,
                                      dmsMBContext *mbContext,
                                      optCollectionStat *collectionStat,
-                                     mthMatchHelper &matchHelper,
+                                     optAccessPlanHelper &planHelper,
                                      const OID &indexOID,
                                      OPT_PLAN_PATH_PRIORITY priority,
                                      UINT64 sortBufferSize,
@@ -382,7 +382,7 @@ namespace engine
 
          INT32 _estimateIxScanPlan ( dmsStorageUnit *su,
                                      optCollectionStat *collectionStat,
-                                     mthMatchHelper &matchHelper,
+                                     optAccessPlanHelper &planHelper,
                                      dmsExtentID indexCBExtent,
                                      OPT_PLAN_PATH_PRIORITY priority,
                                      UINT64 sortBufferSize,
@@ -390,13 +390,13 @@ namespace engine
                                      optScanPath &ixScanPath ) ;
 
          INT32 _estimateTbScanPlan ( optCollectionStat *collectionStat,
-                                     mthMatchHelper &matchHelper,
+                                     optAccessPlanHelper &planHelper,
                                      UINT64 sortBufferSize,
                                      INT32 estCacheSize,
                                      optScanPath &tbScanPath ) ;
 
          INT32 _usePath ( dmsStorageUnit *su,
-                          mthMatchHelper &matchHelper,
+                          optAccessPlanHelper &planHelper,
                           optScanPath &path ) ;
 
          INT32 _prepareSUCaches ( dmsStorageUnit *su,
@@ -552,9 +552,9 @@ namespace engine
             return _isMainCLValid ;
          }
 
-         INT32 prepareBindSubCL ( mthMatchHelper &matchHelper ) ;
+         INT32 prepareBindSubCL ( optAccessPlanHelper &planHelper ) ;
 
-         INT32 bindSubCLAccessPlan ( mthMatchHelper &matchHelper,
+         INT32 bindSubCLAccessPlan ( optAccessPlanHelper &planHelper,
                                      optGeneralAccessPlan *subPlan ) ;
 
          BOOLEAN validateSubCL ( const optGeneralAccessPlan *plan ) ;

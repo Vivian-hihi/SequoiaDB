@@ -244,7 +244,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTAPRTM_BINDPARAMPLAN, "_optAccessPlanRuntime::bindParamPlan" )
-   INT32 _optAccessPlanRuntime::bindParamPlan ( mthMatchHelper &matchHelper,
+   INT32 _optAccessPlanRuntime::bindParamPlan ( optAccessPlanHelper &planHelper,
                                                 optAccessPlan *plan )
    {
       INT32 rc = SDB_OK ;
@@ -273,9 +273,10 @@ namespace engine
            NULL == matchRuntime->getPredList() &&
            !plan->getMatchRuntime()->isFixedPredList() )
       {
-         rc = matchRuntime->generatePredList( matchHelper,
+         rc = matchRuntime->generatePredList( planHelper.getPredicateSet(),
                                               plan->getKeyPattern(),
-                                              plan->getDirection() ) ;
+                                              plan->getDirection(),
+                                              planHelper.getNormalizer() ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to generate predicate list, rc: %d",
                       rc ) ;
       }

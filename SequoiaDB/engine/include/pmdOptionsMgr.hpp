@@ -544,7 +544,7 @@ namespace engine
          OSS_INLINE UINT32 getDmsChkInterval() const { return _dmsChkInterval ; }
          OSS_INLINE UINT32 getCacheMergeSize() const { return _cacheMergeSize << 20 ; }
          OSS_INLINE BOOLEAN isEnabledPerfStat() const { return _perfStat ; }
-         OSS_INLINE INT32 getOptEstCacheSize() const { return _optEstCacheSize ; }
+         OSS_INLINE INT32 getOptCostThreshold() const { return _optCostThreshold ; }
          OSS_INLINE BOOLEAN isEnabledMixCmp() const { return _enableMixCmp ; }
          OSS_INLINE UINT32  getDataErrorOp() const { return _dataErrorOp ; }
          OSS_INLINE UINT32 getPlanCacheLevel() const { return _optPlanCacheLevel ; }
@@ -633,7 +633,7 @@ namespace engine
          UINT32      _dmsChkInterval ;
          UINT32      _cacheMergeSize ;
          BOOLEAN     _perfStat ;
-         INT32       _optEstCacheSize ;
+         INT32       _optCostThreshold ;
          BOOLEAN     _enableMixCmp ;
          UINT32      _optPlanCacheLevel ;
 

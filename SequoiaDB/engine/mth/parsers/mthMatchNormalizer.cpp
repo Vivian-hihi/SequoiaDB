@@ -579,6 +579,11 @@ namespace engine
    void _mthMatchNormalizer::setDoneByPred ( const BSONObj &keyPattern,
                                              UINT32 addedLevel )
    {
+      if ( _itemNumber == 0 )
+      {
+         return ;
+      }
+
       UINT32 level = 0 ;
       BSONObjIterator iter( keyPattern ) ;
       while ( iter.more() && level < addedLevel )

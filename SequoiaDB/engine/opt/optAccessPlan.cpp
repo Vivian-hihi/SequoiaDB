@@ -155,13 +155,13 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTACPLAN__PREMTHTREE, "_optAccessPlan::_prepareMatchTree" )
-   INT32 _optAccessPlan::_prepareMatchTree ( mthMatchHelper &matchHelper )
+   INT32 _optAccessPlan::_prepareMatchTree ( optAccessPlanHelper &planHelper )
    {
       INT32 rc = SDB_OK ;
 
       PD_TRACE_ENTRY( SDB__OPTACPLAN__PREMTHTREE ) ;
 
-      matchHelper.setMatchTree( getMatchTree() ) ;
+      planHelper.setMatchTree( getMatchTree() ) ;
 
       switch ( _key.getCacheLevel() )
       {
@@ -172,7 +172,7 @@ namespace engine
             rc = getMatchTree()->loadPattern( _key.getQuery(), FALSE ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to load query, rc: %d", rc ) ;
 
-            rc = getMatchTree()->calcPredicate( matchHelper.getPredicateSet() ) ;
+            rc = getMatchTree()->calcPredicate( planHelper.getPredicateSet() ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to set predicate, rc: %d", rc ) ;
 
             break ;
@@ -182,11 +182,11 @@ namespace engine
          case OPT_PLAN_FUZZYOPTR :
          {
             // Load pattern from normalizer
-            rc = getMatchTree()->loadPattern( matchHelper.getQuery(),
-                                              matchHelper.getNormalizer() ) ;
+            rc = getMatchTree()->loadPattern( planHelper.getQuery(),
+                                              planHelper.getNormalizer() ) ;
             PD_RC_CHECK ( rc, PDERROR, "Failed to load query, rc: %d", rc ) ;
 
-            rc = getMatchTree()->calcPredicate( matchHelper.getPredicateSet() ) ;
+            rc = getMatchTree()->calcPredicate( planHelper.getPredicateSet() ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to set predicate, rc: %d",
                          rc ) ;
 
@@ -267,7 +267,7 @@ namespace engine
    INT32 _optGeneralAccessPlan::_estimateIxScanPlan ( dmsStorageUnit *su,
                                                       dmsMBContext *mbContext,
                                                       optCollectionStat *collectionStat,
-                                                      mthMatchHelper &matchHelper,
+                                                      optAccessPlanHelper &planHelper,
                                                       const CHAR *pIndexName,
                                                       OPT_PLAN_PATH_PRIORITY priority,
                                                       UINT64 sortBufferSize,
@@ -290,7 +290,7 @@ namespace engine
                    "collection [%s], index [%s], rc: %d", _key.getCLFullName(),
                    pIndexName, rc ) ;
 
-      rc = _estimateIxScanPlan( su, collectionStat, matchHelper, indexCBExtent,
+      rc = _estimateIxScanPlan( su, collectionStat, planHelper, indexCBExtent,
                                 priority, sortBufferSize, estCacheSize,
                                 ixScanPath ) ;
       PD_RC_CHECK( rc, PDWARNING, "Failed to estimate ixscan plan for "
@@ -308,7 +308,7 @@ namespace engine
    INT32 _optGeneralAccessPlan::_estimateIxScanPlan ( dmsStorageUnit *su,
                                                       dmsMBContext *mbContext,
                                                       optCollectionStat *collectionStat,
-                                                      mthMatchHelper &matchHelper,
+                                                      optAccessPlanHelper &planHelper,
                                                       const OID &indexOID,
                                                       OPT_PLAN_PATH_PRIORITY priority,
                                                       UINT64 sortBufferSize,
@@ -329,7 +329,7 @@ namespace engine
                    "collection [%s], index [%s], rc: %d", _key.getCLFullName(),
                    indexOID.toString().c_str(), rc ) ;
 
-      rc = _estimateIxScanPlan( su, collectionStat, matchHelper, indexCBExtent,
+      rc = _estimateIxScanPlan( su, collectionStat, planHelper, indexCBExtent,
                                 priority, sortBufferSize, estCacheSize,
                                 ixScanPath ) ;
       PD_RC_CHECK( rc, PDWARNING, "Failed to estimate ixscan plan for "
@@ -346,7 +346,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTGENACPLAN__ESTIXPLAN, "_optGeneralAccessPlan::_estimateIxScanPlan" )
    INT32 _optGeneralAccessPlan::_estimateIxScanPlan ( dmsStorageUnit *su,
                                                       optCollectionStat *collectionStat,
-                                                      mthMatchHelper &matchHelper,
+                                                      optAccessPlanHelper &planHelper,
                                                       dmsExtentID indexCBExtent,
                                                       OPT_PLAN_PATH_PRIORITY priority,
                                                       UINT64 sortBufferSize,
@@ -374,7 +374,7 @@ namespace engine
          optIndexStat indexStat( *collectionStat, indexCB ) ;
 
          rc = ixScanPath.createIxScan( _key.getCLFullName(), indexCB,
-                                       _key.getSelector(), matchHelper,
+                                       _key.getSelector(), planHelper,
                                        _key.getOrderBy(), priority,
                                        estCacheSize, collectionStat,
                                        &indexStat ) ;
@@ -406,7 +406,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTGENACPLAN__ESTTBPLAN, "_optGeneralAccessPlan::_estimateTbScanPlan" )
    INT32 _optGeneralAccessPlan::_estimateTbScanPlan ( optCollectionStat *collectionStat,
-                                                      mthMatchHelper &matchHelper,
+                                                      optAccessPlanHelper &planHelper,
                                                       UINT64 sortBufferSize,
                                                       INT32 estCacheSize,
                                                       optScanPath &tbScanPath )
@@ -418,7 +418,7 @@ namespace engine
       SDB_ASSERT( collectionStat, "collection is invalid" ) ;
 
       rc = tbScanPath.createTbScan( _key.getCLFullName(), _key.getSelector(),
-                                    matchHelper, estCacheSize,
+                                    planHelper, estCacheSize,
                                     collectionStat ) ;
       PD_RC_CHECK( rc, PDWARNING,
                    "Failed to create index scan node, rc: %d", rc ) ;
@@ -437,15 +437,15 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTGENACPLAN__ESTHINTPLANS, "_optGeneralAccessPlan::_estimateHintPlans" )
    INT32 _optGeneralAccessPlan::_estimateHintPlans ( dmsStorageUnit *su,
                                                      dmsMBContext *mbContext,
-                                                     mthMatchHelper &matchHelper,
+                                                     optAccessPlanHelper &planHelper,
                                                      dmsStatCache *statCache )
    {
       INT32 rc = SDB_OK ;
 
       PD_TRACE_ENTRY( SDB__OPTGENACPLAN__ESTHINTPLANS ) ;
 
-      UINT64 sortBufferSize = pmdGetOptionCB()->getSortBufSize() * 1024 * 1024 ;
-      INT32 estCacheSize = pmdGetOptionCB()->getOptEstCacheSize() ;
+      UINT64 sortBufferSize = planHelper.getSortBufferSize() * 1024 * 1024 ;
+      INT32 estCacheSize = planHelper.getOptCostThreshold() ;
 
       optCollectionStat collectionStat( su->getPageSize(), mbContext, statCache ) ;
 
@@ -483,7 +483,7 @@ namespace engine
                   PD_LOG ( PDDEBUG, "Try to use index: %s", pIndexName ) ;
 
                   rc = _estimateIxScanPlan( su, mbContext, &collectionStat,
-                                            matchHelper, pIndexName, priority,
+                                            planHelper, pIndexName, priority,
                                             sortBufferSize, estCacheSize,
                                             ixScanPath ) ;
                   if ( SDB_OK != rc )
@@ -525,7 +525,7 @@ namespace engine
                         indexOID.toString().c_str() ) ;
 
                rc = _estimateIxScanPlan( su, mbContext, &collectionStat,
-                                         matchHelper, indexOID, priority,
+                                         planHelper, indexOID, priority,
                                          sortBufferSize, estCacheSize,
                                          ixScanPath ) ;
                if ( SDB_OK != rc )
@@ -555,7 +555,7 @@ namespace engine
                validHints ++ ;
 
                // if we use null in the hint, we use tbscan
-               rc = _estimateTbScanPlan( &collectionStat, matchHelper,
+               rc = _estimateTbScanPlan( &collectionStat, planHelper,
                                          sortBufferSize, estCacheSize,
                                          tbScanPath ) ;
                if ( SDB_OK != rc )
@@ -602,7 +602,7 @@ namespace engine
          goto error ;
       }
 
-      rc = _usePath( su, matchHelper, bestPath ) ;
+      rc = _usePath( su, planHelper, bestPath ) ;
       PD_RC_CHECK( rc, PDWARNING, "Failed to use hint path, rc: %d", rc ) ;
 
    done :
@@ -616,15 +616,15 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTGENACPLAN__ESTPLANS, "_optGeneralAccessPlan::_estimatePlans" )
    INT32 _optGeneralAccessPlan::_estimatePlans ( dmsStorageUnit *su,
                                                  dmsMBContext *mbContext,
-                                                 mthMatchHelper &matchHelper,
+                                                 optAccessPlanHelper &planHelper,
                                                  dmsStatCache *statCache )
    {
       INT32 rc = SDB_OK ;
 
       PD_TRACE_ENTRY( SDB__OPTGENACPLAN__ESTPLANS ) ;
 
-      UINT64 sortBufferSize = pmdGetOptionCB()->getSortBufSize() * 1024 * 1024 ;
-      INT32 estCacheSize = pmdGetOptionCB()->getOptEstCacheSize() ;
+      UINT64 sortBufferSize = planHelper.getSortBufferSize() * 1024 * 1024 ;
+      INT32 estCacheSize = planHelper.getOptCostThreshold() ;
 
       UINT64 bestEstimateCost = OSS_UINT64_MAX ;
       dmsExtentID bestIdxExtID = DMS_INVALID_EXTENT ;
@@ -647,7 +647,7 @@ namespace engine
       }
       else if ( _autoHint &&
                 _hintFailed &&
-                ( !matchHelper.isPredicateSetEmpty() ||
+                ( !planHelper.isPredicateSetEmpty() ||
                   !_key.getOrderBy().isEmpty() ) )
       {
          // Have hints, predicates or order-by, which could prefer index-scan
@@ -674,13 +674,13 @@ namespace engine
            priority == OPT_PLAN_DEFAULT_PRIORITY )
       {
          // Estimate table scan
-         rc = _estimateTbScanPlan( &collectionStat, matchHelper,
+         rc = _estimateTbScanPlan( &collectionStat, planHelper,
                                    sortBufferSize, estCacheSize, tbScanPath ) ;
          PD_RC_CHECK( rc, PDWARNING, "Failed to estimate table scan for "
                       "collection [%s], rc: %d", _key.getCLFullName(), rc ) ;
       }
 
-      if ( !matchHelper.isPredicateSetEmpty() ||
+      if ( !planHelper.isPredicateSetEmpty() ||
            !_key.getOrderBy().isEmpty() )
       {
          // We had found a best index earlier, check it first
@@ -690,7 +690,7 @@ namespace engine
             optScanPath ixScanPath( &_planAllocator ) ;
 
             rc = _estimateIxScanPlan( su, mbContext, &collectionStat,
-                                      matchHelper, pIndexName, priority,
+                                      planHelper, pIndexName, priority,
                                       sortBufferSize, estCacheSize,
                                       ixScanPath ) ;
 
@@ -740,7 +740,7 @@ namespace engine
                continue ;
             }
 
-            rc = _estimateIxScanPlan( su, &collectionStat, matchHelper,
+            rc = _estimateIxScanPlan( su, &collectionStat, planHelper,
                                       indexCBExtent, priority, sortBufferSize,
                                       estCacheSize, ixScanPath ) ;
             if ( SDB_OK != rc )
@@ -796,7 +796,7 @@ namespace engine
       }
 
       scanType = bestPath.getScanType() ;
-      rc = _usePath( su, matchHelper, bestPath ) ;
+      rc = _usePath( su, planHelper, bestPath ) ;
       if ( SDB_OK != rc && IXSCAN == scanType )
       {
          PD_LOG( PDWARNING, "Failed to use index scan, rc: %d", rc ) ;
@@ -814,7 +814,7 @@ namespace engine
             {
                PD_LOG( PDWARNING, "TblScan is not estimated" ) ;
             }
-            rc = _usePath( su, matchHelper, tbScanPath ) ;
+            rc = _usePath( su, planHelper, tbScanPath ) ;
          }
       }
       PD_RC_CHECK( rc, PDWARNING, "Failed to use scan path, rc: %d", rc ) ;
@@ -830,7 +830,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTGENACPLAN__USEPATH, "_optGeneralAccessPlan::_usePath" )
    INT32 _optGeneralAccessPlan::_usePath ( dmsStorageUnit *su,
-                                           mthMatchHelper &matchHelper,
+                                           optAccessPlanHelper &planHelper,
                                            optScanPath &path )
    {
       INT32 rc = SDB_OK ;
@@ -860,9 +860,10 @@ namespace engine
                    "Failed to use index at extent %d", idxExtID ) ;
 
          // Create predicate list
-         rc = _matchRuntime->generatePredList( matchHelper,
+         rc = _matchRuntime->generatePredList( planHelper.getPredicateSet(),
                                                indexCB.keyPattern(),
-                                               path.getDirection() ) ;
+                                               path.getDirection(),
+                                               planHelper.getNormalizer() ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to generate predicate list, rc: %d",
                       rc ) ;
 
@@ -948,7 +949,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTGENACPLAN_OPT, "_optGeneralAccessPlan::optimize" )
    INT32 _optGeneralAccessPlan::optimize ( dmsStorageUnit *su,
                                            dmsMBContext *mbContext,
-                                           mthMatchHelper &matchHelper )
+                                           optAccessPlanHelper &planHelper )
    {
       INT32 rc = SDB_OK ;
 
@@ -966,7 +967,7 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "failed to check orderby", rc ) ;
 
       // Prepare the match runtime for optimize
-      rc = _prepareMatchTree( matchHelper ) ;
+      rc = _prepareMatchTree( planHelper ) ;
       PD_RC_CHECK ( rc, PDERROR, "Failed to load query, rc: %d", rc ) ;
 
       // Lock the mbContext, then we could access the statistics informations
@@ -987,19 +988,19 @@ namespace engine
       {
          // No hints, evaluate the plans directly
          _isAutoPlan = TRUE ;
-         rc = _estimatePlans( su, mbContext, matchHelper, statCache ) ;
+         rc = _estimatePlans( su, mbContext, planHelper, statCache ) ;
       }
       else
       {
          // Evaluate hints first
-         rc = _estimateHintPlans( su, mbContext, matchHelper, statCache ) ;
+         rc = _estimateHintPlans( su, mbContext, planHelper, statCache ) ;
          if ( SDB_OK != rc &&
               SDB_RTN_QUERYMODIFY_SORT_NO_IDX != rc )
          {
             // Hint failed, could evaluate with all candidate plans again
             // Without sorted index should be reported
             _isAutoPlan = TRUE ;
-            rc = _estimatePlans( su, mbContext, matchHelper, statCache ) ;
+            rc = _estimatePlans( su, mbContext, planHelper, statCache ) ;
          }
       }
 
@@ -1251,14 +1252,14 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTMAINACPLAN_PREPAREBINDSUB, "_optMainCLAccessPlan::prepareBindSubCL" )
-   INT32 _optMainCLAccessPlan::prepareBindSubCL ( mthMatchHelper &matchHelper )
+   INT32 _optMainCLAccessPlan::prepareBindSubCL ( optAccessPlanHelper &planHelper )
    {
       INT32 rc = SDB_OK ;
 
       PD_TRACE_ENTRY( SDB__OPTMAINACPLAN_PREPAREBINDSUB ) ;
 
       // Prepare the match runtime for optimize
-      rc = _prepareMatchTree( matchHelper ) ;
+      rc = _prepareMatchTree( planHelper ) ;
       PD_RC_CHECK ( rc, PDERROR, "Failed to load query, rc: %d", rc ) ;
 
    done :
@@ -1270,7 +1271,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTMAINACPLAN_BINDSUBACPLAN, "_optMainCLAccessPlan::bindSubCLAccessPlan" )
-   INT32 _optMainCLAccessPlan::bindSubCLAccessPlan ( mthMatchHelper &matchHelper,
+   INT32 _optMainCLAccessPlan::bindSubCLAccessPlan ( optAccessPlanHelper &planHelper,
                                                      optGeneralAccessPlan *subPlan )
    {
       INT32 rc = SDB_OK ;
@@ -1306,8 +1307,10 @@ namespace engine
       if ( IXSCAN == subPlan->getScanType() &&
            NULL == _matchRuntime->getPredList() )
       {
-         rc = _matchRuntime->generatePredList( matchHelper, _keyPattern,
-                                               _direction ) ;
+         rc = _matchRuntime->generatePredList( planHelper.getPredicateSet(),
+                                               _keyPattern,
+                                               _direction,
+                                               planHelper.getNormalizer() ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to generate predicate list, rc: %d",
                       rc ) ;
       }

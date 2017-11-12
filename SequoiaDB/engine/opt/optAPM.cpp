@@ -1005,7 +1005,8 @@ namespace engine
       _optAccessPlanManager implement
     */
    _optAccessPlanManager::_optAccessPlanManager ()
-   : _mthMatchConfigHolder(),
+   : _optAccessPlanConfigHolder(),
+     _mthMatchConfigHolder(),
      _planCache(),
      _monitor()
    {
@@ -1021,6 +1022,8 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTAPM_INIT, "_optAccessPlanManager::init" )
    INT32 _optAccessPlanManager::init ( UINT32 bucketNum,
                                        OPT_PLAN_CACHE_LEVEL cacheLevel,
+                                       UINT32 sortBufferSize,
+                                       INT32 optCostThreshold,
                                        BOOLEAN enableMixCmp )
    {
       INT32 rc = SDB_OK ;
@@ -1032,6 +1035,9 @@ namespace engine
 
       _cacheBucketNum = bucketNum ;
       _cacheLevel = OPT_PLAN_NOCACHE ;
+
+      setSortBufferSize( sortBufferSize ) ;
+      setOptCostThreshold( optCostThreshold ) ;
 
       // Always update mix-compare mode
       setMthEnableMixCmp( enableMixCmp ) ;
@@ -1068,6 +1074,8 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTAPM_REINIT, "_optAccessPlanManager::reinit" )
    INT32 _optAccessPlanManager::reinit ( OPT_PLAN_CACHE_LEVEL cacheLevel,
+                                         UINT32 sortBufferSize,
+                                         INT32 optCostThreshold,
                                          BOOLEAN enableMixCmp )
    {
       INT32 rc = SDB_OK ;
@@ -1078,22 +1086,28 @@ namespace engine
 
       if ( _planCache.isInitialized() )
       {
-         // For change to OPT_PLAN_NOCACHE, we only clear the cache, but we
-         // don't stop the clearing job
          if ( cacheLevel != _cacheLevel ||
+              sortBufferSize != getSortBufferSize() ||
+              optCostThreshold != getOptCostThreshold() ||
               enableMixCmp != mthEnabledMixCmp() )
          {
-            sdbGetDMSCB()->clearSUCaches( DMS_EVENT_MASK_PLAN ) ;
-         }
+            _cacheLevel = cacheLevel ;
+            setSortBufferSize( sortBufferSize ) ;
+            setOptCostThreshold( optCostThreshold ) ;
+            setMthEnableMixCmp( enableMixCmp ) ;
 
-         _cacheLevel = cacheLevel ;
-         setMthEnableMixCmp( enableMixCmp ) ;
-         setMthEnableParameterized( _cacheLevel >= OPT_PLAN_PARAMETERIZED ) ;
-         setMthEnableFuzzyOptr( _cacheLevel >= OPT_PLAN_FUZZYOPTR ) ;
+            // For change to OPT_PLAN_NOCACHE, we only clear the cache, but we
+            // don't stop the clearing job
+            sdbGetDMSCB()->clearSUCaches( DMS_EVENT_MASK_PLAN ) ;
+
+            setMthEnableParameterized( _cacheLevel >= OPT_PLAN_PARAMETERIZED ) ;
+            setMthEnableFuzzyOptr( _cacheLevel >= OPT_PLAN_FUZZYOPTR ) ;
+         }
       }
       else
       {
-         rc = init( _cacheBucketNum, cacheLevel, enableMixCmp ) ;
+         rc = init( _cacheBucketNum, cacheLevel, sortBufferSize,
+                    optCostThreshold, enableMixCmp ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to initialize access plan manager, "
                       "rc: %d", rc ) ;
       }
@@ -1547,13 +1561,14 @@ namespace engine
       // Construct the plan key, but needn't to get owned at this stage
       optAccessPlanKey planKey( options, cacheLevel ) ;
 
-      mthMatchHelper matchHelper( cacheLevel, getMatchConfig() ) ;
+      optAccessPlanHelper planHelper( cacheLevel, getPlanConfig(),
+                                      getMatchConfig() ) ;
       BOOLEAN needCache = ( isInitialized() &&
                             cacheLevel > OPT_PLAN_NOCACHE ) ;
 
       planRuntime.clear() ;
 
-      rc = _prepareAccessPlanKey( su, mbContext, planKey, matchHelper,
+      rc = _prepareAccessPlanKey( su, mbContext, planKey, planHelper,
                                   planRuntime ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to prepare key of access plan, rc: %d",
                    rc ) ;
@@ -1578,7 +1593,7 @@ namespace engine
       {
          // Failed to get plan from cache, create it
          rc = _createAccessPlan( su, mbContext, planKey, planRuntime,
-                                 matchHelper, &pPlan, needCache ) ;
+                                 planHelper, &pPlan, needCache ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to create access plan, rc: %d",
                       rc ) ;
 
@@ -1593,7 +1608,7 @@ namespace engine
 
             // Plan is parameterized, bind the parameters
             rc = _validateParamPlan( su, mbContext, planKey, planRuntime,
-                                     matchHelper, paramPlan ) ;
+                                     planHelper, paramPlan ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to validate parameterized plan, "
                          "rc: %d", rc ) ;
          }
@@ -1664,9 +1679,10 @@ namespace engine
          planKey.setCLFullName( options._mainCLName ) ;
          planKey.setMainCLName( NULL ) ;
 
-         mthMatchHelper matchHelper( cacheLevel, getMatchConfig() ) ;
+         optAccessPlanHelper planHelper( cacheLevel, getPlanConfig(),
+                                         getMatchConfig() ) ;
 
-         rc = _prepareAccessPlanKey( NULL, NULL, planKey, matchHelper,
+         rc = _prepareAccessPlanKey( NULL, NULL, planKey, planHelper,
                                      planRuntime ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to prepare key of access plan, "
                       "rc: %d", rc ) ;
@@ -1681,7 +1697,7 @@ namespace engine
             // the plan for sub-collection and bind it to the main-collection
             // plan
             rc = _createMainCLPlan( planKey, options, su, mbContext,
-                                    planRuntime, matchHelper, &mainPlan ) ;
+                                    planRuntime, planHelper, &mainPlan ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to create main-collection "
                          "query, rc: %d", rc ) ;
 
@@ -1708,7 +1724,7 @@ namespace engine
             else
             {
                rc = _bindMainCLPlan( mainPlan, options, su, mbContext,
-                                     planRuntime, matchHelper ) ;
+                                     planRuntime, planHelper ) ;
                PD_RC_CHECK( rc, PDERROR, "Failed to bind main-collection "
                             "plan, rc: %d", rc ) ;
             }
@@ -1742,7 +1758,7 @@ namespace engine
    INT32 _optAccessPlanManager::_prepareAccessPlanKey ( dmsStorageUnit *su,
                                                         dmsMBContext *mbContext,
                                                         optAccessPlanKey &planKey,
-                                                        mthMatchHelper &matchHelper,
+                                                        optAccessPlanHelper &planHelper,
                                                         optAccessPlanRuntime &planRuntime )
    {
       INT32 rc = SDB_OK ;
@@ -1761,7 +1777,7 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Failed to create match runtime, rc: %d",
                       rc ) ;
 
-         rc = planKey.normalize( matchHelper, planRuntime.getMatchRuntime() ) ;
+         rc = planKey.normalize( planHelper, planRuntime.getMatchRuntime() ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to normalize plan key, rc: %d", rc ) ;
 
          if ( planKey.getCacheLevel() >= OPT_PLAN_NORMALIZED )
@@ -1795,7 +1811,7 @@ namespace engine
                                                     dmsMBContext *mbContext,
                                                     optAccessPlanKey &planKey,
                                                     optAccessPlanRuntime &planRuntime,
-                                                    mthMatchHelper &matchHelper,
+                                                    optAccessPlanHelper &planHelper,
                                                     optGeneralAccessPlan **ppPlan,
                                                     BOOLEAN needCache )
    {
@@ -1814,12 +1830,12 @@ namespace engine
       if ( isParameterized )
       {
          pPlan = SDB_OSS_NEW optParamAccessPlan( planKey,
-                                                 matchHelper.getMatchConfig() ) ;
+                                                 planHelper.getMatchConfig() ) ;
       }
       else
       {
          pPlan = SDB_OSS_NEW optGeneralAccessPlan( planKey,
-                                                   matchHelper.getMatchConfig() ) ;
+                                                   planHelper.getMatchConfig() ) ;
       }
       PD_CHECK( NULL != pPlan, SDB_OOM, error, PDERROR,
                 "Not able to allocate memory for new plan" ) ;
@@ -1840,7 +1856,7 @@ namespace engine
          pPlan->getMatchRuntimeOnwed( planRuntime ) ;
       }
 
-      rc = pPlan->optimize( su, mbContext, matchHelper ) ;
+      rc = pPlan->optimize( su, mbContext, planHelper ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to optimize plan, query: %s\norder %s\nhint %s",
                    planKey.getQuery().toString().c_str(),
@@ -1949,7 +1965,7 @@ namespace engine
                                                      dmsMBContext *mbContext,
                                                      optAccessPlanKey &planKey,
                                                      optAccessPlanRuntime &planRuntime,
-                                                     mthMatchHelper &matchHelper,
+                                                     optAccessPlanHelper &planHelper,
                                                      optParamAccessPlan *plan )
    {
       INT32 rc = SDB_OK ;
@@ -1966,7 +1982,7 @@ namespace engine
       // access plan is parameterized validated
       if ( plan->isParamValid() )
       {
-         rc = planRuntime.bindParamPlan( matchHelper, plan ) ;
+         rc = planRuntime.bindParamPlan( planHelper, plan ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to bind parameterized plan, rc: %d",
                       rc ) ;
          goto done ;
@@ -1976,7 +1992,7 @@ namespace engine
       paramArr = planRuntime.getParameters().toBSON() ;
       if ( plan->checkSavedParam( paramArr ) )
       {
-         rc = planRuntime.bindParamPlan( matchHelper, plan ) ;
+         rc = planRuntime.bindParamPlan( planHelper, plan ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to bind parameterized plan, rc: %d",
                       rc ) ;
          goto done ;
@@ -2015,7 +2031,7 @@ namespace engine
                                                     dmsStorageUnit *su,
                                                     dmsMBContext *mbContext,
                                                     optAccessPlanRuntime &planRuntime,
-                                                    mthMatchHelper &matchHelper,
+                                                    optAccessPlanHelper &planHelper,
                                                     optMainCLAccessPlan **ppPlan )
    {
       INT32 rc = SDB_OK ;
@@ -2030,7 +2046,7 @@ namespace engine
       optGeneralAccessPlan *subPlan = NULL ;
 
       mainPlan = SDB_OSS_NEW optMainCLAccessPlan( planKey,
-                                                  matchHelper.getMatchConfig() ) ;
+                                                  planHelper.getMatchConfig() ) ;
       PD_CHECK( mainPlan, SDB_OOM, error, PDERROR,
                 "Failed to allocate main-collection access plan" ) ;
 
@@ -2052,7 +2068,7 @@ namespace engine
       }
 
       // Prepare to bind the sub-collection plan
-      rc = mainPlan->prepareBindSubCL( matchHelper ) ;
+      rc = mainPlan->prepareBindSubCL( planHelper ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to prepare main-collection "
                    "plan, rc: %d", rc ) ;
 
@@ -2068,7 +2084,7 @@ namespace engine
       subPlan = dynamic_cast<optGeneralAccessPlan *>( planRuntime.getPlan() ) ;
       SDB_ASSERT( subPlan, "subPlan is invalid " ) ;
 
-      rc = mainPlan->bindSubCLAccessPlan( matchHelper, subPlan ) ;
+      rc = mainPlan->bindSubCLAccessPlan( planHelper, subPlan ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to bind main-collection access "
                    "plan, rc: %d" ) ;
 
@@ -2145,7 +2161,7 @@ namespace engine
                                                   dmsStorageUnit *su,
                                                   dmsMBContext *mbContext,
                                                   optAccessPlanRuntime &planRuntime,
-                                                  mthMatchHelper &matchHelper )
+                                                  optAccessPlanHelper &planHelper )
    {
       INT32 rc = SDB_OK ;
 
@@ -2192,7 +2208,7 @@ namespace engine
       // Bind parameters
       if ( mainPlan->getCacheLevel() >= OPT_PLAN_PARAMETERIZED )
       {
-         rc = planRuntime.bindParamPlan( matchHelper, mainPlan ) ;
+         rc = planRuntime.bindParamPlan( planHelper, mainPlan ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to bind parameterized "
                       "plan, rc: %d", rc ) ;
       }

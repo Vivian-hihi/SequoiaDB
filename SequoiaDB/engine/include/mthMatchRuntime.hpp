@@ -42,7 +42,6 @@
 #include "oss.hpp"
 #include "ossUtil.hpp"
 #include "mthMatchTree.hpp"
-#include "optCommon.hpp"
 
 using namespace bson ;
 using namespace std ;
@@ -164,97 +163,6 @@ namespace engine
    typedef class _mthParamPredListHolder mthParamPredListHolder ;
 
    /*
-      _mthMatchHelper define
-    */
-   class _mthMatchHelper : public SDBObject,
-                           public _mthMatchTreeHolder,
-                           public _mthMatchConfigHolder
-   {
-      public :
-         _mthMatchHelper ( OPT_PLAN_CACHE_LEVEL cacheLevel,
-                           const mthNodeConfig &config ) ;
-
-         virtual ~_mthMatchHelper () ;
-
-         void clear () ;
-
-         OSS_INLINE BSONObj getQuery ()
-         {
-            return _query ;
-         }
-
-         void setMatchTree ( _mthMatchTree *matchTree ) ;
-
-         void getEstimation ( optCollectionStat *pCollectionStat,
-                              double &estSelectivity, UINT32 &estCPUCost ) ;
-
-         OSS_INLINE void getPredSelectivity ( double &predSelectivity,
-                                              double &scanSelectivity )
-         {
-            predSelectivity = _predSelectivity ;
-            scanSelectivity = _scanSelectivity ;
-         }
-
-         OSS_INLINE BOOLEAN isEstimated ()
-         {
-            return _isEstimated ;
-         }
-
-         INT32 normalizeQuery ( const BSONObj &query,
-                                BSONObjBuilder &normalBuilder,
-                                rtnParamList &parameters,
-                                BOOLEAN &invalidMatcher ) ;
-
-         mthMatchNormalizer &getNormalizer ()
-         {
-            return _normalizer ;
-         }
-
-         OSS_INLINE const rtnPredicateSet &getPredicateSet() const
-         {
-            return _predicateSet ;
-         }
-
-         OSS_INLINE rtnPredicateSet &getPredicateSet ()
-         {
-            return _predicateSet ;
-         }
-
-         OSS_INLINE RTN_PREDICATE_MAP &getPredicates ()
-         {
-            return _predicateSet.predicates() ;
-         }
-
-         OSS_INLINE BOOLEAN isPredicateSetEmpty () const
-         {
-            return ( _predicateSet.getSize() == 0 ) ;
-         }
-
-      protected :
-         void _evalEstimation ( optCollectionStat *pCollectionStat ) ;
-
-      protected :
-         BSONObj              _query ;
-         OPT_PLAN_CACHE_LEVEL _cacheLevel ;
-         mthMatchNormalizer   _normalizer ;
-         rtnPredicateSet      _predicateSet ;
-
-         /// Cost or selectivity estimations
-         // Flag to indicate whether the cost and selectivity are estimated
-         BOOLEAN           _isEstimated ;
-         // Selectivity of the matcher
-         double            _estSelectivity ;
-         // The final selectivity of the predicates
-         double            _predSelectivity ;
-         // The scan selectivity of the predicates
-         double            _scanSelectivity ;
-         // The CPU cost of the matcher
-         UINT32            _estCPUCost ;
-   } ;
-
-   typedef class _mthMatchHelper mthMatchHelper ;
-
-   /*
       _mthMatchRuntime define
     */
    class _mthMatchRuntime : public SDBObject,
@@ -294,9 +202,10 @@ namespace engine
                    _predList.isFixedPredList() ;
          }
 
-         INT32 generatePredList ( mthMatchHelper &matchHelper,
+         INT32 generatePredList ( const rtnPredicateSet &predicateSet,
                                   const BSONObj &keyPattern,
-                                  INT32 direction ) ;
+                                  INT32 direction,
+                                  mthMatchNormalizer &normalizer ) ;
 
          OSS_INLINE void clearPredList ()
          {

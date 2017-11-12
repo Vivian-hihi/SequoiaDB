@@ -318,6 +318,7 @@ namespace engine
     */
    class _optAccessPlanManager : public SDBObject,
                                  public _IDmsEventHandler,
+                                 public _optAccessPlanConfigHolder,
                                  public _mthMatchConfigHolder
    {
       public :
@@ -327,9 +328,13 @@ namespace engine
 
          INT32 init ( UINT32 bucketNum,
                       OPT_PLAN_CACHE_LEVEL cacheLevel,
+                      UINT32 sortBufferSize,
+                      INT32 optCostThreshold,
                       BOOLEAN enableMixCmp ) ;
 
          INT32 reinit ( OPT_PLAN_CACHE_LEVEL cacheLevel,
+                        UINT32 sortBufferSize,
+                        INT32 optCostThreshold,
                         BOOLEAN enableMixCmp ) ;
 
          void clear () ;
@@ -459,14 +464,14 @@ namespace engine
          INT32 _prepareAccessPlanKey ( dmsStorageUnit *su,
                                        dmsMBContext *mbContext,
                                        optAccessPlanKey &planKey,
-                                       mthMatchHelper &matchHelper,
+                                       optAccessPlanHelper &planHelper,
                                        optAccessPlanRuntime &planRuntime ) ;
 
          INT32 _createAccessPlan ( dmsStorageUnit *su,
                                    dmsMBContext *mbContext,
                                    optAccessPlanKey &planKey,
                                    optAccessPlanRuntime &planRuntime,
-                                   mthMatchHelper &matchHelper,
+                                   optAccessPlanHelper &planHelper,
                                    optGeneralAccessPlan **ppPlan,
                                    BOOLEAN needCache ) ;
 
@@ -480,7 +485,7 @@ namespace engine
                                     dmsMBContext *mbContext,
                                     optAccessPlanKey &planKey,
                                     optAccessPlanRuntime &planRuntime,
-                                    mthMatchHelper &matchHelper,
+                                    optAccessPlanHelper &planHelper,
                                     optParamAccessPlan *plan ) ;
 
          // Helpers for main-collection plans
@@ -489,7 +494,7 @@ namespace engine
                                    dmsStorageUnit *su,
                                    dmsMBContext *mbContext,
                                    optAccessPlanRuntime &planRuntime,
-                                   mthMatchHelper &matchHelper,
+                                   optAccessPlanHelper &planHelper,
                                    optMainCLAccessPlan **ppPlan ) ;
 
          INT32 _validateMainCLPlan ( optMainCLAccessPlan *mainPlan,
@@ -503,7 +508,7 @@ namespace engine
                                  dmsStorageUnit *su,
                                  dmsMBContext *mbContext,
                                  optAccessPlanRuntime &planRuntime,
-                                 mthMatchHelper &matchHelper ) ;
+                                 optAccessPlanHelper &planHelper ) ;
 
          // Helpers for _IDmsEventHandler
          void _invalidSUPlans ( IDmsSUCacheHolder *pCacheHolder ) ;
