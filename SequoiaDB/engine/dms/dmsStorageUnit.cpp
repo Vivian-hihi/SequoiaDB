@@ -675,6 +675,33 @@ namespace engine
       return rc ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSEVTHLD_ONCHGSUCACHES, "_dmsEventHolder::onChangeSUCacheConfigs" )
+   INT32 _dmsEventHolder::onChangeSUCaches ( UINT32 mask )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__DMSEVTHLD_ONCHGSUCACHES ) ;
+
+      for ( HANDLER_LIST::iterator iter = _handlers.begin() ;
+            iter != _handlers.end() ;
+            ++ iter )
+      {
+         _IDmsEventHandler *pHandler = (*iter) ;
+         if ( pHandler && ( pHandler->getMask() & mask ) )
+         {
+            INT32 tmprc = pHandler->onChangeSUCaches( this, _pCacheHolder ) ;
+            if ( SDB_OK != tmprc )
+            {
+               rc = tmprc ;
+            }
+         }
+      }
+
+      PD_TRACE_EXITRC( SDB__DMSEVTHLD_ONCHGSUCACHES, rc ) ;
+
+      return rc ;
+   }
+
    const CHAR *_dmsEventHolder::getCSName () const
    {
       return _su->CSName() ;
@@ -792,15 +819,7 @@ namespace engine
             }
             case DMS_CACHE_TYPE_PLAN :
             {
-               UINT32 bucketNum = pmdGetOptionCB()->getPlanBuckets() ;
-               if ( bucketNum > 0 )
-               {
-                  bucketNum = ossRoundUpToMultipleX( bucketNum,
-                                                     UTIL_HASH_TABLE_BUCKET_UNIT ) ;
-                  _pSUCaches[ type ] = SDB_OSS_NEW dmsCachedPlanMgr( this,
-                                                                     bucketNum,
-                                                                     TRUE ) ;
-               }
+               _pSUCaches[ type ] = SDB_OSS_NEW dmsCachedPlanMgr( this ) ;
                break ;
             }
             default :

@@ -73,9 +73,7 @@ namespace engine
    class _dmsCachedPlanMgr : public dmsSUCache
    {
       public :
-         _dmsCachedPlanMgr ( IDmsSUCacheHolder *pHolder,
-                             UINT32 bucketNum,
-                             BOOLEAN needParam ) ;
+         _dmsCachedPlanMgr ( IDmsSUCacheHolder *pHolder ) ;
          virtual ~_dmsCachedPlanMgr () ;
 
          OSS_INLINE void setCacheBitmapForPlan( UINT32 hashCode )
@@ -110,10 +108,6 @@ namespace engine
 
          OSS_INLINE BOOLEAN testParamInvalidBitmap ( UINT16 mbID )
          {
-            if ( _paramInvalidBitmap.getSize() <= mbID )
-            {
-               return TRUE ;
-            }
             return _paramInvalidBitmap.testBit( mbID ) ;
          }
 
@@ -134,10 +128,6 @@ namespace engine
 
          OSS_INLINE BOOLEAN testMainCLInvalidBitmap ( UINT16 mbID )
          {
-            if ( _mainCLInvalidBitmap.getSize() <= mbID )
-            {
-               return TRUE ;
-            }
             return _mainCLInvalidBitmap.testBit( mbID ) ;
          }
 
@@ -158,11 +148,16 @@ namespace engine
 
          INT32 createCLCachedPlanUnit ( UINT16 mbID ) ;
 
+         INT32 resizeBitmaps ( UINT32 bucketNum ) ;
+
+      protected :
+         void _setBucketModulo () ;
+
       protected :
          UINT32 _bucketModulo ;
          utilBitmap _cacheBitmap ;
-         utilBitmap _paramInvalidBitmap ;
-         utilBitmap _mainCLInvalidBitmap ;
+         _utilStackBitmap<DMS_MME_SLOTS> _paramInvalidBitmap ;
+         _utilStackBitmap<DMS_MME_SLOTS> _mainCLInvalidBitmap ;
    } ;
 
    typedef class _dmsCachedPlanMgr dmsCachedPlanMgr ;

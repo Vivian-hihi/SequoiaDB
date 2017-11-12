@@ -134,9 +134,6 @@ namespace engine
          }
 
       protected :
-         virtual void _allocateBitmap ( UINT32 size ) = 0 ;
-         virtual void _freeBitmap () = 0 ;
-
          OSS_INLINE UINT32 _calcUnitIndex ( UINT32 index ) const
          {
             // Find the index to the unit in bitmap
@@ -170,6 +167,15 @@ namespace engine
          virtual ~_utilBitmap ()
          {
             _freeBitmap() ;
+         }
+
+         virtual void resize ( UINT32 size )
+         {
+            if ( size != _size )
+            {
+               _freeBitmap() ;
+               _allocateBitmap( size ) ;
+            }
          }
 
       protected :
@@ -212,7 +218,7 @@ namespace engine
          {
             _size = BITMAPSIZE * UTIL_BITMAP_UNIT_SIZE ;
             _bitmapSize = BITMAPSIZE ;
-            _bitmap = &( _bitmapBuf ) ;
+            _bitmap = &( _bitmapBuf[0] ) ;
          }
 
          virtual ~_utilStackBitmap ()

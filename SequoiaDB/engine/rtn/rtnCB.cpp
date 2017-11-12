@@ -268,7 +268,7 @@ namespace engine
 
    INT32 _SDB_RTNCB::fini ()
    {
-      _accessPlanManager.clear() ;
+      _accessPlanManager.fini() ;
 
       dmsIxmKeySorterCreator* creator = sdbGetDMSCB()->getIxmKeySorterCreator() ;
       if ( NULL != creator )
@@ -283,6 +283,10 @@ namespace engine
    void _SDB_RTNCB::onConfigChange ()
    {
       _accessPlanManager.reinit(
+            ( SDB_ROLE_DATA == pmdGetDBRole() ||
+              SDB_ROLE_CATALOG == pmdGetDBRole() ||
+              SDB_ROLE_STANDALONE == pmdGetDBRole() ) ?
+            pmdGetOptionCB()->getPlanBuckets() : 0,
             (OPT_PLAN_CACHE_LEVEL) pmdGetOptionCB()->getPlanCacheLevel(),
             pmdGetOptionCB()->getSortBufSize(),
             pmdGetOptionCB()->getOptCostThreshold(),

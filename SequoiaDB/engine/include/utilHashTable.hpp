@@ -48,7 +48,7 @@ using namespace bson ;
 namespace engine
 {
 
-   #define UTIL_HASH_TABLE_BUCKET_UNIT     ( 512 )
+   #define UTIL_HASH_TABLE_BUCKET_UNIT     ( 128 )
    #define UTIL_HASH_TABLE_DFT_BUCKET_NUM  ( UTIL_HASH_TABLE_BUCKET_UNIT )
    #define UTIL_HASH_TABLE_DFT_LOCK_NUM    ( 64 )
 
@@ -288,6 +288,8 @@ namespace engine
             _list.clearList ( TRUE ) ;
          }
 
+         // Get item matched with given key from bucket
+         // NOTE: should be called with shared lock
          utilHashTableItem *getItem ( const utilHashTableKey &key )
          {
             utilHashTableItem *pCurItem = (utilHashTableItem *)_list.getHead() ;
@@ -302,6 +304,8 @@ namespace engine
             return pCurItem ;
          }
 
+         // Add item into bucket
+         // NOTE: should be called with exclusively lock
          BOOLEAN addItem ( utilHashTableItem *pItem )
          {
             SDB_ASSERT( pItem != NULL, "pItem is invalid" ) ;
@@ -317,19 +321,23 @@ namespace engine
             return TRUE ;
          }
 
+         // Remove item from bucket
+         // NOTE: should be called with exclusive lock
          BOOLEAN removeItem ( utilHashTableItem *pItem )
          {
             SDB_ASSERT( pItem != NULL, "pItem is invalid" ) ;
             return _list.removeItem( pItem ) ;
          }
 
+         // Get head of bucket
+         // NOTE: should be called with lock
          OSS_INLINE utilHashTableItem *getHead ()
          {
             return (utilHashTableItem *)_list.getHead() ;
          }
 
       protected :
-         _utilHashTableList _list ;
+         _utilHashTableList   _list ;
    } ;
 
    /*
@@ -359,15 +367,18 @@ namespace engine
                         "Invalid number of locks" ) ;
 
             _lockModulo = lockNum - 1 ;
+            _enableAddItem = FALSE ;
          }
 
          virtual ~_utilHashTable ()
          {
-            clear() ;
+            deinitialize() ;
          }
 
-         BOOLEAN initialize ( UINT16 bucketNum = UTIL_HASH_TABLE_DFT_BUCKET_NUM )
+         BOOLEAN initialize ( UINT32 bucketNum = UTIL_HASH_TABLE_DFT_BUCKET_NUM )
          {
+            ossScopedRWLock scopedLock( &_bucketNumLock, EXCLUSIVE ) ;
+
             if ( isInitialized() )
             {
                return TRUE ;
@@ -380,21 +391,27 @@ namespace engine
                return FALSE ;
             }
 
+            _lockBuckets( EXCLUSIVE ) ;
+
             _buckets = new(std::nothrow) utilHashTableBucket[ bucketNum ] ;
 
             if ( _buckets != NULL )
             {
                _bucketNum = bucketNum ;
                _bucketModulo = bucketNum - 1 ;
-
-               return TRUE ;
             }
 
-            return FALSE ;
+            _unlockBuckets( EXCLUSIVE ) ;
+
+            return ( _bucketNum > 0 ? TRUE : FALSE ) ;
          }
 
-         void clear ()
+         void deinitialize ()
          {
+            ossScopedRWLock scopedLock( &_bucketNumLock, EXCLUSIVE ) ;
+
+            _lockBuckets( EXCLUSIVE ) ;
+
             if ( _buckets != NULL )
             {
                delete [] _buckets ;
@@ -403,6 +420,8 @@ namespace engine
 
             _bucketNum = 0 ;
             _bucketModulo = 0 ;
+
+            _unlockBuckets( EXCLUSIVE ) ;
          }
 
          OSS_INLINE UINT32 getBucketNum () const
@@ -422,10 +441,10 @@ namespace engine
 
          utilHashTableItem *getItem ( const utilHashTableKey &key )
          {
-            UINT32 keyCode = key.getKeyCode() ;
-            UINT32 bucketID = keyCode & _bucketModulo ;
-            utilHashTableBucket *pBucket = getBucket( bucketID, SHARED ) ;
             utilHashTableItem *pItem = NULL ;
+            UINT32 bucketID = 0 ;
+            utilHashTableBucket *pBucket =
+                  getBucketByKey( key.getKeyCode(), SHARED, bucketID ) ;
 
             if ( NULL == pBucket )
             {
@@ -436,7 +455,7 @@ namespace engine
 
             if ( NULL != pItem )
             {
-               afterGetItem( bucketID, pItem ) ;
+               _afterGetItem( bucketID, pItem ) ;
             }
 
             releaseBucket( bucketID, SHARED ) ;
@@ -448,20 +467,23 @@ namespace engine
          {
             SDB_ASSERT( pItem != NULL, "pItem is invalid" ) ;
 
-            UINT32 keyCode = pItem->getKeyCode() ;
-            UINT32 bucketID = keyCode & _bucketModulo ;
-            utilHashTableBucket *pBucket = getBucket( bucketID, EXCLUSIVE ) ;
             BOOLEAN added = FALSE ;
+            UINT32 bucketID = 0 ;
+            utilHashTableBucket *pBucket =
+                  getBucketByKey( pItem->getKeyCode(), EXCLUSIVE, bucketID ) ;
 
             if ( NULL == pBucket )
             {
                return FALSE ;
             }
 
-            added = pBucket->addItem( pItem ) ;
-            if ( added )
+            if ( _enableAddItem )
             {
-               afterAddItem( bucketID, pItem ) ;
+               added = pBucket->addItem( pItem ) ;
+               if ( added )
+               {
+                  _afterAddItem( bucketID, pItem ) ;
+               }
             }
 
             releaseBucket( bucketID, EXCLUSIVE ) ;
@@ -473,10 +495,10 @@ namespace engine
          {
             SDB_ASSERT( pItem != NULL, "pItem is invalid" ) ;
 
-            UINT32 keyCode = pItem->getKeyCode() ;
-            UINT32 bucketID = keyCode & _bucketModulo ;
-            utilHashTableBucket *pBucket = getBucket( bucketID, EXCLUSIVE ) ;
             BOOLEAN removed = FALSE ;
+            UINT32 bucketID = 0 ;
+            utilHashTableBucket *pBucket =
+                  getBucketByKey( pItem->getKeyCode(), EXCLUSIVE, bucketID ) ;
 
             if ( NULL == pBucket )
             {
@@ -487,7 +509,7 @@ namespace engine
 
             if ( removed )
             {
-               afterRemoveItem( bucketID, pItem ) ;
+               _afterRemoveItem( bucketID, pItem ) ;
             }
 
             releaseBucket( bucketID, EXCLUSIVE ) ;
@@ -495,68 +517,122 @@ namespace engine
             return removed ;
          }
 
+         utilHashTableBucket *getBucketByKey ( UINT32 keyCode,
+                                               OSS_LATCH_MODE mode,
+                                               UINT32 &bucketID )
+         {
+            UINT32 lockID = keyCode & _lockModulo ;
+            _lock( lockID, mode ) ;
+
+            bucketID = keyCode & _bucketModulo ;
+            if ( bucketID < _bucketNum )
+            {
+               return &( _buckets[ bucketID ] ) ;
+            }
+
+            _unlock( lockID, mode ) ;
+            return NULL ;
+         }
+
          utilHashTableBucket *getBucket ( UINT32 bucketID,
                                           OSS_LATCH_MODE mode )
          {
+            UINT32 lockID = bucketID & _lockModulo ;
+
+            _lock( lockID, mode ) ;
             if ( bucketID < _bucketNum )
             {
-               UINT32 lockID = bucketID & _lockModulo ;
-               ossRWMutex &lock = _locks[ lockID ] ;
-               if ( SHARED == mode )
-               {
-                  lock.lock_r() ;
-               }
-               else
-               {
-                  lock.lock_w() ;
-               }
-
                return &( _buckets[ bucketID ] ) ;
             }
+
+            _unlock( lockID, mode ) ;
             return NULL ;
          }
 
          void releaseBucket ( UINT32 bucketID, OSS_LATCH_MODE mode )
          {
-            if ( bucketID < _bucketNum )
-            {
-               UINT32 lockID = bucketID & _lockModulo ;
-               ossRWMutex &lock = _locks[ lockID ] ;
-               if ( SHARED == mode )
-               {
-                  lock.release_r() ;
-               }
-               else
-               {
-                  lock.release_w() ;
-               }
-            }
+            UINT32 lockID = bucketID & _lockModulo ;
+            _unlock( lockID, mode ) ;
          }
 
       protected :
          // Hooks
-         virtual void afterAddItem ( UINT32 bucketID,
-                                     utilHashTableItem *pItem )
+         virtual void _afterAddItem ( UINT32 bucketID,
+                                      utilHashTableItem *pItem )
          {
          }
 
-         virtual void afterGetItem ( UINT32 bucketID,
-                                     utilHashTableItem *pItem )
+         virtual void _afterGetItem ( UINT32 bucketID,
+                                      utilHashTableItem *pItem )
          {
          }
 
-         virtual void afterRemoveItem ( UINT32 bucketID,
-                                        utilHashTableItem *pItem )
+         virtual void _afterRemoveItem ( UINT32 bucketID,
+                                         utilHashTableItem *pItem )
          {
+         }
+
+         virtual void _setEnableAddItem ( BOOLEAN enableAddItem )
+         {
+            _lockBuckets( EXCLUSIVE ) ;
+            _enableAddItem = enableAddItem ;
+            _unlockBuckets( EXCLUSIVE ) ;
+         }
+
+         virtual void _lockBuckets ( OSS_LATCH_MODE mode )
+         {
+            for ( UINT32 lockID = 0 ; lockID < lockNum ; lockID ++ )
+            {
+               _lock( lockID, mode ) ;
+            }
+         }
+
+         virtual void _unlockBuckets ( OSS_LATCH_MODE mode )
+         {
+            for ( UINT32 lockID = 0 ; lockID < lockNum ; lockID ++ )
+            {
+               _unlock( lockID, mode ) ;
+            }
+         }
+
+         virtual void _lock ( UINT32 lockID, OSS_LATCH_MODE mode )
+         {
+            SDB_ASSERT( lockID < lockNum, "lockID is invalid" ) ;
+
+            if ( EXCLUSIVE == mode )
+            {
+               _locks[ lockID ].lock_w() ;
+            }
+            else
+            {
+               _locks[ lockID ].lock_r() ;
+            }
+         }
+
+         virtual void _unlock ( UINT32 lockID, OSS_LATCH_MODE mode )
+         {
+            SDB_ASSERT( lockID < lockNum, "lockID is invalid" ) ;
+
+            if ( EXCLUSIVE == mode )
+            {
+               _locks[ lockID ].release_w() ;
+            }
+            else
+            {
+               _locks[ lockID ].release_r() ;
+            }
          }
 
       protected :
-         UINT16 _bucketNum ;
-         UINT16 _bucketModulo ;
-         UINT16 _lockModulo ;
+         UINT32 _bucketNum ;
+         UINT32 _bucketModulo ;
+         UINT32 _lockModulo ;
 
          utilHashTableBucket *_buckets ;
          ossRWMutex _locks[ lockNum ] ;
+
+         ossRWMutex _bucketNumLock ;
+         BOOLEAN    _enableAddItem ;
    } ;
 
 }

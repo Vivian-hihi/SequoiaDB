@@ -233,6 +233,8 @@ namespace engine
          virtual INT32 onClearCLCaches ( UINT32 mask,
                                          const dmsEventCLItem &clItem ) ;
 
+         virtual INT32 onChangeSUCaches ( UINT32 mask ) ;
+
          virtual const CHAR *getCSName () const ;
 
          virtual UINT32 getSUID () const ;

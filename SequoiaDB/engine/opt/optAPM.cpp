@@ -57,8 +57,13 @@ namespace engine
       _pMonitor = NULL ;
    }
 
+   _optAccessPlanCache::~_optAccessPlanCache ()
+   {
+      deinitialize() ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTAPCACHES_INIT, "_optAccessPlanCache::initialize" )
-   BOOLEAN _optAccessPlanCache::initialize ( UINT16 bucketNum,
+   BOOLEAN _optAccessPlanCache::initialize ( UINT32 bucketNum,
                                              optCachedPlanMonitor *pMonitor )
    {
       BOOLEAN result = FALSE ;
@@ -67,26 +72,33 @@ namespace engine
 
       SDB_ASSERT( NULL != pMonitor, "pMonotir is invalid" ) ;
 
-      if ( utilHashTable::initialize( bucketNum ) )
+      if ( !utilHashTable::initialize( bucketNum ) )
       {
-         _pMonitor = pMonitor ;
-         result = TRUE ;
+         goto error ;
       }
 
-      PD_TRACE_EXIT( SDB_OPTAPCACHES_INIT ) ;
+      _pMonitor = pMonitor ;
+      result = TRUE ;
 
+   done :
+      PD_TRACE_EXIT( SDB_OPTAPCACHES_INIT ) ;
       return result ;
+
+   error :
+      deinitialize() ;
+      result = FALSE ;
+      goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTAPCACHES_CLEAR, "_optAccessPlanCache::clear" )
-   void _optAccessPlanCache::clear ()
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTAPCACHES_DEINIT, "_optAccessPlanCache::deinitialize" )
+   void _optAccessPlanCache::deinitialize ()
    {
-      PD_TRACE_ENTRY( SDB_OPTAPCACHES_CLEAR ) ;
+      PD_TRACE_ENTRY( SDB_OPTAPCACHES_DEINIT ) ;
 
-      utilHashTable::clear() ;
+      utilHashTable::deinitialize() ;
       _pMonitor = NULL ;
 
-      PD_TRACE_EXIT( SDB_OPTAPCACHES_CLEAR ) ;
+      PD_TRACE_EXIT( SDB_OPTAPCACHES_DEINIT ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTAPCACHES_ADDPLAN, "_optAccessPlanCache::addPlan" )
@@ -134,11 +146,12 @@ namespace engine
 
       UINT32 deleteCount = 0 ;
 
-      for ( UINT32 bucketID = 0 ;
-            bucketID < pCachedPlanMgr->getBucketNum() ;
-            bucketID ++ )
+      ossScopedRWLock scopedLock( &_bucketNumLock, SHARED ) ;
+
+      for ( UINT32 bucketID = 0 ; bucketID < getBucketNum() ; bucketID ++ )
       {
-         if ( pCachedPlanMgr->testCacheBitmap( bucketID ) )
+         if ( pCachedPlanMgr->getBucketNum() != getBucketNum() ||
+              pCachedPlanMgr->testCacheBitmap( bucketID ) )
          {
             // Lock the clear lock shared, parallel removing for different
             // collections or collection spaces is allowed
@@ -188,7 +201,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTAPCACHES_INVALIDCLPLANS, "_optAccessPlanCache::invalidateCLPlans" )
    void _optAccessPlanCache::invalidateCLPlans ( dmsCachedPlanMgr *pCachedPlanMgr,
-                                                  UINT32 suLID, UINT32 clLID )
+                                                 UINT32 suLID, UINT32 clLID )
    {
       PD_TRACE_ENTRY( SDB_OPTAPCACHES_INVALIDCLPLANS ) ;
 
@@ -196,11 +209,12 @@ namespace engine
 
       UINT32 deleteCount = 0 ;
 
-      for ( UINT32 bucketID = 0 ;
-            bucketID < pCachedPlanMgr->getBucketNum() ;
-            bucketID ++ )
+      ossScopedRWLock scopedLock( &_bucketNumLock, SHARED ) ;
+
+      for ( UINT32 bucketID = 0 ; bucketID < getBucketNum() ; bucketID ++ )
       {
-         if ( pCachedPlanMgr->testCacheBitmap( bucketID ) )
+         if ( pCachedPlanMgr->getBucketNum() != getBucketNum() ||
+              pCachedPlanMgr->testCacheBitmap( bucketID ) )
          {
             // Lock the clear lock shared, parallel removing for different
             // collections or collection spaces is allowed
@@ -274,10 +288,11 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB_OPTAPCACHES_INVALIDALLPLANS ) ;
 
-
       UINT32 deleteCount = 0 ;
 
-      for ( UINT32 bucketID = 0 ; bucketID < _bucketNum ; bucketID ++ )
+      ossScopedRWLock scopedLock( &_bucketNumLock, SHARED ) ;
+
+      for ( UINT32 bucketID = 0 ; bucketID < getBucketNum() ; bucketID ++ )
       {
          ossScopedRWLock scopedLock( _pMonitor->getClearLock(), EXCLUSIVE ) ;
          utilHashTableBucket *pBucket = getBucket( bucketID, EXCLUSIVE ) ;
@@ -326,7 +341,9 @@ namespace engine
 
       UINT32 deleteCount = 0 ;
 
-      for ( UINT32 bucketID = 0 ; bucketID < _bucketNum ; bucketID ++ )
+      ossScopedRWLock scopedLock( &_bucketNumLock, SHARED ) ;
+
+      for ( UINT32 bucketID = 0 ; bucketID < getBucketNum() ; bucketID ++ )
       {
          // Lock the clear lock shared, parallel removing for different
          ossScopedRWLock scopedLock( _pMonitor->getClearLock(), SHARED ) ;
@@ -385,7 +402,9 @@ namespace engine
 
       PD_TRACE_ENTRY( SDB_OPTCPCACHE_GETCPLIST ) ;
 
-      for ( UINT32 bucketID = 0 ; bucketID < _bucketNum ; bucketID ++ )
+      ossScopedRWLock scopedLock( &_bucketNumLock, SHARED ) ;
+
+      for ( UINT32 bucketID = 0 ; bucketID < getBucketNum() ; bucketID ++ )
       {
          utilHashTableBucket *pBucket = getBucket( bucketID, SHARED ) ;
 
@@ -446,15 +465,37 @@ namespace engine
       goto done ;
    }
 
-   void _optAccessPlanCache::afterAddItem ( UINT32 bucketID,
-                                            optAccessPlan *pPlan )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTCPCACHE_ENABLECACHE, "_optAccessPlanCache::enableCaching" )
+   void _optAccessPlanCache::enableCaching ()
+   {
+      PD_TRACE_ENTRY( SDB_OPTCPCACHE_ENABLECACHE ) ;
+      if ( isInitialized() )
+      {
+         _setEnableAddItem( TRUE ) ;
+      }
+      PD_TRACE_EXIT( SDB_OPTCPCACHE_ENABLECACHE ) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTCPCACHE_DISABLECACHE, "_optAccessPlanCache::disableCaching" )
+   void _optAccessPlanCache::disableCaching ()
+   {
+      PD_TRACE_ENTRY( SDB_OPTCPCACHE_DISABLECACHE ) ;
+      if ( isInitialized() )
+      {
+         _setEnableAddItem( FALSE ) ;
+      }
+      PD_TRACE_EXIT( SDB_OPTCPCACHE_DISABLECACHE ) ;
+   }
+
+   void _optAccessPlanCache::_afterAddItem ( UINT32 bucketID,
+                                             optAccessPlan *pPlan )
    {
       SDB_ASSERT( pPlan, "pPlan is invalid" ) ;
       pPlan->setCachedBitmap() ;
    }
 
-   void _optAccessPlanCache::afterGetItem ( UINT32 bucketID,
-                                            optAccessPlan *pPlan )
+   void _optAccessPlanCache::_afterGetItem ( UINT32 bucketID,
+                                             optAccessPlan *pPlan )
    {
       SDB_ASSERT( pPlan, "pPlan is invalid" ) ;
 
@@ -588,7 +629,7 @@ namespace engine
 
    _optCachedPlanMonitor::~_optCachedPlanMonitor ()
    {
-      clear() ;
+      deinitialize() ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTCPMON_INIT, "_optCachedPlanMonitor::initialize" )
@@ -659,15 +700,15 @@ namespace engine
       return result ;
 
    error :
-      clear() ;
+      deinitialize() ;
       result = FALSE ;
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTCPMON_CLEAR, "_optCachedPlanMonitor::clear" )
-   void _optCachedPlanMonitor::clear ()
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTCPMON_DEINIT, "_optCachedPlanMonitor::deinitialize" )
+   void _optCachedPlanMonitor::deinitialize ()
    {
-      PD_TRACE_ENTRY( SDB_OPTCPMON_CLEAR ) ;
+      PD_TRACE_ENTRY( SDB_OPTCPMON_DEINIT ) ;
 
       if ( NULL != _pFreeActivityIDs )
       {
@@ -694,7 +735,7 @@ namespace engine
 
       _lastClearTimestamp = 0 ;
 
-      PD_TRACE_EXIT( SDB_OPTCPMON_CLEAR ) ;
+      PD_TRACE_EXIT( SDB_OPTCPMON_DEINIT ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTCPMON_SETACT, "_optCachedPlanMonitor::setActivity" )
@@ -1011,7 +1052,6 @@ namespace engine
      _monitor()
    {
       _clearJobEduID = PMD_INVALID_EDUID ;
-      _cacheBucketNum = 0 ;
       _cacheLevel = OPT_PLAN_NOCACHE ;
    }
 
@@ -1033,7 +1073,6 @@ namespace engine
       SDB_ASSERT( !_planCache.isInitialized(),
                   "cache should not be initialized" ) ;
 
-      _cacheBucketNum = bucketNum ;
       _cacheLevel = OPT_PLAN_NOCACHE ;
 
       setSortBufferSize( sortBufferSize ) ;
@@ -1044,6 +1083,9 @@ namespace engine
 
       if ( bucketNum > 0 && cacheLevel > OPT_PLAN_NOCACHE )
       {
+         bucketNum = ossRoundUpToMultipleX( bucketNum,
+                                            UTIL_HASH_TABLE_BUCKET_UNIT ) ;
+
          _planCache.initialize( bucketNum, &_monitor ) ;
          PD_CHECK( _planCache.isInitialized(), SDB_OOM, error, PDERROR,
                    "Failed to initialize plan caches" ) ;
@@ -1052,28 +1094,42 @@ namespace engine
          PD_CHECK( _monitor.isInitialized(), SDB_OOM, error, PDERROR,
                    "Failed to initialize plan cache sweeper" ) ;
 
-         rc = startPlanClearJob( &_clearJobEduID ) ;
-         PD_RC_CHECK( rc, PDERROR, "Start cached plan clearing job thread "
+         // Start cached-plan clearing background job
+         rc = _startClearJob() ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to start cached-plan clearing job "
                       "failed, rc: %d", rc ) ;
-
-         _cacheLevel = cacheLevel ;
+      }
+      else
+      {
+         bucketNum = 0 ;
+         cacheLevel = OPT_PLAN_NOCACHE ;
       }
 
+      // Change caches in DMS level
+      sdbGetDMSCB()->changeSUCaches( getMask() ) ;
+
       // Update parameterize and fuzzy-operator by cache level
-      setMthEnableParameterized( _cacheLevel >= OPT_PLAN_PARAMETERIZED ) ;
-      setMthEnableFuzzyOptr( _cacheLevel >= OPT_PLAN_FUZZYOPTR ) ;
+      setMthEnableParameterized( cacheLevel >= OPT_PLAN_PARAMETERIZED ) ;
+      setMthEnableFuzzyOptr( cacheLevel >= OPT_PLAN_FUZZYOPTR ) ;
+
+      // Set cache level
+      _cacheLevel = cacheLevel ;
+
+      // Done initialize, enable caching
+      _planCache.enableCaching() ;
 
    done :
       PD_TRACE_EXITRC( SDB_OPTAPM_INIT, rc ) ;
       return rc ;
 
    error :
-      clear() ;
+      fini() ;
       goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTAPM_REINIT, "_optAccessPlanManager::reinit" )
-   INT32 _optAccessPlanManager::reinit ( OPT_PLAN_CACHE_LEVEL cacheLevel,
+   INT32 _optAccessPlanManager::reinit ( UINT32 bucketNum,
+                                         OPT_PLAN_CACHE_LEVEL cacheLevel,
                                          UINT32 sortBufferSize,
                                          INT32 optCostThreshold,
                                          BOOLEAN enableMixCmp )
@@ -1082,31 +1138,67 @@ namespace engine
 
       PD_TRACE_ENTRY( SDB_OPTAPM_REINIT ) ;
 
+      // Only one thread could enter reinitialize process
       ossScopedLock scopedLock( &_reinitLatch ) ;
 
       if ( _planCache.isInitialized() )
       {
-         if ( cacheLevel != _cacheLevel ||
+         bucketNum = ossRoundUpToMultipleX( bucketNum,
+                                            UTIL_HASH_TABLE_BUCKET_UNIT ) ;
+         if ( bucketNum != _planCache.getBucketNum() ||
+              cacheLevel != _cacheLevel ||
               sortBufferSize != getSortBufferSize() ||
               optCostThreshold != getOptCostThreshold() ||
               enableMixCmp != mthEnabledMixCmp() )
          {
-            _cacheLevel = cacheLevel ;
-            setSortBufferSize( sortBufferSize ) ;
-            setOptCostThreshold( optCostThreshold ) ;
-            setMthEnableMixCmp( enableMixCmp ) ;
+            if ( 0 == bucketNum ||
+                 OPT_PLAN_NOCACHE == cacheLevel )
+            {
+               cacheLevel = OPT_PLAN_NOCACHE ;
+               bucketNum = 0 ;
+            }
 
-            // For change to OPT_PLAN_NOCACHE, we only clear the cache, but we
-            // don't stop the clearing job
-            sdbGetDMSCB()->clearSUCaches( DMS_EVENT_MASK_PLAN ) ;
+            if ( bucketNum == _planCache.getBucketNum() )
+            {
+               _planCache.disableCaching() ;
 
-            setMthEnableParameterized( _cacheLevel >= OPT_PLAN_PARAMETERIZED ) ;
-            setMthEnableFuzzyOptr( _cacheLevel >= OPT_PLAN_FUZZYOPTR ) ;
+               setSortBufferSize( sortBufferSize ) ;
+               setOptCostThreshold( optCostThreshold ) ;
+               setMthEnableMixCmp( enableMixCmp ) ;
+
+               sdbGetDMSCB()->clearSUCaches( DMS_EVENT_MASK_PLAN ) ;
+
+               setMthEnableParameterized( cacheLevel >= OPT_PLAN_PARAMETERIZED ) ;
+               setMthEnableFuzzyOptr( cacheLevel >= OPT_PLAN_FUZZYOPTR ) ;
+               _cacheLevel = cacheLevel ;
+
+               _planCache.enableCaching() ;
+            }
+            else
+            {
+               // We don't need the clearing job anymore
+               if ( 0 == bucketNum )
+               {
+                  _stopClearJob() ;
+               }
+
+               // Deinitialize the cache first
+               rc = fini () ;
+               PD_RC_CHECK( rc, PDERROR, "Failed to finalize access plan "
+                            "manager, rc: %d", rc ) ;
+
+               // Initialize the cache again with new value of bucketNum
+               rc = init( bucketNum, cacheLevel, sortBufferSize,
+                          optCostThreshold, enableMixCmp ) ;
+               PD_RC_CHECK( rc, PDERROR, "Failed to initialize access plan manager, "
+                            "rc: %d", rc ) ;
+
+            }
          }
       }
       else
       {
-         rc = init( _cacheBucketNum, cacheLevel, sortBufferSize,
+         rc = init( bucketNum, cacheLevel, sortBufferSize,
                     optCostThreshold, enableMixCmp ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to initialize access plan manager, "
                       "rc: %d", rc ) ;
@@ -1117,23 +1209,34 @@ namespace engine
       return rc ;
 
    error :
-      clear() ;
+      fini() ;
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTAPM_CLEAR, "_optAccessPlanManager::clear" )
-   void _optAccessPlanManager::clear ()
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTAPM_FINI, "_optAccessPlanManager::fini" )
+   INT32 _optAccessPlanManager::fini ()
    {
-      PD_TRACE_ENTRY( SDB_OPTAPM_CLEAR ) ;
+      PD_TRACE_ENTRY( SDB_OPTAPM_FINI ) ;
 
-      if ( _planCache.isInitialized() )
+      if ( isInitialized() )
       {
-         _planCache.invalidateAllPlans() ;
-      }
-      _planCache.clear() ;
-      _monitor.clear() ;
+         _planCache.disableCaching() ;
 
-      PD_TRACE_EXIT( SDB_OPTAPM_CLEAR ) ;
+         _cacheLevel = OPT_PLAN_NOCACHE ;
+         setMthEnableParameterized( FALSE ) ;
+         setMthEnableFuzzyOptr( FALSE ) ;
+
+         // Invalidate cached plans
+         _planCache.invalidateAllPlans() ;
+
+         // Finalize cache and monitor
+         _planCache.deinitialize() ;
+         _monitor.deinitialize() ;
+      }
+
+      PD_TRACE_EXIT( SDB_OPTAPM_FINI ) ;
+
+      return SDB_OK ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTAPM_GETAP, "_optAccessPlanManager::getAccessPlan" )
@@ -1247,6 +1350,7 @@ namespace engine
 
       if ( isInitialized() )
       {
+         // Invalidate cached plans
          _planCache.invalidateAllPlans() ;
       }
 
@@ -1499,6 +1603,30 @@ namespace engine
       return rc ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTAPM_ONCHGSUCACHES, "_optAccessPlanManager::onChangeSUCaches" )
+   INT32 _optAccessPlanManager::onChangeSUCaches ( IDmsEventHolder *pEventHolder,
+                                                   IDmsSUCacheHolder *pCacheHolder )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_OPTAPM_ONCHGSUCACHES ) ;
+
+      SDB_ASSERT( pEventHolder, "Event holder is invalid" ) ;
+
+      dmsCachedPlanMgr *pCachedPlanMgr =
+                           dynamic_cast<dmsCachedPlanMgr *>(pCacheHolder) ;
+      if ( pCachedPlanMgr )
+      {
+         pCachedPlanMgr->resizeBitmaps( _planCache.getBucketNum() ) ;
+         pCachedPlanMgr->resetParamInvalidBitmap() ;
+         pCachedPlanMgr->resetMainCLInvalidBitmap() ;
+         pCachedPlanMgr->clearCacheUnits() ;
+      }
+
+      PD_TRACE_EXITRC( SDB_OPTAPM_ONCHGSUCACHES, rc ) ;
+
+      return rc ;
+   }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTAPM__GETCLAP, "_optAccessPlanManager::_getCLAccessPlan" )
    INT32 _optAccessPlanManager::_getCLAccessPlan ( const rtnQueryOptions &options,
@@ -2273,6 +2401,44 @@ namespace engine
       }
 
       PD_TRACE_EXIT( SDB_OPTAPM__INVALIDCLPLANS ) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTAPM__STARTCLEARJOB, "_optAccessPlanManager::_startClearJob" )
+   INT32 _optAccessPlanManager::_startClearJob ()
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_OPTAPM__STARTCLEARJOB ) ;
+
+      rc = startPlanClearJob( &_clearJobEduID ) ;
+      PD_RC_CHECK( rc, PDERROR, "Start cached-plan clearing job thread "
+                   "failed, rc: %d", rc ) ;
+   done :
+      PD_TRACE_EXITRC( SDB_OPTAPM__STARTCLEARJOB, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTAPM__STOPCLEARJOB, "_optAccessPlanManager::_stopClearJob" )
+   void _optAccessPlanManager::_stopClearJob ()
+   {
+      if ( PMD_INVALID_EDUID != _clearJobEduID )
+      {
+         pmdEDUMgr *eduMgr = pmdGetKRCB()->getEDUMgr() ;
+
+         if ( !eduMgr->isDestroyed() )
+         {
+            pmdEDUCB *clearJobCB = eduMgr->getEDUByID( _clearJobEduID ) ;
+            if ( NULL != clearJobCB )
+            {
+               clearJobCB->force() ;
+            }
+         }
+
+         _clearJobEduID = PMD_INVALID_EDUID ;
+      }
    }
 
 }

@@ -71,12 +71,12 @@ namespace engine
       public :
          _optAccessPlanCache () ;
 
-         virtual ~_optAccessPlanCache () {}
+         virtual ~_optAccessPlanCache () ;
 
-         BOOLEAN initialize ( UINT16 bucketNum,
+         BOOLEAN initialize ( UINT32 bucketNum,
                               optCachedPlanMonitor *pMonitor ) ;
 
-         void clear () ;
+         void deinitialize () ;
 
          BOOLEAN addPlan ( optAccessPlan *pPlan ) ;
 
@@ -96,10 +96,14 @@ namespace engine
 
          INT32 getCachedPlanList ( vector<BSONObj> &cachedPlanList ) ;
 
-      protected :
-         virtual void afterAddItem ( UINT32 bucketID, optAccessPlan *pPlan ) ;
+         void enableCaching () ;
 
-         virtual void afterGetItem ( UINT32 bucketID, optAccessPlan *pPlan ) ;
+         void disableCaching () ;
+
+      protected :
+         virtual void _afterAddItem ( UINT32 bucketID, optAccessPlan *pPlan ) ;
+
+         virtual void _afterGetItem ( UINT32 bucketID, optAccessPlan *pPlan ) ;
 
       protected :
          optCachedPlanMonitor *_pMonitor ;
@@ -187,7 +191,7 @@ namespace engine
 
          BOOLEAN initialize ( optAccessPlanCache *pPlanCache ) ;
 
-         void clear () ;
+         void deinitialize () ;
 
          OSS_INLINE BOOLEAN isInitialized () const
          {
@@ -332,12 +336,13 @@ namespace engine
                       INT32 optCostThreshold,
                       BOOLEAN enableMixCmp ) ;
 
-         INT32 reinit ( OPT_PLAN_CACHE_LEVEL cacheLevel,
+         INT32 reinit ( UINT32 bucketNum,
+                        OPT_PLAN_CACHE_LEVEL cacheLevel,
                         UINT32 sortBufferSize,
                         INT32 optCostThreshold,
                         BOOLEAN enableMixCmp ) ;
 
-         void clear () ;
+         INT32 fini () ;
 
          OSS_INLINE OPT_PLAN_CACHE_LEVEL getCacheLevel () const
          {
@@ -439,6 +444,9 @@ namespace engine
                                          IDmsSUCacheHolder *pCacheHolder,
                                          const dmsEventCLItem &clItem ) ;
 
+         virtual INT32 onChangeSUCaches ( IDmsEventHolder *pEventHolder,
+                                          IDmsSUCacheHolder *pCacheHolder ) ;
+
          OSS_INLINE virtual UINT32 getMask ()
          {
             return DMS_EVENT_MASK_PLAN ;
@@ -516,6 +524,10 @@ namespace engine
          void _invalidCLPlans ( IDmsSUCacheHolder *pCacheHolder,
                                 UINT16 mbID, UINT32 clLID ) ;
 
+         // Helpers for clear background job
+         INT32 _startClearJob () ;
+         void  _stopClearJob () ;
+
       protected :
          ossSpinXLatch           _reinitLatch ;
          optAccessPlanCache      _planCache ;
@@ -523,7 +535,6 @@ namespace engine
          EDUID                   _clearJobEduID ;
 
          // Configured options
-         UINT32                  _cacheBucketNum ;
          OPT_PLAN_CACHE_LEVEL    _cacheLevel ;
    } ;
 

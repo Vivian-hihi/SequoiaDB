@@ -59,18 +59,13 @@ namespace engine
    /*
       _dmsCachedPlanMgr implement
     */
-   _dmsCachedPlanMgr::_dmsCachedPlanMgr ( IDmsSUCacheHolder *pHolder,
-                                          UINT32 bucketNum,
-                                          BOOLEAN needParam )
+   _dmsCachedPlanMgr::_dmsCachedPlanMgr ( IDmsSUCacheHolder *pHolder )
    : dmsSUCache( DMS_CACHE_TYPE_PLAN, UTIL_SU_CACHE_UNIT_CLPLAN, pHolder ),
-     _cacheBitmap( bucketNum ),
-     _paramInvalidBitmap( needParam ? DMS_MME_SLOTS : 0 ),
-     _mainCLInvalidBitmap( needParam ? DMS_MME_SLOTS : 0 )
+     _cacheBitmap( 0 ),
+     _paramInvalidBitmap(),
+     _mainCLInvalidBitmap()
    {
-      if ( _cacheBitmap.getSize() > 0 )
-      {
-         _bucketModulo = bucketNum - 1 ;
-      }
+      _setBucketModulo() ;
    }
 
    _dmsCachedPlanMgr::~_dmsCachedPlanMgr ()
@@ -89,6 +84,25 @@ namespace engine
          SAFE_OSS_DELETE( pCachedPlanUnit ) ;
       }
       return SDB_OK ;
+   }
+
+   INT32 _dmsCachedPlanMgr::resizeBitmaps ( UINT32 bucketNum )
+   {
+      _cacheBitmap.resize( bucketNum ) ;
+      _setBucketModulo() ;
+      return SDB_OK ;
+   }
+
+   void _dmsCachedPlanMgr::_setBucketModulo ()
+   {
+      if ( _cacheBitmap.getSize() > 0 )
+      {
+         _bucketModulo = _cacheBitmap.getSize() - 1 ;
+      }
+      else
+      {
+         _bucketModulo = 0 ;
+      }
    }
 
 }

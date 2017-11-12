@@ -304,6 +304,10 @@ namespace engine
 
       void clearSUCaches ( const MON_CS_SIM_LIST &monCSList, UINT32 mask ) ;
 
+      void changeSUCaches ( UINT32 mask ) ;
+
+      void changeSUCaches ( const MON_CS_SIM_LIST &monCSList, UINT32 mask ) ;
+
       INT32 dropCollectionSpaceP1 ( const CHAR *pName, _pmdEDUCB *cb,
                                     SDB_DPSCB *dpsCB );
 

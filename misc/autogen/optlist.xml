@@ -1036,6 +1036,14 @@
          <cn>访问计划缓存内桶的个数。当其为零时Sdb将不会缓存任何访问计划，默认为500。</cn>
       </detail>
       <typeofweb>num</typeofweb>
+      <reloadable>
+         <en>Yes</en>
+         <cn>是</cn>
+      </reloadable>
+      <reloadstrategy>
+         <en>takes effect upon next query</en>
+         <cn>下次查询生效</cn>
+      </reloadstrategy>
   </opt>
 
    <opt>

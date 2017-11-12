@@ -273,6 +273,12 @@ namespace engine
             return SDB_OK ;
          }
 
+         OSS_INLINE virtual INT32 onChangeSUCaches ( IDmsEventHolder *pEventHolder,
+                                                     IDmsSUCacheHolder *pCacheHolder )
+         {
+            return SDB_OK ;
+         }
+
          virtual UINT32 getMask () = 0 ;
    } ;
 
@@ -364,6 +370,8 @@ namespace engine
 
          virtual INT32 onClearCLCaches ( UINT32 mask,
                                          const dmsEventCLItem &clItem ) = 0 ;
+
+         virtual INT32 onChangeSUCaches ( UINT32 mask ) = 0 ;
 
          virtual const CHAR *getCSName () const = 0 ;
 
