@@ -1497,7 +1497,7 @@ namespace engine
       _perfStat = FALSE ;
       _optCostThreshold = PMD_DFT_OPT_COST_THRESHOLD ;
       _enableMixCmp = PMD_DFT_ENABLE_MIX_CMP ;
-      _optPlanCacheLevel = PMD_DFT_PLAN_CACHE_LEVEL ;
+      _planCacheLevel = PMD_DFT_PLAN_CACHE_LEVEL ;
 
 #ifdef SDB_ENTERPRISE
 
@@ -1810,9 +1810,9 @@ namespace engine
                    TRUE, PMD_DFT_ENABLE_MIX_CMP, TRUE ) ;
 
       // --optcachelevel
-      rdxUInt( pEX, PMD_OPTION_PLAN_CACHE_LEVEL, _optPlanCacheLevel, FALSE,
+      rdxUInt( pEX, PMD_OPTION_PLAN_CACHE_LEVEL, _planCacheLevel, FALSE,
                TRUE, PMD_DFT_PLAN_CACHE_LEVEL, FALSE ) ;
-      rdvMinMax( pEX, _optPlanCacheLevel, 0, 4, TRUE ) ;
+      rdvMinMax( pEX, _planCacheLevel, 0, 4, TRUE ) ;
 
       // end map
 

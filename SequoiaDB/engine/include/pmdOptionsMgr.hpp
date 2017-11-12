@@ -547,7 +547,7 @@ namespace engine
          OSS_INLINE INT32 getOptCostThreshold() const { return _optCostThreshold ; }
          OSS_INLINE BOOLEAN isEnabledMixCmp() const { return _enableMixCmp ; }
          OSS_INLINE UINT32  getDataErrorOp() const { return _dataErrorOp ; }
-         OSS_INLINE UINT32 getPlanCacheLevel() const { return _optPlanCacheLevel ; }
+         OSS_INLINE UINT32 getPlanCacheLevel() const { return _planCacheLevel ; }
 
          std::string getOmAddr() const ;
 
@@ -635,7 +635,7 @@ namespace engine
          BOOLEAN     _perfStat ;
          INT32       _optCostThreshold ;
          BOOLEAN     _enableMixCmp ;
-         UINT32      _optPlanCacheLevel ;
+         UINT32      _planCacheLevel ;
 
 #ifdef SDB_ENTERPRISE
 
