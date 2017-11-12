@@ -190,13 +190,8 @@ public class ReplicaGroup {
      * @brief Get the random slave node of current replica group, when have no slave node, return master node.
      */
     public Node getSlave() throws BaseException {
-        List<Integer> list = new ArrayList<Integer>(2);
-        Random rand = new Random();
-        int pos1 = rand.nextInt(7) + 1;
-        int pos2 = pos1 % 7 + 1;
-        list.add(pos1);
-        list.add(pos2);
-        return getSlave(list, true);
+        List<Integer> list = new ArrayList<Integer>();
+        return getSlave(list);
     }
 
     /**
@@ -210,36 +205,37 @@ public class ReplicaGroup {
     public Node getSlave(int... positions) throws BaseException {
         List<Integer> list = null;
         if (positions == null || positions.length == 0) {
-            return getSlave();
+            return getSlave(list);
         } else {
             list = new ArrayList<Integer>();
             for(int pos : positions) {
                 list.add(pos);
             }
-            return getSlave(list, false);
+            return getSlave(list);
         }
-
     }
 
-    private Node getSlave(List<Integer> positions, boolean enforce) throws BaseException {
-        // check arguments
-        if (positions == null) {
-            throw new BaseException(SDBError.SDB_INVALIDARG, "position list can not be null");
-        }
+    private Node getSlave(List<Integer> positions) throws BaseException {
+        boolean needGeneratePosition = false;
         List<Integer> validPositions = new ArrayList<Integer>();
-        for(int pos : positions) {
-            if (pos < 1 || pos > 7) {
+        // check arguments
+        if (positions == null || positions.size() == 0) {
+            needGeneratePosition = true;
+        } else {
+            for (int pos : positions) {
+                if (pos < 1 || pos > 7) {
+                    throw new BaseException(SDBError.SDB_INVALIDARG,
+                            String.format("invalid position(%d) in the list", pos));
+                }
+                if (!validPositions.contains(pos)) {
+                    validPositions.add(pos);
+                }
+            }
+            if (validPositions.size() < 1 || validPositions.size() > 7) {
                 throw new BaseException(SDBError.SDB_INVALIDARG,
-                        String.format("invalid position(%d) in the list", pos));
+                        String.format("the number of valid position in the list is %d, it should be in [1, 7]",
+                                validPositions.size()));
             }
-            if (!validPositions.contains(pos)) {
-                validPositions.add(pos);
-            }
-        }
-        if (validPositions.size() < 1 || validPositions.size() > 7) {
-            throw new BaseException(SDBError.SDB_INVALIDARG,
-                    String.format("the number of valid position in the list is %d, it should be in [1, 7]",
-                            validPositions.size()));
         }
         // get information of nodes from catalog
         BSONObject groupInfoObj = sequoiadb.getDetailById(id);
@@ -284,13 +280,22 @@ public class ReplicaGroup {
         if (hasPrimary && primaryNodePosition == 0) {
             throw new BaseException(SDBError.SDB_SYS, "have no primary node in nodes list");
         }
-        // get a node for return
-        String hostName;
-        int port = -1;
-        int nodeId = -1;
+        // try to generate positions
+        int nodeCount = nodesInfoList.size();
+        if (needGeneratePosition) {
+            for(int i = 0; i < nodeCount; i++) {
+                if ( hasPrimary && primaryNodePosition == i + 1 )
+                {
+                    continue ;
+                }
+                validPositions.add(i + 1);
+            }
+        }
+        // get a node position to create Node
         int nodeIndex = -1 ;
         BSONObject nodeInfoObj = null;
-        int nodeCount = nodesInfoList.size();
+        // we must use "nodeCount" to compare first, since "validPositions" may be generate by us when
+        // "needGeneratePosition" is true.
         if (nodeCount == 1) {
             nodeInfoObj = (BSONObject)nodesInfoList.get(0);
         } else if (validPositions.size() == 1) {
@@ -298,41 +303,48 @@ public class ReplicaGroup {
             nodeIndex = (validPositions.get(0) - 1) % nodeCount;
             nodeInfoObj = (BSONObject)nodesInfoList.get(nodeIndex);
         } else {
-            // when have primary, let's remove it's position first
-            List<Integer> myPositionListCopy = new ArrayList<Integer>(validPositions);
-            if (hasPrimary) {
-                Iterator<Integer> itr = myPositionListCopy.iterator();
-                while(itr.hasNext()) {
-                    int pos = itr.next();
-                    if (pos <= nodeCount) {
-                        if (primaryNodePosition == pos) {
-                            itr.remove();
+            int position = 0;
+            Random rand = new Random();
+            int[] flags = new int[7];
+            List<Integer> includePrimaryPositions = new ArrayList<Integer>();
+            List<Integer> excludePrimaryPositions = new ArrayList<Integer>();
+            for(int pos : validPositions) {
+                if (pos <= nodeCount) {
+                    nodeIndex = pos - 1;
+                    if (flags[nodeIndex] == 0) {
+                        flags[nodeIndex] = 1;
+                        includePrimaryPositions.add(pos);
+                        if (hasPrimary && primaryNodePosition != pos) {
+                            excludePrimaryPositions.add(pos);
                         }
-                    } else {
-                        if (primaryNodePosition == (pos - 1) % nodeCount + 1) {
-                            itr.remove();
+                    }
+                } else {
+                    nodeIndex = (pos - 1) % nodeCount;
+                    if (flags[nodeIndex] == 0) {
+                        flags[nodeIndex] = 1;
+                        includePrimaryPositions.add(pos);
+                        if (hasPrimary && primaryNodePosition != nodeIndex + 1) {
+                            excludePrimaryPositions.add(pos);
                         }
                     }
                 }
             }
-            int position = 0;
-            Random rand = new Random();
-            if (myPositionListCopy.size() > 0) {
-                position = rand.nextInt(myPositionListCopy.size());
-                position = myPositionListCopy.get(position);
+            if (excludePrimaryPositions.size() > 0) {
+                position = rand.nextInt(excludePrimaryPositions.size());
+                position = excludePrimaryPositions.get(position);
             } else {
-                position = rand.nextInt(validPositions.size());
-                position = validPositions.get(position);
-                if (enforce) {
+                position = rand.nextInt(includePrimaryPositions.size());
+                position = includePrimaryPositions.get(position);
+                if (needGeneratePosition) {
                     position += 1;
                 }
             }
             nodeIndex = (position - 1) % nodeCount;
             nodeInfoObj = (BSONObject)nodesInfoList.get(nodeIndex);
         }
-        nodeId = Integer.parseInt(nodeInfoObj.get(SdbConstants.FIELD_NAME_NODEID).toString());
-        hostName = nodeInfoObj.get(SdbConstants.FIELD_NAME_HOST).toString();
-        port = getNodePort(nodeInfoObj);
+        int nodeId = Integer.parseInt(nodeInfoObj.get(SdbConstants.FIELD_NAME_NODEID).toString());
+        String hostName = nodeInfoObj.get(SdbConstants.FIELD_NAME_HOST).toString();
+        int port = getNodePort(nodeInfoObj);
         return new Node(hostName, port, nodeId, this);
     }
 

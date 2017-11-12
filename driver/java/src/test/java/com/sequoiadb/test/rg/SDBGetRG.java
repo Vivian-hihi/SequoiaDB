@@ -116,6 +116,49 @@ public class SDBGetRG {
         assertTrue(false);
     }
 
+    private int getMasterPosition(ReplicaGroup group)
+    {
+        int primaryNodePosition = 0;
+        BSONObject groupInfoObj = group.getDetail();
+        if (groupInfoObj == null) {
+            throw new BaseException(SDBError.SDB_CLS_GRP_NOT_EXIST);
+        }
+        // check the nodes in current group
+        Object nodesInfoArr = groupInfoObj.get("Group");
+        if (nodesInfoArr == null || !(nodesInfoArr instanceof BasicBSONList)) {
+            throw new BaseException(SDBError.SDB_SYS,
+                    String.format("invalid content[%s] of field[%s]",
+                            nodesInfoArr == null ? "null" : nodesInfoArr.toString(), "Group"));
+        }
+        BasicBSONList nodesInfoList = (BasicBSONList) nodesInfoArr;
+        if (nodesInfoList.isEmpty()) {
+            throw new BaseException(SDBError.SDB_CLS_EMPTY_GROUP);
+        }
+        // check whether there has primary or not
+        Object primaryNodeId = groupInfoObj.get("PrimaryNode");
+        boolean hasPrimary = true;
+        if (primaryNodeId == null) {
+            hasPrimary = false;
+        } else if (!(primaryNodeId instanceof Number)) {
+            throw new BaseException(SDBError.SDB_SYS, "invalid primary node's information: " + primaryNodeId.toString());
+        } else if (primaryNodeId.equals(Integer.valueOf(-1))){
+            hasPrimary = false;
+        }
+        // try to mark the position of primary node in the nodes list,
+        // the value of position is [1, 7]
+        for (int i = 0; i < nodesInfoList.size(); i++) {
+            BSONObject nodeInfo = (BSONObject) nodesInfoList.get(i);
+            Object nodeIdValue = nodeInfo.get("NodeID");
+            if (nodeIdValue == null) {
+                throw new BaseException(SDBError.SDB_SYS, "node id can not be null");
+            }
+            if (hasPrimary && nodeIdValue.equals(primaryNodeId)) {
+                primaryNodePosition = i + 1;
+            }
+        }
+        return primaryNodePosition;
+    }
+
     @Test
     public void getMasterAndSlaveNodeTest() {
         if (!isCluster)
@@ -125,6 +168,7 @@ public class SDBGetRG {
         BSONObject detail = rg.getDetail();
         BasicBSONList nodeList = (BasicBSONList)detail.get("Group");
         int nodeCount = nodeList.size();
+        int primaryNodePosition = getMasterPosition(rg);
         assertTrue(nodeCount != 0);
 
         Node master = null;
@@ -163,6 +207,7 @@ public class SDBGetRG {
                 break;
             }
         }
+        //pos1 = 4;pos2=7;
         slave = rg.getSlave(pos1, pos2);
         System.out.println(String.format("case3: group is: %s, master is: %s, slave is: %s", groupName,
                 master == null ? null : master.getNodeName(),
@@ -170,7 +215,12 @@ public class SDBGetRG {
         if (nodeCount == 1) {
             assertEquals(master.getNodeName(), slave.getNodeName());
         } else {
-            assertNotEquals(master.getNodeName(), slave.getNodeName());
+            if ((pos1 % nodeCount == pos2 % nodeCount) &&
+                    (primaryNodePosition == (pos1 - 1) % nodeCount + 1)) {
+                assertEquals(master.getNodeName(), slave.getNodeName());
+            } else {
+                assertNotEquals(master.getNodeName(), slave.getNodeName());
+            }
         }
 
         // case 4
@@ -183,6 +233,41 @@ public class SDBGetRG {
         } else {
             assertNotEquals(master.getNodeName(), slave.getNodeName());
         }
+    }
+
+    @Test
+    @Ignore
+    public void groupTmpTest() {
+        if (!isCluster)
+            return;
+        groupName = "db2";
+        rg = sdb.getReplicaGroup(groupName);
+        BSONObject detail = rg.getDetail();
+        BasicBSONList nodeList = (BasicBSONList) detail.get("Group");
+        int nodeCount = nodeList.size();
+        int primaryNodePosition = getMasterPosition(rg);
+        assertTrue(nodeCount != 0);
+
+        Node master = null;
+        Node slave = null;
+
+        // case 1
+        //master = rg.getMaster();
+        slave = rg.getSlave();
+        System.out.println(String.format("case1: group is: %s, master is: %s, slave is: %s", groupName,
+                master == null ? null : master.getNodeName(),
+                slave == null ? null : slave.getNodeName()));
+        int counter1 = 0, counter2 = 0;
+        String str1 = "susetzb:40000", str2 = "susetzb:42000";
+        for(int i = 0; i < 100; i++) {
+            slave = rg.getSlave(1,2,3,4,5,6,7);
+            if (str1.equals(slave.getNodeName())) {
+                counter1++;
+            } else if(str2.equals(slave.getNodeName())) {
+                counter2++;
+            }
+        }
+        System.out.println("counter1 is: " + counter1 + ", counter2 is: " + counter2);
     }
 
 }
