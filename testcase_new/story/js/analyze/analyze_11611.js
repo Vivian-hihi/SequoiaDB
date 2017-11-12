@@ -6,12 +6,6 @@
 **************************************/
 function main()
 {
-   if (commIsStandalone(db))
-   {
-      println("skip standalone environment");
-		return ;
-   }
-   
    var csName = COMMCSNAME + "11611";
 	commDropCS( db, csName, true, "drop CS in the beginning" );
 	
@@ -121,10 +115,10 @@ function main()
 	
 	//analyze table below SYSSTAT 
 	var options1 = {Collection: "SYSSTAT.SYSCOLLECTIONSTAT"};
-   checkAnalyzeInvalidResult(options1);
+   //checkAnalyzeInvalidResult(options1);
 	
 	var options2 = {Collection: "SYSSTAT.SYSINDEXSTAT"};
-   checkAnalyzeInvalidResult(options2);
+   //checkAnalyzeInvalidResult(options2);
 	
    println("check result after analyze success!");
 	
