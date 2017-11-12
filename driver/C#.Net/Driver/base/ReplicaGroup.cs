@@ -333,46 +333,30 @@ namespace SequoiaDB
          */
         public Node GetSlave(params int[] positions)
         {
-            List<int> list = null;
-            if (positions == null || positions.Length == 0) {
-                Random rand = new Random();
-                int pos1 = rand.Next(7) + 1;
-                int pos2 = pos1 % 7 + 1;
-                list = new List<int>(2);
-                list.Add(pos1);
-                list.Add(pos2);
-                return _GetSlave(list, true);
-            } else {
-                list = new List<int>();
-                foreach(int pos in positions) {
-                    list.Add(pos);
-                }
-                return _GetSlave(list, false);
-            } 
-        }
-
-        private Node _GetSlave(List<int> positions, bool enforce)
-        {
-            // check arguements 
-            if (positions == null)
-            {
-                throw new BaseException((int)Errors.errors.SDB_INVALIDARG);
-            }
+            bool needGeneratePosition = false;
             List<int> validPositions = new List<int>();
-            foreach(int pos in positions)
+            // check arguements 
+            if (positions == null || positions.Length == 0)
             {
-                if (pos < 1 || pos > 7)
-                {
-                    throw new BaseException((int)Errors.errors.SDB_INVALIDARG);
-                }
-                if (!validPositions.Contains(pos))
-                {
-                    validPositions.Add(pos);
-                }
+                needGeneratePosition = true;
             }
-            if (validPositions.Count < 1 || validPositions.Count > 7)
+            else
             {
-                throw new BaseException((int)Errors.errors.SDB_INVALIDARG, "the amount of valid positions should be [1, 7]");
+                foreach (int pos in positions)
+                {
+                    if (pos < 1 || pos > 7)
+                    {
+                        throw new BaseException((int)Errors.errors.SDB_INVALIDARG, "the valid position of node should be [1, 7]");
+                    }
+                    if (!validPositions.Contains(pos))
+                    {
+                        validPositions.Add(pos);
+                    }
+                }
+                if (validPositions.Count < 1 || validPositions.Count > 7)
+                {
+                    throw new BaseException((int)Errors.errors.SDB_INVALIDARG, "the amount of valid positions should be [1, 7]");
+                }
             }
             // get group details
             try
@@ -428,10 +412,21 @@ namespace SequoiaDB
                 {
                     throw new BaseException((int)Errors.errors.SDB_SYS, "have no primary node in nodes list");
                 }
-                // select a node to return
+                // try to generate slave node's positions
                 int nodeCount = nodeList.Count;
+                if (needGeneratePosition)
+                {
+                    for (int i = 0; i < nodeCount; i++)
+                    {
+                        if (hasPrimary && primaryNodePosition == i + 1)
+                        {
+                            continue;
+                        }
+                        validPositions.Add(i + 1);
+                    }
+                }
+                // select a node to return
                 int nodeIndex = -1;
-                List<int> validPositionsCopy = new List<int>();
                 if (nodeCount == 1)
                 {
                     return ExtractNode(nodeList[0]);
@@ -443,44 +438,60 @@ namespace SequoiaDB
                 }
                 else
                 {
-                    if (hasPrimary)
+                    int position = 0;
+                    Random rand = new Random();
+                    int[] flags = new int[7];
+                    List<int> includePrimaryPositions = new List<int>();
+                    List<int> excludePrimaryPositions = new List<int>();
+
+                    foreach (int pos in validPositions)
                     {
-                        foreach (int pos in validPositions)
+                        if (pos <= nodeCount)
                         {
-                            if (pos <= nodeCount)
+                            nodeIndex = pos - 1;
+                            if (flags[nodeIndex] == 0)
                             {
-                                if (primaryNodePosition != pos)
+                                flags[nodeIndex] = 1;
+                                includePrimaryPositions.Add(pos);
+                                if (hasPrimary && primaryNodePosition != pos)
                                 {
-                                    validPositionsCopy.Add(pos);
+                                    excludePrimaryPositions.Add(pos);
                                 }
                             }
-                            else
+                        }
+                        else
+                        {
+                            nodeIndex = (pos - 1) % nodeCount;
+                            if (flags[nodeIndex] == 0)
                             {
-                                if (primaryNodePosition != (pos - 1) % nodeCount + 1)
+                                flags[nodeIndex] = 1;
+                                includePrimaryPositions.Add(pos);
+                                if (hasPrimary && primaryNodePosition != nodeIndex + 1)
                                 {
-                                    validPositionsCopy.Add(pos);
+                                    excludePrimaryPositions.Add(pos);
                                 }
                             }
                         }
                     }
-                }
-                int position = 0;
-                Random rand = new Random();
-                if (validPositionsCopy.Count > 0)
-                {
-                    position = rand.Next(validPositionsCopy.Count);
-                    position = validPositionsCopy[position];
-                }
-                else
-                {
-                    position = rand.Next(validPositions.Count);
-                    position = validPositions[position];
-                    if (enforce) {
-                        position += 1;
+
+                    if (excludePrimaryPositions.Count > 0)
+                    {
+                        position = rand.Next(excludePrimaryPositions.Count);
+                        position = excludePrimaryPositions[position];
                     }
+                    else
+                    {
+                        position = rand.Next(includePrimaryPositions.Count);
+                        Console.WriteLine("position is: " + position);
+                        position = includePrimaryPositions[position];
+                        if (needGeneratePosition)
+                        {
+                            position += 1;
+                        }
+                    }
+                    nodeIndex = (position - 1) % nodeCount;
+                    return ExtractNode(nodeList[nodeIndex]);
                 }
-                nodeIndex = (position - 1) % nodeCount;
-                return ExtractNode(nodeList[nodeIndex]);
             }
             catch (KeyNotFoundException)
             {
