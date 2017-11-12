@@ -379,61 +379,96 @@ namespace engine
    static UINT32 _rtnIndexKeyNodeInfo ( dmsExtentID rootExtentID,
                                         dmsStorageUnit *su,
                                         UINT32 sampleRecords,
-                                        UINT32 &deep,
-                                        UINT32 &levels,
-                                        UINT32 &pages )
+                                        UINT64 totalRecords,
+                                        BOOLEAN full,
+                                        UINT32 &targetLevel,
+                                        UINT32 &levelCount,
+                                        UINT32 &extentCount )
    {
-      UINT32 count = 0, deepCount = 0, extentCount = 0, nextCount = 0 ;
       _utilList< dmsExtentID, 32 > extentIDStack ;
+      UINT32 targetLevelKeyCount = 0 ;
+      UINT64 curLevelKeyCount = 0, curLevelExtCount = 0, nextLevelExtCount = 0 ;
 
+      BOOLEAN foundTargetLevel = FALSE ;
+
+      // First search the root extent
       extentIDStack.push_back( rootExtentID ) ;
+      curLevelExtCount = 1 ;
+
+      targetLevel = 1 ;
+      levelCount = 1 ;
       extentCount = 1 ;
 
-      deep = 0 ;
-      levels = 0 ;
-      pages = 0 ;
-      count = 0 ;
-
-      while ( extentIDStack.size() > 0 )
+      while ( curLevelExtCount > 0 )
       {
-         dmsExtentID curExtentID = extentIDStack.front() ;
-         ixmExtent extent( curExtentID, su->index() ) ;
-
-         extentIDStack.pop_front() ;
-
-         for ( UINT16 i = 0 ; i <= extent.getNumKeyNode() ; ++i )
+         // Breadth-first search each levels
+         for ( UINT32 extIdx = 0 ; extIdx < curLevelExtCount ; extIdx ++ )
          {
-            dmsExtentID childID = extent.getChildExtentID( i ) ;
-            if ( DMS_INVALID_EXTENT != childID )
+            dmsExtentID curExtentID = extentIDStack.front() ;
+            ixmExtent extent( curExtentID, su->index() ) ;
+
+            extentIDStack.pop_front() ;
+
+            for ( UINT16 i = 0 ; i <= extent.getNumKeyNode() ; ++i )
             {
-               extentIDStack.push_back( childID ) ;
-               nextCount ++ ;
+               dmsExtentID childID = extent.getChildExtentID( i ) ;
+               if ( DMS_INVALID_EXTENT != childID )
+               {
+                  extentIDStack.push_back( childID ) ;
+                  extentCount ++ ;
+               }
             }
+            curLevelKeyCount += extent.getNumKeyNode() ;
          }
 
-         if ( deep == 0 )
-         {
-            count += extent.getNumKeyNode() ;
-         }
-         pages ++ ;
-         extentCount -- ;
-         if ( extentCount == 0 )
-         {
-            levels ++ ;
-            if ( deep == 0 &&
-                ( count > sampleRecords || extentIDStack.size() == 0 ) )
-            {
-               deep = levels ;
-               deepCount = count ;
-            }
+         nextLevelExtCount = extentIDStack.size() ;
 
-            extentCount = nextCount ;
-            nextCount = 0 ;
-            count = 0 ;
+         // If found leaf level or found enough sample keys, we found the
+         // target level
+         if ( !foundTargetLevel &&
+               ( curLevelKeyCount > sampleRecords ||
+                 0 == nextLevelExtCount ) )
+         {
+            targetLevelKeyCount = curLevelKeyCount ;
+            foundTargetLevel = TRUE ;
+            targetLevel = levelCount ;
+         }
+
+         // If the root extent has enough samples, but it is not leaf, it could
+         // not be used for estimate levels and pages, We should go deeper
+         if ( ( foundTargetLevel && levelCount > 1 && !full ) ||
+              0 == nextLevelExtCount )
+         {
+            break ;
+         }
+
+         curLevelExtCount = extentIDStack.size() ;
+         levelCount ++ ;
+      }
+
+      // Finish the estimation
+      if ( 0 != nextLevelExtCount )
+      {
+         UINT32 avgOutDegree = (UINT32) ceil( (double) curLevelKeyCount /
+                                              (double) curLevelExtCount ) ;
+         UINT32 estLevelCount =
+               (UINT32) ceil( log( ( (double)( totalRecords + 1 ) ) / 2.0 ) /
+                              log( (double) avgOutDegree ) ) ;
+
+         // Calculate from next level
+         UINT32 levelExtCount = nextLevelExtCount ;
+
+         // Calculate the remain pages by out-degree of each levels
+         for ( levelCount = levelCount + 1 ;
+               levelCount < estLevelCount ;
+               levelCount ++ )
+         {
+            levelExtCount *= avgOutDegree ;
+            extentCount += levelExtCount ;
          }
       }
 
-      return deepCount ;
+      return targetLevelKeyCount ;
    }
 
    static const CHAR* _rtnIndexKeyData( dmsExtentID extentID,
@@ -697,7 +732,9 @@ namespace engine
 
    INT32 rtnGetIndexSamples ( _dmsStorageUnit *su,
                               ixmIndexCB *indexCB,
-                              UINT32 sampleRequired,
+                              UINT32 sampleRecords,
+                              UINT64 totalRecords,
+                              BOOLEAN full,
                               _rtnInternalSorting &sorter,
                               UINT32 &levels, UINT32 &pages )
    {
@@ -708,35 +745,36 @@ namespace engine
       BSONObj key ;
       BSONObj dummy ;
 
-      UINT32 deep = 1 ;
-      UINT32 mod  = 0 ;
-      UINT32 step = 1 ;
-      UINT32 index = 0 ;
-      UINT32 keyNodeCount = _rtnIndexKeyNodeInfo( rootID, su, sampleRequired,
-                                                  deep, levels, pages ) ;
+      UINT32 targetLevel = 1 ;
+      UINT32 sampleMod  = 0 ;
+      UINT32 sampleStep = 1 ;
+      UINT32 sampleIndex = 0 ;
+      UINT32 keyNodeCount =
+            _rtnIndexKeyNodeInfo( rootID, su, sampleRecords, totalRecords,
+                                  full, targetLevel, levels, pages ) ;
 
-      PD_LOG( PDDEBUG, "index info deep %u key %u levels %u pages %u",
-              deep, keyNodeCount, levels, pages ) ;
+      PD_LOG( PDDEBUG, "Estimate index [%s] info levels %u pages %u",
+              indexCB->getName(), levels, pages ) ;
 
-      if ( keyNodeCount > 0 && keyNodeCount < sampleRequired )
+      if ( keyNodeCount > 0 && keyNodeCount < sampleRecords )
       {
-         sampleRequired = keyNodeCount ;
+         sampleRecords = keyNodeCount ;
       }
 
-      step = keyNodeCount / sampleRequired ;
-      mod  = keyNodeCount % sampleRequired ;
+      sampleStep = keyNodeCount / sampleRecords ;
+      sampleMod  = keyNodeCount % sampleRecords ;
 
       sorter.clearBuf() ;
 
-      while ( index < keyNodeCount )
+      while ( sampleIndex < keyNodeCount )
       {
-         keyData = _rtnIndexGetKey( rootID, su, deep, index ) ;
-         index += step ;
+         keyData = _rtnIndexGetKey( rootID, su, targetLevel, sampleIndex ) ;
+         sampleIndex += sampleStep ;
 
-         if ( mod > 0 )
+         if ( sampleMod > 0 )
          {
-            ++index ;
-            --mod ;
+            ++sampleIndex ;
+            --sampleMod ;
          }
 
          if ( NULL == keyData )

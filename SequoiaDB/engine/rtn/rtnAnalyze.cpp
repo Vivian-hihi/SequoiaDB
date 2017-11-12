@@ -138,7 +138,7 @@ namespace engine
 
    static INT32 _rtnAnalyzeCLInternal ( dmsStorageUnit *pSU,
                                         dmsMBContext *mbContext,
-                                        UINT32 sampleRecords,
+                                        const rtnAnalyzeParam &param,
                                         BOOLEAN clearPlans,
                                         pmdEDUCB *cb,
                                         _SDB_DMSCB *dmsCB,
@@ -148,7 +148,7 @@ namespace engine
    static INT32 _rtnAnalyzeIndexStat ( const monCSSimple *pMonCS,
                                        const monCLSimple *pMonCL,
                                        const monIndex *pMonIX,
-                                       UINT32 sampleRecords,
+                                       const rtnAnalyzeParam &param,
                                        BOOLEAN needUpdateCL,
                                        CHAR *pSortBuf,
                                        pmdEDUCB *cb,
@@ -159,7 +159,7 @@ namespace engine
    static INT32 _rtnAnalyzeIndexInternal ( dmsStorageUnit *pSU,
                                            dmsMBContext *mbContext,
                                            ixmIndexCB *indexCB,
-                                           UINT32 sampleRecords,
+                                           const rtnAnalyzeParam &param,
                                            BOOLEAN needUpdateCL,
                                            BOOLEAN clearPlans,
                                            CHAR *pSortBuf,
@@ -178,6 +178,8 @@ namespace engine
                                   dmsMBContext *mbContext,
                                   ixmIndexCB *indexCB,
                                   UINT32 sampleRecords,
+                                  UINT64 totalRecords,
+                                  BOOLEAN full,
                                   CHAR *pSortBuf,
                                   pmdEDUCB *cb ) ;
 
@@ -664,15 +666,15 @@ namespace engine
       }
       else
       {
-         UINT32 sampleRecords = 0 ;
+         rtnAnalyzeParam localParam( param ) ;
 
          pSU->getIndex( mbContext, pIndexName, monIX ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to get index [%s %s], rc: %d",
                       pCLFullName, pIndexName, rc ) ;
 
-         sampleRecords =
-               _rtnGetSampleRecords( mbContext->mbStat()->_totalRecords,
-                                     param ) ;
+         localParam._sampleRecords =
+               _rtnGetSampleRecords( mbContext->mbStat()->_totalRecords, param ) ;
+         localParam._sampleByNum = FALSE ;
 
          // Unlock first
          pSU->data()->releaseMBContext( mbContext ) ;
@@ -682,7 +684,7 @@ namespace engine
          mbContext = NULL ;
 
          rc = _rtnAnalyzeIndexStat( &monCS, &monCL, &monIX,
-                                    sampleRecords, TRUE, NULL,
+                                    localParam, TRUE, NULL,
                                     cb, dmsCB, rtnCB, dpsCB ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to analyze statistics for "
                       "index [%s %s], rc: %d", pCLFullName, pIndexName, rc ) ;
@@ -1168,7 +1170,8 @@ namespace engine
       dmsMBContext *mbContext = NULL ;
 
       BOOLEAN allocatedBuf = FALSE ;
-      UINT32 sampleRecords = 0 ;
+
+      rtnAnalyzeParam localParam( param ) ;
 
       MON_IDX_LIST monIdxList ;
 
@@ -1202,10 +1205,11 @@ namespace engine
       pSU->getIndexes( mbContext, monIdxList ) ;
 
       // Analyze collection
-      sampleRecords = _rtnGetSampleRecords( mbContext->mbStat()->_totalRecords,
-                                            param ) ;
+      localParam._sampleRecords =
+            _rtnGetSampleRecords( mbContext->mbStat()->_totalRecords, param ) ;
+      localParam._sampleByNum = TRUE ;
 
-      rc = _rtnAnalyzeCLInternal( pSU, mbContext, sampleRecords, TRUE, cb,
+      rc = _rtnAnalyzeCLInternal( pSU, mbContext, localParam, TRUE, cb,
                                   dmsCB, rtnCB, dpsCB ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to analyze collection [%s.%s], rc: %d",
                    pCSName, pCLName, rc ) ;
@@ -1221,7 +1225,7 @@ namespace engine
          goto done ;
       }
 
-      if ( NULL == pSortBuf && sampleRecords > 0 )
+      if ( NULL == pSortBuf && localParam._sampleRecords > 0 )
       {
          pSortBuf = ( CHAR * )SDB_OSS_MALLOC( RTN_ANALYZE_SORT_BUF_SIZE ) ;
          PD_CHECK( pSortBuf, SDB_OOM, error, PDERROR,
@@ -1243,7 +1247,7 @@ namespace engine
          }
 
          rc = _rtnAnalyzeIndexStat( pMonCS, pMonCL, pMonIX,
-                                    sampleRecords, FALSE, pSortBuf,
+                                    localParam, FALSE, pSortBuf,
                                     cb, dmsCB, rtnCB, dpsCB ) ;
          if ( SDB_DMS_CS_NOTEXIST == rc ||
               SDB_DMS_NOTEXIST == rc ||
@@ -1285,7 +1289,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNANALYZECL_INT, "_rtnAnalyzeCLInternal" )
    INT32 _rtnAnalyzeCLInternal ( dmsStorageUnit *pSU,
                                  dmsMBContext *mbContext,
-                                 UINT32 sampleRecords,
+                                 const rtnAnalyzeParam &param,
                                  BOOLEAN clearPlans,
                                  pmdEDUCB *cb,
                                  _SDB_DMSCB *dmsCB,
@@ -1322,7 +1326,7 @@ namespace engine
                 pCSName, pCLName ) ;
 
       pCollectionStat->setTotalRecords( mbContext->mbStat()->_totalRecords ) ;
-      pCollectionStat->setSampleRecords( sampleRecords ) ;
+      pCollectionStat->setSampleRecords( param._sampleRecords ) ;
       pCollectionStat->setTotalDataPages( mbContext->mbStat()->_totalDataPages ) ;
       pCollectionStat->setTotalDataSize( mbContext->mbStat()->_totalOrgDataLen ) ;
       pCollectionStat->setAvgNumFields( DMS_STAT_DEF_AVG_NUM_FIELDS ) ;
@@ -1375,7 +1379,7 @@ namespace engine
    INT32 _rtnAnalyzeIndexStat ( const monCSSimple *pMonCS,
                                 const monCLSimple *pMonCL,
                                 const monIndex *pMonIX,
-                                UINT32 sampleRecords,
+                                const rtnAnalyzeParam &param,
                                 BOOLEAN needUpdateCL,
                                 CHAR *pSortBuf,
                                 pmdEDUCB *cb,
@@ -1465,9 +1469,9 @@ namespace engine
             allocatedBuf = TRUE ;
          }
 
-         rc = _rtnAnalyzeIndexInternal( pSU, mbContext, &indexCB, sampleRecords,
-                                        needUpdateCL, TRUE, pSortBuf, cb, dmsCB,
-                                        rtnCB, dpsCB ) ;
+         rc = _rtnAnalyzeIndexInternal( pSU, mbContext, &indexCB,
+                                        param, needUpdateCL, TRUE, pSortBuf,
+                                        cb, dmsCB, rtnCB, dpsCB ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to analyze index [%s.%s %s], "
                       "rc: %d", pCSName, pCLName, pIXName, rc ) ;
       }
@@ -1503,7 +1507,7 @@ namespace engine
    INT32 _rtnAnalyzeIndexInternal ( dmsStorageUnit *pSU,
                                     dmsMBContext *mbContext,
                                     ixmIndexCB *indexCB,
-                                    UINT32 sampleRecords,
+                                    const rtnAnalyzeParam &param,
                                     BOOLEAN needUpdateCL,
                                     BOOLEAN clearPlans,
                                     CHAR *pSortBuf,
@@ -1540,7 +1544,7 @@ namespace engine
       if ( needUpdateCL )
       {
          // Re-analyze collection statistics if needed
-         rc = _rtnAnalyzeCLInternal( pSU, mbContext, sampleRecords, FALSE, cb,
+         rc = _rtnAnalyzeCLInternal( pSU, mbContext, param, FALSE, cb,
                                      dmsCB, rtnCB, dpsCB ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to analyze collection [%s.%s], "
                       "rc: %d", pCSName, pCLName, rc ) ;
@@ -1556,6 +1560,8 @@ namespace engine
 
       try
       {
+         UINT64 totalRecords = mbContext->mbStat()->_totalRecords ;
+
          pIndexStat = SDB_OSS_NEW dmsIndexStat( pCSName, pCLName, pIXName,
                                                 pSU->LogicalCSID(),
                                                 mbContext->mbID(),
@@ -1568,10 +1574,13 @@ namespace engine
          pIndexStat->setUnique( indexCB->unique() ) ;
          pIndexStat->setIndexLogicalID( indexCB->getLogicalID() ) ;
 
-         if ( sampleRecords > 0 )
+         if ( param._sampleRecords > 0 )
          {
+            BOOLEAN full = ( SDB_ANALYZE_MODE_FULL == param._mode ?
+                             TRUE : FALSE ) ;
             rc = _rtnBuildMCVSet( pIndexStat, pSU, mbContext, indexCB,
-                                  sampleRecords, pSortBuf, cb ) ;
+                                  param._sampleRecords, totalRecords, full,
+                                  pSortBuf, cb ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to build MCV set, rc: %d", rc ) ;
          }
          else
@@ -1579,7 +1588,7 @@ namespace engine
             pIndexStat->setSampleRecords( 0 ) ;
          }
 
-         pIndexStat->setTotalRecords( mbContext->mbStat()->_totalRecords ) ;
+         pIndexStat->setTotalRecords( totalRecords ) ;
 
          rc = pIndexStat->postInit() ;
          PD_RC_CHECK( rc, PDERROR, "Failed to initialize index statistics, "
@@ -1646,7 +1655,7 @@ namespace engine
       {
          if ( param._sampleByNum )
          {
-            sampleRecords = param._sampleNum ;
+            sampleRecords = param._sampleRecords ;
          }
          else
          {
@@ -1684,6 +1693,8 @@ namespace engine
                            dmsMBContext *mbContext,
                            ixmIndexCB *indexCB,
                            UINT32 sampleRecords,
+                           UINT64 totalRecords,
+                           BOOLEAN full,
                            CHAR *pSortBuf,
                            pmdEDUCB *cb )
    {
@@ -1710,8 +1721,8 @@ namespace engine
       _rtnInternalSorting sorter( boOrder, pSortBuf,
                                   RTN_ANALYZE_SORT_BUF_SIZE, -1 ) ;
 
-      rc = rtnGetIndexSamples( pSU, indexCB, sampleRecords, sorter, levels,
-                               pages ) ;
+      rc = rtnGetIndexSamples( pSU, indexCB, sampleRecords, totalRecords, full,
+                               sorter, levels, pages ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get samples of index "
                    "[%s.%s %s], rc: %d", pCSName, pCLName, pIXName, rc ) ;
 

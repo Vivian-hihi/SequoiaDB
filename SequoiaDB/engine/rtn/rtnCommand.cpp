@@ -3951,12 +3951,12 @@ namespace engine
          e = matcher.getField( FIELD_NAME_ANALYZE_NUM ) ;
          if ( NumberInt == e.type() )
          {
-            _param._sampleNum = e.numberInt() ;
-            if ( _param._sampleNum > SDB_ANALYZE_SAMPLE_MAX ||
-                 _param._sampleNum < SDB_ANALYZE_SAMPLE_MIN )
+            _param._sampleRecords = (UINT32) e.numberInt() ;
+            if ( _param._sampleRecords > SDB_ANALYZE_SAMPLE_MAX ||
+                 _param._sampleRecords < SDB_ANALYZE_SAMPLE_MIN )
             {
-               PD_LOG( PDERROR, "Field[%s] %d is out of range [ %d - %d ]",
-                       FIELD_NAME_ANALYZE_NUM, _param._sampleNum,
+               PD_LOG( PDERROR, "Field[%s] %u is out of range [ %d - %d ]",
+                       FIELD_NAME_ANALYZE_NUM, _param._sampleRecords,
                        SDB_ANALYZE_SAMPLE_MIN, SDB_ANALYZE_SAMPLE_MAX ) ;
                rc = SDB_INVALIDARG ;
                goto error ;
@@ -4028,14 +4028,6 @@ namespace engine
                  FIELD_NAME_ANALYZE_NUM, FIELD_NAME_ANALYZE_PERCENT ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
-      }
-
-      // Adjust parameters
-      if ( SDB_ANALYZE_MODE_FULL == _param._mode )
-      {
-         PD_LOG( PDWARNING, "Analyze full mode is not supported yet, "
-                 "use sample mode" ) ;
-         _param._mode = SDB_ANALYZE_MODE_SAMPLE ;
       }
 
       if ( sampleByPercent )

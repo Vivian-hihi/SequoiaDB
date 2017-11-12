@@ -1395,14 +1395,23 @@ namespace engine
       {
          _mode = SDB_ANALYZE_MODE_SAMPLE ;
          _sampleByNum = TRUE ;
-         _sampleNum = SDB_ANALYZE_SAMPLE_DEF ;
+         _sampleRecords = SDB_ANALYZE_SAMPLE_DEF ;
          _samplePercent = 0.0 ;
          _needCheck = TRUE ;
       }
 
+      _rtnAnalyzeParam ( const _rtnAnalyzeParam &param )
+      {
+         _mode = param._mode ;
+         _sampleByNum = param._sampleByNum ;
+         _sampleRecords = param._sampleRecords ;
+         _samplePercent = param._samplePercent ;
+         _needCheck = param._needCheck ;
+      }
+
       INT32    _mode ;
       BOOLEAN  _sampleByNum ;
-      INT32    _sampleNum ;
+      UINT32   _sampleRecords ;
       double   _samplePercent ;
       BOOLEAN  _needCheck ;
    } ;

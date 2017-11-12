@@ -93,7 +93,9 @@ namespace engine
 
    INT32 rtnGetIndexSamples ( _dmsStorageUnit *su,
                               ixmIndexCB *indexCB,
-                              UINT32 sampleCount,
+                              UINT32 sampleRecords,
+                              UINT64 totalRecords,
+                              BOOLEAN full,
                               _rtnInternalSorting &sorter,
                               UINT32 &levels, UINT32 &pages ) ;
 
