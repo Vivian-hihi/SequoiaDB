@@ -22,11 +22,11 @@
 #include <assert.h>
 
 #include "markdown.h"
-#include "ossVer.h"
+//#include "ossVer.h"
 #include "renderer.h"
 
 
-#if defined (_WINDOWS)
+#if defined (_WIN32)
 #define snprintf _snprintf
 #endif
 
@@ -76,7 +76,7 @@ int sequence = 0 ;
 #define HEADER_SYNOPSIS_EN "##SYNOPSIS##"
 
 
-
+/*
 void _get_build_time( char *buf, int size )
 {
    const char *build = SDB_ENGINE_BUILD_CURRENT ;
@@ -109,7 +109,7 @@ void _get_version( char *buf, int size )
              SDB_ENGINE_VERISON_CURRENT, 
              SDB_ENGINE_SUBVERSION_CURRENT ) ;
 }
-
+*/
 void _get_func_name( const struct buf *text, char *buf, int size )
 {   
    const char *beg = NULL ;
@@ -457,11 +457,16 @@ void doc_header(struct buf *ob, const struct buf *text, void *opaque)
    memset(header, 0, BUF_LEN2);
 
    _get_func_name( text, func_name, BUF_LEN ) ;
+   /*
    _get_build_time( build_time, BUF_LEN ) ;
    _get_version( version, BUF_LEN ) ;
    snprintf( header, BUF_LEN2,
              "%% %s(1) SequoiaDB User Manuals | Version %s\n\n",
             func_name, version ) ;
+   */
+   snprintf( header, BUF_LEN2,
+             "%% %s(1) SequoiaDB User Manuals \n\n", func_name ) ;
+
    bufputs( ob, header ) ;
 }
 
