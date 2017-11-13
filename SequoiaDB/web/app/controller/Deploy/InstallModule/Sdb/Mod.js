@@ -1395,7 +1395,7 @@
       }
 
       var installSdb = function( installConfig ){
-         var data = { 'cmd': 'add business', 'ConfigInfo': JSON.stringify( installConfig ) } ;
+         var data = { 'cmd': 'add business', 'Force': true, 'ConfigInfo': JSON.stringify( installConfig ) } ;
          SdbRest.OmOperation( data, {
             'success': function( taskInfo ){
                $rootScope.tempData( 'Deploy', 'ModuleTaskID', taskInfo[0]['TaskID'] ) ;
@@ -1492,7 +1492,6 @@
          $.each( oldConfigure, function( key, value ){
             configure[key] = value ;
          } ) ;
-         configure['Force'] = true ;
          configure['Config'] = [] ;
          $.each( oldConfigure['Config'], function( nodeIndex, nodeInfo ){
             var nodeConfig = {} ;
