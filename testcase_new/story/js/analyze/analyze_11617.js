@@ -16,6 +16,12 @@ function main()
 	var clName = COMMCLNAME + "11617";
 	var dbcl = commCreateCL( db, csName, clName );
 	
+	//get master/slave datanode
+   db.setSessionAttr( { PreferedInstance: "m" } );
+   var dbclPrimary = db.getCS(csName).getCL(clName);
+   db.setSessionAttr( { PreferedInstance: "s" } );
+   var dbclSlave = db.getCS(csName).getCL(clName);
+	
 	//insert
 	var insertNums = 5000;
    insertDatas( dbcl, insertNums );
@@ -25,13 +31,12 @@ function main()
 	
 	//check the query explain of master/slave nodes 
 	var findConf = {_id : 4000};
-	var actExplains = getCommonExplain( dbcl, findConf);
    var expExplains = [{ScanType:"ixscan", IndexName:"$id", ReturnNum:1}];
    
-   db.setSessionAttr( { PreferedInstance: "m" } );
+	var actExplains = getCommonExplain( dbclPrimary, findConf);
    checkExplain( actExplains, expExplains );
-	
-   db.setSessionAttr( { PreferedInstance: "s" } );
+   
+   var actExplains = getCommonExplain( dbclSlave, findConf);
    checkExplain( actExplains, expExplains );
 	
 	println("check result before analyze success!");
@@ -45,13 +50,12 @@ function main()
    
    //check the query explain of master/slave nodes 
 	var findConf = {_id : 4000};
-	var actExplains = getCommonExplain( dbcl, findConf);
    var expExplains = [{ScanType:"ixscan", IndexName:"$id", ReturnNum:1}];
 	
-   db.setSessionAttr( { PreferedInstance: "m" } );
+   var actExplains = getCommonExplain( dbclPrimary, findConf);
    checkExplain( actExplains, expExplains );
    
-   db.setSessionAttr( { PreferedInstance: "s" } );
+   var actExplains = getCommonExplain( dbclSlave, findConf);
    checkExplain( actExplains, expExplains );
 
    println("check result after analyze success!");

@@ -24,6 +24,19 @@ function main()
 	var clName4 = COMMCLNAME + "11611_4";
 	var dbcl4 = commCreateCL( db, csName, clName4 );
 	
+	//get master/slave datanode
+   db.setSessionAttr( { PreferedInstance: "m" } );
+   var dbclPrimary1 = db.getCS(csName).getCL(clName1);
+	var dbclPrimary2 = db.getCS(csName).getCL(clName2);
+	var dbclPrimary3 = db.getCS(csName).getCL(clName3);
+	var dbclPrimary4 = db.getCS(csName).getCL(clName4);
+	
+   db.setSessionAttr( { PreferedInstance: "s" } );
+   var dbclSlave1 = db.getCS(csName).getCL(clName1);
+	var dbclSlave2 = db.getCS(csName).getCL(clName2);
+	var dbclSlave3 = db.getCS(csName).getCL(clName3);
+	var dbclSlave4 = db.getCS(csName).getCL(clName4);
+	
 	//create index
 	commCreateIndex( dbcl3, "a", {a : 1}, false );
 	commCreateIndex( dbcl4, "a", {a : 1}, false );
@@ -47,27 +60,29 @@ function main()
 	
 	//check the query explain of master/slave nodes 
 	var findConf = {a : 9000};
-	var actExplains1 = getCommonExplain( dbcl1, findConf);
-	var actExplains2 = getCommonExplain( dbcl2, findConf);
-	var actExplains3 = getCommonExplain( dbcl3, findConf);
-	var actExplains4 = getCommonExplain( dbcl4, findConf);
 	
    var expExplains1 = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
    var expExplains2 = [{ScanType:"tbscan", IndexName:"", ReturnNum:0}];
    var expExplains3 = [{ScanType:"ixscan", IndexName:"a", ReturnNum:insertNums}];
 	var expExplains4 = [{ScanType:"ixscan", IndexName:"a", ReturnNum:0}];
    
-   db.setSessionAttr( { PreferedInstance: "m" } );
-   checkExplain( actExplains1, expExplains1 );
+	var actExplains1 = getCommonExplain( dbclPrimary1, findConf);
+	checkExplain( actExplains1, expExplains1 );
+	var actExplains2 = getCommonExplain( dbclPrimary2, findConf);
 	checkExplain( actExplains2, expExplains2 );
+	var actExplains3 = getCommonExplain( dbclPrimary3, findConf);
 	checkExplain( actExplains3, expExplains3 );
-	checkExplain( actExplains4, expExplains4 );
+	var actExplains4 = getCommonExplain( dbclPrimary4, findConf);
+   checkExplain( actExplains4, expExplains4 );
    
-   db.setSessionAttr( { PreferedInstance: "s" } );
+   var actExplains1 = getCommonExplain( dbclSlave1, findConf);
    checkExplain( actExplains1, expExplains1 );
-	checkExplain( actExplains2, expExplains2 );
-	checkExplain( actExplains3, expExplains3 );
-	checkExplain( actExplains4, expExplains4 );
+	var actExplains2 = getCommonExplain( dbclSlave2, findConf);
+   checkExplain( actExplains2, expExplains2 );
+	var actExplains3 = getCommonExplain( dbclSlave3, findConf);
+   checkExplain( actExplains3, expExplains3 );
+	var actExplains4 = getCommonExplain( dbclSlave4, findConf);
+   checkExplain( actExplains4, expExplains4 );
 	
 	println("check result before analyze success!");
    
@@ -91,27 +106,28 @@ function main()
    //check the query explain of master/slave nodes 
 	var findConf = {a : 9000};
 	
-	var actExplains1 = getCommonExplain( dbcl1, findConf);
-	var actExplains2 = getCommonExplain( dbcl2, findConf);
-	var actExplains3 = getCommonExplain( dbcl3, findConf);
-	var actExplains4 = getCommonExplain( dbcl4, findConf);
-	
    var expExplains1 = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
    var expExplains2 = [{ScanType:"tbscan", IndexName:"", ReturnNum:0}];
 	var expExplains3 = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
 	var expExplains4 = [{ScanType:"ixscan", IndexName:"a", ReturnNum:0}];
    
-   db.setSessionAttr( { PreferedInstance: "m" } );
-   checkExplain( actExplains1, expExplains1 );
+   var actExplains1 = getCommonExplain( dbclPrimary1, findConf);
+	checkExplain( actExplains1, expExplains1 );
+	var actExplains2 = getCommonExplain( dbclPrimary2, findConf);
 	checkExplain( actExplains2, expExplains2 );
+	var actExplains3 = getCommonExplain( dbclPrimary3, findConf);
 	checkExplain( actExplains3, expExplains3 );
-	checkExplain( actExplains4, expExplains4 );
+	var actExplains4 = getCommonExplain( dbclPrimary4, findConf);
+   checkExplain( actExplains4, expExplains4 );
    
-   db.setSessionAttr( { PreferedInstance: "s" } );
+   var actExplains1 = getCommonExplain( dbclSlave1, findConf);
    checkExplain( actExplains1, expExplains1 );
-	checkExplain( actExplains2, expExplains2 );
-	checkExplain( actExplains3, expExplains3 );
-	checkExplain( actExplains4, expExplains4 );
+	var actExplains2 = getCommonExplain( dbclSlave2, findConf);
+   checkExplain( actExplains2, expExplains2 );
+	var actExplains3 = getCommonExplain( dbclSlave3, findConf);
+   checkExplain( actExplains3, expExplains3 );
+	var actExplains4 = getCommonExplain( dbclSlave4, findConf);
+   checkExplain( actExplains4, expExplains4 );
 	
 	//analyze table below SYSSTAT 
 	var options1 = {Collection: "SYSSTAT.SYSCOLLECTIONSTAT"};

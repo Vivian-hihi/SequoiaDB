@@ -21,6 +21,12 @@ function main()
 	var clName = COMMCLNAME + "11401";
 	var dbcl = commCreateCL( db, csName, clName );
 	
+	//get master/slave datanode
+   db.setSessionAttr( { PreferedInstance: "m" } );
+   var dbclPrimary = db.getCS(csName).getCL(clName);
+   db.setSessionAttr( { PreferedInstance: "s" } );
+   var dbclSlave = db.getCS(csName).getCL(clName);
+	
 	//create index
 	commCreateIndex( dbcl, "b", {b : 1}, false )
 	
@@ -35,15 +41,14 @@ function main()
 	
 	//check the query explain of master/slave nodes 
 	var findConf = {b : 9000};
-	var actExplains = getCommonExplain( dbcl, findConf);
    var expExplains = [{ScanType:"ixscan", IndexName:"b", ReturnNum:insertNums}];
    
-   db.setSessionAttr( { PreferedInstance: "m" } );
-   checkExplain( actExplains, expExplains )
-	
-   db.setSessionAttr( { PreferedInstance: "s" } );
-   checkExplain( actExplains, expExplains )
-	
+   var actExplains = getCommonExplain( dbclPrimary, findConf);
+   checkExplain( actExplains, expExplains );
+   
+   var actExplains = getCommonExplain( dbclSlave, findConf);
+   checkExplain( actExplains, expExplains );
+
 	println("check result before analyze success!");
 	
 	//invoke analyze
@@ -56,37 +61,37 @@ function main()
    //check the query explain of master/slave nodes 
 	var findConf1 = {b : 9000};
 	var findConf2 = {a : 9000};
-	var actExplains1 = getCommonExplain( dbcl, findConf1);
-	var actExplains2 = getCommonExplain( dbcl, findConf2);
    var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
 	
-   db.setSessionAttr( { PreferedInstance: "m" } );
-   checkExplain( actExplains1, expExplains )
-	checkExplain( actExplains2, expExplains )
-   
-   db.setSessionAttr( { PreferedInstance: "s" } );
-   checkExplain( actExplains1, expExplains )
-	checkExplain( actExplains2, expExplains )
+	var actExplains1 = getCommonExplain( dbclPrimary, findConf1);
+   checkExplain( actExplains1, expExplains );
+   var actExplains2 = getCommonExplain( dbclPrimary, findConf2);
+   checkExplain( actExplains2, expExplains );
+	
+	var actExplains1 = getCommonExplain( dbclSlave, findConf1);
+   checkExplain( actExplains1, expExplains );
+   var actExplains2 = getCommonExplain( dbclSlave, findConf2);
+   checkExplain( actExplains2, expExplains );
 
 	//alter cl
 	alterCL( dbcl );
 	
 	//check after alter
 	var findConf1 = {b : 9000};
-	var actExplains1 = getCommonExplain( dbcl, findConf1);
    var expExplains1 = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
 	
 	var findConf2 = {a : 9000};
-	var actExplains2 = getCommonExplain( dbcl, findConf2);
    var expExplains2 = [{ScanType:"ixscan", IndexName:"$shard", ReturnNum:insertNums}];
 	
-   db.setSessionAttr( { PreferedInstance: "m" } );
-   checkExplain( actExplains1, expExplains1 )
-	checkExplain( actExplains2, expExplains2 )
-   
-   db.setSessionAttr( { PreferedInstance: "s" } );
-   checkExplain( actExplains1, expExplains1 )
-	checkExplain( actExplains2, expExplains2 )
+	var actExplains1 = getCommonExplain( dbclPrimary, findConf1);
+   checkExplain( actExplains1, expExplains1 );
+   var actExplains2 = getCommonExplain( dbclPrimary, findConf2);
+   checkExplain( actExplains2, expExplains2 );
+	
+	var actExplains1 = getCommonExplain( dbclSlave, findConf1);
+   checkExplain( actExplains1, expExplains1 );
+   var actExplains2 = getCommonExplain( dbclSlave, findConf2);
+   checkExplain( actExplains2, expExplains2 );
 	
    println("check result after analyze success!");
 	

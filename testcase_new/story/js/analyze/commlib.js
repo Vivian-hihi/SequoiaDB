@@ -471,7 +471,7 @@ function getSrcGroup( csName, clName )
 *@author:      liuxiaoxuan
 *@createDate:  2017.11.13
 **************************************/
-function updateIndexStateInfo( db, csName, clName, indexName, mcvValues, Fracs )
+function updateIndexStateInfo( db, csName, clName, indexName, mcvValues, fracs )
 {
 	var dataDB = new Array();
 	if(commIsStandalone(db))
@@ -498,7 +498,7 @@ function updateIndexStateInfo( db, csName, clName, indexName, mcvValues, Fracs )
 			 
 		    if(0 < rec.length)
 		    {				 
-		       var rule = {"$set": {"MCV": {"Values": mcvValues, "Frac": Fracs}}}; 
+		       var rule = {"$set": {"MCV": {"Values": mcvValues, "Frac": fracs}}}; 
 				                  
              var matcher = {"$and": [{"CollectionSpace" : csName},
 				                         {"Collection" : clName},

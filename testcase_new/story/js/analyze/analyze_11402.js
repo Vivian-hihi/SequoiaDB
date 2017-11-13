@@ -1,29 +1,35 @@
 /************************************
-*@Description: 指定group收集统计信息  
+*@Description: split cl更新统计信息  
 *@author:      liuxiaoxuan
-*@createdate:  2017.11.10
-*@testlinkCase: seqDB-11620
+*@createdate:  2017.11.09
+*@testlinkCase: seqDB-11402
 **************************************/
 function main()
-{	
-   if(commIsStandalone(db))
+{
+	if(commIsStandalone(db))
 	{
 		println("skip standalone environment");
 		return;
 	}
 	
-   var csName = COMMCSNAME + "11620";
+	if(2 > commGetGroupsNum(db))
+	{
+		println("group nums less than 2");
+		return;
+	}
+	
+   var csName = COMMCSNAME + "11402";
 	commDropCS( db, csName, true, "drop CS in the beginning" );
 	
-	var csOption = { PageSize: 4096 };
-   commCreateCS( db, csName, false, "", csOption );
+   commCreateCS( db, csName, false, "" );
 		
-	//create cl	
+	//create cl
 	var groups = commGetGroups(db);
-	var groupName = groups[0][0].GroupName;
+	var srcGroupName = groups[0][0].GroupName;
+	var destGroupName = groups[1][0].GroupName;
 	
-	var clOption = { Group : groupName };
-	var clName = COMMCLNAME + "11620";
+	var clOption = {ShardingKey:{a:1}, ShardingType:"hash", Group : srcGroupName};
+	var clName = COMMCLNAME + "11402";
 	var dbcl = commCreateCLByOption( db, csName, clName, clOption, true );
 	
 	//get master/slave datanode
@@ -33,7 +39,7 @@ function main()
    var dbclSlave = db.getCS(csName).getCL(clName);
 	
 	//create index
-	commCreateIndex( dbcl, "a", {a : 1}, false )
+	commCreateIndex( dbcl, "ac", {a : 1 , c : 1}, false )
 	
 	//insert
 	var insertNums = 3000;
@@ -42,11 +48,11 @@ function main()
 	insertSameDatas( dbcl, insertNums, sameValues );
 	
 	//check before invoke analyze
-	checkStat( db, csName, clName, "a", false, false );
+	checkStat( db, csName, clName, "ac", false, false );
 	
 	//check the query explain of master/slave nodes 
-	var findConf = {a : 9000};
-   var expExplains = [{ScanType:"ixscan", IndexName:"a", ReturnNum:insertNums}];
+	var findConf = {a : 9000, c : "test9000"};
+   var expExplains = [{ScanType:"ixscan", IndexName:"ac", ReturnNum:insertNums}];
    
    var actExplains = getCommonExplain( dbclPrimary, findConf);
    checkExplain( actExplains, expExplains );
@@ -57,50 +63,50 @@ function main()
 	println("check result before analyze success!");
 	
 	//invoke analyze
-	var options = {GroupName : groupName};
+	var options = {Collection: csName + "." + clName};
 	analyze( db, options );
 	
    //check after analyze
-	checkStat( db, csName, clName, "a", true, true );
+	checkStat( db, csName, clName, "ac", true, true );
    
    //check the query explain of master/slave nodes 
-	var findConf = {a : 9000};
+	var findConf = {a : 9000, c : "test9000"};
    var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
-	
+  
    var actExplains = getCommonExplain( dbclPrimary, findConf);
    checkExplain( actExplains, expExplains );
    
    var actExplains = getCommonExplain( dbclSlave, findConf);
    checkExplain( actExplains, expExplains );
-
-	//analyze invalid groups
-	var options1 = {GroupName : "SYSCoord"};
-   checkAnalyzeOtherGroup(options1);
 	
-	var options2 = {GroupName : "NotExistGroup"};
-   checkAnalyzeOtherGroup(options2);
+	//split cl
+	splitCL(dbcl, srcGroupName, destGroupName);
 	
-	//check catalog
-	var options3 = {GroupName : "SYSCatalogGroup"};
-	analyze( db, options3 );
+	//check after split
+	println("after split!");
+	var findConf = {a : 9000, c : "test9000"};
+	var expExplains = [{ScanType:"tbscan", IndexName:"",GroupName: srcGroupName,                    ReturnNum:insertNums}];
+	
+   var actExplains = getSplitExplain( dbclPrimary, findConf);
+   checkExplain( actExplains, expExplains );
+   
+   var actExplains = getSplitExplain( dbclSlave, findConf);
+   checkExplain( actExplains, expExplains );
 	
    println("check result after analyze success!");
+	
 	commDropCS( db, csName, true, "drop CS in the end" );
 }
 
-function checkAnalyzeOtherGroup( options )
+function splitCL( dbcl, srcGroup, destGroup )
 {
    try
    {
-      db.analyze( options );
-		throw "NEED ANALYZE FAILED";
+      dbcl.split( srcGroup, destGroup, 50 );
    }
-   catch ( e )
+	catch(e)
    {
-		if( -264 !== e && -154 !== e)
-		{
-         throw buildException( "check analyze", e, "check analyze", "success", "fail" );
-		}
+      throw buildException("split CL", e, "split", "split success", e);
    }
 }
 main();

@@ -1,8 +1,8 @@
 /************************************
-*@Description:  指定2个参数组合收集统计信息  
+*@Description:  指定2个参数组合生成默认统计信息并手工修改再清空 
 *@author:      liuxiaoxuan
-*@createdate:  2017.11.11
-*@testlinkCase: seqDB-11637
+*@createdate:  2017.11.13
+*@testlinkCase: seqDB-11638
 **************************************/
 function main()
 {	
@@ -37,14 +37,7 @@ function main()
 	//create index
 	commCreateIndex( dbcl, "a", {a : 1}, false )
 	
-	//get Group and Node info
-	var groupName = commGetCLGroups( db, csName + "." + clName );
-	var groupDetail = commGetGroups( db, false, groupName[0] );
-	
-	var groupId = groupDetail[0][0].GroupID;
-	var priNodeId = groupDetail[0][0].PrimaryNode;
-	
-	//check before analyze success
+	//check before analyze 
 	checkStat( db, csName, clName, "a", false, false );
 	
 	//check the query explain before analyze
@@ -57,21 +50,50 @@ function main()
    var actExplains = getCommonExplain( dbclSlave, findConf);
    checkExplain( actExplains, expExplains );
 	
-	println("check result before analyze success!");
+	println("check result before default analyze!");
+
+	//get Group and Node info
+	var cl_full_name = csName + "." + clName;
+	var groupName = commGetCLGroups( db, csName + "." + clName );
+	var groupDetail = commGetGroups( db, false, groupName );
 	
-	//invoke analyze
-	var options = [{ CollectionSpace : csName, GroupID : groupId },
-	               { CollectionSpace : csName, NodeID : priNodeId },
-						{ Collection : csName + "." + clName, GroupName : groupName[0]},
-						{ Collection : csName + "." + clName, NodeID : priNodeId},
-						{ GroupID : groupId, NodeID : priNodeId }];
-   
+	var groupId = groupDetail[0][0].GroupID;
+	var priNodeId = groupDetail[0][0].PrimaryNode;
+	
+	//generate default analyze info
+	var options = [{ Mode : 3, Collection : cl_full_name, GroupName : groupName},
+						{ Mode : 3, Collection : cl_full_name, NodeID : priNodeId}];
+						
 	for(var i in options)
 	{
 		analyze( db, options[i] );
 	}
 	
 	//check after analyze success
+	checkStat( db, csName, clName, "a", true, false );
+	
+	//check the query explain after analyze
+	var findConf = {a : 9000};
+   var expExplains = [{ScanType:"ixscan", IndexName:"a", ReturnNum:insertNums}];
+   
+   var actExplains = getCommonExplain( dbclPrimary, findConf);
+   checkExplain( actExplains, expExplains );
+   
+   var actExplains = getCommonExplain( dbclSlave, findConf);
+   checkExplain( actExplains, expExplains );
+	
+	println("check result after default analyze!");
+	
+	//modify anaylze info
+	var mcvValues = [{a: 0},{a: 1},{a:9000}];
+	var fracs = [500,500,9000];
+	updateIndexStateInfo( db, csName, clName, "a", mcvValues, fracs );
+	
+	//reload analyze info
+	var options = { Mode : 4, Collection : cl_full_name, GroupName : groupName };
+	analyze( db, options );
+	
+	//check after reload analyze info
 	checkStat( db, csName, clName, "a", true, true );
 	
 	//check the query explain after analyze
@@ -84,14 +106,16 @@ function main()
    var actExplains = getCommonExplain( dbclSlave, findConf);
    checkExplain( actExplains, expExplains );
 	
-	println("check result after analyze success!");
+	println("check result after reload analyze!");
 	
 	//check invalid analyze, cs+cl, cs+index, index+group, index+node
-	var options = [{ CollectionSpace : csName, Collection : csName + "." + clName},
-	               { CollectionSpace : csName, Index : "a"},
-						{ Index : "a", GroupID : groupId },
-						{ Index : "a", GroupName : groupName[0] },
-	               { Index : "a", NodeID : priNodeId }];
+	var options = [{ Mode : 3, CollectionSpace : csName, Collection : cl_full_name},
+	               { Mode : 3, CollectionSpace : csName, GroupName : groupName },
+	               { Mode : 3, CollectionSpace : csName, Index : "a"},
+						{ Mode : 3, CollectionSpace : csName, NodeID : priNodeId },
+						{ Mode : 3, Index : "a", GroupName : groupName },
+	               { Mode : 3, Index : "a", NodeID : priNodeId },
+						{ Mode : 3, GroupID : groupId, NodeID : priNodeId }];
    
 	for(var i in options)
 	{
