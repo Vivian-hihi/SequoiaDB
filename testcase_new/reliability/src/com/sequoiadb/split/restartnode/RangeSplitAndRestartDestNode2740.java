@@ -51,6 +51,7 @@ public class RangeSplitAndRestartDestNode2740 extends SdbTestBase {
     private String destGroupName;
     private GroupMgr groupMgr = null;
     private boolean clearFlag = false;
+    private boolean isSplitComplete = false;
 
     @BeforeClass()
     public void setUp() {
@@ -94,16 +95,20 @@ public class RangeSplitAndRestartDestNode2740 extends SdbTestBase {
             mgr.addTask(new Split());
             mgr.execute();
 
+            
             //TaskMgr check if there is any exception
             Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
 
             //check whether the cluster is normal，the longest waiting time is 600S
             Assert.assertEquals(groupMgr.checkBusiness(600), true, "failed to restore business");
 
-            //insert 500 records after split,the incremental value of 0,the "no" value is 10000-10500
-            bulkInsert(cl,10000,10500);
-
-            checkSplitResult();
+          //split success,then check result
+            if(isSplitComplete){
+            	//insert 500 records after split,the incremental value of 0,the "no" value is 10000-10500
+                bulkInsert(cl,10000,10500);
+                
+                checkSplitResult();
+            }
             
             //Normal operating environment
             clearFlag = true;
@@ -193,9 +198,15 @@ public class RangeSplitAndRestartDestNode2740 extends SdbTestBase {
             try( Sequoiadb db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {                
                 db1.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
                 DBCollection dbcl = db1.getCollectionSpace(csName).getCollection(clName);
-                dbcl.split(srcGroupName, destGroupName, 50);
+                try{
+                	dbcl.split(srcGroupName, destGroupName, 50);
+                    isSplitComplete = true;
+                }catch(BaseException e){
+                	System.out.println("split have exception:" + e.getMessage());
+                }
+                
             }catch (BaseException e) {
-                throw e;
+            	throw e;
             }
         }
     }

@@ -48,6 +48,7 @@ public class HashSplitAndRestartSrcNode2730 extends SdbTestBase {
     private String srcGroupName;
     private String destGroupName;
     private GroupMgr groupMgr = null;
+    private boolean isSplitComplete = false;
     private boolean clearFlag = false;
 
     @BeforeClass()
@@ -96,11 +97,14 @@ public class HashSplitAndRestartSrcNode2730 extends SdbTestBase {
 
             //check whether the cluster is normal，the longest waiting time is 120S
             Assert.assertEquals(groupMgr.checkBusiness(600), true, "failed to restore business");
+            
+            //split success,then check result
+            if(isSplitComplete){
+            	//insert 500 records after split,the incremental value of 0,the "no" value is 1000-1500
+                bulkInsert(cl,1000,1500);
 
-            //insert 500 records after split,the incremental value of 0,the "no" value is 1000-1500
-            bulkInsert(cl,1000,1500);
-
-            checkSplitResult();
+                checkSplitResult();
+            }
             
             //Normal operating environment
             clearFlag = true;
@@ -198,7 +202,12 @@ public class HashSplitAndRestartSrcNode2730 extends SdbTestBase {
             try ( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ){                
                 db.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
                 DBCollection dbcl = db.getCollectionSpace(csName).getCollection(clName);
-                dbcl.split(srcGroupName, destGroupName, 50);
+                try{
+                	dbcl.split(srcGroupName, destGroupName, 50);
+                	isSplitComplete = true;
+                }catch(BaseException e){
+                	System.out.println("split have exception:" + e.getMessage());
+                }
             }catch (BaseException e) {
                 throw e;
             }
