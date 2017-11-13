@@ -40,9 +40,9 @@ public class Node10233 extends SdbTestBase {
 		try {
 			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 			// judge the mode and group number
-//			if (CommLib.isStandAlone(sdb) || CommLib.OneGroupMode(sdb)) {
-//				throw new SkipException("The mode is standlone, or only one group, skip the testCase.");
-//			}
+			if (CommLib.isStandAlone(sdb) || CommLib.OneGroupMode(sdb)) {
+				throw new SkipException("The mode is standlone, or only one group, skip the testCase.");
+			}
 			CommLib.clearGroup(sdb, rgName);
 
 			sdb.createReplicaGroup(rgName);
