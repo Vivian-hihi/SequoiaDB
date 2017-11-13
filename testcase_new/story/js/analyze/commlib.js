@@ -467,11 +467,11 @@ function getSrcGroup( csName, clName )
 }
 
 /************************************
-*@Description: 手工修改统计表
+*@Description: 手工修改索引统计表
 *@author:      liuxiaoxuan
 *@createDate:  2017.11.13
 **************************************/
-function modifySYSSTATInfo( db, csName, clName, indexName, mcvValues )
+function updateIndexStateInfo( db, csName, clName, indexName, mcvValues, Fracs )
 {
 	var dataDB = new Array();
 	if(commIsStandalone(db))
@@ -490,27 +490,27 @@ function modifySYSSTATInfo( db, csName, clName, indexName, mcvValues )
 		}
 	}		
 	
-	try
-	{	
-    	 //modify each node SYSSTAT info
-       for(var i in dataDB)
-       {
-		    var rec = dataDB[i].SYSSTAT.SYSINDEXSTAT.find().toArray();
+	for(var i in dataDB)
+	{
+		try
+	   {
+			 var rec = dataDB[i].SYSSTAT.SYSINDEXSTAT.find().toArray();
 			 
 		    if(0 < rec.length)
-		    {
-				 //example:  mcvValues = [{a:0},{a:1},{a:sameValues}];
-				 var rule = {"$set": {"MCV": {"Values": mcvValues, 
-				             "Frac": [500,500,9000]}}};
-				 var matcher = {"$and": [{"CollectionSpace" : csName},
-				                         {"Collection" : clName},{"Index" : indexName}]};
-				 
-			    dataDB[i].SYSSTAT.SYSINDEXSTAT.upsert(rule, matcher);
+		    {				 
+		       var rule = {"$set": {"MCV": {"Values": mcvValues, "Frac": Fracs}}}; 
+				                  
+             var matcher = {"$and": [{"CollectionSpace" : csName},
+				                         {"Collection" : clName},
+												 {"Index" : indexName}]};
+												 
+		       dataDB[i].SYSSTAT.SYSINDEXSTAT.upsert(rule, matcher);
 		    }
-      }	
+		}
+		catch(e)
+	   {
+          throw buildException("modify SYSInfo", e, "modify", "modify success", e);
+	   }	
 	}
-	catch(e)
-	{
-      throw buildException("modify SYSInfo", e, "modify", "modify success", e);
-	}	
+
 }
