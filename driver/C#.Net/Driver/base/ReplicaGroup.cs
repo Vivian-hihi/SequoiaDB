@@ -325,8 +325,20 @@ namespace SequoiaDB
             }
         }
 
+        /** \fn Node GetSlave()
+         *  \brief Get the slave node of current group
+         *  \return The fitted node or null
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+         */
+        public Node GetSlave()
+        {
+            return GetSlave(null);
+        }
+
         /** \fn Node GetSlave(params int[] positions)
          *  \brief Get the slave node of current group
+         *  \param positions The positions of nodes
          *  \return The fitted node or null
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
