@@ -1492,6 +1492,7 @@
          $.each( oldConfigure, function( key, value ){
             configure[key] = value ;
          } ) ;
+         configure['Force'] = true ;
          configure['Config'] = [] ;
          $.each( oldConfigure['Config'], function( nodeIndex, nodeInfo ){
             var nodeConfig = {} ;
