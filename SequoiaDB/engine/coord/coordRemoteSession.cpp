@@ -309,6 +309,7 @@ namespace engine
       if ( MSG_INVALID_ROUTEID != nodeID.value &&
            _svcType == nodeID.columns.serviceID )
       {
+         PD_LOG( PDDEBUG, "Select node: %s", routeID2String( nodeID ).c_str() ) ;
          goto done ;
       }
       else if ( _primary )
@@ -363,6 +364,7 @@ namespace engine
       {
          _lastNodeID.value = nodeID.value ;
          _pos = COORD_GROUP_SEL_NONE ;
+         PD_LOG( PDDEBUG, "Select node: %s", routeID2String( nodeID ).c_str() ) ;
       }
 
    done:
@@ -387,6 +389,7 @@ namespace engine
          {
             nodeID.columns.serviceID = _svcType ;
             _pos = COORD_GROUP_SEL_NONE ;
+            PD_LOG( PDDEBUG, "Select node: %s", routeID2String( nodeID ).c_str() ) ;
             goto done ;
          }
          _pPropSite->delLastNode( groupID ) ;
@@ -426,6 +429,7 @@ namespace engine
       else
       {
          _lastNodeID.value = nodeID.value ;
+         PD_LOG( PDDEBUG, "Select node: %s", routeID2String( nodeID ).c_str() ) ;
       }
 
    done:
