@@ -2999,50 +2999,112 @@
                            "file": "install_module",
                            "cn": "安装业务",
                            "en": "Install module"
+                        },
+                        {
+                           "id": 1501731657,
+                           "file": "append_module",
+                           "cn": "发现业务",
+                           "en": "Append module"
                         }
                      ]
                   },
                   {
-                     "id": 1501731655,
-                     "file": "extend_module",
-                     "cn": "扩容",
-                     "en": "Extend module"
-                  },
-                  {
-                     "id": 1501731656,
-                     "file": "sync_module",
-                     "cn": "同步业务",
-                     "en": "Sync module"
-                  },
-                  {
-                     "id": 1501731657,
-                     "file": "append_module",
-                     "cn": "发现业务",
-                     "en": "Append module"
-                  },
-                  {
-                     "id": 1483944518,
-                     "file": "sdb_auth",
-                     "cn": "设置鉴权",
-                     "en": "Set authentication"
-                  },
-                  {
-                     "id": 1483944503,
-                     "file": "update_host_info",
-                     "cn": "更新主机信息",
-                     "en": "Update host information"
-                  },
-                  {
-                     "id": 1483944504,
-                     "file": "uninstall_module",
-                     "cn": "卸载业务",
-                     "en": "Uninstall module"
-                  },
-                  {
-                     "id": 1483944505,
-                     "file": "remove_host",
+                     "id": 1509430531,
+                     "dir": "remove_host",
                      "cn": "删除主机",
-                     "en": "Remove host"
+                     "en": "Remove host",
+                     "contents": [
+                        {
+                           "id": 1483944505,
+                           "file": "uninstall_host",
+                           "cn": "卸载主机",
+                           "en": "Uninstall host"
+                        },
+                        {
+                           "id": 1509430532,
+                           "file": "unbind_host",
+                           "cn": "解绑主机",
+                           "en": "Unbind host"
+                        }
+                     ]
+                  },
+                  {
+                     "id": 1509430533,
+                     "dir": "remove_module",
+                     "cn": "删除业务",
+                     "en": "remove module",
+                     "contents": [
+                        {
+                           "id": 1483944504,
+                           "file": "uninstall_module",
+                           "cn": "卸载业务",
+                           "en": "Uninstall module"
+                        },
+                        {
+                           "id": 1509430534,
+                           "file": "unbind_module",
+                           "cn": "解绑业务",
+                           "en": "Unbind module"
+                        }
+                     ]
+                  },
+                  {
+                     "id": 1509430535,
+                     "dir": "operation_host",
+                     "cn": "主机操作",
+                     "en": "Operation host",
+                     "contents": [
+                        {
+                           "id": 1483944503,
+                           "file": "update_host_info",
+                           "cn": "更新主机信息",
+                           "en": "Update host information"
+                        },
+                        {
+                           "id": 1509430539,
+                           "file": "deploy_package",
+                           "cn": "部署包",
+                           "en": "Deploy package"
+                        }
+                     ]
+                  },
+                  {
+                     "id": 1509430536,
+                     "dir": "modify_module",
+                     "cn": "修改业务",
+                     "en": "Modify module",
+                     "contents": [
+                        {
+                           "id": 1501731655,
+                           "file": "extend_module",
+                           "cn": "业务扩容",
+                           "en": "Extend module"
+                        },
+                        {
+                           "id": 1509430537,
+                           "file": "shrink_module",
+                           "cn": "业务减容",
+                           "en": "Shrink module"
+                        },
+                        {
+                           "id": 1501731656,
+                           "file": "sync_module",
+                           "cn": "同步业务",
+                           "en": "Sync module"
+                        },
+                        {
+                           "id": 1483944518,
+                           "file": "sdb_auth",
+                           "cn": "设置鉴权",
+                           "en": "Set authentication"
+                        },
+                        {
+                           "id": 1509430538,
+                           "file": "relationship_module",
+                           "cn": "关联业务",
+                           "en": "Relationship module"
+                        }
+                     ]
                   }
                ]
             },
