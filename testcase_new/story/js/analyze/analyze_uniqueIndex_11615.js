@@ -21,19 +21,24 @@ function main()
    //插入记录
 	insertDiffDatas( dbcl, insertNum );
 	
+	//获取主备节点
+   db.setSessionAttr( { PreferedInstance: "m" } );
+   var dbclPrimary = db.getCS(COMMCSNAME).getCL(clName);
+   db.setSessionAttr( { PreferedInstance: "s" } );
+   var dbclSlave = db.getCS(COMMCSNAME).getCL(clName);
+	
 	//检查统计信息
    checkStat( db, COMMCSNAME, clName, "a", false, false );
    
    //检查主备节点访问计划
    var findConf = {a:1000};
-   var actExplains = getCommonExplain( dbcl, findConf);
    var expExplains = [{ScanType:"ixscan", IndexName:"a", ReturnNum:1}];
    
-   db.setSessionAttr( { PreferedInstance: "m" } );
-   checkExplain( actExplains, expExplains )
+   var actExplains = getCommonExplain( dbclPrimary, findConf);
+   checkExplain( actExplains, expExplains );
    
-   db.setSessionAttr( { PreferedInstance: "s" } );
-   checkExplain( actExplains, expExplains )
+   var actExplains = getCommonExplain( dbclSlave, findConf);
+   checkExplain( actExplains, expExplains );
 	
 	println("check result before analyze success!");
 
@@ -45,14 +50,13 @@ function main()
    
    //检查主备节点访问计划
    var findConf = {a:1000};
-   var actExplains = getCommonExplain( dbcl, findConf);
    var expExplains = [{ScanType:"ixscan", IndexName:"a", ReturnNum:1}];
    
-   db.setSessionAttr( { PreferedInstance: "m" } );
-   checkExplain( actExplains, expExplains )
+   var actExplains = getCommonExplain( dbclPrimary, findConf);
+   checkExplain( actExplains, expExplains );
    
-   db.setSessionAttr( { PreferedInstance: "s" } );
-   checkExplain( actExplains, expExplains )
+   var actExplains = getCommonExplain( dbclSlave, findConf);
+   checkExplain( actExplains, expExplains );
    
    println("check result after analyze success!");
    

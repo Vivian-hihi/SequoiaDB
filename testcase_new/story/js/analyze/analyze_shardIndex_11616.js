@@ -48,19 +48,24 @@ function main()
 	insertSameDatas( dbcl, insertNum, sameValues1 );
 	insertSameDatas( dbcl, insertNum, sameValues2 );
 	
+	//获取主备节点
+   db.setSessionAttr( { PreferedInstance: "m" } );
+   var dbclPrimary = db.getCS(COMMCSNAME).getCL(clName);
+   db.setSessionAttr( { PreferedInstance: "s" } );
+   var dbclSlave = db.getCS(COMMCSNAME).getCL(clName);
+	
 	//检查统计信息
    checkStat( db, COMMCSNAME, clName, "$shard", false, false );
    
    //使用shard索引，检查主备节点访问计划
    var findConf = {a:{$in:[sameValues1,sameValues2]}};
-   var actExplains = getSplitExplain( dbcl, findConf);
    var expExplains = [{ScanType:"ixscan", IndexName:"$shard", GroupName:groups[0].GroupName, ReturnNum:insertNum},
                       {ScanType:"ixscan", IndexName:"$shard", GroupName:groups[1].GroupName, ReturnNum:insertNum + 1}];
    
-   db.setSessionAttr( { PreferedInstance: "m" } );
+   var actExplains = getSplitExplain( dbclPrimary, findConf);
    checkExplain( actExplains, expExplains );
    
-   db.setSessionAttr( { PreferedInstance: "s" } );
+   var actExplains = getSplitExplain( dbclSlave, findConf);
    checkExplain( actExplains, expExplains );
 	
 	println("check $shard index query explain before analyze success!");
@@ -73,20 +78,19 @@ function main()
    
    //使用shard索引，检查主备节点访问计划
    var findConf = {a:{$in:[sameValues1,sameValues2]}};
-   var actExplains = getSplitExplain( dbcl, findConf); 
    var expExplains = [{ScanType:"tbscan", IndexName:"", GroupName:groups[0].GroupName, ReturnNum:insertNum},
                       {ScanType:"tbscan", IndexName:"", GroupName:groups[1].GroupName, ReturnNum:insertNum + 1}];
    
-   db.setSessionAttr( { PreferedInstance: "m" } );
+   var actExplains = getSplitExplain( dbclPrimary, findConf);
    checkExplain( actExplains, expExplains );
    
-   db.setSessionAttr( { PreferedInstance: "s" } );
+   var actExplains = getSplitExplain( dbclSlave, findConf);
    checkExplain( actExplains, expExplains );
 	
 	println("check $shard index query explain after analyze success!");
 	
    //清理环境
-   //commDropCL( db, COMMCSNAME, clName, true, true,"drop CL in the end" );
+   commDropCL( db, COMMCSNAME, clName, true, true,"drop CL in the end" );
    
  }
  main()

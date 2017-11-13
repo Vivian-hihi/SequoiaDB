@@ -1,12 +1,25 @@
 ﻿/************************************
-*@Description: 删除索引清空统计信息
+*@Description: 指定node收集统计信息
 *@author:      zhaoyu
-*@createdate:  2017.11.8
-*@testlinkCase:seqDB-11399
+*@createdate:  2017.11.13
+*@testlinkCase:seqDB-11621
 **************************************/
 function main()
 {
-   var clName = COMMCLNAME + "_11399";
+   try
+	{
+	   //判断独立模式
+	   if( true == commIsStandalone( db ) )
+      {
+         println( "run mode is standalone" );
+         return;
+      }
+   }catch( e )
+   {
+      throw e;
+   } 
+      
+   var clName = COMMCLNAME + "_11621";
    var insertNum = 2000;
 	var sameValues = 9000;
    
@@ -44,8 +57,12 @@ function main()
 	
 	println("check result before analyze success!");
 
-   //执行统计
-   analyze( db, {Collection: COMMCSNAME + "." + clName} );
+   //指定主节点执行统计
+   var groupName = getSrcGroup( COMMCSNAME, clName );
+   var primaryNode = db.getRG(groupName).getMaster();
+   var nodeId = parseInt(primaryNode.getNodeDetail().split(":")[0]);
+   println("nodeId:" + nodeId);
+   analyze( db, {NodeID:nodeId} );
    
    //检查统计信息
    checkStat( db, COMMCSNAME, clName, "a", true, true );
@@ -60,48 +77,61 @@ function main()
    var actExplains = getCommonExplain( dbclSlave, findConf);
    checkExplain( actExplains, expExplains );
    
-   println("check result after analyze success!");
+   println("check result after analyze primary node success!");
    
-   //删除索引
-   commDropIndex( dbcl, "a" );
+   //指定备节点执行统计
+   var slaveNode = db.getRG(groupName).getSlave();
+   var nodeId = parseInt(slaveNode.getNodeDetail().split(":")[0]);
+   println("nodeId:" + nodeId);
+   try
+   {
+      db.analyze({NodeID:nodeId});
+      throw "NEED_AN_ERR";
+   }catch(e)
+   {
+      if(e !== -264)
+      {
+         throw e;
+      }
+   }
+   println("check result after analyze slave node success!");
+   
+   //指定cata节点执行统计
+   var cataNode = db.getRG("SYSCatalogGroup").getMaster();
+   var nodeId = parseInt(cataNode.getNodeDetail().split(":")[0]);
+   println("nodeId:" + nodeId);
+   analyze( db, {NodeID:nodeId} );
    
    //检查统计信息
-   checkStat( db, COMMCSNAME, clName, "a", true, false );
+   checkStat( db, COMMCSNAME, clName, "a", true, true );
    
    //检查主备节点访问计划
    var findConf = {a:sameValues};
-   var hintConf = {"":"a"};
-   var actExplains = getCommonExplain( dbcl, findConf, null, hintConf);
    var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}];
-   
-   var actExplains = getCommonExplain( dbclPrimary, findConf, null, hintConf);
-   checkExplain( actExplains, expExplains );
-   
-   var actExplains = getCommonExplain( dbclSlave, findConf, null, hintConf);
-   checkExplain( actExplains, expExplains );
-   
-   println("check result after drop index success!");
-   
-   //再次创建相同索引
-   commCreateIndex( dbcl, "a", {a:1});
-   
-   //检查统计信息
-   checkStat( db, COMMCSNAME, clName, "a", true, false );
-   
-   //检查主备节点访问计划
-   var findConf = {a:sameValues};
-   var expExplains = [{ScanType:"ixscan", IndexName:"a", ReturnNum:insertNum}];
    
    var actExplains = getCommonExplain( dbclPrimary, findConf);
    checkExplain( actExplains, expExplains );
    
    var actExplains = getCommonExplain( dbclSlave, findConf);
    checkExplain( actExplains, expExplains );
+   println("check result after analyze cata node success!");
    
-   println("check result after create the same index success!");
+   //指定不存在节点执行统计
+   try
+   {
+      db.analyze({NodeID:2233});
+      throw "NEED_AN_ERR";
+   }catch(e)
+   {
+      if(e !== -155)
+      {
+         throw e;
+      }
+   }
+   println("check result after analyze not exists node success!");
    
-   //清空环境
-   commDropCL( db, COMMCSNAME, clName, true, true,"drop CL in the end" ) ;
+   //清理环境
+   commDropCL( db, COMMCSNAME, clName, true, true,"drop CL in the end" );
   
  }
  main()

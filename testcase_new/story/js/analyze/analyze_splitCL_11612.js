@@ -50,34 +50,38 @@ function main()
 	insertDiffDatas( dbcl, insertNum );
 	insertSameDatas( dbcl, insertNum, sameValues );
 	
+	//获取主备节点
+   db.setSessionAttr( { PreferedInstance: "m" } );
+   var dbclPrimary = db.getCS(COMMCSNAME).getCL(clName);
+   db.setSessionAttr( { PreferedInstance: "s" } );
+   var dbclSlave = db.getCS(COMMCSNAME).getCL(clName);
+	
 	//检查统计信息
    checkStat( db, COMMCSNAME, clName, "$shard", false, false );
    checkStat( db, COMMCSNAME, clName, "a0", false, false );
    
    //使用shard索引，检查主备节点访问计划
    var findConf = {a:sameValues};
-   var actExplains = getSplitExplain( dbcl, findConf);
    var expExplains = [{ScanType:"ixscan", IndexName:"$shard", GroupName:groups[0].GroupName, ReturnNum:insertNum}];
    
-   db.setSessionAttr( { PreferedInstance: "m" } );
-   checkExplain( actExplains, expExplains )
+   var actExplains = getSplitExplain( dbclPrimary, findConf);
+   checkExplain( actExplains, expExplains );
    
-   db.setSessionAttr( { PreferedInstance: "s" } );
-   checkExplain( actExplains, expExplains )
+   var actExplains = getSplitExplain( dbclSlave, findConf);
+   checkExplain( actExplains, expExplains );
 	
 	println("check $shard index query explain before analyze success!");
 	
 	//使用普通索引，检查主备节点访问计划
    var findConf = {a0:sameValues};
-   var actExplains = getSplitExplain( dbcl, findConf);
    var expExplains = [{ScanType:"ixscan", IndexName:"a0", GroupName:groups[1].GroupName, ReturnNum:0},
                       {ScanType:"ixscan", IndexName:"a0", GroupName:groups[0].GroupName, ReturnNum:insertNum}];
    
-   db.setSessionAttr( { PreferedInstance: "m" } );
-   checkExplain( actExplains, expExplains )
+   var actExplains = getSplitExplain( dbclPrimary, findConf);
+   checkExplain( actExplains, expExplains );
    
-   db.setSessionAttr( { PreferedInstance: "s" } );
-   checkExplain( actExplains, expExplains )
+   var actExplains = getSplitExplain( dbclSlave, findConf);
+   checkExplain( actExplains, expExplains );
 	
 	println("check common index query explain before analyze success!");
 
@@ -90,28 +94,26 @@ function main()
    
    //使用shard索引，检查主备节点访问计划
    var findConf = {a:sameValues};
-   var actExplains = getSplitExplain( dbcl, findConf);
    var expExplains = [{ScanType:"tbscan", IndexName:"", GroupName:groups[0].GroupName, ReturnNum:insertNum}];
    
-   db.setSessionAttr( { PreferedInstance: "m" } );
-   checkExplain( actExplains, expExplains )
+   var actExplains = getSplitExplain( dbclPrimary, findConf);
+   checkExplain( actExplains, expExplains );
    
-   db.setSessionAttr( { PreferedInstance: "s" } );
-   checkExplain( actExplains, expExplains )
+   var actExplains = getSplitExplain( dbclSlave, findConf);
+   checkExplain( actExplains, expExplains );
 	
 	println("check $shard index query explain after analyze success!");
 	
 	//使用普通索引，检查主备节点访问计划
    var findConf = {a0:sameValues};
-   var actExplains = getSplitExplain( dbcl, findConf);
    var expExplains = [{ScanType:"ixscan", IndexName:"a0", GroupName:groups[1].GroupName, ReturnNum:0},
                       {ScanType:"tbscan", IndexName:"", GroupName:groups[0].GroupName, ReturnNum:insertNum}];
    
-   db.setSessionAttr( { PreferedInstance: "m" } );
-   checkExplain( actExplains, expExplains )
+   var actExplains = getSplitExplain( dbclPrimary, findConf);
+   checkExplain( actExplains, expExplains );
    
-   db.setSessionAttr( { PreferedInstance: "s" } );
-   checkExplain( actExplains, expExplains )
+   var actExplains = getSplitExplain( dbclSlave, findConf);
+   checkExplain( actExplains, expExplains );
 	
 	println("check common index query explain after analyze success!");
    

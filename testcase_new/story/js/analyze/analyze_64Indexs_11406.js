@@ -28,6 +28,12 @@ function main()
    //插入记录
 	insertDiffDatas( dbcl, insertNum );
 	insertSameDatas( dbcl, insertNum, sameValues );
+	
+	//获取主备节点
+   db.setSessionAttr( { PreferedInstance: "m" } );
+   var dbclPrimary = db.getCS(COMMCSNAME).getCL(clName);
+   db.setSessionAttr( { PreferedInstance: "s" } );
+   var dbclSlave = db.getCS(COMMCSNAME).getCL(clName);
    
    //执行统计
    analyze( db, {Collection:COMMCSNAME + "." + clName} );
@@ -43,13 +49,12 @@ function main()
    {
       var findConf= {};
       findConf["a" + i] = sameValues;
-      var actExplains = getCommonExplain( dbcl, findConf);
       var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}];
       
-      db.setSessionAttr( { PreferedInstance: "m" } );
+      var actExplains = getCommonExplain( dbclPrimary, findConf);
       checkExplain( actExplains, expExplains );
       
-      db.setSessionAttr( { PreferedInstance: "s" } );
+      var actExplains = getCommonExplain( dbclSlave, findConf);
       checkExplain( actExplains, expExplains ); 
    }
    println("check result after analyze success!");
@@ -71,13 +76,12 @@ function main()
    {
       var findConf= {};
       findConf["a" + i] = sameValues;
-      var actExplains = getCommonExplain( dbcl, findConf);
       var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}];
       
-      db.setSessionAttr( { PreferedInstance: "m" } );
+      var actExplains = getCommonExplain( dbclPrimary, findConf);
       checkExplain( actExplains, expExplains );
       
-      db.setSessionAttr( { PreferedInstance: "s" } );
+      var actExplains = getCommonExplain( dbclSlave, findConf);
       checkExplain( actExplains, expExplains ); 
    }
    println("check result drop index success!");

@@ -34,6 +34,17 @@ function main()
 	insertDiffDatas( dbcl3, insertNum );
 	insertSameDatas( dbcl3, insertNum, sameValues );
 	
+	//获取主备节点
+   db.setSessionAttr( { PreferedInstance: "m" } );
+   var dbclPrimary1 = db.getCS(csName).getCL(clName1);
+   var dbclPrimary2 = db.getCS(csName).getCL(clName2);
+   var dbclPrimary3 = db.getCS(csName).getCL(clName3);
+   
+   db.setSessionAttr( { PreferedInstance: "s" } );
+   var dbclSlave1 = db.getCS(csName).getCL(clName1);
+   var dbclSlave2 = db.getCS(csName).getCL(clName2);
+   var dbclSlave3 = db.getCS(csName).getCL(clName3);
+	
 	//检查统计信息
    checkStat( db, csName, clName1, "a", false, false );
    println("check cl:" + clName1 + " before analyze success!");
@@ -46,20 +57,25 @@ function main()
    
    //检查主备节点访问计划
    var findConf = {a:sameValues};
-   var actExplains1 = getCommonExplain( dbcl1, findConf);
-   var actExplains2 = getCommonExplain( dbcl2, findConf);
-   var actExplains3 = getCommonExplain( dbcl3, findConf);
    var expExplains = [{ScanType:"ixscan", IndexName:"a", ReturnNum:insertNum}];
    
-   db.setSessionAttr( { PreferedInstance: "m" } );
+   var actExplains1 = getCommonExplain( dbclPrimary1, findConf);
+   var actExplains2 = getCommonExplain( dbclPrimary2, findConf);
+   var actExplains3 = getCommonExplain( dbclPrimary3, findConf);
    checkExplain( actExplains1, expExplains );
    checkExplain( actExplains2, expExplains );
    checkExplain( actExplains3, expExplains );
    
-   db.setSessionAttr( { PreferedInstance: "s" } );
+   println("check primary node find before analyze success!");
+   
+   var actExplains1 = getCommonExplain( dbclSlave1, findConf);
+   var actExplains2 = getCommonExplain( dbclSlave2, findConf);
+   var actExplains3 = getCommonExplain( dbclSlave3, findConf);
    checkExplain( actExplains1, expExplains );
    checkExplain( actExplains2, expExplains );
    checkExplain( actExplains3, expExplains );
+   
+   println("check slave node find before analyze success!");
    
    //执行统计
    analyze( db, {CollectionSpace: csName} );
@@ -76,20 +92,25 @@ function main()
    
    //检查主备节点访问计划
    var findConf = {a:sameValues};
-   var actExplains1 = getCommonExplain( dbcl1, findConf);
-   var actExplains2 = getCommonExplain( dbcl2, findConf);
-   var actExplains3 = getCommonExplain( dbcl3, findConf);
    var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}];
    
-   db.setSessionAttr( { PreferedInstance: "m" } );
+   var actExplains1 = getCommonExplain( dbclPrimary1, findConf);
+   var actExplains2 = getCommonExplain( dbclPrimary2, findConf);
+   var actExplains3 = getCommonExplain( dbclPrimary3, findConf);
    checkExplain( actExplains1, expExplains );
    checkExplain( actExplains2, expExplains );
    checkExplain( actExplains3, expExplains );
    
-   db.setSessionAttr( { PreferedInstance: "s" } );
+   println("check primary node find after analyze success!");
+   
+   var actExplains1 = getCommonExplain( dbclSlave1, findConf);
+   var actExplains2 = getCommonExplain( dbclSlave2, findConf);
+   var actExplains3 = getCommonExplain( dbclSlave3, findConf);
    checkExplain( actExplains1, expExplains );
    checkExplain( actExplains2, expExplains );
    checkExplain( actExplains3, expExplains );
+   
+   println("check slave node find after analyze success!");
 
    //truncate 其中一个cl的记录,再次执行统计
    dbcl1.truncate();
@@ -107,21 +128,26 @@ function main()
    
    //检查主备节点访问计划
    var findConf = {a:sameValues};
-   var actExplains1 = getCommonExplain( dbcl1, findConf);
-   var actExplains2 = getCommonExplain( dbcl2, findConf);
-   var actExplains3 = getCommonExplain( dbcl3, findConf);
    var expExplains1 = [{ScanType:"ixscan", IndexName:"a", ReturnNum:0}];
    var expExplains2 = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}];
    
-   db.setSessionAttr( { PreferedInstance: "m" } );
+   var actExplains1 = getCommonExplain( dbclPrimary1, findConf);
+   var actExplains2 = getCommonExplain( dbclPrimary2, findConf);
+   var actExplains3 = getCommonExplain( dbclPrimary3, findConf);
    checkExplain( actExplains1, expExplains1 );
    checkExplain( actExplains2, expExplains2 );
    checkExplain( actExplains3, expExplains2 );
    
-   db.setSessionAttr( { PreferedInstance: "s" } );
+   println("check primary node find after truncate cl success!");
+   
+   var actExplains1 = getCommonExplain( dbclSlave1, findConf);
+   var actExplains2 = getCommonExplain( dbclSlave2, findConf);
+   var actExplains3 = getCommonExplain( dbclSlave3, findConf);
    checkExplain( actExplains1, expExplains1 );
    checkExplain( actExplains2, expExplains2 );
    checkExplain( actExplains3, expExplains2 );
+   
+   println("check slave node find after truncate cl success!");
    
    //删除其中一个cl中的索引,再次执行统计
    commDropIndex( dbcl3, "a" );
@@ -139,22 +165,27 @@ function main()
    
    //检查主备节点访问计划
    var findConf = {a:sameValues};
-   var actExplains1 = getCommonExplain( dbcl1, findConf);
-   var actExplains2 = getCommonExplain( dbcl2, findConf);
-   var actExplains3 = getCommonExplain( dbcl3, findConf);
    var expExplains1 = [{ScanType:"ixscan", IndexName:"a", ReturnNum:0}];
    var expExplains2 = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}];
    var expExplains3 = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}];
    
-   db.setSessionAttr( { PreferedInstance: "m" } );
+   var actExplains1 = getCommonExplain( dbclPrimary1, findConf);
+   var actExplains2 = getCommonExplain( dbclPrimary2, findConf);
+   var actExplains3 = getCommonExplain( dbclPrimary3, findConf);
    checkExplain( actExplains1, expExplains1 );
    checkExplain( actExplains2, expExplains2 );
    checkExplain( actExplains3, expExplains3 );
    
-   db.setSessionAttr( { PreferedInstance: "s" } );
+   println("check primary node find after drop index success!");
+   
+   var actExplains1 = getCommonExplain( dbclSlave1, findConf);
+   var actExplains2 = getCommonExplain( dbclSlave2, findConf);
+   var actExplains3 = getCommonExplain( dbclSlave3, findConf);
    checkExplain( actExplains1, expExplains1 );
    checkExplain( actExplains2, expExplains2 );
    checkExplain( actExplains3, expExplains3 );
+   
+   println("check slave node find after drop index success!");
    
    //删除其他2个cl，再次执行统计
    commDropCL( db, csName, clName1, true, true,"drop CL in the beginning" ) ;
@@ -167,13 +198,12 @@ function main()
    
    //检查主备节点访问计划
    var findConf = {a:sameValues};
-   var actExplains2 = getCommonExplain( dbcl2, findConf);
    var expExplains2 = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}];
    
-   db.setSessionAttr( { PreferedInstance: "m" } );
+   var actExplains2 = getCommonExplain( dbclPrimary2, findConf);
    checkExplain( actExplains2, expExplains2 );
    
-   db.setSessionAttr( { PreferedInstance: "s" } );
+   var actExplains2 = getCommonExplain( dbclSlave2, findConf);
    checkExplain( actExplains2, expExplains2 );
    
    //清空环境
