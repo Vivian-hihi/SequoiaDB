@@ -526,7 +526,8 @@ namespace engine
          UINT32 readLen = 0 ;
          UINT32 len = _su->getLobPageSize() ;
          dmsLobRecord record ;
-         BOOLEAN withData = ( SDB_LOB_MODE_READ == _mode ) ? TRUE : FALSE ;
+         BOOLEAN withData = ( SDB_LOB_MODE_READ == _mode && !_reopened ) ?
+                            TRUE : FALSE ;
 
          record.set( &_oid, DMS_LOB_META_SEQUENCE, 0, len, NULL ) ;
 
