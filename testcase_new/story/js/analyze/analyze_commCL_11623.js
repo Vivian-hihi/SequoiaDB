@@ -40,10 +40,10 @@ function main()
    var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}];
    
    var actExplains = getCommonExplain( dbclPrimary, findConf);
-   checkExplain( actExplains, expExplains )
+   checkExplain( actExplains, expExplains );
    
    var actExplains = getCommonExplain( dbclSlave, findConf);
-   checkExplain( actExplains, expExplains )
+   checkExplain( actExplains, expExplains );
    
    println("check result after analyze success!");
    
@@ -58,10 +58,10 @@ function main()
    var expExplains = [{ScanType:"ixscan", IndexName:"a", ReturnNum:insertNum}];
    
    var actExplains = getCommonExplain( dbclPrimary, findConf);
-   checkExplain( actExplains, expExplains )
+   checkExplain( actExplains, expExplains );
    
    var actExplains = getCommonExplain( dbclSlave, findConf);
-   checkExplain( actExplains, expExplains )
+   checkExplain( actExplains, expExplains );
    
    println("check result analyze mode set 3 success!");
    
@@ -81,10 +81,10 @@ function main()
    var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}];
    
    var actExplains = getCommonExplain( dbclPrimary, findConf);
-   checkExplain( actExplains, expExplains )
+   checkExplain( actExplains, expExplains );
    
    var actExplains = getCommonExplain( dbclSlave, findConf);
-   checkExplain( actExplains, expExplains )
+   checkExplain( actExplains, expExplains );
    
    println("check result analyze mode set 4 success!");
    
@@ -99,10 +99,10 @@ function main()
    var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}];
    
    var actExplains = getCommonExplain( dbclPrimary, findConf);
-   checkExplain( actExplains, expExplains )
+   checkExplain( actExplains, expExplains );
    
    var actExplains = getCommonExplain( dbclSlave, findConf);
-   checkExplain( actExplains, expExplains )
+   checkExplain( actExplains, expExplains );
    
    println("check result analyze mode set 5 success!");
    
@@ -119,10 +119,10 @@ function main()
    var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}];
    
    var actExplains = getCommonExplain( dbclPrimary, findConf);
-   checkExplain( actExplains, expExplains )
+   checkExplain( actExplains, expExplains );
    
    var actExplains = getCommonExplain( dbclSlave, findConf);
-   checkExplain( actExplains, expExplains )
+   checkExplain( actExplains, expExplains );
    
    println("check result after update index stat but no analyze success!");
    
@@ -137,15 +137,15 @@ function main()
    var expExplains = [{ScanType:"ixscan", IndexName:"a", ReturnNum:insertNum}];
    
    var actExplains = getCommonExplain( dbclPrimary, findConf);
-   checkExplain( actExplains, expExplains )
+   checkExplain( actExplains, expExplains );
    
    var actExplains = getCommonExplain( dbclSlave, findConf);
-   checkExplain( actExplains, expExplains )
+   checkExplain( actExplains, expExplains );
    
    println("check result after update index stat and analyze mode set 5 success!");
    
    //清理环境
-   //commDropCL( db, COMMCSNAME, clName, true, true,"drop CL in the end" );
+   commDropCL( db, COMMCSNAME, clName, true, true,"drop CL in the end" );
   
  }
  main()
