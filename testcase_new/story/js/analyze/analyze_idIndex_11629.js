@@ -107,7 +107,7 @@ function main()
    updateIndexStateInfo( db, COMMCSNAME, clName, "$id", mcvValues, fracs );
    
    //检查统计信息
-   checkStat( db, COMMCSNAME, clName, "a", true, true );
+   checkStat( db, COMMCSNAME, clName, "$id", true, true );
    
    //检查主备节点访问计划
    var findConf = {_id:2000};
