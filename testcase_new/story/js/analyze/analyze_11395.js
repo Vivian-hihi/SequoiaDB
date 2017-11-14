@@ -7,53 +7,53 @@
 function main()
 {	
    var csName = COMMCSNAME + "11395";
-	commDropCS( db, csName, true, "drop CS in the beginning" );
+   commDropCS( db, csName, true, "drop CS in the beginning" );
 	
-	var csOption = { PageSize: 4096 };
+   var csOption = { PageSize: 4096 };
    commCreateCS( db, csName, false, "", csOption );
 		
-	//create cl	
-	var clOption = { AutoIndexId : false };
-	var clName = COMMCLNAME + "11395";
-	var dbcl = commCreateCLByOption( db, csName, clName, clOption, true );
+   //create cl	
+   var clOption = { AutoIndexId : false };
+   var clName = COMMCLNAME + "11395";
+   var dbcl = commCreateCLByOption( db, csName, clName, clOption, true );
 	
-	//get master/slave datanode
+   //get master/slave datanode
    db.setSessionAttr( { PreferedInstance: "m" } );
    var dbclPrimary = db.getCS(csName).getCL(clName);
    db.setSessionAttr( { PreferedInstance: "s" } );
    var dbclSlave = db.getCS(csName).getCL(clName);
 	
-	//insert
-	var insertNums = 5000;
+   //insert
+   var insertNums = 5000;
    insertDatas( dbcl, insertNums );
 	
-	//create id index
-	createIdIndex( dbcl );
+   //create id index
+   createIdIndex( dbcl );
 	
-	//check before invoke analyze
-	checkStat( db, csName, clName, "$id", false, false );
+   //check before invoke analyze
+   checkStat( db, csName, clName, "$id", false, false );
 	
-	//check the query explain of master/slave nodes 
-	var findConf = {_id : 4000};
+   //check the query explain of master/slave nodes 
+   var findConf = {_id : 4000};
    var expExplains = [{ScanType:"ixscan", IndexName:"$id", ReturnNum:1}];
    
-	var actExplains = getCommonExplain( dbclPrimary, findConf);
+   var actExplains = getCommonExplain( dbclPrimary, findConf);
    checkExplain( actExplains, expExplains );
    
    var actExplains = getCommonExplain( dbclSlave, findConf);
    checkExplain( actExplains, expExplains );
 	
-	println("check result before analyze success!");
-	
-	//invoke analyze
-	var options = {CollectionSpace: csName};
-	analyze( db, options );
-	
+   println("check result before analyze success!");
+	                                                                    
+   //invoke analyze
+   var options = {CollectionSpace: csName};
+   analyze( db, options );
+                                                                                       
    //check after analyze
-	checkStat( db, csName, clName, "$id", true, true );
-   
+   checkStat( db, csName, clName, "$id", true, true );
+ 
    //check the query explain of master/slave nodes 
-	var findConf = {_id : 4000};
+   var findConf = {_id : 4000};
    var expExplains = [{ScanType:"ixscan", IndexName:"$id", ReturnNum:1}];
 	
    var actExplains = getCommonExplain( dbclPrimary, findConf);
@@ -63,6 +63,8 @@ function main()
    checkExplain( actExplains, expExplains );
 
    println("check result after analyze success!");
+   
+   commDropCS( db, csName, true, "drop CS in the end" );
 }
 
 function insertDatas( dbcl, insertNum )
@@ -87,7 +89,7 @@ function createIdIndex( dbcl )
    {
       dbcl.createIdIndex();
    }
-	catch(e)
+   catch(e)
    {
       throw buildException("create id index", e, "create IdIndex", "success", e);
    }
