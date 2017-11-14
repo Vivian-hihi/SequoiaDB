@@ -813,6 +813,11 @@ namespace engine
 
       suLocked = TRUE ;
 
+      // Check if statistics cache is ready for collection space
+      pStatCache = pSU->getStatCache() ;
+      PD_CHECK( pStatCache, SDB_INVALIDARG, error, PDERROR,
+                "No statistics manger in storage unit [%s]", pCSName ) ;
+
       // Clear current statistics caches
       pSU->getEventHolder()->onClearSUCaches( DMS_EVENT_MASK_STAT ) ;
 
