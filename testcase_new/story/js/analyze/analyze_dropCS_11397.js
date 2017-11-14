@@ -92,7 +92,6 @@ function main()
    commDropCS( db, csName1);
    
    //检查统计信息
-   checkStat( db, csName1, clName, "a", false, false );
    checkStat( db, csName2, clName, "a", false, false );
    
    println("check result after drop cs success!");

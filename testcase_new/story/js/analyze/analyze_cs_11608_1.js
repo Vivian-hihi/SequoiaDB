@@ -245,9 +245,7 @@ function main()
    analyze( db, {CollectionSpace: csName1} );
    
    //检查统计信息
-   checkStat( db, csName1, clName1, "a", false, false );
    checkStat( db, csName1, clName2, "a", true, true );
-   checkStat( db, csName1, clName3, "a", false, false );
    checkStat( db, csName2, clName1, "a", false, false );
    println("check only one cl:" + clName2 + " success!");
    

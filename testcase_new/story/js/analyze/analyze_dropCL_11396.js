@@ -87,9 +87,7 @@ function main()
    commDropCL( db, COMMCSNAME, clName1) ;
    
    //检查统计信息
-   checkStat( db, COMMCSNAME, clName1, "a", false, false );
    checkStat( db, COMMCSNAME, clName2, "a", true, true );
-   
    println("check result after drop cl success!");
    
    //再次创建cl、创建索引、插入相同数据

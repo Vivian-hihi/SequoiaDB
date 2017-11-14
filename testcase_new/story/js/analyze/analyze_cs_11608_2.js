@@ -53,10 +53,6 @@ function main()
    commDropCL( db, csName, clName) ;
    analyze( db, {CollectionSpace: csName} );
    
-   //检查统计信息
-   checkStat( db, csName, clName, "a", false, false );
-   println("check cl:" + csName + " no cl success!");
-	
 	//清理环境
 	commDropCS( db, csName );
    
