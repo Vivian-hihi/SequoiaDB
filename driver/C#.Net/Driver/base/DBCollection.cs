@@ -1466,6 +1466,48 @@ namespace SequoiaDB
             sdb.UpsertCache(collectionFullName);
         }
 
+        /** \fn DBLob TruncateLob(ObjectId id, long length)
+         * \brief Truncate an exist lob.
+         * \param id The oid of the existing lob.
+         * \param length The truncate length.
+         * \exception SequoiaDB.BaseException
+         * \exception System.Exception
+         */
+        public void TruncateLob(ObjectId id, long length)
+        {
+            BsonDocument newObj = new BsonDocument();
+            newObj.Add(SequoiadbConstants.FIELD_COLLECTION, collectionFullName);
+            newObj.Add(SequoiadbConstants.FIELD_LOB_OID, id);
+            newObj.Add(SequoiadbConstants.FIELD_LOB_LENGTH, length);
+
+            SDBMessage sdbMessage = new SDBMessage();
+            // MsgHeader
+            sdbMessage.OperationCode = Operation.MSG_BS_LOB_TRUNCATE_REQ;
+            sdbMessage.NodeID = SequoiadbConstants.ZERO_NODEID;
+            sdbMessage.RequestID = 0;
+            // the rest part of _MsgOpLOb
+            sdbMessage.Version = SequoiadbConstants.DEFAULT_VERSION;
+            sdbMessage.W = SequoiadbConstants.DEFAULT_W;
+            sdbMessage.Padding = (short)0;
+            sdbMessage.Flags = SequoiadbConstants.DEFAULT_FLAGS;
+            sdbMessage.ContextIDList = new List<long>();
+            sdbMessage.ContextIDList.Add(SequoiadbConstants.DEFAULT_CONTEXTID);
+            sdbMessage.Matcher = newObj;
+
+
+            byte[] request = SDBMessageHelper.BuildTruncateLobRequest(sdbMessage, isBigEndian);
+            connection.SendMessage(request);
+            SDBMessage rtnSDBMessage = SDBMessageHelper.MsgExtractReply(connection.ReceiveMessage(isBigEndian), isBigEndian);
+            rtnSDBMessage = SDBMessageHelper.CheckRetMsgHeader(sdbMessage, rtnSDBMessage);
+            int flags = rtnSDBMessage.Flags;
+            if (flags != 0)
+            {
+                throw new BaseException(flags);
+            }
+            // upsert cache
+            sdb.UpsertCache(collectionFullName);
+        }
+
         /** \fn void Truncate()
          * \brief Truncate the collection
          * \return void

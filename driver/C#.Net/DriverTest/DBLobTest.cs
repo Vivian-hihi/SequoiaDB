@@ -1174,6 +1174,45 @@ namespace DriverTest
         }
 
         [TestMethod()]
+        public void testLobTruncate()
+        {
+            String str = "1234567890";
+            byte[] output = new byte[10];
+            ObjectId id = ObjectId.GenerateNewId();
+            DBLob lob = cl.CreateLob(id);
+            lob.Close();
+
+            lob = cl.OpenLob(id, DBLob.SDB_LOB_WRITE);
+            lob.Write(System.Text.Encoding.Default.GetBytes(str));
+            lob.Close();
+            // truncate
+            cl.TruncateLob(id, 5);
+            // check
+            lob = cl.OpenLob(id);
+            lob.Read(output);
+            lob.Close();
+            for (int i = 0; i < 10; i++)
+            {
+                Console.WriteLine("output[{0}] is: {1}", i, output[i]);
+            }
+            for (int i = 0; i < 10; i++)
+            {
+                if (i < 5)
+                {
+                    Assert.AreEqual((int)'0' + i + 1, output[i]);
+                }
+                else
+                {
+                    Assert.AreEqual(0, output[i]);
+                }
+            }
+            long lobSize = lob.GetSize();
+            Assert.AreEqual(5, lobSize);
+
+
+        }
+
+        [TestMethod()]
         //[Ignore]
         public void LobAbnormalTest()
         {
