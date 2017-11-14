@@ -5,6 +5,12 @@
 ******************************************************************************/
 function main( db )
 {
+   if( commIsStandalone( db ) )
+   {
+      println( "Run mode is standalone" ) ;
+      return ;
+   }
+   
    var clName = CHANGEDPREFIX + "_cl13310" ;
    commCreateCL( db, COMMCSNAME, clName ) ;
     
