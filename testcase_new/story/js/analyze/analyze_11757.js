@@ -40,7 +40,7 @@ function main()
    var expResult = { "SampleRecords": 200, "TotalRecords": 300 };
    checkInfoState( csName, clName, expResult );
    
-   //commDropCS( db, csName, true, "drop CS in the end" );
+   commDropCS( db, csName, true, "drop CS in the end" );
 }
 
 function checkInfoState( csName, clName, expResult )
