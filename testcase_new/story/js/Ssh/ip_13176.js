@@ -11,8 +11,14 @@ function testIP( hostname )
    var expect = getLocalIPAddr() ;
    if( localIp !== expect )
    {
-      throw buildException( "testIP", null, "test local ip", 
-            expect, localIp ) ;
+      if( localIp === "127.0.0.1" && expect.slice( 0, 4 ) === "127." )
+      {
+      }
+      else
+      {
+         throw buildException( "testIP", null, "test local ip", 
+               expect, localIp ) ;
+      }
    }
    var peerIp = ssh.getPeerIP() ;
    expect = getIPAddr( hostname ) ;
