@@ -510,7 +510,8 @@ namespace engine
 
          virtual INT32 calcPredicate( rtnPredicateSet &predicateSet ) ;
 
-         virtual INT32 extraEqualityMatches( BSONObjBuilder &builder ) ;
+         virtual INT32 extraEqualityMatches( BSONObjBuilder &builder,
+                                             const rtnParamList *parameters ) ;
 
          virtual BOOLEAN isTotalConverted() ;
 
@@ -790,7 +791,8 @@ namespace engine
          virtual const CHAR *getOperatorStr() ;
          virtual UINT32 getWeight() ;
          virtual BOOLEAN isTotalConverted() ;
-         virtual INT32 extraEqualityMatches( BSONObjBuilder &builder ) ;
+         virtual INT32 extraEqualityMatches( BSONObjBuilder &builder,
+                                             const rtnParamList *parameters ) ;
          virtual void release() ;
 
       protected:
@@ -816,7 +818,8 @@ namespace engine
          virtual const CHAR *getOperatorStr() ;
          virtual UINT32 getWeight() ;
          virtual BOOLEAN isTotalConverted() ;
-         virtual INT32 extraEqualityMatches( BSONObjBuilder &builder ) ;
+         virtual INT32 extraEqualityMatches( BSONObjBuilder &builder,
+                                             const rtnParamList *parameters ) ;
          virtual INT32 execute( const BSONObj &obj,
                                 _mthMatchTreeContext &context,
                                 BOOLEAN &result ) ;
@@ -1037,7 +1040,8 @@ namespace engine
          virtual const CHAR *getOperatorStr() ;
          virtual UINT32 getWeight() ;
          virtual BOOLEAN isTotalConverted() ;
-         virtual INT32 extraEqualityMatches( BSONObjBuilder &builder ) ;
+         virtual INT32 extraEqualityMatches( BSONObjBuilder &builder,
+                                             const rtnParamList *parameters ) ;
          virtual void release() ;
 
       protected:

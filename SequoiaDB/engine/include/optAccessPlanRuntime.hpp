@@ -241,6 +241,11 @@ namespace engine
          INT32 bindParamPlan ( optAccessPlanHelper &planHelper,
                                optAccessPlan *plan ) ;
 
+         OSS_INLINE BSONObj getEqualityQueryObject ()
+         {
+            return getMatchRuntime()->getEqualityQueryObject() ;
+         }
+
          OSS_INLINE optAccessPlan *getPlan ()
          {
             return _plan ;

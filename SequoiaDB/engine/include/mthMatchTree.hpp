@@ -111,7 +111,7 @@ namespace engine
                            _mthMatchTreeContext *context = NULL,
                            rtnParamList *parameters = NULL ) ;
          void     clear() ;
-         BSONObj  getEqualityQueryObject() ;
+         BSONObj  getEqualityQueryObject( const rtnParamList *parameters = NULL ) ;
          BOOLEAN  isInitialized() ;
          BOOLEAN  isMatchesAll() ;
          BSONObj& getMatchPattern() ;

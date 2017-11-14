@@ -109,7 +109,8 @@ namespace engine
                                 _mthMatchTreeContext &context,
                                 BOOLEAN &result ) ;
          virtual INT32 calcPredicate( rtnPredicateSet &predicateSet ) ;
-         virtual INT32 extraEqualityMatches( BSONObjBuilder &builder ) ;
+         virtual INT32 extraEqualityMatches( BSONObjBuilder &builder,
+                                             const rtnParamList *parameters ) ;
          virtual void release() ;
          virtual void evalEstimation ( const optCollectionStat *pCollectionStat,
                                        double &selectivity, UINT32 &cpuCost ) ;
@@ -129,7 +130,8 @@ namespace engine
                                 _mthMatchTreeContext &context,
                                 BOOLEAN &result ) ;
          virtual INT32 calcPredicate( rtnPredicateSet &predicateSet ) ;
-         virtual INT32 extraEqualityMatches( BSONObjBuilder &builder ) ;
+         virtual INT32 extraEqualityMatches( BSONObjBuilder &builder,
+                                             const rtnParamList *parameters ) ;
          virtual BOOLEAN isTotalConverted() ;
          virtual void release() ;
          virtual void evalEstimation ( const optCollectionStat *pCollectionStat,

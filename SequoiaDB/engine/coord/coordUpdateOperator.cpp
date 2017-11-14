@@ -373,7 +373,7 @@ namespace engine
          PD_RC_CHECK ( rc, PDERROR, "Failed to load matcher[%s], rc: %d",
                        matcher.toString().c_str(), rc ) ;
 
-         source = matcherTree.getEqualityQueryObject() ;
+         source = matcherTree.getEqualityQueryObject( NULL ) ;
 
          rc = modifier.loadPattern( updator, NULL, TRUE, NULL, strictDataMode ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to load updator[%s], rc: %d",

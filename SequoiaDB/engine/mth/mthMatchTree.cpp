@@ -2443,7 +2443,7 @@ namespace engine
       _returnMatchNode    = NULL ;
    }
 
-   BSONObj _mthMatchTree::getEqualityQueryObject()
+   BSONObj _mthMatchTree::getEqualityQueryObject( const rtnParamList *parameters )
    {
       BSONObj obj ;
       if ( NULL == _root )
@@ -2454,7 +2454,7 @@ namespace engine
       try
       {
          BSONObjBuilder builder ;
-         _root->extraEqualityMatches( builder ) ;
+         _root->extraEqualityMatches( builder, parameters ) ;
          obj = dotted2nested( builder.obj() ) ;
       }
       catch (  std::exception &e )

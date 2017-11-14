@@ -520,7 +520,8 @@ namespace engine
 
          virtual INT32 calcPredicate ( rtnPredicateSet &predicateSet ) ;
 
-         virtual INT32 extraEqualityMatches( BSONObjBuilder &builder ) ;
+         virtual INT32 extraEqualityMatches( BSONObjBuilder &builder,
+                                             const rtnParamList *parameters ) ;
 
          virtual INT32 addChild( _mthMatchNode *child ) ;
          virtual void delChild( _mthMatchNode *child ) ;

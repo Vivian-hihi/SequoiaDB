@@ -316,7 +316,8 @@ namespace engine
       return SDB_OK ;
    }
 
-   INT32 _mthMatchLogicOrNode::extraEqualityMatches( BSONObjBuilder &builder )
+   INT32 _mthMatchLogicOrNode::extraEqualityMatches( BSONObjBuilder &builder,
+                                                     const rtnParamList *parameters )
    {
       // do not extraEqualityMatches in logic or.
       return SDB_OK ;
@@ -416,7 +417,8 @@ namespace engine
       return SDB_OK ;
    }
 
-   INT32 _mthMatchLogicNotNode::extraEqualityMatches( BSONObjBuilder &builder )
+   INT32 _mthMatchLogicNotNode::extraEqualityMatches( BSONObjBuilder &builder,
+                                                      const rtnParamList *parameters )
    {
       // do not extraEqualityMatches in logic not.
       return SDB_OK ;

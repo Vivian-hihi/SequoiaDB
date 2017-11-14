@@ -1996,7 +1996,8 @@ namespace engine
       goto done ;
    }
 
-   INT32 _mthMatchOpNode::extraEqualityMatches( BSONObjBuilder &builder )
+   INT32 _mthMatchOpNode::extraEqualityMatches( BSONObjBuilder &builder,
+                                                const rtnParamList *parameters )
    {
       //only $all and $et have EqualityMatches
       return SDB_OK ;
@@ -2958,12 +2959,20 @@ namespace engine
       return TRUE ;
    }
 
-   INT32 _mthMatchOpNodeET::extraEqualityMatches( BSONObjBuilder &builder )
+   INT32 _mthMatchOpNodeET::extraEqualityMatches( BSONObjBuilder &builder,
+                                                  const rtnParamList *parameters )
    {
       BSONElement ele = _toMatch ;
+
       if ( _funcList.size() > 0 )
       {
          return SDB_OK ;
+      }
+
+      // Bind parameters
+      if ( -1 != _paramIndex && NULL != parameters )
+      {
+         ele = parameters->getParam( _paramIndex ) ;
       }
 
       if ( !ele.eoo() )
@@ -3064,7 +3073,8 @@ namespace engine
       return FALSE ;
    }
 
-   INT32 _mthMatchOpNodeNE::extraEqualityMatches( BSONObjBuilder &builder )
+   INT32 _mthMatchOpNodeNE::extraEqualityMatches( BSONObjBuilder &builder,
+                                                  const rtnParamList *parameters )
    {
       return SDB_OK ;
    }
@@ -3817,13 +3827,20 @@ namespace engine
       return FALSE ;
    }
 
-   INT32 _mthMatchOpNodeALL::extraEqualityMatches( BSONObjBuilder &builder )
+   INT32 _mthMatchOpNodeALL::extraEqualityMatches( BSONObjBuilder &builder,
+                                                   const rtnParamList *parameters )
    {
       BSONElement ele = _toMatch ;
 
       if ( _funcList.size() > 0 )
       {
          return SDB_OK ;
+      }
+
+      // Bind parameters
+      if ( -1 != _paramIndex && NULL != parameters )
+      {
+         ele = parameters->getParam( _paramIndex ) ;
       }
 
       if ( !ele.eoo() )

@@ -725,13 +725,14 @@ namespace engine
       return SDB_OK ;
    }
 
-   INT32 _mthMatchNode::extraEqualityMatches( BSONObjBuilder &builder )
+   INT32 _mthMatchNode::extraEqualityMatches( BSONObjBuilder &builder,
+                                              const rtnParamList *parameters )
    {
       UINT32 i = 0 ;
       for ( ; i < _children.size() ; i++ )
       {
          _mthMatchNode *child = _children[ i ] ;
-         child->extraEqualityMatches( builder ) ;
+         child->extraEqualityMatches( builder, parameters ) ;
       }
 
       return SDB_OK ;

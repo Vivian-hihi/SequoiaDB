@@ -260,7 +260,7 @@ namespace engine
       // upsert
       if ( ( 0 == numUpdatedRecords ) && ( FLG_UPDATE_UPSERT & options._flag ) )
       {
-         BSONObj source = planRuntime.getMatchTree()->getEqualityQueryObject() ;
+         BSONObj source = planRuntime.getEqualityQueryObject() ;
          PD_LOG ( PDDEBUG, "equality query object: %s",
                   source.toString().c_str() ) ;
 

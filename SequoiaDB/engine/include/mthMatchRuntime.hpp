@@ -212,6 +212,15 @@ namespace engine
             _predList.clear() ;
          }
 
+         OSS_INLINE BSONObj getEqualityQueryObject ()
+         {
+            if ( NULL != _matchTree )
+            {
+               return _matchTree->getEqualityQueryObject( &_parameters ) ;
+            }
+            return BSONObj() ;
+         }
+
       protected :
          BSONObj              _query ;
          rtnParamList         _parameters ;
