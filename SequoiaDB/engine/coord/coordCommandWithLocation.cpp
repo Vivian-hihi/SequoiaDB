@@ -37,6 +37,8 @@
 #include "coordCommandWithLocation.hpp"
 #include "pmd.hpp"
 #include "rtnCB.hpp"
+#include "rtn.hpp"
+#include "dms.hpp"
 #include "msgMessage.hpp"
 #include "pdTrace.hpp"
 #include "coordTrace.hpp"
@@ -750,6 +752,9 @@ namespace engine
       CoordGroupList grpLst ;
       rtnQueryOptions queryOpt ;
 
+      PD_CHECK( !dmsIsSysCSName( csname ), SDB_INVALIDARG, error, PDERROR,
+                "Could not analyze SYS collection space [%s]", csname ) ;
+
       queryOpt._fullName = "CAT" ;
       queryOpt._query = BSON( CAT_COLLECTION_SPACE_NAME << csname ) ;
       rc = queryOpt.toQueryMsg( &pNewMsg, newMsgSize, cb ) ;
@@ -783,7 +788,22 @@ namespace engine
 
       coordCataSel cataSel ;
       CoordGroupList grpLst, exceptLst ;
-      MsgOpQuery *pRequest = (MsgOpQuery *)pMsg;
+      MsgOpQuery *pRequest = (MsgOpQuery *)pMsg ;
+
+      CHAR csName[ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] = { 0 } ;
+      CHAR clShortName[ DMS_COLLECTION_NAME_SZ + 1 ] = { 0 } ;
+
+      rc = rtnResolveCollectionName( clname, ossStrlen( clname ),
+                                     csName, DMS_COLLECTION_SPACE_NAME_SZ,
+                                     clShortName, DMS_COLLECTION_NAME_SZ ) ;
+      PD_RC_CHECK ( rc, PDERROR, "Failed to resolve collection name [%s], "
+                    "rc: %d", clname, rc ) ;
+
+      PD_CHECK( !dmsIsSysCSName( csName ), SDB_INVALIDARG, error, PDERROR,
+                "Could not analyze SYS collection space [%s]", csName ) ;
+
+      PD_CHECK( !dmsIsSysCLName( clShortName ), SDB_INVALIDARG, error, PDERROR,
+                "Could not analyze SYS collection [%s]", clShortName ) ;
 
       rc = cataSel.bind( _pResource, clname, cb, TRUE, TRUE ) ;
       PD_RC_CHECK( rc, PDERROR, "Update collection[%s]'s catalog info failed, "
@@ -807,4 +827,3 @@ namespace engine
    }
 
 }
-

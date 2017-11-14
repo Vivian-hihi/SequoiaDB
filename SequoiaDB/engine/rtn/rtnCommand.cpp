@@ -4055,8 +4055,8 @@ namespace engine
       rc = rtnAnalyze( _csname, _clname, _ixname, _param,
                        cb, dmsCB, rtnCB, dpsCB ) ;
 
-      if ( SDB_DMS_CS_NOTEXIST == rc ||
-           SDB_DMS_NOTEXIST == rc )
+      if ( ( SDB_DMS_CS_NOTEXIST == rc && NULL == _csname && NULL == _clname ) ||
+           ( SDB_DMS_NOTEXIST == rc && NULL == _clname ) )
       {
          // The error should be found earlier in clsShardSesssion
          // If report here, means the collection or collection space had been

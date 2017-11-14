@@ -1723,7 +1723,15 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_RTNRESOLVECOLLECTIONNAME ) ;
       while ( pInput[curPos] != '.' )
       {
-         if ( curPos >= inputLen || i >= spaceNameSize )
+         if ( curPos >= inputLen )
+         {
+            PD_LOG_MSG ( PDERROR, "Invalid format for collection name: %s,"
+                         "Expected format: <collectionspace>.<collectionname>",
+                         pInput ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         else if ( i >= spaceNameSize )
          {
             rc = SDB_INVALIDARG ;
             goto error ;
@@ -1765,7 +1773,15 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_RTNRESOLVECOLLECTIONSPACENAME ) ;
       while ( pInput[curPos] != '.' )
       {
-         if ( curPos >= inputLen || i >= spaceNameSize )
+         if ( curPos >= inputLen )
+         {
+            PD_LOG_MSG ( PDERROR, "Invalid format for collection name: %s,"
+                         "Expected format: <collectionspace>.<collectionname>",
+                         pInput ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         else if ( i >= spaceNameSize )
          {
             rc = SDB_INVALIDARG ;
             goto error ;
