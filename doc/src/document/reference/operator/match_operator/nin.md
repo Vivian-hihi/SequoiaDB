@@ -14,13 +14,13 @@
 
 ##示例##
 
-* 查询集合 foo.bar 下“age”字段的值不等于20和25或不存在“age”字段的记录：
+* 查询集合 foo.bar 下“age”字段的值不等于20和25的记录：
 
   ```lang-javascript
   > db.foo.bar.find( { age: { $nin: [ 20, 25 ] } } )
   ```
 
-* $nin 匹配数组对象中的元素。查询集合 foo.bar 中存在数组对象“name”且其元素不包含“Tom”和“Mike”或者不存在数组对象“name ”的记录，并将这些记录的“age”字段删除。
+* $nin 匹配数组对象中的元素。查询集合 foo.bar 中存在字段“name”且其元素不包含“Tom”和“Mike”的记录，并将这些记录的“age”字段删除。
 
   ```lang-javascript
   > db.foo.bar.update( { $unset: { age: "" } }, { name: { $nin: [ "Tom", "Mike" ] } } )
