@@ -61,6 +61,8 @@ namespace engine
 
    BOOLEAN  coordCataCheckFlag( INT32 flag ) ;
 
+   BOOLEAN  coordCheckNodeReplyFlag( INT32 flag ) ;
+
    /*
       Coord parse mask define
    */

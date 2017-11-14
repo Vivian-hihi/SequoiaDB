@@ -960,8 +960,11 @@ namespace engine
 
       cb = _pPropSite->getEDUCB() ;
 
-      /// remove last node
-      _pPropSite->delLastNode( nodeID.columns.groupID, nodeID.value ) ;
+      if ( coordCheckNodeReplyFlag( flag ) )
+      {
+         /// remove last node
+         _pPropSite->delLastNode( nodeID.columns.groupID, nodeID.value ) ;
+      }
 
       if ( !_pGroupSel ||
            !_pGroupSel->getGroupPtrFromMap( nodeID.columns.groupID,

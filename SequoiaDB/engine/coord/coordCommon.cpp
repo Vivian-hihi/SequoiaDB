@@ -317,6 +317,23 @@ namespace engine
                SDB_CAT_NO_MATCH_CATALOG == flag ) ;
    }
 
+   // return TRUE if we should delete the node 
+   BOOLEAN  coordCheckNodeReplyFlag( INT32 flag )
+   {
+      switch( flag )
+      {
+      case SDB_INVALIDARG:
+      case SDB_DMS_RECORD_TOO_BIG:
+      case SDB_IXM_MULTIPLE_ARRAY:
+      case SDB_IXM_DUP_KEY:
+      case SDB_IXM_KEY_TOO_LARGE:
+      case SDB_CLS_COORD_NODE_CAT_VER_OLD:
+         return FALSE ;
+      default:
+         return TRUE ;
+      }
+   }
+
    BSONObj* coordGetFilterByID( FILTER_BSON_ID filterID,
                                 rtnQueryOptions &queryOption )
    {
