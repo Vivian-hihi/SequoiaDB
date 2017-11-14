@@ -126,29 +126,48 @@ function checkStat( db, csName, clName, indexName, clExistStat, indexExistStat )
    if( indexExistStat == undefined ){ indexExistStat = true;}
    var groups = commGetCLGroups( db, csName + "." + clName );
    
-   //检查组内各节点cl统计表信息及索引统计表信息
-   for(var i= 0; i< groups.length; i++)
+   var dataDB = new Array();
+   
+   //get all nodes
+   if(0 == groups.length)
    {
-      //检查CL所在组的主备节点的lsn是否一致
-      var lsnFlag = false;
-      while(!lsnFlag)
+      dataDB[0] = Array();
+      dataDB[0][0] = db;
+   }
+   else
+   {
+      for(var i = 0; i< groups.length; i++)
       {
-         lsnFlag = checkLSN(db, groups[i]);
-         //println("check primary and slave node lsn flag:" + lsnFlag);
-         sleep(500);
+         var lsnFlag = false;
+         while(!lsnFlag)
+         {
+            lsnFlag = checkLSN(db, groups[i]);
+            //println("check primary and slave node lsn flag:" + lsnFlag);
+            sleep(500);
+         }
+         
+         var rg = db.getRG(groups[i]);
+         var rgDetail = eval( "(" + rg.getDetail().toArray()[0] + ")");
+         var nodesInGroup = rgDetail.Group;
+         
+         dataDB[i] = Array();
+         for(var j = 0; j < nodesInGroup.length; j++)
+         {
+            var hostName = nodesInGroup[j].HostName;
+            var serviceName = nodesInGroup[j].Service[0].Name;
+            dataDB[i][j] = new Sdb(hostName, serviceName);
+         }
       }
-      
-      var rg = db.getRG(groups[i]);
-      var rgDetail = eval( "(" + rg.getDetail().toArray()[0] + ")");
-      var nodesInGroup = rgDetail.Group;
-      for(var j= 0; j< nodesInGroup.length; j++)
+   }
+   
+   //check each node  
+   for(var i = 0; i< dataDB.length; i++)
+   {
+      for(var j = 0; j< dataDB[i].length; j++)
       {
          //检查cl统计表信息
-         var clStatFlag = false;
-         var hostName = nodesInGroup[j].HostName;
-         var serviceName = nodesInGroup[j].Service[0].Name;
-         var data = new Sdb(hostName, serviceName);
-         var clStats = data.SYSSTAT.SYSCOLLECTIONSTAT.find().toArray();
+         var clStatFlag = false;   
+         var clStats = dataDB[i][j].SYSSTAT.SYSCOLLECTIONSTAT.find().toArray();
          
          //需要检查cl统计表信息时，统计表信息不能为空
          if(clExistStat === true && clStats.length <1)
@@ -157,15 +176,15 @@ function checkStat( db, csName, clName, indexName, clExistStat, indexExistStat )
          }
          
          //cl统计表信息中存在统计信息且数据页不小于10
-         for(var k= 0; k< clStats.length; k++ )
+         for(var k = 0; k< clStats.length; k++ )
          {
             var clStat = eval( "(" + clStats[k] + ")");
             var actualCSName = clStat.CollectionSpace;
             var actualCLName = clStat.Collection;
             var totalDataPages = clStat.TotalDataPages;
-            if( actualCSName === csName && 
-                actualCLName === clName &&
-                totalDataPages > 10 )
+            if(actualCSName === csName && 
+               actualCLName === clName &&
+               totalDataPages > 10 )
             {
                clStatFlag = true;
             }
@@ -180,7 +199,7 @@ function checkStat( db, csName, clName, indexName, clExistStat, indexExistStat )
          
          //检查索引统计表信息
          var indexStatFlag = false;
-         var indexStats = data.SYSSTAT.SYSINDEXSTAT.find().toArray();
+         var indexStats = dataDB[i][j].SYSSTAT.SYSINDEXSTAT.find().toArray();
          
          //需要检查索引统计表信息时，统计表信息不能为空
          if(indexExistStat === true && indexStats.length <1)
@@ -210,9 +229,9 @@ function checkStat( db, csName, clName, indexName, clExistStat, indexExistStat )
             println("hostName:" + hostName + "\nserviceName:" + serviceName + "\nindexExistStat:" + indexExistStat + "\nindexStatFlag:" + indexStatFlag);
             throw "NO_INDEX_STAT";
          }  
-      } 
+      }
    }
-   
+     
 }
 
 /************************************
@@ -473,44 +492,55 @@ function getSrcGroup( csName, clName )
 **************************************/
 function updateIndexStateInfo( db, csName, clName, indexName, mcvValues, fracs )
 {
-	var dataDB = new Array();
-	if(commIsStandalone(db))
-	{
-		dataDB[0] = db;
-	}
-	else
-	{
-		var groupNames = commGetCLGroups( db, csName + "." + clName );
-		var groupDetail = commGetGroups( db, false, groupNames[0] );
-		for(var j = 1; j < groupDetail[0].length; j++)
+   var dataDB= new Array();
+   
+   if(commIsStandalone(db))
+   {
+      dataDB[0] = Array();
+      dataDB[0][0] = db;
+   }
+   else
+   {
+      var groupNames = commGetCLGroups( db, csName + "." + clName );
+      var groupDetail = new Array();
+      for(var i in groupNames)
       {
-          var hostName = groupDetail[0][j].HostName;
-          var svcName = groupDetail[0][j].svcname;
-          dataDB[j-1] = new Sdb(hostName, svcName);
-		}
-	}		
-	
-	for(var i in dataDB)
-	{
-		try
-	   {
-			 var rec = dataDB[i].SYSSTAT.SYSINDEXSTAT.find().toArray();
-			 
-		    if(0 < rec.length)
-		    {				 
-		       var rule = {"$set": {"MCV": {"Values": mcvValues, "Frac": fracs}}}; 
-				                  
-             var matcher = {"$and": [{"CollectionSpace" : csName},
-				                         {"Collection" : clName},
-												 {"Index" : indexName}]};
-												 
-		       dataDB[i].SYSSTAT.SYSINDEXSTAT.upsert(rule, matcher);
-		    }
-		}
-		catch(e)
-	   {
-          throw buildException("modify SYSInfo", e, "modify", "modify success", e);
-	   }	
-	}
-
-}
+         dataDB[i] = Array();
+         groupDetail = commGetGroups( db, false, groupNames[i] );
+         for(var j = 1; j < groupDetail[0].length; j++)
+         {
+            var hostName = groupDetail[0][j].HostName;
+            var svcName = groupDetail[0][j].svcname;
+            dataDB[i][j-1] = new Sdb(hostName, svcName);
+         }
+      }
+      
+   }		
+   
+   for(var i in dataDB)
+   {
+      for(var j in dataDB[i])
+      {
+         try
+         {
+            var rec = dataDB[i][j].SYSSTAT.SYSINDEXSTAT.find().toArray();
+                                                                                     
+            if(0 < rec.length)
+            {				 
+               var rule = {"$set": {"MCV": {"Values": mcvValues, "Frac": fracs}}}; 
+                                                                                        
+               var matcher = {"$and": [{"CollectionSpace" : csName},
+                                       {"Collection" : clName},
+                                       {"Index" : indexName}]};
+                                                                                     	
+               dataDB[i][j].SYSSTAT.SYSINDEXSTAT.upsert(rule, matcher);
+            }
+         }
+         catch(e)
+         {
+            throw buildException("modify SYSIndexInfo", e, "modify", "modify success", e);
+         }	   
+      }      
+   }
+                                                                                       
+}                                                                                
