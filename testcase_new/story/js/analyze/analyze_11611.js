@@ -25,17 +25,19 @@ function main()
    var dbcl4 = commCreateCL( db, csName, clName4 );
                                                        	
    //get master/slave datanode
-   db.setSessionAttr( { PreferedInstance: "m" } );
-   var dbclPrimary1 = db.getCS(csName).getCL(clName1);
-   var dbclPrimary2 = db.getCS(csName).getCL(clName2);
-   var dbclPrimary3 = db.getCS(csName).getCL(clName3);
-   var dbclPrimary4 = db.getCS(csName).getCL(clName4);
-                                                           	
-   db.setSessionAttr( { PreferedInstance: "s" } );
-   var dbclSlave1 = db.getCS(csName).getCL(clName1);
-   var dbclSlave2 = db.getCS(csName).getCL(clName2);
-   var dbclSlave3 = db.getCS(csName).getCL(clName3);
-   var dbclSlave4 = db.getCS(csName).getCL(clName4);
+   var db1 = new Sdb(db);
+   db1.setSessionAttr( {PreferedInstance: "m"} );
+   var dbclPrimary1 = db1.getCS(csName).getCL(clName1);
+   var dbclPrimary2 = db1.getCS(csName).getCL(clName2);
+   var dbclPrimary3 = db1.getCS(csName).getCL(clName3);
+   var dbclPrimary4 = db1.getCS(csName).getCL(clName4);
+   
+   db1 = new Sdb(db);
+   db1.setSessionAttr( {PreferedInstance: "s"} );
+   var dbclSlave1 = db1.getCS(csName).getCL(clName1);
+   var dbclSlave2 = db1.getCS(csName).getCL(clName2);
+   var dbclSlave3 = db1.getCS(csName).getCL(clName3);
+   var dbclSlave4 = db1.getCS(csName).getCL(clName4);                                                         
                                                               	
    //create index
    commCreateIndex( dbcl3, "a", {a : 1}, false );
@@ -137,7 +139,8 @@ function main()
    //checkAnalyzeInvalidResult(options2);
                                                          	
    println("check result after analyze success!");
-                                                       	
+         
+   db1.close();         
    commDropCS( db, csName, true, "drop CS in the end" );
 }
 

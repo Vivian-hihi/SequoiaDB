@@ -22,10 +22,13 @@ function main()
    var dbcl = commCreateCL( db, csName, clName );
 	
    //get master/slave datanode
-   db.setSessionAttr( { PreferedInstance: "m" } );
-   var dbclPrimary = db.getCS(csName).getCL(clName);
-   db.setSessionAttr( { PreferedInstance: "s" } );
-   var dbclSlave = db.getCS(csName).getCL(clName);
+   var db1 = new Sdb(db);
+   db1.setSessionAttr( {PreferedInstance: "m"} );
+   var dbclPrimary = db1.getCS(csName).getCL(clName);
+   
+   db1 = new Sdb(db);
+   db1.setSessionAttr( {PreferedInstance: "s"} );
+   var dbclSlave = db1.getCS(csName).getCL(clName);
                                                     	
    //insert datas
    var insertNums = 3000;
@@ -92,10 +95,19 @@ function main()
    var mcvValues = [{a: 0},{a: 1},{a:9000}];
    var fracs = [500,500,9000];
    updateIndexStateInfo( db, csName, clName, "a", mcvValues, fracs );
-                                                    	
+                  
+   //cs+cl、cs+index、cs+group、cs+node、cl+group、cl+node、index+group、index+nod、group+node               
    //reload analyze info
-   var options = { Mode : 4, Collection : cl_full_name, GroupName : groupName };
-   analyze( db, options );
+   var options = [{ Mode : 4, Collection : cl_full_name, GroupName : groupName },
+                  { Mode : 4, Collection : cl_full_name, NodeID : priNodeId },
+                  { Mode : 4, CollectionSpace : csName, GroupName : groupName },
+                  { Mode : 4, CollectionSpace : csName, NodeID : priNodeId },
+                  { Mode : 4, GroupID : groupId, NodeID : priNodeId }];
+                  
+   for(var i in options)
+   {
+      analyze( db, options[i] );
+   }
                                   	
    //check after reload analyze info
    checkStat( db, csName, clName, "a", true, true );
@@ -113,8 +125,16 @@ function main()
    println("check result after reload analyze!");
    
    //truncate invalidate
-   var options = { Mode : 5, Collection : cl_full_name };
-   analyze( db, options );
+   var options = [{ Mode : 5, Collection : cl_full_name, GroupName : groupName },
+                  { Mode : 5, Collection : cl_full_name, NodeID : priNodeId },
+                  { Mode : 5, CollectionSpace : csName, GroupName : groupName },
+                  { Mode : 5, CollectionSpace : csName, NodeID : priNodeId },
+                  { Mode : 5, GroupID : groupId, NodeID : priNodeId }];
+                  
+   for(var i in options)
+   {
+      analyze( db, options[i] );
+   }
                               	
    //check analyze after truncate invalidate
    checkStat( db, csName, clName, "a", true, true );
@@ -177,13 +197,24 @@ function main()
                   { Mode : 3, CollectionSpace : csName, NodeID : priNodeId },
                   { Mode : 3, Index : "a", GroupName : groupName },
                   { Mode : 3, Index : "a", NodeID : priNodeId },
-                  { Mode : 3, GroupID : groupId, NodeID : priNodeId }];
+                  { Mode : 3, GroupID : groupId, NodeID : priNodeId },
+                  { Mode : 4, CollectionSpace : csName, Collection : cl_full_name},
+                  { Mode : 4, CollectionSpace : csName, Index : "a"},
+                  { Mode : 4, Index : "a", GroupName : groupName },
+                  { Mode : 4, Index : "a", NodeID : priNodeId },
+                  { Mode : 5, CollectionSpace : csName, Collection : cl_full_name},
+                  { Mode : 5, CollectionSpace : csName, Index : "a"},
+                  { Mode : 5, Index : "a", GroupName : groupName },
+                  { Mode : 5, Index : "a", NodeID : priNodeId },];
                                                             
    for(var i in options)
    {
       checkAnalyzeInvalidResult( options[i] );
    }
-                            	
+   
+   println("check invalid analyze success!");
+   
+   db1.close();   
    commDropCS( db, csName, true, "drop CS in the end" );
 }
 

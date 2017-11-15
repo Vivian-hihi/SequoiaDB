@@ -15,11 +15,14 @@ function main()
    var clName = COMMCLNAME + "11649";
    var dbcl = commCreateCL( db, csName, clName );
                                                   	
-   //get master/slave datanode
-   db.setSessionAttr( { PreferedInstance: "m" } );
-   var dbclPrimary = db.getCS(csName).getCL(clName);
-   db.setSessionAttr( { PreferedInstance: "s" } );
-   var dbclSlave = db.getCS(csName).getCL(clName);
+   //get master/slave datanode          
+   var db1 = new Sdb(db);
+   db1.setSessionAttr( {PreferedInstance: "m"} );
+   var dbclPrimary = db1.getCS(csName).getCL(clName);
+   
+   db1 = new Sdb(db);
+   db1.setSessionAttr( {PreferedInstance: "s"} );
+   var dbclSlave = db1.getCS(csName).getCL(clName);
                                         	
    //insert datas
    var insertNums = 3000;
@@ -91,6 +94,7 @@ function main()
                                        	
    println("check load result success!");
                                    	
+   db1.close();                                    
    commDropCS( db, csName, true, "drop CS in the end" );
 }
 

@@ -22,10 +22,13 @@ function main()
    var dbcl = commCreateCL( db, csName, clName );
                                                        	
    //get master/slave datanode
-   db.setSessionAttr( { PreferedInstance: "m" } );
-   var dbclPrimary = db.getCS(csName).getCL(clName);
-   db.setSessionAttr( { PreferedInstance: "s" } );
-   var dbclSlave = db.getCS(csName).getCL(clName);
+   var db1 = new Sdb(db);
+   db1.setSessionAttr( {PreferedInstance: "m"} );
+   var dbclPrimary = db1.getCS(csName).getCL(clName);
+   
+   db1 = new Sdb(db);
+   db1.setSessionAttr( {PreferedInstance: "s"} );
+   var dbclSlave = db1.getCS(csName).getCL(clName);
                                                          	
    //create index
    commCreateIndex( dbcl, "a", {a : 1}, false );
@@ -53,12 +56,12 @@ function main()
                                                          	
    //analyze with Mode:3  
    var groupName = commGetCLGroups( db, csName + "." + clName );
-   var groupDetail = commGetGroups( db, false, groupName[0] );
+   var groupDetail = commGetGroups( db, false, groupName );
    var priNode = groupDetail[0][0].PrimaryNode;
    
    var options = [{ Mode : 3 },
                   { Mode : 3, CollectionSpace: csName },
-                  { Mode : 3, GroupName: groupName[0] },
+                  { Mode : 3, GroupName: groupName },
                   { Mode : 3, NodeID: priNode }]
                   
    for(var i in options)
@@ -80,6 +83,9 @@ function main()
    checkExplain( actExplains, expExplains );
                                                              
    println("check result after analyze fail!");
+   
+   db1.close();        
+   commDropCS( db, csName, true, "drop CS in the end" );
 }
                                    
 function checkAnalyze( options )

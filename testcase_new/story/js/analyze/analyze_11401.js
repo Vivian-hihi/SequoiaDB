@@ -22,10 +22,13 @@ function main()
    var dbcl = commCreateCL( db, csName, clName );
                                                               	
    //get master/slave datanode
-   db.setSessionAttr( { PreferedInstance: "m" } );
-   var dbclPrimary = db.getCS(csName).getCL(clName);
-   db.setSessionAttr( { PreferedInstance: "s" } );
-   var dbclSlave = db.getCS(csName).getCL(clName);
+   var db1 = new Sdb(db);
+   db1.setSessionAttr( {PreferedInstance: "m"} );
+   var dbclPrimary = db1.getCS(csName).getCL(clName);
+   
+   db1 = new Sdb(db);
+   db1.setSessionAttr( {PreferedInstance: "s"} );
+   var dbclSlave = db1.getCS(csName).getCL(clName);
                                                                  	
    //create index
    commCreateIndex( dbcl, "b", {b : 1}, false );
@@ -94,7 +97,8 @@ function main()
    checkExplain( actExplains2, expExplains2 );
                                                                               	
    println("check result after analyze success!");
-                                                                           	
+        
+   db1.close();        
    commDropCS( db, csName, true, "drop CS in the end" );
 }
 

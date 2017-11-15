@@ -33,14 +33,16 @@ function main()
    var dbcl2 = commCreateCLByOption( db, csName, clName2, clOption2, true );
                                                                       
    //get master/slave datanode
-   db.setSessionAttr( { PreferedInstance: "m" } );
-   var dbclPrimary1 = db.getCS(csName).getCL(clName1);
-   var dbclPrimary2 = db.getCS(csName).getCL(clName2);
-                                                             	
-   db.setSessionAttr( { PreferedInstance: "s" } );
-   var dbclSlave1 = db.getCS(csName).getCL(clName1);
-   var dbclSlave2 = db.getCS(csName).getCL(clName2);	
-                                                       	 
+   var db1 = new Sdb(db);
+   db1.setSessionAttr( {PreferedInstance: "m"} );
+   var dbclPrimary1 = db1.getCS(csName).getCL(clName1);
+   var dbclPrimary2 = db1.getCS(csName).getCL(clName2);
+   
+   db1 = new Sdb(db);
+   db1.setSessionAttr( {PreferedInstance: "s"} );
+   var dbclSlave1 = db1.getCS(csName).getCL(clName1);
+   var dbclSlave2 = db1.getCS(csName).getCL(clName2);
+  	 
    //insert datas
    var insertNums = 3000;
    var sameValues = 9000;
@@ -113,7 +115,8 @@ function main()
    checkExplain( actExplains2, expExplains2 );
                                                                   
    println("check result after analyze success!");
-                                                              	
+       
+   db1.close();       
    commDropCS( db, csName, true, "drop CS in the end" );
 }
 main();
