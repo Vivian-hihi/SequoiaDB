@@ -23,7 +23,7 @@ except:
 import bson
 from bson.py3compat import (str_type)
 from pysequoiadb.errcode import SDB_OOM
-from pysequoiadb.error import (SDBSystemError, SDBTypeError, raise_if_error)
+from pysequoiadb.error import (SDBBaseError, SDBSystemError, SDBTypeError, raise_if_error)
 from pysequoiadb.replicanode import replicanode
 
 NODE_STATUS_ALL = 0
@@ -155,18 +155,26 @@ class replicagroup(object):
 
         return node
 
-    def get_slave(self):
+    def get_slave(self, *positions):
         """Get one of slave node of the current replica group, if no slave exists
            then get master.
 
+        Parameters:
+           Name         Type                  Info:
+           positions    int           The positions of nodes.
         Return values:
            a replicanode object of query
         Exceptions:
            pysequoiadb.error.SDBBaseError
         """
+        for i in range(len(positions)):
+            if not isinstance(positions[i], int):
+                raise SDBTypeError("elements of positions should be instance of int")
+
         node = replicanode(self._client)
+        
         try:
-            rc = sdb.gp_get_slave(self._group, node._node)
+            rc = sdb.gp_get_slave(self._group, node._node, positions)
             raise_if_error(rc, "Failed to get slave")
         except SDBBaseError:
             del node

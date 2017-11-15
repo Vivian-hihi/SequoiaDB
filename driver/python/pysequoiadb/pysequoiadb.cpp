@@ -2835,56 +2835,75 @@ error :
    goto done ;
 }
 
-static INT32 convert_pobj2cobj( PYOBJECT *self, PYOBJECT *args,
-                                Group *& group, sdbNode *& node)
-{
-   INT32 rc            = 0 ;
-   PYOBJECT *group_obj = NULL ;
-   PYOBJECT *node_obj  = NULL ;
-
-   if ( !PARSE_PYTHON_ARGS( args, "OO", &group_obj, &node_obj ) )
-   {
-      rc = SDB_INVALIDARGS ;
-      goto error ;
-   }
-
-   CAST_PYOBJECT_TO_COBJECT( group_obj, Group, group ) ;
-   CAST_PYOBJECT_TO_COBJECT( node_obj, sdbNode, node ) ;
-done :
-   return rc;
-error :
-   goto done ;
-}
-
-static INT32 pydict_to_cmap( PYOBJECT *pyobj,
-                            std::map<std::string,std::string>& cobj )
+static INT32 pytuple_int32_to_vector_int32( PYOBJECT *pyobj, std::vector<INT32>& cobj )
 {
    INT32 rc = SDB_OK ;
-   PyObject *key, *keys;
+   INT32 size = 0 ;
+   PyObject* item = NULL ;
 
-   if ( !PyDict_Check( pyobj ) )
+   if ( !PySequence_Check( pyobj ) )
    {
       rc = SDB_INVALIDARGS ;
       goto error ;
    }
 
-   keys = PyDict_Keys( pyobj );
-   for ( int i = 0; i < PyList_GET_SIZE( keys ); ++i )
+   size = (INT32) PySequence_Size( pyobj ) ;
+   if ( -1 == size )
    {
-      key = PyList_GET_ITEM( keys, i ) ;
-      const CHAR *key_name = PyString_AsString( key );
+      rc = SDB_INVALIDARGS ;
+      goto error ;
+   }
 
-      PyObject *val = PyDict_GetItemString( pyobj, key_name );
-      if ( NULL == val || !PyString_Check( val ) )
+   for ( INT32 i = 0 ; i < size ; i++ )
+   {
+      INT32 value = 0 ;
+
+      item = PySequence_GetItem( pyobj, (Py_ssize_t) i ) ;
+      if ( NULL == item )
+      {
+          rc = SDB_INVALIDARGS ;
+          goto error ;
+      }
+
+#if PY_MAJOR_VERSION >= 3
+      if ( !PyLong_Check( item ) )
       {
          rc = SDB_INVALIDARGS ;
          goto error ;
       }
-      cobj[ key_name ] = PyString_AsString( val );
+
+      value = PyLong_AsLong( item ) ;
+#else
+      if ( !PyInt_Check( item ) )
+      {
+         rc = SDB_INVALIDARGS ;
+         goto error ;
+      }
+
+      value = PyInt_AsLong( item ) ;
+#endif
+      try
+      {
+        cobj.push_back( value ) ;
+      }
+      catch ( std::exception& e )
+      {
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      Py_DECREF( item ) ;
+      item = NULL ;
    }
-done :
+
+done:
+   if ( NULL != item )
+   {
+      Py_DECREF( item ) ;
+      item = NULL ;
+   }
    return rc ;
-error :
+error:
    goto done ;
 }
 
@@ -2893,12 +2912,17 @@ __METHOD_IMP(gp_get_master)
    INT32 rc             = 0 ;
    sdbNode *node        = NULL ;
    Group *replica_group = NULL ;
+   PYOBJECT *group_obj  = NULL ;
+   PYOBJECT *node_obj   = NULL ;
 
-   rc = convert_pobj2cobj( self, args, replica_group, node) ;
-   if  ( SDB_OK != rc )
+   if ( !PARSE_PYTHON_ARGS( args, "OO", &group_obj, &node_obj ) )
    {
+      rc = SDB_INVALIDARGS ;
       goto error ;
    }
+
+   CAST_PYOBJECT_TO_COBJECT( group_obj, Group, replica_group ) ;
+   CAST_PYOBJECT_TO_COBJECT( node_obj, sdbNode, node ) ;
 
    rc = replica_group->getMaster( *node ) ;
    if  ( SDB_OK != rc )
@@ -2916,17 +2940,32 @@ __METHOD_IMP(gp_get_slave)
    INT32 rc             = 0 ;
    sdbNode *node        = NULL ;
    Group *replica_group = NULL ;
+   PYOBJECT *group_obj  = NULL ;
+   PYOBJECT *node_obj   = NULL ;
+   PYOBJECT *positionsObj = NULL ;
+   std::vector<INT32> positions ;
 
-   rc = convert_pobj2cobj( self, args, replica_group, node) ;
-   if  ( SDB_OK != rc )
+   if ( !PARSE_PYTHON_ARGS( args, "OOO", &group_obj, &node_obj, &positionsObj ) )
    {
+      rc = SDB_INVALIDARGS ;
       goto error ;
    }
-   rc = replica_group->getSlave( *node ) ;
+
+   CAST_PYOBJECT_TO_COBJECT( group_obj, Group, replica_group ) ;
+   CAST_PYOBJECT_TO_COBJECT( node_obj, sdbNode, node ) ;
+
+   rc = pytuple_int32_to_vector_int32( positionsObj, positions ) ;
    if ( SDB_OK != rc )
    {
       goto error ;
    }
+
+   rc = replica_group->getSlave( *node, positions ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
 done :
    return MAKE_RETURN_INT( rc ) ;
 error :
