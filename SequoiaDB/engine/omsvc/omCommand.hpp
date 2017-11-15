@@ -646,7 +646,6 @@ namespace engine
                          INT64 &taskID ) ;
 
    private:
-      BOOLEAN _force ;
       string _rootPath ;
       string _localAgentHost ;
       string _localAgentService ;
@@ -654,6 +653,7 @@ namespace engine
       string _businessName ;
       string _businessType ;
       string _deployMod ;
+      BOOLEAN _force ;
    } ;
 
    class omListTaskCommand : public omAuthCommand

@@ -477,7 +477,6 @@ static const CHAR* readDate( const CHAR *pStr,
                              CJSON_READ_INFO **ppReadInfo )
 {
    INT32 argNum      = 0 ;
-   INT32 length      = 0 ;
    INT32 microtm     = 0 ;
    time_t timestamp  = 0 ;
    CHAR *pDateString = NULL ;
@@ -517,10 +516,11 @@ static const CHAR* readDate( const CHAR *pStr,
       // try to convert the string to a number
       if( arg.valType == CJSON_STRING )
       {
-         INT32 valInt = 0 ;
+         INT32 valInt      = 0 ;
          FLOAT64 valDouble = 0 ;
-         INT64 valInt64 = 0 ;
+         INT64 valInt64    = 0 ;
          CJSON_VALUE_TYPE type = CJSON_NONE ;
+
          if( cJsonParseNumber( arg.pValStr,
                                arg.length,
                                &valInt,
