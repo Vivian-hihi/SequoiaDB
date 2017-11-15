@@ -17,7 +17,7 @@ function main()
    var insertNums = 2000;
    
    //清理环境
-   commDropCL( db, csName, clName, true, true,"drop CL in the beginning" ) ;
+   commDropCS( db, csName, true, "drop cs before test" );
    
    //创建cl
    var dbcl = commCreateCL( db, csName, clName);
