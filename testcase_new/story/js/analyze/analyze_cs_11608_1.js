@@ -45,18 +45,19 @@ function main()
 	insertSameDatas( dbcl4, insertNum, sameValues );
 	
 	//获取主备节点
-   db.setSessionAttr( { PreferedInstance: "m" } );
-   var dbclPrimary1 = db.getCS(csName1).getCL(clName1);
-   var dbclPrimary2 = db.getCS(csName1).getCL(clName2);
-   var dbclPrimary3 = db.getCS(csName1).getCL(clName3);
-   var dbclPrimary4 = db.getCS(csName2).getCL(clName1);
+	var db1 = new Sdb(db);
+   db1.setSessionAttr( { PreferedInstance: "m" } );
+   var dbclPrimary1 = db1.getCS(csName1).getCL(clName1);
+   var dbclPrimary2 = db1.getCS(csName1).getCL(clName2);
+   var dbclPrimary3 = db1.getCS(csName1).getCL(clName3);
+   var dbclPrimary4 = db1.getCS(csName2).getCL(clName1);
+   var db2 = new Sdb(db);
+   db2.setSessionAttr( { PreferedInstance: "s" } );
+   var dbclSlave1 = db2.getCS(csName1).getCL(clName1);
+   var dbclSlave2 = db2.getCS(csName1).getCL(clName2);
+   var dbclSlave3 = db2.getCS(csName1).getCL(clName3);
+   var dbclSlave4 = db2.getCS(csName2).getCL(clName1);
    
-   db.setSessionAttr( { PreferedInstance: "s" } );
-   var dbclSlave1 = db.getCS(csName1).getCL(clName1);
-   var dbclSlave2 = db.getCS(csName1).getCL(clName2);
-   var dbclSlave3 = db.getCS(csName1).getCL(clName3);
-   var dbclSlave4 = db.getCS(csName2).getCL(clName1);
-	
 	//检查统计信息
    checkStat( db, csName1, clName1, "a", false, false );
    println("check cs:" + csName1 + "cl:" + clName1 + " before analyze success!");
@@ -269,6 +270,8 @@ function main()
    //清空环境
    commDropCS( db, csName1);
    commDropCS( db, csName2);
+   db1.close();
+   db2.close();
   
  }
  main()

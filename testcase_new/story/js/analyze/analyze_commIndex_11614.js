@@ -24,10 +24,12 @@ function main()
 	insertSameDatas( dbcl, insertNum, sameValues );
 	
 	//获取主备节点
-   db.setSessionAttr( { PreferedInstance: "m" } );
-   var dbclPrimary = db.getCS(COMMCSNAME).getCL(clName);
-   db.setSessionAttr( { PreferedInstance: "s" } );
-   var dbclSlave = db.getCS(COMMCSNAME).getCL(clName);
+   var db1 = new Sdb(db);
+   db1.setSessionAttr( { PreferedInstance: "m" } );
+   var dbclPrimary = db1.getCS(COMMCSNAME).getCL(clName);
+   var db2 = new Sdb(db);
+   db2.setSessionAttr( { PreferedInstance: "s" } );
+   var dbclSlave = db2.getCS(COMMCSNAME).getCL(clName);
 	
 	//检查统计信息
    checkStat( db, COMMCSNAME, clName, "a", false, false );
@@ -96,6 +98,8 @@ function main()
    
    //清理环境
    commDropCL( db, COMMCSNAME, clName, true, true,"drop CL in the end" );
+   db1.close();
+   db2.close();
   
  }
  main()

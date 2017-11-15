@@ -30,10 +30,12 @@ function main()
 	insertSameDatas( dbcl, insertNum, sameValues );
 	
 	//获取主备节点
-   db.setSessionAttr( { PreferedInstance: "m" } );
-   var dbclPrimary = db.getCS(COMMCSNAME).getCL(clName);
-   db.setSessionAttr( { PreferedInstance: "s" } );
-   var dbclSlave = db.getCS(COMMCSNAME).getCL(clName);
+   var db1 = new Sdb(db);
+   db1.setSessionAttr( { PreferedInstance: "m" } );
+   var dbclPrimary = db1.getCS(COMMCSNAME).getCL(clName);
+   var db2 = new Sdb(db);
+   db2.setSessionAttr( { PreferedInstance: "s" } );
+   var dbclSlave = db2.getCS(COMMCSNAME).getCL(clName);
    
    //执行统计
    analyze( db, {Collection:COMMCSNAME + "." + clName} );
@@ -85,6 +87,11 @@ function main()
       checkExplain( actExplains, expExplains ); 
    }
    println("check result drop index success!");
+   
+   //清理环境
+   commDropCL( db, COMMCSNAME, clName) ;
+   db1.close();
+   db2.close();
    
 }
 main()

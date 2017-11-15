@@ -31,13 +31,14 @@ function main()
 	insertSameDatas( dbcl2, insertNum, sameValues );
 	
 	//获取主备节点
-   db.setSessionAttr( { PreferedInstance: "m" } );
-   var dbclPrimary1 = db.getCS(COMMCSNAME).getCL(clName1);
-   var dbclPrimary2 = db.getCS(COMMCSNAME).getCL(clName2);
-   
-   db.setSessionAttr( { PreferedInstance: "s" } );
-   var dbclSlave1 = db.getCS(COMMCSNAME).getCL(clName1);
-   var dbclSlave2 = db.getCS(COMMCSNAME).getCL(clName2);
+	var db1 = new Sdb(db);
+   db1.setSessionAttr( { PreferedInstance: "m" } );
+   var dbclPrimary1 = db1.getCS(COMMCSNAME).getCL(clName1);
+   var dbclPrimary2 = db1.getCS(COMMCSNAME).getCL(clName2);
+   var db2 = new Sdb(db);
+   db2.setSessionAttr( { PreferedInstance: "s" } );
+   var dbclSlave1 = db2.getCS(COMMCSNAME).getCL(clName1);
+   var dbclSlave2 = db2.getCS(COMMCSNAME).getCL(clName2);
 	
 	//检查统计信息
    checkStat( db, COMMCSNAME, clName1, "a", false, false );
@@ -129,6 +130,8 @@ function main()
    //清空环境
    commDropCL( db, COMMCSNAME, clName1, true, true,"drop CL in the end" ) ;
    commDropCL( db, COMMCSNAME, clName2, true, true,"drop CL in the end" ) ;
+   db1.close();
+   db2.close();
   
  }
  main()
