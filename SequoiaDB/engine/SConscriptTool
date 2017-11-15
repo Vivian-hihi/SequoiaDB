@@ -69,22 +69,12 @@ rtnJobFiles = [
       ]
 
 migFiles = [
-#      "mig/migExport.cpp",
-#      "mig/migImport.cpp",
       "mig/migCommon.cpp"
       ]
 
 migLobFiles = [
       "mig/migLobTool.cpp"
 ]
-
-#sdbExportMain = [
-#      "pmd/sdbexprt.cpp"
-#      ]
-
-#sdbImportMain = [
-#      "pmd/sdbimprt.cpp"
-#      ]
 
 sdbLoadMain = [
       "pmd/sdbLoad.cpp"
@@ -604,7 +594,7 @@ toolEnv.StaticLibrary('spt2', spt2Files)
 toolEnv.StaticLibrary('ssh2', ssh2Files)
 
 #Export Executable
-sdbimprt2 = toolEnv.Program("sdbimprt", importFiles,
+sdbimprt = toolEnv.Program("sdbimprt", importFiles,
          LIBDEPS=["bson", "oss", "pd", "util", "client", "cls", "ixm", "rtn", "msg"],
          _LIBDEPS='$_LIBDEPS_OBJS' )
 
@@ -615,14 +605,6 @@ sdbexprt = toolEnv.Program("sdbexprt", exportFiles,
 sdbreplay = toolEnv.Program("sdbreplay", sdbReplayFiles,
           LIBDEPS=["bson","oss","pd","util","clientcpp","dps","pmd"],
           _LIBDEPS='$_LIBDEPS_OBJS' )
-
-#sdbexprt = toolEnv.Program("sdbexprt", sdbExportMain,
-#         LIBDEPS=["bson","mig","oss","pd","util","client","clientcpp"],
-#         _LIBDEPS='$_LIBDEPS_OBJS' )
-
-#sdbimprt = toolEnv.Program("sdbimprt", sdbImportMain,
-#         LIBDEPS=["bson","mig","oss","pd","util","client"],
-#         _LIBDEPS='$_LIBDEPS_OBJS' )
 
 sdbload2 = toolEnv.Program("sdbload2", sdbLoadMain,
          LIBDEPS=["bson","oss","pd","util","client"],
@@ -691,7 +673,7 @@ sdbseadapter = toolEnv.Program("sdbseadapter",
 		 LIBDEPS=["pd","oss","msg","util","bson","pmd","pmdMT","net","rtnJob"],
 		 _LIBDEPS='$_LIBDEPS_OBJS' )
 
-toolEnv.Install( '#/bin', sdbimprt2 )
+toolEnv.Install( '#/bin', sdbimprt )
 toolEnv.Install( '#/bin', sdbexprt )
 toolEnv.Install( '#/bin', sdbreplay )
 toolEnv.Install( '#/bin', sdbstart )
