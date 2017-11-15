@@ -258,19 +258,21 @@ static int win32read(char *c)
                 /* Ctrl+Key */
                 switch (*c)
                 {
-                    case 1: // ctrl+a, move to beginning of line
-                    case 2: // ctrl+b, left_arrow
-                    case 3: // ctrl+c, cancel or quit
-                    case 4: // ctrl+d, remove char at right of cursor
-                    case 5: // ctrl+e, move to end of line
-                    case 6: // ctrl+f, right_arrow
-                    case 8: // ctrl+h, backspace
-                    case 11: // ctrl+k, delete from current to the end of line
-                    case 12: // ctrl+l, clear the screen
-                    case 14: // ctrl+n, down_arrow
-                    case 16: // ctrl+p, up_arrow
-                    case 20: // ctrl+t, swap the char at the cursor and the one before
-                    case 21: // ctrl+u, delete the whole line
+                    case CTRL_A: // ctrl+a, move to beginning of line
+                    case CTRL_B: // ctrl+b, left_arrow
+                    case CTRL_C: // ctrl+c, cancel or quit
+                    case CTRL_D: // ctrl+d, remove char at right of cursor
+                    case CTRL_E: // ctrl+e, move to end of line
+                    case CTRL_F: // ctrl+f, right_arrow
+                    case CTRL_H: // ctrl+h, backspace
+                    case CTRL_K: // ctrl+k, delete from current to the end of line
+                    case CTRL_L: // ctrl+l, clear the screen
+                    case CTRL_M:
+                    case CTRL_N: // ctrl+n, down_arrow
+                    case CTRL_P: // ctrl+p, up_arrow
+                    case CTRL_T: // ctrl+t, swap the char at the cursor and the one before
+                    case CTRL_U: // ctrl+u, delete the whole line
+                    case CTRL_W:
                         ret = 1;
                         goto done;
                     default:
