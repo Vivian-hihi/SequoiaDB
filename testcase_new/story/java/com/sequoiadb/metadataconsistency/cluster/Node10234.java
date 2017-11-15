@@ -122,7 +122,7 @@ public class Node10234 extends SdbTestBase {
 				rgDB.attachNode(hostName, svcName, null);
 			}catch(BaseException e){
 				int eCode = e.getErrorCode();
-				if( eCode != -157 && eCode != -155){ //-157:Invalid node configuration (node has been to attach)
+				if( eCode != -145 && eCode != -155){ //-157 change to -145:Invalid node configuration (node has been to attach)
 					throw e;
 				}
 			}finally{
