@@ -2727,7 +2727,7 @@ File.prototype.chown = function( filename, optionObj, recursive ) {
    {
       if ( undefined != recursive )
       {
-         this._remote._runCommand( "file chown", { "recursive": recursive },
+         this._remote._runCommand( "file chown", { "isRecursive": recursive },
                                    { "Pathname": filename }, optionObj ) ;
       }
       else
@@ -2754,7 +2754,7 @@ File.prototype.chgrp = function( filename, groupname, recursive ) {
    {
       if ( undefined != recursive )
       {
-         this._remote._runCommand( "file chgrp", { "recursive": recursive },
+         this._remote._runCommand( "file chgrp", { "isRecursive": recursive },
                                    { "Pathname": filename },
                                    { "Groupname": groupname } ) ;
       }

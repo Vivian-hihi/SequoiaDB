@@ -1288,7 +1288,7 @@ JS_MAPPING_END()
             detail = BSON( SPT_ERR << "IsRecursive must be bool" ) ;
             goto error ;
          }
-         opBuilder.append( SPT_FILE_COMMON_FIELD_IS_RECURSIVE, isRecursive ) ;
+         opBuilder.appendBool( SPT_FILE_COMMON_FIELD_IS_RECURSIVE, isRecursive ) ;
       }
 
       rc = _sptUsrFileCommon::chgrp( pathname, groupname, opBuilder.obj(), err ) ;
