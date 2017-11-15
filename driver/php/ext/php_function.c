@@ -671,6 +671,79 @@ error:
    goto done ;
 }
 
+INT32 php_assocArray2IntArray( zval *pArray, INT32 **ppIntArray,
+                               INT32 *pEleNum TSRMLS_DC )
+{
+   INT32 rc = SDB_OK ;
+   INT32 eleNum      = 0 ;
+   INT32 i           = 0 ;
+   INT32 arrayType = PHP_NOT_ARRAY ;
+   INT32 *pIntArray = NULL ;
+   HashTable *pTable = NULL ;
+   zval *pValue = NULL ;
+
+   if( !pArray )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   if( IS_ARRAY != Z_TYPE_P( pArray ) )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   arrayType = php_getArrayType( pArray TSRMLS_CC ) ;
+   if( PHP_INDEX_ARRAY != arrayType )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   pTable = HASH_OF( pArray ) ;
+   if( pTable )
+   {
+      eleNum = zend_hash_num_elements( pTable ) ;
+      if( eleNum > 0 )
+      {
+         pIntArray = (INT32 *)emalloc( sizeof( INT32 ) * eleNum ) ;
+         if( !pIntArray )
+         {
+            rc = SDB_OOM ;
+            goto error ;
+         }
+
+         *pEleNum = eleNum ;
+
+         i = 0 ;
+         PHP_ARRAY_FOREACH_START( pTable )
+         {
+            PHP_ARRAY_FOREACH_VALUE( pTable, pValue ) ;
+            if( i >= eleNum )
+            {
+               goto done ;
+            }
+
+            rc = php_zval2Int( pValue, &pIntArray[i] TSRMLS_CC ) ;
+            if( rc )
+            {
+               goto error ;
+            }
+
+            ++i ;
+         }
+         PHP_ARRAY_FOREACH_END()
+      }
+   }
+
+done:
+   *ppIntArray = pIntArray ;
+   return rc ;
+error:
+   goto done ;
+}
+
 INT32 php_assocArray2BsonArray( zval *pArray,
                                 bson ***pppBsonArray,
                                 INT32 *pEleNum TSRMLS_DC )

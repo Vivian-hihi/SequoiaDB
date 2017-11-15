@@ -49,6 +49,9 @@ INT32 php_zval2Bool( zval *pValue, BOOLEAN *pBoolValue TSRMLS_DC ) ;
 
 INT32 php_zval2Long( zval *pValue, INT64 *pLongValue TSRMLS_DC ) ;
 
+INT32 php_assocArray2IntArray( zval *pArray, INT32 **ppIntArray,
+                               INT32 *pEleNum TSRMLS_DC ) ;
+
 INT32 php_assocArray2BsonArray( zval *pArray,
                                 bson ***pppBsonArray,
                                 INT32 *pEleNum TSRMLS_DC ) ;
