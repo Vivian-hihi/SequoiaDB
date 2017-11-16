@@ -3371,11 +3371,11 @@ namespace engine
            SDB_CLS_DATA_NODE_CAT_VER_OLD != rc &&
            SDB_CLS_NO_CATALOG_INFO != rc )
       {
+         // Do not re-create
+         _pCollectionName = NULL ;
          // do not delete main shard context
          if ( NULL == lobContext || !lobContext->isMainShard() )
          {
-            // Do not re-create
-            _pCollectionName = NULL ;
             rtnCB->contextDelete( context->contextID(), _pEDUCB ) ;
          }
       }
@@ -3463,11 +3463,11 @@ namespace engine
            SDB_CLS_DATA_NODE_CAT_VER_OLD != rc &&
            SDB_CLS_NO_CATALOG_INFO != rc )
       {
+         // Do not re-create
+         _pCollectionName = NULL ;
          // do not delete main shard context
          if ( NULL == lobContext || !lobContext->isMainShard() )
          {
-            // Do not re-create
-            _pCollectionName = NULL ;
             rtnCB->contextDelete( context->contextID(), _pEDUCB ) ;
          }
       }
@@ -3615,11 +3615,11 @@ namespace engine
            SDB_CLS_DATA_NODE_CAT_VER_OLD != rc &&
            SDB_CLS_NO_CATALOG_INFO != rc )
       {
+         // Do not re-create
+         _pCollectionName = NULL ;
          // do not delete main shard context
          if ( NULL == lobContext || !lobContext->isMainShard() )
          {
-            // Do not re-create
-            _pCollectionName = NULL ;
             rtnCB->contextDelete ( context->contextID(), _pEDUCB ) ;
          }
       }
@@ -3739,11 +3739,11 @@ namespace engine
            SDB_CLS_DATA_NODE_CAT_VER_OLD != rc &&
            SDB_CLS_NO_CATALOG_INFO != rc )
       {
+         // Do not re-create
+         _pCollectionName = NULL ;
          // do not delete main shard context
          if ( NULL == lobContext || !lobContext->isMainShard() )
          {
-            // Do not re-create
-            _pCollectionName = NULL ;
             rtnCB->contextDelete ( context->contextID(), _pEDUCB ) ;
          }
       }
@@ -3866,11 +3866,11 @@ namespace engine
            SDB_CLS_DATA_NODE_CAT_VER_OLD != rc &&
            SDB_CLS_NO_CATALOG_INFO != rc )
       {
+         // Do not re-create
+         _pCollectionName = NULL ;
          // do not delete main shard context
          if ( NULL == lobContext || !lobContext->isMainShard() )
          {
-            // Do not re-create
-            _pCollectionName = NULL ;
             rtnCB->contextDelete( context->contextID(), _pEDUCB ) ;
          }
       }
