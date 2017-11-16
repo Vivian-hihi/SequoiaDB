@@ -76,42 +76,81 @@ function analyze( db, options )
 }
 
 /************************************
+*@Description: 获取所有组的数据节点
+*@author:      zhaoyu 
+*@createDate:  2017.11.8
+**************************************/
+function getNodesInGroups(db, groups)
+{
+   var datas = new Array();
+   
+   //standalone
+   if(0 === groups.length)
+   {
+      datas[0] = Array();
+      datas[0][0] = db;
+   }
+   
+   for (var i = 0 ; i < groups.length; ++i)
+   {
+      datas[i] = Array();
+      
+      var rg = db.getRG(groups[i]);
+      var rgDetail = eval( "(" + rg.getDetail().toArray()[0] + ")");
+      var nodesInGroup = rgDetail.Group;
+      
+      for(var j = 0; j < nodesInGroup.length; ++j)
+      {
+         var hostName = nodesInGroup[j].HostName;
+         var serviceName = nodesInGroup[j].Service[0].Name;
+         datas[i][j] = new Sdb(hostName, serviceName);                                                                                                                                     
+      }
+      
+   }
+   
+   return datas;
+}
+
+/************************************
 *@Description: 检查主备节点lsn是否一致
 *@author:      zhaoyu
 *@createDate:  2017.11.8
 **************************************/
-function checkLSN(db, group)
+function checkLSN(db, groups)
 {
-   var rg = db.getRG(group);
-   var rgDetail = eval( "(" + rg.getDetail().toArray()[0] + ")");
-   var nodesInGroup = rgDetail.Group;
-   var LSNs = new Array();
-   for(var j= 0; j< nodesInGroup.length; j++)
-   {
-      //获取各节点lsn
-      var clStatFlag = false;
-      var hostName = nodesInGroup[j].HostName;
-      var serviceName = nodesInGroup[j].Service[0].Name;
-      var data = new Sdb(hostName, serviceName);
-      var getSnapshot6 = eval( "(" + data.snapshot(6).toArray()[0] + ")" );
-      var currentLSN = getSnapshot6.CurrentLSN.Offset;
-      LSNs.push(currentLSN);
-   }
+   var datas = getNodesInGroups(db, groups);
    
-   var checkLSN = true;
-
-   //比较各节点lsn
-   for(var j=0; j< LSNs.length -1; j++)
+   var LSNs = new Array();
+   for(var i = 0; i < datas.length; ++i)
    {
-      if(LSNs[j] === LSNs[j+1])
+      var nodesInGroup = datas[i];
+      LSNs[i] = Array();
+      for(var j = 0; j < nodesInGroup.length; ++j)
       {
-         checkLSN = true;
-      }else
-      {
-         checkLSN = false;
-         break;
+         var clStatFlag = false;
+         var getSnapshot6 = eval( "(" + nodesInGroup[j].snapshot(6).toArray()[0] + ")" );
+         var currentLSN = getSnapshot6.CurrentLSN.Offset;
+         LSNs[i][j] = currentLSN;         
       }
    }
+ 
+   var checkLSN = true;
+   //比较各节点lsn
+   for(var i = 0; i < LSNs.length; ++i)
+   {
+      for(var j = 0; j < LSNs[i].length -1; ++j)
+      {
+         if(LSNs[i][j] === LSNs[i][j+1])
+         {
+            checkLSN = true;
+         }else
+         {
+            checkLSN = false;
+            break;
+         }
+      }
+   }
+   
    return checkLSN;
 }
 
@@ -126,48 +165,27 @@ function checkStat( db, csName, clName, indexName, clExistStat, indexExistStat )
    if( indexExistStat == undefined ){ indexExistStat = true;}
    var groups = commGetCLGroups( db, csName + "." + clName );
    
-   var dataDB = new Array();
+   //check lsn
+   var lsnFlag = false;
+   while(!lsnFlag)
+   {
+      lsnFlag = checkLSN(db, groups);
+      //println("check primary and slave node lsn flag:" + lsnFlag);
+      sleep(500);
+   }
    
    //get all nodes
-   if(0 == groups.length)
-   {
-      dataDB[0] = Array();
-      dataDB[0][0] = db;
-   }
-   else
-   {
-      for(var i = 0; i< groups.length; i++)
-      {
-         var lsnFlag = false;
-         while(!lsnFlag)
-         {
-            lsnFlag = checkLSN(db, groups[i]);
-            //println("check primary and slave node lsn flag:" + lsnFlag);
-            sleep(500);
-         }
-         
-         var rg = db.getRG(groups[i]);
-         var rgDetail = eval( "(" + rg.getDetail().toArray()[0] + ")");
-         var nodesInGroup = rgDetail.Group;
-         
-         dataDB[i] = Array();
-         for(var j = 0; j < nodesInGroup.length; j++)
-         {
-            var hostName = nodesInGroup[j].HostName;
-            var serviceName = nodesInGroup[j].Service[0].Name;
-            dataDB[i][j] = new Sdb(hostName, serviceName);
-         }
-      }
-   }
+   var datas = getNodesInGroups(db, groups);
    
    //check each node  
-   for(var i = 0; i< dataDB.length; i++)
+   for(var i = 0; i < datas.length; i++)
    {
-      for(var j = 0; j< dataDB[i].length; j++)
+      var nodesInGroup = datas[i];
+      for(var j = 0; j< nodesInGroup.length; j++)
       {
          //检查cl统计表信息
          var clStatFlag = false;   
-         var clStats = dataDB[i][j].SYSSTAT.SYSCOLLECTIONSTAT.find().toArray();
+         var clStats = nodesInGroup[j].SYSSTAT.SYSCOLLECTIONSTAT.find().toArray();
          
          //需要检查cl统计表信息时，统计表信息不能为空
          if(clExistStat === true && clStats.length <1)
@@ -176,7 +194,7 @@ function checkStat( db, csName, clName, indexName, clExistStat, indexExistStat )
          }
          
          //cl统计表信息中存在统计信息且数据页不小于10
-         for(var k = 0; k< clStats.length; k++ )
+         for(var k = 0; k < clStats.length; k++ )
          {
             var clStat = eval( "(" + clStats[k] + ")");
             var actualCSName = clStat.CollectionSpace;
@@ -199,7 +217,7 @@ function checkStat( db, csName, clName, indexName, clExistStat, indexExistStat )
          
          //检查索引统计表信息
          var indexStatFlag = false;
-         var indexStats = dataDB[i][j].SYSSTAT.SYSINDEXSTAT.find().toArray();
+         var indexStats = nodesInGroup[j].SYSSTAT.SYSINDEXSTAT.find().toArray();
          
          //需要检查索引统计表信息时，统计表信息不能为空
          if(indexExistStat === true && indexStats.length <1)
@@ -208,7 +226,7 @@ function checkStat( db, csName, clName, indexName, clExistStat, indexExistStat )
          }
          
          //索引统计表信息中存在统计信息
-         for(var h= 0; h< indexStats.length; h++ )
+         for(var h = 0; h < indexStats.length; h++ )
          {
             var indexStat = eval( "(" + indexStats[h] + ")");
             var actualCSName = indexStat.CollectionSpace;
@@ -229,6 +247,7 @@ function checkStat( db, csName, clName, indexName, clExistStat, indexExistStat )
             println("hostName:" + hostName + "\nserviceName:" + serviceName + "\nindexExistStat:" + indexExistStat + "\nindexStatFlag:" + indexStatFlag);
             throw "NO_INDEX_STAT";
          }  
+         
       }
    }
      
@@ -492,38 +511,18 @@ function getSrcGroup( csName, clName )
 **************************************/
 function updateIndexStateInfo( db, csName, clName, indexName, mcvValues, fracs )
 {
-   var dataDB= new Array();
+   var groups = commGetCLGroups( db, csName + "." + clName );
+   var datas = getNodesInGroups(db, groups);
    
-   if(commIsStandalone(db))
+   //update all nodes
+   for(var i in datas)
    {
-      dataDB[0] = Array();
-      dataDB[0][0] = db;
-   }
-   else
-   {
-      var groupNames = commGetCLGroups( db, csName + "." + clName );
-      var groupDetail = new Array();
-      for(var i in groupNames)
-      {
-         dataDB[i] = Array();
-         groupDetail = commGetGroups( db, false, groupNames[i] );
-         for(var j = 1; j < groupDetail[0].length; j++)
-         {
-            var hostName = groupDetail[0][j].HostName;
-            var svcName = groupDetail[0][j].svcname;
-            dataDB[i][j-1] = new Sdb(hostName, svcName);
-         }
-      }
-      
-   }		
-   
-   for(var i in dataDB)
-   {
-      for(var j in dataDB[i])
+      var nodesInGroup = datas[i];
+      for(var j in nodesInGroup)
       {
          try
          {
-            var rec = dataDB[i][j].SYSSTAT.SYSINDEXSTAT.find().toArray();
+            var rec = nodesInGroup[j].SYSSTAT.SYSINDEXSTAT.find().toArray();
                                                                                      
             if(0 < rec.length)
             {				 
@@ -533,13 +532,15 @@ function updateIndexStateInfo( db, csName, clName, indexName, mcvValues, fracs )
                                        {"Collection" : clName},
                                        {"Index" : indexName}]};
                                                                                      	
-               dataDB[i][j].SYSSTAT.SYSINDEXSTAT.upsert(rule, matcher);
+               nodesInGroup[j].SYSSTAT.SYSINDEXSTAT.upsert(rule, matcher);
+               
             }
          }
          catch(e)
          {
             throw buildException("modify SYSIndexInfo", e, "modify", "modify success", e);
          }	   
+         
       }      
    }
                                                                                        
