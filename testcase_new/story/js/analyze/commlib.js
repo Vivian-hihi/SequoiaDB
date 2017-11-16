@@ -313,6 +313,49 @@ function getSplitExplain( dbcl, findConf, sortConf, hintConf )
 }
 
 /************************************
+*@Description: 按组获取主子表访问计划
+*@author:      zhaoyu
+*@createDate:  2017.11.10
+**************************************/
+function getMainclExplain( dbcl, findConf, sortConf, hintConf )
+{
+   if ( typeof(findConf) == "undefined" ) { findConf = null; }
+   if ( typeof(sortConf) == "undefined" ) { sortConf = null; }
+   if ( typeof(hintConf) == "undefined" ) { hintConf = null; }
+   
+   //保存主子表所有组的访问计划
+   var explains = new Array();
+   
+   var rc = dbcl.find(findConf).sort(sortConf).hint(hintConf).explain({Run:true}).toArray();
+   for(var i= 0; i< rc.length; i++)
+   {
+      //保存单个组的访问计划
+      var groupExplains = eval("(" + rc[i] + ")");
+      
+      var groupName = groupExplains.GroupName;
+      var subCollections = groupExplains.SubCollections;
+      
+      for(var j=0; j< subCollections.length; j++)
+      {
+         //保存单个组上一个子表的访问计划
+         var explainObj = {};
+         explainObj['GroupName'] = groupName;
+         for( var f in subCollections[j] )
+      	{
+      	   if((f == "Name") || (f == "ScanType") || (f == "IndexName") || (f == "ReturnNum"))
+      	   {
+      	      explainObj[f] = subCollections[j][f];
+      	        
+      	   }
+      	}
+      	explains.push(explainObj);
+      }
+   }
+   return explains;
+   
+}
+
+/************************************
 *@Description: 校验访问计划
 *@author:      zhaoyu
 *@createDate:  2017.11.8

@@ -63,7 +63,7 @@ function main()
    println("check result analyze mode set 3 success!");
    
    //手工修改主节点统计信息
-   var mcvValues = [{_id:8000},{_id:9000},{_id:9001}];
+   var mcvValues = [{_id:8000},{_id:2000},{_id:9001}];
    var fracs = [50,5000,50];
    updateIndexStateInfo( db, COMMCSNAME, clName, "$id", mcvValues, fracs );
    
@@ -104,7 +104,7 @@ function main()
    println("check result analyze mode set 5 success!");
    
    //再次更新统计信息
-   var mcvValues = [{_id:8000},{_id:9000},{_id:9001}];
+   var mcvValues = [{_id:8000},{_id:2000},{_id:9001}];
    var fracs = [50,50,50];
    updateIndexStateInfo( db, COMMCSNAME, clName, "$id", mcvValues, fracs );
    
