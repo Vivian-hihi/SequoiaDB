@@ -222,6 +222,8 @@ function checkStat( db, csName, clName, indexName, clExistStat, indexExistStat )
          //需要检查索引统计表信息时，统计表信息不能为空
          if(indexExistStat === true && indexStats.length <1)
          {
+            println("indexExistStat:" + indexExistStat);
+            println("indexStats.length:" + indexStats.length);
             throw "NO_INDEX_STAT";
          }
          
@@ -565,19 +567,10 @@ function updateIndexStateInfo( db, csName, clName, indexName, mcvValues, fracs )
       {
          try
          {
-            var rec = nodesInGroup[j].SYSSTAT.SYSINDEXSTAT.find().toArray();
-                                                                                     
-            if(0 < rec.length)
-            {				 
-               var rule = {"$set": {"MCV": {"Values": mcvValues, "Frac": fracs}}}; 
-                                                                                        
-               var matcher = {"$and": [{"CollectionSpace" : csName},
-                                       {"Collection" : clName},
-                                       {"Index" : indexName}]};
-                                                                                     	
-               nodesInGroup[j].SYSSTAT.SYSINDEXSTAT.upsert(rule, matcher);
-               
-            }
+            var rec = nodesInGroup[j].SYSSTAT.SYSINDEXSTAT.find().toArray();                                                                        
+            var rule = {"$set": {"MCV": {"Values": mcvValues, "Frac": fracs}}};                                                                          
+            var matcher = {"CollectionSpace" : csName,"Collection" : clName,"Index" : indexName};                                                                     	
+            nodesInGroup[j].SYSSTAT.SYSINDEXSTAT.upsert(rule, matcher);
          }
          catch(e)
          {
