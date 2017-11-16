@@ -15,7 +15,7 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program. If not, see <http://www.gnu.org/license/>.
 
-   Source File Name = omConfigSdb.hpp
+   Source File Name = omConfigSsqlOltp.hpp
 
    Dependencies: N/A
 
@@ -24,7 +24,7 @@
    Change Activity:
    defect Date        Who Description
    ====== =========== === ==============================================
-          18/4/2016  David Li Initial Draft
+          27/09/2017  HJW Initial Draft
 
    Last Changed =
 

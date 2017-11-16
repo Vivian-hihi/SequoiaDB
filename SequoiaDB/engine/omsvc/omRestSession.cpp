@@ -80,7 +80,7 @@ namespace engine
       {
          if ( ossStrcasecmp( pSubCommand, OM_LOGOUT_REQ ) == 0 )
          {
-            if ( isAuthOK() ) 
+            if ( isAuthOK() )
             {
                doLogout() ;
                pAdaptor->sendResponse( this, HTTP_OK ) ;
