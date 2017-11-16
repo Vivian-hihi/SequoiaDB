@@ -32,14 +32,10 @@ function main()
    insertSameDatas( dbcl, insertNums, sameValues );
 
    //create index
-   commCreateIndex( dbcl, "a", {a : 1}, false );                                         
-                                                    	
-   //invoke analyze
-   var options = { Mode : 3, Collection : csName + "." + clName };
-   analyze( db, options );
+   commCreateIndex( dbcl, "a", {a : 1}, false );                                                                                            
                                           	
-   //check after analyze success
-   checkStat( db, csName, clName, "a", true, false );
+   //check before analyze success
+   checkStat( db, csName, clName, "a", false, false );
                                                    	
    //check the query explain after analyze
    var findConf = {a : 9000};
@@ -51,14 +47,28 @@ function main()
    var actExplains = getCommonExplain( dbclSlave, findConf);
    checkExplain( actExplains, expExplains );
                                                	
-   println("check result after default analyze !");
-                                                       	
-   // modify SYSSTAT info                                           	
-   var mcvValues = [{a: 0},{a: 1},{a:9000}];
-   var fracs = [500,500,9000];
-   updateIndexStateInfo( db, csName, clName, "a", mcvValues, fracs );
-                                                          	
-   // reload analyze again
+   println("check result before analyze !");
+                                                       	                                                   	
+   //analyze 
+   var options = { Collection : csName + "." + clName };
+   analyze( db, options );
+                            	
+   //check after analyze success
+   checkStat( db, csName, clName, "a", true, true );
+                                                	
+   //check the query explain after analyze
+   var findConf = {a : 9000};
+   var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
+                                           
+   var actExplains = getCommonExplain( dbclPrimary, findConf);
+   checkExplain( actExplains, expExplains );
+                          
+   var actExplains = getCommonExplain( dbclSlave, findConf);
+   checkExplain( actExplains, expExplains );
+                	
+   println("check result after analyze!");
+   
+   //reload analyze 
    var options = { Mode : 4, Collection : csName + "." + clName };
    analyze( db, options );
                             	
@@ -75,7 +85,7 @@ function main()
    var actExplains = getCommonExplain( dbclSlave, findConf);
    checkExplain( actExplains, expExplains );
                 	
-   println("check result after reload analyze success!");
+   println("check result after reload analyze!");
            
    db1.close();           
    commDropCS( db, csName, true, "drop CS in the end" );

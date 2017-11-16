@@ -42,7 +42,7 @@ function main()
    var dbclSlave = db1.getCS(csName).getCL(clName);
                                                                                                	
    //create index
-   commCreateIndex( dbcl, "ac", {a : 1 , c : 1}, false )
+   commCreateIndex( dbcl, "b", {b : 1}, false )
 	 
    //insert
    var insertNums = 3000;
@@ -51,17 +51,24 @@ function main()
    insertSameDatas( dbcl, insertNums, sameValues );
                                                                                                  	                                                                                            
    //check before invoke analyze
-   checkStat( db, csName, clName, "ac", false, false );
-                                                                                                   	
+   checkStat( db, csName, clName, "$shard", false, false );
+   checkStat( db, csName, clName, "b", false, false );
+
    //check the query explain of master/slave nodes 
-   var findConf = {a : 9000, c : "test9000"};
-   var expExplains = [{ScanType:"ixscan", IndexName:"ac", ReturnNum:insertNums}];
-                                                                                         
-   var actExplains = getCommonExplain( dbclPrimary, findConf);
-   checkExplain( actExplains, expExplains );
+   var findConf1 = {a : 9000};
+   var findConf2 = {b : 9000};
+   var expExplains1 = [{ScanType:"ixscan", IndexName:"$shard", ReturnNum:insertNums}];
+   var expExplains2 = [{ScanType:"ixscan", IndexName:"b", ReturnNum:insertNums}];
+                                                                    
+   var actExplains1 = getCommonExplain( dbclPrimary, findConf1);
+   var actExplains2 = getCommonExplain( dbclPrimary, findConf2);
+   checkExplain( actExplains1, expExplains1 );
+   checkExplain( actExplains2, expExplains2 );
    
-   var actExplains = getCommonExplain( dbclSlave, findConf);
-   checkExplain( actExplains, expExplains );
+   var actExplains1 = getCommonExplain( dbclSlave, findConf1);
+   var actExplains2 = getCommonExplain( dbclSlave, findConf2);
+   checkExplain( actExplains1, expExplains1 );
+   checkExplain( actExplains2, expExplains2 );
 	
    println("check result before analyze success!");
 	
@@ -70,33 +77,51 @@ function main()
    analyze( db, options );
                                                                                                
    //check after analyze
-   checkStat( db, csName, clName, "ac", true, true );
+   checkStat( db, csName, clName, "$shard", true, true );
+   checkStat( db, csName, clName, "b", true, true );
                                                                 
    //check the query explain of master/slave nodes 
-   var findConf = {a : 9000, c : "test9000"};
+   var findConf1 = {a : 9000};
+   var findConf2 = {b : 9000};
    var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
-                                                                                      
-   var actExplains = getCommonExplain( dbclPrimary, findConf);
-   checkExplain( actExplains, expExplains );
-                                                                                              
-   var actExplains = getCommonExplain( dbclSlave, findConf);
-   checkExplain( actExplains, expExplains );
+                                                                    
+   var actExplains1 = getCommonExplain( dbclPrimary, findConf1);
+   var actExplains2 = getCommonExplain( dbclPrimary, findConf2);
+   checkExplain( actExplains1, expExplains );
+   checkExplain( actExplains2, expExplains );
+   
+   var actExplains1 = getCommonExplain( dbclSlave, findConf1);
+   var actExplains2 = getCommonExplain( dbclSlave, findConf2);
+   checkExplain( actExplains1, expExplains );
+   checkExplain( actExplains2, expExplains );
+   
+   println("check analyze result success before split!");
                                                                                   	
    //split cl
    splitCL(dbcl, srcGroupName, destGroupName);
 	
+   //analyze after split
+   var options = {Collection: csName + "." + clName};
+   analyze( db, options );
+     
    //check after split
-   println("after split!");
-   var findConf = {a : 9000, c : "test9000"};
-   var expExplains = [{ScanType:"tbscan", IndexName:"",GroupName: srcGroupName, ReturnNum:insertNums}];
-                                                                                        	
-   var actExplains = getSplitExplain( dbclPrimary, findConf);
-   checkExplain( actExplains, expExplains );
+   var findConf1 = {a : 9000};
+   var findConf2 = {b : 9000};
+   var expExplains1 = [{ScanType:"tbscan", IndexName:"", GroupName:srcGroupName, ReturnNum:insertNums}];
+   var expExplains2 = [{ScanType:"tbscan", IndexName:"", GroupName:srcGroupName, ReturnNum:insertNums},
+                       {ScanType:"ixscan", IndexName:"b", GroupName:destGroupName, ReturnNum:0}];
+                                                           
+   var actExplains1 = getSplitExplain( dbclPrimary, findConf1);
+   var actExplains2 = getSplitExplain( dbclPrimary, findConf2);
+   checkExplain( actExplains1, expExplains1 );
+   checkExplain( actExplains2, expExplains2 );
    
-   var actExplains = getSplitExplain( dbclSlave, findConf);
-   checkExplain( actExplains, expExplains );
-	
-   println("check result after analyze success!");
+   var actExplains1 = getSplitExplain( dbclSlave, findConf1);
+   var actExplains2 = getSplitExplain( dbclSlave, findConf2);
+   checkExplain( actExplains1, expExplains1 );
+   checkExplain( actExplains2, expExplains2 );
+                                      
+   println("check analyze result success after split!");
 	
    db1.close();
    commDropCS( db, csName, true, "drop CS in the end" );
