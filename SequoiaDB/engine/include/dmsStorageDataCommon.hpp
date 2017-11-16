@@ -178,6 +178,15 @@ namespace engine
       do {(x)=DMS_MB_FLAG_LOAD_BUILD|DMS_MB_FLAG_LOAD|\
       DMS_MB_FLAG_USED;} while(0)
 
+   #define DMS_MB_STATINFO_FLAG_TRUNCATED  0x00000001
+
+   #define DMS_MB_STATINFO_IS_TRUNCATED(x) \
+      (0 != ((x) & DMS_MB_STATINFO_FLAG_TRUNCATED))
+   #define DMS_MB_STATINFO_SET_TRUNCATED(x) \
+      do { (x) |= DMS_MB_STATINFO_FLAG_TRUNCATED ; } while (0)
+   #define DMS_MB_STATINFO_CLEAR_TRUNCATED(x) \
+      do { (x) &= ~DMS_MB_STATINFO_FLAG_TRUNCATED ; } while (0)
+
    /*
       DMS MB ATTRIBUTE DEFINE
    */
@@ -454,6 +463,8 @@ namespace engine
       UINT8       _lastCompressRatio ;
       UINT64      _totalOrgDataLen ;
       UINT64      _totalDataLen ;
+      UINT32      _startLID ;
+      UINT32      _flag ;
 
       ossAtomic32 _commitFlag ;
       ossAtomic64 _lastLSN ;
@@ -484,6 +495,8 @@ namespace engine
          _lastCompressRatio      = 100 ;
          _totalOrgDataLen        = 0 ;
          _totalDataLen           = 0 ;
+         _startLID               = DMS_INVALID_CLID ;
+         _flag                   = 0 ;
          _commitFlag.init( 0 ) ;
          _lastLSN.init( ~0 ) ;
          _lastWriteTick          = 0 ;
@@ -598,12 +611,14 @@ namespace engine
          OSS_INLINE  dmsMB* mb () { return _mb ; }
          OSS_INLINE  dmsMBStatInfo* mbStat() { return _mbStat ; }
          OSS_INLINE  UINT32 clLID () const { return _clLID ; }
+         OSS_INLINE  UINT32 startLID() const { return _startLID ; }
 
       private:
          dmsMB             *_mb ;
          dmsMBStatInfo     *_mbStat ;
          ossSpinSLatch     *_latch ;
          UINT32            _clLID ;
+         UINT32            _startLID ;
          UINT16            _mbID ;
          INT32             _mbLockType ;
          INT32             _resumeType ;
@@ -630,16 +645,42 @@ namespace engine
          return rc ;
       }
       // check before lock
-      if ( !DMS_IS_MB_INUSE(_mb->_flag) || _clLID != _mb->_logicalID )
+      if ( !DMS_IS_MB_INUSE(_mb->_flag) )
       {
          return SDB_DMS_NOTEXIST ;
       }
+      if ( _clLID != _mb->_logicalID )
+      {
+         if ( _startLID == _mbStat->_startLID &&
+              DMS_MB_STATINFO_IS_TRUNCATED( _mbStat->_flag ) )
+         {
+            return SDB_DMS_TRUNCATED ;
+         }
+         else
+         {
+            return SDB_DMS_NOTEXIST ;
+         }
+      }
       ossLatch( _latch, (OSS_LATCH_MODE)lockType ) ;
       // check after lock
-      if ( !DMS_IS_MB_INUSE(_mb->_flag) || _clLID != _mb->_logicalID )
+      if ( !DMS_IS_MB_INUSE(_mb->_flag) )
       {
          ossUnlatch( _latch, (OSS_LATCH_MODE)lockType ) ;
          return SDB_DMS_NOTEXIST ;
+      }
+      if ( _clLID != _mb->_logicalID )
+      {
+         if ( _startLID == _mbStat->_startLID &&
+              DMS_MB_STATINFO_IS_TRUNCATED( _mbStat->_flag ) )
+         {
+            ossUnlatch( _latch, (OSS_LATCH_MODE)lockType ) ;
+            return SDB_DMS_TRUNCATED ;
+         }
+         else
+         {
+            ossUnlatch( _latch, (OSS_LATCH_MODE)lockType ) ;
+            return SDB_DMS_NOTEXIST ;
+         }
       }
       _mbLockType = lockType ;
       _resumeType = -1 ;
@@ -801,7 +842,7 @@ namespace engine
          dmsStorageUnitID CSID () const { return _CSID ; }
 
          OSS_INLINE INT32  getMBContext( dmsMBContext **pContext, UINT16 mbID,
-                                         UINT32 clLID, INT32 lockType = -1 );
+                                         UINT32 clLID, UINT32 startLID, INT32 lockType = -1 );
          OSS_INLINE INT32  getMBContext( dmsMBContext **pContext,
                                          const CHAR* pName,
                                          INT32 lockType = -1 ) ;
@@ -909,7 +950,7 @@ namespace engine
                        BOOLEAN dataOwned = FALSE ) ;
 
          /* Create the compressor, and set the dictionry for it. */
-         INT32 dictPersist( UINT16 mbID, UINT32 clLID,
+         INT32 dictPersist( UINT16 mbID, UINT32 clLID, UINT32 startLID,
                             const CHAR *dict, UINT32 dictLen ) ;
          OSS_INLINE _dmsCompressorEntry *getCompressorEntry( UINT16 mbID ) ;
 
@@ -1206,6 +1247,7 @@ namespace engine
    OSS_INLINE INT32 _dmsStorageDataCommon::getMBContext( dmsMBContext ** pContext,
                                                          UINT16 mbID,
                                                          UINT32 clLID,
+                                                         UINT32 startLID,
                                                          INT32 lockType )
    {
       if ( mbID >= DMS_MME_SLOTS )
@@ -1214,10 +1256,18 @@ namespace engine
       }
 
       // metadata shared lock
-      if ( (UINT32)DMS_INVALID_CLID == clLID )
+      if ( (UINT32)DMS_INVALID_CLID == clLID ||
+           (UINT32)DMS_INVALID_CLID == startLID )
       {
          _metadataLatch.get_shared() ;
-         clLID = _dmsMME->_mbList[mbID]._logicalID ;
+         if ( (UINT32)DMS_INVALID_CLID == clLID )
+         {
+            clLID = _dmsMME->_mbList[mbID]._logicalID ;
+         }
+         if ( (UINT32)DMS_INVALID_CLID == startLID )
+         {
+            startLID = _mbStatInfo[mbID]._startLID ;
+         }
          _metadataLatch.release_shared() ;
       }
 
@@ -1239,6 +1289,7 @@ namespace engine
          return SDB_OOM ;
       }
       (*pContext)->_clLID = clLID ;
+      (*pContext)->_startLID = startLID ;
       (*pContext)->_mbID = mbID ;
       (*pContext)->_mb = &_dmsMME->_mbList[mbID] ;
       (*pContext)->_mbStat = &_mbStatInfo[mbID] ;
@@ -1260,6 +1311,7 @@ namespace engine
    {
       UINT16 mbID = DMS_INVALID_MBID ;
       UINT32 clLID = DMS_INVALID_CLID ;
+      UINT32 startLID = DMS_INVALID_CLID ;
 
       // metadata shared lock
       _metadataLatch.get_shared() ;
@@ -1267,6 +1319,7 @@ namespace engine
       if ( DMS_INVALID_MBID != mbID )
       {
          clLID = _dmsMME->_mbList[mbID]._logicalID ;
+         startLID = _mbStatInfo[mbID]._startLID ;
       }
       _metadataLatch.release_shared() ;
 
@@ -1274,7 +1327,7 @@ namespace engine
       {
          return SDB_DMS_NOTEXIST ;
       }
-      return getMBContext( pContext, mbID, clLID, lockType ) ;
+      return getMBContext( pContext, mbID, clLID, startLID, lockType ) ;
    }
    OSS_INLINE void _dmsStorageDataCommon::releaseMBContext( dmsMBContext *&pContext )
    {

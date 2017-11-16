@@ -417,7 +417,6 @@ namespace engine
 
       dmsStorageUnit *su = NULL ;
       dmsStorageUnitID suID = DMS_INVALID_SUID ;
-      UINT32 clLID = DMS_INVALID_CLID ;
       dmsMBContext *context = NULL ;
       dmsMB *mb = NULL ;
 
@@ -432,7 +431,10 @@ namespace engine
       for ( UINT16 mbID = 0; mbID < DMS_MME_SLOTS; ++mbID )
       {
          // If the collection does not exist, lock will failed.
-         rc = su->data()->getMBContext( &context, mbID, clLID, SHARED ) ;
+         rc = su->data()->getMBContext( &context, mbID,
+                                        DMS_INVALID_CLID,
+                                        DMS_INVALID_CLID,
+                                        SHARED ) ;
          if ( rc )
          {
             if ( SDB_DMS_NOTEXIST == rc )

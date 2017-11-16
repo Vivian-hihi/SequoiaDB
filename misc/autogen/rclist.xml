@@ -2570,5 +2570,13 @@
          </description>
       </code>
 
+      <code>
+         <name>SDB_DMS_TRUNCATED</name>
+         <description>
+            <en>Collection is truncated</en>
+            <cn>集合被清空</cn>
+         </description>
+      </code>
+
    </codelist>
 </rclist>

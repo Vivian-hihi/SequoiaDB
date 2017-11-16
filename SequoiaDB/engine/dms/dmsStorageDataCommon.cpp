@@ -250,6 +250,7 @@ namespace engine
       _mbStat        = NULL ;
       _latch         = NULL ;
       _clLID         = DMS_INVALID_CLID ;
+      _startLID      = DMS_INVALID_CLID ;
       _mbID          = DMS_INVALID_MBID ;
       _mbLockType    = -1 ;
       _resumeType    = -1 ;
@@ -268,6 +269,7 @@ namespace engine
       }
       ss << "ID: " << _mbID ;
       ss << ", LID: " << _clLID ;
+      ss << ", StartLID: " << _startLID ;
       ss << ", LockType: " << _mbLockType ;
       ss << ", ResumeType: " << _resumeType ;
 
@@ -809,6 +811,8 @@ namespace engine
                _dmsMME->_mbList[i]._totalDataLen ;
             _mbStatInfo[i]._totalOrgDataLen =
                _dmsMME->_mbList[i]._totalOrgDataLen ;
+            _mbStatInfo[i]._startLID =
+               _dmsMME->_mbList[i]._logicalID ;
             /*
              * The following branch is for using newer program(SequoiaDB 2.0 or
              * later) with data of elder versions(Before 2.0). As dictionary
@@ -2004,6 +2008,7 @@ namespace engine
       mb = &_dmsMME->_mbList[newCollectionID] ;
       mb->reset( pName, newCollectionID, logicalID, attributes, compressionType ) ;
       _mbStatInfo[ newCollectionID ].reset() ;
+      _mbStatInfo[ newCollectionID ]._startLID = logicalID ;
 
       _dmsHeader->_numMB++ ;
       _collectionNameInsert( pName, newCollectionID ) ;
@@ -2050,7 +2055,7 @@ namespace engine
       dropDps = dpscb ;
 
       // create dms cb context
-      rc = getMBContext( &context, newCollectionID, logicalID, EXCLUSIVE ) ;
+      rc = getMBContext( &context, newCollectionID, logicalID, logicalID, EXCLUSIVE ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Failed to get mb[%u] context, rc: %d",
@@ -2253,6 +2258,7 @@ namespace engine
       // change mb meta data
       DMS_SET_MB_DROPPED( context->mb()->_flag ) ;
       context->mb()->_logicalID-- ;
+      DMS_MB_STATINFO_CLEAR_TRUNCATED( context->mbStat()->_flag ) ;
 
       if ( DMS_INVALID_EXTENT != context->mb()->_mbExExtentID )
       {
@@ -2460,6 +2466,7 @@ namespace engine
          context->mb()->_logicalID = newCLID ;
          context->_clLID           = newCLID ;
       }
+      DMS_MB_STATINFO_SET_TRUNCATED( context->mbStat()->_flag ) ;
 
       // write dps log
       if ( dpscb )
@@ -3554,7 +3561,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACOMMON_DICTPERSIST, "_dmsStorageDataCommon::dictPersist" )
-   INT32 _dmsStorageDataCommon::dictPersist( UINT16 mbID, UINT32 clLID,
+   INT32 _dmsStorageDataCommon::dictPersist( UINT16 mbID, UINT32 clLID, UINT32 startLID,
                                              const CHAR *dict, UINT32 dictLen )
    {
       INT32 rc = SDB_OK ;
@@ -3569,7 +3576,7 @@ namespace engine
       UINT32 pageNum = ( sizeof( dmsDictExtent ) + dictLen +
                          ( pageSize() - 1 ) ) / pageSize() ;
 
-      rc = getMBContext( &context, mbID, clLID, EXCLUSIVE ) ;
+      rc = getMBContext( &context, mbID, clLID, startLID, EXCLUSIVE ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get dms mb context, rc: %d", rc ) ;
 
       if ( !dmsAccessAndFlagCompatiblity( context->mb()->_flag,

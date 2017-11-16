@@ -267,17 +267,17 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTN_DICTCREATORJOB__TRANSFERDICT, "_rtnDictCreatorJob::_transferDict" )
    INT32 _rtnDictCreatorJob::_transferDict( dmsStorageDataCommon *sd,
-                                            dmsMBContext *context,
+                                            dmsMBContext *ctx,
                                             CHAR *dictStream,
                                             UINT32 dictSize )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTN_DICTCREATORJOB__TRANSFERDICT ) ;
 
-      SDB_ASSERT( FALSE == context->isMBLock(),
+      SDB_ASSERT( FALSE == ctx->isMBLock(),
                   "mb should not have been locked" ) ;
 
-      rc = sd->dictPersist( context->mbID(), context->clLID(),
+      rc = sd->dictPersist( ctx->mbID(), ctx->clLID(), ctx->startLID(),
                             dictStream, dictSize ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to store dictionary in colleciton, rc: %d", rc ) ;
@@ -296,7 +296,6 @@ namespace engine
       PD_TRACE_ENTRY( SDB__RTN_DICTCREATORJOB__CHECKANDCREATEDICTFORCL ) ;
       dmsStorageUnit *su = NULL ;
       dmsMBContext *mbContext = NULL ;
-      UINT32 clLID = DMS_INVALID_CLID ;
       pmdKRCB *krCB = pmdGetKRCB() ;
       SDB_DMSCB *dmsCB = krCB->getDMSCB() ;
       UINT32 dictBufLen = UTIL_MAX_DICT_TOTAL_SIZE ;
@@ -321,7 +320,8 @@ namespace engine
          goto error ;
       }
 
-      rc = su->data()->getMBContext( &mbContext, job._clID, clLID ) ;
+      rc = su->data()->getMBContext( &mbContext, job._clID,
+                                     DMS_INVALID_CLID, DMS_INVALID_CLID ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get mb[%u] context, rc: %d",
                    job._clID, rc ) ;
       if ( mbContext->clLID() != job._clLID )

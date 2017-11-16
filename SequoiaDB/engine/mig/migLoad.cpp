@@ -740,7 +740,8 @@ namespace engine
          PD_LOG ( PDERROR, "memory error" ) ;
          goto error ;
       }
-      rc = su->data()->getMBContext( &mbContext, collectionID, clLID, -1 ) ;
+      rc = su->data()->getMBContext( &mbContext, collectionID, clLID,
+                                     DMS_INVALID_CLID, -1 ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Failed to get dms mb context, rc: %d", rc ) ;

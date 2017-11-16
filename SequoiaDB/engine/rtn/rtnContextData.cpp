@@ -1354,7 +1354,7 @@ namespace engine
       rtnContextData *dataContext = NULL ;
 
       rc = _su->data()->getMBContext( &mbContext, _planRuntime.getCLMBID(),
-                                      DMS_INVALID_CLID, -1 ) ;
+                                      DMS_INVALID_CLID, DMS_INVALID_CLID, -1 ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get dms mb context, rc: %d", rc ) ;
       PD_CHECK( _planRuntime.getCLLID() == mbContext->clLID(), SDB_DMS_NOTEXIST,
                 error, PDERROR, "Failed to get dms mb context, rc: %d",

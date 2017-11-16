@@ -201,7 +201,8 @@ namespace engine
          }
          mbID = _freeCollections.front() ;
 
-         rc = _su->data()->getMBContext( ppContext, mbID, DMS_INVALID_CLID ) ;
+         rc = _su->data()->getMBContext( ppContext, mbID,
+                                         DMS_INVALID_CLID, DMS_INVALID_CLID ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to get dms mb context for "
                       "collection[%d], rc: %d", mbID, rc ) ;
          _occupiedCollections[mbID] = eduID ;
