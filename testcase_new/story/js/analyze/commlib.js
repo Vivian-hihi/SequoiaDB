@@ -98,12 +98,11 @@ function getNodesInGroups(db, groups)
       var rg = db.getRG(groups[i]);
       var rgDetail = eval( "(" + rg.getDetail().toArray()[0] + ")");
       var nodesInGroup = rgDetail.Group;
-      
       for(var j = 0; j < nodesInGroup.length; ++j)
       {
          var hostName = nodesInGroup[j].HostName;
          var serviceName = nodesInGroup[j].Service[0].Name;
-         datas[i][j] = new Sdb(hostName, serviceName);                                                                                                                                     
+         datas[i][j] = new Sdb(hostName, serviceName);                                                                                                                                    
       }
       
    }
@@ -182,8 +181,7 @@ function checkStat( db, csName, clName, indexName, clExistStat, indexExistStat )
       var nodesInGroup = datas[i];
       for(var j = 0; j< nodesInGroup.length; j++)
       {
-         //检查cl统计表信息
-         var clStatFlag = false;   
+         //检查cl统计表信息 
          var clStats = nodesInGroup[j].SYSSTAT.SYSCOLLECTIONSTAT.find().toArray();
          
          //需要检查cl统计表信息时，统计表信息不能为空
@@ -375,7 +373,7 @@ function checkExplain( actExplains, expExplains )
    {
       if(JSON.stringify(actExplains).indexOf(JSON.stringify(expExplains[i])) === -1)
       {
-         throw buildException("checkMainclExplain", "CHECK_EXPLAIN_FAIL", "check explain failed!", 
+         throw buildException("checkExplain", "CHECK_EXPLAIN_FAIL", "check explain failed!", 
 	   		                  JSON.stringify(expExplains[i]), JSON.stringify(actExplains));
       }
    }
@@ -579,4 +577,5 @@ function updateIndexStateInfo( db, csName, clName, indexName, mcvValues, fracs )
       }      
    }
                                                                                        
-}                                                                                
+} 
+                                                                               
