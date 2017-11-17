@@ -181,6 +181,7 @@ function checkStat( db, csName, clName, indexName, clExistStat, indexExistStat )
       var nodesInGroup = datas[i];
       for(var j = 0; j< nodesInGroup.length; j++)
       {
+         var clStatFlag = false;
          //检查cl统计表信息 
          var clStats = nodesInGroup[j].SYSSTAT.SYSCOLLECTIONSTAT.find().toArray();
          
