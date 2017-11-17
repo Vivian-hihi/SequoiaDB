@@ -6,6 +6,7 @@
 **************************************/
 function main()
 {
+   //独立模式及1节点模式不执行该用例
    try
 	{
 	   //判断独立模式
@@ -13,8 +14,19 @@ function main()
       {
          println( "run mode is standalone" );
          return;
+      } 
+          
+      //判断1节点模式
+      var groups = new Array();
+      groups[0] = commGetGroups( db )[0][0].GroupName;
+      var nodes = getNodesInGroups(db, groups);  
+      if( 1 === nodes[0].length )
+      {
+         println("only one node");
+         return ;
       }
-   }catch( e )
+   }
+   catch( e )
    {
       throw e;
    }
