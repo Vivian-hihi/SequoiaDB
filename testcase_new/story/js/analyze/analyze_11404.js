@@ -17,7 +17,7 @@ function main()
                                                               	
    commCreateCS( db, csName, false, "" );
                                   	
-   //create CLs
+   //create cl
    var clName = COMMCLNAME + "11404";
    var dbcl = commCreateCL( db, csName, clName );
                                                         
@@ -31,7 +31,6 @@ function main()
    //check before invoke analyze
    checkStat( db, csName, clName, "a", false, false );
                                                                           	
-   //check the query explain before analyze
    var findConf = {a : 9000};
    var actExplains = getCommonExplain( dbcl, findConf);
    var expExplains = [{ScanType:"ixscan", IndexName:"a", ReturnNum:insertNums}];
@@ -46,7 +45,6 @@ function main()
    //check after analyze
    checkStat( db, csName, clName, "a", true, true );
                                                                   
-   //check the query explain after analyze
    var findConf = {a : 9000};
    var actExplains = getCommonExplain( dbcl, findConf);
    var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
@@ -60,17 +58,39 @@ function main()
    renameCL(csName, oldClName, newClName);
                                                                                 	
    //check newCL's anaylze info
+   checkAnalyzeStatInfo(csName, newClName);
    checkStat( db, csName, newClName, "a", true, true );
                                                                  	
    //check analyze result
+   var newCL = db.getCS(csName).getCL(newClName);
+   
    var findConf = {a : 9000};
    var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
-   var newCL = db.getCS(csName).getCL(newClName);
    var actExplains = getCommonExplain( newCL, findConf);
    checkExplain( actExplains, expExplains );
                                                                	
-   println("check result after rename success!");
-                                                            	
+   println("check analyze result after rename CL success!");
+   
+   //create oldCL
+   dbcl = commCreateCL( db, csName, clName );
+           
+   //create index
+   commCreateIndex( dbcl, "a", {a : 1}, false );
+   
+   //insert datas
+   var insertNums = 3000;
+   var sameValues = 9000;
+   insertDiffDatas( dbcl, insertNums );
+   insertSameDatas( dbcl, insertNums, sameValues );
+   
+   //check result,no cache
+   var findConf = {a : 9000};
+   var expExplains = [{ScanType:"ixscan", IndexName:"a", ReturnNum:insertNums}];
+   var actExplains = getCommonExplain( dbcl, findConf);
+   checkExplain( actExplains, expExplains );
+                                               
+   println("check result success after create old CL!");
+                                               
    commDropCS( db, csName, true, "drop CS in the end" );
 }
 
@@ -84,6 +104,25 @@ function renameCL( csName, oldClName, newClName )
    catch(e)
    {
       throw buildException("renameCL", e, "rename cl", "rename success", e);
+   }
+}
+
+function checkAnalyzeStatInfo( csName, clName )
+{
+   try
+   { 
+      var matcher = {CollectionSpace: csName, Collection: clName}
+      var rec = db.SYSSTAT.SYSCOLLECTIONSTAT.find(matcher).toArray();
+            
+      if(0 === rec.length)
+      {
+         throw "CHECK RENAMECL FAILED";
+      }
+      
+   }
+   catch(e)
+   {
+      throw buildException("check analyze info", e, "check", "success", e);
    }
 }
 main();

@@ -12,9 +12,13 @@ function main()
       return ;
    }
    
-   if (2 > commGetGroupsNum(db))
+  //判断1节点模式
+   var groups = new Array();
+   groups[0] = commGetGroups( db )[0][0].GroupName;
+   var nodes = getNodesInGroups(db, groups);  
+   if( 1 === nodes[0].length )
    {
-      println("skip one group");
+      println("only one node");
       return ;
    }
                                       	
@@ -278,7 +282,7 @@ function main()
                   { Mode : 5, CollectionSpace : csName, Collection : cl_full_name},
                   { Mode : 5, CollectionSpace : csName, Index : "a"},
                   { Mode : 5, Index : "a", GroupName : groupName },
-                  { Mode : 5, Index : "a", NodeID : priNodeId },];
+                  { Mode : 5, Index : "a", NodeID : priNodeId }];
                                                             
    for(var i in options)
    {

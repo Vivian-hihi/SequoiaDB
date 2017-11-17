@@ -26,6 +26,8 @@ function main()
    analyze( db, options );
                                                                                        
    //check SampleNum
+   checkStat( db, csName, clName, "", false, false );
+   
    var expResult = { "SampleRecords": 150, "TotalRecords": 150 };
    checkInfoState( csName, clName, expResult );
    
@@ -37,6 +39,8 @@ function main()
    analyze( db, options );
    
    //check SampleNum again 
+   checkStat( db, csName, clName, "", false, false );
+   
    var expResult = { "SampleRecords": 150, "TotalRecords": 300 };
    checkInfoState( csName, clName, expResult );
    
@@ -45,6 +49,8 @@ function main()
    analyze( db, options );
    
    //check SampleNum again 
+   checkStat( db, csName, clName, "", false, false );
+   
    var expResult = { "SampleRecords": 200, "TotalRecords": 300 };
    checkInfoState( csName, clName, expResult );
    
@@ -53,69 +59,59 @@ function main()
 
 function checkInfoState( csName, clName, expResult )
 {  
-   try
+   var groups = commGetCLGroups( db, csName + "." + clName );
+   var datas = getNodesInGroups(db, groups);
+      
+   for(var i in datas)
    {
-      var dataDB = getDataDB( csName, clName );
-      //check collection state
-      var matcher = { "CollectionSpace": csName, "Collection": clName };
-      
-      var actResult = dataDB.SYSSTAT.SYSCOLLECTIONSTAT.find(matcher);
-      //println("actResult: " + actResult);
-      
-      if(0 < actResult.length)
+      var nodesInGroup = datas[i];
+      for(var j in nodesInGroup)
       {
-         var expSampleNum = expResult["SampleRecords"];
-         var expTotalRecord = expResult["TotalRecords"];
-         
-         var actSampleNum = actResult[0]["SampleRecords"];
-         var actTotalRecord = actResult[0]["TotalRecords"];
-         
-         if(expSampleNum !== actSampleNum && expTotalRecord !== actTotalRecord)
+         try
          {
-            println("expSampleNum: " + expSampleNum + "actSampleNum " + actSampleNum + "expTotalRecord: " + expTotalRecord + "actTotalRecord " + actTotalRecord);
-            throw "check failed";
-         }
-      }
+            //check collection state
+            var matcher = { "CollectionSpace": csName, "Collection": clName };
+            var actResult = nodesInGroup[j].SYSSTAT.SYSCOLLECTIONSTAT.find(matcher);
       
-      //check index state
-      actResult = dataDB.SYSSTAT.SYSINDEXSTAT.find(matcher);
-      if(0 < actResult.length)
-      {
-         var expSampleNum = expResult["SampleRecords"];
-         var expTotalRecord = expResult["TotalRecords"];
+            if(0 < actResult.length)
+            {
+               var expSampleNum = expResult["SampleRecords"];
+               var expTotalRecord = expResult["TotalRecords"];
          
-         var actSampleNum = actResult[0]["SampleRecords"];
-         var actTotalRecord = actResult[0]["TotalRecords"];
+               var actSampleNum = actResult[0]["SampleRecords"];
+               var actTotalRecord = actResult[0]["TotalRecords"];
          
-         if(expSampleNum !== actSampleNum && expTotalRecord !== actTotalRecord)
-         {
-            println("expSampleNum: " + expSampleNum + "actSampleNum " + actSampleNum + "expTotalRecord: " + expTotalRecord + "actTotalRecord " + actTotalRecord);
-            throw "check failed";
+               if(expSampleNum !== actSampleNum && expTotalRecord !== actTotalRecord)
+               {
+                  println("expSampleNum: " + expSampleNum + "actSampleNum " + actSampleNum + "expTotalRecord: " + expTotalRecord + "actTotalRecord " + actTotalRecord);
+                  throw "check failed";
+               }
+            }
+      
+            //check index state
+            actResult = nodesInGroup[j].SYSSTAT.SYSINDEXSTAT.find(matcher);
+            if(0 < actResult.length)
+            {
+               var expSampleNum = expResult["SampleRecords"];
+               var expTotalRecord = expResult["TotalRecords"];
+         
+               var actSampleNum = actResult[0]["SampleRecords"];
+               var actTotalRecord = actResult[0]["TotalRecords"];
+         
+               if(expSampleNum !== actSampleNum && expTotalRecord !== actTotalRecord)
+               {
+                  println("expSampleNum: " + expSampleNum + "actSampleNum " + actSampleNum + "expTotalRecord: " + expTotalRecord + "actTotalRecord " + actTotalRecord);
+                  throw "check failed";
+               }
+            }
          }
+         catch(e)
+         {
+            throw buildException("check state", e, "check", "check success", e);
+         }
+            
       }
    }
-   catch(e)
-   {
-      throw buildException("check state", e, "check", "check success", e);
-   }
-}
-
-function getDataDB( csName, clName )
-{  
-   if (commIsStandalone(db))
-   {  
-      return db;
-   }
-	
-   var groupName = commGetCLGroups( db, csName + "." + clName );
-   var groupDetail = commGetGroups( db, false, groupName );
-                     
-   var priNodePos = groupDetail[0][0].PrimaryPos;
-                      	
-   var hostName = groupDetail[0][priNodePos].HostName;
-   var svcName = groupDetail[0][priNodePos].svcname;
-   
-   return new Sdb(hostName, svcName);
 }
 
 main();

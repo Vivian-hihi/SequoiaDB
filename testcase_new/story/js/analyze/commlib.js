@@ -209,7 +209,7 @@ function checkStat( db, csName, clName, indexName, clExistStat, indexExistStat )
          //是否存在cl统计表信息与预期结果校验   
          if((clExistStat ^ clStatFlag) === 1)
          {
-            println("hostName:" + hostName + "\nserviceName:" + serviceName + "\nclExistStat:" + clExistStat + "\nclStatFlag:" + clStatFlag);
+            println("host:" + nodesInGroup[j] + "\nclExistStat:" + clExistStat + "\nclStatFlag:" + clStatFlag);
             throw "NO_CL_STAT";
          } 
          
@@ -244,7 +244,7 @@ function checkStat( db, csName, clName, indexName, clExistStat, indexExistStat )
          //是否存在索引统计表信息与预期结果校验  
          if((indexExistStat ^ indexStatFlag) === 1)
          {
-            println("hostName:" + hostName + "\nserviceName:" + serviceName + "\nindexExistStat:" + indexExistStat + "\nindexStatFlag:" + indexStatFlag);
+            println("host:" + nodesInGroup[j] + "\nindexExistStat:" + indexExistStat + "\nindexStatFlag:" + indexStatFlag);
             throw "NO_INDEX_STAT";
          }  
          

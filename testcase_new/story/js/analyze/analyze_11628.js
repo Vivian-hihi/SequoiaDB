@@ -42,6 +42,9 @@ function main()
    var sameValues = 9000;
    insertDiffDatas( dbcl, insertNums );
    insertSameDatas( dbcl, insertNums, sameValues );
+   
+   //create index
+   commCreateIndex( dbcl, "b", {b : 1}, false );
                                                              	
    //split cl
    ClSplitOneTimes( csName, clName, 50 );
@@ -53,123 +56,186 @@ function main()
                          
    //check before analyze success
    checkStat( db, csName, clName, "$shard", true, true );
-                                                         	
-   var srcGroupName = getSrcGroup( csName, clName );
+   checkStat( db, csName, clName, "b", true, true );
+        
+   //get split groupName        
+   var groups = getSplitGroups( csName, clName, 1 );                                               	
+   var srcGroupName = groups[0].GroupName;
+   var destGroupName = groups[1].GroupName;
                                                        	
    //check the query explain before analyze
-   var findConf = {a : 9000};
-   var expExplains = [{ScanType:"tbscan", IndexName:"", 
+   var findConf1 = {a : 9000};
+   var findConf2 = {b : 9000};
+   
+   var expExplains1 = [{ScanType:"tbscan", IndexName:"", 
                        GroupName:srcGroupName, ReturnNum:insertNums}];
-                                                                     
-   var actExplains = getSplitExplain( dbclPrimary, findConf);
-   checkExplain( actExplains, expExplains );
-                                                           
-   var actExplains = getSplitExplain( dbclSlave, findConf);
-   checkExplain( actExplains, expExplains );
-                                                                     	
+   var expExplains2 = [{ScanType:"tbscan", IndexName:"", GroupName:srcGroupName, ReturnNum:insertNums},
+                       {ScanType:"ixscan", IndexName:"b", GroupName:destGroupName, ReturnNum:0}];
+                                                                                   
+   var actExplains1 = getSplitExplain( dbclPrimary, findConf1);
+   var actExplains2 = getSplitExplain( dbclPrimary, findConf2);
+   checkExplain( actExplains1, expExplains1 );
+   checkExplain( actExplains2, expExplains2 );
+                                              
+   var actExplains1 = getSplitExplain( dbclSlave, findConf1);
+   var actExplains2 = getSplitExplain( dbclSlave, findConf2);
+   checkExplain( actExplains1, expExplains1 );
+   checkExplain( actExplains2, expExplains2 );                                              
+                          	
    println("check result before default analyze !");
                                                          	
-   //invoke analyze
-   var options = { Mode : 3, Collection : cl_full_name, Index: "$shard"};
-   analyze( db, options );
+   //analyze with index
+   var options1 = { Mode : 3, Collection : cl_full_name, Index: "$shard"};
+   analyze( db, options1 );
+   var options2 = { Mode : 3, Collection : cl_full_name, Index: "b"};
+   analyze( db, options2 );
                                                                            	
-   //check after analyze success
+   //check after analyze with shard index
    checkStat( db, csName, clName, "$shard", true, false );
+   checkStat( db, csName, clName, "b", true, false );
                                                                  	
-   //check the query explain after analyze
-   var findConf = {a : 9000};
-   var expExplains = [{ScanType:"ixscan", IndexName:"$shard", 
+   var findConf1 = {a : 9000};
+   var findConf2 = {b : 9000};
+   
+   var expExplains1 = [{ScanType:"ixscan", IndexName:"$shard", 
                        GroupName:srcGroupName, ReturnNum:insertNums}];
-                                     
-   var actExplains = getSplitExplain( dbclPrimary, findConf);
-   checkExplain( actExplains, expExplains );
-          
-   var actExplains = getSplitExplain( dbclSlave, findConf);
-   checkExplain( actExplains, expExplains );
+   var expExplains2 = [{ScanType:"ixscan", IndexName:"b", GroupName:srcGroupName, ReturnNum:insertNums},
+                       {ScanType:"ixscan", IndexName:"b", GroupName:destGroupName, ReturnNum:0}];
+                                                                                   
+   var actExplains1 = getSplitExplain( dbclPrimary, findConf1);
+   var actExplains2 = getSplitExplain( dbclPrimary, findConf2);
+   checkExplain( actExplains1, expExplains1 );
+   checkExplain( actExplains2, expExplains2 );
+                                              
+   var actExplains1 = getSplitExplain( dbclSlave, findConf1);
+   var actExplains2 = getSplitExplain( dbclSlave, findConf2);
+   checkExplain( actExplains1, expExplains1 );
+   checkExplain( actExplains2, expExplains2 );                        
                          
-   println("check result after default analyze !");
+   println("check result after default analyze with index !");
                                                  	
-   // modify SYSSTAT info
-   var mcvValues = [{a: 0},{a: 1},{a:9000}];
-   var fracs = [500,500,9000];
-   updateIndexStateInfo( db, csName, clName, "$shard", mcvValues, fracs );
+   // modify SYSSTAT info 
+   var mcvValues1 = [{a: 0},{a: 1},{a:9000}];
+   var fracs1 = [500,500,9000];
+   updateIndexStateInfo( db, csName, clName, "$shard", mcvValues1, fracs1 );  
+
+   var mcvValues2 = [{b: 0},{b: 1},{b:9000}];
+   var fracs2 = [500,500,9000];
+   updateIndexStateInfo( db, csName, clName, "b", mcvValues2, fracs2 );
                                                               	
-   // reload analyze again
-   var options = { Mode : 4, Collection : cl_full_name};
-   analyze( db, options );
-                                                 	
-   //check the query explain after analyze
+   // reload analyze 
+   var options1 = { Mode : 4, Collection : cl_full_name, Index:"$shard"};
+   analyze( db, options1 );
+   var options2 = { Mode : 4, Collection : cl_full_name, Index:"b"};
+   analyze( db, options2 );
+
    checkStat( db, csName, clName, "$shard", true, true );
-                                        
-   var findConf = {a : 9000};
-   var expExplains = [{ScanType:"tbscan", IndexName:"", 
+   checkStat( db, csName, clName, "b", true, true );
+                                                                 	
+   var findConf1 = {a : 9000};
+   var findConf2 = {b : 9000};   
+                              
+   var expExplains1 = [{ScanType:"tbscan", IndexName:"", 
                        GroupName:srcGroupName, ReturnNum:insertNums}];
-   
-   var actExplains = getSplitExplain( dbclPrimary, findConf);
-   checkExplain( actExplains, expExplains );
-   
-   var actExplains = getSplitExplain( dbclSlave, findConf);
-   checkExplain( actExplains, expExplains );
+   var expExplains2 = [{ScanType:"tbscan", IndexName:"", GroupName:srcGroupName, ReturnNum:insertNums},
+                       {ScanType:"tbscan", IndexName:"", GroupName:destGroupName, ReturnNum:0}];
+                                                                                   
+   var actExplains1 = getSplitExplain( dbclPrimary, findConf1);
+   var actExplains2 = getSplitExplain( dbclPrimary, findConf2);
+   checkExplain( actExplains1, expExplains1 );
+   checkExplain( actExplains2, expExplains2 );
+                                              
+   var actExplains1 = getSplitExplain( dbclSlave, findConf1);
+   var actExplains2 = getSplitExplain( dbclSlave, findConf2);
+   checkExplain( actExplains1, expExplains1 );
+   checkExplain( actExplains2, expExplains2 );             
                                  	
-   println("check result after reload analyze success!");
+   println("check result after reload analyze!");
                                               	
    //truncate invalidate
-   var options = { Mode : 5, Collection : cl_full_name };
-   analyze( db, options );
-                              	
-   //check analyze after truncate invalidate
+   var options1 = { Mode : 5, Collection : cl_full_name, Index:"$shard" };
+   analyze( db, options1 );
+   var options2 = { Mode : 5, Collection : cl_full_name, Index:"b" };
+   analyze( db, options2 );
+   
    checkStat( db, csName, clName, "$shard", true, true );
-                           
-   var findConf = {a : 9000};
-   var expExplains = [{ScanType:"tbscan", IndexName:"", 
+   checkStat( db, csName, clName, "b", true, true );
+                                                                 	
+   var findConf1 = {a : 9000};
+   var findConf2 = {b : 9000};   
+                              	
+   var expExplains1 = [{ScanType:"tbscan", IndexName:"", 
                        GroupName:srcGroupName, ReturnNum:insertNums}];
-                            		
-   var actExplains = getSplitExplain( dbclPrimary, findConf);
-   checkExplain( actExplains, expExplains );
-                                
-   var actExplains = getSplitExplain( dbclSlave, findConf);
-   checkExplain( actExplains, expExplains );
+   var expExplains2 = [{ScanType:"tbscan", IndexName:"", GroupName:srcGroupName, ReturnNum:insertNums},
+                       {ScanType:"tbscan", IndexName:"", GroupName:destGroupName, ReturnNum:0}];
+                                                                                   
+   var actExplains1 = getSplitExplain( dbclPrimary, findConf1);
+   var actExplains2 = getSplitExplain( dbclPrimary, findConf2);
+   checkExplain( actExplains1, expExplains1 );
+   checkExplain( actExplains2, expExplains2 );
+                                              
+   var actExplains1 = getSplitExplain( dbclSlave, findConf1);
+   var actExplains2 = getSplitExplain( dbclSlave, findConf2);
+   checkExplain( actExplains1, expExplains1 );
+   checkExplain( actExplains2, expExplains2 );           
                                                 	
    println("check result after truncate invalidate!");
    
    // modify SYSSTAT info again
-   var mcvValues = [{a: 0},{a: 1},{a:9000}];
-   var fracs = [500,500,500];
-   updateIndexStateInfo( db, csName, clName, "$shard", mcvValues, fracs );                                                    
+   var mcvValues1 = [{a: 0},{a: 1},{a:9000}];
+   var fracs1 = [500,500,500];
+   updateIndexStateInfo( db, csName, clName, "$shard", mcvValues1, fracs1 );  
+
+   var mcvValues2 = [{b: 0},{b: 1},{b:9000}];
+   var fracs2 = [500,500,500];
+   updateIndexStateInfo( db, csName, clName, "b", mcvValues2, fracs2 );      
+
+   var findConf1 = {a : 9000};
+   var findConf2 = {b : 9000};   
                                                  	
-   //check the query explain after analyze
-   checkStat( db, csName, clName, "$shard", true, true );
-                                        
-   var findConf = {a : 9000};
-   var expExplains = [{ScanType:"tbscan", IndexName:"", 
+   var expExplains1 = [{ScanType:"tbscan", IndexName:"", 
                        GroupName:srcGroupName, ReturnNum:insertNums}];
-   
-   var actExplains = getSplitExplain( dbclPrimary, findConf);
-   checkExplain( actExplains, expExplains );
-   
-   var actExplains = getSplitExplain( dbclSlave, findConf);
-   checkExplain( actExplains, expExplains );
+   var expExplains2 = [{ScanType:"tbscan", IndexName:"", GroupName:srcGroupName, ReturnNum:insertNums},
+                       {ScanType:"tbscan", IndexName:"", GroupName:destGroupName, ReturnNum:0}];
+                                                                                   
+   var actExplains1 = getSplitExplain( dbclPrimary, findConf1);
+   var actExplains2 = getSplitExplain( dbclPrimary, findConf2);
+   checkExplain( actExplains1, expExplains1 );
+   checkExplain( actExplains2, expExplains2 );
+                                              
+   var actExplains1 = getSplitExplain( dbclSlave, findConf1);
+   var actExplains2 = getSplitExplain( dbclSlave, findConf2);
+   checkExplain( actExplains1, expExplains1 );
+   checkExplain( actExplains2, expExplains2 );           
                                  	
-   println("check result after second modify SYS info success!");
+   println("check result after modify SYS info but without reload analyze!");
    
    //truncate invalidate
    var options = { Mode : 5, Collection : cl_full_name };
    analyze( db, options );
-                              	
-   //check analyze after truncate invalidate
+   
    checkStat( db, csName, clName, "$shard", true, true );
-                           
-   var findConf = {a : 9000};
-   var expExplains = [{ScanType:"ixscan", IndexName:"$shard", 
+   checkStat( db, csName, clName, "b", true, true );
+                                                                                    	
+   var findConf1 = {a : 9000};
+   var findConf2 = {b : 9000};
+   
+   var expExplains1 = [{ScanType:"ixscan", IndexName:"$shard", 
                        GroupName:srcGroupName, ReturnNum:insertNums}];
-                            		
-   var actExplains = getSplitExplain( dbclPrimary, findConf);
-   checkExplain( actExplains, expExplains );
-                                
-   var actExplains = getSplitExplain( dbclSlave, findConf);
-   checkExplain( actExplains, expExplains );
+   var expExplains2 = [{ScanType:"ixscan", IndexName:"b", GroupName:srcGroupName, ReturnNum:insertNums},
+                       {ScanType:"ixscan", IndexName:"b", GroupName:destGroupName, ReturnNum:0}];
+                                                                                   
+   var actExplains1 = getSplitExplain( dbclPrimary, findConf1);
+   var actExplains2 = getSplitExplain( dbclPrimary, findConf2);
+   checkExplain( actExplains1, expExplains1 );
+   checkExplain( actExplains2, expExplains2 );
+                                              
+   var actExplains1 = getSplitExplain( dbclSlave, findConf1);
+   var actExplains2 = getSplitExplain( dbclSlave, findConf2);
+   checkExplain( actExplains1, expExplains1 );
+   checkExplain( actExplains2, expExplains2 );                        
                                                 	
-   println("check result after second truncate invalidate!");
+   println("check result after truncate invalidate again!");
        
    db1.close();       
    commDropCS( db, csName, true, "drop CS in the end" );

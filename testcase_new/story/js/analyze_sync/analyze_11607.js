@@ -27,8 +27,6 @@ function main()
    commCreateCS( db, csName2, false, "" );
                                                                  	
    //create CLs
-   var dbcl = new Array();
-   
    var clName1 = COMMCLNAME + "11607_1";
    var dbCommCL1 = commCreateCLByOption( db, csName1, clName1 );
    var dbCommCL2 = commCreateCLByOption( db, csName2, clName1 );
@@ -105,6 +103,10 @@ function main()
    checkStat( db, csName2, clName2, "$shard", false, false );
    checkStat( db, csName1, clName3, "$shard", false, false );
    checkStat( db, csName2, clName3, "$shard", false, false );
+   checkStat( db, csName1, clName2, "b", false, false );
+   checkStat( db, csName2, clName2, "b", false, false );
+   checkStat( db, csName1, clName3, "b", false, false );
+   checkStat( db, csName2, clName3, "b", false, false );
                                                                   	
    //check the query explain of master/slave nodes 
    var groupsHash1 = getSplitGroups( csName1, clName2, 1 );
@@ -123,20 +125,35 @@ function main()
    var srcRangGroupName2 = groupsRang2[0].GroupName;
    var destRangGroupName2 = groupsRang2[1].GroupName;
                                                       	
-   var findConf = {a : 9000};
+   var findConf1 = {a : 9000};
+   var findConf2 = {b : 9000};
+   
    var expCommExplains = [{ScanType:"ixscan", IndexName:"a", ReturnNum:insertNums}];
    var expHashExplains1 = [{ScanType:"ixscan", IndexName:"$shard",GroupName :srcHashGroupName1, ReturnNum:insertNums}];
    var expHashExplains2 = [{ScanType:"ixscan", IndexName:"$shard",GroupName :srcHashGroupName2, ReturnNum:insertNums}];
    var expRangExplains1 = [{ScanType:"ixscan", IndexName:"$shard",GroupName :destRangGroupName1, ReturnNum:insertNums}];
    var expRangExplains2 = [{ScanType:"ixscan", IndexName:"$shard",GroupName :destRangGroupName2, ReturnNum:insertNums}];
 
+   var expHashExplains3 = [{ScanType:"ixscan", IndexName:"b",GroupName :srcHashGroupName1, ReturnNum:insertNums},
+                           {ScanType:"ixscan", IndexName:"b",GroupName :destHashGroupName1, ReturnNum:0}];                    	                     
+	var expHashExplains4 = [{ScanType:"ixscan", IndexName:"b",GroupName :srcHashGroupName2, ReturnNum:insertNums},
+	                        {ScanType:"ixscan", IndexName:"b",GroupName :destHashGroupName2, ReturnNum:0}];
+   var expRangExplains3 = [{ScanType:"ixscan", IndexName:"b",GroupName :srcRangGroupName1, ReturnNum:0},
+                           {ScanType:"ixscan", IndexName:"b",GroupName :destRangGroupName1, ReturnNum:insertNums}];                    	                     
+	var expRangExplains4 = [{ScanType:"ixscan", IndexName:"b",GroupName :srcRangGroupName2, ReturnNum:0},
+	                        {ScanType:"ixscan", IndexName:"b",GroupName :destRangGroupName2, ReturnNum:insertNums}];
+	                     
    //check primary
-   var actCommExplains1 = getCommonExplain( dbCommCLPrimary1, findConf); 
-   var actCommExplains2 = getCommonExplain( dbCommCLPrimary2, findConf); 
-   var actHashExplains1 = getSplitExplain( dbHashCLPrimary1, findConf); 
-   var actHashExplains2 = getSplitExplain( dbHashCLPrimary2, findConf); 
-   var actRangExplains1 = getSplitExplain( dbRangCLPrimary1, findConf); 
-   var actRangExplains2 = getSplitExplain( dbRangCLPrimary2, findConf); 
+   var actCommExplains1 = getCommonExplain( dbCommCLPrimary1, findConf1); 
+   var actCommExplains2 = getCommonExplain( dbCommCLPrimary2, findConf1); 
+   var actHashExplains1 = getSplitExplain( dbHashCLPrimary1, findConf1); 
+   var actHashExplains2 = getSplitExplain( dbHashCLPrimary2, findConf1); 
+   var actRangExplains1 = getSplitExplain( dbRangCLPrimary1, findConf1); 
+   var actRangExplains2 = getSplitExplain( dbRangCLPrimary2, findConf1); 
+   var actHashExplains3 = getSplitExplain( dbHashCLPrimary1, findConf2); 
+   var actHashExplains4 = getSplitExplain( dbHashCLPrimary2, findConf2); 
+   var actRangExplains3 = getSplitExplain( dbRangCLPrimary1, findConf2); 
+   var actRangExplains4 = getSplitExplain( dbRangCLPrimary2, findConf2); 
 
    checkExplain( actCommExplains1, expCommExplains );
    checkExplain( actCommExplains2, expCommExplains );
@@ -144,21 +161,34 @@ function main()
    checkExplain( actHashExplains2, expHashExplains2 );
    checkExplain( actRangExplains1, expRangExplains1 );
    checkExplain( actRangExplains2, expRangExplains2 );
+   checkExplain( actHashExplains3, expHashExplains3 );     
+   checkExplain( actHashExplains4, expHashExplains4 );
+   checkExplain( actRangExplains3, expRangExplains3 );
+   checkExplain( actRangExplains4, expRangExplains4 );
    
    //check slave
-   var actCommExplains1 = getCommonExplain( dbCommCLSlave1, findConf); 
-   var actCommExplains2 = getCommonExplain( dbCommCLSlave2, findConf); 
-   var actHashExplains1 = getSplitExplain( dbHashCLSlave1, findConf); 
-   var actHashExplains2 = getSplitExplain( dbHashCLSlave2, findConf); 
-   var actRangExplains1 = getSplitExplain( dbRangCLSlave1, findConf); 
-   var actRangExplains2 = getSplitExplain( dbRangCLSlave2, findConf); 
-
+   var actCommExplains1 = getCommonExplain( dbCommCLSlave1, findConf1); 
+   var actCommExplains2 = getCommonExplain( dbCommCLSlave2, findConf1); 
+   var actHashExplains1 = getSplitExplain( dbHashCLSlave1, findConf1); 
+   var actHashExplains2 = getSplitExplain( dbHashCLSlave2, findConf1); 
+   var actRangExplains1 = getSplitExplain( dbRangCLSlave1, findConf1); 
+   var actRangExplains2 = getSplitExplain( dbRangCLSlave2, findConf1); 
+   var actHashExplains3 = getSplitExplain( dbHashCLSlave1, findConf2); 
+   var actHashExplains4 = getSplitExplain( dbHashCLSlave2, findConf2); 
+   var actRangExplains3 = getSplitExplain( dbRangCLSlave1, findConf2); 
+   var actRangExplains4 = getSplitExplain( dbRangCLSlave2, findConf2); 
+   
    checkExplain( actCommExplains1, expCommExplains );
    checkExplain( actCommExplains2, expCommExplains );
    checkExplain( actHashExplains1, expHashExplains1 );                                                    	
    checkExplain( actHashExplains2, expHashExplains2 );
    checkExplain( actRangExplains1, expRangExplains1 );
    checkExplain( actRangExplains2, expRangExplains2 );
+   checkExplain( actRangExplains2, expRangExplains2 );
+   checkExplain( actHashExplains3, expHashExplains3 );                                                    	
+   checkExplain( actHashExplains4, expHashExplains4 );
+   checkExplain( actRangExplains3, expRangExplains3 );
+   checkExplain( actRangExplains4, expRangExplains4 );
                                                               	
    println("check result before analyze success!");
                    
@@ -172,22 +202,43 @@ function main()
    checkStat( db, csName2, clName2, "$shard", true, true );
    checkStat( db, csName1, clName3, "$shard", true, true );
    checkStat( db, csName2, clName3, "$shard", true, true );
+   checkStat( db, csName1, clName2, "b", true, true );
+   checkStat( db, csName2, clName2, "b", true, true );
+   checkStat( db, csName1, clName3, "b", true, true );
+   checkStat( db, csName2, clName3, "b", true, true );
                                                         
    //check the query explain of master/slave nodes 
-   var findConf = {a : 9000};
+   var findConf1 = {a : 9000};
+   var findConf2 = {b : 9000};
+   
    var expCommExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
    var expHashExplains1 = [{ScanType:"tbscan", IndexName:"",GroupName :srcHashGroupName1, ReturnNum:insertNums}];
    var expHashExplains2 = [{ScanType:"tbscan", IndexName:"",GroupName :srcHashGroupName2, ReturnNum:insertNums}];
    var expRangExplains1 = [{ScanType:"tbscan", IndexName:"",GroupName :destRangGroupName1, ReturnNum:insertNums}];
    var expRangExplains2 = [{ScanType:"tbscan", IndexName:"",GroupName :destRangGroupName2, ReturnNum:insertNums}];
-
+   
+   
+   var expHashExplains3 = [{ScanType:"tbscan", IndexName:"",GroupName :srcHashGroupName1, ReturnNum:insertNums},
+                           {ScanType:"ixscan", IndexName:"b",GroupName :destHashGroupName1, ReturnNum:0}];                    	                     
+	var expHashExplains4 = [{ScanType:"tbscan", IndexName:"",GroupName :srcHashGroupName2, ReturnNum:insertNums},
+	                        {ScanType:"ixscan", IndexName:"b",GroupName :destHashGroupName2, ReturnNum:0}];
+   var expRangExplains3 = [{ScanType:"ixscan", IndexName:"b",GroupName :srcRangGroupName1, ReturnNum:0},
+                           {ScanType:"tbscan", IndexName:"",GroupName :destRangGroupName1, ReturnNum:insertNums}];                    	                     
+	var expRangExplains4 = [{ScanType:"ixscan", IndexName:"b",GroupName :srcRangGroupName2, ReturnNum:0},
+	                        {ScanType:"tbscan", IndexName:"",GroupName :destRangGroupName2, ReturnNum:insertNums}];
+   
+   
    //check primary
-   var actCommExplains1 = getCommonExplain( dbCommCLPrimary1, findConf); 
-   var actCommExplains2 = getCommonExplain( dbCommCLPrimary2, findConf); 
-   var actHashExplains1 = getSplitExplain( dbHashCLPrimary1, findConf); 
-   var actHashExplains2 = getSplitExplain( dbHashCLPrimary2, findConf); 
-   var actRangExplains1 = getSplitExplain( dbRangCLPrimary1, findConf); 
-   var actRangExplains2 = getSplitExplain( dbRangCLPrimary2, findConf); 
+   var actCommExplains1 = getCommonExplain( dbCommCLPrimary1, findConf1); 
+   var actCommExplains2 = getCommonExplain( dbCommCLPrimary2, findConf1); 
+   var actHashExplains1 = getSplitExplain( dbHashCLPrimary1, findConf1); 
+   var actHashExplains2 = getSplitExplain( dbHashCLPrimary2, findConf1); 
+   var actRangExplains1 = getSplitExplain( dbRangCLPrimary1, findConf1); 
+   var actRangExplains2 = getSplitExplain( dbRangCLPrimary2, findConf1); 
+   var actHashExplains3 = getSplitExplain( dbHashCLPrimary1, findConf2); 
+   var actHashExplains4 = getSplitExplain( dbHashCLPrimary2, findConf2); 
+   var actRangExplains3 = getSplitExplain( dbRangCLPrimary1, findConf2); 
+   var actRangExplains4 = getSplitExplain( dbRangCLPrimary2, findConf2); 
 
    checkExplain( actCommExplains1, expCommExplains );
    checkExplain( actCommExplains2, expCommExplains );
@@ -195,14 +246,22 @@ function main()
    checkExplain( actHashExplains2, expHashExplains2 );
    checkExplain( actRangExplains1, expRangExplains1 );
    checkExplain( actRangExplains2, expRangExplains2 );
+   checkExplain( actHashExplains3, expHashExplains3 );      
+   checkExplain( actHashExplains4, expHashExplains4 );
+   checkExplain( actRangExplains3, expRangExplains3 );
+   checkExplain( actRangExplains4, expRangExplains4 );
    
    //check slave
-   var actCommExplains1 = getCommonExplain( dbCommCLSlave1, findConf); 
-   var actCommExplains2 = getCommonExplain( dbCommCLSlave2, findConf); 
-   var actHashExplains1 = getSplitExplain( dbHashCLSlave1, findConf); 
-   var actHashExplains2 = getSplitExplain( dbHashCLSlave2, findConf); 
-   var actRangExplains1 = getSplitExplain( dbRangCLSlave1, findConf); 
-   var actRangExplains2 = getSplitExplain( dbRangCLSlave2, findConf); 
+   var actCommExplains1 = getCommonExplain( dbCommCLSlave1, findConf1); 
+   var actCommExplains2 = getCommonExplain( dbCommCLSlave2, findConf1); 
+   var actHashExplains1 = getSplitExplain( dbHashCLSlave1, findConf1); 
+   var actHashExplains2 = getSplitExplain( dbHashCLSlave2, findConf1); 
+   var actRangExplains1 = getSplitExplain( dbRangCLSlave1, findConf1); 
+   var actRangExplains2 = getSplitExplain( dbRangCLSlave2, findConf1); 
+   var actHashExplains3 = getSplitExplain( dbHashCLSlave1, findConf2); 
+   var actHashExplains4 = getSplitExplain( dbHashCLSlave2, findConf2); 
+   var actRangExplains3 = getSplitExplain( dbRangCLSlave1, findConf2); 
+   var actRangExplains4 = getSplitExplain( dbRangCLSlave2, findConf2); 
 
    checkExplain( actCommExplains1, expCommExplains );
    checkExplain( actCommExplains2, expCommExplains );
@@ -210,7 +269,11 @@ function main()
    checkExplain( actHashExplains2, expHashExplains2 );
    checkExplain( actRangExplains1, expRangExplains1 );
    checkExplain( actRangExplains2, expRangExplains2 );
-                                                                  
+   checkExplain( actHashExplains3, expHashExplains3 );                                                    	
+   checkExplain( actHashExplains4, expHashExplains4 );
+   checkExplain( actRangExplains3, expRangExplains3 );
+   checkExplain( actRangExplains4, expRangExplains4 );
+                                                       
    println("check result after analyze success!");
      
    db1.close();     

@@ -51,6 +51,10 @@ function main()
    insertSameDatas( dbcl1, insertNums, sameValues );
    insertDiffDatas( dbcl2, insertNums );
    insertSameDatas( dbcl2, insertNums, sameValues );
+   
+   //create index
+   commCreateIndex( dbcl1, "b", {b : 1}, false );
+   commCreateIndex( dbcl2, "b", {b : 1}, false );
                                                               	
    //split cl
    ClSplitOneTimes( csName, clName1, 50 );
@@ -58,9 +62,9 @@ function main()
                                                        	
    //check before invoke analyze
    checkStat( db, csName, clName1, "$shard", false, false );
-   checkStat( db, csName, clName1, "bc", false, false );	
+   checkStat( db, csName, clName1, "b", false, false );	
    checkStat( db, csName, clName2, "$shard", false, false );
-   checkStat( db, csName, clName2, "bc", false, false );
+   checkStat( db, csName, clName2, "b", false, false );
                                                                   	
    //check the query explain of master/slave nodes 
    var groups1 = getSplitGroups( csName, clName1, 1 );
@@ -71,21 +75,36 @@ function main()
    var srcGroupName2 = groups2[0].GroupName;
    var destGroupName2 = groups2[1].GroupName;
                                                       	
-   var findConf = {a : 9000};
+   var findConf1 = {a : 9000};
+   var findConf2 = {b : 9000};
+   
    var expExplains1 = [{ScanType:"ixscan", IndexName:"$shard",
                         GroupName :srcGroupName1, ReturnNum:insertNums}];
-   var expExplains2 = [{ScanType:"ixscan", IndexName:"$shard",
-                        GroupName :destGroupName2, ReturnNum:insertNums}];
+   var expExplains2 = [{ScanType:"ixscan", IndexName:"b",GroupName :srcGroupName1, ReturnNum:insertNums},
+                       {ScanType:"ixscan", IndexName:"b",GroupName :destGroupName1, ReturnNum:0}];    
+   var expExplains3 = [{ScanType:"ixscan", IndexName:"$shard",GroupName :destGroupName2, ReturnNum:insertNums}];          
+   var expExplains4 = [{ScanType:"ixscan", IndexName:"b",GroupName :srcGroupName2, ReturnNum:0},
+                       {ScanType:"ixscan", IndexName:"b",GroupName :destGroupName2, ReturnNum:insertNums}];
 	
-   var actExplains1 = getSplitExplain( dbclPrimary1, findConf);
+   var actExplains1 = getSplitExplain( dbclPrimary1, findConf1);
+   var actExplains2 = getSplitExplain( dbclPrimary1, findConf2);
+   var actExplains3 = getSplitExplain( dbclPrimary2, findConf1);
+   var actExplains4 = getSplitExplain( dbclPrimary2, findConf2);
+   
    checkExplain( actExplains1, expExplains1 );
-   var actExplains2 = getSplitExplain( dbclPrimary2, findConf);
    checkExplain( actExplains2, expExplains2 );
+   checkExplain( actExplains3, expExplains3 );
+   checkExplain( actExplains4, expExplains4 );
                                                              	
-   var actExplains1 = getSplitExplain( dbclSlave1, findConf);
+   var actExplains1 = getSplitExplain( dbclSlave1, findConf1);
+   var actExplains2 = getSplitExplain( dbclSlave1, findConf2);
+   var actExplains3 = getSplitExplain( dbclSlave2, findConf1);
+   var actExplains4 = getSplitExplain( dbclSlave2, findConf2);
+   
    checkExplain( actExplains1, expExplains1 );
-   var actExplains2 = getSplitExplain( dbclSlave2, findConf);
    checkExplain( actExplains2, expExplains2 );
+   checkExplain( actExplains3, expExplains3 );
+   checkExplain( actExplains4, expExplains4 );
                                                               	
    println("check result before analyze success!");
                    
@@ -95,24 +114,41 @@ function main()
                                                              
    //check after analyze
    checkStat( db, csName, clName1, "$shard", true, true );
+   checkStat( db, csName, clName1, "b", true, true );	
    checkStat( db, csName, clName2, "$shard", true, true );
+   checkStat( db, csName, clName2, "b", true, true );
                                                         
    //check the query explain of master/slave nodes 
-   var findConf = {a : 9000};
+   var findConf1 = {a : 9000};
+   var findConf2 = {b : 9000};
+   
    var expExplains1 = [{ScanType:"tbscan", IndexName:"",
                         GroupName :srcGroupName1, ReturnNum:insertNums}];
-   var expExplains2 = [{ScanType:"tbscan", IndexName:"",
-                        GroupName :destGroupName2, ReturnNum:insertNums}];
-                                                                          	
-   var actExplains1 = getSplitExplain( dbclPrimary1, findConf);
+   var expExplains2 = [{ScanType:"tbscan", IndexName:"",GroupName :srcGroupName1, ReturnNum:insertNums},
+                       {ScanType:"ixscan", IndexName:"b",GroupName :destGroupName1, ReturnNum:0}];    
+   var expExplains3 = [{ScanType:"tbscan", IndexName:"",GroupName :destGroupName2, ReturnNum:insertNums}];          
+   var expExplains4 = [{ScanType:"ixscan", IndexName:"b",GroupName :srcGroupName2, ReturnNum:0},
+                       {ScanType:"tbscan", IndexName:"",GroupName :destGroupName2, ReturnNum:insertNums}];
+	
+   var actExplains1 = getSplitExplain( dbclPrimary1, findConf1);
+   var actExplains2 = getSplitExplain( dbclPrimary1, findConf2);
+   var actExplains3 = getSplitExplain( dbclPrimary2, findConf1);
+   var actExplains4 = getSplitExplain( dbclPrimary2, findConf2);
+   
    checkExplain( actExplains1, expExplains1 );
-   var actExplains2 = getSplitExplain( dbclPrimary2, findConf);
    checkExplain( actExplains2, expExplains2 );
-                                                                           	
-   var actExplains1 = getSplitExplain( dbclSlave1, findConf);
+   checkExplain( actExplains3, expExplains3 );
+   checkExplain( actExplains4, expExplains4 );
+                                                             	
+   var actExplains1 = getSplitExplain( dbclSlave1, findConf1);
+   var actExplains2 = getSplitExplain( dbclSlave1, findConf2);
+   var actExplains3 = getSplitExplain( dbclSlave2, findConf1);
+   var actExplains4 = getSplitExplain( dbclSlave2, findConf2);
+   
    checkExplain( actExplains1, expExplains1 );
-   var actExplains2 = getSplitExplain( dbclSlave2, findConf);
    checkExplain( actExplains2, expExplains2 );
+   checkExplain( actExplains3, expExplains3 );
+   checkExplain( actExplains4, expExplains4 );
                                                                   
    println("check result after analyze success!");
        
