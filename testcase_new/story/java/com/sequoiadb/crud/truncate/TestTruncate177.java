@@ -107,7 +107,7 @@ public class TestTruncate177 extends SdbTestBase {
                 // doing remove
                 cl.delete("");
             }catch(BaseException e){
-                if(e.getErrorCode() != -23){
+                if(e.getErrorCode() != -321){
                     throw e;
                 }
             }finally{

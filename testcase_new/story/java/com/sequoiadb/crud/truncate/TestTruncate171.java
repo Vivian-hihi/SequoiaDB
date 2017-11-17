@@ -126,7 +126,7 @@ public class TestTruncate171 extends SdbTestBase {
                 // check split
                 checkSplit(db, srcGroupName, dstGroupName);
             }catch(BaseException e){
-                if(e.getErrorCode() != -23){
+                if(e.getErrorCode() != -321){
                     throw e;
                 }
             }finally{

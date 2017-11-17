@@ -118,7 +118,7 @@ public class TestTruncate176 extends SdbTestBase {
                 // doing upsert            
                 cl.upsert(null, modifier, null);
             }catch(BaseException e){
-                if(e.getErrorCode() != -23){
+                if(e.getErrorCode() != -321){
                     throw e;
                 }
             }finally{

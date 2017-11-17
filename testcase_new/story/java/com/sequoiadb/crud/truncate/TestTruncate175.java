@@ -112,7 +112,7 @@ public class TestTruncate175 extends SdbTestBase {
                 // doing update
                 cl.update(null, modifier, null);
             }catch(BaseException e){
-                if(e.getErrorCode() != -23){
+                if(e.getErrorCode() != -321){
                     throw e;
                 }
             }finally{

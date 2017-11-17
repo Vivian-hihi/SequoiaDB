@@ -84,7 +84,7 @@ public class TestTruncate174 extends SdbTestBase {
                 // doing truncate
                 cl.truncate();
             }catch(BaseException e){
-                if(e.getErrorCode() != -23){
+                if(e.getErrorCode() != -321){
                     throw e;
                 }
             }finally{
