@@ -816,7 +816,7 @@ public class DBLobTest {
         for (int i = beg; i < end; i++) {
             try {
                 Assert.assertEquals(content_bytes[i], output_bytes[i]);
-            } catch (Exception e) {
+            } catch (AssertionError e) {
                 String errmsg = String.format("expect: %d, actual: %d, beg: %d, end: %d, len: %d, i: %d", content_bytes[i], output_bytes[i], beg, end, len, i);
                 System.out.println("errmsg is: " + errmsg);
                 throw e;

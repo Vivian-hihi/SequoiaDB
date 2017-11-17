@@ -57,7 +57,7 @@ public class InsertRequest extends SdbRequest {
             throw new BaseException(SDBError.SDB_INVALIDARG, "doc is null");
         }
 
-        docsBytes = new ArrayList<>(1);
+        docsBytes = new ArrayList<byte[]>(1);
         byte[] docBytes = Helper.encodeBSONObj(doc);
         docsBytes.add(docBytes);
         length += Helper.alignedSize(docBytes.length);
@@ -72,7 +72,7 @@ public class InsertRequest extends SdbRequest {
             throw new BaseException(SDBError.SDB_INVALIDARG, "docs is null or empty");
         }
 
-        docsBytes = new ArrayList<>(docs.size());
+        docsBytes = new ArrayList<byte[]>(docs.size());
         for (BSONObject doc : docs) {
             if (ensureOID && !doc.containsField(OID)) {
                 doc.put(OID, ObjectId.get());

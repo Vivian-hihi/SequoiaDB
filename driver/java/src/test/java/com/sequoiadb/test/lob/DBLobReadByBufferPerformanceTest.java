@@ -115,8 +115,11 @@ public class DBLobReadByBufferPerformanceTest {
             try {
                 db = ds.getConnection();
                 coll = db.getCollectionSpace(csName).getCollection(clName);
-            } catch (BaseException | InterruptedException e1) {
-                e1.printStackTrace();
+            } catch (BaseException e) {
+                e.printStackTrace();
+                Assert.fail();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
                 Assert.fail();
             }
 

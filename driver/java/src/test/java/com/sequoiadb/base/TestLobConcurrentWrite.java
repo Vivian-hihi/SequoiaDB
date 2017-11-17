@@ -69,19 +69,25 @@ public class TestLobConcurrentWrite extends SingleCSCLTestCase {
             System.out.println(
                 String.format("Index[%d]: offset=%d, length=%d",
                     index, offset, length));
-            try (Sequoiadb sdb = new Sequoiadb(TestConfig.getSingleHost(),
+            Sequoiadb sdb = new Sequoiadb(TestConfig.getSingleHost(),
                 Integer.valueOf(TestConfig.getSinglePort()),
                 TestConfig.getSingleUsername(),
-                TestConfig.getSinglePassword())) {
+                TestConfig.getSinglePassword());
+            try {
                 DBCollection cl = sdb.getCollectionSpace(csName)
                     .getCollection(clName);
-                try (DBLob lob = cl.openLob(id, DBLob.SDB_LOB_WRITE)) {
+                DBLob lob = cl.openLob(id, DBLob.SDB_LOB_WRITE);
+                try {
                     lob.lockAndSeek(offset, length);
                     lob.write(data, offset, length);
+                } finally {
+                    lob.close();
                 }
             } catch (Exception e) {
                 throw new RuntimeException(
                     String.format("Index[%d]: offset=%d, length=%d", index, offset, length), e);
+            } finally {
+                sdb.close();
             }
         }
     }
@@ -96,7 +102,7 @@ public class TestLobConcurrentWrite extends SingleCSCLTestCase {
         ObjectId id = ObjectId.get();
         DBLob lob = cl.createLob(id);
 
-        ArrayList<LobSeekWriter> list = new ArrayList<>();
+        ArrayList<LobSeekWriter> list = new ArrayList<LobSeekWriter>();
         int step = 1024 * 211 - 10 + new Random().nextInt(20);
         int offset = 0;
         int taskId = 0;
@@ -160,7 +166,7 @@ public class TestLobConcurrentWrite extends SingleCSCLTestCase {
         DBLob lob = cl.createLob(id);
         lob.close();
 
-        ArrayList<LobWriter> list = new ArrayList<>();
+        ArrayList<LobWriter> list = new ArrayList<LobWriter>();
         int step = 1024 * 211 - 10 + new Random().nextInt(20);
         int offset = 0;
         int taskId = 0;
@@ -174,7 +180,7 @@ public class TestLobConcurrentWrite extends SingleCSCLTestCase {
             offset += length;
         }
         Collections.shuffle(list);
-        ConcurrentLinkedQueue<LobWriter> queue = new ConcurrentLinkedQueue<>(list);
+        ConcurrentLinkedQueue<LobWriter> queue = new ConcurrentLinkedQueue<LobWriter>(list);
 
         PerfTimer timer = new PerfTimer();
         timer.start();
@@ -228,7 +234,7 @@ public class TestLobConcurrentWrite extends SingleCSCLTestCase {
         DBLob lob = cl.createLob(id);
         lob.close();
 
-        ArrayList<LobWriter> list = new ArrayList<>();
+        ArrayList<LobWriter> list = new ArrayList<LobWriter>();
         int step = 1024 * 211 - 10 + new Random().nextInt(20);
         int offset = 0;
         int taskId = 0;
@@ -242,7 +248,7 @@ public class TestLobConcurrentWrite extends SingleCSCLTestCase {
             offset += length;
         }
         Collections.shuffle(list);
-        final ConcurrentLinkedQueue<LobWriter> queue = new ConcurrentLinkedQueue<>(list);
+        final ConcurrentLinkedQueue<LobWriter> queue = new ConcurrentLinkedQueue<LobWriter>(list);
 
         final int threadNum = Math.min(7, list.size());
         Thread[] threads = new Thread[threadNum];

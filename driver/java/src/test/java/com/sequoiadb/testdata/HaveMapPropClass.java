@@ -1,8 +1,8 @@
 package com.sequoiadb.testdata;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 public class HaveMapPropClass {
     private Map<String, String> mapProp = null;
@@ -36,7 +36,8 @@ public class HaveMapPropClass {
 
     @Override
     public int hashCode() {
-        return Objects.hash(mapProp, userMap);
+        Object[] objects = new Object[]{mapProp, userMap};
+        return Arrays.hashCode(objects);
     }
 
     @Override

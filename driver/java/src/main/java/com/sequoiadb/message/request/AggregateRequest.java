@@ -51,7 +51,7 @@ public class AggregateRequest extends SdbRequest {
         this.collectionName = collectionName;
         length += Helper.alignedSize(collectionName.length() + 1);
 
-        objsBytes = new ArrayList<>(objects.size());
+        objsBytes = new ArrayList<byte[]>(objects.size());
         for (BSONObject obj : objects) {
             byte[] objBytes = Helper.encodeBSONObj(obj);
             objsBytes.add(objBytes);

@@ -1,6 +1,6 @@
 package com.sequoiadb.testdata;
 
-import java.util.Objects;
+import java.util.Arrays;
 
 public class Student {
     public int age;
@@ -39,7 +39,8 @@ public class Student {
 
     @Override
     public int hashCode() {
-        return Objects.hash(age, name);
+        Object[] objects = new Object[]{age, name};
+        return Arrays.hashCode(objects);
     }
 
     @Override

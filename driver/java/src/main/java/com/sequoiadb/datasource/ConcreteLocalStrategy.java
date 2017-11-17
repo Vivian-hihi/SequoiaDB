@@ -10,7 +10,7 @@ import java.util.*;
 
 class ConcreteLocalStrategy extends AbstractStrategy {
     private Random _rand = new Random(47);
-    private List<String> _localCoordAddrs = new ArrayList<>();
+    private List<String> _localCoordAddrs = new ArrayList<String>();
     private Set<String> _localNetCardIPs = new HashSet<String>();
 
     @Override

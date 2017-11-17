@@ -43,7 +43,7 @@ public class TestAggregate extends SingleCSCLTestCase {
         BSONObject obj = new BasicBSONObject();
         obj.put("$group", group);
 
-        List<BSONObject> list = new ArrayList<>();
+        List<BSONObject> list = new ArrayList<BSONObject>();
         list.add(obj);
         DBCursor cursor = cl.aggregate(list);
         assertTrue(cursor.hasNext());

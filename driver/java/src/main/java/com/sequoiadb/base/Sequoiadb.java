@@ -53,7 +53,7 @@ public class Sequoiadb implements Closeable {
     private long lastUseTime;
 
     // cache cs/cl name
-    private Map<String, Long> nameCache = new HashMap<>();
+    private Map<String, Long> nameCache = new HashMap<String, Long>();
     private static boolean enableCache = true;
     private static long cacheInterval = 300 * 1000;
 
@@ -195,7 +195,7 @@ public class Sequoiadb implements Closeable {
      * @return Host of SequoiaDB server.
      */
     public String getHost() {
-        return socketAddress.getHostString();
+        return socketAddress.getHostName();
     }
 
     /**
@@ -301,7 +301,7 @@ public class Sequoiadb implements Closeable {
             throw new BaseException(SDBError.SDB_INVALIDARG, "connStrings is null");
         }
 
-        List<String> list = new ArrayList<>();
+        List<String> list = new ArrayList<String>();
         for (String str : connStrings) {
             if (str != null && !str.isEmpty()) {
                 list.add(str);
@@ -439,7 +439,7 @@ public class Sequoiadb implements Closeable {
 
         try {
             throwIfError(response, "failed to authenticate " + userName);
-        } catch (Exception e){
+        } catch (BaseException e){
             close();
             throw e;
         }

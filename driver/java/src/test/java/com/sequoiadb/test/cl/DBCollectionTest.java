@@ -473,7 +473,7 @@ public class DBCollectionTest {
         popOption.put("LogicalID", 1024);
         clCapped.pop(popOption);
         BSONObject record = clCapped.queryOne();
-        assertEquals(2048, (long)( record.get("_id")));
+        assertEquals(2048, ((Long)( record.get("_id"))).longValue());
 
         BSONObject popOption2 = new BasicBSONObject();
         popOption2.put("LogicalID", 2048);
