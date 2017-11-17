@@ -376,7 +376,7 @@ function checkExplain( actExplains, expExplains )
    {
       if(JSON.stringify(actExplains).indexOf(JSON.stringify(expExplains[i])) === -1)
       {
-         throw buildException("checkMainclExplain", "CHECK_EXPLAIN_FAIL", "check explain failed!", 
+         throw buildException("checkExplain", "CHECK_EXPLAIN_FAIL", "check explain failed!", 
 	   		                  JSON.stringify(expExplains[i]), JSON.stringify(actExplains));
       }
    }
