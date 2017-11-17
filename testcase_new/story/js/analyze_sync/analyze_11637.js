@@ -1,0 +1,274 @@
+/************************************
+*@Description:  指定2个参数组合收集统计信息  
+*@author:      liuxiaoxuan
+*@createdate:  2017.11.11
+*@testlinkCase: seqDB-11637
+**************************************/
+function main()
+{	
+   if (commIsStandalone(db))
+   {
+      println("skip standalone environment");
+      return ;
+   }
+                                         	
+   var csName = COMMCSNAME + "11637";
+   commDropCS( db, csName, true, "drop CS in the beginning" );
+                                            	
+   commCreateCS( db, csName, false, "" );
+                                            		
+   //create cl	
+   var clName = COMMCLNAME + "11637";
+   var dbcl = commCreateCL( db, csName, clName );
+          
+   //get master/slave datanode          
+   var db1 = new Sdb(db);
+   db1.setSessionAttr( {PreferedInstance: "m"} );
+   var dbclPrimary = db1.getCS(csName).getCL(clName);
+   
+   db1 = new Sdb(db);
+   db1.setSessionAttr( {PreferedInstance: "s"} );
+   var dbclSlave = db1.getCS(csName).getCL(clName);
+                                                 	
+   //insert datas
+   var insertNums = 3000;
+   var sameValues = 9000;
+                               	
+   insertDiffDatas( dbcl, insertNums );
+   insertSameDatas( dbcl, insertNums, sameValues );
+                                                    	
+   //create index
+   commCreateIndex( dbcl, "a", {a : 1}, false );
+                                                 	
+   //get Group and Node info
+   var groupName = commGetCLGroups( db, csName + "." + clName );
+   var groupDetail = commGetGroups( db, false, groupName[0] );
+                                 	
+   var groupId = groupDetail[0][0].GroupID;
+   var priNodeId = groupDetail[0][0].PrimaryNode;
+                                             	
+   //check before analyze success
+   checkStat( db, csName, clName, "a", false, false );
+                                          	
+   //check the query explain before analyze
+   var findConf = {a : 9000};
+   var expExplains = [{ScanType:"ixscan", IndexName:"a", ReturnNum:insertNums}];
+                                                              
+   var actExplains = getCommonExplain( dbclPrimary, findConf);
+   checkExplain( actExplains, expExplains );
+                                                            
+   var actExplains = getCommonExplain( dbclSlave, findConf);
+   checkExplain( actExplains, expExplains );
+                                                        	
+   println("check result before analyze success!");
+                                                     	
+   //analyze with cs+group
+   var options = { CollectionSpace : csName, GroupID : groupId };
+   analyze( db, options );
+   
+   //check after analyze success with cs+group
+   checkStat( db, csName, clName, "a", true, true );
+                                                 	
+   //check the query explain after analyze
+   var findConf = {a : 9000};
+   var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
+   
+   var actExplains = getCommonExplain( dbclPrimary, findConf);
+   checkExplain( actExplains, expExplains );
+   
+   var actExplains = getCommonExplain( dbclSlave, findConf);
+   checkExplain( actExplains, expExplains );
+                                   	
+   println("check result after analyze success with options cs+group!");
+   
+    //truncate analyze info
+   var options = { Mode : 3, Collection : csName + "." + clName };
+   analyze( db, options );               
+
+   //check after truncate        
+   checkStat( db, csName, clName, "a", true, false );
+                                               	
+   var findConf = {a : 9000};
+   var expExplains = [{ScanType:"ixscan", IndexName:"a", ReturnNum:insertNums}];
+                                                           
+   var actExplains = getCommonExplain( dbclPrimary, findConf);
+   checkExplain( actExplains, expExplains );
+                                             
+   var actExplains = getCommonExplain( dbclSlave, findConf);
+   checkExplain( actExplains, expExplains );
+
+   //analyze with cs+node
+   var options = { CollectionSpace : csName, NodeID : priNodeId };
+   analyze( db, options );
+   
+   //check after analyze success with cs+node
+   checkStat( db, csName, clName, "a", true, true );
+                                                 	
+   //check the query explain after analyze
+   var findConf = {a : 9000};
+   var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
+   
+   var actExplains = getCommonExplain( dbclPrimary, findConf);
+   checkExplain( actExplains, expExplains );
+   
+   var actExplains = getCommonExplain( dbclSlave, findConf);
+   checkExplain( actExplains, expExplains );
+                                   	
+   println("check result after analyze success with options cs+node!");
+   
+    //truncate analyze info
+   var options = { Mode : 3, Collection : csName + "." + clName };
+   analyze( db, options );               
+
+   //check after truncate        
+   checkStat( db, csName, clName, "a", true, false );
+                                               	
+   var findConf = {a : 9000};
+   var expExplains = [{ScanType:"ixscan", IndexName:"a", ReturnNum:insertNums}];
+                                                           
+   var actExplains = getCommonExplain( dbclPrimary, findConf);
+   checkExplain( actExplains, expExplains );
+                                             
+   var actExplains = getCommonExplain( dbclSlave, findConf);
+   checkExplain( actExplains, expExplains );
+  
+   //analyze with cl+group
+   var options = { Collection : csName + "." + clName, GroupName : groupName[0] };
+   analyze( db, options );
+   
+   //check after analyze success with cl+group
+   checkStat( db, csName, clName, "a", true, true );
+                                                 	
+   //check the query explain after analyze
+   var findConf = {a : 9000};
+   var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
+   
+   var actExplains = getCommonExplain( dbclPrimary, findConf);
+   checkExplain( actExplains, expExplains );
+   
+   var actExplains = getCommonExplain( dbclSlave, findConf);
+   checkExplain( actExplains, expExplains );
+                                   	
+   println("check result after analyze success with options cl+group!");
+   
+   //truncate analyze info
+   var options = { Mode : 3, Collection : csName + "." + clName };
+   analyze( db, options );               
+
+   //check after truncate        
+   checkStat( db, csName, clName, "a", true, false );
+                                               	
+   var findConf = {a : 9000};
+   var expExplains = [{ScanType:"ixscan", IndexName:"a", ReturnNum:insertNums}];
+                                                           
+   var actExplains = getCommonExplain( dbclPrimary, findConf);
+   checkExplain( actExplains, expExplains );
+                                             
+   var actExplains = getCommonExplain( dbclSlave, findConf);
+   checkExplain( actExplains, expExplains );
+   
+   //analyze with cl+node
+   var options = { Collection : csName + "." + clName, NodeID : priNodeId };
+   analyze( db, options );
+   
+   //check after analyze success with cl+node
+   checkStat( db, csName, clName, "a", true, true );
+                                                 	
+   //check the query explain after analyze
+   var findConf = {a : 9000};
+   var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
+   
+   var actExplains = getCommonExplain( dbclPrimary, findConf);
+   checkExplain( actExplains, expExplains );
+   
+   var actExplains = getCommonExplain( dbclSlave, findConf);
+   checkExplain( actExplains, expExplains );
+                                   	
+   println("check result after analyze success with options cl+node!");
+   
+   //truncate analyze info
+   var options = { Mode : 3, Collection : csName + "." + clName };
+   analyze( db, options );               
+
+   //check after truncate        
+   checkStat( db, csName, clName, "a", true, false );
+                                               	
+   var findConf = {a : 9000};
+   var expExplains = [{ScanType:"ixscan", IndexName:"a", ReturnNum:insertNums}];
+                                                           
+   var actExplains = getCommonExplain( dbclPrimary, findConf);
+   checkExplain( actExplains, expExplains );
+                                             
+   var actExplains = getCommonExplain( dbclSlave, findConf);
+   checkExplain( actExplains, expExplains );
+   
+   //analyze with group+node
+   var options = { GroupID : groupId, NodeID : priNodeId };
+   analyze( db, options );
+   
+   //check after analyze success with group+node
+   checkStat( db, csName, clName, "a", true, true );
+                                                 	
+   //check the query explain after analyze
+   var findConf = {a : 9000};
+   var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
+   
+   var actExplains = getCommonExplain( dbclPrimary, findConf);
+   checkExplain( actExplains, expExplains );
+   
+   var actExplains = getCommonExplain( dbclSlave, findConf);
+   checkExplain( actExplains, expExplains );
+                                   	
+   println("check result after analyze success with options group+node!");
+   
+   //truncate analyze info
+   var options = { Mode : 3, Collection : csName + "." + clName };
+   analyze( db, options );               
+
+   //check after truncate        
+   checkStat( db, csName, clName, "a", true, false );
+                                               	
+   var findConf = {a : 9000};
+   var expExplains = [{ScanType:"ixscan", IndexName:"a", ReturnNum:insertNums}];
+                                                           
+   var actExplains = getCommonExplain( dbclPrimary, findConf);
+   checkExplain( actExplains, expExplains );
+                                             
+   var actExplains = getCommonExplain( dbclSlave, findConf);
+   checkExplain( actExplains, expExplains );                                                                           
+                                         	
+   //check invalid analyze, cs+cl, cs+index, index+group, index+node
+   var options = [{ CollectionSpace : csName, Collection : csName + "." + clName},
+                  { CollectionSpace : csName, Index : "a"},
+                  { Index : "a", GroupID : groupId },
+                  { Index : "a", GroupName : groupName[0] },
+                  { Index : "a", NodeID : priNodeId }];
+                                                   
+   for(var i in options)
+   {
+      checkAnalyzeInvalidResult( options[i] );
+   }
+     
+   println("check invalid analyze success!");  
+     
+   db1.close();     
+   commDropCS( db, csName, true, "drop CS in the end" ); 
+}
+
+function checkAnalyzeInvalidResult( options )
+{  
+   try
+   {
+      db.analyze( options );
+      throw "NEED ANALYZE FAILED";
+   }
+   catch(e)
+   {
+      if( -6 !== e )
+      {
+         throw buildException("check analyze", e, "analyze", "analyze success", e);
+      }
+   }
+}
+
+main();

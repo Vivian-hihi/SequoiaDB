@@ -11,6 +11,12 @@ function main()
       println("skip standalone environment");
       return ;
    }
+   
+   if (2 > commGetGroupsNum(db))
+   {
+      println("skip one group");
+      return ;
+   }
                                       	
    var csName = COMMCSNAME + "11638";
    commDropCS( db, csName, true, "drop CS in the beginning" );
@@ -48,7 +54,6 @@ function main()
    //check analyze 
    checkStat( db, csName, clName, "a", true, true );
                                                	
-   //check the query explain before analyze
    var findConf = {a : 9000};
    var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
                                                            
@@ -57,9 +62,7 @@ function main()
                                              
    var actExplains = getCommonExplain( dbclSlave, findConf);
    checkExplain( actExplains, expExplains );
-                                      	
-   println("check result before default analyze!"); 
-                                                    
+                                      	                                                    
    //get Group and Node info
    var groupName = commGetCLGroups( db, csName + "." + clName );
    var groupDetail = commGetGroups( db, false, groupName );
@@ -67,19 +70,13 @@ function main()
    var groupId = groupDetail[0][0].GroupID;
    var priNodeId = groupDetail[0][0].PrimaryNode;
                                                 	
-   //generate default analyze info
-   var options = [{ Mode : 3, Collection : cl_full_name, GroupName : groupName},
-                  { Mode : 3, Collection : cl_full_name, NodeID : priNodeId}];
+   //generate default analyze info with cl+group
+   var options = { Mode : 3, Collection : cl_full_name, GroupName : groupName};
+   analyze( db, options );           
                                                            						
-   for(var i in options)
-   {
-      analyze( db, options[i] );
-   }
-                                      	
-   //check after analyze success
+   //check after default analyze success with cl+group
    checkStat( db, csName, clName, "a", true, false );
                                                                                                  	
-   //check the query explain after analyze
    var findConf = {a : 9000};
    var expExplains = [{ScanType:"ixscan", IndexName:"a", ReturnNum:insertNums}];
                                                               
@@ -89,27 +86,17 @@ function main()
    var actExplains = getCommonExplain( dbclSlave, findConf);
    checkExplain( actExplains, expExplains );
                                                 	
-   println("check result after default analyze!");
-                                                     	
-   //modify SYS info
+   println("check result after default analyze with cl+group!");
+   
+   //modify and reload analyze with cl+group
    var mcvValues = [{a: 0},{a: 1},{a:9000}];
    var fracs = [500,500,9000];
    updateIndexStateInfo( db, csName, clName, "a", mcvValues, fracs );
-                  
-   //cs+cl、cs+index、cs+group、cs+node、cl+group、cl+node、index+group、index+nod、group+node               
-   //reload analyze info
-   var options = [{ Mode : 4, Collection : cl_full_name, GroupName : groupName },
-                  { Mode : 4, Collection : cl_full_name, NodeID : priNodeId },
-                  { Mode : 4, CollectionSpace : csName, GroupName : groupName },
-                  { Mode : 4, CollectionSpace : csName, NodeID : priNodeId },
-                  { Mode : 4, GroupID : groupId, NodeID : priNodeId }];
-                  
-   for(var i in options)
-   {
-      analyze( db, options[i] );
-   }
-                                  	
-   //check after reload analyze info
+   
+   var options = { Mode : 4, Collection : cl_full_name, GroupName : groupName };
+   analyze( db, options );              
+     
+   //check after reload analyze with cl+group
    checkStat( db, csName, clName, "a", true, true );
                                                	
    //check the query explain after analyze
@@ -122,44 +109,33 @@ function main()
    var actExplains = getCommonExplain( dbclSlave, findConf);
    checkExplain( actExplains, expExplains );
                                                  	
-   println("check result after reload analyze!");
+   println("check result after reload analyze with cl+group!");
    
-   //truncate invalidate
-   var options = [{ Mode : 5, Collection : cl_full_name, GroupName : groupName },
-                  { Mode : 5, Collection : cl_full_name, NodeID : priNodeId },
-                  { Mode : 5, CollectionSpace : csName, GroupName : groupName },
-                  { Mode : 5, CollectionSpace : csName, NodeID : priNodeId },
-                  { Mode : 5, GroupID : groupId, NodeID : priNodeId }];
-                  
-   for(var i in options)
-   {
-      analyze( db, options[i] );
-   }
-                              	
-   //check analyze after truncate invalidate
+   //truncate invalidate with cl+group
+   var options = { Mode : 5, Collection : cl_full_name, GroupName : groupName };
+   analyze( db, options );             
+                                          	
+   //check analyze after truncate invalidate with cl+group
    checkStat( db, csName, clName, "a", true, true );
                            
    var findConf = {a : 9000};
    var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
-                        
-                            		
+                                                    		
    var actExplains = getCommonExplain( dbclPrimary, findConf);
    checkExplain( actExplains, expExplains );
                                 
    var actExplains = getCommonExplain( dbclSlave, findConf);
    checkExplain( actExplains, expExplains );
                                                 	
-   println("check result after truncate invalidate!");
+   println("check result after truncate invalidate with cl+group!");
    
-   //modify SYS info again
+   //modify SYS info again 
    var mcvValues = [{a: 0},{a: 1},{a:9000}];
    var fracs = [500,500,500];
    updateIndexStateInfo( db, csName, clName, "a", mcvValues, fracs );
                                  	
-   //check after reload analyze info
    checkStat( db, csName, clName, "a", true, true );
                                                	
-   //check the query explain after analyze
    var findConf = {a : 9000};
    var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
                                              
@@ -169,18 +145,17 @@ function main()
    var actExplains = getCommonExplain( dbclSlave, findConf);
    checkExplain( actExplains, expExplains );
                                                  	
-   println("check result after second modify SYS info!");
+   println("check result modify SYS info without analyze!");
    
-   //truncate invalidate again
-   var options = { Mode : 5, Collection : cl_full_name };
+   //truncate invalidate again with cs+group
+   var options = { Mode : 5, CollectionSpace : csName, GroupName : groupName };
    analyze( db, options );
                               	
-   //check analyze after truncate invalidate
+   //check analyze after truncate invalidate with cs+group
    checkStat( db, csName, clName, "a", true, true );
                            
    var findConf = {a : 9000};
-   var expExplains = [{ScanType:"ixscan", IndexName:"a", ReturnNum:insertNums}];
-                       
+   var expExplains = [{ScanType:"ixscan", IndexName:"a", ReturnNum:insertNums}];               
                             		
    var actExplains = getCommonExplain( dbclPrimary, findConf);
    checkExplain( actExplains, expExplains );
@@ -188,8 +163,106 @@ function main()
    var actExplains = getCommonExplain( dbclSlave, findConf);
    checkExplain( actExplains, expExplains );
                                                 	
-   println("check result after second truncate invalidate!");
-                                                    	
+   println("check truncate invalidate end with cs+group!");
+   
+   //generate default analyze info with cl+node
+   var options = { Mode : 3, Collection : cl_full_name, NodeID : priNodeId};
+   analyze( db, options );           
+                                                           						
+   //check after default analyze success with cl+node
+   checkStat( db, csName, clName, "a", true, false );
+                                                                                                 	
+   var findConf = {a : 9000};
+   var expExplains = [{ScanType:"ixscan", IndexName:"a", ReturnNum:insertNums}];
+                                                              
+   var actExplains = getCommonExplain( dbclPrimary, findConf);
+   checkExplain( actExplains, expExplains );
+                                                
+   var actExplains = getCommonExplain( dbclSlave, findConf);
+   checkExplain( actExplains, expExplains );
+                                                	
+   println("check result after default analyze with cl+node!");
+                      
+   //modify and reload analyze with cl+node
+   var mcvValues = [{a: 0},{a: 1},{a:9000}];
+   var fracs = [500,500,9000];
+   updateIndexStateInfo( db, csName, clName, "a", mcvValues, fracs );
+   
+   var options = { Mode : 4, Collection : cl_full_name, NodeID : priNodeId };
+   analyze( db, options );              
+     
+   //check after reload analyze with cl+node
+   checkStat( db, csName, clName, "a", true, true );
+                                               	
+   //check the query explain after analyze
+   var findConf = {a : 9000};
+   var expExplains1 = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
+   var expExplains2 = [{ScanType:"ixscan", IndexName:"a", ReturnNum:insertNums}];
+                                      
+   var actExplains = getCommonExplain( dbclPrimary, findConf);
+   checkExplain( actExplains, expExplains1 );
+                      
+   var actExplains = getCommonExplain( dbclSlave, findConf);
+   checkExplain( actExplains, expExplains2 );
+                                                 	
+   println("check result after reload analyze with cl+node!");
+   
+   //truncate invalidate with cl+node
+   var options = { Mode : 5, Collection : cl_full_name, NodeID : priNodeId };
+   analyze( db, options );             
+                                          	
+   //check analyze after truncate invalidate
+   checkStat( db, csName, clName, "a", true, true );
+                           
+   var findConf = {a : 9000};
+   var expExplains1 = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
+   var expExplains2 = [{ScanType:"ixscan", IndexName:"a", ReturnNum:insertNums}];
+                                                    		
+   var actExplains = getCommonExplain( dbclPrimary, findConf);
+   checkExplain( actExplains, expExplains1 );
+                                
+   var actExplains = getCommonExplain( dbclSlave, findConf);
+   checkExplain( actExplains, expExplains2 );
+                                                	
+   println("check result after truncate invalidate with cl+node!");
+                      
+   //modify SYS info again 
+   var mcvValues = [{a: 0},{a: 1},{a:9000}];
+   var fracs = [500,500,500];
+   updateIndexStateInfo( db, csName, clName, "a", mcvValues, fracs );
+                                 	
+   checkStat( db, csName, clName, "a", true, true );
+                                               	
+   var findConf = {a : 9000};
+   var expExplains1 = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
+   var expExplains2 = [{ScanType:"ixscan", IndexName:"a", ReturnNum:insertNums}];
+                                             
+   var actExplains = getCommonExplain( dbclPrimary, findConf);
+   checkExplain( actExplains, expExplains1 );
+                                                 
+   var actExplains = getCommonExplain( dbclSlave, findConf);
+   checkExplain( actExplains, expExplains2 );
+                                                 	
+   println("check result modify SYS info without analyze!");
+   
+   //truncate invalidate again with cs+node
+   var options = { Mode : 5, CollectionSpace : csName, NodeID : priNodeId };
+   analyze( db, options );
+                              	
+   //check analyze after truncate invalidate with cs+node
+   checkStat( db, csName, clName, "a", true, true );
+                           
+   var findConf = {a : 9000};
+   var expExplains = [{ScanType:"ixscan", IndexName:"a", ReturnNum:insertNums}];               
+                            		
+   var actExplains = getCommonExplain( dbclPrimary, findConf);
+   checkExplain( actExplains, expExplains );
+                                
+   var actExplains = getCommonExplain( dbclSlave, findConf);
+   checkExplain( actExplains, expExplains );
+                                                	
+   println("check truncate invalidate end with cs+node!");
+                                           	
    //check invalid analyze, cs+cl, cs+index, index+group, index+node
    var options = [{ Mode : 3, CollectionSpace : csName, Collection : cl_full_name},
                   { Mode : 3, CollectionSpace : csName, GroupName : groupName },

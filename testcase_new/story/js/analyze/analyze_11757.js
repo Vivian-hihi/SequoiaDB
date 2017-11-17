@@ -22,7 +22,7 @@ function main()
    commCreateIndex( dbcl, "a", {a : 1}, false );
 	                                                                    
    //analyze with SampleNum
-   var options = {CollectionSpace: csName, SampleNum: insertNums};
+   var options = {CollectionSpace: csName, SampleNum: 200};
    analyze( db, options );
                                                                                        
    //check SampleNum
@@ -32,11 +32,19 @@ function main()
    //insert datas again
    insertDiffDatas( dbcl, insertNums );
    
-   //analyze again
+   //analyze again with SampleNum
+   var options = {CollectionSpace: csName, SampleNum: 150};
+   analyze( db, options );
+   
+   //check SampleNum again 
+   var expResult = { "SampleRecords": 150, "TotalRecords": 300 };
+   checkInfoState( csName, clName, expResult );
+   
+   //analyze again without SampleNum
    var options = {CollectionSpace: csName};
    analyze( db, options );
    
-   //check SampleNum again
+   //check SampleNum again 
    var expResult = { "SampleRecords": 200, "TotalRecords": 300 };
    checkInfoState( csName, clName, expResult );
    
