@@ -6,6 +6,7 @@
 **************************************/
 function main()
 {
+   //独立模式及1组模式不执行该用例
    try
 	{
 	   //判断独立模式
@@ -13,8 +14,17 @@ function main()
       {
          println( "run mode is standalone" );
          return;
+      } 
+          
+      //判断1组模式
+      var allGroupName = getGroupName( db );       
+      if( 1 === allGroupName.length )
+      {
+         println("only one group");
+         return ;
       }
-   }catch( e )
+   }
+   catch( e )
    {
       throw e;
    }
