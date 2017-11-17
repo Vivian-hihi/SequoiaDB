@@ -83,7 +83,8 @@ namespace engine
 
          virtual INT32   _preExcute( MsgHeader *pMsg,
                                      pmdEDUCB *cb,
-                                     coordCtrlParam &ctrlParam ) ;
+                                     coordCtrlParam &ctrlParam,
+                                     SET_RC &ignoreRCList ) ;
    } ;
    typedef _coordCMDInvalidateCache coordCMDInvalidateCache ;
 
@@ -104,7 +105,8 @@ namespace engine
 
          virtual INT32   _preExcute( MsgHeader *pMsg,
                                      pmdEDUCB *cb,
-                                     coordCtrlParam &ctrlParam ) ;
+                                     coordCtrlParam &ctrlParam,
+                                     SET_RC &ignoreRCList ) ;
    } ;
    typedef _coordCMDSyncDB coordCMDSyncDB ;
 
@@ -125,7 +127,8 @@ namespace engine
 
          virtual INT32   _preExcute( MsgHeader *pMsg,
                                      pmdEDUCB *cb,
-                                     coordCtrlParam &ctrlParam ) ;
+                                     coordCtrlParam &ctrlParam,
+                                     SET_RC &ignoreRCList ) ;
    } ;
    typedef _coordCmdLoadCS coordCmdLoadCS ;
 
@@ -208,7 +211,8 @@ namespace engine
 
          virtual INT32   _preExcute ( MsgHeader *pMsg,
                                       pmdEDUCB *cb,
-                                      coordCtrlParam &ctrlParam ) ;
+                                      coordCtrlParam &ctrlParam,
+                                      SET_RC &ignoreRCList ) ;
 
          INT32   _getCSGrps ( const CHAR *csname, pmdEDUCB *cb,
                               coordCtrlParam &ctrlParam ) ;

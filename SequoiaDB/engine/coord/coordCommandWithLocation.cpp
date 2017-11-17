@@ -177,7 +177,8 @@ namespace engine
 
    INT32 _coordCMDInvalidateCache::_preExcute( MsgHeader *pMsg,
                                                pmdEDUCB *cb,
-                                               coordCtrlParam &ctrlParam )
+                                               coordCtrlParam &ctrlParam,
+                                               SET_RC &ignoreRCList )
    {
       /// invalidate local catalog cache and group cache
       _pResource->invalidateCataInfo() ;
@@ -219,7 +220,8 @@ namespace engine
 
    INT32 _coordCMDSyncDB::_preExcute( MsgHeader *pMsg,
                                       pmdEDUCB *cb,
-                                      coordCtrlParam &ctrlParam )
+                                      coordCtrlParam &ctrlParam,
+                                      SET_RC &ignoreRCList )
    {
       INT32 rc = SDB_OK ;
       CHAR *pQuery = NULL ;
@@ -324,7 +326,8 @@ namespace engine
 
    INT32 _coordCmdLoadCS::_preExcute( MsgHeader * pMsg,
                                       pmdEDUCB * cb,
-                                      coordCtrlParam &ctrlParam )
+                                      coordCtrlParam &ctrlParam,
+                                      SET_RC &ignoreRCList )
    {
       INT32 rc = SDB_OK ;
       CHAR *pQuery = NULL ;
@@ -539,7 +542,8 @@ namespace engine
 
    INT32 _coordCMDAnalyze::_preExcute ( MsgHeader *pMsg,
                                         pmdEDUCB *cb,
-                                        coordCtrlParam &ctrlParam )
+                                        coordCtrlParam &ctrlParam,
+                                        SET_RC &ignoreRCList )
    {
       INT32 rc = SDB_OK ;
 
@@ -721,6 +725,10 @@ namespace engine
          rc = _getCSGrps( csname, cb, ctrlParam ) ;
          PD_RC_CHECK( rc, PDERROR, "Get groups of collectionspace[%s], "
                       "rc: %d", csname, rc ) ;
+         // The group list may contain sub-collections' groups, which may
+         // not belong to the collection space
+         // Ignore the error in this case
+         ignoreRCList.insert( SDB_DMS_CS_NOTEXIST ) ;
       }
       else if ( NULL != clname )
       {

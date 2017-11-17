@@ -68,7 +68,8 @@ namespace engine
 
          virtual INT32   _preExcute( MsgHeader *pMsg,
                                      pmdEDUCB *cb,
-                                     coordCtrlParam &ctrlParam ) ;
+                                     coordCtrlParam &ctrlParam,
+                                     SET_RC &ignoreRCList ) ;
          virtual INT32   _posExcute( MsgHeader *pMsg,
                                      pmdEDUCB *cb,
                                      ROUTE_RC_MAP &faileds ) ;

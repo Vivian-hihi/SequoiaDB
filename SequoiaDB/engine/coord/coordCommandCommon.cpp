@@ -67,6 +67,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       coordCtrlParam ctrlParam ;
+      SET_RC ignoreRCList ;
       ROUTE_RC_MAP faileds ;
       rtnContextCoord *pContext = NULL ;
 
@@ -74,7 +75,7 @@ namespace engine
 
       _preSet( cb, ctrlParam ) ;
 
-      rc = _preExcute( pMsg, cb, ctrlParam ) ;
+      rc = _preExcute( pMsg, cb, ctrlParam, ignoreRCList ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Pre-excute failed, rc: %d", rc ) ;
@@ -83,7 +84,7 @@ namespace engine
 
       rc = executeOnNodes( pMsg, cb, ctrlParam, _getControlMask(),
                            faileds, _useContext() ? &pContext : NULL,
-                           FALSE, NULL, NULL ) ;
+                           FALSE, &ignoreRCList, NULL ) ;
       if ( rc )
       {
          if ( SDB_RTN_CMD_IN_LOCAL_MODE == rc )
@@ -131,7 +132,8 @@ namespace engine
 
    INT32 _coordCmdWithLocation::_preExcute( MsgHeader *pMsg,
                                             pmdEDUCB *cb,
-                                            coordCtrlParam &ctrlParam )
+                                            coordCtrlParam &ctrlParam,
+                                            SET_RC &ignoreRCList )
    {
       return SDB_OK ;
    }
