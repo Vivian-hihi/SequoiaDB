@@ -43,6 +43,9 @@ function main()
    //执行切分
    var groups = ClSplitOneTimes( COMMCSNAME, clName, {a:2000}, {a:4000} ); 
    
+   //创建索引
+   commCreateIndex( dbcl, "a0", {a0:1});
+   
    //插入记录
 	insertDiffDatas( dbcl, insertNum );
 	insertSameDatas( dbcl, insertNum, sameValues1 );
@@ -58,6 +61,7 @@ function main()
 	
 	//检查统计信息
    checkStat( db, COMMCSNAME, clName, "$shard", false, false );
+   checkStat( db, COMMCSNAME, clName, "a0", false, false );
    
    //使用shard索引，检查主备节点访问计划
    var findConf = {a:{$in:[sameValues1,sameValues2]}};
@@ -72,11 +76,26 @@ function main()
 	
 	println("check $shard index query explain before analyze success!");
 	
+	//使用普通索引，检查主备节点访问计划
+   var findConf = {a0:sameValues1};
+   var expExplains = [{ScanType:"ixscan", IndexName:"a0", GroupName:groups[1].GroupName, ReturnNum:0},
+                      {ScanType:"ixscan", IndexName:"a0", GroupName:groups[0].GroupName, ReturnNum:insertNum}];
+   
+   var actExplains = getSplitExplain( dbclPrimary, findConf);
+   checkExplain( actExplains, expExplains );
+   
+   var actExplains = getSplitExplain( dbclSlave, findConf);
+   checkExplain( actExplains, expExplains );
+	
+	println("check common index query explain before analyze success!");
+	
    //执行统计
-   analyze( db, {Collection: COMMCSNAME + "." + clName} );
+   analyze( db, {Collection: COMMCSNAME + "." + clName, Index:"$shard"} );
+   analyze( db, {Collection: COMMCSNAME + "." + clName, Index:"a0"} );
    
    //检查统计信息
    checkStat( db, COMMCSNAME, clName, "$shard", true, true );
+   checkStat( db, COMMCSNAME, clName, "a0", true, true );
    
    //使用shard索引，检查主备节点访问计划
    var findConf = {a:{$in:[sameValues1,sameValues2]}};
@@ -90,6 +109,19 @@ function main()
    checkExplain( actExplains, expExplains );
 	
 	println("check $shard index query explain after analyze success!");
+	
+	//使用普通索引，检查主备节点访问计划
+   var findConf = {a0:sameValues1};
+   var expExplains = [{ScanType:"ixscan", IndexName:"a0", GroupName:groups[1].GroupName, ReturnNum:0},
+                      {ScanType:"tbscan", IndexName:"", GroupName:groups[0].GroupName, ReturnNum:insertNum}];
+   
+   var actExplains = getSplitExplain( dbclPrimary, findConf);
+   checkExplain( actExplains, expExplains );
+   
+   var actExplains = getSplitExplain( dbclSlave, findConf);
+   checkExplain( actExplains, expExplains );
+	
+	println("check common index query explain before analyze success!");
 	
    //清理环境
    commDropCL( db, COMMCSNAME, clName, true, true,"drop CL in the end" );
