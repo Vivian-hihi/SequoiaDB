@@ -127,7 +127,6 @@ function checkLSN(db, groups)
       LSNs[i] = Array();
       for(var j = 0; j < nodesInGroup.length; ++j)
       {
-         var clStatFlag = false;
          var getSnapshot6 = eval( "(" + nodesInGroup[j].snapshot(6).toArray()[0] + ")" );
          var currentLSN = getSnapshot6.CurrentLSN.Offset;
          LSNs[i][j] = currentLSN;         
@@ -376,7 +375,7 @@ function checkExplain( actExplains, expExplains )
    {
       if(JSON.stringify(actExplains).indexOf(JSON.stringify(expExplains[i])) === -1)
       {
-         throw buildException("checkExplain", "CHECK_EXPLAIN_FAIL", "check explain failed!", 
+         throw buildException("checkMainclExplain", "CHECK_EXPLAIN_FAIL", "check explain failed!", 
 	   		                  JSON.stringify(expExplains[i]), JSON.stringify(actExplains));
       }
    }

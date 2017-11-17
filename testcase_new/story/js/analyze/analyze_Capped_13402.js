@@ -32,6 +32,9 @@ function main()
    db2.setSessionAttr( { PreferedInstance: "s" } );
    var dbclSlave = db2.getCS(csName).getCL(clName);
    
+   //检查统计信息
+   checkStat( db, csName, clName, "a", false, false );
+   
    //检查主备节点访问计划
    var findConf = {a:sameValues};
    var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}];
