@@ -60,6 +60,9 @@ function main()
    var clOption = {ShardingKey: {"a": 1}, ShardingType: "hash"};
    var dbcl = commCreateCLByOption( db, csName, clName, clOption);
    
+   //获取切分表的组信息
+   var groups = commGetCLGroups( db, csName + "." +clName );
+   
    //创建索引
    commCreateIndex( dbcl, "a0", {a0:1});
    
@@ -81,7 +84,7 @@ function main()
    
    //使用shard索引，检查主备节点访问计划
    var findConf = {a:sameValues};
-   var expExplains = [{ScanType:"ixscan", IndexName:"$shard", GroupName:groups[1][0], ReturnNum:insertNum}];
+   var expExplains = [{ScanType:"ixscan", IndexName:"$shard", GroupName:groups[0], ReturnNum:insertNum}];
    
    var actExplains = getSplitExplain( dbclPrimary, findConf);
    checkExplain( actExplains, expExplains );
@@ -93,8 +96,8 @@ function main()
 	
 	//使用普通索引，检查主备节点访问计划
    var findConf = {a0:sameValues};
-   var expExplains = [{ScanType:"ixscan", IndexName:"a0", GroupName:groups[0][0], ReturnNum:0},
-                      {ScanType:"ixscan", IndexName:"a0", GroupName:groups[1][0], ReturnNum:insertNum}];
+   var expExplains = [{ScanType:"ixscan", IndexName:"a0", GroupName:groups[1], ReturnNum:0},
+                      {ScanType:"ixscan", IndexName:"a0", GroupName:groups[0], ReturnNum:insertNum}];
    
    var actExplains = getSplitExplain( dbclPrimary, findConf);
    checkExplain( actExplains, expExplains );
@@ -113,7 +116,7 @@ function main()
    
    //使用shard索引，检查主备节点访问计划
    var findConf = {a:sameValues};
-   var expExplains = [{ScanType:"tbscan", IndexName:"", GroupName:groups[1][0], ReturnNum:insertNum}];
+   var expExplains = [{ScanType:"tbscan", IndexName:"", GroupName:groups[0], ReturnNum:insertNum}];
    
    var actExplains = getSplitExplain( dbclPrimary, findConf);
    checkExplain( actExplains, expExplains );
@@ -125,8 +128,8 @@ function main()
 	
 	//使用普通索引，检查主备节点访问计划
    var findConf = {a0:sameValues};
-   var expExplains = [{ScanType:"ixscan", IndexName:"a0", GroupName:groups[0][0], ReturnNum:0},
-                      {ScanType:"tbscan", IndexName:"", GroupName:groups[1][0], ReturnNum:insertNum}];
+   var expExplains = [{ScanType:"ixscan", IndexName:"a0", GroupName:groups[1], ReturnNum:0},
+                      {ScanType:"tbscan", IndexName:"", GroupName:groups[0], ReturnNum:insertNum}];
    
    var actExplains = getSplitExplain( dbclPrimary, findConf);
    checkExplain( actExplains, expExplains );
