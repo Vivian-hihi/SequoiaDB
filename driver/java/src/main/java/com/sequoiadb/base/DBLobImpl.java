@@ -71,9 +71,7 @@ class DBLobImpl implements DBLob {
 
     /**
      * @param cl The instance of DBCollection
-     * @throws com.sequoiadb.exception.BaseException
-     * @fn DBLob(DBCollection cl)
-     * @brief Constructor
+     * @throws BaseException If error happens.
      */
     DBLobImpl(DBCollection cl) throws BaseException {
         if (cl == null) {
@@ -85,25 +83,23 @@ class DBLobImpl implements DBLob {
     }
 
     /**
-     * @throws BaseException.
-     * @fn open()
-     * @brief create a lob, lob's id will auto generate in this function
-     */
+     * Create a lob, lob's id will auto generate in this function.
+     * @throws BaseException If error happens.
     public void open() {
         open(null, SDB_LOB_CREATEONLY);
     }
 
     /**
+     * Open an existing lob with id.
      * @param id the lob's id
-     * @throws BaseException.
-     * @fn open(ObjectId id)
-     * @brief open an exist lob with id
+     * @throws BaseException If error happens.
      */
     public void open(ObjectId id) {
         open(id, SDB_LOB_READ);
     }
 
     /**
+     * Open an existing lob, or create a lob.
      * @param id   the lob's id
      * @param mode available mode is SDB_LOB_CREATEONLY or SDB_LOB_READ.
      *             SDB_LOB_CREATEONLY
@@ -111,9 +107,7 @@ class DBLobImpl implements DBLob {
      *             be generated in this function;
      *             SDB_LOB_READ
      *             read an exist lob
-     * @throws BaseException.
-     * @fn open(ObjectId id, int mode)
-     * @brief open an exist lob, or create a lob
+     * @throws BaseException If error happens.
      */
     public void open(ObjectId id, int mode) throws BaseException {
         if (_isOpened) {
@@ -178,9 +172,8 @@ class DBLobImpl implements DBLob {
     }
 
     /**
+     * Get the lob's id.
      * @return the lob's id
-     * @fn getID()
-     * @brief get the lob's id
      */
     @Override
     public ObjectId getID() {
@@ -188,9 +181,8 @@ class DBLobImpl implements DBLob {
     }
 
     /**
+     * Get the size of lob.
      * @return the lob's size
-     * @fn getSize()
-     * @brief get the size of lob
      */
     @Override
     public long getSize() {
@@ -198,9 +190,8 @@ class DBLobImpl implements DBLob {
     }
 
     /**
+     * Get the create time of lob.
      * @return the lob's create time
-     * @fn getCreateTime()
-     * @brief get the create time of lob
      */
     @Override
     public long getCreateTime() {
@@ -208,9 +199,8 @@ class DBLobImpl implements DBLob {
     }
 
     /**
+     * Get the last modification time of lob.
      * @return the lob's last modification time
-     * @fn long getModificationTime()
-     * @brief get the last modification time of lob
      */
     @Override
     public long getModificationTime() {
@@ -218,9 +208,8 @@ class DBLobImpl implements DBLob {
     }
 
     /**
-     * @throws BaseException
-     * @fn close()
-     * @brief close the lob
+     * Close the lob.
+     * @throws BaseException If error happens.
      */
     @Override
     public void close() throws BaseException {
@@ -235,10 +224,9 @@ class DBLobImpl implements DBLob {
     }
 
     /**
+     * Write bytes from the input stream to this lob.
      * @param in the input stream.
-     * @throws BaseException
-     * @fn void write( InputStream in )
-     * @brief Writes bytes from the input stream to this lob.
+     * @throws BaseException If error happens.
      */
     @Override
     public void write(InputStream in) throws BaseException {
@@ -261,11 +249,10 @@ class DBLobImpl implements DBLob {
     }
 
     /**
-     * @param b the data.
-     * @throws BaseException.
-     * @fn void write( byte[] b )
-     * @brief Writes <code>b.length</code> bytes from the specified
+     * Write <code>b.length</code> bytes from the specified
      * byte array to this lob.
+     * @param b the data.
+     * @throws BaseException If error happens.
      */
     @Override
     public void write(byte[] b) throws BaseException {
@@ -273,13 +260,12 @@ class DBLobImpl implements DBLob {
     }
 
     /**
+     * Write <code>len</code> bytes from the specified
+     * byte array starting at offset <code>off</code> to this lob.
      * @param b   the data.
      * @param off the start offset in the data.
      * @param len the number of bytes to write.
-     * @throws BaseException
-     * @fn void write( byte[] b, int off, int len )
-     * @brief Writes <code>len</code> bytes from the specified
-     * byte array starting at offset <code>off</code> to this lob.
+     * @throws BaseException If error happens.
      */
     @Override
     public void write(byte[] b, int off, int len) throws BaseException {
@@ -316,11 +302,9 @@ class DBLobImpl implements DBLob {
     }
 
     /**
+     * Read data from this lob into the output stream.
      * @param out the output stream.
-     * @throws BaseException.
-     * @fn void read( OutputStream out )
-     * @brief Reads data from this
-     * lob into the output stream.
+     * @throws BaseException If error happens.
      */
     @Override
     public void read(OutputStream out) throws BaseException {
@@ -344,15 +328,14 @@ class DBLobImpl implements DBLob {
     }
 
     /**
+     * Read up to <code>b.length</code> bytes of data from this
+     * lob into an array of bytes.
      * @param b the buffer into which the data is read.
      * @return the total number of bytes read into the buffer, or
      * <code>-1</code> if there is no more data because the end of
      * the file has been reached, or <code>0<code> if
      * <code>b.length</code> is Zero.
-     * @throws BaseException.
-     * @fn read(byte[] b)
-     * @brief Reads up to <code>b.length</code> bytes of data from this
-     * lob into an array of bytes.
+     * @throws BaseException If error happens.
      */
     @Override
     public int read(byte[] b) throws BaseException {
@@ -360,16 +343,15 @@ class DBLobImpl implements DBLob {
     }
 
     /**
+     * Read up to <code>len</code> bytes of data from this lob into
+     * an array of bytes.
      * @param b   the buffer into which the data is read.
      * @param off the start offset in the destination array <code>b</code>.
      * @param len the maximum number of bytes read.
      * @return the total number of bytes read into the buffer, or <code>-1</code> if
      * there is no more data because the end of the file has been
      * reached, or <code>0</code> if <code>len</code> is Zero.
-     * @throws BaseException
-     * @fn int read( byte[] b, int off, int len )
-     * @brief Reads up to <code>len</code> bytes of data from this lob into
-     * an array of bytes.
+     * @throws BaseException If error happens.
      */
     @Override
     public int read(byte[] b, int off, int len) throws BaseException {
@@ -400,16 +382,15 @@ class DBLobImpl implements DBLob {
     }
 
     /**
-     * @param size     the adding size.
-     * @param seekType SDB_LOB_SEEK_SET/SDB_LOB_SEEK_CUR/SDB_LOB_SEEK_END
-     * @throws BaseException.
-     * @fn seek(long size, int seekType)
-     * @brief change the read or write position of the lob. The new position is
-     * obtained by adding <code>size</code> to the position
+     * Change the read or write position of the lob.
+     * The new position is obtained by adding <code>size</code> to the position
      * specified by <code>seekType</code>. If <code>seekType</code>
      * is set to SDB_LOB_SEEK_SET, SDB_LOB_SEEK_CUR, or SDB_LOB_SEEK_END,
      * the offset is relative to the start of the lob, the current
      * position of lob, or the end of lob.
+     * @param size     the adding size.
+     * @param seekType SDB_LOB_SEEK_SET/SDB_LOB_SEEK_CUR/SDB_LOB_SEEK_END
+     * @throws BaseException If error happens.
      */
     @Override
     public void seek(long size, int seekType) throws BaseException {
@@ -454,11 +435,10 @@ class DBLobImpl implements DBLob {
     }
 
     /**
+     * Lock LOB section for writing.
      * @param offset lock start position
      * @param length lock length, -1 means lock to the end of lob
-     * @throws com.sequoiadb.exception.BaseException.
-     * @fn lock(long offset, long length)
-     * @brief lock LOB section for writing
+     * @throws BaseException If error happens..
      */
     @Override
     public void lock(long offset, long length) throws BaseException {
@@ -481,11 +461,10 @@ class DBLobImpl implements DBLob {
     }
 
     /**
+     * Lock LOB section for writing and seek to the offset position.
      * @param offset lock start position
      * @param length lock length, -1 means lock to the end of lob
-     * @throws com.sequoiadb.exception.BaseException.
-     * @fn lockAndSeek(long offset, long length)
-     * @brief lock LOB section for writing and seek to the offset position
+     * @throws BaseException If error happens..
      */
     @Override
     public void lockAndSeek(long offset, long length) throws BaseException {

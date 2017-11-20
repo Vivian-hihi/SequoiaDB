@@ -1,20 +1,18 @@
-// BSONTDecimal.java
-
-/**
- *      Copyright (C) 2008 10gen Inc.
+/*
+ * Copyright 2012-2017 SequoiaDB Inc.
  *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
- */
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+*/
 
 package org.bson.types;
 
@@ -117,8 +115,7 @@ public class BSONDecimal implements Comparable<BSONDecimal>, Serializable {
     public static final int DECIMAL_HEADER_SIZE = 12;
 	
     /**
-	 * @fn String getValue()
-	 * @brief get the value of decimal
+	 * Get the value of decimal.
 	 * @return the value of decimal
 	 */
 	public String getValue() {
@@ -126,9 +123,8 @@ public class BSONDecimal implements Comparable<BSONDecimal>, Serializable {
 	}
 
 	/**
-	 * @fn int getPrecision()
-	 * @brief get the precision of decimal
-	 * @note  When user specify precision, the range of it is [1, 1000]. When user did not specify 
+	 * Get the precision of decimal.
+	 * When user specify precision, the range of it is [1, 1000]. When user did not specify
      * 	precision, it will be set to -1. That means the precision is determined 
      * 	by database. For decimal, database allow 131072 digits before decimal point and 16383 digits
      * 	after decimal point at most. 
@@ -140,9 +136,8 @@ public class BSONDecimal implements Comparable<BSONDecimal>, Serializable {
 	}
 
 	/**
-	 * @fn int getScale()
-	 * @brief get the scale of the decimal
-	 * @note When user specify scale, the range of it is [0, precision]. 
+	 * Get the scale of the decimal.
+	 * When user specify scale, the range of it is [0, precision].
      * 	When user did not specify scale, it will be set to -1. 
      * 	That means the scale is determined 
      * 	by database. For decimal, database allow 131072 digits before decimal point and 16383 digits
@@ -155,7 +150,6 @@ public class BSONDecimal implements Comparable<BSONDecimal>, Serializable {
 	}
     
 	/**
-	 * @fn int getSize_notdisplay()
 	 * @return the size
 	 */
 	public int getSize() {
@@ -163,7 +157,6 @@ public class BSONDecimal implements Comparable<BSONDecimal>, Serializable {
 	}
 
 	/**
-	 * @fn int getTypemod_notdisplay()
 	 * @return the typemod
 	 */
 	public int getTypemod() {
@@ -171,7 +164,6 @@ public class BSONDecimal implements Comparable<BSONDecimal>, Serializable {
 	}
 
 	/**
-	 * @fn short getSignScale_notdisplay()
 	 * @return the signscale
 	 */
 	public short getSignScale() {
@@ -179,7 +171,6 @@ public class BSONDecimal implements Comparable<BSONDecimal>, Serializable {
 	}
 
 	/**
-	 * @fn short getWeight_notdisplay()
 	 * @return the weight
 	 */
 	public short getWeight() {
@@ -187,7 +178,6 @@ public class BSONDecimal implements Comparable<BSONDecimal>, Serializable {
 	}
 
 	/**
-	 * @fn short[] getDigits_notdisplay()
 	 * @return the digits
 	 */
 	public short[] getDigits() {
@@ -213,7 +203,6 @@ public class BSONDecimal implements Comparable<BSONDecimal>, Serializable {
 	}
 
 	/**
-	 * @fn BSONDecimal(String value, int precision, int scale)
 	 * @param value
 	 *            the decimal value which is in the format of string, e.g.
 	 *            "3.14159265358"
@@ -222,8 +211,7 @@ public class BSONDecimal implements Comparable<BSONDecimal>, Serializable {
 	 * @param scale
 	 *            the total count of decimal digits in the fractional part, to
 	 *            the right of the decimal point.
-	 * @throws IllegalArgumentException  
-	 * 			for null or invalid value
+	 * @throws IllegalArgumentException if null pointer or invalid value
 	 */
 	public BSONDecimal(String value, int precision, int scale) {
 		_fromStringValue(value, precision, scale);
@@ -238,26 +226,19 @@ public class BSONDecimal implements Comparable<BSONDecimal>, Serializable {
 	}
 
 	/**
-	 * @fn BSONDecimal(String value)
 	 * @param value
 	 *            the decimal value which is in the format of string, e.g.
 	 *            "3.14159265358"
-	 * @throws IllegalArgumentException  
-	 * 			for null or invalid value
+	 * @throws IllegalArgumentException if null pointer or invalid value
 	 */
 	public BSONDecimal(String value) {
 		this(value, -1, -1);
 	}
 
 	/**
-	 * @fn BSONDecimal(BigDecimal value)
-	 * @brief transform a BigDecimal object to a BSONDecimal object.
-	 * @param value
-	 *            a BigDecimal to be transformed
-	 * @throws IllegalArgumentException  
-	 * 			for null or invalid value         
-	 * @note The meaning of "precision" and "scale" defined in BSONDecimal are
-	 *       different from that defined by BigDecimal. We deprecate "precision" 
+	 * Transform a BigDecimal object to a BSONDecimal object.
+	 * The meaning of "precision" and "scale" defined in BSONDecimal are
+	 *       different from that defined by BigDecimal. We deprecate "precision"
 	 *       and "scale" defined in BigDecimal. Actually we build BSONDecimal like
 	 *       this:
 	 *       <pre>
@@ -267,7 +248,10 @@ public class BSONDecimal implements Comparable<BSONDecimal>, Serializable {
 	 *       and set "precision" and "scale" to be -1 in the newly built BSONDecimal
 	 *       object.
 	 *        </p>
-	 * @see toBigDecimal()
+	 * @param value
+	 *            a BigDecimal to be transformed
+	 * @throws IllegalArgumentException if null pointer or invalid value
+	 * @see #toBigDecimal()
 	 */
 	public BSONDecimal(BigDecimal value) {
 		if (value == null) {
@@ -281,9 +265,6 @@ public class BSONDecimal implements Comparable<BSONDecimal>, Serializable {
 	}
 
 	/**
-	 * @fn BSONDecimal_notdisplay(int size, int typemod, 
-     *		short signscale, short weight, short[] digits)
-     * @brief Constructor for decoder.
 	 * @param size 
 	 * 		total size of this decimal(4+4+2+2+digits.Length).
 	 * @param typemod
@@ -296,8 +277,7 @@ public class BSONDecimal implements Comparable<BSONDecimal>, Serializable {
 	 * 		weight of this decimal(NBASE=10000).
 	 * @param digits
 	 * 		real data.
-	 * @throws IllegalArgumentException  
-	 * 			for null or invalid arguments
+	 * @throws IllegalArgumentException if null pointer or invalid arguments
 	 */
 	public BSONDecimal(int size, int typemod, 
 			short signscale, short weight, short[] digits) {
@@ -342,44 +322,43 @@ public class BSONDecimal implements Comparable<BSONDecimal>, Serializable {
 	}
 	
 	/**
-	 * @fn BigDecimal toBigDecimal()
-	 * @brief transform to BigDecimal object
-	 * @note The meaning of "precision" and "scale" defined in BSONDecimal are
-	 *       different from that defined in BigDecimal.
-	 *       <p>
-	 *       In BSONDecimal, "precision" represents the total number of digits
-	 *       of decimal, and "scale" represents the max count of decimal digits
-	 *       in the fractional part. For example, when we define a BSONDecimal
-	 *       object which precision is 10 and scale is 6, that means this
-	 *       BSONDecimal object can only represent a value which count of digits
-	 *       in integer part is not more than 4(10-6) and count of digits in
-	 *       fractional part is not more that 6. So, when we specify
-	 *       "12345.6789" for this BSONDecimal object, if we insert this object
-	 *       into database, we get an error about invalid argument. When we
-	 *       specify "1234.1234507" for this BSONDecimal object, if we insert
-	 *       this object into database, we finally get "1234.123451". We can get
-	 *       only 6 digits after decimal point, and the last digit is rounding
-	 *       to 1. when we specify "1.23E10" for this BSONDecial object, we have
-	 *       11 digits in the integer part, so when we insert this BSONDecimal
-	 *       object into database, we get an error, too.
-	 *       </p>
-	 *       <p>
-	 *       In BigDecimal, the value of the number represented by the
-	 *       BigDecimal is (unscaledValue * 10^-scale). "precision" represents
-	 *       the count of digits in unscaleValue, and "scale" is the value of
-	 *       scale. For example, value "1234.567890" is represented by
-	 *       BigDecimal like "1234567890 * 10^-6". So, unscaledValue is
-	 *       "1234567890", precision is 10, and scale is 6. Value "1.2345E9" is
-	 *       represented by BigDecimal like "12345 * 10^5". So, unscaledValue is
-	 *       "12345", precision is 5, and scale is -5.
-	 *       </p>
-	 *       <p>
-	 *       As above, we can see the difference between BSONDecimal and
-	 *       BigDecimal. Actually, when we transform BSONDecimal to BigDecimal,
-	 *       it's as below:
-	 *       </p>
-	 * 
-	 *       <pre>
+	 * Transform to BigDecimal object
+	 * The meaning of "precision" and "scale" defined in BSONDecimal are
+	 * different from that defined in BigDecimal.
+	 * <p>
+	 * In BSONDecimal, "precision" represents the total number of digits
+	 * of decimal, and "scale" represents the max count of decimal digits
+	 * in the fractional part. For example, when we define a BSONDecimal
+	 * object which precision is 10 and scale is 6, that means this
+	 * BSONDecimal object can only represent a value which count of digits
+	 * in integer part is not more than 4(10-6) and count of digits in
+	 * fractional part is not more that 6. So, when we specify
+	 * "12345.6789" for this BSONDecimal object, if we insert this object
+	 * into database, we get an error about invalid argument. When we
+	 * specify "1234.1234507" for this BSONDecimal object, if we insert
+	 * this object into database, we finally get "1234.123451". We can get
+	 * only 6 digits after decimal point, and the last digit is rounding
+	 * to 1. when we specify "1.23E10" for this BSONDecimal object, we have
+	 * 11 digits in the integer part, so when we insert this BSONDecimal
+	 * object into database, we get an error, too.
+	 * </p>
+	 * <p>
+	 * In BigDecimal, the value of the number represented by the
+	 * BigDecimal is (unscaledValue * 10^-scale). "precision" represents
+	 * the count of digits in unscaleValue, and "scale" is the value of
+	 * scale. For example, value "1234.567890" is represented by
+	 * BigDecimal like "1234567890 * 10^-6". So, unscaledValue is
+	 * "1234567890", precision is 10, and scale is 6. Value "1.2345E9" is
+	 * represented by BigDecimal like "12345 * 10^5". So, unscaledValue is
+	 * "12345", precision is 5, and scale is -5.
+	 * </p>
+	 * <p>
+	 * As above, we can see the difference between BSONDecimal and
+	 * BigDecimal. Actually, when we transform BSONDecimal to BigDecimal,
+	 * it's as below:
+	 * </p>
+	 *
+	 * <pre>
 	 * new BigDecimal(this.getValue()) // &quot;this&quot; means current BSONDecimal object
 	 * </pre>
 	 * @return a BigDecimal object
@@ -389,17 +368,16 @@ public class BSONDecimal implements Comparable<BSONDecimal>, Serializable {
 	}
 
     /**
-     * @fn     int compareTo(BSONDecimal val)
-     * @brief  Compares this BSONDecimal with the specified
-     *         BSONDecimal.  Two BSONDecimal objects that are
-     *         equal in value(this method does not consider precision and scale, 
-     *         so 2.0 and 2.00 are considered equal by this method).  
-     *         This method is provided in preference to individual 
-     *         methods for each of the six boolean
-     *         comparison operators (<, ==, >, >=, !=, <=).  
-     *         The suggested idiom for performing these comparisons is:
-     *         (x.compareTo(y) <<i>op</i>> 0), where <<i>op</i>> is 
-     *         one of the six comparison operators.
+     * Compares this BSONDecimal with the specified BSONDecimal.
+     * Two BSONDecimal objects that are
+     * equal in value(this method does not consider precision and scale,
+     * so 2.0 and 2.00 are considered equal by this method).
+     * This method is provided in preference to individual
+     * methods for each of the six boolean
+     * comparison operators (<, ==, >, >=, !=, <=).
+     * The suggested idiom for performing these comparisons is:
+     * (x.compareTo(y) <<i>op</i>> 0), where <<i>op</i>> is
+     * one of the six comparison operators.
      * @param  val BSONDecimal to which this BSONDecimal is
      *         to be compared.
      * @return -1, 0, or 1 as this BSONDecimal is numerically 
@@ -412,18 +390,16 @@ public class BSONDecimal implements Comparable<BSONDecimal>, Serializable {
 	}
 	
     /**
-     * @fn     boolean equals(Object x)
-     * @brief  Compares this BSONDecimal with the specified
-     *         Object for equality.  Like compareTo(BSONDecimal), this method considers two
-     *         BigDecimal objects equal only if they are equal in
-     *         value, and does not compare the precision and scale (thus 
-     *         2.0 is equal to 2.00 when compared by this method).
+     * Compares this BSONDecimal with the specified object for equality.
+     * Like compareTo(BSONDecimal), this method considers two
+     * BigDecimal objects equal only if they are equal in
+     * value, and does not compare the precision and scale (thus
+     * 2.0 is equal to 2.00 when compared by this method).
      * @param  x Object to which this BSONDecimal is to be compared.
      * @return true if and only if the specified Object is a
      *         BSONDecimal whose value is equal to this
      *         BSONDecimal's.
-     * @see    compareTo(BSONDecimal)
-     * @see    hashCode
+     * @see #compareTo(BSONDecimal)
      */
     @Override
     public boolean equals(Object x) {
@@ -439,15 +415,12 @@ public class BSONDecimal implements Comparable<BSONDecimal>, Serializable {
         	return false;
         }
     }
-	
+
     /**
-     * @fn     int hashCode()
-     * @brief  Returns the hash code for this BSONDecimal.  
-     *         Two BSONDecimal objects that are numerically equal
-     *         (like 2.0 and 2.00) will generally 
-     *         have the same hash code.
+     * Returns the hash code for this BSONDecimal.
+     * Two BSONDecimal objects that are numerically equal
+     * (like 2.0 and 2.00) will generally have the same hash code.
      * @return hash code for this BSONDecimal.
-     * @see    equals(Object)
      */
     @Override
     public int hashCode(){
@@ -468,8 +441,7 @@ public class BSONDecimal implements Comparable<BSONDecimal>, Serializable {
     }
     
     /**
-     * @fn String toString()
-     * @brief the string value of this object
+     * The string value of this object.
      * @return the string value of this object
      */
     @Override
@@ -1423,5 +1395,4 @@ public class BSONDecimal implements Comparable<BSONDecimal>, Serializable {
 
          return 0;
      }
-	
 }

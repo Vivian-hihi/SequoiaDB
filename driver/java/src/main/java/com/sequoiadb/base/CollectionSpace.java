@@ -27,36 +27,31 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @class CollectionSpace
- * @brief Database operation interfaces of collection space.
+ * Collection space of SequoiaDB.
  */
 public class CollectionSpace {
     private String name;
     private Sequoiadb sequoiadb;
 
     /**
+     * Return the name of current collection space.
      * @return The collection space name
-     * @fn String getName()
-     * @brief Return the name of current collection space.
      */
     public String getName() {
         return name;
     }
 
     /**
+     * Get the Sequoiadb instance of current collection space belongs to.
      * @return Sequoiadb object
-     * @fn Sequoiadb getSequoiadb()
-     * @brief Return the Sequoiadb instance of current collection space belong to.
      */
     public Sequoiadb getSequoiadb() {
         return sequoiadb;
     }
 
     /**
-     * @param sequoiadb Sequoiadb handle
+     * @param sequoiadb Sequoiadb instance
      * @param name      Collection space name
-     * @fn CollectionSpace(Sequoiadb sequoiadb, String name)
-     * @brief Constructor
      */
     CollectionSpace(Sequoiadb sequoiadb, String name) {
         this.name = name;
@@ -64,11 +59,10 @@ public class CollectionSpace {
     }
 
     /**
+     * Get the named collection.
      * @param collectionName The collection name
      * @return The collection object or null for collection not exist
-     * @throws com.sequoiadb.exception.BaseException
-     * @fn DBCollection getCollection(String collectionName)
-     * @brief Get the named collection
+     * @throws BaseException If error happens.
      */
     public DBCollection getCollection(String collectionName)
         throws BaseException {
@@ -88,14 +82,13 @@ public class CollectionSpace {
     }
 
     /**
-     * @param colName The collection name
+     * Verify the existence of collection in current collection space.
+     * @param collectionName The collection name
      * @return True if collection existed or False if not existed
-     * @throws com.sequoiadb.exception.BaseException
-     * @fn boolean isCollectionExist(String colName)
-     * @brief Verify the existence of collection in current collection space
+     * @throws BaseException If error happens.
      */
-    public boolean isCollectionExist(String colName) throws BaseException {
-        String collectionFullName = name + "." + colName;
+    public boolean isCollectionExist(String collectionName) throws BaseException {
+        String collectionFullName = name + "." + collectionName;
 
         BSONObject obj = new BasicBSONObject();
         obj.put(SdbConstants.FIELD_NAME_NAME, collectionFullName);
@@ -117,10 +110,9 @@ public class CollectionSpace {
     }
 
     /**
+     * Get all the collection names of current collection space.
      * @return A list of collection names
-     * @throws com.sequoiadb.exception.BaseException
-     * @fn List<String> getCollectionNames()
-     * @brief Get all the collection names of current collection space
+     * @throws BaseException If error happens.
      */
     public List<String> getCollectionNames() throws BaseException {
         List<String> collectionNames = new ArrayList<String>();
@@ -136,10 +128,9 @@ public class CollectionSpace {
     }
 
     /**
+     * Create the named collection in current collection space.
      * @param collectionName The collection name
-     * @throws com.sequoiadb.exception.BaseException
-     * @fn void createCollection(String collectionName)
-     * @brief Create the named collection in current collection space
+     * @throws BaseException If error happens.
      */
     public DBCollection createCollection(String collectionName)
         throws BaseException {
@@ -147,15 +138,13 @@ public class CollectionSpace {
     }
 
     /**
+     * Create collection by options.
      * @param collectionName The collection name
      * @param options        The options for creating collection, including
      *                       "ShardingKey", "ReplSize", "IsMainCL" and "Compressed" informations,
      *                       no options, if null
      * @return the created DBCollection
-     * @throws com.sequoiadb.exception.BaseException
-     * @fn DBCollection createCollection(String collectionName, BSONObject
-     * options)
-     * @brief Create collection by options
+     * @throws BaseException Tf error happens.
      */
     public DBCollection createCollection(String collectionName,
                                          BSONObject options) {
@@ -180,22 +169,19 @@ public class CollectionSpace {
     }
 
     /**
-     * @return void
-     * @throws com.sequoiadb.exception.BaseException
-     * @fn void drop()
-     * @brief Drop current collectionSpace
-     * @see com.sequoiadb.base.Sequoiadb.dropCollectionSpace
-     * @deprecated the method will be deprecated in version 2.x, use Sequoiadb.dropCollectionSpace instead
+     * Drop current collection space.
+     * @throws BaseException If error happens.
+     * @see com.sequoiadb.base.Sequoiadb#dropCollectionSpace(String)
+     * @deprecated Use Sequoiadb.dropCollectionSpace() instead.
      */
     public void drop() throws BaseException {
         sequoiadb.dropCollectionSpace(this.name);
     }
 
     /**
+     * Remove the named collection of current collection space.
      * @param collectionName The collection name
-     * @throws com.sequoiadb.exception.BaseException
-     * @fn void dropCollection(String collectionName)
-     * @brief Remove the named collection of current collection space
+     * @throws BaseException If error happens.
      */
     public void dropCollection(String collectionName) throws BaseException {
         if (!isCollectionExist(collectionName)) {

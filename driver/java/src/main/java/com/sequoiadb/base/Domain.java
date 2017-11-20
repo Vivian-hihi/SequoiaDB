@@ -24,8 +24,7 @@ import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 
 /**
- * @class Domain
- * @brief Database operation interfaces of Sequoiadb domain.
+ * Domain of SequoiaDB.
  */
 public class Domain {
     private String name;
@@ -33,17 +32,13 @@ public class Domain {
 
     /**
      * @return The name of current domain
-     * @fn String getName()
-     * @brief Return the name of current domain.
      */
     public String getName() {
         return name;
     }
 
     /**
-     * @return Sequoiadb connection instance
-     * @fn Sequoiadb getSequoiadb()
-     * @brief Return the Sequoiadb connection instance of current domain belong to.
+     * @return Sequoiadb The Sequoiadb instance of current domain belongs to.
      */
     public Sequoiadb getSequoiadb() {
         return sequoiadb;
@@ -52,8 +47,6 @@ public class Domain {
     /**
      * @param sequoiadb Sequoiadb connection instance
      * @param name      the name for the created domain
-     * @fn Domain(Sequoiadb sequoiadb, String name)
-     * @brief Constructor
      */
     Domain(Sequoiadb sequoiadb, String name) {
         this.name = name;
@@ -61,6 +54,7 @@ public class Domain {
     }
 
     /**
+     * Alter current domain.
      * @param options the options user wants to alter:
      *                <ul>
      *                <li>Groups:    The list of replica groups' names which the domain is going to contain.
@@ -74,9 +68,7 @@ public class Domain {
      *                However, it won't automatically split data into those groups which were add into this domain later.
      *                eg: { "Groups": [ "group1", "group2", "group3" ], "AutoSplit: true" }
      *                </ul>
-     * @throws com.sequoiadb.exception.BaseException
-     * @fn void alterDomain(BSONObject options)
-     * @brief Alter the current domain.
+     * @throws BaseException If error happens.
      */
     public void alterDomain(BSONObject options) throws BaseException {
         if (null == options) {
@@ -93,20 +85,18 @@ public class Domain {
     }
 
     /**
+     * List all the collection spaces in current domain.
      * @return the cursor of result
-     * @throws com.sequoiadb.exception.BaseException
-     * @fn DBCursor listCSInDomain()
-     * @brief List all the collection spaces in current domain.
+     * @throws BaseException If error happens.
      */
     public DBCursor listCSInDomain() throws BaseException {
         return listCSCL(Sequoiadb.SDB_LIST_CS_IN_DOMAIN);
     }
 
     /**
+     * List all the collections in current domain.
      * @return the cursor of result
-     * @throws com.sequoiadb.exception.BaseException
-     * @fn DBCursor listCLInDomain()
-     * @brief List all the collections in current domain.
+     * @throws BaseException If error happens.
      */
     public DBCursor listCLInDomain() throws BaseException {
         return listCSCL(Sequoiadb.SDB_LIST_CL_IN_DOMAIN);

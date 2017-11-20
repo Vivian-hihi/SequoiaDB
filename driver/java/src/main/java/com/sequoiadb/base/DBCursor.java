@@ -28,8 +28,7 @@ import org.bson.BSONObject;
 import java.io.Closeable;
 
 /**
- * @class DBCursor
- * @brief Database operation interfaces of cursor.
+ * Cursor of query result.
  */
 public class DBCursor implements Closeable {
     private Sequoiadb sequoiadb;
@@ -52,10 +51,9 @@ public class DBCursor implements Closeable {
     }
 
     /**
+     * Judge whether the next document exists or not.
      * @return true for next data exists while false for not
-     * @throws com.sequoiadb.exception.BaseException
-     * @fn boolean hasNext()
-     * @brief Judge whether the next document exists or not.
+     * @throws BaseException If error happens.
      */
     public boolean hasNext() throws BaseException {
         if (isClosed || isEOC) {
@@ -78,12 +76,12 @@ public class DBCursor implements Closeable {
         return false;
     }
 
-    /*
-     * @fn boolean hasNextRaw()
-     * @brief Judge whether next raw data exists.
+    /**
+     * Judge whether next raw data exists.
      * @return true for next raw data exists while false for not
-     * @exception com.sequoiadb.exception.BaseException
+     * @exception BaseException If error happens.
      * @deprecated always use DBCursor.hasNext()
+     * @see #hasNext()
      */
     @Deprecated
     public boolean hasNextRaw() throws BaseException {
@@ -91,13 +89,12 @@ public class DBCursor implements Closeable {
     }
 
     /**
+     * Get next document.
+     * Calling this function after the cursor have been closed
+     * will throw BaseException with error SDB_RTN_CONTEXT_NOTEXIST
      * @return the next date or null if the cursor is empty
      * or the cursor is closed
-     * @throws com.sequoiadb.exception.BaseException
-     * @fn BSONObject getNext()
-     * @brief Get next document.
-     * @note calling this function after the cursor have been closed
-     * will throw BaseException "SDB_RTN_CONTEXT_NOTEXIST"
+     * @throws BaseException If error happens.
      */
     public BSONObject getNext() throws BaseException {
         if (hasNext()) {
@@ -110,13 +107,12 @@ public class DBCursor implements Closeable {
     }
 
     /**
+     * Get raw date of next record.
+     * Calling this function after the cursor have been closed
+     * will throw BaseException with error SDB_RTN_CONTEXT_NOTEXIST
      * @return a byte array of raw date of next record or null
      * if the cursor is empty
-     * @throws com.sequoiadb.exception.BaseException
-     * @fn byte[] getNextRaw()
-     * @brief Get raw date of next record.
-     * @note calling this function after the cursor have been closed
-     * will throw BaseException "SDB_RTN_CONTEXT_NOTEXIST"
+     * @throws BaseException If error happens.
      */
     public byte[] getNextRaw() throws BaseException {
         if (hasNext()) {
@@ -129,12 +125,11 @@ public class DBCursor implements Closeable {
     }
 
     /**
+     * Get current document.
+     * Calling this function after the cursor have been closed
+     * will throw BaseException with error SDB_RTN_CONTEXT_NOTEXIST
      * @return the current date or null if the cursor is empty
-     * @throws com.sequoiadb.exception.BaseException
-     * @fn BSONObject getCurrent()
-     * @brief Get current document.
-     * @note calling this function after the cursor have been closed
-     * will throw BaseException "SDB_RTN_CONTEXT_NOTEXIST"
+     * @throws BaseException If error happens.
      */
     public BSONObject getCurrent() throws BaseException {
         if (!isStarted) {
@@ -170,10 +165,8 @@ public class DBCursor implements Closeable {
     }
 
     /**
-     * @return void
-     * @throws com.sequoiadb.exception.BaseException
-     * @fn void close()
-     * @brief Close the cursor.
+     * Close the cursor.
+     * @throws BaseException If error happens.
      */
     @Override
     public void close() throws BaseException {

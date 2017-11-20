@@ -17,8 +17,7 @@
 package com.sequoiadb.base;
 
 /**
- * @class ConfigOptions
- * @brief Database Connection Configuration Option
+ * Connection configuration option for Sequoiadb.
  */
 public class ConfigOptions {
     private long maxAutoConnectRetryTime = 15000;
@@ -29,72 +28,64 @@ public class ConfigOptions {
     private boolean useSSL = false;
 
     /**
-     * @return the socket timeout(milliseconds)(int)
-     * @fn int getSocketTimeout()
-     * @brief Get the socket timeout(milliseconds)
+     * Get the socket timeout time.
+     * @return the socket timeout time(milliseconds)
      */
     public int getSocketTimeout() {
         return socketTimeout;
     }
 
     /**
-     * @param socketTimeout(int)
-     * @fn void setSocketTimeout(int socketTimeout)
-     * @brief Set the socket timeout(milliseconds)
+     * Set the socket timeout time.
+     * @param socketTimeout The socket timeout time(milliseconds).
      */
     public void setSocketTimeout(int socketTimeout) {
         this.socketTimeout = socketTimeout;
     }
 
     /**
-     * @return the status(boolean)
-     * @fn boolean getSocketKeepAlive()
-     * @brief Get whether the socket keeps alive or not
+     * Get whether the socket keeps alive or not.
+     * @return True if keep alive and false if not.
      */
     public boolean getSocketKeepAlive() {
         return socketKeepAlive;
     }
 
     /**
-     * @param socketKeepAlive the the status of socket(boolean)
-     * @fn void setSocketKeepAlive(boolean socketKeepAlive)
-     * @brief Set the status of socket
+     * Set the keep alive status of socket
+     * @param socketKeepAlive the the status of socket
      */
     public void setSocketKeepAlive(boolean socketKeepAlive) {
         this.socketKeepAlive = socketKeepAlive;
     }
 
     /**
-     * @return boolean
-     * @fn boolean getUseNagle()
-     * @brief Get whether use the Nagle Algorithm or not
+     * Get whether use the Nagle algorithm or not.
+     * @return True if use nagle and false if not.
      */
     public boolean getUseNagle() {
         return useNagle;
     }
 
     /**
-     * @param useNagle(boolean)
-     * @fn void setUseNagle(boolean useNagle)
-     * @brief Set whether use the Nagle Algorithm or not
+     * Set whether use the Nagle algorithm or not.
+     * @param useNagle whether use the Nagle algorithm or not
      */
     public void setUseNagle(boolean useNagle) {
         this.useNagle = useNagle;
     }
 
     /**
-     * @return the connect timeout(int)
-     * @fn int getConnectTimeout()
-     * @brief Get the connect timeout(milliseconds)
+     * Get the connect timeout time.
+     * @return the connect timeout(milliseconds)
      */
     public int getConnectTimeout() {
         return connectTimeout;
     }
 
     /**
-     * @param connectTimeout(int)
-     * @fn void setConnectTimeout(int connectTimeout)
-     * @brief Set the connect timeout(milliseconds)
+     * Set the connect timeout time.
+     * @param connectTimeout connect timeout time(milliseconds)
      */
     public void setConnectTimeout(int connectTimeout) {
         this.connectTimeout = connectTimeout;
@@ -110,18 +101,16 @@ public class ConfigOptions {
     }
 
     /**
-     * @param maxAutoConnectRetryTime(long)
-     * @fn void setMaxAutoConnectRetryTime(long maxAutoConnectRetryTime)
-     * @brief Set the max auto connect retry time(milliseconds)
+     * Set the max auto connect retry time.
+     * @param maxAutoConnectRetryTime the max auto connect retry time(milliseconds)
      */
     public void setMaxAutoConnectRetryTime(long maxAutoConnectRetryTime) {
         this.maxAutoConnectRetryTime = maxAutoConnectRetryTime;
     }
 
     /**
-     * @return boolean
-     * @fn boolean getUseSSL()
-     * @brief Get whether use the SSL or not
+     * Get whether use the SSL or not.
+     * @return True if use SSL and false if not.
      * @since 1.12
      */
     public boolean getUseSSL() {
@@ -129,9 +118,8 @@ public class ConfigOptions {
     }
 
     /**
-     * @param useSSL(boolean)
-     * @fn void setUseSSL(boolean useSSL)
-     * @brief Set whether use the SSL or not
+     * Set whether use the SSL or not.
+     * @param useSSL whether use the SSL or not
      * @since 1.12
      */
     public void setUseSSL(boolean useSSL) {

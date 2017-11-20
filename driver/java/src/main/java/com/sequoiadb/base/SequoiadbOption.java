@@ -19,8 +19,7 @@ package com.sequoiadb.base;
 import com.sequoiadb.datasource.DatasourceOptions;
 
 /**
- * @class SequoiadbOption
- * @brief The options for setting data source
+ * The options for setting data source.
  * @deprecated use DatasourceOptions instead
  */
 @Deprecated

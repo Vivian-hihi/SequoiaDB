@@ -22,8 +22,7 @@ import com.sequoiadb.exception.BaseException;
 import java.util.List;
 
 /**
- * @class SequoiadbDatasource
- * @brief SequoiaDB Data Source
+ * SequoiaDB Data Source
  * @deprecated Use com.sequoiadb.datasource.SequoiadbDatasource instead.
  */
 @Deprecated
@@ -31,23 +30,20 @@ public class SequoiadbDatasource extends com.sequoiadb.datasource.SequoiadbDatas
 
 
     /**
-     * @param urls     the addresses of coord nodes, can't be null or empty,
-     *                 e.g."ubuntu1:11810","ubuntu2:11810",...
-     * @param username the user name for logging sequoiadb
-     * @param password the password for logging sequoiadb
-     * @param nwOpt    the options for connection
-     * @param dsOpt    the options for connection pool
-     * @throws com.sequoiadb.exception.BaseException
-     * @fn SequoiadbDatasource(List<String> urls, String username, String password,
-     *ConfigOptions nwOpt, DatasourceOptions dsOpt)
-     * @brief constructor.
-     * @note When offer several addresses for connection pool to use, if
+     * When offer several addresses for connection pool to use, if
      * some of them are not available(invalid address, network error, coord shutdown,
      * catalog replica group is not available), we will put these addresses
      * into a queue, and check them periodically. If some of them is valid again,
      * get them back for use. When connection pool get a unavailable address to connect,
      * the default timeout is 100ms, and default retry time is 0. Parameter nwOpt can
      * can change both of the default value.
+     * @param urls     the addresses of coord nodes, can't be null or empty,
+     *                 e.g."ubuntu1:11810","ubuntu2:11810",...
+     * @param username the user name for logging sequoiadb
+     * @param password the password for logging sequoiadb
+     * @param nwOpt    the options for connection
+     * @param dsOpt    the options for connection pool
+     * @throws BaseException If error happens.
      * @see ConfigOptions
      * @see DatasourceOptions
      * @deprecated Use com.sequoiadb.datasource.SequoiadbDatasource instead.
@@ -65,23 +61,20 @@ public class SequoiadbDatasource extends com.sequoiadb.datasource.SequoiadbDatas
     }
 
     /**
-     * @param urls     the addresses of coord nodes, can't be null or empty,
-     *                 e.g."ubuntu1:11810","ubuntu2:11810",...
-     * @param username the user name for logging sequoiadb
-     * @param password the password for logging sequoiadb
-     * @param nwOpt    the options for connection
-     * @param dsOpt    the options for connection pool
-     * @throws com.sequoiadb.exception.BaseException
-     * @fn SequoiadbDatasource(List<String> urls, String username, String password,
-     *ConfigOptions nwOpt, SequoiadbOption dsOpt)
-     * @brief constructor.
-     * @note When offer several addresses for connection pool to use, if
+     * When offer several addresses for connection pool to use, if
      * some of them are not available(invalid address, network error, coord shutdown,
      * catalog replica group is not available), we will put these addresses
      * into a queue, and check them periodically. If some of them is valid again,
      * get them back for use. When connection pool get a unavailable address to connect,
      * the default timeout is 100ms, and default retry time is 0. Parameter nwOpt can
      * can change both of the default value.
+     * @param urls     the addresses of coord nodes, can't be null or empty,
+     *                 e.g."ubuntu1:11810","ubuntu2:11810",...
+     * @param username the user name for logging sequoiadb
+     * @param password the password for logging sequoiadb
+     * @param nwOpt    the options for connection
+     * @param dsOpt    the options for connection pool
+     * @throws BaseException If error happens.
      * @see ConfigOptions
      * @see DatasourceOptions
      * @deprecated Use com.sequoiadb.datasource.SequoiadbDatasource instead.
@@ -103,10 +96,7 @@ public class SequoiadbDatasource extends com.sequoiadb.datasource.SequoiadbDatas
      * @param username the user name for logging sequoiadb
      * @param password the password for logging sequoiadb
      * @param dsOpt    the options for connection pool
-     * @throws com.sequoiadb.exception.BaseException
-     * @fn SequoiadbDatasource(String url, String username, String password,
-     *DatasourceOptions dsOpt)
-     * @brief Constructor.
+     * @throws BaseException If error happens.
      * @deprecated Use com.sequoiadb.datasource.SequoiadbDatasource instead.
      */
     @Deprecated

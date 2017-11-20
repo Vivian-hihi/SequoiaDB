@@ -16,6 +16,9 @@
 
 package com.sequoiadb.base;
 
+/**
+ * Options for client.
+ */
 public class ClientOptions {
     private boolean enableCache;
     // define in milliseconds
@@ -27,19 +30,15 @@ public class ClientOptions {
     }
 
     /**
-     * @return The value of "enableCache".
-     * @fn boolean getEnableCache()
-     * @brief Get the value of "enableCache".
+     * @return True if cache is enabled and false if not.
      */
     public boolean getEnableCache() {
         return enableCache;
     }
 
     /**
-     * @param enable true or false.
-     * @return void
-     * @fn void setEnableCache(boolean enable)
-     * @brief Set caching the name of collection space and collection in client or not.
+     * Set caching the name of collection space and collection in client or not.
+     * @param enable True or false.
      */
     public void setEnableCache(boolean enable) {
         enableCache = enable;
@@ -47,22 +46,17 @@ public class ClientOptions {
 
     /**
      * @return The value of caching interval.
-     * @fn long getCacheInterval()
-     * @brief Get the caching interval.
      */
     public long getCacheInterval() {
         return cacheInterval;
     }
 
     /**
-     * @param interval The interval in milliseconds.
-     * @return void
-     * @fn void setCacheInterval(long interval)
-     * @brief Set the interval for caching the name of collection space
+     * Set the interval for caching the name of collection space
      * and collection in client in milliseconds.
-     * This value should not be less than 0,
-     * or it will be set to the default value,
-     * default to be 300*1000ms.
+     * This value should not be less than 0, or it will be set to the default value,
+     * default value is 300*1000ms.
+     * @param interval The interval in milliseconds.
      */
     public void setCacheInterval(long interval) {
         cacheInterval = interval;
