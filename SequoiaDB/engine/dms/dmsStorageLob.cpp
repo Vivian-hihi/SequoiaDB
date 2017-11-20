@@ -41,9 +41,6 @@
 namespace engine
 {
 
-   #define DMS_LOBM_EYECATCHER               "SDBLOBM"
-   #define DMS_LOBM_EYECATCHER_LEN           8
-
    #define DMS_LOB_EXTEND_THRESHOLD_SIZE     ( 65536 )   // 64K
 
    #define DMS_LOB_PAGE_IN_USED( page )\

@@ -69,14 +69,14 @@ namespace engine
    */
    struct _dmsStorageInfo
    {
-      SINT32      _pageSize ;
+      UINT32      _pageSize ;
       CHAR        _suName [ DMS_SU_NAME_SZ + 1 ] ; // storage unit file name is
                                                    // foo.0 / foo.1, where foo
                                                    // is suName, and 0/1 are
                                                    // _sequence
       UINT32      _sequence ;
       UINT64      _secretValue ;
-      INT32       _lobdPageSize ;
+      UINT32       _lobdPageSize ;
 
       UINT32      _overflowRatio ;
       UINT32      _extentThreshold ;

@@ -41,8 +41,6 @@
 #include "ossUtil.hpp"
 #include "ossIO.hpp"
 #include "rtn.hpp"
-#include "pdTrace.hpp"
-#include "pmdTrace.hpp"
 #include "pmdEDU.hpp"
 #include "ixmExtent.hpp"
 #include "ossVer.h"
@@ -54,6 +52,7 @@
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/path.hpp>
+#include <stdarg.h>
 
 using namespace std ;
 using namespace engine ;
@@ -65,6 +64,8 @@ namespace fs = boost::filesystem ;
 #define OPTION_VERSION      "version"
 #define OPTION_DBPATH       "dbpath"
 #define OPTION_INDEXPATH    "indexpath"
+#define OPTION_LOBMPATH     "lobmpath"
+#define OPTION_LOBPATH      "lobpath"
 #define OPTION_OUTPUT       "output"
 #define OPTION_VERBOSE      "verbose"
 #define OPTION_CSNAME       "csname"
@@ -72,10 +73,12 @@ namespace fs = boost::filesystem ;
 #define OPTION_ACTION       "action"
 #define OPTION_DUMPDATA     "dumpdata"
 #define OPTION_DUMPINDEX    "dumpindex"
+#define OPTION_DUMPLOB        "dumplob"
 #define OPTION_PAGESTART    "pagestart"
 #define OPTION_NUMPAGE      "numpage"
 #define OPTION_SHOW_CONTENT "record"
 #define OPTION_ONLY_META    "meta"
+#define OPTION_JUDGE_BALANCE "balance"
 #define OPTION_REPAIRE      "repaire"
 #define OPTION_FORCE        "force"
 
@@ -101,6 +104,8 @@ namespace fs = boost::filesystem ;
        ( OPTION_VERSION, "version" )\
        ( COMMANDS_STRING(OPTION_DBPATH, ",d"), boost::program_options::value<string>(), "database path" ) \
        ( COMMANDS_STRING(OPTION_INDEXPATH, ",x"), boost::program_options::value<string>(), "index path" ) \
+       ( COMMANDS_STRING(OPTION_LOBPATH, ",g"), boost::program_options::value<string>(), "lob path" ) \
+       ( COMMANDS_STRING(OPTION_LOBMPATH, ",m"), boost::program_options::value<string>(), "lob meta path" ) \
        ( COMMANDS_STRING(OPTION_OUTPUT, ",o"), boost::program_options::value<string>(), "output file" ) \
        ( COMMANDS_STRING(OPTION_VERBOSE, ",v"), boost::program_options::value<string>(), "verbose (ture/false)" ) \
        ( COMMANDS_STRING(OPTION_CSNAME, ",c"), boost::program_options::value<string>(), "collection space name" ) \
@@ -108,10 +113,12 @@ namespace fs = boost::filesystem ;
        ( COMMANDS_STRING(OPTION_ACTION, ",a"), boost::program_options::value<string>(), "action (inspect/dump/stat/all)" ) \
        ( COMMANDS_STRING(OPTION_DUMPDATA, ",t"), boost::program_options::value<string>(), "dump data (true/false)" ) \
        ( COMMANDS_STRING(OPTION_DUMPINDEX, ",i"), boost::program_options::value<string>(), "dump index (true/false)" ) \
+       ( COMMANDS_STRING(OPTION_DUMPLOB, ",b"), boost::program_options::value<string>(), "dump lob (true/false)" ) \
        ( COMMANDS_STRING(OPTION_PAGESTART, ",s"), boost::program_options::value<SINT32>(), "starting page number" ) \
        ( COMMANDS_STRING(OPTION_NUMPAGE, ",n"), boost::program_options::value<SINT32>(), "number of pages" ) \
        ( COMMANDS_STRING(OPTION_SHOW_CONTENT, ",p"), boost::program_options::value<string>(), "display data/index content(true/false)" ) \
        ( OPTION_ONLY_META, boost::program_options::value<string>(), "inspect only meta(Header, SME, MME), true/false" ) \
+       ( OPTION_JUDGE_BALANCE, boost::program_options::value<string>(), "open lob buckets balance judgement" ) \
        ( OPTION_FORCE, "force dump all invalid mb, delete list and index list and so on" ) \
        ( COMMANDS_STRING(OPTION_REPAIRE, ",r"), boost::program_options::value<string>(), OPTION_REPAIRE_DESP )
 
@@ -126,23 +133,6 @@ namespace fs = boost::filesystem ;
 #define ACTION_DUMP_STRING       "dump"
 #define ACTION_ALL_STRING        "all"
 
-// since we are single-threaded program, we define a lots of global variables :)
-CHAR    gDatabasePath [ OSS_MAX_PATHSIZE + 1 ]       = {0} ;
-CHAR    gIndexPath[ OSS_MAX_PATHSIZE + 1 ]           = {0} ;
-CHAR    gOutputFile [ OSS_MAX_PATHSIZE + 1 ]         = {0} ;
-BOOLEAN gVerbose                                     = TRUE ;
-UINT32  gDumpType                                    = DMS_SU_DMP_OPT_FORMATTED;
-CHAR    gCSName [ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] = {0} ;
-CHAR    gCLName [ DMS_COLLECTION_NAME_SZ + 1 ]       = {0} ;
-CHAR    gAction                                      = 0 ;
-BOOLEAN gDumpData                                    = FALSE ;
-BOOLEAN gDumpIndex                                   = FALSE ;
-SINT32  gStartingPage                                = -1 ;
-SINT32  gNumPages                                    = 1 ;
-SINT32  gCurFileIndex                                = 0 ;
-std::string gRepairStr ;
-OSSFILE gFile ;
-
 #define DMS_DUMPFILE "dmsdump"
 
 #define W_OK 2
@@ -153,38 +143,6 @@ OSSFILE gFile ;
 #define BUFFER_INC_SIZE 67108864
 // buffer init 4MB
 #define BUFFER_INIT_SIZE 4194304
-CHAR *  gBuffer                                      = NULL ;
-UINT32  gBufferSize                                  = 0 ;
-
-CHAR *  gExtentBuffer = NULL ;
-UINT32  gExtentBufferSize = 0 ;
-
-CHAR *  gDictBuffer = NULL ;
-
-pmdEDUCB *cb             = NULL ;
-
-// other value
-enum SDB_INSPT_TYPE
-{
-   SDB_INSPT_DATA,
-   SDB_INSPT_INDEX
-};
-
-UINT64  gSecretValue                                 = 0 ;
-UINT32  gPageSize                                    = 0 ;
-UINT32  gDataOffset                                  = 0 ;
-INT32   gPageNum                                     = 0 ;
-CHAR   *gMMEBuff                                     = NULL ;
-BOOLEAN gInitMME                                     = FALSE ;
-BOOLEAN gShowRecordContent                           = FALSE ;
-BOOLEAN gOnlyMeta                                    = FALSE ;
-BOOLEAN gForce                                       = FALSE ;
-BOOLEAN gReachEnd                                    = FALSE ;
-BOOLEAN gHitCS                                       = FALSE ;
-SDB_INSPT_TYPE gCurInsptType                         = SDB_INSPT_DATA ;
-dmsMBStatInfo gMBStat ;
-dmsMB         gRepaireMB ;
-UINT32        gRepaireMask                           = 0 ;
 
 #define PMD_REPAIRE_MB_MASK_FLAG             0x00000001
 #define PMD_REPAIRE_MB_MASK_LID              0x00000002
@@ -209,7 +167,86 @@ UINT32        gRepaireMask                           = 0 ;
 
 #define RETRY_COUNT 5
 
-INT32 prepareCompressor( OSSFILE &file, SINT32 pageSize, dmsMB *mb, UINT16 id,
+namespace 
+{
+     // other value
+    enum SDB_INSPT_TYPE
+    {
+       SDB_INSPT_DATA,
+       SDB_INSPT_INDEX,
+       SDB_INSPT_LOB
+    };
+    
+    struct LobFragments
+    {
+        BYTE oid[DMS_LOB_OID_LEN];
+        map<UINT32,UINT32> sequences;  //pair<sequenceId, PageId>
+    };
+
+    typedef std::map<UINT32, std::vector<LobFragments> > ClMap;
+    ClMap gCl2PageMap;
+
+
+    // since we are single-threaded program, we define a lots of global variables :)
+    CHAR    gDatabasePath [ OSS_MAX_PATHSIZE + 1 ]       = {0} ;
+    CHAR    gIndexPath[ OSS_MAX_PATHSIZE + 1 ]           = {0} ;
+    CHAR    gLobPath[ OSS_MAX_PATHSIZE + 1 ]           = {0} ;
+    CHAR    gLobmPath[ OSS_MAX_PATHSIZE + 1 ]           = {0} ;
+    CHAR    gOutputFile [ OSS_MAX_PATHSIZE + 1 ]         = {0} ;
+    BOOLEAN gVerbose                                     = TRUE ;
+    UINT32  gDumpType                                    = DMS_SU_DMP_OPT_FORMATTED;
+    CHAR    gCSName [ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] = {0} ;
+    CHAR    gCLName [ DMS_COLLECTION_NAME_SZ + 1 ]       = {0} ;
+    CHAR    gAction                                      = 0 ;
+    BOOLEAN gDumpData                                    = FALSE ;
+    BOOLEAN gDumpIndex                                   = FALSE ;
+    SINT32  gStartingPage                                = -1 ;
+    SINT32  gNumPages                                    = 1 ;
+    SINT32  gCurFileIndex                                = 0 ;
+    std::string gRepairStr ;
+    OSSFILE gFile ;
+
+    //to support lob
+    OSSFILE gLobdFile;
+    string gLobdFileName;
+    BOOLEAN gDumpLob = FALSE;
+    UINT32 gLobdPageSize = 0;
+    UINT32 gLobmPageSize = 0;
+    UINT32 gSequence = 0;
+    BOOLEAN gExistLobs = FALSE;
+
+    //to support bucket balance judgement.
+    BOOLEAN gBalance = FALSE;
+    UINT32 *gBucketDep = NULL;
+
+
+    CHAR *  gBuffer                                      = NULL ;
+    UINT32  gBufferSize                                  = 0 ;
+    CHAR *  gExtentBuffer = NULL ;
+    UINT32  gExtentBufferSize = 0 ;
+    CHAR *  gDictBuffer = NULL ;
+
+    pmdEDUCB *cb             = NULL ;
+
+    UINT64  gSecretValue                                 = 0 ;
+    UINT32  gPageSize                                    = 0 ;
+    UINT32  gDataOffset                                  = 0 ;
+    UINT32  gPageNum                                     = 0 ;
+    CHAR   *gMMEBuff                                     = NULL ;
+    BOOLEAN gInitMME                                     = FALSE ;
+    BOOLEAN gShowRecordContent                           = FALSE ;
+    BOOLEAN gOnlyMeta                                    = FALSE ;
+    BOOLEAN gForce                                       = FALSE ;
+    BOOLEAN gReachEnd                                    = FALSE ;
+    BOOLEAN gHitCS                                       = FALSE ;
+    SDB_INSPT_TYPE gCurInsptType                         = SDB_INSPT_DATA ;
+    dmsMBStatInfo gMBStat ;
+    dmsMB         gRepaireMB ;
+    UINT32        gRepaireMask                           = 0 ;
+}
+
+
+INT32 prepareCompressor( OSSFILE &file, UINT32 pageSize, dmsMB *mb, UINT16 id,
                          CHAR *pExpBuffer, dmsCompressorEntry &compressorEntry,
                          SINT32 &err ) ;
 
@@ -421,11 +458,9 @@ INT32 parseRepaireString( const std::string &str )
 }
 
 // resolve input argument
-// PD_TRACE_DECLARE_FUNCTION ( SDB_SDBINSPT_RESVARG, "resolveArgument" )
 INT32 resolveArgument ( po::options_description &desc, INT32 argc, CHAR **argv )
 {
    INT32 rc = SDB_OK ;
-   PD_TRACE_ENTRY ( SDB_SDBINSPT_RESVARG );
    CHAR actionString[BUFFERSIZE] = {0} ;
    CHAR outputFile[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
    po::variables_map vm ;
@@ -503,6 +538,38 @@ INT32 resolveArgument ( po::options_description &desc, INT32 argc, CHAR **argv )
    else
    {
       ossStrcpy( gIndexPath, gDatabasePath ) ;
+   }
+   
+   if ( vm.count( OPTION_LOBPATH ) )
+   {
+      const CHAR *lobPath = vm[OPTION_LOBPATH].as<string>().c_str() ;
+      if ( ossStrlen ( lobPath ) > OSS_MAX_PATHSIZE )
+      {
+         ossPrintf ( "Error: lob path is too long: %s", lobPath ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      ossStrncpy ( gLobPath, lobPath, OSS_MAX_PATHSIZE ) ;
+   }
+   else
+   {
+      ossStrcpy( gLobPath, gDatabasePath ) ;
+   }
+   
+   if ( vm.count( OPTION_LOBMPATH ) )
+   {
+      const CHAR *lobmPath = vm[OPTION_LOBMPATH].as<string>().c_str() ;
+      if ( ossStrlen ( lobmPath ) > OSS_MAX_PATHSIZE )
+      {
+         ossPrintf ( "Error: lob meta path is too long: %s", lobmPath ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      ossStrncpy ( gLobmPath, lobmPath, OSS_MAX_PATHSIZE ) ;
+   }
+   else
+   {
+      ossStrcpy( gLobmPath, gDatabasePath ) ;
    }
 
    // check --output, if not provide then use stdout
@@ -583,6 +650,13 @@ INT32 resolveArgument ( po::options_description &desc, INT32 argc, CHAR **argv )
    {
       ossStrToBoolean ( vm[OPTION_DUMPINDEX].as<string>().c_str(),
                         &gDumpIndex ) ;
+   }
+
+   // whether dump lob
+   if ( vm.count ( OPTION_DUMPLOB ) )
+   {
+      ossStrToBoolean ( vm[OPTION_DUMPLOB].as<string>().c_str(),
+                        &gDumpLob ) ;
    }
 
    // collection space name
@@ -690,6 +764,13 @@ INT32 resolveArgument ( po::options_description &desc, INT32 argc, CHAR **argv )
       ossStrToBoolean( vm[OPTION_ONLY_META].as<string>().c_str(),
                        &gOnlyMeta ) ;
    }
+
+   if ( vm.count( OPTION_JUDGE_BALANCE) )
+   {
+      ossStrToBoolean( vm[OPTION_JUDGE_BALANCE].as<string>().c_str(),
+                       &gBalance) ;
+   }
+   
    if ( vm.count( OPTION_FORCE ) )
    {
       gForce = TRUE ;
@@ -726,6 +807,10 @@ INT32 resolveArgument ( po::options_description &desc, INT32 argc, CHAR **argv )
                        gDatabasePath ) ;
    dumpAndShowPrintf ( "Index path    : %s"OSS_NEWLINE,
                        gIndexPath ) ;
+   dumpAndShowPrintf ( "Lobm path     : %s"OSS_NEWLINE,
+                       gLobmPath) ;
+   dumpAndShowPrintf ( "Lob path      : %s"OSS_NEWLINE,
+                       gLobPath ) ;
    dumpAndShowPrintf ( "Output File   : %s"OSS_NEWLINE,
                        ossStrlen(gOutputFile)?gOutputFile:"{stdout}" ) ;
    dumpAndShowPrintf ( "Verbose       : %s"OSS_NEWLINE,
@@ -743,6 +828,8 @@ INT32 resolveArgument ( po::options_description &desc, INT32 argc, CHAR **argv )
                        gDumpData?"True":"False" ) ;
    dumpAndShowPrintf ( "   Dump Index : %s"OSS_NEWLINE,
                        gDumpIndex?"True":"False" ) ;
+   dumpAndShowPrintf ( "   Dump Lob   : %s"OSS_NEWLINE,
+                       gDumpLob?"True":"False" ) ;
    dumpAndShowPrintf ( "   Start Page : %d"OSS_NEWLINE,
                        gStartingPage ) ;
    dumpAndShowPrintf ( "   Num Pages  : %d"OSS_NEWLINE,
@@ -751,11 +838,12 @@ INT32 resolveArgument ( po::options_description &desc, INT32 argc, CHAR **argv )
                        gShowRecordContent ? "True":"False") ;
    dumpAndShowPrintf ( "   Only Meta  : %s"OSS_NEWLINE,
                        gOnlyMeta ? "True":"False" ) ;
+   dumpAndShowPrintf ( "   Balance    : %s"OSS_NEWLINE,
+                       gBalance? "True":"False" ) ;
    dumpAndShowPrintf ( "   force      : %s"OSS_NEWLINE,
                        gForce ? "True":"False" ) ;
    dumpAndShowPrintf ( OSS_NEWLINE ) ;
 done :
-   PD_TRACE_EXITRC ( SDB_SDBINSPT_RESVARG, rc );
    return rc ;
 error :
    goto done ;
@@ -764,11 +852,9 @@ error :
 // write output from pBuffer for size bytes, to output file
 // if output file is not defined, or failed writing to file, we write to screen
 // stdout
-// PD_TRACE_DECLARE_FUNCTION ( SDB_FLUSHOUTPUT, "flushOutput" )
 void flushOutput ( const CHAR *pBuffer, INT32 size )
 {
    INT32 rc = SDB_OK ;
-   PD_TRACE_ENTRY ( SDB_FLUSHOUTPUT );
    SINT64 writeSize ;
    SINT64 writtenSize = 0 ;
 
@@ -806,8 +892,6 @@ void flushOutput ( const CHAR *pBuffer, INT32 size )
    }
 
 done :
-   PD_TRACE1 ( SDB_FLUSHOUTPUT, PD_PACK_INT(rc) );
-   PD_TRACE_EXIT ( SDB_FLUSHOUTPUT );
    return ;
 error :
    ossPrintf ( "%s", pBuffer ) ;
@@ -816,10 +900,8 @@ error :
 
 // dump some text into output
 #define DUMP_PRINTF_BUFFER_SZ 4095
-// PD_TRACE_DECLARE_FUNCTION ( SDB_DUMPPRINTF, "dumpPrintf" )
 void dumpPrintf ( const CHAR *format, ... )
 {
-   PD_TRACE_ENTRY ( SDB_DUMPPRINTF );
    INT32 len = 0 ;
    CHAR tempBuffer [ DUMP_PRINTF_BUFFER_SZ + 1 ] = {0} ;
    va_list ap ;
@@ -827,8 +909,6 @@ void dumpPrintf ( const CHAR *format, ... )
    len = vsnprintf ( tempBuffer, DUMP_PRINTF_BUFFER_SZ, format, ap );
    va_end ( ap ) ;
    flushOutput ( tempBuffer, len ) ;
-   PD_TRACE1 ( SDB_DUMPPRINTF, PD_PACK_INT(len) );
-   PD_TRACE_EXIT ( SDB_DUMPPRINTF );
 }
 
 // reallocate global output buffer.
@@ -837,11 +917,9 @@ void dumpPrintf ( const CHAR *format, ... )
 // than required, they'll call this function again to double the memory. The
 // incremental upper limit is BUFFER_INC_SIZE, and the total amount of buffer
 // cannot exceed 2GB ( for protection only )
-// PD_TRACE_DECLARE_FUNCTION ( SDB_REALLOCBUFFER, "reallocBuffer" )
 INT32 reallocBuffer ()
 {
    INT32 rc = SDB_OK ;
-   PD_TRACE_ENTRY ( SDB_REALLOCBUFFER );
    if ( gBufferSize == 0 )
    {
       gBufferSize = BUFFER_INIT_SIZE ;
@@ -874,7 +952,6 @@ INT32 reallocBuffer ()
       goto error ;
    }
 done :
-   PD_TRACE_EXITRC ( SDB_REALLOCBUFFER, rc );
    return rc ;
 error :
    goto done ;
@@ -884,11 +961,9 @@ error :
 // read from file. The argument size represents the number of bytes required by
 // the extent. If the required size is greater than the current size, we'll
 // reallocate required buffer size
-// PD_TRACE_DECLARE_FUNCTION ( SDB_GETEXTBUFFER, "getExtentBuffer" )
 INT32 getExtentBuffer ( INT32 size )
 {
    INT32 rc = SDB_OK ;
-   PD_TRACE_ENTRY ( SDB_GETEXTBUFFER );
    if ( (UINT32)size > gExtentBufferSize )
    {
       if ( gExtentBuffer )
@@ -909,7 +984,6 @@ INT32 getExtentBuffer ( INT32 size )
    }
 
 done :
-   PD_TRACE_EXITRC ( SDB_GETEXTBUFFER, rc );
    return rc ;
 error :
    goto done ;
@@ -927,11 +1001,106 @@ void clearBuffer ()
 }
 
 // inspect SU's header
-// PD_TRACE_DECLARE_FUNCTION ( SDB_INSPECTHEADER, "inspectHeader" )
-void inspectHeader ( OSSFILE &file, SINT32 &pageSize, SINT32 &err )
+INT32 inspectLobmHeader ( OSSFILE &file, INT64 &fileSize, SINT32 &err )
+{
+    INT32 rc       = SDB_OK ;
+    UINT32 len     = 0 ;
+    CHAR headerBuffer [ DMS_HEADER_SZ ] = {0};
+    SINT64 lenRead = 0 ;
+    SINT32 localErr = 0;
+
+    // seek to where header starts and read DMS_HEADER_SZ bytes
+    rc = ossSeekAndRead(&file, DMS_HEADER_OFFSET, headerBuffer,
+                         DMS_HEADER_SZ, &lenRead ) ;
+    if ( rc || lenRead != DMS_HEADER_SZ )
+    {
+      dumpPrintf("  Error: Failed to read header, read %lld bytes, "
+                   "rc = %d"OSS_NEWLINE, lenRead, rc ) ;
+      
+      goto error ;
+    }
+   // attempt to format, note if len is gBufferSize - 1, that means we write to
+   // end of buffer, which represents the current buffer size is not sufficient,
+   // then clearly we should attempt to realloc buffer and format again
+retry :
+    localErr = 0;
+    len = dmsInspect::inspectLobmHeader(headerBuffer, DMS_HEADER_SZ,
+                                     gBuffer, gBufferSize, gSequence,
+                                     gPageNum, gLobmPageSize, gSecretValue,
+                                     fileSize, localErr) ;
+    if ( len >= gBufferSize - 1 )
+    {
+        // if len is same as buffer size, that means we run out of buffer memory
+        if ( reallocBuffer() )
+        {
+            // if we failed to realloc more memory
+            clearBuffer () ;
+            goto error ;
+        }
+        goto retry ;
+    }
+    flushOutput ( gBuffer, len ) ;
+    err += localErr;
+   
+done :
+    return rc;
+error :
+    goto done ;
+}
+
+
+// inspect SU's header
+INT32 inspectLobdHeader (UINT64 fileSize, SINT32 &totalErr)
 {
    INT32 rc       = SDB_OK ;
-   PD_TRACE_ENTRY ( SDB_INSPECTHEADER );
+   UINT32 len     = 0 ;
+   CHAR headerBuffer [ DMS_HEADER_SZ ] = {0};
+   SINT64 lenRead = 0 ;
+   SINT32 localErr;
+
+   // seek to where header starts and read DMS_HEADER_SZ bytes
+   rc = ossSeekAndRead ( &gLobdFile, DMS_HEADER_OFFSET, headerBuffer,
+                         DMS_HEADER_SZ, &lenRead ) ;
+   if ( rc || lenRead != DMS_HEADER_SZ )
+   {
+      dumpPrintf ( "Error: Failed to read header, read %lld bytes, "
+                   "rc = %d"OSS_NEWLINE, lenRead, rc ) ;
+      goto error ;
+   }
+   // attempt to format, note if len is gBufferSize - 1, that means we write to
+   // end of buffer, which represents the current buffer size is not sufficient,
+   // then clearly we should attempt to realloc buffer and format again
+retry :
+    localErr = 0;
+    len = dmsInspect::inspectLobdHeader ( headerBuffer, DMS_HEADER_SZ,
+                                     gBuffer, gBufferSize,
+                                     gSequence, gSecretValue,
+                                     fileSize, localErr) ;
+    if ( len >= gBufferSize - 1 )
+    {
+      // if len is same as buffer size, that means we run out of buffer memory
+      if ( reallocBuffer () )
+      {
+         // if we failed to realloc more memory
+         clearBuffer () ;
+         goto error ;
+      }
+      goto retry ;
+    }
+    flushOutput ( gBuffer, len ) ;
+    totalErr += localErr;
+
+done :
+   return rc;
+error :
+   goto done ;
+}
+
+
+// inspect SU's header
+void inspectHeader ( OSSFILE &file, UINT32 &pageSize, SINT32 &err )
+{
+   INT32 rc       = SDB_OK ;
    INT32 localErr = 0 ;
    UINT32 len     = 0 ;
    CHAR headerBuffer [ DMS_HEADER_SZ ] = {0};
@@ -957,7 +1126,6 @@ retry :
                                      gBuffer, gBufferSize,
                                      pageSize, gPageNum,
                                      secretValue, localErr ) ;
-   PD_TRACE1 ( SDB_INSPECTHEADER, PD_PACK_UINT(len) );
    if ( len >= gBufferSize - 1 )
    {
       // if len is same as buffer size, that means we run out of buffer memory
@@ -987,18 +1155,14 @@ retry :
    }
 
 done :
-   PD_TRACE1 ( SDB_INSPECTHEADER, PD_PACK_INT(rc) );
-   PD_TRACE_EXIT ( SDB_INSPECTHEADER );
    return ;
 error :
    goto done ;
 }
 
-// PD_TRACE_DECLARE_FUNCTION ( SDB_DUMPHEADER, "dumpHeader" )
-void dumpHeader ( OSSFILE &file, SINT32 &pageSize )
+void dumpHeader ( OSSFILE &file, UINT32 &pageSize )
 {
    INT32 rc                            = SDB_OK ;
-   PD_TRACE_ENTRY ( SDB_DUMPHEADER );
    UINT32 len                          = 0 ;
    CHAR headerBuffer [ DMS_HEADER_SZ ] = {0};
    SINT64 lenRead                      = 0 ;
@@ -1021,7 +1185,6 @@ retry :
                                DMS_SU_DMP_OPT_HEX_WITH_ASCII |
                                DMS_SU_DMP_OPT_HEX_PREFIX_AS_ADDR |
                                gDumpType, pageSize, gPageNum ) ;
-   PD_TRACE1 ( SDB_DUMPHEADER, PD_PACK_UINT(len) );
    if ( len >= gBufferSize - 1 )
    {
       // if len is same as buffer size, that means we run out of buffer memory
@@ -1038,18 +1201,14 @@ retry :
    flushOutput ( gBuffer, len ) ;
 
 done :
-   PD_TRACE1 ( SDB_DUMPHEADER, PD_PACK_INT(rc) ) ;
-   PD_TRACE_EXIT ( SDB_DUMPHEADER );
    return ;
 error :
    goto done ;
 }
 
-// PD_TRACE_DECLARE_FUNCTION ( SDB_INSPECTSME, "inspectSME" )
 void inspectSME ( OSSFILE &file, const CHAR *pExpBuf, SINT32 &hwm, SINT32 &err )
 {
    INT32 rc        = SDB_OK ;
-   PD_TRACE_ENTRY ( SDB_INSPECTSME );
    UINT32 len      = 0 ;
    CHAR *smeBuffer = NULL ;
    SINT64 lenRead  = 0 ;
@@ -1061,7 +1220,7 @@ void inspectSME ( OSSFILE &file, const CHAR *pExpBuf, SINT32 &hwm, SINT32 &err )
    {
       dumpPrintf ( "Error: Failed to allocate %d bytes for SME buffer"
                    OSS_NEWLINE, (INT32)DMS_SME_SZ ) ;
-      ++err ;
+
       goto error ;
    }
    // seek to SME
@@ -1071,7 +1230,7 @@ void inspectSME ( OSSFILE &file, const CHAR *pExpBuf, SINT32 &hwm, SINT32 &err )
    {
       dumpPrintf ( "Error: Failed to read sme, read %lld bytes, "
                    "rc = %d"OSS_NEWLINE, lenRead, rc ) ;
-      ++err ;
+      
       goto error ;
    }
 retry :
@@ -1080,7 +1239,6 @@ retry :
                                   gBuffer, gBufferSize,
                                   pExpBuf, gPageNum,
                                   hwm, localErr ) ;
-   PD_TRACE1 ( SDB_INSPECTSME, PD_PACK_UINT(len) );
    if ( len >= gBufferSize - 1 )
    {
       if ( reallocBuffer () )
@@ -1097,32 +1255,22 @@ done :
    {
       SDB_OSS_FREE ( smeBuffer ) ;
    }
-   PD_TRACE1 ( SDB_INSPECTSME, PD_PACK_INT(rc) );
-   PD_TRACE_EXIT ( SDB_INSPECTSME );
    return ;
 error :
    goto done ;
 }
 
-// PD_TRACE_DECLARE_FUNCTION ( SDB_DUMPSME, "dumpSME" )
-void dumpSME ( OSSFILE &file )
+void dumpSME ( OSSFILE &file, CHAR *pSmeBuffer)
 {
    INT32 rc = SDB_OK ;
-   PD_TRACE_ENTRY ( SDB_DUMPSME );
    UINT32 len ;
-   CHAR *smeBuffer = NULL ;
    SINT64 lenRead = 0 ;
    // free by end of function
    // since SME is too large to be held by stack, we do heap allocation
-   smeBuffer = (CHAR*)SDB_OSS_MALLOC ( DMS_SME_SZ ) ;
-   if ( !smeBuffer )
-   {
-      dumpPrintf ( "Error: Failed to allocate %d bytes for SME buffer"
-                   OSS_NEWLINE, (INT32)DMS_SME_SZ ) ;
-      goto error ;
-   }
+   
+
    // seek to where SME starts
-   rc = ossSeekAndRead ( &file, DMS_SME_OFFSET, smeBuffer,
+   rc = ossSeekAndRead ( &file, DMS_SME_OFFSET, pSmeBuffer,
                          DMS_SME_SZ, &lenRead ) ;
    if ( rc || lenRead != DMS_SME_SZ )
    {
@@ -1133,9 +1281,8 @@ void dumpSME ( OSSFILE &file )
    // format it, if len == gBufferSize -1, that means buffer is not large enough
    // and we should attempt to realloc
 retry :
-   len = dmsDump::dumpSME ( smeBuffer, DMS_SME_SZ,
+   len = dmsDump::dumpSME ( pSmeBuffer, DMS_SME_SZ,
                             gBuffer, gBufferSize, gPageNum ) ;
-   PD_TRACE1 ( SDB_DUMPSME, PD_PACK_UINT(len) );
    if ( len >= gBufferSize - 1 )
    {
       if ( reallocBuffer () )
@@ -1149,12 +1296,7 @@ retry :
    flushOutput ( gBuffer, len ) ;
 
 done :
-   if ( smeBuffer )
-   {
-      SDB_OSS_FREE ( smeBuffer ) ;
-   }
-   PD_TRACE1 ( SDB_DUMPSME, PD_PACK_INT(rc) );
-   PD_TRACE_EXIT ( SDB_DUMPSME );
+
    return ;
 error :
    goto done ;
@@ -1165,12 +1307,10 @@ error :
 // 2) extent id
 // 3) SU page size
 // and output to extentHead structure
-// PD_TRACE_DECLARE_FUNCTION ( SDB_GETEXTENTHEAD, "getExtentHead" )
-INT32 getExtentHead ( OSSFILE &file, dmsExtentID extentID, SINT32 pageSize,
+INT32 getExtentHead ( OSSFILE &file, dmsExtentID extentID, UINT32 pageSize,
                       dmsExtent &extentHead )
 {
    INT32 rc = SDB_OK ;
-   PD_TRACE_ENTRY ( SDB_GETEXTENTHEAD );
    SINT64 lenRead = 0 ;
    // calculate the starting offset of extent, and read extent head
    rc = ossSeekAndRead ( &file, gDataOffset + (SINT64)pageSize * extentID,
@@ -1184,7 +1324,6 @@ INT32 getExtentHead ( OSSFILE &file, dmsExtentID extentID, SINT32 pageSize,
       if ( !rc )
          rc = SDB_IO ;
    }
-   PD_TRACE_EXITRC ( SDB_GETEXTENTHEAD, rc );
    return rc ;
 }
 
@@ -1194,12 +1333,10 @@ INT32 getExtentHead ( OSSFILE &file, dmsExtentID extentID, SINT32 pageSize,
 // 3) page size
 // 4) extent size
 // This function store output to global gExtentBuffer
-// PD_TRACE_DECLARE_FUNCTION ( SDB_GETEXTENT, "getExtent" )
-INT32 getExtent ( OSSFILE &file, dmsExtentID extentID, SINT32 pageSize,
+INT32 getExtent ( OSSFILE &file, dmsExtentID extentID, UINT32 pageSize,
                   SINT32 extentSize, BOOLEAN dictExtent = FALSE )
 {
    INT32 rc = SDB_OK ;
-   PD_TRACE_ENTRY ( SDB_GETEXTENT );
    SINT64 lenRead ;
    CHAR *buffer = NULL ;
 
@@ -1241,7 +1378,6 @@ INT32 getExtent ( OSSFILE &file, dmsExtentID extentID, SINT32 pageSize,
    }
 
 done :
-   PD_TRACE_EXITRC ( SDB_GETEXTENT, rc );
    return rc ;
 error :
    goto done ;
@@ -1264,13 +1400,11 @@ enum INSPECT_EXTENT_TYPE
 // check if an extent is valid, TRUE means valid, FALSE means invalid
 // If type = INSPECT_EXTENT_TYPE_UNKNOWN, we'll first detect the extent type,
 // and then assign type to the correct value, then do validation
-// PD_TRACE_DECLARE_FUNCTION ( SDB_EXTENTSANITYCHK, "extentSanityCheck" )
 BOOLEAN extentSanityCheck ( dmsExtent &extentHead,
                             INSPECT_EXTENT_TYPE &type, // in-out
-                            SINT32 pageSize,
+                            UINT32 pageSize,
                             UINT16 expID )
 {
-   PD_TRACE_ENTRY ( SDB_EXTENTSANITYCHK );
    BOOLEAN result = TRUE ;
 
 retry :
@@ -1320,7 +1454,7 @@ retry :
       }
       // first record doesn't go wild
       if ( extentHead._firstRecordOffset >=
-           extentHead._blockSize * pageSize )
+            extentHead._blockSize * (SINT32)pageSize )
       {
          dumpPrintf ( "Error: Bad first record offset: %d"OSS_NEWLINE,
                       extentHead._firstRecordOffset ) ;
@@ -1328,7 +1462,7 @@ retry :
       }
       // last record doens't go wild
       if ( extentHead._lastRecordOffset >=
-           extentHead._blockSize * pageSize )
+           extentHead._blockSize * (SINT32)pageSize )
       {
          dumpPrintf ( "Error: Bad last record offset: %d"OSS_NEWLINE,
                       extentHead._lastRecordOffset ) ;
@@ -1336,7 +1470,7 @@ retry :
       }
       // free space is making sense too
       if ( (UINT32)extentHead._freeSpace >
-           extentHead._blockSize * pageSize - DMS_EXTENT_METADATA_SZ )
+           extentHead._blockSize * (SINT32)pageSize - DMS_EXTENT_METADATA_SZ )
       {
          dumpPrintf ( "Error: Invalid free space: %d, extentSize: %d"
                       OSS_NEWLINE, extentHead._freeSpace,
@@ -1504,16 +1638,12 @@ retry :
    {
       SDB_ASSERT ( FALSE, "should never hit here" ) ;
    }
-   PD_TRACE1 ( SDB_EXTENTSANITYCHK, PD_PACK_INT(result) );
-   PD_TRACE_EXIT ( SDB_EXTENTSANITYCHK );
    return result ;
 }
 
-// PD_TRACE_DECLARE_FUNCTION ( SDB_LOADMB, "loadMB" )
 INT32 loadMB ( UINT16 collectionID, dmsMB *&mb )
 {
    INT32 rc = SDB_SYS ;
-   PD_TRACE_ENTRY ( SDB_LOADMB ) ;
    mb = NULL ;
 
    if ( gInitMME && collectionID < DMS_MME_SLOTS )
@@ -1524,7 +1654,6 @@ INT32 loadMB ( UINT16 collectionID, dmsMB *&mb )
       rc = SDB_OK ;
    }
 
-   PD_TRACE_EXITRC ( SDB_LOADMB, rc );
    return rc ;
 }
 
@@ -1532,13 +1661,11 @@ INT32 loadMB ( UINT16 collectionID, dmsMB *&mb )
 // first we need to load extent header and do sanity check. If we found
 // something strange, we don't want to load garbage.
 // Then let's load the full extent and return
-// PD_TRACE_DECLARE_FUNCTION ( SDB_LOADEXTENT, "loadExtent" )
 INT32 loadExtent ( OSSFILE &file, INSPECT_EXTENT_TYPE &type,
-                   SINT32 pageSize, dmsExtentID extentID,
+                   UINT32 pageSize, dmsExtentID extentID,
                    UINT16 collectionID )
 {
    INT32 rc = SDB_OK ;
-   PD_TRACE_ENTRY ( SDB_LOADEXTENT );
    dmsExtent extentHead ;
    // load header first
    rc = getExtentHead ( file, extentID, pageSize, extentHead ) ;
@@ -1579,14 +1706,12 @@ INT32 loadExtent ( OSSFILE &file, INSPECT_EXTENT_TYPE &type,
    }
 
 done :
-   PD_TRACE_EXITRC ( SDB_LOADEXTENT, rc );
    return rc ;
 error :
    goto done ;
 }
 
-// PD_TRACE_DECLARE_FUNCTION ( SDB_INSPOVFLWRECRDS, "inspectOverflowedRecords" )
-void inspectOverflowedRecords ( OSSFILE &file, SINT32 pageSize,
+void inspectOverflowedRecords ( OSSFILE &file, UINT32 pageSize,
                                 UINT16 collectionID, dmsExtentID ovfFromExtent,
                                 std::set<dmsRecordID> &overRIDList,
                                 SINT32 &err,
@@ -1594,7 +1719,6 @@ void inspectOverflowedRecords ( OSSFILE &file, SINT32 pageSize,
                                 UINT64 &compressedNum )
 {
    INT32 rc        = SDB_OK ;
-   PD_TRACE_ENTRY ( SDB_INSPOVFLWRECRDS );
    SINT32 oldErr   = err ;
    SINT32 localErr = 0 ;
    UINT32 len      = 0 ;
@@ -1604,14 +1728,14 @@ void inspectOverflowedRecords ( OSSFILE &file, SINT32 pageSize,
    dmsExtentID currentExtentID = DMS_INVALID_EXTENT ;
    BOOLEAN isCompressed = FALSE ;
 
-   dumpPrintf ( " Inspect Overflow-Records for Collection [%d]'s extent [%d]"
+   dumpPrintf ( "Inspect Overflow-Records for Collection [%d]'s extent [%d]"
                 OSS_NEWLINE, collectionID, ovfFromExtent ) ;
 
    for ( it = overRIDList.begin() ; it != overRIDList.end() ; ++it )
    {
       dmsRecordID rid = *it ;
       dmsOffset offset = 0 ;
-      if ( rid._extent > gPageNum )
+      if ( rid._extent > (SINT32)gPageNum )
       {
          dumpPrintf ( "Error: overflowed rid extent is out of range: "
                       "0x08lx (%d) 0x08lx (%d)"OSS_NEWLINE,
@@ -1676,21 +1800,17 @@ done :
                    "done with error: %d"OSS_NEWLINE, collectionID,
                    ovfFromExtent, err-oldErr ) ;
    }
-   PD_TRACE1 ( SDB_INSPOVFLWRECRDS, PD_PACK_INT(err) );
-   PD_TRACE_EXIT ( SDB_INSPOVFLWRECRDS );
    return ;
 error :
    goto done ;
 }
 
-// PD_TRACE_DECLARE_FUNCTION ( SDB_DUMPOVFWRECRDS, "dumpOverflowedRecords" )
-void dumpOverflowedRecords ( OSSFILE &file, SINT32 pageSize,
+void dumpOverflowedRecords ( OSSFILE &file, UINT32 pageSize,
                              UINT16 collectionID, dmsExtentID ovfFromExtID,
                              std::set<dmsRecordID> &overRIDList,
                              dmsCompressorEntry *compressorEntry )
 {
    INT32 rc = SDB_OK ;
-   PD_TRACE_ENTRY ( SDB_DUMPOVFWRECRDS );
    UINT32 len = 0 ;
    std::set<dmsRecordID>::iterator it ;
    INSPECT_EXTENT_TYPE extentType = INSPECT_EXTENT_TYPE_DATA ;
@@ -1725,7 +1845,6 @@ retry :
                  ((dmsExtent*)gExtentBuffer)->_blockSize * pageSize - offset,
                  gBuffer, gBufferSize, offset, compressorEntry, NULL ) ;
 
-      PD_TRACE1 ( SDB_DUMPOVFWRECRDS, PD_PACK_UINT(len) );
       if ( len >= gBufferSize-1 )
       {
          if ( reallocBuffer () )
@@ -1740,22 +1859,18 @@ retry :
    }
 
 done :
-   PD_TRACE1 ( SDB_DUMPOVFWRECRDS, PD_PACK_INT(rc) );
-   PD_TRACE_EXIT ( SDB_DUMPOVFWRECRDS );
    return ;
 error :
    goto done ;
 }
 
-// PD_TRACE_DECLARE_FUNCTION ( SDB_INSPINXDEF, "inspectIndexDef" )
-void inspectIndexDef ( OSSFILE &file, SINT32 pageSize, UINT16 collectionID,
+void inspectIndexDef ( OSSFILE &file, UINT32 pageSize, UINT16 collectionID,
                        dmsMB *mb, CHAR *pExpBuffer,
                        std::map<UINT16, dmsExtentID> &indexRoots,
                        SINT32 &err )
 {
    UINT32 len = 0 ;
    INT32 rc = SDB_OK ;
-   PD_TRACE_ENTRY ( SDB_INSPINXDEF );
    INT32 localErr = 0 ;
    INT32 oldErr   = err ;
    INSPECT_EXTENT_TYPE extentType = INSPECT_EXTENT_TYPE_INDEX_CB ;
@@ -1775,7 +1890,7 @@ void inspectIndexDef ( OSSFILE &file, SINT32 pageSize, UINT16 collectionID,
       dmsExtentID indexRoot = DMS_INVALID_EXTENT ;
       // dump index cb extent
       if ( indexCBExtentID == DMS_INVALID_EXTENT ||
-           indexCBExtentID >= gPageNum )
+           (UINT32)indexCBExtentID >= gPageNum )
       {
          dumpPrintf ( "Error: Index CB Extent ID is not valid: 0x%08lx (%d)"
                       OSS_NEWLINE, indexCBExtentID, indexCBExtentID ) ;
@@ -1831,7 +1946,6 @@ retry :
                                                collectionID,
                                                indexRoot,
                                                localErr ) ;
-      PD_TRACE1 ( SDB_INSPINXDEF, PD_PACK_UINT(len) );
       if ( len >= gBufferSize-1 )
       {
          if ( reallocBuffer () )
@@ -1853,20 +1967,16 @@ done :
       dumpPrintf ( " Inspect Index Def for Collection [%u] Done with (%d) Error"
                    OSS_NEWLINE, collectionID, err-oldErr ) ;
    }
-   PD_TRACE1 ( SDB_INSPINXDEF, PD_PACK_INT(rc) );
-   PD_TRACE_EXIT ( SDB_INSPINXDEF );
    return ;
 error :
    goto done ;
 }
 
-// PD_TRACE_DECLARE_FUNCTION ( SDB_DUMPINXDEF, "dumpIndexDef" )
-void dumpIndexDef ( OSSFILE &file, SINT32 pageSize, UINT16 collectionID,
+void dumpIndexDef ( OSSFILE &file, UINT32 pageSize, UINT16 collectionID,
                     dmsMB *mb, std::map<UINT16, dmsExtentID> &indexRoots )
 {
    UINT32 len = 0 ;
    INT32 rc = SDB_OK ;
-   PD_TRACE_ENTRY ( SDB_DUMPINXDEF );
    INSPECT_EXTENT_TYPE extentType = INSPECT_EXTENT_TYPE_INDEX_CB ;
    dumpPrintf ( " Dump Index Def for Collection [%u]"OSS_NEWLINE,
                 collectionID ) ;
@@ -1887,7 +1997,7 @@ void dumpIndexDef ( OSSFILE &file, SINT32 pageSize, UINT16 collectionID,
                    i, indexCBExtentID ) ;
       // sanity check
       if ( indexCBExtentID == DMS_INVALID_EXTENT ||
-           indexCBExtentID >= gPageNum )
+           (UINT32)indexCBExtentID >= gPageNum )
       {
          dumpPrintf ( "Error: Index CB Extent ID is not valid: 0x%08lx (%d)"
                       OSS_NEWLINE, indexCBExtentID, indexCBExtentID ) ;
@@ -1913,7 +2023,6 @@ retry :
                                          DMS_SU_DMP_OPT_HEX_PREFIX_AS_ADDR |
                                          gDumpType,
                                          indexRoot ) ;
-      PD_TRACE1 ( SDB_DUMPINXDEF, PD_PACK_UINT(len) );
       if ( len >= gBufferSize-1 )
       {
          if ( reallocBuffer () )
@@ -1931,21 +2040,17 @@ retry :
    }
 
 done :
-   PD_TRACE1 ( SDB_DUMPINXDEF, PD_PACK_INT(rc) );
-   PD_TRACE_EXIT ( SDB_DUMPINXDEF );
    return ;
 error :
    goto done ;
 }
 
-// PD_TRACE_DECLARE_FUNCTION ( SDB_INSPINXEXTS, "inspectIndexExtents" )
-void inspectIndexExtents ( OSSFILE &file, SINT32 pageSize,
+void inspectIndexExtents ( OSSFILE &file, UINT32 pageSize,
                            dmsExtentID rootID, UINT16 collectionID,
                            CHAR *pExpBuffer, SINT32 &err )
 {
    UINT32 len      = 0 ;
    INT32 rc        = SDB_OK ;
-   PD_TRACE_ENTRY ( SDB_INSPINXEXTS );
    SINT32 localErr = 0 ;
    std::deque<dmsExtentID> childExtents ;
    // set to index type
@@ -1958,7 +2063,7 @@ void inspectIndexExtents ( OSSFILE &file, SINT32 pageSize,
       dmsExtentID childID = childExtents.front() ;
       childExtents.pop_front() ;
 
-      if ( childID == DMS_INVALID_EXTENT || childID >= gPageNum )
+      if ( childID == DMS_INVALID_EXTENT || childID >= (SINT32)gPageNum )
       {
          dumpPrintf ( "Error: index extent ID is not valid: 0x%08lx (%d)"
                       OSS_NEWLINE, childID, childID ) ;
@@ -1997,7 +2102,6 @@ retry :
                                              collectionID,
                                              childID, childExtents,
                                              localErr ) ;
-      PD_TRACE1 ( SDB_INSPINXEXTS, PD_PACK_UINT(len) );
       if ( len >= gBufferSize-1 )
       {
          if ( reallocBuffer () )
@@ -2012,21 +2116,17 @@ retry :
    }
 
 done :
-   PD_TRACE1 ( SDB_INSPINXEXTS, PD_PACK_INT(rc) );
-   PD_TRACE_EXIT ( SDB_INSPINXEXTS );
    return ;
 error :
    goto done ;
 }
 
 // dump all extents for a given index
-// PD_TRACE_DECLARE_FUNCTION ( SDB_DUMPINXEXTS, "dumpIndexExtents" )
-void dumpIndexExtents ( OSSFILE &file, SINT32 pageSize,
+void dumpIndexExtents ( OSSFILE &file, UINT32 pageSize,
                         dmsExtentID rootID, UINT16 collectionID )
 {
    UINT32 len = 0 ;
    INT32 rc = SDB_OK ;
-   PD_TRACE_ENTRY ( SDB_DUMPINXEXTS );
    std::deque<dmsExtentID> childExtents ;
    // set to index type
    INSPECT_EXTENT_TYPE extentType = INSPECT_EXTENT_TYPE_INDEX ;
@@ -2040,7 +2140,7 @@ void dumpIndexExtents ( OSSFILE &file, SINT32 pageSize,
       ++count ;
 
       dumpPrintf ( "    Dump Index Page %d:"OSS_NEWLINE, childID ) ;
-      if ( childID == DMS_INVALID_EXTENT || childID >= gPageNum )
+      if ( childID == DMS_INVALID_EXTENT || (UINT32)childID >= gPageNum )
       {
          dumpPrintf ( "Error: index extent ID is not valid: 0x%08lx (%d)"
                       OSS_NEWLINE, childID, childID ) ;
@@ -2064,7 +2164,6 @@ retry :
                                       gDumpType,
                                       childExtents,
                                       gShowRecordContent ) ;
-      PD_TRACE1 ( SDB_DUMPINXEXTS, PD_PACK_UINT(len) );
       if ( len >= gBufferSize-1 )
       {
          if ( reallocBuffer () )
@@ -2081,18 +2180,14 @@ retry :
    dumpPrintf ( OSS_NEWLINE ) ;
 
 done :
-   PD_TRACE1 ( SDB_DUMPINXEXTS, PD_PACK_INT(rc) );
-   PD_TRACE_EXIT ( SDB_DUMPINXEXTS );
    return ;
 error :
    goto done ;
 }
 
-// PD_TRACE_DECLARE_FUNCTION ( SDB_INSPECTDICTPAGESTATE, "inspectDictPageState" )
 void inspectDictPageState( CHAR *pExpBuffer, dmsExtentID extentID,
                            SINT32 &err )
 {
-   PD_TRACE_ENTRY( SDB_INSPECTDICTPAGESTATE ) ;
    dmsDictExtent *dictExtent = (dmsDictExtent*)gDictBuffer ;
    dmsSpaceManagementExtent *sme = (dmsSpaceManagementExtent*)pExpBuffer ;
    for ( INT32 i = 0; i < dictExtent->_blockSize; ++i )
@@ -2108,10 +2203,121 @@ void inspectDictPageState( CHAR *pExpBuffer, dmsExtentID extentID,
          sme->setBitMask( extentID + i ) ;
       }
    }
-   PD_TRACE_EXIT( SDB_INSPECTDICTPAGESTATE ) ;
 }
 
-void inspectCollectionData( OSSFILE &file, SINT32 pageSize, UINT16 id,
+
+INT32 inspectLobdCollection(OSSFILE &file, UINT16 pageId, 
+                            UINT32 sequence, SINT32 &err)
+{
+    INT32 rc = SDB_OK;
+    SINT64 len = 0;
+    SINT32 localErr = 0;
+    CHAR *lobMeta = (CHAR*) SDB_OSS_MALLOC(sizeof(dmsLobMeta));
+    PD_CHECK( lobMeta != NULL, SDB_OOM, error, PDERROR, "malloc failed" );
+
+    rc = ossSeekAndRead ( &file, DMS_HEADER_SZ + gLobdPageSize* pageId,
+                          (CHAR*)lobMeta, (SINT64) sizeof(dmsLobMeta), &len ) ;
+    
+    if ( SDB_OK != rc)
+    {
+       dumpPrintf ( "Error: Failed to read lobd dmsLobMeta , read %lld bytes, "
+                    "rc = %d"OSS_NEWLINE, len, rc ) ;
+       if ( !rc )rc = SDB_IO ;
+       goto error;
+    }
+
+    if(len <(SINT64) sizeof(dmsLobMeta) )
+    {
+         ossSnprintf ( gBuffer, gBufferSize,
+                              "Error: LobMeta size (%d) in lobd file is too small "
+                              "expected over size (%d)"OSS_NEWLINE,
+                              len, sizeof(dmsLobMeta)) ;
+         goto error;
+    }
+                
+retry_dmsLobMeta:
+    localErr = 0;
+    len = dmsInspect::inspectDmsLobMeta((dmsLobMeta*)lobMeta, gBuffer, gBufferSize,localErr);
+    if (len >= gBufferSize -1 )
+    {
+       // if our buffer is not large enough, let's allocate more memory and
+       // try again
+       if ( reallocBuffer () )
+       {
+          clearBuffer();
+          goto error;
+       }
+       goto  retry_dmsLobMeta;
+    }
+    flushOutput(gBuffer, (UINT32)len);
+    err += localErr;
+
+done:
+    SAFE_OSS_FREE(lobMeta);
+    return rc;
+error:
+    goto done;
+
+}
+
+INT32 inspectLobmMeta(OSSFILE &file, 
+        CHAR *pExpBuffer, UINT16 pageId, 
+        CHAR *pageBuf, UINT32 pageSize, 
+        UINT16 clID, SINT32 &err)
+{
+    INT32 rc = SDB_OK;
+    SINT64 len = 0;
+    SINT32 localErr = 0;
+    dmsLobDataMapBlk *blk = (dmsLobDataMapBlk*)pageBuf;
+    
+    rc = ossSeekAndRead ( &file, DMS_BME_OFFSET+ DMS_BME_SZ + 
+                   pageSize * pageId, pageBuf, pageSize, &len ) ;
+    
+    if ( SDB_OK != rc || len < pageSize)
+    {
+       dumpPrintf ( "Error: Failed to read lobm dmsLobDataMapBlk , read %u bytes, "
+                    "rc = %d"OSS_NEWLINE, len, rc ) ;
+       if ( !rc )rc = SDB_IO ;
+       goto error;
+    }
+
+retry_dmsLobDataMapBlk:
+    localErr = 0;
+    len = dmsInspect::inspectDmsLobDataMapBlk(blk, gBuffer, gBufferSize, clID, localErr);
+    if ( (UINT32)len >= gBufferSize -1 )
+    {
+       // if our buffer is not large enough, let's allocate more memory and
+       // try again
+       if ( reallocBuffer () )
+       {
+          clearBuffer () ;
+          goto error ;
+       }
+       goto  retry_dmsLobDataMapBlk;
+    }
+    err += localErr;
+
+    if ( pExpBuffer && DMS_LOB_PAGE_NORMAL == blk->_status )
+    {
+          dmsSpaceManagementExtent *pSME = ( dmsSpaceManagementExtent*)pExpBuffer ;
+          if ( pSME->getBitMask( pageId ) != DMS_SME_FREE )
+          {
+             dumpPrintf ( "Error: dmsLobDataMapBlk 0x%08lx (%d) is refered by two. this maybe caused a loop "
+                          OSS_NEWLINE, pageId , pageId) ;
+             ++err ;
+          }
+          pSME->setBitMask( pageId ) ;
+       }
+    
+done:
+    flushOutput( gBuffer, len) ;
+    return rc;
+error:
+    goto done;
+
+}
+
+void inspectCollectionData( OSSFILE &file, UINT32 pageSize, UINT16 id,
                             SINT32 hwm, CHAR *pExpBuffer, SINT32 &err,
                             UINT64 &ovfNum, UINT64 &compressedNum )
 {
@@ -2142,7 +2348,7 @@ void inspectCollectionData( OSSFILE &file, SINT32 pageSize, UINT16 id,
    capped = OSS_BIT_TEST( mb->_attributes, DMS_MB_ATTR_CAPPED ) ;
    firstExtent = mb->_firstExtentID ;
    ossStrncpy( collectionName, mb->_collectionName, DMS_COLLECTION_NAME_SZ ) ;
-   dumpPrintf ( " Inspect Data for collection [%d : %s]"OSS_NEWLINE,
+   dumpPrintf ( "Inspect Data for collection [%d : %s]"OSS_NEWLINE,
                 id, collectionName ) ;
 
    if ( !OSS_BIT_TEST( gAction, ACTION_STAT ) &&
@@ -2189,7 +2395,7 @@ void inspectCollectionData( OSSFILE &file, SINT32 pageSize, UINT16 id,
    {
       // if one of the extent is not valid, we have to break the loop since the
       // chain is breaking
-      if ( firstExtent >= gPageNum )
+      if ( (UINT32)firstExtent >= gPageNum )
       {
          dumpPrintf ( "Error: data extent 0x%08lx (%d) is out of range"
                       OSS_NEWLINE, firstExtent, firstExtent ) ;
@@ -2310,7 +2516,7 @@ error :
    goto done ;
 }
 
-void inspectCollectionIndex( OSSFILE &file, SINT32 pageSize, UINT16 id,
+void inspectCollectionIndex( OSSFILE &file, UINT32 pageSize, UINT16 id,
                              SINT32 hwm, CHAR *pExpBuffer, SINT32 &err )
 {
    INT32 rc        = SDB_OK ;
@@ -2330,7 +2536,7 @@ void inspectCollectionIndex( OSSFILE &file, SINT32 pageSize, UINT16 id,
    ossStrncpy( collectionName, mb->_collectionName,
                DMS_COLLECTION_NAME_SZ ) ;
 
-   dumpPrintf ( " Inspect Index for collection [%d : %s]"OSS_NEWLINE,
+   dumpPrintf ( "Inspect Index for collection [%d : %s]"OSS_NEWLINE,
                 id, collectionName ) ;
 
    inspectIndexDef ( file, pageSize, id, mb, pExpBuffer, indexRoots, err ) ;
@@ -2361,8 +2567,55 @@ error :
    goto done ;
 }
 
-// PD_TRACE_DECLARE_FUNCTION ( SDB_INSPCOLL, "inspectCollection" )
-void inspectCollection ( OSSFILE &file, SINT32 pageSize, UINT16 id,
+void inspectCollectionLob( OSSFILE &lobmFile, UINT32 pageSize, 
+                              UINT16 clId, SINT32 hwm, 
+                              CHAR *pExpBuffer, SINT32 &err, 
+                              UINT32 &pageCount, UINT32 &lobCount)
+{
+   pageCount = 0;
+   lobCount = 0;
+
+   INT32 rc        = SDB_OK ;
+   INT32 pageId = DMS_LOB_INVALID_PAGEID;
+   vector<LobFragments> &vctFrgmts = gCl2PageMap[clId];
+
+   CHAR *blkBuf = (CHAR*) SDB_OSS_MALLOC(pageSize);
+   PD_CHECK( blkBuf != NULL, SDB_OOM, error, PDERROR, "malloc failed" );
+    
+   //dump collection objects
+   for(UINT32 i = 0; i < vctFrgmts.size(); i ++, lobCount++)
+   {
+      LobFragments &fragmt = vctFrgmts[i];
+      map<UINT32, UINT32> &pages = fragmt.sequences;
+      map<UINT32, UINT32>::iterator it = pages.begin();
+      for(; it != pages.end(); it++, pageCount++)
+      {
+         pageId = it->second;
+         rc = inspectLobmMeta(lobmFile, pExpBuffer, pageId, blkBuf, pageSize, clId, err);
+         if ( rc ) goto error;
+
+         if(gOnlyMeta)
+         {
+            continue;
+         }
+         
+         // just dump lobmeta in page 0.
+         if (DMS_LOB_META_SEQUENCE == it->first && gShowRecordContent) 
+         {
+            rc = inspectLobdCollection(gLobdFile, pageId, it->first, err);
+            if ( rc ) goto error;
+         }
+      }
+   }
+
+done:
+    SAFE_OSS_FREE(blkBuf);
+    return;
+error:
+    goto done ;
+}
+
+void inspectCollection ( OSSFILE &file, UINT32 pageSize, UINT16 id,
                          SINT32 hwm, CHAR *pExpBuffer, SINT32 &err )
 {
    UINT32 len = 0 ;
@@ -2403,9 +2656,28 @@ void inspectCollection ( OSSFILE &file, SINT32 pageSize, UINT16 id,
                          gMBStat._uniqueIdxNum ) ;
       flushOutput( gBuffer, len ) ;
    }
+   else if ( SDB_INSPT_LOB == gCurInsptType )
+   {
+      UINT32 lobPageCount = 0;
+      UINT32 lobCount = 0;
+      inspectCollectionLob( file, pageSize, id, hwm, pExpBuffer, err, lobPageCount, lobCount) ;
+      /// flush index info
+
+      len = ossSnprintf( gBuffer, gBufferSize,
+                         "****The collection lob info****"OSS_NEWLINE
+                         "   Collection ID            : %u"OSS_NEWLINE
+                         "   Total Lob Pages          : %u"OSS_NEWLINE
+                         "   Total Lobs               : %u"OSS_NEWLINE,
+                         id,
+                         lobPageCount,
+                         lobCount);
+                         
+      len += ossSnprintf(gBuffer + len, gBufferSize - len, OSS_NEWLINE);
+      flushOutput( gBuffer, len ) ;
+   }
 }
 
-void dumpCollectionData( OSSFILE &file, SINT32 pageSize, UINT16 id )
+void dumpCollectionData( OSSFILE &file, UINT32 pageSize, UINT16 id )
 {
    INT32 rc = SDB_OK ;
    INT32 len = 0 ;
@@ -2566,7 +2838,6 @@ retry_data :
                                gDumpType, tempExtent, &compressorEntry,
                                &extentRIDList,  gShowRecordContent, capped ) ;
 
-      PD_TRACE1 ( SDB_DUMPCOLL, PD_PACK_INT(len) );
       if ( (UINT32)len >= gBufferSize-1 )
       {
          // if our buffer is not large enough, let's allocate more memory and
@@ -2595,7 +2866,7 @@ error :
    goto done ;
 }
 
-void dumpCollectionIndex( OSSFILE &file, SINT32 pageSize, UINT16 id )
+void dumpCollectionIndex( OSSFILE &file, UINT32 pageSize, UINT16 id )
 {
    INT32 rc = SDB_OK ;
    dmsMB *mb = NULL ;
@@ -2641,8 +2912,376 @@ error :
    goto done ;
 }
 
-// PD_TRACE_DECLARE_FUNCTION ( SDB_DUMPCOLL, "dumpCollection" )
-void dumpCollection ( OSSFILE &file, SINT32 pageSize, UINT16 id )
+INT32 getBME(OSSFILE &lobmFile, CHAR *pBME)
+{
+    INT32 rc = SDB_OK ;
+    SINT64 lenRead = 0 ;
+    
+    // calculate the starting offset of extent, and read extent head
+    rc = ossSeekAndRead ( &lobmFile, DMS_SME_OFFSET + DMS_SME_LEN,
+                          pBME, DMS_BME_SZ, &lenRead ) ;
+    
+    if ( rc || lenRead != DMS_BME_SZ )
+    {
+       dumpPrintf ( "Error: Failed to read lobm buckets , read %lld bytes, "
+                    "rc = %d"OSS_NEWLINE, lenRead, rc ) ;
+       if ( !rc )
+          rc = SDB_IO ;
+    }
+
+    return rc ;
+}
+
+void cacheLobDataMapBlk(dmsLobDataMapBlk *blk, UINT32 pageId)
+{
+   UINT32 i = 0;
+   vector<LobFragments> &pages = gCl2PageMap[blk->_mbID];
+   for (i = 0; i < pages.size(); i ++ )
+   {
+       LobFragments &frag = pages[i];
+       if (0 == ossMemcmp(frag.oid, blk->_oid, DMS_LOB_OID_LEN))
+       {
+           frag.sequences[blk->_sequence] = pageId;
+           break;
+       }
+   }
+   
+   //did not find oid in pags.
+   if (i == pages.size())
+   {
+       LobFragments frag;
+       ossMemcpy(frag.oid, blk->_oid, DMS_LOB_OID_LEN);
+       frag.sequences[blk->_sequence] = pageId;
+       pages.push_back(frag);
+   }
+}
+
+
+INT32 loadLobDataMapBlk(OSSFILE &lobmFile, 
+        CHAR *outBuf, UINT32 outSize,
+        INT32 pageId, dmsLobDataMapBlk *blk, 
+        UINT32 pageSize, UINT32 &dep,
+        UINT32 &msgLen)
+{
+    INT32 rc = SDB_OK ;
+    SINT64 lenRead = 0 ;
+    INT32 nextPageId = pageId;
+    pair<set<UINT32>::iterator, bool> ret;
+    set<UINT32> pages;
+    
+    dep = 0;
+    static const UINT32 FIRSTPAGEOFFSET = DMS_BME_OFFSET + DMS_BME_SZ;
+    do
+    {
+        ret = pages.insert(pageId);
+        if(!ret.second)
+        {
+            msgLen += ossSnprintf(outBuf + msgLen, outSize - msgLen, 
+                    "Error: Failed to load lobm buckets , because there was a loop in bucket"
+                    "about page(%u)"OSS_NEWLINE, pageId);
+           return SDB_DMS_RECORD_INVALID;
+        }
+
+        // calculate the starting offset of extent, and read extent head
+        rc = ossSeekAndRead ( &lobmFile, FIRSTPAGEOFFSET + pageSize * nextPageId,
+                              (CHAR*)blk, pageSize, &lenRead ) ;
+        
+        if ( SDB_OK != rc || lenRead != pageSize )
+        {
+           dumpPrintf ( "Error: Failed to read lobm buckets , read %lld bytes, "
+                        "rc = %d"OSS_NEWLINE, lenRead, rc ) ;
+           return rc;
+        }
+        
+        dep++;
+        cacheLobDataMapBlk(blk, nextPageId);
+
+        nextPageId = blk->_nextPageInBucket;
+    } while(nextPageId != DMS_LOB_INVALID_PAGEID);
+
+    return rc;
+}
+
+
+INT32 parseBME(OSSFILE &lobmFile, UINT32 pageSize, CHAR *pBME)
+{
+   INT32 rc = SDB_OK;
+   INT32 pageId = DMS_LOB_INVALID_PAGEID;
+   UINT32 dep = 0;
+   UINT32 len = 0;
+   UINT32 msgLen = 0;
+   UINT32 localErr = 0;
+   dmsLobDataMapBlk *blkBuf = (dmsLobDataMapBlk*)SDB_OSS_MALLOC(pageSize);
+   PD_CHECK( blkBuf != NULL, SDB_OOM, error, PDERROR, "malloc failed" );
+
+   for(UINT32 i = 0; i < DMS_BUCKETS_NUM; i++)
+   {
+      pageId = ((dmsBucketsManagementExtent*)pBME)->_buckets[i];
+      if(pageId == DMS_LOB_INVALID_PAGEID) 
+      { 
+          continue;
+      }
+      
+   retry_inspectBucketLoop:
+      rc = loadLobDataMapBlk(lobmFile, gBuffer, gBufferSize, pageId, blkBuf, pageSize, dep, msgLen);
+      if ( msgLen >= gBufferSize - 1 )
+      {
+         // if len is same as buffer size, that means we run out of buffer memory
+         flushOutput(gBuffer,len);
+         len = msgLen = 0;
+         goto retry_inspectBucketLoop ;
+      }
+      len = msgLen;
+
+      if (rc == SDB_DMS_RECORD_INVALID)
+      {
+         localErr++;
+      }
+      else if ( rc != SDB_OK) 
+      {
+         break;
+      }
+
+      if(gBucketDep) 
+      {
+         gBucketDep[i] = dep;
+      }
+   }
+
+done:
+
+retry_summary:
+   if ( 0 == localErr )
+   {
+      msgLen += ossSnprintf ( gBuffer + len, gBufferSize - len,
+                        " Inspect Bucket Management Exent Done "
+                        "without Error"OSS_NEWLINE ) ;
+   }
+   else
+   {
+      msgLen += ossSnprintf ( gBuffer + len, gBufferSize - len,
+                        " Inspect Bucket Management Exent Done "
+                        "with Error: %d"OSS_NEWLINE, localErr ) ;
+   }
+
+   if ( msgLen >= gBufferSize - 1 )
+   {
+      // if len is same as buffer size, that means we run out of buffer memory
+      flushOutput(gBuffer,len);
+      len = msgLen = 0;
+      goto retry_summary ;
+   }
+   
+   flushOutput ( gBuffer, len ) ;
+   SAFE_OSS_FREE(blkBuf);
+   return rc;
+error:
+   goto done;
+}
+
+INT32 dumpLobmMeta(OSSFILE &file, UINT16 pageId, CHAR *pageBuf, UINT32 pageSize)
+{
+    INT32 rc = SDB_OK;
+    SINT64 len = 0;
+    
+    rc = ossSeekAndRead ( &file, DMS_BME_OFFSET+ DMS_BME_SZ + 
+                   pageSize* pageId, (CHAR*)pageBuf, pageSize, &len ) ;
+    
+    if ( SDB_OK != rc || len < pageSize)
+    {
+       dumpPrintf ( "Error: Failed to read lobm dmsLobDataMapBlk , read %u bytes, "
+                    "rc = %d"OSS_NEWLINE, len, rc ) ;
+       goto error;
+    }
+
+retry_dmsLobDataMapBlk:
+
+    len = dmsDump::dumpDmsLobDataMapBlk((dmsLobDataMapBlk*)pageBuf, gBuffer, gBufferSize, NULL,
+                             DMS_SU_DMP_OPT_HEX |
+                             DMS_SU_DMP_OPT_HEX_WITH_ASCII |
+                             DMS_SU_DMP_OPT_HEX_PREFIX_AS_ADDR |
+                             gDumpType, pageSize);
+    if ( (UINT32)len >= gBufferSize -1 )
+    {
+       // if our buffer is not large enough, let's allocate more memory and
+       // try again
+       if ( reallocBuffer () )
+       {
+          clearBuffer () ;
+          goto error ;
+       }
+       goto  retry_dmsLobDataMapBlk;
+    }
+    
+done:
+    flushOutput( gBuffer, len) ;
+    return rc;
+error:
+    goto done;
+
+}
+
+INT32 dumpLobdCollection(OSSFILE &file, UINT16 pageId,
+        CHAR* lobdPageBuf,UINT32 sequence)
+{
+    INT32 rc = SDB_OK;
+    SINT64 len = 0;
+    UINT32 metaSize = 0;
+     
+    rc = ossSeekAndRead ( &file, DMS_HEADER_SZ + gLobdPageSize* pageId,
+                          (CHAR*)lobdPageBuf, gLobdPageSize, &len ) ;
+    if ( SDB_OK != rc)
+    {
+       dumpPrintf ( "Error: Failed to read lobd dmsLobMeta , read %lld bytes, "
+                    "rc = %d"OSS_NEWLINE, len, rc ) ;
+       if ( !rc )rc = SDB_IO ;
+       return rc;
+    }
+
+    if ( DMS_LOB_META_SEQUENCE == sequence)
+    {
+        if((UINT32)len < sizeof(dmsLobMeta) )
+        {
+             ossSnprintf ( gBuffer, gBufferSize,
+                                  "Error: LobMeta size (%d) in lobd file is too small "
+                                  "expected size (%d)"OSS_NEWLINE,
+                                  len, sizeof(dmsLobMeta)) ;
+             goto error;
+        }
+                
+        dmsLobMeta *lobMeta = (dmsLobMeta *)lobdPageBuf;
+        metaSize = (lobMeta->hasPiecesInfo()) 
+                                           ? DMS_LOB_META_LENGTH 
+                                           : sizeof(dmsLobMeta);
+        
+        if(len < metaSize) 
+        {
+             ossSnprintf ( gBuffer, gBufferSize,
+                                  "Error: LobMeta size (%d) in lobd file is too small "
+                                  "expected size (%d)"OSS_NEWLINE,
+                                  len, metaSize ) ;
+             goto error;
+        }
+
+    retry_dmsLobMeta:
+
+        len = dmsDump::dumpDmsLobMeta(lobdPageBuf, metaSize,
+                                 gBuffer, gBufferSize, NULL,
+                                 DMS_SU_DMP_OPT_HEX |
+                                 DMS_SU_DMP_OPT_HEX_WITH_ASCII |
+                                 DMS_SU_DMP_OPT_HEX_PREFIX_AS_ADDR |
+                                 gDumpType);
+        if ((UINT32)len >= gBufferSize -1 )
+        {
+           // if our buffer is not large enough, let's allocate more memory and
+           // try again
+           if ( reallocBuffer () )
+           {
+              clearBuffer () ;
+              goto error ;
+           }
+           goto  retry_dmsLobMeta;
+        }
+        flushOutput( gBuffer, (UINT32)len) ;
+    }
+
+    if(!gShowRecordContent) goto done;
+    
+retry_dmsLobData:
+    len = dmsDump::dumpDmsLobData(lobdPageBuf + metaSize, gLobdPageSize - metaSize,
+                                             gBuffer , gBufferSize , NULL,
+                                             DMS_SU_DMP_OPT_HEX |
+                                             DMS_SU_DMP_OPT_HEX_WITH_ASCII |
+                                             DMS_SU_DMP_OPT_HEX_PREFIX_AS_ADDR |
+                                             gDumpType);
+    if ((UINT32)len >= gBufferSize -1 )
+    {
+       // if our buffer is not large enough, let's allocate more memory and
+       // try again
+       if ( reallocBuffer () )
+       {
+          clearBuffer () ;
+          goto error ;
+       }
+       goto  retry_dmsLobData;
+    }
+    flushOutput( gBuffer, (UINT32)len) ;
+    
+done:
+    return rc;
+error:
+    goto done;
+
+}
+
+INT32 dumpCollectionLob( OSSFILE &lobmFile,  UINT32 pageSize, UINT16 id)
+{
+
+    INT32 rc = SDB_OK ;
+    CHAR *pLobdPageBuf = NULL;
+    INT32 pageId = DMS_LOB_INVALID_PAGEID;
+    vector<LobFragments> &vctFrgmts = gCl2PageMap[id];
+
+    if (!gOnlyMeta)
+    {
+        pLobdPageBuf = (CHAR*)SDB_OSS_MALLOC(gLobdPageSize);
+         if ( NULL == pLobdPageBuf)
+        {
+            dumpPrintf ( "Error: Failed to alloc buffer with size %u,rc = %d"
+                    OSS_NEWLINE, gLobdPageSize, SDB_OOM ) ;
+            return SDB_OOM ;
+        }
+    }
+
+    CHAR *pPageBuf = (CHAR*)SDB_OSS_MALLOC(pageSize);
+     if ( NULL == pPageBuf)
+    {
+        dumpPrintf ( "Error: Failed to alloc buffer with size %u,rc = %d"
+                OSS_NEWLINE, pageSize, SDB_OOM ) ;
+        rc = SDB_OOM ;
+        goto error;
+    }
+
+    //dump collection objects
+    for(UINT32 i = 0; i < vctFrgmts.size(); i ++)
+    {
+
+        LobFragments &fragmt = vctFrgmts[i];
+        std::map<UINT32, UINT32> &pages = fragmt.sequences;
+        std::map<UINT32, UINT32>::iterator it = pages.begin();
+
+        for(;it != pages.end(); ++it)
+        {
+            pageId = it->second;
+            rc = dumpLobmMeta(lobmFile, pageId, pPageBuf, pageSize);
+            if ( rc ) goto error ;
+
+            if (gOnlyMeta)
+            {
+               continue;  
+            }
+            
+            // just dump lobmeta in page 0.
+            if (!gShowRecordContent && DMS_LOB_META_SEQUENCE != it->first) 
+            {
+                continue;
+            }
+
+            rc = dumpLobdCollection(gLobdFile, pageId, pLobdPageBuf, it->first);
+            if ( rc ) goto error ;
+        }
+    }
+
+done :
+    SAFE_OSS_FREE(pPageBuf);
+    SAFE_OSS_FREE(pLobdPageBuf);
+    return rc;
+error :
+   goto done ;
+ 
+}
+
+void dumpCollection ( OSSFILE &file, UINT32 pageSize, UINT16 id )
 {
    if ( SDB_INSPT_DATA == gCurInsptType )
    {
@@ -2652,45 +3291,41 @@ void dumpCollection ( OSSFILE &file, SINT32 pageSize, UINT16 id )
    {
       dumpCollectionIndex( file, pageSize, id ) ;
    }
+   else if ( SDB_INSPT_LOB == gCurInsptType )
+   {
+      dumpCollectionLob( file, pageSize, id ) ;
+   }
 }
 
-// PD_TRACE_DECLARE_FUNCTION ( SDB_INSPCOLLS, "inspectCollections" )
-void inspectCollections ( OSSFILE &file, SINT32 pageSize,
+void inspectCollections ( OSSFILE &file, UINT32 pageSize,
                           vector<UINT16> &collections,
                           SINT32 hwm, CHAR *pExpBuffer,
                           SINT32 &err )
 {
-   PD_TRACE_ENTRY ( SDB_INSPCOLLS );
    vector<UINT16>::iterator it ;
    for ( it = collections.begin(); it != collections.end(); ++it )
    {
       inspectCollection ( file, pageSize, *it, hwm, pExpBuffer, err ) ;
    }
-   PD_TRACE_EXIT ( SDB_INSPCOLLS );
 }
 
-// PD_TRACE_DECLARE_FUNCTION ( SDB_DUMPCOLLS, "dumpCollections" )
-void dumpCollections ( OSSFILE &file, SINT32 pageSize,
+void dumpCollections ( OSSFILE &file, UINT32 pageSize,
                        vector<UINT16> &collections )
 {
-   PD_TRACE_ENTRY ( SDB_DUMPCOLLS );
    vector<UINT16>::iterator it ;
    for ( it = collections.begin() ; it != collections.end() ; ++it )
    {
       dumpCollection ( file, pageSize, *it ) ;
    }
-   PD_TRACE_EXIT ( SDB_DUMPCOLLS );
 }
 
 // inspect collections, this unction will first inspect MME, and then based on
 // the input CLName inspectMME may choose to inspect zero or more collections.
 // Note pExpBuffer is not NULL only in full collectionspace inspection
-// PD_TRACE_DECLARE_FUNCTION ( SDB_INSPCOLLECTIONS, "inspectCollections" )
-void inspectCollections ( OSSFILE &file, SINT32 pageSize, SINT32 hwm,
+void inspectCollections ( OSSFILE &file, UINT32 pageSize, SINT32 hwm,
                           CHAR *pExpBuffer, SINT32 &err )
 {
    INT32 rc = SDB_OK ;
-   PD_TRACE_ENTRY ( SDB_INSPCOLLECTIONS );
    UINT32 len ;
    SINT32 localErr = 0 ;
    vector<UINT16> collections ;
@@ -2719,7 +3354,6 @@ retry :
                                   ossStrlen ( gCLName ) ? gCLName : NULL,
                                   ( SDB_INSPT_DATA==gCurInsptType ) ? hwm : -1,
                                   collections, localErr ) ;
-   PD_TRACE1 ( SDB_INSPCOLLECTIONS, PD_PACK_UINT(len) );
    if ( len >= gBufferSize-1 )
    {
       if ( reallocBuffer () )
@@ -2743,18 +3377,279 @@ retry :
    }
 
 done :
-   PD_TRACE1 ( SDB_INSPCOLLECTIONS, PD_PACK_INT(rc) );
-   PD_TRACE_EXIT ( SDB_INSPCOLLECTIONS );
    return ;
 error :
    goto done ;
 }
 
-// PD_TRACE_DECLARE_FUNCTION ( SDB_DUMPRAWPAGE, "dumpRawPage" )
-void dumpRawPage ( OSSFILE &file, SINT32 pageSize, SINT32 pageID )
+UINT32 inspectBalance(CHAR *outBuf, INT64 outSize)
+{
+    SDB_ASSERT(gBalance,"impossible");
+    SDB_ASSERT(gBucketDep,"forbidden");
+
+    UINT32 len = 0;
+    UINT64 sum = 0;
+    double value = 0.0;
+    double variance = 0.0;
+    UINT32 maxDep = 0;
+    UINT32 minDep = (UINT32)-1;
+    UINT32 zeroDepCount =0;
+
+    for(UINT32 i = 0; i < DMS_BUCKETS_NUM; i++)
+    {
+        if (minDep > gBucketDep[i])
+        {
+            minDep = gBucketDep[i];
+        }
+            
+        if (gBucketDep[i] == 0) 
+        {
+            zeroDepCount++;
+            continue;
+        }
+            
+        if (maxDep < gBucketDep[i]) 
+        {
+            maxDep = gBucketDep[i];
+        }
+
+        sum += gBucketDep[i];
+        value += gBucketDep[i] *gBucketDep[i] ;
+    }
+
+    variance = (value - (double)(sum *sum /DMS_BUCKETS_NUM)) / DMS_BUCKETS_NUM;
+    
+    len += ossSnprintf(outBuf + len, outSize -len, "Inspect Lobd Balance:"OSS_NEWLINE);
+    
+    len += ossSnprintf(outBuf+ len, outSize -len, 
+                                 " Average Bucket Depth   :%.6f"OSS_NEWLINE,
+                                 (float)sum/DMS_BUCKETS_NUM);
+                                 
+    len += ossSnprintf(outBuf+ len, outSize -len, 
+                                 " Max Bucket Depth       :%u"OSS_NEWLINE, maxDep);
+                                 
+    len += ossSnprintf(outBuf+ len, outSize -len, 
+                                 " Min Bucket Depth       :%u"OSS_NEWLINE,minDep);
+                                 
+    len += ossSnprintf(outBuf+ len, outSize -len, 
+                                 " Zero-Depth Number      :%u"OSS_NEWLINE, zeroDepCount);
+                                 
+    len += ossSnprintf(outBuf+ len, outSize -len, 
+                                 " Variance               :%.6f (%s)"OSS_NEWLINE,(float)variance, "Less is Better");
+                                 
+    len += ossSnprintf(outBuf+ len, outSize -len, OSS_NEWLINE);
+    return len;
+}
+
+
+INT32 loadPages(OSSFILE &lobmFile, CHAR *pCache, 
+        UINT32 cacheSize, UINT32 pageSize, UINT32 &pageCount)
 {
    INT32 rc = SDB_OK ;
-   PD_TRACE_ENTRY ( SDB_DUMPRAWPAGE );
+   SINT64 lenRead = 0 ;
+
+   // calculate the starting offset of extent, and read extent head
+   rc = ossRead(&lobmFile, pCache, (SINT64)cacheSize, &lenRead);
+   switch (rc)
+   {
+      case SDB_EOF:
+      case SDB_OK:
+      {
+         pageCount = (UINT32)( lenRead /pageSize );
+         return SDB_OK;
+      }
+      default:
+      {
+         dumpPrintf ( "Error: Failed to read lobm pages , read %lld bytes, "
+                 "rc = %d"OSS_NEWLINE, lenRead, rc ) ;
+      }
+   }
+   return rc ;
+}
+
+void parsePages(OSSFILE &lobmFile, CHAR *pCache, 
+        UINT32 startPage, UINT32 endPage,
+        UINT32 pageSize, CHAR *pSME)
+{
+   dmsLobDataMapBlk *lobDataMapBlk = NULL;
+   dmsSpaceManagementExtent *bitmap = (dmsSpaceManagementExtent *)pSME;
+   while(startPage < endPage)
+   {
+      lobDataMapBlk = (dmsLobDataMapBlk*)pCache;
+      if ( (bitmap->getBitMask(startPage) == DMS_SME_ALLOCATED)
+              && lobDataMapBlk->isNormal() )
+      {
+         cacheLobDataMapBlk(lobDataMapBlk, startPage);
+      }  
+      pCache += pageSize;
+      startPage += 1;
+   }
+}
+
+
+INT32 loadLobMetaData(OSSFILE &lobmFile, UINT32 pageSize, CHAR *pSME)
+{
+   INT32 rc = SDB_OK ;
+   UINT32 pageCount = 0;
+   UINT32 startPage = 0;
+   SDB_ASSERT(lobmFile.isOpened(),"forbidden");
+
+   const static UINT32 MAX_CACHE_PAGE_SZ = DMS_PAGE_SIZE256K /pageSize;
+
+   UINT32 cacheSize = ( ( gPageNum > MAX_CACHE_PAGE_SZ ) 
+                                ? MAX_CACHE_PAGE_SZ  : gPageNum ) * pageSize;
+
+   CHAR *pCache = (CHAR*)SDB_OSS_MALLOC(cacheSize);
+   PD_CHECK( pCache != NULL, SDB_OOM, error, PDERROR, "malloc failed" );
+
+   rc = ossSeek(&lobmFile, DMS_BME_OFFSET + DMS_BME_SZ, OSS_SEEK_SET);
+   if ( rc != SDB_OK )
+   {
+      dumpPrintf ( "Error: Failed to seek lobm pages "OSS_NEWLINE);
+      goto error;
+   }
+
+   do
+   {
+      rc = loadPages(lobmFile, pCache, cacheSize, pageSize, pageCount);
+      if ( rc != SDB_OK )
+      {
+         dumpPrintf ( "Error: Failed to load lobm buckets, rc = %d"OSS_NEWLINE,  rc ) ;
+         goto error ;
+      }
+
+      //parse pages & traverse buckets & make up a map<collectionId, vector<pages>
+      parsePages(lobmFile, pCache, startPage, startPage + pageCount, pageSize, pSME);
+      startPage += pageCount;
+       
+   }while(startPage < gPageNum);
+
+done :
+    SAFE_OSS_FREE(pCache);
+    return rc;
+error :
+   goto done ;
+}
+
+INT32 InspectBME(OSSFILE &file, UINT32 pageSize)
+{
+   INT32 rc = SDB_OK ;
+   SDB_ASSERT(file.isOpened(),"forbidden");
+
+   //load bme
+   CHAR *pBME= (CHAR*)SDB_OSS_MALLOC(DMS_BME_SZ);
+   PD_CHECK( pBME != NULL, SDB_OOM, error, PDERROR, "malloc failed" );
+
+   rc = getBME(file,pBME);
+   if ( rc )
+   {
+      dumpPrintf ( "Error: Failed to load lobm buckets, rc = %d"OSS_NEWLINE,  rc ) ;
+      goto error ;
+   }
+
+   // parse BME & traverse buckets & make up a map<collectionId, vector<pages>
+   rc = parseBME(file, pageSize,  pBME);
+   if ( rc )
+   {
+      dumpPrintf ( "Error: Failed to parse lobm buckets, rc = %d"OSS_NEWLINE,  rc ) ;
+      goto error ;
+   }
+
+done :
+    SAFE_OSS_FREE(pBME);
+    return rc;
+error :
+   goto done ;
+}
+
+void inspectLobCollections ( OSSFILE &file, UINT32 pageSize, SINT32 hwm,
+                          CHAR *pExpBuffer, SINT32 &err )
+{
+
+   INT32 rc = SDB_OK;
+   UINT32 len = 0;
+   vector<UINT16> collections ;
+
+   if (gBalance)
+   {
+      gBucketDep = (UINT32 *) SDB_OSS_MALLOC(sizeof(UINT32) *DMS_BUCKETS_NUM);
+      PD_CHECK( gBucketDep != NULL, SDB_OOM, error, PDERROR, "malloc failed" );
+      ossMemset(gBucketDep, 0, sizeof(UINT32) *DMS_BUCKETS_NUM);
+   }
+
+   //load bme
+   rc = InspectBME(file, pageSize);
+   if ( rc ) goto error ;
+
+   if (gBalance) 
+   {
+   retry_inspectBalance:
+      len = inspectBalance(gBuffer, gBufferSize);
+      if ( len >= gBufferSize - 1 )
+      {
+         // if len is same as buffer size, that means we run out of buffer memory
+         if ( reallocBuffer () )
+         {
+            // if we failed to realloc more memory
+            clearBuffer () ;
+            goto error ;
+         }
+         goto retry_inspectBalance ;
+      }
+      flushOutput ( gBuffer, len ) ;
+   }
+
+   if ( FALSE == gInitMME )
+   {
+      SINT64 lenRead = 0 ;
+      rc = ossSeekAndRead ( &file, DMS_MME_OFFSET, gMMEBuff,
+            DMS_MME_SZ, &lenRead ) ;
+      if ( rc || lenRead != DMS_MME_SZ )
+      {
+         dumpPrintf ( "Error: Failed to read sme, read %lld bytes, "
+         "rc = %d"OSS_NEWLINE, lenRead, rc ) ;
+         goto error ;
+      }
+      gInitMME = TRUE ;
+   }
+
+   retry :
+   // attempt to inspect MME
+   collections.clear() ;
+   len = dmsInspect::inspectMME ( gMMEBuff, DMS_MME_SZ,
+                                 gBuffer, gBufferSize,
+                                 ossStrlen ( gCLName ) ? gCLName : NULL,
+                                 ( SDB_INSPT_DATA==gCurInsptType ) ? hwm : -1,
+                                 collections, err ) ;
+   if ( len >= gBufferSize-1 )
+   {
+      if ( reallocBuffer () )
+      {
+         clearBuffer () ;
+         goto error ;
+      }
+      goto retry ;
+   }
+
+   if ( collections.size() != 0 )
+   {
+      inspectCollections ( file, pageSize, collections, hwm, pExpBuffer, err ) ;
+   }
+   if ( pExpBuffer )
+   {
+      inspectSME ( file, pExpBuffer, hwm, err ) ;
+   }
+
+done :
+   SAFE_OSS_FREE(gBucketDep);
+   return ;
+error :
+   goto done ;
+}
+
+void dumpRawPage ( OSSFILE &file, UINT32 pageSize, SINT32 pageID )
+{
+   INT32 rc = SDB_OK ;
    UINT32 len ;
    rc = getExtent ( file, pageID, pageSize, 1 ) ;
    if ( rc )
@@ -2766,7 +3661,6 @@ void dumpRawPage ( OSSFILE &file, SINT32 pageSize, SINT32 pageID )
 retry :
    len = dmsDump::dumpRawPage ( gExtentBuffer, gExtentBufferSize,
                                 gBuffer, gBufferSize ) ;
-   PD_TRACE1 ( SDB_DUMPRAWPAGE, PD_PACK_UINT(len) );
    if ( len >= gBufferSize-1 )
    {
       if ( reallocBuffer () )
@@ -2780,8 +3674,6 @@ retry :
    dumpPrintf ( OSS_NEWLINE ) ;
 
 done :
-   PD_TRACE1 ( SDB_DUMPRAWPAGE, PD_PACK_INT(rc) );
-   PD_TRACE_EXIT ( SDB_DUMPRAWPAGE );
    return ;
 error :
    goto done ;
@@ -2957,11 +3849,9 @@ error:
    goto done ;
 }
 
-// PD_TRACE_DECLARE_FUNCTION ( SDB_DUMPCOLLECTIONS, "dumpCollections" )
-void dumpCollections ( OSSFILE &file, SINT32 pageSize )
+void dumpCollections ( OSSFILE &file, UINT32 pageSize, CHAR *pSmeBuffer)
 {
    INT32 rc = SDB_OK ;
-   PD_TRACE_ENTRY ( SDB_DUMPCOLLECTIONS ) ;
    UINT32 len ;
    vector<UINT16> collections ;
 
@@ -2992,7 +3882,6 @@ retry :
                             ossStrlen ( gCLName ) ? gCLName : NULL,
                             collections,
                             gForce ) ;
-   PD_TRACE1 ( SDB_DUMPCOLLECTIONS, PD_PACK_UINT(len) );
    if ( len >= gBufferSize-1 )
    {
       if ( reallocBuffer () )
@@ -3008,16 +3897,37 @@ retry :
    {
       flushOutput ( gBuffer, len ) ;
    }
+   else if (SDB_INSPT_LOB == gCurInsptType)
+   {    
+        rc = loadLobMetaData(file, pageSize, pSmeBuffer);
+        if ( rc ) 
+        {
+            goto error ;
+        }
 
-   // let's dump individual collections in collection list
-   if ( collections.size() != 0 )
-   {
-      dumpCollections ( file, pageSize, collections ) ;
-   }
+        /*if(gBalance) 
+        {
+            len = inspectBalance(gBuffer, gBufferSize);
+            flushOutput(gBuffer,len);
+        }*/         
+        
+        if (!gOnlyMeta)
+        {
+            UINT32 unused = 0;
+            dumpHeader(gLobdFile, unused);
+        }
+    }
+
+    // let's dump individual collections in collection list
+    if ( collections.size() != 0 )
+    {
+        dumpCollections ( file, pageSize, collections ) ;
+    }
+
 
 done :
-   PD_TRACE1 ( SDB_DUMPCOLLECTIONS, PD_PACK_INT(rc) );
-   PD_TRACE_EXIT ( SDB_DUMPCOLLECTIONS );
+
+    
    return ;
 error :
    goto done ;
@@ -3030,18 +3940,148 @@ enum SDB_INSPT_ACTION
    SDB_INSPT_ACTION_REPARE
 } ;
 
-// PD_TRACE_DECLARE_FUNCTION ( SDB_ACTIONCSATTEMPT, "actionCSAttempt" )
-void actionCSAttempt ( const CHAR *pFile, vector<const CHAR *> &expectEyeVec,
+void inspectLob(OSSFILE &file, const CHAR*pFileName)
+{
+   INT32 totalErr         = 0 ;
+   SINT32 hwm             = 0 ;
+   CHAR     *inspectSMEBuffer = NULL;
+   INT64 fileSize = 0;
+   UINT32 rc = SDB_OK;
+
+   rc = ossGetFileSizeByName(pFileName, &fileSize);
+   if ( rc  != SDB_OK )
+   {
+      goto error ;
+   }
+
+   rc = inspectLobmHeader ( file, fileSize, totalErr ) ;
+   if ( rc  != SDB_OK )
+   {
+      goto error ;
+   }
+
+   (void) inspectSME ( file, NULL, hwm, totalErr ) ;
+
+   // allocate expected SME for global collectionspace inspect only
+   if ( ossStrlen ( gCLName ) == 0 && ( FALSE == gOnlyMeta ||
+         OSS_BIT_TEST( gAction, ACTION_STAT ) ) )
+   {
+      // allocate memory for expected SME
+      // this buffer is used to store all allocated pages from collection
+      // traversal, the result will be used to compare with real SME for
+      // orphan/inconsistent pages
+      inspectSMEBuffer = (CHAR*)SDB_OSS_MALLOC ( DMS_SME_SZ ) ;
+      dmsSpaceManagementExtent *pSME = ( dmsSpaceManagementExtent*)inspectSMEBuffer ;
+      if ( !inspectSMEBuffer )
+      {
+         dumpPrintf ( "Error: Failed to allocate %d bytes for Exp SME buffer"
+         OSS_NEWLINE, (INT32)DMS_SME_SZ ) ;
+         return;
+      }
+      for ( UINT32 i = 0; i < DMS_SME_SZ ; ++i )
+      {
+         pSME->freeBitMask( i ) ;
+      }
+   }
+
+   if(!gOnlyMeta) 
+   {
+      (void)ossGetFileSizeByName(gLobdFileName.c_str(), &fileSize);
+      rc = inspectLobdHeader(fileSize, totalErr);
+      if ( rc  != SDB_OK )
+      {
+         goto error ;
+      }
+   }
+   
+   (void) inspectLobCollections ( file, gLobmPageSize, hwm, inspectSMEBuffer, totalErr ) ;
+
+done:
+   if ( 0 == totalErr )
+   {
+      dumpPrintf ( "Inspection collection space is Done without Error"
+      OSS_NEWLINE ) ;
+   }
+   else
+   {
+      dumpPrintf ( "Inspection collection space is Done with %d Error(s)"
+      OSS_NEWLINE, totalErr ) ;
+   }
+   SAFE_OSS_FREE ( inspectSMEBuffer ) ;
+   return ;
+error :
+   goto done;
+}
+
+void inspectData(OSSFILE &file, const CHAR*pFileName)
+{
+    INT32 totalErr         = 0 ;
+    SINT32 hwm             = 0 ;
+    UINT32 csPageSize = 0;
+    CHAR *inspectSMEBuffer = NULL;
+
+    inspectHeader ( file, csPageSize, totalErr ) ;
+    if ( csPageSize != DMS_PAGE_SIZE4K &&
+       csPageSize != DMS_PAGE_SIZE8K &&
+       csPageSize != DMS_PAGE_SIZE16K &&
+       csPageSize != DMS_PAGE_SIZE32K &&
+       csPageSize != DMS_PAGE_SIZE64K )
+    {
+     dumpPrintf ( "Error: %s page size is not valid: %d"OSS_NEWLINE,
+                  pFileName, csPageSize ) ;
+     return;
+    }
+    inspectSME ( file, NULL, hwm, totalErr ) ;
+
+    // allocate expected SME for global collectionspace inspect only
+    if ( ossStrlen ( gCLName ) == 0 && ( FALSE == gOnlyMeta ||
+       OSS_BIT_TEST( gAction, ACTION_STAT ) ) )
+    {
+     // allocate memory for expected SME
+     // this buffer is used to store all allocated pages from collection
+     // traversal, the result will be used to compare with real SME for
+     // orphan/inconsistent pages
+     inspectSMEBuffer = (CHAR*)SDB_OSS_MALLOC ( DMS_SME_SZ ) ;
+     dmsSpaceManagementExtent *pSME = ( dmsSpaceManagementExtent*)inspectSMEBuffer ;
+     if ( !inspectSMEBuffer )
+     {
+        dumpPrintf ( "Error: Failed to allocate %d bytes for Exp SME buffer"
+                     OSS_NEWLINE, (INT32)DMS_SME_SZ ) ;
+        return;
+     }
+     for ( UINT32 i = 0; i < DMS_SME_SZ ; ++i )
+     {
+        pSME->freeBitMask( i ) ;
+     }
+    }
+
+    inspectCollections ( file, csPageSize, hwm, inspectSMEBuffer,
+                       totalErr ) ;
+    if ( 0 == totalErr )
+    {
+     dumpPrintf ( "Inspection collection space is Done without Error"
+                  OSS_NEWLINE ) ;
+    }
+    else
+    {
+     dumpPrintf ( "Inspection collection space is Done with %d Error(s)"
+                  OSS_NEWLINE, totalErr ) ;
+    }
+
+    SDB_OSS_FREE ( inspectSMEBuffer ) ;
+
+   return ;
+}
+
+void actionCSAttempt ( const CHAR *pFileName, vector<const CHAR *> &expectEyeVec,
                        BOOLEAN specific, SDB_INSPT_ACTION action )
 {
    INT32    rc = SDB_OK ;
-   PD_TRACE_ENTRY ( SDB_ACTIONCSATTEMPT );
    OSSFILE  file ;
    BOOLEAN  isOpen = FALSE ;
-   SINT32   csPageSize = 0 ;
+   UINT32   csPageSize = 0 ;
    CHAR     eyeCatcher[DMS_HEADER_EYECATCHER_LEN+1] = {0} ;
    SINT64   readSize = 0 ;
-   CHAR     *inspectSMEBuffer = NULL ;
 
    SINT64   restLen = 0 ;
    SINT64   readPos = 0 ;
@@ -3057,11 +4097,11 @@ void actionCSAttempt ( const CHAR *pFile, vector<const CHAR *> &expectEyeVec,
       iMode |= OSS_READONLY ;
    }
 
-   rc = ossOpen ( pFile, iMode, OSS_RU | OSS_WU | OSS_RG, file ) ;
+   rc = ossOpen ( pFileName, iMode, OSS_RU | OSS_WU | OSS_RG, file ) ;
    if ( rc )
    {
       dumpPrintf ( "Error: Failed to open %s, rc = %d"OSS_NEWLINE,
-                   pFile, rc ) ;
+                   pFileName, rc ) ;
       goto error ;
    }
 
@@ -3076,7 +4116,7 @@ void actionCSAttempt ( const CHAR *pFile, vector<const CHAR *> &expectEyeVec,
       if ( rc && SDB_INTERRUPT != rc )
       {
          dumpPrintf ( "Error: Failed to read %s, rc = %d"OSS_NEWLINE,
-                      pFile, rc ) ;
+                      pFileName, rc ) ;
          goto error ;
       }
       rc = SDB_OK ;
@@ -3102,7 +4142,7 @@ void actionCSAttempt ( const CHAR *pFile, vector<const CHAR *> &expectEyeVec,
       if ( specific )
       {
          dumpPrintf ( "Error: %s is not a valid storage unit"OSS_NEWLINE,
-                      pFile ) ;
+                      pFileName ) ;
       }
       goto done ;
    }
@@ -3113,20 +4153,22 @@ void actionCSAttempt ( const CHAR *pFile, vector<const CHAR *> &expectEyeVec,
    if ( rc )
    {
       dumpPrintf ( "Error, Failed to seek to beginning of the file %s"
-                   OSS_NEWLINE, pFile ) ;
+                   OSS_NEWLINE, pFileName ) ;
       goto error ;
    }
 
    switch ( action )
    {
    case SDB_INSPT_ACTION_REPARE :
-      repaireCollections( file ) ;
+   {
+      if(gCurInsptType != SDB_INSPT_LOB) repaireCollections( file ) ;
       break ;
+   }
    case SDB_INSPT_ACTION_DUMP :
       if ( gStartingPage < 0 )
       {
          // entire collection space dump
-         dumpPrintf ( " Dump collection space %s"OSS_NEWLINE, pFile ) ;
+         dumpPrintf ( " Dump collection space %s"OSS_NEWLINE, pFileName ) ;
          dumpHeader ( file, csPageSize ) ;
          // page size sanity check, should we need header sanity check function?
          // hmm.. maybe later :)
@@ -3134,82 +4176,65 @@ void actionCSAttempt ( const CHAR *pFile, vector<const CHAR *> &expectEyeVec,
               csPageSize != DMS_PAGE_SIZE8K &&
               csPageSize != DMS_PAGE_SIZE16K &&
               csPageSize != DMS_PAGE_SIZE32K &&
-              csPageSize != DMS_PAGE_SIZE64K )
-         {
+              csPageSize != DMS_PAGE_SIZE64K &&
+              gCurInsptType != SDB_INSPT_LOB)
+        {
             dumpPrintf ( "Error: %s page size is not valid: %d"OSS_NEWLINE,
-                         pFile, csPageSize ) ;
+                         pFileName, csPageSize ) ;
             goto error ;
-         }
-         dumpSME ( file ) ;
-         dumpCollections ( file, csPageSize ) ;
-         dumpPrintf ( " Dump collection space is done"OSS_NEWLINE ) ;
-      }
-      else
-      {
-         dumpHeader ( file, csPageSize ) ;
-         // specific pages dump
-         for ( SINT32 i = 0; i < gNumPages && !gReachEnd; ++i )
-         {
-            dumpPrintf ( " Dump page %d"OSS_NEWLINE, gStartingPage + i ) ;
-            dumpRawPage ( file, csPageSize, gStartingPage + i ) ;
-         }
-      }
-      break ;
-   case SDB_INSPT_ACTION_INSPECT :
-   {
-      INT32 totalErr         = 0 ;
-      SINT32 hwm             = 0 ;
-      dumpPrintf ( " Inspect collection space %s"OSS_NEWLINE, pFile ) ;
-      inspectHeader ( file, csPageSize, totalErr ) ;
-      if ( csPageSize != DMS_PAGE_SIZE4K &&
-           csPageSize != DMS_PAGE_SIZE8K &&
-           csPageSize != DMS_PAGE_SIZE16K &&
-           csPageSize != DMS_PAGE_SIZE32K &&
-           csPageSize != DMS_PAGE_SIZE64K )
-      {
-         dumpPrintf ( "Error: %s page size is not valid: %d"OSS_NEWLINE,
-                      pFile, csPageSize ) ;
-         goto error ;
-      }
-      inspectSME ( file, NULL, hwm, totalErr ) ;
+        }
 
-      // allocate expected SME for global collectionspace inspect only
-      if ( ossStrlen ( gCLName ) == 0 && ( FALSE == gOnlyMeta ||
-           OSS_BIT_TEST( gAction, ACTION_STAT ) ) )
-      {
-         // allocate memory for expected SME
-         // this buffer is used to store all allocated pages from collection
-         // traversal, the result will be used to compare with real SME for
-         // orphan/inconsistent pages
-         inspectSMEBuffer = (CHAR*)SDB_OSS_MALLOC ( DMS_SME_SZ ) ;
-         dmsSpaceManagementExtent *pSME =
-            ( dmsSpaceManagementExtent*)inspectSMEBuffer ;
-         if ( !inspectSMEBuffer )
+        CHAR *pSmeBuffer = (CHAR*)SDB_OSS_MALLOC ( DMS_SME_SZ ) ;
+        if ( !pSmeBuffer )
          {
-            dumpPrintf ( "Error: Failed to allocate %d bytes for Exp SME buffer"
+            dumpPrintf ( "Error: Failed to allocate %d bytes for SME buffer"
                          OSS_NEWLINE, (INT32)DMS_SME_SZ ) ;
             goto error ;
-         }
-         for ( UINT32 i = 0; i < DMS_SME_SZ ; ++i )
-         {
-            pSME->freeBitMask( i ) ;
-         }
-      }
+        }
 
-      inspectCollections ( file, csPageSize, hwm, inspectSMEBuffer,
-                           totalErr ) ;
-      if ( 0 == totalErr )
-      {
-         dumpPrintf ( " Inspection collection space is Done without Error"
-                      OSS_NEWLINE ) ;
+        dumpSME ( file, pSmeBuffer ) ;
+        
+        dumpCollections ( file, csPageSize, pSmeBuffer ) ;
+        dumpPrintf ( "Dump collection space is done"OSS_NEWLINE ) ;
+        
+        SAFE_OSS_FREE ( pSmeBuffer ) ;
       }
       else
       {
-         dumpPrintf ( " Inspection collection space is Done with %d Error(s)"
-                      OSS_NEWLINE, totalErr ) ;
+        dumpHeader ( file, csPageSize ) ;
+        if (gCurInsptType == SDB_INSPT_LOB)
+        {
+
+             dumpHeader ( gLobdFile, csPageSize ) ;
+                         // specific pages dump
+             for ( SINT32 i = 0; i < gNumPages && !gReachEnd; ++i )
+             {
+                dumpPrintf ( " Dump page %d"OSS_NEWLINE, gStartingPage + i ) ;
+                dumpRawPage ( gLobdFile, gLobdPageSize, gStartingPage + i ) ;
+             }
+        }
+        else
+        {
+             // specific pages dump
+             for ( SINT32 i = 0; i < gNumPages && !gReachEnd; ++i )
+             {
+                dumpPrintf ( " Dump page %d"OSS_NEWLINE, gStartingPage + i ) ;
+                dumpRawPage ( file, csPageSize, gStartingPage + i ) ;
+             }
+        }
+
       }
       break ;
-   }
+    case SDB_INSPT_ACTION_INSPECT :
+    {
+        dumpPrintf ( "Inspect collection space %s"OSS_NEWLINE, pFileName ) ;
+        
+        (gCurInsptType == SDB_INSPT_LOB) 
+                ? inspectLob(file, pFileName) 
+                : inspectData(file, pFileName);
+        
+        break;
+    }
    default :
       dumpPrintf ( "Error: unexpected action"OSS_NEWLINE ) ;
       goto error ;
@@ -3222,12 +4247,6 @@ done :
    {
       ossClose ( file ) ;
    }
-   if ( inspectSMEBuffer )
-   {
-      SDB_OSS_FREE ( inspectSMEBuffer ) ;
-   }
-   PD_TRACE1 ( SDB_ACTIONCSATTEMPT, PD_PACK_INT(rc) );
-   PD_TRACE_EXIT ( SDB_ACTIONCSATTEMPT );
    return ;
 error :
    goto done ;
@@ -3279,7 +4298,10 @@ INT32 prepareForDump( const CHAR *csName, UINT32 sequence )
    // set info
    gPageSize = dataHeader._pageSize ;
    gSecretValue = dataHeader._secretValue ;
-
+   gLobdPageSize = dataHeader._lobdPageSize;
+   gSequence = dataHeader._sequence;
+   gExistLobs = dataHeader._createLobs;
+   
    // read mme and check
    rc = ossSeekAndRead ( &file, DMS_MME_OFFSET, gMMEBuff,
                          DMS_MME_SZ, &lenRead ) ;
@@ -3324,6 +4346,8 @@ void actionCSAttemptEntry( const CHAR *csName, UINT32 sequence,
    gInitMME       = FALSE ;
    ossMemset( gMMEBuff, 0, DMS_MME_SZ ) ;
 
+   gCl2PageMap.clear();
+
    // prepare
    if ( SDB_OK != prepareForDump( csName, sequence ) )
    {
@@ -3356,12 +4380,48 @@ void actionCSAttemptEntry( const CHAR *csName, UINT32 sequence,
       eyeCatcherVec.push_back( DMS_INDEXSU_EYECATCHER ) ;
       actionCSAttempt( csFullName.c_str(), eyeCatcherVec, specific, action ) ;
    }
+   if ( gDumpLob && gExistLobs )
+   {
+        ///TODO: multi sequence need use loop instead.
+        INT32 rc = SDB_OK;
+        if(!gOnlyMeta)
+        {
+           csFileName =  rtnMakeSUFileName( csName, sequence, DMS_LOB_DATA_SU_EXT_NAME ) ;
+           gLobdFileName = rtnFullPathName( gLobPath, csFileName ) ;
+
+           UINT32 iMode = ( SDB_INSPT_ACTION_REPARE == action ) ? OSS_READWRITE : OSS_READONLY;
+           
+           rc = ossOpen (gLobdFileName.c_str(), iMode, OSS_RU | OSS_WU | OSS_RG,   gLobdFile);
+           if ( rc != SDB_OK)
+           {
+              dumpPrintf ( "Error: Failed to open %s, rc = %d"OSS_NEWLINE, gLobdFileName.c_str(), rc ) ;
+              return;
+           }
+        }
+                
+        csFileName = rtnMakeSUFileName( csName, sequence, DMS_LOB_META_SU_EXT_NAME ) ;
+        csFullName = rtnFullPathName( gLobmPath, csFileName ) ;
+        gDataOffset = DMS_BME_OFFSET + DMS_BME_SZ;
+        gPageNum    = 0 ;
+        gCurInsptType = SDB_INSPT_LOB ;
+        vector<const CHAR *> eyeCatcherVec ;
+        eyeCatcherVec.push_back( DMS_LOBM_EYECATCHER) ;
+        actionCSAttempt( csFullName.c_str(), eyeCatcherVec, specific, action ) ;
+
+        if(!gOnlyMeta)
+        {
+            rc = ossClose (gLobdFile);
+            if ( rc != SDB_OK)
+            {
+              dumpPrintf ( "Error: Failed to close %s, rc = %d"OSS_NEWLINE, gLobdFileName.c_str(), rc ) ;
+            }
+        }
+   }
+  
 }
 
-// PD_TRACE_DECLARE_FUNCTION ( SDB_DUMPPAGES, "dumpPages" )
 void dumpPages ()
 {
-   PD_TRACE_ENTRY ( SDB_DUMPPAGES ) ;
    CHAR csName [ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] = {0} ;
    UINT32 sequence = 0 ;
    fs::path dbDir ( gDatabasePath ) ;
@@ -3404,17 +4464,14 @@ void dumpPages ()
    }
 
 done :
-   PD_TRACE_EXIT ( SDB_DUMPPAGES ) ;
    return ;
 error :
    goto done ;
 }
 
 // database inspection may entry code
-// PD_TRACE_DECLARE_FUNCTION ( SDB_INSPECTDB, "inspectDB" )
 void inspectDB( SDB_INSPT_ACTION action )
 {
-   PD_TRACE_ENTRY ( SDB_INSPECTDB );
    CHAR csName [ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] = {0} ;
    UINT32 sequence = 0 ;
    fs::path dbDir ( gDatabasePath ) ;
@@ -3449,16 +4506,13 @@ void inspectDB( SDB_INSPT_ACTION action )
       dumpPrintf ( "Error: inspect path %s is not a valid directory"OSS_NEWLINE,
                    gDatabasePath ) ;
    }
-   PD_TRACE_EXIT ( SDB_INSPECTDB );
 }
 
-// PD_TRACE_DECLARE_FUNCTION ( SDB_PREPARECOMPRESSOR, "prepareCompressor" )
-INT32 prepareCompressor( OSSFILE &file, SINT32 pageSize, dmsMB *mb, UINT16 id,
+INT32 prepareCompressor( OSSFILE &file, UINT32 pageSize, dmsMB *mb, UINT16 id,
                          CHAR *pExpBuffer, dmsCompressorEntry &compressorEntry,
                          SINT32 &err )
 {
    INT32 rc = SDB_OK ;
-   PD_TRACE_ENTRY( SDB_PREPARECOMPRESSOR ) ;
    UTIL_COMPRESSOR_TYPE type = (UTIL_COMPRESSOR_TYPE)( mb->_compressorType ) ;
 
    dmsCompressorGuard gard( &compressorEntry, EXCLUSIVE ) ;
@@ -3490,18 +4544,15 @@ INT32 prepareCompressor( OSSFILE &file, SINT32 pageSize, dmsMB *mb, UINT16 id,
    }
 
 done:
-   PD_TRACE_EXITRC( SDB_PREPARECOMPRESSOR, rc ) ;
    return rc ;
 error:
    goto done ;
 }
 
 // main function
-// PD_TRACE_DECLARE_FUNCTION ( SDB_SDBINSPT_MAIN, "main" )
 INT32 main ( INT32 argc, CHAR **argv )
 {
    INT32 rc = SDB_OK ;
-   PD_TRACE_ENTRY ( SDB_SDBINSPT_MAIN );
    po::options_description desc ( "Command options" ) ;
    init ( desc ) ;
    rc = resolveArgument ( desc, argc, argv ) ;
@@ -3514,16 +4565,16 @@ INT32 main ( INT32 argc, CHAR **argv )
       }
       goto done ;
    }
-   if ( OSS_BIT_TEST ( gAction, ACTION_DUMP ) &&
-        FALSE == gDumpData && FALSE == gDumpIndex )
+   if (( OSS_BIT_TEST ( gAction, ACTION_DUMP ) 
+            || OSS_BIT_TEST ( gAction, ACTION_INSPECT))
+        && !gDumpData && !gDumpIndex && !gDumpLob )
    {
-      dumpPrintf( "Error: should specific dump data or index " ) ;
+      dumpPrintf( "Error: should specific dump data, index or lob" ) ;
       goto done ;
    }
-   if ( gDumpData == gDumpIndex && gStartingPage >= 0 )
+   if ( gStartingPage >= 0 && ((UINT32)( gDumpData + gDumpIndex + gDumpLob)  > 1 ) )  
    {
-      dumpPrintf( "Error: dump from starting page only for the one of data or "
-                  "index" ) ;
+      dumpPrintf( "Error: dump from starting page only for the one of data, index or lob" ) ;
       goto done ;
    }
 
@@ -3626,6 +4677,5 @@ done :
    {
       SDB_OSS_DEL ( cb ) ;
    }
-   PD_TRACE_EXITRC ( SDB_SDBINSPT_MAIN, rc );
    return rc ;
 }

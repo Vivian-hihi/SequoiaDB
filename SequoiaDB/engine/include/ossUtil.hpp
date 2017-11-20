@@ -149,6 +149,13 @@ public :
    time_t time ;     // tv_sec ,  seconds
    UINT32 microtm ;  // tv_usec,  microseconds
 
+   ossTimestamp(){}
+   ossTimestamp(UINT64 curTime)
+   {
+      time = curTime / 1000 ;
+      microtm = ( curTime % 1000 ) * 1000 ;
+   }
+
    ossTimestamp &operator= ( const ossTimestamp &rhs )
    {
       time    = rhs.time ;

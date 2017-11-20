@@ -45,6 +45,7 @@
 #include "pdTrace.hpp"
 #include "dmsTrace.hpp"
 #include "dmsStorageDataCapped.hpp"
+#include "dmsStorageLob.hpp"
 
 using namespace bson ;
 
@@ -53,7 +54,7 @@ namespace engine
 
    UINT32 _dmsInspect::inspectHeader( void *inBuf, UINT32 inSize,
                                       CHAR *outBuf, UINT32 outSize,
-                                      SINT32 &pageSize, SINT32 &pageNum,
+                                      UINT32 &pageSize, UINT32 &pageNum,
                                       UINT64 &secretValue, SINT32 &err )
    {
       SINT32 localErr                    = 0 ;
@@ -179,12 +180,266 @@ namespace engine
 
       return len ;
    }
+   
+   UINT32 _dmsInspect::inspectLobmHeader( void *inBuf, UINT32 inSize,
+                                         CHAR *outBuf, UINT32 outSize, UINT32 sequence,
+                                         UINT32 &pageNum , UINT32 &lobmPageSize,
+                                         UINT64 secretValue, INT64 fileSize, SINT32 &localErr)
+   {
+      UINT32 len                         = 0 ;
+      dmsStorageUnitHeader *header       = (dmsStorageUnitHeader*)inBuf ;
+      CHAR   eyeCatcher [ DMS_HEADER_EYECATCHER_LEN+1 ] = {0} ;
+
+
+      if ( NULL == inBuf || NULL == outBuf || inSize != DMS_HEADER_SZ )
+      {
+         len += ossSnprintf ( outBuf + len, outSize - len,
+                              "Error: inspectHeader input size (%d) doesn't "
+                              "match expected size (%d)"OSS_NEWLINE,
+                              inSize, DMS_HEADER_SZ ) ;
+         ++localErr ;
+         goto exit ;
+      }
+
+      pageNum = header->_pageNum;
+      lobmPageSize = header->_pageSize;
+
+      ossMemcpy ( eyeCatcher, header->_eyeCatcher, DMS_HEADER_EYECATCHER_LEN ) ;
+
+      len += ossSnprintf ( outBuf + len, outSize - len,
+                    "Inspect Storage Unit Header: %s"OSS_NEWLINE,
+                    header->_name ) ;
+
+      if ( ossStrncmp ( eyeCatcher, DMS_LOBM_EYECATCHER,
+                 DMS_HEADER_EYECATCHER_LEN ) != 0)
+      {
+         len += ossSnprintf ( outBuf + len, outSize - len,
+                           "Error: Invalid storage unit eye catcher: %s, "
+                           "expected: %s"OSS_NEWLINE,
+                           eyeCatcher, DMS_LOBM_EYECATCHER ) ;
+         ++localErr ;
+      }
+
+
+      if ( header->_version > DMS_LOB_CUR_VERSION )
+      {
+         len += ossSnprintf ( outBuf + len, outSize - len,
+                              "Error: Invalid lob version: %d"OSS_NEWLINE,
+                              header->_version ) ;
+         ++localErr ;
+      }
+
+      if ( header->_pageSize != DMS_PAGE_SIZE256B 
+          && header->_pageSize != DMS_PAGE_SIZE64B)
+      {
+         len += ossSnprintf ( outBuf + len, outSize - len,
+                              "Error: Invalid page size: %d"OSS_NEWLINE,
+                              header->_pageSize ) ;
+         ++localErr ;
+      }
+
+      if ( header->_storageUnitSize !=  fileSize / header->_pageSize )
+      {
+         len += ossSnprintf ( outBuf + len, outSize - len,
+                             "Error: Storage Unit size is smaller than "
+                             "header: %d"OSS_NEWLINE,
+                             header->_storageUnitSize ) ;
+         ++localErr ;
+      }
+
+      if ( ( header->_pageNum % DMS_SEGMENT_PG(header->_lobdPageSize) != 0 )
+          || (header->_pageNum > DMS_MAX_PG) )
+      {
+         len += ossSnprintf ( outBuf + len, outSize - len,
+                              "Error: Invalid page number: %d"OSS_NEWLINE,
+                              header->_pageNum ) ;
+         ++localErr ;
+      }
+      pageNum =  header->_pageNum;
+
+
+      // check
+      if ( header->_secretValue != secretValue )
+      {
+         len += ossSnprintf ( outBuf + len, outSize - len,
+                      "Error: Secret value[%llu] is not expected[%llu]"OSS_NEWLINE,
+                      header->_secretValue , secretValue ) ;
+         ++localErr ;
+      }
+
+      if ( header->_sequence != sequence )
+      {
+         len += ossSnprintf ( outBuf + len, outSize - len,
+                             "Error: sequence value[%llu] is not expected[%llu]"OSS_NEWLINE,
+                             header->_sequence , sequence ) ;
+         ++localErr ;
+      }
+
+
+      if ( header->_numMB  != 0 )
+      {
+         len += ossSnprintf ( outBuf + len, outSize - len,
+                              "Error: Invalid number of collections: %d, "
+                              "which should be %d"OSS_NEWLINE,
+                              header->_numMB, 0) ;
+         ++localErr ;
+      }
+
+      if ( header->_numMB !=  header->_MBHWM )
+      {
+         len += ossSnprintf ( outBuf + len, outSize - len,
+                              "Error: Invalid number of collections: %d, "
+                              "HWM is %d"OSS_NEWLINE,
+                              header->_numMB, header->_MBHWM ) ;
+         ++localErr ;
+      }
+
+   exit :
+      if ( 0 == localErr )
+      {
+         len += ossSnprintf ( outBuf + len, outSize - len,
+                              "Inspect Storage Unit Header Done "
+                              "without Error"OSS_NEWLINE ) ;
+      }
+      else
+      {
+         len += ossSnprintf ( outBuf + len, outSize - len,
+                              "Inspect Storage Unit Header Done "
+                              "with Error: %d"OSS_NEWLINE, localErr ) ;
+      }
+      len += ossSnprintf ( outBuf + len, outSize - len, OSS_NEWLINE ) ;
+
+      return len ;
+   }
+
+
+   UINT32 _dmsInspect::inspectLobdHeader( void *inBuf, UINT32 inSize,
+                                         CHAR *outBuf, UINT32 outSize, 
+                                         UINT32 sequence, UINT64 secretValue,
+                                         INT64 fileSize, INT32 &totalErr)
+   {
+      SINT32 localErr                    = 0 ;
+      UINT32 len                         = 0 ;
+      dmsStorageUnitHeader *header       = (dmsStorageUnitHeader*)inBuf ;
+      CHAR   eyeCatcher [ DMS_HEADER_EYECATCHER_LEN+1 ] = {0} ;
+
+      if ( NULL == inBuf || NULL == outBuf || inSize != DMS_HEADER_SZ )
+      {
+         len += ossSnprintf ( outBuf + len, outSize - len,
+                              "Error: inspectHeader input size (%d) doesn't "
+                              "match expected size (%d)"OSS_NEWLINE,
+                              inSize, DMS_HEADER_SZ ) ;
+         ++localErr ;
+      }
+
+      ossMemcpy ( eyeCatcher, header->_eyeCatcher, DMS_HEADER_EYECATCHER_LEN ) ;
+
+      len += ossSnprintf ( outBuf + len, outSize - len,
+                    "Inspect Storage Unit Header: %s"OSS_NEWLINE,
+                    header->_name ) ;
+
+      if ( ossStrncmp ( eyeCatcher, DMS_LOBD_EYECATCHER,
+                 DMS_HEADER_EYECATCHER_LEN ) != 0)
+      {
+         len += ossSnprintf ( outBuf + len, outSize - len,
+                              "Error: Invalid storage unit eye catcher: %s, "
+                              "expected: %s"OSS_NEWLINE,
+                              eyeCatcher, DMS_DATASU_EYECATCHER ) ;
+         ++localErr ;
+      }
+
+
+      if ( header->_version > DMS_LOB_CUR_VERSION )
+      {
+         len += ossSnprintf ( outBuf + len, outSize - len,
+                              "Error: Invalid lob version: %d"OSS_NEWLINE,
+                              header->_version ) ;
+         ++localErr ;
+      }
+
+      if ( header->_pageSize != 0 )
+      {
+         len += ossSnprintf ( outBuf + len, outSize - len,
+                              "Error: Invalid page size: %d"OSS_NEWLINE,
+                              header->_pageSize ) ;
+         ++localErr ;
+      }
+
+      if ( header->_storageUnitSize !=  0 )
+      {
+         len += ossSnprintf ( outBuf + len, outSize - len,
+                             "Error: Storage Unit size should not be: %d"OSS_NEWLINE,
+                             header->_storageUnitSize) ;
+         ++localErr ;
+      }
+
+      if ( header->_pageNum != 0 )
+      {
+         len += ossSnprintf ( outBuf + len, outSize - len,
+                              "Error: page number should not be: %d"OSS_NEWLINE,
+                              header->_pageNum );
+         ++localErr ;
+      }
+
+      // check
+      if ( header->_secretValue  != secretValue )
+      {
+         len += ossSnprintf ( outBuf + len, outSize - len,
+                             "Error: Secret value[%llu] is not expected[%llu]"OSS_NEWLINE,
+                             header->_secretValue , secretValue ) ;
+         ++localErr ;
+      }
+
+      if ( header->_sequence != sequence )
+      {
+         len += ossSnprintf ( outBuf + len, outSize - len,
+                             "Error: sequence value[%llu] is not expected[%llu]"OSS_NEWLINE,
+                             header->_sequence , sequence ) ;
+         ++localErr ;
+      }
+
+
+      if ( header->_numMB  != 0 )
+      {
+         len += ossSnprintf ( outBuf + len, outSize - len,
+                              "Error: Invalid number of collections: %d, "
+                              "which should be: %d"OSS_NEWLINE,
+                              header->_numMB, DMS_MME_SZ/DMS_MB_SIZE ) ;
+         ++localErr ;
+      }
+
+      if ( header->_numMB !=  header->_MBHWM )
+      {
+         len += ossSnprintf ( outBuf + len, outSize - len,
+                              "Error: Invalid number of collections: %d, "
+                              "HWM is %d"OSS_NEWLINE,
+                              header->_numMB, header->_MBHWM ) ;
+         ++localErr ;
+      }
+
+      if ( 0 == localErr )
+      {
+         len += ossSnprintf ( outBuf + len, outSize - len,
+                              "Inspect Storage Unit Header Done "
+                              "without Error"OSS_NEWLINE ) ;
+      }
+      else
+      {
+         len += ossSnprintf ( outBuf + len, outSize - len,
+                              "Inspect Storage Unit Header Done "
+                              "with Error: %d"OSS_NEWLINE, localErr ) ;
+      }
+      len += ossSnprintf ( outBuf + len, outSize - len, OSS_NEWLINE ) ;
+
+      totalErr += localErr;
+      return len ;
+   }
 
    #define DMS_INSPECT_SME_STATE_BUFSZ          63
 
    UINT32 _dmsInspect::inspectSME( void *inBuf, UINT32 inSize,
                                    CHAR *outBuf, UINT32 outSize,
-                                   const CHAR *expBuffer, SINT32 pageNum,
+                                   const CHAR *expBuffer, UINT32 pageNum,
                                    SINT32 &hwmPages, SINT32 &err )
    {
       SINT32 localErr       = 0 ;
@@ -232,12 +487,12 @@ namespace engine
                                  pExpSME->getBitMask(i), stateBuf ) ;
             ++localErr ;
          }
-         else if ( i < (UINT32)pageNum &&
+         else if ( i < pageNum &&
                    DMS_SME_ALLOCATED == pSME->getBitMask(i) )
          {
             hwmPages = i ;
          }
-         else if ( i >= (UINT32)pageNum &&
+         else if ( i >= pageNum &&
                    DMS_SME_ALLOCATED == pSME->getBitMask(i) )
          {
             // error
@@ -1458,6 +1713,99 @@ namespace engine
       }
 
    exit:
+      return len ;
+   }
+
+   UINT32 _dmsInspect::inspectDmsLobDataMapBlk(dmsLobDataMapBlk *blk, 
+                                 CHAR * outBuf, UINT32 outSize, 
+                                 UINT16 clId,  SINT32 &err)
+   {
+       UINT32 len           = 0 ;
+   
+       if (  blk->_mbID !=  clId )
+       {
+            len += ossSnprintf ( outBuf + len, outSize - len,
+                         "Error: Invalid mbID, mbId: %c, expected: %d"OSS_NEWLINE, blk->_mbID, clId) ;
+            ++err ;
+       }
+   
+       if (blk->_status != DMS_LOB_PAGE_REMOVED
+               && DMS_LOB_PAGE_NORMAL != blk->_status)
+       {
+            len += ossSnprintf ( outBuf + len, outSize - len, 
+                   "Error: Invalid dmsLobDataMapBlk status : %c( UNKOWN STATUS )"OSS_NEWLINE, blk->_status) ;
+            ++err ;
+       }
+       ///TODO:: add bucket list loop inspect.
+      return len ;
+   }
+
+   
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_INSPTDMSLOBMETA, "inspectDmsLobMeta" )
+   UINT32 _dmsInspect::inspectDmsLobMeta(dmsLobMeta *lobMeta,
+                            CHAR * outBuf, UINT32 outSize, 
+                            SINT32 &err)
+   {
+      UINT32 len           = 0 ;
+      CHAR strTime[ OSS_TIMESTAMP_STRING_LEN + 1 ] = { 0 } ;    
+      UINT64 curTime = ossGetCurrentMilliseconds() ;
+
+      if(lobMeta->_flag > DMS_LOB_META_FLAG_PIECESINFO_INSIDE )
+      {
+         len += ossSnprintf ( outBuf + len , outSize - len,
+                              "Error: LobMeta flag  (%d) in lobd file is unkown "
+                              "expected less than DMS_LOB_META_FLAG_PIECESINFO_INSIDE (%d)"
+                              OSS_NEWLINE,  lobMeta->_flag, DMS_LOB_META_FLAG_PIECESINFO_INSIDE) ;
+         err++;
+      }
+
+      if(lobMeta->_version > DMS_LOB_META_CURRENT_VERSION )
+      {
+         len += ossSnprintf ( outBuf + len , outSize - len,
+                              "Error: LobMeta version  (%d) in lobd file is unkown "
+                              "expected less than DMS_LOB_META_CURRENT_VERSION (%d)"
+                              OSS_NEWLINE,  lobMeta->_version, DMS_LOB_META_CURRENT_VERSION) ;
+         err++;
+      }
+
+      if(lobMeta->_status > DMS_LOB_COMPLETE )
+      {
+         len += ossSnprintf ( outBuf + len , outSize - len,
+                              "Error: LobMeta status  (%d) in lobd file is unkown "
+                              "expected less than DMS_LOB_COMPLETE (%d)"
+                              OSS_NEWLINE,  lobMeta->_status, DMS_LOB_COMPLETE) ;
+         err++;
+      }
+
+      if(lobMeta->hasPiecesInfo() && lobMeta->_piecesInfoNum <= 0 )
+      {
+         len += ossSnprintf ( outBuf + len , outSize - len,
+                              "Error: LobMeta piecesInfoNum  (%d)  or flag %d "
+                              "(DMS_LOB_META_MERGE_DATA_VERSION) in lobd file is unkown "
+                              OSS_NEWLINE,  lobMeta->_piecesInfoNum, DMS_LOB_COMPLETE) ;
+         err++;
+      }
+
+      ossTimestamp timestamp(lobMeta->_createTime);
+      if (curTime < lobMeta->_createTime)
+      {
+         ossTimestampToString(timestamp, strTime ) ;
+         len += ossSnprintf ( outBuf + len , outSize - len,
+                              "Error: LobMeta createTime  %lu (%s)  is not correct"OSS_NEWLINE, 
+                              lobMeta->_createTime, strTime) ;
+         err++;
+      }
+
+      if (curTime < lobMeta->_modificationTime)
+      {
+         timestamp = lobMeta->_modificationTime;
+         ossTimestampToString(timestamp, strTime) ;
+         len += ossSnprintf(outBuf + len , outSize - len,
+                             "Error: LobMeta modificationTime  %lu (%s)  is not correct"OSS_NEWLINE, 
+                             lobMeta->_modificationTime, strTime) ;
+         err++;
+      }
+
       return len ;
    }
 }

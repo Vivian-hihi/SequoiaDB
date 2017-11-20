@@ -43,6 +43,8 @@
 namespace engine
 {
    #define DMS_BME_OFFSET        DMS_MME_OFFSET
+   #define DMS_LOBM_EYECATCHER               "SDBLOBM"
+   #define DMS_LOBM_EYECATCHER_LEN           8
 
    /// must be power of 2
    const UINT32 DMS_BUCKETS_NUM =   16777216 ; // 16MB

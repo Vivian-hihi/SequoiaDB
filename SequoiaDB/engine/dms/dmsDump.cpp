@@ -46,6 +46,7 @@
 #include "dmsTrace.hpp"
 #include "utilDictionary.hpp"
 #include "dmsStorageDataCapped.hpp"
+#include "rtnLobPieces.hpp"
 
 using namespace bson ;
 
@@ -129,7 +130,7 @@ namespace engine
    UINT32 _dmsDump::dumpHeader( void *inBuf, UINT32 inSize,
                                 CHAR *outBuf, UINT32 outSize,
                                 CHAR *addrPrefix, UINT32 options,
-                                SINT32 &pageSize, INT32 &pageNum )
+                                UINT32 &pageSize, UINT32 &pageNum )
    {
       UINT32 len                         = 0 ;
       UINT32 hexDumpOption               = 0 ;
@@ -1859,6 +1860,175 @@ namespace engine
    exit :
       return len ;
    }
+
+
+UINT32 _dmsDump::dumpDmsLobMeta(CHAR *inBuf, UINT32 inSize,
+                                                                 CHAR * outBuf,UINT32 outSize, 
+                                                                 CHAR * addrPrefix, UINT32 options)
+{
+   UINT32 len           = 0 ;
+   UINT32 hexDumpOption = 0 ;
+
+   if ( DMS_SU_DMP_OPT_HEX & options )
+   {
+      if ( DMS_SU_DMP_OPT_HEX_PREFIX_AS_ADDR & options )
+      {
+         hexDumpOption |= OSS_HEXDUMP_PREFIX_AS_ADDR ;
+      }
+      if ( !( DMS_SU_DMP_OPT_HEX_WITH_ASCII & options ) )
+      {
+         hexDumpOption |= OSS_HEXDUMP_RAW_HEX_ONLY ;
+      }
+      len += ossHexDumpBuffer(inBuf, inSize, outBuf+len, outSize-len,
+                            addrPrefix, hexDumpOption ) ;
+   }
+
+
+   if ( DMS_SU_DMP_OPT_FORMATTED & options )
+   {
+      dmsLobMeta *lobMeta = (dmsLobMeta*)inBuf;
+      const char *tag = NULL;
+      len += ossSnprintf(outBuf + len, outSize -len, "Lobd Meta:"OSS_NEWLINE) ;
+
+      len += ossSnprintf(outBuf + len, outSize - len, 
+                                    " Lob Len        :%lld"OSS_NEWLINE, 
+                                    lobMeta->_lobLen);
+
+      CHAR strTime[ OSS_TIMESTAMP_STRING_LEN + 1 ] = { 0 } ;    
+      ossTimestamp tm(lobMeta->_createTime);
+      ossTimestampToString(tm , strTime ) ;
+      len += ossSnprintf(outBuf + len, outSize - len, 
+                                    " Create Time    :%s (%llu)"OSS_NEWLINE, 
+                                    strTime, lobMeta->_createTime) ;
+
+      tag = lobMeta->isDone()? "DMS_LOB_COMPLETE":"DMS_LOB_UNCOMPLETE";
+      len += ossSnprintf(outBuf + len, outSize - len, 
+                                    " Status         :%s (%u)"OSS_NEWLINE, 
+                                    tag, lobMeta->_status);
+
+      tag = (lobMeta->_version == DMS_LOB_META_CURRENT_VERSION )
+                          ? "DMS_LOB_META_CURRENT_VERSION"
+                          : NULL;
+                             
+      len += ossSnprintf(outBuf + len, outSize - len, 
+                                    " Version        :%s (%u)"OSS_NEWLINE, 
+                                    tag, lobMeta->_version) ;
+
+      tm = lobMeta->_createTime;
+      ossTimestampToString(tm , strTime ) ;
+      len += ossSnprintf(outBuf + len, outSize - len, 
+                                    " Mod Time       :%s (%llu)"OSS_NEWLINE, 
+                                    strTime, lobMeta->_modificationTime);
+
+      tag = lobMeta->hasPiecesInfo()
+                       ? "DMS_LOB_META_FLAG_PIECESINFO_INSIDE"
+                       : "NO PIECESINFO";
+                       
+      len += ossSnprintf(outBuf + len, outSize - len, " Flag           :%s (%u)"OSS_NEWLINE, tag, lobMeta->_flag);
+
+      len += ossSnprintf(outBuf + len,
+                                   outSize - len, 
+                                   " PiecesInfo Num :%d"OSS_NEWLINE,
+                                   lobMeta->_piecesInfoNum);
+
+      if (lobMeta->_piecesInfoNum <=  0) goto exit;
+
+      len += ossSnprintf(outBuf + len, outSize - len, " Pieces:");
+      _rtnLobPieces* piecesInfoBuf = (_rtnLobPieces*)(inBuf + DMS_LOB_META_LENGTH 
+                               - sizeof( _rtnLobPieces ) * lobMeta->_piecesInfoNum);
+      for(INT32 i = 0; i < lobMeta->_piecesInfoNum; i ++)
+      {
+         len += ossSnprintf ( outBuf+len, outSize-len, 
+                                          "      { first:%u; last:%u }"OSS_NEWLINE,
+                                          piecesInfoBuf[i].first, 
+                                          piecesInfoBuf[i].last);
+      }
+   }
+
+   exit :
+   len += ossSnprintf ( outBuf + len, outSize - len, OSS_NEWLINE ) ;
+   return len ;
+
+}
+
+UINT32 _dmsDump::dumpDmsLobData(CHAR *inBuf, UINT32 inSize, 
+                              CHAR * outBuf, UINT32 outSize, 
+                              CHAR * addrPrefix, UINT32 options)
+{
+   UINT32 len           = 0 ;
+   UINT32 hexDumpOption = 0 ;
+
+   len += ossSnprintf(outBuf + len, outSize -len, "Lobd Data:") ;
+
+   if ( DMS_SU_DMP_OPT_HEX & options )
+   {
+      if ( DMS_SU_DMP_OPT_HEX_PREFIX_AS_ADDR & options )
+      {
+         hexDumpOption |= OSS_HEXDUMP_PREFIX_AS_ADDR ;
+      }
+      if ( !( DMS_SU_DMP_OPT_HEX_WITH_ASCII & options ) )
+      {
+         hexDumpOption |= OSS_HEXDUMP_RAW_HEX_ONLY ;
+      }
+      len += ossHexDumpBuffer(inBuf, inSize, outBuf+len, outSize-len,
+                            addrPrefix, hexDumpOption ) ;
+   }
+
+
+   if ( DMS_SU_DMP_OPT_FORMATTED & options )
+   {
+      ///TODO:dump record
+   }
+
+   len += ossSnprintf ( outBuf + len, outSize - len, OSS_NEWLINE ) ;
+   return len ;
+
+}
+
+
+UINT32 _dmsDump::dumpDmsLobDataMapBlk(dmsLobDataMapBlk *blk, CHAR * outBuf,
+                              UINT32 outSize, CHAR * addrPrefix,
+                              UINT32 options, UINT32 pageSize)
+{
+   UINT32 len           = 0 ;
+   UINT32 hexDumpOption = 0 ;
+
+   if ( DMS_SU_DMP_OPT_HEX & options )
+   {
+      if ( DMS_SU_DMP_OPT_HEX_PREFIX_AS_ADDR & options )
+      {
+         hexDumpOption |= OSS_HEXDUMP_PREFIX_AS_ADDR ;
+      }
+      if ( !( DMS_SU_DMP_OPT_HEX_WITH_ASCII & options ) )
+      {
+         hexDumpOption |= OSS_HEXDUMP_RAW_HEX_ONLY ;
+      }
+      len += ossHexDumpBuffer(blk, pageSize, outBuf+len, outSize-len,
+                         addrPrefix, hexDumpOption ) ;
+   }
+
+   if ( DMS_SU_DMP_OPT_FORMATTED & options )
+   {
+      const char *tag = NULL;
+      len += ossSnprintf(outBuf + len, outSize -len, "Lobm dmsLobDataMapBlk:"OSS_NEWLINE);
+      bson::OID oid;
+      ossMemcpy(&oid, blk->_oid, DMS_LOB_OID_LEN);
+      len += ossSnprintf(outBuf + len, outSize -len,  " Oid            :%s"OSS_NEWLINE, oid.str().c_str());
+      len += ossSnprintf(outBuf + len, outSize - len, " Sequence       :%u"OSS_NEWLINE, blk->_sequence);
+      len += ossSnprintf(outBuf + len, outSize - len, " Data Len       :%u"OSS_NEWLINE, blk->_dataLen);
+      len += ossSnprintf(outBuf + len, outSize - len, " Prev PageId    :%d"OSS_NEWLINE, blk->_prevPageInBucket);
+      len += ossSnprintf(outBuf + len, outSize - len, " Next PageId    :%d"OSS_NEWLINE, blk->_nextPageInBucket);
+      len += ossSnprintf(outBuf + len, outSize - len, " CL LogicId     :%u"OSS_NEWLINE, blk->_clLogicalID);
+      len += ossSnprintf(outBuf + len, outSize - len, " MB Id          :%u"OSS_NEWLINE, blk->_mbID);
+
+      tag = blk->isNormal()? "DMS_LOB_PAGE_NORMAL":"DMS_LOB_PAGE_REMOVED";
+      len += ossSnprintf(outBuf + len, outSize - len, " STATUS         :%s (%u)"OSS_NEWLINE,tag, blk->_status);
+   }
+
+   len += ossSnprintf ( outBuf + len, outSize - len, OSS_NEWLINE ) ;
+   return len ;
+}
+
 
 }
 

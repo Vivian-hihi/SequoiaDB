@@ -615,7 +615,7 @@ pmdMain = [
       ]
 
 sdbdmsdumpMain = [
-      "pmd/sdbinspt.cpp"
+      "tools/sdbinspt.cpp"
       ]
 
 sdbrestoreFiles = [
