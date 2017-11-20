@@ -211,7 +211,7 @@ public class DBQuery {
 
     /**
      * Set the query flag.
-     * @param The query flag as below:
+     * @param flag The query flag as below:
      *            DBQuery.FLG_QUERY_STRINGOUT
      *            DBQuery.FLG_QUERY_FORCE_HINT
      *            DBQuery.LG_QUERY_PARALLED

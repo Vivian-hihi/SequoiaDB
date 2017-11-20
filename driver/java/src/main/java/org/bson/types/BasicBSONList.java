@@ -169,7 +169,7 @@ public class BasicBSONList extends ArrayList<Object> implements BSONObject {
 	/**
 	 * Checks if this object contains a given field
 	 * 
-	 * @param field
+	 * @param key
 	 *            field name
 	 * @return if the field exists
 	 */
@@ -222,12 +222,10 @@ public class BasicBSONList extends ArrayList<Object> implements BSONObject {
 	}
 
 	/**
-	 * @fn <T> T as_notdisplay(Class<T> cls)
-	 * @brief Returns an instance of the class "cls" only for BasicBsonObject
-	 * 
-	 * @param cls
+	 * Returns an instance of the class "cls" only for BasicBsonObject.
+	 * @param cls target class object
 	 * @return the instance of the class
-	 * @throws Exception
+	 * @throws Exception UnsupportedOperationException
 	 */
 	// @Override
 	public <T> T as(Class<T> cls) throws Exception {

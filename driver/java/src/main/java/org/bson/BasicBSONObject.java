@@ -675,19 +675,16 @@ public class BasicBSONObject implements Map<String, Object>, BSONObject {
 
 
 	/**
-	 * @fn <T> T as(Class<T> cls)
-	 * @brief an instance of the class "cls", only for BasicBSONObject
-	 * @param cls
-	 *            target class object
+	 * Return an instance of the class "cls", only for BasicBSONObject
+	 * @param cls target class object
 	 * @return the instance of the class
-	 * @throws Exception
+	 * @throws Exception If error happens.
 	 */
 	public /*! @cond x*/ <T> /*! @endcond */ T as(Class<T> cls) throws Exception {
 		return as(cls, null);
 	}
 
 	@SuppressWarnings({ "unchecked" })
-	// @Override
 	public /*! @cond x*/ <T> /*! @endcond */ T as(Class<T> cls, Type eleType) throws Exception {
 		boolean hasConsturctor = false;
 		T result = null;

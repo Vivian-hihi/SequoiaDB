@@ -378,7 +378,7 @@ public class BSONDecimal implements Comparable<BSONDecimal>, Serializable {
      * The suggested idiom for performing these comparisons is:
      * (x.compareTo(y) <<i>op</i>> 0), where <<i>op</i>> is
      * one of the six comparison operators.
-     * @param  val BSONDecimal to which this BSONDecimal is
+     * @param  other BSONDecimal to which this BSONDecimal is
      *         to be compared.
      * @return -1, 0, or 1 as this BSONDecimal is numerically 
      *         less than, equal to, or greater than val.

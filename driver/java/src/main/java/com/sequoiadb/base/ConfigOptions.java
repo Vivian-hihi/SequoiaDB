@@ -92,9 +92,8 @@ public class ConfigOptions {
     }
 
     /**
-     * @return the max auto connect retry time(long)
-     * @fn long getMaxAutoConnectRetryTime()
-     * @brief Get the max auto connect retry time(milliseconds)
+     * Get the max auto connect retry time
+     * @return the max auto connect retry time(milliseconds)
      */
     public long getMaxAutoConnectRetryTime() {
         return maxAutoConnectRetryTime;

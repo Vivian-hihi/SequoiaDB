@@ -480,7 +480,6 @@ public class ReplicaGroup {
      * @param hostName  host name
      * @param port      port
      * @param configure configuration for this operation
-     * @return void
      * @throws BaseException If error happens.
      */
     public void detachNode(String hostName, int port,

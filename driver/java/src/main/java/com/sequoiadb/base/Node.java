@@ -88,7 +88,6 @@ public class Node {
 
     /**
      * Disconnect from current node.
-     * @return void
      * @throws BaseException If error happens.
      */
     public void disconnect() throws BaseException {

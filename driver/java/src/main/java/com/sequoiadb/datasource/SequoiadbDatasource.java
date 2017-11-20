@@ -555,7 +555,6 @@ public class SequoiadbDatasource {
 
     /**
      * Update connection pool options.
-     * @return dsOpt the newly connection pool for update
      * @throws BaseException If error happens.
      * @since 2.2
      */
@@ -695,7 +694,6 @@ public class SequoiadbDatasource {
      * Get a connection from current connection pool.
      * When the pool runs out, a request will wait up to 5 seconds. When time is up, if the pool
      * still has no idle connection, it throws BaseException with the type of "SDB_DRIVER_DS_RUNOUT".
-     * @param timeout the time for waiting for connection in millisecond. 0 for waiting until a connection is available.
      * @return Sequoiadb the connection for using
      * @throws BaseException If error happens.
      * @throws InterruptedException Actually, nothing happen. Throw this for compatibility reason.

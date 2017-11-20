@@ -1659,7 +1659,7 @@ public class Sequoiadb implements Closeable {
      * Create the replica Catalog group with the given options.
      * @param hostName  The host name
      * @param port      The port
-     * @param dbpath    The database path
+     * @param dbPath    The database path
      * @param options The configure options
      * @throws BaseException If error happens.
      */
@@ -1689,7 +1689,7 @@ public class Sequoiadb implements Closeable {
      * Create the replica Catalog group with the given options.
      * @param hostName  The host name
      * @param port      The port
-     * @param dbpath    The database path
+     * @param dbPath    The database path
      * @param configure The configure options
      * @throws BaseException If error happens.
      * @deprecated Use "void createReplicaCataGroup(String hostName, int port, String dbPath,

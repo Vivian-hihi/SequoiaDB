@@ -1911,7 +1911,6 @@ public class DBCollection {
 
     /**
      * Truncate the collection.
-     * @return void
      * @throws BaseException If error happens.
      */
     public void truncate() throws BaseException {
