@@ -221,6 +221,33 @@ public class Commlib {
 		}		
 	}
     
+    /**
+     * Check strict data control mode by update
+     * @param: cl
+     *         operSymbol:      $inc           
+     *         upsertValue: update value,rg:{a:1}
+     */
+    public static void upsertIsStrictDataType(DBCollection cl, BSONObject upsertValue, BSONObject matherValue ){
+		try{
+			BSONObject modifier = new BasicBSONObject();					
+			modifier.put("$inc",upsertValue);		
+			cl.upsert( matherValue, modifier, null);
+			//if there is no error ,then query the data
+			List<BSONObject> actualList= new ArrayList<BSONObject>(); 
+			DBCursor cursor = cl.query(null);
+	        while( cursor.hasNext() ) {
+	            BSONObject object = cursor.getNext();  
+	            actualList.add(object);
+	        } 	             	        
+	        cursor.close();	
+	        Assert.fail("the operation must be error!");
+		}catch(BaseException e){			
+			if( e.getErrorCode() != -318 ){ 
+				Assert.assertTrue(false,"upsert is overflow should be failed,"+e.getErrorCode()+e.getMessage());
+            }			
+		}		
+	}
+    
     public static void multipleFieldOper(DBCollection cl,String selector, String[] expRecords){
 		try{			
 	        long skipRows   = 0;
