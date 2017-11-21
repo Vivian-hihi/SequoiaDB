@@ -50,9 +50,9 @@ class TestUpsert12643(testlib.SdbTestBase):
       sort = {'_id' : 1}
       self.check_upsert_result(expect_result2, condition = matcher2, order_by = sort)					  
 		
-   #def tearDown(self):
-      #if self.should_clean_env():
-         #self.db.drop_collection_space(self.cs_name)
+   def tearDown(self):
+      if self.should_clean_env():
+         self.db.drop_collection_space(self.cs_name)
 
    def insert_datas(self):
       insert_nums = 100
