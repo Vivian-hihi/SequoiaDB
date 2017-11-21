@@ -30,8 +30,9 @@ from pysequoiadb.error import (SDBBaseError,
                                SDBTypeError,
                                SDBSystemError,
                                SDBEndOfCursor,
+                               SDBInvalidArgument,
                                raise_if_error)
-from pysequoiadb.errcode import SDB_OOM
+from pysequoiadb.errcode import (SDB_OOM, SDB_INVALIDARG)
 
 QUERY_FLG_WITH_RETURNDATA = 0x00000080
 QUERY_FLG_PARALLED = 0x00000100
@@ -1088,6 +1089,8 @@ class collection(object):
             str_id = str(oid)
         else:
             str_id = oid
+            if len(oid) != 24:
+                raise SDBInvalidArgument(SDB_INVALIDARG, "invalid oid: '%s'" % oid)
 
         if not isinstance(mode, int):
             raise SDBTypeError("mode must be an instance of int")
@@ -1130,6 +1133,8 @@ class collection(object):
             str_id = str(oid)
         elif isinstance(oid, str):
             str_id = oid
+            if len(oid) != 24:
+                raise SDBInvalidArgument(SDB_INVALIDARG, "invalid oid: '%s'" % oid)
         else:
             raise SDBTypeError("oid must be an instance of str or bson.ObjectId")
 
@@ -1150,6 +1155,8 @@ class collection(object):
             str_id = str(oid)
         elif isinstance(oid, str):
             str_id = oid
+            if len(oid) != 24:
+                raise SDBInvalidArgument(SDB_INVALIDARG, "invalid oid: '%s'" % oid)
         else:
             raise SDBTypeError("oid must be an instance of str or bson.ObjectId")
 
