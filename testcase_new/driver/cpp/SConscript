@@ -131,7 +131,19 @@ testFiles = [
    [ "./monitor/resetSnapshot12664.cpp" ], # sync
    [ "./date/date11754.cpp" ],
    [ "./date/dateTime12219_12220.cpp" ],
-   [ "./numberLong/numberLong7822.cpp" ]
+   [ "./numberLong/numberLong7822.cpp" ],
+   [ "./lob/lobSeekAndWrite13412_13413.cpp" ],
+   [ "./lob/lobWrite13414.cpp" ],
+   [ "./lob/lobLockAndWrite13415.cpp" ],
+   [ "./lob/getLobModTime13416.cpp" ],
+   [ "./lob/multiLockLob13417.cpp" ],
+   [ "./lob/multiLockLob13418.cpp" ],
+   [ "./lob/readWhenWriteLob13419.cpp" ],
+   [ "./lob/lobTruncate13421.cpp" ],
+   [ "./lob/readEmptyPiece13420.cpp" ],
+   [ "./lob/lockParamVerify13422.cpp" ],
+   [ "./lob/lockAndSeekParamVerify13423.cpp" ],
+   [ "./lob/truncateLobParamVerify13424.cpp" ],
 ]
 
 def getFileName( filePath ):
