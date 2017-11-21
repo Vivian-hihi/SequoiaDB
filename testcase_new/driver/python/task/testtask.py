@@ -6,24 +6,37 @@
 """
 
 from lib import testlib
-import unittest
 
 class TestTask12495(testlib.SdbTestBase):
    def setUp(self):
-      l=self.get_data_groups()
-      self.group1_name=l[0]["GroupName"]
-      self.group2_name=l[1]["GroupName"]
-      cl_option = {"ShardingKey": {"a": 1}, "ShardingType": "hash", "Group": self.group1_name}
-      self.create_cs_cl(cl_option=cl_option)
+      if testlib.is_standalone():
+         self.skipTest("skip! This testcase do not support standlone")
+
+      if testlib.get_data_groups().__len__() < 2:
+         self.skipTest("only have signal group")
+
+      l = testlib.get_data_groups()
+      self.g1 = l[0]
+      self.g2 = l[1]
+      self.g1_name = self.g1["GroupName"]
+      self.g2_name = self.g2["GroupName"]
+
+      cl_option = {"ShardingKey": {"a": 1}, "ShardingType": "hash", "Group": self.g1_name}
+      testlib.drop_cs(self.db, self.cs_name, ignore_not_exist=True)
+      self.cs = self.db.create_collection_space(self.cs_name)
+      self.cl = self.cs.create_collection(self.cl_name,cl_option)
 
    def tearDown(self):
       if self.should_clean_env():
-         self.drop_cs()
+         self.db.drop_collection_space(self.cs_name)
 
-   @unittest.skip("find bug SEQUOIADBMAINSTREAM-2804")
    def test_task(self):
       list=[{"a":i} for i in range(10000)]
-      self.cl.split_async_by_percent(self.group1_name,self.group2_name,50.0)
-      self.db.list_task()
-
-
+      self.cl.bulk_insert(0,list)
+      self.cl.split_async_by_percent(self.g1_name,self.g2_name,50.0)
+      cur=self.db.list_tasks()
+      list=testlib.get_all_records(cur)
+      task_id=list[0]["TaskID"]
+      if task_id is not None:
+         self.db.cancel_task(task_id=task_id,is_async=True)
+         self.db.wait_task([task_id],1)

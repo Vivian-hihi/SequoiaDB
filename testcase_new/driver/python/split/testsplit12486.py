@@ -14,7 +14,6 @@ class TestSplit12486(testlib.SdbTestBase):
          self.skipTest("skip! This testcase do not support standlone")
 
       if testlib.get_data_groups().__len__() < 2:
-         print("only have signal group")
          self.skipTest("only have signal group")
 
       l = testlib.get_data_groups()
