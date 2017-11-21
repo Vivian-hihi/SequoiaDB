@@ -7,7 +7,6 @@ def random_str(length=1024):
    r = Random()
    for i in range(length):
       s += r.choice(string.ascii_letters + string.digits)
-
    return s
 
 

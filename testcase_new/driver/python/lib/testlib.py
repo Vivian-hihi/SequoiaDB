@@ -1,6 +1,5 @@
 # -- coding: utf-8 --
 import unittest
-import xmlrunner
 from copy import copy
 from datetime import datetime
 
@@ -91,9 +90,7 @@ class SdbTestBase(unittest.TestCase):
          print("warn: can not judge this testcase success.")
          return True
 
-
 __is_standlone = None
-
 
 def is_standalone():
    if __is_standlone != None:
@@ -112,10 +109,8 @@ def is_standalone():
          if db != None:
             db.disconnect()
 
-
 __groups = []
 __data_groups = []
-
 
 def get_groups():
    if __groups.__len__() > 0:
@@ -131,7 +126,6 @@ def get_groups():
          if db != None:
             db.disconnect()
 
-
 def get_data_groups():
    if __data_groups.__len__() > 0:
       return copy(__data_groups)
@@ -143,7 +137,6 @@ def get_data_groups():
             __data_groups.append(x)
       return copy(__data_groups)
 
-
 def get_data_group_num():
    if __data_groups.__len__() > 0:
       return __data_groups.__len__()
@@ -151,10 +144,8 @@ def get_data_group_num():
       get_data_groups()
       return __data_groups.__len__()
 
-
 def default_db():
    return client(sdbconfig.sdb_config.host_name, sdbconfig.sdb_config.service)
-
 
 def get_all_records(cur):
    """
@@ -170,7 +161,6 @@ def get_all_records(cur):
          break
    cur.close()
    return items
-
 
 def get_all_records_noid(cur):
    items = list()
