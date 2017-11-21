@@ -1160,14 +1160,6 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Create storage objects for storage unit[ %s ] "
                    "failed[ %d ]", _storageInfo._suName, rc ) ;
 
-      rc = _pCacheUnit->init( _pMgr, _pLobSu->getLobData(),
-                              _storageInfo._lobdPageSize ) ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Init cache unit failed, rc: %d", rc ) ;
-         goto error ;
-      }
-
       // open data
       rc = _pDataSu->openStorage( pDataPath, pSyncMgr, createNew ) ;
       if ( rc )
@@ -3153,7 +3145,7 @@ namespace engine
       }
 
       /// alloc cache unit
-      _pCacheUnit = SDB_OSS_NEW utilCacheUnit() ;
+      _pCacheUnit = SDB_OSS_NEW utilCacheUnit( _pMgr ) ;
       if ( !_pCacheUnit )
       {
          rc = SDB_OOM ;
