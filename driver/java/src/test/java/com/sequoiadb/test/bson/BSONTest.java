@@ -36,16 +36,21 @@ public class BSONTest {
     public void BSONHashCodeTest() {
         BSONObject obj1 = new BasicBSONObject().append("a", 1).append("b", new BasicBSONObject("b",1));
         BSONObject obj2 = new BasicBSONObject().append("a", 1).append("b", new BasicBSONObject("b",1));
+        BSONObject obj3 = new BasicBSONObject().append("b", new BasicBSONObject("b",1)).append("a", 1);
         assertEquals(obj1, obj1);
         assertEquals(obj1, obj2);
         assertEquals(obj2, obj1);
+        assertEquals(obj1, obj3);
         assertTrue (obj1.equals(obj1));
         assertTrue (obj1.equals(obj2));
         assertTrue (obj2.equals(obj1));
+        assertTrue (obj1.equals(obj3));
+        assertTrue (obj3.equals(obj1));
         assertEquals(obj1.hashCode(), obj1.hashCode());
         assertEquals(obj1.hashCode(), obj2.hashCode());
         assertEquals(obj2.hashCode(), obj1.hashCode());
-
+        assertEquals(obj1.hashCode(), obj3.hashCode());
+        assertEquals(obj3.hashCode(), obj1.hashCode());
     }
 
     @Test
@@ -55,7 +60,7 @@ public class BSONTest {
         BSONObject obj3 = new BasicBSONObject().append("a", 1).append("b", new BasicBSONObject("b",3));
         BSONObject obj4 = new BasicBSONObject().append("a", 1).append("b", new BasicBSONObject("b",4));
 
-        Map<BSONObject, BSONObject> map = new HashMap<>();
+        Map<BSONObject, BSONObject> map = new HashMap<BSONObject, BSONObject>();
         map.put(obj1, obj1);
         map.put(obj2, obj2);
         map.put(obj3, obj3);
