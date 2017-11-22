@@ -268,6 +268,23 @@ function GeneratePlan( taskID )
       restoreConfig[FIELD_TASKID] = taskID ;
       restoreConfig[FIELD_RESULTINFO] = resultInfo[index] ;
       restoreConfig[FIELD_RESULTINFO][FIELD_PROGRESS] = progressStep ;
+      restoreConfig[FIELD_USER]   = user ;
+      restoreConfig[FIELD_PASSWD] = passwd ;
+      if( nodeConfig[FIELD_ROLE] == FIELD_COORD )
+      {
+         var tmpCoordList = [] ;
+         var tmpCoordInfo = {} ;
+
+         tmpCoordInfo[FIELD_HOSTNAME] = nodeConfig[FIELD_HOSTNAME] ;
+         tmpCoordInfo[FIELD_SVCNAME] = nodeConfig[FIELD_SVCNAME] ;
+         tmpCoordList.push( tmpCoordInfo ) ;
+
+         restoreConfig[FIELD_COORD2] = tmpCoordList ;
+      }
+      else
+      {
+         restoreConfig[FIELD_COORD2] = coordList ;
+      }
       restoreTask.push( restoreConfig ) ;
    }
 
@@ -573,6 +590,8 @@ function StartGroup()
    var svcname     = resultInfo[FIELD_SVCNAME] ;
    var role        = resultInfo[FIELD_ROLE] ;
    var groupName   = resultInfo[FIELD_DATAGROUPNAME] ;
+   var db          = null ;
+   var rg          = null ;
 
    PD_LOGGER.logTask( PDEVENT, sprintf( "Start ?[?:?]",
                                         role, hostName, svcname ) ) ;
@@ -616,18 +635,24 @@ function StartGroup()
    return resultInfo ;
 }
 
-function _restoreNodeByScript( taskID, hostName, svcname )
+function _restoreNodeByScript( coordList, user, passwd,
+                               taskID, hostName, svcname )
 {
    try
    {
+      var db = null ;
       var agentPort = Oma.getAOmaSvcName( hostName ) ;
       var oma = new Oma( hostName, agentPort ) ;
       var config = oma.getNodeConfigs( svcname ) ;
       var configObj = JSON.parse( config ) ;
+
       if( configObj[FIELD_SAC_TASKID] === taskID.toString() )
       {
          delete configObj[FIELD_SAC_TASKID] ;
          oma.setNodeConfigs( svcname, configObj ) ;
+
+         db = _connectCoord( coordList, user, passwd ) ;
+         db.reloadConf( { "HostName": hostName, "svcname": svcname } ) ;
       }
       return true ;
    }
@@ -641,6 +666,9 @@ function RestoreNodeConfig( taskID )
 {
    var rc = SDB_OK ;
    var resultInfo  = BUS_JSON[FIELD_RESULTINFO] ;
+   var coordList   = BUS_JSON[FIELD_COORD2] ;
+   var user        = BUS_JSON[FIELD_USER] ;
+   var passwd      = BUS_JSON[FIELD_PASSWD] ;
    var hostName    = resultInfo[FIELD_HOSTNAME] ;
    var svcname     = resultInfo[FIELD_SVCNAME] ;
 
@@ -650,7 +678,8 @@ function RestoreNodeConfig( taskID )
    PD_LOGGER.logTask( PDEVENT, sprintf( "Restore node config [?:?]",
                                         hostName, svcname ) ) ;
 
-   if( _restoreNodeByScript( taskID, hostName, svcname ) )
+   if( _restoreNodeByScript( coordList, user, passwd,
+                             taskID, hostName, svcname ) )
    {
       PD_LOGGER.logTask( PDEVENT, sprintf( "Finish restore node config [?:?]",
                                             hostName, svcname ) ) ;
