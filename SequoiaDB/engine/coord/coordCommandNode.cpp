@@ -2362,6 +2362,10 @@ namespace engine
          PD_LOG( PDWARNING, "Do remote stop on node[%s:%s] failed in "
                  "command[%s, targe:%s], rc: %d", _pHostName, _pSvcName,
                  getName(), pArgs->_targetName.c_str(), rc ) ;
+         if ( _enforce )
+         {
+            rc = SDB_OK ;
+         }
       }
 
       if ( !_onlyDetach )
