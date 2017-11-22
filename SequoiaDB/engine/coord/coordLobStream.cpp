@@ -41,31 +41,6 @@
 
 using namespace bson ;
 
-#define RTN_COORD_LOB_GET_SUBSTREAM( groupID, s ) \
-        do\
-        {\
-           SUB_STREAMS::iterator itr = _subs.find( groupID ) ;\
-           if ( _subs.end() == itr )\
-           {\
-              rc = _openOtherStreams( getFullName(), getOID(),\
-                                      _getMode(), cb, &groupID ) ;\
-              if ( rc )\
-              {\
-                  PD_LOG( PDERROR, "Open sub stream in group[%d] failed, "\
-                          "rc: %d", groupID, rc ) ; \
-                  goto error ;\
-              }\
-              itr = _subs.find( groupID ) ;\
-              if ( _subs.end() == itr )\
-              {\
-                 PD_LOG( PDERROR, "group:%d is not in sub streams", groupID ) ;\
-                 rc = SDB_SYS ;\
-                 goto error ;\
-              }\
-           }\
-           s = &( itr->second ) ;\
-        } while ( FALSE )
-
 namespace engine
 {
 
@@ -783,7 +758,6 @@ namespace engine
             goto error ;
          }
 
-         //RTN_COORD_LOB_GET_SUBSTREAM( groupID, sub ) ;
          rc = _getSubStream( groupID, &sub, cb ) ;
          if ( SDB_OK != rc )
          {
@@ -1382,7 +1356,6 @@ namespace engine
             goto error ;
          }
 
-         //RTN_COORD_LOB_GET_SUBSTREAM( groupID, sub ) ;
          rc = _getSubStream( groupID, &sub, cb ) ;
          if ( SDB_OK != rc )
          {
@@ -1977,7 +1950,6 @@ namespace engine
             goto error ;
          }
 
-         //RTN_COORD_LOB_GET_SUBSTREAM( groupID, sub ) ;
          rc = _getSubStream( groupID, &sub, cb ) ;
          if ( SDB_OK != rc )
          {
@@ -2029,7 +2001,6 @@ namespace engine
          goto error ;
       }
 
-      //RTN_COORD_LOB_GET_SUBSTREAM( groupID, sub ) ;
       rc = _getSubStream( groupID, &sub, cb ) ;
       if ( SDB_OK != rc )
       {
