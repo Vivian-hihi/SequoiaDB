@@ -24,8 +24,7 @@ class Testdata13486(testlib.SdbTestBase):
       
       # create nodes
       rg = self.db.get_replica_group_by_name(self.group_name)
-      host_name = sdbconfig.sdb_config.host_name
-      
+      host_name = self.db.get_replica_group_by_name("SYSCatalogGroup").get_master().get_hostname()
       
       servic_name1 = str(sdbconfig.sdb_config.rsrv_port_begin)
       data_path1 = sdbconfig.sdb_config.rsrv_node_dir + servic_name1

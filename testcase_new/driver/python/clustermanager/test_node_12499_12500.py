@@ -18,7 +18,7 @@ class TestDataNode12499(testlib.SdbTestBase):
 
    def test_data_node_12499(self):
       # check standalone
-      if testlib.is_standalone() is True:
+      if testlib.is_standalone():
          self.skipTest('run mode is standalone')
       
       # create data rg

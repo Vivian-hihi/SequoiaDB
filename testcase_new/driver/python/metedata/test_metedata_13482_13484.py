@@ -21,7 +21,7 @@ class TestMetedata13482(testlib.SdbTestBase):
       
    def test_metedata_13482(self):
       # check standalone
-      if testlib.is_standalone() is True:
+      if testlib.is_standalone():
          self.skipTest('current environment is standalone')
       
       # get data groups
@@ -125,5 +125,5 @@ class TestMetedata13482(testlib.SdbTestBase):
       try:
          self.db.drop_domain(self.domain_name)
       except SDBBaseError as e:
-         if not e.code == -214:
+         if e.code != -214 and e.code != -159:
             self.fail("drop domain fail when teardown: " + e.detail) 

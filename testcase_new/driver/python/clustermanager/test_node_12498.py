@@ -29,7 +29,7 @@ class TestDataNode12498(testlib.SdbTestBase):
 
    def test_data_node_12498(self):
       # check standalone
-      if testlib.is_standalone() is True:
+      if testlib.is_standalone():
          self.skipTest('run mode is standalone')
       
       # create data rg
@@ -58,6 +58,7 @@ class TestDataNode12498(testlib.SdbTestBase):
       
       rg_master = data_rg.get_master()
       rg_slave = data_rg.get_slave()
+      
       master_data_connect_status = check_data_start_status(rg_master)
       slave_data_connect_status = check_data_start_status(rg_slave)
       self.assertTrue(master_data_connect_status)
@@ -66,9 +67,9 @@ class TestDataNode12498(testlib.SdbTestBase):
       #stop node
       node1.stop()
       node2.stop()
-            
+           
       rg_master = data_rg.get_master()
-      rg_slave = data_rg.get_slave()
+      rg_slave = data_rg.get_slave()      
       master_data_connect_status = check_data_stop_status(rg_master)
       slave_data_connect_status = check_data_stop_status(rg_slave)
       self.assertTrue(master_data_connect_status)

@@ -14,7 +14,7 @@ class TestCatalog12496(testlib.SdbTestBase):
       
    def test_catalog_12496(self):
       # check standalone
-      if testlib.is_standalone() is True:
+      if testlib.is_standalone():
          self.skipTest('run mode is standalone')
       
       # get catalog rg and check is_catalog

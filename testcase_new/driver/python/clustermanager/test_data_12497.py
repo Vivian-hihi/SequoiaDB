@@ -24,7 +24,7 @@ class TestDataRg12497(testlib.SdbTestBase):
       
    def test_data_12497(self):
       # check standalone
-      if testlib.is_standalone() is True:
+      if testlib.is_standalone():
          self.skipTest('run mode is standalone')
       
       # create data rg
@@ -76,7 +76,7 @@ class TestDataRg12497(testlib.SdbTestBase):
       if self.data_rg_name in data_rgs:
          self.fail("remove_rg_fail,data_rgs:" + str(data_rgs))
    
-   #def tearDown(self):
+   def tearDown(self):
       try:
          self.db.remove_replica_group(self.data_rg_name)
          self.db.disconnect()
