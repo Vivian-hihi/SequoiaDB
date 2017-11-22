@@ -10,7 +10,7 @@
 
   （2）将压缩包中的 driver 目录，拷贝到开发工程目录中（建议放在第三方库目录下），并命名为 sdbdriver。
 
-  （3）将 sdbdriver/include 目录加入到编译头目录，并将 sdbdriver/lib 目录加入链接目录。
+  （3）将 sdbdriver/include 目录加入到编译包含目录，并将 sdbdriver/lib 目录加入链接目录。
 
   **动态链接：**
 
