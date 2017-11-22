@@ -74,6 +74,10 @@
 #define REST_STRING_TEXT_BMP      "image/bmp"
 #define REST_STRING_TEXT_JPG      "image/jpeg"
 #define REST_STRING_TEXT_GIF      "image/gif"
+#define REST_STRING_TEXT_SVG      "image/svg+xml"
+#define REST_STRING_TEXT_WOFF     "application/font-woff"
+#define REST_STRING_TEXT_EOT      "application/vnd.ms-fontobject"
+#define REST_STRING_TEXT_OCTET_STREAM  "application/octet-stream"
 #define REST_STRING_CONLEN_SIZE   "0"
 #define REST_STRING_CHUNKED       "chunked"
 
@@ -109,7 +113,7 @@ static const CHAR *responseHeader[] = {
 
 static const CHAR *fileExtension[] = {
       "html",   "js",   "css",   "png",   "bmp",   "jpg",
-      "gif"
+      "gif",    "svg",  "woff",  "eot",   "otf",   "ttf"
 } ;
 
 #define REST_STRING_FILE_EX_SIZE ( sizeof( fileExtension ) \
@@ -1265,6 +1269,19 @@ namespace engine
             break ;
          case HTTP_FILE_GIF:
             pFileType = REST_STRING_TEXT_GIF ;
+            break ;
+         case HTTP_FILE_SVG:
+            pFileType = REST_STRING_TEXT_SVG ;
+            break ;
+         case HTTP_FILE_WOFF:
+            pFileType = REST_STRING_TEXT_WOFF ;
+            break ;
+         case HTTP_FILE_EOT:
+            pFileType = REST_STRING_TEXT_EOT ;
+            break ;
+         case HTTP_FILE_OTF:
+         case HTTP_FILE_TTF:
+            pFileType = REST_STRING_TEXT_OCTET_STREAM ;
             break ;
          case HTTP_FILE_JS:
             pFileType = REST_STRING_TEXT_JS ;
