@@ -238,7 +238,7 @@ namespace engine
             CHAR tmpData[ sizeof( *oidPtr ) + sizeof( sequence ) ] = { 0 } ;
             ossMemcpy( tmpData, ( const CHAR * )( oidPtr->getData()),
                        sizeof( *oidPtr ) ) ;
-            ossMemcpy( tmpData[ sizeof( *oidPtr ) ], ( const CHAR* )sequence,
+            ossMemcpy( &tmpData[ sizeof( *oidPtr ) ], ( const CHAR* )&sequence,
                        sizeof( sequence ) ) ;
             bucketID = pBucket->calcIndex( tmpData, sizeof( tmpData ) ) ;
          }
