@@ -54,6 +54,7 @@
 #include "sdbInterface.hpp"
 #include "dmsIxmKeySorter.hpp"
 #include "utilMap.hpp"
+#include "dmsStorageJob.hpp"
 #include <map>
 #include <set>
 
@@ -196,6 +197,8 @@ namespace engine
 
       dmsIxmKeySorterCreator* _ixmKeySorterCreator ;
 
+      dmsPageMappingDispatcher   _pageMapDispatcher ;
+
    private:
       void  _logCSCBNameMap () ;
 
@@ -295,6 +298,8 @@ namespace engine
                       BOOLEAN sys = FALSE ) ;
 
       void dumpInfo ( INT64 &totalFileSize );
+
+      void dumpPageMapCSInfo( MON_CSNAME_VEC &vecCS ) ;
 
       dmsTempSUMgr *getTempSUMgr () ;
 

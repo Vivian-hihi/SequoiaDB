@@ -559,6 +559,37 @@ namespace engine
    typedef class _monStorageUnit monStorageUnit ;
    typedef std::set<monStorageUnit> MON_SU_LIST ;
 
+   /*
+      _monCSName define
+   */
+   struct _monCSName
+   {
+      CHAR     _csName[ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] ;
+
+      _monCSName( const CHAR *pCSName = NULL )
+      {
+         ossMemset( _csName, 0, sizeof( _csName ) ) ;
+
+         if ( pCSName )
+         {
+            ossStrncpy( _csName, pCSName, DMS_COLLECTION_SPACE_NAME_SZ ) ;
+         }
+      }
+
+      _monCSName( const _monCSName &right )
+      {
+         ossStrcpy( _csName, right._csName ) ;
+      }
+
+      _monCSName& operator= ( const _monCSName &right )
+      {
+         ossStrcpy( _csName, right._csName ) ;
+         return *this ;
+      }
+   } ;
+   typedef _monCSName monCSName ;
+   typedef std::vector< monCSName >          MON_CSNAME_VEC ;
+
 }
 
 #endif //MONDMS_HPP_

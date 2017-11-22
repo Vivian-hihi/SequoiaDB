@@ -40,6 +40,7 @@
 
 #include "dmsStorageBase.hpp"
 #include "dpsLogWrapper.hpp"
+#include "dmsPageMap.hpp"
 
 using namespace bson ;
 
@@ -70,6 +71,9 @@ namespace engine
          ~_dmsStorageIndex () ;
 
          virtual void  syncMemToMmap() ;
+
+         dmsPageMapUnit*   getPageMapUnit() ;
+         dmsPageMap*       getPageMap( UINT16 mbID ) ;
 
       public:
          // reserve a signal page
@@ -217,6 +221,7 @@ namespace engine
 
       private:
          _dmsStorageData         *_pDataSu ;
+         dmsPageMapUnit          _mbPageInfo ;
 
       friend class _dmsIndexBuilder ;
    };

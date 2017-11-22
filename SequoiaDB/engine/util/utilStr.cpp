@@ -192,27 +192,6 @@ namespace engine
       goto done ;
    }
 
-   INT32 utilStrJoin( const CHAR **src,
-                      UINT32 cnt,
-                      CHAR *join,
-                      UINT32 &joinSize )
-   {
-      SDB_ASSERT( NULL != join, "impossible" ) ;
-      INT32 rc = SDB_OK ;
-      UINT32 len = 0 ;
-      for ( UINT32 i = 0; i < cnt; i++ )
-      {
-         if ( NULL != src[i] )
-         {
-            UINT32 sLen = ossStrlen(src[i]) ;
-            ossMemcpy( join + len, src[i], sLen ) ;
-            len += sLen ;
-         }
-      }
-      joinSize = len ;
-      return rc ;
-   }
-
    BOOLEAN utilStrIsDigit( const string& str )
    {
       for ( UINT32 i = 0 ; i < str.size() ; i++ )
@@ -629,6 +608,24 @@ namespace engine
                                             "|[1-9][0-9]|[1-9])" ) ;
       return regex_match( ip, reg ) ;
 
+   }
+
+   BOOLEAN utilIsValidOID( const CHAR * pStr )
+   {
+      if ( NULL == pStr || 24 > ossStrlen( pStr ) )
+      {
+         return FALSE ;
+      }
+      for ( UINT32 i = 0; i < 24; ++i )
+      {
+         if ( ! ( ( pStr[i] >= '0' && pStr[i] <= '9' ) ||
+                  ( pStr[i] >= 'a' && pStr[i] <= 'f' ) ||
+                  ( pStr[i] >= 'A' && pStr[i] <= 'F' ) ) )
+         {
+            return FALSE ;
+         }
+      }
+      return TRUE ;
    }
 
    string utilTimeSpanStr( UINT64 seconds )

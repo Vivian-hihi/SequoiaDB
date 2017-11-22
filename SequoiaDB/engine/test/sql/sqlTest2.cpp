@@ -182,70 +182,75 @@ TEST(sqlTest, parse_1)
       const CHAR *sql = NULL ;
       utilStrTrim( line, sql ) ;
       SQL_AST &ast = container.ast() ;
-      ast = ast_parse( sql, grammar ) ;
+      ast = SQL_PARSE( sql, grammar ) ;
       _qgmPlan *plan = NULL ;
+
       cout << "match:"<< ast.match << " full:" << ast.full << endl ;
-      if ( ast.match )
+
+      if ( ast.match && ast.full )
+      {
+         sqlDumpAst( ast.trees ) ;
+         cout << endl ;
+         rc = builder.build( ast.trees, qgm ) ;
+         if ( SDB_OK == rc )
          {
-            sqlDumpAst( ast.trees ) ;
-            cout << endl ;
-            rc = builder.build( ast.trees, qgm ) ;
+            qgm->dump() ;
+            cout << "**************" << endl ;
+
+            qgmOptiTreeNode *e = NULL ;
+            rc = qgm->extend( e ) ;
+            if ( SDB_OK != rc )
+            {
+               cout << "rc = " << rc << endl ;
+               break ;
+            }
+            else
+            {
+               cout << "After extent, tree dump:" << endl ;
+               e->dump() ;
+               qgm = e ;
+            }
+
+            // optimizer
+            qgmOptTree tree( qgm ) ;
+            optQgmOptimizer optimizer ;
+            rc = optimizer.adjust( tree ) ;
+            if ( SDB_OK != rc )
+            {
+               cout << "opt failed, rc = " << rc << endl ;
+               break ;
+            }
+            else
+            {
+               cout << "After optimizer, tree dump:" << endl ;
+               qgm = tree.getRoot() ;
+               qgm->dump() ;
+            }
+
+            rc = builder.build( tree.getRoot(), plan ) ;
             if ( SDB_OK == rc )
             {
-               qgm->dump() ;
-               cout << "**************" << endl ;
-
-               qgmOptiTreeNode *e = NULL ;
-               rc = qgm->extend( e ) ;
-               if ( SDB_OK != rc )
-               {
-                  cout << "rc = " << rc << endl ;
-                  break ;
-               }
-               else
-               {
-                  cout << "After extent, tree dump:" << endl ;
-                  e->dump() ;
-                  qgm = e ;
-               }
-
-               // optimizer
-               qgmOptTree tree( qgm ) ;
-               optQgmOptimizer optimizer ;
-               rc = optimizer.adjust( tree ) ;
-               if ( SDB_OK != rc )
-               {
-                  cout << "opt failed, rc = " << rc << endl ;
-                  break ;
-               }
-               else
-               {
-                  cout << "After optimizer, tree dump:" << endl ;
-                  qgm = tree.getRoot() ;
-                  qgm->dump() ;
-               }
-
-               rc = builder.build( tree.getRoot(), plan ) ;
+               cout << endl << "plan tree:" << endl ;
+               container.plan() = plan ;
+               rc = qgmDump( &container, dumpBuf, 1024*1024*10) ;
                if ( SDB_OK == rc )
-               {
-                  cout << endl << "plan tree:" << endl ;
-                  container.plan() = plan ;
-                  rc = qgmDump( &container, dumpBuf, 1024*1024*10) ;
-                  if ( SDB_OK == rc )
-                  cout << dumpBuf << endl ;
-               }
-               else
-               {
-                  cout << "rc:" << rc << endl ;
-                  break ;
-               }
-
-               SDB_OSS_DEL qgm ;
-               qgm = NULL ;
+               cout << dumpBuf << endl ;
             }
+            else
+            {
+               cout << "rc:" << rc << endl ;
+               break ;
+            }
+
+            SDB_OSS_DEL qgm ;
+            qgm = NULL ;
          }
+      }
       else
-         cout << ast.stop << endl ;
+      {
+         cout << sql << endl ;
+         cout << string( ast.stop - sql, ' ' ) << '^' << endl ;
+      }
    }
 
 done:
