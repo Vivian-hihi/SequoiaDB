@@ -8588,6 +8588,26 @@ static JSClass objectid_class = {
    JSCLASS_NO_OPTIONAL_MEMBERS   // optional members
 } ;
 
+BOOLEAN isValidOIDHex( const CHAR *hex )
+{
+   if ( 24 != ossStrlen( hex ) )
+   {
+      return FALSE ;
+   }
+
+   for ( UINT32 i = 0; i < 24; ++i )
+   {
+      if ( ! ( ( hex[i] >= '0' && hex[i] <= '9' ) ||
+               ( hex[i] >= 'a' && hex[i] <= 'f' ) ||
+               ( hex[i] >= 'A' && hex[i] <= 'F' ) ) )
+      {
+         return FALSE ;
+      }
+   }
+
+   return TRUE ;
+}
+
 // PD_TRACE_DECLARE_FUNCTION ( SDB_OBJECTID_CONSTRUCTOR, "objectid_constructor" )
 static JSBool objectid_constructor( JSContext *cx, uintN argc, jsval *vp )
 {
@@ -8617,7 +8637,7 @@ static JSBool objectid_constructor( JSContext *cx, uintN argc, jsval *vp )
    {
       hexStr = ( CHAR * )JS_EncodeString( cx, jsHexStr ) ;
       VERIFY( hexStr ) ;
-      if ( !engine::utilIsValidOID( hexStr ) )
+      if ( !isValidOIDHex( hexStr ) )
       {
          REPORT_RC( FALSE, "ObjectId(): wrong arguments", SDB_INVALIDARG ) ;
       }
