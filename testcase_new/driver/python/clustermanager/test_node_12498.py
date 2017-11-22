@@ -20,8 +20,7 @@ import unittest
 from lib import testlib
 from lib import sdbconfig
 from commlib import *
-import time
-
+from pysequoiadb.error import SDBBaseError
 
 class TestDataNode12498(testlib.SdbTestBase):
    def setUp(self):
@@ -68,8 +67,6 @@ class TestDataNode12498(testlib.SdbTestBase):
       node1.stop()
       node2.stop()
            
-      rg_master = data_rg.get_master()
-      rg_slave = data_rg.get_slave()      
       master_data_connect_status = check_data_stop_status(rg_master)
       slave_data_connect_status = check_data_stop_status(rg_slave)
       self.assertTrue(master_data_connect_status)

@@ -8,8 +8,7 @@ import unittest
 from lib import testlib
 from lib import sdbconfig
 from commlib import *
-import time
-
+from pysequoiadb.error import SDBBaseError
 
 class TestDataNode12499(testlib.SdbTestBase):
    def setUp(self):
@@ -52,8 +51,8 @@ class TestDataNode12499(testlib.SdbTestBase):
       self.assertTrue(slave_data_connect_status)
       
       #create cs cl
-      cs = self.db.create_collection_space("cs_12499")
-      cl = cs.create_collection("cl_12499", {"Group":self.data_rg_name})
+      cs = self.db.create_collection_space(self.cs_name)
+      cl = cs.create_collection(self.cl_name, {"Group":self.data_rg_name})
       
       # detach node
       data_rg_slave_service = data_rg.get_slave().get_servicename()
@@ -62,13 +61,12 @@ class TestDataNode12499(testlib.SdbTestBase):
       # attach node with config
       spare_rg.attach_node(data_hostname, data_rg_slave_service, {"KeepData": True})
       spare_rg.start()
-      
-      check_rg_master( spare_rg )
-      
+            
       # check data
+      cl_full_name = self.cl_name_qualified
       spare_data = client(data_hostname, data_rg_slave_service)
-      get_full_name = spare_data.get_collection("cs_12499" + "." + "cl_12499").get_full_name()
-      self.assertEqual(get_full_name, "cs_12499" + "." + "cl_12499")
+      get_full_name = spare_data.get_collection(cl_full_name).get_full_name()
+      self.assertEqual(get_full_name, cl_full_name)
       
       # detach node no config
       spare_rg.detach_node(data_hostname, data_rg_slave_service)
@@ -77,23 +75,22 @@ class TestDataNode12499(testlib.SdbTestBase):
       data_rg.attach_node(data_hostname, data_rg_slave_service)
       data = client(data_hostname, data_rg_slave_service)
       try:
-         get_full_name = data.get_collection("cs_12499" + "." + "cl_12499")
+         get_full_name = data.get_collection(cl_full_name)
       except SDBBaseError as e:
          if(-34 != e.code):
             print(e.detail)
             self.fail("check_data_fail")
             
       #dropcs from catalog
-      self.db.drop_collection_space("cs_12499")
+      self.db.drop_collection_space(self.cs_name)
       
       # remove node
       self.db.remove_replica_group(self.data_rg_name)
       self.db.remove_replica_group("SYSSpare")
    
    def tearDown(self):
-      msg = 'tear_down_fail'
-      self.remove_rg(self.data_rg_name, msg)
-      self.remove_rg('SYSSpare', msg)
+      self.remove_rg(self.data_rg_name, 'tear_down_fail')
+      self.remove_rg('SYSSpare', 'tear_down_fail')
       self.db.disconnect()
       
    def remove_rg(self, rg, msg):

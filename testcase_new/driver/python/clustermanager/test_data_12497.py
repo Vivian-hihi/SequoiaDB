@@ -14,12 +14,10 @@ import unittest
 from lib import testlib
 from lib import sdbconfig
 from commlib import *
-import time
-
+from pysequoiadb.error import SDBBaseError
 
 class TestDataRg12497(testlib.SdbTestBase):
    def setUp(self):
-      testlib.drop_cs(self.db, self.cs_name, ignore_not_exist=True)
       self.data_rg_name = "data12497"
       
    def test_data_12497(self):
@@ -61,8 +59,7 @@ class TestDataRg12497(testlib.SdbTestBase):
       data_id = group_detail["GroupID"]
       data_rg = self.db.get_replica_group_by_id(data_id)
       data_rg.stop()
-      rg_master = data_rg.get_master()
-      rg_slave = data_rg.get_slave()
+      
       master_data_connect_status = check_data_stop_status(rg_master)
       slave_data_connect_status = check_data_stop_status(rg_slave)
       self.assertTrue(master_data_connect_status)

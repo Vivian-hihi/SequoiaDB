@@ -106,7 +106,7 @@ class TestMetedata13482(testlib.SdbTestBase):
          try:
             rec = cur.next()
             act_result.append(rec['Name'])
-         except BaseException as e:
+         except SDBBaseError as e:
             break
       cur.close()
       for x in expect_result:
@@ -115,6 +115,6 @@ class TestMetedata13482(testlib.SdbTestBase):
    def drop_domain(self, domain_name, msg):
       try:
          self.db.drop_domain(domain_name)
-      except BaseException as e:
+      except SDBBaseError as e:
          if e.code != -214 and e.code != -159:
             self.fail(msg + e.detail)    

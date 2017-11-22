@@ -7,7 +7,6 @@
 import unittest
 from lib import testlib
 from lib import sdbconfig
-from pysequoiadb import client
 
 class TestCatalog12496(testlib.SdbTestBase):
    def setUp(self):
