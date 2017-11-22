@@ -1,6 +1,7 @@
 # @decription: catalog
 # @testlink:   seqDB-12496
 # @interface:  is_catalog
+#              get_cata_replica_group(self)
 # @author:     zhaoyu 2017-9-8
 
 import unittest
@@ -18,7 +19,7 @@ class TestCatalog12496(testlib.SdbTestBase):
          self.skipTest('run mode is standalone')
       
       # get catalog rg and check is_catalog
-      catalog_rg = self.db.get_replica_group_by_name("SYSCatalogGroup")
+      catalog_rg = self.db.get_cata_replica_group()
       is_catalog = catalog_rg.is_catalog()
       self.assertTrue(is_catalog)
    
