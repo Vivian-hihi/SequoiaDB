@@ -99,6 +99,10 @@ if( $param['m'] == "doc" || $param['m'] == "chm" || $param['m'] == "offline" || 
    //1. Éú³Édoxygen
    foreach( $doxygen_files as $index => $file )
    {
+      if ( $file == "config/doxygen/doxygen-java.conf" )
+      {
+          continue ;
+      }
       printLog( "Generate doxygen file: $root/$file\n", "Event" ) ;
       if( execCmd( "doxygen $root/$file" ) != 0 )
       {
@@ -106,7 +110,29 @@ if( $param['m'] == "doc" || $param['m'] == "chm" || $param['m'] == "offline" || 
          exit( 1 ) ;
       }
    }
-   
+
+   printLog( "Generate java driver apidocs\n", "Event" ) ;
+
+   if( execCmd( "mvn -f $root/../driver/java/pom.xml versions:set -DnewVersion=$major.$minor" ) != 0 )
+   {
+      printLog( "Failed to exec \"mvn -f $root/../driver/java/pom.xml versions:set -DnewVersion=$major.$minor\"" ) ;
+      exit( 1 ) ;
+   }
+
+   if( execCmd( "mvn -f $root/../driver/java/pom.xml clean javadoc:javadoc" ) != 0 )
+   {
+      printLog( "Failed to exec \"mvn -f $root/../driver/java/pom.xml clean javadoc:javadoc\"" ) ;
+      exit( 1 ) ;
+   }
+
+   if( execCmd( "mvn -f $root/../driver/java/pom.xml versions:revert" ) != 0 )
+   {
+      printLog( "Failed to exec \"mvn -f $root/../driver/java/pom.xml versions:revert\"" ) ;
+      exit( 1 ) ;
+   }
+
+   copyDir( "$root/../driver/java/target/site/apidocs", "$root/build/output/api/java/html") ;
+
    if( $param['m'] == "offline" )
    {
       if( formatApiDoc( "$root/build/output/api" ) === false )
