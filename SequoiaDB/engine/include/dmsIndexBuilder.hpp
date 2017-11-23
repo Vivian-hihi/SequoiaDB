@@ -95,7 +95,8 @@ namespace engine
                                                _dmsMBContext* mbContext,
                                                _pmdEDUCB* eduCB,
                                                dmsExtentID indexExtentID,
-                                               INT32 sortBufferSize ) ;
+                                               INT32 sortBufferSize,
+                                               UINT16 indexType ) ;
       static void releaseInstance( _dmsIndexBuilder* builder ) ;
    } ;
    typedef class _dmsIndexBuilder dmsIndexBuilder ;

@@ -557,7 +557,8 @@ namespace engine
       UINT32 logRecSize            = 0;
       SDB_DPSCB *dropDps           = NULL ;
       INT32 rc1                    = 0 ;
-      const CHAR *indexName = NULL ;
+      const CHAR *indexName        = NULL ;
+      UINT16 indexType             = 0 ;
 
       if ( !ixmIndexCB::validateKey ( index, isSys ) )
       {
@@ -637,7 +638,6 @@ namespace engine
 
       {
          // initialize index control block, set flag to invalid
-         BOOLEAN textIdx = FALSE ;
          ixmIndexCB indexCB ( extentID, index, context->mbID(), this,
                               context ) ;
          // verify the index control block is initialized
@@ -654,8 +654,7 @@ namespace engine
          indexLID = context->mb()->_indexHWCount ;
          indexCB.setLogicalID( indexLID ) ;
          indexDef = indexCB.getDef().getOwned() ;
-         textIdx = IXM_EXTENT_HAS_TYPE( IXM_EXTENT_TYPE_TEXT,
-                                        indexCB.getIndexType() ) ;
+         indexType = indexCB.getIndexType() ;
 
          // calc the reserve size
          if ( dpscb )
@@ -692,7 +691,7 @@ namespace engine
             context->mbStat()->_uniqueIdxNum++ ;
          }
 
-         if ( textIdx )
+         if ( IXM_EXTENT_HAS_TYPE( IXM_EXTENT_TYPE_TEXT, indexType ) )
          {
             context->mbStat()->_textIdxNum++ ;
          }
@@ -728,7 +727,7 @@ namespace engine
       flushPages( rootExtentID, 1, isSyncDeep() ) ;
 
       // now we finished allocation part, let's get into build part
-      rc = _rebuildIndex( context, extentID, cb, sortBufferSize ) ;
+      rc = _rebuildIndex( context, extentID, cb, sortBufferSize, indexType ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Failed to build index[%s], rc = %d",
@@ -1163,7 +1162,8 @@ namespace engine
    INT32 _dmsStorageIndex::_rebuildIndex( dmsMBContext *context,
                                           dmsExtentID indexExtentID,
                                           pmdEDUCB * cb,
-                                          INT32 sortBufferSize )
+                                          INT32 sortBufferSize,
+                                          UINT16 indexType )
    {
       INT32 rc = SDB_OK ;
       dmsIndexBuilder* builder = NULL ;
@@ -1183,7 +1183,8 @@ namespace engine
       builder = dmsIndexBuilder::createInstance( this, _pDataSu,
                                                  context, cb,
                                                  indexExtentID,
-                                                 sortBufferSize ) ;
+                                                 sortBufferSize,
+                                                 indexType ) ;
       if ( NULL == builder )
       {
          PD_LOG ( PDERROR, "Failed to get index builder instance, sort buffer size: %d",
@@ -1239,8 +1240,14 @@ namespace engine
       {
          PD_LOG ( PDEVENT, "Rebuilding index %d for collection %d",
                   indexID, context->mbID() ) ;
+         ixmIndexCB indexCB( context->mb()->_indexExtent[indexID], this,
+                             context ) ;
+         PD_CHECK( indexCB.isInitialized(), SDB_DMS_INIT_INDEX, error, PDERROR,
+                   "Failed to initialize index, index extent id: %d ",
+                   context->mb()->_indexExtent[indexID] ) ;
+
          rc = _rebuildIndex ( context, context->mb()->_indexExtent[indexID],
-                              cb, sortBufferSize ) ;
+                              cb, sortBufferSize, indexCB.getIndexType() ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Failed to rebuild index %d, rc: %d", indexID,

@@ -393,10 +393,10 @@ namespace engine
                                                        _dmsStorageData* dataSU,
                                                        _dmsMBContext* mbContext,
                                                        _pmdEDUCB* eduCB,
-                                                       dmsExtentID indexExtentID, 
-                                                       INT32 sortBufferSize )
+                                                       dmsExtentID indexExtentID,
+                                                       INT32 sortBufferSize,
+                                                       UINT16 indexType )
    {
-      UINT16 idxType = IXM_EXTENT_TYPE_NONE ;
       _dmsIndexBuilder* builder = NULL ;
 
       SDB_ASSERT( indexSU != NULL, "indexSU can't be NULL" ) ;
@@ -404,9 +404,7 @@ namespace engine
       SDB_ASSERT( mbContext != NULL, "mbContext can't be NULL" ) ;
       SDB_ASSERT( eduCB != NULL, "eduCB can't be NULL" ) ;
 
-      ixmIndexCB indexCB( indexExtentID, indexSU, mbContext ) ;
-      idxType = indexCB.getIndexType() ;
-      if ( IXM_EXTENT_HAS_TYPE( IXM_EXTENT_TYPE_TEXT, idxType ) )
+      if ( IXM_EXTENT_HAS_TYPE( IXM_EXTENT_TYPE_TEXT, indexType ) )
       {
          builder = SDB_OSS_NEW _dmsIndexExtBuilder( indexSU,
                                                     dataSU,
