@@ -10,43 +10,36 @@ import java.util.Date;
  * Created by laojingtang on 17-11-23.
  */
 public class TimePrinterListener extends TestListenerAdapter {
-    //the package use this listener
-    // if you want some package use this listener,you should add the package name to packageArray.
+    // if you want some package use this listener,
+    // you should add the package name to packageArray.
     private String[] packageArray = {"com.sequoiadb.lob.randomwrite"};
 
     @Override
-    public void onTestStart(ITestResult result) {
-        super.onTestStart(result);
-        if (isPrint(result))
-            printBeginTime(result);
+    public void onConfigurationSuccess(ITestResult itr) {
+        super.onConfigurationSuccess(itr);
+        if (itr.getMethod().isAfterClassConfiguration() && isPrint(itr))
+            printEndTime(itr);
     }
 
     @Override
-    public void onTestFailure(ITestResult tr) {
-        super.onTestFailure(tr);
-        if (isPrint(tr))
-            printEndTime(tr);
+    public void onConfigurationFailure(ITestResult itr) {
+        super.onConfigurationFailure(itr);
+        if (itr.getMethod().isAfterClassConfiguration() && isPrint(itr))
+            printEndTime(itr);
     }
 
     @Override
-    public void onTestSkipped(ITestResult tr) {
-        super.onTestSkipped(tr);
-        if (isPrint(tr))
-            printEndTime(tr);
+    public void onConfigurationSkip(ITestResult itr) {
+        super.onConfigurationSkip(itr);
+        if (itr.getMethod().isAfterClassConfiguration() && isPrint(itr))
+            printEndTime(itr);
     }
 
     @Override
-    public void onTestSuccess(ITestResult tr) {
-        super.onTestSuccess(tr);
-        if (isPrint(tr))
-            printEndTime(tr);
-    }
-
-    @Override
-    public void onTestFailedButWithinSuccessPercentage(ITestResult tr) {
-        super.onTestFailedButWithinSuccessPercentage(tr);
-        if (isPrint(tr))
-            printEndTime(tr);
+    public void beforeConfiguration(ITestResult tr) {
+        super.beforeConfiguration(tr);
+        if (tr.getMethod().isBeforeClassConfiguration() && isPrint(tr))
+            printBeginTime(tr);
     }
 
     private void printBeginTime(ITestResult tr) {
