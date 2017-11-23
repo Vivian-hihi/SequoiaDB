@@ -17,7 +17,7 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.crud.compress.snappy.Commlib;
+import com.sequoiadb.crud.compress.snappy.SnappyUilts;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
 
@@ -44,7 +44,7 @@ public class TestLzw6647 extends SdbTestBase {
         }catch(BaseException e){
             Assert.fail(e.getMessage());
         }
-        if (Commlib.isStandAlone(sdb)){
+        if (SnappyUilts.isStandAlone(sdb)){
             throw new SkipException("is standalone skip testcase");
         }
         DBCollection cl = createCL();

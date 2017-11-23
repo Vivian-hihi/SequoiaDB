@@ -42,12 +42,12 @@ public class TestSnappy6633 extends SdbTestBase {
         }catch(BaseException e){
             Assert.fail(e.getMessage());
         }
-        if (Commlib.isStandAlone(sdb)){
+        if (SnappyUilts.isStandAlone(sdb)){
             throw new SkipException("is standalone skip testcase");
         }
         try{
             DBCollection cl = createCL();
-            Commlib.insertData(cl, 1000);
+            SnappyUilts.insertData(cl, 1000);
         }catch(BaseException e){
             Assert.fail(e.getMessage());
         }
@@ -89,7 +89,7 @@ public class TestSnappy6633 extends SdbTestBase {
             
             // check result
             checkUpserted(cl);
-            Commlib.checkCompressed(cl, dataGroupName);
+            SnappyUilts.checkCompressed(cl, dataGroupName);
         }catch(BaseException e){
             e.printStackTrace();
             Assert.fail(e.getMessage());
@@ -106,7 +106,7 @@ public class TestSnappy6633 extends SdbTestBase {
         CollectionSpace cs = sdb.getCollectionSpace(csName);
         BSONObject option = new BasicBSONObject();
         try{
-            dataGroupName = ((ArrayList<String>)Commlib.getDataGroups(sdb)).get(0);
+            dataGroupName = ((ArrayList<String>)SnappyUilts.getDataGroups(sdb)).get(0);
             option.put("Group", dataGroupName);
             option.put("Compressed", true);
             option.put("CompressionType", "snappy");

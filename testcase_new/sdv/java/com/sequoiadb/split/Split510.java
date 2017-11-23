@@ -57,7 +57,7 @@ public class Split510 extends SdbTestBase {
 			CollectionSpace commCS = commSdb.getCollectionSpace(csName);
 			commCS.createCollection(clName,
 					(BSONObject) JSON.parse("{ShardingKey:{\"a\":1},ShardingType:\"range\"}"));
-			ArrayList<String> tmp = Utils.getGroupName(commSdb, csName, clName);
+			ArrayList<String> tmp = SplitUtils.getGroupName(commSdb, csName, clName);
 			srcGroupName = tmp.get(0);
 			destGroupName = tmp.get(1);
 
@@ -66,7 +66,7 @@ public class Split510 extends SdbTestBase {
 			if (commSdb != null) {
 				commSdb.disconnect();
 			}
-			Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
+			Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage()+"\r\n"+SplitUtils.getKeyStack(e,this));
 		}
 	}
 
@@ -89,7 +89,7 @@ public class Split510 extends SdbTestBase {
 			long count1 = destGroupCl.getCount("{a:{$lt:0,$gte:400}}");
 			Assert.assertEquals(count1, 0);// 目标组应当不含有含有上述范围数据
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
+			Assert.fail(e.getMessage()+"\r\n"+SplitUtils.getKeyStack(e,this));
 		} finally {
 			if (sdb != null)
 				sdb.disconnect();
@@ -102,7 +102,7 @@ public class Split510 extends SdbTestBase {
 			CollectionSpace commCS = commSdb.getCollectionSpace(csName);
 			commCS.dropCollection(clName);
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
+			Assert.fail(e.getMessage()+"\r\n"+SplitUtils.getKeyStack(e,this));
 		} finally {
 			if (commSdb != null) {
 				commSdb.disconnect();
@@ -125,7 +125,7 @@ public class Split510 extends SdbTestBase {
 			for (int i = 0; i < 1000; i++) {
 				arr.add((BSONObject) JSON.parse("{a:" + i + "}"));
 			}
-			cl.bulkInsert(arr, Utils.FLG_INSERT_CONTONDUP);
+			cl.bulkInsert(arr, SplitUtils.FLG_INSERT_CONTONDUP);
 		} catch (BaseException e) {
 			throw e;
 		}

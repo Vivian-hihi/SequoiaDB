@@ -42,15 +42,15 @@ public class TestSnappy6639 extends SdbTestBase {
         }catch(BaseException e){            
             Assert.assertTrue(false,"connect failed,"+SdbTestBase.coordUrl+e.getMessage());
         }
-        if (Commlib.isStandAlone(sdb)){
+        if (SnappyUilts.isStandAlone(sdb)){
             throw new SkipException("is standalone skip testcase");
         }
-        if (Commlib.OneGroupMode(sdb)){
+        if (SnappyUilts.OneGroupMode(sdb)){
             throw new SkipException("less two groups skip testcase");
         }
         try{
             DBCollection cl = createCL();
-            Commlib.insertData(cl, recsSum);
+            SnappyUilts.insertData(cl, recsSum);
         }catch(BaseException e){
             Assert.fail(e.getMessage());
         }
@@ -86,13 +86,13 @@ public class TestSnappy6639 extends SdbTestBase {
             cl.split(srcGroup, dstGroup, startCondition, endCondition);
             
             // check source group
-            Sequoiadb srcDataDB = Commlib.getDataDB(db, srcGroup);
-            Commlib.checkCompression(srcDataDB, clName);
+            Sequoiadb srcDataDB = SnappyUilts.getDataDB(db, srcGroup);
+            SnappyUilts.checkCompression(srcDataDB, clName);
             checkSplit(srcDataDB);
             
             // check destination group
-            Sequoiadb dstDataDB = Commlib.getDataDB(db, srcGroup);
-            Commlib.checkCompression(dstDataDB, clName);
+            Sequoiadb dstDataDB = SnappyUilts.getDataDB(db, srcGroup);
+            SnappyUilts.checkCompression(dstDataDB, clName);
             checkSplit(dstDataDB);
         }catch(BaseException e){
             e.printStackTrace();
@@ -113,8 +113,8 @@ public class TestSnappy6639 extends SdbTestBase {
             option.put("ShardingType", "hash");
             option.put("Compressed", true);
             option.put("CompressionType", "snappy");
-            srcGroup = Commlib.getDataGroups(sdb).get(0);
-            dstGroup = Commlib.getDataGroups(sdb).get(1);
+            srcGroup = SnappyUilts.getDataGroups(sdb).get(0);
+            dstGroup = SnappyUilts.getDataGroups(sdb).get(1);
             option.put("Group", srcGroup);
             cl = cs.createCollection(clName, option);
         }catch(BaseException e){

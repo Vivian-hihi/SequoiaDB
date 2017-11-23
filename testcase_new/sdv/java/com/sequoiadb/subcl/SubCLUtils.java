@@ -11,7 +11,7 @@ import com.sequoiadb.base.ReplicaGroup;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 
-public class Commlib {
+public class SubCLUtils {
 	public static ArrayList<String> groupList;
 	
     public static boolean isStandAlone(Sequoiadb sdb){

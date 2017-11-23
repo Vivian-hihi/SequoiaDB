@@ -50,7 +50,7 @@ public class Split536 extends SdbTestBase {
 			this.currentCL = commCS.createCollection(clName,
 					(BSONObject) JSON.parse("{ShardingKey:{\"a\":1}}"));
 		} catch (BaseException e) {
-			Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
+			Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage()+"\r\n"+SplitUtils.getKeyStack(e,this));
 		}
 	}
 
@@ -73,7 +73,7 @@ public class Split536 extends SdbTestBase {
 			// 切分
 			cl.split(srcGroupName, destGroupName, (BSONObject) JSON.parse("{a:1}"), (BSONObject) JSON.parse("{a:5}"));
 		} catch (BaseException e) {
-			Assert.assertEquals(e.getErrorCode(), -154, e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
+			Assert.assertEquals(e.getErrorCode(), -154, e.getMessage()+"\r\n"+SplitUtils.getKeyStack(e,this));
 			return;
 		} finally {
 			if (dbc != null) {
@@ -92,7 +92,7 @@ public class Split536 extends SdbTestBase {
 					commCS.dropCollection(clName);
 			}
 		} catch (BaseException e) {
-			Assert.fail("messqge:" + e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
+			Assert.fail("messqge:" + e.getMessage()+"\r\n"+SplitUtils.getKeyStack(e,this));
 		}
 		if (sdb != null) {
 			sdb.disconnect();

@@ -45,11 +45,11 @@ public class TestSeqDB6971 extends SdbTestBase {
             this.sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
              
             // 跳过 standAlone 和数据组不足的环境
-            Util util = new Util();
+            LzwUilts1 util = new LzwUilts1();
             if (util.isStandAlone(this.sdb)) {
                 throw new SkipException("skip StandAlone");
             }
-            if (Util.getDataRgNames(this.sdb).size() < 2) {
+            if (LzwUilts1.getDataRgNames(this.sdb).size() < 2) {
                 throw new SkipException("current environment less than tow groups ");
             }
             this.cs = this.sdb.getCollectionSpace(SdbTestBase.csName);
@@ -69,7 +69,7 @@ public class TestSeqDB6971 extends SdbTestBase {
             createCL();
             this.cl.alterCollection((BSONObject)JSON.parse("{ShardingKey:{age:1},ShardingType:\"range\"}"));
             //插入数据
-            Util util = new Util();
+            LzwUilts1 util = new LzwUilts1();
             util.insertData(this.cl, 0, 99, 1024 * 1024);
             util.insertData(this.cl, 99, 109, 1024 * 1024);
             BSONObject bObject = getSnapshotDetail();
@@ -117,8 +117,8 @@ public class TestSeqDB6971 extends SdbTestBase {
         Sequoiadb dataDb = null;
         try {
             //连接源组data验证数据
-            List<String> rgNames = Util.getDataRgNames( this.sdb );
-            String url = Util.getGroupIPByGroupName(this.sdb, rgNames.get(1));
+            List<String> rgNames = LzwUilts1.getDataRgNames( this.sdb );
+            String url = LzwUilts1.getGroupIPByGroupName(this.sdb, rgNames.get(1));
             dataDb = new Sequoiadb(url, "", "");
             CollectionSpace cs = dataDb.getCollectionSpace(SdbTestBase.csName);
             DBCollection dbcl = cs.getCollection(this.clName);
@@ -137,8 +137,8 @@ public class TestSeqDB6971 extends SdbTestBase {
         Sequoiadb dataDb = null;
         try {
             //连接源组data验证数据
-            List<String> rgNames = Util.getDataRgNames( this.sdb );
-            String url = Util.getGroupIPByGroupName(this.sdb, rgNames.get(0));
+            List<String> rgNames = LzwUilts1.getDataRgNames( this.sdb );
+            String url = LzwUilts1.getGroupIPByGroupName(this.sdb, rgNames.get(0));
             dataDb = new Sequoiadb(url, "", "");
             CollectionSpace cs = dataDb.getCollectionSpace(SdbTestBase.csName);
             DBCollection dbcl = cs.getCollection(this.clName);
@@ -176,12 +176,12 @@ public class TestSeqDB6971 extends SdbTestBase {
 
     public void createCL(){
         try{
-            List<String> rgNames = Util.getDataRgNames( this.sdb );
+            List<String> rgNames = LzwUilts1.getDataRgNames( this.sdb );
             BSONObject option = new BasicBSONObject();
             option.put("Group", rgNames.get(0));
             option.put("Compressed", true);
             option.put("CompressionType", "lzw");
-            this.cl = Util.createCL(this.cs, this.clName, option);
+            this.cl = LzwUilts1.createCL(this.cs, this.clName, option);
         }catch(BaseException e){
             Assert.fail(e.getMessage());
         }
@@ -192,8 +192,8 @@ public class TestSeqDB6971 extends SdbTestBase {
         Sequoiadb dataDB = null;
         try {
             detail = new BasicBSONObject();
-            List<String> rgNames = Util.getDataRgNames( this.sdb );
-            String url = Util.getGroupIPByGroupName(this.sdb, rgNames.get(0));
+            List<String> rgNames = LzwUilts1.getDataRgNames( this.sdb );
+            String url = LzwUilts1.getGroupIPByGroupName(this.sdb, rgNames.get(0));
             dataDB = new Sequoiadb(url, "", "");
             // get details of snapshot
             BSONObject nameBSON = new BasicBSONObject();
@@ -232,7 +232,7 @@ public class TestSeqDB6971 extends SdbTestBase {
             Sequoiadb db2 = null;
             try{
                 db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-                List<String> rgNames2 = Util.getDataRgNames( db2 );
+                List<String> rgNames2 = LzwUilts1.getDataRgNames( db2 );
                 CollectionSpace cs2 = db2.getCollectionSpace(SdbTestBase.csName);
                 DBCollection cl2 = cs2.getCollection(clName);
                 BSONObject startCondition = (BSONObject) JSON.parse("{age:0}");
@@ -254,7 +254,7 @@ public class TestSeqDB6971 extends SdbTestBase {
                 db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
                 CollectionSpace cs1 = db1.getCollectionSpace(SdbTestBase.csName);
                 DBCollection cl1 = cs1.getCollection(clName);
-                Util util = new Util();
+                LzwUilts1 util = new LzwUilts1();
                 //插入数据开始压缩
                 util.insertData(cl1, 109, 115, 1024);
                 cl1.update("{_id:{$et:112}}", "{$inc:{num:2}}", "");

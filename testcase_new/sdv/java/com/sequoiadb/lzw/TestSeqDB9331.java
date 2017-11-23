@@ -38,11 +38,11 @@ public class TestSeqDB9331 extends SdbTestBase{
                     ". the TestCase begin at:" + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
             this.sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             // 跳过 standAlone 和数据组不足的环境
-            Util util = new Util();
+            LzwUilts1 util = new LzwUilts1();
             if (util.isStandAlone(this.sdb)) {
                 throw new SkipException("skip StandAlone");
             }
-            if (Util.getDataRgNames(this.sdb).size() < 2) {
+            if (LzwUilts1.getDataRgNames(this.sdb).size() < 2) {
                 throw new SkipException("current environment less than tow groups ");
             }
             this.cs = this.sdb.getCollectionSpace(SdbTestBase.csName); 
@@ -62,7 +62,7 @@ public class TestSeqDB9331 extends SdbTestBase{
         try {
             createCL();
             //插入数据，使cl存在已被压缩的记录
-            Util util = new Util();
+            LzwUilts1 util = new LzwUilts1();
             util.insertData(this.cl, 0, 99, 1024 * 1024);
             util.insertData(this.cl, 99, 109, 1024 * 1024);
             BSONObject bObject = getSnapshotDetail();
@@ -104,8 +104,8 @@ public class TestSeqDB9331 extends SdbTestBase{
         Sequoiadb dataDB = null;
         try {
             detail = new BasicBSONObject();
-            List<String> rgNames = Util.getDataRgNames( this.sdb );
-            String url = Util.getGroupIPByGroupName(this.sdb, rgNames.get(0));
+            List<String> rgNames = LzwUilts1.getDataRgNames( this.sdb );
+            String url = LzwUilts1.getGroupIPByGroupName(this.sdb, rgNames.get(0));
             dataDB = new Sequoiadb(url, "", "");
             // get details of snapshot
             BSONObject nameBSON = new BasicBSONObject();
@@ -125,13 +125,13 @@ public class TestSeqDB9331 extends SdbTestBase{
     
     public void createCL(){
         try{
-            List<String> rgNames = Util.getDataRgNames( this.sdb );
+            List<String> rgNames = LzwUilts1.getDataRgNames( this.sdb );
             BSONObject option = new BasicBSONObject();
             option.put("Group", rgNames.get(0));
             option.put("Compressed", true);
             option.put("CompressionType", "lzw");
             option.put("ReplSize", 0);
-            this.cl = Util.createCL(this.cs, this.clName, option);
+            this.cl = LzwUilts1.createCL(this.cs, this.clName, option);
         }catch(BaseException e){
             Assert.fail(e.getMessage());
         }

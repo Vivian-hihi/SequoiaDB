@@ -32,7 +32,7 @@ public class TestConcurrency6673 extends SdbTestBase {
     private Sequoiadb sdb = null;
     private String dataGroupName = null;
     private static final int CL_COUNT = 5;
-    private String ranStr = Commlib.getRandomString(8 *1024);
+    private String ranStr = CompressUtils.getRandomString(8 *1024);
     private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
     
     @BeforeClass
@@ -43,7 +43,7 @@ public class TestConcurrency6673 extends SdbTestBase {
         }catch(BaseException e){
             Assert.fail(e.getMessage());
         }
-        if (Commlib.isStandAlone(sdb)){
+        if (CompressUtils.isStandAlone(sdb)){
             throw new SkipException("is standalone skip testcase");
         }
         for(int i = 0; i < CL_COUNT; i++){
@@ -106,7 +106,7 @@ public class TestConcurrency6673 extends SdbTestBase {
                     rec.put("b", ranStr + i);
                     cl.insert(rec);
                 }
-                Commlib.checkCompressed(cl, dataGroupName, "lzw");
+                CompressUtils.checkCompressed(cl, dataGroupName, "lzw");
                 
                 // check data correctness
                 checkData(cl);
@@ -124,7 +124,7 @@ public class TestConcurrency6673 extends SdbTestBase {
         DBCollection cl = null;
         try{
             BSONObject option = new BasicBSONObject();
-            dataGroupName = ((ArrayList<String>)Commlib.getDataGroups(sdb)).get(0);
+            dataGroupName = ((ArrayList<String>)CompressUtils.getDataGroups(sdb)).get(0);
             option.put("Group", dataGroupName);
             option.put("Compressed", true);
             option.put("CompressionType", "lzw");
@@ -142,7 +142,7 @@ public class TestConcurrency6673 extends SdbTestBase {
         for(passSecond = 0; passSecond < waitSecond; passSecond++){
             try {
                 Thread.sleep(1000);
-                if(Commlib.isDictExist(cl, dataGroupName)){
+                if(CompressUtils.isDictExist(cl, dataGroupName)){
                     break;
                 }
             }catch(BaseException e){

@@ -42,7 +42,7 @@ public class TestSnappy6638 extends SdbTestBase {
         try{
             DBCollection cl = createCL();
             cl.createIndex("aIndex", "{a:1}", false, false);
-            Commlib.insertData(cl, 100);
+            SnappyUilts.insertData(cl, 100);
         }catch(BaseException e){
             Assert.fail(e.getMessage());
         }

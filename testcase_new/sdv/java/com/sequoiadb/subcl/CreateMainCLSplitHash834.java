@@ -41,10 +41,10 @@ public class CreateMainCLSplitHash834 extends SdbTestBase{
 		}catch(BaseException e){
 			Assert.assertTrue(false, "connect  failed,"+SdbTestBase.coordUrl+e.getMessage());
 		}
-        if (Commlib.isStandAlone(sdb)){
+        if (SubCLUtils.isStandAlone(sdb)){
             throw new SkipException("is standalone skip testcase");
         }
-		if (Commlib.getDataGroups(sdb).size() < 2){
+		if (SubCLUtils.getDataGroups(sdb).size() < 2){
             throw new SkipException("current environment less than tow groups");
         }
 	}
