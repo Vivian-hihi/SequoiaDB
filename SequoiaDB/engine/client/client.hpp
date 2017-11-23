@@ -39,17 +39,17 @@
 #include <map>
 #include <string>
 #include <vector>
-/*
-#if defined (_WINDOWS)
-   #if defined (SDB_DLL_BUILD)
-      #define DLLEXPORT __declspec(dllexport)
-   #else
-      #define DLLEXPORT __declspec(dllimport)
-   #endif
-#else
-   #define DLLEXPORT
-#endif
-*/
+
+/** This micro is for internal use, not a public api, it will be removed in the future */
+#define RELEASE_INNER_HANDLE( handle ) \
+do                                     \
+{                                      \
+   if ( handle )                       \
+   {                                   \
+      delete handle ;                  \
+      handle = NULL ;                  \
+   }                                   \
+} while( 0 )
 
 #define DLLEXPORT SDB_EXPORT
 
@@ -168,7 +168,9 @@ namespace sdbclient
       ~sdbCursor ()
       {
          if ( pCursor )
+         {
             delete pCursor ;
+         }
       }
 
 /** \fn  INT32 next ( bson::BSONObj &obj )
@@ -964,7 +966,10 @@ namespace sdbclient
                           )
       {
          if ( !pCollection )
+         {
             return SDB_NOT_CONNECTED ;
+         }
+         RELEASE_INNER_HANDLE( cursor.pCursor ) ;
          return pCollection->queryAndUpdate( &cursor.pCursor , update, condition,
                                              selected, orderBy, hint,
                                              numToSkip, numToReturn, flag, returnNew ) ;
@@ -1010,7 +1015,10 @@ namespace sdbclient
                           )
       {
          if ( !pCollection )
+         {
             return SDB_NOT_CONNECTED ;
+         }
+         RELEASE_INNER_HANDLE( cursor.pCursor ) ;
          return pCollection->queryAndRemove( &cursor.pCursor , condition,
                                              selected, orderBy, hint,
                                              numToSkip, numToReturn, flag ) ;

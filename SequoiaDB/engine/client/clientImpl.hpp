@@ -33,6 +33,7 @@ namespace sdbclient
 #define CLIENT_REPLICAGROUP_NAMESZ         127
 #define CLIENT_DOMAIN_NAMESZ               127
 #define CLIENT_DC_NAMESZ                   127
+
    class _sdbCollectionSpaceImpl ;
    class _sdbCollectionImpl ;
    class _sdbReplicaGroupImpl ;
@@ -265,6 +266,7 @@ namespace sdbclient
                      INT32 flag               = 0
                    )
       {
+         RELEASE_INNER_HANDLE( cursor.pCursor ) ;
          return query ( &cursor.pCursor,
                         condition, selected, orderBy, hint,
                         numToSkip, numToReturn, flag ) ;
@@ -344,6 +346,7 @@ namespace sdbclient
       INT32 getIndexes ( sdbCursor &cursor,
                          const CHAR *pName )
       {
+         RELEASE_INNER_HANDLE( cursor.pCursor ) ;
          return getIndexes ( &cursor.pCursor, pName ) ;
       }
       INT32 dropIndex ( const CHAR *pName ) ;
@@ -385,6 +388,7 @@ namespace sdbclient
                      std::vector<bson::BSONObj> &obj
                    )
       {
+         RELEASE_INNER_HANDLE( cursor.pCursor ) ; 
          return aggregate ( &cursor.pCursor, obj ) ;
       }
       INT32 getQueryMeta  ( _sdbCursor **cursor,
@@ -402,6 +406,7 @@ namespace sdbclient
                      INT64 numToReturn = -1
                    )
       {
+         RELEASE_INNER_HANDLE( cursor.pCursor ) ;
          return getQueryMeta ( &cursor.pCursor,
                         condition, orderBy, hint,
                         numToSkip, numToReturn ) ;
@@ -434,15 +439,17 @@ namespace sdbclient
                               INT32 flag                     = 0,
                               const bson::BSONObj &options   = _sdbStaticObject )
       {
+         RELEASE_INNER_HANDLE( cursor.pCursor ) ;
          return explain( &cursor.pCursor, condition, select, orderBy, hint,
                          numToSkip, numToReturn, flag, options ) ;
       }
 
       /// lob
       INT32 createLob( _sdbLob **lob, const bson::OID *oid = NULL ) ;
-
+      
       virtual INT32 createLob( sdbLob &lob, const bson::OID *oid = NULL )
       {
+         RELEASE_INNER_HANDLE( lob.pLob ) ;
          return createLob( &lob.pLob, oid ) ;
       }
 
@@ -456,13 +463,15 @@ namespace sdbclient
       virtual INT32 openLob( sdbLob &lob, const bson::OID &oid,
                              SDB_LOB_OPEN_MODE mode = SDB_LOB_READ )
       {
+         RELEASE_INNER_HANDLE( lob.pLob ) ;
          return openLob( &lob.pLob, oid, mode ) ;
       }
 
       INT32 listLobs ( _sdbCursor **cursor ) ;
-
+      
       virtual INT32 listLobs( sdbCursor &cursor )
       {
+         RELEASE_INNER_HANDLE( cursor.pCursor ) ;
          return listLobs( &cursor.pCursor ) ;
       }
 
@@ -473,7 +482,7 @@ namespace sdbclient
       INT32 createIdIndex( const bson::BSONObj &options = _sdbStaticObject ) ;
 
       INT32 dropIdIndex() ;
-
+      
    private:
       INT32 _alterCollection1( const bson::BSONObj &options ) ;
       INT32 _alterCollection2( const bson::BSONObj &options ) ;
@@ -482,7 +491,7 @@ namespace sdbclient
                            INT32 sortBufferSize ) ;
 
    } ;
-
+   
    typedef class _sdbCollectionImpl sdbCollectionImpl ;
 
    /*
@@ -518,6 +527,7 @@ namespace sdbclient
       INT32 connect ( _sdb **dbConn ) ;
       INT32 connect ( sdb &dbConn )
       {
+         RELEASE_INNER_HANDLE( dbConn.pSDB ) ;
          return connect ( &dbConn.pSDB ) ;
       }
 
@@ -590,6 +600,7 @@ namespace sdbclient
       INT32 getMaster ( _sdbNode **node ) ;
       INT32 getMaster ( sdbNode &node )
       {
+         RELEASE_INNER_HANDLE( node.pNode ) ;
          return getMaster ( &node.pNode ) ;
       }
 
@@ -598,6 +609,7 @@ namespace sdbclient
       INT32 getSlave ( sdbNode &node,
                        const vector<INT32>& positions = _sdbStaticVec )
       {
+         RELEASE_INNER_HANDLE( node.pNode ) ;
          return getSlave( &node.pNode, positions ) ;
       }
 
@@ -606,6 +618,7 @@ namespace sdbclient
       INT32 getNode ( const CHAR *pNodeName,
                       sdbNode &node )
       {
+         RELEASE_INNER_HANDLE( node.pNode ) ;
          return getNode ( pNodeName, &node.pNode ) ;
       }
 
@@ -616,6 +629,7 @@ namespace sdbclient
                       const CHAR *pServiceName,
                       sdbNode &node )
       {
+         RELEASE_INNER_HANDLE( node.pNode ) ;
          return getNode ( pHostName, pServiceName, &node.pNode ) ;
       }
       // create a new node in current replica group
@@ -780,6 +794,7 @@ namespace sdbclient
 
       INT32 listCollectionSpacesInDomain ( sdbCursor &cursor )
       {
+         RELEASE_INNER_HANDLE( cursor.pCursor ) ;
          return listCollectionSpacesInDomain ( &cursor.pCursor ) ;
       }
 
@@ -787,6 +802,7 @@ namespace sdbclient
 
       INT32 listCollectionsInDomain ( sdbCursor &cursor )
       {
+         RELEASE_INNER_HANDLE( cursor.pCursor ) ;
          return listCollectionsInDomain ( &cursor.pCursor ) ;
       }
 
@@ -1171,6 +1187,7 @@ namespace sdbclient
                           const BSONObj &orderBy = _sdbStaticObject
                          )
       {
+         RELEASE_INNER_HANDLE( cursor.pCursor ) ;
          return getSnapshot ( &cursor.pCursor,
                               snapType,
                               condition,
@@ -1192,6 +1209,7 @@ namespace sdbclient
                       const BSONObj &orderBy = _sdbStaticObject
                     )
       {
+         RELEASE_INNER_HANDLE( cursor.pCursor ) ;
          return getList ( &cursor.pCursor, snapType, condition,
                           selector, orderBy ) ;
       }
@@ -1221,6 +1239,7 @@ namespace sdbclient
       INT32 getCollection ( const CHAR *pCollectionFullName,
                             sdbCollection &collection )
       {
+         RELEASE_INNER_HANDLE( collection.pCollection ) ;
          return getCollection ( pCollectionFullName, &collection.pCollection ) ;
       }
 
@@ -1230,6 +1249,7 @@ namespace sdbclient
       INT32 getCollectionSpace ( const CHAR *pCollectionSpaceName,
                                  sdbCollectionSpace &cs )
       {
+         RELEASE_INNER_HANDLE( cs.pCollectionSpace ) ;
          return getCollectionSpace ( pCollectionSpaceName,
                                      &cs.pCollectionSpace ) ;
       }
@@ -1242,6 +1262,7 @@ namespace sdbclient
                                     INT32 iPageSize,
                                     sdbCollectionSpace &cs )
       {
+         RELEASE_INNER_HANDLE( cs.pCollectionSpace ) ;
          return createCollectionSpace ( pCollectionSpaceName, iPageSize,
                                         &cs.pCollectionSpace ) ;
       }
@@ -1256,6 +1277,7 @@ namespace sdbclient
                                     sdbCollectionSpace &cs
                                   )
       {
+         RELEASE_INNER_HANDLE( cs.pCollectionSpace ) ;
          return createCollectionSpace ( pCollectionSpaceName, options,
                                         &cs.pCollectionSpace ) ;
       }
@@ -1266,6 +1288,7 @@ namespace sdbclient
 
       INT32 listCollectionSpaces ( sdbCursor &result )
       {
+         RELEASE_INNER_HANDLE( result.pCursor ) ;
          return listCollectionSpaces ( &result.pCursor ) ;
       }
 
@@ -1273,6 +1296,7 @@ namespace sdbclient
 
       INT32 listCollections ( sdbCursor &result )
       {
+         RELEASE_INNER_HANDLE( result.pCursor ) ;
          return listCollections ( &result.pCursor ) ;
       }
 
@@ -1280,6 +1304,7 @@ namespace sdbclient
 
       INT32 listReplicaGroups ( sdbCursor &result )
       {
+         RELEASE_INNER_HANDLE( result.pCursor ) ;
          return listReplicaGroups ( &result.pCursor ) ;
       }
 
@@ -1287,6 +1312,7 @@ namespace sdbclient
 
       INT32 getReplicaGroup ( const CHAR *pName, sdbReplicaGroup &result )
       {
+         RELEASE_INNER_HANDLE( result.pReplicaGroup ) ;
          return getReplicaGroup ( pName, &result.pReplicaGroup ) ;
       }
 
@@ -1294,6 +1320,7 @@ namespace sdbclient
 
       INT32 getReplicaGroup ( INT32 id, sdbReplicaGroup &result )
       {
+         RELEASE_INNER_HANDLE( result.pReplicaGroup ) ;
          return getReplicaGroup ( id, &result.pReplicaGroup ) ;
       }
 
@@ -1301,6 +1328,7 @@ namespace sdbclient
 
       INT32 createReplicaGroup ( const CHAR *pName, sdbReplicaGroup &replicaGroup )
       {
+         RELEASE_INNER_HANDLE( replicaGroup.pReplicaGroup ) ;
          return createReplicaGroup ( pName, &replicaGroup.pReplicaGroup ) ;
       }
 
@@ -1314,6 +1342,7 @@ namespace sdbclient
       INT32 activateReplicaGroup ( const CHAR *pName, _sdbReplicaGroup **replicaGroup ) ;
       INT32 activateReplicaGroup ( const CHAR *pName, sdbReplicaGroup &replicaGroup )
       {
+         RELEASE_INNER_HANDLE( replicaGroup.pReplicaGroup ) ;
          return activateReplicaGroup( pName, &replicaGroup.pReplicaGroup ) ;
       }
 
@@ -1321,6 +1350,7 @@ namespace sdbclient
       INT32 execUpdate( const CHAR *sql ) ;
       INT32 exec( const CHAR *sql, sdbCursor &result )
       {
+         RELEASE_INNER_HANDLE( result.pCursor ) ;
          return exec( sql, &result.pCursor ) ;
       }
       INT32 exec( const CHAR *sql, _sdbCursor **result ) ;
@@ -1339,6 +1369,7 @@ namespace sdbclient
       INT32 listProcedures( _sdbCursor **cursor, const bson::BSONObj &condition ) ;
       INT32 listProcedures( sdbCursor &cursor, const bson::BSONObj &condition )
       {
+         RELEASE_INNER_HANDLE( cursor.pCursor ) ;
          return listProcedures ( &cursor.pCursor, condition ) ;
       }
 
@@ -1351,6 +1382,7 @@ namespace sdbclient
                     sdbCursor &cursor,
                     bson::BSONObj &errmsg )
       {
+         RELEASE_INNER_HANDLE( cursor.pCursor ) ;
          return evalJS( code, type, &cursor.pCursor, errmsg ) ;
       }
 
@@ -1367,6 +1399,7 @@ namespace sdbclient
                          const bson::BSONObj &selector = _sdbStaticObject,
                          const bson::BSONObj &orderBy = _sdbStaticObject)
       {
+         RELEASE_INNER_HANDLE( cursor.pCursor ) ;
          return listBackup ( &cursor.pCursor, options, condition, selector, orderBy ) ;
       }
       INT32 removeBackup ( const bson::BSONObj &options ) ;
@@ -1383,6 +1416,7 @@ namespace sdbclient
                         const bson::BSONObj &orderBy = _sdbStaticObject,
                         const bson::BSONObj &hint = _sdbStaticObject)
       {
+         RELEASE_INNER_HANDLE( cursor.pCursor ) ;
          return listTasks ( &cursor.pCursor, condition,
                              selector, orderBy, hint ) ;
       }
@@ -1409,6 +1443,7 @@ namespace sdbclient
                            const bson::BSONObj &options,
                            sdbDomain &domain )
       {
+         RELEASE_INNER_HANDLE( domain.pDomain ) ;
          return createDomain ( pDomainName, options, &domain.pDomain ) ;
       }
 
@@ -1420,6 +1455,7 @@ namespace sdbclient
       INT32 getDomain ( const CHAR *pDomainName,
                         sdbDomain &domain )
       {
+         RELEASE_INNER_HANDLE( domain.pDomain ) ;
          return getDomain ( pDomainName, &domain.pDomain ) ;
       }
 
@@ -1437,6 +1473,7 @@ namespace sdbclient
                           const bson::BSONObj &hint
                          )
       {
+         RELEASE_INNER_HANDLE( cursor.pCursor ) ;
          return listDomains ( &cursor.pCursor, condition, selector, orderBy, hint ) ;
       }
 
@@ -1444,6 +1481,7 @@ namespace sdbclient
 
       INT32 getDC( sdbDataCenter &dc )
       {
+         RELEASE_INNER_HANDLE( dc.pDC ) ;
          return getDC( &dc.pDC ) ;
       }
 
