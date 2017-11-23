@@ -1,4 +1,4 @@
-package com.sequoiadb.crud.lob;
+package com.sequoiadb.lob.biglob;
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
@@ -54,7 +54,7 @@ public class Commlib {
      * @return the MD5 value
      * @throws BaseException when failed
      */
-    public static String getMd5(Object inbuff)throws BaseException{
+    public static String getMd5(Object inbuff) {
         MessageDigest md5 = null;
         String value = "";
         try {

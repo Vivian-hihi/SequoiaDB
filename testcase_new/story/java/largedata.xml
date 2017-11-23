@@ -13,7 +13,7 @@
    
    <test name="parralclass">
       <packages>
-		  	<package name="com.sequoiadb.crud.biglob" />
+		  	<package name="com.sequoiadb.lob.biglob" />
       </packages>      
    </test>
 

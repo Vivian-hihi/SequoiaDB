@@ -1,4 +1,4 @@
-package com.sequoiadb.crud.biglob;
+package com.sequoiadb.lob.biglob;
 
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;

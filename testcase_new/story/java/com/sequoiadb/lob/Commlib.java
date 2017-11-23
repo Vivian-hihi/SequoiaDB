@@ -177,4 +177,15 @@ public class Commlib {
 		}
 	}
 
+    /**
+     * build a byte array of specific length, which's content is random
+     * @param length
+     * @return byte[]
+     */
+    public static byte[] getRandomBytes(int length){
+        byte[] randomBytes = new byte[length];
+        new Random().nextBytes(randomBytes);
+        return randomBytes;
+    }
+
 }

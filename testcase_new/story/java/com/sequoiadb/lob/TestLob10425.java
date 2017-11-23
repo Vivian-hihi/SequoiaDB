@@ -1,4 +1,4 @@
-package com.sequoiadb.crud.lob;
+package com.sequoiadb.lob;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
