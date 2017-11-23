@@ -394,16 +394,6 @@ namespace engine
       }
    }
 
-   INT32 _dmsStorageIndex::_verifyTextIdxDef( const BSONObj &indexDef )
-   {
-      INT32 rc = SDB_OK ;
-
-      // TODO: Check the definition of the index. Besides the common check, also need
-      // to check if all fields are "text" type.
-
-      return rc  ;
-   }
-
    INT32 _dmsStorageIndex::_allocateIdxID( dmsMBContext *context,
                                            const BSONObj &index,
                                            INT32 &indexID )

@@ -519,6 +519,14 @@ namespace engine
             goto error ;
          }
 
+         if ( ( IXM_EXTENT_TYPE_TEXT & type ) &&
+              ( ~IXM_EXTENT_TYPE_TEXT & type ) )
+         {
+            PD_LOG( PDERROR, "Text index can not mix with other kinds of "
+                    "indices:%s", obj.toString().c_str() ) ;
+            goto error ;
+         }
+
       done:
          return rc ;
       error:

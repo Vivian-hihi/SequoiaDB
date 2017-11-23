@@ -214,8 +214,6 @@ namespace engine
 
          virtual void   _onRestore() ;
 
-         INT32 _verifyTextIdxDef( const BSONObj &indexDef ) ;
-
          INT32 _allocateIdxID( _dmsMBContext *context,
                                const BSONObj &index,
                                INT32 &indexID ) ;
