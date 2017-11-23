@@ -43,6 +43,13 @@ function svnUp()
    sleep 1
    echo "====================Begin to update all files============================="
    svn up
+   ret=$?
+   if [ $ret -eq 0 ] ; then
+      echo "====================svn up Succeed======================================"
+   else
+      echo "********************svn up Failed**************************************"
+      exit 1
+   fi
    echo "====================End to update all files==============================="
 }
 
