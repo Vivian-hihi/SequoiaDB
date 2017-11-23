@@ -138,13 +138,10 @@ function checkLSN(db, groups)
    {
       for(var j = 0; j < LSNs[i].length -1; ++j)
       {
-         if(LSNs[i][j] === LSNs[i][j+1])
-         {
-            checkLSN = true;
-         }else
+         if(LSNs[i][j] !== LSNs[i][j+1])
          {
             checkLSN = false;
-            break;
+            return checkLSN;
          }
       }
    }
@@ -244,7 +241,7 @@ function checkStat( db, csName, clName, indexName, clExistStat, indexExistStat )
          //是否存在索引统计表信息与预期结果校验  
          if((indexExistStat ^ indexStatFlag) === 1)
          {
-            println("host:" + nodesInGroup[j] + "\nindexExistStat:" + indexExistStat + "\nindexStatFlag:" + indexStatFlag);
+            println("host:" + nodesInGroup[j] + "\nIndexName:" + indexName + "\nindexExistStat:" + indexExistStat + "\nindexStatFlag:" + indexStatFlag);
             throw "NO_INDEX_STAT";
          }  
          

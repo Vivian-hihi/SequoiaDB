@@ -53,11 +53,13 @@ class TestMetedata13482(testlib.SdbTestBase):
       domain.alter(alter_option)
       
       # check domain
-      cur = self.db.list_domains(condition = condition, selector = selector, order_by = order_by)
+      cur = self.db.list_domains(condition = condition, order_by = order_by)
       domain_result = testlib.get_all_records_noid(cur)
+      print("GroupName: " + domain_result[0]['Groups'][0]["GroupName"])
       self.assertEqual(1, len(domain_result))
       self.assertEqual(self.domain_name, domain_result[0]['Name'])
-      #self.assertTrue(domain_result[0]['AutoSplit']) 
+      self.assertEqual(group1, domain_result[0]['Groups'][0]["GroupName"])
+      self.assertTrue(domain_result[0]['AutoSplit']) 
          
       # drop domain  
       self.db.drop_domain(self.domain_name)      
@@ -96,7 +98,15 @@ class TestMetedata13482(testlib.SdbTestBase):
       domain.alter(alter_option)
          
       # check domain
-      self.assertIn(self.domain_name, domain_result, 'not find domain') 
+      cur = self.db.list_domains()
+      rec = testlib.get_all_records_noid(cur)
+      domain_result = dict()
+      for r in rec:
+         if self.domain_name == str(r['Name']):
+            domain_result = {'Name': str(r['Name']), 'Group': r['Groups'][0]['GroupName'], 'AutoSplit': True}
+      self.assertEqual(self.domain_name, domain_result['Name'], 'not find domain') 
+      self.assertEqual(group1, domain_result['Group']) 
+      self.assertTrue(domain_result['AutoSplit']) 
       
       # drop domain  
       self.db.drop_domain(self.domain_name)      

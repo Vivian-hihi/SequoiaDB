@@ -77,9 +77,9 @@ class TestDataNode12498(testlib.SdbTestBase):
       self.assertEqual(node_num, 2)
       
       #get master and slave
-      data_master_status = data_rg.get_master().get_status()
+      data_master_status = rg_master.get_status()
       self.assertEqual(data_master_status, 3)
-      data_slave_status = data_rg.get_slave().get_status()
+      data_slave_status = rg_slave.get_status()
       self.assertEqual(data_slave_status, 3)
       
       #get node information and check
