@@ -1,8 +1,12 @@
 package com.sequoiadb.lob.randomwrite;
 
-import com.sequoiadb.base.*;
-import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.exception.SDBError;
+import java.io.ByteArrayOutputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Random;
+import java.util.logging.Logger;
+
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.types.BasicBSONList;
@@ -10,14 +14,13 @@ import org.bson.types.ObjectId;
 import org.bson.util.JSON;
 import org.testng.Assert;
 
-import java.io.ByteArrayOutputStream;
-import java.math.BigInteger;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Random;
-import java.util.logging.Logger;
+import com.sequoiadb.base.CollectionSpace;
+import com.sequoiadb.base.DBCollection;
+import com.sequoiadb.base.DBCursor;
+import com.sequoiadb.base.DBLob;
+import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.exception.SDBError;
 
 /**
  * FileName: RandomWriteLobUtil.java
@@ -29,8 +32,6 @@ import java.util.logging.Logger;
 class RandomWriteLobUtil {
 
     final private static Logger log = Logger.getLogger(RandomWriteLobUtil.class.getName());
-
-    private static ArrayList<String> groupList;
 
     static DBCollection createCL(CollectionSpace cs, String clName, String option) {
         DBCollection cl = null;
@@ -61,41 +62,16 @@ class RandomWriteLobUtil {
         return cl;
     }
 
-
-    /**
-     * get the buff MD5 value
-     *
-     * @param inbuff the object of need to get the MD5
-     * @return the MD5 value
-     */
-    static String getMd5(byte[] inbuff) {
-        MessageDigest md5;
-        String value = "";
-        try {
-            md5 = MessageDigest.getInstance("MD5");
-
-            md5.update(inbuff);
-            BigInteger bi = new BigInteger(1, md5.digest());
-            value = bi.toString(16);
-            //else{
-            //Assert.fail("invalid parameter!");
-            //}
-        } catch (NoSuchAlgorithmException e) {
-            log.severe(e.getMessage());
-        }
-        return value;
-    }
-
-    static byte[] appendBuff(byte[] testLobBuff, byte[] rewriteBuff, int offset) {
-        byte[] appendBuff;
-        if (testLobBuff.length >= offset + rewriteBuff.length) {
-            appendBuff = new byte[testLobBuff.length];
+    static byte[] appendBuff(byte[] oldBuff, byte[] buff4Append, int offset) {
+        byte[] newBuff;
+        if (oldBuff.length >= offset + buff4Append.length) {
+            newBuff = new byte[oldBuff.length];
         } else {
-            appendBuff = new byte[offset + rewriteBuff.length];
+            newBuff = new byte[offset + buff4Append.length];
         }
-        System.arraycopy(testLobBuff, 0, appendBuff, 0, testLobBuff.length);
-        System.arraycopy(rewriteBuff, 0, appendBuff, offset, rewriteBuff.length);
-        return appendBuff;
+        System.arraycopy(oldBuff, 0, newBuff, 0, oldBuff.length);
+        System.arraycopy(buff4Append, 0, newBuff, offset, buff4Append.length);
+        return newBuff;
     }
 
 
@@ -117,7 +93,7 @@ class RandomWriteLobUtil {
     }
 
     static ArrayList<String> getDataGroups(Sequoiadb sdb) {
-        groupList = sdb.getReplicaGroupNames();
+        ArrayList<String> groupList = sdb.getReplicaGroupNames();
         groupList.remove("SYSCatalogGroup");
         groupList.remove("SYSCoord");
         groupList.remove("SYSSpare");
@@ -125,7 +101,7 @@ class RandomWriteLobUtil {
     }
 
     static String chooseDataGroups(Sequoiadb sdb, int groupsNum) {
-        groupList = getDataGroups(sdb);
+        ArrayList<String> groupList = getDataGroups(sdb);
         int length = (groupsNum > groupList.size()) ? groupList.size() : groupsNum;
         String ret = "";
         for (int i = 0; i < length; i++) {
@@ -152,7 +128,7 @@ class RandomWriteLobUtil {
 
     static String getSplitGroupName(Sequoiadb sdb, String groupName) {
         String tarRgName = "";
-        groupList = getDataGroups(sdb);
+        List<String> groupList = getDataGroups(sdb);
         for (String name : groupList) {
             if (!name.equals(groupName)) {
                 tarRgName = name;
@@ -216,7 +192,11 @@ class RandomWriteLobUtil {
     }
 
     static byte[] readLob(DBCollection dbcl, ObjectId id) {
-        return readLob(dbcl.openLob(id));
+        byte[] res = null;
+        try (DBLob lob = dbcl.openLob(id)) {
+            res = readLob(lob);
+        }
+        return res;
     }
 
     static byte[] readLob(Sequoiadb db, String csName, String clName, ObjectId id) {
