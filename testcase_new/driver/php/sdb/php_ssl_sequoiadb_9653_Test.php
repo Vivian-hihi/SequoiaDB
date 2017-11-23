@@ -1,6 +1,6 @@
 /****************************************************
-@description:      ssl
-@testlink cases:   seqDB-9652
+@description:      ssl, node config usessl is false
+@testlink cases:   seqDB-9653
 @modify list:
         2017-11-21 xiaoni huang init
 ****************************************************/
