@@ -62,11 +62,11 @@ public class SelectSQL12624 extends SdbTestBase{
 		}
 		
 		cs = sdb.getCollectionSpace(SdbTestBase.csName);
-		cl = Commlib.createCL(cs, clName);
+		cl = NumOverflowUtils.createCL(cs, clName);
 		String []records = {"{'no':[-2147483648,{'$numberLong':'-9223372036854775808'}],'test':1}",
 							"{'no':[2147483647,{'$numberLong':'9223372036854775807'}],'test':2}",};
 
-		Commlib.insert(cl, records);
+		NumOverflowUtils.insert(cl, records);
 	}
 	
 	@Test(dataProvider = "operData")

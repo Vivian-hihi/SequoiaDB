@@ -42,7 +42,7 @@ public class AbsIsMatcher12592 extends SdbTestBase{
 		}
 		
 		cs = sdb.getCollectionSpace(SdbTestBase.csName);
-		cl = Commlib.createCL(cs, clName);
+		cl = NumOverflowUtils.createCL(cs, clName);
 		String []records = {"{'int32':-2147483648,'long':{'$numberLong':'-9223372036854775808'},"
 				+ "'arr':[-2147483648,{'$numberLong':'-9223372036854775808'}],"
 				+ "obj:{a:{b:{'$numberLong':'-9223372036854775808'}}}}",
@@ -50,7 +50,7 @@ public class AbsIsMatcher12592 extends SdbTestBase{
 				+ "'arr':[-214743648,{'$numberLong':'-9223336854775808'}],"
 				+ "obj:{a:{b:{'$numberLong':'-92233754775808'}}}}"};
 
-		Commlib.insert(cl, records);
+		NumOverflowUtils.insert(cl, records);
 	}
 	
 	@Test
@@ -65,7 +65,7 @@ public class AbsIsMatcher12592 extends SdbTestBase{
 								+ "obj:{a:{b:{'$numberLong':'-9223372036854775808'}}}}"};
 		String indexKey = "{int32:-1,long:1,arr:1,obj:-1}";
 		try{			
-			Commlib.multiFieldOperAsMatcher(cl, matcher, expRecords, indexKey);
+			NumOverflowUtils.multiFieldOperAsMatcher(cl, matcher, expRecords, indexKey);
 			
 		}catch(BaseException e){			
 			Assert.assertTrue(false,"abs data is used as matcher oper failed,"+e.getMessage());

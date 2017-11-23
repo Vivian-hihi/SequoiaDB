@@ -40,9 +40,9 @@ public class TestTruncate172 extends SdbTestBase {
             Assert.fail(e.getMessage());
         }
         try{
-            DBCollection cl = Commlib.createCL(sdb, csName, clName);
+            DBCollection cl = BackUpUtils.createCL(sdb, csName, clName);
             // doing insert
-            Commlib.insertData(cl);
+            BackUpUtils.insertData(cl);
             // prepare data for backup offline
             options = new BasicBSONObject();
             options.put("Name", "backupName");
@@ -91,7 +91,7 @@ public class TestTruncate172 extends SdbTestBase {
                 // doing truncate
                 cl.truncate();
                 // check truncate
-                Commlib.checkTruncated(db, cl, hostName);
+                BackUpUtils.checkTruncated(db, cl, hostName);
             }catch(BaseException e){
                 throw e;
             }finally{

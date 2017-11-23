@@ -14,7 +14,7 @@ import org.testng.annotations.Test;
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.crud.numoverflow.Commlib;
+import com.sequoiadb.crud.numoverflow.NumOverflowUtils;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
 
@@ -80,13 +80,13 @@ public class AdsIsSelector12570 extends SdbTestBase{
 		String clOption = "{ShardingKey:{no:1},ShardingType:'hash',Partition:1024,"
 				+ "ReplSize:0,Compressed:true, StrictDataMode:false}";
 		cs = sdb.getCollectionSpace(SdbTestBase.csName);
-		cl = Commlib.createCL(cs,  clName, clOption);	
+		cl = NumOverflowUtils.createCL(cs,  clName, clOption);	
 		
 		String []records = {"{'no':-2147483648,'tlong':{'$numberLong':'-9223372036854775808'},'tdouble':-1.7E+308,'test':0}",
 		        "{no:1,numarry:[-2147483648,{'$numberLong':'-9223372036854775808'},'testo1'],obj:{a:-2147483648},test:1}",
 		        "{no:2147483647,obj:{a:{b:{'$numberLong':'-9223372036854775808'}}},test:3}"};
 
-		Commlib.insert(cl, records);
+		NumOverflowUtils.insert(cl, records);
 	}
 	
 	@Test(dataProvider = "operData")
@@ -94,9 +94,9 @@ public class AdsIsSelector12570 extends SdbTestBase{
 		try{		
 			BSONObject sValue = new BasicBSONObject();
 			sValue.put("$abs", 1);
-			Commlib.selectorOper(cl,matcherValue, sValue, selectorName, expRecords);
+			NumOverflowUtils.selectorOper(cl,matcherValue, sValue, selectorName, expRecords);
 			try {				
-				Commlib.checkDataType(cl,sValue,matcherValue,selectorName, expTypeToSdb,isVerifyTypeToJava,typeToJava);
+				NumOverflowUtils.checkDataType(cl,sValue,matcherValue,selectorName, expTypeToSdb,isVerifyTypeToJava,typeToJava);
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();

@@ -80,14 +80,14 @@ public class MultiplyIsSelector12580 extends SdbTestBase{
 		}
 		
 		cs = sdb.getCollectionSpace(SdbTestBase.csName);
-		cl = Commlib.createCL(cs, clName);
+		cl = NumOverflowUtils.createCL(cs, clName);
 		
 		String []records = {"{'no':-2147483648,'tlong':{'$numberLong':'-9223372036854775808'},'test':0}",
 		        			"{'no':2147483647,'long':{'$numberLong':'9223372036854775807'},'test':1}",
 		        			"{'no':123.0,'double':123.5,'test':2}",
 		        			"{'no':[2147483147,{'$numberLong':'8223372036854775807'}],'arr':[1000000000,-2147483648],'obj':{a:'123'},'test':3}"};
 
-		Commlib.insert(cl, records);
+		NumOverflowUtils.insert(cl, records);
 	}
 	
 	@Test(dataProvider = "operData")
@@ -95,9 +95,9 @@ public class MultiplyIsSelector12580 extends SdbTestBase{
 		try{			
 			BSONObject mValue = new BasicBSONObject();
 			mValue.put("$multiply", mulValue);
-			Commlib.selectorOper(cl,matcherValue, mValue, selectorName, expRecords);
+			NumOverflowUtils.selectorOper(cl,matcherValue, mValue, selectorName, expRecords);
 			try {
-				Commlib.checkDataType(cl, mValue, matcherValue, selectorName, expType, isVerifyTypeToJava, expTypeToJava);
+				NumOverflowUtils.checkDataType(cl, mValue, matcherValue, selectorName, expType, isVerifyTypeToJava, expTypeToJava);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}

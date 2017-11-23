@@ -71,7 +71,7 @@ public class Split10504B extends SdbTestBase {
 				commSdb.disconnect();
 			}
 			Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage() + "\r\n"
-					+ Utils.getKeyStack(e, this));
+					+ SplitUtils.getKeyStack(e, this));
 		}
 	}
 
@@ -93,7 +93,7 @@ public class Split10504B extends SdbTestBase {
 			// 通过协调节点比对已插入所有数据
 			checkCoord();
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage() + "\r\n" + Utils.getKeyStack(e, this));
+			Assert.fail(e.getMessage() + "\r\n" + SplitUtils.getKeyStack(e, this));
 		}
 	}
 
@@ -125,7 +125,7 @@ public class Split10504B extends SdbTestBase {
 					"srcGroup count:" + lobCount);
 		} catch (BaseException | UnsupportedEncodingException e) {
 			e.printStackTrace();
-			Assert.fail(e.getMessage() + "\r\n" + Utils.getKeyStack(e, this));
+			Assert.fail(e.getMessage() + "\r\n" + SplitUtils.getKeyStack(e, this));
 		} finally {
 			if (cursor != null) {
 				cursor.close();
@@ -179,7 +179,7 @@ public class Split10504B extends SdbTestBase {
 					"srcCheckFalg:" + srcCheckFlag + " destCheckFlag:" + destCheckFlag);
 
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage() + "\r\n" + Utils.getKeyStack(e, this));
+			Assert.fail(e.getMessage() + "\r\n" + SplitUtils.getKeyStack(e, this));
 		} finally {
 			if (dbc != null) {
 				dbc.close();
@@ -217,7 +217,7 @@ public class Split10504B extends SdbTestBase {
 			Assert.assertEquals(insertedLobCopy.size(), 0,
 					"miss some lob:" + insertedLobCopy + " all expected:" + insertedLobId + " all actual:" + actual);
 		} catch (BaseException | UnsupportedEncodingException e) {
-			Assert.fail(e.getMessage() + "\r\n" + Utils.getKeyStack(e, this));
+			Assert.fail(e.getMessage() + "\r\n" + SplitUtils.getKeyStack(e, this));
 		} finally {
 			if (cursor2 != null) {
 				cursor2.close();
@@ -263,7 +263,7 @@ public class Split10504B extends SdbTestBase {
 			CollectionSpace commCS = commSdb.getCollectionSpace(csName);
 			commCS.dropCollection(clName);
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage() + "\r\n" + Utils.getKeyStack(e, this));
+			Assert.fail(e.getMessage() + "\r\n" + SplitUtils.getKeyStack(e, this));
 		} finally {
 			if (commSdb != null) {
 				commSdb.disconnect();

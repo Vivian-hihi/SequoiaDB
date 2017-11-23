@@ -39,9 +39,9 @@ public class QueryGreatConcurrentcy11806 extends SdbTestBase{
 			boolean isCapped = true;
 			sdb = new Sequoiadb(SdbTestBase.coordUrl, "","");
 			sdb.setSessionAttr((BSONObject)JSON.parse("{PreferedInstance:'M'}"));
-			cappedCL_11806 = Commlib.createCL(sdb, cappedCSName_11806, cappedCLName_11806, isCapped);
-			stringLength = Commlib.getRandomStringLength();
-			Commlib.insertRecords(cappedCL_11806,stringLength,2000);//init insert 2000 records
+			cappedCL_11806 = CappedCLUtils.createCL(sdb, cappedCSName_11806, cappedCLName_11806, isCapped);
+			stringLength = CappedCLUtils.getRandomStringLength();
+			CappedCLUtils.insertRecords(cappedCL_11806,stringLength,2000);//init insert 2000 records
 		}catch(BaseException e) {
 			Assert.fail(e.getMessage());
 		}
@@ -83,7 +83,7 @@ public class QueryGreatConcurrentcy11806 extends SdbTestBase{
 	                db.setSessionAttr((BSONObject)JSON.parse("{PreferedInstance:'M'}"));
 	                cl = db.getCollectionSpace(cappedCSName_11806).getCollection(cappedCLName_11806);
 	                // find records in cappedCL
-	                Commlib.checkLogicalID(cl,stringLength,Thread.currentThread().getName());
+	                CappedCLUtils.checkLogicalID(cl,stringLength,Thread.currentThread().getName());
 	            }catch(BaseException e){
 	                if(e.getErrorCode() != -23 || e.getErrorCode() != -34){
 	                    throw e;

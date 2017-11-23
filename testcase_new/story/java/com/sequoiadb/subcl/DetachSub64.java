@@ -44,7 +44,7 @@ public class DetachSub64 extends SdbTestBase{
 		}catch(BaseException e){
 			Assert.fail(e.getMessage());
 		}
-        if (Commlib.isStandAlone(sdb)){
+        if (SubCLUtils.isStandAlone(sdb)){
             throw new SkipException("is standalone skip testcase");
         }
 		createMainclAndSubcl();

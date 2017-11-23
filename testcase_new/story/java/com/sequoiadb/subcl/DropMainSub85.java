@@ -49,7 +49,7 @@ public class DropMainSub85 extends SdbTestBase{
 			e.printStackTrace();
 			Assert.fail(e.getMessage());
 		}
-        if (Commlib.isStandAlone(db)){
+        if (SubCLUtils.isStandAlone(db)){
             throw new SkipException("is standalone skip testcase");
         }
 	}

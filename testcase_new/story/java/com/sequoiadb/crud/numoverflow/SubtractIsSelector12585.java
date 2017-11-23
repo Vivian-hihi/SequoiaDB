@@ -14,7 +14,7 @@ import org.testng.annotations.Test;
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.crud.numoverflow.Commlib;
+import com.sequoiadb.crud.numoverflow.NumOverflowUtils;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
 
@@ -80,13 +80,13 @@ public class SubtractIsSelector12585 extends SdbTestBase{
 		}
 		
 		cs = sdb.getCollectionSpace(SdbTestBase.csName);
-		cl = Commlib.createCL(cs, clName);
+		cl = NumOverflowUtils.createCL(cs, clName);
 		
 		String []records = {"{'no':-2147483648,'tlong':{'$numberLong':'-9223372036854775808'},'test':0}",		        
 		        "{arr:[{'$numberLong':'9223372036854775807'},-2100],obj:{a:{b:{int:2147483647,long:{'$numberLong':'9223372036854775800'}}}},test:1}",
 		        "{arr:[1,0,[2147483147,1]],obj:{a:1},test:2}"};
 
-		Commlib.insert(cl, records);
+		NumOverflowUtils.insert(cl, records);
 	}
 	
 	
@@ -97,9 +97,9 @@ public class SubtractIsSelector12585 extends SdbTestBase{
 			
 			BSONObject sValue = new BasicBSONObject();
 			sValue.put("$subtract", subValue);
-			Commlib.selectorOper(cl,matcherValue, sValue, selectorName, expRecords);
+			NumOverflowUtils.selectorOper(cl,matcherValue, sValue, selectorName, expRecords);
 			try {				
-				Commlib.checkDataType(cl,sValue,matcherValue,selectorName, expTypeToSdb,isVerifyTypeToJava,typeToJava);
+				NumOverflowUtils.checkDataType(cl,sValue,matcherValue,selectorName, expTypeToSdb,isVerifyTypeToJava,typeToJava);
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();

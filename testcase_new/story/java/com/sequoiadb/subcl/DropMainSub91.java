@@ -42,7 +42,7 @@ public class DropMainSub91 extends SdbTestBase{
 		}catch(BaseException e){
 			Assert.assertTrue(false, "connect  failed,"+SdbTestBase.coordUrl+e.getMessage());
 		}
-        if (Commlib.isStandAlone(db)){
+        if (SubCLUtils.isStandAlone(db)){
             throw new SkipException("is standalone skip testcase");
         }
 	}

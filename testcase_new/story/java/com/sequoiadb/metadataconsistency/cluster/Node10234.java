@@ -16,7 +16,7 @@ import com.sequoiadb.base.Node;
 import com.sequoiadb.base.ReplicaGroup;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.metadataconsistency.data.CommLib;
+import com.sequoiadb.metadataconsistency.data.MetaDataUtils;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 
@@ -42,16 +42,16 @@ public class Node10234 extends SdbTestBase {
 		try{
 			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 			//judge the mode and group number
-			if(CommLib.isStandAlone(sdb) || CommLib.OneGroupMode(sdb)){
+			if(MetaDataUtils.isStandAlone(sdb) || MetaDataUtils.OneGroupMode(sdb)){
 				throw new SkipException("The mode is standlone, or only one group, skip the testCase.");
 			}
-			CommLib.clearGroup(sdb, rgName);
+			MetaDataUtils.clearGroup(sdb, rgName);
 
 			ReplicaGroup rg = sdb.createReplicaGroup(rgName);
 			createNode();
 			rg.start();
 			
-			nodes = CommLib.getNodeAddress(sdb, rgName);
+			nodes = MetaDataUtils.getNodeAddress(sdb, rgName);
 		}catch(BaseException e){
 			sdb.disconnect();
 			Assert.fail(e.getMessage());
@@ -62,7 +62,7 @@ public class Node10234 extends SdbTestBase {
 	public void tearDown(){
 		try{
 			this.attachNodeForCleanEnv();
-			CommLib.clearGroup(sdb, rgName);
+			MetaDataUtils.clearGroup(sdb, rgName);
 		}catch(BaseException e){
 			Assert.fail(e.getMessage());
 		}finally{
@@ -79,7 +79,7 @@ public class Node10234 extends SdbTestBase {
 		detachNode.start();
 		
 		AttachNode attachNode = new AttachNode();
-		CommLib.sleep(random.nextInt(msec));
+		MetaDataUtils.sleep(random.nextInt(msec));
 		attachNode.start();
 		
 		if( !( detachNode.isSuccess() && attachNode.isSuccess() ) ){
@@ -87,7 +87,7 @@ public class Node10234 extends SdbTestBase {
 		}
 		
 		//check results
-		CommLib.checkRGOfCatalog(rgName);
+		MetaDataUtils.checkRGOfCatalog(rgName);
 	}
 
 	private class DetachNode extends SdbThreadBase{
@@ -145,7 +145,7 @@ public class Node10234 extends SdbTestBase {
 		try
 		{
 			for(int i = 0; i < 3; i++){
-				CommLib.createNode( sdb, rgName, 
+				MetaDataUtils.createNode( sdb, rgName, 
 						   SdbTestBase.reservedPortBegin, 
 						   SdbTestBase.reservedPortEnd, 
 						   SdbTestBase.reservedDir );

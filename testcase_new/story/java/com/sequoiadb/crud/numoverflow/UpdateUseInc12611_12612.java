@@ -92,14 +92,14 @@ public class UpdateUseInc12611_12612 extends SdbTestBase{
 		}
 		
 		cs = sdb.getCollectionSpace(SdbTestBase.csName);
-		cl = Commlib.createCL(cs, clName);
+		cl = NumOverflowUtils.createCL(cs, clName);
 		String []records = {"{'no':-2147483648,'long':{'$numberLong':'-9223372036854775808'},'test':1}",
 		        			"{'no':{a:{b:1073741823}},'string':'123','test':2}",
 		        			"{'no':[-2147483648,[2147483647],{'$numberLong':'9223372036854775807'}],test:3}",
 		        			"{'no':2147483647,'long':{'$numberLong':'9223372036854775807'},'test':4}",
 		        			"{'no':2147483647,'long':{'$numberLong':'9223372036854775807'},'test':5}"};
 
-		Commlib.insert(cl, records);
+		NumOverflowUtils.insert(cl, records);
 	}
 	
 	@Test(dataProvider = "operData")
@@ -107,10 +107,10 @@ public class UpdateUseInc12611_12612 extends SdbTestBase{
 		try{			
 			BSONObject uValue = new BasicBSONObject();
 			uValue.put(updateName, updateValue);
-			Commlib.updateOper(cl, matcherValue, uValue, "update"); 
-			Commlib.checkUpdateResult(cl, matcherValue, expRecords);
+			NumOverflowUtils.updateOper(cl, matcherValue, uValue, "update"); 
+			NumOverflowUtils.checkUpdateResult(cl, matcherValue, expRecords);
 			try {
-				Commlib.checkUpdateDataType(cl, matcherValue, updateName, expTypeToSdb, isVerifyTypeToJava, expTypeToJava);
+				NumOverflowUtils.checkUpdateDataType(cl, matcherValue, updateName, expTypeToSdb, isVerifyTypeToJava, expTypeToJava);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}

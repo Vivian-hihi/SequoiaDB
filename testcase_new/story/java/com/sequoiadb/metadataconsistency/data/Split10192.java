@@ -16,7 +16,7 @@ import org.testng.SkipException;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.metadataconsistency.data.CommLib;
+import com.sequoiadb.metadataconsistency.data.MetaDataUtils;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 
@@ -45,12 +45,12 @@ public class Split10192 extends SdbTestBase {
 		try{
 			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 			//judge the mode and group number
-			if(CommLib.isStandAlone(sdb) || CommLib.OneGroupMode(sdb)){
+			if(MetaDataUtils.isStandAlone(sdb) || MetaDataUtils.OneGroupMode(sdb)){
 				throw new SkipException("The mode is standlone or only one group, skip the testCase.");
 			}
-			CommLib.clearCS(sdb, csName);
+			MetaDataUtils.clearCS(sdb, csName);
 			
-			groupNames = CommLib.getDataGroupNames(sdb);
+			groupNames = MetaDataUtils.getDataGroupNames(sdb);
 			
 			sdb.createCollectionSpace(csName);
 			createMainCL(sdb);
@@ -64,7 +64,7 @@ public class Split10192 extends SdbTestBase {
 	@AfterClass
 	public void tearDown(){
 		try{
-			CommLib.clearCS(sdb, csName);
+			MetaDataUtils.clearCS(sdb, csName);
 		}catch(BaseException e){
 			Assert.fail(e.getMessage());
 		}finally{
@@ -77,15 +77,15 @@ public class Split10192 extends SdbTestBase {
 	@Test
 	public void test(){
 		Split split = new Split();
-		CommLib.sleep(random.nextInt(msec));
+		MetaDataUtils.sleep(random.nextInt(msec));
 		split.start();
 
 		AttachCL attachCL = new AttachCL();
-		CommLib.sleep(random.nextInt(msec));
+		MetaDataUtils.sleep(random.nextInt(msec));
 		attachCL.start();
 
 		DetachCL detachCL = new DetachCL();
-		CommLib.sleep(random.nextInt(msec));
+		MetaDataUtils.sleep(random.nextInt(msec));
 		detachCL.start();
 		
 		if( !( split.isSuccess() && attachCL.isSuccess() && detachCL.isSuccess() ) ){
@@ -93,7 +93,7 @@ public class Split10192 extends SdbTestBase {
 		}
 		
 		//check results
-		CommLib.checkCLResult(csName, clName);
+		MetaDataUtils.checkCLResult(csName, clName);
 	}
 	
 	private class Split extends SdbThreadBase{
@@ -134,7 +134,7 @@ public class Split10192 extends SdbTestBase {
 				
 				try
 				{
-				   CommLib.insertData(db, csName, mCLName);
+				   MetaDataUtils.insertData(db, csName, mCLName);
 				}catch(BaseException e){
 	   				int eCode = e.getErrorCode();
 	   				if( eCode != -135){

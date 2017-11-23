@@ -39,7 +39,7 @@ public class CreateMainCl19 extends SdbTestBase{
 		}catch(BaseException e){
 			Assert.fail("connect failed,"+SdbTestBase.coordUrl+e.getMessage());
 		}	
-        if (Commlib.isStandAlone(sdb)){
+        if (SubCLUtils.isStandAlone(sdb)){
             throw new SkipException("is standalone skip testcase");
         }
 	}

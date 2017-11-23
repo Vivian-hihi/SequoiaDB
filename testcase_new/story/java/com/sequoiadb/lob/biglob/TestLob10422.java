@@ -52,10 +52,10 @@ public class TestLob10422 extends SdbTestBase {
         }catch(BaseException e){        
             Assert.assertTrue(false,"connect  failed,"+SdbTestBase.coordUrl+e.getMessage());
         }
-        if(Commlib.isStandAlone(sdb)){
+        if(BigLobUtils.isStandAlone(sdb)){
             throw new SkipException("is standalone skip testcase");
         }
-        if(Commlib.OneGroupMode(sdb)){
+        if(BigLobUtils.OneGroupMode(sdb)){
             throw new SkipException("less two groups skip testcase");
         }
         createCL();
@@ -121,7 +121,7 @@ public class TestLob10422 extends SdbTestBase {
     private Md5Data buildAndPutLob(DBCollection cl){
         // build a lob
         int lobSize = 130 * 1024 * 1024;
-        byte[] lobBytes = Commlib.getRandomBytes(lobSize);
+        byte[] lobBytes = BigLobUtils.getRandomBytes(lobSize);
         // get it's md5, then insert
         Md5Data prevMd5 = new Md5Data();
         DBLob lob = null;
@@ -129,7 +129,7 @@ public class TestLob10422 extends SdbTestBase {
             lob = cl.createLob();
             lob.write(lobBytes);
             prevMd5.oid = lob.getID();
-            prevMd5.md5 = Commlib.getMd5(lobBytes);
+            prevMd5.md5 = BigLobUtils.getMd5(lobBytes);
         }catch(BaseException e){
             Assert.fail(e.getMessage());
         }finally{
@@ -149,21 +149,21 @@ public class TestLob10422 extends SdbTestBase {
             rLob = cl.openLob(prevMd5.oid);
             byteBuff = ByteBuffer.allocate((int)rLob.getSize());
             readLobByUnit(rLob, 1024);
-            curMd5 = Commlib.getMd5(byteBuff);
+            curMd5 = BigLobUtils.getMd5(byteBuff);
             Assert.assertEquals(curMd5, prevMd5.md5, "the lobs md5 different(Unit: 1k)");
             rLob.close();
             
             // read lob in unit of 64M
             rLob = cl.openLob(prevMd5.oid);
             readLobByUnit(rLob, 64 * 1024 * 1024);
-            curMd5 = Commlib.getMd5(byteBuff);
+            curMd5 = BigLobUtils.getMd5(byteBuff);
             Assert.assertEquals(curMd5, prevMd5.md5, "the lobs md5 different(Unit: 64M)");
             rLob.close();
             
             // read lob in unit of 128M
             rLob = cl.openLob(prevMd5.oid);
             readLobByUnit(rLob, 128 * 1024 * 1024);
-            curMd5 = Commlib.getMd5(byteBuff);
+            curMd5 = BigLobUtils.getMd5(byteBuff);
             Assert.assertEquals(curMd5, prevMd5.md5, "the lobs md5 different(Unit: 128M)");
             rLob.close();
         }catch(BaseException e){
@@ -187,8 +187,8 @@ public class TestLob10422 extends SdbTestBase {
             BSONObject endCond = new BasicBSONObject();
             cond.put("Partition", 1024);
             endCond.put("Partition", 3072);
-            String sourceRGName = Commlib.getSrcGroupName(sdb,SdbTestBase.csName,clName);
-            String targetRGName = Commlib.getSplitGroupName(sourceRGName);
+            String sourceRGName = BigLobUtils.getSrcGroupName(sdb,SdbTestBase.csName,clName);
+            String targetRGName = BigLobUtils.getSplitGroupName(sourceRGName);
             cl.split(sourceRGName, targetRGName, cond, endCond);
         }catch(BaseException e){
             Assert.fail(e.getMessage());

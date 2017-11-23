@@ -71,10 +71,10 @@ public class SelectSQL12625 extends SdbTestBase{
 			Assert.assertTrue(false,"connect %s failed,"+coordUrl+e.getMessage());
 		}
 		
-		if (Commlib.isStandAlone(sdb)){
+		if (NumOverflowUtils.isStandAlone(sdb)){
             throw new SkipException("is standalone skip testcase");
         }
-		groupNameList = Commlib.getDataGroups(sdb);
+		groupNameList = NumOverflowUtils.getDataGroups(sdb);
 		if(groupNameList.size()<2){
 			throw new SkipException("groups less than 2 skip testcase");
 		}
@@ -93,7 +93,7 @@ public class SelectSQL12625 extends SdbTestBase{
 	public void testSQL( String condition, int mValue, String[] expRecords){
 		String sql = "select " + condition + " from " + cl.getFullName() + " where test = " + mValue;
 		try {
-			Commlib.sqlOper(sdb, sql, expRecords);
+			NumOverflowUtils.sqlOper(sdb, sql, expRecords);
 		} catch (BaseException e) {
 			Assert.assertTrue(false,"many opertors data are used as selector oper failed,"+e.getMessage());
 		}
@@ -132,22 +132,22 @@ public class SelectSQL12625 extends SdbTestBase{
     }
 	
 	public DBCollection createSubCL(String clName,String skey,String []records){
-		cl = Commlib.createCL(cs, clName, "{ShardingKey:{'"+skey+"':1},ShardingType:'range',IsMainCL:true,StrictDataMode:true}");
+		cl = NumOverflowUtils.createCL(cs, clName, "{ShardingKey:{'"+skey+"':1},ShardingType:'range',IsMainCL:true,StrictDataMode:true}");
 		String normalCL = clName+"_1";
 		String rangeCL = clName+"_2";
 		String hashCL = clName+"_3";
 		
 		//create CL
-		DBCollection cl1 = Commlib.createCL(cs,normalCL,"{StrictDataMode:true}");
-		DBCollection cl2 = Commlib.createCL(cs, rangeCL, "{ShardingKey:{'test':1},ShardingType:'range',StrictDataMode:true,Group:'"+groupNameList.get(0)+"'}");
-		DBCollection cl3 = Commlib.createCL(cs, hashCL, "{ShardingKey:{'test':1},ShardingType:'hash',StrictDataMode:true,Group:'"+groupNameList.get(0)+"'}");
+		DBCollection cl1 = NumOverflowUtils.createCL(cs,normalCL,"{StrictDataMode:true}");
+		DBCollection cl2 = NumOverflowUtils.createCL(cs, rangeCL, "{ShardingKey:{'test':1},ShardingType:'range',StrictDataMode:true,Group:'"+groupNameList.get(0)+"'}");
+		DBCollection cl3 = NumOverflowUtils.createCL(cs, hashCL, "{ShardingKey:{'test':1},ShardingType:'hash',StrictDataMode:true,Group:'"+groupNameList.get(0)+"'}");
 		
 		//mainCL attach cl
 		this.attachCL(cl, cl1.getFullName(), "test", 0, 5);
 		this.attachCL(cl, cl2.getFullName(), "test", 5, 10);
 		this.attachCL(cl, cl3.getFullName(), "test", 10, 15);
 		
-		Commlib.insert(cl, records);
+		NumOverflowUtils.insert(cl, records);
 		//split cl
 		try {
 			cl2.split(groupNameList.get(0), groupNameList.get(1), 50);

@@ -11,7 +11,7 @@ import org.testng.annotations.Test;
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.crud.numoverflow.Commlib;
+import com.sequoiadb.crud.numoverflow.NumOverflowUtils;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
 
@@ -43,7 +43,7 @@ public class SubtractIsMatcher12598 extends SdbTestBase{
 		}
 	
 		cs = sdb.getCollectionSpace(SdbTestBase.csName);
-		cl = Commlib.createCL(cs, clName);
+		cl = NumOverflowUtils.createCL(cs, clName);
 		
 		String []records = {"{'a':-214748364,long:{'$numberLong':'-1024819115206086201'},"
 				+ "arr:[{'$numberLong':'-9223372036854775808'},3],obj:{a:{'$numberLong':'922337203685'}},"
@@ -51,7 +51,7 @@ public class SubtractIsMatcher12598 extends SdbTestBase{
 				"{a:1,long:123456,arr:[{'$numberLong':'9223372036854775800'},3],"
 				+ "obj:{a:{'$numberLong':'9223372036854775807'}},mobj:123}"};
 
-		Commlib.insert(cl, records);
+		NumOverflowUtils.insert(cl, records);
 	}	
 
 	@Test
@@ -69,7 +69,7 @@ public class SubtractIsMatcher12598 extends SdbTestBase{
 					+ "arr:[{'$numberLong':'-9223372036854775808'},3],obj:{a:{'$numberLong':'922337203685'}},"
 					+ "mobj:{arr:[1,3,2147483647]},b:1}"};					
 			String indexKey = "{a:1,long:-1,arr:1}";
-			Commlib.multiFieldOperAsMatcher(cl,matcher, expRecords, indexKey);		
+			NumOverflowUtils.multiFieldOperAsMatcher(cl,matcher, expRecords, indexKey);		
 		}catch(BaseException e){			
 			Assert.assertTrue(false,"subtract is used as matcher oper failed,"+e.getMessage());
 		}	

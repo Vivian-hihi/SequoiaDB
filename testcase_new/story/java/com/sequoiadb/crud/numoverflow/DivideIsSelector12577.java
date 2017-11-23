@@ -12,7 +12,7 @@ import org.testng.annotations.Test;
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.crud.numoverflow.Commlib;
+import com.sequoiadb.crud.numoverflow.NumOverflowUtils;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
 
@@ -45,11 +45,11 @@ public class DivideIsSelector12577 extends SdbTestBase{
 		
 		String clOption = "{ReplSize:0,Compressed:true, StrictDataMode:false}";
 		cs = sdb.getCollectionSpace(SdbTestBase.csName);
-		cl = Commlib.createCL(cs, clName, clOption);
+		cl = NumOverflowUtils.createCL(cs, clName, clOption);
 		
 		String []records = {"{'no':-2147483648,'tlong':{'$numberLong':'-9223372036854775808'},"
 								+ "'arr':[1,[1,{'$numberLong':'-9223372036854775808'}],2],obj:{a:{b:-2147483648}}}"};
-		Commlib.insert(cl, records);
+		NumOverflowUtils.insert(cl, records);
 	}
 	
 	@Test
@@ -63,7 +63,7 @@ public class DivideIsSelector12577 extends SdbTestBase{
 			String selector = "{no:{$abs:1},tlong:{$abs:1},'obj.a.b':{$abs:1},_id:{$include:0}}";
 			String []expRecords = {"{'no':2147483648,'tlong':{'$decimal':'9223372036854775808'},"
 					+ "'arr':[1,[1,{'$numberLong':'-9223372036854775808'}],2],obj:{a:{b:2147483648}}}"};			
-			Commlib.multipleFieldOper(cl, selector, expRecords);
+			NumOverflowUtils.multipleFieldOper(cl, selector, expRecords);
 		}catch(BaseException e){			
 			Assert.assertTrue(false,"divide is used as selector oper failed,"+e.getMessage()+e.getErrorCode());
 		}		

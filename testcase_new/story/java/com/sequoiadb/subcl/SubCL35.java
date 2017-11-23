@@ -55,7 +55,7 @@ public class SubCL35 extends SdbTestBase {
 			subCL = commCS.createCollection(subCLName,
 					(BSONObject) JSON.parse("{ShardingKey:{\"tx_id\":1},ShardingType:\"hash\"}"));
 		} catch (BaseException e) {
-			Assert.fail("TestCase35 setUp error, error description:" + e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
+			Assert.fail("TestCase35 setUp error, error description:" + e.getMessage()+"\r\n"+SubCLUtils2.getKeyStack(e,this));
 		}
 
 	}
@@ -74,14 +74,14 @@ public class SubCL35 extends SdbTestBase {
 			mainCL.insert(bobj);
 
 			// 比对结果
-			if (!Utils.isCollectionContainThisJSON(subCL, bobj.toString())) {
+			if (!SubCLUtils2.isCollectionContainThisJSON(subCL, bobj.toString())) {
 				Assert.fail("check resault not pass");
 			}
-			if (!Utils.isCollectionContainThisJSON(mainCL, bobj.toString())) {
+			if (!SubCLUtils2.isCollectionContainThisJSON(mainCL, bobj.toString())) {
 				Assert.fail("check resault not pass");
 			}
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
+			Assert.fail(e.getMessage()+"\r\n"+SubCLUtils2.getKeyStack(e,this));
 		} finally {
 			if (dbc != null) {
 				dbc.close();
@@ -95,7 +95,7 @@ public class SubCL35 extends SdbTestBase {
 			commCS.dropCollection(subCLName);
 			commCS.dropCollection(mainCLName);
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
+			Assert.fail(e.getMessage()+"\r\n"+SubCLUtils2.getKeyStack(e,this));
 		} finally {
 			if (sdb != null) {
 				sdb.disconnect();

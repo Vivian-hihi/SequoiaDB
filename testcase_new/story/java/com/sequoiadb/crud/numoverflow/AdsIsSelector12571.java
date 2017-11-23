@@ -11,7 +11,7 @@ import org.testng.annotations.Test;
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.crud.numoverflow.Commlib;
+import com.sequoiadb.crud.numoverflow.NumOverflowUtils;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
 
@@ -45,10 +45,10 @@ public class AdsIsSelector12571 extends SdbTestBase{
 		String clOption = "{ShardingKey:{no:1},ShardingType:'hash',Partition:1024,"
 				+ "ReplSize:0,Compressed:true, StrictDataMode:false}";
 		cs = sdb.getCollectionSpace(SdbTestBase.csName);
-		cl = Commlib.createCL(cs, clName, clOption);
+		cl = NumOverflowUtils.createCL(cs, clName, clOption);
 		
 		String []records = {"{'no':-2147483648,'tlong':{'$numberLong':'-9223372036854775808'},'arr':[-2147483648,{'$numberLong':'-9223372036854775808'}]}"};
-		Commlib.insert(cl, records);
+		NumOverflowUtils.insert(cl, records);
 	}
 	
 	@Test
@@ -56,7 +56,7 @@ public class AdsIsSelector12571 extends SdbTestBase{
 		String selector = "{no:{$abs:1},tlong:{$abs:1},arr:{$abs:1},_id:{$include:0}}"; 
 		String []expRecords = {"{'no':2147483648,'tlong':{'$decimal':'9223372036854775808'},'arr':[2147483648,{'$decimal':'9223372036854775808'}]}"};
        
-		Commlib.multipleFieldOper(cl, selector, expRecords);		
+		NumOverflowUtils.multipleFieldOper(cl, selector, expRecords);		
 	}
 			
 	@AfterClass

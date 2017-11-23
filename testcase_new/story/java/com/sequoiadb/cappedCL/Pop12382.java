@@ -44,7 +44,7 @@ public class Pop12382 extends SdbTestBase{
 			boolean isCapped = true;
 			sdb = new Sequoiadb(SdbTestBase.coordUrl, "","");
 			sdb.setSessionAttr((BSONObject)JSON.parse("{PreferedInstance:'M'}"));
-			cappedCL = Commlib.createCL(sdb, cappedCSName, cappedCLName, isCapped);
+			cappedCL = CappedCLUtils.createCL(sdb, cappedCSName, cappedCLName, isCapped);
 			int recordNums = 10;
 			insertRecords(recordNums);
 		}catch(BaseException e) {

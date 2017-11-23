@@ -15,7 +15,7 @@ import org.testng.annotations.Test;
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.crud.numoverflow.Commlib;
+import com.sequoiadb.crud.numoverflow.NumOverflowUtils;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
 
@@ -94,10 +94,10 @@ public class UpsertAsInc12616 extends SdbTestBase{
 		
 		String clOption = "{ShardingKey:{no:1},ReplSize:0,Compressed:true, StrictDataMode:false}";
 		cs = sdb.getCollectionSpace(SdbTestBase.csName);
-		cl = Commlib.createCL(cs, clName, clOption);
+		cl = NumOverflowUtils.createCL(cs, clName, clOption);
 		
 		String []records = {"{no:648,a:{'$numberLong':'-9223372036854775808'},test:8}"};		        
-		Commlib.insert(cl, records);
+		NumOverflowUtils.insert(cl, records);
 	}
 	
 	//@Test(dataProvider = "operData")
@@ -108,12 +108,12 @@ public class UpsertAsInc12616 extends SdbTestBase{
 			BSONObject matcher = new BasicBSONObject();			
 			updateValue.put(updateName, incValue);			
 			matcher.put(updateName, matcherValue);		
-			Commlib.upsertOper(cl, matcher, updateValue, setInsertValue, "upsertShardingKey");
-			Commlib.checkUpdateResult(cl, setInsertValue, expRecords);
+			NumOverflowUtils.upsertOper(cl, matcher, updateValue, setInsertValue, "upsertShardingKey");
+			NumOverflowUtils.checkUpdateResult(cl, setInsertValue, expRecords);
 			//TODO:SEQUOIADBMAINSTREAM-2795
 			if(!updateName.contains(".")){
 				try {				
-					Commlib.checkUpdateDataType(cl, setInsertValue, updateName, expTypeToSdb, 
+					NumOverflowUtils.checkUpdateDataType(cl, setInsertValue, updateName, expTypeToSdb, 
 							isVerifyTypeToJava, typeToJava);				
 				} catch (Exception e) {
 					// TODO Auto-generated catch block
@@ -131,8 +131,8 @@ public class UpsertAsInc12616 extends SdbTestBase{
 			BSONObject updateValue = new BasicBSONObject();
 			BSONObject matcher0 = (BSONObject) JSON.parse(matcher);			
 			updateValue.put(updateName, incValue);					
-			Commlib.upsertOper(cl, matcher0, updateValue, setInsertValue, "upsertShardingKey");
-			Commlib.checkUpdateResult(cl, setInsertValue, expRecords);
+			NumOverflowUtils.upsertOper(cl, matcher0, updateValue, setInsertValue, "upsertShardingKey");
+			NumOverflowUtils.checkUpdateResult(cl, setInsertValue, expRecords);
 		}catch(BaseException e){			
 			Assert.assertTrue(false,"upsert numeric value overflowoper failed,"+e.getMessage()+e.getErrorCode());
 		}		

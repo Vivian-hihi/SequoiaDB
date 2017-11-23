@@ -49,10 +49,10 @@ public class DetachAndInsert66 extends SdbTestBase {
         Sequoiadb tmpdb = null;
         try {
             tmpdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
-            if ( Commlib.isStandAlone( tmpdb ) ) {
+            if ( SubCLUtils.isStandAlone( tmpdb ) ) {
                 throw new SkipException( "is standalone skip testcase" );
             }
-            addressList = Commlib.getNodeAddress( tmpdb, "SYSCoord" );
+            addressList = SubCLUtils.getNodeAddress( tmpdb, "SYSCoord" );
             sdb1 = new Sequoiadb( addressList.get( 0 ), "", "" );
             sdb2 = new Sequoiadb( addressList.get( 1 ), "", "" );
         } catch ( BaseException e ) {

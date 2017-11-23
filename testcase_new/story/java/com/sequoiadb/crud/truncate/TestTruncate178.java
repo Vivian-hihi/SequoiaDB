@@ -42,9 +42,9 @@ public class TestTruncate178 extends SdbTestBase {
             Assert.fail(e.getMessage());
         }
         try{
-            DBCollection cl = Commlib.createCL(sdb, myCsName, clName);
+            DBCollection cl = TruncateUtils.createCL(sdb, myCsName, clName);
             // doing insert
-            Commlib.insertData(cl);
+            TruncateUtils.insertData(cl);
         }catch(BaseException e){
             Assert.fail(e.getMessage());
         }

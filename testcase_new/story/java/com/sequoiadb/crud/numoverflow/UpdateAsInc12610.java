@@ -14,7 +14,7 @@ import org.testng.annotations.Test;
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.crud.numoverflow.Commlib;
+import com.sequoiadb.crud.numoverflow.NumOverflowUtils;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
 
@@ -79,12 +79,12 @@ public class UpdateAsInc12610 extends SdbTestBase{
 		
 		String clOption = "{ReplSize:0,Compressed:true, StrictDataMode:false}";
 		cs = sdb.getCollectionSpace(SdbTestBase.csName);
-		cl = Commlib.createCL(cs, clName, clOption);
+		cl = NumOverflowUtils.createCL(cs, clName, clOption);
 		
 		String []records = {"{no:648,a:{'$numberLong':'-9223372036854775808'},test:0}",
 		        "{no:[-2147483648,{'$numberLong':'-8223372036854775800'}],a:[1,[2147483648],3],test:1}",
 		        "{no:2147,a:[1,{a:{b:{c:{'$numberLong':'9223372036854775807'}}}},2],test:2}"};
-		Commlib.insert(cl, records);
+		NumOverflowUtils.insert(cl, records);
 	}
 	
 	@Test(dataProvider = "operData")
@@ -93,12 +93,12 @@ public class UpdateAsInc12610 extends SdbTestBase{
 		try{			
 			BSONObject updateValue = new BasicBSONObject();
 			updateValue.put(updateName, incValue);			
-			Commlib.updateOper(cl, matcherValue, updateValue, "update");
-			Commlib.checkUpdateResult(cl, matcherValue, expRecords);
+			NumOverflowUtils.updateOper(cl, matcherValue, updateValue, "update");
+			NumOverflowUtils.checkUpdateResult(cl, matcherValue, expRecords);
 			//TODO:SEQUOIADBMAINSTREAM-2795
 			if(!updateName.contains(".")){
 				try {				
-					Commlib.checkUpdateDataType(cl, matcherValue, updateName, expTypeToSdb, 
+					NumOverflowUtils.checkUpdateDataType(cl, matcherValue, updateName, expTypeToSdb, 
 							isVerifyTypeToJava, typeToJava);				
 				} catch (Exception e) {
 					// TODO Auto-generated catch block

@@ -65,20 +65,20 @@ public class SelectSQL12619 extends SdbTestBase{
 		
 		cs = sdb.getCollectionSpace(SdbTestBase.csName);
 		String clOption = "{ShardingKey:{no:1},ReplSize:0,Compressed:true, StrictDataMode:false}";
-		cl = Commlib.createCL(cs, clName, clOption);
+		cl = NumOverflowUtils.createCL(cs, clName, clOption);
 		String []records = {"{'no':-2147483648,'long':{'$numberLong':'-9223372036854775808'},'test':1}",
 				"{'no':2147483648,'long':{'$numberLong':'8223372036854775807'},'test':2}",
     			"{'no':1024,'long':{'$numberLong':'46116860387904'},'test':3}"};
 
 
-		Commlib.insert(cl, records);
+		NumOverflowUtils.insert(cl, records);
 	}
 	
 	@Test(dataProvider = "operData")
 	public void testSQL(String operExpression, String matcher,String[] expRecords){
 		try{
 			String sql = "select "+operExpression +" from "+ cl.getFullName() + " where " + matcher;
-			Commlib.sqlOper(sdb, sql, expRecords);
+			NumOverflowUtils.sqlOper(sdb, sql, expRecords);
 		}catch(BaseException e){			
 			Assert.assertTrue(false,"select oper failed,"+e.getMessage());
 		}		

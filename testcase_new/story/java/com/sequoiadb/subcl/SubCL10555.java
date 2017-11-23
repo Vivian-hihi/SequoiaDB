@@ -58,7 +58,7 @@ public class SubCL10555 extends SdbTestBase {
 			mainCL.attachCollection(subCL.getFullName(),
 					(BSONObject) JSON.parse("{LowBound:{sk:100},UpBound:{sk:200}}"));
 		} catch (BaseException e) {
-			Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
+			Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage()+"\r\n"+SubCLUtils2.getKeyStack(e,this));
 		}
 
 	}
@@ -72,7 +72,7 @@ public class SubCL10555 extends SdbTestBase {
 			resaults.add("mainCL split success"); // 主表同步切分成功
 		} catch (BaseException e) {
 			if (e.getErrorCode() != -246) {
-				resaults.add(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this)); // 主表同步切分错误码不符合预期
+				resaults.add(e.getMessage()+"\r\n"+SubCLUtils2.getKeyStack(e,this)); // 主表同步切分错误码不符合预期
 			}
 		}
 
@@ -81,7 +81,7 @@ public class SubCL10555 extends SdbTestBase {
 			resaults.add("mainCL splitAsync success"); // 主表异步切分成功
 		} catch (BaseException e) {
 			if (e.getErrorCode() != -246) {
-				resaults.add(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this)); // 主表异步切分错误码不符合预期
+				resaults.add(e.getMessage()+"\r\n"+SubCLUtils2.getKeyStack(e,this)); // 主表异步切分错误码不符合预期
 			}
 		}
 
@@ -97,7 +97,7 @@ public class SubCL10555 extends SdbTestBase {
 			commCS.dropCollection(subCLName);
 			commCS.dropCollection(mainCLName);
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
+			Assert.fail(e.getMessage()+"\r\n"+SubCLUtils2.getKeyStack(e,this));
 		} finally {
 			if (sdb != null) {
 				sdb.disconnect();

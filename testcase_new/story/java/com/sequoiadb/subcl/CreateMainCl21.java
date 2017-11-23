@@ -44,10 +44,10 @@ public class CreateMainCl21 extends SdbTestBase{
 		}catch(BaseException e){
 			Assert.fail("connect  failed,"+SdbTestBase.coordUrl+e.getMessage());
 		}
-        if (Commlib.isStandAlone(sdb)){
+        if (SubCLUtils.isStandAlone(sdb)){
             throw new SkipException("is standalone skip testcase");
         }	        
-        if (Commlib.OneGroupMode(sdb)){
+        if (SubCLUtils.OneGroupMode(sdb)){
             throw new SkipException("less two groups skip testcase");
         }
 	}
@@ -72,7 +72,7 @@ public class CreateMainCl21 extends SdbTestBase{
 	
 	@Test
 	public void testCreateCsByAppointDomain(){
-		ArrayList<String> dataGroup = Commlib.getDataGroups(sdb);
+		ArrayList<String> dataGroup = SubCLUtils.getDataGroups(sdb);
 		//创建domain
 		createDomain(dataGroup);
 		//创建cs在domain中

@@ -14,7 +14,7 @@ import com.sequoiadb.base.Node;
 import com.sequoiadb.base.ReplicaGroup;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.metadataconsistency.data.CommLib;
+import com.sequoiadb.metadataconsistency.data.MetaDataUtils;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 
@@ -40,13 +40,13 @@ public class Node10233 extends SdbTestBase {
 		try {
 			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 			// judge the mode and group number
-			if (CommLib.isStandAlone(sdb) || CommLib.OneGroupMode(sdb)) {
+			if (MetaDataUtils.isStandAlone(sdb) || MetaDataUtils.OneGroupMode(sdb)) {
 				throw new SkipException("The mode is standlone, or only one group, skip the testCase.");
 			}
-			CommLib.clearGroup(sdb, rgName);
+			MetaDataUtils.clearGroup(sdb, rgName);
 
 			sdb.createReplicaGroup(rgName);
-			CommLib.createNode(sdb, rgName, SdbTestBase.reservedPortBegin, SdbTestBase.reservedPortEnd,
+			MetaDataUtils.createNode(sdb, rgName, SdbTestBase.reservedPortBegin, SdbTestBase.reservedPortEnd,
 					SdbTestBase.reservedDir);
 			ReplicaGroup rgDB = sdb.getReplicaGroup(rgName);
 			rgDB.start();
@@ -60,7 +60,7 @@ public class Node10233 extends SdbTestBase {
 	@AfterClass
 	public void tearDown() {
 		try {
-			CommLib.clearGroup(sdb, rgName);
+			MetaDataUtils.clearGroup(sdb, rgName);
 		} catch (BaseException e) {
 			Assert.fail(e.getMessage());
 		} finally {
@@ -76,7 +76,7 @@ public class Node10233 extends SdbTestBase {
 		createNode.start();
 
 		RemoveNode removeNode = new RemoveNode();
-		CommLib.sleep(random.nextInt(msec));
+		MetaDataUtils.sleep(random.nextInt(msec));
 		removeNode.start();
 
 		if (!(createNode.isSuccess() && removeNode.isSuccess())) {
@@ -84,7 +84,7 @@ public class Node10233 extends SdbTestBase {
 		}
 
 		// check results
-		CommLib.checkRGOfCatalog(rgName);
+		MetaDataUtils.checkRGOfCatalog(rgName);
 	}
 
 	private class CreateNode extends SdbThreadBase {
@@ -94,7 +94,7 @@ public class Node10233 extends SdbTestBase {
 			try {
 				db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 
-				CommLib.createNode(db, rgName, SdbTestBase.reservedPortBegin, SdbTestBase.reservedPortEnd,
+				MetaDataUtils.createNode(db, rgName, SdbTestBase.reservedPortBegin, SdbTestBase.reservedPortEnd,
 						SdbTestBase.reservedDir);
 				ReplicaGroup rgDB = db.getReplicaGroup(rgName);
 				rgDB.start();

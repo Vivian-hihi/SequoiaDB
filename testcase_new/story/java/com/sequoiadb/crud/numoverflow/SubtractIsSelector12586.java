@@ -12,7 +12,7 @@ import org.testng.annotations.Test;
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.crud.numoverflow.Commlib;
+import com.sequoiadb.crud.numoverflow.NumOverflowUtils;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
 
@@ -44,13 +44,13 @@ public class SubtractIsSelector12586 extends SdbTestBase{
 		}		
 		
 		cs = sdb.getCollectionSpace(SdbTestBase.csName);
-		cl = Commlib.createCL(cs, clName);
+		cl = NumOverflowUtils.createCL(cs, clName);
 		
 		String []records = {"{'no':-2147483648,'tlong':{'$numberLong':'9223372036854775807'},"
 								+ "'arr':[1,3],'arr1':[1,[1,{'$numberLong':'9223372036854775800'}],2],"
 								+ "obj:{a:{b:[4,{'$numberLong':'-9223372036854775808'}]}},obj1:{a:{b:-2}}}"};
 
-		Commlib.insert(cl, records);
+		NumOverflowUtils.insert(cl, records);
 	}
 	
 	@Test
@@ -70,7 +70,7 @@ public class SubtractIsSelector12586 extends SdbTestBase{
 					+ "'tlong':{'$decimal':'9223372036854775808'},arr:[{'$decimal':'9223372036854775808'}],"
 					+ "'arr1':[],obj:{a:{b:[{'$decimal':'-9223372036854775809'}]}},"
 					+ "obj1:{a:{b:{'$decimal':'-9223372036854775809'}}}}"};	 
-			Commlib.multipleFieldOper(cl, selector, expRecords);
+			NumOverflowUtils.multipleFieldOper(cl, selector, expRecords);
 		}catch(BaseException e){			
 			Assert.assertTrue(false,"subtract is used as selector oper failed,"+e.getMessage()+e.getErrorCode());
 		}		

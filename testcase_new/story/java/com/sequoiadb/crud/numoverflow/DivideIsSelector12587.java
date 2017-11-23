@@ -71,14 +71,14 @@ public class DivideIsSelector12587 extends SdbTestBase{
 		}
 		
 		cs = sdb.getCollectionSpace(SdbTestBase.csName);
-		cl = Commlib.createCL(cs, clName);
+		cl = NumOverflowUtils.createCL(cs, clName);
 		
 		String []records = {"{'no':-2147483648,'tlong':{'$numberLong':'-9223372036854775808'},'test':0}",
 		        			"{'no':2147483647,'long':{'$numberLong':'9223372036854775807'},'test':1}",
 		        			"{'no':[2147483147,{'$numberLong':'8223372036854775807'}],'test':2}",
 		        			"{'no':[[1024]],obj:{a:{b:2147483147}},'test':3}"};
 
-		Commlib.insert(cl, records);
+		NumOverflowUtils.insert(cl, records);
 	}
 	
 	@Test(dataProvider = "operData")
@@ -86,9 +86,9 @@ public class DivideIsSelector12587 extends SdbTestBase{
 		try{			
 			BSONObject mValue = new BasicBSONObject();
 			mValue.put("$divide", mulValue);
-			Commlib.selectorOper(cl,matcherValue, mValue, selectorName, expRecords);
+			NumOverflowUtils.selectorOper(cl,matcherValue, mValue, selectorName, expRecords);
 			try {
-				Commlib.checkDataType(cl, mValue, matcherValue, selectorName, expType, isVerifyTypeToJava, expTypeToJava);
+				NumOverflowUtils.checkDataType(cl, mValue, matcherValue, selectorName, expType, isVerifyTypeToJava, expTypeToJava);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}

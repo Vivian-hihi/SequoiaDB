@@ -64,12 +64,12 @@ public class DivideIsMatcher12605_12656 extends SdbTestBase{
 		}
 		
 		cs = sdb.getCollectionSpace(SdbTestBase.csName);
-		cl = Commlib.createCL(cs, clName);
+		cl = NumOverflowUtils.createCL(cs, clName);
 		String []records = {"{'no1':-2147483648,'long':{'$numberLong':'-9223372036854775808'}}",
 		        			"{'no2':{a:{b:-2147483648}},'string':'123'}",
 		        			"{'no3':[2147483647,{'$numberLong':'9223372036854775807'}]}"};
 
-		Commlib.insert(cl, records);
+		NumOverflowUtils.insert(cl, records);
 	}
 	
 	@Test(dataProvider = "operData")
@@ -78,7 +78,7 @@ public class DivideIsMatcher12605_12656 extends SdbTestBase{
 			BSONObject mValue = new BasicBSONObject();
 			mValue.put("$divide", matcherValue);
 			mValue.put("$et", resultValue);
-			Commlib.matcherOper(cl, matcherName, mValue, expRecords);
+			NumOverflowUtils.matcherOper(cl, matcherName, mValue, expRecords);
 			
 		}catch(BaseException e){			
 			Assert.assertTrue(false,"divide data is used as matcher oper failed,"+e.getMessage());

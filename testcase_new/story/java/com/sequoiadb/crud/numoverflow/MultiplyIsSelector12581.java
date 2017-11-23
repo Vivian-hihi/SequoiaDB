@@ -61,11 +61,11 @@ public class MultiplyIsSelector12581 extends SdbTestBase{
 		}
 		
 		cs = sdb.getCollectionSpace(SdbTestBase.csName);
-		cl = Commlib.createCL(cs, clName, "{StrictDataMode:true}");
+		cl = NumOverflowUtils.createCL(cs, clName, "{StrictDataMode:true}");
 		
 		String []records = {"{'no':-2147483648,'tlong':{'$numberLong':'-9223372036854775808'},'arr':[-2147483648,-1.7e+304]}"};
 
-		Commlib.insert(cl, records);
+		NumOverflowUtils.insert(cl, records);
 	}
 	
 	@Test(dataProvider = "operData")
@@ -75,7 +75,7 @@ public class MultiplyIsSelector12581 extends SdbTestBase{
 			BSONObject selector = new BasicBSONObject();
 			mValue.put("$multiply", mulValue);
 			selector.put(selectorName, mValue);
-			Commlib.isStrictDataTypeOper(cl, selector);
+			NumOverflowUtils.isStrictDataTypeOper(cl, selector);
 			
 		}catch(BaseException e){			
 			Assert.assertTrue(false,"multiply data is used as selector oper failed,"+e.getMessage());

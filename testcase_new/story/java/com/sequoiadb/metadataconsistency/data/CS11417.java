@@ -11,7 +11,7 @@ import org.testng.SkipException;
 
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.metadataconsistency.data.CommLib;
+import com.sequoiadb.metadataconsistency.data.MetaDataUtils;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 
@@ -35,10 +35,10 @@ public class CS11417 extends SdbTestBase {
 		try{
 			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 			//judge the mode
-			if(CommLib.isStandAlone(sdb)){
+			if(MetaDataUtils.isStandAlone(sdb)){
 				throw new SkipException("The mode is standlone, skip the testCase.");
 			}
-			CommLib.clearCS(sdb, csName);
+			MetaDataUtils.clearCS(sdb, csName);
 			this.createCS();
 		}catch(BaseException e){
 			sdb.disconnect();
@@ -50,7 +50,7 @@ public class CS11417 extends SdbTestBase {
 	public void tearDown(){
 		try{
 			this.createCS();
-			CommLib.clearCS(sdb, csName);
+			MetaDataUtils.clearCS(sdb, csName);
 		}catch(BaseException e){
 			Assert.fail(e.getMessage());
 		}finally{
@@ -70,7 +70,7 @@ public class CS11417 extends SdbTestBase {
 		}
 
 		//check results
-		CommLib.checkCSOfCatalog(csName);
+		MetaDataUtils.checkCSOfCatalog(csName);
 	}
 
 	private class DropCS extends SdbThreadBase{

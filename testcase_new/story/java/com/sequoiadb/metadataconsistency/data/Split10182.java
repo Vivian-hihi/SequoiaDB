@@ -17,7 +17,7 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.metadataconsistency.data.CommLib;
+import com.sequoiadb.metadataconsistency.data.MetaDataUtils;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 
@@ -44,16 +44,16 @@ public class Split10182 extends SdbTestBase {
 		try{
 			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 			//judge the mode and group number
-			if(CommLib.isStandAlone(sdb) || CommLib.OneGroupMode(sdb)){
+			if(MetaDataUtils.isStandAlone(sdb) || MetaDataUtils.OneGroupMode(sdb)){
 				throw new SkipException("The mode is standlone or only one group, skip the testCase.");
 			}
-			CommLib.clearCS(sdb, csName);
+			MetaDataUtils.clearCS(sdb, csName);
 			
-			groupNames = CommLib.getDataGroupNames(sdb);
+			groupNames = MetaDataUtils.getDataGroupNames(sdb);
 			
 			sdb.createCollectionSpace(csName);
 			createCL(sdb, groupNames.get(0));
-			CommLib.insertData(sdb, csName, clName);
+			MetaDataUtils.insertData(sdb, csName, clName);
 		}catch(BaseException e){
 			sdb.disconnect();
 			Assert.fail(e.getMessage());
@@ -63,7 +63,7 @@ public class Split10182 extends SdbTestBase {
 	@AfterClass
 	public void tearDown(){
 		try{
-			CommLib.clearCS(sdb, csName);
+			MetaDataUtils.clearCS(sdb, csName);
 		}catch(BaseException e){
 			Assert.fail(e.getMessage());
 		}finally{
@@ -79,7 +79,7 @@ public class Split10182 extends SdbTestBase {
 		Split split = new Split();
 		split.start();
 		
-		CommLib.sleep(random.nextInt(msec));
+		MetaDataUtils.sleep(random.nextInt(msec));
 		split.start();
 		
 		if( !split.isSuccess() ){
@@ -87,7 +87,7 @@ public class Split10182 extends SdbTestBase {
 		}
 		
 		//check results
-		CommLib.checkCLResult(csName, clName);
+		MetaDataUtils.checkCLResult(csName, clName);
 	}
 	
 	private class Split extends SdbThreadBase{

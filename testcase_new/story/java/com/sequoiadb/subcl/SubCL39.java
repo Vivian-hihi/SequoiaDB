@@ -46,7 +46,7 @@ public class SubCL39 extends SdbTestBase {
 			mainCL = commCS.createCollection(mainCLName,
 					(BSONObject) JSON.parse("{IsMainCL:true,ShardingKey:{\"alph\":1}}"));
 		} catch (BaseException e) {
-			Assert.fail("TestCase39 setUp error, error description:" + e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
+			Assert.fail("TestCase39 setUp error, error description:" + e.getMessage()+"\r\n"+SubCLUtils2.getKeyStack(e,this));
 		}
 
 	}
@@ -58,7 +58,7 @@ public class SubCL39 extends SdbTestBase {
 			mainCL.attachCollection(commCS.getName() + "." + subCLName,
 					(BSONObject) JSON.parse("{LowBound:{\"alph\":110},UpBound:{\"alph\":210}}"));
 		} catch (BaseException e) {
-			Assert.assertEquals(e.getErrorCode(), -23, e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
+			Assert.assertEquals(e.getErrorCode(), -23, e.getMessage()+"\r\n"+SubCLUtils2.getKeyStack(e,this));
 			return;
 		}
 		Assert.fail(this.getClass().getName() + " dose not pass, mainCL attach a non-existing subCL success");
@@ -70,7 +70,7 @@ public class SubCL39 extends SdbTestBase {
 		try {
 			commCS.dropCollection(mainCLName);
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
+			Assert.fail(e.getMessage()+"\r\n"+SubCLUtils2.getKeyStack(e,this));
 		} finally {
 			if (sdb != null) {
 				sdb.disconnect();

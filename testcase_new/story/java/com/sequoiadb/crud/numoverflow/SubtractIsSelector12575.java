@@ -14,7 +14,7 @@ import org.testng.annotations.Test;
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.crud.numoverflow.Commlib;
+import com.sequoiadb.crud.numoverflow.NumOverflowUtils;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
 
@@ -62,10 +62,10 @@ public class SubtractIsSelector12575 extends SdbTestBase{
 		
 		String clOption = "{StrictDataMode:true}";
 		cs = sdb.getCollectionSpace(SdbTestBase.csName);
-		cl = Commlib.createCL(cs, clName, clOption);
+		cl = NumOverflowUtils.createCL(cs, clName, clOption);
 		
 		String []records = {"{'no':-2147483648,'tlong':{'$numberLong':'-9223372036854775808'},'arr':[2147483647,235]}"};
-		Commlib.insert(cl, records);
+		NumOverflowUtils.insert(cl, records);
 	}
 	
 	@Test(dataProvider = "operData")
@@ -75,7 +75,7 @@ public class SubtractIsSelector12575 extends SdbTestBase{
 			BSONObject selectorValue = new BasicBSONObject();			
 			selectorValue.put("$subtract", sValue);
 			selector.put(selectorName, selectorValue);		
-			Commlib.isStrictDataTypeOper(cl, selector);	
+			NumOverflowUtils.isStrictDataTypeOper(cl, selector);	
 		}catch(BaseException e){			
 			Assert.assertTrue(false,"subtract is used as selector oper failed,"+e.getMessage());
 		}		

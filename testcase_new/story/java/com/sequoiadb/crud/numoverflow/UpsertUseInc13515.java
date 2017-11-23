@@ -66,11 +66,11 @@ public class UpsertUseInc13515 extends SdbTestBase {
 		
 		String clOption = "{StrictDataMode:true}";
 		cs = sdb.getCollectionSpace(SdbTestBase.csName);
-		cl = Commlib.createCL(cs, clName, clOption);
+		cl = NumOverflowUtils.createCL(cs, clName, clOption);
 		
 		String []records = {"{no:-2147483648}"
 						  + "{no:{'$numberLong':'-9223372036854775808'}}"};		        
-		Commlib.insert(cl, records);
+		NumOverflowUtils.insert(cl, records);
 	}
 	
 	@Test(dataProvider = "operData")
@@ -80,7 +80,7 @@ public class UpsertUseInc13515 extends SdbTestBase {
 			incValue.put(upsertName, sValue);				
 			BSONObject matherValue = new BasicBSONObject();
 			matherValue.put(upsertName, mValue);
-			Commlib.upsertIsStrictDataType( cl, incValue, matherValue );	
+			NumOverflowUtils.upsertIsStrictDataType( cl, incValue, matherValue );	
 		}catch(BaseException e){			
 			Assert.assertTrue(false,"upsert user StrictDataMode failed,"+e.getErrorCode()+e.getMessage());
 		}		

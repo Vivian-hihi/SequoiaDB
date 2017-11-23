@@ -12,7 +12,7 @@ import org.testng.annotations.Test;
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.crud.numoverflow.Commlib;
+import com.sequoiadb.crud.numoverflow.NumOverflowUtils;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
 
@@ -43,23 +43,23 @@ public class SubtractIsSelector12574 extends SdbTestBase{
 			Assert.assertTrue(false,"connect %s failed,"+coordUrl+e.getMessage());
 		}
 		
-		if (Commlib.isStandAlone(sdb)){
+		if (NumOverflowUtils.isStandAlone(sdb)){
 			throw new SkipException("is standalone skip testcase");
 		}
 		
-		if (Commlib.OneGroupMode(sdb)){
+		if (NumOverflowUtils.OneGroupMode(sdb)){
 			throw new SkipException("less two groups skip testcase");
 		}
 		
 		String clOption = "{ShardingKey:{no:1},ShardingType:'hash',Partition:1024,"
 				+ "ReplSize:0,Compressed:true, StrictDataMode:false}";
 		cs = sdb.getCollectionSpace(SdbTestBase.csName);
-		cl = Commlib.createCL(cs, clName, clOption);
+		cl = NumOverflowUtils.createCL(cs, clName, clOption);
 		
 		String []records = {"{'no':-2147483648,'tlong':{'$numberLong':'9223372036854775807'},"
 								+ "'arr':[1,[1,{'$numberLong':'8223372036854775808'}],2],obj:{a:{b:4}}}"};
 
-		Commlib.insert(cl, records);
+		NumOverflowUtils.insert(cl, records);
 		splitCL();
 	}
 	
@@ -70,7 +70,7 @@ public class SubtractIsSelector12574 extends SdbTestBase{
 					+ "arr:{$subtract:-1000000000000000002},'obj.a.b':{$subtract:-2147483644},_id:{$include:0}}"; 
 			String []expRecords = {"{'no':-2147483649,'tlong':{'$decimal':'10223372036854775809'},"
 	        		+ "'arr':[1000000000000000003,null,1000000000000000004],obj:{a:{b:2147483648}}}"};	       
-			Commlib.multipleFieldOper(cl, selector, expRecords);
+			NumOverflowUtils.multipleFieldOper(cl, selector, expRecords);
 		}catch(BaseException e){			
 			Assert.assertTrue(false,"subtract is used as selector oper failed,"+e.getMessage()+e.getErrorCode());
 		}		
@@ -98,8 +98,8 @@ public class SubtractIsSelector12574 extends SdbTestBase{
 		String sourceRGName = "";
 		String targetRGName = "";
 		try{			
-			sourceRGName = Commlib.getSourceRGName(sdb,SdbTestBase.csName,clName);
-			targetRGName = Commlib.getTarRgName(sdb,sourceRGName);	
+			sourceRGName = NumOverflowUtils.getSourceRGName(sdb,SdbTestBase.csName,clName);
+			targetRGName = NumOverflowUtils.getTarRgName(sdb,sourceRGName);	
 			int percent = 80;
 			cl.split(sourceRGName, targetRGName,percent );		
 		}catch(BaseException e){

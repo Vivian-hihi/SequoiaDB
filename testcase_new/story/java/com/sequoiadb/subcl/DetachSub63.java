@@ -47,7 +47,7 @@ public class DetachSub63 extends SdbTestBase{
 		}catch(BaseException e){
 			Assert.fail(e.getMessage());
 		}
-        if (Commlib.isStandAlone(db)){
+        if (SubCLUtils.isStandAlone(db)){
             throw new SkipException("is standalone skip testcase");
         }
 	}

@@ -42,13 +42,13 @@ public class AddIsSelector12583 extends SdbTestBase{
 		}
 		
 		cs = sdb.getCollectionSpace(SdbTestBase.csName);
-		cl = Commlib.createCL(cs, clName);
+		cl = NumOverflowUtils.createCL(cs, clName);
 		
 		String []records = {"{'no':2147483647,'long':{'$numberLong':'9223372036854775807'},"
 				+ "'arr':[-2147483648,{'$numberLong':'9223372036854775807'},-1.7e+304],"
 				+ "'obj':{a:{b:{'$numberLong':'9223372036854775807'}}}}"};
 
-		Commlib.insert(cl, records);
+		NumOverflowUtils.insert(cl, records);
 	}
 	
 	@Test
@@ -60,7 +60,7 @@ public class AddIsSelector12583 extends SdbTestBase{
 			String []expRecords = {"{'no':2147483648,'long' : { '$decimal' : '10223372036854775807'},"
 					+ "'arr':[-1000000002147483650],'obj':{a:{b:{'$decimal':'9223372039002259454'}}}}"};
 
-			Commlib.multipleFieldOper(cl, selector, expRecords);
+			NumOverflowUtils.multipleFieldOper(cl, selector, expRecords);
 		}catch(BaseException e){			
 			Assert.assertTrue(false,"add data is used as selector oper failed,"+e.getMessage());
 		}		

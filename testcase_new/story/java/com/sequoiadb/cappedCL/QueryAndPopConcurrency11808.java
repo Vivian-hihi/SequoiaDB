@@ -18,7 +18,7 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.cappedCL.Commlib;
+import com.sequoiadb.cappedCL.CappedCLUtils;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
@@ -46,7 +46,7 @@ public class QueryAndPopConcurrency11808 extends SdbTestBase{
 			boolean isCapped = true;
 			sdb = new Sequoiadb(SdbTestBase.coordUrl, "","");
 			sdb.setSessionAttr((BSONObject)JSON.parse("{PreferedInstance:'M'}"));
-			cappedCL_11808 = Commlib.createCL(sdb, cappedCSName_11808, cappedCLName_11808, isCapped);
+			cappedCL_11808 = CappedCLUtils.createCL(sdb, cappedCSName_11808, cappedCLName_11808, isCapped);
 			int recordNums = 100;
 			insertRecords(recordNums);
 		}catch(BaseException e) {
@@ -111,7 +111,7 @@ public class QueryAndPopConcurrency11808 extends SdbTestBase{
                 cl = db.getCollectionSpace(cappedCSName_11808).getCollection(cappedCLName_11808);
                 
                 int stringLength = 1;
-                Commlib.checkLogicalID(cl, stringLength, Thread.currentThread().getName());
+                CappedCLUtils.checkLogicalID(cl, stringLength, Thread.currentThread().getName());
                 
             }catch(BaseException e){
                 if(e.getErrorCode() != -23 || e.getErrorCode() != -34){

@@ -77,7 +77,7 @@ public class Split10529C extends SdbTestBase {
 				commSdb.disconnect();
 			}
 			Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage() + "\r\n"
-					+ Utils.getKeyStack(e, this));
+					+ SplitUtils.getKeyStack(e, this));
 		}
 	}
 
@@ -135,9 +135,9 @@ public class Split10529C extends SdbTestBase {
 			Assert.fail("alter cl success");
 		} catch (BaseException e) {
 			Assert.assertEquals(e.getErrorCode(), -6,
-					e.getMessage() + "\r\n" + Utils.getKeyStack(e, this) + "\r\n" + splitThread.getErrorMsg());
+					e.getMessage() + "\r\n" + SplitUtils.getKeyStack(e, this) + "\r\n" + splitThread.getErrorMsg());
 		} catch (InterruptedException e) {
-			Assert.fail(e.getMessage() + "\r\n" + Utils.getKeyStack(e, this));
+			Assert.fail(e.getMessage() + "\r\n" + SplitUtils.getKeyStack(e, this));
 		} finally {
 			if (splitThread != null) {
 				splitThread.join();
@@ -158,7 +158,7 @@ public class Split10529C extends SdbTestBase {
 				commSdb.dropCollectionSpace(customName);
 			}
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage() + "\r\n" + Utils.getKeyStack(e, this));
+			Assert.fail(e.getMessage() + "\r\n" + SplitUtils.getKeyStack(e, this));
 		} finally {
 			if (commSdb != null) {
 				commSdb.disconnect();

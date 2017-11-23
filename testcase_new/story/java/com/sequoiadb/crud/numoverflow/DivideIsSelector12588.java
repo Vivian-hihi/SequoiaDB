@@ -42,13 +42,13 @@ public class DivideIsSelector12588 extends SdbTestBase{
 		}
 		
 		cs = sdb.getCollectionSpace(SdbTestBase.csName);
-		cl = Commlib.createCL(cs, clName);
+		cl = NumOverflowUtils.createCL(cs, clName);
 		
 		String []records = {"{'no':-2147483648,'long':{'$numberLong':'-9223372036854775808'},"
 				+ "'arr':[2147483647,{'$numberLong':'9223372036854775807'},-1.7e+304],"
 				+ "'obj':{a:{b:{'$numberLong':'9223372036854775807'}}}}"};
 
-		Commlib.insert(cl, records);
+		NumOverflowUtils.insert(cl, records);
 	}
 	
 	@Test
@@ -60,7 +60,7 @@ public class DivideIsSelector12588 extends SdbTestBase{
 			String []expRecords = {"{'no':2147483648,'long' : { '$decimal' : '9223372036854775808'},"
 					+ "'arr':[715827882],'obj':{a:{b:{'$numberLong':'74986764527274600'}}}}"};
 
-			Commlib.multipleFieldOper(cl, selector, expRecords);
+			NumOverflowUtils.multipleFieldOper(cl, selector, expRecords);
 		}catch(BaseException e){			
 			Assert.assertTrue(false,"divide data is used as selector oper failed,"+e.getMessage());
 		}		

@@ -14,7 +14,7 @@ import org.testng.annotations.Test;
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.crud.numoverflow.Commlib;
+import com.sequoiadb.crud.numoverflow.NumOverflowUtils;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
 
@@ -63,11 +63,11 @@ public class UpdateAsInc12609 extends SdbTestBase{
 		
 		String clOption = "{StrictDataMode:true}";
 		cs = sdb.getCollectionSpace(SdbTestBase.csName);
-		cl = Commlib.createCL(cs, clName, clOption);
+		cl = NumOverflowUtils.createCL(cs, clName, clOption);
 		
 		String []records = {"{'no':-2147483648,'tlong':{'$numberLong':'-9223372036854775808'},'arr':[2147483647,-1.7e+304]}",
 				"{'no':1,'tlong':{a:{b:{c:{'$numberLong':'9223372036854775000'}}}},'arr':[1,[2,[3,2147483600],4]]}"};
-		Commlib.insert(cl, records);
+		NumOverflowUtils.insert(cl, records);
 	}
 	
 	@Test(dataProvider = "operData")
@@ -75,7 +75,7 @@ public class UpdateAsInc12609 extends SdbTestBase{
 		try{			
 			BSONObject incValue = new BasicBSONObject();							
 			incValue.put(updateName, sValue);				
-			Commlib.updateIsStrictDataType(cl, incValue);	
+			NumOverflowUtils.updateIsStrictDataType(cl, incValue);	
 		}catch(BaseException e){			
 			Assert.assertTrue(false,"update user StrictDataMode failed,"+e.getErrorCode()+e.getMessage());
 		}		

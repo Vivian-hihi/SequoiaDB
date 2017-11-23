@@ -71,7 +71,7 @@ public class SubCL10554 extends SdbTestBase {
 			if (sdb != null) {
 				sdb.disconnect();
 			}
-			Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
+			Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage()+"\r\n"+SubCLUtils2.getKeyStack(e,this));
 		}
 
 	}
@@ -118,7 +118,7 @@ public class SubCL10554 extends SdbTestBase {
 			queryByIndexAndCheckExplain("{_id:{$oid:\"" + oidPrefix + "50\"}}",
 					"{sk:50,num:50,_id:{$oid:\"" + oidPrefix + "50\"}}", "tbscan");
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this) + e.getStackTrace().toString());
+			Assert.fail(e.getMessage()+"\r\n"+SubCLUtils2.getKeyStack(e,this) + e.getStackTrace().toString());
 		}
 	}
 
@@ -156,7 +156,7 @@ public class SubCL10554 extends SdbTestBase {
 			commCS.dropCollection(subCL2Name);
 			commCS.dropCollection(mainCLName);
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
+			Assert.fail(e.getMessage()+"\r\n"+SubCLUtils2.getKeyStack(e,this));
 		} finally {
 			if (sdb != null) {
 				sdb.disconnect();

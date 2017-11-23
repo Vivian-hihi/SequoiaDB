@@ -39,9 +39,9 @@ public class TestTruncate175 extends SdbTestBase {
             Assert.fail(e.getMessage());
         }
         try{
-            DBCollection cl = Commlib.createCL(sdb, csName, clName);
+            DBCollection cl = TruncateUtils.createCL(sdb, csName, clName);
             // doing insert
-            Commlib.insertData(cl);
+            TruncateUtils.insertData(cl);
             // prepare data for update
             modifier = new BasicBSONObject();
             BSONObject updatedValue = new BasicBSONObject();
@@ -91,7 +91,7 @@ public class TestTruncate175 extends SdbTestBase {
                 // doing truncate
                 cl.truncate();
                 // check truncate
-                Commlib.checkTruncated(db, cl);
+                TruncateUtils.checkTruncated(db, cl);
             }catch(BaseException e){
                 e.printStackTrace();
                 throw e;

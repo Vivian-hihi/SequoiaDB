@@ -42,7 +42,7 @@ public class CreateMainCl23 extends SdbTestBase{
 		}catch(BaseException e){
 			Assert.assertTrue(false, "connect  failed,"+SdbTestBase.coordUrl+e.getMessage());
 		}
-        if (Commlib.isStandAlone(db)){
+        if (SubCLUtils.isStandAlone(db)){
             throw new SkipException("is standalone skip testcase");
         }
 	}
@@ -63,7 +63,7 @@ public class CreateMainCl23 extends SdbTestBase{
 	
 	@Test
 	public void testCreateMainclByAppointGroup(){
-		dataGroups = Commlib.getDataGroups(db);
+		dataGroups = SubCLUtils.getDataGroups(db);
 		if(dataGroups.size() == 0){	
 			return;
 		}	

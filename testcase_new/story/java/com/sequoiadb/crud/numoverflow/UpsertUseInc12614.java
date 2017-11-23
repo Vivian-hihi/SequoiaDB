@@ -98,10 +98,10 @@ public class UpsertUseInc12614 extends SdbTestBase{
 		
 		String clOption = "{ReplSize:0,Compressed:true, StrictDataMode:false}";
 		cs = sdb.getCollectionSpace(SdbTestBase.csName);
-		cl = Commlib.createCL(cs, clName, clOption);
+		cl = NumOverflowUtils.createCL(cs, clName, clOption);
 		
 		String []records = {"{no:648,a:{'$numberLong':'-9223372036854775808'},test:8}"};		        
-		Commlib.insert(cl, records);
+		NumOverflowUtils.insert(cl, records);
 	}
 	
 	@Test(dataProvider = "operData")
@@ -112,11 +112,11 @@ public class UpsertUseInc12614 extends SdbTestBase{
 			BSONObject matcher = new BasicBSONObject();			
 			updateValue.put(updateName, incValue);			
 			matcher.put(updateName, matcherValue);		
-			Commlib.upsertOper(cl, matcher, updateValue, setInsertValue, "upsert");
-			Commlib.checkUpdateResult(cl, setInsertValue, expRecords);
+			NumOverflowUtils.upsertOper(cl, matcher, updateValue, setInsertValue, "upsert");
+			NumOverflowUtils.checkUpdateResult(cl, setInsertValue, expRecords);
 			if(!updateName.contains(".")){
 				try {				
-					Commlib.checkUpdateDataType(cl, setInsertValue, updateName, expTypeToSdb, 
+					NumOverflowUtils.checkUpdateDataType(cl, setInsertValue, updateName, expTypeToSdb, 
 							isVerifyTypeToJava, typeToJava);				
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -133,8 +133,8 @@ public class UpsertUseInc12614 extends SdbTestBase{
 			BSONObject updateValue = new BasicBSONObject();
 			BSONObject matcher0 = (BSONObject) JSON.parse(matcher);			
 			updateValue.put(updateName, incValue);					
-			Commlib.upsertOper(cl, matcher0, updateValue, setInsertValue, "upsert");
-			Commlib.checkUpdateResult(cl, setInsertValue, expRecords);
+			NumOverflowUtils.upsertOper(cl, matcher0, updateValue, setInsertValue, "upsert");
+			NumOverflowUtils.checkUpdateResult(cl, setInsertValue, expRecords);
 		}catch(BaseException e){			
 			Assert.assertTrue(false,"upsert numeric value overflowoper failed,"+e.getMessage()+e.getErrorCode());
 		}		

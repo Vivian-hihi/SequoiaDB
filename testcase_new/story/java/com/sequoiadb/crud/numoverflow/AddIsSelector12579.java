@@ -15,7 +15,7 @@ import org.testng.annotations.Test;
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.crud.numoverflow.Commlib;
+import com.sequoiadb.crud.numoverflow.NumOverflowUtils;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
 
@@ -81,13 +81,13 @@ public class AddIsSelector12579 extends SdbTestBase{
 		}
 		
 		cs = sdb.getCollectionSpace(SdbTestBase.csName);
-		cl = Commlib.createCL(cs, clName);
+		cl = NumOverflowUtils.createCL(cs, clName);
 		
 		String []records = {"{'no':-3648,'tlong':{'$numberLong':'-6854775808'},'test':0}",		        
 		        "{no:-4.0,arr:[1,0,3.0],arr1:[1,'test',['0.01',{'$numberLong':'8'}]],test:1}",
 		        "{no:{a:{c:{'$numberLong':'6854775808'}}},obj:{a:{b:{a1:10.00,a2:3}}},test:2}"};
 
-		Commlib.insert(cl, records);
+		NumOverflowUtils.insert(cl, records);
 	}
 	
 	
@@ -98,9 +98,9 @@ public class AddIsSelector12579 extends SdbTestBase{
 			
 			BSONObject sValue = new BasicBSONObject();
 			sValue.put("$add", subValue);
-			Commlib.selectorOper(cl,matcherValue, sValue, selectorName, expRecords);
+			NumOverflowUtils.selectorOper(cl,matcherValue, sValue, selectorName, expRecords);
 			try {				
-				Commlib.checkDataType(cl,sValue,matcherValue,selectorName, expTypeToSdb,isVerifyTypeToJava,typeToJava);
+				NumOverflowUtils.checkDataType(cl,sValue,matcherValue,selectorName, expTypeToSdb,isVerifyTypeToJava,typeToJava);
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();

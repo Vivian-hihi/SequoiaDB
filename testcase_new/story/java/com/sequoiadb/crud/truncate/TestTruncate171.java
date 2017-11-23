@@ -44,20 +44,20 @@ public class TestTruncate171 extends SdbTestBase {
         }catch(BaseException e){            
             Assert.assertTrue(false,"connect failed,"+SdbTestBase.coordUrl+e.getMessage());
         }
-        if (Commlib.isStandAlone(sdb)){
+        if (TruncateUtils.isStandAlone(sdb)){
             throw new SkipException("is standalone skip testcase");
         }
         
-        if (Commlib.OneGroupMode(sdb)){
+        if (TruncateUtils.OneGroupMode(sdb)){
             throw new SkipException("less two groups skip testcase");
         }
         try{
             DBCollection cl = createShardCL(sdb, csName, clName);
             // doing insert
-            Commlib.insertData(cl);
+            TruncateUtils.insertData(cl);
             // prepare data for splitting
-            srcGroupName = Commlib.getSrcGroupName(sdb, cl);
-            dstGroupName = Commlib.getDstGroupName(sdb, srcGroupName);
+            srcGroupName = TruncateUtils.getSrcGroupName(sdb, cl);
+            dstGroupName = TruncateUtils.getDstGroupName(sdb, srcGroupName);
         }catch(BaseException e){
             Assert.fail(e.getMessage());
         }
@@ -103,7 +103,7 @@ public class TestTruncate171 extends SdbTestBase {
                 // doing truncate
                 cl.truncate();
                 // check truncate
-                Commlib.checkTruncated(db, cl);
+                TruncateUtils.checkTruncated(db, cl);
             }catch(BaseException e){
                 throw e;
             }finally{

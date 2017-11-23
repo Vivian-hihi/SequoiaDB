@@ -14,7 +14,7 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.metadataconsistency.data.CommLib;
+import com.sequoiadb.metadataconsistency.data.MetaDataUtils;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 
@@ -40,10 +40,10 @@ public class CL10173 extends SdbTestBase {
 		try{
 			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 			//judge the mode
-			if(CommLib.isStandAlone(sdb)){
+			if(MetaDataUtils.isStandAlone(sdb)){
 				throw new SkipException("The mode is standlone, " + "skip the testCase.");
 			}
-			CommLib.clearCS(sdb, csName);
+			MetaDataUtils.clearCS(sdb, csName);
 			sdb.createCollectionSpace(csName);
 		}catch(BaseException e){
 			sdb.disconnect();
@@ -54,7 +54,7 @@ public class CL10173 extends SdbTestBase {
 	@AfterClass
 	public void tearDown(){
 		try{
-			CommLib.clearCS(sdb, csName);
+			MetaDataUtils.clearCS(sdb, csName);
 		}catch(BaseException e){
 			Assert.fail(e.getMessage());
 		}finally{
@@ -70,7 +70,7 @@ public class CL10173 extends SdbTestBase {
 		createCL.start();
 
 		DropCS dropCS = new DropCS();
-		CommLib.sleep(random.nextInt(msec));
+		MetaDataUtils.sleep(random.nextInt(msec));
 		dropCS.start();
 		
 		if( !( createCL.isSuccess() && dropCS.isSuccess() ) ){
@@ -78,7 +78,7 @@ public class CL10173 extends SdbTestBase {
 		}
 		
 		//check results
-		CommLib.checkCLResult(csName, clName);
+		MetaDataUtils.checkCLResult(csName, clName);
 	}
 
 	private class CreateCL extends SdbThreadBase{
@@ -93,7 +93,7 @@ public class CL10173 extends SdbTestBase {
 				if(csDB != null ){
 					DBCollection clDB = csDB.createCollection(clName);
 					if(clDB != null){
-						CommLib.insertData(db, csName, clName);
+						MetaDataUtils.insertData(db, csName, clName);
 					}
 				}
 			}catch(BaseException e){

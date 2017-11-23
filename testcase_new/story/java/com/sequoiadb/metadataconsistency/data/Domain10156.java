@@ -15,7 +15,7 @@ import org.testng.SkipException;
 
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.metadataconsistency.data.CommLib;
+import com.sequoiadb.metadataconsistency.data.MetaDataUtils;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 
@@ -43,11 +43,11 @@ public class Domain10156 extends SdbTestBase {
 		try{
 			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 			//judge the mode and group number
-			if(CommLib.isStandAlone(sdb) || CommLib.OneGroupMode(sdb)){
+			if(MetaDataUtils.isStandAlone(sdb) || MetaDataUtils.OneGroupMode(sdb)){
 				throw new SkipException("The mode is standlone or only one group, skip the testCase.");
 			}
-			CommLib.clearDomain(sdb, domainName);
-			dataGroups = CommLib.getDataGroupNames(sdb);
+			MetaDataUtils.clearDomain(sdb, domainName);
+			dataGroups = MetaDataUtils.getDataGroupNames(sdb);
 		}catch(BaseException e){
 			sdb.disconnect();
 			Assert.fail(e.getMessage());
@@ -58,7 +58,7 @@ public class Domain10156 extends SdbTestBase {
 	@AfterClass
 	public void tearDown(){
 		try{
-			CommLib.clearDomain(sdb, domainName);
+			MetaDataUtils.clearDomain(sdb, domainName);
 		}catch(BaseException e){
 			Assert.fail(e.getMessage());
 		}finally{
@@ -71,11 +71,11 @@ public class Domain10156 extends SdbTestBase {
 	@Test(invocationCount = 10, threadPoolSize = 10)
 	public void test(){
 		CreateDomain createDomain = new CreateDomain();
-		CommLib.sleep(random.nextInt(msec));
+		MetaDataUtils.sleep(random.nextInt(msec));
 		createDomain.start();
 		
 		AlterDomain alterDomain = new AlterDomain();
-		CommLib.sleep(random.nextInt(msec));
+		MetaDataUtils.sleep(random.nextInt(msec));
 		alterDomain.start();
 		
 		if( !( createDomain.isSuccess() && alterDomain.isSuccess() ) ){
@@ -83,7 +83,7 @@ public class Domain10156 extends SdbTestBase {
 		}
 
 		//check results
-		CommLib.checkDomainOfCatalog(domainName);
+		MetaDataUtils.checkDomainOfCatalog(domainName);
 	}
 	
 	private class CreateDomain extends SdbThreadBase{

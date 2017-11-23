@@ -15,7 +15,7 @@ import org.testng.annotations.Test;
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.crud.numoverflow.Commlib;
+import com.sequoiadb.crud.numoverflow.NumOverflowUtils;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
 
@@ -68,13 +68,13 @@ public class MultiplyIsMatcher12599 extends SdbTestBase{
 		
 		String clOption = "{StrictDataMode:true}";
 		cs = sdb.getCollectionSpace(SdbTestBase.csName);
-		cl = Commlib.createCL(cs,  clName, clOption);	
+		cl = NumOverflowUtils.createCL(cs,  clName, clOption);	
 		
 		String []records = {"{'a':-2147483648,'b':{'$numberLong':'-1024819115206086201'}}",
 				"{a:[{'$numberLong':'-9223372036854775808'},3],b:[{a:{'$numberLong':'9223372036854775807'}},'testo1']}",
 				"{a:[1,[3,214748,[-1,2147483647]]],b:1}"};
 
-		Commlib.insert(cl, records);
+		NumOverflowUtils.insert(cl, records);
 	}
 	
 	@Test(dataProvider = "operData")
@@ -84,7 +84,7 @@ public class MultiplyIsMatcher12599 extends SdbTestBase{
 			mValue.put("$multiply", arithmeticValue);
 			mValue.put("$et", resultVaule);
 			
-			Commlib.matcherOper(cl,matcherName,mValue, expRecords);			
+			NumOverflowUtils.matcherOper(cl,matcherName,mValue, expRecords);			
 		}catch(BaseException e){			
 			Assert.assertTrue(false,"abs intData is used as selector oper failed,"+e.getMessage());
 		}	
