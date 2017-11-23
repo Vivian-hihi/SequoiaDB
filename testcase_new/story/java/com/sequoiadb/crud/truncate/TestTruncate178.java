@@ -32,7 +32,6 @@ public class TestTruncate178 extends SdbTestBase {
 
     @BeforeClass
     public void setUp() {
-        System.out.println(this.getClass().getName()+" begin at "+sdf.format(new Date()));
         try{
             sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             if (!sdb.isCollectionSpaceExist(myCsName)){
@@ -60,7 +59,6 @@ public class TestTruncate178 extends SdbTestBase {
             Assert.assertTrue(false,"clean up failed:"+e.getMessage());
         }finally{
             sdb.disconnect();
-            System.out.println(this.getClass().getName()+" end at "+sdf.format(new Date()));
         }
     }
     

@@ -46,8 +46,6 @@ public class Split10505 extends SdbTestBase {
 	@BeforeClass
 	public void setUp() {
 		try {
-			System.out.println("the TestCase Name:" + this.getClass().getName() + ". the TestCase begin at:"
-					+ new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
 			commSdb = new Sequoiadb(coordUrl, "", "");
 
 			// 跳过 standAlone 和数据组不足的环境
@@ -338,8 +336,6 @@ public class Split10505 extends SdbTestBase {
 			if (commSdb != null) {
 				commSdb.disconnect();
 			}
-			System.out.println("the TestCase Name:" + this.getClass().getName() + ". the TestCase end at:"
-					+ new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
 		}
 	}
 

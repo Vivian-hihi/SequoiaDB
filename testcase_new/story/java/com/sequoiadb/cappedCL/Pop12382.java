@@ -39,7 +39,6 @@ public class Pop12382 extends SdbTestBase{
 	
 	@BeforeClass
 	public void setUp() {
-		System.out.println(this.getClass().getName()+" begin at "+sdf.format(new Date()));
 		try {
 			boolean isCapped = true;
 			sdb = new Sequoiadb(SdbTestBase.coordUrl, "","");
@@ -79,7 +78,6 @@ public class Pop12382 extends SdbTestBase{
 			Assert.fail(e.getMessage());
 		}finally {
 			sdb.close();
-			System.out.println(this.getClass().getName()+" end at "+sdf.format(new Date()));
 		}
 	}
 

@@ -48,7 +48,6 @@ public class TestSplit10882 extends SdbTestBase{
     @BeforeClass
     public void setUp() {
         try{
-            System.out.println(getClass().getName()+" begin at "+sdf.format(new Date()));
             sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             if (SplitBaseUtils.isStandAlone(sdb)) {
                 throw new SkipException("skip StandAlone");
@@ -73,7 +72,6 @@ public class TestSplit10882 extends SdbTestBase{
             Assert.fail(e.getMessage());
         } finally {
             sdb.disconnect();
-            System.out.println(getClass().getName()+" end at "+sdf.format(new Date()));
         }
     }
     

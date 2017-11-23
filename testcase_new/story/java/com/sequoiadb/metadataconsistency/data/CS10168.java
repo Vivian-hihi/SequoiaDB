@@ -41,8 +41,6 @@ public class CS10168 extends SdbTestBase {
 	@BeforeClass
 	public void setUp(){
 		//start time
-		System.out.println("Begin to run " + getClass().getName() 
-					+ ", begin in: " + dateFm.format(new Date().getTime()));
 		try{
 			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 			//judge the mode and group number
@@ -70,8 +68,6 @@ public class CS10168 extends SdbTestBase {
 		}catch(BaseException e){
 			throw e;
 		}finally{
-			System.out.println("End to run " + getClass().getName() 
-						+ ", end in: " + dateFm.format(new Date().getTime()));
 			sdb.disconnect();
 		}
 	}

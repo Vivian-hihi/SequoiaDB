@@ -37,8 +37,6 @@ public class CL10171 extends SdbTestBase {
 	
 	@BeforeClass
 	public void setUp(){
-		System.out.println("Begin to run " + getClass().getName() 
-					+ ", begin in: " + dateFm.format(new Date().getTime()));
 		try{
 			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 			//judge the mode
@@ -60,8 +58,6 @@ public class CL10171 extends SdbTestBase {
 		}catch(BaseException e){
 			Assert.fail(e.getMessage());
 		}finally{
-			System.out.println("End to run " + getClass().getName() 
-						+ ", end in: " + dateFm.format(new Date().getTime()));
 			sdb.disconnect();
 		}
 	}

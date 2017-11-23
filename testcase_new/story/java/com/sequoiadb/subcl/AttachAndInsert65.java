@@ -35,8 +35,6 @@ public class AttachAndInsert65 extends SdbTestBase {
 	
 	@BeforeClass
 	public void setUp(){
-	    System.out.println(this.getClass().getName()+" begin at "
-	    		+new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:S").format(new Date()));
 	    Sequoiadb tmpdb = null;    
 		try{
 		    tmpdb = new Sequoiadb(SdbTestBase.coordUrl,"","");
@@ -68,8 +66,6 @@ public class AttachAndInsert65 extends SdbTestBase {
 			sdb1.disconnect();
 			sdb2.disconnect();
 			tmpdb.disconnect();
-			System.out.println("End to run " + this.getClass().getName() 
-					+ ", end in: " + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:S").format(new Date()));
 		}
 	}
 

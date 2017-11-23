@@ -52,8 +52,6 @@ public class SubtractIsSelector12575 extends SdbTestBase{
 	
 	@BeforeClass
 	public void setUp(){
-		System.out.println(this.getClass().getName()+" begin at "
-					+new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:S").format(new Date()));
 		try{
 			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 		}catch(BaseException e){			
@@ -84,8 +82,6 @@ public class SubtractIsSelector12575 extends SdbTestBase{
 	@AfterClass
 	public void tearDown(){
 		try{
-			System.out.println(this.getClass().getName()+" end at "
-					 +new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:S").format(new Date()));
 			cs = sdb.getCollectionSpace(SdbTestBase.csName);
 			if(cs.isCollectionExist(clName)){
 				cs.dropCollection(clName);

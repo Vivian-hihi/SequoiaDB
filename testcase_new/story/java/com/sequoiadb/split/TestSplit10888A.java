@@ -50,8 +50,6 @@ public class TestSplit10888A extends SdbTestBase{
     @BeforeClass
     public void setUp() {
         try{
-            System.out.println("the TestCase Name:" + this.getClass().getName() + 
-                    ". the TestCase begin at:" + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
             this.sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             // 跳过 standAlone 和数据组不足的环境
             SplitUtils2 util = new SplitUtils2();
@@ -339,8 +337,6 @@ public class TestSplit10888A extends SdbTestBase{
     @AfterClass
     public void tearDown() {
         try {
-            System.out.println("the TestCase Name:" + this.getClass().getName() + 
-                    ". the TestCase end at:" + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
             if (this.cs.isCollectionExist(this.clName1)) {
                this.cs.dropCollection(this.clName1);
             }

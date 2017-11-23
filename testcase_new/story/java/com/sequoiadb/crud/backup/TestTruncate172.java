@@ -33,7 +33,6 @@ public class TestTruncate172 extends SdbTestBase {
     
     @BeforeClass
     public void setUp() {
-        System.out.println(this.getClass().getName()+" begin at "+sdf.format(new Date()));
         try{
             sdb = new Sequoiadb(SdbTestBase.coordUrl, "", ""); 
         }catch(BaseException e){
@@ -63,7 +62,6 @@ public class TestTruncate172 extends SdbTestBase {
             Assert.fail(e.getMessage());
         }finally{
             sdb.disconnect();
-            System.out.println(this.getClass().getName()+" end at "+sdf.format(new Date()));
         }
     }
     

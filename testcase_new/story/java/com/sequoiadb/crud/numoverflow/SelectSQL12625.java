@@ -63,8 +63,6 @@ public class SelectSQL12625 extends SdbTestBase{
 	
 	@BeforeClass
 	public void setUp(){
-		System.out.println(this.getClass().getName()+" begin at "
-					+new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:S").format(new Date()));
 		try{
 			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 		}catch(BaseException e){			
@@ -103,8 +101,6 @@ public class SelectSQL12625 extends SdbTestBase{
 	@AfterClass
 	public void tearDown(){
 		try{
-			System.out.println(this.getClass().getName()+" end at "
-					 +new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:S").format(new Date()));			
 			if(sdb.isCollectionSpaceExist(cs_name)){
 				sdb.dropCollectionSpace(cs_name);
 			}			

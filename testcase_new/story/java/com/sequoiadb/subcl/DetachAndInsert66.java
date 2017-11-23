@@ -43,9 +43,6 @@ public class DetachAndInsert66 extends SdbTestBase {
 
     @BeforeClass
     public void setUp() {
-        System.out.println( this.getClass().getName() + " begin at "
-                + new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss:S" )
-                        .format( new Date() ) );
         Sequoiadb tmpdb = null;
         try {
             tmpdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
