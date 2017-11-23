@@ -38,8 +38,6 @@ public class TestSeqDB7563 extends SdbTestBase {
     @BeforeClass
     public void setUp() {
         try{
-            System.out.println("the TestCase Name:" + this.getClass().getName() + 
-                    ". the TestCase begin at:" + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
             this.sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             // 跳过 standAlone 和数据组不足的环境
             LzwUilts1 util = new LzwUilts1();
@@ -154,8 +152,6 @@ public class TestSeqDB7563 extends SdbTestBase {
     @AfterClass(alwaysRun=true)
     public void tearDown() {
         try {
-            System.out.println("the TestCase Name:" + this.getClass().getName() + 
-                    ". the TestCase end at:" + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
             if (this.cs.isCollectionExist(this.clName)) {
                 this.cs.dropCollection(this.clName);
             }

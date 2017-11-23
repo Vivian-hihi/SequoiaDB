@@ -35,7 +35,6 @@ public class TestConcurrency6674 extends SdbTestBase {
     
     @BeforeClass
     public void setUp() {
-        System.out.println(this.getClass().getName()+" begin at "+sdf.format(new Date()));
         try{
             sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         }catch(BaseException e){
@@ -63,7 +62,6 @@ public class TestConcurrency6674 extends SdbTestBase {
             if(sdb != null){
                 sdb.disconnect();
             }
-            System.out.println(this.getClass().getName()+" end at "+sdf.format(new Date()));
         }
     }
     

@@ -33,8 +33,6 @@ public class CreateMainCLSplitHash834 extends SdbTestBase{
 	
 	@BeforeClass
 	public void setUp(){
-		System.out.println(this.getClass().getName()+" begin at "
-				+new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:S").format(new Date()));
 		try{
 			sdb = new Sequoiadb(SdbTestBase.coordUrl,"","");
 			maincs = sdb.getCollectionSpace(SdbTestBase.csName);
@@ -56,8 +54,6 @@ public class CreateMainCLSplitHash834 extends SdbTestBase{
 		}catch(BaseException e){
 			Assert.assertEquals(e.getErrorCode(), -23, e.getMessage());
 		}finally{
-			System.out.println("End to run " + this.getClass().getName() 
-						+ ", end in: " + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:S").format(new Date()));
 			sdb.disconnect();
 		}
 	}	
