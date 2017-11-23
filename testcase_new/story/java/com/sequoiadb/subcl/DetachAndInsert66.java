@@ -82,10 +82,6 @@ public class DetachAndInsert66 extends SdbTestBase {
             sdb1.disconnect();
             sdb2.disconnect();
             tmpdb.disconnect();
-            System.out.println(
-                    "End to run " + this.getClass().getName() + ", end in: "
-                            + new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss:S" )
-                                    .format( new Date() ) );
         }
     }
 

@@ -40,15 +40,15 @@ public class TimePrinterListener extends TestListenerAdapter {
     }
 
     private void printBeginTime(ITestResult tr) {
-        System.out.println(getTestMethodName(tr) + " begin: " + getCurTimeStr());
+        System.out.println(getCurTimeStr() + "\tbegin: " + getTestMethodName(tr));
     }
 
     private void printEndTime(ITestResult tr) {
-        System.out.println(getTestMethodName(tr) + " end: " + getCurTimeStr());
+        System.out.println(getCurTimeStr() + "\tend  : " + getTestMethodName(tr));
     }
 
     private String getTestMethodName(ITestResult tr) {
-        return tr.getTestClass().getRealClass().getName() + "." + tr.getMethod().getMethodName();
+        return tr.getTestClass().getRealClass().getName();
     }
 
     private String getCurTimeStr() {
