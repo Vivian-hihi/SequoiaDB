@@ -4,8 +4,10 @@
  @testlink:   测试用例 seqDB-12495 :: 版本: 1 :: 列出/取消/等待任务
  @author:     laojingtang
 """
+from pysequoiadb.errcode import SDB_CAT_TASK_NOTFOUND
 
 from lib import testlib
+from pysequoiadb import SDBError
 
 class TestTask12495(testlib.SdbTestBase):
    def setUp(self):
@@ -33,10 +35,14 @@ class TestTask12495(testlib.SdbTestBase):
    def test_task(self):
       list=[{"a":i} for i in range(10000)]
       self.cl.bulk_insert(0,list)
-      self.cl.split_async_by_percent(self.g1_name,self.g2_name,50.0)
-      cur=self.db.list_tasks()
-      list=testlib.get_all_records(cur)
-      task_id=list[0]["TaskID"]
-      if task_id is not None:
-         self.db.cancel_task(task_id=task_id,is_async=True)
-         self.db.wait_task([task_id],1)
+      id=self.cl.split_async_by_percent(self.g1_name,self.g2_name,50.0)
+      import sys
+      if sys.version_info[0] != 3:
+         id=long(id);
+      self.db.list_tasks()
+      try:
+         self.db.cancel_task(task_id=id,is_async=True)
+      except SDBError as e:
+         if e.errcode!=SDB_CAT_TASK_NOTFOUND:
+            raise e
+      self.db.wait_task([id],1)
