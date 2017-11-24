@@ -28,7 +28,8 @@
 */
 
 var FILE_NAME_CHECK_HOST = "checkHost.js" ;
-var disablePathArr = [ "/bin", "/boot", "/root", "/sbin" ] ;
+var disablePathArr = [ "/bin", "/boot", "/root", "/sbin", "/dev", "/etc", "/lib", "/tmp", "/media", "/sys" ] ;
+var disableFileSystem = [ "none", "tmpfs" ] ;
 var errMsg           = "" ;
 var rc               = SDB_OK ;
 var RET_JSON         = new Object() ;
@@ -75,6 +76,23 @@ function _checkDiskPath( disk )
    for ( var i = 0; i < disablePathArr.length; i++ )
    {
       if ( 0 == path.indexOf( disablePathArr[i] ) )
+      {
+         return false ;
+      }
+   }
+   return true ;
+}
+
+function _checkDiskFileSystem( disk )
+{
+   var fileSystem = disk[Filesystem] ;
+   if ( undefined == fileSystem )
+   {
+      return false ;
+   }
+   for ( var i = 0; i < disableFileSystem.length; i++ )
+   {
+      if ( fileSystem === disableFileSystem[i] )
       {
          return false ;
       }
@@ -380,7 +398,7 @@ function _getDiskInfo()
       for ( var i = 0; i < arr.length; i++ )
       {
          var obj           = arr[i] ;
-         if ( _checkDiskPath( obj ) )
+         if ( _checkDiskPath( obj ) && _checkDiskFileSystem( obj ) )
          {
             var diskInfo      = new DiskInfo() ;
             diskInfo[Name]    = obj[Filesystem] ;
