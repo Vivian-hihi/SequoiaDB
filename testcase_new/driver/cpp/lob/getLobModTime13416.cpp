@@ -54,9 +54,10 @@ TEST_F( getLobModTime13416, lobWrite )
    sdbLob lob ;
    OID oid ;
    UINT64 createTime ;
-   UINT64 modificationTime1 ;
-   UINT64 modificationTime2 ;
-   UINT64 modificationTime3 ;
+   UINT64 initModTime ;
+   UINT64 createModTime ;
+   UINT64 writeModTime ;
+   UINT64 readModTime ;
    const CHAR *writeBuf = "0123456789ABCDEabcde" ;
    const INT32 wBufSize = strlen( writeBuf ) ;
    const UINT32 rBufSize = wBufSize ;
@@ -66,36 +67,48 @@ TEST_F( getLobModTime13416, lobWrite )
    // create lob
    rc = cl.createLob( lob ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to create lob" ;
+   createTime = lob.getCreateTime() ;
+   initModTime = lob.getModificationTime() ;
    rc = lob.close() ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to close lob" ;
-   createTime = lob.getCreateTime() ;
-   modificationTime1 = lob.getModificationTime() ;
-   ASSERT_EQ( createTime, modificationTime1 ) 
-         << "wrong modification time after lob creation" ;
+   ASSERT_EQ( createTime, initModTime ) 
+         << "wrong modification time after init" ;
 
-   // modify lob
+   // check modification time 
    rc = lob.getOid( oid ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to get oid" ;
    rc = cl.openLob( lob, oid, SDB_LOB_WRITE ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to open lob" ;
+   createModTime = lob.getModificationTime() ;
+   ASSERT_LT( initModTime, createModTime ) 
+         << "wrong modification time after creating" ;
+
+   // modify lob
    rc = lob.write( writeBuf, wBufSize ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to write lob" ;
-   modificationTime2 = lob.getModificationTime() ;
    rc = lob.close() ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to close lob" ;
-   ASSERT_LT( modificationTime1, modificationTime2 ) 
+
+   // check modification time
+   rc = cl.openLob( lob, oid, SDB_LOB_READ ) ;
+   ASSERT_EQ( SDB_OK, rc ) << "fail to open lob" ;
+   writeModTime = lob.getModificationTime() ;
+   ASSERT_LT( createModTime, writeModTime ) 
          << "wrong modification time after modifying" ;
 
    // not modify lob
-   // TODO: open and read lob can also update modification time. is it reasonable?
-   //rc = cl.openLob( lob, oid, SDB_LOB_READ ) ;
-   //ASSERT_EQ( SDB_OK, rc ) << "fail to open lob" ;
-   //rc = lob.read( rBufSize, readBuf, &read ) ;
-   //ASSERT_EQ( rBufSize, read ) << "long read length is wrong" ;
-   //ASSERT_EQ( SDB_OK, rc ) << "fail to read lob" ;
-   //rc = lob.close() ;
-   //ASSERT_EQ( SDB_OK, rc ) << "fail to close lob" ;
-   modificationTime3 = lob.getModificationTime() ;
-   ASSERT_EQ( modificationTime2, modificationTime3 ) 
-         << "wrong modification time when no modifying" ;
+   rc = lob.read( rBufSize, readBuf, &read ) ;
+   ASSERT_EQ( rBufSize, read ) << "long read length is wrong" ;
+   ASSERT_EQ( SDB_OK, rc ) << "fail to read lob" ;
+   rc = lob.close() ;
+   ASSERT_EQ( SDB_OK, rc ) << "fail to close lob" ;
+
+   // check modification time
+   rc = cl.openLob( lob, oid, SDB_LOB_READ ) ;
+   ASSERT_EQ( SDB_OK, rc ) << "fail to open lob" ;
+   readModTime = lob.getModificationTime() ;
+   rc = lob.close() ;
+   ASSERT_EQ( SDB_OK, rc ) << "fail to close lob" ;
+   ASSERT_EQ( writeModTime, readModTime ) 
+         << "wrong modification time when no modification" ;
 }
