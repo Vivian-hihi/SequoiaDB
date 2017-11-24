@@ -1786,7 +1786,9 @@ Ssh.prototype.isPathExist = function Ssh_isPathExist(path) {
         return true;
     } else {
         var msg = this.getLastOut();
-        if (msg.indexOf("No such file or directory") != -1) {
+        if ( msg.indexOf("No such file or directory") != -1 ||
+             msg.indexOf("没有那个文件或目录") != -1 )
+        {
             setLastError(SDB_OK);
             setLastErrMsg("");
             return false;
@@ -1876,7 +1878,9 @@ Ssh.prototype.isEmptyDirectory = function Ssh_isEmptyDirectory(path) {
         return false;
     } else {
         var msg = this.getLastOut();
-        if (msg.indexOf("No such file or directory") != -1) {
+        if ( msg.indexOf("No such file or directory") != -1 ||
+             msg.indexOf("没有那个文件或目录") != -1 )
+        {
             setLastError(SDB_OK);
             setLastErrMsg("");
             return true;
