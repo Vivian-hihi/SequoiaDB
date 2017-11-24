@@ -154,6 +154,18 @@ const CHAR* getDialogPath ()
    return _getPDCfgInfo( PD_DIAGLOG )._pdLogPath ;
 }
 
+void setDiagFileNum( INT32 fileMaxNum )
+{
+   pdCfgInfo &info = _getPDCfgInfo( PD_DIAGLOG ) ;
+   info._pdFileMaxNum = fileMaxNum ;
+}
+
+void setAuditFileNum( INT32 fileMaxNum )
+{
+   pdCfgInfo &info = _getPDCfgInfo( PD_AUDIT ) ;
+   info._pdFileMaxNum = fileMaxNum ;
+}
+
 void sdbEnablePD( const CHAR *pdPathOrFile, INT32 fileMaxNum,
                   UINT32 fileMaxSize )
 {

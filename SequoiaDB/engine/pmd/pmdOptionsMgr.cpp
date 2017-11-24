@@ -1568,7 +1568,7 @@ namespace engine
               PD_DFT_FILE_NUM ) ;
       // --auditmask
       rdxString( pEX, PMD_OPTION_AUDIT_MASK, _auditMaskStr, sizeof(_auditMaskStr),
-                 FALSE, FALSE, AUDIT_MASK_DFT_STR ) ;
+                 FALSE, TRUE, AUDIT_MASK_DFT_STR ) ;
       // --svcname
       rdxString( pEX, PMD_OPTION_SVCNAME, _krcbSvcName, sizeof(_krcbSvcName),
                  FALSE, FALSE,
@@ -1607,7 +1607,7 @@ namespace engine
                PMD_DFT_LOG_FILE_NUM ) ;
       rdvMinMax( pEX, _logFileNum, 1, 60000, TRUE ) ;
       // --logbuffsize
-      rdxUInt( pEX, PMD_OPTION_LOGBUFFSIZE, _logBuffSize, FALSE, TRUE,
+      rdxUInt( pEX, PMD_OPTION_LOGBUFFSIZE, _logBuffSize, FALSE, FALSE,
                DPS_DFT_LOG_BUF_SZ ) ;
       rdvMinMax( pEX, _logBuffSize, 512, 1024000, TRUE ) ;
       // --numpreload
@@ -1642,10 +1642,10 @@ namespace engine
       rdvMinMax( pEX, _dataErrorOp, PMD_OPT_VALUE_NONE,
                  PMD_OPT_VALUE_SHUTDOWN, TRUE ) ;
       // --memdebug
-      rdxBooleanS( pEX, PMD_OPTION_MEMDEBUG, _memDebugEnabled, FALSE, TRUE,
+      rdxBooleanS( pEX, PMD_OPTION_MEMDEBUG, _memDebugEnabled, FALSE, FALSE,
                    FALSE, TRUE ) ;
       // --memdebugsize
-      rdxUInt( pEX, PMD_OPTION_MEMDEBUGSIZE, _memDebugSize, FALSE, TRUE, 0,
+      rdxUInt( pEX, PMD_OPTION_MEMDEBUGSIZE, _memDebugSize, FALSE, FALSE, 0,
                TRUE ) ;
       // --indexscanstep
       rdxUInt( pEX, PMD_OPTION_INDEX_SCAN_STEP, _indexScanStep, FALSE, TRUE,
@@ -1655,16 +1655,16 @@ namespace engine
       rdxBooleanS( pEX, PMD_OPTION_DPSLOCAL, _dpslocal, FALSE, TRUE, FALSE,
                    TRUE ) ;
       // --traceOn
-      rdxBooleanS( pEX, PMD_OPTION_TRACEON, _traceOn, FALSE, TRUE, FALSE,
+      rdxBooleanS( pEX, PMD_OPTION_TRACEON, _traceOn, FALSE, FALSE, FALSE,
                    TRUE ) ;
       // --traceBufSz
-      rdxUInt( pEX, PMD_OPTION_TRACEBUFSZ, _traceBufSz, FALSE, TRUE,
+      rdxUInt( pEX, PMD_OPTION_TRACEBUFSZ, _traceBufSz, FALSE, FALSE,
                TRACE_DFT_BUFFER_SIZE, TRUE ) ;
       rdvMinMax( pEX, _traceBufSz, TRACE_MIN_BUFFER_SIZE,
                  TRACE_MAX_BUFFER_SIZE, TRUE ) ;
       // --transactionOn
       rdxBooleanS( pEX, PMD_OPTION_TRANSACTIONON, _transactionOn, FALSE,
-                   TRUE, FALSE ) ;
+                   FALSE, FALSE ) ;
       // --transactionTimeout
       rdxUInt( pEX, PMD_OPTION_TRANSTIMEOUT, _transTimeout, FALSE, TRUE,
                PMD_DFT_TRANS_TIMEOUT, TRUE ) ;
@@ -1679,7 +1679,7 @@ namespace engine
       rdvMinMax( pEX, _startShiftTime, 0, 7200, TRUE ) ;
       // --catalogaddr
       rdxString( pEX, PMD_OPTION_CATALOG_ADDR, _catAddrLine,
-                 sizeof(_catAddrLine), FALSE, TRUE, "" ) ;
+                 sizeof(_catAddrLine), FALSE, FALSE, "" ) ;
 
       // --dmsTmpBlkPath
       rdxPath( pEX, PMD_OPTION_DMS_TMPBLKPATH, _dmsTmpBlkPath,
@@ -1760,7 +1760,7 @@ namespace engine
 
       // --archiveon
       rdxBooleanS( pEX, PMD_OPTION_ARCHIVE_ON, _archiveOn,
-                   FALSE, TRUE, FALSE, FALSE ) ;
+                   FALSE, FALSE, FALSE, FALSE ) ;
 
       // --archivecompresson
       rdxBooleanS( pEX, PMD_OPTION_ARCHIVE_COMPRESS_ON, _archiveCompressOn,

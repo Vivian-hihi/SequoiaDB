@@ -172,6 +172,11 @@ namespace engine
       return SDB_OK ;
    }
 
+   void dpsTransCB::onConfigChange()
+   {
+      dpsLockBucket::setLockTimeout( pmdGetOptionCB()->transTimeout() * 1000 ) ;
+   }
+
    DPS_TRANS_ID dpsTransCB::allocTransID()
    {
       DPS_TRANS_ID temp = 0;

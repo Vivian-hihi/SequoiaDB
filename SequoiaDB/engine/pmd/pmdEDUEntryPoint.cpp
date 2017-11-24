@@ -197,6 +197,7 @@ namespace engine
       {
          ossSleep( OSS_ONE_SEC ) ;
          ++timeCounter ;
+         interval = pmdGetOptionCB()->getSignalInterval() ;
 
          if ( interval > 0 && timeCounter > (UINT32)interval )
          {

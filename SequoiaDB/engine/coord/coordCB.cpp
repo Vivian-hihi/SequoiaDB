@@ -268,6 +268,7 @@ namespace engine
          _pAgent->getFrame()->setBeatInfo( oprtimeout ) ;
       }
 
+      _sitePropMgr.setPreferInsType( pmdGetOptionCB()->preferedReplica() ) ;
    }
 
    void _CoordCB::attachCB( _pmdEDUCB *cb )

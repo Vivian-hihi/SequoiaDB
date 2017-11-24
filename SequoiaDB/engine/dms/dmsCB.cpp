@@ -193,6 +193,28 @@ namespace engine
       return SDB_OK ;
    }
 
+   void _SDB_DMSCB::onConfigChange()
+   {
+      pmdOptionsCB *optCB = pmdGetKRCB()->getOptionCB() ;
+      UINT32       syncInterval = optCB->getSyncInterval() ;
+      UINT32       syncRecordNum = optCB->getSyncRecordNum() ;
+      UINT32       syncDirtyRatio = optCB->getSyncDirtyRatio() ;
+      BOOLEAN      syncDeep = optCB->isSyncDeep() ;
+
+      ossScopedLock _lock( &_mutex, SHARED ) ;
+
+      for ( vector<SDB_DMS_CSCB*>::iterator itr = _cscbVec.begin();
+            itr != _cscbVec.end(); ++itr )
+      {
+         if ( NULL != (*itr) )
+         {
+            _dmsStorageUnit *su = (*itr)->_su ;
+            su->setSyncConfig( syncInterval, syncRecordNum, syncDirtyRatio ) ;
+            su->setSyncDeep( syncDeep ) ;
+         }
+      }
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB__LGCSCBNMMAP, "_SDB_DMSCB::_logCSCBNameMap" )
    void _SDB_DMSCB::_logCSCBNameMap ()
    {

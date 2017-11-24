@@ -1112,6 +1112,10 @@ namespace engine
       {
          // nothing
       }
+      else if ( 0 == maxCacheSize() )
+      {
+         needRecycle = TRUE ;
+      }
       /// when free ratio over the threshold
       else if ( totalSize() * 100 / maxCacheSize() >= UTIL_CACHE_RATIO &&
                 freeSize() * 100 / totalSize() >=
@@ -3023,6 +3027,10 @@ namespace engine
       if ( totalPages() <= 0 )
       {
          // nothing
+      }
+      else if ( 0 == _pMgr->maxCacheSize() )
+      {
+         needRecycle = TRUE ;
       }
       /// when free ratio over the threshold
       else if ( _pMgr->totalSize() * 100 / _pMgr->maxCacheSize() >=

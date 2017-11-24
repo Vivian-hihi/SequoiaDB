@@ -55,6 +55,9 @@ namespace engine
    {
    public:
       friend class dpsTransLock;
+
+      static void setLockTimeout( UINT32 timeout ) { _lockTimeout = timeout ; }
+
    protected:
       dpsLockBucket();
       ~dpsLockBucket();
