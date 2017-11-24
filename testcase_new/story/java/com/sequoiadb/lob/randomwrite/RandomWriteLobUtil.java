@@ -1,12 +1,13 @@
 package com.sequoiadb.lob.randomwrite;
 
-import java.io.ByteArrayOutputStream;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.logging.Logger;
 
+import com.sequoiadb.testcommon.SdbTestBase;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.types.BasicBSONList;
@@ -54,7 +55,6 @@ class RandomWriteLobUtil {
             if (cs.isCollectionExist(clName)) {
                 cs.dropCollection(clName);
             }
-
             cl = cs.createCollection(clName);
         } catch (BaseException e) {
             Assert.fail(e.getMessage());
@@ -73,7 +73,6 @@ class RandomWriteLobUtil {
         System.arraycopy(buff4Append, 0, newBuff, offset, buff4Append.length);
         return newBuff;
     }
-
 
     /**
      * generating byte to write lob
@@ -143,9 +142,65 @@ class RandomWriteLobUtil {
     }
 
     static void assertByteArrayEqual(byte[] actual, byte[] expect, String msg) {
-        if (!Arrays.equals(actual, expect)) {
-            Assert.fail("\nexpect: " + Arrays.toString(expect)
-                    + "\nbut actual: " + Arrays.toString(actual) + "\n" + msg + "\n");
+        if (actual.length < 10240 && expect.length < 10240) {
+            if (!Arrays.equals(actual, expect))
+                Assert.fail("\nexpect: " + Arrays.toString(expect)
+                        + "\nbut actual: " + Arrays.toString(actual) + "\n" + msg + "\n");
+        } else {
+            Assert.assertEquals(actual, expect, msg);
+        }
+    }
+
+    /**
+     * 把lob和期望值分别写到以该lob oid开头的文件，路径由SdbTestBase.getWorkDir()指定
+     *
+     * @param lob
+     * @param expect
+     */
+    void writeLobAndExpectData2File(DBLob lob, byte[] expect) {
+        String path = SdbTestBase.getWorkDir();
+
+        File dir = new File(path);
+        if (!dir.isDirectory())
+            throw new RuntimeException("the path can not use: " + path);
+        path = dir.toPath().toString();
+        String lobID = lob.getID().toString();
+        File fileActual = new File(path + File.separator + lobID + "_actual");
+        File fileExpect = new File(path + File.separator + lobID + "_expect");
+
+        if (fileActual.exists()) {
+            fileActual.delete();
+            try {
+                fileActual.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        if (fileExpect.exists()) {
+            fileExpect.delete();
+            try {
+                fileExpect.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        try (FileOutputStream out = new FileOutputStream(fileActual)) {
+            lob.read(out);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        try (FileOutputStream out = new FileOutputStream(fileExpect)) {
+            out.write(expect);
+            out.flush();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
@@ -192,7 +247,7 @@ class RandomWriteLobUtil {
     }
 
     static byte[] readLob(DBCollection dbcl, ObjectId id) {
-        byte[] res = null;
+        byte[] res;
         try (DBLob lob = dbcl.openLob(id)) {
             res = readLob(lob);
         }
