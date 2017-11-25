@@ -116,7 +116,7 @@
             <var name="case_reltdir" unset="true"/>
             <propertyregex property="case_reltdir" input="@{casetype}" regexp="_" replace="/"/> 
             <var name="case_dir" value="${case_basedir}/${case_reltdir}"/>      
-            <filtercase casedir="${case_dir}" testtype="sync_test"/>
+            <filtercase casedir="${case_dir}" testtype="sync_test" selectedcaselist="${TESTCASE_LISTS}" casereltdir="${case_reltdir}"/>
          </sequential>
       </for>
    </target>

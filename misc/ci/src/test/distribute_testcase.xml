@@ -8,8 +8,88 @@
    <!--delete other type of testcase-->  
    <macrodef name="filtercase">
       <attribute name="casedir"/>
+      <attribute name="selectedcaselist" />
+      <attribute name="casereltdir"/>
       <attribute name="testtype" default="normal_test"/>
       <sequential>
+         <var name="caselist" value=""/>
+         <var name="classeslist" value=""/>
+         <for list="@{selectedcaselist}" param="feature" delimiter=",">
+            <sequential>
+               <if>
+                  <contains string="@{casereltdir}" substring="/c"/>
+                  <then>
+                     <propertyregex property="casename" input="@{feature}" regexp="(.*)@{casereltdir}/(.*)/(.*).cpp" select="\3"/>
+                  </then>
+                  <elseif>
+                     <contains string="@{casereltdir}" substring="/java"/>
+                     <then>
+                        <propertyregex property="casename" input="@{feature}" regexp="(.*)@{casereltdir}/(.*).java" select="\2"/>
+                        <propertyregex property="classname" input="${casename}" regexp="/" replace="."/>           
+                        <switch value="@{testtype}">
+                           <case value="normal_test">
+                              <var name="xmlfilename" value="testng.xml"/>
+                           </case>
+                           <case value="largedata_test">
+                              <var name="xmlfilename" value="largedata.xml"/>
+                           </case>
+                           <case value="configure_test">
+                              <var name="xmlfilename" value="configure.xml"/>
+                           </case>
+                           <case value="sync_test">
+                              <var name="xmlfilename" value="sync.xml"/>
+                           </case>
+                           <case value="smoke_test">
+                              <var name="xmlfilename" value="smoke.xml"/>
+                           </case>
+                        </switch>
+                        <exec executable="sed">
+                           <arg value="-i"/>
+                           <arg line="'/packages/d' @{casedir}/${xmlfilename}"/>
+                        </exec>
+                        <exec executable="sed">
+                           <arg value="-i"/>
+                           <arg line="'/package name/d' @{casedir}/${xmlfilename}"/>
+                        </exec>
+                        <if>
+                           <isset property="classname"/>
+                           <then>
+                              <var name="classeslist" value="${classeslist}\n&lt;class name=&quot;${classname}&quot;/&gt;"/>
+                           </then>
+                        </if>
+                     </then>
+                  </elseif>
+                  <else>
+                     <propertyregex property="casename" input="@{feature}" regexp="(.*)@{casereltdir}/(.*)" select="\2"/>
+                  </else>
+               </if>
+               
+               <if>
+                  <equals arg1="${caselist}" arg2=""/>
+                  <then>
+                     <var name="caselist" value="${casename}"/>
+                  </then>
+                  <else>
+                     <var name="caselist" value="${caselist},${casename}"/>
+                  </else>
+               </if>
+               <var name="casename" unset="true"/>
+               <var name="classname" unset="true"/>
+            </sequential>
+         </for>
+         
+         <if>
+            <not>
+               <equals arg1="@{selectedcaselist}" arg2=""/>
+            </not>
+            <then>
+               <exec executable="sed">
+                  <arg value="-i"/>
+                  <arg line=" '/suite/i\\&lt;test name=&quot;classtest&quot;&gt;\n&lt;classes&gt;\n${classeslist}\n&lt;/classes&gt;\n&lt;/test&gt;' @{casedir}/${xmlfilename}"/>
+               </exec>
+            </then>
+         </if>
+
          <var name="total_conf" unset="true"/>
          <loadfile property="total_conf" srcFile="@{casedir}/testcase.conf" failonerror="false"/>
          
@@ -34,11 +114,29 @@
                         <delete file="@{casedir}/@{feature}.static" failonerror="false"/>
                      </sequential>
                   </for>
+                  <if>
+                     <equals arg1="@{selectedcaselist}" arg2=""/>
+                     <else>
+                        <var name="excludelist" unset="true" />
+                        <var name="excludelist" value="" />
+                        <for list="${common_list}" param="feature">
+                           <sequential>
+                              <var name="excludepathfile" value="@{feature}/**/*,@{feature},@{feature}.static" />
+                              <var name="excludelist" value="${excludelist},${excludepathfile}"/>
+                           </sequential>
+                        </for>
+                        <echo message="excludelist: ${excludelist}"/>
+                        <delete includeEmptyDirs="true">
+                           <fileset dir="@{casedir}" excludes="testcase.conf,*node.conf,${excludelist},${caselist}"/>
+                        </delete>
+                     </else>
+                  </if>
                </case>
                
                <case value="largedata_test">
                   <var name="excludelist" unset="true" />
                   <var name="excludelist" value="" />
+                 
                   <for list="${large_data_list}" param="feature">
                      <sequential>
                         <var name="excludepathfile" value="@{feature}/**/*,@{feature},@{feature}.static" />
@@ -53,6 +151,10 @@
                   </for>
                   <delete includeEmptyDirs="true">
                      <fileset dir="@{casedir}" excludes="testcase.conf,*node.conf,${excludelist}"/>
+                  </delete>
+                  <!--delete other testcase by testcaselist-->
+                  <delete includeEmptyDirs="true">
+                     <fileset dir="@{casedir}" excludes="testcase.conf,*node.conf,${caselist}"/>
                   </delete>
                </case>
                
@@ -74,6 +176,10 @@
                   <delete includeEmptyDirs="true">
                      <fileset dir="@{casedir}" excludes="testcase.conf,*node.conf,${excludelist}"/>
                   </delete>
+                  <!--delete other testcase by testcaselist-->
+                  <delete includeEmptyDirs="true">
+                     <fileset dir="@{casedir}" excludes="testcase.conf,*node.conf,${caselist}"/>
+                  </delete>
                </case>
 
                <case value="sync_test">
@@ -93,6 +199,10 @@
                   </for>
                   <delete includeEmptyDirs="true">
                      <fileset dir="@{casedir}" excludes="lib/**/*,test-mongo,testcase.conf,${excludelist}"/>
+                  </delete>
+                  <!--delete other testcase by testcaselist-->
+                  <delete includeEmptyDirs="true">
+                     <fileset dir="@{casedir}" excludes="lib/**/*,test-mongo,testcase.conf,${caselist}"/>
                   </delete>
                </case>
            
@@ -177,6 +287,7 @@
             <path refid="divided_path" />
          </resourcecount>
          <var name="part_filenum" unset="true"/>
+         <echo>11111total_filenum:${total_filenum}, partnum:${part_num}, part_filenum:${part_filenum}</echo>
          <math result="part_filenum" 
                operand1="${total_filenum}" 
                operation="/" 

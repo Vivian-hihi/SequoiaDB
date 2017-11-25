@@ -140,11 +140,11 @@
    <target name="filter_testcase">
       <for list="${TESTCASE_TYPE}" param="casetype" trim="true" parallel="false">
          <sequential>    
-         <echo>******begin to filter @{casetype} testcase******</echo>     
-         <var name="case_reltdir" unset="true"/>
-         <propertyregex property="case_reltdir" input="@{casetype}" regexp="_" replace="/"/> 
-         <var name="case_dir" value="${case_basedir}/${case_reltdir}"/>      
-         <filtercase casedir="${case_dir}" />
+            <echo>******begin to filter @{casetype} testcase******</echo>     
+            <var name="case_reltdir" unset="true"/>
+            <propertyregex property="case_reltdir" input="@{casetype}" regexp="_" replace="/"/> 
+            <var name="case_dir" value="${case_basedir}/${case_reltdir}"/>      
+            <filtercase casedir="${case_dir}" selectedcaselist="${TESTCASE_LISTS}" casereltdir="${case_reltdir}"/>
          </sequential>
       </for>
    </target>
