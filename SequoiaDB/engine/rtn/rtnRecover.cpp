@@ -1022,7 +1022,13 @@ namespace engine
             goto error ;
          }
 
-         /// when rebuild index, mbContext will be unlock or lock shared
+         /// Release the lock before flush.
+         mbContext->mbUnlock() ;
+
+         /// flush all
+         _pSU->index()->flushAll( TRUE ) ;
+
+         /// Take the lock again to modify meta data.
          rc = mbContext->mbLock( EXCLUSIVE ) ;
          if ( rc )
          {
@@ -1030,8 +1036,6 @@ namespace engine
             goto error ;
          }
 
-         /// flush all
-         _pSU->index()->flushAll( TRUE ) ;
          /// Change status
          DMS_SET_MB_NORMAL( flag ) ;
          mbContext->mb()->_flag = flag ;
