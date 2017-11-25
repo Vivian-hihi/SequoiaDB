@@ -31,6 +31,11 @@ function main()
       println( "Run mode is Standalone, can't use procedure" ) ;
       return ;
    }
+   if( getCoordUser() === "root" )
+   {
+      println( COORDHOSTNAME + ":" + COORDSVCNAME + " user is root" ) ;
+      return ;
+   }
 
    // creat import importOnce file
    createNoPermFile() ;

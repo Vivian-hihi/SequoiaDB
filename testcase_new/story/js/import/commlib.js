@@ -60,3 +60,22 @@ function currUser()
    var user = tmp[tmp.length-2] ;
    return user ;
 }
+
+function getCoordUser()
+{
+   try
+   {
+      var remote = new Remote( COORDHOSTNAME, CMSVCNAME ) ;
+      var system = remote.getSystem() ;
+      var cursor = system.listProcess( { detail: true }, 
+                                       { cmd: "sequoiadb("+COORDSVCNAME+") S" } ) ;
+      var user = cursor.next().toObj()["user"] ;
+      remote.close() ;
+      return user ;
+   }
+   catch( e )
+   {
+      throw buildException( "getCoordUser", e, 
+            "get user of " + COORDHOSTNAME + ":" + COORDSVCNAME, 0, e ) ;
+   }
+}
