@@ -15,7 +15,7 @@
    <property file="${basedir}/src/conf/test.conf" />
    
    <target name="normal_test_build">
-      <antcallback target="check_parameter" return="NEED_INSTALL_DEPLOY, DEPLOY_MODE, COVERAGE"/>
+      <antcallback target="check_parameter" return="NEED_INSTALL_DEPLOY, DEPLOY_MODE, COVERAGE, TESTCASE_LISTS"/>
       
       <var name="TEST_TYPE" value="NORMALTEST"/>
       <getplatform resultProperty="plat_form"/>
@@ -83,7 +83,7 @@
    
    <target name="largedata_test_build">
       <var name="TEST_TYPE" value="LARGEDATATEST"/>
-      <antcallback target="check_parameter" return="NEED_INSTALL_DEPLOY, DEPLOY_MODE, COVERAGE"/>
+      <antcallback target="check_parameter" return="NEED_INSTALL_DEPLOY, DEPLOY_MODE, COVERAGE, TESTCASE_LISTS"/>
       <getplatform resultProperty="plat_form"/>
       <propertycopy name="testhost_list" from="${plat_form}_${TEST_TYPE}_${DEPLOY_MODE}_HOST" />
       
@@ -148,7 +148,7 @@
    </target>
    
    <target name="sync_test_build">
-      <antcallback target="check_parameter" return="NEED_INSTALL_DEPLOY, DEPLOY_MODE, BREAK_ON_FAILURE, COVERAGE"/>
+      <antcallback target="check_parameter" return="NEED_INSTALL_DEPLOY, DEPLOY_MODE, BREAK_ON_FAILURE, COVERAGE, TESTCASE_LISTS"/>
       
       <var name="TEST_TYPE" value="SYNCTEST"/>
       <getplatform resultProperty="plat_form"/>
@@ -218,7 +218,7 @@
    <target name="performance_tpcc_test_build">
       <antcallback target="check_parameter" return="UPDATE_DB_PACKAGE, UPDATE_PG_PACKAGE, 
                                                     SELECT_DB_PACKAGE, SELECT_PG_PACKAGE,
-                                                    BACKUP_LOG_WHEN_FAIL"/>
+                                                    BACKUP_LOG_WHEN_FAIL, TESTCASE_LISTS"/>
 
       <var name="TEST_TYPE" value="PERFORMANCETEST_TPCC"/>
       <propertycopy name="testhost_list" from="${TEST_TYPE}_HOST" /> 
@@ -276,7 +276,7 @@
    </target>
    
    <target name="configure_test_build">
-      <antcallback target="check_parameter" return="NEED_INSTALL_DEPLOY, TESTCASE_TYPE, BACKUP_LOG_WHEN_FAIL, COVERAGE"/>
+      <antcallback target="check_parameter" return="NEED_INSTALL_DEPLOY, TESTCASE_TYPE, BACKUP_LOG_WHEN_FAIL, COVERAGE, TESTCASE_LISTS"/>
       
       <var name="TEST_TYPE" value="CONFIGURETEST"/>
       <getplatform resultProperty="plat_form"/>
@@ -345,7 +345,7 @@
    
    <target name="reliability_test_build">
       <var name="TEST_TYPE" value="RELIABILITYTEST"/>
-      <antcallback target="check_parameter" return="DEPLOY_MODE"/> 
+      <antcallback target="check_parameter" return="DEPLOY_MODE, TESTCASE_LISTS"/> 
       <getplatform resultProperty="plat_form"/>
       <propertycopy name="testhost_list" from="${plat_form}_${TEST_TYPE}_${DEPLOY_MODE}_HOST" />
       <if>
@@ -397,7 +397,7 @@
    
    <target name="smoke_test_build">
       <var name="TEST_TYPE" value="SMOKETEST"/>
-      <antcallback target="check_parameter" return="NEED_INSTALL_DEPLOY, DEPLOY_MODE, BREAK_ON_FAILURE"/>
+      <antcallback target="check_parameter" return="NEED_INSTALL_DEPLOY, DEPLOY_MODE, BREAK_ON_FAILURE, TESTCASE_LISTS"/>
       <getplatform resultProperty="plat_form"/>
       <propertycopy name="testhost_list" from="${plat_form}_${TEST_TYPE}_${DEPLOY_MODE}_HOST" />
       <ant antfile="install_deploy.xml" dir="src/install_deploy" inheritAll="true" useNativeBaseDir="true" >
@@ -502,6 +502,12 @@
          <isset property="SELECT_PG_PACKAGE"/>
          <else>           
             <var name="SELECT_PG_PACKAGE" value="compile_pg_trunk_release" />
+         </else>
+      </if>
+      <if>
+         <isset property="TESTCASE_LISTS"/>
+         <else>           
+            <var name="TESTCASE_LISTS" value="" />
          </else>
       </if>
    </target>
