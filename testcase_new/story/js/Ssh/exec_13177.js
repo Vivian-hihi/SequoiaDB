@@ -52,7 +52,7 @@ function testExecAbnormal( hostname )
             "test getLastRet", 127, e ) ;
    }
    var out = ssh.getLastOut() ;
-   if( out.indexOf( "command not found" ) === -1 &&
+   if( out.indexOf( "not found" ) === -1 &&
        out.indexOf( "未找到命令" ) === -1 )
    {
       throw buildException( "testExecAbnormal", null,
