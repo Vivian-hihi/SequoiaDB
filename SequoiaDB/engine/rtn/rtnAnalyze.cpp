@@ -1638,7 +1638,7 @@ namespace engine
 
    done :
       SAFE_OSS_DELETE( pIndexStat ) ;
-      PD_TRACE_EXITRC( SDB__RTNANALYZEIX, rc ) ;
+      PD_TRACE_EXITRC( SDB__RTNANALYZEIX_INT, rc ) ;
       return rc ;
 
    error :
