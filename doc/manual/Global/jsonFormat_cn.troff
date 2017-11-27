@@ -27,7 +27,7 @@ Global
 v2.6及以上版本。
 .SH 示例
 .IP "1." 3
-通过jsonForamt()改变BSON打印格式。
+通过jsonFormat()改变BSON打印格式。
 .nf
 \f[C]
 >\ db.foo.bar.find()
