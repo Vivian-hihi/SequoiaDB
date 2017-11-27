@@ -161,12 +161,31 @@ function checkStat( db, csName, clName, indexName, clExistStat, indexExistStat )
    var groups = commGetCLGroups( db, csName + "." + clName );
    
    //check lsn
+   //the longest waiting time is 600S
    var lsnFlag = false;
-   while(!lsnFlag)
+   var timeout = 600;
+   var doTimes = 0; 
+   
+   while(true)
    {
       lsnFlag = checkLSN(db, groups);
       //println("check primary and slave node lsn flag:" + lsnFlag);
-      sleep(500);
+      if(!lsnFlag)
+      {
+         if(doTimes < timeout)
+         {
+            ++doTimes;
+            sleep(1000);
+         }
+         else
+         {
+            throw "check lsn time out";
+         }     
+      }
+      else 
+      {
+         break;
+      }
    }
    
    //get all nodes
