@@ -108,7 +108,7 @@ class domain(object):
         return result
 
     def list_collections(self):
-        """List all collection spaces in this domain.
+        """List all collections in this domain.
 
         Return values:
            The cursor object of collection spaces.
