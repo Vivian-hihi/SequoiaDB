@@ -1533,11 +1533,6 @@ namespace bson {
     {
         int rc = 0 ;
         bsonDecimal decimal ;
-        if ( 0 != rc )
-        {
-            return false ;
-        }
-
         rc = decimal.fromString( strDecimal.data() ) ;
         if ( 0 != rc )
         {
