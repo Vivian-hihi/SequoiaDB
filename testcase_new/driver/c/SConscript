@@ -60,6 +60,7 @@ testFiles = [
    [ "./misc/turnonCache.cpp" ],
    [ "./misc/sync.cpp" ],
    [ "./misc/snapshotTrans.cpp" ], # conf
+   [ "./misc/masterSlave.cpp" ], # sync
    [ "./load/loadUnloadCS.cpp" ],
    [ "./load/reloadConf.cpp" ],
    [ "./load/rename.cpp" ],
