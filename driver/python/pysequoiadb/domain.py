@@ -111,7 +111,7 @@ class domain(object):
         """List all collections in this domain.
 
         Return values:
-           The cursor object of collection spaces.
+           The cursor object of collections.
         Exceptions:
            pysequoiadb.error.SDBBaseError
         """
