@@ -1,8 +1,8 @@
 # -- coding: utf-8 --
 # @decription: lob opeartion
 # @testlink:   seqDB-12478
-# @author:     LaoJingTang 2017-8-30
-
+# @author:     LaoJingTang 2017-8-
+30
 import sys
 
 from pysequoiadb import SDBInvalidArgument
@@ -63,20 +63,35 @@ class LobRandoWrite(testlib.SdbTestBase):
       actual = lob.read(1024)
       self.assertEqual(actual, self.expect_data)
 
-   def test_lob_truncate(self):
-      oid = self.__create_and_write_lob()
+   def test_lob_truncate_13409(self):
+      oid = self.__create_and_write_lob(self.data)
       self.cl.truncate_lob(oid, 0)
       lob = self.cl.open_lob(oid)
       self.assertEqual(lob.get_size(), 0)
       lob.close()
 
-      oid = self.__create_and_write_lob()
+      oid = self.__create_and_write_lob(self.data)
       self.cl.truncate_lob(oid, 100)
       self.assertEqual(self.__read_lob(oid), (self.data[0:100]).encode())
 
-      oid = self.__create_and_write_lob()
+      oid = self.__create_and_write_lob(self.data)
       self.cl.truncate_lob(oid, 10000)
       self.assertEqual(self.__read_lob(oid), self.expect_data)
+
+
+   def test_lob_oid(self):
+      with self.assertRaises(SDBInvalidArgument):
+         self.cl.truncate_lob("xxx",10)
+      with self.assertRaises(SDBInvalidArgument):
+         self.cl.remove_lob("xxx")
+      with self.assertRaises(SDBInvalidArgument):
+         self.cl.open_lob("xxx")
+      with self.assertRaises(SDBInvalidArgument):
+         self.cl.get_lob("xxx")
+      with self.assertRaises(SDBTypeError):
+         self.cl.create_lob("xxx")
+
+
 
    def test_lock(self):
       lob = self.cl.create_lob()
@@ -132,9 +147,9 @@ class LobRandoWrite(testlib.SdbTestBase):
       lob.close()
       return lob.get_oid()
 
-   def __create_and_write_lob(self):
+   def __create_and_write_lob(self,lob_data):
       lob = self.cl.create_lob()
-      lob.write(self.data, 1024)
+      lob.write(lob_data, len(lob_data))
       lob.close()
       return lob.get_oid()
 
