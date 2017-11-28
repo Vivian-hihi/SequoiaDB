@@ -153,9 +153,16 @@
                      <fileset dir="@{casedir}" excludes="testcase.conf,*node.conf,${excludelist}"/>
                   </delete>
                   <!--delete other testcase by testcaselist-->
-                  <delete includeEmptyDirs="true">
-                     <fileset dir="@{casedir}" excludes="testcase.conf,*node.conf,${caselist}"/>
-                  </delete>
+                  <if>
+                     <not>
+                        <equals arg1="@{selectedcaselist}" arg2=""/>
+                     </not>
+                     <then>
+                        <delete includeEmptyDirs="true">
+                           <fileset dir="@{casedir}" excludes="testcase.conf,*node.conf,${caselist}"/>
+                        </delete>
+                     </then>
+                  </if>
                </case>
                
                <case value="configure_test">
