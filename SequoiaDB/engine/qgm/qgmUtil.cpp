@@ -1208,7 +1208,7 @@ namespace engine
          {
             if ( !builder.appendDecimal( fieldName, value ) )
             {
-               PD_LOG( PDERROR, "Failed to append as decimal: %s",
+               PD_LOG( PDERROR, "Failed to append decimal: %s",
                        value.c_str() ) ;
                rc = SDB_INVALIDARG ;
                goto error ;
