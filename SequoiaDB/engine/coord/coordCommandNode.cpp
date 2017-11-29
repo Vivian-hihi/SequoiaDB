@@ -1395,7 +1395,7 @@ namespace engine
                                                 cb ) ;
          if ( SDB_OK == rc )
          {
-            // do operation on the nodes that query from local cache
+            // For catalog group
             rc = _opOnCataNodes( opList, groupPtr.get(), dataObjs ) ;
          }
          else if ( 0 == pArgs->_targetName.compare( CATALOG_GROUPNAME ) &&
