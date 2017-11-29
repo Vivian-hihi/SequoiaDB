@@ -17,6 +17,8 @@
 package com.sequoiadb.spark
 
 import com.sequoiadb.net.ConfigOptions
+import org.bson.BSONObject
+import org.bson.util.JSON
 
 /**
   * SequoiaDB configurations
@@ -183,6 +185,73 @@ class SdbConfig(val properties: Map[String, String]) extends Serializable {
     if (selectorDiff < 0) {
         invalidConfigValue(SdbConfig.SelectorDiff, selectorDiff)
     }
+
+    val pageSize: Int = properties.get(SdbConfig.PageSize)
+        .map(_.toInt).getOrElse(SdbConfig.DefaultPageSize)
+
+    if (pageSize < 0) {
+        invalidConfigValue(SdbConfig.PageSize, pageSize)
+    }
+
+    val lobPageSize: Int = properties.get(SdbConfig.LobPageSize)
+        .map(_.toInt).getOrElse(SdbConfig.DefaultLobPageSize)
+
+    if (lobPageSize < 0) {
+        invalidConfigValue(SdbConfig.LobPageSize, lobPageSize)
+    }
+
+    val domain: String = properties
+        .getOrElse(SdbConfig.Domain, SdbConfig.DefaultDomain)
+
+    val shardingKey: String = properties
+        .getOrElse(SdbConfig.ShardingKey, SdbConfig.DefaultShardingKey)
+
+    try {
+        JSON.parse(shardingKey).asInstanceOf[BSONObject]
+    } catch {
+        case _: Exception => invalidConfigValue(SdbConfig.ShardingKey, shardingKey)
+    }
+
+    val shardingType: String = properties
+        .getOrElse(SdbConfig.ShardingType, SdbConfig.DefaultShardingType)
+
+    shardingType.toLowerCase match {
+        case SdbConfig.SHARDING_TYPE_HASH =>
+        case SdbConfig.SHARDING_TYPE_RANGE =>
+        case SdbConfig.SHARDING_TYPE_NONE =>
+            if (shardingKey != "") {
+                invalidConfigValue(SdbConfig.ShardingType, shardingType)
+            }
+        case _ =>
+            invalidConfigValue(SdbConfig.ShardingType, shardingType)
+    }
+
+    val clPartition: Int = properties.get(SdbConfig.CLPartition)
+        .map(_.toInt).getOrElse(SdbConfig.DefaultCLPartition)
+
+    if (clPartition < 0) {
+        invalidConfigValue(SdbConfig.CLPartition, clPartition)
+    }
+
+    val replicaSize: Int = properties.get(SdbConfig.ReplicaSize)
+        .map(_.toInt).getOrElse(SdbConfig.DefaultReplicaSize)
+
+    val compressionType: String = properties
+        .getOrElse(SdbConfig.CompressionType, SdbConfig.DefaultCompressionType)
+
+    compressionType.toLowerCase match {
+        case SdbConfig.COMPRESSION_TYPE_SNAPPY =>
+        case SdbConfig.COMPRESSION_TYPE_LZW =>
+        case SdbConfig.COMPRESSION_TYPE_NONE =>
+        case _ =>
+            invalidConfigValue(SdbConfig.CompressionType, compressionType)
+    }
+
+    val autoSplit: Boolean = properties.get(SdbConfig.AutoSplit)
+        .map(_.toBoolean).getOrElse(SdbConfig.DefaultAutoSplit)
+
+    val group: String = properties
+        .getOrElse(SdbConfig.Group, SdbConfig.DefaultGroup)
 }
 
 object SdbConfig {
@@ -210,6 +279,16 @@ object SdbConfig {
     val IgnoreDuplicateKey = "ignoreduplicatekey"
     val UseSelector = "useselector"
     val SelectorDiff = "selectordiff"
+    val PageSize = "pagesize"
+    val LobPageSize = "lobpagesize"
+    val Domain = "domain"
+    val ShardingKey = "shardingkey"
+    val ShardingType = "shardingtype"
+    val CLPartition = "clpartition"
+    val ReplicaSize = "replsize"
+    val CompressionType = "compressiontype"
+    val AutoSplit = "autosplit"
+    val Group = "group"
 
     // compatible with old edition option
     val ScanType = "scantype" // auto/ixscan/tbscan
@@ -229,6 +308,14 @@ object SdbConfig {
     val USE_SELECTOR_ENABLE = "enable"
     val USE_SELECTOR_DISABLE = "disable"
     val USE_SELECTOR_AUTO = "auto"
+
+    val SHARDING_TYPE_NONE = "none"
+    val SHARDING_TYPE_HASH = "hash"
+    val SHARDING_TYPE_RANGE = "range"
+
+    val COMPRESSION_TYPE_NONE = "none"
+    val COMPRESSION_TYPE_SNAPPY = "snappy"
+    val COMPRESSION_TYPE_LZW = "lzw"
 
     val AllProperties = List(
         Host,
@@ -252,7 +339,17 @@ object SdbConfig {
         IgnoreDuplicateKey,
         UseSelector,
         SelectorDiff,
-        ScanType
+        ScanType,
+        PageSize,
+        LobPageSize,
+        Domain,
+        ShardingKey,
+        ShardingType,
+        CLPartition,
+        ReplicaSize,
+        CompressionType,
+        AutoSplit,
+        Group
     )
 
     val RequiredProperties = List(
@@ -280,6 +377,16 @@ object SdbConfig {
     val DefaultIgnoreDuplicateKey = false
     val DefaultUseSelector = USE_SELECTOR_ENABLE
     val DefaultSelectorDiff = 2
+    val DefaultPageSize = 1024 * 64
+    val DefaultLobPageSize = 1024 * 256
+    val DefaultDomain = ""
+    val DefaultShardingKey = ""
+    val DefaultShardingType = SHARDING_TYPE_HASH
+    val DefaultCLPartition = 1024
+    val DefaultReplicaSize = 1
+    val DefaultCompressionType = COMPRESSION_TYPE_NONE
+    val DefaultAutoSplit = true
+    val DefaultGroup = ""
 
     def apply(parameters: Map[String, String]): SdbConfig = new SdbConfig(parameters)
 

@@ -20,6 +20,8 @@ import com.sequoiadb.base.{DBCollection, Sequoiadb}
 import org.apache.spark.sql.sources._
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{DataFrame, SQLContext, SaveMode}
+import org.bson.{BSONObject, BasicBSONObject}
+import org.bson.util.JSON
 
 import scala.collection.JavaConversions._
 
@@ -32,7 +34,8 @@ import scala.collection.JavaConversions._
 class DefaultSource extends DataSourceRegister
     with RelationProvider
     with SchemaRelationProvider
-    with CreatableRelationProvider {
+    with CreatableRelationProvider
+    with Logging {
 
     override def shortName(): String = "sequoiadb"
 
@@ -83,10 +86,10 @@ class DefaultSource extends DataSourceRegister
         try {
             mode match {
                 case SaveMode.Append =>
-                    ensureCollection(sdb, config.collectionSpace, config.collection)
+                    ensureCollection(sdb, config.collectionSpace, config.collection, Option(config))
                     true
                 case SaveMode.Overwrite =>
-                    val cl = ensureCollection(sdb, config.collectionSpace, config.collection)
+                    val cl = ensureCollection(sdb, config.collectionSpace, config.collection, Option(config))
                     cl.truncate()
                     true
                 case SaveMode.ErrorIfExists =>
@@ -96,7 +99,7 @@ class DefaultSource extends DataSourceRegister
                                 config.collectionSpace, config.collection)
                         )
                     }
-                    ensureCollection(sdb, config.collectionSpace, config.collection)
+                    ensureCollection(sdb, config.collectionSpace, config.collection, Option(config))
                     true
                 case SaveMode.Ignore => false
                 case _ => false
@@ -118,13 +121,45 @@ class DefaultSource extends DataSourceRegister
     }
 
     // create CollectionSpace & Collection if they are not existing
-    private def ensureCollection(sdb: Sequoiadb, csName: String, clName: String): DBCollection = {
+    private def ensureCollection(sdb: Sequoiadb, csName: String, clName: String, config: Option[SdbConfig] = None): DBCollection = {
         if (!sdb.isCollectionSpaceExist(csName)) {
-            sdb.createCollectionSpace(csName)
+            val options = new BasicBSONObject()
+            if (config.nonEmpty) {
+                options.put("PageSize", config.get.pageSize)
+                options.put("LobPageSize", config.get.lobPageSize)
+                val domain = config.get.domain
+                if (domain != "") {
+                    options.put("Domain", domain)
+                }
+                logInfo(s"Using $options to create collection space[$csName]")
+            }
+            sdb.createCollectionSpace(csName, options)
         }
         val cs = sdb.getCollectionSpace(csName)
         if (!cs.isCollectionExist(clName)) {
-            cs.createCollection(clName)
+            val options = new BasicBSONObject()
+            if (config.nonEmpty) {
+                if (config.get.shardingKey != "") {
+                    val shardingKey = JSON.parse(config.get.shardingKey)
+                        .asInstanceOf[BSONObject]
+                    options.put("ShardingKey", shardingKey)
+                    options.put("ShardingType", config.get.shardingType)
+                    if (config.get.shardingType == SdbConfig.SHARDING_TYPE_HASH) {
+                        options.put("Partition", config.get.clPartition)
+                        options.put("AutoSplit", config.get.autoSplit)
+                    }
+                }
+                options.put("ReplSize", config.get.replicaSize)
+                if (config.get.compressionType != SdbConfig.COMPRESSION_TYPE_NONE) {
+                    options.put("Compressed", true)
+                    options.put("CompressionType", config.get.compressionType)
+                }
+                if (config.get.group != "") {
+                    options.put("Group", config.get.group)
+                }
+                logInfo(s"Using $options to create collection[$csName.$clName]")
+            }
+            cs.createCollection(clName, options)
         }
         cs.getCollection(clName)
     }
