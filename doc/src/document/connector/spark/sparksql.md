@@ -39,6 +39,14 @@ create <[temporary] table| temporary view> <tableName> [(schema)] using com.sequ
 |partitionblocknum|每个分区的数据块数，在按datablock分区时有效。取值大于0。|int|4|否|
 |partitionmaxnum|最大分区数量，在按datablock分区时有效。取值大于等于0，等于0时表示不限制分区最大数量。由于partitionMaxNum的限制，每个分区的数据块数可能与partitionBlockNum不同。|int|1000|否|
 |ignoreduplicatekey|向表中插入数据时忽略主键重复的错误。|boolean|false|否|
+|pagesize|create tabel as select创建集合空间时指定数据页大小。如果集合空间已存在，则忽略该参数。|int|65536|否|
+|domain|create tabel as select创建集合空间时指定所属域。如果集合空间已存在，则忽略该参数。|string|-|否|
+|shardingkey|create tabel as select创建集合时指定分区键。|json|-|否|
+|shardingtype|create tabel as select创建集合时指定分区类型，取值可以是"hash"和"range"。|string|"hash"|否|
+|replsize|create tabel as select创建集合时指定副本写入数。 |int|1|否|
+|compressiontype|create tabel as select创建集合时指定压缩类型，取值可以是"none","lzw"和"snappy"。"none"表示不压缩。|string|"none"|否|
+|autosplit|create tabel as select创建集合时指定是否自动切分。必须配合散列分区和域使用，且不能与group同时使用。|boolean|true|否|
+|group|create tabel as select创建集合时指定创建在某个复制组。group必须存在于集合空间所属的域中。|string|-|否|
 
 ###示例###
 
