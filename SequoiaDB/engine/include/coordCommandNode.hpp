@@ -164,6 +164,11 @@ namespace engine
          virtual ~_coordCMDOpOnGroup() ;
 
       protected :
+         INT32 _opOnOneNode ( const vector<INT32> &opList,
+                              string hostName,
+                              string svcName,
+                              vector<BSONObj> &dataObjs ) ;
+
          INT32 _opOnNodes ( const vector<INT32> &opList,
                             const BSONObj &boGroupInfo,
                             vector<BSONObj> &dataObjs ) ;
