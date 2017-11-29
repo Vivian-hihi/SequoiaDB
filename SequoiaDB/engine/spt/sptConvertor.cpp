@@ -803,7 +803,7 @@ INT32 sptConvertor::_addSpecialObj( JSObject *obj,
          goto error ;
       }
 
-      if ( 24 != strValue.length() || !_isValidOid( strValue.c_str() ) )
+      if ( !engine::utilIsValidOID( strValue.c_str() ) )
       {
          _setErrorMsg( "The length of ObjectId is not equal 24", FALSE ) ;
          rc = SDB_INVALIDARG ;
@@ -1595,22 +1595,6 @@ done:
    return rc ;
 error:
    goto done ;
-}
-
-BOOLEAN sptConvertor::_isValidOid( const CHAR *value )
-{
-   if ( NULL == value || 24 > ossStrlen( value ) )
-      return FALSE ;
-   for ( UINT32 i = 0; i < 24; ++i )
-   {
-      if ( ! ( ( value[i] >= '0' && value[i] <= '9' ) ||
-               ( value[i] >= 'a' && value[i] <= 'f' ) ||
-               ( value[i] >= 'A' && value[i] <= 'F' ) ) )
-      {
-         return FALSE ;
-      }
-   }
-   return TRUE ;
 }
 
 BOOLEAN sptConvertor::_isValidNumberLong( const CHAR *value )

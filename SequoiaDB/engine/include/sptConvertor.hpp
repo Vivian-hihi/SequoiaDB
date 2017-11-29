@@ -138,7 +138,6 @@ private:
                       bson *bs) ;
    void _setErrorMsg( const CHAR *pErrMsg, BOOLEAN isReplace ) ;
 private:
-   BOOLEAN _isValidOid( const CHAR *value ) ;
    BOOLEAN _isValidNumberLong( const CHAR *value ) ;
 
 private:

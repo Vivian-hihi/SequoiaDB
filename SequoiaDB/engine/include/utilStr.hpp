@@ -86,11 +86,6 @@ namespace engine
 
    INT32 utilStrToUpper( const CHAR *src, CHAR *&upper ) ;
 
-   INT32 utilStrJoin( const CHAR **src,
-                      UINT32 cnt,
-                      CHAR *join,
-                      UINT32 &joinSize ) ;
-
    BOOLEAN utilStrIsDigit( const string& str ) ;
 
    BOOLEAN utilStrIsDigit( const char *str ) ;
@@ -130,6 +125,8 @@ namespace engine
                            INT32 &fixVersion,    // out
                            INT32 &release,       // out
                            string &buildInfo ) ;
+
+   BOOLEAN utilIsValidOID( const CHAR *pStr ) ;
 
    class utilSplitIterator : public SDBObject
    {

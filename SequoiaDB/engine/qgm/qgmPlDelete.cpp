@@ -62,7 +62,7 @@ namespace engine
       if ( NULL != condition )
       {
          _qgmConditionNodeHelper tree( condition ) ;
-         _condition = tree.toBson(FALSE) ;
+         _condition = tree.toBson( TRUE ) ;
          if ( !_condition.isEmpty() )
          {
             _initialized = TRUE ;

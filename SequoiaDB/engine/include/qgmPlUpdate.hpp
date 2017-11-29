@@ -49,8 +49,7 @@ namespace engine
    {
    public:
       _qgmPlUpdate( const _qgmDbAttr &collection,
-                    const qgmDbAttrVec &columns,
-                    const qgmOPFieldVec &values,
+                    const BSONObj &modifer,
                     _qgmConditionNode *condition,
                     INT32 flag ) ;
 
@@ -78,10 +77,10 @@ namespace engine
       }
 
    private:
-      _qgmDbAttr _collection ;
-      BSONObj _updater ;
-      BSONObj _condition ;
-      INT32 _flag ;
+      _qgmDbAttr  _collection ;
+      BSONObj     _updater ;
+      BSONObj     _condition ;
+      INT32       _flag ;
    } ;
 
    typedef class _qgmPlUpdate qgmPlUpdate ;

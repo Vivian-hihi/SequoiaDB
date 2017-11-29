@@ -100,10 +100,9 @@ namespace engine
       }
 
    public:
-      _qgmDbAttr _collection ;
-      qgmDbAttrVec _columns ;
-      qgmOPFieldVec _values ;
-      _qgmConditionNode *_condition ;
+      _qgmDbAttr           _collection ;
+      BSONObj              _modifer ;
+      _qgmConditionNode    *_condition ;
    } ;
    typedef class _qgmOptiUpdate qgmOptiUpdate ;
 }
