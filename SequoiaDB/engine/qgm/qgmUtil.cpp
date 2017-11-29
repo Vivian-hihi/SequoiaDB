@@ -1206,7 +1206,13 @@ namespace engine
          }
          else if ( SQL_GRAMMAR::DECIMAL == type )
          {
-            builder.appendDecimal( fieldName, value ) ;
+            if ( !builder.appendDecimal( fieldName, value ) )
+            {
+               PD_LOG( PDERROR, "Failed to append as decimal: %s",
+                       value.c_str() ) ;
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
          }
          else if ( SQL_GRAMMAR::NULLL == type )
          {
