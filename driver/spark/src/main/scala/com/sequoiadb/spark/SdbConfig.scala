@@ -385,7 +385,7 @@ object SdbConfig {
     val DefaultCLPartition = 1024
     val DefaultReplicaSize = 1
     val DefaultCompressionType = COMPRESSION_TYPE_NONE
-    val DefaultAutoSplit = true
+    val DefaultAutoSplit = false
     val DefaultGroup = ""
 
     def apply(parameters: Map[String, String]): SdbConfig = new SdbConfig(parameters)

@@ -146,7 +146,9 @@ class DefaultSource extends DataSourceRegister
                     options.put("ShardingType", config.get.shardingType)
                     if (config.get.shardingType == SdbConfig.SHARDING_TYPE_HASH) {
                         options.put("Partition", config.get.clPartition)
-                        options.put("AutoSplit", config.get.autoSplit)
+                        if (config.get.autoSplit) {
+                            options.put("AutoSplit", config.get.autoSplit)
+                        }
                     }
                 }
                 options.put("ReplSize", config.get.replicaSize)
