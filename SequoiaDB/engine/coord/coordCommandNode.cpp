@@ -571,7 +571,7 @@ namespace engine
       PD_TRACE_ENTRY ( COORD_CMDOPONGROUP_OPONVECNODES ) ;
 
       BSONObj boExecArg ;
-      string svcName ;
+      CHAR svcPortStr[ 10 ] = { 0 } ;
       UINT32 pos = 0 ;
 
       try
@@ -581,10 +581,21 @@ namespace engine
             const clsNodeItem &item = vecNodes[ pos ] ;
             ++pos ;
 
-            svcName = item._service[ MSG_ROUTE_LOCAL_SERVICE ] ;
+            UINT16 cataPort = 0 ;
+            UINT16 svcPort = 0 ;
+            string cataName = item._service[ MSG_ROUTE_CAT_SERVICE ] ;
+            rc = ossGetPort( cataName.c_str(), cataPort ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Convert service[%s] to port failed, rc: %d",
+                       cataName.c_str(), rc ) ;
+               goto error ;
+            }
+            svcPort = cataPort - MSG_ROUTE_CAT_SERVICE ;
+            ossSnprintf( svcPortStr, sizeof( svcPortStr ), "%us", svcPort ) ;
 
             boExecArg = BSON( FIELD_NAME_HOST << item._host <<
-                              PMD_OPTION_SVCNAME << svcName ) ;
+                              PMD_OPTION_SVCNAME << svcPortStr ) ;
 
             for ( vector<INT32>::const_iterator iter = opList.begin() ;
                   iter != opList.end() ;
@@ -603,10 +614,10 @@ namespace engine
                {
                   PD_LOG( PDERROR, "Do remote execute[code:%d] on the "
                           "node[%s:%s] failed, rc: %d, remoteRC: %d",
-                          opCode, item._host, svcName.c_str(),
+                          opCode, item._host, svcPortStr,
                           rc, retCode ) ;
                   dataObjs.push_back( BSON( FIELD_NAME_HOST << item._host <<
-                                            PMD_OPTION_SVCNAME << svcName <<
+                                            PMD_OPTION_SVCNAME << svcPortStr <<
                                             OP_ERRNOFIELD << retCode ) ) ;
                } /// end if
             } /// end for
@@ -1398,25 +1409,27 @@ namespace engine
       {
          rc = _opOnNodes( opList, cataObjs[0], dataObjs ) ;
       }
-      else if ( 0 == pArgs->_targetName.compare( CATALOG_GROUPNAME ) &&
-                !_vecNodes.empty() )
-      {
-         rc = _opOnVecNodes( opList, _vecNodes, dataObjs ) ;
-      }
       else
       {
          CoordGroupInfoPtr groupPtr ;
          rc = _pResource->getOrUpdateGroupInfo( pArgs->_targetName.c_str(),
                                                 groupPtr,
                                                 cb ) ;
-         if ( rc )
+         if ( SDB_OK == rc )
+         {
+            // For catalog group
+            rc = _opOnCataNodes( opList, groupPtr.get(), dataObjs ) ;
+         }
+         else if ( 0 == pArgs->_targetName.compare( CATALOG_GROUPNAME ) &&
+                   !_vecNodes.empty() )
+         {
+            rc = _opOnVecNodes( opList, _vecNodes, dataObjs ) ;
+         }
+         else
          {
             PD_LOG( PDERROR, "Get group info failed on command[%s, targe:%s], "
                     "rc: %d", getName(), pArgs->_targetName.c_str(), rc ) ;
-            goto error ;
          }
-         // For catalog group
-         rc = _opOnCataNodes( opList, groupPtr.get(), dataObjs ) ;
       }
 
       if ( SDB_OK != rc )
