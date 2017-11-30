@@ -52,6 +52,7 @@ using namespace bson ;
 #define ES_TOTAL_KEY             "total"
 #define ES_SCROLL_ID_KEY         "_scroll_id"
 #define ES_SOURCE_KEY            "_source"
+#define ES_ERROR_FIELD_NAME      "errors"
 
 // For arguments check.
 #define ES_CLT_ARG_CHK1( index )                         \
@@ -652,6 +653,60 @@ namespace engine
    void _utilESClt::clearScroll( const std::string& scrollId )
    {
       _http.remove("/_search/scroll", scrollId.c_str(), NULL, NULL, NULL );
+   }
+
+   INT32 _utilESClt::bulk( const CHAR *index, const CHAR *type,
+                           const CHAR *data )
+   {
+      INT32 rc = SDB_OK ;
+      string endUrl ;
+      const CHAR *reply = NULL ;
+      INT32 replyLen = 0 ;
+      BSONObj replyObj ;
+      HTTP_STATUS_CODE status = 0 ;
+
+      if ( !data )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "No valid data for _bulk operation" ) ;
+         goto error ;
+      }
+
+      // Index and type are optional.
+      if ( index )
+      {
+         endUrl = string( index ) ;
+         if ( type )
+         {
+            endUrl += string( "/" ) + type ;
+         }
+      }
+      endUrl += "/_bulk" ;
+
+      rc = _http.post( endUrl.c_str(), data, &status, &reply, &replyLen ) ;
+      rc = _processReply( rc, reply, replyLen, replyObj ) ;
+      PD_RC_CHECK( rc, PDERROR, "Process request reply failed[ %d ]", rc ) ;
+
+      try
+      {
+         if ( replyObj.getBoolField( ES_ERROR_FIELD_NAME ) )
+         {
+            rc = SDB_SYS ;
+            PD_LOG( PDERROR, "Operation on remote failed. Reply: %s", reply ) ;
+            goto error ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Unexpected exception happened: %s", e.what() ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _utilESClt::_getResultObjs( const BSONObj &replyObj,

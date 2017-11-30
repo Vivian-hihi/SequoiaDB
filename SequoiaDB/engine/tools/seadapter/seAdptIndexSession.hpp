@@ -42,6 +42,7 @@
 #include "pmdAsyncSession.hpp"
 #include "dmsExtDataHandler.hpp"
 #include "seAdptMgr.hpp"
+#include "utilESBulkBuilder.hpp"
 
 using namespace bson ;
 
@@ -114,6 +115,9 @@ namespace engine
       INT32 _startOver() ;
       void  _setQueryBusyFlag( BOOLEAN busy ) { _queryBusy = busy; }
       BOOLEAN _isQueryBusy() { return _queryBusy ; }
+      INT32 _bulkPrepare() ;
+      INT32 _bulkProcess( const utilESBulkActionBase &actionItem ) ;
+      INT32 _bulkFinish() ;
 
       OSS_INLINE INT32 _findRecWithLID( INT64 logicalID, BOOLEAN &found ) ;
 
@@ -138,6 +142,7 @@ namespace engine
                                              // A new query can be started only
                                              // when it's FALSE.
       INT64                   _expectLID ;
+      utilESBulkBuilder       _bulkBuilder ;
    } ;
    typedef _seAdptIndexSession seAdptIndexSession ;
 

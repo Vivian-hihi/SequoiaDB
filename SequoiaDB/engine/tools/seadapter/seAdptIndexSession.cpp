@@ -786,6 +786,9 @@ namespace engine
          rc = _ensureESClt() ;
          PD_RC_CHECK( rc, PDERROR, "The search engine client is not active[ %d ]",
                       rc ) ;
+         rc = _bulkPrepare() ;
+         PD_RC_CHECK( rc, PDERROR, "Prepare of bulk operation failed[ %d ]",
+                      rc ) ;
 
          for ( vector<BSONObj>::const_iterator itr = docObjs.begin();
                itr != docObjs.end(); ++itr )
@@ -817,14 +820,25 @@ namespace engine
 
             sourceObj = builder.done() ;
 
-            // For data in the original collection, the only operation is insertion.
-            rc = _esClt->indexDocument( _indexName.c_str(), _typeName.c_str(),
-                                        idEle.OID().toString().c_str(),
-                                        sourceObj.toString().c_str() ) ;
-            PD_RC_CHECK( rc, PDERROR, "Index record on search engine "
-                  "failed[ %d ], id: %s", rc,
-                         idEle.toString().c_str() ) ;
+            {
+               utilESActionIndex item( _indexName.c_str(), _typeName.c_str() ) ;
+               rc = item.setID( idEle.OID().toString().c_str() ) ;
+               PD_RC_CHECK( rc, PDERROR, "Set _id for action failed[ %d ]",
+                            rc ) ;
+               rc = item.setSourceData( sourceObj.toString().c_str(),
+                                        sourceObj.toString().length() ) ;
+               PD_RC_CHECK( rc, PDERROR, "Set source data for action "
+                            "failed[ %d ]", rc ) ;
+
+               rc = _bulkProcess( item ) ;
+               PD_RC_CHECK( rc, PDERROR, "Bulk processing item failed[ %d ]",
+                            rc ) ;
+            }
          }
+
+         rc = _bulkFinish() ;
+         PD_RC_CHECK( rc, PDERROR, "Finish operation of bulk failed[ %d ]",
+                      rc ) ;
 
          rc = _sendGetmoreReq( contextID, msg->requestID ) ;
          PD_RC_CHECK( rc, PDERROR, "Send get more request failed[ %d ]", rc ) ;
@@ -901,6 +915,10 @@ namespace engine
             nextLastLID = lidEle.Long() ;
          }
 
+         rc = _bulkPrepare() ;
+         PD_RC_CHECK( rc, PDERROR, "Prepare of bulk operation failed[ %d ]",
+                      rc ) ;
+
          for ( vector<BSONObj>::const_iterator itr = docObjs.begin();
                itr != docObjs.end(); ++itr )
          {
@@ -919,32 +937,53 @@ namespace engine
             switch ( oprType )
             {
                case DMS_EXT_INSERT:
-                  rc = _esClt->indexDocument( _indexName.c_str(),
-                                              _typeName.c_str(),
-                                              origOID,
-                                              sourceObj.toString().c_str() ) ;
-                  PD_RC_CHECK( rc, PDERROR, "Index record on search engine "
-                               "failed[ %d ], id: %s", rc,
-                               origOID ) ;
+                  {
+                     utilESActionIndex item( _indexName.c_str(),
+                                             _typeName.c_str() ) ;
+                     rc = item.setID( origOID ) ;
+                     PD_RC_CHECK( rc, PDERROR, "Set _id for action "
+                                  "failed[ %d ]", rc ) ;
+                     rc = item.setSourceData( sourceObj.toString().c_str(),
+                                              sourceObj.toString().length() ) ;
+                     PD_RC_CHECK( rc, PDERROR, "Set source data failed[ %d ]",
+                                  rc ) ;
+                     rc = _bulkProcess( item ) ;
+                     PD_RC_CHECK( rc, PDERROR, "Bulk processing item "
+                                  "failed[ %d ]", rc ) ;
+                  }
                   break ;
                case DMS_EXT_DELETE:
-                  rc = _esClt->deleteDocument( _indexName.c_str(),
-                                               _typeName.c_str(),
-                                               origOID ) ;
-                  PD_RC_CHECK( rc, PDERROR, "Delete document on search engine "
-                               "failed[ %d ], _id: %s", rc,
-                               origOID ) ;
+                  {
+                     utilESActionDelete item( _indexName.c_str(),
+                                              _typeName.c_str() ) ;
+                     rc = item.setID( origOID ) ;
+                     PD_RC_CHECK( rc, PDERROR, "Set _id for action "
+                                  "failed[ %d ]", rc ) ;
+                     rc = _bulkProcess( item ) ;
+                     PD_RC_CHECK( rc, PDERROR, "Bulk processing item "
+                                  "failed[ %d ]", rc ) ;
+                  }
                   break ;
                case DMS_EXT_UPDATE:
-                  rc = _esClt->updateDocument( _indexName.c_str(),
-                                               _typeName.c_str(),
-                                               origOID,
-                                               sourceObj.toString().c_str()  ) ;
-                  PD_RC_CHECK( rc, PDERROR, "Update document on search engine "
-                               "failed[ %d ], id: %s", rc,
-                               origOID ) ;
+                  {
+                     utilESActionUpdate item( _indexName.c_str(),
+                                              _typeName.c_str() ) ;
+                     rc = item.setID( origOID ) ;
+                     PD_RC_CHECK( rc, PDERROR, "Set _id for action "
+                                  "failed[ %d ]", rc ) ;
+                     rc = item.setSourceData( sourceObj.toString().c_str(),
+                                              sourceObj.toString().length() ) ;
+                     rc = _bulkProcess( item ) ;
+                     PD_RC_CHECK( rc, PDERROR, "Bulk processing item "
+                                  "failed[ %d ]", rc ) ;
+                  }
                   break ;
                case DMS_EXT_TRUNCATE:
+                  // Truncate(actuall delete by type) can not be done in bulk
+                  // operation. So wait for the current bulk to finish.
+                  rc = _bulkFinish() ;
+                  PD_RC_CHECK( rc, PDERROR, "Finish operation of bulk "
+                               "failed[ %d ]", rc ) ;
                   rc = _esClt->deleteAllByType( _indexName.c_str(),
                                                 _typeName.c_str() ) ;
                   PD_RC_CHECK( rc, PDERROR, "Delete all documents for index[ %s ] "
@@ -958,6 +997,9 @@ namespace engine
                   goto error ;
             }
          }
+         rc = _bulkFinish() ;
+         PD_RC_CHECK( rc, PDERROR, "Finish operation of bulk "
+                      "failed[ %d ]", rc ) ;
       }
       catch ( std::exception &e )
       {
@@ -1287,6 +1329,69 @@ namespace engine
    done:
       return rc ;
    error: goto done ;
+   }
+
+   INT32 _seAdptIndexSession::_bulkPrepare()
+   {
+      INT32 rc = SDB_OK ;
+      if ( _bulkBuilder.isInit() )
+      {
+         _bulkBuilder.reset() ;
+      }
+      else
+      {
+         rc = _bulkBuilder.init() ;
+         PD_RC_CHECK( rc, PDERROR, "Initialize bulk builder failed[ %d ]",
+                      rc ) ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _seAdptIndexSession::_bulkProcess( const utilESBulkActionBase &actionItem )
+   {
+      INT32 rc = SDB_OK ;
+
+      // If reaching the size limit of the bulk builder, fire the operation and
+      // go on with the next batch of data.
+      if ( actionItem.outSizeEstimate() > _bulkBuilder.getFreeSize() )
+      {
+         PD_LOG( PDDEBUG, "Bulk operation data: %s",
+                 _bulkBuilder.getData() ) ;
+         rc = _esClt->bulk( _indexName.c_str(), _typeName.c_str(),
+                            _bulkBuilder.getData() ) ;
+         PD_RC_CHECK( rc, PDERROR, "Bulk operation failed[ %d ]" ) ;
+         _bulkBuilder.reset() ;
+      }
+      rc = _bulkBuilder.appendItem( actionItem, FALSE, FALSE, TRUE ) ;
+      PD_RC_CHECK( rc, PDERROR, "Append item to bulk builder failed[ %d ]",
+                   rc ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _seAdptIndexSession::_bulkFinish()
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( _bulkBuilder.getDataLen() > 0 )
+      {
+         PD_LOG( PDDEBUG, "Bulk operation data: %s",
+                 _bulkBuilder.getData() ) ;
+         rc = _esClt->bulk( _indexName.c_str(), _typeName.c_str(),
+                            _bulkBuilder.getData() ) ;
+         PD_RC_CHECK( rc, PDERROR, "Bulk operation failed[ %d ]" ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 }
 

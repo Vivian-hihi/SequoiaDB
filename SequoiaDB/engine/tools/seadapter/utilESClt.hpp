@@ -82,7 +82,6 @@ namespace engine
          INT32 deleteDocument( const CHAR *index, const CHAR *type,
                                const CHAR *id ) ;
 
-         // TODO: Whether to filter meta data away. Provide another parameter?
          // Request the document by index/type/id. At most one document should be
          // returned as id dose not duplicate.
          INT32 getDocument( const CHAR *index, const CHAR *type, const CHAR *id,
@@ -118,6 +117,8 @@ namespace engine
                            int scrollSize = UTIL_ES_DFT_SCROLL_SIZE ) ;
          INT32 scrollNext( string& scrollId, utilCommObjBuff &result ) ;
          void clearScroll( const string& scrollId ) ;
+
+         INT32 bulk( const CHAR *index, const CHAR *type, const CHAR*data ) ;
 
       private:
          OSS_INLINE INT32 _processReply( INT32 returnCode, const CHAR *reply,
