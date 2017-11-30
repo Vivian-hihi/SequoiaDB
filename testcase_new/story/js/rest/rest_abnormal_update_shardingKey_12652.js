@@ -6,6 +6,27 @@
 ****************************************************/
 var csName=COMMCSNAME;
 var clName=COMMCLNAME + "12652";
+var varCL;
+
+main();
+
+function main(){
+   if( commIsStandalone( db ) )
+   {
+      println( "Deploy mode is standalone!" );
+      return;
+   }
+   
+   commDropCL(db,csName,clName,true,true,"drop cl in begin");
+   
+   var opt = {ReplSize:0, ShardingKey:{a:1}};
+   varCL = commCreateCLByOption(db,csName,clName,opt,true,false,"create cl in begin");
+   
+   insertRecs();
+   updateAndCheck();
+   
+   commDropCL(db, csName, clName, false,false, "drop cl in clean");
+}
 
 function insertRecs(){
 	try
@@ -132,13 +153,3 @@ function updateAndCheck()
 		throw e;
 	}
 }
-
-commDropCL(db,csName,clName,true,true,"drop cl in begin");
-
-var opt = {ReplSize:0, ShardingKey:{a:1}};
-var varCL = commCreateCLByOption(db,csName,clName,opt,true,false,"create cl in begin");
-
-insertRecs();
-updateAndCheck();
-
-commDropCL(db, csName, clName, false,false, "drop cl in clean");
