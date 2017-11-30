@@ -114,11 +114,13 @@ namespace engine
                            const CHAR* type,
                            const string& query,
                            utilCommObjBuff &result,
-                           int scrollSize = UTIL_ES_DFT_SCROLL_SIZE ) ;
-         INT32 scrollNext( string& scrollId, utilCommObjBuff &result ) ;
+                           int scrollSize = UTIL_ES_DFT_SCROLL_SIZE,
+                           const CHAR *filterPath = NULL ) ;
+         INT32 scrollNext( string& scrollId, utilCommObjBuff &result,
+                           const CHAR *filterPath = NULL ) ;
          void clearScroll( const string& scrollId ) ;
 
-         INT32 bulk( const CHAR *index, const CHAR *type, const CHAR*data ) ;
+         INT32 bulk( const CHAR *index, const CHAR *type, const CHAR *data ) ;
 
       private:
          OSS_INLINE INT32 _processReply( INT32 returnCode, const CHAR *reply,

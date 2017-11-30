@@ -405,14 +405,15 @@ namespace engine
       query << "{\"query\":{\"match\":{\"" << key << "\":\""
             << value << "\"}}}" ;
 
+      rc = objBuff.reset() ;
+      PD_RC_CHECK( rc, PDERROR, "Reset object buffer failed[ %d ]", rc ) ;
+
       rc = _http.get( endUrl.str().c_str(), query.str().c_str(),
                       &status, &reply, &replyLen ) ;
       if ( withMeta )
       {
          rc = _processReply( rc, reply, replyLen, fullObj ) ;
          PD_RC_CHECK( rc, PDERROR, "Process request reply failed[ %d ]", rc ) ;
-         rc = objBuff.reset() ;
-         PD_RC_CHECK( rc, PDERROR, "Reset object buffer failed[ %d ]", rc ) ;
          rc = objBuff.appendObj( fullObj ) ;
          PD_RC_CHECK( rc, PDERROR, "Append object to buffer failed[ %d ]", rc ) ;
       }
@@ -592,7 +593,8 @@ namespace engine
                                  const CHAR* type,
                                  const std::string& query,
                                  utilCommObjBuff &result,
-                                 int scrollSize )
+                                 int scrollSize,
+                                 const CHAR *filterPath )
    {
       INT32 rc = SDB_OK ;
       const CHAR *reply = NULL ;
@@ -605,6 +607,13 @@ namespace engine
 
       oss << index << "/" << type << "/_search?scroll=1m&size="
          << scrollSize;
+      if ( filterPath )
+      {
+         oss << "&" << filterPath ;
+      }
+
+      rc = result.reset() ;
+      PD_RC_CHECK( rc, PDERROR, "Reset object buffer failed[ %d ]", rc ) ;
 
       rc = _http.post( oss.str().c_str(), query.c_str(), &status,
                        &reply, &replyLen ) ;
@@ -628,15 +637,22 @@ namespace engine
       goto done ;
    }
 
-   INT32 _utilESClt::scrollNext( std::string& scrollId, utilCommObjBuff &result )
+   INT32 _utilESClt::scrollNext( std::string& scrollId, utilCommObjBuff &result,
+                                 const CHAR *filterPath )
    {
       INT32 rc = SDB_OK ;
       const CHAR *reply = NULL ;
       INT32 replyLen = 0 ;
       BSONObj replyObj ;
       HTTP_STATUS_CODE status = 0 ;
+      string endUrl = "_search/scroll?scroll=1m" ;
 
-      rc = _http.post( "_search/scroll?scroll=1m", scrollId.c_str(),
+      if ( filterPath )
+      {
+         endUrl = endUrl + "&" + filterPath ;
+      }
+
+      rc = _http.post( endUrl.c_str(), scrollId.c_str(),
                        &status, &reply, &replyLen ) ;
       rc = _processReply( rc, reply, replyLen, replyObj ) ;
       PD_RC_CHECK( rc, PDERROR, "Process request reply failed[ %d ]", rc ) ;
@@ -715,7 +731,6 @@ namespace engine
       INT32 rc = SDB_OK ;
       BSONElement sourceObj ;
 
-      rc = resultObjs.reset() ;
       PD_RC_CHECK( rc, PDERROR, "Initialize result buffer failed[ %d ]", rc ) ;
 
       try
@@ -734,7 +749,9 @@ namespace engine
                         itr != hitObjs.end(); ++itr )
                   {
                      BSONObj sourceObj = itr->embeddedObject() ;
-                     resultObjs.appendObj( sourceObj ) ;
+                     rc = resultObjs.appendObj( sourceObj ) ;
+                     PD_RC_CHECK( rc, PDERROR, "Append object failed[ %d ]",
+                                  rc ) ;
                   }
                }
             }

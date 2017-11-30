@@ -109,6 +109,7 @@ namespace engine
    {
       _root = NULL ;
       _textNode = NULL ;
+      _textNodeInNot = FALSE ;
    }
 
    _rtnSimpleCondParseTree::~_rtnSimpleCondParseTree()
@@ -475,6 +476,7 @@ namespace engine
       PD_TRACE_ENTRY( SDB__RTNSIMPLECONDPARSETREE__PARSEOPTEXT ) ;
       rtnCondTextNode *textNode = NULL ;
       const CHAR *fieldName = ele.fieldName() ;
+      rtnCondNode *parentTmp = parent ;
 
       SDB_ASSERT( Object == ele.type(), "Element of text operation should be "
                   "object type" ) ;
@@ -514,6 +516,20 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Add child node failed[ %d ]", rc ) ;
 
       _textNode = textNode ;
+
+      // Check if the text node is in a $not clause.
+      while ( parentTmp )
+      {
+         if ( RTN_COND_NODE_LOGIC_NOT == parentTmp->getType() )
+         {
+            _textNodeInNot = TRUE ;
+            break ;
+         }
+         else
+         {
+            parentTmp = parentTmp->getParent() ;
+         }
+      }
 
    done:
       PD_TRACE_EXITRC( SDB__RTNSIMPLECONDPARSETREE__PARSEOPTEXT, rc ) ;

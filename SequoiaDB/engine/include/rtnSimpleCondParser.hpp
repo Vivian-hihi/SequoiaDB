@@ -76,6 +76,7 @@ namespace engine
          void clear() ;
          BOOLEAN hasTextCond() ;
          rtnCondNode* getTextNode() ;
+         BOOLEAN textNodeInNot() const { return _textNodeInNot ; }
          INT32 updateNode( rtnCondNode *node, const BSONElement &newEle ) ;
          BSONObj toBson() ;
 
@@ -101,6 +102,8 @@ namespace engine
          rtnCondNode          *_root ;
          rtnCondNodeAllocator _allocator ;
          rtnCondNode          *_textNode ;
+         // Whether text node is descendant of a $not clause.
+         BOOLEAN              _textNodeInNot ;
    } ;
    typedef _rtnSimpleCondParseTree rtnSimpleCondParseTree ;
 

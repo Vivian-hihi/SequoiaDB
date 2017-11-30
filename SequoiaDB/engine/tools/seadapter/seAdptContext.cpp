@@ -41,7 +41,10 @@
 
 using namespace bson ;
 
-#define DMS_ID_KEY_NAME        "_id"
+#define SEADPT_ID_KEY_NAME          "_id"
+#define SEADPT_FETCH_BATCH_SIZE     10000
+#define SEADPT_FETCH_MAX_SIZE       100000
+#define SEADPT_ES_ID_FILTER_PATH    "filter_path=_scroll_id,hits.hits._id"
 
 namespace engine
 {
@@ -265,12 +268,22 @@ namespace engine
          rc = _esClt->active() ;
          PD_RC_CHECK( rc, PDERROR, "Reactive ES client failed[ %d ]", rc ) ;
       }
-      rc = _esClt->initScroll( _scrollID, _indexName.c_str(),
-                               _type.c_str(),
-                               queryCond, searchResult, 1000 ) ;
-      PD_RC_CHECK( rc, PDERROR, "Initialize scroll for index[ %s ] and "
-                   "type[ %s ] failed[ %d ], query string: %s ",
-                   _indexName.c_str(), _type.c_str(), rc, queryCond.c_str() ) ;
+
+      // If the text index query is inside a $not clause, try to fetch all
+      // the documents which match the condition. Because if that is done in
+      // more than one round, the result on SDB node will be wrong.
+      // Otherwise, fetch one batch of records.
+      if ( _condTree.textNodeInNot() )
+      {
+         rc = _fetchAll( queryCond, searchResult, SEADPT_FETCH_MAX_SIZE ) ;
+         PD_RC_CHECK( rc, PDERROR, "Fetch all documents failed[ %d ]", rc ) ;
+      }
+      else
+      {
+         rc = _fetchFirstBatch( queryCond, searchResult ) ;
+         PD_RC_CHECK( rc, PDERROR, "Fetch one batch of documents "
+                      "failed[ %d ]", rc ) ;
+      }
 
       rc = _buildInCond( searchResult, inCond ) ;
       PD_RC_CHECK( rc, PDERROR, "Build the $in condition failed[ %d ]", rc ) ;
@@ -306,15 +319,11 @@ namespace engine
       REBUILD_ITEM_MAP rebuildItems ;
 
       objBuff.reset() ;
-      if ( !_esClt->isActive() )
-      {
-         rc = _esClt->active() ;
-         PD_RC_CHECK( rc, PDERROR, "Reactive ES client failed[ %d ]", rc ) ;
-      }
-      rc = _esClt->scrollNext( _scrollID, searchResult ) ;
-      PD_RC_CHECK( rc, PDERROR, "Scroll with id[ %s ] for index[ %s ] and "
-                   "type[ %s ] failed[ %d ]", _scrollID.c_str(),
-                   _indexName.c_str(), _type.c_str(), rc ) ;
+
+      rc = _fetchNextBatch( objBuff ) ;
+      PD_RC_CHECK( rc, PDERROR, "Get next batch of documents failed[ %d ]",
+                   rc ) ;
+
       rc = _buildInCond( searchResult, inCond ) ;
       PD_RC_CHECK( rc, PDERROR, "Build the $in condition failed[ %d ]", rc ) ;
 
@@ -325,6 +334,110 @@ namespace engine
    done:
       return rc ;
    error:
+      goto done ;
+   }
+
+   INT32 _seAdptContextQuery::_fetchFirstBatch( const string &queryCond,
+                                                utilCommObjBuff &result )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( !result.valid() )
+      {
+         rc = SDB_OK ;
+         PD_LOG( PDERROR, "Result buffer is invalid. Maybe it haven't been "
+                 "initialized" ) ;
+         goto error ;
+      }
+
+      if ( !_esClt->isActive() )
+      {
+         rc = _esClt->active() ;
+         PD_RC_CHECK( rc, PDERROR, "Reactive ES client failed[ %d ]", rc ) ;
+      }
+
+      // We just want the scroll id and document id. So use the filter path.
+      rc = _esClt->initScroll( _scrollID, _indexName.c_str(), _type.c_str(),
+                               queryCond, result, SEADPT_FETCH_BATCH_SIZE,
+                               SEADPT_ES_ID_FILTER_PATH ) ;
+      PD_RC_CHECK( rc, PDERROR, "Initialize scroll for index[ %s ] and "
+                   "type[ %s ] failed[ %d ], query string: %s ",
+                   _indexName.c_str(), _type.c_str(), rc, queryCond.c_str() ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // New objects will be appened to the result buffer. So if you do not want
+   // the former ones, reset the buffer before invoke this function.
+   INT32 _seAdptContextQuery::_fetchNextBatch( utilCommObjBuff &result )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( _scrollID.empty() )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "Scroll ID is empty" ) ;
+         goto error ;
+      }
+
+      if ( !_esClt->isActive() )
+      {
+         rc = _esClt->active() ;
+         PD_RC_CHECK( rc, PDERROR, "Reactive ES client failed[ %d ]", rc ) ;
+      }
+
+      rc = _esClt->scrollNext( _scrollID, result, SEADPT_ES_ID_FILTER_PATH ) ;
+      PD_RC_CHECK( rc, PDERROR, "Scroll with id[ %s ] for index[ %s ] and "
+                   "type[ %s ] failed[ %d ]", _scrollID.c_str(),
+                   _indexName.c_str(), _type.c_str(), rc ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _seAdptContextQuery::_fetchAll( const string &queryCond,
+                                         utilCommObjBuff &result,
+                                         UINT32 limitNum )
+   {
+      INT32 rc = SDB_OK ;
+      UINT32 totalNum = 0 ;
+
+      result.reset() ;
+
+      rc = _fetchFirstBatch( queryCond, result ) ;
+      PD_RC_CHECK( rc, PDERROR, "Fetch one batch of documents failed[ %d ]",
+                   rc ) ;
+      do
+      {
+         totalNum = result.getObjNum() ;
+
+         // Two conditions to terminate this loop:
+         // 1. Number exceeds the limit.
+         // 2. The result buffer is full.
+         if ( totalNum > limitNum )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "Record number too large for the operation" ) ;
+            goto error ;
+         }
+         rc = _fetchNextBatch( result ) ;
+         PD_RC_CHECK( rc, PDERROR, "Fetch next batch of documents failed[ %d ]",
+                      rc ) ;
+         // No more record, break.
+         if ( totalNum == result.getObjNum() )
+         {
+            break ;
+         }
+      } while ( TRUE ) ;
+
+   done:
+      return rc ;
+   error:
+      result.reset() ;
       goto done ;
    }
 
@@ -351,7 +464,7 @@ namespace engine
          while ( !objBuff.eof() )
          {
             objBuff.nextObj( obj ) ;
-            idValue = obj.getStringField( DMS_ID_KEY_NAME ) ;
+            idValue = obj.getStringField( SEADPT_ID_KEY_NAME ) ;
             SDB_ASSERT( idValue, "id value should not be NULL" ) ;
 
             bson::OID oid( idValue ) ;
