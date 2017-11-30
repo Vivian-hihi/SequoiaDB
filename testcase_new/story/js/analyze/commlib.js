@@ -386,15 +386,41 @@ function checkExplain( actExplains, expExplains )
    }
    
    //校验访问计划，不校验元素顺序
+   var newExpArray = new Array();
+   var newActArray = new Array();
+   for(var i = 0; i < expExplains.length; i++){
+      var newObj1 = objSortByKey(actExplains[i]);
+      newActArray.push(newObj1);
+      
+      var newObj2 = objSortByKey(expExplains[i]);
+      newExpArray.push(newObj2);   
+   }
+   
    for(var i=0; i< expExplains.length; i++)
    {
-      if(JSON.stringify(actExplains).indexOf(JSON.stringify(expExplains[i])) === -1)
+      if(JSON.stringify(newActArray).indexOf(JSON.stringify(newExpArray[i])) === -1)
       {
          throw buildException("checkExplain", "CHECK_EXPLAIN_FAIL", "check explain failed!", 
-	   		                  JSON.stringify(expExplains[i]), JSON.stringify(actExplains));
+	   		                  JSON.stringify(newExpArray[i]), JSON.stringify(newActArray));
       }
    }
    
+   println("check explain success")
+   
+}
+
+/************************************
+*@Description: obj按照key排序
+*@author:      zhaoyu
+*@createDate:  2017.11.30
+**************************************/
+function objSortByKey(obj){
+   var newKey = Object.keys(obj).sort();
+   var newObj = {};
+   for(var i=0;i<newKey.length;i++){
+      newObj[newKey[i]] =obj[newKey[i]];
+   }
+   return newObj;
 }
 
 /************************************
