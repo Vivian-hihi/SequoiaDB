@@ -1,8 +1,5 @@
 package com.sequoiadb.crud.numoverflow;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.testng.Assert;
@@ -39,10 +36,10 @@ public class UpdateAsInc12608 extends SdbTestBase{
 			new Object[]{"tlong", new Integer(-1)},			
 			//int32(arr) + int64
 			//TODO:SEQUOIADBMAINSTREAM-2825
-			//new Object[]{"arr.0", new Long(9223372034707292161L)},				
-			//new Object[]{"arr.1.1.1", new Long(9223372034707292208L)},
+			new Object[]{"arr.0", new Long(9223372034707292161L)},				
+			new Object[]{"arr.1.1.1", new Long(9223372034707292208L)},
 			//int64(obj) + int32
-			//new Object[]{"tlong.a.b.c", new Integer(808)},
+			new Object[]{"tlong.a.b.c", new Integer(808)},
 		};
 	}
 	
