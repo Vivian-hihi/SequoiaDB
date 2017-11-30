@@ -1,8 +1,7 @@
 # -- coding: utf-8 --
 # @decription: lob opeartion
 # @testlink:   seqDB-12478
-# @author:     LaoJingTang 2017-8-
-30
+# @author:     LaoJingTang 2017-8-30
 import sys
 
 from pysequoiadb import SDBInvalidArgument

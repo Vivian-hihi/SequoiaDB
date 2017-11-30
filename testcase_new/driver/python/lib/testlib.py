@@ -3,24 +3,25 @@ import unittest
 from copy import copy
 from datetime import datetime
 
-from lib import sdbconfig
 from pysequoiadb import SDBError
 from pysequoiadb import client
 from pysequoiadb.error import SDBBaseError
+
+from lib import sdbconfig
 
 
 class SdbTestBase(unittest.TestCase):
    def __init__(self, methodName='runTest'):
       unittest.TestCase.__init__(self, methodName=methodName)
-      self.cs_name = self.__class__.__name__ + "_cs"
-      self.cl_name = self.__class__.__name__ + "_cl"
-      self.cl_name_qualified = self.cs_name + "." + self.cl_name
       self.__groups = []
       self.__data_groups = []
 
    @classmethod
    def setUpClass(cls):
       print(cls.__name__ + " setup: " + str(datetime.now()))
+      cls.cs_name = cls.__class__.__name__ + "_cs"
+      cls.cl_name = cls.__class__.__name__ + "_cl"
+      cls.cl_name_qualified = cls.cs_name + "." + cls.cl_name
       cls.db = default_db()
 
    @classmethod
@@ -49,11 +50,11 @@ class SdbTestBase(unittest.TestCase):
       if not isinstance(self, unittest.TestCase):
          raise TypeError("should_clear_env() arg must be unittest.TestCase")
 
-      r=True
+      r = True
       try:
-         r=self.__is_testcase_success()
+         r = self.__is_testcase_success()
       except BaseException:
-         r=True
+         r = True
       if r:
          return True
       else:
@@ -78,11 +79,11 @@ class SdbTestBase(unittest.TestCase):
          # for python 2 unittest
          failures = self._resultForDoCleanups.failures
          errors = self._resultForDoCleanups.errors
-         l=[]
+         l = []
          l.extend(failures)
          l.extend(errors)
          for x in l:
-            if isinstance(x,xmlrunner._TestInfo) and self == x.test_method:
+            if isinstance(x, xmlrunner._TestInfo) and self == x.test_method:
                return False
          return True
       else:
@@ -90,7 +91,9 @@ class SdbTestBase(unittest.TestCase):
          print("warn: can not judge this testcase success.")
          return True
 
+
 __is_standlone = None
+
 
 def is_standalone():
    if __is_standlone != None:
@@ -109,8 +112,10 @@ def is_standalone():
          if db != None:
             db.disconnect()
 
+
 __groups = []
 __data_groups = []
+
 
 def get_groups():
    if __groups.__len__() > 0:
@@ -126,6 +131,7 @@ def get_groups():
          if db != None:
             db.disconnect()
 
+
 def get_data_groups():
    if __data_groups.__len__() > 0:
       return copy(__data_groups)
@@ -137,6 +143,7 @@ def get_data_groups():
             __data_groups.append(x)
       return copy(__data_groups)
 
+
 def get_data_group_num():
    if __data_groups.__len__() > 0:
       return __data_groups.__len__()
@@ -144,8 +151,10 @@ def get_data_group_num():
       get_data_groups()
       return __data_groups.__len__()
 
+
 def default_db():
    return client(sdbconfig.sdb_config.host_name, sdbconfig.sdb_config.service)
+
 
 def get_all_records(cur):
    """
@@ -162,6 +171,7 @@ def get_all_records(cur):
    cur.close()
    return items
 
+
 def get_all_records_noid(cur):
    items = list()
    while True:
@@ -175,13 +185,21 @@ def get_all_records_noid(cur):
    cur.close()
    return items
 
-def drop_cs(db,cs_name,ignore_not_exist=False):
+
+def drop_cs(db, cs_name, ignore_not_exist=False):
    try:
       db.drop_collection_space(cs_name)
    except SDBBaseError as e:
-      if ignore_not_exist==True:
+      if ignore_not_exist == True:
          if -34 != e.code:
             raise e
       else:
          raise e
 
+
+def drop_cs_if_exist(db, cs_name):
+   try:
+      db.drop_collection_space(cs_name)
+   except SDBBaseError as e:
+      if -34 != e.code:
+         raise e
