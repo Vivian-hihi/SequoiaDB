@@ -1,4 +1,4 @@
-﻿//@ sourceURL=Index.js
+//@ sourceURL=Index.js
 //"use strict" ;
 (function(){
    var sacApp = window.SdbSacManagerModule ;
@@ -2957,21 +2957,45 @@
          
          //选择被关联业务之后查询该业务下的coord节点
          var listCoordNodes = function( index ){
+            var eachNodeList = function( nodeList ){
+                $.each( nodeList, function( nodeIndex, nodeInfo ){
+                  if( nodeInfo['Role'] == 'coord' || nodeInfo['Role'] == 'standalone' )
+                  {
+                     $scope.CreateRelationWindow['config']['inputList'][5]['valid']['list'].push( {
+                        'key': nodeInfo['HostName'] + ':' + nodeInfo['ServiceName'],
+                        'value': nodeInfo['HostName'] + ':' + nodeInfo['ServiceName'],
+                        'checked': false
+                     } ) ;
+                  }
+                  else
+                  {
+                     return ;
+                  }
+               } ) ;
+            }
             $scope.CreateRelationWindow['config']['inputList'][5]['valid']['list'] = [] ;
-            $.each( $scope.moduleList[index]['BusinessInfo']['NodeList'], function( nodeIndex, nodeInfo ){
-               if( nodeInfo['Role'] == 'coord' || nodeInfo['Role'] == 'standalone' )
-               {
-                  $scope.CreateRelationWindow['config']['inputList'][5]['valid']['list'].push( {
-                     'key': nodeInfo['HostName'] + ':' + nodeInfo['ServiceName'],
-                     'value': nodeInfo['HostName'] + ':' + nodeInfo['ServiceName'],
-                     'checked': false
-                  } ) ;
-               }
-               else
-               {
-                  return ;
-               }
-            } ) ;
+            if( typeof( $scope.moduleList[index]['BusinessInfo'] ) == 'undefined' )
+            {
+               var moduleName = $scope.moduleList[index]['BusinessName'] ;
+               var data = { 'cmd': 'list nodes', 'BusinessName': moduleName } ;
+               SdbRest.OmOperation( data, {
+                  'success': function( nodeList ){
+                     eachNodeList( nodeList ) ;
+                  },
+                  'failed': function( errorInfo ){
+                     _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                        getNodesList( moduleIndex ) ;
+                        return true ;
+                     } ) ;
+                  }
+               }, {
+                  'showLoading': false
+               } ) ;
+            }
+            else
+            {
+               eachNodeList( $scope.moduleList[index]['BusinessInfo']['NodeList'] ) ;
+            }
          }
 
          $scope.CreateRelationWindow['config'] = {
