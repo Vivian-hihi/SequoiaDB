@@ -129,6 +129,7 @@ namespace engine
       string                  _indexName ;
       string                  _typeName ;
       BSONObj                 _indexDef ;
+      BSONObj                 _queryCond ;
       BSONObj                 _selector ; // Should contain _id and index fields.
       utilESClt               *_esClt ;
       SEADPT_SESSION_STATUS   _status ;

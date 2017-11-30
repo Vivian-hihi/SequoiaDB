@@ -42,6 +42,8 @@
 #define SEADPT_FIELD_NAME_RID        "_rid"
 #define SEADPT_COMMIT_ID             "SDBCOMMIT"
 #define SEADPT_FIELD_NAME_LID        "_lid"
+#define SEADPT_OPERATOR_STR_OR       "$or"
+#define SEADPT_OPERATOR_STR_EXIST    "$exists"
 #define SEADPT_TID(sessionID)        ((UINT32)(sessionID & 0xFFFFFFFF))
 
 namespace engine
@@ -444,27 +446,42 @@ namespace engine
       goto done ;
    }
 
+   // Build the query condition and selector for querying the original
+   // collection. It's in the format of:
+   // db.cs.cl.find({$or:[{field1:{$exists:1}}, ..., {fieldn:{$exists:1}}]},
+   //               {_id:"", field1:"", ..., fieldn:""})
+   // field1~fieldn are the fields in the text index.
+   // So records without any index field will not be indexed on ES.
    void _seAdptIndexSession::_onAttach()
    {
       try
       {
-         // Build the selector for querying the original collection.
-         BSONObjBuilder builder ;
+         BSONObjBuilder queryBuilder ;
+         BSONObjBuilder selectorBuilder ;
          BSONObjIterator idxItr( _indexDef ) ;
+         BSONArrayBuilder queryObj( queryBuilder.subarrayStart( SEADPT_OPERATOR_STR_OR ) ) ;
+         BSONObj existTmp = BSON( SEADPT_OPERATOR_STR_EXIST << 1 ) ;
 
-         builder.append( SEADPT_FIELD_NAME_ID, "" ) ;
+         selectorBuilder.append( SEADPT_FIELD_NAME_ID, "" ) ;
+
          while ( idxItr.more() )
          {
             BSONElement ele = idxItr.next() ;
             const CHAR *fieldName = ele.fieldName() ;
             SDB_ASSERT( 0 != ossStrcmp( fieldName, SEADPT_FIELD_NAME_ID ),
                         "Text index should not include _id" ) ;
-            builder.append( fieldName, "" ) ;
+            selectorBuilder.append( fieldName, "" ) ;
+            BSONObjBuilder existObj( queryObj.subobjStart() ) ;
+            existObj.appendObject( fieldName, existTmp.objdata(),
+                                   existTmp.objsize() ) ;
+            existObj.done() ;
          }
+         queryObj.done() ;
+         _queryCond = queryBuilder.obj() ;
+         _selector = selectorBuilder.obj() ;
 
-         _selector = builder.obj() ;
-
-         PD_LOG( PDDEBUG, "Selector for the original collection: %s",
+         PD_LOG( PDDEBUG, "Original collection query, condition: %s, "
+                 "selector: %s", _queryCond.toString().c_str(),
                  _selector.toString().c_str() ) ;
 
          PD_LOG( PDEVENT, "New index task starts: original collection[ %s ], "
@@ -542,7 +559,7 @@ namespace engine
 
       rc = msgBuildQueryMsg( (CHAR **)&msg, &bufSize,
                               _origCLFullName.c_str(),
-                              0, 0, 0, -1, NULL, &_selector ) ;
+                              0, 0, 0, -1, &_queryCond, &_selector ) ;
       PD_RC_CHECK( rc, PDERROR, "Build query message failed[ %d ]", rc ) ;
       msg->version = _origCLVersion ;
       msg->header.TID = SEADPT_TID( _sessionID ) ;

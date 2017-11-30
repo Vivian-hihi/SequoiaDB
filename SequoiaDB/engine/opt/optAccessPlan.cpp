@@ -369,6 +369,14 @@ namespace engine
                 SDB_IXM_UNEXPECTED_STATUS, error, PDDEBUG,
                 "Index is not normal status, skip" ) ;
 
+      // Text index can not be used in query without text query condition.
+      // So return an error to let this index to be skipped.
+      if ( IXM_EXTENT_HAS_TYPE( IXM_EXTENT_TYPE_TEXT, indexCB.getIndexType() ) )
+      {
+         rc = SDB_IXM_UNEXPECTED_STATUS ;
+         goto error ;
+      }
+
       try
       {
          optIndexStat indexStat( *collectionStat, indexCB ) ;
