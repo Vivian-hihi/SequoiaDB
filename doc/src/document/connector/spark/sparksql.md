@@ -45,7 +45,7 @@ create <[temporary] table| temporary view> <tableName> [(schema)] using com.sequ
 |shardingtype|create tabel as select创建集合时指定分区类型，取值可以是"hash"和"range"。|string|"hash"|否|
 |replsize|create tabel as select创建集合时指定副本写入数。 |int|1|否|
 |compressiontype|create tabel as select创建集合时指定压缩类型，取值可以是"none","lzw"和"snappy"。"none"表示不压缩。|string|"none"|否|
-|autosplit|create tabel as select创建集合时指定是否自动切分。必须配合散列分区和域使用，且不能与group同时使用。|boolean|true|否|
+|autosplit|create tabel as select创建集合时指定是否自动切分。必须配合散列分区和域使用，且不能与group同时使用。|boolean|false|否|
 |group|create tabel as select创建集合时指定创建在某个复制组。group必须存在于集合空间所属的域中。|string|-|否|
 
 ###示例###
