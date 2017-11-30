@@ -138,13 +138,10 @@ function checkLSN(db, groups)
    {
       for(var j = 0; j < LSNs[i].length -1; ++j)
       {
-         if(LSNs[i][j] === LSNs[i][j+1])
-         {
-            checkLSN = true;
-         }else
+         if(LSNs[i][j] !== LSNs[i][j+1])
          {
             checkLSN = false;
-            break;
+            return checkLSN;
          }
       }
    }
@@ -164,12 +161,31 @@ function checkStat( db, csName, clName, indexName, clExistStat, indexExistStat )
    var groups = commGetCLGroups( db, csName + "." + clName );
    
    //check lsn
+   //the longest waiting time is 600S
    var lsnFlag = false;
-   while(!lsnFlag)
+   var timeout = 600;
+   var doTimes = 0; 
+   
+   while(true)
    {
       lsnFlag = checkLSN(db, groups);
       //println("check primary and slave node lsn flag:" + lsnFlag);
-      sleep(500);
+      if(!lsnFlag)
+      {
+         if(doTimes < timeout)
+         {
+            ++doTimes;
+            sleep(1000);
+         }
+         else
+         {
+            throw "check lsn time out";
+         }     
+      }
+      else 
+      {
+         break;
+      }
    }
    
    //get all nodes
@@ -181,8 +197,8 @@ function checkStat( db, csName, clName, indexName, clExistStat, indexExistStat )
       var nodesInGroup = datas[i];
       for(var j = 0; j< nodesInGroup.length; j++)
       {
-         //检查cl统计表信息
-         var clStatFlag = false;   
+         var clStatFlag = false;
+         //检查cl统计表信息 
          var clStats = nodesInGroup[j].SYSSTAT.SYSCOLLECTIONSTAT.find().toArray();
          
          //需要检查cl统计表信息时，统计表信息不能为空
@@ -209,7 +225,7 @@ function checkStat( db, csName, clName, indexName, clExistStat, indexExistStat )
          //是否存在cl统计表信息与预期结果校验   
          if((clExistStat ^ clStatFlag) === 1)
          {
-            println("hostName:" + hostName + "\nserviceName:" + serviceName + "\nclExistStat:" + clExistStat + "\nclStatFlag:" + clStatFlag);
+            println("host:" + nodesInGroup[j] + "\nclExistStat:" + clExistStat + "\nclStatFlag:" + clStatFlag);
             throw "NO_CL_STAT";
          } 
          
@@ -244,7 +260,7 @@ function checkStat( db, csName, clName, indexName, clExistStat, indexExistStat )
          //是否存在索引统计表信息与预期结果校验  
          if((indexExistStat ^ indexStatFlag) === 1)
          {
-            println("hostName:" + hostName + "\nserviceName:" + serviceName + "\nindexExistStat:" + indexExistStat + "\nindexStatFlag:" + indexStatFlag);
+            println("host:" + nodesInGroup[j] + "\nIndexName:" + indexName + "\nindexExistStat:" + indexExistStat + "\nindexStatFlag:" + indexStatFlag);
             throw "NO_INDEX_STAT";
          }  
          
@@ -370,15 +386,41 @@ function checkExplain( actExplains, expExplains )
    }
    
    //校验访问计划，不校验元素顺序
+   var newExpArray = new Array();
+   var newActArray = new Array();
+   for(var i = 0; i < expExplains.length; i++){
+      var newObj1 = objSortByKey(actExplains[i]);
+      newActArray.push(newObj1);
+      
+      var newObj2 = objSortByKey(expExplains[i]);
+      newExpArray.push(newObj2);   
+   }
+   
    for(var i=0; i< expExplains.length; i++)
    {
-      if(JSON.stringify(actExplains).indexOf(JSON.stringify(expExplains[i])) === -1)
+      if(JSON.stringify(newActArray).indexOf(JSON.stringify(newExpArray[i])) === -1)
       {
-         throw buildException("checkMainclExplain", "CHECK_EXPLAIN_FAIL", "check explain failed!", 
-	   		                  JSON.stringify(expExplains[i]), JSON.stringify(actExplains));
+         throw buildException("checkExplain", "CHECK_EXPLAIN_FAIL", "check explain failed!", 
+	   		                  JSON.stringify(newExpArray[i]), JSON.stringify(newActArray));
       }
    }
    
+   println("check explain success")
+   
+}
+
+/************************************
+*@Description: obj按照key排序
+*@author:      zhaoyu
+*@createDate:  2017.11.30
+**************************************/
+function objSortByKey(obj){
+   var newKey = Object.keys(obj).sort();
+   var newObj = {};
+   for(var i=0;i<newKey.length;i++){
+      newObj[newKey[i]] =obj[newKey[i]];
+   }
+   return newObj;
 }
 
 /************************************
@@ -579,36 +621,4 @@ function updateIndexStateInfo( db, csName, clName, indexName, mcvValues, fracs )
    }
                                                                                        
 } 
-
-/************************************
-*@Description: 获取组内节点个数
-*@author:      赵育
-*@createDate:  2017.11.17
-**************************************/
-function getNodeNumInGroup( db )
-{
-   var groups = commGetCLGroups( db, csName + "." + clName );
-   var datas = getNodesInGroups(db, groups);
-   
-   //update all nodes
-   for(var i in datas)
-   {
-      var nodesInGroup = datas[i];
-      for(var j in nodesInGroup)
-      {
-         try
-         {
-            var rec = nodesInGroup[j].SYSSTAT.SYSINDEXSTAT.find().toArray();                                                                        
-            var rule = {"$set": {"MCV": {"Values": mcvValues, "Frac": fracs}}};                                                                          
-            var matcher = {"CollectionSpace" : csName,"Collection" : clName,"Index" : indexName};                                                                     	
-            nodesInGroup[j].SYSSTAT.SYSINDEXSTAT.upsert(rule, matcher);
-         }
-         catch(e)
-         {
-            throw buildException("modify SYSIndexInfo", e, "modify", "modify success", e);
-         }	   
-         
-      }      
-   }
-                                                                                       
-}                                                                                
+                                                                               
