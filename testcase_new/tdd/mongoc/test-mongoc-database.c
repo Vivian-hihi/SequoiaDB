@@ -223,7 +223,7 @@ test_create_collection (void)
    mongoc_client_destroy (client);
    bson_destroy( &options );
    bson_destroy( &storage_opts );
-   bson_destroy &wt_opts );
+   bson_destroy( &wt_opts );
 }
 
 static void
