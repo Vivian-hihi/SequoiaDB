@@ -319,7 +319,7 @@ class RandomWriteLobUtil {
             return new Object[][]{
                     {1024},
                     {1024*1024},
-                    {1024*1024}
+                    {1024*1024*10}
             };
         }
     }
