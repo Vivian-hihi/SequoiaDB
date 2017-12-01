@@ -732,6 +732,7 @@ TestSuite_RunParallel (TestSuite *suite) /* IN */
    for (test = suite->tests, i = 0; test; test = test->next, i++) {
       if (0 == strncmp(test->name, "Client_authenticate", strlen(test->name)) ||
           0 == strncmp(test->name, "Client_authenticate_failure", strlen(test->name))){
+          --i;
           continue ;
       }
       info = calloc (1, sizeof *info);
@@ -745,6 +746,7 @@ TestSuite_RunParallel (TestSuite *suite) /* IN */
    for (test = suite->tests, i = 0; test; test = test->next, i++) {
       if (0 == strncmp(test->name, "Client_authenticate", strlen(test->name)) ||
           0 == strncmp(test->name, "Client_authenticate_failure", strlen(test->name))){
+          --i;
           continue ;
       }
       Thread_Join(threads [i]);
