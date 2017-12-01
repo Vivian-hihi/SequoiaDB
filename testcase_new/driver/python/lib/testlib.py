@@ -92,19 +92,22 @@ class SdbTestBase(unittest.TestCase):
          return True
 
 
-__is_standlone = None
+__is_standalone_flag = None
 
 
 def is_standalone():
-   if __is_standlone != None:
-      return __is_standlone
+   global __is_standalone_flag
+   if __is_standalone_flag != None:
+      return __is_standalone_flag
    else:
       try:
          db = default_db()
          db.list_replica_groups()
+         __is_standalone_flag = False
          return False
       except SDBError as e:
          if e.code == -159:
+            __is_standalone_flag = True
             return True
          else:
             raise e
@@ -118,6 +121,7 @@ __data_groups = []
 
 
 def get_groups():
+   global __groups
    if __groups.__len__() > 0:
       return copy(__groups)
    else:
@@ -133,6 +137,8 @@ def get_groups():
 
 
 def get_data_groups():
+   global __data_groups
+   global __groups
    if __data_groups.__len__() > 0:
       return copy(__data_groups)
    else:

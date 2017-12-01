@@ -9,14 +9,14 @@ class TestTruncateLob(testlib.SdbTestBase):
    @classmethod
    def setUpClass(cls):
       testlib.SdbTestBase.setUpClass()
-      testlib.drop_cs_if_exist(cls.db, cls.cs_name)
+      cls.db.drop_cs_if_exist(cls.cs_name)
       cls.cs = cls.db.create_collection_space(cls.cs_name)
       cls.data = util.random_str(1024)
       cls.expect_data = cls.data.encode()
 
    @classmethod
    def tearDownClass(cls):
-      # cls.db.drop_collection_space(cls.cs_name)
+      cls.db.drop_collection_space(cls.cs_name)
       testlib.SdbTestBase.tearDownClass()
 
    def setUp(self):
