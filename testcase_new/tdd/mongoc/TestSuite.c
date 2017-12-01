@@ -752,6 +752,9 @@ TestSuite_RunParallel (TestSuite *suite) /* IN */
       Thread_Join(threads [i]);
    }
 
+   free( threads ) ;
+   
+
 /*if (timeout < 0 || timeout > 600)
 {
    timeout = 60;
