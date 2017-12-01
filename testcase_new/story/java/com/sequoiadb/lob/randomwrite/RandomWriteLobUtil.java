@@ -22,6 +22,7 @@ import com.sequoiadb.base.DBLob;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.SDBError;
+import org.testng.annotations.DataProvider;
 
 /**
  * FileName: RandomWriteLobUtil.java
@@ -157,7 +158,7 @@ class RandomWriteLobUtil {
      * @param lob
      * @param expect
      */
-    void writeLobAndExpectData2File(DBLob lob, byte[] expect) {
+    static void writeLobAndExpectData2File(DBLob lob, byte[] expect) {
         String path = SdbTestBase.getWorkDir();
 
         File dir = new File(path);
@@ -309,5 +310,17 @@ class RandomWriteLobUtil {
             lob.read(b);
         }
         return b;
+    }
+
+
+    public static class LobSizedataProvider {
+        @DataProvider(name = "lobSizeDataProvider")
+        public static Object[][] lobSizeDataProvider() {
+            return new Object[][]{
+                    {1024},
+                    {1024*1024},
+                    {1024*1024}
+            };
+        }
     }
 }
