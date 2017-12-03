@@ -478,6 +478,29 @@ exit:
    sdbReleaseConnection ( ddb ) ;
    goto done ;
 }
+
+TEST(sdb,sdbGetSnapshot_SDB_SNAP_ACCESSPLANS)
+{
+   sdbConnectionHandle db         = 0 ;
+   sdbCursorHandle cursor         = 0 ;
+   INT32 rc                       = SDB_OK ;
+
+   // connect to database
+   rc = sdbConnect ( HOST, SERVER, USER, PASSWD, &db ) ;
+   rc = sdbGetSnapshot( db, SDB_SNAP_ACCESSPLANS,
+                        NULL, NULL, NULL, &cursor ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   //displayRecord( &cursor ) ;
+
+   sdbReleaseCursor ( cursor ) ;
+done:
+   sdbDisconnect ( db ) ;
+   sdbReleaseConnection ( db ) ;
+   return ;
+exit:
+   goto done ;
+}
+
 /*
 // doubtful
 
