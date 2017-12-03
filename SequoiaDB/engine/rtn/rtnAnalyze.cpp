@@ -301,9 +301,11 @@ namespace engine
          dmsCB->dumpInfo( monCSList, FALSE, FALSE, FALSE ) ;
       }
 
-      if ( monCSList.empty() )
+      if ( monCSList.empty() &&
+           param._mode != SDB_ANALYZE_MODE_CLEAR )
       {
-         // No collection space found
+         // No collection space is found, need to do nothing except for clear
+         // mode which need to clear cached plans as well
          goto done ;
       }
 
