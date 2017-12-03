@@ -461,6 +461,34 @@ TEST(sdb,getSnapshot_SDB_SNAP_TRANSACTION_CURRENT)
    connection.disconnect() ;
 }
 
+TEST(sdb,getSnapshot_SDB_SNAP_ACCESSPLANS)
+{
+   sdb connection ;
+   sdbCollectionSpace cs ;
+   sdbCursor cursor ;
+   sdbCursor cursor1 ;
+   // initialize local variables
+   const CHAR *pHostName                    = HOST ;
+   const CHAR *pPort                        = SERVER ;
+   const CHAR *pUsr                         = USER ;
+   const CHAR *pPasswd                      = PASSWD ;
+   INT32 rc                                 = SDB_OK ;
+   const CHAR *clName                       = NULL ;
+   // initialize the work environment
+   rc = initEnv() ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // connect to database
+   rc = connection.connect( pHostName, pPort, pUsr, pPasswd ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   rc = connection.getSnapshot( cursor, SDB_SNAP_ACCESSPLANS ) ;
+   CHECK_MSG("%s%d\n","rc = ",rc) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // display records
+   // displayRecord( cursor ) ;
+   // disconnect the connection
+   connection.disconnect() ;
+}
+
 TEST(sdb,getList_SDB_LIST_CONTEXTS)
 {
    sdb connection ;
