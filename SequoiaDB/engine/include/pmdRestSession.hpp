@@ -387,6 +387,8 @@ namespace engine
                                              MsgHeader **msg ) ;
          INT32       _convertSnapshotCata( restAdaptor *pAdaptor,
                                            MsgHeader **msg ) ;
+         INT32       _convertSnapshotAccessPlans ( restAdaptor * pAdaptor,
+                                                   MsgHeader ** msg ) ;
 
          INT32       _buildExecMsg( CHAR **ppBuffer, INT32 *bufferSize,
                                     const CHAR *pSql, UINT64 reqID ) ;

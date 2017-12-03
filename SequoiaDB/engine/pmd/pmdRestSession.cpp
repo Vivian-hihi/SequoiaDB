@@ -932,6 +932,8 @@ namespace engine
                                  &RestToMSGTransfer::_convertSnapshotSystem },
          { CMD_NAME_SNAPSHOT_CATA,
                                  &RestToMSGTransfer::_convertSnapshotCata },
+         { CMD_NAME_SNAPSHOT_ACCESSPLANS,
+                                 &RestToMSGTransfer::_convertSnapshotAccessPlans },
          { CMD_NAME_LIST_LOBS,   &RestToMSGTransfer::_convertListLobs },
          { OM_LOGIN_REQ,         &RestToMSGTransfer::_convertLogin },
          { REST_CMD_NAME_EXEC,   &RestToMSGTransfer::_convertExec },
@@ -3989,6 +3991,41 @@ namespace engine
       CHAR *pBuff           = NULL ;
       INT32 buffSize        = 0 ;
       const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_CATA ;
+
+      rc = _convertListBase( pAdaptor, match, selector, order ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "convert snapshot failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &match,
+                             &selector, &order, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d",
+                     pCommand, rc ) ;
+         goto error ;
+      }
+
+      *msg = ( MsgHeader * )pBuff ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 RestToMSGTransfer::_convertSnapshotAccessPlans ( restAdaptor * pAdaptor,
+                                                          MsgHeader ** msg )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj selector ;
+      BSONObj order ;
+      BSONObj match ;
+      CHAR *pBuff           = NULL ;
+      INT32 buffSize        = 0 ;
+      const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_ACCESSPLANS ;
 
       rc = _convertListBase( pAdaptor, match, selector, order ) ;
       if ( SDB_OK != rc )
