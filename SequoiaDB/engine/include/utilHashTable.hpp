@@ -48,8 +48,8 @@ using namespace bson ;
 namespace engine
 {
 
-   #define UTIL_HASH_TABLE_BUCKET_UNIT     ( 128 )
-   #define UTIL_HASH_TABLE_DFT_BUCKET_NUM  ( UTIL_HASH_TABLE_BUCKET_UNIT )
+   #define UTIL_HASH_TABLE_DFT_BUCKET_NUM  ( 128 )
+   #define UTIL_HASH_TABLE_MAX_BUCKET_NUM  ( 4096 )
    #define UTIL_HASH_TABLE_DFT_LOCK_NUM    ( 64 )
 
    class _utilHashTableListItem ;
@@ -384,8 +384,9 @@ namespace engine
                return TRUE ;
             }
 
-            bucketNum = ossRoundUpToMultipleX( bucketNum,
-                                               UTIL_HASH_TABLE_BUCKET_UNIT ) ;
+            SDB_ASSERT( getRoundedUpBucketNum( bucketNum ) == bucketNum,
+                        "bucket number is invalid" ) ;
+
             if ( 0 == bucketNum )
             {
                return FALSE ;
@@ -427,6 +428,25 @@ namespace engine
          OSS_INLINE UINT32 getBucketNum () const
          {
             return _bucketNum ;
+         }
+
+         OSS_INLINE UINT32 getRoundedUpBucketNum ( UINT32 bucketNum )
+         {
+            UINT32 roundedBucketNum = 0 ;
+            if ( bucketNum > 0 )
+            {
+               // Bucket number should be power of 2, between 128 and 4096
+               for ( roundedBucketNum = UTIL_HASH_TABLE_DFT_BUCKET_NUM ;
+                     roundedBucketNum < UTIL_HASH_TABLE_MAX_BUCKET_NUM ;
+                     roundedBucketNum <<= 1 )
+               {
+                  if ( bucketNum <= roundedBucketNum )
+                  {
+                     break ;
+                  }
+               }
+            }
+            return roundedBucketNum ;
          }
 
          OSS_INLINE UINT32 getLockNum () const

@@ -47,6 +47,7 @@
 #include "ossVer.hpp"
 #include "dpsLogWrapper.hpp"
 #include "omStrategyDef.hpp"
+#include "optCommon.hpp"
 
 #include "rtnSortDef.hpp"
 #include "clsUtil.hpp"
@@ -90,7 +91,6 @@ namespace engine
    #define PMD_DFT_CACHE_MERGE_SZ      (0)
    #define PMD_DFT_OPT_COST_THRESHOLD  (20)
    #define PMD_DFT_ENABLE_MIX_CMP      (FALSE)
-   #define PMD_DFT_PLAN_CACHE_LEVEL    ( 3 )
 
    /*
       _pmdCfgExchange implement
@@ -1472,7 +1472,7 @@ namespace engine
       _sparseFile          = FALSE ;
       _weight              = 0 ;
       _auth                = TRUE ;
-      _planBucketNum       = 500 ;
+      _planBucketNum       = OPT_PLAN_DEF_CACHE_BUCKETS ;
       _oprtimeout          = PMD_OPTION_OPR_TIME_DEFAULT ;
       _overflowRatio       = PMD_DFT_OVERFLOW_RETIO ;
       _extendThreshold     = PMD_DFT_EXTEND_THRESHOLD ;
@@ -1497,7 +1497,7 @@ namespace engine
       _perfStat = FALSE ;
       _optCostThreshold = PMD_DFT_OPT_COST_THRESHOLD ;
       _enableMixCmp = PMD_DFT_ENABLE_MIX_CMP ;
-      _planCacheLevel = PMD_DFT_PLAN_CACHE_LEVEL ;
+      _planCacheLevel = OPT_PLAN_PARAMETERIZED ;
 
 #ifdef SDB_ENTERPRISE
 
@@ -1722,7 +1722,9 @@ namespace engine
                    FALSE, TRUE, TRUE, FALSE ) ;
       // --planbuckets
       rdxUInt( pEX, PMD_OPTION_PLAN_BUCKETS, _planBucketNum,
-               FALSE, TRUE, 500, FALSE ) ;
+               FALSE, TRUE, OPT_PLAN_DEF_CACHE_BUCKETS, FALSE ) ;
+      rdvMinMax( pEX, _planBucketNum, OPT_PLAN_MIN_CACHE_BUCKETS,
+                 OPT_PLAN_MAX_CACHE_BUCKETS, TRUE ) ;
       // --optimeout
       rdxUInt( pEX, PMD_OPTION_OPERATOR_TIMEOUT, _oprtimeout, FALSE, TRUE,
                PMD_OPTION_OPR_TIME_DEFAULT, FALSE ) ;
@@ -1811,8 +1813,9 @@ namespace engine
 
       // --optcachelevel
       rdxUInt( pEX, PMD_OPTION_PLAN_CACHE_LEVEL, _planCacheLevel, FALSE,
-               TRUE, PMD_DFT_PLAN_CACHE_LEVEL, FALSE ) ;
-      rdvMinMax( pEX, _planCacheLevel, 0, 4, TRUE ) ;
+               TRUE, OPT_PLAN_PARAMETERIZED, FALSE ) ;
+      rdvMinMax( pEX, _planCacheLevel, OPT_PLAN_NOCACHE, OPT_PLAN_FUZZYOPTR,
+                 TRUE ) ;
 
       // end map
 

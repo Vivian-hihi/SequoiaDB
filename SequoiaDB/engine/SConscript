@@ -332,7 +332,6 @@ optFiles = [
       "opt/optQgmStrategy.cpp",
       "opt/optQgmSpecStrategy.cpp",
       "opt/optQgmOptimizer.cpp",
-      "opt/optCommon.cpp",
       "opt/optPlanPath.cpp",
       "opt/optStatUnit.cpp",
       "opt/optAPM.cpp",

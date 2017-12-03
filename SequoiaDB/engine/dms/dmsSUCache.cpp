@@ -38,6 +38,7 @@
 
 #include "dmsSUCache.hpp"
 #include "dmsCachedPlanUnit.hpp"
+#include "optCommon.hpp"
 #include "pdTrace.hpp"
 #include "dmsTrace.hpp"
 
@@ -88,8 +89,11 @@ namespace engine
 
    INT32 _dmsCachedPlanMgr::resizeBitmaps ( UINT32 bucketNum )
    {
-      _cacheBitmap.resize( bucketNum ) ;
-      _setBucketModulo() ;
+      if ( bucketNum <= OPT_PLAN_MAX_CACHE_BUCKETS )
+      {
+         _cacheBitmap.resize( bucketNum ) ;
+         _setBucketModulo() ;
+      }
       return SDB_OK ;
    }
 

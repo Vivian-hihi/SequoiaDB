@@ -386,6 +386,16 @@ namespace engine
 
       public :
          // For _IDmsEventHandler
+         virtual INT32 onCreateCS ( IDmsEventHolder *pEventHolder,
+                                    IDmsSUCacheHolder *pCacheHolder,
+                                    pmdEDUCB *cb,
+                                    SDB_DPSCB *dpsCB ) ;
+
+         virtual INT32 onLoadCS ( IDmsEventHolder *pEventHolder,
+                                  IDmsSUCacheHolder *pCacheHolder,
+                                  pmdEDUCB *cb,
+                                  SDB_DPSCB *dpsCB ) ;
+
          virtual INT32 onUnloadCS ( IDmsEventHolder *pEventHolder,
                                     IDmsSUCacheHolder *pCacheHolder,
                                     pmdEDUCB *cb,
@@ -523,6 +533,8 @@ namespace engine
 
          void _invalidCLPlans ( IDmsSUCacheHolder *pCacheHolder,
                                 UINT16 mbID, UINT32 clLID ) ;
+
+         void _resetSUPlanCache ( IDmsSUCacheHolder *pCacheHolder ) ;
 
          // Helpers for clear background job
          INT32 _startClearJob () ;

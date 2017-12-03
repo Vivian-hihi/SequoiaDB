@@ -49,6 +49,12 @@ namespace engine
 {
 
    /*
+      Helper functions define
+    */
+   static double optConvertStrToScalar ( const CHAR *pValue, UINT32 valueSize,
+                                         UINT8 low, UINT8 high ) ;
+
+   /*
       _optStatListKey implement
     */
    _optStatListKey::_optStatListKey ()
@@ -1305,5 +1311,32 @@ namespace engine
       return pBestIndexStat ;
    }
 
-}
+   /*
+      Helper functions implement
+    */
+   double optConvertStrToScalar ( const CHAR *pValue, UINT32 valueSize,
+                                  UINT8 low, UINT8 high )
+   {
+      if ( 0 == valueSize )
+      {
+         // Empty string
+         return 0.0 ;
+      }
 
+      UINT8 base = high - low + 1;
+      double scalar = 0.0 ;
+      double denom = base ;
+
+      // Convert initial characters to fraction
+      while ( valueSize-- > 0 )
+      {
+         UINT8 ch = (UINT8) *( pValue++ ) ;
+
+         ch = OPT_ROUND( ch, low, high ) ;
+         scalar += ( (double) (ch - low) ) / denom ;
+         denom *= base ;
+      }
+
+      return scalar ;
+   }
+}

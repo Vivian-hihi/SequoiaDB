@@ -1095,10 +1095,7 @@ namespace engine
 
       // Create caches
       _cacheHolder.createSUCache( DMS_CACHE_TYPE_STAT ) ;
-      if ( options->getPlanBuckets() > 0 )
-      {
-         _cacheHolder.createSUCache( DMS_CACHE_TYPE_PLAN ) ;
-      }
+      _cacheHolder.createSUCache( DMS_CACHE_TYPE_PLAN ) ;
       _eventHolder.setCacheHolder( &_cacheHolder ) ;
 
       PD_TRACE_EXIT ( SDB__DMSSU ) ;

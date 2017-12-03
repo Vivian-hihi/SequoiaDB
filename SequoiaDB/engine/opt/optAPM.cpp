@@ -1083,8 +1083,7 @@ namespace engine
 
       if ( bucketNum > 0 && cacheLevel > OPT_PLAN_NOCACHE )
       {
-         bucketNum = ossRoundUpToMultipleX( bucketNum,
-                                            UTIL_HASH_TABLE_BUCKET_UNIT ) ;
+         bucketNum = _planCache.getRoundedUpBucketNum( bucketNum ) ;
 
          _planCache.initialize( bucketNum, &_monitor ) ;
          PD_CHECK( _planCache.isInitialized(), SDB_OOM, error, PDERROR,
@@ -1118,6 +1117,9 @@ namespace engine
       // Done initialize, enable caching
       _planCache.enableCaching() ;
 
+      PD_LOG( PDDEBUG, "Initialize plan cache: [ level: %d, buckets : %u ]",
+              _cacheLevel, _planCache.getBucketNum() ) ;
+
    done :
       PD_TRACE_EXITRC( SDB_OPTAPM_INIT, rc ) ;
       return rc ;
@@ -1143,8 +1145,8 @@ namespace engine
 
       if ( _planCache.isInitialized() )
       {
-         bucketNum = ossRoundUpToMultipleX( bucketNum,
-                                            UTIL_HASH_TABLE_BUCKET_UNIT ) ;
+         bucketNum = _planCache.getRoundedUpBucketNum( bucketNum ) ;
+
          if ( bucketNum != _planCache.getBucketNum() ||
               cacheLevel != _cacheLevel ||
               sortBufferSize != getSortBufferSize() ||
@@ -1373,6 +1375,50 @@ namespace engine
       }
 
       PD_TRACE_EXIT( SDB_OPTAPM_SETQUERYACT ) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTAPM_ONCRTCS, "_optAccessPlanManager::onCreateCS" )
+   INT32 _optAccessPlanManager::onCreateCS ( IDmsEventHolder *pEventHolder,
+                                             IDmsSUCacheHolder *pCacheHolder,
+                                             pmdEDUCB *cb,
+                                             SDB_DPSCB *dpsCB )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_OPTAPM_ONCRTCS ) ;
+
+      SDB_ASSERT( pEventHolder, "Event holder is invalid" ) ;
+
+      if ( pCacheHolder )
+      {
+         _resetSUPlanCache( pCacheHolder ) ;
+      }
+
+      PD_TRACE_EXITRC( SDB_OPTAPM_ONCRTCS, rc ) ;
+
+      return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTAPM_ONLOADCS, "_optAccessPlanManager::onLoadCS" )
+   INT32 _optAccessPlanManager::onLoadCS ( IDmsEventHolder *pEventHolder,
+                                           IDmsSUCacheHolder *pCacheHolder,
+                                           pmdEDUCB *cb,
+                                           SDB_DPSCB *dpsCB )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_OPTAPM_ONLOADCS ) ;
+
+      SDB_ASSERT( pEventHolder, "Event holder is invalid" ) ;
+
+      if ( pCacheHolder )
+      {
+         _resetSUPlanCache( pCacheHolder ) ;
+      }
+
+      PD_TRACE_EXITRC( SDB_OPTAPM_ONLOADCS, rc ) ;
+
+      return rc ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTAPM_ONUNLOADCS, "_optAccessPlanManager::onUnloadCS" )
@@ -1613,14 +1659,9 @@ namespace engine
 
       SDB_ASSERT( pEventHolder, "Event holder is invalid" ) ;
 
-      dmsCachedPlanMgr *pCachedPlanMgr =
-                           dynamic_cast<dmsCachedPlanMgr *>(pCacheHolder) ;
-      if ( pCachedPlanMgr )
+      if ( pCacheHolder )
       {
-         pCachedPlanMgr->resizeBitmaps( _planCache.getBucketNum() ) ;
-         pCachedPlanMgr->resetParamInvalidBitmap() ;
-         pCachedPlanMgr->resetMainCLInvalidBitmap() ;
-         pCachedPlanMgr->clearCacheUnits() ;
+         _resetSUPlanCache( pCacheHolder ) ;
       }
 
       PD_TRACE_EXITRC( SDB_OPTAPM_ONCHGSUCACHES, rc ) ;
@@ -2401,6 +2442,26 @@ namespace engine
       }
 
       PD_TRACE_EXIT( SDB_OPTAPM__INVALIDCLPLANS ) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTAPM__RESETSUCACHE, "_optAccessPlanManager::_resetSUPlanCache" )
+   void _optAccessPlanManager::_resetSUPlanCache ( IDmsSUCacheHolder *pCacheHolder )
+   {
+      PD_TRACE_ENTRY( SDB_OPTAPM__RESETSUCACHE ) ;
+
+      SDB_ASSERT( pCacheHolder, "pCacheHolder is invalid" ) ;
+
+      dmsCachedPlanMgr *pCachedPlanMgr =
+                           dynamic_cast<dmsCachedPlanMgr *>(pCacheHolder) ;
+      if ( pCachedPlanMgr )
+      {
+         pCachedPlanMgr->resizeBitmaps( _planCache.getBucketNum() ) ;
+         pCachedPlanMgr->resetParamInvalidBitmap() ;
+         pCachedPlanMgr->resetMainCLInvalidBitmap() ;
+         pCachedPlanMgr->clearCacheUnits() ;
+      }
+
+      PD_TRACE_EXIT( SDB_OPTAPM__RESETSUCACHE ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTAPM__STARTCLEARJOB, "_optAccessPlanManager::_startClearJob" )

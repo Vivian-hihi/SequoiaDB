@@ -45,6 +45,10 @@
 namespace engine
 {
 
+   #define OPT_PLAN_MIN_CACHE_BUCKETS        ( 0 )
+   #define OPT_PLAN_DEF_CACHE_BUCKETS        ( 500 )
+   #define OPT_PLAN_MAX_CACHE_BUCKETS        ( 4096 )
+
    // When index scan is best enough, its cost is smaller than 1/10 of table
    // scan
    #define OPT_IDX_PREFERRED_RATE            ( 10 )
@@ -138,9 +142,6 @@ namespace engine
    #define OPT_BSON_STR_MIN_LEN              ( 20 )
    #define OPT_BSON_STR_MIN                  ( (UINT8)' ' )
    #define OPT_BSON_STR_MAX                  ( 127 )
-
-   double optConvertStrToScalar ( const CHAR *pValue, UINT32 valueSize,
-                                  UINT8 low, UINT8 high ) ;
 
    /*
       OPT_PLAN_CACHE_LEVEL define
