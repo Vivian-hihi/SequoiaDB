@@ -178,7 +178,7 @@ class SequoiaDB_Test extends PHPUnit_Framework_TestCase
     */
    public function test_snapshot( $db )
    {
-      for( $i = 0; $i < 10; ++ $i )
+      for( $i = 0; $i < 12; ++ $i )
       {
          $cursor = $db -> snapshot( $i ) ;
          $err = $db -> getError() ;
@@ -196,7 +196,7 @@ class SequoiaDB_Test extends PHPUnit_Framework_TestCase
          {
          }
       }
-      for( $i = 0; $i < 10; ++ $i )
+      for( $i = 0; $i < 12; ++ $i )
       {
          $cursor = $db -> getSnapshot( $i ) ;
          $err = $db -> getError() ;
