@@ -115,6 +115,13 @@ public class SdbSnapshotList {
             sdb.commit();
         }
 
+        // 11
+        cursor = sdb.getSnapshot(Sequoiadb.SDB_SNAP_ACCESSPLANS, "", "", "");
+        System.out.println("result of SDB_SNAP_ACCESSPLANS is: ");
+        while(cursor.hasNext()){
+            System.out.println(cursor.getNext());
+        }
+
     }
 
     @Test

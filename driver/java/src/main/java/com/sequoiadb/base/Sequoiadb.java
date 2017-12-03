@@ -96,6 +96,7 @@ public class Sequoiadb implements Closeable {
     public final static int SDB_SNAP_CATALOG = 8;
     public final static int SDB_SNAP_TRANSACTIONS = 9;
     public final static int SDB_SNAP_TRANSACTIONS_CURRENT = 10;
+    public final static int SDB_SNAP_ACCESSPLANS = 11;
 
     public final static int FMP_FUNC_TYPE_INVALID = -1;
     public final static int FMP_FUNC_TYPE_JS = 0;
@@ -886,19 +887,19 @@ public class Sequoiadb implements Closeable {
      * Get the information of specified type.
      * @param listType The list type as below:
      *                 <dl>
-     *                 <dt>Sequoiadb.SDB_LIST_CONTEXTS   : Get all contexts list
-     *                 <dt>Sequoiadb.SDB_LIST_CONTEXTS_CURRENT        : Get contexts list for the current session
-     *                 <dt>Sequoiadb.SDB_LIST_SESSIONS        : Get all sessions list
-     *                 <dt>Sequoiadb.SDB_LIST_SESSIONS_CURRENT        : Get the current session
-     *                 <dt>Sequoiadb.SDB_LIST_COLLECTIONS        : Get all collections list
-     *                 <dt>Sequoiadb.SDB_LIST_COLLECTIONSPACES        : Get all collection spaces list
-     *                 <dt>Sequoiadb.SDB_LIST_STORAGEUNITS        : Get storage units list
-     *                 <dt>Sequoiadb.SDB_LIST_GROUPS        : Get replica group list ( only applicable in sharding env )
-     *                 <dt>Sequoiadb.SDB_LIST_STOREPROCEDURES           : Get stored procedure list ( only applicable in sharding env )
-     *                 <dt>Sequoiadb.SDB_LIST_DOMAINS        : Get all the domains list ( only applicable in sharding env )
-     *                 <dt>Sequoiadb.SDB_LIST_TASKS        : Get all the running split tasks ( only applicable in sharding env )
-     *                 <dt>Sequoiadb.SDB_LIST_TRANSACTIONS        : Get all the transactions information.
-     *                 <dt>Sequoiadb.SDB_LIST_TRANSACTIONS_CURRENT        : Get the transactions information of current session.
+     *                 <dt>Sequoiadb.SDB_LIST_CONTEXTS             : Get all contexts list
+     *                 <dt>Sequoiadb.SDB_LIST_CONTEXTS_CURRENT     : Get contexts list for the current session
+     *                 <dt>Sequoiadb.SDB_LIST_SESSIONS             : Get all sessions list
+     *                 <dt>Sequoiadb.SDB_LIST_SESSIONS_CURRENT     : Get the current session
+     *                 <dt>Sequoiadb.SDB_LIST_COLLECTIONS          : Get all collections list
+     *                 <dt>Sequoiadb.SDB_LIST_COLLECTIONSPACES     : Get all collection spaces list
+     *                 <dt>Sequoiadb.SDB_LIST_STORAGEUNITS         : Get storage units list
+     *                 <dt>Sequoiadb.SDB_LIST_GROUPS               : Get replica group list ( only applicable in sharding env )
+     *                 <dt>Sequoiadb.SDB_LIST_STOREPROCEDURES      : Get stored procedure list ( only applicable in sharding env )
+     *                 <dt>Sequoiadb.SDB_LIST_DOMAINS              : Get all the domains list ( only applicable in sharding env )
+     *                 <dt>Sequoiadb.SDB_LIST_TASKS                : Get all the running split tasks ( only applicable in sharding env )
+     *                 <dt>Sequoiadb.SDB_LIST_TRANSACTIONS         : Get all the transactions information.
+     *                 <dt>Sequoiadb.SDB_LIST_TRANSACTIONS_CURRENT : Get the transactions information of current session.
      *                 </dl>
      * @param query    The matching rule, match all the documents if null.
      * @param selector The selective rule, return the whole document if null.
@@ -976,17 +977,18 @@ public class Sequoiadb implements Closeable {
      * Get snapshot of the database.
      * @param snapType The snapshot types are as below:
      *                 <dl>
-     *                 <dt>Sequoiadb.SDB_SNAP_CONTEXTS   : Get all contexts' snapshot
-     *                 <dt>Sequoiadb.SDB_SNAP_CONTEXTS_CURRENT        : Get the current context's snapshot
-     *                 <dt>Sequoiadb.SDB_SNAP_SESSIONS        : Get all sessions' snapshot
-     *                 <dt>Sequoiadb.SDB_SNAP_SESSIONS_CURRENT        : Get the current session's snapshot
-     *                 <dt>Sequoiadb.SDB_SNAP_COLLECTIONS        : Get the collections' snapshot
-     *                 <dt>Sequoiadb.SDB_SNAP_COLLECTIONSPACES        : Get the collection spaces' snapshot
-     *                 <dt>Sequoiadb.SDB_SNAP_DATABASE        : Get database's snapshot
-     *                 <dt>Sequoiadb.SDB_SNAP_SYSTEM        : Get system's snapshot
-     *                 <dt>Sequoiadb.SDB_SNAP_CATALOG        : Get catalog's snapshot
-     *                 <dt>Sequoiadb.SDB_SNAP_TRANSACTIONS           : Get the snapshot of all the transactions
-     *                 <dt>Sequoiadb.SDB_SNAP_TRANSACTIONS_CURRENT        : Get the snapshot of current transactions
+     *                 <dt>Sequoiadb.SDB_SNAP_CONTEXTS             : Get all contexts' snapshot
+     *                 <dt>Sequoiadb.SDB_SNAP_CONTEXTS_CURRENT     : Get the current context's snapshot
+     *                 <dt>Sequoiadb.SDB_SNAP_SESSIONS             : Get all sessions' snapshot
+     *                 <dt>Sequoiadb.SDB_SNAP_SESSIONS_CURRENT     : Get the current session's snapshot
+     *                 <dt>Sequoiadb.SDB_SNAP_COLLECTIONS          : Get the collections' snapshot
+     *                 <dt>Sequoiadb.SDB_SNAP_COLLECTIONSPACES     : Get the collection spaces' snapshot
+     *                 <dt>Sequoiadb.SDB_SNAP_DATABASE             : Get database's snapshot
+     *                 <dt>Sequoiadb.SDB_SNAP_SYSTEM               : Get system's snapshot
+     *                 <dt>Sequoiadb.SDB_SNAP_CATALOG              : Get catalog's snapshot
+     *                 <dt>Sequoiadb.SDB_SNAP_TRANSACTIONS         : Get the snapshot of all the transactions
+     *                 <dt>Sequoiadb.SDB_SNAP_TRANSACTIONS_CURRENT : Get the snapshot of current transactions
+     *                 <dt>Sequoiadb.SDB_SNAP_ACCESSPLANS          : Get the snapshot of cached access plans
      *                 </dl>
      * @param matcher  the matching rule, match all the documents if null
      * @param selector the selective rule, return the whole document if null
@@ -1016,17 +1018,18 @@ public class Sequoiadb implements Closeable {
      * Get snapshot of the database.
      * @param snapType The snapshot types are as below:
      *                 <dl>
-     *                 <dt>Sequoiadb.SDB_SNAP_CONTEXTS   : Get all contexts' snapshot
-     *                 <dt>Sequoiadb.SDB_SNAP_CONTEXTS_CURRENT        : Get the current context's snapshot
-     *                 <dt>Sequoiadb.SDB_SNAP_SESSIONS        : Get all sessions' snapshot
-     *                 <dt>Sequoiadb.SDB_SNAP_SESSIONS_CURRENT        : Get the current session's snapshot
-     *                 <dt>Sequoiadb.SDB_SNAP_COLLECTIONS        : Get the collections' snapshot
-     *                 <dt>Sequoiadb.SDB_SNAP_COLLECTIONSPACES        : Get the collection spaces' snapshot
-     *                 <dt>Sequoiadb.SDB_SNAP_DATABASE        : Get database's snapshot
-     *                 <dt>Sequoiadb.SDB_SNAP_SYSTEM        : Get system's snapshot
-     *                 <dt>Sequoiadb.SDB_SNAP_CATALOG        : Get catalog's snapshot
-     *                 <dt>Sequoiadb.SDB_SNAP_TRANSACTIONS        : Get snapshot of transactions in current session
-     *                 <dt>Sequoiadb.SDB_SNAP_TRANSACTIONS_CURRENT           : Get snapshot of all the transactions
+     *                 <dt>Sequoiadb.SDB_SNAP_CONTEXTS             : Get all contexts' snapshot
+     *                 <dt>Sequoiadb.SDB_SNAP_CONTEXTS_CURRENT     : Get the current context's snapshot
+     *                 <dt>Sequoiadb.SDB_SNAP_SESSIONS             : Get all sessions' snapshot
+     *                 <dt>Sequoiadb.SDB_SNAP_SESSIONS_CURRENT     : Get the current session's snapshot
+     *                 <dt>Sequoiadb.SDB_SNAP_COLLECTIONS          : Get the collections' snapshot
+     *                 <dt>Sequoiadb.SDB_SNAP_COLLECTIONSPACES     : Get the collection spaces' snapshot
+     *                 <dt>Sequoiadb.SDB_SNAP_DATABASE             : Get database's snapshot
+     *                 <dt>Sequoiadb.SDB_SNAP_SYSTEM               : Get system's snapshot
+     *                 <dt>Sequoiadb.SDB_SNAP_CATALOG              : Get catalog's snapshot
+     *                 <dt>Sequoiadb.SDB_SNAP_TRANSACTIONS         : Get snapshot of transactions in current session
+     *                 <dt>Sequoiadb.SDB_SNAP_TRANSACTIONS_CURRENT : Get snapshot of all the transactions
+     *                 <dt>SequoiaDB.SDB_SNAP_ACCESSPLANS          : Get the snapshot of cached access plans
      *                 </dl>
      * @param matcher  the matching rule, match all the documents if null
      * @param selector the selective rule, return the whole document if null
@@ -1080,6 +1083,8 @@ public class Sequoiadb implements Closeable {
                 return AdminCommand.SNAP_TRANSACTIONS;
             case SDB_SNAP_TRANSACTIONS_CURRENT:
                 return AdminCommand.SNAP_TRANSACTIONS_CURRENT;
+            case SDB_SNAP_ACCESSPLANS:
+                return AdminCommand.SNAP_ACCESSPLANS;
             default:
                 throw new BaseException(SDBError.SDB_INVALIDARG, String.format("Invalid snapshot type: %d", snapType));
         }

@@ -80,6 +80,7 @@ final class AdminCommand {
     final static String SNAP_CATALOG = PREFIX + "snapshot catalog";
     final static String SNAP_TRANSACTIONS = PREFIX + "snapshot transactions";
     final static String SNAP_TRANSACTIONS_CURRENT = PREFIX + "snapshot transactions current";
+    final static String SNAP_ACCESSPLANS = PREFIX + "snapshot accessplans";
 
     final static String RESET_SNAPSHOT = PREFIX + "snapshot reset";
 
