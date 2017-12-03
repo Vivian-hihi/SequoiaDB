@@ -409,6 +409,17 @@ namespace DriverTest
             {
                 sdb.TransactionCommit();
             }
+
+            // snapshot accessplans
+            {
+                BsonDocument o = null;
+                cursor = sdb.GetSnapshot(SDBConst.SDB_SNAP_ACCESSPLANS, dummy, dummy, dummy);
+                Console.WriteLine("the result of SDB_SNAP_TRANSACTIONS is: ");
+                while (null != (o = cursor.Next()))
+                {
+                    Console.WriteLine(o);
+                }
+            }
         }
 
         [TestMethod()]

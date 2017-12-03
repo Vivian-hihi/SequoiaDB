@@ -736,6 +736,7 @@ namespace SequoiaDB
          *      SDBConst.SDB_SNAP_CATALOG
          *      SDBConst.SDB_SNAP_TRANSACTIONS
          *      SDBConst.SDB_SNAP_TRANSACTIONS_CURRENT
+         *      SDBConst.SDB_SNAP_ACCESSPLANS
          *      
          *  \param matcher The matching condition or null
          *  \param selector The selective rule or null
@@ -793,6 +794,10 @@ namespace SequoiaDB
                 case SDBConst.SDB_SNAP_TRANSACTIONS_CURRENT:
                     command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.SNAP_CMD + " " +
                            SequoiadbConstants.TRANSACTIONS_CURRENT;
+                    break;
+                case SDBConst.SDB_SNAP_ACCESSPLANS:
+                    command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.SNAP_CMD + " " +
+                              SequoiadbConstants.ACCESSPLANS;
                     break;
 
                 default:
