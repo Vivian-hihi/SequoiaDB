@@ -480,10 +480,11 @@ class client(object):
                     8     : Get catalog's snapshot
                     9     : Get transactions' snapshot
                     10    : Get current session's transaction snapshot
+                    11    : Get cached access plan snapshot
         """
         if not isinstance(snap_type, int):
             raise SDBTypeError("snap type must be an instance of int")
-        if snap_type < 0 or snap_type > 10:
+        if snap_type < 0 or snap_type > 11:
             raise SDBTypeError("snap_type value is invalid")
 
         bson_condition = None
