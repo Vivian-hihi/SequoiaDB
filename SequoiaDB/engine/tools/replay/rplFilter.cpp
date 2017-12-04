@@ -142,6 +142,7 @@ namespace replay
       case LOG_TYPE_DATA_UPDATE:
       case LOG_TYPE_DATA_DELETE:
       case LOG_TYPE_CL_TRUNC:
+      case LOG_TYPE_DATA_POP:
          return TRUE;
       default:
          return FALSE;
@@ -210,6 +211,7 @@ namespace replay
          _op.insert(RPL_LOG_OP_UPDATE);
          _op.insert(RPL_LOG_OP_DELETE);
          _op.insert(RPL_LOG_OP_TRUNCATE_CL);
+         _op.insert(RPL_LOG_OP_POP);
       }
 
       value = DPS_INVALID_LSN_OFFSET;
@@ -559,7 +561,7 @@ namespace replay
       {
          rc = SDB_INVALIDARG;
          PD_LOG(PDERROR, "Filter[%s] should be Array", fieldName.c_str());
-         std::cerr << "Filter[" 
+         std::cerr << "Filter["
                    << fieldName
                    << "] should be Array"
                    << std::endl;
@@ -576,8 +578,8 @@ namespace replay
                rc = SDB_INVALIDARG;
                PD_LOG(PDERROR, "Element should be String in %s",
                       fieldName.c_str());
-               std::cerr << "Element should be String in " 
-                         << fieldName 
+               std::cerr << "Element should be String in "
+                         << fieldName
                          << std::endl;
                goto error;
             }
@@ -608,7 +610,7 @@ namespace replay
       {
          rc = SDB_INVALIDARG;
          PD_LOG(PDERROR, "Filter[%s] should be integer", fieldName.c_str());
-         std::cerr << "Filter[" 
+         std::cerr << "Filter["
                    << fieldName
                    << "] should be integer"
                    << std::endl;

@@ -382,7 +382,6 @@
 #define FIELD_NAME_DEEP                      "Deep"
 #define FIELD_NAME_BLOCK                     "Block"
 #define FIELD_NAME_CAPPED                    "Capped"
-#define FIELD_NAME_DIRECTION                 "Direction"
 #define FIELD_NAME_TEXT                      "$Text"
 
 #define FIELD_NAME_ANALYZE_MODE              "Mode"

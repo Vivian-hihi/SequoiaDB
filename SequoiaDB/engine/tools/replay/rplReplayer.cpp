@@ -305,13 +305,13 @@ namespace replay
             goto error;
          }
       }
-   
+
    done:
       return rc;
    error:
       goto done;
    }
-   
+
    INT32 Replayer::_replayDir()
    {
       INT32 rc = SDB_OK;
@@ -333,7 +333,7 @@ namespace replay
                 _path.c_str(), rc);
          goto error;
       }
-      
+
    done:
       return rc;
    error:
@@ -818,6 +818,9 @@ namespace replay
       case LOG_TYPE_CL_TRUNC:
          rc = _replayTruncateCL(log);
          break;
+      case LOG_TYPE_DATA_POP:
+         rc = _replayPop(log) ;
+         break ;
       default:
          SDB_ASSERT(FALSE, "invalid log type");
       }
@@ -929,7 +932,7 @@ namespace replay
       if (SDB_OK != rc)
       {
          PD_LOG(PDERROR, "Failed to update record[%s:%s], lsn[%lld], rc=%d",
-                modifier.toString(FALSE, TRUE).c_str(), 
+                modifier.toString(FALSE, TRUE).c_str(),
                 match.toString(FALSE, TRUE).c_str(), header._lsn, rc);
          goto error ;
       }
@@ -978,7 +981,7 @@ namespace replay
       rc = _sdb->getCollection(fullName, cl);
       if (SDB_OK != rc)
       {
-         PD_LOG(PDERROR, "Failed to get collection: %s, lsn[%lld], rc=%d", 
+         PD_LOG(PDERROR, "Failed to get collection: %s, lsn[%lld], rc=%d",
                 fullName, header._lsn, rc);
          goto error;
       }
@@ -1017,7 +1020,7 @@ namespace replay
       rc = _sdb->getCollection(fullName, cl);
       if (SDB_OK != rc)
       {
-         PD_LOG(PDERROR, "Failed to get collection: %s, lsn[%lld], rc=%d", 
+         PD_LOG(PDERROR, "Failed to get collection: %s, lsn[%lld], rc=%d",
                 fullName, header._lsn, rc);
          goto error;
       }
@@ -1034,6 +1037,60 @@ namespace replay
       return rc;
    error:
       goto done;
+   }
+
+   INT32 Replayer::_replayPop( const CHAR *log )
+   {
+      INT32 rc = SDB_OK ;
+      const dpsLogRecordHeader& header = *(const dpsLogRecordHeader*)log ;
+      const CHAR *fullName = NULL ;
+      sdbCollection cl ;
+      INT64 logicalID = 0 ;
+      INT8 direction = 1 ;
+
+      rc = dpsRecord2Pop( log, &fullName, logicalID, direction ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to parse log record[%lld], rc=%d",
+                 header._lsn, rc ) ;
+         goto error ;
+      }
+
+      rc  = _sdb->getCollection( fullName, cl ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to get collection: %s, lsn[%lld], rc=%d",
+                 fullName, header._lsn, rc ) ;
+         goto error ;
+      }
+
+      try
+      {
+         BSONObjBuilder builder ;
+         builder.append( FIELD_NAME_LOGICAL_ID, logicalID ) ;
+         builder.append( FIELD_NAME_DIRECTION, direction ) ;
+         BSONObj option = builder.obj() ;
+
+         rc = cl.pop( option ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to do pop[option: %s] on collection[%s], "
+                    "lsn[%lld], rc=%d", option.toString().c_str(), fullName,
+                    header._lsn, rc);
+            goto error ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "unexpected exception: %s", e.what() ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    void Replayer::_dumpArchiveFileHeader(dpsArchiveFile& archiveFile)
@@ -2427,7 +2484,7 @@ namespace replay
       if (SDB_OK != rc)
       {
          PD_LOG(PDERROR, "Failed to rollback update record[%s:%s], lsn[%lld], rc=%d",
-                oldObj.toString(FALSE, TRUE).c_str(), 
+                oldObj.toString(FALSE, TRUE).c_str(),
                 newMatch.toString(FALSE, TRUE).c_str(), header._lsn, rc);
          goto error ;
       }
@@ -2460,7 +2517,7 @@ namespace replay
       rc = _sdb->getCollection(fullName, cl);
       if (SDB_OK != rc)
       {
-         PD_LOG(PDERROR, "Failed to get collection: %s, lsn[%lld], rc=%d", 
+         PD_LOG(PDERROR, "Failed to get collection: %s, lsn[%lld], rc=%d",
                 fullName, header._lsn, rc);
          goto error;
       }
@@ -2727,7 +2784,7 @@ namespace replay
    error:
       goto done;
    }
-   
+
    INT32 Replayer::_writeStatus()
    {
       INT32 rc = SDB_OK;

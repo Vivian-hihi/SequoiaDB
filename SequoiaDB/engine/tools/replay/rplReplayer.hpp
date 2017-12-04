@@ -94,10 +94,11 @@ namespace replay
       INT32 _replayUpdate(const CHAR* log);
       INT32 _replayDelete(const CHAR* log);
       INT32 _replayTruncateCL(const CHAR* log);
+      INT32 _replayPop(const CHAR *log) ;
       INT32 _move(UINT32 startFileId);
       INT32 _rollbackLogFile(engine::dpsLogFile& logFile,
                            DPS_LSN_OFFSET startLSN, DPS_LSN_OFFSET endLSN);
-      INT32 _findLastLSN(engine::dpsLogFile& logFile, 
+      INT32 _findLastLSN(engine::dpsLogFile& logFile,
                              DPS_LSN_OFFSET startLSN, DPS_LSN_OFFSET endLSN,
                              DPS_LSN_OFFSET& lastLSN);
       INT32 _rollbackLog(const CHAR* log);

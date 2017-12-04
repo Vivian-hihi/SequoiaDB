@@ -1315,6 +1315,9 @@ do                                                            \
    INT32 _sdbCollectionImpl::pop( const BSONObj &option )
    {
       INT32 rc = SDB_OK ;
+      BSONElement lidEle ;
+      BSONObj cmdOption ;
+      BSONObjBuilder builder ;
 
       if ( '\0' == _collectionFullName[0] || !_connection )
       {
@@ -1328,7 +1331,26 @@ do                                                            \
          goto error ;
       }
 
-      rc = _connection->_runCommand( _collectionFullName, &option ) ;
+      try
+      {
+         builder.append( FIELD_NAME_COLLECTION, _collectionFullName ) ;
+         lidEle = option.getField( FIELD_NAME_LOGICAL_ID ) ;
+         if ( EOO == lidEle.type() )
+         {
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         builder.appendElements(option) ;
+         cmdOption = builder.obj() ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_DRIVER_BSON_ERROR ;
+         goto error ;
+      }
+
+      rc = _connection->_runCommand( CMD_ADMIN_PREFIX CMD_NAME_POP,
+                                     &cmdOption ) ;
       if ( rc )
       {
          goto error ;
@@ -4042,7 +4064,7 @@ error:
          rc = SDB_INVALIDARG ;
          goto error ;
       }
-      // get information of nodes from catalog 
+      // get information of nodes from catalog
       rc = getDetail ( result ) ;
       if ( rc )
       {
@@ -4134,7 +4156,7 @@ error:
       }
       else
       {
-         // it is impossible for us to find primary id but cannot 
+         // it is impossible for us to find primary id but cannot
          // find primary node in list
          rc = SDB_SYS ;
          goto error ;
@@ -4146,7 +4168,7 @@ error:
    }
 
    // attempt to get slave, if no slave exist, return primary
-   INT32 _sdbReplicaGroupImpl::getSlave ( _sdbNode **node, 
+   INT32 _sdbReplicaGroupImpl::getSlave ( _sdbNode **node,
                                           const vector<INT32>& positions )
    {
       INT32 rc = SDB_OK ;
@@ -4225,7 +4247,7 @@ error:
       if ( ele.type() == EOO )
       {
          hasPrimary = FALSE ;
-      } 
+      }
       else if ( ele.type() != NumberInt )
       {
          rc = SDB_SYS ;
