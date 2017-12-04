@@ -37,10 +37,9 @@ public class TestLob13255 extends SdbTestBase {
         clName = "cl_" + this.getClass().getSimpleName();
         db = new Sequoiadb(coordUrl, "", "");
         cs = db.getCollectionSpace(csName);
-        List<String> groupNames = RandomWriteLobUtil.getDataGroups(db);
 
         dbcl = cs.createCollection(clName,
-                (BSONObject) JSON.parse("{ShardingKey:{\"_id\":1},ShardingType:\"hash\",Group:'" + groupNames.get(0) + "'}"));
+                (BSONObject) JSON.parse("{ShardingKey:{\"_id\":1},ShardingType:\"hash\"}"));
     }
 
     @AfterClass
@@ -60,7 +59,7 @@ public class TestLob13255 extends SdbTestBase {
      *
      * @param lobsize
      */
-    @Test(dataProvider = "lobSizeDataProvider", dataProviderClass = RandomWriteLobUtil.LobSizedataProvider.class)
+    @Test(enabled = false,dataProvider = "lobSizeDataProvider", dataProviderClass = RandomWriteLobUtil.LobSizedataProvider.class)
     public void testLob13252(int lobsize) {
         ObjectId id = createEmptyLob(dbcl);
 

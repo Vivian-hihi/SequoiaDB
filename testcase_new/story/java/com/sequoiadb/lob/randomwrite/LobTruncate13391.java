@@ -4,6 +4,7 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBLob;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 import org.bson.BSONObject;
 import org.bson.types.ObjectId;
@@ -37,7 +38,8 @@ public class LobTruncate13391 extends SdbTestBase {
         csName = SdbTestBase.csName;
         clName = "cl_" + this.getClass().getSimpleName();
         cs = db.getCollectionSpace(csName);
-        groupNames = RandomWriteLobUtil.getDataGroups(db);
+        if(CommLib.isStandAlone(db))
+            throw new SkipException("");
         if (groupNames.size() < 2)
             throw new SkipException("");
         dbcl = cs.createCollection(

@@ -8,12 +8,14 @@ import com.sequoiadb.testcommon.SdbTestBase;
 import org.bson.BSONObject;
 import org.bson.types.ObjectId;
 import org.bson.util.JSON;
+import org.testng.Assert;
 import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,10 +41,9 @@ public class LobTest13228 extends SdbTestBase {
         clName = "cl_" + this.getClass().getSimpleName();
         db = new Sequoiadb(coordUrl, "", "");
         cs = db.getCollectionSpace(csName);
-        List<String> groupNames = RandomWriteLobUtil.getDataGroups(db);
 
         dbcl = cs.createCollection(clName,
-                (BSONObject) JSON.parse("{ShardingKey:{\"_id\":1},ShardingType:\"hash\",Group:'" + groupNames.get(0) + "'}"));
+                (BSONObject) JSON.parse("{ShardingKey:{\"_id\":1},ShardingType:\"hash\"}"));
     }
 
     @AfterClass
@@ -76,23 +77,31 @@ public class LobTest13228 extends SdbTestBase {
      * 2、执行list查看显示lob size信息正确，包含seek size长度
      */
     @Test(dataProvider = "testLob13228DataProvider")
-    public void testLob13228(int initLobSize, int appendDataSize, int seekSize, int seekType) {
-        byte[] data = getRandomBytes(initLobSize);
+    public void testLob13228(int initDataSize, int appendDataSize, int seekSize, int seekType) {
+        byte[] initData = getRandomBytes(initDataSize);
         byte[] appendData = getRandomBytes(appendDataSize);
         ObjectId id = ObjectId.get();
 
         try (DBLob lob = dbcl.createLob(id)) {
-            lob.write(data);
+            lob.write(initData);
             lob.seek(seekSize, seekType);
             lob.write(appendData);
         }
 
-        byte[] actual = readLob(dbcl,id);
-        if (seekType == DBLob.SDB_LOB_SEEK_CUR)
-            seekSize += initLobSize;
-        if (seekType == DBLob.SDB_LOB_SEEK_END)
-            seekSize = initLobSize - seekSize;
-        assertByteArrayEqual(actual, RandomWriteLobUtil.appendBuff(data, appendData, seekSize));
-    }
+        int appendPosition;
+        byte[] actual = readLob(dbcl, id);
+        if (seekType == DBLob.SDB_LOB_SEEK_CUR) {
+            appendPosition = seekSize + initDataSize;
+        }
+        else if (seekType == DBLob.SDB_LOB_SEEK_END)
+            appendPosition = initDataSize - seekSize;
+        else
+            appendPosition = seekSize;
 
+        if (appendPosition > initDataSize) {
+            Assert.assertEquals(Arrays.copyOfRange(actual, 0, initDataSize), initData);
+            Assert.assertEquals(Arrays.copyOfRange(actual, appendPosition, appendPosition+appendDataSize), appendData);
+        } else
+            Assert.assertEquals(actual, RandomWriteLobUtil.appendBuff(initData, appendData, appendPosition));
+    }
 }

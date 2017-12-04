@@ -5,6 +5,7 @@ import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBLob;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.SDBError;
+import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 import org.bson.BSONObject;
 import org.bson.types.ObjectId;
@@ -43,10 +44,12 @@ public class LobTest13227 extends SdbTestBase {
         clName = "cl_" + this.getClass().getSimpleName();
         db = new Sequoiadb(coordUrl, "", "");
         cs = db.getCollectionSpace(csName);
+        if(CommLib.isStandAlone(db))
+            throw new SkipException("");
+
         List<String> groupNames = RandomWriteLobUtil.getDataGroups(db);
         if (groupNames.size() < 2)
             throw new SkipException("");
-
         dbcl = cs.createCollection(clName,
                 (BSONObject) JSON.parse("{ShardingKey:{\"_id\":1},ShardingType:\"hash\",Group:'" + groupNames.get(0) + "'}"));
         dbcl.split(groupNames.get(0), groupNames.get(1), 50);

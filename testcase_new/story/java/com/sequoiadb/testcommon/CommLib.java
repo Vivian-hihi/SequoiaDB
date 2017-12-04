@@ -20,7 +20,7 @@ public class CommLib {
 	 * @param sdb
 	 * @return true/false, true is standalone, false is cluster
 	 */
-	public boolean isStandAlone(Sequoiadb sdb){
+	public static boolean isStandAlone(Sequoiadb sdb){
 		try{
 			sdb.listReplicaGroups();
 		}catch(BaseException e){
@@ -51,7 +51,7 @@ public class CommLib {
 	 * @return dataGroupNames
 	 */
 	public ArrayList<String> getDataGroupNames(Sequoiadb sdb){
-		ArrayList<String> dataGroupNames = new ArrayList<String>();
+		ArrayList<String> dataGroupNames = new ArrayList<>();
 		try{
 			dataGroupNames = sdb.getReplicaGroupNames();
 			dataGroupNames.remove("SYSCatalogGroup");
@@ -70,7 +70,7 @@ public class CommLib {
 	 */
 	public List<String> getNodeAddress(Sequoiadb sdb, 
 									   String rgName){
-		List<String> nodeAddrs = new ArrayList<String>();
+		List<String> nodeAddrs = new ArrayList<>();
 		try{
 			ReplicaGroup tmpArray = sdb.getReplicaGroup(rgName);
 			BasicBSONObject doc = (BasicBSONObject)tmpArray.getDetail();
@@ -97,7 +97,7 @@ public class CommLib {
 	 * @return csInfoOfCata
 	 */
 	public ArrayList<BSONObject> getCSInfoOfCatalog(Sequoiadb sdb){
-		ArrayList<BSONObject> csInfoOfCata = new ArrayList<BSONObject>();
+		ArrayList<BSONObject> csInfoOfCata = new ArrayList<>();
 		Sequoiadb cataDB = null;
 		try
 		{
@@ -123,7 +123,6 @@ public class CommLib {
 	/**
 	 * check domain results of catalog, compare each node in catalog
 	 * @param sdb
-	 * @return true/false, true is success, false is failed
 	 */
 	public void checkDomainOfCatalog(Sequoiadb sdb, 
 									 String domainName){
@@ -148,7 +147,6 @@ public class CommLib {
 	/**
 	 * check cs results of catalog, compare each node in catalog
 	 * @param sdb
-	 * @return true/false, true is success, false is failed
 	 */
 	public void checkCSOfCatalog(Sequoiadb sdb, 
 								 String csName){
@@ -452,7 +450,6 @@ public class CommLib {
 	
 	/**
 	 * compare node's data within the group
-	 * @param .......
 	 * @param matcher, matching condition for query
 	 */
 	public void compareNodeData(Sequoiadb sdb, 

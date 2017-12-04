@@ -34,10 +34,9 @@ public class TestLob13240 extends SdbTestBase {
         clName = "cl_" + this.getClass().getSimpleName();
         db = new Sequoiadb(coordUrl, "", "");
         cs = db.getCollectionSpace(csName);
-        List<String> groupNames = RandomWriteLobUtil.getDataGroups(db);
 
         dbcl = cs.createCollection(clName,
-                (BSONObject) JSON.parse("{ShardingKey:{\"_id\":1},ShardingType:\"hash\",Group:'" + groupNames.get(0) + "'}"));
+                (BSONObject) JSON.parse("{ShardingKey:{\"_id\":1},ShardingType:\"hash\"}"));
     }
 
     @AfterClass

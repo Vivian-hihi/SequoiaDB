@@ -1,12 +1,14 @@
 package com.sequoiadb.lob.randomwrite;
 
 import com.sequoiadb.base.*;
+import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 import org.bson.BSONObject;
 import org.bson.types.BSONTimestamp;
 import org.bson.types.ObjectId;
 import org.bson.util.JSON;
 import org.testng.Assert;
+import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -36,10 +38,9 @@ public class LobTest13237 extends SdbTestBase {
         clName = "cl_" + this.getClass().getSimpleName();
         db = new Sequoiadb(coordUrl, "", "");
         cs = db.getCollectionSpace(csName);
-        List<String> groupNames = RandomWriteLobUtil.getDataGroups(db);
 
         dbcl = cs.createCollection(clName,
-                (BSONObject) JSON.parse("{ShardingKey:{\"_id\":1},ShardingType:\"hash\",Group:'" + groupNames.get(0) + "'}"));
+                (BSONObject) JSON.parse("{ShardingKey:{\"_id\":1},ShardingType:\"hash\"}"));
     }
 
     @AfterClass

@@ -4,6 +4,7 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBLob;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 import org.bson.BSONObject;
 import org.bson.types.ObjectId;
@@ -38,6 +39,8 @@ public class LobTest13233 extends SdbTestBase {
         clName = "cl_" + this.getClass().getSimpleName();
         db = new Sequoiadb(coordUrl,"","");
         cs = db.getCollectionSpace(csName);
+        if(CommLib.isStandAlone(db))
+            throw new SkipException("skip for standlone");
         List<String> groupNames = RandomWriteLobUtil.getDataGroups(db);
 
         dbcl = cs.createCollection(clName,

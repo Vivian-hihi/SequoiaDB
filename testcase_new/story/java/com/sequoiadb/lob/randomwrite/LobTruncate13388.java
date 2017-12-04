@@ -27,7 +27,6 @@ public class LobTruncate13388 extends SdbTestBase {
     DBCollection dbcl;
     final int lobSize = 1024;
     final byte[] _randomDatas = RandomWriteLobUtil.getRandomBytes(lobSize);
-    List<String> groupNames;
 
     @BeforeClass
     public void setupClass() {
@@ -35,10 +34,9 @@ public class LobTruncate13388 extends SdbTestBase {
         csName = SdbTestBase.csName;
         clName = "cl_" + this.getClass().getSimpleName();
         cs = db.getCollectionSpace(csName);
-        groupNames = RandomWriteLobUtil.getDataGroups(db);
         dbcl = cs.createCollection(
                 clName,
-                (BSONObject) JSON.parse("{ShardingKey:{\"_id\":1},ShardingType:\"hash\",Group:'" + groupNames.get(0) + "'}")
+                (BSONObject) JSON.parse("{ShardingKey:{\"_id\":1},ShardingType:\"hash\"}")
         );
     }
 
