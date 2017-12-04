@@ -123,6 +123,7 @@ public class TestLob10425 extends SdbTestBase {
             DBCollection cl = null;
             try{
                 db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+                db.setSessionAttr(new BasicBSONObject("PreferedInstance", "M"));
                 cl = db.getCollectionSpace(csName).getCollection(clName);
                 // do read lobs
                 while(!oids.isEmpty()){
