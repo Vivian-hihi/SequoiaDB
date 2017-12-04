@@ -245,6 +245,12 @@ namespace engine
                   break ;
                }
             case SDB_LOB_MODE_WRITE:
+               if ( SDB_LOB_MODE_WRITE != mode )
+               {
+                  rc = SDB_LOB_IS_IN_USE ;
+                  goto error ;
+               }
+
                if ( accessId <= -1 )
                {
                   rc = SDB_SYS ;
@@ -252,18 +258,11 @@ namespace engine
                           accessId ) ;
                   goto error ;
                }
-               if ( SDB_LOB_MODE_WRITE != mode )
-               {
-                  rc = SDB_LOB_IS_IN_USE ;
-                  goto error ;
-               }
-               else
-               {
-                  lobAccessInfo->lock();
-                  lobAccessInfo->incRefCount() ;
-                  lobAccessInfo->unlock();
-                  break ;
-               }
+
+               lobAccessInfo->lock();
+               lobAccessInfo->incRefCount() ;
+               lobAccessInfo->unlock();
+               break ;
             default:
                SDB_ASSERT( FALSE, "invalid mode" ) ;
                rc = SDB_SYS ;

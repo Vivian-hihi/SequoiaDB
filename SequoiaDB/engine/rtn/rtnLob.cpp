@@ -530,6 +530,8 @@ namespace engine
       }
       oid = oidEle.OID() ;
 
+      stream.setDPSCB( dpsCB ) ;
+
       rc = stream.open( fullName.valuestr(),
                         oid, SDB_LOB_MODE_REMOVE,
                         flags, NULL, cb ) ;
@@ -616,6 +618,8 @@ namespace engine
          goto error ;
       }
       length = ele.numberLong() ;
+
+      stream.setDPSCB( dpsCB ) ;
 
       rc = stream.open( fullName.c_str(),
                         oid, SDB_LOB_MODE_TRUNCATE,
