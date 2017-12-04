@@ -42,6 +42,8 @@ public class LobTest13233 extends SdbTestBase {
         if(CommLib.isStandAlone(db))
             throw new SkipException("skip for standlone");
         List<String> groupNames = RandomWriteLobUtil.getDataGroups(db);
+        if(groupNames.size()<2)
+            throw new SkipException("need at least 2 groups");
 
         dbcl = cs.createCollection(clName,
                 (BSONObject) JSON.parse("{ShardingKey:{\"_id\":1},ShardingType:\"hash\",Group:'" + groupNames.get(0) + "'}"));

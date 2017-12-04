@@ -40,6 +40,7 @@ public class LobTruncate13391 extends SdbTestBase {
         cs = db.getCollectionSpace(csName);
         if(CommLib.isStandAlone(db))
             throw new SkipException("");
+        groupNames = RandomWriteLobUtil.getDataGroups(db);
         if (groupNames.size() < 2)
             throw new SkipException("");
         dbcl = cs.createCollection(
