@@ -1256,12 +1256,14 @@ namespace engine
       }
       else
       {
+         BOOLEAN bLock = FALSE ;
          if ( _pLatch )
          {
             _pLatch->get() ;
+            bLock = TRUE ;
          }
          _assitNodes.erase( nodeID ) ;
-         if ( _pLatch )
+         if ( bLock )
          {
             _pLatch->release() ;
          }
@@ -1271,6 +1273,7 @@ namespace engine
    BOOLEAN _pmdRemoteSessionSite::existNode( UINT16 nodeID )
    {
       BOOLEAN bFound = FALSE ;
+      BOOLEAN bLock = FALSE ;
 
       for ( UINT32 i = 0 ; i < PMD_SITE_NODEID_BUFF_SIZE ; ++i )
       {
@@ -1285,12 +1288,13 @@ namespace engine
       if ( _pLatch )
       {
          _pLatch->get_shared() ;
+         bLock = TRUE ;
       }
       if ( _assitNodes.count( nodeID ) > 0 )
       {
          bFound = TRUE ;
       }
-      if ( _pLatch )
+      if ( bLock )
       {
          _pLatch->release_shared() ;
       }
