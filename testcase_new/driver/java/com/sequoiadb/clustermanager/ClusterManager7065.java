@@ -3,6 +3,7 @@ package com.sequoiadb.clustermanager;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
@@ -246,22 +247,27 @@ public class ClusterManager7065 extends SdbTestBase{
 				}
 			}
 			actualMasterNodeName = dataRG.getMaster().getNodeName();
+			Node nodeinfo = dataRG.getMaster();
+			boolean isPrimaryFlag = isPrimary(nodeinfo);	
+			Assert.assertEquals(isPrimaryFlag, true);
 			System.out.println("masterNodeName=" + actualMasterNodeName);
 			actualSlaveNodeName = dataRG.getSlave().getNodeName();
+			Node slaveNodeinfo = dataRG.getSlave();				
+			Assert.assertEquals(isPrimary(slaveNodeinfo), false);
 			System.out.println("slaveNodeName=" + actualSlaveNodeName);
 		}catch(BaseException e){
 			Assert.fail("get master and slave node failed" + e.getMessage());
 		}
-		Assert.assertEquals(actualMasterNodeName, coordIP + ":" + dataPortAdd1);
-		Assert.assertEquals(actualSlaveNodeName, coordIP + ":" + dataPortAdd2);
 		
 		//remove node
 		try{
-			dataRG.removeNode(coordIP, dataPortAdd2, null);
+			int removePort = dataRG.getSlave().getPort();
+			dataRG.removeNode(coordIP, removePort, null);
+			Assert.assertNull(dataRG.getNode(coordIP, removePort), "node " + removePort + " exists ,but expect result is removed!");
 		}catch(BaseException e){
 			Assert.fail("remove node failed" + e.getMessage());
 		}
-		Assert.assertNull(dataRG.getNode(coordIP, dataPortAdd2), "node " + dataPortAdd2 + " exists ,but expect result is removed!");
+		
 		
 		//remove replicaGroup
 		try{
@@ -275,5 +281,23 @@ public class ClusterManager7065 extends SdbTestBase{
       clearFlag = true;		
 	}
 	
-	
+	private boolean isPrimary(Node nodeinfo){
+		Sequoiadb db = null;
+		try{
+			db = new Sequoiadb(nodeinfo.getHostName(),nodeinfo.getPort(),"","");
+			DBCursor cursor = db.getSnapshot(6, "","" ,"");
+			boolean isPrimaryFlag = false;
+			while(cursor.hasNext()) {
+	            BSONObject object = cursor.getNext();
+	            Object isPrimary = object.get("IsPrimary");
+	            isPrimaryFlag = (boolean) isPrimary;	           
+	        }
+	        cursor.close();
+	        return isPrimaryFlag;		        
+		}finally{
+			if( db != null){
+				db.disconnect();
+			}		
+		}	
+	}
 }
