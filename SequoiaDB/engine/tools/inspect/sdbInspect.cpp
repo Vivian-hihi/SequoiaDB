@@ -2505,32 +2505,32 @@ BOOLEAN reachEnd( const ciBson &doc, const INT32 nodeCount )
    return end ;
 }
 
-// Objects with the same fields and values are equal even their field orders are
-// different.
+// Objects(actually records in the collection) with the same fields and values
+// are equal even their field orders are different.
 BOOLEAN _objSortCmp( const BSONObj &left, const BSONObj &right )
 {
    BOOLEAN equal = FALSE ;
-   BSONObj sortKey ;
-   BSONObjBuilder builder ;
-   std::set<string> fields ;
 
    try
    {
-      if ( left.nFields() != right.nFields() )
+      BSONObjIteratorSorted itrLeft( left ) ;
+      BSONObjIteratorSorted itrRight( right ) ;
+
+      while ( itrLeft.more() && itrRight.more() )
       {
-         equal = FALSE ;
-         goto done ;
+         if ( itrLeft.next() == itrRight.next() )
+         {
+            continue ;
+         }
+         else
+         {
+            equal = FALSE ;
+            goto done ;
+         }
       }
 
-      // Fetch all the names to build the sort key.
-      (void)left.getFieldNames( fields ) ;
-      for ( std::set<string>::iterator itr = fields.begin();
-            itr != fields.end() ; ++itr )
-      {
-         builder.append( *itr, "" ) ;
-      }
-      sortKey = builder.done() ;
-      equal = ( 0 == left.woSortOrder( right, sortKey ) ) ;
+      // Any one has more elements, they do not equal.
+      equal = ( itrLeft.more() || itrRight.more() ) ? FALSE : TRUE ;
    }
    catch ( std::exception &e )
    {
