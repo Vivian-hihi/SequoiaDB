@@ -59,6 +59,7 @@ public class MetaDataUtils extends SdbTestBase {
 			dataGroupNames = sdb.getReplicaGroupNames();
 			dataGroupNames.remove("SYSCatalogGroup");
 			dataGroupNames.remove("SYSCoord");
+			dataGroupNames.remove("SYSSpare");
 			}catch(BaseException e){
 				throw e;
 			}
@@ -246,6 +247,13 @@ public class MetaDataUtils extends SdbTestBase {
 			ArrayList<String> dataGroupNames =  getDataGroupNames(sdb);
 			for(int i = 0; i < dataGroupNames.size(); i++){
 				List<String> nodeAddrs = getNodeAddress(sdb, dataGroupNames.get(i));
+				
+				if (nodeAddrs.size() < 2) { //other testCase create empty group or only one node that may be cause to fail
+					System.out.println("group = " + dataGroupNames.get(i) + ", nodeNum = " + nodeAddrs.size());
+					break;
+//					throw new Exception("group = " + dataGroupNames.get(i) + ", nodeNum = " + nodeAddrs.size());
+				}
+				
 				//direct node and compare node's data
 				int failCnt = 0;
 				int maxCnt = 600;
@@ -288,7 +296,7 @@ public class MetaDataUtils extends SdbTestBase {
 									"The group is SYSCatalogGroup, " + nodeAddrs.get(j) 
 								  + " and " + nodeAddrs.get(j-1) + " is not consistent.");
 						}
-						//dataDB.closeAllCursors();
+						
 					}
 				}while(!checkSucc && failCnt < maxCnt);
 			}
