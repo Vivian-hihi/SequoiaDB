@@ -102,7 +102,7 @@ class LobRandoWrite(testlib.SdbTestBase):
    1、写入lob成功，查询lob信息和实际插入信息一致（比较MD5值）； 2、list查询lob size信息正确
    """
 
-   def test_lob_13433(self):
+   def test_lob_13443(self):
       oid=self.__create_empty_lob()
 
       lob=self.cl.open_lob(oid,LOB_WRITE)
@@ -216,48 +216,6 @@ class LobRandoWrite(testlib.SdbTestBase):
       actual=self.__read_lob(oid)
       self.assertEqual(actual,expect_data[0:100])
 
-
-
-   def test_lob_13403(self):
-      lob = self.cl.create_lob()
-      lob_id = lob.get_oid()
-      lob.seek(10, 0)
-      lob.write(self.data, 1024)
-      lob.close()
-
-      lob = self.cl.open_lob(lob_id, LOB_WRITE)
-      lob.seek(2000, 0)
-      lob.write(self.data, 1024)
-      lob.close()
-
-      lob = self.cl.open_lob(lob_id)
-      lob.seek(10, 0)
-      actual = lob.read(1024)
-      self.assertEqual(actual, self.expect_data)
-
-      lob.seek(2000, 0)
-      actual = lob.read(1024)
-      self.assertEqual(actual, self.expect_data)
-
-   def test_lob_13404(self):
-      oid = self.__create_empty_lob()
-
-      lob = self.cl.open_lob(oid, LOB_WRITE)
-      lob.lock(0, 1024)
-      lob.write(self.data, 1024)
-      lob.close()
-
-      lob = self.cl.open_lob(oid, LOB_WRITE)
-      lob.lock_and_seek(1024, 1024)
-      lob.write(self.data, 1024)
-      lob.close()
-
-      lob = self.cl.open_lob(oid)
-      actual = lob.read(1024)
-      self.assertEqual(actual, self.expect_data)
-      actual = lob.read(1024)
-      self.assertEqual(actual, self.expect_data)
-
    def test_lob_13409(self):
       oid = self.__create_and_write_lob(self.data)
       self.cl.truncate_lob(oid, 0)
@@ -285,7 +243,7 @@ class LobRandoWrite(testlib.SdbTestBase):
       with self.assertRaises(SDBTypeError):
          self.cl.create_lob("xxx")
 
-   def test_lob_13488(self):
+   def test_lob_13448(self):
       lob = self.cl.create_lob()
       lob.lock(0, 1024)
       lob.lock(sys.maxsize, 1024)
