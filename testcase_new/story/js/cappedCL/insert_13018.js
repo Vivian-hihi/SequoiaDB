@@ -27,11 +27,19 @@ function main()
 	checkCount(dbcl, null, expectCount);
 	
 	//check find
-	var expectIDs = [2048,1024,0];
-	var sortConf = {_id : -1};
-	var limitConf = 3;
+   var limitConf = 3;
 	var skipConf = 39997;
-	checkLogicalID( dbcl, null, null, sortConf, limitConf, skipConf, expectIDs);
+   
+	var expectIDs1 = [2048,1024,0];
+	var sortConf1 = {_id : -1};
+   
+   var expectIDs2 = [getOneLogicalID(stringLength, 39997),
+                     getOneLogicalID(stringLength, 39998),
+                     getOneLogicalID(stringLength, 39999)];
+	var sortConf2 = {_id : 1};
+	
+	//checkLogicalID( dbcl, null, null, sortConf1, limitConf, skipConf, expectIDs1);
+   checkLogicalID( dbcl, null, null, sortConf2, limitConf, skipConf, expectIDs2);
 	
 	//check data file size
 	//if(!commIsStandalone(db))
@@ -50,10 +58,48 @@ function main()
 	checkCount(dbcl, null, expectCount);
 	
 	//check find
-	skipConf = 99997;
-	checkLogicalID( dbcl, null, null, sortConf, limitConf, skipConf, expectIDs);
+   var limitConf = 3;
+   var skipConf = 99997;
+   
+   var expectIDs1 = [2048,1024,0];
+	var sortConf1 = {_id : -1};
+   
+   var expectIDs2 = [getOneLogicalID(stringLength, 99997),
+                     getOneLogicalID(stringLength, 99998),
+                     getOneLogicalID(stringLength, 99999)];
+	var sortConf2 = {_id : 1};
+	
+	//checkLogicalID( dbcl, null, null, sortConf1, limitConf, skipConf, expectIDs1);
+   checkLogicalID( dbcl, null, null, sortConf2, limitConf, skipConf, expectIDs2);
 
-   //commDropCS( db, csName, true, "drop CS in the end" );
+   commDropCS( db, csName, true, "drop CS in the end" );
+}
+
+function getOneLogicalID( stringLength, skipNum )
+{
+	var logicalID = 0;
+   var blockCounts = 1;
+	var block_max_32 = 33554396;
+   
+   var recordLength = stringLength + 55;
+   if(recordLength % 4 !== 0)
+   {
+      recordLength = recordLength - recordLength % 4 + 4;
+   }
+   
+   for(var i = 0; i < skipNum; ++i)
+   {
+      logicalID = logicalID + recordLength;
+      
+      var nextLogicalID = logicalID + recordLength;
+      if(nextLogicalID > (blockCounts * block_max_32)) 
+      {
+			logicalID = blockCounts * block_max_32;
+		   ++blockCounts;
+		}
+   }
+   println("skip num: " + skipNum + " logicalID: " + logicalID);
+	return logicalID;
 }
 
 function getDataFilePath( csName, clName )
