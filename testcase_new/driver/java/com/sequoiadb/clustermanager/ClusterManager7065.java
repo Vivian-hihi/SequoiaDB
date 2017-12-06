@@ -247,6 +247,8 @@ public class ClusterManager7065 extends SdbTestBase {
                 }
             }
             actualMasterNodeName = dataRG.getMaster().getNodeName();
+
+            dataRG = sdb.getReplicaGroup(dataRGName);
             Node nodeinfo = dataRG.getMaster();
             boolean isPrimaryFlag = isPrimary(nodeinfo);
             Assert.assertEquals(isPrimaryFlag, true);
@@ -285,7 +287,7 @@ public class ClusterManager7065 extends SdbTestBase {
         Sequoiadb db = null;
         try {
             db = nodeinfo.connect();
-            for (int i = 0; i < 10; i++) {
+            for (int i = 0; i < 100; i++) {
                 DBCursor cursor = db.getSnapshot(6, "", "", "");
                 BSONObject object = cursor.getNext();
                 boolean isPrimary = (Boolean) object.get("IsPrimary");
