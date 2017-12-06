@@ -1,7 +1,7 @@
 选择字段 \<field_name\> 的值存在且不为 null 的记录。
 
 ##语法##
-***\<field_name\> isnot null***
+***\<field_name\> is not null***
 
 ##参数##
 | 参数名     | 参数类型 | 描述     | 是否必填 |
@@ -24,7 +24,7 @@
    * 查询 a 字段值存在且不为 null 的记录。
 
    ```lang-javascript
-   > db.exec('select * from foo.bar where a isnot null')
+   > db.exec('select * from foo.bar where a is not null')
    {
      "_id": {
        "$oid": "598d0b57a6e2e2fd65000000"
