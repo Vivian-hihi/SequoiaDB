@@ -189,6 +189,7 @@ class RandomWriteLobUtil {
 
         try (FileOutputStream out = new FileOutputStream(fileActual)) {
             lob.read(out);
+            out.flush();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
