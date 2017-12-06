@@ -65,7 +65,7 @@ public class WriteAndTruncate13319 extends SdbTestBase {
         }
     }
 
-    @Test(enabled = false)
+    @Test
     public void testLob() {
         try {
             int lobSize = 1 * 1024 * 1024;
@@ -139,7 +139,10 @@ public class WriteAndTruncate13319 extends SdbTestBase {
                 lob.lockAndSeek(part.getOffset(), part.getLength());
                 lob.write(part.getData());
             } catch (BaseException e) {
-                if (-4 != e.getErrorCode()) {
+                int errCode = e.getErrorCode();
+                if (errCode != -4 &&          // -4: file not exist
+                        errCode != -321 &&    // -321: cl truncate
+                        errCode != -268) {    // -268: lob sequence not exist
                     throw e;
                 }
             } finally {

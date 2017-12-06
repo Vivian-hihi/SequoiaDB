@@ -59,7 +59,7 @@ public class TruncateLobWhenTruncateCL13465 extends SdbTestBase {
         }
     }
 
-    @Test(enabled = false)
+    @Test
     public void testLob() {
         try {
             byte[] data = RandomWriteLobUtil.getRandomBytes(lobSize);
@@ -128,7 +128,10 @@ public class TruncateLobWhenTruncateCL13465 extends SdbTestBase {
                 DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
                 cl.truncateLob(oid, 0);
             } catch (BaseException e) {
-                if (e.getErrorCode() != -4) {
+                int errCode = e.getErrorCode();
+                if (errCode != -4 && errCode != -321) {
+                    // -4: file not exist
+                    // -321: cl truncate
                     throw e;
                 }
             } finally {
