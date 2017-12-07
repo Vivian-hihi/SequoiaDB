@@ -146,6 +146,11 @@ namespace engine
          _uniqueId = uniqueId ;
       }
 
+      OSS_INLINE INT32 mode() const
+      {
+         return _getMode() ;
+      }
+
    protected:
       OSS_INLINE _dmsLobMeta &_getMeta()
       {

@@ -315,22 +315,12 @@ namespace engine
    INT32 _rtnLobStream::getMetaData( bson::BSONObj &meta )
    {
       INT32 rc = SDB_OK ;
-      if ( !isOpened() )
+
+      rc = _meta2Obj( meta ) ;
+      if ( SDB_OK != rc )
       {
-         rc = SDB_INVALIDARG ;
          goto error ;
       }
-
-      if ( _metaObj.isEmpty() )
-      {
-         rc = _meta2Obj( _metaObj ) ;
-         if ( SDB_OK != rc )
-         {
-            goto error ;
-         }
-      }
-
-      meta = _metaObj ;
 
    done:
       return rc ;

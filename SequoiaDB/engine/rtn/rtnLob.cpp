@@ -452,9 +452,8 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCLOSELOB, "rtnCloseLob" )
    INT32 rtnCloseLob( SINT64 contextID,
                       pmdEDUCB *cb,
-                      rtnContextBuf *errBuf )
+                      rtnContextBuf *bufObj )
    {
-      
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNCLOSELOB ) ;
       rtnContextLob *lobContext = NULL ;
@@ -475,15 +474,34 @@ namespace engine
       }
 
       lobContext = ( rtnContextLob * )context ;
+
       rc = lobContext->close( cb ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Failed to close lob, rc:%d", rc ) ;
-         if ( errBuf )
+         if ( bufObj )
          {
-            lobContext->getErrorInfo( rc, cb, *errBuf ) ;
+            lobContext->getErrorInfo( rc, cb, *bufObj ) ;
          }
          goto error ;
+      }
+
+      if ( NULL != bufObj )
+      {
+         INT32 mode = lobContext->mode() ;
+         if ( SDB_LOB_MODE_CREATEONLY == mode ||
+              SDB_LOB_MODE_WRITE == mode )
+         {
+            BSONObj meta ;
+            rc = lobContext->getLobMetaData( meta ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "Failed to get lob meta data, rc:%d", rc ) ;
+               goto error ;
+            }
+
+            *bufObj = meta ;
+         }
       }
 
    done:

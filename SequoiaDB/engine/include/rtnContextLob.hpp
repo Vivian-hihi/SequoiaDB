@@ -85,6 +85,8 @@ namespace engine
 
       INT32 getLobMetaData( BSONObj &meta ) ;
 
+      INT32 mode() const ;
+
       virtual void     getErrorInfo( INT32 rc,
                                      _pmdEDUCB *cb,
                                      rtnContextBuf &buffObj ) ;

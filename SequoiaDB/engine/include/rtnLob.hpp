@@ -80,7 +80,7 @@ namespace engine
 
    INT32 rtnCloseLob( SINT64 contextID,
                       pmdEDUCB *cb,
-                      rtnContextBuf *errBuf = NULL ) ;
+                      rtnContextBuf *bufObj = NULL ) ;
 
    INT32 rtnRemoveLob( const BSONObj &lob,
                        INT32 flags,

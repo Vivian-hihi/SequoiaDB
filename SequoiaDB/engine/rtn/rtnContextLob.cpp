@@ -221,6 +221,18 @@ namespace engine
       goto done ;
    }
 
+   INT32 _rtnContextLob::mode() const
+   {
+      if ( NULL != _stream )
+      {
+         return _stream->mode() ;
+      }
+      else
+      {
+         return 0 ;
+      }
+   }
+
    void _rtnContextLob::getErrorInfo( INT32 rc,
                                       pmdEDUCB *cb,
                                       rtnContextBuf &buffObj )

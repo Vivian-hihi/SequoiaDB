@@ -156,7 +156,7 @@ namespace engine
                rc = _onLockLobMsg( msg ) ;
                break ;
             case MSG_BS_LOB_CLOSE_REQ:
-               rc = _onCloseLobMsg( msg ) ;
+               rc = _onCloseLobMsg( msg, contextBuff ) ;
                break ;
             case MSG_BS_LOB_REMOVE_REQ:
                rc = _onRemoveLobMsg( msg, getDPSCB() ) ;
@@ -923,7 +923,8 @@ namespace engine
       goto done ;
    }
 
-   INT32 _pmdDataProcessor::_onCloseLobMsg( MsgHeader *msg )
+   INT32 _pmdDataProcessor::_onCloseLobMsg( MsgHeader *msg,
+                                            rtnContextBuf &buffObj )
    {
       INT32 rc = SDB_OK ;
       const MsgOpLob *header = NULL ;
@@ -938,7 +939,7 @@ namespace engine
       MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), msg->opCode,
                           "ContextID:%lld", header->contextID ) ;
 
-      rc = rtnCloseLob( header->contextID, eduCB() ) ;
+      rc = rtnCloseLob( header->contextID, eduCB(), &buffObj ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to close lob:%d", rc ) ;
