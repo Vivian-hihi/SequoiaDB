@@ -17,6 +17,7 @@ import java.util.Date;
 import java.util.Random;
 
 import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
 
 public class TestLob extends SingleCSCLTestCase {
     private static final String FIELD_HAS_PIECES_INFO = "HasPiecesInfo";
@@ -32,8 +33,10 @@ public class TestLob extends SingleCSCLTestCase {
 
         ObjectId id = ObjectId.get();
         DBLob lob = cl.createLob(id);
+        assertEquals(lob.getCreateTime(), lob.getModificationTime());
         lob.write(str.getBytes());
         lob.close();
+        assertTrue(lob.getModificationTime() > lob.getCreateTime());
 
         long lobSize = lob.getSize();
 

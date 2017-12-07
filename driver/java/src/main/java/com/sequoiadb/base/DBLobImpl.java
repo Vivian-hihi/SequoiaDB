@@ -18,6 +18,7 @@ package com.sequoiadb.base;
 
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.SDBError;
+import com.sequoiadb.message.ResultSet;
 import com.sequoiadb.message.request.*;
 import com.sequoiadb.message.response.LobOpenResponse;
 import com.sequoiadb.message.response.LobReadResponse;
@@ -221,6 +222,13 @@ class DBLobImpl implements DBLob {
         SdbReply response = _sdb.requestAndResponse(request);
         _sdb.throwIfError(response);
         _isOpened = false;
+        if (response.getReturnedNum() > 0) {
+            ResultSet resultSet = response.getResultSet();
+            BSONObject obj = resultSet.getNext();
+            if (obj != null && obj.containsField(FIELD_NAME_LOB_MODIFICATION_TIME)) {
+                _modificationTime = (Long)obj.get(FIELD_NAME_LOB_MODIFICATION_TIME);
+            }
+        }
     }
 
     /**
