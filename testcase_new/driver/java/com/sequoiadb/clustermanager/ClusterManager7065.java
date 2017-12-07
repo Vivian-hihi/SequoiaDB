@@ -246,17 +246,9 @@ public class ClusterManager7065 extends SdbTestBase {
                     }
                 }
             }
-            actualMasterNodeName = dataRG.getMaster().getNodeName();
 
             dataRG = sdb.getReplicaGroup(dataRGName);
-            Node nodeinfo = dataRG.getMaster();
-            boolean isPrimaryFlag = isPrimary(nodeinfo);
-            Assert.assertEquals(isPrimaryFlag, true);
-            System.out.println("masterNodeName=" + actualMasterNodeName);
-            actualSlaveNodeName = dataRG.getSlave().getNodeName();
-            Node slaveNodeinfo = dataRG.getSlave();
-            Assert.assertEquals(isPrimary(slaveNodeinfo), false);
-            System.out.println("slaveNodeName=" + actualSlaveNodeName);
+            Assert.assertEquals(isPrimary(dataRG), true);
         } catch (BaseException e) {
             Assert.fail("get master and slave node failed" + e.getMessage());
         }
@@ -283,11 +275,12 @@ public class ClusterManager7065 extends SdbTestBase {
         clearFlag = true;
     }
 
-    private boolean isPrimary(Node nodeinfo) {
-        Sequoiadb db = null;
-        try {
-            db = nodeinfo.connect();
-            for (int i = 0; i < 100; i++) {
+    private boolean isPrimary(ReplicaGroup group) {
+        for (int i = 0; i < 50; i++) {
+            Sequoiadb db = null;
+            try {
+                Node master = group.getMaster();
+                db = master.connect();
                 DBCursor cursor = db.getSnapshot(6, "", "", "");
                 BSONObject object = cursor.getNext();
                 boolean isPrimary = (Boolean) object.get("IsPrimary");
@@ -296,12 +289,11 @@ public class ClusterManager7065 extends SdbTestBase {
                     return true;
                 else
                     Thread.sleep(1000);
-            }
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } finally {
-            if (db != null) {
-                db.disconnect();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } finally {
+                if (db != null)
+                    db.disconnect();
             }
         }
         //should never come here!
