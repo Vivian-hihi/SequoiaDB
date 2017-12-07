@@ -6,7 +6,7 @@
 *
 *******************************************************************/
 var csname = COMMCSNAME ;
-var clnum = 2048 ;
+var clnum = 100 ;
 var clnames = [] ;
 var doc = { a: 1 } ;
 var csvContent = "a\n1\n" ;

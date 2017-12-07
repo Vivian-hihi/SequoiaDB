@@ -115,4 +115,5 @@ function testExprtGenconf2()
    checkFileContent( csvfile, content ) ;
    
    cmd.run( "rm -rf " + conffile ) ;
+   cmd.run( "rm -rf " + csvfile ) ;
 }

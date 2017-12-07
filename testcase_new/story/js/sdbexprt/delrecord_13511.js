@@ -13,7 +13,7 @@ var clname1 = COMMCLNAME + "_sdbimprt13511" ;
 var docs = [ { a: 1 }, { a: 2 } ] ;
 var expRecs = [ "{\"a\":1}", "{\"a\":2}" ] ;
 
-main() ;
+// main() ;
 
 function main()
 {
