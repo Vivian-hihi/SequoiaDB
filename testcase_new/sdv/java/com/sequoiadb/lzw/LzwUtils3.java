@@ -65,9 +65,8 @@ public class LzwUtils3 extends SdbTestBase {
 
 	public static void waitCreateDict(DBCollection cl, String dataGroupName) {
 		try {
-			for (int i = 0; i < 60 * 60; i++) {			    
+			for (int i = 0; i < 60 * 60; i++) {
 				if (LzwUtils3.isDictExist(cl, dataGroupName)) {
-				    
 					return;
 				}
 				Thread.sleep(1000);
@@ -104,14 +103,13 @@ public class LzwUtils3 extends SdbTestBase {
 	public static void checkCompressed(DBCollection cl, String dataGroupName) {
 		// connect to data node of cl
 		Sequoiadb db = cl.getSequoiadb();
-		Sequoiadb dataDB = db.getReplicaGroup(dataGroupName).getMaster().connect();
+		Sequoiadb dataDB = getDataDB(db, dataGroupName);
 		checkCompression(dataDB, cl.getName());
 	}
 
 	public static Sequoiadb getDataDB(Sequoiadb db, String dataGroupName) {
 		// connect to data node of cl
-		int dataGroupPort = db.getReplicaGroup(dataGroupName).getMaster().getPort();
-		return new Sequoiadb(hostName + " : " + dataGroupPort, "", "");
+		return db.getReplicaGroup(dataGroupName).getMaster().connect();
 	}
 
 	public static void checkCompression(Sequoiadb dataDB, String clName) {
