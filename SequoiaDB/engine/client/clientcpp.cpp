@@ -5628,6 +5628,7 @@ error :
       SINT64 contextID = -1 ;
       BOOLEAN result = FALSE ;
       BOOLEAN locked = FALSE ;
+      const MsgOpReply* reply = NULL ;
 
       // check wether the lob had been close or not
       if ( !_isOpen || -1 == _contextID )
@@ -5669,6 +5670,28 @@ error :
       // and cleanup data member of this object then
       // set this lob to be close
       _close() ;
+
+      reply = ( const MsgOpReply * )( _pReceiveBuffer ) ;
+      if ( reply->numReturned > 0 &&
+           reply->header.messageLength > ossRoundUpToMultipleX( sizeof(MsgOpReply), 4 ) )
+      {
+         // get reply bson from received msg
+         const CHAR* bsonBuf = _pReceiveBuffer + sizeof( MsgOpReply ) ;
+         try
+         {
+            BSONObj obj = BSONObj( bsonBuf ) ;
+            BSONElement ele = obj.getField( FIELD_NAME_LOB_MODIFICATION_TIME ) ;
+            if ( NumberLong == ele.type() )
+            {
+               _modificationTime = (UINT64) ele.numberLong() ;
+            }
+         }
+         catch ( std::exception &e )
+         {
+            rc = SDB_DRIVER_BSON_ERROR ;
+            goto error ;
+         }
+      }
 
    done:
       if ( locked )
