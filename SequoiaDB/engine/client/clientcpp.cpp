@@ -5673,7 +5673,7 @@ error :
 
       reply = ( const MsgOpReply * )( _pReceiveBuffer ) ;
       if ( reply->numReturned > 0 &&
-           reply->header.messageLength > ossRoundUpToMultipleX( sizeof(MsgOpReply), 4 ) )
+           (UINT32)reply->header.messageLength > ossRoundUpToMultipleX( sizeof(MsgOpReply), 4 ) )
       {
          // get reply bson from received msg
          const CHAR* bsonBuf = _pReceiveBuffer + sizeof( MsgOpReply ) ;
