@@ -9,7 +9,10 @@ import com.sequoiadb.exception.SDBError;
 import com.sequoiadb.test.common.Constants;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
+import org.bson.types.BSONTimestamp;
 import org.junit.*;
+
+import java.util.Date;
 
 
 public class Bug_JIRA_ {
@@ -46,6 +49,21 @@ public class Bug_JIRA_ {
     @After
     public void tearDown() throws Exception {
         cl.delete("");
+    }
+
+    @Test
+    public void jira3089_timestamp_throw_null() {
+        BSONTimestamp b=new BSONTimestamp();
+        Assert.assertEquals(0, b.getTime());
+        Assert.assertEquals(0, b.getInc());
+    }
+
+    @Test
+    public void timestampTest() {
+        Date date = new Date(2000 - 1900,0,1,0,0,0);
+        BSONObject obj = new BasicBSONObject().append("a", new BSONTimestamp(date));
+        cl.insert(obj);
+        System.out.println(cl.query().getNext().toString());
     }
 
     @Test
