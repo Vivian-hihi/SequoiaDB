@@ -344,7 +344,7 @@ namespace engine
       rc = incRecordRuleID( strategyInfo._id, cb ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to inc ruleID(rc=%d)!", rc ) ;
-      
+
       rc = strategyInfo.toBSON( obj ) ;
       PD_CHECK( SDB_OK ==rc, rc, rollback, PDERROR,
                 "Failed to generate the bson-obj(rc=%d)!",
@@ -477,6 +477,7 @@ namespace engine
       goto done ;
    }
 
+   /*
    INT32 omStrategyMgr::getTaskStrategy( const std::string &taskName,
                                          const std::string &userName,
                                          const std::string &IP )
@@ -492,4 +493,5 @@ namespace engine
    error:
       goto done ;
    }
+   */
 }

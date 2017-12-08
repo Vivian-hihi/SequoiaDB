@@ -63,9 +63,11 @@ namespace engine
 
       INT32 delTaskById( INT64 _id, pmdEDUCB *cb ) ;
 
+      /*
       INT32 getTaskStrategy( const std::string &taskName,
                              const std::string &userName,
                              const std::string &IP ) ;
+      */
 
    private:
 
