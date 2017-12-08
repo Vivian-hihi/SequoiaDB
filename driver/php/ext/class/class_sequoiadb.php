@@ -33,21 +33,66 @@ class SequoiaDB
    /** Get the snapshot of current session. */
    define( "SDB_SNAP_SESSIONS_CURRENT",    3 ) ;
    /** Get the snapshot of all the collections. */
-   define( "SDB_SNAP_COLLECTION",          4 ) ;
+   define( "SDB_SNAP_COLLECTIONS",         4 ) ;
    /** Get the snapshot of all the collection spaces. */
-   define( "SDB_SNAP_COLLECTIONSPACE",     5 ) ;
+   define( "SDB_SNAP_COLLECTIONSPACES",    5 ) ;
    /** Get the snapshot of the database. */
    define( "SDB_SNAP_DATABASE",            6 ) ;
    /** Get the snapshot of the system. */
    define( "SDB_SNAP_SYSTEM",              7 ) ;
    /** Get the snapshot of the catalog. */
-   define( "SDB_SNAP_CATALOG",             8 ) ;
+   define( "SDB_SNAP_CATA",                8 ) ;
    /** Get the snapshot of all the transactions. */
-   define( "SDB_SNAP_TRANSACTION",         9 ) ;
+   define( "SDB_SNAP_TRANSACTIONS",        9 ) ;
    /** Get the snapshot of current transaction. */
-   define( "SDB_SNAP_TRANSACTION_CURRENT", 10 ) ;
+   define( "SDB_SNAP_TRANSACTIONS_CURRENT",10 ) ;
    /** Get the snapshot of cached access plans. */
-   define( "SDB_SNAP_ACCESSPLANS", 11 ) ;
+   define( "SDB_SNAP_ACCESSPLANS",         11 ) ;
+
+   /**
+    * Get the snapshot of all the collections.
+    *
+    * @deprecated
+    *
+    * @see SDB_SNAP_COLLECTIONS
+   */
+   define( "SDB_SNAP_COLLECTION",          4 ) ;
+
+   /**
+    * Get the snapshot of all the collection spaces.
+    *
+    * @deprecated
+    *
+    * @see SDB_SNAP_COLLECTIONSPACES
+   */
+   define( "SDB_SNAP_COLLECTIONSPACE",     5 ) ;
+
+   /**
+    * Get the snapshot of the catalog.
+    *
+    * @deprecated
+    *
+    * @see SDB_SNAP_CATA
+   */
+   define( "SDB_SNAP_CATALOG",             8 ) ;
+
+   /**
+    * Get the snapshot of all the transactions.
+    *
+    * @deprecated
+    *
+    * @see SDB_SNAP_TRANSACTIONS
+   */
+   define( "SDB_SNAP_TRANSACTION",         9 ) ;
+
+   /**
+    * Get the snapshot of current transaction.
+    *
+    * @deprecated
+    *
+    * @see SDB_SNAP_TRANSACTIONS_CURRENT
+   */
+   define( "SDB_SNAP_TRANSACTION_CURRENT", 10 ) ;
   
    /** Get the list of the contexts. */
    define( "SDB_LIST_CONTEXTS",         0 ) ;
@@ -442,13 +487,13 @@ class SequoiaDB
     *                                                               SDB_SNAP_CONTEXTS_CURRENT
     *                                                               SDB_SNAP_SESSIONS
     *                                                               SDB_SNAP_SESSIONS_CURRENT
-    *                                                               SDB_SNAP_COLLECTION
-    *                                                               SDB_SNAP_COLLECTIONSPACE
+    *                                                               SDB_SNAP_COLLECTIONS
+    *                                                               SDB_SNAP_COLLECTIONSPACES
     *                                                               SDB_SNAP_DATABASE
     *                                                               SDB_SNAP_SYSTEM
-    *                                                               SDB_SNAP_CATALOG
-    *                                                               SDB_SNAP_TRANSACTION
-    *                                                               SDB_SNAP_TRANSACTION_CURRENT
+    *                                                               SDB_SNAP_CATA
+    *                                                               SDB_SNAP_TRANSACTIONS
+    *                                                               SDB_SNAP_TRANSACTIONS_CURRENT
     *                                                               SDB_SNAP_ACCESSPLANS
     *                                                               @endcode
     *
