@@ -168,12 +168,30 @@ namespace SequoiaDB
                 throw new BaseException((int)Errors.errors.SDB_UNKNOWN_MESSAGE,
                         string.Format("Receive Unexpected operation code: {0}", retInfo.OperationCode));
             }
-            int flag = retInfo.Flags;
-            if (0 != flag)
+            int errorCode = retInfo.Flags;
+            if (0 != errorCode)
             {
-                throw new BaseException(flag);
+                throw new BaseException(errorCode);
             }
+            // update the last update time
+            List<BsonDocument> resultSet = retInfo.ObjectList;
+            if (resultSet != null && resultSet.Count > 0)
+            {
+                BsonDocument obj = resultSet[0];
 
+                if (obj != null && obj.Contains(SequoiadbConstants.FIELD_LOB_MODIFICATION_TIME))
+                {
+                    if (obj[SequoiadbConstants.FIELD_LOB_MODIFICATION_TIME].IsInt64)
+                    {
+                        _modificationTime = obj[SequoiadbConstants.FIELD_LOB_MODIFICATION_TIME].AsInt64;
+                    }
+                    else
+                    {
+                        throw new BaseException((int)Errors.errors.SDB_SYS,
+                            "the received data is not a long type.");
+                    }
+                }
+            }
             _isOpened = false;
         }
 

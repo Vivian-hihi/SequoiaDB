@@ -130,10 +130,14 @@ namespace DriverTest
             // GetID
             oid1 = lob.GetID();
             Assert.IsTrue(ObjectId.Empty != oid1);
+            // 
+            long modificationTime1 = lob.GetModificationTime();
             // Write
             lob.Write(buf);
             // Close
             lob.Close();
+            long modificationTime2 = lob.GetModificationTime();
+            Assert.IsTrue(modificationTime2 > modificationTime1);
             // IsClosed
             flag = false;
             flag = lob.IsClosed();
