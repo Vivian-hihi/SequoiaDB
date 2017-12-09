@@ -50,9 +50,9 @@ namespace engine
 {
    _clsRegAssit::_clsRegAssit()
    :_groupID( INVALID_GROUPID ),
-    _nodeID( INVALID_NODEID ),
-    _hostname( NULL )
+    _nodeID( INVALID_NODEID )
    {
+      _hostName[ 0 ] = '\0' ;
    }
 
    _clsRegAssit::~_clsRegAssit()
@@ -176,7 +176,9 @@ namespace engine
          }
          _groupID = (UINT32)gidEle.Int () ;
          _nodeID = (UINT16)nidEle.Int () ;
-         _hostname = hostEle.String().c_str() ;
+         ossStrncpy( _hostName, hostEle.valuestrsafe(),
+                     OSS_MAX_HOSTNAME ) ;
+         _hostName[ OSS_MAX_HOSTNAME ] = '\0' ;
       }
       catch ( std::exception &e )
       {
@@ -204,6 +206,6 @@ namespace engine
 
    const CHAR* _clsRegAssit::getHostname ()
    {
-      return _hostname ;
+      return _hostName ;
    }
 }

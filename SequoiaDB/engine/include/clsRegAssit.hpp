@@ -40,6 +40,7 @@
 
 #include "../bson/bsonobj.h"
 #include "msg.hpp"
+#include "ossSocket.hpp"
 
 using namespace bson ;
 
@@ -59,7 +60,7 @@ namespace engine
       private :
          UINT32 _groupID ;
          UINT16 _nodeID ;
-         const CHAR *_hostname ;
+         CHAR _hostName[ OSS_MAX_HOSTNAME + 1 ];
    } ;
    typedef _clsRegAssit clsRegAssit ;
 }
