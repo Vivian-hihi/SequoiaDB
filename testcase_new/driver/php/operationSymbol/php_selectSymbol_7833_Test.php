@@ -100,8 +100,8 @@ class SelectSymbol extends BaseOperator
       {
          array_push( $findRecsArray, $recs );
       }
-      echo "\n--------use \"". $selecType ."\"------".$selector."----------\n";
-      //var_dump($findRecsArray);
+      // echo "\n--------use \"". $selecType ."\"------".$selector."----------\n";
+      // var_dump($findRecsArray);
       return $findRecsArray;
    }
    
