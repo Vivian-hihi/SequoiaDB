@@ -7,6 +7,7 @@ var cmd = new Cmd() ;
 var installPath = adaptPath( commGetInstallPath() ) ;
 commMakeDir( "localhost", WORKDIR ) ;
 var workDir = adaptPath( WORKDIR ) ;
+println( File.stat( workDir ) ) ;
 
 /*******************************************************************
 * @Description : check path has / in the end or not
