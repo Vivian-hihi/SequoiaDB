@@ -114,12 +114,12 @@ public class KillNodeSplit2771 extends SdbTestBase {
 			DBCollection cl = commSdb.getCollectionSpace(csName).getCollection(clName);
 			insertData(cl, 5000, 5100);
 
-			Assert.assertEquals(destGroup.checkInspect(60), true);
-			Assert.assertEquals(srcGroup.checkInspect(60), true);
-			Assert.assertEquals(cataGroup.checkInspect(60), true);
-
 			if(splitComplete){
 				//切分任务已执行完后，再执行源和目标数据量比对
+				Assert.assertEquals(destGroup.checkInspect(60), true);
+				Assert.assertEquals(srcGroup.checkInspect(60), true);
+				Assert.assertEquals(cataGroup.checkInspect(60), true);
+				
 				Utils.waitSplit(commSdb, cl.getFullName());
 				int bound = Utils.getBound(commSdb, csName + "." + clName, srcGroupName, destGroupName);
 				long destCount = checkGroupData(commSdb, destGroupName);
@@ -130,6 +130,9 @@ public class KillNodeSplit2771 extends SdbTestBase {
             
 			}else{
 				//切分任务建立失败，数据全部在源组上
+				Assert.assertEquals(srcGroup.checkInspect(60), true);
+				Assert.assertEquals(cataGroup.checkInspect(60), true);
+				
             	long srcCount = cl.getCount();
             	Assert.assertEquals(srcCount, totalCount);
 			}
