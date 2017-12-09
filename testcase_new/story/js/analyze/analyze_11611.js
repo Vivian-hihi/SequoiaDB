@@ -131,12 +131,14 @@ function main()
    var actExplains4 = getCommonExplain( dbclSlave4, findConf);
    checkExplain( actExplains4, expExplains4 );
                                                        	
-   //analyze table below SYSSTAT 
-   var options1 = {Collection: "SYSSTAT.SYSCOLLECTIONSTAT"};
-   //checkAnalyzeInvalidResult(options1);
-                                                              	
-   var options2 = {Collection: "SYSSTAT.SYSINDEXSTAT"};
-   //checkAnalyzeInvalidResult(options2);
+   //check analyze SYSSTAT cl   
+   var expectErrCode = -6;
+   checkAnalyzeInvalidResult({Collection: "SYSSTAT.SYSCOLLECTIONSTAT"}, expectErrCode);
+   checkAnalyzeInvalidResult({Collection: "SYSSTAT.SYSINDEXSTAT"}, expectErrCode);
+               
+   //check analyze non exist cl 
+   var expectErrCode = -23;
+   checkAnalyzeInvalidResult({Collection: csName + ".non_exist_cl"}, expectErrCode);
                                                          	
    println("check result after analyze success!");
          
@@ -144,7 +146,7 @@ function main()
    commDropCS( db, csName, true, "drop CS in the end" );
 }
 
-function checkAnalyzeInvalidResult( options )
+function checkAnalyzeInvalidResult( options, expectErrCode)
 {
    try
    {
@@ -153,7 +155,7 @@ function checkAnalyzeInvalidResult( options )
    }
    catch ( e )
    {
-      if( -23 !== e )
+      if( expectErrCode !== e )
       {
          throw buildException( "check analyze", e, "check analyze", "success", "fail" );
       }

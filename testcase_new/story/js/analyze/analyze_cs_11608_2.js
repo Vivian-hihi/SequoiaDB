@@ -57,7 +57,6 @@ function main()
 	commDropCS( db, csName );
    
    //删除cs，执行统计
-   /*
    commDropCS( db, csName );
    try
    {
@@ -78,11 +77,10 @@ function main()
       throw "NEED_ERR";
    }catch(e)
    {
-      if(e !== -34)
+      if(e !== -6)
       {
          throw e;
       }
    }
-   */ 
  }
  main()

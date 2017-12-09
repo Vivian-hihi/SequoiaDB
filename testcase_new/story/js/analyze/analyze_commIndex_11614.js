@@ -68,20 +68,18 @@ function main()
    //删除索引
    commDropIndex( dbcl, "a" );
    
-   //指定不存在的索引执行统计信息
-   /*
+   //指定不存在的索引执行统计信息，部分数据组未执行成功报-264，数据节点未执行成功报-47
    try
    {
       db.analyze({Collection: COMMCSNAME + "." + clName, Index: "a"});
       throw "NEED_ERR";
    }catch(e)
    {
-      if(e !== -264)
+      if(e !== -264 && e !== -47)
       {
          throw e;
       }
    }
-   */
    
    //不指定cl但指定索引收集统计信息
    try
