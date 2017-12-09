@@ -115,11 +115,12 @@ namespace engine
          PD_LOG( PDERROR, "failed to add action:%d", rc ) ;
          goto error ;
       }
+
    done:
       PD_TRACE_EXITRC( SDB__MTHSCOLUMN_ADDACTION, rc ) ;
       return rc ;
    error:
-      goto done ;   
+      goto done ;
    }
 
    ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHSCOLUMN_CLEAR, "_mthSColumn::clear" )
@@ -163,7 +164,7 @@ namespace engine
          PD_LOG( PDERROR, "failed to build column:%d", rc ) ;
          goto error ;
       }
-      
+
    done:
       PD_TRACE_EXITRC( SDB__MTHSCOLUMN_BUILD, rc ) ;
       return rc ;
@@ -359,12 +360,13 @@ namespace engine
       UINT32 found = 0 ;
       MTH_S_COLUMNS array ;
       UINT32 number = 0 ;
+      BOOLEAN addOtherChild = _actions.size() ;
 
       rc = _subColumns.copyTo( array ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to copy array:%d", rc ) ;
-         goto error ;      
+         goto error ;
       }
 
       {
@@ -389,6 +391,13 @@ namespace engine
          }
          else if ( !_attribute.isInclude() )
          {
+            builder.append( e ) ;
+         }
+         else if ( addOtherChild )
+         {
+            // If the field has action, we should also show its other children
+            // eg: selector is {a:null,'a.b':{$add:10}}, record is {a:{b:1,c:1}
+            //     result is {a:{b:11,c:1}, instead of {a:{b:11}
             builder.append( e ) ;
          }
       }
