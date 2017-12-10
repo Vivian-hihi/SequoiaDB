@@ -1333,15 +1333,22 @@ do                                                            \
 
       try
       {
+         // Append all the options except the collection name, if any.
+         // We should use the collection by which this function is called.
          builder.append( FIELD_NAME_COLLECTION, _collectionFullName ) ;
-         lidEle = option.getField( FIELD_NAME_LOGICAL_ID ) ;
-         if ( EOO == lidEle.type() )
+         BSONObjIterator itr( option ) ;
+         while ( itr.more() )
          {
-            rc = SDB_INVALIDARG ;
-            goto error ;
+            BSONElement ele = itr.next() ;
+            if ( 0 == ossStrcmp( FIELD_NAME_COLLECTION, ele.fieldName() ) )
+            {
+               continue ;
+            }
+
+            builder.append( ele ) ;
          }
-         builder.appendElements(option) ;
-         cmdOption = builder.obj() ;
+
+         cmdOption = builder.done() ;
       }
       catch ( std::exception &e )
       {

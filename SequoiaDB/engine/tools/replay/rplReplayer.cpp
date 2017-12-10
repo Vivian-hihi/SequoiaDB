@@ -2354,6 +2354,9 @@ namespace replay
       case LOG_TYPE_CL_TRUNC:
          rc = _rollbackTruncateCL(log);
          break;
+      case LOG_TYPE_DATA_POP:
+         rc = _rollbackPop(log);
+         break;
       default:
          SDB_ASSERT(FALSE, "invalid log type");
       }
@@ -2569,6 +2572,34 @@ namespace replay
       return rc;
    error:
       goto done;
+   }
+
+   INT32 Replayer::_rollbackPop( const CHAR* log )
+   {
+      INT32 rc = SDB_OK ;
+      const dpsLogRecordHeader& header = *(const dpsLogRecordHeader*)log ;
+      const CHAR *fullName = NULL;
+      INT64 logicalID = 0 ;
+      INT8 direction = 1 ;
+
+      SDB_ASSERT( LOG_TYPE_DATA_POP == header._type, "not pop log" ) ;
+
+      rc = dpsRecord2Pop( log, &fullName, logicalID, direction ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to parse log record[%lld], rc=%d",
+                 header._lsn, rc ) ;
+         goto error ;
+      }
+
+      rc = SDB_SYS ;
+      PD_LOG( PDERROR, "Pop collection[%s] can't be rollbacked, lsn[%lld], "
+              "prelsn[%lld]", fullName, header._lsn, header._preLsn ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    void Replayer::_dumpRollbackLog(const engine::dpsLogRecord& log)

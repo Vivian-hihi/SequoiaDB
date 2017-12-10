@@ -107,6 +107,7 @@ namespace replay
       INT32 _rollbackUpdate(const CHAR* log);
       INT32 _rollbackDelete(const CHAR* log);
       INT32 _rollbackTruncateCL(const CHAR* log);
+      INT32 _rollbackPop(const CHAR* log);
       INT32 _deflateFile(const string& file);
       INT32 _inflateFile(const string& file);
 
