@@ -1380,7 +1380,8 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNPRED_BINDPARAM, "rtnPredicate::bindParameters" )
-   BOOLEAN rtnPredicate::bindParameters ( rtnParamList &parameters )
+   BOOLEAN rtnPredicate::bindParameters ( rtnParamList &parameters,
+                                          BOOLEAN markDone )
    {
       BOOLEAN res = FALSE ;
 
@@ -1413,7 +1414,10 @@ namespace engine
             }
          }
          // Mark the parameter matching is done by predicates
-         parameters.setDoneByPred( _paramIndex ) ;
+         if ( markDone )
+         {
+            parameters.setDoneByPred( _paramIndex ) ;
+         }
          res = TRUE ;
       }
 

@@ -71,14 +71,14 @@ namespace engine
    }
 
    /*
-      _dmsExtScanner implement
+      _dmsExtScannerBase implement
    */
-   _dmsExtScanner::_dmsExtScanner( dmsStorageDataCommon *su,
-                                   dmsMBContext *context,
-                                   mthMatchRuntime *matchRuntime,
-                                   dmsExtentID curExtentID,
-                                   DMS_ACCESS_TYPE accessType,
-                                   INT64 maxRecords, INT64 skipNum )
+   _dmsExtScannerBase::_dmsExtScannerBase( dmsStorageDataCommon *su,
+                                           dmsMBContext *context,
+                                           mthMatchRuntime *matchRuntime,
+                                           dmsExtentID curExtentID,
+                                           DMS_ACCESS_TYPE accessType,
+                                           INT64 maxRecords, INT64 skipNum )
    :_dmsScanner( su, context, matchRuntime, accessType ),
     _curRecordPtr( NULL )
    {
@@ -101,7 +101,7 @@ namespace engine
       }
    }
 
-   _dmsExtScanner::~_dmsExtScanner ()
+   _dmsExtScannerBase::~_dmsExtScannerBase ()
    {
       _extent     = NULL ;
 
@@ -113,7 +113,7 @@ namespace engine
       }
    }
 
-   dmsExtentID _dmsExtScanner::nextExtentID() const
+   dmsExtentID _dmsExtScannerBase::nextExtentID() const
    {
       if ( _extent )
       {
@@ -122,7 +122,7 @@ namespace engine
       return DMS_INVALID_EXTENT ;
    }
 
-   INT32 _dmsExtScanner::stepToNextExtent()
+   INT32 _dmsExtScannerBase::stepToNextExtent()
    {
       if ( 0 != _maxRecords &&
            DMS_INVALID_EXTENT != nextExtentID() )
@@ -132,6 +132,87 @@ namespace engine
          return SDB_OK ;
       }
       return SDB_DMS_EOC ;
+   }
+
+   void _dmsExtScannerBase::_checkMaxRecordsNum( _mthRecordGenerator &generator )
+   {
+      if ( _maxRecords > 0 )
+      {
+         if ( _maxRecords >= generator.getRecordNum() )
+         {
+            _maxRecords -= generator.getRecordNum() ;
+         }
+         else
+         {
+            INT32 num = generator.getRecordNum() - _maxRecords ;
+            generator.popTail( num ) ;
+            _maxRecords = 0 ;
+         }
+      }
+   }
+
+   INT32 _dmsExtScannerBase::advance( dmsRecordID &recordID,
+                                      _mthRecordGenerator &generator,
+                                      pmdEDUCB *cb,
+                                      _mthMatchTreeContext *mthContext )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( _firstRun )
+      {
+         rc = _firstInit( cb ) ;
+         PD_RC_CHECK( rc, PDWARNING, "first init failed, rc: %d", rc ) ;
+      }
+      // have locked, but not trans, need to release record X lock
+      else if ( _needUnLock && DMS_INVALID_OFFSET != _curRID._offset )
+      {
+         _pTransCB->transLockRelease( cb, _pSu->logicalID(), _context->mbID(),
+                                      &_curRID ) ;
+      }
+
+      rc = _fetchNext( recordID, generator, cb, mthContext ) ;
+      if ( rc )
+      {
+         // Do not write error log when EOC.
+         if ( SDB_DMS_EOC != rc )
+         {
+            PD_LOG( PDERROR, "Get next record failed, rc: %d", rc ) ;
+         }
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      recordID.reset() ;
+      _curRID._offset = DMS_INVALID_OFFSET ;
+      goto done ;
+   }
+
+   void _dmsExtScannerBase::stop()
+   {
+      if ( FALSE == _firstRun && _recordXLock &&
+           DMS_INVALID_OFFSET != _curRID._offset )
+      {
+         _pTransCB->transLockRelease( _cb, _pSu->logicalID(), _context->mbID(),
+                                      &_curRID ) ;
+      }
+      _next = DMS_INVALID_OFFSET ;
+      _curRID._offset = DMS_INVALID_OFFSET ;
+   }
+
+   _dmsExtScanner::_dmsExtScanner( dmsStorageDataCommon *su, _dmsMBContext *context,
+                                   mthMatchRuntime *matchRuntime,
+                                   dmsExtentID curExtentID,
+                                   DMS_ACCESS_TYPE accessType,
+                                   INT64 maxRecords, INT64 skipNum )
+   : _dmsExtScannerBase( su, context, matchRuntime, curExtentID, accessType,
+                         maxRecords, skipNum )
+   {
+   }
+
+   _dmsExtScanner::~_dmsExtScanner()
+   {
    }
 
    INT32 _dmsExtScanner::_firstInit( pmdEDUCB *cb )
@@ -199,45 +280,16 @@ namespace engine
       goto done ;
    }
 
-   void _dmsExtScanner::_checkMaxRecordsNum( _mthRecordGenerator &generator )
-   {
-      if ( _maxRecords > 0 )
-      {
-         if ( _maxRecords >= generator.getRecordNum() )
-         {
-            _maxRecords -= generator.getRecordNum() ;
-         }
-         else
-         {
-            INT32 num = generator.getRecordNum() - _maxRecords ;
-            generator.popTail( num ) ;
-            _maxRecords = 0 ;
-         }
-      }
-   }
-
-   INT32 _dmsExtScanner::advance( dmsRecordID &recordID,
-                                  _mthRecordGenerator &generator,
-                                  pmdEDUCB *cb,
-                                  _mthMatchTreeContext *mthContext )
+   INT32 _dmsExtScanner::_fetchNext( dmsRecordID &recordID,
+                                     _mthRecordGenerator &generator,
+                                     pmdEDUCB *cb,
+                                     _mthMatchTreeContext *mthContext )
    {
       INT32 rc                = SDB_OK ;
       BOOLEAN result          = TRUE ;
       ossValuePtr recordDataPtr ;
       dmsRecordData recordData ;
       BOOLEAN lockedRecord    = FALSE ;
-
-      if ( _firstRun )
-      {
-         rc = _firstInit( cb ) ;
-         PD_RC_CHECK( rc, PDWARNING, "first init failed, rc: %d", rc ) ;
-      }
-      // have locked, but not trans, need to release record X lock
-      else if ( _needUnLock && DMS_INVALID_OFFSET != _curRID._offset )
-      {
-         _pTransCB->transLockRelease( cb, _pSu->logicalID(), _context->mbID(),
-                                      &_curRID ) ;
-      }
 
       // skip extent all
       if ( !_matchRuntime && _skipNum > 0 && _skipNum >= _extent->_recCount )
@@ -437,26 +489,15 @@ namespace engine
       goto done ;
    }
 
-   void _dmsExtScanner::stop()
-   {
-      if ( FALSE == _firstRun && _recordXLock &&
-           DMS_INVALID_OFFSET != _curRID._offset )
-      {
-         _pTransCB->transLockRelease( _cb, _pSu->logicalID(), _context->mbID(),
-                                      &_curRID ) ;
-      }
-      _next = DMS_INVALID_OFFSET ;
-      _curRID._offset = DMS_INVALID_OFFSET ;
-   }
-
-   _dmsCappedExtScanner::_dmsCappedExtScanner( _dmsStorageDataCapped *su,
+   _dmsCappedExtScanner::_dmsCappedExtScanner( dmsStorageDataCommon *su,
                                                dmsMBContext *context,
                                                mthMatchRuntime *matchRuntime,
                                                dmsExtentID curExtentID,
                                                DMS_ACCESS_TYPE accessType,
                                                INT64 maxRecords,
                                                INT64 skipNum )
-   : _dmsScanner( su, context, matchRuntime, accessType )
+   : _dmsExtScannerBase( su, context, matchRuntime, curExtentID, accessType,
+                         maxRecords, skipNum )
    {
       _maxRecords = maxRecords ;
       _skipNum = skipNum ;
@@ -467,6 +508,8 @@ namespace engine
       _firstRun = TRUE ;
       _cb = NULL ;
       _workExtInfo = NULL ;
+      _rangeInit = FALSE ;
+      _fastScanByID = FALSE ;
    }
 
    _dmsCappedExtScanner::~_dmsCappedExtScanner()
@@ -476,7 +519,14 @@ namespace engine
    INT32 _dmsCappedExtScanner::_firstInit( pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
-      INT32 lockType = SHARED ;
+      _pTransCB = pmdGetKRCB()->getTransCB() ;
+      INT32 lockType = _recordXLock ? EXCLUSIVE : SHARED ;
+      BOOLEAN inRange = FALSE ;
+
+      if ( _recordXLock && DPS_INVALID_TRANS_ID == cb->getTransID() )
+      {
+         _needUnLock = TRUE ;
+      }
 
       _extRW = _pSu->extent2RW( _curRID._extent, _context->mbID() ) ;
       _extRW.setNothrow( TRUE ) ;
@@ -484,6 +534,16 @@ namespace engine
       if ( NULL == _extent )
       {
          rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      rc = _validateRange( inRange ) ;
+      PD_RC_CHECK( rc , PDERROR, "Failed to validate extant range, rc: %d",
+                   rc ) ;
+
+      if ( !inRange )
+      {
+         rc = SDB_DMS_EOC ;
          goto error ;
       }
 
@@ -525,27 +585,10 @@ namespace engine
       goto done ;
    }
 
-   void _dmsCappedExtScanner::_checkMaxRecordsNum( _mthRecordGenerator &generator )
-   {
-      if ( _maxRecords > 0 )
-      {
-         if ( _maxRecords >= generator.getRecordNum() )
-         {
-            _maxRecords -= generator.getRecordNum() ;
-         }
-         else
-         {
-            INT32 num = generator.getRecordNum() - _maxRecords ;
-            generator.popTail( num ) ;
-            _maxRecords = 0 ;
-         }
-      }
-   }
-
-   INT32 _dmsCappedExtScanner::advance( dmsRecordID &recordID,
-                                        _mthRecordGenerator &generator,
-                                        pmdEDUCB *cb,
-                                        _mthMatchTreeContext *mthContext )
+   INT32 _dmsCappedExtScanner::_fetchNext( dmsRecordID &recordID,
+                                           _mthRecordGenerator &generator,
+                                           pmdEDUCB *cb,
+                                           _mthMatchTreeContext *mthContext )
    {
       INT32 rc = SDB_OK ;
       BOOLEAN result = TRUE ;
@@ -553,12 +596,6 @@ namespace engine
       dmsRecordData recordData ;
       const dmsCappedRecord *record = NULL ;
       UINT32 currExtRecNum = 0 ;
-
-      if ( _firstRun )
-      {
-         rc = _firstInit( cb ) ;
-         PD_RC_CHECK( rc, PDWARNING, "first init failed, rc: %d", rc ) ;
-      }
 
       currExtRecNum = ( _curRID._extent == _workExtInfo->getID() ) ?
                        _workExtInfo->_recCount : _extent->_recCount ;
@@ -688,10 +725,128 @@ namespace engine
       goto done ;
    }
 
-   void _dmsCappedExtScanner::stop()
+   OSS_INLINE dmsExtentID _dmsCappedExtScanner::_idToExtLID( INT64 id )
    {
-      _next = DMS_INVALID_OFFSET ;
-      _curRID._offset = DMS_INVALID_OFFSET ;
+      SDB_ASSERT( id >= 0, "id can't be negative" ) ;
+      return ( id / DMS_CAP_EXTENT_BODY_SZ ) ;
+   }
+
+   // Filter out the extents that we really need to scan(in the range of the
+   // condition).
+   INT32 _dmsCappedExtScanner::_initFastScanRange()
+   {
+      INT32 rc = SDB_OK ;
+      const INT32 maxExtLID = ( ( (INT64)1 << 31 ) - 1 ) ;
+      rtnPredicateSet predicateSet ;
+      _mthMatchTree *matcher = _matchRuntime->getMatchTree() ;
+      rtnParamList *parameters = _matchRuntime->getParametersPointer() ;
+
+      rc = matcher->calcPredicate( predicateSet ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to calculate predicate, rc: %d",
+                   rc ) ;
+
+      {
+         rtnPredicate predicate = predicateSet.predicate( DMS_ID_KEY_NAME ) ;
+         if ( predicate.isGeneric() )
+         {
+            _fastScanByID = FALSE ;
+         }
+         else
+         {
+            _fastScanByID = TRUE ;
+            predicate.bindParameters( *parameters, FALSE ) ;
+
+            for ( RTN_SSKEY_LIST::iterator itr = predicate._startStopKeys.begin();
+                  itr != predicate._startStopKeys.end(); ++itr )
+            {
+               dmsExtentID startExtLID = DMS_INVALID_EXTENT ;
+               dmsExtentID endExtLID = DMS_INVALID_EXTENT ;
+               const rtnKeyBoundary &startKey = itr->_startKey ;
+               const rtnKeyBoundary &stopKey = itr->_stopKey ;
+
+               // If stop key is less than 0, this is an invalid range.
+               if ( stopKey._bound.numberLong() < 0 )
+               {
+                  continue ;
+               }
+
+               if ( MaxKey == stopKey._bound.type() )
+               {
+                  endExtLID = maxExtLID ;
+               }
+               else
+               {
+                  endExtLID = _idToExtLID( stopKey._bound.numberLong() ) ;
+               }
+
+               if ( MinKey == startKey._bound.type() ||
+                    startKey._bound.numberLong() < 0 )
+               {
+                  startExtLID = 0 ;
+               }
+               else
+               {
+                  startExtLID = _idToExtLID( startKey._bound.numberLong() ) ;
+               }
+
+               _rangeSet.insert( std::pair<dmsExtentID, dmsExtentID>( startExtLID,
+                                                                      endExtLID ) ) ;
+            }
+         }
+      }
+      _rangeInit = TRUE ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // As there is no index on capped table, query with condition will be slow as
+   // we always need to do full table scan. But if _id is specified in the
+   // condition, we can first filter out the extents which are in the range of
+   // the condition. This will lead to much better performance.
+   INT32 _dmsCappedExtScanner::_validateRange( BOOLEAN &inRange )
+   {
+      INT32 rc = SDB_OK ;
+
+      // If there is no condition, or no _id in the condition, the validation
+      // result should always be TRUE.
+      inRange = TRUE ;
+      if ( _matchRuntime )
+      {
+         if ( !_rangeInit )
+         {
+            rc = _initFastScanRange() ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to initial fast scan range, "
+                         "rc: %d", rc ) ;
+         }
+
+         if ( _fastScanByID )
+         {
+            // Traverse the range set to check if the current extent is in any
+            // valid range.
+            for ( EXT_RANGE_SET_ITR itr = _rangeSet.begin();
+                  itr != _rangeSet.end(); ++itr )
+            {
+               if ( _extent->_logicID >= itr->first &&
+                    _extent->_logicID <= itr->second )
+               {
+                  inRange = TRUE ;
+                  break ;
+               }
+            }
+         }
+         else
+         {
+            inRange = TRUE ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    dmsExtentID _dmsCappedExtScanner::nextExtentID () const
@@ -711,23 +866,34 @@ namespace engine
                                  mthMatchRuntime *matchRuntime,
                                  DMS_ACCESS_TYPE accessType,
                                  INT64 maxRecords, INT64 skipNum )
-   :_dmsScanner( su, context, matchRuntime, accessType ),
-    _extScanner( su, context, matchRuntime, DMS_INVALID_EXTENT, accessType,
-                 maxRecords, skipNum )
+   :_dmsScanner( su, context, matchRuntime, accessType )
    {
+      _extScanner    = NULL ;
       _curExtentID   = DMS_INVALID_EXTENT ;
       _firstRun      = TRUE ;
+      _maxRecords    = maxRecords ;
+      _skipNum       = skipNum ;
    }
 
    _dmsTBScanner::~_dmsTBScanner()
    {
       _curExtentID   = DMS_INVALID_EXTENT ;
+      if ( _extScanner )
+      {
+         SDB_OSS_DEL _extScanner ;
+      }
    }
 
    INT32 _dmsTBScanner::_firstInit()
    {
       INT32 rc = SDB_OK ;
-      INT32 lockType = _extScanner._recordXLock ? EXCLUSIVE : SHARED ;
+      INT32 lockType = SHARED ;
+
+      rc = _getExtScanner() ;
+      PD_RC_CHECK( rc, PDERROR, "Get extent scanner failed, rc: %d", rc ) ;
+
+      lockType = _extScanner->_recordXLock ? EXCLUSIVE : SHARED ;
+
       if ( !_context->isMBLock( lockType ) )
       {
          rc = _context->mbLock( lockType ) ;
@@ -745,8 +911,30 @@ namespace engine
 
    void _dmsTBScanner::_resetExtScanner()
    {
-      _extScanner._firstRun = TRUE ;
-      _extScanner._curRID._extent = _curExtentID ;
+      _extScanner->_firstRun = TRUE ;
+      _extScanner->_curRID._extent = _curExtentID ;
+   }
+
+   INT32 _dmsTBScanner::_getExtScanner()
+   {
+      INT32 rc = SDB_OK ;
+      _extScanner = dmsGetScannerFactory()->create( _pSu, _context,
+                                                    _matchRuntime,
+                                                    _curExtentID,
+                                                    _accessType,
+                                                    _maxRecords,
+                                                    _skipNum ) ;
+      if ( !_extScanner )
+      {
+         PD_LOG( PDERROR, "Create extent scanner failed" ) ;
+         rc = SDB_OOM ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _dmsTBScanner::advance( dmsRecordID &recordID,
@@ -763,12 +951,12 @@ namespace engine
 
       while ( DMS_INVALID_EXTENT != _curExtentID )
       {
-         rc = _extScanner.advance( recordID, generator, cb, mthContext ) ;
+         rc = _extScanner->advance( recordID, generator, cb, mthContext ) ;
          if ( SDB_DMS_EOC == rc )
          {
-            if ( 0 != _extScanner.getMaxRecords() )
+            if ( 0 != _extScanner->getMaxRecords() )
             {
-               _curExtentID = _extScanner.nextExtentID() ;
+               _curExtentID = _extScanner->nextExtentID() ;
                _resetExtScanner() ;
                _context->pause() ;
                continue ;
@@ -800,7 +988,7 @@ namespace engine
 
    void _dmsTBScanner::stop()
    {
-      _extScanner.stop() ;
+      _extScanner->stop() ;
       _curExtentID = DMS_INVALID_EXTENT ;
    }
 
@@ -1573,6 +1761,60 @@ namespace engine
       goto done ;
    }
 
+   _dmsExtScannerFactory::_dmsExtScannerFactory()
+   {
+   }
+
+   _dmsExtScannerFactory::~_dmsExtScannerFactory()
+   {
+   }
+
+   dmsExtScannerBase* _dmsExtScannerFactory::create( dmsStorageDataCommon *su,
+                                                     dmsMBContext *context,
+                                                     mthMatchRuntime *matchRuntime,
+                                                     dmsExtentID curExtentID,
+                                                     DMS_ACCESS_TYPE accessType,
+                                                     INT64 maxRecords,
+                                                     INT64 skipNum )
+   {
+      dmsExtScannerBase* scanner = NULL ;
+
+      if ( OSS_BIT_TEST( DMS_MB_ATTR_CAPPED, context->mb()->_attributes ) )
+      {
+         scanner = SDB_OSS_NEW dmsCappedExtScanner( su, context,
+                                                    matchRuntime,
+                                                    curExtentID,
+                                                    accessType,
+                                                    maxRecords,
+                                                    skipNum ) ;
+      }
+      else
+      {
+         scanner = SDB_OSS_NEW dmsExtScanner( su, context,
+                                              matchRuntime,
+                                              curExtentID,
+                                              accessType,
+                                              maxRecords,
+                                              skipNum ) ;
+      }
+
+      if ( !scanner )
+      {
+         PD_LOG( PDERROR, "Allocate memory for extent scanner failed" ) ;
+         goto error ;
+      }
+
+   done:
+      return scanner ;
+   error:
+      goto done ;
+   }
+
+   dmsExtScannerFactory* dmsGetScannerFactory()
+   {
+      static dmsExtScannerFactory s_factory ;
+      return &s_factory ;
+   }
 }
 
 

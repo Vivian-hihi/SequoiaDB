@@ -132,18 +132,6 @@ namespace engine
                                 _mthRecordGenerator &generator ) ;
          INT32    _selectAndAppend( mthSelector *selector, BSONObj &obj ) ;
 
-      private:
-         INT32 _prepareNormalTbScan( _pmdEDUCB * cb,
-                                     DMS_ACCESS_TYPE accessType,
-                                     vector<INT64>* dollarList,
-                                     mthMatchRuntime *matchRuntime,
-                                     mthSelector *selector ) ;
-         INT32 _prepareCappedTbScan( _pmdEDUCB * cb,
-                                     DMS_ACCESS_TYPE accessType,
-                                     vector<INT64>* dollarList,
-                                     mthMatchRuntime *matchRuntime,
-                                     mthSelector *selector) ;
-
       protected:
          _SDB_DMSCB                 *_dmsCB ;
          _dmsStorageUnit            *_su ;

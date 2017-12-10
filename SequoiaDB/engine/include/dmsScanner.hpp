@@ -87,8 +87,8 @@ namespace engine
 
       protected:
          _dmsStorageDataCommon  *_pSu ;
-         _dmsMBContext           *_context ;
-         mthMatchRuntime     *_matchRuntime ;
+         _dmsMBContext          *_context ;
+         mthMatchRuntime        *_matchRuntime ;
          DMS_ACCESS_TYPE         _accessType ;
 
    } ;
@@ -98,16 +98,16 @@ namespace engine
    /*
       _dmsExtScanner define
    */
-   class _dmsExtScanner : public _dmsScanner
+   class _dmsExtScannerBase : public _dmsScanner
    {
       friend class _dmsTBScanner ;
       public:
-         _dmsExtScanner ( _dmsStorageDataCommon *su, _dmsMBContext *context,
-                          mthMatchRuntime *matchRuntime,
-                          dmsExtentID curExtentID,
-                          DMS_ACCESS_TYPE accessType = DMS_ACCESS_TYPE_FETCH,
-                          INT64 maxRecords = -1, INT64 skipNum = 0 ) ;
-         virtual ~_dmsExtScanner () ;
+         _dmsExtScannerBase ( _dmsStorageDataCommon *su, _dmsMBContext *context,
+                              mthMatchRuntime *matchRuntime,
+                              dmsExtentID curExtentID,
+                              DMS_ACCESS_TYPE accessType = DMS_ACCESS_TYPE_FETCH,
+                              INT64 maxRecords = -1, INT64 skipNum = 0 ) ;
+         virtual ~_dmsExtScannerBase () ;
 
          const dmsExtent* curExtent () const { return _extent ; }
          dmsExtentID nextExtentID () const ;
@@ -123,10 +123,14 @@ namespace engine
          virtual void  stop () ;
 
       protected:
-         INT32 _firstInit( _pmdEDUCB *cb ) ;
+         virtual INT32 _firstInit( _pmdEDUCB *cb ) = 0 ;
+         virtual INT32 _fetchNext( dmsRecordID &recordID,
+                                   _mthRecordGenerator &generator,
+                                   _pmdEDUCB *cb,
+                                   _mthMatchTreeContext *mhtContext = NULL) = 0 ;
          void _checkMaxRecordsNum( _mthRecordGenerator &generator ) ;
 
-      private:
+      protected:
          INT64                _maxRecords ;
          INT64                _skipNum ;
          dmsExtRW             _extRW ;
@@ -141,13 +145,35 @@ namespace engine
          BOOLEAN              _needUnLock ;
          _pmdEDUCB            *_cb ;
    };
+   typedef _dmsExtScannerBase dmsExtScannerBase ;
+
+   class _dmsExtScanner : public _dmsExtScannerBase
+   {
+      public:
+         _dmsExtScanner( dmsStorageDataCommon *su, _dmsMBContext *context,
+                         mthMatchRuntime *matchRuntime,
+                         dmsExtentID curExtentID,
+                         DMS_ACCESS_TYPE accessType = DMS_ACCESS_TYPE_FETCH,
+                         INT64 maxRecords = -1, INT64 skipNum = 0 ) ;
+         virtual ~_dmsExtScanner() ;
+
+      private:
+         virtual INT32 _firstInit( _pmdEDUCB *cb ) ;
+         virtual INT32 _fetchNext( dmsRecordID &recordID,
+                                   _mthRecordGenerator &generator,
+                                   _pmdEDUCB *cb,
+                                   _mthMatchTreeContext *mhtContext = NULL) ;
+   } ;
    typedef _dmsExtScanner dmsExtScanner ;
 
-   class _dmsCappedExtScanner : public _dmsScanner
+   class _dmsCappedExtScanner : public _dmsExtScannerBase
    {
-      friend class _dmsTBScanner ;
+      typedef std::pair<dmsExtentID, dmsExtentID>  EXT_LID_PAIR ;
+      typedef std::set<EXT_LID_PAIR>               EXT_RANGE_SET ;
+      typedef std::set<EXT_LID_PAIR>::iterator     EXT_RANGE_SET_ITR ;
+
       public:
-         _dmsCappedExtScanner ( _dmsStorageDataCapped *su,
+         _dmsCappedExtScanner ( dmsStorageDataCommon *su,
                                 _dmsMBContext *context,
                                 mthMatchRuntime *matchRuntime,
                                 dmsExtentID curExtentID,
@@ -158,31 +184,28 @@ namespace engine
          INT64 getSkipNum () const { return _skipNum ; }
 
       public:
-         virtual INT32 advance ( dmsRecordID &recordID,
-                                 _mthRecordGenerator &generator,
-                                 _pmdEDUCB *cb,
-                                 _mthMatchTreeContext *mhtContext = NULL ) ;
-         virtual void  stop () ;
 
          const dmsExtent* curExtent () { return _extent ; }
          dmsExtentID nextExtentID () const ;
 
       protected:
-         INT32 _firstInit( _pmdEDUCB *cb ) ;
-         void _checkMaxRecordsNum( _mthRecordGenerator &generator ) ;
+         virtual INT32 _firstInit( _pmdEDUCB *cb ) ;
+         virtual INT32 _fetchNext( dmsRecordID &recordID,
+                                   _mthRecordGenerator &generator,
+                                   _pmdEDUCB *cb,
+                                   _mthMatchTreeContext *mhtContext = NULL) ;
+
+         INT32 _initFastScanRange() ;
+         INT32 _validateRange( BOOLEAN &inRange ) ;
+
+         OSS_INLINE dmsExtentID _idToExtLID( INT64 id ) ;
 
       private:
-         INT64                   _maxRecords ;
-         INT64                   _skipNum ;
-         dmsExtRW                _extRW ;
-         const dmsExtent         *_extent ;
-         dmsRecordID             _curRID ;
-         dmsRecordRW             _recordRW ;
-         dmsOffset               _next ;
          dmsOffset               _lastOffset ;
-         BOOLEAN                 _firstRun ;
-         _pmdEDUCB               *_cb ;
          const _dmsExtentInfo    *_workExtInfo ;
+         BOOLEAN                 _rangeInit ;
+         BOOLEAN                 _fastScanByID ;
+         EXT_RANGE_SET           _rangeSet ;
    } ;
    typedef _dmsCappedExtScanner dmsCappedExtScanner ;
 
@@ -199,6 +222,7 @@ namespace engine
          ~_dmsTBScanner () ;
 
       public:
+
          virtual INT32 advance ( dmsRecordID &recordID,
                                  _mthRecordGenerator &generator,
                                  _pmdEDUCB *cb,
@@ -210,10 +234,14 @@ namespace engine
          INT32 _firstInit() ;
 
       private:
-         dmsExtScanner              _extScanner ;
+         INT32 _getExtScanner() ;
+
+      private:
+         dmsExtScannerBase         *_extScanner ;
          dmsExtentID                _curExtentID ;
          BOOLEAN                    _firstRun ;
-
+         INT64                      _maxRecords ;
+         INT64                      _skipNum ;
    };
    typedef _dmsTBScanner dmsTBScanner ;
 
@@ -358,6 +386,23 @@ namespace engine
    } ;
    typedef _dmsExtentItr dmsExtentItr ;
 
+   class _dmsExtScannerFactory : public SDBObject
+   {
+      public:
+         _dmsExtScannerFactory() ;
+         ~_dmsExtScannerFactory() ;
+
+         dmsExtScannerBase* create( dmsStorageDataCommon *su,
+                                    dmsMBContext *context,
+                                    mthMatchRuntime *matchRuntime,
+                                    dmsExtentID curExtentID,
+                                    DMS_ACCESS_TYPE accessType,
+                                    INT64 maxRecords,
+                                    INT64 skipNum ) ;
+   } ;
+   typedef _dmsExtScannerFactory dmsExtScannerFactory ;
+
+   dmsExtScannerFactory* dmsGetScannerFactory() ;
 }
 
 #endif //DMSSCANNER_HPP__

@@ -90,6 +90,7 @@ namespace engine
    */
    class dpsTransCB : public _IControlBlock, public _IEventHander
    {
+      friend class _dmsExtScannerBase ;
       friend class _dmsExtScanner ;
       friend class _dmsIXSecScanner ;
    public:
@@ -197,14 +198,14 @@ namespace engine
                             UINT16 collectionID = DMS_INVALID_MBID,
                             const dmsRecordID *recordID = NULL );
 
-      // try to get record-X-lock: also try to get the space-S-lock and 
+      // try to get record-X-lock: also try to get the space-S-lock and
       // collection-IX-lock
       // try to get collection-X-lock: also try to get the space-S-lock
       INT32 transLockTryX( _pmdEDUCB *eduCB, UINT32 logicCSID,
                            UINT16 collectionID = DMS_INVALID_MBID,
                            const dmsRecordID *recordID = NULL );
 
-      // try to get record-S-lock: also try to get the space-S-lock and 
+      // try to get record-S-lock: also try to get the space-S-lock and
       // collection-IS-lock
       // try to get collection-S-lock: also try to get the space-S-lock
       INT32 transLockTryS( _pmdEDUCB *eduCB, UINT32 logicCSID,
@@ -223,9 +224,9 @@ namespace engine
       UINT64 usedLogSpace();
 
    protected:
-      // try to get record-X-lock: also try to get the space-S-lock and 
+      // try to get record-X-lock: also try to get the space-S-lock and
       // collection-IX-lock,
-      // if failed then append to the wait-queue but not wait, caller must 
+      // if failed then append to the wait-queue but not wait, caller must
       // call waitLock()
       // for waitting the lock
       INT32 tryOrAppendX( _pmdEDUCB *eduCB, UINT32 logicCSID,

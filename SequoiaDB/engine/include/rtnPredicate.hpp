@@ -433,7 +433,8 @@ namespace engine
          _selectivity = selectivity ;
       }
 
-      BOOLEAN bindParameters ( rtnParamList &parameters ) ;
+      BOOLEAN bindParameters ( rtnParamList &parameters,
+                               BOOLEAN markDone = TRUE ) ;
 
    protected :
       // Helper functions for create predicate

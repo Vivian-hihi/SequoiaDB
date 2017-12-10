@@ -118,6 +118,9 @@ namespace engine
 
 #define DMS_INDEX_SORT_BUFFER_MIN_SIZE     32
 
+#define DMS_CAP_EXTENT_SZ           (32 * 1024 * 1024)
+#define DMS_CAP_EXTENT_BODY_SZ      ( DMS_CAP_EXTENT_SZ - DMS_EXTENT_METADATA_SZ )
+
    /*
       DMS TOOL FUNCTIONS:
    */

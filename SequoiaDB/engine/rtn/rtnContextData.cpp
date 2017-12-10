@@ -269,7 +269,7 @@ namespace engine
          rc = SDB_DMS_INCOMPATIBLE_MODE ;
          goto error ;
       }
-      if ( OSS_BIT_TEST( mbContext->mb()->_attributes, 
+      if ( OSS_BIT_TEST( mbContext->mb()->_attributes,
                          DMS_MB_ATTR_STRICTDATAMODE ) )
       {
          isStictType = TRUE ;
@@ -370,7 +370,7 @@ namespace engine
          rc = SDB_DMS_INCOMPATIBLE_MODE ;
          goto error ;
       }
-      if ( OSS_BIT_TEST( mbContext->mb()->_attributes, 
+      if ( OSS_BIT_TEST( mbContext->mb()->_attributes,
                          DMS_MB_ATTR_STRICTDATAMODE ) )
       {
          strictDataMode = TRUE ;
@@ -568,24 +568,48 @@ namespace engine
       goto done ;
    }
 
-   INT32 _rtnContextData::_prepareNormalTbScan( pmdEDUCB * cb,
-                                                DMS_ACCESS_TYPE accessType,
-                                                vector<INT64>* dollarList,
-                                                mthMatchRuntime *matchRuntime,
-                                                mthSelector *selector )
+   INT32 _rtnContextData::_prepareByTBScan( pmdEDUCB * cb,
+                                            DMS_ACCESS_TYPE accessType,
+                                            vector<INT64>* dollarList )
    {
       INT32 rc = SDB_OK ;
       INT32 startNumRecords = numRecords() ;
-
       dmsRecordID recordID ;
       ossValuePtr recordDataPtr = 0 ;
       _mthRecordGenerator generator ;
       BOOLEAN hasLocked = _mbContext->isMBLock() ;
       monAppCB *pMonAppCB = cb ? cb->getMonAppCB() : NULL ;
+      mthMatchRuntime *matchRuntime = _planRuntime.getMatchRuntime( TRUE ) ;
+      mthSelector *selector   = NULL ;
+      dmsExtScannerFactory* extFactory = dmsGetScannerFactory() ;
+      dmsExtScannerBase* extScanner = NULL ;
+
+      if ( _selector.isInitialized() )
+      {
+         selector = &_selector ;
+      }
+
+      if ( DMS_INVALID_EXTENT == _extentID )
+      {
+         SDB_ASSERT( FALSE, "extentID can't be INVALID" ) ;
+         _hitEnd = TRUE ;
+         rc = SDB_DMS_EOC ;
+         goto error ;
+      }
 
       if ( NULL != _queryModifier )
       {
          generator.setQueryModify( TRUE ) ;
+      }
+
+      extScanner = extFactory->create( _su->data(), _mbContext, matchRuntime,
+                                       _extentID, accessType,
+                                       _numToReturn, _numToSkip ) ;
+      if ( !extScanner )
+      {
+         rc = SDB_OOM ;
+         PD_LOG( PDERROR, "Failed to create extent scanner" ) ;
+         goto error ;
       }
 
       while ( numRecords() == startNumRecords )
@@ -603,11 +627,7 @@ namespace engine
             goto error ;
          }
 
-         dmsExtScanner extScanner( _su->data(), _mbContext, matchRuntime,
-                                   _extentID, accessType, _numToReturn,
-                                   _numToSkip ) ;
-
-         while ( SDB_OK == ( rc = extScanner.advance( recordID, generator,
+         while ( SDB_OK == ( rc = extScanner->advance( recordID, generator,
                                                       cb, &mthContext ) ) )
          {
             try
@@ -651,8 +671,8 @@ namespace engine
             goto error ;
          }
 
-         _numToReturn = extScanner.getMaxRecords() ;
-         _numToSkip   = extScanner.getSkipNum() ;
+         _numToReturn = extScanner->getMaxRecords() ;
+         _numToSkip   = extScanner->getSkipNum() ;
 
          if ( 0 == _numToReturn )
          {
@@ -662,9 +682,9 @@ namespace engine
 
          if ( _segmentScan )
          {
-            if ( DMS_INVALID_EXTENT == extScanner.nextExtentID() ||
+            if ( DMS_INVALID_EXTENT == extScanner->nextExtentID() ||
                  _su->data()->extent2Segment( *_segments.begin() ) !=
-                 _su->data()->extent2Segment( extScanner.nextExtentID() ) )
+                 _su->data()->extent2Segment( extScanner->nextExtentID() ) )
             {
                _segments.erase( _segments.begin() ) ;
                if ( _segments.size() > 0 )
@@ -678,24 +698,28 @@ namespace engine
             }
             else
             {
-               _extentID = extScanner.nextExtentID() ;
+               _extentID = extScanner->nextExtentID() ;
             }
          }
          else
          {
-            _extentID = extScanner.nextExtentID() ;
+            _extentID = extScanner->nextExtentID() ;
          }
-         _lastExtLID = extScanner.curExtent()->_logicID ;
-         if ( DMS_INVALID_EXTENT == _extentID )
+         _lastExtLID = extScanner->curExtent()->_logicID ;
+
+         // If the next extent is valid, let's step to it. Otherwise, the end
+         // is hit.
+         if ( DMS_INVALID_EXTENT == _extentID ||
+              SDB_DMS_EOC == extScanner->stepToNextExtent() )
          {
             _hitEnd = TRUE ;
             break ;
          }
+
          if ( !hasLocked )
          {
             _mbContext->pause() ;
          }
-
       } // end while
 
       if ( !isEmpty() )
@@ -713,158 +737,10 @@ namespace engine
       {
          _mbContext->pause() ;
       }
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 _rtnContextData::_prepareCappedTbScan( pmdEDUCB * cb,
-                                                DMS_ACCESS_TYPE accessType,
-                                                vector<INT64>* dollarList,
-                                                mthMatchRuntime *matchRuntime,
-                                                mthSelector *selector )
-   {
-      INT32 rc = SDB_OK ;
-      dmsRecordID recordID ;
-      _mthRecordGenerator generator ;
-      ossValuePtr recordDataPtr = 0 ;
-      INT32 startNumRecords = numRecords();
-      BOOLEAN hasLocked = _mbContext->isMBLock() ;
-      monAppCB *pMonAppCB = cb ? cb->getMonAppCB() : NULL ;
-
-      if ( DMS_INVALID_EXTENT == _extentID )
+      if ( extScanner )
       {
-         SDB_ASSERT( FALSE, "extentID can't be INVALID" ) ;
-         _hitEnd = FALSE ;
-         rc = SDB_DMS_EOC ;
-         goto error ;
+         SDB_OSS_DEL extScanner ;
       }
-
-      while ( numRecords() == startNumRecords )
-      {
-         _mthMatchTreeContext mthContext ;
-         dmsCappedExtScanner extScanner( (dmsStorageDataCapped *)_su->data(),
-                                         _mbContext, matchRuntime, _extentID,
-                                         DMS_ACCESS_TYPE_FETCH, _numToReturn,
-                                         _numToSkip ) ;
-         while ( SDB_OK == (rc = extScanner.advance( recordID, generator,
-                                                     cb, &mthContext ) ) )
-         {
-            try
-            {
-               generator.getDataPtr( recordDataPtr ) ;
-               BSONObj obj( (const CHAR *)recordDataPtr ) ;
-
-               rc = _innerAppend( selector, generator ) ;
-               PD_RC_CHECK( rc, PDERROR, "innerAppend failed, rc: %d", rc ) ;
-            }
-            catch ( std::exception &e )
-            {
-               PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
-               rc = SDB_SYS ;
-               goto error ;
-            }
-            DMS_MON_OP_COUNT_INC( pMonAppCB, MON_SELECT, 1 ) ;
-            if ( _numToReturn > 0 )
-            {
-               --_numToReturn ;
-            }
-
-            mthContext.clearRecordInfo() ;
-         }
-
-         if ( SDB_DMS_EOC != rc )
-         {
-            PD_LOG( PDERROR, "Extent scanner failed, rc: %d", rc ) ;
-            goto error ;
-         }
-
-         _numToReturn = extScanner.getMaxRecords() ;
-         _numToSkip   = extScanner.getSkipNum() ;
-
-         if ( 0 == _numToReturn )
-         {
-            _hitEnd = TRUE ;
-            break ;
-         }
-
-         _extentID = extScanner.nextExtentID() ;
-         _lastExtLID = extScanner.curExtent()->_logicID ;
-         if ( DMS_INVALID_EXTENT == _extentID )
-         {
-            _hitEnd = TRUE ;
-            break ;
-         }
-         if ( !hasLocked )
-         {
-            _mbContext->pause() ;
-         }
-      }
-
-      if ( !isEmpty() )
-      {
-         rc = SDB_OK ;
-      }
-      else
-      {
-         rc = SDB_DMS_EOC ;
-         goto error ;
-      }
-
-   done:
-      if ( !hasLocked )
-      {
-         _mbContext->pause() ;
-      }
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 _rtnContextData::_prepareByTBScan ( pmdEDUCB * cb,
-                                             DMS_ACCESS_TYPE accessType,
-                                             vector<INT64>* dollarList )
-   {
-      INT32 rc                = SDB_OK ;
-      mthMatchRuntime *matchRuntime = _planRuntime.getMatchRuntime( TRUE ) ;
-      mthSelector *selector   = NULL ;
-
-      if ( _selector.isInitialized() )
-      {
-         selector = &_selector ;
-      }
-
-      _mthRecordGenerator generator ;
-
-      if ( DMS_INVALID_EXTENT == _extentID )
-      {
-         SDB_ASSERT( FALSE, "extentID can't be INVALID" ) ;
-         _hitEnd = TRUE ;
-         rc = SDB_DMS_EOC ;
-         goto error ;
-      }
-
-      if ( NULL != _queryModifier )
-      {
-         generator.setQueryModify( TRUE ) ;
-      }
-
-      if ( DMS_STORAGE_CAPPED == _su->type() )
-      {
-         rc = _prepareCappedTbScan( cb, accessType, dollarList,
-                                    matchRuntime, selector ) ;
-      }
-      else
-      {
-         rc = _prepareNormalTbScan( cb, accessType, dollarList,
-                                    matchRuntime, selector ) ;
-      }
-      if ( rc && SDB_DMS_EOC != rc )
-      {
-         PD_LOG( PDERROR, "Prepare data failed, rc: %d", rc ) ;
-      }
-
-   done:
       return rc ;
    error:
       goto done ;

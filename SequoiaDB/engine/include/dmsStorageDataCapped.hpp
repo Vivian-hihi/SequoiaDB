@@ -43,10 +43,7 @@
 namespace engine
 {
 #define DMS_INVALID_REC_LOGICALID         -1
-#define DMS_CAP_EXTENT_SZ                 (32 * 1024 * 1024)
-#define DMS_CAP_EXTENT_PG_NUM             (DMS_CAP_EXTENT_SZ>>pageSizeSquareRoot())
 #define DMS_CAP_CL_MIN_SZ                 DMS_CAP_EXTENT_SZ
-#define DMS_CAP_EXTENT_BODY_SZ            ( DMS_CAP_EXTENT_SZ - DMS_EXTENT_METADATA_SZ )
 #define DMS_CAP_EXTENT_PAGE_NUM           \
    (DMS_CAP_EXTENT_SZ >> pageSizeSquareRoot())
 
