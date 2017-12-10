@@ -878,7 +878,6 @@ namespace engine
          {
             BSONObj obj ;
             const CHAR *fullname = NULL ;
-            BOOLEAN isCapped = FALSE ;
             rc = dpsRecord2Insert( (const CHAR *)recordHeader,
                                    &fullname, obj ) ;
             if ( SDB_OK != rc )
@@ -887,54 +886,23 @@ namespace engine
             }
 
             {
-               dmsStorageUnit *su = NULL ;
-               const CHAR *pShortName = NULL ;
-               dmsStorageUnitID suID = DMS_INVALID_SUID ;
-               rc = rtnResolveCollectionNameAndLock( fullname, _dmsCB, &su,
-                                                     &pShortName, suID ) ;
-               PD_RC_CHECK( rc, PDERROR, "Resolve collection name[ %s ] and "
-                            "lock failed: %d", fullname, rc ) ;
-
-               isCapped = ( DMS_STORAGE_CAPPED == su->type() ) ?
-                          TRUE : FALSE ;
-               _dmsCB->suUnlock( suID, SHARED ) ;
-            }
-
-            BSONElement idEle = obj.getField( DMS_ID_KEY_NAME ) ;
-            if ( idEle.eoo() )
-            {
-               PD_LOG( PDWARNING, "replay: failed to parse"
-                       " oid from bson:[%s]",obj.toString().c_str() ) ;
-               rc = SDB_INVALIDARG ;
-               goto error ;
-            }
-
-            if ( isCapped )
-            {
-               SDB_ASSERT( idEle.isNumber(),
-                           "oid should be number in capped cl" ) ;
-               if ( idEle.isNumber() )
+               BSONElement idEle = obj.getField( DMS_ID_KEY_NAME ) ;
+               if ( idEle.eoo() )
                {
-                  INT64 logicID = idEle.numberLong() ;
-                  rc = rtnPopCommand( fullname, logicID, eduCB,
-                                      _dmsCB, _dpsCB, 1, -1 ) ;
-               }
-               else
-               {
-                  PD_LOG( PDERROR, "oid type[ %d ] is wrong",
-                          idEle.type() ) ;
+                  PD_LOG( PDWARNING, "replay: failed to parse"
+                          " oid from bson:[%s]",obj.toString().c_str() ) ;
                   rc = SDB_INVALIDARG ;
                   goto error ;
                }
-            }
-            else
-            {
-               BSONObjBuilder selectorBuilder ;
-               selectorBuilder.append( idEle ) ;
-               BSONObj selector = selectorBuilder.obj() ;
-               BSONObj hint = BSON(""<<IXM_ID_KEY_NAME) ;
-               rc = rtnDelete( fullname, selector, hint, 0, eduCB, _dmsCB,
-                               _dpsCB, 1 ) ;
+
+               {
+                  BSONObjBuilder selectorBuilder ;
+                  selectorBuilder.append( idEle ) ;
+                  BSONObj selector = selectorBuilder.obj() ;
+                  BSONObj hint = BSON(""<<IXM_ID_KEY_NAME) ;
+                  rc = rtnDelete( fullname, selector, hint, 0, eduCB, _dmsCB,
+                                  _dpsCB, 1 ) ;
+               }
             }
             break ;
          }

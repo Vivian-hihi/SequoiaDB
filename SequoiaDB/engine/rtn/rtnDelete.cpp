@@ -139,8 +139,10 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Failed to get collection[%s] mb context, "
                    "rc: %d", options._fullName, rc ) ;
 
-      if ( OSS_BIT_TEST( mbContext->mb()->_attributes,
-                         DMS_MB_ATTR_NOIDINDEX ) )
+      // Capped collection has no index, but delete is supported.
+      if ( OSS_BIT_TEST( mbContext->mb()->_attributes, DMS_MB_ATTR_NOIDINDEX )
+           &&
+           !(OSS_BIT_TEST( mbContext->mb()->_attributes, DMS_MB_ATTR_CAPPED ) ) )
       {
          PD_LOG( PDERROR, "can not delete data when autoIndexId is false" ) ;
          rc = SDB_RTN_AUTOINDEXID_IS_FALSE ;

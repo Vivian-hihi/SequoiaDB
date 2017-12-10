@@ -43,9 +43,6 @@
 namespace engine
 {
 #define DMS_INVALID_REC_LOGICALID         -1
-#define DMS_CAP_CL_MIN_SZ                 DMS_CAP_EXTENT_SZ
-#define DMS_CAP_EXTENT_PAGE_NUM           \
-   (DMS_CAP_EXTENT_SZ >> pageSizeSquareRoot())
 
 // Default size threshold of capped collection is 30GB.
 // Default record number threshold is set to 0, which means no limit on that.

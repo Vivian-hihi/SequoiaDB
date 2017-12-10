@@ -2974,10 +2974,6 @@ namespace engine
       dmsRecord *pRecord            = NULL ;
       dmsRecordData recordData ;
 
-      rc = _operationPermChk( DMS_ACCESS_TYPE_DELETE ) ;
-      PD_RC_CHECK( rc, PDERROR,
-                   "Failed in permission check of delete, rc: %d", rc ) ;
-
       if ( !context->isMBLock( EXCLUSIVE ) )
       {
          PD_LOG( PDERROR, "Caller must hold mb exclusive lock[%s]",

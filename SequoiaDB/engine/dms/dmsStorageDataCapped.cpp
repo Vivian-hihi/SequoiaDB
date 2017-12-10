@@ -40,6 +40,10 @@
 #include "pmd.hpp"
 #include "dmsTrace.hpp"
 
+#define DMS_CAP_CL_MIN_SZ                 DMS_CAP_EXTENT_SZ
+#define DMS_CAP_EXTENT_PAGE_NUM           \
+   (DMS_CAP_EXTENT_SZ >> pageSizeSquareRoot())
+
 using namespace bson ;
 
 namespace engine
@@ -854,6 +858,7 @@ namespace engine
          case DMS_ACCESS_TYPE_QUERY:
          case DMS_ACCESS_TYPE_FETCH:
          case DMS_ACCESS_TYPE_INSERT:
+         case DMS_ACCESS_TYPE_DELETE:
          case DMS_ACCESS_TYPE_TRUNCATE:
          case DMS_ACCESS_TYPE_POP:
             break ;
@@ -1192,14 +1197,38 @@ namespace engine
       return SDB_OPERATION_INCOMPATIBLE ;
    }
 
+   // Only allowed to remove the last record.
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACAPPED__EXTENTREMOVERECORD, "_dmsStorageDataCapped::_extentRemoveRecord" )
    INT32 _dmsStorageDataCapped::_extentRemoveRecord( dmsMBContext *context,
                                                      dmsExtRW &extRW,
                                                      dmsRecordRW &recordRW,
                                                      pmdEDUCB *cb,
                                                      BOOLEAN decCount )
    {
-      SDB_ASSERT( FALSE, "Should not be here" ) ;
-      return SDB_OPERATION_INCOMPATIBLE ;
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DMSSTORAGEDATACAPPED__EXTENTREMOVERECORD ) ;
+      dmsExtentInfo *workExtInfo = getWorkExtInfo( context->mbID() ) ;
+      dmsRecordID lastRID( workExtInfo->_id,
+                           workExtInfo->_lastRecordOffset ) ;
+
+      if ( recordRW.getRecordID() != lastRID )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "Only allowed to delete the last record in "
+                 "capped collection, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      // Actually, we tigger a pop operation on the last record.
+      rc = _popRecord( context, lastRID._extent, lastRID._offset, -1 ) ;
+      PD_RC_CHECK( rc, PDERROR, "Pop record[extent: %d, offset: %d] failed, "
+                   "rc: %d",  lastRID._extent, lastRID._offset, rc ) ;
+
+   done:
+      PD_TRACE_EXITRC( SDB__DMSSTORAGEDATACAPPED__EXTENTREMOVERECORD, rc ) ;
+      return rc ;
+   error:
+      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACAPPED__ONINSERTFAIL, "_dmsStorageDataCapped::_onInsertFail" )
@@ -1528,8 +1557,6 @@ namespace engine
                rc = SDB_SYS ;
                goto error ;
             }
-
-            ossMemset( (CHAR *)extent + offset, 0, totalSize ) ;
          }
 
          workExtInfo->_writePos = offset - DMS_EXTENT_METADATA_SZ ;
