@@ -745,6 +745,7 @@ SdbQuery.prototype.explain = function( options ) {
                                     this._hint,
                                     this._skip,
                                     this._limit,
+                                    this._flags,
                                     options ) ;
 }
 

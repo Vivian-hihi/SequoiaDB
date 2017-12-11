@@ -1729,9 +1729,9 @@ static JSBool collection_explain( JSContext *cx , uintN argc , jsval *vp )
    REPORT ( collection , "SdbCollection.explain(): no collection handle" ) ;
 
    ret = JS_ConvertArguments ( cx , argc , JS_ARGV ( cx , vp ) ,
-                               "ooooii/o" , &objCondition,
+                               "ooooiii/o" , &objCondition,
                                &objSelector, &objSort,
-                               &objHint, &skip, &limit, &objExplain ) ;
+                               &objHint, &skip, &limit, &flags, &objExplain ) ;
    REPORT ( ret , "SdbCollection.explain(): wrong arguments" ) ;
 
    if ( NULL != objExplain )
