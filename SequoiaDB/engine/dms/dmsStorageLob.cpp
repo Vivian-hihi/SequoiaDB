@@ -1469,7 +1469,12 @@ namespace engine
             UINT32 __hash = 0 ;
             DMS_LOB_GET_HASH_FROM_BLK( blk, __hash ) ;
             UINT32 testBucketNo = _getBucket( __hash ) ;
-            SDB_ASSERT( testBucketNo == bucketNumber, "must be same" ) ;
+            if ( testBucketNo != bucketNumber )
+            {
+               dmsLobDataMapBlk memBlk ;
+               ossMemcpy( &memBlk, blk, sizeof( memBlk ) ) ;
+               SDB_ASSERT( testBucketNo == bucketNumber, "must be same" ) ;
+            }
          }
 #endif
          if ( clID == blk->_clLogicalID &&
