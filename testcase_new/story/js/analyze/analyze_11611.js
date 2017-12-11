@@ -136,10 +136,23 @@ function main()
    checkAnalyzeInvalidResult({Collection: "SYSSTAT.SYSCOLLECTIONSTAT"}, expectErrCode);
    checkAnalyzeInvalidResult({Collection: "SYSSTAT.SYSINDEXSTAT"}, expectErrCode);
                
-   //check analyze non exist cl 
+   //check analyze exist cs but non exist cl 
    var expectErrCode = -23;
    checkAnalyzeInvalidResult({Collection: csName + ".non_exist_cl"}, expectErrCode);
-                                                         	
+   
+   //check analyze not exist cs and cl 
+   var expectErrCode_alone = -34;
+   var expectErrCode_cluster = -23;
+   var cs_null = "non_exist_cl.non_exist_cl"
+   if(commIsStandalone(db))
+   {
+      checkAnalyzeInvalidResult({Collection: cs_null}, expectErrCode_alone);
+   }
+   else
+   {
+      checkAnalyzeInvalidResult({Collection: cs_null}, expectErrCode_cluster);
+   }
+                                                          	
    println("check result after analyze success!");
          
    db1.close();         
