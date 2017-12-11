@@ -7,7 +7,7 @@
 setLastErrObj \- Set the error object of last operation.
 .SH SYNOPSIS
 .PP
-\f[B]getLastErrObj()\f[]
+\f[B]setLastErrObj(<obj>)\f[]
 .SH CATEGORY
 .PP
 Global
