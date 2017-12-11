@@ -981,9 +981,8 @@ INT32 ossGetMemoryInfo ( INT32 &loadPercent,
                          INT64 &totalPF,     INT64 &availPF,
                          INT64 &totalVirtual, INT64 &availVirtual ) ;
 
-INT32 ossGetDiskInfo ( const CHAR *pPath,
-                       INT64 &totalBytes,
-                       INT64 &freeBytes ) ;
+INT32 ossGetDiskInfo ( const CHAR *pPath, INT64 &totalBytes,
+                       INT64 &freeBytes, CHAR* fsName = NULL ) ;
 
 typedef struct _ossDiskIOStat
 {
@@ -1094,6 +1093,7 @@ private:
 #define OSS_LIMIT_OPEN_FILE "open files"
 #define OSS_LIMIT_SCHE_PRIO "scheduling priority"
 #define OSS_LIMIT_STACK_SIZE "stack size"
+#define OSS_LIMIT_PROC_NUM "process num"
 
 class ossProcLimits
 {

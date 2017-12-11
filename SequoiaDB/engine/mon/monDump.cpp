@@ -2337,6 +2337,7 @@ namespace engine
       INT64 diskTotalBytes = 0 ;
       INT64 diskFreeBytes  = 0 ;
       const CHAR *dbPath   = pmdGetOptionCB()->getDbPath () ;
+      CHAR fsName[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
 
       if ( _hitEnd )
       {
@@ -2363,7 +2364,7 @@ namespace engine
       }
 
       // disk
-      rc = ossGetDiskInfo ( dbPath, diskTotalBytes, diskFreeBytes ) ;
+      rc = ossGetDiskInfo ( dbPath, diskTotalBytes, diskFreeBytes, fsName ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to get disk info, rc = %d", rc ) ;
@@ -2413,6 +2414,7 @@ namespace engine
             {
                loadPercent = 0 ;
             }
+            diskOb.append ( FIELD_NAME_NAME, fsName ) ;
             diskOb.append ( FIELD_NAME_DATABASEPATH, dbPath ) ;
             diskOb.append ( FIELD_NAME_LOADPERCENT, loadPercent ) ;
             diskOb.append ( FIELD_NAME_TOTALSPACE, diskTotalBytes ) ;
