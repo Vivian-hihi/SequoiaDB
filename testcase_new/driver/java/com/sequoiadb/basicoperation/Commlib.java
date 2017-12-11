@@ -1,8 +1,10 @@
 package com.sequoiadb.basicoperation;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Random;
 import java.util.regex.Pattern;
 
 import org.bson.BSONObject;
@@ -145,8 +147,58 @@ public class Commlib {
 			 Assert.assertTrue(false,"bulkinsert fail "+e.getErrorCode()+e.getMessage());
 		 }		
 	 }
-   
 	 
+	 /**
+	     * generating byte to write lob
+	     *
+	     * @param length generating byte stream size
+	     * @return byte[] bytes
+	     */
+	 public static byte[] getRandomBytes(int length) {
+		 byte[] bytes = new byte[length];
+	     Random random = new Random();
+	     random.nextBytes(bytes);
+	     return bytes;
+	 }
+
+	 public static String getRandomString(int size) {
+	     return Arrays.toString(getRandomBytes(size));
+	 }
+	    
+	 public static ObjectId createAndWriteLob(DBCollection dbcl, ObjectId id, byte[] data) {    	
+	     DBLob lob = dbcl.createLob(id);
+	     lob.write(data);
+	     lob.close();
+	     return lob.getID();
+	 }
+
+	 public static ObjectId createAndWriteLob(DBCollection dbcl, byte[] data) {
+	     return createAndWriteLob(dbcl, null, data);
+	 }
+	 
+	 
+	 public static byte[] appendBuff(byte[] testLobBuff, byte[] rewriteBuff, int offset) {
+	     byte[] appendBuff = null;
+	     if (testLobBuff.length >= offset + rewriteBuff.length) {
+	         appendBuff = new byte[testLobBuff.length];
+	     } else {
+	         appendBuff = new byte[offset + rewriteBuff.length];
+	     }
+	     System.arraycopy(testLobBuff, 0, appendBuff, 0, testLobBuff.length);
+	     System.arraycopy(rewriteBuff, 0, appendBuff, offset, rewriteBuff.length);
+	     return appendBuff;
+	 }
+	 
+	 public static void assertByteArrayEqual(byte[] actual, byte[] expect) {
+	     assertByteArrayEqual(actual, expect, "");
+	 }
+
+	 public static void assertByteArrayEqual(byte[] actual, byte[] expect, String msg) {
+	     if (!Arrays.equals(actual, expect)) {
+	         Assert.fail("\nexpect: " + Arrays.toString(expect)
+	                 + "\nbut actual: " + Arrays.toString(actual) + "\n" + msg + "\n");
+	     }
+	 }
 	
 }
 
