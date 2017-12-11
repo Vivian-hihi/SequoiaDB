@@ -337,6 +337,9 @@ namespace engine
                rc = ctx->popAll() ;
                PD_RC_CHECK( rc, PDERROR, "Failed to pop all objs of sub ctx, rc: %d", rc ) ;
 
+               rc = _saveEmptyNormalSubCtx( ctx ) ;
+               PD_RC_CHECK( rc, PDERROR, "Failed to save empty sub ctx, rc: %d", rc ) ;
+
                continue ;
             }
             else
