@@ -317,7 +317,8 @@ namespace engine
                             pmdEDUCB *cb,
                             dmsExtentID &extentID,
                             dmsExtentID &extLID,
-                            dmsOffset &offset ) ;
+                            dmsOffset &offset,
+                            BOOLEAN &outOfRange ) ;
 
       INT32 _recycleExtents( dmsMBContext *context,
                              dmsExtentID targetExtID,
