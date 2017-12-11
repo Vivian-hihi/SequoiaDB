@@ -1,6 +1,7 @@
 package com.sequoiadb.base;
 
 import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.exception.SDBError;
 import com.sequoiadb.test.SingleCSCLTestCase;
 import com.sequoiadb.test.TestConfig;
 import org.bson.BSONObject;
@@ -772,6 +773,40 @@ public class TestLob extends SingleCSCLTestCase {
         DBLob lob1 = cl.openLob(id, DBLob.SDB_LOB_WRITE);
         lob1.lock(0, -1);
         lob1.close();
+    }
+
+    @Test
+    public void testLobOpenWrite11() {
+        ObjectId id = ObjectId.get();
+        DBLob lob = cl.createLob(id);
+        lob.close();
+
+        long lockLength = 1024 * 1024 * 10;
+        long dataLength = lockLength + 100;
+
+        byte[] bytes = new byte[(int)dataLength];
+        Random rand = new Random();
+        rand.nextBytes(bytes);
+
+        try (DBLob lob1 = cl.openLob(id, DBLob.SDB_LOB_WRITE)) {
+            lob1.lock(0, lockLength);
+            try {
+                lob1.write(bytes);
+                fail("should throw exception");
+            } catch (BaseException e) {
+                if (e.getErrorCode() != SDBError.SDB_INVALIDARG.getErrorCode()) {
+                    throw e;
+                }
+            }
+        }
+        try (DBLob lob2 = cl.openLob(id)) {
+            if (lob2.getSize() > 0) {
+                byte[] readBytes = new byte[(int) lob2.getSize()];
+                lob2.read(readBytes);
+                byte[] expectedBytes = Arrays.copyOf(bytes, (int) lob2.getSize());
+                assertArrayEquals(expectedBytes, readBytes);
+            }
+        }
     }
 
     class LobWriter implements Runnable {
