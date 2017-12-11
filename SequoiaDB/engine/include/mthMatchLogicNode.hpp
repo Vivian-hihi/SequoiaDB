@@ -108,7 +108,8 @@ namespace engine
          virtual INT32 execute( const BSONObj &obj, 
                                 _mthMatchTreeContext &context,
                                 BOOLEAN &result ) ;
-         virtual INT32 calcPredicate( rtnPredicateSet &predicateSet ) ;
+         virtual INT32 calcPredicate( rtnPredicateSet &predicateSet,
+                                      const rtnParamList * paramList ) ;
          virtual INT32 extraEqualityMatches( BSONObjBuilder &builder,
                                              const rtnParamList *parameters ) ;
          virtual void release() ;
@@ -129,7 +130,8 @@ namespace engine
          virtual INT32 execute( const BSONObj &obj, 
                                 _mthMatchTreeContext &context,
                                 BOOLEAN &result ) ;
-         virtual INT32 calcPredicate( rtnPredicateSet &predicateSet ) ;
+         virtual INT32 calcPredicate( rtnPredicateSet &predicateSet,
+                                      const rtnParamList * paramList ) ;
          virtual INT32 extraEqualityMatches( BSONObjBuilder &builder,
                                              const rtnParamList *parameters ) ;
          virtual BOOLEAN isTotalConverted() ;

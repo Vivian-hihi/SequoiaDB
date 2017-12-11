@@ -310,7 +310,8 @@ namespace engine
       goto done ;
    }
 
-   INT32 _mthMatchLogicOrNode::calcPredicate( rtnPredicateSet &predicateSet )
+   INT32 _mthMatchLogicOrNode::calcPredicate( rtnPredicateSet &predicateSet,
+                                              const rtnParamList * paramList )
    {
       // Logic or do not have predicatekey.
       return SDB_OK ;
@@ -411,7 +412,8 @@ namespace engine
       goto done ;
    }
 
-   INT32 _mthMatchLogicNotNode::calcPredicate( rtnPredicateSet &predicateSet )
+   INT32 _mthMatchLogicNotNode::calcPredicate( rtnPredicateSet &predicateSet,
+                                               const rtnParamList * paramList )
    {
       // Logic not do not have predicatekey.
       return SDB_OK ;

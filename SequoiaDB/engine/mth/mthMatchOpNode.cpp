@@ -1906,7 +1906,8 @@ namespace engine
       cpuCost = OPT_MTH_OPTR_BASE_CPU_COST ;
    }
 
-   INT32 _mthMatchOpNode::calcPredicate( rtnPredicateSet &predicateSet )
+   INT32 _mthMatchOpNode::calcPredicate( rtnPredicateSet &predicateSet,
+                                         const rtnParamList * paramList )
    {
       INT32 rc = SDB_OK ;
       const UINT32 bufLen        = 31 ;
@@ -1978,7 +1979,8 @@ namespace engine
               rebuildName ? buf : fieldName ) ;
 
       if ( SDB_OK == _addPredicate ( predicateSet,
-                                     rebuildName ? buf : fieldName ) )
+                                     rebuildName ? buf : fieldName,
+                                     paramList ) )
       {
          if ( isTotalConverted() )
          {
@@ -2734,6 +2736,26 @@ namespace engine
       }
    }
 
+   INT32 _mthMatchOpNode::_addPredicate ( rtnPredicateSet & predicateSet,
+                                          const CHAR * fieldName,
+                                          const rtnParamList * paramList )
+   {
+      BSONElement toMatch = _toMatch ;
+      INT8 paramIndex = _paramIndex ;
+      BOOLEAN addToParam = mthEnabledParameterized() ;
+
+      if ( NULL != paramList && !paramList->isEmpty() && _paramIndex > 0 )
+      {
+         toMatch = paramList->getParam( _paramIndex ) ;
+         paramIndex = -1 ;
+         addToParam = FALSE ;
+      }
+
+      return predicateSet.addPredicate(
+                  fieldName, toMatch, getBSONOpType(), _isUnderLogicNot,
+                  mthEnabledMixCmp(), addToParam, paramIndex, -1 ) ;
+   }
+
    //*******************_mthMatchFuzzyOpNode  ******************
    static BSONObj _mthFuzzyOptrObj ( BOOLEAN inclusive )
    {
@@ -2910,6 +2932,40 @@ namespace engine
          }
          builder.appendAs( parameters.getParam( _paramIndex ), opStr ) ;
       }
+   }
+
+   INT32 _mthMatchFuzzyOpNode::_addPredicate ( rtnPredicateSet & predicateSet,
+                                               const CHAR * fieldName,
+                                               const rtnParamList * paramList )
+   {
+      BSONElement toMatch = _toMatch ;
+      INT8 paramIndex = _paramIndex ;
+      INT8 fuzzyOpType = _fuzzyOpType >= 0 ? _fuzzyOpType : -1 ;
+      INT32 opType = getBSONOpType() ;
+      BOOLEAN addToParam = mthEnabledParameterized() ;
+
+      if ( NULL != paramList && !paramList->isEmpty() && _paramIndex > 0 )
+      {
+         toMatch = paramList->getParam( _paramIndex ) ;
+         paramIndex = -1 ;
+         fuzzyOpType = -1 ;
+         if ( _fuzzyOpType > 0 )
+         {
+            if ( paramList->getParam( _fuzzyOpType ).booleanSafe() )
+            {
+               opType = _getIncBSONOpType() ;
+            }
+            else
+            {
+               opType = _getExcBSONOpType() ;
+            }
+         }
+         addToParam = FALSE ;
+      }
+
+      return predicateSet.addPredicate(
+                  fieldName, toMatch, opType, _isUnderLogicNot,
+                  mthEnabledMixCmp(), addToParam, paramIndex, fuzzyOpType ) ;
    }
 
    //*******************_mthMatchOpNodeET***********************
@@ -4517,7 +4573,8 @@ namespace engine
       return FALSE ;
    }
 
-   INT32 _mthMatchOpNodeEXPAND::calcPredicate( rtnPredicateSet &predicateSet )
+   INT32 _mthMatchOpNodeEXPAND::calcPredicate( rtnPredicateSet &predicateSet,
+                                               const rtnParamList * paramList )
    {
       // $expand has no predicate
       return SDB_OK ;

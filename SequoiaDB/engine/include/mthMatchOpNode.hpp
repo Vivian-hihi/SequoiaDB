@@ -508,7 +508,8 @@ namespace engine
          virtual void evalEstimation ( const optCollectionStat *pCollectionStat,
                                        double &selectivity, UINT32 &cpuCost ) ;
 
-         virtual INT32 calcPredicate( rtnPredicateSet &predicateSet ) ;
+         virtual INT32 calcPredicate( rtnPredicateSet &predicateSet,
+                                      const rtnParamList * paramList ) ;
 
          virtual INT32 extraEqualityMatches( BSONObjBuilder &builder,
                                              const rtnParamList *parameters ) ;
@@ -628,18 +629,9 @@ namespace engine
                      !_hasExpand ) ;
          }
 
-         OSS_INLINE virtual INT32 _addPredicate ( _rtnPredicateSet &predicateSet,
-                                                  const CHAR *fieldName )
-         {
-            return predicateSet.addPredicate( fieldName,
-                                              _toMatch,
-                                              getBSONOpType(),
-                                              _isUnderLogicNot,
-                                              mthEnabledMixCmp(),
-                                              mthEnabledParameterized(),
-                                              _paramIndex,
-                                              -1 ) ;
-         }
+         virtual INT32 _addPredicate ( rtnPredicateSet & predicateSet,
+                                       const CHAR * fieldName,
+                                       const rtnParamList * paramList ) ;
 
       protected:
          MTH_FUNC_LIST _funcList ;
@@ -755,19 +747,9 @@ namespace engine
             return ( _fuzzyOpType >= 0 ? _fuzzyOpType : -1 ) ;
          }
 
-         OSS_INLINE virtual INT32 _addPredicate ( _rtnPredicateSet &predicateSet,
-                                                  const CHAR *fieldName )
-         {
-            return predicateSet.addPredicate( fieldName,
-                                              _toMatch,
-                                              getBSONOpType(),
-                                              _isUnderLogicNot,
-                                              mthEnabledMixCmp(),
-                                              mthEnabledParameterized(),
-                                              _paramIndex,
-                                              _fuzzyOpType >= 0 ?
-                                                    _fuzzyOpType : -1 ) ;
-         }
+         virtual INT32 _addPredicate ( rtnPredicateSet & predicateSet,
+                                       const CHAR * fieldName,
+                                       const rtnParamList * paramList ) ;
 
          virtual void _toParamBson ( BSONObjBuilder &builder,
                                      const rtnParamList &parameters ) ;
@@ -1193,7 +1175,8 @@ namespace engine
          virtual BOOLEAN isTotalConverted() ;
          virtual void release() ;
 
-         virtual INT32 calcPredicate( rtnPredicateSet &predicateSet ) ;
+         virtual INT32 calcPredicate( rtnPredicateSet &predicateSet,
+                                      const rtnParamList * paramList ) ;
 
       protected:
          virtual INT32 _valueMatch( const BSONElement &left,

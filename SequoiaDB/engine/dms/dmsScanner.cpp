@@ -741,7 +741,7 @@ namespace engine
       _mthMatchTree *matcher = _matchRuntime->getMatchTree() ;
       rtnParamList *parameters = _matchRuntime->getParametersPointer() ;
 
-      rc = matcher->calcPredicate( predicateSet ) ;
+      rc = matcher->calcPredicate( predicateSet, parameters ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to calculate predicate, rc: %d",
                    rc ) ;
 
@@ -754,7 +754,6 @@ namespace engine
          else
          {
             _fastScanByID = TRUE ;
-            predicate.bindParameters( *parameters, FALSE ) ;
 
             for ( RTN_SSKEY_LIST::iterator itr = predicate._startStopKeys.begin();
                   itr != predicate._startStopKeys.end(); ++itr )

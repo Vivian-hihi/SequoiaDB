@@ -713,13 +713,14 @@ namespace engine
       return FALSE ;
    }
 
-   INT32 _mthMatchNode::calcPredicate( rtnPredicateSet &predicateSet )
+   INT32 _mthMatchNode::calcPredicate( rtnPredicateSet &predicateSet,
+                                       const rtnParamList * paramList )
    {
       UINT32 i = 0 ;
       for ( ; i < _children.size() ; i++ )
       {
          _mthMatchNode *child = _children[ i ] ;
-         child->calcPredicate( predicateSet ) ;
+         child->calcPredicate( predicateSet, paramList ) ;
       }
 
       return SDB_OK ;

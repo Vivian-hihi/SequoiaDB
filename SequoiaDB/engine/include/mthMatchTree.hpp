@@ -129,7 +129,8 @@ namespace engine
          void evalEstimation ( optCollectionStat *pCollectionStat,
                                double &estSelectivity, UINT32 &estCPUCost ) ;
 
-         INT32    calcPredicate ( rtnPredicateSet &predicateSet ) ;
+         INT32    calcPredicate ( rtnPredicateSet &predicateSet,
+                                  const rtnParamList * paramList ) ;
 
       private:
          INT32    _matches( const BSONObj &matchTarget, BOOLEAN &result,

@@ -2045,13 +2045,14 @@ namespace engine
       _root->sortByWeight() ;
    }
 
-   INT32 _mthMatchTree::calcPredicate ( rtnPredicateSet &predicateSet )
+   INT32 _mthMatchTree::calcPredicate ( rtnPredicateSet &predicateSet,
+                                        const rtnParamList * paramList )
    {
       INT32 rc = SDB_OK ;
 
       if ( _isInitialized && _root )
       {
-         rc = _root->calcPredicate( predicateSet ) ;
+         rc = _root->calcPredicate( predicateSet, paramList ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "calc predicate failed:rc=%d", rc ) ;

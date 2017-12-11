@@ -174,7 +174,8 @@ namespace engine
             rc = getMatchTree()->loadPattern( _key.getQuery(), FALSE ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to load query, rc: %d", rc ) ;
 
-            rc = getMatchTree()->calcPredicate( planHelper.getPredicateSet() ) ;
+            rc = getMatchTree()->calcPredicate( planHelper.getPredicateSet(),
+                                                NULL ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to set predicate, rc: %d", rc ) ;
 
             break ;
@@ -188,7 +189,8 @@ namespace engine
                                               planHelper.getNormalizer() ) ;
             PD_RC_CHECK ( rc, PDERROR, "Failed to load query, rc: %d", rc ) ;
 
-            rc = getMatchTree()->calcPredicate( planHelper.getPredicateSet() ) ;
+            rc = getMatchTree()->calcPredicate( planHelper.getPredicateSet(),
+                                                NULL ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to set predicate, rc: %d",
                          rc ) ;
 

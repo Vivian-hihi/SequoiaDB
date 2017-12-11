@@ -522,7 +522,8 @@ namespace engine
 
          virtual BOOLEAN hasDollarFieldName() ;
 
-         virtual INT32 calcPredicate ( rtnPredicateSet &predicateSet ) ;
+         virtual INT32 calcPredicate ( rtnPredicateSet &predicateSet,
+                                       const rtnParamList * paramList ) ;
 
          virtual INT32 extraEqualityMatches( BSONObjBuilder &builder,
                                              const rtnParamList *parameters ) ;
