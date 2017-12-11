@@ -1163,6 +1163,19 @@ namespace engine
       blk->_nextPageInBucket = DMS_LOB_INVALID_PAGEID ;
       blk->setRemoved() ;
 
+#if defined (_DEBUG)
+      {
+         UINT32 __hash = 0 ;
+         DMS_LOB_GET_HASH_FROM_BLK( blk, __hash ) ;
+         if ( __hash != record._hash )
+         {
+            dmsLobDataMapBlk memBlk ;
+            ossMemcpy( &memBlk, blk, sizeof( memBlk ) ) ;
+            SDB_ASSERT( __hash == record._hash, "must be same" ) ;
+         }
+      }
+#endif
+
       rc = _push2Bucket( _getBucket( record._hash ),
                          page, *blk, &record ) ;
       if ( SDB_OK != rc )
