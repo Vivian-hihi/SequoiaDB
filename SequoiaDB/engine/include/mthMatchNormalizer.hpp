@@ -281,4 +281,3 @@ namespace engine
 }
 
 #endif // MTH_MATCHNORMALIZER_HPP_
-

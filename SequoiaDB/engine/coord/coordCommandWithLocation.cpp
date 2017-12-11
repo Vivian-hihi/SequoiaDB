@@ -257,8 +257,8 @@ namespace engine
             CoordGroupList grpLst ;
             rtnQueryOptions queryOpt ;
 
-            queryOpt._fullName = "CAT" ;
-            queryOpt._query = BSON( CAT_COLLECTION_SPACE_NAME << csName ) ;
+            queryOpt.setCLFullName( "CAT" ) ;
+            queryOpt.setQuery( BSON( CAT_COLLECTION_SPACE_NAME << csName ) ) ;
             rc = queryOpt.toQueryMsg( &pNewMsg, newMsgSize, cb ) ;
             if ( rc )
             {
@@ -361,15 +361,15 @@ namespace engine
             CoordGroupList grpLst ;
             rtnQueryOptions queryOpt ;
 
-            queryOpt._fullName = "CAT" ;
-            queryOpt._query = BSON( CAT_COLLECTION_SPACE_NAME << csName ) ;
+            queryOpt.setCLFullName( "CAT" ) ;
+            queryOpt.setQuery( BSON( CAT_COLLECTION_SPACE_NAME << csName ) ) ;
             rc = queryOpt.toQueryMsg( &pNewMsg, newMsgSize, cb ) ;
             if ( rc )
             {
                PD_LOG( PDERROR, "Alloc query msg failed, rc: %d", rc ) ;
                goto error ;
             }
-            /// chage the opCode
+            /// change the opCode
             ((MsgHeader*)pNewMsg)->opCode = MSG_CAT_QUERY_SPACEINFO_REQ ;
             rc = executeOnCataGroup( (MsgHeader*)pNewMsg, cb, &grpLst ) ;
             if ( rc )
@@ -763,8 +763,8 @@ namespace engine
       PD_CHECK( !dmsIsSysCSName( csname ), SDB_INVALIDARG, error, PDERROR,
                 "Could not analyze SYS collection space [%s]", csname ) ;
 
-      queryOpt._fullName = "CAT" ;
-      queryOpt._query = BSON( CAT_COLLECTION_SPACE_NAME << csname ) ;
+      queryOpt.setCLFullName( "CAT" ) ;
+      queryOpt.setQuery( BSON( CAT_COLLECTION_SPACE_NAME << csname ) ) ;
       rc = queryOpt.toQueryMsg( &pNewMsg, newMsgSize, cb ) ;
       PD_RC_CHECK( rc, PDERROR, "Alloc query msg failed, rc: %d", rc ) ;
 

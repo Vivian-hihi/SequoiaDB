@@ -291,13 +291,13 @@ namespace engine
       rc = queryOption.fromQueryMsg( (CHAR*)pMsg ) ;
       PD_RC_CHECK( rc, PDERROR, "Extract command failed, rc: %d", rc ) ;
 
-      rc = coordParseControlParam( queryOption._query, ctrlParam,
+      rc = coordParseControlParam( queryOption.getQuery(), ctrlParam,
                                    COORD_CTRL_MASK_RAWDATA, NULL, TRUE ) ;
       PD_RC_CHECK( rc, PDERROR, "Parse control param failed, rc: %d", rc ) ;
 
-      rc = parseUserAggr( queryOption._hint, vecUserAggr ) ;
+      rc = parseUserAggr( queryOption.getHint(), vecUserAggr ) ;
       PD_RC_CHECK( rc, PDERROR, "Parse user define aggr[%s] failed, rc: %d",
-                   queryOption._hint.toString().c_str(), rc ) ;
+                   queryOption.getHint().toString().c_str(), rc ) ;
 
       if ( ( !ctrlParam._rawData && getInnerAggrContent() ) ||
            vecUserAggr.size() > 0 )
@@ -305,7 +305,7 @@ namespace engine
          /// add aggr operators
          BSONObj nodeMatcher ;
          BSONObj newMatcher ;
-         rc = parseMatcher( queryOption._query, nodeMatcher, newMatcher ) ;
+         rc = parseMatcher( queryOption.getQuery(), nodeMatcher, newMatcher ) ;
          PD_RC_CHECK( rc, PDERROR, "Parse matcher failed, rc: %d", rc ) ;
 
          /// add nodes matcher to the botton
@@ -336,10 +336,10 @@ namespace engine
          }
 
          /// order by
-         if ( !queryOption._orderBy.isEmpty() )
+         if ( !queryOption.isOrderByEmpty() )
          {
             rc = appendObj( BSON( AGGR_SORT_PARSER_NAME <<
-                                  queryOption._orderBy ),
+                                  queryOption.getOrderBy() ),
                             pOutBuff, buffSize, buffUsedSize, buffObjNum ) ;
             PD_RC_CHECK( rc, PDERROR, "Append order by failed, rc: %d",
                          rc ) ;
@@ -356,7 +356,7 @@ namespace engine
 
          /// open context
          rc = openContext( pOutBuff, buffObjNum, getIntrCMDName(),
-                           queryOption._selector, cb, contextID ) ;
+                           queryOption.getSelector(), cb, contextID ) ;
          PD_RC_CHECK( rc, PDERROR, "Open context failed, rc: %d", rc ) ;
       }
       else
@@ -452,9 +452,9 @@ namespace engine
       }
       if ( !clName.empty() )
       {
-         queryOpt._fullName = clName.c_str() ;
+         queryOpt.setCLFullName( clName.c_str() ) ;
       }
-      queryOpt._flag |= FLG_QUERY_WITH_RETURNDATA ;
+      queryOpt.clearFlag( FLG_QUERY_WITH_RETURNDATA ) ;
 
       // query on catalog
       rc = queryOnCatalog( queryOpt, cb, contextID, buf ) ;

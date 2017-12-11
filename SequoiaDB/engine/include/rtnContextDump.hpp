@@ -40,13 +40,15 @@
 
 #include "rtnContext.hpp"
 #include "rtnFetchBase.hpp"
+#include "mthMatchRuntime.hpp"
 
 namespace engine
 {
    /*
       _rtnContextDump define
    */
-   class _rtnContextDump : public _rtnContextBase
+   class _rtnContextDump : public _rtnContextBase,
+                           public _mthMatchTreeHolder
    {
       DECLARE_RTN_CTX_AUTO_REGISTER()
       public:

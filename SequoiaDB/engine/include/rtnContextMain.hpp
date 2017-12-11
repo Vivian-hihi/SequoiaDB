@@ -41,11 +41,14 @@
 #include "oss.hpp"
 #include "rtnContext.hpp"
 #include "rtnSubContext.hpp"
+#include "rtnContextDataDispatcher.hpp"
 #include <map>
 
 namespace engine
 {
-   class _rtnContextMain: public _rtnContextBase
+
+   class _rtnContextMain : public _rtnContextBase,
+                           public _rtnCtxDataDispatcher
    {
    protected:
       typedef std::multimap< rtnOrderKey, rtnSubContext* > SUB_ORDERED_CTX_MAP ;
@@ -60,7 +63,21 @@ namespace engine
       void operator=( const _rtnContextMain& ) ;
 
    public:
-      virtual _dmsStorageUnit* getSU () { return NULL ; }
+      _dmsStorageUnit* getSU () { return NULL ; }
+
+      virtual BOOLEAN requireOrder() const = 0 ;
+
+      OSS_INLINE rtnQueryOptions & getQueryOptions ()
+      {
+         return _options ;
+      }
+
+      OSS_INLINE const rtnQueryOptions & getQueryOptions () const
+      {
+         return _options ;
+      }
+
+      INT32 reopenForExplain ( INT64 numToSkip, INT64 numToReturn ) ;
 
    protected:
       virtual BOOLEAN _requireExplicitSorting () const = 0 ;
@@ -77,14 +94,18 @@ namespace engine
       INT32 _prepareDataNormal( _pmdEDUCB *cb ) ;
       INT32 _saveNonEmptyOrderedSubCtx( rtnSubContext* subCtx ) ;
 
+      INT32 _processSubContext ( rtnSubContext * subContext,
+                                 BOOLEAN & skipData ) ;
+
    protected:
+      rtnQueryOptions            _options ;
       SUB_ORDERED_CTX_MAP        _orderedContextMap ;
       _ixmIndexKeyGen*           _keyGen ;
       INT64                      _numToReturn ;
       INT64                      _numToSkip ;
    } ;
+
    typedef _rtnContextMain rtnContextMain ;
 }
 
 #endif /* RTN_MAIN_CONTEXT_HPP_ */
-

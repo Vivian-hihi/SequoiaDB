@@ -179,6 +179,7 @@ rtnFiles = [
       "rtn/rtnContextBuff.cpp",
       "rtn/rtnContextMain.cpp",
       "rtn/rtnSubContext.cpp",
+      "rtn/rtnContextExplain.cpp",
       "rtn/rtnFetchBase.cpp",
       "rtn/rtnUpdate.cpp",
       "rtn/rtnInsert.cpp",
@@ -248,7 +249,8 @@ rtnFiles = [
       "rtn/rtnQueryOperator.cpp",
       "rtn/rtnExtDataHandler.cpp",
       "rtn/rtnSimpleCondNode.cpp",
-      "rtn/rtnSimpleCondParser.cpp"
+      "rtn/rtnSimpleCondParser.cpp",
+      "rtn/rtnContextDataDispatcher.cpp"
       ]
 
 msgFiles = [
@@ -333,6 +335,7 @@ optFiles = [
       "opt/optQgmSpecStrategy.cpp",
       "opt/optQgmOptimizer.cpp",
       "opt/optPlanPath.cpp",
+      "opt/optPlanNode.cpp",
       "opt/optStatUnit.cpp",
       "opt/optAPM.cpp",
       "opt/optAccessPlanKey.cpp",

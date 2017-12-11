@@ -17,7 +17,7 @@
 
    Source File Name = optPlanPath.cpp
 
-   Descriptive Name = Optimizer Access Plan
+   Descriptive Name = Optimizer Access Plan Path
 
    When/how to use: this program may be used on binary and text-formatted
    versions of Optimizer component. This file contains functions for optimizer
@@ -41,785 +41,27 @@
 #include "pdTrace.hpp"
 #include "optTrace.hpp"
 #include "msg.hpp"
+#include "rtn.hpp"
+#include "rtnContext.hpp"
+#include "rtnContextData.hpp"
+#include "rtnContextSort.hpp"
+#include "rtnContextMainCL.hpp"
+#include "coordContext.hpp"
 #include <cmath>
 
-using namespace bson;
+using namespace bson ;
 
 namespace engine
 {
 
    /*
-      _optPlanNode implement
-    */
-   _optPlanNode::_optPlanNode ()
-   {
-      _pLNode = NULL ;
-      _pRNode = NULL ;
-
-      _startCost = 0 ;
-      _runCost = 0 ;
-      _totalCost = 0 ;
-
-      _outputRecords = 0 ;
-      _outputRecordSize = 0 ;
-      _outputNumFields = 0 ;
-
-      _sorted = FALSE ;
-   }
-
-   void _optPlanNode::toBSON ( BSONObjBuilder &builder ) const
-   {
-      builder.append( OPT_NODE_FIELD_NAME, getName() ) ;
-      _toBSON ( builder ) ;
-
-      if ( _pLNode )
-      {
-         BSONArrayBuilder childBuilder( builder.subarrayStart( OPT_NODE_FIELD_CHILDNODES ) ) ;
-
-         if ( _pLNode )
-         {
-            BSONObjBuilder subBuilder( childBuilder.subobjStart( 0 ) ) ;
-            _pLNode->toBSON( subBuilder ) ;
-            subBuilder.done() ;
-         }
-         else
-         {
-            childBuilder.appendNull() ;
-         }
-
-         if ( _pRNode )
-         {
-            BSONObjBuilder subBuilder( childBuilder.subobjStart( 1 ) ) ;
-            _pRNode->toBSON( subBuilder ) ;
-            subBuilder.done() ;
-         }
-
-         childBuilder.done() ;
-      }
-   }
-
-   void _optPlanNode::_toOutputBSON ( BSONObjBuilder &builder ) const
-   {
-      BSONObjBuilder subBuilder( builder.subobjStart( OPT_NODE_FIELD_OUTPUT ) ) ;
-
-      subBuilder.append( OPT_NODE_FIELD_RECORDS, (INT64)_outputRecords ) ;
-      subBuilder.append( OPT_NODE_FIELD_RECORD_SIZE, (INT32)_outputRecordSize ) ;
-      subBuilder.append( OPT_NODE_FIELD_SORTED, _sorted ) ;
-
-      subBuilder.done() ;
-   }
-
-   void _optPlanNode::_toEstimateBSON ( BSONObjBuilder &builder ) const
-   {
-      BSONObjBuilder subBuilder( builder.subobjStart( OPT_NODE_FIELD_ESTIMATE ) ) ;
-
-      subBuilder.append( OPT_NODE_FIELD_START_COST,
-                         (double)_startCost * OPT_COST_TO_MS ) ;
-      subBuilder.append( OPT_NODE_FIELD_RUN_COST,
-                         (double)_runCost * OPT_COST_TO_MS ) ;
-      subBuilder.append( OPT_NODE_FIELD_TOTAL_COST,
-                         (double)_totalCost * OPT_COST_TO_MS ) ;
-
-      subBuilder.done() ;
-   }
-
-   /*
-      _optScanNode implement
-    */
-   _optScanNode::_optScanNode ( const CHAR *pCollection,
-                                INT32 estCacheSize )
-   : _optPlanNode()
-   {
-      _pCollection = pCollection ;
-
-      _inputRecords = 0 ;
-      _inputPages = 0 ;
-      _inputRecordSize = 0 ;
-      _inputNumFields = 0 ;
-      _pageSize = 0 ;
-
-      _mthSelectivity = OPT_MTH_DEFAULT_SELECTIVITY ;
-      _mthCPUCost = OPT_MTH_DEFAULT_CPU_COST ;
-
-      _isCandidate = FALSE ;
-
-      _estCacheSize = estCacheSize ;
-
-      _clFromStat = FALSE ;
-      _clStatTime = 0 ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTSCAN__PREEVAL, "_optScanNode::_preEvaluate" )
-   void _optScanNode::_preEvaluate ( const BSONObj &selector,
-                                     optAccessPlanHelper &planHelper,
-                                     optCollectionStat *collectionStat )
-   {
-      PD_TRACE_ENTRY( SDB_OPTSCAN__PREEVAL ) ;
-
-      SDB_ASSERT( collectionStat, "collectionStat is invalid" ) ;
-
-      _inputRecords = OPT_ROUND_NUM_DEF( collectionStat->getTotalRecords(),
-                                         DMS_STAT_DEF_TOTAL_RECORDS ) ;
-      _inputPages = OPT_ROUND_NUM( collectionStat->getTotalDataPages() ) ;
-      _inputRecordSize = OPT_ROUND_NUM(
-                  (UINT32)ceil( (double)collectionStat->getTotalDataSize() /
-                                (double)_inputRecords ) ) ;
-
-      _pageSize = collectionStat->getPageSize() ;
-      _inputNumFields = collectionStat->getAvgNumFields() ;
-
-      planHelper.getEstimation( collectionStat, _mthSelectivity, _mthCPUCost ) ;
-
-      _outputNumFields = selector.nFields() ;
-
-      if ( collectionStat->isValid() )
-      {
-         _clFromStat = TRUE ;
-         _clStatTime = collectionStat->getCreateTime() ;
-      }
-
-      PD_TRACE_EXIT( SDB_OPTSCAN__PREEVAL ) ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTSCAN_EVALOUTRECSIZE, "_optScanNode::_evalOutRecordSize" )
-   void _optScanNode::_evalOutRecordSize ()
-   {
-      PD_TRACE_ENTRY( SDB_OPTSCAN_EVALOUTRECSIZE ) ;
-
-      if ( _outputNumFields > 0 && _inputNumFields > 0 )
-      {
-         _outputRecordSize = _outputNumFields * _inputRecordSize / _inputNumFields ;
-      }
-      else
-      {
-         _outputNumFields = _inputNumFields ;
-         _outputRecordSize = _inputRecordSize ;
-      }
-
-      PD_TRACE_EXIT( SDB_OPTSCAN_EVALOUTRECSIZE ) ;
-   }
-
-   void _optScanNode::_toInputBSON( BSONObjBuilder &builder ) const
-   {
-      BSONObjBuilder subBuilder( builder.subobjStart( OPT_NODE_FIELD_INPUT ) ) ;
-
-      subBuilder.append( OPT_NODE_FIELD_PAGES, (INT64)_inputPages ) ;
-      subBuilder.append( OPT_NODE_FIELD_RECORDS, (INT64)_inputRecords ) ;
-      subBuilder.append( OPT_NODE_FIELD_RECORD_SIZE, (INT32)_inputRecordSize ) ;
-
-      subBuilder.done() ;
-   }
-
-   /*
-      _optTbScanNode implement
-    */
-   _optTbScanNode::_optTbScanNode ( const CHAR *pCollection,
-                                    INT32 estCacheSize )
-   : _optScanNode( pCollection, estCacheSize )
-   {
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTTBSCAN_PREEVAL, "_optTbScanNode::preEvaluate" )
-   void _optTbScanNode::preEvaluate ( const BSONObj &selector,
-                                      optAccessPlanHelper &planHelper,
-                                      optCollectionStat *collectionStat )
-   {
-      PD_TRACE_ENTRY( SDB_OPTTBSCAN_PREEVAL ) ;
-
-      SDB_ASSERT( collectionStat, "collectionStat is invalid" ) ;
-
-      _preEvaluate( selector, planHelper, collectionStat ) ;
-      _isCandidate = TRUE ;
-
-      PD_TRACE_EXIT( SDB_OPTTBSCAN_PREEVAL ) ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTTBSCAN_EVAL, "_optTbScanNode::evaluate" )
-   void _optTbScanNode::evaluate ()
-   {
-      PD_TRACE_ENTRY( SDB_OPTTBSCAN_EVAL ) ;
-
-      UINT64 scanIOCost = 0, scanCPUCost = 0 ;
-
-      if ( _estCacheSize >= 0 &&
-           _inputPages > (UINT32)_estCacheSize )
-      {
-         scanIOCost = OPT_SEQ_SCAN_IO_COST *               // sequence scan cost
-                      _inputPages *                        // page num
-                      ( _pageSize / DMS_PAGE_SIZE_BASE ) ; // normalize to 4K
-      }
-      else
-      {
-         // Ignore IO cost
-         scanIOCost = 0 ;
-      }
-
-      // Need to extract every records and evaluate matchers
-      scanCPUCost = ( OPT_RECORD_CPU_COST + _mthCPUCost ) * _inputRecords ;
-
-      _startCost = OPT_TBLSCAN_DEFAULT_START_COST ;
-      _runCost = OPT_IO_CPU_RATE * scanIOCost + scanCPUCost ;
-      _totalCost = _startCost + _runCost ;
-
-      _outputRecords = OPT_ROUND_NUM(
-                       (UINT64)ceil( (double)_inputRecords * _mthSelectivity ) ) ;
-
-      _evalOutRecordSize() ;
-
-      PD_TRACE_EXIT( SDB_OPTTBSCAN_EVAL ) ;
-   }
-
-   void _optTbScanNode::_toBSON ( BSONObjBuilder &builder ) const
-   {
-      builder.append( OPT_NODE_FIELD_COLLECTION, _pCollection ) ;
-
-      _toInputBSON( builder ) ;
-      _toOutputBSON( builder ) ;
-      _toEstimateBSON( builder ) ;
-
-      builder.appendBool( OPT_NODE_FIELD_CL_STAT_EST, _clFromStat ) ;
-      builder.appendTimestamp( OPT_NODE_FIELD_CL_STAT_TIME, _clStatTime,
-                               ( _clStatTime - ( _clStatTime / 1000 * 1000 ) ) * 1000 ) ;
-   }
-
-   /*
-      _optIxScanNode implement
-    */
-   _optIxScanNode::_optIxScanNode ( const CHAR *pCollection,
-                                    const ixmIndexCB &indexCB,
-                                    INT32 estCacheSize )
-   : _optScanNode ( pCollection, estCacheSize )
-   {
-      ossMemset ( _pIndexName, 0, sizeof( _pIndexName ) ) ;
-
-      if ( indexCB.isInitialized() )
-      {
-         const CHAR *pIndexName = indexCB.getName() ;
-         ossStrncpy( _pIndexName, pIndexName, sizeof( _pIndexName ) - 1 ) ;
-
-         _indexExtID = indexCB.getExtentID() ;
-         _indexLID = indexCB.getLogicalID() ;
-         _keyPattern = indexCB.keyPattern().copy() ;
-      }
-      else
-      {
-         _indexExtID = DMS_INVALID_EXTENT ;
-         _indexLID = DMS_INVALID_EXTENT ;
-      }
-
-      _scanSelectivity = OPT_PRED_DEFAULT_SELECTIVITY ;
-      _predSelectivity = OPT_PRED_DEFAULT_SELECTIVITY ;
-      _predCPUCost = OPT_PRED_DEFAULT_CPU_COST ;
-
-      _direction = 1 ;
-      _matchAll = FALSE ;
-      _needMatch = TRUE ;
-      _matchedFields = 0 ;
-      _matchedOrders = 0 ;
-
-      _indexPages = 0 ;
-      _indexLevels = 0 ;
-
-      _idxReadRecords = 0 ;
-      _idxOutRecords = 0 ;
-
-      _ixFromStat = FALSE ;
-      _ixStatTime = 0 ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTIXSCAN_PREEVAL, "_optIxScanNode::preEvaluate" )
-   void _optIxScanNode::preEvaluate ( const BSONObj &selector,
-                                      optAccessPlanHelper &planHelper,
-                                      const BSONObj &boOrder,
-                                      OPT_PLAN_PATH_PRIORITY priority,
-                                      optCollectionStat *collectionStat,
-                                      optIndexStat *indexStat )
-   {
-      PD_TRACE_ENTRY( SDB_OPTIXSCAN_PREEVAL ) ;
-
-      SDB_ASSERT( collectionStat, "collectionStat is invalid" ) ;
-      SDB_ASSERT( indexStat,"indexStat is invalid" ) ;
-
-      _preEvaluate( selector, planHelper, collectionStat ) ;
-      _indexPages = indexStat->getIndexPages() ;
-      _indexLevels = indexStat->getIndexLevels() ;
-
-      BOOLEAN isBestIndex = collectionStat->isBestIndex( indexStat ) ;
-
-      _evalPredEstimation( planHelper, boOrder, isBestIndex, indexStat ) ;
-
-      switch ( priority )
-      {
-         case OPT_PLAN_IDX_REQUIRED :
-         {
-            _isCandidate = TRUE ;
-            break ;
-         }
-         case OPT_PLAN_SORTED_IDX_REQUIRED :
-         {
-            // Must be sorted index
-            if ( _sorted )
-            {
-               _isCandidate = TRUE ;
-            }
-            break ;
-         }
-         case OPT_PLAN_IDX_PREFERRED :
-         {
-            // Either be sorted or matched predicates
-            if ( _sorted || _matchedFields > 0 )
-            {
-               _isCandidate = TRUE ;
-            }
-            break ;
-         }
-         default :
-         {
-            // Either be sorted or scan selectivity smaller than threshold
-            if ( _scanSelectivity <= OPT_PRED_THRESHOLD_SELECTIVITY ||
-                 _sorted )
-            {
-               _isCandidate = TRUE ;
-            }
-            break;
-         }
-      }
-
-      if ( indexStat->isValid() )
-      {
-         _ixFromStat = TRUE ;
-         _ixStatTime = indexStat->getCreateTime() ;
-      }
-
-      PD_TRACE_EXIT( SDB_OPTIXSCAN_PREEVAL ) ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTIXSCAN_EVAL, "_optIxScanNode::evaluate" )
-   void _optIxScanNode::evaluate ()
-   {
-      PD_TRACE_ENTRY( SDB_OPTIXSCAN_EVAL ) ;
-
-      UINT64 scanIOCost = 0, scanCPUCost = 0 ;
-
-      // Number of index pages and records will be read ( based on _scanSelectivity )
-      UINT32 idxReadPages = OPT_ROUND_NUM(
-                            (UINT32)ceil( (double)_indexPages * _scanSelectivity ) ) ;
-      _idxReadRecords = OPT_ROUND_NUM(
-                        (UINT64)ceil( (double)_inputRecords * _scanSelectivity ) ) ;
-
-      // Number of data pages and records will be read ( based on _predSelectivity )
-      // which is also the number of items output from index
-      UINT32 dataReadPages = OPT_ROUND_NUM(
-                             (UINT32)ceil( (double)_inputPages * _predSelectivity ) ) ;
-      _idxOutRecords = OPT_ROUND_NUM(
-                       (UINT64)ceil( (double)_inputRecords * _predSelectivity ) ) ;
-
-      if ( _estCacheSize >= 0 && _inputPages > (UINT32)_estCacheSize )
-      {
-         scanIOCost = OPT_RANDOM_SCAN_IO_COST *             // random scan cost
-                      ( idxReadPages + dataReadPages ) *    // number of pages read
-                      ( _pageSize / DMS_PAGE_SIZE_BASE ) ;  // normalize to 4k-size
-      }
-      else
-      {
-         // Ignore IO cost
-         scanIOCost = 0 ;
-      }
-
-      // For each index read records, need to be extracted from index page and
-      // evaluated against predicates
-      // For each index output records, need to be extracted from data page and
-      // evaluated against matchers
-      scanCPUCost = ( _idxReadRecords *
-                     ( OPT_IDX_CPU_COST + _predCPUCost ) ) +
-                    ( _idxOutRecords *
-                     ( OPT_RECORD_CPU_COST + ( _needMatch ? _mthCPUCost : 0 ) ) ) ;
-
-      _startCost = OPT_IDXSCAN_DEFAULT_START_COST + _predCPUCost * _indexLevels ;
-      _runCost = OPT_IO_CPU_RATE * scanIOCost + scanCPUCost ;
-      _totalCost = _startCost + _runCost ;
-
-      if ( _predSelectivity < _mthSelectivity )
-      {
-         _outputRecords = OPT_ROUND_NUM(
-                          (UINT64)ceil( (double)_inputRecords * _predSelectivity ) ) ;
-      }
-      else
-      {
-         _outputRecords = OPT_ROUND_NUM(
-                          (UINT64)ceil( (double)_inputRecords * _mthSelectivity ) ) ;
-      }
-
-      _evalOutRecordSize() ;
-
-      PD_TRACE_EXIT( SDB_OPTIXSCAN_EVAL ) ;
-   }
-
-   void _optIxScanNode::_toBSON ( BSONObjBuilder &builder ) const
-   {
-      builder.append( OPT_NODE_FIELD_COLLECTION, _pCollection ) ;
-      builder.append( OPT_NODE_FIELD_INDEX, _pIndexName ) ;
-
-      _toInputBSON( builder ) ;
-      _toIndexBSON( builder ) ;
-      _toOutputBSON( builder ) ;
-      _toEstimateBSON( builder ) ;
-
-      builder.appendBool( OPT_NODE_FIELD_CL_STAT_EST, _clFromStat ) ;
-      builder.appendTimestamp( OPT_NODE_FIELD_CL_STAT_TIME, _clStatTime,
-                               ( _clStatTime - ( _clStatTime / 1000 * 1000 ) ) * 1000 ) ;
-      builder.appendBool( OPT_NODE_FIELD_IX_STAT_EST, _ixFromStat ) ;
-      builder.appendTimestamp( OPT_NODE_FIELD_IX_STAT_TIME, _ixStatTime,
-                               ( _ixStatTime - ( _ixStatTime / 1000 * 1000 ) ) * 1000 ) ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTIXSCAN_EVALPREDEST, "_optIxScanNode::_evalPredEstimation" )
-   void _optIxScanNode::_evalPredEstimation ( optAccessPlanHelper &planHelper,
-                                              const BSONObj &boOrder,
-                                              BOOLEAN isBestIndex,
-                                              const optIndexStat *indexStat )
-   {
-      PD_TRACE_ENTRY( SDB_OPTIXSCAN_EVALPREDEST ) ;
-
-      SDB_ASSERT( planHelper.getMatchTree(), "matchTree is invalid" ) ;
-      SDB_ASSERT( indexStat, "indexStat is invalid" ) ;
-
-      UINT32 iterIdx = 0,
-             matchedFields = 0,
-             matchedOrders = 0 ;
-      BOOLEAN startIncluded = TRUE, stopIncluded = TRUE ;
-      const BSONObj &keyPattern = indexStat->getKeyPattern() ;
-      UINT32 keyNum = (UINT32)keyPattern.nFields() ;
-
-      rtnStatPredList predicateList ;
-      BOOLEAN needMatchOrder = TRUE ;
-      INT32 direction = 1 ;
-
-      double predSelectivity = 1.0 ;
-      double scanSelectivity = 1.0 ;
-
-      BOOLEAN isEqual = TRUE ;
-      const CHAR *pFirstField = NULL ;
-
-      // The statistics of index are invalid, we need to evaluate each predicate
-      // in the predicate set
-      BOOLEAN fieldOnly = !indexStat->isValid() ;
-
-      mthMatchTree *matcher = planHelper.getMatchTree() ;
-      RTN_PREDICATE_MAP &predicates = planHelper.getPredicates() ;
-
-      if ( !planHelper.isEstimated() )
-      {
-         // The matcher has not been estimated, which could not be used
-         // to evaluate predicates
-         isBestIndex = FALSE ;
-      }
-
-      BSONObjIterator iterKey( keyPattern ) ;
-      BSONObjIterator iterOrder( boOrder ) ;
-
-      while ( iterKey.more() )
-      {
-         BSONElement beKey = iterKey.next() ;
-         const CHAR *pFieldName = beKey.fieldName() ;
-
-         // Set the first name
-         if ( !pFirstField )
-         {
-            pFirstField = pFieldName ;
-         }
-
-         // Try to match order first
-         if ( needMatchOrder && iterOrder.more() )
-         {
-            BSONElement beOrder = iterOrder.next() ;
-            if ( 0 == ossStrcmp ( pFieldName, beOrder.fieldName() ) )
-            {
-               BOOLEAN orderMatched = ( ( ( beKey.number() * direction ) > 0 ) ==
-                                          ( beOrder.number() > 0 ) ) ;
-               if ( matchedOrders == 0 )
-               {
-                  direction = orderMatched ? 1 : -1 ;
-                  matchedOrders ++ ;
-               }
-               else if ( orderMatched )
-               {
-                  matchedOrders ++ ;
-               }
-               else
-               {
-                  needMatchOrder = FALSE ;
-               }
-            }
-            else
-            {
-               needMatchOrder = FALSE ;
-            }
-         }
-
-         if ( predicates.empty() )
-         {
-            iterIdx ++ ;
-            continue ;
-         }
-
-         RTN_PREDICATE_MAP::iterator iterPred = predicates.find( pFieldName ) ;
-
-         if ( iterPred == predicates.end() ||
-              iterPred->second.isEmpty() )
-         {
-            // The key is not included in the predicates
-            // Cover all values in this key
-            if ( !fieldOnly && !isBestIndex )
-            {
-               predicateList.push_back( NULL ) ;
-               isEqual = FALSE ;
-            }
-         }
-         else
-         {
-            rtnPredicate &curPredicate = iterPred->second ;
-
-            if ( fieldOnly )
-            {
-               // Evaluate the predicate for this field only
-               BOOLEAN curIsAllRange = FALSE ;
-               double curSelectivity =  indexStat->evalPredicate(
-                        pFieldName, curPredicate, planHelper.mthEnabledMixCmp(),
-                        curIsAllRange ) ;
-
-               predSelectivity *= curSelectivity ;
-               if ( iterIdx == 0 )
-               {
-                  scanSelectivity = curSelectivity ;
-               }
-            }
-            else if ( !isBestIndex )
-            {
-               // Need to evaluate the whole predicate set together, add the
-               // predicates into list, and evaluate them later
-               predicateList.push_back( &curPredicate ) ;
-
-               isEqual &= curPredicate.isEquality() ;
-               startIncluded &= curPredicate.minInclusive() ;
-               stopIncluded &= curPredicate.maxInclusive() ;
-            }
-
-            matchedFields ++ ;
-         }
-
-         iterIdx ++ ;
-      }
-
-      // Matched key in index
-      if ( matchedFields > 0 )
-      {
-         if ( fieldOnly )
-         {
-            // Do nothing
-            // scanSelectivity is estimated by the first field
-         }
-         else if ( isBestIndex )
-         {
-            // The best index has been evaluated and cached in matcher
-            planHelper.getPredSelectivity( predSelectivity, scanSelectivity ) ;
-         }
-         else
-         {
-            // The predicates contain multiple start stop key-pairs, evaluate
-            // each of them
-            predSelectivity = indexStat->evalPredicateList(
-                  pFirstField, predicateList, planHelper.mthEnabledMixCmp(),
-                  scanSelectivity ) ;
-         }
-      }
-
-      if ( !boOrder.isEmpty() )
-      {
-         // Set the scan direction
-         _direction = direction ;
-         if ( matchedOrders == (UINT32)boOrder.nFields() )
-         {
-            _sorted = TRUE ;
-         }
-      }
-
-      // we try to set matchall only when all fields converted into predicates
-      if ( matcher->totallyConverted() )
-      {
-         _matchAll = ( 0 == predicates.size() ) ||
-                     ( ( 0 != matchedFields ) &&
-                       ( matchedFields == predicates.size() ) &&
-                         matchedFields <= keyNum ) ;
-      }
-
-      if ( matcher->isInitialized() && _matchAll &&
-           !matcher->hasExpand() && !matcher->hasReturnMatch() )
-      {
-         _needMatch = FALSE ;
-      }
-
-      _matchedFields = matchedFields ;
-      _matchedOrders = matchedOrders ;
-
-      _predSelectivity = OPT_ROUND_SELECTIVITY( predSelectivity ) ;
-      _scanSelectivity = OPT_ROUND_SELECTIVITY( scanSelectivity ) ;
-      _predCPUCost = OPT_MTH_OPTR_BASE_CPU_COST * keyNum ;
-
-      PD_TRACE_EXIT( SDB_OPTIXSCAN_EVALPREDEST ) ;
-   }
-
-   void _optIxScanNode::_toIndexBSON ( BSONObjBuilder &builder ) const
-   {
-      BSONObjBuilder subBuilder( builder.subobjStart( OPT_NODE_FIELD_INDEX_FILTER ) ) ;
-
-      subBuilder.append( OPT_NODE_FIELD_READ_RECORDS, (INT64)_idxReadRecords ) ;
-      subBuilder.append( OPT_NODE_FIELD_OUTPUT_RECORDS, (INT32)_idxOutRecords ) ;
-
-      subBuilder.done() ;
-   }
-
-   /*
-      _optSortNode implement
-    */
-   _optSortNode::_optSortNode ()
-   : _optPlanNode()
-   {
-      _sortType = OPT_PLAN_IN_MEM_SORT ;
-      _sortBufferSize = 0 ;
-      _numOrders = 0 ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTSORT_EVAL, "_optSortNode::evaluate" )
-   void _optSortNode::evaluate ( const BSONObj &boOrder, UINT64 sortBufferSize )
-   {
-      PD_TRACE_ENTRY( SDB_OPTSORT_EVAL ) ;
-
-      SDB_ASSERT( _pLNode, "Child node should not be NULL" ) ;
-
-      _numOrders = boOrder.nFields() ;
-      _sortBufferSize = sortBufferSize ;
-
-      if ( _pLNode )
-      {
-         UINT64 comparisionCPUCost = 2 * OPT_OPTR_BASE_CPU_COST * _numOrders ;
-         UINT64 inputSize = _pLNode->getOutputRecords() * _pLNode->getOutputRecordSize() ;
-         double inputRecords = (double)( OSS_MAX( 2, _pLNode->getOutputRecords() ) ) ;
-
-         UINT64 sortCPUCost = (UINT64)( (double)comparisionCPUCost *
-                              inputRecords * OPT_LOG2( inputRecords ) ) ;
-         UINT64 sortIOCost = 0 ;
-
-         // Check input size against sort buffer size
-         if ( inputSize > _sortBufferSize )
-         {
-            // Use external merge-sort
-            _sortType = OPT_PLAN_EXT_SORT ;
-            UINT32 pages = OPT_ROUND_NUM( inputSize / DMS_PAGE_SIZE_BASE ) ;
-            sortIOCost = (UINT64)pages * ( (double) OPT_SEQ_SCAN_IO_COST * 2.0 +
-                                           (double) OPT_SEQ_SCAN_IO_COST * 0.75 +
-                                           (double) OPT_RANDOM_SCAN_IO_COST * 0.25 ) ;
-         }
-         else
-         {
-            // Use in-memory sort
-            _sortType = OPT_PLAN_IN_MEM_SORT ;
-            sortIOCost = 0 ;
-         }
-
-         _startCost = _pLNode->getTotalCost() +
-                      OPT_IO_CPU_RATE * sortIOCost +
-                      sortCPUCost ;
-
-         _runCost = OPT_OPTR_BASE_CPU_COST * _pLNode->getOutputRecords() ;
-         _totalCost = _startCost + _runCost ;
-
-         _outputRecordSize = _pLNode->getOutputRecordSize() ;
-         _outputRecords = _pLNode->getOutputRecords() ;
-         _outputNumFields = _pLNode->getOutputNumFields() ;
-         _sorted = TRUE ;
-      }
-
-      PD_TRACE_EXIT( SDB_OPTSORT_EVAL ) ;
-   }
-
-   void _optSortNode::_toBSON ( BSONObjBuilder &builder ) const
-   {
-      builder.append( OPT_NODE_FIELD_SORT_TYPE,
-                      ( _sortType == OPT_PLAN_IN_MEM_SORT ?
-                                     OPT_NODE_FIELD_SORT_IN_MEM :
-                                     OPT_NODE_FIELD_SORT_EXTERNAL ) ) ;
-
-      _toOutputBSON( builder ) ;
-      _toEstimateBSON( builder ) ;
-   }
-
-   /*
-      _optReturnNode implement
-    */
-   _optReturnNode::_optReturnNode ()
-   : _optPlanNode()
-   {
-      _numToSkip = 0 ;
-      _numToReturn = -1 ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTRETURN_EVAL, "_optReturnNode::evaluate" )
-   void _optReturnNode::evaluate ( SINT64 numToSkip, SINT64 numToReturn )
-   {
-      PD_TRACE_ENTRY( SDB_OPTRETURN_EVAL ) ;
-
-      SDB_ASSERT( _pLNode, "Child node should not be NULL" ) ;
-
-      _numToSkip = OSS_MAX( numToSkip, 0 ) ;
-      _numToReturn = numToReturn ;
-
-      if ( _pLNode )
-      {
-         UINT64 avgRecordCost = 0 ;
-         UINT64 skipCost = 0 ;
-
-         if ( _pLNode->getOutputRecords() > 0 )
-         {
-            avgRecordCost = (UINT64)( (double)_pLNode->getRunCost() /
-                                      (double)_pLNode->getOutputRecords() ) ;
-         }
-
-         if ( _numToReturn < 0 )
-         {
-            _outputRecords = _pLNode->getOutputRecords() - _numToSkip ;
-         }
-         else
-         {
-            _outputRecords = _numToReturn ;
-         }
-
-         skipCost = avgRecordCost * _numToSkip ;
-         _startCost = _pLNode->getStartCost() + skipCost ;
-         _runCost = _pLNode->getRunCost() - skipCost ;
-         _totalCost = _startCost + _runCost ;
-
-         _outputRecordSize = _pLNode->getOutputRecordSize() ;
-         _outputNumFields = _pLNode->getOutputNumFields() ;
-         _sorted = _pLNode->isSorted() ;
-      }
-
-      PD_TRACE_EXIT( SDB_OPTRETURN_EVAL ) ;
-   }
-
-   void _optReturnNode::_toBSON ( BSONObjBuilder &builder ) const
-   {
-      _toOutputBSON( builder ) ;
-      _toEstimateBSON( builder ) ;
-   }
-
-   /*
       _optPlanPath implement
     */
-   _optPlanPath::_optPlanPath ( optPlanAllocator *pAllocator )
+   _optPlanPath::_optPlanPath ( optPlanAllocator * pAllocator )
+   : _ownedPath( TRUE ),
+     _pAllocator( pAllocator ),
+     _pRootNode( NULL )
    {
-      _pRootNode = NULL ;
-      _pAllocator = pAllocator ;
    }
 
    _optPlanPath::~_optPlanPath ()
@@ -827,150 +69,90 @@ namespace engine
       _deleteNodes() ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTPLANPATH__DELNODES, "_optPlanPath::_deleteNodes" )
    void _optPlanPath::_deleteNodes ()
    {
-      if ( _pRootNode )
+      PD_TRACE_ENTRY( SDB_OPTPLANPATH__DELNODES ) ;
+
+      if ( _pRootNode && _ownedPath )
       {
-         _deleteChildNodes( _pRootNode ) ;
+         _pRootNode->deleteChildNodes( _pAllocator ) ;
          _pRootNode->release( _pAllocator ) ;
       }
       _pRootNode = NULL ;
+      _ownedPath = TRUE ;
+
+      PD_TRACE_EXIT( SDB_OPTPLANPATH__DELNODES ) ;
    }
 
-   void _optPlanPath::_deleteChildNodes ( optPlanNode *pNode )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTPLANPATH__SETROOTNODE, "_optPlanPath::_setRootNode" )
+   void _optPlanPath::_setRootNode ( optPlanNode * pNode )
    {
-      if ( pNode )
-      {
-         optPlanNode *pLNode = pNode->getLNode() ;
-         if ( pLNode )
-         {
-            _deleteChildNodes( pLNode ) ;
-            pLNode->release( _pAllocator ) ;
-            pNode->setLNode( NULL ) ;
-         }
-         optPlanNode *pRNode = pNode->getRNode() ;
-         if ( pRNode )
-         {
-            _deleteChildNodes( pRNode ) ;
-            pRNode->release( _pAllocator ) ;
-            pNode->setRNode( NULL ) ;
-         }
-      }
-   }
+      PD_TRACE_ENTRY( SDB_OPTPLANPATH__SETROOTNODE ) ;
 
-   void _optPlanPath::_setRootNode ( optPlanNode *pNode )
-   {
-      if ( pNode )
+      if ( NULL != pNode && _ownedPath )
       {
-         pNode->setLNode( _pRootNode ) ;
+         pNode->addChildNode( _pRootNode ) ;
          _pRootNode = pNode ;
       }
+
+      PD_TRACE_EXIT( SDB_OPTPLANPATH__SETROOTNODE ) ;
    }
 
-   void _optPlanPath::_joinPath ( optPlanNode *pJoinNode, optPlanPath &path )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTPLANPATH__SETPATH, "_optPlanPath::_setPath" )
+   void _optPlanPath::_setPath ( const optPlanPath &path, BOOLEAN takeOwned )
    {
-      if ( pJoinNode )
+      PD_TRACE_ENTRY( SDB_OPTPLANPATH__SETPATH ) ;
+
+      clearPath() ;
+      _pRootNode = path._pRootNode ;
+      _pAllocator = path._pAllocator ;
+      if ( takeOwned && path._ownedPath )
       {
-         _setRootNode( pJoinNode ) ;
-         pJoinNode->setRNode( path._pRootNode ) ;
-         path._pRootNode = NULL ;
+         _ownedPath = TRUE ;
+         path._ownedPath = FALSE ;
       }
-   }
-
-   void _optPlanPath::_swap( optPlanPath &path )
-   {
+      else
       {
-         optPlanNode *pTmpNode = _pRootNode ;
-         _pRootNode = path._pRootNode ;
-         path._pRootNode = pTmpNode ;
-      }
-
-      {
-         optPlanAllocator *pTmpAllocator = _pAllocator ;
-         _pAllocator = path._pAllocator ;
-         path._pAllocator = pTmpAllocator ;
-      }
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTPATH_CRTSORT, "_optPlanPath::_createSortNode" )
-   INT32 _optPlanPath::_createSortNode ( const BSONObj &boOrder,
-                                         UINT64 sortBufferSize )
-   {
-      INT32 rc = SDB_OK ;
-
-      PD_TRACE_ENTRY( SDB_OPTPATH_CRTSORT ) ;
-
-      optSortNode *pSort = NULL ;
-
-      if ( boOrder.isEmpty() || !_pRootNode )
-      {
-         goto done ;
+         _ownedPath = FALSE ;
       }
 
-      pSort = new ( _pAllocator, std::nothrow ) optSortNode() ;
-      PD_CHECK( pSort, SDB_OOM, error, PDWARNING,
-                "Failed to allocate optSortNode" ) ;
-
-      _setRootNode( pSort ) ;
-
-      pSort->evaluate( boOrder, sortBufferSize ) ;
-
-   done :
-      PD_TRACE_EXITRC( SDB_OPTPATH_CRTSORT, rc ) ;
-      return rc ;
-   error :
-      SAFE_OSS_DELETE( pSort ) ;
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTPATH_CRTRETURN, "_optPlanPath::_createReturnNode" )
-   INT32 _optPlanPath::_createReturnNode ( SINT64 numToSkip,
-                                           SINT64 numToReturn )
-   {
-      INT32 rc = SDB_OK ;
-
-      PD_TRACE_ENTRY( SDB_OPTPATH_CRTRETURN ) ;
-
-      optReturnNode *pReturn = NULL ;
-
-      if ( ( 0 == numToSkip && -1 == numToReturn ) ||
-           !_pRootNode )
-      {
-         goto done ;
-      }
-
-      pReturn = new ( _pAllocator, std::nothrow ) optReturnNode() ;
-      PD_CHECK( pReturn, SDB_OOM, error, PDWARNING,
-                "Failed to allocate optReturnNode" ) ;
-
-      _setRootNode( pReturn ) ;
-
-      pReturn->evaluate( numToSkip, numToReturn ) ;
-
-   done :
-      PD_TRACE_EXITRC( SDB_OPTPATH_CRTRETURN, rc ) ;
-      return rc ;
-   error :
-      SAFE_OSS_DELETE( pReturn ) ;
-      goto done ;
+      PD_TRACE_EXIT( SDB_OPTPLANPATH__SETPATH ) ;
    }
 
    /*
       _optScanPath implement
     */
-   _optScanPath::_optScanPath ( optPlanAllocator *pAllocator )
-   : _optPlanPath( pAllocator )
+   _optScanPath::_optScanPath ()
+   : _optPlanPath( NULL ),
+     _pScanNode( NULL ),
+     _sortRequired( FALSE )
    {
-      _pScanNode = NULL ;
-      _sortRequired = FALSE ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTSCANPATH_CRTTBSCAN, "_optPlanPath::createTbScan" )
-   INT32 _optScanPath::createTbScan ( const CHAR *pCollection,
-                                      const BSONObj &selector,
-                                      optAccessPlanHelper &planHelper,
+   _optScanPath::_optScanPath ( optPlanAllocator * pAllocator )
+   : _optPlanPath( pAllocator ),
+     _pScanNode( NULL ),
+     _sortRequired( FALSE )
+   {
+   }
+
+   _optScanPath::~_optScanPath ()
+   {
+   }
+
+   optScanPath & _optScanPath::operator = ( const optScanPath & path )
+   {
+      setPath( path, TRUE ) ;
+      return ( *this ) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTSCANPATH_CRTTBSCAN, "_optScanPath::createTbScan" )
+   INT32 _optScanPath::createTbScan ( const CHAR * pCollection,
+                                      const rtnQueryOptions & queryOptions,
+                                      optAccessPlanHelper & planHelper,
                                       INT32 estCacheSize,
-                                      optCollectionStat *collectionStat )
+                                      optCollectionStat * collectionStat )
    {
       INT32 rc = SDB_OK ;
 
@@ -996,7 +178,7 @@ namespace engine
       _pScanNode = pTbScan ;
       _sortRequired = FALSE ;
 
-      pTbScan->preEvaluate( selector, planHelper, collectionStat ) ;
+      pTbScan->preEvaluate( queryOptions, planHelper, collectionStat ) ;
 
    done :
       PD_TRACE_EXITRC( SDB_OPTSCANPATH_CRTTBSCAN, rc ) ;
@@ -1006,16 +188,15 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTSCANPATH_CRTIXSCAN, "_optPlanPath::createIxScan" )
-   INT32 _optScanPath::createIxScan ( const CHAR *pCollection,
-                                      const ixmIndexCB &indexCB,
-                                      const BSONObj &selector,
-                                      optAccessPlanHelper &planHelper,
-                                      const BSONObj &boOrder,
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTSCANPATH_CRTIXSCAN, "_optScanPath::createIxScan" )
+   INT32 _optScanPath::createIxScan ( const CHAR * pCollection,
+                                      const ixmIndexCB & indexCB,
+                                      const rtnQueryOptions & queryOptions,
+                                      optAccessPlanHelper & planHelper,
                                       OPT_PLAN_PATH_PRIORITY priority,
                                       INT32 estCacheSize,
-                                      optCollectionStat *collectionStat,
-                                      optIndexStat *indexStat )
+                                      optCollectionStat * collectionStat,
+                                      optIndexStat * indexStat )
    {
       INT32 rc = SDB_OK ;
 
@@ -1042,7 +223,7 @@ namespace engine
       _pScanNode = pIdxScan ;
       _sortRequired = FALSE ;
 
-      pIdxScan->preEvaluate( selector, planHelper, boOrder, priority,
+      pIdxScan->preEvaluate( queryOptions, planHelper, priority,
                              collectionStat, indexStat ) ;
 
    done :
@@ -1053,10 +234,43 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTSCANPATH_CRTSORT, "_optScanPath::createSortNode" )
+   INT32 _optScanPath::createSortNode ( const rtnQueryOptions & queryOptions,
+                                        UINT64 sortBufferSize )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_OPTSCANPATH_CRTSORT ) ;
+
+      optSortNode *pSort = NULL ;
+
+      PD_CHECK( _ownedPath, SDB_INVALIDARG, error, PDDEBUG,
+                "Failed to create sort node : path is not owned" ) ;
+
+      if ( queryOptions.isOrderByEmpty() || !_pRootNode )
+      {
+         goto done ;
+      }
+
+      pSort = new ( _pAllocator, std::nothrow ) optSortNode() ;
+      PD_CHECK( pSort, SDB_OOM, error, PDWARNING,
+                "Failed to allocate optSortNode" ) ;
+
+      _setRootNode( pSort ) ;
+
+      pSort->preEvaluate( queryOptions, sortBufferSize ) ;
+      pSort->evaluate() ;
+
+   done :
+      PD_TRACE_EXITRC( SDB_OPTSCANPATH_CRTSORT, rc ) ;
+      return rc ;
+   error :
+      SAFE_OSS_DELETE( pSort ) ;
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTSCANPATH_EVAL, "_optScanPath::evaluate" )
-   INT32 _optScanPath::evaluate ( const BSONObj &boOrder,
-                                  SINT64 numToSkip,
-                                  SINT64 numToReturn,
+   INT32 _optScanPath::evaluate ( const rtnQueryOptions & options,
                                   UINT64 sortBufferSize )
    {
       INT32 rc = SDB_OK ;
@@ -1068,20 +282,21 @@ namespace engine
          goto done ;
       }
 
-      _pScanNode->evaluate() ;
-      _sortRequired = FALSE ;
-
-      if ( !boOrder.isEmpty() && !_pScanNode->isSorted() )
+      // Sort is required
+      if ( !options.isOrderByEmpty() &&
+           !_pScanNode->isSorted() )
       {
-         rc = _createSortNode( boOrder, sortBufferSize ) ;
+         _pScanNode->evaluate() ;
+
+         rc = createSortNode( options, sortBufferSize ) ;
          PD_RC_CHECK( rc, PDWARNING, "Failed to evaluate sort, rc: %d", rc ) ;
+
          _sortRequired = TRUE ;
       }
-
-      if ( numToSkip > 0 || -1 != numToReturn )
+      else
       {
-         rc = _createReturnNode( numToSkip, numToReturn ) ;
-         PD_RC_CHECK( rc, PDWARNING, "Failed to evaluate skip/limit, rc: %d", rc ) ;
+         _pScanNode->evaluate() ;
+         _sortRequired = FALSE ;
       }
 
    done :
@@ -1091,21 +306,1250 @@ namespace engine
       goto done ;
    }
 
-   void _optScanPath::swap( optScanPath &path )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTSCANPATH_SETPATH, "_optScanPath::setPath" )
+   void _optScanPath::setPath ( const optScanPath & path, BOOLEAN takeOwned )
    {
-      _optPlanPath::_swap( path ) ;
+      PD_TRACE_ENTRY( SDB_OPTSCANPATH_SETPATH ) ;
 
+      _optPlanPath::_setPath( path, takeOwned ) ;
+      _pScanNode = path._pScanNode ;
+      _sortRequired = path._sortRequired ;
+
+      PD_TRACE_EXIT( SDB_OPTSCANPATH_SETPATH ) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTSCANPATH_COPYPATH, "_optScanPath::copyPath" )
+   INT32 _optScanPath::copyPath ( const optScanPath & path )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_OPTSCANPATH_COPYPATH ) ;
+
+      clearPath() ;
+
+      optPlanNode *lastDstNode = NULL ;
+      const optPlanNode *srcNode = path._pRootNode ;
+
+      while ( srcNode != NULL )
       {
-         optScanNode *pTmpNode = _pScanNode ;
-         _pScanNode = path._pScanNode ;
-         path._pScanNode = pTmpNode ;
+         optPlanNode *newNode = NULL ;
+         const optPlanNodeList &childNodes = srcNode->getChildNodes() ;
+
+         SDB_ASSERT( childNodes.size() <= 1, "Should be a single path" ) ;
+
+         switch ( srcNode->getType() )
+         {
+            case OPT_PLAN_TB_SCAN :
+            {
+               const optTbScanNode *tbScanNode =
+                     dynamic_cast<const optTbScanNode *>( srcNode ) ;
+               PD_CHECK( NULL != tbScanNode, SDB_SYS, error, PDERROR,
+                         "Failed to get table scan node" ) ;
+               newNode = new ( _pAllocator, std::nothrow )
+                                             optTbScanNode( *tbScanNode,
+                                                            NULL ) ;
+               break ;
+            }
+            case OPT_PLAN_IX_SCAN :
+            {
+               const optIxScanNode *ixScanNode =
+                     dynamic_cast<const optIxScanNode *>( srcNode ) ;
+               PD_CHECK( NULL != ixScanNode, SDB_SYS, error, PDERROR,
+                         "Failed to get index scan node" ) ;
+               newNode = new ( _pAllocator, std::nothrow )
+                                             optIxScanNode( *ixScanNode,
+                                                            NULL ) ;
+               break ;
+            }
+            case OPT_PLAN_SORT :
+            {
+               const optSortNode *sortNode =
+                     dynamic_cast<const optSortNode *>( srcNode ) ;
+               PD_CHECK( NULL != sortNode, SDB_SYS, error, PDERROR,
+                         "Failed to get sort node" ) ;
+               newNode = new ( _pAllocator, std::nothrow )
+                                             optSortNode( *sortNode,
+                                                          NULL ) ;
+               break ;
+            }
+            default :
+               rc = SDB_SYS ;
+               PD_LOG( PDERROR, "Unknown node type %d", srcNode->getType() ) ;
+               goto error ;
+         }
+
+         PD_CHECK( newNode, SDB_OOM, error, PDWARNING,
+                   "Failed to allocate optPlanNode" ) ;
+
+         if ( NULL == _pRootNode )
+         {
+            SDB_ASSERT( NULL == lastDstNode, "lastDstNode is invalid" ) ;
+            _setRootNode( newNode ) ;
+         }
+         else
+         {
+            lastDstNode->addChildNode( newNode ) ;
+         }
+         lastDstNode = newNode ;
+
+         if ( childNodes.size () == 1 )
+         {
+            srcNode = childNodes.front() ;
+         }
+         else
+         {
+            srcNode = NULL ;
+         }
       }
 
+      // Set scan node
+      if ( NULL != lastDstNode )
       {
-         BOOLEAN tmp = _sortRequired ;
-         _sortRequired = path._sortRequired ;
-         path._sortRequired = tmp ;
+         rc = _setScanNode( lastDstNode ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to set scan node, rc: %d", rc ) ;
       }
+
+      _sortRequired = path._sortRequired ;
+
+   done :
+      PD_TRACE_EXITRC( SDB_OPTSCANPATH_COPYPATH, rc ) ;
+      return rc ;
+
+   error :
+      clearPath() ;
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTSCANPATH_CLRSCANINFO, "_optScanPath::clearScanInfo" )
+   INT32 _optScanPath::clearScanInfo ()
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_OPTSCANPATH_CLRSCANINFO ) ;
+
+      if ( NULL != _pScanNode )
+      {
+         _pScanNode->setCollection( NULL ) ;
+         if ( OPT_PLAN_IX_SCAN == _pScanNode->getType() )
+         {
+            optIxScanNode *ixScanNode =
+                  dynamic_cast<optIxScanNode *>( _pScanNode ) ;
+            PD_CHECK( ixScanNode, SDB_SYS, error, PDERROR,
+                      "Failed to get index scan node" ) ;
+            ixScanNode->setIndexExtID( DMS_INVALID_EXTENT ) ;
+            ixScanNode->setIndexLID( DMS_INVALID_EXTENT ) ;
+         }
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB_OPTSCANPATH_CLRSCANINFO, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTSCANPATH_TOBSONSEARCHPATH, "_optScanPath::toBSONSearchPath" )
+   INT32 _optScanPath::toBSONSearchPath ( BSONArrayBuilder & builder,
+                                          BOOLEAN isUsed,
+                                          BOOLEAN needEvaluate ) const
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_OPTSCANPATH_TOBSONSEARCHPATH ) ;
+
+      BSONObjBuilder pathBuilder( builder.subobjStart() ) ;
+
+      pathBuilder.appendBool( OPT_FIELD_IS_USED, isUsed ) ;
+      pathBuilder.appendBool( OPT_FIELD_IS_CANDIDATE, isCandidate() ) ;
+      pathBuilder.append( OPT_FIELD_PLAN_SCORE, getSelectivity() ) ;
+      if ( isCandidate() )
+      {
+         pathBuilder.append( OPT_FIELD_TOTAL_COST,
+                             (INT64)getEstTotalCost() ) ;
+      }
+      pathBuilder.append( OPT_FIELD_SCAN_TYPE,
+                          IXSCAN == getScanType() ? OPT_VALUE_IXSCAN :
+                                                    OPT_VALUE_TBSCAN ) ;
+      pathBuilder.append( OPT_FIELD_INDEX_NAME, getIndexName() ) ;
+      pathBuilder.appendBool( OPT_FIELD_USE_EXT_SORT, isSortRequired() ) ;
+
+      if ( IXSCAN == getScanType() )
+      {
+         pathBuilder.append( OPT_FIELD_DIRECTION, getDirection() ) ;
+         pathBuilder.append( OPT_FIELD_IX_BOUND, getIXBound() ) ;
+         pathBuilder.appendBool( OPT_FIELD_NEED_MATCH, isNeedMatch() ) ;
+         if ( NULL != _pScanNode )
+         {
+            rc = _pScanNode->toBSONIXStatInfo( pathBuilder ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for index "
+                         "statistics information, rc: %d", rc ) ;
+         }
+      }
+
+      if ( needEvaluate && isCandidate() )
+      {
+         if ( NULL != _pScanNode )
+         {
+            BSONObjBuilder scanBuilder(
+                  pathBuilder.subobjStart( OPT_FIELD_SCAN_NODE ) ) ;
+            rc = _pScanNode->toBSONEvaluation( scanBuilder ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for scan node "
+                         "evaluation, rc: %d", rc ) ;
+            scanBuilder.done() ;
+         }
+         if ( isSortRequired() && NULL != _pRootNode )
+         {
+            BSONObjBuilder scanBuilder(
+                  pathBuilder.subobjStart( OPT_FIELD_SORT_NODE ) ) ;
+            rc = _pRootNode->toBSONEvaluation( scanBuilder ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for sort node "
+                         "evaluation, rc: %d", rc ) ;
+            scanBuilder.done() ;
+         }
+      }
+
+      pathBuilder.done() ;
+
+   done :
+      PD_TRACE_EXITRC( SDB_OPTSCANPATH_TOBSONSEARCHPATH, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTSCANPATH__SETSCANNODE, "_optScanPath::_setScanNode" )
+   INT32 _optScanPath::_setScanNode ( optPlanNode * pNode )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_OPTSCANPATH__SETSCANNODE ) ;
+
+      SDB_ASSERT( NULL != pNode, "pNode is invalid" ) ;
+
+      PD_CHECK( OPT_PLAN_TB_SCAN == pNode->getType() ||
+                OPT_PLAN_IX_SCAN == pNode->getType(),
+                SDB_SYS, error, PDERROR, "No scan node is found" ) ;
+
+      _pScanNode = dynamic_cast<optScanNode *>( pNode ) ;
+      PD_CHECK( _pScanNode, SDB_SYS, error, PDERROR,
+                "Failed to get scan node" ) ;
+
+   done :
+      PD_TRACE_EXITRC( SDB_OPTSCANPATH__SETSCANNODE, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   /*
+      _optExplainPath implement
+    */
+   _optExplainPath::_optExplainPath ( optPlanAllocator * pAllocator )
+   : _optPlanPath( pAllocator ),
+     _beginUsrCpu( 0.0 ),
+     _beginSysCpu( 0.0 ),
+     _endUsrCpu( 0.0 ),
+     _endSysCpu( 0.0 )
+   {
+      _clFullName[ 0 ] = '\0' ;
+   }
+
+   _optExplainPath::~_optExplainPath ()
+   {
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTEXPPATH_SETCLNAME, "_optExplainPath::setCollectionName" )
+   void _optExplainPath::setCollectionName ( const CHAR * clFullName )
+   {
+      PD_TRACE_ENTRY( SDB_OPTEXPPATH_SETCLNAME ) ;
+
+      if ( NULL != clFullName )
+      {
+         ossStrncpy( _clFullName, clFullName,
+                     DMS_COLLECTION_FULL_NAME_SZ ) ;
+         _clFullName[ DMS_COLLECTION_FULL_NAME_SZ ] = '\0' ;
+      }
+      else
+      {
+         _clFullName[ 0 ] = '\0' ;
+      }
+
+      PD_TRACE_EXIT( SDB_OPTEXPPATH_SETCLNAME ) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTEXPPATH_CLEARPATH, "_optExplainPath::clearPath" )
+   void _optExplainPath::clearPath ()
+   {
+      PD_TRACE_ENTRY( SDB_OPTEXPPATH_CLEARPATH ) ;
+
+      _optPlanPath::clearPath() ;
+
+      PD_TRACE_EXIT( SDB_OPTEXPPATH_CLEARPATH ) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTEXPPATH_TOBSON, "_optExplainPath::toBSON" )
+   INT32 _optExplainPath::toBSON ( BSONObjBuilder & builder,
+                                   BOOLEAN needExpand,
+                                   BOOLEAN needFlatten,
+                                   UINT16 mask) const
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_OPTEXPPATH_TOBSON ) ;
+
+      if ( NULL != _pRootNode )
+      {
+         BSONObjBuilder pathBuilder( builder.subobjStart( OPT_FIELD_PLAN_PATH ) ) ;
+         _pRootNode->toBSON( builder, needExpand, needFlatten, mask ) ;
+         pathBuilder.done() ;
+      }
+      else
+      {
+         PD_CHECK( _pRootNode, SDB_INVALIDARG, error, PDERROR,
+                   "Failed to get root node of explain path" ) ;
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB_OPTEXPPATH_TOBSON, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTEXPPATH_SETEXPSTART, "_optExplainPath::setExplainStart" )
+   INT32 _optExplainPath::setExplainStart ( pmdEDUCB * cb )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_OPTEXPPATH_SETEXPSTART ) ;
+
+      ossTime userTime, sysTime ;
+
+      /// get some info before explain
+      _beginMon = *cb->getMonAppCB() ;
+      ossGetCurrentTime( _beginTime ) ;
+
+      /// get begin cpu time info
+      ossGetCPUUsage( cb->getThreadHandle(), userTime, sysTime ) ;
+      _beginUsrCpu = userTime.seconds + (FLOAT64)userTime.microsec / 1000000 ;
+      _beginSysCpu = sysTime.seconds + (FLOAT64)sysTime.microsec / 1000000 ;
+
+      PD_TRACE_EXITRC( SDB_OPTEXPPATH_SETEXPSTART, rc ) ;
+
+      return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTEXPPATH_SETEXPEND, "_optExplainPath::setExplainEnd" )
+   INT32 _optExplainPath::setExplainEnd ( rtnContext * context, pmdEDUCB * cb )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_OPTEXPPATH_SETEXPEND ) ;
+
+      ossTime userTime, sysTime ;
+
+      if ( NULL != _pRootNode )
+      {
+         _pRootNode->setRuntimeMonitor( *( context->getMonCB() ) ) ;
+      }
+
+      ossGetCurrentTime( _endTime ) ;
+      _endMon = *cb->getMonAppCB() ;
+
+      /// get end cpu time info
+      ossGetCPUUsage( cb->getThreadHandle(), userTime, sysTime ) ;
+      _endUsrCpu = userTime.seconds + (FLOAT64)userTime.microsec / 1000000 ;
+      _endSysCpu = sysTime.seconds + (FLOAT64)sysTime.microsec / 1000000 ;
+
+      PD_TRACE_EXITRC( SDB_OPTEXPPATH_SETEXPEND, rc ) ;
+
+      return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTEXPPATH_TOBSONEXPINFO, "_optExplainPath::toBSONExplainInfo" )
+   INT32 _optExplainPath::toBSONExplainInfo ( BSONObjBuilder & builder ) const
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_OPTEXPPATH_TOBSONEXPINFO ) ;
+
+      UINT64 beginTime = 0, endTime = 0 ;
+
+      if ( NULL != _pRootNode )
+      {
+         builder.appendNumber(
+               OPT_FIELD_RETURN_NUM,
+               (INT64)_pRootNode->getRuntimeMonitor().getReturnRecords() ) ;
+      }
+      else
+      {
+         builder.appendNumber( OPT_FIELD_RETURN_NUM, (INT64)0 ) ;
+      }
+
+      beginTime = _beginTime.time * 1000000 + _beginTime.microtm  ;
+      endTime = _endTime.time * 1000000 + _endTime.microtm  ;
+      builder.append( FIELD_NAME_ELAPSED_TIME,
+                      FLOAT64( ( endTime - beginTime ) / 1000000.0 ) ) ;
+      builder.appendNumber( FIELD_NAME_INDEXREAD,
+                             (INT64)( _endMon.totalIndexRead -
+                                      _beginMon.totalIndexRead ) ) ;
+      builder.appendNumber( FIELD_NAME_DATAREAD,
+                            (INT64)( _endMon.totalDataRead -
+                                     _beginMon.totalDataRead ) ) ;
+
+      builder.append( FIELD_NAME_USERCPU, _endUsrCpu - _beginUsrCpu ) ;
+
+      builder.append( FIELD_NAME_SYSCPU, _endSysCpu - _beginSysCpu ) ;
+
+      PD_TRACE_EXITRC( SDB_OPTEXPPATH_TOBSONEXPINFO, rc ) ;
+
+      return rc ;
+   }
+
+   /*
+      _optExplainScanPath implement
+    */
+   _optExplainScanPath::_optExplainScanPath ( optPlanAllocator * pAllocator )
+   : _optExplainPath( pAllocator ),
+     _mthMatchConfigHolder(),
+     _optAccessPlanConfigHolder(),
+     _pScanNode( NULL ),
+     _isNewPlan( FALSE ),
+     _isMainCLPlan( FALSE ),
+     _cacheLevel( OPT_PLAN_NOCACHE ),
+     _searchPaths( NULL ),
+     _needSearch( FALSE ),
+     _needEvaluate( FALSE )
+   {
+   }
+
+   _optExplainScanPath::~_optExplainScanPath ()
+   {
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTEXPSCANPATH_CLEARPATH, "_optExplainScanPath::clearPath" )
+   void _optExplainScanPath::clearPath ()
+   {
+      PD_TRACE_ENTRY( SDB_OPTEXPSCANPATH_CLEARPATH ) ;
+
+      _optExplainPath::clearPath() ;
+
+      _pScanNode = NULL ;
+      _isNewPlan = FALSE ;
+      _cacheLevel = OPT_PLAN_NOCACHE ;
+      _parameters = BSONObj() ;
+
+      _searchPaths = NULL ;
+
+      PD_TRACE_EXIT( SDB_OPTEXPSCANPATH_CLEARPATH ) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTEXPSCANPATH_COPYSCANPATH, "_optExplainScanPath::copyScanPath" )
+   INT32 _optExplainScanPath::copyScanPath ( const optScanPath & scanPath,
+                                             const rtnContext * context )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_OPTEXPSCANPATH_COPYSCANPATH ) ;
+
+      optPlanNode *lastDstNode = NULL ;
+      const optPlanNode *srcNode = NULL ;
+      const rtnContext *curContext = NULL ;
+
+      clearPath() ;
+
+      srcNode = scanPath.getRootNode() ;
+      curContext = context ;
+
+      while ( srcNode != NULL )
+      {
+         optPlanNode *newNode = NULL ;
+         const optPlanNodeList &childNodes = srcNode->getChildNodes() ;
+
+         SDB_ASSERT( childNodes.size() <= 1, "Should be a single path" ) ;
+
+         switch ( srcNode->getType() )
+         {
+            case OPT_PLAN_TB_SCAN :
+            {
+               rc = _copyTbScanNode( srcNode, curContext, &newNode ) ;
+               PD_RC_CHECK( rc, PDERROR, "Failed to create TBSCAN node, "
+                            "rc: %d", rc ) ;
+               break ;
+            }
+            case OPT_PLAN_IX_SCAN :
+            {
+               rc = _copyIxScanNode( srcNode, curContext, &newNode ) ;
+               PD_RC_CHECK( rc, PDERROR, "Failed to create IXSCAN node, "
+                            "rc: %d", rc ) ;
+               break ;
+            }
+            case OPT_PLAN_SORT :
+            {
+               rc = _copySortNode( srcNode, curContext, &newNode, &curContext ) ;
+               PD_RC_CHECK( rc, PDERROR, "Failed to create SORT node, "
+                            "rc: %d", rc ) ;
+               break ;
+            }
+            default :
+               rc = SDB_SYS ;
+               PD_LOG( PDERROR, "Unknown node type %d", srcNode->getType() ) ;
+               goto error ;
+         }
+
+         PD_CHECK( newNode, SDB_OOM, error, PDWARNING,
+                   "Failed to allocate optPlanNode" ) ;
+
+         if ( NULL == _pRootNode )
+         {
+            SDB_ASSERT( NULL == lastDstNode, "lastDstNode is invalid" ) ;
+            _setRootNode( newNode ) ;
+         }
+         else
+         {
+            lastDstNode->addChildNode( newNode ) ;
+            if ( lastDstNode->needReEvaluate() )
+            {
+               lastDstNode->evaluate() ;
+            }
+         }
+         lastDstNode = newNode ;
+
+         srcNode = childNodes.size() == 1 ? childNodes.front() : NULL ;
+      }
+
+      if ( lastDstNode->needReEvaluate() )
+      {
+         lastDstNode->evaluate() ;
+      }
+
+      rc = _setScanNode( lastDstNode ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to set scan node, rc: %d", rc ) ;
+
+   done :
+      PD_TRACE_EXITRC( SDB_OPTEXPSCANPATH_COPYSCANPATH, rc ) ;
+      return rc ;
+
+   error :
+      clearPath() ;
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTEXPSCANPATH__COPYTBSCAN, "_optExplainScanPath::_copyTbScanNode" )
+   INT32 _optExplainScanPath::_copyTbScanNode ( const optPlanNode * srcNode,
+                                                const rtnContext * srcContext,
+                                                optPlanNode ** dstNode )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_OPTEXPSCANPATH__COPYTBSCAN ) ;
+
+      SDB_ASSERT( dstNode, "dstNode is invalid" ) ;
+
+      optPlanNode *newNode = NULL ;
+      const optTbScanNode *tbScanNode = NULL ;
+      const rtnContextData *dataContext = NULL ;
+
+      tbScanNode = dynamic_cast<const optTbScanNode *>( srcNode ) ;
+      PD_CHECK( NULL != tbScanNode, SDB_SYS, error, PDERROR,
+                "Failed to get table scan node" ) ;
+
+      dataContext = dynamic_cast<const rtnContextData *>( srcContext ) ;
+      PD_CHECK( NULL != dataContext, SDB_SYS, error, PDERROR,
+                "Failed to get data context" ) ;
+
+      newNode = new ( _pAllocator, std::nothrow )
+                optTbScanNode( *tbScanNode, srcContext ) ;
+      PD_CHECK( NULL != newNode, SDB_OOM, error, PDERROR,
+                "Failed to allocate node" ) ;
+
+      (*dstNode) = newNode ;
+
+   done :
+      PD_TRACE_EXITRC( SDB_OPTEXPSCANPATH__COPYTBSCAN, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTEXPSCANPATH__COPYIXSCAN, "_optExplainScanPath::_copyIxScanNode" )
+   INT32 _optExplainScanPath::_copyIxScanNode ( const optPlanNode * srcNode,
+                                                const rtnContext * srcContext,
+                                                optPlanNode ** dstNode )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_OPTEXPSCANPATH__COPYIXSCAN ) ;
+
+      SDB_ASSERT( dstNode, "dstNode is invalid" ) ;
+
+      optPlanNode *newNode = NULL ;
+      const optIxScanNode *ixScanNode = NULL ;
+      const rtnContextData *dataContext = NULL ;
+
+      ixScanNode = dynamic_cast<const optIxScanNode *>( srcNode ) ;
+      PD_CHECK( NULL != ixScanNode, SDB_SYS, error, PDERROR,
+                "Failed to get index scan node" ) ;
+
+      dataContext = dynamic_cast<const rtnContextData *>( srcContext ) ;
+      PD_CHECK( NULL != dataContext, SDB_SYS, error, PDERROR,
+                "Failed to get data context" ) ;
+
+      newNode = new ( _pAllocator, std::nothrow )
+                optIxScanNode( *ixScanNode, srcContext ) ;
+      PD_CHECK( NULL != newNode, SDB_OOM, error, PDERROR,
+                "Failed to allocate node" ) ;
+
+      (*dstNode) = newNode ;
+
+   done :
+      PD_TRACE_EXITRC( SDB_OPTEXPSCANPATH__COPYIXSCAN, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTEXPSCANPATH__COPYSORT, "_optExplainScanPath::_copySortNode" )
+   INT32 _optExplainScanPath::_copySortNode ( const optPlanNode * srcNode,
+                                              const rtnContext * srcContext,
+                                              optPlanNode ** dstNode,
+                                              const rtnContext ** subContext )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_OPTEXPSCANPATH__COPYSORT ) ;
+
+      SDB_ASSERT( dstNode, "dstNode is invalid" ) ;
+      SDB_ASSERT( subContext, "subContext is invalid" ) ;
+
+      optPlanNode *newNode = NULL ;
+      const optSortNode *sortNode = NULL ;
+      const rtnContextSort *sortContext = NULL ;
+
+      sortNode = dynamic_cast<const optSortNode *>( srcNode ) ;
+      PD_CHECK( NULL != sortNode, SDB_SYS, error, PDERROR,
+                "Failed to get sort node" ) ;
+      sortContext = dynamic_cast<const rtnContextSort *>( srcContext ) ;
+      PD_CHECK( NULL != sortContext, SDB_SYS, error, PDERROR,
+                "Failed to get sort context" ) ;
+      newNode = new ( _pAllocator, std::nothrow )
+                optSortNode( *sortNode, srcContext ) ;
+      PD_CHECK( NULL != newNode, SDB_OOM, error, PDERROR,
+                "Failed to allocate node" ) ;
+
+      (*dstNode) = newNode ;
+      (*subContext) = sortContext->getSubContext() ;
+
+   done :
+      PD_TRACE_EXITRC( SDB_OPTEXPSCANPATH__COPYSORT, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTEXPSCANPATH__SETSCANNODE, "_optExplainPath::_setScanNode" )
+   INT32 _optExplainScanPath::_setScanNode ( optPlanNode * pNode )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_OPTEXPSCANPATH__SETSCANNODE ) ;
+
+      SDB_ASSERT( NULL != pNode, "pNode is invalid" ) ;
+
+      PD_CHECK( OPT_PLAN_TB_SCAN == pNode->getType() ||
+                OPT_PLAN_IX_SCAN == pNode->getType(),
+                SDB_SYS, error, PDERROR, "No merge node is found" ) ;
+
+      _pScanNode = dynamic_cast<optScanNode *>( pNode ) ;
+      PD_CHECK( _pScanNode, SDB_SYS, error, PDERROR,
+                "Failed to set MERGE node" ) ;
+
+      _pScanNode->setCollection( _clFullName ) ;
+
+   done :
+      PD_TRACE_EXITRC( SDB_OPTEXPSCANPATH__SETSCANNODE, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTEXPSCANPATH_TOBSON, "_optExplainScanPath::toBSON" )
+   INT32 _optExplainScanPath::toBSON ( BSONObjBuilder & builder,
+                                       BOOLEAN needExpand,
+                                       BOOLEAN needFlatten,
+                                       UINT16 mask ) const
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_OPTEXPSCANPATH_TOBSON ) ;
+
+      rc = _toBSONPlanInfo( builder ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for plan information, "
+                   "rc: %d", rc ) ;
+
+      rc = confToBSON( builder ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for match configuration, "
+                   "rc: %d", rc ) ;
+
+      rc = _optExplainPath::toBSON( builder, needExpand, FALSE, mask ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to output BSON from explain path, "
+                      "rc: %d", rc ) ;
+
+      if ( _needSearch && NULL != _searchPaths && !_searchPaths->empty() )
+      {
+         BSONObjBuilder searchBuilder( builder.subobjStart( OPT_FIELD_SEARCH ) ) ;
+
+         rc = _toBSONSearchParameters( searchBuilder ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for search "
+                      "parameters, rc: %d", rc ) ;
+
+         BSONArrayBuilder pathsBuilder(
+               searchBuilder.subarrayStart( OPT_FIELD_SEARCH_PATHS ) ) ;
+
+         for ( optScanPathList::const_iterator iter = _searchPaths->begin() ;
+               iter != _searchPaths->end() ; iter ++ )
+         {
+            const optScanPath &scanPath = ( *iter ) ;
+            BOOLEAN isUsed =
+                  ( scanPath.getScanType() == _pScanNode->getScanType() &&
+                    ( ( _pScanNode->getScanType() == IXSCAN &&
+                        0 == ossStrcmp( scanPath.getIndexName(),
+                                        _pScanNode->getIndexName() ) ) ||
+                      ( _pScanNode->getScanType() == TBSCAN ) ) ) ;
+
+            rc = scanPath.toBSONSearchPath( pathsBuilder, isUsed,
+                                            _needEvaluate ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for search path, "
+                         "rc: %d", rc ) ;
+         }
+
+         pathsBuilder.done() ;
+
+         searchBuilder.done() ;
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB_OPTEXPSCANPATH_TOBSON, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTEXPSCANPATH_TOBSONBASIC, "_optExplainScanPath::toBSONBasic" )
+   INT32 _optExplainScanPath::toBSONBasic ( BSONObjBuilder & builder ) const
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_OPTEXPSCANPATH_TOBSONBASIC ) ;
+
+      if ( NULL != _pScanNode )
+      {
+         optScanType scanType = _pScanNode->getScanType() ;
+
+         builder.append( OPT_FIELD_NAME, _pScanNode->getCollection() ) ;
+         builder.append( OPT_FIELD_SCAN_TYPE,
+                         IXSCAN == scanType ? OPT_VALUE_IXSCAN :
+                                              OPT_VALUE_TBSCAN ) ;
+         builder.append( OPT_FIELD_INDEX_NAME, _pScanNode->getIndexName() ) ;
+         builder.appendBool( OPT_FIELD_USE_EXT_SORT,
+                             OPT_PLAN_SORT == _pRootNode->getType() ) ;
+
+         builder.append( OPT_FIELD_QUERY, _pScanNode->getMatcher() ) ;
+
+         if ( IXSCAN == scanType &&
+              !_pScanNode->getIXBound().isEmpty() )
+         {
+            builder.append( OPT_FIELD_IX_BOUND, _pScanNode->getIXBound() ) ;
+         }
+         else
+         {
+            builder.appendNull( OPT_FIELD_IX_BOUND ) ;
+         }
+
+         builder.appendBool( OPT_FIELD_NEED_MATCH, _pScanNode->isNeedMatch() ) ;
+      }
+
+      PD_TRACE_EXITRC( SDB_OPTEXPSCANPATH_TOBSONBASIC, rc ) ;
+
+      return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTEXPSCANPATH__TOBSONPLANINFO, "_optExplainScanPath::_toBSONPlanInfo" )
+   INT32 _optExplainScanPath::_toBSONPlanInfo ( BSONObjBuilder & builder ) const
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_OPTEXPSCANPATH__TOBSONPLANINFO ) ;
+
+      if ( _cacheLevel > OPT_PLAN_NOCACHE )
+      {
+         builder.append( OPT_FIELD_CACHE_STATUS,
+                         _isNewPlan ? OPT_VALUE_CACHE_STATUS_NEWCACHE :
+                                      OPT_VALUE_CACHE_STATUS_HITCACHE ) ;
+         builder.appendBool( OPT_FIELD_MAINCL_PLAN, _isMainCLPlan ) ;
+         builder.append( OPT_FIELD_CACHE_LEVEL,
+                         optAccessPlanKey::getCacheLevelName( _cacheLevel ) ) ;
+         if ( !_parameters.isEmpty() )
+         {
+            builder.append( _parameters.firstElement() ) ;
+         }
+      }
+      else
+      {
+         builder.append( OPT_FIELD_CACHE_STATUS,
+                         OPT_VALUE_CACHE_STATUS_NOCACHE ) ;
+      }
+
+      PD_TRACE_EXITRC( SDB_OPTEXPSCANPATH__TOBSONPLANINFO, rc ) ;
+
+      return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTEXPSCANPATH__TOBSONSEARCHPARAMS, "_optExplainScanPath::_toBSONSearchParameters" )
+   INT32 _optExplainScanPath::_toBSONSearchParameters ( BSONObjBuilder & builder ) const
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_OPTEXPSCANPATH__TOBSONSEARCHPARAMS ) ;
+
+      rc = _toBSONSearchOptions( builder ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for options of "
+                   "search path, rc: %d", rc ) ;
+
+      if ( _needEvaluate )
+      {
+         rc = _toBSONSearchConstants( builder ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for constants of "
+                      "search path, rc: %d", rc ) ;
+
+         rc = _toBSONSearchInputs( builder ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for inputs of "
+                      "search path, rc: %d", rc ) ;
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB_OPTEXPSCANPATH__TOBSONSEARCHPARAMS, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTEXPSCANPATH__TOBSONSEARCHCONSTS, "_optExplainScanPath::_toBSONSearchConstants" )
+   INT32 _optExplainScanPath::_toBSONSearchConstants ( BSONObjBuilder & builder ) const
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_OPTEXPSCANPATH__TOBSONSEARCHCONSTS ) ;
+
+      BSONObjBuilder constantBuilder(
+                        builder.subobjStart( OPT_FIELD_CONSTANTS ) ) ;
+
+      constantBuilder.append( OPT_FIELD_RAN_IO_COST,
+                              OPT_RANDOM_SCAN_IO_COST ) ;
+      constantBuilder.append( OPT_FIELD_SEQ_IO_COST,
+                              OPT_SEQ_SCAN_IO_COST ) ;
+      constantBuilder.append( OPT_FIELD_SEQ_WRITE_IO_COST,
+                              OPT_SEQ_WRITE_IO_COST ) ;
+      constantBuilder.append( OPT_FIELD_PAGE_UINT,
+                              DMS_PAGE_SIZE_BASE ) ;
+      constantBuilder.append( OPT_FIELD_REC_CPU_COST,
+                              OPT_RECORD_CPU_COST ) ;
+      constantBuilder.append( OPT_FIELD_IDX_CPU_COST,
+                              OPT_IDX_CPU_COST ) ;
+      constantBuilder.append( OPT_FIELD_OPTR_CPU_COST,
+                              OPT_OPTR_BASE_CPU_COST ) ;
+      constantBuilder.append( OPT_FIELD_IO_CPU_RATE,
+                              OPT_IO_CPU_RATE ) ;
+      constantBuilder.append( OPT_FIELD_TB_START_COST,
+                              OPT_TBSCAN_DEFAULT_START_COST ) ;
+      constantBuilder.append( OPT_FIELD_IX_START_COST,
+                              OPT_IXSCAN_DEFAULT_START_COST ) ;
+
+      constantBuilder.done() ;
+
+      PD_TRACE_EXITRC( SDB_OPTEXPSCANPATH__TOBSONSEARCHCONSTS, rc ) ;
+
+      return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTEXPSCANPATH__TOBSONSEARCHOPTIONS, "_optExplainScanPath::_toBSONSearchOptions" )
+   INT32 _optExplainScanPath::_toBSONSearchOptions ( BSONObjBuilder & builder ) const
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_OPTEXPSCANPATH__TOBSONSEARCHOPTIONS ) ;
+
+      BSONObjBuilder optionBuilder(
+                        builder.subobjStart( OPT_FIELD_OPTIONS ) ) ;
+
+      optionBuilder.append( OPT_FIELD_SORT_BUFF_SIZE,
+                            getSortBufferSize() ) ;
+      optionBuilder.append( OPT_FIELD_OPT_COST_THRESHOLD,
+                            getOptCostThreshold() ) ;
+
+      optionBuilder.done() ;
+
+      PD_TRACE_EXITRC( SDB_OPTEXPSCANPATH__TOBSONSEARCHOPTIONS, rc ) ;
+
+      return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTEXPSCANPATH__TOBSONSEARCHINPUTS, "_optExplainScanPath::_toBSONSearchInputs" )
+   INT32 _optExplainScanPath::_toBSONSearchInputs ( BSONObjBuilder & builder ) const
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_OPTEXPSCANPATH__TOBSONSEARCHINPUTS ) ;
+
+      if ( NULL != _pScanNode )
+      {
+         BSONObjBuilder inputBuilder(
+                           builder.subobjStart( OPT_FIELD_INPUT ) ) ;
+
+         inputBuilder.append( OPT_FIELD_PAGES,
+                              (INT32)_pScanNode->getInputPages() ) ;
+         inputBuilder.append( OPT_FIELD_RECORDS,
+                              (INT64)_pScanNode->getInputRecords() ) ;
+         inputBuilder.appendBool( OPT_FIELD_NEED_EVAL_IO,
+                                  _pScanNode->needEvalIOCost() ) ;
+
+         rc = _pScanNode->toBSONCLStatInfo( inputBuilder ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for collection "
+                      "statistics information, rc: %d", rc ) ;
+
+         inputBuilder.done() ;
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB_OPTEXPSCANPATH__TOBSONSEARCHINPUTS, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   /*
+      _optExplainMergePathBase implement
+    */
+   _optExplainMergePathBase::_optExplainMergePathBase ( optPlanAllocator * pAllocator )
+   : _optExplainPath( pAllocator ),
+     _pMergeNode( NULL )
+   {
+   }
+
+   _optExplainMergePathBase::~_optExplainMergePathBase ()
+   {
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTEXPMERGEPATHBASE_CLEARPATH, "_optExplainMergePathBase::clearPath" )
+   void _optExplainMergePathBase::clearPath ()
+   {
+      PD_TRACE_ENTRY( SDB_OPTEXPMERGEPATHBASE_CLEARPATH ) ;
+
+      _optExplainPath::clearPath() ;
+
+      _pMergeNode = NULL ;
+
+      PD_TRACE_EXIT( SDB_OPTEXPMERGEPATHBASE_CLEARPATH ) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTEXPMERGEPATHBASE_EVALUATE, "_optExplainMergePathBase::evaluate" )
+   INT32 _optExplainMergePathBase::evaluate ()
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_OPTEXPMERGEPATHBASE_EVALUATE ) ;
+
+      PD_CHECK( NULL != _pMergeNode, SDB_SYS, error, PDERROR,
+                "Failed to evaluate MERGE node" ) ;
+
+      _pMergeNode->evaluate() ;
+
+   done :
+      PD_TRACE_EXITRC( SDB_OPTEXPMERGEPATHBASE_EVALUATE, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTEXPMERGEPATHBASE__SETMERGENODE, "_optExplainMergePathBase::_setMergeNode" )
+   INT32 _optExplainMergePathBase::_setMergeNode ( optPlanNode *pNode )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_OPTEXPMERGEPATHBASE__SETMERGENODE ) ;
+
+      SDB_ASSERT( NULL != pNode, "pNode is invalid" ) ;
+
+      PD_CHECK( OPT_PLAN_MERGE == pNode->getType() ||
+                OPT_PLAN_COORD == pNode->getType(),
+                SDB_SYS, error, PDERROR, "No merge node is found" ) ;
+
+      _pMergeNode = dynamic_cast<optMergeNodeBase *>( pNode ) ;
+      PD_CHECK( _pMergeNode, SDB_SYS, error, PDERROR,
+                "Failed to set MERGE node" ) ;
+
+   done :
+      PD_TRACE_EXITRC( SDB_OPTEXPMERGEPATHBASE__SETMERGENODE, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   /*
+      _optExplainMergePath implement
+    */
+   _optExplainMergePath::_optExplainMergePath ( optPlanAllocator * pAllocator )
+   : _optExplainMergePathBase( pAllocator )
+   {
+   }
+
+   _optExplainMergePath::~_optExplainMergePath ()
+   {
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTEXPMERGEPATH_CRTMERGEPATH, "_optExplainMergePath::createMergePath" )
+   INT32 _optExplainMergePath::createMergePath ( const rtnContext * context )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_OPTEXPMERGEPATH_CRTMERGEPATH ) ;
+
+      optPlanNode *newNode = NULL ;
+      const rtnContextMainCL *mainCLContext = NULL ;
+
+      clearPath() ;
+
+      mainCLContext = dynamic_cast<const rtnContextMainCL *>( context ) ;
+      PD_CHECK( mainCLContext, SDB_SYS, error, PDERROR,
+                "Failed to get main-collection context" ) ;
+
+      rc = _createMergeNode( context, &newNode ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to create MERGE node, rc: %d", rc ) ;
+
+      rc = _setMergeNode( newNode ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to set MERGE node, rc: %d", rc ) ;
+
+      _setRootNode( newNode ) ;
+
+   done :
+      PD_TRACE_EXITRC( SDB_OPTEXPMERGEPATH_CRTMERGEPATH, rc ) ;
+      return rc ;
+
+   error :
+      clearPath() ;
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTEXPMERGEPATH__CRTMERGENODE, "_optExplainMergePath::_createMergeNode" )
+   INT32 _optExplainMergePath::_createMergeNode ( const rtnContext * srcContext,
+                                                  optPlanNode ** dstNode )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_OPTEXPMERGEPATH__CRTMERGENODE ) ;
+
+      SDB_ASSERT( dstNode, "dstNode is invalid" ) ;
+
+      optPlanNode *newNode = NULL ;
+      const rtnContextMainCL *mainCLContext = NULL ;
+
+      mainCLContext = dynamic_cast<const rtnContextMainCL *>( srcContext ) ;
+      PD_CHECK( NULL != mainCLContext, SDB_SYS, error, PDERROR,
+                "Failed to get main-collection context" ) ;
+      newNode = new ( _pAllocator, std::nothrow )
+                optMainCLMergeNode( srcContext ) ;
+      PD_CHECK( NULL != newNode, SDB_OOM, error, PDERROR,
+                "Failed to allocate MERGE node" ) ;
+
+      (*dstNode) = newNode ;
+
+   done :
+      PD_TRACE_EXITRC( SDB_OPTEXPMERGEPATH__CRTMERGENODE, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTEXPMERGEPATH_TOSIMPLEBSON, "_optExplainMergePath::toSimpleBSON" )
+   INT32 _optExplainMergePath::toSimpleBSON ( BSONObjBuilder & builder )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_OPTEXPMERGEPATH_TOSIMPLEBSON ) ;
+
+      builder.append( OPT_FIELD_NAME, getCollectionName() ) ;
+
+      rc = _pMergeNode->toSimpleBSON( builder ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for simple explain, "
+                   "rc: %d", rc ) ;
+
+   done :
+      PD_TRACE_EXITRC( SDB_OPTEXPMERGEPATH_TOSIMPLEBSON, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   /*
+      _optExplainCoordPath implement
+    */
+   _optExplainCoordPath::_optExplainCoordPath ( optPlanAllocator * pAllocator )
+   : _optExplainMergePathBase( pAllocator )
+   {
+   }
+
+   _optExplainCoordPath::~_optExplainCoordPath ()
+   {
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTEXPCOORDPATH_CRTCOORDPATH, "_optExplainCoordPath::createCoordPath" )
+   INT32 _optExplainCoordPath::createCoordPath ( const rtnContext * context )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_OPTEXPCOORDPATH_CRTCOORDPATH ) ;
+
+      optPlanNode *newNode = NULL ;
+      const rtnContextCoord *coordContext = NULL ;
+
+      clearPath() ;
+
+      coordContext = dynamic_cast<const rtnContextCoord *>( context ) ;
+      PD_CHECK( coordContext, SDB_SYS, error, PDERROR,
+                "Failed to get coord context" ) ;
+
+      rc = _createCoordNode( context, &newNode ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to create COORD node, rc: %d", rc ) ;
+
+      rc = _setMergeNode( newNode ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to set MERGE node, rc: %d", rc ) ;
+
+      _setRootNode( newNode ) ;
+
+   done :
+      PD_TRACE_EXITRC( SDB_OPTEXPCOORDPATH_CRTCOORDPATH, rc ) ;
+      return rc ;
+
+   error :
+      clearPath() ;
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTEXPCOORDPATH_SORTCHILDEXPS, "_optExplainCoordPath::sortChildExplains" )
+   INT32 _optExplainCoordPath::sortChildExplains ()
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_OPTEXPCOORDPATH_SORTCHILDEXPS ) ;
+
+      SDB_ASSERT( NULL != _pMergeNode, "merge node is invalid" ) ;
+
+      optExplainResultList tmpExplainList ;
+      optExplainResultList & childExplainList = _pMergeNode->getChildExplains() ;
+
+      while ( !childExplainList.empty() )
+      {
+         try
+         {
+            BSONElement nodeElement ;
+            const CHAR * nodeName = NULL ;
+
+            BSONObj explainResult = childExplainList.front() ;
+            tmpExplainList.push_back( explainResult ) ;
+            childExplainList.pop_front() ;
+
+            nodeName = explainResult.getStringField( OPT_FIELD_NODE_NAME ) ;
+
+            if ( NULL != nodeName && nodeName[0] != '\0' )
+            {
+               optExplainResultList::iterator iter = childExplainList.begin() ;
+
+               while ( iter != childExplainList.end() )
+               {
+                  BSONObj subExplainResult = ( *iter ) ;
+                  const CHAR * subNodeName =
+                        subExplainResult.getStringField( OPT_FIELD_NODE_NAME ) ;
+
+                  if ( NULL != subNodeName && subNodeName[0] != '\0' &&
+                       0 == ossStrcmp( nodeName, subNodeName ) )
+                  {
+                     tmpExplainList.push_back( subExplainResult ) ;
+                     iter = childExplainList.erase( iter ) ;
+                  }
+                  else
+                  {
+                     iter ++ ;
+                  }
+               }
+            }
+         }
+         catch ( std::exception & e )
+         {
+            PD_LOG( PDERROR, "Failed to prepare explain, received unexpected "
+                    "error: %s", e.what() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+      }
+
+      while ( !tmpExplainList.empty() )
+      {
+         childExplainList.push_back( tmpExplainList.front() ) ;
+         tmpExplainList.pop_front() ;
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB_OPTEXPCOORDPATH_SORTCHILDEXPS, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTEXPCOORDPATH__CRTCOORDNODE, "_optExplainCoordPath::_createCoordNode" )
+   INT32 _optExplainCoordPath::_createCoordNode ( const rtnContext * srcContext,
+                                                  optPlanNode ** dstNode )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_OPTEXPCOORDPATH__CRTCOORDNODE ) ;
+
+      SDB_ASSERT( dstNode, "dstNode is invalid" ) ;
+
+      optPlanNode *newNode = NULL ;
+      const rtnContextCoord *coordContext = NULL ;
+
+      coordContext = dynamic_cast<const rtnContextCoord *>( srcContext ) ;
+      PD_CHECK( NULL != coordContext, SDB_SYS, error, PDERROR,
+                "Failed to get coord context" ) ;
+      newNode = new ( _pAllocator, std::nothrow )
+                optCoordMergeNode( srcContext ) ;
+      PD_CHECK( NULL != newNode, SDB_OOM, error, PDERROR,
+                "Failed to allocate COORD-MERGE node" ) ;
+
+      (*dstNode) = newNode ;
+
+   done :
+      PD_TRACE_EXITRC( SDB_OPTEXPCOORDPATH__CRTCOORDNODE, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
    }
 
 }

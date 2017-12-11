@@ -64,18 +64,18 @@ namespace engine
    typedef struct _dmsEventSUItem
    {
       _dmsEventSUItem ()
+      : _pCSName( NULL ),
+        _suID( DMS_INVALID_SUID ),
+        _suLID( DMS_INVALID_LOGICCSID )
       {
-         _pCSName = NULL ;
-         _suID = DMS_INVALID_SUID ;
-         _suLID = DMS_INVALID_LOGICCSID ;
       }
 
       _dmsEventSUItem( const CHAR *pCSName, dmsStorageUnitID suID,
                        UINT32 suLID )
+      : _pCSName( pCSName ),
+        _suID( suID ),
+        _suLID( suLID )
       {
-         _pCSName = pCSName ;
-         _suID = suID ;
-         _suLID = suLID ;
       }
 
       const CHAR *      _pCSName ;
@@ -89,17 +89,17 @@ namespace engine
    typedef struct _dmsEventCLItem
    {
       _dmsEventCLItem ()
+      : _pCLName( NULL ),
+        _mbID( DMS_INVALID_MBID ),
+        _clLID( DMS_INVALID_CLID )
       {
-         _pCLName = NULL ;
-         _mbID = DMS_INVALID_MBID ;
-         _clLID = DMS_INVALID_CLID ;
       }
 
       _dmsEventCLItem ( const CHAR *pCLName, UINT16 mbID, UINT32 clLID )
+      : _pCLName( pCLName ),
+        _mbID( mbID ),
+        _clLID( clLID )
       {
-         _pCLName = pCLName ;
-         _mbID = mbID ;
-         _clLID = clLID ;
       }
 
       const CHAR *   _pCLName ;
@@ -113,17 +113,17 @@ namespace engine
    typedef struct _dmsEventIdxItem
    {
       _dmsEventIdxItem ()
+      : _pIXName( NULL ),
+        _idxLID( DMS_INVALID_EXTENT )
       {
-         _pIXName = NULL ;
-         _idxLID = DMS_INVALID_EXTENT ;
       }
 
       _dmsEventIdxItem ( const CHAR *pIXName, dmsExtentID idxLID,
                          const BSONObj &boDefine )
+      : _pIXName( pIXName ),
+        _idxLID( idxLID ),
+        _boDefine( boDefine )
       {
-         _pIXName = pIXName ;
-         _idxLID = idxLID ;
-         _boDefine = boDefine ;
       }
 
       const CHAR *   _pIXName ;

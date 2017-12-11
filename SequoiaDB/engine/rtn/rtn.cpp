@@ -214,6 +214,29 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNGETDOUBLEELE, "rtnGetDoubleElement" )
+   INT32 rtnGetDoubleElement ( const BSONObj &obj, const CHAR *fieldName,
+                               double &value )
+   {
+      SINT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_RTNGETLONGELE );
+      SDB_ASSERT ( fieldName, "field name can't be NULL" ) ;
+      BSONElement ele = obj.getField ( fieldName ) ;
+      PD_CHECK ( !ele.eoo(), SDB_FIELD_NOT_EXIST, error, PDDEBUG,
+                 "Can't locate field '%s': %s",
+                 fieldName,
+                 obj.toString().c_str() ) ;
+      PD_CHECK ( ele.isNumber(), SDB_INVALIDARG, error, PDDEBUG,
+                 "Unexpected field type : %s, supposed to be number",
+                 obj.toString().c_str()) ;
+      value = ele.numberDouble() ;
+   done :
+      PD_TRACE_EXITRC ( SDB_RTNGETLONGELE, rc );
+      return rc ;
+   error :
+      goto done ;
+   }
+
    BSONObj rtnUniqueKeyNameObj( const BSONObj & obj )
    {
       CHAR szTmp[ 5 ] = { 0 } ;

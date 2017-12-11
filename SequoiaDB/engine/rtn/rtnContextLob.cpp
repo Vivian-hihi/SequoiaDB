@@ -348,6 +348,7 @@ namespace engine
                                                  UINT64 eduID )
    :rtnContextBase( contextID, eduID )
    {
+      _pFetcher = NULL ;
    }
 
    _rtnContextLobFetcher::~_rtnContextLobFetcher()

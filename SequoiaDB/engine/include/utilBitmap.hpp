@@ -71,12 +71,12 @@ namespace engine
     */
    class _utilBitmapBase : public SDBObject
    {
-      public :
+      protected :
          _utilBitmapBase ()
+         : _size( 0 ),
+           _bitmapSize( 0 ),
+           _bitmap( NULL )
          {
-            _size = 0 ;
-            _bitmapSize = 0 ;
-            _bitmap = NULL ;
          }
 
          virtual ~_utilBitmapBase ()
@@ -86,6 +86,7 @@ namespace engine
             _bitmap = NULL ;
          }
 
+      public :
          OSS_INLINE void setBit ( UINT32 index )
          {
             if ( index < _size )
@@ -147,9 +148,9 @@ namespace engine
          }
 
       protected :
-         UINT32 _size ;
-         UINT32 _bitmapSize ;
-         UINT8 *_bitmap ;
+         UINT32   _size ;
+         UINT32   _bitmapSize ;
+         UINT8 *  _bitmap ;
    } ;
 
    /*
@@ -218,7 +219,12 @@ namespace engine
          {
             _size = BITMAPSIZE * UTIL_BITMAP_UNIT_SIZE ;
             _bitmapSize = BITMAPSIZE ;
-            _bitmap = &( _bitmapBuf[0] ) ;
+            if ( BITMAPSIZE > 0 )
+            {
+               _bitmap = &( _bitmapBuf[0] ) ;
+            }
+
+            resetBitmap() ;
          }
 
          virtual ~_utilStackBitmap ()

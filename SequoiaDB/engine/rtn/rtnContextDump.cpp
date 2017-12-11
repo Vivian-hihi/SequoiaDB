@@ -47,7 +47,8 @@ namespace engine
    RTN_CTX_AUTO_REGISTER(_rtnContextDump, RTN_CONTEXT_DUMP, "DUMP")
 
    _rtnContextDump::_rtnContextDump( INT64 contextID, UINT64 eduID )
-   :_rtnContextBase( contextID, eduID )
+   : _rtnContextBase( contextID, eduID ),
+     _mthMatchTreeHolder()
    {
       _numToReturn = -1 ;
       _numToSkip   = 0 ;
@@ -123,13 +124,13 @@ namespace engine
       {
          try
          {
-            rc = newMatcher() ;
+            rc = createMatchTree() ;
             if ( rc )
             {
                PD_LOG ( PDERROR, "Failed to create new matcher, rc: %d", rc ) ;
                goto error ;
             }
-            rc = _matcher->loadPattern ( matcher ) ;
+            rc = getMatchTree()->loadPattern ( matcher ) ;
          }
          catch ( std::exception &e )
          {
@@ -178,9 +179,9 @@ namespace engine
       try
       {
          // let's see if it's what we want
-         if ( _matcher && _matcher->isInitialized() )
+         if ( getMatchTree() && getMatchTree()->isInitialized() )
          {
-            rc = _matcher->matches ( result, isMatch ) ;
+            rc = getMatchTree()->matches ( result, isMatch ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to match record, rc: %d", rc ) ;
          }
          // if it matches
@@ -303,6 +304,11 @@ namespace engine
 
    void _rtnContextDump::_toString( stringstream &ss )
    {
+      if ( NULL != getMatchTree() &&
+           !getMatchTree()->getMatchPattern().isEmpty() )
+      {
+         ss << ",Matcher:" << getMatchTree()->getMatchPattern().toString() ;
+      }
       if ( _numToReturn > 0 )
       {
          ss << ",NumToReturn:" << _numToReturn ;

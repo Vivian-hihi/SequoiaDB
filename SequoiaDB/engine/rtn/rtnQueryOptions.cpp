@@ -41,10 +41,141 @@
 #include <sstream>
 
 using namespace bson ;
+using namespace std ;
 
 namespace engine
 {
-   _rtnQueryOptions::~_rtnQueryOptions()
+
+   /*
+      _rtnReturnOptions implement
+    */
+   _rtnReturnOptions::_rtnReturnOptions ()
+   : _skip( 0 ),
+     _limit( -1 ),
+     _flag( 0 )
+   {
+   }
+
+   _rtnReturnOptions::_rtnReturnOptions ( const BSONObj &selector,
+                                          INT64 skip,
+                                          INT64 limit,
+                                          INT32 flag )
+   : _selector( selector ),
+     _skip( skip ),
+     _limit( limit ),
+     _flag( flag )
+   {
+   }
+
+   _rtnReturnOptions::_rtnReturnOptions ( const CHAR *selector,
+                                          INT64 skip,
+                                          INT64 limit,
+                                          INT32 flag )
+   : _selector( selector ),
+     _skip( skip ),
+     _limit( limit ),
+     _flag( flag )
+   {
+   }
+
+   _rtnReturnOptions::_rtnReturnOptions ( const _rtnReturnOptions &options )
+   : _selector( options._selector ),
+     _skip( options._skip ),
+     _limit( options._limit ),
+     _flag( options._flag )
+   {
+   }
+
+   _rtnReturnOptions::~_rtnReturnOptions ()
+   {
+   }
+
+   _rtnReturnOptions & _rtnReturnOptions::operator = ( const _rtnReturnOptions &options )
+   {
+      _selector = options._selector ;
+      _skip = options._skip ;
+      _limit = options._limit ;
+      _flag = options._flag ;
+      return (*this) ;
+   }
+
+   void _rtnReturnOptions::reset ()
+   {
+      _selector = BSONObj() ;
+      _skip = 0 ;
+      _limit = -1 ;
+      _flag = 0 ;
+   }
+
+   INT32 _rtnReturnOptions::getOwned ()
+   {
+      _selector = _selector.getOwned() ;
+      return SDB_OK ;
+   }
+
+   /*
+      _rtnQueryOptions implement
+    */
+   _rtnQueryOptions::_rtnQueryOptions ()
+   : _rtnReturnOptions(),
+     _fullName( NULL ),
+     _fullNameBuf( NULL ),
+     _mainCLName( NULL ),
+     _mainCLNameBuf( NULL )
+   {
+   }
+
+   _rtnQueryOptions::_rtnQueryOptions ( const CHAR *query,
+                                        const CHAR *selector,
+                                        const CHAR *orderBy,
+                                        const CHAR *hint,
+                                        const CHAR *fullName,
+                                        SINT64 skip,
+                                        SINT64 limit,
+                                        INT32 flag )
+   : _rtnReturnOptions( selector, skip, limit, flag ),
+     _query( query ),
+     _orderBy( orderBy ),
+     _hint( hint ),
+     _fullName( fullName ),
+     _fullNameBuf( NULL ),
+     _mainCLName( NULL ),
+     _mainCLNameBuf( NULL )
+   {
+   }
+
+   _rtnQueryOptions::_rtnQueryOptions ( const BSONObj &query,
+                                        const BSONObj &selector,
+                                        const BSONObj &orderBy,
+                                        const BSONObj &hint,
+                                        const CHAR *fullName,
+                                        SINT64 skip,
+                                        SINT64 limit,
+                                        INT32 flag )
+   : _rtnReturnOptions( selector, skip, limit, flag ),
+     _query( query ),
+     _orderBy( orderBy ),
+     _hint( hint ),
+     _fullName( fullName ),
+     _fullNameBuf( NULL ),
+     _mainCLName( NULL ),
+     _mainCLNameBuf( NULL )
+   {
+   }
+
+   _rtnQueryOptions::_rtnQueryOptions ( const _rtnQueryOptions &o )
+   : _rtnReturnOptions( o ),
+     _query( o._query ),
+     _orderBy( o._orderBy ),
+     _hint( o._hint ),
+     _fullName( o._fullName ),
+     _fullNameBuf( NULL ),
+     _mainCLName( o._mainCLName ),
+     _mainCLNameBuf( NULL )
+   {
+   }
+
+   _rtnQueryOptions::~_rtnQueryOptions ()
    {
       SAFE_OSS_FREE( _fullNameBuf ) ;
       SAFE_OSS_FREE( _mainCLNameBuf ) ;
@@ -52,9 +183,11 @@ namespace engine
       _mainCLName = NULL ;
    }
 
-   INT32 _rtnQueryOptions::getOwned()
+   INT32 _rtnQueryOptions::getOwned ()
    {
       INT32 rc = SDB_OK ;
+
+      _rtnReturnOptions::getOwned() ;
 
       SAFE_OSS_FREE( _fullNameBuf ) ;
       if ( NULL != _fullName )
@@ -81,9 +214,9 @@ namespace engine
       _mainCLName = _mainCLNameBuf ;
 
       _query = _query.getOwned() ;
-      _selector = _selector.getOwned() ;
       _orderBy = _orderBy.getOwned() ;
       _hint = _hint.getOwned() ;
+
    done:
       return rc ;
    error:
@@ -92,7 +225,7 @@ namespace engine
 
    void _rtnQueryOptions::setCLFullName ( const CHAR *clFullName )
    {
-      SAFE_OSS_DELETE( _fullNameBuf ) ;
+      SAFE_OSS_FREE( _fullNameBuf ) ;
       if ( NULL != clFullName && '\0' != clFullName[0] )
       {
          _fullName = clFullName ;
@@ -105,7 +238,7 @@ namespace engine
 
    void _rtnQueryOptions::setMainCLName ( const CHAR *mainCLName )
    {
-      SAFE_OSS_DELETE( _mainCLNameBuf ) ;
+      SAFE_OSS_FREE( _mainCLNameBuf ) ;
       if ( NULL != mainCLName && '\0' != mainCLName[0] )
       {
          _mainCLName = mainCLName ;
@@ -116,8 +249,8 @@ namespace engine
       }
    }
 
-   void _rtnQueryOptions::setMainCLQuery( const CHAR *mainCLName,
-                                          const CHAR *subCLName )
+   void _rtnQueryOptions::setMainCLQuery ( const CHAR *mainCLName,
+                                           const CHAR *subCLName )
    {
       SDB_ASSERT( NULL != mainCLName && '\0' != mainCLName[0],
                   "Invalid main-collection name" ) ;
@@ -127,23 +260,22 @@ namespace engine
       setCLFullName( subCLName ) ;
    }
 
-   _rtnQueryOptions &_rtnQueryOptions::operator=( const _rtnQueryOptions &o )
+   _rtnQueryOptions &_rtnQueryOptions::operator = ( const _rtnQueryOptions &o )
    {
+      _rtnReturnOptions::operator =( o ) ;
+
       _query = o._query ;
-      _selector = o._selector ;
       _orderBy = o._orderBy ;
       _hint = o._hint ;
       _fullName = o._fullName ;
       SAFE_OSS_FREE( _fullNameBuf ) ;
       _mainCLName = o._mainCLName ;
       SAFE_OSS_FREE( _mainCLNameBuf ) ;
-      _skip = o._skip ;
-      _limit = o._limit ;
-      _flag = o._flag ;
+
       return *this ;
    }
 
-   string _rtnQueryOptions::toString() const
+   string _rtnQueryOptions::toString () const
    {
       stringstream ss ;
       if ( _fullName )
@@ -164,7 +296,7 @@ namespace engine
       return ss.str() ;
    }
 
-   INT32 _rtnQueryOptions::fromQueryMsg( CHAR *pMsg )
+   INT32 _rtnQueryOptions::fromQueryMsg ( CHAR *pMsg )
    {
       INT32 rc = SDB_OK ;
       CHAR *pQuery = NULL ;
@@ -203,9 +335,9 @@ namespace engine
       goto done ;
    }
 
-   INT32 _rtnQueryOptions::toQueryMsg( CHAR **ppMsg,
-                                       INT32 &buffSize,
-                                       IExecutor *cb ) const
+   INT32 _rtnQueryOptions::toQueryMsg ( CHAR **ppMsg,
+                                        INT32 &buffSize,
+                                        IExecutor *cb ) const
    {
       INT32 rc = SDB_OK ;
 

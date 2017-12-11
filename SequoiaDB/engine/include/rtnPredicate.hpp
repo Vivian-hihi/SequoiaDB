@@ -60,8 +60,8 @@ namespace engine
          typedef struct _rtnParam
          {
             _rtnParam ()
+            : _doneByPred( FALSE )
             {
-               _doneByPred = FALSE ;
             }
 
             BSONElement _param ;

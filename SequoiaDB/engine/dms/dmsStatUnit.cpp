@@ -75,11 +75,11 @@ namespace engine
       _dmsStatValues implement
     */
    _dmsStatValues::_dmsStatValues ()
+   : _numKeys( 0 ),
+     _size( 0 ),
+     _allocSize( 0 ),
+     _pValues( NULL )
    {
-      _numKeys = 0 ;
-      _size = 0 ;
-      _allocSize = 0 ;
-      _pValues = NULL ;
    }
 
    _dmsStatValues::~_dmsStatValues ()
@@ -296,10 +296,10 @@ namespace engine
       _dmsStatMCVSet implement
     */
    _dmsStatMCVSet::_dmsStatMCVSet ()
-   : _dmsStatValues ()
+   : _dmsStatValues (),
+     _pFractions( NULL ),
+     _totalFrac( 0 )
    {
-      _pFractions = NULL ;
-      _totalFrac = 0 ;
    }
 
    _dmsStatMCVSet::~_dmsStatMCVSet ()
@@ -567,24 +567,22 @@ namespace engine
       _dmsStatUnit implement
     */
    _dmsStatUnit::_dmsStatUnit ()
-   : _utilSUCacheUnit()
+   : _utilSUCacheUnit(),
+     _sampleRecords( DMS_STAT_DEF_TOTAL_RECORDS ),
+     _totalRecords( DMS_STAT_DEF_TOTAL_RECORDS ),
+     _suLogicalID( DMS_INVALID_LOGICCSID ),
+     _clLogicalID( DMS_INVALID_CLID )
    {
-      _clLogicalID = DMS_INVALID_CLID ;
-      _suLogicalID = DMS_INVALID_LOGICCSID ;
-
-      _sampleRecords = DMS_STAT_DEF_TOTAL_RECORDS ;
-      _totalRecords = DMS_STAT_DEF_TOTAL_RECORDS ;
    }
 
    _dmsStatUnit::_dmsStatUnit ( UINT32 suLID, UINT16 mbID, UINT32 clLID,
                                 UINT64 createTime )
-   : _utilSUCacheUnit( mbID, createTime )
+   : _utilSUCacheUnit( mbID, createTime ),
+     _sampleRecords( DMS_STAT_DEF_TOTAL_RECORDS ),
+     _totalRecords( DMS_STAT_DEF_TOTAL_RECORDS ),
+     _suLogicalID( suLID ),
+     _clLogicalID( clLID )
    {
-      _suLogicalID = suLID ;
-      _clLogicalID = clLID ;
-
-      _sampleRecords = DMS_STAT_DEF_TOTAL_RECORDS ;
-      _totalRecords = DMS_STAT_DEF_TOTAL_RECORDS ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSSTATBASE_INIT, "_dmsStatUnit::init" )
@@ -682,24 +680,42 @@ namespace engine
       _dmsIndexStat implement
     */
    _dmsIndexStat::_dmsIndexStat ()
-   : _dmsStatUnit ()
+   : _dmsStatUnit (),
+     _pCSName( NULL ),
+     _pCLName( NULL ),
+     _indexLogicalID( DMS_INVALID_EXTENT ),
+     _pFirstField( NULL ),
+     _numKeys( 0 ),
+     _indexPages( DMS_STAT_DEF_TOTAL_PAGES ),
+     _indexLevels( DMS_STAT_DEF_IDX_LEVELS ),
+     _isUnique( FALSE ),
+     _distinctValues( 0 ),
+     _nullFrac( 0 ),
+     _undefFrac( 0 ),
+     _mcvSet()
    {
-      setCSName( NULL ) ;
-      setCLName( NULL ) ;
       setIndexName( NULL ) ;
-      _initDefaultItems() ;
    }
 
    _dmsIndexStat::_dmsIndexStat ( const CHAR *pCSName, const CHAR *pCLName,
                                   const CHAR *pIndexName, UINT32 suLID,
                                   UINT16 mbID, UINT32 clLID,
                                   UINT64 createTime )
-   : _dmsStatUnit( suLID, mbID, clLID, createTime )
+   : _dmsStatUnit( suLID, mbID, clLID, createTime ),
+     _pCSName( pCSName ),
+     _pCLName( pCLName ),
+     _indexLogicalID( DMS_INVALID_EXTENT ),
+     _pFirstField( NULL ),
+     _numKeys( 0 ),
+     _indexPages( DMS_STAT_DEF_TOTAL_PAGES ),
+     _indexLevels( DMS_STAT_DEF_IDX_LEVELS ),
+     _isUnique( FALSE ),
+     _distinctValues( 0 ),
+     _nullFrac( 0 ),
+     _undefFrac( 0 ),
+     _mcvSet()
    {
-      setCSName( pCSName ) ;
-      setCLName( pCLName ) ;
       setIndexName( pIndexName ) ;
-      _initDefaultItems() ;
    }
 
    _dmsIndexStat::~_dmsIndexStat ()
@@ -900,23 +916,6 @@ namespace engine
       return rc ;
    error :
       goto done ;
-   }
-
-   void _dmsIndexStat::_initDefaultItems ()
-   {
-      _pFirstField = NULL ;
-      _numKeys = 0 ;
-
-      _indexPages = DMS_STAT_DEF_TOTAL_PAGES ;
-      _indexLevels = DMS_STAT_DEF_IDX_LEVELS ;
-
-      _isUnique = FALSE ;
-      _distinctValues = 0 ;
-
-      _nullFrac = 0 ;
-      _undefFrac = 0 ;
-
-      _indexLogicalID = DMS_INVALID_EXTENT ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSIDXSTAT__INITITEM, "_dmsIndexStat::_initItem" )
@@ -1164,11 +1163,13 @@ namespace engine
       _dmsCollectionStat implement
     */
    _dmsCollectionStat::_dmsCollectionStat ()
-   : _dmsStatUnit()
+   : _dmsStatUnit(),
+     _totalDataPages( DMS_STAT_DEF_TOTAL_PAGES ),
+     _totalDataSize( DMS_STAT_DEF_DATA_SIZE * DMS_STAT_DEF_TOTAL_RECORDS ),
+     _avgNumFields( DMS_STAT_DEF_AVG_NUM_FIELDS )
    {
       setCSName( NULL ) ;
       setCLName( NULL ) ;
-      _initDefaultItems() ;
    }
 
    _dmsCollectionStat::_dmsCollectionStat ( const CHAR *pCSName,
@@ -1177,11 +1178,13 @@ namespace engine
                                             UINT16 mbID,
                                             UINT32 clLID,
                                             UINT64 createTime )
-   : _dmsStatUnit( suLID, mbID, clLID, createTime )
+   : _dmsStatUnit( suLID, mbID, clLID, createTime ),
+     _totalDataPages( DMS_STAT_DEF_TOTAL_PAGES ),
+     _totalDataSize( DMS_STAT_DEF_DATA_SIZE * DMS_STAT_DEF_TOTAL_RECORDS ),
+     _avgNumFields( DMS_STAT_DEF_AVG_NUM_FIELDS )
    {
       setCSName( pCSName ) ;
       setCLName( pCLName ) ;
-      _initDefaultItems() ;
    }
 
    _dmsCollectionStat::~_dmsCollectionStat ()
@@ -1369,13 +1372,6 @@ namespace engine
       return pFieldStat ;
    }
 
-   void _dmsCollectionStat::_initDefaultItems ()
-   {
-      _totalDataPages = DMS_STAT_DEF_TOTAL_PAGES ;
-      _totalDataSize = DMS_STAT_DEF_DATA_SIZE * DMS_STAT_DEF_TOTAL_RECORDS ;
-      _avgNumFields = DMS_STAT_DEF_AVG_NUM_FIELDS ;
-   }
-
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSCLSTAT__INITITEM, "_dmsCollectionStat::_initItem" )
    INT32 _dmsCollectionStat::_initItem ( const BSONObj &boStat )
    {
@@ -1527,4 +1523,3 @@ namespace engine
    }
 
 }
-

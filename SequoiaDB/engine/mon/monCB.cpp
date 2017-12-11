@@ -255,4 +255,66 @@ namespace engine
    done:
       return ;
    }
+
+   /*
+      _monContextCB implement
+    */
+   _monContextCB::_monContextCB ()
+   : _contextID( -1 ),
+     _dataRead( 0 ),
+     _indexRead( 0 ),
+     _returnBatches( 0 ),
+     _returnRecords( 0 ),
+     _startTimestamp(),
+     _waitTime(),
+     _queryTime(),
+     _executeTime()
+   {
+   }
+
+   _monContextCB::_monContextCB ( const _monContextCB & monCtxCB )
+   : _contextID( monCtxCB._contextID ),
+     _dataRead( monCtxCB._dataRead ),
+     _indexRead( monCtxCB._indexRead ),
+     _returnBatches( monCtxCB._returnBatches ),
+     _returnRecords( monCtxCB._returnRecords ),
+     _startTimestamp( monCtxCB._startTimestamp ),
+     _waitTime( monCtxCB._waitTime ),
+     _queryTime( monCtxCB._queryTime ),
+     _executeTime( monCtxCB._executeTime )
+   {
+   }
+
+   _monContextCB::~_monContextCB ()
+   {
+   }
+
+   void _monContextCB::reset ()
+   {
+      _contextID     = -1 ;
+      _dataRead      = 0 ;
+      _indexRead     = 0 ;
+      _returnBatches = 0 ;
+      _returnRecords = 0 ;
+      _startTimestamp.clear() ;
+      _waitTime.clear() ;
+      _queryTime.clear() ;
+      _executeTime.clear() ;
+   }
+
+   _monContextCB & _monContextCB::operator = ( const _monContextCB & monCtxCB )
+   {
+      _contextID        = monCtxCB._contextID ;
+      _dataRead         = monCtxCB._dataRead ;
+      _indexRead        = monCtxCB._indexRead ;
+      _returnBatches    = monCtxCB._returnBatches ;
+      _returnRecords    = monCtxCB._returnRecords ;
+      _startTimestamp   = monCtxCB._startTimestamp ;
+      _waitTime         = monCtxCB._waitTime ;
+      _queryTime        = monCtxCB._queryTime ;
+      _executeTime      = monCtxCB._executeTime ;
+
+      return ( *this ) ;
+   }
+
 }

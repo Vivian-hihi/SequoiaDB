@@ -64,9 +64,7 @@ namespace engine
          dmsExtentID       lastExtLID () const { return _lastExtLID ; }
 
          virtual INT32 open( _dmsStorageUnit *su, _dmsMBContext *mbContext,
-                             _pmdEDUCB *cb,
-                             const BSONObj &selector, INT64 numToReturn = -1,
-                             INT64 numToSkip = 0,
+                             _pmdEDUCB *cb, const rtnReturnOptions &returnOptions,
                              const BSONObj *blockObj = NULL,
                              INT32 direction = 1 ) ;
 
@@ -78,9 +76,21 @@ namespace engine
 
          void setQueryModifier ( rtnQueryModifier* modifier ) ;
 
-         OSS_INLINE virtual optAccessPlanRuntime *getPlanRuntime ()
+         OSS_INLINE virtual optAccessPlanRuntime * getPlanRuntime ()
          {
             return &_planRuntime ;
+         }
+
+         OSS_INLINE virtual const optAccessPlanRuntime * getPlanRuntime () const
+         {
+            return &_planRuntime ;
+         }
+
+         virtual void setQueryActivity ( BOOLEAN hitEnd ) ;
+
+         OSS_INLINE const rtnReturnOptions & getReturnOptions () const
+         {
+            return _returnOptions ;
          }
 
       public:
@@ -143,6 +153,8 @@ namespace engine
          SINT64                     _numToReturn ;
          // rest number of records need to skip
          SINT64                     _numToSkip ;
+         // Original return options, number of skip, etc.
+         rtnReturnOptions           _returnOptions ;
 
          // TBSCAN
          dmsExtentID                _extentID ;
@@ -159,6 +171,7 @@ namespace engine
          // query modify
          rtnQueryModifier*          _queryModifier ;
    } ;
+
    typedef _rtnContextData rtnContextData ;
 
    /*
@@ -173,8 +186,7 @@ namespace engine
 
          virtual INT32 open( _dmsStorageUnit *su, _dmsMBContext *mbContext,
                              _pmdEDUCB *cb,
-                             const BSONObj &selector, INT64 numToReturn = -1,
-                             INT64 numToSkip = 0,
+                             const rtnReturnOptions &returnOptions,
                              const BSONObj *blockObj = NULL,
                              INT32 direction = 1 ) ;
 
@@ -189,10 +201,9 @@ namespace engine
          const BSONObj* _nextBlockObj () ;
          INT32          _checkAndPrefetch () ;
          INT32          _getSubContextData( _pmdEDUCB *cb ) ;
-         INT32          _openSubContext( const BSONObj *blockObj,
-                                         const BSONObj &selector,
-                                         _pmdEDUCB *cb,
-                                         INT64 numToReturn ) ;
+         INT32          _openSubContext( _pmdEDUCB *cb,
+                                         const rtnReturnOptions &subReturnOptions,
+                                         const BSONObj *blockObj ) ;
          void           _removeSubContext( rtnContextData *pContext ) ;
          INT32          _getSubCtxWithData ( rtnContextData **ppContext,
                                              _pmdEDUCB *cb ) ;
@@ -225,59 +236,6 @@ namespace engine
    } ;
    typedef _rtnContextTemp rtnContextTemp ;
 
-   class _rtnContextExplain : public _rtnContextBase
-   {
-      DECLARE_RTN_CTX_AUTO_REGISTER()
-   public:
-      _rtnContextExplain( INT64 contextID, UINT64 eduID ) ;
-      virtual ~_rtnContextExplain() ;
-
-   public:
-      virtual std::string      name() const ;
-      virtual RTN_CONTEXT_TYPE getType() const { return RTN_CONTEXT_EXPLAIN ; }
-      virtual _dmsStorageUnit* getSU () { return NULL ; }
-
-      INT32 open( const _rtnQueryOptions &options,
-                  const BSONObj &explainOptions ) ;
-
-   protected:
-      virtual INT32     _prepareData( _pmdEDUCB *cb ) ;
-      virtual BOOLEAN   _canPrefetch () const { return FALSE ; }
-      virtual void      _toString( stringstream &ss ) ;
-
-   private:
-      INT32 _prepareToExplain( _pmdEDUCB *cb ) ;
-
-      INT32 _explainQuery( _pmdEDUCB *cb ) ;
-
-      INT32 _commitResult( _pmdEDUCB *cb ) ;
-
-   private:
-      _rtnQueryOptions _options ;
-      INT64 _queryContextID ;
-      BOOLEAN _needRun ;
-      BOOLEAN _needDetail ;
-
-      /// info before explain
-      monAppCB _beginMon ;
-      ossTimestamp _beginTime ;
-      FLOAT64  _beginUsrCpu ;
-      FLOAT64  _beginSysCpu ;
-
-      /// info after explain
-      monAppCB _endMon ;
-      ossTimestamp _endTime ;
-      FLOAT64  _endUsrCpu ;
-      FLOAT64  _endSysCpu ;
-      INT64 _recordNum ;
-
-      _pmdEDUCB *_cbOfQuery ;
-
-      BSONObjBuilder _builder ;
-      BOOLEAN _explained ;
-
-   } ;
-   typedef class _rtnContextExplain rtnContextExplain ;
 }
 
 #endif /* RTN_CONTEXT_DATA_HPP_ */

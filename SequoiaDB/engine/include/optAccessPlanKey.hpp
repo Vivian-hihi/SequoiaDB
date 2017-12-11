@@ -57,28 +57,28 @@ namespace engine
 {
 
    /*
-      _optAccessPlanInfoBase define
+      _optCollectionInfo define
     */
-   class _optAccessPlanInfoBase
+   class _optCollectionInfo
    {
       public :
-         _optAccessPlanInfoBase ()
+         _optCollectionInfo ()
+         : _suID( DMS_INVALID_SUID ),
+           _suLID( DMS_INVALID_LOGICCSID ),
+           _clLID( DMS_INVALID_CLID ),
+           _mbID( DMS_INVALID_MBID )
          {
-            _suID = DMS_INVALID_SUID ;
-            _suLID = DMS_INVALID_LOGICCSID ;
-            _clLID = DMS_INVALID_CLID ;
-            _mbID = DMS_INVALID_MBID ;
          }
 
-         _optAccessPlanInfoBase ( const _optAccessPlanInfoBase &info )
+         _optCollectionInfo ( const _optCollectionInfo & info )
+         : _suID( info._suID ),
+           _suLID( info._suLID ),
+           _clLID( info._clLID ),
+           _mbID( info._mbID )
          {
-            _suID = info._suID ;
-            _suLID = info._suLID ;
-            _clLID = info._clLID ;
-            _mbID = info._mbID ;
          }
 
-         virtual ~_optAccessPlanInfoBase ()
+         virtual ~_optCollectionInfo ()
          {
          }
 
@@ -127,12 +127,14 @@ namespace engine
          UINT16                  _mbID ;
    } ;
 
+   typedef class _optCollectionInfo optCollectionInfo ;
+
    /*
       _optAccessPlanKey define
     */
    class _optAccessPlanKey : public _rtnQueryOptions,
                              public _utilHashTableKey,
-                             public _optAccessPlanInfoBase
+                             public _optCollectionInfo
    {
       public :
          _optAccessPlanKey ( const rtnQueryOptions &options,
@@ -146,11 +148,6 @@ namespace engine
          {
             _normalizedQuery = _normalizedQuery.getOwned() ;
             return _rtnQueryOptions::getOwned() ;
-         }
-
-         OSS_INLINE const CHAR *getCLFullName () const
-         {
-            return _fullName ;
          }
 
          OSS_INLINE virtual UINT32 getKeyCode () const
@@ -170,44 +167,9 @@ namespace engine
 
          virtual BOOLEAN isEqual ( const _optAccessPlanKey &key ) const ;
 
-         OSS_INLINE const BSONObj &getQuery () const
-         {
-            return _query ;
-         }
-
          OSS_INLINE const BSONObj &getNormalizedQuery () const
          {
             return _normalizedQuery ;
-         }
-
-         OSS_INLINE const BSONObj &getOrderBy () const
-         {
-            return _orderBy ;
-         }
-
-         OSS_INLINE const BSONObj &getHint () const
-         {
-            return _hint ;
-         }
-
-         OSS_INLINE const BSONObj &getSelector () const
-         {
-            return _selector ;
-         }
-
-         OSS_INLINE INT32 getFlag () const
-         {
-            return _flag ;
-         }
-
-         OSS_INLINE SINT64 getSkip () const
-         {
-            return _skip ;
-         }
-
-         OSS_INLINE SINT64 getLimit () const
-         {
-            return _limit ;
          }
 
          OSS_INLINE OPT_PLAN_CACHE_LEVEL getCacheLevel () const
@@ -222,12 +184,17 @@ namespace engine
 
          OSS_INLINE BOOLEAN isSortedIdxRequired () const
          {
-            return ( ( !_orderBy.isEmpty() ) &&
-                     ( OSS_BIT_TEST( _flag, FLG_QUERY_MODIFY ) ||
-                       OSS_BIT_TEST( _flag, FLG_QUERY_FORCE_IDX_BY_SORT ) ) ) ;
+            // In below cases, we must use an index which matches order-by
+            // 1. order-by is not empty
+            // 2. flags is set with FLG_QUERY_MODIFY or
+            //    FLG_QUERY_FORCE_IDX_BY_SORT
+            return ( !isOrderByEmpty() &&
+                     testFlag( FLG_QUERY_MODIFY |
+                               FLG_QUERY_FORCE_IDX_BY_SORT ) ) ;
          }
 
-         OSS_INLINE void generateKeyCode ( dmsStorageUnit *su, dmsMBContext *mbContext )
+         OSS_INLINE void generateKeyCode ( dmsStorageUnit *su,
+                                           dmsMBContext *mbContext )
          {
             setCSInfo( su ) ;
             setCLInfo( mbContext ) ;
@@ -244,22 +211,23 @@ namespace engine
          INT32 normalize ( optAccessPlanHelper &planHelper,
                            mthMatchRuntime *matchRuntime ) ;
 
-         OSS_INLINE const CHAR *getCacheLevelName () const
+         OSS_INLINE static const CHAR * getCacheLevelName (
+                                             OPT_PLAN_CACHE_LEVEL cacheLevel )
          {
-            switch ( _cacheLevel )
+            switch ( cacheLevel )
             {
                case OPT_PLAN_ORIGINAL :
-                  return OPT_CACHE_ORIGINAL_NAME ;
+                  return OPT_VALUE_CACHE_ORIGINAL ;
                case OPT_PLAN_NORMALIZED :
-                  return OPT_CACHE_NORMALIZED_NAME ;
+                  return OPT_VALUE_CACHE_NORMALIZED ;
                case OPT_PLAN_PARAMETERIZED :
-                  return OPT_CACHE_PARAMETERIZED_NAME ;
+                  return OPT_VALUE_CACHE_PARAMETERIZED ;
                case OPT_PLAN_FUZZYOPTR :
-                  return OPT_CACHE_FUZZYOPTR_NAME ;
+                  return OPT_VALUE_CACHE_FUZZYOPTR ;
                default :
                   break ;
             }
-            return OPT_CACHE_NOCACHE_NAME ;
+            return OPT_VALUE_CACHE_NOCACHE ;
          }
 
       protected :
@@ -279,4 +247,3 @@ namespace engine
 }
 
 #endif //OPTACCESSPLANKEY_HPP__
-

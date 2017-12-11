@@ -844,9 +844,9 @@ namespace engine
       optAccessPlanManager *apm = NULL ;
       BSONObj dummy ;
 
-      ossTick startTime ;
+      ossTick startTime, endTime ;
       monContextCB monCtxCB ;
-      BOOLEAN monStarted = FALSE ;
+      rtnReturnOptions returnOptions ;
 
       // Construct options
       // matcher, selector, order, hint, collection, skip, limit, flag
@@ -866,7 +866,7 @@ namespace engine
       SDB_ASSERT ( apm, "apm shouldn't be NULL" ) ;
 
       // plan is released in context destructor
-      rc = apm->getAccessPlan( options, su, mbContext, planRuntime ) ;
+      rc = apm->getAccessPlan( options, FALSE, su, mbContext, planRuntime ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get access plan for %s, "
                    "context %lld, rc: %d", pCollectionName,
                    context->contextID(), rc ) ;
@@ -877,7 +877,6 @@ namespace engine
       }
 
       startTime = krcb->getCurTime() ;
-      monStarted = TRUE ;
 
       rc = mbContext->mbLock( SHARED ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to lock collection[%s], rc: %d",
@@ -903,19 +902,15 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Failed to get collection[%s] query meta, "
                    "rc: %d", pCollectionName, rc ) ;
 
+      endTime = krcb->getCurTime() ;
+
+      monCtxCB.monQueryTimeInc( startTime, endTime ) ;
+      planRuntime.setQueryActivity( MON_SELECT, monCtxCB, returnOptions, TRUE ) ;
+
    done:
       if ( su && mbContext )
       {
          su->data()->releaseMBContext( mbContext ) ;
-      }
-      if ( monStarted )
-      {
-         ossTick endTime = krcb->getCurTime() ;
-         ossTickDelta delta = endTime - startTime ;
-         monCtxCB.monOperationTimeInc( MON_TOTAL_WRITE_TIME, delta ) ;
-         planRuntime.setQueryActivity( -1, MON_SELECT,
-                                       monCtxCB._startTimestampTick,
-                                       monCtxCB.queryTimeSpent ) ;
       }
       planRuntime.releasePlan() ;
       if ( DMS_INVALID_CS != suID )

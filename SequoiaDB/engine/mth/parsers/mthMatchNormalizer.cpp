@@ -52,25 +52,25 @@ namespace engine
       _mthMatchItemBase implement
     */
    _mthMatchItemBase::_mthMatchItemBase ()
+   : _fieldName( NULL ),
+     _opCode( EN_MATCH_OPERATOR_ET )
    {
-      _opCode = EN_MATCH_OPERATOR_ET ;
-      _fieldName = NULL ;
    }
 
    _mthMatchItemBase::_mthMatchItemBase ( const CHAR *fieldName,
                                           EN_MATCH_OP_FUNC_TYPE opCode,
                                           const BSONElement &element )
+   : _fieldName( fieldName ),
+     _opCode( opCode ),
+     _element( element )
    {
-      _fieldName = fieldName ;
-      _opCode = opCode ;
-      _element = element ;
    }
 
    _mthMatchItemBase::_mthMatchItemBase ( const _mthMatchItemBase &item )
+   : _fieldName( item._fieldName ),
+     _opCode( item._opCode ),
+     _element( item._element )
    {
-      _fieldName = item._fieldName ;
-      _opCode = item._opCode ;
-      _element = item._element ;
    }
 
    _mthMatchItemBase::~_mthMatchItemBase ()
@@ -135,14 +135,14 @@ namespace engine
       _mthMatchOpItem implement
     */
    _mthMatchOpItem::_mthMatchOpItem ()
-   : _mthMatchItemBase()
+   : _mthMatchItemBase(),
+     _opWeight( 0 ),
+     _opName( NULL ),
+     _options( NULL ),
+     _paramIndex( -1 ),
+     _fuzzyIndex( -1 ),
+     _node( NULL )
    {
-      _opWeight = 0 ;
-      _opName = NULL ;
-      _options = NULL ;
-      _paramIndex = -1 ;
-      _fuzzyIndex = -1 ;
-      _node = NULL ;
    }
 
    _mthMatchOpItem::~_mthMatchOpItem ()
@@ -514,10 +514,10 @@ namespace engine
       _mthMatchNormalizer implement
     */
    _mthMatchNormalizer::_mthMatchNormalizer ( const mthNodeConfig *config )
-   : _mthMatchConfig( config )
+   : _mthMatchConfig( config ),
+     _itemNumber( 0 ),
+     _invalidMatcher( FALSE )
    {
-      _itemNumber = 0 ;
-      _invalidMatcher = FALSE ;
    }
 
    _mthMatchNormalizer::~_mthMatchNormalizer ()
@@ -996,4 +996,3 @@ namespace engine
    }
 
 }
-

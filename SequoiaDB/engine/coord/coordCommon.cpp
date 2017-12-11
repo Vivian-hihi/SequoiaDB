@@ -341,16 +341,16 @@ namespace engine
       switch ( filterID )
       {
          case FILTER_ID_SELECTOR:
-            pFilter = &queryOption._selector ;
+            pFilter = queryOption.getSelectorPtr() ;
             break ;
          case FILTER_ID_ORDERBY:
-            pFilter = &queryOption._orderBy ;
+            pFilter = queryOption.getOrderByPtr() ;
             break ;
          case FILTER_ID_HINT:
-            pFilter = &queryOption._hint ;
+            pFilter = queryOption.getHintPtr() ;
             break ;
          default:
-            pFilter = &queryOption._query ;
+            pFilter = queryOption.getQueryPtr() ;
             break ;
       }
       return pFilter ;

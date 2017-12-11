@@ -49,6 +49,63 @@ namespace engine
 {
 
    /*
+      _mthMatchTreeHolder implement
+    */
+   _mthMatchTreeHolder::_mthMatchTreeHolder ()
+   : _matchTree( NULL ),
+     _ownedMatchTree( FALSE )
+   {
+   }
+
+   _mthMatchTreeHolder::~_mthMatchTreeHolder ()
+   {
+      deleteMatchTree() ;
+   }
+
+   INT32 _mthMatchTreeHolder::createMatchTree ()
+   {
+      INT32 rc = SDB_OK ;
+
+      deleteMatchTree() ;
+
+      _matchTree = SDB_OSS_NEW _mthMatchTree() ;
+      PD_CHECK( _matchTree, SDB_OOM, error, PDERROR,
+                "Failed to allocate match tree" ) ;
+      _ownedMatchTree = TRUE ;
+
+   done :
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   void _mthMatchTreeHolder::deleteMatchTree ()
+   {
+      if ( _ownedMatchTree && NULL != _matchTree )
+      {
+         SDB_OSS_DEL _matchTree ;
+      }
+      _matchTree = NULL ;
+      _ownedMatchTree = FALSE ;
+   }
+
+   /*
+      _mthMatchTreeStackHolder implement
+    */
+   _mthMatchTreeStackHolder::_mthMatchTreeStackHolder ()
+   : _mthMatchTreeHolder()
+   {
+      _matchTree = (&_stackMatchTree ) ;
+      _ownedMatchTree = TRUE ;
+   }
+
+   _mthMatchTreeStackHolder::~_mthMatchTreeStackHolder ()
+   {
+      _matchTree = NULL ;
+      _ownedMatchTree = FALSE ;
+   }
+
+   /*
       _mthMatchRuntime implement
     */
    _mthMatchRuntime::_mthMatchRuntime ()
@@ -87,7 +144,7 @@ namespace engine
 
       clearPredList() ;
 
-      if ( NULL != _matchTree )
+      if ( NULL != getMatchTree() )
       {
          RTN_PARAM_PREDICATE_LIST *paramPredList = getParamPredList() ;
 
@@ -132,9 +189,9 @@ namespace engine
       _mthMatchRuntimeHolder implement
     */
    _mthMatchRuntimeHolder::_mthMatchRuntimeHolder ()
+   : _matchRuntime( NULL ),
+     _ownedMatchRuntime( FALSE )
    {
-      _matchRuntime = NULL ;
-      _ownedMatchRuntime = FALSE ;
    }
 
    _mthMatchRuntimeHolder::~_mthMatchRuntimeHolder ()
@@ -181,4 +238,3 @@ namespace engine
    }
 
 }
-

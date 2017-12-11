@@ -296,6 +296,8 @@ namespace engine
          BOOLEAN        isTimeout() const ;
          BOOLEAN        isAllReply() ;
 
+         INT64          getMilliTimeout () const ;
+
       public:
          /*
             Send by sub session map and use the pSrcMsg.

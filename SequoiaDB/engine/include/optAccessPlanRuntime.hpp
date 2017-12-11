@@ -41,6 +41,7 @@
 #include "core.hpp"
 #include "oss.hpp"
 #include "ossUtil.hpp"
+#include "monCB.hpp"
 #include "mthMatchRuntime.hpp"
 #include "optAccessPlan.hpp"
 
@@ -48,77 +49,77 @@ using namespace bson ;
 
 namespace engine
 {
+   class _rtnContextBase ;
+   typedef class _rtnContextBase rtnContext ;
+
    class _optAccessPlanManager ;
    typedef class _optAccessPlanManager optAccessPlanManager ;
 
    /*
       _optQueryActivity define
     */
-   class _optQueryActivity : public SDBObject
+   class _optQueryActivity
    {
       public :
          _optQueryActivity () ;
 
-         _optQueryActivity ( INT64 contextID,
-                             MON_OPERATION_TYPES optrType,
-                             ossTick startTSTick,
-                             ossTickDelta queryTimeTick ) ;
+         _optQueryActivity ( MON_OPERATION_TYPES optrType,
+                             const rtnParamList &parameters,
+                             const monContextCB &monCtxCB,
+                             const rtnReturnOptions &returnOptions,
+                             BOOLEAN hitEnd ) ;
 
          virtual ~_optQueryActivity () ;
 
-         void clear () ;
+         virtual void reset () ;
 
          _optQueryActivity & operator = ( const _optQueryActivity & activity ) ;
 
          void toBSON ( BSONObjBuilder &builder ) const ;
-
-         OSS_INLINE INT64 getContextID () const
-         {
-            return _contextID ;
-         }
 
          OSS_INLINE MON_OPERATION_TYPES getOptrType () const
          {
             return _optrType ;
          }
 
-         OSS_INLINE const ossTick & getStartTSTick () const
+         OSS_INLINE BSONObj getParameters () const
          {
-            return _startTSTick ;
+            return _parameters ;
          }
 
-         OSS_INLINE const ossTickDelta & getQueryTimeTick () const
+         OSS_INLINE const ossTickDelta & getQueryTime () const
          {
-            return _queryTimeTick ;
+            return _contextMonitor.getQueryTime() ;
          }
 
          OSS_INLINE BOOLEAN isValid () const
          {
-            return ( -1 != _contextID ||
+            return ( -1 != _contextMonitor.getContextID() ||
                      MON_COUNTER_OPERATION_NONE != _optrType ) ;
          }
 
       protected :
-         INT64                _contextID ;
          MON_OPERATION_TYPES  _optrType ;
-         ossTick              _startTSTick ;
-         ossTickDelta         _queryTimeTick ;
+         BSONObj              _parameters ;
+         rtnReturnOptions     _returnOptions ;
+         monContextCB         _contextMonitor ;
+         BOOLEAN              _hitEnd ;
    } ;
 
    typedef class _optQueryActivity optQueryActivity ;
 
    /*
-      _optAccessPlanInfo define
+      _optCLScanInfo define
     */
-   class _optAccessPlanInfo : public SDBObject,
-                              public _optAccessPlanInfoBase
+   class _optCLScanInfo : public SDBObject,
+                          public _optCollectionInfo
    {
       public :
-         _optAccessPlanInfo () ;
+         _optCLScanInfo () ;
 
-         _optAccessPlanInfo ( const _optAccessPlanInfo &info ) ;
+         _optCLScanInfo ( const _optCLScanInfo & info ) ;
 
-         virtual ~_optAccessPlanInfo () {}
+         virtual ~_optCLScanInfo () ;
 
          OSS_INLINE virtual void setIndexExtID ( dmsExtentID indexExtID )
          {
@@ -130,6 +131,8 @@ namespace engine
             _indexLID = indexLID ;
          }
 
+         virtual void setCLFullName ( const CHAR *pCLFullName ) ;
+
          OSS_INLINE virtual dmsExtentID getIndexExtID () const
          {
             return _indexExtID ;
@@ -140,29 +143,18 @@ namespace engine
             return _indexLID ;
          }
 
-         OSS_INLINE const CHAR *getCLFullName () const
+         OSS_INLINE virtual const CHAR *getCLFullName () const
          {
             return _clFullName ;
          }
 
-         OSS_INLINE void setCLFullName ( const CHAR *pCLFullName )
-         {
-            if ( NULL != pCLFullName )
-            {
-               ossStrncpy( _clFullName, pCLFullName,
-                           DMS_COLLECTION_FULL_NAME_SZ ) ;
-            }
-            else
-            {
-               _clFullName[0] = '\0' ;
-            }
-         }
-
-      public :
-         dmsExtentID       _indexExtID ;
-         dmsExtentID       _indexLID ;
-         CHAR              _clFullName[ DMS_COLLECTION_FULL_NAME_SZ + 1 ] ;
+      protected :
+         dmsExtentID _indexExtID ;
+         dmsExtentID _indexLID ;
+         CHAR        _clFullName[ DMS_COLLECTION_FULL_NAME_SZ + 1 ] ;
    } ;
+
+   typedef class _optCLScanInfo optCLScanInfo ;
 
    /*
       _optAccessPlanRuntime define
@@ -175,34 +167,27 @@ namespace engine
 
          virtual ~_optAccessPlanRuntime () ;
 
-         void clear () ;
+         void reset () ;
 
-         OSS_INLINE void inheritRuntime ( _optAccessPlanRuntime *planRuntime )
-         {
-            // The plan is reused, increase the reference count
-            planRuntime->_plan->incRefCount() ;
-            setPlan( planRuntime->_plan, planRuntime->_apm,
-                     planRuntime->_isNewPlan ) ;
-            setMatchRuntime( planRuntime->getMatchRuntime() ) ;
-         }
+         void inheritRuntime ( _optAccessPlanRuntime *planRuntime ) ;
 
          OSS_INLINE virtual const mthMatchRuntime *getMatchRuntime () const
          {
             return _matchRuntime ? _matchRuntime :
-                                  ( _plan ? _plan->getMatchRuntime() : NULL ) ;
+                   ( _plan ? _plan->getMatchRuntime() : NULL ) ;
          }
 
          OSS_INLINE virtual mthMatchRuntime *getMatchRuntime ()
          {
             return _matchRuntime ? _matchRuntime :
-                                  ( _plan ? _plan->getMatchRuntime() : NULL ) ;
+                   ( _plan ? _plan->getMatchRuntime() : NULL ) ;
          }
 
          virtual mthMatchRuntime *getMatchRuntime ( BOOLEAN checkValid ) ;
 
-         INT32 createPlanInfo () ;
+         INT32 createCLScanInfo () ;
 
-         void deletePlanInfo () ;
+         void deleteCLScanInfo () ;
 
          INT32 bindPlanInfo ( const CHAR *pCLFullName,
                               dmsStorageUnit *su,
@@ -211,6 +196,11 @@ namespace engine
                               dmsExtentID indexLID ) ;
 
          OSS_INLINE _mthMatchTree *getMatchTree ()
+         {
+            return getMatchRuntime()->getMatchTree() ;
+         }
+
+         OSS_INLINE const _mthMatchTree *getMatchTree () const
          {
             return getMatchRuntime()->getMatchTree() ;
          }
@@ -224,7 +214,21 @@ namespace engine
                      getMatchRuntime()->getPredList() ) ;
          }
 
+         OSS_INLINE const rtnPredicateList *getPredList () const
+         {
+            SDB_ASSERT ( _plan && _plan->isInitialized(),
+                         "optAccessPlan must be optimized before start using" ) ;
+            return ( _plan->getMatchRuntime()->isFixedPredList() ?
+                     _plan->getMatchRuntime()->getPredList() :
+                     getMatchRuntime()->getPredList() ) ;
+         }
+
          OSS_INLINE rtnParamList &getParameters ()
+         {
+            return getMatchRuntime()->getParameters() ;
+         }
+
+         OSS_INLINE const rtnParamList &getParameters () const
          {
             return getMatchRuntime()->getParameters() ;
          }
@@ -251,11 +255,26 @@ namespace engine
             return _plan ;
          }
 
+         OSS_INLINE const optAccessPlan *getPlan () const
+         {
+            return _plan ;
+         }
+
+         OSS_INLINE BOOLEAN hasPlan () const
+         {
+            return NULL != _plan ;
+         }
+
          void releasePlan () ;
 
          OSS_INLINE BOOLEAN isNewPlan () const
          {
             return _isNewPlan ;
+         }
+
+         OSS_INLINE const optCLScanInfo * getCLScanInfo () const
+         {
+            return _clScanInfo ;
          }
 
          OSS_INLINE optScanType getScanType () const
@@ -293,42 +312,55 @@ namespace engine
          OSS_INLINE dmsExtentID getIndexCBExtent () const
          {
             SDB_ASSERT( _plan, "_plan is invalid" ) ;
-            return _planInfo ? _planInfo->getIndexExtID() :
-                               _plan->getIndexCBExtent() ;
+            return _clScanInfo ? _clScanInfo->getIndexExtID() :
+                                 _plan->getIndexCBExtent() ;
          }
 
          OSS_INLINE dmsExtentID getIndexLID () const
          {
             SDB_ASSERT( _plan, "_plan is invalid" ) ;
-            return _planInfo ? _planInfo->getIndexLID() :
-                               _plan->getIndexLID() ;
+            return _clScanInfo ? _clScanInfo->getIndexLID() :
+                                 _plan->getIndexLID() ;
          }
 
          OSS_INLINE const CHAR *getCLFullName () const
          {
             SDB_ASSERT( _plan, "_plan is invalid" ) ;
-            return _planInfo ? _planInfo->getCLFullName() :
-                               _plan->getCLFullName() ;
+            return _clScanInfo ? _clScanInfo->getCLFullName() :
+                                 _plan->getCLFullName() ;
          }
 
          OSS_INLINE UINT16 getCLMBID () const
          {
             SDB_ASSERT( _plan, "_plan is invalid" ) ;
-            return _planInfo ? _planInfo->getCLMBID() :
-                               _plan->getCLMBID() ;
+            return _clScanInfo ? _clScanInfo->getCLMBID() :
+                                 _plan->getCLMBID() ;
          }
 
          OSS_INLINE UINT32 getCLLID () const
          {
             SDB_ASSERT( _plan, "_plan is invalid" ) ;
-            return _planInfo ? _planInfo->getCLLID() :
-                               _plan->getCLLID() ;
+            return _clScanInfo ? _clScanInfo->getCLLID() :
+                                 _plan->getCLLID() ;
          }
 
-         void setQueryActivity ( INT64 contextID,
-                                 MON_OPERATION_TYPES optrType,
-                                 ossTick startTSTick,
-                                 ossTickDelta queryTimeTick ) ;
+         void setQueryActivity ( MON_OPERATION_TYPES optrType,
+                                 const monContextCB &monCtxCB,
+                                 const rtnReturnOptions &returnOptions,
+                                 BOOLEAN hitEnd ) ;
+
+         INT32 toExplainPath ( optExplainScanPath &expPath,
+                               const rtnContext *context ) const ;
+
+         OSS_INLINE BSONObj getParsedMatcher () const
+         {
+            return getMatchTree()->getParsedMatcher( getParameters() ) ;
+         }
+
+         OSS_INLINE BSONObj getPredIXBound () const
+         {
+            return getPredList()->getBound() ;
+         }
 
       protected :
          // Pointer to access plan
@@ -345,7 +377,7 @@ namespace engine
 
          // Used for main CL plan, bind sub-collection and index
          BOOLEAN                 _ownedPlanInfo ;
-         _optAccessPlanInfo *    _planInfo ;
+         optCLScanInfo *         _clScanInfo ;
    } ;
 
    typedef class _optAccessPlanRuntime optAccessPlanRuntime ;
@@ -353,4 +385,3 @@ namespace engine
 }
 
 #endif //OPTACCESSPLANRUNTIME_HPP__
-

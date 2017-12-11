@@ -100,7 +100,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNDEL_OPTIONS ) ;
 
-      SDB_ASSERT ( options._fullName, "collection name can't be NULL" ) ;
+      SDB_ASSERT ( options.getCLFullName(), "collection name can't be NULL" ) ;
       SDB_ASSERT ( cb, "educb can't be NULL" ) ;
       SDB_ASSERT ( dmsCB, "dmsCB can't be NULL" ) ;
 
@@ -116,10 +116,6 @@ namespace engine
       INT64 delNum                        = 0 ;
 
       optAccessPlanRuntime planRuntime ;
-
-      ossTick startTime ;
-      monContextCB monCtxCB ;
-      BOOLEAN monStarted = FALSE ;
 
       rc = dmsCB->writable( cb ) ;
       if ( rc )
@@ -153,7 +149,7 @@ namespace engine
       SDB_ASSERT ( apm, "apm shouldn't be NULL" ) ;
 
       // plan is released when exiting the function
-      rc = apm->getAccessPlan( options, su, mbContext, planRuntime ) ;
+      rc = apm->getAccessPlan( options, FALSE, su, mbContext, planRuntime ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get access plan for %s for delete, "
                    "rc: %d", options._fullName, rc ) ;
 
@@ -177,28 +173,37 @@ namespace engine
       }
       PD_RC_CHECK( rc, PDERROR, "Failed to get dms scanner, rc: %d", rc ) ;
 
-      if ( cb->getMonConfigCB()->timestampON )
-      {
-         monCtxCB.recordStartTimestamp() ;
-      }
-
-      startTime = krcb->getCurTime() ;
-      monStarted = TRUE ;
-
       // delete
       {
          _mthRecordGenerator generator ;
          dmsRecordID recordID ;
          ossValuePtr recordDataPtr = 0 ;
 
+         ossTick startTime, endTime, execStartTime, execEndTime ;
+         ossTickDelta queryTime ;
+         monContextCB monCtxCB ;
+         rtnReturnOptions returnOptions ;
+
+         if ( cb->getMonConfigCB()->timestampON )
+         {
+            monCtxCB.recordStartTimestamp() ;
+         }
+
+         startTime = krcb->getCurTime() ;
+
          while ( SDB_OK == ( rc = pScanner->advance( recordID, generator,
                                                      cb ) ) )
          {
+            execStartTime = krcb->getCurTime() ;
+
             generator.getDataPtr( recordDataPtr ) ;
             rc = su->data()->deleteRecord( mbContext, recordID, recordDataPtr,
                                            cb, dpsCB ) ;
             PD_RC_CHECK( rc, PDERROR, "Delete record failed, rc: %d", rc ) ;
             ++delNum ;
+
+            execEndTime = krcb->getCurTime() ;
+            monCtxCB.monExecuteTimeInc( execStartTime, execEndTime ) ;
          }
 
          if ( SDB_DMS_EOC == rc )
@@ -210,18 +215,17 @@ namespace engine
             PD_LOG( PDERROR, "Failed to get next record, rc: %d", rc ) ;
             goto error ;
          }
+
+         endTime = krcb->getCurTime() ;
+         queryTime = endTime - startTime ;
+         queryTime -= monCtxCB.getExecuteTime() ;
+         monCtxCB.setQueryTime( queryTime ) ;
+
+         planRuntime.setQueryActivity( MON_DELETE, monCtxCB, returnOptions,
+                                       TRUE ) ;
       }
 
    done :
-      if ( monStarted )
-      {
-         ossTick endTime = krcb->getCurTime() ;
-         ossTickDelta delta = endTime - startTime ;
-         monCtxCB.monOperationTimeInc( MON_TOTAL_WRITE_TIME, delta ) ;
-         planRuntime.setQueryActivity( -1, MON_DELETE,
-                                       monCtxCB._startTimestampTick,
-                                       monCtxCB.queryTimeSpent ) ;
-      }
       if ( pDelNum )
       {
          *pDelNum = delNum ;

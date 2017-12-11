@@ -60,14 +60,14 @@ namespace engine
      _mthMatchTreeStackHolder(),
      _mthMatchRuntimeHolder(),
      _key( planKey ),
+     _isInitialized( FALSE ),
+     _hintFailed( FALSE ),
+     _isAutoPlan( FALSE ),
      _activityID( OPT_INVALID_ACT_ID ),
-     _refCount( 0 )
+     _refCount( 0 ),
+     _scanPath( &_planAllocator )
    {
-      _isInitialized = FALSE ;
-      _hintFailed = FALSE ;
-      _isAutoPlan = FALSE ;
-
-      _matchTree->setMatchConfig( config ) ;
+      getMatchTree()->setMatchConfig( config ) ;
    }
 
    _optAccessPlan::~_optAccessPlan ()
@@ -101,7 +101,7 @@ namespace engine
       }
    }
 
-   std::string _optAccessPlan::toString () const
+   string _optAccessPlan::toString () const
    {
       stringstream ss ;
       ss << "CollectionName:" << _key.getCLFullName()
@@ -120,38 +120,40 @@ namespace engine
       return ss.str() ;
    }
 
-   void _optAccessPlan::toBSON ( BSONObjBuilder &builder, BOOLEAN detail,
-                                 BOOLEAN cacheInfo ) const
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTACPLAN_TOBSON, "_optAccessPlan::toBSON" )
+   INT32 _optAccessPlan::toBSON ( BSONObjBuilder &builder ) const
    {
-      builder.append( OPT_FIELD_CACHELEVEL, _key.getCacheLevelName() ) ;
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__OPTACPLAN_TOBSON ) ;
+
+      builder.append( OPT_FIELD_CACHE_LEVEL,
+                      optAccessPlanKey::getCacheLevelName( getCacheLevel() ) ) ;
 
       // Selector, skip and limit are not used in cached
-      builder.append( FIELD_NAME_FORMATTED_QUERY,
+      builder.append( OPT_FIELD_QUERY,
                       _key.getNormalizedQuery().isEmpty() ?
-                      _key.getQuery().toString( FALSE, TRUE ).c_str() :
-                      _key.getNormalizedQuery().toString( FALSE, TRUE ).c_str() ) ;
-      builder.append( OPT_FIELD_ORDERBY,
-                      _key.getOrderBy().toString( FALSE, TRUE ).c_str() ) ;
-      builder.append( OPT_FIELD_HINT,
-                      _key.getHint().toString( FALSE, TRUE ).c_str() ) ;
+                      _key.getQuery() :
+                      _key.getNormalizedQuery() ) ;
+      builder.append( OPT_FIELD_SORT, _key.getOrderBy() ) ;
+      builder.append( OPT_FIELD_HINT, _key.getHint() ) ;
       builder.appendBool( OPT_FIELD_SORTED_IDX_REQURED,
                           _key.isSortedIdxRequired() ) ;
 
-      if ( cacheInfo )
-      {
-         builder.append( OPT_FIELD_HASH_CODE, getKeyCode() ) ;
-         builder.append( OPT_FIELD_PLAN_SCORE, getScore() ) ;
-         builder.append( OPT_FIELD_PLAN_REF_COUNT, (INT32)getRefCount() ) ;
-      }
+      builder.append( OPT_FIELD_HASH_CODE, getKeyCode() ) ;
+      builder.append( OPT_FIELD_PLAN_SCORE, getScore() ) ;
+      builder.append( OPT_FIELD_PLAN_REF_COUNT, (INT32)getRefCount() ) ;
 
-      if ( detail )
-      {
-         if ( NULL != _matchTree )
-         {
-            _matchTree->confToBSON( builder ) ;
-         }
-         _toBSONInternal( builder ) ;
-      }
+      rc = _toBSONInternal( builder ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for plan, "
+                   "rc: %d", rc ) ;
+
+   done :
+      PD_TRACE_EXITRC( SDB__OPTACPLAN_TOBSON, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTACPLAN__PREMTHTREE, "_optAccessPlan::_prepareMatchTree" )
@@ -212,13 +214,14 @@ namespace engine
    _optGeneralAccessPlan::_optGeneralAccessPlan ( optAccessPlanKey &planKey,
                                                   const mthNodeConfig &config )
    : _optAccessPlan( planKey, config ),
-     _scanPath( &_planAllocator )
+     _cachedPlanMgr( NULL ),
+     _searchPaths( NULL )
    {
-      _cachedPlanMgr = NULL ;
    }
 
    _optGeneralAccessPlan::~_optGeneralAccessPlan ()
    {
+      _deleteSearchPaths() ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTGENACPLAN__CHKORDER, "_optGeneralAccessPlan::_checkOrderBy" )
@@ -382,8 +385,7 @@ namespace engine
          optIndexStat indexStat( *collectionStat, indexCB ) ;
 
          rc = ixScanPath.createIxScan( _key.getCLFullName(), indexCB,
-                                       _key.getSelector(), planHelper,
-                                       _key.getOrderBy(), priority,
+                                       _key, planHelper, priority,
                                        estCacheSize, collectionStat,
                                        &indexStat ) ;
          PD_RC_CHECK( rc, PDWARNING,
@@ -400,8 +402,7 @@ namespace engine
 
       if ( ixScanPath.isCandidate() )
       {
-         ixScanPath.evaluate( _key.getOrderBy(), _key.getSkip(),
-                              _key.getLimit(), sortBufferSize ) ;
+         ixScanPath.evaluate( _key, sortBufferSize ) ;
       }
 
    done :
@@ -425,14 +426,12 @@ namespace engine
 
       SDB_ASSERT( collectionStat, "collection is invalid" ) ;
 
-      rc = tbScanPath.createTbScan( _key.getCLFullName(), _key.getSelector(),
-                                    planHelper, estCacheSize,
-                                    collectionStat ) ;
+      rc = tbScanPath.createTbScan( _key.getCLFullName(), _key, planHelper,
+                                    estCacheSize, collectionStat ) ;
       PD_RC_CHECK( rc, PDWARNING,
                    "Failed to create index scan node, rc: %d", rc ) ;
 
-      tbScanPath.evaluate( _key.getOrderBy(), _key.getSkip(),
-                           _key.getLimit(), sortBufferSize ) ;
+      tbScanPath.evaluate( _key, sortBufferSize ) ;
 
    done :
        PD_TRACE_EXITRC( SDB__OPTGENACPLAN__ESTTBPLAN, rc ) ;
@@ -504,11 +503,16 @@ namespace engine
 
                   validHints ++ ;
 
-                  if ( ixScanPath.isCandidate() &&
-                       ixScanPath.getTotalCost() < bestEstimateCost )
+                  if ( NULL != _searchPaths )
                   {
-                     bestEstimateCost = ixScanPath.getTotalCost() ;
-                     bestPath.swap( ixScanPath ) ;
+                     _addSearchPath( ixScanPath, planHelper ) ;
+                  }
+
+                  if ( ixScanPath.isCandidate() &&
+                       ixScanPath.getEstTotalCost() < bestEstimateCost )
+                  {
+                     bestEstimateCost = ixScanPath.getEstTotalCost() ;
+                     bestPath.setPath( ixScanPath, TRUE ) ;
                   }
                }
                else if ( bestPath.isEmpty() )
@@ -546,12 +550,18 @@ namespace engine
 
                validHints ++ ;
 
-               if ( ixScanPath.isCandidate() &&
-                    ixScanPath.getTotalCost() < bestEstimateCost )
+               if ( NULL != _searchPaths )
                {
-                  bestEstimateCost = ixScanPath.getTotalCost() ;
-                  bestPath.swap( ixScanPath ) ;
+                  _addSearchPath( ixScanPath, planHelper ) ;
                }
+
+               if ( ixScanPath.isCandidate() &&
+                    ixScanPath.getEstTotalCost() < bestEstimateCost )
+               {
+                  bestEstimateCost = ixScanPath.getEstTotalCost() ;
+                  bestPath.setPath( ixScanPath, TRUE ) ;
+               }
+
                break ;
             }
             case jstNULL :
@@ -574,10 +584,15 @@ namespace engine
                   break ;
                }
 
-               if ( tbScanPath.getTotalCost() < bestEstimateCost )
+               if ( NULL != _searchPaths )
                {
-                  bestEstimateCost = tbScanPath.getTotalCost() ;
-                  bestPath.swap( tbScanPath ) ;
+                  _addSearchPath( tbScanPath, planHelper ) ;
+               }
+
+               if ( tbScanPath.getEstTotalCost() < bestEstimateCost )
+               {
+                  bestEstimateCost = tbScanPath.getEstTotalCost() ;
+                  bestPath.setPath( tbScanPath, TRUE ) ;
                }
 
                break ;
@@ -646,9 +661,7 @@ namespace engine
       optScanType scanType = UNKNOWNSCAN ;
       OPT_PLAN_PATH_PRIORITY priority = OPT_PLAN_DEFAULT_PRIORITY ;
 
-      if ( !_key.getOrderBy().isEmpty() &&
-           ( OSS_BIT_TEST( _key.getFlag(), FLG_QUERY_MODIFY ) ||
-             OSS_BIT_TEST( _key.getFlag(), FLG_QUERY_FORCE_IDX_BY_SORT ) ) )
+      if ( _key.isSortedIdxRequired() )
       {
          // Have order-by and with query flags to required sorted index
          priority = OPT_PLAN_SORTED_IDX_REQUIRED ;
@@ -656,13 +669,13 @@ namespace engine
       else if ( _autoHint &&
                 _hintFailed &&
                 ( !planHelper.isPredicateSetEmpty() ||
-                  !_key.getOrderBy().isEmpty() ) )
+                  !_key.isOrderByEmpty() ) )
       {
          // Have hints, predicates or order-by, which could prefer index-scan
-         if ( OSS_BIT_TEST( _key.getFlag(), FLG_QUERY_FORCE_HINT ) )
+         if ( _key.testFlag( FLG_QUERY_FORCE_HINT ) )
          {
             // Must use index
-            if ( !_key.getOrderBy().isEmpty() )
+            if ( !_key.isOrderByEmpty() )
             {
                priority = OPT_PLAN_SORTED_IDX_REQUIRED ;
             }
@@ -689,7 +702,7 @@ namespace engine
       }
 
       if ( !planHelper.isPredicateSetEmpty() ||
-           !_key.getOrderBy().isEmpty() )
+           !_key.isOrderByEmpty() )
       {
          // We had found a best index earlier, check it first
          if ( collectionStat.getBestIndexName() )
@@ -711,11 +724,17 @@ namespace engine
             else
             {
                bestIdxExtID = ixScanPath.getIndexExtID() ;
-               if ( ixScanPath.isCandidate() &&
-                    ixScanPath.getTotalCost() < bestEstimateCost )
+
+               if ( NULL != _searchPaths )
                {
-                  bestEstimateCost = ixScanPath.getTotalCost() ;
-                  bestPath.swap( ixScanPath ) ;
+                  _addSearchPath( ixScanPath, planHelper ) ;
+               }
+
+               if ( ixScanPath.isCandidate() &&
+                    ixScanPath.getEstTotalCost() < bestEstimateCost )
+               {
+                  bestEstimateCost = ixScanPath.getEstTotalCost() ;
+                  bestPath.setPath( ixScanPath, TRUE ) ;
                   candidateCount ++ ;
                }
             }
@@ -759,11 +778,17 @@ namespace engine
                        _key.getCLFullName(), idx, rc ) ;
                continue ;
             }
-            if ( ixScanPath.isCandidate() &&
-                 ixScanPath.getTotalCost() < bestEstimateCost )
+
+            if ( NULL != _searchPaths )
             {
-               bestEstimateCost = ixScanPath.getTotalCost() ;
-               bestPath.swap( ixScanPath ) ;
+               _addSearchPath( ixScanPath, planHelper ) ;
+            }
+
+            if ( ixScanPath.isCandidate() &&
+                 ixScanPath.getEstTotalCost() < bestEstimateCost )
+            {
+               bestEstimateCost = ixScanPath.getEstTotalCost() ;
+               bestPath.setPath( ixScanPath, TRUE ) ;
                candidateCount ++ ;
 
                // Needn't to evaluate all indexes in below cases:
@@ -792,15 +817,20 @@ namespace engine
                    "index" ) ;
       }
 
+      if ( NULL != _searchPaths )
+      {
+         _addSearchPath( tbScanPath, planHelper ) ;
+      }
+
       // Check the cost of tbScanPath after ixScanPath, so the ixScanPath
       // have higher priority when they have the same costs
       if ( ( ( OPT_PLAN_IDX_PREFERRED == priority &&
                DMS_INVALID_EXTENT == bestPath.getIndexExtID() ) ||
              OPT_PLAN_DEFAULT_PRIORITY == priority ) &&
-           tbScanPath.getTotalCost() < bestEstimateCost )
+           tbScanPath.getEstTotalCost() < bestEstimateCost )
       {
-         bestEstimateCost = tbScanPath.getTotalCost() ;
-         bestPath.swap( tbScanPath ) ;
+         bestEstimateCost = tbScanPath.getEstTotalCost() ;
+         bestPath.setPath( tbScanPath, TRUE ) ;
       }
 
       scanType = bestPath.getScanType() ;
@@ -827,8 +857,6 @@ namespace engine
       }
       PD_RC_CHECK( rc, PDWARNING, "Failed to use scan path, rc: %d", rc ) ;
 
-      PD_LOG( PDDEBUG, "Optimizer: Use plan %s", _scanPath.toString().c_str() ) ;
-
    done :
       PD_TRACE_EXITRC( SDB__OPTGENACPLAN__ESTPLANS, rc ) ;
       return rc ;
@@ -852,7 +880,7 @@ namespace engine
 
       // Clear earlier settings
       _matchRuntime->clearPredList() ;
-      _scanPath.swap( emptyPath ) ;
+      _scanPath.setPath( emptyPath, TRUE ) ;
 
       PD_CHECK( !path.isEmpty(), SDB_SYS, error, PDWARNING,
                 "Try to use unknown path" ) ;
@@ -884,7 +912,7 @@ namespace engine
          }
       }
 
-      _scanPath.swap( path ) ;
+      _scanPath.setPath( path, TRUE ) ;
 
    done :
       PD_TRACE_EXITRC( SDB__OPTGENACPLAN__USEPATH, rc ) ;
@@ -991,8 +1019,15 @@ namespace engine
       rc = _prepareSUCaches( su, mbContext ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to prepare for optimize, rc: %d", rc ) ;
 
+      if ( planHelper.isKeepSearchPaths() )
+      {
+         rc = _createSearchPaths() ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to create search path list, "
+                      "rc: %d", rc ) ;
+      }
+
       // Check hints
-      if ( _key.getHint().isEmpty() )
+      if ( _key.isHintEmpty() )
       {
          // No hints, evaluate the plans directly
          _isAutoPlan = TRUE ;
@@ -1024,6 +1059,8 @@ namespace engine
          _hintFailed = FALSE ;
       }
 
+      PD_LOG( PDDEBUG, "Optimizer: Use plan %s", toString().c_str() ) ;
+
       rc = SDB_OK ;
 
    done :
@@ -1036,14 +1073,6 @@ namespace engine
 
    error :
       goto done ;
-   }
-
-   void _optGeneralAccessPlan::_toBSONInternal ( BSONObjBuilder &builder ) const
-   {
-      builder.appendBool( OPT_FIELD_PARAM_PLAN_VALID, isParamValid() ) ;
-      BSONObjBuilder pathBuilder( builder.subobjStart( OPT_FIELD_PLAN_PATH ) ) ;
-      _scanPath.toBSON( pathBuilder ) ;
-      pathBuilder.done() ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTGENACPLAN_BINDMTHRTM, "_optGeneralAccessPlan::bindMatchRuntime" )
@@ -1060,6 +1089,65 @@ namespace engine
       return rc ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTGENACPLAN_CRTSEARCHPATHS, "_optGeneralAccessPlan::_createSearchPaths" )
+   INT32 _optGeneralAccessPlan::_createSearchPaths ()
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__OPTGENACPLAN_CRTSEARCHPATHS ) ;
+
+      _deleteSearchPaths() ;
+
+      _searchPaths = SDB_OSS_NEW optScanPathList() ;
+      PD_CHECK( NULL != _searchPaths, SDB_OOM, error, PDERROR,
+                "Failed to allocate search list" ) ;
+
+   done :
+      PD_TRACE_EXITRC( SDB__OPTGENACPLAN_CRTSEARCHPATHS, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTGENACPLAN_DELSEARCHPATHS, "_optGeneralAccessPlan::_deleteSearchPaths" )
+   void _optGeneralAccessPlan::_deleteSearchPaths ()
+   {
+      PD_TRACE_ENTRY( SDB__OPTGENACPLAN_DELSEARCHPATHS ) ;
+
+      SAFE_OSS_DELETE( _searchPaths ) ;
+
+      PD_TRACE_EXIT( SDB__OPTGENACPLAN_DELSEARCHPATHS ) ;
+   }
+
+   INT32 _optGeneralAccessPlan::_addSearchPath ( optScanPath & path,
+                                                 const optAccessPlanHelper & planHelper )
+   {
+      INT32 rc = SDB_OK ;
+
+      SDB_ASSERT( NULL != _searchPaths, "search path list is invalid" ) ;
+
+      if ( IXSCAN == path.getScanType() )
+      {
+         rtnPredicateList predList ;
+         UINT32 addedLevel = 0 ;
+         rc = predList.initialize( planHelper.getPredicateSet(),
+                                   path.getKeyPattern(), path.getDirection(),
+                                   addedLevel ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to generate index bounds, "
+                      "rc: %d", rc ) ;
+
+         path.getScanNode()->setIXBound( predList.getBound() ) ;
+      }
+
+      _searchPaths->push_back( path ) ;
+
+   done :
+      return rc ;
+   error :
+      goto done ;
+   }
+
    /*
       _optParamAccessPlan implement
     */
@@ -1067,13 +1155,12 @@ namespace engine
                                               const mthNodeConfig &config )
    : _optGeneralAccessPlan( planKey, config ),
      _mthParamPredListStackHolder(),
-     _paramValidCount( 0 )
+     _isParamValid( FALSE ),
+     _paramValidCount( 0 ),
+     _score( 0.0 )
    {
       SDB_ASSERT( _key.getCacheLevel() >= OPT_PLAN_PARAMETERIZED,
                   "Invalid cache level" ) ;
-
-      _isParamValid = FALSE ;
-      _score = 0.0 ;
    }
 
    _optParamAccessPlan::~_optParamAccessPlan ()
@@ -1082,7 +1169,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTPARAMACPLAN_VALIDPARAM, "_optParamAccessPlan::validateParameterized" )
    BOOLEAN _optParamAccessPlan::validateParameterized ( const _optAccessPlan &plan,
-                                                        const BSONObj &paramArr )
+                                                        const BSONObj &parameters )
    {
       BOOLEAN result = FALSE ;
 
@@ -1093,7 +1180,7 @@ namespace engine
            plan.getIndexLID() == getIndexLID() &&
            plan.getDirection() == getDirection() )
       {
-         _saveParam( paramArr, plan.getScore() ) ;
+         _saveParam( parameters, plan.getScore() ) ;
          result = TRUE ;
       }
       else
@@ -1110,7 +1197,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTPARAMACPLAN_CHKSAVEDPARAM, "_optParamAccessPlan::checkSavedParam" )
-   BOOLEAN _optParamAccessPlan::checkSavedParam ( const BSONObj &paramArr )
+   BOOLEAN _optParamAccessPlan::checkSavedParam ( const BSONObj &parameters )
    {
       BOOLEAN res = FALSE ;
 
@@ -1122,7 +1209,7 @@ namespace engine
 
       for ( UINT32 i = 0 ; i < savedCount ; i++ )
       {
-         if ( paramArr.shallowEqual( _records[ i ]._paramArr ) )
+         if ( parameters.shallowEqual( _records[ i ]._parameters ) )
          {
             res = TRUE ;
             break ;
@@ -1199,7 +1286,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTPARAMACPLAN__SAVEPARAM, "_optParamAccessPlan::_saveParam" )
-   void _optParamAccessPlan::_saveParam ( const BSONObj &paramArr, double score )
+   void _optParamAccessPlan::_saveParam ( const BSONObj &parameters, double score )
    {
       PD_TRACE_ENTRY( SDB__OPTPARAMACPLAN__SAVEPARAM ) ;
 
@@ -1207,7 +1294,7 @@ namespace engine
       if ( paramIndex < OPT_PARAM_VALID_PLAN_NUM )
       {
          // Save the specified plan for validation
-         _records[ paramIndex ]._paramArr = paramArr.copy() ;
+         _records[ paramIndex ]._parameters = parameters.copy() ;
          _records[ paramIndex ]._score = score ;
 
          if ( paramIndex == OPT_PARAM_VALID_PLAN_NUM - 1 )
@@ -1238,6 +1325,41 @@ namespace engine
       PD_TRACE_EXIT( SDB__OPTPARAMACPLAN__SAVEPARAM ) ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTPARAMACPLAN__TOBSONINT, "_optParamAccessPlan::_toBSONInternal" )
+   INT32 _optParamAccessPlan::_toBSONInternal ( BSONObjBuilder &builder ) const
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__OPTPARAMACPLAN__TOBSONINT ) ;
+
+      builder.appendBool( OPT_FIELD_PARAM_PLAN_VALID, isParamValid() ) ;
+
+      // Output the validate parameters when the parameterized plan is
+      // invalidate
+      if ( !isParamValid() )
+      {
+         UINT32 paramValidNum = _paramValidCount.peek() ;
+         if ( paramValidNum > 0 )
+         {
+            BSONArrayBuilder paramBuilder(
+                  builder.subarrayStart( OPT_FIELD_VALID_PARAMS ) ) ;
+            for ( UINT32 index = 0 ; index < paramValidNum ; index++ )
+            {
+               BSONObjBuilder subBuilder( paramBuilder.subobjStart() ) ;
+               subBuilder.appendElements( _records[index]._parameters ) ;
+               subBuilder.append( OPT_FIELD_PLAN_SCORE,
+                                  _records[index]._score ) ;
+               subBuilder.done() ;
+            }
+            paramBuilder.done() ;
+         }
+      }
+
+      PD_TRACE_EXITRC( SDB__OPTPARAMACPLAN__TOBSONINT, rc ) ;
+
+      return rc ;
+   }
+
    /*
       _optMainCLAccessPlan implement
     */
@@ -1245,14 +1367,10 @@ namespace engine
                                                 const mthNodeConfig &config )
    : _optAccessPlan( planKey, config ),
      _mthParamPredListStackHolder(),
-     _mainCLValidCount( 0 )
+     _isMainCLValid( TRUE ),
+     _mainCLValidCount( 0 ),
+     _score( 0.0 )
    {
-      _scanType = TBSCAN ;
-      _indexName[0] = '\0' ;
-      _direction = 1 ;
-      _sortRequired = FALSE ;
-      _isMainCLValid = TRUE ;
-      _score = 0.0 ;
    }
 
    _optMainCLAccessPlan::~_optMainCLAccessPlan ()
@@ -1280,7 +1398,8 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTMAINACPLAN_BINDSUBACPLAN, "_optMainCLAccessPlan::bindSubCLAccessPlan" )
    INT32 _optMainCLAccessPlan::bindSubCLAccessPlan ( optAccessPlanHelper &planHelper,
-                                                     optGeneralAccessPlan *subPlan )
+                                                     optGeneralAccessPlan *subPlan,
+                                                     const BSONObj &parameters )
    {
       INT32 rc = SDB_OK ;
 
@@ -1288,25 +1407,16 @@ namespace engine
 
       SDB_ASSERT( _matchRuntime, "_matchRuntime is invalid" ) ;
 
-      _scanType = subPlan->getScanType() ;
-      if ( IXSCAN == _scanType )
-      {
-         // Copy the name and key pattern of indexes for validate other
-         // sub-collections
-         ossStrncpy( _indexName, subPlan->getIndexName(), IXM_INDEX_NAME_SIZE ) ;
-         _keyPattern = subPlan->getKeyPattern().copy() ;
-      }
-      else
-      {
-         _indexName[0] = '\0' ;
-      }
-      _direction = subPlan->getDirection() ;
-      _sortRequired = subPlan->sortRequired() ;
+      rc = _scanPath.copyPath( subPlan->getScanPath() ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to copy scan path, rc: %d", rc ) ;
+
+      rc = _scanPath.clearScanInfo() ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to clear scan info, rc: %d", rc ) ;
 
       _hintFailed = subPlan->isHintFailed() ;
       _isAutoPlan = subPlan->isAutoGen() ;
 
-      _saveSubCL( subPlan->getCLFullName(), subPlan->getScore() ) ;
+      _saveSubCL( subPlan->getCLFullName(), subPlan->getScore(), parameters ) ;
 
       rc = bindMatchRuntime( _matchRuntime ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to bind match runtime, rc: %d", rc ) ;
@@ -1316,8 +1426,8 @@ namespace engine
            NULL == _matchRuntime->getPredList() )
       {
          rc = _matchRuntime->generatePredList( planHelper.getPredicateSet(),
-                                               _keyPattern,
-                                               _direction,
+                                               subPlan->getKeyPattern(),
+                                               subPlan->getDirection(),
                                                planHelper.getNormalizer() ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to generate predicate list, rc: %d",
                       rc ) ;
@@ -1336,7 +1446,8 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTMAINCLACPLAN_VALIDSUBCL_PLAN, "_optMainCLAccessPlan::validateSubCL" )
-   BOOLEAN _optMainCLAccessPlan::validateSubCL ( const optGeneralAccessPlan *plan )
+   BOOLEAN _optMainCLAccessPlan::validateSubCL ( const optGeneralAccessPlan *plan,
+                                                 const BSONObj &parameters )
    {
       BOOLEAN result = FALSE ;
 
@@ -1344,15 +1455,28 @@ namespace engine
 
       SDB_ASSERT( plan, "plan is invalid" ) ;
 
-      if ( _scanType == plan->getScanType() &&
-           _direction == plan->getDirection() &&
-           _sortRequired == plan->sortRequired() &&
-           0 == ossStrncmp( _indexName, plan->getIndexName(),
-                            IXM_INDEX_NAME_SIZE ) &&
-           _keyPattern.shallowEqual( plan->getKeyPattern() ) )
+      if ( getScanType() == plan->getScanType() &&
+           sortRequired() == plan->sortRequired() )
       {
-         _saveSubCL( plan->getCLFullName(), plan->getScore() ) ;
-         result = TRUE ;
+         if ( IXSCAN == getScanType() )
+         {
+            if ( getDirection() == plan->getDirection() &&
+                 0 == ossStrncmp( getIndexName(), plan->getIndexName(),
+                                  IXM_INDEX_NAME_SIZE ) &&
+                 getKeyPattern().shallowEqual( plan->getKeyPattern() ) )
+            {
+               result = TRUE ;
+            }
+         }
+         else
+         {
+            result = TRUE ;
+         }
+      }
+
+      if ( result )
+      {
+         _saveSubCL( plan->getCLFullName(), plan->getScore(), parameters ) ;
       }
 
       PD_TRACE_EXIT( SDB__OPTMAINCLACPLAN_VALIDSUBCL_PLAN ) ;
@@ -1384,20 +1508,22 @@ namespace engine
             mbLocked = TRUE ;
          }
 
-         rc = su->index()->getIndexCBExtent( mbContext, _indexName, indexExtID ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to get index, rc: %d", rc ) ;
+         rc = su->index()->getIndexCBExtent( mbContext, getIndexName(),
+                                             indexExtID ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get index [%s], rc: %d",
+                      getIndexName(), rc ) ;
 
          {
             ixmIndexCB indexCB( indexExtID, su->index(), mbContext ) ;
 
             PD_CHECK( indexCB.isInitialized(),
                       SDB_DMS_INIT_INDEX, error, PDWARNING,
-                      "Index [%s] is invalid", _indexName ) ;
+                      "Index [%s] is invalid", getIndexName() ) ;
             PD_CHECK( indexCB.getFlag() == IXM_INDEX_FLAG_NORMAL,
                       SDB_IXM_UNEXPECTED_STATUS, error, PDDEBUG,
-                      "Index [%s] is not normal status", _indexName ) ;
+                      "Index [%s] is not normal status", getIndexName() ) ;
 
-            if ( !_keyPattern.shallowEqual( indexCB.keyPattern() ) )
+            if ( !getKeyPattern().shallowEqual( indexCB.keyPattern() ) )
             {
                rc = SDB_IXM_NOTEXIST ;
                PD_LOG( PDERROR, "Index not exists" ) ;
@@ -1502,7 +1628,9 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTMAINCLACPLAN__SAVESUBCL, "_optMainCLAccessPlan::_saveSubCL" )
-   void _optMainCLAccessPlan::_saveSubCL ( const CHAR *pSubCLName, double score )
+   void _optMainCLAccessPlan::_saveSubCL ( const CHAR *pSubCLName,
+                                           double score,
+                                           const BSONObj &parameters )
    {
       PD_TRACE_ENTRY( SDB__OPTMAINCLACPLAN__SAVESUBCL ) ;
 
@@ -1512,6 +1640,8 @@ namespace engine
          // Save the specified plan for validation
          ossStrncpy( _records[ paramIndex ]._subCLName, pSubCLName,
                      DMS_COLLECTION_FULL_NAME_SZ ) ;
+         _records[ paramIndex ]._subCLName[ DMS_COLLECTION_FULL_NAME_SZ ] = '\0' ;
+         _records[ paramIndex ]._parameters = parameters ;
          _records[ paramIndex ]._score = score ;
 
          if ( paramIndex == OPT_PARAM_VALID_PLAN_NUM - 1 )
@@ -1542,10 +1672,42 @@ namespace engine
       PD_TRACE_EXIT( SDB__OPTMAINCLACPLAN__SAVESUBCL ) ;
    }
 
-   void _optMainCLAccessPlan::_toBSONInternal ( BSONObjBuilder &builder ) const
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTMAINCLACPLAN__TOBSONINT, "_optMainCLAccessPlan::_toBSONInternal" )
+   INT32 _optMainCLAccessPlan::_toBSONInternal ( BSONObjBuilder &builder ) const
    {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__OPTMAINCLACPLAN__TOBSONINT ) ;
+
       builder.appendBool( OPT_FIELD_MAINCL_PLAN_VALID, isMainCLValid() ) ;
+
+      if ( !isMainCLValid() )
+      {
+         UINT32 mainCLValidNum = _mainCLValidCount.peek() ;
+         if ( mainCLValidNum > 0 )
+         {
+            BSONArrayBuilder subCLBuilder(
+                  builder.subarrayStart( OPT_FIELD_VALID_SUBCLS ) ) ;
+            for ( UINT32 index = 0 ; index < mainCLValidNum ; index++ )
+            {
+               BSONObjBuilder subBuilder( subCLBuilder.subobjStart() ) ;
+               subBuilder.append( OPT_FIELD_COLLECTION,
+                                  _records[index]._subCLName ) ;
+               if ( !_records[index]._parameters.isEmpty() )
+               {
+                  subBuilder.appendElements( _records[index]._parameters ) ;
+               }
+               subBuilder.append( OPT_FIELD_PLAN_SCORE,
+                                  _records[index]._score ) ;
+               subBuilder.done() ;
+            }
+            subCLBuilder.done() ;
+         }
+      }
+
+      PD_TRACE_EXITRC( SDB__OPTMAINCLACPLAN__TOBSONINT, rc ) ;
+
+      return rc ;
    }
 
 }
-

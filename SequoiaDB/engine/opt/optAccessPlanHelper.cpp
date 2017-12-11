@@ -66,26 +66,25 @@ namespace engine
     */
    _optAccessPlanHelper::_optAccessPlanHelper ( OPT_PLAN_CACHE_LEVEL cacheLevel,
                                                 const optAccessPlanConfig &planConfig,
-                                                const mthNodeConfig &mthConfig )
+                                                const mthNodeConfig &mthConfig,
+                                                BOOLEAN keepSearchPaths )
    : _mthMatchTreeHolder(),
      _optAccessPlanConfigHolder( planConfig ),
      _mthMatchConfigHolder( mthConfig ),
-     _normalizer( getMatchConfigPtr() )
+     _cacheLevel( cacheLevel ),
+     _normalizer( getMatchConfigPtr() ),
+     _isEstimated( FALSE ),
+     _estSelectivity( OPT_MTH_DEFAULT_SELECTIVITY ),
+     _predSelectivity( OPT_MTH_DEFAULT_SELECTIVITY ),
+     _scanSelectivity( OPT_MTH_DEFAULT_SELECTIVITY ),
+     _estCPUCost( OPT_MTH_OPTR_DEFAULT_SELECTIVITY ),
+     _keepSearchPaths( keepSearchPaths )
    {
-      _cacheLevel = cacheLevel ;
-
       // Adjust with cache level
       setMthEnableParameterized( mthConfig._enableParameterized &&
                                  ( cacheLevel >= OPT_PLAN_PARAMETERIZED ) ) ;
       setMthEnableFuzzyOptr( mthConfig._enableFuzzyOptr &&
                              ( cacheLevel >= OPT_PLAN_FUZZYOPTR ) ) ;
-
-      _isEstimated      = FALSE ;
-      _estSelectivity   = OPT_MTH_DEFAULT_SELECTIVITY ;
-      _predSelectivity  = OPT_MTH_DEFAULT_SELECTIVITY ;
-      _scanSelectivity  = OPT_MTH_DEFAULT_SELECTIVITY ;
-      _estCPUCost       = OPT_MTH_OPTR_DEFAULT_SELECTIVITY ;
-
    }
 
    _optAccessPlanHelper::~_optAccessPlanHelper ()
@@ -144,15 +143,15 @@ namespace engine
       double tmpSelectivity = OPT_MTH_DEFAULT_SELECTIVITY ;
       UINT32 tmpCPUCost = OPT_MTH_DEFAULT_CPU_COST ;
 
-      if ( _matchTree != NULL )
+      if ( getMatchTree() != NULL )
       {
          if ( pCollectionStat )
          {
             predSelectivity = pCollectionStat->evalPredicateSet(
                   _predicateSet, mthEnabledMixCmp(), scanSelectivity ) ;
          }
-         _matchTree->evalEstimation( pCollectionStat, tmpSelectivity,
-                                     tmpCPUCost ) ;
+         getMatchTree()->evalEstimation( pCollectionStat, tmpSelectivity,
+                                         tmpCPUCost ) ;
          tmpSelectivity *= predSelectivity ;
       }
 
@@ -194,7 +193,5 @@ namespace engine
       parameters.clearParams() ;
       goto done ;
    }
-
-
 
 }

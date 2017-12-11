@@ -54,29 +54,27 @@ namespace engine
    _optAccessPlanKey::_optAccessPlanKey ( const rtnQueryOptions &options,
                                           OPT_PLAN_CACHE_LEVEL cacheLevel )
    : _rtnQueryOptions( options ),
-     _optAccessPlanInfoBase()
+     _utilHashTableKey(),
+     _optCollectionInfo(),
+     _isValid( FALSE ),
+     _cacheLevel( cacheLevel )
    {
-      SDB_ASSERT( _fullName, "pCLFullName is invalid" ) ;
+      SDB_ASSERT( NULL != getCLFullName(), "pCLFullName is invalid" ) ;
 
       // Selector, skip and limit is not used to generate keys, reset them
-      _selector = BSONObj() ;
-      _skip = 0 ;
-      _limit = -1 ;
-
-      _isValid = FALSE ;
-      _cacheLevel = cacheLevel ;
+      setSelector( BSONObj() ) ;
+      setSkip( 0 ) ;
+      setLimit( -1 ) ;
    }
 
    _optAccessPlanKey::_optAccessPlanKey ( _optAccessPlanKey &planKey )
    : _rtnQueryOptions( planKey ),
-     _optAccessPlanInfoBase( planKey )
+     _utilHashTableKey( planKey ),
+     _optCollectionInfo( planKey ),
+     _isValid( FALSE ),
+     _cacheLevel( planKey._cacheLevel ),
+     _normalizedQuery( planKey._normalizedQuery )
    {
-      // No need to re-calculate
-      _keyCode = planKey._keyCode ;
-
-      _isValid = FALSE ;
-      _cacheLevel = planKey._cacheLevel ;
-      _normalizedQuery = planKey._normalizedQuery ;
    }
 
    _optAccessPlanKey::~_optAccessPlanKey ()
@@ -97,7 +95,7 @@ namespace engine
 
       // Check the IDs of Collection Space and Collection
       if ( DMS_INVALID_SUID == _suID && DMS_INVALID_SUID == planKey._suID &&
-           0 != ossStrncmp( _fullName, planKey._fullName,
+           0 != ossStrncmp( getCLFullName(), planKey.getCLFullName(),
                             DMS_COLLECTION_FULL_NAME_SZ ) )
       {
          return FALSE ;
@@ -116,7 +114,7 @@ namespace engine
       // User query must be identical
       if ( _normalizedQuery.isEmpty() )
       {
-         if ( !_query.shallowEqual( planKey._query ) )
+         if ( !getQuery().shallowEqual( planKey.getQuery() ) )
          {
             return FALSE ;
          }
@@ -130,13 +128,13 @@ namespace engine
       }
 
       // Order by must be identical
-      if ( !_orderBy.shallowEqual( planKey._orderBy ) )
+      if ( !getOrderBy().shallowEqual( planKey.getOrderBy() ) )
       {
          return FALSE ;
       }
 
       // Query with modifier should use index to sort
-      if ( _flag != planKey._flag )
+      if ( getFlag() != planKey.getFlag() )
       {
          BOOLEAN lhsFlag = isSortedIdxRequired() ? TRUE : FALSE ;
          BOOLEAN rhsFlag = planKey.isSortedIdxRequired() ? TRUE : FALSE ;
@@ -148,8 +146,8 @@ namespace engine
 
       /// Hint must compare field by field, and need ignore object field and
       /// field name
-      BSONObjIterator itr( planKey._hint ) ;
-      BSONObjIterator itrSelf( _hint ) ;
+      BSONObjIterator itr( planKey.getHint() ) ;
+      BSONObjIterator itrSelf( getHint() ) ;
       while( itr.more() )
       {
          BSONElement e2 ;
@@ -202,7 +200,7 @@ namespace engine
       SDB_ASSERT( matchRuntime, "matchRuntime is invalid" ) ;
 
       // Copy the query
-      matchRuntime->setQuery( _query, TRUE ) ;
+      matchRuntime->setQuery( getQuery(), TRUE ) ;
 
       rc = planHelper.normalizeQuery( matchRuntime->getQuery(),
                                       normalBuilder,
@@ -225,11 +223,11 @@ namespace engine
 
       PD_CHECK( !invalidMatcher, rc, error, PDERROR,
                 "The matcher [%s] is invalid",
-                _query.toString( FALSE, TRUE ).c_str() ) ;
+                getQuery().toString( FALSE, TRUE ).c_str() ) ;
 
       PD_LOG( PDDEBUG, "Failed to normalize query [%s] with normalizer, change "
               "the cache level to OPT_PLAN_ORIGINAL, rc: %d",
-              _query.toString( FALSE, TRUE ).c_str(), rc ) ;
+              getQuery().toString( FALSE, TRUE ).c_str(), rc ) ;
 
       // Ignore errors, goto full generation for original cache level
       _cacheLevel = OPT_PLAN_ORIGINAL ;
@@ -261,15 +259,15 @@ namespace engine
       }
       else
       {
-         keyCode = ossHash( _fullName ) ;
+         keyCode = ossHash( getCLFullName() ) ;
       }
 
       keyCode ^= ossHash( (CHAR *)&_cacheLevel, sizeof( _cacheLevel ), 5 ) ;
 
       // Query
-      if ( _normalizedQuery.isEmpty() && !_query.isEmpty() )
+      if ( _normalizedQuery.isEmpty() && !isQueryEmpty() )
       {
-         keyCode ^= ossHash( _query.objdata(), _query.objsize() ) ;
+         keyCode ^= getQueryHash() ;
       }
       else if ( !_normalizedQuery.isEmpty() )
       {
@@ -278,13 +276,13 @@ namespace engine
       }
 
       // Order-By
-      if ( !_orderBy.isEmpty() )
+      if ( !isOrderByEmpty() )
       {
-         keyCode ^= ossHash( _orderBy.objdata(), _orderBy.objsize() ) ;
+         keyCode ^= getOrderByHash() ;
       }
 
       // Hint
-      BSONObjIterator itr( _hint ) ;
+      BSONObjIterator itr( getHint() ) ;
       while( itr.more() )
       {
          BSONElement e = itr.next() ;

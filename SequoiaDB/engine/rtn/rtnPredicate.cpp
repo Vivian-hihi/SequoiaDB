@@ -60,8 +60,8 @@ namespace engine
       _rtnParamList implement
     */
    _rtnParamList::_rtnParamList ()
+   : _paramNum( 0 )
    {
-      _paramNum = 0 ;
    }
 
    _rtnParamList::~_rtnParamList ()

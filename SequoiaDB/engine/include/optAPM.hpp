@@ -71,7 +71,7 @@ namespace engine
       public :
          _optAccessPlanCache () ;
 
-         virtual ~_optAccessPlanCache () ;
+         ~_optAccessPlanCache () ;
 
          BOOLEAN initialize ( UINT32 bucketNum,
                               optCachedPlanMonitor *pMonitor ) ;
@@ -119,7 +119,7 @@ namespace engine
       public :
          _optCachedPlanActivity () ;
 
-         virtual ~_optCachedPlanActivity () ;
+         ~_optCachedPlanActivity () ;
 
          void clear () ;
 
@@ -130,37 +130,51 @@ namespace engine
             return _pPlan ;
          }
 
-         OSS_INLINE void setLastAccessTime ( UINT64 lastAccessTime )
-         {
-            _lastAccessTime = lastAccessTime ;
-         }
-
-         OSS_INLINE void incAccessCount ()
-         {
-            _accessCount ++ ;
-            _periodAccessCount ++ ;
-         }
-
-         void decPeriodAccessCount ( UINT32 count ) ;
-
-         OSS_INLINE BOOLEAN isEmpty () const
-         {
-            return ( NULL == _pPlan ) ;
-         }
-
          OSS_INLINE UINT64 getLastAccessTime () const
          {
             return _lastAccessTime ;
          }
 
-         OSS_INLINE UINT32 getPeriodAccessCount () const
+         OSS_INLINE void setLastAccessTime ( UINT64 lastAccessTime )
+         {
+            _lastAccessTime = lastAccessTime ;
+         }
+
+         OSS_INLINE UINT64 getAccessCount () const
+         {
+            return _accessCount ;
+         }
+
+         OSS_INLINE void incAccessCount ()
+         {
+            _accessCount ++ ;
+         }
+
+         OSS_INLINE UINT64 getPeriodAccessCount () const
          {
             return _periodAccessCount ;
          }
 
-         OSS_INLINE UINT32 getAccessCount () const
+         OSS_INLINE void incPeriodAccessCount ()
          {
-            return _accessCount ;
+            _periodAccessCount ++ ;
+         }
+
+         OSS_INLINE void decPeriodAccessCount ( UINT64 count )
+         {
+            if ( _periodAccessCount > count )
+            {
+               _periodAccessCount -= count ;
+            }
+            else
+            {
+               _periodAccessCount = 0 ;
+            }
+         }
+
+         OSS_INLINE BOOLEAN isEmpty () const
+         {
+            return ( NULL == _pPlan ) ;
          }
 
          void setQueryActivity ( const optQueryActivity &queryActivity ) ;
@@ -170,8 +184,8 @@ namespace engine
       protected :
          optAccessPlan *   _pPlan ;
          UINT64            _lastAccessTime ;
-         UINT32            _periodAccessCount ;
-         UINT32            _accessCount ;
+         UINT64            _periodAccessCount ;
+         UINT64            _accessCount ;
          ossTickDelta      _totalQueryTimeTick ;
          optQueryActivity  _maxQueryActivity ;
          optQueryActivity  _minQueryActivity ;
@@ -187,7 +201,7 @@ namespace engine
       public :
          _optCachedPlanMonitor () ;
 
-         virtual ~_optCachedPlanMonitor () ;
+         ~_optCachedPlanMonitor () ;
 
          BOOLEAN initialize ( optAccessPlanCache *pPlanCache ) ;
 
@@ -207,7 +221,7 @@ namespace engine
             {
                optCachedPlanActivity &activity = _pActivities[ activityID ] ;
                activity.setLastAccessTime( _accessTimestamp.inc() ) ;
-               activity.incAccessCount() ;
+               activity.incPeriodAccessCount() ;
             }
          }
 
@@ -328,7 +342,7 @@ namespace engine
       public :
          _optAccessPlanManager () ;
 
-         virtual ~_optAccessPlanManager () ;
+         ~_optAccessPlanManager () ;
 
          INT32 init ( UINT32 bucketNum,
                       OPT_PLAN_CACHE_LEVEL cacheLevel,
@@ -367,6 +381,7 @@ namespace engine
          // Try to get access plan from cache, if could not get access plan
          // from cache, create one
          INT32 getAccessPlan ( const rtnQueryOptions &options,
+                               BOOLEAN keepSearchPaths,
                                dmsStorageUnit *su,
                                dmsMBContext *mbContext,
                                optAccessPlanRuntime &planRuntime ) ;
@@ -464,12 +479,14 @@ namespace engine
 
       protected :
          INT32 _getCLAccessPlan ( const rtnQueryOptions &options,
+                                  BOOLEAN keepSearchPaths,
                                   dmsStorageUnit *su,
                                   dmsMBContext *mbContext,
                                   optAccessPlanRuntime &planRuntime ) ;
 
          INT32 _getCLAccessPlan ( const rtnQueryOptions &options,
                                   OPT_PLAN_CACHE_LEVEL cacheLevel,
+                                  BOOLEAN keepSearchPaths,
                                   dmsStorageUnit *su,
                                   dmsMBContext *mbContext,
                                   optAccessPlanRuntime &planRuntime ) ;
@@ -550,8 +567,7 @@ namespace engine
          OPT_PLAN_CACHE_LEVEL    _cacheLevel ;
    } ;
 
-   typedef _optAccessPlanManager optAccessPlanManager ;
+   typedef class _optAccessPlanManager optAccessPlanManager ;
 }
 
 #endif //OPTAPM_HPP__
-

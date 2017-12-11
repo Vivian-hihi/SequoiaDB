@@ -275,7 +275,7 @@ namespace engine
 
       try
       {
-         BSONObj objQuery = queryOption._query ;
+         BSONObj objQuery = queryOption.getQuery() ;
          BSONElement ele = objQuery.getField( FIELD_NAME_HOST ) ;
          if ( ele.eoo() || ele.type() != String )
          {
@@ -321,7 +321,7 @@ namespace engine
    done:
       if ( strHostName && svcname )
       {
-         PD_AUDIT_COMMAND( AUDIT_SYSTEM, queryOption._fullName + 1,
+         PD_AUDIT_COMMAND( AUDIT_SYSTEM, queryOption.getCLFullName() + 1,
                            AUDIT_OBJ_NODE, "", rc,
                            "HostName:%s, ServiceName:%s", strHostName,
                            svcname ) ;

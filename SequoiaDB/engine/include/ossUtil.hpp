@@ -328,6 +328,15 @@ public :
 #endif
    }
 
+   ossTickCore ( const ossTickCore & tick )
+   {
+#if defined (_WINDOWS)
+      _value.QuadPart = tick._value.QuadPart ;
+#else
+      _value = tick._value ;
+#endif
+   }
+
 #if defined (_WINDOWS)
    LARGE_INTEGER _value ;
 #else
@@ -488,6 +497,16 @@ class ossTickDelta : protected ossTickCore
    friend ossTick operator +  (const ossTick      &x, const ossTickDelta &y) ;
    friend ossTick operator +  (const ossTickDelta &x, const ossTick      &y) ;
 public :
+   ossTickDelta ()
+   : ossTickCore()
+   {
+   }
+
+   ossTickDelta ( const ossTickDelta & delta )
+   : ossTickCore( delta )
+   {
+   }
+
    // set the tick value to zero
    OSS_INLINE void clear(void)
    {
@@ -562,6 +581,13 @@ public :
       return *this ;
    } ;
 
+   // subtract a tick delta from an existing tick interval.
+   OSS_INLINE ossTickDelta & operator -= ( const ossTickDelta & x )
+   {
+      poke( ossTickCore::addOrSub( *this, x, OSS_TICKS_OP_SUB ) ) ;
+      return *this ;
+   } ;
+
    OSS_INLINE ossTickDelta & operator= ( const ossTickDelta &rhs )
    {
       poke( rhs.peek() ) ;
@@ -632,6 +658,16 @@ class ossTick : protected ossTickCore
    friend ossTick operator +  (const ossTickDelta &x, const ossTick &y ) ;
    friend ossTickDelta operator - (const ossTick &x, const ossTick &y ) ;
 public :
+   ossTick ()
+   : ossTickCore()
+   {
+   }
+
+   ossTick ( const ossTick & tick )
+   : ossTickCore( tick )
+   {
+   }
+
    // Get a timestamp represented by tick number.
    // Tick values are only valid relative to each other, and cannot be
    // converted to time of day/date values. Conversion to time units can be

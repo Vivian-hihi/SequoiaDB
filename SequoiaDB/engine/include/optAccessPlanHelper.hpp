@@ -52,19 +52,19 @@ namespace engine
    typedef struct _optAccessPlanConfig
    {
       _optAccessPlanConfig ()
+      : _sortBufferSize( 0 ),
+        _optCostThreshold( 0 )
       {
-         _sortBufferSize = 0 ;
-         _optCostThreshold = 0 ;
       }
 
       _optAccessPlanConfig ( const _optAccessPlanConfig &config )
+      : _sortBufferSize( config._sortBufferSize ),
+        _optCostThreshold( config._optCostThreshold )
       {
-         _sortBufferSize = config._sortBufferSize ;
-         _optCostThreshold = config._optCostThreshold ;
       }
 
-      UINT32 _sortBufferSize ;
-      INT32 _optCostThreshold ;
+      UINT32   _sortBufferSize ;
+      INT32    _optCostThreshold ;
    } optAccessPlanConfig ;
 
    /*
@@ -82,6 +82,12 @@ namespace engine
          OSS_INLINE const optAccessPlanConfig & getPlanConfig () const
          {
             return _config ;
+         }
+
+         OSS_INLINE void setPlanConfig ( const optAccessPlanConfig & config )
+         {
+            _config._sortBufferSize = config._sortBufferSize ;
+            _config._optCostThreshold = config._optCostThreshold ;
          }
 
          OSS_INLINE void setSortBufferSize ( UINT32 sortBufferSize )
@@ -121,7 +127,8 @@ namespace engine
       public :
          _optAccessPlanHelper ( OPT_PLAN_CACHE_LEVEL cacheLevel,
                                 const optAccessPlanConfig &planConfig,
-                                const mthNodeConfig &mthConfig ) ;
+                                const mthNodeConfig &mthConfig,
+                                BOOLEAN keepSearchPaths ) ;
 
          virtual ~_optAccessPlanHelper () ;
 
@@ -179,6 +186,16 @@ namespace engine
             return ( _predicateSet.getSize() == 0 ) ;
          }
 
+         OSS_INLINE void setKeepSearchPaths ( BOOLEAN keepSearchPaths )
+         {
+            _keepSearchPaths = keepSearchPaths ;
+         }
+
+         OSS_INLINE BOOLEAN isKeepSearchPaths () const
+         {
+            return _keepSearchPaths ;
+         }
+
       protected :
          void _evalEstimation ( optCollectionStat *pCollectionStat ) ;
 
@@ -199,10 +216,11 @@ namespace engine
          double            _scanSelectivity ;
          // The CPU cost of the matcher
          UINT32            _estCPUCost ;
+
+         BOOLEAN           _keepSearchPaths ;
    } ;
 
    typedef class _optAccessPlanHelper optAccessPlanHelper ;
 }
 
 #endif //OPT_ACCESSPLANHELPER_HPP__
-

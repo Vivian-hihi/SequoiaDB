@@ -147,8 +147,8 @@ namespace engine
    {
       public :
          _optStatUnit ( UINT64 totalRecords )
+         : _totalRecords( totalRecords )
          {
-            _totalRecords = totalRecords ;
          }
 
          virtual ~_optStatUnit () {}
@@ -182,7 +182,7 @@ namespace engine
                               double &scanSelectivity ) const ;
 
       protected :
-         UINT64         _totalRecords ;
+         UINT64 _totalRecords ;
    } ;
 
    /*

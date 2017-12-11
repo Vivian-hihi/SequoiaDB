@@ -482,10 +482,11 @@ namespace engine
    _optIndexStat::_optIndexStat ( const optCollectionStat &collectionStat,
                                   const ixmIndexCB &indexCB )
    : _optStatUnit( collectionStat.getTotalRecords( TRUE ) ),
-     _collectionStat( collectionStat )
+     _collectionStat( collectionStat ),
+     _pIndexStat( collectionStat.getIndexStat( indexCB.getName() ) ),
+     _keyPattern( indexCB.keyPattern() )
    {
-      _pIndexStat = collectionStat.getIndexStat( indexCB.getName() ) ;
-      _keyPattern = indexCB.keyPattern().copy() ;
+      _keyPattern = _keyPattern.getOwned() ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTIDXSTAT_EVALPREDLIST, "_optStatUnit::evalPredicateList" )
@@ -503,6 +504,8 @@ namespace engine
       {
          predSelectivity = 1.0 ;
          scanSelectivity = 1.0 ;
+
+         goto done ;
       }
       else if ( isValid() )
       {
@@ -529,8 +532,8 @@ namespace engine
          scanSelectivity = predSelectivity ;
       }
 
+   done :
       PD_TRACE_EXIT( SDB__OPTIDXSTAT_EVALPREDLIST ) ;
-
       return predSelectivity ;
    }
 
@@ -583,29 +586,26 @@ namespace engine
    _optCollectionStat::_optCollectionStat ( UINT32 pageSize,
                                             _dmsMBContext *mbContext,
                                             const dmsStatCache *statCache )
-   : _optStatUnit( 0 )
+   : _optStatUnit( 0 ),
+     _pageSize( pageSize ),
+     _totalDataPages( 0 ),
+     _totalDataSize( 0 ),
+     _numIndexes( 0 ),
+     _totalIndexPages( 0 ),
+     _totalIndexSize( 0 ),
+     _avgIndexPages( 0 ),
+     _avgIndexSize( 0 ),
+     _pCollectionStat( NULL ),
+     _bestIndexStat( NULL )
    {
-      _pageSize = pageSize ;
-      _totalDataPages = 0 ;
-      _totalDataSize = 0 ;
-
-      _numIndexes = 0 ;
-      _totalIndexPages = 0 ;
-      _totalIndexSize = 0 ;
-      _avgIndexPages = 0 ;
-      _avgIndexSize = 0 ;
-
-      _pCollectionStat = NULL ;
       if ( statCache )
       {
          // For statistics cache, mbID is ID of cache unit
          _pCollectionStat = (const dmsCollectionStat *)
                             statCache->getCacheUnit( mbContext->mbID() ) ;
       }
-
+      SDB_ASSERT( NULL != mbContext, "mbContext is invalid" ) ;
       initCurStat( mbContext ) ;
-
-      _bestIndexStat = NULL ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTCLSTAT_INITCURSTAT, "_optCollectionStat::initCurStat" )

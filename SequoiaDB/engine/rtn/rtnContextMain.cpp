@@ -44,6 +44,7 @@ namespace engine
 {
    _rtnContextMain::_rtnContextMain( INT64 contextID, UINT64 eduID )
       : _rtnContextBase( contextID, eduID ),
+        _rtnCtxDataDispatcher(),
         _keyGen( NULL ),
         _numToReturn( -1 ),
         _numToSkip( 0 )
@@ -60,13 +61,28 @@ namespace engine
       SUB_ORDERED_CTX_MAP::iterator orderIter = _orderedContextMap.begin() ;
       while ( orderIter != _orderedContextMap.end() )
       {
-         rtnCB->contextDelete( orderIter->second->contextId(), eduCB ) ;
+         rtnCB->contextDelete( orderIter->second->contextID(), eduCB ) ;
          SDB_OSS_DEL orderIter->second ;
          ++orderIter ;
       }
       _orderedContextMap.clear() ;
 
       SAFE_OSS_DELETE( _keyGen ) ;
+   }
+
+   INT32 _rtnContextMain::reopenForExplain ( INT64 numToSkip,
+                                             INT64 numToReturn )
+   {
+      INT32 rc = SDB_OK ;
+
+      _empty() ;
+      _resetTotalRecords( 0 ) ;
+      _isOpened = TRUE ;
+      _hitEnd = FALSE ;
+      _numToSkip = numToSkip ;
+      _numToReturn = numToReturn ;
+
+      return rc ;
    }
 
    INT32 _rtnContextMain::_prepareData( _pmdEDUCB *cb )
@@ -443,4 +459,50 @@ namespace engine
       goto done;
    
    }
+
+   INT32 _rtnContextMain::_processSubContext ( rtnSubContext * subContext,
+                                               BOOLEAN & skipData )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( !_hasProcessor ||
+           0 == subContext->recordNum() )
+      {
+         goto done ;
+      }
+
+      if ( subContext->getProcessType() > (INT64)RTN_CTX_PROCESSOR_BEGIN &&
+           subContext->getProcessType() < (INT64)RTN_CTX_PROCESSOR_END )
+      {
+         rc = _processData( subContext->getProcessType(),
+                            subContext->getDataID(),
+                            subContext->front(),
+                            subContext->remainLength(),
+                            subContext->recordNum() ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to process data, rc: %d", rc ) ;
+         skipData = TRUE ;
+      }
+      else if ( needCheckData() )
+      {
+         rc = _processData( RTN_CTX_PROCESSOR_NONE,
+                            subContext->getDataID(),
+                            subContext->front(),
+                            subContext->remainLength(),
+                            subContext->recordNum() ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to check data, rc: %d", rc ) ;
+      }
+
+      if ( skipData )
+      {
+         rc = subContext->popAll() ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to skip context, rc: %d", rc ) ;
+      }
+
+   done :
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
 }

@@ -386,7 +386,7 @@ namespace engine
       public :
          _mthMatchConfig () ;
          _mthMatchConfig ( const mthNodeConfig *configPtr ) ;
-         virtual ~_mthMatchConfig () ;
+         ~_mthMatchConfig () ;
 
       public :
          OSS_INLINE const mthNodeConfig *getMatchConfigPtr () const
@@ -409,8 +409,10 @@ namespace engine
             return _matchConfig->_enableFuzzyOptr ;
          }
 
-         OSS_INLINE void confToBSON ( BSONObjBuilder &builder ) const
+         OSS_INLINE INT32 confToBSON ( BSONObjBuilder &builder ) const
          {
+            INT32 rc = SDB_OK ;
+
             BSONObjBuilder confBuilder(
                            builder.subobjStart( MTH_FIELD_CONFIG ) ) ;
             confBuilder.appendBool( MTH_FIELD_CONF_MIXCMP,
@@ -420,6 +422,8 @@ namespace engine
             confBuilder.appendBool( MTH_FIELD_CONF_FUZZYOPTR,
                                     mthEnabledFuzzyOptr() ) ;
             confBuilder.done() ;
+
+            return rc ;
          }
 
       protected :
@@ -431,7 +435,7 @@ namespace engine
       public :
          _mthMatchConfigHolder () ;
          _mthMatchConfigHolder ( const mthNodeConfig &config ) ;
-         virtual ~_mthMatchConfigHolder () ;
+         ~_mthMatchConfigHolder () ;
 
       public :
          OSS_INLINE const mthNodeConfig &getMatchConfig () const

@@ -56,7 +56,6 @@ namespace engine
          virtual std::string      name() const ;
          virtual RTN_CONTEXT_TYPE getType () const ;
          virtual _dmsStorageUnit* getSU () ;
-         virtual _optAccessPlan*  getPlan () ;
 
       protected:
          virtual INT32     _prepareData( _pmdEDUCB *cb ) ;

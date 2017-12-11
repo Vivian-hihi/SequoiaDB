@@ -62,10 +62,10 @@ namespace engine
    {
       public :
          _utilHashTableListItem ()
+         : _pList( NULL ),
+           _pPrev( NULL ),
+           _pNext( NULL )
          {
-            _pList = NULL ;
-            _pPrev = NULL ;
-            _pNext = NULL ;
          }
 
          virtual ~_utilHashTableListItem () {}
@@ -122,9 +122,9 @@ namespace engine
    {
       public :
          _utilHashTableList ()
+         : _pHead( NULL ),
+           _pTail( NULL )
          {
-            _pHead = NULL ;
-            _pTail = NULL ;
          }
 
          virtual ~_utilHashTableList () {}
@@ -217,8 +217,13 @@ namespace engine
    {
       public :
          _utilHashTableKey ()
+         : _keyCode( 0 )
          {
-            _keyCode = 0 ;
+         }
+
+         _utilHashTableKey ( const _utilHashTableKey & key )
+         : _keyCode( key._keyCode )
+         {
          }
 
          virtual ~_utilHashTableKey () {}
@@ -357,17 +362,15 @@ namespace engine
 
       public :
          _utilHashTable ()
+         : _bucketNum( 0 ),
+           _bucketModulo( 0 ),
+           _lockModulo( lockNum - 1 ),
+           _buckets( NULL ),
+           _enableAddItem( FALSE )
          {
-            _buckets = NULL ;
-            _bucketNum = 0 ;
-            _bucketModulo = 0 ;
-
-            SDB_ASSERT( lockNum >= 16 && lockNum <= 256 &&
-                        ossRoundUpToMultipleX( lockNum, 16 ) == lockNum,
+            SDB_ASSERT( 16 == lockNum || 32 == lockNum || 64 == lockNum ||
+                        128 == lockNum || 256 == lockNum,
                         "Invalid number of locks" ) ;
-
-            _lockModulo = lockNum - 1 ;
-            _enableAddItem = FALSE ;
          }
 
          virtual ~_utilHashTable ()
@@ -658,4 +661,3 @@ namespace engine
 }
 
 #endif //UTILHASHTABLE_HPP__
-

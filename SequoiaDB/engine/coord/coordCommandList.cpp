@@ -279,8 +279,8 @@ namespace engine
       BSONObjBuilder builder ;
       clName = CAT_COLLECTION_SPACE_COLLECTION ;
       builder.appendNull( CAT_COLLECTION_SPACE_NAME ) ;
-      outSelector = queryOpt._selector ;
-      queryOpt._selector = builder.obj() ;
+      outSelector = queryOpt.getSelector() ;
+      queryOpt.setSelector( builder.obj() ) ;
       return SDB_OK ;
    }
 
@@ -327,8 +327,8 @@ namespace engine
       BSONObjBuilder builder ;
       clName = CAT_COLLECTION_INFO_COLLECTION ;
       builder.appendNull( CAT_COLLECTION_NAME ) ;
-      outSelector = queryOpt._selector ;
-      queryOpt._selector = builder.obj() ;
+      outSelector = queryOpt.getSelector() ;
+      queryOpt.setSelector( builder.obj() ) ;
       return SDB_OK ;
    }
 
@@ -526,11 +526,11 @@ namespace engine
    {
       BSONObjBuilder builder ;
       clName = AUTH_USR_COLLECTION ;
-      if ( queryOpt._selector.isEmpty() )
+      if ( queryOpt.isSelectorEmpty() )
       {
          builder.appendNull( FIELD_NAME_USER ) ;
       }
-      queryOpt._selector = builder.obj() ;
+      queryOpt.setSelector( builder.obj() ) ;
       return SDB_OK ;
    }
 
@@ -721,8 +721,8 @@ namespace engine
          goto error ;
       }
 
-      queryOptions._query = BSON( CAT_DOMAIN_NAME << domain.valuestr() ) ;
-      queryOptions._fullName = CAT_COLLECTION_SPACE_COLLECTION ;
+      queryOptions.setQuery( BSON( CAT_DOMAIN_NAME << domain.valuestr() ) ) ;
+      queryOptions.setCLFullName( CAT_COLLECTION_SPACE_COLLECTION ) ;
 
       rc = queryOnCataAndPushToVec( queryOptions, cb, replyFromCata,
                                     buf ) ; 

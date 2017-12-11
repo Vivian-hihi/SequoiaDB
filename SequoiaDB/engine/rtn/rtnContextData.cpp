@@ -54,7 +54,7 @@ namespace engine
    RTN_CTX_AUTO_REGISTER(_rtnContextData, RTN_CONTEXT_DATA, "DATA")
 
    _rtnContextData::_rtnContextData( INT64 contextID, UINT64 eduID )
-   :_rtnContextBase( contextID, eduID )
+   : _rtnContextBase( contextID, eduID )
    {
       _dmsCB            = NULL ;
       _su               = NULL ;
@@ -70,6 +70,10 @@ namespace engine
       _scanner          = NULL ;
       _direction        = 0 ;
       _queryModifier    = NULL ;
+
+      // Save query activity
+      _enableMonContext = TRUE ;
+      _enableQueryActivity = TRUE ;
    }
 
    _rtnContextData::~_rtnContextData ()
@@ -80,10 +84,8 @@ namespace engine
          _scanner = NULL ;
       }
 
-      // first set activity and release plan
-      _planRuntime.setQueryActivity( contextID(), MON_SELECT,
-                                     _monCtxCB._startTimestampTick,
-                                     _monCtxCB.queryTimeSpent ) ;
+      // first release plan
+      setQueryActivity( _hitEnd ) ;
       _planRuntime.releasePlan() ;
 
       // second release mb context
@@ -122,9 +124,10 @@ namespace engine
 
    void _rtnContextData::_toString( stringstream & ss )
    {
-      if ( _su && _planRuntime.getPlan() )
+      if ( NULL != _su && NULL != _planRuntime.getPlan() )
       {
          ss << ",Collection:" << _planRuntime.getCLFullName() ;
+         ss << ",Matcher:" << _planRuntime.getParsedMatcher().toString() ;
       }
       ss << ",ScanType:" << ( ( TBSCAN == _scanType ) ? "TBSCAN" : "IXSCAN" ) ;
       if ( _numToReturn > 0 )
@@ -239,18 +242,19 @@ namespace engine
       goto done ;
    }
 
-   INT32 _rtnContextData::open( dmsStorageUnit *su, dmsMBContext *mbContext,
+   INT32 _rtnContextData::open( dmsStorageUnit *su,
+                                dmsMBContext *mbContext,
                                 pmdEDUCB *cb,
-                                const BSONObj &selector, INT64 numToReturn,
-                                INT64 numToSkip,
+                                const rtnReturnOptions &returnOptions,
                                 const BSONObj *blockObj,
                                 INT32 direction )
    {
       INT32 rc = SDB_OK ;
       BOOLEAN isStictType = FALSE ;
+      BSONObj selector = returnOptions.getSelector() ;
 
       SDB_ASSERT( su && mbContext, "Invalid param" ) ;
-      SDB_ASSERT( _planRuntime.getPlan(), "Invalid plan" ) ;
+      SDB_ASSERT( _planRuntime.hasPlan(), "Invalid plan" ) ;
 
       if ( _isOpened )
       {
@@ -317,8 +321,13 @@ namespace engine
       _su = su ;
       _mbContext = mbContext ;
       _scanType = _planRuntime.getScanType() ;
-      _numToReturn = numToReturn ;
-      _numToSkip = numToSkip > 0 ? numToSkip : 0 ;
+
+      _returnOptions.setSelector( returnOptions.getSelector().getOwned() ) ;
+      _returnOptions.setSkip( returnOptions.getSkip() ) ;
+      _returnOptions.setLimit( returnOptions.getLimit() ) ;
+      _returnOptions.resetFlag( returnOptions.getFlag() ) ;
+      _numToReturn = returnOptions.getLimit() ;
+      _numToSkip = returnOptions.getSkip() ;
 
       if ( 0 == _numToReturn )
       {
@@ -427,6 +436,12 @@ namespace engine
       SDB_ASSERT( NULL == _queryModifier, "_queryModifier already exists" ) ;
 
       _queryModifier = modifier ;
+   }
+
+   void _rtnContextData::setQueryActivity ( BOOLEAN hitEnd )
+   {
+      _planRuntime.setQueryActivity( MON_SELECT, _monCtxCB, _returnOptions,
+                                     hitEnd ) ;
    }
 
    INT32 _rtnContextData::_queryModify( pmdEDUCB* eduCB,
@@ -1091,6 +1106,7 @@ namespace engine
 
    _rtnContextParaData::~_rtnContextParaData()
    {
+      setQueryActivity( _hitEnd ) ;
       vector< rtnContextData* >::iterator it = _vecContext.begin() ;
       while ( it != _vecContext.end() )
       {
@@ -1117,21 +1133,23 @@ namespace engine
       return RTN_CONTEXT_PARADATA ;
    }
 
-   INT32 _rtnContextParaData::open( dmsStorageUnit *su, dmsMBContext *mbContext,
+   INT32 _rtnContextParaData::open( dmsStorageUnit *su,
+                                    dmsMBContext *mbContext,
                                     pmdEDUCB *cb,
-                                    const BSONObj &selector, INT64 numToReturn,
-                                    INT64 numToSkip, const BSONObj *blockObj,
+                                    const rtnReturnOptions &returnOptions,
+                                    const BSONObj *blockObj,
                                     INT32 direction )
    {
       INT32 rc = SDB_OK ;
+      rtnReturnOptions subReturnOptions( returnOptions ) ;
+
       _step = pmdGetKRCB()->getOptionCB()->maxSubQuery() ;
       if ( 0 == _step )
       {
          _step = 1 ;
       }
 
-      rc = _rtnContextData::open( su, mbContext, cb, selector,
-                                  numToReturn, numToSkip, blockObj,
+      rc = _rtnContextData::open( su, mbContext, cb, returnOptions, blockObj,
                                   direction ) ;
       if ( rc )
       {
@@ -1180,14 +1198,18 @@ namespace engine
       _isParalled = TRUE ;
       mbContext->mbUnlock() ;
 
-      if ( numToReturn > 0 && numToSkip > 0 )
+      if ( returnOptions.getLimit() > 0 &&
+           returnOptions.getSkip() > 0 )
       {
-         numToReturn += numToSkip ;
+         subReturnOptions.setLimit( returnOptions.getLimit() +
+                                    returnOptions.getSkip() ) ;
       }
+      subReturnOptions.setSkip( 0 ) ;
+      subReturnOptions.clearFlag( FLG_QUERY_PARALLED ) ;
 
       while ( NULL != ( blockObj = _nextBlockObj() ) )
       {
-         rc = _openSubContext( blockObj, selector, cb, numToReturn ) ;
+         rc = _openSubContext( cb, subReturnOptions, blockObj ) ;
          if ( rc )
          {
             goto error ;
@@ -1219,10 +1241,9 @@ namespace engine
       }
    }
 
-   INT32 _rtnContextParaData::_openSubContext( const BSONObj *blockObj,
-                                               const BSONObj &selector,
-                                               _pmdEDUCB *cb,
-                                               INT64 numToReturn )
+   INT32 _rtnContextParaData::_openSubContext( pmdEDUCB *cb,
+                                               const rtnReturnOptions &subReturnOptions,
+                                               const BSONObj *blockObj )
    {
       INT32 rc = SDB_OK ;
 
@@ -1248,14 +1269,16 @@ namespace engine
 
       dataContext->getPlanRuntime()->inheritRuntime( &_planRuntime ) ;
 
-      rc = dataContext->open( _su, mbContext, cb, selector,
-                              numToReturn, 0, blockObj, _direction ) ;
+      rc = dataContext->open( _su, mbContext, cb, subReturnOptions, blockObj,
+                              _direction ) ;
       PD_RC_CHECK( rc, PDERROR, "Open sub context failed, blockObj: %s, "
                    "rc: %d", blockObj->toString().c_str(), rc ) ;
 
       mbContext = NULL ;
 
       dataContext->enablePrefetch ( cb, &_prefWather ) ;
+      dataContext->setEnableQueryActivity( FALSE ) ;
+
       // sample timetamp
       if ( cb->getMonConfigCB()->timestampON )
       {
@@ -1513,30 +1536,21 @@ namespace engine
 
    _rtnContextSort::_rtnContextSort( INT64 contextID, UINT64 eduID )
    :_rtnContextBase( contextID, eduID ),
-    _dataContext( NULL ),
-    _eduCB( NULL ),
+    _rtnSubContextHolder(),
     _keyGen ( BSONObj() ),
     _dataSorted ( FALSE ),
-    _skip( 0 ),
-    _limit( -1 ),
-    _planForExplain( NULL )
+    _numToSkip( 0 ),
+    _numToReturn( -1 )
    {
-
+      _enableMonContext = TRUE ;
+      _enableQueryActivity = TRUE ;
    }
 
    _rtnContextSort::~_rtnContextSort()
    {
-      _skip = 0 ;
-      _limit = 0 ;
-      _planForExplain = NULL ;
-
-      if ( NULL != _dataContext )
-      {
-         pmdGetKRCB()->getRTNCB()->contextDelete( _dataContext->contextID(), _eduCB ) ;
-         _dataContext = NULL ;
-      }
-
-      _eduCB = NULL ;
+      setQueryActivity( _hitEnd ) ;
+      _numToSkip = 0 ;
+      _numToReturn = 0 ;
    }
 
    std::string _rtnContextSort::name() const
@@ -1577,8 +1591,11 @@ namespace engine
 
       _isOpened = TRUE ;
       _hitEnd = FALSE ;
-      _skip = numToSkip ;
-      _limit = numToReturn ;
+
+      _returnOptions.setSkip( numToSkip ) ;
+      _returnOptions.setLimit( numToReturn ) ;
+      _numToSkip = numToSkip ;
+      _numToReturn = numToReturn ;
 
       rc = _rebuildSrcContext( orderby, context ) ;
       if ( SDB_OK != rc )
@@ -1587,15 +1604,7 @@ namespace engine
          goto error ;
       }
 
-      if ( RTN_CONTEXT_DATA == context->getType() )
-      {
-         /// WARNING: do not use this plan to do anything
-         ///  except keeping plan for explain. -- yunwu.
-         _planForExplain = ( ( _rtnContextData * )context )->getPlanRuntime() ;
-      }
-
-      _dataContext = context ;
-      _eduCB = cb ;
+      _setSubContext( context, cb ) ;
       _orderby = orderby.getOwned() ;
       _keyGen = _ixmIndexKeyGen( _orderby ) ;
 
@@ -1603,6 +1612,15 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   void _rtnContextSort::setQueryActivity ( BOOLEAN hitEnd )
+   {
+      if ( NULL != getPlanRuntime() )
+      {
+         getPlanRuntime()->setQueryActivity( MON_SELECT, _monCtxCB,
+                                             _returnOptions, hitEnd ) ;
+      }
    }
 
    INT32 _rtnContextSort::_rebuildSrcContext( const BSONObj &orderBy,
@@ -1634,6 +1652,7 @@ namespace engine
                PD_LOG( PDERROR, "failed to rebuild selector:%d", rc ) ;
                goto error ;
             }
+            _returnOptions.setSelector( _selector.getPattern() ) ;
          }
       }
 
@@ -1649,9 +1668,14 @@ namespace engine
       rtnContextBuf bufObj ;
       BSONObj obj ;
 
-      for(;;)
+      if ( cb->getMonConfigCB()->timestampON )
       {
-         rc = _dataContext->getMore( -1, bufObj, cb ) ;
+         _getSubContext()->getMonCB()->recordStartTimestamp() ;
+      }
+
+      for ( ; ; )
+      {
+         rc = _getSubContext()->getMore( -1, bufObj, _getSubContextCB() ) ;
          if ( SDB_DMS_EOC == rc )
          {
             rc = _sorting.sort( cb ) ;
@@ -1716,7 +1740,7 @@ namespace engine
       BSONObj obj ;
       monAppCB *pMonAppCB = cb ? cb->getMonAppCB() : NULL ;
 
-      if ( 0 == _limit )
+      if ( 0 == _numToReturn )
       {
          _hitEnd = TRUE ;
          rc = SDB_DMS_EOC ;
@@ -1749,14 +1773,14 @@ namespace engine
             PD_LOG( PDERROR, "failed to fetch from sorting:%d", rc ) ;
             goto error ;
          }
-         else if ( 0 < _skip )
+         else if ( 0 < _numToSkip )
          {
-            --_skip ;
+            -- _numToSkip ;
             /// wo do not want to break this loop when get nothing.
-            --i ;
+            -- i ;
             continue ;
          }
-         else if ( 0 == _limit )
+         else if ( 0 == _numToReturn )
          {
             _hitEnd = TRUE ;
             break ;
@@ -1785,9 +1809,9 @@ namespace engine
             PD_RC_CHECK( rc, PDERROR, "Append obj[%s] failed, rc: %d",
                       obj.toString().c_str(), rc ) ;
 
-            if ( 0 < _limit )
+            if ( 0 < _numToReturn )
             {
-               --_limit ;
+               -- _numToReturn ;
             }
          }
 
@@ -1826,13 +1850,13 @@ namespace engine
 
    void _rtnContextSort::_toString( stringstream &ss )
    {
-      if ( _limit > 0 )
+      if ( _numToReturn > 0 )
       {
-         ss << ",NumToReturn:" << _limit ;
+         ss << ",NumToReturn:" << _numToReturn ;
       }
-      if ( _skip > 0 )
+      if ( _numToSkip > 0 )
       {
-         ss << ",NumToSkip:" << _skip ;
+         ss << ",NumToSkip:" << _numToSkip ;
       }
       if ( !_orderby.isEmpty() )
       {
@@ -1870,388 +1894,4 @@ namespace engine
       return RTN_CONTEXT_TEMP ;
    }
 
-   RTN_CTX_AUTO_REGISTER(_rtnContextExplain, RTN_CONTEXT_EXPLAIN, "EXPLAIN")
-
-   _rtnContextExplain::_rtnContextExplain( INT64 contextID,
-                                           UINT64 eduID )
-   :_rtnContextBase( contextID, eduID ),
-    _queryContextID( -1 ),
-    _recordNum( 0 ),
-    _cbOfQuery( NULL ),
-    _explained( FALSE )
-   {
-      _needRun = FALSE ;
-      _needDetail = FALSE ;
-      _beginUsrCpu = 0.0 ;
-      _beginSysCpu = 0.0 ;
-      _endUsrCpu = 0.0 ;
-      _endSysCpu = 0.0 ;
-   }
-
-   _rtnContextExplain::~_rtnContextExplain()
-   {
-      if ( -1 != _queryContextID )
-      {
-         sdbGetRTNCB()->contextDelete( _queryContextID,
-                                       _cbOfQuery ) ;
-         _queryContextID = -1 ;
-         _cbOfQuery = NULL ;
-      }
-   }
-
-   std::string _rtnContextExplain::name() const
-   {
-      return "EXPLAIN" ;
-   }
-
-   INT32 _rtnContextExplain::open( const rtnQueryOptions &options,
-                                   const BSONObj &explainOptions )
-   {
-      INT32 rc = SDB_OK ;
-      if ( _isOpened )
-      {
-         rc = SDB_DMS_CONTEXT_IS_OPEN ;
-         goto error ;
-      }
-
-      _options = options ;
-      rc = _options.getOwned() ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "options failed to get owned:%d", rc ) ;
-         goto error ;
-      }
-
-      try
-      {
-         BSONElement e = explainOptions.getField( FIELD_NAME_RUN ) ;
-         if ( e.eoo() )
-         {
-            _needRun = FALSE ;
-         }
-         else if ( e.isNumber() )
-         {
-            _needRun = e.numberInt() == 0 ? FALSE : TRUE ;
-         }
-         else if ( e.isBoolean() )
-         {
-            _needRun = e.booleanSafe() ;
-         }
-         else
-         {
-            _needRun = FALSE ;
-         }
-
-         e = explainOptions.getField( FIELD_NAME_DETAIL ) ;
-         if ( e.eoo() )
-         {
-            _needDetail = FALSE ;
-         }
-         else if ( e.isNumber() )
-         {
-            _needDetail = e.numberInt() == 0 ? FALSE : TRUE ;
-         }
-         else if ( e.isBoolean() )
-         {
-            _needDetail = e.booleanSafe() ;
-         }
-         else
-         {
-            _needDetail = FALSE ;
-         }
-      }
-      catch( std::exception &e )
-      {
-         PD_LOG( PDERROR, "Ocurr exception: %s", e.what() ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-
-      _isOpened = TRUE ;
-      _hitEnd = FALSE ;
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCONTEXTEXPLAIN__PREPAREDATA, "_rtnContextExplain::_prepareData" )
-   INT32 _rtnContextExplain::_prepareData( _pmdEDUCB *cb )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB_RTNCONTEXTEXPLAIN__PREPAREDATA ) ;
-
-      if ( _explained )
-      {
-         rc = SDB_DMS_EOC ;
-         goto error ;
-      }
-
-      rc = _prepareToExplain( cb ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to prepare for explaining:%d", rc ) ;
-         goto error ;
-      }
-
-      rc = _explainQuery( cb ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to explain query:%d", rc ) ;
-         goto error ;
-      }
-
-      rc = _commitResult( cb ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to commit result:%d", rc ) ;
-         goto error ;
-      }
-
-      _explained = TRUE ;
-      _hitEnd    = TRUE ;
-
-   done:
-      PD_TRACE_EXITRC( SDB_RTNCONTEXTEXPLAIN__PREPAREDATA, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   void _rtnContextExplain::_toString( stringstream &ss )
-   {
-      ss << ",NeedRun:" << _needRun ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCONTEXTEXPLAIN__PREPARETOEXPLAIN, "_rtnContextExplain::_prepareToExplain" )
-   INT32 _rtnContextExplain::_prepareToExplain( _pmdEDUCB *cb )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB_RTNCONTEXTEXPLAIN__PREPARETOEXPLAIN ) ;
-      INT64 queryContextID = -1 ;
-      rtnContextBuf ctxBuf ;
-      optAccessPlanRuntime *planRuntime = NULL ;
-      const CHAR* hostName = NULL ;
-      stringstream ss ;
-      BSONObj formattedQuery ;
-      _rtnContextBase *contextOfQuery = NULL ;
-      ossTime userTime, sysTime ;
-
-      rc = rtnQuery( _options, cb, sdbGetDMSCB(), sdbGetRTNCB(),
-                     queryContextID, &contextOfQuery ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to query data:%d", rc ) ;
-         goto error ;
-      }
-
-      if ( NULL == contextOfQuery )
-      {
-         PD_LOG( PDERROR, "can not get the context of query" ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-
-      planRuntime = contextOfQuery->getPlanRuntime() ;
-      if ( NULL == planRuntime ||
-           NULL == planRuntime->getPlan() )
-      {
-         PD_LOG( PDERROR, "plan should not be NULL" ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-
-      _builder.append( FIELD_NAME_NAME,
-                       _options._fullName ) ;
-      _builder.append( FIELD_NAME_SCANTYPE,
-                       IXSCAN == planRuntime->getScanType() ?
-                       VALUE_NAME_IXSCAN : VALUE_NAME_TBSCAN ) ;
-      _builder.append( FIELD_NAME_INDEXNAME,
-                       planRuntime->getIndexName() ) ;
-      _builder.appendBool( FIELD_NAME_USE_EXT_SORT,
-                           planRuntime->sortRequired() ) ;
-
-      formattedQuery = planRuntime->getMatchTree()->getParsedQuery(
-                                             planRuntime->getParameters() ) ;
-      _builder.append( FIELD_NAME_QUERY, formattedQuery ) ;
-      _builder.append( FIELD_NAME_FORMATTED_QUERY,
-                       formattedQuery.toString( FALSE, TRUE ).c_str() ) ;
-
-      if ( IXSCAN == planRuntime->getScanType() &&
-           NULL != planRuntime->getPredList() )
-      {
-         _builder.append( FIELD_NAME_IX_BOUND,
-                          planRuntime->getPredList()->getBound() ) ;
-      }
-      else
-      {
-         _builder.appendNull( FIELD_NAME_IX_BOUND ) ;
-      }
-
-      _builder.appendBool( FIELD_NAME_NEED_MATCH,
-                           !planRuntime->getMatchTree()->isMatchesAll() ) ;
-
-      hostName = pmdGetKRCB()->getHostName() ;
-      ss << hostName << ":" << pmdGetOptionCB()->getServiceAddr() ;
-      _builder.append( FIELD_NAME_NODE_NAME, ss.str() ) ;
-      _builder.append( FIELD_NAME_GROUPNAME, pmdGetKRCB()->getGroupName() ) ;
-
-      if ( _needDetail )
-      {
-         BSONObjBuilder subBuilder( _builder.subobjStart( FIELD_NAME_DETAIL ) ) ;
-
-         if ( planRuntime->getPlan()->isCached() )
-         {
-            subBuilder.append( OPT_FIELD_CACHE_STATUS,
-                               planRuntime->isNewPlan() ?
-                               OPT_CACHE_STATUS_NEWCACHE :
-                               OPT_CACHE_STATUS_HITCACHE ) ;
-         }
-         else
-         {
-            subBuilder.append( OPT_FIELD_CACHE_STATUS,
-                               OPT_CACHE_STATUS_NOCACHE ) ;
-         }
-
-         planRuntime->getPlan()->toBSON( subBuilder, TRUE, FALSE ) ;
-         if ( !planRuntime->getParameters().isEmpty() )
-         {
-            planRuntime->getParameters().toBSON( subBuilder ) ;
-         }
-         subBuilder.done() ;
-      }
-
-      /// get some info before explain
-      _beginMon = *cb->getMonAppCB() ;
-      ossGetCurrentTime( _beginTime ) ;
-
-      /// get begin cpu time info
-      ossGetCPUUsage( cb->getThreadHandle(), userTime, sysTime ) ;
-      _beginUsrCpu = userTime.seconds + (FLOAT64)userTime.microsec / 1000000 ;
-      _beginSysCpu = sysTime.seconds + (FLOAT64)sysTime.microsec / 1000000 ;
-
-      _queryContextID = queryContextID ;
-      _cbOfQuery = cb ;
-   done:
-      PD_TRACE_EXITRC( SDB_RTNCONTEXTEXPLAIN__PREPARETOEXPLAIN, rc ) ;
-      return rc ;
-   error:
-      if ( -1 != queryContextID )
-      {
-         sdbGetRTNCB()->contextDelete( queryContextID,
-                                       cb ) ;
-      }
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCONTEXTEXPLAIN__EXPLAINQUERY, "_rtnContextExplain::_explainQuery" )
-   INT32 _rtnContextExplain::_explainQuery( _pmdEDUCB *cb )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB_RTNCONTEXTEXPLAIN__EXPLAINQUERY ) ;
-      rtnContextBuf ctxBuf ;
-      BSONObj record ;
-      ossTime userTime, sysTime ;
-
-      /// here we do not use $count coz it does not surpport
-      /// 'limit' and 'skip'.
-      while ( _needRun )
-      {
-         rc = rtnGetMore( _queryContextID, -1, ctxBuf, cb, sdbGetRTNCB() ) ;
-         if ( SDB_DMS_EOC == rc )
-         {
-            rc = SDB_OK ;
-            _queryContextID = -1 ;  /// context has been freed in getmore.
-            break ;
-         }
-         else if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "failed to get more from context[%lld]"
-                    ", rc:%d", _queryContextID, rc ) ;
-            _queryContextID = -1 ;
-            goto error ;
-         }
-         else
-         {
-            while ( TRUE )
-            {
-               rc = ctxBuf.nextObj( record ) ;
-               if ( SDB_DMS_EOC == rc )
-               {
-                  rc = SDB_OK ;
-                  break ;
-               }
-               else if ( SDB_OK != rc )
-               {
-                  PD_LOG( PDERROR, "Failed to get more from buf of "
-                          "context[%lld],rc:%d ", _queryContextID, rc ) ;
-                  goto error ;
-               }
-               else
-               {
-                  ++_recordNum ;
-               }
-            }
-         }
-      }
-
-      ossGetCurrentTime( _endTime ) ;
-      _endMon = *cb->getMonAppCB() ;
-      /// get end cpu time info
-      ossGetCPUUsage( cb->getThreadHandle(), userTime, sysTime ) ;
-      _endUsrCpu = userTime.seconds + (FLOAT64)userTime.microsec / 1000000 ;
-      _endSysCpu = sysTime.seconds + (FLOAT64)sysTime.microsec / 1000000 ;
-
-   done:
-      if ( -1 != _queryContextID )
-      {
-         sdbGetRTNCB()->contextDelete( _queryContextID,
-                                       _cbOfQuery ) ;
-         _queryContextID = -1 ;
-      }
-      PD_TRACE_EXITRC( SDB_RTNCONTEXTEXPLAIN__EXPLAINQUERY, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCONTEXTEXPLAIN__COMMITRESULT, "_rtnContextExplain::_commitResult" )
-   INT32 _rtnContextExplain::_commitResult( _pmdEDUCB *cb )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB_RTNCONTEXTEXPLAIN__COMMITRESULT ) ;
-
-      _builder.appendNumber( FIELD_NAME_RETURN_NUM, _recordNum ) ;
-      UINT64 beginTime = _beginTime.time * 1000000 + _beginTime.microtm  ;
-      UINT64 endTime = _endTime.time * 1000000 + _endTime.microtm  ;
-      _builder.append( FIELD_NAME_ELAPSED_TIME,
-                       FLOAT64( ( endTime - beginTime ) / 1000000.0 ) ) ;
-      _builder.appendNumber( FIELD_NAME_INDEXREAD,
-                             (INT64)( _endMon.totalIndexRead -
-                             _beginMon.totalIndexRead ) ) ;
-      _builder.appendNumber( FIELD_NAME_DATAREAD,
-                             (INT64)( _endMon.totalDataRead -
-                             _beginMon.totalDataRead ) ) ;
-
-      _builder.append( FIELD_NAME_USERCPU,
-                       _endUsrCpu - _beginUsrCpu ) ;
-
-      _builder.append( FIELD_NAME_SYSCPU,
-                       _endSysCpu - _beginSysCpu ) ;
-
-      rc = append( _builder.obj() ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed append obj to context[%lld]:%d",
-                 contextID(), rc ) ;
-         goto error ;
-      }
-
-   done:
-      PD_TRACE_EXITRC( SDB_RTNCONTEXTEXPLAIN__COMMITRESULT, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
 }
-

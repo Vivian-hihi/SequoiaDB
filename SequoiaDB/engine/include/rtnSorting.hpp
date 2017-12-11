@@ -73,6 +73,11 @@ namespace engine
       INT32 fetch( BSONObj &key, const CHAR** obj,
                    INT32* objLen, _pmdEDUCB *cb ) ;
 
+      OSS_INLINE BOOLEAN isInMemorySort () const
+      {
+         return _blks.empty() ;
+      }
+
    private:
 
       INT32 _moveToExternalBlks( _rtnInternalSorting *inter,

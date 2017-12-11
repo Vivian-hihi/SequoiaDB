@@ -40,6 +40,7 @@
 
 #include "rtnContext.hpp"
 #include "rtnContextMain.hpp"
+#include "rtnContextExplain.hpp"
 #include "coordDef.hpp"
 
 using namespace bson ;
@@ -56,12 +57,12 @@ namespace engine
    class _coordSubContext : public _rtnSubContext
    {
    public:
-      _coordSubContext ( BSONObj& orderBy,
+      _coordSubContext ( const BSONObj& orderBy,
                          _ixmIndexKeyGen* keyGen,
                          INT64 contextID,
                          MsgRouteID routeID ) ;
-      ~_coordSubContext () ;
 
+      virtual ~_coordSubContext () ;
 
    public:
       void           appendData ( MsgOpReply *pReply ) ;
@@ -75,6 +76,11 @@ namespace engine
       INT32          remainLength() ;
       INT32          truncate ( INT32 num ) ;
       INT32          getOrderKey( rtnOrderKey &orderKey ) ;
+
+      OSS_INLINE INT64 getDataID () const
+      {
+         return (INT64)( _routeID.value ) ;
+      }
 
    private:
       // disallow copy and assign
@@ -101,27 +107,27 @@ namespace engine
       DECLARE_RTN_CTX_AUTO_REGISTER()
       public:
          _rtnContextCoord ( INT64 contextID, UINT64 eduID,
-                           BOOLEAN preRead = TRUE ) ;
+                            BOOLEAN preRead = TRUE ) ;
          virtual ~_rtnContextCoord () ;
 
-         INT32    addSubContext ( MsgRouteID routeID, SINT64 contextID ) ;
-         INT32    addSubContext ( MsgOpReply *pReply, BOOLEAN &takeOver ) ;
+         virtual INT32 addSubContext ( MsgOpReply *pReply, BOOLEAN &takeOver ) ;
 
-         void     addSubDone( _pmdEDUCB *cb ) ;
+         virtual void addSubDone( _pmdEDUCB *cb ) ;
 
-         INT32    open( const BSONObj &orderBy,
-                        const BSONObj &selector,
-                        INT64 numToReturn = -1,
-                        INT64 numToSkip = 0,
-                        BOOLEAN preRead = TRUE ) ;
+         virtual INT32 open ( const rtnQueryOptions & options,
+                              BOOLEAN preRead = TRUE ) ;
+
          INT32    reopen () ;
 
          void     killSubContexts( _pmdEDUCB *cb ) ;
 
-         INT64    getSkipNum() const { return _numToSkip ; }
-         void     setSkipNum( INT64 numToSkip ) { _numToSkip = numToSkip ; }
-         INT64    getLimitNum() const { return _numToReturn ; }
-         void     setLimitNum( INT64 limitNum ) { _numToReturn = limitNum ; }
+         INT64    getSkipNum () const { return _numToSkip ; }
+         INT64    getLimitNum () const { return _numToReturn ; }
+
+         INT64    getSessionMilliTimeout () const ;
+
+         virtual void optimizeReturnOptions ( MsgOpQuery * pQueryMsg,
+                                              UINT32 targetGroupNum ) ;
 
          virtual void     getErrorInfo( INT32 rc,
                                         pmdEDUCB *cb,
@@ -133,16 +139,17 @@ namespace engine
          virtual std::string      name() const ;
          virtual RTN_CONTEXT_TYPE getType () const ;
 
-         OSS_INLINE  BOOLEAN requireOrder () const ;
-
-         void enablePreRead() { _preRead = TRUE ; }
-         void disablePreRead() { _preRead = FALSE ; }
+         OSS_INLINE BOOLEAN requireOrder () const ;
 
       protected:
-         virtual void    _toString( stringstream &ss ) ;
+         virtual void _toString( stringstream &ss ) ;
+
+         void     _setPreRead ( BOOLEAN preRead ) { _preRead = preRead ; }
+         BOOLEAN  _enabledPreRead () const { return _preRead ; }
 
       protected:
-         BOOLEAN _requireExplicitSorting () const ;
+         OSS_INLINE BOOLEAN _requireExplicitSorting () const ;
+         INT32   _createSubContext ( MsgRouteID routeID, SINT64 contextID ) ;
          INT32   _prepareAllSubCtxDataByOrder( _pmdEDUCB *cb ) ;
          INT32   _getNonEmptyNormalSubCtx( _pmdEDUCB *cb, rtnSubContext*& subCtx ) ;
          INT32   _saveEmptyOrderedSubCtx( rtnSubContext* subCtx ) ;
@@ -166,7 +173,6 @@ namespace engine
          EMPTY_CONTEXT_MAP          _prepareContextMap ;
 
          rtnOrderKey                _emptyKey ;
-         BSONObj                    _orderBy ;
          BOOLEAN                    _preRead ;
 
          BOOLEAN                    _needReOrder ;
@@ -183,16 +189,74 @@ namespace engine
    */
    OSS_INLINE BOOLEAN _rtnContextCoord::requireOrder () const
    {
-      if ( _orderBy.isEmpty() ||
-           _orderedContextMap.size() + _emptyContextMap.size() +
-           _prepareContextMap.size() <= 1 )
-      {
-         return FALSE ;
-      }
-      return TRUE ;
+      return !_options.isOrderByEmpty() ;
    }
+
+   OSS_INLINE BOOLEAN _rtnContextCoord::_requireExplicitSorting () const
+   {
+      // 1. order is required ( sort is not empty )
+      // 2. has more than one sub-context
+      return requireOrder() &&
+             ( _orderedContextMap.size() + _emptyContextMap.size() +
+               _prepareContextMap.size() > 1 ) ;
+   }
+
+   /*
+      _rtnContextCoordExplain define
+    */
+   class _rtnContextCoordExplain : public _rtnContextCoord,
+                                   public _rtnExplainMainBase
+   {
+      DECLARE_RTN_CTX_AUTO_REGISTER()
+
+      public :
+         _rtnContextCoordExplain ( INT64 contextID, UINT64 eduID,
+                                   BOOLEAN preRead = TRUE ) ;
+
+         virtual ~_rtnContextCoordExplain () ;
+
+         std::string name () const ;
+
+         RTN_CONTEXT_TYPE getType () const ;
+
+         INT32 open ( const rtnQueryOptions & options,
+                      BOOLEAN preRead = TRUE ) ;
+
+         void optimizeReturnOptions ( MsgOpQuery * pQueryMsg,
+                                      UINT32 targetGroupNum ) ;
+
+         INT32 addSubContext ( MsgOpReply *pReply, BOOLEAN &takeOver ) ;
+
+         void addSubDone ( pmdEDUCB *cb ) ;
+
+      protected :
+         INT32 _prepareData ( pmdEDUCB *cb ) ;
+
+         INT32 _openSubContext ( rtnQueryOptions & options,
+                                 pmdEDUCB * cb,
+                                 rtnContext ** ppContext ) ;
+
+         INT32 _prepareExplainPath ( rtnContext * context,
+                                     pmdEDUCB * cb ) ;
+
+         INT32 _parseLocationOption ( const BSONObj & explainOptions,
+                                      BOOLEAN & hasOption ) ;
+
+         BOOLEAN _needChildExplain ( INT64 dataID,
+                                     const BSONObj & childExplain  ) ;
+
+         INT32 _buildSimpleExplain ( rtnContext * explainContext,
+                                     BOOLEAN & hasMore ) ;
+
+      protected :
+         SET_ROUTEID             _locationFilter ;
+         optExplainCoordPath     _explainCoordPath ;
+         UINT64                  _startSessionTimeout ;
+         UINT64                  _endSessionTimeout ;
+   } ;
+
+   typedef class _rtnContextCoordExplain rtnContextCoordExplain ;
 
 }
 
 #endif //COORD_CONTEXT_HPP__
-

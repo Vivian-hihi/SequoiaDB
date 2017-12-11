@@ -112,13 +112,13 @@ namespace engine
                            rtnParamList *parameters = NULL ) ;
          void     clear() ;
          BSONObj  getEqualityQueryObject( const rtnParamList *parameters = NULL ) ;
-         BOOLEAN  isInitialized() ;
-         BOOLEAN  isMatchesAll() ;
+         BOOLEAN  isInitialized() const ;
+         BOOLEAN  isMatchesAll() const ;
          BSONObj& getMatchPattern() ;
          BOOLEAN  hasDollarFieldName() ;
          BOOLEAN  totallyConverted() const ;
          void     setMatchesAll( BOOLEAN matchesAll ) ;
-         BSONObj  getParsedQuery( rtnParamList &parameters ) const ;
+         BSONObj  getParsedMatcher( const rtnParamList &parameters ) const ;
          BSONObj  toBson() ;
          string   toString() ;
 

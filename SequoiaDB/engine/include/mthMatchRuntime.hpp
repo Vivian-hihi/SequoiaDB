@@ -55,45 +55,56 @@ namespace engine
    class _mthMatchTreeHolder
    {
       public :
-         _mthMatchTreeHolder ()
-         {
-            _matchTree = NULL ;
-         }
+         _mthMatchTreeHolder () ;
 
-         virtual ~_mthMatchTreeHolder ()
-         {
-            _matchTree = NULL ;
-         }
+         virtual ~_mthMatchTreeHolder () ;
 
-         OSS_INLINE mthMatchTree *getMatchTree ()
+         virtual INT32 createMatchTree () ;
+
+         virtual void deleteMatchTree () ;
+
+         OSS_INLINE virtual mthMatchTree *getMatchTree ()
          {
             return _matchTree ;
          }
 
-         OSS_INLINE const mthMatchTree *getMatchTree () const
+         OSS_INLINE virtual const mthMatchTree *getMatchTree () const
          {
             return _matchTree ;
          }
 
          OSS_INLINE virtual void setMatchTree ( mthMatchTree *matchTree )
          {
+            deleteMatchTree() ;
             _matchTree = matchTree ;
+            _ownedMatchTree = FALSE ;
          }
 
       protected :
          mthMatchTree * _matchTree ;
+         BOOLEAN        _ownedMatchTree ;
    } ;
 
+   /*
+      _mthMatchTreeStackHolder define
+    */
    class _mthMatchTreeStackHolder : public _mthMatchTreeHolder
    {
       public :
-         _mthMatchTreeStackHolder ()
-         : _mthMatchTreeHolder()
+         _mthMatchTreeStackHolder () ;
+
+         virtual ~_mthMatchTreeStackHolder () ;
+
+         OSS_INLINE virtual INT32 createMatchTree ()
          {
-            _matchTree = (&_stackMatchTree ) ;
+            // Do nothing
+            return SDB_OK ;
          }
 
-         virtual ~_mthMatchTreeStackHolder () {}
+         OSS_INLINE virtual void deleteMatchTree ()
+         {
+            // Do nothing
+         }
 
          OSS_INLINE virtual void setMatchTree ( mthMatchTree *matchTree )
          {
@@ -111,8 +122,8 @@ namespace engine
    {
       public :
          _mthParamPredListHolder ()
+         : _paramPredList( NULL )
          {
-            _paramPredList = NULL ;
          }
 
          virtual ~_mthParamPredListHolder ()
@@ -145,7 +156,7 @@ namespace engine
          _mthParamPredListStackHolder ()
          : _mthParamPredListHolder()
          {
-            _paramPredList = (&_stackParamPredList ) ;
+            _paramPredList = ( &_stackParamPredList ) ;
          }
 
          virtual ~_mthParamPredListStackHolder () {}
@@ -186,12 +197,22 @@ namespace engine
             return _parameters ;
          }
 
+         OSS_INLINE const rtnParamList &getParameters () const
+         {
+            return _parameters ;
+         }
+
          OSS_INLINE rtnParamList *getParametersPointer ()
          {
             return _parameters.isEmpty() ? NULL : &_parameters ;
          }
 
          OSS_INLINE rtnPredicateList *getPredList ()
+         {
+            return _predList.isInitialized() ? (&_predList) : NULL ;
+         }
+
+         OSS_INLINE const rtnPredicateList *getPredList () const
          {
             return _predList.isInitialized() ? (&_predList) : NULL ;
          }
@@ -214,9 +235,9 @@ namespace engine
 
          OSS_INLINE BSONObj getEqualityQueryObject ()
          {
-            if ( NULL != _matchTree )
+            if ( NULL != getMatchTree() )
             {
-               return _matchTree->getEqualityQueryObject( &_parameters ) ;
+               return getMatchTree()->getEqualityQueryObject( &_parameters ) ;
             }
             return BSONObj() ;
          }
@@ -268,4 +289,3 @@ namespace engine
 }
 
 #endif //MTHMATCHRUNTIME_HPP__
-

@@ -90,7 +90,7 @@ namespace engine
             rc = SDB_OOM ;
             goto error ;
          }
-         
+
          // double buffer size until hitting RTN_CONTEXT_MAX_BUFF_SIZE
          newSize = newSize << 1 ;
          if (newSize > RTN_CONTEXT_MAX_BUFF_SIZE )
@@ -131,7 +131,7 @@ namespace engine
       }
 
    done:
-      return rc; 
+      return rc;
    error:
       goto done ;
    }
@@ -139,7 +139,7 @@ namespace engine
    INT32 _rtnContextStoreBuf::append( const BSONObj& obj )
    {
       INT32 rc = SDB_OK ;
-      
+
       if ( !isCountMode() )
       {
          _writeOffset = ossAlign4( (UINT32)_writeOffset ) ;
@@ -165,7 +165,7 @@ namespace engine
    error:
       goto done ;
    }
-   
+
    INT32 _rtnContextStoreBuf::appendObjs( const CHAR* objBuf,
                                              INT32 len,
                                              INT32 num,
@@ -210,7 +210,7 @@ namespace engine
    }
 
    INT32 _rtnContextStoreBuf::get( INT32 maxNumToReturn,
-                                    rtnContextBuf& buf )
+                                   rtnContextBuf& buf )
    {
       INT32 rc = SDB_OK ;
 
@@ -265,8 +265,6 @@ namespace engine
             }
             buf._buffSize = _readOffset - prevCurOffset ;
          }
-
-         
       }
       else
       {
@@ -325,7 +323,7 @@ namespace engine
       _rtnContextBase implement
    */
    _rtnContextBase::_rtnContextBase( INT64 contextID, UINT64 eduID )
-   :_waitPrefetchNum( 0 )
+   : _waitPrefetchNum( 0 )
    {
       _contextID           = contextID ;
       _eduID               = eduID ;
@@ -334,9 +332,6 @@ namespace engine
 
       _hitEnd              = TRUE ;
       _isOpened            = FALSE ;
-
-      _matcher             = NULL ;
-      _ownedMatcher        = FALSE ;
 
       _prefetchID          = 0 ;
       _isInPrefetch        = FALSE ;
@@ -350,6 +345,11 @@ namespace engine
 
       _canPrepareMore      = FALSE ;
       _prepareMoreDataLimit = RTN_CTX_PREPARE_MORE_DATA_INIT ;
+
+      _enableMonContext    = FALSE ;
+      _enableQueryActivity = FALSE ;
+
+      _monCtxCB.setContextID( contextID ) ;
    }
 
    _rtnContextBase::~_rtnContextBase()
@@ -368,12 +368,6 @@ namespace engine
       _prefetchLock.lock_w() ;
       _prefetchLock.release_w() ;
 
-      if ( _matcher && _ownedMatcher )
-      {
-         SDB_OSS_DEL _matcher ;
-         _matcher = NULL ;
-         _ownedMatcher = FALSE ;
-      }
       _pPrefWatcher = NULL ;
 
       SDB_ASSERT( 0 == _waitPrefetchNum.peek(), "Has wait prefetch jobs" ) ;
@@ -430,36 +424,10 @@ namespace engine
 
       if ( isOpened() )
       {
-         if ( _matcher &&
-              !_matcher->getMatchPattern().isEmpty() )
-         {
-            ss << ",Matcher:" <<
-               _matcher->getMatchPattern().toString() ;
-         }
-
          _toString( ss ) ;
       }
 
       return ss.str() ;
-   }
-
-   INT32 _rtnContextBase::newMatcher ()
-   {
-      if ( _matcher && _ownedMatcher )
-      {
-         SDB_OSS_DEL _matcher ;
-         _matcher = NULL ;
-         _ownedMatcher = FALSE ;
-      }
-
-      _matcher = SDB_OSS_NEW _mthMatchTree() ;
-      if ( !_matcher )
-      {
-         return SDB_OOM ;
-      }
-
-      _ownedMatcher = TRUE ;
-      return SDB_OK ;
    }
 
    INT32 _rtnContextBase::append( const BSONObj &result )
@@ -585,7 +553,7 @@ namespace engine
       {
          cb->getMonAppCB()->reset() ;
       }
-      rc = _prepareDataWithMon( cb ) ;
+      rc = _prepareDataMonitor( cb ) ;
       _prefetchRet = rc ;
       if ( rc && SDB_DMS_EOC != rc )
       {
@@ -595,7 +563,7 @@ namespace engine
       if ( _pMonAppCB && cb->getID() != eduID() )
       {
          *_pMonAppCB += *cb->getMonAppCB() ;
-         _monCtxCB.dataRead += _pMonAppCB->totalDataRead ;
+         _monCtxCB.monDataReadInc( _pMonAppCB->totalDataRead ) ;
          cb->getMonAppCB()->reset() ;
       }
 
@@ -646,7 +614,7 @@ namespace engine
          INT32 currentPreparedSize ;
          UINT64 currentTime ;
 
-         rc = _prepareDataWithMon( cb ) ;
+         rc = _prepareDataMonitor( cb ) ;
          if ( SDB_OK != rc )
          {
             goto error ;
@@ -680,21 +648,32 @@ namespace engine
       goto done ;
    }
 
-   INT32 _rtnContextBase::_prepareDataWithMon ( _pmdEDUCB *cb )
+   INT32 _rtnContextBase::_prepareDataMonitor ( _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
 
-      pmdKRCB *krcb = pmdGetKRCB() ;
-      ossTick startTime = krcb->getCurTime() ;
+      if ( enabledMonContext() )
+      {
+         pmdKRCB *krcb = pmdGetKRCB() ;
+         ossTick startTime = krcb->getCurTime() ;
 
-      rc = _prepareData( cb ) ;
+         rc = _prepareData( cb ) ;
 
-      ossTick endTime = krcb->getCurTime() ;
-      ossTickDelta delta = endTime - startTime ;
-
-      _monCtxCB.monOperationTimeInc( MON_TOTAL_READ_TIME, delta ) ;
+         ossTick endTime = krcb->getCurTime() ;
+         _monCtxCB.monQueryTimeInc( startTime, endTime ) ;
+      }
+      else
+      {
+         rc = _prepareData( cb ) ;
+      }
 
       return rc ;
+   }
+
+   INT32 _rtnContextBase::_getBuffer ( INT32 maxNumToReturn,
+                                       rtnContextBuf& buf )
+   {
+      return _buffer.get( maxNumToReturn, buf ) ;
    }
 
    INT32 _rtnContextBase::getMore( INT32 maxNumToReturn,
@@ -758,7 +737,7 @@ namespace engine
          }
          else
          {
-            rc = _prepareDataWithMon( cb ) ;
+            rc = _prepareDataMonitor( cb ) ;
          }
 
          if ( rc && SDB_DMS_EOC != rc )
@@ -767,17 +746,15 @@ namespace engine
             goto error ;
          }
 
-         _monCtxCB.dataRead += ( cb->getMonAppCB()->totalDataRead -
-                                 tmpTotalRead ) ;
+         _monCtxCB.monDataReadInc( cb->getMonAppCB()->totalDataRead -
+                                   tmpTotalRead ) ;
+         _monCtxCB.monReturnInc( 1, _buffer.numRecords() ) ;
       }
 
       // if not empty, get current data
       if ( !isEmpty() )
       {
-         if ( !isCountMode() )
-         {
-            buffObj._startFrom = _totalRecords - _buffer.numRecords() ;
-         }
+         INT64 numRecords = _buffer.numRecords() ;
 
          rc = _buffer.get( maxNumToReturn, buffObj ) ;
          if ( SDB_OK != rc )
@@ -788,6 +765,7 @@ namespace engine
 
          if ( !isCountMode() )
          {
+            buffObj._startFrom = _totalRecords - numRecords ;
             buffObj._reference( _buffer.getRefCountPointer(), &_dataLock ) ;
             locked = FALSE ;
 
@@ -795,7 +773,6 @@ namespace engine
             if ( isEmpty() && !eof() )
             {
                _buffer.empty() ;
-
                _onDataEmpty() ;
             }
          }
@@ -811,6 +788,12 @@ namespace engine
       {
          _dataLock.release_r() ;
       }
+      if ( enabledMonContext() && enabledQueryActivity() &&
+           ( _hitEnd || SDB_DMS_EOC == rc ) )
+      {
+         setQueryActivity( TRUE ) ;
+      }
+
       return rc ;
    error:
       goto done ;
@@ -966,5 +949,37 @@ namespace engine
       static _rtnContextBuilder ctxBuilder ;
       return &ctxBuilder ;
    }
-}
 
+   /*
+      _rtnSubContextHolder implement
+    */
+   _rtnSubContextHolder::_rtnSubContextHolder ()
+   {
+      _subContext = NULL ;
+      _subCB = NULL ;
+   }
+
+   _rtnSubContextHolder::~_rtnSubContextHolder ()
+   {
+      _deleteSubContext() ;
+   }
+
+   void _rtnSubContextHolder::_deleteSubContext ()
+   {
+      if ( NULL != _subContext )
+      {
+         sdbGetRTNCB()->contextDelete( _subContext->contextID(), _subCB ) ;
+         _subContext = NULL ;
+         _subCB = NULL ;
+      }
+   }
+
+   void _rtnSubContextHolder::_setSubContext ( rtnContext *subContext,
+                                               pmdEDUCB *subCB )
+   {
+      _deleteSubContext() ;
+      _subContext = subContext ;
+      _subCB = subCB ;
+   }
+
+}

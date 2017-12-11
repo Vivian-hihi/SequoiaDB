@@ -195,7 +195,8 @@ namespace engine
                     SDB_RTNCB *rtnCB,
                     SINT64 &contextID,
                     rtnContextBase **ppContext = NULL,
-                    BOOLEAN enablePrefetch = FALSE ) ;
+                    BOOLEAN enablePrefetch = FALSE,
+                    BOOLEAN keepSearchPaths = FALSE ) ;
 
    INT32 rtnSort ( rtnContext **ppContext,
                    const BSONObj &orderBy,
@@ -364,6 +365,9 @@ namespace engine
 
    INT32 rtnGetNumberLongElement ( const BSONObj &obj, const CHAR *fieldName,
                                    INT64 &value ) ;
+
+   INT32 rtnGetDoubleElement ( const BSONObj &obj, const CHAR *fieldName,
+                               double &value ) ;
 
    INT32 rtnCreateIndexCommand ( const CHAR *pCollection,
                                  const BSONObj &indexObj,

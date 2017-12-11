@@ -2468,12 +2468,12 @@ namespace engine
       return obj ;
    }
 
-   BOOLEAN _mthMatchTree::isInitialized()
+   BOOLEAN _mthMatchTree::isInitialized() const
    {
       return _isInitialized ;
    }
 
-   BOOLEAN _mthMatchTree::isMatchesAll()
+   BOOLEAN _mthMatchTree::isMatchesAll() const
    {
       return _isMatchesAll ;
    }
@@ -2505,7 +2505,7 @@ namespace engine
       _isMatchesAll = matchesAll ;
    }
 
-   BSONObj _mthMatchTree::getParsedQuery( rtnParamList &parameters ) const
+   BSONObj _mthMatchTree::getParsedMatcher( const rtnParamList &parameters ) const
    {
       return NULL != _root ? _root->toParamBson( parameters ) : BSONObj() ;
    }
@@ -2572,7 +2572,16 @@ namespace engine
       estSelectivity = OPT_MTH_DEFAULT_SELECTIVITY ;
       estCPUCost = OPT_MTH_DEFAULT_CPU_COST ;
 
-      if ( _isInitialized && _root )
+      if ( !_isInitialized )
+      {
+         return ;
+      }
+
+      if ( _isMatchesAll && !hasExpand() && !hasReturnMatch() )
+      {
+         return ;
+      }
+      else if ( _root )
       {
          _root->evalEstimation( pCollectionStat, estSelectivity, estCPUCost ) ;
       }

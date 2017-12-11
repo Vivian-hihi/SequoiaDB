@@ -109,36 +109,8 @@ namespace engine
       if ( _pContext && 0 == result._sucGroupLst.size() )
       {
          MsgOpQuery *pQueryMsg = ( MsgOpQuery* )inMsg.msg() ;
-         INT64 ctxRetNum = _pContext->getLimitNum() ;
-         INT64 ctxSkipNum = _pContext->getSkipNum() ;
-
-         /// if send to one node
-         if ( options._groupLst.size() <= 1 )
-         {
-            if ( ctxSkipNum > 0 )
-            {
-               pQueryMsg->numToSkip = ctxSkipNum ;
-               _pContext->setSkipNum( 0 ) ;
-               if ( ctxRetNum > 0 &&
-                    pQueryMsg->numToReturn == ctxRetNum + ctxSkipNum )
-               {
-                  pQueryMsg->numToReturn -= ctxSkipNum ;
-               }
-            }
-         }
-         else
-         {
-            if ( pQueryMsg->numToSkip > 0 )
-            {
-               if ( pQueryMsg->numToReturn > 0 )
-               {
-                  _pContext->setLimitNum( pQueryMsg->numToReturn ) ;
-                  pQueryMsg->numToReturn += pQueryMsg->numToSkip ;
-               }
-               _pContext->setSkipNum( pQueryMsg->numToSkip ) ;
-               pQueryMsg->numToSkip = 0 ;
-            }
-         }
+         _pContext->optimizeReturnOptions( pQueryMsg,
+                                           options._groupLst.size() ) ;
       }
    }
 
@@ -747,8 +719,15 @@ namespace engine
       {
          if ( NULL == *pContext )
          {
+            RTN_CONTEXT_TYPE contextType = RTN_CONTEXT_COORD ;
+
+            if ( FLG_QUERY_EXPLAIN & pQueryMsg->flags )
+            {
+               contextType = RTN_CONTEXT_COORD_EXP ;
+            }
+
             // create context
-            rc = pRtncb->contextNew( RTN_CONTEXT_COORD,
+            rc = pRtncb->contextNew( contextType,
                                      (rtnContext **)pContext,
                                      contextID, cb ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to allocate context(rc=%d)",
@@ -764,16 +743,16 @@ namespace engine
 
       if ( _pContext && !_pContext->isOpened() )
       {
-         // open context, explain only in query msg
-         if ( ( ( FLG_QUERY_EXPLAIN & pQueryMsg->flags ) &&
-                '$' != pCollectionName[ 0 ] ) ||
-              openEmptyContext )
+         if ( openEmptyContext )
          {
-            rc = _pContext->open( BSONObj(), BSONObj(), -1, 0 ) ;
+            rtnQueryOptions defaultOptions ;
+            rc = _pContext->open( defaultOptions ) ;
          }
          else
          {
             BOOLEAN needReset       = FALSE ;
+            rtnQueryOptions options ;
+
             if ( FLG_QUERY_STRINGOUT & pQueryMsg->flags )
             {
                needReset = TRUE ;
@@ -798,11 +777,17 @@ namespace engine
                inMsg._pMsg = ( MsgHeader* )pNewMsg ;
             }
 
+            options.setCLFullName( pCollectionName ) ;
+            options.setQuery( objQuery ) ;
+            options.setOrderBy( objOrderby ) ;
+            options.setSelector( needReset ? objSelector : BSONObj() ) ;
+            options.setHint( objHint ) ;
+            options.setSkip( pQueryMsg->numToSkip ) ;
+            options.setLimit( pQueryMsg->numToReturn ) ;
+            options.resetFlag( pQueryMsg->flags ) ;
+
             // open context
-            rc = _pContext->open( objOrderby,
-                                  needReset ? objSelector : BSONObj(),
-                                  pQueryMsg->numToReturn,
-                                  pQueryMsg->numToSkip,
+            rc = _pContext->open( options,
                                   ( FLG_QUERY_MODIFY & pQueryMsg->flags )
                                   ? FALSE : TRUE ) ;
 
@@ -822,6 +807,12 @@ namespace engine
             }
          }
          PD_RC_CHECK( rc, PDERROR, "Open context failed, rc: %d", rc ) ;
+
+         // sample timetamp
+         if ( cb->getMonConfigCB()->timestampON )
+         {
+            _pContext->getMonCB()->recordStartTimestamp() ;
+         }
       }
 
       rc = cataSel.bind( _pResource,

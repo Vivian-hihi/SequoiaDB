@@ -52,9 +52,9 @@ namespace engine
       _optAccessPlanCache implement
     */
    _optAccessPlanCache::_optAccessPlanCache ()
-   : _utilHashTable< optAccessPlanKey, optAccessPlan >()
+   : _utilHashTable< optAccessPlanKey, optAccessPlan >(),
+     _pMonitor( NULL )
    {
-      _pMonitor = NULL ;
    }
 
    _optAccessPlanCache::~_optAccessPlanCache ()
@@ -413,44 +413,54 @@ namespace engine
          optAccessPlan *pPlan = pBucket->getHead() ;
          while ( pPlan )
          {
-            BSONObjBuilder planBuilder ;
-            BSONObj planObj ;
-
-            const CHAR *clFullName = pPlan->getCLFullName() ;
-            CHAR csName [ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] = { 0 } ;
-
-            rc = rtnResolveCollectionSpaceName( clFullName,
-                                                ossStrlen( clFullName ),
-                                                csName,
-                                                DMS_COLLECTION_SPACE_NAME_SZ ) ;
-            PD_RC_CHECK( rc, PDERROR, "Failed to resolve collection space "
-                         "name, rc: %d", rc ) ;
-
-            planBuilder.append( FIELD_NAME_COLLECTION,
-                                pPlan->getCLFullName() ) ;
-            planBuilder.append( FIELD_NAME_COLLECTIONSPACE, csName ) ;
-            planBuilder.append( FIELD_NAME_SCANTYPE,
-                                IXSCAN == pPlan->getScanType() ?
-                                VALUE_NAME_IXSCAN : VALUE_NAME_TBSCAN ) ;
-            planBuilder.append( FIELD_NAME_INDEXNAME,
-                                pPlan->getIndexName() ) ;
-            planBuilder.appendBool( FIELD_NAME_USE_EXT_SORT,
-                                    pPlan->sortRequired() ) ;
-
-            pPlan->toBSON( planBuilder, FALSE, TRUE ) ;
-
-            if ( NULL != _pMonitor )
+            try
             {
-               const optCachedPlanActivity *activity =
-                           _pMonitor->getActivity( pPlan->getActivityID() ) ;
-               if ( NULL != activity )
-               {
-                  activity->toBSON( planBuilder ) ;
-               }
-            }
+               BSONObjBuilder planBuilder ;
+               BSONObj planObj ;
 
-            planObj = planBuilder.obj() ;
-            cachedPlanList.push_back( planObj ) ;
+               const CHAR *clFullName = pPlan->getCLFullName() ;
+               CHAR csName [ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] = { 0 } ;
+
+               rc = rtnResolveCollectionSpaceName( clFullName,
+                                                   ossStrlen( clFullName ),
+                                                   csName,
+                                                   DMS_COLLECTION_SPACE_NAME_SZ ) ;
+               PD_RC_CHECK( rc, PDERROR, "Failed to resolve collection space "
+                            "name, rc: %d", rc ) ;
+
+               planBuilder.append( OPT_FIELD_COLLECTION,
+                                   pPlan->getCLFullName() ) ;
+               planBuilder.append( OPT_FIELD_COLLECTION_SPACE, csName ) ;
+               planBuilder.append( OPT_FIELD_SCAN_TYPE,
+                                   IXSCAN == pPlan->getScanType() ?
+                                   OPT_VALUE_IXSCAN : OPT_VALUE_TBSCAN ) ;
+               planBuilder.append( OPT_FIELD_INDEX_NAME,
+                                   pPlan->getIndexName() ) ;
+               planBuilder.appendBool( OPT_FIELD_USE_EXT_SORT,
+                                       pPlan->sortRequired() ) ;
+
+               pPlan->toBSON( planBuilder ) ;
+
+               if ( NULL != _pMonitor )
+               {
+                  const optCachedPlanActivity *activity =
+                              _pMonitor->getActivity( pPlan->getActivityID() ) ;
+                  if ( NULL != activity )
+                  {
+                     activity->toBSON( planBuilder ) ;
+                  }
+               }
+
+               planObj = planBuilder.obj() ;
+               cachedPlanList.push_back( planObj ) ;
+            }
+            catch ( std::exception &e )
+            {
+               PD_LOG( PDERROR, "Failed to build result, received "
+                       "unexpected error: %s", e.what() ) ;
+               rc = SDB_SYS ;
+               goto error ;
+            }
 
             pPlan = (optAccessPlan *)pPlan->getNext() ;
          }
@@ -507,12 +517,12 @@ namespace engine
       _optCachedPlanActivity implement
     */
    _optCachedPlanActivity::_optCachedPlanActivity ()
+   : _pPlan( NULL ),
+     _lastAccessTime( 0 ),
+     _periodAccessCount( 0 ),
+     _accessCount( 0 ),
+     _totalQueryTimeTick()
    {
-      _pPlan = NULL ;
-      _lastAccessTime = 0 ;
-      _periodAccessCount = 0 ;
-      _accessCount = 0 ;
-      _totalQueryTimeTick.clear() ;
    }
 
    _optCachedPlanActivity::~_optCachedPlanActivity ()
@@ -525,8 +535,8 @@ namespace engine
       _periodAccessCount = 0 ;
       _accessCount = 0 ;
       _totalQueryTimeTick.clear() ;
-      _maxQueryActivity.clear() ;
-      _minQueryActivity.clear() ;
+      _maxQueryActivity.reset() ;
+      _minQueryActivity.reset() ;
       _pPlan = NULL ;
    }
 
@@ -538,20 +548,8 @@ namespace engine
       _periodAccessCount = 0 ;
       _accessCount = 0 ;
       _totalQueryTimeTick.clear() ;
-      _maxQueryActivity.clear() ;
-      _minQueryActivity.clear() ;
-   }
-
-   void _optCachedPlanActivity::decPeriodAccessCount ( UINT32 count )
-   {
-      if ( _periodAccessCount > count )
-      {
-         _periodAccessCount -= count ;
-      }
-      else
-      {
-         _periodAccessCount = 0 ;
-      }
+      _maxQueryActivity.reset() ;
+      _minQueryActivity.reset() ;
    }
 
    void _optCachedPlanActivity::setQueryActivity (
@@ -559,19 +557,18 @@ namespace engine
    {
       if ( !isEmpty() )
       {
-         _totalQueryTimeTick += queryActivity.getQueryTimeTick() ;
-         if ( queryActivity.getQueryTimeTick() <
-                           _minQueryActivity.getQueryTimeTick() ||
+         _totalQueryTimeTick += queryActivity.getQueryTime() ;
+         if ( queryActivity.getQueryTime() < _minQueryActivity.getQueryTime() ||
               !_minQueryActivity.isValid() )
          {
             _minQueryActivity = queryActivity ;
          }
-         if ( queryActivity.getQueryTimeTick() >
-                           _maxQueryActivity.getQueryTimeTick() ||
+         if ( queryActivity.getQueryTime() > _maxQueryActivity.getQueryTime() ||
               !_maxQueryActivity.isValid() )
          {
             _maxQueryActivity = queryActivity ;
          }
+         incAccessCount() ;
       }
    }
 
@@ -580,14 +577,17 @@ namespace engine
       ossTickConversionFactor factor ;
       UINT32 seconds = 0, microseconds = 0 ;
       double totalQueryTime = 0.0, avgQueryTime = 0.0 ;
-      UINT32 accessCount = getAccessCount() ;
+      UINT64 accessCount = _accessCount ;
 
       _totalQueryTimeTick.convertToTime( factor, seconds, microseconds ) ;
       totalQueryTime = (double)( seconds ) +
                        (double)( microseconds ) / (double)( OSS_ONE_MILLION ) ;
-      avgQueryTime = totalQueryTime / (double)accessCount ;
+      if ( accessCount > 0 )
+      {
+         avgQueryTime = totalQueryTime / (double)accessCount ;
+      }
 
-      builder.append( OPT_FIELD_PLAN_ACCESS_COUNT, (INT32)( accessCount ) ) ;
+      builder.append( OPT_FIELD_PLAN_ACCESS_COUNT, (INT64)( accessCount ) ) ;
 
       builder.append( OPT_FIELD_TOTAL_QUERY_TIME, totalQueryTime ) ;
       builder.append( OPT_FIELD_AVG_QUERY_TIME, avgQueryTime ) ;
@@ -612,19 +612,19 @@ namespace engine
    _optCachedPlanMonitor::_optCachedPlanMonitor ()
    : _freeIndexBegin( 0 ),
      _freeIndexEnd( 0 ),
+     _pFreeActivityIDs( NULL ),
      _clearThread( 0 ),
      _allocateThread( 0 ),
+     _activityNum( 0 ),
+     _highWaterMark( 0 ),
+     _lowWaterMark( 0 ),
+     _clockIndex( 0 ),
+     _pActivities( NULL ),
      _cachedPlanCount( 0 ),
-     _accessTimestamp( 0 )
+     _accessTimestamp( 0 ),
+     _lastClearTimestamp( 0 ),
+     _pPlanCache( NULL )
    {
-      _pPlanCache = NULL ;
-      _pFreeActivityIDs = NULL ;
-      _clockIndex = 0 ;
-      _pActivities = NULL ;
-      _activityNum = 0 ;
-      _highWaterMark = 0 ;
-      _lowWaterMark = 0 ;
-      _lastClearTimestamp = 0 ;
    }
 
    _optCachedPlanMonitor::~_optCachedPlanMonitor ()
@@ -920,7 +920,7 @@ namespace engine
          {
             optCachedPlanActivity &activity = _pActivities[ _clockIndex ] ;
             UINT64 accessTime = 0 ;
-            UINT32 accessCount = 0 ;
+            UINT64 accessCount = 0 ;
             double curClearScore = 0.0 ;
 
             if ( activity.isEmpty() )
@@ -1019,7 +1019,7 @@ namespace engine
 
             pPlan->setActivityID( activityID ) ;
             activity.setPlan( pPlan, _accessTimestamp.inc() ) ;
-            activity.incAccessCount() ;
+            activity.incPeriodAccessCount() ;
          }
          else
          {
@@ -1049,10 +1049,10 @@ namespace engine
    : _optAccessPlanConfigHolder(),
      _mthMatchConfigHolder(),
      _planCache(),
-     _monitor()
+     _monitor(),
+     _clearJobEduID( PMD_INVALID_EDUID ),
+     _cacheLevel( OPT_PLAN_NOCACHE )
    {
-      _clearJobEduID = PMD_INVALID_EDUID ;
-      _cacheLevel = OPT_PLAN_NOCACHE ;
    }
 
    _optAccessPlanManager::~_optAccessPlanManager ()
@@ -1118,7 +1118,8 @@ namespace engine
       _planCache.enableCaching() ;
 
       PD_LOG( PDDEBUG, "Initialize plan cache: [ level: %d, buckets : %u ]",
-              _cacheLevel, _planCache.getBucketNum() ) ;
+              optAccessPlanKey::getCacheLevelName( _cacheLevel ),
+              _planCache.getBucketNum() ) ;
 
    done :
       PD_TRACE_EXITRC( SDB_OPTAPM_INIT, rc ) ;
@@ -1175,6 +1176,9 @@ namespace engine
                _cacheLevel = cacheLevel ;
 
                _planCache.enableCaching() ;
+
+               PD_LOG( PDDEBUG, "Re-initialize plan cache: [ level: %d ]",
+                       optAccessPlanKey::getCacheLevelName( _cacheLevel ) ) ;
             }
             else
             {
@@ -1185,16 +1189,15 @@ namespace engine
                }
 
                // Deinitialize the cache first
-               rc = fini () ;
+               rc = fini() ;
                PD_RC_CHECK( rc, PDERROR, "Failed to finalize access plan "
                             "manager, rc: %d", rc ) ;
 
                // Initialize the cache again with new value of bucketNum
                rc = init( bucketNum, cacheLevel, sortBufferSize,
                           optCostThreshold, enableMixCmp ) ;
-               PD_RC_CHECK( rc, PDERROR, "Failed to initialize access plan manager, "
-                            "rc: %d", rc ) ;
-
+               PD_RC_CHECK( rc, PDERROR, "Failed to initialize access plan "
+                            "manager, rc: %d", rc ) ;
             }
          }
       }
@@ -1243,6 +1246,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTAPM_GETAP, "_optAccessPlanManager::getAccessPlan" )
    INT32 _optAccessPlanManager::getAccessPlan ( const rtnQueryOptions &options,
+                                                BOOLEAN keepSearchPaths,
                                                 dmsStorageUnit *su,
                                                 dmsMBContext *mbContext,
                                                 optAccessPlanRuntime &planRuntime )
@@ -1256,9 +1260,15 @@ namespace engine
 
       BOOLEAN gotMainCLPlan = FALSE ;
 
+      // Use main-collection plan in below case
+      // 1. plan cache is initialized
+      // 2. parameterized plan is enabled
+      // 3. main-collection name is given
+      // 4. path-searching is disabled
       if ( isInitialized() &&
            _cacheLevel >= OPT_PLAN_PARAMETERIZED &&
-           NULL != options._mainCLName )
+           NULL != options.getMainCLName() &&
+           !keepSearchPaths )
       {
          dmsCachedPlanMgr *pCachedPlanMgr = su->getCachedPlanMgr() ;
          if ( NULL == pCachedPlanMgr ||
@@ -1285,7 +1295,8 @@ namespace engine
       {
          // If cache is not initialized, or it not from main-collection, or the
          // cache level is too low, get or create normal plan
-         rc = _getCLAccessPlan( options, su, mbContext, planRuntime ) ;
+         rc = _getCLAccessPlan( options, keepSearchPaths, su, mbContext,
+                                planRuntime ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to get collection access plan for "
                       "query [ %s ], rc: %d", options.toString().c_str(), rc ) ;
       }
@@ -1319,7 +1330,7 @@ namespace engine
       SDB_ASSERT( su, "su is invalid" ) ;
       SDB_ASSERT( mbContext, "mbContext is invalid" ) ;
 
-      rc = _getCLAccessPlan( options, OPT_PLAN_NOCACHE, su, mbContext,
+      rc = _getCLAccessPlan( options, OPT_PLAN_NOCACHE, FALSE, su, mbContext,
                              planRuntime ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get collection access plan for "
                    "query [ %s ], rc: %d", options.toString().c_str(), rc ) ;
@@ -1360,8 +1371,8 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTAPM_SETQUERYACT, "_optAccessPlanManager::setQueryActivity" )
-   void _optAccessPlanManager::setQueryActivity( INT32 activityID,
-                                                 const optQueryActivity &queryActivity )
+   void _optAccessPlanManager::setQueryActivity ( INT32 activityID,
+                                                  const optQueryActivity &queryActivity )
    {
       PD_TRACE_ENTRY( SDB_OPTAPM_SETQUERYACT ) ;
 
@@ -1671,6 +1682,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTAPM__GETCLAP, "_optAccessPlanManager::_getCLAccessPlan" )
    INT32 _optAccessPlanManager::_getCLAccessPlan ( const rtnQueryOptions &options,
+                                                   BOOLEAN keepSearchPaths,
                                                    dmsStorageUnit *su,
                                                    dmsMBContext *mbContext,
                                                    optAccessPlanRuntime &planRuntime )
@@ -1684,6 +1696,11 @@ namespace engine
 
       OPT_PLAN_CACHE_LEVEL cacheLevel = _cacheLevel ;
 
+      if ( keepSearchPaths )
+      {
+         cacheLevel = OPT_PLAN_NOCACHE ;
+      }
+
       // If the collection have been marked parameterized invalid,
       // lower the cache level to normalized
       if ( cacheLevel >= OPT_PLAN_PARAMETERIZED )
@@ -1693,12 +1710,13 @@ namespace engine
               pCachedPlanMgr->testParamInvalidBitmap( mbContext->mbID() ) )
          {
             PD_LOG( PDDEBUG, "Collection [%s] is invalid for parameterized "
-                    "plans", options._fullName ) ;
+                    "plans", options.getCLFullName() ) ;
             cacheLevel = OPT_PLAN_NORMALIZED ;
          }
       }
 
-      rc = _getCLAccessPlan( options, cacheLevel, su, mbContext, planRuntime ) ;
+      rc = _getCLAccessPlan( options, cacheLevel, keepSearchPaths, su,
+                             mbContext, planRuntime ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get collection access plan for "
                    "query [ %s ], rc: %d", options.toString().c_str(), rc ) ;
 
@@ -1713,6 +1731,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTAPM__GETCLAP_LEVEL, "_optAccessPlanManager::_getCLAccessPlan" )
    INT32 _optAccessPlanManager::_getCLAccessPlan ( const rtnQueryOptions &options,
                                                    OPT_PLAN_CACHE_LEVEL cacheLevel,
+                                                   BOOLEAN keepSearchPaths,
                                                    dmsStorageUnit *su,
                                                    dmsMBContext *mbContext,
                                                    optAccessPlanRuntime &planRuntime )
@@ -1731,11 +1750,12 @@ namespace engine
       optAccessPlanKey planKey( options, cacheLevel ) ;
 
       optAccessPlanHelper planHelper( cacheLevel, getPlanConfig(),
-                                      getMatchConfig() ) ;
+                                      getMatchConfig(), keepSearchPaths ) ;
       BOOLEAN needCache = ( isInitialized() &&
-                            cacheLevel > OPT_PLAN_NOCACHE ) ;
+                            cacheLevel > OPT_PLAN_NOCACHE &&
+                            !keepSearchPaths ) ;
 
-      planRuntime.clear() ;
+      planRuntime.reset() ;
 
       rc = _prepareAccessPlanKey( su, mbContext, planKey, planHelper,
                                   planRuntime ) ;
@@ -1788,7 +1808,7 @@ namespace engine
             planRuntime.deleteMatchRuntime() ;
          }
 
-         if ( planRuntime.getPlan() != NULL )
+         if ( planRuntime.hasPlan() )
          {
             pPlan->release() ;
          }
@@ -1822,7 +1842,7 @@ namespace engine
 
       SDB_ASSERT( su, "su is invalid" ) ;
       SDB_ASSERT( mbContext, "mbContext is invalid" ) ;
-      SDB_ASSERT( options._mainCLName, "mainCLName is invalid" ) ;
+      SDB_ASSERT( options.getMainCLName(), "mainCLName is invalid" ) ;
 
       optAccessPlan *pPlan = NULL ;
       OPT_PLAN_CACHE_LEVEL cacheLevel = _cacheLevel ;
@@ -1835,7 +1855,7 @@ namespace engine
       {
          // The sub-collection is not validated to use main-collection plans,
          // generate a general plan for it
-         rc = _getCLAccessPlan( options, su, mbContext, planRuntime ) ;
+         rc = _getCLAccessPlan( options, FALSE, su, mbContext, planRuntime ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to get collection access plan for "
                       "query [ %s ], rc: %d", options.toString().c_str(), rc ) ;
       }
@@ -1845,11 +1865,11 @@ namespace engine
 
          // Construct the plan key for main-collection
          optAccessPlanKey planKey( options, cacheLevel ) ;
-         planKey.setCLFullName( options._mainCLName ) ;
+         planKey.setCLFullName( options.getMainCLName() ) ;
          planKey.setMainCLName( NULL ) ;
 
          optAccessPlanHelper planHelper( cacheLevel, getPlanConfig(),
-                                         getMatchConfig() ) ;
+                                         getMatchConfig(), FALSE ) ;
 
          rc = _prepareAccessPlanKey( NULL, NULL, planKey, planHelper,
                                      planRuntime ) ;
@@ -1898,7 +1918,7 @@ namespace engine
                             "plan, rc: %d", rc ) ;
             }
 
-            if ( planRuntime.getPlan() != NULL )
+            if ( planRuntime.hasPlan() )
             {
                // Already got one plan, release this one
                pPlan->release() ;
@@ -1936,7 +1956,7 @@ namespace engine
 
 #ifdef _DEBUG
       PD_LOG( PDDEBUG, "Original query: [%s] %s", planKey.getCLFullName(),
-              planKey._query.toString( FALSE, TRUE ).c_str() ) ;
+              planKey.getQuery().toString( FALSE, TRUE ).c_str() ) ;
 #endif
 
       if ( planKey.getCacheLevel() >= OPT_PLAN_NORMALIZED )
@@ -2035,8 +2055,8 @@ namespace engine
       if ( isParameterized )
       {
          // Validate self
-         BSONObj paramArr = planRuntime.getParameters().toBSON() ;
-         pPlan->validateParameterized( *pPlan, paramArr ) ;
+         BSONObj parameters = planRuntime.getParameters().toBSON() ;
+         pPlan->validateParameterized( *pPlan, parameters ) ;
       }
 
       // Set the outputs
@@ -2145,7 +2165,7 @@ namespace engine
                    plan->getCacheLevel() >= OPT_PLAN_PARAMETERIZED,
                    "plan is invalid" ) ;
 
-      BSONObj paramArr ;
+      BSONObj parameters ;
       optGeneralAccessPlan *tempPlan = NULL ;
 
       // access plan is parameterized validated
@@ -2158,8 +2178,8 @@ namespace engine
       }
 
       // access plan has the same parameters
-      paramArr = planRuntime.getParameters().toBSON() ;
-      if ( plan->checkSavedParam( paramArr ) )
+      parameters = planRuntime.getParameters().toBSON() ;
+      if ( plan->checkSavedParam( parameters ) )
       {
          rc = planRuntime.bindParamPlan( planHelper, plan ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to bind parameterized plan, rc: %d",
@@ -2167,7 +2187,7 @@ namespace engine
          goto done ;
       }
 
-      rc = _getCLAccessPlan( planKey, OPT_PLAN_NOCACHE, su, mbContext,
+      rc = _getCLAccessPlan( planKey, OPT_PLAN_NOCACHE, FALSE, su, mbContext,
                              planRuntime ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get access plan for with "
                    "query [ %s ], rc: %d", planKey.toString().c_str(), rc ) ;
@@ -2175,7 +2195,7 @@ namespace engine
       tempPlan = dynamic_cast<optGeneralAccessPlan *>( planRuntime.getPlan() ) ;
       SDB_ASSERT( tempPlan, "subPlan is invalid " ) ;
 
-      if ( plan->validateParameterized( *tempPlan, paramArr ) )
+      if ( plan->validateParameterized( *tempPlan, parameters ) )
       {
          // Do nothing
       }
@@ -2213,6 +2233,7 @@ namespace engine
 
       optMainCLAccessPlan *mainPlan = NULL ;
       optGeneralAccessPlan *subPlan = NULL ;
+      BSONObj parameters ;
 
       mainPlan = SDB_OSS_NEW optMainCLAccessPlan( planKey,
                                                   planHelper.getMatchConfig() ) ;
@@ -2224,6 +2245,7 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Failed to get key of access plan owned, "
                    "rc: %d", rc ) ;
 
+      // Make sure matcher runtime is created, and must owned by plan
       if ( NULL == planRuntime.getMatchRuntime() )
       {
          rc = mainPlan->createMatchRuntime() ;
@@ -2236,6 +2258,12 @@ namespace engine
          mainPlan->getMatchRuntimeOnwed( planRuntime ) ;
       }
 
+      // Save parameters
+      if ( !planRuntime.getParameters().isEmpty() )
+      {
+         parameters = planRuntime.getParameters().toBSON() ;
+      }
+
       // Prepare to bind the sub-collection plan
       rc = mainPlan->prepareBindSubCL( planHelper ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to prepare main-collection "
@@ -2243,7 +2271,7 @@ namespace engine
 
       // Generate the sub-collection plan
       // Specify the cache level, APM is not allowed to adjust it
-      rc = _getCLAccessPlan( subOptions, OPT_PLAN_NOCACHE, su, mbContext,
+      rc = _getCLAccessPlan( subOptions, OPT_PLAN_NOCACHE, FALSE, su, mbContext,
                              planRuntime ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get access plan for "
                    "sub-collection with query [ %s ], rc: %d",
@@ -2253,7 +2281,7 @@ namespace engine
       subPlan = dynamic_cast<optGeneralAccessPlan *>( planRuntime.getPlan() ) ;
       SDB_ASSERT( subPlan, "subPlan is invalid " ) ;
 
-      rc = mainPlan->bindSubCLAccessPlan( planHelper, subPlan ) ;
+      rc = mainPlan->bindSubCLAccessPlan( planHelper, subPlan, parameters ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to bind main-collection access "
                    "plan, rc: %d" ) ;
 
@@ -2293,9 +2321,16 @@ namespace engine
       // to verify if it is validate to main-collection plan
       optGeneralAccessPlan *subPlan = NULL ;
       dmsCachedPlanMgr *pCachedPlanMgr = su->getCachedPlanMgr() ;
+      BSONObj parameters ;
+
+      // Save parameters
+      if ( !planRuntime.getParameters().isEmpty() )
+      {
+         parameters = planRuntime.getParameters().toBSON() ;
+      }
 
       // Specify the cache level, APM is not allowed to adjust it
-      rc = _getCLAccessPlan( subOptions, OPT_PLAN_NOCACHE, su, mbContext,
+      rc = _getCLAccessPlan( subOptions, OPT_PLAN_NOCACHE, FALSE, su, mbContext,
                              planRuntime ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get access plan for "
                    "sub-collection with query [ %s ], rc: %d",
@@ -2304,7 +2339,7 @@ namespace engine
       subPlan = dynamic_cast<optGeneralAccessPlan *>( planRuntime.getPlan() ) ;
       SDB_ASSERT( subPlan, "subPlan is invalid " ) ;
 
-      if ( !mainPlan->validateSubCL( subPlan ) )
+      if ( !mainPlan->validateSubCL( subPlan, parameters ) )
       {
          // The sub-collection is not validate for the main-collection
          // plan, mark it invalidate for main-collection plans
@@ -2360,7 +2395,7 @@ namespace engine
                       "rc: %d", rc ) ;
 
          // Create a general plan for sub-collection
-         rc = _getCLAccessPlan( subOptions, su, mbContext, planRuntime ) ;
+         rc = _getCLAccessPlan( subOptions, FALSE, su, mbContext, planRuntime ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to get collection access plan for "
                       "query [ %s ], rc: %d", subOptions.toString().c_str(),
                       rc ) ;
@@ -2369,7 +2404,7 @@ namespace engine
       }
 
       // Bind plan info ( suID, mbID, etc )
-      rc = planRuntime.bindPlanInfo( subOptions._fullName, su, mbContext,
+      rc = planRuntime.bindPlanInfo( subOptions.getCLFullName(), su, mbContext,
                                      indexExtID, indexLID ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to bind plan info, rc: %d",
                    rc ) ;
@@ -2503,4 +2538,3 @@ namespace engine
    }
 
 }
-

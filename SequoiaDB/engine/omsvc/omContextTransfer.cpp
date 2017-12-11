@@ -141,11 +141,6 @@ namespace engine
       return NULL ; 
    }
 
-   _optAccessPlan* _omContextTransfer::getPlan() 
-   { 
-      return NULL ; 
-   }
-
    INT32 _omContextTransfer::_appendReply( MsgHeader *reply )
    {
       INT32 rc           = SDB_OK ;

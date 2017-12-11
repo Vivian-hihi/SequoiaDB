@@ -523,6 +523,11 @@ namespace engine
       return _milliTimeout <= 0 ? TRUE : FALSE ;
    }
 
+   INT64 _pmdRemoteSession::getMilliTimeout () const
+   {
+      return _milliTimeout ;
+   }
+
    BOOLEAN _pmdRemoteSession::isAllReply()
    {
       BOOLEAN ret = TRUE ;

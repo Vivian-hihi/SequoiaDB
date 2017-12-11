@@ -2209,9 +2209,9 @@ namespace engine
       const UINT32 maxRetryTimes = 3 ;
       UINT32 retryTimes = 0 ;
 
-      queryOpt._fullName = CAT_SYSDCBASE_COLLECTION_NAME ;
-      queryOpt._flag = FLG_QUERY_WITH_RETURNDATA ;
-      queryOpt._query = BSON( FIELD_NAME_TYPE << CAT_BASE_TYPE_GLOBAL_STR ) ;
+      queryOpt.setCLFullName( CAT_SYSDCBASE_COLLECTION_NAME ) ;
+      queryOpt.setFlag( FLG_QUERY_WITH_RETURNDATA ) ;
+      queryOpt.setQuery( BSON( FIELD_NAME_TYPE << CAT_BASE_TYPE_GLOBAL_STR ) ) ;
 
       rc = queryOpt.toQueryMsg( &pBuff, bufSize, NULL ) ;
       if ( rc )

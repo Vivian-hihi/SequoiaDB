@@ -221,7 +221,7 @@ namespace engine
                                        BSONObj &outSelector )
    {
       clName = CAT_SYSDCBASE_COLLECTION_NAME ;
-      queryOpt._query = BSON( FIELD_NAME_TYPE << CAT_BASE_TYPE_GLOBAL_STR ) ;
+      queryOpt.setQuery( BSON( FIELD_NAME_TYPE << CAT_BASE_TYPE_GLOBAL_STR ) ) ;
       return SDB_OK ;
    }
 

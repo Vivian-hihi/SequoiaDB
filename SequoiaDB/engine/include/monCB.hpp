@@ -125,6 +125,7 @@ namespace engine
       MON_COUNTER_OPERATION_MAX = MON_READ,
 
       MON_TIME_OPERATION_NONE = 0,
+      MON_TOTAL_WAIT_TIME,
       MON_TOTAL_READ_TIME,
       MON_TOTAL_WRITE_TIME,
       MON_TIME_OPERATION_MAX = MON_TOTAL_WRITE_TIME
@@ -452,70 +453,227 @@ namespace engine
    } ;
    typedef class _monAppCB  monAppCB ;
 
+   /*
+      _monContextCB define
+    */
    class _monContextCB : public SDBObject
    {
-   public :
-      UINT64 dataRead ;
-      UINT64 indexRead ;
-      ossTickDelta queryTimeSpent ;
-      ossTimestamp _startTimestamp ;
-      ossTick      _startTimestampTick ;
+      public :
+         _monContextCB () ;
 
-      void reset()
-      {
-         dataRead = 0 ;
-         indexRead = 0 ;
-         queryTimeSpent.clear() ;
-         _startTimestamp.time = 0 ;
-         _startTimestamp.microtm = 0 ;
-         _startTimestampTick.clear() ;
-      }
+         _monContextCB ( const _monContextCB & monCtxCB ) ;
 
-      _monContextCB()
-      {
-         reset() ;
-      }
+         ~_monContextCB () ;
 
-      _monContextCB &operator= ( const _monContextCB &rhs )
-      {
-         dataRead                = rhs.dataRead ;
-         indexRead               = rhs.indexRead ;
-         queryTimeSpent          = rhs.queryTimeSpent ;
-         _startTimestamp.time    = rhs._startTimestamp.time ;
-         _startTimestamp.microtm = rhs._startTimestamp.microtm ;
-         _startTimestampTick     = rhs._startTimestampTick ;
-         return *this ;
-      }
+         void reset () ;
 
-      void recordStartTimestamp()
-      {
-         _startTimestampTick.sample() ;
-         ossGetCurrentTime( _startTimestamp ) ;
-      }
+         _monContextCB & operator = ( const _monContextCB & monCtxCB ) ;
 
-      void monOperationCountInc( MON_OPERATION_TYPES op, UINT64 delta = 1 )
-      {
-         switch ( op )
+         OSS_INLINE INT64 getContextID () const
          {
-            case MON_DATA_READ :
-               dataRead += delta ;
-               break ;
-
-            case MON_INDEX_READ :
-               indexRead += delta ;
-               break ;
-
-            default:
-               break ;
+            return _contextID ;
          }
-      }
 
-      void monOperationTimeInc( MON_OPERATION_TYPES op, ossTickDelta &delta )
-      {
-         queryTimeSpent += delta ;
-      }
+         OSS_INLINE void setContextID ( INT64 contextID )
+         {
+            _contextID = contextID ;
+         }
 
+         OSS_INLINE UINT64 getDataRead () const
+         {
+            return _dataRead ;
+         }
+
+         OSS_INLINE void setDataRead ( UINT64 dataRead )
+         {
+            _dataRead = dataRead ;
+         }
+
+         OSS_INLINE UINT64 getIndexRead () const
+         {
+            return _indexRead ;
+         }
+
+         OSS_INLINE void setIndexRead ( UINT64 indexRead )
+         {
+            _indexRead = indexRead ;
+         }
+
+         OSS_INLINE UINT32 getReturnBatches () const
+         {
+            return _returnBatches ;
+         }
+
+         OSS_INLINE void setReturnBatches ( UINT32 returnBatches )
+         {
+            _returnBatches = returnBatches ;
+         }
+
+         OSS_INLINE UINT64 getReturnRecords () const
+         {
+            return _returnRecords ;
+         }
+
+         OSS_INLINE void setReturnRecords ( UINT64 returnRecords )
+         {
+            _returnRecords = returnRecords ;
+         }
+
+         OSS_INLINE const ossTick & getStartTimestamp () const
+         {
+            return _startTimestamp ;
+         }
+
+         OSS_INLINE void setStartTimestamp ( const ossTick & startTimestamp )
+         {
+            _startTimestamp = startTimestamp ;
+         }
+
+         OSS_INLINE const ossTickDelta & getWaitTime () const
+         {
+            return _waitTime ;
+         }
+
+         OSS_INLINE void setWaitTime ( const ossTickDelta & waitTime )
+         {
+            _waitTime = waitTime ;
+         }
+
+         OSS_INLINE const ossTickDelta & getQueryTime () const
+         {
+            return _queryTime ;
+         }
+
+         OSS_INLINE void setQueryTime ( const ossTickDelta & queryTime )
+         {
+            _queryTime = queryTime ;
+         }
+
+         OSS_INLINE const ossTickDelta & getExecuteTime () const
+         {
+            return _executeTime ;
+         }
+
+         OSS_INLINE void setExecuteTime ( const ossTickDelta & executeTime )
+         {
+            _executeTime = executeTime ;
+         }
+
+         OSS_INLINE void recordStartTimestamp ()
+         {
+            _startTimestamp.sample() ;
+         }
+
+         OSS_INLINE void monReturnInc ( UINT32 batchDelta,
+                                        UINT64 recordDelta )
+         {
+            _returnBatches += batchDelta ;
+            _returnRecords += recordDelta ;
+         }
+
+         OSS_INLINE void monOperationCountInc ( MON_OPERATION_TYPES op,
+                                                UINT64 delta = 1 )
+         {
+            switch ( op )
+            {
+               case MON_DATA_READ :
+                  monDataReadInc( delta ) ;
+                  break ;
+
+               case MON_INDEX_READ :
+                  monIndexReadInc( delta ) ;
+                  break ;
+
+               default:
+                  break ;
+            }
+         }
+
+         OSS_INLINE void monDataReadInc ( UINT64 delta )
+         {
+            _dataRead += delta ;
+         }
+
+         OSS_INLINE void monIndexReadInc ( UINT64 delta )
+         {
+            _indexRead += delta ;
+         }
+
+         OSS_INLINE void monOperationTimeInc ( MON_OPERATION_TYPES op,
+                                               ossTickDelta &delta )
+         {
+            switch ( op )
+            {
+               case MON_TOTAL_WAIT_TIME :
+                  monWaitTimeInc( delta ) ;
+                  break ;
+               case MON_TOTAL_READ_TIME :
+                  monQueryTimeInc( delta ) ;
+                  break ;
+               case MON_TOTAL_WRITE_TIME :
+                  monExecuteTimeInc( delta ) ;
+                  break ;
+               default :
+                  break ;
+            }
+         }
+
+         OSS_INLINE void monOperationTimeInc ( MON_OPERATION_TYPES op,
+                                               const ossTick &startTime,
+                                               const ossTick &endTime )
+         {
+            ossTickDelta delta = endTime - startTime ;
+            monOperationTimeInc( op, delta ) ;
+         }
+
+         OSS_INLINE void monWaitTimeInc ( ossTickDelta &delta )
+         {
+            _waitTime += delta ;
+         }
+
+         OSS_INLINE void monWaitTimeInc ( const ossTick &startTime,
+                                          const ossTick &endTime )
+         {
+            ossTickDelta delta = endTime - startTime ;
+            monWaitTimeInc( delta ) ;
+         }
+
+         OSS_INLINE void monQueryTimeInc ( ossTickDelta &delta )
+         {
+            _queryTime += delta ;
+         }
+
+         OSS_INLINE void monQueryTimeInc ( const ossTick &startTime,
+                                           const ossTick &endTime )
+         {
+            ossTickDelta delta = endTime - startTime ;
+            monQueryTimeInc( delta ) ;
+         }
+
+         OSS_INLINE void monExecuteTimeInc ( ossTickDelta &delta )
+         {
+            _executeTime += delta ;
+         }
+
+         OSS_INLINE void monExecuteTimeInc ( const ossTick &startTime,
+                                             const ossTick &endTime )
+         {
+            ossTickDelta delta = endTime - startTime ;
+            monExecuteTimeInc( delta ) ;
+         }
+
+      public :
+         INT64          _contextID ;
+         UINT64         _dataRead ;
+         UINT64         _indexRead ;
+         UINT32         _returnBatches ;
+         UINT64         _returnRecords ;
+         ossTick        _startTimestamp ;
+         ossTickDelta   _waitTime ;
+         ossTickDelta   _queryTime ;
+         ossTickDelta   _executeTime ;
    } ;
+
    typedef class _monContextCB  monContextCB ;
 
 }

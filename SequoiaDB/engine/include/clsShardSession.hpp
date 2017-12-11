@@ -258,11 +258,6 @@ namespace engine
          INT32 _sortSubCLListByBound( const CHAR *pCollectionName,
                                       std::vector< std::string > &strSubCLList ) ;
 
-         INT32 _aggregateMainCLExplaining( const CHAR *fullName,
-                                           pmdEDUCB *cb,
-                                           SINT64 &mainCLContextID,
-                                           SINT64 &contextID ) ;
-
          INT32 _truncateMainCL( const CHAR *fullName ) ;
 
          INT32 _testMainCollection( const CHAR *fullName ) ;

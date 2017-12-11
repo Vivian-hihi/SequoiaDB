@@ -57,7 +57,7 @@ namespace engine
       rtnQueryType type = RTN_QUERY_NORMAL ;
 
       // Analyze the message, and create the operator.
-      rc = _getQueryType( options._query, type ) ;
+      rc = _getQueryType( options.getQuery(), type ) ;
       PD_RC_CHECK( rc, PDERROR, "Get query type failed[ %d ]", rc ) ;
 
       if ( RTN_QUERY_TEXT == type )

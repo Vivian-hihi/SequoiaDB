@@ -45,9 +45,9 @@
 #include "ossAtomic.hpp"
 #include "dmsCB.hpp"
 #include "dpsLogWrapper.hpp"
-#include "mthMatchRuntime.hpp"
 #include "mthSelector.hpp"
 #include "rtnContextBuff.hpp"
+#include "rtnQueryOptions.hpp"
 #include "utilMap.hpp"
 #include <string>
 
@@ -65,11 +65,13 @@ namespace engine
       RTN_CONTEXT_DATA     = 1,
       RTN_CONTEXT_DUMP,
       RTN_CONTEXT_COORD,
+      RTN_CONTEXT_COORD_EXP,
       RTN_CONTEXT_QGM,
       RTN_CONTEXT_TEMP,
       RTN_CONTEXT_SP,
       RTN_CONTEXT_PARADATA,
       RTN_CONTEXT_MAINCL,
+      RTN_CONTEXT_MAINCL_EXP,
       RTN_CONTEXT_SORT,
       RTN_CONTEXT_QGMSORT,
       RTN_CONTEXT_DELCS,
@@ -113,10 +115,11 @@ namespace engine
 
    class _pmdEDUCB ;
    class _dmsStorageUnit ;
-   class _optAccessPlanRuntime ;
-   class _optAccessPlan ;
    class _SDB_DMSCB ;
    class _dmsMBContext ;
+
+   class _optAccessPlanRuntime ;
+   typedef class _optAccessPlanRuntime optAccessPlanRuntime ;
 
    /*
       _rtnPrefWatcher define
@@ -235,22 +238,26 @@ namespace engine
    class _rtnContextBase : public SDBObject
    {
       friend class _rtnContextParaData ;
+      friend class _rtnExplainBase ;
+
       public:
          _rtnContextBase ( INT64 contextID, UINT64 eduID ) ;
          virtual ~_rtnContextBase () ;
          string   toString() ;
 
-         INT32    newMatcher () ;
-
          INT64    contextID () const { return _contextID ; }
          UINT64   eduID () const { return _eduID ; }
 
-         monContextCB*     getMonCB () { return &_monCtxCB ; }
          ossRWMutex*       dataLock () { return &_dataLock ; }
-         _mthSelector&     getSelector () { return _selector ; }
-         _mthMatchTree*    getMatcher ()
+
+         _mthSelector & getSelector ()
          {
-            return _matcher ;
+            return _selector ;
+         }
+
+         const _mthSelector & getSelector () const
+         {
+            return _selector ;
          }
 
          INT32    append( const BSONObj &result ) ;
@@ -317,8 +324,54 @@ namespace engine
          virtual std::string      name() const = 0 ;
          virtual RTN_CONTEXT_TYPE getType () const = 0 ;
          virtual _dmsStorageUnit* getSU () = 0 ;
-         virtual _optAccessPlanRuntime* getPlanRuntime () { return NULL ; }
          virtual BOOLEAN          isWrite() const { return FALSE ; }
+
+         virtual optAccessPlanRuntime * getPlanRuntime ()
+         {
+            return NULL ;
+         }
+
+         virtual const optAccessPlanRuntime * getPlanRuntime () const
+         {
+            return NULL ;
+         }
+
+      // Monitor
+      public :
+         monContextCB* getMonCB ()
+         {
+            return &_monCtxCB ;
+         }
+
+         const monContextCB* getMonCB () const
+         {
+            return &_monCtxCB ;
+         }
+
+         BOOLEAN enabledMonContext () const
+         {
+            return _enableMonContext ;
+         }
+
+         void setEnableMonContext ( BOOLEAN enableMonContext )
+         {
+            _enableMonContext = enableMonContext ;
+         }
+
+         BOOLEAN enabledQueryActivity () const
+         {
+            return _enableQueryActivity ;
+         }
+
+         void setEnableQueryActivity ( BOOLEAN enableQueryActivity )
+         {
+            _enableQueryActivity = enableQueryActivity ;
+         }
+
+         virtual void setQueryActivity ( BOOLEAN hitEnd )
+         {
+            // Do nothing
+         }
 
       protected:
          void              _onDataEmpty () ;
@@ -327,7 +380,9 @@ namespace engine
          virtual void      _toString( stringstream &ss ) {}
          BOOLEAN           _canPrepareMoreData() const { return _canPrepareMore ;}
          INT32             _prepareMoreData( _pmdEDUCB *cb ) ;
-         INT32             _prepareDataWithMon ( _pmdEDUCB *cb ) ;
+         INT32             _prepareDataMonitor ( _pmdEDUCB *cb ) ;
+         INT32             _getBuffer( INT32 maxNumToReturn,
+                                       rtnContextBuf& buf ) ;
 
       protected:
          OSS_INLINE void _empty () ;
@@ -343,14 +398,17 @@ namespace engine
       protected:
          monContextCB            _monCtxCB ;
          _mthSelector            _selector ;
-         _mthMatchTree           *_matcher ;
-         BOOLEAN                 _ownedMatcher ;
+
          // status
          BOOLEAN                 _hitEnd ;
          BOOLEAN                 _isOpened ;
 
          SDB_DPSCB               *_pDpsCB ;
          INT16                   _w ;
+
+         // Enable performance monitor
+         BOOLEAN                 _enableMonContext ;
+         BOOLEAN                 _enableQueryActivity ;
 
       private:
          INT64                   _contextID ;
@@ -447,7 +505,44 @@ namespace engine
    } ;
 
    _rtnContextBuilder* sdbGetRTNContextBuilder() ;
+
+   /*
+      _rtnSubContextHolder define
+    */
+   class _rtnSubContextHolder
+   {
+      public :
+         _rtnSubContextHolder () ;
+
+         ~_rtnSubContextHolder () ;
+
+      protected :
+         void _deleteSubContext () ;
+
+         void _setSubContext ( rtnContext * subContext, pmdEDUCB * subCB ) ;
+
+         OSS_INLINE rtnContext * _getSubContext ()
+         {
+            return _subContext ;
+         }
+
+         OSS_INLINE const rtnContext * _getSubContext () const
+         {
+            return _subContext ;
+         }
+
+         OSS_INLINE pmdEDUCB * _getSubContextCB ()
+         {
+            return _subCB ;
+         }
+
+      protected :
+         pmdEDUCB *     _subCB ;
+         rtnContext *   _subContext ;
+   } ;
+
+   typedef class _rtnSubContextHolder rtnSubContextHolder ;
+
 }
 
 #endif //RTNCONTEXT_HPP_
-

@@ -182,7 +182,7 @@ namespace engine
 
       // get the final data records, and call rtnContextBase::append().
 
-      rc = rtnGetMore( _subCtxID, _options._limit, objBuff, cb, rtnCB ) ;
+      rc = rtnGetMore( _subCtxID, _options.getLimit(), objBuff, cb, rtnCB ) ;
       if ( rc )
       {
          // If the return code is EOC, get another query from search engine
@@ -197,7 +197,7 @@ namespace engine
             rc = _getMoreFromRemote( cb ) ;
             PD_RC_CHECK( rc, PDERROR, "Get more from remote failed[ %d ]",
                          rc ) ;
-            rc = rtnGetMore( _subCtxID, _options._limit, objBuff, cb, rtnCB ) ;
+            rc = rtnGetMore( _subCtxID, _options.getLimit(), objBuff, cb, rtnCB ) ;
             PD_RC_CHECK( rc, PDERROR, "Get more data failed[ %d ]", rc ) ;
          }
          else
@@ -372,12 +372,12 @@ namespace engine
       }
 
       // Do a query, and get another subcontext.
-      rc = rtnQuery( _options._fullName, objList[1], objList[0], objList[2],
-                     objList[3], _options._flag, _remoteSession->getEDUCB(),
-                     _options._skip, _options._limit, dmsCB, rtnCB,
+      rc = rtnQuery( _options.getCLFullName(), objList[1], objList[0], objList[2],
+                     objList[3], _options.getFlag(), _remoteSession->getEDUCB(),
+                     _options.getSkip(), _options.getLimit(), dmsCB, rtnCB,
                      _subCtxID ) ;
       PD_RC_CHECK( rc, PDERROR, "Query data on collection[ %s ] failed[ %d ]",
-                   _options._fullName, rc ) ;
+                   _options.getCLFullName(), rc ) ;
 
    done:
       return rc ;

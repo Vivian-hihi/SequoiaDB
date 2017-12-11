@@ -265,7 +265,8 @@ namespace engine
          // return obj
          if ( !pTmpContext->isOpened() )
          {
-            rc = pTmpContext->open( BSONObj(), BSONObj(), -1, 0, preRead ) ;
+            rtnQueryOptions defaultOptions ;
+            rc = pTmpContext->open( defaultOptions, preRead ) ;
             PD_RC_CHECK( rc, PDERROR, "Open context failed(rc=%d)", rc ) ;
          }
       }
@@ -942,21 +943,23 @@ namespace engine
       {
          if ( openEmptyContext )
          {
-            rc = pTmpContext->open( BSONObj(), BSONObj(), -1, 0 ) ;
+            rtnQueryOptions defaultOptions ;
+            rc = pTmpContext->open( defaultOptions ) ;
          }
          else
          {
-            BSONObj srcSelector = queryOption._selector ;
-            INT64 srcLimit = queryOption._limit ;
-            INT64 srcSkip = queryOption._skip ;
+            rtnQueryOptions contextOptions ;
+            BSONObj srcSelector = queryOption.getSelector() ;
+            INT64 srcLimit = queryOption.getLimit() ;
+            INT64 srcSkip = queryOption.getSkip() ;
 
             if ( sendNodes.size() > 1 )
             {
                if ( srcLimit > 0 && srcSkip > 0 )
                {
-                  queryOption._limit = srcLimit + srcSkip ;
+                  queryOption.setLimit( srcLimit + srcSkip ) ;
                }
-               queryOption._skip = 0 ;
+               queryOption.setSkip( 0 ) ;
             }
             else
             {
@@ -965,16 +968,20 @@ namespace engine
             }
 
             // build new selector
-            rtnNeedResetSelector( srcSelector, queryOption._orderBy,
+            rtnNeedResetSelector( srcSelector, queryOption.getOrderBy(),
                                   needReset ) ;
             if ( needReset )
             {
-               queryOption._selector = BSONObj() ;
+               queryOption.setSelector( BSONObj() ) ;
             }
+
+            contextOptions = queryOption ;
+            contextOptions.setSelector( needReset ? srcSelector : BSONObj() ) ;
+            contextOptions.setLimit( srcLimit ) ;
+            contextOptions.setSkip( srcSkip ) ;
+
             // open context
-            rc = pTmpContext->open( queryOption._orderBy,
-                                    needReset ? srcSelector : BSONObj(),
-                                    srcLimit, srcSkip ) ;
+            rc = pTmpContext->open( contextOptions ) ;
          }
          PD_RC_CHECK( rc, PDERROR, "Open context failed(rc=%d)", rc ) ;
       }
@@ -985,8 +992,8 @@ namespace engine
          /// not change
          pNewMsg = (CHAR*)pMsg ;
          MsgOpQuery *pQueryMsg = ( MsgOpQuery* )pNewMsg ;
-         pQueryMsg->numToReturn = queryOption._limit ;
-         pQueryMsg->numToSkip = queryOption._skip ;
+         pQueryMsg->numToReturn = queryOption.getLimit() ;
+         pQueryMsg->numToSkip = queryOption.getSkip() ;
       }
       else
       {

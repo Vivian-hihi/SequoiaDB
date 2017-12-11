@@ -114,20 +114,20 @@ namespace engine
       goto done ;
    }
 
-   _rtnSubContext::_rtnSubContext( BSONObj& orderBy,
+   _rtnSubContext::_rtnSubContext( const BSONObj& orderBy,
                                    _ixmIndexKeyGen* keyGen,
-                                   INT64 contextId )
+                                   INT64 contextID )
    {
       _orderKey.setOrderBy( orderBy ) ;
       _isOrderKeyChange = TRUE ;
       _keyGen = keyGen ;
-      _contextId = contextId ;
+      _contextID = contextID ;
+      _startFrom = 0 ;
    }
 
    _rtnSubContext::~_rtnSubContext()
    {
       _keyGen = NULL ;
-      _contextId = -1 ;
+      _contextID = -1 ;
    }
 }
-

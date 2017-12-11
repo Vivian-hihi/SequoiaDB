@@ -75,13 +75,13 @@ namespace engine
    class _rtnSubContext: public SDBObject
    {
    public:
-      _rtnSubContext( BSONObj& orderBy,
+      _rtnSubContext( const BSONObj& orderBy,
                       _ixmIndexKeyGen* keyGen,
-                      INT64 contextId ) ;
+                      INT64 contextID ) ;
       virtual ~_rtnSubContext() ;
 
    public:
-      OSS_INLINE INT64     contextId() const { return _contextId ; }
+      OSS_INLINE INT64     contextID () const { return _contextID ; }
 
    public:
       virtual const CHAR*  front() = 0 ;
@@ -91,12 +91,17 @@ namespace engine
       virtual INT32        recordNum() = 0 ;
       virtual INT32        remainLength() = 0 ;
       virtual INT32        truncate ( INT32 num ) = 0 ;
-      virtual INT32        getOrderKey( _rtnOrderKey& orderKey ) = 0;
+      virtual INT32        getOrderKey( _rtnOrderKey& orderKey ) = 0 ;
+
+      // For context data processor
+      virtual INT64        getDataID () const = 0 ;
+      INT64                getProcessType () const { return _startFrom ; }
 
    protected:
       _rtnOrderKey      _orderKey ;
       BOOLEAN           _isOrderKeyChange ;
-      INT64             _contextId ;
+      INT64             _contextID ;
+      INT64             _startFrom ;
       _ixmIndexKeyGen*  _keyGen ;
    } ;
    typedef _rtnSubContext rtnSubContext ;

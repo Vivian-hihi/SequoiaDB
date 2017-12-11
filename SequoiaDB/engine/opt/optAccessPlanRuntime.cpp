@@ -42,6 +42,8 @@
 #include "pmd.hpp"
 #include "optAPM.hpp"
 #include "rtnCB.hpp"
+#include "rtnContext.hpp"
+#include "rtnContextData.hpp"
 
 using namespace bson ;
 
@@ -52,41 +54,51 @@ namespace engine
       _optQueryActivity implement
     */
    _optQueryActivity::_optQueryActivity ()
+   : _optrType( MON_COUNTER_OPERATION_NONE ),
+     _parameters(),
+     _returnOptions(),
+     _contextMonitor(),
+     _hitEnd( FALSE )
    {
-      clear() ;
    }
 
-   _optQueryActivity::_optQueryActivity ( INT64 contextID,
-                                          MON_OPERATION_TYPES optrType,
-                                          ossTick startTSTick,
-                                          ossTickDelta queryTimeTick )
+   _optQueryActivity::_optQueryActivity ( MON_OPERATION_TYPES optrType,
+                                          const rtnParamList &parameters,
+                                          const monContextCB &monCtxCB,
+                                          const rtnReturnOptions &returnOptions,
+                                          BOOLEAN hitEnd )
+   : _optrType( optrType),
+     _returnOptions( returnOptions ),
+     _contextMonitor( monCtxCB ),
+     _hitEnd( hitEnd )
    {
-      _contextID = contextID ;
-      _optrType = optrType ;
-      _startTSTick = startTSTick ;
-      _queryTimeTick = queryTimeTick ;
+      if ( !parameters.isEmpty() )
+      {
+         _parameters = parameters.toBSON() ;
+      }
    }
 
    _optQueryActivity::~_optQueryActivity ()
    {
-      clear() ;
    }
 
-   void _optQueryActivity::clear ()
+   void _optQueryActivity::reset ()
    {
-      _contextID = -1 ;
       _optrType = MON_COUNTER_OPERATION_NONE ;
-      _startTSTick.clear() ;
-      _queryTimeTick.clear() ;
+      _parameters = BSONObj() ;
+      _contextMonitor.reset() ;
+      _returnOptions.reset() ;
+      _hitEnd = FALSE ;
    }
 
    _optQueryActivity & _optQueryActivity::operator = (
                                        const _optQueryActivity & activity )
    {
-      _contextID = activity._contextID ;
       _optrType = activity._optrType ;
-      _startTSTick = activity._startTSTick ;
-      _queryTimeTick = activity._queryTimeTick ;
+      _parameters = activity._parameters ;
+      _contextMonitor = activity._contextMonitor ;
+      _returnOptions = activity._returnOptions ;
+      _hitEnd = activity._hitEnd ;
       return (*this) ;
    }
 
@@ -94,82 +106,142 @@ namespace engine
    {
       ossTickConversionFactor factor ;
       UINT32 seconds = 0, microseconds = 0 ;
-      double queryTime = 0.0 ;
+      double queryTime = 0.0, executeTime = 0.0 ;
       CHAR timestampStr[ OSS_TIMESTAMP_STRING_LEN + 1 ] = { 0 } ;
       ossTimestamp startTime ;
 
-      _queryTimeTick.convertToTime( factor, seconds, microseconds ) ;
+      _contextMonitor.getQueryTime().convertToTime( factor, seconds, microseconds ) ;
       queryTime = (double)( seconds ) +
                   (double)( microseconds ) / (double)( OSS_ONE_MILLION ) ;
 
-      _startTSTick.convertToTimestamp( startTime ) ;
+      _contextMonitor.getExecuteTime().convertToTime( factor, seconds, microseconds ) ;
+      executeTime = (double)( seconds ) +
+                    (double)( microseconds ) / (double)( OSS_ONE_MILLION ) ;
+
+      _contextMonitor.getStartTimestamp().convertToTimestamp( startTime ) ;
       ossTimestampToString( startTime, timestampStr ) ;
 
-      builder.append( OPT_FIELD_CONTEXT_ID, _contextID ) ;
+      // Context ID
+      builder.append( OPT_FIELD_CONTEXT_ID, _contextMonitor.getContextID() ) ;
+
+      // Query type
       switch ( _optrType )
       {
          case MON_UPDATE :
-            builder.append( OPT_FIELD_QUERY_TYPE, OPT_QUERY_TYPE_UPDATE ) ;
+            builder.append( OPT_FIELD_QUERY_TYPE,
+                            OPT_VALUE_QUERY_TYPE_UPDATE ) ;
             break ;
          case MON_DELETE :
-            builder.append( OPT_FIELD_QUERY_TYPE, OPT_QUERY_TYPE_DELETE ) ;
+            builder.append( OPT_FIELD_QUERY_TYPE,
+                            OPT_VALUE_QUERY_TYPE_DELETE ) ;
             break ;
          default :
-            builder.append( OPT_FIELD_QUERY_TYPE, OPT_QUERY_TYPE_SELECT ) ;
+            builder.append( OPT_FIELD_QUERY_TYPE,
+                            OPT_VALUE_QUERY_TYPE_SELECT ) ;
             break ;
       }
 
-      builder.append( OPT_QUERY_TIME_SPENT, queryTime ) ;
-      builder.append( OPT_QUERY_START_TIME, timestampStr ) ;
+      // Parameters
+      if ( !_parameters.isEmpty() )
+      {
+         builder.append( _parameters.firstElement() ) ;
+      }
+
+      // Monitor statistics: start timestamp, query time spent, etc.
+      builder.append( OPT_FIELD_QUERY_START_TIME, timestampStr ) ;
+      builder.append( OPT_FIELD_QUERY_TIME_SPENT, queryTime ) ;
+      builder.append( OPT_FIELD_EXECUTE_TIME_SPENT, executeTime ) ;
+      builder.append( OPT_FIELD_SELECTOR, _returnOptions.getSelector() ) ;
+      builder.append( OPT_FIELD_SKIP, _returnOptions.getSkip() ) ;
+      builder.append( OPT_FIELD_RETURN, _returnOptions.getLimit() ) ;
+      builder.append( OPT_FIELD_FLAG, _returnOptions.getFlag() ) ;
+      builder.append( OPT_FIELD_DATA_READ,
+                      (INT64)_contextMonitor.getDataRead() );
+      builder.append( OPT_FIELD_INDEX_READ,
+                      (INT64)_contextMonitor.getIndexRead() ) ;
+      builder.append( OPT_FIELD_GETMORES,
+                      (INT32)_contextMonitor.getReturnBatches() ) ;
+      builder.append( OPT_FIELD_RETURN_NUM,
+                      (INT64)_contextMonitor.getReturnRecords() ) ;
+      builder.appendBool( OPT_FIELD_HIT_END, _hitEnd ) ;
    }
 
    /*
-      _optAccessPlanInfo implement
+      _optCLScanInfo implement
     */
-   _optAccessPlanInfo::_optAccessPlanInfo ()
-   : _optAccessPlanInfoBase()
+   _optCLScanInfo::_optCLScanInfo ()
+   : _optCollectionInfo(),
+     _indexExtID( DMS_INVALID_EXTENT ),
+     _indexLID( DMS_INVALID_EXTENT )
    {
-      _indexExtID = DMS_INVALID_EXTENT ;
-      _indexLID = DMS_INVALID_EXTENT ;
       setCLFullName( NULL ) ;
    }
 
-   _optAccessPlanInfo::_optAccessPlanInfo ( const _optAccessPlanInfo &info )
-   : _optAccessPlanInfoBase( info )
+   _optCLScanInfo::_optCLScanInfo ( const _optCLScanInfo & info )
+   : _optCollectionInfo( info ),
+     _indexExtID( info._indexExtID ),
+     _indexLID( info._indexLID )
    {
-      _indexExtID = info._indexExtID ;
-      _indexLID = info._indexLID ;
       setCLFullName( info._clFullName ) ;
    }
 
+   _optCLScanInfo::~_optCLScanInfo ()
+   {
+   }
+
+   void _optCLScanInfo::setCLFullName ( const CHAR *pCLFullName )
+   {
+      if ( NULL != pCLFullName )
+      {
+         ossStrncpy( _clFullName, pCLFullName,
+                     DMS_COLLECTION_FULL_NAME_SZ ) ;
+         _clFullName[ DMS_COLLECTION_FULL_NAME_SZ ] = '\0' ;
+      }
+      else
+      {
+         _clFullName[0] = '\0' ;
+      }
+   }
 
    /*
       _optAccessPlanRuntime implement
     */
    _optAccessPlanRuntime::_optAccessPlanRuntime ()
-   : _mthMatchRuntimeHolder()
+   : _mthMatchRuntimeHolder(),
+     _plan( NULL ),
+     _apm( NULL ),
+     _hasQueryActivity( FALSE ),
+     _isNewPlan( FALSE ),
+     _ownedPlanInfo( FALSE ),
+     _clScanInfo( NULL )
    {
-      _plan = NULL ;
-      _apm = NULL ;
-      _isNewPlan = FALSE ;
-      _hasQueryActivity = FALSE ;
-      _ownedPlanInfo = FALSE ;
-      _planInfo = NULL ;
    }
 
    _optAccessPlanRuntime::~_optAccessPlanRuntime ()
    {
-      clear() ;
+      reset() ;
    }
 
-   void _optAccessPlanRuntime::clear ()
+   void _optAccessPlanRuntime::reset ()
    {
       deleteMatchRuntime() ;
-      deletePlanInfo() ;
+      deleteCLScanInfo() ;
       _isNewPlan = FALSE ;
       _hasQueryActivity = FALSE ;
       _apm = NULL ;
       releasePlan() ;
+   }
+
+   void _optAccessPlanRuntime::inheritRuntime ( _optAccessPlanRuntime *planRuntime )
+   {
+      SDB_ASSERT( planRuntime, "planRuntime is invalid" ) ;
+
+      // The plan is reused, increase the reference count
+      planRuntime->_plan->incRefCount() ;
+      setPlan( planRuntime->_plan, planRuntime->_apm, FALSE ) ;
+
+      // Set match runtime and query info
+      setMatchRuntime( planRuntime->getMatchRuntime() ) ;
    }
 
    mthMatchRuntime *_optAccessPlanRuntime::getMatchRuntime ( BOOLEAN checkValid )
@@ -186,15 +258,15 @@ namespace engine
       return matchRuntime ;
    }
 
-   INT32 _optAccessPlanRuntime::createPlanInfo ()
+   INT32 _optAccessPlanRuntime::createCLScanInfo ()
    {
       INT32 rc = SDB_OK ;
 
-      SDB_ASSERT( NULL == _planInfo, "_planInfo should be NULL" ) ;
+      SDB_ASSERT( NULL == _clScanInfo, "_clScanInfo should be NULL" ) ;
 
-      _planInfo = SDB_OSS_NEW _optAccessPlanInfo() ;
-      PD_CHECK( _planInfo, SDB_OOM, error, PDERROR,
-                "Failed to allocate plan info" ) ;
+      _clScanInfo = SDB_OSS_NEW optCLScanInfo() ;
+      PD_CHECK( _clScanInfo, SDB_OOM, error, PDERROR,
+                "Failed to allocate collection scan info" ) ;
       _ownedPlanInfo = TRUE ;
 
       done :
@@ -203,13 +275,13 @@ namespace engine
          goto done ;
    }
 
-   void _optAccessPlanRuntime::deletePlanInfo ()
+   void _optAccessPlanRuntime::deleteCLScanInfo ()
    {
-      if ( _ownedPlanInfo && NULL != _planInfo )
+      if ( _ownedPlanInfo && NULL != _clScanInfo )
       {
-         SDB_OSS_DEL _planInfo ;
+         SDB_OSS_DEL _clScanInfo ;
       }
-      _planInfo = NULL ;
+      _clScanInfo = NULL ;
       _ownedPlanInfo = FALSE ;
    }
 
@@ -224,17 +296,18 @@ namespace engine
 
       PD_TRACE_ENTRY( SDB_OPTAPRTM_BINDPLANINFO ) ;
 
-      if ( NULL == _planInfo )
+      if ( NULL == _clScanInfo )
       {
-         rc = createPlanInfo() ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to create plan info, rc: %d", rc ) ;
+         rc = createCLScanInfo() ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to create sub-collection scan info, "
+                      "rc: %d", rc ) ;
       }
 
-      _planInfo->setCLFullName( pCLFullName ) ;
-      _planInfo->setCSInfo( su ) ;
-      _planInfo->setCLInfo( mbContext ) ;
-      _planInfo->setIndexExtID( indexExtID ) ;
-      _planInfo->setIndexLID( indexLID ) ;
+      _clScanInfo->setCSInfo( su ) ;
+      _clScanInfo->setCLInfo( mbContext ) ;
+      _clScanInfo->setCLFullName( pCLFullName ) ;
+      _clScanInfo->setIndexExtID( indexExtID ) ;
+      _clScanInfo->setIndexLID( indexLID ) ;
 
    done :
       PD_TRACE_EXITRC( SDB_OPTAPRTM_BINDPLANINFO, rc ) ;
@@ -298,19 +371,64 @@ namespace engine
       }
    }
 
-   void _optAccessPlanRuntime::setQueryActivity ( INT64 contextID,
-                                                  MON_OPERATION_TYPES optrType,
-                                                  ossTick startTSTick,
-                                                  ossTickDelta queryTimeTick )
+   void _optAccessPlanRuntime::setQueryActivity ( MON_OPERATION_TYPES optrType,
+                                                  const monContextCB &monCtxCB,
+                                                  const rtnReturnOptions &returnOptions,
+                                                  BOOLEAN hitEnd )
    {
       if ( NULL != _plan && NULL != _apm && !_hasQueryActivity )
       {
-         optQueryActivity queryActivity( contextID, optrType, startTSTick,
-                                         queryTimeTick ) ;
+         optQueryActivity queryActivity( optrType, getParameters(),
+                                         monCtxCB, returnOptions, hitEnd ) ;
          _apm->setQueryActivity( _plan->getActivityID(), queryActivity ) ;
          _hasQueryActivity = TRUE ;
       }
    }
 
-}
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTAPRTM_TOEXPPATH, "_optAccessPlanRuntime::toExplainPath" )
+   INT32 _optAccessPlanRuntime::toExplainPath ( optExplainScanPath &expPath,
+                                                const rtnContext *context ) const
+   {
+      INT32 rc = SDB_OK ;
 
+      PD_TRACE_ENTRY( SDB_OPTAPRTM_TOEXPPATH ) ;
+
+      rc = expPath.copyScanPath( _plan->getScanPath(), context ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to copy scan path, rc: %d", rc ) ;
+
+      if ( NULL != _clScanInfo )
+      {
+         expPath.setCollectionName( _clScanInfo->getCLFullName() ) ;
+         expPath.setIsMainCLPlan( TRUE ) ;
+      }
+      else
+      {
+         expPath.setCollectionName( _plan->getCLFullName() ) ;
+      }
+
+      expPath.setCacheLevel( _plan->isCached() ? _plan->getCacheLevel() :
+                                                 OPT_PLAN_NOCACHE ) ;
+      expPath.setIsNewPlan( _isNewPlan ) ;
+      expPath.setSearchPaths( _plan->getSearchPaths() ) ;
+      if ( NULL != getMatchTree() )
+      {
+         expPath.setMatchConfig( getMatchTree()->getMatchConfig() ) ;
+      }
+      if ( NULL != _apm )
+      {
+         expPath.setPlanConfig( _apm->getPlanConfig() ) ;
+      }
+
+      if ( !getParameters().isEmpty() )
+      {
+         expPath.setParameters( getParameters().toBSON() ) ;
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB_OPTAPRTM_TOEXPPATH, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+}

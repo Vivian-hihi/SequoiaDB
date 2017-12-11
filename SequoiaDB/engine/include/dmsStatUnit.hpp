@@ -91,7 +91,10 @@ namespace engine
    class _dmsStatKey
    {
       public :
-         _dmsStatKey ( BOOLEAN included = TRUE ) { _included = included ; }
+         _dmsStatKey ( BOOLEAN included = TRUE )
+         : _included( included )
+         {
+         }
 
          virtual ~_dmsStatKey () {}
 
@@ -430,9 +433,8 @@ namespace engine
          {
             if ( pIndexName )
             {
-               ossMemset( _pIndexName, 0, sizeof( _pIndexName ) ) ;
-               ossStrncpy( _pIndexName, pIndexName,
-                           sizeof( _pIndexName ) - 1 ) ;
+               ossStrncpy( _pIndexName, pIndexName, IXM_INDEX_NAME_SIZE ) ;
+               _pIndexName[ IXM_INDEX_NAME_SIZE ] = '\0' ;
             }
             else
             {
@@ -557,8 +559,6 @@ namespace engine
          }
 
       protected :
-         void _initDefaultItems () ;
-
          virtual INT32 _initItem ( const BSONObj &boStat ) ;
          virtual INT32 _postInit () ;
          virtual void _toBSON ( BSONObjBuilder &builder ) const ;
@@ -634,8 +634,8 @@ namespace engine
          {
             if ( pCSName )
             {
-               ossMemset( _pCSName, 0, sizeof( _pCSName ) ) ;
-               ossStrncpy( _pCSName, pCSName, sizeof( _pCSName ) ) ;
+               ossStrncpy( _pCSName, pCSName, DMS_COLLECTION_SPACE_NAME_SZ ) ;
+               _pCSName[ DMS_COLLECTION_SPACE_NAME_SZ ] = '\0' ;
             }
             else
             {
@@ -652,8 +652,8 @@ namespace engine
          {
             if ( pCLName )
             {
-               ossMemset( _pCLName, 0, sizeof( _pCLName ) ) ;
-               ossStrncpy( _pCLName, pCLName, sizeof( _pCLName ) ) ;
+               ossStrncpy( _pCLName, pCLName, DMS_COLLECTION_NAME_SZ ) ;
+               _pCLName[ DMS_COLLECTION_NAME_SZ ] = '\0' ;
             }
             else
             {
@@ -738,8 +738,6 @@ namespace engine
          }
 
       protected :
-         void _initDefaultItems () ;
-
          virtual INT32 _initItem ( const BSONObj &boStat ) ;
          virtual INT32 _postInit () { return SDB_OK ; }
          virtual void _toBSON ( BSONObjBuilder &builder ) const ;
@@ -770,4 +768,3 @@ namespace engine
 }
 
 #endif //DMSSTATUNIT_HPP__
-

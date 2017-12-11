@@ -41,6 +41,7 @@
 
 #include "core.hpp"
 #include "oss.hpp"
+#include "msgDef.hpp"
 
 namespace engine
 {
@@ -74,14 +75,22 @@ namespace engine
    // IO Cost to randomly scan a 4k-size page
    #define OPT_RANDOM_SCAN_IO_COST           ( 10 )
 
+   #define OPT_DEF_COST_THRESHOLD            ( OPT_RANDOM_SCAN_IO_COST * 2 )
+
+   // IO COST to sequential write a 4k-size page
+   #define OPT_SEQ_WRITE_IO_COST             ( 2 )
+
    // Rate to convert cost to ms
    #define OPT_COST_TO_MS                    ( 0.0005 )
 
+   // Rate to convert cost to sec
+   #define OPT_COST_TO_SEC                   ( OPT_COST_TO_MS * 0.001 )
+
    // Default start cost of table scan
-   #define OPT_TBLSCAN_DEFAULT_START_COST    ( 0 )
+   #define OPT_TBSCAN_DEFAULT_START_COST     ( 0 )
 
    // Default start cost of indes scan
-   #define OPT_IDXSCAN_DEFAULT_START_COST    ( 0 )
+   #define OPT_IXSCAN_DEFAULT_START_COST     ( 0 )
 
    // Threshold selectivity of candidate index scan plans
    #define OPT_PRED_THRESHOLD_SELECTIVITY    ( 0.1 )
@@ -155,50 +164,167 @@ namespace engine
       OPT_PLAN_FUZZYOPTR
    } ;
 
+   /*
+      Explain field masks
+    */
+   #define OPT_NODE_EXPLAIN_MASK_NONE        ( 0x0000 )
+   #define OPT_NODE_EXPLAIN_MASK_ESTIMATE    ( 0x0001 )
+   #define OPT_NODE_EXPLAIN_MASK_RUN         ( 0x0002 )
+   #define OPT_NODE_EXPLAIN_MASK_INPUT       ( 0x0010 )
+   #define OPT_NODE_EXPLAIN_MASK_FILTER      ( 0x0020 )
+   #define OPT_NODE_EXPLAIN_MASK_OUTPUT      ( 0x0040 )
+   #define OPT_NODE_EXPLAIN_MASK_ALL         ( 0xffff )
+
+   #define OPT_EXPLAIN_MASK_NONE_NAME        "None"
+   #define OPT_EXPLAIN_MASK_INPUT_NAME       OPT_FIELD_INPUT
+   #define OPT_EXPLAIN_MASK_FILTER_NAME      OPT_FIELD_FILTER
+   #define OPT_EXPLAIN_MASK_OUTPUT_NAME      OPT_FIELD_OUTPUT
+   #define OPT_EXPLAIN_MASK_ALL_NAME         "All"
+
+   /*
+      Explain field names
+    */
+
+   // Explain for cache status
+   #define OPT_FIELD_CACHE_STATUS         "CacheStatus"
+   // Not cached
+   #define OPT_VALUE_CACHE_STATUS_NOCACHE    "NoCache"
+   // New created into cache
+   #define OPT_VALUE_CACHE_STATUS_NEWCACHE   "NewCache"
+   // Hit cache
+   #define OPT_VALUE_CACHE_STATUS_HITCACHE   "HitCache"
+
+   // Explain for cache level ( --plancachelevel )
+   #define OPT_FIELD_CACHE_LEVEL          "CacheLevel"
+   #define OPT_VALUE_CACHE_NOCACHE         "OPT_PLAN_NOCACHE"
+   #define OPT_VALUE_CACHE_ORIGINAL        "OPT_PLAN_ORIGINAL"
+   #define OPT_VALUE_CACHE_NORMALIZED      "OPT_PLAN_NORMALZIED"
+   #define OPT_VALUE_CACHE_PARAMETERIZED   "OPT_PLAN_PARAMETERIZED"
+   #define OPT_VALUE_CACHE_FUZZYOPTR       "OPT_PLAN_FUZZYOPTR"
+
    #define OPT_FIELD_HASH_CODE            "HashCode"
-   #define OPT_FIELD_REFERENCE_COUNT      "RefCount"
-   #define OPT_FIELD_ORDERBY              "OrderBy"
-   #define OPT_FIELD_HINT                 "Hint"
+   #define OPT_FIELD_SORT                 FIELD_NAME_SORT
+   #define OPT_FIELD_HINT                 FIELD_NAME_HINT
    #define OPT_FIELD_SORTED_IDX_REQURED   "SortedIndexRequired"
    #define OPT_FIELD_PARAM_PLAN_VALID     "ParamPlanValid"
    #define OPT_FIELD_MAINCL_PLAN_VALID    "MainCLPlanValid"
+   #define OPT_FIELD_VALID_PARAMS         "ValidParams"
+   #define OPT_FIELD_VALID_SUBCLS         "ValidSubCLs"
    #define OPT_FIELD_PLAN_PATH            "PlanPath"
-   #define OPT_FIELD_PARAM_QUERY          "Query"
+   #define OPT_FIELD_SEARCH               FIELD_NAME_SEARCH
+   #define OPT_FIELD_SEARCH_PATHS         "SearchPaths"
+   #define OPT_FIELD_SCAN_NODE            "ScanNode"
+   #define OPT_FIELD_SORT_NODE            "SortNode"
    #define OPT_FIELD_PLAN_SCORE           "Score"
    #define OPT_FIELD_TOTAL_QUERY_TIME     "TotalQueryTime"
    #define OPT_FIELD_AVG_QUERY_TIME       "AvgQueryTime"
    #define OPT_FIELD_PLAN_REF_COUNT       "RefCount"
    #define OPT_FIELD_PLAN_ACCESS_COUNT    "AccessCount"
-
-   // Explain for cache status
-   #define OPT_FIELD_CACHE_STATUS         "CacheStatus"
-   // Not cached
-   #define OPT_CACHE_STATUS_NOCACHE       "NoCache"
-   // New created into cache
-   #define OPT_CACHE_STATUS_NEWCACHE      "NewCache"
-   // Hit cache
-   #define OPT_CACHE_STATUS_HITCACHE      "HitCache"
-
-   // Explain for cache level ( --plancachelevel )
-   #define OPT_FIELD_CACHELEVEL           "CacheLevel"
-   #define OPT_CACHE_NOCACHE_NAME         "OPT_PLAN_NOCACHE"
-   #define OPT_CACHE_ORIGINAL_NAME        "OPT_PLAN_ORIGINAL"
-   #define OPT_CACHE_NORMALIZED_NAME      "OPT_PLAN_NORMALZIED"
-   #define OPT_CACHE_PARAMETERIZED_NAME   "OPT_PLAN_PARAMETERIZED"
-   #define OPT_CACHE_FUZZYOPTR_NAME       "OPT_PLAN_FUZZYOPTR"
+   #define OPT_FIELD_MAINCL_PLAN          "MainCLPlan"
+   #define OPT_FIELD_DATA_READ            FIELD_NAME_DATAREAD
+   #define OPT_FIELD_INDEX_READ           FIELD_NAME_INDEXREAD
 
    // Explain for query activity
    #define OPT_FIELD_MAX_QUERY            "MaxTimeSpentQuery"
    #define OPT_FIELD_MIN_QUERY            "MinTimeSpentQuery"
    #define OPT_FIELD_CONTEXT_ID           FIELD_NAME_CONTEXTID
    #define OPT_FIELD_QUERY_TYPE           "QueryType"
-   #define OPT_QUERY_TYPE_SELECT          "SELECT"
-   #define OPT_QUERY_TYPE_UPDATE          "UPDATE"
-   #define OPT_QUERY_TYPE_DELETE          "DELETE"
-   #define OPT_QUERY_TIME_SPENT           FIELD_NAME_QUERYTIMESPENT
-   #define OPT_QUERY_START_TIME           FIELD_NAME_STARTTIMESTAMP
+   #define OPT_VALUE_QUERY_TYPE_SELECT    "SELECT"
+   #define OPT_VALUE_QUERY_TYPE_UPDATE    "UPDATE"
+   #define OPT_VALUE_QUERY_TYPE_DELETE    "DELETE"
+   #define OPT_FIELD_QUERY_TIME_SPENT     FIELD_NAME_QUERYTIMESPENT
+   #define OPT_FIELD_EXECUTE_TIME_SPENT   "ExecuteTimeSpent"
+   #define OPT_FIELD_WAIT_TIME_SPENT      "WaitTimeSpent"
+   #define OPT_FIELD_QUERY_START_TIME     FIELD_NAME_STARTTIMESTAMP
+   #define OPT_FIELD_HIT_END              "HitEnd"
+
+   // Explain details
+   #define OPT_FIELD_ROLE                 FIELD_NAME_ROLE
+   #define OPT_FIELD_NODE_NAME            FIELD_NAME_NODE_NAME
+   #define OPT_FIELD_GROUP_NAME           FIELD_NAME_GROUPNAME
+   #define OPT_FIELD_NAME                 FIELD_NAME_NAME
+   #define OPT_FIELD_SCAN_TYPE            FIELD_NAME_SCANTYPE
+   #define OPT_VALUE_TBSCAN               VALUE_NAME_TBSCAN
+   #define OPT_VALUE_IXSCAN               VALUE_NAME_IXSCAN
+   #define OPT_FIELD_USE_EXT_SORT         FIELD_NAME_USE_EXT_SORT
+   #define OPT_FIELD_OPERATOR             "Operator"
+   #define OPT_FIELD_ESTIMATE             FIELD_NAME_ESTIMATE
+   #define OPT_FIELD_RUN                  FIELD_NAME_RUN
+   #define OPT_FIELD_INPUT                "Input"
+   #define OPT_FIELD_OUTPUT               "Output"
+   #define OPT_FIELD_FILTER               "Filter"
+   #define OPT_FIELD_CHILD_NODES          "ChildOperators"
+   #define OPT_FIELD_SUB_COLLECTIONS      FIELD_NAME_SUB_COLLECTIONS
+   #define OPT_FIELD_SELECTOR             FIELD_NAME_SELECTOR
+   #define OPT_FIELD_SKIP                 FIELD_NAME_SKIP
+   #define OPT_FIELD_RETURN               FIELD_NAME_RETURN
+   #define OPT_FIELD_COLLECTION           FIELD_NAME_COLLECTION
+   #define OPT_FIELD_COLLECTION_SPACE     FIELD_NAME_COLLECTIONSPACE
+   #define OPT_FIELD_INDEX                FIELD_NAME_INDEX
+   #define OPT_FIELD_INDEX_NAME           FIELD_NAME_INDEXNAME
+   #define OPT_FIELD_QUERY                FIELD_NAME_QUERY
+   #define OPT_FIELD_FLAG                 "Flag"
+   #define OPT_FIELD_IX_BOUND             FIELD_NAME_IX_BOUND
+   #define OPT_FIELD_DIRECTION            FIELD_NAME_DIRECTION
+   #define OPT_FIELD_NEED_MATCH           FIELD_NAME_NEED_MATCH
+   #define OPT_FIELD_PAGES                "Pages"
+   #define OPT_FIELD_PAGE_SIZE            FIELD_NAME_PAGE_SIZE
+   #define OPT_FIELD_RECORDS              "Records"
+   #define OPT_FIELD_RECORD_SIZE          "RecordSize"
+   #define OPT_FIELD_SORTED               "Sorted"
+   #define OPT_FIELD_READ_RECORDS         "ReadRecords"
+   #define OPT_FIELD_READ_PAGES           "ReadPages"
+   #define OPT_FIELD_OUTPUT_RECORDS       "OutputRecords"
+   #define OPT_FIELD_MTH_SEL              "MthSelectivity"
+   #define OPT_FIELD_MTH_COST             "MthCPUCost"
+   #define OPT_FIELD_SCAN_SEL             "IXScanSelectivity"
+   #define OPT_FIELD_PRED_SEL             "IXPredSelectivity"
+   #define OPT_FIELD_PRED_COST            "PredCPUCost"
+   #define OPT_FIELD_SORT_TYPE            "SortType"
+   #define OPT_VALUE_SORT_IN_MEM          "InMemory"
+   #define OPT_VALUE_SORT_EXTERNAL        "External"
+   #define OPT_FIELD_START_COST           "StartCost"
+   #define OPT_FIELD_RUN_COST             "RunCost"
+   #define OPT_FIELD_TOTAL_COST           "TotalCost"
+   #define OPT_FIELD_CL_STAT_EST          "CLEstFromStat"
+   #define OPT_FIELD_CL_STAT_TIME         "CLStatTime"
+   #define OPT_FIELD_IX_STAT_EST          "IXEstFromStat"
+   #define OPT_FIELD_IX_STAT_TIME         "IXStatTime"
+   #define OPT_FIELD_IS_CANDIDATE         "IsCandidate"
+   #define OPT_FIELD_IS_USED              "IsUsed"
+   #define OPT_FIELD_INDEX_PAGES          "IndexPages"
+   #define OPT_FIELD_INDEX_LEVELS         "IndexLevels"
+   #define OPT_FIELD_INDEX_READ_RECORDS   "IndexReadRecords"
+   #define OPT_FIELD_INDEX_READ_PAGES     "IndexReadPages"
+   #define OPT_FIELD_GETMORES             "GetMores"
+   #define OPT_FIELD_RETURN_NUM           FIELD_NAME_RETURN_NUM
+   #define OPT_FIELD_IO_COST              "IOCost"
+   #define OPT_FIELD_CPU_COST             "CPUCost"
+   #define OPT_FIELD_RAN_IO_COST          "RandomIOCostUnit"
+   #define OPT_FIELD_SEQ_IO_COST          "SeqIOCostUnit"
+   #define OPT_FIELD_SEQ_WRITE_IO_COST    "SeqWrtIOCostUnit"
+   #define OPT_FIELD_PAGE_UINT            "PageUnit"
+   #define OPT_FIELD_IDX_CPU_COST         "IXExtractCPUCost"
+   #define OPT_FIELD_REC_CPU_COST         "RecExtractCPUCost"
+   #define OPT_FIELD_IX_START_COST        "IXScanStartCost"
+   #define OPT_FIELD_TB_START_COST        "TBScanStartCost"
+   #define OPT_FIELD_IO_CPU_RATE          "IOCPURate"
+   #define OPT_FIELD_SORT_FIELDS          "SortFields"
+   #define OPT_FIELD_OPTR_CPU_COST        "OptrCPUCost"
+   #define OPT_FIELD_CHILD_TOTAL_COST     "ChildTotalCost"
+   #define OPT_FIELD_CONSTANTS            "Constants"
+   #define OPT_FIELD_OPTIONS              FIELD_NAME_OPTIONS
+   #define OPT_FIELD_NEED_EVAL_IO         "NeedEvalIO"
+   #define OPT_FIELD_OPT_COST_THRESHOLD   PMD_OPTION_OPT_COST_THRESHOLD
+   #define OPT_FIELD_SORT_BUFF_SIZE       PMD_OPTION_SORTBUF_SIZE
+   #define OPT_FIELD_NEED_REORDER         "NeedReorder"
+   #define OPT_FIELD_SUB_COLLECTION_LIST  "SubCollectionList"
+   #define OPT_FILED_SUB_COLLECTION_NUM   "SubCollectionNum"
+   #define OPT_FIELD_DATA_NODE_LIST       "DataNodeList"
+   #define OPT_FIELD_DATA_NODE_NUM        "DataNodeNum"
+   #define OPT_FIELD_SUMMARY_NAME         FIELD_NAME_NAME
+   #define OPT_FIELD_SUMMARY_EST_COST     "Est" OPT_FIELD_TOTAL_COST
 
 }
 
 #endif //OPTCOMMON_HPP__
-

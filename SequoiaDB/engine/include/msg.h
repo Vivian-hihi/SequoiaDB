@@ -621,9 +621,16 @@ struct _MsgOpReply
    // 32-35 bytes
    SINT32    flags ;      // reply flags
    // 36-39 bytes
-   SINT32    startFrom ;  // where in the context "this" reply is starting
+   // 1. In most cases, startFrom (>=0) is where "this" reply is starting
+   // in the context given by contextID
+   // 2. If flags is SDB_CLS_NOT_PRIMARY, startFrom might be the new primary
+   //    node to re-send the request
+   // 3. If startFrom (<0) is between RTN_CTX_PROCESSOR_BEGIN and
+   //    RTN_CTX_PROCESSOR_END, it is the type of data dispatcher which is
+   //    used to process "this" reply
+   SINT32    startFrom ;
    // 40-43 bytes
-   SINT32    numReturned ;// number of recourds returned in the reply
+   SINT32    numReturned ;// number of records returned in the reply
 } ;
 typedef struct _MsgOpReply MsgOpReply ;
 

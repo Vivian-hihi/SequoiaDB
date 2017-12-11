@@ -50,6 +50,7 @@
 #include "optAccessPlanKey.hpp"
 
 using namespace bson ;
+using namespace std ;
 
 namespace engine
 {
@@ -90,13 +91,6 @@ namespace engine
          virtual OPT_PLAN_TYPE getPlanType () const = 0 ;
 
          /// Information for plan execution and explanation
-
-         // Scan type ( tbscan or ixscan )
-         virtual optScanType getScanType () const = 0 ;
-
-         // Whether sort is required after scan
-         virtual BOOLEAN sortRequired () const = 0 ;
-
          OSS_INLINE BOOLEAN isHintFailed () const
          {
             return _hintFailed ;
@@ -134,17 +128,9 @@ namespace engine
             return _key.getCLLID() ;
          }
 
-         // Information of index
-         virtual const CHAR *getIndexName () const = 0 ;
-         virtual dmsExtentID getIndexCBExtent () const = 0 ;
-         virtual dmsExtentID getIndexLID () const = 0 ;
-         virtual BSONObj getKeyPattern () const = 0 ;
-         virtual INT32 getDirection () const = 0 ;
+         string toString () const ;
 
-         std::string toString () const ;
-
-         virtual void toBSON ( BSONObjBuilder &builder, BOOLEAN detail,
-                               BOOLEAN cacheInfo ) const ;
+         virtual INT32 toBSON ( BSONObjBuilder &builder ) const ;
 
          /// Plan cache related
          OSS_INLINE virtual const optAccessPlanKey &getKey () const
@@ -194,8 +180,6 @@ namespace engine
             return _activityID.peek() ;
          }
 
-         virtual double getScore () const = 0 ;
-
          OSS_INLINE UINT32 getRefCount () const
          {
             return _refCount.peek() ;
@@ -220,15 +204,86 @@ namespace engine
 
          void release () ;
 
-         OSS_INLINE OPT_PLAN_CACHE_LEVEL getCacheLevel ()
+         OSS_INLINE OPT_PLAN_CACHE_LEVEL getCacheLevel () const
          {
             return _key.getCacheLevel() ;
+         }
+
+         OSS_INLINE virtual optScanType getScanType () const
+         {
+            SDB_ASSERT ( _isInitialized, "optAccessPlan must be optimized "
+                         "before start using" ) ;
+            return _scanPath.getScanType() ;
+         }
+
+         OSS_INLINE virtual const CHAR *getIndexName() const
+         {
+            SDB_ASSERT ( _isInitialized, "optAccessPlan must be optimized "
+                         "before start using" ) ;
+            return _scanPath.getIndexName() ;
+         }
+
+         OSS_INLINE virtual dmsExtentID getIndexCBExtent () const
+         {
+            SDB_ASSERT ( _isInitialized, "optAccessPlan must be optimized "
+                         "before start using" ) ;
+            return _scanPath.getIndexExtID() ;
+         }
+
+         OSS_INLINE virtual dmsExtentID getIndexLID () const
+         {
+            SDB_ASSERT ( _isInitialized, "optAccessPlan must be optimized "
+                         "before start using" ) ;
+            return _scanPath.getIndexLID() ;
+         }
+
+         OSS_INLINE virtual INT32 getDirection () const
+         {
+            SDB_ASSERT ( _isInitialized, "optAccessPlan must be optimized "
+                         "before start using" ) ;
+            return _scanPath.getDirection() ;
+         }
+
+         OSS_INLINE virtual BSONObj getKeyPattern () const
+         {
+            SDB_ASSERT ( _isInitialized, "optAccessPlan must be optimized "
+                         "before start using" ) ;
+            return _scanPath.getKeyPattern() ;
+         }
+
+         OSS_INLINE virtual BOOLEAN sortRequired () const
+         {
+            SDB_ASSERT ( _isInitialized, "optAccessPlan must be optimized "
+                         "before start using" ) ;
+            return _scanPath.isSortRequired() ;
+         }
+
+         OSS_INLINE virtual double getScore () const
+         {
+            SDB_ASSERT ( _isInitialized, "optAccessPlan must be optimized "
+                         "before start using" ) ;
+            return _scanPath.getSelectivity() ;
+         }
+
+         OSS_INLINE virtual const optScanPath &getScanPath () const
+         {
+            SDB_ASSERT ( _isInitialized, "optAccessPlan must be optimized "
+                         "before start using" ) ;
+            return _scanPath ;
+         }
+
+         OSS_INLINE virtual const optScanPathList * getSearchPaths () const
+         {
+            return NULL ;
          }
 
          virtual INT32 bindMatchRuntime ( mthMatchRuntime *matchRuntime ) = 0 ;
 
       protected :
-         virtual void _toBSONInternal ( BSONObjBuilder &builder ) const = 0 ;
+         OSS_INLINE virtual INT32 _toBSONInternal ( BSONObjBuilder &builder ) const
+         {
+            return SDB_OK ;
+         }
 
          virtual INT32 _prepareMatchTree ( optAccessPlanHelper &planHelper ) ;
 
@@ -249,6 +304,10 @@ namespace engine
          // Reference count to the plan
          // Note, the plan could be only deleted when reference count is zero
          ossAtomic32 _refCount ;
+
+         /// Scan path
+         optPlanAllocator _planAllocator ;
+         optScanPath _scanPath ;
    } ;
 
    typedef class _optAccessPlan optAccessPlan ;
@@ -273,52 +332,6 @@ namespace engine
             return OPT_PLAN_TYPE_NORMAL ;
          }
 
-         OSS_INLINE virtual optScanType getScanType () const
-         {
-            SDB_ASSERT ( _isInitialized,
-                         "optAccessPlan must be optimized before start using" ) ;
-            return _scanPath.getScanType() ;
-         }
-
-         OSS_INLINE virtual const CHAR *getIndexName() const
-         {
-            return _scanPath.getIndexName() ;
-         }
-
-         OSS_INLINE virtual dmsExtentID getIndexCBExtent () const
-         {
-            return _scanPath.getIndexExtID() ;
-         }
-
-         OSS_INLINE virtual dmsExtentID getIndexLID () const
-         {
-            return _scanPath.getIndexLID() ;
-         }
-
-         OSS_INLINE virtual INT32 getDirection () const
-         {
-            SDB_ASSERT ( _isInitialized,
-                         "optAccessPlan must be optimized before start using" ) ;
-            return _scanPath.getDirection() ;
-         }
-
-         OSS_INLINE virtual BSONObj getKeyPattern () const
-         {
-            SDB_ASSERT ( _isInitialized,
-                         "optAccessPlan must be optimized before start using" ) ;
-            return _scanPath.getKeyPattern() ;
-         }
-
-         BOOLEAN sortRequired() const
-         {
-            return _scanPath.isSortRequired() ;
-         }
-
-         OSS_INLINE virtual double getScore () const
-         {
-            return _scanPath.getSelectivity() ;
-         }
-
          OSS_INLINE virtual void setCachedBitmap ()
          {
             // Set the cached plan bitmap for collection space
@@ -335,7 +348,7 @@ namespace engine
          }
 
          OSS_INLINE virtual BOOLEAN validateParameterized ( const _optAccessPlan &plan,
-                                                            const BSONObj &paramArr )
+                                                            const BSONObj &parameters )
          {
             return FALSE ;
          }
@@ -343,6 +356,11 @@ namespace engine
          OSS_INLINE virtual INT32 markParamInvalid ( dmsMBContext *mbContext )
          {
             return SDB_OK ;
+         }
+
+         OSS_INLINE virtual const optScanPathList * getSearchPaths () const
+         {
+            return _searchPaths ;
          }
 
          virtual INT32 bindMatchRuntime ( mthMatchRuntime *matchRuntime ) ;
@@ -402,15 +420,17 @@ namespace engine
          INT32 _prepareSUCaches ( dmsStorageUnit *su,
                                   dmsMBContext *mbContext ) ;
 
-         virtual void _toBSONInternal ( BSONObjBuilder &builder ) const ;
+         INT32 _createSearchPaths () ;
+
+         void _deleteSearchPaths () ;
+
+         INT32 _addSearchPath ( optScanPath & path,
+                                const optAccessPlanHelper & planHelper ) ;
 
       protected :
-         optPlanAllocator _planAllocator ;
-         optScanPath _scanPath ;
-
          dmsCachedPlanMgr *_cachedPlanMgr ;
-
          BOOLEAN _autoHint ;
+         optScanPathList * _searchPaths ;
    } ;
 
    typedef class _optGeneralAccessPlan optGeneralAccessPlan ;
@@ -425,11 +445,11 @@ namespace engine
          typedef struct _optParamRecord
          {
             _optParamRecord ()
+            : _score( OPT_PRED_DEFAULT_SELECTIVITY )
             {
-               _score = OPT_PRED_DEFAULT_SELECTIVITY ;
             }
 
-            BSONObj _paramArr ;
+            BSONObj _parameters ;
             double _score ;
          } _optParamRecord, optParamRecord ;
 
@@ -455,16 +475,18 @@ namespace engine
          }
 
          virtual BOOLEAN validateParameterized ( const _optAccessPlan &plan,
-                                                 const BSONObj &paramArr ) ;
+                                                 const BSONObj &parameters ) ;
 
-         virtual BOOLEAN checkSavedParam ( const BSONObj &paramArr ) ;
+         virtual BOOLEAN checkSavedParam ( const BSONObj &parameters ) ;
 
          virtual INT32 markParamInvalid ( dmsMBContext *mbContext ) ;
 
          virtual INT32 bindMatchRuntime ( mthMatchRuntime *matchRuntime ) ;
 
       protected :
-         void _saveParam ( const BSONObj &paramArr, double score ) ;
+         void _saveParam ( const BSONObj &parameters, double score ) ;
+
+         virtual INT32 _toBSONInternal ( BSONObjBuilder &builder ) const ;
 
       protected :
          optParamRecord    _records[ OPT_PARAM_VALID_PLAN_NUM ] ;
@@ -485,13 +507,14 @@ namespace engine
          typedef struct _optSubCLRecord
          {
             _optSubCLRecord ()
+            : _score( OPT_PRED_DEFAULT_SELECTIVITY )
             {
                _subCLName[0] = '\0' ;
-               _score = OPT_PRED_DEFAULT_SELECTIVITY ;
             }
 
-            CHAR _subCLName[ DMS_COLLECTION_FULL_NAME_SZ + 1 ] ;
-            double _score ;
+            CHAR     _subCLName[ DMS_COLLECTION_FULL_NAME_SZ + 1 ] ;
+            BSONObj  _parameters ;
+            double   _score ;
          } _optSubCLRecord, optSubCLRecord ;
 
       public :
@@ -505,11 +528,6 @@ namespace engine
             return OPT_PLAN_TYPE_MAINCL ;
          }
 
-         OSS_INLINE virtual optScanType getScanType () const
-         {
-            return _scanType ;
-         }
-
          OSS_INLINE virtual dmsExtentID getIndexCBExtent () const
          {
             return DMS_INVALID_EXTENT ;
@@ -520,32 +538,12 @@ namespace engine
             return DMS_INVALID_EXTENT ;
          }
 
-         OSS_INLINE virtual BSONObj getKeyPattern () const
-         {
-            return _keyPattern ;
-         }
-
-         OSS_INLINE virtual INT32 getDirection () const
-         {
-            return _direction ;
-         }
-
          OSS_INLINE virtual double getScore () const
          {
             return _score ;
          }
 
          OSS_INLINE virtual void setCachedBitmap () {}
-
-         OSS_INLINE virtual const CHAR *getIndexName () const
-         {
-            return _indexName ;
-         }
-
-         OSS_INLINE virtual BOOLEAN sortRequired () const
-         {
-            return _sortRequired ;
-         }
 
          OSS_INLINE BOOLEAN isMainCLValid () const
          {
@@ -555,9 +553,11 @@ namespace engine
          INT32 prepareBindSubCL ( optAccessPlanHelper &planHelper ) ;
 
          INT32 bindSubCLAccessPlan ( optAccessPlanHelper &planHelper,
-                                     optGeneralAccessPlan *subPlan ) ;
+                                     optGeneralAccessPlan *subPlan,
+                                     const BSONObj &parameters ) ;
 
-         BOOLEAN validateSubCL ( const optGeneralAccessPlan *plan ) ;
+         BOOLEAN validateSubCL ( const optGeneralAccessPlan *plan,
+                                 const BSONObj &parameters ) ;
 
          INT32 validateSubCL ( dmsStorageUnit *su,
                                dmsMBContext *mbContext,
@@ -571,17 +571,12 @@ namespace engine
          virtual INT32 bindMatchRuntime ( mthMatchRuntime *matchRuntime ) ;
 
       protected :
-         void _saveSubCL ( const CHAR *pSubCLName, double score ) ;
+         void _saveSubCL ( const CHAR *pSubCLName, double score,
+                           const BSONObj &parameters ) ;
 
-         virtual void _toBSONInternal ( BSONObjBuilder &builder ) const ;
+         virtual INT32 _toBSONInternal ( BSONObjBuilder &builder ) const ;
 
       protected :
-         optScanType       _scanType ;
-         CHAR              _indexName[ IXM_INDEX_NAME_SIZE + 1 ] ;
-         INT32             _direction ;
-         BSONObj           _keyPattern ;
-         BOOLEAN           _sortRequired ;
-
          optSubCLRecord    _records[ OPT_MAINCL_VALID_PLAN_NUM ] ;
          BOOLEAN           _isMainCLValid ;
          ossAtomic32       _mainCLValidCount ;
@@ -593,4 +588,3 @@ namespace engine
 }
 
 #endif //OPTACCESSPLAN_HPP__
-
