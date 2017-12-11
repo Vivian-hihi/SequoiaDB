@@ -41,6 +41,7 @@ function testExcludeCsCl()
                  " --dir " + csvDir +
                  " --type csv" +
                  " --force true" ;
+   command += " --cscl " + csname ;
    command += " --excludecscl " + csname + "." + clnames[0] + "," +
                                   csname + "." + clnames[1] ;                
    testRunCommand( command ) ;

@@ -48,6 +48,7 @@ function testExcludeCsCl()
                  " --dir " + csvDir +
                  " --type csv" +
                  " --force true" ;
+   command += " --cscl " + csnames[0] + "," + csnames[1] ;
    command += " --excludecscl " + csnames[0] + "." + clnames[0] + "," +
                                   csnames[0] + "." + clnames[1] + "," +
                                   csnames[1] + "." + clnames[0] + "," +
@@ -59,7 +60,7 @@ function testExcludeCsCl()
       for( var j = 0;j < clnum;j++ )
       {
          var filename = csvDir + csnames[i] + "." + clnames[j] + ".csv" ;
-         println( filename ) ;
+         // println( filename ) ;
          if( ( i == 0 || i == 1 ) && ( j == 0 || j == 1 ) )
             checkFileExist( filename, false ) ;
          else
