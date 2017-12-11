@@ -212,6 +212,14 @@ namespace engine
          goto error ;
       }
 
+      if ( SDB_LOB_MODE_WRITE == mode && accessId <= -1 )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Invalid LOB accessId[%lld] in write mode",
+                 accessId ) ;
+         goto error ;
+      }
+
       {
          _rtnLobAccessKey key( clName, oid ) ;
 
@@ -248,14 +256,6 @@ namespace engine
                if ( SDB_LOB_MODE_WRITE != mode )
                {
                   rc = SDB_LOB_IS_IN_USE ;
-                  goto error ;
-               }
-
-               if ( accessId <= -1 )
-               {
-                  rc = SDB_SYS ;
-                  PD_LOG( PDERROR, "Invalid LOB accessId[%lld] in write mode",
-                          accessId ) ;
                   goto error ;
                }
 
@@ -300,6 +300,7 @@ namespace engine
             catch ( std::exception& e )
             {
                rc = SDB_SYS ;
+               SAFE_OSS_DELETE( lobAccessInfo ) ;
                PD_LOG( PDERROR, "Unexpected error happened: %s", e.what() ) ;
                goto error ;
             }
