@@ -417,7 +417,7 @@ namespace engine
       {
          PD_LOG( PDERROR, "Lob[%s] is closed with exception, write meta data",
                  getOID().str().c_str() ) ;
-         rc = _writeLobMeta( cb, FALSE ) ;
+         rc = _writeLobMeta( cb, TRUE ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to write meta data of lob[%s], rc:%d",
