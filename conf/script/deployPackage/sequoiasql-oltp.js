@@ -357,16 +357,38 @@ function InstallPackage( taskID )
    var destPath      = '/tmp/packet/sequoiasql-oltp.run' ;
    var options = "" ;
 
-   options += " --mode unattended --installmode cover " + " --prefix " + installPath ;
-   options += " --username " + sdbUser + " --userpasswd " + sdbPasswd ;
-   options += " --groupname " + sdbUserGroup ;
-
    PD_LOGGER.setTaskId( taskID ) ;
 
    PD_LOGGER.logTask( PDEVENT, sprintf( "Begin to install packet: host [?]",
                                         hostName ) ) ;
    resultInfo[FIELD_FLOW].push( sprintf( "Begin to install packet: host [?]",
                                          hostName ) ) ;
+
+   var cmd = 'chmod u+x ' + destPath ;
+   try
+   {
+      var ssh = new Ssh( hostName, user, pwd, parseInt( sshPort ) ) ;
+
+      ssh.exec( cmd ) ;
+   }
+   catch( e )
+   {
+      error = _getErrorMsg( getLastError(), e,
+                            sprintf( "Failed to geve package executable " +
+                                     "authority: host [?], " +
+                                     "detail[?]", hostName, getLastErrMsg() ) ) ;
+      resultInfo[FIELD_ERRNO]  = error.getErrCode() ;
+      resultInfo[FIELD_DETAIL] = getErr( error.getErrCode() ) ;
+      resultInfo[FIELD_STATUS] = STATUS_FAIL ;
+      resultInfo[FIELD_STATUS_DESC] = DESC_STATUS_FAIL ;
+      resultInfo[FIELD_FLOW].push( error.getErrMsg() ) ;
+      PD_LOGGER.logTask( PDERROR, error ) ;
+      return resultInfo ;
+   }
+
+   options += " --mode unattended --installmode cover " + " --prefix " + installPath ;
+   options += " --username " + sdbUser + " --userpasswd " + sdbPasswd ;
+   options += " --groupname " + sdbUserGroup ;
 
    var cmd = destPath + options ;
    try
