@@ -131,7 +131,22 @@ function _runRemoteCmd( cmd, command, arg, timeout )
    {
       var rc = cmd.getLastRet() ;
       var out = cmd.getLastOut() ;
-      error = new SdbError( rc, out ) ;
+
+      if( rc )
+      {
+         error = new SdbError( rc, out ) ;
+      }
+      else
+      {
+         if( typeof( e ) == "number" )
+         {
+            error = new SdbError( e, "failed to exec cmd" ) ;
+         }
+         else
+         {
+            error = new SdbError( SDB_SYS, "failed to exec cmd." ) ;
+         }
+      }
    }
 
    return error ;
