@@ -2254,11 +2254,14 @@ namespace engine
                                       _dmsLobDataMapBlk *blk,
                                       const UINT32 *bucket,
                                       dmsMBContext *mbContext,
-                                      BOOLEAN needRelease )
+                                      BOOLEAN needRelease,
+                                      BOOLEAN needCheck )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__DMSSTORAGELOB__REMOVEPAGE ) ;
       UINT32 bucketNumber = 0 ;
+      UINT32 __hash1 = 0 ;
+      UINT32 __hash2 = 0 ;
 
       if ( NULL != bucket )
       {
@@ -2266,12 +2269,34 @@ namespace engine
       }
       else
       {
-         UINT32 hash = 0 ;
-         DMS_LOB_GET_HASH_FROM_BLK( blk, hash ) ;
-         bucketNumber = _getBucket( hash ) ;
+         DMS_LOB_GET_HASH_FROM_BLK( blk, __hash1 ) ;
+         bucketNumber = _getBucket( __hash1 ) ;
       }
 
       ossScopedLock lock( _getBucketLatch( bucketNumber ), EXCLUSIVE ) ;
+
+      /// For truncate
+      if ( needCheck )
+      {
+         DMS_LOB_GET_HASH_FROM_BLK( blk, __hash2 ) ;
+
+         if ( __hash1 != __hash2 )
+         {
+            /// The page is writing, so the page is not belong to the cl
+            PD_LOG( PDINFO, "Page[%d] is not belong to the collection"
+                    "[ID:%u,LID:%u]", page, mbContext->mbID(),
+                    mbContext->clLID() ) ;
+            goto done ;
+         }
+         else if ( mbContext->clLID() != blk->_clLogicalID )
+         {
+            PD_LOG( PDINFO, "Page[%d]'s logical id[%u] is not the "
+                    "same with collection[%u]'s logical id[%u], ignored",
+                    page, blk->_clLogicalID, mbContext->mbID(),
+                    mbContext->clLID() ) ;
+            goto done ;
+         }
+      }
 
       if ( DMS_LOB_INVALID_PAGEID == blk->_prevPageInBucket )
       {
@@ -2459,7 +2484,7 @@ namespace engine
             goto error ;
          }
 
-         rc = _removePage( current, blk, NULL, mbContext ) ;
+         rc = _removePage( current, blk, NULL, mbContext, TRUE, TRUE ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to remove page:%d, rc:%d", rc ) ;
