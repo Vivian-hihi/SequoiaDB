@@ -434,11 +434,11 @@ namespace engine
 
             rc = rtnPopCommand( fullName, logicalID, eduCB, _dmsCB,
                                 _dpsCB, 1, direction ) ;
-            if ( SDB_OK != rc )
+            if ( SDB_INVALIDARG == rc )
             {
-               PD_LOG( PDERROR, "Failed to pop from collection[%s], rc: %d",
-                       fullName, rc ) ;
-               goto error ;
+               PD_LOG( PDINFO, "Logical id[ %lld ] is invalid when pop",
+                       logicalID ) ;
+               rc = SDB_OK ;
             }
             break ;
          }

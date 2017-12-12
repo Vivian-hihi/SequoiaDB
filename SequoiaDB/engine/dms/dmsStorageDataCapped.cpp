@@ -1710,8 +1710,7 @@ namespace engine
                                                 pmdEDUCB *cb,
                                                 dmsExtentID &extentID,
                                                 dmsExtentID &extLID,
-                                                dmsOffset &offset,
-                                                BOOLEAN &outOfRange )
+                                                dmsOffset &offset )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__DMSSTORAGEDATACAPPED__EXTRACTRECLID ) ;
@@ -1719,6 +1718,7 @@ namespace engine
       dmsRecordRW recordRW ;
       const dmsCappedRecord *record = NULL ;
       const dmsExtent *extent = NULL ;
+      BOOLEAN invalid = FALSE ;
       dmsExtentInfo* workExtInfo = getWorkExtInfo( context->mbID() ) ;
 
       if ( logicalID < 0 )
@@ -1739,45 +1739,32 @@ namespace engine
 
       SDB_ASSERT( extent, "extent should not be NULL" ) ;
 
-      // Validate the extent id and offset, to make sure they are in range and
-      // at the right position.
       _recLid2ExtLidAndOffset( logicalID, extLID, offset ) ;
 
-      // Check left boundary.
-      if ( offset < extent->_firstRecordOffset )
-      {
-         if ( DMS_INVALID_EXTENT == extent->_prevExtent )
-         {
-            outOfRange = TRUE ;
-            goto done ;
-         }
-         else
-         {
-            rc = SDB_INVALIDARG ;
-            PD_LOG( PDERROR, "Invalid logical id[%lld], rc: %d",
-                    logicalID, rc ) ;
-            goto error ;
-         }
-      }
-
+      // Validate the extent id and offset, to make sure they are in range and
+      // at the right position.
       if ( extentID == workExtInfo->getID() )
       {
-         // If behind the last record of the working extent, it's out of range.
-         if ( offset > workExtInfo->_lastRecordOffset )
+         if ( offset < workExtInfo->_firstRecordOffset ||
+              offset > workExtInfo->_lastRecordOffset )
          {
-            outOfRange = TRUE ;
-            goto done ;
+            invalid = TRUE ;
          }
       }
       else
       {
-         if ( offset > extent->_lastRecordOffset )
+         if ( offset < extent->_firstRecordOffset ||
+              offset > extent->_lastRecordOffset )
          {
-            rc = SDB_INVALIDARG ;
-            PD_LOG( PDERROR, "Invalid logical id[%lld], rc: %d",
-                    logicalID, rc ) ;
-            goto error ;
+            invalid = TRUE ;
          }
+      }
+      if ( invalid )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "Invalid logical id[%lld], rc: %d",
+                 logicalID, rc ) ;
+         goto error ;
       }
 
       {
@@ -2078,10 +2065,14 @@ namespace engine
       dmsOffset offset = 0 ;
       dpsLogRecord &dpsRecord = info.getMergeBlock().record() ;
       CHAR fullName[DMS_COLLECTION_FULL_NAME_SZ + 1] = { 0 } ;
-      BOOLEAN outOfRange = FALSE ;
 
       SDB_ASSERT( context, "context should not be NULL" ) ;
       SDB_ASSERT( cb, "edu cb should not be NULL" ) ;
+
+      // Calculate the target extent id and offset.
+      rc = _extractRecLID( context, logicalID, cb, extentID, extLID, offset ) ;
+      PD_RC_CHECK( rc, PDERROR, "Invalid LogicalID[%lld], rc: %d",
+                   logicalID, rc ) ;
 
       if ( !context->isMBLock( EXCLUSIVE ) )
       {
@@ -2089,17 +2080,6 @@ namespace engine
                  context->toString().c_str() ) ;
          rc = SDB_SYS ;
          goto error ;
-      }
-
-      // Calculate the target extent id and offset.
-      rc = _extractRecLID( context, logicalID, cb, extentID,
-                           extLID, offset, outOfRange) ;
-      PD_RC_CHECK( rc, PDERROR, "Invalid LogicalID[%lld], rc: %d",
-                   logicalID, rc ) ;
-      // If the given logical id is out of range, return OK directly.
-      if ( outOfRange )
-      {
-         goto done ;
       }
 
 #ifdef _DEBUG
@@ -2229,4 +2209,5 @@ namespace engine
       goto done ;
    }
 }
+
 

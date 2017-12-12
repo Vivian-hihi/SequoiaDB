@@ -26,11 +26,12 @@ function main()
    var logicalIDs = getLogicalID(dbcl, null, null, sortConf, limitConf, null);
    
    pop( dbcl, logicalIDs[0], -1 );
-   checkPopResult(dbcl, logicalIDs[0], -1, true);
-   checkPopResult(dbcl, logicalIDs[0], 1, true);
    
-   checkPopResult(dbcl, logicalIDs[0]+1, -1, true);
-   checkPopResult(dbcl, logicalIDs[0]+1, 1, true);
+   popCheckLogicalID(dbcl, logicalIDs[0], -1);
+   popCheckLogicalID(dbcl, logicalIDs[0], 1);
+   
+   popCheckLogicalID(dbcl, logicalIDs[0]+1, -1);
+   popCheckLogicalID(dbcl, logicalIDs[0]+1, 1);
 	
 	//SEQUOIADBMAINSTREAM-2575,补充测试
 	//_id: 0,1024,2048,3072,4096 increasing
@@ -44,30 +45,26 @@ function main()
 	
 	//pop from 1024 and check
 	pop( dbcl, logicalIDs[1], -1 );
-	checkPopResult(dbcl, logicalIDs[1], -1, true);
+	popCheckLogicalID(dbcl, logicalIDs[1], -1);
 	
 	//pop from 0 and check
 	pop( dbcl, logicalIDs[0], -1 );
-	checkPopResult(dbcl, logicalIDs[0], -1, true);
+	popCheckLogicalID(dbcl, logicalIDs[0], -1);
 	
    commDropCS( db, csName, true, "drop CS in the end" );
 }
 
 main();
 
-function checkPopResult(dbcl, logicalID, direction, isSuccess)
+function popCheckLogicalID(dbcl, logicalID, direction)
 {
    try
    {
-      dbcl.pop({LogicalID:logicalID,Direction:direction});
-	  if(isSuccess == undefined)  throw "NEED_POP_ERROR";
+      dbcl.pop({LogicalID:logicalID,Direction:direction}).toArray();
+      throw "NEED_THROE_ERROR";
    }catch(e)
    {
-	  if(isSuccess == true)
-	  {
-		 throw buildException("pop", e, "pop", -6, e); 
-	  }
-      else if(e !== -6)
+      if(e !== -6)
       {
          throw buildException("pop", e, "pop", -6, e);
       }

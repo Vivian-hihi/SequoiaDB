@@ -24,7 +24,7 @@ function main()
 
    //direction 1 first , and again direction -1 
    checkPopResult(dbcl, logicalID, 1, isSuccess);
-   checkPopResult(dbcl,logicalID, -1, isSuccess);
+   checkPopResult(dbcl,logicalID, -1);
 
    //insert records again
    insertData(dbcl , insertNums);
@@ -32,7 +32,7 @@ function main()
    
    //direction -1 first , and again direction 1 
    checkPopResult(dbcl, logicalID, -1, isSuccess);
-   checkPopResult(dbcl,logicalID, 1, isSuccess);
+   checkPopResult(dbcl,logicalID, 1);
      
    commDropCS( db, csName, true, "drop CS in the end" );
 }

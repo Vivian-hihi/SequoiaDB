@@ -1074,10 +1074,17 @@ namespace replay
          rc = cl.pop( option ) ;
          if ( rc )
          {
-            PD_LOG( PDERROR, "Failed to do pop[option: %s] on collection[%s], "
-                    "lsn[%lld], rc=%d", option.toString().c_str(), fullName,
-                    header._lsn, rc);
-            goto error ;
+            if ( SDB_INVALIDARG == rc )
+            {
+               rc = SDB_OK ;
+            }
+            else
+            {
+               PD_LOG( PDERROR, "Failed to do pop[option: %s] on collection[%s], "
+                       "lsn[%lld], rc=%d", option.toString().c_str(), fullName,
+                       header._lsn, rc);
+               goto error ;
+            }
          }
       }
       catch ( std::exception &e )
