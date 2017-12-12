@@ -7,7 +7,7 @@
 * @author      : Liang XueWang 
 *
 *******************************************************************/
-var csname = COMMCSNAME ;
+var csname = COMMCSNAME + "_sdbexprt13616" ;
 var clname = COMMCLNAME + "_sdbexprt13616_1" ;
 var clname1 = COMMCLNAME + "_sdbexprt13616_2" ;
 
@@ -23,7 +23,7 @@ function main()
    testExprtConf1() ;  // test export with diff cl same fields
    testExprtConf2() ;  // test export with diff cl diff fields
    
-   commDropCL( db, csname, clname ) ;
+   commDropCS( db, csname ) ;
 }
 
 function testExprtConf1()
