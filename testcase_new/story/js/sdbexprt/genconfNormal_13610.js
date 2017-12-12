@@ -44,7 +44,6 @@ function testExprtGenconf1()
                  "svcname = " + COORDSVCNAME + "\n" +
                  "user = \n" + 
                  "type = csv\n" +
-                 "errorstop = false\n" +
                  "ssl = false\n" +
                  "floatfmt = %.16g\n" +
                  "delchar = \"\n" +
@@ -91,7 +90,6 @@ function testExprtGenconf2()
                  "svcname = " + COORDSVCNAME + "\n" +
                  "user = \n" + 
                  "type = csv\n" +
-                 "errorstop = false\n" +
                  "ssl = false\n" +
                  "floatfmt = %.16g\n" +
                  "delchar = \"\n" +
