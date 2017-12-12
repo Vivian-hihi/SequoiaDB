@@ -736,7 +736,6 @@ namespace engine
    INT32 _dmsCappedExtScanner::_initFastScanRange()
    {
       INT32 rc = SDB_OK ;
-      const INT32 maxExtLID = ( ( (INT64)1 << 31 ) - 1 ) ;
       rtnPredicateSet predicateSet ;
       _mthMatchTree *matcher = _matchRuntime->getMatchTree() ;
       rtnParamList *parameters = _matchRuntime->getParametersPointer() ;
@@ -754,6 +753,22 @@ namespace engine
          else
          {
             _fastScanByID = TRUE ;
+            // Add valid logical id range.
+            BSONObj boStartKey = BSON( DMS_ID_KEY_NAME << 0 ) ;
+            BSONObj boStopKey = BSON( DMS_ID_KEY_NAME << OSS_SINT64_MAX ) ;
+
+            rc = predicateSet.addPredicate( DMS_ID_KEY_NAME,
+                                            boStartKey.firstElement(),
+                                            BSONObj::GTE, FALSE, FALSE, FALSE,
+                                            -1, -1 ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to add predicate, rc: %d", rc ) ;
+            rc = predicateSet.addPredicate( DMS_ID_KEY_NAME,
+                                            boStopKey.firstElement(),
+                                            BSONObj::LTE, FALSE, FALSE, FALSE,
+                                            -1, -1 ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to add predicate, rc: %d", rc ) ;
+
+            predicate = predicateSet.predicate( DMS_ID_KEY_NAME ) ;
 
             for ( RTN_SSKEY_LIST::iterator itr = predicate._startStopKeys.begin();
                   itr != predicate._startStopKeys.end(); ++itr )
@@ -763,30 +778,8 @@ namespace engine
                const rtnKeyBoundary &startKey = itr->_startKey ;
                const rtnKeyBoundary &stopKey = itr->_stopKey ;
 
-               // If stop key is less than 0, this is an invalid range.
-               if ( stopKey._bound.numberLong() < 0 )
-               {
-                  continue ;
-               }
-
-               if ( MaxKey == stopKey._bound.type() )
-               {
-                  endExtLID = maxExtLID ;
-               }
-               else
-               {
-                  endExtLID = _idToExtLID( stopKey._bound.numberLong() ) ;
-               }
-
-               if ( MinKey == startKey._bound.type() ||
-                    startKey._bound.numberLong() < 0 )
-               {
-                  startExtLID = 0 ;
-               }
-               else
-               {
-                  startExtLID = _idToExtLID( startKey._bound.numberLong() ) ;
-               }
+               startExtLID = _idToExtLID( startKey._bound.numberLong() ) ;
+               endExtLID = _idToExtLID( stopKey._bound.numberLong() ) ;
 
                _rangeSet.insert( std::pair<dmsExtentID, dmsExtentID>( startExtLID,
                                                                       endExtLID ) ) ;
