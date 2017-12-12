@@ -237,8 +237,6 @@ namespace engine
       {
          bsonDecimal inc ;
          bsonDecimal decimal ;
-         inc.init() ;
-         decimal.init() ;
 
          decimal = in.numberDecimal() ;
          inc     = elt.numberDecimal() ;
@@ -250,7 +248,6 @@ namespace engine
          else
          {
             bsonDecimal result ;
-            result.init() ;
 
             rc = decimal.add( inc, result ) ;
             if ( SDB_OK != rc )
@@ -302,7 +299,6 @@ namespace engine
                bsonDecimal decimalE ;
                bsonDecimal decimalArg ;
                bsonDecimal decimalResult ;
-               decimalResult.init() ;
 
                decimalE   = in.numberDecimal() ;
                decimalArg = elt.numberDecimal() ;
