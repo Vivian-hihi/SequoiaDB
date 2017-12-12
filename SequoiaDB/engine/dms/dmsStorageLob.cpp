@@ -2254,14 +2254,11 @@ namespace engine
                                       _dmsLobDataMapBlk *blk,
                                       const UINT32 *bucket,
                                       dmsMBContext *mbContext,
-                                      BOOLEAN needRelease,
-                                      BOOLEAN needCheck )
+                                      BOOLEAN needRelease )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__DMSSTORAGELOB__REMOVEPAGE ) ;
       UINT32 bucketNumber = 0 ;
-      UINT32 __hash1 = 0 ;
-      UINT32 __hash2 = 0 ;
 
       if ( NULL != bucket )
       {
@@ -2269,34 +2266,12 @@ namespace engine
       }
       else
       {
+         UINT32 __hash1 = 0 ;
          DMS_LOB_GET_HASH_FROM_BLK( blk, __hash1 ) ;
          bucketNumber = _getBucket( __hash1 ) ;
       }
 
       ossScopedLock lock( _getBucketLatch( bucketNumber ), EXCLUSIVE ) ;
-
-      /// For truncate
-      if ( needCheck )
-      {
-         DMS_LOB_GET_HASH_FROM_BLK( blk, __hash2 ) ;
-
-         if ( __hash1 != __hash2 )
-         {
-            /// The page is writing, so the page is not belong to the cl
-            PD_LOG( PDINFO, "Page[%d] is not belong to the collection"
-                    "[ID:%u,LID:%u]", page, mbContext->mbID(),
-                    mbContext->clLID() ) ;
-            goto done ;
-         }
-         else if ( mbContext->clLID() != blk->_clLogicalID )
-         {
-            PD_LOG( PDINFO, "Page[%d]'s logical id[%u] is not the "
-                    "same with collection[%u]'s logical id[%u], ignored",
-                    page, blk->_clLogicalID, mbContext->mbID(),
-                    mbContext->clLID() ) ;
-            goto done ;
-         }
-      }
 
       if ( DMS_LOB_INVALID_PAGEID == blk->_prevPageInBucket )
       {
@@ -2382,6 +2357,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__DMSSTORAGELOB_TRUNCATE ) ;
+      static BYTE __emptyOID[ DMS_LOB_OID_LEN ] = { 0 } ;
       DMS_LOB_PAGEID current = -1 ;
       BOOLEAN locked = FALSE ;
       BOOLEAN needPanic = FALSE ;
@@ -2473,6 +2449,31 @@ namespace engine
          {
             continue ;
          }
+         /// The blk page is all zero when init
+         else if ( 0 == mbContext->clLID() &&
+                   0 == ossMemcmp( readBlk->_oid, __emptyOID,
+                                   DMS_LOB_OID_LEN ) )
+         {
+            /// Check the page whether exist in bucket or not
+            dmsLobRecord record ;
+            DMS_LOB_PAGEID checkPage = DMS_LOB_INVALID_PAGEID ;
+            record.set( ( const bson::OID* )readBlk->_oid,
+                        readBlk->_sequence, 0,
+                        readBlk->_dataLen, NULL ) ;
+
+            rc = _find( record, mbContext->clLID(), checkPage, NULL ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Find page by record[%s] failed, rc: %d",
+                       record.toString().c_str(), rc ) ;
+               goto error ;
+            }
+            if ( checkPage != current )
+            {
+               /// The page is not owned by the collection
+               continue ;
+            }
+         }
 
          /// change to write mode
          blk = extRW.writePtr<_dmsLobDataMapBlk>() ;
@@ -2484,7 +2485,7 @@ namespace engine
             goto error ;
          }
 
-         rc = _removePage( current, blk, NULL, mbContext, TRUE, TRUE ) ;
+         rc = _removePage( current, blk, NULL, mbContext ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to remove page:%d, rc:%d", rc ) ;

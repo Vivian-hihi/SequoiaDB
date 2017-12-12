@@ -265,8 +265,7 @@ namespace engine
                          _dmsLobDataMapBlk *blk,
                          const UINT32 *bucket,
                          dmsMBContext *mbContext,
-                         BOOLEAN needRelease = TRUE,
-                         BOOLEAN needCheck = FALSE ) ;
+                         BOOLEAN needRelease = TRUE ) ;
 
       INT32 _rollback( DMS_LOB_PAGEID page,
                        dmsMBContext *mbContext,
