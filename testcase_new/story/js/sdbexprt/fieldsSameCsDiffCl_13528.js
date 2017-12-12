@@ -4,7 +4,7 @@
 * @author      : Liang XueWang 
 *
 *******************************************************************/
-var csname = COMMCSNAME ;
+var csname = COMMCSNAME + "_sdbexprt13528" ;
 var clnum = 5 ;
 var clnames = [] ;
 var doc = { a: 1 } ;
@@ -26,7 +26,7 @@ function main()
    
    for( var i = 0;i < clnames.length;i++ )
    {
-      commDropCL( db, csname, clnames[i] ) ;
+      commDropCS( db, csname ) ;
    }
 }
 

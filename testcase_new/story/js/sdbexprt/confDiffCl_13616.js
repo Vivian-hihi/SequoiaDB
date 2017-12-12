@@ -34,6 +34,7 @@ function testExprtConf1()
    var command = installPath + "bin/sdbexprt" +
                  " -s " + COORDHOSTNAME +
                  " -p " + COORDSVCNAME +
+                 " --cscl " + csname +
                  " --fields " + csname + "." + clname + ":a" +
                  " --type csv" +
                  " --genconf " + conffile ;
@@ -68,6 +69,7 @@ function testExprtConf2()
    var command = installPath + "bin/sdbexprt" +
                  " -s " + COORDHOSTNAME +
                  " -p " + COORDSVCNAME +
+                 " --cscl " + csname +
                  " --genconf " + conffile +
                  " --fields " + csname + "." + clname + ":a" +
                  " --type csv" ;          

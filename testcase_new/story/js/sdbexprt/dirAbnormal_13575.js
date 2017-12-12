@@ -54,6 +54,13 @@ function testExprtNoPerm()
                  " --dir " + csvDir +
                  " --type csv" +
                  " --force true" ;
+   command += " --cscl " ;
+   for( var i = 0;i < clnum;i++ )
+   {
+      command += csnames[i] ;
+      if( i !== clnum-1 )
+         command += "," ;
+   }
   
    testRunCommand( command, 127 ) ;
    
@@ -71,6 +78,13 @@ function testExprtNoDir()
                  " --dir " + csvDir +
                  " --type csv" +
                  " --force true" ;
+   command += " --cscl " ;
+   for( var i = 0;i < clnum;i++ )
+   {
+      command += csnames[i] ;
+      if( i !== clnum-1 )
+         command += "," ;
+   }
   
    testRunCommand( command, 127 ) ;
    
@@ -92,6 +106,13 @@ function testExprtExisted()
                  " --dir " + csvDir +
                  " --type csv" +
                  " --force true" ;
+   command += " --cscl " ;
+   for( var i = 0;i < clnum;i++ )
+   {
+      command += csnames[i] ;
+      if( i !== clnum-1 )
+         command += "," ;
+   }
   
    testRunCommand( command ) ;
    

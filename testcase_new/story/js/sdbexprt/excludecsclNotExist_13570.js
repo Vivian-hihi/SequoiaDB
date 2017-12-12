@@ -47,7 +47,14 @@ function testExcludeCsCl()
                  " -p " + COORDSVCNAME + 
                  " --dir " + csvDir +
                  " --type csv" +
-                 " --force true" ;             
+                 " --force true" ;
+   command += " --cscl " ;
+   for( var i = 0;i < csnum;i++ )
+   {
+      command += csnames[i] ;
+      if( i !== csnum-1 )
+         command += "," ;
+   }            
    // exclude not exist cl 
    command += " --excludecscl " + csnames[0] + ".notExistCl"  ;                
    testRunCommand( command ) ;
