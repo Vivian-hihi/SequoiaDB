@@ -9,14 +9,16 @@ var csname = COMMCSNAME ;
 var clname = COMMCLNAME + "_sdbexprt13509_timestamp" ;
 var clname1 = COMMCLNAME + "_sdbimprt13509_timestamp" ;
 var key = "timestamp" ;
+var intMin = -2147483648 ;
+var intMax = 2147483647 ;
 var docs = [ { "timestamp": Timestamp( "1902-01-01-00:00:00.000000" ) },
              { "timestamp": Timestamp( "2037-12-31-23:59:59.999999" ) },
          //  { "timestamp": Timestamp( "1902-01-01T00:00:00.000Z" ) },
          //  { "timestamp": Timestamp( "2037-12-31T23:59:59.999Z" ) },
          //  { "timestamp": Timestamp( "1902-01-01T00:00:00.000+0800" ) },
              { "timestamp": Timestamp( "2037-12-31T23:59:59.999+0800" ) },
-             { "timestamp": Timestamp( -2147483648, 0 ) },
-             { "timestamp": Timestamp( 2147483647, 0 ) } ] ; 
+             { "timestamp": Timestamp( intMin, 0 ) },
+             { "timestamp": Timestamp( intMax, 0 ) } ] ; 
 var csvContent = key + "\n" + 
                  "\"1902-01-01-00.00.00.000000\"\n" +
                  "\"2037-12-31-23.59.59.999999\"\n" +
@@ -24,8 +26,8 @@ var csvContent = key + "\n" +
             //   "\"2038-01-01-07.59.59.999000\"\n" +
             //   "\"1902-01-01-00.05.52.000000\"\n" +
                  "\"2037-12-31-23.59.59.999000\"\n" +
-                 "\"1901-12-14-04.51.44.000000\"\n" +
-                 "\"2038-01-19-11.14.07.000000\"\n" ;
+                 "\"" + ms2ts( intMin ) + "\"\n" +
+                 "\"" + ms2ts( intMax ) + "\"\n" ;
 var jsonContent = 
      "{ \"" + key + "\": { \"$timestamp\": \"1902-01-01-00.00.00.000000\" } }\n" + 
      "{ \"" + key + "\": { \"$timestamp\": \"2037-12-31-23.59.59.999999\" } }\n" +
@@ -33,8 +35,8 @@ var jsonContent =
   // "{ \"" + key + "\": { \"$timestamp\": \"2038-01-01-07.59.59.999000\" } }\n" +
   // "{ \"" + key + "\": { \"$timestamp\": \"1902-01-01-00.05.52.000000\" } }\n" +
      "{ \"" + key + "\": { \"$timestamp\": \"2037-12-31-23.59.59.999000\" } }\n" +
-     "{ \"" + key + "\": { \"$timestamp\": \"1901-12-14-04.51.44.000000\" } }\n" +
-     "{ \"" + key + "\": { \"$timestamp\": \"2038-01-19-11.14.07.000000\" } }\n" ;
+     "{ \"" + key + "\": { \"$timestamp\": \"" + ms2ts( intMin ) + "\" } }\n" +
+     "{ \"" + key + "\": { \"$timestamp\": \"" + ms2ts( intMax ) + "\" } }\n" ;
 var csvRecs = [ 
      "{\"" + key + "\":{\"$timestamp\":\"1902-01-01-00.00.00.000000\"}}", 
      "{\"" + key + "\":{\"$timestamp\":\"2037-12-31-23.59.59.999999\"}}",
@@ -42,8 +44,8 @@ var csvRecs = [
   // "{\"" + key + "\":{\"$timestamp\":\"2038-01-01-07.59.59.999000\"}}",
   // "{\"" + key + "\":{\"$timestamp\":\"1902-01-01-00.05.52.000000\"}}",
      "{\"" + key + "\":{\"$timestamp\":\"2037-12-31-23.59.59.999000\"}}",
-     "{\"" + key + "\":{\"$timestamp\":\"1901-12-14-04.51.44.000000\"}}",
-     "{\"" + key + "\":{\"$timestamp\":\"2038-01-19-11.14.07.000000\"}}" 
+     "{\"" + key + "\":{\"$timestamp\":\"" + ms2ts( intMin ) + "\"}}",
+     "{\"" + key + "\":{\"$timestamp\":\"" + ms2ts( intMax ) + "\"}}" 
                ] ;
 var jsonRecs = csvRecs ;
 
@@ -127,4 +129,12 @@ function testExprtImprtJson()
    testRunCommand( command ) ;
    
    cmd.run( "rm -rf " + jsonfile ) ;
+}
+
+// millseconds to timestamp
+function ms2ts( ms )
+{
+   var command = "date -d@\"" + ms + 
+                 "\" +\"%Y-%m-%d-%H.%M.%S.000000\"" ;
+   return cmd.run( command ).split( "\n" )[0] ;
 }
