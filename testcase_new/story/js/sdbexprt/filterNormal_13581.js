@@ -29,15 +29,15 @@ function main()
    testExprtFilter2() ;  // test filter with $mod 
    testExprtFilter3() ;  // test filter with $in
    testExprtFilter4() ;  // test filter with $isnull
-   // testExprtFilter5() ;  // test filter with $all
+   testExprtFilter5() ;  // test filter with $all
    testExprtFilter6() ;  // test filter with $and
    testExprtFilter7() ;  // test filter with $exists
-   // testExprtFilter8() ;  // test filter with $elemMatch
-   // testExprtFilter9() ;  // test filter with $1
+   testExprtFilter8() ;  // test filter with $elemMatch
+   testExprtFilter9() ;  // test filter with $1
    testExprtFilter10() ;  // test filter with $regex
    testExprtFilter11() ;  // test filter with $field
-   // testExprtFilter12() ;  // test filter with $expand
-   // testExprtFilter13() ;  // test filter with $returnMatch
+   testExprtFilter12() ;  // test filter with $expand
+   testExprtFilter13() ;  // test filter with $returnMatch
 }
 
 function testExprtFilter1()
@@ -57,7 +57,7 @@ function testExprtFilter1()
                  " -c " + csname +
                  " -l " + clname + 
                  " --file " + csvfile +
-                 " --filter '{ a: { $gte: 2 } }'" +
+                 " --filter '{ a: { \\$gte: 2 } }'" +
                  " --type csv" +
                  " --fields a" ;                
    testRunCommand( command ) ;
@@ -103,7 +103,7 @@ function testExprtFilter2()
                  " -c " + csname +
                  " -l " + clname + 
                  " --file " + csvfile +
-                 " --filter '{ a: { $mod: [ 2, 1 ] } }'" +
+                 " --filter '{ a: { \\$mod: [ 2, 1 ] } }'" +
                  " --type csv" +
                  " --fields a" ;                
    testRunCommand( command ) ;
@@ -149,7 +149,7 @@ function testExprtFilter3()
                  " -c " + csname +
                  " -l " + clname + 
                  " --file " + csvfile +
-                 " --filter '{ a: { $in: [ 1, 3, 4 ] } }'" +
+                 " --filter '{ a: { \\$in: [ 1, 3, 4 ] } }'" +
                  " --type csv" +
                  " --fields a" ;                
    testRunCommand( command ) ;
@@ -195,7 +195,7 @@ function testExprtFilter4()
                  " -c " + csname +
                  " -l " + clname + 
                  " --file " + csvfile +
-                 " --filter '{ a: { $isnull: 0 } }'" +
+                 " --filter '{ a: { \\$isnull: 0 } }'" +
                  " --type csv" +
                  " --fields a" ;                
    testRunCommand( command ) ;
@@ -227,7 +227,7 @@ function testExprtFilter4()
 function testExprtFilter5()
 {
    println( "test filter with $all" ) ;
-   var docs = [ { name: [ "Tom", "Mick", "Jack" ] }, 
+   var docs = [ { name: [ "Tom", "Mike", "Jack" ] }, 
                 { name: [ "Tom", "John" ] } ] ;
    var cl = commCreateCL( db, csname, clname ) ;
    var cl1 = commCreateCL( db, csname, clname1 ) ;
@@ -242,12 +242,13 @@ function testExprtFilter5()
                  " -c " + csname +
                  " -l " + clname + 
                  " --file " + csvfile +
-                 " --filter '{ name: { $all: [ \"Tom\", \"Mike\" ] } }'" +
+                 " --filter '{ name: { \\$all: [ \"Tom\", \"Mike\" ] } }'" +
                  " --type csv" +
                  " --fields name" ;                
    testRunCommand( command ) ;
    
-   var content = "name\n" ;
+   var content = "name\n" + 
+					  "\"[ \"\"Tom\"\", \"\"Mike\"\", \"\"Jack\"\" ]\"\n" ;
    checkFileContent( csvfile, content ) ;
    
    command = installPath + "bin/sdbimprt" +
@@ -261,7 +262,7 @@ function testExprtFilter5()
              " --fields='name string'" ;
    testRunCommand( command ) ;
   
-   var expRecs = [] ; 
+   var expRecs = [ "{\"name\":\"[ \\\"Tom\\\", \\\"Mike\\\", \\\"Jack\\\" ]\"}" ] ; 
    var cursor = cl1.find( {}, { _id: { $include: 0 } } ) ;
    var actRecs = getRecords( cursor ) ;
    checkRecords( expRecs, actRecs ) ;
@@ -289,7 +290,7 @@ function testExprtFilter6()
                  " -c " + csname +
                  " -l " + clname + 
                  " --file " + csvfile +
-                 " --filter '{ $and: [ { a: { $gte: 2 } }, { a: { $lte: 3 } } ] }'" +
+                 " --filter '{ \\$and: [ { a: { \\$gte: 2 } }, { a: { \\$lte: 3 } } ] }'" +
                  " --type csv" +
                  " --fields a" ;                
    testRunCommand( command ) ;
@@ -335,7 +336,7 @@ function testExprtFilter7()
                  " -c " + csname +
                  " -l " + clname + 
                  " --file " + csvfile +
-                 " --filter '{ b: { $exists: 1 } }'" +
+                 " --filter '{ b: { \\$exists: 1 } }'" +
                  " --type csv" +
                  " --fields a,b" ;   
    testRunCommand( command ) ;
@@ -382,7 +383,7 @@ function testExprtFilter8()
                  " -c " + csname +
                  " -l " + clname + 
                  " --file " + csvfile +
-                 " --filter '{ info: { $elemMatch: { name: \"Jack\" } } }'" +
+                 " --filter '{ info: { \\$elemMatch: { name: \"Jack\" } } }'" +
                  " --type csv" +
                  " --fields info" ;   
    testRunCommand( command ) ;
@@ -435,7 +436,7 @@ function testExprtFilter9()
                  " -c " + csname +
                  " -l " + clname + 
                  " --file " + csvfile +
-                 " --filter '{ a.$1: 5 }'" +
+                 " --filter '{ a.\\$1: 5 }'" +
                  " --type csv" +
                  " --fields a" ;   
    testRunCommand( command ) ;
@@ -487,7 +488,7 @@ function testExprtFilter10()
                  " -c " + csname +
                  " -l " + clname + 
                  " --file " + csvfile +
-                 " --filter '{ a: { $regex: \"^a\", $options: \"i\" } }'" +
+                 " --filter '{ a: { \\$regex: \"^a\", \\$options: \"i\" } }'" +
                  " --type csv" +
                  " --fields a" ;   
    testRunCommand( command ) ;
@@ -535,7 +536,7 @@ function testExprtFilter11()
                  " -c " + csname +
                  " -l " + clname + 
                  " --file " + csvfile +
-                 " --filter '{ a: { $field: \"b\" } }'" +
+                 " --filter '{ a: { \\$field: \"b\" } }'" +
                  " --type csv" +
                  " --fields a,b" ;   
    testRunCommand( command ) ;
@@ -568,7 +569,7 @@ function testExprtFilter11()
 function testExprtFilter12()
 {
    println( "test filter with $expand" ) ;
-   var docs = [ { a: [ 1, 2, 3 ] }, { a: 4 } ] ;
+   var docs = [ { a: [ 1, 2, 3 ] } ] ;
    var cl = commCreateCL( db, csname, clname ) ;
    var cl1 = commCreateCL( db, csname, clname1 ) ;
    cl.insert( docs ) ;
@@ -582,12 +583,12 @@ function testExprtFilter12()
                  " -c " + csname +
                  " -l " + clname + 
                  " --file " + csvfile +
-                 " --filter '{ a: { $expand: 1 } }'" +
+                 " --filter '{ a: { \\$expand: 1 } }'" +
                  " --type csv" +
                  " --fields a" ;   
    testRunCommand( command ) ;
    
-   var content = "a\n1\n2\n3\n4\n" ;
+   var content = "a\n1\n2\n3\n" ;
    checkFileContent( csvfile, content ) ;
    
    command = installPath + "bin/sdbimprt" +
@@ -598,10 +599,10 @@ function testExprtFilter12()
              " --type csv" +
              " --file " + csvfile +
              " --headerline true" +
-             " --fields='a int" ;
+             " --fields='a int'" ;
    testRunCommand( command ) ;
   
-   var expRecs = [ "{\"a\":1}", "{\"a\":2}", "{\"a\":3}", "{\"a\":4}" ] ; 
+   var expRecs = [ "{\"a\":1}", "{\"a\":2}", "{\"a\":3}" ] ; 
    var cursor = cl1.find( {}, { _id: { $include: 0 } } ) ;
    var actRecs = getRecords( cursor ) ;
    checkRecords( expRecs, actRecs ) ;
@@ -629,7 +630,7 @@ function testExprtFilter13()
                  " -c " + csname +
                  " -l " + clname + 
                  " --file " + csvfile +
-                 " --filter '{ a: { $returnMatch: 0, $in: [ 1, 4, 7 ] } }'" +
+                 " --filter '{ a: { \\$returnMatch: 0, \\$in: [ 1, 4, 7 ] } }'" +
                  " --type csv" +
                  " --fields a" ;   
    testRunCommand( command ) ;
@@ -645,7 +646,7 @@ function testExprtFilter13()
              " --type csv" +
              " --file " + csvfile +
              " --headerline true" +
-             " --fields='a string" ;
+             " --fields='a string'" ;
    testRunCommand( command ) ;
   
    var expRecs = [ "{\"a\":\"[ 1, 4, 7 ]\"}"  ] ; 

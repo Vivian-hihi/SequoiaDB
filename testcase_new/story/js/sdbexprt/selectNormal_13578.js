@@ -18,7 +18,7 @@ function main()
    testExprtSelect1() ;  // no use select symbol
    testExprtSelect2() ;  // use $include
    testExprtSelect3() ;  // use $default
- //testExprtSelect4() ;  // use $elemMatch
+   testExprtSelect4() ;  // use $elemMatch
 }
 
 function testExprtSelect1()
@@ -82,7 +82,7 @@ function testExprtSelect2()
                  " -c " + csname +
                  " -l " + clname + 
                  " --file " + csvfile +
-                 " --select '{ a: { $include: 1 } }'" +
+                 " --select '{ a: { \\$include: 1 } }'" +
                  " --type csv" ;                
    testRunCommand( command ) ;
    
@@ -127,7 +127,7 @@ function testExprtSelect3()
                  " -c " + csname +
                  " -l " + clname + 
                  " --file " + csvfile +
-                 " --select '{ a: { $include: 1 }, b: { $default: 3 } }'" +
+                 " --select '{ a: { \\$include: 1 }, b: { \\$default: 3 } }'" +
                  " --type csv" ;                
    testRunCommand( command ) ;
    
@@ -175,7 +175,7 @@ function testExprtSelect4()
                  " -l " + clname + 
                  " --file " + csvfile +
                  " --select " +
-                 "'{ class: { $include: 1 }, students: { $elemMatch: { age: 18 } } }'" +
+                 "'{ class: { \\$include: 1 }, students: { \\$elemMatch: { age: 18 } } }'" +
                  " --type csv" ;
    testRunCommand( command ) ;
    

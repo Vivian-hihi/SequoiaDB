@@ -16,8 +16,8 @@ function main()
    var cl = commCreateCL( db, csname, clname ) ;
    cl.insert( docs ) ;
    
-   testExprtSelect1() ;  // use --select '{ a: { $include: 1 }'
-   testExprtSelect2() ;  // use --select '{ a: { $inclu: 1 } }'
+   testExprtSelect1() ;  // use --select '{ a: { \\$include: 1 }'
+   testExprtSelect2() ;  // use --select '{ a: { \\$inclu: 1 } }'
    testExprtSelect3() ;  // use --select with --fields
    
    commDropCL( db, csname, clname ) ;
@@ -34,7 +34,7 @@ function testExprtSelect1()
                  " -c " + csname +
                  " -l " + clname + 
                  " --file " + csvfile +
-                 " --select '{ a: { $include: 1 }'" +
+                 " --select '{ a: { \\$include: 1 }'" +
                  " --type csv" ;                
    testRunCommand( command, 127 ) ;
    
@@ -52,7 +52,7 @@ function testExprtSelect2()
                  " -c " + csname +
                  " -l " + clname + 
                  " --file " + csvfile +
-                 " --select '{ a: { $inclu: 1 } }'" +
+                 " --select '{ a: { \\$inclu: 1 } }'" +
                  " --type csv" ;                
    testRunCommand( command, 127 ) ;
    
@@ -70,7 +70,7 @@ function testExprtSelect3()
                  " -c " + csname +
                  " -l " + clname + 
                  " --file " + csvfile +
-                 " --select '{ a: { $include: 1 } }'" +
+                 " --select '{ a: { \\$include: 1 } }'" +
                  " --fields a" +
                  " --type csv" ;                
    testRunCommand( command, 127 ) ;

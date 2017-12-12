@@ -35,8 +35,8 @@ function testExprt()
                  " -c " + csname +
                  " -l " + clname + 
                  " --file " + csvfile +
-                 " --filter '{ a: { $gt: 2 } }'" +
-                 " --select '{ a: \"\", b: { $default: \"dft\"}}'" +
+                 " --filter '{ a: { \\$gt: 2 } }'" +
+                 " --select '{ a: \"\", b: { \\$default: \"dft\"}}'" +
                  " --sort '{ a: 1 }'" +
                  " --skip 2" +
                  " --limit 4" +

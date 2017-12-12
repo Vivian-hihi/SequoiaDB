@@ -16,8 +16,8 @@ function main()
    var cl = commCreateCL( db, csname, clname ) ;
    cl.insert( docs ) ;
    
-   testExprtFilter1() ;  // use --filter '{ a: { $gt: 2 }'
-   testExprtFilter2() ;  // use --filter '{ a: { $gtt: 2 } }'
+   testExprtFilter1() ;  // use --filter '{ a: { \\$gt: 2 }'
+   testExprtFilter2() ;  // use --filter '{ a: { \\$gtt: 2 } }'
    testExprtFilter3() ;  // use --filter with --fields
    
    commDropCL( db, csname, clname ) ;
@@ -34,7 +34,7 @@ function testExprtFilter1()
                  " -c " + csname +
                  " -l " + clname + 
                  " --file " + csvfile +
-                 " --filter '{ a: { $gt: 2 }'" +
+                 " --filter '{ a: { \\$gt: 2 }'" +
                  " --type csv" +
                  " --fields a" ;                
    testRunCommand( command, 127 ) ;
@@ -53,7 +53,7 @@ function testExprtFilter2()
                  " -c " + csname +
                  " -l " + clname + 
                  " --file " + csvfile +
-                 " --filter '{ a: { $gtt: 2 } }'" +
+                 " --filter '{ a: { \\$gtt: 2 } }'" +
                  " --type csv" +
                  " --fields a" ;                
    testRunCommand( command, 127 ) ;
@@ -72,7 +72,7 @@ function testExprtFilter3()
                  " -c " + csname +
                  " -l " + clname + 
                  " --file " + csvfile +
-                 " --filter '{ a: { $gt: 2 } }'" +
+                 " --filter '{ a: { \\$gt: 2 } }'" +
                  " --type csv" +
                  " --fields a" ;                
    testRunCommand( command ) ;
