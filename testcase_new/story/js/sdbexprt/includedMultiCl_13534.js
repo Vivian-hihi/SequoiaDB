@@ -5,7 +5,7 @@
 * @author      : Liang XueWang
 * 
 *******************************************************************/
-var csname = COMMCSNAME_sdbexprt13534 ;
+var csname = COMMCSNAME + "_sdbexprt13534" ;
 var num = 5 ;
 var clnames = [] ;
 var doc = { a: 1, b: 2, c: 3 } ;
