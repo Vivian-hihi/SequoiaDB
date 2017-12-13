@@ -240,8 +240,9 @@ namespace engine
          goto error ;
       }
       // 2. execute js
-      rc = _scope->eval( _content.c_str(), _content.size(),
-                         "", 1, SPT_EVAL_FLAG_NONE, &pRval ) ;
+      rc = _scope->eval( _content.c_str(), _content.size(), "", 1,
+                         SPT_EVAL_FLAG_NONE | SPT_EVAL_FLAG_IGNORE_ERR_PREFIX,
+                         &pRval ) ;
       if ( rc )
       {
          // we come here for one of the follow reasons:

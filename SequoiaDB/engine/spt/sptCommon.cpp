@@ -471,16 +471,7 @@ namespace engine
 
       if ( ( sdbIsErrMsgEmpty() || !__hasSetErrMsg__ ) && msg )
       {
-         if ( filename )
-         {
-            stringstream ss ;
-            ss << filename << ":" << lineno << " " << msg ;
-            sdbSetErrMsg( ss.str().c_str() ) ;
-         }
-         else
-         {
-            sdbSetErrMsg( msg ) ;
-         }
+         sdbSetErrMsg( msg ) ;
          add = TRUE ;
       }
 
