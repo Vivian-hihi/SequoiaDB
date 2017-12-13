@@ -752,6 +752,11 @@ namespace exprt
 
                continue ;
             }
+            else
+            {
+               str-- ;
+               len++ ;
+            }
          }
 
          ss << ch ;
