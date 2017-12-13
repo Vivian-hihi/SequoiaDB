@@ -69,6 +69,8 @@ testFiles = [
    [ "./ssl/sslTrue.cpp" ],  # conf
    [ "./lob/lobAbnormal.cpp" ],
    [ "./lob/lobNormal.cpp" ],
+   [ "./lob/lobTruncate13434.cpp" ],
+   [ "./lob/lobTruncate13437.cpp" ],
    [ "./tdd/bson_test.cpp" ],
    [ "./tdd/cbson.cpp" ],
    [ "./tdd/collection.cpp" ],

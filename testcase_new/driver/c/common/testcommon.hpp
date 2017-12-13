@@ -38,7 +38,6 @@ using namespace std ;
 #define DATAPATH2             "/opt/sequoiadb/database/test/data2"
 #define DATAPATH3             "/opt/sequoiadb/database/test/data3"
 
-
 #define _DATAPATH1            "/home/users/tanzhaobo/sequoiadb/path/data1"
 #define _DATAPATH2            "/home/users/tanzhaobo/sequoiadb/path/data2"
 #define _DATAPATH3            "/home/users/tanzhaobo/sequoiadb/path/data3"
@@ -84,6 +83,21 @@ INT32 getGroups( sdbConnectionHandle db, vector<string>& groups ) ;
 
 // get all group nodes
 INT32 getGroupNodes( sdbConnectionHandle db, const CHAR* rgName, vector<string>& nodes ) ;
+
+// create lob and write buff
+INT32 createLob( sdbCollectionHandle cl, bson_oid_t oid, const CHAR* buff, INT32 len ) ;
+
+// write buff to lob
+INT32 writeLob( sdbCollectionHandle cl, bson_oid_t oid, const CHAR* buff, INT32 len ) ;
+
+// read lob, len: length want to read, read: actual read len
+INT32 readLob( sdbCollectionHandle cl, bson_oid_t oid, CHAR* buff, UINT32 len, UINT32* read ) ;
+
+// get lob size
+INT32 getLobSize( sdbCollectionHandle cl, bson_oid_t oid, SINT64* size ) ;
+
+// check oid equal
+BOOLEAN isOidEqual( bson_oid_t oid1, bson_oid_t oid2 ) ;
 
 /* display syntax error */
 void displaySyntax ( CHAR *pCommand );

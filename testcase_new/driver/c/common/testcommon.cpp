@@ -219,6 +219,107 @@ error:
    goto done ;
 }
 
+/*****************************************************************
+ * create lob and write buff into it
+ * return SDB_OK if success, return others if error
+ * when error, lob may be not closed, be careful
+ *
+ *****************************************************************/
+INT32 createLob( sdbCollectionHandle cl, bson_oid_t oid, 
+					  const CHAR* buff, INT32 len )
+{
+	INT32 rc = SDB_OK ;
+	sdbLobHandle lob ;
+	rc = sdbOpenLob( cl, &oid, SDB_LOB_CREATEONLY, &lob ) ;
+	CHECK_RC( SDB_OK, rc, "fail to open lob with create mode, rc = %d", rc ) ;
+	rc = sdbWriteLob( lob, buff, len ) ;
+	CHECK_RC( SDB_OK, rc, "fail to write lob, rc = %d", rc ) ;
+	rc = sdbCloseLob( &lob ) ;
+	CHECK_RC( SDB_OK, rc, "fail to close lob, rc = %d", rc ) ;
+done:
+	return rc ;
+error:
+	goto done ;
+}
+
+/*****************************************************************
+ * write buff to lob, no seek
+ * return SDB_OK if success, return others if error
+ * when error, lob may be not closed, be careful
+ *
+ *****************************************************************/
+INT32 writeLob( sdbCollectionHandle cl, bson_oid_t oid, 
+				    const CHAR* buff, INT32 len )
+{
+	INT32 rc = SDB_OK ;
+	sdbLobHandle lob ;
+	rc = sdbOpenLob( cl, &oid, SDB_LOB_WRITE, &lob ) ;
+	CHECK_RC( SDB_OK, rc, "fail to openLob with write mode, rc = %d", rc ) ;
+	rc = sdbWriteLob( lob, buff, len ) ;
+	CHECK_RC( SDB_OK, rc, "fail to write lob, rc = %d", rc ) ;
+	rc = sdbCloseLob( &lob ) ;
+	CHECK_RC( SDB_OK, rc, "fail to close lob, rc = %d", rc ) ;
+done:
+	return rc ;
+error:
+	goto done ;  
+}
+
+
+/*****************************************************************
+ * read lob, no seek
+ * return SDB_OK if success, return others if error
+ * when error, lob may be not closed, be careful
+ *
+ *****************************************************************/
+INT32 readLob( sdbCollectionHandle cl, bson_oid_t oid, 
+				   CHAR* buff, UINT32 len, UINT32* read )
+{
+	INT32 rc = SDB_OK ;
+	sdbLobHandle lob ;
+	rc = sdbOpenLob( cl, &oid, SDB_LOB_READ, &lob ) ;
+	CHECK_RC( SDB_OK, rc, "fail to open lob with read mode, rc = %d", rc ) ;
+	rc = sdbReadLob( lob, len, buff, read ) ;
+	CHECK_RC( SDB_OK, rc, "fail to read lob, rc = %d", rc ) ;
+	rc = sdbCloseLob( &lob ) ;
+	CHECK_RC( SDB_OK, rc, "fail to close lob, rc = %d", rc ) ;
+done:
+	return rc ;
+error:
+	goto done ;
+}
+
+/*****************************************************************
+ * get lob size
+ * return SDB_OK if success, return others if error
+ * when error, lob may be not closed, be careful
+ *
+ *****************************************************************/
+INT32 getLobSize( sdbCollectionHandle cl, bson_oid_t oid, SINT64* size )
+{
+	INT32 rc = SDB_OK ;
+	sdbLobHandle lob ;
+	rc = sdbOpenLob( cl, &oid, SDB_LOB_READ, &lob ) ;
+	CHECK_RC( SDB_OK, rc, "fail to open lob with read mode, rc = %d", rc ) ;
+	rc = sdbGetLobSize( lob, size ) ;
+	CHECK_RC( SDB_OK, rc, "fail to get lobSize, rc = %d", rc ) ; 
+	rc = sdbCloseLob( &lob ) ;
+	CHECK_RC( SDB_OK, rc, "fail to close lob, rc = %d", rc ) ;
+done:
+	return rc ;
+error:
+	goto done ;
+}
+
+BOOLEAN isOidEqual( bson_oid_t oid1, bson_oid_t oid2 )
+{
+	for( int i = 0;i < 3;i++ )
+	{
+		if( oid1.ints[i] != oid2.ints[i] )
+			return FALSE ;
+	}
+	return TRUE ;
+}
 
 //srand(time(NULL)) ;
 /* display syntax error */
