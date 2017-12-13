@@ -106,8 +106,8 @@ TEST_F( lobTruncateTest13434, eqLobSize )
 	ASSERT_EQ( lobSize, size ) << "fail to check lobSize with listLobs" ;
 
 	// read lob
-	CHAR* lobReadBuffer = (CHAR*)malloc( lobSize ) ;
-	memset( lobReadBuffer, 0, lobSize ) ;
+	CHAR* lobReadBuffer = (CHAR*)malloc( lobSize+1 ) ;
+	memset( lobReadBuffer, 0, lobSize+1 ) ;
    UINT32 readSize = 0 ;
 	rc = readLob( cl, oid, lobReadBuffer, lobSize, &readSize ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
@@ -140,8 +140,8 @@ TEST_F( lobTruncateTest13434, gtLobSize )
 	ASSERT_EQ( lobSize, size ) << "fail to check lobSize with listLobs" ;
 
 	// read lob
-	CHAR* lobReadBuffer = (CHAR*)malloc( lobSize ) ;
-	memset( lobReadBuffer, 0, lobSize ) ;
+	CHAR* lobReadBuffer = (CHAR*)malloc( lobSize+1 ) ;
+	memset( lobReadBuffer, 0, lobSize+1 ) ;
    UINT32 readSize = 0 ;
 	rc = readLob( cl, oid, lobReadBuffer, lobSize, &readSize ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
