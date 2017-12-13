@@ -51,7 +51,7 @@ public class LockAndWriteLob13404 extends SdbTestBase {
 		ObjectId oid = Commlib.createAndWriteLob(cl, testLobBuff);
 		
 		int writeLobSize = 1024 * 256;
-		int offset = 1024 * 3;
+		int offset = 1024 * 2;
 		byte[] rewriteBuff = Commlib.getRandomBytes(writeLobSize);
 		lockAndWriteLob( oid, rewriteBuff, offset );
 			
