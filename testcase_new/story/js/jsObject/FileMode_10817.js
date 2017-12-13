@@ -39,7 +39,7 @@ FileTest.prototype.testChmodNoPermission = function()
    var user = this.cmd.run( "whoami" ).split( "\n" )[0] ;
    if( user === "root" )
    {
-      println( "user is root" ) ;
+      println( "user is root, cann't testChmodNoPermission" ) ;
       this.release() ;
       return ;
    }
@@ -111,7 +111,7 @@ FileTest.prototype.testChown = function()
    var user = this.cmd.run( "whoami" ).split( "\n" )[0] ;
    var group = this.cmd.run( "id -gn " + user ).split( "\n" )[0] ;
 
-   var tmpFilename = "/tmp/testOwn.txt" ;
+   var tmpFilename = "/tmp/testChown.txt" ;
    var tmpFile ;   
    if( this.isLocal )
       tmpFile = new File( tmpFilename ) ;
@@ -139,7 +139,7 @@ FileTest.prototype.testChownRecursive = function()
    var user = this.system.getCurrentUser().toObj()["user"] ;
    if( user !== "root" )
    {
-      println( "user " + user + " is not root" ) ;
+      println( user + " is not root,cann't testChownRecursive" ) ;
       this.release() ;
       return ;
    }
@@ -222,7 +222,7 @@ FileTest.prototype.testChgrpRecursive = function()
    var user = this.system.getCurrentUser().toObj()["user"] ;
    if( user !== "root" )
    {
-      println( "user " + user + " is not root" ) ;
+      println( user + " is not root,cann't testChgrpRecursive" ) ;
       this.release() ;
       return ;
    }
@@ -271,16 +271,12 @@ FileTest.prototype.testChgrpRecursive = function()
 
 function createUserAndGroup( ft, user, group )
 {
-   if( isGroupExist( ft.hostname, ft.svcname, "tmpGroup" ) ||
-       isUserExist( ft.hostname, ft.svcname, "tmpUser" ) )
-   {
-      println( "tmpGroup or tmpUser existed" ) ;
-      return ;
-   }
    try
    {
-      ft.system.addGroup( { "name": group } ) ;
-      ft.system.addUser( { "name": user, "group": group } ) ;
+      if( !isGroupExist( ft.hostname, ft.svcname, "tmpGroup" ) )
+         ft.system.addGroup( { "name": group } ) ;
+      if( !isUserExist( ft.hostname, ft.svcname, "tmpUser" ) )
+         ft.system.addUser( { "name": user, "group": group } ) ;
    }
    catch( e )
    {
