@@ -243,6 +243,9 @@
                         <var name="excludelist" value="${excludelist},${excludepathfile}"/>
                      </sequential>
                   </for>
+                  <delete includeEmptyDirs="true">
+                     <fileset dir="@{casedir}" excludes="testcase.conf,*node.conf,${excludelist}"/>
+                  </delete>
                   <if>
                      <not>
                         <equals arg1="@{selectedcaselist}" arg2=""/>
