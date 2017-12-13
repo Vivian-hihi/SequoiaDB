@@ -55,7 +55,7 @@ public class LockAndWriteLob13404 extends SdbTestBase {
 		byte[] rewriteBuff = Commlib.getRandomBytes(writeLobSize);
 		lockAndWriteLob( oid, rewriteBuff, offset );
 			
-		int rewriteOffset = 1024 * 266;				
+		int rewriteOffset = 1024 * 256;				
 		lockAndseekToRewriteLob(oid, rewriteBuff, rewriteOffset);			
 		readAndcheckResult( oid);		
 	}
