@@ -421,7 +421,7 @@ namespace engine
       const dmsMBStatInfo *mbStatInfo = getMBStatInfo( context->mbID() ) ;
       SDB_ASSERT( mbStatInfo, "mbStatInfo should not be NULL" ) ;
 
-      return (( mbStatInfo->_totalDataPages << pageSizeSquareRoot()) + newSize)
+      return (((UINT64)mbStatInfo->_totalDataPages << pageSizeSquareRoot()) + newSize)
              > (UINT64)_options[context->mbID()]->_maxSize ;
    }
 
