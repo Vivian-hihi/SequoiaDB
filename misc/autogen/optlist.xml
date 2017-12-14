@@ -1075,12 +1075,12 @@
       <default>500</default>
       <type>int</type>
       <description>
-         <en>The buckets of access plan cache. Sdb will not cache any access plan if it is zero</en>
-         <cn>访问计划缓存内桶的个数。当其为零时Sdb将不会缓存任何访问计划，默认为500。</cn>
+         <en>The buckets of access plan cache. Sdb will not cache any access plan if it is 0. Default is 500, maximum is 4096.</en>
+         <cn>访问计划缓存内桶的个数。当其为0时数据库将不会缓存任何访问计划，默认为500，最大值为4096。</cn>
       </description>
       <detail>
-         <en>The buckets of access plan cache. Sdb will not cache any access plan if it is zero</en>
-         <cn>访问计划缓存内桶的个数。当其为零时Sdb将不会缓存任何访问计划，默认为500。</cn>
+         <en>The buckets of access plan cache. Sdb will not cache any access plan if it is 0. Default is 500, maximum is 4096.</en>
+         <cn>访问计划缓存内桶的个数。当其为0时数据库将不会缓存任何访问计划，默认为500，最大值为4096。</cn>
       </detail>
       <typeofweb>num</typeofweb>
       <reloadable>
