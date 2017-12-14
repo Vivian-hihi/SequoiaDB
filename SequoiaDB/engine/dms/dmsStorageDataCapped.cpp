@@ -903,7 +903,7 @@ namespace engine
       rc = _countRecNumAndSize( context->mbID(), extID,
                                 extInfo->_firstRecordOffset,
                                 extInfo->_lastRecordOffset, recNum,
-                                totalSize, TRUE ) ;
+                                totalSize ) ;
       PD_RC_CHECK( rc, PDERROR, "Count record number and size failed[ %d ]",
                    rc ) ;
 
@@ -961,7 +961,7 @@ namespace engine
 
       rc = _countRecNumAndSize( mbID, extID, extent->_firstRecordOffset,
                                 extent->_lastRecordOffset,
-                                recNum, totalSize, TRUE ) ;
+                                recNum, totalSize ) ;
       PD_RC_CHECK( rc, PDERROR, "Count record number and size failed[ %d ]",
                    rc ) ;
 
@@ -1509,7 +1509,7 @@ namespace engine
       {
          rc = _countRecNumAndSize( context->mbID(), extentID,
                                    workExtInfo->_firstRecordOffset, offset,
-                                   recNum, totalSize, TRUE ) ;
+                                   recNum, totalSize ) ;
          PD_RC_CHECK( rc, PDERROR, "Count record number and size failed[ %d ]",
                       rc ) ;
          SDB_ASSERT( workExtInfo->_lastRecordOffset >= lastRecOffset,
@@ -1538,7 +1538,7 @@ namespace engine
                          rc ) ;
             rc = _countRecNumAndSize( context->mbID(), extentID, offset,
                                       workExtInfo->_lastRecordOffset,
-                                      recNum, totalSize, TRUE ) ;
+                                      recNum, totalSize ) ;
             PD_RC_CHECK( rc, PDERROR, "Count record number and size "
                          "failed[ %d ]", rc ) ;
 
@@ -1637,7 +1637,7 @@ namespace engine
       {
          rc = _countRecNumAndSize( context->mbID(), extentID,
                                    extent->_firstRecordOffset,
-                                   offset, recNum, totalSize, TRUE ) ;
+                                   offset, recNum, totalSize ) ;
          PD_RC_CHECK( rc, PDERROR, "Count record number and size "
                       "failed[ %d ]", rc ) ;
          extent->_firstRecordOffset += totalSize ;
@@ -1957,8 +1957,7 @@ namespace engine
                                                      dmsOffset beginOffset,
                                                      dmsOffset endOffset,
                                                      UINT32 &recNum,
-                                                     UINT32 &totalSize,
-                                                     BOOLEAN endInclude )
+                                                     UINT32 &totalSize )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__DMSSTORAGEDATACAPPED_COUNTRECNUMANDSIZE ) ;
@@ -2001,13 +2000,8 @@ namespace engine
          goto error ;
       }
 
-      recNum = endRec->getRecordNo() - beginRec->getRecordNo() ;
-      totalSize = endOffset - beginOffset ;
-      if ( endInclude )
-      {
-         recNum++ ;
-         totalSize += endRec->getSize() ;
-      }
+      recNum = endRec->getRecordNo() - beginRec->getRecordNo() + 1 ;
+      totalSize = endOffset - beginOffset + endRec->getSize() ;
 
    done:
       PD_TRACE_EXIT( SDB__DMSSTORAGEDATACAPPED_COUNTRECNUMANDSIZE ) ;

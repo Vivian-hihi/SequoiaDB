@@ -333,8 +333,7 @@ namespace engine
                                  dmsOffset beginOffset,
                                  dmsOffset endOffset,
                                  UINT32 &recNum,
-                                 UINT32 &totalSize,
-                                 BOOLEAN endInclude = TRUE ) ;
+                                 UINT32 &totalSize ) ;
 
       INT32 _updateExtentLID( UINT16 mbID,
                               dmsExtentID extID,
