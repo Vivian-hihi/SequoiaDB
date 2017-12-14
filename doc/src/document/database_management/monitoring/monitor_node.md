@@ -38,6 +38,9 @@
 >   *   [数据库快照](database_management/monitoring/snapshot/SDB_SNAP_DATABASE.md)
 >   *   [系统快照](database_management/monitoring/snapshot/SDB_SNAP_SYSTEM.md)
 >   *   [编目信息快照](database_management/monitoring/snapshot/SDB_SNAP_CATALOG.md)
+>   *   [事务快照](database_management/monitoring/snapshot/SDB_SNAP_TRANSACTION.md)
+>   *   [当前事务快照](database_management/monitoring/snapshot/SDB_SNAP_TRANSACTION_CURRENT.md)
+>   *   [访问计划缓存快照](database_management/monitoring/snapshot/SDB_SNAP_ACCESSPLANS.md)
 
 用户可以使用 Shell 脚本监控，例如“monitor_insert.sh”：
 

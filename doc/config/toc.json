@@ -581,6 +581,12 @@
                            "file": "SDB_SNAP_TRANSACTIONS_CURRENT",
                            "cn": "当前事务快照",
                            "en": "SDB_SNAP_TRANSACTIONS_CURRENT"
+                        },
+                        {
+                           "id": 1511852592,
+                           "file": "SDB_SNAP_ACCESSPLANS",
+                           "cn": "访问计划缓存快照",
+                           "en": "SDB_SNAP_ACCESSPLANS"
                         }
                      ]
                   },
