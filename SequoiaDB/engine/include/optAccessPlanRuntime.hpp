@@ -171,20 +171,6 @@ namespace engine
 
          void inheritRuntime ( _optAccessPlanRuntime *planRuntime ) ;
 
-         OSS_INLINE virtual const mthMatchRuntime *getMatchRuntime () const
-         {
-            return _matchRuntime ? _matchRuntime :
-                   ( _plan ? _plan->getMatchRuntime() : NULL ) ;
-         }
-
-         OSS_INLINE virtual mthMatchRuntime *getMatchRuntime ()
-         {
-            return _matchRuntime ? _matchRuntime :
-                   ( _plan ? _plan->getMatchRuntime() : NULL ) ;
-         }
-
-         virtual mthMatchRuntime *getMatchRuntime ( BOOLEAN checkValid ) ;
-
          INT32 createCLScanInfo () ;
 
          void deleteCLScanInfo () ;
@@ -195,43 +181,22 @@ namespace engine
                               dmsExtentID indexExtID,
                               dmsExtentID indexLID ) ;
 
-         OSS_INLINE _mthMatchTree *getMatchTree ()
-         {
-            return getMatchRuntime()->getMatchTree() ;
-         }
+         virtual const mthMatchRuntime * getMatchRuntime () const ;
+         virtual mthMatchRuntime * getMatchRuntime () ;
+         virtual mthMatchRuntime * getMatchRuntime ( BOOLEAN checkValid ) ;
 
-         OSS_INLINE const _mthMatchTree *getMatchTree () const
-         {
-            return getMatchRuntime()->getMatchTree() ;
-         }
+         mthMatchTree * getMatchTree () ;
+         const mthMatchTree * getMatchTree () const ;
 
-         OSS_INLINE rtnPredicateList *getPredList ()
-         {
-            SDB_ASSERT ( _plan && _plan->isInitialized(),
-                         "optAccessPlan must be optimized before start using" ) ;
-            return ( _plan->getMatchRuntime()->isFixedPredList() ?
-                     _plan->getMatchRuntime()->getPredList() :
-                     getMatchRuntime()->getPredList() ) ;
-         }
+         rtnPredicateList * getPredList () ;
+         const rtnPredicateList * getPredList () const ;
 
-         OSS_INLINE const rtnPredicateList *getPredList () const
-         {
-            SDB_ASSERT ( _plan && _plan->isInitialized(),
-                         "optAccessPlan must be optimized before start using" ) ;
-            return ( _plan->getMatchRuntime()->isFixedPredList() ?
-                     _plan->getMatchRuntime()->getPredList() :
-                     getMatchRuntime()->getPredList() ) ;
-         }
+         rtnParamList & getParameters () ;
+         const rtnParamList & getParameters () const ;
 
-         OSS_INLINE rtnParamList &getParameters ()
-         {
-            return getMatchRuntime()->getParameters() ;
-         }
-
-         OSS_INLINE const rtnParamList &getParameters () const
-         {
-            return getMatchRuntime()->getParameters() ;
-         }
+         BSONObj getEqualityQueryObject () ;
+         BSONObj getParsedMatcher () const ;
+         BSONObj getPredIXBound () const ;
 
          OSS_INLINE void setPlan ( optAccessPlan *plan,
                                    optAccessPlanManager *apm,
@@ -244,11 +209,6 @@ namespace engine
 
          INT32 bindParamPlan ( optAccessPlanHelper &planHelper,
                                optAccessPlan *plan ) ;
-
-         OSS_INLINE BSONObj getEqualityQueryObject ()
-         {
-            return getMatchRuntime()->getEqualityQueryObject() ;
-         }
 
          OSS_INLINE optAccessPlan *getPlan ()
          {
@@ -351,16 +311,6 @@ namespace engine
 
          INT32 toExplainPath ( optExplainScanPath &expPath,
                                const rtnContext *context ) const ;
-
-         OSS_INLINE BSONObj getParsedMatcher () const
-         {
-            return getMatchTree()->getParsedMatcher( getParameters() ) ;
-         }
-
-         OSS_INLINE BSONObj getPredIXBound () const
-         {
-            return getPredList()->getBound() ;
-         }
 
       protected :
          // Pointer to access plan

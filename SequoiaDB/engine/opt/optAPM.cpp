@@ -339,6 +339,8 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB_OPTAPCACHES_INVALIDCLPLANS_NAME ) ;
 
+      SDB_ASSERT( NULL != pCLFullName, "collection name is invalid" ) ;
+
       UINT32 deleteCount = 0 ;
 
       ossScopedRWLock scopedLock( &_bucketNumLock, SHARED ) ;
@@ -388,6 +390,78 @@ namespace engine
       }
 
       PD_TRACE_EXIT( SDB_OPTAPCACHES_INVALIDCLPLANS_NAME ) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTAPCACHES_INVALIDSUPLANS_NAME, "_optAccessPlanCache::invalidateSUPlans" )
+   void _optAccessPlanCache::invalidateSUPlans ( const CHAR * pCSName )
+   {
+      PD_TRACE_ENTRY( SDB_OPTAPCACHES_INVALIDSUPLANS_NAME ) ;
+
+      SDB_ASSERT( NULL != pCSName, "collection space name is invalid" ) ;
+
+      UINT32 deleteCount = 0 ;
+
+      ossScopedRWLock scopedLock( &_bucketNumLock, SHARED ) ;
+
+      for ( UINT32 bucketID = 0 ; bucketID < getBucketNum() ; bucketID ++ )
+      {
+         // Lock the clear lock shared, parallel removing for different
+         ossScopedRWLock scopedLock( _pMonitor->getClearLock(), SHARED ) ;
+         utilHashTableBucket *pBucket = getBucket( bucketID, EXCLUSIVE ) ;
+
+         if ( NULL != pBucket )
+         {
+            optAccessPlan *pPlan = pBucket->getHead() ;
+            while ( pPlan )
+            {
+               INT32 rc = SDB_OK ;
+               CHAR csName [ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] = { 0 } ;
+
+               optAccessPlan *pNextPlan = (optAccessPlan *)pPlan->getNext() ;
+
+               rc = rtnResolveCollectionSpaceName(
+                     pPlan->getCLFullName(), ossStrlen( pPlan->getCLFullName() ),
+                     csName, DMS_COLLECTION_SPACE_NAME_SZ ) ;
+               if ( SDB_OK != rc )
+               {
+                  PD_LOG( PDDEBUG, "Failed to resolve collection space "
+                          "name [%s], rc: %d", pPlan->getCLFullName(), rc ) ;
+               }
+
+               if ( SDB_OK != rc ||
+                    0 == ossStrncmp( pCSName, csName,
+                                     DMS_COLLECTION_SPACE_NAME_SZ ) )
+               {
+                  // Increase the reference count before we delete it
+                  pPlan->incRefCount() ;
+
+                  // Locked bucket already, safe to remove from bucket
+                  if ( pBucket->removeItem( pPlan ) )
+                  {
+                     // We need to reset the activity ID to check if someone
+                     // else is also deleting this plan
+                     _pMonitor->resetActivity( pPlan->resetActivityID() ) ;
+                     deleteCount ++ ;
+                  }
+                  pPlan->release() ;
+               }
+               pPlan = pNextPlan ;
+            }
+
+            releaseBucket( bucketID, EXCLUSIVE ) ;
+         }
+         else
+         {
+            SDB_ASSERT( pBucket, "pBucket is invalid" ) ;
+         }
+      }
+
+      if ( deleteCount > 0 )
+      {
+         _pMonitor->decCachedPlanCount( deleteCount ) ;
+      }
+
+      PD_TRACE_EXIT( SDB_OPTAPCACHES_INVALIDSUPLANS_NAME ) ;
    }
 
    UINT32 _optAccessPlanCache::getCachedPlanCount () const
@@ -1348,12 +1422,30 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB_OPTAPM_INVALIDCLPLANS ) ;
 
+      SDB_ASSERT( NULL != pCLFullName, "collection name is invalid" ) ;
+
       if ( isInitialized() )
       {
          _planCache.invalidateCLPlans( pCLFullName ) ;
       }
 
       PD_TRACE_EXIT( SDB_OPTAPM_INVALIDCLPLANS ) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTAPM_INVALIDSUPLANS, "_optAccessPlanManager::invalidateSUPlans" )
+   void _optAccessPlanManager::invalidateSUPlans ( const CHAR *pCSName )
+   {
+      PD_TRACE_ENTRY( SDB_OPTAPM_INVALIDSUPLANS ) ;
+
+      SDB_ASSERT( NULL != pCSName, "collection space name is invalid" ) ;
+
+      if ( isInitialized() )
+      {
+         // Invalidate cached plans by collection space name
+         _planCache.invalidateSUPlans( pCSName ) ;
+      }
+
+      PD_TRACE_EXIT( SDB_OPTAPM_INVALIDSUPLANS ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTAPM_INVALIDALLPLANS, "_optAccessPlanManager::invalidateAllPlans" )
@@ -1400,7 +1492,7 @@ namespace engine
 
       SDB_ASSERT( pEventHolder, "Event holder is invalid" ) ;
 
-      if ( pCacheHolder )
+      if ( pCacheHolder && isInitialized() )
       {
          _resetSUPlanCache( pCacheHolder ) ;
       }
@@ -1422,7 +1514,7 @@ namespace engine
 
       SDB_ASSERT( pEventHolder, "Event holder is invalid" ) ;
 
-      if ( pCacheHolder )
+      if ( pCacheHolder && isInitialized() )
       {
          _resetSUPlanCache( pCacheHolder ) ;
       }
@@ -1444,8 +1536,10 @@ namespace engine
 
       SDB_ASSERT( pEventHolder, "Event holder is invalid" ) ;
 
-      if ( pCacheHolder )
+      if ( pCacheHolder && isInitialized() )
       {
+         // Only to remove SU plans
+         // no need to remove main-collection plans
          _invalidSUPlans( pCacheHolder ) ;
       }
 
@@ -1468,9 +1562,12 @@ namespace engine
 
       SDB_ASSERT( pEventHolder, "Event holder is invalid" ) ;
 
-      if ( pCacheHolder )
+      if ( pCacheHolder && isInitialized() )
       {
          _invalidSUPlans( pCacheHolder ) ;
+
+         // Run invalidation again to clear main-collection plans
+         invalidateSUPlans( pOldCSName ) ;
       }
 
       PD_TRACE_EXITRC( SDB_OPTAPM_ONRENAMECS, rc ) ;
@@ -1490,9 +1587,12 @@ namespace engine
 
       SDB_ASSERT( pEventHolder, "Event holder is invalid" ) ;
 
-      if ( pCacheHolder )
+      if ( pCacheHolder && isInitialized() )
       {
          _invalidSUPlans( pCacheHolder ) ;
+
+         // Run invalidation again to clear main-collection plans
+         invalidateSUPlans( pCacheHolder->getCSName() ) ;
       }
 
       PD_TRACE_EXITRC( SDB_OPTAPM_ONDROPCS, rc ) ;
@@ -1514,7 +1614,7 @@ namespace engine
 
       SDB_ASSERT( pEventHolder, "Event holder is invalid" ) ;
 
-      if ( pCacheHolder )
+      if ( pCacheHolder && isInitialized() )
       {
          _invalidCLPlans( pCacheHolder, clItem._mbID, clItem._clLID ) ;
       }
@@ -1538,7 +1638,7 @@ namespace engine
 
       SDB_ASSERT( pEventHolder, "Event holder is invalid" ) ;
 
-      if ( pCacheHolder )
+      if ( pCacheHolder && isInitialized() )
       {
          _invalidCLPlans( pCacheHolder, clItem._mbID, clItem._clLID ) ;
       }
@@ -1561,7 +1661,7 @@ namespace engine
 
       SDB_ASSERT( pEventHolder, "Event holder is invalid" ) ;
 
-      if ( pCacheHolder )
+      if ( pCacheHolder && isInitialized() )
       {
          _invalidCLPlans( pCacheHolder, clItem._mbID, clItem._clLID ) ;
       }
@@ -1585,7 +1685,7 @@ namespace engine
 
       SDB_ASSERT( pEventHolder, "Event holder is invalid" ) ;
 
-      if ( pCacheHolder )
+      if ( pCacheHolder && isInitialized() )
       {
          _invalidCLPlans( pCacheHolder, clItem._mbID, clItem._clLID ) ;
       }
@@ -1609,7 +1709,7 @@ namespace engine
 
       SDB_ASSERT( pEventHolder, "Event holder is invalid" ) ;
 
-      if ( pCacheHolder )
+      if ( pCacheHolder && isInitialized() )
       {
          _invalidCLPlans( pCacheHolder, clItem._mbID, clItem._clLID ) ;
       }
@@ -1629,7 +1729,7 @@ namespace engine
 
       SDB_ASSERT( pEventHolder, "Event holder is invalid" ) ;
 
-      if ( pCacheHolder )
+      if ( pCacheHolder && isInitialized() )
       {
          _invalidSUPlans( pCacheHolder ) ;
       }
@@ -1650,7 +1750,7 @@ namespace engine
 
       SDB_ASSERT( pEventHolder, "Event holder is invalid" ) ;
 
-      if ( pCacheHolder )
+      if ( pCacheHolder && isInitialized() )
       {
          _invalidCLPlans( pCacheHolder, clItem._mbID, clItem._clLID ) ;
       }
@@ -1670,7 +1770,7 @@ namespace engine
 
       SDB_ASSERT( pEventHolder, "Event holder is invalid" ) ;
 
-      if ( pCacheHolder )
+      if ( pCacheHolder && isInitialized() )
       {
          _resetSUPlanCache( pCacheHolder ) ;
       }
@@ -1901,12 +2001,13 @@ namespace engine
             mainPlan = dynamic_cast<optMainCLAccessPlan *>( pPlan ) ;
             SDB_ASSERT( mainPlan, "mainPlan is invalid " ) ;
 
-            if ( pCachedPlanMgr->testParamInvalidBitmap( subCLMBID ) )
+            if ( pCachedPlanMgr->testParamInvalidBitmap( subCLMBID ) ||
+                 !mainPlan->isMainCLValid() )
             {
                // The sub-collection is not parameterized validated, we need
                // to verify if it is validate to main-collection plan
                rc = _validateMainCLPlan( mainPlan, options, su, mbContext,
-                                         planRuntime ) ;
+                                         planRuntime, planHelper ) ;
                PD_RC_CHECK( rc, PDERROR, "Failed to validate main-collection "
                             "plan, rc: %d", rc ) ;
             }
@@ -2308,7 +2409,8 @@ namespace engine
                                                       const rtnQueryOptions &subOptions,
                                                       dmsStorageUnit *su,
                                                       dmsMBContext *mbContext,
-                                                      optAccessPlanRuntime &planRuntime )
+                                                      optAccessPlanRuntime &planRuntime,
+                                                      optAccessPlanHelper &planHelper )
    {
       INT32 rc = SDB_OK ;
 
@@ -2324,9 +2426,22 @@ namespace engine
       BSONObj parameters ;
 
       // Save parameters
-      if ( !planRuntime.getParameters().isEmpty() )
+      if ( mainPlan->getCacheLevel() >= OPT_PLAN_PARAMETERIZED &&
+           !planRuntime.getParameters().isEmpty() )
       {
          parameters = planRuntime.getParameters().toBSON() ;
+      }
+
+      // Check whether the sub-collection and parameters had been
+      // already validated
+      if ( mainPlan->checkSavedSubCL( subOptions.getCLFullName(),
+                                      parameters ) )
+      {
+         rc = _bindMainCLPlan( mainPlan, subOptions, su, mbContext,
+                               planRuntime, planHelper ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to bind main-collection "
+                      "plan, rc: %d", rc ) ;
+         goto done ;
       }
 
       // Specify the cache level, APM is not allowed to adjust it
@@ -2339,7 +2454,7 @@ namespace engine
       subPlan = dynamic_cast<optGeneralAccessPlan *>( planRuntime.getPlan() ) ;
       SDB_ASSERT( subPlan, "subPlan is invalid " ) ;
 
-      if ( !mainPlan->validateSubCL( subPlan, parameters ) )
+      if ( !mainPlan->validateSubCLPlan( subPlan, parameters ) )
       {
          // The sub-collection is not validate for the main-collection
          // plan, mark it invalidate for main-collection plans

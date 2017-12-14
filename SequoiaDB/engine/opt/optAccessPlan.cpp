@@ -1369,7 +1369,7 @@ namespace engine
                                                 const mthNodeConfig &config )
    : _optAccessPlan( planKey, config ),
      _mthParamPredListStackHolder(),
-     _isMainCLValid( TRUE ),
+     _isMainCLValid( FALSE ),
      _mainCLValidCount( 0 ),
      _score( 0.0 )
    {
@@ -1447,13 +1447,13 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTMAINCLACPLAN_VALIDSUBCL_PLAN, "_optMainCLAccessPlan::validateSubCL" )
-   BOOLEAN _optMainCLAccessPlan::validateSubCL ( const optGeneralAccessPlan *plan,
-                                                 const BSONObj &parameters )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTMAINCLACPLAN_VALIDSUBCLPLAN, "_optMainCLAccessPlan::validateSubCLPlan" )
+   BOOLEAN _optMainCLAccessPlan::validateSubCLPlan ( const optGeneralAccessPlan *plan,
+                                                     const BSONObj &parameters )
    {
       BOOLEAN result = FALSE ;
 
-      PD_TRACE_ENTRY( SDB__OPTMAINCLACPLAN_VALIDSUBCL_PLAN ) ;
+      PD_TRACE_ENTRY( SDB__OPTMAINCLACPLAN_VALIDSUBCLPLAN ) ;
 
       SDB_ASSERT( plan, "plan is invalid" ) ;
 
@@ -1481,7 +1481,7 @@ namespace engine
          _saveSubCL( plan->getCLFullName(), plan->getScore(), parameters ) ;
       }
 
-      PD_TRACE_EXIT( SDB__OPTMAINCLACPLAN_VALIDSUBCL_PLAN ) ;
+      PD_TRACE_EXIT( SDB__OPTMAINCLACPLAN_VALIDSUBCLPLAN ) ;
 
       return result ;
    }
@@ -1546,6 +1546,36 @@ namespace engine
 
    error :
       goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTPARAMACPLAN_CHKSAVEDSUBCL, "_optMainCLAccessPlan::checkSavedSubCL" )
+   BOOLEAN _optMainCLAccessPlan::checkSavedSubCL ( const CHAR * subCLName,
+                                                   const BSONObj & parameters )
+   {
+      BOOLEAN res = FALSE ;
+
+      PD_TRACE_ENTRY( SDB__OPTPARAMACPLAN_CHKSAVEDSUBCL ) ;
+
+      SDB_ASSERT( NULL != subCLName, "sub-collection name is invalid" ) ;
+
+      UINT32 savedCount = _mainCLValidCount.peek() ;
+
+      savedCount = OSS_MIN( OPT_MAINCL_VALID_PLAN_NUM, savedCount ) ;
+
+      for ( UINT32 i = 0 ; i < savedCount ; i++ )
+      {
+         if ( 0 == ossStrncmp( subCLName, _records[ i ]._subCLName,
+                               DMS_COLLECTION_FULL_NAME_SZ ) &&
+              parameters.shallowEqual( _records[ i ]._parameters ) )
+         {
+            res = TRUE ;
+            break ;
+         }
+      }
+
+      PD_TRACE_EXIT( SDB__OPTPARAMACPLAN_CHKSAVEDSUBCL ) ;
+
+      return res ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTMAINCLACPLAN_MARKINVALID, "_optParamAccessPlan::markMainCLInvalid" )
@@ -1646,24 +1676,24 @@ namespace engine
          _records[ paramIndex ]._parameters = parameters ;
          _records[ paramIndex ]._score = score ;
 
-         if ( paramIndex == OPT_PARAM_VALID_PLAN_NUM - 1 )
+         if ( paramIndex == OPT_MAINCL_VALID_PLAN_NUM - 1 )
          {
             // The parameterized plan could be validated, so calculate the
             // score which is the standard difference of each specified plan
             // to validate the parameterized plan
             double avgScores = 0.0 ;
             double diffScores = 0.0 ;
-            for ( UINT32 i = 0 ; i < OPT_PARAM_VALID_PLAN_NUM ; i++ )
+            for ( UINT32 i = 0 ; i < OPT_MAINCL_VALID_PLAN_NUM ; i++ )
             {
                avgScores += _records[i]._score ;
             }
-            avgScores /= (double)OPT_PARAM_VALID_PLAN_NUM ;
-            for ( UINT32 i = 0 ; i < OPT_PARAM_VALID_PLAN_NUM ; i++ )
+            avgScores /= (double)OPT_MAINCL_VALID_PLAN_NUM ;
+            for ( UINT32 i = 0 ; i < OPT_MAINCL_VALID_PLAN_NUM ; i++ )
             {
                double tmp = _records[i]._score - avgScores ;
                diffScores += ( tmp * tmp ) ;
             }
-            _score = sqrt( diffScores / (double)OPT_PARAM_VALID_PLAN_NUM ) ;
+            _score = sqrt( diffScores / (double)OPT_MAINCL_VALID_PLAN_NUM ) ;
             _isMainCLValid = TRUE ;
 
             PD_LOG( PDDEBUG, "Validate main-collection plan [%s]: score [%.6f]",

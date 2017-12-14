@@ -203,6 +203,16 @@ namespace engine
          goto done ;
       }
 
+      if ( NULL == rtnCB )
+      {
+         rtnCB = pmdGetKRCB()->getRTNCB() ;
+      }
+
+      if ( NULL == dmsCB )
+      {
+         dmsCB = pmdGetKRCB()->getDMSCB() ;
+      }
+
       if ( NULL != pCSName )
       {
          rc = _rtnAnalyzeCS( pCSName, param, cb, dmsCB, rtnCB, dpsCB ) ;
@@ -240,6 +250,8 @@ namespace engine
       INT32 rc = SDB_OK ;
 
       PD_TRACE_ENTRY( SDB_RTNRELOADCLSTATS ) ;
+
+      SDB_ASSERT( NULL != dmsCB, "dmsCB is invalid" ) ;
 
       dmsStatCache *pStatCache = pSU->getStatCache() ;
 
@@ -280,6 +292,9 @@ namespace engine
       INT32 rc = SDB_OK ;
 
       PD_TRACE_ENTRY( SDB__RTNANALYZEALL ) ;
+
+      SDB_ASSERT( NULL != rtnCB, "rtnCB is invalid" ) ;
+      SDB_ASSERT( NULL != dmsCB, "dmsCB is invalid" ) ;
 
       MON_CS_SIM_LIST monCSList ;
 
@@ -351,6 +366,9 @@ namespace engine
 
       PD_TRACE_ENTRY( SDB__RTNANALYZECS ) ;
 
+      SDB_ASSERT( NULL != rtnCB, "rtnCB is invalid" ) ;
+      SDB_ASSERT( NULL != dmsCB, "dmsCB is invalid" ) ;
+
       BOOLEAN suLocked = FALSE ;
 
       monCSSimple monCS ;
@@ -376,9 +394,35 @@ namespace engine
          csLockType = EXCLUSIVE ;
       }
 
-      rc = dmsCB->nameToSUAndLock( pCSName, suID, &pSU, csLockType, OSS_ONE_SEC ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to get collection space [%s], rc: %d",
-                   pCSName, rc ) ;
+      rc = dmsCB->nameToSUAndLock( pCSName, suID, &pSU, csLockType,
+                                   OSS_ONE_SEC ) ;
+      if ( SDB_OK != rc )
+      {
+         if ( SDB_DMS_CS_NOTEXIST == rc )
+         {
+            // Collection space doesn't have storage unit, but might contain
+            // main-collections
+            // Make sure main-collection plans are removed
+            rtnCB->getAPM()->invalidateSUPlans( pCSName ) ;
+
+            if ( param._mode != SDB_ANALYZE_MODE_RELOAD &&
+                 param._mode != SDB_ANALYZE_MODE_CLEAR )
+            {
+               // Notify backup nodes to clear old cached statistics
+               INT32 tmprc = rtnAnalyzeDpsLog( pCSName, NULL, NULL, dpsCB ) ;
+               if ( SDB_OK != tmprc )
+               {
+                  PD_LOG( PDERROR, "Failed to write analyze log, "
+                          "rc: %d", tmprc ) ;
+               }
+            }
+         }
+
+         PD_LOG( PDERROR, "Failed to get collection space [%s], rc: %d",
+                 pCSName, rc ) ;
+
+         goto error ;
+      }
 
       suLocked = TRUE ;
 
@@ -416,6 +460,12 @@ namespace engine
       {
          pSU->getEventHolder()->onClearSUCaches( DMS_EVENT_MASK_PLAN |
                                                  DMS_EVENT_MASK_STAT ) ;
+
+         dmsCB->suUnlock( suID, csLockType ) ;
+         suLocked = FALSE ;
+
+         // Make sure main-collection plans are removed
+         rtnCB->getAPM()->invalidateSUPlans( pCSName ) ;
       }
       else
       {
@@ -425,6 +475,9 @@ namespace engine
          rc = _rtnAnalyzeCSStats( &monCS, param, NULL, cb, dmsCB, rtnCB, dpsCB ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to analyze collection space [%s], "
                       "rc: %d", pCSName, rc ) ;
+
+         // Make sure main-collection plans are removed
+         rtnCB->getAPM()->invalidateSUPlans( pCSName ) ;
 
          // Notify backup nodes to clear old cached statistics
          rc = rtnAnalyzeDpsLog( pCSName, NULL, NULL, dpsCB ) ;
@@ -436,6 +489,7 @@ namespace engine
       {
          dmsCB->suUnlock( suID, csLockType ) ;
       }
+
       PD_TRACE_EXITRC( SDB__RTNANALYZECS, rc ) ;
       return rc ;
 
@@ -456,6 +510,8 @@ namespace engine
       PD_TRACE_ENTRY( SDB__RTNANALYZECL ) ;
 
       SDB_ASSERT( pCLFullName, "pCLFullName is invalid" ) ;
+      SDB_ASSERT( NULL != rtnCB, "rtnCB is invalid" ) ;
+      SDB_ASSERT( NULL != dmsCB, "dmsCB is invalid" ) ;
 
       dmsStorageUnitID suID = DMS_INVALID_SUID ;
       dmsStorageUnit *pSU = NULL ;
@@ -581,6 +637,8 @@ namespace engine
 
       SDB_ASSERT( pCLFullName, "pCLFullName is invalid" ) ;
       SDB_ASSERT( pIndexName, "pIndexName is invalid" ) ;
+      SDB_ASSERT( NULL != rtnCB, "rtnCB is invalid" ) ;
+      SDB_ASSERT( NULL != dmsCB, "dmsCB is invalid" ) ;
 
       dmsStorageUnitID suID = DMS_INVALID_SUID ;
       dmsStorageUnit *pSU = NULL ;

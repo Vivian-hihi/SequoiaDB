@@ -699,7 +699,20 @@ namespace engine
 
             if ( OSS_BIT_TEST( type, DPS_LOG_INVALIDCATA_TYPE_PLAN ) )
             {
+               SDB_RTNCB * rtnCB = sdbGetRTNCB() ;
 
+               if ( NULL != clFullName )
+               {
+                  rtnCB->getAPM()->invalidateCLPlans( clFullName ) ;
+               }
+               else if ( NULL != csName )
+               {
+                  rtnCB->getAPM()->invalidateSUPlans( csName ) ;
+               }
+               else
+               {
+                  rtnCB->getAPM()->invalidateAllPlans() ;
+               }
             }
 
             rc = SDB_OK ;

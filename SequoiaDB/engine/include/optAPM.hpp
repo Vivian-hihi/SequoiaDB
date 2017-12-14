@@ -92,6 +92,8 @@ namespace engine
 
          void invalidateCLPlans ( const CHAR *pCLFullName ) ;
 
+         void invalidateSUPlans ( const CHAR *pCSName ) ;
+
          UINT32 getCachedPlanCount () const ;
 
          INT32 getCachedPlanList ( vector<BSONObj> &cachedPlanList ) ;
@@ -394,6 +396,8 @@ namespace engine
 
          void invalidateCLPlans ( const CHAR *pCLFullName ) ;
 
+         void invalidateSUPlans ( const CHAR * pCSName ) ;
+
          void invalidateAllPlans () ;
 
          void setQueryActivity ( INT32 activityID,
@@ -536,7 +540,8 @@ namespace engine
                                      const rtnQueryOptions &subOptions,
                                      dmsStorageUnit *su,
                                      dmsMBContext *mbContext,
-                                     optAccessPlanRuntime &planRuntime ) ;
+                                     optAccessPlanRuntime &planRuntime,
+                                     optAccessPlanHelper &planHelper ) ;
 
          INT32 _bindMainCLPlan ( optMainCLAccessPlan *mainPlan,
                                  const rtnQueryOptions &subOptions,

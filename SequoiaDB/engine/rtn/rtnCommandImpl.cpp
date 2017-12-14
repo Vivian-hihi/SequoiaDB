@@ -609,14 +609,17 @@ namespace engine
       }
 
       {
-         BSONObj startObj = planRuntime->getPredList()->startKey() ;
-         BSONObj endObj = planRuntime->getPredList()->endKey() ;
+         rtnPredicateList * predList = planRuntime->getPredList() ;
+         SDB_ASSERT ( predList, "predList can't be NULL" ) ;
+
+         BSONObj startObj = predList->startKey() ;
+         BSONObj endObj = predList->endKey() ;
          BSONObj prevObj ;
          dmsRecordID prevRid ;
          if ( planRuntime->getDirection() < 0 )
          {
             startObj = endObj ;
-            endObj = planRuntime->getPredList()->startKey() ;
+            endObj = predList->startKey() ;
          }
          Ordering order = Ordering::make( indexCB.keyPattern() ) ;
          dmsExtentID rootID = indexCB.getRoot() ;

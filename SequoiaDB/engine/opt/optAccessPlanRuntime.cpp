@@ -244,20 +244,6 @@ namespace engine
       setMatchRuntime( planRuntime->getMatchRuntime() ) ;
    }
 
-   mthMatchRuntime *_optAccessPlanRuntime::getMatchRuntime ( BOOLEAN checkValid )
-   {
-      mthMatchRuntime *matchRuntime = getMatchRuntime() ;
-      if ( checkValid && matchRuntime )
-      {
-         if ( !_plan->getMatchTree()->isInitialized() ||
-              _plan->getMatchTree()->isMatchesAll() )
-         {
-            matchRuntime = NULL ;
-         }
-      }
-      return matchRuntime ;
-   }
-
    INT32 _optAccessPlanRuntime::createCLScanInfo ()
    {
       INT32 rc = SDB_OK ;
@@ -429,6 +415,122 @@ namespace engine
       return rc ;
    error :
       goto done ;
+   }
+
+   const mthMatchRuntime * _optAccessPlanRuntime::getMatchRuntime () const
+   {
+      return _matchRuntime ? _matchRuntime :
+                             ( _plan ? _plan->getMatchRuntime() :
+                                       NULL ) ;
+   }
+
+   mthMatchRuntime * _optAccessPlanRuntime::getMatchRuntime ()
+   {
+      return _matchRuntime ? _matchRuntime :
+                             ( _plan ? _plan->getMatchRuntime() :
+                                       NULL ) ;
+   }
+
+   mthMatchRuntime * _optAccessPlanRuntime::getMatchRuntime ( BOOLEAN checkValid )
+   {
+      mthMatchRuntime *matchRuntime = getMatchRuntime() ;
+      if ( checkValid && NULL != matchRuntime )
+      {
+         if ( !_plan->getMatchTree()->isInitialized() ||
+              _plan->getMatchTree()->isMatchesAll() )
+         {
+            matchRuntime = NULL ;
+         }
+      }
+      return matchRuntime ;
+   }
+
+   mthMatchTree * _optAccessPlanRuntime::getMatchTree ()
+   {
+      mthMatchRuntime * matchRuntime = getMatchRuntime() ;
+      return matchRuntime ? matchRuntime->getMatchTree() : NULL ;
+   }
+
+   const mthMatchTree * _optAccessPlanRuntime::getMatchTree () const
+   {
+      const mthMatchRuntime * matchRuntime = getMatchRuntime() ;
+      return matchRuntime ? matchRuntime->getMatchTree() : NULL ;
+   }
+
+   const rtnPredicateList * _optAccessPlanRuntime::getPredList () const
+   {
+      SDB_ASSERT ( _plan && _plan->isInitialized(),
+                   "optAccessPlan must be optimized before start using" ) ;
+
+      const mthMatchRuntime * planMatchRuntime = _plan->getMatchRuntime() ;
+      const mthMatchRuntime * matchRuntime = getMatchRuntime() ;
+
+      if ( NULL != planMatchRuntime && planMatchRuntime->isFixedPredList() )
+      {
+         return planMatchRuntime->getPredList() ;
+      }
+      else if ( NULL != matchRuntime )
+      {
+         return matchRuntime->getPredList() ;
+      }
+
+      return NULL ;
+   }
+
+   rtnPredicateList * _optAccessPlanRuntime::getPredList ()
+   {
+      SDB_ASSERT ( _plan && _plan->isInitialized(),
+                   "optAccessPlan must be optimized before start using" ) ;
+
+      mthMatchRuntime * planMatchRuntime = _plan->getMatchRuntime() ;
+      mthMatchRuntime * matchRuntime = getMatchRuntime() ;
+
+      if ( NULL != planMatchRuntime && planMatchRuntime->isFixedPredList() )
+      {
+         return planMatchRuntime->getPredList() ;
+      }
+      else if ( NULL != matchRuntime )
+      {
+         return matchRuntime->getPredList() ;
+      }
+
+      return NULL ;
+   }
+
+   rtnParamList & _optAccessPlanRuntime::getParameters ()
+   {
+      static rtnParamList s_emptyParameters ;
+      mthMatchRuntime * matchRuntime = getMatchRuntime() ;
+      return matchRuntime ? matchRuntime->getParameters() :
+                            s_emptyParameters ;
+   }
+
+   const rtnParamList & _optAccessPlanRuntime::getParameters () const
+   {
+      static rtnParamList s_emptyParameters ;
+      const mthMatchRuntime * matchRuntime = getMatchRuntime() ;
+      return matchRuntime ? matchRuntime->getParameters() :
+                            s_emptyParameters ;
+   }
+
+   BSONObj _optAccessPlanRuntime::getEqualityQueryObject ()
+   {
+      mthMatchRuntime * matchRuntime = getMatchRuntime() ;
+      return matchRuntime ? matchRuntime->getEqualityQueryObject() :
+                            BSONObj() ;
+   }
+
+   BSONObj _optAccessPlanRuntime::getParsedMatcher () const
+   {
+      const mthMatchTree * matchTree = getMatchTree() ;
+      return matchTree ? matchTree->getParsedMatcher( getParameters() ) :
+                         BSONObj() ;
+   }
+
+   BSONObj _optAccessPlanRuntime::getPredIXBound () const
+   {
+      const rtnPredicateList * predList = getPredList() ;
+      return predList ? predList->getBound() : BSONObj() ;
    }
 
 }

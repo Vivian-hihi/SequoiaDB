@@ -477,7 +477,7 @@ namespace engine
          virtual BOOLEAN validateParameterized ( const _optAccessPlan &plan,
                                                  const BSONObj &parameters ) ;
 
-         virtual BOOLEAN checkSavedParam ( const BSONObj &parameters ) ;
+         BOOLEAN checkSavedParam ( const BSONObj &parameters ) ;
 
          virtual INT32 markParamInvalid ( dmsMBContext *mbContext ) ;
 
@@ -556,13 +556,16 @@ namespace engine
                                      optGeneralAccessPlan *subPlan,
                                      const BSONObj &parameters ) ;
 
-         BOOLEAN validateSubCL ( const optGeneralAccessPlan *plan,
-                                 const BSONObj &parameters ) ;
+         BOOLEAN validateSubCLPlan ( const optGeneralAccessPlan *plan,
+                                     const BSONObj &parameters ) ;
 
          INT32 validateSubCL ( dmsStorageUnit *su,
                                dmsMBContext *mbContext,
                                dmsExtentID &indexExtID,
                                dmsExtentID &indexLID ) ;
+
+         BOOLEAN checkSavedSubCL ( const CHAR * subCLName,
+                                   const BSONObj & parameters ) ;
 
          INT32 markMainCLInvalid ( dmsCachedPlanMgr *pCachedPlanMgr,
                                    dmsMBContext *mbContext,
