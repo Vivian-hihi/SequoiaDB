@@ -60,7 +60,7 @@ public class TestLob13245 extends SdbTestBase {
      *
      * @param lobsize
      */
-    @Test(enabled = false,dataProvider = "lobSizeDataProvider", dataProviderClass = RandomWriteLobUtil.LobSizedataProvider.class)
+    @Test(dataProvider = "lobSizeDataProvider", dataProviderClass = RandomWriteLobUtil.LobSizedataProvider.class)
     public void testLob13245(long lobsize) {
         ObjectId id = createEmptyLob(dbcl);
 
