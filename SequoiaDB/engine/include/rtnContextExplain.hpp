@@ -264,12 +264,21 @@ namespace engine
             return TRUE ;
          }
 
+         OSS_INLINE BOOLEAN needCheckSubContext () const
+         {
+            return TRUE ;
+         }
+
          INT32 processData ( INT64 dataID, const CHAR * data,
                              INT32 dataSize, INT32 dataNum ) ;
          INT32 checkData ( INT64 dataID, const CHAR * data,
                            INT32 dataSize, INT32 dataNum ) ;
+         INT32 checkSubContext ( INT64 dataID ) ;
 
       protected :
+         // Sub-contexts are processed in parallel or not
+         virtual BOOLEAN _needParallelProcess () const = 0 ;
+
          INT32 _registerExplainProcessor ( rtnContext * context ) ;
          INT32 _unregisterExplainProcessor ( rtnContext * context ) ;
 
@@ -295,7 +304,10 @@ namespace engine
          typedef _utilSet< INT64 > rtnExplainIDList ;
 
       protected :
+         ossTick                    _tempTimestamp ;
          rtnExplainTimestampList    _startTimestampList ;
+         rtnExplainTimestampList    _waitTimestampList ;
+         rtnExplainTimestampList    _endTimestampList ;
          rtnExplainIDList           _explainIDSet ;
          BOOLEAN                    _mainExplainOutputted ;
          optExplainMergePathBase *  _explainMergeBasePath ;

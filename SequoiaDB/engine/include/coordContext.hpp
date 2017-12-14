@@ -121,9 +121,6 @@ namespace engine
 
          void     killSubContexts( _pmdEDUCB *cb ) ;
 
-         INT64    getSkipNum () const { return _numToSkip ; }
-         INT64    getLimitNum () const { return _numToReturn ; }
-
          INT64    getSessionMilliTimeout () const ;
 
          virtual void optimizeReturnOptions ( MsgOpQuery * pQueryMsg,
@@ -228,6 +225,11 @@ namespace engine
          INT32 addSubContext ( MsgOpReply *pReply, BOOLEAN &takeOver ) ;
 
          void addSubDone ( pmdEDUCB *cb ) ;
+
+         OSS_INLINE BOOLEAN _needParallelProcess () const
+         {
+            return TRUE ;
+         }
 
       protected :
          INT32 _prepareData ( pmdEDUCB *cb ) ;

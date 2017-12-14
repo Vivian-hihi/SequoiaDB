@@ -77,6 +77,16 @@ namespace engine
          return _options ;
       }
 
+      OSS_INLINE INT64 getNumToSkip () const
+      {
+         return _numToSkip ;
+      }
+
+      OSS_INLINE INT64 getNumToReturn () const
+      {
+         return _numToReturn ;
+      }
+
       INT32 reopenForExplain ( INT64 numToSkip, INT64 numToReturn ) ;
 
    protected:
@@ -96,6 +106,8 @@ namespace engine
 
       INT32 _processSubContext ( rtnSubContext * subContext,
                                  BOOLEAN & skipData ) ;
+
+      INT32 _checkSubContext ( rtnSubContext * subContext ) ;
 
    protected:
       rtnQueryOptions            _options ;

@@ -74,7 +74,17 @@ namespace engine
             return SDB_OK ;
          }
 
+         OSS_INLINE virtual INT32 checkSubContext ( INT64 dataID )
+         {
+            return SDB_OK ;
+         }
+
          OSS_INLINE virtual BOOLEAN needCheckData () const
+         {
+            return FALSE ;
+         }
+
+         OSS_INLINE virtual BOOLEAN needCheckSubContext () const
          {
             return FALSE ;
          }
@@ -104,6 +114,11 @@ namespace engine
             return _needCheckData ;
          }
 
+         OSS_INLINE BOOLEAN needCheckSubContext () const
+         {
+            return _needCheckSubContext ;
+         }
+
       protected :
          INT32 _processData ( INT64 processorType,
                               INT64 dataID,
@@ -111,9 +126,12 @@ namespace engine
                               INT32 dataSize,
                               INT32 dataNum ) ;
 
+         INT32 _checkSubContext ( INT64 dataID ) ;
+
       protected :
          BOOLEAN                 _hasProcessor ;
          BOOLEAN                 _needCheckData ;
+         BOOLEAN                 _needCheckSubContext ;
          rtnCtxDataProcessorList _processors ;
    } ;
 

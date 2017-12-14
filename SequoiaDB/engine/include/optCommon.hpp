@@ -271,6 +271,7 @@ namespace engine
    #define OPT_FIELD_PAGE_SIZE            FIELD_NAME_PAGE_SIZE
    #define OPT_FIELD_RECORDS              "Records"
    #define OPT_FIELD_RECORD_SIZE          "RecordSize"
+   #define OPT_FIELD_RECORD_TOTAL_SIZE    "RecordTotalSize"
    #define OPT_FIELD_SORTED               "Sorted"
    #define OPT_FIELD_READ_RECORDS         "ReadRecords"
    #define OPT_FIELD_READ_PAGES           "ReadPages"
@@ -300,8 +301,8 @@ namespace engine
    #define OPT_FIELD_RETURN_NUM           FIELD_NAME_RETURN_NUM
    #define OPT_FIELD_IO_COST              "IOCost"
    #define OPT_FIELD_CPU_COST             "CPUCost"
-   #define OPT_FIELD_RAN_IO_COST          "RandomIOCostUnit"
-   #define OPT_FIELD_SEQ_IO_COST          "SeqIOCostUnit"
+   #define OPT_FIELD_RAN_IO_COST          "RandomReadIOCostUnit"
+   #define OPT_FIELD_SEQ_IO_COST          "SeqReadIOCostUnit"
    #define OPT_FIELD_SEQ_WRITE_IO_COST    "SeqWrtIOCostUnit"
    #define OPT_FIELD_PAGE_UINT            "PageUnit"
    #define OPT_FIELD_IDX_CPU_COST         "IXExtractCPUCost"

@@ -691,6 +691,9 @@ namespace engine
       _emptyContextMap.insert( EMPTY_CONTEXT_MAP::value_type( routeID.value,
                                pSubContext ) ) ;
 
+      rc = _checkSubContext( pSubContext ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to check sub context, rc: %d", rc ) ;
+
       PD_LOG( PDDEBUG,
               "add sub context (groupID=%u, nodeID=%u, contextID=%lld)",
               routeID.columns.groupID,
@@ -1240,10 +1243,11 @@ namespace engine
 
          coordContext->optimizeReturnOptions( pQueryMsg, targetGroupNum ) ;
 
-         _numToSkip = coordContext->getSkipNum() ;
-         _numToReturn = coordContext->getLimitNum() ;
-         _queryOptions.setSkip( _numToSkip ) ;
-         _queryOptions.setLimit( _numToReturn ) ;
+         // Reset local skip and limit values
+         // NOTE: no need to reset _queryOptions which is the options passed to
+         //       COORD rather than options executed on COORD
+         _numToSkip = coordContext->getNumToSkip() ;
+         _numToReturn = coordContext->getNumToReturn() ;
 
          if ( NULL != mergeNode )
          {
@@ -1347,7 +1351,9 @@ namespace engine
       PD_CHECK( NULL != queryContext, SDB_SYS, error, PDERROR,
                 "Failed to get the context of query" ) ;
 
-      queryContext->registerProcessor( this ) ;
+      rc = _registerExplainProcessor( queryContext ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to register explain processor, "
+                   "rc: %d", rc ) ;
 
       rc = queryContext->open( options, _enabledPreRead() ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to open main-collection context, "
@@ -1361,6 +1367,7 @@ namespace engine
       if ( _needRun )
       {
          _startSessionTimeout = queryContext->getSessionMilliTimeout() * 1000 ;
+         queryContext->setEnableMonContext( TRUE ) ;
       }
 
    done :

@@ -788,8 +788,7 @@ namespace engine
       {
          _dataLock.release_r() ;
       }
-      if ( enabledMonContext() && enabledQueryActivity() &&
-           ( _hitEnd || SDB_DMS_EOC == rc ) )
+      if ( _hitEnd || SDB_DMS_EOC == rc )
       {
          setQueryActivity( TRUE ) ;
       }

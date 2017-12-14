@@ -110,7 +110,8 @@ namespace engine
       _optChildNodeSummary ()
       : _name( NULL ),
         _estTotalCost( 0 ),
-        _queryTime()
+        _queryTime(),
+        _waitTime()
       {
       }
 
@@ -119,12 +120,14 @@ namespace engine
          _name = summary._name ;
          _estTotalCost = summary._estTotalCost ;
          _queryTime = summary._queryTime ;
+         _waitTime = summary._waitTime ;
          return (*this) ;
       }
 
       const CHAR *   _name ;
       UINT64         _estTotalCost ;
       ossTickDelta   _queryTime ;
+      ossTickDelta   _waitTime ;
    } optChildNodeSummary ;
 
    typedef _utilList< optChildNodeSummary > optChildSummaryList ;
@@ -564,8 +567,6 @@ namespace engine
 
          virtual INT32 _toBSONRunImpl ( BSONObjBuilder & builder ) const ;
 
-         INT32 _toBSONStartCostEval ( BSONObjBuilder & builder,
-                                      const CHAR * scanStartCostName ) const ;
          INT32 _toBSONRunCostEval ( BSONObjBuilder & builder,
                                     BOOLEAN needIOCost ) const ;
 
@@ -677,6 +678,8 @@ namespace engine
          INT32 _toBSONIOCostEval ( BSONObjBuilder & builder ) const ;
 
          INT32 _toBSONCPUCostEval ( BSONObjBuilder & builder ) const ;
+
+         INT32 _toBSONStartCostEval ( BSONObjBuilder & builder ) const ;
    } ;
 
    /*
@@ -834,6 +837,8 @@ namespace engine
          INT32 _toBSONIOCostEval ( BSONObjBuilder & builder ) const ;
 
          INT32 _toBSONCPUCostEval ( BSONObjBuilder & builder ) const ;
+
+         INT32 _toBSONStartCostEval ( BSONObjBuilder & builder ) const ;
 
       protected :
          CHAR              _pIndexName [ IXM_INDEX_NAME_SIZE + 1 ] ;
@@ -1021,6 +1026,7 @@ namespace engine
          INT32 addChildExplain ( optPlanAllocator * pAllocator,
                                  const BSONObj & childExplain,
                                  const ossTickDelta & queryTime,
+                                 const ossTickDelta & waitTime,
                                  BOOLEAN needParse,
                                  BOOLEAN needChildExplain ) ;
 
@@ -1054,13 +1060,9 @@ namespace engine
          virtual INT32 _toBSONChildList ( BSONObjBuilder & builder,
                                           UINT16 mask ) const ;
 
-         virtual INT32 _toBSONMergeChildNodes ( BSONArrayBuilder & builder,
-                                                BOOLEAN needExpand,
-                                                BOOLEAN needNodeInfo ) const ;
-
-         virtual INT32 _toBSONMergeChildPath ( BSONObjBuilder & builder,
-                                               const BSONObj & childPath,
-                                               BOOLEAN needExpand ) const ;
+         INT32 _toBSONMergeChildNodes ( BSONArrayBuilder & builder,
+                                        BOOLEAN needExpand,
+                                        BOOLEAN needNodeInfo ) const ;
 
       protected :
          optChildSummaryList  _childSummary ;

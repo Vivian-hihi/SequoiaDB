@@ -413,6 +413,9 @@ namespace engine
 
       _subContextMap.insert( SUBCL_CTX_MAP::value_type( contextID, subCtx ) ) ;
 
+      rc = _checkSubContext( subCtx ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to check sub context, rc: %d", rc ) ;
+
    done:
       return rc ;
    error:
@@ -843,7 +846,9 @@ namespace engine
          queryContext->setPrepareMoreData( TRUE ) ;
       }
 
-      queryContext->registerProcessor( this ) ;
+      rc = _registerExplainProcessor( queryContext ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to register explain processor, "
+                   "rc: %d", rc ) ;
 
       rc = queryContext->open( options, _subCollections, _shardSort, cb ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to open main-collection context, "
@@ -853,6 +858,11 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Failed to create MERGE node, rc: %d", rc ) ;
 
       _explainMergePath.setCollectionName( options.getCLFullName() ) ;
+
+      if ( _needRun )
+      {
+         queryContext->setEnableMonContext( TRUE ) ;
+      }
 
    done :
       if ( NULL != ppContext )

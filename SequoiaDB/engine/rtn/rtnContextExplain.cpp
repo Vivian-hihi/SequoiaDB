@@ -652,7 +652,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNEXPBASE__BLDBSONOPTS, "_rtnExplainBase::_buildBSONQueryOptions" )
    INT32 _rtnExplainBase::_buildBSONQueryOptions ( BSONObjBuilder & builder,
-                                                          BOOLEAN needDetail ) const
+                                                   BOOLEAN needDetail ) const
    {
       INT32 rc = SDB_OK ;
 
@@ -905,6 +905,7 @@ namespace engine
    _rtnExplainMainBase::_rtnExplainMainBase ( optExplainMergePathBase * explainMergePath )
    : _rtnExplainBase( explainMergePath ),
      _IRtnCtxDataProcessor(),
+     _tempTimestamp(),
      _mainExplainOutputted( FALSE ),
      _explainMergeBasePath( explainMergePath )
    {
@@ -935,7 +936,7 @@ namespace engine
          try
          {
             BSONObj explainResult ;
-            ossTickDelta queryTime ;
+            ossTickDelta queryTime, waitTime ;
             BOOLEAN needExplain = FALSE ;
             BOOLEAN needParse = FALSE ;
 
@@ -952,28 +953,54 @@ namespace engine
 
             if ( _explainIDSet.end() == _explainIDSet.find( dataID ) )
             {
+               ossTick startTimestamp, endTimestamp ;
+               endTimestamp.sample() ;
+
                needParse = _needDetail ;
 
-               rtnExplainTimestampList::iterator iter =
-                                          _startTimestampList.find( dataID ) ;
-               if ( _startTimestampList.end() != iter )
+               rtnExplainTimestampList::iterator endIter =
+                                          _endTimestampList.find( dataID ) ;
+               if ( _endTimestampList.end() != endIter )
                {
-                  ossTick endTimestamp ;
-                  endTimestamp.sample() ;
-                  queryTime = endTimestamp - iter->second ;
+                  endTimestamp = endIter->second ;
+               }
+
+               rtnExplainTimestampList::iterator startIter =
+                                          _startTimestampList.find( dataID ) ;
+               if ( _startTimestampList.end() != startIter &&
+                    _needParallelProcess() )
+               {
+                  startTimestamp = startIter->second ;
                }
                else
                {
-                  ossTick timestamp ;
-                  timestamp.sample() ;
-                  _startTimestampList[ dataID ] = timestamp ;
+                  startTimestamp = _tempTimestamp ;
+                  if ( !_needParallelProcess() )
+                  {
+                     // Not in parallel, re-use the start timestamp to save
+                     // the start timestamp of the next sub context
+                     _tempTimestamp.sample() ;
+                  }
+               }
+               queryTime = endTimestamp - startTimestamp ;
+
+               rtnExplainTimestampList::iterator waitIter =
+                                          _waitTimestampList.find( dataID ) ;
+               if ( _waitTimestampList.end() != waitIter )
+               {
+                  waitTime = waitIter->second - startTimestamp ;
+               }
+               else
+               {
+                  waitTime = endTimestamp - startTimestamp ;
                }
 
                PD_CHECK( NULL != _explainMergeBasePath, SDB_SYS, error, PDERROR,
                          "Failed to get merge explain path" ) ;
 
                rc = _explainMergeBasePath->addChildExplain(
-                        explainResult, queryTime, needParse, needExplain ) ;
+                        explainResult, queryTime, waitTime, needParse,
+                        needExplain ) ;
                PD_RC_CHECK( rc, PDERROR, "Failed to add child explain, "
                             "rc: %d", rc ) ;
 
@@ -984,7 +1011,8 @@ namespace engine
                needParse = FALSE ;
 
                rc = _explainMergeBasePath->addChildExplain(
-                        explainResult, queryTime, needParse, needExplain ) ;
+                        explainResult, queryTime, waitTime, needParse,
+                        needExplain ) ;
                PD_RC_CHECK( rc, PDERROR, "Failed to add child explain, "
                             "rc: %d", rc ) ;
             }
@@ -1019,6 +1047,29 @@ namespace engine
 
       PD_TRACE_ENTRY( SDB_RTNEXPLAINMAINBASE_CHKDATA ) ;
 
+      if ( _waitTimestampList.end() == _waitTimestampList.find( dataID ) )
+      {
+         ossTick waitTimestamp ;
+         waitTimestamp.sample() ;
+         _waitTimestampList[ dataID ] = waitTimestamp ;
+      }
+
+      ossTick endTimestamp ;
+      endTimestamp.sample() ;
+      _endTimestampList[ dataID ] = endTimestamp ;
+
+      PD_TRACE_EXITRC( SDB_RTNEXPLAINMAINBASE_CHKDATA, rc ) ;
+
+      return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNEXPLAINMAINBASE_CHKSUBCTX, "_rtnExplainMainBase::checkSubContext" )
+   INT32 _rtnExplainMainBase::checkSubContext ( INT64 dataID )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_RTNEXPLAINMAINBASE_CHKSUBCTX ) ;
+
       if ( _startTimestampList.end() == _startTimestampList.find( dataID ) )
       {
          ossTick startTimestamp ;
@@ -1044,6 +1095,8 @@ namespace engine
                 "Failed to get main context" ) ;
 
       mainContext->registerProcessor( this ) ;
+
+      _tempTimestamp.sample() ;
 
    done :
       PD_TRACE_EXITRC( SDB_RTNEXPLAINMAINBASE__REGEXPPROC, rc ) ;
@@ -1104,6 +1157,10 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Failed to get more from main-context "
                       "[%lld], rc: %d", mainContext->contextID(), rc ) ;
       }
+
+      rc = _unregisterExplainProcessor( context ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to unregister explain processor, "
+                   "rc: %d", rc ) ;
 
    done :
       PD_TRACE_EXITRC( SDB_RTNEXPLAINMAINBASE__FINISUBCTX, rc ) ;

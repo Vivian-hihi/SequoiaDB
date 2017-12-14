@@ -60,8 +60,10 @@ namespace engine
       _rtnCtxDataDispatcher implement
     */
    _rtnCtxDataDispatcher::_rtnCtxDataDispatcher ()
+   : _hasProcessor( FALSE ),
+     _needCheckData( FALSE ),
+     _needCheckSubContext( FALSE )
    {
-      _hasProcessor = FALSE ;
    }
 
    _rtnCtxDataDispatcher::~_rtnCtxDataDispatcher ()
@@ -93,6 +95,10 @@ namespace engine
          {
             _needCheckData = TRUE ;
          }
+         if ( processor->needCheckSubContext() )
+         {
+            _needCheckSubContext = TRUE ;
+         }
       }
    }
 
@@ -114,6 +120,7 @@ namespace engine
       {
          _hasProcessor = FALSE ;
          _needCheckData = FALSE ;
+         _needCheckSubContext = FALSE ;
       }
    }
 
@@ -142,6 +149,33 @@ namespace engine
          {
             rc = processor->checkData( dataID, data, dataSize, dataNum ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to check data, rc: %d", rc ) ;
+         }
+      }
+
+   done :
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   INT32 _rtnCtxDataDispatcher::_checkSubContext ( INT64 dataID )
+   {
+      INT32 rc = SDB_OK ;
+
+      for ( rtnCtxDataProcessorList::iterator iter = _processors.begin() ;
+            iter != _processors.end() ;
+            iter ++ )
+      {
+         _IRtnCtxDataProcessor * processor = ( *iter ) ;
+
+         SDB_ASSERT( NULL != processor, "processor is invalid" ) ;
+
+         if ( processor->needCheckSubContext() )
+         {
+            rc = processor->checkSubContext( dataID ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to check sub context, "
+                         "rc: %d", rc ) ;
          }
       }
 

@@ -441,13 +441,14 @@ namespace engine
 
          OSS_INLINE INT32 addChildExplain ( const BSONObj & childExplain,
                                             const ossTickDelta & queryTime,
+                                            const ossTickDelta & waitTime,
                                             BOOLEAN needParse,
                                             BOOLEAN needChildExplain )
          {
             SDB_ASSERT( NULL != _pMergeNode, "merge node is invalid" ) ;
-            return _pMergeNode->addChildExplain( _pAllocator, childExplain,
-                                                 queryTime, needParse,
-                                                 needChildExplain ) ;
+            return _pMergeNode->addChildExplain(
+                        _pAllocator, childExplain, queryTime, waitTime,
+                        needParse, needChildExplain ) ;
          }
 
          OSS_INLINE optExplainResultList & getChildExplains ()

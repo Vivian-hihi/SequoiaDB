@@ -84,8 +84,8 @@ namespace engine
               ( grpSubCl && grpSubCl->size() >= 1 &&
                 grpSubCl->begin()->second.size() > 1 ) )
          {
-            if ( _pContext->getLimitNum() > 0 ||
-                 _pContext->getSkipNum() > 0 ||
+            if ( _pContext->getNumToReturn() > 0 ||
+                 _pContext->getNumToSkip() > 0 ||
                  queryMsg->numToReturn > 0 ||
                  queryMsg->numToSkip > 0 )
             {

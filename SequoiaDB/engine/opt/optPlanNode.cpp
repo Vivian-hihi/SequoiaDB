@@ -952,19 +952,6 @@ namespace engine
       goto done ;
    }
 
-   INT32 _optScanNode::_toBSONStartCostEval ( BSONObjBuilder & builder,
-                                              const CHAR * scanStartCostName ) const
-   {
-      StringBuilder formBuilder, evalBuilder ;
-      formBuilder << scanStartCostName ;
-      evalBuilder << _estStartCost ;
-
-      return _toBSONFieldEval( builder, OPT_FIELD_START_COST,
-                               formBuilder.str().c_str(),
-                               evalBuilder.str().c_str(),
-                               (INT64)_estStartCost ) ;
-   }
-
    INT32 _optScanNode::_toBSONRunCostEval ( BSONObjBuilder & builder,
                                             BOOLEAN needIOCost ) const
    {
@@ -1263,12 +1250,16 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for IO Cost "
                       "evaluation, rc: %d", rc ) ;
       }
+      else
+      {
+         builder.append( OPT_FIELD_IO_COST, (INT64)_estIOCost ) ;
+      }
 
       rc = _toBSONCPUCostEval( builder ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for CPU Cost "
                    "evaluation, rc: %d", rc ) ;
 
-      rc = _toBSONStartCostEval( builder, OPT_FIELD_TB_START_COST ) ;
+      rc = _toBSONStartCostEval( builder ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for start Cost "
                    "evaluation, rc: %d", rc ) ;
 
@@ -1292,6 +1283,7 @@ namespace engine
    {
       StringBuilder formBuilder, evalBuilder ;
 
+      // SeqReadIOCostUnit * ( Pages * ( PageSize / PageUnit ) )
       formBuilder << OPT_FIELD_SEQ_IO_COST << " * "
                   << OPT_FIELD_PAGES << " * ( "
                   << OPT_FIELD_PAGE_SIZE << " / "
@@ -1312,18 +1304,31 @@ namespace engine
    {
       StringBuilder formBuilder, evalBuilder ;
 
+      // TotalRecords * ( RecExtractCPUCost + MthCPUCost )
       formBuilder << OPT_FIELD_RECORDS << " * ( "
                   << OPT_FIELD_REC_CPU_COST << " + "
                   << OPT_FIELD_MTH_COST << " )" ;
 
       evalBuilder << _inputRecords << " * ( "
                   << OPT_RECORD_CPU_COST << " + "
-                  << _mthCPUCost << " ) ";
+                  << _mthCPUCost << " ) " ;
 
       return _toBSONFieldEval( builder, OPT_FIELD_CPU_COST,
                                formBuilder.str().c_str(),
                                evalBuilder.str().c_str(),
                                (INT64)_estCPUCost ) ;
+   }
+
+   INT32 _optTbScanNode::_toBSONStartCostEval ( BSONObjBuilder & builder ) const
+   {
+      StringBuilder formBuilder, evalBuilder ;
+      formBuilder << OPT_FIELD_TB_START_COST ;
+      evalBuilder << OPT_IXSCAN_DEFAULT_START_COST ;
+
+      return _toBSONFieldEval( builder, OPT_FIELD_START_COST,
+                               formBuilder.str().c_str(),
+                               evalBuilder.str().c_str(),
+                               (INT64)_estStartCost ) ;
    }
 
    /*
@@ -1902,8 +1907,6 @@ namespace engine
 
       builder.append( OPT_FIELD_INDEX_PAGES, (INT32)_indexPages ) ;
       builder.append( OPT_FIELD_INDEX_LEVELS, (INT32)_indexLevels ) ;
-      builder.append( OPT_FIELD_INDEX_READ_RECORDS, (INT64)_idxReadRecords ) ;
-      builder.append( OPT_FIELD_INDEX_READ_PAGES, (INT32)_idxReadPages ) ;
       builder.append( OPT_FIELD_MTH_SEL, _mthSelectivity ) ;
       builder.append( OPT_FIELD_MTH_COST, (INT32)_mthCPUCost ) ;
       builder.append( OPT_FIELD_SCAN_SEL, _scanSelectivity ) ;
@@ -1962,12 +1965,16 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for IO Cost "
                       "evaluation, rc: %d", rc ) ;
       }
+      else
+      {
+         builder.append( OPT_FIELD_IO_COST, (INT64)_estIOCost ) ;
+      }
 
       rc = _toBSONCPUCostEval( builder ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for CPU Cost "
                    "evaluation, rc: %d", rc ) ;
 
-      rc = _toBSONStartCostEval( builder, OPT_FIELD_TB_START_COST ) ;
+      rc = _toBSONStartCostEval( builder ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for start Cost "
                    "evaluation, rc: %d", rc ) ;
 
@@ -2238,6 +2245,8 @@ namespace engine
    {
       StringBuilder formBuilder, evalBuilder ;
 
+      // RandomReadIOCostUnit * ( IndexReadPages + ReadPages ) *
+      // ( PageSize / PageUnit )
       formBuilder << OPT_FIELD_RAN_IO_COST << " * ( "
                   << OPT_FIELD_INDEX_READ_PAGES << " + "
                   << OPT_FIELD_READ_PAGES << " ) * ( "
@@ -2260,9 +2269,15 @@ namespace engine
    {
       StringBuilder formBuilder, evalBuilder ;
 
-      formBuilder << OPT_FIELD_INDEX_READ_RECORDS << " * ( " <<
-                  OPT_FIELD_IDX_CPU_COST << " + " <<
-                  OPT_FIELD_PRED_COST << " ) + " ;
+      // 1. If match is needed
+      //    IndexReadRecords * ( IXExtractCPUCost + PredCPUCost ) +
+      //    ReadRecords * ( RecExtractCPUCost + MthCPUCost )
+      // 2. If match is not needed
+      //    IndexReadRecords * ( IXExtractCPUCost + PredCPUCost ) +
+      //    ReadRecords * RecExtractCPUCost
+      formBuilder << OPT_FIELD_INDEX_READ_RECORDS << " * ( "
+                  << OPT_FIELD_IDX_CPU_COST << " + "
+                  << OPT_FIELD_PRED_COST << " ) + " ;
 
       evalBuilder << _idxReadRecords << " * ( " <<
                   OPT_IDX_CPU_COST << " + " <<
@@ -2289,6 +2304,25 @@ namespace engine
                                formBuilder.str().c_str(),
                                evalBuilder.str().c_str(),
                                (INT64)_estCPUCost ) ;
+   }
+
+   INT32 _optIxScanNode::_toBSONStartCostEval ( BSONObjBuilder & builder ) const
+   {
+      StringBuilder formBuilder, evalBuilder ;
+
+      // IXScanStartCost + PredCPUCost * IndexLevels
+      formBuilder << OPT_FIELD_IX_START_COST << " + "
+                  << OPT_FIELD_PRED_COST << " * "
+                  << OPT_FIELD_INDEX_LEVELS ;
+
+      evalBuilder << OPT_IXSCAN_DEFAULT_START_COST << " + "
+                  << _predCPUCost << " * "
+                  << _indexLevels ;
+
+      return _toBSONFieldEval( builder, OPT_FIELD_START_COST,
+                               formBuilder.str().c_str(),
+                               evalBuilder.str().c_str(),
+                               (INT64)_estStartCost ) ;
    }
 
    /*
@@ -2381,9 +2415,11 @@ namespace engine
                                   (double)numOrderByFields ;
       UINT64 outputSkipRecords = 0 ;
 
+      // At least 2 records to be compared
+      double roundInputRecords = (double)( OSS_MAX( 2, inputRecords ) ) ;
       _estCPUCost = (UINT64)ceil( comparisionCPUCost *
-                                  (double)inputRecords *
-                                  OPT_LOG2( (double)inputRecords ) ) ;
+                                  roundInputRecords *
+                                  OPT_LOG2( roundInputRecords ) ) ;
 
       // Check input size against sort buffer size
       if ( inputSize > _sortBufferSize )
@@ -2432,14 +2468,16 @@ namespace engine
       PD_TRACE_ENTRY( SDB_OPTSORT_TOBSONEVAL ) ;
 
       const _optPlanNode *childNode = _childNodes.front() ;
-      UINT32 numOrderByFields = (UINT32)_orderBy.nFields() ;
 
-      builder.append( OPT_FIELD_RECORDS,
-                      (INT64)OSS_MAX( 2, childNode->getOutputRecords() ) ) ;
-      builder.append( OPT_FIELD_PAGES,
-                      (INT32)OPT_ROUND_NUM( childNode->getOutputRecords() *
-                                            childNode->getOutputRecordSize() /
-                                            DMS_PAGE_SIZE_BASE ) ) ;
+      UINT32 numOrderByFields = (UINT32)_orderBy.nFields() ;
+      UINT64 inputRecords = childNode->getOutputRecords() ;
+      UINT64 inputSize = inputRecords * childNode->getOutputRecordSize() ;
+      UINT32 inputPages = OPT_ROUND_NUM( childNode->getOutputRecords() *
+                                         childNode->getOutputRecordSize() /
+                                         DMS_PAGE_SIZE_BASE ) ;
+      builder.append( OPT_FIELD_RECORDS, (INT64)inputRecords ) ;
+      builder.append( OPT_FIELD_RECORD_TOTAL_SIZE, (INT64)inputSize ) ;
+      builder.append( OPT_FIELD_PAGES, (INT32)inputPages ) ;
       builder.append( OPT_FIELD_SORT_FIELDS, (INT32)numOrderByFields ) ;
       builder.append( OPT_FIELD_SORT_TYPE,
                       ( _estSortType == OPT_PLAN_IN_MEM_SORT ?
@@ -2451,6 +2489,10 @@ namespace engine
          rc = _toBSONIOCostEval( builder ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for IO Cost "
                       "evaluation, rc: %d", rc ) ;
+      }
+      else
+      {
+         builder.append( OPT_FIELD_IO_COST, (INT64)_estIOCost ) ;
       }
 
       rc = _toBSONCPUCostEval( builder ) ;
@@ -2629,10 +2671,12 @@ namespace engine
    {
       StringBuilder formBuilder, evalBuilder ;
 
-      formBuilder << OPT_FIELD_PAGES << " * ( " <<
-                  OPT_FIELD_SEQ_WRITE_IO_COST << " + " <<
-                  OPT_FIELD_SEQ_IO_COST << " * 0.75 " <<
-                  OPT_FIELD_RAN_IO_COST << " * 0.25 )" ;
+      // Pages * ( SeqWrtIOCostUnit + SeqReadIOCostUnit * 0.75 +
+      //           RandomReadIOCostUnit * 0.25 )
+      formBuilder << OPT_FIELD_PAGES << " * ( "
+                  << OPT_FIELD_SEQ_WRITE_IO_COST << " + "
+                  << OPT_FIELD_SEQ_IO_COST << " * 0.75 "
+                  << OPT_FIELD_RAN_IO_COST << " * 0.25 )" ;
 
       evalBuilder << _getInputPages( _getInputSize() ) << " * ( " <<
                   OPT_SEQ_WRITE_IO_COST << " + " <<
@@ -2651,15 +2695,17 @@ namespace engine
 
       UINT64 inputRecords = _getInputRecords() ;
 
-      formBuilder << " 2 * " << OPT_FIELD_OPTR_CPU_COST << " * " <<
-                  OPT_FIELD_SORT_FIELDS << " * " <<
-                  OPT_FIELD_RECORDS << " * log2( " <<
-                  OPT_FIELD_RECORDS << " )" ;
+      // 2 * OptrCPUCost * SortFields * max( 2, Records ) *
+      // log2( max( 2, Records ) )
+      formBuilder << "2 * " << OPT_FIELD_OPTR_CPU_COST << " * "
+                  << OPT_FIELD_SORT_FIELDS << " * "
+                  << "max( 2, " << OPT_FIELD_RECORDS << " ) * log2( "
+                  << "max( 2, " << OPT_FIELD_RECORDS << " ) )" ;
 
-      evalBuilder << " 2 * " << OPT_OPTR_BASE_CPU_COST << " * " <<
-                  _orderBy.nFields() << " * " <<
-                  inputRecords << " * log2( " <<
-                  inputRecords << " ) " ;
+      evalBuilder << "2 * " << OPT_OPTR_BASE_CPU_COST << " * "
+                  << _orderBy.nFields() << " * "
+                  << "max( 2, " << inputRecords << " ) * log2( "
+                  << "max( 2, " << inputRecords << " ) )" ;
 
       return _toBSONFieldEval( builder, OPT_FIELD_CPU_COST,
                                formBuilder.str().c_str(),
@@ -2671,24 +2717,16 @@ namespace engine
    {
       StringBuilder formBuilder, evalBuilder ;
 
-      if ( OPT_PLAN_EXT_SORT == _estSortType )
-      {
-         formBuilder << OPT_FIELD_CHILD_TOTAL_COST << " + " <<
-                     OPT_FIELD_IO_CPU_RATE << " * " <<
-                     OPT_FIELD_IO_COST << " + " <<
-                     OPT_FIELD_CPU_COST ;
-         evalBuilder << _getInputTotalCost() << " + " <<
-                     OPT_IO_CPU_RATE << " * " <<
-                     _estIOCost << " + " <<
-                     _estCPUCost ;
-      }
-      else
-      {
-         formBuilder << OPT_FIELD_CHILD_TOTAL_COST << " + " <<
-                     OPT_FIELD_CPU_COST ;
-         evalBuilder << _getInputTotalCost() << " + " <<
-                     _estCPUCost ;
-      }
+      // ChildTotalCost + IOCPURate * IOCost + CPUCost
+      formBuilder << OPT_FIELD_CHILD_TOTAL_COST << " + "
+                  << OPT_FIELD_IO_CPU_RATE << " * "
+                  << OPT_FIELD_IO_COST << " + "
+                  << OPT_FIELD_CPU_COST ;
+
+      evalBuilder << _getInputTotalCost() << " + "
+                  << OPT_IO_CPU_RATE << " * "
+                  << _estIOCost << " + "
+                  << _estCPUCost ;
 
       return _toBSONFieldEval( builder, OPT_FIELD_START_COST,
                                formBuilder.str().c_str(),
@@ -2700,10 +2738,11 @@ namespace engine
    {
       StringBuilder formBuilder, evalBuilder ;
 
-      formBuilder << OPT_FIELD_OPTR_CPU_COST << " * " <<
-                  OPT_FIELD_RECORDS ;
-      evalBuilder << OPT_OPTR_BASE_CPU_COST << " * " <<
-                  _getInputRecords() ;
+      // OptrCPUCost * Records
+      formBuilder << OPT_FIELD_OPTR_CPU_COST << " * "
+                  << OPT_FIELD_RECORDS ;
+      evalBuilder << OPT_OPTR_BASE_CPU_COST << " * "
+                  << _getInputRecords() ;
 
       return _toBSONFieldEval( builder, OPT_FIELD_RUN_COST,
                                formBuilder.str().c_str(),
@@ -2735,6 +2774,8 @@ namespace engine
       _orderBy = mainContext->getQueryOptions().getOrderBy() ;
 
       _returnOptions = mainContext->getQueryOptions() ;
+      _returnOptions.setSkip( mainContext->getNumToSkip() ) ;
+      _returnOptions.setLimit( mainContext->getNumToReturn() ) ;
       if ( mainContext->getSelector().isInitialized() )
       {
          _returnOptions.setSelector( mainContext->getSelector().getPattern() ) ;
@@ -2749,6 +2790,7 @@ namespace engine
    INT32 _optMergeNodeBase::addChildExplain ( optPlanAllocator * pAllocator,
                                               const BSONObj & childExplain,
                                               const ossTickDelta & queryTime,
+                                              const ossTickDelta & waitTime,
                                               BOOLEAN needParse,
                                               BOOLEAN needChildExplain )
    {
@@ -2757,8 +2799,6 @@ namespace engine
       PD_TRACE_ENTRY( SDB_OPTMERGENODEBASE_ADDCHILDEXP ) ;
 
       optPlanNode * newNode = NULL ;
-      optChildNodeSummary childSummary ;
-      const CHAR * childNodeName = NULL ;
 
       try
       {
@@ -2771,15 +2811,17 @@ namespace engine
          }
          _childBackupList.push_back( explainResult ) ;
 
-         rc = rtnGetStringElement( explainResult, _getChildExplainName(),
-                                   &childNodeName ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to get field [%s], rc: %d",
-                      _getChildExplainName(), rc ) ;
-
          if ( needParse )
          {
             BSONObj pathObject ;
-            const CHAR * nodeName = NULL ;
+            const CHAR * optrName = NULL ;
+            const CHAR * childNodeName = NULL ;
+            optChildNodeSummary childSummary ;
+
+            rc = rtnGetStringElement( explainResult, _getChildExplainName(),
+                                      &childNodeName ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to get field [%s], rc: %d",
+                         _getChildExplainName(), rc ) ;
 
             rc = rtnGetObjElement( explainResult, OPT_FIELD_PLAN_PATH,
                                    pathObject ) ;
@@ -2787,27 +2829,27 @@ namespace engine
                          OPT_FIELD_PLAN_PATH, rc ) ;
 
             rc = rtnGetStringElement( pathObject, OPT_FIELD_OPERATOR,
-                                      &nodeName ) ;
+                                      &optrName ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to get field [%s], rc: %d",
                          OPT_FIELD_OPERATOR, rc ) ;
 
-            if ( 0 == ossStrcmp( nodeName, OPT_PLAN_NODE_NAME_TBSCAN ) )
+            if ( 0 == ossStrcmp( optrName, OPT_PLAN_NODE_NAME_TBSCAN ) )
             {
                newNode = new ( pAllocator, std::nothrow ) optTbScanNode() ;
             }
-            else if ( 0 == ossStrcmp( nodeName, OPT_PLAN_NODE_NAME_IXSCAN ) )
+            else if ( 0 == ossStrcmp( optrName, OPT_PLAN_NODE_NAME_IXSCAN ) )
             {
                newNode = new ( pAllocator, std::nothrow ) optIxScanNode() ;
             }
-            else if ( 0 == ossStrcmp( nodeName, OPT_PLAN_NODE_NAME_SORT ) )
+            else if ( 0 == ossStrcmp( optrName, OPT_PLAN_NODE_NAME_SORT ) )
             {
                newNode = new ( pAllocator, std::nothrow ) optSortNode() ;
             }
-            else if ( 0 == ossStrcmp( nodeName, OPT_PLAN_NODE_NAME_MERGE ) )
+            else if ( 0 == ossStrcmp( optrName, OPT_PLAN_NODE_NAME_MERGE ) )
             {
                newNode = new ( pAllocator, std::nothrow ) optMainCLMergeNode() ;
             }
-            else if ( 0 == ossStrcmp( nodeName, OPT_PLAN_NODE_NAME_COORD ) )
+            else if ( 0 == ossStrcmp( optrName, OPT_PLAN_NODE_NAME_COORD ) )
             {
                newNode = new ( pAllocator, std::nothrow ) optCoordMergeNode() ;
             }
@@ -2815,16 +2857,16 @@ namespace engine
             {
                rc = SDB_SYS ;
                PD_LOG( PDERROR, "Failed to rebuild from BSON, "
-                       "unknown operator [%s]", nodeName ) ;
+                       "unknown operator [%s]", optrName ) ;
                goto error ;
             }
 
             PD_CHECK( newNode, SDB_OOM, error, PDERROR,
-                      "Failed to allocate %s node", nodeName ) ;
+                      "Failed to allocate %s node", optrName ) ;
 
             rc = newNode->fromBSON( pathObject, OPT_NODE_EXPLAIN_MASK_ALL ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to parse BSON for %s node, "
-                         "rc: %d", nodeName, rc ) ;
+                         "rc: %d", optrName, rc ) ;
 
             _childNodes.push_back( newNode ) ;
 
@@ -2832,6 +2874,7 @@ namespace engine
             childSummary._name = childNodeName ;
             childSummary._estTotalCost = newNode->getEstTotalCost() ;
             childSummary._queryTime = queryTime ;
+            childSummary._waitTime = waitTime ;
             _childSummary.push_back( childSummary ) ;
          }
       }
@@ -3057,12 +3100,17 @@ namespace engine
          {
             ossTickConversionFactor factor ;
             UINT32 seconds = 0, microseconds = 0 ;
-            double queryTime = 0.0 ;
+            double queryTime = 0.0, waitTime = 0.0 ;
 
             iter->_queryTime.convertToTime( factor, seconds, microseconds ) ;
             queryTime = (double)( seconds ) +
                         (double)( microseconds ) / (double)( OSS_ONE_MILLION ) ;
             summaryBuilder.append( OPT_FIELD_QUERY_TIME_SPENT, queryTime ) ;
+
+            iter->_waitTime.convertToTime( factor, seconds, microseconds ) ;
+            waitTime = (double)( seconds ) +
+                        (double)( microseconds ) / (double)( OSS_ONE_MILLION ) ;
+            summaryBuilder.append( OPT_FIELD_WAIT_TIME_SPENT, waitTime ) ;
          }
 
          summaryBuilder.done() ;
@@ -3110,13 +3158,11 @@ namespace engine
             }
             else if ( 0 == ossStrcmp( subElement.fieldName(),
                                       OPT_FIELD_PLAN_PATH ) &&
-                      Object == subElement.type() )
+                      Object == subElement.type() &&
+                      ! needExpand )
             {
-               rc = _toBSONMergeChildPath( subBuilder,
-                                           subElement.embeddedObject(),
-                                           needExpand ) ;
-               PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for child path, "
-                            "rc: %d", rc ) ;
+               // Skip plan path
+               continue ;
             }
             else
             {
@@ -3127,47 +3173,7 @@ namespace engine
          subBuilder.done() ;
       }
 
-   done :
       PD_TRACE_EXITRC( SDB_OPTMERGENODEBASE__TOBSONMERGECHILDNODES, rc ) ;
-      return rc ;
-
-   error :
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTMERGENODEBASE__TOBSONMERGECHILDPATH, "_optMergeNodeBase::_toBSONMergeChildPath" )
-   INT32 _optMergeNodeBase::_toBSONMergeChildPath ( BSONObjBuilder & builder,
-                                                    const BSONObj & childPath,
-                                                    BOOLEAN needExpand ) const
-   {
-      INT32 rc = SDB_OK ;
-
-      PD_TRACE_ENTRY( SDB_OPTMERGENODEBASE__TOBSONMERGECHILDPATH ) ;
-
-      BSONObjBuilder pathBuilder( builder.subobjStart( OPT_FIELD_PLAN_PATH ) ) ;
-
-      BSONObjIterator pathIter( childPath ) ;
-      while( pathIter.more() )
-      {
-         BSONElement pathElement = pathIter.next() ;
-         if ( ( 0 == ossStrcmp( pathElement.fieldName(),
-                                OPT_FIELD_CHILD_NODES ) ||
-                0 == ossStrcmp( pathElement.fieldName(),
-                                OPT_FIELD_SUB_COLLECTIONS ) ) &&
-               !needExpand )
-         {
-            // Skip child nodes
-            continue ;
-         }
-         else
-         {
-            pathBuilder.append( pathElement ) ;
-         }
-      }
-
-      pathBuilder.done() ;
-
-      PD_TRACE_EXITRC( SDB_OPTMERGENODEBASE__TOBSONMERGECHILDPATH, rc ) ;
 
       return rc ;
    }
@@ -3228,7 +3234,8 @@ namespace engine
       UINT32 numOrderByFields = (UINT32)_orderBy.nFields() ;
       UINT64 comparisionCPUCost = 2 * OPT_OPTR_BASE_CPU_COST * numOrderByFields ;
 
-      BOOLEAN allDataNeeded = ( _outputSkipRecords + _outputRecords == _inputRecords ) ;
+      BOOLEAN allDataNeeded = ( ( _outputSkipRecords + _outputRecords ) ==
+                                _inputRecords ) ;
       double skipRate = (double)_outputSkipRecords  / (double)_inputRecords ;
       double returnRate = 1.0 - skipRate ;
 
@@ -3251,10 +3258,10 @@ namespace engine
       }
 
       // CPU cost
-      _estStartCost += ( comparisionCPUCost * _outputSkipRecords +
-                         OPT_OPTR_BASE_CPU_COST * _outputSkipRecords ) ;
-      _estRunCost += ( comparisionCPUCost * _outputRecords +
-                       OPT_OPTR_BASE_CPU_COST * _outputRecords ) ;
+      _estStartCost += ( ( comparisionCPUCost + OPT_OPTR_BASE_CPU_COST ) *
+                         _outputSkipRecords ) ;
+      _estRunCost += ( ( comparisionCPUCost + OPT_OPTR_BASE_CPU_COST ) *
+                       _outputRecords ) ;
 
       PD_TRACE_EXIT( SDB_OPTMERGENODE__EVALORDRUNCOST ) ;
    }
@@ -3408,7 +3415,8 @@ namespace engine
       UINT32 numOrderByFields = (UINT32)_orderBy.nFields() ;
       UINT64 comparisionCPUCost = 2 * OPT_OPTR_BASE_CPU_COST * numOrderByFields ;
 
-      BOOLEAN allDataNeeded = ( _outputSkipRecords + _outputRecords == _inputRecords ) ;
+      BOOLEAN allDataNeeded = ( ( _outputSkipRecords + _outputRecords ) ==
+                                _inputRecords ) ;
       double skipRate = (double)_outputSkipRecords  / (double)_inputRecords ;
       double returnRate = 1.0 - skipRate ;
 
@@ -3426,8 +3434,10 @@ namespace engine
          SDB_ASSERT( NULL != node, "node is invalid" ) ;
 
          UINT64 curStartCost = ( node->getEstStartCost() +
-                               (UINT64)ceil( (double)node->getEstRunCost() * skipRate ) ) ;
-         UINT64 curRunCost = (UINT64)ceil( (double)node->getEstRunCost() * returnRate ) ;
+                                 (UINT64)ceil( (double)node->getEstRunCost() *
+                                               skipRate ) ) ;
+         UINT64 curRunCost = (UINT64)ceil( (double)node->getEstRunCost() *
+                                           returnRate ) ;
 
          if ( iter == _childNodes.begin() )
          {
@@ -3448,10 +3458,10 @@ namespace engine
       }
 
       // CPU cost
-      _estStartCost += ( comparisionCPUCost * _outputSkipRecords +
-                         OPT_OPTR_BASE_CPU_COST * _outputSkipRecords ) ;
-      _estRunCost += ( comparisionCPUCost * _outputRecords +
-                       OPT_OPTR_BASE_CPU_COST * _outputRecords ) ;
+      _estStartCost += ( ( comparisionCPUCost + OPT_OPTR_BASE_CPU_COST ) *
+                         _outputSkipRecords ) ;
+      _estRunCost += ( ( comparisionCPUCost + OPT_OPTR_BASE_CPU_COST ) *
+                       _outputRecords ) ;
 
       PD_TRACE_EXIT( SDB_OPTCOORDNODE__EVALORDRUNCOST ) ;
    }
@@ -3461,7 +3471,8 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB_OPTCOORDNODE__EVALNMLRUNCOST ) ;
 
-      BOOLEAN allDataNeeded = ( _outputSkipRecords + _outputRecords == _inputRecords ) ;
+      BOOLEAN allDataNeeded = ( ( _outputSkipRecords + _outputRecords ) ==
+                                _inputRecords ) ;
       double skipRate = (double)_outputSkipRecords  / (double)_inputRecords ;
       double returnRate = 1.0 - skipRate ;
 
@@ -3479,8 +3490,10 @@ namespace engine
          SDB_ASSERT( NULL != node, "node is invalid" ) ;
 
          UINT64 curStartCost = ( node->getEstStartCost() +
-                               (UINT64)ceil( (double)node->getEstRunCost() * skipRate ) ) ;
-         UINT64 curRunCost = (UINT64)ceil( (double)node->getEstRunCost() * returnRate ) ;
+                                 (UINT64)ceil( (double)node->getEstRunCost() *
+                                               skipRate ) ) ;
+         UINT64 curRunCost = (UINT64)ceil( (double)node->getEstRunCost() *
+                                           returnRate ) ;
 
          if ( iter == _childNodes.begin() )
          {

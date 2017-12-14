@@ -440,8 +440,11 @@ namespace engine
 
    void _rtnContextData::setQueryActivity ( BOOLEAN hitEnd )
    {
-      _planRuntime.setQueryActivity( MON_SELECT, _monCtxCB, _returnOptions,
-                                     hitEnd ) ;
+      if ( enabledMonContext() && enabledQueryActivity() )
+      {
+         _planRuntime.setQueryActivity( MON_SELECT, _monCtxCB, _returnOptions,
+                                        hitEnd ) ;
+      }
    }
 
    INT32 _rtnContextData::_queryModify( pmdEDUCB* eduCB,
@@ -1616,7 +1619,8 @@ namespace engine
 
    void _rtnContextSort::setQueryActivity ( BOOLEAN hitEnd )
    {
-      if ( NULL != getPlanRuntime() )
+      if ( NULL != getPlanRuntime() &&
+           enabledMonContext() && enabledQueryActivity() )
       {
          getPlanRuntime()->setQueryActivity( MON_SELECT, _monCtxCB,
                                              _returnOptions, hitEnd ) ;

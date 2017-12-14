@@ -505,4 +505,24 @@ namespace engine
       goto done ;
    }
 
+   INT32 _rtnContextMain::_checkSubContext ( rtnSubContext * subContext )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( !_hasProcessor || !_needCheckSubContext )
+      {
+         goto done ;
+      }
+
+      rc = _rtnCtxDataDispatcher::_checkSubContext( subContext->getDataID() ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to check sub context [%lld]",
+                   subContext->getDataID() ) ;
+
+   done :
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
 }

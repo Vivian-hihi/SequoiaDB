@@ -168,6 +168,12 @@ namespace engine
          RTN_CONTEXT_TYPE getType () const ;
          _dmsStorageUnit* getSU () { return NULL ; }
 
+         INT32 open ( const rtnQueryOptions & options,
+                      const std::vector<string> & subs,
+                      BOOLEAN shardSort,
+                      pmdEDUCB * cb ) ;
+
+      protected :
          OSS_INLINE BOOLEAN _needReturnDataInRun () const
          {
             return TRUE ;
@@ -178,12 +184,11 @@ namespace engine
             return TRUE ;
          }
 
-         INT32 open ( const rtnQueryOptions & options,
-                      const std::vector<string> & subs,
-                      BOOLEAN shardSort,
-                      pmdEDUCB * cb ) ;
+         OSS_INLINE BOOLEAN _needParallelProcess () const
+         {
+            return ( !_queryOptions.isOrderByEmpty() && !_shardSort ) ;
+         }
 
-      protected :
          INT32 _prepareData ( pmdEDUCB * cb ) ;
 
          INT32 _openSubContext ( rtnQueryOptions & options,
