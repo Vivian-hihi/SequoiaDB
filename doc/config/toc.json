@@ -699,6 +699,38 @@
                ]
             },
             {
+               "id": 1513325500,
+               "dir": "access_plans",
+               "cn": "查询访问计划",
+               "en": "Query Access Plans",
+               "contents": [
+                  {
+                     "id": 1513325501,
+                     "file": "access_plans",
+                     "cn": "访问计划",
+                     "en": "Access Plans"
+                  },
+                  {
+                     "id": 1513325502,
+                     "file": "search_paths",
+                     "cn": "基于代价的访问计划评估",
+                     "en": "Evaluate Access Plans"
+                  },
+                  {
+                     "id": 1513325503,
+                     "file": "detailed_access_plan",
+                     "cn": "查看访问计划",
+                     "en": "Explain Access Plans"
+                  },
+                  {
+                     "id": 1513325504,
+                     "file": "plan_cache",
+                     "cn": "访问计划缓存",
+                     "en": "Access Plan Cache"
+                  }
+               ]
+            },
+            {
                "id": 1496923310,
                "dir": "statistics",
                "cn": "统计信息",
