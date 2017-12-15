@@ -261,8 +261,16 @@ int ha_sdb::row_to_obj( uchar *buf,  bson::BSONObj & obj )
          case MYSQL_TYPE_YEAR:
          case MYSQL_TYPE_INT24:
             {
-               obj_builder.append( (*field)->field_name,
-                                   (int)(*field)->val_int() ) ;
+               if ( ((Field_num *)(*field))->unsigned_flag )
+               {
+                  obj_builder.append( (*field)->field_name,
+                                      (long long)((*field)->val_int()) ) ;
+               }
+               else
+               {
+                  obj_builder.append( (*field)->field_name,
+                                      (int)(*field)->val_int() ) ;
+               }
                break ;
             }
          case MYSQL_TYPE_LONGLONG:
