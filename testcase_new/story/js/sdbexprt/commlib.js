@@ -170,7 +170,7 @@ function checkFileContent( filename, expContent )
    {
       throw buildException( "checkFileContent", null,
             "check " + filename + " content", 
-            expContent.slice( 0, 500 ), actContent.slice( 0, 500 ) ) ;
+            expContent.slice( 0, 1024 ), actContent.slice( 0, 1024 ) ) ;
    }
 }
 
@@ -207,8 +207,8 @@ function checkRecords( expRecs, actRecs )
       if( expRecs[i] !== actRecs[i] )
       {
          throw buildException( "checkRecords", null, "check record " + i,
-               JSON.stringify(expRecs[i]).slice( 0, 500 ), 
-               JSON.stringify(actRecs[i]).slice( 0, 500 ) ) ;   
+               JSON.stringify(expRecs[i]).slice( 0, 1024 ), 
+               JSON.stringify(actRecs[i]).slice( 0, 1024 ) ) ;   
       }
    }
 }

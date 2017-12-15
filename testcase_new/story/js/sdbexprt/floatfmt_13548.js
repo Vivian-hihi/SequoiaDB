@@ -27,7 +27,7 @@ var doubleMin = "-" + doubleMax ;
 var floatfmts = [ "%.f", "%.4f", "%+.4f", "%.G", "%.4G", "%+.4G",
                   "%.E", "%.4E", "%+.4E", "db2" ] ;
 var csvContents = [ 
-      "a\n" + doubleMin + "\n" + doubleMax + "\n12346\n",
+      "a\n" + doubleMin + ".0\n" + doubleMax + ".0\n12346.0\n",
       "a\n" + doubleMin + ".0000\n" + doubleMax + ".0000\n12345.6789\n",
       "a\n" + doubleMin + ".0000\n+" + doubleMax + ".0000\n+12345.6789\n",
       "a\n" + "-2E+308\n" + "2E+308\n" + "1E+04\n",

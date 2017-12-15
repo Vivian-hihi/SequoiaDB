@@ -44,7 +44,7 @@ function testExprtImprt()
                  " --file " + csvfile + 
                  " --type csv" +
                  " -e " + asc + 
-                 " --fields a, b" ;
+                 " --fields a,b" ;
    testRunCommand( command ) ;
    
    command = installPath + "bin/sdbimprt" +
