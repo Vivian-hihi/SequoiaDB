@@ -14,9 +14,19 @@
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA */
 
 #include "handler.h"
-#include "sdb_conn.h"
-#include <include/client.hpp>
+#include "include/client.hpp"
+#include "sdb_adaptor.h"
+#include "sdb_def.h"
+#include "sdb_cl_ptr.h"
 
+
+typedef struct st_sdb_share {
+  char *table_name;
+  uint table_name_length, use_count ;
+
+  mysql_mutex_t mutex;
+  THR_LOCK lock;
+} SDB_SHARE;
 
 class ha_sdb : public handler
 {
@@ -236,14 +246,13 @@ public:
 
 private:
 
-   int get_collection( const char *from ) ;
+   void check_thread() ;
 
    int obj_to_row( bson::BSONObj &obj, uchar *buf ) ;
 
    int row_to_obj( uchar *buf, bson::BSONObj &obj ) ;
 
-   int next_row( sdbclient::sdbCursor &inputCursor,
-                 bson::BSONObj &obj, uchar *buf ) ;
+   int next_row( bson::BSONObj &obj, uchar *buf ) ;
 
    int cur_row( uchar *buf ) ;
 
@@ -252,8 +261,6 @@ private:
                         key_part_map keypart_map,
                         enum ha_rkey_function find_flag,
                         bson::BSONObj &matchObj ) ;
-
-   void reconnect( int rc ) ;
 
    int create_index( Alter_inplace_info *ha_alter_info ) ;
 
@@ -320,15 +327,15 @@ private:
                                  bson::BSONObj & obj ) ;
 
 private:
-   THR_LOCK                                  lock ;
    THR_LOCK_DATA                             lock_data ;
-   sdb_conn_auto_ptr                         connection ;
-   sdbclient::sdbCollection                  cl ;
-   sdbclient::sdbCursor                      cursor ;
+   sdb_cl_auto_ptr                           cl ;
+   bool                                      first_read ;
    bson::BSONObj                             cur_rec ;
    bson::BSONObj                             condition ;
    int                                       keynr ; //use for index_scan
    uint32                                    str_field_buf_size ;
    char                                      *str_field_buf ;
-
+   SDB_SHARE                                 *share ;
+   char                                      db_name[CS_NAME_MAX_SIZE + 1] ;
+   char                                      table_name[CL_NAME_MAX_SIZE + 1] ;
 };

@@ -3,22 +3,29 @@
    #define MYSQL_SERVER
 #endif
 
+#include "include/client.hpp"
 #include "sql_class.h"
 #include "sdb_conn.h"
+#include "sdb_conn_ptr.h"
+#include "sdb_cl.h"
+#include "sdb_cl_ptr.h"
 #include "sdb_conf.h"
 #include "sdb_util.h"
-#include <include/client.hpp>
-#include <mysql/service_security_context.h>
+#include "sdb_err_code.h"
+#include "sdb_adaptor.h"
 
 
 sdb_conn::sdb_conn( my_thread_id _tid )
 :transactionon(false),
 tid(_tid)
 {
+   pthread_rwlock_init( &rw_mutex, NULL ) ;
 }
 
 sdb_conn::~sdb_conn()
 {
+   clear_all_cl() ;
+   pthread_rwlock_destroy( &rw_mutex ) ;
 }
 
 sdbclient::sdb & sdb_conn::get_sdb()
@@ -36,13 +43,31 @@ int sdb_conn::connect()
    int rc = 0 ;
    if ( !connection.isValid() )
    {
+      std::map<std::string, sdb_cl_auto_ptr>::iterator iter ;
       transactionon = false ;
-      MYSQL_SECURITY_CONTEXT ctx = current_thd->security_context();
+      //MYSQL_SECURITY_CONTEXT ctx = current_thd->security_context();
       rc = connection.connect( (const CHAR **)(SDB_CONF_INST->get_coord_addrs()),
                                SDB_CONF_INST->get_coord_num(),
                                "", "" ) ; 
+      if ( rc != SDB_ERR_OK )
+      {
+         goto error ;
+      }
+
+      // get the r_lock because the cl_list will not change
+      sdb_rw_lock_r r_lock( &rw_mutex ) ;
+      iter = cl_list.begin() ;
+      while ( iter != cl_list.end() )
+      {
+         iter->second->re_init() ;
+         ++iter ;
+      }
    }
+done:
    return rc ;
+error:
+   convert_sdb_code( rc ) ;
+   goto done ;
 }
 
 int sdb_conn::begin_transaction()
@@ -55,18 +80,37 @@ int sdb_conn::begin_transaction()
       {
          transactionon = true ;
       }
+      else
+      {
+         goto error ;
+      }
    }
+
+done:
    return rc ;
+error:
+   convert_sdb_code( rc ) ;
+   goto done ;
 }
 
 int sdb_conn::commit_transaction()
 {
+   int rc = 0 ;
    if ( transactionon )
    {
       transactionon = false ;
-      return connection.transactionCommit() ;
+      rc = connection.transactionCommit() ;
+      if ( rc != SDB_ERR_OK )
+      {
+         goto error ;
+      }
    }
-   return 0 ;
+
+done:
+   return rc ;
+error:
+   convert_sdb_code( rc ) ;
+   goto done ;
 }
 
 int sdb_conn::rollback_transaction()
@@ -84,6 +128,117 @@ bool sdb_conn::is_transaction()
    return transactionon ;
 }
 
+int sdb_conn::get_cl( char *cs_name, char *cl_name,
+                      sdb_cl_auto_ptr &cl_ptr,
+                      bool create )
+{
+   int rc = SDB_ERR_OK ;
+   std::map<std::string, sdb_cl_auto_ptr>::iterator iter ;
+   cl_ptr.clear() ;
+   std::string str_tmp( cs_name ) ;
+   str_tmp.append( "." ) ;
+   str_tmp.append( cl_name ) ;
+
+   {
+   //TODO: improve performence
+   sdb_rw_lock_r r_lock( &rw_mutex ) ;
+   iter = cl_list.find( str_tmp ) ;
+   if ( iter != cl_list.end() )
+   {
+      cl_ptr = iter->second ;
+      if ( create )
+      {
+         rc = cl_ptr->init( this, cs_name, cl_name, create ) ;
+         if ( rc != SDB_ERR_OK )
+         {
+            goto error ;
+         }
+      }
+      goto done ;
+   }
+   }
+
+   {
+   sdb_cl_auto_ptr tmp_cl( new sdb_cl() ) ;
+   rc = tmp_cl->init( this, cs_name, cl_name, create ) ;
+   if ( rc != SDB_ERR_OK )
+   {
+      goto error ;
+   }
+   cl_ptr = tmp_cl ;
+   sdb_rw_lock_w w_lock( &rw_mutex ) ;
+   cl_list.insert(
+      std::pair< std::string, sdb_cl_auto_ptr>( str_tmp, cl_ptr )) ;
+   }
+done:
+   return rc ;
+error:
+   convert_sdb_code( rc ) ;
+   goto done ;
+}
+
+int sdb_conn::create_cl( char *cs_name, char *cl_name,
+                         sdb_cl_auto_ptr &cl_ptr )
+{
+   return this->get_cl( cs_name, cl_name, cl_ptr, TRUE ) ;
+}
+
+void sdb_conn::clear_cl( char *cs_name, char *cl_name )
+{
+   int rc = SDB_ERR_OK ;
+   std::map<std::string, sdb_cl_auto_ptr>::iterator iter ;
+   std::string str_tmp( cs_name ) ;
+   str_tmp.append( "." ) ;
+   str_tmp.append( cl_name ) ;
+
+   {
+   sdb_rw_lock_w w_lock( &rw_mutex ) ;
+   iter = cl_list.find( str_tmp ) ;
+   if ( cl_list.end() == iter || iter->second.ref() > 1 )
+   {
+      goto done ;
+   }
+   cl_list.erase( iter ) ;
+   }
+done:
+   return ;
+}
+
+void sdb_conn::clear_all_cl()
+{
+   int rc = SDB_ERR_OK ;
+   std::map<std::string, sdb_cl_auto_ptr>::iterator iter ;
+   sdb_rw_lock_w w_lock( &rw_mutex ) ;
+   iter = cl_list.begin() ;
+   while( iter != cl_list.end() )
+   {
+      cl_list.erase( iter++ ) ;
+   }
+done:
+   return ;
+}
+
+int sdb_conn::get_cl_num()
+{
+   sdb_rw_lock_r r_lock( &rw_mutex ) ;
+   return cl_list.size() ;
+}
+
+bool sdb_conn::is_idle()
+{
+   std::map<std::string, sdb_cl_auto_ptr>::iterator iter ;
+   sdb_rw_lock_r r_lock( &rw_mutex ) ;
+   iter = cl_list.begin() ;
+   while ( iter != cl_list.end() )
+   {
+      if ( iter->second.ref() > 1 )
+      {
+         return FALSE ;
+      }
+      ++iter ;
+   }
+   return TRUE ;
+}
 
 sdb_conn_ref_ptr::sdb_conn_ref_ptr( sdb_conn * connection )
 {
@@ -118,20 +273,31 @@ sdb_conn_auto_ptr::sdb_conn_auto_ptr( const sdb_conn_auto_ptr &other )
    this->ref_ptr = other.ref_ptr ;
    if ( ref_ptr )
    {
-      ++(ref_ptr->ref) ;
+      ref_ptr->ref.atomic_add(1) ;
    }
 }
 
 sdb_conn_auto_ptr::~sdb_conn_auto_ptr()
 {
+   clear() ;
+}
+
+void sdb_conn_auto_ptr::clear()
+{
+   int ref_tmp = 0 ;
    if ( NULL == ref_ptr )
    {
       goto done ;
    }
 
-   --(ref_ptr->ref) ;
+   // Note: ref_tmp is the old-value
+   ref_tmp = ref_ptr->ref.atomic_add(-1) ;
 
-   if ( 1 == ref_ptr->ref )
+   if ( 1 == ref_tmp )
+   {
+      delete ref_ptr ;
+   }
+   else if ( 2 == ref_tmp )
    {
       // there is no table-handler use sdb-instance,
       // only one in conn_list which in sdb_conn_mgr,
@@ -141,21 +307,19 @@ sdb_conn_auto_ptr::~sdb_conn_auto_ptr()
          SDB_CONN_MGR_INST->del_sdb_conn( ref_ptr->sdb_connection->get_tid() ) ;
       }
    }
-   else if ( 0 == ref_ptr->ref )
-   {
-      delete ref_ptr ;
-      ref_ptr = NULL ;
-   }
+
+   ref_ptr = NULL ;
 done:
    return ;
 }
 
 sdb_conn_auto_ptr & sdb_conn_auto_ptr::operator = ( sdb_conn_auto_ptr &other )
 {
+   clear() ;
    this->ref_ptr = other.ref_ptr ;
    DBUG_ASSERT( ref_ptr != NULL ) ;
    DBUG_ASSERT( ref_ptr->sdb_connection != NULL ) ;
-   ++(ref_ptr->ref) ;
+   ref_ptr->ref.atomic_add(1) ;
    return *this ;
 }
 
@@ -169,51 +333,11 @@ sdb_conn * sdb_conn_auto_ptr::operator ->()
    return ref_ptr->sdb_connection ;
 }
 
-
-sdb_conn_mgr::sdb_conn_mgr()
+int sdb_conn_auto_ptr::ref()
 {
-   mysql_rwlock_init( rw_key, &rw_mutex ) ;
-}
-
-sdb_conn_mgr::~sdb_conn_mgr()
-{
-   mysql_rwlock_destroy( &rw_mutex ) ;
-}
-
-sdb_conn_mgr *sdb_conn_mgr::get_instance()
-{
-   static sdb_conn_mgr _sdb_conn_mgr ;
-   return &_sdb_conn_mgr ;
-}
-
-int sdb_conn_mgr::get_sdb_conn( my_thread_id tid, sdb_conn_auto_ptr &sdb_ptr )
-{
-   int rc = 0 ;
-   std::map<my_thread_id, sdb_conn_auto_ptr>::iterator iter ;
-
+   if ( ref_ptr )
    {
-   sdb_rw_lock_r r_lock( &rw_mutex ) ;
-   iter = conn_list.find( tid ) ;
-   if ( conn_list.end() != iter )
-   {
-      sdb_ptr = iter->second ;
-      goto done ;
+      return ref_ptr->ref.atomic_get() ;
    }
-   }
-
-   {
-   sdb_conn_auto_ptr tmp_conn( new sdb_conn( tid ) ) ;
-   sdb_ptr = tmp_conn ;
-   rc = sdb_ptr->connect() ;
-   sdb_rw_lock_w w_lock( &rw_mutex ) ;
-   conn_list.insert( std::pair<my_thread_id,sdb_conn_auto_ptr>(tid,sdb_ptr) ) ;
-   }
-done:
-   return rc ;
-}
-
-void sdb_conn_mgr::del_sdb_conn( my_thread_id tid )
-{
-   sdb_rw_lock_w w_lock( &rw_mutex ) ;
-   conn_list.erase( tid );
+   return 0 ;
 }

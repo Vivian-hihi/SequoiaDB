@@ -13,10 +13,18 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA */
 
+#ifndef SDB_CONN__H
+#define SDB_CONN__H
+
 #include <map>
 #include <mysql/psi/mysql_thread.h>
-#include <include/client.hpp>
+#include <my_global.h>
+#include <atomic_class.h>
+#include "include/client.hpp"
 
+
+class sdb_conn_auto_ptr ;
+class sdb_cl_auto_ptr ;
 class sdb_conn
 {
 public:
@@ -25,7 +33,7 @@ public:
 
    ~sdb_conn() ;
 
-   int connect() ;
+   int connect( ) ;
 
    sdbclient::sdb & get_sdb() ;
 
@@ -39,78 +47,27 @@ public:
 
    bool is_transaction() ;
 
-private:
-   sdbclient::sdb                   connection ;
-   bool                             transactionon ;
-   my_thread_id                     tid ;
-} ;
+   int get_cl( char *cs_name, char *cl_name,
+               sdb_cl_auto_ptr &cl_ptr,
+               bool create = TRUE ) ;
 
-class sdb_conn_auto_ptr ;
-class sdb_conn_ref_ptr
-{
-public:
+   int create_cl( char *cs_name, char *cl_name,
+                  sdb_cl_auto_ptr &cl_ptr ) ;
 
-   friend class sdb_conn_auto_ptr ;
+   void clear_cl( char *cs_name, char *cl_name ) ;
 
-protected:
+   void clear_all_cl() ;
 
-   sdb_conn_ref_ptr( sdb_conn *connection ) ;
+   int get_cl_num() ;
 
-   virtual ~sdb_conn_ref_ptr() ;
-
-protected:
-   sdb_conn                         *sdb_connection ;
-   long                             ref ;    // It is not need to use atomic variable
-                                             // because there is only one thread access
-                                             // the same sdb-instance
-} ;
-
-class sdb_conn_auto_ptr
-{
-public:
-
-   sdb_conn_auto_ptr() ;
-
-   virtual ~sdb_conn_auto_ptr() ;
-
-   sdb_conn_auto_ptr( sdb_conn *connection ) ;
-
-   sdb_conn_auto_ptr( const sdb_conn_auto_ptr &other ) ;
-
-   sdb_conn_auto_ptr & operator = ( sdb_conn_auto_ptr &other ) ;
-
-   sdb_conn& operator *() ;
-
-   sdb_conn* operator ->() ;
+   bool is_idle() ;
 
 private:
-   sdb_conn_ref_ptr                 *ref_ptr ;
+   sdbclient::sdb                            connection ;
+   bool                                      transactionon ;
+   my_thread_id                              tid ;
+   pthread_rwlock_t                          rw_mutex ;
+   std::map<std::string, sdb_cl_auto_ptr>    cl_list ;
 } ;
 
-class sdb_conn_mgr
-{
-public:
-
-   ~sdb_conn_mgr() ;
-
-   static sdb_conn_mgr *get_instance() ;
-
-   int get_sdb_conn( my_thread_id tid, sdb_conn_auto_ptr &sdb_ptr ) ;
-
-   void del_sdb_conn( my_thread_id tid ) ;
-
-private:
-
-   sdb_conn_mgr() ;
-
-   sdb_conn_mgr(const sdb_conn_mgr & rh){}
-
-   sdb_conn_mgr & operator = (const sdb_conn_mgr & rh) { return *this ;}
-
-private:
-   std::map<my_thread_id, sdb_conn_auto_ptr>    conn_list ;
-   PSI_rwlock_key                               rw_key ;
-   mysql_rwlock_t                               rw_mutex ;
-} ;
-
-#define SDB_CONN_MGR_INST           sdb_conn_mgr::get_instance()
+#endif

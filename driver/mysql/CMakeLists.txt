@@ -13,12 +13,18 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 
+add_definitions(-Wno-error)
 SET(SEQUOIADB_PLUGIN_DYNAMIC "ha_sequoiadb")
 SET(SEQUOIADB_SOURCES
 ha_sdb.cc
 sdb_conf.cc
 sdb_util.cc
-sdb_conn.cc)
+sdb_conn.cc
+sdb_condition.cc
+sdb_item.cc
+sdb_cl.cc
+sdb_adaptor.cc
+sdb_err_code.cc)
 
 INCLUDE_DIRECTORIES(
 ./sequoiadb

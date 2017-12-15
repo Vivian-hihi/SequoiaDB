@@ -25,9 +25,11 @@
 #include <log.h>
 #include <time.h>
 #include "sdb_conf.h"
-#include "sdb_def.h"
+#include "sdb_cl.h"
+#include "sdb_conn.h"
 #include "sdb_util.h"
-//#include "sdb_condition.h"
+#include "sdb_condition.h"
+#include "sdb_err_code.h"
 
 using namespace sdbclient ;
 
@@ -41,7 +43,84 @@ using namespace sdbclient ;
 #define SDB_STR_BUF_SIZE         SDB_STR_BUF_STEP_SIZE
 
 static char *sdb_addr ;
+mysql_mutex_t sdb_mutex;
+static PSI_mutex_key key_mutex_sdb, key_mutex_SDB_SHARE_mutex ;
 bson::BSONObj empty_obj ;
+static HASH sdb_open_tables;
+static PSI_memory_key key_memory_sdb_share;
+
+static uchar* sdb_get_key( SDB_SHARE *share, size_t *length,
+                           my_bool not_used MY_ATTRIBUTE((unused)))
+{
+  *length=share->table_name_length;
+  return (uchar*) share->table_name;
+}
+
+static SDB_SHARE *get_share(const char *table_name, TABLE *table)
+{
+   SDB_SHARE *share = NULL ;
+   char *tmp_name;
+   uint length;
+
+   mysql_mutex_lock(&sdb_mutex);
+   length=(uint) strlen(table_name);
+
+   /*
+    If share is not present in the hash, create a new share and
+    initialize its members.
+   */
+   if ( !(share=(SDB_SHARE*) my_hash_search( &sdb_open_tables,
+                                             (uchar*) table_name,
+                                             length )))
+   {
+      if ( !my_multi_malloc( key_memory_sdb_share,
+                            MYF(MY_WME | MY_ZEROFILL),
+                            &share, sizeof(*share),
+                            &tmp_name, length+1,
+                            NullS ) )
+      {
+         goto error ;
+      }
+
+      share->use_count = 0 ;
+      share->table_name_length = length ;
+      share->table_name= tmp_name ;
+      my_stpcpy(share->table_name, table_name) ;
+
+      if ( my_hash_insert( &sdb_open_tables, (uchar*) share ))
+      {
+         goto error ;
+      }
+      thr_lock_init( &share->lock ) ;
+      mysql_mutex_init( key_mutex_SDB_SHARE_mutex,
+                        &share->mutex, MY_MUTEX_INIT_FAST ) ;
+   }
+
+   share->use_count++ ;
+
+done:
+   mysql_mutex_unlock( &sdb_mutex ) ;
+  return share ;
+error:
+  my_free(share) ;
+  share = NULL ;
+  goto done ;
+}
+
+static int free_share(SDB_SHARE *share)
+{
+   mysql_mutex_lock(&sdb_mutex) ;
+   if (!--share->use_count)
+   {
+      my_hash_delete(&sdb_open_tables, (uchar*) share) ;
+      thr_lock_delete(&share->lock) ;
+      mysql_mutex_destroy(&share->mutex) ;
+      my_free(share) ;
+  }
+  mysql_mutex_unlock(&sdb_mutex) ;
+
+  return 0 ;
+}
 
 ha_sdb::ha_sdb(handlerton * hton, TABLE_SHARE * table_arg)
    :handler(hton, table_arg)
@@ -49,6 +128,10 @@ ha_sdb::ha_sdb(handlerton * hton, TABLE_SHARE * table_arg)
    keynr = -1 ;
    str_field_buf_size = SDB_STR_BUF_SIZE ;
    str_field_buf = (char *)malloc( str_field_buf_size ) ;
+   share = NULL ;
+   first_read = TRUE ;
+   memset( db_name, 0, CS_NAME_MAX_SIZE+1 ) ;
+   memset( table_name, 0, CL_NAME_MAX_SIZE+1 ) ;
 }
 
 ha_sdb::~ha_sdb()
@@ -107,83 +190,47 @@ uint ha_sdb::max_supported_key_length() const
    return 255 ;
 }
 
-void ha_sdb::reconnect( int rc )
-{
-   if ( SDB_NETWORK == rc )
-   {
-      connection->connect() ;
-   }
-}
-
-int ha_sdb::get_collection( const char *from )
-{
-   int rc = 0 ;
-   sdbCollectionSpace cs ;
-   char db_name[CS_NAME_MAX_SIZE] = {0} ;
-   char table_name[CL_NAME_MAX_SIZE] = {0} ;
-
-   rc = sdb_parse_table_name( from, db_name, CS_NAME_MAX_SIZE,
-                              table_name, CL_NAME_MAX_SIZE ) ;
-   if ( rc != 0 )
-   {
-      goto error ;
-   }
-
-   rc = connection->get_sdb().getCollectionSpace( db_name, cs ) ;
-   if ( rc != 0 )
-   {
-      goto error ;
-   }
-
-   rc = cs.getCollection( table_name, cl ) ;
-   if ( rc != 0 )
-   {
-      goto error ;
-   }
-
-done:
-   return rc ;
-error:
-   goto done ;
-}
-
 int ha_sdb::open( const char *name, int mode, uint test_if_locked )
 {
-   //TODO:***************malloc lock
-   //TODO:***************malloc lock
-   //TODO:***************malloc lock
-   //TODO:***************malloc lock
-   //TODO:***************malloc lock
    int rc = 0 ;
    ref_length = SDB_ID_STR_LEN + 1 ; //length of _id
-   thr_lock_init( &lock ) ;
-   thr_lock_data_init(&lock, &lock_data, (void*) this);
 
-   //THD *handler::ha_thd(void) const
-   //get connection by THD
-   rc = SDB_CONN_MGR_INST->get_sdb_conn( ha_thd()->thread_id(),
-                                         connection ) ;
+   if ( !(share = get_share(name, table )))
+   {
+      rc = SDB_ERR_OOM ;
+      goto error ;
+   }
+
+   rc = sdb_parse_table_name( name, db_name, CS_NAME_MAX_SIZE+1,
+                              table_name, CL_NAME_MAX_SIZE+1 ) ;
+   if ( rc != 0 )
+   {
+      goto error ;
+   }
+
+   rc = SDB_CL_MGR_INST->get_sdb_cl( ha_thd()->thread_id(),
+                                     db_name, table_name, cl ) ;
    if ( 0 != rc )
    {
       goto error ;
    }
 
-   rc = get_collection( name ) ;
-   if ( rc != 0 )
-   {
-      goto error ;
-   }
+   thr_lock_data_init( &share->lock, &lock_data, (void*) NULL ) ;
 done:
    return rc ;
 error:
+   if ( share )
+   {
+      free_share( share ) ;
+      share = NULL ;
+   }
    goto done ;
 }
 
 int ha_sdb::close(void)
 {
-   //TODO*********
-   thr_lock_delete( &lock ) ;
-   return 0 ;
+   cl.clear() ;
+   return free_share( share) ;
 }
 
 int ha_sdb::row_to_obj( uchar *buf,  bson::BSONObj & obj )
@@ -211,6 +258,7 @@ int ha_sdb::row_to_obj( uchar *buf,  bson::BSONObj & obj )
          case MYSQL_TYPE_SHORT:
          case MYSQL_TYPE_LONG:
          case MYSQL_TYPE_TINY:
+         case MYSQL_TYPE_YEAR:
          case MYSQL_TYPE_INT24:
             {
                obj_builder.append( (*field)->field_name,
@@ -225,6 +273,7 @@ int ha_sdb::row_to_obj( uchar *buf,  bson::BSONObj & obj )
             }
          case MYSQL_TYPE_FLOAT:
          case MYSQL_TYPE_DOUBLE:
+         case MYSQL_TYPE_TIME:
             {
                obj_builder.append( (*field)->field_name,
                                    (*field)->val_real() ) ;
@@ -295,6 +344,7 @@ int ha_sdb::row_to_obj( uchar *buf,  bson::BSONObj & obj )
             }
          case MYSQL_TYPE_TIMESTAMP2:
          case MYSQL_TYPE_TIMESTAMP:
+         case MYSQL_TYPE_DATETIME:
             {
                struct timeval tm ;
                int warnings= 0;
@@ -320,12 +370,10 @@ int ha_sdb::row_to_obj( uchar *buf,  bson::BSONObj & obj )
             //skip the null value
             break ;
 
-         case MYSQL_TYPE_TIME:
-         case MYSQL_TYPE_DATETIME:
-         case MYSQL_TYPE_YEAR:
-
          default:
             {
+               my_error( ER_BAD_FIELD_ERROR, MYF(0),
+                         (*field)->field_name, table_name ) ;
                rc = -1 ;
                goto error ;
             }
@@ -351,6 +399,7 @@ int ha_sdb::write_row(uchar *buf)
    int rc = 0 ;
    bson::BSONObj obj ;
    ha_statistic_increment( &SSV::ha_write_count ) ;
+   check_thread() ;
 
    rc = row_to_obj( buf, obj ) ;
    if ( rc != 0 )
@@ -358,7 +407,7 @@ int ha_sdb::write_row(uchar *buf)
       goto error ;
    }
 
-   rc = cl.insert( obj ) ;
+   rc = cl->insert( obj ) ;
    if ( rc != 0 )
    {
       goto error ;
@@ -368,7 +417,6 @@ int ha_sdb::write_row(uchar *buf)
 done:
    return rc ;
 error:
-   reconnect( rc ) ;
    goto done ;
 }
 
@@ -376,6 +424,7 @@ int ha_sdb::update_row( const uchar *old_data, uchar *new_data )
 {
    int rc = 0 ;
    bson::BSONObj old_obj, new_obj, rule_obj ;
+   check_thread() ;
 
    ha_statistic_increment( &SSV::ha_update_count ) ;
 
@@ -386,7 +435,7 @@ int ha_sdb::update_row( const uchar *old_data, uchar *new_data )
    }
 
    rule_obj = BSON( "$set" << new_obj ) ;
-   rc = cl.update( rule_obj, cur_rec ) ;
+   rc = cl->update( rule_obj, cur_rec ) ;
    if ( rc != 0 )
    {
       goto error ;
@@ -394,7 +443,6 @@ int ha_sdb::update_row( const uchar *old_data, uchar *new_data )
 done:
    return rc ;
 error:
-   reconnect( rc ) ;
    goto done ;
 }
 
@@ -402,10 +450,11 @@ int ha_sdb::delete_row( const uchar *buf )
 {
    int rc = 0 ;
    bson::BSONObj obj ;
+   check_thread() ;
 
    ha_statistic_increment( &SSV::ha_delete_count ) ;
 
-   rc = cl.del( cur_rec) ;
+   rc = cl->del( cur_rec) ;
    if ( rc != 0 )
    {
       goto error ;
@@ -413,7 +462,6 @@ int ha_sdb::delete_row( const uchar *buf )
 done:
    return rc ;
 error:
-   reconnect( rc ) ;
    goto done ;
 }
 
@@ -421,7 +469,7 @@ int ha_sdb::index_next(uchar *buf)
 {
    int rc = 0 ;
    ha_statistic_increment( &SSV::ha_read_next_count ) ;
-   rc = next_row( cursor, cur_rec, buf ) ;
+   rc = next_row( cur_rec, buf ) ;
    if ( rc != 0 )
    {
       goto error ;
@@ -430,7 +478,6 @@ int ha_sdb::index_next(uchar *buf)
 done:
    return rc ;
 error:
-   reconnect( rc ) ;
    goto done ;
 }
 
@@ -654,8 +701,6 @@ void ha_sdb::get_text_key_val( const uchar *key_ptr,
       str_field_buf[key_part->length] = 0 ;
       obj_builder.append( op_str, str_field_buf ) ;
    }
-done:
-   return ;
 }
 
 void ha_sdb::get_text_key_range_obj( const uchar *start_key_ptr,
@@ -703,8 +748,6 @@ void ha_sdb::get_float_key_val( const uchar *key_ptr,
          obj_builder.append( op_str, tmp ) ;
       }
    }
-done:
-   return ;
 }
 
 void ha_sdb::get_float_key_range_obj( const uchar *start_key_ptr,
@@ -868,7 +911,7 @@ int ha_sdb::index_read_map( uchar *buf, const uchar *key_ptr,
       //sort
       //(gdb) p range_scan_direction 
       //$69 = handler::RANGE_SCAN_ASC
-   rc = cl.query( cursor, condition ) ;
+   rc = cl->query( condition ) ;
    if ( rc )
    {
       goto error ;
@@ -914,7 +957,7 @@ int ha_sdb::index_init(uint idx, bool sorted)
 
 int ha_sdb::index_end()
 {
-   cursor.close() ;
+   cl->close() ;
    keynr = -1 ;
    return 0 ;
 }
@@ -933,16 +976,14 @@ double ha_sdb::read_time( uint index, uint ranges, ha_rows rows )
 
 int ha_sdb::rnd_init(bool scan)
 {
-   int rc = 0 ;
    stats.records= 0;
-   rc = cl.query( cursor, condition ) ;
-   condition = empty_obj ;
-   return rc ;
+   first_read = TRUE ;
+   return 0 ;
 }
 
 int ha_sdb::rnd_end()
 {
-   cursor.close() ;
+   cl->close() ;
    return 0 ;
 }
 
@@ -1067,7 +1108,7 @@ int ha_sdb::obj_to_row( bson::BSONObj &obj, uchar *buf )
          case bson::Bool:
          default:
             (*field)->store( "", 0, &my_charset_bin ) ;
-            rc = -1 ;
+            rc = SDB_ERR_TYPE_UNSUPPORTED ;
             goto error ;
       }
    }
@@ -1081,14 +1122,9 @@ error:
 int ha_sdb::cur_row( uchar *buf )
 {
    int rc = 0 ;
-   rc = cursor.current( cur_rec ) ;
+   rc = cl->current( cur_rec ) ;
    if ( rc != 0 )
    {
-      if ( SDB_DMS_EOC == rc )
-      {
-         rc = HA_ERR_END_OF_FILE ;
-         goto done ;
-      }
       goto error ;
    }
    rc = obj_to_row( cur_rec, buf ) ;
@@ -1102,18 +1138,12 @@ error:
    goto done ;
 }
 
-int ha_sdb::next_row( sdbclient::sdbCursor &inputCursor,
-                      bson::BSONObj &obj,uchar *buf )
+int ha_sdb::next_row( bson::BSONObj &obj,uchar *buf )
 {
    int rc = 0 ;
-   rc = inputCursor.next( obj ) ;
+   rc = cl->next( obj ) ;
    if ( rc != 0 )
    {
-      if ( SDB_DMS_EOC == rc )
-      {
-         rc = HA_ERR_END_OF_FILE ;
-         goto done ;
-      }
       goto error ;
    }
    rc = obj_to_row( obj, buf ) ;
@@ -1130,8 +1160,20 @@ error:
 int ha_sdb::rnd_next(uchar *buf)
 {
    int rc = 0 ;
+   if ( first_read )
+   {
+      check_thread() ;
+
+      rc = cl->query( condition ) ;
+      condition = empty_obj ;
+      if ( rc != 0 )
+      {
+         goto error ;
+      }
+      first_read = FALSE ;
+   }
    ha_statistic_increment( &SSV::ha_read_rnd_next_count ) ;
-   rc = next_row( cursor, cur_rec, buf ) ;
+   rc = next_row( cur_rec, buf ) ;
    if ( rc != 0 )
    {
       goto error ;
@@ -1140,7 +1182,6 @@ int ha_sdb::rnd_next(uchar *buf)
 done:
    return rc ;
 error:
-   reconnect( rc ) ;
    goto done ;
 }
 
@@ -1152,26 +1193,22 @@ int ha_sdb::rnd_pos( uchar *buf, uchar *pos )
    objBuilder.appendOID( "_id", &tmpOid ) ;
    bson::BSONObj oidObj = objBuilder.obj() ;
 
-   sdbclient::sdbCursor tmpCursor ;
-   rc = cl.query( tmpCursor, oidObj ) ;
+   rc = cl->query_one( oidObj, cur_rec ) ;
    if ( rc )
    {
       goto error ;
    }
 
    ha_statistic_increment( &SSV::ha_read_rnd_count ) ;
-   rc = next_row( tmpCursor, cur_rec, buf ) ;
-   if ( rc )
+   rc = obj_to_row( cur_rec, buf ) ;
+   if ( rc != 0 )
    {
       goto error ;
    }
 
-   tmpCursor.close() ;
-
 done:
    return rc ;
 error:
-   reconnect( rc ) ;
    goto done ;
 }
 
@@ -1195,6 +1232,9 @@ void ha_sdb::position( const uchar *record )
 
 int ha_sdb::info( uint flag )
 {
+   int rc = 0 ;
+   //long long count = 0 ;
+
    //TODO: fill the stats with actual info.
    stats.data_file_length = 107374182400LL ; //100*1024*1024*1024
    stats.max_data_file_length = 1099511627776LL ; //1*1024*1024*1024*1024
@@ -1202,7 +1242,14 @@ int ha_sdb::info( uint flag )
    stats.max_index_file_length = 10737418240LL ; //10*1024*1024*1024
    stats.delete_length = 0 ;
    stats.auto_increment_value = 0 ;
-   stats.records = 100000000 ;
+
+   /*rc = cl.getCount( count ) ;
+   if ( rc != 0  )
+   {
+      goto error ;
+   }*/
+
+   stats.records = 10000 ;
    stats.deleted = 0 ;
    stats.mean_rec_length = 1024 ;
    stats.create_time = 0 ;
@@ -1212,7 +1259,10 @@ int ha_sdb::info( uint flag )
    stats.mrr_length_per_rec = 0 ;
    stats.table_in_mem_estimate = -1 ;
 
-   return 0 ;
+done:
+   return rc ;
+error:
+   goto done ;
 }
 
 int ha_sdb::extra( enum ha_extra_function operation )
@@ -1221,16 +1271,37 @@ int ha_sdb::extra( enum ha_extra_function operation )
    return 0 ;
 }
 
+void ha_sdb::check_thread()
+{
+   if ( cl->get_tid() != ha_thd()->thread_id() )
+   {
+      int rc = 0 ;
+
+      rc = SDB_CL_MGR_INST->get_sdb_cl( ha_thd()->thread_id(),
+                                        db_name, table_name, cl ) ;
+      if ( 0 != rc )
+      {
+         goto error ;
+      }
+   }
+done:
+   return ;
+error:
+   goto done ;
+}
+
 int ha_sdb::external_lock( THD *thd, int lock_type )
 {
    int rc = 0 ;
+   check_thread() ;
+
    ulonglong trxid = thd->thread_id() ;
    if( !thd_test_options( thd, OPTION_BEGIN ) )
    {
       goto done ;
    }
 
-   rc = connection->begin_transaction() ;
+   rc = cl->begin_transaction() ;
    if ( rc != 0 )
    {
       goto error ;
@@ -1349,7 +1420,7 @@ int ha_sdb::create_index( Alter_inplace_info *ha_alter_info )
       bson::BSONObj keyObj = keyObjBuilder.obj() ;
 
       //TODO: parse primary-key-index ;
-      rc = cl.createIndex( keyObj, keyInfo->name, FALSE, FALSE ) ;
+      rc = cl->create_index( keyObj, keyInfo->name, FALSE, FALSE ) ;
       if ( rc && rc != SDB_IXM_REDEF && rc != SDB_IXM_EXIST_COVERD_ONE )
       {
          goto error ;
@@ -1375,7 +1446,7 @@ int ha_sdb::drop_index( Alter_inplace_info *ha_alter_info )
    {
       KEY *keyInfo = NULL ;
       keyInfo = ha_alter_info->index_drop_buffer[i] ;
-      rc = cl.dropIndex( keyInfo->name ) ;
+      rc = cl->drop_index( keyInfo->name ) ;
       if ( rc && rc != SDB_IXM_NOTEXIST )
       {
          goto error ;
@@ -1419,9 +1490,9 @@ error:
 
 int ha_sdb::delete_all_rows(void)
 {
-   if ( connection->is_transaction())
+   if ( cl->is_transaction())
    {
-      return cl.del();
+      return cl->del();
    }
    return this->truncate() ;
 }
@@ -1429,7 +1500,7 @@ int ha_sdb::delete_all_rows(void)
 int ha_sdb::truncate()
 {
    int rc = 0 ;
-   rc = cl.truncate() ;
+   rc = cl->truncate() ;
    if ( rc != 0 )
    {
       goto error ;
@@ -1437,7 +1508,6 @@ int ha_sdb::truncate()
 done:
    return rc ;
 error:
-   reconnect( rc ) ;
    goto done ;
 }
 
@@ -1451,39 +1521,41 @@ ha_rows ha_sdb::records_in_range(uint inx, key_range *min_key,
 int ha_sdb::delete_table(const char *from)
 {
    int rc = 0 ;
-   int retry_times = 1 ;
 
-   do
+   rc = sdb_parse_table_name( from, db_name, CS_NAME_MAX_SIZE+1,
+                              table_name, CL_NAME_MAX_SIZE+1 ) ;
+   if ( rc != 0 )
    {
-      rc = cl.drop() ;
-      if ( 0 == rc || SDB_DMS_NOTEXIST == rc )
+      goto error ;
+   }
+
+   rc = SDB_CL_MGR_INST->get_sdb_cl( ha_thd()->thread_id(),
+                                     db_name, table_name, cl,
+                                     FALSE ) ;
+   if ( 0 != rc )
+   {
+      int rc_tmp = get_sdb_code( rc ) ;
+      if ( SDB_DMS_NOTEXIST == rc_tmp
+           || SDB_DMS_CS_NOTEXIST == rc_tmp )
       {
          rc = 0 ;
-         break ;
+         goto done ;
       }
-      else if ( SDB_NOT_CONNECTED == rc )
-      {
-         rc = SDB_CONN_MGR_INST->get_sdb_conn( ha_thd()->thread_id(),
-                                         connection ) ;
+      goto error ;
+   }
 
-         if ( rc != 0 )
-         {
-            break ;
-         }
-         rc = get_collection( from ) ;
-      }
+   rc = cl->drop() ;
+   if ( 0 != rc )
+   {
+      goto error ;
+   }
 
-      if ( rc != 0 )
-      {
-         if ( SDB_DMS_NOTEXIST == rc )
-         {
-            rc = 0 ;
-         }
-         break ;
-      }
-   }while( retry_times-- ) ;
+   cl.clear() ;
 
+done:
    return rc ;
+error:
+   goto done ;
 }
 
 int ha_sdb::rename_table(const char * from, const char * to)
@@ -1538,30 +1610,26 @@ int ha_sdb::create( const char *name, TABLE *form,
       }
    }
 
-   rc = SDB_CONN_MGR_INST->get_sdb_conn( ha_thd()->thread_id(),
-                                         connection ) ;
+   db_name[CS_NAME_MAX_SIZE] = 0 ;
+   strncpy( db_name, form->s->db.str, CS_NAME_MAX_SIZE+1 ) ;
+   if ( db_name[CS_NAME_MAX_SIZE] != 0 )
+   {
+      rc = SDB_ERR_SIZE_OVF ;
+      goto error ;
+   }
+
+   table_name[CL_NAME_MAX_SIZE] = 0 ;
+   strncpy( table_name, form->s->table_name.str, CL_NAME_MAX_SIZE+1 ) ;
+   if ( table_name[CL_NAME_MAX_SIZE] != 0 )
+   {
+      rc = SDB_ERR_SIZE_OVF ;
+      goto error ;
+   }
+
+   rc = SDB_CL_MGR_INST->create_sdb_cl( ha_thd()->thread_id(),
+                                        db_name, table_name,
+                                        cl ) ;
    if ( 0 != rc )
-   {
-      goto error ;
-   }
-
-   rc = connection->get_sdb().getCollectionSpace( form->s->db.str, cs ) ;
-   if ( SDB_DMS_CS_NOTEXIST == rc )
-   {
-      rc = connection->get_sdb().createCollectionSpace( form->s->db.str,
-                                             4096, cs ) ;
-   }
-   if ( rc != 0 )
-   {
-      goto error ;
-   }
-
-   rc = cs.getCollection( form->s->table_name.str, cl ) ;
-   if ( SDB_DMS_NOTEXIST == rc )
-   {
-      rc = cs.createCollection( form->s->table_name.str, cl ) ;
-   }
-   if (rc != 0 )
    {
       goto error ;
    }
@@ -1580,11 +1648,11 @@ THR_LOCK_DATA **ha_sdb::store_lock( THD *thd, THR_LOCK_DATA **to,
    //       record is not matched, unlock_row() will be called.
    //       if lock_type == TL_READ then lock the record by s-lock
    //       if lock_type == TL_WIRTE then lock the record by x-lock
-   if (lock_type != TL_IGNORE && lock_data.type == TL_UNLOCK)
+   /*if (lock_type != TL_IGNORE && lock_data.type == TL_UNLOCK)
    {
       lock_data.type=lock_type ;
    }
-   *to++= &lock_data ;
+   *to++= &lock_data ;*/
    return to ;
 }
 
@@ -1597,19 +1665,19 @@ void ha_sdb::unlock_row()
 const Item *ha_sdb::cond_push( const Item *cond )
 {
    const Item *remain_cond = cond ;
-   //sdb_condition_info sdb_condition ;
+   sdb_cond_ctx sdb_condition ;
    if ( cond->used_tables() & ~table->pos_in_table_list->map() )
    {
       goto done ;
    }
 
-   /*sdb_parse_condtion( cond, &sdb_condition ) ;
-   condition = sdb_condition.cond_obj ;
-   if ( !sdb_condition.has_unsupported )
+   sdb_parse_condtion( cond, &sdb_condition ) ;
+   sdb_condition.to_bson( condition ) ;
+   if ( sdb_cond_supported == sdb_condition.status )
    {
       //TODO: build unanalysable condition
       remain_cond = NULL ;
-   }*/
+   }
 
 done:
    return remain_cond;
@@ -1628,18 +1696,29 @@ static handler *sdb_create_handler(handlerton *hton,
 }
 
 #ifdef HAVE_PSI_INTERFACE
-static PSI_memory_info all_sdb_memory[]=
+
+static PSI_memory_info all_sdb_memory[] =
 {
-  { &sdb_key_memory_conf_coord_addrs, "coord_addrs", 0}
+   { &key_memory_sdb_share, "SDB_SHARE", PSI_FLAG_GLOBAL },
+   { &sdb_key_memory_conf_coord_addrs, "coord_addrs", PSI_FLAG_GLOBAL }
+};
+
+static PSI_mutex_info all_sdb_mutexes[] = 
+{
+   { &key_mutex_sdb, "sdb", PSI_FLAG_GLOBAL },
+   { &key_mutex_SDB_SHARE_mutex, "SDB_SHARE::mutex", 0 }
 };
 
 static void init_sdb_psi_keys(void)
 {
-  const char* category= "sequoiadb";
-  int count;
+   const char* category = "sequoiadb";
+   int count;
 
-  count= array_elements(all_sdb_memory);
-  mysql_memory_register(category, all_sdb_memory, count);
+   count = array_elements( all_sdb_mutexes ) ;
+   mysql_mutex_register( category, all_sdb_mutexes, count ) ;
+
+   count= array_elements( all_sdb_memory);
+   mysql_memory_register( category, all_sdb_memory, count ) ;
 }
 #endif
 
@@ -1735,6 +1814,10 @@ static int sdb_init_func(void *p)
    init_sdb_psi_keys();
 #endif
    sdb_hton = (handlerton *)p ;
+   mysql_mutex_init(key_mutex_sdb, &sdb_mutex, MY_MUTEX_INIT_FAST);
+   (void) my_hash_init( &sdb_open_tables,system_charset_info,32,0,0,
+                        (my_hash_get_key) sdb_get_key,0,0,
+                        key_memory_sdb_share);
    sdb_hton->state= SHOW_OPTION_YES ;
    sdb_hton->db_type= DB_TYPE_PARTITION_DB ;
    sdb_hton->create= sdb_create_handler ;
@@ -1749,6 +1832,8 @@ static int sdb_done_func(void *p)
 {
    //TODO************
    //SHOW_COMP_OPTION state;
+   my_hash_free( &sdb_open_tables ) ;
+   mysql_mutex_destroy(&sdb_mutex);
    return 0 ;
 }
 
