@@ -72,7 +72,7 @@ function testExprtImprtCsv()
              " --file " + csvfile +
              " --type csv " +
              " --headerline true" +
-             " --field='a int,b int,c int'" ;
+             " --fields='a int,b int,c int'" ;
    testRunCommand( command ) ;
    
    cmd.run( "rm -rf " + csvfile ) ;

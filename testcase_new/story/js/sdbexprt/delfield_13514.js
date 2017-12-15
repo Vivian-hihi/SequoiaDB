@@ -8,10 +8,11 @@
 var csname = COMMCSNAME ;
 var clname = COMMCLNAME + "_sdbexprt13514" ;
 var clname1 = COMMCLNAME + "_sdbimprt13514" ;
-var docs = [ { a: 1 }, { a: 2 } ] ;
-var expRecs = [ "{\"a\":1}", "{\"a\":2}" ] ;
+var docs = [ { a: "1", b: "1" }, { a: "2", b: "2" } ] ;
+var expRecs = [ "{\"a\":\"1\",\"b\":\"1\"}", 
+                "{\"a\":\"2\",\"b\":\"2\"}" ] ;
 
-// main() ;
+main() ;
 
 function main()
 {
@@ -43,7 +44,7 @@ function testExprtImprt()
                  " --file " + csvfile + 
                  " --type csv" +
                  " -e " + asc + 
-                 " --fields a" ;
+                 " --fields a, b" ;
    testRunCommand( command ) ;
    
    command = installPath + "bin/sdbimprt" +
@@ -54,7 +55,8 @@ function testExprtImprt()
              " --file " + csvfile +
              " --type csv " +
              " -e " + asc +
-             " --field='a int'" ;  
+             " --fields='a string,b string'" +
+             " --headerline true" ;  
    testRunCommand( command ) ;
    
    cmd.run( "rm -rf " + csvfile ) ;

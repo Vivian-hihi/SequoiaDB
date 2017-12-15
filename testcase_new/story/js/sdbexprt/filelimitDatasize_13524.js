@@ -99,7 +99,7 @@ function testExprtImprtCsv()
              " -l " + clname1 +
              " --file " + csvDir +
              " --type csv " +
-             " --field='a int'" ;  
+             " --fields='a int'" ;  
    testRunCommand( command ) ;
    
    cmd.run( "rm -rf " + csvDir ) ;

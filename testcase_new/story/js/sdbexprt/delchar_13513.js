@@ -10,7 +10,7 @@ var clname1 = COMMCLNAME + "_sdbimprt13513" ;
 var doc = { a: 1, b: "exprtTest" } ;
 var expRecs = [ "{\"a\":1,\"b\":\"exprtTest\"}" ] ;
 
-// main() ;
+main() ;
 
 function main()
 {
@@ -52,8 +52,8 @@ function testExprtImprt()
              " --file " + csvfile +
              " --type csv " +
              " -a " + asc +
-             " --field='a int,b string'" ; 
-   testRunCommand() ;
+             " --fields='a int,b string'" ; 
+   testRunCommand( command ) ;
    
    cmd.run( "rm -rf " + csvfile ) ;
 }

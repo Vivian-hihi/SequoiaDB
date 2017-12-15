@@ -63,7 +63,7 @@ var jsonContents = [
                     "{ \"a\": +1.70000000000000E+308 }\n" + "{ \"a\": +1.23456789000000E+04 }\n"
                     ] ;               
                  
-// main() ;
+main() ;
 
 function main()
 {
@@ -92,7 +92,7 @@ function testFloatFmtCsv( floatfmt, content )
                  " --file " + csvfile +
                  " --type csv" +
                  " --floatfmt " + floatfmt +
-                 " --field a" ;
+                 " --fields a" ;
    testRunCommand( command ) ;
    
    checkFileContent( csvfile, content ) ;
@@ -119,7 +119,7 @@ function testFloatFmtJson( floatfmt, content )
                  " --file " + jsonfile +
                  " --type json" +
                  " --floatfmt " + floatfmt +
-                 " --field a" ;
+                 " --fields a" ;
    testRunCommand( command ) ;
    
    checkFileContent( jsonfile, content ) ;

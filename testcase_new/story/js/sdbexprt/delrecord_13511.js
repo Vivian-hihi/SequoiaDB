@@ -13,7 +13,7 @@ var clname1 = COMMCLNAME + "_sdbimprt13511" ;
 var docs = [ { a: 1 }, { a: 2 } ] ;
 var expRecs = [ "{\"a\":1}", "{\"a\":2}" ] ;
 
-// main() ;
+main() ;
 
 function main()
 {
@@ -62,7 +62,7 @@ function testExprtImprtJson()
              " --file " + jsonfile +
              " --type json " +
              " -r " + asc +
-             " --field='a int'" ;
+             " --fields='a int'" ;
    testRunCommand( command ) ;
    
    cmd.run( "rm -rf " + jsonfile ) ;
@@ -93,7 +93,7 @@ function testExprtImprtCsv()
              " --file " + csvfile +
              " --type csv " +
              " -r " + asc +
-             " --field='a int'" ;
+             " --fields='a int'" ;
    testRunCommand( command ) ;
    
    cmd.run( "rm -rf " + csvfile ) ;
