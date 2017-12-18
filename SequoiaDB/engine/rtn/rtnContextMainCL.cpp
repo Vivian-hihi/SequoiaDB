@@ -958,6 +958,12 @@ namespace engine
          BSONElement ele = explainOptions.getField( FIELD_NAME_SUB_COLLECTIONS ) ;
          if ( ele.eoo() )
          {
+            if ( Object == explainOptions.getField( FIELD_NAME_LOCATION ).type() )
+            {
+               // The MERGE doesn't need "Location" option,
+               // but it need to make sure "Detail" option is enabled
+               hasOption = TRUE ;
+            }
             goto done ;
          }
          else if ( Array == ele.type() )

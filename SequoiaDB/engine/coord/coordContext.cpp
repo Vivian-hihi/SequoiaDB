@@ -1510,6 +1510,12 @@ namespace engine
 
          if ( locationOption.isEmpty() )
          {
+            if ( explainOptions.hasField( FIELD_NAME_SUB_COLLECTIONS ) )
+            {
+               // The COORD doesn't need "SubCollections" option,
+               // but it need to make sure "Detail" option is enabled
+               hasOption = TRUE ;
+            }
             goto done ;
          }
 
