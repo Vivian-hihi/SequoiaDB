@@ -211,7 +211,8 @@ namespace engine
       _accessPlanManager.init(
             ( SDB_ROLE_DATA == pmdGetDBRole() ||
               SDB_ROLE_CATALOG == pmdGetDBRole() ||
-              SDB_ROLE_STANDALONE == pmdGetDBRole() ) ?
+              SDB_ROLE_STANDALONE == pmdGetDBRole() ||
+              SDB_ROLE_OM == pmdGetDBRole() ) ?
              pmdGetOptionCB()->getPlanBuckets() : 0,
             (OPT_PLAN_CACHE_LEVEL) pmdGetOptionCB()->getPlanCacheLevel(),
             pmdGetOptionCB()->getSortBufSize(),
