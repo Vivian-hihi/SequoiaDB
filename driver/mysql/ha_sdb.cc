@@ -343,10 +343,22 @@ int ha_sdb::row_to_obj( uchar *buf,  bson::BSONObj & obj )
 
          case MYSQL_TYPE_DATE:
             {
-               struct timeval tm ;
-               int warnings= 0;
-               (*field)->get_timestamp( &tm, &warnings ) ;
-               bson::Date_t dt( (longlong)(tm.tv_sec*1000) + tm.tv_usec/1000 ) ;
+               longlong date_val = 0 ;
+               date_val = ((Field_newdate*)(*field))->val_int() ;
+               struct tm tm_val ;
+               tm_val.tm_sec = 0 ;
+               tm_val.tm_min = 0 ;
+               tm_val.tm_hour = 0 ;
+               tm_val.tm_mday = date_val % 100 ;
+               date_val = date_val / 100 ;
+               tm_val.tm_mon = date_val % 100 - 1 ;
+               date_val = date_val / 100 ;
+               tm_val.tm_year = date_val - 1900 ;
+               tm_val.tm_wday = 0 ;
+               tm_val.tm_yday = 0 ;
+               tm_val.tm_isdst = 0 ;
+               time_t time_tmp = mktime( &tm_val ) ;
+               bson::Date_t dt( (longlong)(time_tmp * 1000) ) ;
                obj_builder.appendDate( (*field)->field_name, dt ) ;
                break ;
             }
@@ -1098,6 +1110,8 @@ int ha_sdb::obj_to_row( bson::BSONObj &obj, uchar *buf )
                   myTime.hour = tmTmp.tm_hour ;
                   myTime.minute = tmTmp.tm_min ;
                   myTime.second = tmTmp.tm_sec ;
+                  myTime.second_part = 0 ;
+                  myTime.neg = 0 ;
                   myTime.time_type = MYSQL_TIMESTAMP_DATETIME ;
                   Field_temporal_with_date *f
                         = (Field_temporal_with_date *)(*field) ;
