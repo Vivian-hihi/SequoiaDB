@@ -1077,7 +1077,7 @@ namespace engine
          _startTimestampList[ dataID ] = startTimestamp ;
       }
 
-      PD_TRACE_EXITRC( SDB_RTNEXPLAINMAINBASE_CHKDATA, rc ) ;
+      PD_TRACE_EXITRC( SDB_RTNEXPLAINMAINBASE_CHKSUBCTX, rc ) ;
 
       return rc ;
    }
