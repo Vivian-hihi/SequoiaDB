@@ -2,7 +2,6 @@ package com.sequoiadb.lob.basicoperation;
 
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
-import java.nio.ByteBuffer;
 
 import org.bson.BSONObject;
 import org.bson.types.ObjectId;
@@ -10,8 +9,7 @@ import org.bson.util.JSON;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.util.Arrays;
 import java.util.Random;
 
 import com.sequoiadb.base.CollectionSpace;
@@ -34,9 +32,8 @@ public class TestSameLobs7841 extends SdbTestBase {
 	private String clName = "cl_lob7841";
 	private Sequoiadb sdb = null;
 	private CollectionSpace cs = null;
-	private DBCollection cl = null;
 	private Random random = new Random();	
-	private String prevMd5 = "";    
+	private byte[] wlobBuff = null;   
 	
 	@BeforeClass
 	public void setUp(){
@@ -46,77 +43,28 @@ public class TestSameLobs7841 extends SdbTestBase {
 			Assert.assertTrue(false,"connect %s failed,"+coordUrl+e.getMessage());
 		}
 		createCL();
+		int writeLobSize = random.nextInt(1024*1024);	
+		wlobBuff = LobOprUtils.getRandomBytes(writeLobSize);
 	}		
 	
-	public void createCL(){
-		try{
-			if (!sdb.isCollectionSpaceExist(SdbTestBase.csName)){
-				sdb.createCollectionSpace(SdbTestBase.csName);	
-			}
-		}catch(BaseException e){
-			//-33 CS exist,ignore exceptions
-			Assert.assertEquals(-33,e.getErrorCode(),e.getMessage());
-	    }					
-	    try
-	    {
-	    	String clOptions = "{ShardingKey:{no:1},ShardingType:'hash',Partition:1024,"
-				+ "ReplSize:0,Compressed:true}";
-	    	BSONObject options =(BSONObject) JSON.parse(clOptions);
-	    	
-		    cs = sdb.getCollectionSpace(SdbTestBase.csName);			
-		    cl = cs.createCollection(clName,options);			
-	    }catch(BaseException e){
-		    Assert.assertTrue(false,"create cl fail "+e.getErrorType()+":"+e.getMessage());
-	    }
-	 }	
-	
-	private ObjectId putLob(String lobSb){		
-		ObjectId oid  = null;	
-		
-		DBLob lob = null;
-		try{			
-			lob = cl.createLob();
-			lob.write(lobSb.getBytes());
-		
-			prevMd5 = LobOprUtils.getMd5(lobSb);
-		    oid = lob.getID();		    
-		}catch(BaseException e){	
-			Assert.assertTrue(false,"write lob fail:"+e.getMessage()+e.getStackTrace());
-		}finally{
-			if (lob != null){
-				lob.close();
-			}
-		}
-		return oid;
-		
-	}
-		
-	private void checkLob(ObjectId oid){
-		String curMd5 ="";
-		DBLob rLob = null;
-		try
-		{
-			rLob = cl.openLob(oid);
+	//write same lob 
+	@Test(invocationCount = 200,threadPoolSize = 200)
+	private void testSameLob(){	
+		try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ){
+			DBCollection dbcl = db.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
 			
-			int rbuffSize = 1024;
-			byte[] rbuff = new byte[rbuffSize];
-			int readLen =0;
-		
-			ByteBuffer bytebuff = ByteBuffer.allocate((int)rLob.getSize());
-			while ((readLen = rLob.read(rbuff)) != -1){
-				bytebuff.put(rbuff, 0, readLen);				
+			//write lob
+			ObjectId oid = LobOprUtils.createAndWriteLob(dbcl, wlobBuff);
+			
+			//read lob and check the lobdata
+			byte[] rbuff = new byte[ wlobBuff.length];
+			try( DBLob rLob= dbcl.openLob(oid)){			
+				rLob.read(rbuff);			
 			}
-			bytebuff.rewind();		
-			curMd5 = LobOprUtils.getMd5(bytebuff);
-			Assert.assertEquals(curMd5, prevMd5,"the lobs md5 different");
-		}catch(BaseException e){
-			Assert.assertTrue(false,"read lob fail:"+e.getMessage()+e.getStackTrace());
-		}finally{
-			if (rLob != null){
-				rLob.close();
-			}
+			Arrays.equals(rbuff, wlobBuff);
 		}
-	}
+		
+	}	
 	
 	@AfterClass
 	public void tearDown(){		
@@ -124,24 +72,35 @@ public class TestSameLobs7841 extends SdbTestBase {
 			if(cs.isCollectionExist(clName)){
 				cs.dropCollection(clName);
 			}
-			sdb.disconnect();
+			sdb.close();
 		}catch(BaseException e){			
 			Assert.assertTrue(false,"clean up failed:"+e.getMessage());
 		}finally{
+			if( null != sdb){
+				sdb.close();
+			}
 		}
 	}	
 	
-	//write same lob 
-	@Test
-	private void testSameLob(){	
-		int lobsize = random.nextInt(10240);		
-		String lobSb = LobOprUtils.getRandomString(lobsize);
-		for(int i=0;i<5;i++)
-		{
-			ObjectId oid = putLob(lobSb);
-			checkLob(oid);
-		}
-	}	
+	private void createCL(){						
+	    try
+	    {
+	    	String clOptions = "{ReplSize:0}";
+	    	BSONObject options =(BSONObject) JSON.parse(clOptions);	    	
+		    cs = sdb.getCollectionSpace(SdbTestBase.csName);			
+		    cs.createCollection(clName,options);			
+	    }catch(BaseException e){
+		    Assert.assertTrue(false,"create cl fail "+e.getErrorType()+":"+e.getMessage());
+	    }
+	 }	
+	
+	
+	
+		
+	
+	
+	
+	
 	
 	
 }

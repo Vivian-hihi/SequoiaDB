@@ -10,10 +10,14 @@ import java.util.Random;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.types.BasicBSONList;
+import org.bson.types.ObjectId;
 import org.bson.util.JSON;
 import org.testng.Assert;
 
+import com.sequoiadb.base.CollectionSpace;
+import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
+import com.sequoiadb.base.DBLob;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 
@@ -140,6 +144,7 @@ public class LobOprUtils {
 		String groupName = "";
 		String cond = String.format("{Name:\"%s.%s\"}", csName, clName);
 		DBCursor cr = sdb.getSnapshot(8, cond, null, null);
+		groupList = getDataGroups(sdb);
 		while(cr.hasNext()){
 			 BSONObject obj = cr.getNext();
 			 
@@ -153,7 +158,7 @@ public class LobOprUtils {
 	}
 	
 	public static String getSplitGroupName(String groupName){
-		String tarRgName = "";
+		String tarRgName = "";		
 		for (int i = 0; i < groupList.size(); ++i){
 			String name = groupList.get(i);
 			if (!name.equals(groupName)){
@@ -179,15 +184,93 @@ public class LobOprUtils {
 		}
 	}
 
-    /**
-     * build a byte array of specific length, which's content is random
-     * @param length
-     * @return byte[]
-     */
-    public static byte[] getRandomBytes(int length){
-        byte[] randomBytes = new byte[length];
-        new Random().nextBytes(randomBytes);
-        return randomBytes;
+       
+    private static DBCollection createCL(CollectionSpace cs, String clName, String option) {
+        DBCollection cl = null;
+        BSONObject options = (BSONObject) JSON.parse(option);
+        try {
+            if (cs.isCollectionExist(clName)) {
+                cs.dropCollection(clName);
+            }
+
+            cl = cs.createCollection(clName, options);
+        } catch (BaseException e) {
+            Assert.fail(e.getMessage());
+        }
+        return cl;
     }
 
+    private static DBCollection createCL(CollectionSpace cs, String clName) {
+        DBCollection cl = null;
+        try {
+            if (cs.isCollectionExist(clName)) {
+                cs.dropCollection(clName);
+            }
+            cl = cs.createCollection(clName);
+        } catch (BaseException e) {
+            Assert.fail(e.getMessage());
+        }
+        return cl;
+    }
+    
+    public static byte[] appendBuff(byte[] oldBuff, byte[] buff4Append, int offset) {
+        byte[] newBuff;
+        if (oldBuff.length >= offset + buff4Append.length) {
+            newBuff = new byte[oldBuff.length];
+        } else {
+            newBuff = new byte[offset + buff4Append.length];
+        }       
+        System.arraycopy(oldBuff, 0, newBuff, 0, oldBuff.length);
+        System.arraycopy(buff4Append, 0, newBuff, offset, buff4Append.length);
+        return newBuff;
+    }
+
+    /**
+     * generating byte to write lob
+     *
+     * @param length generating byte stream size
+     * @return byte[] bytes
+     */
+    static byte[] getRandomBytes(int length) {
+        byte[] bytes = new byte[length];
+        Random random = new Random();
+        random.nextBytes(bytes);
+        return bytes;
+    }
+    
+    /**
+     * convenient method for creating lob and write some data to this lob.
+     *
+     * @param dbcl
+     * @param id
+     * @return
+     */
+    static ObjectId createAndWriteLob(DBCollection dbcl, ObjectId id, byte[] data) {
+        DBLob lob = dbcl.createLob(id);
+        lob.write(data);
+        lob.close();
+        return lob.getID();
+    }
+
+    static ObjectId createAndWriteLob(DBCollection dbcl, byte[] data) {
+        return createAndWriteLob(dbcl, null, data);
+    }
+
+    static ObjectId createAndWriteLob(Sequoiadb db, String csName, String clName, ObjectId id, byte[] data) {
+        return createAndWriteLob(db.getCollectionSpace(csName).getCollection(clName),
+                id, data);
+    }
+
+    static ObjectId createAndWriteLob(Sequoiadb db, String csName, String clName, byte[] data) {
+        return createAndWriteLob(db.getCollectionSpace(csName).getCollection(clName), data);
+    }
+    
+    static byte[] seekAndReadLob(DBCollection dbcl, ObjectId lobid, int readSize, int offset) {
+        byte[] b = new byte[readSize];
+        try (DBLob lob = dbcl.openLob(lobid)) {
+            lob.seek(offset, DBLob.SDB_LOB_SEEK_SET);
+            lob.read(b);
+        }
+        return b;
+    }
 }
