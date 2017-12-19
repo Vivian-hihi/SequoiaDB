@@ -56,6 +56,53 @@ namespace engine
 
    static ossSpinSLatch *locks = NULL ;
 
+   struct SshMapRCItem
+   {
+      INT32 key ;
+      INT32 value ;
+      const BOOLEAN end ;
+   } ;
+
+   #define MAP_SSH_RC_ITEM( key, value ) { key, value, FALSE }
+
+   static INT32 _sshRCToSdbRC( INT32 retCode )
+   {
+      INT32 rc = SDB_SYS ;
+      static SshMapRCItem sshRCMap[] =
+      {
+         // map begin
+         MAP_SSH_RC_ITEM( LIBSSH2_ERROR_NONE, SDB_OK ),
+         MAP_SSH_RC_ITEM( LIBSSH2_ERROR_ALLOC, SDB_OOM ),
+         MAP_SSH_RC_ITEM( LIBSSH2_ERROR_AUTHENTICATION_FAILED, SDB_INVALIDARG ),
+         MAP_SSH_RC_ITEM( LIBSSH2_ERROR_INVALID_POLL_TYPE, SDB_INVALIDARG ),
+         MAP_SSH_RC_ITEM( LIBSSH2_ERROR_INVAL, SDB_INVALIDARG ),
+         MAP_SSH_RC_ITEM( LIBSSH2_ERROR_BUFFER_TOO_SMALL, SDB_INVALIDSIZE ),
+         MAP_SSH_RC_ITEM( LIBSSH2_ERROR_METHOD_NOT_SUPPORTED, SDB_INVALIDARG ),
+         MAP_SSH_RC_ITEM( LIBSSH2_ERROR_EAGAIN, SDB_INTERRUPT ),
+         MAP_SSH_RC_ITEM( LIBSSH2_ERROR_TIMEOUT, SDB_TIMEOUT ),
+         MAP_SSH_RC_ITEM( LIBSSH2_ERROR_SOCKET_TIMEOUT, SDB_TIMEOUT ),
+         MAP_SSH_RC_ITEM( LIBSSH2_ERROR_SOCKET_DISCONNECT, SDB_NETWORK_CLOSE ),
+         MAP_SSH_RC_ITEM( LIBSSH2_ERROR_OUT_OF_BOUNDARY, SDB_INVALIDSIZE ),
+         MAP_SSH_RC_ITEM( LIBSSH2_ERROR_CHANNEL_PACKET_EXCEEDED, SDB_INVALIDSIZE ),
+         MAP_SSH_RC_ITEM( LIBSSH2_ERROR_SOCKET_SEND, SDB_NET_SEND_ERR ),
+         MAP_SSH_RC_ITEM( LIBSSH2_ERROR_BAD_SOCKET, SDB_NET_INVALID_HANDLE ),
+         // map end
+         { 0, 0, TRUE }
+      } ;
+
+      SshMapRCItem *item = &sshRCMap[0] ;
+      while( item->end != TRUE )
+      {
+         if( item->key == retCode )
+         {
+            rc = item->value ;
+            break ;
+         }
+         item++ ;
+      }
+      return rc ;
+   }
+
    // callback function 1
    void lock_callback( INT32 mode, INT32 type, CHAR *file, INT32 line )
    {
@@ -298,7 +345,7 @@ namespace engine
       {
          PD_LOG( PDERROR, "failed to open channel in sesison" ) ;
          _getLastError( _errmsg ) ;
-         rc = SDB_SYS ;
+         rc = _getLastErrorRC() ;
          goto error ;
       }
 
@@ -307,7 +354,7 @@ namespace engine
       {
          _getLastError( _errmsg ) ;
          PD_LOG( PDERROR, "failed to exec cmd on remote node:%d", rc ) ;
-         rc = SDB_SYS ;
+         rc = _getLastErrorRC() ;
          goto error ;
       }
 
@@ -384,7 +431,7 @@ namespace engine
          else
          {
             PD_LOG( PDERROR, "failed to read from channel:%d", rc ) ;
-            rc = SDB_SYS ;
+            rc = _getLastErrorRC() ;
             goto error ;
          }
       }
@@ -467,6 +514,7 @@ namespace engine
          if ( SDB_OK != rc )
          {
             _getLastError( _errmsg ) ;
+            rc = _getLastErrorRC() ;
             PD_LOG( PDERROR, "failed to close channel:%d", rc ) ;
             goto error ;
          }
@@ -531,7 +579,7 @@ namespace engine
          {
             _getLastError( _errmsg ) ;
             PD_LOG( PDERROR, "failed to send data:%lld", once ) ;
-            rc = SDB_SYS ;
+            rc = _getLastErrorRC() ;
             goto error ;
          }
       }
@@ -567,7 +615,7 @@ namespace engine
          {
             _getLastError( _errmsg ) ;
             PD_LOG( PDERROR, "failed to recv data:%lld", once ) ;
-            rc = SDB_SYS ;
+		    rc = _getLastErrorRC() ;
             goto error ;
          }
       }
@@ -603,7 +651,7 @@ namespace engine
       {
          _getLastError( _errmsg ) ;
          PD_LOG( PDERROR, "failed to create scp channel" ) ;
-         rc = SDB_SYS ;
+         rc = _getLastErrorRC() ;
          goto error ;
       }
 
@@ -674,7 +722,7 @@ namespace engine
       {
          _getLastError( _errmsg ) ;
          PD_LOG( PDERROR, "failed to crate scp recv channel" ) ;
-         rc = SDB_SYS ;
+         rc = _getLastErrorRC() ;
          goto error ;
       }
 
@@ -787,4 +835,32 @@ namespace engine
       goto done ;
    }
 
+   INT32 _sptLibssh2Session::_getLastErrorRC()
+   {
+      INT32 rc = SDB_OK ;
+      INT32 err = SDB_OK ;
+      INT32 sshErrno = libssh2_session_last_errno( _session ) ;
+      if( ( LIBSSH2_ERROR_SOCKET_SEND == sshErrno ||
+            LIBSSH2_ERROR_SOCKET_RECV == sshErrno )
+            && ( ( err = SOCKET_GETLASTERROR ) != SDB_OK ) )
+      {
+#if defined (_WINDOWS)
+         if( WSAETIMEDOUT == err )
+#else
+         if( ETIMEDOUT == err )
+#endif
+         {
+            rc = SDB_TIMEOUT ;
+         }
+         else
+         {
+            rc = SDB_NETWORK ;
+         }
+      }
+      else
+      {
+         rc = _sshRCToSdbRC( sshErrno ) ;
+      }
+      return rc ;
+   }
 }
