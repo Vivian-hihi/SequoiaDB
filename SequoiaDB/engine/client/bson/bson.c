@@ -346,7 +346,7 @@ static int strlen_a ( const char *data )
          ++len ;
       }
       ++len ;
-      ++data ;  
+      ++data ;
    }
    return len ;
 }
@@ -424,6 +424,8 @@ static void bson_sprint_raw_concat ( char **pbuf, int *left, const char *data, i
     *pbuf += tempsize ;
 }
 
+/* Comment unused function to clean compile warning. If you want to use it, just
+ * remove this comment.
 static void bson_sprint_hex_concat ( char **pbuf, int *left, const char *data, unsigned int size )
 {
    unsigned int tempsize = size * 2 ;
@@ -436,6 +438,7 @@ static void bson_sprint_hex_concat ( char **pbuf, int *left, const char *data, u
       tempsize -= 2 ;
    }
 }
+*/
 
 SDB_EXPORT int bson_sprint_iterator ( char **pbuf, int *left, bson_iterator *i,
                                       char delChar )
@@ -515,7 +518,7 @@ SDB_EXPORT int bson_sprint_iterator ( char **pbuf, int *left, bson_iterator *i,
          struct tm psr;
          LocalTime ( &timer, &psr ) ;
          if ( (psr.tm_year + 1900) >= 0 && (psr.tm_year + 1900) <= 9999 )
-         {         
+         {
             // [ 0000-01-01, 9999-12-31 ]
             sprintf ( temp, "{ \"$date\": \"%04d-%02d-%02d\" }", psr.tm_year + 1900, psr.tm_mon + 1, psr.tm_mday ) ;
          }
@@ -661,7 +664,7 @@ SDB_EXPORT int bson_sprint_iterator ( char **pbuf, int *left, bson_iterator *i,
          int tmpRC   = 0 ;
 
          bson_iterator_decimal( i, &decimal ) ;
-         decimal_to_jsonstr_len( decimal.sign, decimal.weight, decimal.dscale, 
+         decimal_to_jsonstr_len( decimal.sign, decimal.weight, decimal.dscale,
                                  decimal.typemod, &tmpSize ) ;
 
          temp = (char *)malloc( tmpSize ) ;
@@ -883,10 +886,10 @@ SDB_EXPORT int bson_sprint_length_iterator ( bson_iterator *i )
       {
          total += 32 ;
       }
-      else 
+      else
       {
          // show as{ "a": { "$numberLong": "-9223372036854775808" } }
-         // so, we need at least 42 bytes 
+         // so, we need at least 42 bytes
          // for { "$numberLong": "-9223372036854775808" }
          total += 64 ;
       }
@@ -1320,7 +1323,7 @@ SDB_EXPORT double bson_iterator_double( const bson_iterator *i ) {
     }
 }
 
-SDB_EXPORT int bson_iterator_decimal_weight( const bson_iterator *i, 
+SDB_EXPORT int bson_iterator_decimal_weight( const bson_iterator *i,
                                              int *weight )
 {
    //define in common_decimal.h __decimal
@@ -1343,7 +1346,7 @@ SDB_EXPORT int bson_iterator_decimal_weight( const bson_iterator *i,
    return BSON_OK ;
 }
 
-SDB_EXPORT int bson_iterator_decimal_size( const bson_iterator *i, 
+SDB_EXPORT int bson_iterator_decimal_size( const bson_iterator *i,
                                            int *size )
 {
    //define in common_decimal.h __decimal
@@ -1359,7 +1362,7 @@ SDB_EXPORT int bson_iterator_decimal_size( const bson_iterator *i,
    return BSON_OK ;
 }
 
-SDB_EXPORT int bson_iterator_decimal_typemod( const bson_iterator *i, 
+SDB_EXPORT int bson_iterator_decimal_typemod( const bson_iterator *i,
                                               int *typemod )
 {
    //define in common_decimal.h __decimal
@@ -1378,7 +1381,7 @@ SDB_EXPORT int bson_iterator_decimal_typemod( const bson_iterator *i,
 }
 
 
-SDB_EXPORT int bson_iterator_decimal_scale( const bson_iterator *i, 
+SDB_EXPORT int bson_iterator_decimal_scale( const bson_iterator *i,
                                             int *sign, int *scale )
 {
    //define in common_decimal.h __decimal
@@ -1401,7 +1404,7 @@ SDB_EXPORT int bson_iterator_decimal_scale( const bson_iterator *i,
    return BSON_OK ;
 }
 
-SDB_EXPORT int bson_iterator_decimal( const bson_iterator *i, 
+SDB_EXPORT int bson_iterator_decimal( const bson_iterator *i,
                                       bson_decimal *decimal )
 {
    bson_type type ;
@@ -1807,7 +1810,7 @@ SDB_EXPORT int bson_append_long( bson *b, const char *name, const int64_t i ) {
     return BSON_OK;
 }
 
-SDB_EXPORT int bson_append_decimal( bson *b, const char *name, 
+SDB_EXPORT int bson_append_decimal( bson *b, const char *name,
                                     const bson_decimal *decimal )
 {
    //define in common_decimal.h __decimal
@@ -1831,7 +1834,7 @@ SDB_EXPORT int bson_append_decimal( bson *b, const char *name,
    return BSON_OK ;
 }
 
-SDB_EXPORT int bson_append_decimal3( bson *b, const char *name, 
+SDB_EXPORT int bson_append_decimal3( bson *b, const char *name,
                                      const char *value )
 {
    int rc = 0 ;
@@ -1850,8 +1853,8 @@ SDB_EXPORT int bson_append_decimal3( bson *b, const char *name,
 }
 
 
-SDB_EXPORT int bson_append_decimal2( bson *b, const char *name, 
-                                     const char *value, int precision, 
+SDB_EXPORT int bson_append_decimal2( bson *b, const char *name,
+                                     const char *value, int precision,
                                      int scale )
 {
    int rc = 0 ;
@@ -2155,7 +2158,7 @@ SDB_EXPORT int bson_append_finish_object( bson *b ) {
     bson_append_byte( b , 0 );
 
     --b->stackPos ;
-    b->stackType[ b->stackPos ] = (char)(-1) ;    
+    b->stackType[ b->stackPos ] = (char)(-1) ;
     start = b->data + b->stack[ b->stackPos ];
     i = b->cur - start;
     bson_little_endian32( start, &i );
