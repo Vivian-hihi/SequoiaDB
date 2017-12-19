@@ -1,4 +1,4 @@
-//@ sourceURL=Index.js
+﻿//@ sourceURL=Index.js
 //"use strict" ;
 (function(){
    var sacApp = window.SdbSacManagerModule ;
@@ -2906,7 +2906,7 @@
       var createRelationDisabled = false ;
 
       //打开 关联操作 下拉菜单
-      $scope.OpenRelationDropdown = function(){
+      $scope.OpenRelationDropdown = function( event ){
          var disabled = false ;
          var sqlModule = 0 ;
          var sdbModule = 0 ;

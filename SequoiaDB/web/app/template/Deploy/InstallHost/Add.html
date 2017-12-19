@@ -96,7 +96,7 @@
          <div class="pull-left" ng-container="{offsetX:-410,marginLeft:10}" ng-controller="Deploy.AddHost.HostInfo.Ctrl">
 
             <div style="height:30px;font-size:110%;font-weight:bold;">{{autoLanguage("主机配置")}}</div>
-            <div class="borderBox" style="padding:10px;overflow-y:auto;overflow-x:hidden;" ng-container="{offsetY:-30}">
+            <div class="borderBox" style="position:relative;padding:10px;overflow-y:auto;overflow-x:hidden;" ng-container="{offsetY:-30}">
 
                <div style="height:25px;">{{autoLanguage("系统信息")}}</div>
                <div>
@@ -182,8 +182,7 @@
                <div ng-windows="form as AddCustomPathWindow.config" windows-callback="AddCustomPathWindow.callback">
                   <div form-create para="form"></div>
                </div>
-
-               <div style="height:25px;margin-top:20px;" ng-if="DiskTable['body'].length > 0">
+               <div style="height:25px;margin-top:20px;position:relative;" ng-if="DiskTable['body'].length > 0">
                   {{autoLanguage("磁盘列表")}}
                   &nbsp;<button class="btn btn-primary" ng-if="HostInfo['errno'] == 0" ng-click="ShowAddCustomPath()">{{autoLanguage("添加自定义路径")}}</button>
                </div>
@@ -198,6 +197,12 @@
                      <div progress-bar="diskInfo['Chart']" class="ng-scope ng-isolate-scope"></div>
                   </div>
                </div>
+
+               <!--[if IE]>
+                  <style>
+                     .ng-table-box{position:relative;}
+                  </style>
+               <![endif]-->
 
                <div style="height:25px;margin-top:20px;" ng-if="PortTable['body'].length > 0">
                   {{autoLanguage("端口")}}
