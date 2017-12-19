@@ -58,6 +58,9 @@ using namespace std ;
 
 #define MAX_CL_SIZE_ALIGN_SIZE            ( 32 * 1024 * 1024 )
 
+// Unit is MB. This is the upper limit. It should be smaller than the maximum
+// size of the storage unit.
+#define MAX_CAP_CL_SIZE                   ( OSS_SINT64_MAX >> 20 )
 // Default size of capped collection for text index. The unit is MB. So its 30G.
 #define TEXT_INDEX_DATA_BUFF_DEFAULT_SIZE  ( 30 * 1024 )
 
@@ -680,6 +683,13 @@ namespace engine
             }
             goto error ;
          }
+         if ( maxSize <= 0 || maxSize > MAX_CAP_CL_SIZE )
+         {
+            PD_LOG( PDERROR, "Invalid Size[ %lld ] when creating capped "
+                    "collection", maxSize ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
          maxSize = ossRoundUpToMultipleX( maxSize << 20,
                                           MAX_CL_SIZE_ALIGN_SIZE ) ;
          builder.append( FIELD_NAME_SIZE, maxSize ) ;
@@ -690,6 +700,13 @@ namespace engine
          {
             PD_LOG( PDERROR, "Field[%s] value is error in obj[%s]",
                     FIELD_NAME_MAX, matcher.toString().c_str() ) ;
+            goto error ;
+         }
+         if ( maxRecNum < 0 )
+         {
+            PD_LOG( PDERROR, "Invalid Max[ %lld ] when creating capped "
+                    "collection", maxRecNum ) ;
+            rc = SDB_INVALIDARG ;
             goto error ;
          }
          builder.append( FIELD_NAME_MAX, maxRecNum ) ;
