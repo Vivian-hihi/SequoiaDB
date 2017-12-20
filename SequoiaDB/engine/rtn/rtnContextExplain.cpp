@@ -662,9 +662,10 @@ namespace engine
                       NULL != _queryOptions.getCLFullName() ?
                       _queryOptions.getCLFullName() :
                       "" ) ;
+      builder.append( OPT_FIELD_QUERY, _queryOptions.getQuery() ) ;
+
       if ( needDetail )
       {
-         builder.append( OPT_FIELD_QUERY, _queryOptions.getQuery() ) ;
          builder.append( OPT_FIELD_SORT, _queryOptions.getOrderBy() ) ;
          builder.append( OPT_FIELD_SELECTOR, _queryOptions.getSelector() ) ;
          builder.append( OPT_FIELD_HINT, _queryOptions.getHint() ) ;
