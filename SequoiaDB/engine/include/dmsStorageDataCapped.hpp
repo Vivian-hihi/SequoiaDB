@@ -272,9 +272,6 @@ namespace engine
       INT32 _recycleActiveExt( dmsMBContext *context,
                                dmsExtentID extID ) ;
 
-      INT32 _popFromWorkExt( dmsMBContext *context, dmsExtentID extID,
-                             dmsOffset offset, INT8 direction = 1 ) ;
-
       INT32 _popFromActiveExt( dmsMBContext *context,
                                dmsExtentID extentID,
                                dmsOffset offset,
@@ -284,6 +281,11 @@ namespace engine
       INT32 _switchWorkExt( dmsMBContext *context, dmsExtentID extID ) ;
       INT32 _attachWorkExt( UINT16 collectionID, dmsExtentID extID ) ;
       INT32 _detachWorkExt( UINT16 collectionID, BOOLEAN sync = TRUE ) ;
+
+      INT32 _shrinkForward( dmsMBContext* context, dmsExtentInfo* workExtInfo,
+                            dmsExtentID extID, dmsOffset offset ) ;
+      INT32 _shrinkBackward( dmsMBContext* context, dmsExtentInfo* workExtInfo,
+                             dmsExtentID extID, dmsOffset offset ) ;
 
       INT32 _popRecord( dmsMBContext *context,
                         dmsExtentID extID,
@@ -316,7 +318,6 @@ namespace engine
                             INT64 logicalID,
                             pmdEDUCB *cb,
                             dmsExtentID &extentID,
-                            dmsExtentID &extLID,
                             dmsOffset &offset ) ;
 
       INT32 _recycleExtents( dmsMBContext *context,
