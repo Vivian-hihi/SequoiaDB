@@ -266,6 +266,7 @@ namespace engine
      _returnBatches( 0 ),
      _returnRecords( 0 ),
      _startTimestamp(),
+     _startTimestampTick(),
      _waitTime(),
      _queryTime(),
      _executeTime()
@@ -279,6 +280,7 @@ namespace engine
      _returnBatches( monCtxCB._returnBatches ),
      _returnRecords( monCtxCB._returnRecords ),
      _startTimestamp( monCtxCB._startTimestamp ),
+     _startTimestampTick( monCtxCB._startTimestampTick ),
      _waitTime( monCtxCB._waitTime ),
      _queryTime( monCtxCB._queryTime ),
      _executeTime( monCtxCB._executeTime )
@@ -297,6 +299,7 @@ namespace engine
       _returnBatches = 0 ;
       _returnRecords = 0 ;
       _startTimestamp.clear() ;
+      _startTimestampTick.clear() ;
       _waitTime.clear() ;
       _queryTime.clear() ;
       _executeTime.clear() ;

@@ -1402,7 +1402,7 @@ namespace engine
          for ( itSet = setInfo.begin() ; itSet != setInfo.end() ; ++itSet )
          {
             const monContextFull &ctx = *itSet ;
-            ossTimestamp startTime ;
+            ossTimestamp startTime( ctx._monContext.getStartTimestamp() ) ;
             BSONObjBuilder sub( ba.subobjStart() ) ;
 
             sub.append( FIELD_NAME_CONTEXTID, ctx._contextID );
@@ -1417,8 +1417,6 @@ namespace engine
                                                            microseconds ) ;
             sub.append( FIELD_NAME_QUERYTIMESPENT,
                         (SINT64)(seconds * 1000 + microseconds / 1000 ) ) ;
-
-            ctx._monContext.getStartTimestamp().convertToTimestamp( startTime ) ;
             ossTimestampToString( startTime, timestampStr ) ;
             sub.append(FIELD_NAME_STARTTIMESTAMP, timestampStr ) ;
             sub.done() ;

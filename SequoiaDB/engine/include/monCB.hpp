@@ -519,12 +519,22 @@ namespace engine
             _returnRecords = returnRecords ;
          }
 
-         OSS_INLINE const ossTick & getStartTimestamp () const
+         OSS_INLINE const ossTick & getStartTimestampTick () const
+         {
+            return _startTimestampTick ;
+         }
+
+         OSS_INLINE void setStartTimestampTick ( const ossTick & startTimestampTick )
+         {
+            _startTimestampTick = startTimestampTick ;
+         }
+
+         OSS_INLINE const ossTimestamp & getStartTimestamp () const
          {
             return _startTimestamp ;
          }
 
-         OSS_INLINE void setStartTimestamp ( const ossTick & startTimestamp )
+         OSS_INLINE void setStartTimestamp ( const ossTimestamp & startTimestamp )
          {
             _startTimestamp = startTimestamp ;
          }
@@ -561,7 +571,8 @@ namespace engine
 
          OSS_INLINE void recordStartTimestamp ()
          {
-            _startTimestamp.sample() ;
+            ossGetCurrentTime( _startTimestamp ) ;
+            _startTimestampTick.sample() ;
          }
 
          OSS_INLINE void monReturnInc ( UINT32 batchDelta,
@@ -668,7 +679,8 @@ namespace engine
          UINT64         _indexRead ;
          UINT32         _returnBatches ;
          UINT64         _returnRecords ;
-         ossTick        _startTimestamp ;
+         ossTimestamp   _startTimestamp ;
+         ossTick        _startTimestampTick ;
          ossTickDelta   _waitTime ;
          ossTickDelta   _queryTime ;
          ossTickDelta   _executeTime ;

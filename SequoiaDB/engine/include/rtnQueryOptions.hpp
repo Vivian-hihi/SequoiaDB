@@ -156,7 +156,7 @@ namespace engine
 
          OSS_INLINE BOOLEAN testFlag ( INT32 flag ) const
          {
-            return OSS_BIT_TEST( _flag, flag ) ;
+            return OSS_BIT_TEST( _flag, flag ) ? TRUE : FALSE ;
          }
 
       public :

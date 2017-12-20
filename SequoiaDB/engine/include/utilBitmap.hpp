@@ -116,7 +116,8 @@ namespace engine
                UINT32 unitIndex = _calcUnitIndex( index ) ;
                UINT8 bitIndex = _calcBitIndex( index ) ;
                return OSS_BIT_TEST( _bitmap[ unitIndex ],
-                                    _utilBitmapIndex[ bitIndex ] ) ;
+                                    _utilBitmapIndex[ bitIndex ] ) ?
+                      TRUE : FALSE ;
             }
             return FALSE ;
          }

@@ -108,7 +108,7 @@ namespace engine
       UINT32 seconds = 0, microseconds = 0 ;
       double queryTime = 0.0, executeTime = 0.0 ;
       CHAR timestampStr[ OSS_TIMESTAMP_STRING_LEN + 1 ] = { 0 } ;
-      ossTimestamp startTime ;
+      ossTimestamp startTime( _contextMonitor.getStartTimestamp() ) ;
 
       _contextMonitor.getQueryTime().convertToTime( factor, seconds, microseconds ) ;
       queryTime = (double)( seconds ) +
@@ -118,7 +118,6 @@ namespace engine
       executeTime = (double)( seconds ) +
                     (double)( microseconds ) / (double)( OSS_ONE_MILLION ) ;
 
-      _contextMonitor.getStartTimestamp().convertToTimestamp( startTime ) ;
       ossTimestampToString( startTime, timestampStr ) ;
 
       // Context ID

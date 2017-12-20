@@ -109,11 +109,11 @@ namespace engine
          << ",OrderBy:" << _key.getOrderBy().toString().c_str()
          << ",Query:" << _key.getQuery().toString().c_str()
          << ",Hint:" << _key.getHint().toString().c_str()
-         << ",HintFailed:" << _hintFailed
+         << ",HintFailed:" << ( _hintFailed ? "TRUE" : "FALSE" )
          << ",Direction:" << getDirection()
          << ",ScanType:" << ( TBSCAN == getScanType() ? "TBSCAN" : "IXSCAN" )
-         << ",Valid:" << _key.isValid()
-         << ",AutoPlan:" << _isAutoPlan
+         << ",Valid:" << ( _key.isValid() ? "TRUE" : "FALSE" )
+         << ",AutoPlan:" << ( _isAutoPlan ? "TRUE" : "FALSE" )
          << ",HashValue:" << _key.getKeyCode()
          << ",Count:" << getRefCount()
          << ",SortRequired:" << sortRequired() ;

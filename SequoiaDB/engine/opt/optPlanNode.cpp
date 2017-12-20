@@ -531,13 +531,12 @@ namespace engine
       UINT32 seconds = 0, microseconds = 0 ;
       double queryTime = 0.0 ;
       CHAR timestampStr[ OSS_TIMESTAMP_STRING_LEN + 1 ] = { 0 } ;
-      ossTimestamp startTime ;
+      ossTimestamp startTime( _runtimeMonitor.getStartTimestamp() ) ;
 
       _runtimeMonitor.getQueryTime().convertToTime( factor, seconds, microseconds ) ;
       queryTime = (double)( seconds ) +
                   (double)( microseconds ) / (double)( OSS_ONE_MILLION ) ;
 
-      _runtimeMonitor.getStartTimestamp().convertToTimestamp( startTime ) ;
       ossTimestampToString( startTime, timestampStr ) ;
 
       builder.append( OPT_FIELD_CONTEXT_ID, _runtimeMonitor.getContextID() ) ;
@@ -863,9 +862,10 @@ namespace engine
       builder.appendBool( OPT_FIELD_CL_STAT_EST, _clFromStat ) ;
       if ( _clFromStat )
       {
-         builder.appendTimestamp(
-               OPT_FIELD_CL_STAT_TIME, _clStatTime,
-               ( _clStatTime - ( _clStatTime / 1000 * 1000 ) ) * 1000 ) ;
+         ossTimestamp statTimestamp( _clStatTime ) ;
+         CHAR timestampStr[ OSS_TIMESTAMP_STRING_LEN + 1] = { 0 } ;
+         ossTimestampToString( statTimestamp, timestampStr ) ;
+         builder.append( OPT_FIELD_CL_STAT_TIME, timestampStr ) ;
       }
 
       PD_TRACE_EXITRC( SDB_OPTSCANNODE_TOBSONCLSTAT, rc ) ;
@@ -2004,9 +2004,10 @@ namespace engine
       builder.appendBool( OPT_FIELD_IX_STAT_EST, _ixFromStat ) ;
       if ( _ixFromStat )
       {
-         builder.appendTimestamp(
-               OPT_FIELD_IX_STAT_TIME, _ixStatTime,
-               ( _ixStatTime - ( _ixStatTime / 1000 * 1000 ) ) * 1000 ) ;
+         ossTimestamp statTimestamp( _ixStatTime ) ;
+         CHAR timestampStr[ OSS_TIMESTAMP_STRING_LEN + 1] = { 0 } ;
+         ossTimestampToString( statTimestamp, timestampStr ) ;
+         builder.append( OPT_FIELD_IX_STAT_TIME, timestampStr ) ;
       }
 
       PD_TRACE_EXITRC( SDB_OPTIXSCAN_TOBSONIXSTAT, rc ) ;

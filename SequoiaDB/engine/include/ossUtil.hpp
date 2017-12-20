@@ -149,11 +149,22 @@ public :
    time_t time ;     // tv_sec ,  seconds
    UINT32 microtm ;  // tv_usec,  microseconds
 
-   ossTimestamp(){}
-   ossTimestamp(UINT64 curTime)
+   ossTimestamp ()
+   : time( 0 ),
+     microtm( 0 )
    {
-      time = curTime / 1000 ;
-      microtm = ( curTime % 1000 ) * 1000 ;
+   }
+
+   ossTimestamp ( UINT64 curTime )
+   : time( curTime / 1000 ),
+     microtm( ( curTime % 1000 ) * 1000 )
+   {
+   }
+
+   ossTimestamp ( const ossTimestamp & timestamp )
+   : time( timestamp.time ),
+     microtm( timestamp.microtm )
+   {
    }
 
    ossTimestamp &operator= ( const ossTimestamp &rhs )
@@ -161,6 +172,12 @@ public :
       time    = rhs.time ;
       microtm = rhs.microtm ;
       return *this ;
+   }
+
+   void clear ()
+   {
+      time = 0 ;
+      microtm = 0 ;
    }
 } ;
 typedef class ossTimestamp ossTimestamp ;
