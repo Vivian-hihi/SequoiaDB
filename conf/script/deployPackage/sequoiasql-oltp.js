@@ -109,7 +109,9 @@ function _checkInstall( PD_LOGGER, md5, hostName, agentPort, installPath )
    {
       var error = _getErrorMsg( getLastError(), e,
                                 sprintf( "Failed to get remote md5: " +
-                                         "host [?:?]", hostName, agentPort ) ) ;
+                                         "host [?:?], errMsg:?",
+                                          hostName, agentPort, 
+                                          getLastErrObj().toObj().detail ) ) ;
       PD_LOGGER.logTask( PDERROR, error ) ;
       installStatus = 2 ;
    }

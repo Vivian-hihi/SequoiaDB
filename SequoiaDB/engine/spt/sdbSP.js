@@ -561,26 +561,44 @@ Remote.prototype._runCommand = function( command, optionObj,
                                          matchObj, valueObj ) {
    var bsonObj ;
    var retObj ;
-   if ( 6 < arguments.length )
+   var option = {} ;
+   var match = {} ;
+   var value = {} ;
+   if ( 4 < arguments.length )
    {
       setLastErrMsg( "Too much arguments" ) ;
       throw SDB_INVALIDARG ;
    }
-   else if ( undefined != valueObj )
+   if( undefined != optionObj )
    {
-      bsonObj = this.__runCommand( command, optionObj, matchObj, valueObj ) ;
+      option = optionObj ;
    }
-   else if ( undefined != matchObj )
+   if( undefined != matchObj )
    {
-      bsonObj = this.__runCommand( command, optionObj, matchObj ) ;
+      match = matchObj ;
    }
-   else if ( undefined != optionObj  )
+   if( undefined != valueObj )
    {
-      bsonObj = this.__runCommand( command, optionObj ) ;
+      value = valueObj ;
    }
-   else
+
+   try
    {
-      bsonObj = this.__runCommand( command ) ;
+      bsonObj = this.__runCommand( command, option, match, value ) ;
+   }
+   catch( e )
+   {
+      if( SDB_INVALIDARG == e || SDB_OUT_OF_BOUND == e )
+      {
+         var errMsg = getLastErrMsg() ;
+         var errObj = getLastErrObj().toObj() ;
+         var extraErrMsg = ": the cause of this error may be that the server version "
+                           + "is not consistent with the client version" ;
+         errObj.detail = errObj.detail + extraErrMsg ;
+         setLastErrMsg( errMsg + extraErrMsg  ) ;
+         setLastErrObj( errObj ) ;
+      }
+      throw e ;
    }
 
    return bsonObj ;
