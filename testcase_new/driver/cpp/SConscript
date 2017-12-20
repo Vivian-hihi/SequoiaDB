@@ -90,6 +90,10 @@ testFiles = [
    [ "./cls/nodeOpr12689_12692.cpp" ],  # sync
    [ "./cls/attachDetachNode12553.cpp" ],  # sync
    [ "./cls/masterSlave12690.cpp" ],  # sync
+   [ "./cls/getSlaveOnePos13784.cpp" ], # sync
+   [ "./cls/getSlaveMultiPos13785.cpp" ], # sync
+   [ "./cls/getSlaveNoPos13786.cpp" ], # sync
+   [ "./cls/getSlaveParaCheck13787.cpp" ],
    [ "./cache/createClWithCache7800.cpp" ],
    [ "./cache/getCsWithCache7801.cpp" ],
    [ "./cache/getClWithCache7802.cpp" ],
