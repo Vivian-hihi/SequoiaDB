@@ -29,22 +29,26 @@ class SequoiaTimestamp
     *
     * @param $timestamp is timestamp string
     *
+    * timestamp format
     * @code
     * $timeObj = new SequoiaTimestamp( '2000-01-01-12.30.20.123456' ) ;
     * $arr = array( 'time' => $timeObj ) ; // json ==> { "time": { "$timestamp": "2000-01-01-12.30.20.123456" } }
     * @endcode
     *
-    * @code default parameter, current timestamp. ( Available/Support on 2.10 or newer version. )
+    * default parameter, current timestamp. ( Available/Support on 2.10 or newer version. )
+    * @code
     * $timeObj = new SequoiaTimestamp() ;
     * $arr = array( 'time' => $timeObj ) ; // json ==> { "time": { "$timestamp": "2017-12-01-10.20.13.000000" } }
     * @endcode
     *
-    * @code string format(millisecond). ( Available/Support on 2.10 or newer version. )
+    * string format(millisecond). ( Available/Support on 2.10 or newer version. )
+    * @code
     * $timeObj = new SequoiaTimestamp( '946656000' ) ;
     * $arr = array( 'time' => $timeObj ) ; // json ==> { "time": { "$timestamp": "2000-01-01-00.00.00.000000" } }
     * @endcode
     *
-    * @code integer(millisecond). ( Available/Support on 2.10 or newer version. )
+    * integer(millisecond). ( Available/Support on 2.10 or newer version. )
+    * @code
     * $timeObj = new SequoiaTimestamp( 946656000 ) ;
     * $arr = array( 'time' => $timeObj ) ; // json ==> { "time": { "$timestamp": "2000-01-01-00.00.00.000000" } }
     * @endcode

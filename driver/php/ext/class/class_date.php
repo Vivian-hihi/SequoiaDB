@@ -31,22 +31,26 @@ class SequoiaDate
     *
     * @code string format
     *
-    * @code date format.
+    * date format.
+    * @code
     * $dateObj = new SequoiaDate( '2000-01-01' ) ;
     * $arr = array( 'date' => $dateObj ) ; // json ==> { "date": { "$date": "2000-01-01" } }
     * @endcode
     *
-    * @code default parameter, current date. ( Available/Support on 2.10 or newer version. )
+    * default parameter, current date. ( Available/Support on 2.10 or newer version. )
+    * @code
     * $dateObj = new SequoiaDate() ;
     * $arr = array( 'date' => $dateObj ) ; // json ==> { "date": { "$date": "2017-12-01" } }
     * @endcode
     *
-    * @code string format(millisecond). ( Available/Support on 2.10 or newer version. )
+    * string format(millisecond). ( Available/Support on 2.10 or newer version. )
+    * @code
     * $dateObj = new SequoiaDate( '946656000000' ) ;
     * $arr = array( 'date' => $dateObj ) ; // json ==> { "date": { "$date": "2000-01-01" } }
     * @endcode
     *
-    * @code integer(millisecond). ( Available/Support on 2.10 or newer version. )
+    * integer(millisecond). ( Available/Support on 2.10 or newer version. )
+    * @code
     * $dateObj = new SequoiaDate( 946656000000 ) ;
     * $arr = array( 'date' => $dateObj ) ; // json ==> { "date": { "$date": "2000-01-01" } }
     * @endcode
