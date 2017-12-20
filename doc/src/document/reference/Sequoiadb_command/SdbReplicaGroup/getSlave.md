@@ -65,7 +65,7 @@ Replica Group
 2. group1 分区组信息如下：
 
 	```lang-javascript
-	> db.list(SDB_SNAP_SYSTEM, {"GroupName":"group1"})
+	> db.list(SDB_LIST_GROUPS, {"GroupName":"group1"})
 	{
   	"Group": [
     	{
