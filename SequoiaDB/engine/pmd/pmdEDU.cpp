@@ -199,11 +199,6 @@ namespace engine
 
    _pmdEDUCB::~_pmdEDUCB ()
    {
-      // wait for destory
-      {
-         ossScopedRWLock assist ( &_callInMutex, EXCLUSIVE ) ;
-      }
-
       if ( _pErrorBuff )
       {
          SDB_OSS_FREE ( _pErrorBuff ) ;
@@ -342,7 +337,6 @@ namespace engine
    void _pmdEDUCB::disconnect ()
    {
       PD_TRACE_ENTRY ( SDB__PMDEDUCB_DISCONNECT );
-      ossScopedRWLock assist ( &_callInMutex, SHARED ) ;
       interrupt () ;
       _ctrlFlag |= EDU_CTRL_DISCONNECTED ;
       postEvent ( pmdEDUEvent ( PMD_EDU_EVENT_TERM ) ) ;
@@ -353,7 +347,6 @@ namespace engine
    void _pmdEDUCB::force ()
    {
       PD_TRACE_ENTRY ( SDB__PMDEDUCB_FORCE );
-      ossScopedRWLock assist ( &_callInMutex, SHARED ) ;
       disconnect () ;
       _ctrlFlag |= EDU_CTRL_FORCED ;
       PD_TRACE_EXIT ( SDB__PMDEDUCB_FORCE );

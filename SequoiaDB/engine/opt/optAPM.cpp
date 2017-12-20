@@ -2641,11 +2641,7 @@ namespace engine
 
          if ( !eduMgr->isDestroyed() )
          {
-            pmdEDUCB *clearJobCB = eduMgr->getEDUByID( _clearJobEduID ) ;
-            if ( NULL != clearJobCB )
-            {
-               clearJobCB->force() ;
-            }
+            eduMgr->forceUserEDU( _clearJobEduID ) ;
          }
 
          _clearJobEduID = PMD_INVALID_EDUID ;
