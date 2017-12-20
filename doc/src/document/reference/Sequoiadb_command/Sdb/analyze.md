@@ -13,11 +13,11 @@
 
  | 属性名 | 描述 | 约束 | 格式 |
  | ------ | ------ | ------ | ------ |
- | Mode | 进行分析的模式，整数类型，(1-5)：<br/>1：进行抽样分析，生成统计信息<br/>2：进行全量数据分析，生成统计信息<br/>3：生成默认的统计信息<br/>4：加载统计信息到缓存中<br/>5：清除缓存的统计信息 | Mode取 1 - 3 时，必须在主数据节点上执行</br>Mode取 4，5 时，可以在备数据节点上执行 | Mode:1 |
- | CollectionSpace | 指定需要分析的集合名称，字符串类型。默认为空。 | 不能与Collection同时使用 |  CollectionSpace:"foo" |
- | Collection | 指定需要分析的集合名称，字符串类型。默认为空。 | 不能与CollecitonSpace同时使用<br/>必须是Collection的全名 |  Collection:"foo.bar" |
- | Index | 指定需要分析的索引名称，字符串类型。默认为空。 | 如果指定该参数，需要指定Collection参数 | Index:"index" |
- | SampleNum | 指定抽样的数据个数，整数类型，( 100 - 10000 )，默认是200 | 不能与SamplePercent同时使用 | SampleNum:1000 |
+ | Mode | 进行分析的模式，整数类型，(1-5)：<br/>1：进行抽样分析，生成统计信息<br/>2：进行全量数据分析，生成统计信息<br/>3：生成默认的统计信息<br/>4：加载统计信息到缓存中<br/>5：清除缓存的统计信息<br>默认值为 1 | Mode取 1 - 3 时，必须在主数据节点上执行</br>Mode取 4，5 时，可以在备数据节点上执行 | Mode:1 |
+ | CollectionSpace | 指定需要分析的集合名称，字符串类型。默认值为空。 | 不能与Collection同时使用 |  CollectionSpace:"foo" |
+ | Collection | 指定需要分析的集合名称，字符串类型。默认值为空。 | 不能与CollecitonSpace同时使用<br/>必须是Collection的全名 |  Collection:"foo.bar" |
+ | Index | 指定需要分析的索引名称，字符串类型。默认值为空。 | 如果指定该参数，需要指定Collection参数 | Index:"index" |
+ | SampleNum | 指定抽样的数据个数，整数类型，( 100 - 10000 )，默认值为 200 | 不能与SamplePercent同时使用 | SampleNum:1000 |
  | SamplePercent | 指定抽样的比例，浮点数类型，( 0.0 - 100.0 ) | 不能与SampleNum同时使用 | SamplePercent:50 |
  | Location Elements | 命令位置参数项，详细见 **[命令位置参数](reference/Sequoiadb_command/Overview/location.md)** | | GroupName:"db1" |
 
