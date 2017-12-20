@@ -205,10 +205,14 @@ public class NetSplit2571 extends SdbTestBase {
 
         @Override
         public void exec() throws Exception {
-            Sequoiadb db = new Sequoiadb(connectUrl, "", "");
-            DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
-            insertData(cl, 2000, 8000);
-            db.close();
+			  try{
+				  Sequoiadb db = new Sequoiadb(connectUrl, "", "");
+				  DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
+              insertData(cl, 2000, 8000);
+              db.close();
+			  }catch(BaseException e){
+			     System.out.println("insert have exception:" + e.getMessage());
+			  }
         }
     }
 
