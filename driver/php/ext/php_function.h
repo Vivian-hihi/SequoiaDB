@@ -74,6 +74,9 @@ void php_parseNumber( CHAR *pBuffer,
                       INT64 *pInt64,
                       double *pDouble TSRMLS_DC ) ;
 
+BOOLEAN php_date2Time( const CHAR *pDate, INT32 valType,
+                       time_t *pTimestamp, INT32 *pMicros ) ;
+
 INT32 driver_connect( CHAR *pAddress,
                       const CHAR *pUserName,
                       const CHAR *pPassword,

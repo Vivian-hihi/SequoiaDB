@@ -27,14 +27,29 @@ class SequoiaTimestamp
    /**
     * Constructor.
     *
-    * @param string $timestamp is timestamp string
+    * @param $timestamp is timestamp string
     *
     * @code
     * $timeObj = new SequoiaTimestamp( '2000-01-01-12.30.20.123456' ) ;
     * $arr = array( 'time' => $timeObj ) ; // json ==> { "time": { "$timestamp": "2000-01-01-12.30.20.123456" } }
     * @endcode
+    *
+    * @code default parameter, current timestamp. ( Available/Support on 2.10 or newer version. )
+    * $timeObj = new SequoiaTimestamp() ;
+    * $arr = array( 'time' => $timeObj ) ; // json ==> { "time": { "$timestamp": "2017-12-01-10.20.13.000000" } }
+    * @endcode
+    *
+    * @code string format(millisecond). ( Available/Support on 2.10 or newer version. )
+    * $timeObj = new SequoiaTimestamp( '946656000' ) ;
+    * $arr = array( 'time' => $timeObj ) ; // json ==> { "time": { "$timestamp": "2000-01-01-00.00.00.000000" } }
+    * @endcode
+    *
+    * @code integer(millisecond). ( Available/Support on 2.10 or newer version. )
+    * $timeObj = new SequoiaTimestamp( 946656000 ) ;
+    * $arr = array( 'time' => $timeObj ) ; // json ==> { "time": { "$timestamp": "2000-01-01-00.00.00.000000" } }
+    * @endcode
    */
-   public function __construct( $timestamp ){}
+   public function __construct( string|integer $timestamp ){}
 
    /**
     * PHP Magic Methods, the class as string output.
