@@ -15,6 +15,8 @@
 
 using namespace std ;
 
+// tdd begin
+
 #define SERVER1               "11800" // for catalog
 #define SERVER2               "20100" // for data
 #define USER1                 "sequoiadb"
@@ -48,6 +50,10 @@ using namespace std ;
 
 #define NAME_LEN              255
 
+#define CHECK_MSG(fmt, args ...) printf("%s[%d]:"fmt,__FILE__,__LINE__,##args)
+
+// tdd end
+
 #define CHECK_RC( expRc, actRc, fmt, ... ) \
 do { \
    if( expRc != actRc ) \
@@ -58,21 +64,19 @@ do { \
    } \
 } while( 0 ) ;
 
-
-#define CHECK_MSG(fmt, args ...) printf("%s[%d]:"fmt,__FILE__,__LINE__,##args)
+#define SDB_TEST_ERROR -10000
 
 SDB_EXTERN_C_START
 
 void printMsg( const CHAR* fmt, ... ) ;
 
-// create collection
+// create normal cs cl, no option
 INT32 createNormalCsCl( sdbConnectionHandle db, sdbCSHandle* cs, sdbCollectionHandle* cl,
 				            const CHAR* csName, const CHAR* clName ) ;
 
-// check standalone
 BOOLEAN isStandalone( sdbConnectionHandle db ) ;
 
-// get hostname like sdbserver1
+// get local hostname
 INT32 getLocalHost( CHAR hostName[], INT32 len ) ;
 
 // get idle port between RSRVPORTBEGIN and RSRVPORTEND
@@ -81,7 +85,7 @@ void getIdlePort( CHAR* port ) ;
 // get all data groups
 INT32 getGroups( sdbConnectionHandle db, vector<string>& groups ) ;
 
-// get all group nodes
+// get all nodes in group
 INT32 getGroupNodes( sdbConnectionHandle db, const CHAR* rgName, vector<string>& nodes ) ;
 
 // create lob and write buff
@@ -93,11 +97,11 @@ INT32 writeLob( sdbCollectionHandle cl, bson_oid_t oid, const CHAR* buff, INT32 
 // read lob, len: length want to read, read: actual read len
 INT32 readLob( sdbCollectionHandle cl, bson_oid_t oid, CHAR* buff, UINT32 len, UINT32* read ) ;
 
-// get lob size
 INT32 getLobSize( sdbCollectionHandle cl, bson_oid_t oid, SINT64* size ) ;
 
-// check oid equal
 BOOLEAN isOidEqual( bson_oid_t oid1, bson_oid_t oid2 ) ;
+
+// tdd begin
 
 /* display syntax error */
 void displaySyntax ( CHAR *pCommand );
@@ -217,6 +221,8 @@ INT32 isTranOn( sdbConnectionHandle db, BOOLEAN *flag ) ;
 INT32 gettid() ;
 
 INT32 bson_compare(const CHAR *pStr, const bson *b) ;
+
+// tdd end
 
 SDB_EXTERN_C_END
 

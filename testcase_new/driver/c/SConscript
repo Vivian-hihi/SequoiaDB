@@ -81,6 +81,10 @@ testFiles = [
    [ "./lob/lobReadEmpty13433.cpp" ],
    [ "./lob/lobLock13435.cpp" ],
    [ "./lob/lobLockAndSeek13436.cpp" ],
+   [ "./cls/getSlaveOnePos13781.cpp" ], # sync
+   [ "./cls/getSlaveMultiPos13782.cpp" ], # sync
+   [ "./cls/getSlaveNoPos13783.cpp" ], # sync
+   [ "./cls/getSlaveParaCheck13780.cpp" ],
    [ "./tdd/bson_test.cpp" ],
    [ "./tdd/cbson.cpp" ],
    [ "./tdd/collection.cpp" ],
