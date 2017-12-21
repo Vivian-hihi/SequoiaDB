@@ -1593,7 +1593,8 @@ public class Sequoiadb implements Closeable {
         throws BaseException {
         BSONObject rg = getDetailByName(rgName);
         if (rg == null) {
-            return null;
+            throw new BaseException(SDBError.SDB_CLS_GRP_NOT_EXIST,
+                    String.format("Group with the name[%s] does not exist", rgName));
         }
         return new ReplicaGroup(this, rgName);
     }
@@ -1607,7 +1608,8 @@ public class Sequoiadb implements Closeable {
     public ReplicaGroup getReplicaGroup(int rgId) throws BaseException {
         BSONObject rg = getDetailById(rgId);
         if (rg == null) {
-            return null;
+            throw new BaseException(SDBError.SDB_CLS_GRP_NOT_EXIST,
+                    String.format("Group with the name[%d] does not exist", rgId));
         }
         return new ReplicaGroup(this, rgId);
     }
