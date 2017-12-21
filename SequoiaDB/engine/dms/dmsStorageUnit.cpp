@@ -901,7 +901,7 @@ namespace engine
       if ( needCheck )
       {
          PD_CHECK( _su->LogicalCSID() == pCollectionStat->getSULogicalID(),
-                   SDB_DMS_NOTEXIST, error, PDWARNING, "Failed to get "
+                   SDB_DMS_CS_NOTEXIST, error, PDWARNING, "Failed to get "
                    "collection space [%s] for statistics", pCSName ) ;
       }
       else

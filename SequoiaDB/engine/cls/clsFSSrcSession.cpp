@@ -686,8 +686,13 @@ namespace engine
          if ( rc )
          {
             _mb.writePtr( oldSize ) ;
-            if ( SDB_DMS_EOC == rc || SDB_DMS_NOTEXIST == rc )
+            if ( SDB_DMS_EOC == rc ||
+                 SDB_DMS_NOTEXIST == rc ||
+                 SDB_DMS_TRUNCATED == rc )
             {
+               // Ignore errors:
+               // 1. end of collection
+               // 2. collection dropped or collection truncated
                rc = SDB_OK ;
                break ;
             }
@@ -1019,9 +1024,13 @@ namespace engine
 
       if ( SDB_DMS_EOC == rc ||
            SDB_RTN_CONTEXT_NOTEXIST == rc ||
-           SDB_DMS_NOTEXIST == rc )
+           SDB_DMS_NOTEXIST == rc ||
+           SDB_DMS_TRUNCATED == rc )
       {
-         // if we hit end of collection or contextID is already closed
+         // End the scan in below cases :
+         // 1. hit end of collection
+         // 2. contextID is already closed
+         // 3. collection dropped or collection truncated
          _findEnd = TRUE ;
 
          if ( 0 == _queryLen )
@@ -1241,6 +1250,9 @@ namespace engine
    error:
       if ( SDB_DMS_CS_NOTEXIST == rc || SDB_DMS_NOTEXIST == rc )
       {
+         // NOTE: could not ignore SDB_DMS_TRUNCATED, in that case, meta-data
+         // of indexes might not be dumped, so disconnect and let the
+         // destination node to restart the sync process
          res.header.res = rc ;
          res.header.header.messageLength = sizeof ( MsgClsFSMetaRes ) ;
          if ( SDB_OK == _agent->syncSend ( handle, (void*)&res ) )
