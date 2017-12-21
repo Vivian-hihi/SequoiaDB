@@ -1862,9 +1862,9 @@ namespace engine
    }
 
 
-UINT32 _dmsDump::dumpDmsLobMeta(CHAR *inBuf, UINT32 inSize,
-                                                                 CHAR * outBuf,UINT32 outSize, 
-                                                                 CHAR * addrPrefix, UINT32 options)
+UINT32 _dmsDump::dumpDmsLobMeta( CHAR *inBuf, UINT32 inSize,
+                                 CHAR * outBuf,UINT32 outSize,
+                                 CHAR * addrPrefix, UINT32 options )
 {
    UINT32 len           = 0 ;
    UINT32 hexDumpOption = 0 ;
