@@ -117,7 +117,7 @@ class TestDate11191 extends PHPUnit_Framework_TestCase
       $expRecsArray = array( 
          //array( 'a' => 0,  'b' => new SequoiaTimestamp() ),  //nonsuport
          array( 'a' => 1,  'b' => "1902-01-01-00.00.00.000000" ), 
-         array( 'a' => 2,  'b' => "2037-12-31-23.00.00.000000" ), 
+         array( 'a' => 2,  'b' => "2037-12-31-23.59.59.999999" ), 
          array( 'a' => 3,  'b' => "1902-01-01-08.05.52.000000" ), 
          array( 'a' => 4,  'b' => "2038-01-01-07.59.59.999000" ), 
          array( 'a' => 5,  'b' => "1902-01-01-00.05.52.000000" ), 
@@ -136,6 +136,15 @@ class TestDate11191 extends PHPUnit_Framework_TestCase
             $this -> assertContains( "2038-01-01", $actRecsArray[$i]['b'] -> __toString(), '$i = '.$i );
          } 
       }
+   }
+   
+   function test_dropCL()
+   {
+      echo "\n---Begin to drop cl in the end.\n";
+      
+      self::$dbh -> dropCL( self::$csName, self::$clName, false );
+      $errno = self::$dbh -> getErrno();
+      $this -> assertEquals( 0, $errno );
    }
   
 }
