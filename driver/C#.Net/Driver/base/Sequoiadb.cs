@@ -1455,7 +1455,9 @@ namespace SequoiaDB
                     try
                     {
                         if (!detail[SequoiadbConstants.FIELD_GROUPID].IsInt32)
+                        {
                             throw new BaseException("SDB_SYS");
+                        }
                         int groupID = detail[SequoiadbConstants.FIELD_GROUPID].AsInt32;
                         return new ReplicaGroup(this, groupName, groupID);
                     }
@@ -1465,10 +1467,14 @@ namespace SequoiaDB
                     }
                 }
                 else
-                    return null;
+                {
+                    throw new BaseException("SDB_CLS_GRP_NOT_EXIST");
+                }
             }
             else
-                throw new BaseException("SDB_SYS");
+            {
+                throw new BaseException("SDB_CLS_GRP_NOT_EXIST");
+            }
         }
 
         /** \fn ReplicaGroup GetReplicaGroup(int groupID)
@@ -1488,10 +1494,13 @@ namespace SequoiaDB
             {
                 BsonDocument detail = cursor.Next();
                 if (detail != null)
+                {
                     try
                     {
                         if (!detail[SequoiadbConstants.FIELD_GROUPNAME].IsString)
+                        {
                             throw new BaseException("SDB_SYS");
+                        }
                         string groupName = detail[SequoiadbConstants.FIELD_GROUPNAME].AsString;
                         return new ReplicaGroup(this, groupName, groupID);
                     }
@@ -1499,11 +1508,16 @@ namespace SequoiaDB
                     {
                         throw new BaseException("SDB_SYS");
                     }
+                }
                 else
-                    return null;
+                {
+                    throw new BaseException("SDB_CLS_GRP_NOT_EXIST");
+                }
             }
             else
-                throw new BaseException("SDB_SYS");
+            {
+                throw new BaseException("SDB_CLS_GRP_NOT_EXIST");
+            }
         }
 
         /** \fn ReplicaGroup CreateReplicaGroup(string groupName)
