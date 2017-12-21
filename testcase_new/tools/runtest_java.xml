@@ -20,24 +20,24 @@
 
       <switch value="${TESTCASE_TYPE}">
          <case value="driver_java">             
-            <property name="testcase_dir" value="${basedir}/../../driver/java"/>
-            <property name="report_dir" value="${basedir}/../../driver/java"/>
+            <property name="testcase_dir" value="${basedir}/../../testcase_new/driver/java"/>
+            <property name="report_dir" value="${basedir}/../../testcase_new/driver/java"/>
          </case>
          <case value="tdd_java">             
-            <property name="testcase_dir" value="${basedir}/../../tdd/java"/>
-            <property name="report_dir" value="${basedir}/../../tdd/java"/>
+            <property name="testcase_dir" value="${basedir}/../../testcase_new/tdd/java"/>
+            <property name="report_dir" value="${basedir}/../../testcase_new/tdd/java"/>
          </case>
          <case value="story_java">             
-            <property name="testcase_dir" value="${basedir}/../../story/java"/>
-            <property name="report_dir" value="${basedir}/../../story/java"/>
+            <property name="testcase_dir" value="${basedir}/../../testcase_new/story/java"/>
+            <property name="report_dir" value="${basedir}/../../testcase_new/story/java"/>
          </case>
          <case value="reliability">
-            <property name="testcase_dir" value="${basedir}/../../reliability"/>
-            <property name="report_dir" value="${basedir}/../../reliability"/>
+            <property name="testcase_dir" value="${basedir}/../../testcase_new/reliability"/>
+            <property name="report_dir" value="${basedir}/../../testcase_new/reliability"/>
          </case>
          <default>
-            <property name="testcase_dir" value="${basedir}/../../sdv/java"/>
-            <property name="report_dir" value="${basedir}/../../sdv/java"/>
+            <property name="testcase_dir" value="${basedir}/../../testcase_new/sdv/java"/>
+            <property name="report_dir" value="${basedir}/../../testcase_new/sdv/java"/>
          </default>
       </switch>
       <mkdir dir="${report_dir}"/>
