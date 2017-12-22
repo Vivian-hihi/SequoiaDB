@@ -54,7 +54,8 @@
             <antcall target="generate_node_start_report"/>
          </then>
       </if>
-      
+      <!-- detect node lsn and group has primary node -->
+      <antcall target="detect_db_cluster"/>
       <!-- cp report to ${WORKSPACE}/report-->
       <delete dir="${WORKSPACE}/report/env_detect"/>
       <copy todir="${WORKSPACE}/report/env_detect">
@@ -395,4 +396,47 @@
          </else>
       </if> 
    </target>
+
+   <target name="detect_db_cluster">
+      <detectenv envisok="envrc" casetype="detect_env" casename="db_group"
+                    rptfullname="${report_dir}/after_detect_env_db_group.xml" />
+   </target>
+   <macrodef name="detectenv">
+      <attribute name="envisok" />
+      <attribute name="rptfullname"/>
+      <attribute name="casetype"/>
+      <attribute name="casename"/>
+      <sequential>
+      <property file="${basedir}/src/conf/test.conf" /> 
+      <propertyregex property="firsthost" input="${testhost_list}" regexp=",(.*)" replace="" defaultValue="${testhost_list}"/>
+      <var name="sdbshell" value="${INSTALL_DIR}/bin/sdb"/>
+      <var name="cmd1" value="-f &quot;${basedir}/src/solve_result/detect_db_datagroup.js&quot;" />
+      <var name="cmd2" value="-e &quot;var COORDSVCNAME='${SVCNAME}';var COORDHOSTNAME='localhost'&quot;" />
+      <echo message="exec cmd: ${sdbshell} ${cmd1} ${cmd2}"/>
+      <var name="output" unset="true"/>
+      <var name="@{envisok}" unset="true"/>
+      <exec executable="${sdbshell}" 
+            timeout="1800000" 
+            outputproperty="output" 
+            resultproperty="@{envisok}"
+            failonerror="false">
+         <arg line="${cmd1} ${cmd2}" />
+      </exec>
+      <echo message="${output}"/>
+      <if>
+         <not>
+            <equals arg1="${@{envisok}}" arg2="0"/>
+         </not>
+         <then>
+            <copy file="${basedir}/src/test/exec_testcase/report_fail_temple.xml" tofile="@{rptfullname}"/>
+            <replace file="@{rptfullname}" token="ERROR_MESSAGE" value="${output}"/>
+            <replace file="@{rptfullname}" token="TESTSUIT_NAME" value="detect_env"/>
+            <replace file="@{rptfullname}" token="TESTCASE_TYPE" value="@{casetype}"/>
+            <propertyregex property="casename" input="@{casename}" defaultValue="@{casename}"
+                           regexp="\." replace="_" override="true"/> 
+            <replace file="@{rptfullname}" token="TESTCASE_NAME" value="final_${casename}"/>
+         </then>
+      </if>
+      </sequential>
+   </macrodef>
 </project>
