@@ -2453,7 +2453,7 @@ SDB_EXPORT INT32 sdbForceStepUp( sdbConnectionHandle cHandle,
 SDB_EXPORT INT32 sdbTruncateCollection( sdbConnectionHandle cHandle,
                                         const CHAR *fullName ) ;
 
-/** \fn INT32 sdbPop( sdbConnectionHandle cHandle,
+/* \fn INT32 sdbPop( sdbConnectionHandle cHandle,
                       const CHAR *fullName,
                       bson *options )
     \brief pop records from capped collection

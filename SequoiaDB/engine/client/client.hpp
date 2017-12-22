@@ -96,6 +96,9 @@ enum _SDB_LOB_OPEN_MODE
    SDB_LOB_READ       = 0x00000004, /**< Open an existing lob to read */
    SDB_LOB_WRITE      = 0x00000008  /**< Open an existing lob to write */
 } ;
+/** \typedef enum _SDB_LOB_OPEN_MODE SDB_LOB_OPEN_MODE
+    \brief The open mode.
+*/
 typedef enum _SDB_LOB_OPEN_MODE SDB_LOB_OPEN_MODE ;
 
 enum _SDB_LOB_SEEK
@@ -104,6 +107,9 @@ enum _SDB_LOB_SEEK
    SDB_LOB_SEEK_CUR,     /**< Seek from the current place */
    SDB_LOB_SEEK_END      /**< Seek from the end of file  */
 } ;
+/** \typedef enum _SDB_LOB_SEEK SDB_LOB_SEEK
+    \brief The whence of seek.
+*/
 typedef enum _SDB_LOB_SEEK SDB_LOB_SEEK ;
 
 /** \namespace sdbclient
@@ -1038,7 +1044,7 @@ namespace sdbclient
       }*/
 
 /** \fn INT32 createIndex ( const bson::BSONObj &indexDef,
-                            const CHAR *pName,
+                            const CHAR *pIndexName,
                             BOOLEAN isUnique,
                             BOOLEAN isEnforced
                           )
@@ -1052,19 +1058,19 @@ namespace sdbclient
     \retval Others Operation Fail
 */
       INT32 createIndex ( const bson::BSONObj &indexDef,
-                          const CHAR *pName,
+                          const CHAR *pIndexName,
                           BOOLEAN isUnique,
                           BOOLEAN isEnforced
                         )
       {
          if ( !pCollection )
             return SDB_NOT_CONNECTED ;
-         return pCollection->createIndex ( indexDef, pName, isUnique,
+         return pCollection->createIndex ( indexDef, pIndexName, isUnique,
                                            isEnforced ) ;
       }
 
 /** \fn INT32 createIndex ( const bson::BSONObj &indexDef,
-                            const CHAR *pName,
+                            const CHAR *pIndexName,
                             BOOLEAN isUnique,
                             BOOLEAN isEnforced,
                             INT32 sortBufferSize )
@@ -1080,60 +1086,60 @@ namespace sdbclient
     \retval Others Operation Fail
 */
       INT32 createIndex ( const bson::BSONObj &indexDef,
-                          const CHAR *pName,
+                          const CHAR *pIndexName,
                           BOOLEAN isUnique,
                           BOOLEAN isEnforced,
                           INT32 sortBufferSize )
       {
          if ( !pCollection )
             return SDB_NOT_CONNECTED ;
-         return pCollection->createIndex ( indexDef, pName, isUnique,
+         return pCollection->createIndex ( indexDef, pIndexName, isUnique,
                                            isEnforced, sortBufferSize ) ;
       }
 
 /* \fn INT32 getIndexes ( _sdbCursor **cursor,
-                         const CHAR *pName )
+                         const CHAR *pIndexName )
     \brief Get all of or one of the indexes in current collection
-    \param [in] pName  The index name, returns all of the indexes if this parameter is null
+    \param [in] pIndexName  The index name, returns all of the indexes if this parameter is null
     \param [out] cursor The cursor of all the result for current query
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
       INT32 getIndexes ( _sdbCursor **cursor,
-                         const CHAR *pName )
+                         const CHAR *pIndexName )
       {
          if ( !pCollection )
             return SDB_NOT_CONNECTED ;
-         return pCollection->getIndexes ( cursor, pName ) ;
+         return pCollection->getIndexes ( cursor, pIndexName ) ;
       }
 
 /** \fn INT32 getIndexes ( sdbCursor &cursor,
-                         const CHAR *pName )
+                         const CHAR *pIndexName )
     \brief Get all of or one of the indexes in current collection
-    \param [in] pName  The index name, returns all of the indexes if this parameter is null
+    \param [in] pIndexName  The index name, returns all of the indexes if this parameter is null
     \param [out] cursor The cursor of all the result for current query
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
       INT32 getIndexes ( sdbCursor &cursor,
-                         const CHAR *pName )
+                         const CHAR *pIndexName )
       {
          if ( !pCollection )
             return SDB_NOT_CONNECTED ;
-         return pCollection->getIndexes ( cursor, pName ) ;
+         return pCollection->getIndexes ( cursor, pIndexName ) ;
       }
 
-/** \fn INT32 dropIndex ( const CHAR *pName )
+/** \fn INT32 dropIndex ( const CHAR *pIndexName )
     \brief Drop the index in current collection
-    \param [in] pName The index name
+    \param [in] pIndexName The index name
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
-      INT32 dropIndex ( const CHAR *pName )
+      INT32 dropIndex ( const CHAR *pIndexName )
       {
          if ( !pCollection )
             return SDB_NOT_CONNECTED ;
-         return pCollection->dropIndex ( pName ) ;
+         return pCollection->dropIndex ( pIndexName ) ;
       }
 
 /** \fn INT32 create ()
@@ -1233,9 +1239,9 @@ namespace sdbclient
 }
 
 /* \fn  INT32 getQueryMeta ( _sdbCursor **cursor,
-                             const bson::BSONObj &condition,
-                             const bson::BSONObj &selected,
-                             const bson::BSONObj &orderBy,
+                             const bson::BSONObj &condition = _sdbStaticObject,
+                             const bson::BSONObj &selected = _sdbStaticObject,
+                             const bson::BSONObj &orderBy = _sdbStaticObject,
                              INT64 numToSkip = 0,
                              INT64 numToReturn = -1 ) ;
     \brief Get the index blocks' or data blocks' infomation for concurrent query
@@ -1252,16 +1258,16 @@ namespace sdbclient
     \retval Others Operation Fail
 */
    INT32 getQueryMeta ( _sdbCursor **cursor,
-                             const bson::BSONObj &condition,
-                             const bson::BSONObj &orderBy,
-                             const bson::BSONObj &hint,
+                             const bson::BSONObj &condition = _sdbStaticObject,
+                             const bson::BSONObj &orderBy = _sdbStaticObject,
+                             const bson::BSONObj &hint = _sdbStaticObject,
                              INT64 numToSkip = 0,
                              INT64 numToReturn = -1 ) ;
 
 /** \fn  INT32 getQueryMeta ( sdbCursor &cursor,
-                         const bson::BSONObj &condition,
-                         const bson::BSONObj &selected,
-                         const bson::BSONObj &orderBy,
+                         const bson::BSONObj &condition = _sdbStaticObject,
+                         const bson::BSONObj &selected = _sdbStaticObject,
+                         const bson::BSONObj &orderBy = _sdbStaticObject,
                          INT64 numToSkip = 0,
                          INT64 numToReturn = -1 )
     \brief Get the index blocks' or data blocks' infomations for concurrent query
@@ -1279,9 +1285,9 @@ namespace sdbclient
     \retval Others Operation Fail
 */
     INT32 getQueryMeta ( sdbCursor &cursor,
-                         const bson::BSONObj &condition,
-                         const bson::BSONObj &orderBy,
-                         const bson::BSONObj &hint,
+                         const bson::BSONObj &condition = _sdbStaticObject,
+                         const bson::BSONObj &orderBy = _sdbStaticObject,
+                         const bson::BSONObj &hint = _sdbStaticObject,
                          INT64 numToSkip = 0,
                          INT64 numToReturn = -1 )
     {
@@ -1301,7 +1307,7 @@ namespace sdbclient
     \retval Others Operation Fail
 */
     INT32 attachCollection ( const CHAR *subClFullName,
-                                      const bson::BSONObj &options)
+                             const bson::BSONObj &options)
     {
        if ( !pCollection )
           return SDB_NOT_CONNECTED ;
@@ -1322,14 +1328,14 @@ namespace sdbclient
     }
 
 /** \fn INT32 explain ( sdbCursor &cursor,
-                    const bson::BSONObj &condition,
-                    const bson::BSONObj &select,
-                    const bson::BSONObj &orderBy,
-                    const bson::BSONObj &hint,
-                    INT64 numToSkip,
-                    INT64 numToReturn,
-                    INT32 flag,
-                    const bson::BSONObj &options )
+                    const bson::BSONObj &condition = _sdbStaticObject,
+                    const bson::BSONObj &select = _sdbStaticObject,
+                    const bson::BSONObj &orderBy = _sdbStaticObject,
+                    const bson::BSONObj &hint = _sdbStaticObject,
+                    INT64 numToSkip = 0,
+                    INT64 numToReturn = -1,
+                    INT32 flag = 0,
+                    const bson::BSONObj &options = _sdbStaticObject )
     \brief Get access plan of query.
     \param [in] condition The matching rule, return all the documents if null
     \param [in] select The selective rule, return the whole document if null
@@ -1485,7 +1491,7 @@ namespace sdbclient
         return pCollection->dropIdIndex() ;
     }
 
-/** \fn INT32 pop()
+/* \fn INT32 pop()
     \brief Pop records from a capped collection
     \param [in] option The arguments to pop records.
     \retval SDB_OK Operation Success
@@ -1551,10 +1557,10 @@ namespace sdbclient
    } ;
 
 /** \class sdbNode
-    \brief Database operation interfaces of node. This class takes the place of class "replicaNode".
+    \brief Database operation interfaces of node. This class takes the place of class "sdbReplicaNode".
     \note We use concept "node" instead of "replica node",
-            and change the class name "ReplicaNode" to "Node".
-            class "ReplicaNode" will be deprecated in version 2.x.
+            and change the class name "sdbReplicaNode" to "sdbNode".
+            class "sdbReplicaNode" will be deprecated in version 2.x.
 */
    class DLLEXPORT sdbNode
    {
@@ -1820,7 +1826,7 @@ namespace sdbclient
     \param [out] num The count of node.
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
-    \deprecated Since v2.8, the status of node are invalid,
+    \deprecated Since v2.6, the status of node are invalid,
                 never use this api again.
 */
       INT32 getNodeNum ( sdbNodeStatus status, INT32 *num )
@@ -4515,10 +4521,10 @@ namespace sdbclient
       }
 
 /** \fn INT32 listDomains ( sdbCursor &cursor,
-                          const bson::BSONObj &condition,
-                          const bson::BSONObj &selector,
-                          const bson::BSONObj &orderBy,
-                          const bson::BSONObj &hint ) ;
+                          const bson::BSONObj &condition = _sdbStaticObject,
+                          const bson::BSONObj &selector = _sdbStaticObject,
+                          const bson::BSONObj &orderBy = _sdbStaticObject,
+                          const bson::BSONObj &hint = _sdbStaticObject ) ;
     \brief List the domains.
     \param [in] condition The matching rule, return all the documents if null
     \param [in] selector The selective rule, return the whole document if null
@@ -4532,17 +4538,17 @@ namespace sdbclient
     \retval Others Operation Fail
 */
       INT32 listDomains ( sdbCursor &cursor,
-                          const bson::BSONObj &condition,
-                          const bson::BSONObj &selector,
-                          const bson::BSONObj &orderBy,
-                          const bson::BSONObj &hint )
+                          const bson::BSONObj &condition = _sdbStaticObject,
+                          const bson::BSONObj &selector = _sdbStaticObject,
+                          const bson::BSONObj &orderBy = _sdbStaticObject,
+                          const bson::BSONObj &hint = _sdbStaticObject )
       {
          if ( !pSDB )
             return SDB_NOT_CONNECTED ;
          return pSDB->listDomains ( cursor, condition, selector, orderBy, hint ) ;
       }
 
-      /** \fn INT32 getDC( sdbDataCenter &dc )
+      /* \fn INT32 getDC( sdbDataCenter &dc )
           \brief Get current data center.
           \retval SDB_OK Operation Success
           \retval Others Operation Fail
