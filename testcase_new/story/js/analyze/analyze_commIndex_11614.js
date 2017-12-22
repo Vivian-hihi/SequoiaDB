@@ -18,6 +18,7 @@ function main()
    
    //创建索引
    commCreateIndex( dbcl, "a", {a:1});
+   commCreateIndex( dbcl, "a1", {a1:1});
    
    //插入记录
 	insertDiffDatas( dbcl, insertNum );
@@ -33,53 +34,64 @@ function main()
 	
 	//检查统计信息
    checkStat( db, COMMCSNAME, clName, "a", false, false );
+   checkStat( db, COMMCSNAME, clName, "a1", false, false );
    
    //检查主备节点访问计划
    var findConf = {a:sameValues};
    var expExplains = [{ScanType:"ixscan", IndexName:"a", ReturnNum:insertNum}];
-   
    var actExplains = getCommonExplain( dbclPrimary, findConf);
    checkExplain( actExplains, expExplains );
-   
    var actExplains = getCommonExplain( dbclSlave, findConf);
    checkExplain( actExplains, expExplains );
 	
+	var findConf = {a1:sameValues};
+   var expExplains = [{ScanType:"ixscan", IndexName:"a1", ReturnNum:insertNum}];
+   var actExplains = getCommonExplain( dbclPrimary, findConf);
+   checkExplain( actExplains, expExplains );
+   var actExplains = getCommonExplain( dbclSlave, findConf);
+   checkExplain( actExplains, expExplains );
 	println("check result before analyze success!");
 
    //执行统计
    analyze( db, {Collection: COMMCSNAME + "." + clName, Index: "a"} );
    
-   
    //检查统计信息
    checkStat( db, COMMCSNAME, clName, "a", true, true );
+   checkStat( db, COMMCSNAME, clName, "a1", true, false );
    
    //检查主备节点访问计划
    var findConf = {a:sameValues};
    var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}];
-   
    var actExplains = getCommonExplain( dbclPrimary, findConf);
    checkExplain( actExplains, expExplains );
-   
    var actExplains = getCommonExplain( dbclSlave, findConf);
    checkExplain( actExplains, expExplains );
    
+   var findConf = {a1:sameValues};
+   var expExplains = [{ScanType:"ixscan", IndexName:"a1", ReturnNum:insertNum}];
+   var actExplains = getCommonExplain( dbclPrimary, findConf);
+   checkExplain( actExplains, expExplains );
+   var actExplains = getCommonExplain( dbclSlave, findConf);
+   checkExplain( actExplains, expExplains );
    println("check result after analyze success!");
    
    //删除索引
    commDropIndex( dbcl, "a" );
    
-   //指定不存在的索引执行统计信息，部分数据组未执行成功报-264，数据节点未执行成功报-47
+   //指定不存在的索引执行统计信息
+   /*
    try
    {
       db.analyze({Collection: COMMCSNAME + "." + clName, Index: "a"});
       throw "NEED_ERR";
    }catch(e)
    {
-      if(e !== -264 && e !== -47)
+      if(e !== -264)
       {
          throw e;
       }
    }
+   */
    
    //不指定cl但指定索引收集统计信息
    try

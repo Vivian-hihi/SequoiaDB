@@ -18,6 +18,7 @@ function main()
    
    //创建索引
    commCreateIndex( dbcl, "a", {a:1});
+   commCreateIndex( dbcl, "a1", {a1:1});
    
    //插入记录
 	insertDiffDatas( dbcl, insertNum );
@@ -36,17 +37,22 @@ function main()
    
    //检查统计信息
    checkStat( db, COMMCSNAME, clName, "a", true, true );
+   checkStat( db, COMMCSNAME, clName, "a1", true, true );
    
    //检查主备节点访问计划
    var findConf = {a:sameValues};
    var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}];
-   
    var actExplains = getCommonExplain( dbclPrimary, findConf);
    checkExplain( actExplains, expExplains );
-   
    var actExplains = getCommonExplain( dbclSlave, findConf);
    checkExplain( actExplains, expExplains );
    
+   var findConf = {a1:sameValues};
+   var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}];
+   var actExplains = getCommonExplain( dbclPrimary, findConf);
+   checkExplain( actExplains, expExplains );
+   var actExplains = getCommonExplain( dbclSlave, findConf);
+   checkExplain( actExplains, expExplains );
    println("check result after analyze success!");
    
    //生成默认统计信息
@@ -54,17 +60,22 @@ function main()
    
    //检查统计信息
    checkStat( db, COMMCSNAME, clName, "a", true, false );
+   checkStat( db, COMMCSNAME, clName, "a1", true, true );
    
    //检查主备节点访问计划
    var findConf = {a:sameValues};
    var expExplains = [{ScanType:"ixscan", IndexName:"a", ReturnNum:insertNum}];
-   
    var actExplains = getCommonExplain( dbclPrimary, findConf);
    checkExplain( actExplains, expExplains );
-   
    var actExplains = getCommonExplain( dbclSlave, findConf);
    checkExplain( actExplains, expExplains );
    
+   var findConf = {a1:sameValues};
+   var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}];
+   var actExplains = getCommonExplain( dbclPrimary, findConf);
+   checkExplain( actExplains, expExplains );
+   var actExplains = getCommonExplain( dbclSlave, findConf);
+   checkExplain( actExplains, expExplains );
    println("check result analyze mode set 3 success!");
    
    //手工修改主节点统计信息
@@ -77,17 +88,22 @@ function main()
    
    //检查统计信息
    checkStat( db, COMMCSNAME, clName, "a", true, true );
+   checkStat( db, COMMCSNAME, clName, "a1", true, true );
    
    //检查主备节点访问计划
    var findConf = {a:sameValues};
    var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}];
-   
    var actExplains = getCommonExplain( dbclPrimary, findConf);
    checkExplain( actExplains, expExplains );
-   
    var actExplains = getCommonExplain( dbclSlave, findConf);
    checkExplain( actExplains, expExplains );
    
+   var findConf = {a1:sameValues};
+   var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}];
+   var actExplains = getCommonExplain( dbclPrimary, findConf);
+   checkExplain( actExplains, expExplains );
+   var actExplains = getCommonExplain( dbclSlave, findConf);
+   checkExplain( actExplains, expExplains );
    println("check result analyze mode set 4 success!");
    
    //清空统计信息
@@ -95,17 +111,22 @@ function main()
    
    //检查统计信息
    checkStat( db, COMMCSNAME, clName, "a", true, true );
+   checkStat( db, COMMCSNAME, clName, "a1", true, true );
    
    //检查主备节点访问计划
    var findConf = {a:sameValues};
    var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}];
-   
    var actExplains = getCommonExplain( dbclPrimary, findConf);
    checkExplain( actExplains, expExplains );
-   
    var actExplains = getCommonExplain( dbclSlave, findConf);
    checkExplain( actExplains, expExplains );
    
+   var findConf = {a1:sameValues};
+   var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}];
+   var actExplains = getCommonExplain( dbclPrimary, findConf);
+   checkExplain( actExplains, expExplains );
+   var actExplains = getCommonExplain( dbclSlave, findConf);
+   checkExplain( actExplains, expExplains );
    println("check result analyze mode set 5 success!");
    
    //再次更新统计信息
@@ -115,17 +136,22 @@ function main()
    
    //检查统计信息
    checkStat( db, COMMCSNAME, clName, "a", true, true );
+   checkStat( db, COMMCSNAME, clName, "a1", true, true );
    
    //检查主备节点访问计划
    var findConf = {a:sameValues};
    var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}];
-   
    var actExplains = getCommonExplain( dbclPrimary, findConf);
    checkExplain( actExplains, expExplains );
-   
    var actExplains = getCommonExplain( dbclSlave, findConf);
    checkExplain( actExplains, expExplains );
    
+   var findConf = {a1:sameValues};
+   var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}];
+   var actExplains = getCommonExplain( dbclPrimary, findConf);
+   checkExplain( actExplains, expExplains );
+   var actExplains = getCommonExplain( dbclSlave, findConf);
+   checkExplain( actExplains, expExplains );
    println("check result after update index stat but no analyze success!");
    
    //再次清空缓存
@@ -133,17 +159,22 @@ function main()
    
    //检查统计信息
    checkStat( db, COMMCSNAME, clName, "a", true, true );
+   checkStat( db, COMMCSNAME, clName, "a1", true, true );
    
    //检查主备节点访问计划
    var findConf = {a:sameValues};
    var expExplains = [{ScanType:"ixscan", IndexName:"a", ReturnNum:insertNum}];
-   
    var actExplains = getCommonExplain( dbclPrimary, findConf);
    checkExplain( actExplains, expExplains );
-   
    var actExplains = getCommonExplain( dbclSlave, findConf);
    checkExplain( actExplains, expExplains );
    
+   var findConf = {a1:sameValues};
+   var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}];
+   var actExplains = getCommonExplain( dbclPrimary, findConf);
+   checkExplain( actExplains, expExplains );
+   var actExplains = getCommonExplain( dbclSlave, findConf);
+   checkExplain( actExplains, expExplains );
    println("check result after update index stat and analyze mode set 5 success!");
    
    //清理环境
