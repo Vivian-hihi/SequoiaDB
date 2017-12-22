@@ -131,6 +131,8 @@ namespace engine
          void              updateClusterHostFilePrivilege( string clusterName,
                                                            BOOLEAN privilege ) ;
 
+         void getUpdatePluginPasswdTimeDiffer( INT64 &differ ) ;
+
          omTaskManager     *getTaskManager() ;
 
       public:
@@ -193,9 +195,9 @@ namespace engine
                                            INT32 flag, 
                                            rtnContextBuf &buffObj ) ;
 
-         void              _checkSsqlTimeout() ;
-
          void              _checkTaskTimeout( const BSONObj &task ) ;
+
+         INT32 _updatePluginPasswd() ;
 
          void              _createVersionFile() ;
 
@@ -234,7 +236,8 @@ namespace engine
 
          omTaskManager                          *_taskManager ;
 
-         UINT64                                 _ssqlCheckTimer ;
+         INT64                                  _updateTimestamp ;
+         UINT64                                 _updatePluinUsrTimer ;
 
          BOOLEAN                                _isInitTable ;
    } ;

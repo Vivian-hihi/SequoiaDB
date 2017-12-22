@@ -40,6 +40,8 @@
 #include "omTaskManager.hpp"
 #include "omStrategyMgr.hpp"
 #include "../bson/lib/md5.hpp"
+#include "../bson/lib/base64.h"
+#include "../util/des.h"
 #include "ossPath.hpp"
 #include "ossProc.hpp"
 #include "ossVer.hpp"
@@ -10422,8 +10424,9 @@ namespace engine
                                          pmdRestSession *pRestSession,
                                          const string &localAgentHost,
                                          const string &localAgentPort )
-                     :omScanHostCommand( pRestAdaptor, pRestSession,
-                                         localAgentHost, localAgentPort )
+                     : omAuthCommand( pRestAdaptor, pRestSession ),
+                       _localAgentHost( localAgentHost ),
+                       _localAgentService( localAgentPort )
    {
    }
 
@@ -10431,247 +10434,212 @@ namespace engine
    {
    }
 
-   INT32 omSsqlExecCommand::_parseRestSsqlExecInfo()
-   {
-      INT32 rc = SDB_OK ;
-      const CHAR *pClusterName  = NULL ;
-      const CHAR *pBusinessName = NULL ;
-      const CHAR *pDbName       = NULL ;
-      const CHAR *pUser         = NULL ;
-      const CHAR *pPasswd       = NULL ;
-      const CHAR *pSql          = NULL ;
-      const CHAR *pResultFormat = NULL ;
-      BSONObj selector ;
-      BSONObj matcher ;
-      BSONObj order ;
-      BSONObj hint ;
-      list <BSONObj> records ;
-      BSONObj businessInfo ;
-      BSONElement element ;
-      string businessType ;
-
-      _restAdaptor->getQuery( _restSession, OM_BUSINESS_FIELD_CLUSTERNAME,
-                              &pClusterName ) ;
-      _restAdaptor->getQuery( _restSession, OM_BUSINESS_FIELD_NAME,
-                              &pBusinessName ) ;
-      if ( NULL == pClusterName || NULL == pBusinessName )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "get rest info failed:%s is NULL or %s is NULL",
-                     OM_BUSINESS_FIELD_CLUSTERNAME, OM_BUSINESS_FIELD_NAME ) ;
-         goto error ;
-      }
-
-      _clusterName  = pClusterName ;
-      _businessName = pBusinessName ;
-
-      matcher = BSON( OM_BUSINESS_FIELD_CLUSTERNAME << pClusterName
-                      << OM_BUSINESS_FIELD_NAME << pBusinessName ) ;
-      _queryTable( OM_CS_DEPLOY_CL_BUSINESS, selector, matcher, order,
-                      hint, 0, 0, -1, records ) ;
-      if ( records.size() != 1 )
-      {
-         rc = SDB_OM_BUSINESS_NOT_EXIST ;
-         PD_LOG_MSG( PDERROR, "business is not exist:cluster=%s,business=%s",
-                     pClusterName, pBusinessName ) ;
-         goto error ;
-      }
-
-      businessInfo = *records.begin() ;
-      businessType = businessInfo.getStringField( OM_BUSINESS_FIELD_TYPE ) ;
-      if ( OM_BUSINESS_SEQUOIASQL != businessType )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "business is not %s:cluster=%s,business=%s,"
-                     "businessType=%s", OM_BUSINESS_SEQUOIASQL, pClusterName,
-                     pBusinessName, businessType.c_str() ) ;
-         goto error ;
-      }
-      //ssql's host
-      element = businessInfo.getFieldDotted( OM_BUSINESS_FIELD_INFO"."
-                                             OM_BSON_FIELD_HOST_NAME ) ;
-      _ssqlHost = element.String() ;
-
-      //ssql's port
-      element = businessInfo.getFieldDotted( OM_BUSINESS_FIELD_INFO"."
-                                             OM_BSON_FIELD_SVCNAME ) ;
-      _ssqlService = element.String() ;
-
-      //ssql's installpath
-      element = businessInfo.getFieldDotted( OM_BUSINESS_FIELD_INFO"."
-                                             OM_BSON_FIELD_INSTALL_PATH ) ;
-      _ssqlInstallPath = element.String() ;
-
-      //ssql's dbname
-      element = businessInfo.getFieldDotted( OM_BUSINESS_FIELD_INFO"."
-                                             OM_REST_DBNAME ) ;
-      _dbName = element.String() ;
-
-      //ssql's dbuser
-      element = businessInfo.getFieldDotted( OM_BUSINESS_FIELD_INFO"."
-                                             OM_BSON_FIELD_HOST_USER ) ;
-      _user   = element.String() ;
-
-      //ssql's passwd
-      element = businessInfo.getFieldDotted( OM_BUSINESS_FIELD_INFO"."
-                                             OM_BSON_FIELD_HOST_PASSWD ) ;
-      _passwd = element.String() ;
-
-      _dbUser   = _user ;
-      _dbPasswd = _passwd ;
-
-      _restAdaptor->getQuery( _restSession, OM_REST_SQL, &pSql ) ;
-      _restAdaptor->getQuery( _restSession, OM_REST_RESULT_FORMAT,
-                              &pResultFormat ) ;
-      if ( NULL == pSql )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "get rest field failed:field=%s",
-                     OM_REST_SQL) ;
-         goto error ;
-      }
-
-      if ( NULL == pResultFormat )
-      {
-         _resultFormat = "" ;
-      }
-      else
-      {
-         _resultFormat = pResultFormat ;
-      }
-
-      _sql = pSql ;
-
-      _restAdaptor->getQuery( _restSession, OM_REST_DBNAME, &pDbName ) ;
-      _restAdaptor->getQuery( _restSession, OM_REST_DBUSER, &pUser ) ;
-      _restAdaptor->getQuery( _restSession, OM_REST_DBPASSWD, &pPasswd ) ;
-      if ( NULL != pDbName )
-      {
-         _dbName = pDbName ;
-      }
-
-      if ( NULL != pUser )
-      {
-         _dbUser = pUser ;
-      }
-
-      if ( NULL != pPasswd )
-      {
-         _dbPasswd = pPasswd ;
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 omSsqlExecCommand::_sendTaskInfo2Web( INT64 taskID )
-   {
-      BSONObj result = BSON( OM_BSON_TASKID << (long long)taskID ) ;
-      _restAdaptor->appendHttpBody( _restSession, result.objdata(),
-                                    result.objsize(), 1 ) ;
-      _sendOKRes2Web() ;
-
-      return SDB_OK ;
-   }
-
-   INT32 omSsqlExecCommand::_generateSsqlTaskInfo( BSONObj &taskInfo,
-                                                   BSONArray &resultInfo )
-   {
-      INT32 rc = SDB_OK ;
-      BSONArrayBuilder arrayBuilder ;
-
-      taskInfo = BSON( OM_BUSINESS_FIELD_CLUSTERNAME << _clusterName
-                       << OM_BUSINESS_FIELD_NAME << _businessName
-                       << OM_BSON_FIELD_HOST_NAME << _ssqlHost
-                       << OM_BSON_FIELD_SVCNAME << _ssqlService
-                       << OM_BSON_FIELD_INSTALL_PATH << _ssqlInstallPath
-                       << OM_BSON_FIELD_HOST_USER << _user
-                       << OM_BSON_FIELD_HOST_PASSWD << _passwd
-                       << OM_REST_DBNAME << _dbName
-                       << OM_BSON_FIELD_DBUSER << _dbUser
-                       << OM_BSON_FIELD_DBPASSWD << _dbPasswd
-                       << OM_REST_SQL << _sql
-                       << OM_REST_RESULT_FORMAT << _resultFormat ) ;
-
-      resultInfo = arrayBuilder.arr() ;
-      return rc ;
-   }
-
-   INT32 omSsqlExecCommand::_createSsqlExecTask( INT64 &taskID )
-   {
-      INT32 rc = SDB_OK ;
-      BSONObj taskInfo ;
-      BSONArray resultInfo ;
-      rc = _generateSsqlTaskInfo( taskInfo, resultInfo ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "generate task info failed:rc=%d", rc ) ;
-         goto error ;
-      }
-
-      getMaxTaskID( taskID ) ;
-      taskID++ ;
-
-      rc = createTask( OM_TASK_TYPE_SSQL_EXEC, taskID,
-                       getTaskTypeStr( OM_TASK_TYPE_SSQL_EXEC ),
-                       _localAgentHost, _localAgentService,
-                       taskInfo, resultInfo ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "fail to createTask:rc=%d", rc ) ;
-         goto error ;
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
    INT32 omSsqlExecCommand::doCommand()
    {
       INT32 rc = SDB_OK ;
-      string clusterName ;
-      string businessName ;
-      INT64 taskID ;
+      string dbName ;
+      string sql ;
+      omArgOptions option( _restAdaptor, _restSession ) ;
+      omRestTool restTool( _restAdaptor, _restSession ) ;
+      omDatabaseTool dbTool( _cb ) ;
 
-#ifndef SDB_ENTERPRISE
-      _errorDetail = "only supported in enterprise edition" ;
-      rc = SDB_OPTION_NOT_SUPPORT ;
-      _sendErrorRes2Web( rc, _errorDetail ) ;
-      goto error ;
-#endif
+      _setFileLanguageSep() ;
 
-      rc = _parseRestSsqlExecInfo() ;
-      if ( SDB_OK != rc )
+      pmdGetThreadEDUCB()->resetInfo( EDU_INFO_ERROR ) ;
+
+      rc = option.parseRestArg( "ssss",
+                                OM_REST_FIELD_CLUSTER_NAME, &_clusterName,
+                                OM_REST_FIELD_BUSINESS_NAME, &_businessName,
+                                OM_REST_FIELD_SQL, &sql,
+                                OM_REST_FIELD_DB_NAME, &dbName ) ;
+      if ( rc )
       {
-         PD_LOG( PDERROR, "_parseRestSsqlExecInfo failed:rc=%d", rc ) ;
+         _errorMsg.setError( TRUE, option.getErrorMsg() ) ;
+         PD_LOG( PDERROR, "failed to parse rest arg: rc=%d", rc ) ;
          goto error ;
       }
 
-      rc = _createSsqlExecTask( taskID ) ;
-      if ( SDB_OK != rc )
+      rc = _check() ;
+      if ( rc )
       {
-         PD_LOG( PDERROR, "createSSqlExecTask failed:rc=%d", rc ) ;
+         PD_LOG( PDERROR, "failed to check: rc=%d", rc ) ;
          goto error ;
       }
 
-      rc = _notifyAgentTask( taskID ) ;
-      if ( SDB_OK != rc )
+      rc = _execSsql( sql, dbName ) ;
+      if ( rc )
       {
-         removeTask( taskID ) ;
-         PD_LOG( PDERROR, "fail to _notifyAgentTask:rc=%d", rc ) ;
+         PD_LOG( PDERROR, "failed to exec ssql: rc=%d", rc ) ;
          goto error ;
       }
-
-      _sendTaskInfo2Web( taskID ) ;
 
    done:
       return rc ;
    error:
-      _sendErrorRes2Web( rc, omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ) ;
+      restTool.sendRespone( rc, _errorMsg.getError() ) ;
+      goto done ;
+   }
+
+   INT32 omSsqlExecCommand::_check()
+   {
+      INT32 rc = SDB_OK ;
+      INT64 taskID = -1 ;
+      BSONObj businessInfo ;
+      omDatabaseTool dbTool( _cb ) ;
+
+      if ( FALSE == dbTool.isClusterExist( _clusterName ) )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "cluster does not exist: name=%s",
+                             _clusterName.c_str() ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      rc = dbTool.getOneBusinessInfo( _businessName, businessInfo ) ;
+      if ( SDB_DMS_RECORD_NOTEXIST == rc )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "business does not exist: name=%s",
+                             _businessName.c_str() ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+      else
+      {
+         _errorMsg.setError( TRUE, "failed to get business info,rc=%d", rc ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      _businessType = businessInfo.getStringField( OM_BUSINESS_FIELD_TYPE ) ;
+      if( OM_BUSINESS_SEQUOIASQL_OLTP != _businessType )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "Unsupported business type: name=%s, type=%s",
+                             _businessName.c_str(), _businessType.c_str() ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      taskID = dbTool.getTaskIdOfRunningBuz( _businessName ) ;
+      if( 0 <= taskID )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "business[%s] is exist "
+                             "in task["OSS_LL_PRINT_FORMAT"]",
+                             _businessName.c_str(), taskID ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omSsqlExecCommand::_execSsql( const string &sql, const string &dbName )
+   {
+      INT32 rc = SDB_OK ;
+      string errDetail ;
+      BSONObj request ;
+      BSONObj result ;
+      omTaskTool taskTool( _cb, _localAgentHost, _localAgentService ) ;
+
+      rc = _generateRequest( sql, dbName, request ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to generate request: rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = taskTool.notifyAgentMsg( CMD_ADMIN_PREFIX OM_SSQL_EXEC_REQ,
+                                    request, errDetail, result ) ;
+      if ( rc )
+      {
+         _errorMsg.setError( TRUE, "%s", errDetail.c_str() ) ;
+         PD_LOG( PDERROR, "failed to notify agent: detail=%s, rc=%d",
+                 errDetail.c_str(), rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omSsqlExecCommand::_generateRequest( const string &sql,
+                                              const string &dbName,
+                                              BSONObj &request )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObjBuilder requestBuilder ;
+      list<BSONObj> configList ;
+      omDatabaseTool dbTool( _cb ) ;
+
+      rc = dbTool.getConfigByBusiness( _businessName, configList ) ;
+      if ( rc )
+      {
+         _errorMsg.setError( TRUE, "failed to get configure: name=%s, rc=%d",
+                             _businessName.c_str(), rc ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      if ( configList.empty() )
+      {
+         rc = SDB_SYS ;
+         _errorMsg.setError( TRUE, "the business configure is empty:"
+                                   " name=%s, rc=%d",
+                             _businessName.c_str(), rc ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      requestBuilder.append( OM_BSON_CLUSTER_NAME, _clusterName ) ;
+      requestBuilder.append( OM_BSON_BUSINESS_NAME, _clusterName ) ;
+      requestBuilder.append( OM_BSON_BUSINESS_TYPE, _clusterName ) ;
+
+      {
+         string hostName ;
+         string serviceName ;
+         string installPath ;
+         list<BSONObj>::iterator iter = configList.begin() ;
+         BSONObj configInfo = iter->getObjectField( OM_CONFIGURE_FIELD_CONFIG ) ;
+
+         hostName = iter->getStringField( OM_CONFIGURE_FIELD_HOSTNAME ) ;
+
+         {
+               BSONObjIterator configIter( configInfo ) ;
+
+               while ( configIter.more() )
+               {
+                  BSONElement ele = configIter.next() ;
+                  BSONObj tmpNodeInfo = ele.embeddedObject() ;
+
+                  serviceName = tmpNodeInfo.getStringField(
+                                                   OM_CONFIGURE_FIELD_PORT2 ) ;
+                  installPath = tmpNodeInfo.getStringField(
+                                             OM_CONFIGURE_FIELD_INSTALLPATH ) ;
+                  break ;
+               }
+         }
+
+         requestBuilder.append( OM_BSON_HOSTNAME, hostName ) ;
+         requestBuilder.append( OM_BSON_SERVICENAME, serviceName ) ;
+         requestBuilder.append( OM_BSON_INSTALL_PATH, installPath ) ;
+      }
+
+      requestBuilder.append( OM_BSON_DB_NAME, dbName ) ;
+      requestBuilder.append( OM_BSON_SQL, sql ) ;
+
+      request = requestBuilder.obj() ;
+
+   done:
+      return rc ;
+   error:
       goto done ;
    }
 
@@ -10882,6 +10850,95 @@ namespace engine
       goto done ;
    }
 
+   // ***************** omForwardPluginCommand  *****************************
+   omForwardPluginCommand::omForwardPluginCommand(
+                                                restAdaptor *pRestAdaptor,
+                                                pmdRestSession *pRestSession )
+                                 : omAuthCommand( pRestAdaptor, pRestSession )
+   {
+   }
+
+   omForwardPluginCommand::~omForwardPluginCommand()
+   {
+   }
+
+   INT32 omForwardPluginCommand::doCommand()
+   {
+      INT32 rc = SDB_OK ;
+      INT32 sendLength = 0 ;
+      INT32 headerSize = 0 ;
+      INT32 bodySize   = 0 ;
+      const CHAR *pHttpHeader = NULL ;
+      const CHAR *pHttpBody   = NULL ;
+      omRestTool restTool( _restAdaptor, _restSession ) ;
+      ossSocket client( "127.0.0.1", 8080 ) ;
+
+      pmdGetThreadEDUCB()->resetInfo( EDU_INFO_ERROR ) ;
+
+      rc = client.initSocket() ;
+      if ( rc )
+      {
+         _errorMsg.setError( TRUE, "failed to init network: rc=%d", rc ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      rc = client.connect() ;
+      if ( rc )
+      {
+         _errorMsg.setError( TRUE, "failed to connect plugin: rc=%d", rc ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      headerSize  = _restAdaptor->getRequestHeaderSize( _restSession ) ;
+      pHttpHeader = _restAdaptor->getRequestHeader( _restSession ) ;
+
+      rc = client.send( pHttpHeader, headerSize, sendLength ) ;
+      if ( rc )
+      {
+         _errorMsg.setError( TRUE, "failed to forward http header: rc=%d", rc ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      bodySize  = _restAdaptor->getRequestBodySize( _restSession ) ;
+      pHttpBody = _restAdaptor->getRequestBody( _restSession ) ;
+
+      rc = client.send( pHttpBody, bodySize, sendLength ) ;
+      if ( rc )
+      {
+         _errorMsg.setError( TRUE, "failed to forward http body: rc=%d", rc ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      while( TRUE )
+      {
+         INT32 recvBuf = 0 ;
+         CHAR tmpBuf[256] ;
+
+         rc = client.recv( tmpBuf, 256, recvBuf,
+                           OSS_SOCKET_DFT_TIMEOUT, 0, FALSE, FALSE ) ;
+         if ( rc || 0 == recvBuf )
+         {
+            break ;
+         }
+
+         rc = _restSession->sendData( tmpBuf, recvBuf, 3000 ) ;
+         if ( rc )
+         {
+            break ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      restTool.sendRespone( rc, _errorMsg.getError() ) ;
+      goto done ;
+   }
+
    // *****************omGetFileCommand *****************************
    omGetFileCommand::omGetFileCommand( restAdaptor *pRestAdaptor,
                                        pmdRestSession *pRestSession,
@@ -10901,18 +10958,90 @@ namespace engine
 
    INT32 omGetFileCommand::doCommand()
    {
-      INT32 rc                      = SDB_OK ;
-      CHAR *pContent                = NULL ;
-      INT32 contentLength           = 0 ;
+      INT32 rc = SDB_OK ;
+      INT32 contentLength = 0 ;
+      CHAR *pContent      = NULL ;
+      const CHAR *pClusterName  = NULL ;
+      const CHAR *pBusinessName = NULL ;
       restFileController* transfer = NULL ;
-      string realSubPath            = _subPath ;
+      string realSubPath = _subPath ;
 
       transfer = restFileController::getTransferInstance() ;
       transfer->getTransferedPath( _subPath.c_str(), realSubPath ) ;
 
-      rc = _getFileContent( _rootPath + realSubPath, &pContent,
-                            contentLength ) ;
-      if ( SDB_OK != rc )
+      _restAdaptor->getHttpHeader( _restSession, OM_REST_HEAD_CLUSTERNAME,
+                                   &pClusterName ) ;
+      _restAdaptor->getHttpHeader( _restSession, OM_REST_HEAD_BUSINESSNAME, 
+                                   &pBusinessName ) ;
+      if ( NULL == pClusterName || NULL == pBusinessName )
+      {
+         rc = _getFileContent( _rootPath + realSubPath, &pContent,
+                               contentLength ) ;
+      }
+      else
+      {
+         omDatabaseTool dbTool( _cb ) ;
+         string businessType ;
+         BSONObj businessInfo ;
+
+         rc = dbTool.getOneBusinessInfo( pBusinessName, businessInfo ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "failed to get business info: cluster=%s,"
+                             "business=%s, rc=%d",
+                    pClusterName, pBusinessName, rc ) ;
+            _restAdaptor->sendResponse( _restSession, HTTP_SERVICUNAVA ) ;
+            goto error ;
+         }
+
+         businessType = businessInfo.getStringField( OM_BUSINESS_FIELD_TYPE ) ;
+
+         if ( OM_BUSINESS_SEQUOIADB == businessType )
+         {
+            rc = _getFileContent( _rootPath + realSubPath, &pContent,
+                               contentLength ) ;
+         }
+         else
+         {
+            CHAR pluginPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+            string realPluginPath = ".."OSS_FILE_SEP"plugins"OSS_FILE_SEP ;
+            string pluginRootPath ;
+            BSONObj pluginInfo ;
+
+            rc = dbTool.getPluginInfoByBusinessType( businessType, pluginInfo ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "failed to get plugin info: "
+                                "business type=%s, rc=%d",
+                       businessType.c_str(), rc ) ;
+               _restAdaptor->sendResponse( _restSession, HTTP_SERVICUNAVA ) ;
+               goto error ;
+            }
+
+            realPluginPath += pluginInfo.getStringField(
+                                                      OM_PLUGINS_FIELD_NAME ) ;
+
+            realPluginPath += OSS_FILE_SEP"www" ;
+
+            rc = utilBuildFullPath( _rootPath.c_str(),
+                                    realPluginPath.c_str(),
+                                    OSS_MAX_PATHSIZE, pluginPath ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "plugin path is too long: rc=%d",
+                       rc ) ;
+               _restAdaptor->sendResponse( _restSession, HTTP_SERVICUNAVA ) ;
+               goto error ;
+            }
+
+            pluginRootPath = pluginPath ;
+
+            rc = _getFileContent( pluginRootPath + realSubPath, &pContent,
+                                  contentLength ) ;
+         }
+      }
+      
+      if ( rc )
       {
          if ( SDB_FNE == rc )
          {
@@ -12652,5 +12781,303 @@ namespace engine
       goto done ;
    }
 
+   omRegisterPluginsCommand::omRegisterPluginsCommand(
+                                                restAdaptor *pRestAdaptor,
+                                                pmdRestSession *pRestSession )
+                     : omRestCommandBase( pRestAdaptor, pRestSession )
+   {
+   }
+
+   omRegisterPluginsCommand::~omRegisterPluginsCommand()
+   {
+   }
+
+   INT32 omRegisterPluginsCommand::doCommand()
+   {
+      INT32 rc = SDB_OK ;
+      string pluginName ;
+      string hostName ;
+      string serviceName ;
+      string role ;
+      string businessType ;
+      string publicKey ;
+      omArgOptions option( _restAdaptor, _restSession ) ;
+      omRestTool restTool( _restAdaptor, _restSession ) ;
+
+      pmdGetThreadEDUCB()->resetInfo( EDU_INFO_ERROR ) ;
+
+      rc = option.parseRestArg( "ssssss",
+                             OM_REST_FIELD_NAME,            &pluginName,
+                             OM_REST_FIELD_HOST_NAME,       &hostName,
+                             OM_REST_FIELD_SERVICE_NAME,    &serviceName,
+                             OM_REST_FIELD_ROLE,            &role,
+                             OM_REST_FIELD_TYPE,            &businessType,
+                             OM_REST_FIELD_PUBLIC_KEY,      &publicKey ) ;
+      if ( rc )
+      {
+         _errorMsg.setError( TRUE, option.getErrorMsg() ) ;
+         PD_LOG( PDERROR, "failed to parse rest arg: rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = _check( role, publicKey ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to check: rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = _updatePlugin( restTool, pluginName, businessType,
+                          publicKey, serviceName ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to add plugin: rc=%d", rc ) ;
+         goto error ;
+      }
+
+      restTool.sendOkRespone() ;
+
+   done:
+      return rc ;
+   error:
+      restTool.sendRespone( rc, _errorMsg.getError() ) ;
+      goto done ;
+   }
+
+   INT32 omRegisterPluginsCommand::_check( const string &role,
+                                           const string &publicKey )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 length = 0 ;
+
+      if ( OM_REST_VALUE_PLUGIN != role )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "invalid parameter: name=%s",
+                             OM_REST_FIELD_ROLE ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      length = publicKey.length() ;
+      if ( 8 != length )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "invalid parameter length: name=%s",
+                             OM_REST_FIELD_PUBLIC_KEY ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      for( INT32 i = 0; i < length; ++i )
+      {
+         if( ( publicKey[i] < '0' || publicKey[i] > '9' ) &&
+             ( publicKey[i] < 'a' || publicKey[i] > 'z' ) &&
+             ( publicKey[i] < 'A' || publicKey[i] > 'Z' ) )
+         {
+            rc = SDB_INVALIDARG ;
+            _errorMsg.setError( TRUE, "invalid parameter: name=%s",
+                                OM_REST_FIELD_PUBLIC_KEY ) ;
+            PD_LOG( PDERROR, _errorMsg.getError() ) ;
+            goto error ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omRegisterPluginsCommand::_updatePlugin( omRestTool &restTool,
+                                                  const string &pluginName,
+                                                  const string &businessType,
+                                                  const string &publicKey,
+                                                  const string &serviceName )
+   {
+      INT32 rc = SDB_OK ;
+      INT64 timeDiffer = 0 ;
+      SDB_AUTHCB *pAuthCB = pmdGetKRCB()->getAuthCB() ;
+      omDatabaseTool dbTool( _cb ) ;
+      omAuthTool authTool( _cb, pAuthCB ) ;
+      BSONObj userInfo ;
+      string user ;
+      string passwd ;
+      string userEncrypt ;
+      string passwdEncrypt ;
+      string httpname ;
+
+      rc = dbTool.upsertPlugin( pluginName, businessType, serviceName ) ;
+      if ( rc )
+      {
+         _errorMsg.setError( TRUE, "failed to update plugin info: "
+                                   "name=%s, type=%s, service=%s",
+                             pluginName.c_str(), businessType.c_str(),
+                             serviceName.c_str() ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      rc = authTool.getUsrInfo( OM_DEFAULT_PLUGIN_USER, userInfo ) ;
+      if( rc )
+      {
+         _errorMsg.setError( TRUE, "failed to get plugin user: rc=%d",
+                             rc ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      user = userInfo.getStringField( SDB_AUTH_USER ) ;
+      passwd = userInfo.getStringField( SDB_AUTH_PASSWD ) ;
+
+      rc = _encrypt( publicKey, user, userEncrypt ) ;
+      if( rc )
+      {
+         _errorMsg.setError( TRUE, "failed to encrypt: rc=%d",
+                             rc ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      rc = _encrypt( publicKey, passwd, passwdEncrypt ) ;
+      if( rc )
+      {
+         _errorMsg.setError( TRUE, "failed to encrypt: rc=%d",
+                             rc ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      sdbGetOMManager()->getUpdatePluginPasswdTimeDiffer( timeDiffer ) ;
+
+      httpname = pmdGetKRCB()->getOptionCB()->getOMService() ;
+
+      {
+         BSONObj result = BSON( OM_BSON_USER2      << userEncrypt <<
+                                OM_BSON_PASSWD2    << passwdEncrypt <<
+                                OM_BSON_LEASETIME2 << timeDiffer <<
+                                OM_BSON_HTTPNAME   << httpname ) ;
+
+         restTool.appendResponeMsg( result ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   #define OM_ENCRYPT_PUBLIC_KEY_LEN 8
+   #define OM_ENCRYPT_PRIVATE_KEY_SIZE 17
+   INT32 omRegisterPluginsCommand::_encrypt( const string &publicKey,
+                                             const string &src,
+                                             string &dest )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 encryptSize = 0 ;
+      BYTE *pCiphertext = NULL ;
+      SDB_AUTHCB *pAuthCB = pmdGetKRCB()->getAuthCB() ;
+      const CHAR *pPublicKey = publicKey.c_str() ;
+      omDatabaseTool dbTool( _cb ) ;
+      omAuthTool authTool( _cb, pAuthCB ) ;
+      CHAR privateKey[OM_ENCRYPT_PRIVATE_KEY_SIZE] ;
+      md5::md5digest digest ;
+
+      ossMemset( privateKey, 0, OM_ENCRYPT_PRIVATE_KEY_SIZE ) ;
+      authTool.generateRandomVisualString( privateKey, OM_ENCRYPT_PUBLIC_KEY_LEN ) ;
+
+      ossMemcpy( privateKey + OM_ENCRYPT_PUBLIC_KEY_LEN, pPublicKey,
+                 OM_ENCRYPT_PUBLIC_KEY_LEN ) ;
+
+      md5::md5( (const void*)privateKey, OM_ENCRYPT_PRIVATE_KEY_SIZE - 1,
+                digest ) ;
+
+      encryptSize = desEncryptSize( src.length() ) + OM_ENCRYPT_PUBLIC_KEY_LEN ;
+      pCiphertext = (BYTE *)SDB_OSS_MALLOC( encryptSize + 1 ) ;
+      if ( NULL == pCiphertext )
+      {
+         rc = SDB_OOM ;
+         PD_LOG( PDERROR, "out of memory" ) ;
+         goto error ;
+      }
+
+      ossMemset( pCiphertext, 0, encryptSize + 1 ) ;
+
+      rc = desEncrypt( (BYTE *)digest, (BYTE *)src.c_str(), src.length(),
+                       pCiphertext + OM_ENCRYPT_PUBLIC_KEY_LEN ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to call desEncrypt: rc=%d", rc ) ;
+         goto error ;
+      }
+
+      ossMemcpy( pCiphertext, privateKey, OM_ENCRYPT_PUBLIC_KEY_LEN ) ;
+
+      dest = base64::encode( (const CHAR *)pCiphertext, encryptSize ) ;
+
+   done:
+      if ( pCiphertext )
+      {
+         SDB_OSS_FREE( pCiphertext ) ;
+         pCiphertext = NULL ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   omListPluginsCommand::omListPluginsCommand( restAdaptor *pRestAdaptor,
+                                               pmdRestSession *pRestSession )
+                     : omAuthCommand( pRestAdaptor, pRestSession )
+   {
+   }
+
+   omListPluginsCommand::~omListPluginsCommand()
+   {
+   }
+
+   INT32 omListPluginsCommand::doCommand()
+   {
+      INT32 rc = SDB_OK ;
+      list<BSONObj> pluginList ;
+      list<BSONObj>::iterator iter ;
+      omDatabaseTool dbTool( _cb ) ;
+      omRestTool restTool( _restAdaptor, _restSession ) ;
+
+      _setFileLanguageSep() ;
+
+      pmdGetThreadEDUCB()->resetInfo( EDU_INFO_ERROR ) ;
+
+      rc = dbTool.getPluginList( pluginList ) ;
+      if ( rc )
+      {
+         _errorMsg.setError( TRUE, "failed to get plugin info: rc=%d",
+                             rc ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      for ( iter = pluginList.begin(); iter != pluginList.end(); ++iter )
+      {
+         BSONObj pluginInfo = *iter ;
+
+         rc = restTool.appendResponeContent( pluginInfo ) ;
+         if ( rc )
+         {
+            _errorMsg.setError( TRUE, "failed to build respone: rc=%d",
+                                rc ) ;
+            PD_LOG( PDERROR, _errorMsg.getError() ) ;
+            goto error ;
+         }
+      }
+
+      restTool.sendOkRespone() ;
+
+   done:
+      return rc ;
+   error:
+      restTool.sendRespone( rc, _errorMsg.getError() ) ;
+      goto done ;
+   }
 }
 

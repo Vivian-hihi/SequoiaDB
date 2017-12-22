@@ -57,8 +57,7 @@ namespace engine
                                         const CHAR *pFilePath ) ;
 
       protected:
-         INT32             _processOMRestMsg( HTTP_PARSE_COMMON command,
-                                              const CHAR *pFilePath ) ;
+         INT32             _processOMRestMsg( const CHAR *pFilePath ) ;
          INT32             _setSpecifyNode( const CHAR *pSdbHostName,
                                             const CHAR *pSdbSvcName,
                                             list<omNodeInfo> &nodeList ) ;
@@ -86,17 +85,16 @@ namespace engine
                                         list<BSONObj> &records ) ;
          BOOLEAN           _isClusterExist( const CHAR *pClusterName ) ;
 
-         omRestCommandBase *_createSsqlCommand( restAdaptor *pAdaptor,
-                                                const string &localAgentHost,
-                                                const string &localAgentPort ) ;
-
-         INT32             _processSsqlTransferMsg( restAdaptor *pAdaptor,
-                                                    const CHAR *pClusterName,
-                                                    const CHAR *pBusinessName ) ;
+         INT32 _registerPlugin( restAdaptor *pAdaptor ) ;
 
       private:
-         omRestCommandBase *_createCommand( HTTP_PARSE_COMMON command,
-                                            const CHAR *pFilePath ) ;
+         INT32 _actionGetFile( const CHAR *pFilePath ) ;
+
+         INT32 _forwardPlugin( restAdaptor *pAdptor ) ;
+
+         INT32 _actionCmd( const CHAR *pFilePath ) ;
+
+         omRestCommandBase *_createCommand( const CHAR *pFilePath ) ;
 
    } ;
    typedef _omRestSession omRestSession ;

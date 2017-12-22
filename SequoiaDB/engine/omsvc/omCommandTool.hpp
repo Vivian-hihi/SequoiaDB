@@ -33,6 +33,7 @@
 #ifndef OM_COMMAND_TOOL_HPP__
 #define OM_COMMAND_TOOL_HPP__
 
+#include "authCB.hpp"
 #include "rtnCB.hpp"
 #include "pmd.hpp"
 #include "omManager.hpp"
@@ -250,6 +251,15 @@ namespace engine
       INT32 removeRelationship( const string &fromBuzName,
                                 const string &toBuzName ) ;
 
+      //plugin
+      BOOLEAN isPluginExist( const string &name ) ;
+      BOOLEAN isPluginBusinessTypeExist( const string& businessType ) ;
+      INT32 getPluginInfoByBusinessType( const string &businessType,
+                                         BSONObj &info ) ;
+      INT32 getPluginList( list<BSONObj> &pluginList ) ;
+      INT32 upsertPlugin( const string &name, const string&businessType,
+                          const string &serviceName ) ;
+
       //trans
       INT32 addPackageOfHosts( set<string> &hostList,
                                const string &packageName,
@@ -265,6 +275,10 @@ namespace engine
       INT32 unbindHost( const string &clusterName,
                         list<string> &hostList ) ;
 
+      //collection
+      INT32 createCollection( const CHAR *pCollection ) ;
+      INT32 createCollectionIndex( const CHAR *pCollection,
+                                   const CHAR *pIndex ) ;
    private:
       //task
       INT32 _getOneTasktInfo( const BSONObj &matcher, const BSONObj &selector,
@@ -284,12 +298,38 @@ namespace engine
                                  const BSONObj &selector,
                                  BSONObj &info ) ;
 
+      //plugin
+      INT32 _getOnePluginInfo( const BSONObj &condition,
+                               const BSONObj &selector,
+                               BSONObj &info ) ;
+
    private:
       pmdEDUCB    *_cb ;
       SDB_RTNCB   *_pRTNCB ;
       pmdKRCB     *_pKRCB ;
       SDB_DPSCB   *_pDpsCB ;
       SDB_DMSCB   *_pDMSCB ;
+   } ;
+
+   class omAuthTool : public SDBObject
+   {
+   public:
+      omAuthTool( pmdEDUCB *cb, SDB_AUTHCB *pAuthCB ) : _cb( cb ),
+                                                        _pAuthCB( pAuthCB )
+      {
+      }
+   public:
+      INT32 createOmsvcDefaultUsr() ;
+      INT32 createAdminUsr() ;
+      INT32 createPluginUsr() ;
+
+      INT32 getUsrInfo( const string &user, BSONObj &info ) ;
+
+      void generateRandomVisualString( CHAR* pPasswd, INT32 length ) ;
+
+   private:
+      pmdEDUCB    *_cb ;
+      SDB_AUTHCB  *_pAuthCB ;
    } ;
 
    class omRestTool : public SDBObject

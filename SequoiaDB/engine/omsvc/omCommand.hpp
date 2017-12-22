@@ -1097,44 +1097,28 @@ namespace engine
                                               const string &businessName ) ;
    } ;
 
-   class omSsqlExecCommand : public omScanHostCommand
+   class omSsqlExecCommand : public omAuthCommand
    {
-      public:
-         omSsqlExecCommand( restAdaptor *pRestAdaptor,
-                            pmdRestSession *pRestSession,
-                            const string &localAgentHost,
-                            const string &localAgentPort ) ;
+   public:
+      omSsqlExecCommand( restAdaptor *pRestAdaptor,
+                         pmdRestSession *pRestSession,
+                         const string &localAgentHost,
+                         const string &localAgentPort ) ;
+      virtual ~omSsqlExecCommand() ;
+      virtual INT32 doCommand() ;
 
-         virtual ~omSsqlExecCommand() ;
+   private:
+      INT32 _check() ;
+      INT32 _execSsql( const string &sql, const string &dbName ) ;
+      INT32 _generateRequest( const string &sql, const string &dbName,
+                              BSONObj &request ) ;
 
-      public:
-         virtual INT32   doCommand() ;
-
-      protected:
-         INT32           _parseRestSsqlExecInfo() ;
-         INT32           _sendTaskInfo2Web( INT64 taskID ) ;
-         INT32           _generateSsqlTaskInfo( BSONObj &taskInfo,
-                                                BSONArray &resultInfo ) ;
-         INT32           _createSsqlExecTask( INT64 &taskID ) ;
-
-      protected:
-         string          _clusterName ;
-         string          _businessName ;
-         string          _dbName ;
-         //_dbUser & _dbPasswd is the ssql's user & password
-         string          _dbUser ;
-         string          _dbPasswd ;
-
-         string          _sql ;
-         string          _resultFormat ;
-         string          _ssqlHost ;
-         string          _ssqlService ;
-         string          _ssqlInstallPath ;
-
-         //_user & _passwd is the host's user & password
-         string          _user ;
-         string          _passwd ;
-
+   private:
+      string _clusterName ;
+      string _businessName ;
+      string _businessType ;
+      string _localAgentHost ;
+      string _localAgentService ;
    } ;
 
    class omInterruptTaskCommand : public omScanHostCommand
@@ -1161,6 +1145,17 @@ namespace engine
       protected:
          BOOLEAN         _isFinished ;
          INT64           _taskID ;
+   } ;
+
+   class omForwardPluginCommand : public omAuthCommand
+   {
+   public:
+      omForwardPluginCommand( restAdaptor *pRestAdaptor,
+                              pmdRestSession *pRestSession ) ;
+
+      ~omForwardPluginCommand() ;
+
+      virtual INT32 doCommand() ;
    } ;
 
    class omGetFileCommand : public omGetLogCommand
@@ -1514,10 +1509,39 @@ namespace engine
       ~omListRelationshipCommand() ;
 
       virtual INT32 doCommand() ;
+   } ;
 
-   private:
+   class omRegisterPluginsCommand : public omRestCommandBase
+   {
+   public:
+      omRegisterPluginsCommand( restAdaptor *pRestAdaptor,
+                                pmdRestSession *pRestSession ) ;
 
+      ~omRegisterPluginsCommand() ;
+
+      virtual INT32 doCommand() ;
    private:
+      INT32 _check( const string &role, const string &publicKey ) ;
+
+      INT32 _updatePlugin( omRestTool &restTool,
+                           const string &pluginName,
+                           const string &businessType,
+                           const string &publicKey,
+                           const string &serviceName ) ;
+
+      INT32 _encrypt( const string &publicKey, const string &src,
+                      string &dest ) ;
+   } ;
+
+   class omListPluginsCommand : public omAuthCommand
+   {
+   public:
+      omListPluginsCommand( restAdaptor *pRestAdaptor,
+                            pmdRestSession *pRestSession ) ;
+
+      ~omListPluginsCommand() ;
+
+      virtual INT32 doCommand() ;
    } ;
 }
 

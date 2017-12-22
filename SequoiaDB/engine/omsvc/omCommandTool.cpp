@@ -34,6 +34,7 @@
 #include "omDef.hpp"
 #include "rtn.hpp"
 #include "msgMessage.hpp"
+#include "../bson/lib/md5.hpp"
 
 using namespace bson ;
 
@@ -2581,6 +2582,70 @@ namespace engine
       goto done ;
    }
 
+   INT32 omDatabaseTool::_getOnePluginInfo( const BSONObj &condition,
+                                            const BSONObj &selector,
+                                            BSONObj &info )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN isExist = FALSE ;
+      SINT64 contextID = -1 ;
+      BSONObj order ;
+      BSONObj hint ;
+
+      rc = rtnQuery( OM_CS_DEPLOY_CL_PLUGINS, selector, condition, order,
+                     hint, 0, _cb, 0, 1, _pDMSCB, _pRTNCB, contextID );
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "fail to query table:%s,rc=%d",
+                 OM_CS_DEPLOY_CL_PLUGINS, rc ) ;
+         goto error ;
+      }
+
+      while ( TRUE )
+      {
+         rtnContextBuf buffObj ;
+
+         rc = rtnGetMore ( contextID, 1, buffObj, _cb, _pRTNCB ) ;
+         if ( rc )
+         {
+            if ( SDB_DMS_EOC == rc )
+            {
+               rc = SDB_OK ;
+               break ;
+            }
+
+            contextID = -1 ;
+            PD_LOG( PDERROR, "failed to get record from table:%s,rc=%d",
+                    OM_CS_DEPLOY_CL_PLUGINS, rc ) ;
+            goto error ;
+         }
+
+         {
+            BSONObj result( buffObj.data() ) ;
+
+            info = result.copy() ;
+            isExist = TRUE ;
+         }
+      }
+
+      if ( FALSE == isExist )
+      {
+         rc = SDB_DMS_RECORD_NOTEXIST ;
+         PD_LOG( PDWARNING, "Failed to query info:rc=%d", rc ) ;
+         goto error ;
+      }
+
+   done:
+      if( -1 != contextID )
+      {
+         _pRTNCB->contextDelete ( contextID, _cb ) ;
+         contextID = -1 ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 omDatabaseTool::createRelationship( const string &fromBuzName,
                                              const string &toBuzName,
                                              const BSONObj &options )
@@ -2748,6 +2813,182 @@ namespace engine
       {
          PD_LOG( PDERROR, "failed to remove relationship: rc=%d",
                  OM_CS_DEPLOY_CL_RELATIONSHIP, rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   BOOLEAN omDatabaseTool::isPluginExist( const string &name )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN isExist = TRUE ;
+      BSONObj condition = BSON( OM_PLUGINS_FIELD_NAME << name ) ;
+      BSONObj selector ;
+      BSONObj info ;
+
+      rc = _getOnePluginInfo( condition, selector, info ) ;
+      if ( rc )
+      {
+         isExist = FALSE ;
+      }
+
+      return isExist ;
+   }
+
+   BOOLEAN omDatabaseTool::isPluginBusinessTypeExist(
+                                                   const string& businessType )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN isExist = TRUE ;
+      BSONObj condition = BSON( OM_PLUGINS_FIELD_BUSINESSTYPE << businessType ) ;
+      BSONObj selector ;
+      BSONObj info ;
+
+      rc = _getOnePluginInfo( condition, selector, info ) ;
+      if ( rc )
+      {
+         isExist = FALSE ;
+      }
+
+      return isExist ;
+   }
+
+   INT32 omDatabaseTool::getPluginInfoByBusinessType( const string &businessType,
+                                                      BSONObj &info )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj condition = BSON( OM_PLUGINS_FIELD_BUSINESSTYPE << businessType ) ;
+      BSONObj selector ;
+
+      rc = _getOnePluginInfo( condition, selector, info ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to get plugin info: business type=%s, rc=%d",
+                 businessType.c_str(), rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omDatabaseTool::getPluginList( list<BSONObj> &pluginList )
+   {
+      INT32 rc = SDB_OK ;
+      SINT64 numToSkip   = 0 ;
+      SINT64 numToReturn = -1 ;
+      SINT64 contextID   = -1 ;
+      BSONObj condition ;
+      BSONObj selector ;
+      BSONObj order ;
+      BSONObj hint ;
+      BSONObj filter = BSON( "_id" << "" ) ;
+
+      rc = rtnQuery( OM_CS_DEPLOY_CL_PLUGINS, selector, condition, order,
+                     hint, 0, _cb, numToSkip, numToReturn,
+                     _pDMSCB, _pRTNCB, contextID );
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "fail to query table:%s,rc=%d",
+                 OM_CS_DEPLOY_CL_PLUGINS, rc ) ;
+         goto error ;
+      }
+
+      while ( TRUE )
+      {
+         rtnContextBuf buffObj ;
+
+         rc = rtnGetMore ( contextID, 1, buffObj, _cb, _pRTNCB ) ;
+         if ( rc )
+         {
+            if ( SDB_DMS_EOC == rc )
+            {
+               rc = SDB_OK ;
+               break ;
+            }
+
+            contextID = -1 ;
+            PD_LOG( PDERROR, "failed to get record from table:%s,rc=%d",
+                    OM_CS_DEPLOY_CL_RELATIONSHIP, rc ) ;
+            goto error ;
+         }
+
+         {
+            BSONObj result( buffObj.data() ) ;
+            BSONObj newResult = result.filterFieldsUndotted( filter, FALSE ) ;
+
+            pluginList.push_back( newResult.copy() ) ;
+         }
+      }
+
+   done:
+      if( -1 != contextID )
+      {
+         _pRTNCB->contextDelete ( contextID, _cb ) ;
+         contextID = -1 ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omDatabaseTool::upsertPlugin( const string &name,
+                                       const string&businessType,
+                                       const string &serviceName )
+   {
+      INT32 rc = SDB_OK ;
+      time_t now = time( NULL ) ;
+      INT64 updateNum = 0 ;
+      BSONObj condition ;
+      BSONObj updator ;
+      BSONObj hint ;
+      BSONObjBuilder builder ;
+
+      if ( name.empty() )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "plugin name cannot be empty" ) ;
+         goto error ;
+      }
+
+      if ( businessType.empty() )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "plugin business type cannot be empty" ) ;
+         goto error ;
+      }
+
+      if ( serviceName.empty() )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "plugin service name cannot be empty" ) ;
+         goto error ;
+      }
+
+      builder.append( OM_PLUGINS_FIELD_NAME, name ) ;
+      builder.append( OM_PLUGINS_FIELD_BUSINESSTYPE, businessType ) ;
+      builder.append( OM_PLUGINS_FIELD_SERVICENAME, serviceName ) ;
+      builder.appendTimestamp( OM_PLUGINS_FIELD_UPDATETIME,
+                               (unsigned long long)now * 1000, 0 ) ;
+
+      condition = BSON( OM_PLUGINS_FIELD_NAME << name ) ;
+      updator = BSON( "$replace" << builder.obj() ) ;
+
+      rc = rtnUpdate( OM_CS_DEPLOY_CL_PLUGINS, condition, updator, hint,
+                      FLG_UPDATE_UPSERT | FLG_UPDATE_RETURNNUM,
+                      _cb, &updateNum ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "falied to update business auth,"
+                          "condition=%s,updator=%s,rc=%d",
+                 condition.toString().c_str(),
+                 updator.toString().c_str(), rc ) ;
          goto error ;
       }
 
@@ -3134,6 +3375,222 @@ namespace engine
    error:
       rtnTransRollback( _cb, _pDpsCB ) ;
       goto done ;
+   }
+
+   INT32 omDatabaseTool::createCollection( const CHAR *pCollection )
+   {
+      INT32 rc = SDB_OK ;
+
+      rc = rtnTestAndCreateCL( pCollection, _cb, _pDMSCB, NULL, TRUE ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to create collection: name=%s, rc=%d",
+                 pCollection, rc ) ;
+         goto error ;
+      }
+
+   done :
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   INT32 omDatabaseTool::createCollectionIndex( const CHAR *pCollection,
+                                                const CHAR *pIndex )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj indexDef ;
+
+      rc = fromjson ( pIndex, indexDef ) ;
+      if( rc )
+      {
+         PD_LOG( PDERROR, "Failed to build index object: rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = rtnTestAndCreateIndex( pCollection, indexDef, _cb, _pDMSCB,
+                                  NULL, TRUE ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to create index: name=%s, rc=%d",
+                 pCollection, rc ) ;
+         goto error ;
+      }
+
+   done :
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   INT32 omAuthTool::createOmsvcDefaultUsr()
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN need = TRUE ;
+
+      rc = _pAuthCB->needAuthenticate( _cb, need ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to check if need to authenticate:%d", rc ) ;
+         goto error ;
+      }
+
+      if ( FALSE == need && _pAuthCB->authEnabled() )
+      {
+         rc = createAdminUsr() ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to create default user: rc=%d", rc ) ;
+            goto error ;
+         }
+
+      }
+
+      rc = createPluginUsr() ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to create plugin user: rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = _pAuthCB->needAuthenticate( _cb, need ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to check if need to authenticate:%d", rc ) ;
+         goto error ;
+      }
+      if ( !need && _pAuthCB->authEnabled() )
+      {
+         PD_LOG( PDERROR, "can not start auth after adding user" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omAuthTool::createAdminUsr()
+   {
+      INT32 rc = SDB_OK ;
+      md5::md5digest digest ;
+      BSONObj obj ;
+      BSONObjBuilder objBuilder ;
+
+      md5::md5( ( const void * )OM_DEFAULT_LOGIN_PASSWD, 
+                ossStrlen( OM_DEFAULT_LOGIN_PASSWD ), digest ) ;
+
+      objBuilder.append( SDB_AUTH_USER, OM_DEFAULT_LOGIN_USER ) ;
+      objBuilder.append( SDB_AUTH_PASSWD, md5::digestToString( digest ) ) ;
+      obj = objBuilder.obj() ;
+
+      rc = _pAuthCB->createUsr( obj, _cb ) ;
+      if ( SDB_IXM_DUP_KEY == rc || SDB_AUTH_USER_ALREADY_EXIST == rc )
+      {
+         rc = SDB_OK ;
+      }
+      else if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to create default user: rc=%d", rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   #define OM_DEFAULT_PLUGIN_PASSWD_SIZE 17
+   INT32 omAuthTool::createPluginUsr()
+   {
+      INT32 rc = SDB_OK ;
+      md5::md5digest digest ;
+      BSONObj obj ;
+      BSONObjBuilder objBuilder ;
+      CHAR passwd[OM_DEFAULT_PLUGIN_PASSWD_SIZE] ;
+
+      ossMemset( passwd, 0, OM_DEFAULT_PLUGIN_PASSWD_SIZE ) ;
+
+      generateRandomVisualString( passwd, OM_DEFAULT_PLUGIN_PASSWD_SIZE - 1 ) ;
+
+      md5::md5( ( const void * )passwd, OM_DEFAULT_PLUGIN_PASSWD_SIZE - 1,
+                digest ) ;
+
+      objBuilder.append( SDB_AUTH_USER, OM_DEFAULT_PLUGIN_USER ) ;
+      objBuilder.append( SDB_AUTH_PASSWD, md5::digestToString( digest ) ) ;
+      obj = objBuilder.obj() ;
+
+      rc = _pAuthCB->createUsr( obj, _cb ) ;
+      if ( SDB_IXM_DUP_KEY == rc || SDB_AUTH_USER_ALREADY_EXIST == rc )
+      {
+         BSONObj userInfo ;
+         string oldPasswd ;
+         string newPasswd ;
+
+         rc = getUsrInfo( OM_DEFAULT_PLUGIN_USER, userInfo ) ;
+         if( rc )
+         {
+            PD_LOG( PDERROR, "Failed to get plugin user: rc=%d", rc ) ;
+            goto error ;
+         }
+
+         oldPasswd = userInfo.getStringField( SDB_AUTH_PASSWD ) ;
+         newPasswd = obj.getStringField( SDB_AUTH_PASSWD ) ;
+
+         rc = _pAuthCB->updatePasswd( OM_DEFAULT_PLUGIN_USER, oldPasswd,
+                                      newPasswd, _cb ) ;
+         if( rc )
+         {
+            PD_LOG( PDERROR, "Failed to create plugin user: rc=%d", rc ) ;
+            goto error ;
+         }
+      }
+      else if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to create plugin user: rc=%d", rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omAuthTool::getUsrInfo( const string &user, BSONObj &info )
+   {
+      INT32 rc = SDB_OK ;
+
+      rc = _pAuthCB->getUsrInfo( user, _cb, info ) ;
+      if ( rc )
+      {
+         rc = SDB_DMS_RECORD_NOTEXIST ;
+         PD_LOG( PDWARNING, "Failed to get user info: rc=%d", rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   void omAuthTool::generateRandomVisualString( CHAR* pPasswd, INT32 length )
+   {
+   	for ( INT32 i = 0; i < length; )
+      {
+         CHAR character = rand() % 255 ;
+
+         if ( ( character >= '0' && character <= '9' ) ||
+              ( character >= 'a' && character <= 'z' ) )
+         {
+   		   pPasswd[i] = character ;
+            ++i ;
+         }
+   	}
    }
 
    omRestTool::omRestTool( restAdaptor *pRestAdaptor,

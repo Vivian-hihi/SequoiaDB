@@ -43,6 +43,7 @@
 #include "pmdController.hpp"
 #include "omManagerJob.hpp"
 #include "omCommand.hpp"
+#include "omCommandTool.hpp"
 #include "ossVer.h"
 #include "omStrategyMgr.hpp"
 
@@ -51,6 +52,7 @@ using namespace bson ;
 namespace engine
 {
 
+   #define OM_UPDATE_PLUGIN_PASSWD_TIMEOUT         (86400)
    #define OM_WAIT_CB_ATTACH_TIMEOUT               ( 300 * OSS_ONE_SEC )
 
    /*
@@ -80,7 +82,8 @@ namespace engine
       _pDmsCB              = NULL ;
       _hostVersion         = SDB_OSS_NEW omHostVersion() ;
       _taskManager         = SDB_OSS_NEW omTaskManager() ;
-      _ssqlCheckTimer      = NET_INVALID_TIMER_ID ;
+      _updatePluinUsrTimer = NET_INVALID_TIMER_ID ;
+      _updateTimestamp     = 0 ;
    }
 
    _omManager::~_omManager()
@@ -332,143 +335,137 @@ namespace engine
 
    INT32 _omManager::_initOmTables() 
    {
-      _pmdEDUCB *cb       = NULL ;
-      INT32 rc            = SDB_OK ;
-      BSONObjBuilder bsonBuilder ;
-      SDB_AUTHCB *pAuthCB = NULL ;
-      BOOLEAN need = TRUE ;
-
-      cb = pmdGetThreadEDUCB() ;
+      INT32 rc = SDB_OK ;
+      _pmdEDUCB *cb = pmdGetThreadEDUCB() ;
+      SDB_AUTHCB *pAuthCB = pmdGetKRCB()->getAuthCB() ;
+      omDatabaseTool dbTool( cb ) ;
+      omAuthTool authTool( cb, pAuthCB ) ;
 
       // SYSDEPLOY.SYSCLUSTER
-      rc = _createCollection ( OM_CS_DEPLOY_CL_CLUSTER, cb ) ;
+      rc = dbTool.createCollection( OM_CS_DEPLOY_CL_CLUSTER ) ;
       if ( rc )
       {
          goto error ;
       }
-      rc = _createCollectionIndex ( OM_CS_DEPLOY_CL_CLUSTER,
-                                    OM_CS_DEPLOY_CL_CLUSTERIDX1, cb ) ;
+
+      rc = dbTool.createCollectionIndex( OM_CS_DEPLOY_CL_CLUSTER,
+                                         OM_CS_DEPLOY_CL_CLUSTERIDX1 ) ;
       if ( rc )
       {
          goto error ;
       }
 
       // SYSDEPLOY.SYSHOST
-      rc = _createCollection ( OM_CS_DEPLOY_CL_HOST, cb ) ;
+      rc = dbTool.createCollection( OM_CS_DEPLOY_CL_HOST ) ;
       if ( rc )
       {
          goto error ;
       }
-      rc = _createCollectionIndex ( OM_CS_DEPLOY_CL_HOST,
-                                    OM_CS_DEPLOY_CL_HOSTIDX1, cb ) ;
+
+      rc = dbTool.createCollectionIndex( OM_CS_DEPLOY_CL_HOST,
+                                         OM_CS_DEPLOY_CL_HOSTIDX1 ) ;
       if ( rc )
       {
          goto error ;
       }
-      rc = _createCollectionIndex ( OM_CS_DEPLOY_CL_HOST,
-                                    OM_CS_DEPLOY_CL_HOSTIDX2, cb ) ;
+
+      rc = dbTool.createCollectionIndex( OM_CS_DEPLOY_CL_HOST,
+                                         OM_CS_DEPLOY_CL_HOSTIDX2 ) ;
       if ( rc )
       {
          goto error ;
       }
 
       // SYSDEPLOY.SYSBUSINESS
-      rc = _createCollection ( OM_CS_DEPLOY_CL_BUSINESS, cb ) ;
+      rc = dbTool.createCollection( OM_CS_DEPLOY_CL_BUSINESS ) ;
       if ( rc )
       {
          goto error ;
       }
-      rc = _createCollectionIndex ( OM_CS_DEPLOY_CL_BUSINESS,
-                                    OM_CS_DEPLOY_CL_BUSINESSIDX1, cb ) ;
+      rc = dbTool.createCollectionIndex( OM_CS_DEPLOY_CL_BUSINESS,
+                                         OM_CS_DEPLOY_CL_BUSINESSIDX1 ) ;
       if ( rc )
       {
          goto error ;
       }
 
       // SYSDEPLOY.SYSCONFIGURE
-      rc = _createCollection ( OM_CS_DEPLOY_CL_CONFIGURE, cb ) ;
+      rc = dbTool.createCollection( OM_CS_DEPLOY_CL_CONFIGURE ) ;
       if ( rc )
       {
          goto error ;
       }
 
       // SYSDEPLOY.SYSTASKINFO
-      rc = _createCollection ( OM_CS_DEPLOY_CL_TASKINFO, cb ) ;
+      rc = dbTool.createCollection( OM_CS_DEPLOY_CL_TASKINFO ) ;
       if ( rc )
       {
          goto error ;
       }
-      rc = _createCollectionIndex ( OM_CS_DEPLOY_CL_TASKINFO,
-                                    OM_CS_DEPLOY_CL_TASKINFOIDX1, cb ) ;
+
+      rc = dbTool.createCollectionIndex( OM_CS_DEPLOY_CL_TASKINFO,
+                                         OM_CS_DEPLOY_CL_TASKINFOIDX1 ) ;
       if ( rc )
       {
          goto error ;
       }
 
       // SYSDEPLOY.SYSBUSINESSAUTH
-      rc = _createCollection ( OM_CS_DEPLOY_CL_BUSINESS_AUTH, cb ) ;
+      rc = dbTool.createCollection( OM_CS_DEPLOY_CL_BUSINESS_AUTH ) ;
       if ( rc )
       {
          goto error ;
       }
-      rc = _createCollectionIndex ( OM_CS_DEPLOY_CL_BUSINESS_AUTH,
-                                    OM_CS_DEPLOY_CL_BUSINESSAUTHIDX1, cb ) ;
+
+      rc = dbTool.createCollectionIndex( OM_CS_DEPLOY_CL_BUSINESS_AUTH,
+                                         OM_CS_DEPLOY_CL_BUSINESSAUTHIDX1 ) ;
       if ( rc )
       {
          goto error ;
       }
 
       // SYSDEPLOY.SYSRELATIONSHIP
-      rc = _createCollection ( OM_CS_DEPLOY_CL_RELATIONSHIP, cb ) ;
-      if ( rc )
-      {
-         goto error ;
-      }
-      rc = _createCollectionIndex ( OM_CS_DEPLOY_CL_RELATIONSHIP,
-                                    OM_CS_DEPLOY_CL_RELATIONSHIPIDX1, cb ) ;
+      rc = dbTool.createCollection( OM_CS_DEPLOY_CL_RELATIONSHIP ) ;
       if ( rc )
       {
          goto error ;
       }
 
-      pAuthCB = pmdGetKRCB()->getAuthCB() ;
-      rc = pAuthCB->needAuthenticate( cb, need ) ;
-      if ( SDB_OK != rc )
+      rc = dbTool.createCollectionIndex( OM_CS_DEPLOY_CL_RELATIONSHIP,
+                                         OM_CS_DEPLOY_CL_RELATIONSHIPIDX1 ) ;
+      if ( rc )
       {
-         PD_LOG( PDERROR, "failed to check if need to authenticate:%d", rc ) ;
          goto error ;
       }
 
-      if ( !need && pAuthCB->authEnabled() )
+      // SYSDEPLOY.SYSPLUGINS
+      rc = dbTool.createCollection( OM_CS_DEPLOY_CL_PLUGINS ) ;
+      if ( rc )
       {
-         md5::md5digest digest ;
-         BSONObj obj ;
-         bsonBuilder.append( SDB_AUTH_USER, OM_DEFAULT_LOGIN_USER ) ;
-         md5::md5( ( const void * )OM_DEFAULT_LOGIN_PASSWD, 
-                   ossStrlen( OM_DEFAULT_LOGIN_PASSWD ), digest) ;
-         bsonBuilder.append( SDB_AUTH_PASSWD, md5::digestToString( digest ) ) ;
-         obj = bsonBuilder.obj() ;
-         rc = pAuthCB->createUsr( obj, cb ) ;
-         if ( SDB_IXM_DUP_KEY == rc || SDB_AUTH_USER_ALREADY_EXIST == rc )
-         {
-            rc = SDB_OK ;
-         }
-         PD_RC_CHECK ( rc, PDERROR, "Failed to create default user:rc = %d",
-                       rc ) ;
+         goto error ;
       }
 
-      rc = pAuthCB->needAuthenticate( cb, need ) ;
-      if ( SDB_OK != rc )
+      rc = dbTool.createCollectionIndex( OM_CS_DEPLOY_CL_PLUGINS,
+                                         OM_CS_DEPLOY_CL_PLUGINSIDX1 ) ;
+      if ( rc )
       {
-         PD_LOG( PDERROR, "failed to check if need to authenticate:%d", rc ) ;
          goto error ;
       }
-      if ( !need && pAuthCB->authEnabled() )
+
+      rc = dbTool.createCollectionIndex( OM_CS_DEPLOY_CL_PLUGINS,
+                                         OM_CS_DEPLOY_CL_PLUGINSIDX2 ) ;
+      if ( rc )
       {
-         PD_LOG( PDERROR, "can not start auth after adding user" ) ;
-         rc = SDB_SYS ;
          goto error ;
       }
+
+      rc = authTool.createOmsvcDefaultUsr() ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to create om user: rc=%d", rc ) ;
+         goto error ;
+      }
+
    done:
       return rc ;
    error:
@@ -1144,8 +1141,10 @@ namespace engine
       // register
       pEDUMgr->regSystemEDU( EDU_TYPE_OMNET, eduID ) ;
 
-      // start ssql exec timeout checker (1 minutes)
-      _ssqlCheckTimer = setTimer( 60 * OSS_ONE_SEC ) ;
+      // start update plugin user timer (24 hour)
+      _updateTimestamp = (INT64)time( NULL ) ;
+      _updatePluinUsrTimer = setTimer(
+                              OM_UPDATE_PLUGIN_PASSWD_TIMEOUT * OSS_ONE_SEC ) ;
 
    done:
       return rc ;
@@ -1202,9 +1201,9 @@ namespace engine
 
    void _omManager::onTimer( UINT64 timerID, UINT32 interval )
    {
-      if ( _ssqlCheckTimer == timerID )
+      if( _updatePluinUsrTimer == timerID )
       {
-         _checkSsqlTimeout() ;
+         _updatePluginPasswd() ;
       }
    }
 
@@ -1357,6 +1356,39 @@ namespace engine
       }
    }
 
+   INT32 _omManager::_updatePluginPasswd()
+   {
+      INT32 rc = SDB_OK ;
+      _pmdEDUCB *cb = pmdGetThreadEDUCB() ;
+      SDB_AUTHCB *pAuthCB = pmdGetKRCB()->getAuthCB() ;
+      omAuthTool authTool( cb, pAuthCB ) ;
+
+      rc = authTool.createPluginUsr() ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to update plugin passwd: rc=%d", rc ) ;
+         goto error ;
+      }
+
+      _updateTimestamp = (INT64)time( NULL ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   void _omManager::getUpdatePluginPasswdTimeDiffer( INT64 &differ )
+   {
+      differ = (INT64)time( NULL ) - _updateTimestamp ;
+      differ = OM_UPDATE_PLUGIN_PASSWD_TIMEOUT - differ ;
+
+      if ( 0 >= differ )
+      {
+         differ = OM_UPDATE_PLUGIN_PASSWD_TIMEOUT ;
+      }
+   }
+
    void _omManager::_checkTaskTimeout( const BSONObj &task )
    {
       BSONElement element ;
@@ -1397,46 +1429,6 @@ namespace engine
 
    done:
       pmdGetThreadEDUCB()->resetInfo( EDU_INFO_ERROR ) ;
-      return ;
-   }
-
-   void _omManager::_checkSsqlTimeout()
-   {
-      INT32 rc = SDB_OK ;
-      BSONElement element ;
-      BSONObj selector ;
-      BSONObj matcher ;
-      BSONObj orderBy ;
-      BSONObj hint ;
-      vector <BSONObj> results ;
-      UINT32 index = 0 ;
-
-      BSONObj noFinish ;
-      BSONObj noCancel ;
-      BSONArrayBuilder arrayBuilder ;
-      noFinish = BSON( "$ne" << OM_TASK_STATUS_FINISH ) ;
-      noCancel = BSON( "$ne" << OM_TASK_STATUS_CANCEL ) ;
-
-      arrayBuilder.append( BSON( OM_TASKINFO_FIELD_STATUS<< noFinish ) ) ;
-      arrayBuilder.append( BSON( OM_TASKINFO_FIELD_STATUS << noCancel ) ) ;
-      arrayBuilder.append( BSON( OM_TASKINFO_FIELD_TYPE 
-                                 << OM_TASK_TYPE_SSQL_EXEC ) ) ;
-
-      matcher = BSON( "$and" << arrayBuilder.arr() ) ;
-      rc = _taskManager->queryTasks( selector, matcher, orderBy, hint, 
-                                     results ) ;
-      if ( SDB_OK != rc || results.size() == 0 )
-      {
-         goto done ;
-      }
-
-      for ( index = 0 ; index < results.size() ; index++ )
-      {
-         BSONObj oneTask = results[index] ;
-         _checkTaskTimeout( oneTask ) ;
-      }
-
-   done:
       return ;
    }
 

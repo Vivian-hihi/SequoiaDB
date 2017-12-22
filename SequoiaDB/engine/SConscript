@@ -117,6 +117,7 @@ pdFiles = [
       ]
 
 utilFiles = [
+      "util/des.c",
       "util/base64.cpp",
       "util/text.cpp",
       "util/utilUnicodeGen.cpp",

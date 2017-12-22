@@ -382,6 +382,11 @@ namespace engine
             break ;
          }
 
+         if ( FALSE == pAdptor->isKeepAlive( this ) )
+         {
+            break ;
+         }
+
          // wait edu
          if ( SDB_OK != ( rc = pEDUMgr->waitEDU( _pEDUCB ) ) )
          {

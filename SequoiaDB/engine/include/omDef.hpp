@@ -66,6 +66,16 @@ namespace engine
    #define OM_REST_FIELD_TO                     "To"
    #define OM_REST_FIELD_OPTIONS                "Options"
    #define OM_REST_FIELD_FORCE                  "Force"
+   #define OM_REST_FIELD_SQL                    "Sql"
+   #define OM_REST_FIELD_DB_NAME                "DbName"
+   #define OM_REST_FIELD_NAME                   "Name"
+   #define OM_REST_FIELD_HOST_NAME              "HostName"
+   #define OM_REST_FIELD_SERVICE_NAME           "ServiceName"
+   #define OM_REST_FIELD_ROLE                   "Role"
+   #define OM_REST_FIELD_TYPE                   "Type"
+   #define OM_REST_FIELD_PUBLIC_KEY             "PublicKey"
+
+   #define OM_REST_VALUE_PLUGIN                 "plugin"
 
    /***************** Bson field *****************/
    #define OM_BSON_HOST_INFO                    "HostInfo"
@@ -91,6 +101,7 @@ namespace engine
    #define OM_BSON_USER                         "User"
    #define OM_BSON_USER2                        "user"
    #define OM_BSON_PASSWD                       "Passwd"
+   #define OM_BSON_PASSWD2                      "passwd"
    #define OM_BSON_PASSWORD                     "Password"
    #define OM_BSON_PASSWORD2                    "password"
    #define OM_BSON_INSTALL_PATH                 "InstallPath"
@@ -99,6 +110,12 @@ namespace engine
    #define OM_BSON_FROM                         "From"
    #define OM_BSON_TO                           "To"
    #define OM_BSON_OPTIONS                      "Options"
+   #define OM_BSON_SERVICENAME                  "ServiceName"
+   #define OM_BSON_DB_NAME                      "DbName"
+   #define OM_BSON_SQL                          "Sql"
+   #define OM_BSON_LEASETIME                    "LeaseTime"
+   #define OM_BSON_LEASETIME2                   "leaseTime"
+   #define OM_BSON_HTTPNAME                     "httpname"
 
    /***************** XML field *****************/
    #define OM_XML_FIELD_BUSINESS_TYPE           "BusinessType"
@@ -276,6 +293,18 @@ _IDX1\",key: {"OM_BUSINESS_FIELD_NAME":1}, unique: true, enforced: true }"
    #define OM_CS_DEPLOY_CL_RELATIONSHIPIDX1     "{name:\"SYSDEPLOY_RELATIONSHIP\
 _IDX1\",key: {"OM_RELATIONSHIP_FIELD_FROM":1,"OM_RELATIONSHIP_FIELD_TO":1}, \
 unique: true, enforced: true }"
+
+   /******* SYSPLUGINS *******/
+   #define OM_CS_DEPLOY_CL_PLUGINS              OM_CS_DEPLOY".SYSPLUGINS"
+   #define OM_PLUGINS_FIELD_NAME                "Name"
+   #define OM_PLUGINS_FIELD_BUSINESSTYPE        OM_PUBLIC_FIELD_BUSINESS_TYPE
+   #define OM_PLUGINS_FIELD_SERVICENAME         "ServiceName"
+   #define OM_PLUGINS_FIELD_UPDATETIME          "UpdateTime"
+   #define OM_CS_DEPLOY_CL_PLUGINSIDX1          "{name:\"SYSDEPLOY_PLUGINS_IDX1\
+\",key: {"OM_PLUGINS_FIELD_NAME":1}, unique: true, enforced: true }"
+   #define OM_CS_DEPLOY_CL_PLUGINSIDX2          "{name:\"SYSDEPLOY_PLUGINS_IDX2\
+\",key: {"OM_PLUGINS_FIELD_BUSINESSTYPE":1}, unique: true, enforced: true }"
+
 
 //********************************** OLD **************************************
 
@@ -518,6 +547,8 @@ unique: true, enforced: true }"
    // OM user's table
    #define  OM_DEFAULT_LOGIN_USER            "admin"
    #define  OM_DEFAULT_LOGIN_PASSWD          "admin"
+
+   #define  OM_DEFAULT_PLUGIN_USER           "plugin"
    //**************************************************************************
 
    //*********************command between rest and om**************************
@@ -577,6 +608,9 @@ unique: true, enforced: true }"
    #define  OM_CREATE_RELATIONSHIP_REQ       "create relationship"
    #define  OM_REMOVE_RELATIONSHIP_REQ       "remove relationship"
    #define  OM_LIST_RELATIONSHIP_REQ         "list relationship"
+
+   #define  OM_REGISTER_PLUGIN_REQ           "register plugin"
+   #define  OM_LIST_PLUGIN_REQ               "list plugins"
 
    //**************************************************************************
 

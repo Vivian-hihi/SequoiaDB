@@ -191,6 +191,76 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_AUTHCB_GETUSRINFO, "_authCB::getUsrInfo" )
+   INT32 _authCB::getUsrInfo( const string &user, _pmdEDUCB *cb, BSONObj &info )
+   {
+      INT32 rc = SDB_OK ;
+      SINT64 contextID = -1 ;
+      SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
+      SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
+      rtnContextBuf buffObj ;
+      BSONObj condition ;
+      BSONObj selector ;
+      BSONObj order ;
+      BSONObj hint ;
+
+      PD_TRACE_ENTRY ( SDB_AUTHCB_GETUSRINFO ) ;
+
+      condition = BSON( SDB_AUTH_USER << user ) ;
+
+      rc = rtnQuery( AUTH_USR_COLLECTION, selector, condition, order, hint, 0,
+                     cb, 0, -1, dmsCB, rtnCB, contextID ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to query:%d",rc ) ;
+         goto error ;
+      }
+
+      rc = rtnGetMore( contextID, -1, buffObj, cb, rtnCB ) ;
+      if ( rc && SDB_DMS_EOC != rc)
+      {
+         PD_LOG( PDERROR, "failed to getmore:%d",rc ) ;
+         rc = SDB_AUTH_AUTHORITY_FORBIDDEN ;
+         goto error ;
+      }
+      else if ( SDB_DMS_EOC == rc )
+      {
+         rc = SDB_AUTH_AUTHORITY_FORBIDDEN ;
+         goto error ;
+      }
+      else if ( 0 == buffObj.recordNum() )
+      {
+         rc = SDB_AUTH_AUTHORITY_FORBIDDEN ;
+         goto error ;
+      }
+      else if ( 1 == buffObj.recordNum() )
+      {
+         rc = SDB_OK ;
+      }
+      else
+      {
+         PD_LOG( PDERROR, "get more than one record, impossible" ) ;
+         rc = SDB_SYS ;
+         SDB_ASSERT( FALSE, "impossible" ) ;
+      }
+
+      {
+         BSONObj result( buffObj.data() ) ;
+
+         info = result.copy() ;
+      }
+
+   done:
+      if ( -1 != contextID )
+      {
+         rtnCB->contextDelete ( contextID, cb ) ;
+      }
+      PD_TRACE_EXITRC ( SDB_AUTHCB_GETUSRINFO, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _authCB::updatePasswd( const string &user, const string &oldPasswd, 
                                 const string &newPasswd, _pmdEDUCB *cb )
    {
