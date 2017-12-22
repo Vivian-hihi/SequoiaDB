@@ -77,13 +77,14 @@ public class ClusterManager7072 extends SdbTestBase{
 		//create data groups
 		ReplicaGroup dataRGAdd = null;
 		try{
-			if(sdb.getReplicaGroup(dataRGName) != null){
-				sdb.removeReplicaGroup(dataRGName);
-			}
-			dataRGAdd = sdb.createReplicaGroup(dataRGName);
+			sdb.getReplicaGroup(dataRGName);			
 		}catch(BaseException e){
-			Assert.fail("createReplicaGroup failed" + e.getMessage());
+			if( -154 != e.getErrorCode()){
+				sdb.removeReplicaGroup(dataRGName);
+			}			
 		}
+		
+		dataRGAdd = sdb.createReplicaGroup(dataRGName);
 		
 		//create data node
 		try{

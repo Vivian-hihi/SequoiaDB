@@ -66,11 +66,8 @@ public class ClusterManager7071 extends SdbTestBase{
 	public void tearDown(){
 		try{
 			System.out.println("the TestCase: "+ this.getClass().getName() + 
-					" end at:" + df.format(new Date().getTime()));
-			
-			if(sdb.getReplicaGroup(dataRGName) != null){
-				sdb.removeReplicaGroup(dataRGName);
-			}
+					" end at:" + df.format(new Date().getTime()));		
+			sdb.removeReplicaGroup(dataRGName);
 			sdb.disconnect();
 		}catch(BaseException e){
 			Assert.fail("clear env failed, errMsg:" + e.getMessage());
@@ -87,13 +84,13 @@ public class ClusterManager7071 extends SdbTestBase{
 		//create data groups
 		ReplicaGroup dataRGAdd = null;
 		try{
-			if(sdb.getReplicaGroup(dataRGName) != null){
-				sdb.removeReplicaGroup(dataRGName);
-			}
-			dataRGAdd = sdb.createReplicaGroup(dataRGName);
+			sdb.getReplicaGroup(dataRGName);			
 		}catch(BaseException e){
-			Assert.fail("createReplicaGroup failed" + e.getMessage());
-		}
+			if( -154 != e.getErrorCode()){
+				sdb.removeReplicaGroup(dataRGName);
+			}			
+		}		
+		dataRGAdd = sdb.createReplicaGroup(dataRGName);		
 		
 		//create data node
 		Node data = null;
