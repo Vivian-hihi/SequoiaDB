@@ -123,7 +123,7 @@ public class LobOprUtils {
 			 groupList = sdb.getReplicaGroupNames();
 			 groupList.remove("SYSCatalogGroup");
 			 groupList.remove("SYSCoord");
-			 groupList.remove("SYSSpare");
+			 groupList.remove("SYSSpare");			 
 		 }catch(BaseException e){				
 			 Assert.assertTrue(false,"getDataGroups fail " + e.getMessage());				
 		 }			
@@ -273,4 +273,43 @@ public class LobOprUtils {
         }
         return b;
     }
+    
+    public static void checkSplitResult(Sequoiadb sdb, String csName, String clName,
+    							ArrayList<String> splitGroupNames,double expErrorValue){	
+    	DBCollection cl = sdb.getCollectionSpace(csName).getCollection(clName);
+		DBCursor listCursor = cl.listLobs();
+		int count = 0;
+		while ( listCursor.hasNext() ) {			
+			count++;
+			listCursor.getNext();		
+		}		
+		listCursor.close();	
+		
+		int actListNums = 0;		
+		for(int i=0; i< splitGroupNames.size();i++){			
+			String nodeName = sdb.getReplicaGroup((String)splitGroupNames.get(i)).getMaster().getNodeName();
+			
+			try( Sequoiadb dataDB = new Sequoiadb(nodeName,"","") ){						
+				DBCollection dataCL = dataDB.getCollectionSpace(csName).getCollection(clName);
+				DBCursor listLobs = dataCL.listLobs();
+				int subCount = 0;				
+				while ( listLobs.hasNext() ) {					
+					subCount++;
+					listLobs.getNext();						
+				}
+				listLobs.close();	
+				actListNums += subCount;				
+				//list lobs deviation value is less than 50 percent after split
+				double expRate = count / splitGroupNames.size();
+				double actErrorValue = Math.abs(expRate - subCount)/expRate;				
+				if (actErrorValue > expErrorValue){
+					Assert.assertTrue(false,"errorValue: "+actErrorValue+" subCont:"+subCount
+							+"  explistnum:"+count);					
+				}			
+			}
+		}
+		//sum of query results on each group is equal to the results of coord 
+		Assert.assertEquals(actListNums,count,"list lobs error."+"allCount:"+actListNums);			
+	}
+    
 }

@@ -48,7 +48,7 @@ public class TestSameLobs7841 extends SdbTestBase {
 	}		
 	
 	//write same lob 
-	@Test(invocationCount = 200,threadPoolSize = 200)
+	@Test(invocationCount = 100,threadPoolSize = 100)
 	private void testSameLob(){	
 		try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ){
 			DBCollection dbcl = db.getCollectionSpace(SdbTestBase.csName).getCollection(clName);

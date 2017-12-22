@@ -1,7 +1,5 @@
 package com.sequoiadb.lob.basicoperation;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.Random;
 
 import org.bson.BSONObject;
