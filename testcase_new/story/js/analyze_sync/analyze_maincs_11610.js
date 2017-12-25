@@ -180,6 +180,7 @@ function main()
    println("---check all explain after detach/attach cl in maincs success");
    
    //指定子表所在cs收集统计
+	analyze( db, {Mode: 5} );
    analyze( db, {CollectionSpace: subcsName1} );
    
    //检查统计信息
