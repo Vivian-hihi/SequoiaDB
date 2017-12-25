@@ -317,8 +317,7 @@ function createCL( csName, clName, shardingKey, shardingType)
    if ( typeof( shardingType ) == "undefined" ) { shardingType = "hash"; }
    println("---Begin to create cl.");
 
-   var options  = { ShardingKey: shardingKey, ShardingType: shardingType, AutoSplit: true,
-                    ReplSize:0, Compressed:true } ;
+   var options  = { ShardingKey: shardingKey, ShardingType: shardingType,ReplSize:0, Compressed:true } ;
    var dbcl = commCreateCLByOption( db, csName, clName, options, true,
                                      true, "Failed to create cl." );
    return dbcl ;
