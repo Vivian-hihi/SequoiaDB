@@ -55,7 +55,15 @@
          </then>
       </if>
       <!-- detect node lsn and group has primary node -->
-      <antcall target="detect_db_cluster"/>
+      <if>
+         <not>
+            <equals arg1="${TEST_TYPE}" arg2="RELIABILITYTEST"/>
+         </not>
+         <then>
+            <antcall target="detect_db_cluster"/>
+         </then>
+      </if>
+
       <!-- cp report to ${WORKSPACE}/report-->
       <delete dir="${WORKSPACE}/report/env_detect"/>
       <copy todir="${WORKSPACE}/report/env_detect">
