@@ -18,17 +18,21 @@ function main()
    println("---begin test---");
    isnotnullSQL( cl, csName, clName );
     
-   insertSQL(db, cl, csName, clName, 'decimal(100.01)', {$decimal:"100.01"}, true);
+   insertSQL(db, cl, csName, clName, 'decimal(2147483648.2147483648)', {$decimal:"2147483648.2147483648"}, true);
+   insertSQL(db, cl, csName, clName, 'decimal(1.7E+309)', {$decimal:"1.7E+309"}, true);
    insertSQL(db, cl, csName, clName, 'decimal(\"100.01\")', {$decimal:"100.01"}, false);
    
-   updateSQL(db, cl, csName, clName, 'decimal(100.01)', 'decimal(\"200.02\")', {$decimal:"200.02"}, false);
-   updateSQL(db, cl, csName, clName, 'decimal(100.01)', 'decimal(200.02)', {$decimal:"200.02"}, true);
+   updateSQL(db, cl, csName, clName, 'decimal(2147483648.2147483648)', 'decimal(\"9223372036854775808\")', {$decimal:"9223372036854775808"}, false);
+   updateSQL(db, cl, csName, clName, 'decimal(2147483648.2147483648)', 'decimal(9223372036854775808)', {$decimal:"9223372036854775808"}, true);
+   updateSQL(db, cl, csName, clName, 'decimal(1.7E+309)', 'decimal(100.01)', {$decimal:"100.01"}, true);
  
-   selectSQL(db, csName, clName, 'decimal(\"200.02\")', false);
-   selectSQL(db, csName, clName, 'decimal(200.02)', true);
+   selectSQL(db, csName, clName, 'decimal(\"9223372036854775808\")', false);
+   selectSQL(db, csName, clName, 'decimal(9223372036854775808)', true);
+   selectSQL(db, csName, clName, 'decimal(100.01)', true);
    
-   deleteSQL(db, cl, csName, clName, 'decimal(\"200.02\")', {$decimal:"200.02"}, false);
-   deleteSQL(db, cl, csName, clName, 'decimal(200.02)', {$decimal:"200.02"}, true);
+   deleteSQL(db, cl, csName, clName, 'decimal(\"9223372036854775808\")', {$decimal:"9223372036854775808"}, false);
+   deleteSQL(db, cl, csName, clName, 'decimal(9223372036854775808)', {$decimal:"9223372036854775808"}, true);
+   deleteSQL(db, cl, csName, clName, 'decimal(100.01)', {$decimal:"100.01"}, true);
    
    println( "---end the test---" );
    commDropCS( db, csName, true, "drop CS in the end" );

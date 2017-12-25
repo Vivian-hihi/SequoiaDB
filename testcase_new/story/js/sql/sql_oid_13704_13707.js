@@ -18,17 +18,17 @@ function main()
    println("---begin test---");
    isnotnullSQL(cl, csName, clName);
    
-   insertSQL(db, cl, csName, clName, 'oid(\"55713f7953e6769804000001\")', {$oid:"55713f7953e6769804000001"}, true);
+   insertSQL(db, cl, csName, clName, 'oid(\"55713F7953E6769804000001\")', {$oid:"55713f7953e6769804000001"}, true);
    insertSQL(db, cl, csName, clName, 'oid(\"55713f7953e\")',  {$oid:"55713f7953e6769804000001"}, false);
    
    updateSQL(db, cl, csName, clName, 'oid(\"55713f7953e6769804000001\")', 'oid(\"55713f7953e\")', null, false);
-   updateSQL(db, cl, csName, clName, 'oid(\"55713f7953e6769804000001\")', 'oid(\"55713f7953e6769804000111\")', {$oid:"55713f7953e6769804000111"}, true);
+   updateSQL(db, cl, csName, clName, 'oid(\"55713F7953E6769804000001\")', 'oid(\"55713f7953e6769804000111\")', {$oid:"55713f7953e6769804000111"}, true);
  
    selectSQL(db, csName, clName, 'oid(\"55713f7953e6769804000111\")', true);
    selectSQL(db, csName, clName, 'oid(\"55713f7953e\")', false);
    
    deleteSQL(db, cl, csName, clName, 'oid(\"55713f7953e\")', null, false);
-   deleteSQL(db, cl, csName, clName, 'oid(\"55713f7953e6769804000111\")', {$oid:"55713f7953e6769804000111"}, true);
+   deleteSQL(db, cl, csName, clName, 'oid(\"55713F7953E6769804000111\")', {$oid:"55713f7953e6769804000111"}, true);
    
    println( "---end the test---" );
    commDropCS( db, csName, true, "drop CS in the end" );
