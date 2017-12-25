@@ -1652,6 +1652,7 @@ namespace engine
          }
          else
          {
+            BOOLEAN needAlloc = TRUE ;
             // begin for extent
             rc = context ? context->pause() : SDB_OK ;
             PD_RC_CHECK( rc, PDERROR, "Failed to pause context[%s], rc: %d",
@@ -1662,6 +1663,11 @@ namespace engine
             rc = context ? context->resume() : SDB_OK ;
             PD_RC_CHECK( rc, PDERROR, "Failed to resum context[%s], rc: %d",
                          context->toString().c_str(), rc ) ;
+            _onAllocSpaceReady( context, needAlloc ) ;
+            if ( !needAlloc )
+            {
+               break ;
+            }
          }
       }
 

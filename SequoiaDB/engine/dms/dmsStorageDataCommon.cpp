@@ -1179,6 +1179,13 @@ namespace engine
          goto error ;
       }
 
+      if ( DMS_INVALID_EXTENT == firstFreeExtentID )
+      {
+         // In _findFreeSpace, it decided not to allocate space this time.
+         *allocExtID = DMS_INVALID_EXTENT ;
+         goto done ;
+      }
+
       extRW = extent2RW( firstFreeExtentID, context->mbID() ) ;
       extRW.setNothrow( TRUE ) ;
       extAddr = extRW.writePtr<dmsExtent>() ;

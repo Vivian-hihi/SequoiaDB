@@ -510,6 +510,13 @@ namespace engine
             return SDB_OK ;
          }
 
+         // Called when trying to find freespace. The return value specifies
+         // whether to do the allocation or not.
+         virtual void _onAllocSpaceReady( dmsContext *context, BOOLEAN &doit )
+         {
+            doit = TRUE ;
+         }
+
          virtual UINT64 _getOldestWriteTick() const { return ~0 ; }
 
          virtual void   _onRestore() {}

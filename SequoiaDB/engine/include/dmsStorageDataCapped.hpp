@@ -163,11 +163,28 @@ namespace engine
          _writePos = offset - DMS_EXTENT_METADATA_SZ ;
          _freeSpace -= distance ;
       }
+
+      // For debug purpose.
+      string toString() const
+      {
+         ostringstream ss ;
+         ss << "Extent id: " << _id
+            << ". Extent logical id: " << _extLogicID
+            << ". Record number: " << _recCount
+            << ". Free space: " << _freeSpace
+            << ". First record offset: " << _firstRecordOffset
+            << ". Last record offset: " << _lastRecordOffset
+            << ". Write position: " << _writePos
+            << ". Record number: " << _recNo
+            << ".\n" ;
+         return ss.str() ;
+      }
    } ;
    typedef _dmsExtentInfo dmsExtentInfo ;
 
    class _dmsStorageDataCapped : public _dmsStorageDataCommon
    {
+      typedef std::map<UINT32, UINT32>    SIZE_REQ_MAP ;
    public:
       _dmsStorageDataCapped( const CHAR* pSuFileName,
                              dmsStorageInfo *pInfo,
@@ -264,6 +281,8 @@ namespace engine
 
       virtual INT32 _operationPermChk( DMS_ACCESS_TYPE accessType ) ;
 
+      virtual void _onAllocSpaceReady( dmsContext *context, BOOLEAN &doit ) ;
+
       INT32 _parseExtendOptions( const BSONObj *extOptions,
                                  dmsCappedCLOptions &options ) ;
 
@@ -280,7 +299,7 @@ namespace engine
       INT32 _syncWorkExtInfo( UINT16 collectionID ) ;
       INT32 _switchWorkExt( dmsMBContext *context, dmsExtentID extID ) ;
       INT32 _attachWorkExt( UINT16 collectionID, dmsExtentID extID ) ;
-      INT32 _detachWorkExt( UINT16 collectionID, BOOLEAN sync = TRUE ) ;
+      void _detachWorkExt( UINT16 collectionID, BOOLEAN sync = TRUE ) ;
 
       INT32 _shrinkForward( dmsMBContext* context, dmsExtentInfo* workExtInfo,
                             dmsExtentID extID, dmsOffset offset ) ;
@@ -313,6 +332,9 @@ namespace engine
       OSS_INLINE dmsExtentID _logicID2ExtID( dmsMBContext *context,
                                              INT64 logicalID,
                                              const dmsExtent *&extent ) ;
+      OSS_INLINE void   _saveSizeRequest( UINT32 size ) ;
+      OSS_INLINE void   _clearSizeRequest() ;
+      OSS_INLINE UINT32 _getSizeRequest() const ;
 
       INT32 _extractRecLID( dmsMBContext *context,
                             INT64 logicalID,
@@ -345,6 +367,7 @@ namespace engine
       // The information of the working extents of each collection.
       // Working extent is the one which we are using for inserting record now.
       dmsExtentInfo _workExtInfo[ DMS_MME_SLOTS ] ;
+      SIZE_REQ_MAP  _sizeReqMap ;
    } ;
    typedef _dmsStorageDataCapped dmsStorageDataCapped ;
 
@@ -526,6 +549,24 @@ namespace engine
       return extentID ;
    error:
       goto done ;
+   }
+
+   OSS_INLINE void _dmsStorageDataCapped::_saveSizeRequest( UINT32 size )
+   {
+      _sizeReqMap[ (UINT32)ossGetCurrentThreadID() ] = size ;
+   }
+
+   OSS_INLINE void _dmsStorageDataCapped::_clearSizeRequest()
+   {
+      _sizeReqMap.erase( (UINT32)ossGetCurrentThreadID() ) ;
+   }
+
+   OSS_INLINE UINT32 _dmsStorageDataCapped::_getSizeRequest() const
+   {
+      SIZE_REQ_MAP::const_iterator search =
+         _sizeReqMap.find( (UINT32)ossGetCurrentThreadID() ) ;
+
+      return ( search == _sizeReqMap.end() ) ? 0 : search->second ;
    }
  }
 

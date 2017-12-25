@@ -207,7 +207,8 @@ namespace engine
             if ( SDB_OK == rc )
             {
                // For collection who has text indices, parallel replay should
-               // also be forbidden. Otherwise, the records in the capped col
+               // also be forbidden. Otherwise, the records in the capped
+               // collection will not be exactly the same.
                paralla = ( mbContext->mbStat()->_uniqueIdxNum <= 1 &&
                            0 == mbContext->mbStat()->_textIdxNum ) ?
                          TRUE : FALSE ;
