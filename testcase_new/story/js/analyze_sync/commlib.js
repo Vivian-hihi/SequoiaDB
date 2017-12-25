@@ -266,6 +266,7 @@ function checkStat( db, csName, clName, indexName, clExistStat, indexExistStat )
          
       }
    }
+	println("check stat sucess");
      
 }
 
