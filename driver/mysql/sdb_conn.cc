@@ -73,12 +73,18 @@ error:
 int sdb_conn::begin_transaction()
 {
    int rc = 0 ;
-   if ( !transactionon )
+   int retry_times = 2 ;
+   while ( !transactionon )
    {
       rc = connection.transactionBegin() ;
       if ( 0 == rc )
       {
          transactionon = true ;
+         break ;
+      }
+      else if ( IS_SDB_NET_ERR( rc ) && --retry_times > 0 )
+      {
+         connect() ;
       }
       else
       {
@@ -109,6 +115,10 @@ int sdb_conn::commit_transaction()
 done:
    return rc ;
 error:
+   if ( IS_SDB_NET_ERR( rc ) )
+   {
+      connect() ;
+   }
    convert_sdb_code( rc ) ;
    goto done ;
 }
@@ -117,8 +127,13 @@ int sdb_conn::rollback_transaction()
 {
    if ( transactionon )
    {
+      int rc = 0 ;
       transactionon = false ;
-      connection.transactionRollback() ;
+      rc = connection.transactionRollback() ;
+      if ( IS_SDB_NET_ERR( rc ) )
+      {
+         connect() ;
+      }
    }
    return 0 ;
 }
@@ -173,6 +188,10 @@ int sdb_conn::get_cl( char *cs_name, char *cl_name,
 done:
    return rc ;
 error:
+   if ( IS_SDB_NET_ERR( rc ) )
+   {
+      connect() ;
+   }
    convert_sdb_code( rc ) ;
    goto done ;
 }
@@ -180,12 +199,25 @@ error:
 int sdb_conn::create_cl( char *cs_name, char *cl_name,
                          sdb_cl_auto_ptr &cl_ptr )
 {
-   return this->get_cl( cs_name, cl_name, cl_ptr, TRUE ) ;
+   int rc = 0 ;
+   rc = this->get_cl( cs_name, cl_name, cl_ptr, TRUE ) ;
+   if( rc != 0 )
+   {
+      goto error ;
+   }
+done:
+   return rc ;
+error:
+   if ( IS_SDB_NET_ERR( rc ) )
+   {
+      connect() ;
+   }
+   convert_sdb_code( rc ) ;
+   goto done ;
 }
 
 void sdb_conn::clear_cl( char *cs_name, char *cl_name )
 {
-   int rc = SDB_ERR_OK ;
    std::map<std::string, sdb_cl_auto_ptr>::iterator iter ;
    std::string str_tmp( cs_name ) ;
    str_tmp.append( "." ) ;

@@ -83,6 +83,14 @@ error:
    goto done ;
 }
 
+int sdb_cl::check_connect( int rc )
+{
+   if ( SDB_NETWORK == rc || SDB_NOT_CONNECTED == rc )
+   {
+      return p_conn->connect() ;
+   }
+}
+
 int sdb_cl::begin_transaction()
 {
    return p_conn->begin_transaction() ;
@@ -122,22 +130,11 @@ int sdb_cl::query( const bson::BSONObj &condition,
                    INT32 flags )
 {
    int rc = SDB_ERR_OK ;
-   int retrys = 2 ;
-   while( retrys-- > 0 )
-   {
-      rc = cl.query( cursor, condition, selected, orderBy,
-                     hint, numToSkip, numToReturn, flags ) ;
-      if ( SDB_ERR_OK == rc )
-      {
-         goto done ;
-      }
-      if ( SDB_NETWORK != rc )
-      {
-         goto error ;
-      }
-      rc = p_conn->connect() ;
-   }
-   if ( rc != SDB_ERR_OK )
+   int retry_times = 2 ;
+retry:
+   rc = cl.query( cursor, condition, selected, orderBy,
+                  hint, numToSkip, numToReturn, flags ) ;
+   if ( SDB_ERR_OK != rc )
    {
       goto error ;
    }
@@ -145,6 +142,15 @@ int sdb_cl::query( const bson::BSONObj &condition,
 done:
    return rc ;
 error:
+   if ( IS_SDB_NET_ERR(rc) )
+   {
+      bool is_transaction = p_conn->is_transaction() ;
+      if( 0 == p_conn->connect() && !is_transaction
+          && retry_times-- > 0 )
+      {
+         goto retry ;
+      }
+   }
    convert_sdb_code( rc ) ;
    goto done ;
 }
@@ -159,6 +165,8 @@ int sdb_cl::query_one( bson::BSONObj obj,
 {
    int rc = SDB_ERR_OK ;
    sdbclient::sdbCursor cursor_tmp ;
+   int retry_times = 2 ;
+retry:
    rc = cl.query( cursor_tmp, condition, selected, orderBy,
                   hint, numToSkip, 1, flags ) ;
    if ( rc != SDB_ERR_OK )
@@ -176,6 +184,15 @@ int sdb_cl::query_one( bson::BSONObj obj,
 done:
    return rc ;
 error:
+   if ( IS_SDB_NET_ERR(rc) )
+   {
+      bool is_transaction = p_conn->is_transaction() ;
+      if( 0 == p_conn->connect() && !is_transaction
+          && retry_times-- > 0 )
+      {
+         goto retry ;
+      }
+   }
    convert_sdb_code( rc ) ;
    goto done ;
 }
@@ -228,6 +245,8 @@ error:
 int sdb_cl::insert( bson::BSONObj &obj )
 {
    int rc = SDB_ERR_OK ;
+   int retry_times = 2 ;
+retry:
    rc = cl.insert( obj ) ;
    if ( rc != SDB_ERR_OK )
    {
@@ -236,6 +255,15 @@ int sdb_cl::insert( bson::BSONObj &obj )
 done:
    return rc ;
 error:
+   if ( IS_SDB_NET_ERR(rc) )
+   {
+      bool is_transaction = p_conn->is_transaction() ;
+      if( 0 == p_conn->connect() && !is_transaction
+          && retry_times-- > 0 )
+      {
+         goto retry ;
+      }
+   }
    convert_sdb_code( rc ) ;
    goto done ;
 }
@@ -246,6 +274,8 @@ int sdb_cl::update( const bson::BSONObj &rule,
                     INT32 flag )
 {
    int rc = SDB_ERR_OK ;
+   int retry_times = 2 ;
+retry:
    rc = cl.update( rule, condition, hint, flag ) ;
    if ( rc != SDB_ERR_OK )
    {
@@ -254,6 +284,15 @@ int sdb_cl::update( const bson::BSONObj &rule,
 done:
    return rc ;
 error:
+   if ( IS_SDB_NET_ERR(rc) )
+   {
+      bool is_transaction = p_conn->is_transaction() ;
+      if( 0 == p_conn->connect() && !is_transaction
+          && retry_times-- > 0 )
+      {
+         goto retry ;
+      }
+   }
    convert_sdb_code( rc ) ;
    goto done ;
 }
@@ -262,6 +301,8 @@ int sdb_cl::del( const bson::BSONObj &condition,
                  const bson::BSONObj &hint )
 {
    int rc = SDB_ERR_OK ;
+   int retry_times = 2 ;
+retry:
    rc = cl.del( condition, hint ) ;
    if ( rc != SDB_ERR_OK )
    {
@@ -270,6 +311,15 @@ int sdb_cl::del( const bson::BSONObj &condition,
 done:
    return rc ;
 error:
+   if ( IS_SDB_NET_ERR(rc) )
+   {
+      bool is_transaction = p_conn->is_transaction() ;
+      if( 0 == p_conn->connect() && !is_transaction
+          && retry_times-- > 0 )
+      {
+         goto retry ;
+      }
+   }
    convert_sdb_code( rc ) ;
    goto done ;
 }
@@ -280,6 +330,8 @@ int sdb_cl::create_index( const bson::BSONObj &indexDef,
                           BOOLEAN isEnforced )
 {
    int rc = SDB_ERR_OK ;
+   int retry_times = 2 ;
+retry:
    rc = cl.createIndex( indexDef, pName, isUnique, isEnforced ) ;
    if ( rc != SDB_ERR_OK )
    {
@@ -288,6 +340,15 @@ int sdb_cl::create_index( const bson::BSONObj &indexDef,
 done:
    return rc ;
 error:
+   if ( IS_SDB_NET_ERR(rc) )
+   {
+      bool is_transaction = p_conn->is_transaction() ;
+      if( 0 == p_conn->connect() && !is_transaction
+          && retry_times-- > 0 )
+      {
+         goto retry ;
+      }
+   }
    convert_sdb_code( rc ) ;
    goto done ;
 }
@@ -295,6 +356,8 @@ error:
 int sdb_cl::drop_index( const char *pName )
 {
    int rc = SDB_ERR_OK ;
+   int retry_times = 2 ;
+retry:
    rc = cl.dropIndex( pName ) ;
    if ( rc != SDB_ERR_OK )
    {
@@ -303,6 +366,15 @@ int sdb_cl::drop_index( const char *pName )
 done:
    return rc ;
 error:
+   if ( IS_SDB_NET_ERR(rc) )
+   {
+      bool is_transaction = p_conn->is_transaction() ;
+      if( 0 == p_conn->connect() && !is_transaction
+          && retry_times-- > 0 )
+      {
+         goto retry ;
+      }
+   }
    convert_sdb_code( rc ) ;
    goto done ;
 }
@@ -310,6 +382,8 @@ error:
 int sdb_cl::truncate()
 {
    int rc = SDB_ERR_OK ;
+   int retry_times = 2 ;
+retry:
    rc = cl.truncate() ;
    if ( rc != SDB_ERR_OK )
    {
@@ -318,6 +392,15 @@ int sdb_cl::truncate()
 done:
    return rc ;
 error:
+   if ( IS_SDB_NET_ERR(rc) )
+   {
+      bool is_transaction = p_conn->is_transaction() ;
+      if( 0 == p_conn->connect() && !is_transaction
+          && retry_times-- > 0 )
+      {
+         goto retry ;
+      }
+   }
    convert_sdb_code( rc ) ;
    goto done ;
 }
@@ -335,6 +418,8 @@ my_thread_id sdb_cl::get_tid()
 int sdb_cl::drop()
 {
    int rc = SDB_ERR_OK ;
+   int retry_times = 2 ;
+retry:
    rc = cl.drop() ;
    if ( rc != SDB_ERR_OK )
    {
@@ -348,6 +433,15 @@ int sdb_cl::drop()
 done:
    return rc ;
 error:
+   if ( IS_SDB_NET_ERR(rc) )
+   {
+      bool is_transaction = p_conn->is_transaction() ;
+      if( 0 == p_conn->connect() && !is_transaction
+          && retry_times-- > 0 )
+      {
+         goto retry ;
+      }
+   }
    convert_sdb_code( rc ) ;
    goto done ;
 }

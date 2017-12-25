@@ -78,6 +78,11 @@ public:
 
    int drop() ;
 
+
+private:
+
+   int check_connect( int rc ) ;
+
 private:
    sdb_conn                                  *p_conn ;
    sdbclient::sdbCollection                  cl ;
