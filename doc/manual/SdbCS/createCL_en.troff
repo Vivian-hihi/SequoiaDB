@@ -141,12 +141,17 @@ The parameter \f[C]options\f[] haves one or more fields, please use comma(,) to
 separate.
 .IP \[bu] 2
 AutoSplit must cooperate with hash partitioning and domain.
-AutoSplit and Group cannot be set at the same time.
 .IP \[bu] 2
 AutoSplit and Group cannot be set at the same time.
 .IP \[bu] 2
-If AutoSplit is not specOKified in a collection, the value of AutoSplit will
+If AutoSplit is not specified in a collection, the value of AutoSplit will
 come from domain.
+.IP \[bu] 2
+If AutoSplit is specified in a collection which is belong to a domain, the
+value of AutoSplit will cover the AutoSplit value of domain.
+.IP \[bu] 2
+If AutoSplit is specified in a collection which is not belong to any domain,
+the collection will be splitted into all groups of SYSDOMAIN.
 .IP \[bu] 2
 Group must exist in a domain, which contains a collection space, which has the
 group(All replica group belong to SYSDOMAIN, that is to say, a collection space

@@ -103,12 +103,19 @@ or not, default to be false.
       comma(,) to separate.
    
     *  AutoSplit must cooperate with hash partitioning and domain.
-       AutoSplit and Group cannot be set at the same time.
 
     *  AutoSplit and Group cannot be set at the same time.
 
-    *  If AutoSplit is not specOKified in a collection, the value
+    *  If AutoSplit is not specified in a collection, the value
        of AutoSplit will come from domain.
+
+    *  If AutoSplit is specified in a collection which is belong to
+       a domain, the value of AutoSplit will cover the AutoSplit value
+       of domain.
+
+    *  If AutoSplit is specified in a collection which is not belong
+       to any domain, the collection will be splitted into all groups
+       of SYSDOMAIN.
 
     *  Group must exist in a domain, which contains a collection
        space, which has the group(All replica group belong to

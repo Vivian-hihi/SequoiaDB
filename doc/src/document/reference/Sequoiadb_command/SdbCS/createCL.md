@@ -122,6 +122,8 @@ Collection Space
     * 使用 AutoSplit 参数时，若该集合从属于某个域，当前的 AutoSplit 参数将
       覆盖域中的 AutoSplit 参数作用于当前集合；
 
+    * 使用 AutoSplit 参数时，若该集合不从属于某个域，集合将在系统域 SYSDOMAIN 上进行自动切分；
+
     * 不使用 AutoSplit 参数时，若该集合从属于某个域，该域的 AutoSplit 参数将
       作用于当前集合。
 
