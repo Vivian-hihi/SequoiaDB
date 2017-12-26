@@ -241,6 +241,22 @@ namespace engine
                                std::map<std::string, UINT32> &splitRange ) ;
 
       INT32 _getBoundFromClObj ( const BSONObj &clObj, UINT32 &totalBound ) ;
+
+   private :
+      INT32 _chooseCLGroupBySpec ( const CHAR * groupName,
+                                   const BSONObj & domainObj,
+                                   _pmdEDUCB * cb,
+                                   std::vector<UINT32> & groupIDList ) ;
+
+      INT32 _chooseCLGroupAutoSplit ( const BSONObj & domainObj,
+                                      std::vector<UINT32> & groupIDList,
+                                      std::map<std::string, UINT32> & splitRange ) ;
+
+      INT32 _chooseCLGroupDefault ( const BSONObj & domainObj,
+                                    const BSONObj & csObj,
+                                    INT32 assignType,
+                                    _pmdEDUCB * cb,
+                                    std::vector<UINT32> & groupIDList ) ;
    } ;
 
    typedef class _catCtxCreateCL catCtxCreateCL ;

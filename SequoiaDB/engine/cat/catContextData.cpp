@@ -1329,101 +1329,25 @@ namespace engine
 
       PD_TRACE_ENTRY ( SDB_CATCTXCREATECL_CHOOSE_GRP ) ;
 
-      BSONObj gpObj ;
-      const CHAR *domain = NULL ;
-      BOOLEAN isSysDomain = domainObj.isEmpty() ;
-      std::map<string, UINT32> groupsOfDomain ;
-
-      /// if the group is specified.
-      /// 1) whether the group exists.
-      /// 2) whether the group is one of the groups of domain.
       if ( NULL != clInfo._gpSpecified )
       {
-         INT32 tmpGrpID = CAT_INVALID_GROUPID ;
-
-         // test group first
-         rc = catGroupName2ID( clInfo._gpSpecified, (UINT32 &)tmpGrpID,
-                               TRUE, cb ) ;
-         PD_RC_CHECK( rc, PDERROR,
-                      "Failed to convert group name [%s] to id, rc: %d",
-                      clInfo._gpSpecified, rc ) ;
-
-         if ( !isSysDomain )
-         {
-            rc = catGetDomainGroups( domainObj, groupsOfDomain ) ;
-            PD_RC_CHECK( rc, PDERROR,
-                         "Failed to get groups from domain info [%s], rc: %d",
-                         domainObj.toString().c_str(), rc ) ;
-            {
-               map<string, UINT32>::const_iterator itr =
-                  groupsOfDomain.find( clInfo._gpSpecified ) ;
-
-               if ( groupsOfDomain.end() == itr )
-               {
-                  PD_LOG( PDERROR, "[%s] is not a group of domain [%s]",
-                          clInfo._gpSpecified, domain ) ;
-                  rc = SDB_CAT_GROUP_NOT_IN_DOMAIN ;
-                  goto error ;
-               }
-
-               groupIDList.push_back( itr->second ) ;
-            }
-         }
-         else
-         {
-            groupIDList.push_back( (UINT32)tmpGrpID ) ;
-         }
+         rc = _chooseCLGroupBySpec( clInfo._gpSpecified, domainObj, cb,
+                                    groupIDList ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get group for collection by "
+                      "specified, rc: %d", rc ) ;
+      }
+      else if ( clInfo._autoSplit )
+      {
+         rc = _chooseCLGroupAutoSplit( domainObj, groupIDList, splitRange ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get groups for auto-split "
+                      "collection, rc: %d", rc ) ;
       }
       else
       {
-         /// get a group from groups of cs
-         if ( !isSysDomain && clInfo._autoSplit )
-         {
-            // Split to all domain groups
-            rc = catGetDomainGroups( domainObj, splitRange ) ;
-            PD_RC_CHECK( rc, PDERROR,
-                         "Failed to get groups from domain info [%s], rc: %d",
-                         domainObj.toString().c_str(), rc ) ;
-            rc = catGetDomainGroups( domainObj, groupIDList ) ;
-            PD_RC_CHECK( rc, PDERROR,
-                         "Failed to get groups from domain info [%s], rc: %d",
-                         domainObj.toString().c_str(), rc ) ;
-         }
-         else
-         {
-            std::vector<UINT32> candidateGroupList ;
-            UINT32 grpID = CAT_INVALID_GROUPID ;
-            if ( ASSIGN_FOLLOW == clInfo._assignType )
-            {
-               BSONElement ele = csObj.getField( CAT_COLLECTION_SPACE_NAME ) ;
-               rc = catGetCSGroupsFromCLs( ele.valuestrsafe(), cb,
-                                           candidateGroupList ) ;
-               PD_RC_CHECK( rc, PDERROR, "Failed to get collection space [%s]"
-                            " groups, rc: %d", csObj.toString().c_str(), rc ) ;
-            }
-
-            if ( candidateGroupList.empty() && !isSysDomain )
-            {
-               /// Randomly choose one group in the domain
-               rc = catGetDomainGroups( domainObj, candidateGroupList ) ;
-               PD_RC_CHECK( rc, PDERROR,
-                            "Failed to get groups from domain info [%s], rc: %d",
-                            domainObj.toString().c_str(), rc ) ;
-            }
-
-            if ( candidateGroupList.empty() )
-            {
-               grpID = CAT_INVALID_GROUPID ;
-               rc = sdbGetCatalogueCB()->getAGroupRand( grpID ) ;
-               PD_RC_CHECK( rc, PDERROR, "Failed to get group from SYS, rc: %d",
-                            rc ) ;
-            }
-            else
-            {
-               grpID = candidateGroupList[ ossRand() % candidateGroupList.size() ] ;
-            }
-            groupIDList.push_back( grpID ) ;
-         }
+         rc = _chooseCLGroupDefault( domainObj, csObj, clInfo._assignType,
+                                     cb, groupIDList ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get groups for collection, "
+                      "rc: %d", rc ) ;
       }
 
       rc = catCheckGroupsByID( groupIDList ) ;
@@ -1445,6 +1369,162 @@ namespace engine
    error :
       groupIDList.clear() ;
       splitRange.clear() ;
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXCREATECL__CHOOSECLGRPSPEC, "_catCtxCreateCL::_chooseCLGroupBySpec" )
+   INT32 _catCtxCreateCL::_chooseCLGroupBySpec ( const CHAR * groupName,
+                                                 const BSONObj & domainObj,
+                                                 _pmdEDUCB * cb,
+                                                 std::vector<UINT32> & groupIDList )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_CATCTXCREATECL__CHOOSECLGRPSPEC ) ;
+
+      BOOLEAN isSysDomain = domainObj.isEmpty() ;
+      INT32 tmpGrpID = CAT_INVALID_GROUPID ;
+
+      /// if the group is specified.
+      /// 1) whether the group exists.
+      /// 2) whether the group is one of the groups of domain.
+
+      // test group first
+      rc = catGroupName2ID( groupName, (UINT32 &)tmpGrpID, TRUE, cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to convert group name [%s] to id, "
+                   "rc: %d", groupName, rc ) ;
+
+      if ( isSysDomain )
+      {
+         groupIDList.push_back( (UINT32)tmpGrpID ) ;
+      }
+      else
+      {
+         std::map<string, UINT32> groupsOfDomain ;
+         std::map<string, UINT32>::iterator itr ;
+
+         rc = catGetDomainGroups( domainObj, groupsOfDomain ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get groups from domain "
+                      "info [%s], rc: %d", domainObj.toString().c_str(), rc ) ;
+
+         itr = groupsOfDomain.find( groupName ) ;
+         PD_CHECK( groupsOfDomain.end() != itr, SDB_CAT_GROUP_NOT_IN_DOMAIN,
+                   error, PDERROR, "[%s] is not a group of given domain",
+                   groupName ) ;
+
+         groupIDList.push_back( itr->second ) ;
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB_CATCTXCREATECL__CHOOSECLGRPSPEC, rc ) ;
+      return rc ;
+
+   error :
+      groupIDList.clear() ;
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXCREATECL__CHOOSECLGRPAUTOSPLIT, "_catCtxCreateCL::_chooseCLGroupAutoSplit" )
+   INT32 _catCtxCreateCL::_chooseCLGroupAutoSplit ( const BSONObj & domainObj,
+                                                    std::vector<UINT32> & groupIDList,
+                                                    std::map<std::string, UINT32> & splitRange )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_CATCTXCREATECL__CHOOSECLGRPAUTOSPLIT ) ;
+
+      BOOLEAN isSysDomain = domainObj.isEmpty() ;
+
+      if ( isSysDomain )
+      {
+         // Split to all SYS domain groups
+         sdbGetCatalogueCB()->getGroupsID( groupIDList, TRUE ) ;
+         sdbGetCatalogueCB()->getGroupNameMap( splitRange, TRUE ) ;
+      }
+      else
+      {
+         // Split to all domain groups
+         rc = catGetDomainGroups( domainObj, groupIDList ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get groups from domain info "
+                      "[%s], rc: %d", domainObj.toString().c_str(), rc ) ;
+         rc = catGetDomainGroups( domainObj, splitRange ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get groups from domain info "
+                      "[%s], rc: %d", domainObj.toString().c_str(), rc ) ;
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB_CATCTXCREATECL__CHOOSECLGRPAUTOSPLIT, rc ) ;
+      return rc ;
+
+   error :
+      splitRange.clear() ;
+      groupIDList.clear() ;
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXCREATECL__CHOOSECLGRPDEF, "_catCtxCreateCL::_chooseCLGroupDefault" )
+   INT32 _catCtxCreateCL::_chooseCLGroupDefault ( const BSONObj & domainObj,
+                                                  const BSONObj & csObj,
+                                                  INT32 assignType,
+                                                  _pmdEDUCB * cb,
+                                                  std::vector<UINT32> & groupIDList )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_CATCTXCREATECL__CHOOSECLGRPDEF ) ;
+
+      std::vector<UINT32> candidateGroupList ;
+      UINT32 tmpGrpID = CAT_INVALID_GROUPID ;
+      BOOLEAN isSysDomain = domainObj.isEmpty() ;
+
+      // FOLLOW is given
+      if ( ASSIGN_FOLLOW == assignType )
+      {
+         BSONElement ele = csObj.getField( CAT_COLLECTION_SPACE_NAME ) ;
+         rc = catGetCSGroupsFromCLs( ele.valuestrsafe(), cb,
+                                     candidateGroupList ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get collection space [%s]"
+                      " groups, rc: %d", csObj.toString().c_str(), rc ) ;
+      }
+
+      // Collection space has domain
+      if ( candidateGroupList.empty() && !isSysDomain )
+      {
+         /// Randomly choose one group in the domain
+         rc = catGetDomainGroups( domainObj, candidateGroupList ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to get groups from domain info [%s], rc: %d",
+                      domainObj.toString().c_str(), rc ) ;
+      }
+
+      if ( candidateGroupList.empty() )
+      {
+         // No candidate groups, choose one from SYS domain
+         tmpGrpID = CAT_INVALID_GROUPID ;
+         rc = sdbGetCatalogueCB()->getAGroupRand( tmpGrpID ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get group from SYS, rc: %d",
+                      rc ) ;
+      }
+      else if ( 1 == candidateGroupList.size() )
+      {
+         // Got a single group, assign directly
+         tmpGrpID = candidateGroupList[ 0 ] ;
+      }
+      else
+      {
+         // Got multiple groups, randomly choose one
+         tmpGrpID = candidateGroupList[ ossRand() %
+                                        candidateGroupList.size() ] ;
+      }
+
+      groupIDList.push_back( tmpGrpID ) ;
+
+   done :
+      PD_TRACE_EXITRC( SDB_CATCTXCREATECL__CHOOSECLGRPDEF, rc ) ;
+      return rc ;
+
+   error :
+      groupIDList.clear() ;
       goto done ;
    }
 
