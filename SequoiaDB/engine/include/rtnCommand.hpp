@@ -1447,6 +1447,11 @@ namespace engine
          return _clname ;
       }
 
+      const CHAR * getIndexName () const
+      {
+         return _ixname ;
+      }
+
       const rtnAnalyzeParam &getAnalyzeParam () const
       {
          return _param ;

@@ -3805,6 +3805,7 @@ namespace engine
       const CHAR *pMainCLName = command->collectionFullName() ;
       vector< string > strSubCLList ;
       vector< string >::iterator iterSubCL ;
+      BOOLEAN foundIndex = FALSE ;
 
       _rtnAnalyze *pAnalyzeCmd = (_rtnAnalyze *)command ;
 
@@ -3823,12 +3824,11 @@ namespace engine
             goto error ;
          }
 
-         rc = rtnAnalyze( NULL, pSubCLName, NULL,
+         rc = rtnAnalyze( NULL, pSubCLName, pAnalyzeCmd->getIndexName(),
                           pAnalyzeCmd->getAnalyzeParam(),
                           _pEDUCB, _pDmsCB, _pRtnCB, _pDpsCB ) ;
          if ( SDB_OK != rc )
          {
-
             if ( SDB_DMS_CS_NOTEXIST == rc ||
                  SDB_DMS_NOTEXIST == rc )
             {
@@ -3838,6 +3838,14 @@ namespace engine
                // retry
                rc = SDB_OK ;
             }
+            else if ( NULL != pAnalyzeCmd->getIndexName() &&
+                      SDB_IXM_NOTEXIST == rc )
+            {
+               // The index doesn't exist in this sub-collection, ignore it
+               // and continue with the next sub-collection
+               rc = SDB_OK ;
+               continue ;
+            }
             else
             {
                PD_LOG( PDERROR, "Failed to analyze sub-collection [%s], rc: %d",
@@ -3845,8 +3853,21 @@ namespace engine
             }
             break ;
          }
+         else if ( NULL != pAnalyzeCmd->getIndexName() )
+         {
+            foundIndex = TRUE ;
+         }
 
          ++iterSubCL ;
+      }
+
+      if ( !strSubCLList.empty() && NULL != pAnalyzeCmd->getIndexName() &&
+           !foundIndex )
+      {
+         rc = SDB_IXM_NOTEXIST ;
+         PD_LOG( PDERROR, "Failed to find index [%s] in main-collection [%s]",
+                 pAnalyzeCmd->getIndexName(), pMainCLName ) ;
+         goto error ;
       }
 
       _pRtnCB->getAPM()->invalidateCLPlans( pMainCLName ) ;
