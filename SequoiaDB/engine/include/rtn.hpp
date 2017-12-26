@@ -95,7 +95,7 @@ namespace engine
                               ixmIndexCB *indexCB,
                               UINT32 sampleRecords,
                               UINT64 totalRecords,
-                              BOOLEAN full,
+                              BOOLEAN fullScan,
                               _rtnInternalSorting &sorter,
                               UINT32 &levels, UINT32 &pages ) ;
 

@@ -179,7 +179,7 @@ namespace engine
                                   ixmIndexCB *indexCB,
                                   UINT32 sampleRecords,
                                   UINT64 totalRecords,
-                                  BOOLEAN full,
+                                  BOOLEAN fullScan,
                                   CHAR *pSortBuf,
                                   pmdEDUCB *cb ) ;
 
@@ -1641,10 +1641,10 @@ namespace engine
 
          if ( param._sampleRecords > 0 )
          {
-            BOOLEAN full = ( SDB_ANALYZE_MODE_FULL == param._mode ?
-                             TRUE : FALSE ) ;
+            BOOLEAN fullScan = ( SDB_ANALYZE_MODE_FULL == param._mode ?
+                                 TRUE : FALSE ) ;
             rc = _rtnBuildMCVSet( pIndexStat, pSU, mbContext, indexCB,
-                                  param._sampleRecords, totalRecords, full,
+                                  param._sampleRecords, totalRecords, fullScan,
                                   pSortBuf, cb ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to build MCV set, rc: %d", rc ) ;
          }
@@ -1759,7 +1759,7 @@ namespace engine
                            ixmIndexCB *indexCB,
                            UINT32 sampleRecords,
                            UINT64 totalRecords,
-                           BOOLEAN full,
+                           BOOLEAN fullScan,
                            CHAR *pSortBuf,
                            pmdEDUCB *cb )
    {
@@ -1786,8 +1786,8 @@ namespace engine
       _rtnInternalSorting sorter( boOrder, pSortBuf,
                                   RTN_ANALYZE_SORT_BUF_SIZE, -1 ) ;
 
-      rc = rtnGetIndexSamples( pSU, indexCB, sampleRecords, totalRecords, full,
-                               sorter, levels, pages ) ;
+      rc = rtnGetIndexSamples( pSU, indexCB, sampleRecords, totalRecords,
+                               fullScan, sorter, levels, pages ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get samples of index "
                    "[%s.%s %s], rc: %d", pCSName, pCLName, pIXName, rc ) ;
 

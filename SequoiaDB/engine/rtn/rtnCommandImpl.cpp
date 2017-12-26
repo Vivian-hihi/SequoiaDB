@@ -380,14 +380,16 @@ namespace engine
                                         dmsStorageUnit *su,
                                         UINT32 sampleRecords,
                                         UINT64 totalRecords,
-                                        BOOLEAN full,
+                                        BOOLEAN fullScan,
                                         UINT32 &targetLevel,
                                         UINT32 &levelCount,
                                         UINT32 &extentCount )
    {
       _utilList< dmsExtentID, 32 > extentIDStack ;
       UINT32 targetLevelKeyCount = 0 ;
-      UINT64 curLevelKeyCount = 0, curLevelExtCount = 0, nextLevelExtCount = 0 ;
+      UINT64 curLevelKeyCount = 0, curLevelExtCount = 0,
+             nextLevelExtCount = 0 ;
+      UINT32 maxExtKeyCount = 1 ;
 
       BOOLEAN foundTargetLevel = FALSE ;
 
@@ -419,6 +421,10 @@ namespace engine
                }
             }
             curLevelKeyCount += extent.getNumKeyNode() ;
+            if ( extent.getNumKeyNode() > maxExtKeyCount )
+            {
+               maxExtKeyCount = extent.getNumKeyNode() ;
+            }
          }
 
          nextLevelExtCount = extentIDStack.size() ;
@@ -436,7 +442,7 @@ namespace engine
 
          // If the root extent has enough samples, but it is not leaf, it could
          // not be used for estimate levels and pages, We should go deeper
-         if ( ( foundTargetLevel && levelCount > 1 && !full ) ||
+         if ( ( foundTargetLevel && levelCount > 1 && !fullScan ) ||
               0 == nextLevelExtCount )
          {
             break ;
@@ -449,22 +455,35 @@ namespace engine
       // Finish the estimation
       if ( 0 != nextLevelExtCount )
       {
-         UINT32 avgOutDegree = (UINT32) ceil( (double) curLevelKeyCount /
-                                              (double) curLevelExtCount ) ;
-         UINT32 estLevelCount =
-               (UINT32) ceil( log( ( (double)( totalRecords + 1 ) ) / 2.0 ) /
-                              log( (double) avgOutDegree ) ) ;
+         // Estimate the level of index tree
+         // 1. the max number of keys in a extent is "maxExtKeyCount"
+         // 2. the average number of keys in scanned extents of the last level
+         //    is "avgExtKeyCount"
+         // From the last scanned level:
+         // 1. For each extent in the last scanned level, there would be
+         //    ( avgExtKeyCount + 1 ) child extents by estimation. So the
+         //    total number of extents in the next level will be
+         //       lastLevelExtCount * ( avgExtKeyCount + 1 )
+         // 2. For each extent in the next level, there are maxExtKeyCount at
+         //    most, so the maximum number of keys in the next level will be
+         //       lastLevelExtCount * ( avgExtKeyCount + 1 ) * maxExtKeyCount
+         // 3. If this value is larger than totalRecords, it means the next
+         //    level would be enough for all keys, which might be the leaf
+         //    level. Then we could stop the estimation.
+         UINT32 avgExtKeyCount = (UINT32)ceil( (double)curLevelKeyCount /
+                                               (double)curLevelExtCount ) ;
 
          // Calculate from next level
          UINT32 levelExtCount = nextLevelExtCount ;
+         UINT32 levelKeyCount = nextLevelExtCount * maxExtKeyCount ;
+         levelCount ++ ;
 
-         // Calculate the remain pages by out-degree of each levels
-         for ( levelCount = levelCount + 1 ;
-               levelCount < estLevelCount ;
-               levelCount ++ )
+         while ( levelKeyCount < totalRecords )
          {
-            levelExtCount *= avgOutDegree ;
+            levelExtCount *= ( avgExtKeyCount + 1 ) ;
+            levelKeyCount = levelExtCount * maxExtKeyCount ;
             extentCount += levelExtCount ;
+            levelCount ++ ;
          }
       }
 
@@ -737,7 +756,7 @@ namespace engine
                               ixmIndexCB *indexCB,
                               UINT32 sampleRecords,
                               UINT64 totalRecords,
-                              BOOLEAN full,
+                              BOOLEAN fullScan,
                               _rtnInternalSorting &sorter,
                               UINT32 &levels, UINT32 &pages )
    {
@@ -754,7 +773,7 @@ namespace engine
       UINT32 sampleIndex = 0 ;
       UINT32 keyNodeCount =
             _rtnIndexKeyNodeInfo( rootID, su, sampleRecords, totalRecords,
-                                  full, targetLevel, levels, pages ) ;
+                                  fullScan, targetLevel, levels, pages ) ;
 
       PD_LOG( PDDEBUG, "Estimate index [%s] info levels %u pages %u",
               indexCB->getName(), levels, pages ) ;
