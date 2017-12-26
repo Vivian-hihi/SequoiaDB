@@ -102,7 +102,7 @@ or not, default to be false.
     * The parameter `options` haves one or more fields, please use
       comma(,) to separate.
    
-    *  AutoSplit must cooperate with hash partitioning and domain.
+    *  AutoSplit must cooperate with hash partitioning.
 
     *  AutoSplit and Group cannot be set at the same time.
 

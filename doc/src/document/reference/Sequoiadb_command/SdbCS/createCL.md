@@ -116,8 +116,7 @@ Collection Space
     
     * AutoSplit 不能与 Group 参数同时使用。
 
-    * AutoSplit 必须配合散列分区和域使用（即该集合必须从属于某个域）。
-      否则，该参数不起作用。
+    * AutoSplit 必须配合散列分区使用。
 
     * 使用 AutoSplit 参数时，若该集合从属于某个域，当前的 AutoSplit 参数将
       覆盖域中的 AutoSplit 参数作用于当前集合；

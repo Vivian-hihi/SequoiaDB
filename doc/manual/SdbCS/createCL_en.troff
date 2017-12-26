@@ -140,7 +140,7 @@ occur.
 The parameter \f[C]options\f[] haves one or more fields, please use comma(,) to
 separate.
 .IP \[bu] 2
-AutoSplit must cooperate with hash partitioning and domain.
+AutoSplit must cooperate with hash partitioning.
 .IP \[bu] 2
 AutoSplit and Group cannot be set at the same time.
 .IP \[bu] 2
