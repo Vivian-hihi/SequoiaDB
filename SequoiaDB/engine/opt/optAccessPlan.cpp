@@ -116,7 +116,7 @@ namespace engine
          << ",AutoPlan:" << ( _isAutoPlan ? "TRUE" : "FALSE" )
          << ",HashValue:" << _key.getKeyCode()
          << ",Count:" << getRefCount()
-         << ",SortRequired:" << sortRequired() ;
+         << ",SortRequired:" << ( sortRequired() ? "TRUE" : "FALSE" ) ;
       return ss.str() ;
    }
 
