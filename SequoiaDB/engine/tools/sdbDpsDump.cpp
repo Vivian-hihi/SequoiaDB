@@ -689,7 +689,6 @@ INT32 _dpsDumper::dump()
 {
    INT32   rc      = SDB_OK ;
    OSSFILE fileFrom, fileTo ;
-   UINT32 len = 0;
    UINT32 id = 0;
    UINT32 i = 0;
    dpsCmdData data ;
@@ -720,15 +719,15 @@ INT32 _dpsDumper::dump()
    {
       if ( OSS_FILE_SEP_CHAR == dstPath[ dstPathLen - 1 ] )
       {
-         len = ossSnprintf( dstPath + dstPathLen , OSS_MAX_PATHSIZE + 1 - dstPathLen, 
-                        "%s", "tmpLog.log" ) ;
+         (void)ossStrncpy( dstPath + dstPathLen, "tmpLog.log", 
+                        OSS_MAX_PATHSIZE + 1 - dstPathLen);
       }
       else
       {
-         len = ossSnprintf( dstPath + dstPathLen, OSS_MAX_PATHSIZE + 1 - dstPathLen,
-                        OSS_FILE_SEP"%s", "tmpLog.log" ) ;
+         (void)ossStrncpy( dstPath + dstPathLen, OSS_FILE_SEP"tmpLog.log", 
+                        OSS_MAX_PATHSIZE + 1 - dstPathLen);
       }
-      dstPathLen += len;
+      dstPathLen = ossStrlen(dstPath);
    }
 
    rc = _changeFileName();
@@ -989,7 +988,7 @@ void putMatchFileIntoMap(map<UINT32, string > &mapFiles, const fs::path &filePat
       {
          return;
       }
-      mapFiles.insert( pair<UINT32, string>( atoi(sequenceId.c_str()), filePath.string()) );
+      mapFiles.insert( pair<UINT32, string>( ossAtoi(sequenceId.c_str()), filePath.string()) );
    }
 }
 
@@ -1240,7 +1239,6 @@ INT64 _dpsDumper::_dumpMeta( const dpsMetaData& meta,
    UINT32 fileIndex = 0;
    UINT32 lastIndex = 0;
    UINT32 lastFileId = 0;
-   UINT32 i =0;
    
    len += ossSnprintf( pBuffer + len, bufferSize - len,
                        "======================================="OSS_NEWLINE
@@ -1271,7 +1269,7 @@ INT64 _dpsDumper::_dumpMeta( const dpsMetaData& meta,
    fileIndex = _meta.fileBegin;
    lastIndex = fileIndex;
    lastFileId = meta.metaList[lastIndex].index;
-   for ( i = 0; i < meta.metaList.size(); ++i)
+   for (UINT32 i = 0; i < meta.metaList.size(); ++i)
    {
       const dpsFileMeta& fMeta = meta.metaList[fileIndex] ;
 
@@ -1289,7 +1287,7 @@ INT64 _dpsDumper::_dumpMeta( const dpsMetaData& meta,
          UINT32 lostFileNum = fMeta.logID -  meta.metaList[lastIndex].logID -1;
          UINT32 totalN = lastFileId - fMeta.index + lostFileNum + 1;
          
-         for (i = 0; i < lostFileNum; i++)
+         for (UINT32 i = 0; i < lostFileNum; i++)
          {
                len += ossSnprintf( pBuffer + len, bufferSize - len,
                              OSS_NEWLINE"ERROR: Log File Name (sequoiadbLog.%d) is Missing"OSS_NEWLINE,
