@@ -3844,6 +3844,7 @@ namespace engine
                // The index doesn't exist in this sub-collection, ignore it
                // and continue with the next sub-collection
                rc = SDB_OK ;
+               ++ iterSubCL ;
                continue ;
             }
             else
@@ -3858,7 +3859,7 @@ namespace engine
             foundIndex = TRUE ;
          }
 
-         ++iterSubCL ;
+         ++ iterSubCL ;
       }
 
       if ( !strSubCLList.empty() && NULL != pAnalyzeCmd->getIndexName() &&
