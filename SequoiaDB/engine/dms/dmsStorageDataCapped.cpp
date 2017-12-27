@@ -456,12 +456,9 @@ namespace engine
       PD_TRACE_ENTRY( SDB__DMSSTORAGEDATACAPPED__ALLOCRECORDSPACE ) ;
       dmsExtentID extID = DMS_INVALID_EXTENT ;
       dmsExtentInfo *workExtInfo = NULL ;
-      BOOLEAN extSwitched = FALSE ;
 
       SDB_ASSERT( context, "Context should not be NULL" ) ;
       SDB_ASSERT( cb, "edu cb should not be NULL" ) ;
-
-      _saveSizeRequest( size ) ;
 
       workExtInfo = getWorkExtInfo( context->mbID() ) ;
       if ( !context->isMBLock( EXCLUSIVE ) )
@@ -483,71 +480,47 @@ namespace engine
                                TRUE, FALSE, &extID ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to allocate extent, rc: %d", rc ) ;
 
-         if ( DMS_INVALID_EXTENT != extID )
+         // As the collection lock may have been released in the invoking of
+         // _allocateExtent(in _findFreeSpace, to be precise), some one else
+         // (in parrallel scenario) may have also reached _allocateExtent, and
+         // allocated one extent. That is most likely to happen when doing
+         // parrallel insertions. The working extent may have already switched.
+         // So we need to check again, and only to switch to the new allocated
+         // extent here if the current working extent's free space is not enough.
+
+         // The 2 conditions below:
+         // (1) If the working extent is STILL invalid, no body else has done
+         //     the attach yet. So we'll do it, attaching to the first extent
+         //     of the collection.
+         // (3) If the working extent is valid, it means some other thread has
+         //     done the attach. So we check if the free space is enough. If not
+         //     attach to the next extent(There should be one).
+         if ( DMS_INVALID_EXTENT == workExtInfo->getID() ||
+              workExtInfo->_freeSpace < size )
          {
-            rc = _attachWorkExt( context->mbID(), extID ) ;
-            PD_RC_CHECK( rc, PDERROR, "Attach new working extent failed: %d",
-                         rc ) ;
-            extSwitched = TRUE ;
+            // There should be a next extent. Let switch to it.
+            rc = _attachNextExt( context, workExtInfo ) ;
+            PD_RC_CHECK( rc, PDERROR, "Switch working extent failed, "
+                         "rc: %d", rc ) ;
          }
       }
       else
       {
-         // Check if exceeding the Size and Max limitations.
-         // If yes, return error or recycle extent, depending on the option.
-         if ( _numExceedLimit( context, 1 ) )
-         {
-            if ( _overwriteOnExceed( context ) )
-            {
-               rc = _recycleOneExtent( context ) ;
-               PD_RC_CHECK( rc, PDERROR,
-                            "Recycle the eldest extent failed[ %d ]", rc ) ;
-            }
-            else
-            {
-               PD_LOG( PDERROR, "Record number exceed the limit" ) ;
-               rc = SDB_OSS_UP_TO_LIMIT ;
-               goto error ;
-            }
-         }
+         rc = _limitProcess( context, size, workExtInfo ) ;
+         PD_RC_CHECK( rc, PDERROR, "Collection limit error, rc: %d", rc ) ;
 
-         // If free space in current working extent is not enough, get another.
          if ( workExtInfo->_freeSpace < size )
          {
-            // Before allocationg another extent, check size limitation.
-            if ( _sizeExceedLimit( context, DMS_CAP_EXTENT_SZ ) )
-            {
-               if ( _overwriteOnExceed( context ) )
-               {
-                  rc = _recycleOneExtent( context ) ;
-                  PD_RC_CHECK( rc, PDERROR,
-                               "Recycle the eldest extent failed[ %d ]", rc ) ;
-               }
-               else
-               {
-                  PD_LOG( PDERROR, "Size exceed the limit" ) ;
-                  rc = SDB_OSS_UP_TO_LIMIT ;
-                  goto error ;
-               }
-            }
-
-            // After recycle, check once again. For when recycling the woking
-            // extent, it will be reset and used again. In that case, no need to
-            // allocate extent again.
+            rc = _allocateExtent( context, DMS_CAP_EXTENT_PAGE_NUM, TRUE,
+                                  FALSE, &extID ) ;
+            PD_RC_CHECK( rc, PDERROR,
+                         "Failed to allocate extent, rc: %d", rc ) ;
             if ( workExtInfo->_freeSpace < size )
             {
-               rc = _allocateExtent( context, DMS_CAP_EXTENT_PAGE_NUM, TRUE,
-                                     FALSE, &extID ) ;
-               PD_RC_CHECK( rc, PDERROR,
-                            "Failed to allocate extent, rc: %d", rc ) ;
-
-               if ( DMS_INVALID_EXTENT != extID )
-               {
-                  rc = _switchWorkExt( context, extID ) ;
-                  PD_RC_CHECK( rc, PDERROR,
-                               "Failed to switch working extent, rc: %d", rc ) ;
-                  extSwitched = TRUE ;
-               }
+               // There should be a next extent. Let switch to it.
+               rc = _attachNextExt( context, workExtInfo ) ;
+               PD_RC_CHECK( rc, PDERROR, "Switch working extent failed, "
+                            "rc: %d", rc ) ;
             }
          }
       }
@@ -556,18 +529,9 @@ namespace engine
       foundRID._offset = workExtInfo->getNextRecOffset() ;
 
    done:
-      _clearSizeRequest() ;
       PD_TRACE_EXITRC( SDB__DMSSTORAGEDATACAPPED__ALLOCRECORDSPACE, rc ) ;
       return rc ;
    error:
-      if ( !extSwitched )
-      {
-         INT32 rcTmp = _freeExtent( extID, context->mbID() ) ;
-         if ( rcTmp )
-         {
-            PD_LOG( PDERROR, "Failed to free extent, rc: %d", rcTmp ) ;
-         }
-      }
       goto done ;
    }
 
@@ -589,9 +553,6 @@ namespace engine
       dmsExtentID extID = DMS_INVALID_EXTENT ;
       dmsOffset offset = DMS_INVALID_OFFSET ;
       dmsExtentInfo *workExtInfo = NULL ;
-      BOOLEAN extSwitched = FALSE ;
-
-      _saveSizeRequest( size ) ;
 
       _recLid2ExtLidAndOffset( position, extLogicalID, offset ) ;
 
@@ -614,7 +575,7 @@ namespace engine
                                TRUE, FALSE, &extID ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to allocate extent, rc: %d", rc ) ;
 
-         if ( DMS_INVALID_EXTENT != extID )
+         if ( DMS_INVALID_EXTENT == workExtInfo->getID() )
          {
             // First extent of the collection. If position is specified( for
             // example, full sync is in progress), need to update the logical
@@ -622,14 +583,19 @@ namespace engine
             rc = _updateExtentLID( context->mbID(), extID, extLogicalID ) ;
             PD_RC_CHECK( rc, PDERROR, "Update extent logical id to %d "
                          "failed[ %d ]", extLogicalID, rc ) ;
-            rc = _attachWorkExt( context->mbID(), extID ) ;
-            PD_RC_CHECK( rc, PDERROR, "Attach new working extent failed: %d",
-                         rc ) ;
-            // Adjust the write position to the target place.
-            workExtInfo->adjustWritePos( offset ) ;
             _mbStatInfo[context->mbID()]._totalDataFreeSpace -=
                offset - DMS_EXTENT_METADATA_SZ ;
-            extSwitched = TRUE ;
+         }
+
+         if ( DMS_INVALID_EXTENT == workExtInfo->getID() ||
+              workExtInfo->_freeSpace < size )
+         {
+            // There should be a next extent. Let switch to it.
+            rc = _attachNextExt( context, workExtInfo ) ;
+            PD_RC_CHECK( rc, PDERROR, "Switch working extent failed, "
+                         "rc: %d", rc ) ;
+            // Adjust the write position to the target place.
+            workExtInfo->seek( offset ) ;
          }
       }
       else
@@ -662,60 +628,22 @@ namespace engine
                rc = SDB_INVALIDARG ;
                goto error ;
             }
-            // Check if exceeding the Size and Max limitations.
-            // If yes, return error or recycle extent, depending on the option.
-            if ( _numExceedLimit( context, 1 ) )
-            {
-               if ( _overwriteOnExceed( context ) )
-               {
-                  rc = _recycleOneExtent( context ) ;
-                  PD_RC_CHECK( rc, PDERROR,
-                               "Recycle the eldest extent failed[ %d ]", rc ) ;
-               }
-               else
-               {
-                  PD_LOG( PDERROR, "Record number exceed the limit" ) ;
-                  rc = SDB_OSS_UP_TO_LIMIT ;
-                  goto error ;
-               }
-            }
-            // If free space in current working extent is not enough, get another.
+
+            rc = _limitProcess( context, size, workExtInfo ) ;
+            PD_RC_CHECK( rc, PDERROR, "Collection limit error, rc: %d", rc ) ;
+
             if ( workExtInfo->_freeSpace < size )
             {
-               // Before allocationg another extent, check size limitation.
-               if ( _sizeExceedLimit( context, DMS_CAP_EXTENT_SZ ) )
-               {
-                  if ( _overwriteOnExceed( context ) )
-                  {
-                     rc = _recycleOneExtent( context ) ;
-                     PD_RC_CHECK( rc, PDERROR,
-                                  "Recycle the eldest extent failed[ %d ]", rc ) ;
-                  }
-                  else
-                  {
-                     PD_LOG( PDERROR, "Size exceed the limit" ) ;
-                     rc = SDB_OSS_UP_TO_LIMIT ;
-                     goto error ;
-                  }
-               }
-
-               // After recycle, check once again. For when recycling the woking
-               // extent, it will be reset and used again. In that case, no need to
-               // allocate extent again.
+               rc = _allocateExtent( context, DMS_CAP_EXTENT_PAGE_NUM, TRUE,
+                                     FALSE, &extID ) ;
+               PD_RC_CHECK( rc, PDERROR,
+                            "Failed to allocate extent, rc: %d", rc ) ;
                if ( workExtInfo->_freeSpace < size )
                {
-                  rc = _allocateExtent( context, DMS_CAP_EXTENT_PAGE_NUM, TRUE,
-                                        FALSE, &extID ) ;
-                  PD_RC_CHECK( rc, PDERROR,
-                               "Failed to allocate extent, rc: %d", rc ) ;
-
-                  if ( DMS_INVALID_EXTENT != extID )
-                  {
-                     rc = _switchWorkExt( context, extID ) ;
-                     PD_RC_CHECK( rc, PDERROR,
-                                  "Failed to switch working extent, rc: %d", rc ) ;
-                     extSwitched = TRUE ;
-                  }
+                  // There should be a next extent. Let switch to it.
+                  rc = _attachNextExt( context, workExtInfo ) ;
+                  PD_RC_CHECK( rc, PDERROR, "Switch working extent failed, "
+                               "rc: %d", rc ) ;
                }
             }
          }
@@ -736,18 +664,9 @@ namespace engine
                   "expected" ) ;
 
    done:
-      _clearSizeRequest() ;
       PD_TRACE_EXITRC( SDB__DMSSTORAGEDATACAPPED__ALLOCRECORDSPACEBYPOS, rc ) ;
       return rc ;
    error:
-      if ( !extSwitched )
-      {
-         INT32 rcTmp = _freeExtent( extID, context->mbID() ) ;
-         if ( rcTmp )
-         {
-            PD_LOG( PDERROR, "Failed to free extent, rc: %d", rcTmp ) ;
-         }
-      }
       goto done ;
    }
 
@@ -896,9 +815,22 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB__DMSSTORAGEDATACAPPED__ONALLOCSPACEREADY ) ;
       dmsExtentInfo *extInfo = getWorkExtInfo( context->mbID() ) ;
-      UINT32 size = _getSizeRequest() ;
+      dmsExtentID workExtID = extInfo->getID() ;
 
-      doit = ( (0 == size) || (extInfo->_freeSpace < size) ) ? TRUE : FALSE ;
+      if ( DMS_INVALID_EXTENT == workExtID )
+      {
+         doit = TRUE ;
+      }
+      else
+      {
+         // Check if this is the last extent.
+         dmsExtRW extRW = extent2RW( workExtID, context->mbID() );
+         extRW.setNothrow( TRUE ) ;
+         const dmsExtent *extent = extRW.readPtr<dmsExtent>() ;
+         SDB_ASSERT( extent, "Extent is invalid" ) ;
+         // Do the allocation if we are using the last extent.
+         doit = ( DMS_INVALID_EXTENT == extent->_nextExtent ) ? TRUE : FALSE ;
+      }
 
       PD_TRACE_EXIT( SDB__DMSSTORAGEDATACAPPED__ONALLOCSPACEREADY ) ;
    }
@@ -1492,6 +1424,53 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACAPPED__ATTACHNEXTEXT, "_dmsStorageDataCapped::_attachNextExt" )
+   INT32 _dmsStorageDataCapped::_attachNextExt( dmsMBContext *context,
+                                                dmsExtentInfo *workExt )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DMSSTORAGEDATACAPPED__ATTACHNEXTEXT ) ;
+      dmsExtentID currExt = workExt->getID() ;
+      dmsExtentID nextExt =  DMS_INVALID_EXTENT ;
+      dmsExtRW extRW ;
+
+      // If the working extent is invalid, there is only one extent for the
+      // collection now.
+      if ( DMS_INVALID_EXTENT == currExt )
+      {
+         SDB_ASSERT( context->mb()->_firstExtentID ==
+                     context->mb()->_lastExtentID,
+                     "mb first and last extent should be the same" ) ;
+
+         nextExt = context->mb()->_firstExtentID ;
+      }
+      else
+      {
+         extRW = extent2RW( currExt, context->mbID() ) ;
+         extRW.setNothrow( TRUE ) ;
+         const dmsExtent *extent = extRW.readPtr<dmsExtent>() ;
+         if ( !extent || !extent->validate( context->mbID() ) )
+         {
+            rc = SDB_SYS ;
+            PD_LOG( PDERROR, "Invalid extent[%d]", currExt ) ;
+            goto error ;
+         }
+
+         nextExt = extent->_nextExtent ;
+         SDB_ASSERT( DMS_INVALID_EXTENT != nextExt,
+                     "Next extent should not be invalid" ) ;
+      }
+
+      rc = _switchWorkExt( context, nextExt ) ;
+      PD_RC_CHECK( rc, PDERROR, "Switch working extent failed, rc: %d", rc ) ;
+
+   done:
+      PD_TRACE_EXITRC( SDB__DMSSTORAGEDATACAPPED__ATTACHNEXTEXT, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACAPPED__DETACHWORKEXT, "_dmsStorageDataCapped::_detachWorkExt" )
    void _dmsStorageDataCapped::_detachWorkExt( UINT16 collectionID,
                                                BOOLEAN sync )
@@ -1662,7 +1641,7 @@ namespace engine
       {
          rc = _attachWorkExt( context->mbID(), context->mb()->_lastExtentID ) ;
          PD_RC_CHECK( rc, PDERROR, "Attach working extent failed, rc: %d", rc ) ;
-         workExtInfo->adjustWritePos( expectOffset ) ;
+         workExtInfo->seek( expectOffset ) ;
       }
 
    done:
@@ -1716,7 +1695,7 @@ namespace engine
          rc = _attachWorkExt( context->mbID(), extID ) ;
          PD_RC_CHECK( rc, PDERROR, "Attach working extent failed, rc: %d",
                       rc ) ;
-         workExtInfo->adjustWritePos( offset ) ;
+         workExtInfo->seek( offset ) ;
       }
 
    done:
@@ -2098,6 +2077,60 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACAPPED__LIMITPROCESS, "_dmsStorageDataCapped::_limitProcess" )
+   INT32 _dmsStorageDataCapped::_limitProcess( dmsMBContext *context,
+                                               UINT32 sizeReq,
+                                               dmsExtentInfo *workExtInfo )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DMSSTORAGEDATACAPPED__LIMITPROCESS ) ;
+
+      // Check if exceeding the Size and Max limitations.
+      // If yes, return error or recycle extent, depending on the option.
+      if ( _numExceedLimit( context, 1 ) )
+      {
+         if ( _overwriteOnExceed( context ) )
+         {
+            rc = _recycleOneExtent( context ) ;
+            PD_RC_CHECK( rc, PDERROR,
+                         "Recycle the eldest extent failed[ %d ]", rc ) ;
+         }
+         else
+         {
+            PD_LOG( PDERROR, "Record number exceed the limit" ) ;
+            rc = SDB_OSS_UP_TO_LIMIT ;
+            goto error ;
+         }
+      }
+
+      // If free space in current working extent is not enough, get another.
+      if ( workExtInfo->_freeSpace < sizeReq )
+      {
+         // Before allocationg another extent, check size limitation.
+         if ( _sizeExceedLimit( context, DMS_CAP_EXTENT_SZ ) )
+         {
+            if ( _overwriteOnExceed( context ) )
+            {
+               rc = _recycleOneExtent( context ) ;
+               PD_RC_CHECK( rc, PDERROR,
+                            "Recycle the eldest extent failed[ %d ]", rc ) ;
+            }
+            else
+            {
+               PD_LOG( PDERROR, "Size exceed the limit" ) ;
+               rc = SDB_OSS_UP_TO_LIMIT ;
+               goto error ;
+            }
+         }
+      }
+
+   done:
+      PD_TRACE_EXITRC( SDB__DMSSTORAGEDATACAPPED__LIMITPROCESS, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACAPPED_POPRECORD, "_dmsStorageDataCapped::popRecord" )
    INT32 _dmsStorageDataCapped::popRecord( dmsMBContext *context,
                                            INT64 logicalID,
@@ -2265,5 +2298,4 @@ namespace engine
       goto done ;
    }
 }
-
 

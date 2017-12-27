@@ -155,7 +155,7 @@ namespace engine
       }
 
       // Should only be done after attach to a new empty extent.
-      void adjustWritePos( dmsOffset offset )
+      void seek( dmsOffset offset )
       {
          SDB_ASSERT( offset >= (INT32)DMS_EXTENT_METADATA_SZ,
                      "offset is invalid" ) ;
@@ -299,6 +299,7 @@ namespace engine
       INT32 _syncWorkExtInfo( UINT16 collectionID ) ;
       INT32 _switchWorkExt( dmsMBContext *context, dmsExtentID extID ) ;
       INT32 _attachWorkExt( UINT16 collectionID, dmsExtentID extID ) ;
+      INT32 _attachNextExt( dmsMBContext *context, dmsExtentInfo *workExt ) ;
       void _detachWorkExt( UINT16 collectionID, BOOLEAN sync = TRUE ) ;
 
       INT32 _shrinkForward( dmsMBContext* context, dmsExtentInfo* workExtInfo,
@@ -332,9 +333,6 @@ namespace engine
       OSS_INLINE dmsExtentID _logicID2ExtID( dmsMBContext *context,
                                              INT64 logicalID,
                                              const dmsExtent *&extent ) ;
-      OSS_INLINE void   _saveSizeRequest( UINT32 size ) ;
-      OSS_INLINE void   _clearSizeRequest() ;
-      OSS_INLINE UINT32 _getSizeRequest() const ;
 
       INT32 _extractRecLID( dmsMBContext *context,
                             INT64 logicalID,
@@ -361,6 +359,9 @@ namespace engine
       INT32 _updateExtentLID( UINT16 mbID,
                               dmsExtentID extID,
                               dmsExtentID extLogicID ) ;
+
+      INT32 _limitProcess( dmsMBContext *context, UINT32 sizeReq,
+                           dmsExtentInfo *workExtInfo ) ;
 
    private:
       dmsCappedCLOptions *_options[ DMS_MME_SLOTS ] ;
@@ -549,24 +550,6 @@ namespace engine
       return extentID ;
    error:
       goto done ;
-   }
-
-   OSS_INLINE void _dmsStorageDataCapped::_saveSizeRequest( UINT32 size )
-   {
-      _sizeReqMap[ (UINT32)ossGetCurrentThreadID() ] = size ;
-   }
-
-   OSS_INLINE void _dmsStorageDataCapped::_clearSizeRequest()
-   {
-      _sizeReqMap.erase( (UINT32)ossGetCurrentThreadID() ) ;
-   }
-
-   OSS_INLINE UINT32 _dmsStorageDataCapped::_getSizeRequest() const
-   {
-      SIZE_REQ_MAP::const_iterator search =
-         _sizeReqMap.find( (UINT32)ossGetCurrentThreadID() ) ;
-
-      return ( search == _sizeReqMap.end() ) ? 0 : search->second ;
    }
  }
 
