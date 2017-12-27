@@ -2302,6 +2302,14 @@ namespace engine
             rc = SDB_OPTION_NOT_SUPPORT ;
             goto error ;
          }
+
+         if ( ( CAT_MASK_CLMAXSIZE & mask ) || ( CAT_MASK_CLMAXRECNUM & mask )
+              || ( CAT_MASK_CLOVERWRITE & mask ) )
+         {
+            PD_LOG( PDERROR, "Can't change Size|Max|OverWrite" ) ;
+            rc = SDB_OPTION_NOT_SUPPORT ;
+            goto error ;
+         }
       }
       else
       {
