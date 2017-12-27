@@ -19,7 +19,7 @@ function main()
    cl.insert( docs ) ;
    
    testExprtConf1() ;  // test export with same cl same fields
-   // testExprtConf2() ;  // test export with same cl diff fields
+   testExprtConf2() ;  // test export with same cl diff fields
    
    commDropCL( db, csname, clname ) ;
 }
