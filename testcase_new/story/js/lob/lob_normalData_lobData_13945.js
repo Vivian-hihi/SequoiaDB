@@ -6,13 +6,13 @@
 
 function main( db )
 {
-   var testFile = CHANGEDPREFIX + "lobTest.file",
-       getTestFile = CHANGEDPREFIX + "lobTestGet.file",
-       putNum = 100,
-       oid = new Array(),
-       cmd = new Cmd() ;
-
-   lobAutoFile( testFile ) ;   // auto file
+   var testFile = CHANGEDPREFIX + "lobTest.file" ;
+   var getTestFile = CHANGEDPREFIX + "lobTestGet.file" ;
+   var putNum = 50 ;
+       
+   lobGenerateFile( testFile ) ;   // auto file
+   var originMd5 = getMd5ForFile( testFile ) ;
+   
    // create collection
    var cl = commCreateCL( db, COMMCSNAME, COMMCLNAME, -1, true, true, true,
                           "create collection" ) ;
@@ -21,31 +21,19 @@ function main( db )
    {
       oid = lobPutLob( cl, testFile, putNum ) ;
       println( "success to put lob" ) ;
-      lobInsert( cl, putNum ) ;
+      lobInsertDoc( cl, putNum ) ;
       println( "success to insert normal record" ) ;
-   }
-   catch( e )
-   {
-      println( "failed to put lob and normal record in collection, rc = " +e ) ;
-      throw e ;
-   }
-   // get lob
-   try
-   {
+      
       for( var i = 0 ; i < oid.length ; ++i )
       {
          cl.getLob( oid[i], getTestFile, true ) ;
+         var curMd5 = getMd5ForFile( getTestFile ) ;
+         if ( originMd5 !== curMd5 )
+         {
+            throw "origin file's md5=" + originMd5 + "getLob's md5=" + curMd5 ;
+         }
       }
       println( "success to get lob data" ) ;
-   }
-   catch( e )
-   {
-      println( "failed to get lob, rc = " + e ) ;
-      throw e ;
-   }
-   // query data
-   try
-   {
       for( var i = 0 ; i < cl.count() ; ++i )
       {
          var count = cl.find( {"no":i} ).count() ;
@@ -56,13 +44,21 @@ function main( db )
          }
       }
       println( "success to query data" ) ;
-      cmd.run( "rm -rf " + testFile ) ;
+      
    }
    catch( e )
    {
-      cmd.run( "rm -rf " + testFile ) ;
-      println( "failed to query data, rc = " + e ) ;
+      println( "failed to put lob and normal record in collection, rc = " +e ) ;
       throw e ;
+   }
+   finally
+   {
+      var cmd = new Cmd() ;
+      cmd.run( "rm -rf " + testFile ) ;
+      if ( lobFileIsExist( getTestFile ) )
+      {
+         cmd.run( "rm -rf " + getTestFile ) ;
+      }
    }
 }
 
@@ -72,14 +68,14 @@ try
    commDropCL( db, COMMCSNAME, COMMCLNAME, true, true,
                "clear collection in the beginning" ) ;
    main( db ) ;
-   commDropCL( db, COMMCSNAME, COMMCLNAME, false, false,
-               "drop collection in the end, correct" ) ;
-   db.close( ) ;
 }
 catch( e )
+{
+   throw e ;
+}
+finally
 {
    commDropCL( db, COMMCSNAME, COMMCLNAME, true, true,
                "drop collection in the end , error" ) ;
    db.close( ) ;
-   throw e ;
 }

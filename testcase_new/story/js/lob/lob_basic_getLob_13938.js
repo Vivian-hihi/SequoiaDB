@@ -10,14 +10,14 @@
 
 function main( db )
 {
-   var testFile = CHANGEDPREFIX + "_lobTest.file",
-       getTestFile = CHANGEDPREFIX + "_lobTestGet.file",
-       putNum = 100,
-       oid = new Array(),
-       cmd = new Cmd() ;
-
-   lobAutoFile( testFile ) ;   // auto file
-   cmd.run( "cat " + testFile ) ;
+   var testFile = CHANGEDPREFIX + "_lobTest.file" ;
+   var getTestFile = CHANGEDPREFIX + "_lobTestGet.file" ;
+   var putNum = 10 ;
+   var cmd = new Cmd() ;
+   var oids = [] ;
+   
+   lobGenerateFile( testFile ) ;   // auto file
+   // cmd.run( "cat " + testFile ) ;
    // create collection
    var cl = commCreateCL( db, COMMCSNAME, COMMCLNAME, -1, true, true, true,
                           "create collection in the beginning" ) ;
@@ -29,7 +29,7 @@ function main( db )
       println( "begin to put lob" ) ;
       for( var i = 0 ; i < putNum ; ++i )
       {
-         oid[i] = cl.putLob( testFile ) ;
+         oids.push( cl.putLob( testFile ) ) ;
       }
       println( "put lob over" ) ;
       // verify
@@ -49,9 +49,9 @@ function main( db )
    // get lob
    try
    {
-      for( var i = 0 ; i < oid.length ; ++i )
+      for( var i = 0 ; i < oids.length ; ++i )
       {
-         cl.getLob( oid[i], getTestFile, true ) ;
+         cl.getLob( oids[i], getTestFile, true ) ;
          md5Arr = cmd.run( "md5sum " + getTestFile ).split(" ") ;
          getMd5 = md5Arr[0] ;
          if( getMd5 !== md5 )   // verify put file is equal get file or not
@@ -63,22 +63,26 @@ function main( db )
       }
       println( "success to get lob in colleciton" ) ;
       // delete lobs
-      for( var i = 0 ; i < oid.length ; ++i )
+      for( var i = 0 ; i < oids.length ; ++i )
       {
-         cl.deleteLob( oid[i] ) ;
+         cl.deleteLob( oids[i] ) ;
       }
       println( "success to delete lob in colleciton" ) ;
       // remove lobfile
       //cmd.run( "rm -rf " + testFile ) ;
-      cmd.run( "rm -rf " + getTestFile ) ;
+      //cmd.run( "rm -rf " + getTestFile ) ;
    }
    catch( e )
    {
       // remove lobfile
       //cmd.run( "rm -rf " + testFile ) ;
-      cmd.run( "rm -rf " + getTestFile ) ;
       println( "failed to get lob, rc = " + e ) ;
       throw  e ;
+   }
+   finally
+   {
+      cmd.run( "rm -rf " + testFile ) ;
+      cmd.run( "rm -rf " + getTestFile ) ;
    }
 }
 
@@ -88,14 +92,14 @@ try
    commDropCL( db, COMMCSNAME, COMMCLNAME, true, true,
                "clear collection in the beginning" ) ;
    main( db ) ;
-   commDropCL( db, COMMCSNAME, COMMCLNAME, false, false,
-               "drop collection in the end, correct" ) ;
-   db.close( ) ;
 }
 catch( e )
+{
+   throw e ;
+}
+finally
 {
    commDropCL( db, COMMCSNAME, COMMCLNAME, true, true,
                "drop collection in the end , error" ) ;
    db.close( ) ;
-   throw e ;
 }

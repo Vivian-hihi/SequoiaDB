@@ -4,16 +4,19 @@
 *@Modify list :
 *               2014-12-18  xiaojun Hu  Init
 ******************************************************************************/
-
 function main( db )
 {
-   var testFile = CHANGEDPREFIX + "lobTest.file",
-       getTestFile = CHANGEDPREFIX + "lobTestGet.file",
-       putNum = 100,
-       oid = new Array(),
-       cmd = new Cmd() ;
-
-   lobAutoFile( testFile ) ;   // auto file
+   var testFile = CHANGEDPREFIX + "lobTest.file" ;
+   var getTestFile = CHANGEDPREFIX + "lobTestGet.file" ;
+   var putNum = 50 ;
+   
+   var names = lobGetAllGroupNames( db ) ;
+   if( 1 == names.length )
+   {
+      return ;
+   }
+   
+   lobGenerateFile( testFile ) ;   // auto file
    // create collection
    var optionObj = { "ShardingKey":{"no":1}, "ShardingType":"range", "ReplSize":0,
                      "Compressed":true } ;
@@ -22,50 +25,26 @@ function main( db )
    // do range split collection before put data
    try
    {
-      if( false != commIsStandalone(db) )
-         throw "run mode is standalone" ;
       var FULLCLNAME = COMMCSNAME + "." + COMMCLNAME ;
-      var clRg = commGetCLGroups( db, FULLCLNAME ),
-          rg = lobGetGroups( db ) ;
-      if( 1 != clRg.length )
-      {
-         println( "collection have more than one groups: " + clRg ) ;
-         throw "NotOneGroup" ;
-      }
-      if( 1 != rg.length )
-         throw "database only have one group" ;
-      var cond = putNum/rg.length ;
+      var clRg = commGetCLGroups( db, FULLCLNAME ) ;
+      var cond = putNum/names.length ;
       //println( "the group length: " + cond ) ;
       var loopCond = cond ;
-      for( var i = 0 ; i < rg.length ; ++i )
+      for( var i = 0 ; i < names.length ; ++i )
       {
-         if( clRg[0] != rg[i] )
+         if( clRg[0] != names[i] )
          {
             var firstCond = { "no": (loopCond-cond) } ;
             var secondCond = { "no": loopCond } ;
-            lobSplit( cl, clRg[0], rg[i], firstCond, secondCond ) ;
+            lobSplit( cl, clRg[0], names[i], firstCond, secondCond ) ;
             loopCond += cond ;
          }
       }
       println( "success to do range split before input data" ) ;
-   }
-   catch( e )
-   {
-      if( "run mode is standalone" != e &&
-          "database only have one group" != e )
-      {
-         println( "failed to split collection, rc = " + e ) ;
-         throw e ;
-      }
-   }
-   // put normal data and lob data
-   try
-   {
-      lobInsert( cl, putNum ) ;   // will be OK
+      lobInsertDoc( cl, putNum ) ;   // will be OK
       println( "suceess to put normal record data" ) ;
-      oid = lobPutLob( cl, testFile, putNum ) ;   // will throw exception
-      if( false == commIsStandalone( db ) )
-         throw "WrongPutLobWhenRangeSplit" ;
+      var oids = lobPutLob( cl, testFile, putNum ) ;   // will throw exception
+      throw "range collection write lob expect failed!!!";
    }
    catch( e )
    {
@@ -78,6 +57,7 @@ function main( db )
       else
          println( "success to test execute put lob when range split" ) ;
    }
+   
    // get lob
    try
    {
@@ -91,38 +71,49 @@ function main( db )
          }
       }
       println( "success to query records" ) ;
-      for( var i = 0 ; i < oid.length ; ++i )  // oid equal 0
+      
+      if ( typeof(oids) == "undefined" ) return ;
+      for( var i = 0 ; i < oids.length ; ++i )  // oid equal 0
       {
-         cl.getLob( oid[i], getTestFile, true ) ;
+         cl.getLob( oids[i], getTestFile, true ) ;
       }
-      // remove lobfile
-      cmd.run( "rm -rf " + testFile ) ;
-      cmd.run( "rm -rf " + getTestFile ) ;
    }
    catch( e )
    {
-      // remove lobfile
-      cmd.run( "rm -rf " + testFile ) ;
-      cmd.run( "rm -rf " + getTestFile ) ;
-      println( "failed to get lob and query nomral data, rc = " + e ) ;
+      println( "failed to query nomral data, rc = " + e ) ;
       throw e ;
+   }
+   finally
+   {
+      // remove lobfile
+      cmd = new Cmd() ;
+      cmd.run( "rm -rf " + testFile ) ;
+      if ( lobFileIsExist( getTestFile ) )
+      {
+         cmd.run( "rm -rf " + getTestFile ) ;
+      }
    }
 }
 
 // Run Main
 try
 {
-   commDropCL( db, COMMCSNAME, COMMCLNAME, true, true,
-               "clear collection in the beginning" ) ;
-   main( db ) ;
-   //commDropCL( db, COMMCSNAME, COMMCLNAME, false, false,
-   //            "drop collection in the end, correct" ) ;
-   db.close( ) ;
+   if ( !commIsStandalone(db) )
+   {
+      commDropCL( db, COMMCSNAME, COMMCLNAME, true, true,
+                  "clear collection in the beginning" ) ;
+      main( db ) ;
+      //commDropCL( db, COMMCSNAME, COMMCLNAME, false, false,
+      //            "drop collection in the end, correct" ) ;
+   }
 }
 catch( e )
 {
    //commDropCL( db, COMMCSNAME, COMMCLNAME, true, true,
    //            "drop collection in the end , error" ) ;
-   db.close( ) ;
    throw e ;
+}
+finally
+{
+   db.close( ) ;
 }

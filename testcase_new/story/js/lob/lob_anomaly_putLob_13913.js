@@ -6,10 +6,8 @@
 
 function main( db )
 {
-   var testFile = CHANGEDPREFIX + "lobTest.file",
-       cmd = new Cmd() ;
-
-   lobAutoFile( testFile ) ;   // auto file
+   var testFile = CHANGEDPREFIX + "lobTest.file" ;
+   //lobGenerateFile( testFile ) ;   // auto file
    // create collection
    var cl = commCreateCL( db, COMMCSNAME, COMMCLNAME, -1, true, true, true,
                           "create collection" ) ;
@@ -17,13 +15,27 @@ function main( db )
    try
    {
       var list = cl.listLobs( testFile ) ;
+      throw "ErrExecuteLob" ;
+   }
+   catch( e )
+   {
+      if( "Error: SdbCollection.listLobs(): wrong arguments" != e )
+      {
+         println( "failed to execute listLobs with a parmeter, rc = " + e ) ;
+         throw e ;
+      }
+      else
+         println( "success to execute putLob with no lob file" ) ;
+   }
+   
+   try
+   {
       cl.putLob() ;
       throw "ErrExecuteLob" ;
    }
    catch( e )
    {
-      if( "Error: SdbCollection.putLob(): wrong arguments" != e &&
-          "Error: SdbCollection.listLobs(): wrong arguments" != e )
+      if( "Error: SdbCollection.putLob(): wrong arguments" != e )
       {
          println( "failed to execute put lob with no file, rc = " + e ) ;
          throw e ;
@@ -31,6 +43,7 @@ function main( db )
       else
          println( "success to execute putLob with no lob file" ) ;
    }
+   
    // delete lob with no oid[Test_Point_2]
    try
    {
@@ -42,15 +55,11 @@ function main( db )
    {
       if( "Error: SdbCollection.deleteLob(): wrong arguments" != e )
       {
-         // remove lobfile
-         cmd.run( "rm -rf " + testFile ) ;
          println( "failed to execute delete lob with no file, rc = " + e ) ;
          throw e ;
       }
       else
       {
-         // remove lobfile
-         cmd.run( "rm -rf " + testFile ) ;
          println( "success to execute deleteLob with no parameter, rc = " ) ;
       }
    }
@@ -62,14 +71,14 @@ try
    commDropCL( db, COMMCSNAME, COMMCLNAME, true, true,
                "clear collection in the beginning" ) ;
    main( db ) ;
-   commDropCL( db, COMMCSNAME, COMMCLNAME, false, false,
-               "drop collection in the end, correct" ) ;
-   db.close( ) ;
 }
 catch( e )
+{
+   throw e ;
+}
+finally
 {
    commDropCL( db, COMMCSNAME, COMMCLNAME, true, true,
                "drop collection in the end , error" ) ;
    db.close( ) ;
-   throw e ;
 }

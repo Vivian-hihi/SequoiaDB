@@ -4,8 +4,6 @@
 *               2014-6-12   xiaojun Hu  Init
 *               2014-11-10  xiaojun Hu  Change
 ******************************************************************************/
-
-
 function lobFileIsExist( fileName )
 {
    var isExist = false ;
@@ -22,17 +20,38 @@ function lobFileIsExist( fileName )
    return isExist ;
 }
 
-function lobAutoFile( fileName, fileLine)
+function getMd5ForFile(testFile)
 {
-   if( undefined == fileLine ){ fileLine = 1000 ; }
+   try
+   {
+      var cmd = new Cmd() ;
+      var md5Arr = cmd.run( "md5sum " + testFile ).split(" ") ;
+      var md5 = md5Arr[0] ;
+   }catch( e )
+   {
+      throw e ;
+   }
+   return md5 ;
+}
+
+function lobGenerateFile( fileName, fileLine)
+{
+   if( undefined == fileLine )
+   { 
+      fileLine = 1000 ; 
+   }
+   
    try
    {
       var cnt = 0 ;
-      while( true == lobFileIsExist( fileName ) && cnt < 10 )
+      while( true == lobFileIsExist( fileName ))
       {
          File.remove( fileName ) ;
+         if ( cnt > 10) break ;
          cnt++ ;
+         sleep(10) ;
       }
+      
       if( 10 <= cnt )
          throw "failed to remove file: " + fileName ;
       var file = new File( fileName ) ;
@@ -57,7 +76,8 @@ function lobCreateCS( db, DOMCSNAME, domName )
 {
    try
    {
-      db.createCS( DOMCSNAME, { "PageSize":4096, "Domain": domName }) ;
+      var cs = db.createCS( DOMCSNAME, { "PageSize":4096, "Domain": domName }) ;
+      return cs;
    }
    catch( e )
    {
@@ -68,8 +88,12 @@ function lobCreateCS( db, DOMCSNAME, domName )
 
 function lobPutLob( cl, lobFile, lobNum )
 {
-   if( undefined == lobNum ){ lobNum = 10 ; }
-   var oid = new Array() ;
+   if( undefined == lobNum )
+   {
+      lobNum = 10 ; 
+   }
+       
+   var oid = [] ;
    try
    {
       for( var i = 0 ; i < lobNum; ++i )
@@ -93,22 +117,25 @@ function lobPutLob( cl, lobFile, lobNum )
 }
 
 // Insert data to SequoiaDB
-function lobInsert( cl, recordNum )
+function lobInsertDoc( cl, recordNum )
 {
    try
    {
+      var docs = [];
       // insert 10000 records in CL
       for( var i = 0 ; i < recordNum ; ++i )
       {
-         cl.insert( { no:i, score:i, interest:["movie", "photo"],
+         docs.push({ no:i, score:i, interest:["movie", "photo"],
                       major:"计算机软件与理论", dep:"计算机学院",
-                      info:{name:"Holiday", age:22, sex:"男"} } ) ;
+                      info:{name:"Holiday", age:22, sex:"男"} });
+         
       }
+      cl.insert( docs ) ;
       var cnt = 0 ;
       do
       {
          ++cnt ;
-         sleep(1) ;
+         sleep(10) ;
       }while( recordNum != cl.count() && 1000 < cnt ) ;
       if( recordNum != cl.count() )
       {
@@ -149,17 +176,17 @@ function lobSplit( cl, srcGroup, dstGroup, firstCond, secondCond )
    }
 }
 
-function lobGetGroups( db )
+function lobGetAllGroupNames( db )
 {
    try
    {
       var RG = commGetGroups( db ) ;
-      var groups = new Array() ;
+      var groupnames = [] ;
       for( var i = 0 ; i < RG.length ; ++i )
       {
-         groups[i] = RG[i][0].GroupName ;
+         groupnames.push( RG[i][0].GroupName );
       }
-      return groups ;
+      return groupnames ;
    }
    catch( e )
    {
