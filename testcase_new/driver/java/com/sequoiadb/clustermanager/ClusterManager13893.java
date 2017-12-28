@@ -97,8 +97,8 @@ public class ClusterManager13893 extends SdbTestBase{
 			if( e.getErrorCode() != -155 ){
 				Assert.fail("node does not exist is error -155,but e ="+e.getErrorCode());
 			}
-		}
-	
+		}		
+
 	}
 	
 	@AfterClass
