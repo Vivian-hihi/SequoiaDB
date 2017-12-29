@@ -310,7 +310,7 @@
                         'list': []
                      },
                      {
-                        'title': 'SequoiaSQL',
+                        'title': 'SequoiaSQL-OLTP',
                         'list': []
                      },
                      {
@@ -504,6 +504,8 @@
                {
                   $location.path( '/Data/Edition' ).search( params ) ; break ;
                }
+            case 'sequoiasql-oltp':
+               $location.path( '/Data/OLTP-Database/Index' ).search( params ) ; break ;
             case 'hdfs':
                $location.path( '/Data/HDFS-web/Index' ).search( params ) ; break ;
             case 'spark':
@@ -605,11 +607,11 @@
       }
    } ) ;
    //底部
-   sacApp.controller( 'Index.Bottom.Ctrl', function( $scope, SdbRest ){
+   sacApp.controller( 'Index.Bottom.Ctrl', function( $scope, $interval, SdbRest ){
       $scope.Bottom = {} ;
       //获取系统时间
       _IndexBottom.getSystemTime( $scope ) ;
       //获取系统状态
-      _IndexBottom.checkPing( $scope, SdbRest ) ;
+      _IndexBottom.checkPing( $scope, $interval, SdbRest ) ;
    } ) ;
 }());

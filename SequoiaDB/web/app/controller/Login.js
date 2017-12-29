@@ -67,6 +67,7 @@ function loginTransfer( $scope, SdbRest, SdbFunction ){
 	      }
 	      SdbFunction.LocalData( 'SdbLanguage', language ) ;
       }
+
       //获取语言
       $scope.Language = SdbFunction.LocalData( 'SdbLanguage' ) ;
       //语言控制

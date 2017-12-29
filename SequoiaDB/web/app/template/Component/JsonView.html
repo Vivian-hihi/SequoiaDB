@@ -7,7 +7,7 @@
          <button class="toolBtn" ng-if="!Setting.IsFullScreen" ng-attr="{'data-desc':autoLanguage('全屏')}" ng-click="fullScreen()"><i class="fa fa-arrows-alt"></i></button>
          <button class="toolBtn" ng-if="Setting.IsFullScreen" ng-attr="{'data-desc':autoLanguage('取消全屏')}" ng-click="cancelFullScreen()"><i class="fa fa-minus"></i></button>
       </div>
-      <div class="editBox" style="white-space:pre;" ng-style="{ 'height': Setting.Height + 'px' }" spellcheck="false" contenteditable="true" ng-model="Setting.Json"></div>
+      <div class="editBox" style="white-space:pre;" spellcheck="false">{{Setting.Json}}</div>
    </div>
    <div class="viewModel" ng-hide="Setting.Type == 2">
       <div class="tool">
@@ -19,6 +19,6 @@
          <button class="toolBtn" ng-if="Setting.IsFullScreen" ng-attr="{'data-desc':autoLanguage('取消全屏')}" ng-click="cancelFullScreen()"><i class="fa fa-minus"></i></button>
          <div class="clear-float"></div>
       </div>
-      <div class="editBox" ng-style="{ 'height': Setting.Height + 'px' }" ng-include="'./app/template/Component/JsonEdit_child.html'" ng-eval="fields=Setting.View"></div>
+      <div class="editBox" ng-include="'./app/template/Component/JsonView_child.html'" ng-eval="fields=Setting.View"></div>
    </div>
 </div>

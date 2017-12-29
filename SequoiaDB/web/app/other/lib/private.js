@@ -282,10 +282,10 @@ _IndexBottom.getSystemTime = function( $scope )
 }
 
 //获取ping值
-_IndexBottom.checkPing = function( $scope, SdbRest, errorNum )
+_IndexBottom.checkPing = function( $scope, $interval, SdbRest )
 {
    var isShowErrorModel = false ;
-   setInterval( function(){
+   $interval( function(){
       var status = SdbRest.getNetworkStatus() ;
       if( status == 1 )
       {
@@ -308,8 +308,7 @@ _IndexBottom.checkPing = function( $scope, SdbRest, errorNum )
          isShowErrorModel = true ;
          _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '服务端连接断开，正在尝试重新连接...' ) ) ;
       }
-      $scope.$apply() ;
-   }, 500 ) ;
+   }, 1000 ) ;
 }
 
 // --------------------- Index.Top ---------------------
