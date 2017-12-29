@@ -743,6 +743,12 @@
                      "en": "Statistics"
                   }
                ]
+            },
+            {
+               "id": 1496923311,
+               "file": "sdbcm",
+               "cn": "数据库服务",
+               "en": "Database service"
             }
          ]
       },
