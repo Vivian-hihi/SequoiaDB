@@ -304,6 +304,12 @@ namespace engine
                                  _plan->getCLLID() ;
          }
 
+         OSS_INLINE BOOLEAN canSetQueryActivity () const
+         {
+            return ( NULL != _plan && NULL != _apm && !_hasQueryActivity ) ?
+                   TRUE : FALSE ;
+         }
+
          void setQueryActivity ( MON_OPERATION_TYPES optrType,
                                  const monContextCB &monCtxCB,
                                  const rtnReturnOptions &returnOptions,

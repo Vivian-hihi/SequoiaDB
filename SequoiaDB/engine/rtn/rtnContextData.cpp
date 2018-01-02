@@ -440,7 +440,9 @@ namespace engine
 
    void _rtnContextData::setQueryActivity ( BOOLEAN hitEnd )
    {
-      if ( enabledMonContext() && enabledQueryActivity() )
+      if ( _planRuntime.canSetQueryActivity() &&
+           enabledMonContext() &&
+           enabledQueryActivity() )
       {
          _planRuntime.setQueryActivity( MON_SELECT, _monCtxCB, _returnOptions,
                                         hitEnd ) ;
@@ -1620,10 +1622,17 @@ namespace engine
    void _rtnContextSort::setQueryActivity ( BOOLEAN hitEnd )
    {
       if ( NULL != getPlanRuntime() &&
-           enabledMonContext() && enabledQueryActivity() )
+           getPlanRuntime()->canSetQueryActivity() &&
+           enabledMonContext() &&
+           enabledQueryActivity() )
       {
+         rtnReturnOptions returnOption( _returnOptions ) ;
+         if ( returnOption.isSelectorEmpty() && NULL != getSubContext() )
+         {
+            returnOption.setSelector( getSubContext()->getSelector().getPattern() ) ;
+         }
          getPlanRuntime()->setQueryActivity( MON_SELECT, _monCtxCB,
-                                             _returnOptions, hitEnd ) ;
+                                             returnOption, hitEnd ) ;
       }
    }
 

@@ -361,7 +361,7 @@ namespace engine
                                                   const rtnReturnOptions &returnOptions,
                                                   BOOLEAN hitEnd )
    {
-      if ( NULL != _plan && NULL != _apm && !_hasQueryActivity )
+      if ( canSetQueryActivity() )
       {
          optQueryActivity queryActivity( optrType, getParameters(),
                                          monCtxCB, returnOptions, hitEnd ) ;
