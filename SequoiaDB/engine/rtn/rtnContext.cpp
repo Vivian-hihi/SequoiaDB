@@ -563,7 +563,7 @@ namespace engine
       if ( _pMonAppCB && cb->getID() != eduID() )
       {
          *_pMonAppCB += *cb->getMonAppCB() ;
-         _monCtxCB.monDataReadInc( _pMonAppCB->totalDataRead ) ;
+         _monCtxCB.monDataReadInc( cb->getMonAppCB()->totalDataRead ) ;
          cb->getMonAppCB()->reset() ;
       }
 
@@ -748,13 +748,14 @@ namespace engine
 
          _monCtxCB.monDataReadInc( cb->getMonAppCB()->totalDataRead -
                                    tmpTotalRead ) ;
-         _monCtxCB.monReturnInc( 1, _buffer.numRecords() ) ;
       }
 
       // if not empty, get current data
       if ( !isEmpty() )
       {
          INT64 numRecords = _buffer.numRecords() ;
+
+         _monCtxCB.monReturnInc( 1, numRecords ) ;
 
          rc = _buffer.get( maxNumToReturn, buffObj ) ;
          if ( SDB_OK != rc )
