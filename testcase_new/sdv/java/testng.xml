@@ -3,7 +3,7 @@
 <!--testcase for function test, which can be excuted concurrently-->
 
 <suite name="sdv" verbose="1" parallel="tests">
-   <parameter name="HOSTNAME"       value="192.168.31.10" />
+   <parameter name="HOSTNAME"       value="localhost" />
    <parameter name="SVCNAME"        value="11810" />
    <parameter name="CHANGEDPREFIX"  value="story_java_test" />
    <parameter name="RSRVPORTBEGIN"  value="26000" />
