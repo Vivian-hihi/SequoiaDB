@@ -669,6 +669,7 @@ retry :
             break ;
          case MSG_CLS_GINFO_UPDATED :
             rc = _processUpdateGrpInfo() ;
+            break ;
          case MSG_CAT_GRP_CHANGE_NTY :
             rc = _processCatGrpChgNty() ;
             break ;
