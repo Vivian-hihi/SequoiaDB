@@ -1,11 +1,7 @@
 package com.sequoiadb.lzwtransaction;
 
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
@@ -24,7 +20,6 @@ import com.sequoiadb.base.ReplicaGroup;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
-import com.sequoiadb.testcommon.SdbConfTestBase;
 
 
 /**
@@ -214,11 +209,14 @@ public class TestSeqDB6670 extends SdbTestBase {
             configure.put("logfilenum", 5);
             configure.put("transactionon", true);
             String hostName = sdb.getReplicaGroup("SYSCatalogGroup").getMaster().getHostName();
-            ReplicaGroup rg = sdb.getReplicaGroup(this.rgName);
-            if(rg != null){
+            try {
                 sdb.removeReplicaGroup(this.rgName);
+            } catch (BaseException e) {
+                if (e.getErrorCode() != -154) { // SDB_CLS_GRP_NOT_EXIST
+                    throw e;
+                }
             }
-            rg = this.sdb.createReplicaGroup(this.rgName);
+            ReplicaGroup rg = this.sdb.createReplicaGroup(this.rgName);
             System.out.println(this.port1 + ":" + this.port2 + ":" + this.port3);
             Node node1 = rg.createNode(hostName, this.port1, SdbTestBase.workDir + port1 + "/", configure );
             Node node2 = rg.createNode(hostName, this.port2, SdbTestBase.workDir + port2 + "/", configure );
