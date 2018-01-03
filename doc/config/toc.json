@@ -333,6 +333,12 @@
          "en": "Database Management",
          "contents": [
             {
+               "id": 1514516858,
+               "file": "sdbcm",
+               "cn": "数据库服务",
+               "en": "Database service"
+            },
+            {
                "id": 1432190643,
                "file": "runtime_configuration",
                "cn": "数据库配置",
@@ -743,12 +749,6 @@
                      "en": "Statistics"
                   }
                ]
-            },
-            {
-               "id": 1514516858,
-               "file": "sdbcm",
-               "cn": "数据库服务",
-               "en": "Database service"
             }
          ]
       },
