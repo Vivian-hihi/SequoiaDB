@@ -1931,7 +1931,9 @@ UINT32 _dmsDump::dumpDmsLobMeta( CHAR *inBuf, UINT32 inSize,
                                    " PiecesInfo Num :%d"OSS_NEWLINE,
                                    lobMeta->_piecesInfoNum);
 
-      if (lobMeta->_piecesInfoNum <=  0) goto exit;
+      if ( (lobMeta->_piecesInfoNum <=  0) ||
+            (lobMeta->_piecesInfoNum > DMS_LOB_META_LENGTH /sizeof( _rtnLobPieces ) ) )
+         goto exit;
 
       len += ossSnprintf(outBuf + len, outSize - len, " Pieces:");
       _rtnLobPieces* piecesInfoBuf = (_rtnLobPieces*)(inBuf + DMS_LOB_META_LENGTH 
@@ -2022,7 +2024,7 @@ UINT32 _dmsDump::dumpDmsLobDataMapBlk(dmsLobDataMapBlk *blk, CHAR * outBuf,
       len += ossSnprintf(outBuf + len, outSize - len, " MB Id          :%u"OSS_NEWLINE, blk->_mbID);
 
       tag = blk->isNormal()? "DMS_LOB_PAGE_NORMAL":"DMS_LOB_PAGE_REMOVED";
-      len += ossSnprintf(outBuf + len, outSize - len, " STATUS         :%s (%u)"OSS_NEWLINE,tag, blk->_status);
+      len += ossSnprintf(outBuf + len, outSize - len, " Status         :%s (%u)"OSS_NEWLINE,tag, blk->_status);
    }
 
    len += ossSnprintf ( outBuf + len, outSize - len, OSS_NEWLINE ) ;

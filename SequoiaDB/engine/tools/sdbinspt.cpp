@@ -4201,27 +4201,26 @@ void actionCSAttempt ( const CHAR *pFileName, vector<const CHAR *> &expectEyeVec
       }
       else
       {
-        dumpHeader ( file, csPageSize ) ;
-        if (gCurInsptType == SDB_INSPT_LOB)
-        {
+         dumpHeader ( file, csPageSize ) ;
 
-             dumpHeader ( gLobdFile, csPageSize ) ;
-                         // specific pages dump
-             for ( SINT32 i = 0; i < gNumPages && !gReachEnd; ++i )
-             {
-                dumpPrintf ( " Dump page %d"OSS_NEWLINE, gStartingPage + i ) ;
-                dumpRawPage ( gLobdFile, gLobdPageSize, gStartingPage + i ) ;
-             }
-        }
-        else
-        {
-             // specific pages dump
-             for ( SINT32 i = 0; i < gNumPages && !gReachEnd; ++i )
-             {
-                dumpPrintf ( " Dump page %d"OSS_NEWLINE, gStartingPage + i ) ;
-                dumpRawPage ( file, csPageSize, gStartingPage + i ) ;
-             }
-        }
+         // specific pages dump
+         for ( SINT32 i = 0; i < gNumPages && !gReachEnd; ++i )
+         {
+            dumpPrintf ( " Dump page %d"OSS_NEWLINE, gStartingPage + i ) ;
+            dumpRawPage ( file, csPageSize, gStartingPage + i ) ;
+         }
+         
+         if (gCurInsptType == SDB_INSPT_LOB)
+         {
+            dumpHeader ( gLobdFile, csPageSize ) ;
+            // specific pages dump
+            gDataOffset = DMS_SME_OFFSET;
+            for ( SINT32 i = 0; i < gNumPages && !gReachEnd; ++i )
+            {
+               dumpPrintf ( " Dump page %d"OSS_NEWLINE, gStartingPage + i ) ;
+               dumpRawPage ( gLobdFile, gLobdPageSize, gStartingPage + i ) ;
+            }
+         }
 
       }
       break ;
