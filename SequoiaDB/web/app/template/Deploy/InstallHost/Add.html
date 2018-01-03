@@ -182,11 +182,11 @@
                <div ng-windows="form as AddCustomPathWindow.config" windows-callback="AddCustomPathWindow.callback">
                   <div form-create para="form"></div>
                </div>
-               <div style="height:25px;margin-top:20px;position:relative;" ng-if="DiskTable['body'].length > 0">
+               <div style="height:25px;margin-top:20px;" ng-if="DiskTable['body'].length > 0">
                   {{autoLanguage("磁盘列表")}}
                   &nbsp;<button class="btn btn-primary" ng-if="HostInfo['errno'] == 0" ng-click="ShowAddCustomPath()">{{autoLanguage("添加自定义路径")}}</button>
                </div>
-               <div ng-container="{width:'auto',height:DiskTableHeight,marginTop:5}" ng-if="DiskTable['body'].length > 0" ng-table="DiskTable['options']" table-title="DiskTable['title']" table-content="diskInfo in DiskTable['body']">
+               <div style="position:relative;" ng-container="{width:'auto',height:DiskTableHeight,marginTop:5}" ng-if="DiskTable['body'].length > 0" ng-table="DiskTable['options']" table-title="DiskTable['title']" table-content="diskInfo in DiskTable['body']">
                   <div table-key="IsUse">
                      <input type="checkbox" ng-model="diskInfo['IsUse']" ng-disabled="diskInfo['CanUse']==false" ng-click="CountCheckedDisk()" />
                   </div>
