@@ -4,7 +4,7 @@
 .hy
 .SH NAME
 .PP
-setPDLevel \- create a new collection.
+setPDLevel \- Set the node's diagnostic level and take effect.
 .SH SYNOPSIS
 .PP
 \f[B]\f[I]db.setPDLevel(<level>,[options])\f[]\f[]
