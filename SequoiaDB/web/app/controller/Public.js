@@ -48,8 +48,8 @@
       $rootScope.layout.top     = { height: 40 } ;
       $rootScope.layout.content = { offsetY: -40 } ;
       $rootScope.layout.bottom  = { height: 40 } ;
-      $rootScope.layout.left    = { width: 260 } ;
-      $rootScope.layout.centre  = { offsetX: -260, marginLeft: 260 } ;
+      $rootScope.layout.left    = { width: 80 } ;
+      $rootScope.layout.centre  = { offsetX: -80, marginLeft: 80 } ;
       //-------- 全局函数 ---------
       //格式化
       $rootScope.sprintf = sprintf ;
@@ -63,7 +63,11 @@
       $rootScope.pad = pad ;
       //语言控制
       $rootScope.autoLanguage = function( text ){
-         return _IndexPublic.languageCtrl( $scope, text ) ;
+         return _IndexPublic.languageCtrl( this, text ) ;
+      }
+      //插件语言控制
+      $rootScope.pAutoLanguage = function( text ){
+         return _IndexPublic.pLanguageCtrl( this, text ) ;
       }
       $rootScope.autoLanguage('确定') ;//马上调用，原因是firefox有bug，如果不调用会造成后续子页面加载后不执行代码。
       //读写临时存储
@@ -165,6 +169,7 @@
             }
          } ) ;
       }
+
       getOMSysInfo() ;
    } ) ;
 
@@ -286,189 +291,263 @@
          'scope': false
       } ) ;
    } ) ;
+
    //左边
-   sacApp.controller( 'Index.Left.Ctrl', function( $scope, $rootScope, $location, SdbRest, SdbFunction ){
+   sacApp.controller( 'Index.Left.Ctrl', function( $scope, $rootScope, $location, SdbRest, SdbFunction, SdbPromise ){
       $scope.showModuleIndex = -1 ;
       $scope.Left = {} ;
       $scope.Left.nav1 = { width: 80 } ;
       $scope.Left.nav2 = { width: 180, marginLeft: 80 } ;
-      $scope.Left.nav2Show = true ;
+      $scope.Left.nav2Show = false ;
       $scope.Left.nav1Btn = { 'visibility': 'hidden' } ;
       $scope.Left.nav2Btn = { 'visibility': 'hidden' } ;
-      //初始化导航列表
-      $rootScope.initNav = function(){
-         if( window.Config['Edition'] == 'Enterprise' )
-         {
-            $scope.Left.navMenu = [
-               {
-                  'text': $scope.autoLanguage( '数据' ),
-                  'module': 'Data',
-                  'icon': 'fa-database',
-                  'list': [
-                     {
-                        'title': 'SequoiaDB',
-                        'list': []
-                     },
-                     {
-                        'title': 'SequoiaSQL-OLTP',
-                        'list': []
-                     },
-                     {
-                        'title': 'Hdfs',
-                        'list': []
-                     },
-                     {
-                        'title': 'Spark',
-                        'list': []
-                     },
-                     {
-                        'title': 'Yarn',
-                        'list': []
-                     }
-                  ]
-               },
-               {
-                  'text': $scope.autoLanguage( '监控' ),
-                  'module': 'Monitor',
-                  'icon': 'fa-flash',
-                  'list': [
-                     {
-                        'title': 'SequoiaDB',
-                        'list': []
-                     }
-                  ]
-               },
-               {
-                  'text': $scope.autoLanguage( '部署' ),
-                  'module': 'Deploy',
-                  'icon': 'fa-share-alt',
-                  'action': '/#/Deploy/Index'
-               }
-            ] ;
-         }
-         else
-         {
-            $scope.Left.navMenu = [
-               {
-                  'text': $scope.autoLanguage( '数据' ),
-                  'module': 'Data',
-                  'icon': 'fa-database',
-                  'list': [
-                     {
-                        'title': 'SequoiaDB',
-                        'list': []
-                     },
-                     {
-                        'title': 'SequoiaSQL',
-                        'list': []
-                     },
-                     {
-                        'title': 'Hdfs',
-                        'list': []
-                     },
-                     {
-                        'title': 'Spark',
-                        'list': []
-                     },
-                     {
-                        'title': 'Yarn',
-                        'list': []
-                     }
-                  ]
-               },
-               {
-                  'text': $scope.autoLanguage( '监控' ),
-                  'module': 'Monitor',
-                  'icon': 'fa-flash',
-                  'list': [
-                     {
-                        'title': 'SequoiaDB',
-                        'list': []
-                     }
-                  ]
-               },
-               {
-                  'text': $scope.autoLanguage( '部署' ),
-                  'module': 'Deploy',
-                  'icon': 'fa-share-alt',
-                  'action': '/#/Deploy/Index'
-               }
-            ] ;
-         }
-      } ;
-      $rootScope.initNav() ;
 
-      $rootScope.updateNav = function( updateDefault ){
-         if( updateDefault && $rootScope.Url.Module == 'Deploy' )
+      $scope.Left.navMenu = [
          {
-            $rootScope.layout.left    = { width: 80 } ;
-            $rootScope.layout.centre  = { offsetX: -80, marginLeft: 80 } ;
-            $scope.Left.nav2 = { width: 0, marginLeft: 0 } ;
-            $scope.Left.nav2Show = false ;
+            'text': $scope.autoLanguage( '部署' ),
+            'module': 'Deploy',
+            'icon': 'fa-share-alt',
+            'action': '/#/Deploy/Index'
          }
-         _IndexLeft.updateNav( $scope, $rootScope, SdbRest,  function( instanceList, navMenu ){
-            if( updateDefault == true )
+      ] ;
+
+      var promise = SdbPromise.init( 2 ) ;
+
+      function getPlugins()
+      {
+         var data = { 'cmd': 'list plugins' } ;
+         SdbRest.OmOperation( data, {
+            'success': function( list ){
+
+               var pluginList = {
+                  'sequoiadb': {
+                     'Name': 'SequoiaDB',
+                     'BusinessType': 'sequoiadb'
+                  },
+                  'spark': {
+                     'Name': 'Spark',
+                     'BusinessType': 'spark'
+                  },
+                  'hdfs': {
+                     'Name': 'Hdfs',
+                     'BusinessType': 'hdfs'
+                  },
+                  'yarn': {
+                     'Name': 'Yarn',
+                     'BusinessType': 'yarn'
+                  }
+               } ;
+
+               $.each( list, function( index, info ){
+                  pluginList[info['BusinessType']] = info ;
+               } ) ;
+
+               promise.resolve( 'plugins', pluginList ) ;
+            },
+            'failed': function( errorInfo ){
+               promise.throw( errorInfo ) ;
+            }
+         }, { 'showLoading': false } ) ;
+      }
+
+      function getBusiness()
+      {
+         var data = { 'cmd': 'query business', 'sort': JSON.stringify( { 'BusinessType': 1, 'BusinessName': 1, 'ClusterName': 1 } ) } ;
+         SdbRest.OmOperation( data, {
+            'success': function( list ){
+               promise.resolve( 'business', list ) ;
+            },
+            'failed': function( errorInfo ){
+               promise.throw( errorInfo ) ;
+            }
+         }, { 'showLoading': false } ) ;
+      }
+
+      getPlugins() ;
+      getBusiness() ;
+
+      function addBusinessTitle( titles, name )
+      {
+         var index = -1 ;
+
+         $.each( titles, function( idx, info ){
+            if( info['title'] == name )
             {
-               $scope.cursorIndex = _IndexLeft.getActiveIndex( $rootScope, SdbFunction, navMenu ) ;
-               if( $scope.showModuleIndex == -1 )
-               {
-                  $scope.showModuleIndex = $scope.cursorIndex[0] ;
-               }
-               if( $scope.Left.navMenu[ $scope.showModuleIndex ]['module'] == 'Deploy' )
-               {
-                  $scope.Left.nav1Btn = { 'visibility': 'hidden' } ;
-                  $scope.Left.nav2Btn = { 'visibility': 'hidden' } ;
-               }
-               else
-               {
-                  if( $scope.Left.nav2Show )
-                  {
-                     $scope.Left.nav1Btn = { 'visibility': 'hidden' } ;
-                     $scope.Left.nav2Btn = { 'visibility': 'visible' } ;
-                  }
-                  else
-                  {
-                     $scope.Left.nav1Btn = { 'visibility': 'visible' } ;
-                     $scope.Left.nav2Btn = { 'visibility': 'hidden' } ;
-                  }
-               }
+               index = idx ;
+               return false ;
             }
          } ) ;
-      } ;
 
-      //更新url地址信息
-      $rootScope.updateUrl() ;
+         if( index == -1 )
+         {
+            index = titles.length ;
 
-      /*if( $rootScope.Url.Module == 'Deploy' )
+            titles.push( {
+               'title': name,
+               'list': []
+            } ) ;
+         }
+
+         return titles[index] ;
+      }
+
+      function addDataOperation( pluginInfo, businessInfo )
       {
-         $rootScope.layout.left    = { width: 80 } ;
-         $rootScope.layout.centre  = { offsetX: -80, marginLeft: 80 } ;
-         $scope.Left.nav2 = { width: 0, marginLeft: 0 } ;
-         $scope.Left.nav2Show = false ;
-      }*/
+         if( $scope.Left.navMenu[0]['module'] != 'Data' )
+         {
+            $scope.Left.navMenu.unshift( {
+               'text': $scope.autoLanguage( '数据' ),
+               'module': 'Data',
+               'icon': 'fa-database',
+               'list': []
+            } ) ;
+         }
 
-      //更新导航
-      $rootScope.updateNav( true ) ;
+         var titleInfo = addBusinessTitle( $scope.Left.navMenu[0]['list'], pluginInfo['Name'] ) ;
+         titleInfo['list'].push( businessInfo ) ;
+      }
 
-      $scope.toggleNav2 = function(){
-         if( $scope.Left.nav2Show == true )
+      function addMonitor( pluginInfo, businessInfo )
+      {
+         var index = 1 ;
+
+         if( $scope.Left.navMenu.length == 1 )
+         {
+            $scope.Left.navMenu.unshift( {
+               'text': $scope.autoLanguage( '监控' ),
+               'module': 'Monitor',
+               'icon': 'fa-flash',
+               'list': []
+            } ) ;
+            index = 0 ;
+         }
+         else if( $scope.Left.navMenu.length == 2 && $scope.Left.navMenu[0]['module'] == 'Data' )
+         {
+            $scope.Left.navMenu.splice( 1, 0, {
+               'text': $scope.autoLanguage( '监控' ),
+               'module': 'Monitor',
+               'icon': 'fa-flash',
+               'list': []
+            } ) ;
+         }
+
+         if( businessInfo['type'] == 'sequoiasql-oltp' )
+         {
+            return ;
+         }
+
+         var titleInfo = addBusinessTitle( $scope.Left.navMenu[index]['list'], pluginInfo['Name'] ) ;
+         titleInfo['list'].push( businessInfo ) ;
+      }
+
+      function addBusiness( plugins, businessInfo )
+      {
+         var hasPlugin = false ;
+         var thisModule = {
+            'name': businessInfo['BusinessName'],
+            'type': businessInfo['BusinessType'],
+            'mode': businessInfo['DeployMod'],
+            'cluster': businessInfo['ClusterName']
+         } ;
+
+         if( thisModule['type'] == 'spark' )
+         {
+            thisModule['href'] = 'http://' + businessInfo['BusinessInfo']['HostName'] + ':' + businessInfo['BusinessInfo']['WebServicePort'] ;
+         }
+
+         hasPlugin = typeof( plugins[businessInfo['BusinessType']] ) !== 'undefined' ;
+
+         if( false == hasPlugin )
+         {
+            return ;
+         }
+
+         addDataOperation( plugins[businessInfo['BusinessType']], thisModule ) ;
+         addMonitor( plugins[businessInfo['BusinessType']], thisModule ) ;
+      }
+
+      promise.error( function( errorInfo ){
+         promise.clear() ;
+         setTimeout( function(){
+            getPlugins() ;
+            getBusiness() ;
+         }, 5000 ) ;
+      } ) ;
+
+      promise.then( function( data ){
+         $scope.Left.navMenu = [
+            {
+               'text': $scope.autoLanguage( '部署' ),
+               'module': 'Deploy',
+               'icon': 'fa-share-alt',
+               'action': '/#/Deploy/Index'
+            }
+         ] ;
+
+         $.each( data['business'], function( index, businessInfo ){
+            addBusiness( data['plugins'], businessInfo ) ;
+         } ) ;
+
+         $scope.cursorIndex = _IndexLeft.getActiveIndex( $rootScope, SdbFunction, $scope.Left.navMenu ) ;
+         if( $scope.showModuleIndex == -1 )
+         {
+            $scope.showModuleIndex = $scope.cursorIndex[0] ;
+         }
+         if( $scope.Left.navMenu.length > 1 && $scope.Left.navMenu[$scope.showModuleIndex]['module'] != 'Deploy' )
          {
             $scope.Left.nav1Btn = { 'visibility': 'visible' } ;
-            $scope.Left.nav2Btn = { 'visibility': 'hidden' } ;
-            $rootScope.layout.left    = { width: 80 } ;
-            $rootScope.layout.centre  = { offsetX: -80, marginLeft: 80 } ;
-            $scope.Left.nav2 = { width: 0, marginLeft: 0 } ;
          }
          else
          {
             $scope.Left.nav1Btn = { 'visibility': 'hidden' } ;
-            $scope.Left.nav2Btn = { 'visibility': 'visible' } ;
-            $rootScope.layout.left    = { width: 260 } ;
-            $rootScope.layout.centre  = { offsetX: -260, marginLeft: 260 } ;
-            $scope.Left.nav1 = { width: 80 } ;
-            $scope.Left.nav2 = { width: 180, marginLeft: 80 } ;
          }
-         $scope.Left.nav2Show = !$scope.Left.nav2Show ;
+
+         setTimeout( function(){
+            getPlugins() ;
+            getBusiness() ;
+         }, 5000 ) ;
+      } ) ;
+
+      //更新url地址信息
+      $rootScope.updateUrl() ;
+
+      function flodNav()
+      {
+         if( $scope.Left.navMenu.length > 1 && $scope.Left.navMenu[$scope.showModuleIndex]['module'] != 'Deploy' )
+         {
+            $scope.Left.nav1Btn = { 'visibility': 'visible' } ;
+         }
+         else
+         {
+            $scope.Left.nav1Btn = { 'visibility': 'hidden' } ;
+         }
+         $scope.Left.nav2Btn = { 'visibility': 'hidden' } ;
+         $rootScope.layout.left    = { width: 80 } ;
+         $rootScope.layout.centre  = { offsetX: -80, marginLeft: 80 } ;
+         $scope.Left.nav2 = { width: 0, marginLeft: 0 } ;
+         $scope.Left.nav2Show = false ;
+      }
+
+      function unflodNav()
+      {
+         $scope.Left.nav1Btn = { 'visibility': 'hidden' } ;
+         $scope.Left.nav2Btn = { 'visibility': 'visible' } ;
+         $rootScope.layout.left    = { width: 260 } ;
+         $rootScope.layout.centre  = { offsetX: -260, marginLeft: 260 } ;
+         $scope.Left.nav1 = { width: 80 } ;
+         $scope.Left.nav2 = { width: 180, marginLeft: 80 } ;
+         $scope.Left.nav2Show = true ;
+      }
+
+      $scope.toggleNav2 = function(){
+         if( $scope.Left.nav2Show == true )
+         {
+            flodNav() ;
+         }
+         else
+         {
+            unflodNav() ;
+         }
          $rootScope.bindResize() ;
       }
 
@@ -521,16 +600,6 @@
             switch( moduleType )
             {
             case 'sequoiadb':
-               /*
-               if( window.Config['Edition'] == 'Enterprise' )
-               {
-                  $location.path( '/Monitor/SDB/Index' ).search( params ) ; break ;
-               }
-               else
-               {
-                  $location.path( '/Monitor/Preview' ).search( params ) ; break ;
-               }
-               */
                $location.path( '/Monitor/SDB/Index' ).search( params ) ; break ;
             default:
                break ;
@@ -549,6 +618,7 @@
          $scope.cursorIndex[0] = moduleIndex ;
          $scope.cursorIndex[1] = activeIndex ;
          $scope.cursorIndex[2] = instanceIndex ;
+         flodNav() ;
       }
 
       $rootScope.$on( '$locationChangeStart', function( event, newUrl, oldUrl ){
@@ -586,23 +656,19 @@
          $rootScope.bindResize() ;
          if( $scope.Left.navMenu[ $scope.showModuleIndex ]['module'] == 'Deploy' )
          {
-            $scope.Left.nav1Btn = { 'visibility': 'hidden' } ;
-            $scope.Left.nav2Btn = { 'visibility': 'hidden' } ;
-            $rootScope.layout.left    = { width: 80 } ;
-            $rootScope.layout.centre  = { offsetX: -80, marginLeft: 80 } ;
-            $scope.Left.nav2 = { width: 0, marginLeft: 0 } ;
-            $scope.cursorIndex[1] = -1 ;
-            $scope.cursorIndex[2] = -1 ;
+            flodNav() ;
+            try
+            {
+               $scope.cursorIndex[1] = -1 ;
+               $scope.cursorIndex[2] = -1 ;
+            }
+            catch( e )
+            {
+            }
          }
          else
          {
-            $scope.Left.nav1Btn = { 'visibility': 'hidden' } ;
-            $scope.Left.nav2Btn = { 'visibility': 'visible' } ;
-            $rootScope.layout.left    = { width: 260 } ;
-            $rootScope.layout.centre  = { offsetX: -260, marginLeft: 260 } ;
-            $scope.Left.nav1 = { width: 80 } ;
-            $scope.Left.nav2 = { width: 180, marginLeft: 80 } ;
-            $scope.Left.nav2Show = true ;
+            unflodNav() ;
          }
       }
    } ) ;

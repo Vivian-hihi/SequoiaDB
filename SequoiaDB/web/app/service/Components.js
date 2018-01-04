@@ -314,6 +314,7 @@
                {
                   this._thenFun( this._valHandler ) ;
                   this._total = 0 ;
+                  this._valHandler = {} ;
                }
             },
             'error': function( errFun ){
@@ -334,6 +335,8 @@
                      return ;
                   }
                   this._thenFun( this._valHandler ) ;
+                  this._total = 0 ;
+                  this._valHandler = {} ;
                }
             },
             'throw': function( error ){
@@ -344,6 +347,11 @@
                   return ;
                }
                this._errFun( this._error ) ;
+            },
+            'clear': function(){
+               this._total = 0 ;
+               this._valHandler = {} ;
+               this._faile = false ;
             }
          } ;
       }

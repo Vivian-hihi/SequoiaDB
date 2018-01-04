@@ -143,12 +143,67 @@ _IndexPublic.languageCtrl = function( $scope, text ){
       }
       if( typeof( window.SdbSacLanguage ) == 'undefined' )
       {
+         window.SdbSacLanguage = {} ;
          //获取语言
          $.ajax( './app/language/English.json', { 'async': false, 'success': function( reqData ){
             window.SdbSacLanguage = JSON.parse( reqData ) ;
             setLanguage() ;
          }, 'error': function( XMLHttpRequest, textStatus, errorThrown ){
-            window.SdbSacLanguage = {} ;
+            _IndexPublic.createErrorModel( $scope, 'Can not find the language file, please try to refresh your browser by pressing F5.' ) ;
+         } } ) ;
+      }
+      else
+      {
+         setLanguage() ;
+      }
+   }
+   return newText ;
+}
+
+//插件语言控制器
+_IndexPublic.pLanguageCtrl = function( $scope, text ){
+   var newText = text ;
+   var type = localLocalData( 'SdbModuleType' ) ;
+   if( $scope.Language == 'en' )
+   {
+      function setLanguage()
+      {
+         if( typeof( window.SdbSacLanguage['_plugins'][type][text] ) == 'undefined' )
+         {
+            printfDebug( '插件 ' + type + ' "' + text + '" 没翻译！' ) ;
+         }
+         else
+         {
+            newText = window.SdbSacLanguage['_plugins'][type][text] ;
+         }
+      }
+      if( typeof( window.SdbSacLanguage ) == 'undefined' )
+      {
+         window.SdbSacLanguage = { '_plugins' : {} } ;
+      }
+      if( typeof( window.SdbSacLanguage['_plugins'] ) == 'undefined' )
+      {
+         window.SdbSacLanguage['_plugins'] = {} ;
+      }
+      if( typeof( window.SdbSacLanguage['_plugins'][type] ) == 'undefined' )
+      {
+         window.SdbSacLanguage['_plugins'][type] = {} ;
+         //获取语言
+         $.ajax( './app/language/English.json', { 'async': false, 'beforeSend': function( jqXHR ){
+            var clusterName = localLocalData( 'SdbClusterName' ) ;
+	         if( clusterName !== null )
+	         {
+		         jqXHR.setRequestHeader( 'SdbClusterName', clusterName ) ;
+	         }
+	         var businessName = localLocalData( 'SdbModuleName' )
+	         if( businessName !== null )
+	         {
+		         jqXHR.setRequestHeader( 'SdbBusinessName', businessName ) ;
+	         }
+         },'success': function( reqData ){
+            window.SdbSacLanguage['_plugins'][type] = JSON.parse( reqData ) ;
+            setLanguage() ;
+         }, 'error': function( XMLHttpRequest, textStatus, errorThrown ){
             _IndexPublic.createErrorModel( $scope, 'Can not find the language file, please try to refresh your browser by pressing F5.' ) ;
          } } ) ;
       }
@@ -162,53 +217,6 @@ _IndexPublic.languageCtrl = function( $scope, text ){
 
 // --------------------- Index.Left ---------------------
 var _IndexLeft = {} ;
-
-//更新导航信息
-_IndexLeft.updateNav = function( $scope, $rootScope, SdbRest, callBack )
-{
-   //获取业务实例列表
-   var data = { 'cmd': 'query business', 'sort': JSON.stringify( { 'BusinessName': 1, 'ClusterName': 1 } ) } ;
-   SdbRest.OmOperation( data, {
-      'success': function( instanceList ){
-         $rootScope.initNav() ;
-         var navMenuLength = $scope.Left.navMenu.length ;
-         $.each( instanceList, function( index, moduleInfo ){
-            var thisModule = { 'name': moduleInfo['BusinessName'],
-                               'type': moduleInfo['BusinessType'],
-                               'mode': moduleInfo['DeployMod'],
-                               'cluster': moduleInfo['ClusterName'] } ;
-            if( thisModule['type'] == 'spark' )
-            {
-               thisModule['href'] = 'http://' + moduleInfo['BusinessInfo']['HostName'] + ':' + moduleInfo['BusinessInfo']['WebServicePort'] ;
-            }
-            for( var i = 0; i < navMenuLength; ++i )
-            {
-               if( isArray( $scope.Left.navMenu[i]['list'] ) == true )
-               {
-                  var moduleLength = $scope.Left.navMenu[i]['list'].length ;
-                  for( var k = 0; k < moduleLength; ++k )
-                  {
-                     if( $scope.Left.navMenu[i]['list'][k]['title'].toLocaleLowerCase() == moduleInfo['BusinessType'].toLocaleLowerCase() )
-                     {
-                        $scope.Left.navMenu[i]['list'][k]['list'].push( thisModule ) ;
-                     }
-                  }
-               }
-            }
-         } ) ;
-         $scope.$digest() ;
-         if( typeof( callBack ) == 'function' )
-         {
-            callBack( instanceList, $scope.Left.navMenu ) ;
-         }
-      }
-   }, {
-      'showLoading': false,
-      'delay': 5000,
-      'loop': true,
-      'scope': false
-   } ) ;
-}
 
 //激活导航要激活的业务的索引
 _IndexLeft.getActiveIndex = function( $rootScope, SdbFunction, navMenu )
