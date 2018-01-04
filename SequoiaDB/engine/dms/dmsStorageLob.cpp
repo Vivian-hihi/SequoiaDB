@@ -1832,7 +1832,7 @@ namespace engine
          /// flush cache to file
          if ( _pCacheUnit && _pCacheUnit->dirtyPages() > 0 )
          {
-            _pCacheUnit->lockPageCleaner( EXCLUSIVE ) ;
+            _pCacheUnit->lockPageCleaner() ;
             UINT64 beginDirtyPages = 0 ;
             UINT32 syncPages = 0 ;
             while( _pCacheUnit->dirtyPages() > 0 )
@@ -1845,7 +1845,7 @@ namespace engine
                   break ;
                }
             }
-            _pCacheUnit->unlockPageCleaner( EXCLUSIVE ) ;
+            _pCacheUnit->unlockPageCleaner() ;
          }
          _data.flush() ;
       }
