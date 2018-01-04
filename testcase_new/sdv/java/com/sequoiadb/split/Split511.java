@@ -1,8 +1,6 @@
 package com.sequoiadb.split;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 
 import org.bson.BSONObject;
 import org.bson.types.BasicBSONList;
@@ -86,18 +84,20 @@ public class Split511 extends SdbTestBase {
 	public void insertData() {
 		Sequoiadb db = null;
 		Split split = new Split();
+		
+		InsertDataToCL insertDataToCL = new InsertDataToCL();
 		split.start();
+		insertDataToCL.start();
+		
 		try {
-			db = new Sequoiadb(coordUrl, "", "");
-			DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
-			ArrayList<BSONObject> arr = new ArrayList<BSONObject>();
-			for (int i = 0; i < 1000; i++) {
-				arr.add((BSONObject) JSON.parse("{a:" + i + "}"));
-			}
-			cl.bulkInsert(arr, SplitUtils.FLG_INSERT_CONTONDUP);
+    
+		    db = new Sequoiadb(coordUrl, "", "");
 			if(!split.isSuccess()){
 				Assert.fail(split.getErrorMsg());
 			}
+            if(!insertDataToCL.isSuccess()){
+                Assert.fail(split.getErrorMsg());
+            }
 			checkCatalog(db);// 检查切分后编目信息
 			checkData(db); // 检查源和目标组数据量，插入数据，检测落入情况
 		} catch (BaseException e) {
@@ -199,10 +199,35 @@ public class Split511 extends SdbTestBase {
 		}
 	}
 
+	
+	class InsertDataToCL extends SdbThreadBase {
+
+        @Override
+        public void exec() throws Exception {
+            Sequoiadb db = null;
+            try{
+                db = new Sequoiadb(coordUrl, "", "");
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
+                ArrayList<BSONObject> arr = new ArrayList<BSONObject>();
+                for (int i = 0; i < 1000; i++) {
+                    //arr.add((BSONObject) JSON.parse("{a:" + i + "}"));
+                    cl.insert((BSONObject) JSON.parse("{a:" + i + "}"));
+                }
+                //cl.bulkInsert(arr, SplitUtils.FLG_INSERT_CONTONDUP);
+            }catch (BaseException e) {
+                throw e;
+            } finally {
+                if (db != null)
+                    db.disconnect();
+            }
+        }
+	    
+	}
 	class Split extends SdbThreadBase {
 
 		@Override
 		public void exec() throws Exception {
+		    
 			// 切分
 			Sequoiadb sdb = null;
 			try {
