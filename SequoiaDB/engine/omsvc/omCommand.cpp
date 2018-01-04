@@ -12905,7 +12905,7 @@ namespace engine
       string passwd ;
       string userEncrypt ;
       string passwdEncrypt ;
-      string httpname ;
+      string svcname ;
 
       rc = dbTool.upsertPlugin( pluginName, businessType, serviceName ) ;
       if ( rc )
@@ -12950,13 +12950,18 @@ namespace engine
 
       sdbGetOMManager()->getUpdatePluginPasswdTimeDiffer( timeDiffer ) ;
 
-      httpname = pmdGetKRCB()->getOptionCB()->getOMService() ;
+      {
+         stringstream ss ;
+
+         ss << pmdGetKRCB()->getOptionCB()->getServicePort() ;
+         svcname = ss.str() ;
+      }
 
       {
          BSONObj result = BSON( OM_BSON_USER2      << userEncrypt <<
                                 OM_BSON_PASSWD2    << passwdEncrypt <<
                                 OM_BSON_LEASETIME2 << timeDiffer <<
-                                OM_BSON_HTTPNAME   << httpname ) ;
+                                OM_BSON_SVCNAME    << svcname ) ;
 
          restTool.appendResponeMsg( result ) ;
       }
@@ -12982,6 +12987,7 @@ namespace engine
       omAuthTool authTool( _cb, pAuthCB ) ;
       CHAR privateKey[OM_ENCRYPT_PRIVATE_KEY_SIZE] ;
       md5::md5digest digest ;
+      string md5String ;
 
       ossMemset( privateKey, 0, OM_ENCRYPT_PRIVATE_KEY_SIZE ) ;
       authTool.generateRandomVisualString( privateKey, OM_ENCRYPT_PUBLIC_KEY_LEN ) ;
@@ -12991,6 +12997,8 @@ namespace engine
 
       md5::md5( (const void*)privateKey, OM_ENCRYPT_PRIVATE_KEY_SIZE - 1,
                 digest ) ;
+
+      md5String = md5::digestToString( digest ) ;
 
       encryptSize = desEncryptSize( src.length() ) + OM_ENCRYPT_PUBLIC_KEY_LEN ;
       pCiphertext = (BYTE *)SDB_OSS_MALLOC( encryptSize + 1 ) ;
@@ -13003,7 +13011,8 @@ namespace engine
 
       ossMemset( pCiphertext, 0, encryptSize + 1 ) ;
 
-      rc = desEncrypt( (BYTE *)digest, (BYTE *)src.c_str(), src.length(),
+      rc = desEncrypt( (BYTE *)md5String.c_str(),
+                       (BYTE *)src.c_str(), src.length(),
                        pCiphertext + OM_ENCRYPT_PUBLIC_KEY_LEN ) ;
       if ( rc )
       {

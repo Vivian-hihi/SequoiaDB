@@ -115,7 +115,6 @@ namespace engine
    #define OM_BSON_SQL                          "Sql"
    #define OM_BSON_LEASETIME                    "LeaseTime"
    #define OM_BSON_LEASETIME2                   "leaseTime"
-   #define OM_BSON_HTTPNAME                     "httpname"
 
    /***************** XML field *****************/
    #define OM_XML_FIELD_BUSINESS_TYPE           "BusinessType"
