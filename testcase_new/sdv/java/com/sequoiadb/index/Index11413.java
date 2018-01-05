@@ -19,7 +19,7 @@ import static org.testng.Assert.*;
  * Created by laojingtang on 18-1-2.
  */
 public class Index11413 extends SdbTestBase {
-    final String clName = Index11413.class.getSimpleName();
+    final static String CLNAME = Index11413.class.getSimpleName();
     private Sequoiadb db = null;
     private DBCollection dbcl;
 
@@ -27,7 +27,7 @@ public class Index11413 extends SdbTestBase {
     @BeforeClass
     public void setup() {
         db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        dbcl = db.getCollectionSpace(SdbTestBase.csName).createCollection(clName);
+        dbcl = db.getCollectionSpace(SdbTestBase.csName).createCollection(CLNAME);
         //prepare data
         List<BSONObject> list = new ArrayList<>(10000);
         for (int i = 0; i < 10000; i++) {
@@ -43,8 +43,10 @@ public class Index11413 extends SdbTestBase {
 
     @AfterClass
     public void teardown() {
-        if (db != null)
+        if (db != null){
+            db.getCollectionSpace(SdbTestBase.csName).dropCollection(CLNAME);
             db.disconnect();
+        }
     }
 
     /**
@@ -63,7 +65,7 @@ public class Index11413 extends SdbTestBase {
                 Sequoiadb db = null;
                 try {
                     db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-                    DBCollection cl = db.getCollectionSpace(SdbTestBase.csName).getCollection(Index11413.this.clName);
+                    DBCollection cl = db.getCollectionSpace(SdbTestBase.csName).getCollection(Index11413.this.CLNAME);
                     cl.createIndex("index11413", new BasicBSONObject("a", 1), false, false);
                 } finally {
                     if (db != null)
@@ -91,7 +93,7 @@ public class Index11413 extends SdbTestBase {
                 Sequoiadb db = null;
                 try {
                     db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-                    DBCollection cl = db.getCollectionSpace(SdbTestBase.csName).getCollection(Index11413.this.clName);
+                    DBCollection cl = db.getCollectionSpace(SdbTestBase.csName).getCollection(Index11413.this.CLNAME);
                     cl.dropIndex("b_index");
                 } finally {
                     if (db != null)

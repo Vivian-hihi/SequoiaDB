@@ -21,14 +21,14 @@ import static org.testng.Assert.*;
  * Created by laojingtang on 18-1-2.
  */
 public class Index11414 extends SdbTestBase {
-    final String clName = "index11414";
+    final String CLNAME = "index11414";
     private Sequoiadb db = null;
     private DBCollection dbcl;
 
     @BeforeClass
     public void setup() {
         db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        dbcl = db.getCollectionSpace(SdbTestBase.csName).createCollection(clName);
+        dbcl = db.getCollectionSpace(SdbTestBase.csName).createCollection(CLNAME);
     }
 
     private void prepareData() {
@@ -47,8 +47,10 @@ public class Index11414 extends SdbTestBase {
 
     @AfterClass
     public void teardown() {
-        if (db != null)
+        if (db != null){
+            db.getCollectionSpace(SdbTestBase.csName).dropCollection(CLNAME);
             db.disconnect();
+        }
     }
 
     /**
@@ -68,7 +70,7 @@ public class Index11414 extends SdbTestBase {
                 Sequoiadb db = null;
                 try {
                     db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-                    DBCollection cl = db.getCollectionSpace(SdbTestBase.csName).getCollection(Index11414.this.clName);
+                    DBCollection cl = db.getCollectionSpace(SdbTestBase.csName).getCollection(Index11414.this.CLNAME);
                     cl.createIndex("index11414", new BasicBSONObject("a", 1), false, false);
                 } finally {
                     if (db != null)
@@ -82,7 +84,7 @@ public class Index11414 extends SdbTestBase {
                 Sequoiadb db = null;
                 try {
                     db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-                    DBCollection cl = db.getCollectionSpace(SdbTestBase.csName).getCollection(Index11414.this.clName);
+                    DBCollection cl = db.getCollectionSpace(SdbTestBase.csName).getCollection(Index11414.this.CLNAME);
                     cl.delete(new BasicBSONObject());
                 } finally {
                     if (db != null)
@@ -113,7 +115,7 @@ public class Index11414 extends SdbTestBase {
                 Sequoiadb db = null;
                 try {
                     db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-                    DBCollection cl = db.getCollectionSpace(SdbTestBase.csName).getCollection(Index11414.this.clName);
+                    DBCollection cl = db.getCollectionSpace(SdbTestBase.csName).getCollection(Index11414.this.CLNAME);
                     cl.createIndex("b_index", new BasicBSONObject("b", 1), false, false);
                 } finally {
                     if (db != null)
@@ -127,7 +129,7 @@ public class Index11414 extends SdbTestBase {
                 Sequoiadb db = null;
                 try {
                     db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-                    DBCollection cl = db.getCollectionSpace(SdbTestBase.csName).getCollection(Index11414.this.clName);
+                    DBCollection cl = db.getCollectionSpace(SdbTestBase.csName).getCollection(Index11414.this.CLNAME);
                     BasicBSONObject obj = (BasicBSONObject) cl.queryOne();
                     ObjectId id = obj.getObjectId("_id");
                     cl.delete(new BasicBSONObject("_id", id));

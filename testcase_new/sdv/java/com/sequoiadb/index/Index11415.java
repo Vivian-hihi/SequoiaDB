@@ -21,20 +21,22 @@ import static org.testng.Assert.*;
  * Created by laojingtang on 18-1-2.
  */
 public class Index11415 extends SdbTestBase {
-    final String clName = Index11415.class.getSimpleName();
+    final String CLNAME = Index11415.class.getSimpleName();
     private Sequoiadb db = null;
     private DBCollection dbcl;
 
     @BeforeClass
     public void setup() {
         db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        dbcl = db.getCollectionSpace(SdbTestBase.csName).createCollection(clName);
+        dbcl = db.getCollectionSpace(SdbTestBase.csName).createCollection(CLNAME);
     }
 
     @AfterClass
     public void teardown() {
-        if (db != null)
+        if (db != null){
+            db.getCollectionSpace(SdbTestBase.csName).dropCollection(CLNAME);
             db.disconnect();
+        }
     }
 
 
@@ -52,7 +54,7 @@ public class Index11415 extends SdbTestBase {
                 Sequoiadb db = null;
                 try {
                     db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-                    DBCollection cl = db.getCollectionSpace(SdbTestBase.csName).getCollection(Index11415.this.clName);
+                    DBCollection cl = db.getCollectionSpace(SdbTestBase.csName).getCollection(Index11415.this.CLNAME);
                     cl.dropIndex("b_index");
                 } catch (BaseException e) {
                     if(e.getErrorCode()!=-47)
@@ -69,7 +71,7 @@ public class Index11415 extends SdbTestBase {
                 Sequoiadb db = null;
                 try {
                     db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-                    DBCollection cl = db.getCollectionSpace(SdbTestBase.csName).getCollection(Index11415.this.clName);
+                    DBCollection cl = db.getCollectionSpace(SdbTestBase.csName).getCollection(Index11415.this.CLNAME);
                     //prepare data
                     List<BSONObject> list = new ArrayList<>(10000);
                     for (int i = 0; i < 10000; i++) {
