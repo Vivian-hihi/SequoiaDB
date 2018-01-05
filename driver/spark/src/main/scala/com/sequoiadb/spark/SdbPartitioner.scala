@@ -16,7 +16,7 @@
 
 package com.sequoiadb.spark
 
-import com.sequoiadb.base.Sequoiadb
+import com.sequoiadb.base.{DBCursor, Sequoiadb}
 import com.sequoiadb.exception.BaseException
 import org.bson.BSONObject
 import org.bson.types.BasicBSONList
@@ -116,12 +116,24 @@ private object SdbPartitioner extends Logging {
         PartitionMode.Datablock
     }
 
-    def getAbnormalNodes(sdb: Sequoiadb): Map[String, Int] = {
-        val map = new mutable.HashMap[String, Int]()
+    def getAbnormalNodes(sdb: Sequoiadb): Map[String, String] = {
+        val map = new mutable.HashMap[String, String]()
 
         try {
-            val cursor = sdb.getSnapshot(Sequoiadb.SDB_SNAP_SYSTEM,
-                null.asInstanceOf[BSONObject], null, null)
+            var cursor: DBCursor = null
+            try {
+                cursor = sdb.exec("select NodeName, ServiceStatus, Status from $SNAPSHOT_SYSTEM")
+            } catch {
+                case e: BaseException =>
+                    if (e.getErrorType.equals("SDB_INVALIDARG")) {
+                        cursor = sdb.getSnapshot(Sequoiadb.SDB_SNAP_SYSTEM,
+                            null.asInstanceOf[BSONObject], null, null)
+                    } else {
+                        throw e
+                    }
+                case x: Throwable => throw x
+            }
+
             while (cursor.hasNext) {
                 val obj = cursor.getNext
 
@@ -130,8 +142,16 @@ private object SdbPartitioner extends Logging {
                     list.foreach { value =>
                         val node = value.asInstanceOf[BSONObject]
                         val nodeName = node.get("NodeName").asInstanceOf[String]
-                        val flag = node.get("Flag").asInstanceOf[Int]
+                        val flag = node.get("Flag").asInstanceOf[Int].toString
                         map += (nodeName -> flag)
+                    }
+                } else if (obj.containsField("ServiceStatus")) {
+                    val node = obj
+                    val serviceStatus = node.get("ServiceStatus").asInstanceOf[Boolean]
+                    if (!serviceStatus) {
+                        val nodeName = node.get("NodeName").asInstanceOf[String]
+                        val status = node.get("Status").asInstanceOf[String]
+                        map += (nodeName -> status)
                     }
                 }
             }
@@ -293,7 +313,7 @@ private object SdbPartitioner extends Logging {
         queryMetas.toList
     }
 
-    // shuffle partitions to rearrange partition position
+    // shuffle partitions to re-arrange partition position
     def shufflePartitions(partitions: Array[SdbPartition]): Array[SdbPartition] = {
         val partitionSelector: PartitionSelector = new PartitionSelector
 
@@ -382,7 +402,7 @@ private class PartitionSelector {
         }
     }
 
-    def removePartition(node:Node, partition: SdbPartition):Unit = {
+    def removePartition(node: Node, partition: SdbPartition): Unit = {
         val host: Host = hostMap.get(node.host).orNull
         if (host == null) {
             throw new SdbException(s"No host for node $node")

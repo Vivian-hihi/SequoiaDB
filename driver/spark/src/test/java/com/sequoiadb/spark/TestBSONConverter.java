@@ -397,7 +397,7 @@ public class TestBSONConverter {
         obj.put("string", strVal);
         obj.put("date", dateVal);
         obj.put("timestamp", bsonTimestampVal);
-        //obj.put("binary", binaryVal);
+        obj.put("binary", binaryVal);
 
         Timestamp ts = new Timestamp(((long) bsonTimestampVal.getTime() * 1000));
         ts.setNanos(bsonTimestampVal.getInc() * 1000);
@@ -412,7 +412,7 @@ public class TestBSONConverter {
                 strVal,
                 new java.sql.Date(dateVal.getTime()),
                 ts,
-                //binaryVal.getData()
+                binaryVal.getData()
             }
         )));
 
@@ -424,8 +424,8 @@ public class TestBSONConverter {
 
         BSONObject expectedObj = new BasicBSONObject();
         expectedObj.put("bool", trueVal);
-        expectedObj.put("byte", byteVal);
-        expectedObj.put("short", shortVal);
+        expectedObj.put("byte", (int)byteVal);
+        expectedObj.put("short", (int)shortVal);
         expectedObj.put("int", intVal);
         expectedObj.put("long", longVal);
         expectedObj.put("float", floatVal);
@@ -437,7 +437,7 @@ public class TestBSONConverter {
         expectedObj.put("string", strVal);
         expectedObj.put("date", dateVal);
         expectedObj.put("timestamp", bsonTimestampVal);
-        //expectedObj.put("binary", binaryVal);
+        expectedObj.put("binary", binaryVal);
 
         BSONObject obj2 = BSONConverter.rowToBson(row, schema);
 
