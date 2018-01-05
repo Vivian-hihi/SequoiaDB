@@ -224,15 +224,6 @@ function main()
          exception_handle( rc, errMsg ) ;
       }
       
-      // 3. judge whether it's in local host, if so, no need to uninstall
-      if ( true == isInLocalHost( ssh ) )
-      {
-         PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_REMOVE_HOST,
-                  sprintf( "It's in localhost[?], not going to uninstall local SequoiaDB", ip ) ) ;
-         _final() ;
-         return RET_JSON ;
-      }
-
       if ( typeof( installPackages ) != 'object' )
       {
          rc = SDB_SYS ;
@@ -247,7 +238,18 @@ function main()
          var packageName = installPackages[index][FIELD_NAME] ;
          var installPath = installPackages[index][FIELD_INSTALL_PATH] ;
 
-         // 4. check whether db has been uninstalled
+         if( FIELD_SEQUOIADB == packageName &&
+             true == isInLocalHost( ssh ) )
+         {
+            PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_REMOVE_HOST,
+                     sprintf( "It's in localhost[?], not going to uninstall local SequoiaDB", ip ) ) ;
+            continue ;
+         }
+
+         PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_REMOVE_HOST,
+                  sprintf( "host[?] uninstall ?", ip, packageName ) ) ;
+
+         // 3. check whether db has been uninstalled
          if( true == _hasUninstalled( ssh, installPath ) )
          {
             PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_REMOVE_HOST,
@@ -256,7 +258,7 @@ function main()
             continue ;
          }
 
-         // 5. uninstall db packet and stop sdbcm in remote host
+         // 4. uninstall db packet and stop sdbcm in remote host
          _uninstallDBInRemote( ssh, installPath ) ;
       }
    }
