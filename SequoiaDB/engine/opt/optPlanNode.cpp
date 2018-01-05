@@ -160,6 +160,21 @@ namespace engine
       PD_TRACE_EXIT( SDB_OPTPLANNODE_DELCHILDNODES ) ;
    }
 
+   void _optPlanNode::_setReturnSelector ( const rtnContext * context )
+   {
+      if ( NULL != context )
+      {
+         if ( context->getSelector().isInitialized() )
+         {
+            _returnOptions.setSelector( context->getSelector().getPattern() ) ;
+         }
+         else
+         {
+            _returnOptions.setSelector( BSONObj() ) ;
+         }
+      }
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTPLANNODE__EVALOUTREC, "_optPlanNode::_evaluateOutputRecords" )
    UINT64 _optPlanNode::_evaluateOutputRecords ( UINT64 inputRecords,
                                                  UINT64 &outputSkipRecords )
@@ -785,10 +800,7 @@ namespace engine
          SDB_ASSERT( planRuntime, "planRuntime is invalid" ) ;
 
          _returnOptions = dataContext->getReturnOptions() ;
-         if ( dataContext->getSelector().isInitialized() )
-         {
-            _returnOptions.setSelector( dataContext->getSelector().getPattern() ) ;
-         }
+         _setReturnSelector( dataContext ) ;
 
          // Reset matcher by runtime
          _runtimeMatcher = planRuntime->getParsedMatcher() ;
@@ -2355,10 +2367,7 @@ namespace engine
          SDB_ASSERT( sortContext, "sortContext is invalid" ) ;
 
          _returnOptions = sortContext->getReturnOptions() ;
-         if ( sortContext->getSelector().isInitialized() )
-         {
-            _returnOptions.setSelector( sortContext->getSelector().getPattern() ) ;
-         }
+         _setReturnSelector( sortContext ) ;
 
          _runtimeSortType = sortContext->isInMemorySort() ?
                             OPT_PLAN_IN_MEM_SORT : OPT_PLAN_EXT_SORT ;
@@ -2777,10 +2786,7 @@ namespace engine
       _returnOptions = mainContext->getQueryOptions() ;
       _returnOptions.setSkip( mainContext->getNumToSkip() ) ;
       _returnOptions.setLimit( mainContext->getNumToReturn() ) ;
-      if ( mainContext->getSelector().isInitialized() )
-      {
-         _returnOptions.setSelector( mainContext->getSelector().getPattern() ) ;
-      }
+      _setReturnSelector( mainContext ) ;
    }
 
    _optMergeNodeBase::~_optMergeNodeBase ()

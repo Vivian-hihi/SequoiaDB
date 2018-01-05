@@ -1626,13 +1626,8 @@ namespace engine
            enabledMonContext() &&
            enabledQueryActivity() )
       {
-         rtnReturnOptions returnOption( _returnOptions ) ;
-         if ( returnOption.isSelectorEmpty() && NULL != getSubContext() )
-         {
-            returnOption.setSelector( getSubContext()->getSelector().getPattern() ) ;
-         }
          getPlanRuntime()->setQueryActivity( MON_SELECT, _monCtxCB,
-                                             returnOption, hitEnd ) ;
+                                             _returnOptions, hitEnd ) ;
       }
    }
 
@@ -1666,6 +1661,10 @@ namespace engine
                goto error ;
             }
             _returnOptions.setSelector( _selector.getPattern() ) ;
+         }
+         else
+         {
+            _returnOptions.setSelector( selector ) ;
          }
       }
 

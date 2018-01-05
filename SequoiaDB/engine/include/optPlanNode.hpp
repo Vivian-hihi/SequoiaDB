@@ -277,7 +277,7 @@ namespace engine
          }
 
       protected :
-         void _setReturnOptions ( const rtnContext * context ) ;
+         void _setReturnSelector ( const rtnContext * context ) ;
 
          UINT64 _evaluateOutputRecords ( UINT64 inputRecords,
                                          UINT64 &outputSkipRecords ) ;
