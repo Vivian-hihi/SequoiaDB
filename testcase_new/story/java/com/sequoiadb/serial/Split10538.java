@@ -84,26 +84,31 @@ public class Split10538 extends SdbTestBase {
 	}
 
 	@Test
-	public void backup() {
+	public void testBackup() {
 		Sequoiadb db = null;
 		Split splitThread = null;
 		try {
 			// 启动切分线程
 			splitThread = new Split();
 			splitThread.start();
-
 			// 备份源组和目标组
 			db = new Sequoiadb(coordUrl, "", "");
 			db.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
-			db.backupOffline(
-					(BSONObject) JSON.parse("{Name:'testcase10538backupSrc',GroupName:'" + srcGroupName + "'}"));
-			checkBackup(db, "testcase10538backupSrc", 1);
-			db.backupOffline(
-					(BSONObject) JSON.parse("{Name:'testcase10538backupDest',GroupName:'" + destGroupName + "'}"));
+			try {
+                Thread.sleep(1500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            db.backupOffline(
+                    (BSONObject) JSON.parse("{Name:'testcase10538backupSrc',GroupName:'" + srcGroupName + "'}"));
+            checkBackup(db, "testcase10538backupSrc", 1);
+            db.backupOffline(
+                    (BSONObject) JSON.parse("{Name:'testcase10538backupDest',GroupName:'" + destGroupName + "'}"));
 			checkBackup(db, "testcase10538backupDest", 1);
 
 			// 等待切分结束,检查源和目标
 			Assert.assertEquals(splitThread.isSuccess(), true, splitThread.getErrorMsg());
+			//Assert.assertEquals(backupThread.isSuccess(), true, backupThread.getErrorMsg());
 			checkDestGroup(900, "{sk:{$gte:100,$lt:1000}}", 900, destGroupName);
 			checkDestGroup(100, "{sk:{$gte:0,$lt:100}}", 100, srcGroupName);
 		} catch (BaseException e) {
