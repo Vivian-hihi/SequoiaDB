@@ -235,12 +235,17 @@ namespace engine
    {
       SDB_ASSERT( planRuntime, "planRuntime is invalid" ) ;
 
-      // The plan is reused, increase the reference count
-      planRuntime->_plan->incRefCount() ;
-      setPlan( planRuntime->_plan, planRuntime->_apm, FALSE ) ;
+      optAccessPlan * plan = planRuntime->_plan ;
 
-      // Set match runtime and query info
-      setMatchRuntime( planRuntime->getMatchRuntime() ) ;
+      if ( NULL != plan )
+      {
+         // The plan is reused, increase the reference count
+         plan->incRefCount() ;
+         setPlan( plan, planRuntime->_apm, FALSE ) ;
+
+         // Set match runtime and query info
+         setMatchRuntime( planRuntime->getMatchRuntime() ) ;
+      }
    }
 
    INT32 _optAccessPlanRuntime::createCLScanInfo ()

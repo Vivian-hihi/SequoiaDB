@@ -108,8 +108,8 @@ namespace engine
 
       PD_TRACE_ENTRY( SDB_OPTAPCACHES_ADDPLAN ) ;
 
-      // Increase reference count before we cache the plan
-      pPlan->incRefCount() ;
+      // No need to increase the reference count
+      // The new created plan already has 1 reference count
       result = addItem( pPlan ) ;
 
       PD_TRACE_EXIT( SDB_OPTAPCACHES_ADDPLAN ) ;

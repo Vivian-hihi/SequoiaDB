@@ -539,6 +539,7 @@ namespace engine
       protected :
          pmdEDUCB *     _subCB ;
          rtnContext *   _subContext ;
+         INT64          _subContextID ;
    } ;
 
    typedef class _rtnSubContextHolder rtnSubContextHolder ;

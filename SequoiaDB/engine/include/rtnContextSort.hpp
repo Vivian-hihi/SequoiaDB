@@ -61,14 +61,14 @@ namespace engine
       {
          /// WARNING: do not use this plan runtime to do anything
          /// except keeping plan for explaining and performance monitor.
-         return _getSubContext()->getPlanRuntime() ;
+         return &_planRuntime ;
       }
 
       OSS_INLINE virtual const optAccessPlanRuntime * getPlanRuntime () const
       {
          /// WARNING: do not use this plan runtime to do anything
          /// except keeping plan for explaining and performance monitor.
-         return _getSubContext()->getPlanRuntime() ;
+         return &_planRuntime ;
       }
 
       OSS_INLINE const rtnContext * getSubContext () const
@@ -111,7 +111,7 @@ namespace engine
       SINT64 _numToSkip ;
       SINT64 _numToReturn ;
       rtnReturnOptions _returnOptions ;
-      _mthSelector _selector ;
+      optAccessPlanRuntime _planRuntime ;
    } ;
    typedef class _rtnContextSort rtnContextSort ;
 }

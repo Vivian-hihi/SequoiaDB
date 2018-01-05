@@ -1554,6 +1554,7 @@ namespace engine
    _rtnContextSort::~_rtnContextSort()
    {
       setQueryActivity( _hitEnd ) ;
+      _planRuntime.releasePlan() ;
       _numToSkip = 0 ;
       _numToReturn = 0 ;
    }
@@ -1609,6 +1610,10 @@ namespace engine
          goto error ;
       }
 
+      if ( NULL != context->getPlanRuntime() )
+      {
+         _planRuntime.inheritRuntime( context->getPlanRuntime() ) ;
+      }
       _setSubContext( context, cb ) ;
       _orderby = orderby.getOwned() ;
       _keyGen = _ixmIndexKeyGen( _orderby ) ;
@@ -1621,13 +1626,12 @@ namespace engine
 
    void _rtnContextSort::setQueryActivity ( BOOLEAN hitEnd )
    {
-      if ( NULL != getPlanRuntime() &&
-           getPlanRuntime()->canSetQueryActivity() &&
+      if ( _planRuntime.canSetQueryActivity() &&
            enabledMonContext() &&
            enabledQueryActivity() )
       {
-         getPlanRuntime()->setQueryActivity( MON_SELECT, _monCtxCB,
-                                             _returnOptions, hitEnd ) ;
+         _planRuntime.setQueryActivity( MON_SELECT, _monCtxCB, _returnOptions,
+                                        hitEnd ) ;
       }
    }
 

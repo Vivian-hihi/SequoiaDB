@@ -64,7 +64,7 @@ namespace engine
      _hintFailed( FALSE ),
      _isAutoPlan( FALSE ),
      _activityID( OPT_INVALID_ACT_ID ),
-     _refCount( 0 ),
+     _refCount( 1 ),
      _scanPath( &_planAllocator )
    {
       getMatchTree()->setMatchConfig( config ) ;
@@ -85,16 +85,13 @@ namespace engine
    void _optAccessPlan::release ()
    {
       // If the plan is cached, decrease the reference count
-      // If the plan is not cached, delete it when
-      // 1. reference count is 0, means it is allocated by new outside APM
-      //    and had been never added to cache
-      // 2. reference count is 1, means it is the last reference
+      // If the plan is not cached, delete it when reference count is 1,
+      // means it is the last reference
       if ( isCached() )
       {
          decRefCount() ;
       }
-      else if ( getRefCount() == 0 ||
-                decRefCount() == 1 )
+      else if ( decRefCount() == 1 )
       {
          SDB_ASSERT( getRefCount() == 0, "Invalid ref count" ) ;
          SDB_OSS_DEL this ;

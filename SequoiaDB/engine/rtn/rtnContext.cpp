@@ -954,9 +954,10 @@ namespace engine
       _rtnSubContextHolder implement
     */
    _rtnSubContextHolder::_rtnSubContextHolder ()
+   : _subCB( NULL ),
+     _subContext( NULL ),
+     _subContextID( -1 )
    {
-      _subContext = NULL ;
-      _subCB = NULL ;
    }
 
    _rtnSubContextHolder::~_rtnSubContextHolder ()
@@ -966,11 +967,12 @@ namespace engine
 
    void _rtnSubContextHolder::_deleteSubContext ()
    {
-      if ( NULL != _subContext )
+      if ( -1 != _subContextID )
       {
-         sdbGetRTNCB()->contextDelete( _subContext->contextID(), _subCB ) ;
+         sdbGetRTNCB()->contextDelete( _subContextID, _subCB ) ;
          _subContext = NULL ;
          _subCB = NULL ;
+         _subContextID = -1 ;
       }
    }
 
@@ -978,8 +980,12 @@ namespace engine
                                                pmdEDUCB *subCB )
    {
       _deleteSubContext() ;
-      _subContext = subContext ;
-      _subCB = subCB ;
+      if ( NULL != subContext )
+      {
+         _subContext = subContext ;
+         _subContextID = subContext->contextID() ;
+         _subCB = subCB ;
+      }
    }
 
 }
