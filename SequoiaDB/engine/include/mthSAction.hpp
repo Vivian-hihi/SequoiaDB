@@ -39,12 +39,14 @@
 #include "mthDef.hpp"
 #include "mthSActionFunc.hpp"
 #include "ossUtil.hpp"
-#include "mthMatchTree.hpp"
+#include "mthMatchRuntime.hpp"
 #include <boost/noncopyable.hpp>
 
 namespace engine
 {
-   class _mthSAction : public SDBObject, boost::noncopyable
+   class _mthSAction : public SDBObject,
+                       public boost::noncopyable,
+                       public _mthMatchTreeHolder
    {
    public:
       _mthSAction() ;
@@ -130,7 +132,7 @@ namespace engine
          _value = bson::BSONElement() ;
          _name = NULL ;
          _attribute = MTH_S_ATTR_NONE ;
-         SAFE_OSS_DELETE( _matcher ) ;
+         deleteMatchTree() ;
          return ;
       }
 
@@ -139,14 +141,6 @@ namespace engine
          return !MTH_ATTR_IS_VALID( _attribute ) ;
       }
 
-      OSS_INLINE _mthMatchTree &getMatcher()
-      {
-         if ( NULL == _matcher )
-         {
-            _matcher = SDB_OSS_NEW _mthMatchTree() ;
-         }
-         return *_matcher ;
-      }
    public:
       INT32 build( const CHAR *name,
                    const bson::BSONElement &e,
@@ -169,8 +163,6 @@ namespace engine
       /// think about placement new ?
       /// that we can use different child classes.
       bson::BSONObj _obj ;
-      _mthMatchTree *_matcher ;
-
       bson::BSONObj _arg ;
    } ;
    typedef class _mthSAction mthSAction ;

@@ -39,19 +39,17 @@
 namespace engine
 {
    _mthSAction::_mthSAction()
-   :_buildFunc( NULL ),
-    _getFunc( NULL ),
-    _name( NULL ),
-    _attribute( MTH_S_ATTR_NONE ),
-    _strictDataMode( FALSE ),
-    _matcher( NULL )
+   : _mthMatchTreeHolder(),
+     _buildFunc( NULL ),
+     _getFunc( NULL ),
+     _name( NULL ),
+     _attribute( MTH_S_ATTR_NONE ),
+     _strictDataMode( FALSE )
    {
-
    }
 
    _mthSAction::~_mthSAction()
    {
-      SAFE_OSS_DELETE( _matcher ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__MTHSACTION_BUILD, "_mthSAction::build" )
