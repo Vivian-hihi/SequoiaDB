@@ -1,5 +1,18 @@
 (function(){
    var sacApp = window.SdbSacManagerModule ;
+   //部署包的缩写列表
+   var packageShortName = {
+      'sequoiadb': 'sdb',
+      'sequoiasql-oltp': 'ssql-oltp'
+   } ;
+   //导航标题列表
+   var navTitleName = {
+      'sequoiadb': 'SequoiaDB',
+      'sequoiasql-oltp': 'SequoiaSQL-OLTP',
+      'hdfs': 'HDFS',
+      'yarn': 'YARN'
+   } ;
+
    //全局模板
    sacApp.controller( 'Index.Ctrl', function( $scope, $window, $rootScope, $location, Tip, SdbFunction, Loading, SdbRest ){
       //校验登录信息
@@ -121,14 +134,10 @@
       } ;
       //Package包名缩写
       $rootScope.abbreviate = function( name ){
-         var newName = name ;
-         if( name == 'sequoiadb' )
+         var newName = packageShortName[name] ;
+         if( typeof( newName ) == 'undefined' )
          {
-            newName = 'sdb' ;
-         }
-         else if( name == 'sequoiasql-oltp' )
-         {
-            newName = 'ssql-oltp' ;
+            newName = name ;
          }
          return newName ;
       }
@@ -293,7 +302,7 @@
    } ) ;
 
    //左边
-   sacApp.controller( 'Index.Left.Ctrl', function( $scope, $rootScope, $location, SdbRest, SdbFunction, SdbPromise ){
+   sacApp.controller( 'Index.Left.Ctrl', function( $scope, $rootScope, $location, SdbRest, SdbFunction ){
       $scope.showModuleIndex = -1 ;
       $scope.Left = {} ;
       $scope.Left.nav1 = { width: 80 } ;
@@ -301,8 +310,19 @@
       $scope.Left.nav2Show = false ;
       $scope.Left.nav1Btn = { 'visibility': 'hidden' } ;
       $scope.Left.nav2Btn = { 'visibility': 'hidden' } ;
-
       $scope.Left.navMenu = [
+         {
+            'text': $scope.autoLanguage( '数据' ),
+            'module': 'Data',
+            'icon': 'fa-database',
+            'list': []
+         },
+         {
+            'text': $scope.autoLanguage( '监控' ),
+            'module': 'Monitor',
+            'icon': 'fa-flash',
+            'list': []
+         },
          {
             'text': $scope.autoLanguage( '部署' ),
             'module': 'Deploy',
@@ -311,60 +331,60 @@
          }
       ] ;
 
-      var promise = SdbPromise.init( 2 ) ;
+      var pluginList = [] ;
 
       function getPlugins()
       {
          var data = { 'cmd': 'list plugins' } ;
          SdbRest.OmOperation( data, {
             'success': function( list ){
-
-               var pluginList = {
-                  'sequoiadb': {
-                     'Name': 'SequoiaDB',
-                     'BusinessType': 'sequoiadb'
-                  },
-                  'spark': {
-                     'Name': 'Spark',
-                     'BusinessType': 'spark'
-                  },
-                  'hdfs': {
-                     'Name': 'Hdfs',
-                     'BusinessType': 'hdfs'
-                  },
-                  'yarn': {
-                     'Name': 'Yarn',
-                     'BusinessType': 'yarn'
-                  }
-               } ;
-
-               $.each( list, function( index, info ){
-                  pluginList[info['BusinessType']] = info ;
-               } ) ;
-
-               promise.resolve( 'plugins', pluginList ) ;
-            },
-            'failed': function( errorInfo ){
-               promise.throw( errorInfo ) ;
+               pluginList = list ;
             }
-         }, { 'showLoading': false } ) ;
+         }, {
+            'delay': 5000,
+            'loop': true,
+            'scope': false,
+            'showLoading': false
+         } ) ;
       }
 
-      function getBusiness()
+      function hasPlugin( type )
       {
-         var data = { 'cmd': 'query business', 'sort': JSON.stringify( { 'BusinessType': 1, 'BusinessName': 1, 'ClusterName': 1 } ) } ;
-         SdbRest.OmOperation( data, {
-            'success': function( list ){
-               promise.resolve( 'business', list ) ;
-            },
-            'failed': function( errorInfo ){
-               promise.throw( errorInfo ) ;
+         var has = false ;
+         if( type == 'sequoiadb' ||
+             type == 'hdfs' ||
+             type == 'yarn' )
+         {
+            return true ;
+         }
+         $.each( pluginList, function( index, plugin ){
+            if( plugin['BusinessType'] == type )
+            {
+               has = true ;
+               return false ;
             }
-         }, { 'showLoading': false } ) ;
+         } ) ;
+         return has ;
       }
 
-      getPlugins() ;
-      getBusiness() ;
+      function showPluginNotExist( type, func )
+      {
+         var has = hasPlugin( type ) ;
+         if( has == false )
+         {
+            var errorInfo = {
+               'cmd': '',
+               'errno': -10,
+               'detail': sprintf( $scope.autoLanguage( '插件不存在: ?' ), type ),
+               'description': ''
+            } ;
+            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+               func() ;
+               return true ;
+            } ) ;
+         }
+         return has ;
+      }
 
       function addBusinessTitle( titles, name )
       {
@@ -391,58 +411,37 @@
          return titles[index] ;
       }
 
-      function addDataOperation( pluginInfo, businessInfo )
+      function getNavTitle( type )
       {
-         if( $scope.Left.navMenu[0]['module'] != 'Data' )
+         var title = navTitleName[type] ;
+         if( typeof( title ) == 'undefined' )
          {
-            $scope.Left.navMenu.unshift( {
-               'text': $scope.autoLanguage( '数据' ),
-               'module': 'Data',
-               'icon': 'fa-database',
-               'list': []
-            } ) ;
+            title = type ;
          }
+         return title ;
+      }
 
-         var titleInfo = addBusinessTitle( $scope.Left.navMenu[0]['list'], pluginInfo['Name'] ) ;
+      function addDataOperation( businessInfo )
+      {
+         var title = getNavTitle( businessInfo['type'] ) ;
+         var titleInfo = addBusinessTitle( $scope.Left.navMenu[0]['list'], title ) ;
          titleInfo['list'].push( businessInfo ) ;
       }
 
-      function addMonitor( pluginInfo, businessInfo )
+      function addMonitor( businessInfo )
       {
-         var index = 1 ;
-
-         if( $scope.Left.navMenu.length == 1 )
-         {
-            $scope.Left.navMenu.unshift( {
-               'text': $scope.autoLanguage( '监控' ),
-               'module': 'Monitor',
-               'icon': 'fa-flash',
-               'list': []
-            } ) ;
-            index = 0 ;
-         }
-         else if( $scope.Left.navMenu.length == 2 && $scope.Left.navMenu[0]['module'] == 'Data' )
-         {
-            $scope.Left.navMenu.splice( 1, 0, {
-               'text': $scope.autoLanguage( '监控' ),
-               'module': 'Monitor',
-               'icon': 'fa-flash',
-               'list': []
-            } ) ;
-         }
-
          if( businessInfo['type'] == 'sequoiasql-oltp' )
          {
             return ;
          }
 
-         var titleInfo = addBusinessTitle( $scope.Left.navMenu[index]['list'], pluginInfo['Name'] ) ;
+         var title = getNavTitle( businessInfo['type'] ) ;
+         var titleInfo = addBusinessTitle( $scope.Left.navMenu[1]['list'], title ) ;
          titleInfo['list'].push( businessInfo ) ;
       }
 
-      function addBusiness( plugins, businessInfo )
+      function addBusiness( businessInfo )
       {
-         var hasPlugin = false ;
          var thisModule = {
             'name': businessInfo['BusinessName'],
             'type': businessInfo['BusinessType'],
@@ -455,58 +454,47 @@
             thisModule['href'] = 'http://' + businessInfo['BusinessInfo']['HostName'] + ':' + businessInfo['BusinessInfo']['WebServicePort'] ;
          }
 
-         hasPlugin = typeof( plugins[businessInfo['BusinessType']] ) !== 'undefined' ;
-
-         if( false == hasPlugin )
-         {
-            return ;
-         }
-
-         addDataOperation( plugins[businessInfo['BusinessType']], thisModule ) ;
-         addMonitor( plugins[businessInfo['BusinessType']], thisModule ) ;
+         addDataOperation( thisModule ) ;
+         addMonitor( thisModule ) ;
       }
 
-      promise.error( function( errorInfo ){
-         promise.clear() ;
-         setTimeout( function(){
-            getPlugins() ;
-            getBusiness() ;
-         }, 5000 ) ;
-      } ) ;
+      function getBusiness()
+      {
+         var data = { 'cmd': 'query business', 'sort': JSON.stringify( { 'BusinessType': 1, 'BusinessName': 1, 'ClusterName': 1 } ) } ;
+         SdbRest.OmOperation( data, {
+            'success': function( list ){
 
-      promise.then( function( data ){
-         $scope.Left.navMenu = [
-            {
-               'text': $scope.autoLanguage( '部署' ),
-               'module': 'Deploy',
-               'icon': 'fa-share-alt',
-               'action': '/#/Deploy/Index'
+               $scope.Left.navMenu[0]['list'] = [] ;
+               $scope.Left.navMenu[1]['list'] = [] ;
+
+               $.each( list, function( index, businessInfo ){
+                  addBusiness( businessInfo ) ;
+               } ) ;
+
+               $scope.cursorIndex = _IndexLeft.getActiveIndex( $rootScope, SdbFunction, $scope.Left.navMenu ) ;
+               if( $scope.showModuleIndex == -1 )
+               {
+                  $scope.showModuleIndex = $scope.cursorIndex[0] ;
+               }
+               if( $scope.Left.navMenu.length > 1 && $scope.Left.navMenu[$scope.showModuleIndex]['module'] != 'Deploy' && $scope.Left.nav2Show == false )
+               {
+                  $scope.Left.nav1Btn = { 'visibility': 'visible' } ;
+               }
+               else
+               {
+                  $scope.Left.nav1Btn = { 'visibility': 'hidden' } ;
+               }
             }
-         ] ;
-
-         $.each( data['business'], function( index, businessInfo ){
-            addBusiness( data['plugins'], businessInfo ) ;
+         }, {
+            'delay': 5000,
+            'loop': true,
+            'scope': false,
+            'showLoading': false
          } ) ;
+      }
 
-         $scope.cursorIndex = _IndexLeft.getActiveIndex( $rootScope, SdbFunction, $scope.Left.navMenu ) ;
-         if( $scope.showModuleIndex == -1 )
-         {
-            $scope.showModuleIndex = $scope.cursorIndex[0] ;
-         }
-         if( $scope.Left.navMenu.length > 1 && $scope.Left.navMenu[$scope.showModuleIndex]['module'] != 'Deploy' )
-         {
-            $scope.Left.nav1Btn = { 'visibility': 'visible' } ;
-         }
-         else
-         {
-            $scope.Left.nav1Btn = { 'visibility': 'hidden' } ;
-         }
-
-         setTimeout( function(){
-            getPlugins() ;
-            getBusiness() ;
-         }, 5000 ) ;
-      } ) ;
+      getPlugins() ;
+      getBusiness() ;
 
       //更新url地址信息
       $rootScope.updateUrl() ;
@@ -556,41 +544,39 @@
          var moduleName  = $scope.Left.navMenu[ moduleIndex ]['list'][ activeIndex ]['list'][ instanceIndex ]['name'] ;
          var moduleType  = $scope.Left.navMenu[ moduleIndex ]['list'][ activeIndex ]['list'][ instanceIndex ]['type'] ;
          var moduleMode  = $scope.Left.navMenu[ moduleIndex ]['list'][ activeIndex ]['list'][ instanceIndex ]['mode'] ;
+
+         var hasPlugin = showPluginNotExist( moduleType, function(){
+            setTimeout( function(){
+               $rootScope.gotoModule( moduleIndex, activeIndex, instanceIndex ) ;
+            }, 100 ) ;
+         } ) ;
+
+         if( hasPlugin == false )
+         {
+            return ;
+         }
+
          SdbFunction.LocalData( 'SdbClusterName', clusterName ) ;
          SdbFunction.LocalData( 'SdbModuleType', moduleType ) ;
          SdbFunction.LocalData( 'SdbModuleMode', moduleMode ) ;
          SdbFunction.LocalData( 'SdbModuleName', moduleName ) ;
+
          var params = { 'r': new Date().getTime() } ;
+
          if( $scope.Left.navMenu[ moduleIndex ]['module'] == 'Data' )
          {
             switch( moduleType )
             {
             case 'sequoiadb':
                $location.path( '/Data/SDB-Database/Index' ).search( params ) ; break ;
-            case 'sequoiasql':
-               if( window.Config['Edition'] == 'Enterprise' )
-               {
-                  if( moduleMode == '' || moduleMode == 'oltp' )
-                  {
-                     $location.path( '/Data/SQL-Metadata/Index' ).search( params ) ; break ;
-                  }
-                  else
-                  {
-                     $location.path( '/Data/NotSupport' ).search( params ) ; break ;
-                  }
-               }
-               else
-               {
-                  $location.path( '/Data/Edition' ).search( params ) ; break ;
-               }
-            case 'sequoiasql-oltp':
-               $location.path( '/Data/OLTP-Database/Index' ).search( params ) ; break ;
             case 'hdfs':
                $location.path( '/Data/HDFS-web/Index' ).search( params ) ; break ;
             case 'spark':
                $location.path( '/Data/SPARK-web/Index' ).search( params ) ; break ;
             case 'yarn':
                $location.path( '/Data/YARN-web/Index' ).search( params ) ; break ;
+            case 'sequoiasql-oltp':
+               $location.path( '/Data/OLTP-Database/Index' ).search( params ) ; break ;
             default:
                break ;
             }

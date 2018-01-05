@@ -80,6 +80,9 @@
       }
       //动态注册插件的路由表
       _loadPluginRoute( false, $routeProvider ) ;
+      setInterval( function(){
+         _loadPluginRoute( true, $routeProvider ) ;
+      }, 10000 )
       //默认访问
       $routeProvider.otherwise( window.SdbSacManagerConf.defaultRoute ) ;
    } ) ;
