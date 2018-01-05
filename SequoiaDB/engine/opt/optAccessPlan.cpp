@@ -214,6 +214,7 @@ namespace engine
                                                   const mthNodeConfig &config )
    : _optAccessPlan( planKey, config ),
      _cachedPlanMgr( NULL ),
+     _autoHint( FALSE ),
      _searchPaths( NULL )
    {
    }
