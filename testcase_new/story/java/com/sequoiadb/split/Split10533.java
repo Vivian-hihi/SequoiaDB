@@ -82,22 +82,23 @@ public class Split10533 extends SdbTestBase {
 	}
 
 	@Test
-	public void truncateCL() {
+	public void testTruncateCL() {
 		Sequoiadb db = null;
 		Split splitThread = null;
 		try {
 			// 启动切分线程
 			splitThread = new Split();
+			TruncateCL truncateCLThread = new TruncateCL();
 			splitThread.start();
-
-			// 执行truncate，检验结果
-			db = new Sequoiadb(coordUrl, "", "");
-			DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
-			cl.truncate();
-			Assert.assertEquals(cl.getCount(), 0, "cl not empty :" + cl.getCount());
+			truncateCLThread.start();
 
 			// 等待切分结束，检查编目
 			Assert.assertEquals(splitThread.isSuccess(), true, splitThread.getErrorMsg());
+			Assert.assertEquals(truncateCLThread.isSuccess(), true, truncateCLThread.getErrorMsg());
+            // 检验结果
+            db = new Sequoiadb(coordUrl, "", "");
+            DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
+            Assert.assertEquals(cl.getCount(), 0, "cl not empty :" + cl.getCount());
 			checkCatalog(db);
 		} catch (BaseException e) {
 			Assert.fail(e.getMessage()+"\r\n"+SplitUtils.getKeyStack(e,this));
@@ -175,6 +176,25 @@ public class Split10533 extends SdbTestBase {
 		}
 	}
 
+	class TruncateCL extends SdbThreadBase {
+
+        @Override
+        public void exec() throws Exception {
+            Sequoiadb db = null;
+            try {
+                db = new Sequoiadb(coordUrl, "", "");
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
+                Thread.sleep(1500);
+                cl.truncate();
+            } catch (BaseException e) {
+                throw e;
+            } finally {
+                if (db != null) {
+                    db.disconnect();
+                }
+            }
+        }
+	}
 	class Split extends SdbThreadBase {
 
 		@Override

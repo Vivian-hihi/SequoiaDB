@@ -89,20 +89,16 @@ public class Split10532 extends SdbTestBase {
 		try {
 			// 切分线程启动
 			splitThread = new Split();
-			splitThread.start();
-
 			// 增加和更新数据
+			UpdateAndInsert updateAndInsertThread = new UpdateAndInsert();
+			splitThread.start();
+			updateAndInsertThread.start();
 			db = new Sequoiadb(coordUrl, "", "");
 			db.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
-			DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
-			for (int i = 400; i < 600; i++) {
-				cl.insert("{sk:" + i + ",alpha:1}");// 增加数据
-				cl.update("{sk:" + i + ",alpha:1}", "{$inc:{alpha:1}}", null);// 更新数据
-			}
 
 			// 等待切分结束，并检查出错信息
 			Assert.assertEquals(splitThread.isSuccess(), true, splitThread.getErrorMsg());
-
+			Assert.assertEquals(updateAndInsertThread.isSuccess(), true, updateAndInsertThread.getErrorMsg());
 			// 构造源组期望数据
 			List<BSONObject> srcExpect = new ArrayList<BSONObject>();
 			for (int i = 0; i < 400; i++) {
@@ -217,6 +213,31 @@ public class Split10532 extends SdbTestBase {
 		}
 	}
 
+	class UpdateAndInsert extends SdbThreadBase {
+
+        @Override
+        public void exec() throws Exception {
+            Sequoiadb db = null;
+            try {
+                db = new Sequoiadb(coordUrl, "", "");
+                db.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
+                for (int i = 400; i < 600; i++) {
+                    cl.insert("{sk:" + i + ",alpha:1}");// 增加数据
+                    Thread.sleep(10);
+                    cl.update("{sk:" + i + ",alpha:1}", "{$inc:{alpha:1}}", null);// 更新数据
+                }
+            }catch (BaseException e) {
+                throw e;
+            } finally {
+                if (db != null) {
+                    db.disconnect();
+                }
+            }
+        }
+	    
+	}
+	
 	class Split extends SdbThreadBase {
 
 		@Override

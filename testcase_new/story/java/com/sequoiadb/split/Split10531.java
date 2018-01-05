@@ -97,18 +97,18 @@ public class Split10531 extends SdbTestBase {
 	public void insertAndCheck() {
 		Sequoiadb db = null;
 		Split splitThread = new Split();
-		splitThread.start();
+		DeleteDataAndLob deleteDataAndLob = new DeleteDataAndLob(); 
 		try {
 			db = new Sequoiadb(coordUrl, "", "");
-
-			// 删除500数据和500Lob
-			deleteDataAndLob(db);
-
+		     splitThread.start();
+		     deleteDataAndLob.start();
 			// 等待切分线程
 			if (!splitThread.isSuccess()) {
 				Assert.fail(splitThread.getErrorMsg());
 			}
-
+            if (!deleteDataAndLob.isSuccess()) {
+                Assert.fail(deleteDataAndLob.getErrorMsg());
+            }
 			// 目标组中的普通记录应当是insertedData的子集，校验完成后，将删除insertedData中属于子集的元素
 			checkGroupData(insertedData, db, destGroupName);
 			// 源中的普通记录应当是insertedData的子集，校验完成后，将删除insertedData中属于子集的元素
@@ -240,20 +240,6 @@ public class Split10531 extends SdbTestBase {
 		}
 	}
 
-	private void deleteDataAndLob(Sequoiadb db) {
-		try {
-			DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
-			for (int i = 0; i < 500; i++) { //// 删除500记录,500LOB
-				cl.removeLob(insertedLob.get(i));
-				cl.delete(insertedData.get(i));
-				deletedLob.add(insertedLob.get(i));
-				insertedData.remove(i);
-				insertedLob.remove(i);
-			}
-		} catch (BaseException e) {
-			Assert.fail(e.getMessage()+"\r\n"+SplitUtils.getKeyStack(e,this));
-		}
-	}
 
 	@AfterClass
 	public void tearDown() {
@@ -269,6 +255,27 @@ public class Split10531 extends SdbTestBase {
 				commSdb.disconnect();
 			}
 		}
+	}
+	
+	class DeleteDataAndLob extends SdbThreadBase {
+
+        @Override
+        public void exec() throws Exception {
+            try {
+                Sequoiadb db = new Sequoiadb(coordUrl, "", "");
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
+                for (int i = 0; i < 500; i++) { //// 删除500记录,500LOB
+                    cl.removeLob(insertedLob.get(i));
+                    cl.delete(insertedData.get(i));
+                    deletedLob.add(insertedLob.get(i));
+                    insertedData.remove(i);
+                    insertedLob.remove(i);
+                }
+            } catch (BaseException e) {
+                Assert.fail(e.getMessage()+"\r\n"+SplitUtils.getKeyStack(e,this));
+            }
+        }
+	    
 	}
 
 	class Split extends SdbThreadBase {

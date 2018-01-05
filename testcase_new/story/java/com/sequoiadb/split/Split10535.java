@@ -6,6 +6,7 @@ import java.util.Date;
 import java.util.List;
 
 import org.bson.BSONObject;
+import org.bson.BasicBSONObject;
 import org.bson.util.JSON;
 import org.testng.Assert;
 import org.testng.SkipException;
@@ -70,11 +71,17 @@ public class Split10535 extends SdbTestBase {
 	public void insertDataAndCreateIndex(DBCollection cl) {
 		try {
 			for (int i = 0; i < 1000; i++) {
-				BSONObject obj = (BSONObject) JSON.parse("{sk:" + i + ",index:" + i + "}");
+			    BSONObject obj = new BasicBSONObject();
+			    obj.put("sk", i);
+			    for ( int j = 1; j <= 55; j++ ) {
+			        obj.put("index"+j, i);
+			    }
 				cl.insert(obj);
 				insertedData.add(obj);
 			}
-			cl.createIndex("index", "{index:1}", false, false);
+			for( int i=1; i<=55; i++ ){
+			    cl.createIndex("index"+i, "{index"+i+":1}", false, false);
+			}
 		} catch (BaseException e) {
 			throw e;
 		}
@@ -89,17 +96,15 @@ public class Split10535 extends SdbTestBase {
 		try {
 			// 启动切分线程
 			splitThread = new Split();
+			DeleteIndex deleteIndex = new DeleteIndex();
 			splitThread.start();
-
-			// 删除普通索引
+			deleteIndex.start();
 			db = new Sequoiadb(coordUrl, "", "");
-			db.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
-			DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
-			cl.dropIndex("index");
-
+            db.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
+            DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
 			// 等待切分结束
 			Assert.assertEquals(splitThread.isSuccess(), true, splitThread.getErrorMsg());
-
+			Assert.assertEquals(deleteIndex.isSuccess(), true, splitThread.getErrorMsg());
 			// 期望有500条符合{sk:{$gte:0,$lt:500}}的记录，并且源组中只有500条记录
 			checkGroupData(db, 500, "{sk:{$gte:0,$lt:500}}", 500, srcGroupName);
 			// 期望有500条符合条件的记录，并且目标组中只有500条记录
@@ -194,17 +199,46 @@ public class Split10535 extends SdbTestBase {
 		}
 	}
 
+	class DeleteIndex extends SdbThreadBase {
+
+        @Override
+        public void exec() throws Exception {
+            Sequoiadb db = null;
+            try{
+                SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                System.out.println("3333  " + df.format(new Date()));
+                db = new Sequoiadb(coordUrl, "", "");
+                db.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
+                for( int i=1; i<=55; i++ ){
+                    cl.dropIndex("index"+i);
+                    Thread.sleep(100);
+                }
+                System.out.println("4444  " + df.format(new Date()));
+            }catch (BaseException e) {
+                throw e;
+            } finally {
+                if (db != null) {
+                    db.disconnect();
+                }
+            }
+        }
+	    
+	}
 	class Split extends SdbThreadBase {
 
 		@Override
 		public void exec() throws Exception {
 			Sequoiadb sdb = null;
 			try {
+                SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                System.out.println("11111  " + df.format(new Date()));
 				sdb = new Sequoiadb(coordUrl, "", "");
 				CollectionSpace cs = sdb.getCollectionSpace(csName);
 				DBCollection cl = cs.getCollection(clName);
 				cl.split(srcGroupName, destGroupName, (BSONObject) JSON.parse("{sk:500}"), // 切分
 						(BSONObject) JSON.parse("{sk:1000}"));
+				System.out.println("22222  " + df.format(new Date()));
 			} catch (BaseException e) {
 				throw e;
 			} finally {

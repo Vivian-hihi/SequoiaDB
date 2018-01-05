@@ -84,26 +84,18 @@ public class Split10534 extends SdbTestBase {
 	}
 
 	@Test
-	public void createIndex() {
+	public void testCreateIndex() {
 		Sequoiadb db = null;
 		Split splitThread = null;
 		try {
 			// 启动切分线程
 			splitThread = new Split();
+			CreateIndex createIndexThread = new CreateIndex();
 			splitThread.start();
-
+			createIndexThread.start();
+			
 			// 建立62个索引，预期索引集合indexes
 			db = new Sequoiadb(coordUrl, "", "");
-			DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
-			for (int i = 0; i < 62; i++) {
-				String indexName = "index" + i;
-				int oder = i % 2 == 0 ? 1 : -1;
-				cl.createIndex(indexName, "{" + indexName + ":" + oder + "}", false, false);
-				BSONObject indexObj = (BSONObject) JSON.parse("{name:'" + indexName + "',key: {" + indexName + ": "
-						+ oder + "},v: 0,unique: false,dropDups: false,enforced: false}");
-				indexes.add(indexObj);
-			}
-
 			// 预期索引集合indexes加入默认的id索引和shard索引
 			BSONObject idIndex = (BSONObject) JSON
 					.parse("{name: \"$id\",key: {_id: 1},v: 0,unique: true,dropDups: false,enforced: true}");
@@ -114,7 +106,7 @@ public class Split10534 extends SdbTestBase {
 
 			// 等待切分结束
 			Assert.assertEquals(splitThread.isSuccess(), true, splitThread.getErrorMsg());
-
+			Assert.assertEquals(createIndexThread.isSuccess(), true, createIndexThread.getErrorMsg());
 			// 期望有250条符合{sk:{$gte:0,$lt:250}}的记录，并且源组中只有250条记录
 			checkDestGroup(db, 250, "{sk:{$gte:0,$lt:250}}", 250, srcGroupName);
 			// 期望有250条符合条件的记录，并且目标组中只有250条记录
@@ -247,6 +239,37 @@ public class Split10534 extends SdbTestBase {
 		}
 	}
 
+	class CreateIndex extends SdbThreadBase {
+
+        @Override
+        public void exec() throws Exception {
+            Sequoiadb db = null;
+            try{
+                db = new Sequoiadb(coordUrl, "", "");
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
+                for (int i = 0; i < 62; i++) {
+                    String indexName = "index" + i;
+                    try {
+                        Thread.sleep(20);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    int oder = i % 2 == 0 ? 1 : -1;
+                    cl.createIndex(indexName, "{" + indexName + ":" + oder + "}", false, false);
+                    BSONObject indexObj = (BSONObject) JSON.parse("{name:'" + indexName + "',key: {" + indexName + ": "
+                            + oder + "},v: 0,unique: false,dropDups: false,enforced: false}");
+                    indexes.add(indexObj);
+                }
+            }catch (BaseException e) {
+                throw e;
+            } finally {
+                if (db != null) {
+                    db.disconnect();
+                }
+            }
+        }
+	    
+	}
 	class Split extends SdbThreadBase {
 
 		@Override
