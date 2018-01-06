@@ -2973,7 +2973,7 @@ INT32 loadLobDataMapBlk(OSSFILE &lobmFile,
     static const UINT32 FIRSTPAGEOFFSET = DMS_BME_OFFSET + DMS_BME_SZ;
     do
     {
-        ret = pages.insert(pageId);
+        ret = pages.insert(nextPageId);
         if(!ret.second)
         {
             msgLen += ossSnprintf(outBuf + msgLen, outSize - msgLen, 
