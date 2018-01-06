@@ -287,6 +287,26 @@ namespace engine
       version = stream.str() ;
    }
 
+   void omAddHostTask::_getPackageVersion( const BSONObj resultInfo,
+                                           const string &hostName,
+                                           string &version )
+   {
+      BSONObjIterator iter( resultInfo ) ;
+
+      while ( iter.more() )
+      {
+         BSONElement ele = iter.next() ;
+         BSONObj oneHost = ele.embeddedObject() ;
+         string tmpHostName = oneHost.getStringField( OM_HOST_FIELD_NAME ) ;
+
+         if ( tmpHostName == hostName )
+         {
+            version = oneHost.getStringField( OM_HOST_FIELD_VERSION ) ;
+            break ;
+         }
+      }
+   }
+
    INT32 omAddHostTask::finish( BSONObj &resultInfo )
    {
       INT32 rc     = SDB_OK ;
@@ -301,6 +321,7 @@ namespace engine
       BSONObj orderBy ;
       BSONObj hint ;
       BSONObj taskInfo ;
+      BSONObj taskResultInfo ;
       string omVersion ;
 
       _getOMVersion( omVersion ) ;
@@ -322,7 +343,8 @@ namespace engine
          goto error ;
       }
 
-      taskInfoValue = taskInfo.getObjectField( OM_TASKINFO_FIELD_INFO ) ;
+      taskInfoValue  = taskInfo.getObjectField( OM_TASKINFO_FIELD_INFO ) ;
+      taskResultInfo = resultInfo.getObjectField( OM_TASKINFO_FIELD_RESULTINFO ) ;
       hosts = taskInfoValue.getObjectField( OM_BSON_FIELD_HOST_INFO ) ;
       SDB_ASSERT( !hosts.isEmpty(), "" ) ;
       {
@@ -350,7 +372,11 @@ namespace engine
 
                if ( version.empty() )
                {
-                  version = omVersion ;
+                  _getPackageVersion( taskResultInfo, hostName, version ) ;
+                  if ( version.empty() )
+                  {
+                     version = omVersion ;
+                  }
                }
 
                packageInfo = BSON(

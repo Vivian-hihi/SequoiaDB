@@ -624,6 +624,7 @@ namespace engine
          builder.append( OMA_FIELD_STATUSDESC, it->second._statusDesc ) ;
          builder.append( OMA_FIELD_ERRNO, it->second._errno ) ;
          builder.append( OMA_FIELD_DETAIL, it->second._detail ) ;
+         builder.append( OMA_FIELD_VERSION, it->second._version ) ;
          builder.append( OMA_FIELD_FLOW, arrBuilder.arr() ) ;
          obj = builder.obj() ;
          bab.append( obj ) ;

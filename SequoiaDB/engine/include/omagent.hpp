@@ -78,6 +78,7 @@ namespace engine
       string         _statusDesc ;
       INT32          _errno ;
       string         _detail ;
+      string         _version ;
       vector<string> _flow ;
    } ;
    typedef struct _AddHostResultInfo AddHostResultInfo ;

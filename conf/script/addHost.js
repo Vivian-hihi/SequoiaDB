@@ -248,6 +248,34 @@ function _getLocalVersion()
    return version.split( '.' ) ;
 }
 
+function _getRemoteVersion( ssh, installPath )
+{
+   var cmd = installPath + '/' + OMA_PROG_BIN_SDBCM + ' --version' ;
+   var version = "" ;
+
+   try
+   {
+      ssh.exec( cmd ) ;
+      var str = ssh.getLastOut() ;
+      var beg = str.indexOf( OMA_MISC_OM_VERSION ) ;
+      var end = str.indexOf( '\n' ) ;
+      var len = OMA_MISC_OM_VERSION.length ;
+
+      version = str.substring( beg + len, end ) ;
+   }
+   catch( e )
+   {
+      errMsg = sprintf( "Failed to get version: host [?]", hostName ) ;
+      SYSEXPHANDLE( e ) ;
+      rc = GETLASTERROR() ;
+      PD_LOG( arguments, PDERROR, FILE_NAME_CHECK_HOST,
+              sprintf( errMsg + ", rc: ?, detail: ?", rc, GETLASTERRMSG() ) ) ;
+      exception_handle( rc, errMsg ) ;
+   }
+
+   return version ;
+}
+
 function _checkCompatible( remoteVersion, omVersion )
 {
    var installPath = _getLocalInstallPath() ;
@@ -673,6 +701,8 @@ function _installDBPacket( ssh, sdbuser, sdbpasswd, sdbgroup, omagentservice, pa
          PD_LOG2( task_id, arguments, PDDEBUG, FILE_NAME_ADD_HOST,
                   sprintf( "Install db packet run command: ?", cmd ) ) ;
          ssh.exec( cmd ) ;
+
+         RET_JSON[FIELD_VERSION] = _getRemoteVersion( ssh, path ) ;
       }
       catch ( e )
       {

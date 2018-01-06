@@ -82,6 +82,10 @@ namespace engine
          virtual INT32     checkUpdateInfo( const BSONObj &updateInfo ) ;
 
       private:
+         void _getPackageVersion( const BSONObj resultInfo,
+                                  const string &hostName,
+                                  string &version ) ;
+
          void              _getOMVersion( string &version ) ;
 
          INT32             _getSuccessHost( BSONObj &resultInfo, 
