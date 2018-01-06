@@ -85,9 +85,7 @@ public class Sdv11419 extends SdbTestBase {
         };
 
         insert.start(20);
-        insert.setThreadname("insert");
         update.start(20);
-        update.setThreadname("update");
 
         assertTrue(insert.isSuccess(), insert.getErrorMsg());
         assertTrue(update.isSuccess(), update.getErrorMsg());
