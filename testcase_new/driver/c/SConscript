@@ -104,7 +104,8 @@ testFiles = [
    [ "./crud/updateShardingKey.cpp" ],
    [ "./crud/queryAndUpdateShardingKey.cpp" ],
    [ "./crud/upsertShardingKey.cpp"],
-   [ "./crud/queryMeta.cpp" ]
+   [ "./crud/queryMeta.cpp" ],
+   [ "./crud/specialDecimal_14004.cpp" ]
 ]
 
 def getFileName( filePath ):
