@@ -33,12 +33,11 @@ public class Index11415 extends SdbTestBase {
 
     @AfterClass
     public void teardown() {
-        if (db != null){
+        if (db != null) {
             db.getCollectionSpace(SdbTestBase.csName).dropCollection(CLNAME);
             db.disconnect();
         }
     }
-
 
     /**
      * 1、向cl中插入记录，过程中并发删除索引（插入记录中包含索引键）
@@ -57,7 +56,7 @@ public class Index11415 extends SdbTestBase {
                     DBCollection cl = db.getCollectionSpace(SdbTestBase.csName).getCollection(Index11415.this.CLNAME);
                     cl.dropIndex("b_index");
                 } catch (BaseException e) {
-                    if(e.getErrorCode()!=-47)
+                    if (e.getErrorCode() != -47)
                         throw e;
                 } finally {
                     if (db != null)
@@ -94,9 +93,9 @@ public class Index11415 extends SdbTestBase {
 
         assertTrue(insertClTask.isSuccess(), insertClTask.getErrorMsg());
         assertTrue(removeIndexTask.isSuccess(), removeIndexTask.getErrorMsg());
+        assertEquals(dbcl.getCount(), 10000 * 10);
 
         DBCursor curor = dbcl.getIndex("b_index");
         assertFalse(curor.hasNext(), "b_index");
     }
-
 }

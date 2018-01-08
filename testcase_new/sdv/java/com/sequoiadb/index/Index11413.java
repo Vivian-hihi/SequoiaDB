@@ -7,6 +7,7 @@ import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
+import org.bson.util.JSON;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -81,6 +82,14 @@ public class Index11413 extends SdbTestBase {
         BSONObject object = cursor.getNext();
         cursor.close();
         assertNotNull(object, "index11413");
+
+        BasicBSONObject indexDef= (BasicBSONObject) object.get("IndexDef");
+        BasicBSONObject indexKey= (BasicBSONObject) indexDef.get("key");
+        assertNotNull(object, "index11413");
+        assertEquals(indexDef.getString("name"),"index11413");
+        assertEquals(indexDef.getBoolean("unique"),false);
+        assertEquals(indexDef.getBoolean("enforced"),false);
+        assertEquals(indexKey, JSON.parse("{a:1}"));
     }
 
     @Test

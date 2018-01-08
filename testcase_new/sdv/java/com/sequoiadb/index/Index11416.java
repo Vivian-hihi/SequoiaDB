@@ -7,6 +7,7 @@ import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
+import org.bson.util.JSON;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -14,9 +15,8 @@ import org.testng.annotations.Test;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
 
 /**
  * Created by laojingtang on 18-1-2.
@@ -66,7 +66,7 @@ public class Index11416 extends SdbTestBase {
                 try {
                     db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
                     DBCollection cl = db.getCollectionSpace(SdbTestBase.csName).getCollection(Index11416.this.CLNAME);
-                    cl.createIndex("index11413", new BasicBSONObject("a", 1), false, false);
+                    cl.createIndex("index11416", new BasicBSONObject("a", 1), false, false);
                 } finally {
                     if (db != null)
                         db.disconnect();
@@ -74,17 +74,25 @@ public class Index11416 extends SdbTestBase {
             }
         };
 
-        SdbThreadBase queryTask=new QueryTask("index11413");
+        SdbThreadBase queryTask=new QueryTask("index11416");
         queryTask.start(20);
         createTasks.start();
 
         assertTrue(queryTask.isSuccess(),queryTask.getErrorMsg());
         assertTrue(createTasks.isSuccess(),createTasks.getErrorMsg());
 
-        DBCursor cursor = dbcl.getIndex("index11413");
+        DBCursor cursor = dbcl.getIndex("index11416");
         BSONObject object = cursor.getNext();
         cursor.close();
-        assertNotNull(object, "index11413");
+        assertNotNull(object, "index11416");
+
+        BasicBSONObject indexDef= (BasicBSONObject) object.get("IndexDef");
+        BasicBSONObject indexKey= (BasicBSONObject) indexDef.get("key");
+        assertNotNull(object, "index11416");
+        assertEquals(indexDef.getString("name"),"index11416");
+        assertEquals(indexDef.getBoolean("unique"),false);
+        assertEquals(indexDef.getBoolean("enforced"),false);
+        assertEquals(indexKey, JSON.parse("{a:1}"));
     }
 
     @Test
