@@ -90,27 +90,24 @@ public class Split10539 extends SdbTestBase {
 	}
 
 	@Test
-	public void crud() {
+	public void testCrud() {
 		Sequoiadb db = null;
 		Sequoiadb destDataNode = null;
 		Sequoiadb srcDataNode = null;
 		Split splitThread = null;
+		Crud crudThread = null;
 		try {
 			// 启动切分线程
 			splitThread = new Split();
+			crudThread = new Crud();
 			splitThread.start();
+			crudThread.start();
 
 			// 增删改
 			db = new Sequoiadb(coordUrl, "", "");
-			DBCollection mainCL = db.getCollectionSpace(csName).getCollection(mainCLName);
-			mainCL.delete("{sk:{$gte:400,$lt:600}}");// 删除数据
-			for (int i = 400; i < 600; i++) { // 增加数据
-				mainCL.insert("{sk:" + i + ",beta:1}");
-			}
-			mainCL.update("{sk:{$gte:400,$lt:600}}", "{$inc:{beta:1}}", null);// 更新数据
-
 			// 等待切分结束
 			Assert.assertEquals(splitThread.isSuccess(), true, splitThread.getErrorMsg());
+			Assert.assertEquals(crudThread.isSuccess(), true, crudThread.getErrorMsg());
 
 			// 构造源组期望数据
 			List<BSONObject> srcExpect = new ArrayList<BSONObject>();
@@ -153,6 +150,9 @@ public class Split10539 extends SdbTestBase {
 			}
 			if (splitThread != null) {
 				splitThread.join();
+			}
+			if (crudThread != null) {
+			    crudThread.join();
 			}
 		}
 	}
@@ -264,6 +264,32 @@ public class Split10539 extends SdbTestBase {
 		}
 	}
 
+	class Crud extends SdbThreadBase {
+
+        @Override
+        public void exec() throws Exception {
+            Sequoiadb sdb = null;
+            try {
+                sdb = new Sequoiadb(coordUrl, "", "");
+                Thread.sleep(1500);
+                DBCollection mainCL = sdb.getCollectionSpace(csName).getCollection(mainCLName);
+                mainCL.delete("{sk:{$gte:400,$lt:600}}");// 删除数据
+                Thread.sleep(500);
+                for (int i = 400; i < 600; i++) { // 增加数据
+                    mainCL.insert("{sk:" + i + ",beta:1}");
+                }
+                Thread.sleep(500);
+                mainCL.update("{sk:{$gte:400,$lt:600}}", "{$inc:{beta:1}}", null);// 更新数据
+            }catch (BaseException e) {
+                throw e;
+            } finally {
+                if (sdb != null) {
+                    sdb.disconnect();
+                }
+            }
+        }
+	    
+	}
 	class Split extends SdbThreadBase {
 
 		@Override
@@ -275,7 +301,6 @@ public class Split10539 extends SdbTestBase {
 				DBCollection subCL = cs.getCollection(subCLName);
 				subCL.split(srcGroupName, destGroupName, (BSONObject) JSON.parse("{sk:500}"),
 						(BSONObject) JSON.parse("{sk:1000}"));
-
 			} catch (BaseException e) {
 				throw e;
 			} finally {

@@ -1,6 +1,8 @@
 package com.sequoiadb.split;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
@@ -62,24 +64,16 @@ public class TestSplit13886 extends SdbTestBase {
 	public void test() throws InterruptedException{
 		insertRecord();
 		Split split = new Split();
+		InsertData insertData = new InsertData();
 		split.start();
-		
-		BSONObject obj = null;
-		String str = SplitUtils.getRandomString(1024);
-		try{
-			for(int i=0;i<50000;i++){
-				obj = new BasicBSONObject();
-				obj.put("a", 10000+i);
-				obj.put("b", str+":newInsert"+i);
-				cl.insert(obj);
-			}
-		}catch(BaseException e){
-			Assert.assertFalse(false, "insert record failed:"+e.getMessage());
-		}
+		insertData.start();
 		
 		if(!split.isSuccess()){
 			Assert.assertFalse(false, "split was failed!");
 		}
+        if(!insertData.isSuccess()){
+            Assert.assertFalse(false, "insertData was failed!");
+        }
 		checkSplitResult();
 	} 
 	
@@ -96,6 +90,35 @@ public class TestSplit13886 extends SdbTestBase {
 		}
 	}
 	
+	private class InsertData extends SdbThreadBase {
+
+        @Override
+        public void exec() throws Exception {
+            Sequoiadb db = null;
+            try {
+                db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+                BSONObject obj = null;
+                String str = SplitUtils.getRandomString(1024);
+                try{
+                    for(int i=0;i<50000;i++){
+                        obj = new BasicBSONObject();
+                        obj.put("a", 10000+i);
+                        obj.put("b", str+":newInsert"+i);
+                        cl.insert(obj);
+                    }
+                }catch(BaseException e){
+                    Assert.assertFalse(false, "insert record failed:"+e.getMessage());
+                }
+            }catch (BaseException e) {
+                throw e;
+            }finally{
+                if (db!=null) {
+                    db.disconnect();
+                }
+            }
+        }
+	}
+	
 	private class Split extends SdbThreadBase{
 		
 		@Override
@@ -107,6 +130,7 @@ public class TestSplit13886 extends SdbTestBase {
                 targetRGName = SplitUtils.getSplitGroupName(sourceRGName);
                 for(int i=0;i<10;i++){
                 	cl.split(sourceRGName, targetRGName, 50);
+                	Thread.sleep(100);
                 }
             }catch (BaseException e) {
             	Assert.assertTrue(false,"split cl failed:"+e.getMessage()+e.getStackTrace());
