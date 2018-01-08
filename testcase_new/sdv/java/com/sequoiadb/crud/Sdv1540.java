@@ -2,12 +2,14 @@ package com.sequoiadb.crud;
 
 import com.sequoiadb.base.*;
 import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.types.BasicBSONList;
 import org.bson.types.ObjectId;
+import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -32,6 +34,9 @@ public class Sdv1540 extends SdbTestBase {
     @BeforeClass
     public void setup() {
         db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        if (CommLib.isStandAlone(db)) {
+            throw new SkipException("Test case skip for standlone");
+        }
         CollectionSpace cs = db.getCollectionSpace(SdbTestBase.csName);
         dbcl = cs.createCollection(CLNAME);
 

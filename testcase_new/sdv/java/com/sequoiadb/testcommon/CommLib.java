@@ -20,7 +20,7 @@ public class CommLib {
 	 * @param sdb
 	 * @return true/false, true is standalone, false is cluster
 	 */
-	public boolean isStandAlone(Sequoiadb sdb){
+	public static boolean isStandAlone(Sequoiadb sdb){
 		try{
 			sdb.listReplicaGroups();
 		}catch(BaseException e){
@@ -37,7 +37,7 @@ public class CommLib {
 	 * @param sdb
 	 * @return true/false, true is only on group, false is multiple group
 	 */
-	public boolean OneGroupMode(Sequoiadb sdb){
+	public static boolean OneGroupMode(Sequoiadb sdb){
 		if(getDataGroupNames(sdb).size() < 2){
 			System.out.printf("Only one group.");
 			return true;
@@ -50,7 +50,7 @@ public class CommLib {
 	 * @param sdb
 	 * @return dataGroupNames
 	 */
-	public ArrayList<String> getDataGroupNames(Sequoiadb sdb){
+	public static ArrayList<String> getDataGroupNames(Sequoiadb sdb){
 		ArrayList<String> dataGroupNames = new ArrayList<String>();
 		try{
 			dataGroupNames = sdb.getReplicaGroupNames();
@@ -68,7 +68,7 @@ public class CommLib {
 	 * @param rgName
 	 * @return nodeAddrs, eg.[host1:11840, host2:11850]
 	 */
-	public List<String> getNodeAddress(Sequoiadb sdb, 
+	public static List<String> getNodeAddress(Sequoiadb sdb,
 									   String rgName){
 		List<String> nodeAddrs = new ArrayList<String>();
 		try{
@@ -96,7 +96,7 @@ public class CommLib {
 	 * @param sdb
 	 * @return csInfoOfCata
 	 */
-	public ArrayList<BSONObject> getCSInfoOfCatalog(Sequoiadb sdb){
+	public static ArrayList<BSONObject> getCSInfoOfCatalog(Sequoiadb sdb){
 		ArrayList<BSONObject> csInfoOfCata = new ArrayList<BSONObject>();
 		Sequoiadb cataDB = null;
 		try
@@ -125,7 +125,7 @@ public class CommLib {
 	 * @param sdb
 	 * @return true/false, true is success, false is failed
 	 */
-	public void checkDomainOfCatalog(Sequoiadb sdb, 
+	public static void checkDomainOfCatalog(Sequoiadb sdb,
 									 String domainName){
 		try{
 			BSONObject matcher = new BasicBSONObject();
@@ -150,7 +150,7 @@ public class CommLib {
 	 * @param sdb
 	 * @return true/false, true is success, false is failed
 	 */
-	public void checkCSOfCatalog(Sequoiadb sdb, 
+	public static void checkCSOfCatalog(Sequoiadb sdb,
 								 String csName){
 		try{
 			BSONObject matcher = new BasicBSONObject();
@@ -175,7 +175,7 @@ public class CommLib {
 	 * @param sdb
 	 * @return true/false, true is success, false is failed
 	 */
-	public void checkCLOfCatalog(Sequoiadb sdb, 
+	public static void checkCLOfCatalog(Sequoiadb sdb,
 							 	 String csName, 
 							 	 String clName){
 		try{
@@ -202,7 +202,7 @@ public class CommLib {
 	 * @param csName
 	 * @param clName
 	 */
-	public void checkCLOfDataRG(Sequoiadb sdb, 
+	public static void checkCLOfDataRG(Sequoiadb sdb,
 								String csName, 
 								String clName){
 		try{
@@ -275,14 +275,14 @@ public class CommLib {
 	 * @param csName
 	 * @param clName
 	 */
-	public void checkCLResult(Sequoiadb sdb, 
+	public static void checkCLResult(Sequoiadb sdb,
 							  String csName, 
 							  String clName){
 		try{
-			CommLib.this.checkCLOfCatalog(sdb, csName, clName);
-			CommLib.this.checkCLOfDataRG(sdb, csName, clName);
+			checkCLOfCatalog(sdb, csName, clName);
+			checkCLOfDataRG(sdb, csName, clName);
 			
-			boolean rc = CommLib.this.compareDataAndCata(sdb, csName, clName);
+			boolean rc = compareDataAndCata(sdb, csName, clName);
 			Assert.assertTrue(rc);
 			
 		}catch(BaseException e){
@@ -296,7 +296,7 @@ public class CommLib {
 	 * @param csName
 	 * @param clName
 	 */
-	public void checkIndex(Sequoiadb sdb, 
+	public static void checkIndex(Sequoiadb sdb,
 								String csName, 
 								String clName){
 		try{
@@ -377,7 +377,7 @@ public class CommLib {
 	 * @param csName
 	 * @param clName
 	 */
-	public boolean compareDataAndCata(Sequoiadb sdb, 
+	public static boolean compareDataAndCata(Sequoiadb sdb,
 									  String csName, 
 									  String clName){
 		try{
@@ -452,10 +452,9 @@ public class CommLib {
 	
 	/**
 	 * compare node's data within the group
-	 * @param .......
 	 * @param matcher, matching condition for query
 	 */
-	public void compareNodeData(Sequoiadb sdb, 
+	public static void compareNodeData(Sequoiadb sdb,
 								String rgName, 
 								String csName, 
 								String clName, 
@@ -519,7 +518,7 @@ public class CommLib {
 	 * @param sdb
 	 * @param domainName
 	 */
-	public void clearDomain(Sequoiadb sdb, 
+	public static void clearDomain(Sequoiadb sdb,
 							String domainName){
 		String dmName = null;
 		try{
@@ -561,7 +560,7 @@ public class CommLib {
 	 * @param sdb
 	 * @param csName
 	 */
-	public void clearCS(Sequoiadb sdb, 
+	public static void clearCS(Sequoiadb sdb,
 						String csName){
 		try{
 			DBCursor cursor = sdb.listCollectionSpaces();
@@ -586,7 +585,7 @@ public class CommLib {
 	 * @param sdb
 	 * @param clName
 	 */
-	public void clearCL(Sequoiadb sdb, 
+	public static void clearCL(Sequoiadb sdb,
 						String csName, 
 						String clName){
 		try{
@@ -615,10 +614,10 @@ public class CommLib {
 	 * @param sdb
 	 * @param rgName
 	 */
-	public void clearGroup(Sequoiadb sdb, 
+	public static void clearGroup(Sequoiadb sdb,
 						   String rgName){
 		try{
-			ArrayList<String> groupNames= CommLib.this.getDataGroupNames(sdb);
+			ArrayList<String> groupNames= getDataGroupNames(sdb);
 			for(int i = 0; i < groupNames.size(); i++){
 				String tmpName = groupNames.get(i);
 				if(tmpName.indexOf(rgName) >= 0){
@@ -637,7 +636,7 @@ public class CommLib {
 	 * createNode
 	 * @param sdb
 	 */
-	public void createNode(Sequoiadb sdb, 
+	public static void createNode(Sequoiadb sdb,
 						   String rgName, 
 						   int portStart, 
 						   int portStop, 
