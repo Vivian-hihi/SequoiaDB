@@ -1191,7 +1191,7 @@ namespace engine
       // Done initialize, enable caching
       _planCache.enableCaching() ;
 
-      PD_LOG( PDDEBUG, "Initialize plan cache: [ level: %d, buckets : %u ]",
+      PD_LOG( PDDEBUG, "Initialize plan cache: [ level: %s, buckets : %u ]",
               optAccessPlanKey::getCacheLevelName( _cacheLevel ),
               _planCache.getBucketNum() ) ;
 
@@ -1251,7 +1251,7 @@ namespace engine
 
                _planCache.enableCaching() ;
 
-               PD_LOG( PDDEBUG, "Re-initialize plan cache: [ level: %d ]",
+               PD_LOG( PDDEBUG, "Re-initialize plan cache: [ level: %s ]",
                        optAccessPlanKey::getCacheLevelName( _cacheLevel ) ) ;
             }
             else
