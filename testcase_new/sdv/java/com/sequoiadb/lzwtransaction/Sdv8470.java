@@ -1,4 +1,4 @@
-package com.sequoiadb.crud;
+package com.sequoiadb.lzwtransaction;
 
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.Sequoiadb;
