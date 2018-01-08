@@ -543,6 +543,7 @@ namespace engine
 
          OSS_INLINE UINT32 getDmsChkInterval() const { return _dmsChkInterval ; }
          OSS_INLINE UINT32 getCacheMergeSize() const { return _cacheMergeSize << 20 ; }
+         OSS_INLINE UINT32 getPageAllocTimeout() const { return _pageAllocTimeout ; }
          OSS_INLINE BOOLEAN isEnabledPerfStat() const { return _perfStat ; }
          OSS_INLINE INT32 getOptCostThreshold() const { return _optCostThreshold ; }
          OSS_INLINE BOOLEAN isEnabledMixCmp() const { return _enableMixCmp ; }
@@ -632,6 +633,7 @@ namespace engine
          UINT32      _archiveQuota ;
          UINT32      _dmsChkInterval ;
          UINT32      _cacheMergeSize ;
+         UINT32      _pageAllocTimeout ;  // ms
          BOOLEAN     _perfStat ;
          INT32       _optCostThreshold ;
          BOOLEAN     _enableMixCmp ;

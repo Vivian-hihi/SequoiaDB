@@ -211,6 +211,13 @@ namespace engine
             _dmsStorageUnit *su = (*itr)->_su ;
             su->setSyncConfig( syncInterval, syncRecordNum, syncDirtyRatio ) ;
             su->setSyncDeep( syncDeep ) ;
+
+            /// update cache info
+            dmsStorageInfo *pInfo = su->storageInfo() ;
+            utilCacheUnit *pCache = su->cacheUnit() ;
+
+            pInfo->_pageAllocTimeout = optCB->getPageAllocTimeout() ;
+            pCache->setAllocTimeout( pInfo->_pageAllocTimeout ) ;
          }
       }
    }
