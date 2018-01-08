@@ -83,25 +83,20 @@ public class Split514 extends SdbTestBase {
 
 	// 切分同时查询删除，校验结果
 	@Test(enabled = true)
-	public void findAndRemove() {
+	public void testFindAndRemove() {
 		Sequoiadb sdb = null;
-		DBCursor dbc = null;
 		Split split = new Split();
-		split.start();
+		FindAndRemove findAndRemove = new FindAndRemove();
 		try {
-			sdb = new Sequoiadb(coordUrl, "", "");
-			sdb.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
-			DBCollection cl = sdb.getCollectionSpace(csName).getCollection(clName);
-			
-			// 删除a:0 - a:50 的记录
-			dbc = cl.query("{a:{$gte:0,$lt:50}}", null, null, null, 10, 50);
-			while (dbc.hasNext()) {
-				cl.delete(dbc.getNext());
-			}
-
+		    split.start();
+		    sdb = new Sequoiadb(coordUrl, "", "");
+		    findAndRemove.start();
 			if (!split.isSuccess()) {
 				Assert.fail(split.getErrorMsg());
 			}
+            if (!findAndRemove.isSuccess()) {
+                Assert.fail(findAndRemove.getErrorMsg());
+            }
 			// 检查编目
 			checkCatalog(sdb);
 			// 校验目标组数据，重新插入，再次校验
@@ -109,9 +104,6 @@ public class Split514 extends SdbTestBase {
 		} catch (BaseException e) {
 			Assert.fail(e.getMessage()+"\r\n"+SplitUtils.getKeyStack(e,this));
 		} finally {
-			if (dbc != null) {
-				dbc.close();
-			}
 			if (sdb != null) {
 				sdb.disconnect();
 			}
@@ -220,6 +212,34 @@ public class Split514 extends SdbTestBase {
 		}
 	}
 
+	class FindAndRemove extends SdbThreadBase {
+
+        @Override
+        public void exec() throws Exception {
+            Sequoiadb sdb = null;
+            DBCursor dbc = null;
+            try {
+                sdb = new Sequoiadb(coordUrl, "", "");
+                sdb.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
+                DBCollection cl = sdb.getCollectionSpace(csName).getCollection(clName);
+                // 删除a:0 - a:50 的记录
+                dbc = cl.query("{a:{$gte:0,$lt:50}}", null, null, null, 10, 50);
+                while (dbc.hasNext()) {
+                    cl.delete(dbc.getNext());
+                    Thread.sleep(50);
+                }
+            } catch (BaseException e) {
+                throw e;
+            } finally {
+                if (dbc!=null) {
+                    dbc.close();
+                }
+                if (sdb != null) {
+                    sdb.disconnect();
+                }
+            }
+        }
+	}
 	class Split extends SdbThreadBase {
 
 		@Override

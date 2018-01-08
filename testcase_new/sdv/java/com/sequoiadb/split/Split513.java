@@ -73,21 +73,22 @@ public class Split513 extends SdbTestBase {
 	public void insertLobAndDoc() {
 		Sequoiadb sdb = null;
 		Split split = new Split();
-		split.start();
+		InsertData insertDataThread = new InsertData();
 		try {
-			sdb = new Sequoiadb(coordUrl, "", "");
-			DBCollection cl = sdb.getCollectionSpace(csName).getCollection(clName);
-			for (int i = 0; i < 100; i++) {
-				DBLob blob = cl.createLob();
-				blob.write(clName.getBytes());
-				blob.close();
-			}
-			for (int j = 0; j < 100; j++) {
-				cl.insert("{a:" + j + "}");
-			}
+		    split.start();
+		    try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+		    insertDataThread.start();
 			if(!split.isSuccess()){
 				Assert.fail(split.getErrorMsg());
 			}
+            if(!insertDataThread.isSuccess()){
+                Assert.fail(insertDataThread.getErrorMsg());
+            }
+            sdb = new Sequoiadb(coordUrl, "", "");
 			checkCatalog(sdb);// 检查编目信息
 			checkData(sdb); // 检查目标组数据量，重新插入数据，检查落入情况
 		} catch (BaseException e) {
@@ -271,6 +272,32 @@ public class Split513 extends SdbTestBase {
 		}
 	}
 
+	class InsertData extends SdbThreadBase {
+
+        @Override
+        public void exec() throws Exception {
+            Sequoiadb sdb = null;
+            try {
+                sdb = new Sequoiadb(coordUrl, "", "");
+                DBCollection cl = sdb.getCollectionSpace(csName).getCollection(clName);
+                for (int i = 0; i < 100; i++) {
+                    DBLob blob = cl.createLob();
+                    blob.write(clName.getBytes());
+                    blob.close();
+                }
+                for (int j = 0; j < 100; j++) {
+                    cl.insert("{a:" + j + "}");
+                }
+            } catch (BaseException e) {
+                throw e;
+            } finally {
+                if (sdb != null) {
+                    sdb.disconnect();
+                } 
+            }
+        }
+	}
+	
 	class Split extends SdbThreadBase {
 
 		@Override
