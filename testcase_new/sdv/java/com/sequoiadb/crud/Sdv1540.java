@@ -14,10 +14,8 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static org.testng.Assert.*;
 
@@ -30,6 +28,7 @@ public class Sdv1540 extends SdbTestBase {
     private DBCollection dbcl;
     private List<String> coorURLs = new ArrayList<>();
     private Random random = new Random();
+    private byte[] data = new byte[100];
 
     @BeforeClass
     public void setup() {
@@ -62,8 +61,7 @@ public class Sdv1540 extends SdbTestBase {
     }
 
     /**
-     * 1、cl中插入记录和lob
-     * 2、并发连接到不同的coord执行如下并发操作：
+     * 1、cl中插入记录和lob * 2、并发连接到不同的coord执行如下并发操作：
      * 1）并发插入数据
      * 2）并发修改记录
      * 3）并发删除记录（删除已经插入成功的记录）
@@ -76,7 +74,6 @@ public class Sdv1540 extends SdbTestBase {
      */
     @Test
     public void test() {
-        prepareSimpleData();
 
         MyTask insert = new MyTask() {
             @Override
@@ -84,17 +81,22 @@ public class Sdv1540 extends SdbTestBase {
                 cl.insert(Arrays.asList(genrateData(1000)));
             }
         };
+
+        List<BSONObject> record2DeleteList = Arrays.asList(genrateData(1000));
+        dbcl.insert(record2DeleteList);
+        final ConcurrentLinkedQueue<BSONObject> record2Delete = new ConcurrentLinkedQueue(record2DeleteList);
         MyTask delete = new MyTask() {
             @Override
             void opration(DBCollection cl) {
-                for (int i = 0; i < 100; i++) {
-                    BasicBSONObject o = (BasicBSONObject) cl.queryOne();
+                while (!record2Delete.isEmpty()) {
+                    BasicBSONObject o = (BasicBSONObject) record2Delete.poll();
                     if (o == null)
-                        continue;
+                        break;
                     cl.delete(new BasicBSONObject("_id", o.getObjectId("_id")));
                 }
             }
         };
+
         MyTask update = new MyTask() {
             @Override
             void opration(DBCollection cl) {
@@ -111,6 +113,7 @@ public class Sdv1540 extends SdbTestBase {
                 }
             }
         };
+
         MyTask query = new MyTask() {
             @Override
             void opration(DBCollection cl) {
@@ -119,49 +122,40 @@ public class Sdv1540 extends SdbTestBase {
                 }
             }
         };
+
+        final List<ObjectId> lob2Read = new Vector<>(100);
         MyTask createLob = new MyTask() {
             @Override
             void opration(DBCollection cl) {
-                for (int i = 0; i < 10; i++) {
+                for (int i = 0; i < 100; i++) {
                     DBLob lob = cl.createLob();
                     lob.write(data);
+                    lob.close();
+                    lob2Read.add(lob.getID());
+                }
+            }
+        };
+
+
+        MyTask readLob = new MyTask() {
+            @Override
+            void opration(DBCollection cl) {
+                for (int i = 0; i < 10 && lob2Read.size() > 0; i++) {
+                    ObjectId id = lob2Read.get(random.nextInt(lob2Read.size()));
+                    DBLob lob = cl.openLob(id);
+                    lob.read(new byte[(int) lob.getSize()]);
                     lob.close();
                 }
             }
         };
-        MyTask readLob = new MyTask() {
-            @Override
-            void opration(DBCollection cl) {
-                List<ObjectId> ids = getLobOids(cl);
-                for (int i = 0; i < 10; i++) {
-                    ObjectId id = ids.get(random.nextInt(ids.size()));
-                    try {
-                        DBLob lob = cl.openLob(id);
-                        lob.read(new byte[(int) lob.getSize()]);
-                        lob.close();
-                    } catch (BaseException e) {
-                        if (e.getErrorCode() != -4) {
-                            throw e;
-                        }
-                    }
-                }
-            }
-        };
+
+        final ConcurrentLinkedQueue<ObjectId> lob2DeleteQueue = new ConcurrentLinkedQueue(repareSimpleLob(100, data));
         MyTask deleteLob = new MyTask() {
             @Override
             void opration(DBCollection cl) {
-                List<ObjectId> ids = getLobOids(cl);
-                for (int i = 0; i < 10; i++) {
-                    ObjectId id = ids.get(random.nextInt(ids.size()));
-                    try {
-                        cl.removeLob(id);
-                    } catch (BaseException e) {
-                        //-4 when the lob maybe already removed throw -4
-                        //-137 when the lob is in use throw -137
-                        if (e.getErrorCode() != -4 && e.getErrorCode() != -137) {
-                            throw e;
-                        }
-                    }
+                while (!lob2DeleteQueue.isEmpty()) {
+                    ObjectId id = lob2DeleteQueue.poll();
+                    cl.removeLob(id);
                 }
             }
         };
@@ -186,15 +180,31 @@ public class Sdv1540 extends SdbTestBase {
         for (MyTask task : tasks) {
             assertTrue(task.isSuccess(), task.getErrorMsg());
         }
+
+        //assert insert remove record
+        assertEquals(dbcl.getCount(), 1000 * 10, dbcl.getCount());
+        //assert lob
+        assertEquals(getLobnum(), 10 * 100, getLobnum());
+
     }
 
-    private List<ObjectId> getLobOids(DBCollection cl) {
-        DBCursor cur = cl.listLobs();
-        List<ObjectId> ids = new ArrayList<>(1000);
-        while (cur.hasNext()) {
-            BasicBSONObject o = (BasicBSONObject) cur.getNext();
-            ObjectId id = o.getObjectId("Oid");
-            ids.add(id);
+    int getLobnum() {
+        DBCursor cursor = dbcl.listLobs();
+        int count = 0;
+        while (cursor.hasNext()) {
+            cursor.getNext();
+            count++;
+        }
+        return count;
+    }
+
+    private List<ObjectId> repareSimpleLob(int lobNum, byte[] data) {
+        List<ObjectId> ids = new ArrayList<>(lobNum);
+        for (int i = 0; i < lobNum; i++) {
+            DBLob lob = dbcl.createLob();
+            lob.write(data);
+            lob.close();
+            ids.add(lob.getID());
         }
         return ids;
     }
@@ -215,22 +225,15 @@ public class Sdv1540 extends SdbTestBase {
             }
         }
 
+        public Object getResult() {
+            return null;
+        }
+
         abstract void opration(DBCollection cl);
     }
 
     private String getCoordURLRandom() {
         return coorURLs.get(random.nextInt(coorURLs.size()));
-    }
-
-    private byte[] data = new byte[1024];
-
-    private void prepareSimpleData() {
-        dbcl.insert(Arrays.asList(genrateData(10000)));
-        for (int i = 0; i < 10000; i++) {
-            DBLob lob = dbcl.createLob();
-            lob.write(data);
-            lob.close();
-        }
     }
 
     private BSONObject[] genrateData(int num) {
@@ -239,5 +242,16 @@ public class Sdv1540 extends SdbTestBase {
             b[i] = new BasicBSONObject("a", i).append("b", i).append("c", i);
         }
         return b;
+    }
+
+    private List<ObjectId> getLobOids(DBCollection cl) {
+        DBCursor cur = cl.listLobs();
+        List<ObjectId> ids = new ArrayList<>(1000);
+        while (cur.hasNext()) {
+            BasicBSONObject o = (BasicBSONObject) cur.getNext();
+            ObjectId id = o.getObjectId("Oid");
+            ids.add(id);
+        }
+        return ids;
     }
 }
