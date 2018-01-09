@@ -2145,7 +2145,7 @@ namespace sdbclient
                         const bson::BSONObj &options = _sdbStaticObject )
       {
          if ( !pReplicaGroup )
-            return FALSE ;
+            return SDB_NOT_CONNECTED ;
          return pReplicaGroup->attachNode( pHostName, pSvcName, options ) ;
       }
 
@@ -2164,7 +2164,7 @@ namespace sdbclient
                         const bson::BSONObj &options = _sdbStaticObject )
       {
          if ( !pReplicaGroup )
-            return FALSE ;
+            return SDB_NOT_CONNECTED ;
          return pReplicaGroup->detachNode( pHostName, pSvcName, options ) ;
       }
 
