@@ -344,7 +344,7 @@ namespace engine
          len += ossSnprintf ( outBuf + len, outSize - len,
                               "Error: Invalid storage unit eye catcher: %s, "
                               "expected: %s"OSS_NEWLINE,
-                              eyeCatcher, DMS_DATASU_EYECATCHER ) ;
+                              eyeCatcher, DMS_LOBD_EYECATCHER ) ;
          ++localErr ;
       }
 
