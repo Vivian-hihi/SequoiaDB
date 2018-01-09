@@ -103,6 +103,10 @@ function main()
    //analyze after split
    var options = {Collection: csName + "." + clName};
    analyze( db, options );
+
+   //check after analyze
+   checkStat( db, csName, clName, "$shard", true, true );
+   checkStat( db, csName, clName, "b", true, true );
      
    //check after split
    var findConf1 = {a : 9000};
