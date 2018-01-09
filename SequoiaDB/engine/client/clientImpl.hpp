@@ -191,7 +191,8 @@ namespace sdbclient
       // get the total number of records for a given condition, if the condition
       // is NULL then match all records in the collection
       INT32 getCount ( SINT64 &count,
-                       const BSONObj &condition ) ;
+                       const BSONObj &condition,
+                       const BSONObj &hint = _sdbStaticObject ) ;
       // insert a bson object into current collection
       // given:
       // object ( required )
@@ -388,7 +389,7 @@ namespace sdbclient
                      std::vector<bson::BSONObj> &obj
                    )
       {
-         RELEASE_INNER_HANDLE( cursor.pCursor ) ; 
+         RELEASE_INNER_HANDLE( cursor.pCursor ) ;
          return aggregate ( &cursor.pCursor, obj ) ;
       }
       INT32 getQueryMeta  ( _sdbCursor **cursor,
@@ -446,7 +447,7 @@ namespace sdbclient
 
       /// lob
       INT32 createLob( _sdbLob **lob, const bson::OID *oid = NULL ) ;
-      
+
       virtual INT32 createLob( sdbLob &lob, const bson::OID *oid = NULL )
       {
          RELEASE_INNER_HANDLE( lob.pLob ) ;
@@ -468,13 +469,20 @@ namespace sdbclient
       }
 
       INT32 listLobs ( _sdbCursor **cursor ) ;
-      
+
       virtual INT32 listLobs( sdbCursor &cursor )
       {
          RELEASE_INNER_HANDLE( cursor.pCursor ) ;
          return listLobs( &cursor.pCursor ) ;
       }
 
+      virtual INT32 listLobPieces( _sdbCursor **cursor ) ;
+
+      virtual INT32 listLobPieces( sdbCursor &cursor )
+      {
+         RELEASE_INNER_HANDLE( cursor.pCursor ) ;
+         return listLobPieces( &cursor.pCursor ) ;
+      }
       /// truncate
       INT32 truncate() ;
 
@@ -482,7 +490,7 @@ namespace sdbclient
       INT32 createIdIndex( const bson::BSONObj &options = _sdbStaticObject ) ;
 
       INT32 dropIdIndex() ;
-      
+
    private:
       INT32 _alterCollection1( const bson::BSONObj &options ) ;
       INT32 _alterCollection2( const bson::BSONObj &options ) ;
@@ -491,7 +499,7 @@ namespace sdbclient
                            INT32 sortBufferSize ) ;
 
    } ;
-   
+
    typedef class _sdbCollectionImpl sdbCollectionImpl ;
 
    /*
@@ -673,6 +681,7 @@ namespace sdbclient
                         const CHAR *pSvcName,
                         const bson::BSONObj &options = _sdbStaticObject ) ;
 
+      INT32 reelect( const bson::BSONObj &options = _sdbStaticObject ) ;
    } ;
 
    typedef class _sdbReplicaGroupImpl sdbReplicaGroupImpl ;
@@ -748,6 +757,9 @@ namespace sdbclient
       {
          return &_collectionSpaceName[0] ;
       }
+
+      INT32 renameCollection( const CHAR * oldName, const CHAR * newName,
+                              const BSONObj & options = _sdbStaticObject ) ;
    } ;
 
    typedef class _sdbCollectionSpaceImpl sdbCollectionSpaceImpl ;
@@ -806,6 +818,13 @@ namespace sdbclient
          return listCollectionsInDomain ( &cursor.pCursor ) ;
       }
 
+      INT32 listReplicaGroupInDomain( _sdbCursor **cursor ) ;
+
+      INT32 listReplicaGroupInDomain( sdbCursor &cursor )
+      {
+         RELEASE_INNER_HANDLE( cursor.pCursor ) ;
+         return listReplicaGroupInDomain ( &cursor.pCursor ) ;
+      }
    } ;
    typedef class _sdbDomainImpl sdbDomainImpl ;
 
@@ -1131,6 +1150,8 @@ namespace sdbclient
 
       INT32 _connect( const CHAR *pHostName,
                       UINT16 port ) ;
+
+      INT32 _traceStrtok( BSONArrayBuilder &arrayBuilder, const CHAR* pLine ) ;
 
       friend class _sdbCollectionSpaceImpl ;
       friend class _sdbCollectionImpl ;
@@ -1492,6 +1513,43 @@ namespace sdbclient
 
       INT32 analyze( const bson::BSONObj &options = _sdbStaticObject ) ;
 
+      INT32 forceSession( SINT64 sessionID,
+                          const bson::BSONObj &options = _sdbStaticObject ) ;
+
+      INT32 forceStepUp( const bson::BSONObj &options = _sdbStaticObject ) ;
+
+      INT32 invalidateCache( const bson::BSONObj &options = _sdbStaticObject ) ;
+
+      INT32 reloadConfig( const bson::BSONObj &options = _sdbStaticObject ) ;
+
+      INT32 setPDLevel( INT32 level,
+                        const bson::BSONObj &options = _sdbStaticObject ) ;
+
+      INT32 msg( const CHAR* msg ) ;
+
+      INT32 loadCS( const CHAR* csName,
+                    const bson::BSONObj &options = _sdbStaticObject ) ;
+
+      INT32 unloadCS( const CHAR* csName,
+                      const bson::BSONObj &options = _sdbStaticObject ) ;
+
+      INT32 traceStart( UINT32 traceBufferSize, const CHAR* component = NULL,
+                        const CHAR* breakpoint = NULL,
+                        const vector<UINT32> &tidVec = _sdbStaticUINT32Vec ) ;
+
+      INT32 traceStop( const CHAR* dumpFileName ) ;
+
+      INT32 traceResume() ;
+
+      INT32 traceStatus( _sdbCursor** cursor ) ;
+
+      INT32 traceStatus( sdbCursor& cursor )
+      {
+         return traceStatus( &(cursor.pCursor) ) ;
+      }
+
+      INT32 renameCollectionSpace( const CHAR* oldName, const CHAR* newName,
+                             const bson::BSONObj &options = _sdbStaticObject ) ;
 /*      INT32 modifyConfig ( INT32 nodeID,
                            std::map<std::string,std::string> &config ) ;
 

@@ -120,6 +120,7 @@ namespace sdbclient
    const static bson::BSONObj _sdbStaticObject ;
    const static bson::OID _sdbStaticOid ;
    const static std::vector<INT32> _sdbStaticVec ;
+   const static std::vector<UINT32> _sdbStaticUINT32Vec ;
    class _sdbCursor ;
    class _sdbCollection ;
    class sdb ;
@@ -254,8 +255,8 @@ namespace sdbclient
       // get the total number of records for a given condition, if the condition
       // is NULL then match all records in the collection
       virtual INT32 getCount ( SINT64 &count,
-                               const bson::BSONObj &condition = _sdbStaticObject ) = 0 ;
-
+                               const bson::BSONObj &condition = _sdbStaticObject,
+                               const bson::BSONObj &hint = _sdbStaticObject ) = 0 ;
       // insert a bson object into current collection
       // given:
       // object ( required )
@@ -465,6 +466,10 @@ namespace sdbclient
 
       virtual INT32 listLobs( sdbCursor &cursor ) = 0 ;
 
+      virtual INT32 listLobPieces( _sdbCursor **cursor ) = 0 ;
+
+      virtual INT32 listLobPieces( sdbCursor &cursor ) = 0 ;
+
       /// truncate
       virtual INT32 truncate() = 0 ;
 
@@ -521,19 +526,25 @@ namespace sdbclient
       }
 
 /** \fn INT32 getCount ( SINT64 &count,
-                         const bson::BSONObj &condition )
+                         const bson::BSONObj &condition,
+                         const bson::BSONObj &hint )
     \brief Get the count of matching documents in current collection.
     \param [in] condition The matching rule, return the count of all documents if this parameter is empty
+    \param [in] hint Specified the index used to scan data. e.g. {"":"ageIndex"} means
+                    using index "ageIndex" to scan data(index scan);
+                    {"":null} means table scan. when hint is not provided,
+                    database automatically match the optimal index to scan data
     \param [out] count The count of matching documents, matches all records if not provided.
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
       INT32 getCount ( SINT64 &count,
-                       const bson::BSONObj &condition = _sdbStaticObject )
+                       const bson::BSONObj &condition = _sdbStaticObject,
+                       const bson::BSONObj &hint = _sdbStaticObject )
       {
          if ( !pCollection )
             return SDB_NOT_CONNECTED ;
-         return pCollection->getCount ( count, condition ) ;
+         return pCollection->getCount ( count, condition, hint ) ;
       }
 
 /** \fn INT32 split ( const CHAR *pSourceGroupName,
@@ -1491,7 +1502,7 @@ namespace sdbclient
         return pCollection->dropIdIndex() ;
     }
 
-/* \fn INT32 pop()
+/* \fn INT32 pop(const bson::BSONObj &option)
     \brief Pop records from a capped collection
     \param [in] option The arguments to pop records.
     \retval SDB_OK Operation Success
@@ -1502,6 +1513,32 @@ namespace sdbclient
          if ( !pCollection )
             return SDB_NOT_CONNECTED ;
          return pCollection->pop( option ) ;
+      }
+
+/** \fn INT32 listLobPieces( _sdbCursor **cursor )
+    \brief List all the lob pieces' meta data in current collection.
+    \param [out] cursor The cursor of current query
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+      INT32 listLobPieces( _sdbCursor **cursor )
+      {
+         if( !pCollection )
+            return SDB_NOT_CONNECTED ;
+         return pCollection->listLobPieces( cursor ) ;
+      }
+
+/** \fn INT32 listLobPieces( sdbCursor &cursor )
+    \brief List all the lob pieces' meta data in current collection.
+    \param [out] cursor The curosr reference of the result
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+      INT32 listLobPieces( sdbCursor &cursor )
+      {
+         if( !pCollection )
+            return SDB_NOT_CONNECTED ;
+         return pCollection->listLobPieces( cursor ) ;
       }
    } ;
 
@@ -1779,6 +1816,9 @@ namespace sdbclient
       virtual INT32 detachNode( const CHAR *pHostName,
                                 const CHAR *pSvcName,
                                 const bson::BSONObj &options = _sdbStaticObject ) = 0 ;
+
+      // reelect primary node
+      virtual INT32 reelect( const bson::BSONObj &options = _sdbStaticObject ) = 0 ;
    } ;
 
 /** \class sdbReplicaGroup
@@ -2128,6 +2168,19 @@ namespace sdbclient
          return pReplicaGroup->detachNode( pHostName, pSvcName, options ) ;
       }
 
+/** \fn INT32 reelect( const bson::BSONObj &options )
+ *  \brief Force the replica group to reelect primary node.
+ *  \param [in] options options of reelect:
+      Seconds: Reelection timeout
+ *  \retval SDB_OK Operation Success
+ *  \retval Others Operation Fail
+ */
+      INT32 reelect( const bson::BSONObj &options = _sdbStaticObject )
+      {
+         if( !pReplicaGroup )
+            return SDB_NOT_CONNECTED ;
+         return pReplicaGroup->reelect( options ) ;
+      }
    } ;
 
    class DLLEXPORT _sdbCollectionSpace
@@ -2169,8 +2222,12 @@ namespace sdbclient
       // drop a collection space with current collection space name
       virtual INT32 drop () = 0 ;
 
-      // get the collecton's name
+      // get the collectonSpace's name
       virtual const CHAR *getCSName () = 0 ;
+
+      // rename collection
+      virtual INT32 renameCollection( const CHAR* oldName, const CHAR* newName,
+                         const bson::BSONObj &options = _sdbStaticObject ) = 0 ;
 
    } ;
 /** \class sdbCollectionSpace
@@ -2382,6 +2439,24 @@ namespace sdbclient
             return NULL ;
          return pCollectionSpace->getCSName () ;
       }
+
+/** \fn INT32 renameCollection(const CHAR* oldName,
+                               const CHAR* newName,
+                               const bson::BSONObj &options)
+    \brief Rename collection ( only support the standalone mode )
+    \param [in] oldName The old name of collectionSpace.
+    \param [in] newName The new name of collectionSpace.
+    \param [in] options Reserved argument
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+      */
+      INT32 renameCollection( const CHAR* oldName, const CHAR* newName,
+                              const bson::BSONObj &options = _sdbStaticObject )
+      {
+         if( !pCollectionSpace )
+            return SDB_NOT_CONNECTED ;
+         return pCollectionSpace->renameCollection( oldName, newName, options ) ;
+      }
    } ;
 
    class DLLEXPORT _sdbDomain
@@ -2405,6 +2480,9 @@ namespace sdbclient
 
       virtual INT32 listCollectionsInDomain ( sdbCursor &cursor ) = 0 ;
 
+      virtual INT32 listReplicaGroupInDomain( _sdbCursor **cursor ) = 0 ;
+
+      virtual INT32 listReplicaGroupInDomain( sdbCursor &cursor ) = 0 ;
    } ;
 
    /** \class  sdbDomain
@@ -2502,6 +2580,31 @@ namespace sdbclient
          return pDomain->listCollectionsInDomain ( cursor ) ;
       }
 
+/** \fn INT32 listReplicaGroupInDomain( _sdbCursor **cursor )
+    \brief List all the replicagroup in current domain.
+    \param [out] cursor The cursor of current query
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+      INT32 listReplicaGroupInDomain( _sdbCursor **cursor )
+      {
+         if ( !pDomain )
+            return SDB_NOT_CONNECTED ;
+         return pDomain->listReplicaGroupInDomain( cursor ) ;
+      }
+
+/** \fn INT32 listReplicaGroupInDomain( sdbCursor &cursor )
+    \brief List all the replicagroup in current domain.
+    \param [out] cursor The curosr reference of the result
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+      INT32 listReplicaGroupInDomain( sdbCursor &cursor )
+      {
+         if ( !pDomain )
+            return SDB_NOT_CONNECTED ;
+         return pDomain->listReplicaGroupInDomain( cursor ) ;
+      }
    };
 
    class DLLEXPORT _sdbDataCenter
@@ -3265,6 +3368,48 @@ namespace sdbclient
 
       virtual INT32 analyze(
          const bson::BSONObj &options = _sdbStaticObject ) = 0 ;
+
+      virtual INT32 forceSession(
+         SINT64 sessionID,
+         const bson::BSONObj &options = _sdbStaticObject ) = 0 ;
+
+      virtual INT32 forceStepUp(
+         const bson::BSONObj &options = _sdbStaticObject ) = 0 ;
+
+      virtual INT32 invalidateCache(
+         const bson::BSONObj &options = _sdbStaticObject ) = 0 ;
+
+      virtual INT32 reloadConfig(
+         const bson::BSONObj &options = _sdbStaticObject ) = 0 ;
+
+      virtual INT32 setPDLevel( INT32 level,
+         const bson::BSONObj &options = _sdbStaticObject ) = 0 ;
+
+      virtual INT32 msg( const CHAR* msg ) = 0 ;
+
+      virtual INT32 loadCS( const CHAR* csName,
+         const bson::BSONObj &options = _sdbStaticObject ) = 0 ;
+
+      virtual INT32 unloadCS( const CHAR* csName,
+         const bson::BSONObj &options = _sdbStaticObject ) = 0 ;
+
+      virtual INT32 traceStart( UINT32 traceBufferSize,
+                                const CHAR* component = NULL,
+                                const CHAR* breakpoint = NULL,
+                      const vector<UINT32> &tidVec = _sdbStaticUINT32Vec ) = 0 ;
+
+      virtual INT32 traceStop( const CHAR* dumpFileName ) = 0 ;
+
+      virtual INT32 traceResume() = 0 ;
+
+      virtual INT32 traceStatus( _sdbCursor** cursor ) = 0 ;
+
+      virtual INT32 traceStatus( sdbCursor& cursor ) = 0 ;
+
+
+      virtual INT32 renameCollectionSpace( const CHAR* oldName,
+                                           const CHAR* newName,
+                        const bson::BSONObj &options = _sdbStaticObject ) = 0 ;
    } ;
 /** \typedef class _sdb _sdb
 */
@@ -4598,7 +4743,6 @@ namespace sdbclient
 
       /** \fn INT32 analyze(const bson::BSONObj &options)
           \brief analyze collection or index to collect statistics information
-          \param [in] cHandle The database connection handle
           \param [in] options The control options:
 
               CollectionSpace: (String) Specify the collectionspace to be analyzed.
@@ -4625,6 +4769,329 @@ namespace sdbclient
          return pSDB->analyze ( options ) ;
       }
 
+      /** \fn INT32 forceSession(SINT64 sessionID,
+                                 const bson::BSONObj &options)
+          \brief Stop the specified session's current operation and terminate it
+          \param [in] sessionID The ID of the session.
+          \param [in] options The control options:
+
+              CollectionSpace: (String) Specify the collectionspace to be analyzed.
+              Collection: (String) Specify the collection to be analyzed.
+              Index: (String) Specify the index to be analyzed.
+              Mode: (Int32) Specify the analyze, 0 is reload only, 1 is sampling
+                    analyze, 2 is full analyze
+              Some of other options are as below:(only take effect in coordinate nodes,
+                             please visit the official website to search "analyze" or
+                             "Location Elements" for more detail.)
+              GroupID:INT32,
+              GroupName:String,
+              NodeID:INT32,
+              HostName:String,
+              svcname:String,
+              ...
+          \retval SDB_OK Operation Success
+          \retval Others Operation Fail
+      */
+      INT32 forceSession( SINT64 sessionID,
+                          const bson::BSONObj &options = _sdbStaticObject )
+      {
+         if( !pSDB )
+            return SDB_NOT_CONNECTED ;
+         return pSDB->forceSession( sessionID, options ) ;
+      }
+
+      /** \fn INT32 forceStepUp(const bson::BSONObj &options)
+          \brief In a replica group that doesn't satisfy the requirement ofre-election,
+               upgrade a slave node to a master node by force.
+          \param [in] options The control options:
+
+              CollectionSpace: (String) Specify the collectionspace to be analyzed.
+              Collection: (String) Specify the collection to be analyzed.
+              Index: (String) Specify the index to be analyzed.
+              Mode: (Int32) Specify the analyze, 0 is reload only, 1 is sampling
+                    analyze, 2 is full analyze
+              Some of other options are as below:(only take effect in coordinate nodes,
+                             please visit the official website to search "analyze" or
+                             "Location Elements" for more detail.)
+              GroupID:INT32,
+              GroupName:String,
+              NodeID:INT32,
+              HostName:String,
+              svcname:String,
+              ...
+          \retval SDB_OK Operation Success
+          \retval Others Operation Fail
+      */
+      INT32 forceStepUp( const bson::BSONObj &options = _sdbStaticObject )
+      {
+         if( !pSDB )
+            return SDB_NOT_CONNECTED ;
+         return pSDB->forceStepUp( options ) ;
+      }
+
+      /** \fn INT32 invalidateCache(const bson::BSONObj &options)
+          \brief Clear the cache of the nodes (data/coord node).
+          \param [in] options The control options:
+
+              CollectionSpace: (String) Specify the collectionspace to be analyzed.
+              Collection: (String) Specify the collection to be analyzed.
+              Index: (String) Specify the index to be analyzed.
+              Mode: (Int32) Specify the analyze, 0 is reload only, 1 is sampling
+                    analyze, 2 is full analyze
+              Some of other options are as below:(only take effect in coordinate nodes,
+                             please visit the official website to search "analyze" or
+                             "Location Elements" for more detail.)
+              GroupID:INT32,
+              GroupName:String,
+              NodeID:INT32,
+              HostName:String,
+              svcname:String,
+              ...
+          \retval SDB_OK Operation Success
+          \retval Others Operation Fail
+      */
+      INT32 invalidateCache( const bson::BSONObj &options = _sdbStaticObject )
+      {
+         if( !pSDB )
+            return SDB_NOT_CONNECTED ;
+         return pSDB->invalidateCache( options ) ;
+      }
+
+      /** \fn INT32 reloadConfig(const bson::BSONObj &options)
+          \brief Force the node to reload config from file and take effect.
+          \param [in] options The control options:
+
+              CollectionSpace: (String) Specify the collectionspace to be analyzed.
+              Collection: (String) Specify the collection to be analyzed.
+              Index: (String) Specify the index to be analyzed.
+              Mode: (Int32) Specify the analyze, 0 is reload only, 1 is sampling
+                    analyze, 2 is full analyze
+              Some of other options are as below:(only take effect in coordinate nodes,
+                             please visit the official website to search "analyze" or
+                             "Location Elements" for more detail.)
+              GroupID:INT32,
+              GroupName:String,
+              NodeID:INT32,
+              HostName:String,
+              svcname:String,
+              ...
+          \retval SDB_OK Operation Success
+          \retval Others Operation Fail
+      */
+      INT32 reloadConfig( const bson::BSONObj &options = _sdbStaticObject )
+      {
+         if( !pSDB )
+            return SDB_NOT_CONNECTED ;
+         return pSDB->reloadConfig( options ) ;
+      }
+
+      /** \fn INT32 setPDLevel(INT32 level,
+                               const bson::BSONObj &options)
+          \brief Set the node's diagnostic level and take effect.
+          \param [in] level The diagnostic level:
+               value 0~5. value means:
+               0: SEVERE
+               1: ERROR
+               2: EVENT
+               3: WARNING
+               4: INFO
+               5: DEBUG
+          \param [in] options The control options:
+
+              CollectionSpace: (String) Specify the collectionspace to be analyzed.
+              Collection: (String) Specify the collection to be analyzed.
+              Index: (String) Specify the index to be analyzed.
+              Mode: (Int32) Specify the analyze, 0 is reload only, 1 is sampling
+                    analyze, 2 is full analyze
+              Some of other options are as below:(only take effect in coordinate nodes,
+                             please visit the official website to search "analyze" or
+                             "Location Elements" for more detail.)
+              GroupID:INT32,
+              GroupName:String,
+              NodeID:INT32,
+              HostName:String,
+              svcname:String,
+              ...
+          \retval SDB_OK Operation Success
+          \retval Others Operation Fail
+      */
+      INT32 setPDLevel( INT32 level,
+                        const bson::BSONObj &options = _sdbStaticObject )
+      {
+         if( !pSDB )
+            return SDB_NOT_CONNECTED ;
+         return pSDB->setPDLevel( level, options ) ;
+      }
+
+      /** \fn INT32 msg(const CHAR* msg)
+          \brief Write a message to log
+          \param [in] msg The message that will be written to log
+          \retval SDB_OK Operation Success
+          \retval Others Operation Fail
+      */
+      INT32 msg( const CHAR* msg )
+      {
+         if( !pSDB )
+            return SDB_NOT_CONNECTED ;
+         return pSDB->msg( msg ) ;
+      }
+
+      /** \fn INT32 loadCS(const CHAR* csName,
+                           const bson::BSONObj &options)
+          \brief Load the specific cs from the file.
+          \param [in] csName The name of cs that will be loaded
+          \param [in] options The control options:
+
+              CollectionSpace: (String) Specify the collectionspace to be analyzed.
+              Collection: (String) Specify the collection to be analyzed.
+              Index: (String) Specify the index to be analyzed.
+              Mode: (Int32) Specify the analyze, 0 is reload only, 1 is sampling
+                    analyze, 2 is full analyze
+              Some of other options are as below:(only take effect in coordinate nodes,
+                             please visit the official website to search "analyze" or
+                             "Location Elements" for more detail.)
+              GroupID:INT32,
+              GroupName:String,
+              NodeID:INT32,
+              HostName:String,
+              svcname:String,
+              ...
+          \retval SDB_OK Operation Success
+          \retval Others Operation Fail
+      */
+      INT32 loadCS( const CHAR* csName,
+                    const bson::BSONObj &options = _sdbStaticObject )
+      {
+         if( !pSDB )
+            return SDB_NOT_CONNECTED ;
+         return pSDB->loadCS( csName, options ) ;
+      }
+
+      /** \fn INT32 unloadCS(const CHAR* csName,
+                           const bson::BSONObj &options)
+          \brief Unload the specific cs.
+          \param [in] csName The name of cs that will be unloaded
+          \param [in] options The control options:
+
+              CollectionSpace: (String) Specify the collectionspace to be analyzed.
+              Collection: (String) Specify the collection to be analyzed.
+              Index: (String) Specify the index to be analyzed.
+              Mode: (Int32) Specify the analyze, 0 is reload only, 1 is sampling
+                    analyze, 2 is full analyze
+              Some of other options are as below:(only take effect in coordinate nodes,
+                             please visit the official website to search "analyze" or
+                             "Location Elements" for more detail.)
+              GroupID:INT32,
+              GroupName:String,
+              NodeID:INT32,
+              HostName:String,
+              svcname:String,
+              ...
+          \retval SDB_OK Operation Success
+          \retval Others Operation Fail
+      */
+      INT32 unloadCS( const CHAR* csName,
+                      const bson::BSONObj &options = _sdbStaticObject )
+      {
+         if( !pSDB )
+            return SDB_NOT_CONNECTED ;
+         return pSDB->unloadCS( csName, options ) ;
+      }
+
+      /** \fn INT32 traceStart(UINT32 traceBufferSize,
+                               const CHAR* component,
+                               const CHAR* breakpoint,
+                               const vector<UINT32> &tidVec)
+          \brief Turn on the trace function of the database engine.
+          \param [in] traceBufferSize Trace file's size(MB), Value range:[1,1024].
+          \param [in] component Specific module.
+          \param [in] breakpoint Add a breakpoint in function to trace.
+          \param [in] tidVec The target threads.
+          \retval SDB_OK Operation Success
+          \retval Others Operation Fail
+      */
+      INT32 traceStart( UINT32 traceBufferSize,
+                        const CHAR* component = NULL,
+                        const CHAR* breakpoint = NULL,
+                        const vector<UINT32> &tidVec = _sdbStaticUINT32Vec )
+      {
+         if( !pSDB )
+            return SDB_NOT_CONNECTED ;
+         return pSDB->traceStart( traceBufferSize, component,
+                                  breakpoint, tidVec ) ;
+      }
+
+      /** \fn INT32 traceStop(const CHAR* dumpFileName)
+          \brief Close the tracing function of the database engine,
+            and then export the information in to binary files
+          \param [in] dumpFileName Name of dump file. If the file path is
+            relative path, will store file into the node's 'diagpath'.
+          \retval SDB_OK Operation Success
+          \retval Others Operation Fail
+      */
+      INT32 traceStop( const CHAR* dumpFileName )
+      {
+         if( !pSDB )
+            return SDB_NOT_CONNECTED ;
+         return pSDB->traceStop( dumpFileName ) ;
+      }
+
+      /** \fn INT32 traceResume()
+          \brief Resume the breakpoint trace tool.
+          \retval SDB_OK Operation Success
+          \retval Others Operation Fail
+      */
+      INT32 traceResume()
+      {
+         if( !pSDB )
+            return SDB_NOT_CONNECTED ;
+         return pSDB->traceResume() ;
+      }
+
+      /** \fn INT32 traceStatus(sdbCursor& cursor)
+          \brief Show the current status of the program trace.
+          \param [out] cursor The return cursor object of query.
+          \retval SDB_OK Operation Success
+          \retval Others Operation Fail
+      */
+      INT32 traceStatus( sdbCursor& cursor )
+      {
+         if( !pSDB )
+            return SDB_NOT_CONNECTED ;
+         return pSDB->traceStatus( cursor ) ;
+      }
+
+      /** \fn INT32 traceStatus(_sdbCursor** cursor)
+          \brief Show the current status of the program trace.
+          \param [out] cursor The return cursor handle of query.
+          \retval SDB_OK Operation Success
+          \retval Others Operation Fail
+      */
+      INT32 traceStatus( _sdbCursor** cursor )
+      {
+         if( !pSDB )
+            return SDB_NOT_CONNECTED ;
+         return pSDB->traceStatus( cursor ) ;
+      }
+
+      /** \fn INT32 renameCollectionSpace(const CHAR* oldName,
+                                          const CHAR* newName,
+                                          const bson::BSONObj &options)
+          \brief Rename collectionSpace ( only support the standalone mode )
+          \param [in] oldName The old name of collectionSpace.
+          \param [in] newName The new name of collectionSpace.
+          \param [in] options Reserved argument
+          \retval SDB_OK Operation Success
+          \retval Others Operation Fail
+      */
+      INT32 renameCollectionSpace( const CHAR* oldName,
+                                   const CHAR* newName,
+                                   const bson::BSONObj &options = _sdbStaticObject )
+      {
+         if( !pSDB )
+            return SDB_NOT_CONNECTED ;
+         return pSDB->renameCollectionSpace( oldName, newName, options ) ;
+      }
 /*      INT32 modifyConfig ( INT32 nodeID,
                            std::map<std::string,std::string> &config )
       {
