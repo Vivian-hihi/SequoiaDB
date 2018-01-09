@@ -154,7 +154,7 @@ testFiles = [
    [ "./uninited/sdbNode14034.cpp" ],
    [ "./uninited/sdbCollection14035.cpp" ],
    [ "./uninited/sdbCollectionSpace14036.cpp" ],
-   [ "./uninited/sdbReplicaGroup14038.cpp" ],
+   [ "./uninited/sdbReplicaGroup14037.cpp" ],
    [ "./uninited/sdbDomain14038.cpp" ],
    [ "./uninited/sdbLob14039.cpp" ]
 ]
