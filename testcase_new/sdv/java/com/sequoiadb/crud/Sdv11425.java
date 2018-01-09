@@ -48,7 +48,6 @@ public class Sdv11425 extends SdbTestBase {
                             .getCollection(CLNAME);
                     for (int i = 0; i < 10000; i++) {
                         cl.insert(new BasicBSONObject("b", i));
-                        System.out.println("xxxxxx");
                     }
                 } catch (BaseException e) {
                     if (e.getErrorCode() != -23) throw e;
