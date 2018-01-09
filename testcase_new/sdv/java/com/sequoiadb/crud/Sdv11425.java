@@ -12,6 +12,8 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import java.util.Random;
+
 /**
  * Created by laojingtang on 18-1-4.
  */
@@ -35,7 +37,7 @@ public class Sdv11425 extends SdbTestBase {
     }
 
     @Test
-    public void test() {
+    public void test() throws InterruptedException {
         SdbThreadBase insert = new SdbThreadBase() {
             @Override
             public void exec() throws Exception {
@@ -44,8 +46,9 @@ public class Sdv11425 extends SdbTestBase {
                     db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
                     DBCollection cl = db.getCollectionSpace(SdbTestBase.csName)
                             .getCollection(CLNAME);
-                    for (int i = 0; i < 100; i++) {
+                    for (int i = 0; i < 10000; i++) {
                         cl.insert(new BasicBSONObject("b", i));
+                        System.out.println("xxxxxx");
                     }
                 } catch (BaseException e) {
                     if (e.getErrorCode() != -23) throw e;
@@ -58,9 +61,11 @@ public class Sdv11425 extends SdbTestBase {
 
         insert.start(20);
 
-        db.getCollectionSpace(SdbTestBase.csName)
-                .dropCollection(CLNAME);
+        Thread.sleep(300 + new Random().nextInt(200));
+        CollectionSpace cs = db.getCollectionSpace(SdbTestBase.csName);
+        cs.dropCollection(CLNAME);
 
         Assert.assertTrue(insert.isSuccess(), insert.getErrorMsg());
+        Assert.assertFalse(cs.isCollectionExist(CLNAME));
     }
 }
