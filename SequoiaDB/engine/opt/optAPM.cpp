@@ -2302,7 +2302,10 @@ namespace engine
       }
       else
       {
-         PD_LOG( PDDEBUG, "Invalid parameterized plan" ) ;
+         // The parameter is not validate for the parameterized
+         // plan, mark the collection invalidate for parameterized plans
+         PD_LOG( PDDEBUG, "Invalid parameterized plan [%s]",
+                 plan->toString().c_str() ) ;
          plan->markParamInvalid( mbContext ) ;
          _planCache.removeCachedPlan( plan ) ;
       }
@@ -2457,13 +2460,11 @@ namespace engine
       if ( !mainPlan->validateSubCLPlan( subPlan, parameters ) )
       {
          // The sub-collection is not validate for the main-collection
-         // plan, mark it invalidate for main-collection plans
-         rc = mainPlan->markMainCLInvalid( pCachedPlanMgr,
-                                           mbContext,
-                                           FALSE ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to mark sub-collection "
-                      "invalidated to reuse main-collection plan, "
-                      "rc: %d", rc ) ;
+         // plan, mark the collection invalidate for main-collection plans
+         PD_LOG( PDDEBUG, "Invalid main-collection plan [%s]",
+                 mainPlan->toString().c_str() ) ;
+         mainPlan->markMainCLInvalid( pCachedPlanMgr, mbContext, FALSE ) ;
+         _planCache.removeCachedPlan( mainPlan ) ;
       }
 
    done :
