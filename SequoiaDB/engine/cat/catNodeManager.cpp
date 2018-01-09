@@ -304,18 +304,8 @@ namespace engine
          BSONObj boMatcher;
          if ( SPARE_GROUPID == groupID)
          {
-            BSONObj obj ;
-            /// check primary node is the same
-            rc = catGetOneObj( CAT_NODE_INFO_COLLECTION,
-                               BSONObj(),
-                               BSON( CAT_GROUPID_NAME << groupID ),
-                               BSONObj(), _pEduCB, obj) ;
-            if ( SDB_OK == rc )
-            {
-               goto done ;
-            }
-
-            boMatcher = BSON( CAT_GROUPID_NAME << groupID) ;
+             boMatcher = BSON( CAT_GROUPID_NAME << groupID) ;
+             boUpdater = BSON( "$unset" << BSON( CAT_PRIMARY_NAME<<"") ) ;
          }
          else if ( INVALID_GROUPID == groupID || INVALID_NODEID == nodeID )
          {
