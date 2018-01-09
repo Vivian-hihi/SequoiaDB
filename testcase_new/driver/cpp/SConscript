@@ -149,6 +149,14 @@ testFiles = [
    [ "./lob/lockParamVerify13422.cpp" ],
    [ "./lob/lockAndSeekParamVerify13423.cpp" ],
    [ "./lob/truncateLobParamVerify13424.cpp" ],
+   [ "./uninited/sdb14032.cpp" ],
+   [ "./uninited/sdbCursor14033.cpp" ],
+   [ "./uninited/sdbNode14034.cpp" ],
+   [ "./uninited/sdbCollection14035.cpp" ],
+   [ "./uninited/sdbCollectionSpace14036.cpp" ],
+   [ "./uninited/sdbReplicaGroup14038.cpp" ],
+   [ "./uninited/sdbDomain14038.cpp" ],
+   [ "./uninited/sdbLob14039.cpp" ]
 ]
 
 def getFileName( filePath ):
