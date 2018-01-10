@@ -123,8 +123,12 @@ public class Index11424 extends SdbTestBase {
 
                     for (int i = 0; i < 1000; i++) {
                         for (String s : clRowMeta) {
-                            BasicBSONObject matcher = new BasicBSONObject(s, random.nextInt(10));
-                            cl.query(matcher, new BasicBSONObject(), new BasicBSONObject(), new BasicBSONObject(), 0, 10).close();
+                            int sValue = random.nextInt((int) num);
+                            BasicBSONObject matcher = new BasicBSONObject(s, sValue);
+                            DBCursor cursor = cl.query(matcher, new BasicBSONObject(), new BasicBSONObject(), new BasicBSONObject(), 0, 10);
+                            BSONObject o = cursor.getNext();
+                            cursor.close();
+                            assertEquals(o.get(s), sValue, o.toString());
                         }
                     }
                 } finally {

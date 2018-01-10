@@ -14,6 +14,7 @@ import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static org.testng.Assert.*;
 
@@ -45,7 +46,16 @@ public class Index11415 extends SdbTestBase {
      */
     @Test
     public void testRemoveIndex() {
+        dbcl.createIndex("a_index", new BasicBSONObject("a", 1), false, false);
         dbcl.createIndex("b_index", new BasicBSONObject("b", 1), false, false);
+        dbcl.createIndex("c_index", new BasicBSONObject("c", 1), false, false);
+        dbcl.createIndex("d_index", new BasicBSONObject("d", 1), false, false);
+        String[] indexNameArr = new String[]{"a_index", "b_index", "c_index", "d_index"};
+
+        final ConcurrentLinkedQueue<String> indexQueue = new ConcurrentLinkedQueue<>();
+        for (String s : indexNameArr) {
+            indexQueue.add(s);
+        }
 
         SdbThreadBase removeIndexTask = new SdbThreadBase() {
             @Override
@@ -54,7 +64,8 @@ public class Index11415 extends SdbTestBase {
                 try {
                     db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
                     DBCollection cl = db.getCollectionSpace(SdbTestBase.csName).getCollection(Index11415.this.CLNAME);
-                    cl.dropIndex("b_index");
+                    String indexName = indexQueue.poll();
+                    cl.dropIndex(indexName);
                 } catch (BaseException e) {
                     if (e.getErrorCode() != -47)
                         throw e;
@@ -89,13 +100,16 @@ public class Index11415 extends SdbTestBase {
             }
         };
         insertClTask.start(10);
-        removeIndexTask.start(20);
+        removeIndexTask.start(4);
 
         assertTrue(insertClTask.isSuccess(), insertClTask.getErrorMsg());
         assertTrue(removeIndexTask.isSuccess(), removeIndexTask.getErrorMsg());
         assertEquals(dbcl.getCount(), 10000 * 10);
 
-        DBCursor curor = dbcl.getIndex("b_index");
-        assertFalse(curor.hasNext(), "b_index");
+        for (String s : indexNameArr) {
+            DBCursor curor = dbcl.getIndex(s);
+            assertFalse(curor.hasNext(), s);
+            curor.close();
+        }
     }
 }
