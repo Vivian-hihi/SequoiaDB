@@ -39,7 +39,8 @@ public class Split10534 extends SdbTestBase {
 	private Sequoiadb commSdb = null;
 	private List<BSONObject> insertedData = new ArrayList<BSONObject>();
 	private List<BSONObject> indexes = new ArrayList<BSONObject>();
-
+	public static final int FLG_INSERT_CONTONDUP = 0x00000001;
+	
 	@BeforeClass
 	public void setUp() {
 
@@ -73,11 +74,12 @@ public class Split10534 extends SdbTestBase {
 
 	public void insertData(DBCollection cl) {
 		try {
-			for (int i = 0; i < 500; i++) {
+			for (int i = 0; i < 50000; i++) {
 				BSONObject obj = (BSONObject) JSON.parse("{sk:" + i + ",index1:" + i + "}");
-				cl.insert(obj);
+				//cl.insert(obj);
 				insertedData.add(obj);
 			}
+			cl.bulkInsert(insertedData,this.FLG_INSERT_CONTONDUP);
 		} catch (BaseException e) {
 			throw e;
 		}
@@ -107,10 +109,10 @@ public class Split10534 extends SdbTestBase {
 			// 等待切分结束
 			Assert.assertEquals(splitThread.isSuccess(), true, splitThread.getErrorMsg());
 			Assert.assertEquals(createIndexThread.isSuccess(), true, createIndexThread.getErrorMsg());
-			// 期望有250条符合{sk:{$gte:0,$lt:250}}的记录，并且源组中只有250条记录
-			checkDestGroup(db, 250, "{sk:{$gte:0,$lt:250}}", 250, srcGroupName);
-			// 期望有250条符合条件的记录，并且目标组中只有250条记录
-			checkDestGroup(db, 250, "{sk:{$gte:250,$lt:500}}", 250, destGroupName);
+			// 期望有2500条符合{sk:{$gte:0,$lt:2500}}的记录，并且源组中只有250条记录
+			checkDestGroup(db, 25000, "{sk:{$gte:0,$lt:25000}}", 25000, srcGroupName);
+			// 期望有2500条符合条件的记录，并且目标组中只有250条记录
+			checkDestGroup(db, 25000, "{sk:{$gte:25000,$lt:50000}}", 25000, destGroupName);
 
 			// 检查源和目标组的索引
 			checkIndexExist(db, srcGroupName);
@@ -279,8 +281,8 @@ public class Split10534 extends SdbTestBase {
 				sdb = new Sequoiadb(coordUrl, "", "");
 				CollectionSpace cs = sdb.getCollectionSpace(csName);
 				DBCollection cl = cs.getCollection(clName);
-				cl.split(srcGroupName, destGroupName, (BSONObject) JSON.parse("{sk:250}"), // 切分
-						(BSONObject) JSON.parse("{sk:500}"));
+				cl.split(srcGroupName, destGroupName, (BSONObject) JSON.parse("{sk:25000}"), // 切分
+						(BSONObject) JSON.parse("{sk:50000}"));
 			} catch (BaseException e) {
 				throw e;
 			} finally {

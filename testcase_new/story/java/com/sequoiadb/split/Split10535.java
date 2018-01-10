@@ -205,8 +205,6 @@ public class Split10535 extends SdbTestBase {
         public void exec() throws Exception {
             Sequoiadb db = null;
             try{
-                SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                System.out.println("3333  " + df.format(new Date()));
                 db = new Sequoiadb(coordUrl, "", "");
                 db.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
                 DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
@@ -214,7 +212,6 @@ public class Split10535 extends SdbTestBase {
                     cl.dropIndex("index"+i);
                     Thread.sleep(100);
                 }
-                System.out.println("4444  " + df.format(new Date()));
             }catch (BaseException e) {
                 throw e;
             } finally {
@@ -231,14 +228,11 @@ public class Split10535 extends SdbTestBase {
 		public void exec() throws Exception {
 			Sequoiadb sdb = null;
 			try {
-                SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                System.out.println("11111  " + df.format(new Date()));
 				sdb = new Sequoiadb(coordUrl, "", "");
 				CollectionSpace cs = sdb.getCollectionSpace(csName);
 				DBCollection cl = cs.getCollection(clName);
 				cl.split(srcGroupName, destGroupName, (BSONObject) JSON.parse("{sk:500}"), // 切分
 						(BSONObject) JSON.parse("{sk:1000}"));
-				System.out.println("22222  " + df.format(new Date()));
 			} catch (BaseException e) {
 				throw e;
 			} finally {

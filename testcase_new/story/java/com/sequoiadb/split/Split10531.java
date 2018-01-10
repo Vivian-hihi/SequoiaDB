@@ -106,6 +106,7 @@ public class Split10531 extends SdbTestBase {
 			if (!splitThread.isSuccess()) {
 				Assert.fail(splitThread.getErrorMsg());
 			}
+			deleteDataAndLob.join();
             if (!deleteDataAndLob.isSuccess()) {
                 Assert.fail(deleteDataAndLob.getErrorMsg());
             }
@@ -270,6 +271,7 @@ public class Split10531 extends SdbTestBase {
                     deletedLob.add(insertedLob.get(i));
                     insertedData.remove(i);
                     insertedLob.remove(i);
+                    Thread.sleep(20);
                 }
             } catch (BaseException e) {
                 Assert.fail(e.getMessage()+"\r\n"+SplitUtils.getKeyStack(e,this));

@@ -37,7 +37,8 @@ public class Split10532 extends SdbTestBase {
 	private String srcGroupName;
 	private String destGroupName;
 	private Sequoiadb commSdb = null;
-
+	public static final int FLG_INSERT_CONTONDUP = 0x00000001;
+	
 	@BeforeClass()
 	public void setUp() {
 
@@ -70,10 +71,12 @@ public class Split10532 extends SdbTestBase {
 
 	public void insertData(DBCollection cl) {
 		try {
-			for (int i = 0; i < 1000; i++) {
+		    ArrayList<BSONObject> arr = new ArrayList<BSONObject>();
+			for (int i = 0; i < 100000; i++) {
 				BSONObject obj = (BSONObject) JSON.parse("{sk:" + i + ",alpha:1}");
-				cl.insert(obj);
+				arr.add(obj);
 			}
+			cl.bulkInsert(arr,this.FLG_INSERT_CONTONDUP);
 		} catch (BaseException e) {
 			throw e;
 		}
@@ -101,10 +104,10 @@ public class Split10532 extends SdbTestBase {
 			Assert.assertEquals(updateAndInsertThread.isSuccess(), true, updateAndInsertThread.getErrorMsg());
 			// 构造源组期望数据
 			List<BSONObject> srcExpect = new ArrayList<BSONObject>();
-			for (int i = 0; i < 400; i++) {
+			for (int i = 0; i < 40000; i++) {
 				srcExpect.add((BSONObject) JSON.parse("{sk:" + i + ",alpha:1}"));
 			}
-			for (int i = 400; i < 500; i++) {
+			for (int i = 40000; i < 50000; i++) {
 				srcExpect.add((BSONObject) JSON.parse("{sk:" + i + ",alpha:2}"));
 				srcExpect.add((BSONObject) JSON.parse("{sk:" + i + ",alpha:2}"));
 			}
@@ -113,11 +116,11 @@ public class Split10532 extends SdbTestBase {
 
 			// 构造目标组期望数据
 			List<BSONObject> destExpect = new ArrayList<BSONObject>();
-			for (int i = 500; i < 600; i++) {
+			for (int i = 50000; i < 60000; i++) {
 				destExpect.add((BSONObject) JSON.parse("{sk:" + i + ",alpha:2}"));
 				destExpect.add((BSONObject) JSON.parse("{sk:" + i + ",alpha:2}"));
 			}
-			for (int i = 600; i < 1000; i++) {
+			for (int i = 60000; i < 100000; i++) {
 				destExpect.add((BSONObject) JSON.parse("{sk:" + i + ",alpha:1}"));
 			}
 			// 检验目标组数据
@@ -125,7 +128,7 @@ public class Split10532 extends SdbTestBase {
 
 			// 构造更新后的期望数据
 			List<BSONObject> updateExpect = new ArrayList<BSONObject>();
-			for (int i = 400; i < 600; i++) {
+			for (int i = 40000; i < 60000; i++) {
 				updateExpect.add((BSONObject) JSON.parse("{sk:" + i + ",alpha:2}"));
 				updateExpect.add((BSONObject) JSON.parse("{sk:" + i + ",alpha:2}"));
 			}
@@ -169,7 +172,7 @@ public class Split10532 extends SdbTestBase {
 		try {
 			// 比对所有更新的数据
 			DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
-			cursor1 = cl.query("{sk:{$gte:400,$lt:600}}", null, "", null);
+			cursor1 = cl.query("{sk:{$gte:40000,$lt:60000}}", null, "", null);
 			while (cursor1.hasNext()) {
 				BSONObject actual = cursor1.getNext();
 				actual.removeField("_id");
@@ -222,9 +225,8 @@ public class Split10532 extends SdbTestBase {
                 db = new Sequoiadb(coordUrl, "", "");
                 db.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
                 DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
-                for (int i = 400; i < 600; i++) {
+                for (int i = 40000; i < 60000; i++) {
                     cl.insert("{sk:" + i + ",alpha:1}");// 增加数据
-                    Thread.sleep(10);
                     cl.update("{sk:" + i + ",alpha:1}", "{$inc:{alpha:1}}", null);// 更新数据
                 }
             }catch (BaseException e) {
@@ -247,8 +249,8 @@ public class Split10532 extends SdbTestBase {
 				sdb = new Sequoiadb(coordUrl, "", "");
 				CollectionSpace cs = sdb.getCollectionSpace(csName);
 				DBCollection subCL = cs.getCollection(clName);
-				subCL.split(srcGroupName, destGroupName, (BSONObject) JSON.parse("{sk:500}"),
-						(BSONObject) JSON.parse("{sk:1000}"));
+				subCL.split(srcGroupName, destGroupName, (BSONObject) JSON.parse("{sk:50000}"),
+						(BSONObject) JSON.parse("{sk:100000}"));
 			} catch (BaseException e) {
 				throw e;
 			} finally {
