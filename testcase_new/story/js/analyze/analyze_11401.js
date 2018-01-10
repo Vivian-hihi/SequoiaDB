@@ -40,25 +40,31 @@ function main()
    insertSameDatas( dbcl, insertNums, sameValues );
                                                            	
    //check before invoke analyze
+   checkStat( db, csName, clName, "$shard", false, false );
    checkStat( db, csName, clName, "b", false, false );
                                                         	
    //check the query explain of master/slave nodes 
-   var findConf = {b : 9000};
-   var expExplains = [{ScanType:"ixscan", IndexName:"b", ReturnNum:insertNums}];
+   var findConf1 = {a : 9000};
+   var findConf2 = {b : 9000};
+   var expExplains1 = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
+   var expExplains2 = [{ScanType:"ixscan", IndexName:"b", ReturnNum:insertNums}];
                                         
-   var actExplains = getCommonExplain( dbclPrimary, findConf);
-   checkExplain( actExplains, expExplains );
+   var actExplains1 = getCommonExplain( dbclPrimary, findConf1);
+   var actExplains2 = getCommonExplain( dbclPrimary, findConf2);
+   checkExplain( actExplains1, expExplains1 );
+   checkExplain( actExplains2, expExplains2 ); 
                                                                   
-   var actExplains = getCommonExplain( dbclSlave, findConf);
-   checkExplain( actExplains, expExplains );
-                                                                       
-   println("check result before analyze success!");
-                                                                    	
+   var actExplains1 = getCommonExplain( dbclSlave, findConf1);
+   var actExplains2 = getCommonExplain( dbclSlave, findConf2);
+   checkExplain( actExplains1, expExplains1 );
+   checkExplain( actExplains2, expExplains2 ); 
+                                                                                                                                 	
    //invoke analyze
    var options = {CollectionSpace: csName};
    analyze( db, options );
                                                         	
-   //check after analyze
+   //check after analyze before alter
+   checkStat( db, csName, clName, "$shard", true, false );
    checkStat( db, csName, clName, "b", true, true );
    
    //check the query explain of master/slave nodes 
@@ -75,28 +81,55 @@ function main()
    checkExplain( actExplains1, expExplains );
    var actExplains2 = getCommonExplain( dbclSlave, findConf2);
    checkExplain( actExplains2, expExplains );
-                                                                       
+               
+   println("check result success before alter!");       
+                                                 
    //alter cl
    alterCL( dbcl );
-                                       	
-   //check after alter	
-   var findConf1 = {b : 9000};
-   var expExplains1 = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}]; 
-                                                                                	
-   var findConf2 = {a : 9000};
-   var expExplains2 = [{ScanType:"ixscan", IndexName:"$shard", ReturnNum:insertNums}];
+         
+   //check alter before analyze       
+   checkStat( db, csName, clName, "$shard", true, false );
+   checkStat( db, csName, clName, "b", true, true );
+
+   var findConf1 = {a : 9000};
+   var findConf2 = {b : 9000};
+   var expExplains1 = [{ScanType:"ixscan", IndexName:"$shard", ReturnNum:insertNums}];
+   var expExplains2 = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
+                                        
+   var actExplains1 = getCommonExplain( dbclPrimary, findConf1);
+   var actExplains2 = getCommonExplain( dbclPrimary, findConf2);
+   checkExplain( actExplains1, expExplains1 );
+   checkExplain( actExplains2, expExplains2 ); 
+                                                                  
+   var actExplains1 = getCommonExplain( dbclSlave, findConf1);
+   var actExplains2 = getCommonExplain( dbclSlave, findConf2);
+   checkExplain( actExplains1, expExplains1 );
+   checkExplain( actExplains2, expExplains2 ); 
+                                                                       
+   println("check result success after alter before analyze!");  
+                       	
+   //check alter after analyze
+   var options = {CollectionSpace: csName};
+   analyze( db, options );
+
+   checkStat( db, csName, clName, "$shard", true, true );
+   checkStat( db, csName, clName, "b", true, true );
+
+   var findConf1 = {a : 9000};                                                                            	
+   var findConf2 = {b : 9000};
+   var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}]; 
                                                                                         	
    var actExplains1 = getCommonExplain( dbclPrimary, findConf1);
-   checkExplain( actExplains1, expExplains1 );
    var actExplains2 = getCommonExplain( dbclPrimary, findConf2);
-   checkExplain( actExplains2, expExplains2 );
+   checkExplain( actExplains1, expExplains );
+   checkExplain( actExplains2, expExplains );
                                                                    	
    var actExplains1 = getCommonExplain( dbclSlave, findConf1);
-   checkExplain( actExplains1, expExplains1 );
    var actExplains2 = getCommonExplain( dbclSlave, findConf2);
-   checkExplain( actExplains2, expExplains2 );
+   checkExplain( actExplains1, expExplains );
+   checkExplain( actExplains2, expExplains );
                                                                               	
-   println("check result after analyze success!");
+   println("check result success after alter after analyze!");  
         
    db1.close();        
    commDropCS( db, csName, true, "drop CS in the end" );

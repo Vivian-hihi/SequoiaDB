@@ -78,14 +78,14 @@ function main()
                                                     
    //analyze invalid groups
    var options1 = {GroupName : "SYSCoord"};
-   checkAnalyzeOtherGroup(options1);
+   checkAnalyzeInvalidGroup(options1);
                                                                                  	
    var options2 = {GroupName : "NotExistGroup"};
-   checkAnalyzeOtherGroup(options2);
+   checkAnalyzeInvalidGroup(options2);
                                                                                   	
    //check catalog
    var options3 = {GroupName : "SYSCatalogGroup"};
-   analyze( db, options3 );
+   checkAnalyzeCataGroup( options3 );
                                                           	
    println("check result after analyze success!");
    
@@ -93,7 +93,7 @@ function main()
    commDropCS( db, csName, true, "drop CS in the end" );
 }
 
-function checkAnalyzeOtherGroup( options )
+function checkAnalyzeInvalidGroup( options )
 {
    try
    {
@@ -106,6 +106,44 @@ function checkAnalyzeOtherGroup( options )
       {
          throw buildException( "check analyze", e, "check analyze", "success", "fail" );
       }
+   }
+}
+
+function checkAnalyzeCataGroup( options )
+{
+   try
+   {
+      db.analyze( options );
+      
+      //get and connect to master node
+      var cataRG = db.getCatalogRG();
+      var priNode = cataRG.getMaster();
+      var cataDB = priNode.connect();
+      
+      //check analyze stat info
+      var sysStatCLName = "SYSSTAT.SYSCOLLECTIONSTAT";
+      var sysStatIndexName = "SYSSTAT.SYSINDEXSTAT";
+     
+      var count = 0;
+      var cursor = cataDB.listCollections();
+      while(cursor.next())
+      { 
+         var name = cursor.current().toObj().Name;
+         if(sysStatCLName == name || sysStatIndexName == name)
+         {
+            count++;
+         }
+      }
+  
+      if(count > 0)
+      {
+          throw 'CHECK CATAGROUP FAIL';
+      }
+
+   }
+   catch ( e )
+   {
+      throw buildException( "check analyze", e, "check analyze", "success", "fail" );
    }
 }
 main();

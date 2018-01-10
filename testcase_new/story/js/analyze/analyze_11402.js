@@ -99,16 +99,30 @@ function main()
                                                                                   	
    //split cl
    splitCL(dbcl, srcGroupName, destGroupName);
+
+   var findConf1 = {a : 9000};
+   var findConf2 = {b : 9000};
+   var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
+                                                                    
+   var actExplains1 = getCommonExplain( dbclPrimary, findConf1);
+   var actExplains2 = getCommonExplain( dbclPrimary, findConf2);
+   checkExplain( actExplains1, expExplains );
+   checkExplain( actExplains2, expExplains );
+   
+   var actExplains1 = getCommonExplain( dbclSlave, findConf1);
+   var actExplains2 = getCommonExplain( dbclSlave, findConf2);
+   checkExplain( actExplains1, expExplains );
+   checkExplain( actExplains2, expExplains );
+   
+   println("check analyze result success after split before analyze!");
 	
-   //analyze after split
+   //check split after analyze
    var options = {Collection: csName + "." + clName};
    analyze( db, options );
-
-   //check after analyze
+   
    checkStat( db, csName, clName, "$shard", true, true );
    checkStat( db, csName, clName, "b", true, true );
      
-   //check after split
    var findConf1 = {a : 9000};
    var findConf2 = {b : 9000};
    var expExplains1 = [{ScanType:"tbscan", IndexName:"", GroupName:srcGroupName, ReturnNum:insertNums}];
@@ -125,7 +139,7 @@ function main()
    checkExplain( actExplains1, expExplains1 );
    checkExplain( actExplains2, expExplains2 );
                                       
-   println("check analyze result success after split!");
+   println("check analyze result success after split after analyze!");
 	
    db1.close();
    commDropCS( db, csName, true, "drop CS in the end" );
