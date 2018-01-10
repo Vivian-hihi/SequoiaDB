@@ -25,7 +25,6 @@ import static org.testng.Assert.assertTrue;
  * Created by laojingtang on 18-1-4.
  */
 public class Sdv6986 extends SdbTestBase {
-    Logger log = Logger.getLogger("xx");
     private Sequoiadb db = null;
     private static final String CLNAME = Sdv6986.class.getSimpleName();
     private DBCollection dbcl;
@@ -61,7 +60,6 @@ public class Sdv6986 extends SdbTestBase {
             public void exec() throws Exception {
                 Sequoiadb db = null;
                 try {
-                    log.info("1");
                     db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
                     DBCollection cl = db.getCollectionSpace(SdbTestBase.csName)
                             .getCollection(CLNAME);
@@ -70,7 +68,6 @@ public class Sdv6986 extends SdbTestBase {
                         cl.insert(t);
                         insertData.addAll(t);
                     }
-                    log.info("2");
                 } finally {
                     if (db != null)
                         db.disconnect();
@@ -83,12 +80,10 @@ public class Sdv6986 extends SdbTestBase {
             public void exec() throws Exception {
                 Sequoiadb db = null;
                 try {
-                    log.info("3");
                     db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
                     DBCollection cl = db.getCollectionSpace(SdbTestBase.csName)
                             .getCollection(CLNAME);
                     cl.createIndex("a_index", new BasicBSONObject("a", 1), false, false);
-                    log.info("4");
                 } finally {
                     if (db != null)
                         db.disconnect();
