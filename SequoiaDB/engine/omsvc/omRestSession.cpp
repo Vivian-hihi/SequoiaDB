@@ -770,12 +770,14 @@ namespace engine
       goto done ;
    }
 
-   INT32 _omRestSession::_forwardPlugin( restAdaptor *pAdptor )
+   INT32 _omRestSession::_forwardPlugin( restAdaptor *pAdptor,
+                                         const string &businessType )
    {
       INT32 rc = SDB_OK ;
       omRestCommandBase *pCommand = NULL ;
 
-      pCommand = SDB_OSS_NEW omForwardPluginCommand( pAdptor, this ) ;
+      pCommand = SDB_OSS_NEW omForwardPluginCommand( pAdptor, this,
+                                                     businessType ) ;
       if ( NULL == pCommand )
       {
          rc = SDB_OOM ;
@@ -833,7 +835,7 @@ namespace engine
          else
          {
             //forward to the plugin
-            rc = _forwardPlugin( pAdaptor ) ;
+            rc = _forwardPlugin( pAdaptor, businessType ) ;
          }
       }
 

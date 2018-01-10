@@ -90,7 +90,8 @@ namespace engine
       private:
          INT32 _actionGetFile( const CHAR *pFilePath ) ;
 
-         INT32 _forwardPlugin( restAdaptor *pAdptor ) ;
+         INT32 _forwardPlugin( restAdaptor *pAdptor,
+                               const string &businessType ) ;
 
          INT32 _actionCmd( const CHAR *pFilePath ) ;
 

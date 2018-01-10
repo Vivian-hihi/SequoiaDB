@@ -1151,11 +1151,15 @@ namespace engine
    {
    public:
       omForwardPluginCommand( restAdaptor *pRestAdaptor,
-                              pmdRestSession *pRestSession ) ;
+                              pmdRestSession *pRestSession,
+                              const string &businessType ) ;
 
       ~omForwardPluginCommand() ;
 
       virtual INT32 doCommand() ;
+
+   private:
+      string _businessType ;
    } ;
 
    class omGetFileCommand : public omGetLogCommand

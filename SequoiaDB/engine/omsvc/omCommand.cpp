@@ -10853,17 +10853,21 @@ namespace engine
    // ***************** omForwardPluginCommand  *****************************
    omForwardPluginCommand::omForwardPluginCommand(
                                                 restAdaptor *pRestAdaptor,
-                                                pmdRestSession *pRestSession )
+                                                pmdRestSession *pRestSession,
+                                                const string &businessType )
                                  : omAuthCommand( pRestAdaptor, pRestSession )
    {
+      _businessType = businessType ;
    }
 
    omForwardPluginCommand::~omForwardPluginCommand()
    {
    }
 
+   #define OM_FORWARD_TIMEOUT (10000)
    INT32 omForwardPluginCommand::doCommand()
    {
+      UINT16 port = 0 ;
       INT32 rc = SDB_OK ;
       INT32 sendLength = 0 ;
       INT32 headerSize = 0 ;
@@ -10871,64 +10875,99 @@ namespace engine
       const CHAR *pHttpHeader = NULL ;
       const CHAR *pHttpBody   = NULL ;
       omRestTool restTool( _restAdaptor, _restSession ) ;
-      ossSocket client( "127.0.0.1", 8080 ) ;
+      omDatabaseTool dbTool( _cb ) ;
+      BSONObj pluginInfo ;
+      string serviceName ;
 
       pmdGetThreadEDUCB()->resetInfo( EDU_INFO_ERROR ) ;
 
-      rc = client.initSocket() ;
+      rc = dbTool.getPluginInfoByBusinessType( _businessType, pluginInfo ) ;
       if ( rc )
       {
-         _errorMsg.setError( TRUE, "failed to init network: rc=%d", rc ) ;
+         _errorMsg.setError( TRUE, "Set socket keep alive failed[ %d ]", rc ) ;
          PD_LOG( PDERROR, _errorMsg.getError() ) ;
          goto error ;
       }
+      
+      serviceName = pluginInfo.getStringField( OM_PLUGINS_FIELD_SERVICENAME ) ;
 
-      rc = client.connect() ;
-      if ( rc )
+      ossGetPort( serviceName.c_str(), port ) ;
+
       {
-         _errorMsg.setError( TRUE, "failed to connect plugin: rc=%d", rc ) ;
-         PD_LOG( PDERROR, _errorMsg.getError() ) ;
-         goto error ;
-      }
+         ossSocket client( "127.0.0.1", port ) ;
 
-      headerSize  = _restAdaptor->getRequestHeaderSize( _restSession ) ;
-      pHttpHeader = _restAdaptor->getRequestHeader( _restSession ) ;
-
-      rc = client.send( pHttpHeader, headerSize, sendLength ) ;
-      if ( rc )
-      {
-         _errorMsg.setError( TRUE, "failed to forward http header: rc=%d", rc ) ;
-         PD_LOG( PDERROR, _errorMsg.getError() ) ;
-         goto error ;
-      }
-
-      bodySize  = _restAdaptor->getRequestBodySize( _restSession ) ;
-      pHttpBody = _restAdaptor->getRequestBody( _restSession ) ;
-
-      rc = client.send( pHttpBody, bodySize, sendLength ) ;
-      if ( rc )
-      {
-         _errorMsg.setError( TRUE, "failed to forward http body: rc=%d", rc ) ;
-         PD_LOG( PDERROR, _errorMsg.getError() ) ;
-         goto error ;
-      }
-
-      while( TRUE )
-      {
-         INT32 recvBuf = 0 ;
-         CHAR tmpBuf[256] ;
-
-         rc = client.recv( tmpBuf, 256, recvBuf,
-                           OSS_SOCKET_DFT_TIMEOUT, 0, FALSE, FALSE ) ;
-         if ( rc || 0 == recvBuf )
-         {
-            break ;
-         }
-
-         rc = _restSession->sendData( tmpBuf, recvBuf, 3000 ) ;
+         rc = client.initSocket() ;
          if ( rc )
          {
-            break ;
+            _errorMsg.setError( TRUE, "failed to init network: rc=%d", rc ) ;
+            PD_LOG( PDERROR, _errorMsg.getError() ) ;
+            goto error ;
+         }
+
+         rc = client.setKeepAlive( 1, OSS_SOCKET_KEEP_IDLE,
+                                   OSS_SOCKET_KEEP_INTERVAL,
+                                   OSS_SOCKET_KEEP_CONTER ) ;
+         if ( rc )
+         {
+            _errorMsg.setError( TRUE, "Set socket keep alive failed[ %d ]", rc ) ;
+            PD_LOG( PDERROR, _errorMsg.getError() ) ;
+            goto error ;
+         }
+
+         rc = client.connect( OM_FORWARD_TIMEOUT ) ;
+         if ( rc )
+         {
+            _errorMsg.setError( TRUE, "failed to connect plugin: rc=%d", rc ) ;
+            PD_LOG( PDERROR, _errorMsg.getError() ) ;
+            goto error ;
+         }
+
+         headerSize  = _restAdaptor->getRequestHeaderSize( _restSession ) ;
+         pHttpHeader = _restAdaptor->getRequestHeader( _restSession ) ;
+
+         rc = pmdSend( pHttpHeader, headerSize, &client,
+                       _cb, OM_FORWARD_TIMEOUT ) ;
+         if ( rc )
+         {
+            _errorMsg.setError( TRUE, "failed to forward http header: rc=%d",
+                                rc ) ;
+            PD_LOG( PDERROR, _errorMsg.getError() ) ;
+            goto error ;
+         }
+
+         bodySize  = _restAdaptor->getRequestBodySize( _restSession ) ;
+         pHttpBody = _restAdaptor->getRequestBody( _restSession ) ;
+
+         rc = pmdSend( pHttpBody, bodySize, &client, _cb, OM_FORWARD_TIMEOUT ) ;
+         if ( rc )
+         {
+            _errorMsg.setError( TRUE, "failed to forward http body: rc=%d",
+                                rc ) ;
+            PD_LOG( PDERROR, _errorMsg.getError() ) ;
+            goto error ;
+         }
+
+         while( !_cb->isInterrupted() )
+         {
+            INT32 recvSize = 0 ;
+            CHAR tmpBuf[256] ;
+
+            rc = client.recv( tmpBuf, 256, recvSize, OSS_SOCKET_DFT_TIMEOUT,
+                              0, FALSE, FALSE ) ;
+            if ( rc )
+            {
+               if ( SDB_TIMEOUT == rc )
+               {
+                  continue;
+               }
+               break ;
+            }
+
+            rc = _restSession->sendData( tmpBuf, recvSize, OM_FORWARD_TIMEOUT ) ;
+            if ( rc )
+            {
+               break ;
+            }
          }
       }
 
@@ -10999,7 +11038,7 @@ namespace engine
          if ( OM_BUSINESS_SEQUOIADB == businessType )
          {
             rc = _getFileContent( _rootPath + realSubPath, &pContent,
-                               contentLength ) ;
+                                  contentLength ) ;
          }
          else
          {
