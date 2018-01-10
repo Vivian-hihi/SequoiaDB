@@ -66,7 +66,7 @@ public class Split10539 extends SdbTestBase {
 			DBCollection subCL = commCS.createCollection(subCLName, (BSONObject) JSON
 					.parse("{ShardingKey:{'sk':1},ShardingType:'range',Group:'" + srcGroupName + "'}"));
 			mainCL.attachCollection(subCL.getFullName(),
-					(BSONObject) JSON.parse("{LowBound:{sk:0},UpBound:{sk:1000}}"));
+					(BSONObject) JSON.parse("{LowBound:{sk:0},UpBound:{sk:1000000}}"));
 			insertData(mainCL);// 写入待切分的记录（1000）
 		} catch (BaseException e) {
 			if (commSdb != null) {
@@ -79,10 +79,13 @@ public class Split10539 extends SdbTestBase {
 
 	public void insertData(DBCollection cl) {
 		try {
-			for (int i = 0; i < 1000; i++) {
+		    List<BSONObject> insertedData = new ArrayList<BSONObject>();
+			for (int i = 0; i < 100000; i++) {
 				BSONObject obj = (BSONObject) JSON.parse("{sk:" + i + ",alpha:" + i + "}");
-				cl.insert(obj);
+				insertedData.add(obj);
+				//cl.insert(obj);
 			}
+			cl.bulkInsert(insertedData, 0);
 		} catch (BaseException e) {
 			throw e;
 		}
@@ -108,13 +111,12 @@ public class Split10539 extends SdbTestBase {
 			// 等待切分结束
 			Assert.assertEquals(splitThread.isSuccess(), true, splitThread.getErrorMsg());
 			Assert.assertEquals(crudThread.isSuccess(), true, crudThread.getErrorMsg());
-
 			// 构造源组期望数据
 			List<BSONObject> srcExpect = new ArrayList<BSONObject>();
-			for (int i = 0; i < 400; i++) {
+			for (int i = 0; i < 40000; i++) {
 				srcExpect.add((BSONObject) JSON.parse("{sk:" + i + ",alpha:" + i + "}"));
 			}
-			for (int i = 400; i < 500; i++) {
+			for (int i = 40000; i < 50000; i++) {
 				srcExpect.add((BSONObject) JSON.parse("{sk:" + i + ",beta:2}"));
 			}
 			// 检验源组数据
@@ -122,10 +124,10 @@ public class Split10539 extends SdbTestBase {
 
 			// 构造目标组期望数据
 			List<BSONObject> destExpect = new ArrayList<BSONObject>();
-			for (int i = 500; i < 600; i++) {
+			for (int i = 50000; i < 60000; i++) {
 				destExpect.add((BSONObject) JSON.parse("{sk:" + i + ",beta:2}"));
 			}
-			for (int i = 600; i < 1000; i++) {
+			for (int i = 60000; i < 100000; i++) {
 				destExpect.add((BSONObject) JSON.parse("{sk:" + i + ",alpha:" + i + "}"));
 			}
 			// 检验目标组数据
@@ -216,11 +218,11 @@ public class Split10539 extends SdbTestBase {
 			}
 
 			// 查询切分边界
-			cursor4 = cl.query("{sk:500}", null, null, null);
+			cursor4 = cl.query("{sk:50000}", null, null, null);
 			if (cursor4.hasNext()) {
 				BSONObject actual = cursor4.getNext();
 				actual.removeField("_id");
-				BSONObject expect = (BSONObject) JSON.parse("{sk:500,beta:2}");
+				BSONObject expect = (BSONObject) JSON.parse("{sk:50000,beta:2}");
 				Assert.assertEquals(expect.equals(actual), true, "expect:" + expect + " actual:" + actual);
 				if (cursor4.hasNext()) {
 					Assert.fail("mainCL should not have this record:" + cursor3.getNext());
@@ -271,15 +273,14 @@ public class Split10539 extends SdbTestBase {
             Sequoiadb sdb = null;
             try {
                 sdb = new Sequoiadb(coordUrl, "", "");
-                Thread.sleep(1500);
                 DBCollection mainCL = sdb.getCollectionSpace(csName).getCollection(mainCLName);
-                mainCL.delete("{sk:{$gte:400,$lt:600}}");// 删除数据
+                mainCL.delete("{sk:{$gte:40000,$lt:60000}}");// 删除数据
                 Thread.sleep(500);
-                for (int i = 400; i < 600; i++) { // 增加数据
+                for (int i = 40000; i < 60000; i++) { // 增加数据
                     mainCL.insert("{sk:" + i + ",beta:1}");
                 }
                 Thread.sleep(500);
-                mainCL.update("{sk:{$gte:400,$lt:600}}", "{$inc:{beta:1}}", null);// 更新数据
+                mainCL.update("{sk:{$gte:40000,$lt:60000}}", "{$inc:{beta:1}}", null);// 更新数据
             }catch (BaseException e) {
                 throw e;
             } finally {
@@ -299,8 +300,8 @@ public class Split10539 extends SdbTestBase {
 				sdb = new Sequoiadb(coordUrl, "", "");
 				CollectionSpace cs = sdb.getCollectionSpace(csName);
 				DBCollection subCL = cs.getCollection(subCLName);
-				subCL.split(srcGroupName, destGroupName, (BSONObject) JSON.parse("{sk:500}"),
-						(BSONObject) JSON.parse("{sk:1000}"));
+				subCL.split(srcGroupName, destGroupName, (BSONObject) JSON.parse("{sk:50000}"),
+						(BSONObject) JSON.parse("{sk:100000}"));
 			} catch (BaseException e) {
 				throw e;
 			} finally {
