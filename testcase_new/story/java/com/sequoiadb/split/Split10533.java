@@ -4,6 +4,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Random;
 
 import org.bson.BSONObject;
 import org.bson.types.BasicBSONList;
@@ -184,7 +185,8 @@ public class Split10533 extends SdbTestBase {
             try {
                 db = new Sequoiadb(coordUrl, "", "");
                 DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
-                Thread.sleep(1500);
+                Random random = new Random();
+                Thread.sleep(random.nextInt(5)*1000);
                 cl.truncate();
             } catch (BaseException e) {
                 throw e;
