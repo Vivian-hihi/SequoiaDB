@@ -1819,7 +1819,7 @@ public class Sequoiadb implements Closeable {
         if (!isClosed()) {
             connection.send(buffer);
         } else {
-            throw new BaseException(SDBError.SDB_NET_NOT_CONNECT);
+            throw new BaseException(SDBError.SDB_NOT_CONNECTED);
         }
     }
 
@@ -1840,7 +1840,7 @@ public class Sequoiadb implements Closeable {
             lastUseTime = System.currentTimeMillis();
             return receiveSdbResponse();
         } else {
-            throw new BaseException(SDBError.SDB_NET_NOT_CONNECT);
+            throw new BaseException(SDBError.SDB_NOT_CONNECTED);
         }
     }
 
@@ -1914,7 +1914,7 @@ public class Sequoiadb implements Closeable {
 
     private void killContext() {
         if (isClosed()) {
-            throw new BaseException(SDBError.SDB_NET_NOT_CONNECT);
+            throw new BaseException(SDBError.SDB_NOT_CONNECTED);
         }
 
         long[] contextIds = new long[]{-1};

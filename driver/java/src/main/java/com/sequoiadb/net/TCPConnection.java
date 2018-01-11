@@ -177,24 +177,26 @@ public class TCPConnection implements IConnection {
         if (this.isClosed()) {
             throw new BaseException(SDBError.SDB_NOT_CONNECTED);
         }
-
+        if (input == null) {
+            throw new BaseException(SDBError.SDB_SYS, "input stream is null");
+        }
+        int size = 0;
         try {
-            int size = 0;
             while (size < length) {
                 int retSize = input.read(buf, off + size, length - size);
-                if (-1 == retSize) {
+                if (retSize == -1) {
                     break; // EOF
                 }
                 size += retSize;
             }
-
-            if (size != length) {
-                close();
-                throw new BaseException(SDBError.SDB_NETWORK,
-                    String.format("Required %d bytes, but only read %s bytes", length, size));
-            }
         } catch (IOException e) {
+            close();
             throw new BaseException(SDBError.SDB_NETWORK, e);
+        }
+        if (size != length) {
+            close();
+            throw new BaseException(SDBError.SDB_NETWORK,
+                    String.format("Required %d bytes, but only read %s bytes", length, size));
         }
     }
 
@@ -220,10 +222,13 @@ public class TCPConnection implements IConnection {
         if (this.isClosed()) {
             throw new BaseException(SDBError.SDB_NOT_CONNECTED);
         }
-
+        if (output == null) {
+            throw new BaseException(SDBError.SDB_SYS, "output stream is null");
+        }
         try {
             output.write(msg, off, length);
         } catch (IOException e) {
+            close();
             throw new BaseException(SDBError.SDB_NETWORK, e);
         }
     }
