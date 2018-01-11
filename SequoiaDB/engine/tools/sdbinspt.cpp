@@ -2206,7 +2206,7 @@ void inspectDictPageState( CHAR *pExpBuffer, dmsExtentID extentID,
 }
 
 
-INT32 inspectLobdCollection(OSSFILE &file, UINT16 pageId, 
+INT32 inspectLobdCollection(OSSFILE &file, UINT32 pageId, 
                             UINT32 sequence, SINT32 &err)
 {
     INT32 rc = SDB_OK;
@@ -2261,7 +2261,7 @@ error:
 }
 
 INT32 inspectLobmMeta(OSSFILE &file, 
-        CHAR *pExpBuffer, UINT16 pageId, 
+        CHAR *pExpBuffer, UINT32 pageId, 
         CHAR *pageBuf, UINT32 pageSize, 
         UINT16 clID, SINT32 &err)
 {
@@ -2299,15 +2299,15 @@ retry_dmsLobDataMapBlk:
 
     if ( pExpBuffer && DMS_LOB_PAGE_NORMAL == blk->_status )
     {
-          dmsSpaceManagementExtent *pSME = ( dmsSpaceManagementExtent*)pExpBuffer ;
-          if ( pSME->getBitMask( pageId ) != DMS_SME_FREE )
-          {
-             dumpPrintf ( "Error: dmsLobDataMapBlk 0x%08lx (%d) is refered by two. this maybe caused a loop "
-                          OSS_NEWLINE, pageId , pageId) ;
-             ++err ;
-          }
-          pSME->setBitMask( pageId ) ;
+       dmsSpaceManagementExtent *pSME = ( dmsSpaceManagementExtent*)pExpBuffer ;
+       if ( pSME->getBitMask( pageId ) != DMS_SME_FREE )
+       {
+          dumpPrintf ( "Error: dmsLobDataMapBlk 0x%08lx (%d) is refered by two. this maybe caused a loop "
+                     "(prev page id :%d)"OSS_NEWLINE, pageId , pageId, blk->_prevPageInBucket) ;
+          ++err ;
        }
+       pSME->setBitMask( pageId ) ;
+    }
     
 done:
     flushOutput( gBuffer, len) ;
@@ -2918,7 +2918,7 @@ INT32 getBME(OSSFILE &lobmFile, CHAR *pBME)
     SINT64 lenRead = 0 ;
     
     // calculate the starting offset of extent, and read extent head
-    rc = ossSeekAndRead ( &lobmFile, DMS_SME_OFFSET + DMS_SME_LEN,
+    rc = ossSeekAndRead ( &lobmFile, DMS_BME_OFFSET,
                           pBME, DMS_BME_SZ, &lenRead ) ;
     
     if ( rc || lenRead != DMS_BME_SZ )
@@ -2978,7 +2978,7 @@ INT32 loadLobDataMapBlk(OSSFILE &lobmFile,
         {
             msgLen += ossSnprintf(outBuf + msgLen, outSize - msgLen, 
                     "Error: Failed to load lobm buckets , because there was a loop in bucket"
-                    "about page(%u)"OSS_NEWLINE, pageId);
+                    "about page(%u)"OSS_NEWLINE, nextPageId);
            return SDB_DMS_RECORD_INVALID;
         }
 
@@ -3017,7 +3017,7 @@ INT32 parseBME(OSSFILE &lobmFile, UINT32 pageSize, CHAR *pBME)
    for(UINT32 i = 0; i < DMS_BUCKETS_NUM; i++)
    {
       pageId = ((dmsBucketsManagementExtent*)pBME)->_buckets[i];
-      if(pageId == DMS_LOB_INVALID_PAGEID) 
+      if (pageId == DMS_LOB_INVALID_PAGEID) 
       { 
           continue;
       }
@@ -3079,7 +3079,7 @@ error:
    goto done;
 }
 
-INT32 dumpLobmMeta(OSSFILE &file, UINT16 pageId, CHAR *pageBuf, UINT32 pageSize)
+INT32 dumpLobmMeta(OSSFILE &file, UINT32 pageId, CHAR *pageBuf, UINT32 pageSize)
 {
     INT32 rc = SDB_OK;
     SINT64 len = 0;
@@ -3121,7 +3121,7 @@ error:
 
 }
 
-INT32 dumpLobdCollection(OSSFILE &file, UINT16 pageId,
+INT32 dumpLobdCollection(OSSFILE &file, UINT32 pageId,
         CHAR* lobdPageBuf,UINT32 sequence)
 {
     INT32 rc = SDB_OK;
