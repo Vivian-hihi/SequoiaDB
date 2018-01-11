@@ -15,6 +15,9 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * 用例要求：
  * 1、向cl中插入大量数据（如1千万条记录）
@@ -48,7 +51,8 @@ public class IdIndex6614 extends SdbTestBase {
 
         updateTask.join();
         indexThread.join();
-        Assert.assertTrue(indexThread.isSuccess());
+        Assert.assertTrue(indexThread.isSuccess(), indexThread.getErrorMsg());
+        Assert.assertTrue(updateTask.isSuccess(), updateTask.getErrorMsg());
     }
 
     class UpdateTask extends SdbThreadBase {
@@ -59,9 +63,41 @@ public class IdIndex6614 extends SdbTestBase {
                 db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
                 DBCollection cl = db.getCollectionSpace(IdIndex6614.this.csName).getCollection(IdIndex6614.this.clName);
                 cl.update(null, "{$set:{name:\"kkkk\"}}", null);
+                checkUpdated(cl);
+            } catch (BaseException e) {
+                //SDB_RTN_AUTOINDEXID_IS_FALSE(-279): can not update/delete records when $id index does not exist
+                if (e.getErrorCode() == -279) {
+                    checkNoUpdate(cl);
+                } else {
+                    throw e;
+                }
             } finally {
                 if (db != null)
                     db.disconnect();
+            }
+        }
+
+        private List<BSONObject> getActualRecord(DBCollection cl) {
+            DBCursor cur = cl.query();
+            List<BSONObject> list = new ArrayList<>(10000);
+            while (cur.hasNext()) {
+                list.add(cur.getNext());
+            }
+            cur.close();
+            return list;
+        }
+
+        private void checkUpdated(DBCollection cl) {
+            List<BSONObject> list = getActualRecord(cl);
+            for (BSONObject object : list) {
+                Assert.assertEquals(object.get("name"), "kkkk", object.toString());
+            }
+        }
+
+        private void checkNoUpdate(DBCollection cl) {
+            List<BSONObject> list = getActualRecord(cl);
+            for (BSONObject object : list) {
+                Assert.assertNotEquals(object.get("name"), "kkkk", object.toString());
             }
         }
     }
@@ -73,12 +109,12 @@ public class IdIndex6614 extends SdbTestBase {
         @Override
         public void exec() throws BaseException {
 
-            Sequoiadb db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+            Sequoiadb db1 = null;
             try {
+                db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
                 DBCollection cl1 = db1.getCollectionSpace(csName)
                         .getCollection(clName);
-                BSONObject indexObj = (BSONObject) JSON
-                        .parse("{SortBufferSize:16}");
+                BSONObject indexObj = (BSONObject) JSON.parse("{SortBufferSize:16}");
                 cl1.createIdIndex(indexObj);
                 checkIdIndex(cl1);
             } finally {
@@ -105,60 +141,42 @@ public class IdIndex6614 extends SdbTestBase {
     }
 
     void createCL() {
-        try {
-            if (!sdb.isCollectionSpaceExist(SdbTestBase.csName)) {
-                sdb.createCollectionSpace(SdbTestBase.csName);
-            }
-        } catch (BaseException e) {
-            // -33 CS exist,ignore exceptions
-            Assert.assertEquals(-33, e.getErrorCode(), e.getMessage());
-        }
-        try {
-            String clOptions = "{ShardingKey:{no:1},ShardingType:'hash',Partition:1024,"
-                    + "ReplSize:0,Compressed:true,AutoIndexId:false}";
-            BSONObject options = (BSONObject) JSON.parse(clOptions);
-
-            cs = sdb.getCollectionSpace(SdbTestBase.csName);
-            cl = cs.createCollection(clName, options);
-        } catch (BaseException e) {
-            Assert.assertTrue(false, "create cl fail " + e.getErrorType() + ":"
-                    + e.getMessage());
-        }
+        String clOptions = "{ShardingKey:{no:1},ShardingType:'hash',Partition:1024,"
+                + "ReplSize:0,Compressed:true,AutoIndexId:false}";
+        BSONObject options = (BSONObject) JSON.parse(clOptions);
+        cs = sdb.getCollectionSpace(SdbTestBase.csName);
+        cl = cs.createCollection(clName, options);
     }
 
     void insertData() {
-        for (int i = 0; i < 100000; i++) {
+        List<BSONObject> list = new ArrayList<>(10000);
+        for (int i = 0; i < 10000; i++) {
             BSONObject bson = new BasicBSONObject();
             bson.put("age", i);
             bson.put("name", "Json");
-            cl.insert(bson);
+            list.add(bson);
         }
+        cl.insert(list);
     }
 
     /**
      * 检查索引
      */
     void checkIdIndex(DBCollection cl) {
-        DBCursor cursor1 = null;
-        try {
-            // 通过explain，判断是否走索引
-            cursor1 = cl.explain(null, null, null,
-                    (BSONObject) JSON.parse("{'':'$id'}"), 0, -1, 0, null);
-            String scanType = null;
-            String indexName = null;
-            while (cursor1.hasNext()) {
-                BSONObject record = cursor1.getNext();
-                if (record.get("Name").equals(SdbTestBase.csName + "." + clName)) {
-                    scanType = (String) record.get("ScanType");
-                    indexName = (String) record.get("IndexName");
-                }
-            }
-            Assert.assertEquals(scanType, "ixscan");
-            Assert.assertEquals(indexName, "$id");
-        } finally {
-            if (cursor1 != null) {
-                cursor1.close();
+        // 通过explain，判断是否走索引
+        DBCursor cursor1 = cl.explain(null, null, null,
+                (BSONObject) JSON.parse("{'':'$id'}"), 0, -1, 0, null);
+        String scanType = null;
+        String indexName = null;
+        while (cursor1.hasNext()) {
+            BSONObject record = cursor1.getNext();
+            if (record.get("Name").equals(SdbTestBase.csName + "." + clName)) {
+                scanType = (String) record.get("ScanType");
+                indexName = (String) record.get("IndexName");
             }
         }
+        Assert.assertEquals(scanType, "ixscan");
+        Assert.assertEquals(indexName, "$id");
+        cursor1.close();
     }
 }
