@@ -795,7 +795,7 @@ namespace engine
          /// alloc space
          _ensureSpace( rSize ) ;
          /// copy all elements
-         iterator it = rhs.begin() ;
+         const_iterator it = rhs.begin() ;
          while ( it != rhs.end() )
          {
             push_back( *it ) ;

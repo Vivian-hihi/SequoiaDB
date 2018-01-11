@@ -39,6 +39,7 @@
 #include "coordResource.hpp"
 #include "pmdRemoteSession.hpp"
 #include "coordRemoteHandle.hpp"
+#include "rtnSessionProperty.hpp"
 
 using namespace bson ;
 
@@ -68,7 +69,7 @@ namespace engine
    /*
       _coordSessionPropSite define
    */
-   class _coordSessionPropSite : public SDBObject
+   class _coordSessionPropSite : public _rtnSessionProperty
    {
       typedef std::map< UINT32, UINT64 >        MAP_GROUP_2_NODE ;
       typedef MAP_GROUP_2_NODE::iterator        MAP_GROUP_2_NODE_IT ;
@@ -77,7 +78,7 @@ namespace engine
 
       public:
          _coordSessionPropSite() ;
-         ~_coordSessionPropSite() ;
+         virtual ~_coordSessionPropSite() ;
 
          void        clear() ;
 
@@ -87,30 +88,26 @@ namespace engine
          void        delLastNode( UINT32 groupID ) ;
          void        delLastNode( UINT32 groupID, UINT64 nodeID ) ;
 
-         void        setPreferInsType( INT32 preferType ) ;
-         INT32       getPreferInstype() const ;
-
-         void        setOprTimeout( INT64 oprTimeout ) ;
-         INT64       getOprTimeout() const ;
-
          _pmdEDUCB*  getEDUCB() { return _pEDUCB ; }
+
+      protected :
+         virtual void _onSetInstance () ;
 
       private:
          void        setEduCB( _pmdEDUCB *cb ) ;
 
       private:
-         MAP_GROUP_2_NODE           _mapLastNodes ;
-         _pmdEDUCB                  *_pEDUCB ;
-         INT32                      _preferInsType ;
-         INT64                      _oprTimeout ;
-
+         MAP_GROUP_2_NODE  _mapLastNodes ;
+         _pmdEDUCB         *_pEDUCB ;
    } ;
+
    typedef _coordSessionPropSite coordSessionPropSite ;
 
    /*
       _coordSessionPropMgr define
    */
-   class _coordSessionPropMgr : public _IRemoteMgrHandle
+   class _coordSessionPropMgr : public _IRemoteMgrHandle,
+                                public _rtnSessionProperty
    {
       typedef map< UINT32, coordSessionPropSite >     MAP_TID_2_PROP ;
       typedef MAP_TID_2_PROP::iterator                MAP_TID_2_PROP_IT ;
@@ -119,9 +116,7 @@ namespace engine
          _coordSessionPropMgr() ;
          ~_coordSessionPropMgr() ;
 
-         void                    setPreferInsType( INT32 preferInsType ) ;
-         void                    setOprTimeout( INT64 oprTimeout ) ;
-         coordSessionPropSite*   getSite( _pmdEDUCB *cb ) ;
+         coordSessionPropSite * getSite( _pmdEDUCB *cb ) ;
 
       protected:
          virtual void   onRegister( _pmdRemoteSessionSite *pSite,
@@ -130,11 +125,9 @@ namespace engine
                                  _pmdEDUCB *cb ) ;
 
       private:
-         MAP_TID_2_PROP                _mapProps ;
-         INT32                         _preferInsType ;
-         INT64                         _oprTimeout ;
-
+         MAP_TID_2_PROP _mapProps ;
    } ;
+
    typedef _coordSessionPropMgr coordSessionPropMgr ;
 
    /*
@@ -173,16 +166,25 @@ namespace engine
          INT32    _selPrimaryBegin( MsgRouteID &nodeID ) ;
          INT32    _selOtherBegin( MsgRouteID &nodeID ) ;
 
+      protected :
+         typedef _utilArray< UINT8, CLS_REPLSET_MAX_NODE_SIZE > COORD_POS_ARRAY ;
+         typedef _utilList< UINT8, CLS_REPLSET_MAX_NODE_SIZE > COORD_POS_LIST ;
       private:
          INT32    _calcBeginPos( clsGroupItem *pGroupItem,
-                                 INT32 preferInsType,
+                                 const rtnInstanceOption & instanceOption,
                                  UINT32 random ) ;
          INT32    _nextPos( CoordGroupInfoPtr &groupPtr,
-                            INT32 preferInsType,
+                            BOOLEAN isSlavePreferred,
                             UINT32 &selTimes,
                             INT32 &pos,
                             MsgRouteID &nodeID ) ;
          void     _resetStatus() ;
+         void     _selectPositions ( const VEC_NODE_INFO & groupNodes,
+                                     UINT32 primaryPos,
+                                     const rtnInstanceOption & instanceOption,
+                                     COORD_POS_LIST & selectedPositions ) ;
+         void     _shufflePositions ( COORD_POS_ARRAY & positionArray,
+                                      COORD_POS_LIST & positionList ) ;
 
       private:
          coordResource           *_pResource ;
@@ -192,6 +194,7 @@ namespace engine
 
          CoordGroupInfoPtr       _groupPtr ;
          BOOLEAN                 _hasUpdate ;
+         COORD_POS_LIST          _selectedPositions ;
          INT32                   _pos ;
          UINT32                  _selTimes ;
          UINT32                  _ignoredNum ;

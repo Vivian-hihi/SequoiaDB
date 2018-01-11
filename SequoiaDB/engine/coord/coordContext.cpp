@@ -283,7 +283,7 @@ namespace engine
       pPropSite = ( coordSessionPropSite* )_pSite->getUserData() ;
       if ( pPropSite )
       {
-         timeout = pPropSite->getOprTimeout() ;
+         timeout = pPropSite->getOperationTimeout() ;
       }
       _pSession = _pSite->addSession( timeout, NULL ) ;
       if ( !_pSession )

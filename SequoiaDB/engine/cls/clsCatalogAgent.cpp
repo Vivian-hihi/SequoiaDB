@@ -40,6 +40,7 @@
 #include "catDef.hpp"
 #include "clsCataHashMatcher.hpp"
 #include "utilBsonHash.hpp"
+#include "utilCommon.hpp"
 #include <set>
 
 #include "../bson/lib/md5.hpp"
@@ -2791,8 +2792,8 @@ namespace engine
    }
 
    /*
-   note: _clsGroupItem implement
-   */
+      _clsGroupItem implement
+    */
    _clsGroupItem::_clsGroupItem ( UINT32 groupID )
    {
       _groupID = groupID ;
@@ -3048,19 +3049,35 @@ namespace engine
 
    INT32 _clsGroupItem::updateNodes ( std::map <UINT64, _netRouteNode> & nodes )
    {
+
       _clear() ;
 
-      // add to map
       std::map <UINT64, _netRouteNode>::iterator it = nodes.begin () ;
+      UINT8 pos = 0 ;
+
+      // Add nodes
       while ( it != nodes.end() )
       {
-         if ( _primaryNode.columns.nodeID == it->second._id.columns.nodeID )
+         _netRouteNode & node = it->second ;
+
+         // Set primary position
+         if ( _primaryNode.columns.nodeID == node._id.columns.nodeID )
          {
-            _primaryPos = _vecNodes.size();
+            _primaryPos = pos ;
          }
-         _vecNodes.push_back ( it->second ) ;
-         ++it ;
+
+         // By default, use the position in group array as node instance
+         if ( !utilCheckInstanceID( (UINT32)node._instanceID, FALSE ) )
+         {
+            node._instanceID = pos + 1 ;
+         }
+
+         _vecNodes.push_back ( node ) ;
+
+         ++ it ;
+         ++ pos ;
       }
+
       return SDB_OK ;
    }
 

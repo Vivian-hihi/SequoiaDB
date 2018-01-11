@@ -135,6 +135,37 @@ namespace engine
             return _size ;
          }
 
+         OSS_INLINE void setBitmap ( const _utilBitmapBase & bitmap )
+         {
+            resetBitmap() ;
+
+            UINT32 lhsIdx = 0, rhsIdx = 0 ;
+            while ( lhsIdx < _bitmapSize &&
+                    rhsIdx < bitmap._bitmapSize )
+            {
+               _bitmap[ lhsIdx ] = bitmap._bitmap[ rhsIdx ] ;
+               lhsIdx ++ ;
+               rhsIdx ++ ;
+            }
+         }
+
+         OSS_INLINE BOOLEAN hasIntersaction ( const _utilBitmapBase & bitmap ) const
+         {
+            UINT32 lhsIdx = 0, rhsIdx = 0 ;
+            while ( lhsIdx < _bitmapSize &&
+                    rhsIdx < bitmap._bitmapSize )
+            {
+               if ( OSS_BIT_TEST( _bitmap[ lhsIdx ],
+                                  bitmap._bitmap[ rhsIdx ] ) )
+               {
+                  return TRUE ;
+               }
+               lhsIdx ++ ;
+               rhsIdx ++ ;
+            }
+            return FALSE ;
+         }
+
       protected :
          OSS_INLINE UINT32 _calcUnitIndex ( UINT32 index ) const
          {

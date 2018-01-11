@@ -391,6 +391,9 @@ namespace engine
    } ;
    typedef _clsShardingKeySite clsShardingKeySite ;
 
+   /*
+      _clsGroupItem define
+    */
    typedef _netRouteNode clsNodeItem ;
 
    class _clsNodeMgrAgent ;
@@ -481,7 +484,6 @@ namespace engine
          MsgRouteID                    _primaryNode ;
          UINT32                        _primaryPos;
          UINT64                        _upIdentify ;
-
          ossRWMutex                    _rwMutex ;
 
    };
@@ -536,7 +538,6 @@ namespace engine
          ossRWMutex                    _rwMutex ;
          GROUP_MAP                     _groupMap ;
          GROUP_NAME_MAP                _groupNameMap ;
-
    };
    typedef _clsNodeMgrAgent nodeMgrAgent ;
 

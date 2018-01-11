@@ -130,7 +130,9 @@ namespace engine
       ossStrncpy( _shdServiceName, optCB->shardService(),
                   OSS_MAX_SERVICENAME ) ;
 
-      _sitePropMgr.setPreferInsType( (INT32)optCB->preferedReplica() ) ;
+      _sitePropMgr.setInstanceOption( optCB->getPrefInstStr(),
+                                      optCB->getPrefInstModeStr() ) ;
+
       rc = _remoteSessionMgr.init( _pAgent, &_sitePropMgr ) ;
       PD_RC_CHECK ( rc, PDERROR, "Init session manager failed, rc: %d", rc ) ;
 
@@ -262,13 +264,16 @@ namespace engine
 
    void _CoordCB::onConfigChange ()
    {
+      pmdOptionsCB * optCB = pmdGetOptionCB() ;
+
       if ( _pAgent )
       {
-         UINT32 oprtimeout = pmdGetOptionCB()->getOprTimeout() ;
+         UINT32 oprtimeout = optCB->getOprTimeout() ;
          _pAgent->getFrame()->setBeatInfo( oprtimeout ) ;
       }
 
-      _sitePropMgr.setPreferInsType( pmdGetOptionCB()->preferedReplica() ) ;
+      _sitePropMgr.setInstanceOption( optCB->getPrefInstStr(),
+                                      optCB->getPrefInstModeStr() ) ;
    }
 
    void _CoordCB::attachCB( _pmdEDUCB *cb )

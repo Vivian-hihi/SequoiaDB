@@ -251,7 +251,8 @@ rtnFiles = [
       "rtn/rtnExtDataHandler.cpp",
       "rtn/rtnSimpleCondNode.cpp",
       "rtn/rtnSimpleCondParser.cpp",
-      "rtn/rtnContextDataDispatcher.cpp"
+      "rtn/rtnContextDataDispatcher.cpp",
+      "rtn/rtnSessionProperty.cpp"
       ]
 
 msgFiles = [

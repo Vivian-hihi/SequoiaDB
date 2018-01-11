@@ -2391,9 +2391,10 @@ namespace engine
       coordSessionPropSite *pSiteProp  = NULL ;
       UINT64 taskID = CLS_INVALID_TASKID ;
       BSONObj taskInfoObj ;
-      INT32 preferedType = 0 ;
+      rtnInstanceOption instanceOption ;
+      BOOLEAN replacedInstanceOption = FALSE ;
 
-      contextID                        = -1 ;
+      contextID = -1 ;
 
       if ( cb->getRemoteSite() )
       {
@@ -2402,11 +2403,11 @@ namespace engine
          pSiteProp = (coordSessionPropSite*)pSite->getUserData() ;
       }
 
-      if ( pSiteProp &&
-           PREFER_REPL_MASTER != pSiteProp->getPreferInstype() )
+      if ( NULL != pSiteProp && !pSiteProp->isMasterPreferred() )
       {
-         preferedType = pSiteProp->getPreferInstype() ;
-         pSiteProp->setPreferInsType( PREFER_REPL_MASTER ) ;
+         instanceOption = pSiteProp->getInstanceOption() ;
+         pSiteProp->setMasterPreferred() ;
+         replacedInstanceOption = TRUE ;
       }
 
       /// prepare
@@ -2437,9 +2438,9 @@ namespace engine
 
    done :
       /// restore
-      if ( 0 != preferedType && pSiteProp )
+      if ( NULL != pSiteProp && replacedInstanceOption )
       {
-         pSiteProp->setPreferInsType( preferedType ) ;
+         pSiteProp->setInstanceOption( instanceOption ) ;
       }
       if ( !_clName.empty() )
       {

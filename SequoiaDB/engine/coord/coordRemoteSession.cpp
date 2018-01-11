@@ -37,6 +37,8 @@
 #include "msgMessageFormat.hpp"
 #include "coordCommon.hpp"
 #include "pmdEDU.hpp"
+#include "pdTrace.hpp"
+#include "coordTrace.hpp"
 
 using namespace bson ;
 
@@ -48,11 +50,11 @@ namespace engine
    /*
       _coordSessionPropSite implement
    */
-   _coordSessionPropSite::_coordSessionPropSite()
+   _coordSessionPropSite::_coordSessionPropSite ()
+   : _rtnSessionProperty(),
+     _mapLastNodes(),
+     _pEDUCB( NULL )
    {
-      _pEDUCB           = NULL ;
-      _preferInsType    = PREFER_REPL_ANYONE ;
-      _oprTimeout       = -1 ;
    }
 
    _coordSessionPropSite::~_coordSessionPropSite()
@@ -105,38 +107,22 @@ namespace engine
       }
    }
 
-   void _coordSessionPropSite::setPreferInsType( INT32 preferType )
-   {
-      _preferInsType = preferType ;
-   }
-
-   INT32 _coordSessionPropSite::getPreferInstype() const
-   {
-      return _preferInsType ;
-   }
-
-   void _coordSessionPropSite::setOprTimeout( INT64 oprTimeout )
-   {
-      _oprTimeout = oprTimeout ;
-   }
-
-   INT64 _coordSessionPropSite::getOprTimeout() const
-   {
-      return _oprTimeout ;
-   }
-
    void _coordSessionPropSite::setEduCB( _pmdEDUCB *cb )
    {
       _pEDUCB = cb ;
+   }
+
+   void _coordSessionPropSite::_onSetInstance ()
+   {
+      clear() ;
    }
 
    /*
       _coordSessionPropMgr implement
    */
    _coordSessionPropMgr::_coordSessionPropMgr()
+   : _mapProps()
    {
-      _preferInsType = PREFER_REPL_ANYONE ;
-      _oprTimeout    = -1 ;
    }
 
    _coordSessionPropMgr::~_coordSessionPropMgr()
@@ -144,22 +130,12 @@ namespace engine
       SDB_ASSERT( 0 == _mapProps.size(), "Props must be empty" ) ;
    }
 
-   void _coordSessionPropMgr::setPreferInsType( INT32 preferInsType )
-   {
-      _preferInsType = preferInsType ;
-   }
-
-   void _coordSessionPropMgr::setOprTimeout( INT64 oprTimeout )
-   {
-      _oprTimeout = oprTimeout ;
-   }
-
    void _coordSessionPropMgr::onRegister( _pmdRemoteSessionSite *pSite,
                                           _pmdEDUCB *cb )
    {
       coordSessionPropSite &propSite = _mapProps[ cb->getTID() ] ;
-      propSite.setPreferInsType( _preferInsType ) ;
-      propSite.setOprTimeout( _oprTimeout ) ;
+      propSite.setInstanceOption( _instanceOption ) ;
+      propSite.setOperationTimeout( _operationTimeout ) ;
       propSite.setEduCB( cb ) ;
       pSite->setUserData( (UINT64)&propSite ) ;
    }
@@ -237,8 +213,7 @@ namespace engine
 
    BOOLEAN _coordGroupSel::isPreferedPrimary() const
    {
-      if ( _pPropSite &&
-           PREFER_REPL_MASTER == _pPropSite->getPreferInstype() )
+      if ( _pPropSite && _pPropSite->isMasterPreferred() )
       {
          return TRUE ;
       }
@@ -257,6 +232,7 @@ namespace engine
       _ignoredNum = 0 ;
       _hasUpdate = FALSE ;
       _lastNodeID.value = MSG_INVALID_ROUTEID ;
+      _selectedPositions.clear() ;
    }
 
    void _coordGroupSel::addGroupPtr2Map( CoordGroupInfoPtr &groupPtr )
@@ -418,9 +394,9 @@ namespace engine
          goto error ;
       }
 
-      _pos = _calcBeginPos( groupItem, _pPropSite->getPreferInstype(),
+      _pos = _calcBeginPos( groupItem, _pPropSite->getInstanceOption(),
                             ossRand() ) ;
-      rc = _nextPos( _groupPtr, _pPropSite->getPreferInstype(),
+      rc = _nextPos( _groupPtr, _pPropSite->isSlavePreferred(),
                      _selTimes, _pos, nodeID ) ;
       if ( rc )
       {
@@ -454,7 +430,7 @@ namespace engine
       }
       else
       {
-         rc = _nextPos( _groupPtr, _pPropSite->getPreferInstype(),
+         rc = _nextPos( _groupPtr, _pPropSite->isSlavePreferred(),
                         _selTimes, _pos, nodeID ) ;
       }
       if ( rc )
@@ -473,45 +449,68 @@ namespace engine
    }
 
    INT32 _coordGroupSel::_calcBeginPos( clsGroupItem *pGroupItem,
-                                        INT32 preferInsType,
+                                        const rtnInstanceOption & instanceOption,
                                         UINT32 random )
    {
       UINT32 posTmp = 0 ;
+      BOOLEAN selected = FALSE ;
 
-      switch( preferInsType )
+      if ( instanceOption.hasCommonInstance() )
       {
-         case PREFER_REPL_NODE_1:
-         case PREFER_REPL_NODE_2:
-         case PREFER_REPL_NODE_3:
-         case PREFER_REPL_NODE_4:
-         case PREFER_REPL_NODE_5:
-         case PREFER_REPL_NODE_6:
-         case PREFER_REPL_NODE_7:
+         const VEC_NODE_INFO * nodes = pGroupItem->getNodes() ;
+         SDB_ASSERT( NULL != nodes, "node list is invalid" ) ;
+         _selectPositions( *nodes, pGroupItem->getPrimaryPos(),
+                           instanceOption, _selectedPositions ) ;
+
+         if ( !_selectedPositions.empty() )
          {
-            posTmp = preferInsType - 1 ;
-            break;
-         }
-         case PREFER_REPL_MASTER:
-         {
-            posTmp = pGroupItem->getPrimaryPos() ;
-            // if there is no primary,
-            // then do not break and go on to
-            // get random node
-            if ( CLS_RG_NODE_POS_INVALID != posTmp )
-            {
-               break ;
-            }
-         }
-         case PREFER_REPL_ANYONE:
-         case PREFER_REPL_SLAVE:
-         default:
-         {
-            posTmp = random ;
-            break;
+            posTmp = _selectedPositions.front() ;
+            _selectedPositions.pop_front() ;
+            selected = TRUE ;
          }
       }
 
-      if( pGroupItem->nodeCount() > 0 )
+      if ( !selected )
+      {
+         switch ( instanceOption.getSpecialInstance() )
+         {
+            case PREFER_INSTANCE_TYPE_MASTER :
+            case PREFER_INSTANCE_TYPE_MASTER_SND :
+            {
+               posTmp = pGroupItem->getPrimaryPos() ;
+               // if there is no primary,
+               // then do not break and go on to
+               // get random node
+               if ( CLS_RG_NODE_POS_INVALID != posTmp )
+               {
+                  selected = TRUE ;
+                  break ;
+               }
+            }
+            case PREFER_INSTANCE_TYPE_ANYONE :
+            case PREFER_INSTANCE_TYPE_ANYONE_SND :
+            case PREFER_INSTANCE_TYPE_SLAVE :
+            case PREFER_INSTANCE_TYPE_SLAVE_SND :
+            {
+               posTmp = random ;
+               break ;
+            }
+            default :
+            {
+               if ( 1 == instanceOption.getInstanceList().size() )
+               {
+                  posTmp = instanceOption.getInstanceList().front() - 1 ;
+               }
+               else
+               {
+                  posTmp = random ;
+               }
+               break ;
+            }
+         }
+      }
+
+      if( !selected && pGroupItem->nodeCount() > 0 )
       {
          posTmp = posTmp % pGroupItem->nodeCount() ;
       }
@@ -520,7 +519,7 @@ namespace engine
    }
 
    INT32 _coordGroupSel::_nextPos( CoordGroupInfoPtr &groupPtr,
-                                   INT32 preferInsType,
+                                   BOOLEAN isSlavePreferred,
                                    UINT32 &selTimes,
                                    INT32 &pos,
                                    MsgRouteID &nodeID )
@@ -538,10 +537,18 @@ namespace engine
          tmpPos = pos ;
          if ( selTimes > 0 )
          {
-            tmpPos = ( pos + 1 ) % pGroupItem->nodeCount() ;
+            if ( _selectedPositions.empty() )
+            {
+               tmpPos = ( tmpPos + 1 ) % pGroupItem->nodeCount() ;
+            }
+            else
+            {
+               tmpPos = _selectedPositions.front() ;
+               _selectedPositions.pop_front() ;
+            }
          }
 
-         if ( PREFER_REPL_SLAVE == preferInsType )
+         if ( isSlavePreferred )
          {
             UINT32 pimaryPos = pGroupItem->getPrimaryPos() ;
 
@@ -620,6 +627,101 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   void _coordGroupSel::_selectPositions ( const VEC_NODE_INFO & groupNodes,
+                                           UINT32 primaryPos,
+                                           const rtnInstanceOption & instanceOption,
+                                           COORD_POS_LIST & selectedPositions )
+   {
+      RTN_PREFER_INSTANCE_MODE mode = instanceOption.getPreferredMode() ;
+      const RTN_INSTANCE_LIST & instanceList = instanceOption.getInstanceList() ;
+      COORD_POS_ARRAY tempPositions ;
+      BOOLEAN foundPrimary = FALSE ;
+      BOOLEAN primaryFirst = ( instanceOption.getSpecialInstance() == PREFER_INSTANCE_TYPE_MASTER ) ;
+      BOOLEAN primaryLast = ( instanceOption.getSpecialInstance() == PREFER_INSTANCE_TYPE_SLAVE ) ;
+
+      selectedPositions.clear() ;
+
+      if ( groupNodes.size() == 0 || instanceList.empty() )
+      {
+         goto done ;
+      }
+
+      for ( RTN_INSTANCE_LIST::const_iterator instIter = instanceList.begin() ;
+            instIter != instanceList.end() ;
+            instIter ++ )
+      {
+         RTN_PREFER_INSTANCE_TYPE instance = (RTN_PREFER_INSTANCE_TYPE)(*instIter) ;
+         if ( instance > PREFER_INSTANCE_TYPE_MIN &&
+              instance < PREFER_INSTANCE_TYPE_MAX )
+         {
+            UINT8 pos = 0 ;
+            for ( VEC_NODE_INFO::const_iterator nodeIter = groupNodes.begin() ;
+                  nodeIter != groupNodes.end() ;
+                  nodeIter ++, pos ++ )
+            {
+               if ( nodeIter->_instanceID == (UINT8)instance )
+               {
+                  if ( primaryPos == pos && ( primaryFirst || primaryLast ) )
+                  {
+                     foundPrimary = TRUE ;
+                  }
+                  else
+                  {
+                     tempPositions.append( pos ) ;
+                  }
+               }
+            }
+            if ( !tempPositions.empty() &&
+                 PREFER_INSTANCE_MODE_ORDERED == mode )
+            {
+               _shufflePositions( tempPositions, selectedPositions ) ;
+            }
+         }
+      }
+
+      if ( !tempPositions.empty() )
+      {
+         _shufflePositions( tempPositions, selectedPositions ) ;
+      }
+
+      if ( foundPrimary )
+      {
+         if ( primaryFirst )
+         {
+            selectedPositions.push_front( primaryPos ) ;
+         }
+         else if ( primaryLast )
+         {
+            selectedPositions.push_back( primaryPos ) ;
+         }
+      }
+
+   done :
+      return ;
+   }
+
+   void _coordGroupSel::_shufflePositions ( COORD_POS_ARRAY & positionArray,
+                                            COORD_POS_LIST & positionList )
+   {
+      for ( UINT32 i = 0 ; i < positionArray.size() ; i ++ )
+      {
+         UINT32 random = ossRand() % positionArray.size() ;
+         if ( i != random )
+         {
+            UINT8 tmp = positionArray[ i ] ;
+            positionArray[ i ] = positionArray[ random ] ;
+            positionArray[ random ] = tmp  ;
+         }
+      }
+
+      COORD_POS_ARRAY::iterator posIter( positionArray ) ;
+      UINT8 tmpPos = 0 ;
+      while ( posIter.next( tmpPos ) )
+      {
+         positionList.push_back( tmpPos ) ;
+      }
    }
 
    void _coordGroupSel::selDone()
@@ -1146,7 +1248,7 @@ namespace engine
 
       if ( 0 == _timeout )
       {
-         _timeout = _pPropSite->getOprTimeout() ;
+         _timeout = _pPropSite->getOperationTimeout() ;
       }
       if ( !pHandle )
       {

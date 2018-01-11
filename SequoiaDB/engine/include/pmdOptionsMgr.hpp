@@ -58,7 +58,9 @@ using namespace bson ;
 
 namespace engine
 {
-   #define PMD_MAX_ENUM_STR_LEN        (32)
+   #define PMD_MAX_ENUM_STR_LEN        ( 32 )
+   #define PMD_MAX_LONG_STR_LEN        ( 256 )
+   #define PMD_MAX_SHORT_STR_LEN       ( 32 )
 
    enum PMD_CFG_STEP
    {
@@ -507,7 +509,6 @@ namespace engine
          OSS_INLINE UINT32 memDebugSize () const { return _memDebugSize ; }
          OSS_INLINE UINT32 indexScanStep () const { return _indexScanStep ; }
          OSS_INLINE UINT32 getReplLogBuffSize () const { return _logBuffSize ; }
-         OSS_INLINE UINT32 preferedReplica () const { return _preferReplica ; }
          OSS_INLINE const CHAR* dbroleStr() const { return _krcbRole ; }
          OSS_INLINE INT32 diagFileNum() const { return _dialogFileNum ; }
          OSS_INLINE INT32 auditFileNum() const { return _auditFileNum ; }
@@ -549,6 +550,9 @@ namespace engine
          OSS_INLINE BOOLEAN isEnabledMixCmp() const { return _enableMixCmp ; }
          OSS_INLINE UINT32  getDataErrorOp() const { return _dataErrorOp ; }
          OSS_INLINE UINT32 getPlanCacheLevel() const { return _planCacheLevel ; }
+         OSS_INLINE const CHAR * getPrefInstStr () const { return _prefInstStr ; }
+         OSS_INLINE const CHAR * getPrefInstModeStr () const { return _prefInstModeStr ; }
+         OSS_INLINE UINT32 getInstanceID () const { return _instanceID ; }
 
          std::string getOmAddr() const ;
 
@@ -579,7 +583,8 @@ namespace engine
          UINT16      _krcbDiagLvl ;
          CHAR        _krcbRole[ PMD_MAX_ENUM_STR_LEN + 1 ] ;
          CHAR        _syncStrategyStr[ PMD_MAX_ENUM_STR_LEN + 1 ] ;
-         CHAR        _prefReplStr[ PMD_MAX_ENUM_STR_LEN + 1 ] ;
+         CHAR        _prefInstStr[ PMD_MAX_LONG_STR_LEN + 1 ] ;
+         CHAR        _prefInstModeStr[ PMD_MAX_SHORT_STR_LEN + 1 ] ;
          CHAR        _auditMaskStr[ OSS_MAX_PATHSIZE + 1 ] ;
          UINT32      _logFileSz ;
          UINT32      _logFileNum ;
@@ -605,7 +610,6 @@ namespace engine
          CHAR        _dmsTmpBlkPath[ OSS_MAX_PATHSIZE + 1 ] ;
          UINT32      _sortBufSz ;
          UINT32      _hjBufSz ;
-         UINT32      _preferReplica ;
          INT32       _dialogFileNum ;
          INT32       _auditFileNum ;
          UINT32      _auditMask ;
@@ -638,6 +642,7 @@ namespace engine
          INT32       _optCostThreshold ;
          BOOLEAN     _enableMixCmp ;
          UINT32      _planCacheLevel ;
+         UINT32      _instanceID ;
 
 #ifdef SDB_ENTERPRISE
 

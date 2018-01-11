@@ -43,6 +43,7 @@
 #include "ossUtil.hpp"
 #include "pdTrace.hpp"
 #include "clsTrace.hpp"
+#include "utilCommon.hpp"
 
 using namespace bson ;
 
@@ -71,6 +72,12 @@ namespace engine
       bsonBuilder.append ( CAT_TYPE_FIELD_NAME, (INT32)(pKRCB->getDBRole()) ) ;
       bsonBuilder.append ( CAT_HOST_FIELD_NAME, hostName ) ;
       bsonBuilder.append ( PMD_OPTION_DBPATH, pKRCB->getDBPath() ) ;
+
+      if ( utilCheckInstanceID( pKRCB->getOptionCB()->getInstanceID(), FALSE ) )
+      {
+         bsonBuilder.append ( PMD_OPTION_INSTANCE_ID,
+                              pKRCB->getOptionCB()->getInstanceID() ) ;
+      }
 
       BSONArrayBuilder subServiceBuild( bsonBuilder.subarrayStart(
          CAT_SERVICE_FIELD_NAME ) ) ;

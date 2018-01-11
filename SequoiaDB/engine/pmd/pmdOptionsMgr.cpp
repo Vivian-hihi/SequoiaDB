@@ -93,6 +93,9 @@ namespace engine
    #define PMD_DFT_PAGE_ALLOC_TIMEOUT  (0)
    #define PMD_DFT_OPT_COST_THRESHOLD  (20)
    #define PMD_DFT_ENABLE_MIX_CMP      (FALSE)
+   #define PMD_DFT_PREFINST            ( PREFER_INSTANCE_MASTER_STR )
+   #define PMD_DFT_PREFINST_MODE       ( PREFER_INSTANCE_RANDOM_STR )
+   #define PMD_DFT_INSTANCE_ID         ( NODE_INSTANCE_ID_UNKNOWN )
 
    /*
       _pmdCfgExchange implement
@@ -1435,7 +1438,8 @@ namespace engine
       ossMemset( _omServiceName, 0, OSS_MAX_SERVICENAME + 1 ) ;
       ossMemset( _krcbRole, 0, PMD_MAX_ENUM_STR_LEN + 1) ;
       ossMemset( _syncStrategyStr, 0, PMD_MAX_ENUM_STR_LEN + 1) ;
-      ossMemset( _prefReplStr, 0, PMD_MAX_ENUM_STR_LEN + 1 ) ;
+      ossMemset( _prefInstStr, 0, PMD_MAX_LONG_STR_LEN + 1 ) ;
+      ossMemset( _prefInstModeStr, 0, PMD_MAX_SHORT_STR_LEN + 1 ) ;
       ossMemset( _catAddrLine, 0, OSS_MAX_PATHSIZE + 1 ) ;
       ossMemset( _dmsTmpBlkPath, 0, OSS_MAX_PATHSIZE + 1 ) ;
       ossMemset( _krcbLobPath, 0, OSS_MAX_PATHSIZE + 1 ) ;
@@ -1452,7 +1456,6 @@ namespace engine
       _maxReplSync         = PMD_DEFAULT_MAX_REPLSYNC ;
       _syncStrategy        = CLS_SYNC_NONE ;
       _dataErrorOp         = PMD_OPT_VALUE_FULLSYNC ;
-      _preferReplica       = PREFER_REPL_MASTER ;
       _replBucketSize      = PMD_DFT_REPL_BUCKET_SIZE ;
       _memDebugEnabled     = FALSE ;
       _memDebugSize        = 0 ;
@@ -1486,7 +1489,7 @@ namespace engine
       _syncRecordNum       = PMD_DFT_SYNC_RECORDNUM ;
       _syncDeep            = FALSE ;
 
-      // archive releated
+      // archive related
       _archiveOn = FALSE ;
       _archiveCompressOn = TRUE ;
       ossMemset( _archivePath, 0, OSS_MAX_PATHSIZE + 1 ) ;
@@ -1501,6 +1504,7 @@ namespace engine
       _optCostThreshold = PMD_DFT_OPT_COST_THRESHOLD ;
       _enableMixCmp = PMD_DFT_ENABLE_MIX_CMP ;
       _planCacheLevel = OPT_PLAN_PARAMETERIZED ;
+      _instanceID = PMD_DFT_INSTANCE_ID ;
 
 #ifdef SDB_ENTERPRISE
 
@@ -1636,9 +1640,18 @@ namespace engine
       // --syncstrategy
       rdxString( pEX, PMD_OPTION_SYNC_STRATEGY, _syncStrategyStr,
                  sizeof( _syncStrategyStr ), FALSE, TRUE, "", FALSE ) ;
-      // --preferedreplica
-      rdxString( pEX, PMD_OPTION_PREFINST, _prefReplStr, sizeof(_prefReplStr),
-                 FALSE, TRUE, "M" ) ;
+      // --preferedinstance
+      rdxString( pEX, PMD_OPTION_PREFINST, _prefInstStr,
+                 sizeof( _prefInstStr ), FALSE, TRUE, PMD_DFT_PREFINST ) ;
+      // --preferedinstancemode
+      rdxString( pEX, PMD_OPTION_PREFINST_MODE, _prefInstModeStr,
+                 sizeof( _prefInstModeStr ), FALSE, TRUE,
+                 PMD_DFT_PREFINST_MODE ) ;
+      // --instanceid
+      rdxUInt( pEX, PMD_OPTION_INSTANCE_ID, _instanceID, FALSE, FALSE,
+               PMD_DFT_INSTANCE_ID, FALSE ) ;
+      rdvMinMax( pEX, _instanceID, NODE_INSTANCE_ID_UNKNOWN,
+                 NODE_INSTANCE_ID_MAX - 1, TRUE ) ;
       // --dataerrorop
       rdxUInt( pEX, PMD_OPTION_DATAERROR_OP, _dataErrorOp,
                FALSE, TRUE, PMD_OPT_VALUE_FULLSYNC, FALSE ) ;
@@ -1889,9 +1902,6 @@ namespace engine
                    << endl ;
          _auditMask = AUDIT_MASK_DEFAULT ;
       }
-
-      // preferreplica check
-      _preferReplica = utilPrefReplStr2Enum( _prefReplStr ) ;
 
       if ( 0 == ossStrlen( _replServiceName ) )
       {
@@ -2237,9 +2247,6 @@ namespace engine
 
       clsStrategy2String( _syncStrategy, _syncStrategyStr,
                           sizeof( _syncStrategyStr ) ) ;
-
-      utilPrefReplEnum2Str( _preferReplica, _prefReplStr,
-                            sizeof(_prefReplStr) ) ;
 
       return SDB_OK ;
    }

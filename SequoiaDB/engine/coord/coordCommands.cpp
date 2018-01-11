@@ -64,80 +64,34 @@ namespace engine
                                            INT64 &contextID,
                                            rtnContextBuf *buf )
    {
-      INT32 rc = SDB_OK;
+      INT32 rc = SDB_OK ;
+
       PD_TRACE_ENTRY ( COORD_SETSESSIONATTR_EXE ) ;
+
       coordSessionPropSite *pPropSite = NULL ;
       pmdRemoteSessionSite *pSite = NULL ;
-      // fill default-reply(delete success)
-      contextID = -1 ;
+      CHAR *pQuery = NULL ;
 
-      CHAR *pQuery                     = NULL ;
       rc = msgExtractQuery( (CHAR*)pMsg, NULL, NULL, NULL, NULL,
                             &pQuery, NULL, NULL, NULL );
-      PD_RC_CHECK( rc, PDERROR,
-                   "Failed to parse unlink collection request(rc=%d)",
-                   rc ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to parse set session attribute "
+                   "request, rc: %d", rc ) ;
 
       pSite = ( pmdRemoteSessionSite* )cb->getRemoteSite() ;
       if ( pSite )
       {
          pPropSite = ( coordSessionPropSite* )pSite->getUserData() ;
       }
-      if ( !pPropSite )
-      {
-         PD_LOG( PDERROR, "Session's prop site is NULL" ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
+
+      PD_CHECK( NULL != pPropSite, SDB_SYS, error, PDERROR,
+                "Session's prop site is NULL" ) ;
 
       try
       {
-         BSONElement ele ;
-         BSONObj boQuery( pQuery ) ;
-         BSONObjIterator itr( boQuery ) ;
-         while( itr.more() )
-         {
-            ele = itr.next() ;
-
-            /// preferedInstance
-            if ( 0 == ossStrcmp( ele.fieldName(),
-                                 FIELD_NAME_PREFERED_INSTANCE ) )
-            {
-               INT32 sessReplType = PREFER_REPL_TYPE_MIN ;
-               PD_CHECK( ele.type() == NumberInt, SDB_INVALIDARG, error,
-                         PDERROR, "Field[%s] is not numberInt",
-                         FIELD_NAME_PREFERED_INSTANCE );
-               sessReplType = ele.Int();
-               PD_CHECK( sessReplType > PREFER_REPL_TYPE_MIN &&
-                         sessReplType < PREFER_REPL_TYPE_MAX,
-                         SDB_INVALIDARG, error, PDERROR,
-                         "Failed to set preferedInstanace, invalid value[%d], "
-                         "Value range:(%d~%d)", sessReplType,
-                         PREFER_REPL_TYPE_MIN, PREFER_REPL_TYPE_MAX ) ;
-
-               /// set and clear last nodes
-               pPropSite->setPreferInsType( sessReplType ) ;
-               pPropSite->clear() ;
-            }
-            /// timeout
-            else if ( 0 == ossStrcmp( ele.fieldName(), FIELD_NAME_TIMEOUT ) )
-            {
-               INT64 timeout = -1 ;
-               PD_CHECK( ele.isNumber(), SDB_INVALIDARG, error,
-                         PDERROR, "Feild[%s] is not number",
-                         FIELD_NAME_TIMEOUT ) ;
-               timeout = (INT64)ele.numberLong() ;
-
-               pPropSite->setOprTimeout( timeout ) ;
-            }
-            else
-            {
-               PD_LOG( PDERROR, "Options[%s] is not support in operator[%s]",
-                       ele.toString().c_str(), getName() ) ;
-               rc = SDB_INVALIDARG ;
-               goto error ;
-            }
-         }
+         BSONObj property( pQuery ) ;
+         rc = pPropSite->parseProperty( property ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to parse session property, "
+                      "rc: %d", rc ) ;
       }
       catch ( std::exception &e )
       {
@@ -147,12 +101,15 @@ namespace engine
          goto error ;
       }
 
-   done:
+   done :
+      // fill default-reply(delete success)
+      contextID = -1 ;
+
       PD_TRACE_EXITRC ( COORD_SETSESSIONATTR_EXE, rc ) ;
-      return rc;
-   error:
-      goto done;
+      return rc ;
+
+   error :
+      goto done ;
    }
 
 }
-

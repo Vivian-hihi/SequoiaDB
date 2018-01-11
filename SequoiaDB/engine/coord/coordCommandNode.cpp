@@ -46,6 +46,7 @@
 #include "msgReplicator.hpp"
 #include "pdTrace.hpp"
 #include "coordTrace.hpp"
+#include "utilCommon.hpp"
 
 using namespace bson;
 
@@ -1896,6 +1897,27 @@ namespace engine
                rc = SDB_INVALIDARG ;
                PD_LOG( PDERROR, "Get field[%s] failed on command[%s], "
                        "rc: %d", PMD_OPTION_DBPATH, getName(), rc ) ;
+               goto error ;
+            }
+
+            /// check instance ID
+            ele = pArgs->_boQuery.getField( PMD_OPTION_INSTANCE_ID ) ;
+            if ( ele.eoo() || ele.isNumber() )
+            {
+               UINT32 instanceID = ele.isNumber() ? ele.numberInt() :
+                                                    NODE_INSTANCE_ID_UNKNOWN ;
+               PD_CHECK( utilCheckInstanceID( instanceID, TRUE ),
+                         SDB_INVALIDARG, error, PDERROR,
+                         "Failed to check field [%s], "
+                         "should be %d, or between %d to %d",
+                         PMD_OPTION_INSTANCE_ID, NODE_INSTANCE_ID_UNKNOWN,
+                         NODE_INSTANCE_ID_MIN + 1, NODE_INSTANCE_ID_MAX - 1 ) ;
+            }
+            else
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR, "Get field[%s] failed on command[%s], "
+                       "rc: %d", PMD_OPTION_INSTANCE_ID, getName(), rc ) ;
                goto error ;
             }
          }
