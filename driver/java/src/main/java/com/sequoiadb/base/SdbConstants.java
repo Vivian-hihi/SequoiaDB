@@ -93,4 +93,7 @@ final class SdbConstants {
     final static String OID = "_id";
 
     final static int FLG_UPDATE_UPSERT = 0x00000001;
+
+    final static int SDB_SETSESSIONATTR_V0 = 0;
+    final static int SDB_SETSESSIONATTR_V1 = 1;
 }
