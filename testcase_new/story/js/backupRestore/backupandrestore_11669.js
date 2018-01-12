@@ -1,0 +1,96 @@
+/*******************************************************************************
+*@Description : Backup (EnsureInc=true) and restore for data node
+*@Modify list :
+*               2018-1-10  wenjing Wang Init
+*******************************************************************************/
+function backupTestCase11669(  )
+{
+    
+}
+
+backupTestCase11669.prototype = new backupTestCase( db ) ;
+backupTestCase11669.prototype.constructor = backupTestCase11669 ;
+
+backupTestCase11669.prototype.reInit=
+function()
+{
+   if ( this.group === undefined )
+   {
+      this.sdb = new Sdb( COORDHOSTNAME, COORDSVCNAME ) ;
+      this.db = this.sdb
+   }
+   else
+   {
+      this.db = new Sdb( this.nodeinfo.hostName, this.nodeinfo.svcName ) ;
+   }
+}
+
+backupTestCase11669.prototype.execTest=
+function(backupName, path)
+{
+   println( " begin execTest..." ) ;
+   this.docs = bakInsertData( this.cl ) ;
+   this.oids.push( sdbPutLob( this.cl, path ) );
+   bakBackup( this.db , { "Name": backupName} );      
+   if ( this.nodeinfo !== undefined )
+   { 
+      var bakInfo = new backUpInfo( backupName, this.nodeinfo.dbPath + "bakfile" ) ;
+   }
+   else
+   {
+      var dbPath = db.snapshot(6).current().toObj()["Disk"]["DatabasePath"] ; 
+      var bakInfo = new backUpInfo( backupName, dbPath + "bakfile" ) ;
+   }
+   
+   var times = 1 ;
+   this.checkBackupRes( bakInfo, times++, [ this.group[0].GroupName ] ) ; 
+   bakInsertData( this.cl, this.docs ) ;
+   this.oids.push( sdbPutLob( this.cl, path ) );
+   bakBackup( this.db , { "Name": backupName, EnsureInc:true } );
+   this.checkBackupRes( bakInfo, times++, [ this.group[0].GroupName ] ) ;
+
+   bakInsertData( this.cl, this.docs ) ;
+   this.oids.push( sdbPutLob( this.cl, path ) );
+   bakBackup( this.db , { "Name": backupName, EnsureInc:true } );
+   if ( this.group !== undefined )
+   {
+      println( "backup on " + this.group[0].GroupName ) ;
+      this.removeNodeExceptPrimary() ;
+   }
+   this.checkBackupRes( bakInfo, times,  [ this.group[0].GroupName ]) ;
+   println( "begin restore..." );
+   sdbRestore( this.sdb, this.cmd, bakInfo, this.nodeinfo ) ;
+   this.checkResult( times ) ;
+   println( " end execTest ..." );
+}
+
+function main( db )
+{
+   try
+   {
+      if ( commIsStandalone( db ) )
+      {
+         return ;
+      }
+
+      var testBackUp = new backupTestCase11669( );
+      if ( testBackUp.setUp() )
+      {
+         testBackUp.test() ;
+      }
+      testBackUp.tearDown() ;
+   }
+   catch( e )
+   {  
+      var tmp = new Error( "tmp" )
+      if ( e.constructor === tmp.constructor)
+      {
+         println( e.fileName + ":" + e.lineNumber + " throw " + e.message );
+         println( e.stack ) ;
+      }
+      throw e;
+   }
+}
+
+main( db )
+
