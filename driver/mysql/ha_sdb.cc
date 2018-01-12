@@ -275,8 +275,21 @@ int ha_sdb::row_to_obj( uchar *buf,  bson::BSONObj & obj )
             }
          case MYSQL_TYPE_LONGLONG:
             {
-               obj_builder.append( (*field)->field_name,
-                                   (*field)->val_int() ) ;
+               if( ((Field_num *)(*field))->unsigned_flag )
+               {
+                  my_decimal tmp_val ;
+                  char buff[MAX_FIELD_WIDTH];
+                  String str(buff, sizeof(buff), &my_charset_bin);
+                  ((Field_num *)(*field))->val_decimal( &tmp_val ) ;
+                  my_decimal2string(E_DEC_FATAL_ERROR, &tmp_val, 0, 0, 0, &str ) ;
+                  obj_builder.appendDecimal( (*field)->field_name,
+                                             str.c_ptr() ) ;
+               }
+               else
+               {
+                  obj_builder.append( (*field)->field_name,
+                                      (*field)->val_int() ) ;
+               }
                break ;
             }
          case MYSQL_TYPE_FLOAT:
@@ -287,13 +300,40 @@ int ha_sdb::row_to_obj( uchar *buf,  bson::BSONObj & obj )
                                    (*field)->val_real() ) ;
                break ;
             }
-         case MYSQL_TYPE_VARCHAR:
-         case MYSQL_TYPE_STRING:
-         case MYSQL_TYPE_VAR_STRING:
          case MYSQL_TYPE_TINY_BLOB:
          case MYSQL_TYPE_MEDIUM_BLOB:
          case MYSQL_TYPE_LONG_BLOB:
          case MYSQL_TYPE_BLOB:
+            {
+               if ( str_field_buf_size < (*field)->data_length() )
+               {
+                  uint32 str_buf_size_new = 0 ;
+                  if ( (*field)->data_length() >= SDB_FIELD_MAX_LEN )
+                  {
+                     my_printf_error( ER_TOO_BIG_FIELDLENGTH,
+                                      ER(ER_TOO_BIG_FIELDLENGTH),
+                                      MYF(0), (*field)->field_name,
+                                      static_cast<ulong>(SDB_FIELD_MAX_LEN-1));
+                     rc = -1 ;
+                     goto error ;
+                  }
+                  str_buf_size_new
+                     = ( (*field)->data_length() / SDB_STR_BUF_STEP_SIZE + 1 )
+                       * SDB_STR_BUF_STEP_SIZE ;
+                  str_field_buf = (char *)realloc( str_field_buf,
+                                                   str_buf_size_new ) ;
+                  str_field_buf_size = str_buf_size_new ;
+               }
+               String val_tmp( str_field_buf, str_field_buf_size, &my_charset_bin ) ;
+               (*field)->val_str( &val_tmp, &val_tmp ) ;
+               obj_builder.appendBinData( (*field)->field_name,
+                                           val_tmp.length(), bson::BinDataGeneral,
+                                           val_tmp.ptr() ) ;
+               break ;
+            }
+         case MYSQL_TYPE_VARCHAR:
+         case MYSQL_TYPE_STRING:
+         case MYSQL_TYPE_VAR_STRING:
             {
                if ( str_field_buf_size < (*field)->data_length() )
                {
@@ -1052,10 +1092,19 @@ int ha_sdb::obj_to_row( bson::BSONObj &obj, uchar *buf )
                (*field)->store( nr ) ;
                break ;
             }
+         case bson::BinData:
+            {
+               int lenTmp = 0 ;
+               const char * dataTmp = befield.binData( lenTmp ) ;
+               (*field)->store( dataTmp, lenTmp,
+                                &my_charset_bin ) ;
+               break ;
+                              
+            }
          case bson::String:
             {
                (*field)->store( befield.valuestr(),
-                                strlen(befield.valuestr()),
+                                befield.valuestrsize(),
                                 &my_charset_bin ) ;
                break ;
                               
