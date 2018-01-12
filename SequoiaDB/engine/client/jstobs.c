@@ -1523,6 +1523,9 @@ static BOOLEAN bsonConvertJson ( CHAR **pbuf,
          {
             CHAR temp[ BSON_TEMP_SIZE_512 ] ;
             memset ( temp, 0, BSON_TEMP_SIZE_512 ) ;
+            double z = valNum;
+            if (valNum == z)
+            {
 #ifdef WIN32
             _snprintf ( temp,
                         BSON_TEMP_SIZE_512,
@@ -1532,6 +1535,12 @@ static BOOLEAN bsonConvertJson ( CHAR **pbuf,
                        BSON_TEMP_SIZE_512,
                        _precision, bson_iterator_double( &i ) ) ;
 #endif
+            }
+            else
+            {
+               (void) ossStrncpy ( temp, "NaN", BSON_TEMP_SIZE_512) ;
+            }
+	
             bsonConvertJsonRawConcat ( pbuf, left, temp, FALSE ) ;
             CHECK_LEFT ( left )
             if( strchr( temp, '.') == 0 && strchr( temp, 'E') == 0
