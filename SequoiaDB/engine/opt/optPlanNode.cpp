@@ -2976,6 +2976,12 @@ namespace engine
 
       _sorted = !_orderBy.isEmpty() ;
 
+      // No child node or single child node, no need to reorder
+      if ( _sorted && _needReorder && _childNodes.size() <= 1 )
+      {
+         _needReorder = FALSE ;
+      }
+
       PD_TRACE_EXIT( SDB_OPTMERGENODEBASE__EVALOUTPUT ) ;
    }
 

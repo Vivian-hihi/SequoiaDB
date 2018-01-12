@@ -270,7 +270,7 @@
 | --------------------------- | --------- | ------------------------------------------------------------------------ |
 | Operator                    | 字符串    | 操作符的名称： "COORD-MERGE"                                             |
 | Sort                        | 字符串    | COORD-MERGE 需要保证输出结果有序的排序字段                               |
-| NeedReorder                 | 布尔型    | COORD-MERGE 是否需要根据排序字段对多个数据组的记录进行排序合并           |
+| NeedReorder                 | 布尔型    | COORD-MERGE 是否需要根据排序字段对多个数据组的记录进行排序合并<br>当查询中包含排序的时候 NeedReorder 为 true |
 | DataNodeNum                 | 整型      | COORD-MERGE 涉及查询的数据节点个数                                       |
 | DataNodeList                | 数组      | COORD-MERGE 涉及查询的数据节点，按查询的执行顺序列出                     |
 | DataNodeList.Name           | 字符串    | COORD-MERGE 发送查询的数据节点名称                                       |
@@ -362,7 +362,7 @@
 | -------------------------------- | --------- | ---------------------------------------------------------------------------- |
 | Operator                         | 字符串    | 操作符的名称： "MERGE"                                                       |
 | Sort                             | 字符串    | MERGE 需要保证输出结果有序的排序字段                                         |
-| NeedReorder                      | 布尔型    | MERGE 是否需要根据排序字段对多个子表的记录进行排序合并                       |
+| NeedReorder                      | 布尔型    | MERGE 是否需要根据排序字段对多个子表的记录进行排序合并<br>当查询中包含排序，排序字段不包含主表的分区键时为 true |
 | SubCollectionNum                 | 整型      | MERGE 涉及查询的子表个数                                                     |
 | SubCollectionList                | 数组      | MERGE 涉及查询的子表，按查询的执行顺序列出                                   |
 | SubCollectionList.Name           | 字符串    | MERGE 发送查询的子表名称                                                     |
