@@ -27,8 +27,8 @@ public class TestClose11320 extends SdbTestBase{
 	
 	@BeforeClass
 	public void setUp( ){
-		System.out.println(this.getClass().getName()+" begin at "
-				+new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:S").format(new Date()));
+		
+				
 		try{
 			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");			 
 		}catch(BaseException e){			
@@ -42,7 +42,7 @@ public class TestClose11320 extends SdbTestBase{
 			//check the resource is used
 			Assert.assertEquals(sdb.isClosed(), false, "the isClosed should be false");
 			Assert.assertEquals(sdb.isValid(), true, "the isValid should be true");
-			sdb.close();			
+			sdb.disconnect();			
 			//if the resource has been released,
 			//then the isClosed() is false and the isValid is true			
 			Assert.assertEquals(sdb.isClosed(), true, "the isClosed should be true");
@@ -54,8 +54,11 @@ public class TestClose11320 extends SdbTestBase{
 				cs.createCollection(clName);
 				Assert.fail("expect result need throw an error but not.");
 			}catch(BaseException e){
-				//-80,ignore exceptions
-				Assert.assertEquals(-80,e.getErrorCode(),e.getMessage());				
+				//-80/-64,ignore exceptions
+				if( e.getErrorCode() != -64 && e.getErrorCode() != -80){
+					Assert.fail(e.getMessage());
+				}
+								
 			}			
 		}catch(BaseException e){		   
 		   Assert.assertTrue(false, e.getErrorCode()+e.getMessage());	
@@ -64,8 +67,8 @@ public class TestClose11320 extends SdbTestBase{
 	
 	@AfterClass()
 	public void tearDown(){
-		System.out.println(this.getClass().getName()+" end at "
-				+new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:S").format(new Date()));		
+		
+						
 	}		
 	
 }

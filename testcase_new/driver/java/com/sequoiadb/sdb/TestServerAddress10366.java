@@ -39,7 +39,7 @@ public class TestServerAddress10366 extends SdbTestBase{
                 sdb.listCollections();
                 Assert.fail();
             } catch(BaseException e) {
-                Assert.assertEquals(e.getErrorCode(), -80);  
+                Assert.assertEquals(e.getErrorCode(), -64);  
             }
         } catch (BaseException e) {
             e.printStackTrace();
