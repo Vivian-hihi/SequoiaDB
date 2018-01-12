@@ -13,11 +13,10 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Vector;
+import java.util.*;
 
 import static org.testng.Assert.*;
+import static com.sequoiadb.index.IndexUtil.*;
 
 /**
  * Created by laojingtang on 18-1-2.
@@ -26,6 +25,7 @@ public class Index11414 extends SdbTestBase {
     final String CLNAME = "index11414";
     private Sequoiadb db = null;
     private DBCollection dbcl;
+    private List<BSONObject> prepareData = new ArrayList<>(10000);
 
     @BeforeClass
     public void setup() {
@@ -35,21 +35,20 @@ public class Index11414 extends SdbTestBase {
 
     private void prepareData() {
         //prepare data
-        List<BSONObject> list = new ArrayList<>(10000);
         for (int i = 0; i < 10000; i++) {
             BSONObject obj = new BasicBSONObject()
                     .append("a", i)
                     .append("b", i)
                     .append("c", i)
                     .append("d", i);
-            list.add(obj);
+            prepareData.add(obj);
         }
-        dbcl.insert(list);
+        dbcl.insert(prepareData);
     }
 
     @AfterClass
     public void teardown() {
-        if (db != null){
+        if (db != null) {
             db.getCollectionSpace(SdbTestBase.csName).dropCollection(CLNAME);
             db.disconnect();
         }
@@ -63,9 +62,12 @@ public class Index11414 extends SdbTestBase {
      * 3、检查操作结果
      */
     @Test
-    public void testCreateIndexAndRemoveAllRecord() {
+    public void testCreateIndexAndRemoveAllRecord() throws InterruptedException {
+        dbcl.delete(new BasicBSONObject());
+        prepareData.clear();
         prepareData();
 
+        final IndexEntity index2Create = new IndexEntity().setIndexName("index11414").setKey(new BasicBSONObject("a", 1)).setUnique(false).setEnforced(false);
         SdbThreadBase createIndexTasks = new SdbThreadBase() {
             @Override
             public void exec() throws Exception {
@@ -73,13 +75,14 @@ public class Index11414 extends SdbTestBase {
                 try {
                     db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
                     DBCollection cl = db.getCollectionSpace(SdbTestBase.csName).getCollection(Index11414.this.CLNAME);
-                    cl.createIndex("index11414", new BasicBSONObject("a", 1), false, false);
+                    cl.createIndex(index2Create.getIndexName(), index2Create.getKey(), index2Create.isUnique(), index2Create.isEnforced());
                 } finally {
                     if (db != null)
                         db.disconnect();
                 }
             }
         };
+
         SdbThreadBase removeAllRecordTask = new SdbThreadBase() {
             @Override
             public void exec() throws Exception {
@@ -87,7 +90,9 @@ public class Index11414 extends SdbTestBase {
                 try {
                     db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
                     DBCollection cl = db.getCollectionSpace(SdbTestBase.csName).getCollection(Index11414.this.CLNAME);
-                    cl.delete(new BasicBSONObject());
+                    for (int i = 0; i < 1000; i++) {
+                        cl.delete(new BasicBSONObject());
+                    }
                 } finally {
                     if (db != null)
                         db.disconnect();
@@ -95,33 +100,31 @@ public class Index11414 extends SdbTestBase {
             }
         };
 
-        createIndexTasks.start();
         removeAllRecordTask.start(20);
+        Thread.sleep(100 + new Random().nextInt(200));
+        createIndexTasks.start();
 
         assertTrue(removeAllRecordTask.isSuccess(), removeAllRecordTask.getErrorMsg());
         assertTrue(createIndexTasks.isSuccess(), createIndexTasks.getErrorMsg());
 
-        //assert index already created.
-        DBCursor cursor = dbcl.getIndex("index11414");
-        BasicBSONObject object = (BasicBSONObject) cursor.getNext();
-        BasicBSONObject indexDef= (BasicBSONObject) object.get("IndexDef");
-        BasicBSONObject indexKey= (BasicBSONObject) indexDef.get("key");
-        cursor.close();
-        assertNotNull(object, "index11414");
-        assertEquals(indexDef.getString("name"),"index11414");
-        assertEquals(indexDef.getBoolean("unique"),false);
-        assertEquals(indexDef.getBoolean("enforced"),false);
-        assertEquals(indexKey, JSON.parse("{a:1}"));
+        //assert index created correctly
+        assertIndexCreatedCorrect(dbcl, index2Create);
 
         //assert remove task already remove all recored.
-        assertEquals(dbcl.getCount(),0);
+        assertEquals(dbcl.getCount(), 0);
     }
 
     @Test
     public void testCreateIndexAndRemoveRecords() {
+        dbcl.delete(new BasicBSONObject());
+        prepareData.clear();
         prepareData();
-        final List<ObjectId> oidRemoved=new Vector<>();
 
+        final IndexEntity indexEntity2Create = new IndexEntity()
+                .setIndexName("b_index")
+                .setKey(new BasicBSONObject("b", 1))
+                .setEnforced(false)
+                .setUnique(false);
         SdbThreadBase createIndexTask = new SdbThreadBase() {
             @Override
             public void exec() throws Exception {
@@ -129,13 +132,15 @@ public class Index11414 extends SdbTestBase {
                 try {
                     db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
                     DBCollection cl = db.getCollectionSpace(SdbTestBase.csName).getCollection(Index11414.this.CLNAME);
-                    cl.createIndex("b_index", new BasicBSONObject("b", 1), false, false);
+                    cl.createIndex(indexEntity2Create.getIndexName(), indexEntity2Create.getKey(), indexEntity2Create.isUnique(), indexEntity2Create.isEnforced());
                 } finally {
                     if (db != null)
                         db.disconnect();
                 }
             }
         };
+
+        final List<ObjectId> oidRemoved = new Vector<>();
         SdbThreadBase removeRecordTask = new SdbThreadBase() {
             @Override
             public void exec() throws Exception {
@@ -143,10 +148,12 @@ public class Index11414 extends SdbTestBase {
                 try {
                     db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
                     DBCollection cl = db.getCollectionSpace(SdbTestBase.csName).getCollection(Index11414.this.CLNAME);
-                    BasicBSONObject obj = (BasicBSONObject) cl.queryOne();
-                    ObjectId id = obj.getObjectId("_id");
-                    cl.delete(new BasicBSONObject("_id", id));
-                    oidRemoved.add(id);
+                    for (int i = 0; i < 100; i++) {
+                        BasicBSONObject obj = (BasicBSONObject) cl.queryOne();
+                        ObjectId id = obj.getObjectId("_id");
+                        cl.delete(new BasicBSONObject("_id", id));
+                        oidRemoved.add(id);
+                    }
                 } finally {
                     if (db != null)
                         db.disconnect();
@@ -160,23 +167,33 @@ public class Index11414 extends SdbTestBase {
         assertTrue(removeRecordTask.isSuccess(), removeRecordTask.getErrorMsg());
 
         //assert index aleardy created.
-        DBCursor cur = dbcl.getIndex("b_index");
-        BSONObject object = cur.getNext();
-        assertNotNull(object);
-        cur.close();
-        BasicBSONObject indexDef= (BasicBSONObject) object.get("IndexDef");
-        BasicBSONObject indexKey= (BasicBSONObject) indexDef.get("key");
-        assertNotNull(object, "b_index");
-        assertEquals(indexDef.getString("name"),"b_index");
-        assertEquals(indexDef.getBoolean("unique"),false);
-        assertEquals(indexDef.getBoolean("enforced"),false);
-        assertEquals(indexKey, JSON.parse("{b:1}"));
-
+        assertIndexCreatedCorrect(dbcl,indexEntity2Create);
 
         //assert remove task do right things.
         for (ObjectId objectId : oidRemoved) {
-            DBCursor c = dbcl.query(new BasicBSONObject("_id",objectId),new BasicBSONObject(),new BasicBSONObject(),new BasicBSONObject());
-            assertFalse(c.hasNext(),objectId.toString());
+            DBCursor c = dbcl.query(new BasicBSONObject("_id", objectId), new BasicBSONObject(), new BasicBSONObject(), new BasicBSONObject());
+            assertFalse(c.hasNext(), objectId.toString());
+        }
+
+        //assert index can be used.
+        Map<Object, BSONObject> map = new Hashtable<>();
+        for (BSONObject obj : prepareData) {
+            map.put(obj.get("_id"), obj);
+        }
+        for (ObjectId objectId : oidRemoved) {
+            map.remove(objectId);
+        }
+
+        BSONObject matcher = new BasicBSONObject();
+        BSONObject selector = new BasicBSONObject();
+        BSONObject orderby = new BasicBSONObject();
+        BSONObject hint = new BasicBSONObject("", indexEntity2Create.getIndexName());
+
+        try (DBCursor c = dbcl.query(matcher, selector, orderby, hint)) {
+            while (c.hasNext()) {
+                BSONObject obj = c.getNext();
+                assertEquals(obj, map.get(obj.get("_id")));
+            }
         }
     }
 }

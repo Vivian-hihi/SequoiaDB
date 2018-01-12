@@ -15,6 +15,9 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * 用例要求：
  * 1、向cl中插入大量数据（如1千万条记录）
@@ -53,7 +56,7 @@ public class IdIndex6615 extends SdbTestBase {
             BSONObject indexObj = (BSONObject) JSON.parse("{SortBufferSize:256}");
             cl1.createIdIndex(indexObj);
             checkIndex(cl1);
-            Assert.assertTrue(deleteTask.isSuccess(),deleteTask.getErrorMsg());
+            Assert.assertTrue(deleteTask.isSuccess(), deleteTask.getErrorMsg());
         } finally {
             if (sdb1 != null) {
                 sdb1.disconnect();
@@ -119,11 +122,18 @@ public class IdIndex6615 extends SdbTestBase {
 
     public void insertData() {
         try {
+            int count = 0;
+            List<BSONObject> list = new ArrayList<>(10000);
             for (int i = 0; i < 100000; i++) {
                 BSONObject bson = new BasicBSONObject();
                 bson.put("age", i);
                 bson.put("name", "Json");
-                this.cl.insert(bson);
+                list.add(bson);
+                count++;
+                if (count % 10000 == 0) {
+                    cl.insert(list);
+                    list.clear();
+                }
             }
         } catch (BaseException e) {
             Assert.fail(" IdIndex6615 insert error:" + e.getMessage());

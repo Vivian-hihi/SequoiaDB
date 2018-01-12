@@ -20,9 +20,9 @@ import java.util.List;
 /**
  * Created by laojingtang on 18-1-4.
  */
-public class Sdv11420 extends SdbTestBase {
+public class Update11420 extends SdbTestBase {
     private Sequoiadb db = null;
-    private static final String CLNAME = Sdv11420.class.getSimpleName();
+    private static final String CLNAME = Update11420.class.getSimpleName();
     private DBCollection dbcl;
 
     @BeforeClass
@@ -55,40 +55,40 @@ public class Sdv11420 extends SdbTestBase {
         }
         dbcl.insert(Arrays.asList(bsonObjects));
 
-        ClTask setTask=new ClTask() {
+        ClTask setTask = new ClTask() {
             @Override
             protected void update(DBCollection cl) {
-                cl.update("","{$set:{b:1}}","",0);
+                cl.update("", "{$set:{b:1}}", "", 0);
             }
         };
 
         setTask.start(20);
-        Assert.assertTrue(setTask.isSuccess(),setTask.getErrorMsg());
-        List<BSONObject> list = dbcursor2List(dbcl.query());
+        Assert.assertTrue(setTask.isSuccess(), setTask.getErrorMsg());
+        List<BSONObject> list = getAllRecord(dbcl.query());
         for (BSONObject object : list) {
-            int i= (int) object.get("b");
-            Assert.assertEquals(i,1,object.toString());
+            int i = (int) object.get("b");
+            Assert.assertEquals(i, 1, object.toString());
         }
 
-        ClTask unsetTask=new ClTask() {
+        ClTask unsetTask = new ClTask() {
             @Override
             protected void update(DBCollection cl) {
-                cl.update("","{$unset:{b:1}}","",0);
+                cl.update("", "{$unset:{b:1}}", "", 0);
             }
         };
 
         unsetTask.start(20);
-        Assert.assertTrue(unsetTask.isSuccess(),unsetTask.getErrorMsg());
+        Assert.assertTrue(unsetTask.isSuccess(), unsetTask.getErrorMsg());
 
-        list=dbcursor2List(dbcl.query());
+        list = getAllRecord(dbcl.query());
         for (BSONObject object : list) {
             Assert.assertFalse(object.containsField("b"));
         }
     }
 
-    private List<BSONObject> dbcursor2List(DBCursor cur){
-        List<BSONObject> actual=new ArrayList<>(2000);
-        while(cur.hasNext()){
+    private List<BSONObject> getAllRecord(DBCursor cur) {
+        List<BSONObject> actual = new ArrayList<>(2000);
+        while (cur.hasNext()) {
             actual.add(cur.getNext());
         }
         cur.close();
@@ -102,7 +102,7 @@ public class Sdv11420 extends SdbTestBase {
             Sequoiadb db = null;
             try {
                 db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-                DBCollection cl=db.getCollectionSpace(SdbTestBase.csName).getCollection(CLNAME);
+                DBCollection cl = db.getCollectionSpace(SdbTestBase.csName).getCollection(CLNAME);
                 update(cl);
             } finally {
                 if (db != null)
@@ -110,6 +110,7 @@ public class Sdv11420 extends SdbTestBase {
             }
 
         }
+
         protected abstract void update(DBCollection cl);
     }
 

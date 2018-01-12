@@ -7,17 +7,18 @@ import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
-import org.bson.util.JSON;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.testng.Assert.*;
 import static org.testng.Assert.assertEquals;
-
+import static com.sequoiadb.index.IndexUtil.*;
 /**
  * Created by laojingtang on 18-1-2.
  */
@@ -25,28 +26,27 @@ public class Index11416 extends SdbTestBase {
     final String CLNAME = Index11416.class.getSimpleName();
     private Sequoiadb db = null;
     private DBCollection dbcl;
-
+    private List<BSONObject> bsonInserted=new ArrayList<>(10000);
 
     @BeforeClass
     public void setup() {
         db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         dbcl = db.getCollectionSpace(SdbTestBase.csName).createCollection(CLNAME);
         //prepare data
-        List<BSONObject> list = new ArrayList<>(10000);
         for (int i = 0; i < 10000; i++) {
             BSONObject obj = new BasicBSONObject()
                     .append("a", i)
                     .append("b", i)
                     .append("c", i)
                     .append("d", i);
-            list.add(obj);
+            bsonInserted.add(obj);
         }
-        dbcl.insert(list);
+        dbcl.insert(bsonInserted);
     }
 
     @AfterClass
     public void teardown() {
-        if (db != null){
+        if (db != null) {
             db.getCollectionSpace(SdbTestBase.csName).dropCollection(CLNAME);
             db.disconnect();
         }
@@ -59,6 +59,7 @@ public class Index11416 extends SdbTestBase {
      */
     @Test
     public void testCreateIndexAndQuery() {
+        final IndexEntity createIndex = new IndexEntity().setIndexName("index11416").setKey(new BasicBSONObject("a", 1));
         SdbThreadBase createTasks = new SdbThreadBase() {
             @Override
             public void exec() throws Exception {
@@ -66,7 +67,7 @@ public class Index11416 extends SdbTestBase {
                 try {
                     db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
                     DBCollection cl = db.getCollectionSpace(SdbTestBase.csName).getCollection(Index11416.this.CLNAME);
-                    cl.createIndex("index11416", new BasicBSONObject("a", 1), false, false);
+                    cl.createIndex(createIndex.getIndexName(), createIndex.getKey(), createIndex.isUnique(), createIndex.isEnforced());
                 } finally {
                     if (db != null)
                         db.disconnect();
@@ -74,25 +75,32 @@ public class Index11416 extends SdbTestBase {
             }
         };
 
-        SdbThreadBase queryTask=new QueryTask("index11416");
+        SdbThreadBase queryTask = new QueryTask("index11416");
         queryTask.start(20);
         createTasks.start();
 
-        assertTrue(queryTask.isSuccess(),queryTask.getErrorMsg());
-        assertTrue(createTasks.isSuccess(),createTasks.getErrorMsg());
+        assertTrue(queryTask.isSuccess(), queryTask.getErrorMsg());
+        assertTrue(createTasks.isSuccess(), createTasks.getErrorMsg());
 
-        DBCursor cursor = dbcl.getIndex("index11416");
-        BSONObject object = cursor.getNext();
-        cursor.close();
-        assertNotNull(object, "index11416");
+        //assert index info
+        assertIndexCreatedCorrect(dbcl,createIndex);
 
-        BasicBSONObject indexDef= (BasicBSONObject) object.get("IndexDef");
-        BasicBSONObject indexKey= (BasicBSONObject) indexDef.get("key");
-        assertNotNull(object, "index11416");
-        assertEquals(indexDef.getString("name"),"index11416");
-        assertEquals(indexDef.getBoolean("unique"),false);
-        assertEquals(indexDef.getBoolean("enforced"),false);
-        assertEquals(indexKey, JSON.parse("{a:1}"));
+        //assert index can be used
+        Map<Object, BSONObject> expectRecordMap = new HashMap<>();
+        for (BSONObject obj : bsonInserted) {
+            expectRecordMap.put(obj.get("_id"), obj);
+        }
+        BSONObject matcher = new BasicBSONObject();
+        BSONObject selector = new BasicBSONObject();
+        BSONObject orderby = new BasicBSONObject();
+        BSONObject hint = new BasicBSONObject("", createIndex.getIndexName());
+
+        try (DBCursor cur = dbcl.query(matcher, selector, orderby, hint)) {
+            while (cur.hasNext()) {
+                BSONObject obj = cur.getNext();
+                assertEquals(obj, expectRecordMap.get(obj.get("_id")));
+            }
+        }
     }
 
     @Test
@@ -113,12 +121,12 @@ public class Index11416 extends SdbTestBase {
                 }
             }
         };
-        SdbThreadBase queryTask=new QueryTask("b_index");
+        SdbThreadBase queryTask = new QueryTask("b_index");
         removeTask.start();
         queryTask.start(20);
 
-        assertTrue(removeTask.isSuccess(),removeTask.getErrorMsg());
-        assertTrue(queryTask.isSuccess(),queryTask.getErrorMsg());
+        assertTrue(removeTask.isSuccess(), removeTask.getErrorMsg());
+        assertTrue(queryTask.isSuccess(), queryTask.getErrorMsg());
 
         try (DBCursor curor = dbcl.getIndex("b_index")) {
             assertFalse(curor.hasNext(), "b_index");
@@ -139,7 +147,7 @@ public class Index11416 extends SdbTestBase {
             try {
                 db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
                 DBCollection cl = db.getCollectionSpace(SdbTestBase.csName).getCollection(Index11416.this.CLNAME);
-                cl.query(null, null, null, new BasicBSONObject("",indexName), 0, 10);
+                cl.query(null, null, null, new BasicBSONObject("", indexName), 0, 10);
             } finally {
                 if (db != null)
                     db.disconnect();

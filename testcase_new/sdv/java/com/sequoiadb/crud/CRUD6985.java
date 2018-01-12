@@ -22,9 +22,9 @@ import static org.testng.Assert.*;
 /**
  * Created by laojingtang on 18-1-4.
  */
-public class Sdv6985 extends SdbTestBase {
+public class CRUD6985 extends SdbTestBase {
     private Sequoiadb db = null;
-    private static final String CLNAME = Sdv6985.class.getSimpleName();
+    private static final String CLNAME = CRUD6985.class.getSimpleName();
     private DBCollection dbcl;
 
     @BeforeClass
@@ -47,12 +47,14 @@ public class Sdv6985 extends SdbTestBase {
      */
     @Test
     public void test() {
+//        int i;
         ClTask insertTask = new ClTask() {
             private List<BSONObject> oidInserted = new Vector<>(10000);
             private List<BSONObject> expect = new Vector<>(10000);
 
             @Override
             protected void doCurdHere(DBCollection cl) {
+//                System.out.println(i);
                 List<BSONObject> insertData = generate(1000);
                 expect.addAll(insertData);
                 cl.insert(insertData);
@@ -74,13 +76,10 @@ public class Sdv6985 extends SdbTestBase {
             }
         };
 
+        final List<BSONObject> deleteTaskEexpect = generate(1000);
+        CRUD6985.this.dbcl.insert(deleteTaskEexpect);
         ClTask deleteTask = new ClTask() {
-            private List<BSONObject> expect = generate(1000);
-            private ConcurrentLinkedQueue<BSONObject> removeQueue = new ConcurrentLinkedQueue(expect);
-
-            {
-                Sdv6985.this.dbcl.insert(expect);
-            }
+            private ConcurrentLinkedQueue<BSONObject> removeQueue = new ConcurrentLinkedQueue(deleteTaskEexpect);
 
             @Override
             protected void doCurdHere(DBCollection cl) {
@@ -93,7 +92,7 @@ public class Sdv6985 extends SdbTestBase {
             @Override
             CURDResult getExpectResult() {
                 ResultImpl r = new ResultImpl();
-                r.setResultBson(expect);
+                r.setResultBson(deleteTaskEexpect);
                 return r;
             }
         };
@@ -107,13 +106,10 @@ public class Sdv6985 extends SdbTestBase {
             }
         };
 
+        final List<BSONObject> updateTaskExpect = generate(1000);
+        CRUD6985.this.dbcl.insert(updateTaskExpect);
         ClTask updateTask = new ClTask() {
-            List<BSONObject> expect = generate(1000);
-            ConcurrentLinkedQueue<BSONObject> updateQueue = new ConcurrentLinkedQueue(expect);
-
-            {
-                Sdv6985.this.dbcl.insert(expect);
-            }
+            ConcurrentLinkedQueue<BSONObject> updateQueue = new ConcurrentLinkedQueue(updateTaskExpect);
 
             @Override
             protected void doCurdHere(DBCollection cl) {
@@ -125,13 +121,13 @@ public class Sdv6985 extends SdbTestBase {
 
             @Override
             CURDResult getExpectResult() {
-                for (BSONObject object : expect) {
+                for (BSONObject object : updateTaskExpect) {
                     int a = (int) object.get("a");
                     a++;
                     object.put("a", a);
                 }
                 ResultImpl r = new ResultImpl();
-                r.setResultBson(expect);
+                r.setResultBson(updateTaskExpect);
                 return r;
             }
         };

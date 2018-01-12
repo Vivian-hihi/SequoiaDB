@@ -11,12 +11,11 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static org.testng.Assert.*;
+import static com.sequoiadb.index.IndexUtil.*;
 
 /**
  * Created by laojingtang on 18-1-2.
@@ -26,6 +25,7 @@ public class Index11424 extends SdbTestBase {
     private Sequoiadb db = null;
     private DBCollection dbcl;
     private String[] clRowMeta = new String[]{"a0", "a1", "a2", "a3", "a4", "a5", "a6", "a7", "a8", "a9"};
+    List<BSONObject> bsonInserted = new ArrayList<>(1000);
 
     @BeforeClass
     public void setup() {
@@ -35,15 +35,14 @@ public class Index11424 extends SdbTestBase {
 
     private void prepareData() {
         //prepare data
-        List<BSONObject> list = new ArrayList<>(1000);
         for (int i = 0; i < 10000; i++) {
             BSONObject obj = new BasicBSONObject();
             for (String s : clRowMeta) {
                 obj.put(s, i);
             }
-            list.add(obj);
+            bsonInserted.add(obj);
         }
-        dbcl.insert(list);
+        dbcl.insert(bsonInserted);
     }
 
     @AfterClass
@@ -51,29 +50,6 @@ public class Index11424 extends SdbTestBase {
         if (db != null) {
             db.getCollectionSpace(SdbTestBase.csName).dropCollection(CLNAME);
             db.disconnect();
-        }
-    }
-
-    class IndexBean {
-        String indexName;
-        BasicBSONObject key;
-
-        public IndexBean setIndexName(String indexName) {
-            this.indexName = indexName;
-            return this;
-        }
-
-        public BasicBSONObject getKey() {
-            return key;
-        }
-
-        public String getIndexName() {
-            return indexName;
-        }
-
-        public IndexBean setKey(BasicBSONObject key) {
-            this.key = key;
-            return this;
         }
     }
 
@@ -88,12 +64,16 @@ public class Index11424 extends SdbTestBase {
         prepareData();
         final Random random = new Random();
 
-        final ConcurrentLinkedQueue<IndexBean> queue = new ConcurrentLinkedQueue<>();
+        final ConcurrentLinkedQueue<IndexEntity> queue = new ConcurrentLinkedQueue<>();
         for (String s : clRowMeta) {
-            queue.add(new IndexBean().setIndexName(s + "_index").setKey(new BasicBSONObject(s, 1)));
+            queue.add(new IndexEntity()
+                    .setIndexName(s + "_index")
+                    .setKey(new BasicBSONObject(s, 1))
+                    .setEnforced(false)
+                    .setUnique(false));
         }
 
-        final IndexBean[] indexArr = new IndexBean[queue.size()];
+        final IndexEntity[] indexArr = new IndexEntity[queue.size()];
         queue.toArray(indexArr);
 
         SdbThreadBase createIndexTasks = new SdbThreadBase() {
@@ -103,8 +83,8 @@ public class Index11424 extends SdbTestBase {
                 try {
                     db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
                     DBCollection cl = db.getCollectionSpace(SdbTestBase.csName).getCollection(Index11424.this.CLNAME);
-                    IndexBean index = queue.poll();
-                    cl.createIndex(index.getIndexName(), index.getKey(), false, false);
+                    IndexEntity index = queue.poll();
+                    cl.createIndex(index.getIndexName(), index.getKey(), index.isUnique(), index.isEnforced());
                 } finally {
                     if (db != null)
                         db.disconnect();
@@ -145,19 +125,27 @@ public class Index11424 extends SdbTestBase {
         assertTrue(createIndexTasks.isSuccess(), createIndexTasks.getErrorMsg());
 
         //assert index already created.
-        for (IndexBean indexBean : indexArr) {
-            String index_name = indexBean.getIndexName();
-            DBCursor cursor = dbcl.getIndex(index_name);
-            BasicBSONObject object = (BasicBSONObject) cursor.getNext();
-            assertNotNull(object, index_name);
-            BasicBSONObject indexDef = (BasicBSONObject) object.get("IndexDef");
-            BasicBSONObject indexKey = (BasicBSONObject) indexDef.get("key");
-            cursor.close();
+        for (IndexEntity expect : indexArr) {
+            assertIndexCreatedCorrect(dbcl, expect);
+        }
 
-            assertEquals(indexDef.getString("name"), index_name);
-            assertEquals(indexDef.getBoolean("unique"), false);
-            assertEquals(indexDef.getBoolean("enforced"), false);
-            assertEquals(indexKey, indexBean.getKey());
+        //assert index can use
+        Map<Object, BSONObject> expectRecordMap = new HashMap<>();
+        for (BSONObject object : bsonInserted) {
+            expectRecordMap.put(object.get("_id"), object);
+        }
+        for (IndexEntity expectIndex : indexArr) {
+            BSONObject matcher = new BasicBSONObject();
+            BSONObject selector = new BasicBSONObject();
+            BSONObject orderby = new BasicBSONObject();
+            BSONObject hint = new BasicBSONObject("", expectIndex.getIndexName());
+
+            try (DBCursor cursor = dbcl.query(matcher, selector, orderby, hint)) {
+                while (cursor.hasNext()) {
+                    BSONObject obj = cursor.getNext();
+                    assertEquals(obj, expectRecordMap.get(obj.get("_id")));
+                }
+            }
         }
     }
 }

@@ -21,9 +21,9 @@ import static org.testng.Assert.*;
 /**
  * Created by laojingtang on 18-1-4.
  */
-public class Sdv6986 extends SdbTestBase {
+public class Index6986 extends SdbTestBase {
     private Sequoiadb db = null;
-    private static final String CLNAME = Sdv6986.class.getSimpleName();
+    private static final String CLNAME = Index6986.class.getSimpleName();
     private DBCollection dbcl;
 
     @BeforeClass

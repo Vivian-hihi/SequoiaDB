@@ -7,14 +7,15 @@ import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
-import org.bson.util.JSON;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import static org.testng.Assert.*;
+import static com.sequoiadb.index.IndexUtil.*;
 
 /**
  * Created by laojingtang on 18-1-2.
@@ -23,7 +24,6 @@ public class Index11413 extends SdbTestBase {
     final static String CLNAME = Index11413.class.getSimpleName();
     private Sequoiadb db = null;
     private DBCollection dbcl;
-
 
     @BeforeClass
     public void setup() {
@@ -44,7 +44,7 @@ public class Index11413 extends SdbTestBase {
 
     @AfterClass
     public void teardown() {
-        if (db != null){
+        if (db != null) {
             db.getCollectionSpace(SdbTestBase.csName).dropCollection(CLNAME);
             db.disconnect();
         }
@@ -59,7 +59,7 @@ public class Index11413 extends SdbTestBase {
      */
     @Test
     public void testCreateIndex() {
-
+        final IndexEntity index2Create = new IndexEntity().setIndexName("index11413").setKey(new BasicBSONObject("a", 1)).setEnforced(false).setUnique(false);
         SdbThreadBase createTasks = new SdbThreadBase() {
             @Override
             public void exec() throws Exception {
@@ -67,7 +67,7 @@ public class Index11413 extends SdbTestBase {
                 try {
                     db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
                     DBCollection cl = db.getCollectionSpace(SdbTestBase.csName).getCollection(Index11413.this.CLNAME);
-                    cl.createIndex("index11413", new BasicBSONObject("a", 1), false, false);
+                    cl.createIndex(index2Create.getIndexName(), index2Create.getKey(), index2Create.isUnique(), index2Create.isEnforced());
                 } finally {
                     if (db != null)
                         db.disconnect();
@@ -78,18 +78,7 @@ public class Index11413 extends SdbTestBase {
         createTasks.start(20);
         createTasks.join();
 
-        DBCursor cursor = dbcl.getIndex("index11413");
-        BSONObject object = cursor.getNext();
-        cursor.close();
-        assertNotNull(object, "index11413");
-
-        BasicBSONObject indexDef= (BasicBSONObject) object.get("IndexDef");
-        BasicBSONObject indexKey= (BasicBSONObject) indexDef.get("key");
-        assertNotNull(object, "index11413");
-        assertEquals(indexDef.getString("name"),"index11413");
-        assertEquals(indexDef.getBoolean("unique"),false);
-        assertEquals(indexDef.getBoolean("enforced"),false);
-        assertEquals(indexKey, JSON.parse("{a:1}"));
+        assertIndexCreatedCorrect(dbcl, index2Create);
     }
 
     @Test
@@ -117,5 +106,4 @@ public class Index11413 extends SdbTestBase {
             assertFalse(curor.hasNext(), "b_index");
         }
     }
-
 }

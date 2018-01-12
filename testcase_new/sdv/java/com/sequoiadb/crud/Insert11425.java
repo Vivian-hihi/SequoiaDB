@@ -17,9 +17,9 @@ import java.util.Random;
 /**
  * Created by laojingtang on 18-1-4.
  */
-public class Sdv11425 extends SdbTestBase {
+public class Insert11425 extends SdbTestBase {
     private Sequoiadb db = null;
-    private static final String CLNAME = Sdv11425.class.getSimpleName();
+    private static final String CLNAME = Insert11425.class.getSimpleName();
     private DBCollection dbcl;
 
     @BeforeClass
@@ -36,6 +36,9 @@ public class Sdv11425 extends SdbTestBase {
         }
     }
 
+    /**
+     * 1.多线程插入，同时删除cl
+     */
     @Test
     public void test() throws InterruptedException {
         SdbThreadBase insert = new SdbThreadBase() {
