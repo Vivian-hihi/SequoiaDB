@@ -1056,6 +1056,8 @@ INT32 ossGetDiskInfo ( const CHAR *pPath, INT64 &totalBytes,
    struct statvfs vfs ;
    FILE *fp = NULL ;
    struct mntent *me = NULL ;
+   struct mntent dummy ;
+   CHAR tmpBuff[OSS_MAX_PATHSIZE] = {0} ;
    struct stat pathStat ;
    INT32 retcode = 0 ;
    BOOLEAN findOut = FALSE ;
@@ -1086,7 +1088,7 @@ INT32 ossGetDiskInfo ( const CHAR *pPath, INT64 &totalBytes,
    PD_CHECK( NULL != fp, SDB_SYS, error, PDERROR, "Failed to set mnt entry"
              ", errno: %d, rc = %d", ossGetLastError (), rc );
 
-   while ( NULL != ( me = getmntent (fp) ) )
+   while ( NULL != ( me = getmntent_r ( fp, &dummy, tmpBuff, OSS_MAX_PATHSIZE ) ) )
    {
       struct stat fsStat ;
       INT32 retcode = stat ( me->mnt_fsname, &fsStat );
@@ -1126,6 +1128,11 @@ done :
    {
       SDB_OSS_FREE ( lpszVolumePath ) ;
       lpszVolumePath = NULL ;
+   }
+#elif defined (_LINUX) || defined (_AIX)
+   if ( NULL != fp )
+   {
+      endmntent( fp ) ;
    }
 #endif
    PD_TRACE_EXITRC ( SDB_OSSGETDISKINFO, rc );
