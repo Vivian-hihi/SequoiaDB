@@ -573,6 +573,9 @@ namespace engine
 
          virtual INT32 bindMatchRuntime ( mthMatchRuntime *matchRuntime ) ;
 
+         INT32 bindMatchRuntime ( optAccessPlanHelper & planHelper,
+                                  optGeneralAccessPlan * subPlan ) ;
+
       protected :
          void _saveSubCL ( const CHAR *pSubCLName, double score,
                            const BSONObj &parameters ) ;

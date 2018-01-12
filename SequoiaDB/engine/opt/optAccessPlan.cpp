@@ -1406,6 +1406,7 @@ namespace engine
       PD_TRACE_ENTRY( SDB__OPTMAINACPLAN_BINDSUBACPLAN ) ;
 
       SDB_ASSERT( _matchRuntime, "_matchRuntime is invalid" ) ;
+      SDB_ASSERT( subPlan, "subPlan is invalid" ) ;
 
       rc = _scanPath.copyPath( subPlan->getScanPath() ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to copy scan path, rc: %d", rc ) ;
@@ -1418,20 +1419,8 @@ namespace engine
 
       _saveSubCL( subPlan->getCLFullName(), subPlan->getScore(), parameters ) ;
 
-      rc = bindMatchRuntime( _matchRuntime ) ;
+      rc = bindMatchRuntime( planHelper, subPlan ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to bind match runtime, rc: %d", rc ) ;
-
-      // Only need to bind predicates for index-scan plan
-      if ( IXSCAN == subPlan->getScanType() &&
-           NULL == _matchRuntime->getPredList() )
-      {
-         rc = _matchRuntime->generatePredList( planHelper.getPredicateSet(),
-                                               subPlan->getKeyPattern(),
-                                               subPlan->getDirection(),
-                                               planHelper.getNormalizer() ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to generate predicate list, rc: %d",
-                      rc ) ;
-      }
 
       // Bind finished, set the plan validated
       _isInitialized = TRUE ;
@@ -1655,6 +1644,48 @@ namespace engine
       PD_TRACE_EXITRC( SDB__OPTMAINCLACPLAN_BINDMTHRTM, rc ) ;
 
       return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTMAINCLACPLAN_BINDMTHRTM_SUB, "_optMainCLAccessPlan::bindMatchRuntime" )
+   INT32 _optMainCLAccessPlan::bindMatchRuntime ( optAccessPlanHelper & planHelper,
+                                                  optGeneralAccessPlan * subPlan )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__OPTMAINCLACPLAN_BINDMTHRTM_SUB ) ;
+
+      SDB_ASSERT( _matchRuntime, "_matchRuntime is invalid" ) ;
+      SDB_ASSERT( subPlan, "subPlan is invalid" ) ;
+
+      rc = bindMatchRuntime( _matchRuntime ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to bind match runtime, rc: %d", rc ) ;
+
+      // Only need to bind predicates for index-scan plan
+      if ( IXSCAN == subPlan->getScanType() &&
+           NULL == _matchRuntime->getPredList() )
+      {
+         mthMatchTree * matchTree = _matchRuntime->getMatchTree() ;
+         mthMatchTree * subMatchTree = subPlan->getMatchTree() ;
+
+         if ( NULL != matchTree && NULL != subMatchTree )
+         {
+            matchTree->setMatchesAll( subMatchTree->isMatchesAll() ) ;
+         }
+
+         rc = _matchRuntime->generatePredList( planHelper.getPredicateSet(),
+                                               subPlan->getKeyPattern(),
+                                               subPlan->getDirection(),
+                                               planHelper.getNormalizer() ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to generate predicate list, rc: %d",
+                      rc ) ;
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB__OPTMAINCLACPLAN_BINDMTHRTM_SUB, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTMAINCLACPLAN__SAVESUBCL, "_optMainCLAccessPlan::_saveSubCL" )
