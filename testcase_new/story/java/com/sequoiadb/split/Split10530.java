@@ -105,7 +105,7 @@ public class Split10530 extends SdbTestBase {
 	@AfterClass()
 	public void tearDown() {
 		try {
-			commCS.dropCollection(clName);
+			//commCS.dropCollection(clName);
 		} catch (BaseException e) {
 			Assert.fail(e.getMessage()+"\r\n"+SplitUtils.getKeyStack(e,this));
 		} finally {
@@ -235,14 +235,17 @@ public class Split10530 extends SdbTestBase {
 	}
 		
 	private void insertData(DBCollection cl, int beginNo, int endNo) {
-		for ( int i = beginNo; i < endNo; i+=10000){
-			List<BSONObject>list = new ArrayList<BSONObject>();	
-			for (int j = i + 0; j < i + 10000; j++) {				
-				BSONObject obj = (BSONObject) JSON.parse("{sk:" + j +", test:"+"'testasetatatatatat'" + "}");				
-				list.add(obj);	
-				insertedData.add(obj);
+		int count=0;
+		List<BSONObject>list = new ArrayList<BSONObject>();
+		for ( int i = beginNo; i < endNo; i++){
+			count++;
+			BSONObject obj = (BSONObject) JSON.parse("{sk:" + i +", test:"+"'testasetatatatatat'" + "}");				
+			list.add(obj);
+			insertedData.add(obj);
+			if(count%10000==0){
+				cl.insert(list);
+				list.clear();
 			}
-			cl.insert(list);
 		}		
 	}
 	

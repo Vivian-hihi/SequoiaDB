@@ -142,10 +142,12 @@ public class Split10528A extends SdbTestBase {
 	
 	//insert 3W records
 	private void insertData(DBCollection cl) {
-		for ( int i = 0; i < 30000; i+=10000){
+		int count=0;
+		for ( int i = 0; i < 3; i++){
 			List<BSONObject>list = new ArrayList<BSONObject>();	
-			for (int j = i + 0; j < i + 10000; j++) {				
-				BSONObject obj = (BSONObject) JSON.parse("{sk:" + j +", test:"+"'testasetatatatatat'" + "}");				
+			for (int j = 0; j < 10000; j++) {
+				int value = count++;
+				BSONObject obj = (BSONObject) JSON.parse("{sk:" + value +", test:"+"'testasetatatatatat'" + "}");				
 				list.add(obj);	
 			}
 			cl.insert(list);

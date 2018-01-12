@@ -65,7 +65,7 @@ public class Split10529B extends SdbTestBase {
 		cs = commSdb.getCollectionSpace(SdbTestBase.csName);
 		cl = cs.createCollection(clName, (BSONObject) JSON
 				.parse("{ShardingKey:{'sk':1},ReplSize:1,ShardingType:'range',Group:'" + srcGroupName + "'}"));
-		// 写入待切分的记录（20000）
+		// 写入待切分的记录（30000）
 		insertData(cl);			
 	}	
 
@@ -208,12 +208,13 @@ public class Split10529B extends SdbTestBase {
 	
 	//insert 3W records
 	private void insertData(DBCollection cl) {
-		for ( int i = 0; i < 30000; i+=10000){
+		int count = 0;
+		for ( int i = 0; i < 3; i++){
 			List<BSONObject>list = new ArrayList<BSONObject>();	
-			for (int j = i + 0; j < i + 10000; j++) {				
-				BSONObject obj = (BSONObject) JSON.parse("{sk:" + j +", test:"+"'testasetatatatatat'" + "}");				
+			for (int j = 0; j < 10000; j++) {	
+				int value = count++;
+				BSONObject obj = (BSONObject) JSON.parse("{sk:" + value +", test:"+"'testasetatatatatat'" + "}");				
 				list.add(obj);	
-				insertedData.add(obj);
 			}
 			cl.insert(list);
 		}		

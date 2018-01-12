@@ -1,6 +1,7 @@
 package com.sequoiadb.split;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -18,17 +19,18 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.split.Split10527C.SplitTask;
 import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 
 /**
  * @FileName:SEQDB-10528 切分过程中删除CL :1、向cl中循环插入数据记录 2、执行split，设置范围切分条件
- *                       3、切分过程中执行删除CL操作，分别在如下阶段删除CL:
- *                       a、任务已下发还未开始执行（如执行split后，通过listTasks查看无任务，在此过程中删除cl）
- *                       b、迁移数据过程中（如直连目标组节点查看数据持续插入，可count查询数据量在增加，删除cl）
+ *                       3、切分过程中执行删除CL操作，在如下阶段删除CL: *                      
  *                       c、目标组更新编目信息后删除cs（如直连目标组查看数据已迁移完成，或者直连编目节点查看cl信息中存在目标组，
- *                       删除cl） 4、查看切分和删除cl操作结果 备注此用例验证C
+ *                       删除cl） 
+ *                       4、查看切分和删除cl操作结果 
+ *                       备注：通过并发多个切分任务，同时随机等待时间dropCL测试（参考评审意见，这种方式可以随机并发测试该流程）
  * @author huangqiaohui
  * @version 1.00
  *
@@ -59,58 +61,43 @@ public class Split10528C extends SdbTestBase {
 		cs = commSdb.getCollectionSpace(SdbTestBase.csName);
 		DBCollection cl = cs.createCollection(clName, (BSONObject) JSON
 				.parse("{ShardingKey:{'sk':1},ShardingType:'range',Group:'" + srcGroupName + "'}"));
-		//写入待切分的记录（30000）
+		//写入待切分的记录（200000）
 		insertData(cl);		
 	}	
 
 	@Test(timeOut = 30 * 60 * 1000)
 	public void dropCL() {		
-		Sequoiadb dataNode = null;
-		Split splitThread = null;
-		try {
-			ClientOptions op = new ClientOptions();
-			op.setEnableCache(false);
-			Sequoiadb.initClient(op);
-
-			// 切分线程启动
-			splitThread = new Split();
-			splitThread.start();
-
-			// 等待目标组数据迁移完成			
-			commSdb.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
-			dataNode = commSdb.getReplicaGroup(destGroupName).getMaster().connect();
-			// flag为了防止split线程失败，产生死循环
-			while (dataNode.isCollectionSpaceExist(SdbTestBase.csName) != true && flag.get() == false) {
-			}
-			
-			CollectionSpace datacs = dataNode.getCollectionSpace(SdbTestBase.csName);	
-			while (datacs.isCollectionExist(clName) != true && flag.get() == false) {					
-			}
-			
-			DBCollection cl = dataNode.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
-			//目标组总数为24900，判断在22000时开始删除cl
-			while (cl.getCount() < 22000 && flag.get() == false) {
-			}
-			
-			// 删除CL,随机覆盖：1、数据迁移完成，编目未更新；2、数据迁移完成，编目已更新				
-			Random random = new Random();
-			int sleeptime = random.nextInt(1000);				
-			Thread.sleep(sleeptime);			
-			cs.dropCollection(clName);			
-			Assert.assertEquals(cs.isCollectionExist(clName), false);
-
-			// 检测切分线程
-			Assert.assertEquals(splitThread.isSuccess(), true, splitThread.getErrorMsg());		
-		} catch (InterruptedException e) {
-			Assert.fail(e.getMessage() + "\r\n" + SplitUtils.getKeyStack(e, this));
-		} finally {			
-			if (dataNode != null) {
-				dataNode.disconnect();
-			}
-			if (splitThread != null) {
-				splitThread.join();
-			}
+		int condition = 0;
+		int endCondition = 5000;
+		List<SplitTask> splitTasks = new ArrayList<>(5);	
+		Random random = new Random();
+		for( int i = 0; i < 5; i++){			
+			splitTasks.add( new SplitTask(condition, endCondition));
+			condition = endCondition + 5000 ;
+			endCondition = condition + 25000;
 		}
+		
+		for( SplitTask splitTask: splitTasks){
+			splitTask.start();
+		}
+		
+		// 删除CL,随机覆盖：1、数据迁移完成，编目未更新；2、数据迁移完成，编目已更新			
+		int sleeptime = random.nextInt(2000);				
+		try {
+			Thread.sleep(sleeptime);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}			
+		
+		cs.dropCollection(clName);		
+		Assert.assertEquals(cs.isCollectionExist(clName), false);
+
+		// 检测切分线程
+		for( SplitTask splitTask: splitTasks){
+			Assert.assertTrue(splitTask.isSuccess(), splitTask.getErrorMsg());
+		}			
+	
 	}
 
 	@AfterClass(enabled = true)
@@ -128,33 +115,42 @@ public class Split10528C extends SdbTestBase {
 		}
 	}
 
-	class Split extends SdbThreadBase {
-
+	class SplitTask extends SdbThreadBase {
+        private int beginNo,endNo;
+        
+        public SplitTask(int beginNo,int endNo){
+        	this.beginNo = beginNo;
+        	this.endNo = endNo;
+        }
 		@Override
 		public void exec() throws Exception {
 			Sequoiadb sdb = null;
 			try {
-				sdb = new Sequoiadb(coordUrl, "", "");				
-				DBCollection cl = sdb.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
-				cl.split(srcGroupName, destGroupName, (BSONObject) JSON.parse("{sk:100}"), // 切分
-						(BSONObject) JSON.parse("{sk:25000}"));				
-			} catch (BaseException e) {
-				throw e;
+				sdb = new Sequoiadb(coordUrl, "", "");
+				DBCollection cl = sdb.getCollectionSpace(SdbTestBase.csName).getCollection(clName);				
+				cl.split(srcGroupName, destGroupName, (BSONObject) JSON.parse("{sk:"+beginNo+"}"), 
+						(BSONObject) JSON.parse("{sk:"+endNo+"}"));					
+			} catch (BaseException e) {				
+				if (e.getErrorCode() != -147) {
+					throw e;
+				}
 			} finally {
 				if (sdb != null) {
 					sdb.disconnect();
-				}
-				flag.set(true);
+				}				
 			}
 		}
+
 	}
 	
 	//insert 3W records
 	private void insertData(DBCollection cl) {
-		for ( int i = 0; i < 30000; i+=10000){
+		int count = 0;
+		for ( int i = 0; i < 20; i++){
 			List<BSONObject>list = new ArrayList<BSONObject>();	
-			for (int j = i + 0; j < i + 10000; j++) {				
-				BSONObject obj = (BSONObject) JSON.parse("{sk:" + j +", test:"+"'testasetatatatatat'" + "}");				
+			for (int j = 0; j < 10000; j++) {	
+				int value = count++;
+				BSONObject obj = (BSONObject) JSON.parse("{sk:" + value +", test:"+"'testasetaASDGAA111111111DGADGADGADGtatatatat'" + "}");				
 				list.add(obj);	
 			}
 			cl.insert(list);
