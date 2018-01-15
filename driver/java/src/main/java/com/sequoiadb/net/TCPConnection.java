@@ -177,9 +177,6 @@ public class TCPConnection implements IConnection {
         if (this.isClosed()) {
             throw new BaseException(SDBError.SDB_NOT_CONNECTED);
         }
-        if (input == null) {
-            throw new BaseException(SDBError.SDB_SYS, "input stream is null");
-        }
         int size = 0;
         try {
             while (size < length) {
@@ -221,9 +218,6 @@ public class TCPConnection implements IConnection {
     public void send(byte[] msg, int off, int length) throws BaseException {
         if (this.isClosed()) {
             throw new BaseException(SDBError.SDB_NOT_CONNECTED);
-        }
-        if (output == null) {
-            throw new BaseException(SDBError.SDB_SYS, "output stream is null");
         }
         try {
             output.write(msg, off, length);
