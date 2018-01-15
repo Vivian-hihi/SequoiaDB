@@ -3,6 +3,7 @@ package com.sequoiadb.index;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 import org.bson.BSONObject;
@@ -19,6 +20,7 @@ import java.util.Map;
 import static org.testng.Assert.*;
 import static org.testng.Assert.assertEquals;
 import static com.sequoiadb.index.IndexUtil.*;
+
 /**
  * Created by laojingtang on 18-1-2.
  */
@@ -26,7 +28,7 @@ public class Index11416 extends SdbTestBase {
     final String CLNAME = Index11416.class.getSimpleName();
     private Sequoiadb db = null;
     private DBCollection dbcl;
-    private List<BSONObject> bsonInserted=new ArrayList<>(10000);
+    private List<BSONObject> bsonInserted = new ArrayList<>(10000);
 
     @BeforeClass
     public void setup() {
@@ -83,7 +85,7 @@ public class Index11416 extends SdbTestBase {
         assertTrue(createTasks.isSuccess(), createTasks.getErrorMsg());
 
         //assert index info
-        assertIndexCreatedCorrect(dbcl,createIndex);
+        assertIndexCreatedCorrect(dbcl, createIndex);
 
         //assert index can be used
         Map<Object, BSONObject> expectRecordMap = new HashMap<>();
@@ -106,6 +108,7 @@ public class Index11416 extends SdbTestBase {
     @Test
     public void testRemoveIndexAndQuery() {
         dbcl.createIndex("b_index", new BasicBSONObject("b", 1), false, false);
+        long initCount = dbcl.getCount();
 
         SdbThreadBase removeTask = new SdbThreadBase() {
             @Override
@@ -131,6 +134,15 @@ public class Index11416 extends SdbTestBase {
         try (DBCursor curor = dbcl.getIndex("b_index")) {
             assertFalse(curor.hasNext(), "b_index");
         }
+
+        long actual = 0;
+        try (DBCursor cur = dbcl.query()) {
+            while (cur.hasNext()) {
+                cur.getNext();
+                actual++;
+            }
+        }
+        assertEquals(actual, initCount);
     }
 
     class QueryTask extends SdbThreadBase {
@@ -148,6 +160,9 @@ public class Index11416 extends SdbTestBase {
                 db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
                 DBCollection cl = db.getCollectionSpace(SdbTestBase.csName).getCollection(Index11416.this.CLNAME);
                 cl.query(null, null, null, new BasicBSONObject("", indexName), 0, 10);
+            } catch (BaseException e) {
+                if (e.getErrorCode() != -10)
+                    throw e;
             } finally {
                 if (db != null)
                     db.disconnect();
