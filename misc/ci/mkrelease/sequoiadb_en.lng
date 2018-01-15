@@ -36,7 +36,7 @@ Install.ErrorMsg.DeleteUser.error=Failed to delete user:${username}
 Install.ErrorMsg.IntallationOM.error=Create OM failed
 Install.ErrorMsg.checkDisk.error=There is not enough disk space for installation. It needs at lease 1.3G.
 Install.ErrorMsg.StartCM.error=Failed to start cm, execute: service sdbcm start.
-Install.ErrorMsg.CheckInstallmodeAndUpgrade.error=the parameter 'upgrade' is deprecated, please use 'installmode'.
+Install.ErrorMsg.CheckInstallmodeAndUpgrade.error=Parameters 'upgrade' and 'installmode' are not allowed to be used at the same time, please use 'installmode'.
 Install.ErrorMsg.SystemctlReload=Fail to excute 'systemctl daemon-reload'.
 
 Install.WarnMsg.CheckUmask=Umask abnormal! Current umask = ${full_mask}, recommended value is 0022
