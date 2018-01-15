@@ -236,9 +236,9 @@ function main()
    }
    
    //清理环境
-   //commDropCS( db, subcsName1 );
-   //commDropCS( db, subcsName2 );
-   //commDropCS( db, maincsName );
+   commDropCS( db, subcsName1 );
+   commDropCS( db, subcsName2 );
+   commDropCS( db, maincsName );
    db1.close();
    db2.close();
    
