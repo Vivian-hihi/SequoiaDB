@@ -622,4 +622,35 @@ function updateIndexStateInfo( db, csName, clName, indexName, mcvValues, fracs )
    }
                                                                                        
 } 
+
+/************************************
+*@Description: 检查访问计划快照
+*@author:      liuxiaoxuan
+*@createDate:  2018.01.15
+**************************************/
+function checkSnapShotAccessPlans( expectAccessPlan, actAccessPlan )
+{
+   try
+   {
+      if( expectAccessPlan.length !==  actAccessPlan.length )
+      {
+          throw buildException("check length", "accessPlan length", "check failed!",
+									expectAccessPlan.length, actAccessPlan.length);
+      }
+
+      for(var i = 0; i < expectAccessPlan.length; i++)
+      {
+         if(expectAccessPlan['Query'] !== actAccessPlan['Query']
+                  && expectAccessPlan['AccessCount'] !== actAccessPlan['AccessCount'])
+         {
+             throw buildException("check accessPlan", "accessPlan", "check failed!", 
+	   		                  JSON.stringify(expectAccessPlan[i]), JSON.stringify(actAccessPlan[i]));
+         }
+      }
+   }
+   catch(e)
+   {
+      throw buildException("check snapshot accessPlan", e, "snapshot accessPlan", "success", e);
+   }
+}
                                                                                
