@@ -86,7 +86,7 @@ public class Split515 extends SdbTestBase {
             TaskMgr mgr1 = new TaskMgr(faultTask);
             mgr1.addTask(new Split());
             mgr1.execute();
-            Assert.assertEquals(mgr1.isAllSuccess(), true, mgr2.getErrorMsg());
+            Assert.assertEquals(mgr1.isAllSuccess(), true, mgr1.getErrorMsg());
             Assert.assertEquals(groupMgr.checkBusiness(600), true, "failed to restore business");
             Assert.assertEquals(100000, checkGroupData(srcGroupName));
             Assert.assertEquals(900000, checkGroupData(destGroupName));
