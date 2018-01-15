@@ -18,6 +18,7 @@
 #include "cJSON_ext.h"
 #include "base64c.h"
 #include "timestamp.h"
+#include <math.h>
 
 #define INT_NUM_SIZE 32
 
@@ -1523,8 +1524,7 @@ static BOOLEAN bsonConvertJson ( CHAR **pbuf,
          {
             CHAR temp[ BSON_TEMP_SIZE_512 ] ;
             memset ( temp, 0, BSON_TEMP_SIZE_512 ) ;
-            double z = valNum;
-            if (valNum == z)
+            if (!isnan(valNum))
             {
 #ifdef WIN32
             _snprintf ( temp,
