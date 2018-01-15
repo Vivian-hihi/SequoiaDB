@@ -2860,7 +2860,7 @@ namespace engine
       }
 
       // Clear cached main-collection plans
-      // Note: cached sub-collection plans are cleared inside drop-index
+      // Note: cached sub-collection plans are cleared inside create-index
       // of sub-collections
       _pRtnCB->getAPM()->invalidateCLPlans( _pCollectionName ) ;
 
@@ -3696,6 +3696,14 @@ namespace engine
          }
          ++itr ;
       }
+
+      // Clear cached main-collection plans
+      // Note: cached sub-collection plans are cleared inside truncate
+      // of sub-collections
+      _pRtnCB->getAPM()->invalidateCLPlans( _pCollectionName ) ;
+
+      // Tell secondary nodes to clear cached main-collection plans
+      sdbGetClsCB()->invalidatePlan( _pCollectionName ) ;
 
    done:
       return rc ;
