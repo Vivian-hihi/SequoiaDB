@@ -69,7 +69,7 @@ TEST_F( updateShardingKeyTest12635, update12635 )
 
    // create split cl
    BSONObj option = BSON( "ShardingKey" << BSON( "a" << 1 ) << "ShardingType" << "range" <<
-                          "Group" << srcGroup ) ;
+                          "Group" << srcGroup << "ReplSize" << 0 ) ;
    rc = cs.createCollection( clName, option, cl ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to create cl " << clName ;
 

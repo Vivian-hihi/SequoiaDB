@@ -56,7 +56,8 @@ TEST_F( queryAndUpdateShardingKeyTest12636, queryAndUpdate12636 )
    }
 
    // create split cl
-   BSONObj option = BSON( "ShardingKey" << BSON( "a" << 1 ) << "ShardingType" << "hash" ) ;
+   BSONObj option = BSON( "ShardingKey" << BSON( "a" << 1 ) << "ShardingType" << "hash" <<
+                          "ReplSize" << 0 ) ;
    rc = cs.createCollection( clName, option, cl ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to create cl " << clName ;
 
