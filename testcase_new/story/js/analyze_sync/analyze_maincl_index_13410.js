@@ -204,7 +204,7 @@ function main()
    checkExplainAfterAnalyzeMainclCommonIndex();
    println("---check all explain after anlyze common index success");
    
-   //删除主表cs、其他cs下的子表中的shard索引
+   //删除主表cs、其他cs下的子表中的a1索引
    commDropIndex( subcl2, "a1" );
    commDropIndex( subcl5, "a1" );
    
@@ -219,7 +219,7 @@ function main()
    //主备节点上检查访问计划
    checkExplainAfterDropSubclCommIndex();
    
-   //指定主表cl的shard索引执行统计
+   //指定主表cl的普通索引执行统计
    analyze( db, {Collection: mainclFullName, Index:"a1"} );
    
    //主备节点上检查访问计划
