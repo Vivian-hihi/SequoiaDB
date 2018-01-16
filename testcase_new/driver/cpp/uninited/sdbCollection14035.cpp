@@ -148,8 +148,6 @@ TEST_F( sdbCollection14035, opCL )
    rc = cl.dropIdIndex() ;
    EXPECT_EQ( SDB_NOT_CONNECTED, rc ) << "drop id index shouldn't be executed" ;
 
-   /*
    rc = cl.listLobPieces( cursor ) ;
    EXPECT_EQ( SDB_NOT_CONNECTED, rc ) << "listLobPieces shouldn't be executed" ;
-   */
 }
