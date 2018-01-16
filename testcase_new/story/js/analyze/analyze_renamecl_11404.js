@@ -50,6 +50,10 @@ function main()
    checkExplain( actExplains1, expExplains1 );
    checkExplain( actExplains2, expExplains2 );
 
+   //query no explain
+   querySameWithOutExplain( dbcl1, findConf1 );
+   querySameWithOutExplain( dbcl2, findConf2 );
+
    //check snapshot access plan
    var actAccessPlan1 = db.snapshot(11, {Collection : csName + "." + clName1}).toArray();
    var actAccessPlan2 = db.snapshot(11, {Collection : csName + "." + clName2}).toArray();
@@ -93,6 +97,10 @@ function main()
    checkExplain( actExplains1, expExplains );
    checkExplain( actExplains2, expExplains );
 
+   //query no explain
+   querySameWithOutExplain( dbcl1, findConf1 );
+   querySameWithOutExplain( dbcl2, findConf2 );
+
    //check snapshot access plan after query
    var actAccessPlan1 = db.snapshot(11, {Collection : csName + "." + clName1}).toArray();
    var actAccessPlan2 = db.snapshot(11, {Collection : csName + "." + clName2}).toArray();
@@ -129,6 +137,10 @@ function main()
    //check explain
    checkExplain( actExplains1, expExplains );
    checkExplain( actExplains2, expExplains );
+
+   //query no explain
+   querySameWithOutExplain( newCL, findConf1 );
+   querySameWithOutExplain( dbcl2, findConf2 );
 
    //check snapshot access plan
    var actAccessPlan1 = db.snapshot(11, {Collection : csName + "." + newClName}).toArray();
@@ -196,6 +208,19 @@ function checkAnalyzeStatInfo( csName, clName )
    catch(e)
    {
       throw buildException("check analyze info", e, "check", "success", e);
+   }
+}
+
+function querySameWithOutExplain(dbcl, findConf, sortConf, hintConf)
+{
+   if ( typeof(findConf) == "undefined" ) { findConf = null; }
+   if ( typeof(sortConf) == "undefined" ) { sortConf = null; }
+   if ( typeof(hintConf) == "undefined" ) { hintConf = null; }
+   
+   //执行查询
+   var rc = dbcl.find(findConf).sort(sortConf).hint(hintConf);
+   while(rc.next())
+   {
    }
 }
 main();

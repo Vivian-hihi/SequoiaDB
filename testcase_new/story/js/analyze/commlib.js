@@ -628,25 +628,34 @@ function updateIndexStateInfo( db, csName, clName, indexName, mcvValues, fracs )
 *@author:      liuxiaoxuan
 *@createDate:  2018.01.15
 **************************************/
-function checkSnapShotAccessPlans( expectAccessPlan, actAccessPlan )
+function checkSnapShotAccessPlans( expectAccessPlans, actAccessPlans )
 {
    try
    {
-      if( expectAccessPlan.length !==  actAccessPlan.length )
+      if( expectAccessPlans.length !==  actAccessPlans.length )
       {
           throw buildException("check length", "accessPlan length", "check failed!",
-									expectAccessPlan.length, actAccessPlan.length);
+									expectAccessPlans.length, actAccessPlans.length);
       }
-
-      for(var i = 0; i < expectAccessPlan.length; i++)
+   
+      var newActAccessPlans = new Array();
+      for(var i = 0; i < actAccessPlans.length; i++)
       {
-         if(expectAccessPlan['Query'] !== actAccessPlan['Query']
-                  && expectAccessPlan['AccessCount'] !== actAccessPlan['AccessCount'])
+         var actAccessPlan = eval("(" + actAccessPlans[i] + ")");
+         newActAccessPlans.push({'Query': actAccessPlan['Query'],
+                                 'AccessCount': actAccessPlan['AccessCount']});
+      }   
+
+      for(var i = 0; i < expectAccessPlans.length; i++)
+      {
+         if(JSON.stringify(newActAccessPlans).indexOf(JSON.stringify(expectAccessPlans[i])) === -1
+               && JSON.stringify(expectAccessPlans).indexOf(JSON.stringify(newActAccessPlans[i])) === -1)
          {
-             throw buildException("check accessPlan", "accessPlan", "check failed!", 
-	   		                  JSON.stringify(expectAccessPlan[i]), JSON.stringify(actAccessPlan[i]));
+            throw buildException("check access plan", "access plan", "fail", 
+	   		                  JSON.stringify(expectAccessPlans[i]), JSON.stringify(newActAccessPlans));
          }
       }
+     
    }
    catch(e)
    {

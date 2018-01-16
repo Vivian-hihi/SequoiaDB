@@ -53,6 +53,10 @@ function main()
    checkExplain( actExplains1, expExplains1 );
    checkExplain( actExplains2, expExplains2 );
 
+   //query no explain
+   querySameWithOutExplain( dbcl1, findConf1 );
+   querySameWithOutExplain( dbcl2, findConf2 );
+
    //check snapshot access plan
    var actAccessPlan1 = db.snapshot(11, {Collection : csName + "." + clName1}).toArray();
    var actAccessPlan2 = db.snapshot(11, {Collection : csName + "." + clName2}).toArray();
@@ -96,6 +100,10 @@ function main()
    //check explain
    checkExplain( actExplains1, expExplains );
    checkExplain( actExplains2, expExplains );
+
+   //query no explain
+   querySameWithOutExplain( dbcl1, findConf1 );
+   querySameWithOutExplain( dbcl2, findConf2 );
 
    //check snapshot access plan
    var actAccessPlan1 = db.snapshot(11, {Collection : csName + "." + clName1}).toArray();
@@ -145,6 +153,10 @@ function main()
    checkExplain( actExplains1, expExplains );
    checkExplain( actExplains2, expExplains );
 
+   //query no explain
+   querySameWithOutExplain( newCL1, findConf1 );
+   querySameWithOutExplain( newCL2, findConf2 );
+
    //check snapshot access plan
    var actAccessPlan1 = db.snapshot(11, {Collection : newCsName + "." + clName1}).toArray();
    var actAccessPlan2 = db.snapshot(11, {Collection : newCsName + "." + clName2}).toArray();
@@ -175,5 +187,17 @@ function renameCS( oldCsName, newCsName )
    }
 }
 
+function querySameWithOutExplain(dbcl, findConf, sortConf, hintConf)
+{
+   if ( typeof(findConf) == "undefined" ) { findConf = null; }
+   if ( typeof(sortConf) == "undefined" ) { sortConf = null; }
+   if ( typeof(hintConf) == "undefined" ) { hintConf = null; }
+   
+   //执行查询
+   var rc = dbcl.find(findConf).sort(sortConf).hint(hintConf);
+   while(rc.next())
+   {
+   }
+}
 
 main();

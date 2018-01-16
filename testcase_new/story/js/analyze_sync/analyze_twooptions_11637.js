@@ -1,5 +1,5 @@
 /************************************
-*@Description:  指定2个参数组合收集统计信息  
+*@Description:  指定2个参数组合收集统计信息、清空缓存 
 *@author:      liuxiaoxuan
 *@createdate:  2017.11.11
 *@testlinkCase: seqDB-11637
@@ -59,6 +59,19 @@ function main()
                                                             
    var actExplains = getCommonExplain( dbclSlave, findConf);
    checkExplain( actExplains, expExplains );
+
+   //query no explain
+   querySameWithOutExplain( dbclPrimary, findConf );
+   querySameWithOutExplain( dbclSlave, findConf );
+
+   //check snapshot access plan
+   var actAccessPlan = db.snapshot(11, {Collection : csName + "." + clName}).toArray();
+
+   var expectAccessPlan = [{"Query": {"$and": [{"a": {"$et": {"$param": 0,"$ctype": 10}}}]},
+                            "AccessCount": 1},
+                           {"Query": {"$and": [{"a": {"$et": {"$param": 0,"$ctype": 10}}}]},
+                            "AccessCount": 1}];
+   checkSnapShotAccessPlans( expectAccessPlan, actAccessPlan );
                                                         	
    println("check result before analyze success!");
                                                      	
@@ -67,8 +80,13 @@ function main()
    analyze( db, options );
    
    //check after analyze success with cs+group
-   checkStat( db, csName, clName, "a", true, true );
-                                                 	
+   checkStat( db, csName, clName, "a", true, true );     
+
+   //check snapshot access plan
+   var actAccessPlan = db.snapshot(11, {Collection : csName + "." + clName}).toArray();
+   var expectAccessPlan = [];
+   checkSnapShotAccessPlans( expectAccessPlan, actAccessPlan );  
+                          	
    //check the query explain after analyze
    var findConf = {a : 9000};
    var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
@@ -79,6 +97,19 @@ function main()
    var actExplains = getCommonExplain( dbclSlave, findConf);
    checkExplain( actExplains, expExplains );
                                    	
+   //query no explain
+   querySameWithOutExplain( dbclPrimary, findConf );
+   querySameWithOutExplain( dbclSlave, findConf );
+
+   //check snapshot access plan
+   var actAccessPlan = db.snapshot(11, {Collection : csName + "." + clName}).toArray();
+
+   var expectAccessPlan = [{"Query": {"$and": [{"a": {"$et": {"$param": 0,"$ctype": 10}}}]},
+                            "AccessCount": 1},
+                           {"Query": {"$and": [{"a": {"$et": {"$param": 0,"$ctype": 10}}}]},
+                            "AccessCount": 1}];
+   checkSnapShotAccessPlans( expectAccessPlan, actAccessPlan );
+
    println("check result after analyze success with options cs+group!");
    
     //truncate analyze info
@@ -87,6 +118,11 @@ function main()
 
    //check after truncate        
    checkStat( db, csName, clName, "a", true, false );
+
+   //check snapshot access plan
+   var actAccessPlan = db.snapshot(11, {Collection : csName + "." + clName}).toArray();
+   var expectAccessPlan = [];
+   checkSnapShotAccessPlans( expectAccessPlan, actAccessPlan );  
                                                	
    var findConf = {a : 9000};
    var expExplains = [{ScanType:"ixscan", IndexName:"a", ReturnNum:insertNums}];
@@ -97,13 +133,31 @@ function main()
    var actExplains = getCommonExplain( dbclSlave, findConf);
    checkExplain( actExplains, expExplains );
 
+   //query no explain
+   querySameWithOutExplain( dbclPrimary, findConf );
+   querySameWithOutExplain( dbclSlave, findConf );
+
+   //check snapshot access plan
+   var actAccessPlan = db.snapshot(11, {Collection : csName + "." + clName}).toArray();
+
+   var expectAccessPlan = [{"Query": {"$and": [{"a": {"$et": {"$param": 0,"$ctype": 10}}}]},
+                            "AccessCount": 1},
+                           {"Query": {"$and": [{"a": {"$et": {"$param": 0,"$ctype": 10}}}]},
+                            "AccessCount": 1}];
+   checkSnapShotAccessPlans( expectAccessPlan, actAccessPlan );
+
    //analyze with cs+node
    var options = { CollectionSpace : csName, NodeID : priNodeId };
    analyze( db, options );
    
    //check after analyze success with cs+node
    checkStat( db, csName, clName, "a", true, true );
-                                                 	
+                           
+   //check snapshot access plan
+   var actAccessPlan = db.snapshot(11, {Collection : csName + "." + clName}).toArray();
+   var expectAccessPlan = [];
+   checkSnapShotAccessPlans( expectAccessPlan, actAccessPlan );
+                      	
    //check the query explain after analyze
    var findConf = {a : 9000};
    var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
@@ -113,6 +167,19 @@ function main()
    
    var actExplains = getCommonExplain( dbclSlave, findConf);
    checkExplain( actExplains, expExplains );
+
+   //query no explain
+   querySameWithOutExplain( dbclPrimary, findConf );
+   querySameWithOutExplain( dbclSlave, findConf );
+
+   //check snapshot access plan
+   var actAccessPlan = db.snapshot(11, {Collection : csName + "." + clName}).toArray();
+
+   var expectAccessPlan = [{"Query": {"$and": [{"a": {"$et": {"$param": 0,"$ctype": 10}}}]},
+                            "AccessCount": 1},
+                           {"Query": {"$and": [{"a": {"$et": {"$param": 0,"$ctype": 10}}}]},
+                            "AccessCount": 1}];
+   checkSnapShotAccessPlans( expectAccessPlan, actAccessPlan );
                                    	
    println("check result after analyze success with options cs+node!");
    
@@ -122,6 +189,12 @@ function main()
 
    //check after truncate        
    checkStat( db, csName, clName, "a", true, false );
+
+   //check snapshot access plan
+   var actAccessPlan = db.snapshot(11, {Collection : csName + "." + clName}).toArray();
+
+   var expectAccessPlan = [];
+   checkSnapShotAccessPlans( expectAccessPlan, actAccessPlan );
                                                	
    var findConf = {a : 9000};
    var expExplains = [{ScanType:"ixscan", IndexName:"a", ReturnNum:insertNums}];
@@ -131,10 +204,28 @@ function main()
                                              
    var actExplains = getCommonExplain( dbclSlave, findConf);
    checkExplain( actExplains, expExplains );
+
+   //query no explain
+   querySameWithOutExplain( dbclPrimary, findConf );
+   querySameWithOutExplain( dbclSlave, findConf );
+
+   //check snapshot access plan
+   var actAccessPlan = db.snapshot(11, {Collection : csName + "." + clName}).toArray();
+
+   var expectAccessPlan = [{"Query": {"$and": [{"a": {"$et": {"$param": 0,"$ctype": 10}}}]},
+                            "AccessCount": 1},
+                           {"Query": {"$and": [{"a": {"$et": {"$param": 0,"$ctype": 10}}}]},
+                            "AccessCount": 1}];
+   checkSnapShotAccessPlans( expectAccessPlan, actAccessPlan );
   
    //analyze with cl+group
    var options = { Collection : csName + "." + clName, GroupName : groupName[0] };
    analyze( db, options );
+
+   //check snapshot access plan
+   var actAccessPlan = db.snapshot(11, {Collection : csName + "." + clName}).toArray();
+   var expectAccessPlan = [];
+   checkSnapShotAccessPlans( expectAccessPlan, actAccessPlan );
    
    //check after analyze success with cl+group
    checkStat( db, csName, clName, "a", true, true );
@@ -148,6 +239,19 @@ function main()
    
    var actExplains = getCommonExplain( dbclSlave, findConf);
    checkExplain( actExplains, expExplains );
+
+   //query no explain
+   querySameWithOutExplain( dbclPrimary, findConf );
+   querySameWithOutExplain( dbclSlave, findConf );
+
+   //check snapshot access plan
+   var actAccessPlan = db.snapshot(11, {Collection : csName + "." + clName}).toArray();
+
+   var expectAccessPlan = [{"Query": {"$and": [{"a": {"$et": {"$param": 0,"$ctype": 10}}}]},
+                            "AccessCount": 1},
+                           {"Query": {"$and": [{"a": {"$et": {"$param": 0,"$ctype": 10}}}]},
+                            "AccessCount": 1}];
+   checkSnapShotAccessPlans( expectAccessPlan, actAccessPlan );
                                    	
    println("check result after analyze success with options cl+group!");
    
@@ -268,6 +372,19 @@ function checkAnalyzeInvalidResult( options )
       {
          throw buildException("check analyze", e, "analyze", "analyze success", e);
       }
+   }
+}
+
+function querySameWithOutExplain(dbcl, findConf, sortConf, hintConf)
+{
+   if ( typeof(findConf) == "undefined" ) { findConf = null; }
+   if ( typeof(sortConf) == "undefined" ) { sortConf = null; }
+   if ( typeof(hintConf) == "undefined" ) { hintConf = null; }
+   
+   //执行查询
+   var rc = dbcl.find(findConf).sort(sortConf).hint(hintConf);
+   while(rc.next())
+   {
    }
 }
 

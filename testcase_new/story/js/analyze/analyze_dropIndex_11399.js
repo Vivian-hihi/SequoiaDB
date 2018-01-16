@@ -1,5 +1,5 @@
 ﻿/************************************
-*@Description: 删除索引清空统计信息
+*@Description: 删除索引清空统计信息、查询缓存
 *@author:      zhaoyu
 *@createdate:  2017.11.8
 *@testlinkCase:seqDB-11399
@@ -71,6 +71,10 @@ function main()
    var actExplains = getCommonExplain( dbclSlave, findConf);
    checkExplain( actExplains, expExplains );
    
+   //执行查询
+   querySameWithOutExplain( dbclPrimary, findConf );
+   querySameWithOutExplain( dbclSlave, findConf ); 
+
    var findConf = {b:sameValues};
    var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}];
    
@@ -78,6 +82,35 @@ function main()
    checkExplain( actExplains, expExplains );
    var actExplains = getCommonExplain( dbclSlave, findConf);
    checkExplain( actExplains, expExplains );
+
+   //执行查询
+   querySameWithOutExplain( dbclPrimary, findConf );
+   querySameWithOutExplain( dbclSlave, findConf ); 
+
+   //检查访问计划快照信息
+   var actAccessPlans = db.snapshot(11, {Collection : COMMCSNAME + "." + clName}).toArray();
+
+   var expectAccessPlansStandAlone = [{"Query": {"$and": [{"a": {"$et": {"$param": 0,"$ctype": 10}}}]},
+                                       "AccessCount": 2},
+                                      {"Query": {"$and": [{"b": {"$et": {"$param": 0,"$ctype": 10}}}]},
+                                       "AccessCount": 2}];	
+                                                      
+   var expectAccessPlansCluster = [{"Query": {"$and": [{"a": {"$et": {"$param": 0,"$ctype": 10}}}]},
+                                    "AccessCount": 1},
+                                   {"Query": {"$and": [{"a": {"$et": {"$param": 0,"$ctype": 10}}}]},
+                                    "AccessCount": 1},
+                                   {"Query": {"$and": [{"b": {"$et": {"$param": 0,"$ctype": 10}}}]},
+                                    "AccessCount": 1},
+                                   {"Query": {"$and": [{"b": {"$et": {"$param": 0,"$ctype": 10}}}]},
+                                    "AccessCount": 1}];	
+   if(commIsStandalone(db))
+   {
+      checkSnapShotAccessPlans( expectAccessPlansStandAlone, actAccessPlans );
+   }
+   else
+   {
+      checkSnapShotAccessPlans( expectAccessPlansCluster, actAccessPlans );
+   }
    
    println("check result after analyze success!");
    
@@ -87,6 +120,12 @@ function main()
    //检查统计信息
    checkStat( db, COMMCSNAME, clName, "a", true, false );
    checkStat( db, COMMCSNAME, clName, "b", true, true );
+
+   //检查访问计划快照信息
+   var actAccessPlans = db.snapshot(11, {Collection : COMMCSNAME + "." + clName}).toArray();
+
+   var expectAccessPlans = [];	
+   checkSnapShotAccessPlans( expectAccessPlans, actAccessPlans );
    
    //检查主备节点访问计划
    var findConf = {a:sameValues};
@@ -98,6 +137,10 @@ function main()
    var actExplains = getCommonExplain( dbclSlave, findConf, null, hintConf);
    checkExplain( actExplains, expExplains );
    
+   //执行查询
+   querySameWithOutExplain( dbclPrimary, findConf, null, hintConf );
+   querySameWithOutExplain( dbclSlave, findConf, null, hintConf ); 
+
    var findConf = {b:sameValues};
    var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}];
    
@@ -105,6 +148,35 @@ function main()
    checkExplain( actExplains, expExplains );
    var actExplains = getCommonExplain( dbclSlave, findConf);
    checkExplain( actExplains, expExplains );
+
+   //执行查询
+   querySameWithOutExplain( dbclPrimary, findConf );
+   querySameWithOutExplain( dbclSlave, findConf ); 
+
+   //检查访问计划快照信息
+   var actAccessPlans = db.snapshot(11, {Collection : COMMCSNAME + "." + clName}).toArray();
+
+   var expectAccessPlansStandAlone = [{"Query": {"$and": [{"a": {"$et": {"$param": 0,"$ctype": 10}}}]},
+                                       "AccessCount": 2},
+                                      {"Query": {"$and": [{"b": {"$et": {"$param": 0,"$ctype": 10}}}]},
+                                       "AccessCount": 2}];	
+                                                      
+   var expectAccessPlansCluster = [{"Query": {"$and": [{"a": {"$et": {"$param": 0,"$ctype": 10}}}]},
+                                    "AccessCount": 1},
+                                   {"Query": {"$and": [{"a": {"$et": {"$param": 0,"$ctype": 10}}}]},
+                                    "AccessCount": 1},
+                                   {"Query": {"$and": [{"b": {"$et": {"$param": 0,"$ctype": 10}}}]},
+                                    "AccessCount": 1},
+                                   {"Query": {"$and": [{"b": {"$et": {"$param": 0,"$ctype": 10}}}]},
+                                    "AccessCount": 1}];	
+   if(commIsStandalone(db))
+   {
+      checkSnapShotAccessPlans( expectAccessPlansStandAlone, actAccessPlans );
+   }
+   else
+   {
+      checkSnapShotAccessPlans( expectAccessPlansCluster, actAccessPlans );
+   }
    
    println("check result after drop index success!");
    
@@ -113,6 +185,12 @@ function main()
    
    //检查统计信息
    checkStat( db, COMMCSNAME, clName, "a", true, false );
+
+   //检查访问计划快照信息
+   var actAccessPlans = db.snapshot(11, {Collection : COMMCSNAME + "." + clName}).toArray();
+
+   var expectAccessPlans = [];	
+   checkSnapShotAccessPlans( expectAccessPlans, actAccessPlans );
    
    //检查主备节点访问计划
    var findConf = {a:sameValues};
@@ -123,6 +201,10 @@ function main()
    var actExplains = getCommonExplain( dbclSlave, findConf);
    checkExplain( actExplains, expExplains );
    
+   //执行查询
+   querySameWithOutExplain( dbclPrimary, findConf );
+   querySameWithOutExplain( dbclSlave, findConf ); 
+
    var findConf = {b:sameValues};
    var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}];
    
@@ -130,7 +212,36 @@ function main()
    checkExplain( actExplains, expExplains );
    var actExplains = getCommonExplain( dbclSlave, findConf);
    checkExplain( actExplains, expExplains );
-   
+
+   //执行查询
+   querySameWithOutExplain( dbclPrimary, findConf );
+   querySameWithOutExplain( dbclSlave, findConf ); 
+
+   //检查访问计划快照信息
+   var actAccessPlans = db.snapshot(11, {Collection : COMMCSNAME + "." + clName}).toArray();
+
+   var expectAccessPlansStandAlone = [{"Query": {"$and": [{"a": {"$et": {"$param": 0,"$ctype": 10}}}]},
+                                       "AccessCount": 2},
+                                      {"Query": {"$and": [{"b": {"$et": {"$param": 0,"$ctype": 10}}}]},
+                                       "AccessCount": 2}];	
+                                                      
+   var expectAccessPlansCluster = [{"Query": {"$and": [{"a": {"$et": {"$param": 0,"$ctype": 10}}}]},
+                                    "AccessCount": 1},
+                                   {"Query": {"$and": [{"a": {"$et": {"$param": 0,"$ctype": 10}}}]},
+                                    "AccessCount": 1},
+                                   {"Query": {"$and": [{"b": {"$et": {"$param": 0,"$ctype": 10}}}]},
+                                    "AccessCount": 1},
+                                   {"Query": {"$and": [{"b": {"$et": {"$param": 0,"$ctype": 10}}}]},
+                                    "AccessCount": 1}];	
+   if(commIsStandalone(db))
+   {
+      checkSnapShotAccessPlans( expectAccessPlansStandAlone, actAccessPlans );
+   }
+   else
+   {
+      checkSnapShotAccessPlans( expectAccessPlansCluster, actAccessPlans );
+   } 
+
    println("check result after create the same index success!");
    
    //清空环境
@@ -139,4 +250,17 @@ function main()
    db2.close();
   
  }
+
+function querySameWithOutExplain(dbcl, findConf, sortConf, hintConf)
+{
+   if ( typeof(findConf) == "undefined" ) { findConf = null; }
+   if ( typeof(sortConf) == "undefined" ) { sortConf = null; }
+   if ( typeof(hintConf) == "undefined" ) { hintConf = null; }
+   
+   //执行查询
+   var rc = dbcl.find(findConf).sort(sortConf).hint(hintConf);
+   while(rc.next())
+   {
+   }
+}
  main()
