@@ -47,6 +47,7 @@
 #include "../bson/ordering.h"
 #include "msgCatalogDef.h"
 #include "utilCompression.hpp"
+#include "utilSet.hpp"
 
 using namespace bson ;
 
@@ -351,7 +352,8 @@ namespace engine
                                  _clsCatalogSet **ppSet = NULL ) ;
          INT32   clear ( const CHAR* name ) ;
          INT32   clearBySpaceName ( const CHAR* name,
-                                    vector< string > *pRelatedCLs = NULL ) ;
+                                    vector< string > *pRelatedCLs = NULL,
+                                    _utilSet< string > * pMainCLs = NULL ) ;
          /// caller need to hold the write lock
          INT32   clearAll () ;
 

@@ -168,11 +168,14 @@ namespace engine
                                     _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
+      SDB_RTNCB *pRtnCB = sdbGetRTNCB() ;
       clsCB *pClsCB = sdbGetClsCB() ;
       shardCB *pShdMgr = pClsCB->getShardCB() ;
       clsTaskMgr *pTaskMgr = pmdGetKRCB()->getClsCB()->getTaskMgr() ;
       vector< string > subCLs ;
       vector< string >::iterator it ;
+      _utilSet< string > mainCLs ;
+      _utilSet< string >::iterator mainIter ;
 
       if ( !isOpened() )
       {
@@ -181,7 +184,7 @@ namespace engine
       }
 
       _pCatAgent->lock_w() ;
-      _pCatAgent->clearBySpaceName( _name, &subCLs ) ;
+      _pCatAgent->clearBySpaceName( _name, &subCLs, &mainCLs ) ;
       _pCatAgent->release_w() ;
 
       it = subCLs.begin() ;
@@ -197,6 +200,18 @@ namespace engine
          ++it ;
       }
       pClsCB->invalidateCata( _name ) ;
+
+      // Clear main collection plans
+      mainIter = mainCLs.begin() ;
+      while ( mainIter != mainCLs.end() )
+      {
+         const CHAR * mainCLName = ( *mainIter ).c_str() ;
+         // Clear plan cache in self
+         pRtnCB->getAPM()->invalidateCLPlans( mainCLName ) ;
+         // Clear plan cache in secondary nodes
+         pClsCB->invalidatePlan( mainCLName ) ;
+         ++ mainIter ;
+      }
 
       /// already drop phrase1
       if ( DELCSPHASE_1 == _status )

@@ -2601,7 +2601,8 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTAGENT_CRBYSPACENAME, "_clsCatalogAgent::clearBySpaceName" )
    INT32 _clsCatalogAgent::clearBySpaceName ( const CHAR * name,
-                                              vector< string > *pRelatedCLs )
+                                              vector< string > *pRelatedCLs,
+                                              _utilSet< string > * pMainCLs )
    {
       PD_TRACE_ENTRY ( SDB__CLSCTAGENT_CRBYSPACENAME ) ;
       _clsCatalogSet *preSet = NULL ;
@@ -2609,9 +2610,14 @@ namespace engine
       _clsCatalogSet *tmpSet = NULL ;
       UINT32 nameLen = ossStrlen(name) ;
       BOOLEAN itAdd  = TRUE ;
-      set< string > mainCLList ;
-      set< string >::iterator iterMain ;
+      _utilSet< string > mainCLList ;
+      _utilSet< string >::iterator iterMain ;
       CAT_MAP_IT it = _mapCatalog.begin() ;
+
+      if ( NULL == pMainCLs )
+      {
+         pMainCLs = &mainCLList ;
+      }
 
       if ( 0 == nameLen )
       {
@@ -2641,7 +2647,7 @@ namespace engine
                string strMainCL = curSet->getMainCLName() ;
                if ( !strMainCL.empty() )
                {
-                  mainCLList.insert( strMainCL ) ;
+                  pMainCLs->insert( strMainCL ) ;
                }
                tmpSet = curSet ;
                curSet = curSet->next () ;
@@ -2676,8 +2682,8 @@ namespace engine
          }
       }
 
-      iterMain = mainCLList.begin() ;
-      while ( iterMain != mainCLList.end() )
+      iterMain = pMainCLs->begin() ;
+      while ( iterMain != pMainCLs->end() )
       {
          clear( (*iterMain).c_str() ) ;
          ++iterMain ;

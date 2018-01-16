@@ -686,7 +686,7 @@ namespace engine
                   }
                   else if ( NULL != csName )
                   {
-                     pCatAgent->clearBySpaceName( csName ) ;
+                     pCatAgent->clearBySpaceName( csName, NULL, NULL ) ;
                   }
                   else
                   {
