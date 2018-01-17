@@ -174,7 +174,7 @@ namespace engine
                                  const rtnInstanceOption & instanceOption,
                                  UINT32 random ) ;
          INT32    _nextPos( CoordGroupInfoPtr &groupPtr,
-                            BOOLEAN isSlavePreferred,
+                            const rtnInstanceOption & instanceOption,
                             UINT32 &selTimes,
                             INT32 &pos,
                             MsgRouteID &nodeID ) ;

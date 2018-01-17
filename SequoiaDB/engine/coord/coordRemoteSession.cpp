@@ -396,7 +396,7 @@ namespace engine
 
       _pos = _calcBeginPos( groupItem, _pPropSite->getInstanceOption(),
                             ossRand() ) ;
-      rc = _nextPos( _groupPtr, _pPropSite->isSlavePreferred(),
+      rc = _nextPos( _groupPtr, _pPropSite->getInstanceOption(),
                      _selTimes, _pos, nodeID ) ;
       if ( rc )
       {
@@ -430,7 +430,7 @@ namespace engine
       }
       else
       {
-         rc = _nextPos( _groupPtr, _pPropSite->isSlavePreferred(),
+         rc = _nextPos( _groupPtr, _pPropSite->getInstanceOption(),
                         _selTimes, _pos, nodeID ) ;
       }
       if ( rc )
@@ -452,19 +452,20 @@ namespace engine
                                         const rtnInstanceOption & instanceOption,
                                         UINT32 random )
    {
-      UINT32 posTmp = 0 ;
+      UINT32 pos = 0 ;
       BOOLEAN selected = FALSE ;
+      UINT32 primaryPos = pGroupItem->getPrimaryPos() ;
 
       if ( instanceOption.hasCommonInstance() )
       {
          const VEC_NODE_INFO * nodes = pGroupItem->getNodes() ;
          SDB_ASSERT( NULL != nodes, "node list is invalid" ) ;
-         _selectPositions( *nodes, pGroupItem->getPrimaryPos(),
-                           instanceOption, _selectedPositions ) ;
+         _selectPositions( *nodes, primaryPos, instanceOption,
+                           _selectedPositions ) ;
 
          if ( !_selectedPositions.empty() )
          {
-            posTmp = _selectedPositions.front() ;
+            pos = _selectedPositions.front() ;
             _selectedPositions.pop_front() ;
             selected = TRUE ;
          }
@@ -472,54 +473,70 @@ namespace engine
 
       if ( !selected )
       {
+         UINT32 nodeCount = pGroupItem->nodeCount() ;
+         BOOLEAN isSlavePreferred = FALSE ;
          switch ( instanceOption.getSpecialInstance() )
          {
             case PREFER_INSTANCE_TYPE_MASTER :
             case PREFER_INSTANCE_TYPE_MASTER_SND :
             {
-               posTmp = pGroupItem->getPrimaryPos() ;
-               // if there is no primary,
-               // then do not break and go on to
-               // get random node
-               if ( CLS_RG_NODE_POS_INVALID != posTmp )
+               pos = pGroupItem->getPrimaryPos() ;
+               // if there is no primary, then go on to get random node
+               if ( CLS_RG_NODE_POS_INVALID != pos )
                {
                   selected = TRUE ;
-                  break ;
                }
+               else
+               {
+                  pos = random ;
+               }
+               break ;
             }
-            case PREFER_INSTANCE_TYPE_ANYONE :
-            case PREFER_INSTANCE_TYPE_ANYONE_SND :
             case PREFER_INSTANCE_TYPE_SLAVE :
             case PREFER_INSTANCE_TYPE_SLAVE_SND :
             {
-               posTmp = random ;
+               isSlavePreferred = TRUE ;
+               pos = random ;
+               break ;
+            }
+            case PREFER_INSTANCE_TYPE_ANYONE :
+            case PREFER_INSTANCE_TYPE_ANYONE_SND :
+            {
+               pos = random ;
                break ;
             }
             default :
             {
                if ( 1 == instanceOption.getInstanceList().size() )
                {
-                  posTmp = instanceOption.getInstanceList().front() - 1 ;
+                  pos = instanceOption.getInstanceList().front() - 1 ;
                }
                else
                {
-                  posTmp = random ;
+                  pos = random ;
                }
                break ;
             }
          }
+
+         if ( !selected && nodeCount > 0 )
+         {
+            // Round up the position to number of nodes
+            pos = pos % nodeCount ;
+            if ( isSlavePreferred && pos == primaryPos )
+            {
+               // Move one position back for slave preferred but primary has
+               // been chosen
+               pos = ( pos + 1 ) % nodeCount ;
+            }
+         }
       }
 
-      if( !selected && pGroupItem->nodeCount() > 0 )
-      {
-         posTmp = posTmp % pGroupItem->nodeCount() ;
-      }
-
-      return (INT32)posTmp ;
+      return (INT32)pos ;
    }
 
    INT32 _coordGroupSel::_nextPos( CoordGroupInfoPtr &groupPtr,
-                                   BOOLEAN isSlavePreferred,
+                                   const rtnInstanceOption & instanceOption,
                                    UINT32 &selTimes,
                                    INT32 &pos,
                                    MsgRouteID &nodeID )
@@ -528,18 +545,24 @@ namespace engine
       INT32 status = NET_NODE_STAT_UNKNOWN ;
       UINT32 tmpPos = 0 ;
       BOOLEAN foundNode = FALSE ;
-      clsGroupItem *pGroupItem = NULL ;
-      UINT32 groupID = groupPtr->groupID() ;
+      clsGroupItem *pGroupItem = groupPtr.get() ;
+      UINT32 groupID = pGroupItem->groupID() ;
+      BOOLEAN isSlavePreferred = FALSE ;
+      UINT32 nodeCount = pGroupItem->nodeCount() ;
 
-      pGroupItem = groupPtr.get() ;
-      while( selTimes < pGroupItem->nodeCount() )
+      while( selTimes < nodeCount )
       {
          tmpPos = pos ;
          if ( selTimes > 0 )
          {
             if ( _selectedPositions.empty() )
             {
-               tmpPos = ( tmpPos + 1 ) % pGroupItem->nodeCount() ;
+               // Only when choose from group will consider move position
+               // for slave preferred option
+               // The selected positions have been considered for slave
+               // preferred option
+               isSlavePreferred = instanceOption.isSlavePerferred() ;
+               tmpPos = ( tmpPos + 1 ) % nodeCount ;
             }
             else
             {
@@ -550,16 +573,16 @@ namespace engine
 
          if ( isSlavePreferred )
          {
-            UINT32 pimaryPos = pGroupItem->getPrimaryPos() ;
-
-            if ( CLS_RG_NODE_POS_INVALID != pimaryPos &&
-                 selTimes + 1 == pGroupItem->nodeCount() )
+            // Slave is preferred, avoid to use the primary node
+            UINT32 primaryPos = pGroupItem->getPrimaryPos() ;
+            if ( CLS_RG_NODE_POS_INVALID != primaryPos &&
+                 selTimes + 1 == nodeCount )
             {
-               tmpPos = pimaryPos ;
+               tmpPos = primaryPos ;
             }
-            else if ( tmpPos == pimaryPos )
+            else if ( tmpPos == primaryPos )
             {
-               tmpPos = ( tmpPos + 1 ) % pGroupItem->nodeCount() ;
+               tmpPos = ( tmpPos + 1 ) % nodeCount ;
             }
          }
 
@@ -663,8 +686,13 @@ namespace engine
             {
                if ( nodeIter->_instanceID == (UINT8)instance )
                {
-                  if ( primaryPos == pos && ( primaryFirst || primaryLast ) )
+                  if ( primaryPos == pos )
                   {
+                     if ( !primaryFirst && !primaryLast )
+                     {
+                        // Primary is not specified in this case
+                        tempPositions.append( pos ) ;
+                     }
                      foundPrimary = TRUE ;
                   }
                   else
@@ -697,6 +725,39 @@ namespace engine
             selectedPositions.push_back( primaryPos ) ;
          }
       }
+      else if ( CLS_RG_NODE_POS_INVALID != primaryPos &&
+                !selectedPositions.empty() &&
+                ( instanceOption.getSpecialInstance() == PREFER_INSTANCE_TYPE_MASTER ||
+                  instanceOption.getSpecialInstance() == PREFER_INSTANCE_TYPE_MASTER_SND ) )
+      {
+         // Primary is not in the selected list, but "M" or "m" is specified,
+         // so we need to consider primary node if all previous selected nodes
+         // are failing, put the primary node to the end
+         selectedPositions.push_back( primaryPos ) ;
+      }
+
+#ifdef _DEBUG
+      if ( selectedPositions.empty() )
+      {
+         PD_LOG( PDDEBUG, "Got no selected node positions" ) ;
+      }
+      else
+      {
+         StringBuilder ss ;
+         for ( COORD_POS_LIST::iterator iter = selectedPositions.begin() ;
+               iter != selectedPositions.end() ;
+               iter ++ )
+         {
+            if ( iter != selectedPositions.begin() )
+            {
+               ss << ", " ;
+            }
+            ss << ( *iter ) ;
+         }
+         PD_LOG( PDDEBUG, "Got selected node positions : [ %s ]",
+                 ss.str().c_str() ) ;
+      }
+#endif
 
    done :
       return ;
