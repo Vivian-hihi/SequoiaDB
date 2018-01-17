@@ -3423,7 +3423,8 @@ namespace engine
       goto done ;
    }
 
-   INT32 omAuthTool::createOmsvcDefaultUsr()
+   INT32 omAuthTool::createOmsvcDefaultUsr( const CHAR *pPluginPasswd,
+                                            INT32 pluginPasswdLen )
    {
       INT32 rc = SDB_OK ;
       BOOLEAN need = TRUE ;
@@ -3446,7 +3447,7 @@ namespace engine
 
       }
 
-      rc = createPluginUsr() ;
+      rc = createPluginUsr( pPluginPasswd, pluginPasswdLen ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Failed to create plugin user: rc=%d", rc ) ;
@@ -3503,21 +3504,14 @@ namespace engine
       goto done ;
    }
 
-   #define OM_DEFAULT_PLUGIN_PASSWD_SIZE 17
-   INT32 omAuthTool::createPluginUsr()
+   INT32 omAuthTool::createPluginUsr( const CHAR *pPasswd, INT32 length )
    {
       INT32 rc = SDB_OK ;
       md5::md5digest digest ;
       BSONObj obj ;
       BSONObjBuilder objBuilder ;
-      CHAR passwd[OM_DEFAULT_PLUGIN_PASSWD_SIZE] ;
 
-      ossMemset( passwd, 0, OM_DEFAULT_PLUGIN_PASSWD_SIZE ) ;
-
-      generateRandomVisualString( passwd, OM_DEFAULT_PLUGIN_PASSWD_SIZE - 1 ) ;
-
-      md5::md5( ( const void * )passwd, OM_DEFAULT_PLUGIN_PASSWD_SIZE - 1,
-                digest ) ;
+      md5::md5( (const void *)pPasswd, length, digest ) ;
 
       objBuilder.append( SDB_AUTH_USER, OM_DEFAULT_PLUGIN_USER ) ;
       objBuilder.append( SDB_AUTH_PASSWD, md5::digestToString( digest ) ) ;
@@ -4092,3 +4086,4 @@ namespace engine
 
 
 }
+ 

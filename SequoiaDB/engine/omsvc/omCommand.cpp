@@ -10869,7 +10869,6 @@ namespace engine
    {
       UINT16 port = 0 ;
       INT32 rc = SDB_OK ;
-      INT32 sendLength = 0 ;
       INT32 headerSize = 0 ;
       INT32 bodySize   = 0 ;
       const CHAR *pHttpHeader = NULL ;
@@ -12939,7 +12938,6 @@ namespace engine
       SDB_AUTHCB *pAuthCB = pmdGetKRCB()->getAuthCB() ;
       omDatabaseTool dbTool( _cb ) ;
       omAuthTool authTool( _cb, pAuthCB ) ;
-      BSONObj userInfo ;
       string user ;
       string passwd ;
       string userEncrypt ;
@@ -12957,17 +12955,8 @@ namespace engine
          goto error ;
       }
 
-      rc = authTool.getUsrInfo( OM_DEFAULT_PLUGIN_USER, userInfo ) ;
-      if( rc )
-      {
-         _errorMsg.setError( TRUE, "failed to get plugin user: rc=%d",
-                             rc ) ;
-         PD_LOG( PDERROR, _errorMsg.getError() ) ;
-         goto error ;
-      }
-
-      user = userInfo.getStringField( SDB_AUTH_USER ) ;
-      passwd = userInfo.getStringField( SDB_AUTH_PASSWD ) ;
+      user = OM_DEFAULT_PLUGIN_USER ;
+      sdbGetOMManager()->getPluginPasswd( passwd ) ;
 
       rc = _encrypt( publicKey, user, userEncrypt ) ;
       if( rc )

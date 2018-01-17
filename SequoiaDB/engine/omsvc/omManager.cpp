@@ -333,6 +333,8 @@ namespace engine
       goto done ;
    }
 
+   #define OM_DEFAULT_PLUGIN_PASSWD_SIZE 17
+   #define OM_DEFAULT_PLUGIN_PASSWD_LEN (OM_DEFAULT_PLUGIN_PASSWD_SIZE-1)
    INT32 _omManager::_initOmTables() 
    {
       INT32 rc = SDB_OK ;
@@ -459,11 +461,22 @@ namespace engine
          goto error ;
       }
 
-      rc = authTool.createOmsvcDefaultUsr() ;
-      if ( rc )
       {
-         PD_LOG( PDERROR, "failed to create om user: rc=%d", rc ) ;
-         goto error ;
+         CHAR passwd[OM_DEFAULT_PLUGIN_PASSWD_SIZE] ;
+
+         ossMemset( passwd, 0, OM_DEFAULT_PLUGIN_PASSWD_SIZE ) ;
+         authTool.generateRandomVisualString( passwd,
+                                              OM_DEFAULT_PLUGIN_PASSWD_LEN ) ;
+
+         rc = authTool.createOmsvcDefaultUsr( passwd,
+                                              OM_DEFAULT_PLUGIN_PASSWD_LEN ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "failed to create om user: rc=%d", rc ) ;
+            goto error ;
+         }
+
+         _usrPluginPasswd = passwd ;
       }
 
    done:
@@ -1362,13 +1375,20 @@ namespace engine
       _pmdEDUCB *cb = pmdGetThreadEDUCB() ;
       SDB_AUTHCB *pAuthCB = pmdGetKRCB()->getAuthCB() ;
       omAuthTool authTool( cb, pAuthCB ) ;
+      CHAR passwd[OM_DEFAULT_PLUGIN_PASSWD_SIZE] ;
 
-      rc = authTool.createPluginUsr() ;
+      ossMemset( passwd, 0, OM_DEFAULT_PLUGIN_PASSWD_SIZE ) ;
+      authTool.generateRandomVisualString( passwd,
+                                           OM_DEFAULT_PLUGIN_PASSWD_LEN ) ;
+
+      rc = authTool.createPluginUsr( passwd, OM_DEFAULT_PLUGIN_PASSWD_LEN ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "failed to update plugin passwd: rc=%d", rc ) ;
          goto error ;
       }
+
+      _usrPluginPasswd = passwd ;
 
       _updateTimestamp = (INT64)time( NULL ) ;
 
@@ -1376,6 +1396,11 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   void _omManager::getPluginPasswd( string &passwd )
+   {
+      passwd = _usrPluginPasswd ;
    }
 
    void _omManager::getUpdatePluginPasswdTimeDiffer( INT64 &differ )

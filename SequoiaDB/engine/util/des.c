@@ -76,7 +76,6 @@ INT32 desEncrypt( BYTE *pDesKey, BYTE *pExpress, INT32 expressLen,
       expressLen -= 8 ;
    }
 
-done:
    return rc ;
 }
 

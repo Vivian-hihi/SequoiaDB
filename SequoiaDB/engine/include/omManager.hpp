@@ -130,6 +130,7 @@ namespace engine
          void              removeClusterVersion( string cluster ) ;
          void              updateClusterHostFilePrivilege( string clusterName,
                                                            BOOLEAN privilege ) ;
+         void getPluginPasswd( string &passwd ) ;
 
          void getUpdatePluginPasswdTimeDiffer( INT64 &differ ) ;
 
@@ -240,6 +241,8 @@ namespace engine
          UINT64                                 _updatePluinUsrTimer ;
 
          BOOLEAN                                _isInitTable ;
+
+         string                                 _usrPluginPasswd ;
    } ;
 
    typedef _omManager omManager ;

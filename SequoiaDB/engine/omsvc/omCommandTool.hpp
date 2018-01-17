@@ -319,11 +319,13 @@ namespace engine
       {
       }
    public:
-      INT32 createOmsvcDefaultUsr() ;
+      INT32 createOmsvcDefaultUsr( const CHAR *pPluginPasswd,
+                                   INT32 pluginPasswdLen ) ;
       INT32 createAdminUsr() ;
-      INT32 createPluginUsr() ;
+      INT32 createPluginUsr( const CHAR *pPasswd, INT32 length ) ;
 
       INT32 getUsrInfo( const string &user, BSONObj &info ) ;
+      void getPluginPasswd( string &passwd ) ;
 
       void generateRandomVisualString( CHAR* pPasswd, INT32 length ) ;
 
