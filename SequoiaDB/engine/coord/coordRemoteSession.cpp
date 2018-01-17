@@ -722,6 +722,8 @@ namespace engine
       {
          positionList.push_back( tmpPos ) ;
       }
+
+      positionArray.clear() ;
    }
 
    void _coordGroupSel::selDone()
