@@ -622,4 +622,44 @@ function updateIndexStateInfo( db, csName, clName, indexName, mcvValues, fracs )
    }
                                                                                        
 } 
+
+/************************************
+*@Description: 检查访问计划快照
+*@author:      liuxiaoxuan
+*@createDate:  2018.01.15
+**************************************/
+function checkSnapShotAccessPlans( expectAccessPlans, actAccessPlans )
+{
+   try
+   {
+      if( expectAccessPlans.length !==  actAccessPlans.length )
+      {
+          throw buildException("check length", "accessPlan length", "check failed!",
+									expectAccessPlans.length, actAccessPlans.length);
+      }
+   
+      var newActAccessPlans = new Array();
+      for(var i = 0; i < actAccessPlans.length; i++)
+      {
+         var actAccessPlan = eval("(" + actAccessPlans[i] + ")");
+         newActAccessPlans.push({'Query': actAccessPlan['Query'],
+                                 'AccessCount': actAccessPlan['AccessCount']});
+      }   
+
+      for(var i = 0; i < expectAccessPlans.length; i++)
+      {
+         if(JSON.stringify(newActAccessPlans).indexOf(JSON.stringify(expectAccessPlans[i])) === -1
+               && JSON.stringify(expectAccessPlans).indexOf(JSON.stringify(newActAccessPlans[i])) === -1)
+         {
+            throw buildException("check access plan", "access plan", "fail", 
+	   		                  JSON.stringify(expectAccessPlans[i]), JSON.stringify(newActAccessPlans));
+         }
+      }
+     
+   }
+   catch(e)
+   {
+      throw buildException("check snapshot accessPlan", e, "snapshot accessPlan", "success", e);
+   }
+}
                                                                                
