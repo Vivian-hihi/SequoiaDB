@@ -624,21 +624,66 @@ function updateIndexStateInfo( db, csName, clName, indexName, mcvValues, fracs )
 } 
 
 /************************************
+*@Description: 去除数组中重复的json
+*@author:      liuxiaoxuan
+*@createDate:  2017.01.18
+**************************************/
+function uniqueJsonInArray( jsonArrays )
+{
+   var newJsonArray = new Array();
+	newJsonArray.push(jsonArrays[0]);
+	
+   if(0 === newJsonArray.length)  return newJsonArray;
+	
+	for(var i = 1; i < jsonArrays.length; i++)
+   {
+      var isEqual	= false;
+		for(var j = 0; j < newJsonArray.length; j++)
+	   {
+			for( var f in newJsonArray[j] )
+	      {
+	         if(newJsonArray[j][f] === jsonArrays[i][f])
+	         {
+	            isEqual = true;  
+	         }
+			}				
+			
+			if(isEqual)  break;
+		}
+			
+	   if(!isEqual)
+		{
+	      newJsonArray.push(jsonArrays[i]);
+	   }
+	}
+	
+	return newJsonArray;
+}
+
+
+/************************************
 *@Description: 执行查询
 *@author:      liuxiaoxuan
 *@createDate:  2017.01.18
 **************************************/
-function execCommonQuery( dbcl, findConf, sortConf, hintConf )
+function query( dbcl, findConf, sortConf, hintConf )
 {
    if ( typeof(findConf) == "undefined" ) { findConf = null; }
    if ( typeof(sortConf) == "undefined" ) { sortConf = null; }
    if ( typeof(hintConf) == "undefined" ) { hintConf = null; }
    
    //执行查询
-   var rc = dbcl.find(findConf).sort(sortConf).hint(hintConf);
-	while(rc.next())
+   try
    {
+	   var rc = dbcl.find(findConf).sort(sortConf).hint(hintConf);
+	   while(rc.next())
+      {
+	   }
 	}
+	catch(e)
+   {
+      throw buildException("query", e, "query", "success", e);
+   }	  
 }
 
 /************************************
@@ -646,33 +691,93 @@ function execCommonQuery( dbcl, findConf, sortConf, hintConf )
 *@author:      liuxiaoxuan
 *@createDate:  2017.01.18
 **************************************/
-function getCommonAccessPlans( db, csName, clName )
+function getCommonAccessPlans( db, options )
 {
-	var accessPlans = new Array();
-	
-	//获取快照信息
-	var rc = db.snapshot(11, {Collection : csName + "." + clName}).toArray();
-   for(var i = 0; i < rc.length; i++)
+	try
    {
-      var accessPlan = eval("(" + rc[i] + ")");
-      var accessPlanObj= {};
-		for( var f in accessPlan )
-	   {
-	      if((f == "ScanType") || (f == "IndexName") )
-	      {
-	         accessPlanObj[f] = accessPlan[f];   
-	      }		
-			
-			if(f == "MinTimeSpentQuery")
-			{
-				accessPlanObj['ReturnNum'] = accessPlan[f]['ReturnNum'];  
-			}
-	   }
-		
-		accessPlans.push(accessPlanObj);
-   }  
+      var accessPlans = new Array();
 	
-   return accessPlans;
+	   //获取快照信息
+	   var rc = db.snapshot(11, options).toArray();
+      for(var i = 0; i < rc.length; i++)
+      {
+         var accessPlan = eval("(" + rc[i] + ")");
+         var accessPlanObj= {};
+		   for( var f in accessPlan )
+	      {
+	         if((f == "ScanType") || (f == "IndexName") )
+	         {
+	            accessPlanObj[f] = accessPlan[f];   
+	         }		
+			
+			   if(f == "MinTimeSpentQuery")
+			   {
+				   accessPlanObj['ReturnNum'] = accessPlan[f]['ReturnNum'];  
+			   }
+	      }
+		
+		   accessPlans.push(accessPlanObj);
+      }  
+	
+      return accessPlans;
+   }
+   catch( e )
+   {
+		throw buildException("getCommonAccessPlans", e, "get access plans", "success", e);
+   }
+
+}
+
+/************************************
+*@Description: 获取切分表访问计划快照
+*@author:      liuxiaoxuan
+*@createDate:  2017.01.18
+**************************************/
+function getSplitAccessPlans( db, options )
+{
+	try
+   {
+      var accessPlans = new Array();
+	
+	   //获取快照信息
+	   var rc = db.snapshot(11, options).toArray();
+      for(var i = 0; i < rc.length; i++)
+      {
+         var accessPlan = eval("(" + rc[i] + ")");
+      
+		   //过滤hash、range切分时生成的查询计划
+		   if(accessPlan['IndexName'] == '$id')  
+			      continue;
+		   if(accessPlan['ScanType'] == 'tbscan' 
+		            && JSON.stringify(accessPlan['Query']) == "{}")  
+			      continue
+	      if(accessPlan['IndexName'] == '$shard' 
+		            && JSON.stringify(accessPlan['Query']) == "{}")  
+			      continue;
+		
+		   var accessPlanObj= {};
+		   for( var f in accessPlan )
+	      {
+	         if((f == "GroupName") || (f == "ScanType") || (f == "IndexName") )
+	         {
+	            accessPlanObj[f] = accessPlan[f];   
+	         }		
+			
+			   if(f == "MinTimeSpentQuery")
+			   {
+			      accessPlanObj['ReturnNum'] = accessPlan[f]['ReturnNum'];  
+			   }
+	      }
+
+	      accessPlans.push(accessPlanObj);
+      } 
+      return accessPlans;
+   }
+   catch( e )
+   {
+		throw buildException("getSplitAccessPlans", e, "get access plans", "success", e);
+   }	
+	
 }
 
 /************************************
@@ -680,23 +785,47 @@ function getCommonAccessPlans( db, csName, clName )
 *@author:      liuxiaoxuan
 *@createDate:  2018.01.15
 **************************************/
-function checkSnapShotAccessPlans( expectAccessPlans, actAccessPlans )
+function checkSnapShotAccessPlans( csName, clName, expectAccessPlans, actAccessPlans )
 {
    try
    {
+		var groups = commGetCLGroups( db, csName + "." + clName );
+      var datas = getNodesInGroups(db, groups);
+		
+		//独立模式或一组一节点的情况
+		if(1 === datas[0].length)
+      {
+			for(var i = 0; i < datas[0].length; i++)
+				println('datas[0][' + i + ']: ' + datas[0][i]);
+			expectAccessPlans = uniqueJsonInArray(expectAccessPlans);
+	   }
+     
+	   //校验计划个数
       if( expectAccessPlans.length !==  actAccessPlans.length )
       {
           throw buildException("check length", "accessPlan length", "check failed!",
 									expectAccessPlans.length, actAccessPlans.length);
       }
+		
+		//校验查询计划，不校验元素顺序
+      var newExpAccessPlans = new Array();
+      var newActAccessPlans = new Array();
+      for(var i = 0; i < expectAccessPlans.length; i++)
+		{
+         var newObj1 = objSortByKey(actAccessPlans[i]);
+         newActAccessPlans.push(newObj1);
       
+         var newObj2 = objSortByKey(expectAccessPlans[i]);
+         newExpAccessPlans.push(newObj2);   
+      }
+    	 
       for(var i = 0; i < expectAccessPlans.length; i++)
       {
-         if(JSON.stringify(actAccessPlans).indexOf(JSON.stringify(expectAccessPlans[i])) === -1
-               && JSON.stringify(expectAccessPlans).indexOf(JSON.stringify(actAccessPlans[i])) === -1)
+         if(JSON.stringify(newActAccessPlans).indexOf(JSON.stringify(newExpAccessPlans[i])) === -1
+               && JSON.stringify(newExpAccessPlans).indexOf(JSON.stringify(newActAccessPlans[i])) === -1)
          {
             throw buildException("check access plan", "access plan", "fail", 
-	   		                  JSON.stringify(expectAccessPlans), JSON.stringify(actAccessPlans));
+	   		                  JSON.stringify(newExpAccessPlans), JSON.stringify(newActAccessPlans));
          }
       }
      
