@@ -8,7 +8,7 @@ import java.util.Iterator;
 import java.util.List;
 
 public abstract class SdbThreadBase implements Runnable {
-    private List<Exception> exceptionList = Collections.synchronizedList(new ArrayList<Exception>());
+    private List<Throwable> exceptionList = Collections.synchronizedList(new ArrayList<Throwable>());
     private List<Thread> threadList = new ArrayList<>();
 
     public void start() {
@@ -26,7 +26,7 @@ public abstract class SdbThreadBase implements Runnable {
     }
 
     // 返回结果集
-    public List<Exception> getExceptions() {
+    public List<Throwable> getExceptions() {
         join();
         return exceptionList;
     }
@@ -34,13 +34,13 @@ public abstract class SdbThreadBase implements Runnable {
     public String getErrorMsg() {
         join();
         StringBuilder buffer = new StringBuilder();
-        for (Exception exception : exceptionList) {
+        for (Throwable exception : exceptionList) {
             buffer.append(getErrorMsg(exception));
         }
         return buffer.toString();
     }
 
-    private String getErrorMsg(Exception e) {
+    private String getErrorMsg(Throwable e) {
         if (e == null)
             return "";
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
@@ -79,7 +79,7 @@ public abstract class SdbThreadBase implements Runnable {
     public void run() {
         try {
             exec();
-        } catch (Exception e) {
+        } catch (Throwable e) {
             exceptionList.add(e);
         }
     }
