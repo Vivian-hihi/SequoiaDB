@@ -1001,8 +1001,8 @@ error :
 #endif
 
 // PD_TRACE_DECLARE_FUNCTION ( SDB_OSSGETDISKINFO, "ossGetDiskInfo" )
-INT32 ossGetDiskInfo ( const CHAR *pPath, INT64 &totalBytes,
-                       INT64 &freeBytes, CHAR* fsName )
+INT32 ossGetDiskInfo ( const CHAR *pPath, INT64 &totalBytes, INT64 &freeBytes,
+                       CHAR* fsName, INT32 fsNameSize )
 {
    INT32 rc                = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_OSSGETDISKINFO );
@@ -1050,14 +1050,15 @@ INT32 ossGetDiskInfo ( const CHAR *pPath, INT64 &totalBytes,
    rc = ossWC2ANSI ( volumePath, &lpszVolumePath, NULL ) ;
    PD_RC_CHECK( rc, PDERROR, "Failed to convert ansi to wc, rc = %d", rc );
 
-   ossStrncpy ( fsName, lpszVolumePath, ossStrlen ( fsName ) - 1 ) ;
+   ossStrncpy ( fsName, lpszVolumePath, fsNameSize - 1 ) ;
+   fsName[ fsNameSize ] = '\0' ;
 
 #elif defined (_LINUX) || defined (_AIX)
    struct statvfs vfs ;
    FILE *fp = NULL ;
    struct mntent *me = NULL ;
    struct mntent dummy ;
-   CHAR tmpBuff[OSS_MAX_PATHSIZE] = {0} ;
+   CHAR tmpBuff[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
    struct stat pathStat ;
    INT32 retcode = 0 ;
    BOOLEAN findOut = FALSE ;
@@ -1095,7 +1096,7 @@ INT32 ossGetDiskInfo ( const CHAR *pPath, INT64 &totalBytes,
       if ( -1 == retcode )
       {
          //skip error
-         PD_LOG ( PDWARNING, "Failed to stat %s, errno: %d, rc = %d",
+         PD_LOG ( PDINFO, "Failed to stat %s, errno: %d, rc = %d",
                   me->mnt_fsname, errno, rc ) ;
       }
       else
@@ -1103,7 +1104,8 @@ INT32 ossGetDiskInfo ( const CHAR *pPath, INT64 &totalBytes,
          dev_t devID = fsStat.st_rdev ;
          if ( pathDevID == devID )
          {
-            ossStrcpy( fsName, me->mnt_fsname ) ;
+            ossStrncpy( fsName, me->mnt_fsname, fsNameSize -1 ) ;
+            fsName[ fsNameSize ] = '\0' ;
             findOut = TRUE ;
             break ;
          }
@@ -1113,7 +1115,8 @@ INT32 ossGetDiskInfo ( const CHAR *pPath, INT64 &totalBytes,
    // set disk name, if it hasn't find out
    if ( FALSE == findOut )
    {
-      ossStrncpy( fsName, "unknown-disk", sizeof( fsName ) -1 ) ;
+      ossStrncpy( fsName, "unknown-disk", fsNameSize -1 ) ;
+      fsName[ fsNameSize ] = '\0' ;
    }
 
 #endif
@@ -1140,6 +1143,7 @@ done :
 error :
    goto done ;
 }
+
 // PD_TRACE_DECLARE_FUNCTION ( SDB_OSSREADLINK, "ossReadlink" )
 INT32 ossReadlink ( const CHAR *pPath, CHAR *pLinkedPath, INT32 maxLen )
 {
