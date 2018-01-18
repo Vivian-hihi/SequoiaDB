@@ -153,9 +153,8 @@ namespace engine
       std::vector<SDB_DMS_CSCB*>          _delCscbVec ;
       std::vector<ossRWMutex*>            _latchVec ;
       std::vector<dmsStorageUnitID>       _freeList ;
-
       // collection spaces mutex in create and drop operations
-      std::vector< ossSpinXLatch* >       _vecCSMutex ;
+      std::vector< ossSpinRecursiveXLatch* >  _vecCSMutex ;
 
 #if defined (_WINDOWS)
       typedef std::map<const CHAR*,

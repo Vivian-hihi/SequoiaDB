@@ -52,6 +52,7 @@
 #else
 #include <unistd.h>
 #include <pthread.h>
+#include <boost/thread/recursive_mutex.hpp>
 #endif //_WINDOWS
 
 #include "ossAtomicBase.hpp"
@@ -411,6 +412,66 @@ public :
 } ;
 typedef class _ossSpinXLatch ossSpinXLatch ;
 
+class _ossSpinRecursiveXLatch : public ossXLatch
+{
+#if defined(_WIN32)
+private:
+   CRITICAL_SECTION _cs ;
+public:
+   _ossSpinRecursiveXLatch()
+   {
+      InitializeCriticalSection( &_cs ) ;
+   }
+
+   ~_ossSpinRecursiveXLatch()
+   {
+      DeleteCriticalSection( &_cs ) ;
+   }
+
+   void get()
+   {
+      EnterCriticalSection( &_cs ) ;
+   }
+
+   void release()
+   {
+      LeaveCriticalSection( &_cs ) ;
+   }
+
+   BOOLEAN try_get()
+   {
+      return TryEnterCriticalSection( &_cs ) ;
+   }
+#else /* except _WIN32 */
+private:
+   boost::recursive_mutex _mutex ;
+public:
+   _ossSpinRecursiveXLatch()
+   {
+   }
+
+   ~_ossSpinRecursiveXLatch()
+   {
+   }
+
+   void get()
+   {
+      _mutex.lock() ;
+   }
+
+   void release()
+   {
+      _mutex.unlock() ;
+   }
+
+   BOOLEAN try_get()
+   {
+      return _mutex.try_lock() ;
+   }
+#endif
+} ;
+typedef _ossSpinRecursiveXLatch ossSpinRecursiveXLatch ;
+
 #if defined (_WINDOWS)
 /*
    _ossSRWLock define
@@ -462,7 +523,7 @@ class _ossSRWLock
             }
             else if ( WAIT_TIMEOUT == retCode )
             {
-               return SDB_TIMEOUT ;         
+               return SDB_TIMEOUT ;
             }
             else
             {

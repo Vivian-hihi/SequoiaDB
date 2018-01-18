@@ -101,7 +101,7 @@ namespace engine
 
       for ( UINT32 i = 0 ; i < DMS_CS_MUTEX_BUCKET_SIZE ; ++i )
       {
-         _vecCSMutex.push_back( new( std::nothrow ) ossSpinXLatch() ) ;
+         _vecCSMutex.push_back( new( std::nothrow ) ossSpinRecursiveXLatch() ) ;
       }
 
       _blockEvent.signal() ;
