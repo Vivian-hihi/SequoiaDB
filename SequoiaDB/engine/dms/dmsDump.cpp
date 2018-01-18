@@ -1932,7 +1932,7 @@ UINT32 _dmsDump::dumpDmsLobMeta( CHAR *inBuf, UINT32 inSize,
                                    lobMeta->_piecesInfoNum);
 
       if ( (lobMeta->_piecesInfoNum <=  0) ||
-            (lobMeta->_piecesInfoNum > (INT32)DMS_LOB_META_LENGTH /sizeof( _rtnLobPieces ) ) )
+            (lobMeta->_piecesInfoNum > (INT32)(DMS_LOB_META_LENGTH /sizeof( _rtnLobPieces ) )) )
          goto exit;
 
       len += ossSnprintf(outBuf + len, outSize - len, " Pieces:");
