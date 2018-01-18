@@ -624,6 +624,58 @@ function updateIndexStateInfo( db, csName, clName, indexName, mcvValues, fracs )
 } 
 
 /************************************
+*@Description: 执行查询
+*@author:      liuxiaoxuan
+*@createDate:  2017.01.18
+**************************************/
+function execCommonQuery( dbcl, findConf, sortConf, hintConf )
+{
+   if ( typeof(findConf) == "undefined" ) { findConf = null; }
+   if ( typeof(sortConf) == "undefined" ) { sortConf = null; }
+   if ( typeof(hintConf) == "undefined" ) { hintConf = null; }
+   
+   //执行查询
+   var rc = dbcl.find(findConf).sort(sortConf).hint(hintConf);
+	while(rc.next())
+   {
+	}
+}
+
+/************************************
+*@Description: 获取普通表访问计划快照
+*@author:      liuxiaoxuan
+*@createDate:  2017.01.18
+**************************************/
+function getCommonAccessPlans( db, csName, clName )
+{
+	var accessPlans = new Array();
+	
+	//获取快照信息
+	var rc = db.snapshot(11, {Collection : csName + "." + clName}).toArray();
+   for(var i = 0; i < rc.length; i++)
+   {
+      var accessPlan = eval("(" + rc[i] + ")");
+      var accessPlanObj= {};
+		for( var f in accessPlan )
+	   {
+	      if((f == "ScanType") || (f == "IndexName") )
+	      {
+	         accessPlanObj[f] = accessPlan[f];   
+	      }		
+			
+			if(f == "MinTimeSpentQuery")
+			{
+				accessPlanObj['ReturnNum'] = accessPlan[f]['ReturnNum'];  
+			}
+	   }
+		
+		accessPlans.push(accessPlanObj);
+   }  
+	
+   return accessPlans;
+}
+
+/************************************
 *@Description: 检查访问计划快照
 *@author:      liuxiaoxuan
 *@createDate:  2018.01.15
@@ -637,22 +689,14 @@ function checkSnapShotAccessPlans( expectAccessPlans, actAccessPlans )
           throw buildException("check length", "accessPlan length", "check failed!",
 									expectAccessPlans.length, actAccessPlans.length);
       }
-   
-      var newActAccessPlans = new Array();
-      for(var i = 0; i < actAccessPlans.length; i++)
-      {
-         var actAccessPlan = eval("(" + actAccessPlans[i] + ")");
-         newActAccessPlans.push({'Query': actAccessPlan['Query'],
-                                 'AccessCount': actAccessPlan['AccessCount']});
-      }   
-
+      
       for(var i = 0; i < expectAccessPlans.length; i++)
       {
-         if(JSON.stringify(newActAccessPlans).indexOf(JSON.stringify(expectAccessPlans[i])) === -1
-               && JSON.stringify(expectAccessPlans).indexOf(JSON.stringify(newActAccessPlans[i])) === -1)
+         if(JSON.stringify(actAccessPlans).indexOf(JSON.stringify(expectAccessPlans[i])) === -1
+               && JSON.stringify(expectAccessPlans).indexOf(JSON.stringify(actAccessPlans[i])) === -1)
          {
             throw buildException("check access plan", "access plan", "fail", 
-	   		                  JSON.stringify(expectAccessPlans[i]), JSON.stringify(newActAccessPlans));
+	   		                  JSON.stringify(expectAccessPlans), JSON.stringify(actAccessPlans));
          }
       }
      
@@ -661,5 +705,4 @@ function checkSnapShotAccessPlans( expectAccessPlans, actAccessPlans )
    {
       throw buildException("check snapshot accessPlan", e, "snapshot accessPlan", "success", e);
    }
-}
-                                                                               
+}                                                                          
