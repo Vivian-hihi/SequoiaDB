@@ -182,6 +182,7 @@ namespace engine
          void     _selectPositions ( const VEC_NODE_INFO & groupNodes,
                                      UINT32 primaryPos,
                                      const rtnInstanceOption & instanceOption,
+                                     UINT32 random,
                                      COORD_POS_LIST & selectedPositions ) ;
          void     _shufflePositions ( COORD_POS_ARRAY & positionArray,
                                       COORD_POS_LIST & positionList ) ;
