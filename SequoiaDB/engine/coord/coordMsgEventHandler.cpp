@@ -31,12 +31,15 @@
 *******************************************************************************/
 
 #include "pmdDef.hpp"
+#include "pmd.hpp"
 #include "coordMsgEventHandler.hpp"
 #include "pmdEDU.hpp"
 #include "pmdRemoteSession.hpp"
 #include "msgMessageFormat.hpp"
 #include "pdTrace.hpp"
 #include "coordTrace.hpp"
+#include "coordCB.hpp"
+#include "msgMessage.hpp"
 
 namespace engine
 {
@@ -71,10 +74,34 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
+      // sys info request
+      if ( (UINT32)MSG_SYSTEM_INFO_LEN == (UINT32)header->messageLength )
+      {
+         MsgSysInfoReply reply ;
+         MsgSysInfoReply *pReply = &reply ;
+         INT32 replySize = sizeof(reply) ;
+
+         rc = msgBuildSysInfoReply ( (CHAR**)&pReply, &replySize ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to build sys info reply, rc: %d", rc ) ;
+            rc = SDB_NET_BROKEN_MSG ;
+            goto error ;
+         }
+         else
+         {
+            CoordCB *pCoord = pmdGetKRCB()->getCoordCB() ;
+            rc = pCoord->getRouteAgent()->syncSendRaw( handle,
+                                                       (const CHAR *)pReply,
+                                                       (UINT32)replySize ) ;
+            goto done ;
+         }
+      }
+
       // main cb msg
       if ( 0 == header->TID || ! IS_REPLY_TYPE( header->opCode ) )
       {
-         _postMsg( handle, header, msg ) ;
+         rc = _postMsg( handle, header, msg ) ;
       }
       // session msg
       else

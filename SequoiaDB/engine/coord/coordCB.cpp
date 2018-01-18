@@ -85,6 +85,11 @@ namespace engine
       return &_resource ;
    }
 
+   netRouteAgent* _CoordCB::getRouteAgent()
+   {
+      return _pAgent ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__COORDCB_INIT, "_CoordCB::init" )
    INT32 _CoordCB::init ()
    {

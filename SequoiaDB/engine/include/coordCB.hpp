@@ -79,10 +79,11 @@ namespace engine
          virtual void   attachCB( _pmdEDUCB *cb ) ;
          virtual void   detachCB( _pmdEDUCB *cb ) ;
 
-         UINT32      setTimer( UINT32 milliSec ) ;
-         void        killTimer( UINT32 timerID ) ;
+         UINT32         setTimer( UINT32 milliSec ) ;
+         void           killTimer( UINT32 timerID ) ;
 
-         coordResource*    getResource() ;
+         coordResource* getResource() ;
+         netRouteAgent* getRouteAgent() ;
 
       protected:
          virtual void onTimer ( UINT64 timerID, UINT32 interval ) ;
