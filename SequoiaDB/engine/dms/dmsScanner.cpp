@@ -547,7 +547,7 @@ namespace engine
          goto error ;
       }
 
-      if ( !_context->mbLock( lockType ) )
+      if ( !_context->isMBLock( lockType ) )
       {
          rc = _context->mbLock( lockType ) ;
          PD_RC_CHECK( rc, PDERROR, "dms mb lock failed, rc: %d", rc ) ;

@@ -49,6 +49,7 @@ namespace engine
    #define SDB_SEADPT_NODE_ID          0
    #define SDB_SEADPT_SVC_ID           0
    #define SDB_SEADPT_MAX_IDXNAME_SZ   255
+   #define SDB_SEADPT_COMMIT_ID        "SDBCOMMIT"
 
    #define SDB_SEADPT_EXE_FILE_NAME    "sdbseadapter"
    #define SDB_SEADPT_CFG_FILE_NAME    SDB_SEADPT_EXE_FILE_NAME".conf"

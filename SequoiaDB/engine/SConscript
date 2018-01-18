@@ -245,14 +245,15 @@ rtnFiles = [
       "rtn/rtnIxmKeySorter.cpp",
       "rtn/rtnDictCreatorJob.cpp",
       "rtn/rtnAnalyze.cpp",
-      "rtn/rtnOperatorFactory.cpp",
       "rtn/rtnOperator.cpp",
       "rtn/rtnQueryOperator.cpp",
       "rtn/rtnExtDataHandler.cpp",
+      "rtn/rtnExtDataProcessor.cpp",
       "rtn/rtnSimpleCondNode.cpp",
       "rtn/rtnSimpleCondParser.cpp",
       "rtn/rtnContextDataDispatcher.cpp",
-      "rtn/rtnSessionProperty.cpp"
+      "rtn/rtnSessionProperty.cpp",
+      "rtn/rtnRemoteMessenger.cpp"
       ]
 
 msgFiles = [

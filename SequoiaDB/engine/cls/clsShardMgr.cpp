@@ -2526,7 +2526,7 @@ namespace engine
       const CHAR *peerHost = NULL ;
       const CHAR *peerSvc = NULL ;
       SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
-      netRouteAgent *rtnRTAgent = rtnCB->getRTAgent() ;
+      rtnRemoteMessenger *messenger = rtnCB->getRemoteMessenger() ;
       BSONObj myInfoObj ;
       BSONObjBuilder builder ;
       MsgAuthReply *reply = NULL ;
@@ -2538,7 +2538,7 @@ namespace engine
       MSG_ROUTE_SERVICE_TYPE svcType = MSG_ROUTE_CAT_SERVICE ;
       CHAR groupName[ OSS_MAX_GROUPNAME_SIZE + 1 ] = { 0 } ;
 
-      SDB_ASSERT( rtnRTAgent, "rtn route agent should not be NULL" ) ;
+      SDB_ASSERT( messenger, "Remote messenger should not be NULL" ) ;
       rc = extractAuthMsg( msg, bodyObj ) ;
       PD_RC_CHECK( rc, PDERROR, "Extract auth message failed[ %d ]", rc ) ;
 
@@ -2587,19 +2587,12 @@ namespace engine
          }
 
          // Update both the route agent of rtn and shard.
-         rc = rtnRTAgent->updateRoute( _seAdptID, peerHost, peerSvc ) ;
-         if ( rc && SDB_NET_UPDATE_EXISTING_NODE != rc )
-         {
-            PD_LOG( PDERROR, "Update route failed[ %d ], host[ %s ], "
-                    "service[ %s ]", rc, peerHost, peerSvc ) ;
-            goto error ;
-         }
+         rc = messenger->setTarget( _seAdptID, peerHost, peerSvc ) ;
+         PD_RC_CHECK( rc, PDERROR, "Add remote target failed[ %d ]", rc ) ;
 
          // Set the local id of route agent in rtn.
-         if ( MSG_INVALID_ROUTEID == rtnRTAgent->localID().value )
-         {
-            rtnRTAgent->setLocalID( _nodeID ) ;
-         }
+         rc = messenger->setLocalID( _nodeID ) ;
+         PD_RC_CHECK( rc, PDERROR, "Set local id failed[ %d ]", rc ) ;
 
          rc = _pNetRtAgent->updateRoute( _seAdptID, peerHost, peerSvc ) ;
          if ( rc && SDB_NET_UPDATE_EXISTING_NODE != rc )
@@ -2608,8 +2601,6 @@ namespace engine
                     "service[ %s ]", rc, peerHost, peerSvc ) ;
             goto error ;
          }
-
-         rtnCB->updateExtNodeId( _seAdptID.value ) ;
 
          // Need to reply with following information:
          // Whether master node?
@@ -2818,13 +2809,9 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__CLSSHDMGR__BUILDTEXTIDXOBJ ) ;
 
-      string cappedCSName ;
-      string cappedCLName ;
-
-      rtnExtDataHandler::buildNames( clInfo->_csname, clInfo->_clname,
-                                     idxInfo->getIndexName(),
-                                     cappedCSName,
-                                     cappedCLName ) ;
+      CHAR cappedCLName[ DMS_COLLECTION_FULL_NAME_SZ + 1 ] = { 0 } ;
+      rtnExtDataHandler::buildNames( csInfo, clInfo, idxInfo, cappedCLName,
+                                     DMS_COLLECTION_FULL_NAME_SZ + 1 ) ;
 
       try
       {
@@ -2837,6 +2824,7 @@ namespace engine
          // Append logical ids of cl and index as an array. They are used by
          // the adapter to identify different indices with the same meta data.
          BSONArrayBuilder lidObjs( builder.subarrayStart( FIELD_NAME_LOGICAL_ID ) ) ;
+         lidObjs.append( csInfo->_logicalID ) ;
          lidObjs.append( clInfo->_logicalID ) ;
          lidObjs.append( idxInfo->_indexLID ) ;
          lidObjs.done() ;

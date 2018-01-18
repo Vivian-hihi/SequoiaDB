@@ -42,7 +42,6 @@
 #include "rtnContextMainCL.hpp"
 #include "rtnContextDel.hpp"
 #include "utilCompressor.hpp"
-#include "rtnOperatorFactory.hpp"
 #include "pmdStartup.hpp"
 
 using namespace bson ;
@@ -1148,7 +1147,6 @@ namespace engine
       INT16 replSize = 0 ;
       INT16 w = 1 ;
       _rtnCommand *pCommand = NULL ;
-      rtnOperator *pOperator = NULL ;
 
       rc = msgExtractQuery ( (CHAR *)msg, &flags, &pCollectionName,
                              &numToSkip, &numToReturn, &pQueryBuff,
@@ -1240,28 +1238,8 @@ namespace engine
 
             if ( !_isMainCL )
             {
-               // Get an operator based on the message type. Currently only a
-               // text query operator is supported. Otherwise, the original flow
-               // will be executed.
-               // In the long run, the explain and normal query may also be
-               // abstracted into operators.
-               rc = rtnGetOperatorFactory()->create( options, &pOperator ) ;
-               PD_RC_CHECK( rc, PDERROR, "Create operator for query failed[ %d ]",
-                            rc ) ;
-               if ( pOperator )
-               {
-                  rtnContextBase *context = NULL ;
-                  rc = pOperator->run( options, eduCB(), sdbGetRTNCB(),
-                                       contextID, &context, FALSE ) ;
-                  PD_RC_CHECK( rc, PDERROR, "Initialize operator for query "
-                               "failed[ %d ]", rc ) ;
-                  goto done ;
-               }
-               else
-               {
-                  rc = rtnQuery( options, _pEDUCB, _pDmsCB, _pRtnCB, contextID,
-                                 &pContext, TRUE, FALSE ) ;
-               }
+               rc = rtnQuery( options, _pEDUCB, _pDmsCB, _pRtnCB, contextID,
+                              &pContext, TRUE, FALSE ) ;
             }
             else
             {
@@ -1455,10 +1433,6 @@ namespace engine
       if ( pCommand )
       {
          rtnReleaseCommand( &pCommand ) ;
-      }
-      if ( pOperator )
-      {
-         rtnGetOperatorFactory()->release( &pOperator ) ;
       }
       PD_TRACE_EXITRC ( SDB__CLSSHDSESS__ONQYREQMSG, rc ) ;
       return rc ;

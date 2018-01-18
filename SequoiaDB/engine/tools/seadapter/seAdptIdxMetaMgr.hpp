@@ -59,6 +59,7 @@ namespace engine
          void setVersion( INT64 version ) ;
          void setCLName( const CHAR *clFullName ) ;
          void setIdxName( const CHAR *idxName ) ;
+         void setCSLogicalID( UINT32 logicalID ) ;
          void setCLLogicalID( UINT32 logicalID ) ;
          void setIdxLogicalID( UINT32 logicalID ) ;
          void setCappedCLName( const CHAR *cappedCLFullName ) ;
@@ -82,6 +83,7 @@ namespace engine
                      _esIdxName == r._esIdxName &&
                      _esTypeName == r._esTypeName &&
                      _indexDef == r._indexDef &&
+                     _csLogicalID == r._csLogicalID &&
                      _clLogicalID == r._clLogicalID &&
                      _idxLogicalID == r._idxLogicalID ) ;
          }
@@ -128,6 +130,7 @@ namespace engine
                std::stringstream ss ;
                ss << "original cl[" << _origCLName << "], "
                   << "capped cl[" << _cappedCLName << "], "
+                  << "CS logical id[" << _csLogicalID << "], "
                   << "CL logical id[" << _clLogicalID << "], "
                   << "es index[" << _esIdxName << "], "
                   << "es type[" << _esTypeName << "], "
@@ -138,6 +141,8 @@ namespace engine
             }
             catch ( std::exception &e )
             {
+               PD_LOG( PDERROR, "Unexpected exception happened: %s",
+                       e.what() ) ;
                return "" ;
             }
          }
@@ -146,6 +151,7 @@ namespace engine
          INT64       _version ;
          string      _origCLName ;
          string      _origIdxName ;
+         UINT32      _csLogicalID ;
          UINT32      _clLogicalID ;
          UINT32      _idxLogicalID ;
          string      _cappedCLName ;

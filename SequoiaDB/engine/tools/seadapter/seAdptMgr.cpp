@@ -42,7 +42,6 @@
 #include "seAdptIndexSession.hpp"
 #include "seAdptDef.hpp"
 #include "msgMessage.hpp"
-#include "seAdptUtil.hpp"
 
 #define DATA_NODE_GRP_ID                        10000
 #define DATA_NODE_ID                            10000
@@ -56,6 +55,7 @@
 #define SEADPT_PORT_STR_SZ                      10
 #define SEADPT_MAX_PORT                         65535
 #define SEADPT_SVC_PORT_PLUS                    7
+#define ES_SYS_PREFIX                           "sys"
 
 namespace engine
 {
@@ -195,14 +195,6 @@ namespace engine
       // Clean all the remaining task, and release all indexing sessions.
       // _taskSet.clear() ;
       _taskSessionMap.clear() ;
-
-      MAPSESSION_IT it = _mapSession.begin () ;
-      while ( it != _mapSession.end() )
-      {
-         _releaseSession_i( it->second, TRUE, FALSE ) ;
-         ++it ;
-      }
-      _mapSession.clear () ;
    }
 
    SDB_SESSION_TYPE _seIndexSessionMgr::_prepareCreate( UINT64 sessionID,
@@ -882,15 +874,16 @@ namespace engine
                                      seIndexMeta &idxMeta )
    {
       INT32 rc = SDB_OK ;
-      seAdptNameParser nameParser ;
       const CHAR *clName = NULL ;
       const CHAR *idxName = NULL  ;
       const CHAR *cappedCLName = NULL ;
       BSONObj idxDef ;
       BSONObj key ;
       BSONElement lidEle ;
+      UINT32 csLogicalID = 0 ;
       UINT32 clLogicalID = 0 ;
       UINT32 idxLogicalID = 0 ;
+      CHAR esIdxName[ SDB_SEADPT_MAX_IDXNAME_SZ + 1 ] = { 0 } ;
 
       try
       {
@@ -936,15 +929,6 @@ namespace engine
             goto error ;
          }
 
-         rc = nameParser.parse( clName, idxName ) ;
-         if ( rc )
-         {
-            PD_LOG( PDERROR, "Parse collection[ %s ] and "
-                    "index[ %s ] names failed[ %d ], skip ",
-                    clName, idxName, rc ) ;
-            goto error ;
-         }
-
          lidEle = idxObj.getField( FIELD_NAME_LOGICAL_ID ) ;
          if ( Array != lidEle.type() )
          {
@@ -955,16 +939,20 @@ namespace engine
 
          {
             BSONObj lidObj = lidEle.embeddedObject() ;
-            if ( 2 != lidObj.nFields() )
+            if ( 3 != lidObj.nFields() )
             {
                rc = SDB_SYS ;
                PD_LOG( PDERROR, "Logical id field size is not as expected. "
                        "Expected: 2, Actual: %d", lidObj.nFields() ) ;
+               goto error ;
             }
             else
             {
-               clLogicalID = (UINT32)lidObj.getIntField( "0" ) ;
-               idxLogicalID = (UINT32)lidObj.getIntField( "1" ) ;
+               csLogicalID = (UINT32)lidObj.getIntField( "0" ) ;
+               clLogicalID = (UINT32)lidObj.getIntField( "1" ) ;
+               idxLogicalID = (UINT32)lidObj.getIntField( "2" ) ;
+               _genESIdxName( csLogicalID, clLogicalID, idxLogicalID,
+                              esIdxName, sizeof( esIdxName ) ) ;
             }
          }
 
@@ -974,10 +962,11 @@ namespace engine
          rc = idxMeta.setIdxDef( key ) ;
          PD_RC_CHECK( rc, PDERROR, "Set index difinition failed[ %d ]", rc ) ;
 
+         idxMeta.setCSLogicalID( csLogicalID ) ;
          idxMeta.setCLLogicalID( clLogicalID ) ;
          idxMeta.setIdxLogicalID( idxLogicalID ) ;
 
-         idxMeta.setESIdxName( nameParser.getTargetIdxName() ) ;
+         idxMeta.setESIdxName( esIdxName ) ;
          idxMeta.setESIdxType( _peerGroupName ) ;
       }
       catch ( std::exception &e )
@@ -1507,6 +1496,8 @@ namespace engine
       _idxMetaCache.clear() ;
       _idxMetaCache.unlock( EXCLUSIVE ) ;
 
+      PD_LOG( PDEVENT, "Network broken with remote. Stop all indexing jobs "
+              "and try to register on data node again..." ) ;
       _idxSessionMgr.stopAllIndexer() ;
 
       rc = _resumeRegister() ;
@@ -1543,6 +1534,13 @@ namespace engine
    void _seAdptCB::_killTimer( UINT32 timerID )
    {
       _indexNetRtAgent.removeTimer( timerID ) ;
+   }
+
+   void _seAdptCB::_genESIdxName( UINT32 csLID, UINT32 clLID, INT32 idxLID,
+                                  CHAR *esIdxName, UINT32 buffSize )
+   {
+      ossSnprintf( esIdxName, buffSize, ES_SYS_PREFIX"_%u_%u_%d",
+                   csLID, clLID, idxLID ) ;
    }
 
    seAdptCB* sdbGetSeAdapterCB()

@@ -37,6 +37,7 @@
 *******************************************************************************/
 #include "msgDef.hpp"
 #include "seAdptContext.hpp"
+#include "seAdptDef.hpp"
 #include "rtnSimpleCondParser.hpp"
 
 using namespace bson ;
@@ -285,6 +286,12 @@ namespace engine
                       "failed[ %d ]", rc ) ;
       }
 
+      if ( 0 == searchResult.getObjNum() )
+      {
+         rc = SDB_DMS_EOC ;
+         goto error ;
+      }
+
       rc = _buildInCond( searchResult, inCond ) ;
       PD_RC_CHECK( rc, PDERROR, "Build the $in condition failed[ %d ]", rc ) ;
 
@@ -320,10 +327,15 @@ namespace engine
 
       objBuff.reset() ;
 
-      rc = _fetchNextBatch( objBuff ) ;
+      rc = _fetchNextBatch( searchResult ) ;
       PD_RC_CHECK( rc, PDERROR, "Get next batch of documents failed[ %d ]",
                    rc ) ;
 
+      if ( 0 == searchResult.getObjNum() )
+      {
+         rc = SDB_DMS_EOC ;
+         goto error ;
+      }
       rc = _buildInCond( searchResult, inCond ) ;
       PD_RC_CHECK( rc, PDERROR, "Build the $in condition failed[ %d ]", rc ) ;
 
@@ -341,14 +353,6 @@ namespace engine
                                                 utilCommObjBuff &result )
    {
       INT32 rc = SDB_OK ;
-
-      if ( !result.valid() )
-      {
-         rc = SDB_OK ;
-         PD_LOG( PDERROR, "Result buffer is invalid. Maybe it haven't been "
-                 "initialized" ) ;
-         goto error ;
-      }
 
       if ( !_esClt->isActive() )
       {
@@ -466,6 +470,11 @@ namespace engine
             objBuff.nextObj( obj ) ;
             idValue = obj.getStringField( SEADPT_ID_KEY_NAME ) ;
             SDB_ASSERT( idValue, "id value should not be NULL" ) ;
+            // Skip the SDBCOMMIT mark record.
+            if ( 0 == ossStrcmp( SDB_SEADPT_COMMIT_ID, idValue ) )
+            {
+               continue ;
+            }
 
             bson::OID oid( idValue ) ;
             arrayBuilder.append( oid ) ;

@@ -567,7 +567,9 @@ namespace engine
                                                                    sequence,
                                                                    pmdGetBuffPool(),
                                                                    DMS_PAGE_SIZE_DFT,
-                                                                   DMS_DEFAULT_LOB_PAGE_SZ ) ;
+                                                                   DMS_DEFAULT_LOB_PAGE_SZ,
+                                                                   DMS_STORAGE_NORMAL,
+                                                                   rtnGetExtDataHandler() ) ;
                         if ( !storageUnit )
                         {
                            PD_LOG_MSG ( PDERROR, "Failed to allocate "
@@ -599,7 +601,6 @@ namespace engine
                                                     optCB->getSyncRecordNum(),
                                                     optCB->getSyncDirtyRatio() ) ;
                         storageUnit->setSyncDeep( optCB->isSyncDeep() ) ;
-                        storageUnit->regExtDataHandler( getRtnExtDataHandler() ) ;
 
                         /// add collectionspace
                         rc = dmsCB->addCollectionSpace ( csName, sequence,
@@ -716,7 +717,9 @@ namespace engine
                                                                 sequence,
                                                                 pmdGetBuffPool(),
                                                                 DMS_PAGE_SIZE_DFT,
-                                                                DMS_DEFAULT_LOB_PAGE_SZ ) ;
+                                                                DMS_DEFAULT_LOB_PAGE_SZ,
+                                                                DMS_STORAGE_NORMAL,
+                                                                rtnGetExtDataHandler()) ;
                      PD_CHECK ( storageUnit, SDB_OOM, error, PDERROR,
                                 "Failed to allocate dmsStorageUnit for %s",
                                 dir_iter->path().string().c_str() ) ;
@@ -744,7 +747,6 @@ namespace engine
                                                  optCB->getSyncRecordNum(),
                                                  optCB->getSyncDirtyRatio() ) ;
                      storageUnit->setSyncDeep( optCB->isSyncDeep() ) ;
-                     storageUnit->regExtDataHandler( getRtnExtDataHandler() ) ;
                      /// add collectionspace
                      rc = dmsCB->addCollectionSpace ( csName, sequence,
                                                       storageUnit, NULL,

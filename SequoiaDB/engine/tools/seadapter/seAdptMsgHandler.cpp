@@ -52,6 +52,8 @@ namespace engine
    void _indexMsgHandler::handleClose( const NET_HANDLE &handle,
                                        _MsgRouteID id )
    {
+      _pmdAsyncMsgHandler::handleClose( handle, id ) ;
+
       if ( _pMgrEDUCB )
       {
          MsgOpReply *pMsg = NULL ;
@@ -78,8 +80,6 @@ namespace engine
                                                 pMsg, (UINT64)handle ) ) ;
          }
       }
-
-      _pmdAsyncMsgHandler::handleClose( handle, id ) ;
    }
 }
 

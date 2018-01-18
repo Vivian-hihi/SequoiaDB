@@ -83,7 +83,7 @@ namespace engine
    typedef class _dmsIndexSortingBuilder dmsIndexSortingBuilder ;
 
    // Extended index builder, currently for text indices.
-   // The rebuild of text index is very different with normal indices.
+   // The rebuild of text index is very different from normal indices.
    // The main task is to create the corresponding capped cs and cl. No scanning
    // of the original collection is needed. After creating the capped
    // collection, the operation records can be inserted into it.
@@ -100,13 +100,10 @@ namespace engine
    private:
       virtual INT32 _onInit() ;
       INT32 _build() ;
-      void _reset() ;
 
    private:
-      IDmsExtDataHandler *_extHandle ;
-      CHAR _csName[ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] ;
-      CHAR _clName[ DMS_COLLECTION_NAME_SZ + 1 ] ;
-      CHAR _idxName[ IXM_INDEX_NAME_SIZE + 1 ] ;
+      IDmsExtDataHandler *_extHandler ;
+      UINT32 _csLogicalID ;
    } ;
    typedef _dmsIndexExtBuilder dmsIndexExtBuilder ;
 }

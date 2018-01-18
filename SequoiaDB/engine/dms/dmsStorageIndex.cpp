@@ -50,6 +50,8 @@
 
 using namespace bson ;
 
+#define DMS_MAX_TEXT_IDX_NUM        4
+
 namespace engine
 {
 
@@ -135,7 +137,9 @@ namespace engine
 
    INT32 _dmsStorageIndex::_onOpened()
    {
+      INT32 rc = SDB_OK ;
       BOOLEAN needFlushMME = FALSE ;
+      IDmsExtDataHandler *extHandler = _pDataSu->getExtDataHandler() ;
 
       for ( UINT16 i = 0 ; i < DMS_MME_SLOTS ; i++ )
       {
@@ -189,6 +193,24 @@ namespace engine
                                             indexCB.getIndexType() ) )
                   {
                      _pDataSu->_mbStatInfo[i]._textIdxNum++ ;
+                     // If there is any text indices, register the external
+                     // data handler, and invoke the onOpenTextIdx method.
+                     if ( !extHandler )
+                     {
+                        SDB_ASSERT( _pStorageInfo->_extDataHandler,
+                                    "External data handler in storage info is "
+                                    "NULL" ) ;
+                        _pDataSu->regExtDataHandler( _pStorageInfo->_extDataHandler ) ;
+                        extHandler = _pDataSu->getExtDataHandler() ;
+                     }
+                     else
+                     {
+                        rc = extHandler->onOpenTextIdx( _pDataSu->logicalID(),
+                                                        _pDataSu->_dmsMME->_mbList[i]._logicalID,
+                                                        indexCB.getLogicalID() ) ;
+                        PD_RC_CHECK( rc, PDERROR, "External on text index open "
+                                     "failed[ %d ]", rc ) ;
+                     }
                   }
                   if ( indexCB.unique() )
                   {
@@ -204,7 +226,10 @@ namespace engine
          _pDataSu->flushMME( isSyncDeep() ) ;
       }
 
-      return SDB_OK ;
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    void _dmsStorageIndex::_onClosed()
@@ -645,6 +670,23 @@ namespace engine
          indexCB.setLogicalID( indexLID ) ;
          indexDef = indexCB.getDef().getOwned() ;
          indexType = indexCB.getIndexType() ;
+         if ( IXM_EXTENT_HAS_TYPE( IXM_EXTENT_TYPE_TEXT, indexType ) )
+         {
+            if ( context->mbStat()->_textIdxNum >= DMS_MAX_TEXT_IDX_NUM )
+            {
+               rc = SDB_DMS_MAX_INDEX ;
+               PD_LOG( PDERROR, "Max number of text indexes have been created "
+                       "already" ) ;
+               goto error ;
+            }
+            context->mbStat()->_textIdxNum++ ;
+            if ( NULL == _pDataSu->getExtDataHandler() )
+            {
+               SDB_ASSERT( _pStorageInfo->_extDataHandler,
+                           "_extDataHandler is NULL" ) ;
+               _pDataSu->regExtDataHandler( _pStorageInfo->_extDataHandler ) ;
+            }
+         }
 
          // calc the reserve size
          if ( dpscb )
@@ -679,11 +721,6 @@ namespace engine
          if ( indexCB.unique() )
          {
             context->mbStat()->_uniqueIdxNum++ ;
-         }
-
-         if ( IXM_EXTENT_HAS_TYPE( IXM_EXTENT_TYPE_TEXT, indexType ) )
-         {
-            context->mbStat()->_textIdxNum++ ;
          }
       }
 
@@ -785,6 +822,24 @@ namespace engine
 
       rc = context->mbLock( EXCLUSIVE ) ;
       PD_RC_CHECK( rc, PDERROR, "dms mb context lock failed, rc: %d" ) ;
+
+      if ( context->mbStat()->_textIdxNum > 0 )
+      {
+         IDmsExtDataHandler* extHandler = _pDataSu->getExtDataHandler() ;
+         if ( !extHandler )
+         {
+            rc = SDB_SYS ;
+            PD_LOG( PDERROR, "External data handler is NULL" ) ;
+            goto error ;
+         }
+         else
+         {
+            rc = extHandler->onDropAllIndexes( _pDataSu->logicalID(),
+                                               context->clLID(), cb, dpscb ) ;
+            PD_RC_CHECK( rc, PDERROR, "External operation on drop all index "
+                         "failed, rc: %d", rc ) ;
+         }
+      }
 
       while ( DMS_INVALID_EXTENT != context->mb()->_indexExtent[0] )
       {
@@ -960,8 +1015,7 @@ namespace engine
       dpsLogRecord &record  = info.getMergeBlock().record() ;
       UINT32 logRecSize            = 0 ;
       BSONObj indexDef ;
-      CHAR clName[ DMS_COLLECTION_NAME_SZ ] = { 0 } ;
-      CHAR idxName[ IXM_INDEX_NAME_SIZE ] = { 0 } ;
+      dmsExtentID idxLogicalID = DMS_INVALID_EXTENT ;
       IDmsExtDataHandler *extDataHandler = NULL ;
 
       rc = context->mbLock( EXCLUSIVE ) ;
@@ -1057,9 +1111,6 @@ namespace engine
          if ( IXM_EXTENT_HAS_TYPE( indexCB.getIndexType(),
                                    IXM_EXTENT_TYPE_TEXT ) )
          {
-            ossStrncpy( clName, context->mb()->_collectionName,
-                        DMS_COLLECTION_NAME_SZ ) ;
-            ossStrncpy( idxName, indexCB.getName(), IXM_INDEX_NAME_SIZE ) ;
             extDataHandler = _pDataSu->getExtDataHandler() ;
             if ( !extDataHandler )
             {
@@ -1068,6 +1119,7 @@ namespace engine
                rc = SDB_SYS ;
                goto error ;
             }
+            idxLogicalID = indexCB.getLogicalID() ;
          }
 
          // truncate index, do remove root
@@ -1102,6 +1154,15 @@ namespace engine
             goto error ;
          }
 
+         if ( extDataHandler )
+         {
+            rc = extDataHandler->onDropTextIdx( _pDataSu->logicalID(),
+                                                context->clLID(),
+                                                idxLogicalID, cb, NULL ) ;
+            PD_RC_CHECK( rc, PDERROR, "External data process of dropping "
+                         "text index failed[ %d ]", rc ) ;
+         }
+
          // copy back
          ossMemmove (&context->mb()->_indexExtent[indexID],
                      &context->mb()->_indexExtent[indexID+1],
@@ -1125,14 +1186,6 @@ namespace engine
          context->mbStat()->updateLastLSNWithComp( cb->getEndLsn(),
                                                    DMS_FILE_IDX,
                                                    cb->isDoRollback() ) ;
-      }
-
-      if ( extDataHandler )
-      {
-         rc = extDataHandler->onDropTextIdx( getSuName(), clName, idxName,
-                                             cb, NULL ) ;
-         PD_RC_CHECK( rc, PDERROR, "External data process of dropping "
-                      "text index failed[ %d ]", rc ) ;
       }
 
    done :
@@ -1332,238 +1385,6 @@ namespace engine
       goto done ;
    }
 
-   INT32 _dmsStorageIndex::_textIndexInsert( dmsMBContext *context,
-                                             ixmIndexCB *indexCB,
-                                             BSONObj &inputObj,
-                                             pmdEDUCB *cb )
-   {
-      INT32 rc = SDB_OK ;
-      string extDataName ;
-      BSONObjSet keySet ;
-      OID oid ;
-      IDmsExtDataHandler *extDataHandler = NULL ;
-
-      SDB_ASSERT ( indexCB, "indexCB can't be NULL" ) ;
-
-      extDataHandler = _pDataSu->getExtDataHandler() ;
-      if ( !extDataHandler )
-      {
-         SDB_ASSERT( FALSE, "External data handler is NULL" ) ;
-         PD_LOG( PDERROR, "External data handler is NULL" ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-
-      try
-      {
-         // Get the _id from the insert object.
-         BSONElement ele = inputObj.getField( DMS_ID_KEY_NAME ) ;
-         if ( EOO == ele.type() )
-         {
-            PD_LOG( PDERROR, "Text index can not be used if record has no _id "
-                    "field" ) ;
-            rc = SDB_SYS ;
-            goto error ;
-         }
-
-         oid = ele.OID() ;
-
-         {
-            ixmIndexKeyGen keygen( indexCB, GEN_OBJ_KEEP_FIELD_NAME ) ;
-            // If any field is an array, it should keep that format instead of
-            // being breaking into separate objects.
-            rc = keygen.getKeys( inputObj, keySet, NULL, TRUE, FALSE, TRUE ) ;
-            PD_RC_CHECK( rc, PDERROR, "Generate key from object failed[ %d ]",
-                         rc ) ;
-
-            SDB_ASSERT( keySet.size() <= 1, "Key set size should be 1" ) ;
-            if ( 0 == keySet.size() )
-            {
-               // No index key in the record, ignore.
-               goto done ;
-            }
-            {
-               BSONObjSet::iterator it = keySet.begin();
-               BSONObj object( *it ) ;
-               rc = extDataHandler->onInsert( getSuName(),
-                                              context->mb()->_collectionName,
-                                              indexCB->getName(),
-                                              object, oid, 0, cb ) ;
-               PD_RC_CHECK( rc, PDERROR, "External data process of text index "
-                            "insertion failed[ %d ]", rc) ;
-            }
-         }
-      }
-      catch ( std::exception &e )
-      {
-         rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Exception occurred: %s", e.what() ) ;
-         goto error ;
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 _dmsStorageIndex::_textIndexDelete( dmsMBContext *context,
-                                             ixmIndexCB *indexCB,
-                                             BSONObj &inputObj,
-                                             pmdEDUCB *cb )
-   {
-      INT32 rc = SDB_OK ;
-      string extDataName ;
-      BSONObjSet keySet ;
-      OID oid ;
-      IDmsExtDataHandler *extDataHandler = NULL ;
-
-      SDB_ASSERT ( indexCB, "indexCB can't be NULL" ) ;
-
-      extDataHandler = _pDataSu->getExtDataHandler() ;
-      if ( !extDataHandler )
-      {
-         SDB_ASSERT( FALSE, "External data handler is NULL" ) ;
-         PD_LOG( PDERROR, "External data handler is NULL" ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-
-      try
-      {
-         BSONElement ele = inputObj.getField( DMS_ID_KEY_NAME ) ;
-         if ( EOO == ele.type() )
-         {
-            PD_LOG( PDERROR, "Text index can not be used if record has no _id "
-                    "field" ) ;
-            rc = SDB_SYS ;
-            goto error ;
-         }
-         oid = ele.OID() ;
-
-         rc = extDataHandler->onDelete( getSuName(),
-                                        context->mb()->_collectionName,
-                                        indexCB->getName(),
-                                        oid, cb ) ;
-
-         PD_RC_CHECK( rc, PDERROR, "External data process of text index "
-                      "deletion failed[ %d ]", rc) ;
-      }
-      catch ( std::exception &e )
-      {
-         rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Exception occurred: %s", e.what() ) ;
-         goto error ;
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 _dmsStorageIndex::_textIndexUpdate( dmsMBContext *context,
-                                             ixmIndexCB *indexCB,
-                                             BSONObj &newObj,
-                                             pmdEDUCB *cb )
-   {
-      // Only need the new object, including the _id.
-      INT32 rc = SDB_OK ;
-      string extDataName ;
-      BSONObjSet keySet ;
-      OID oid ;
-      IDmsExtDataHandler *extDataHandler = NULL ;
-
-      SDB_ASSERT ( indexCB, "indexCB can't be NULL" ) ;
-
-      extDataHandler = _pDataSu->getExtDataHandler() ;
-      if ( !extDataHandler )
-      {
-         SDB_ASSERT( FALSE, "External data handler is NULL" ) ;
-         PD_LOG( PDERROR, "External data handler is NULL" ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-
-      try
-      {
-         BSONElement ele = newObj.getField( DMS_ID_KEY_NAME ) ;
-         if ( EOO == ele.type() )
-         {
-            PD_LOG( PDERROR, "Text index can not be used if record has no _id "
-                    "field" ) ;
-            rc = SDB_SYS ;
-            goto error ;
-         }
-
-         oid = ele.OID() ;
-
-         {
-            ixmIndexKeyGen keygen( indexCB, GEN_OBJ_KEEP_FIELD_NAME ) ;
-            rc = keygen.getKeys( newObj, keySet, NULL, TRUE, FALSE ) ;
-            PD_RC_CHECK( rc, PDERROR, "Generate key from object failed[ %d ]", rc ) ;
-
-            SDB_ASSERT( 1 == keySet.size(), "Key set size should be 1" ) ;
-
-            {
-               BSONObjSet::iterator it = keySet.begin();
-               BSONObj object( *it ) ;
-               rc = extDataHandler->onUpdate( getSuName(),
-                                              context->mb()->_collectionName,
-                                              indexCB->getName(),
-                                              object, oid, 0, cb ) ;
-               PD_RC_CHECK( rc, PDERROR, "External data process of text index "
-                            "updating failed[ %d ]", rc) ;
-            }
-         }
-      }
-      catch ( std::exception &e )
-      {
-         rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Exception occurred: %s", e.what() ) ;
-         goto error ;
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 _dmsStorageIndex::_textIndexTruncate( dmsMBContext *context,
-                                               ixmIndexCB *indexCB,
-                                               pmdEDUCB *cb )
-   {
-      INT32 rc = SDB_OK ;
-      string extDataName ;
-      IDmsExtDataHandler *extDataHandler = NULL ;
-
-      SDB_ASSERT ( indexCB, "indexCB can't be NULL" ) ;
-
-      extDataHandler = _pDataSu->getExtDataHandler() ;
-      if ( !extDataHandler )
-      {
-         SDB_ASSERT( FALSE, "External data handler is NULL" ) ;
-         PD_LOG( PDERROR, "External data handler is NULL" ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-
-      indexCB->setFlag( IXM_INDEX_FLAG_TRUNCATING ) ;
-      rc = extDataHandler->onTruncate( getSuName(),
-                                       context->mb()->_collectionName,
-                                       indexCB->getName(), cb ) ;
-      PD_RC_CHECK( rc, PDERROR, "Truncate text index failed[ %d ]", rc ) ;
-
-      indexCB->setFlag( IXM_INDEX_FLAG_NORMAL ) ;
-
-   done:
-      return rc ;
-   error:
-      indexCB->setFlag( IXM_INDEX_FLAG_INVALID ) ;
-      goto done ;
-   }
-
    // caller is responsible to rollback the change if indexesInsert fail
    INT32 _dmsStorageIndex::indexesInsert( dmsMBContext *context,
                                           dmsExtentID extLID,
@@ -1614,7 +1435,20 @@ namespace engine
          if ( IXM_EXTENT_HAS_TYPE( indexCB.getIndexType(),
                                    IXM_EXTENT_TYPE_TEXT ) )
          {
-            rc = _textIndexInsert( context, &indexCB, inputObj, cb ) ;
+            IDmsExtDataHandler *handler = _pDataSu->getExtDataHandler() ;
+            if ( !handler )
+            {
+               rc = SDB_SYS ;
+               PD_LOG( PDERROR,
+                       "External operation handler of index[%s] is invalid",
+                       indexCB.getName() ) ;
+               goto error ;
+            }
+
+            rc = handler->onInsert( _pDataSu->logicalID(),
+                                    context->clLID(),
+                                    indexCB.getLogicalID(),
+                                    indexCB, inputObj, cb ) ;
             PD_RC_CHECK( rc, PDERROR, "Insert on text index failed[ %d ]",
                          rc ) ;
          }
@@ -1857,7 +1691,20 @@ namespace engine
          if ( IXM_EXTENT_HAS_TYPE( indexCB.getIndexType(),
                                    IXM_EXTENT_TYPE_TEXT ) )
          {
-            rc = _textIndexUpdate( context, &indexCB, newObj, cb ) ;
+            IDmsExtDataHandler *handler = _pDataSu->getExtDataHandler() ;
+            if ( !handler )
+            {
+               rc = SDB_SYS ;
+               PD_LOG( PDERROR,
+                       "External operation handler of index[%s] is invalid",
+                       indexCB.getName() ) ;
+               goto error ;
+            }
+
+            rc = handler->onUpdate( _pDataSu->logicalID(),
+                                    context->clLID(),
+                                    indexCB.getLogicalID(),
+                                    indexCB, originalObj, newObj, cb ) ;
             PD_RC_CHECK( rc, PDERROR, "Update on text index failed[ %d ]",
                          rc ) ;
          }
@@ -1979,7 +1826,20 @@ namespace engine
          if ( IXM_EXTENT_HAS_TYPE( indexCB.getIndexType(),
                                    IXM_EXTENT_TYPE_TEXT ) )
          {
-            rc = _textIndexDelete( context, &indexCB, inputObj, cb ) ;
+            IDmsExtDataHandler *handler = _pDataSu->getExtDataHandler() ;
+            if ( !handler )
+            {
+               rc = SDB_SYS ;
+               PD_LOG( PDERROR,
+                       "External operation handler of index[%s] is invalid",
+                       indexCB.getName() ) ;
+               goto error ;
+            }
+
+            rc = handler->onDelete( _pDataSu->logicalID(),
+                                    context->clLID(),
+                                    indexCB.getLogicalID(),
+                                    indexCB, inputObj, cb ) ;
             PD_RC_CHECK( rc, PDERROR, "Delete on text index failed[ %d ]",
                          rc ) ;
          }
@@ -2004,7 +1864,7 @@ namespace engine
                                             pmdEDUCB *cb )
    {
       INT32 rc                     = SDB_OK ;
-      INT32  indexID               = 0 ;
+      INT32 indexID                = 0 ;
 
       rc = context->mbLock( EXCLUSIVE ) ;
       PD_RC_CHECK( rc, PDERROR, "dms mb context lock failed, rc: %d", rc ) ;
@@ -2027,14 +1887,11 @@ namespace engine
          if ( IXM_EXTENT_HAS_TYPE( indexCB.getIndexType(),
                                    IXM_EXTENT_TYPE_TEXT ) )
          {
-            rc = _textIndexTruncate( context, &indexCB, cb ) ;
+            continue ;
          }
-         else
-         {
-            // we don't check index flag since we are doing full index rebuild now
-            // truncate index, do remove root
-            rc = indexCB.truncate ( FALSE ) ;
-         }
+         // we don't check index flag since we are doing full index rebuild now
+         // truncate index, do remove root
+         rc = indexCB.truncate ( FALSE ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Failed to truncate index, rc: %d", rc ) ;

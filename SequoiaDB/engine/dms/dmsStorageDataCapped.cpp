@@ -294,6 +294,10 @@ namespace engine
       SDB_ASSERT( _options[collectionID],
                   "Option pointer should not be NULL" ) ;
 
+      // As capped collection dose not support index, always set the index
+      // commit flag to true.
+      _dmsMME->_mbList[collectionID]._idxCommitFlag = 1 ;
+
    done:
       PD_TRACE_EXITRC( SDB__DMSSTORAGEDATACAPPED__ONADDCOLLECTION, rc ) ;
       return rc ;
@@ -1867,7 +1871,7 @@ namespace engine
       else
       {
          beginExtID = ( DMS_INVALID_EXTENT == extent->_nextExtent ) ?
-                    targetExtID : extent->_nextExtent ;
+                      targetExtID : extent->_nextExtent ;
          endExtID = context->mb()->_lastExtentID ;
          context->mb()->_lastExtentID = targetExtID ;
       }
@@ -2007,10 +2011,8 @@ namespace engine
       recNum = 0 ;
       totalSize = 0 ;
 
-      if ( DMS_INVALID_OFFSET == beginOffset )
+      if ( DMS_INVALID_OFFSET == beginOffset || beginOffset > endOffset )
       {
-         SDB_ASSERT( DMS_INVALID_OFFSET == endOffset, "End offset must be "
-                     "invalid while begin offset is invalid" ) ;
          recNum = 0 ;
          totalSize = 0 ;
          goto done ;

@@ -1052,7 +1052,8 @@ namespace engine
                                       utilCacheMgr *pMgr,
                                       INT32 pageSize,
                                       INT32 lobPageSize,
-                                      DMS_STORAGE_TYPE type )
+                                      DMS_STORAGE_TYPE type,
+                                      IDmsExtDataHandler *extDataHandler )
    :_pDataSu( NULL ),
     _pIndexSu( NULL ),
     _pLobSu( NULL ),
@@ -1093,6 +1094,7 @@ namespace engine
       _storageInfo._secretValue = ossPack32To64( (UINT32)time(NULL),
                                                  (UINT32)(ossRand()*239641) ) ;
       _storageInfo._type = type ;
+      _storageInfo._extDataHandler = extDataHandler ;
 
       // Create caches
       _cacheHolder.createSUCache( DMS_CACHE_TYPE_STAT ) ;
@@ -1728,7 +1730,8 @@ namespace engine
          getContext = TRUE ;
       }
 
-      rc = _pIndexSu->createIndex( context, index, cb, dpscb, isSys, sortBufferSize ) ;
+      rc = _pIndexSu->createIndex( context, index, cb, dpscb,
+                                   isSys, sortBufferSize ) ;
       if ( rc )
       {
          goto error ;
@@ -3074,36 +3077,6 @@ namespace engine
    dmsCachedPlanMgr *_dmsStorageUnit::getCachedPlanMgr ()
    {
       return (dmsCachedPlanMgr *)getSUCache( DMS_CACHE_TYPE_PLAN ) ;
-   }
-
-   INT32 _dmsStorageUnit::regExtDataHandler( IDmsExtDataHandler *pHandler )
-   {
-      INT32 rc = SDB_OK ;
-
-      SDB_ASSERT( pHandler, "External data handle is NULL" ) ;
-      if ( !_pDataSu )
-      {
-         PD_LOG( PDERROR, "Storage unit has not been opened yet" ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-      _pDataSu->setExtDataHandler( pHandler ) ;
-      _extDataHandler = pHandler ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   void _dmsStorageUnit::unregExtDataHandler( IDmsExtDataHandler *pHandler )
-   {
-      return ;
-   }
-
-   IDmsExtDataHandler *_dmsStorageUnit::getExtDataHandler()
-   {
-      return _extDataHandler ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU__CREATESTORAGEOBJS, "_dmsStorageUnit::_createStorageObjs" )

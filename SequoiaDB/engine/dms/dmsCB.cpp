@@ -1436,11 +1436,12 @@ namespace engine
    INT32 _SDB_DMSCB::_delCollectionSpace( const CHAR * pName, _pmdEDUCB * cb,
                                           SDB_DPSCB * dpsCB,
                                           BOOLEAN removeFile,
-                                          BOOLEAN onlyEmpty,
-                                          monCSSimple *csInfo )
+                                          BOOLEAN onlyEmpty )
    {
       INT32 rc = SDB_OK ;
       SDB_DMS_CSCB *pCSCB = NULL ;
+      IDmsExtDataHandler *extHandler = NULL ;
+      BOOLEAN extOprFinish = FALSE ;
 
       PD_TRACE_ENTRY ( SDB__SDB_DMSCB_DELCS ) ;
 
@@ -1448,6 +1449,23 @@ namespace engine
       {
          rc = SDB_INVALIDARG ;
          goto error ;
+      }
+
+      _mutex.get_shared () ;
+      rc = _CSCBNameLookup( pName, &pCSCB ) ;
+      _mutex.release_shared () ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      extHandler = pCSCB->_su->data()->getExtDataHandler() ;
+      if ( extHandler )
+      {
+         rc = extHandler->onDelCS( pCSCB->_su->LogicalCSID(), cb,
+                                   removeFile, dpsCB ) ;
+         PD_RC_CHECK( rc, PDERROR, "External operation on delete cs failed, "
+                      "rc: %d", rc ) ;
       }
 
       rc = _CSCBNameRemove ( pName, cb, dpsCB, onlyEmpty, pCSCB ) ;
@@ -1461,9 +1479,17 @@ namespace engine
          goto error ;
       }
 
-      if ( csInfo )
+      if ( extHandler )
       {
-         pCSCB->_su->dumpInfo( *csInfo, TRUE, TRUE, TRUE ) ;
+         rc = extHandler->done( cb, dpsCB ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "External done operation failed, rc: %d", rc ) ;
+         }
+         else
+         {
+            extOprFinish = TRUE ;
+         }
       }
 
       if ( removeFile )
@@ -1488,56 +1514,26 @@ namespace engine
       PD_TRACE_EXITRC ( SDB__SDB_DMSCB_DELCS, rc );
       return rc ;
    error :
+      if ( extHandler && !extOprFinish )
+      {
+         extHandler->abortOperation( cb ) ;
+      }
       goto done ;
    }
 
    INT32 _SDB_DMSCB::dropCollectionSpace ( const CHAR *pName, _pmdEDUCB *cb,
                                            SDB_DPSCB *dpsCB )
    {
-      monCSSimple csInfo ;
-
       aquireCSMutex( pName ) ;
-      INT32 rc = _delCollectionSpace( pName, cb, dpsCB, TRUE, FALSE, &csInfo ) ;
+      INT32 rc = _delCollectionSpace( pName, cb, dpsCB, TRUE, FALSE ) ;
       releaseCSMutex( pName ) ;
-
-      {
-         rtnExtDataHandler *extDataHandler = getRtnExtDataHandler() ;
-         INT32 rcTmp = extDataHandler->onDropCS( csInfo, cb ) ;
-         if ( rcTmp )
-         {
-            PD_LOG( PDERROR, "External operation of drop cs failed, rc: %d",
-                    rcTmp ) ;
-         }
-      }
 
       return rc ;
    }
 
    INT32 _SDB_DMSCB::unloadCollectonSpace( const CHAR *pName, _pmdEDUCB *cb )
    {
-      INT32 rc = SDB_OK ;
-      monCSSimple csInfo ;
-
-      rc = _delCollectionSpace( pName, cb, NULL, FALSE, FALSE, &csInfo ) ;
-      if ( rc )
-      {
-         goto error ;
-      }
-
-      {
-         rtnExtDataHandler *extDataHandler = getRtnExtDataHandler() ;
-         INT32 rcTmp = extDataHandler->onUnloadCS( csInfo, cb ) ;
-         if ( rcTmp )
-         {
-            PD_LOG( PDERROR, "External operation of unload cs failed, rc: %d",
-                    rcTmp ) ;
-         }
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
+      return _delCollectionSpace( pName, cb, NULL, FALSE, FALSE ) ;
    }
 
    INT32 _SDB_DMSCB::dropEmptyCollectionSpace( const CHAR *pName,
@@ -1611,12 +1607,26 @@ namespace engine
                                              SDB_DPSCB *dpsCB )
    {
       INT32 rc = SDB_OK ;
-
       PD_TRACE_ENTRY ( SDB__SDB_DMSCB_DROPCSP1 ) ;
+      IDmsExtDataHandler *extHandler = NULL ;
+      SDB_DMS_CSCB *pCSCB = NULL ;
+
       if ( !pName )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
+      }
+
+      _mutex.get_shared () ;
+      rc = _CSCBNameLookup( pName, &pCSCB ) ;
+      _mutex.release_shared () ;
+      extHandler = pCSCB->_su->data()->getExtDataHandler() ;
+      if ( extHandler )
+      {
+         rc = extHandler->onDelCS( pCSCB->_su->LogicalCSID(),
+                                   cb, TRUE, dpsCB ) ;
+         PD_RC_CHECK( rc, PDERROR, "External operation on drop CS[ %s ] failed,"
+                      " rc: %d", pName, rc ) ;
       }
 
       rc = _CSCBNameRemoveP1( pName, cb, dpsCB ) ;
@@ -1631,6 +1641,10 @@ namespace engine
       PD_TRACE_EXITRC ( SDB__SDB_DMSCB_DROPCSP1, rc );
       return rc ;
    error :
+      if ( extHandler )
+      {
+         extHandler->abortOperation( cb ) ;
+      }
       goto done ;
    }
 
@@ -1639,6 +1653,8 @@ namespace engine
                                                    SDB_DPSCB *dpsCB )
    {
       INT32 rc = SDB_OK ;
+      IDmsExtDataHandler *extHandler = NULL ;
+      SDB_DMS_CSCB *pCSCB = NULL ;
 
       PD_TRACE_ENTRY ( SDB__SDB_DMSCB_DROPCSP1CANCEL ) ;
       if ( !pName )
@@ -1650,6 +1666,29 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR,
                    "failed to cancel remove cs(rc=%d)",
                    rc );
+
+      _mutex.get_shared () ;
+      rc = _CSCBNameLookup( pName, &pCSCB ) ;
+      _mutex.release_shared () ;
+      if ( rc )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Find collection space[ %s ] failed, rc: %d",
+                 pName, rc ) ;
+         goto error ;
+      }
+      SDB_ASSERT( pCSCB, "Collection space CB is NULL" ) ;
+      if ( pCSCB )
+      {
+         extHandler = pCSCB->_su->data()->getExtDataHandler() ;
+         if ( extHandler )
+         {
+            rc = extHandler->abortOperation( cb ) ;
+            PD_RC_CHECK( rc, PDERROR, "External operation on drop CS[ %s ] "
+                         "failed, rc: %d", pName, rc ) ;
+         }
+      }
+
    done :
       PD_TRACE_EXITRC ( SDB__SDB_DMSCB_DROPCSP1CANCEL, rc );
       return rc ;
@@ -1659,11 +1698,11 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_DROPCSP2, "_SDB_DMSCB::dropCollectionSpaceP2" )
    INT32 _SDB_DMSCB::dropCollectionSpaceP2 ( const CHAR *pName, _pmdEDUCB *cb,
-                                             SDB_DPSCB *dpsCB,
-                                             monCSSimple *csInfo )
+                                             SDB_DPSCB *dpsCB )
    {
       INT32 rc = SDB_OK ;
       SDB_DMS_CSCB *pCSCB = NULL ;
+      IDmsExtDataHandler *extHandler = NULL ;
 
       PD_TRACE_ENTRY ( SDB__SDB_DMSCB_DROPCSP2 ) ;
       if ( !pName )
@@ -1682,15 +1721,12 @@ namespace engine
          rc = SDB_SYS ;
          goto error ;
       }
-
-      // When adding the function of text search, capped collection spaces are
-      // "bound" to the original cs. So when dropping the original cs, need to
-      // find these relative capped cs and drop them also.
-      // Dump the information here, and the dropping action will be done by
-      // external data handler.
-      if ( csInfo )
+      extHandler = pCSCB->_su->data()->getExtDataHandler() ;
+      if ( extHandler )
       {
-         pCSCB->_su->dumpInfo( *csInfo, TRUE, TRUE, TRUE ) ;
+         rc = extHandler->done( cb, dpsCB ) ;
+         PD_RC_CHECK( rc, PDERROR, "External operation on drop CS[ %s ] failed,"
+                      " rc: %d", pName, rc ) ;
       }
 
       pCSCB->_su->getEventHolder()->onDropCS( DMS_EVENT_MASK_ALL, cb, dpsCB ) ;

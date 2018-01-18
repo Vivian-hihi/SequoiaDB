@@ -43,6 +43,7 @@ namespace engine
    _seIndexMeta::_seIndexMeta()
    {
       _version = -1 ;
+      _csLogicalID = 0 ;
       _clLogicalID = 0 ;
       _idxLogicalID = 0 ;
    }
@@ -78,6 +79,11 @@ namespace engine
    {
       SDB_ASSERT( idxName, "Index name is NULL" ) ;
       _origIdxName = idxName ;
+   }
+
+   void _seIndexMeta::setCSLogicalID( UINT32 logicalID )
+   {
+      _csLogicalID = logicalID ;
    }
 
    void _seIndexMeta::setCLLogicalID( UINT32 logicalID )

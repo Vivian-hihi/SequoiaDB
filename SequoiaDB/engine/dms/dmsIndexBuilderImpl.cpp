@@ -36,6 +36,7 @@
 #include "ixm.hpp"
 #include "dmsCB.hpp"
 #include "pmdEDU.hpp"
+#include "dmsTrace.hpp"
 
 namespace engine
 {
@@ -377,63 +378,62 @@ namespace engine
                                              dmsMBContext* mbContext,
                                              pmdEDUCB* eduCB,
                                              dmsExtentID indexExtentID)
-   : _dmsIndexBuilder( indexSU, dataSU, mbContext, eduCB, indexExtentID )
+   : _dmsIndexBuilder( indexSU, dataSU, mbContext, eduCB, indexExtentID ),
+     _extHandler( NULL ),
+     _csLogicalID( DMS_INVALID_LOGICCSID )
    {
-      _reset() ;
    }
 
    _dmsIndexExtBuilder::~_dmsIndexExtBuilder()
    {
-
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSINDEXEXTBUILDER__ONINIT, "_dmsIndexExtBuilder::_onInit" )
    INT32 _dmsIndexExtBuilder::_onInit()
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DMSINDEXEXTBUILDER__ONINIT ) ;
 
       SDB_ASSERT( IXM_EXTENT_HAS_TYPE( IXM_EXTENT_TYPE_TEXT,
                                        _indexCB->getIndexType() ),
                   "Not text index" ) ;
 
-      _extHandle = _suData->getExtDataHandler() ;
-      PD_CHECK( _extHandle, SDB_SYS, error, PDERROR,
+      _extHandler = _suData->getExtDataHandler() ;
+      PD_CHECK( _extHandler, SDB_SYS, error, PDERROR,
                 "External data handle is NULL" ) ;
 
-      ossStrncpy( _csName, _suData->getSuName(),
-                  DMS_COLLECTION_SPACE_NAME_SZ ) ;
-      ossStrncpy( _clName, _mbContext->mb()->_collectionName,
-                  DMS_COLLECTION_NAME_SZ ) ;
-      ossStrncpy( _idxName, _indexCB->getName(), IXM_INDEX_NAME_SIZE ) ;
+      _csLogicalID = _suData->logicalID() ;
 
       // We are going to create the capped cs and cl. During the whole process,
-      // on use of the index is allowed.
+      // no use of the index is allowed.
       if ( IXM_INDEX_FLAG_INVALID != _indexCB->getFlag() )
       {
          _indexCB->setFlag( IXM_INDEX_FLAG_INVALID ) ;
       }
 
    done:
+      PD_TRACE_EXITRC( SDB__DMSINDEXEXTBUILDER__ONINIT, rc ) ;
       return rc ;
    error:
-      if ( _indexCB )
-      {
-         SDB_OSS_DEL _indexCB ;
-         _indexCB = NULL ;
-      }
-      _reset() ;
+      _extHandler = NULL ;
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSINDEXEXTBUILDER__BUILD, "_dmsIndexExtBuilder::_build" )
    INT32 _dmsIndexExtBuilder::_build()
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DMSINDEXEXTBUILDER__BUILD ) ;
       BOOLEAN mbLocked = FALSE ;
       BOOLEAN hasRebuild = FALSE ;
       INT32 idxID = 0 ;
 
-      rc = _extHandle->onRebuildTextIdx( _csName, _clName, _idxName, _eduCB ) ;
+      rc = _extHandler->onRebuildTextIdx( _csLogicalID, _mbContext->clLID(),
+                                          _indexLID, _eduCB ) ;
       PD_RC_CHECK( rc, PDERROR, "External handle on text index rebuild "
                    "failed: %d", rc ) ;
+      // Now the capped cs and cl have been created. So if any failure below,
+      // they need to be dropped.
       hasRebuild = TRUE ;
 
       // Now we need to set the index as valid.
@@ -477,33 +477,29 @@ namespace engine
       {
          _mbContext->mbUnlock() ;
       }
+      PD_TRACE_EXITRC( SDB__DMSINDEXEXTBUILDER__BUILD, rc ) ;
       return rc ;
    error:
       if ( hasRebuild )
       {
-         // Unlock before external operation.
-         if ( mbLocked )
+         // If the cs/cl/index has been dropped, or the cl has been truncated,
+         // the external operation would have been done. Otherwise, do the
+         // external on drop operation.
+         if ( ( SDB_DMS_NOTEXIST != rc ) && ( SDB_DMS_TRUNCATED != rc ) &&
+              ( SDB_DMS_INVALID_INDEXCB != rc ) )
          {
-            _mbContext->mbUnlock() ;
-            mbLocked = FALSE ;
-         }
-         INT32 rcTmp = _extHandle->onDropTextIdx( _csName, _clName, _idxName,
-                                                  _eduCB, NULL ) ;
-         if ( rcTmp )
-         {
-            PD_LOG( PDERROR, "External operation on drop text index failed, "
-                    "rc: %d", rcTmp ) ;
+            INT32 rcTmp = _extHandler->onDropTextIdx( _csLogicalID,
+                                                      _mbContext->clLID(),
+                                                      _indexLID, _eduCB,
+                                                      NULL ) ;
+            if ( rcTmp )
+            {
+               PD_LOG( PDERROR, "External operation on drop text index failed, "
+                       "rc: %d", rcTmp ) ;
+            }
          }
       }
       goto done ;
-   }
-
-   void _dmsIndexExtBuilder::_reset()
-   {
-      _extHandle = NULL ;
-      ossMemset( _csName, 0, DMS_COLLECTION_SPACE_NAME_SZ + 1 ) ;
-      ossMemset( _clName, 0, DMS_COLLECTION_NAME_SZ + 1 ) ;
-      ossMemset( _idxName, 0, IXM_INDEX_NAME_SIZE + 1 ) ;
    }
 }
 

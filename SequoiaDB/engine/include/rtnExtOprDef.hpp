@@ -1,6 +1,5 @@
 /*******************************************************************************
 
-
    Copyright (C) 2011-2017 SequoiaDB Ltd.
 
    This program is free software: you can redistribute it and/or modify
@@ -15,13 +14,13 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program. If not, see <http://www.gnu.org/license/>.
 
-   Source File Name = seAdptUtil.hpp
+   Source File Name = rtnExtOprDef.hpp
 
-   Descriptive Name = Search Engine Adapter Util.
+   Descriptive Name = External Operation Definitions.
 
    When/how to use: this program may be used on binary and text-formatted
-   versions of PMD component. This file contains main function for sdbcm,
-   which is used to do cluster managing.
+   versions of data management component. This file contains structure for
+   DMS storage unit and its methods.
 
    Dependencies: N/A
 
@@ -30,36 +29,24 @@
    Change Activity:
    defect Date        Who Description
    ====== =========== === ==============================================
-          10/01/2017  YSD  Initial Draft
+          15/11/2017  YSD Initial Draft
 
    Last Changed =
 
 *******************************************************************************/
-#ifndef SEADPT_UTIL_HPP__
-#define SEADPT_UTIL_HPP__
-
-#include "core.hpp"
-#include "seAdptDef.hpp"
-#include <string>
+#ifndef RTN_EXTOPR_DEF_HPP__
+#define RTN_EXTOPR_DEF_HPP__
 
 namespace engine
 {
-   // Parse the original collection and index name into target index name.
-   class _seAdptNameParser
+   enum _rtnExtOprType
    {
-      public:
-         _seAdptNameParser() ;
-         ~_seAdptNameParser() ;
-
-         INT32 parse( const CHAR *clFullName, const CHAR *idxName ) ;
-         void reset() ;
-         const CHAR* getTargetIdxName() ;
-
-      private:
-         std::string _targetIdxName ;
+      RTN_EXT_INVALID = 0,
+      RTN_EXT_INSERT = 1,
+      RTN_EXT_DELETE,
+      RTN_EXT_UPDATE,
    } ;
-   typedef _seAdptNameParser seAdptNameParser ;
 }
 
-#endif /* SEADPT_UTIL_HPP__ */
+#endif /* RTN_EXTOPR_DEF_HPP__ */
 

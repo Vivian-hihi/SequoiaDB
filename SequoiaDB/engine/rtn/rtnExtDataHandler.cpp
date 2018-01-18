@@ -38,311 +38,466 @@
 #include "rtn.hpp"
 #include "rtnTrace.hpp"
 #include "rtnExtDataHandler.hpp"
-
-// Currently we set the size limit of capped collection to 30GB. This may change
-// in the future.
-#define RTN_CAPPED_CL_MAXSIZE       ( 30 * 1024 * 1024 * 1024LL )
-#define RTN_CAPPED_CL_MAXRECNUM     0
-#define RTN_FIELD_NAME_RID          "_rid"
-#define RTN_FIELD_NAME_SOURCE       "_source"
+#include "rtnExtDataProcessor.hpp"
 
 namespace engine
 {
-   _rtnExtDataHandler::_rtnExtDataHandler()
+   _rtnExtContextBase::_rtnExtContextBase()
    {
+      _id = 0 ;
+   }
+   _rtnExtContextBase::~_rtnExtContextBase()
+   {
+   }
+
+   void _rtnExtContextBase::appendProcessor( rtnExtDataProcessor *processor )
+   {
+      _processors.push_back( processor ) ;
+   }
+
+   void _rtnExtContextBase::appendProcessor( rtnExtDataProcessor *processor,
+                                             const BSONObj &processData )
+   {
+      _processors.push_back( processor ) ;
+      _objects.push_back( processData ) ;
+   }
+
+   void _rtnExtContextBase::appendProcessors( const vector< rtnExtDataProcessor * >& processorVec )
+   {
+      _processors.insert( _processors.end(), processorVec.begin(),
+                          processorVec.end() ) ;
+   }
+
+   _rtnExtDataOprCtx::_rtnExtDataOprCtx()
+   {
+   }
+
+   _rtnExtDataOprCtx::~_rtnExtDataOprCtx()
+   {
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAOPRCTX_DONE, "_rtnExtDataOprCtx::done" )
+   INT32 _rtnExtDataOprCtx::done( rtnExtDataProcessorMgr *edpMgr, pmdEDUCB *cb,
+                                  SDB_DPSCB *dpscb )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAOPRCTX_DONE ) ;
+      OBJ_VEC_ITR objItr = _objects.begin() ;
+      for ( EDP_VEC_ITR itr = _processors.begin(); itr != _processors.end();
+            ++itr )
+      {
+         SDB_ASSERT( objItr != _objects.end(), "objItr should not reach end" ) ;
+         rc  = (*itr)->doWrite( cb,  *objItr, dpscb ) ;
+         PD_RC_CHECK( rc, PDERROR, "Processor operation failed[ %d ]", rc ) ;
+         objItr++ ;
+      }
+
+   done:
+      PD_TRACE_EXITRC( SDB__RTNEXTDATAOPRCTX_DONE, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAOPRCTX_ABORT, "_rtnExtDataOprCtx::abort" )
+   INT32 _rtnExtDataOprCtx::abort( rtnExtDataProcessorMgr *edpMgr, pmdEDUCB *cb,
+                                   SDB_DPSCB *dpscb )
+   {
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAOPRCTX_ABORT ) ;
+      _processors.clear() ;
+      _objects.clear() ;
+      PD_TRACE_EXIT( SDB__RTNEXTDATAOPRCTX_ABORT ) ;
+      return SDB_OK ;
+   }
+
+   _rtnExtDropOprCtx::_rtnExtDropOprCtx()
+   : _removeFiles( FALSE )
+   {
+   }
+
+   _rtnExtDropOprCtx::~_rtnExtDropOprCtx()
+   {
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDROPOPRCTX_DONE, "_rtnExtDropOprCtx::done" )
+   INT32 _rtnExtDropOprCtx::done( rtnExtDataProcessorMgr *edpMgr, pmdEDUCB *cb,
+                                  SDB_DPSCB *dpscb )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNEXTDROPOPRCTX_DONE ) ;
+      if ( _removeFiles )
+      {
+         // For drop operation, the processors need to be removed.
+         for ( EDP_VEC_ITR itr = _processors.begin(); itr != _processors.end();)
+         {
+            rc = (*itr)->doDropP2( cb, dpscb ) ;
+            PD_RC_CHECK( rc, PDERROR, "Do drop phase 2 failed[ %d ]", rc ) ;
+            edpMgr->delProcessor( &(*itr ) ) ;
+            _processors.erase( itr ) ;
+         }
+      }
+
+   done:
+      PD_TRACE_EXITRC( SDB__RTNEXTDROPOPRCTX_DONE, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDROPOPRCTX_ABORT, "_rtnExtDropOprCtx::abort" )
+   INT32 _rtnExtDropOprCtx::abort( rtnExtDataProcessorMgr *edpMgr, pmdEDUCB *cb,
+                                   SDB_DPSCB *dpscb )
+   {
+      PD_TRACE_ENTRY( SDB__RTNEXTDROPOPRCTX_ABORT ) ;
+      for ( EDP_VEC_ITR itr = _processors.begin(); itr != _processors.end(); )
+      {
+         (*itr)->doDropP1Cancel( cb, dpscb ) ;
+         _processors.erase( itr ) ;
+      }
+      PD_TRACE_EXIT( SDB__RTNEXTDROPOPRCTX_ABORT ) ;
+      return SDB_OK ;
+   }
+
+   _rtnExtTruncateCtx::_rtnExtTruncateCtx()
+   : _oldCLLID( 0 ),
+     _newCLLID( 0 )
+   {
+   }
+
+   _rtnExtTruncateCtx::~_rtnExtTruncateCtx()
+   {
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTTRUNCATECTX_DONE, "_rtnExtTruncateCtx::done" )
+   INT32 _rtnExtTruncateCtx::done( rtnExtDataProcessorMgr *edpMgr, pmdEDUCB *cb,
+                                   SDB_DPSCB *dpscb )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNEXTTRUNCATECTX_DONE ) ;
+
+      for ( vector<rtnExtDataProcessor *>::iterator itr = _processors.begin();
+            itr != _processors.end(); )
+      {
+         rc = (*itr)->doDropP2( cb, NULL ) ;
+         PD_RC_CHECK( rc, PDERROR, "Drop phase 2 failed[ %d ]", rc ) ;
+         if ( _oldCLLID != _newCLLID )
+         {
+            rtnExtDataProcessor* newProcessor = NULL ;
+            rtnExtProcessorMeta meta = (*itr)->getMeta() ;
+            edpMgr->delProcessor( &(*itr) ) ;
+            meta._clLogicalID = _newCLLID ;
+            rc = edpMgr->addProcessor( meta._csLogicalID, meta._clLogicalID,
+                                        meta._idxLogicalID, &newProcessor ) ;
+            PD_RC_CHECK( rc, PDERROR, "Add new processor failed[ %d ]", rc ) ;
+            rc = newProcessor->doRebuild( cb, dpscb ) ;
+            PD_RC_CHECK( rc, PDERROR, "Rebuild of index failed[ %d ]", rc ) ;
+         }
+         _processors.erase( itr ) ;
+      }
+
+   done:
+      PD_TRACE_EXITRC( SDB__RTNEXTTRUNCATECTX_DONE, rc ) ;
+      return rc ;
+   error:
+      for ( vector<rtnExtDataProcessor *>::iterator itr = _processors.begin();
+            itr != _processors.end();)
+      {
+         (*itr)->doDropP1Cancel( cb, NULL ) ;
+         _processors.erase( itr ) ;
+      }
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTTRUNCATECTX_ABORT, "_rtnExtTruncateCtx::abort" )
+   INT32 _rtnExtTruncateCtx::abort( rtnExtDataProcessorMgr *edpMgr,
+                                    pmdEDUCB *cb, SDB_DPSCB *dpscb )
+   {
+      PD_TRACE_ENTRY( SDB__RTNEXTTRUNCATECTX_ABORT ) ;
+      for ( vector<rtnExtDataProcessor *>::iterator itr = _processors.begin();
+            itr != _processors.end(); )
+      {
+         (*itr)->doDropP1Cancel( cb, dpscb ) ;
+         _processors.erase( itr ) ;
+      }
+      PD_TRACE_EXIT( SDB__RTNEXTTRUNCATECTX_ABORT ) ;
+      return SDB_OK ;
+   }
+
+   void _rtnExtTruncateCtx::setCLLIDs( UINT32 oldLID, UINT32 newLID )
+   {
+      _oldCLLID = oldLID ;
+      _newCLLID = newLID ;
+   }
+
+   _rtnExtContextMgr::_rtnExtContextMgr()
+   {
+   }
+
+   _rtnExtContextMgr::~_rtnExtContextMgr()
+   {
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTCONTEXTMGR_FINDCONTEXT, "_rtnExtContextMgr::findContext" )
+   rtnExtContextBase* _rtnExtContextMgr::findContext( UINT32 contextID )
+   {
+      PD_TRACE_ENTRY( SDB__RTNEXTCONTEXTMGR_FINDCONTEXT ) ;
+      rtnExtContextBase *context = NULL ;
+      ossScopedRWLock lock( &_mutex, SHARED ) ;
+      std::pair< rtnExtContextBase*, bool > ret = _contextMap.find( contextID ) ;
+      if ( ret.second )
+      {
+         context = ret.first ;
+      }
+      PD_TRACE_EXIT( SDB__RTNEXTCONTEXTMGR_FINDCONTEXT ) ;
+      return context ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTCONTEXTMGR_CREATECONTEXT, "_rtnExtContextMgr::createContext" )
+   INT32 _rtnExtContextMgr::createContext( RTN_EXTCTX_TYPE type,
+                                           pmdEDUCB *cb,
+                                           rtnExtContextBase** context )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNEXTCONTEXTMGR_CREATECONTEXT ) ;
+      rtnExtContextBase *newCtx = NULL ;
+      UINT32 ctxID = 0 ;
+
+      switch ( type )
+      {
+      case RTN_EXTCTX_TYPE_INSERT:
+      case RTN_EXTCTX_TYPE_DELETE:
+      case RTN_EXTCTX_TYPE_UPDATE:
+
+         newCtx = SDB_OSS_NEW rtnExtDataOprCtx ;
+         break ;
+      case RTN_EXTCTX_TYPE_DROPCS:
+      case RTN_EXTCTX_TYPE_DROPCL:
+      case RTN_EXTCTX_TYPE_DROPIDX:
+         newCtx = SDB_OSS_NEW rtnExtDropOprCtx ;
+         break ;
+      case RTN_EXTCTX_TYPE_TRUNCATE:
+         newCtx = SDB_OSS_NEW rtnExtTruncateCtx ;
+         break ;
+      default:
+         SDB_ASSERT( FALSE, "Invalid context type" ) ;
+         break ;
+      }
+
+      if ( !newCtx )
+      {
+         rc = SDB_OOM ;
+         PD_LOG( PDERROR, "Alocate memory for context failed" ) ;
+         goto error ;
+      }
+
+      ctxID = cb->getTID() ;
+      newCtx->setID( ctxID ) ;
+
+      {
+         ossScopedRWLock lock( &_mutex, EXCLUSIVE ) ;
+         _contextMap.insert( ctxID, newCtx ) ;
+         if ( context )
+         {
+            *context = newCtx ;
+         }
+      }
+
+   done:
+      PD_TRACE_EXITRC( SDB__RTNEXTCONTEXTMGR_CREATECONTEXT, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTCONTEXTMGR_DELCONTEXT, "_rtnExtContextMgr::delContext" )
+   INT32 _rtnExtContextMgr::delContext( UINT32 contextID, pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNEXTCONTEXTMGR_DELCONTEXT ) ;
+      rtnExtContextBase *context = NULL ;
+      std::pair< rtnExtContextBase*, bool > ret ;
+
+      {
+         ossScopedRWLock lock( &_mutex, SHARED ) ;
+         ret = _contextMap.find( contextID ) ;
+      }
+      if ( ret.second )
+      {
+         context = ret.first ;
+         ossScopedRWLock wLock( &_mutex, EXCLUSIVE ) ;
+         _contextMap.erase( contextID ) ;
+         SDB_OSS_DEL context ;
+      }
+      else
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+   done:
+      PD_TRACE_EXITRC( SDB__RTNEXTCONTEXTMGR_DELCONTEXT, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   _rtnExtDataHandler::_rtnExtDataHandler( rtnExtDataProcessorMgr *edpMgr )
+   {
+      _edpMgr = edpMgr ;
    }
 
    _rtnExtDataHandler::~_rtnExtDataHandler()
    {
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER__ADDOPRRECORD, "_rtnExtDataHandler::_addOprRecord" )
-   INT32 _rtnExtDataHandler::_addOprRecord( const CHAR *name,
-                                            _dmsExtOprType oprType,
-                                            pmdEDUCB *cb,
-                                            const bson::OID *dataOID,
-                                            const BSONObj *dataObj,
-                                            SDB_DPSCB *dpsCB )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ONOPENTEXTIDX, "_rtnExtDataHandler::onOpenTextIdx" )
+   INT32 _rtnExtDataHandler::onOpenTextIdx( UINT32 csLogialID,
+                                            UINT32 clLogicalID,
+                                            dmsExtentID idxLogicalID )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER__ADDOPRRECORD ) ;
-      INT32 insertNum = 0 ;
-      INT32 ignoreNum = 0 ;
-      BSONObj objToInsert ;
-      BSONObjBuilder objBuilder ;
-      BOOLEAN oidRequired = FALSE ;
-      BOOLEAN dataRequired = FALSE ;
-      SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB () ;
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONOPENTEXTIDX ) ;
+      rtnExtDataProcessor *processor = NULL ;
 
-      switch ( oprType )
-      {
-         case DMS_EXT_INSERT:  // insert
-         case DMS_EXT_UPDATE:  // update
-            oidRequired = TRUE ;
-            dataRequired = TRUE ;
-            break ;
-         case DMS_EXT_DELETE:  // delete
-            oidRequired = TRUE ;
-            dataRequired = FALSE ;
-            break ;
-         case DMS_EXT_TRUNCATE:  // truncate
-            oidRequired = FALSE ;
-            dataRequired = FALSE ;
-            break ;
-         default:
-            PD_LOG( PDERROR, "Invalid operation type[ %d ]", oprType ) ;
-            rc = SDB_SYS ;
-            goto error ;
-      }
-
-      if ( oidRequired && ( !dataOID || !dataOID->isSet() ) )
-      {
-         PD_LOG( PDERROR, "_id should be specified for current operation" ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-
-      if ( dataRequired && !dataObj )
-      {
-         PD_LOG( PDERROR, "Data object is NULL for operation" ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-
-      try
-      {
-         // 1. Append operation type.
-         objBuilder.append( FIELD_NAME_TYPE, oprType ) ;
-         // 2. Append the _id as _rid.
-         if ( oidRequired )
-         {
-            objBuilder.append( RTN_FIELD_NAME_RID, dataOID->str().c_str() ) ;
-         }
-
-         // 3. Append data if necessarry.
-         if ( dataRequired )
-         {
-            objBuilder.append( RTN_FIELD_NAME_SOURCE, *dataObj ) ;
-         }
-
-         objToInsert = objBuilder.done() ;
-
-         PD_LOG( PDDEBUG, "Operation record to insert: %s",
-                 objToInsert.toString( FALSE, TRUE ).c_str() ) ;
-      }
-      catch ( std::exception &e )
-      {
-         rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Exception occurred: %s", e.what() ) ;
-         goto error ;
-      }
-
-      // Pass dpsCB as NULL as we don't want to write dps log. The replication
-      // of external data totally relies on the original data.
-      rc = rtnInsert( name, objToInsert, 1, 0,
-                      cb, dmsCB, NULL, 1, &insertNum, &ignoreNum ) ;
-      PD_RC_CHECK( rc, PDERROR, "Insert record failed[ %d ]", rc ) ;
+      rc = _edpMgr->addProcessor( csLogialID, clLogicalID,
+                                  idxLogicalID, &processor ) ;
+      PD_RC_CHECK( rc, PDERROR, "Add external processor failed[ %d ]", rc ) ;
+      SDB_ASSERT( processor, "processor is NULL" ) ;
 
    done:
-      PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER__ADDOPRRECORD, rc ) ;
+      PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER_ONOPENTEXTIDX, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER__GETTEXTIDXCSLIST, "_rtnExtDataHandler::_getTextIdxCSList" )
-   void _rtnExtDataHandler::_getTextIdxCSList( const monCSSimple &csInfo,
-                                               vector<string> &csNameVec )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ONDELCS, "_rtnExtDataHandler::onDelCS" )
+   INT32 _rtnExtDataHandler::onDelCS( UINT32 csLogicalID, pmdEDUCB *cb,
+                                      BOOLEAN removeFiles, SDB_DPSCB *dpscb )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER__GETTEXTIDXCSLIST ) ;
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONDELCS ) ;
+      rtnExtDropOprCtx *context = NULL ;
+      vector <rtnExtDataProcessor *> processorVec ;
 
-      // Traverse all the indices of all collections in the cs, to find out all
-      // the text indexes.
-      for ( MON_CL_SIM_VEC::const_iterator clItr = csInfo._clList.begin();
-            clItr != csInfo._clList.end(); ++clItr )
+      context = (rtnExtDropOprCtx *)_contextMgr.findContext( cb->getTID() ) ;
+      if ( !context )
       {
-         for ( MON_IDX_LIST::const_iterator idxItr = clItr->_idxList.begin();
-               idxItr != clItr->_idxList.end(); ++idxItr )
-         {
-            INT32 rcTmp = SDB_OK ;
-            UINT16 idxType = IXM_EXTENT_TYPE_NONE ;
-            rcTmp = idxItr->getIndexType( idxType ) ;
-            if ( rcTmp )
-            {
-               if ( SDB_OK == rc )
-               {
-                  rc = rcTmp ;
-               }
-               // Only logging error, and process the remaining ones.
-               PD_LOG( PDERROR, "Get type of index failed[ %d ], cs[ %s ],"
-                       " cl[ %s ], index[ %s ]", rcTmp, csInfo._name,
-                       clItr->_name, idxItr->getIndexName() ) ;
-               continue ;
-            }
-            if ( IXM_EXTENT_HAS_TYPE( IXM_EXTENT_TYPE_TEXT, idxType ) )
-            {
-               string cappedCSName ;
-               string cappedCLName ;
-               buildNames( csInfo._name, clItr->_clname,
-                           idxItr->getIndexName(), cappedCSName,
-                           cappedCLName ) ;
-               csNameVec.push_back( cappedCSName ) ;
-            }
-         }
+         rc = _contextMgr.createContext( RTN_EXTCTX_TYPE_DROPCS,
+                                         cb, (rtnExtContextBase**)&context ) ;
+         PD_RC_CHECK( rc, PDERROR, "Create new context failed[ %d ]", rc ) ;
       }
+      context->setRemoveFiles( removeFiles ) ;
 
-      PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER__GETTEXTIDXCSLIST, rc ) ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ONDROPCS, "_rtnExtDataHandler::onDropCS" )
-   INT32 _rtnExtDataHandler::onDropCS( const monCSSimple &csInfo, pmdEDUCB *cb )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONDROPCS ) ;
-      SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
-      vector< string > cappedCSs ;
-      BOOLEAN hasTextIdx = FALSE ;
-      SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
-
-      // It may fail when dropping some of the related collection spaces. In
-      // that case, we logging the error, and remember the first error code, and
-      // continue with the remainning ones. At the end, return the first error
-      // code, if any.
-
-      _getTextIdxCSList( csInfo, cappedCSs ) ;
-      hasTextIdx = cappedCSs.size() > 0 ? TRUE : FALSE ;
-      for ( vector<string>::iterator itr = cappedCSs.begin();
-            itr != cappedCSs.end(); ++itr )
-      {
-         INT32 rcTmp = rtnDropCollectionSpaceCommand( itr->c_str(), cb,
-                                                      dmsCB, NULL, TRUE ) ;
-         if ( rcTmp )
-         {
-            if ( SDB_OK == rc )
-            {
-               rc = rcTmp ;
-            }
-            // Only logging error, and process the remaining ones.
-            PD_LOG( PDERROR, "Drop collection space[ %s ] failed[ %d ]",
-                    itr->c_str(), rcTmp ) ;
-            continue ;
-         }
-      }
-
-      if ( hasTextIdx )
-      {
-         rtnCB->incTextIdxVersion() ;
-      }
-
-      PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER_ONDROPCS, rc ) ;
-      return rc ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ONUNLOADCS, "_rtnExtDataHandler::onUnloadCS" )
-   INT32 _rtnExtDataHandler::onUnloadCS( const monCSSimple &csInfo,
-                                         pmdEDUCB *cb )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONUNLOADCS ) ;
-      SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
-      vector< string > cappedCSs ;
-
-      _getTextIdxCSList( csInfo, cappedCSs ) ;
-      for ( vector<string>::iterator itr = cappedCSs.begin();
-            itr != cappedCSs.end(); ++itr )
-      {
-         INT32 rcTmp = rtnUnloadCollectionSpace( itr->c_str(), cb, dmsCB ) ;
-         if ( rcTmp )
-         {
-            if ( SDB_OK == rc )
-            {
-               rc = rcTmp ;
-            }
-            // Only logging error, and process the remaining ones.
-            PD_LOG( PDERROR, "Unload collection space[ %s ] failed[ %d ]",
-                    itr->c_str(), rcTmp ) ;
-            continue ;
-         }
-      }
-
-      PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER_ONUNLOADCS, rc ) ;
-      return rc ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ONCREATETEXTIDX, "_rtnExtDataHandler::onCreateTextIdx" )
-   INT32 _rtnExtDataHandler::onCreateTextIdx( const CHAR *csName,
-                                              const CHAR *clName,
-                                              const CHAR *idxName,
-                                              pmdEDUCB* cb,
-                                              SDB_DPSCB *dpsCB )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONCREATETEXTIDX ) ;
-      string cappedCSName ;
-      string cappedCLFullName ;
-      BSONObj extOptions ;
-      BSONObjBuilder builder ;
-      SDB_DB_STATUS dbStatus = pmdGetKRCB()->getDBStatus() ;
-
-      // During the full sync, let the capped collections to sync by themselves.
-      if ( SDB_DB_FULLSYNC == dbStatus )
+      _edpMgr->getProcessors( csLogicalID, processorVec ) ;
+      if ( 0 == processorVec.size() )
       {
          goto done ;
       }
 
-      buildNames( csName, clName, idxName, cappedCSName, cappedCLFullName ) ;
-
-      rc = _prepareCSAndCL( cappedCSName.c_str(), cappedCLFullName.c_str(),
-                            cb, dpsCB ) ;
-      PD_RC_CHECK( rc, PDERROR, "Create capped collection[ %s.%s ] "
-                   "failed[ %d ]",
-                   cappedCSName.c_str(), cappedCLFullName.c_str(), rc ) ;
+      for ( vector<rtnExtDataProcessor *>::iterator itr = processorVec.begin();
+            itr != processorVec.end(); )
+      {
+         if ( removeFiles )
+         {
+            rc = (*itr)->doDropP1( cb, NULL ) ;
+         }
+         else
+         {
+            rc = (*itr)->doUnload( cb, NULL ) ;
+         }
+         PD_RC_CHECK( rc, PDERROR, "Processor drop operation failed[ %d ]",
+                      rc ) ;
+         context->appendProcessor( *itr ) ;
+         processorVec.erase( itr ) ;
+      }
 
    done:
-      PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER_ONCREATETEXTIDX, rc ) ;
+      PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER_ONDELCS, rc ) ;
       return rc ;
    error:
+      if ( removeFiles )
+      {
+         for ( vector<rtnExtDataProcessor *>::iterator itr = processorVec.begin();
+               itr != processorVec.end(); ++itr )
+         {
+            (*itr)->doDropP1Cancel( cb, NULL ) ;
+         }
+      }
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ONDROPALLINDEXES, "_rtnExtDataHandler::onDropAllIndexes" )
+   INT32 _rtnExtDataHandler::onDropAllIndexes( UINT32 csLogicalID,
+                                               UINT32 clLogicalID,
+                                               pmdEDUCB *cb, SDB_DPSCB *dpscb )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONDROPALLINDEXES ) ;
+      vector<rtnExtDataProcessor *> processorVec ;
+      vector<rtnExtDataProcessor *> processorP1 ;
+
+      _edpMgr->getProcessors( csLogicalID, clLogicalID, processorVec ) ;
+
+      for ( vector<rtnExtDataProcessor *>::iterator itr = processorVec.begin();
+            itr != processorVec.end(); ++itr )
+      {
+         rc = (*itr)->doDropP1( cb, NULL ) ;
+         PD_RC_CHECK( rc, PDERROR, "Drop phase 1 failed[ %d ]", rc ) ;
+         processorP1.push_back( *itr ) ;
+      }
+
+      for ( vector<rtnExtDataProcessor *>::iterator itr = processorP1.begin();
+            itr != processorP1.end(); )
+      {
+         rc = (*itr)->doDropP2( cb, NULL ) ;
+         PD_RC_CHECK( rc, PDERROR, "Drop phase 2 failed[ %d ]", rc ) ;
+         _edpMgr->delProcessor( &(*itr ) ) ;
+         processorP1.erase( itr ) ;
+      }
+
+   done:
+      PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER_ONDROPALLINDEXES, rc ) ;
+      return rc ;
+   error:
+      for ( vector<rtnExtDataProcessor *>::iterator itr = processorP1.begin();
+            itr != processorP1.end(); ++itr )
+      {
+         (*itr)->doDropP1Cancel( cb, NULL ) ;
+      }
       goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ONDROPTEXTIDX, "_rtnExtDataHandler::onDropTextIdx" )
-   INT32 _rtnExtDataHandler::onDropTextIdx( const CHAR *csName,
-                                            const CHAR *clName,
-                                            const CHAR *idxName,
-                                            pmdEDUCB* cb,
+   INT32 _rtnExtDataHandler::onDropTextIdx( UINT32 csLogicalID,
+                                            UINT32 clLogicalID,
+                                            dmsExtentID idxLogicalID,
+                                            pmdEDUCB *cb,
                                             SDB_DPSCB *dpscb )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONDROPTEXTIDX ) ;
-      string cappedCSName ;
-      string cappedCLName ;
-      SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
-      SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
       SDB_DB_STATUS dbStatus = pmdGetKRCB()->getDBStatus() ;
+      rtnExtDataProcessor *processor = NULL ;
 
       if ( SDB_DB_FULLSYNC == dbStatus )
       {
          goto done ;
       }
 
-      buildNames( csName, clName, idxName, cappedCSName, cappedCLName ) ;
+      rc = _edpMgr->getProcessor( csLogicalID, clLogicalID,
+                                  idxLogicalID, &processor ) ;
+      PD_RC_CHECK( rc, PDERROR, "Get external processor failed[ %d ]", rc ) ;
+      if ( !processor )
+      {
+         goto done ;
+      }
+      rc = processor->doDropP1( cb, NULL ) ;
+      PD_RC_CHECK( rc, PDERROR, "Processor drop operation failed[ %d ]", rc ) ;
+      rc = processor->doDropP2( cb, NULL ) ;
+      PD_RC_CHECK( rc, PDERROR, "Processor drop operation failed[ %d ]", rc ) ;
+      _edpMgr->delProcessor( &processor ) ;
 
-      rc = rtnDropCollectionSpaceCommand( cappedCSName.c_str(), cb, dmsCB,
-                                          dpscb, TRUE ) ;
-      if ( SDB_DMS_CS_NOTEXIST == rc )
-      {
-         PD_LOG( PDWARNING, "Capped collection space[ %s ] not found when "
-                 "dropping text index[ %s ] of collection[ %s.%s ]",
-                 cappedCSName.c_str(), idxName, csName, clName ) ;
-         rc = SDB_OK ;
-      }
-      else
-      {
-         PD_RC_CHECK( rc, PDERROR, "Drop capped collection space failed[ %d ]",
-                      rc ) ;
-      }
-      rtnCB->incTextIdxVersion() ;
    done:
       PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER_ONDROPTEXTIDX, rc ) ;
       return rc ;
@@ -351,54 +506,57 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ONREBUILDTEXTIDX, "_rtnExtDataHandler::onRebuildTextIdx" )
-   INT32 _rtnExtDataHandler::onRebuildTextIdx( const CHAR *csName,
-                                               const CHAR *clName,
-                                               const CHAR *idxName,
-                                               _pmdEDUCB *cb,
-                                               SDB_DPSCB *dpscb )
+   INT32 _rtnExtDataHandler::onRebuildTextIdx( UINT32 csLogicalID,
+                                               UINT32 clLogicalID,
+                                               dmsExtentID idxLogicalID,
+                                               pmdEDUCB *cb, SDB_DPSCB *dpscb )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONREBUILDTEXTIDX ) ;
-      string cappedCSName ;
-      string cappedCLName ;
-      pmdKRCB *krcb = pmdGetKRCB() ;
-      SDB_DB_STATUS dbStatus = krcb->getDBStatus() ;
-      SDB_DMSCB *dmsCB = krcb->getDMSCB() ;
+      SDB_DB_STATUS dbStatus = pmdGetKRCB()->getDBStatus() ;
+      rtnExtDataProcessor *processor = NULL ;
 
+      // Index will be rebuilt in the following cases:
+      // 1. One new index is created.
+      // 2. In case of full sync.
+      // 3. Rebuilding after crash.
+      // If rebuild index is called when db is in normal status, it means one
+      // new index is being created. In that case, processor and new capped
+      // collection should be created.
       // In case of full sync, leave all the capped collections to sync by
       // themselves, because we want them to be exactly the same with the ones
-      // on primary node.
-      if ( SDB_DB_FULLSYNC == dbStatus )
+      // on primary node. The processors will be deleted if the index is
+      // dropped. So we need to add them again here.
+      // In any other cases( rebuilding, for example ), the processors are added
+      // during opening of storage. So no need to add.
+      BOOLEAN create = ( SDB_DB_NORMAL == dbStatus
+                         || SDB_DB_FULLSYNC == dbStatus ) ? TRUE : FALSE ;
+
+      SDB_ASSERT( cb, "eduCB is NULL" ) ;
+      if ( DMS_INVALID_LOGICCSID == csLogicalID ||
+           DMS_INVALID_LOGICCLID == clLogicalID ||
+           DMS_INVALID_EXTENT == idxLogicalID )
       {
-         goto done ;
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "Invalid id to rebuild text index, cs logical "
+                 "id[ %u ], cl logical id[ %u ], index logical id[ %d ]",
+                 csLogicalID, clLogicalID, idxLogicalID ) ;
+         goto error ;
       }
 
-      buildNames( csName, clName, idxName, cappedCSName, cappedCLName ) ;
-
-      // In case of rebuilding, we don't know whether the capped collections are
-      // valid or not. So we directly drop and re-create the capped collection
-      // again.
-      if ( SDB_DB_REBUILDING == dbStatus )
+      rc = _edpMgr->getProcessor( csLogicalID, clLogicalID, idxLogicalID,
+                                  &processor, create ) ;
+      PD_RC_CHECK( rc, PDERROR, "Get external processor for index "
+                   "failed[ %d ]", rc ) ;
+      if ( !processor )
       {
-         rc = rtnDropCollectionSpaceCommand( cappedCSName.c_str(), cb,
-                                             dmsCB, dpscb, TRUE ) ;
-         if ( SDB_DMS_CS_NOTEXIST == rc )
-         {
-            PD_LOG( PDINFO, "Capped collection space[ %s ] not found when "
-                    "trying to drop it", cappedCSName.c_str() ) ;
-         }
-         else
-         {
-            PD_RC_CHECK( rc, PDERROR, "Drop collectionspace[ %s ] failed[ %d ]",
-                         cappedCSName.c_str(), rc);
-         }
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Get external data processor failed[ %d ]", rc ) ;
+         goto error ;
       }
 
-      rc = _prepareCSAndCL( cappedCSName.c_str(), cappedCLName.c_str(),
-                            cb, dpscb ) ;
-      PD_RC_CHECK( rc, PDERROR, "Create capped collection[ %s.%s ] "
-                   "failed[ %d ]",
-                   cappedCSName.c_str(), cappedCLName.c_str(), rc ) ;
+      rc = processor->doRebuild( cb, NULL ) ;
+      PD_RC_CHECK( rc, PDERROR, "Rebuild of index failed[ %d ]", rc ) ;
 
    done:
       PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER_ONREBUILDTEXTIDX, rc ) ;
@@ -408,221 +566,325 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ONINSERT, "_rtnExtDataHandler::onInsert" )
-   INT32 _rtnExtDataHandler::onInsert( const CHAR *csName, const CHAR *clName,
-                                       const CHAR *idxName, BSONObj &object,
-                                       bson::OID &oid, INT32 flags,
-                                       pmdEDUCB* cb, SDB_DPSCB *dpscb )
+   INT32 _rtnExtDataHandler::onInsert( UINT32 csLogicalID, UINT32 clLogicalID,
+                                       dmsExtentID idxLogicalID,
+                                       const ixmIndexCB &indexCB,
+                                       const BSONObj &object, _pmdEDUCB* cb,
+                                       SDB_DPSCB *dpscb )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONINSERT ) ;
       pmdKRCB *krcb = pmdGetKRCB() ;
       SDB_DB_STATUS dbStatus = krcb->getDBStatus() ;
-      string cappedCSName ;
-      string cappedCLFullName ;
+      rtnExtDataProcessor *processor = NULL ;
+      rtnExtDataOprCtx *context = NULL ;
+      BOOLEAN newContext = FALSE ;
+      BSONObj processData ;
 
       if ( SDB_DB_REBUILDING == dbStatus || SDB_DB_FULLSYNC == dbStatus )
       {
          goto done ;
       }
 
-      buildNames( csName, clName, idxName, cappedCSName, cappedCLFullName ) ;
+      context = (rtnExtDataOprCtx *)_contextMgr.findContext( cb->getTID() ) ;
+      if ( !context )
+      {
+         rc = _contextMgr.createContext( RTN_EXTCTX_TYPE_INSERT,
+                                         cb, (rtnExtContextBase**)&context ) ;
+         PD_RC_CHECK( rc, PDERROR, "Create new context failed[ %d ]", rc ) ;
+         newContext = TRUE ;
+      }
 
-      rc = _addOprRecord( cappedCLFullName.c_str(), DMS_EXT_INSERT, cb,
-                          &oid, &object, NULL ) ;
-      PD_RC_CHECK( rc, PDERROR, "Insert operation record failed[ %d ]", rc ) ;
+      // At this point, we are still under the protection of the mb lock. So no
+      // need to take lock here.
+      rc = _edpMgr->getProcessor( csLogicalID, clLogicalID, idxLogicalID,
+                                  &processor ) ;
+      PD_RC_CHECK( rc, PDERROR, "Get external processor failed[ %d ]", rc ) ;
+      SDB_ASSERT( processor, "Processor is NULL" ) ;
+      if ( !processor )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Get external processor failed[ %d ]", rc ) ;
+         goto error ;
+      }
+
+      rc = processor->prepareInsert( indexCB, object, processData ) ;
+      PD_RC_CHECK( rc, PDERROR, "External processor handle insert failed[ %d ]",
+                   rc ) ;
+
+      context->appendProcessor( processor, processData ) ;
 
    done:
       PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER_ONINSERT, rc ) ;
       return rc ;
    error:
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ONDELETE, "_rtnExtDataHandler::onDelete" )
-   INT32 _rtnExtDataHandler::onDelete( const CHAR *csName, const CHAR *clName,
-                                       const CHAR *idxName, bson::OID &oid,
-                                       pmdEDUCB* cb, SDB_DPSCB *dpscb )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONDELETE ) ;
-      pmdKRCB *krcb = pmdGetKRCB() ;
-      SDB_DB_STATUS dbStatus = krcb->getDBStatus() ;
-      string cappedCSName ;
-      string cappedCLFullName ;
-
-      if ( SDB_DB_REBUILDING == dbStatus || SDB_DB_FULLSYNC == dbStatus )
+      if ( context && newContext )
       {
-         goto done ;
-      }
-
-      buildNames( csName, clName, idxName, cappedCSName, cappedCLFullName ) ;
-
-      rc = _addOprRecord( cappedCLFullName.c_str(), DMS_EXT_DELETE, cb,
-                          &oid, NULL, NULL ) ;
-      PD_RC_CHECK( rc, PDERROR, "Insert Operation Record failed[ %d ]", rc ) ;
-
-   done:
-      PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER_ONDELETE, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ONUPDATE, "_rtnExtDataHandler::onUpdate" )
-   INT32 _rtnExtDataHandler::onUpdate( const CHAR *csName, const CHAR *clName,
-                                       const CHAR *idxName, BSONObj &object,
-                                       bson::OID &oid, INT32 flags,
-                                       pmdEDUCB* cb, SDB_DPSCB *dpscb )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONUPDATE ) ;
-      pmdKRCB *krcb = pmdGetKRCB() ;
-      SDB_DB_STATUS dbStatus = krcb->getDBStatus() ;
-      string cappedCSName ;
-      string cappedCLFullName ;
-
-      if ( SDB_DB_REBUILDING == dbStatus || SDB_DB_FULLSYNC == dbStatus )
-      {
-         goto done ;
-      }
-
-      buildNames( csName, clName, idxName, cappedCSName, cappedCLFullName ) ;
-
-      rc = _addOprRecord( cappedCLFullName.c_str(), DMS_EXT_UPDATE, cb,
-                          &oid, &object, NULL ) ;
-      PD_RC_CHECK( rc, PDERROR, "Insert Operation Record failed[ %d ]", rc ) ;
-
-   done:
-      PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER_ONUPDATE, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ONTRUNCATE, "_rtnExtDataHandler::onTruncate" )
-   INT32 _rtnExtDataHandler::onTruncate( const CHAR *csName, const CHAR *clName,
-                                         const CHAR *idxName, pmdEDUCB* cb,
-                                         SDB_DPSCB *dpscb )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONTRUNCATE ) ;
-      pmdKRCB *krcb = pmdGetKRCB() ;
-      SDB_DB_STATUS dbStatus = krcb->getDBStatus() ;
-      string cappedCSName ;
-      string cappedCLFullName ;
-
-      if ( SDB_DB_FULLSYNC == dbStatus )
-      {
-         goto done ;
-      }
-
-      buildNames( csName, clName, idxName, cappedCSName, cappedCLFullName ) ;
-
-      // In case of rebuilding, we are not sure if the capped collection is
-      // valid or not.
-      if ( SDB_DB_REBUILDING == dbStatus )
-      {
-         rc = rtnTruncCollectionCommand( cappedCLFullName.c_str(), cb,
-                                         krcb->getDMSCB(), NULL ) ;
-         PD_RC_CHECK( rc, PDERROR, "Truncate collection[ %s ] failed[ %d ]",
-                      cappedCLFullName.c_str(), rc ) ;
-      }
-
-      rc = _addOprRecord( cappedCLFullName.c_str(), DMS_EXT_TRUNCATE, cb,
-                          NULL, NULL, NULL ) ;
-      PD_RC_CHECK( rc, PDERROR, "Insert Operation Record failed[ %d ]", rc ) ;
-
-   done:
-      PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER_ONTRUNCATE, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER__BUILDNAMES, "_rtnExtDataHandler::buildNames" )
-   void _rtnExtDataHandler::buildNames( const CHAR *csName,
-                                        const CHAR *clName,
-                                        const CHAR *idxName,
-                                        string &cappedCSName,
-                                        string &cappedCLName )
-   {
-      PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER__BUILDNAMES )  ;
-      SDB_ASSERT( csName, "Collection space name can't be NULL")  ;
-      SDB_ASSERT( clName, "Collection name can't be NULL")  ;
-      SDB_ASSERT( idxName, "Index name can't be NULL" ) ;
-
-      cappedCSName = string( SYS_PREFIX ) + "_" + csName + "_" +
-                     clName + "_" + idxName ;
-      cappedCLName = cappedCSName + "." + cappedCSName ;
-
-      PD_TRACE_EXIT( SDB__RTNEXTDATAHANDLER__BUILDNAMES ) ;
-   }
-
-   INT32 _rtnExtDataHandler::_prepareCSAndCL( const CHAR *csName,
-                                              const CHAR *clName,
-                                              pmdEDUCB *cb,
-                                              SDB_DPSCB *dpsCB )
-   {
-      INT32 rc = SDB_OK ;
-      SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
-      SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
-      BOOLEAN csCreated = FALSE ;
-      BSONObjBuilder builder ;
-      BSONObj extOptions ;
-
-      rc = rtnCreateCollectionSpaceCommand( csName, cb, dmsCB,
-                                            dpsCB, DMS_PAGE_SIZE_DFT,
-                                            DMS_DO_NOT_CREATE_LOB,
-                                            DMS_STORAGE_CAPPED, TRUE ) ;
-      PD_RC_CHECK( rc, PDERROR, "Create capped collection space failed[ %d ]",
-                   rc ) ;
-
-      csCreated = TRUE ;
-
-      try
-      {
-         builder.append( FIELD_NAME_SIZE, RTN_CAPPED_CL_MAXSIZE ) ;
-         builder.append( FIELD_NAME_MAX, RTN_CAPPED_CL_MAXRECNUM ) ;
-         // Set the OverWrite option as false.
-         builder.appendBool( FIELD_NAME_OVERWRITE, FALSE ) ;
-         extOptions = builder.done() ;
-      }
-      catch ( std::exception &e )
-      {
-         rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Exception occurred: %s", e.what() ) ;
-         goto error ;
-      }
-
-      rc = rtnCreateCollectionCommand( clName,
-                                       DMS_MB_ATTR_NOIDINDEX | DMS_MB_ATTR_CAPPED,
-                                       cb, dmsCB, dpsCB,
-                                       UTIL_COMPRESSOR_INVALID, 0,
-                                       TRUE, &extOptions ) ;
-      PD_RC_CHECK( rc, PDERROR, "Create capped collection[ %s ] failed[ %d ]",
-                   clName, rc ) ;
-      rtnCB->incTextIdxVersion() ;
-
-   done:
-      return rc ;
-   error:
-      if ( csCreated )
-      {
-         INT32 rcTmp = rtnDropCollectionSpaceCommand( csName, cb, dmsCB,
-                                                      dpsCB, TRUE ) ;
+         INT32 rcTmp = _contextMgr.delContext( context->getID(), cb ) ;
          if ( rcTmp )
          {
-            PD_LOG( PDERROR, "Drop collectionspace[ %s ] failed[ %d ]",
-                    csName, rcTmp ) ;
+            PD_LOG( PDERROR, "Delete context failed[ %d ]", rcTmp ) ;
          }
       }
       goto done ;
    }
 
-   rtnExtDataHandler* getRtnExtDataHandler()
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ONDELETE, "_rtnExtDataHandler::onDelete" )
+   INT32 _rtnExtDataHandler::onDelete( UINT32 csLogicalID, UINT32 clLogicalID,
+                                       dmsExtentID idxLogicalID,
+                                       const ixmIndexCB &indexCB,
+                                       const BSONObj &object, _pmdEDUCB* cb,
+                                       SDB_DPSCB *dpscb )
    {
-      static rtnExtDataHandler s_rtnExtDataHandler ;
-      return &s_rtnExtDataHandler ;
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONDELETE ) ;
+      pmdKRCB *krcb = pmdGetKRCB() ;
+      SDB_DB_STATUS dbStatus = krcb->getDBStatus() ;
+      rtnExtDataProcessor *processor = NULL ;
+      rtnExtDataOprCtx *context = NULL ;
+      BOOLEAN newContext = FALSE ;
+      BSONObj processData ;
+
+      if ( SDB_DB_REBUILDING == dbStatus || SDB_DB_FULLSYNC == dbStatus )
+      {
+         goto done ;
+      }
+
+      context = (rtnExtDataOprCtx *)_contextMgr.findContext( cb->getTID() ) ;
+      if ( !context )
+      {
+         rc = _contextMgr.createContext( RTN_EXTCTX_TYPE_DELETE,
+                                         cb, (rtnExtContextBase**)&context ) ;
+         PD_RC_CHECK( rc, PDERROR, "Create new context failed[ %d ]", rc ) ;
+         newContext = TRUE ;
+      }
+
+      // At this point, we are still under the protection of the mb lock. So no
+      // need to take lock here.
+      rc = _edpMgr->getProcessor( csLogicalID, clLogicalID,
+                                  idxLogicalID, &processor ) ;
+      PD_RC_CHECK( rc, PDERROR, "Get external processor failed[ %d ]", rc ) ;
+      SDB_ASSERT( processor, "Processor is NULL" ) ;
+      if ( !processor )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Get external processor failed[ %d ]", rc ) ;
+         goto error ;
+      }
+
+      rc = processor->prepareDelete( indexCB, object, processData ) ;
+      PD_RC_CHECK( rc, PDERROR, "External processor handle delete failed[ %d ]",
+                   rc ) ;
+      context->appendProcessor( processor, processData ) ;
+
+   done:
+      PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER_ONDELETE, rc ) ;
+      return rc ;
+   error:
+      if ( context && newContext )
+      {
+         INT32 rcTmp = _contextMgr.delContext( context->getID(), cb ) ;
+         if ( rcTmp )
+         {
+            PD_LOG( PDERROR, "Delete context failed[ %d ]", rcTmp ) ;
+         }
+      }
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ONUPDATE, "_rtnExtDataHandler::onUpdate" )
+   INT32 _rtnExtDataHandler::onUpdate( UINT32 csLogicalID,
+                                       UINT32 clLogicalID,
+                                       dmsExtentID idxLogicalID,
+                                       const ixmIndexCB &indexCB,
+                                       const BSONObj &orignalObj,
+                                       const BSONObj &newObj,
+                                       pmdEDUCB* cb,
+                                       SDB_DPSCB *dpscb )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONUPDATE ) ;
+      pmdKRCB *krcb = pmdGetKRCB() ;
+      SDB_DB_STATUS dbStatus = krcb->getDBStatus() ;
+      rtnExtDataProcessor *processor = NULL ;
+      rtnExtDataOprCtx *context = NULL ;
+      BOOLEAN newContext = FALSE ;
+      BSONObj processData ;
+
+      if ( SDB_DB_REBUILDING == dbStatus || SDB_DB_FULLSYNC == dbStatus )
+      {
+         goto done ;
+      }
+
+      context = (rtnExtDataOprCtx *)_contextMgr.findContext( cb->getTID() ) ;
+      if ( !context )
+      {
+         rc = _contextMgr.createContext( RTN_EXTCTX_TYPE_UPDATE,
+                                         cb, (rtnExtContextBase**)&context ) ;
+         PD_RC_CHECK( rc, PDERROR, "Create new context failed[ %d ]", rc ) ;
+         newContext = TRUE ;
+      }
+
+      rc = _edpMgr->getProcessor( csLogicalID, clLogicalID,
+                                  idxLogicalID, &processor ) ;
+      PD_RC_CHECK( rc, PDERROR, "Get external processor failed[ %d ]", rc ) ;
+      SDB_ASSERT( processor, "Processor is NULL" ) ;
+      if ( !processor )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Get external processor failed[ %d ]", rc ) ;
+         goto error ;
+      }
+
+      rc = processor->prepareUpdate( indexCB, orignalObj, newObj, processData ) ;
+      PD_RC_CHECK( rc, PDERROR, "External processor handle update failed[ %d ]",
+                   rc ) ;
+
+      context->appendProcessor( processor, processData ) ;
+
+   done:
+      PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER_ONUPDATE, rc ) ;
+      return rc ;
+   error:
+      if ( context && newContext )
+      {
+         INT32 rcTmp = _contextMgr.delContext( context->getID(), cb ) ;
+         if ( rcTmp )
+         {
+            PD_LOG( PDERROR, "Delete context failed[ %d ]", rcTmp ) ;
+         }
+      }
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ONTRUNCATECL, "_rtnExtDataHandler::onTruncateCL" )
+   INT32 _rtnExtDataHandler::onTruncateCL( UINT32 csLogicalID,
+                                           UINT32 oldCLLogicalID,
+                                           UINT32 newCLLogicalID,
+                                           pmdEDUCB *cb,
+                                           SDB_DPSCB *dpsCB )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONTRUNCATECL ) ;
+      rtnExtTruncateCtx *context = NULL ;
+      vector<rtnExtDataProcessor *> processors ;
+      vector<rtnExtDataProcessor *> processorP1 ;
+
+      context = (rtnExtTruncateCtx *)_contextMgr.findContext( cb->getTID() ) ;
+      if ( !context )
+      {
+         rc = _contextMgr.createContext( RTN_EXTCTX_TYPE_TRUNCATE,
+                                         cb, (rtnExtContextBase**)&context ) ;
+         PD_RC_CHECK( rc, PDERROR, "Create new context failed[ %d ]", rc ) ;
+      }
+
+      _edpMgr->getProcessors( csLogicalID, oldCLLogicalID, processors ) ;
+      PD_RC_CHECK( rc, PDERROR, "Get processors failed[ %d ]", rc ) ;
+
+      for ( vector<rtnExtDataProcessor *>::iterator itr = processors.begin();
+            itr != processors.end(); ++itr )
+      {
+         rc = (*itr)->doDropP1( cb, NULL ) ;
+         PD_RC_CHECK( rc, PDERROR, "Drop phase 1 failed[ %d ]", rc ) ;
+         processorP1.push_back( *itr ) ;
+      }
+      context->setCLLIDs( oldCLLogicalID, newCLLogicalID ) ;
+      context->appendProcessors( processors ) ;
+
+   done:
+      PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER_ONTRUNCATECL, rc ) ;
+      return rc ;
+   error:
+      INT32 rcTmp = SDB_OK ;
+      for ( vector<rtnExtDataProcessor *>::iterator itr = processorP1.begin();
+            itr != processorP1.end(); ++itr )
+      {
+         rcTmp = (*itr)->doDropP1Cancel( cb, dpsCB ) ;
+         if ( rcTmp )
+         {
+            PD_LOG( PDERROR, "Drop phase 1 cancel failed[ %d ]", rc ) ;
+         }
+      }
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_BUILDNAMES, "_rtnExtDataHandler::buildNames" )
+   void _rtnExtDataHandler::buildNames( const monCSSimple *csInfo,
+                                        const monCLSimple *clInfo,
+                                        const monIndex *idxInfo,
+                                        CHAR *cappedCLName,
+                                        UINT32 buffLen )
+   {
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_BUILDNAMES ) ;
+      SDB_ASSERT( csInfo && clInfo && idxInfo && cappedCLName,
+                  "Invalid arguments to build names" ) ;
+
+      // The format of the capped collection space is
+      // SYS_<csLID>_<clLID>_<idxLID>, and the collection name is the same with
+      // collection space.
+      ossSnprintf( cappedCLName, buffLen,
+                   SYS_PREFIX"_%u_%u_%d."SYS_PREFIX"_%u_%u_%d",
+                   csInfo->_logicalID, clInfo->_logicalID, idxInfo->_indexLID,
+                   csInfo->_logicalID, clInfo->_logicalID, idxInfo->_indexLID ) ;
+      PD_TRACE_EXIT( SDB__RTNEXTDATAHANDLER_BUILDNAMES ) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_DONE, "_rtnExtDataHandler::done" )
+   INT32 _rtnExtDataHandler::done( pmdEDUCB *cb, SDB_DPSCB *dpscb )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_DONE ) ;
+      rtnExtContextBase *context = _contextMgr.findContext( cb->getTID() ) ;
+      if ( !context )
+      {
+         goto done ;
+      }
+
+      rc = context->done( _edpMgr, cb, NULL ) ;
+      PD_RC_CHECK( rc, PDERROR, "Final step of current operation failed[ %d ]",
+                   rc) ;
+
+   done:
+      if ( context )
+      {
+         _contextMgr.delContext( context->getID(), cb ) ;
+      }
+      PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER_DONE, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ABORTOPERATION, "_rtnExtDataHandler::abortOperation" )
+   INT32 _rtnExtDataHandler::abortOperation( pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ABORTOPERATION ) ;
+      rtnExtContextBase *context = _contextMgr.findContext( cb->getTID() ) ;
+      if ( !context )
+      {
+         goto done ;
+      }
+
+      rc = context->abort( _edpMgr, cb, NULL ) ;
+      PD_RC_CHECK( rc, PDERROR, "Final step of current operation failed[ %d ]",
+                   rc) ;
+
+   done:
+      if ( context )
+      {
+         _contextMgr.delContext( context->getID(), cb ) ;
+      }
+      PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER_ABORTOPERATION, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   rtnExtDataHandler* rtnGetExtDataHandler()
+   {
+      static rtnExtDataHandler s_edh( rtnGetExtDataProcessorMgr() ) ;
+      return &s_edh ;
    }
 }
 

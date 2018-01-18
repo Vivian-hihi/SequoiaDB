@@ -38,36 +38,13 @@
 #ifndef RTN_CONTEXTTS_HPP__
 #define RTN_CONTEXTTS_HPP__
 
-#include "rtnContext.hpp"
-#include "rtnQueryOptions.hpp"
+#include "rtnContextMainCL.hpp"
 #include "pmdRemoteSession.hpp"
 
 namespace engine
 {
-   // Remote session handler. Used by _rtnContextTS.
-   class _rtnRSHandler : public IRemoteSessionHandler
-   {
-      public:
-         _rtnRSHandler() ;
-         virtual ~_rtnRSHandler() ;
-      public:
-         virtual INT32  onSendFailed( _pmdRemoteSession *pSession,
-                                      _pmdSubSession **ppSub,
-                                      INT32 flag ) ;
-
-         virtual void   onReply( _pmdRemoteSession *pSession,
-                                 _pmdSubSession **ppSub,
-                                 const MsgHeader *pReply,
-                                 BOOLEAN isPending ) ;
-
-         virtual INT32  onSendConnect( _pmdSubSession *pSub,
-                                       const MsgHeader *pReq,
-                                       BOOLEAN isFirst ) ;
-   } ;
-   typedef _rtnRSHandler rtnRSHandler ;
-
    // Context for text search data.
-   class _rtnContextTS : public _rtnContextBase
+   class _rtnContextTS : public rtnContextMain
    {
       DECLARE_RTN_CTX_AUTO_REGISTER()
 
@@ -83,23 +60,34 @@ namespace engine
          INT32 open( const rtnQueryOptions &options, pmdEDUCB *eduCB ) ;
 
       protected:
-         virtual INT32 _prepareData( _pmdEDUCB *cb ) ;
+         virtual BOOLEAN _requireExplicitSorting () const ;
+         virtual INT32   _prepareAllSubCtxDataByOrder( _pmdEDUCB *cb ) ;
+         virtual INT32   _getNonEmptyNormalSubCtx( _pmdEDUCB *cb, rtnSubContext*& subCtx ) ;
+         virtual INT32   _saveEmptyOrderedSubCtx( rtnSubContext* subCtx ) ;
+         virtual INT32   _saveEmptyNormalSubCtx( rtnSubContext* subCtx ) ;
+         virtual INT32   _saveNonEmptyNormalSubCtx( rtnSubContext* subCtx ) ;
+         virtual BOOLEAN requireOrder () const
+         {
+            return !_options.isOrderByEmpty() ;
+         }
 
       private:
          INT32 _prepareRemoteSession( _pmdEDUCB *eduCB ) ;
          INT32 _getMoreFromRemote( pmdEDUCB *eduCB ) ;
-         INT32 _sendToRemote( const MsgHeader *msg ) ;
-         INT32 _waitAndProcessRemoteReply() ;
+         INT32 _prepareNextSubContext( pmdEDUCB *eduCB,
+                                       BOOLEAN getMore = TRUE ) ;
+         INT32 _prepareSubCtxData( pmdEDUCB *cb, INT32 maxNumToReturn ) ;
+         INT32 _queryRemote( const rtnQueryOptions &options, pmdEDUCB *cb ) ;
 
       private:
          pmdEDUCB*            _eduCB ;
          rtnQueryOptions      _options ;
          pmdRemoteSessionSite *_remoteSessionSite ;
          pmdRemoteSession     *_remoteSession ;
-         rtnRSHandler         _rsHandler ;
          SINT64               _subCtxID ;    // Context to fetch data from local
                                              // after get new query from ES.
-         UINT64               _extNodeId ;
+         UINT64               _remoteSessionID ;
+         rtnSubCLContext      *_subContext ;
    } ;
    typedef _rtnContextTS rtnContextTS ;
 }

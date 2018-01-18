@@ -165,24 +165,6 @@ namespace engine
                                  _pmdEDUCB *cb, BOOLEAN dupAllowed,
                                  BOOLEAN dropDups ) ;
 
-         INT32    _textIndexInsert( _dmsMBContext *context,
-                                    _ixmIndexCB *indexCB,
-                                    BSONObj &inputObj,
-                                    _pmdEDUCB *cb ) ;
-
-         INT32    _textIndexDelete( _dmsMBContext *context,
-                                    _ixmIndexCB *indexCB,
-                                    BSONObj &inputObj,
-                                    _pmdEDUCB *cb ) ;
-         INT32    _textIndexUpdate( _dmsMBContext *context,
-                                    _ixmIndexCB *indexCB,
-                                    BSONObj &newObj,
-                                    _pmdEDUCB *cb ) ;
-
-         INT32    _textIndexTruncate( _dmsMBContext *context,
-                                      _ixmIndexCB *indexCB,
-                                      _pmdEDUCB *cb ) ;
-
          INT32    _indexUpdate ( _dmsMBContext *context, _ixmIndexCB *indexCB,
                                  BSONObj &originalObj, BSONObj &newObj,
                                  const dmsRecordID &rid, _pmdEDUCB *cb,

@@ -1896,12 +1896,6 @@ namespace engine
       goto done ;
    }
 
-   void _dmsStorageDataCommon::setExtDataHandler( IDmsExtDataHandler *pExtDataHandler )
-   {
-      SDB_ASSERT( pExtDataHandler, "External data handle is NULL" ) ;
-      _pExtDataHandler = pExtDataHandler ;
-   }
-
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACOMMON_ADDCOLLECTION, "_dmsStorageDataCommon::addCollection" )
    INT32 _dmsStorageDataCommon::addCollection( const CHAR * pName,
                                                UINT16 * collectionID,
@@ -2364,6 +2358,7 @@ namespace engine
       UINT32 logRecSize       = 0;
       dpsTransCB *pTransCB    = pmdGetKRCB()->getTransCB() ;
       BOOLEAN isTransLocked   = FALSE ;
+      IDmsExtDataHandler* handler = NULL ;
 
       SDB_ASSERT( pName, "Collection name cat't be NULL" ) ;
 
@@ -2441,6 +2436,26 @@ namespace engine
       oldRecords = context->mbStat()->_totalRecords ;
       oldLobs = context->mbStat()->_totalLobs ;
 
+      if ( context->mbStat()->_textIdxNum > 0 )
+      {
+         handler = getExtDataHandler() ;
+         if ( handler )
+         {
+            UINT32 oldLID = context->clLID() ;
+            UINT32 newLID = needChangeCLID ? newCLID : oldLID ;
+            rc = handler->onTruncateCL( logicalID(), oldLID, newLID,
+                                        cb, dpscb ) ;
+            PD_RC_CHECK( rc, PDERROR, "External operation on truncate "
+                         "collection failed, rc: %d", rc ) ;
+         }
+         else
+         {
+            rc = SDB_SYS ;
+            PD_LOG( PDERROR, "External data handler is NULL" ) ;
+            goto error ;
+         }
+      }
+
       rc = _pIdxSU->truncateIndexes( context, cb ) ;
       PD_RC_CHECK( rc, PDERROR, "Truncate collection[%s] indexes failed, "
                    "rc: %d", pName, rc ) ;
@@ -2498,6 +2513,13 @@ namespace engine
                                 oldCLID ) ;
          _pEventHolder->onTruncateCL( DMS_EVENT_MASK_ALL, clItem, newCLID,
                                       cb, dpscb ) ;
+      }
+
+      if ( handler )
+      {
+         rc = handler->done( cb, dpscb ) ;
+         PD_RC_CHECK( rc, PDERROR, "External done operation failed, rc: %d",
+                      rc ) ;
       }
 
    done:
@@ -2728,6 +2750,7 @@ namespace engine
       BOOLEAN newMem                = FALSE ;
       CHAR *pMergedData             = NULL ;
       _dmsCompressorEntry *compressorEntry = &_compressorEntry[context->mbID()] ;
+      UINT32 textIdxNum             = 0 ;
 
       try
       {
@@ -2894,6 +2917,7 @@ namespace engine
          DMS_MON_OP_COUNT_INC( pMonAppCB, MON_INSERT, 1 ) ;
          _incWriteRecord() ;
 
+         textIdxNum = context->mbStat()->_textIdxNum ;
          // insert object's indexes
          rc = _pIdxSU->indexesInsert( context, pExtent->_logicID,
                                       insertObj, foundRID, cb ) ;
@@ -2926,6 +2950,15 @@ namespace engine
          context->mbStat()->updateLastLSNWithComp( cb->getEndLsn(),
                                                    DMS_FILE_DATA,
                                                    cb->isDoRollback() ) ;
+      }
+
+      if ( textIdxNum > 0 )
+      {
+         IDmsExtDataHandler* handler = getExtDataHandler() ;
+         if ( handler )
+         {
+            handler->done( cb ) ;
+         }
       }
 
    done:
@@ -2980,6 +3013,7 @@ namespace engine
       dmsExtent *pExtent            = NULL ;
       dmsRecord *pRecord            = NULL ;
       dmsRecordData recordData ;
+      UINT32 textIdxNum             = 0 ;
 
       if ( !context->isMBLock( EXCLUSIVE ) )
       {
@@ -3094,6 +3128,8 @@ namespace engine
                      goto error ;
                   }
                }
+
+               textIdxNum = context->mbStat()->_textIdxNum ;
                // then delete indexes
                rc = _pIdxSU->indexesDelete( context, pExtent->_logicID,
                                             delObject, recordID, cb ) ;
@@ -3178,6 +3214,15 @@ namespace engine
                                                    cb->isDoRollback() ) ;
       }
 
+      if ( textIdxNum > 0 )
+      {
+         IDmsExtDataHandler* handler = getExtDataHandler() ;
+         if ( handler )
+         {
+            handler->done( cb ) ;
+         }
+      }
+
    done :
       if ( 0 != logRecSize )
       {
@@ -3218,6 +3263,7 @@ namespace engine
       const dmsExtent *pExtent  = NULL ;
       const dmsRecord *pRecord = NULL ;
       dmsRecordData recordData ;
+      UINT32 textIdxNum = 0 ;
 
       rc = _operationPermChk( DMS_ACCESS_TYPE_UPDATE ) ;
       PD_RC_CHECK( rc, PDERROR,
@@ -3357,6 +3403,8 @@ namespace engine
          // increase update counter
          DMS_MON_OP_COUNT_INC( pMonAppCB, MON_UPDATE, 1 ) ;
          _incWriteRecord() ;
+
+         textIdxNum = context->mbStat()->_textIdxNum ;
       }
       catch( std::exception &e )
       {
@@ -3393,6 +3441,15 @@ namespace engine
          context->mbStat()->updateLastLSNWithComp( cb->getEndLsn(),
                                                    DMS_FILE_DATA,
                                                    cb->isDoRollback() ) ;
+      }
+
+      if ( textIdxNum > 0 )
+      {
+         IDmsExtDataHandler* handler = getExtDataHandler() ;
+         if ( handler )
+         {
+            handler->done( cb ) ;
+         }
       }
 
    done :

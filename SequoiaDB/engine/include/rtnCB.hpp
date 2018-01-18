@@ -53,36 +53,12 @@
 #include "optAPM.hpp"
 #include <map>
 #include <set>
-#include "pmdRemoteSession.hpp"
-
-#include "netMsgHandler.hpp"
+#include "rtnRemoteMessenger.hpp"
 
 #define RTN_INIT_TEXT_INDEX_VERSION    -1
 
 namespace engine
 {
-   class _rtnMsgHandler : public _netMsgHandler
-   {
-      public:
-         _rtnMsgHandler( _pmdRemoteSessionMgr *pRSManager ) ;
-         virtual ~_rtnMsgHandler() ;
-
-         void  attach( _pmdEDUCB *cb ) ;
-         void  detach() ;
-
-         virtual INT32 handleMsg( const NET_HANDLE &handle,
-                                  const _MsgHeader *header,
-                                  const CHAR *msg ) ;
-         virtual void  handleClose( const NET_HANDLE &handle, _MsgRouteID id ) ;
-         virtual void  handleConnect( const NET_HANDLE &handle,
-                                      _MsgRouteID id,
-                                      BOOLEAN isPositive ) ;
-
-      protected:
-         _pmdRemoteSessionMgr    *_pRSManager ;
-   } ;
-   typedef _rtnMsgHandler rtnMsgHandler ;
-
    /*
       _SDB_RTNCB define
    */
@@ -102,13 +78,10 @@ namespace engine
       // adapter when do text searching. Search engine adapter use the shard
       // plane to get data from data node, and data node use this new plane to
       // send text search request to adapter.
+      rtnRemoteMessenger   *_remoteMessenger ;
       ossSpinSLatch        _mutex ;        // Lock for protection of accessing
                                           // index information.
-      pmdRemoteSessionMgr  _rsMgr ;
-      rtnMsgHandler        *_msgHandler ;
-      netRouteAgent        *_routeAgent ;
       ossAtomicSigned64    _textIdxVersion ;
-      UINT64               _extNodeId ;
 
    public :
       _SDB_RTNCB() ;
@@ -204,9 +177,9 @@ namespace engine
          return this->_accessPlanManager.mthEnabledMixCmp() ;
       }
 
-      OSS_INLINE netRouteAgent* getRTAgent()
+      OSS_INLINE rtnRemoteMessenger* getRemoteMessenger()
       {
-         return _routeAgent ;
+         return _remoteMessenger ;
       }
 
       OSS_INLINE INT64 getTextIdxVersion()
@@ -221,19 +194,6 @@ namespace engine
                                                INT64 newVersion )
       {
          return _textIdxVersion.compareAndSwap( oldVersion, newVersion ) ;
-      }
-      OSS_INLINE void updateExtNodeId( UINT64 newID )
-      {
-         ossScopedLock lock( &_mutex, EXCLUSIVE ) ;
-         if ( 0 != newID && newID != _extNodeId )
-         {
-            _extNodeId = newID ;
-         }
-      }
-      OSS_INLINE UINT64 getExtNodeId()
-      {
-         ossScopedLock lock( &_mutex, SHARED ) ;
-         return _extNodeId ;
       }
 
       OSS_INLINE optAccessPlanManager *getAPM ()

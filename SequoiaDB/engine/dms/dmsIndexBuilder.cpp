@@ -133,7 +133,7 @@ namespace engine
       _unique = _indexCB->unique() ;
       _dropDups = _indexCB->dropDups() ;
 
-      rc = _onInit()  ;
+      rc = _onInit() ;
       if ( rc && SDB_DMS_EOC != rc )
       {
          PD_LOG( PDERROR, "Post init operation failed, rc: %d", rc ) ;

@@ -41,6 +41,7 @@
 #include "utilESClt.hpp"
 #include "pmdAsyncSession.hpp"
 #include "dmsExtDataHandler.hpp"
+#include "rtnExtOprDef.hpp"
 #include "seAdptMgr.hpp"
 #include "utilESBulkBuilder.hpp"
 
@@ -97,7 +98,7 @@ namespace engine
       INT32 _queryLastCappedRecLID() ;
       INT32 _queryCappedCollection( BSONObj &condition ) ;
       INT32 _cleanData( INT64 recLID ) ;
-      INT32 _parseSrcData( const BSONObj &origObj, _dmsExtOprType &oprType,
+      INT32 _parseSrcData( const BSONObj &origObj, _rtnExtOprType &oprType,
                            const CHAR **origOID, INT64 &logicalID,
                            BSONObj &sourceObj ) ;
       INT32 _processNormalCLRecords( NET_HANDLE handle, MsgHeader *msg ) ;
@@ -115,6 +116,7 @@ namespace engine
       INT32 _startOver() ;
       void  _setQueryBusyFlag( BOOLEAN busy ) { _queryBusy = busy; }
       BOOLEAN _isQueryBusy() { return _queryBusy ; }
+      INT32 _onOrigIdxDropped() ;
       INT32 _bulkPrepare() ;
       INT32 _bulkProcess( const utilESBulkActionBase &actionItem ) ;
       INT32 _bulkFinish() ;

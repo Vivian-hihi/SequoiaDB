@@ -45,100 +45,11 @@
 using namespace std;
 namespace engine
 {
-   _rtnMsgHandler::_rtnMsgHandler( _pmdRemoteSessionMgr *pRSManager )
-   {
-      _pRSManager = pRSManager ;
-   }
-
-   _rtnMsgHandler::~_rtnMsgHandler()
-   {
-   }
-
-   void _rtnMsgHandler::attach( _pmdEDUCB *cb )
-   {
-   }
-
-   void _rtnMsgHandler::detach()
-   {
-   }
-
-   INT32 _rtnMsgHandler::handleMsg( const NET_HANDLE &handle,
-                                    const _MsgHeader *header,
-                                    const CHAR *msg )
-   {
-      INT32 rc = SDB_OK ;
-
-      // main cb msg
-      if ( header->TID == 0 )
-      {
-         /*
-         CHAR *pNewMsg = NULL ;
-         SDB_ASSERT( _pMainCB, "Main cb can't be NULL" ) ;
-         if ( !_pMainCB )
-         {
-            PD_LOG( PDERROR, "Main cb handler is null when recv "
-                    "msg[opCode:%d]", header->opCode ) ;
-            rc = SDB_SYS ;
-            goto error ;
-         }
-         pNewMsg = (CHAR*)SDB_OSS_MALLOC( header->messageLength + 1 ) ;
-         if ( !pNewMsg )
-         {
-            rc = SDB_OOM ;
-            PD_LOG( PDERROR, "Failed to alloc memory for msg[opCode: %d, "
-                    "len: %d], rc: %d", header->opCode, header->messageLength,
-                    rc ) ;
-            goto error ;
-         }
-
-         // copy msg
-         ossMemcpy( pNewMsg, msg, header->messageLength ) ;
-         pNewMsg[ header->messageLength ] = 0 ;
-         // push event
-         _pMainCB->postEvent( pmdEDUEvent( PMD_EDU_EVENT_MSG,
-                                           PMD_EDU_MEM_ALLOC,
-                                           pNewMsg, (UINT64)handle ) ) ;
-         */
-      }
-      // session msg
-      else
-      {
-         SDB_ASSERT( _pRSManager, "Remote Session Manager can't be NULL" ) ;
-         rc = _pRSManager->pushMessage( handle, header ) ;
-         if ( rc )
-         {
-            PD_LOG( PDERROR, "Push message[%s] failed, rc: %d",
-                    msg2String( header, MSG_MASK_ALL, 0 ).c_str(), rc ) ;
-            goto error ;
-         }
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   void _rtnMsgHandler::handleClose( const NET_HANDLE &handle, _MsgRouteID id )
-   {
-      SDB_ASSERT( _pRSManager, "Remote session manager can't be NULL" ) ;
-
-      _pRSManager->handleClose( handle, id ) ;
-   }
-
-   void _rtnMsgHandler::handleConnect( const NET_HANDLE &handle,
-                                       _MsgRouteID id,
-                                       BOOLEAN isPositive )
-   {
-   }
-
    _SDB_RTNCB::_SDB_RTNCB()
       : _contextIdGenerator( 0 ),
+        _remoteMessenger( NULL ),
         _textIdxVersion((INT64)RTN_INIT_TEXT_INDEX_VERSION)
    {
-      _msgHandler = NULL ;
-      _routeAgent = NULL ;
-      _extNodeId = 0 ;
    }
 
    _SDB_RTNCB::~_SDB_RTNCB()
@@ -151,14 +62,9 @@ namespace engine
 
       _contextMap.clear() ;
 
-      if ( _msgHandler )
+      if ( _remoteMessenger )
       {
-         SDB_OSS_DEL _msgHandler ;
-      }
-
-      if ( _routeAgent )
-      {
-         SDB_OSS_DEL _routeAgent ;
+         SDB_OSS_DEL _remoteMessenger ;
       }
    }
 
@@ -176,34 +82,20 @@ namespace engine
 
       sdbGetDMSCB()->setIxmKeySorterCreator( creator ) ;
 
-      // Remote session manager should be enabled on data node to support text
-      // search.
+      // Remote messenger should be enabled on data node to support text search.
       if ( SDB_ROLE_DATA == pmdGetDBRole() )
       {
-         _msgHandler = SDB_OSS_NEW rtnMsgHandler( &_rsMgr ) ;
-         if ( !_msgHandler )
+         _remoteMessenger = SDB_OSS_NEW rtnRemoteMessenger() ;
+         if ( !_remoteMessenger )
          {
-            PD_LOG( PDERROR, "Allocate memory for message handler failed, "
-                    "size[ %d ]", sizeof( rtnMsgHandler ) ) ;
             rc = SDB_OOM ;
+            PD_LOG( PDERROR, "Allocate memory for remote messenger failed, "
+                    "size[ %d ]", sizeof( rtnRemoteMessenger ) ) ;
             goto error ;
          }
-
-         // The route agent will be updated when the search engine adapter
-         // registers.
-         _routeAgent = SDB_OSS_NEW netRouteAgent( _msgHandler ) ;
-         if ( !_routeAgent )
-         {
-            PD_LOG( PDERROR, "Allocate memory for route agent failed, "
-                    "size[ %d ]", sizeof( netRouteAgent ) ) ;
-            rc = SDB_OOM ;
-            goto error ;
-         }
-
-         rc = _rsMgr.init( _routeAgent, NULL ) ;
-         PD_RC_CHECK( rc, PDERROR, "Init remote session manager failed[ %d ]",
-                      rc ) ;
-         sdbGetPMDController()->setRSManager( &_rsMgr ) ;
+         rc = _remoteMessenger->init() ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to initialize remote messenger, "
+                      "rc: %d", rc ) ;
       }
 
       // The error of initialization of APM could be ignore
@@ -222,17 +114,10 @@ namespace engine
    done:
       return rc ;
    error:
-      // In case of error, we can release resources here, or leave it to the
-      // fini or destructor.
-      if ( _msgHandler )
+      if ( _remoteMessenger )
       {
-         SDB_OSS_DEL _msgHandler ;
-         _msgHandler = NULL ;
-      }
-      if ( _routeAgent )
-      {
-         SDB_OSS_DEL _routeAgent ;
-         _routeAgent = NULL ;
+         SDB_OSS_DEL _remoteMessenger ;
+         _remoteMessenger = NULL ;
       }
       goto done ;
    }
@@ -243,17 +128,10 @@ namespace engine
 
       if ( SDB_ROLE_DATA == pmdGetDBRole() )
       {
-         pmdEDUMgr *eduMgr = pmdGetKRCB()->getEDUMgr() ;
-         EDUID eduID = PMD_INVALID_EDUID ;
-
-         rc = eduMgr->startEDU( EDU_TYPE_RTNNETWORK, (void *)_routeAgent,
-                                &eduID ) ;
-         PD_RC_CHECK( rc, PDERROR, "Start external search network failed[ %d ]",
-                      rc ) ;
-         eduMgr->regSystemEDU( EDU_TYPE_RTNNETWORK, eduID ) ;
-         rc = eduMgr->waitUntil( eduID, PMD_EDU_RUNNING ) ;
-         PD_RC_CHECK( rc, PDERROR, "Wait external search net active failed[ %d ]",
-                      rc ) ;
+         SDB_ASSERT( _remoteMessenger, "Remote messenger should not be NULL" ) ;
+         rc = _remoteMessenger->active() ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to active remote messenger, "
+                      "rc: %d", rc) ;
       }
 
    done:

@@ -45,12 +45,19 @@
 #include "rtnContextData.hpp"
 #include "rtnContextSort.hpp"
 #include "rtnContextExplain.hpp"
+#include "rtnContextTS.hpp"
 #include "rtnQueryModifier.hpp"
 
 using namespace bson ;
 
 namespace engine
 {
+   enum _rtnQueryType
+   {
+      RTN_QUERY_NORMAL = 1,
+      RTN_QUERY_TEXT
+   } ;
+   typedef _rtnQueryType rtnQueryType ;
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNGETMORE, "rtnGetMore" )
    INT32 rtnGetMore ( SINT64 contextID,         // input, context id
@@ -271,6 +278,129 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__FINDFIELDINOBJ, "_findFieldInObj" )
+   static INT32 _findFieldInObj( const BSONObj &object, const CHAR *fieldName,
+                                 BOOLEAN &found )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__FINDFIELDINOBJ ) ;
+
+      try
+      {
+         if ( object.hasField( fieldName ) )
+         {
+            found = TRUE ;
+            goto done ;
+         }
+         else
+         {
+            BSONObjIterator itr( object ) ;
+            while ( itr.more() )
+            {
+               BSONElement ele = itr.next() ;
+               if ( Object == ele.type() )
+               {
+                  rc = _findFieldInObj( ele.Obj(), fieldName, found ) ;
+                  if ( rc )
+                  {
+                     goto error ;
+                  }
+                  if ( found )
+                  {
+                     goto done ;
+                  }
+               }
+            }
+         }
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Unexpected exception happened: %s", e.what() ) ;
+         goto error ;
+      }
+
+   done:
+      PD_TRACE_EXITRC( SDB__FINDFIELDINOBJ, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__GETQUERYTYPE, "_getQueryType" )
+   static INT32 _getQueryType( const BSONObj &query, rtnQueryType &qType )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__GETQUERYTYPE ) ;
+      BOOLEAN textFound = FALSE ;
+
+      rc = _findFieldInObj( query, FIELD_NAME_TEXT, textFound ) ;
+      PD_RC_CHECK( rc, PDERROR, "Find field[ %s ] in query[ %s ]failed[ %d ]",
+                   FIELD_NAME_TEXT, query.toString().c_str(), rc ) ;
+      qType = textFound ? RTN_QUERY_TEXT : RTN_QUERY_NORMAL ;
+
+   done:
+      PD_TRACE_EXITRC( SDB__GETQUERYTYPE, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNQUERYWITHTS, "rtnQueryWithTS" )
+   static INT32 rtnQueryWithTS( const rtnQueryOptions &options, pmdEDUCB *cb,
+                                SDB_RTNCB *rtnCB, SINT64 &contextID,
+                                rtnContextBase **ppContext, BOOLEAN enablePrefetch )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNQUERYWITHTS ) ;
+      INT64 tmpContextID = -1 ;
+      rtnContextTS *contextTS = NULL ;
+
+      if ( options.testFlag( FLG_QUERY_EXPLAIN ) )
+      {
+         rc = SDB_OPTION_NOT_SUPPORT ;
+         PD_LOG( PDERROR, "Explain query with text search condition is not "
+                 "support yet" ) ;
+         goto error ;
+      }
+      else
+      {
+         rc = rtnCB->contextNew( RTN_CONTEXT_TS, (rtnContext **)&contextTS,
+                                 tmpContextID, cb ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to create new text search context, "
+                      "rc: %d", rc ) ;
+         if ( options.canPrepareMore() )
+         {
+            contextTS->setPrepareMoreData( TRUE ) ;
+         }
+
+         rc = contextTS->open( options, cb ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to open text search context, "
+                      "rc: %d", rc ) ;
+      }
+
+      if ( cb->getMonConfigCB()->timestampON )
+      {
+         contextTS->getMonCB()->recordStartTimestamp() ;
+      }
+
+      contextID = tmpContextID ;
+      if ( ppContext )
+      {
+         *ppContext = contextTS ;
+      }
+
+   done:
+      PD_TRACE_EXITRC( SDB_RTNQUERYWITHTS, rc ) ;
+      return rc ;
+   error:
+      if ( -1 != tmpContextID )
+      {
+         rtnCB->contextDelete( tmpContextID, cb ) ;
+      }
+      goto done ;
+   }
+
    INT32 rtnSort ( rtnContext **ppContext,
                    const BSONObj &orderBy,
                    _pmdEDUCB *cb,
@@ -399,6 +529,23 @@ namespace engine
       const CHAR *scanType  = NULL ;
       INT32 indexLID = DMS_INVALID_EXTENT ;
       INT32 direction = 0 ;
+      rtnQueryType queryType = RTN_QUERY_NORMAL ;
+      rtnRemoteMessenger* messenger = rtnCB->getRemoteMessenger() ;
+
+      // check if the adapter is registered.
+      if ( messenger && messenger->isReady() )
+      {
+         rc = _getQueryType( options.getQuery(), queryType ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get query type, rc: %d", rc ) ;
+         if ( RTN_QUERY_TEXT == queryType )
+         {
+            rc = rtnQueryWithTS( options, cb, rtnCB, contextID,
+                                 ppContext, enablePrefetch ) ;
+            PD_RC_CHECK( rc, PDERROR, "Query with text search condition "
+                         "failed[ %d ]", rc ) ;
+            goto done ;
+         }
+      }
 
       if ( options.testFlag( FLG_QUERY_EXPLAIN ) )
       {
@@ -871,6 +1018,5 @@ namespace engine
       }
       goto done ;
    }
-
 }
 

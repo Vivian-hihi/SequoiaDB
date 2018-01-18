@@ -15,7 +15,7 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program. If not, see <http://www.gnu.org/license/>.
 
-   Source File Name = dmsExtDataHandler.hpp
+   Source File Name = rtnExtDataHandler.hpp
 
    Descriptive Name = External data process handler for rtn.
 
@@ -41,79 +41,197 @@
 #include "pmdEDU.hpp"
 #include "dpsLogWrapper.hpp"
 #include "dmsExtDataHandler.hpp"
+#include "rtnExtDataProcessor.hpp"
 
 namespace engine
 {
+   enum _RTN_EXTCTX_TYPE
+   {
+      RTN_EXTCTX_TYPE_INSERT = 0,
+      RTN_EXTCTX_TYPE_DELETE,
+      RTN_EXTCTX_TYPE_UPDATE,
+      RTN_EXTCTX_TYPE_TRUNCATE,
+      RTN_EXTCTX_TYPE_DROPCS,
+      RTN_EXTCTX_TYPE_DROPCL,
+      RTN_EXTCTX_TYPE_DROPIDX
+   } ;
+   typedef enum _RTN_EXTCTX_TYPE RTN_EXTCTX_TYPE ;
+
+   // The life circle of this context is in each operation. It holds all the
+   // text index processors of one collection.
+   class _rtnExtContextBase : public SDBObject
+   {
+   public:
+      _rtnExtContextBase() ;
+      virtual ~_rtnExtContextBase() ;
+      void setID( UINT32 id )
+      {
+         _id = id ;
+      }
+
+      UINT32 getID() const
+      {
+         return _id ;
+      }
+
+      void appendProcessor( rtnExtDataProcessor *processor ) ;
+      void appendProcessor( rtnExtDataProcessor *processor,
+                            const BSONObj &processData ) ;
+      void appendProcessors( const vector< rtnExtDataProcessor * >& processorVec ) ;
+
+      RTN_EXTCTX_TYPE getType() const { return _type ; }
+
+      virtual INT32 done( rtnExtDataProcessorMgr *edpMgr, _pmdEDUCB *cb,
+                          SDB_DPSCB *dpscb = NULL ) = 0 ;
+      virtual INT32 abort( rtnExtDataProcessorMgr *edpMgr, _pmdEDUCB *cb,
+                           SDB_DPSCB *dpscb = NULL ) = 0 ;
+
+   protected:
+      typedef vector< rtnExtDataProcessor * > EDP_VEC ;
+      typedef EDP_VEC::iterator EDP_VEC_ITR ;
+      typedef vector< BSONObj > OBJ_VEC ;
+      typedef OBJ_VEC::iterator OBJ_VEC_ITR ;
+
+      RTN_EXTCTX_TYPE   _type ;
+      UINT32            _id ;
+      EDP_VEC           _processors ;
+      OBJ_VEC           _objects ;
+   } ;
+   typedef _rtnExtContextBase rtnExtContextBase ;
+
+   class _rtnExtDataOprCtx : public _rtnExtContextBase
+   {
+   public:
+      _rtnExtDataOprCtx() ;
+      ~_rtnExtDataOprCtx() ;
+
+      virtual INT32 done( rtnExtDataProcessorMgr *edpMgr, _pmdEDUCB *cb,
+                          SDB_DPSCB *dpscb = NULL ) ;
+      virtual INT32 abort( rtnExtDataProcessorMgr *edpMgr, _pmdEDUCB *cb,
+                           SDB_DPSCB *dpscb = NULL ) ;
+   } ;
+   typedef _rtnExtDataOprCtx rtnExtDataOprCtx ;
+
+   class _rtnExtDropOprCtx : public _rtnExtContextBase
+   {
+   public:
+      _rtnExtDropOprCtx() ;
+      ~_rtnExtDropOprCtx() ;
+
+      virtual INT32 done( rtnExtDataProcessorMgr *edpMgr, _pmdEDUCB *cb,
+                          SDB_DPSCB *dpscb = NULL ) ;
+      virtual INT32 abort( rtnExtDataProcessorMgr *edpMgr, _pmdEDUCB *cb,
+                           SDB_DPSCB *dpscb = NULL ) ;
+      void setRemoveFiles( BOOLEAN remove ) { _removeFiles = remove ; }
+   private:
+      BOOLEAN _removeFiles ;
+   } ;
+   typedef _rtnExtDropOprCtx rtnExtDropOprCtx ;
+
+   class _rtnExtTruncateCtx : public _rtnExtContextBase
+   {
+   public:
+      _rtnExtTruncateCtx() ;
+      ~_rtnExtTruncateCtx() ;
+
+      virtual INT32 done( rtnExtDataProcessorMgr *edpMgr, _pmdEDUCB *cb,
+                          SDB_DPSCB *dpscb = NULL ) ;
+      virtual INT32 abort( rtnExtDataProcessorMgr *edpMgr, _pmdEDUCB *cb,
+                           SDB_DPSCB *dpscb = NULL ) ;
+
+      void setCLLIDs( UINT32 oldLID, UINT32 newLID ) ;
+   private:
+      UINT32 _oldCLLID ;
+      UINT32 _newCLLID ;
+   } ;
+   typedef _rtnExtTruncateCtx rtnExtTruncateCtx ;
+
+   class _rtnExtContextMgr : public SDBObject
+   {
+      typedef utilConcurrentMap<UINT32, rtnExtContextBase*> RTN_CTX_MAP ;
+   public:
+      _rtnExtContextMgr() ;
+      ~_rtnExtContextMgr() ;
+
+      rtnExtContextBase* findContext( UINT32 contextID ) ;
+      INT32 createContext( RTN_EXTCTX_TYPE type, _pmdEDUCB *cb,
+                           rtnExtContextBase** context ) ;
+      INT32 delContext( UINT32 contextID, _pmdEDUCB *cb ) ;
+
+   private:
+      ossRWMutex        _mutex ;
+      RTN_CTX_MAP       _contextMap ;
+   } ;
+   typedef _rtnExtContextMgr rtnExtContextMgr ;
+
    class _rtnExtDataHandler : public _IDmsExtDataHandler
    {
-      public:
-         _rtnExtDataHandler() ;
-         virtual ~_rtnExtDataHandler() ;
+   public:
+      _rtnExtDataHandler( rtnExtDataProcessorMgr *edpMgr ) ;
+      virtual ~_rtnExtDataHandler() ;
 
-      public:
-         virtual INT32 onDropCS( const monCSSimple &csInfo,
-                                 _pmdEDUCB *cb ) ;
+   public:
+      virtual INT32 onOpenTextIdx( UINT32 csLogialID, UINT32 clLogicalID,
+                                   dmsExtentID idxLogicalID ) ;
 
-         virtual INT32 onUnloadCS( const monCSSimple &csInfo,
-                                   _pmdEDUCB *cb ) ;
+      virtual INT32 onDelCS( UINT32 csLogicalID, pmdEDUCB *cb,
+                             BOOLEAN removeFiles, SDB_DPSCB *dpscb = NULL ) ;
 
-         virtual INT32 onCreateTextIdx( const CHAR *csName,
-                                        const CHAR *clName,
-                                        const CHAR *idxName,
-                                        pmdEDUCB* cb,
-                                        SDB_DPSCB *dpsCB = NULL ) ;
+      virtual INT32 onDropAllIndexes( UINT32 csLogicalID, UINT32 clLogicalID,
+                                      _pmdEDUCB *cb, SDB_DPSCB *dpscb = NULL ) ;
 
-         virtual INT32 onDropTextIdx( const CHAR *csName,
-                                      const CHAR *clName,
-                                      const CHAR *idxName,
-                                      _pmdEDUCB *cb,
-                                      SDB_DPSCB *dpscb = NULL ) ;
-
-         virtual INT32 onRebuildTextIdx( const CHAR *csName,
-                                         const CHAR *clName,
-                                         const CHAR *idxName,
-                                         _pmdEDUCB *cb,
-                                         SDB_DPSCB *dpscb = NULL ) ;
-
-         virtual INT32 onInsert( const CHAR *csName, const CHAR *clName,
-                                 const CHAR *idxName, BSONObj &object,
-                                 bson::OID &oid, INT32 flags, _pmdEDUCB* cb,
-                                 SDB_DPSCB *dpscb = NULL ) ;
-
-         virtual INT32 onDelete( const CHAR *csName, const CHAR *clName,
-                                 const CHAR *idxName, bson::OID &oid,
-                                 _pmdEDUCB* cb, SDB_DPSCB *dpscb = NULL ) ;
-
-         virtual INT32 onUpdate( const CHAR *csName, const CHAR *clName,
-                                 const CHAR *idxName, BSONObj &object,
-                                 bson::OID &oid, INT32 flags, _pmdEDUCB* cb,
-                                 SDB_DPSCB *dpscb = NULL ) ;
-
-         virtual INT32 onTruncate( const CHAR *csName, const CHAR *clName,
-                                   const CHAR *idxName, _pmdEDUCB* cb,
+      virtual INT32 onDropTextIdx( UINT32 csLogicalID,
+                                   UINT32 clLogicalID,
+                                   dmsExtentID idxLogicalID,
+                                   _pmdEDUCB *cb,
                                    SDB_DPSCB *dpscb = NULL ) ;
 
-         static void buildNames( const CHAR *csName, const CHAR *clName,
-                                 const CHAR *idxName, string &cappedCSName,
-                                 string &cappedCLName ) ;
+      virtual INT32 onRebuildTextIdx( UINT32 csLogicalID, UINT32 clLogicalID,
+                                      dmsExtentID idxLogicalID, _pmdEDUCB *cb,
+                                      SDB_DPSCB *dpscb = NULL ) ;
 
-      private:
-         INT32 _addOprRecord( const CHAR *name,
-                              _dmsExtOprType oprType,
-                              pmdEDUCB *cb,
-                              const bson::OID *dataOID,
-                              const BSONObj *dataObj,
-                              SDB_DPSCB *dpsCB = NULL ) ;
+      virtual INT32 onInsert( UINT32 csLogicalID, UINT32 clLogicalID,
+                              dmsExtentID idxLogicalID,
+                              const ixmIndexCB &indexCB,
+                              const BSONObj &object, _pmdEDUCB* cb,
+                              SDB_DPSCB *dpscb = NULL ) ;
 
-         void _getTextIdxCSList( const monCSSimple &csInfo,
-                                 vector<string> &csNameVec ) ;
+      virtual INT32 onDelete( UINT32 csLogicalID, UINT32 clLogicalID,
+                              dmsExtentID idxLogicalID,
+                              const ixmIndexCB &indexCB,
+                              const BSONObj &object, _pmdEDUCB* cb,
+                              SDB_DPSCB *dpscb = NULL ) ;
 
-         INT32 _prepareCSAndCL( const CHAR *csName, const CHAR *clName,
-                                pmdEDUCB *cb, SDB_DPSCB *dpsCB ) ;
+      virtual INT32 onUpdate( UINT32 csLogicalID, UINT32 clLogicalID,
+                              dmsExtentID idxLogicalID,
+                              const ixmIndexCB &indexCB,
+                              const BSONObj &orignalObj, const BSONObj &newObj,
+                              _pmdEDUCB* cb, SDB_DPSCB *dpscb = NULL ) ;
+
+      INT32 onTruncateCL( UINT32 csLogicalID, UINT32 oldCLLogicalID,
+                          UINT32 newCLLogicalID, _pmdEDUCB *cb,
+                          SDB_DPSCB *dpsCB = NULL ) ;
+
+      static void buildNames( const monCSSimple *csInfo,
+                              const monCLSimple *clInfo,
+                              const monIndex *idxInfo, CHAR *cappedCLName,
+                              UINT32 buffLen ) ;
+
+      virtual INT32 done( _pmdEDUCB *cb, SDB_DPSCB *dpscb = NULL ) ;
+
+      virtual INT32 abortOperation( _pmdEDUCB *cb ) ;
+
+   private:
+      INT32 _prepareCSAndCL( const CHAR *csName, const CHAR *clName,
+                             pmdEDUCB *cb, SDB_DPSCB *dpsCB ) ;
+
+   private:
+      rtnExtDataProcessorMgr  *_edpMgr ;
+      rtnExtContextMgr        _contextMgr ;
    } ;
    typedef _rtnExtDataHandler rtnExtDataHandler ;
 
-   rtnExtDataHandler* getRtnExtDataHandler() ;
+   rtnExtDataHandler* rtnGetExtDataHandler() ;
 }
 
 #endif /* RTN_EXTDATAHANDLER_HPP__ */

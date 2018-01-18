@@ -269,7 +269,8 @@ namespace engine
                            utilCacheMgr *pMgr,
                            INT32 pageSize = DMS_PAGE_SIZE_DFT,
                            INT32 lobPageSize = DMS_DEFAULT_LOB_PAGE_SZ,
-                           DMS_STORAGE_TYPE type = DMS_STORAGE_NORMAL ) ;
+                           DMS_STORAGE_TYPE type = DMS_STORAGE_NORMAL,
+                           IDmsExtDataHandler *extDataHandler = NULL ) ;
          ~_dmsStorageUnit() ;
 
          INT32 open ( const CHAR *pDataPath,
@@ -496,10 +497,6 @@ namespace engine
 
          dmsStatCache *getStatCache () ;
          dmsCachedPlanMgr *getCachedPlanMgr () ;
-
-         INT32 regExtDataHandler( IDmsExtDataHandler *pHandler ) ;
-         void unregExtDataHandler( IDmsExtDataHandler *pHandler ) ;
-         IDmsExtDataHandler *getExtDataHandler() ;
 
       private:
          INT32 _createStorageObjs() ;

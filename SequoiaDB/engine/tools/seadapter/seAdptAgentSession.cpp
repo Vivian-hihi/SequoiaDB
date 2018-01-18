@@ -38,7 +38,6 @@
 #include "seAdptAgentSession.hpp"
 #include "rtnContextBuff.hpp"
 #include "msgMessage.hpp"
-#include "seAdptUtil.hpp"
 #include "utilCommon.hpp"
 
 namespace engine
@@ -327,8 +326,11 @@ namespace engine
                               hint, objBuff, eduCB ) ;
          if ( rc )
          {
-            PD_LOG_MSG( PDERROR, "Open context for rewrite query failed[ %d ]",
-                        rc ) ;
+            if ( SDB_DMS_EOC != rc )
+            {
+               PD_LOG_MSG( PDERROR, "Open context for rewrite query failed[ %d ]",
+                           rc ) ;
+            }
             goto error ;
          }
       }
@@ -364,7 +366,14 @@ namespace engine
       INT32 rc = SDB_OK ;
 
       rc = _context->getMore( 1, objBuff ) ;
-      PD_RC_CHECK( rc, PDERROR, "Get rewrite query failed[ %d ]", rc ) ;
+      if ( rc )
+      {
+         if ( SDB_DMS_EOC != rc )
+         {
+            PD_LOG_MSG( PDERROR, "Get more rewrite query failed[ %d ]", rc ) ;
+         }
+         goto error ;
+      }
 
    done:
       return rc ;

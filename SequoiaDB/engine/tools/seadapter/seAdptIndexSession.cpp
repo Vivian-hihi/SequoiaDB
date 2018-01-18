@@ -38,9 +38,9 @@
 #include "msgMessage.hpp"
 #include "seAdptIndexSession.hpp"
 #include "seAdptMgr.hpp"
+#include "seAdptDef.hpp"
 
 #define SEADPT_FIELD_NAME_RID        "_rid"
-#define SEADPT_COMMIT_ID             "SDBCOMMIT"
 #define SEADPT_FIELD_NAME_LID        "_lid"
 #define SEADPT_OPERATOR_STR_OR       "$or"
 #define SEADPT_OPERATOR_STR_EXIST    "$exists"
@@ -139,27 +139,12 @@ namespace engine
          goto done ;
       }
       else if ( SDB_DMS_CS_NOTEXIST == reply->flags ||
-                SDB_DMS_NOTEXIST == reply->flags )
+                SDB_DMS_NOTEXIST == reply->flags ||
+                SDB_DMS_CS_DELETING == reply->flags )
       {
-         _quit = TRUE ;
-         PD_LOG( PDEVENT, "Query target collection[ %s ] dose not exist any "
-                 "more. Task ready to exit. Index on search engine will be "
-                 "dropped.",
-                 ( SEADPT_SESSION_STAT_QUERY_NORMAL_TBL == _status ) ?
-                 _origCLFullName.c_str() : _cappedCLFullName.c_str() ) ;
-         rc = _ensureESClt() ;
-         PD_RC_CHECK( rc, PDERROR, "The search engine client is not active[ %d ]",
-                      rc ) ;
-         rc = _esClt->dropIndex( _indexName.c_str() ) ;
-         if ( rc )
-         {
-            PD_LOG( PDERROR, "Drop index[ %s ] on search engine failed[ %d ]",
-                    _indexName.c_str(), rc ) ;
-            goto error ;
-         }
-         PD_LOG( PDEVENT, "Drop index[ %s ] on search engine successfully",
-                 _indexName.c_str() ) ;
-
+         rc = _onOrigIdxDropped() ;
+         PD_RC_CHECK( rc, PDERROR, "Clean operation on index dropped "
+                      "failed[ %d ]", rc ) ;
          goto done ;
       }
       else if ( SDB_OK != reply->flags )
@@ -321,6 +306,19 @@ namespace engine
    done:
       return rc ;
    error:
+      // If cs or cl not exists, the index is not there any longer.
+      if ( SDB_DMS_NOTEXIST == rc || SDB_DMS_CS_NOTEXIST == rc )
+      {
+         INT32 rcTmp = _onOrigIdxDropped() ;
+         if ( rcTmp )
+         {
+            PD_LOG( PDERROR, "Clean operation on index dropped failed[ %d ]",
+                    rcTmp  ) ;
+         }
+
+         // The index is dropped, this is not error for us.
+         rc = SDB_OK ;
+      }
       goto done ;
    }
 
@@ -686,7 +684,7 @@ namespace engine
 
    // Parse the original object and get the items we want.
    INT32 _seAdptIndexSession::_parseSrcData( const BSONObj &origObj,
-                                             _dmsExtOprType &oprType,
+                                             _rtnExtOprType &oprType,
                                              const CHAR **origOID,
                                              INT64 &logicalID,
                                              BSONObj &sourceObj )
@@ -701,7 +699,7 @@ namespace engine
          BSONElement lidField = origObj.getField( SEADPT_FIELD_NAME_ID ) ;
          type = origObj.getIntField( FIELD_NAME_TYPE ) ;
 
-         if ( type < DMS_EXT_INSERT || type > DMS_EXT_TRUNCATE )
+         if ( type < RTN_EXT_INSERT || type > RTN_EXT_UPDATE )
          {
             PD_LOG( PDERROR, "Operation type[ %d ] is invalid in source object",
                     type ) ;
@@ -709,30 +707,29 @@ namespace engine
             goto error ;
          }
 
-         oprType = ( _dmsExtOprType )type ;
+         oprType = ( _rtnExtOprType )type ;
          logicalID = lidField.Long() ;
-         if ( DMS_EXT_TRUNCATE != oprType )
-         {
-            *origOID = origObj.getStringField( SEADPT_FIELD_NAME_RID ) ;
-            if ( 0 == ossStrcmp( *origOID, "" ) )
-            {
-               PD_LOG( PDERROR, "_rid for the original record is invalid. "
-                     "Object: %s", origObj.toString().c_str() ) ;
-               rc = SDB_SYS ;
-               goto done ;
-            }
 
-            sourceObj = origObj.getObjectField( "_source" ) ;
-            if ( !sourceObj.isEmpty() && !sourceObj.isValid() )
-            {
-               PD_LOG( PDERROR, "_source field is invalid. Object: %s",
-                       origObj.toString().c_str() ) ;
-               rc = SDB_SYS ;
-               goto error ;
-            }
+         *origOID = origObj.getStringField( SEADPT_FIELD_NAME_RID ) ;
+         if ( 0 == ossStrcmp( *origOID, "" ) )
+         {
+            PD_LOG( PDERROR, "_rid for the original record is invalid. "
+                  "Object: %s", origObj.toString().c_str() ) ;
+            rc = SDB_SYS ;
+            goto done ;
          }
 
-         PD_LOG( PDDEBUG, "Operation type: %d, _id: %s, _source: %s", oprType,
+         sourceObj = origObj.getObjectField( "_source" ) ;
+         if ( !sourceObj.isEmpty() && !sourceObj.isValid() )
+         {
+            PD_LOG( PDERROR, "_source field is invalid. Object: %s",
+                    origObj.toString().c_str() ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+
+         PD_LOG( PDDEBUG, "Operation type: %d, _lid: %lld, _id: %s, "
+                 "_source: %s", oprType, logicalID,
                  *origOID, sourceObj.toString().c_str() ) ;
       }
       catch ( std::exception &e )
@@ -777,12 +774,6 @@ namespace engine
                   "search engine successfully", _origCLFullName.c_str() ) ;
             _switchStatus( SEADPT_SESSION_STAT_QUERY_CAP_TBL ) ;
             _setQueryBusyFlag( FALSE ) ;
-            goto done ;
-         }
-         else if ( SDB_DMS_CS_NOTEXIST == reply->flags ||
-                   SDB_DMS_NOTEXIST == reply->flags )
-         {
-            _quit = TRUE ;
             goto done ;
          }
          else if ( SDB_OK != reply->flags )
@@ -842,8 +833,9 @@ namespace engine
                rc = item.setID( idEle.OID().toString().c_str() ) ;
                PD_RC_CHECK( rc, PDERROR, "Set _id for action failed[ %d ]",
                             rc ) ;
-               rc = item.setSourceData( sourceObj.toString().c_str(),
-                                        sourceObj.toString().length() ) ;
+               rc = item.setSourceData( sourceObj.toString(false, true).c_str(),
+                                        sourceObj.toString(false, true).length(),
+                                        TRUE ) ;
                PD_RC_CHECK( rc, PDERROR, "Set source data for action "
                             "failed[ %d ]", rc ) ;
 
@@ -882,7 +874,6 @@ namespace engine
                                                        MsgHeader *msg )
    {
       INT32 rc = SDB_OK ;
-      MsgOpReply *reply = (MsgOpReply *)msg ;
       INT32 flag = 0 ;
       INT64 contextID = 0 ;
       INT32 startFrom = 0 ;
@@ -891,31 +882,33 @@ namespace engine
       vector<BSONObj> docObjs ;
       INT64 logicalID = -1 ;
 
+      rc = msgExtractReply( (CHAR *)msg, &flag, &contextID, &startFrom,
+                            &numReturned, docObjs ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to extract query result, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      rc = flag ;
+
       // If reach end of the capped collection, start another query on it. It
       // will be started in onTimer.
-      if ( SDB_DMS_EOC == reply->flags )
+      if ( SDB_DMS_EOC == rc )
       {
+         rc = SDB_OK ;
          _setQueryBusyFlag( FALSE ) ;
          PD_LOG( PDDEBUG, "All records in capped collection[ %s ] have been "
                  "processed. Ready to start a new query on it",
                  _cappedCLFullName.c_str() ) ;
          goto done ;
       }
-      else if ( SDB_OK != reply->flags )
+      else if ( SDB_OK != rc )
       {
-         rc = reply->flags ;
          PD_LOG( PDERROR, "Get more failed[ %d ]", rc ) ;
          // Start another query.
          _switchStatus( SEADPT_SESSION_STAT_QUERY_CAP_TBL ) ;
          _setQueryBusyFlag( FALSE ) ;
-         goto error ;
-      }
-
-      rc = msgExtractReply( (CHAR *)msg, &flag, &contextID, &startFrom,
-                            &numReturned, docObjs ) ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Failed to extract query result, rc: %d", rc ) ;
          goto error ;
       }
 
@@ -942,7 +935,7 @@ namespace engine
             BSONObj newNameObj ;
             string idStr ;
             BSONObj sourceObj ;
-            _dmsExtOprType oprType = DMS_EXT_INVALID ;
+            _rtnExtOprType oprType = RTN_EXT_INVALID ;
             const CHAR *origOID = NULL ;
             BSONElement sourceEle ;
 
@@ -953,15 +946,16 @@ namespace engine
                          "failed[ %d ]", rc ) ;
             switch ( oprType )
             {
-               case DMS_EXT_INSERT:
+               case RTN_EXT_INSERT:
                   {
                      utilESActionIndex item( _indexName.c_str(),
                                              _typeName.c_str() ) ;
                      rc = item.setID( origOID ) ;
                      PD_RC_CHECK( rc, PDERROR, "Set _id for action "
                                   "failed[ %d ]", rc ) ;
-                     rc = item.setSourceData( sourceObj.toString().c_str(),
-                                              sourceObj.toString().length() ) ;
+                     rc = item.setSourceData( sourceObj.toString(false, true).c_str(),
+                                              sourceObj.toString(false, true).length(),
+                                              TRUE ) ;
                      PD_RC_CHECK( rc, PDERROR, "Set source data failed[ %d ]",
                                   rc ) ;
                      rc = _bulkProcess( item ) ;
@@ -969,7 +963,7 @@ namespace engine
                                   "failed[ %d ]", rc ) ;
                   }
                   break ;
-               case DMS_EXT_DELETE:
+               case RTN_EXT_DELETE:
                   {
                      utilESActionDelete item( _indexName.c_str(),
                                               _typeName.c_str() ) ;
@@ -981,21 +975,23 @@ namespace engine
                                   "failed[ %d ]", rc ) ;
                   }
                   break ;
-               case DMS_EXT_UPDATE:
+               case RTN_EXT_UPDATE:
                   {
                      utilESActionUpdate item( _indexName.c_str(),
                                               _typeName.c_str() ) ;
                      rc = item.setID( origOID ) ;
                      PD_RC_CHECK( rc, PDERROR, "Set _id for action "
                                   "failed[ %d ]", rc ) ;
-                     rc = item.setSourceData( sourceObj.toString().c_str(),
-                                              sourceObj.toString().length() ) ;
+                     rc = item.setSourceData( sourceObj.toString(false, true).c_str(),
+                                              sourceObj.toString(false, true).length(),
+                                              TRUE ) ;
                      rc = _bulkProcess( item ) ;
                      PD_RC_CHECK( rc, PDERROR, "Bulk processing item "
                                   "failed[ %d ]", rc ) ;
                   }
                   break ;
-               case DMS_EXT_TRUNCATE:
+               /*
+               case RTN_EXT_TRUNCATE:
                   // Truncate(actuall delete by type) can not be done in bulk
                   // operation. So wait for the current bulk to finish.
                   rc = _bulkFinish() ;
@@ -1006,7 +1002,9 @@ namespace engine
                   PD_RC_CHECK( rc, PDERROR, "Delete all documents for index[ %s ] "
                                "and type[ %s ] failed[ %d ]", _indexName.c_str(),
                                _typeName.c_str(), rc ) ;
+                  finished = TRUE ;
                   break ;
+               */
                default:
                   PD_LOG( PDERROR, "Invalid operation type[ %d ] in source data",
                           oprType ) ;
@@ -1014,6 +1012,7 @@ namespace engine
                   goto error ;
             }
          }
+
          rc = _bulkFinish() ;
          PD_RC_CHECK( rc, PDERROR, "Finish operation of bulk "
                       "failed[ %d ]", rc ) ;
@@ -1098,7 +1097,7 @@ namespace engine
       try
       {
          rc = _esClt->indexDocument( _indexName.c_str(), _typeName.c_str(),
-                                     SEADPT_COMMIT_ID,
+                                     SDB_SEADPT_COMMIT_ID,
                                      infoObj.toString().c_str() ) ;
          PD_RC_CHECK( rc, PDERROR, "Index document failed[ %d ]", rc ) ;
       }
@@ -1138,7 +1137,7 @@ namespace engine
 
       rc = _esClt->documentExist( _indexName.c_str(),
                                   _typeName.c_str(),
-                                  SEADPT_COMMIT_ID,
+                                  SDB_SEADPT_COMMIT_ID,
                                   found ) ;
       PD_RC_CHECK( rc, PDERROR, "Check document existense failed[ %d ]", rc ) ;
 
@@ -1199,7 +1198,7 @@ namespace engine
       try
       {
          rc = _esClt->getDocument( _indexName.c_str(), _typeName.c_str(),
-                                   SEADPT_COMMIT_ID, resultObj, FALSE ) ;
+                                   SDB_SEADPT_COMMIT_ID, resultObj, FALSE ) ;
          if ( SDB_INVALIDARG == rc )
          {
             PD_LOG( PDEVENT, "Commit mark for index[ %s ] "
@@ -1346,6 +1345,35 @@ namespace engine
    done:
       return rc ;
    error: goto done ;
+   }
+
+   INT32 _seAdptIndexSession::_onOrigIdxDropped()
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_LOG( PDEVENT, "Original index[ %s ] does not exist any more. Task "
+              "ready to exit. Index on search engine[ %s ] will be dropped.",
+              _origIdxName.c_str(), _indexName.c_str() ) ;
+
+      _quit = TRUE ;
+
+      rc = _ensureESClt() ;
+      PD_RC_CHECK( rc, PDERROR, "The search engine client is not active[ %d ]",
+                   rc ) ;
+      rc = _esClt->dropIndex( _indexName.c_str() ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Drop index[ %s ] on search engine failed[ %d ]",
+                 _indexName.c_str(), rc ) ;
+         goto error ;
+      }
+      PD_LOG( PDEVENT, "Drop index[ %s ] on search engine successfully",
+              _indexName.c_str() ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _seAdptIndexSession::_bulkPrepare()

@@ -866,8 +866,21 @@ namespace engine
                                              dmsExtent *extent ) ;
 
          OSS_INLINE void   updateCreateLobs( UINT32 createLobs ) ;
-         void setExtDataHandler( IDmsExtDataHandler *pExtDataHandler ) ;
-         IDmsExtDataHandler *getExtDataHandler() { return _pExtDataHandler ; }
+
+         void regExtDataHandler( IDmsExtDataHandler *handler )
+         {
+            _pExtDataHandler = handler ;
+         }
+
+         void unregExtDataHandler()
+         {
+            _pExtDataHandler = NULL ;
+         }
+
+         IDmsExtDataHandler *getExtDataHandler()
+         {
+            return _pExtDataHandler ;
+         }
 
          /// flush mme
          INT32          flushMME( BOOLEAN sync = FALSE ) ;

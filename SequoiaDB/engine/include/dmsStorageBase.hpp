@@ -51,6 +51,7 @@
 #include "dmsLobDef.hpp"
 #include "pmdEnv.hpp"
 #include "sdbIPersistence.hpp"
+#include "dmsExtDataHandler.hpp"
 
 #include <string>
 
@@ -91,6 +92,7 @@ namespace engine
       UINT64      _curLSNOnStart ;
 
       DMS_STORAGE_TYPE _type ;
+      IDmsExtDataHandler *_extDataHandler ;
 
       _dmsStorageInfo ()
       {
@@ -110,6 +112,7 @@ namespace engine
          _dataIsOK       = FALSE ;
          _curLSNOnStart  = ~0 ;
          _type = DMS_STORAGE_NORMAL ;
+         _extDataHandler = NULL ;
       }
    };
    typedef _dmsStorageInfo dmsStorageInfo ;

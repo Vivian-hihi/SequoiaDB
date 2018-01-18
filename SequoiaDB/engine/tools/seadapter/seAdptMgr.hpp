@@ -236,6 +236,9 @@ namespace engine
       INT32 _updateIndexInfo( BSONObj &obj, BOOLEAN &updated ) ;
       INT32 _parseIndexInfo( const BSONElement *ele, seIndexMeta &idxMeta ) ;
 
+      void _genESIdxName( UINT32 csLID, UINT32 clLID, INT32 idxLID,
+                          CHAR *esIdxName, UINT32 buffSize ) ;
+
    private:
       indexMsgHandler         _indexMsgHandler ;
       pmdAsyncMsgHandler      _svcMsgHandler ;
