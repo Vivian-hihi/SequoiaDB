@@ -281,7 +281,7 @@ function createUserAndGroup( ft, user, group )
    catch( e )
    {
       throw buildException( "createUserAndGroup", e,
-            "create " + user + " " + group + " " + this,
+            "create " + user + " " + group + " " + ft,
             0, e ) ;
    }
 }
@@ -298,7 +298,7 @@ function deleteUserAndGroup( ft, user, group )
       if( msg.indexOf( "logged in" ) === -1 )
       {
          throw buildException( "deleteUserAndGroup", e, 
-               "delete user " + user + " " + msg + " " + this, 0, e ) ;
+               "delete user " + user + " " + msg + " " + ft, 0, e ) ;
       }
    }
    try
@@ -308,7 +308,7 @@ function deleteUserAndGroup( ft, user, group )
    catch( e )
    {
       throw buildException( "deleteUserAndGroup", e,
-            "delete group " + group + " " + this,
+            "delete group " + group + " " + ft,
             0, e ) ;
    }
 }
