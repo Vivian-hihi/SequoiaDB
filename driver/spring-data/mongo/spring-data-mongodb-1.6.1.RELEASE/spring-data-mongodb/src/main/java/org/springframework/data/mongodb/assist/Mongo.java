@@ -6,6 +6,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Logger;
 
+import com.sequoiadb.datasource.DatasourceOptions;
 import com.sequoiadb.net.ConfigOptions;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
@@ -45,7 +46,7 @@ import com.sequoiadb.exception.BaseException;
  * <pre>
  * mongo.setWriteConcern(WriteConcern.SAFE);
  * </pre>
- *
+ * <p>
  * Note: This class has been superseded by {@code MongoClient}, and may be deprecated in a future release.
  *
  * @see MongoClient
@@ -55,6 +56,9 @@ import com.sequoiadb.exception.BaseException;
 public class Mongo {
 
     static Logger logger = Logger.getLogger(Bytes.LOGGER.getName() + ".Mongo");
+
+    static final String DEFAULT_HOST = "127.0.0.1";
+    static final int DEFAULT_PORT = 11810;
 
     /**
      * @deprecated Replaced by <code>Mongo.getMajorVersion()</code>
@@ -79,13 +83,14 @@ public class Mongo {
     }
 
     private ConnectionManager _cm;
-    private List<String> _connStrings;
+    private List<String> _coordList;
+    private MongoOptions options;
 
 
     /**
      * Gets the major version of this library
-     * @return the major version, e.g. 2
      *
+     * @return the major version, e.g. 2
      * @deprecated Please use {@link #getVersion()} instead.
      */
     @Deprecated
@@ -95,8 +100,8 @@ public class Mongo {
 
     /**
      * Gets the minor version of this library
-     * @return the minor version, e.g. 8
      *
+     * @return the minor version, e.g. 8
      * @deprecated Please use {@link #getVersion()} instead.
      */
     @Deprecated
@@ -109,212 +114,105 @@ public class Mongo {
      *
      * @param addr The details of the server and database to connect to
      * @return the DB requested in the addr parameter.
-     * @throws MongoException
-     * @deprecated Please use {@link MongoClient#getDB(String)} instead.
+     * @deprecated
      */
     @Deprecated
-    public static DB connect( DBAddress addr ){
-        return new Mongo( addr ).getDB( addr.getDBName() );
+    public static DB connect(DBAddress addr) {
+        return new Mongo(addr).getDB(addr.getDBName());
     }
 
     /**
      * Creates a Mongo instance based on a (single) mongodb node (localhost, default port)
+     *
      * @throws UnknownHostException
      * @throws MongoException
-     *
-     * @deprecated Replaced by {@link MongoClient#MongoClient()})
-     *
      */
-    @Deprecated
-    public Mongo()
-            throws UnknownHostException {
-        this( new ServerAddress() );
-    }
-
-    /**
-     * Creates a Mongo instance based on a (single) mongodb node (default port)
-     * @param host server to connect to
-     * @throws UnknownHostException if the database host cannot be resolved
-     * @throws MongoException
-     *
-     * @deprecated Replaced by {@link MongoClient#MongoClient(String)}
-     *
-     */
-    @Deprecated
-    public Mongo( String host )
-            throws UnknownHostException{
-        this( new ServerAddress( host ) );
-    }
-
-    /**
-     * Creates a Mongo instance based on a (single) mongodb node (default port)
-     * @param host server to connect to
-     * @param options default query options
-     * @throws UnknownHostException if the database host cannot be resolved
-     * @throws MongoException
-     *
-     * @deprecated Replaced by {@link MongoClient#MongoClient(String, MongoClientOptions)}
-     *
-     */
-    @Deprecated
-    public Mongo( String host , MongoOptions options )
-            throws UnknownHostException {
-        this( new ServerAddress( host ) , options );
+//    @Deprecated
+    public Mongo() throws UnknownHostException {
+        this(new ServerAddress());
     }
 
     /**
      * Creates a Mongo instance based on a (single) mongodb node
+     *
      * @param host the database's host address
      * @param port the port on which the database is running
      * @throws UnknownHostException if the database host cannot be resolved
      * @throws MongoException
-     *
-     * @deprecated Replaced by {@link MongoClient#MongoClient(String, int)}
-     *
      */
-    @Deprecated
-    public Mongo( String host , int port )
-            throws UnknownHostException {
-        this( new ServerAddress( host , port ) );
+//    @Deprecated
+    public Mongo(String host, int port) throws UnknownHostException {
+        this(new ServerAddress(host, port));
+    }
+
+    public Mongo(String host, int port, String userName, String password,
+                 MongoOptions options) throws UnknownHostException {
+        this(new ServerAddress(host, port), userName, password, options);
     }
 
     /**
      * Creates a Mongo instance based on a (single) mongodb node
-     * @see com.mongodb.ServerAddress
+     *
      * @param addr the database address
-     * @throws MongoException
-     *
-     * @deprecated Replaced by {@link MongoClient#MongoClient(ServerAddress)}
-     *
      */
-    @Deprecated
-    public Mongo( ServerAddress addr ) {
-        this(addr, new MongoOptions());
+//    @Deprecated
+    public Mongo(ServerAddress addr) {
+        this(Arrays.asList(addr));
+    }
+
+    /**
+     * Creates a Mongo instance based on the given ServerAddress
+     *
+     * @param coords address of coord nodes
+     */
+//    @Deprecated
+    public Mongo(List<ServerAddress> coords) {
+        this(coords, null);
     }
 
     /**
      * Creates a Mongo instance based on a (single) mongo node using a given ServerAddress
-     * @see com.mongodb.ServerAddress
-     * @param addr the database address
-     * @param options default query options
+     *
+     * @param addr    the database address
+     * @param options options for creating connections
      * @throws MongoException
-     *
-     * @deprecated Replaced by {@link MongoClient#MongoClient(ServerAddress, MongoClientOptions)}
-     *
      */
-    @Deprecated
-    public Mongo( ServerAddress addr , MongoOptions options ) {
-        String host1 = addr.getHost() + ":" + addr.getPort();
-        List<String> list = new ArrayList<String>();
-        list.add(host1);
-        _init(list, "", "" , null);
+//    @Deprecated
+    public Mongo(ServerAddress addr, MongoOptions options) {
+        this(Arrays.asList(addr), "", "", options);
+    }
+
+    public Mongo(ServerAddress addr, String userName, String password, MongoOptions options) {
+        this(Arrays.asList(addr), userName, password, options);
     }
 
     /**
-     * <p>Creates a Mongo in paired mode. <br/> This will also work for
-     * a replica set and will find all members (the master will be used by
-     * default).</p>
+     * Creates a Mongo instance based on a (single) mongo node using a given ServerAddress
      *
-     * @see com.mongodb.ServerAddress
-     * @param left left side of the pair
-     * @param right right side of the pair
-     * @throws MongoException
+     * @param coords  address of coord nodes
+     * @param options options for creating connections
      */
-    @Deprecated
-    public Mongo( ServerAddress left , ServerAddress right ) {
-        String host1 = left.getHost() + ":" + left.getPort();
-        String host2 = right.getHost() + ":" + right.getPort();
-        List<String> list = new ArrayList<String>();
-        list.add(host1);
-        list.add(host2);
-        _init(list, "", "", null);
+//    @Deprecated
+    public Mongo(List<ServerAddress> coords, MongoOptions options) {
+        this(coords, "", "", options);
     }
 
     /**
-     * <p>Creates a Mongo connection in paired mode. <br/> This will also work for
-     * a replica set and will find all members (the master will be used by
-     * default).</p>
+     * Specified the address of coords.
      *
-     * @see com.mongodb.ServerAddress
-     * @param left left side of the pair
-     * @param right right side of the pair
-     * @param options the optional settings for the Mongo instance
+     * @param coords   the coord node list
+     * @param options  the options for creating connections
+     * @param userName the authentication user
+     * @param password the password of the authentication user
      * @throws MongoException
-     * @deprecated Please use {@link MongoClient#MongoClient(java.util.List, MongoClientOptions)} instead.
      */
-    @Deprecated
-    public Mongo( ServerAddress left , ServerAddress right , MongoOptions options ) {
-        this(left, right);
-    }
-
-    /**
-     * Creates a Mongo based on a list of replica set members or a list of mongos.
-     * It will find all members (the master will be used by default). If you pass in a single server in the list,
-     * the driver will still function as if it is a replica set. If you have a standalone server,
-     * use the Mongo(ServerAddress) constructor.
-     * <p>
-     * If this is a list of mongos servers, it will pick the closest (lowest ping time) one to send all requests to,
-     * and automatically fail over to the next server if the closest is down.
-     *
-     * @see com.mongodb.ServerAddress
-     * @param seeds Put as many servers as you can in the list and the system will figure out the rest.  This can
-     *              either be a list of mongod servers in the same replica set or a list of mongos servers in the same
-     *              sharded cluster.
-     * @throws MongoException
-     *
-     * @deprecated Replaced by {@link MongoClient#MongoClient(java.util.List)}
-     *
-     */
-    @Deprecated
-    public Mongo( List<ServerAddress> seeds ) {
-        this( seeds , null );
-    }
-
-    /**
-     * Creates a Mongo based on a list of replica set members or a list of mongos.
-     * It will find all members (the master will be used by default). If you pass in a single server in the list,
-     * the driver will still function as if it is a replica set. If you have a standalone server,
-     * use the Mongo(ServerAddress) constructor.
-     * <p>
-     * If this is a list of mongos servers, it will pick the closest (lowest ping time) one to send all requests to,
-     * and automatically fail over to the next server if the closest is down.
-     *
-     * @see com.mongodb.ServerAddress
-     * @param seeds Put as many servers as you can in the list and the system will figure out the rest.  This can
-     *              either be a list of mongod servers in the same replica set or a list of mongos servers in the same
-     *              sharded cluster.
-     * @param options for configuring this Mongo instance
-     * @throws MongoException
-     *
-     * @deprecated Replaced by {@link MongoClient#MongoClient(java.util.List, MongoClientOptions)}
-     *
-     */
-    @Deprecated
-    public Mongo( List<ServerAddress> seeds , MongoOptions options ) {
-        List<String> list = _getAddresses(seeds);
-        _init(list, "", "", null);
-    }
-
-    /**
-     * Creates a Mongo described by a URI.
-     * If only one address is used it will only connect to that node, otherwise it will discover all nodes.
-     * If the URI contains database credentials, the database will be authenticated lazily on first use
-     * with those credentials.
-     * @param uri the URI to connect to.
-     * <p>examples:<ul>
-     *   <li>mongodb://localhost</li>
-     *   <li>mongodb://fred:foobar@localhost/</li>
-     * </ul></p>
-     * @throws MongoException
-     * @throws UnknownHostException
-     * @dochub connections
-     *
-     * @deprecated Replaced by {@link MongoClient#MongoClient(MongoClientURI)}
-     *
-     */
-    @Deprecated
-    public Mongo( MongoURI uri ) throws UnknownHostException {
-        throw new UnsupportedOperationException("not support to use URI");
+//    @Deprecated
+    public Mongo(List<ServerAddress> coords, String userName, String password,
+                 MongoOptions options) {
+        List<String> list = _getAddresses(coords);
+        ConfigOptions configOptions = options == null ? null : options.getNetworkOptions();
+        DatasourceOptions datasourceOptions = options == null ? null : options.getDatasourceOptions();
+        _init(list, userName, password, configOptions, datasourceOptions);
     }
 
     List<String> _getAddresses(List<ServerAddress> args) {
@@ -322,9 +220,9 @@ public class Mongo {
         String address;
 
         if (args == null) return list;
-        for(ServerAddress sa : args) {
-           address = sa.getHost() + ":" + sa.getPort();
-           list.add(address);
+        for (ServerAddress sa : args) {
+            address = sa.getHost() + ":" + sa.getPort();
+            list.add(address);
         }
         return list;
     }
@@ -338,7 +236,7 @@ public class Mongo {
             String[] tmp = addr.split(":");
             try {
                 list.add(new ServerAddress(tmp[0], Integer.parseInt(tmp[1])));
-            } catch(UnknownHostException e) {
+            } catch (UnknownHostException e) {
                 // TODO:
                 continue;
             }
@@ -346,9 +244,10 @@ public class Mongo {
         return list;
     }
 
-    void _init(List<String>  connStrings, String username, String password, ConfigOptions options) {
-        _connStrings = connStrings;
-        _cm = new ConnectionManager(connStrings, username, password, options, null);
+    void _init(List<String> coords, String username, String password,
+               ConfigOptions configOptions, DatasourceOptions datasourceOptions) {
+        _coordList = coords;
+        _cm = new ConnectionManager(coords, username, password, configOptions, datasourceOptions);
     }
 
     ConnectionManager getConnectionManager() {
@@ -369,7 +268,7 @@ public class Mongo {
      * @param dbname the name of the database to retrieve
      * @return a DB representing the specified database
      */
-    public DB getDB( String dbname ){
+    public DB getDB(String dbname) {
         return new DBApiLayer(this, dbname, null);
     }
 
@@ -379,7 +278,7 @@ public class Mongo {
      *
      * @return a collection of database objects
      */
-    public Collection<DB> getUsedDatabases(){
+    public Collection<DB> getUsedDatabases() {
         throw new UnsupportedOperationException("not supported!");
     }
 
@@ -389,31 +288,33 @@ public class Mongo {
      * @return list of database names
      * @throws MongoException
      */
-    public List<String> getDatabaseNames(){
-       return _cm.execute(new DBCallback<List<String>>() {
-           @Override
-           public List<String> doInDB(Sequoiadb db) throws BaseException {
-               List<String > list = db.getCollectionSpaceNames();
-               Collections.sort(list);
-               return list;
-           }
-       });
+    public List<String> getDatabaseNames() {
+        return _cm.execute(new DBCallback<List<String>>() {
+            @Override
+            public List<String> doInDB(Sequoiadb db) throws BaseException {
+                List<String> list = db.getCollectionSpaceNames();
+                Collections.sort(list);
+                return list;
+            }
+        });
     }
 
     /**
      * Drops the database if it exists.
+     *
      * @param dbName name of database to drop
      * @throws MongoException
      */
-    public void dropDatabase(String dbName){
-        getDB( dbName ).dropDatabase();
+    public void dropDatabase(String dbName) {
+        getDB(dbName).dropDatabase();
     }
 
     /**
      * gets this driver version
+     *
      * @return the full version string of this driver, e.g. "2.8.0"
      */
-    public String getVersion(){
+    public String getVersion() {
         return FULL_VERSION;
     }
 
@@ -424,7 +325,7 @@ public class Mongo {
      * @deprecated This method is NOT a part of public API and will be dropped in 3.x versions.
      */
     @Deprecated
-    public String debugString(){
+    public String debugString() {
         return toString();
     }
 
@@ -433,7 +334,7 @@ public class Mongo {
      *
      * @return server address in a host:port form
      */
-    public String getConnectPoint(){
+    public String getConnectPoint() {
         throw new UnsupportedOperationException("not supported!");
     }
 
@@ -448,9 +349,10 @@ public class Mongo {
 
     /**
      * Gets the address of the current master
+     *
      * @return the address
      */
-    public ServerAddress getAddress(){
+    public ServerAddress getAddress() {
         throw new UnsupportedOperationException("not supported!");
     }
 
@@ -461,7 +363,7 @@ public class Mongo {
      * @throws MongoException
      */
     public List<ServerAddress> getAllAddress() {
-        List<ServerAddress> result = _getServerAddress(_connStrings);
+        List<ServerAddress> result = _getServerAddress(_coordList);
         return result;
     }
 
@@ -479,7 +381,7 @@ public class Mongo {
      * Closes the underlying connector, which in turn closes all open connections.
      * Once called, this Mongo instance can no longer be used.
      */
-    public void close(){
+    public void close() {
         _cm.close();
     }
 
@@ -490,7 +392,7 @@ public class Mongo {
      *
      * @param concern write concern to use
      */
-    public void setWriteConcern( WriteConcern concern ){
+    public void setWriteConcern(WriteConcern concern) {
         throw new UnsupportedOperationException("not supported!");
     }
 
@@ -499,7 +401,7 @@ public class Mongo {
      *
      * @return the default write concern
      */
-    public WriteConcern getWriteConcern(){
+    public WriteConcern getWriteConcern() {
         throw new UnsupportedOperationException("not supported!");
     }
 
@@ -510,7 +412,7 @@ public class Mongo {
      *
      * @param preference Read Preference to use
      */
-    public void setReadPreference( ReadPreference preference ){
+    public void setReadPreference(ReadPreference preference) {
         throw new UnsupportedOperationException("not supported!");
     }
 
@@ -519,18 +421,18 @@ public class Mongo {
      *
      * @return the default read preference
      */
-    public ReadPreference getReadPreference(){
+    public ReadPreference getReadPreference() {
         throw new UnsupportedOperationException("not supported!");
     }
 
     /**
      * makes it possible to run read queries on secondary nodes
      *
-     * @deprecated Replaced with {@code ReadPreference.secondaryPreferred()}
      * @see ReadPreference#secondaryPreferred()
+     * @deprecated Replaced with {@code ReadPreference.secondaryPreferred()}
      */
     @Deprecated
-    public void slaveOk(){
+    public void slaveOk() {
         throw new UnsupportedOperationException("not supported!");
     }
 
@@ -539,7 +441,7 @@ public class Mongo {
      *
      * @param option value to be added to current options
      */
-    public void addOption( int option ){
+    public void addOption(int option) {
         throw new UnsupportedOperationException("not supported!");
     }
 
@@ -548,14 +450,14 @@ public class Mongo {
      *
      * @param options value to be set
      */
-    public void setOptions( int options ){
+    public void setOptions(int options) {
         throw new UnsupportedOperationException("not supported!");
     }
 
     /**
      * Reset the default query options
      */
-    public void resetOptions(){
+    public void resetOptions() {
         throw new UnsupportedOperationException("not supported!");
     }
 
@@ -564,19 +466,19 @@ public class Mongo {
      *
      * @return an int representing the options to be used by queries
      */
-    public int getOptions(){
+    public int getOptions() {
         throw new UnsupportedOperationException("not supported!");
     }
 
     /**
      * Returns the mongo options.
      *
-     * @deprecated Please use {@link MongoClient}
-     *             and corresponding {@link com.mongodb.MongoClient#getMongoClientOptions()}
      * @return A {@link com.mongodb.MongoOptions} containing the settings for this MongoDB instance.
+     * @deprecated Please use {@link MongoClient}
+     * and corresponding {@link com.mongodb.MongoClient#getMongoClientOptions()}
      */
     @Deprecated
-    public MongoOptions getMongoOptions(){
+    public MongoOptions getMongoOptions() {
         throw new UnsupportedOperationException("not supported!");
     }
 
@@ -584,6 +486,7 @@ public class Mongo {
      * Gets the maximum size for a BSON object supported by the current master server.
      * Note that this value may change over time depending on which server is master.
      * If the size is not known yet, a request may be sent to the master server
+     *
      * @return the maximum size
      * @throws MongoException
      */
@@ -656,7 +559,6 @@ public class Mongo {
          * @return the client
          * @throws MongoException
          * @throws UnknownHostException
-         *
          * @deprecated Please use {@link #connect(MongoClientURI)} instead.
          */
         @Deprecated
@@ -681,13 +583,14 @@ public class Mongo {
             return uri.toString();
         }
 
-        public static Holder singleton() { return _default; }
+        public static Holder singleton() {
+            return _default;
+        }
 
         private static Holder _default = new Holder();
-        private final ConcurrentMap<String,Mongo> _mongos = new ConcurrentHashMap<String,Mongo>();
+        private final ConcurrentMap<String, Mongo> _mongos = new ConcurrentHashMap<String, Mongo>();
 
     }
-
 
 
 }

@@ -26,6 +26,7 @@ import static org.springframework.data.mongodb.core.query.Update.*;
 import java.math.BigInteger;
 import java.util.*;
 
+import org.bson.types.BSONTimestamp;
 import org.bson.types.ObjectId;
 import org.joda.time.DateTime;
 import org.junit.*;
@@ -125,7 +126,7 @@ public class MongoTemplateTests {
 
 	@After
 	public void cleanUp() {
-		cleanDb();
+//		cleanDb();
 	}
 
 	private void prepareCollection(String clName) {
@@ -198,6 +199,45 @@ public class MongoTemplateTests {
 			} catch(Exception e) {
 			}
 		}
+	}
+
+	@Test
+    public void CreateCollectionWithOptions() {
+	    if (template.collectionExists("test")) {
+            template.dropCollection("test");
+        }
+	    Map<String, Integer> shardingKey = new HashMap<String, Integer>();
+	    shardingKey.put("a", 1);
+	    shardingKey.put("b", 1);
+	    CollectionOptions options = new CollectionOptions.Builder()
+                .shardingKey(shardingKey)
+                .partition(4096)
+                .replSize(2)
+                .build();
+	    template.createCollection("test", options);
+    }
+
+	@Test
+	public void BSONTimestamp2DateTest() {
+		prepareCollection("test");
+		DBCollection cl = template.getCollection("test");
+		new BSONTimestamp(1514736000, 12345);
+		DBObject obj = new BasicDBObject("ts", new BSONTimestamp(1514736000, 12345));
+		obj.put("date", new Date(2000 - 1900, 0, 1, 12, 30, 30));
+		cl.insert(obj);
+		// query
+		DBObject record = cl.findOne();
+		System.out.println(String.format("afer insert, record is: %s", record.toString()));
+		Date date = (Date)record.get("date");
+		System.out.println(String.format("date is: %s", date.toString()));
+		BSONTimestamp ts = (BSONTimestamp)record.get("ts");
+		System.out.println(String.format("ts is: %s", record.toString()));
+		Date dateTime = ((BSONTimestamp)record.get("ts")).getDate();
+		int time = ((BSONTimestamp)record.get("ts")).getTime();
+		int inc = ((BSONTimestamp)record.get("ts")).getInc();
+		System.out.println(String.format("date is: %s", dateTime.toString()));
+		System.out.println(String.format("time is: %d", time));
+		System.out.println(String.format("inc is: %d", inc));
 	}
 
 	@Test

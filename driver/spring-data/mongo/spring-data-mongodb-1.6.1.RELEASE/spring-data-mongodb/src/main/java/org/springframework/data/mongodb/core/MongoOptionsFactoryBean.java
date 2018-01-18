@@ -17,14 +17,18 @@ package org.springframework.data.mongodb.core;
 
 import javax.net.ssl.SSLSocketFactory;
 
+import com.sequoiadb.datasource.ConnectStrategy;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
 import org.springframework.data.mongodb.assist.MongoOptions;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * A factory bean for construction of a {@link MongoOptions} instance.
- * 
+ *
  * @author Graeme Rocher
  * @author Mark Pollack
  * @author Mike Saavedra
@@ -33,165 +37,221 @@ import org.springframework.data.mongodb.assist.MongoOptions;
 @SuppressWarnings("deprecation")
 public class MongoOptionsFactoryBean implements FactoryBean<MongoOptions>, InitializingBean {
 
-	private static final MongoOptions DEFAULT_MONGO_OPTIONS = new MongoOptions();
-
-	private int connectionsPerHost = DEFAULT_MONGO_OPTIONS.connectionsPerHost;
-	private int threadsAllowedToBlockForConnectionMultiplier = DEFAULT_MONGO_OPTIONS.threadsAllowedToBlockForConnectionMultiplier;
-	private int maxWaitTime = DEFAULT_MONGO_OPTIONS.maxWaitTime;
-	private int connectTimeout = DEFAULT_MONGO_OPTIONS.connectTimeout;
-	private int socketTimeout = DEFAULT_MONGO_OPTIONS.socketTimeout;
-	private boolean socketKeepAlive = DEFAULT_MONGO_OPTIONS.socketKeepAlive;
-	private boolean autoConnectRetry = DEFAULT_MONGO_OPTIONS.autoConnectRetry;
-	private long maxAutoConnectRetryTime = DEFAULT_MONGO_OPTIONS.maxAutoConnectRetryTime;
-	private int writeNumber = DEFAULT_MONGO_OPTIONS.w;
-	private int writeTimeout = DEFAULT_MONGO_OPTIONS.wtimeout;
-	private boolean writeFsync = DEFAULT_MONGO_OPTIONS.fsync;
-	private boolean slaveOk = DEFAULT_MONGO_OPTIONS.slaveOk;
-	private boolean ssl;
-	private SSLSocketFactory sslSocketFactory;
-
+	private static final String DEFAULT_PREFERRD_INSTANCE_MODE = "ordered";
+	private static final int DEFAULT_SESSION_TIMEOUT = -1;
+	private static final MongoOptions DEFAULT_MONGO_OPTIONS = new MongoOptions.Builder().build();
 	private MongoOptions options;
 
-	/**
-	 * Configures the maximum number of connections allowed per host until we will block.
-	 * 
-	 * @param connectionsPerHost
-	 */
-	public void setConnectionsPerHost(int connectionsPerHost) {
-		this.connectionsPerHost = connectionsPerHost;
-	}
+	// options for connection
+	private int connectTimeout = DEFAULT_MONGO_OPTIONS.getConnectTimeout();
+	private int socketTimeout = DEFAULT_MONGO_OPTIONS.getSocketTimeout();
+	private boolean socketKeepAlive = DEFAULT_MONGO_OPTIONS.isSocketKeepAlive();
+	private boolean useNagle = DEFAULT_MONGO_OPTIONS.isUseNagle();
+	private boolean useSSL = DEFAULT_MONGO_OPTIONS.isUseSSL();
+
+	// options for datasource
+	private int deltaIncCount = DEFAULT_MONGO_OPTIONS.deltaIncCount();
+	private int maxIdleCount = DEFAULT_MONGO_OPTIONS.maxIdleCount();
+	private int maxCount = DEFAULT_MONGO_OPTIONS.maxCount();
+	private int keepAliveTimeout = DEFAULT_MONGO_OPTIONS.keepAliveTimeout();
+	private int checkInterval = DEFAULT_MONGO_OPTIONS.checkInterval();
+	private int syncCoordInterval = DEFAULT_MONGO_OPTIONS.syncCoordInterval();
+	private boolean validateConnection = DEFAULT_MONGO_OPTIONS.isValidateConnection();
+	private ConnectStrategy connectStrategy = ConnectStrategy.SERIAL;
+
+	// options for session
+	private List<String> preferedInstance = DEFAULT_MONGO_OPTIONS.getPreferedInstance();
+	private String preferedInstanceMode = DEFAULT_MONGO_OPTIONS.getPreferedInstanceMode();
+	private int sessionTimeout = DEFAULT_MONGO_OPTIONS.getSessionTimeout();
+
+
 
 	/**
-	 * A multiplier for connectionsPerHost for # of threads that can block a connection. If connectionsPerHost is 10, and
-	 * threadsAllowedToBlockForConnectionMultiplier is 5, then 50 threads can block. If more threads try to block an
-	 * exception will be thrown.
-	 * 
-	 * @param threadsAllowedToBlockForConnectionMultiplier
+	 * Option for Connection. The connection timeout in milliseconds. A timeout of zero is interpreted as an infinite timeout.
+	 * It is used solely when establishing a new connection {@link java.net.Socket#connect(java.net.SocketAddress, int) }
+	 * <p/>
+	 * Default is 10,000.
+	 *
+	 * @return the socket connect timeout
 	 */
-	public void setThreadsAllowedToBlockForConnectionMultiplier(int threadsAllowedToBlockForConnectionMultiplier) {
-		this.threadsAllowedToBlockForConnectionMultiplier = threadsAllowedToBlockForConnectionMultiplier;
-	}
-
-	/**
-	 * Max wait time of a blocking thread for a connection.
-	 * 
-	 * @param maxWaitTime
-	 */
-	public void setMaxWaitTime(int maxWaitTime) {
-		this.maxWaitTime = maxWaitTime;
-	}
-
-	/**
-	 * Configures the connect timeout in milliseconds. Defaults to 0 (infinite time).
-	 * 
-	 * @param connectTimeout
-	 */
-	public void setConnectTimeout(int connectTimeout) {
+	public void setConnectTimeout(final int connectTimeout) {
+		if (connectTimeout < 0) {
+			throw new IllegalArgumentException("Minimum value is 0");
+		}
 		this.connectTimeout = connectTimeout;
 	}
 
 	/**
-	 * Configures the socket timeout. Defaults to 0 (infinite time).
-	 * 
-	 * @param socketTimeout
+	 * Option for Connection. The socket timeout in milliseconds.
+	 * It is used for I/O socket read operations {@link java.net.Socket#setSoTimeout(int)}
+	 * <p/>
+	 * Default is 0 and means no timeout.
+	 * @param socketTimeout the socket timeout in milliseconds.
+	 * @return
 	 */
-	public void setSocketTimeout(int socketTimeout) {
+	public void setSocketTimeout(final int socketTimeout) {
+		if (socketTimeout < 0) {
+			throw new IllegalArgumentException("Minimum value is 0");
+		}
 		this.socketTimeout = socketTimeout;
 	}
 
 	/**
-	 * Configures whether or not to have socket keep alive turned on (SO_KEEPALIVE). Defaults to {@literal false}.
-	 * 
-	 * @param socketKeepAlive
+	 * Option for Connection. Enable/disable SO_KEEPALIVE.
+	 *
+	 * @param on     whether or not to have socket keep alive turned on, default to be false.
 	 */
-	public void setSocketKeepAlive(boolean socketKeepAlive) {
-		this.socketKeepAlive = socketKeepAlive;
+	public void setSocketKeepAlive(final boolean on) {
+		this.socketKeepAlive = on;
 	}
 
 	/**
-	 * This specifies the number of servers to wait for on the write operation, and exception raising behavior. The 'w'
-	 * option to the getlasterror command. Defaults to 0.
-	 * <ul>
-	 * <li>-1 = don't even report network errors</li>
-	 * <li>0 = default, don't call getLastError by default</li>
-	 * <li>1 = basic, call getLastError, but don't wait for slaves</li>
-	 * <li>2 += wait for slaves</li>
-	 * </ul>
-	 * 
-	 * @param writeNumber the number of servers to wait for on the write operation, and exception raising behavior.
+	 * Option for Connection. Enable/disable Nagle's algorithm(disable/enable TCP_NODELAY)
+	 *
+	 * @param on <code>true</code> to disable TCP_NODELAY,
+	 * <code>false</code> to enable, default to be false and going to use enable TCP_NODELAY.
 	 */
-	public void setWriteNumber(int writeNumber) {
-		this.writeNumber = writeNumber;
+	public void setUseNagle(final boolean on) {
+		this.useNagle = on;
 	}
 
 	/**
-	 * Configures the timeout for write operations in milliseconds. This defaults to {@literal 0} (indefinite).
-	 * 
-	 * @param writeTimeout
+	 * Option for Connection. Set whether use the SSL or not.
+	 *
+	 * @param on <code>true</code> for using,
+	 * <code>false</code> for not.
 	 */
-	public void setWriteTimeout(int writeTimeout) {
-		this.writeTimeout = writeTimeout;
+	public void setUseSSL(final boolean on) {
+		this.useSSL = on;
 	}
 
 	/**
-	 * Configures whether or not to fsync. The 'fsync' option to the getlasterror command. Defaults to {@literal false}.
-	 * 
-	 * @param writeFsync to fsync on <code>write (true)<code>, otherwise {@literal false}.
+	 * Option for Datasource.
+	 * Set the number of new connections to create once running out the idle connections
+	 * @param deltaIncCount Default to be 10.
+	 * @return
 	 */
-	public void setWriteFsync(boolean writeFsync) {
-		this.writeFsync = writeFsync;
+	public void setDeltaIncCount(final int deltaIncCount) {
+		this.deltaIncCount = deltaIncCount;
 	}
 
 	/**
-	 * Configures whether or not the system retries automatically on a failed connect. This defaults to {@literal false}.
+	 * Option for Datasource.
+	 * Set the max number of the idle connection left in connection
+	 * pool after periodically cleaning.
+	 * @param maxIdleCount Default to be 10.
+	 * @since 2.2
 	 */
-	public void setAutoConnectRetry(boolean autoConnectRetry) {
-		this.autoConnectRetry = autoConnectRetry;
+	public void setMaxIdleCount(final int maxIdleCount) {
+		this.maxIdleCount = maxIdleCount;
 	}
 
 	/**
-	 * Configures the maximum amount of time in millisecons to spend retrying to open connection to the same server. This
-	 * defaults to {@literal 0}, which means to use the default {@literal 15s} if {@link #autoConnectRetry} is on.
-	 * 
-	 * @param maxAutoConnectRetryTime the maxAutoConnectRetryTime to set
+	 * Option for Datasource.
+	 * Set the capacity of the connection pool.
+	 * When maxCount is set to 0, the connection pool will be disabled.
+	 * @param maxCount Default to be 500.
+	 * @since 2.2
 	 */
-	public void setMaxAutoConnectRetryTime(long maxAutoConnectRetryTime) {
-		this.maxAutoConnectRetryTime = maxAutoConnectRetryTime;
+	public void setMaxCount(final int maxCount) {
+		this.maxCount = maxCount;
 	}
 
 	/**
-	 * Specifies if the driver is allowed to read from secondaries or slaves. Defaults to {@literal false}.
-	 * 
-	 * @param slaveOk true if the driver should read from secondaries or slaves.
+	 * Option for Datasource.
+	 * Set the time in milliseconds for abandoning a connection which keep alive time is up.
+	 * If a connection has not be used(send and receive) for a long time(longer
+	 * than "keepAliveTimeout"), the pool will not let it come back.
+	 * The pool will also clean this kind of idle connections in the pool periodically.
+	 * When "keepAliveTimeout" is not set to 0, it's better to set it
+	 * greater than "checkInterval" triple over. Besides, unless you know what you need,
+	 * never enable this option.
+	 * @param keepAliveTimeout Default to be 0ms, means not care about how long does a connection
+	 *                         have not be used(send and receive).
+	 * @since 2.2
 	 */
-	public void setSlaveOk(boolean slaveOk) {
-		this.slaveOk = slaveOk;
+	public void setKeepAliveTimeout(final int keepAliveTimeout) {
+		this.keepAliveTimeout = keepAliveTimeout;
 	}
 
 	/**
-	 * Specifies if the driver should use an SSL connection to Mongo. This defaults to {@literal false}. By default
-	 * {@link SSLSocketFactory#getDefault()} will be used. See {@link #setSslSocketFactory(SSLSocketFactory)} if you want
-	 * to configure a custom factory.
-	 * 
-	 * @param ssl true if the driver should use an SSL connection.
-	 * @see #setSslSocketFactory(SSLSocketFactory)
+	 * Option for Datasource.
+	 * Set the checking interval in milliseconds. Every interval,
+	 * the pool cleans all the idle connection which keep alive time is up,
+	 * and keeps the number of idle connection not more than "maxIdleCount".
+	 * When "keepAliveTimeout" is not be 0, "checkInterval" should be less than it.
+	 * It's better to set "keepAliveTimeout" greater than "checkInterval" triple over.
+	 * @param checkInterval Default to be 1 * 60 * 1000ms.
+	 * @since 2.2
 	 */
-	public void setSsl(boolean ssl) {
-		this.ssl = ssl;
+	public void setCheckInterval(final int checkInterval) {
+		this.checkInterval = checkInterval;
 	}
 
 	/**
-	 * Specifies the {@link SSLSocketFactory} to use for creating SSL connections to Mongo. Defaults to
-	 * {@link SSLSocketFactory#getDefault()}. Implicitly activates {@link #setSsl(boolean)} if a non-{@literal null} value
-	 * is given.
-	 * 
-	 * @param sslSocketFactory the sslSocketFactory to use.
-	 * @see #setSsl(boolean)
+	 * Option for Datasource.
+	 * Set the interval for updating coord's addresses from catalog in milliseconds.
+	 * The updated coord addresses will cover the addresses in the pool.
+	 * When "syncCoordInterval" is 0, the pool will stop updating coord's addresses from
+	 * catalog.
+	 * @param syncCoordInterval Default to be 1 * 60 * 1000ms.
+	 * @since 2.2
 	 */
-	public void setSslSocketFactory(SSLSocketFactory sslSocketFactory) {
+	public void setSyncCoordInterval(final int syncCoordInterval) {
+		this.syncCoordInterval = syncCoordInterval;
+	}
 
-		setSsl(sslSocketFactory != null);
-		this.sslSocketFactory = sslSocketFactory;
+	/**
+	 * Option for Datasource.
+	 * When a idle connection is got out of pool, we need
+	 * to validate whether it can be used or not.
+	 * @param validateConnection Default to be false.
+	 * @since 2.2
+	 */
+	public void setValidateConnection(final boolean validateConnection ) {
+		this.validateConnection = validateConnection;
+	}
+
+	/**
+	 * Option for Datasource.
+	 * Set connection strategy.
+	 * When choosing ConnectStrategy.LOCAL, if there have no local coord address,
+	 * use other address instead.
+	 * @param strategy Should one of the follow:
+	 *                 ConnectStrategy.SERIAL,
+	 *                 ConnectStrategy.RANDOM,
+	 *                 ConnectStrategy.LOCAL,
+	 *                 ConnectStrategy.BALANCE
+	 * @since 2.2
+	 */
+	public void setConnectStrategy(final ConnectStrategy connectStrategy) {
+		this.connectStrategy = connectStrategy;
+	}
+
+	public void setPreferedInstance(final List<String> instance) {
+		if (instance == null || instance.size() == 0) {
+			return ;
+		}
+		preferedInstance = new ArrayList<String>();
+		for(String s : instance) {
+			preferedInstance.add(s);
+		}
+	}
+
+	public void setPreferedInstanceMode(final String mode) {
+		if (mode == null || mode.isEmpty()) {
+			preferedInstanceMode = DEFAULT_PREFERRD_INSTANCE_MODE;
+		} else {
+			preferedInstanceMode = mode;
+		}
+	}
+
+	public void setSessionTimeout(final int timeout) {
+		if (timeout < 0) {
+			sessionTimeout = DEFAULT_SESSION_TIMEOUT;
+		} else {
+			sessionTimeout = timeout;
+		}
 	}
 
 	/*
@@ -199,26 +259,23 @@ public class MongoOptionsFactoryBean implements FactoryBean<MongoOptions>, Initi
 	 * @see org.springframework.beans.factory.InitializingBean#afterPropertiesSet()
 	 */
 	public void afterPropertiesSet() {
-
-		MongoOptions options = new MongoOptions();
-
-		options.connectionsPerHost = connectionsPerHost;
-		options.threadsAllowedToBlockForConnectionMultiplier = threadsAllowedToBlockForConnectionMultiplier;
-		options.maxWaitTime = maxWaitTime;
-		options.connectTimeout = connectTimeout;
-		options.socketTimeout = socketTimeout;
-		options.socketKeepAlive = socketKeepAlive;
-		options.autoConnectRetry = autoConnectRetry;
-		options.maxAutoConnectRetryTime = maxAutoConnectRetryTime;
-		options.slaveOk = slaveOk;
-		options.w = writeNumber;
-		options.wtimeout = writeTimeout;
-		options.fsync = writeFsync;
-
-		if (ssl) {
-			options.setSocketFactory(sslSocketFactory != null ? sslSocketFactory : SSLSocketFactory.getDefault());
-		}
-
+		MongoOptions options = new MongoOptions.Builder()
+				.connectTimeout(connectTimeout)
+				.socketTimeout(socketTimeout)
+				.socketKeepAlive(socketKeepAlive)
+				.useNagle(useNagle)
+				.useSSL(useSSL)
+				.deltaIncCount(deltaIncCount)
+				.maxIdleCount(maxIdleCount)
+				.maxCount(maxCount)
+				.keepAliveTimeout(keepAliveTimeout)
+				.checkInterval(checkInterval)
+				.syncCoordInterval(syncCoordInterval)
+				.validateConnection(validateConnection)
+				.connectStrategy(connectStrategy)
+				.preferedInstance(preferedInstance)
+				.preferedInstanceMode(preferedInstanceMode)
+				.sessionTimeout(sessionTimeout).build();
 		this.options = options;
 	}
 

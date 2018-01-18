@@ -35,7 +35,7 @@ public class GeoIndexedAppConfig extends AbstractMongoConfiguration {
 	@Override
 	@Bean
 	public Mongo mongo() throws Exception {
-		return new MongoClient("127.0.0.1");
+		return new MongoClient("127.0.0.1", 11810);
 	}
 
 	@Override

@@ -199,9 +199,7 @@ public class MongoURI {
     @SuppressWarnings("deprecation")
     public Mongo connect()
             throws UnknownHostException {
-        // TODO caching?
-        // Note: we can't change this to new MongoClient(this) as that would silently change the default write concern.
-        return new Mongo(this);
+        throw new UnsupportedOperationException("not supported using uri");
     }
 
     /**

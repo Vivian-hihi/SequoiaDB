@@ -15,6 +15,9 @@
  */
 package org.springframework.data.mongodb.core;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Provides a simple wrapper to encapsulate the variety of settings you can use when creating a collection.
  * 
@@ -22,49 +25,147 @@ package org.springframework.data.mongodb.core;
  */
 public class CollectionOptions {
 
-	private Integer maxDocuments;
+	private Map<String, Integer> shardingKey;
+	private String shardingType;
+	private int partition;
+	private int replSize;
+	private boolean compressed;
+	private String compressionType;
+	private boolean isMainCL;
+	private boolean autoSplit;
+	private String group;
+	private boolean autoIndexId;
+	private boolean ensureShardingIndex;
 
-	private Integer size;
-
-	private Boolean capped;
-
-	/**
-	 * Constructs a new <code>CollectionOptions</code> instance.
-	 * 
-	 * @param size the collection size in bytes, this data space is preallocated
-	 * @param maxDocuments the maximum number of documents in the collection.
-	 * @param capped true to created a "capped" collection (fixed size with auto-FIFO behavior based on insertion order),
-	 *          false otherwise.
-	 */
-	public CollectionOptions(Integer size, Integer maxDocuments, Boolean capped) {
-		super();
-		this.maxDocuments = maxDocuments;
-		this.size = size;
-		this.capped = capped;
+	public Map<String, Integer> getShardingKey() {
+		return shardingKey;
 	}
 
-	public Integer getMaxDocuments() {
-		return maxDocuments;
+	public String getShardingType() {
+		return shardingType;
 	}
 
-	public void setMaxDocuments(Integer maxDocuments) {
-		this.maxDocuments = maxDocuments;
+	public int getPartition() {
+		return partition;
 	}
 
-	public Integer getSize() {
-		return size;
+	public int getReplSize() {
+		return replSize;
 	}
 
-	public void setSize(Integer size) {
-		this.size = size;
+	public boolean isCompressed() {
+		return compressed;
 	}
 
-	public Boolean getCapped() {
-		return capped;
+	public String getCompressionType() {
+		return compressionType;
 	}
 
-	public void setCapped(Boolean capped) {
-		this.capped = capped;
+	public boolean isMainCL() {
+		return isMainCL;
+	}
+
+	public boolean isAutoSplit() {
+		return autoSplit;
+	}
+
+	public String getGroup() {
+		return group;
+	}
+
+	public boolean isAutoIndexId() {
+		return autoIndexId;
+	}
+
+	public boolean isEnsureShardingIndex() {
+		return ensureShardingIndex;
+	}
+
+	public static class Builder {
+		private Map<String, Integer> shardingKey = new HashMap<String, Integer>();
+		private String shardingType = "hash";
+		private int partition = 1024;
+		private int replSize = 1;
+		private boolean compressed = false;
+		private String compressionType = "snappy";
+		private boolean isMainCL = false;
+		private boolean autoSplit = true;
+		private String group;
+		private boolean autoIndexId = true;
+		private boolean ensureShardingIndex = true;
+
+		public Builder shardingKey(Map<String, Integer> val) {
+			shardingKey = val;
+			return this;
+		}
+
+		public Builder shardingType(String val) {
+			shardingType = val;
+			return this;
+		}
+
+		public Builder partition(int val) {
+			partition = val;
+			return this;
+		}
+
+		public Builder replSize(int val) {
+			replSize = val;
+			return this;
+		}
+
+		public Builder compressed(boolean val) {
+			compressed = val;
+			return this;
+		}
+
+		public Builder compressionType(String val) {
+			compressionType = val;
+			return this;
+		}
+
+		public Builder isMainCL(boolean val) {
+			isMainCL = val;
+			return this;
+		}
+
+		public Builder autoSplit(boolean val) {
+			autoSplit = val;
+			return this;
+		}
+
+		public Builder group(String val) {
+			group = val;
+			return this;
+		}
+
+		public Builder autoIndexId(boolean val) {
+			autoIndexId = val;
+			return this;
+		}
+
+		public Builder ensureShardingIndex(boolean val) {
+			ensureShardingIndex = val;
+			return this;
+		}
+
+		public CollectionOptions build() {
+			return new CollectionOptions(this);
+		}
+	}
+
+	private CollectionOptions(Builder builder) {
+		shardingKey = builder.shardingKey;
+		shardingType = builder.shardingType;
+		partition = builder.partition;
+		replSize = builder.replSize;
+		compressed = builder.compressed;
+		compressionType = builder.compressionType;
+		isMainCL = builder.isMainCL;
+		autoSplit = builder.autoSplit;
+		group = builder.group;
+		autoIndexId = builder.autoIndexId;
+		ensureShardingIndex = builder.ensureShardingIndex;
 	}
 
 }

@@ -25,34 +25,26 @@ import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.support.PersistenceExceptionTranslator;
-import org.springframework.data.mongodb.CannotGetMongoDbConnectionException;
 import org.springframework.util.StringUtils;
 
 import org.springframework.data.mongodb.assist.Mongo;
 import org.springframework.data.mongodb.assist.MongoOptions;
 import org.springframework.data.mongodb.assist.ServerAddress;
-import org.springframework.data.mongodb.assist.WriteConcern;
 
 /**
  * Convenient factory for configuring MongoDB.
- * 
- * @author Thomas Risberg
- * @author Graeme Rocher
- * @author Oliver Gierke
- * @author Thomas Darimont
- * @since 1.0
  */
 public class MongoFactoryBean implements FactoryBean<Mongo>, InitializingBean, DisposableBean,
 		PersistenceExceptionTranslator {
 
-	private Mongo mongo;
-
-	private MongoOptions mongoOptions;
+	private static final int DEFAULT_COORD_PORT = 11810;
 	private String host;
 	private Integer port;
-	private WriteConcern writeConcern;
-	private List<ServerAddress> replicaSetSeeds;
-	private List<ServerAddress> replicaPair;
+	private String userName;
+	private String password;
+	private MongoOptions mongoOptions;
+	private List<ServerAddress> coordAddress;
+	private Mongo mongo;
 
 	private PersistenceExceptionTranslator exceptionTranslator = new MongoExceptionTranslator();
 
@@ -60,25 +52,15 @@ public class MongoFactoryBean implements FactoryBean<Mongo>, InitializingBean, D
 		this.mongoOptions = mongoOptions;
 	}
 
-	public void setReplicaSetSeeds(ServerAddress[] replicaSetSeeds) {
-		this.replicaSetSeeds = filterNonNullElementsAsList(replicaSetSeeds);
-	}
-
-	/**
-	 * @deprecated use {@link #setReplicaSetSeeds(ServerAddress[])} instead
-	 * 
-	 * @param replicaPair
-	 */
-	@Deprecated
-	public void setReplicaPair(ServerAddress[] replicaPair) {
-		this.replicaPair = filterNonNullElementsAsList(replicaPair);
+	public void setCoordAddress(List<ServerAddress> coordAddress) {
+		this.coordAddress = filterNonNullElementsAsList(coordAddress);
 	}
 
 	/**
 	 * @param elements the elements to filter <T>
 	 * @return a new unmodifiable {@link List#} from the given elements without nulls
 	 */
-	private <T> List<T> filterNonNullElementsAsList(T[] elements) {
+	private <T> List<T> filterNonNullElementsAsList(List<T> elements) {
 
 		if (elements == null) {
 			return Collections.emptyList();
@@ -103,13 +85,12 @@ public class MongoFactoryBean implements FactoryBean<Mongo>, InitializingBean, D
 		this.port = port;
 	}
 
-	/**
-	 * Sets the {@link WriteConcern} to be configured for the {@link Mongo} instance to be created.
-	 * 
-	 * @param writeConcern
-	 */
-	public void setWriteConcern(WriteConcern writeConcern) {
-		this.writeConcern = writeConcern;
+	public void setUserName(String userName) {
+		this.userName = userName;
+	}
+
+	public void setPassword(String password) {
+		this.password = password;
 	}
 
 	public void setExceptionTranslator(PersistenceExceptionTranslator exceptionTranslator) {
@@ -155,24 +136,18 @@ public class MongoFactoryBean implements FactoryBean<Mongo>, InitializingBean, D
 		ServerAddress defaultOptions = new ServerAddress();
 
 		if (mongoOptions == null) {
-			mongoOptions = new MongoOptions();
+			mongoOptions = new MongoOptions.Builder().build();
 		}
 
-		if (!isNullOrEmpty(replicaPair)) {
-			if (replicaPair.size() < 2) {
-				throw new CannotGetMongoDbConnectionException("A replica pair must have two server entries");
-			}
-			mongo = new Mongo(replicaPair.get(0), replicaPair.get(1), mongoOptions);
-		} else if (!isNullOrEmpty(replicaSetSeeds)) {
-			mongo = new Mongo(replicaSetSeeds, mongoOptions);
+		if (!isNullOrEmpty(coordAddress)) {
+			mongo = new Mongo(coordAddress, userName, password, mongoOptions);
 		} else {
 			String mongoHost = StringUtils.hasText(host) ? host : defaultOptions.getHost();
-			mongo = port != null ? new Mongo(new ServerAddress(mongoHost, port), mongoOptions) : new Mongo(mongoHost,
-					mongoOptions);
-		}
-
-		if (writeConcern != null) {
-			mongo.setWriteConcern(writeConcern);
+			if (port != null) {
+				mongo = new Mongo(new ServerAddress(mongoHost, port), userName, password, mongoOptions);
+			} else {
+				mongo = new Mongo(mongoHost, DEFAULT_COORD_PORT, userName, password, mongoOptions);
+			}
 		}
 
 		this.mongo = mongo;

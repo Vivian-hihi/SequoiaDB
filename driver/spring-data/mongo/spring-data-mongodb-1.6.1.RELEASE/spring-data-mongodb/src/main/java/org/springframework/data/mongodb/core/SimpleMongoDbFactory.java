@@ -93,8 +93,7 @@ public class SimpleMongoDbFactory implements DisposableBean, MongoDbFactory {
 	 */
 	@SuppressWarnings("deprecation")
 	public SimpleMongoDbFactory(MongoURI uri) throws MongoException, UnknownHostException {
-		this(new Mongo(uri), uri.getDatabase(), new UserCredentials(uri.getUsername(), parseChars(uri.getPassword())),
-				true, uri.getDatabase());
+		throw new UnsupportedOperationException("not supported for using uri");
 	}
 
 	private SimpleMongoDbFactory(Mongo mongo, String databaseName, UserCredentials credentials,

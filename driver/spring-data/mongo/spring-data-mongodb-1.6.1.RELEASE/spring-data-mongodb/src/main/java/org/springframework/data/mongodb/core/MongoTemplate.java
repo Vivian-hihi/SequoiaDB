@@ -407,7 +407,7 @@ public class MongoTemplate implements MongoOperations, ApplicationContextAware {
 	}
 
 	public DBCollection createCollection(final String collectionName, final CollectionOptions collectionOptions) {
-		return doCreateCollection(collectionName, null);
+		return doCreateCollection(collectionName, convertToDbObject(collectionOptions));
 	}
 
 	public <T> DBCollection getCollection(Class<T> entityClass) {
@@ -1478,15 +1478,27 @@ public class MongoTemplate implements MongoOperations, ApplicationContextAware {
 	protected DBObject convertToDbObject(CollectionOptions collectionOptions) {
 		DBObject dbo = new BasicDBObject();
 		if (collectionOptions != null) {
-			if (collectionOptions.getCapped() != null) {
-				dbo.put("capped", collectionOptions.getCapped().booleanValue());
+			if (collectionOptions.getShardingKey() != null) {
+				dbo.put("ShardingKey", collectionOptions.getShardingKey());
 			}
-			if (collectionOptions.getSize() != null) {
-				dbo.put("size", collectionOptions.getSize().intValue());
+			if (collectionOptions.getShardingType() != null) {
+				dbo.put("ShardingType", collectionOptions.getShardingType());
+				if (collectionOptions.getShardingType().equals("hash")) {
+					dbo.put("Partition", collectionOptions.getPartition());
+				}
 			}
-			if (collectionOptions.getMaxDocuments() != null) {
-				dbo.put("max", collectionOptions.getMaxDocuments().intValue());
+			dbo.put("ReplSize", collectionOptions.getReplSize());
+			dbo.put("Compressed", collectionOptions.isCompressed());
+			if (collectionOptions.isCompressed()) {
+				dbo.put("CompressionType", collectionOptions.getCompressionType());
 			}
+			dbo.put("IsMainCL", collectionOptions.isMainCL());
+			dbo.put("AutoSplit", collectionOptions.isAutoSplit());
+			if (collectionOptions.getGroup() != null && !collectionOptions.getGroup().isEmpty()) {
+				dbo.put("Group", collectionOptions.getGroup());
+			}
+			dbo.put("AutoIndexId", collectionOptions.isAutoIndexId());
+			dbo.put("EnsureShardingIndex", collectionOptions.isEnsureShardingIndex());
 		}
 		return dbo;
 	}

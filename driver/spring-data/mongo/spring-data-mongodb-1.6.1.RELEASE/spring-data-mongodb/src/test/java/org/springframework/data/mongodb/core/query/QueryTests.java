@@ -44,6 +44,19 @@ public class QueryTests {
 	@Rule public ExpectedException exception = ExpectedException.none();
 
 	@Test
+	public void testQueryWithAnd() {
+		Query q = new Query(Criteria.where("name").is("Thomas").
+				andOperator(Criteria.where("age").gte(10), Criteria.where("age").lte(100)));
+		Query q2 = new Query(Criteria.where("age").gte(10).lte(100));
+		System.out.println("q is: " + q.getQueryObject().toString());
+		System.out.println("q2 is: " + q2.getQueryObject().toString());
+
+
+//		String expected = "{ \"name\" : \"Thomas\" , \"age\" : { \"$lt\" : 80 } }";
+//		Assert.assertEquals(expected, q.getQueryObject().toString());
+	}
+
+	@Test
 	public void testSimpleQuery() {
 		Query q = new Query(where("name").is("Thomas").and("age").lt(80));
 		String expected = "{ \"name\" : \"Thomas\" , \"age\" : { \"$lt\" : 80 } }";
