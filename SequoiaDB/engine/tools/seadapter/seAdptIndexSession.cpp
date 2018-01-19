@@ -107,7 +107,7 @@ namespace engine
    {
       if ( _esClt )
       {
-         sdbGetSeAdapterCB()->getSeCltMgr()->releaseClt( &_esClt ) ;
+         sdbGetSeAdapterCB()->getSeCltMgr()->releaseClt( _esClt ) ;
       }
    }
 
@@ -1126,7 +1126,7 @@ namespace engine
 
       if ( !_esClt )
       {
-         rc = sdbGetSeAdapterCB()->getSeCltMgr()->getSeClt( &_esClt ) ;
+         rc = sdbGetSeAdapterCB()->getSeCltMgr()->getClt( &_esClt ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "Failed to get search engine client, rc: %d",
@@ -1252,7 +1252,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       if ( !_esClt )
       {
-         rc = sdbGetSeAdapterCB()->getSeCltMgr()->getSeClt( &_esClt ) ;
+         rc = sdbGetSeAdapterCB()->getSeCltMgr()->getClt( &_esClt ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "Failed to get search engine client, rc: %d",

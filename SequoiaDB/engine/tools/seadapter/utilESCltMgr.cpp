@@ -42,37 +42,32 @@
 
 namespace engine
 {
-   _utilESCltMgr::_utilESCltMgr()
+   _utilESCltMgr::_utilESCltMgr( UINT32 cacheNum )
    {
+      _cacheNum = cacheNum ;
    }
 
    _utilESCltMgr::~_utilESCltMgr()
    {
-      // Clean all the clients.
-      _utilList<utilESClt *>::iterator itr = _seCltList.begin() ;
-      while ( itr != _seCltList.end() )
+      // Clean all clients.
+      for ( vector<utilESClt *>::iterator itr = _vecSEClt.begin();
+            itr != _vecSEClt.end(); ++itr )
       {
-         _seCltList.erase( itr ) ;
+         SDB_OSS_DEL *itr ;
       }
    }
 
    INT32 _utilESCltMgr::init( const std::string &url )
    {
       INT32 rc = SDB_OK ;
-      utilESClt *seClt = NULL ;
 
-      _url = url ;
-
-      // Initial one connection with search engine, and push it into the list.
-      rc = getSeClt( &seClt ) ;
-      if ( rc )
+      if ( url.empty() )
       {
-         PD_LOG( PDERROR, "Failed to init the first client with search engine, "
-                 "rc: %d", rc ) ;
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "Url to init search engine client manager is empty" ) ;
          goto error ;
       }
-
-      _seCltList.push_back( seClt ) ;
+      _url = url ;
 
    done:
       return rc ;
@@ -80,7 +75,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _utilESCltMgr::getSeClt( utilESClt **seClt )
+   INT32 _utilESCltMgr::getClt( utilESClt **seClt )
    {
       INT32 rc = SDB_OK ;
       utilESClt* client = NULL ;
@@ -88,28 +83,31 @@ namespace engine
       SDB_ASSERT( seClt, "Parameter should not be null" ) ;
 
       // If there are idle client, get it. Otherwise, create a new one.
-      if ( _seCltList.size() > 0 )
+      _latch.get() ;
+      if ( _vecSEClt.size() > 0 )
       {
-         client = _seCltList.back() ;
-         _seCltList.pop_back() ;
+         client = _vecSEClt.back() ;
+         _vecSEClt.pop_back() ;
       }
       else
       {
          client = SDB_OSS_NEW _utilESClt() ;
-         if ( !client )
-         {
-            rc = SDB_OOM ;
-            PD_LOG( PDERROR, "Failed to allocate memory for search engine client, "
-                    "rc: %d", rc ) ;
-            goto error ;
-         }
-         rc = client->init( _url ) ;
-         if ( rc )
-         {
-            PD_LOG( PDERROR, "Failed to init search engine client, rc: %d",
-                    rc ) ;
-            goto error ;
-         }
+      }
+      _latch.release() ;
+
+      if ( !client )
+      {
+         rc = SDB_OOM ;
+         PD_LOG( PDERROR, "Failed to allocate memory for search engine client, "
+                 "rc: %d", rc ) ;
+         goto error ;
+      }
+      rc = client->init( _url ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to init search engine client, rc: %d",
+                 rc ) ;
+         goto error ;
       }
 
       *seClt = client ;
@@ -117,28 +115,31 @@ namespace engine
    done:
       return rc ;
    error:
+      if ( client )
+      {
+         SDB_OSS_DEL client ;
+      }
       goto done ;
    }
 
-   INT32 _utilESCltMgr::releaseClt( utilESClt **seClt )
+   void _utilESCltMgr::releaseClt( utilESClt *&seClt )
    {
-      INT32 rc = SDB_OK ;
-
-      SDB_ASSERT( seClt, "Client pointer should not be null" ) ;
-      if ( !seClt || !(*seClt) )
+      if ( !seClt )
       {
-         rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "Null search engine client object to release, rc: %d",
-                 rc ) ;
-         goto error ;
+         return ;
       }
 
-
-
-   done:
-      return rc ;
-   error:
-      goto done ;
+      _latch.get() ;
+      if ( _vecSEClt.size() < _cacheNum )
+      {
+         _vecSEClt.push_back( seClt ) ;
+      }
+      else
+      {
+         SDB_OSS_DEL seClt ;
+      }
+      _latch.release() ;
+      seClt = NULL ;
    }
 }
 

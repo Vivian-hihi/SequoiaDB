@@ -59,7 +59,7 @@ namespace engine
    {
       if ( _esClt )
       {
-         _seCltMgr->releaseClt( &_esClt ) ;
+         _seCltMgr->releaseClt( _esClt ) ;
       }
       if ( _context )
       {
@@ -224,7 +224,7 @@ namespace engine
 
          if ( !_esClt )
          {
-            rc = _seCltMgr->getSeClt( &_esClt ) ;
+            rc = _seCltMgr->getClt( &_esClt ) ;
             if ( rc )
             {
                PD_LOG_MSG( PDERROR, "Connect to search engine failed[ %d ]", rc ) ;

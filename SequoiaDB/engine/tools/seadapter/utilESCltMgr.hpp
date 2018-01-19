@@ -38,26 +38,28 @@
 #ifndef UTIL_SECLT_MGR_HPP_
 #define UTIL_SECLT_MGR_HPP_
 
-#include "utilList.hpp"
+#include "ossLatch.hpp"
 #include "utilESClt.hpp"
 
+#define UTIL_ESCLT_DFT_CACHE_NUM    100
 namespace engine
 {
    // Management of search engine client.
-   class _utilESCltMgr
+   class _utilESCltMgr : public SDBObject
    {
    public:
-      _utilESCltMgr() ;
+      _utilESCltMgr( UINT32 cacheNum = UTIL_ESCLT_DFT_CACHE_NUM ) ;
       ~_utilESCltMgr() ;
 
       INT32 init( const std::string &url ) ;
-      INT32 getSeClt( utilESClt **seClt ) ;
-      INT32 releaseClt( utilESClt **seClt ) ;
+      INT32 getClt( utilESClt **seClt ) ;
+      void releaseClt( utilESClt *&seClt ) ;
 
    private:
-      // Search engine information
-      std::string _url ;
-      _utilList<utilESClt *> _seCltList ;
+      std::string          _url ;      // Search engine address
+      UINT32               _cacheNum ;
+      ossSpinXLatch        _latch ;
+      vector<utilESClt *>  _vecSEClt ;
    } ;
    typedef _utilESCltMgr utilESCltMgr ;
 }
