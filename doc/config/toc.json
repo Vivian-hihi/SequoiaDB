@@ -1415,6 +1415,12 @@
                            "en": "getDomain()"
                         },
                         {
+                           "id": 1516326561,
+                           "file": "getSessionAttr",
+                           "cn": "getSessionAttr()",
+                           "en": "getSessionAttr()"
+                        },
+                        {
                            "id": 1432190791,
                            "file": "getRG",
                            "cn": "getRG()",
