@@ -85,28 +85,28 @@ function getNodesInGroups(db, groups)
    var datas = new Array();
    
    //standalone
-   if(0 === groups.length)
+   if(true === commIsStandalone(db))
    {
       datas[0] = Array();
       datas[0][0] = db;
-   }
-   
-   for (var i = 0 ; i < groups.length; ++i)
-   {
-      datas[i] = Array();
-      
-      var rg = db.getRG(groups[i]);
-      var rgDetail = eval( "(" + rg.getDetail().toArray()[0] + ")");
-      var nodesInGroup = rgDetail.Group;
-      for(var j = 0; j < nodesInGroup.length; ++j)
+   }else{
+      for (var i = 0 ; i < groups.length; ++i)
       {
-         var hostName = nodesInGroup[j].HostName;
-         var serviceName = nodesInGroup[j].Service[0].Name;
-         datas[i][j] = new Sdb(hostName, serviceName);                                                                                                                                    
+         datas[i] = Array();
+         
+         var rg = db.getRG(groups[i]);
+         var rgDetail = eval( "(" + rg.getDetail().toArray()[0] + ")");
+         var nodesInGroup = rgDetail.Group;
+         println("nodesInGroup:" + nodesInGroup);
+         for(var j = 0; j < nodesInGroup.length; ++j)
+         {
+            var hostName = nodesInGroup[j].HostName;
+            var serviceName = nodesInGroup[j].Service[0].Name;
+            datas[i][j] = new Sdb(hostName, serviceName);                                                                                                                                 
+         }
+         
       }
-      
    }
-   
    return datas;
 }
 
@@ -154,11 +154,11 @@ function checkLSN(db, groups)
 *@author:      zhaoyu
 *@createDate:  2017.11.8
 **************************************/
-function checkStat( db, csName, clName, indexName, clExistStat, indexExistStat )
+function checkStat( db, csName, clName, indexName, clExistStat, indexExistStat, groups )
 {
    if( clExistStat == undefined ){ clExistStat = true;}
    if( indexExistStat == undefined ){ indexExistStat = true;}
-   var groups = commGetCLGroups( db, csName + "." + clName );
+   if( groups == undefined ){var groups = commGetCLGroups( db, csName + "." + clName );}
    
    //check lsn
    //the longest waiting time is 600S
@@ -755,59 +755,61 @@ function getSplitAccessPlans( db, findConf, selectorConf, sortConf )
 *@author:      liuxiaoxuan
 *@createDate:  2018.01.15
 **************************************/
-function checkSnapShotAccessPlans( csName, clName, expectAccessPlans, actAccessPlans )
+function checkSnapShotAccessPlans( clFullName, expectAccessPlans, actAccessPlans, groups )
 {
-   try
-   {
-      var groups = commGetCLGroups( db, csName + "." + clName );
-      var datas = getNodesInGroups(db, groups);
-		
-      //独立模式或一组一节点的情况
-		var expAccessPlans = new Array();
+   var expAccessPlans = new Array();
+   
+   //判断独立模式、存在1组1节点模式的集群、cl不存在的情况下可能存在不同的预期结果
+   if(commIsStandalone(db) == true){
+      for(var i = 0; i < expectAccessPlans.length / 2; i++)
+      {
+        expAccessPlans.push(expectAccessPlans[i]);
+      }
+   }else{
+      if(groups !== undefined){
+         var datas = getNodesInGroups(db, groups);
+      }else{
+         var groups = commGetCLGroups( db, clFullName );
+         var datas = getNodesInGroups(db, groups);
+      }
       if(1 === datas[0].length)
       {
          for(var i = 0; i < expectAccessPlans.length / 2; i++)
          {
             expAccessPlans.push(expectAccessPlans[i]);
          }
-	   }
-		else
-		{
-			expAccessPlans = expectAccessPlans;
-		}
-		
-      //校验计划个数
-      if( expAccessPlans.length !==  actAccessPlans.length )
-      {
-          throw buildException("check length", "accessPlan length", "check failed!",
-									expAccessPlans.length, actAccessPlans.length);
+      }else{
+         expAccessPlans = expectAccessPlans;
       }
-		
-      //校验查询计划，不校验元素顺序
-      var newExpAccessPlans = new Array();
-      var newActAccessPlans = new Array();
-      for(var i = 0; i < expAccessPlans.length; i++)
-		{
-         var newObj1 = objSortByKey(actAccessPlans[i]);
-         newActAccessPlans.push(newObj1);
-      
-         var newObj2 = objSortByKey(expAccessPlans[i]);
-         newExpAccessPlans.push(newObj2);   
-      }
-		    	 
-      for(var i = 0; i < expAccessPlans.length; i++)
-      {
-         if(JSON.stringify(newActAccessPlans).indexOf(JSON.stringify(newExpAccessPlans[i])) === -1
-               && JSON.stringify(newExpAccessPlans).indexOf(JSON.stringify(newActAccessPlans[i])) === -1)
-         {
-            throw buildException("check access plan", "access plan", "fail", 
-	   		                  JSON.stringify(newExpAccessPlans), JSON.stringify(newActAccessPlans));
-         }
-      }
-     
    }
-   catch(e)
+	
+   //校验计划个数
+   if( expAccessPlans.length !==  actAccessPlans.length )
    {
-      throw buildException("check snapshot accessPlan", e, "snapshot accessPlan", "success", e);
+       throw buildException("check length", "accessPlan length", "check failed!",
+								expAccessPlans.length, actAccessPlans.length);
    }
+	
+   //校验查询计划，不校验元素顺序
+   var newExpAccessPlans = new Array();
+   var newActAccessPlans = new Array();
+   for(var i = 0; i < expAccessPlans.length; i++)
+	{
+      var newObj1 = objSortByKey(actAccessPlans[i]);
+      newActAccessPlans.push(newObj1);
+   
+      var newObj2 = objSortByKey(expAccessPlans[i]);
+      newExpAccessPlans.push(newObj2);   
+   }
+	    	 
+   for(var i = 0; i < expAccessPlans.length; i++)
+   {
+      if(JSON.stringify(newActAccessPlans).indexOf(JSON.stringify(newExpAccessPlans[i])) === -1
+            || JSON.stringify(newExpAccessPlans).indexOf(JSON.stringify(newActAccessPlans[i])) === -1)
+      {
+         throw buildException("check access plan", "access plan", "fail", 
+   		                  JSON.stringify(newExpAccessPlans), JSON.stringify(newActAccessPlans));
+      }
+   }
+   println("check accessPlan snapshot success");
 }                                                                          

@@ -6,20 +6,34 @@
 **************************************/
 function main()
 {	
-   if (commIsStandalone(db))
-   {
-      println("skip standalone environment");
-      return ;
+   //独立模式及1组模式不执行该用例
+   try
+	{
+	   //判断独立模式
+	   if( true == commIsStandalone( db ) )
+      {
+         println( "run mode is standalone" );
+         return;
+      } 
+          
+      //判断1节点模式
+      var groups = new Array();
+      temp = commGetGroups( db );
+      for(var i=0; i< temp.length;i++){
+         groups.push(temp[i][0].GroupName);
+      }
+      
+      var nodes = getNodesInGroups(db, groups);
+      for(var i=0;i<nodes.length;i++){
+         if(1 === nodes[i].length){
+            println("group exists one node");
+            return ;
+         }
+      }
    }
-   
-  //判断1节点模式
-   var groups = new Array();
-   groups[0] = commGetGroups( db )[0][0].GroupName;
-   var nodes = getNodesInGroups(db, groups);  
-   if( 1 === nodes[0].length )
+   catch( e )
    {
-      println("only one node");
-      return ;
+      throw e;
    }
                                       	
    var csName = COMMCSNAME + "11638";
