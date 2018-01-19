@@ -50,6 +50,7 @@ final class AdminCommand {
     final static String LIST_LOBS = PREFIX + "list lobs";
 
     final static String SET_SESSION_ATTRIBUTE = PREFIX + "set session attribute";
+    final static String GET_SESSION_ATTRIBUTE = PREFIX + "get session attribute";
     final static String SYNC_DB = PREFIX + "sync db";
     final static String EXPORT_CONFIG = PREFIX + "export configuration";
 

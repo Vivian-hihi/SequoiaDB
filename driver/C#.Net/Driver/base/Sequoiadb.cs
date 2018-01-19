@@ -26,6 +26,7 @@ namespace SequoiaDB
         private static bool enableCache = true;
         private static long cacheInterval = 300 * 1000;
         //private static readonly Logger logger = new Logger("Sequoiadb");
+        private BsonDocument attributeCache = new BsonDocument();
 
         internal void UpsertCache(String name)
         {
@@ -295,6 +296,7 @@ namespace SequoiaDB
                     throw e;
                 }
             }
+            _clearSessionAttrCache();
         }
 
         /** \fn Disconnect()
@@ -311,6 +313,7 @@ namespace SequoiaDB
                 connection.Close();
                 connection = null;
             }
+            _clearSessionAttrCache();
         }
 
         /** \fn bool IsClosed()
@@ -1208,6 +1211,21 @@ namespace SequoiaDB
             }
         }
 
+        internal void _clearSessionAttrCache()
+        {
+            this.attributeCache.Clear();
+        }
+
+        internal void _setSessionAttrCache(BsonDocument attribute)
+        {
+            this.attributeCache = (BsonDocument)attribute.DeepClone();
+        }
+
+        internal BsonDocument _getSessionAttrCache()
+        {
+            return (BsonDocument)this.attributeCache.DeepClone();
+        }
+
         /** \fn void SetSessionAttr(BsonDocument options)
          *  \brief Set the attributes of the session.
          *  \param options The configuration options for session.The options are as below:
@@ -1240,6 +1258,7 @@ namespace SequoiaDB
             attrObj.Add(options);
             attrObj.Add(SequoiadbConstants.FIELD_NAME_VERSION,
                         SequoiadbConstants.SDB_SETSESSIONATTR_V1);
+            _clearSessionAttrCache() ;
             // build command
             string commandString = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.SETSESS_ATTR;
             // run command
@@ -1249,6 +1268,41 @@ namespace SequoiaDB
             int flags = rtn.Flags;
             if (flags != 0)
                 throw new BaseException(flags);
+        }
+
+        /** \fn BsonDocument GetSessionAttr()
+         *  \brief Get the attributes of the session.
+         *  \return BsonDocument or null while no session attributes returned
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+         */
+        public BsonDocument GetSessionAttr()
+        {
+            BsonDocument result = _getSessionAttrCache();
+            if (result.ElementCount != 0)
+            {
+                return result;
+            }
+            // build command
+            string commandString = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.GETSESS_ATTR;
+            // run command
+            BsonDocument dummyObj = new BsonDocument();
+            SDBMessage rtn = AdminCommand(commandString, dummyObj, dummyObj, dummyObj, dummyObj);
+            // check return flag
+            int flags = rtn.Flags;
+            if (flags != 0)
+                throw new BaseException(flags);
+            DBCursor cursor = new DBCursor(rtn, this);
+            result = cursor.Next();
+            if (result == null)
+            {
+                _clearSessionAttrCache();
+            }
+            else
+            {
+                _setSessionAttrCache(result);
+            }
+            return result;
         }
 
         /** \fn void CloseAllCursors()

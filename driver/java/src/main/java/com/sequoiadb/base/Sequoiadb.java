@@ -19,6 +19,7 @@ package com.sequoiadb.base;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.SDBError;
 import com.sequoiadb.message.MsgOpCode;
+import com.sequoiadb.message.ResultSet;
 import com.sequoiadb.message.request.*;
 import com.sequoiadb.message.response.CommonResponse;
 import com.sequoiadb.message.response.SdbReply;
@@ -55,6 +56,7 @@ public class Sequoiadb implements Closeable {
     private Map<String, Long> nameCache = new HashMap<String, Long>();
     private static boolean enableCache = true;
     private static long cacheInterval = 300 * 1000;
+    private BSONObject attributeCache = null;
 
     private final static String DEFAULT_HOST = "127.0.0.1";
     private final static int DEFAULT_PORT = 11810;
@@ -479,6 +481,7 @@ public class Sequoiadb implements Closeable {
     public void releaseResource() throws BaseException {
         // let the receive buffer shrink to default value
         closeAllCursors();
+        attributeCache = null;
     }
 
     /**
@@ -1370,6 +1373,21 @@ public class Sequoiadb implements Closeable {
         throwIfError(response);
     }
 
+    private void _clearSessionAttrCache()
+    {
+        attributeCache = null;
+    }
+
+    private BSONObject _getSessionAttrCache()
+    {
+        return attributeCache;
+    }
+
+    private void _setSessionAttrCache( BSONObject attribute )
+    {
+        attributeCache = attribute;
+    }
+
     /**
      * Set the attributes of the current session.
      * @param options The configuration options for the current session.The options are as below:
@@ -1405,9 +1423,46 @@ public class Sequoiadb implements Closeable {
         newObj.putAll(options);
         newObj.put(SdbConstants.FIELD_NAME_VERSION, SdbConstants.SDB_SETSESSIONATTR_V1);
 
+        _clearSessionAttrCache();
+
         AdminRequest request = new AdminRequest(AdminCommand.SET_SESSION_ATTRIBUTE, newObj);
         SdbReply response = requestAndResponse(request);
         throwIfError(response);
+    }
+
+    /**
+     * Get the attributes of the current session.
+     * @return the BSONObject of the session attribute.
+     * @throws BaseException If error happens.
+     * @since 2.8.5
+     */
+    public BSONObject getSessionAttr() throws BaseException {
+        BSONObject result = _getSessionAttrCache();
+        if (null != result)
+        {
+            return result;
+        }
+        AdminRequest request = new AdminRequest(AdminCommand.GET_SESSION_ATTRIBUTE);
+        SdbReply response = requestAndResponse(request);
+        throwIfError(response);
+        ResultSet resultSet = response.getResultSet();
+        if (null != resultSet && resultSet.hasNext())
+        {
+            result=resultSet.getNext();
+            if ( null == result )
+            {
+                _clearSessionAttrCache();
+            }
+            else
+            {
+                _setSessionAttrCache(result);
+            }
+        }
+        else
+        {
+            _clearSessionAttrCache();
+        }
+        return result;
     }
 
     /**

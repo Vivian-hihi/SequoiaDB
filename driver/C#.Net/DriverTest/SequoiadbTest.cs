@@ -1008,6 +1008,24 @@ namespace DriverTest
         }
 
         [TestMethod()]
+        public void getSessionAttr_Test()
+        {
+            BsonDocument attribute = sdb.GetSessionAttr();
+            Console.WriteLine(attribute.ToString());
+        }
+
+        [TestMethod()]
+        public void getSessionAttr_data_Test()
+        {
+            Sequoiadb data = new Sequoiadb(config.conf.Data.Address);
+            data.Connect(config.conf.UserName, config.conf.Password);
+            Assert.IsNotNull(data.Connection);
+            BsonDocument attribute = data.GetSessionAttr();
+            Assert.IsNull(attribute);
+            data.Disconnect();
+        }
+
+        [TestMethod()]
         public void Sync_DB_Test()
         {
             BsonDocument options = new BsonDocument();
