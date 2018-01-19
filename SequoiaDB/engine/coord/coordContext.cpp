@@ -70,6 +70,7 @@ namespace engine
 
    _rtnContextCoord::~_rtnContextCoord ()
    {
+      unregisterAllProcessors() ;
       if ( NULL != _pSession )
       {
          pmdEDUCB *cb = pmdGetThreadEDUCB() ;

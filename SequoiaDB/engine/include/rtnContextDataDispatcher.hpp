@@ -103,6 +103,7 @@ namespace engine
 
          void registerProcessor ( _IRtnCtxDataProcessor * processor ) ;
          void unregisterProcessor ( _IRtnCtxDataProcessor * processor ) ;
+         void unregisterAllProcessors () ;
 
          OSS_INLINE BOOLEAN hasProcessor () const
          {
@@ -127,6 +128,8 @@ namespace engine
                               INT32 dataNum ) ;
 
          INT32 _checkSubContext ( INT64 dataID ) ;
+
+         void _clearFlags () ;
 
       protected :
          BOOLEAN                 _hasProcessor ;

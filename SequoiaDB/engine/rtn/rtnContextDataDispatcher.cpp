@@ -116,12 +116,13 @@ namespace engine
             break ;
          }
       }
-      if ( _processors.empty() )
-      {
-         _hasProcessor = FALSE ;
-         _needCheckData = FALSE ;
-         _needCheckSubContext = FALSE ;
-      }
+      _clearFlags() ;
+   }
+
+   void _rtnCtxDataDispatcher::unregisterAllProcessors ()
+   {
+      _processors.clear() ;
+      _clearFlags() ;
    }
 
    INT32 _rtnCtxDataDispatcher::_processData ( INT64 processorType,
@@ -184,6 +185,16 @@ namespace engine
 
    error :
       goto done ;
+   }
+
+   void _rtnCtxDataDispatcher::_clearFlags ()
+   {
+      if ( _processors.empty() )
+      {
+         _hasProcessor = FALSE ;
+         _needCheckData = FALSE ;
+         _needCheckSubContext = FALSE ;
+      }
    }
 
 }
