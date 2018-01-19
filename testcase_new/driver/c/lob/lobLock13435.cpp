@@ -42,49 +42,48 @@ protected:
 TEST_F( lobLock13435, lobHandle )
 {
    INT32 rc = SDB_OK ;
+
    sdbLobHandle lob = SDB_INVALID_HANDLE ;
    rc = sdbLockLob( lob, 0, SDB_LOB_SEEK_SET ) ;
-   ASSERT_EQ( SDB_INVALIDARG, rc ) << "fail to test lockLob with illegal lob" ;
+   ASSERT_EQ( SDB_INVALIDARG, rc ) << "fail to test lockLob with invalid lob handle" ;
+
+   rc = sdbLockLob( db, 0, SDB_LOB_SEEK_SET ) ;
+   ASSERT_EQ( SDB_CLT_INVALID_HANDLE, rc ) << "fail to test lockLob with db handle" ;
+
+   bson_oid_t oid ;
+   bson_oid_gen( &oid ) ;
+   rc = sdbOpenLob( cl, &oid, SDB_LOB_CREATEONLY, &lob ) ;
+   ASSERT_EQ( SDB_OK, rc ) << "fail to openLob" ;
+   rc = sdbCloseLob( &lob ) ;
+   ASSERT_EQ( SDB_OK, rc ) << "fail to close lob" ;
+   rc = sdbLockLob( lob, 0, SDB_LOB_SEEK_SET ) ;
+   ASSERT_EQ( SDB_INVALIDARG, rc ) << "fail to test lockLob with closed lob" ;
 }
 
 TEST_F( lobLock13435, offset )
 {
    INT32 rc = SDB_OK ;
 
-   // create lob
    bson_oid_t oid ;
    bson_oid_gen( &oid ) ;
    sdbLobHandle lob ;
    rc = sdbOpenLob( cl, &oid, SDB_LOB_CREATEONLY, &lob ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to openLob with create mode" ;
    rc = sdbCloseLob( &lob ) ;
+   ASSERT_EQ( SDB_OK, rc ) << "fail to close lob" ;
       
-   // write lob
    rc = sdbOpenLob( cl, &oid, SDB_LOB_WRITE, &lob ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to openLob with write mode" ;
-
    rc = sdbLockLob( lob, -1, 10 ) ;
    ASSERT_EQ( SDB_INVALIDARG, rc ) << "fail to test lockLob with offset -1" ;
-   rc = sdbLockLob( lob, 0, 10 ) ;
-   ASSERT_EQ( SDB_OK, rc ) << "fail to test lockLob with offset 0" ;
-   const INT64 maxInt64 = 0x7FFFFFFFFFFFFFFFLL ;
-   rc = sdbLockLob( lob, maxInt64-1, 1 ) ;
-   ASSERT_EQ( SDB_OK, rc ) << "fail to test lockLob with offset maxInt64-1" ;
-   rc = sdbLockLob( lob, maxInt64, 1 ) ;
-   ASSERT_EQ( SDB_INVALIDARG, rc ) << "fail to test lockLob with offset maxInt64" ;
-   
-   // close lob
    rc = sdbCloseLob( &lob ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to close lob" ;
-   rc = sdbRemoveLob( cl, &oid ) ;
-   ASSERT_EQ( SDB_OK, rc ) << "fail to remove lob" ;
 }
 
 TEST_F( lobLock13435, length )
 {
    INT32 rc = SDB_OK ;
    
-   // create lob
    bson_oid_t oid ;
    bson_oid_gen( &oid ) ;
    sdbLobHandle lob ;
@@ -93,7 +92,6 @@ TEST_F( lobLock13435, length )
    rc = sdbCloseLob( &lob ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to close lob" ;
 
-   // write lob
    rc = sdbOpenLob( cl, &oid, SDB_LOB_WRITE, &lob ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to openLob with write mode" ;
    
@@ -105,12 +103,7 @@ TEST_F( lobLock13435, length )
    ASSERT_EQ( SDB_INVALIDARG, rc ) << "fail to test lockLob with length 0" ;
    rc = sdbLockLob( lob, 0, 1 ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to test lockLob with length 1" ;
-   const INT64 maxInt64 = 0x7FFFFFFFFFFFFFFFLL ;
-   rc = sdbLockLob( lob, 0, maxInt64 ) ;
-   ASSERT_EQ( SDB_OK, rc ) << "fail to test lockLob with length maxInt64" ;
 
    rc = sdbCloseLob( &lob ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to close lob" ;
-   rc = sdbRemoveLob( cl, &oid ) ;
-   ASSERT_EQ( SDB_OK, rc ) << "fail to remove lob" ;
 }

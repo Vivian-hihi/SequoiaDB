@@ -85,7 +85,7 @@ TEST_F( lobReadEmpty13433, readEmpty )
    ASSERT_EQ( emptyLen, readLen ) << "fail to check readLen" ;
    CHAR expBuf1[ emptyLen+1 ] ;
    memset( expBuf1, 0, emptyLen+1 ) ;
-   ASSERT_STREQ( expBuf1, readBuf1 ) << "fail to check readBuf1" ;
+   ASSERT_EQ( SDB_OK, memcmp( expBuf1, readBuf1, len ) ) << "fail to check readBuf1" ;
 
    // read lob partial empty
    rc = sdbSeekLob( lob, 0, SDB_LOB_SEEK_SET ) ;
@@ -100,5 +100,5 @@ TEST_F( lobReadEmpty13433, readEmpty )
    memset( expBuf2, 0, len ) ;
    memcpy( expBuf2, writeBuf1, len1 ) ;
    memcpy( expBuf2+len1+emptyLen, writeBuf2, len2 ) ;
-   ASSERT_STREQ( expBuf2, readBuf2 ) << "fail to check readBuf2" ;
+   ASSERT_EQ( SDB_OK, memcmp( expBuf2, readBuf2, len ) ) << "fail to check readBuf2" ;
 }

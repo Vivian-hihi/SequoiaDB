@@ -1,6 +1,6 @@
 /**************************************************************************
  * @Description:   test lob seek operation and seekWrite operation 
- *                 seqDB-13425:seek偏移写lob
+ *                 seqDB-13425:seek偏移创建、写、读lob
  *                 seqDB-13426:write模式下未加锁写lob
  * @Modify:        Liang xuewang
  *                 2017-12-13
@@ -45,43 +45,32 @@ TEST_F( lobSeekAndWrite13425_13426, lobSeekAndWrite )
 {
    INT32 rc = SDB_OK ;
 
-   // open lob with create mode
+   // open lob with createonly mode, seek write lob
    sdbLobHandle lob ;
    bson_oid_t oid ;
    bson_oid_gen( &oid ) ;
    rc = sdbOpenLob( cl, &oid, SDB_LOB_CREATEONLY, &lob ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to openLob with create mode" ;
-
-   // seek lob
    rc = sdbSeekLob( lob, 0, SDB_LOB_SEEK_SET ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to seek lob" ;
-
-   // write lob
    const CHAR* writeBuf = "123456789ABCDEabcde" ;
    UINT32 len = strlen( writeBuf ) ;
    rc = sdbWriteLob( lob, writeBuf, len ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to write lob" ;
-   
-   // close lob
    rc = sdbCloseLob( &lob ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to close lob" ;
 
-   // open lob with write mode
+   // open lob with write mode, seek, write lob
    rc = sdbOpenLob( cl, &oid, SDB_LOB_WRITE, &lob ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to openLob with write mode" ;
-
-   // seek lob in the lob end
    rc = sdbSeekLob( lob, 0, SDB_LOB_SEEK_END ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to seek lob" ;
-
-   // write lob
    rc = sdbWriteLob( lob, writeBuf, len ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to write lob" ;
-
-   // close lob
    rc = sdbCloseLob( &lob ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to close lob" ;
 
+   // read lob without seek
    CHAR* readBuf = (CHAR*)malloc( len*2+1 ) ;
    memset( readBuf, 0, len*2+1 ) ;
    UINT32 readLen = 0 ; 
@@ -92,5 +81,19 @@ TEST_F( lobSeekAndWrite13425_13426, lobSeekAndWrite )
    memset( expBuf, 0, len*2+1 ) ;
    sprintf( expBuf, "%s%s", writeBuf, writeBuf ) ;
    ASSERT_STREQ( expBuf, readBuf ) << "fail to check readBuf" ;
+
+   // read lob with seek
+   memset( readBuf, 0, len*2+1 ) ;
+   rc = sdbOpenLob( cl, &oid, SDB_LOB_READ, &lob ) ;
+   ASSERT_EQ( SDB_OK, rc ) << "fail to open lob with read mode" ;
+   rc = sdbSeekLob( lob, len, SDB_LOB_SEEK_SET ) ;
+   ASSERT_EQ( SDB_OK, rc ) << "fail to seek lob" ;
+   rc = sdbReadLob( lob, len*2, readBuf, &readLen ) ;
+   ASSERT_EQ( SDB_OK, rc ) << "fail to read lob" ;
+   ASSERT_EQ( len, readLen ) << "fail to check readLen" ;
+   ASSERT_STREQ( writeBuf, readBuf ) << "fail to check readBuf" ;
+   rc = sdbCloseLob( &lob ) ;
+   ASSERT_EQ( SDB_OK, rc ) << "fail to close lob" ;
+
    free( readBuf ) ;
 }

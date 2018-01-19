@@ -82,6 +82,10 @@ testFiles = [
    [ "./lob/lobReadEmpty13433.cpp" ],
    [ "./lob/lobLock13435.cpp" ],
    [ "./lob/lobLockAndSeek13436.cpp" ],
+   [ "./lob/lobLockCR14123.cpp" ],
+   [ "./lob/lobModTime14129.cpp" ],
+   [ "./lob/lobSeek14130.cpp" ],
+   [ "./lob/lobSeekEnd14190.cpp" ],
    [ "./cls/getSlaveOnePos13781.cpp" ], # sync
    [ "./cls/getSlaveMultiPos13782.cpp" ], # sync
    [ "./cls/getSlaveNoPos13783.cpp" ], # sync

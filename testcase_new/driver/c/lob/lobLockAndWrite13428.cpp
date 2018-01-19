@@ -46,13 +46,18 @@ TEST_F( lobLockAndWrite13428, lockWrite )
 
    bson_oid_t oid ;
    bson_oid_gen( &oid ) ;
-   const CHAR* writeBuf1 = "123456789ABCDEabcde" ;
-   UINT32 len1 = strlen( writeBuf1 ) ;
-
    sdbLobHandle lob ;
 
-   // open, lock, seek, write, close lob
+   // create, close lob
    rc = sdbOpenLob( cl, &oid, SDB_LOB_CREATEONLY, &lob ) ;
+   ASSERT_EQ( SDB_OK, rc ) << "fail to open lob with createonly mode" ;
+   rc = sdbCloseLob( &lob ) ;
+   ASSERT_EQ( SDB_OK, rc ) << "fail to close lob" ; 
+
+   // open, lock, seek, write, close lob
+   const CHAR* writeBuf1 = "123456789ABCDEabcde" ;
+   UINT32 len1 = strlen( writeBuf1 ) ;
+   rc = sdbOpenLob( cl, &oid, SDB_LOB_WRITE, &lob ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to open lob with write mode" ;
    rc = sdbLockLob( lob, 0, len1 ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to lock lob" ;
