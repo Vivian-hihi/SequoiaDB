@@ -47,7 +47,7 @@ namespace engine
 
    /*
       _coordCMDSetSessionAttr define
-   */
+    */
    class _coordCMDSetSessionAttr : public _coordCommandBase
    {
       COORD_DECLARE_CMD_AUTO_REGISTER() ;
@@ -61,6 +61,25 @@ namespace engine
                                 rtnContextBuf *buf ) ;
    } ;
    typedef _coordCMDSetSessionAttr coordCMDSetSessionAttr ;
+
+   /*
+      _coordCMDGetSessionAttr define
+    */
+   class _coordCMDGetSessionAttr : public _coordCommandBase
+   {
+      COORD_DECLARE_CMD_AUTO_REGISTER() ;
+
+      public :
+         _coordCMDGetSessionAttr () ;
+         virtual ~_coordCMDGetSessionAttr () ;
+
+         virtual INT32 execute ( MsgHeader *pMsg,
+                                 pmdEDUCB *cb,
+                                 INT64 &contextID,
+                                 rtnContextBuf *buf ) ;
+   } ;
+
+   typedef _coordCMDGetSessionAttr coordCMDGetSessionAttr ;
 
 }
 

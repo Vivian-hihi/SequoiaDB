@@ -46,7 +46,7 @@ namespace engine
 
    /*
       _coordCMDSetSessionAttr implement
-   */
+    */
    COORD_IMPLEMENT_CMD_AUTO_REGISTER( _coordCMDSetSessionAttr,
                                       CMD_NAME_SETSESS_ATTR,
                                       TRUE ) ;
@@ -106,6 +106,54 @@ namespace engine
       contextID = -1 ;
 
       PD_TRACE_EXITRC ( COORD_SETSESSIONATTR_EXE, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   /*
+      _coordCMDGetSessionAttr implement
+    */
+   COORD_IMPLEMENT_CMD_AUTO_REGISTER( _coordCMDGetSessionAttr,
+                                      CMD_NAME_GETSESS_ATTR,
+                                      TRUE ) ;
+   _coordCMDGetSessionAttr::_coordCMDGetSessionAttr ()
+   {
+   }
+
+   _coordCMDGetSessionAttr::~_coordCMDGetSessionAttr ()
+   {
+   }
+
+   //PD_TRACE_DECLARE_FUNCTION( COORD_GETSESSIONATTR_EXE, "_coordCMDGetSessionAttr::execute" )
+   INT32 _coordCMDGetSessionAttr::execute ( MsgHeader *pMsg,
+                                            pmdEDUCB *cb,
+                                            INT64 &contextID,
+                                            rtnContextBuf *buf )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( COORD_GETSESSIONATTR_EXE ) ;
+
+      coordSessionPropSite *pPropSite = NULL ;
+      pmdRemoteSessionSite *pSite = NULL ;
+
+      pSite = ( pmdRemoteSessionSite* )cb->getRemoteSite() ;
+      if ( pSite )
+      {
+         pPropSite = ( coordSessionPropSite* )pSite->getUserData() ;
+      }
+      PD_CHECK( NULL != pPropSite, SDB_SYS, error, PDERROR,
+                "Session's prop site is NULL" ) ;
+
+      ( *buf ) = rtnContextBuf( pPropSite->toBSON() ) ;
+
+   done :
+      // fill default-reply(delete success)
+      contextID = -1 ;
+
+      PD_TRACE_EXITRC ( COORD_GETSESSIONATTR_EXE, rc ) ;
       return rc ;
 
    error :
