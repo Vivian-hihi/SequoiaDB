@@ -624,44 +624,6 @@ function updateIndexStateInfo( db, csName, clName, indexName, mcvValues, fracs )
 } 
 
 /************************************
-*@Description: 去除数组中重复的json
-*@author:      liuxiaoxuan
-*@createDate:  2017.01.18
-**************************************/
-function uniqueJsonInArray( jsonArrays )
-{
-   var newJsonArray = new Array();
-	newJsonArray.push(jsonArrays[0]);
-	
-   if(0 === newJsonArray.length)  return newJsonArray;
-	
-	for(var i = 1; i < jsonArrays.length; i++)
-   {
-      var isEqual	= false;
-		for(var j = 0; j < newJsonArray.length; j++)
-	   {
-			for( var f in newJsonArray[j] )
-	      {
-	         if(newJsonArray[j][f] === jsonArrays[i][f])
-	         {
-	            isEqual = true;  
-	         }
-			}				
-			
-			if(isEqual)  break;
-		}
-			
-	   if(!isEqual)
-		{
-	      newJsonArray.push(jsonArrays[i]);
-	   }
-	}
-	
-	return newJsonArray;
-}
-
-
-/************************************
 *@Description: 执行查询
 *@author:      liuxiaoxuan
 *@createDate:  2017.01.18
@@ -691,14 +653,18 @@ function query( dbcl, findConf, sortConf, hintConf )
 *@author:      liuxiaoxuan
 *@createDate:  2017.01.18
 **************************************/
-function getCommonAccessPlans( db, options )
+function getCommonAccessPlans( db, findConf, selectorConf, sortConf )
 {
+	if ( typeof(findConf) == "undefined" ) { findConf = null; }
+   if ( typeof(sortConf) == "undefined" ) { sortConf = null; }
+   if ( typeof(selectorConf) == "undefined" ) { selectorConf = null; }
+	
 	try
    {
       var accessPlans = new Array();
 	
 	   //获取快照信息
-	   var rc = db.snapshot(11, options).toArray();
+	   var rc = db.snapshot(11, findConf, selectorConf, sortConf).toArray();
       for(var i = 0; i < rc.length; i++)
       {
          var accessPlan = eval("(" + rc[i] + ")");
@@ -733,14 +699,18 @@ function getCommonAccessPlans( db, options )
 *@author:      liuxiaoxuan
 *@createDate:  2017.01.18
 **************************************/
-function getSplitAccessPlans( db, options )
+function getSplitAccessPlans( db, findConf, selectorConf, sortConf )
 {
+	if ( typeof(findConf) == "undefined" ) { findConf = null; }
+   if ( typeof(sortConf) == "undefined" ) { sortConf = null; }
+   if ( typeof(selectorConf) == "undefined" ) { selectorConf = null; }
+	
 	try
    {
       var accessPlans = new Array();
 	
 	   //获取快照信息
-	   var rc = db.snapshot(11, options).toArray();
+	   var rc = db.snapshot(11, findConf, selectorConf, sortConf).toArray();
       for(var i = 0; i < rc.length; i++)
       {
          var accessPlan = eval("(" + rc[i] + ")");
@@ -750,7 +720,7 @@ function getSplitAccessPlans( db, options )
 			      continue;
 		   if(accessPlan['ScanType'] == 'tbscan' 
 		            && JSON.stringify(accessPlan['Query']) == "{}")  
-			      continue
+			      continue;
 	      if(accessPlan['IndexName'] == '$shard' 
 		            && JSON.stringify(accessPlan['Query']) == "{}")  
 			      continue;
@@ -789,37 +759,43 @@ function checkSnapShotAccessPlans( csName, clName, expectAccessPlans, actAccessP
 {
    try
    {
-		var groups = commGetCLGroups( db, csName + "." + clName );
+      var groups = commGetCLGroups( db, csName + "." + clName );
       var datas = getNodesInGroups(db, groups);
 		
-		//独立模式或一组一节点的情况
-		if(1 === datas[0].length)
+      //独立模式或一组一节点的情况
+		var expAccessPlans = new Array();
+      if(1 === datas[0].length)
       {
-			for(var i = 0; i < datas[0].length; i++)
-				println('datas[0][' + i + ']: ' + datas[0][i]);
-			expectAccessPlans = uniqueJsonInArray(expectAccessPlans);
+         for(var i = 0; i < expectAccessPlans.length / 2; i++)
+         {
+            expAccessPlans.push(expectAccessPlans[i]);
+         }
 	   }
-     
-	   //校验计划个数
-      if( expectAccessPlans.length !==  actAccessPlans.length )
+		else
+		{
+			expAccessPlans = expectAccessPlans;
+		}
+		
+      //校验计划个数
+      if( expAccessPlans.length !==  actAccessPlans.length )
       {
           throw buildException("check length", "accessPlan length", "check failed!",
-									expectAccessPlans.length, actAccessPlans.length);
+									expAccessPlans.length, actAccessPlans.length);
       }
 		
-		//校验查询计划，不校验元素顺序
+      //校验查询计划，不校验元素顺序
       var newExpAccessPlans = new Array();
       var newActAccessPlans = new Array();
-      for(var i = 0; i < expectAccessPlans.length; i++)
+      for(var i = 0; i < expAccessPlans.length; i++)
 		{
          var newObj1 = objSortByKey(actAccessPlans[i]);
          newActAccessPlans.push(newObj1);
       
-         var newObj2 = objSortByKey(expectAccessPlans[i]);
+         var newObj2 = objSortByKey(expAccessPlans[i]);
          newExpAccessPlans.push(newObj2);   
       }
-    	 
-      for(var i = 0; i < expectAccessPlans.length; i++)
+		    	 
+      for(var i = 0; i < expAccessPlans.length; i++)
       {
          if(JSON.stringify(newActAccessPlans).indexOf(JSON.stringify(newExpAccessPlans[i])) === -1
                && JSON.stringify(newExpAccessPlans).indexOf(JSON.stringify(newActAccessPlans[i])) === -1)
