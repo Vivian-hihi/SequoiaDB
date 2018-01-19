@@ -52,7 +52,6 @@
 #else
 #include <unistd.h>
 #include <pthread.h>
-#include <boost/thread/recursive_mutex.hpp>
 #endif //_WINDOWS
 
 #include "ossAtomicBase.hpp"
@@ -442,31 +441,44 @@ public:
    {
       return TryEnterCriticalSection( &_cs ) ;
    }
-#else /* except _WIN32 */
+#else
 private:
-   boost::recursive_mutex _mutex ;
+   pthread_mutex_t _lock ;
 public:
    _ossSpinRecursiveXLatch()
    {
+      pthread_mutexattr_t _attr ;
+      SDB_ASSERT( pthread_mutexattr_init( &_attr ) == 0,
+                  "Failed to init mutex attribute" ) ;
+      SDB_ASSERT( pthread_mutexattr_settype( &_attr,
+                                             PTHREAD_MUTEX_RECURSIVE ) == 0,
+                  "Failed to set mutex type" ) ;
+
+      SDB_ASSERT( pthread_mutex_init( &_lock, &_attr ) == 0,
+                  "Failed to init mutex" ) ;
    }
 
    ~_ossSpinRecursiveXLatch()
    {
+      SDB_ASSERT( pthread_mutex_destroy( &_lock ) == 0,
+                  "Failed to destroy mutex" ) ;
    }
 
    void get()
    {
-      _mutex.lock() ;
+      SDB_ASSERT( pthread_mutex_lock( &_lock ) == 0,
+                  "Failed to lock mutex" ) ;
    }
 
    void release()
    {
-      _mutex.unlock() ;
+      SDB_ASSERT( pthread_mutex_unlock( &_lock ) == 0,
+                  "Failed to unlock mutex" ) ;
    }
 
    BOOLEAN try_get()
    {
-      return _mutex.try_lock() ;
+      return ( pthread_mutex_trylock( &_lock ) == 0 ) ;
    }
 #endif
 } ;
