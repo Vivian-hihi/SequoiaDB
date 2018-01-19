@@ -1,0 +1,205 @@
+﻿/************************************
+*@Description:  普通表上truncate，清空缓存功能验证 
+*@author:      zhaoyu
+*@createdate:  2017.11.8
+*@testlinkCase:seqDB-12975
+**************************************/
+function main()
+{
+   var clName1 = COMMCLNAME + "_12975_1";
+   var clName2 = COMMCLNAME + "_12975_2";
+   var insertNum = 2000;
+	var sameValues = 9000;
+	
+	var clFullName1 = COMMCSNAME + "." + clName1;
+	var clFullName2 = COMMCSNAME + "." + clName2;
+   
+   //清理环境
+   commDropCL( db, COMMCSNAME, clName1, true, true,"drop CL in the beginning" ) ;
+   commDropCL( db, COMMCSNAME, clName2, true, true,"drop CL in the beginning" ) ;
+   
+   //创建cl
+   var dbcl1 = commCreateCL( db, COMMCSNAME, clName1);
+   var dbcl2 = commCreateCL( db, COMMCSNAME, clName2);
+   
+   //创建索引
+   commCreateIndex( dbcl1, "a", {a:1});
+   commCreateIndex( dbcl2, "a", {a:1});
+   
+   //插入记录
+	insertDiffDatas( dbcl1, insertNum );
+	insertSameDatas( dbcl1, insertNum, sameValues );
+	
+	insertDiffDatas( dbcl2, insertNum );
+	insertSameDatas( dbcl2, insertNum, sameValues );
+	
+	//获取主备节点
+	var db1 = new Sdb(db);
+   db1.setSessionAttr( { PreferedInstance: "m" } );
+   var dbclPrimary1 = db1.getCS(COMMCSNAME).getCL(clName1);
+   var dbclPrimary2 = db1.getCS(COMMCSNAME).getCL(clName2);
+   var db2 = new Sdb(db);
+   db2.setSessionAttr( { PreferedInstance: "s" } );
+   var dbclSlave1 = db2.getCS(COMMCSNAME).getCL(clName1);
+   var dbclSlave2 = db2.getCS(COMMCSNAME).getCL(clName2);
+   
+	//检查统计信息
+   checkStat( db, COMMCSNAME, clName1, "a", false, false );
+   checkStat( db, COMMCSNAME, clName2, "a", false, false );
+   
+   //分别在主备节点执行查询
+   var findConf = {a:sameValues};
+   
+	query(dbclPrimary1, findConf);
+	query(dbclPrimary2, findConf);
+	query(dbclSlave1, findConf);
+	query(dbclSlave2, findConf);
+	
+	//检查主备节点访问计划快照
+	var accessFindOption1 = { Collection: clFullName1 };
+	var accessFindOption2 = { Collection: clFullName2 };
+	
+   var actAccessPlans1 = getCommonAccessPlans(db, accessFindOption1);
+	var actAccessPlans2 = getCommonAccessPlans(db, accessFindOption2);
+   
+   var expAccessPlans1 = [{ScanType:"ixscan", IndexName:"a", ReturnNum:insertNum},
+	                       {ScanType:"ixscan", IndexName:"a", ReturnNum:insertNum}];
+	var expAccessPlans2 = [{ScanType:"ixscan", IndexName:"a", ReturnNum:insertNum},
+	                       {ScanType:"ixscan", IndexName:"a", ReturnNum:insertNum}];
+								                    	
+   checkSnapShotAccessPlans(clFullName1, expAccessPlans1, actAccessPlans1);
+	checkSnapShotAccessPlans(clFullName2, expAccessPlans2, actAccessPlans2);
+	
+	println("check result before analyze success!");
+
+   //执行统计
+   analyze( db, {Collection: COMMCSNAME + "." + clName1} );
+   analyze( db, {Collection: COMMCSNAME + "." + clName2} );
+   
+   //检查统计信息
+   checkStat( db, COMMCSNAME, clName1, "a", true, true );
+   checkStat( db, COMMCSNAME, clName2, "a", true, true );
+	
+	//检查主备节点访问计划快照
+	var accessFindOption1 = { Collection: clFullName1 };
+	var accessFindOption2 = { Collection: clFullName2 };
+	
+   var actAccessPlans1 = getCommonAccessPlans(db, accessFindOption1);
+	var actAccessPlans2 = getCommonAccessPlans(db, accessFindOption2);
+	var expAccessPlans = [];
+                       	
+   checkSnapShotAccessPlans(clFullName1, expAccessPlans, actAccessPlans1);
+	checkSnapShotAccessPlans(clFullName2, expAccessPlans, actAccessPlans2);
+   
+   //分别在主备节点执行查询
+   var findConf = {a:sameValues};
+  
+	query(dbclPrimary1, findConf);
+	query(dbclPrimary2, findConf);
+	query(dbclSlave1, findConf);
+	query(dbclSlave2, findConf);
+	
+	//检查主备节点访问计划快照
+	var accessFindOption1 = { Collection: clFullName1 };
+	var accessFindOption2 = { Collection: clFullName2 };
+	
+   var actAccessPlans1 = getCommonAccessPlans(db, accessFindOption1);
+	var actAccessPlans2 = getCommonAccessPlans(db, accessFindOption2);
+   
+   var expAccessPlans1 = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum},
+	                       {ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}];
+	var expAccessPlans2 = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum},
+	                       {ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}];
+                      
+   checkSnapShotAccessPlans(clFullName1, expAccessPlans1, actAccessPlans1);
+	checkSnapShotAccessPlans(clFullName2, expAccessPlans2, actAccessPlans2);
+   
+   println("check result after analyze success!");
+   
+   //truncate cl
+   dbcl1.truncate();
+   
+   //检查统计信息
+   checkStat( db, COMMCSNAME, clName1, "a", false, false );
+   checkStat( db, COMMCSNAME, clName2, "a", true, true );
+
+   //检查主备节点访问计划快照
+	var accessFindOption1 = { Collection: clFullName1 };
+	var accessFindOption2 = { Collection: clFullName2 };
+	
+   var actAccessPlans1 = getCommonAccessPlans(db, accessFindOption1);
+	var actAccessPlans2 = getCommonAccessPlans(db, accessFindOption2);
+   
+   var expAccessPlans1 = [];
+	var expAccessPlans2 = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum},
+	                       {ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}];
+                       	
+   checkSnapShotAccessPlans(clFullName1, expAccessPlans1, actAccessPlans1);
+	checkSnapShotAccessPlans(clFullName2, expAccessPlans2, actAccessPlans2);
+    
+   //分别在主备节点执行查询
+   var findConf = {a:sameValues};
+  
+	query(dbclPrimary1, findConf);
+	query(dbclPrimary2, findConf);
+	query(dbclSlave1, findConf);
+	query(dbclSlave2, findConf);
+	
+	//检查主备节点访问计划快照
+	var accessFindOption1 = { Collection: clFullName1 };
+	var accessFindOption2 = { Collection: clFullName2 };
+	
+   var actAccessPlans1 = getCommonAccessPlans(db, accessFindOption1);
+	var actAccessPlans2 = getCommonAccessPlans(db, accessFindOption2);
+	
+	var expAccessPlans1 = [{ScanType:"ixscan", IndexName:"a", ReturnNum:0},
+								  {ScanType:"ixscan", IndexName:"a", ReturnNum:0}];                 
+	var expAccessPlans2 = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum},
+	                       {ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}]; 
+								  
+   checkSnapShotAccessPlans(clFullName1, expAccessPlans1, actAccessPlans1);
+	checkSnapShotAccessPlans(clFullName2, expAccessPlans2, actAccessPlans2);
+   
+   println("check result after truncate cl success!");
+   
+   //再次插入相同数据
+   insertDiffDatas( dbcl1, insertNum );
+	insertSameDatas( dbcl1, insertNum, sameValues );
+   
+   //检查统计信息
+   checkStat( db, COMMCSNAME, clName1, "a", false, false );
+   checkStat( db, COMMCSNAME, clName2, "a", true, true );
+   
+   //分别在主备节点执行查询
+   var findConf = {a:sameValues};
+  
+	query(dbclPrimary1, findConf);
+	query(dbclPrimary2, findConf);
+	query(dbclSlave1, findConf);
+	query(dbclSlave2, findConf);
+	
+	//检查主备节点访问计划快照
+	var accessFindOption1 = { Collection: clFullName1 };
+	var accessFindOption2 = { Collection: clFullName2 };
+	
+   var actAccessPlans1 = getCommonAccessPlans(db, accessFindOption1);
+	var actAccessPlans2 = getCommonAccessPlans(db, accessFindOption2);
+   
+	var expAccessPlans1 = [{ScanType:"ixscan", IndexName:"a", ReturnNum:0},
+								  {ScanType:"ixscan", IndexName:"a", ReturnNum:0}];                 
+	var expAccessPlans2 = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum},
+	                       {ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}]; 						 
+		                
+   checkSnapShotAccessPlans(clFullName1, expAccessPlans1, actAccessPlans1);
+   checkSnapShotAccessPlans(clFullName2, expAccessPlans2, actAccessPlans2);
+
+   println("check result after create the same index success!");
+   
+   //清空环境
+   commDropCL( db, COMMCSNAME, clName1, true, true,"drop CL in the end" ) ;
+   commDropCL( db, COMMCSNAME, clName2, true, true,"drop CL in the end" ) ;
+   db1.close();
+   db2.close();
+  
+ }
+ main()

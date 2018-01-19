@@ -1,0 +1,204 @@
+/************************************
+*@Description: 独立模式下，普通表rename cs，清空缓存功能验证 
+*@author:      liuxiaoxuan
+*@createdate:  2017.11.09
+*@testlinkCase: seqDB-12979
+**************************************/
+function main()
+{
+   if(!commIsStandalone(db))
+   {
+      println("not standalone enviroment");
+      return;
+   }
+                                                                                 	
+   var csName = COMMCSNAME + "12979";
+   var csName_new = "newCsName"
+   commDropCS( db, csName, true, "drop CS in the beginning" );
+   commDropCS( db, csName_new, true, "drop CS in the beginning" );
+                                                                                	
+   commCreateCS( db, csName, false, "" );
+                                                                          	
+   //create CLs
+   var clName1 = COMMCLNAME + "12979_1";
+   var dbcl1 = commCreateCL( db, csName, clName1 );
+
+   var clName2 = COMMCLNAME + "12979_2";
+   var dbcl2 = commCreateCL( db, csName, clName2 );
+   
+   var clFullName1 = csName + "." + clName1;
+   var clFullName2 = csName + "." + clName2;
+                                                    
+   commCreateIndex( dbcl1, "a", {a : 1}, false );
+   commCreateIndex( dbcl2, "b", {b : 1}, false );
+                                                       
+   var insertNums = 3000;
+   var sameValues = 9000;
+   
+   insertDiffDatas( dbcl1, insertNums );
+   insertSameDatas( dbcl1, insertNums, sameValues );
+   insertDiffDatas( dbcl2, insertNums );
+   insertSameDatas( dbcl2, insertNums, sameValues );
+   
+   //get primary/slave node
+   var db1 = new Sdb(db);
+   db1.setSessionAttr( { PreferedInstance: "m" } );
+   var dbclPrimary1 = db1.getCS(csName).getCL(clName1);
+   var dbclPrimary2 = db1.getCS(csName).getCL(clName2);
+   
+   db1 = new Sdb(db);
+   db1.setSessionAttr( { PreferedInstance: "s" } );
+   var dbclSlave1 = db1.getCS(csName).getCL(clName1);
+   var dbclSlave2 = db1.getCS(csName).getCL(clName2);
+	
+   //check before invoke analyze
+   checkStat( db, csName, clName1, "a", false, false );
+   checkStat( db, csName, clName2, "b", false, false );
+                                                             	
+   //query from primary/slave node           
+   var findConf1 = {a : 9000};
+   var findConf2 = {b : 9000};
+	
+	query(dbclPrimary1, findConf1);
+	query(dbclPrimary2, findConf2);
+	query(dbclSlave1, findConf1);
+	query(dbclSlave2, findConf2);
+	
+	//check out snapshot access plans
+	var accessFindOption1 = { Collection: clFullName1 };
+	var accessFindOption2 = { Collection: clFullName2 };
+	
+   var actAccessPlans1 = getCommonAccessPlans(db, accessFindOption1);
+	var actAccessPlans2 = getCommonAccessPlans(db, accessFindOption2);
+   
+   var expAccessPlans1 = [{ScanType:"ixscan", IndexName:"a", ReturnNum:insertNums},
+	                       {ScanType:"ixscan", IndexName:"a", ReturnNum:insertNums}];
+	var expAccessPlans2 = [{ScanType:"ixscan", IndexName:"b", ReturnNum:insertNums},
+	                       {ScanType:"ixscan", IndexName:"b", ReturnNum:insertNums}];
+                      
+   checkSnapShotAccessPlans(clFullName1, expAccessPlans1, actAccessPlans1);
+	checkSnapShotAccessPlans(clFullName2, expAccessPlans2, actAccessPlans2);
+
+   println("check result before analyze success!");
+   
+   //invoke analyze
+   var options = {CollectionSpace: csName};
+   analyze( db, options );
+   
+   //check after analyze
+   checkStat( db, csName, clName1, "a", true, true );
+   checkStat( db, csName, clName2, "b", true, true );
+
+   //check out snapshot access plans
+	var accessFindOption1 = { Collection: clFullName1 };
+	var accessFindOption2 = { Collection: clFullName2 };
+	
+   var actAccessPlans1 = getCommonAccessPlans(db, accessFindOption1);
+	var actAccessPlans2 = getCommonAccessPlans(db, accessFindOption2);
+   var expAccessPlans = [];
+
+   checkSnapShotAccessPlans(clFullName1, expAccessPlans, actAccessPlans1);
+	checkSnapShotAccessPlans(clFullName2, expAccessPlans, actAccessPlans2);
+   
+   //query from primary/slave node           
+   var findConf1 = {a : 9000};
+   var findConf2 = {b : 9000};
+	
+	query(dbclPrimary1, findConf1);
+	query(dbclPrimary2, findConf2);
+	query(dbclSlave1, findConf1);
+	query(dbclSlave2, findConf2);
+                   
+   //check out snapshot access plans
+	var accessFindOption1 = { Collection: clFullName1 };
+	var accessFindOption2 = { Collection: clFullName2 };
+	
+   var actAccessPlans1 = getCommonAccessPlans(db, accessFindOption1);
+	var actAccessPlans2 = getCommonAccessPlans(db, accessFindOption2);
+   
+   var expAccessPlans1 = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums},
+	                       {ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
+	var expAccessPlans2 = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums},
+	                       {ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
+                      
+   checkSnapShotAccessPlans(clFullName1, expAccessPlans1, actAccessPlans1);
+	checkSnapShotAccessPlans(clFullName2, expAccessPlans2, actAccessPlans2);
+                                                                             	
+   println("check result after analyze success!");
+                                                                                  	
+   //rename CS
+   var oldCsName = csName;
+   var newCsName = csName_new;
+   renameCS(oldCsName, newCsName);
+                                                	 
+   //check newCL's anaylze info
+   checkStat( db, newCsName, clName1, "a", true, true );
+   checkStat( db, newCsName, clName2, "b", true, true );
+
+   //check out snapshot access plans
+	var accessFindOption1 = { Collection: clFullName1 };
+	var accessFindOption2 = { Collection: clFullName2 };
+	
+   var actAccessPlans1 = getCommonAccessPlans(db, accessFindOption1);
+	var actAccessPlans2 = getCommonAccessPlans(db, accessFindOption2);
+   var expAccessPlans = [];
+
+   checkSnapShotAccessPlans(clFullName1, expAccessPlans, actAccessPlans1);
+	checkSnapShotAccessPlans(clFullName2, expAccessPlans, actAccessPlans2);
+   
+   //get new primary/slave node
+   var db1 = new Sdb(db);
+   db1.setSessionAttr( { PreferedInstance: "m" } );
+   var newclPrimary1 = db1.getCS(newCsName).getCL(clName1);
+   var newclPrimary2 = db1.getCS(newCsName).getCL(clName2);
+   
+   db1 = new Sdb(db);
+   db1.setSessionAttr( { PreferedInstance: "s" } );
+   var newclSlave1 = db1.getCS(newCsName).getCL(clName1);
+   var newclSlave2 = db1.getCS(newCsName).getCL(clName2);     
+   
+   //query from primary/slave node           
+   var findConf1 = {a : 9000};
+   var findConf2 = {b : 9000};
+	
+	query(newclPrimary1, findConf1);
+	query(newclPrimary2, findConf2);
+	query(newclSlave1, findConf1);
+	query(newclSlave2, findConf2);
+                   
+   //check out snapshot access plans
+   var clNewFullName1 = newCsName + "." + clName1;
+   var clNewFullName2 = newCsName + "." + clName2;
+   
+	var accessFindOption1 = { Collection: clNewFullName1 };
+	var accessFindOption2 = { Collection: clNewFullName2 };
+	
+   var actAccessPlans1 = getCommonAccessPlans(db, accessFindOption1);
+	var actAccessPlans2 = getCommonAccessPlans(db, accessFindOption2);
+   
+   var expAccessPlans1 = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums},
+	                       {ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
+	var expAccessPlans2 = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums},
+	                       {ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
+                      
+   checkSnapShotAccessPlans(clFullName1, expAccessPlans1, actAccessPlans1);
+	checkSnapShotAccessPlans(clFullName2, expAccessPlans2, actAccessPlans2);
+                                                 	
+   println("check result after rename success!");
+                                                      
+   commDropCS( db, csName, true, "drop CS in the end" );
+   commDropCS( db, csName_new, true, "drop CS in the end" );
+}
+
+function renameCS( oldCsName, newCsName )
+{
+   try
+   {
+      db.renameCS( oldCsName, newCsName );
+   }
+   catch(e)
+   {
+      throw buildException("renameCS", e, "rename cs", "rename success", e);
+   }
+}
+main();
