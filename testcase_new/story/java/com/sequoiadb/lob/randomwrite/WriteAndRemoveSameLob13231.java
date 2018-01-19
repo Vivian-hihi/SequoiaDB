@@ -86,7 +86,7 @@ public class WriteAndRemoveSameLob13231 extends SdbTestBase {
 			if (cs.isCollectionExist(clName)) {
 				cs.dropCollection(clName);
 			}
-			sdb.close();
+			sdb.disconnect();
 		} catch (BaseException e) {
 			Assert.assertTrue(false, "clean up failed:" + e.getMessage());
 		}
@@ -143,7 +143,7 @@ public class WriteAndRemoveSameLob13231 extends SdbTestBase {
 	
 	private int getErrCode(SdbThreadBase task) {
 		int errcode = 0;
-		Exception exception1 = task.getExceptions().get(0);
+		Throwable exception1 = task.getExceptions().get(0);		
 		if (exception1 instanceof BaseException) {
 			errcode = ((BaseException) exception1).getErrorCode();
 		} else {
