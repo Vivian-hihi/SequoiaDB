@@ -97,7 +97,6 @@ function getNodesInGroups(db, groups)
          var rg = db.getRG(groups[i]);
          var rgDetail = eval( "(" + rg.getDetail().toArray()[0] + ")");
          var nodesInGroup = rgDetail.Group;
-         println("nodesInGroup:" + nodesInGroup);
          for(var j = 0; j < nodesInGroup.length; ++j)
          {
             var hostName = nodesInGroup[j].HostName;
