@@ -86,7 +86,7 @@ TEST_F( lobLockCR14123, lockAndSeekLob )
    sdbLobHandle lob ;
 
    // create, lockAndSeek, write, close lob
-   // after write, lob content: "0000000000ABCDEabcde"
+   // after write, lob content: "----------ABCDEabcde",random content before ABCDEabcde
    const CHAR* writeBuf1 = "ABCDEabcde" ;
    UINT32 len1 = strlen( writeBuf1 ) ;
    rc = sdbOpenLob( cl, &oid, SDB_LOB_CREATEONLY, &lob ) ;
@@ -104,23 +104,19 @@ TEST_F( lobLockCR14123, lockAndSeekLob )
    ASSERT_EQ( 2*len1, size ) << "fail to check lobSize" ;
 
    // open, lockAndSeek, read, close lob
-   // after read, readBuf content: "0ABCDEabcd0"
+   // after read, readBuf content: "ABCDEabcde"
    CHAR* readBuf = (CHAR*)malloc( len1+1 ) ;
    memset( readBuf, 0, len1+1 ) ;
    UINT32 readLen ;
    rc = sdbOpenLob( cl, &oid, SDB_LOB_READ, &lob ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to open lob with read mode" ;
-   rc = sdbLockAndSeekLob( lob, len1-1, len1 ) ;
+   rc = sdbLockAndSeekLob( lob, len1, len1 ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to lockAndSeekLob" ;
    rc = sdbReadLob( lob, len1, readBuf, &readLen ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to read lob" ;
    ASSERT_EQ( len1, readLen ) << "fail to check readLen" ;
-   CHAR* expBuf = (CHAR*)malloc( len1+1 ) ;
-   memset( expBuf, 0, len1+1 ) ;
-   memcpy( expBuf+1, "ABCDEabcd", len1-1 ) ;
-   ASSERT_EQ( SDB_OK, memcmp( readBuf, expBuf, len1+1 ) ) ;
+   ASSERT_STREQ( writeBuf1, readBuf ) ;
    rc = sdbCloseLob( &lob ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to close lob" ;
    free( readBuf ) ;
-   free( expBuf ) ;
 }
