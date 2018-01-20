@@ -56,7 +56,10 @@ public class TestWriteLobAndDropCL13889 extends SdbTestBase {
 
 	
 	@AfterClass
-	public void tearDown(){		
+	public void tearDown(){
+		if( cs.isCollectionExist(clName)){
+			cs.dropCollection(clName);
+		}
 		sdb.close();
 	}	
 	
