@@ -174,6 +174,11 @@
       $scope.ShowGetLog = function(){
          var data = { 'cmd': 'get log', 'name': './task/' + installTask + '.log' } ;
          SdbRest.GetLog( data, function( logstr ){
+            var browser = SdbFunction.getBrowserInfo() ;
+            if( browser[0] == 'ie' && browser[1] == 7 )
+            {
+               logstr = logstr.replace( /\n/gi, '\n\r' ) ;
+            }
             $scope.Logstr = logstr ;
          }, function(){
             _IndexPublic.createRetryModel( $scope, null, function(){
