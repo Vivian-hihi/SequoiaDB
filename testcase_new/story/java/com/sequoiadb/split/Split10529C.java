@@ -128,7 +128,7 @@ public class Split10529C extends SdbTestBase {
 	public void tearDown() {
 		try {
 			if( cs.isCollectionExist(clName)) {
-				//cs.dropCollection(clName);;
+				cs.dropCollection(clName);;
 			}
 		} catch (BaseException e) {
 			Assert.fail(e.getMessage() + "\r\n" + SplitUtils.getKeyStack(e, this));
