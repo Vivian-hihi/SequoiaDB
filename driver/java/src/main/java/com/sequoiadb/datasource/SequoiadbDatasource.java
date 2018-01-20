@@ -68,6 +68,8 @@ public class SequoiadbDatasource {
     // for error report
     private final Object _objForExp = new Object();
     private BaseException _lastException;
+    // for session
+    private volatile BSONObject _sessionAttr = null;
     // for others
     private Random _rand = new Random(47);
     private double MULTIPLE = 1.2;
@@ -762,6 +764,17 @@ public class SequoiadbDatasource {
                             _connItemMgr.releaseItem(connItem);
                             // should never come here
                             throw new BaseException(SDBError.SDB_SYS, "point 2: error happen for getting connection");
+                        } else if (_sessionAttr != null) {
+                            try {
+                                sdb.setSessionAttr(_sessionAttr);
+                            } catch (Exception e) {
+                                _connItemMgr.releaseItem(connItem);
+                                connItem = null;
+                                _destroyConnQueue.add(sdb);
+                                throw new BaseException(SDBError.SDB_SYS,
+                                        String.format("failed to set the session attribute[%s]",
+                                                _sessionAttr.toString()), e);
+                            }
                         }
                         connItem.setAddr(String.format("%s:%d", sdb.getHost(), sdb.getPort()));
                         synchronized (_createConnSignal) {
@@ -1107,6 +1120,9 @@ public class SequoiadbDatasource {
         int keepAliveTimeout = newOpt.getKeepAliveTimeout();
         int checkInterval = newOpt.getCheckInterval();
         int syncCoordInterval = newOpt.getSyncCoordInterval();
+        List<Object> preferredInstanceList = newOpt.getPreferedInstanceObjects();
+        String preferredInstanceMode = newOpt.getPreferedInstanceMode();
+        int sessionTimeout = newOpt.getSessionTimeout();
 
         // 1. maxCount
         if (maxCount < 0)
@@ -1139,6 +1155,49 @@ public class SequoiadbDatasource {
                 throw new BaseException(SDBError.SDB_INVALIDARG, "deltaIncCount can't be great then maxCount");
             if (maxIdleCount > maxCount)
                 throw new BaseException(SDBError.SDB_INVALIDARG, "maxIdleCount can't be great then maxCount");
+        }
+
+        // check arguments about session
+        if (preferredInstanceList != null && preferredInstanceList.size() > 0) {
+            // check elements of preferred instance
+            for (Object obj : preferredInstanceList) {
+                if (obj instanceof String) {
+                    String s = (String) obj;
+                    if (!"M".equals(s) && !"m".equals(s) &&
+                            !"S".equals(s) && !"s".equals(s) &&
+                            !"A".equals(s) && !"a".equals(s)) {
+                        throw new BaseException(SDBError.SDB_INVALIDARG,
+                                "the element of preferred instance should be 'M'/'S'/'A'/'m'/'s'/'a/['1','255'], but it is "
+                                        + s);
+                    }
+                } else if (obj instanceof Integer) {
+                    int i = (Integer) obj;
+                    if (i <= 0 || i > 255) {
+                        throw new BaseException(SDBError.SDB_INVALIDARG,
+                                "the element of preferred instance should be 'M'/'S'/'A'/'m'/'s'/'a/['1','255'], but it is "
+                                        + i);
+                    }
+                } else {
+                    throw new BaseException(SDBError.SDB_INVALIDARG,
+                            "the preferred instance should instance of int or String, but it is "
+                                    + (obj == null ? null : obj.getClass()));
+                }
+            }
+            // check preferred instance mode
+            if (!DatasourceConstants.PREFERED_INSTANCE_MODE_ORDERED.equals(preferredInstanceMode) &&
+                    !DatasourceConstants.PREFERED_INSTANCE_MODE_RANDON.equals(preferredInstanceMode)) {
+                throw new BaseException(SDBError.SDB_INVALIDARG,
+                        String.format("the preferred instance mode should be '%s' or '%s', but it is %s",
+                                DatasourceConstants.PREFERED_INSTANCE_MODE_ORDERED,
+                                DatasourceConstants.PREFERED_INSTANCE_MODE_RANDON,
+                                preferredInstanceMode));
+            }
+            // check session timeout
+            if (sessionTimeout < -1) {
+                throw new BaseException(SDBError.SDB_INVALIDARG,
+                        "the session timeout can not less than -1");
+            }
+            _sessionAttr = newOpt.getSessionAttr();
         }
     }
 
@@ -1291,6 +1350,7 @@ public class SequoiadbDatasource {
             }
             // create new connection
             while (true) {
+                addr = null;
                 addr = _strategy.getAddress();
                 if (addr == null) {
                     // when have no address, we don't want to report any error message,
@@ -1323,6 +1383,15 @@ public class SequoiadbDatasource {
             if (sdb == null) {
                 _connItemMgr.releaseItem(item);
                 break;
+            } else if (_sessionAttr != null) {
+                try {
+                    sdb.setSessionAttr(_sessionAttr);
+                } catch (Exception e) {
+                    _connItemMgr.releaseItem(item);
+                    item = null;
+                    _destroyConnQueue.add(sdb);
+                    break;
+                }
             }
             // when we create a connection, let's put it to idle pool
             item.setAddr(addr);
