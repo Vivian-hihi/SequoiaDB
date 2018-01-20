@@ -128,7 +128,7 @@ public class Split10529C extends SdbTestBase {
 	public void tearDown() {
 		try {
 			if( cs.isCollectionExist(clName)) {
-				cs.dropCollection(clName);;
+				//cs.dropCollection(clName);;
 			}
 		} catch (BaseException e) {
 			Assert.fail(e.getMessage() + "\r\n" + SplitUtils.getKeyStack(e, this));
@@ -202,7 +202,8 @@ public class Split10529C extends SdbTestBase {
 			for (int j = 0; j < 10000; j++) {	
 				int value = count++;
 				BSONObject obj = (BSONObject) JSON.parse("{sk:" + value +", test:"+"'testasetatatatatat'" + "}");				
-				list.add(obj);	
+				list.add(obj);
+				insertedData.add(obj);
 			}
 			cl.insert(list);
 		}		
