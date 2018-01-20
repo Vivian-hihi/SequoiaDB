@@ -102,9 +102,6 @@ namespace engine
       virtual INT32 getMore( INT32 returnNum, utilCommObjBuff &objBuff ) = 0 ;
 
    protected:
-      INT32 _getQueryCond( const BSONObj &matcher, std::string &queryStr ) ;
-
-   protected:
       string _indexName ;
       string _type ;
       utilESClt *_esClt ;

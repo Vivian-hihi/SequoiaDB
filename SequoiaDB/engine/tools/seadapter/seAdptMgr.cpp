@@ -45,10 +45,7 @@
 
 #define DATA_NODE_GRP_ID                        10000
 #define DATA_NODE_ID                            10000
-#define SEADPT_NAME_CAPPED_COLLECTIONSPACE      "CappedCS"
 #define SEADPT_NAME_CAPPED_COLLECTION           "CappedCL"
-// Wait for at most 10 mins for register.
-#define SDBADPT_REGIST_MAX_WAIT_TIME            600
 #define SEADPT_INIT_TEXT_INDEX_VERSION          -1
 #define SEADPT_IDX_UPDATE_INTERVAL              ( 5 * OSS_ONE_SEC )
 #define SEADPT_CAT_RETRY_MAX_TIMES              3

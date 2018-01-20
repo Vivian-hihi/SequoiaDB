@@ -146,49 +146,6 @@ namespace engine
    {
    }
 
-   INT32 _seAdptContextBase::_getQueryCond( const BSONObj &matcher,
-                                            std::string &queryStr )
-   {
-      INT32 rc = SDB_OK ;
-
-      BSONElement ele = matcher.firstElement() ;
-      if ( Object == ele.type() )
-      {
-         BSONElement subEle = ele.Obj().firstElement() ;
-         if ( 0 == ossStrcmp( FIELD_NAME_TEXT, subEle.fieldName() ) )
-         {
-            if ( 1 != matcher.nFields() )
-            {
-               rc = SDB_INVALIDARG ;
-               PD_LOG( PDERROR, "Only one query condition should be specified "
-                       "for text search, actually: %d", matcher.nFields() ) ;
-               goto error ;
-            }
-
-            if ( String == subEle.type() )
-            {
-               queryStr = subEle.valuestr() ;
-            }
-            else if ( Object == subEle.type() )
-            {
-               queryStr = subEle.Obj().jsonString() ;
-            }
-            else
-            {
-               rc = SDB_INVALIDARG ;
-               PD_LOG( PDERROR, "Query conditioin type[%d] for text "
-                       "search is wrong", subEle.type() ) ;
-               goto error ;
-            }
-         }
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
    _seAdptContextQuery::_seAdptContextQuery( const string &indexName,
                                              const string &typeName,
                                              utilESClt *seClt )

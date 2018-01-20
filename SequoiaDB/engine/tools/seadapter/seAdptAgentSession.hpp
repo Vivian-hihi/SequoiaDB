@@ -79,9 +79,6 @@ namespace engine
       INT32 _defaultMsgFunc ( NET_HANDLE handle, MsgHeader *msg ) ;
 
    private:
-      INT32 _getQueryCond( const BSONObj &matcher, std::string &queryStr ) ;
-
-   private:
       utilESCltMgr      *_seCltMgr ;
       utilESClt         *_esClt ;
       std::string       _scrollID ;

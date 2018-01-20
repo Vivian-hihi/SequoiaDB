@@ -411,57 +411,5 @@ namespace engine
    {
       return _onOPMsg( handle, msg ) ;
    }
-
-   INT32 _seAdptAgentSession::_getQueryCond( const BSONObj &matcher,
-                                             std::string &queryStr )
-   {
-      INT32 rc = SDB_OK ;
-
-      try
-      {
-         BSONElement ele = matcher.firstElement() ;
-         if ( Object == ele.type() )
-         {
-            BSONElement subEle = ele.Obj().firstElement() ;
-            if ( 0 == ossStrcmp( FIELD_NAME_TEXT, subEle.fieldName() ) )
-            {
-               if ( 1 != matcher.nFields() )
-               {
-                  rc = SDB_INVALIDARG ;
-                  PD_LOG( PDERROR, "Only one query condition should be specified "
-                          "for text search, actually: %d", matcher.nFields() ) ;
-                  goto error ;
-               }
-
-               if ( String == subEle.type() )
-               {
-                  queryStr = subEle.valuestr() ;
-               }
-               else if ( Object == subEle.type() )
-               {
-                  queryStr = subEle.Obj().jsonString() ;
-               }
-               else
-               {
-                  rc = SDB_INVALIDARG ;
-                  PD_LOG( PDERROR, "Query conditioin type[%d] for text "
-                          "search is wrong", subEle.type() ) ;
-                  goto error ;
-               }
-            }
-         }
-      }
-      catch ( std::exception &e )
-      {
-         rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Unexpected exception happened: %s", e.what() ) ;
-         goto error ;
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
 }
 
