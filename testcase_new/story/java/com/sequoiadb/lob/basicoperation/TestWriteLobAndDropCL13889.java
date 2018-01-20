@@ -75,8 +75,8 @@ public class TestWriteLobAndDropCL13889 extends SdbTestBase {
         			rLob.read(rbuff);        			
         			Arrays.equals(rbuff, wlobBuff);
         		}   
-            }catch(BaseException e){
-		    	if ( e.getErrorCode() != -317 && e.getErrorCode() != -23){
+            }catch(BaseException e){            	
+		    	if ( e.getErrorCode() != -317 && e.getErrorCode() != -23 && e.getErrorCode() != -4){
 		    		Assert.assertTrue(false,"write fail "+e.getErrorType()+":"+e.getMessage());
 		    	}			    
 		    }
