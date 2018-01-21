@@ -730,13 +730,8 @@ function getSplitAccessPlans( db, findConf, selectorConf, sortConf )
 	         if((f == "GroupName") || (f == "ScanType") || (f == "IndexName") )
 	         {
 	            accessPlanObj[f] = accessPlan[f];   
-	         }		
-			
-			   if(f == "MinTimeSpentQuery")
-			   {
-			      accessPlanObj['ReturnNum'] = accessPlan[f]['ReturnNum'];  
-			   }
-	      }
+	         }			
+			}
 
 	      accessPlans.push(accessPlanObj);
       } 
