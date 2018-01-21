@@ -697,6 +697,10 @@ namespace import
                                           CSV_TYPE& type, CSVFieldValue& value,
                                           INT32& valueLength ) ;
 
+   static inline INT32 _stringToNan( const CHAR *data, INT32 length,
+                                     CSV_TYPE& type, CSVFieldValue& value,
+                                     INT32& valueLength ) ;
+
    // the number is long type,
    // but if the number is overflow, we set it as double
    static inline INT32 _stringToRawNum(const CHAR* data, INT32 length,
