@@ -755,14 +755,14 @@ function getSplitAccessPlans( db, findConf, selectorConf, sortConf )
 *@createDate:  2018.01.15
 **************************************/
 function checkSnapShotAccessPlans( clFullName, expectAccessPlans, actAccessPlans, groups )
-{
+{   
    var expAccessPlans = new Array();
    
    //判断独立模式、存在1组1节点模式的集群、cl不存在的情况下可能存在不同的预期结果
    if(commIsStandalone(db) == true){
       for(var i = 0; i < expectAccessPlans.length / 2; i++)
       {
-        expAccessPlans.push(expectAccessPlans[i]);
+         expAccessPlans.push(expectAccessPlans[i]);
       }
    }else{
       if(groups !== undefined){
@@ -804,11 +804,11 @@ function checkSnapShotAccessPlans( clFullName, expectAccessPlans, actAccessPlans
    for(var i = 0; i < expAccessPlans.length; i++)
    {
       if(JSON.stringify(newActAccessPlans).indexOf(JSON.stringify(newExpAccessPlans[i])) === -1
-            || JSON.stringify(newExpAccessPlans).indexOf(JSON.stringify(newActAccessPlans[i])) === -1)
-      {
-         throw buildException("check access plan", "access plan", "fail", 
-   		                  JSON.stringify(newExpAccessPlans), JSON.stringify(newActAccessPlans));
-      }
+              || JSON.stringify(newExpAccessPlans).indexOf(JSON.stringify(newActAccessPlans[i])) === -1)
+         {
+            throw buildException("check access plan", "access plan", "fail", 
+	   		                  JSON.stringify(newExpAccessPlans), JSON.stringify(newActAccessPlans));
+         }
    }
    println("check accessPlan snapshot success");
 }                                                                          

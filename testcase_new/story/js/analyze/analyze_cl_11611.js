@@ -23,7 +23,12 @@ function main()
                                                              	
    var clName4 = COMMCLNAME + "11611_4";
    var dbcl4 = commCreateCL( db, csName, clName4 );
-                                                       	
+   
+   var clFullName1 = csName + "." + clName1;
+   var clFullName2 = csName + "." + clName2;
+   var clFullName3 = csName + "." + clName3;
+   var clFullName4 = csName + "." + clName4;
+              	
    //get master/slave datanode
    var db1 = new Sdb(db);
    db1.setSessionAttr( {PreferedInstance: "m"} );
@@ -85,6 +90,41 @@ function main()
    checkExplain( actExplains3, expExplains3 );
    var actExplains4 = getCommonExplain( dbclSlave4, findConf);
    checkExplain( actExplains4, expExplains4 );
+   
+   //query
+   query(dbclPrimary1, findConf);
+	query(dbclPrimary2, findConf);
+   query(dbclPrimary3, findConf);
+	query(dbclPrimary4, findConf);
+   query(dbclSlave1, findConf);
+	query(dbclSlave2, findConf);
+   query(dbclSlave3, findConf);
+	query(dbclSlave4, findConf);
+   
+   //check out snapshot access plans
+	var accessFindOption1 = { Collection: clFullName1 };
+   var accessFindOption2 = { Collection: clFullName2 };
+   var accessFindOption3 = { Collection: clFullName3 };
+   var accessFindOption4 = { Collection: clFullName4 };
+	
+   var actAccessPlans1 = getCommonAccessPlans(db, accessFindOption1);
+   var actAccessPlans2 = getCommonAccessPlans(db, accessFindOption2);
+   var actAccessPlans3 = getCommonAccessPlans(db, accessFindOption3);
+   var actAccessPlans4 = getCommonAccessPlans(db, accessFindOption4);
+   
+   var expAccessPlans1 = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums},
+	                       {ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
+   var expAccessPlans2 = [{ScanType:"tbscan", IndexName:"", ReturnNum:0},
+	                       {ScanType:"tbscan", IndexName:"", ReturnNum:0}];
+   var expAccessPlans3 = [{ScanType:"ixscan", IndexName:"a", ReturnNum:insertNums},
+	                       {ScanType:"ixscan", IndexName:"a", ReturnNum:insertNums}];
+   var expAccessPlans4 = [{ScanType:"ixscan", IndexName:"a", ReturnNum:0},
+	                       {ScanType:"ixscan", IndexName:"a", ReturnNum:0}];
+                      
+   checkSnapShotAccessPlans(clFullName1, expAccessPlans1, actAccessPlans1);
+   checkSnapShotAccessPlans(clFullName2, expAccessPlans2, actAccessPlans2);
+   checkSnapShotAccessPlans(clFullName3, expAccessPlans3, actAccessPlans3);
+   checkSnapShotAccessPlans(clFullName4, expAccessPlans4, actAccessPlans4);
                                                                	
    println("check result before analyze success!");
                                                            
@@ -104,7 +144,25 @@ function main()
    checkStat( db, csName, clName2, "", false, false );
    checkStat( db, csName, clName3, "a", true, true );
    checkStat( db, csName, clName4, "c", false, false );
-                                                        
+                   
+   //check out snapshot access plans
+	var accessFindOption1 = { Collection: clFullName1 };
+   var accessFindOption2 = { Collection: clFullName2 };
+   var accessFindOption3 = { Collection: clFullName3 };
+   var accessFindOption4 = { Collection: clFullName4 };
+	
+   var actAccessPlans1 = getCommonAccessPlans(db, accessFindOption1);
+   var actAccessPlans2 = getCommonAccessPlans(db, accessFindOption2);
+   var actAccessPlans3 = getCommonAccessPlans(db, accessFindOption3);
+   var actAccessPlans4 = getCommonAccessPlans(db, accessFindOption4);
+   
+   var expAccessPlans = [];
+                         
+   checkSnapShotAccessPlans(clFullName1, expAccessPlans, actAccessPlans1);
+   checkSnapShotAccessPlans(clFullName2, expAccessPlans, actAccessPlans2);
+   checkSnapShotAccessPlans(clFullName3, expAccessPlans, actAccessPlans3);
+   checkSnapShotAccessPlans(clFullName4, expAccessPlans, actAccessPlans4);
+                         
    //check the query explain of master/slave nodes 
    var findConf = {a : 9000};
                                                         	
@@ -130,7 +188,42 @@ function main()
    checkExplain( actExplains3, expExplains3 );
    var actExplains4 = getCommonExplain( dbclSlave4, findConf);
    checkExplain( actExplains4, expExplains4 );
-                                                       	
+                         
+   //query
+   query(dbclPrimary1, findConf);
+	query(dbclPrimary2, findConf);
+   query(dbclPrimary3, findConf);
+	query(dbclPrimary4, findConf);
+   query(dbclSlave1, findConf);
+	query(dbclSlave2, findConf);
+   query(dbclSlave3, findConf);
+	query(dbclSlave4, findConf);
+                         
+   //check out snapshot access plans
+	var accessFindOption1 = { Collection: clFullName1 };
+   var accessFindOption2 = { Collection: clFullName2 };
+   var accessFindOption3 = { Collection: clFullName3 };
+   var accessFindOption4 = { Collection: clFullName4 };
+	
+   var actAccessPlans1 = getCommonAccessPlans(db, accessFindOption1);
+   var actAccessPlans2 = getCommonAccessPlans(db, accessFindOption2);
+   var actAccessPlans3 = getCommonAccessPlans(db, accessFindOption3);
+   var actAccessPlans4 = getCommonAccessPlans(db, accessFindOption4);
+   
+   var expAccessPlans1 = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums},
+	                       {ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
+   var expAccessPlans2 = [{ScanType:"tbscan", IndexName:"", ReturnNum:0},
+	                       {ScanType:"tbscan", IndexName:"", ReturnNum:0}];
+   var expAccessPlans3 = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums},
+	                       {ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
+   var expAccessPlans4 = [{ScanType:"ixscan", IndexName:"a", ReturnNum:0},
+	                       {ScanType:"ixscan", IndexName:"a", ReturnNum:0}];
+                      
+   checkSnapShotAccessPlans(clFullName1, expAccessPlans1, actAccessPlans1);
+   checkSnapShotAccessPlans(clFullName2, expAccessPlans2, actAccessPlans2);
+   checkSnapShotAccessPlans(clFullName3, expAccessPlans3, actAccessPlans3);
+   checkSnapShotAccessPlans(clFullName4, expAccessPlans4, actAccessPlans4);
+                                               
    //check analyze SYSSTAT cl   
    var expectErrCode = -6;
    checkAnalyzeInvalidResult({Collection: "SYSSTAT.SYSCOLLECTIONSTAT"}, expectErrCode);
