@@ -96,7 +96,7 @@ namespace engine
    #define PMD_DFT_PREFINST            ( PREFER_INSTANCE_MASTER_STR )
    #define PMD_DFT_PREFINST_MODE       ( PREFER_INSTANCE_RANDOM_STR )
    #define PMD_DFT_INSTANCE_ID         ( NODE_INSTANCE_ID_UNKNOWN )
-
+   #define PMD_DFT_MAX_CONN            (0)   // unlimited
    /*
       _pmdCfgExchange implement
    */
@@ -1505,6 +1505,7 @@ namespace engine
       _enableMixCmp = PMD_DFT_ENABLE_MIX_CMP ;
       _planCacheLevel = OPT_PLAN_PARAMETERIZED ;
       _instanceID = PMD_DFT_INSTANCE_ID ;
+      _maxconn = PMD_DFT_MAX_CONN;
 
 #ifdef SDB_ENTERPRISE
 
@@ -1838,6 +1839,10 @@ namespace engine
       rdvMinMax( pEX, _planCacheLevel, OPT_PLAN_NOCACHE, OPT_PLAN_FUZZYOPTR,
                  TRUE ) ;
 
+      // --maxconn
+      rdxInt(pEX, PMD_OPTION_MAX_CONN,_maxconn, FALSE,
+               TRUE, PMD_DFT_MAX_CONN, FALSE ) ;
+      rdvMinMax( pEX, _maxconn, 0, 30000, TRUE ) ;
       // end map
 
       return getResult () ;

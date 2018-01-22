@@ -553,6 +553,7 @@ namespace engine
          OSS_INLINE const CHAR * getPrefInstStr () const { return _prefInstStr ; }
          OSS_INLINE const CHAR * getPrefInstModeStr () const { return _prefInstModeStr ; }
          OSS_INLINE UINT32 getInstanceID () const { return _instanceID ; }
+         OSS_INLINE INT32 getMaxConn () const { return _maxconn ; }
 
          std::string getOmAddr() const ;
 
@@ -643,6 +644,7 @@ namespace engine
          BOOLEAN     _enableMixCmp ;
          UINT32      _planCacheLevel ;
          UINT32      _instanceID ;
+         INT32       _maxconn;
 
 #ifdef SDB_ENTERPRISE
 

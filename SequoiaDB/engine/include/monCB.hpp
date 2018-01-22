@@ -164,6 +164,12 @@ namespace engine
 
       UINT64 totalLogSize;
 
+      ossAtomicSigned32 _curConns;
+
+      BOOLEAN isConnLimited();
+      void connInc();
+      void connDec();
+
       void monOperationTimeInc( MON_OPERATION_TYPES op, ossTickDelta &delta )
       {
          switch ( op )
@@ -279,7 +285,8 @@ namespace engine
 
       _monDBCB()
       :_svcNetIn(0),
-      _svcNetOut(0)
+      _svcNetOut(0),
+      _curConns(0)
       {
          reset() ;
          receiveNum = 0 ;

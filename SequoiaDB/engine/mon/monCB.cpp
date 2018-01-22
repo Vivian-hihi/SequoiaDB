@@ -320,4 +320,26 @@ namespace engine
       return ( *this ) ;
    }
 
+
+   
+   BOOLEAN _monDBCB::isConnLimited()
+   {
+      if ( ( pmdGetOptionCB()->getMaxConn() != 0 )
+            && ( _curConns.fetch() > pmdGetOptionCB()->getMaxConn() )  )
+      {
+         return TRUE;
+      }
+      return FALSE;
+   }
+
+   void _monDBCB::connInc()
+   {
+      _curConns.inc();
+   }
+
+   void _monDBCB::connDec()
+   {
+      _curConns.dec();
+   }
+
 }

@@ -125,6 +125,15 @@ namespace engine
             }
          }
 
+         mondbcb->connInc() ;
+         if ( mondbcb->isConnLimited() )
+         {
+            ossSocket newsock ( &s ) ;
+            newsock.close () ;
+            mondbcb->connDec();
+            continue ;
+         }
+         
          cb->incEventCount() ;
          ++mondbcb->numConnects ;
 

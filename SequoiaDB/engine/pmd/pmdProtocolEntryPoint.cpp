@@ -106,6 +106,15 @@ namespace engine
             }
          }
 
+         mondbcb->connInc();
+         if ( mondbcb->isConnLimited() )
+         {
+            ossSocket newsock ( &s ) ;
+            newsock.close () ;
+            mondbcb->connDec();
+            continue ;
+         }
+
          cb->incEventCount() ;
          ++mondbcb->numConnects ;
 
@@ -211,6 +220,9 @@ namespace engine
          protocol->releaseSession( session ) ;
          session = NULL ;
       }
+
+      pmdGetKRCB()->getMonDBCB ()->connDec();
+      
       PD_TRACE_EXITRC ( SDB_PMDLOCALAGENTENTPNT, rc );
       return rc ;
    error:

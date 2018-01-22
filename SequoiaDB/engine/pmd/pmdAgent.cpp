@@ -71,6 +71,8 @@ namespace engine
 
       localSession.detach() ;
 
+      pmdGetKRCB()->getMonDBCB ()->connDec();
+
       PD_TRACE_EXITRC ( SDB_PMDLOCALAGENTENTPNT, rc );
       return rc ;
    }
