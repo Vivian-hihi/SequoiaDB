@@ -1,3 +1,4 @@
+# -- coding: utf-8 --
 # @decription: insert decimal data
 # @testlink:   seqDB-9462/seqDB-9463/seqDB-9464/seqDB-9465/seqDB-9466
 #              /seqDB-9467/seqDB-9468/seqDB-9469/seqDB-9470/seqDB-9471
@@ -7,17 +8,20 @@
 #              delete(kwargs)
 # @author:     zhaoyu 2017-9-7
 
-from pysequoiadb.error import (SDBBaseError)
-from lib import testlib
-from bson.json_util import loads
-from bson.json_util import dumps
-from bson.decimal import Decimal
 from collections import OrderedDict
+
+from bson.decimal import Decimal
+from bson.json_util import dumps
+from bson.json_util import loads
+from bson.objectid import ObjectId
+from pysequoiadb.error import (SDBBaseError)
+
+from lib import testlib
 
 
 class TestDecimal12459(testlib.SdbTestBase):
    def setUp(self):
-		# create cs and cl
+      # create cs and cl
       self.cs_name = "cs_12459"
       self.cl_name = "cl_12459"
       try:
@@ -333,12 +337,12 @@ class TestDecimal12459(testlib.SdbTestBase):
       doc = OrderedDict([("a", obj), ("_id", 1)])
       self.insert_decimal(self.cl, doc)
       self.check_result(self.cl, {"a": OrderedDict([("$type", 1), ("$et", 100)])}, obj, doc)
-      
+
       self.assertEqual(obj.compare(0), 0)
-      
+
       rc = obj.is_zero()
       self.assertTrue(rc)
-      
+
       self.cl.delete()
 
       # seqDB-9469,51
@@ -347,10 +351,10 @@ class TestDecimal12459(testlib.SdbTestBase):
       doc = OrderedDict([("a", obj), ("_id", 1)])
       self.insert_decimal(self.cl, doc)
       self.check_result(self.cl, {"a": OrderedDict([("$type", 1), ("$et", 100)])}, obj, doc)
-      
+
       obj1 = Decimal("9e+1000", None, None)
       self.assertEqual(obj.compare(obj1), 1)
-      
+
       rc = obj.is_max()
       self.assertTrue(rc)
       self.cl.delete()
@@ -361,10 +365,10 @@ class TestDecimal12459(testlib.SdbTestBase):
       doc = OrderedDict([("a", obj), ("_id", 1)])
       self.insert_decimal(self.cl, doc)
       self.check_result(self.cl, {"a": OrderedDict([("$type", 1), ("$et", 100)])}, obj, doc)
-      
+
       obj1 = Decimal("-9e-1000", None, None)
       self.assertEqual(obj.compare(obj1), -1)
-      
+
       rc = obj.is_min()
       self.assertTrue(rc)
       self.cl.delete()
@@ -393,18 +397,18 @@ class TestDecimal12459(testlib.SdbTestBase):
       obj = Decimal("-9223372036854775809", None, None)
       rc = obj.to_int()
       self.assertEqual(rc, 0)
-      
+
       # 58
       obj = Decimal("9223372036854775808", None, None)
       rc = obj.to_int()
       self.assertEqual(rc, 0)
-      
+
       # seqDB-9472,59
       obj = Decimal("123.12", None, None)
       rc = obj.to_float()
       self.assertEqual(type(rc), float)
       self.assertEqual(obj.compare(rc), 0)
-      
+
       # 60
       obj = Decimal("123", None, None)
       rc = obj.to_float()
@@ -463,7 +467,7 @@ class TestDecimal12459(testlib.SdbTestBase):
       obj = Decimal("123.12", None, None)
       self.assertEqual(obj.compare(123.12), 0)
       self.assertEqual(obj.compare(123), 1)
-         
+
       obj1 = Decimal("123.12", 5, 2)
       self.assertEqual(obj.compare(obj1), 0)
 
@@ -471,7 +475,7 @@ class TestDecimal12459(testlib.SdbTestBase):
       obj = Decimal("123.12", 5, 2)
       self.assertEqual(obj.compare(123.12), 0)
       self.assertEqual(obj.compare(123), 1)
-      
+
       obj1 = Decimal("123.12", None, None)
       self.assertEqual(obj.compare(obj1), 0)
 
@@ -531,7 +535,7 @@ class TestDecimal12459(testlib.SdbTestBase):
       self.assertEqual(loads(json).compare(obj), 0)
       self.assertEqual(loads(dumps(obj)).compare(obj), 0)
       self.assertEqual(dumps(loads(json)), json)
-      
+
       obj = Decimal(-9223372036854775808, 100, 2)
       json = '{"$decimal": "-9223372036854775808.00", "$precision": [100, 2]}'
       self.assertEqual(dumps(obj), json)
@@ -540,7 +544,7 @@ class TestDecimal12459(testlib.SdbTestBase):
       self.assertEqual(loads(json).compare(obj), 0)
       self.assertEqual(loads(dumps(obj)).compare(obj), 0)
       self.assertEqual(dumps(loads(json)), json)
-      
+
       obj = Decimal(4.9e-324, 1000, 325)
       json = '{"$decimal": "0.0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000049", "$precision": [1000, 325]}'
       self.assertEqual(dumps(obj), json)
@@ -590,11 +594,11 @@ class TestDecimal12459(testlib.SdbTestBase):
    def check_result(self, cl, condition, obj, doc):
       cnt = cl.get_count(condition=condition)
       rec = cl.query(condition=condition).next()
-      
+
       self.assertEqual(cnt, 1)
       self.assertEqual(rec['a'].compare(obj), 0)
       self.assertEqual(dumps(rec.pop('_id')), dumps(doc.pop('_id')))
-   
+
    def check_InvalidValueArg_Result(self, data, precision, scale):
       try:
          obj = Decimal(data, precision, scale)
