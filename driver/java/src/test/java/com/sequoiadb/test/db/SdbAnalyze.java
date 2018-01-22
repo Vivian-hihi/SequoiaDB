@@ -46,9 +46,6 @@ public class SdbAnalyze {
     public void anzyzeAll()
     {
         sdb.analyze();
-        BSONObject options = new BasicBSONObject();
-        options.put( "Collection", Constants.TEST_CS_NAME_1 + "." + Constants.TEST_CL_NAME_1 ) ;
-        sdb.analyze(options);
     }
 
     @Test
