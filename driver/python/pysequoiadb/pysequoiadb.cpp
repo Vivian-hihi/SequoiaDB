@@ -1336,6 +1336,34 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
+__METHOD_IMP(sdb_analyze)
+{
+   INT32 rc                    = 0 ;
+   PYOBJECT *obj               = NULL ;
+   PYOBJECT *bson_option       = NULL ;
+   sdb *client                 = NULL ;
+   const bson::BSONObj *option = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS( args, "OO", &obj, &bson_option ) )
+   {
+      rc = SDB_INVALIDARGS ;
+      goto done ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_option, option ) ;
+
+   rc = client->analyze( *option ) ;
+   if ( rc )
+   {
+      goto done ;
+   }
+
+done:
+   DELETE_CPPOBJECT( option ) ;
+   return MAKE_RETURN_INT( rc ) ;
+}
+
 ///< implement collection space
 __METHOD_IMP(create_cs)
 {
@@ -4150,6 +4178,7 @@ static PyMethodDef sequoiadb_methods[] = {
    {"sdb_get_domain",                  sdb_get_domain,                  METH_VARARGS},
    {"sdb_sync",                        sdb_sync,                        METH_VARARGS},
    {"sdb_get_datacenter",              sdb_get_datacenter,              METH_VARARGS},
+   {"sdb_analyze",                     sdb_analyze,                     METH_VARARGS},
 
    /** cs */
    {"create_cs",                       create_cs,                       METH_VARARGS},

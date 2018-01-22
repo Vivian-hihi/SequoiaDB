@@ -53,6 +53,7 @@ final class AdminCommand {
     final static String GET_SESSION_ATTRIBUTE = PREFIX + "get session attribute";
     final static String SYNC_DB = PREFIX + "sync db";
     final static String EXPORT_CONFIG = PREFIX + "export configuration";
+    final static String ANALYZE = PREFIX + "analyze";
 
     final static String LIST_CONTEXTS = PREFIX + "list contexts";
     final static String LIST_CONTEXTS_CURRENT = PREFIX + "list contexts current";

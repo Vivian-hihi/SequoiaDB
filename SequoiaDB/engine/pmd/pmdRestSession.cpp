@@ -943,7 +943,8 @@ namespace engine
          { OM_LOGIN_REQ,         &RestToMSGTransfer::_convertLogin },
          { REST_CMD_NAME_EXEC,   &RestToMSGTransfer::_convertExec },
          { CMD_NAME_FORCE_SESSION,
-                                 &RestToMSGTransfer::_convertForceSession }
+                                 &RestToMSGTransfer::_convertForceSession },
+         { CMD_NAME_ANALYZE,     &RestToMSGTransfer::_convertAnalyze }
       } ;
 
       len = sizeof( s_commandArray ) / sizeof( restCommand2Func ) ;
@@ -4283,5 +4284,61 @@ namespace engine
    error:
       goto done ;
    }
+
+   INT32 RestToMSGTransfer::_convertAnalyze ( restAdaptor * pAdaptor,
+                                              MsgHeader ** msg )
+   {
+      INT32 rc = SDB_OK ;
+
+      INT32 buffSize = 0 ;
+      CHAR *pBuff = NULL ;
+      const CHAR *pOption    = NULL ;
+      const CHAR *pCommand   = CMD_ADMIN_PREFIX CMD_NAME_ANALYZE ;
+      BSONObj query ;
+      BSONObj options ;
+
+      pAdaptor->getQuery( _restSession, FIELD_NAME_OPTIONS, &pOption ) ;
+      if( NULL != pOption )
+      {
+         rc = fromjson( pOption, options, 0 ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG_MSG( PDERROR, "field's format error:field=%s, value=%s",
+                        FIELD_NAME_OPTIONS, pOption ) ;
+            goto error ;
+         }
+      }
+
+      try
+      {
+         BSONObjBuilder builder ;
+         builder.appendElements( options ) ;
+         query = builder.obj() ;
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG_MSG( PDERROR, "Failed to create BSON object: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1,
+                             &query, NULL, NULL, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d",
+                     pCommand, rc ) ;
+         goto error ;
+      }
+
+      *msg = ( MsgHeader * )pBuff ;
+
+   done:
+      return rc ;
+
+   error:
+      goto done ;
+   }
+
 }
 

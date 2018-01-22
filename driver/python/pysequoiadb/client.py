@@ -1593,3 +1593,43 @@ class client(object):
 
         rc = sdb.sdb_sync(self._client, bson_options)
         raise_if_error(rc, "Failed to sync")
+
+    def analyze(self, options=None):
+        """Analyze collection or index to collect statistics information
+
+        Parameters:
+           Name         Type     Info:
+           options      dict     The control options:
+                                 CollectionSpace:
+                                    (String) Specify the collection space to be analyzed.
+                                 Collection:
+                                    (String) Specify the collection to be analyzed.
+                                 Index:
+                                    (String) Specify the index to be analyzed.
+                                 Mode:
+                                    (Int32) Specify the analyze mode (default is 1):
+                                    Mode 1 will analyze with data samples.
+                                    Mode 2 will analyze with full data.
+                                    Mode 3 will generate default statistics.
+                                    Mode 4 will reload statistics into memory cache.
+                                    Mode 5 will clear statistics from memory cache.
+                                 Others:
+                                    Only take effect in coordinate nodes)
+                                    GroupID:INT32,
+                                    GroupName:String,
+                                    NodeID:INT32,
+                                    HostName:String,
+                                    svcname:String,
+                                    ...
+        Exceptions:
+           pysequoiadb.error.SDBBaseError
+        """
+        bson_options = None
+        if options is not None:
+            if not isinstance(options, dict):
+                raise SDBTypeError("options must be an instance of dict")
+            bson_options = bson.BSON.encode(options)
+
+        rc = sdb.sdb_sync(self._client, bson_options)
+        raise_if_error(rc, "Failed to analyze")
+

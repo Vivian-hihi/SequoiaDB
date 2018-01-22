@@ -2011,4 +2011,53 @@ class SequoiaDB
     * @endcode
    */
    public function forceSession( integer|SequoiaINT64 $sessionID, array|string $options = null ){}
+
+   /**
+    * Analyze collection or index to collect statistics information
+    *
+    * @param $options an array or the string argument. The control options:
+    *        @code
+    *        CollectionSpace : (String) Specify the collection space to be analyzed.
+    *        Collection      : (String) Specify the collection to be analyzed.
+    *        Index           : (String) Specify the index to be analyzed.
+    *        Mode            : (Int32) Specify the analyze mode (default is 1):
+    *                          Mode 1 will analyze with data samples.
+    *                          Mode 2 will analyze with full data.
+    *                          Mode 3 will generate default statistics.
+    *                          Mode 4 will reload statistics into memory cache.
+    *                          Mode 5 will clear statistics from memory cache.
+    *        Location Elements : (Only take effect in coordinate nodes) GroupID:INT32, GroupName:String, NodeID:INT32, HostName:String, svcname:String ...
+    *        @endcode
+    *
+    * @return Returns the result, default return array.
+    *
+    * @retval array   array( 'errno' => 0 )
+    * @retval string  { "errno": 0 }
+    *
+    * Example:
+    * 1. Analyze all collections by default.
+    * @code
+    * $db = new SequoiaDB() ;
+    * $err = $db -> connect( "192.168.1.10:11810" ) ;
+    * if( $err['errno'] != 0 ) {
+    *    echo "Failed to connect database, error code: ".$err['errno'] ;
+    *    return ;
+    * }
+    * $result = $db -> analyze() ;
+    * var_dump( $result ) ;
+    * @endcode
+    * 2. Analyze collection "foo.bar"
+    * @code
+    * $db = new SequoiaDB() ;
+    * $err = $db -> connect( "192.168.1.10:11810" ) ;
+    * if( $err['errno'] != 0 ) {
+    *    echo "Failed to connect database, error code: ".$err['errno'] ;
+    *    return ;
+    * }
+    * $result = $db -> analyze( array( 'Collection' => 'foo.bar' ) ) ;
+    * var_dump( $result ) ;
+    * @endcode
+   */
+   public function analyze( array|string $options = null ){}
+
 }

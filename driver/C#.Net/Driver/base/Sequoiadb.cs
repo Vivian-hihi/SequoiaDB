@@ -1755,6 +1755,57 @@ namespace SequoiaDB
             Sync(new BsonDocument());
         }
 
+        /** \fn void Analyze(BsonDocument options)
+         *  \brief Analyze collection or index to collect statistics information
+         *  \param [in] options The control options:
+         *
+         *      CollectionSpace : (String) Specify the collection space to be analyzed.
+         *      Collection      : (String) Specify the collection to be analyzed.
+         *      Index           : (String) Specify the index to be analyzed.
+         *      Mode            : (Int32) Specify the analyze mode (default is 1):
+         *                        Mode 1 will analyze with data samples.
+         *                        Mode 2 will analyze with full data.
+         *                        Mode 3 will generate default statistics.
+         *                        Mode 4 will reload statistics into memory cache.
+         *                        Mode 5 will clear statistics from memory cache.
+         *      Other options   : Some of other options are as below:(only take effect
+         *                        in coordinate nodes, please visit the official website
+         *                        to search "analyze" or "Location Elements" for more
+         *                        detail.)
+         *                        GroupID:INT32,
+         *                        GroupName:String,
+         *                        NodeID:INT32,
+         *                        HostName:String,
+         *                        svcname:String,
+         *                        ...
+         *  \return void
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+         */
+        public void Analyze(BsonDocument options)
+        {
+            // build cmd
+            string command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.CMD_VALUE_NAME_ANALYZE;
+            // run command
+            SDBMessage rtn = AdminCommand(command, options, null, null, null);
+            int flags = rtn.Flags;
+            if (flags != 0)
+            {
+                throw new BaseException(flags);
+            }
+        }
+
+        /** \fn void Sync()
+         *  \brief Analyze all collections and indexes to collect statistics information
+         *  \return void
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+         */
+        public void Analyze()
+        {
+            Analyze(new BsonDocument());
+        }
+
         private SDBMessage CreateCS(string csName, BsonDocument options)
         {
             string commandString = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.CREATE_CMD + " " + SequoiadbConstants.COLSPACE;

@@ -399,6 +399,8 @@ namespace engine
 
          INT32       _convertLogin( restAdaptor *pAdaptor, MsgHeader **msg ) ;
 
+         INT32       _convertAnalyze ( restAdaptor * pAdaptor, MsgHeader ** msg ) ;
+
       private:
          pmdRestSession    *_restSession ;
          std::map< string, restTransFunc > _mapTransFunc ;

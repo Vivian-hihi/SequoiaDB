@@ -762,6 +762,53 @@ public class Sequoiadb implements Closeable {
     }
 
     /**
+     * Analyze collection or index to collect statistics information
+     * @param options The control options:(can be null)
+     *      <ul>
+     *          <li>
+     *              CollectionSpace: (String) Specify the collection space to be analyzed.
+     *          </li>
+     *          <li>
+     *              Collection: (String) Specify the collection to be analyzed.
+     *          </li>
+     *          <li>
+     *              Index: (String) Specify the index to be analyzed.
+     *          </li>
+     *          <li>
+     *              Mode: (Int32) Specify the analyze mode (default is 1):
+     *              <ul>
+     *                  <li>Mode 1 will analyze with data samples.</li>
+     *                  <li>Mode 2 will analyze with full data.</li>
+     *                  <li>Mode 3 will generate default statistics.</li>
+     *                  <li>Mode 4 will reload statistics into memory cache.</li>
+     *                  <li>Mode 5 will clear statistics from memory cache.</li>
+     *              </ul>
+     *          </li>
+     *          <li>
+     *              Other options: Some of other options are as below:(only take effect in coordinate nodes,
+     *              please visit the official website to search "analyze" or "Location Elements" for more detail.)
+     *              GroupID:int, GroupName:String, NodeID:int, HostName:String, svcname:String, ...
+     *          </li>
+     *      </ul>
+     * @throws BaseException If error happens.
+     * @since 2.9
+     */
+    public void analyze(BSONObject options) throws BaseException {
+        AdminRequest request = new AdminRequest(AdminCommand.ANALYZE, options);
+        SdbReply response = requestAndResponse(request);
+        throwIfError(response);
+    }
+
+    /**
+     * Analyze all collections and indexes to collect statistics information
+     * @throws BaseException If error happens.
+     * @since 2.9
+     */
+    public void analyze() throws BaseException {
+        analyze(null);
+    }
+
+    /**
      * Get the named collection space.
      * If the collection space not exit, throw BaseException with errcode SDB_DMS_CS_NOTEXIST.
      * @param csName The collection space name.

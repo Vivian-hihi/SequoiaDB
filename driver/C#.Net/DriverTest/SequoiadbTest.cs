@@ -1052,7 +1052,18 @@ namespace DriverTest
             node.Start();
         }
 
+        [TestMethod()]
+        public void Analyze_Test()
+        {
+            sdb.Analyze();
+        }
 
-
+        [TestMethod()]
+        public void Analyze_CL_Test()
+        {
+            BsonDocument options = new BsonDocument();
+            options.Add("Collection", csName + "." + cName);
+            sdb.Analyze(options);
+        }
     }
 }

@@ -52,6 +52,7 @@ __METHOD_DECLARE(sdb_drop_domain) ;
 __METHOD_DECLARE(sdb_get_domain) ;
 __METHOD_DECLARE(sdb_sync) ;
 __METHOD_DECLARE(sdb_get_datacenter) ;
+__METHOD_DECLARE(sdb_analyze) ;
 
 ///< collection space
 __METHOD_DECLARE(create_cs) ;
