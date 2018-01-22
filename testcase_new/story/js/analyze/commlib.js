@@ -730,12 +730,7 @@ function getSplitAccessPlans( db, findConf, selectorConf, sortConf )
 	         if((f == "GroupName") || (f == "ScanType") || (f == "IndexName") )
 	         {
 	            accessPlanObj[f] = accessPlan[f];   
-	         }		
-			
-			   if(f == "MinTimeSpentQuery")
-			   {
-			      accessPlanObj['ReturnNum'] = accessPlan[f]['ReturnNum'];  
-			   }
+	         }	
 	      }
 
 	      accessPlans.push(accessPlanObj);
@@ -771,12 +766,31 @@ function checkSnapShotAccessPlans( clFullName, expectAccessPlans, actAccessPlans
          var groups = commGetCLGroups( db, clFullName );
          var datas = getNodesInGroups(db, groups);
       }
-      if(1 === datas[0].length)
+      //判断普通表一组一节点的情况
+      if(1 === datas.length && 1 === datas[0].length)
       {
          for(var i = 0; i < expectAccessPlans.length / 2; i++)
          {
             expAccessPlans.push(expectAccessPlans[i]);
          }
+      //判断分区表有一组一节点的情况(其中一个组是一组一节点)
+      }else if(1 < datas.length && 
+                (1 === datas[0].length || 1 === datas[1].length)){
+         var groupName = groups[1];
+         if(1 === datas[1].length)  { groupName = groups[0]; }
+         
+         for(var i = 0; i < expectAccessPlans.length / 2; i++)
+         {
+            expAccessPlans.push(expectAccessPlans[i]);
+         }
+         while(i < expectAccessPlans.length)
+         {
+            if(groupName === expectAccessPlans[i]['GroupName'])
+            {
+               expAccessPlans.push(expectAccessPlans[i]);
+            }
+            i++;
+         }         
       }else{
          expAccessPlans = expectAccessPlans;
       }
@@ -785,6 +799,7 @@ function checkSnapShotAccessPlans( clFullName, expectAccessPlans, actAccessPlans
    //校验计划个数
    if( expAccessPlans.length !==  actAccessPlans.length )
    {
+       println('expAccessPlans: ' + JSON.stringify(expAccessPlans) + ', actAccessPlans: ' + JSON.stringify(actAccessPlans))
        throw buildException("check length", "accessPlan length", "check failed!",
 								expAccessPlans.length, actAccessPlans.length);
    }

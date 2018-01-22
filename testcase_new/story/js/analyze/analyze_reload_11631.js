@@ -14,7 +14,9 @@ function main()
    //create cl	
    var clName = COMMCLNAME + "11631";
    var dbcl = commCreateCL( db, csName, clName );
-                                                      	
+                                               
+   var clFullName = csName + "." + clName;
+                                               
    //get master/slave datanode
    var db1 = new Sdb(db);
    db1.setSessionAttr( {PreferedInstance: "m"} );
@@ -47,6 +49,18 @@ function main()
    var actExplains = getCommonExplain( dbclSlave, findConf);
    checkExplain( actExplains, expExplains );
                                                	
+   //query
+   query(dbclPrimary, findConf);
+   query(dbclSlave, findConf);
+   
+   //check out snapshot access plans
+	var accessFindOption = { Collection: clFullName };
+   var actAccessPlans = getCommonAccessPlans(db, accessFindOption);
+   var expAccessPlans = [{ScanType:"ixscan", IndexName:"a", ReturnNum:insertNums},
+	                      {ScanType:"ixscan", IndexName:"a", ReturnNum:insertNums}];
+                     
+   checkSnapShotAccessPlans(clFullName, expAccessPlans, actAccessPlans);                                             
+                                                
    println("check result before analyze !");
                                                        	                                                   	
    //analyze 
@@ -55,6 +69,13 @@ function main()
                             	
    //check after analyze success
    checkStat( db, csName, clName, "a", true, true );
+   
+   //check out snapshot access plans
+	var accessFindOption = { Collection: clFullName };
+   var actAccessPlans = getCommonAccessPlans(db, accessFindOption);
+   var expAccessPlans = [];
+                     
+   checkSnapShotAccessPlans(clFullName, expAccessPlans, actAccessPlans);          
                                                 	
    //check the query explain after analyze
    var findConf = {a : 9000};
@@ -65,6 +86,18 @@ function main()
                           
    var actExplains = getCommonExplain( dbclSlave, findConf);
    checkExplain( actExplains, expExplains );
+   
+   //query
+   query(dbclPrimary, findConf);
+   query(dbclSlave, findConf);
+   
+   //check out snapshot access plans
+	var accessFindOption = { Collection: clFullName };
+   var actAccessPlans = getCommonAccessPlans(db, accessFindOption);
+   var expAccessPlans = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums},
+	                      {ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
+                     
+   checkSnapShotAccessPlans(clFullName, expAccessPlans, actAccessPlans);          
                 	
    println("check result after analyze!");
    
@@ -74,6 +107,13 @@ function main()
                             	
    //check after reload analyze success
    checkStat( db, csName, clName, "a", true, true );
+   
+   //check out snapshot access plans
+	var accessFindOption = { Collection: clFullName };
+   var actAccessPlans = getCommonAccessPlans(db, accessFindOption);
+   var expAccessPlans = [];
+                     
+   checkSnapShotAccessPlans(clFullName, expAccessPlans, actAccessPlans); 
                                                 	
    //check the query explain after analyze
    var findConf = {a : 9000};
@@ -84,6 +124,18 @@ function main()
                           
    var actExplains = getCommonExplain( dbclSlave, findConf);
    checkExplain( actExplains, expExplains );
+   
+   //query
+   query(dbclPrimary, findConf);
+   query(dbclSlave, findConf);
+   
+   //check out snapshot access plans
+	var accessFindOption = { Collection: clFullName };
+   var actAccessPlans = getCommonAccessPlans(db, accessFindOption);
+   var expAccessPlans = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums},
+	                      {ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
+                     
+   checkSnapShotAccessPlans(clFullName, expAccessPlans, actAccessPlans); 
                 	
    println("check result after reload analyze!");
            

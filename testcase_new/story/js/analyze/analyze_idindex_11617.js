@@ -15,6 +15,8 @@ function main()
    //create cl	
    var clName = COMMCLNAME + "11617";
    var dbcl = commCreateCL( db, csName, clName );
+   
+   var clFullName = csName + "." + clName;
                                                  	
    //get master/slave datanode
    var db1 = new Sdb(db);
@@ -41,7 +43,19 @@ function main()
                                                                        
    var actExplains = getCommonExplain( dbclSlave, findConf);
    checkExplain( actExplains, expExplains );
-                                                                            	
+   
+   //query
+   query(dbclPrimary, findConf);
+   query(dbclSlave, findConf);
+   
+   //check out snapshot access plans
+	var accessFindOption = { Collection: clFullName };
+   var actAccessPlans = getCommonAccessPlans(db, accessFindOption);
+   var expAccessPlans = [{ScanType:"ixscan", IndexName:"$id", ReturnNum:1},
+	                      {ScanType:"ixscan", IndexName:"$id", ReturnNum:1}];
+                     
+   checkSnapShotAccessPlans(clFullName, expAccessPlans, actAccessPlans);
+                                                                          	
    println("check result before analyze success!");
                                                                  	
    //invoke analyze
@@ -50,6 +64,13 @@ function main()
                                                                          	
    //check after analyze
    checkStat( db, csName, clName, "$id", true, true );
+   
+   //check out snapshot access plans
+	var accessFindOption = { Collection: clFullName };
+   var actAccessPlans = getCommonAccessPlans(db, accessFindOption);
+   var expAccessPlans = [];
+                     
+   checkSnapShotAccessPlans(clFullName, expAccessPlans, actAccessPlans);
                                                          
    //check the query explain of master/slave nodes 
    var findConf = {_id : 4000};
@@ -60,6 +81,18 @@ function main()
                                                                    
    var actExplains = getCommonExplain( dbclSlave, findConf);
    checkExplain( actExplains, expExplains );
+   
+   //query
+   query(dbclPrimary, findConf);
+   query(dbclSlave, findConf);
+   
+   //check out snapshot access plans
+	var accessFindOption = { Collection: clFullName };
+   var actAccessPlans = getCommonAccessPlans(db, accessFindOption);
+   var expAccessPlans = [{ScanType:"ixscan", IndexName:"$id", ReturnNum:1},
+	                      {ScanType:"ixscan", IndexName:"$id", ReturnNum:1}];
+                     
+   checkSnapShotAccessPlans(clFullName, expAccessPlans, actAccessPlans);
    
    println("check result after analyze success!");
                   
