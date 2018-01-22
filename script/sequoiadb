@@ -169,6 +169,52 @@ log_warning_msg () {
     log_end_msg 255 || true
 }
 
+#
+# Set ulimit 
+#
+set_ulimits() {
+    LIMITS_CFG_PATH="${INSTALL_DIR}/conf/limits.conf"
+    LIMITS_SC=`grep -w core_file_size ${LIMITS_CFG_PATH}`
+    LIMITS_SD=`grep -w data_seg_size ${LIMITS_CFG_PATH}`
+    LIMITS_SF=`grep -w file_size ${LIMITS_CFG_PATH}`
+    LIMITS_SV=`grep -w virtual_memory ${LIMITS_CFG_PATH}`
+    LIMITS_N=`grep -w open_files ${LIMITS_CFG_PATH}`
+
+    LIMITS_SC_VALUE=`echo ${LIMITS_SC} | awk -F '=' '{print $2}'`
+    if [ $LIMITS_SC_VALUE = -1 ]; then
+       ulimit -Sc unlimited   #no coredump
+    else
+       ulimit -Sc $LIMITS_SC_VALUE   #no coredump
+    fi
+       
+    LIMITS_SD_VALUE=`echo ${LIMITS_SD} | awk -F '=' '{print $2}'`
+    if [ $LIMITS_SD_VALUE = -1 ]; then
+       ulimit -Sd unlimited   #data seg size
+    else
+       ulimit -Sd $LIMITS_SD_VALUE   #data seg size
+    fi
+     
+    LIMITS_SF_VALUE=`echo ${LIMITS_SF} | awk -F '=' '{print $2}'`
+    if [ $LIMITS_SF_VALUE = -1 ]; then
+       ulimit -Sf unlimited   #file size
+    else
+       ulimit -Sf $LIMITS_SF_VALUE   #file size
+    fi
+     
+    LIMITS_SV_VALUE=`echo ${LIMITS_SV} | awk -F '=' '{print $2}'`
+    if [ $LIMITS_SV_VALUE = -1 ]; then
+       ulimit -Sv unlimited   #virtual memory
+    else
+       ulimit -Sv $LIMITS_SV_VALUE   #virtual memory
+    fi
+     
+    LIMITS_N_VALUE=`echo ${LIMITS_N} | awk -F '=' '{print $2}'`
+    if [ $LIMITS_N_VALUE = -1 ]; then
+       ulimit -n unlimited   #open files
+    else
+       ulimit -n $LIMITS_N_VALUE   #open files
+    fi
+}
 
 #
 # Return LSB status
@@ -197,12 +243,9 @@ status_of_proc () {
 #
 do_start()
 {
-  # Set ulimit 
-  ulimit -Sc 0   #no coredump
-  ulimit -Sd `ulimit -Hd` #data seg size
-  ulimit -Sf `ulimit -Hf` #file size 
-  ulimit -Sv `ulimit -Hv` #virtual memory 
-  ulimit -Sn `ulimit -Hn` #open files
+  if [ -f "${INSTALL_DIR}/conf/limits.conf" ]; then
+    set_ulimits
+  fi
   mkdir -p ${LOCK_FILE_DIR}
   touch ${LOCK_FILE}
 
