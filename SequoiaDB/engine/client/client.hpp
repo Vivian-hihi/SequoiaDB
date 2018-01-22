@@ -4801,22 +4801,13 @@ namespace sdbclient
                                  const bson::BSONObj &options)
           \brief Stop the specified session's current operation and terminate it
           \param [in] sessionID The ID of the session.
-          \param [in] options The control options:
-
-              CollectionSpace: (String) Specify the collectionspace to be analyzed.
-              Collection: (String) Specify the collection to be analyzed.
-              Index: (String) Specify the index to be analyzed.
-              Mode: (Int32) Specify the analyze, 0 is reload only, 1 is sampling
-                    analyze, 2 is full analyze
-              Some of other options are as below:(only take effect in coordinate nodes,
-                             please visit the official website to search "analyze" or
-                             "Location Elements" for more detail.)
-              GroupID:INT32,
-              GroupName:String,
-              NodeID:INT32,
-              HostName:String,
-              svcname:String,
-              ...
+          \param [in] options The control options:(Only take effect in coordinate nodes)
+                GroupID:INT32,
+                GroupName:String,
+                NodeID:INT32,
+                HostName:String,
+                svcname:String,
+                ...
           \retval SDB_OK Operation Success
           \retval Others Operation Fail
       */
@@ -4831,22 +4822,13 @@ namespace sdbclient
       /** \fn INT32 forceStepUp(const bson::BSONObj &options)
           \brief In a replica group that doesn't satisfy the requirement ofre-election,
                upgrade a slave node to a master node by force.
-          \param [in] options The control options:
-
-              CollectionSpace: (String) Specify the collectionspace to be analyzed.
-              Collection: (String) Specify the collection to be analyzed.
-              Index: (String) Specify the index to be analyzed.
-              Mode: (Int32) Specify the analyze, 0 is reload only, 1 is sampling
-                    analyze, 2 is full analyze
-              Some of other options are as below:(only take effect in coordinate nodes,
-                             please visit the official website to search "analyze" or
-                             "Location Elements" for more detail.)
-              GroupID:INT32,
-              GroupName:String,
-              NodeID:INT32,
-              HostName:String,
-              svcname:String,
-              ...
+          \param [in] options The control options:(Only take effect in coordinate nodes)
+                GroupID:INT32,
+                GroupName:String,
+                NodeID:INT32,
+                HostName:String,
+                svcname:String,
+                ...
           \retval SDB_OK Operation Success
           \retval Others Operation Fail
       */
@@ -4859,22 +4841,13 @@ namespace sdbclient
 
       /** \fn INT32 invalidateCache(const bson::BSONObj &options)
           \brief Clear the cache of the nodes (data/coord node).
-          \param [in] options The control options:
-
-              CollectionSpace: (String) Specify the collectionspace to be analyzed.
-              Collection: (String) Specify the collection to be analyzed.
-              Index: (String) Specify the index to be analyzed.
-              Mode: (Int32) Specify the analyze, 0 is reload only, 1 is sampling
-                    analyze, 2 is full analyze
-              Some of other options are as below:(only take effect in coordinate nodes,
-                             please visit the official website to search "analyze" or
-                             "Location Elements" for more detail.)
-              GroupID:INT32,
-              GroupName:String,
-              NodeID:INT32,
-              HostName:String,
-              svcname:String,
-              ...
+          \param [in] options The control options:(Only take effect in coordinate nodes)
+                GroupID:INT32,
+                GroupName:String,
+                NodeID:INT32,
+                HostName:String,
+                svcname:String,
+                ...
           \retval SDB_OK Operation Success
           \retval Others Operation Fail
       */
@@ -4887,22 +4860,13 @@ namespace sdbclient
 
       /** \fn INT32 reloadConfig(const bson::BSONObj &options)
           \brief Force the node to reload config from file and take effect.
-          \param [in] options The control options:
-
-              CollectionSpace: (String) Specify the collectionspace to be analyzed.
-              Collection: (String) Specify the collection to be analyzed.
-              Index: (String) Specify the index to be analyzed.
-              Mode: (Int32) Specify the analyze, 0 is reload only, 1 is sampling
-                    analyze, 2 is full analyze
-              Some of other options are as below:(only take effect in coordinate nodes,
-                             please visit the official website to search "analyze" or
-                             "Location Elements" for more detail.)
-              GroupID:INT32,
-              GroupName:String,
-              NodeID:INT32,
-              HostName:String,
-              svcname:String,
-              ...
+          \param [in] options The control options:(Only take effect in coordinate nodes)
+                GroupID:INT32,
+                GroupName:String,
+                NodeID:INT32,
+                HostName:String,
+                svcname:String,
+                ...
           \retval SDB_OK Operation Success
           \retval Others Operation Fail
       */
@@ -4924,22 +4888,13 @@ namespace sdbclient
                3: WARNING
                4: INFO
                5: DEBUG
-          \param [in] options The control options:
-
-              CollectionSpace: (String) Specify the collectionspace to be analyzed.
-              Collection: (String) Specify the collection to be analyzed.
-              Index: (String) Specify the index to be analyzed.
-              Mode: (Int32) Specify the analyze, 0 is reload only, 1 is sampling
-                    analyze, 2 is full analyze
-              Some of other options are as below:(only take effect in coordinate nodes,
-                             please visit the official website to search "analyze" or
-                             "Location Elements" for more detail.)
-              GroupID:INT32,
-              GroupName:String,
-              NodeID:INT32,
-              HostName:String,
-              svcname:String,
-              ...
+          \param [in] options The control options:(Only take effect in coordinate nodes)
+                GroupID:INT32,
+                GroupName:String,
+                NodeID:INT32,
+                HostName:String,
+                svcname:String,
+                ...
           \retval SDB_OK Operation Success
           \retval Others Operation Fail
       */
@@ -4968,22 +4923,13 @@ namespace sdbclient
                            const bson::BSONObj &options)
           \brief Load the specific cs from the file.
           \param [in] csName The name of cs that will be loaded
-          \param [in] options The control options:
-
-              CollectionSpace: (String) Specify the collectionspace to be analyzed.
-              Collection: (String) Specify the collection to be analyzed.
-              Index: (String) Specify the index to be analyzed.
-              Mode: (Int32) Specify the analyze, 0 is reload only, 1 is sampling
-                    analyze, 2 is full analyze
-              Some of other options are as below:(only take effect in coordinate nodes,
-                             please visit the official website to search "analyze" or
-                             "Location Elements" for more detail.)
-              GroupID:INT32,
-              GroupName:String,
-              NodeID:INT32,
-              HostName:String,
-              svcname:String,
-              ...
+          \param [in] options The control options:(Only take effect in coordinate nodes)
+                GroupID:INT32,
+                GroupName:String,
+                NodeID:INT32,
+                HostName:String,
+                svcname:String,
+                ...
           \retval SDB_OK Operation Success
           \retval Others Operation Fail
       */
@@ -4999,22 +4945,13 @@ namespace sdbclient
                            const bson::BSONObj &options)
           \brief Unload the specific cs.
           \param [in] csName The name of cs that will be unloaded
-          \param [in] options The control options:
-
-              CollectionSpace: (String) Specify the collectionspace to be analyzed.
-              Collection: (String) Specify the collection to be analyzed.
-              Index: (String) Specify the index to be analyzed.
-              Mode: (Int32) Specify the analyze, 0 is reload only, 1 is sampling
-                    analyze, 2 is full analyze
-              Some of other options are as below:(only take effect in coordinate nodes,
-                             please visit the official website to search "analyze" or
-                             "Location Elements" for more detail.)
-              GroupID:INT32,
-              GroupName:String,
-              NodeID:INT32,
-              HostName:String,
-              svcname:String,
-              ...
+          \param [in] options The control options:(Only take effect in coordinate nodes)
+                GroupID:INT32,
+                GroupName:String,
+                NodeID:INT32,
+                HostName:String,
+                svcname:String,
+                ...
           \retval SDB_OK Operation Success
           \retval Others Operation Fail
       */
