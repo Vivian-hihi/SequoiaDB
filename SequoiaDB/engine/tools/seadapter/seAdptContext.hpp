@@ -43,10 +43,10 @@
 #include "utilESClt.hpp"
 #include "rtnSimpleCondParser.hpp"
 
-namespace engine
-{
-   class _pmdEDUCB ;
+using namespace engine ;
 
+namespace seadapter
+{
    enum _seadptQueryRebldType
    {
       SE_QUERY_REBLD_QUERY = 1,
@@ -97,7 +97,7 @@ namespace engine
                           const BSONObj &orderBy,
                           const BSONObj &hint,
                           utilCommObjBuff &objBuff,
-                          _pmdEDUCB *eduCB ) = 0 ;
+                          pmdEDUCB *eduCB ) = 0 ;
       // Prepare the selector, matcher, order by and hint in objBuff.
       virtual INT32 getMore( INT32 returnNum, utilCommObjBuff &objBuff ) = 0 ;
 

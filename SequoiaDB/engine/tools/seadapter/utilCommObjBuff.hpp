@@ -49,7 +49,7 @@
 
 using bson::BSONObj ;
 
-namespace engine
+namespace seadapter
 {
    class _utilCommObjBuff : public SDBObject
    {

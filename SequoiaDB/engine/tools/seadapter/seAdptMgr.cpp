@@ -54,7 +54,7 @@
 #define SEADPT_SVC_PORT_PLUS                    7
 #define ES_SYS_PREFIX                           "sys"
 
-namespace engine
+namespace seadapter
 {
    UINT64 _seSvcSessionMgr::makeSessionID( const NET_HANDLE &handle,
                                         const MsgHeader *header )
@@ -444,7 +444,7 @@ namespace engine
       return SDB_OK ;
    }
 
-   void _seAdptCB::attachCB( _pmdEDUCB *cb )
+   void _seAdptCB::attachCB( pmdEDUCB *cb )
    {
       if ( EDU_TYPE_SEADPTMGR == cb->getType() )
       {
@@ -456,7 +456,7 @@ namespace engine
       _attachEvent.signalAll() ;
    }
 
-   void _seAdptCB::detachCB( _pmdEDUCB *cb )
+   void _seAdptCB::detachCB( pmdEDUCB *cb )
    {
       if ( EDU_TYPE_SEADPTMGR == cb->getType() )
       {

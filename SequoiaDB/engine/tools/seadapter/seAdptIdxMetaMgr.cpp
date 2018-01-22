@@ -38,7 +38,7 @@
 #include "seAdptIdxMetaMgr.hpp"
 #include "ossUtil.hpp"
 
-namespace engine
+namespace seadapter
 {
    _seIndexMeta::_seIndexMeta()
    {

@@ -41,14 +41,16 @@
 
 #include "core.hpp"
 #include "pmdAsyncHandler.hpp"
+#include "pmdAsyncSession.hpp"
 
-namespace engine
+using namespace engine ;
+
+namespace seadapter
 {
-   class _pmdAsycSessionMgr ;
    class _indexMsgHandler : public _pmdAsyncMsgHandler
    {
       public:
-         _indexMsgHandler( _pmdAsycSessionMgr *pSessionMgr ) ;
+         _indexMsgHandler( pmdAsycSessionMgr *pSessionMgr ) ;
          virtual ~_indexMsgHandler() ;
 
          virtual void handleClose( const NET_HANDLE &handle,
@@ -58,3 +60,4 @@ namespace engine
 }
 
 #endif /* SEADPT_MSG_HANDLER_HPP__ */
+

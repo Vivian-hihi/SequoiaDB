@@ -43,8 +43,7 @@
 #include "ossUtil.hpp"
 #include "utilCommObjBuff.hpp"
 
-
-namespace engine
+namespace seadapter
 {
    _utilCommObjBuff::_utilCommObjBuff( BOOLEAN autoExtent, UINT32 sizeLimit )
    {

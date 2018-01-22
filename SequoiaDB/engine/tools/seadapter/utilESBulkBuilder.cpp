@@ -44,7 +44,7 @@
 #define BULK_UPDATE_SUFFIX          "}"
 #define BULK_UPDATE_SUFFIX_LEN      ossStrlen( BULK_UPDATE_SUFFIX )
 
-namespace engine
+namespace seadapter
 {
    _utilESBulkActionBase::_utilESBulkActionBase( const CHAR *index,
                                                  const CHAR *type )

@@ -106,7 +106,7 @@ do                                                       \
 }                                                        \
 while ( 0 ) ;
 
-namespace engine
+namespace seadapter
 {
    _utilESClt::_utilESClt()
    : _readOnly( FALSE )

@@ -38,7 +38,7 @@
 
 #include "seAdptMsgHandler.hpp"
 
-namespace engine
+namespace seadapter
 {
    _indexMsgHandler::_indexMsgHandler( _pmdAsycSessionMgr *pSessionMgr )
    : _pmdAsyncMsgHandler( pSessionMgr )

@@ -69,7 +69,7 @@
 // Space size for the action name and format characters, such as '{', ':'.
 #define UTIL_ESBULK_MIN_META_SIZE   64
 
-namespace engine
+namespace seadapter
 {
    enum _utilESBulkActionType
    {

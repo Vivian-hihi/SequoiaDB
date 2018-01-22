@@ -56,7 +56,7 @@
 #define UTIL_SE_MAX_TYPE_SZ               255
 using std::string ;
 
-namespace engine
+namespace seadapter
 {
    // Client class for ElasticSearch.
    class _utilESClt : public SDBObject

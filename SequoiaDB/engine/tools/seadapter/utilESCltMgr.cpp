@@ -40,7 +40,7 @@
 #include "utilESClt.hpp"
 #include "utilESCltMgr.hpp"
 
-namespace engine
+namespace seadapter
 {
    _utilESCltMgr::_utilESCltMgr( UINT32 cacheNum )
    {

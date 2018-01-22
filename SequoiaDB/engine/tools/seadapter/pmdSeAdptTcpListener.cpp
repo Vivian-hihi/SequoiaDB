@@ -46,9 +46,10 @@
 #include "pmdTrace.hpp"
 #include "toolsTrace.hpp"
 
-namespace engine
-{
+using namespace engine ;
 
+namespace seadapter
+{
    // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDSETCPLSTNENTPNT, "pmdTcpListenerEntryPoint" )
    INT32 pmdTcpListenerEntryPoint ( pmdEDUCB *cb, void *pData )
    {

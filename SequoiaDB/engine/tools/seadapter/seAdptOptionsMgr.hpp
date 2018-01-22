@@ -40,10 +40,10 @@
 
 #include "pmdOptionsMgr.hpp"
 
-namespace engine
+namespace seadapter
 {
    // Manage the configurations of the search engine adapter
-   class _seAdptOptionsMgr : public _pmdCfgRecord
+   class _seAdptOptionsMgr : public engine::_pmdCfgRecord
    {
    public:
       _seAdptOptionsMgr() ;
@@ -61,7 +61,7 @@ namespace engine
       PDLEVEL     getDiagLevel() const ;
 
    protected:
-      virtual INT32 doDataExchange( pmdCfgExchange *pEX ) ;
+      virtual INT32 doDataExchange( engine::pmdCfgExchange *pEX ) ;
 
    private:
       CHAR     _cfgFileName[ OSS_MAX_PATHSIZE + 1 ] ;

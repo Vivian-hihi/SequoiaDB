@@ -40,7 +40,9 @@
 #include "msgMessage.hpp"
 #include "utilCommon.hpp"
 
-namespace engine
+using engine::_pmdEDUCB ;
+
+namespace seadapter
 {
    BEGIN_OBJ_MSG_MAP( _seAdptAgentSession, _pmdAsyncSession)
       ON_MSG( MSG_BS_QUERY_REQ, _onOPMsg )

@@ -47,7 +47,7 @@ using namespace bson ;
 #define SEADPT_FETCH_MAX_SIZE       100000
 #define SEADPT_ES_ID_FILTER_PATH    "filter_path=_scroll_id,hits.hits._id"
 
-namespace engine
+namespace seadapter
 {
    _seAdptQueryRebuilder::_seAdptQueryRebuilder()
    {

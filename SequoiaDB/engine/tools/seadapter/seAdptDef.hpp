@@ -36,7 +36,7 @@
 #ifndef SEADPT_DEF_HPP_
 #define SEADPT_DEF_HPP_
 
-namespace engine
+namespace seadapter
 {
    #define SDB_SEADPT_PROCESS_NAME     "sdbseadapter"
    #define SDB_SEADPT_ROLE_SHORT_STR   "A"

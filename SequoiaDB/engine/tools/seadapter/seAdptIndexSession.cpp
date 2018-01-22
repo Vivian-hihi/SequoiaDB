@@ -46,7 +46,7 @@
 #define SEADPT_OPERATOR_STR_EXIST    "$exists"
 #define SEADPT_TID(sessionID)        ((UINT32)(sessionID & 0xFFFFFFFF))
 
-namespace engine
+namespace seadapter
 {
    #define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
    const CHAR *_statDescription[] =

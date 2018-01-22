@@ -40,6 +40,8 @@
 #include "seAdptDef.hpp"
 #include "ossVer.hpp"
 
+using namespace engine ;
+
 #define COMMANDS_OPTIONS \
    ( PMD_COMMANDS_STRING (PMD_OPTION_HELP, ",h"), "help" ) \
    ( PMD_OPTION_VERSION, "version" ) \
@@ -50,7 +52,7 @@
    ( SDB_SEADPT_SE_HOST, boost::program_options::value<string>(), "Search engine address" ) \
    ( SDB_SEADPT_SE_PORT, boost::program_options::value<string>(), "Search engine service name or port" )
 
-namespace engine
+namespace seadapter
 {
    _seAdptOptionsMgr::_seAdptOptionsMgr()
    {

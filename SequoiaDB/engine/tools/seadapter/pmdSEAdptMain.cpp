@@ -44,7 +44,7 @@
 #include "seAdptMgr.hpp"
 #include "omagentDef.hpp"
 
-namespace engine
+namespace seadapter
 {
    INT32 pmdResolveArguments( INT32 argc, CHAR **argv )
    {
@@ -258,6 +258,6 @@ namespace engine
 
 INT32 main( INT32 argc, CHAR** argv )
 {
-   return engine::pmdThreadMainEntry( argc, argv ) ;
+   return seadapter::pmdThreadMainEntry( argc, argv ) ;
 }
 

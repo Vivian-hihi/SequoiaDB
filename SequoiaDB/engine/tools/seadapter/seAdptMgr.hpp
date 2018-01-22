@@ -46,7 +46,9 @@
 #include "seAdptMsgHandler.hpp"
 #include "seAdptIdxMetaMgr.hpp"
 
-namespace engine
+using namespace engine ;
+
+namespace seadapter
 {
    class _seAdptCB ;
 
@@ -70,7 +72,7 @@ namespace engine
     * One listener is created during startup, and one seperate session will be
     * created for each client connection.
     */
-   class _seSvcSessionMgr : public _pmdAsycSessionMgr
+   class _seSvcSessionMgr : public pmdAsycSessionMgr
    {
    public:
       _seSvcSessionMgr() {}
@@ -110,7 +112,7 @@ namespace engine
 
    typedef pair<const UINT64, seIndexMeta>      TASK_SESSION_ITEM ;
    // Manager of seAdptIndexSession.
-   class _seIndexSessionMgr : public _pmdAsycSessionMgr
+   class _seIndexSessionMgr : public pmdAsycSessionMgr
    {
       typedef map<UINT64, seIndexMeta>          TASK_SESSION_MAP ;
       typedef TASK_SESSION_MAP::iterator        TASK_SESSION_MAP_ITR ;

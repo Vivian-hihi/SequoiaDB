@@ -96,7 +96,7 @@
 
 #define REST_OPRATION_TIMEOUT    3000
 
-namespace engine
+namespace seadapter
 {
    _utilHttp::_utilHttp()
    : _init( FALSE ),

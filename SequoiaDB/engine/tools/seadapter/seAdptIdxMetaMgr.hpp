@@ -46,8 +46,9 @@
 #include <string>
 
 using bson::BSONObj ;
+using engine::ossRWMutex ;
 
-namespace engine
+namespace seadapter
 {
    class _seIndexMeta : public SDBObject
    {

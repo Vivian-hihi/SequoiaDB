@@ -49,7 +49,7 @@ using namespace bson ;
 
 #define SEADPT_FIELD_NAME_ID         "_id"
 
-namespace engine
+namespace seadapter
 {
    enum SEADPT_SESSION_STATUS
    {

@@ -44,7 +44,9 @@
 #include "utilESClt.hpp"
 #include "seAdptContext.hpp"
 
-namespace engine
+using namespace engine ;
+
+namespace seadapter
 {
    class _seAdptAgentSession : public _pmdAsyncSession
    {

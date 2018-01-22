@@ -48,7 +48,7 @@
 
 using std::string ;
 
-namespace engine
+namespace seadapter
 {
    typedef UINT32 HTTP_STATUS_CODE ;
    enum HTTP_STATUS
