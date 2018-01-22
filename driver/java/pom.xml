@@ -35,6 +35,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.build.timestamp.format>yyyy-MM-dd HH:mm:ss</maven.build.timestamp.format>
         <java.version>1.7</java.version>
         <revision>UNKNOWN</revision>
     </properties>
@@ -75,6 +76,7 @@
                         <manifestEntries>
                             <Driver-Version>${project.version}</Driver-Version>
                             <Driver-Revision>${revision}</Driver-Revision>
+                            <Build-Time>${maven.build.timestamp}</Build-Time>
                         </manifestEntries>
                     </archive>
                 </configuration>
