@@ -1420,17 +1420,17 @@ public class Sequoiadb implements Closeable {
         throwIfError(response);
     }
 
-    private void _clearSessionAttrCache()
+    private void clearSessionAttrCache()
     {
         attributeCache = null;
     }
 
-    private BSONObject _getSessionAttrCache()
+    private BSONObject getSessionAttrCache()
     {
         return attributeCache;
     }
 
-    private void _setSessionAttrCache( BSONObject attribute )
+    private void setSessionAttrCache( BSONObject attribute )
     {
         attributeCache = attribute;
     }
@@ -1470,7 +1470,7 @@ public class Sequoiadb implements Closeable {
         newObj.putAll(options);
         newObj.put(SdbConstants.FIELD_NAME_VERSION, SdbConstants.SDB_SETSESSIONATTR_V1);
 
-        _clearSessionAttrCache();
+        clearSessionAttrCache();
 
         AdminRequest request = new AdminRequest(AdminCommand.SET_SESSION_ATTRIBUTE, newObj);
         SdbReply response = requestAndResponse(request);
@@ -1484,7 +1484,7 @@ public class Sequoiadb implements Closeable {
      * @since 2.8.5
      */
     public BSONObject getSessionAttr() throws BaseException {
-        BSONObject result = _getSessionAttrCache();
+        BSONObject result = getSessionAttrCache();
         if (null != result)
         {
             return result;
@@ -1498,16 +1498,16 @@ public class Sequoiadb implements Closeable {
             result=resultSet.getNext();
             if ( null == result )
             {
-                _clearSessionAttrCache();
+                clearSessionAttrCache();
             }
             else
             {
-                _setSessionAttrCache(result);
+                setSessionAttrCache(result);
             }
         }
         else
         {
-            _clearSessionAttrCache();
+            clearSessionAttrCache();
         }
         return result;
     }
