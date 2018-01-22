@@ -264,19 +264,19 @@ function main()
    
    var expAccessPlans1 = [{GroupName: srcGroupName1, ScanType:"ixscan", IndexName:"$shard"},
 	                       {GroupName: srcGroupName1, ScanType:"tbscan", IndexName:""},
+                          {GroupName: destGroupName1, ScanType:"tbscan", IndexName:""},
                           {GroupName: srcGroupName1, ScanType:"ixscan", IndexName:"$shard"},
 	                       {GroupName: srcGroupName1, ScanType:"tbscan", IndexName:""},
-                          {GroupName: destGroupName1, ScanType:"tbscan", IndexName:""},
-                          {GroupName: destGroupName1, ScanType:"tbscan", IndexName:""}];
+                          {GroupName: destGroupName1, ScanType:"tbscan", IndexName:""}];    
    var expAccessPlans2 = [{GroupName: srcGroupName2, ScanType:"ixscan", IndexName:"$shard"},
 	                       {GroupName: srcGroupName2, ScanType:"tbscan", IndexName:""},
-                          {GroupName: srcGroupName2, ScanType:"tbscan", IndexName:""},
+                          {GroupName: destGroupName2, ScanType:"ixscan", IndexName:"$shard"},
+                          {GroupName: destGroupName2, ScanType:"tbscan", IndexName:""},
                           {GroupName: srcGroupName2, ScanType:"ixscan", IndexName:"$shard"},
+                          {GroupName: srcGroupName2, ScanType:"tbscan", IndexName:""},
 	                       {GroupName: destGroupName2, ScanType:"ixscan", IndexName:"$shard"},
-                          {GroupName: destGroupName2, ScanType:"tbscan", IndexName:""},
-                          {GroupName: destGroupName2, ScanType:"tbscan", IndexName:""},
-                          {GroupName: destGroupName2, ScanType:"ixscan", IndexName:"$shard"}];
-                      
+                          {GroupName: destGroupName2, ScanType:"tbscan", IndexName:""}];
+                              
    checkSnapShotAccessPlans(clFullName1, expAccessPlans1, actAccessPlans1);
    checkSnapShotAccessPlans(clFullName2, expAccessPlans2, actAccessPlans2);
 
@@ -327,14 +327,14 @@ function main()
    
    var expAccessPlans1 = [{GroupName: srcGroupName1, ScanType:"tbscan", IndexName:""},
 	                       {GroupName: srcGroupName1, ScanType:"tbscan", IndexName:""},
+                          {GroupName: destGroupName1, ScanType:"tbscan", IndexName:""},
                           {GroupName: srcGroupName1, ScanType:"tbscan", IndexName:""},
 	                       {GroupName: srcGroupName1, ScanType:"tbscan", IndexName:""},
-                          {GroupName: destGroupName1, ScanType:"tbscan", IndexName:""},
                           {GroupName: destGroupName1, ScanType:"tbscan", IndexName:""}];
    var expAccessPlans2 = [{GroupName: srcGroupName2, ScanType:"tbscan", IndexName:""},
+                          {GroupName: destGroupName2, ScanType:"tbscan", IndexName:""},
+                          {GroupName: destGroupName2, ScanType:"tbscan", IndexName:""},
                           {GroupName: srcGroupName2, ScanType:"tbscan", IndexName:""},
-                          {GroupName: destGroupName2, ScanType:"tbscan", IndexName:""},
-                          {GroupName: destGroupName2, ScanType:"tbscan", IndexName:""},
                           {GroupName: destGroupName2, ScanType:"tbscan", IndexName:""},
                           {GroupName: destGroupName2, ScanType:"tbscan", IndexName:""}];
              
