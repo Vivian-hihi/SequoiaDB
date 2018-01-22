@@ -133,7 +133,7 @@ INT32 ossStrncasecmp ( const CHAR *pString1, const CHAR *pString2,
                        size_t iLength) ;
 CHAR *ossStrnchr(const CHAR *pString, UINT32 c, UINT32 n) ;
 size_t ossVsnprintf (CHAR * buf, size_t size, const CHAR * fmt, va_list ap);
-void ossStrToBoolean(const CHAR* pString, BOOLEAN* pBoolean);
+INT32 ossStrToBoolean(const CHAR* pString, BOOLEAN* pBoolean);
 UINT32 ossHash ( const CHAR *data, INT32 len ) ;
 UINT32 ossHashFileName ( const CHAR *fileName ) ;
 #if defined (_WINDOWS)

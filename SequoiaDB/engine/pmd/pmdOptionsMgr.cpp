@@ -1068,7 +1068,10 @@ namespace engine
                            hideParam ) ;
       if ( SDB_OK == _result && pEX->isLoad() )
       {
-         ossStrToBoolean( szTmp, &value ) ;
+         if ( SDB_INVALIDARG == ossStrToBoolean( szTmp, &value ) )
+         {
+            value = defaultValue ;
+         }
 
          /// update map's value
          MAP_K2V::iterator it = _mapKeyValue.find( pFieldName ) ;

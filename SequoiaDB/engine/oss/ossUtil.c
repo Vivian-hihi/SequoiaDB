@@ -64,6 +64,18 @@ const char *OSSTRUELIST[]={
    "t",
    "1"};
 
+// All strings represent "false"
+const char *OSSFALSELIST[]={
+   "NO",
+   "no",
+   "N",
+   "n",
+   "FALSE",
+   "false",
+   "F",
+   "f",
+   "0"};
+
 CHAR *ossStrdup ( const CHAR * str )
 {
    size_t siz ;
@@ -320,24 +332,43 @@ CHAR *ossStrnchr(const CHAR *pString, UINT32 c, UINT32 n)
    return NULL;
 }
 
-void ossStrToBoolean(const char* pString, BOOLEAN* pBoolean)
+INT32 ossStrToBoolean(const char* pString, BOOLEAN* pBoolean)
 {
-   UINT32 i = 0 ;
-   size_t len = ossStrlen(pString);
+   INT32  rc           = SDB_OK ;
+   UINT32 i            = 0 ;
+   size_t len          = ossStrlen(pString) ;
+
    if (0 == len)
    {
-      *pBoolean=FALSE;
-      return;
+      *pBoolean=FALSE ;
+      rc = SDB_INVALIDARG ;
+      goto error ;
    }
    for(; i < sizeof(OSSTRUELIST)/sizeof(ossValuePtr); i++)
    {
       if(ossStrncasecmp(pString, OSSTRUELIST[i], len) == 0)
       {
-         *pBoolean = TRUE;
-         return;
+         *pBoolean = TRUE ;
+         goto done ;
       }
    }
-   *pBoolean = FALSE;
+   for(i = 0; i < sizeof(OSSFALSELIST)/sizeof(ossValuePtr); i++)
+   {
+      if(ossStrncasecmp(pString, OSSFALSELIST[i], len) == 0)
+      {
+         *pBoolean = FALSE ;
+         goto done ;
+      }
+   }
+
+   *pBoolean = FALSE ;
+   rc = SDB_INVALIDARG ;
+   goto error ;
+
+done :
+   return rc ;
+error :
+   goto done ;
 }
 
 size_t ossVsnprintf
