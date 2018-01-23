@@ -178,7 +178,7 @@ class SequoiaDB_Test extends PHPUnit_Framework_TestCase
     */
    public function test_snapshot( $db )
    {
-      for( $i = 0; $i < 12; ++ $i )
+      for( $i = 0; $i < 13; ++ $i )
       {
          $cursor = $db -> snapshot( $i ) ;
          $err = $db -> getError() ;
@@ -194,9 +194,10 @@ class SequoiaDB_Test extends PHPUnit_Framework_TestCase
          $this -> assertNotEmpty( $cursor, '测试snapshot接口' ) ;
          while( $record = $cursor -> next() )
          {
+            //print_r( $record ) ;
          }
       }
-      for( $i = 0; $i < 12; ++ $i )
+      for( $i = 0; $i < 13; ++ $i )
       {
          $cursor = $db -> getSnapshot( $i ) ;
          $err = $db -> getError() ;
@@ -213,6 +214,38 @@ class SequoiaDB_Test extends PHPUnit_Framework_TestCase
          while( $record = $cursor -> next() )
          {
          }
+      }
+   }
+   
+   /**
+    * @depends test_connect
+    */
+   public function test_reset_snapshot( $db )
+   {
+      $cursor = $db -> snapshot( SDB_SNAP_DATABASE ) ;
+      $err = $db -> getError() ;
+      $this -> assertEquals( 0, $err['errno'], 'reset前获取snapshot '.SDB_SNAP_DATABASE.' 错误' ) ;
+      $this -> assertNotEmpty( $cursor, 'reset前获取snapshot '.SDB_SNAP_DATABASE.' 错误' ) ;
+      $old = $cursor -> next() ;
+      $this -> assertNotEmpty( $old, 'reset前获取snapshot '.SDB_SNAP_DATABASE.' 错误' ) ;
+
+      $err = $db -> resetSnapshot() ;
+      
+      $this -> assertEquals( 0, $err['errno'], 'resetSnapshot错误' ) ;
+      $cursor = $db -> snapshot( SDB_SNAP_DATABASE ) ;
+      $err = $db -> getError() ;
+      $this -> assertEquals( 0, $err['errno'], 'reset后获取snapshot '.SDB_SNAP_DATABASE.' 错误' ) ;
+      $this -> assertNotEmpty( $cursor, 'reset后获取snapshot '.SDB_SNAP_DATABASE.' 错误' ) ;
+      $new = $cursor -> next() ;
+      $this -> assertNotEmpty( $new, 'reset后获取snapshot '.SDB_SNAP_DATABASE.' 错误' ) ;
+      
+      if( array_key_exists( 'replNetIn', $old ) )
+      {
+         $this -> assertLessThan( $old['replNetIn'], $new['replNetIn'], 'resetSnapshot没有生效' ) ;
+      }
+      else
+      {
+         $this -> assertLessThan( $old['svcNetIn'], $new['svcNetIn'], 'resetSnapshot没有生效' ) ;
       }
    }
 
@@ -247,12 +280,12 @@ class SequoiaDB_Test extends PHPUnit_Framework_TestCase
          {
          }
       }
-   }
-
+   } 
+   
    /**
     * @depends test_connect
     */
-   public function test_reset_snapshot( $db )
+   public function test_reset_snapshot_with_options( $db )
    {
       $cursor = $db -> snapshot( SDB_SNAP_DATABASE ) ;
       $err = $db -> getError() ;
@@ -261,8 +294,8 @@ class SequoiaDB_Test extends PHPUnit_Framework_TestCase
       $old = $cursor -> next() ;
       $this -> assertNotEmpty( $old, 'reset前获取snapshot '.SDB_SNAP_DATABASE.' 错误' ) ;
 
-      $err = $db -> resetSnapshot() ;
-
+      $err = $db -> resetSnapshot( array( 'Type' => "all" ) ) ;
+      
       $this -> assertEquals( 0, $err['errno'], 'resetSnapshot错误' ) ;
       $cursor = $db -> snapshot( SDB_SNAP_DATABASE ) ;
       $err = $db -> getError() ;
@@ -273,11 +306,11 @@ class SequoiaDB_Test extends PHPUnit_Framework_TestCase
       
       if( array_key_exists( 'replNetIn', $old ) )
       {
-         $this -> assertLessThan( $old['replNetIn'], $new['replNetIn'], 'resetSnapshot没有生效' ) ;
+         $this -> assertLessThan( $old['replNetIn'], $new['replNetIn'], 'resetSnapshot with options没有生效' ) ;
       }
       else
       {
-         $this -> assertLessThan( $old['svcNetIn'], $new['svcNetIn'], 'resetSnapshot没有生效' ) ;
+         $this -> assertLessThan( $old['svcNetIn'], $new['svcNetIn'], 'resetSnapshot with options没有生效' ) ;
       }
    }
 
