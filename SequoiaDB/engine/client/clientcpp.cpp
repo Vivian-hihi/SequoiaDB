@@ -5880,7 +5880,7 @@ error :
          rc = SDB_DMS_CONTEXT_IS_CLOSE ;
          goto error ;
       }
-      if (  !_connection )
+      if ( !_connection )
       {
          rc = SDB_NOT_CONNECTED ;
          goto error;
@@ -5891,7 +5891,7 @@ error :
          goto error ;
       }
       // check argument
-      if (  NULL == buf )
+      if ( NULL == buf )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
@@ -5963,7 +5963,7 @@ error :
          rc = SDB_DMS_CONTEXT_IS_CLOSE ;
          goto error ;
       }
-      if (  !_connection )
+      if ( !_connection )
       {
          rc = SDB_NOT_CONNECTED ;
          goto error;
@@ -6238,12 +6238,20 @@ error :
 
    INT32 _sdbLobImpl::getSize( SINT64 *size )
    {
+      if ( NULL == size )
+      {
+         return SDB_INVALIDARG ;
+      }
       *size = getSize() ;
       return SDB_OK ;
    }
 
    INT32 _sdbLobImpl::getCreateTime ( UINT64 *millis )
    {
+      if ( NULL == millis )
+      {
+         return SDB_INVALIDARG ;
+      }
       *millis = getCreateTime() ;
       return SDB_OK ;
    }
