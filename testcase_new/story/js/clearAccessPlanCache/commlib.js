@@ -110,11 +110,11 @@ function getNodesInGroups(db, groups)
 }
 
 /************************************
-*@Description: 检查主备节点lsn是否一致
+*@Description: 获取主节点的lsn
 *@author:      zhaoyu
 *@createDate:  2017.11.8
 **************************************/
-function checkLSN(db, groups)
+function getPrimaryNodeLSNs(db, groups)
 {
    var datas = getNodesInGroups(db, groups);
    
@@ -124,20 +124,69 @@ function checkLSN(db, groups)
       var nodesInGroup = datas[i];
       LSNs[i] = Array();
       for(var j = 0; j < nodesInGroup.length; ++j)
-      {
+      { 
          var getSnapshot6 = eval( "(" + nodesInGroup[j].snapshot(6).toArray()[0] + ")" );
+         
          var currentLSN = getSnapshot6.CurrentLSN.Offset;
-         LSNs[i][j] = currentLSN;         
+         var isPrimary = getSnapshot6.IsPrimary;
+         if(isPrimary)
+         {
+            LSNs[i][0] = currentLSN;
+            break;
+         }   
       }
    }
+   
+   return LSNs;
+}
+
+/************************************
+*@Description: 获取备节点的lsn
+*@author:      zhaoyu
+*@createDate:  2017.11.8
+**************************************/
+function getSlaveNodeLSNs(db, groups)
+{
+   var datas = getNodesInGroups(db, groups);
+   
+   var LSNs = new Array();
+   for(var i = 0; i < datas.length; ++i)
+   {
+      var nodesInGroup = datas[i];
+      LSNs[i] = Array();
+      var f = 0;
+      for(var j = 0; j < nodesInGroup.length; ++j)
+      { 
+         var getSnapshot6 = eval( "(" + nodesInGroup[j].snapshot(6).toArray()[0] + ")" );
+         
+         var currentLSN = getSnapshot6.CurrentLSN.Offset;
+         var isPrimary = getSnapshot6.IsPrimary;
+         if(!isPrimary)
+         {
+            LSNs[i][f++] = currentLSN;
+         }   
+      }
+   }
+   
+   return LSNs;
+}
+
+/************************************
+*@Description: 检查主备节点lsn是否一致
+*@author:      zhaoyu
+*@createDate:  2017.11.8
+**************************************/
+function checkLSN(db, groups, primaryNodeLSNs)
+{
+   var slaveNodeLSNs = getSlaveNodeLSNs(db, groups);
  
    var checkLSN = true;
    //比较各节点lsn
-   for(var i = 0; i < LSNs.length; ++i)
+   for(var i = 0; i < slaveNodeLSNs.length; ++i)
    {
-      for(var j = 0; j < LSNs[i].length -1; ++j)
+      for(var j = 0; j < slaveNodeLSNs[i].length; ++j)
       {
-         if(LSNs[i][j] !== LSNs[i][j+1])
+         if(primaryNodeLSNs[i][0] > slaveNodeLSNs[i][j])
          {
             checkLSN = false;
             return checkLSN;
@@ -165,9 +214,11 @@ function checkStat( db, csName, clName, indexName, clExistStat, indexExistStat, 
    var timeout = 600;
    var doTimes = 0; 
    
+   //get primary nodes
+   var primaryNodeLSNs = getPrimaryNodeLSNs(db, groups);
    while(true)
    {
-      lsnFlag = checkLSN(db, groups);
+      lsnFlag = checkLSN(db, groups, primaryNodeLSNs);
       //println("check primary and slave node lsn flag:" + lsnFlag);
       if(!lsnFlag)
       {
