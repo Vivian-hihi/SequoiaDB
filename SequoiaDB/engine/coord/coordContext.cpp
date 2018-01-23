@@ -1450,7 +1450,7 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for query options, "
                       "rc: %d", rc ) ;
 
-         rc = _explainCoordPath.toBSONExplainInfo( builder ) ;
+         rc = _explainCoordPath.toBSONExplainInfo( builder, OPT_EXPINFO_MASK_NONE ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for run information, "
                       "rc: %d", rc ) ;
 

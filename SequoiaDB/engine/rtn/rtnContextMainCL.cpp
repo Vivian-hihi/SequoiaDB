@@ -925,7 +925,7 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Failed to build simple explain result, "
                    "rc: %d", rc ) ;
 
-      rc = _explainMergePath.toBSONExplainInfo( builder ) ;
+      rc = _explainMergePath.toBSONExplainInfo( builder, OPT_EXPINFO_MASK_NONE ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for run information, "
                    "rc: %d", rc ) ;
 

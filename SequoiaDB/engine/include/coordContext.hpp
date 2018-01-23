@@ -250,6 +250,14 @@ namespace engine
          INT32 _buildSimpleExplain ( rtnContext * explainContext,
                                      BOOLEAN & hasMore ) ;
 
+         OSS_INLINE virtual UINT16 _getExplainInfoMask () const
+         {
+            return ( OPT_EXPINFO_MASK_RETURN_NUM |
+                     OPT_EXPINFO_MASK_ELAPSED_TIME |
+                     OPT_EXPINFO_MASK_USERCPU |
+                     OPT_EXPINFO_MASK_SYSCPU ) ;
+         }
+
       protected :
          SET_ROUTEID             _locationFilter ;
          optExplainCoordPath     _explainCoordPath ;

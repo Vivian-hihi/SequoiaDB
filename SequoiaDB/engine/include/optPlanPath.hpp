@@ -293,7 +293,8 @@ namespace engine
 
          INT32 setExplainEnd ( rtnContext * context, pmdEDUCB * cb ) ;
 
-         INT32 toBSONExplainInfo ( BSONObjBuilder & builder ) const ;
+         INT32 toBSONExplainInfo ( BSONObjBuilder & builder,
+                                   UINT16 mask ) const ;
 
       protected :
          CHAR                 _clFullName[ DMS_COLLECTION_FULL_NAME_SZ + 1 ] ;

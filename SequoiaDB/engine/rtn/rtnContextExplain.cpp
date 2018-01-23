@@ -862,7 +862,7 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for query options, "
                       "rc: %d", rc ) ;
 
-         rc = _explainScanPath.toBSONExplainInfo( builder ) ;
+         rc = _explainScanPath.toBSONExplainInfo( builder, OPT_EXPINFO_MASK_ALL ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for run information, "
                       "rc: %d", rc ) ;
 
@@ -877,7 +877,7 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for basic explain, "
                       "rc: %d", rc ) ;
 
-         rc = _explainScanPath.toBSONExplainInfo( builder ) ;
+         rc = _explainScanPath.toBSONExplainInfo( builder, OPT_EXPINFO_MASK_ALL ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for run information, "
                       "rc: %d", rc ) ;
       }
@@ -1239,7 +1239,8 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for query options, "
                       "rc: %d", rc ) ;
 
-         rc = _explainMergeBasePath->toBSONExplainInfo( builder ) ;
+         rc = _explainMergeBasePath->toBSONExplainInfo( builder,
+                                                        _getExplainInfoMask() ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for run information, "
                       "rc: %d", rc ) ;
 

@@ -671,39 +671,64 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTEXPPATH_TOBSONEXPINFO, "_optExplainPath::toBSONExplainInfo" )
-   INT32 _optExplainPath::toBSONExplainInfo ( BSONObjBuilder & builder ) const
+   INT32 _optExplainPath::toBSONExplainInfo ( BSONObjBuilder & builder,
+                                              UINT16 mask ) const
    {
       INT32 rc = SDB_OK ;
 
       PD_TRACE_ENTRY( SDB_OPTEXPPATH_TOBSONEXPINFO ) ;
 
-      UINT64 beginTime = 0, endTime = 0 ;
-
-      if ( NULL != _pRootNode )
+      // ReturnNum
+      if ( OSS_BIT_TEST( mask, OPT_EXPINFO_MASK_RETURN_NUM ) )
       {
-         builder.appendNumber(
-               OPT_FIELD_RETURN_NUM,
-               (INT64)_pRootNode->getRuntimeMonitor().getReturnRecords() ) ;
+         if ( NULL != _pRootNode )
+         {
+            builder.appendNumber(
+                  OPT_FIELD_RETURN_NUM,
+                  (INT64)_pRootNode->getRuntimeMonitor().getReturnRecords() ) ;
+         }
+         else
+         {
+            builder.appendNumber( OPT_FIELD_RETURN_NUM, (INT64)0 ) ;
+         }
       }
-      else
+
+      // ElapsedTime
+      if ( OSS_BIT_TEST( mask, OPT_EXPINFO_MASK_ELAPSED_TIME ) )
       {
-         builder.appendNumber( OPT_FIELD_RETURN_NUM, (INT64)0 ) ;
+         UINT64 beginTime = _beginTime.time * 1000000 + _beginTime.microtm  ;
+         UINT64 endTime = _endTime.time * 1000000 + _endTime.microtm  ;
+         builder.append( OPT_FIELD_ELAPSED_TIME,
+                         FLOAT64( ( endTime - beginTime ) / 1000000.0 ) ) ;
       }
 
-      beginTime = _beginTime.time * 1000000 + _beginTime.microtm  ;
-      endTime = _endTime.time * 1000000 + _endTime.microtm  ;
-      builder.append( FIELD_NAME_ELAPSED_TIME,
-                      FLOAT64( ( endTime - beginTime ) / 1000000.0 ) ) ;
-      builder.appendNumber( FIELD_NAME_INDEXREAD,
-                             (INT64)( _endMon.totalIndexRead -
-                                      _beginMon.totalIndexRead ) ) ;
-      builder.appendNumber( FIELD_NAME_DATAREAD,
-                            (INT64)( _endMon.totalDataRead -
-                                     _beginMon.totalDataRead ) ) ;
+      // IndexRead
+      if ( OSS_BIT_TEST( mask, OPT_EXPINFO_MASK_INDEX_READ ) )
+      {
+         builder.appendNumber( OPT_FIELD_INDEX_READ,
+                               (INT64)( _endMon.totalIndexRead -
+                                        _beginMon.totalIndexRead ) ) ;
+      }
 
-      builder.append( FIELD_NAME_USERCPU, _endUsrCpu - _beginUsrCpu ) ;
+      // DataRead
+      if ( OSS_BIT_TEST( mask, OPT_EXPINFO_MASK_DATA_READ ) )
+      {
+         builder.appendNumber( OPT_FIELD_DATA_READ,
+                               (INT64)( _endMon.totalDataRead -
+                                        _beginMon.totalDataRead ) ) ;
+      }
 
-      builder.append( FIELD_NAME_SYSCPU, _endSysCpu - _beginSysCpu ) ;
+      // UserCPU
+      if ( OSS_BIT_TEST( mask, OPT_EXPINFO_MASK_USERCPU ) )
+      {
+         builder.append( OPT_FIELD_USERCPU, _endUsrCpu - _beginUsrCpu ) ;
+      }
+
+      // SysCPU
+      if ( OSS_BIT_TEST( mask, OPT_EXPINFO_MASK_SYSCPU ) )
+      {
+         builder.append( OPT_FIELD_SYSCPU, _endSysCpu - _beginSysCpu ) ;
+      }
 
       PD_TRACE_EXITRC( SDB_OPTEXPPATH_TOBSONEXPINFO, rc ) ;
 

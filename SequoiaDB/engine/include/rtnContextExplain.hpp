@@ -299,6 +299,11 @@ namespace engine
          virtual INT32 _buildSimpleExplain ( rtnContext * explainContext,
                                              BOOLEAN & hasMore ) = 0 ;
 
+         OSS_INLINE virtual UINT16 _getExplainInfoMask () const
+         {
+            return OPT_EXPINFO_MASK_ALL ;
+         }
+
       protected :
          typedef _utilMap< INT64, ossTick > rtnExplainTimestampList ;
          typedef _utilSet< INT64 > rtnExplainIDList ;

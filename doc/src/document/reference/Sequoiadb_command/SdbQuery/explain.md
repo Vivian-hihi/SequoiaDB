@@ -115,12 +115,6 @@ Detail 选项为 false 时，将会展示普通的访问计划。普通的访问
   "Query": {
     "a": 10000000
   },
-  "ReturnNum": 0,
-  "ElapsedTime": 0.000085,
-  "IndexRead": 0,
-  "DataRead": 0,
-  "UserCPU": 0,
-  "SysCPU": 0
 }
 ```
 

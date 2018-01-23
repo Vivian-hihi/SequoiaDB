@@ -299,6 +299,9 @@ namespace engine
    #define OPT_FIELD_INDEX_READ_PAGES     "IndexReadPages"
    #define OPT_FIELD_GETMORES             "GetMores"
    #define OPT_FIELD_RETURN_NUM           FIELD_NAME_RETURN_NUM
+   #define OPT_FIELD_ELAPSED_TIME         FIELD_NAME_ELAPSED_TIME
+   #define OPT_FIELD_USERCPU              FIELD_NAME_USERCPU
+   #define OPT_FIELD_SYSCPU               FIELD_NAME_SYSCPU
    #define OPT_FIELD_IO_COST              "IOCost"
    #define OPT_FIELD_CPU_COST             "CPUCost"
    #define OPT_FIELD_RAN_IO_COST          "RandomReadIOCostUnit"
@@ -325,6 +328,16 @@ namespace engine
    #define OPT_FIELD_DATA_NODE_NUM        "DataNodeNum"
    #define OPT_FIELD_SUMMARY_NAME         FIELD_NAME_NAME
    #define OPT_FIELD_SUMMARY_EST_COST     "Est" OPT_FIELD_TOTAL_COST
+
+   // Mask for explain info
+   #define OPT_EXPINFO_MASK_RETURN_NUM    ( 0x0001 )
+   #define OPT_EXPINFO_MASK_ELAPSED_TIME  ( 0x0002 )
+   #define OPT_EXPINFO_MASK_INDEX_READ    ( 0x0004 )
+   #define OPT_EXPINFO_MASK_DATA_READ     ( 0x0008 )
+   #define OPT_EXPINFO_MASK_USERCPU       ( 0x0010 )
+   #define OPT_EXPINFO_MASK_SYSCPU        ( 0x0020 )
+   #define OPT_EXPINFO_MASK_NONE          ( 0x0000 )
+   #define OPT_EXPINFO_MASK_ALL           ( 0xFFFF )
 
 }
 
