@@ -2685,12 +2685,12 @@ namespace engine
       //           RandomReadIOCostUnit * 0.25 )
       formBuilder << OPT_FIELD_PAGES << " * ( "
                   << OPT_FIELD_SEQ_WRITE_IO_COST << " + "
-                  << OPT_FIELD_SEQ_IO_COST << " * 0.75 "
+                  << OPT_FIELD_SEQ_IO_COST << " * 0.75 + "
                   << OPT_FIELD_RAN_IO_COST << " * 0.25 )" ;
 
       evalBuilder << _getInputPages( _getInputSize() ) << " * ( " <<
                   OPT_SEQ_WRITE_IO_COST << " + " <<
-                  OPT_SEQ_SCAN_IO_COST << " * 0.75 " <<
+                  OPT_SEQ_SCAN_IO_COST << " * 0.75 + " <<
                   OPT_RANDOM_SCAN_IO_COST << " * 0.25 )" ;
 
       return _toBSONFieldEval( builder, OPT_FIELD_IO_COST,
