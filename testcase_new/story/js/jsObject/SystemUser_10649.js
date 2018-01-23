@@ -109,6 +109,7 @@ SystemTest.prototype.testAddDelUser = function( createDir )
    checkDir( this.cmd, userObj.dir, createDir ) ;
    
    // 测试完成后，删除用户用户组
+   printLoginUsers( this ) ;
    var option = {} ;
    option["name"] = userObj.name ;
    option["isRemoveDir"] = createDir ;
@@ -216,6 +217,7 @@ SystemTest.prototype.testSetUserConfigs = function()
    checkDir( this.cmd, option.dir, true ) ;
    
    // 测试完成后，删除用户
+   printLoginUsers( this ) ;
    var option = {} ;
    option["name"] = userObj.name ;
    option["isRemoveDir"] = true ;
@@ -386,6 +388,21 @@ function checkDir( cmd, dir, createDir )
          ;
       else
          throw buildException( "checkDir", null, "check user dir", 0, e ) ;
+   }
+}
+
+/******************************************************************************
+*@Description : print login users
+*@author      : Liang XueWang            
+******************************************************************************/
+function printLoginUsers( st )
+{
+   println( st + " login users: " ) ;
+   var cursor = st.system.listLoginUsers() ;
+   var obj ;
+   while( obj = cursor.next() )
+   {
+      println( obj.toObj().user ) ;
    }
 }
 
