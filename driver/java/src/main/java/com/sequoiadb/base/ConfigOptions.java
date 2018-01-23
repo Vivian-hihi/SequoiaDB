@@ -17,7 +17,8 @@
 package com.sequoiadb.base;
 
 /**
- * Connection configuration option for Sequoiadb.
+ * @class ConfigOptions
+ * @brief Database Connection Configuration Option
  */
 public class ConfigOptions {
     private long maxAutoConnectRetryTime = 15000;
@@ -28,100 +29,128 @@ public class ConfigOptions {
     private boolean useSSL = false;
 
     /**
-     * Get the socket timeout time.
-     * @return the socket timeout time(milliseconds)
+     * @fn void setMaxAutoConnectRetryTime(long maxRetryTimeMilli)
+     * @brief Set the max auto connect retry time in milliseconds. Default to be 15,000ms.
+     *  when "connectTimeout" is set to 10,000ms(default value), the max number of retries is
+     *  ceiling("maxAutoConnectRetryTime" / "connectTimeout"), which is 2.
+     * @param maxRetryTimeMilli the max auto connect retry time in milliseconds.
      */
-    public int getSocketTimeout() {
-        return socketTimeout;
+    public void setMaxAutoConnectRetryTime(long maxRetryTimeMilli) {
+        this.maxAutoConnectRetryTime = maxRetryTimeMilli;
     }
 
     /**
-     * Set the socket timeout time.
-     * @param socketTimeout The socket timeout time(milliseconds).
+     * @fn void setConnectTimeout(int connectTimeoutMilli)
+     * @brief Set the connection timeout in milliseconds. A value of 0 means no timeout.
+     * It is used solely when establishing a new connection {@link java.net.Socket#connect(java.net.SocketAddress, int) }
+     *
+     * @param connectTimeoutMilli The connection timeout in milliseconds. Default is 10,000ms.
      */
-    public void setSocketTimeout(int socketTimeout) {
-        this.socketTimeout = socketTimeout;
+    public void setConnectTimeout(int connectTimeoutMilli) {
+        this.connectTimeout = connectTimeoutMilli;
     }
 
     /**
-     * Get whether the socket keeps alive or not.
-     * @return True if keep alive and false if not.
+     * @fn void setSocketTimeout(int socketTimeoutMilli)
+     * @brief Get the socket timeout in milliseconds.
+     * It is used for I/O socket read operations {@link java.net.Socket#setSoTimeout(int)}
+     * @param socketTimeoutMilli The socket timeout in milliseconds. Default is 0ms and means no timeout.
      */
-    public boolean getSocketKeepAlive() {
-        return socketKeepAlive;
+    public void setSocketTimeout(int socketTimeoutMilli) {
+        this.socketTimeout = socketTimeoutMilli;
     }
 
     /**
-     * Set the keep alive status of socket
-     * @param socketKeepAlive the the status of socket
+     * @fn void setSocketKeepAlive(boolean on)
+     * @brief This flag controls the socket keep alive feature that keeps a connection alive through firewalls {@link java.net.Socket#setKeepAlive(boolean)}
+     * @param on whether keep-alive is enabled on each socket. Default is false.
      */
-    public void setSocketKeepAlive(boolean socketKeepAlive) {
-        this.socketKeepAlive = socketKeepAlive;
+    public void setSocketKeepAlive(boolean on) {
+        this.socketKeepAlive = on;
     }
 
     /**
-     * Get whether use the Nagle algorithm or not.
-     * @return True if use nagle and false if not.
+     * @fn void setUseNagle(boolean on)
+     * @brief Set whether enable/disable Nagle's algorithm(disable/enable TCP_NODELAY)
+     * @param on <code>false</code> to enable TCP_NODELAY, default to be false and going to use enable TCP_NODELAY.
      */
-    public boolean getUseNagle() {
-        return useNagle;
+    public void setUseNagle(boolean on) {
+        this.useNagle = on;
     }
 
     /**
-     * Set whether use the Nagle algorithm or not.
-     * @param useNagle whether use the Nagle algorithm or not
+     * @fn void setUseSSL(boolean on)
+     * @brief Set whether use the SSL or not
+     * @param on Default to be false.
+     * @author David Li
+     * @since 1.12
      */
-    public void setUseNagle(boolean useNagle) {
-        this.useNagle = useNagle;
+    public void setUseSSL(boolean on) {
+        this.useSSL = on;
     }
 
     /**
-     * Get the connect timeout time.
-     * @return the connect timeout(milliseconds)
-     */
-    public int getConnectTimeout() {
-        return connectTimeout;
-    }
-
-    /**
-     * Set the connect timeout time.
-     * @param connectTimeout connect timeout time(milliseconds)
-     */
-    public void setConnectTimeout(int connectTimeout) {
-        this.connectTimeout = connectTimeout;
-    }
-
-    /**
-     * Get the max auto connect retry time
-     * @return the max auto connect retry time(milliseconds)
+     * @fn long getMaxAutoConnectRetryTime()
+     * @brief Get the max auto connect retry time in milliseconds.
+     * @return the max auto connect retry time in milliseconds.
      */
     public long getMaxAutoConnectRetryTime() {
         return maxAutoConnectRetryTime;
     }
 
     /**
-     * Set the max auto connect retry time.
-     * @param maxAutoConnectRetryTime the max auto connect retry time(milliseconds)
+     * @fn int getConnectTimeout()
+     * @brief The connection timeout in milliseconds. A timeout of zero is interpreted as an infinite timeout.
+     * It is used solely when establishing a new connection {@link java.net.Socket#connect(java.net.SocketAddress, int) }
+     * <p/>
+     * Default is 10,000ms.
+     *
+     * @return the socket connect timeout
      */
-    public void setMaxAutoConnectRetryTime(long maxAutoConnectRetryTime) {
-        this.maxAutoConnectRetryTime = maxAutoConnectRetryTime;
+    public int getConnectTimeout() {
+        return connectTimeout;
     }
 
     /**
-     * Get whether use the SSL or not.
-     * @return True if use SSL and false if not.
+     * @fn int getSocketTimeout()
+     * @brief Get the socket timeout in milliseconds.
+     * It is used for I/O socket read operations {@link java.net.Socket#setSoTimeout(int)}
+     * <p/>
+     * Default is 0ms and means no timeout.
+     *
+     * @return the socket timeout
+     */
+    public int getSocketTimeout() {
+        return socketTimeout;
+    }
+
+    /**
+     * @fn boolean getSocketKeepAlive()
+     * @brief Get whether the socket keeps alive or not
+     * @return the status of setting
+     */
+    public boolean getSocketKeepAlive() {
+        return socketKeepAlive;
+    }
+
+    /**
+     * @fn boolean getUseNagle()
+     * @brief Get whether use the Nagle Algorithm or not
+     * @return the status of setting
+     */
+    public boolean getUseNagle() {
+        return useNagle;
+    }
+
+    /**
+     * @fn boolean getUseSSL()
+     * @brief Get whether use the SSL or not
+     * @return the status of setting
+     * @author David Li
      * @since 1.12
      */
     public boolean getUseSSL() {
         return useSSL;
     }
 
-    /**
-     * Set whether use the SSL or not.
-     * @param useSSL whether use the SSL or not
-     * @since 1.12
-     */
-    public void setUseSSL(boolean useSSL) {
-        this.useSSL = useSSL;
-    }
 }
