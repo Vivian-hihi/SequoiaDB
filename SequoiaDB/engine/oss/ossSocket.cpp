@@ -199,7 +199,8 @@ INT32 _ossSocket::initSocket ()
    {
       PD_LOG ( PDERROR, "Failed to initialize socket, error = %d",
                SOCKET_GETLASTERROR ) ;
-      rc = SDB_NETWORK ;
+      rc = (SOCKET_EMFILE == SOCKET_GETLASTERROR ) ?
+           SDB_TOO_MANY_OPEN_FD : SDB_NETWORK ;
       goto error ;
    }
    _init = TRUE ;
@@ -894,7 +895,7 @@ INT32 _ossSocket::accept ( SOCKET *sock, struct sockaddr *addr, socklen_t
       sysError = SOCKET_GETLASTERROR ;
       rc = ( SOCKET_EMFILE == sysError ) ? SDB_TOO_MANY_OPEN_FD : SDB_NETWORK ;
       PD_LOG ( ( rc == SDB_NETWORK ? PDERROR : PDINFO ) ,
-               "Failed to accept socket, rc = %d", sysError ) ;
+               "Failed to accept socket, errno: %d, rc: %d", sysError, rc ) ;
       goto error ;
    }
 

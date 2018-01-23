@@ -1052,6 +1052,7 @@ namespace engine
             PD_LOG( PDERROR, "Can not accept more connections because of "
                     "open files upto limits, restart listening" ) ;
             _innerTimeHandle.startTimer() ;
+            pmdIncErrNum( SDB_TOO_MANY_OPEN_FD ) ;
          }
 
          goto done ;

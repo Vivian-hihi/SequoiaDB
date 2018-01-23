@@ -248,6 +248,8 @@ namespace engine
 
          INT32 callCatalog( MsgHeader *header, UINT32 times = 1 ) ;
 
+         BOOLEAN getPrimaryInfo( _clsSharingStatus &primaryInfo ) ;
+
          void getGroupInfo( _MsgRouteID &primary,
                             vector<_netRouteNode > &group ) ;
 

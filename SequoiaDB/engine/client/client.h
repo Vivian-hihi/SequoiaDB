@@ -344,6 +344,7 @@ SDB_EXPORT INT32 sdbGetQueryMeta ( sdbCollectionHandle cHandle,
         SDB_SNAP_TRANSACTIONS     : Get snapshot of transactions in current session
         SDB_SNAP_TRANSACTIONS_CURRENT : Get snapshot of all the transactions
         SDB_SNAP_ACCESSPLANS      : Get the snapshot of cached access plans
+        SDB_SNAP_HEALTH           : Get snapshot of node health detection
 
     \param [in] condition The matching rule, match all the documents if null
     \param [in] select The selective rule, return the whole document if null
@@ -363,13 +364,28 @@ SDB_EXPORT INT32 sdbGetSnapshot ( sdbConnectionHandle cHandle,
  *                               bson *condition )
     \brief Reset the snapshot
     \param [in] cHandle The connection handle
-    \param [in] condition The matching rule, usually specifies the node in sharding environment
-        in standalone mode, this option is ignored
+    \param [in] options The control options:
+
+        Type            : (String) Specify the snapshot type to be reset.( defalut is "all" )
+                          "sessions"
+                          "sessions current"
+                          "database"
+                          "health"
+                          "all"
+        SessionID       : (INT32) Specify the session ID to be reset.
+        Other options   : Some of other options are as below: (please visit the official website to
+                          search "analyze" or "Location Elements" for more detail.)
+                          GroupID   :INT32,
+                          GroupName :String,
+                          NodeID    :INT32,
+                          HostName  :String,
+                          svcname   :String,
+                          ...
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
 SDB_EXPORT INT32 sdbResetSnapshot ( sdbConnectionHandle cHandle,
-                                    bson *condition ) ;
+                                    bson *options ) ;
 
 /** \fn INT32 sdbTraceStart ( sdbConnectionHandle cHandle,
                               UINT32 traceBufferSize,
@@ -695,7 +711,7 @@ SDB_EXPORT INT32 sdbGetNodeSlave ( sdbReplicaGroupHandle cHandle,
     \param [in] cHandle The replica group handle
     \param [in] positionsArray The array of node's position, the array elements
                 can be 1-7.
-    \param [in] positionsCount The amount of node's position.                  
+    \param [in] positionsCount The amount of node's position.
     \param [out] handle The slave node handle
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
@@ -2298,7 +2314,7 @@ SDB_EXPORT INT32 sdbWriteLob( sdbLobHandle lobHandle,
                               UINT32 len ) ;
 
 /** \fn INT32 sdbLockLob( sdbLobHandle lobHandle,
-                          INT64 offset, 
+                          INT64 offset,
                           INT64 length )
     \brief lock LOB section for write mode
     \param [in] lobHandle The large object handle
@@ -2312,7 +2328,7 @@ SDB_EXPORT INT32 sdbLockLob( sdbLobHandle lobHandle,
                              INT64 length ) ;
 
 /** \fn INT32 sdbLockAndSeekLob( sdbLobHandle lobHandle,
-                                 INT64 offset, 
+                                 INT64 offset,
                                  INT64 length )
     \brief lock LOB section for write mode and seek to the offset position
     \param [in] lobHandle The large object handle

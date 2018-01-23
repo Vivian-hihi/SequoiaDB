@@ -1242,7 +1242,7 @@ namespace sdbclient
                           selector, orderBy ) ;
       }
 
-      INT32 resetSnapshot ( const BSONObj &condition = _sdbStaticObject ) ;
+      INT32 resetSnapshot ( const BSONObj &options = _sdbStaticObject ) ;
 
       #if defined CLIENT_THREAD_SAFE
       void lock ()

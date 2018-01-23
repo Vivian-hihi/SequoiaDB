@@ -6756,6 +6756,9 @@ error :
       case SDB_SNAP_ACCESSPLANS :
          p = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_ACCESSPLANS ;
          break ;
+      case SDB_SNAP_HEALTH :
+         p = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_HEALTH ;
+         break ;
       default :
          rc = SDB_INVALIDARG ;
          goto exit ;
@@ -6807,7 +6810,7 @@ error :
       goto done ;
    }
 
-   INT32 _sdbImpl::resetSnapshot ( const BSONObj &condition )
+   INT32 _sdbImpl::resetSnapshot ( const BSONObj &options )
    {
       INT32 rc                = SDB_OK ;
       BOOLEAN r               = FALSE ;
@@ -6818,7 +6821,7 @@ error :
          goto error ;
       }
       lock () ;
-      rc = _runCommand ( p, r, &condition,
+      rc = _runCommand ( p, r, &options,
                          NULL, NULL, NULL ) ;
       if ( rc )
       {

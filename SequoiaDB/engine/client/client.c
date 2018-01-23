@@ -433,7 +433,7 @@ static INT32 _recv ( sdbConnectionHandle cHandle, Socket* sock,
    while ( TRUE )
    {
       // get length first
-      rc = clientRecv ( sock, ((CHAR*)&len) + totalReceivedLen, 
+      rc = clientRecv ( sock, ((CHAR*)&len) + totalReceivedLen,
                         sizeof(len) - totalReceivedLen, &receivedLen,
                         SDB_CLIENT_DFT_NETWORK_TIMEOUT ) ;
       totalReceivedLen += receivedLen ;
@@ -471,7 +471,7 @@ static INT32 _recv ( sdbConnectionHandle cHandle, Socket* sock,
    while ( TRUE )
    {
       rc = clientRecv ( sock, &(*ppBuffer)[sizeof(realLen) + totalReceivedLen],
-                        realLen - sizeof(realLen) - totalReceivedLen, 
+                        realLen - sizeof(realLen) - totalReceivedLen,
                         &receivedLen,
                         SDB_CLIENT_DFT_NETWORK_TIMEOUT ) ;
       totalReceivedLen += receivedLen ;
@@ -854,7 +854,7 @@ static INT32 requestSysInfo ( sdbConnectionStruct *connection )
    while ( TRUE )
    {
       rc = clientRecv ( connection->_sock, ((CHAR*)&reply) + totalReceivedLen,
-                        sizeof(MsgSysInfoReply) - totalReceivedLen, 
+                        sizeof(MsgSysInfoReply) - totalReceivedLen,
                         &receivedLen,
                         SDB_CLIENT_DFT_NETWORK_TIMEOUT ) ;
       totalReceivedLen += receivedLen ;
@@ -2399,6 +2399,9 @@ SDB_EXPORT INT32 sdbGetSnapshot ( sdbConnectionHandle cHandle,
    case SDB_SNAP_ACCESSPLANS :
       p = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_ACCESSPLANS ;
       break ;
+   case SDB_SNAP_HEALTH :
+      p = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_HEALTH ;
+      break ;
    default :
       rc = SDB_INVALIDARG ;
       goto error ;
@@ -2580,7 +2583,7 @@ error:
 }
 
 SDB_EXPORT INT32 sdbResetSnapshot ( sdbConnectionHandle cHandle,
-                                    bson *condition )
+                                    bson *options )
 {
    INT32 rc                        = SDB_OK ;
    CHAR *p                         = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_RESET ;
@@ -2592,7 +2595,7 @@ SDB_EXPORT INT32 sdbResetSnapshot ( sdbConnectionHandle cHandle,
                       &connection->_pReceiveBuffer,
                       &connection->_receiveBufferSize,
                       connection->_endianConvert,
-                      p, condition,
+                      p, options,
                       NULL, NULL, NULL ) ;
    if ( SDB_OK != rc )
    {
@@ -3516,10 +3519,10 @@ SDB_EXPORT INT32 sdbGetNodeMaster ( sdbReplicaGroupHandle cHandle,
    // check has primary or not
    bType = bson_find ( &it, &result, CAT_PRIMARY_NAME ) ;
    if ( BSON_EOO == bType )
-   {       
-      // cannot find primary         
-      rc = SDB_RTN_NO_PRIMARY_FOUND ;         
-      goto error ;      
+   {
+      // cannot find primary
+      rc = SDB_RTN_NO_PRIMARY_FOUND ;
+      goto error ;
    }
    if ( BSON_INT != bType )
    {
@@ -3529,7 +3532,7 @@ SDB_EXPORT INT32 sdbGetNodeMaster ( sdbReplicaGroupHandle cHandle,
    primaryNode = bson_iterator_int ( &it ) ;
    if ( -1 == primaryNode )
    {
-      // cannot find primary         
+      // cannot find primary
       rc = SDB_RTN_NO_PRIMARY_FOUND ;
       goto error ;
    }
@@ -3584,7 +3587,7 @@ SDB_EXPORT INT32 sdbGetNodeMaster ( sdbReplicaGroupHandle cHandle,
    {
       // it is impossible for us to find primary id but cannot
       // find primary node in list
-      rc = SDB_SYS ;         
+      rc = SDB_SYS ;
       goto error ;
    }
 done :
@@ -3662,8 +3665,8 @@ static INT32 _sdbGetNodeSlave ( sdbReplicaGroupHandle cHandle,
    rc = _sdbGetReplicaGroupDetail ( cHandle, &result ) ;
    if ( SDB_OK != rc )
    {
-      if ( SDB_DMS_EOC == rc )         
-      {            
+      if ( SDB_DMS_EOC == rc )
+      {
          rc = SDB_CLS_GRP_NOT_EXIST ;
       }
       goto error ;
@@ -3728,7 +3731,7 @@ static INT32 _sdbGetNodeSlave ( sdbReplicaGroupHandle cHandle,
               BSON_OK == bson_init_finished_data ( &intObj,
                             (CHAR*)bson_iterator_value ( &i ) ) )
          {
-            
+
             bson_iterator k ;
             // look for "NodeID" in each object
             if ( BSON_INT != bson_find ( &k, &intObj, CAT_NODEID_NAME ) )
@@ -3758,7 +3761,7 @@ static INT32 _sdbGetNodeSlave ( sdbReplicaGroupHandle cHandle,
    if ( hasPrimary && 0 == primaryNodePosition )
    {
       rc = SDB_SYS ;
-      goto error ;    
+      goto error ;
    }
    // try to generate slave node's positions
    if ( needGeneratePosition )
@@ -3802,7 +3805,7 @@ static INT32 _sdbGetNodeSlave ( sdbReplicaGroupHandle cHandle,
       INT32 includePrimaryPositionsCount = 0 ;
       INT32 excludePrimaryPositions[7]   = { 0 } ;
       INT32 excludePrimaryPositionsCount = 0 ;
-      
+
       for ( i = 0 ; i < validPositionsCount ; i++ )
       {
          INT32 pos = validPositions[i] ;
@@ -3816,7 +3819,7 @@ static INT32 _sdbGetNodeSlave ( sdbReplicaGroupHandle cHandle,
                if ( hasPrimary && primaryNodePosition != pos )
                {
                   excludePrimaryPositions[excludePrimaryPositionsCount++] = pos ;
-               }             
+               }
             }
          }
          else
@@ -3826,7 +3829,7 @@ static INT32 _sdbGetNodeSlave ( sdbReplicaGroupHandle cHandle,
             {
                flags[nodeIndex] = 1 ;
                includePrimaryPositions[includePrimaryPositionsCount++] = pos ;
-               if ( hasPrimary && 
+               if ( hasPrimary &&
                     primaryNodePosition != nodeIndex + 1 )
                {
                   excludePrimaryPositions[excludePrimaryPositionsCount++] = pos ;
@@ -3856,7 +3859,7 @@ static INT32 _sdbGetNodeSlave ( sdbReplicaGroupHandle cHandle,
          goto error ;
       }
    }
-   
+
 done :
    bson_destroy( &result ) ;
    return rc ;

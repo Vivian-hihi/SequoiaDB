@@ -574,7 +574,7 @@ namespace engine
             }
             if ( 0 != _primaryID.columns.nodeID )
             {
-               // retrun the node id by startFrom
+               // return the node id by startFrom
                startFrom = _primaryID.columns.nodeID ;
             }
          }
@@ -588,6 +588,10 @@ namespace engine
 
       rc = _reply ( &_replyHeader, buffObj.data(), buffObj.size() ) ;
 
+      if ( _replyHeader.flags != SDB_OK )
+      {
+         pmdIncErrNum( _replyHeader.flags ) ;
+      }
    done:
       eduCB()->writingDB( FALSE ) ;
       MON_END_OP( _pEDUCB->getMonAppCB() ) ;

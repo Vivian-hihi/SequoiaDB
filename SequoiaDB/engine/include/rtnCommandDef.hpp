@@ -82,6 +82,7 @@ namespace engine
 #define NAME_SNAPSHOT_TRANSACTIONS_CUR       CMD_NAME_SNAPSHOT_TRANSACTIONS_CUR
 #define NAME_SNAPSHOT_TRANSACTIONS           CMD_NAME_SNAPSHOT_TRANSACTIONS
 #define NAME_SNAPSHOT_ACCESSPLANS            CMD_NAME_SNAPSHOT_ACCESSPLANS
+#define NAME_SNAPSHOT_HEALTH                 CMD_NAME_SNAPSHOT_HEALTH
 #define NAME_TEST_COLLECTION                 CMD_NAME_TEST_COLLECTION
 #define NAME_TEST_COLLECTIONSPACE            CMD_NAME_TEST_COLLECTIONSPACE
 #define NAME_SET_PDLEVEL                     CMD_NAME_SET_PDLEVEL
@@ -193,6 +194,7 @@ namespace engine
 
       CMD_SHUTDOWN                           = 80,
 
+      CMD_SNAPSHOT_ALL                       = 89,
       CMD_SNAPSHOT_CONTEXTS                  = 90,
       CMD_SNAPSHOT_CONTEXTS_CURRENT          = 91,
       CMD_SNAPSHOT_DATABASE                  = 92,
@@ -206,6 +208,7 @@ namespace engine
       CMD_SNAPSHOT_TRANSACTIONS_CUR          = 100,
       CMD_SNAPSHOT_TRANSACTIONS              = 101,
       CMD_SNAPSHOT_ACCESSPLANS               = 102,
+      CMD_SNAPSHOT_HEALTH                    = 103,
 
       CMD_TEST_COLLECTION                    = 110,
       CMD_TEST_COLLECTIONSPACE               = 111,

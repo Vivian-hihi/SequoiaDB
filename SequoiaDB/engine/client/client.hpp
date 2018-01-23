@@ -3143,7 +3143,7 @@ namespace sdbclient
                                   const bson::BSONObj &orderBy   = _sdbStaticObject
                                 ) = 0 ;
 
-      virtual INT32 resetSnapshot ( const bson::BSONObj &condition = _sdbStaticObject ) = 0 ;
+      virtual INT32 resetSnapshot ( const bson::BSONObj &options = _sdbStaticObject ) = 0 ;
 
       virtual INT32 getList ( _sdbCursor **cursor,
                               INT32 listType,
@@ -3624,6 +3624,7 @@ namespace sdbclient
         SDB_SNAP_TRANSACTIONS     : Get snapshot of transactions in current session
         SDB_SNAP_TRANSACTIONS_CURRENT : Get snapshot of all the transactions
         SDB_SNAP_ACCESSPLANS      : Get the snapshot of cached access plans
+        SDB_SNAP_HEALTH           : Get snapshot of node health detection
 
     \param [in] condition The matching rule, match all the documents if not provided.
     \param [in] select The selective rule, return the whole document if not provided.
@@ -3667,6 +3668,7 @@ namespace sdbclient
         SDB_SNAP_TRANSACTIONS     : Get snapshot of transactions in current session
         SDB_SNAP_TRANSACTIONS_CURRENT : Get snapshot of all the transactions
         SDB_SNAP_ACCESSPLANS      : Get the snapshot of cached access plans
+        SDB_SNAP_HEALTH           : Get snapshot of node health detection
 
      \param [in] condition The matching rule, match all the documents if not provided.
      \param [in] select The selective rule, return the whole document if not provided.
@@ -3690,16 +3692,31 @@ namespace sdbclient
 
 /** \fn INT32 resetSnapshot ( const bson::BSONObj &condition )
     \brief Reset the snapshot.
-    \param [in] condition The matching rule, usually specifies the node in sharding environment,
-                   in standalone mode, this option is ignored.
+    \param [in] options The control options:
+
+        Type            : (String) Specify the snapshot type to be reset.( defalut is "all" )
+                          "sessions"
+                          "sessions current"
+                          "database"
+                          "health"
+                          "all"
+        SessionID       : (INT32) Specify the session ID to be reset.
+        Other options   : Some of other options are as below: (please visit the official website to
+                          search "analyze" or "Location Elements" for more detail.)
+                          GroupID   :INT32,
+                          GroupName :String,
+                          NodeID    :INT32,
+                          HostName  :String,
+                          svcname   :String,
+                          ...
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
-      INT32 resetSnapshot ( const bson::BSONObj &condition = _sdbStaticObject )
+      INT32 resetSnapshot ( const bson::BSONObj &options = _sdbStaticObject )
       {
          if ( !pSDB )
             return SDB_NOT_CONNECTED ;
-         return pSDB->resetSnapshot ( condition ) ;
+         return pSDB->resetSnapshot ( options ) ;
       }
 
 /* \fn INT32 getList ( _sdbCursor **cursor,

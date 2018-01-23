@@ -189,6 +189,9 @@ typedef class ossTimestamp ossTimestamp ;
 // convert ossTimestamp into string
 void ossTimestampToString( ossTimestamp &Tm, CHAR * pStr ) ;
 
+// convert string into ossTimestamp
+void ossStringToTimestamp( const CHAR * pStr, ossTimestamp &Tm ) ;
+
 // Wrapper of localtime, convert a time value and correct for the local time
 // zone. The input pTime represents the seconds elapsed since the Epoch,
 // midnight (00:00:00), January 1, 1970, UTC
@@ -1032,10 +1035,21 @@ UINT32 ossHexDumpBuffer
 INT32 ossGetMemoryInfo ( INT32 &loadPercent,
                          INT64 &totalPhys,   INT64 &availPhys,
                          INT64 &totalPF,     INT64 &availPF,
+                         INT64 &totalVirtual, INT64 &availVirtual,
+                         INT32 &overCommitMode,
+                         INT64 &commitLimit,  INT64 &committedAS ) ;
+
+INT32 ossGetMemoryInfo ( INT32 &loadPercent,
+                         INT64 &totalPhys,   INT64 &availPhys,
+                         INT64 &totalPF,     INT64 &availPF,
                          INT64 &totalVirtual, INT64 &availVirtual ) ;
 
 INT32 ossGetDiskInfo ( const CHAR *pPath, INT64 &totalBytes, INT64 &freeBytes,
                        CHAR* fsName = NULL, INT32 fsNameSize = 0 ) ;
+
+INT32 ossGetFileDesp ( INT64 &usedNum ) ;
+
+INT32 ossGetProcessMemory( OSSPID pid, INT64 &vmRss, INT64 &vmSize ) ;
 
 typedef struct _ossDiskIOStat
 {
@@ -1151,6 +1165,8 @@ private:
 class ossProcLimits
 {
 public:
+   ossProcLimits() ;
+
    std::string str() const ;
 
    INT32 init() ;

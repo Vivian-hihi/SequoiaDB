@@ -472,6 +472,28 @@ namespace engine
       return isNormal ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSREPSET_GETPRIMARYINFO, "_clsReplicateSet::getPrimaryInfo" )
+   BOOLEAN _clsReplicateSet::getPrimaryInfo( _clsSharingStatus &primaryInfo )
+   {
+      PD_TRACE_ENTRY ( SDB__CLSREPSET_GETPRIMARYINFO );
+      BOOLEAN isOk = FALSE ;
+      _MsgRouteID primary ;
+
+      ossScopedRWLock lock( &_info.mtx, SHARED ) ;
+
+      primary = _info.primary ;
+      map<UINT64, _clsSharingStatus>::iterator itr =
+                                             _info.info.find( primary.value ) ;
+      if ( itr != _info.info.end() )
+      {
+         primaryInfo = itr->second ;
+         isOk = TRUE ;
+      }
+
+      PD_TRACE_EXIT ( SDB__CLSREPSET_GETPRIMARYINFO );
+      return isOk ;
+   }
+
    // The function is caller by any thread, so need to use lock
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSREPSET_GETGPINFO, "_clsReplicateSet::getGroupInfo" )
    void _clsReplicateSet::getGroupInfo( _MsgRouteID &primary,

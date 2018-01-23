@@ -198,7 +198,7 @@ namespace engine
                }
                break ;
             }
- 
+
             // increase process event count
             _pEDUCB->incEventCount() ;
             pBuff[ msgSize ] = 0 ;
@@ -342,6 +342,11 @@ namespace engine
                  "TID: %d, requestID: %llu] failed, rc: %d",
                  sessionName(), msg->opCode, msg->messageLength, msg->TID,
                  msg->requestID, result ) ;
+      }
+
+      if ( result != SDB_OK )
+      {
+         pmdIncErrNum( result ) ;
       }
 
       // end operator

@@ -46,6 +46,8 @@
 #include "pmdTrace.hpp"
 #include "pmdController.hpp"
 #include "rtnBackgroundJob.hpp"
+#include "pmdEnv.hpp"
+#include "pmdStartupHstLogger.hpp"
 
 using namespace std;
 using namespace bson;
@@ -106,8 +108,9 @@ namespace engine
       INT32 rc = SDB_OK ;
       SDB_START_TYPE startType = SDB_START_NORMAL ;
       BOOLEAN bOk = TRUE ;
+      pmdStartupHstLogger *logger = pmdGetStartupHstLogger() ;
 
-      //analysis the start type
+      // analysis the start type
       rc = pmdGetStartup().init( pmdGetOptionCB()->getDbPath() ) ;
       PD_RC_CHECK( rc, PDERROR, "Start up check failed[rc:%d]", rc ) ;
 
@@ -121,6 +124,14 @@ namespace engine
       rc = getQgmStrategyTable()->init() ;
       PD_RC_CHECK( rc, PDERROR, "Init qgm strategy table failed, rc: %d",
                    rc ) ;
+
+      // write start-up info, ignore error
+      rc = logger->init() ;
+      if ( SDB_OK == rc )
+      {
+         PD_LOG( PDWARNING, "Failed to init start-up logger, rc: %d", rc );
+         rc = SDB_OK ;
+      }
 
    done:
       return rc ;
@@ -173,11 +184,11 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDMSTTHRDMAIN, "pmdMasterThreadMain" )
    INT32 pmdMasterThreadMain ( INT32 argc, CHAR** argv )
    {
-      INT32      rc       = SDB_OK ;
+      INT32 rc                             = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_PMDMSTTHRDMAIN );
-      pmdKRCB   *krcb     = pmdGetKRCB () ;
-      UINT32     startTimerCount = 0 ;
-      CHAR      verText[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+      pmdKRCB *krcb                        = pmdGetKRCB () ;
+      UINT32 startTimerCount               = 0 ;
+      CHAR verText[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
 
       // 1. read command line first
       rc = pmdResolveArguments ( argc, argv ) ;
@@ -218,29 +229,17 @@ namespace engine
 
       // 4. dump limit info
       {
-         ossProcLimits limitInfo ;
-         rc = limitInfo.init() ;
-         if ( SDB_SYS == rc )
+         PD_LOG( PDEVENT, "dump limit info:\n%s",
+                 pmdGetLimit().str().c_str() ) ;
+         INT64 sort = -1 ;
+         INT64 hard = -1 ;
+         if ( !pmdGetLimit().getLimit( OSS_LIMIT_VIRTUAL_MEM, sort, hard ) )
          {
-            /// the system not implement, do nothing
+            PD_LOG( PDWARNING, "can not get limit of memory space!" ) ;
          }
-         else if ( SDB_OK != rc )
+         else if ( -1 != sort || -1 != hard )
          {
-            PD_LOG( PDWARNING, "can not init limit info:%d", rc ) ;
-         }
-         else
-         {
-            PD_LOG( PDEVENT, "dump limit info:\n%s", limitInfo.str().c_str() ) ;
-            INT64 sort = -1 ;
-            INT64 hard = -1 ;
-            if ( !limitInfo.getLimit( OSS_LIMIT_VIRTUAL_MEM, sort, hard ) )
-            {
-               PD_LOG( PDWARNING, "can not get limit of memory space!" ) ;
-            }
-            else if ( -1 != sort || -1 != hard )
-            {
-               PD_LOG( PDWARNING, "virtual memory is not unlimited!" ) ;
-            }
+            PD_LOG( PDWARNING, "virtual memory is not unlimited!" ) ;
          }
       }
 
@@ -259,7 +258,7 @@ namespace engine
          goto error ;
       }
 
-      // 8. inti krcb
+      // 8. init krcb
       rc = krcb->init() ;
       if ( rc )
       {

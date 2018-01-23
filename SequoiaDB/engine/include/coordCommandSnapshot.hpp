@@ -86,6 +86,7 @@ namespace engine
          virtual ~_coordCmdSnapshotReset() ;
       private:
          virtual BOOLEAN _useContext() { return FALSE ; }
+         void _preSet( pmdEDUCB *cb, coordCtrlParam &ctrlParam ) ;
    } ;
    typedef _coordCmdSnapshotReset coordCmdSnapshotReset ;
 
@@ -200,6 +201,34 @@ namespace engine
          virtual ~_coordCMDSnapshotSystemIntr() ;
    } ;
    typedef _coordCMDSnapshotSystemIntr coordCMDSnapshotSystemIntr ;
+
+   /*
+      _coordCMDSnapshotHealth define
+   */
+   class _coordCMDSnapshotHealth: public _coordCMDMonBase
+   {
+      COORD_DECLARE_CMD_AUTO_REGISTER() ;
+      public:
+         _coordCMDSnapshotHealth() ;
+         virtual ~_coordCMDSnapshotHealth() ;
+      private:
+         virtual const CHAR *getIntrCMDName() ;
+         virtual const CHAR *getInnerAggrContent() ;
+   } ;
+   typedef _coordCMDSnapshotHealth coordCMDSnapshotHealth ;
+
+   /*
+      _coordCMDSnapshotHealthIntr define
+   */
+   class _coordCMDSnapshotHealthIntr : public _coordCMDSnapshotIntrBase
+   {
+      COORD_DECLARE_CMD_AUTO_REGISTER() ;
+      public:
+         _coordCMDSnapshotHealthIntr() ;
+         virtual ~_coordCMDSnapshotHealthIntr() ;
+         virtual void _preSet( pmdEDUCB *cb, coordCtrlParam &ctrlParam ) ;
+   } ;
+   typedef _coordCMDSnapshotHealthIntr coordCMDSnapshotHealthIntr ;
 
    /*
       _coordCMDSnapshotCollections define

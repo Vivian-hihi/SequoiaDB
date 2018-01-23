@@ -44,6 +44,7 @@
 #include "rtnFetchBase.hpp"
 #include "dpsTransCB.hpp"
 #include "../bson/bson.h"
+#include "rtnCommandDef.hpp"
 
 using namespace bson ;
 
@@ -74,6 +75,17 @@ namespace engine
 
    void  monAppendVersion ( BSONObjBuilder &ob ) ;
 
+   void  monAppendUlimit ( BSONObjBuilder &ob ) ;
+
+   INT32 monAppendFileDesp( BSONObjBuilder &ob ) ;
+
+   INT32 monAppendHostMemory ( BSONObjBuilder &ob ) ;
+
+   INT32 monAppendNodeMemory( BSONObjBuilder &ob ) ;
+
+   INT32 monAppendDisk ( BSONObjBuilder &ob,
+                         BOOLEAN appendDbPath = TRUE ) ;
+
    INT32 monDumpIndexes( MON_IDX_LIST &indexes, rtnContextDump *context ) ;
 
    INT32 monDumpTraceStatus ( rtnContextDump *context ) ;
@@ -88,8 +100,8 @@ namespace engine
                              INT32 direction,
                              rtnContextDump *context ) ;
 
-   void  monResetMon () ;
-
+   void  monResetMon ( RTN_COMMAND_TYPE type, BOOLEAN resetAllEDU,
+                       EDUID eduID ) ;
    INT32 monDBDumpStorageInfo( BSONObjBuilder &ob );
 
    INT32 monDBDumpProcMemInfo( BSONObjBuilder &ob );
@@ -354,7 +366,37 @@ namespace engine
 
    } ;
    typedef _monSystemFetch monSystemFetch ;
- 
+
+   /*
+      _monHealthFetch define
+   */
+   class _monHealthFetch : public rtnFetchBase
+   {
+      DECLARE_FETCH_AUTO_REGISTER()
+
+      public:
+         _monHealthFetch() ;
+         virtual ~_monHealthFetch() ;
+
+         virtual INT32        init( pmdEDUCB *cb,
+                                    BOOLEAN isCurrent,
+                                    BOOLEAN isDetail,
+                                    UINT32 addInfoMask,
+                                    const BSONObj obj = BSONObj() ) ;
+
+         virtual const CHAR*  getName() const ;
+
+      public:
+         virtual BOOLEAN   isHitEnd() const ;
+         virtual INT32     fetch( BSONObj &obj ) ;
+
+      private:
+         UINT32                  _addInfoMask ;
+         BOOLEAN                 _hitEnd ;
+
+   } ;
+   typedef _monHealthFetch monHealthFetch ;
+
    /*
       _monStorageUnitFetch define
    */

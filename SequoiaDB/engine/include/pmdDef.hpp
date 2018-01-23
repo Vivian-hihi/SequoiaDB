@@ -245,6 +245,13 @@ namespace engine
    #define SDB_DB_OFFLINE_BK_STR       "OfflineBackup"
 
    /*
+      SDB_DATA_STATUS_STR DEFINE
+   */
+   #define SDB_DATA_NORMAL_STR           "Normal"
+   #define SDB_DATA_REPAIRE_STR          "Repaire"
+   #define SDB_DATA_FAULT_STR            "Fault"
+
+   /*
       SDB_DB_MODE_STR DEFINE
    */
    #define SDB_DB_MODE_READONLY_STR    "Readonly"
@@ -253,8 +260,11 @@ namespace engine
    /*
       define
    */
+   #define PMD_CONF_DIR_NAME           "conf"
+   #define PMD_RUN_DIR_NAME            "run"
    #define PMD_DFT_CONF                "sdb.conf"
    #define PMD_DFT_CAT                 "sdb.cat"
+   #define PMD_DFT_RUN                 "sdb.id"
    #define PMD_OPTION_DIAG_PATH        "diaglog"
    #define PMD_OPTION_AUDIT_PATH       PMD_OPTION_DIAG_PATH
    #define PMD_OPTION_LOG_PATH         "replicalog"

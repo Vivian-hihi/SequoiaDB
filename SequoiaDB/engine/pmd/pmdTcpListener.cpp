@@ -83,6 +83,7 @@ namespace engine
             pListerner->close() ;
             PD_LOG( PDERROR, "Can not accept more connections because of "
                     "open files upto limits, restart listening" ) ;
+            pmdIncErrNum( rc ) ;
 
             while( !cb->isDisconnected() )
             {
@@ -148,7 +149,7 @@ namespace engine
             continue ;
          }
 
-         // now we have a tcp socket for a new connection, let's get an 
+         // now we have a tcp socket for a new connection, let's get an
          // agent, Note the new new socket sent passing to startEDU
          rc = eduMgr->startEDU ( EDU_TYPE_AGENT, pData, &agentEDU ) ;
          if ( rc )

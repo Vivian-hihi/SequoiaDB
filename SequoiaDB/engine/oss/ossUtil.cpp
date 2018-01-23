@@ -134,6 +134,23 @@ void ossTimestampToString( ossTimestamp &Tm, CHAR * pStr )
    PD_TRACE_EXIT ( SDB_OSSTS2STR );
 }
 
+// PD_TRACE_DECLARE_FUNCTION ( SDB_STR2OSSTS, "ossStringToTimestamp" )
+void ossStringToTimestamp( const CHAR * pStr, ossTimestamp &Tm )
+{
+   PD_TRACE_ENTRY ( SDB_STR2OSSTS );
+   struct tm tmp ;
+   CHAR format[] = "%04d-%02d-%02d-%02d.%02d.%02d.%06d" ;
+
+   ossSscanf( pStr, format, &tmp.tm_year, &tmp.tm_mon, &tmp.tm_mday,
+              &tmp.tm_hour, &tmp.tm_min, &tmp.tm_sec, &Tm.microtm ) ;
+   tmp.tm_year -= 1900 ;
+   tmp.tm_mon  -= 1 ;
+
+   Tm.time = mktime( &tmp ) ;
+
+   PD_TRACE_EXIT ( SDB_STR2OSSTS );
+}
+
 void ossGetCurrentTime( ossTimestamp &TM )
 {
 #if defined (_LINUX) || defined (_AIX)
@@ -874,20 +891,25 @@ exit :
 }
 
 #if defined (_LINUX) || defined (_AIX)
-#define OSS_GET_MEM_INFO_FILE      "/proc/meminfo"
-#define OSS_GET_MEM_INFO_MEMTOTAL  "MemTotal"
-#define OSS_GET_MEM_INFO_MEMFREE   "MemFree"
-#define OSS_GET_MEM_INFO_SWAPTOTAL "SwapTotal"
-#define OSS_GET_MEM_INFO_SWAPFREE  "SwapFree"
-#define OSS_GET_MEM_INFO_AMPLIFIER 1024ll
+#define OSS_GET_MEM_INFO_FILE             "/proc/meminfo"
+#define OSS_GET_MEM_INFO_OVERCOMMIT_FILE  "/proc/sys/vm/overcommit_memory"
+#define OSS_GET_MEM_INFO_MEMTOTAL         "MemTotal"
+#define OSS_GET_MEM_INFO_MEMFREE          "MemFree"
+#define OSS_GET_MEM_INFO_SWAPTOTAL        "SwapTotal"
+#define OSS_GET_MEM_INFO_SWAPFREE         "SwapFree"
+#define OSS_GET_MEM_INFO_COMMITLIM        "CommitLimit"
+#define OSS_GET_MEM_INFO_COMMITTED        "Committed_AS"
+#define OSS_GET_MEM_INFO_AMPLIFIER        1024ll
 #elif defined (_WINDOWS)
-#define OSS_GET_MEM_INFO_AMPLIFIER 1024LL
+#define OSS_GET_MEM_INFO_AMPLIFIER        1024LL
 #endif
 // PD_TRACE_DECLARE_FUNCTION ( SDB_OSSGETMEMINFO, "ossGetMemoryInfo" )
 INT32 ossGetMemoryInfo ( INT32 &loadPercent,
-                         INT64 &totalPhys,   INT64 &availPhys,
-                         INT64 &totalPF,     INT64 &availPF,
-                         INT64 &totalVirtual, INT64 &availVirtual )
+                         INT64 &totalPhys,    INT64 &availPhys,
+                         INT64 &totalPF,      INT64 &availPF,
+                         INT64 &totalVirtual, INT64 &availVirtual,
+                         INT32 &overCommitMode,
+                         INT64 &commitLimit,  INT64 &committedAS )
 {
    INT32 rc     = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_OSSGETMEMINFO );
@@ -899,6 +921,9 @@ INT32 ossGetMemoryInfo ( INT32 &loadPercent,
    totalVirtual = -1 ;
    availVirtual = -1 ;
    loadPercent  = -1 ;
+   commitLimit  = -1 ;
+   committedAS  = -1 ;
+   overCommitMode = -1 ;
 #if defined (_WINDOWS)
    MEMORYSTATUSEX statex ;
    statex.dwLength = sizeof(statex) ;
@@ -918,6 +943,8 @@ INT32 ossGetMemoryInfo ( INT32 &loadPercent,
       rc = SDB_SYS ;
       goto error ;
    }
+   // There is not over commit in windows, only in linux
+   overCommitMode = 0 ;
 #elif defined (_LINUX) || defined (_AIX)
    CHAR pathName[OSS_PROC_PATH_LEN_MAX + 1] = {0} ;
    CHAR lineBuffer [OSS_PROC_PATH_LEN_MAX+1] = {0} ;
@@ -933,10 +960,12 @@ INT32 ossGetMemoryInfo ( INT32 &loadPercent,
    }
    // loop until hitting end of the file or 4 variables are read
    while ( fgets ( lineBuffer, OSS_PROC_PATH_LEN_MAX, fp ) &&
-           ( totalPhys == -1 ||
-             availPhys == -1 ||
-             totalPF   == -1 ||
-             availPF   == -1 )
+           ( totalPhys   == -1 ||
+             availPhys   == -1 ||
+             totalPF     == -1 ||
+             availPF     == -1 ||
+             commitLimit == -1 ||
+             committedAS == -1 )
           )
    {
       if ( ossStrncmp ( lineBuffer,
@@ -972,9 +1001,26 @@ INT32 ossGetMemoryInfo ( INT32 &loadPercent,
                   "%d", &inputNum ) ;
          availPF = OSS_GET_MEM_INFO_AMPLIFIER * inputNum ;
       }
+      else if (  ossStrncmp ( lineBuffer,
+                              OSS_GET_MEM_INFO_COMMITLIM,
+                              ossStrlen ( OSS_GET_MEM_INFO_COMMITLIM ) ) == 0 )
+      {
+         sscanf ( &lineBuffer[ossStrlen ( OSS_GET_MEM_INFO_COMMITLIM )+1],
+                  "%d", &inputNum ) ;
+         commitLimit = OSS_GET_MEM_INFO_AMPLIFIER * inputNum ;
+      }
+      else if (  ossStrncmp ( lineBuffer,
+                              OSS_GET_MEM_INFO_COMMITTED,
+                              ossStrlen ( OSS_GET_MEM_INFO_COMMITTED ) ) == 0 )
+      {
+         sscanf ( &lineBuffer[ossStrlen ( OSS_GET_MEM_INFO_COMMITTED )+1],
+                  "%d", &inputNum ) ;
+         committedAS = OSS_GET_MEM_INFO_AMPLIFIER * inputNum ;
+      }
       ossMemset ( lineBuffer, 0, sizeof(lineBuffer) ) ;
    }
    fclose ( fp ) ;
+
    totalVirtual = totalPhys + totalPF ;
    availVirtual = availPhys + availPF ;
    if ( totalPhys != 0 )
@@ -984,7 +1030,36 @@ INT32 ossGetMemoryInfo ( INT32 &loadPercent,
       loadPercent = loadPercent < 0? 0:loadPercent ;
    }
    else
+   {
       loadPercent = 0 ;
+   }
+
+   fp = NULL ;
+   fp = fopen ( OSS_GET_MEM_INFO_OVERCOMMIT_FILE, "r" ) ;
+   if ( !fp )
+   {
+      ossErr = ossGetLastError () ;
+      rc = SDB_SYS ;
+      goto error ;
+   }
+   // read first line
+   if ( !fgets ( lineBuffer, OSS_PROC_PATH_LEN_MAX, fp ) )
+   {
+      ossErr = ossGetLastError () ;
+      fclose ( fp ) ;
+      rc = SDB_SYS ;
+      goto error ;
+   }
+   sscanf ( &lineBuffer[0], "%d", &inputNum ) ;
+   if( 0 == inputNum || 1 == inputNum || 2 == inputNum )
+   {
+      overCommitMode = inputNum ;
+   }
+   else
+   {
+      overCommitMode = 0 ; // defalut mode
+   }
+   fclose ( fp ) ;
 #endif
 done :
    PD_TRACE_EXITRC ( SDB_OSSGETMEMINFO, rc );
@@ -993,6 +1068,23 @@ error :
    PD_LOG ( PDERROR, "Failed to get memory info, error = %d",
             ossErr ) ;
    goto done ;
+}
+
+INT32 ossGetMemoryInfo ( INT32 &loadPercent,
+                         INT64 &totalPhys,    INT64 &availPhys,
+                         INT64 &totalPF,      INT64 &availPF,
+                         INT64 &totalVirtual, INT64 &availVirtual )
+{
+   INT32 overCommitMode = 0 ;
+   INT64 commitLimit = 0 ;
+   INT64 committedAS = 0 ;
+
+   return ossGetMemoryInfo ( loadPercent,
+                             totalPhys, availPhys,
+                             totalPF, availPF,
+                             totalVirtual, availVirtual,
+                             overCommitMode,
+                             commitLimit, committedAS ) ;
 }
 
 #if defined (_LINUX) || defined (_AIX)
@@ -1141,6 +1233,151 @@ done :
    PD_TRACE_EXITRC ( SDB_OSSGETDISKINFO, rc );
    return rc ;
 error :
+   goto done ;
+}
+
+/*
+   ossGetFDNum implement
+   get the number of file description / open files
+*/
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSGETFILEDESP, "ossGetFileDesp" )
+INT32 ossGetFileDesp ( INT64 &usedNum )
+{
+   PD_TRACE_ENTRY ( SDB_OSSGETFILEDESP ) ;
+   INT32 rc = SDB_OK ;
+
+#if defined (_LINUX) || defined (_AIX)
+
+   CHAR pathName[ OSS_PROC_PATH_LEN_MAX + 1 ] = { 0 } ;
+   DIR *dp = NULL ;
+   struct dirent *dir = NULL ;
+   INT32 ossErr = 0 ;
+   BOOLEAN isOpen = FALSE;
+
+   // Calculate the number of files in the path:  /proc/[pid]/fd
+   ossSnprintf( pathName, sizeof(pathName), "/proc/%d/fd", getpid() ) ;
+   dp = opendir( pathName ) ;
+   if( dp == NULL )
+   {
+      ossErr = ossGetLastError() ;
+      if ( EMFILE == ossErr )
+      {
+         rc = SDB_TOO_MANY_OPEN_FD ;
+      }
+      else
+      {
+         rc = SDB_SYS ;
+      }
+      PD_LOG( PDERROR, "Failed to open dir: %s, errno: %d, rc = %d",
+              pathName, ossErr, rc );
+      goto error ;
+   }
+   isOpen = TRUE ;
+
+   usedNum = 0 ;
+   while ( ( dir = readdir(dp) ) != NULL )
+   {
+      // there may be . (current dir) or .. (parent dir),
+      // but we don't need to count them
+      if ( 0 != ossStrcmp( dir->d_name, "." ) &&
+           0 != ossStrcmp( dir->d_name, ".." ) )
+      {
+         usedNum++ ;
+      }
+   }
+   closedir( dp ) ;
+
+#elif defined (_WINDOWS)
+
+   INT32 retcode = 0 ;
+   retcode = GetProcessHandleCount( GetCurrentProcess(), ( PDWORD )&usedNum ) ;
+   PD_CHECK( retcode != 0, SDB_SYS, error, PDERROR, "Failed to get handle count"
+             "of current process, errno: %d, rc = %d", ossGetLastError(), rc );
+#endif
+
+done :
+   PD_TRACE_EXITRC( SDB_OSSGETFILEDESP, rc ) ;
+   return rc ;
+error :
+
+#if defined (_LINUX) || defined (_AIX)
+   if( isOpen )
+   {
+      closedir( dp ) ;
+   }
+#endif
+   goto done ;
+}
+
+#if defined (_LINUX) || defined (_AIX)
+#define OSS_GET_PROC_MEM_VMSIZE   "VmSize"
+#define OSS_GET_PROC_MEM_VMRSS    "VmRSS"
+#endif
+
+INT32 ossGetProcessMemory( OSSPID pid, INT64 &vmRss, INT64 &vmSize )
+{
+   INT32 rc = SDB_OK ;
+   INT32 ossErr = 0 ;
+   vmSize = -1 ;
+   vmRss = -1 ;
+
+#if defined (_WINDOWS)
+   PROCESS_MEMORY_COUNTERS pmc ;
+   if ( GetProcessMemoryInfo ( GetCurrentProcess(), &pmc, sizeof(pmc) ) )
+   {
+      vmRss  = pmc.WorkingSetSize ;
+      vmSize = pmc.WorkingSetSize + pmc.PagefileUsage ;
+   }
+   else
+   {
+      ossErr = ossGetLastError () ;
+      rc = SDB_SYS ;
+      goto error ;
+   }
+
+#elif defined (_LINUX) || defined (_AIX)
+   CHAR pathName[OSS_PROC_PATH_LEN_MAX + 1] = {0} ;
+   CHAR lineBuffer [OSS_PROC_PATH_LEN_MAX+1] = {0} ;
+   INT32 inputNum = 0 ;
+   FILE *fp = NULL ;
+   ossSnprintf( pathName, sizeof(pathName), "/proc/%d/status", pid ) ;
+   fp = fopen ( pathName, "r" ) ;
+   if ( !fp )
+   {
+      ossErr = ossGetLastError () ;
+      rc = SDB_SYS ;
+      goto error ;
+   }
+   // loop until hitting end of the file or variables are read
+   while ( fgets ( lineBuffer, OSS_PROC_PATH_LEN_MAX, fp ) &&
+           ( vmSize == -1 || vmRss == -1 ) )
+   {
+      if ( ossStrncmp ( lineBuffer, OSS_GET_PROC_MEM_VMSIZE,
+                        ossStrlen ( OSS_GET_PROC_MEM_VMSIZE ) ) == 0 )
+      {
+         // +1 to skip ":"
+         sscanf ( &lineBuffer[ ossStrlen( OSS_GET_PROC_MEM_VMSIZE ) + 1 ],
+                  "%d", &inputNum ) ;
+         vmSize = OSS_GET_MEM_INFO_AMPLIFIER * inputNum ;
+      }
+      else if ( ossStrncmp ( lineBuffer, OSS_GET_PROC_MEM_VMRSS,
+                             ossStrlen ( OSS_GET_PROC_MEM_VMRSS ) ) == 0 )
+      {
+         // +1 to skip ":"
+         sscanf ( &lineBuffer[ ossStrlen( OSS_GET_PROC_MEM_VMRSS ) + 1 ],
+                  "%d", &inputNum ) ;
+         vmRss = OSS_GET_MEM_INFO_AMPLIFIER * inputNum ;
+      }
+      ossMemset ( lineBuffer, 0, sizeof(lineBuffer) ) ;
+   }
+   fclose ( fp ) ;
+
+#endif
+
+done :
+   return rc ;
+error :
+   PD_LOG ( PDERROR, "Failed to get memory info, error = %d", ossErr ) ;
    goto done ;
 }
 
@@ -1643,6 +1880,15 @@ error:
 #error "unsupported os"
 #endif
 
+ossProcLimits::ossProcLimits()
+{
+   INT32 rc = init();
+   if ( SDB_OK != rc )
+   {
+      PD_LOG( PDWARNING, "Init limit info failed, rc:%d", rc ) ;
+   }
+}
+
 #if defined (_LINUX) || defined (_AIX)
 #include <sys/resource.h>
 
@@ -1673,6 +1919,7 @@ INT32 ossProcLimits::init()
    _initRLimit( RLIMIT_MEMLOCK,  OSS_LIMIT_MEM_LOCK ) ;
    _initRLimit( RLIMIT_MSGQUEUE, OSS_LIMIT_MSG_QUEUE ) ;
    _initRLimit( RLIMIT_RTPRIO,   OSS_LIMIT_SCHE_PRIO ) ;
+   _initRLimit( RLIMIT_NPROC,    OSS_LIMIT_PROC_NUM ) ;
 #endif  //_AIX
    return rc ;
 }

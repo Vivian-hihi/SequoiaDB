@@ -171,18 +171,39 @@ namespace engine
 
       INT32 dumpTransInfo( EDUID eduId, monTransInfo &transInfo ) ;
 
-      void resetMon ()
+      void resetMon ( BOOLEAN resetAll = TRUE, EDUID eduID = PMD_INVALID_EDUID )
       {
          std::map<EDUID, pmdEDUCB*>::iterator it ;
          EDUMGR_SLOCK
          for ( it = _runQueue.begin () ; it != _runQueue.end () ; it ++ )
          {
-            (*it).second->resetMon () ;
+            if ( resetAll )
+            {
+               (*it).second->resetMon () ;
+               continue ;
+            }
+            else if ( eduID == (*it).first )
+            {
+               (*it).second->resetMon () ;
+               goto done ;
+            }
          }
          for ( it = _idleQueue.begin () ; it != _idleQueue.end () ; it ++ )
          {
-            (*it).second->resetMon () ;
+            if ( resetAll )
+            {
+               (*it).second->resetMon () ;
+               continue ;
+            }
+            else if ( eduID == (*it).first )
+            {
+               (*it).second->resetMon () ;
+               goto done ;
+            }
          }
+
+      done:
+         return ;
       }
 #endif // SDB_ENGINE
 

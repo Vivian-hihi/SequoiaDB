@@ -15,9 +15,10 @@ const SDB_SNAP_COLLECTIONSPACES    = 5 ;
 const SDB_SNAP_DATABASE            = 6 ;
 const SDB_SNAP_SYSTEM              = 7 ;
 const SDB_SNAP_CATALOG             = 8 ;
-const SDB_SNAP_TRANSACTIONS         = 9 ;
-const SDB_SNAP_TRANSACTIONS_CURRENT = 10 ;
+const SDB_SNAP_TRANSACTIONS        = 9 ;
+const SDB_SNAP_TRANSACTIONS_CURRENT= 10 ;
 const SDB_SNAP_ACCESSPLANS         = 11 ;
+const SDB_SNAP_HEALTH              = 12 ;
 
 const SDB_LIST_CONTEXTS            = 0 ;
 const SDB_LIST_CONTEXTS_CURRENT    = 1 ;

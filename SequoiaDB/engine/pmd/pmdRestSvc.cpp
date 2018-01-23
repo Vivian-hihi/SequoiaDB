@@ -81,6 +81,7 @@ namespace engine
             pListerner->close() ;
             PD_LOG( PDERROR, "Can not accept more connections because of "
                     "open files upto limits, restart listening" ) ;
+            pmdIncErrNum( rc ) ;
 
             while( !cb->isDisconnected() )
             {

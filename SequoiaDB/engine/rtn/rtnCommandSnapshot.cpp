@@ -40,6 +40,7 @@
 #include "aggrDef.hpp"
 #include "pdTrace.hpp"
 #include "rtnTrace.hpp"
+#include "msgDef.hpp"
 
 using namespace bson ;
 using namespace std ;
@@ -110,6 +111,79 @@ namespace engine
    UINT32 _rtnSnapshotSystemInner::_addInfoMask() const
    {
       return MON_MASK_ALL ;
+   }
+
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnSnapshotHealth)
+   _rtnSnapshotHealth::_rtnSnapshotHealth ()
+   {
+   }
+
+   _rtnSnapshotHealth::~_rtnSnapshotHealth ()
+   {
+   }
+
+   const CHAR *_rtnSnapshotHealth::name ()
+   {
+      return NAME_SNAPSHOT_HEALTH ;
+   }
+
+   RTN_COMMAND_TYPE _rtnSnapshotHealth::type ()
+   {
+      return CMD_SNAPSHOT_HEALTH ;
+   }
+
+   INT32 _rtnSnapshotHealth::_getFetchType() const
+   {
+      return RTN_FETCH_HEALTH ;
+   }
+
+   BOOLEAN _rtnSnapshotHealth::_isCurrent() const
+   {
+      return FALSE ;
+   }
+
+   UINT32 _rtnSnapshotHealth::_addInfoMask() const
+   {
+      return MON_MASK_NODE_NAME |
+             MON_MASK_IS_PRIMARY |
+             MON_MASK_SERVICE_STATUS |
+             MON_MASK_LSN_INFO |
+             MON_MASK_NODEID ;
+   }
+
+   const CHAR* _rtnSnapshotHealth::getIntrCMDName()
+   {
+      return CMD_NAME_SNAPSHOT_HEALTH_INTR ;
+   }
+
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnSnapshotHealthInner)
+   const CHAR *_rtnSnapshotHealthInner::name ()
+   {
+      return CMD_NAME_SNAPSHOT_HEALTH_INTR ;
+   }
+
+   RTN_COMMAND_TYPE _rtnSnapshotHealthInner::type ()
+   {
+      return CMD_SNAPSHOT_HEALTH ;
+   }
+
+   INT32 _rtnSnapshotHealthInner::_getFetchType() const
+   {
+      return RTN_FETCH_HEALTH ;
+   }
+
+   BOOLEAN _rtnSnapshotHealthInner::_isCurrent() const
+   {
+      return FALSE ;
+   }
+
+   UINT32 _rtnSnapshotHealthInner::_addInfoMask() const
+   {
+      return MON_MASK_NODE_NAME |
+             MON_MASK_IS_PRIMARY |
+             MON_MASK_SERVICE_STATUS |
+             MON_MASK_LSN_INFO |
+             MON_MASK_NODEID ;
    }
 
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnSnapshotContexts)
@@ -309,6 +383,9 @@ namespace engine
 
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnSnapshotReset)
    _rtnSnapshotReset::_rtnSnapshotReset ()
+   :_type( CMD_SNAPSHOT_ALL ),
+    _sessionID( PMD_INVALID_EDUID ),
+    _resetAllSession( FALSE )
    {
    }
 
@@ -333,14 +410,88 @@ namespace engine
                                   const CHAR *pOrderByBuff,
                                   const CHAR *pHintBuff )
    {
-      return SDB_OK ;
+      INT32 rc = SDB_OK ;
+
+      try
+      {
+         BSONObj obj( pMatcherBuff ) ;
+         BOOLEAN hasSessionID = TRUE ;
+         string type ;
+
+         // check Type
+         rc = rtnGetSTDStringElement( obj, FIELD_NAME_TYPE, type ) ;
+         if ( SDB_FIELD_NOT_EXIST == rc )
+         {
+            rc = SDB_OK ;
+         }
+         PD_RC_CHECK( rc, PDERROR, "Failed to get field[%s], rc: %d",
+                      FIELD_NAME_TYPE, rc ) ;
+
+         if ( VALUE_NAME_DATABASE == type )
+         {
+            _type = CMD_SNAPSHOT_DATABASE ;
+         }
+         else if ( VALUE_NAME_SESSIONS == type )
+         {
+            _type = CMD_SNAPSHOT_SESSIONS ;
+         }
+         else if ( VALUE_NAME_SESSIONS_CURRENT == type )
+         {
+            _type = CMD_SNAPSHOT_SESSIONS_CURRENT ;
+         }
+         else if ( VALUE_NAME_HEALTH == type )
+         {
+            _type = CMD_SNAPSHOT_HEALTH ;
+         }
+         else if ( VALUE_NAME_ALL == type )
+         {
+            _type = CMD_SNAPSHOT_ALL ; ;
+         }
+
+         // check SessionID
+         rc = rtnGetNumberLongElement( obj, FIELD_NAME_SESSIONID,
+                                       (INT64 &)_sessionID ) ;
+         if ( SDB_FIELD_NOT_EXIST == rc )
+         {
+            hasSessionID = FALSE ;
+            rc = SDB_OK ;
+         }
+         PD_RC_CHECK( rc, PDERROR, "Failed to get field[%s], rc: %d",
+                      FIELD_NAME_SESSIONID, rc ) ;
+
+         // check conflict
+         if ( hasSessionID && _type != CMD_SNAPSHOT_SESSIONS )
+         {
+            PD_LOG( PDERROR, "Field[%s] take effect only when reset snapshot "
+                    "session", FIELD_NAME_SESSIONID ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
+         // reset all session
+         if ( _type == CMD_SNAPSHOT_SESSIONS && !hasSessionID )
+         {
+            _resetAllSession = TRUE ;
+         }
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+   done :
+      return rc ;
+   error :
+      goto done ;
    }
 
    INT32 _rtnSnapshotReset::doit( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
                                   _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
                                   INT16 w, INT64 *pContextID )
    {
-      monResetMon() ;
+      monResetMon( _type, _resetAllSession, _sessionID ) ;
       return SDB_OK ;
    }
 

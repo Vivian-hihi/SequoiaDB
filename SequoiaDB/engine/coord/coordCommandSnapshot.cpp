@@ -80,6 +80,13 @@ namespace engine
    {
    }
 
+   void _coordCmdSnapshotReset::_preSet( pmdEDUCB *cb,
+                                         coordCtrlParam &ctrlParam )
+   {
+      // catalog / data has been set with default 1
+      ctrlParam._role[ SDB_ROLE_COORD ] = 1 ;
+   }
+
    /*
       _coordSnapshotTransCurIntr implement
    */
@@ -256,6 +263,51 @@ namespace engine
 
    _coordCMDSnapshotSystemIntr::~_coordCMDSnapshotSystemIntr()
    {
+   }
+
+   /*
+      _coordCMDSnapshotHealth implement
+   */
+   COORD_IMPLEMENT_CMD_AUTO_REGISTER( _coordCMDSnapshotHealth,
+                                      CMD_NAME_SNAPSHOT_HEALTH,
+                                      TRUE ) ;
+   _coordCMDSnapshotHealth::_coordCMDSnapshotHealth()
+   {
+   }
+
+   _coordCMDSnapshotHealth::~_coordCMDSnapshotHealth()
+   {
+   }
+
+   const CHAR* _coordCMDSnapshotHealth::getIntrCMDName()
+   {
+      return CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_HEALTH_INTR ;
+   }
+
+   const CHAR* _coordCMDSnapshotHealth::getInnerAggrContent()
+   {
+      return NULL ;
+   }
+
+   /*
+      _coordCMDSnapshotHealthIntr implement
+   */
+   COORD_IMPLEMENT_CMD_AUTO_REGISTER( _coordCMDSnapshotHealthIntr,
+                                      CMD_NAME_SNAPSHOT_HEALTH_INTR,
+                                      TRUE ) ;
+   _coordCMDSnapshotHealthIntr::_coordCMDSnapshotHealthIntr()
+   {
+   }
+
+   _coordCMDSnapshotHealthIntr::~_coordCMDSnapshotHealthIntr()
+   {
+   }
+
+   void _coordCMDSnapshotHealthIntr::_preSet( pmdEDUCB *cb,
+                                              coordCtrlParam &ctrlParam )
+   {
+      // catalog / data has been set with default 1
+      ctrlParam._role[ SDB_ROLE_COORD ] = 1 ;
    }
 
    /*
