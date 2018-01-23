@@ -12,8 +12,8 @@ var key = "a" ;
 var docs = [ { "a": 1/0 },
              { "a": -1/0 } ] ; 
 var csvContent = key + "\n" + 
-                 "inf\n" +
-                 "-inf\n" ;
+                 "Infinity\n" +
+                 "-Infinity\n" ;
 var jsonContent = "{ \"" + key + "\": Infinity }\n" + 
                   "{ \"" + key + "\": -Infinity }\n" ;
 var csvRecs = [ "{\"" + key + "\":Infinity}", 
