@@ -371,18 +371,18 @@ error:
 PHP_METHOD( SequoiaDB, resetSnapshot )
 {
    INT32 rc = SDB_OK ;
-   zval *pCondition = NULL ;
+   zval *pOptions = NULL ;
    zval *pThisObj   = getThis() ;
    sdbConnectionHandle connection = SDB_INVALID_HANDLE ;
-   bson condition ;
-   bson_init( &condition ) ;
+   bson options ;
+   bson_init( &options ) ;
    PHP_SET_ERRNO_OK( TRUE, pThisObj ) ;
-   if ( PHP_GET_PARAMETERS( "|z", &pCondition ) == FAILURE )
+   if ( PHP_GET_PARAMETERS( "|z", &pOptions ) == FAILURE )
    {
       rc = SDB_INVALIDARG ;
       goto error ;
    }
-   rc = php_auto2Bson( pCondition, &condition TSRMLS_CC ) ;
+   rc = php_auto2Bson( pOptions, &options TSRMLS_CC ) ;
    if( rc )
    {
       goto error ;
@@ -392,13 +392,13 @@ PHP_METHOD( SequoiaDB, resetSnapshot )
                     sdbConnectionHandle,
                     SDB_HANDLE_NAME,
                     connectionDesc ) ;
-   rc = sdbResetSnapshot( connection, &condition ) ;
+   rc = sdbResetSnapshot( connection, &options ) ;
    if( rc )
    {
       goto error ;
    }
 done:
-   bson_destroy( &condition ) ;
+   bson_destroy( &options ) ;
    PHP_RETURN_AUTO_ERROR( TRUE, pThisObj, rc ) ;
    return ;
 error:

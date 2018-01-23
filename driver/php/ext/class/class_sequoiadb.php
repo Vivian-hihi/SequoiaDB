@@ -48,6 +48,8 @@ class SequoiaDB
    define( "SDB_SNAP_TRANSACTIONS_CURRENT",10 ) ;
    /** Get the snapshot of cached access plans. */
    define( "SDB_SNAP_ACCESSPLANS",         11 ) ;
+   /** Get the snapshot of node health detection. */
+   define( "SDB_SNAP_HEALTH", 12 ) ;
 
    /**
     * Get the snapshot of all the collections.
@@ -495,6 +497,7 @@ class SequoiaDB
     *                                                               SDB_SNAP_TRANSACTIONS
     *                                                               SDB_SNAP_TRANSACTIONS_CURRENT
     *                                                               SDB_SNAP_ACCESSPLANS
+    *                                                               SDB_SNAP_HEALTH
     *                                                               @endcode
     *
     * @param $condition an array or the string argument. The matching rule, match all the documents if null.
@@ -533,7 +536,23 @@ class SequoiaDB
    /**
     * Reset the snapshot.
     *
-    * @param $condition an array or the string argument. The matching rule, usually specifies the node in sharding environment in standalone mode, this option is ignored
+    * @param $options an array or the string argument. The control options:
+    *        @code
+    *        Type            : (String) Specify the snapshot type to be reset (default is "all"):
+    *                          "sessions"
+    *                          "sessions current"
+    *                          "database"
+    *                          "health"
+    *                          "all"
+    *        SessionID       : (Int32) Specify the session ID to be reset.
+    *        Other Options   : Some of other options are as below:(please visit the official website to search "Location Elements" for more detail.) 
+    *                          GroupID:INT32,
+    *                          GroupName:String,
+    *                          NodeID:INT32,
+    *                          HostName:String,
+    *                          svcname:String
+    *                          ...
+    *        @endcode
     *
     * @return Returns the result, default return array.
     *
@@ -555,7 +574,7 @@ class SequoiaDB
     * }
     * @endcode
    */
-   public function resetSnapshot( array|string $condition = null ){}
+   public function resetSnapshot( array|string $options = null ){}
 
    /**
     * Get the specified list.
@@ -1878,7 +1897,7 @@ class SequoiaDB
     * Set the attributes of the session.
     *
     * @param $options an array or the string argument. The configuration options for session.The options are as below:
-    *        @code
+    *                                                  @code
     *        PreferedInstance : Preferred instance for read request in the current session. Could be single value in 'M', 'm', 'S', 's', 'A', 'a', 1-255, or BSON Array to include multiple values.
     *                           "M", "m": read and write instance( master instance ). If multiple numeric instances are given with "M", matched master instance will be chosen in higher priority. If multiple numeric instances are given with "M" or "m", master instance will be chosen if no numeric instance is matched.
     *                           "S", "s": read only instance( slave instance ). If multiple numeric instances are given with "S", matched slave instances will be chosen in higher priority. If multiple numeric instances are given with "S" or "s", slave instance will be chosen if no numeric instance is matched.
@@ -1898,7 +1917,7 @@ class SequoiaDB
     *        Timeout : The timeout (in ms) for operations in the current session. -1 means no timeout for operations.
     *
     *                  e.g. array( 'Timeout' => 10000 )
-    *        @endcode
+    *                                                  @endcode
     *
     * @return Returns the result, default return array.
     *

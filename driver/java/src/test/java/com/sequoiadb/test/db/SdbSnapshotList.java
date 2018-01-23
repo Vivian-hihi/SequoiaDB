@@ -121,6 +121,13 @@ public class SdbSnapshotList {
         while(cursor.hasNext()){
             System.out.println(cursor.getNext());
         }
+        
+        // 12
+        cursor = sdb.getSnapshot(Sequoiadb.SDB_SNAP_HEALTH, "", "", "");
+        System.out.println("result of SDB_SNAP_HEALTH is: ");
+        while(cursor.hasNext()){
+            System.out.println(cursor.getNext());
+        }     
 
     }
 

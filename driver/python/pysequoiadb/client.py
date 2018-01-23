@@ -481,10 +481,11 @@ class client(object):
                     9     : Get transactions' snapshot
                     10    : Get current session's transaction snapshot
                     11    : Get cached access plan snapshot
+                    12    : Get node health detection snapshot
         """
         if not isinstance(snap_type, int):
             raise SDBTypeError("snap type must be an instance of int")
-        if snap_type < 0 or snap_type > 11:
+        if snap_type < 0 or snap_type > 12:
             raise SDBTypeError("snap_type value is invalid")
 
         bson_condition = None
@@ -515,24 +516,39 @@ class client(object):
 
         return result
 
-    def reset_snapshot(self, condition=None):
+    def reset_snapshot(self, options=None):
         """Reset the snapshot.
 
         Parameters:
            Name         Type     Info:
-           condition    dict     The matching rule, usually specifies the
-                                       node in sharding environment, in standalone
-                                       mode, this option is ignored.
+           options      dict     The control options:
+                                 Type:
+                                    (Int32) Specify the snapshot type to be reset (default is "all"):
+                                    "sessions"
+                                    "sessions current"
+                                    "database"
+                                    "health"
+                                    "all"
+                                 SessionID:
+                                    (String) Specify the session ID to be reset.
+                                 Others options:
+                                    Some of other options are as below:(please visit the official website to search "Location Elements" for more detail.)
+                                    GroupID:INT32,
+                                    GroupName:String,
+                                    NodeID:INT32,
+                                    HostName:String,
+                                    svcname:String,
+                                    ...
         Exceptions:
            pysequoiadb.error.SDBBaseError
         """
-        bson_condition = None
-        if condition is not None:
-            if not isinstance(condition, dict):
-                raise SDBTypeError("condition must be an instance of dict")
-            bson_condition = bson.BSON.encode(condition)
+        if options is None:
+            options = {}
+        if not isinstance(options, dict):
+            raise SDBTypeError("options must be an instance of dict")
+        bson_options = bson.BSON.encode(options)
 
-        rc = sdb.sdb_reset_snapshot(self._client, bson_condition)
+        rc = sdb.sdb_reset_snapshot(self._client, bson_options)
         raise_if_error(rc, "Failed to reset snapshot")
 
     def get_list(self, list_type, **kwargs):

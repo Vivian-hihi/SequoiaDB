@@ -385,7 +385,6 @@ namespace DriverTest
                 Assert.IsNotNull(obj);
             }
             sdb2.Disconnect();
-
             // snapshot transation
             sdb.TransactionBegin();
             try
@@ -405,6 +404,11 @@ namespace DriverTest
                     Console.WriteLine(o);
                 }
             }
+            catch (BaseException e)
+            {
+                Console.WriteLine("The error info is: " + e.ErrorType + ", " + e.ErrorCode + ", " + e.Message);
+                Assert.IsTrue(e.ErrorType == "SDB_DPS_TRANS_DIABLED");             
+            }
             finally
             {
                 sdb.TransactionCommit();
@@ -420,6 +424,33 @@ namespace DriverTest
                     Console.WriteLine(o);
                 }
             }
+
+            // node health 
+            {
+                cursor = sdb.GetSnapshot(SDBConst.SDB_SNAP_HEALTH, dummy, dummy, dummy);
+                Console.WriteLine("the result of SDB_SNAP_HEALTH is: ");
+                BsonDocument rec = null;
+                while (null != (rec = cursor.Next()))
+                {
+                    Console.WriteLine(rec);
+                }
+            }
+            
+        }
+
+        [TestMethod()]
+        public void RestSnapshot()
+        {
+            Sequoiadb db = new Sequoiadb(config.conf.Coord.Address);
+            db.Connect();
+
+            sdb.ResetSnapshot(null);
+
+            BsonDocument options = new BsonDocument();
+            sdb.ResetSnapshot(options);
+
+            options.Add("Type", "database");
+            sdb.ResetSnapshot(options);
         }
 
         [TestMethod()]

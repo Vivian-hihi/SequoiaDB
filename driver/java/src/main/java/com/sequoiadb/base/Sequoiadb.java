@@ -99,6 +99,7 @@ public class Sequoiadb implements Closeable {
     public final static int SDB_SNAP_TRANSACTIONS = 9;
     public final static int SDB_SNAP_TRANSACTIONS_CURRENT = 10;
     public final static int SDB_SNAP_ACCESSPLANS = 11;
+    public final static int SDB_SNAP_HEALTH = 12;
 
     public final static int FMP_FUNC_TYPE_INVALID = -1;
     public final static int FMP_FUNC_TYPE_JS = 0;
@@ -922,13 +923,51 @@ public class Sequoiadb implements Closeable {
         }
         return colList;
     }
-
+    
     /**
      * Reset the snapshot.
      * @throws BaseException If error happens.
      */
     public void resetSnapshot() throws BaseException {
         AdminRequest request = new AdminRequest(AdminCommand.RESET_SNAPSHOT);
+        SdbReply response = requestAndResponse(request);
+        throwIfError(response);
+    }
+    
+    /**
+     * Reset the snapshot.
+     * @param options The control options:(can be null)
+     *      <ul>
+     *          <li>
+     *              Type: (String) Specify the snapshot type to be reset (default is "all"):
+     *              <ul>
+     *                  <li>"sessions"</li>
+     *                  <li>"sessions current"</li>
+     *                  <li>"database"</li>
+     *                  <li>"health"</li>
+     *                  <li>"all"</li>
+     *              </ul>
+     *          </li>
+     *          <li>
+     *              SessionID: (Int32) Specify the session ID to be reset.
+     *          </li>
+     *          <li>
+     *              Other options: Some of other options are as below:(please visit the official website to 
+     *              search "Location Elements" for more detail.)
+     *              <ul>
+     *                  <li>GroupID:int,</li>
+     *                  <li>GroupName:String,</li>
+     *                  <li>NodeID:int,</li>
+     *                  <li>HostName:String,</li>
+     *                  <li>svcname:String,</li>
+     *                  <li>...</li>
+     *              </ul>
+     *          </li>
+     *      </ul>
+     * @throws BaseException If error happens.
+     */
+    public void resetSnapshot(BSONObject options) throws BaseException {
+        AdminRequest request = new AdminRequest(AdminCommand.RESET_SNAPSHOT, options);
         SdbReply response = requestAndResponse(request);
         throwIfError(response);
     }
@@ -1039,6 +1078,7 @@ public class Sequoiadb implements Closeable {
      *                 <dt>Sequoiadb.SDB_SNAP_TRANSACTIONS         : Get the snapshot of all the transactions
      *                 <dt>Sequoiadb.SDB_SNAP_TRANSACTIONS_CURRENT : Get the snapshot of current transactions
      *                 <dt>Sequoiadb.SDB_SNAP_ACCESSPLANS          : Get the snapshot of cached access plans
+     *                 <dt>Sequoiadb.SDB_SNAP_HEALTH               : Get the snapshot of node health detection
      *                 </dl>
      * @param matcher  the matching rule, match all the documents if null
      * @param selector the selective rule, return the whole document if null
@@ -1080,6 +1120,7 @@ public class Sequoiadb implements Closeable {
      *                 <dt>Sequoiadb.SDB_SNAP_TRANSACTIONS         : Get snapshot of transactions in current session
      *                 <dt>Sequoiadb.SDB_SNAP_TRANSACTIONS_CURRENT : Get snapshot of all the transactions
      *                 <dt>SequoiaDB.SDB_SNAP_ACCESSPLANS          : Get the snapshot of cached access plans
+     *                 <dt>Sequoiadb.SDB_SNAP_HEALTH               : Get the snapshot of node health detection
      *                 </dl>
      * @param matcher  the matching rule, match all the documents if null
      * @param selector the selective rule, return the whole document if null
@@ -1135,6 +1176,8 @@ public class Sequoiadb implements Closeable {
                 return AdminCommand.SNAP_TRANSACTIONS_CURRENT;
             case SDB_SNAP_ACCESSPLANS:
                 return AdminCommand.SNAP_ACCESSPLANS;
+            case SDB_SNAP_HEALTH:
+                return AdminCommand.SNAP_HEALTH;
             default:
                 throw new BaseException(SDBError.SDB_INVALIDARG, String.format("Invalid snapshot type: %d", snapType));
         }

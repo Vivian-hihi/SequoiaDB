@@ -740,6 +740,7 @@ namespace SequoiaDB
          *      SDBConst.SDB_SNAP_TRANSACTIONS
          *      SDBConst.SDB_SNAP_TRANSACTIONS_CURRENT
          *      SDBConst.SDB_SNAP_ACCESSPLANS
+         *      SDBConst.SDB_SNAP_HEALTH
          *      
          *  \param matcher The matching condition or null
          *  \param selector The selective rule or null
@@ -802,7 +803,10 @@ namespace SequoiaDB
                     command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.SNAP_CMD + " " +
                               SequoiadbConstants.ACCESSPLANS;
                     break;
-
+                case SDBConst.SDB_SNAP_HEALTH:
+                    command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.SNAP_CMD + " " +
+                           SequoiadbConstants.HEALTH;
+                    break;  
                 default:
                     throw new BaseException("SDB_INVALIDARG");
             }
@@ -973,20 +977,37 @@ namespace SequoiaDB
             return new DBCursor(rtn, this);
         }
 
-        /** \fn void ResetSnapshot( BsonDocument matcher )
+        /** \fn void ResetSnapshot(BsonDocument options)
          *  \brief Reset the snapshot
-         *  \param matcher The matching condition 
+         *  \param [in] options The control options:
+         * 
+         *      Type            : (String) Specify the snapshot type to be reset(default is "all"):
+         *                        "sessions"
+         *                        "sessions current"
+         *                        "database"
+         *                        "health"
+         *                        "all"
+         *      SessionID       : (Int32) Specify the session ID to be reset.
+         *      Other options   : Some of other options are as below:(please visit the official website
+         *                        to search "Location Elements" for more detail.)
+         *                        GroupID:INT32,
+         *                        GroupName:String,
+         *                        NodeID:INT32,
+         *                        HostName:String,
+         *                        svcname:String,
+         *                        ...
+         *  \return void
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
-        public void ResetSnapshot( BsonDocument matcher )
+        public void ResetSnapshot( BsonDocument options )
         {
             BsonDocument dummyObj = new BsonDocument();
-            if (matcher == null)
-                matcher = dummyObj;
+            if (options == null)
+                options = dummyObj;
             string command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.SNAP_CMD + " "
                              + SequoiadbConstants.RESET;
-            SDBMessage rtn = AdminCommand(command, matcher, dummyObj, dummyObj, dummyObj);
+            SDBMessage rtn = AdminCommand(command, options, dummyObj, dummyObj, dummyObj);
             int flags = rtn.Flags;
             if (flags != 0)
                 throw new BaseException(flags);
