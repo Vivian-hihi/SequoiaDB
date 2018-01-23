@@ -627,23 +627,22 @@ function updateIndexStateInfo( db, csName, clName, indexName, mcvValues, fracs )
 *@author:      liuxiaoxuan
 *@createDate:  2017.01.18
 **************************************/
-function query( dbcl, findConf, sortConf, hintConf )
+function query( dbcl, findConf, sortConf, hintConf, expRecordNum )
 {
    if ( typeof(findConf) == "undefined" ) { findConf = null; }
    if ( typeof(sortConf) == "undefined" ) { sortConf = null; }
    if ( typeof(hintConf) == "undefined" ) { hintConf = null; }
    
-   //执行查询
-   try
+   //执行查询并校验记录数
+   var rc = dbcl.find(findConf).sort(sortConf).hint(hintConf);
+   var count = 0;
+   while(rc.next())
    {
-	   var rc = dbcl.find(findConf).sort(sortConf).hint(hintConf);
-	   while(rc.next())
-      {
-	   }
-	}
-	catch(e)
+      count++;
+   }
+   if(count !== expRecordNum)
    {
-      throw buildException("query", e, "query", "success", e);
+      throw buildException("query", "COUNT_ERR", "query get count", expRecordNum, count);
    }	  
 }
 
@@ -673,12 +672,7 @@ function getCommonAccessPlans( db, findConf, selectorConf, sortConf )
 	         if((f == "ScanType") || (f == "IndexName") )
 	         {
 	            accessPlanObj[f] = accessPlan[f];   
-	         }		
-			
-			   if(f == "MinTimeSpentQuery")
-			   {
-				   accessPlanObj['ReturnNum'] = accessPlan[f]['ReturnNum'];  
-			   }
+	         }
 	      }
 		
 		   accessPlans.push(accessPlanObj);

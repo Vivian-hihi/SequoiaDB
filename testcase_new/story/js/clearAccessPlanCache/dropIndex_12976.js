@@ -42,18 +42,18 @@ function main()
    var findConf1 = {a:sameValues};
    var findConf2 = {b:sameValues};
 	
-	query(dbclPrimary, findConf1);
-	query(dbclPrimary, findConf2);
-	query(dbclSlave, findConf1);
-	query(dbclSlave, findConf2);
+	query(dbclPrimary, findConf1, null, null, insertNum);
+	query(dbclPrimary, findConf2, null, null, insertNum);
+	query(dbclSlave, findConf1, null, null, insertNum);
+	query(dbclSlave, findConf2, null, null, insertNum);
 	
 	//检查主备节点访问计划快照
 	var accessFindOption = { Collection: clFullName };
    var actAccessPlans = getCommonAccessPlans(db, accessFindOption);
-   var expAccessPlans = [{ScanType:"ixscan", IndexName:"a", ReturnNum:insertNum},
-                         {ScanType:"ixscan", IndexName:"b", ReturnNum:insertNum},
-                       	 {ScanType:"ixscan", IndexName:"a", ReturnNum:insertNum},
-   							 {ScanType:"ixscan", IndexName:"b", ReturnNum:insertNum}];
+   var expAccessPlans = [{ScanType:"ixscan", IndexName:"a"},
+                         {ScanType:"ixscan", IndexName:"b"},
+                       	 {ScanType:"ixscan", IndexName:"a"},
+   							 {ScanType:"ixscan", IndexName:"b"}];
 	
    checkSnapShotAccessPlans(clFullName, expAccessPlans, actAccessPlans);
 	
@@ -76,18 +76,18 @@ function main()
    var findConf1 = {a:sameValues};
 	var findConf2 = {b:sameValues};
 	
-	query(dbclPrimary, findConf1);
-	query(dbclPrimary, findConf2);
-	query(dbclSlave, findConf1);
-	query(dbclSlave, findConf2);
+	query(dbclPrimary, findConf1, null, null, insertNum);
+	query(dbclPrimary, findConf2, null, null, insertNum);
+	query(dbclSlave, findConf1, null, null, insertNum);
+	query(dbclSlave, findConf2, null, null, insertNum);
 	
 	//检查主备节点访问计划快照
 	var accessFindOption = { Collection: clFullName };
    var actAccessPlans = getCommonAccessPlans(db, accessFindOption);
-	var expAccessPlans = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum},
-                       	 {ScanType:"tbscan", IndexName:"", ReturnNum:insertNum},
-								 {ScanType:"tbscan", IndexName:"", ReturnNum:insertNum},
-								 {ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}];
+	var expAccessPlans = [{ScanType:"tbscan", IndexName:""},
+                       	 {ScanType:"tbscan", IndexName:""},
+								 {ScanType:"tbscan", IndexName:""},
+								 {ScanType:"tbscan", IndexName:""}];
 	
    checkSnapShotAccessPlans(clFullName, expAccessPlans, actAccessPlans);
 
@@ -110,18 +110,18 @@ function main()
    var findConf1 = {a:sameValues};
 	var findConf2 = {b:sameValues};
 	
-	query(dbclPrimary, findConf1);
-	query(dbclPrimary, findConf2);
-	query(dbclSlave, findConf1);
-	query(dbclSlave, findConf2);
+	query(dbclPrimary, findConf1, null, null, insertNum);
+	query(dbclPrimary, findConf2, null, null, insertNum);
+	query(dbclSlave, findConf1, null, null, insertNum);
+	query(dbclSlave, findConf2, null, null, insertNum);
 	
 	//检查主备节点访问计划快照
 	var accessFindOption = { Collection: clFullName };
    var actAccessPlans = getCommonAccessPlans(db, accessFindOption);
-	var expAccessPlans = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum},
-                       	 {ScanType:"tbscan", IndexName:"", ReturnNum:insertNum},
-								 {ScanType:"tbscan", IndexName:"", ReturnNum:insertNum},
-								 {ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}];
+	var expAccessPlans = [{ScanType:"tbscan", IndexName:""},
+                       	 {ScanType:"tbscan", IndexName:""},
+								 {ScanType:"tbscan", IndexName:""},
+								 {ScanType:"tbscan", IndexName:""}];
 	
    checkSnapShotAccessPlans(clFullName, expAccessPlans, actAccessPlans);
   
@@ -144,18 +144,18 @@ function main()
    var findConf1 = {a:sameValues};
 	var findConf2 = {b:sameValues};
 	
-	query(dbclPrimary, findConf1);
-	query(dbclPrimary, findConf2);
-	query(dbclSlave, findConf1);
-	query(dbclSlave, findConf2);
+	query(dbclPrimary, findConf1, null, null, insertNum);
+	query(dbclPrimary, findConf2, null, null, insertNum);
+	query(dbclSlave, findConf1, null, null, insertNum);
+	query(dbclSlave, findConf2, null, null, insertNum);
 	
 	//检查主备节点访问计划快照
 	var accessFindOption = { Collection: clFullName };
    var actAccessPlans = getCommonAccessPlans(db, accessFindOption);
-	var expAccessPlans = [{ScanType:"ixscan", IndexName:"a", ReturnNum:insertNum},
-                       	 {ScanType:"tbscan", IndexName:"", ReturnNum:insertNum},
-								 {ScanType:"ixscan", IndexName:"a", ReturnNum:insertNum},
-								 {ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}];
+	var expAccessPlans = [{ScanType:"ixscan", IndexName:"a"},
+                       	 {ScanType:"tbscan", IndexName:""},
+								 {ScanType:"ixscan", IndexName:"a"},
+								 {ScanType:"tbscan", IndexName:""}];
 	
    checkSnapShotAccessPlans(clFullName, expAccessPlans, actAccessPlans);
 

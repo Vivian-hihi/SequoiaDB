@@ -68,14 +68,14 @@ function main()
    var findConf3 = {b : {'$gte': 9000}};
    var findConf4 = {c : {'$gte': 'test9000'}};
    
-   query(dbclPrimary1, findConf1);
-	query(dbclPrimary1, findConf2);
-   query(dbclPrimary2, findConf1);
-	query(dbclPrimary2, findConf2);
-	query(dbclSlave1, findConf1);
-	query(dbclSlave1, findConf2);
-   query(dbclSlave2, findConf1);
-	query(dbclSlave2, findConf2);
+   query(dbclPrimary1, findConf1, null, null, insertNums );
+	query(dbclPrimary1, findConf2, null, null, insertNums );
+   query(dbclPrimary2, findConf1, null, null, insertNums );
+	query(dbclPrimary2, findConf2, null, null, insertNums );
+	query(dbclSlave1, findConf1, null, null, insertNums );
+	query(dbclSlave1, findConf2, null, null, insertNums );
+   query(dbclSlave2, findConf1, null, null, insertNums );
+	query(dbclSlave2, findConf2, null, null, insertNums );
 	
 	//check out snapshot access plans
 	var accessFindOption1 = { Collection: clFullName1 };
@@ -84,14 +84,14 @@ function main()
    var actAccessPlans1 = getCommonAccessPlans(db, accessFindOption1);
    var actAccessPlans2 = getCommonAccessPlans(db, accessFindOption2);
    
-   var expAccessPlans1 = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums},
-	                       {ScanType:"tbscan", IndexName:"", ReturnNum:insertNums},
-                          {ScanType:"tbscan", IndexName:"", ReturnNum:insertNums},
-	                       {ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
-   var expAccessPlans2 = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums},
-	                       {ScanType:"tbscan", IndexName:"", ReturnNum:insertNums},
-                          {ScanType:"tbscan", IndexName:"", ReturnNum:insertNums},
-	                       {ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
+   var expAccessPlans1 = [{ScanType:"tbscan", IndexName:""},
+	                       {ScanType:"tbscan", IndexName:""},
+                          {ScanType:"tbscan", IndexName:""},
+	                       {ScanType:"tbscan", IndexName:""}];
+   var expAccessPlans2 = [{ScanType:"tbscan", IndexName:""},
+	                       {ScanType:"tbscan", IndexName:""},
+                          {ScanType:"tbscan", IndexName:""},
+	                       {ScanType:"tbscan", IndexName:""}];
                       
    checkSnapShotAccessPlans(clFullName1, expAccessPlans1, actAccessPlans1);
    checkSnapShotAccessPlans(clFullName2, expAccessPlans2, actAccessPlans2);
@@ -123,14 +123,14 @@ function main()
    var findConf3 = {b : {'$gte': 9000}};
    var findConf4 = {c : {'$gte': 'test9000'}};
 
-   query(dbclPrimary1, findConf1);
-	query(dbclPrimary1, findConf2);
-   query(dbclPrimary2, findConf1);
-	query(dbclPrimary2, findConf2);
-	query(dbclSlave1, findConf1);
-	query(dbclSlave1, findConf2);
-   query(dbclSlave2, findConf1);
-	query(dbclSlave2, findConf2);
+   query(dbclPrimary1, findConf1, null, null, insertNums );
+	query(dbclPrimary1, findConf2, null, null, insertNums );
+   query(dbclPrimary2, findConf1, null, null, insertNums );
+	query(dbclPrimary2, findConf2, null, null, insertNums );
+	query(dbclSlave1, findConf1, null, null, insertNums );
+	query(dbclSlave1, findConf2, null, null, insertNums );
+   query(dbclSlave2, findConf1, null, null, insertNums );
+	query(dbclSlave2, findConf2, null, null, insertNums );
    
    //check out snapshot access plans
 	var accessFindOption1 = { Collection: clFullName1 };
@@ -139,14 +139,14 @@ function main()
    var actAccessPlans1 = getCommonAccessPlans(db, accessFindOption1);
    var actAccessPlans2 = getCommonAccessPlans(db, accessFindOption2);
    
-   var expAccessPlans1 = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums},
-	                       {ScanType:"tbscan", IndexName:"", ReturnNum:insertNums},
-                          {ScanType:"tbscan", IndexName:"", ReturnNum:insertNums},
-	                       {ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
-   var expAccessPlans2 = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums},
-	                       {ScanType:"tbscan", IndexName:"", ReturnNum:insertNums},
-                          {ScanType:"tbscan", IndexName:"", ReturnNum:insertNums},
-	                       {ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
+   var expAccessPlans1 = [{ScanType:"tbscan", IndexName:""},
+	                       {ScanType:"tbscan", IndexName:""},
+                          {ScanType:"tbscan", IndexName:""},
+	                       {ScanType:"tbscan", IndexName:""}];
+   var expAccessPlans2 = [{ScanType:"tbscan", IndexName:""},
+	                       {ScanType:"tbscan", IndexName:""},
+                          {ScanType:"tbscan", IndexName:""},
+	                       {ScanType:"tbscan", IndexName:""}];
                       
    checkSnapShotAccessPlans(clFullName1, expAccessPlans1, actAccessPlans1);
    checkSnapShotAccessPlans(clFullName2, expAccessPlans2, actAccessPlans2);
@@ -182,14 +182,14 @@ function main()
    var findConf3 = {b : {'$gte': 9000}};
    var findConf4 = {c : {'$gte': 'test9000'}};
    
-   query(dbclPrimary1, findConf1);
-	query(dbclPrimary1, findConf2);
-   query(dbclPrimary2, findConf1);
-	query(dbclPrimary2, findConf2);
-	query(dbclSlave1, findConf1);
-	query(dbclSlave1, findConf2);
-   query(dbclSlave2, findConf1);
-	query(dbclSlave2, findConf2);
+   query(dbclPrimary1, findConf1, null, null, insertNums );
+	query(dbclPrimary1, findConf2, null, null, insertNums );
+   query(dbclPrimary2, findConf1, null, null, insertNums );
+	query(dbclPrimary2, findConf2, null, null, insertNums );
+	query(dbclSlave1, findConf1, null, null, insertNums );
+	query(dbclSlave1, findConf2, null, null, insertNums );
+   query(dbclSlave2, findConf1, null, null, insertNums );
+	query(dbclSlave2, findConf2, null, null, insertNums );
 
    //check out snapshot access plans
 	var accessFindOption1 = { Collection: clFullName1 };
@@ -198,14 +198,14 @@ function main()
    var actAccessPlans1 = getCommonAccessPlans(db, accessFindOption1);
    var actAccessPlans2 = getCommonAccessPlans(db, accessFindOption2);
    
-   var expAccessPlans1 = [{ScanType:"ixscan", IndexName:"$shard", ReturnNum:insertNums},
-	                       {ScanType:"tbscan", IndexName:"", ReturnNum:insertNums},
-                          {ScanType:"ixscan", IndexName:"$shard", ReturnNum:insertNums},
-	                       {ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
-   var expAccessPlans2 = [{ScanType:"ixscan", IndexName:"$shard", ReturnNum:insertNums},
-	                       {ScanType:"tbscan", IndexName:"", ReturnNum:insertNums},
-                          {ScanType:"ixscan", IndexName:"$shard", ReturnNum:insertNums},
-	                       {ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
+   var expAccessPlans1 = [{ScanType:"ixscan", IndexName:"$shard"},
+	                       {ScanType:"tbscan", IndexName:""},
+                          {ScanType:"ixscan", IndexName:"$shard"},
+	                       {ScanType:"tbscan", IndexName:""}];
+   var expAccessPlans2 = [{ScanType:"ixscan", IndexName:"$shard"},
+	                       {ScanType:"tbscan", IndexName:""},
+                          {ScanType:"ixscan", IndexName:"$shard"},
+	                       {ScanType:"tbscan", IndexName:""}];
                       
    checkSnapShotAccessPlans(clFullName1, expAccessPlans1, actAccessPlans1);
    checkSnapShotAccessPlans(clFullName2, expAccessPlans2, actAccessPlans2);
@@ -246,14 +246,14 @@ function main()
    var findConf3 = {b : {'$gte': 9000}};
    var findConf4 = {c : {'$gte': 'test9000'}};
    
-   query(dbclPrimary1, findConf1);
-	query(dbclPrimary1, findConf2);
-   query(dbclPrimary2, findConf1);
-	query(dbclPrimary2, findConf2);
-	query(dbclSlave1, findConf1);
-	query(dbclSlave1, findConf2);
-   query(dbclSlave2, findConf1);
-	query(dbclSlave2, findConf2);
+   query(dbclPrimary1, findConf1, null, null, insertNums );
+	query(dbclPrimary1, findConf2, null, null, insertNums );
+   query(dbclPrimary2, findConf1, null, null, insertNums );
+	query(dbclPrimary2, findConf2, null, null, insertNums );
+	query(dbclSlave1, findConf1, null, null, insertNums );
+	query(dbclSlave1, findConf2, null, null, insertNums );
+   query(dbclSlave2, findConf1, null, null, insertNums );
+	query(dbclSlave2, findConf2, null, null, insertNums );
 
    //check out snapshot access plans
 	var accessFindOption1 = { Collection: clFullName1 };
@@ -309,14 +309,14 @@ function main()
    var findConf3 = {b : {'$gte': 9000}};
    var findConf4 = {c : {'$gte': 'test9000'}};
    
-   query(dbclPrimary1, findConf1);
-	query(dbclPrimary1, findConf2);
-   query(dbclPrimary2, findConf1);
-	query(dbclPrimary2, findConf2);
-	query(dbclSlave1, findConf1);
-	query(dbclSlave1, findConf2);
-   query(dbclSlave2, findConf1);
-	query(dbclSlave2, findConf2);
+   query(dbclPrimary1, findConf1, null, null, insertNums );
+	query(dbclPrimary1, findConf2, null, null, insertNums );
+   query(dbclPrimary2, findConf1, null, null, insertNums );
+	query(dbclPrimary2, findConf2, null, null, insertNums );
+	query(dbclSlave1, findConf1, null, null, insertNums );
+	query(dbclSlave1, findConf2, null, null, insertNums );
+   query(dbclSlave2, findConf1, null, null, insertNums );
+	query(dbclSlave2, findConf2, null, null, insertNums );
 
    //check out snapshot access plans
 	var accessFindOption1 = { Collection: clFullName1 };
