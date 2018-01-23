@@ -84,7 +84,7 @@ public class ExceptionTest12799_12800 extends DataSourceTestBase {
         }catch(BaseException e){
          // TODO Auto-generated catch block
             if ( e.getErrorCode() != SDBError.valueOf(
-                    "SDB_INVALIDARG" ).getErrorCode() ) {
+                    "SDB_NETWORK" ).getErrorCode() ) {
                 Assert.fail(e.getMessage());
             }
         }
