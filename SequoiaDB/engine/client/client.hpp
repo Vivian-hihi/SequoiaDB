@@ -33,8 +33,6 @@
 #include "bson/bson.hpp"
 #include "fromjson.hpp"
 #endif
-//#include "bson/bson.h"
-//#include "jstobs.h"
 #include "spd.h"
 #include <map>
 #include <string>
@@ -140,8 +138,6 @@ namespace sdbclient
       virtual INT32 next          ( bson::BSONObj &obj ) = 0 ;
       virtual INT32 current       ( bson::BSONObj &obj ) = 0 ;
       virtual INT32 close () = 0 ;
-      //virtual INT32 updateCurrent ( bson &rule ) = 0 ;
-      //virtual INT32 delCurrent    () = 0 ;
    } ;
 
 /** \class  sdbCursor
@@ -217,31 +213,6 @@ namespace sdbclient
             return SDB_OK ;
          return pCursor->close () ;
       }
-
-/*
-* \fn INT32 updateCurrent ( bson::BSONObj &rule )
-    \brief Update the current document of cursor
-    \param [in] rule The updating rule, cannot be null
-    \retval SDB_OK Operation Success
-    \retval Others Operation Fail
-      INT32 updateCurrent ( bson::BSONObj &rule )
-      {
-         if ( !pCursor )
-            return SDB_NOT_CONNECTED ;
-         return pCursor->updateCurrent ( rule ) ;
-      }
-
-* \fn INT32 delCurrent ()
-      \brief Delete the current document of cursor
-      \retval SDB_OK Operation Success
-      \retval Others Operation Fail
-
-      INT32 delCurrent ()
-      {
-         if ( !pCursor )
-            return SDB_NOT_CONNECTED ;
-         return pCursor->delCurrent () ;
-      }*/
    } ;
 
    class DLLEXPORT _sdbCollection
@@ -890,7 +861,10 @@ namespace sdbclient
                    )
       {
          if ( !pCollection )
+         {
             return SDB_NOT_CONNECTED ;
+         }
+         RELEASE_INNER_HANDLE( cursor.pCursor ) ;
          return pCollection->query ( cursor, condition, selected, orderBy,
                                      hint, numToSkip, numToReturn, flags ) ;
       }
@@ -1136,7 +1110,10 @@ namespace sdbclient
                          const CHAR *pIndexName )
       {
          if ( !pCollection )
+         {
             return SDB_NOT_CONNECTED ;
+         }
+         RELEASE_INNER_HANDLE( cursor.pCursor ) ;
          return pCollection->getIndexes ( cursor, pIndexName ) ;
       }
 
@@ -1245,7 +1222,10 @@ namespace sdbclient
                  )
 {
    if ( !pCollection )
+   {
       return SDB_NOT_CONNECTED ;
+   }
+   RELEASE_INNER_HANDLE( cursor.pCursor ) ;
    return pCollection->aggregate ( cursor, obj ) ;
 }
 
@@ -1303,7 +1283,10 @@ namespace sdbclient
                          INT64 numToReturn = -1 )
     {
        if ( !pCollection )
+       {
           return SDB_NOT_CONNECTED ;
+       }
+       RELEASE_INNER_HANDLE( cursor.pCursor ) ;
        return pCollection->getQueryMeta ( cursor, condition, orderBy,
                                      hint, numToSkip, numToReturn ) ;
     }
@@ -1384,7 +1367,10 @@ namespace sdbclient
                     const bson::BSONObj &options   = _sdbStaticObject )
     {
        if ( !pCollection )
+       {
          return SDB_NOT_CONNECTED ;
+       }
+       RELEASE_INNER_HANDLE( cursor.pCursor ) ;
        return pCollection->explain( cursor, condition, select, orderBy, hint,
                                     numToSkip, numToReturn, flag, options ) ;
     }
@@ -1457,7 +1443,10 @@ namespace sdbclient
     INT32 listLobs( sdbCursor &cursor )
     {
        if ( !pCollection )
+       {
          return SDB_NOT_CONNECTED ;
+       }
+       RELEASE_INNER_HANDLE( cursor.pCursor ) ;
        return pCollection->listLobs( cursor ) ;
     }
 
@@ -1537,7 +1526,10 @@ namespace sdbclient
       INT32 listLobPieces( sdbCursor &cursor )
       {
          if( !pCollection )
+         {
             return SDB_NOT_CONNECTED ;
+         }
+         RELEASE_INNER_HANDLE( cursor.pCursor ) ;
          return pCollection->listLobPieces( cursor ) ;
       }
    } ;
@@ -1661,7 +1653,12 @@ namespace sdbclient
       INT32 connect ( sdb &dbConn )
       {
          if ( !pNode )
+         {
             return SDB_NOT_CONNECTED ;
+         }
+         // we can not use dbConn.pSDB here,
+         // for sdb had not define yet.
+         // RELEASE_INNER_HANDLE( dbConn.pSDB ) ;
          return pNode->connect ( dbConn ) ;
       }
 
@@ -1911,7 +1908,10 @@ namespace sdbclient
       INT32 getMaster ( sdbNode &node )
       {
          if ( !pReplicaGroup )
+         {
             return SDB_NOT_CONNECTED ;
+         }
+         RELEASE_INNER_HANDLE( node.pNode ) ;
          return pReplicaGroup->getMaster ( node ) ;
       }
 
@@ -1943,7 +1943,10 @@ namespace sdbclient
                        const vector<INT32>& positions = _sdbStaticVec )
       {
          if ( !pReplicaGroup )
+         {
             return SDB_NOT_CONNECTED ;
+         }
+         RELEASE_INNER_HANDLE( node.pNode ) ;
          return pReplicaGroup->getSlave ( node, positions ) ;
       }
 
@@ -1975,7 +1978,10 @@ namespace sdbclient
                       sdbNode &node )
       {
          if ( !pReplicaGroup )
+         {
             return SDB_NOT_CONNECTED ;
+         }
+         RELEASE_INNER_HANDLE( node.pNode ) ;
          return pReplicaGroup->getNode ( pNodeName, node ) ;
       }
 
@@ -2013,7 +2019,10 @@ namespace sdbclient
                       sdbNode &node )
       {
          if ( !pReplicaGroup )
+         {
             return SDB_NOT_CONNECTED ;
+         }
+         RELEASE_INNER_HANDLE( node.pNode ) ;
          return pReplicaGroup->getNode ( pHostName, pServiceName, node ) ;
       }
 
@@ -2302,7 +2311,10 @@ namespace sdbclient
                             sdbCollection &collection )
       {
          if ( !pCollectionSpace )
+         {
             return SDB_NOT_CONNECTED ;
+         }
+         RELEASE_INNER_HANDLE( collection.pCollection ) ;
          return pCollectionSpace->getCollection ( pCollectionName,
                                                   collection ) ;
       }
@@ -2347,7 +2359,10 @@ namespace sdbclient
                                sdbCollection &collection )
       {
          if ( !pCollectionSpace )
+         {
             return SDB_NOT_CONNECTED ;
+         }
+         RELEASE_INNER_HANDLE( collection.pCollection ) ;
          return pCollectionSpace->createCollection ( pCollection,
                                                      options,
                                                      collection ) ;
@@ -2384,7 +2399,10 @@ namespace sdbclient
                                sdbCollection &collection )
       {
          if ( !pCollectionSpace )
+         {
             return SDB_NOT_CONNECTED ;
+         }
+         RELEASE_INNER_HANDLE( collection.pCollection ) ;
          return pCollectionSpace->createCollection ( pCollection,
                                                      collection ) ;
       }
@@ -2562,7 +2580,10 @@ namespace sdbclient
       INT32 listCollectionSpacesInDomain ( sdbCursor &cursor )
       {
          if ( !pDomain )
+         {
             return SDB_NOT_CONNECTED ;
+         }
+         RELEASE_INNER_HANDLE( cursor.pCursor ) ;
          return pDomain->listCollectionSpacesInDomain ( cursor ) ;
       }
 
@@ -2576,7 +2597,10 @@ namespace sdbclient
       INT32 listCollectionsInDomain ( sdbCursor &cursor )
       {
          if ( !pDomain )
+         {
             return SDB_NOT_CONNECTED ;
+         }
+         RELEASE_INNER_HANDLE( cursor.pCursor ) ;
          return pDomain->listCollectionsInDomain ( cursor ) ;
       }
 
@@ -2602,7 +2626,10 @@ namespace sdbclient
       INT32 listReplicaGroupInDomain( sdbCursor &cursor )
       {
          if ( !pDomain )
+         {
             return SDB_NOT_CONNECTED ;
+         }
+         RELEASE_INNER_HANDLE( cursor.pCursor ) ;
          return pDomain->listReplicaGroupInDomain( cursor ) ;
       }
    };
@@ -3349,18 +3376,6 @@ namespace sdbclient
       virtual INT32 getDC( _sdbDataCenter **dc ) = 0 ;
       virtual INT32 getDC( sdbDataCenter &dc ) = 0 ;
 
-/*      virtual INT32 modifyConfig ( INT32 nodeID,
-                       std::map<std::string,std::string> &config ) = 0 ;
-
-      virtual INT32 getConfig ( INT32 nodeID,
-                       std::map<std::string,std::string> &config ) = 0 ;
-
-      virtual INT32 modifyConfig (
-                       std::map<std::string,std::string> &config ) = 0 ;
-
-      virtual INT32 getConfig (
-                       std::map<std::string,std::string> &config ) = 0 ;
-*/
       static _sdb *getObj ( BOOLEAN useSSL = FALSE ) ;
 
       // get last alive time
@@ -3641,7 +3656,10 @@ namespace sdbclient
                         )
       {
          if ( !pSDB )
+         {
             return SDB_NOT_CONNECTED ;
+         }
+         RELEASE_INNER_HANDLE( cursor.pCursor ) ;
          return pSDB->getSnapshot ( cursor, snapType, condition,
                                     selector, orderBy ) ;
       }
@@ -3805,12 +3823,12 @@ namespace sdbclient
                     )
       {
          if ( !pSDB )
+         {
             return SDB_NOT_CONNECTED ;
-         return pSDB->getList ( cursor,
-                                listType,
-                                condition,
-                                selector,
-                                orderBy ) ;
+         }
+         RELEASE_INNER_HANDLE( cursor.pCursor ) ;
+         return pSDB->getList ( cursor, listType, condition,
+                                selector, orderBy ) ;
       }
 
 /* \fn INT32 getCollection ( const CHAR *pCollectionFullName,
@@ -3846,7 +3864,10 @@ namespace sdbclient
                           )
       {
          if ( !pSDB )
+         {
             return SDB_NOT_CONNECTED ;
+         }
+         RELEASE_INNER_HANDLE( collection.pCollection ) ;
          return pSDB->getCollection ( pCollectionFullName,
                                       collection ) ;
       }
@@ -3883,7 +3904,10 @@ namespace sdbclient
                                )
       {
          if ( !pSDB )
+         {
             return SDB_NOT_CONNECTED ;
+         }
+         RELEASE_INNER_HANDLE( cs.pCollectionSpace ) ;        
          return pSDB->getCollectionSpace ( pCollectionSpaceName,
                                            cs ) ;
       }
@@ -3943,21 +3967,13 @@ namespace sdbclient
                                   )
       {
          if ( !pSDB )
+         {
             return SDB_NOT_CONNECTED ;
+         }
+         RELEASE_INNER_HANDLE( cs.pCollectionSpace ) ;
          return pSDB->createCollectionSpace ( pCollectionSpaceName,
                                               iPageSize, cs ) ;
       }
-
-//      INT32 createCollectionSpace ( const CHAR *pCollectionSpaceName,
-//                                    const bson::BSONObj &options,
-//                                    _sdbCollectionSpace **cs
-//                                  )
-//      {
-//         if ( !pSDB )
-//            return SDB_NOT_CONNECTED ;
-//         return pSDB->createCollectionSpace ( pCollectionSpaceName,
-//                                              options, cs ) ;
-//      }
 
 /** \fn INT32 createCollectionSpace ( const CHAR *pCollectionSpaceName,
                                       const bson::BSONObj &options,
@@ -3979,7 +3995,10 @@ namespace sdbclient
                                   )
       {
          if ( !pSDB )
+         {
             return SDB_NOT_CONNECTED ;
+         }
+         RELEASE_INNER_HANDLE( cs.pCollectionSpace ) ;
          return pSDB->createCollectionSpace ( pCollectionSpaceName,
                                               options, cs ) ;
       }
@@ -4010,17 +4029,20 @@ namespace sdbclient
          return pSDB->listCollectionSpaces ( result ) ;
       }
 
-/** \fn INT32 listCollectionSpaces  ( sdbCursor &result )
+/** \fn INT32 listCollectionSpaces  ( sdbCursor &cursor )
     \brief List all collection space of current database(include temporary collection space).
-    \param [out] result The return cursor object of query.
+    \param [out] cursor The return cursor object of query.
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
-      INT32 listCollectionSpaces ( sdbCursor &result )
+      INT32 listCollectionSpaces ( sdbCursor &cursor )
       {
          if ( !pSDB )
+         {
             return SDB_NOT_CONNECTED ;
-         return pSDB->listCollectionSpaces ( result ) ;
+         }
+         RELEASE_INNER_HANDLE( cursor.pCursor ) ;
+         return pSDB->listCollectionSpaces ( cursor ) ;
       }
 
 /* \fn INT32 listCollections ( _sdbCursor **result )
@@ -4036,17 +4058,20 @@ namespace sdbclient
          return pSDB->listCollections ( result ) ;
       }
 
-/** \fn  INT32 listCollections ( sdbCursor &result )
+/** \fn  INT32 listCollections ( sdbCursor &cursor )
     \brief list all collections in current database.
-    \param [out] result The return cursor object of query.
+    \param [out] cursor The return cursor object of query.
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
-      INT32 listCollections ( sdbCursor &result )
+      INT32 listCollections ( sdbCursor &cursor )
       {
          if ( !pSDB )
+         {
             return SDB_NOT_CONNECTED ;
-         return pSDB->listCollections ( result ) ;
+         }
+         RELEASE_INNER_HANDLE( cursor.pCursor ) ;
+         return pSDB->listCollections ( cursor ) ;
       }
 
 /* \fn INT32 listReplicaGroups ( _sdbCursor **result )
@@ -4063,17 +4088,20 @@ namespace sdbclient
       }
 
 
-/** \fn INT32 listReplicaGroups ( sdbCursor &result )
+/** \fn INT32 listReplicaGroups ( sdbCursor &cursor )
     \brief List all replica groups of current database.
-    \param [out] result The return cursor object of query.
+    \param [out] cursor The return cursor object of query.
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
-      INT32 listReplicaGroups ( sdbCursor &result )
+      INT32 listReplicaGroups ( sdbCursor &cursor )
       {
          if ( !pSDB )
+         {
             return SDB_NOT_CONNECTED ;
-         return pSDB->listReplicaGroups ( result ) ;
+         }
+         RELEASE_INNER_HANDLE( cursor.pCursor ) ;
+         return pSDB->listReplicaGroups ( cursor ) ;
       }
 
 /* \fn INT32 getReplicaGroup ( const CHAR *pName, _sdbReplicaGroup **result )
@@ -4091,18 +4119,21 @@ namespace sdbclient
       }
 
 
-/** \fn INT32 getReplicaGroup ( const CHAR *pName, sdbReplicaGroup &result )
+/** \fn INT32 getReplicaGroup ( const CHAR *pName, sdbReplicaGroup &group )
     \brief Get the specified replica group.
     \param [in] pName The name of replica group.
-    \param [out] result The sdbReplicaGroup object.
+    \param [out] group The sdbReplicaGroup object.
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
-      INT32 getReplicaGroup ( const CHAR *pName, sdbReplicaGroup &result )
+      INT32 getReplicaGroup ( const CHAR *pName, sdbReplicaGroup &group )
       {
          if ( !pSDB )
+         {
             return SDB_NOT_CONNECTED ;
-         return pSDB->getReplicaGroup ( pName, result ) ;
+         }
+         RELEASE_INNER_HANDLE( group.pReplicaGroup ) ;
+         return pSDB->getReplicaGroup ( pName, group ) ;
       }
 
 /* \fn INT32 getReplicaGroup ( INT32 id, _sdbReplicaGroup **result )
@@ -4119,18 +4150,21 @@ namespace sdbclient
          return pSDB->getReplicaGroup ( id, result ) ;
       }
 
-/** \fn INT32 getReplicaGroup ( INT32 id, sdbReplicaGroup &result )
+/** \fn INT32 getReplicaGroup ( INT32 id, sdbReplicaGroup &group )
     \brief Get the specified replica group.
     \param [in] id The id of replica group.
-    \param [out] result The sdbReplicaGroup object.
+    \param [out] group The sdbReplicaGroup object.
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
-      INT32 getReplicaGroup ( INT32 id, sdbReplicaGroup &result )
+      INT32 getReplicaGroup ( INT32 id, sdbReplicaGroup &group )
       {
          if ( !pSDB )
+         {
             return SDB_NOT_CONNECTED ;
-         return pSDB->getReplicaGroup ( id, result ) ;
+         }
+         RELEASE_INNER_HANDLE( group.pReplicaGroup ) ;
+         return pSDB->getReplicaGroup ( id, group ) ;
       }
 
 /* \fn INT32 createReplicaGroup ( const CHAR *pName, _sdbReplicaGroup **replicaGroup )
@@ -4147,18 +4181,21 @@ namespace sdbclient
          return pSDB->createReplicaGroup ( pName, replicaGroup ) ;
       }
 
-/** \fn INT32 createReplicaGroup ( const CHAR *pName, sdbReplicaGroup &replicaGroup )
+/** \fn INT32 createReplicaGroup ( const CHAR *pName, sdbReplicaGroup &group )
     \brief Create the specified replica group.
     \param [in] pName The name of the replica group.
-    \param [out] replicaGroup The return sdbReplicaGroup object.
+    \param [out] group The return sdbReplicaGroup object.
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
-      INT32 createReplicaGroup ( const CHAR *pName, sdbReplicaGroup &replicaGroup )
+      INT32 createReplicaGroup ( const CHAR *pName, sdbReplicaGroup &group )
       {
          if ( !pSDB )
+         {
             return SDB_NOT_CONNECTED ;
-         return pSDB->createReplicaGroup ( pName, replicaGroup ) ;
+         }
+         RELEASE_INNER_HANDLE( group.pReplicaGroup ) ;
+         return pSDB->createReplicaGroup ( pName, group ) ;
       }
 
 /** \fn INT32 removeReplicaGroup ( const CHAR *pName )
@@ -4221,7 +4258,10 @@ namespace sdbclient
       INT32 activateReplicaGroup ( const CHAR *pName, sdbReplicaGroup &replicaGroup )
       {
          if ( !pSDB )
+         {
             return SDB_NOT_CONNECTED ;
+         }
+         RELEASE_INNER_HANDLE( replicaGroup.pReplicaGroup ) ;
          return pSDB->activateReplicaGroup ( pName, replicaGroup ) ;
       }
 
@@ -4255,19 +4295,22 @@ namespace sdbclient
       }
 
 /** \fn INT32 exec( const CHAR *sql,
-                 sdbCursor &result )
+                 sdbCursor &cursor )
     \brief Executing SQL command.
     \param [in] sql The SQL command.
-    \param [out] result The return cursor object of matching documents.
+    \param [out] cursor The return cursor object of matching documents.
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
       INT32 exec( const CHAR *sql,
-                  sdbCursor &result )
+                  sdbCursor &cursor )
       {
          if ( !pSDB )
+         {
             return SDB_NOT_CONNECTED ;
-         return pSDB->exec( sql, result ) ;
+         }
+         RELEASE_INNER_HANDLE( cursor.pCursor ) ;
+         return pSDB->exec( sql, cursor ) ;
       }
 
 /** \fn INT32 transactionBegin()
@@ -4364,7 +4407,10 @@ namespace sdbclient
       INT32 listProcedures( sdbCursor &cursor, const bson::BSONObj &condition )
       {
          if ( !pSDB )
+         {
             return SDB_NOT_CONNECTED ;
+         }
+         RELEASE_INNER_HANDLE( cursor.pCursor ) ;
          return pSDB->listProcedures( cursor, condition ) ;
       }
 
@@ -4392,13 +4438,15 @@ namespace sdbclient
          return pSDB->evalJS( code, type, cursor, errmsg ) ;
      }
 
-     INT32 evalJS( const CHAR *code,
-                   SDB_SPD_RES_TYPE &type,
+     INT32 evalJS( const CHAR *code, SDB_SPD_RES_TYPE &type,
                    sdbCursor &cursor,
                    bson::BSONObj &errmsg )
      {
          if ( !pSDB )
+         {
             return SDB_NOT_CONNECTED ;
+         }
+         RELEASE_INNER_HANDLE( cursor.pCursor ) ;
          return pSDB->evalJS( code, type, cursor, errmsg ) ;
      }
 
@@ -4467,7 +4515,10 @@ namespace sdbclient
                               const bson::BSONObj &orderBy = _sdbStaticObject)
       {
          if ( !pSDB )
+         {
             return SDB_NOT_CONNECTED ;
+         }
+         RELEASE_INNER_HANDLE( cursor.pCursor ) ;
          return pSDB->listBackup( cursor, options, condition, selector, orderBy ) ;
       }
 
@@ -4530,7 +4581,10 @@ namespace sdbclient
                         const bson::BSONObj &hint = _sdbStaticObject)
       {
          if ( !pSDB )
+         {
             return SDB_NOT_CONNECTED ;
+         }
+         RELEASE_INNER_HANDLE( cursor.pCursor ) ;
          return pSDB->listTasks ( cursor,
                                   condition,
                                   selector,
@@ -4678,7 +4732,10 @@ namespace sdbclient
                            sdbDomain &domain )
       {
          if ( !pSDB )
+         {
             return SDB_NOT_CONNECTED ;
+         }
+         RELEASE_INNER_HANDLE( domain.pDomain ) ;
          return pSDB->createDomain ( pDomainName, options, domain ) ;
       }
 
@@ -4706,7 +4763,10 @@ namespace sdbclient
                         sdbDomain &domain )
       {
          if ( !pSDB )
+         {
             return SDB_NOT_CONNECTED ;
+         }
+         RELEASE_INNER_HANDLE( domain.pDomain ) ;
          return pSDB->getDomain ( pDomainName, domain ) ;
       }
 
@@ -4734,7 +4794,10 @@ namespace sdbclient
                           const bson::BSONObj &hint = _sdbStaticObject )
       {
          if ( !pSDB )
+         {
             return SDB_NOT_CONNECTED ;
+         }
+         RELEASE_INNER_HANDLE( cursor.pCursor ) ;
          return pSDB->listDomains ( cursor, condition, selector, orderBy, hint ) ;
       }
 
@@ -4746,7 +4809,10 @@ namespace sdbclient
       INT32 getDC( sdbDataCenter &dc )
       {
          if ( !pSDB )
+         {
             return SDB_NOT_CONNECTED ;
+         }
+         RELEASE_INNER_HANDLE( dc.pDC ) ;
          return pSDB->getDC ( dc ) ;
       }
 
@@ -5044,7 +5110,10 @@ namespace sdbclient
       INT32 traceStatus( sdbCursor& cursor )
       {
          if( !pSDB )
+         {
             return SDB_NOT_CONNECTED ;
+         }
+         RELEASE_INNER_HANDLE( cursor.pCursor ) ;
          return pSDB->traceStatus( cursor ) ;
       }
 
@@ -5079,36 +5148,6 @@ namespace sdbclient
             return SDB_NOT_CONNECTED ;
          return pSDB->renameCollectionSpace( oldName, newName, options ) ;
       }
-/*      INT32 modifyConfig ( INT32 nodeID,
-                           std::map<std::string,std::string> &config )
-      {
-         if ( !pSDB )
-            return SDB_NOT_CONNECTED ;
-         return pSDB->modifyConfig ( nodeID, config ) ;
-      }
-
-      INT32 getConfig ( INT32 nodeID,
-                        std::map<std::string,std::string> &config )
-      {
-         if ( !pSDB )
-            return SDB_NOT_CONNECTED ;
-         return pSDB->getConfig ( nodeID, config ) ;
-      }
-
-      INT32 modifyConfig ( std::map<std::string,std::string> &config )
-      {
-         if ( !pSDB )
-            return SDB_NOT_CONNECTED ;
-         return pSDB->modifyConfig ( CURRENT_NODEID, config ) ;
-      }
-
-      INT32 getConfig ( std::map<std::string,std::string> &config )
-      {
-         if ( !pSDB )
-            return SDB_NOT_CONNECTED ;
-         return pSDB->getConfig ( CURRENT_NODEID, config ) ;
-      }*/
-
    } ;
 /** \typedef class sdb sdb
       \brief Class sdb definition for sdb.

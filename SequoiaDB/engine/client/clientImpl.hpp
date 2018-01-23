@@ -565,9 +565,6 @@ namespace sdbclient
 
       // start the node
       INT32 start () { return _stopStart ( TRUE ) ; }
-
-      // modify config for the current node
-/*      INT32 modifyConfig ( std::map<std::string,std::string> &config ) ;*/
    } ;
 
    typedef class _sdbNodeImpl sdbNodeImpl ;
@@ -721,6 +718,7 @@ namespace sdbclient
       INT32 getCollection ( const CHAR *pCollectionName,
                             sdbCollection &collection )
       {
+         RELEASE_INNER_HANDLE( collection.pCollection ) ;
          return getCollection ( pCollectionName,
                                 &collection.pCollection ) ;
       }
@@ -730,6 +728,7 @@ namespace sdbclient
       INT32 createCollection ( const CHAR *pCollection,
                                sdbCollection &collection )
       {
+         RELEASE_INNER_HANDLE( collection.pCollection ) ;
          return createCollection ( pCollection,
                                    &collection.pCollection ) ;
       }
@@ -741,6 +740,7 @@ namespace sdbclient
                                const BSONObj &options,
                                sdbCollection &collection )
       {
+         RELEASE_INNER_HANDLE( collection.pCollection ) ;
          return createCollection ( pCollection,
                                    options,
                                    &collection.pCollection ) ;
@@ -1554,26 +1554,12 @@ namespace sdbclient
 
       INT32 traceStatus( sdbCursor& cursor )
       {
+         RELEASE_INNER_HANDLE( cursor.pCursor ) ;
          return traceStatus( &(cursor.pCursor) ) ;
       }
 
       INT32 renameCollectionSpace( const CHAR* oldName, const CHAR* newName,
                              const bson::BSONObj &options = _sdbStaticObject ) ;
-/*      INT32 modifyConfig ( INT32 nodeID,
-                           std::map<std::string,std::string> &config ) ;
-
-      INT32 getConfig ( INT32 nodeID,
-                        std::map<std::string,std::string> &config ) ;
-
-      INT32 modifyConfig ( std::map<std::string,std::string> &config )
-      {
-         return modifyConfig ( CURRENT_NODEID, config ) ;
-      }
-
-      INT32 getConfig ( std::map<std::string,std::string> &config )
-      {
-         return getConfig ( CURRENT_NODEID, config ) ;
-      }*/
    } ;
    typedef class _sdbImpl sdbImpl ;
 }
