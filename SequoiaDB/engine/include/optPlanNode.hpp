@@ -1028,7 +1028,8 @@ namespace engine
                                  const ossTickDelta & queryTime,
                                  const ossTickDelta & waitTime,
                                  BOOLEAN needParse,
-                                 BOOLEAN needChildExplain ) ;
+                                 BOOLEAN needChildExplain,
+                                 UINT16 mask ) ;
 
       public :
          virtual void evaluate () ;

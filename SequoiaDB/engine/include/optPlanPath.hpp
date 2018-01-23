@@ -443,12 +443,13 @@ namespace engine
                                             const ossTickDelta & queryTime,
                                             const ossTickDelta & waitTime,
                                             BOOLEAN needParse,
-                                            BOOLEAN needChildExplain )
+                                            BOOLEAN needChildExplain,
+                                            UINT16 mask )
          {
             SDB_ASSERT( NULL != _pMergeNode, "merge node is invalid" ) ;
             return _pMergeNode->addChildExplain(
                         _pAllocator, childExplain, queryTime, waitTime,
-                        needParse, needChildExplain ) ;
+                        needParse, needChildExplain, mask ) ;
          }
 
          OSS_INLINE optExplainResultList & getChildExplains ()

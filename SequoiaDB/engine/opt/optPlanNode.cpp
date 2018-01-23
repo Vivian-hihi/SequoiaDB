@@ -2799,7 +2799,8 @@ namespace engine
                                               const ossTickDelta & queryTime,
                                               const ossTickDelta & waitTime,
                                               BOOLEAN needParse,
-                                              BOOLEAN needChildExplain )
+                                              BOOLEAN needChildExplain,
+                                              UINT16 mask )
    {
       INT32 rc = SDB_OK ;
 
@@ -2871,7 +2872,7 @@ namespace engine
             PD_CHECK( newNode, SDB_OOM, error, PDERROR,
                       "Failed to allocate %s node", optrName ) ;
 
-            rc = newNode->fromBSON( pathObject, OPT_NODE_EXPLAIN_MASK_ALL ) ;
+            rc = newNode->fromBSON( pathObject, mask ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to parse BSON for %s node, "
                          "rc: %d", optrName, rc ) ;
 

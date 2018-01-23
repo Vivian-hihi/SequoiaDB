@@ -357,17 +357,6 @@ namespace engine
          _needDetail = TRUE ;
       }
 
-      // Estimate option
-      rc = _parseBoolOption ( options, FIELD_NAME_ESTIMATE, _needEstimate,
-                              hasOption, _needDetail ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to parse %s option, rc: %d",
-                   FIELD_NAME_ESTIMATE, rc ) ;
-
-      if ( hasOption )
-      {
-         _needDetail = TRUE ;
-      }
-
       // Search option
       rc = _parseBoolOption( options, FIELD_NAME_SEARCH, _needSearch,
                              hasOption, FALSE ) ;
@@ -377,10 +366,7 @@ namespace engine
       if ( hasOption )
       {
          _needDetail = TRUE ;
-         if ( _needSearch )
-         {
-            _needExpand = TRUE ;
-         }
+         _needExpand = TRUE ;
       }
 
       // Evaluate option
@@ -394,6 +380,17 @@ namespace engine
          _needDetail = TRUE ;
          _needExpand = TRUE ;
          _needSearch = TRUE ;
+      }
+
+      // Estimate option
+      rc = _parseBoolOption ( options, FIELD_NAME_ESTIMATE, _needEstimate,
+                              hasOption, _needDetail ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to parse %s option, rc: %d",
+                   FIELD_NAME_ESTIMATE, rc ) ;
+
+      if ( hasOption )
+      {
+         _needDetail = TRUE ;
       }
 
       // Filter option, convert to mask
@@ -1001,7 +998,7 @@ namespace engine
 
                rc = _explainMergeBasePath->addChildExplain(
                         explainResult, queryTime, waitTime, needParse,
-                        needExplain ) ;
+                        needExplain, _explainMask ) ;
                PD_RC_CHECK( rc, PDERROR, "Failed to add child explain, "
                             "rc: %d", rc ) ;
 
@@ -1013,7 +1010,7 @@ namespace engine
 
                rc = _explainMergeBasePath->addChildExplain(
                         explainResult, queryTime, waitTime, needParse,
-                        needExplain ) ;
+                        needExplain, _explainMask ) ;
                PD_RC_CHECK( rc, PDERROR, "Failed to add child explain, "
                             "rc: %d", rc ) ;
             }
