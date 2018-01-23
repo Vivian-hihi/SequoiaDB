@@ -64,9 +64,10 @@ TEST_F( lobModTime13429, ModifyTime )
    ASSERT_EQ( SDB_OK, rc ) << "fail to getModificationTime" ;
    ASSERT_EQ( createTime1, modTime1 ) << "fail to check modTime before close" ;
 
-   // close then open lob with write mode, modTime is updated, createTime still the same
+   // after close, modTime is updated, createTime still the same
    rc = sdbCloseLob( &lob ) ;                                         
    ASSERT_EQ( SDB_OK, rc ) << "fail to close lob" ;
+
    rc = sdbOpenLob( cl, &oid, SDB_LOB_WRITE, &lob ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to open lob with write mode" ;
 
@@ -79,6 +80,17 @@ TEST_F( lobModTime13429, ModifyTime )
    ASSERT_EQ( createTime1, createTime2 ) << "fail to check createTime after close" ;
    ASSERT_LT( createTime1, modTime2 ) << "fail to check modTime after close" ;
 
+   // open lob won't change modTime
+   sdbLobHandle lob1 ;
+   rc = sdbOpenLob( cl, &oid, SDB_LOB_WRITE, &lob1 ) ;
+   ASSERT_EQ( SDB_OK, rc ) << "fail to open lob with write mode" ; 
+   UINT64 modTime2_1 ;
+   rc = sdbGetLobModificationTime( lob1, &modTime2_1 ) ;
+   ASSERT_EQ( SDB_OK, rc ) << "fail to getModificationTime" ;
+   ASSERT_EQ( modTime2, modTime2_1 ) << "fail to check open won't change modTime" ;
+   rc = sdbCloseLob( &lob1 ) ;
+   ASSERT_EQ( SDB_OK, rc ) << "fail to close lob" ;
+
    // before close, write lob won't change the modTime
    const CHAR* writeBuf = "ABCDE" ;
    UINT32 len = strlen( writeBuf ) ;
@@ -90,9 +102,10 @@ TEST_F( lobModTime13429, ModifyTime )
    ASSERT_EQ( SDB_OK, rc ) << "fail to getModificationTime" ;
    ASSERT_EQ( modTime2, modTime3 ) << "fail to check modTime after write" ;
 
-   // close then open lob with read mode, modTime is updated
+   // after close, modTime is updated
    rc = sdbCloseLob( &lob ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to close lob" ;
+
    rc = sdbOpenLob( cl, &oid, SDB_LOB_READ, &lob ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to open lob with read mode" ;
    UINT64 modTime4 ;
@@ -113,7 +126,7 @@ TEST_F( lobModTime13429, ModifyTime )
    ASSERT_EQ( SDB_OK, rc ) << "fail to getModificationTime" ;
    ASSERT_EQ( modTime4, modTime5 ) << "fail to check modTime after read" ;
 
-   // close then open lob, read lob won't change the modTime, still the same
+   // after close, read lob won't change the modTime, still the same
    rc = sdbCloseLob( &lob ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to close lob" ;
    rc = sdbOpenLob( cl, &oid, SDB_LOB_READ, &lob ) ;
