@@ -989,6 +989,49 @@ namespace engine
                                (INT64)_estRunCost ) ;
    }
 
+   INT32 _optScanNode::_toBSONPagesEval ( BSONObjBuilder & builder,
+                                          const CHAR * outputName,
+                                          const CHAR * inputName,
+                                          const CHAR * selName,
+                                          UINT32 inputValue,
+                                          double selectivity,
+                                          UINT32 outputValue ) const
+   {
+      StringBuilder formBuilder, evalBuilder ;
+
+      // max( 1, ceil( input * selectivity ) )
+      formBuilder << "max( 1, ceil( " << inputName << " * "
+                  << selName << " ) )" ;
+      evalBuilder << "max( 1, ceil( " << inputValue << " * "
+                  << selectivity << " ) )";
+
+      return _toBSONFieldEval( builder, outputName, formBuilder.str().c_str(),
+                               evalBuilder.str().c_str(),
+                               (INT32)outputValue ) ;
+   }
+
+   INT32 _optScanNode::_toBSONRecordsEval ( BSONObjBuilder & builder,
+                                            const CHAR * outputName,
+                                            const CHAR * inputName,
+                                            const CHAR * selName,
+                                            UINT64 inputValue,
+                                            double selectivity,
+                                            UINT64 outputValue ) const
+     {
+        StringBuilder formBuilder, evalBuilder ;
+
+        // max( 1, ceil( input * selectivity ) )
+        formBuilder << "max( 1, ceil( " << inputName << " * "
+                    << selName << " ) )" ;
+        evalBuilder << "max( 1, ceil( " << inputValue << " * "
+                    << selectivity << " ) )" ;
+
+        return _toBSONFieldEval( builder, outputName,
+                                 formBuilder.str().c_str(),
+                                 evalBuilder.str().c_str(),
+                                 (INT64)outputValue ) ;
+     }
+
    /*
       _optTbScanNode implement
     */
@@ -1259,7 +1302,7 @@ namespace engine
       if ( needIOCost )
       {
          rc = _toBSONIOCostEval( builder ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for IO Cost "
+         PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for IO cost "
                       "evaluation, rc: %d", rc ) ;
       }
       else
@@ -1268,19 +1311,23 @@ namespace engine
       }
 
       rc = _toBSONCPUCostEval( builder ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for CPU Cost "
+      PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for CPU cost "
                    "evaluation, rc: %d", rc ) ;
 
       rc = _toBSONStartCostEval( builder ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for start Cost "
+      PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for start cost "
                    "evaluation, rc: %d", rc ) ;
 
       rc = _toBSONRunCostEval( builder, needIOCost ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for run Cost "
+      PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for run cost "
                    "evaluation, rc: %d", rc ) ;
 
       rc = _toBSONTotalCostEval( builder ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for total Cost "
+      PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for total cost "
+                   "evaluation, rc: %d", rc ) ;
+
+      rc = _toBSONOutputRecordsEval( builder ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for output records "
                    "evaluation, rc: %d", rc ) ;
 
    done :
@@ -1341,6 +1388,17 @@ namespace engine
                                formBuilder.str().c_str(),
                                evalBuilder.str().c_str(),
                                (INT64)_estStartCost ) ;
+   }
+
+   INT32 _optTbScanNode::_toBSONOutputRecordsEval ( BSONObjBuilder & builder ) const
+   {
+      return _toBSONRecordsEval( builder,
+                                 OPT_FIELD_OUTPUT_RECORDS,
+                                 OPT_FIELD_RECORDS,
+                                 OPT_FIELD_MTH_SEL,
+                                 _inputRecords,
+                                 _mthSelectivity,
+                                 _outputRecords ) ;
    }
 
    /*
@@ -1974,7 +2032,7 @@ namespace engine
       if ( needIOCost )
       {
          rc = _toBSONIOCostEval( builder ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for IO Cost "
+         PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for IO cost "
                       "evaluation, rc: %d", rc ) ;
       }
       else
@@ -1983,19 +2041,23 @@ namespace engine
       }
 
       rc = _toBSONCPUCostEval( builder ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for CPU Cost "
+      PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for CPU cost "
                    "evaluation, rc: %d", rc ) ;
 
       rc = _toBSONStartCostEval( builder ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for start Cost "
+      PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for start cost "
                    "evaluation, rc: %d", rc ) ;
 
       rc = _toBSONRunCostEval( builder, needIOCost ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for run Cost "
+      PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for run cost "
                    "evaluation, rc: %d", rc ) ;
 
       rc = _toBSONTotalCostEval( builder ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for total Cost "
+      PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for total cost "
+                   "evaluation, rc: %d", rc ) ;
+
+      rc = _toBSONOutputRecordsEval( builder ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for output records "
                    "evaluation, rc: %d", rc ) ;
 
    done :
@@ -2210,50 +2272,6 @@ namespace engine
       goto done ;
    }
 
-   INT32 _optIxScanNode::_toBSONPagesEval ( BSONObjBuilder & builder,
-                                            const CHAR * outputName,
-                                            const CHAR * inputName,
-                                            const CHAR * selName,
-                                            UINT32 inputValue,
-                                            double selectivity,
-                                            UINT32 outputValue ) const
-   {
-      StringBuilder formBuilder, evalBuilder ;
-
-      // max( 1, ceil( input * selectivity ) )
-      formBuilder << "max( 1, ceil( " << inputName << " * "
-                  << selName << " ) )" ;
-      evalBuilder << "max( 1, ceil( " << inputValue << " * "
-                  << selectivity << " ) )";
-
-      return _toBSONFieldEval( builder, outputName, formBuilder.str().c_str(),
-                               evalBuilder.str().c_str(),
-                               (INT32)outputValue ) ;
-   }
-
-   INT32 _optIxScanNode::_toBSONRecordsEval ( BSONObjBuilder & builder,
-                                              const CHAR * outputName,
-                                              const CHAR * inputName,
-                                              const CHAR * selName,
-                                              UINT64 inputValue,
-                                              double selectivity,
-                                              UINT64 outputValue ) const
-     {
-        StringBuilder formBuilder, evalBuilder ;
-
-        // max( 1, ceil( input * selectivity ) )
-        formBuilder << "max( 1, ceil( " << inputName << " * "
-                    << selName << " ) )" ;
-        evalBuilder << "max( 1, ceil( " << inputValue << " * "
-                    << selectivity << " ) )" ;
-
-        return _toBSONFieldEval( builder, outputName,
-                                 formBuilder.str().c_str(),
-                                 evalBuilder.str().c_str(),
-                                 (INT64)outputValue ) ;
-     }
-
-
    INT32 _optIxScanNode::_toBSONIOCostEval ( BSONObjBuilder & builder ) const
    {
       StringBuilder formBuilder, evalBuilder ;
@@ -2336,6 +2354,22 @@ namespace engine
                                formBuilder.str().c_str(),
                                evalBuilder.str().c_str(),
                                (INT64)_estStartCost ) ;
+   }
+
+   INT32 _optIxScanNode::_toBSONOutputRecordsEval ( BSONObjBuilder & builder ) const
+   {
+      StringBuilder formBuilder, evalBuilder ;
+
+      // max( 1, ceil( Records * min( IXPredSelectivity, MthSelectivity ) ) )
+      formBuilder << "max( 1, ceil( " << OPT_FIELD_RECORDS << " * min( "
+                  << OPT_FIELD_PRED_SEL << ", " << OPT_FIELD_MTH_SEL << " ) ) )" ;
+      evalBuilder << "max( 1, ceil( " << _inputRecords << " * min( "
+                  << _predSelectivity << ", " << _mthSelectivity << " ) ) )" ;
+
+      return _toBSONFieldEval( builder, OPT_FIELD_OUTPUT_RECORDS,
+                               formBuilder.str().c_str(),
+                               evalBuilder.str().c_str(),
+                               (INT64)_outputRecords ) ;
    }
 
    /*
@@ -2439,10 +2473,10 @@ namespace engine
          // 2. Read data from disk and merge
          //    75% is sequential read
          //    25% is random read
-         _estIOCost = (UINT64)_getInputPages( inputSize ) *
-                      (UINT64)ceil( (double) OPT_SEQ_WRITE_IO_COST +
-                                    (double) OPT_SEQ_SCAN_IO_COST * 0.75 +
-                                    (double) OPT_RANDOM_SCAN_IO_COST * 0.25 ) ;
+         _estIOCost = (UINT64)ceil( (double)_getInputPages( inputSize ) *
+                                    ( (double)OPT_SEQ_WRITE_IO_COST +
+                                      (double)OPT_SEQ_SCAN_IO_COST * 0.75 +
+                                      (double)OPT_RANDOM_SCAN_IO_COST * 0.25 ) ) ;
          _estSortType = OPT_PLAN_EXT_SORT ;
       }
       else
@@ -2481,14 +2515,22 @@ namespace engine
 
       UINT32 numOrderByFields = (UINT32)_orderBy.nFields() ;
       UINT64 inputRecords = childNode->getOutputRecords() ;
-      UINT64 inputSize = inputRecords * childNode->getOutputRecordSize() ;
-      UINT32 inputPages = OPT_ROUND_NUM( childNode->getOutputRecords() *
-                                         childNode->getOutputRecordSize() /
-                                         DMS_PAGE_SIZE_BASE ) ;
+      UINT32 inputRecordSize = childNode->getOutputRecordSize() ;
+      UINT64 inputSize = inputRecords * inputRecordSize ;
+      UINT32 inputPages = _getInputPages( inputSize ) ;
+
       builder.append( OPT_FIELD_RECORDS, (INT64)inputRecords ) ;
-      builder.append( OPT_FIELD_RECORD_TOTAL_SIZE, (INT64)inputSize ) ;
-      builder.append( OPT_FIELD_PAGES, (INT32)inputPages ) ;
       builder.append( OPT_FIELD_SORT_FIELDS, (INT32)numOrderByFields ) ;
+
+      rc = _toBSONInputSizeEval( builder, inputRecords, inputRecordSize,
+                                 inputSize ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for input size "
+                      "evaluation, rc: %d", rc ) ;
+
+      rc = _toBSONInputPageEval( builder, inputSize, inputPages ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for input size "
+                   "evaluation, rc: %d", rc ) ;
+
       builder.append( OPT_FIELD_SORT_TYPE,
                       ( _estSortType == OPT_PLAN_IN_MEM_SORT ?
                         OPT_VALUE_SORT_IN_MEM :
@@ -2496,8 +2538,8 @@ namespace engine
 
       if ( OPT_PLAN_EXT_SORT == _estSortType )
       {
-         rc = _toBSONIOCostEval( builder ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for IO Cost "
+         rc = _toBSONIOCostEval( builder, inputPages ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for IO cost "
                       "evaluation, rc: %d", rc ) ;
       }
       else
@@ -2505,20 +2547,24 @@ namespace engine
          builder.append( OPT_FIELD_IO_COST, (INT64)_estIOCost ) ;
       }
 
-      rc = _toBSONCPUCostEval( builder ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for CPU Cost "
+      rc = _toBSONCPUCostEval( builder, inputRecords ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for CPU cost "
                    "evaluation, rc: %d", rc ) ;
 
       rc = _toBSONStartCostEval( builder ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for start Cost "
+      PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for start cost "
                    "evaluation, rc: %d", rc ) ;
 
-      rc = _toBSONRunCostEval( builder ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for run Cost "
+      rc = _toBSONRunCostEval( builder, inputRecords ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for run cost "
                    "evaluation, rc: %d", rc ) ;
 
       rc = _toBSONTotalCostEval( builder ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for total Cost "
+      PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for total cost "
+                   "evaluation, rc: %d", rc ) ;
+
+      rc = _toBSONOutputRecordsEval( builder  ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for output records "
                    "evaluation, rc: %d", rc ) ;
 
    done :
@@ -2677,21 +2723,61 @@ namespace engine
       return rc ;
    }
 
-   INT32 _optSortNode::_toBSONIOCostEval ( BSONObjBuilder & builder ) const
+   INT32 _optSortNode::_toBSONInputSizeEval ( BSONObjBuilder & builder,
+                                              UINT64 records,
+                                              UINT32 recordSize,
+                                              UINT64 totalSize ) const
    {
       StringBuilder formBuilder, evalBuilder ;
 
-      // Pages * ( SeqWrtIOCostUnit + SeqReadIOCostUnit * 0.75 +
-      //           RandomReadIOCostUnit * 0.25 )
-      formBuilder << OPT_FIELD_PAGES << " * ( "
+      // Records * RecordSize
+      formBuilder << OPT_FIELD_RECORDS << " * "
+                  << OPT_FIELD_RECORD_SIZE ;
+
+      evalBuilder << records << " * " << recordSize ;
+
+      return _toBSONFieldEval( builder, OPT_FIELD_RECORD_TOTAL_SIZE,
+                               formBuilder.str().c_str(),
+                               evalBuilder.str().c_str(),
+                               (INT64)totalSize ) ;
+   }
+
+   INT32 _optSortNode::_toBSONInputPageEval ( BSONObjBuilder & builder,
+                                              UINT64 totalSize,
+                                              UINT32 totalPages ) const
+   {
+      StringBuilder formBuilder, evalBuilder ;
+
+      // max( 1, ceil( RecordTotalSize / PageUnit ) )
+      formBuilder << "max( 1, ceil( "
+                  << OPT_FIELD_RECORD_TOTAL_SIZE << " / "
+                  << OPT_FIELD_PAGE_UINT << ") )" ;
+
+      evalBuilder << "max( 1, ceil( "
+                  << totalSize << " / " << DMS_PAGE_SIZE_BASE << ") )" ;
+
+      return _toBSONFieldEval( builder, OPT_FIELD_PAGES,
+                               formBuilder.str().c_str(),
+                               evalBuilder.str().c_str(),
+                               (INT64)totalPages ) ;
+   }
+
+   INT32 _optSortNode::_toBSONIOCostEval ( BSONObjBuilder & builder,
+                                           UINT32 totalPages ) const
+   {
+      StringBuilder formBuilder, evalBuilder ;
+
+      // ceil( Pages * ( SeqWrtIOCostUnit + SeqReadIOCostUnit * 0.75 +
+      //                 RandomReadIOCostUnit * 0.25 ) )
+      formBuilder << "ceil( " << OPT_FIELD_PAGES << " * ( "
                   << OPT_FIELD_SEQ_WRITE_IO_COST << " + "
                   << OPT_FIELD_SEQ_IO_COST << " * 0.75 + "
-                  << OPT_FIELD_RAN_IO_COST << " * 0.25 )" ;
+                  << OPT_FIELD_RAN_IO_COST << " * 0.25 ) )" ;
 
-      evalBuilder << _getInputPages( _getInputSize() ) << " * ( " <<
-                  OPT_SEQ_WRITE_IO_COST << " + " <<
-                  OPT_SEQ_SCAN_IO_COST << " * 0.75 + " <<
-                  OPT_RANDOM_SCAN_IO_COST << " * 0.25 )" ;
+      evalBuilder << "ceil( " << totalPages << " * ( "
+                  << OPT_SEQ_WRITE_IO_COST << " + "
+                  << OPT_SEQ_SCAN_IO_COST << " * 0.75 + "
+                  << OPT_RANDOM_SCAN_IO_COST << " * 0.25 ) )" ;
 
       return _toBSONFieldEval( builder, OPT_FIELD_IO_COST,
                                formBuilder.str().c_str(),
@@ -2699,23 +2785,22 @@ namespace engine
                                (INT64)_estIOCost ) ;
    }
 
-   INT32 _optSortNode::_toBSONCPUCostEval ( BSONObjBuilder & builder ) const
+   INT32 _optSortNode::_toBSONCPUCostEval ( BSONObjBuilder & builder,
+                                            UINT64 records ) const
    {
       StringBuilder formBuilder, evalBuilder ;
 
-      UINT64 inputRecords = _getInputRecords() ;
-
-      // 2 * OptrCPUCost * SortFields * max( 2, Records ) *
-      // log2( max( 2, Records ) )
-      formBuilder << "2 * " << OPT_FIELD_OPTR_CPU_COST << " * "
+      // ceil( 2 * OptrCPUCost * SortFields * max( 2, Records ) *
+      //       log2( max( 2, Records ) ) )
+      formBuilder << "ceil( 2 * " << OPT_FIELD_OPTR_CPU_COST << " * "
                   << OPT_FIELD_SORT_FIELDS << " * "
                   << "max( 2, " << OPT_FIELD_RECORDS << " ) * log2( "
-                  << "max( 2, " << OPT_FIELD_RECORDS << " ) )" ;
+                  << "max( 2, " << OPT_FIELD_RECORDS << " ) ) )" ;
 
-      evalBuilder << "2 * " << OPT_OPTR_BASE_CPU_COST << " * "
+      evalBuilder << "ceil( 2 * " << OPT_OPTR_BASE_CPU_COST << " * "
                   << _orderBy.nFields() << " * "
-                  << "max( 2, " << inputRecords << " ) * log2( "
-                  << "max( 2, " << inputRecords << " ) )" ;
+                  << "max( 2, " << records << " ) * log2( "
+                  << "max( 2, " << records << " ) ) )" ;
 
       return _toBSONFieldEval( builder, OPT_FIELD_CPU_COST,
                                formBuilder.str().c_str(),
@@ -2744,7 +2829,8 @@ namespace engine
                                (INT64)_estStartCost ) ;
    }
 
-   INT32 _optSortNode::_toBSONRunCostEval ( BSONObjBuilder & builder ) const
+   INT32 _optSortNode::_toBSONRunCostEval ( BSONObjBuilder & builder,
+                                            UINT64 records ) const
    {
       StringBuilder formBuilder, evalBuilder ;
 
@@ -2752,12 +2838,26 @@ namespace engine
       formBuilder << OPT_FIELD_OPTR_CPU_COST << " * "
                   << OPT_FIELD_RECORDS ;
       evalBuilder << OPT_OPTR_BASE_CPU_COST << " * "
-                  << _getInputRecords() ;
+                  << records ;
 
       return _toBSONFieldEval( builder, OPT_FIELD_RUN_COST,
                                formBuilder.str().c_str(),
                                evalBuilder.str().c_str(),
                                (INT64)_estRunCost ) ;
+   }
+
+   INT32 _optSortNode::_toBSONOutputRecordsEval ( BSONObjBuilder & builder ) const
+   {
+      StringBuilder formBuilder, evalBuilder ;
+
+      // Records
+      formBuilder << OPT_FIELD_RECORDS ;
+      evalBuilder << _outputRecords ;
+
+      return _toBSONFieldEval( builder, OPT_FIELD_OUTPUT_RECORDS,
+                               formBuilder.str().c_str(),
+                               evalBuilder.str().c_str(),
+                               (INT64)_outputRecords ) ;
    }
 
    /*

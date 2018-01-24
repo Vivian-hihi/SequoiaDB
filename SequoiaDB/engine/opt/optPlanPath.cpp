@@ -1245,6 +1245,8 @@ namespace engine
                               (INT32)_pScanNode->getInputPages() ) ;
          inputBuilder.append( OPT_FIELD_RECORDS,
                               (INT64)_pScanNode->getInputRecords() ) ;
+         inputBuilder.append( OPT_FIELD_RECORD_SIZE,
+                              (INT32)_pScanNode->getInputRecordSize() ) ;
          inputBuilder.appendBool( OPT_FIELD_NEED_EVAL_IO,
                                   _pScanNode->needEvalIOCost() ) ;
 

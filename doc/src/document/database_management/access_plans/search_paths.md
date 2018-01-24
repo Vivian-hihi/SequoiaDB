@@ -68,7 +68,7 @@
 当 SdbQuery.explain() 的 Evaluate 选项为 true 时，将会展示查询优化器估算访问计划的总代价的演算过程。
 
 >   **Note:**
->  
+>
 >   1.  搜索过的访问计划不在访问计划缓存中，因此 Search 选项不使用缓存，重新估算
 >   2.  搜索过程将嵌套展示在数据节点每个集合的访问计划中
 
@@ -95,6 +95,7 @@ Search 选项为 true 时，将展示以下信息：
 | Inputs                      | BSON 对象 | 生成访问计划使用的输入项，集合的统计信息<br>Evaluate 选项为 true 时显示              |
 | Inputs.Pages                | 整型      | 集合的数据页个数                                                                     |
 | Inputs.Records              | 长整型    | 集合的数据个数                                                                       |
+| Inputs.RecordSize           | 整型      | 集合的数据平均长度                                                                   |
 | Inputs.NeedEvalIO           | 布尔型    | 根据 Input.Pages 和 Options.optcostthreshold 判断是否需要计算 IO 代价                |
 | Inputs.CLEstFromStat        | 布尔型    | 是否使用集合的统计信息进行估算                                                       |
 | Inputs.CLStatTime           | 时间戳    | 使用的集合的统计信息的生成时间                                                       |
@@ -205,6 +206,7 @@ TBSCAN 的推演公式将展示以下信息：
 | StartCost      | 数组   | 估算的 TBSCAN 的启动代价（内部表示）<br>公式为：```TBScanStartCost``` |
 | RunCost        | 数组   | 估算的 TBSCAN 的运行代价（内部表示）<br>公式为：```IOCPURate * IOCost + CPUCost``` |
 | TotalCost      | 数组   | 估算的 TBSCAN 的总代价（内部表示）<br>公式为：```StartCost + RunCost``` |
+| OutputRecords  | 数组   | 估算的 TBSCAN 的输出记录个数<br>公式为：```max( 1, ceil( Records * MthSelectivity ) )``` |
 
 **示例**
 
@@ -236,6 +238,11 @@ TBSCAN 的推演公式将展示以下信息：
     "StartCost + RunCost",
     "0 + 2768000",
     2768000
+  ],
+  "OutputRecords": [
+    "max( 1, ceil( Records * MthSelectivity ) )",
+    "max( 1, ceil( 100000 * 1 ) )",
+    100000
   ]
 }
 ```
@@ -262,6 +269,7 @@ IXSCAN 的推演公式将展示以下信息：
 | StartCost        | 数组   | 估算的 IXSCAN 的启动代价（内部表示）<br>公式为：```IXScanStartCost + PredCPUCost * IndexLevels``` |
 | RunCost          | 数组   | 估算的 IXSCAN 的运行代价（内部表示）<br>公式为：```IOCPURate * IOCost + CPUCost``` |
 | TotalCost        | 数组   | 估算的 IXSCAN 的总代价（内部表示）<br>公式为：```StartCost + RunCost``` |
+| OutputRecords    | 数组   | 估算的 IXSCAN 的输出记录个数<br>公式为：```max( 1, ceil( Records * min( IXPredSelectivity, MthSelectivity ) ) )``` |
 
 **示例**
 
@@ -318,6 +326,11 @@ IXSCAN 的推演公式将展示以下信息：
     "StartCost + RunCost",
     "1 + 640007",
     640008
+  ],
+  "OutputRecords": [
+    "max( 1, ceil( Records * min( IXPredSelectivity, MthSelectivity ) ) )",
+    "max( 1, ceil( 100000 * min( 0.00001, 0.00001 ) ) )",
+    1
   ]
 }
 ```
@@ -329,45 +342,63 @@ SORT 的推演公式将展示以下信息：
 | 字段名          | 类型   | 描述 |
 | --------------- | ------ | ---- |
 | Records         | 长整型 | 估算的 SORT 输入的记录个数 |
-| RecordTotalSize | 长整型 | 估算的 SORT 输入的记录总大小 |
-| Pages           | 整型   | 估算的 SORT 输入的记录页数（输入记录个数的总大小存放入 4K 页面中的页数） |
 | SortFields      | 整型   | SORT 进行排序的字段个数 |
+| RecordTotalSize | 长整型 | 估算的 SORT 输入的记录总大小<br>公式为：```Records * RecordSize``` |
+| Pages           | 整型   | 估算的 SORT 输入的记录页数（输入记录个数的总大小存放入 4K 页面中的页数）<br>公式为：```max( 1, ceil( RecordTotalSize / PageUnit) )``` |
 | SortType        | 字符串 | SORT 估算的排序类型<br>RecordTotalSize 小于 sortbuff 时，"InMemory" 为内存排序<br>RecordTotalSize 大于 sortbuff 时，"External" 为外存排序 |
-| IOCost          | 数组   | 估算的 SORT 的 IO 代价的公式及计算过程<br>SortType 为 "InMemory" 时不需要计算<br>各个数据页需要写出磁盘，并进行归并排序，假设归并排序中 75% 为顺序读，25% 为随机读<br>公式为：```Pages * ( SeqWrtIOCostUnit + SeqReadIOCostUnit * 0.75 + RandomReadIOCostUnit * 0.25 )``` |
-| CPUCost         | 数组   | 估算的 SORT 的 CPU 代价的公式及计算过程<br>即各个记录进行排序的代价<br>公式为：```2 * OptrCPUCost * SortFields * max( 2, Records ) * log2( max( 2, Records ) )``` |
+| IOCost          | 数组   | 估算的 SORT 的 IO 代价的公式及计算过程<br>SortType 为 "InMemory" 时不需要计算<br>各个数据页需要写出磁盘，并进行归并排序，假设归并排序中 75% 为顺序读，25% 为随机读<br>公式为：```ceil( Pages * ( SeqWrtIOCostUnit + SeqReadIOCostUnit * 0.75 + RandomReadIOCostUnit * 0.25 ) )``` |
+| CPUCost         | 数组   | 估算的 SORT 的 CPU 代价的公式及计算过程<br>即各个记录进行排序的代价<br>公式为：```ceil( 2 * OptrCPUCost * SortFields * max( 2, Records ) * log2( max( 2, Records ) ) )``` |
 | StartCost       | 数组   | 估算的 SORT 的启动代价<br>需要计算子操作的总代价和排序的代价<br>公式为：```ChildTotalCost + IOCPURate * IOCost + CPUCost``` |
 | RunCost         | 数组   | 估算的 SORT 的运行代价（内部表示）<br>即从排序缓存中提取各个记录的代价<br>公式为：```OptrCPUCost * Records``` |
 | TotalCost       | 数组   | 估算的 SORT 的总代价（内部表示）<br>公式为：```StartCost + RunCost``` |
+| OutputRecords   | 数组   | 估算的 SORT 的输出记录个数<br>公式为：```Records``` |
 
 **示例**
 
 ```
 "SortNode": {
-  "Records": 100000,
-  "RecordTotalSize": 2900000,
-  "Pages": 708,
+  "Records": 1000000,
   "SortFields": 1,
-  "SortType": "InMemory",
-  "IOCost": 0,
+  "RecordTotalSize": [
+    "Records * RecordSize",
+    "1000000 * 269",
+    269000000
+  ],
+  "Pages": [
+    "max( 1, ceil( RecordTotalSize / PageUnit) )",
+    "max( 1, ceil( 269000000 / 4096) )",
+    65674
+  ],
+  "SortType": "External",
+  "IOCost": [
+    "ceil( Pages * ( SeqWrtIOCostUnit + SeqReadIOCostUnit * 0.75 + RandomReadIOCostUnit * 0.25 ) )",
+    "ceil( 65674 * ( 2 + 1 * 0.75 + 10 * 0.25 ) )",
+    344789
+  ],
   "CPUCost": [
-    "2 * OptrCPUCost * SortFields * max( 2, Records ) * log2( max( 2, Records ) )",
-    "2 * 1 * 1 * max( 2, 100000 ) * log2( max( 2, 100000 ) )",
-    3321929
+    "ceil( 2 * OptrCPUCost * SortFields * max( 2, Records ) * log2( max( 2, Records ) ) )",
+    "ceil( 2 * 1 * 1 * max( 2, 1000000 ) * log2( max( 2, 1000000 ) ) )",
+    39863138
   ],
   "StartCost": [
     "ChildTotalCost + IOCPURate * IOCost + CPUCost",
-    "2768000 + 2000 * 0 + 3321929",
-    6089929
+    "160864000 + 2000 * 344789 + 39863138",
+    890305138
   ],
   "RunCost": [
     "OptrCPUCost * Records",
-    "1 * 100000",
-    100000
+    "1 * 1000000",
+    1000000
   ],
   "TotalCost": [
     "StartCost + RunCost",
-    "6089929 + 100000",
-    6189929
+    "890305138 + 1000000",
+    891305138
+  ],
+  "OutputRecords": [
+    "Records",
+    "1000000",
+    1000000
   ]
 }
 ```

@@ -424,6 +424,11 @@ namespace engine
             return _inputPages ;
          }
 
+         OSS_INLINE UINT32 getInputRecordSize () const
+         {
+            return _inputRecordSize ;
+         }
+
          OSS_INLINE INT32 getCostThreshold () const
          {
             return _estCacheSize ;
@@ -570,6 +575,22 @@ namespace engine
          INT32 _toBSONRunCostEval ( BSONObjBuilder & builder,
                                     BOOLEAN needIOCost ) const ;
 
+         INT32 _toBSONPagesEval ( BSONObjBuilder & builder,
+                                  const CHAR * outputName,
+                                  const CHAR * inputName,
+                                  const CHAR * selName,
+                                  UINT32 inputValue,
+                                  double selectivity,
+                                  UINT32 outputValue ) const ;
+
+         INT32 _toBSONRecordsEval ( BSONObjBuilder & builder,
+                                    const CHAR * outputName,
+                                    const CHAR * inputName,
+                                    const CHAR * selName,
+                                    UINT64 inputValue,
+                                    double selectivity,
+                                    UINT64 outputValue ) const ;
+
       protected :
          const CHAR *      _pCollection ;
 
@@ -680,6 +701,8 @@ namespace engine
          INT32 _toBSONCPUCostEval ( BSONObjBuilder & builder ) const ;
 
          INT32 _toBSONStartCostEval ( BSONObjBuilder & builder ) const ;
+
+         INT32 _toBSONOutputRecordsEval ( BSONObjBuilder & builder ) const ;
    } ;
 
    /*
@@ -818,27 +841,13 @@ namespace engine
 
          virtual INT32 _toBSONRunImpl ( BSONObjBuilder & builder ) const ;
 
-         INT32 _toBSONPagesEval ( BSONObjBuilder & builder,
-                                  const CHAR * outputName,
-                                  const CHAR * inputName,
-                                  const CHAR * selName,
-                                  UINT32 inputValue,
-                                  double selectivity,
-                                  UINT32 outputValue ) const ;
-
-         INT32 _toBSONRecordsEval ( BSONObjBuilder & builder,
-                                    const CHAR * outputName,
-                                    const CHAR * inputName,
-                                    const CHAR * selName,
-                                    UINT64 inputValue,
-                                    double selectivity,
-                                    UINT64 outputValue ) const ;
-
          INT32 _toBSONIOCostEval ( BSONObjBuilder & builder ) const ;
 
          INT32 _toBSONCPUCostEval ( BSONObjBuilder & builder ) const ;
 
          INT32 _toBSONStartCostEval ( BSONObjBuilder & builder ) const ;
+
+         INT32 _toBSONOutputRecordsEval ( BSONObjBuilder & builder ) const ;
 
       protected :
          CHAR              _pIndexName [ IXM_INDEX_NAME_SIZE + 1 ] ;
@@ -949,14 +958,8 @@ namespace engine
 
          OSS_INLINE UINT32 _getInputPages ( UINT64 inputSize ) const
          {
-            return OPT_ROUND_NUM( inputSize / DMS_PAGE_SIZE_BASE ) ;
-         }
-
-         OSS_INLINE UINT64 _getInputRecords () const
-         {
-            SDB_ASSERT( _childNodes.size() == 1, "Should have only one child node" ) ;
-            const _optPlanNode *childNode = _childNodes.front() ;
-            return (double)( OSS_MAX( 2, childNode->getOutputRecords() ) ) ;
+            return OPT_ROUND_NUM( (UINT32)ceil( (double)inputSize /
+                                                (double)DMS_PAGE_SIZE_BASE ) ) ;
          }
 
          OSS_INLINE UINT64 _getInputTotalCost () const
@@ -983,13 +986,27 @@ namespace engine
                                                BOOLEAN needExpand,
                                                UINT16 mask ) const ;
 
-         INT32 _toBSONIOCostEval ( BSONObjBuilder & builder ) const ;
+         INT32 _toBSONInputSizeEval ( BSONObjBuilder & builder,
+                                      UINT64 records,
+                                      UINT32 recordSize,
+                                      UINT64 totalSize ) const ;
 
-         INT32 _toBSONCPUCostEval ( BSONObjBuilder & builder ) const ;
+         INT32 _toBSONInputPageEval ( BSONObjBuilder & builder,
+                                      UINT64 totalSize,
+                                      UINT32 totalPages ) const ;
+
+         INT32 _toBSONIOCostEval ( BSONObjBuilder & builder,
+                                   UINT32 totalPages ) const ;
+
+         INT32 _toBSONCPUCostEval ( BSONObjBuilder & builder,
+                                    UINT64 records ) const ;
 
          INT32 _toBSONStartCostEval ( BSONObjBuilder & builder ) const ;
 
-         INT32 _toBSONRunCostEval ( BSONObjBuilder & builder ) const ;
+         INT32 _toBSONRunCostEval ( BSONObjBuilder & builder,
+                                    UINT64 records ) const ;
+
+         INT32 _toBSONOutputRecordsEval ( BSONObjBuilder & builder ) const ;
 
       protected :
          OPT_PLAN_SORT_TYPE   _estSortType ;
