@@ -106,14 +106,6 @@ namespace engine
             }
          }
 
-         mondbcb->connInc();
-         if ( mondbcb->isConnLimited() )
-         {
-            ossSocket newsock ( &s ) ;
-            newsock.close () ;
-            mondbcb->connDec();
-            continue ;
-         }
 
          cb->incEventCount() ;
          ++mondbcb->numConnects ;
@@ -130,6 +122,15 @@ namespace engine
 
             SDB_OSS_DEL pParam ;
             pParam = NULL ;
+            continue ;
+         }
+
+         mondbcb->connInc();
+         if ( mondbcb->isConnLimited() )
+         {
+            ossSocket newsock ( &s ) ;
+            newsock.close () ;
+            mondbcb->connDec();
             continue ;
          }
 

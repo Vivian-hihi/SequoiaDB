@@ -126,15 +126,6 @@ namespace engine
             }
          }
 
-         mondbcb->connInc() ;
-         if ( mondbcb->isConnLimited() )
-         {
-            ossSocket newsock ( &s ) ;
-            newsock.close () ;
-            mondbcb->connDec();
-            continue ;
-         }
-         
          cb->incEventCount() ;
          ++mondbcb->numConnects ;
 
@@ -149,7 +140,16 @@ namespace engine
             continue ;
          }
 
-         // now we have a tcp socket for a new connection, let's get an
+         mondbcb->connInc() ;
+         if ( mondbcb->isConnLimited() )
+         {
+            ossSocket newsock ( &s ) ;
+            newsock.close () ;
+            mondbcb->connDec();
+            continue ;
+         }
+         
+         // now we have a tcp socket for a new connection, let's get an 
          // agent, Note the new new socket sent passing to startEDU
          rc = eduMgr->startEDU ( EDU_TYPE_AGENT, pData, &agentEDU ) ;
          if ( rc )
