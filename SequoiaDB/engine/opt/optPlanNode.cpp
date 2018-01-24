@@ -2924,12 +2924,25 @@ namespace engine
             BSONObj pathObject ;
             const CHAR * optrName = NULL ;
             const CHAR * childNodeName = NULL ;
+            ossTickConversionFactor factor ;
+            UINT32 seconds = 0, microseconds = 0 ;
+            double realQueryTime = 0.0 ;
             optChildNodeSummary childSummary ;
 
             rc = rtnGetStringElement( explainResult, _getChildExplainName(),
                                       &childNodeName ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to get field [%s], rc: %d",
                          _getChildExplainName(), rc ) ;
+
+            rc = rtnGetDoubleElement( explainResult, OPT_FIELD_ELAPSED_TIME,
+                                      realQueryTime ) ;
+            if ( SDB_OK != rc )
+            {
+               queryTime.convertToTime( factor, seconds, microseconds ) ;
+               realQueryTime = (double)( seconds ) +
+                               (double)( microseconds ) / (double)( OSS_ONE_MILLION ) ;
+               rc = SDB_OK ;
+            }
 
             rc = rtnGetObjElement( explainResult, OPT_FIELD_PLAN_PATH,
                                    pathObject ) ;
@@ -2981,8 +2994,12 @@ namespace engine
             // Construct summary
             childSummary._name = childNodeName ;
             childSummary._estTotalCost = newNode->getEstTotalCost() ;
-            childSummary._queryTime = queryTime ;
-            childSummary._waitTime = waitTime ;
+            childSummary._queryTime = realQueryTime ;
+            waitTime.convertToTime( factor, seconds, microseconds ) ;
+            childSummary._waitTime = (double)( seconds ) +
+                                     (double)( microseconds ) /
+                                     (double)( OSS_ONE_MILLION ) ;
+
             _childSummary.push_back( childSummary ) ;
          }
       }
@@ -3212,19 +3229,8 @@ namespace engine
 
          if ( OSS_BIT_TEST( mask, OPT_NODE_EXPLAIN_MASK_RUN ) )
          {
-            ossTickConversionFactor factor ;
-            UINT32 seconds = 0, microseconds = 0 ;
-            double queryTime = 0.0, waitTime = 0.0 ;
-
-            iter->_queryTime.convertToTime( factor, seconds, microseconds ) ;
-            queryTime = (double)( seconds ) +
-                        (double)( microseconds ) / (double)( OSS_ONE_MILLION ) ;
-            summaryBuilder.append( OPT_FIELD_QUERY_TIME_SPENT, queryTime ) ;
-
-            iter->_waitTime.convertToTime( factor, seconds, microseconds ) ;
-            waitTime = (double)( seconds ) +
-                        (double)( microseconds ) / (double)( OSS_ONE_MILLION ) ;
-            summaryBuilder.append( OPT_FIELD_WAIT_TIME_SPENT, waitTime ) ;
+            summaryBuilder.append( OPT_FIELD_QUERY_TIME_SPENT, iter->_queryTime ) ;
+            summaryBuilder.append( OPT_FIELD_WAIT_TIME_SPENT, iter->_waitTime ) ;
          }
 
          summaryBuilder.done() ;

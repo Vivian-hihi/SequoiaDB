@@ -110,8 +110,8 @@ namespace engine
       _optChildNodeSummary ()
       : _name( NULL ),
         _estTotalCost( 0 ),
-        _queryTime(),
-        _waitTime()
+        _queryTime( 0.0 ),
+        _waitTime( 0.0 )
       {
       }
 
@@ -126,8 +126,8 @@ namespace engine
 
       const CHAR *   _name ;
       UINT64         _estTotalCost ;
-      ossTickDelta   _queryTime ;
-      ossTickDelta   _waitTime ;
+      double         _queryTime ;
+      double         _waitTime ;
    } optChildNodeSummary ;
 
    typedef _utilList< optChildNodeSummary > optChildSummaryList ;
