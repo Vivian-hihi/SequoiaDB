@@ -11,7 +11,7 @@
 
 ##相关内容##
 
-1.  [基于代价的访问计划评估](database_management/access_plans/search_paths.md)：查询计划优化器使用基于代价的方式对候选访问计划进行评估
+1.  [基于代价的访问计划评估](database_management/access_plans/search_paths/overview.md)：查询计划优化器使用基于代价的方式对候选访问计划进行评估
 2.  [统计信息](database_management/statistics/statistics.md)：统计信息可以帮助查询优化器获得更好的访问计划
-3.  [查看访问计划](database_management/access_plans/detailed_access_plan.md)：SdbQuery.explain() 的 Detail 选项可以查看详细的访问计划
+3.  [查看访问计划](database_management/access_plans/detailed_access_plan/overview.md)：SdbQuery.explain() 的 Detail 选项可以查看详细的访问计划
 4.  [访问计划缓存](database_management/access_plans/plan_cache.md)：数据节点上可以通过缓存访问计划来加速查询

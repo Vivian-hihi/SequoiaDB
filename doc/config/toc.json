@@ -725,20 +725,108 @@
                   {
                      "id": 1513325501,
                      "file": "access_plans",
-                     "cn": "访问计划",
-                     "en": "Access Plans"
+                     "cn": "概述",
+                     "en": "Overview"
                   },
                   {
                      "id": 1513325502,
-                     "file": "search_paths",
+                     "dir": "search_paths",
                      "cn": "基于代价的访问计划评估",
-                     "en": "Evaluate Access Plans"
+                     "en": "Evaluate Access Plans",
+                     "contents": [
+                        {
+                           "id": 1516795220,
+                           "file": "overview",
+                           "cn": "概述",
+                           "en": "Overview"
+                        },
+                        {
+                           "id": 1516795221,
+                           "file": "search",
+                           "cn": "访问计划的搜索过程",
+                           "en": "Search Paths"
+                        },
+                        {
+                           "id": 1516795222,
+                           "file": "TBSCAN",
+                           "cn": "TBSCAN的推演公式",
+                           "en": "Evaluation of TBSCAN"
+                        },
+                        {
+                           "id": 1516795223,
+                           "file": "IXSCAN",
+                           "cn": "IXSCAN的推演公式",
+                           "en": "Evaluation of IXSCAN"
+                        },
+                        {
+                           "id": 1516795224,
+                           "file": "SORT",
+                           "cn": "SORT的推演公式",
+                           "en": "Evaluation of SORT"
+                        }
+                     ]
                   },
                   {
                      "id": 1513325503,
-                     "file": "detailed_access_plan",
+                     "dir": "detailed_access_plan",
                      "cn": "查看访问计划",
-                     "en": "Explain Access Plans"
+                     "en": "Explain Access Plans",
+                     "contents": [
+                        {
+                           "id": 1516787550,
+                           "file": "overview",
+                           "cn": "概述",
+                           "en": "Overview"
+                        },
+                        {
+                           "id": 1516787551,
+                           "file": "coord_plan",
+                           "cn": "协调节点的访问计划",
+                           "en": "Access Plan of Coord Node"
+                        },
+                        {
+                           "id": 1516787552,
+                           "file": "main_collection_plan",
+                           "cn": "主表的访问计划",
+                           "en": "Access Plan of Main-Collection"
+                        },
+                        {
+                           "id": 1516787553,
+                           "file": "collection_plan",
+                           "cn": "数据节点的访问计划",
+                           "en": "Access Plan of Data Node"
+                        },
+                        {
+                           "id": 1516787554,
+                           "file": "COORD_MERGE",
+                           "cn": "COORD-MERGE操作的信息",
+                           "en": "COORD-MERGE Operator"
+                        },
+                        {
+                           "id": 1516787555,
+                           "file": "MERGE",
+                           "cn": "MERGE操作的信息",
+                           "en": "MERGE Operator"
+                        },
+                        {
+                           "id": 1516787556,
+                           "file": "SORT",
+                           "cn": "SORT操作的信息",
+                           "en": "SORT Operator"
+                        },
+                        {
+                           "id": 1516787557,
+                           "file": "TBSCAN",
+                           "cn": "TBSCAN操作的信息",
+                           "en": "TBSCAN Operator"
+                        },
+                        {
+                           "id": 1516787558,
+                           "file": "IXSCAN",
+                           "cn": "IXSCAN操作的信息",
+                           "en": "IXSCAN Operator"
+                        }
+                     ]
                   },
                   {
                      "id": 1513325504,
@@ -1843,22 +1931,16 @@
                      "en": "SdbQuery",
                      "contents": [
                         {
-                           "id": 1432190854,
-                           "file": "explain",
-                           "cn": "explain()",
-                           "en": "explain()"
-                        },
-                        {
                            "id": 1432190855,
                            "file": "count",
                            "cn": "count()",
                            "en": "count()"
                         },
                         {
-                           "id": 1432190856,
-                           "file": "query",
-                           "cn": "query()",
-                           "en": "query()"
+                           "id": 1432190854,
+                           "file": "explain",
+                           "cn": "explain()",
+                           "en": "explain()"
                         },
                         {
                            "id": 1432190857,
@@ -1871,6 +1953,12 @@
                            "file": "limit",
                            "cn": "limit()",
                            "en": "limit()"
+                        },
+                        {
+                           "id": 1432190856,
+                           "file": "query",
+                           "cn": "query()",
+                           "en": "query()"
                         },
                         {
                            "id": 1432190859,

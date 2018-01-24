@@ -12,7 +12,7 @@ SDB_SNAP_ACCESSPLANS
 
 | 字段名               | 类型      | 描述                                           |
 | -------------------- | --------- | ---------------------------------------------- |
-| NodeName             | 字符串    | 该访问计划所在的节点名（主机名：端口号：ID）   |
+| NodeName             | 字符串    | 该访问计划所在的节点名（"主机名:端口号"）      |
 | GroupName            | 字符串    | 该访问计划所在的数据组名                       |
 | Collection           | 字符串    | 该访问计划所在的集合名                         |
 | CollectionSpace      | 字符串    | 该访问计划所在的集合空间名                     |
@@ -29,10 +29,13 @@ SDB_SNAP_ACCESSPLANS
 | RefCount             | 整型      | 该访问计划正在被使用的查询个数                 |
 | ParamPlanValid       | 布尔型    | 该访问计划是否参数化有效的访问计划             |
 | MainCLPlanValid      | 布尔型    | 该访问计划是否主表有效的访问计划               |
-| ValidParams          | BSON 对象数组 | 该访问计划已经生效的参数列表（ParamPlanValid 或 MainCLPlanValid 为 false 时显示） |
-| ValidParams.Collection | 字符串 | 该访问计划为主表访问计划时生效的子表名          |
+| ValidParams          | BSON 对象数组 | 该访问计划已经生效的参数列表（ParamPlanValid 为 false 时显示） |
 | ValidParams.Parameters | 数组   | 该访问计划生效的参数                            |
 | ValidParams.Score      | 浮点数 | 该访问计划生效的参数的评分                      |
+| ValidSubCLs          | BSON 对象数组 | 该访问计划已经生效的参数列表（MainCLPlanValid 为 false 时显示） |
+| ValidSubCLs.Collection | 字符串 | 该访问计划为主表访问计划时生效的子表名          |
+| ValidSubCLs.Parameters | 数组   | 该访问计划生效的参数                            |
+| ValidSubCLs.Score      | 浮点数 | 该访问计划生效的参数的评分                      |
 | AccessCount          | 长整型    | 该访问计划使用次数累计                         |
 | TotalQueryTime       | 浮点型    | 该访问计划的累计执行时间（单位：秒）           |
 | AvgQueryTime         | 浮点型    | 该访问计划的平均执行时间（单位：秒）           |
@@ -51,7 +54,7 @@ SDB_SNAP_ACCESSPLANS
 | StartTimestamp       | 字符串    | 查询启动的时间戳                               |
 | Selector             | BSON 对象 | 查询使用的选择符                               |
 | Skip                 | 长整型    | 查询需要跳过的记录个数                         |
-| Limit                | 长整型    | 查询需要最多返回的记录个数                     |
+| Return               | 长整型    | 查询需要最多返回的记录个数                     |
 | Flag                 | 整型      | 查询使用的标志位                               |
 | DataRead             | 长整型    | 查询读取的记录个数                             |
 | IndexRead            | 长整型    | 查询通过索引读取的记录个数                     |
