@@ -14,6 +14,8 @@ function main()
    //create cl	
    var clName = COMMCLNAME + "11757";
    var dbcl = commCreateCL( db, csName, clName );
+   
+   var clFullName = csName + "." + clName;
 	
    //insert datas
    var insertNums = 150;
@@ -28,6 +30,13 @@ function main()
    //check SampleNum
    checkStat( db, csName, clName, "", false, false );
    
+   //check out snapshot access plans
+	var accessFindOption = { Collection: clFullName };
+   var actAccessPlans = getCommonAccessPlans(db, accessFindOption);
+   var expAccessPlans = [];
+                     
+   checkSnapShotAccessPlans(clFullName, expAccessPlans, actAccessPlans);
+   
    var expResult = { "SampleRecords": 150, "TotalRecords": 150 };
    checkInfoState( csName, clName, expResult );
    
@@ -41,6 +50,13 @@ function main()
    //check SampleNum again 
    checkStat( db, csName, clName, "", false, false );
    
+   //check out snapshot access plans
+	var accessFindOption = { Collection: clFullName };
+   var actAccessPlans = getCommonAccessPlans(db, accessFindOption);
+   var expAccessPlans = [];
+                     
+   checkSnapShotAccessPlans(clFullName, expAccessPlans, actAccessPlans);
+   
    var expResult = { "SampleRecords": 150, "TotalRecords": 300 };
    checkInfoState( csName, clName, expResult );
    
@@ -50,6 +66,13 @@ function main()
    
    //check SampleNum again 
    checkStat( db, csName, clName, "", false, false );
+   
+    //check out snapshot access plans
+	var accessFindOption = { Collection: clFullName };
+   var actAccessPlans = getCommonAccessPlans(db, accessFindOption);
+   var expAccessPlans = [];
+                     
+   checkSnapShotAccessPlans(clFullName, expAccessPlans, actAccessPlans);
    
    var expResult = { "SampleRecords": 200, "TotalRecords": 300 };
    checkInfoState( csName, clName, expResult );

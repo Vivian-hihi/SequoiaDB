@@ -45,14 +45,14 @@ function main()
    checkExplain( actExplains, expExplains );
    
    //query
-   query(dbclPrimary, findConf);
-   query(dbclSlave, findConf);
+   query(dbclPrimary, findConf, null, null, 1);
+   query(dbclSlave, findConf, null, null, 1);
    
    //check out snapshot access plans
 	var accessFindOption = { Collection: clFullName };
    var actAccessPlans = getCommonAccessPlans(db, accessFindOption);
-   var expAccessPlans = [{ScanType:"ixscan", IndexName:"$id", ReturnNum:1},
-	                      {ScanType:"ixscan", IndexName:"$id", ReturnNum:1}];
+   var expAccessPlans = [{ScanType:"ixscan", IndexName:"$id"},
+	                      {ScanType:"ixscan", IndexName:"$id"}];
                      
    checkSnapShotAccessPlans(clFullName, expAccessPlans, actAccessPlans);
                                                                           	
@@ -83,14 +83,14 @@ function main()
    checkExplain( actExplains, expExplains );
    
    //query
-   query(dbclPrimary, findConf);
-   query(dbclSlave, findConf);
+   query(dbclPrimary, findConf, null, null, 1);
+   query(dbclSlave, findConf, null, null, 1);
    
    //check out snapshot access plans
 	var accessFindOption = { Collection: clFullName };
    var actAccessPlans = getCommonAccessPlans(db, accessFindOption);
-   var expAccessPlans = [{ScanType:"ixscan", IndexName:"$id", ReturnNum:1},
-	                      {ScanType:"ixscan", IndexName:"$id", ReturnNum:1}];
+   var expAccessPlans = [{ScanType:"ixscan", IndexName:"$id"},
+	                      {ScanType:"ixscan", IndexName:"$id"}];
                      
    checkSnapShotAccessPlans(clFullName, expAccessPlans, actAccessPlans);
    

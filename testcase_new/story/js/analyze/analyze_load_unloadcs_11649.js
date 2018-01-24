@@ -14,6 +14,8 @@ function main()
    //create cl	
    var clName = COMMCLNAME + "11649";
    var dbcl = commCreateCL( db, csName, clName );
+   
+   var clFullName = csName + "." + clName;
                                                   	
    //get master/slave datanode          
    var db1 = new Sdb(db);
@@ -46,7 +48,7 @@ function main()
    
    var actExplains = getCommonExplain( dbclSlave, findConf);
    checkExplain( actExplains, expExplains );
-                              	
+                           	
    println("check result before analyze success!");
                                    	
    //invoke analyze
@@ -55,7 +57,14 @@ function main()
                               	
    //check after analyze success
    checkStat( db, csName, clName, "a", true, true );
-                                           	
+                     
+   //check out snapshot access plans
+	var accessFindOption = { Collection: clFullName };
+   var actAccessPlans = getCommonAccessPlans(db, accessFindOption);
+   var expAccessPlans = [];
+                     
+   checkSnapShotAccessPlans(clFullName, expAccessPlans, actAccessPlans);
+                     
    //check the query explain after analyze
    var findConf = {a : 9000};
    var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
@@ -65,23 +74,49 @@ function main()
                                            
    var actExplains = getCommonExplain( dbclSlave, findConf);
    checkExplain( actExplains, expExplains );
+   
+   //query
+   query(dbclPrimary, findConf, null, null, insertNums);
+   query(dbclSlave, findConf, null, null, insertNums);
+   
+   //check out snapshot access plans
+	var accessFindOption = { Collection: clFullName };
+   var actAccessPlans = getCommonAccessPlans(db, accessFindOption);
+   var expAccessPlans = [{ScanType:"tbscan", IndexName:""},
+	                      {ScanType:"tbscan", IndexName:""}];
+                     
+   checkSnapShotAccessPlans(clFullName, expAccessPlans, actAccessPlans);
                                              	
    println("check result after analyze success!");
                                             	
    //unload cs
-   var dataDB = getDataDB(csName, clName);
-   dataDB.unloadCS(csName);
+   var primaryDB = getPrimaryNodeDB(csName, clName);
+   primaryDB.unloadCS(csName);
                                	
    //check after unload
    checkStat( db, csName, clName, "a", true, true );
+   
+   //check out snapshot access plans
+	var accessFindOption = { Collection: clFullName };
+   var actAccessPlans = getCommonAccessPlans(db, accessFindOption);
+   var expAccessPlans = [{ScanType:"tbscan", IndexName:""} ];
+	                                
+   checkSnapShotAccessPlans(clFullName, expAccessPlans, actAccessPlans);
                                     	
    println("check unload result success!");
                                        	
    //load cs
-   dataDB.loadCS(csName);
+   primaryDB.loadCS(csName);
                           	
    //check after load
    checkStat( db, csName, clName, "a", true, true );
+   
+   //check out snapshot access plans
+	var accessFindOption = { Collection: clFullName };
+   var actAccessPlans = getCommonAccessPlans(db, accessFindOption);
+   var expAccessPlans = [{ScanType:"tbscan", IndexName:""} ];
+	                                
+   checkSnapShotAccessPlans(clFullName, expAccessPlans, actAccessPlans);
                                    	
    var findConf = {a : 9000};
    var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
@@ -91,6 +126,18 @@ function main()
    
    var actExplains = getCommonExplain( dbclSlave, findConf);
    checkExplain( actExplains, expExplains );
+   
+   //query
+   query(dbclPrimary, findConf, null, null, insertNums);
+   query(dbclSlave, findConf, null, null, insertNums);
+   
+   //check out snapshot access plans
+	var accessFindOption = { Collection: clFullName };
+   var actAccessPlans = getCommonAccessPlans(db, accessFindOption);
+   var expAccessPlans = [{ScanType:"tbscan", IndexName:""},
+	                      {ScanType:"tbscan", IndexName:""}];
+                     
+   checkSnapShotAccessPlans(clFullName, expAccessPlans, actAccessPlans);
                                        	
    println("check load result success!");
                                    	
@@ -98,7 +145,7 @@ function main()
    commDropCS( db, csName, true, "drop CS in the end" );
 }
 
-function getDataDB( csName, clName )
+function getPrimaryNodeDB( csName, clName )
 {  
    if (commIsStandalone(db))
    {  
@@ -113,22 +160,6 @@ function getDataDB( csName, clName )
    var hostName = groupDetail[0][priNodePos].HostName;
    var svcName = groupDetail[0][priNodePos].svcname;
    return new Sdb(hostName, svcName);
-}
-
-function checkAnalyzeInvalidResult( options )
-{  
-   try
-   {
-      db.analyze( options );
-      throw "NEED ANALYZE FAILED";
-   }
-   catch(e)
-   {
-      if( -6 !== e )
-      {
-         throw buildException("check analyze", e, "analyze", "analyze success", e);
-      }
-   }
 }
 
 main();

@@ -110,14 +110,14 @@ function main()
    checkExplain( actExplains4, expExplains4 );
    
    //query
-   query(dbclPrimary1, findConf1);
-   query(dbclPrimary1, findConf2);
-   query(dbclPrimary2, findConf1);
-   query(dbclPrimary2, findConf2);
-   query(dbclSlave1, findConf1);
-   query(dbclSlave1, findConf2);
-   query(dbclSlave2, findConf1);
-   query(dbclSlave2, findConf2);
+   query(dbclPrimary1, findConf1, null, null, insertNums);
+   query(dbclPrimary1, findConf2, null, null, insertNums);
+   query(dbclPrimary2, findConf1, null, null, insertNums);
+   query(dbclPrimary2, findConf2, null, null, insertNums);
+   query(dbclSlave1, findConf1, null, null, insertNums);
+   query(dbclSlave1, findConf2, null, null, insertNums);
+   query(dbclSlave2, findConf1, null, null, insertNums);
+   query(dbclSlave2, findConf2, null, null, insertNums);
    
    //check out snapshot access plans
 	var accessFindOption1 = { Collection: clFullName1 };
@@ -199,14 +199,14 @@ function main()
    checkExplain( actExplains4, expExplains4 );
    
    //query
-   query(dbclPrimary1, findConf1);
-   query(dbclPrimary1, findConf2);
-   query(dbclPrimary2, findConf1);
-   query(dbclPrimary2, findConf2);
-   query(dbclSlave1, findConf1);
-   query(dbclSlave1, findConf2);
-   query(dbclSlave2, findConf1);
-   query(dbclSlave2, findConf2);
+   query(dbclPrimary1, findConf1, null, null, insertNums);
+   query(dbclPrimary1, findConf2, null, null, insertNums);
+   query(dbclPrimary2, findConf1, null, null, insertNums);
+   query(dbclPrimary2, findConf2, null, null, insertNums);
+   query(dbclSlave1, findConf1, null, null, insertNums);
+   query(dbclSlave1, findConf2, null, null, insertNums);
+   query(dbclSlave2, findConf1, null, null, insertNums);
+   query(dbclSlave2, findConf2, null, null, insertNums);
    
    //check out snapshot access plans
 	var accessFindOption1 = { Collection: clFullName1 };

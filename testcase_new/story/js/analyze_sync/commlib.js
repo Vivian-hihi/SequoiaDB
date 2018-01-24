@@ -85,37 +85,36 @@ function getNodesInGroups(db, groups)
    var datas = new Array();
    
    //standalone
-   if(0 === groups.length)
+   if(true === commIsStandalone(db))
    {
       datas[0] = Array();
       datas[0][0] = db;
-   }
-   
-   for (var i = 0 ; i < groups.length; ++i)
-   {
-      datas[i] = Array();
-      
-      var rg = db.getRG(groups[i]);
-      var rgDetail = eval( "(" + rg.getDetail().toArray()[0] + ")");
-      var nodesInGroup = rgDetail.Group;
-      for(var j = 0; j < nodesInGroup.length; ++j)
+   }else{
+      for (var i = 0 ; i < groups.length; ++i)
       {
-         var hostName = nodesInGroup[j].HostName;
-         var serviceName = nodesInGroup[j].Service[0].Name;
-         datas[i][j] = new Sdb(hostName, serviceName);                                                                                                                                    
+         datas[i] = Array();
+         
+         var rg = db.getRG(groups[i]);
+         var rgDetail = eval( "(" + rg.getDetail().toArray()[0] + ")");
+         var nodesInGroup = rgDetail.Group;
+         for(var j = 0; j < nodesInGroup.length; ++j)
+         {
+            var hostName = nodesInGroup[j].HostName;
+            var serviceName = nodesInGroup[j].Service[0].Name;
+            datas[i][j] = new Sdb(hostName, serviceName);                                                                                                                                 
+         }
+         
       }
-      
    }
-   
    return datas;
 }
 
 /************************************
-*@Description: 检查主备节点lsn是否一致
+*@Description: 获取主节点的lsn
 *@author:      zhaoyu
 *@createDate:  2017.11.8
 **************************************/
-function checkLSN(db, groups)
+function getPrimaryNodeLSNs(db, groups)
 {
    var datas = getNodesInGroups(db, groups);
    
@@ -125,20 +124,69 @@ function checkLSN(db, groups)
       var nodesInGroup = datas[i];
       LSNs[i] = Array();
       for(var j = 0; j < nodesInGroup.length; ++j)
-      {
+      { 
          var getSnapshot6 = eval( "(" + nodesInGroup[j].snapshot(6).toArray()[0] + ")" );
+         
          var currentLSN = getSnapshot6.CurrentLSN.Offset;
-         LSNs[i][j] = currentLSN;         
+         var isPrimary = getSnapshot6.IsPrimary;
+         if(isPrimary)
+         {
+            LSNs[i][0] = currentLSN;
+            break;
+         }   
       }
    }
+   
+   return LSNs;
+}
+
+/************************************
+*@Description: 获取备节点的lsn
+*@author:      zhaoyu
+*@createDate:  2017.11.8
+**************************************/
+function getSlaveNodeLSNs(db, groups)
+{
+   var datas = getNodesInGroups(db, groups);
+   
+   var LSNs = new Array();
+   for(var i = 0; i < datas.length; ++i)
+   {
+      var nodesInGroup = datas[i];
+      LSNs[i] = Array();
+      var f = 0;
+      for(var j = 0; j < nodesInGroup.length; ++j)
+      { 
+         var getSnapshot6 = eval( "(" + nodesInGroup[j].snapshot(6).toArray()[0] + ")" );
+         
+         var currentLSN = getSnapshot6.CurrentLSN.Offset;
+         var isPrimary = getSnapshot6.IsPrimary;
+         if(!isPrimary)
+         {
+            LSNs[i][f++] = currentLSN;
+         }   
+      }
+   }
+   
+   return LSNs;
+}
+
+/************************************
+*@Description: 检查主备节点lsn是否一致
+*@author:      zhaoyu
+*@createDate:  2017.11.8
+**************************************/
+function checkLSN(db, groups, primaryNodeLSNs)
+{
+   var slaveNodeLSNs = getSlaveNodeLSNs(db, groups);
  
    var checkLSN = true;
    //比较各节点lsn
-   for(var i = 0; i < LSNs.length; ++i)
+   for(var i = 0; i < slaveNodeLSNs.length; ++i)
    {
-      for(var j = 0; j < LSNs[i].length -1; ++j)
+      for(var j = 0; j < slaveNodeLSNs[i].length; ++j)
       {
-         if(LSNs[i][j] !== LSNs[i][j+1])
+         if(primaryNodeLSNs[i][0] > slaveNodeLSNs[i][j])
          {
             checkLSN = false;
             return checkLSN;
@@ -154,11 +202,11 @@ function checkLSN(db, groups)
 *@author:      zhaoyu
 *@createDate:  2017.11.8
 **************************************/
-function checkStat( db, csName, clName, indexName, clExistStat, indexExistStat )
+function checkStat( db, csName, clName, indexName, clExistStat, indexExistStat, groups )
 {
    if( clExistStat == undefined ){ clExistStat = true;}
    if( indexExistStat == undefined ){ indexExistStat = true;}
-   var groups = commGetCLGroups( db, csName + "." + clName );
+   if( groups == undefined ){var groups = commGetCLGroups( db, csName + "." + clName );}
    
    //check lsn
    //the longest waiting time is 600S
@@ -166,9 +214,11 @@ function checkStat( db, csName, clName, indexName, clExistStat, indexExistStat )
    var timeout = 600;
    var doTimes = 0; 
    
+   //get primary nodes
+   var primaryNodeLSNs = getPrimaryNodeLSNs(db, groups);
    while(true)
    {
-      lsnFlag = checkLSN(db, groups);
+      lsnFlag = checkLSN(db, groups, primaryNodeLSNs);
       //println("check primary and slave node lsn flag:" + lsnFlag);
       if(!lsnFlag)
       {
@@ -624,42 +674,201 @@ function updateIndexStateInfo( db, csName, clName, indexName, mcvValues, fracs )
 } 
 
 /************************************
+*@Description: 执行查询
+*@author:      liuxiaoxuan
+*@createDate:  2017.01.18
+**************************************/
+function query( dbcl, findConf, sortConf, hintConf, expRecordNum )
+{
+   if ( typeof(findConf) == "undefined" ) { findConf = null; }
+   if ( typeof(sortConf) == "undefined" ) { sortConf = null; }
+   if ( typeof(hintConf) == "undefined" ) { hintConf = null; }
+   
+   //执行查询并校验记录数
+   var rc = dbcl.find(findConf).sort(sortConf).hint(hintConf);
+   var count = 0;
+   while(rc.next())
+   {
+      count++;
+   }
+   if(count !== expRecordNum)
+   {
+      throw buildException("query", "COUNT_ERR", "query get count", expRecordNum, count);
+   }	  
+}
+
+/************************************
+*@Description: 获取普通表访问计划快照
+*@author:      liuxiaoxuan
+*@createDate:  2017.01.18
+**************************************/
+function getCommonAccessPlans( db, findConf, selectorConf, sortConf )
+{
+	if ( typeof(findConf) == "undefined" ) { findConf = null; }
+   if ( typeof(sortConf) == "undefined" ) { sortConf = null; }
+   if ( typeof(selectorConf) == "undefined" ) { selectorConf = null; }
+	
+	try
+   {
+      var accessPlans = new Array();
+	
+	   //获取快照信息
+	   var rc = db.snapshot(11, findConf, selectorConf, sortConf).toArray();
+      for(var i = 0; i < rc.length; i++)
+      {
+         var accessPlan = eval("(" + rc[i] + ")");
+         var accessPlanObj= {};
+		   for( var f in accessPlan )
+	      {
+	         if((f == "ScanType") || (f == "IndexName") )
+	         {
+	            accessPlanObj[f] = accessPlan[f];   
+	         }
+	      }
+		
+		   accessPlans.push(accessPlanObj);
+      }  
+	
+      return accessPlans;
+   }
+   catch( e )
+   {
+		throw buildException("getCommonAccessPlans", e, "get access plans", "success", e);
+   }
+
+}
+
+/************************************
+*@Description: 获取切分表访问计划快照
+*@author:      liuxiaoxuan
+*@createDate:  2017.01.18
+**************************************/
+function getSplitAccessPlans( db, findConf, selectorConf, sortConf )
+{
+	if ( typeof(findConf) == "undefined" ) { findConf = null; }
+   if ( typeof(sortConf) == "undefined" ) { sortConf = null; }
+   if ( typeof(selectorConf) == "undefined" ) { selectorConf = null; }
+	
+	try
+   {
+      var accessPlans = new Array();
+	
+	   //获取快照信息
+	   var rc = db.snapshot(11, findConf, selectorConf, sortConf).toArray();
+      for(var i = 0; i < rc.length; i++)
+      {
+         var accessPlan = eval("(" + rc[i] + ")");
+      
+		   //过滤hash、range切分时生成的查询计划
+		   if(accessPlan['IndexName'] == '$id')  
+			      continue;
+		   if(accessPlan['ScanType'] == 'tbscan' 
+		            && JSON.stringify(accessPlan['Query']) == "{}")  
+			      continue;
+	      if(accessPlan['IndexName'] == '$shard' 
+		            && JSON.stringify(accessPlan['Query']) == "{}")  
+			      continue;
+		
+		   var accessPlanObj= {};
+		   for( var f in accessPlan )
+	      {
+	         if((f == "GroupName") || (f == "ScanType") || (f == "IndexName") )
+	         {
+	            accessPlanObj[f] = accessPlan[f];   
+	         }			
+			}
+
+	      accessPlans.push(accessPlanObj);
+      } 
+      return accessPlans;
+   }
+   catch( e )
+   {
+		throw buildException("getSplitAccessPlans", e, "get access plans", "success", e);
+   }	
+	
+}
+
+/************************************
 *@Description: 检查访问计划快照
 *@author:      liuxiaoxuan
 *@createDate:  2018.01.15
 **************************************/
-function checkSnapShotAccessPlans( expectAccessPlans, actAccessPlans )
+function checkSnapShotAccessPlans( clFullName, expectAccessPlans, actAccessPlans, groups )
 {
-   try
-   {
-      if( expectAccessPlans.length !==  actAccessPlans.length )
-      {
-          throw buildException("check length", "accessPlan length", "check failed!",
-									expectAccessPlans.length, actAccessPlans.length);
-      }
+   var expAccessPlans = new Array();
    
-      var newActAccessPlans = new Array();
-      for(var i = 0; i < actAccessPlans.length; i++)
+   //判断独立模式、存在1组1节点模式的集群、cl不存在的情况下可能存在不同的预期结果
+   if(commIsStandalone(db) == true){
+      for(var i = 0; i < expectAccessPlans.length / 2; i++)
       {
-         var actAccessPlan = eval("(" + actAccessPlans[i] + ")");
-         newActAccessPlans.push({'Query': actAccessPlan['Query'],
-                                 'AccessCount': actAccessPlan['AccessCount']});
-      }   
-
-      for(var i = 0; i < expectAccessPlans.length; i++)
-      {
-         if(JSON.stringify(newActAccessPlans).indexOf(JSON.stringify(expectAccessPlans[i])) === -1
-               && JSON.stringify(expectAccessPlans).indexOf(JSON.stringify(newActAccessPlans[i])) === -1)
-         {
-            throw buildException("check access plan", "access plan", "fail", 
-	   		                  JSON.stringify(expectAccessPlans[i]), JSON.stringify(newActAccessPlans));
-         }
+        expAccessPlans.push(expectAccessPlans[i]);
       }
-     
+   }else{
+      if(groups !== undefined){
+         var datas = getNodesInGroups(db, groups);
+      }else{
+         var groups = commGetCLGroups( db, clFullName );
+         var datas = getNodesInGroups(db, groups);
+      }
+      //判断普通表一组一节点的情况
+      if(1 === datas.length && 1 === datas[0].length)
+      {
+         for(var i = 0; i < expectAccessPlans.length / 2; i++)
+         {
+            expAccessPlans.push(expectAccessPlans[i]);
+         }
+      //判断分区表有一组一节点的情况(其中一个组是一组一节点)
+      }else if(1 < datas.length && 
+                (1 === datas[0].length || 1 === datas[1].length)){
+         var groupName = groups[1];
+         if(1 === datas[1].length)  { groupName = groups[0]; }
+         
+         for(var i = 0; i < expectAccessPlans.length / 2; i++)
+         {
+            expAccessPlans.push(expectAccessPlans[i]);
+         }
+         while(i < expectAccessPlans.length)
+         {
+            if(groupName === expectAccessPlans[i]['GroupName'])
+            {
+               expAccessPlans.push(expectAccessPlans[i]);
+            }
+            i++;
+         }         
+      }else{
+         expAccessPlans = expectAccessPlans;
+      }
    }
-   catch(e)
+	
+   //校验计划个数
+   if( expAccessPlans.length !==  actAccessPlans.length )
    {
-      throw buildException("check snapshot accessPlan", e, "snapshot accessPlan", "success", e);
+       println('expAccessPlans: ' + JSON.stringify(expAccessPlans) + ", actAccessPlans: " + JSON.stringify(actAccessPlans));
+       throw buildException("check length", "accessPlan length", "check failed!",
+								expAccessPlans.length, actAccessPlans.length);
    }
-}
-                                                                               
+	
+   //校验查询计划，不校验元素顺序
+   var newExpAccessPlans = new Array();
+   var newActAccessPlans = new Array();
+   for(var i = 0; i < expAccessPlans.length; i++)
+	{
+      var newObj1 = objSortByKey(actAccessPlans[i]);
+      newActAccessPlans.push(newObj1);
+   
+      var newObj2 = objSortByKey(expAccessPlans[i]);
+      newExpAccessPlans.push(newObj2);   
+   }
+	    	 
+   for(var i = 0; i < expAccessPlans.length; i++)
+   {
+      if(JSON.stringify(newActAccessPlans).indexOf(JSON.stringify(newExpAccessPlans[i])) === -1
+            || JSON.stringify(newExpAccessPlans).indexOf(JSON.stringify(newActAccessPlans[i])) === -1)
+      {
+         throw buildException("check access plan", "access plan", "fail", 
+   		                  JSON.stringify(newExpAccessPlans), JSON.stringify(newActAccessPlans));
+      }
+   }
+   println("check accessPlan snapshot success");
+}                                                                          
