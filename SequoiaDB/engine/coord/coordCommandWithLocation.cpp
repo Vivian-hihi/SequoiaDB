@@ -495,6 +495,7 @@ namespace engine
       ctrlParam._filterID = FILTER_ID_MATCHER ;
       ctrlParam._emptyFilterSel = NODE_SEL_ALL ;
       ctrlParam._role[ SDB_ROLE_CATALOG ] = 1 ;
+      ctrlParam._role[ SDB_ROLE_COORD ] = 1 ;
    }
 
    UINT32 _coordReloadConf::_getControlMask() const
