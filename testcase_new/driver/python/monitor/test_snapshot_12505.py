@@ -35,8 +35,15 @@ class TestSnapshot12505(testlib.SdbTestBase):
       # check reset snapshot without condition
       self.insert_datas()
       self.reset_snapshot(condition[1])
-      self.check_reset_snapshot(condition[0])
-
+      self.check_reset_snapshot(condition[0])	
+		
+		# SEQUOIADBMAINSTREAM-2316, only check transaction args	
+      snap_type_transaction = 9
+      self.check_transaction_snapshot(snap_type_transaction)
+		
+      snap_type_transaction_current = 10
+      self.check_transaction_snapshot(snap_type_transaction_current)
+		
    def tearDown(self):
       if self.should_clean_env():
          self.db.drop_collection_space(self.cs_name)
@@ -89,7 +96,7 @@ class TestSnapshot12505(testlib.SdbTestBase):
          if(cond == None):
             self.db.reset_snapshot()
          else:
-            self.db.reset_snapshot(condition = cond)
+            self.db.reset_snapshot(cond)
          # sleep 3s , wait for reset
          time.sleep(3)
       except SDBBaseError as e:
@@ -105,3 +112,10 @@ class TestSnapshot12505(testlib.SdbTestBase):
          self.assertNotEqual(oldDataSize,newDataSize,str(oldDataSize) + 'not equal to' + str(newDataSize))
       except SDBBaseError as e:
          self.fail('reset snapshot fail: ' + e.detail)
+
+	# SEQUOIADBMAINSTREAM-2316, only check transaction args		
+   def check_transaction_snapshot(self,snap_type):
+      try:
+         self.db.get_snapshot(snap_type)
+      except SDBBaseError as e:
+         self.fail('check snapshot fail: ' + e.detail)	
