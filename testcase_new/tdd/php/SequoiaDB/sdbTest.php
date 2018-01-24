@@ -239,13 +239,13 @@ class SequoiaDB_Test extends PHPUnit_Framework_TestCase
       $new = $cursor -> next() ;
       $this -> assertNotEmpty( $new, 'reset后获取snapshot '.SDB_SNAP_DATABASE.' 错误' ) ;
       
-      if( array_key_exists( 'replNetIn', $old ) )
+      if( array_key_exists( 'shardNetIn', $old ) )
       {
-         $this -> assertLessThan( $old['replNetIn'], $new['replNetIn'], 'resetSnapshot没有生效' ) ;
+         $this -> assertLessThan( $old['shardNetIn'], $new['shardNetIn'], 'resetSnapshot没有生效(shardNetIn)' ) ;
       }
       else
       {
-         $this -> assertLessThan( $old['svcNetIn'], $new['svcNetIn'], 'resetSnapshot没有生效' ) ;
+         $this -> assertLessThan( $old['svcNetIn'], $new['svcNetIn'], 'resetSnapshot没有生效(svcNetIn)' ) ;
       }
    }
 
@@ -304,13 +304,13 @@ class SequoiaDB_Test extends PHPUnit_Framework_TestCase
       $new = $cursor -> next() ;
       $this -> assertNotEmpty( $new, 'reset后获取snapshot '.SDB_SNAP_DATABASE.' 错误' ) ;
       
-      if( array_key_exists( 'replNetIn', $old ) )
+      if( array_key_exists( 'shardNetIn', $old ) )
       {
-         $this -> assertLessThan( $old['replNetIn'], $new['replNetIn'], 'resetSnapshot with options没有生效' ) ;
+         $this -> assertLessThan( $old['shardNetIn'], $new['shardNetIn'], 'resetSnapshot with options 没有生效(shardNetIn)' ) ;
       }
       else
       {
-         $this -> assertLessThan( $old['svcNetIn'], $new['svcNetIn'], 'resetSnapshot with options没有生效' ) ;
+         $this -> assertLessThan( $old['svcNetIn'], $new['svcNetIn'], 'resetSnapshot with options没有生效(svcNetIn)' ) ;
       }
    }
 
