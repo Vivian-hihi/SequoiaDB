@@ -37,5 +37,5 @@
 * 重置 SessionID 为1的快照。
 
   ```lang-javascript
-  > db.resetSnapshot( { Typ: "sessions", SessionID: 1 } )
+  > db.resetSnapshot( { Type: "sessions", SessionID: 1 } )
   ```
