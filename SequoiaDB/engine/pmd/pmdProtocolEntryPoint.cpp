@@ -146,7 +146,7 @@ namespace engine
             // close remote connection if we can't create new thread
             ossSocket newsock ( &s ) ;
             newsock.close () ;
-
+            mondbcb->connDec();
             SDB_OSS_DEL pParam ;
             pParam = NULL ;
             continue ;

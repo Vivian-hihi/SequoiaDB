@@ -160,6 +160,7 @@ namespace engine
             // close remote connection if we can't create new thread
             ossSocket newsock ( &s ) ;
             newsock.close () ;
+            mondbcb->connDec();
             continue ;
          }
          // Now EDU is started and posted with the new socket, let's

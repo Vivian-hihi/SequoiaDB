@@ -160,6 +160,7 @@ namespace engine
             // close remote connection if we can't create new thread
             ossSocket newsock ( &s ) ;
             newsock.close () ;
+            mondbcb->connDec();
             continue ;
          }
       } //while ( ! cb->isDisconnected() )
