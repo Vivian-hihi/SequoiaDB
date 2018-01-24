@@ -77,19 +77,19 @@ function main()
    
    //主备节点执行查询
    var findConf = {a:sameValues};
-   query( dbclPrimary1, findConf );
-   query( dbclPrimary2, findConf );
-   query( dbclPrimary3, findConf );
-   query( dbclPrimary4, findConf );
+   query( dbclPrimary1, findConf, null, null, insertNum );
+   query( dbclPrimary2, findConf, null, null, insertNum );
+   query( dbclPrimary3, findConf, null, null, insertNum );
+   query( dbclPrimary4, findConf, null, null, insertNum );
    
-	query( dbclSlave1, findConf );
-	query( dbclSlave2, findConf );
-   query( dbclSlave3, findConf );
-	query( dbclSlave4, findConf );
+	query( dbclSlave1, findConf, null, null, insertNum );
+	query( dbclSlave2, findConf, null, null, insertNum );
+   query( dbclSlave3, findConf, null, null, insertNum );
+	query( dbclSlave4, findConf, null, null, insertNum );
 	
 	//检查访问计划快照
-   var expAccessPlan = [{ScanType:"ixscan", IndexName:"a", ReturnNum:insertNum},
-                        {ScanType:"ixscan", IndexName:"a", ReturnNum:insertNum}];
+   var expAccessPlan = [{ScanType:"ixscan", IndexName:"a"},
+                        {ScanType:"ixscan", IndexName:"a"}];
    var actAccessPlan = getCommonAccessPlans( db, {Collection: clFullName1} );
    checkSnapShotAccessPlans( clFullName1, expAccessPlan, actAccessPlan );
    var actAccessPlan = getCommonAccessPlans( db, {Collection: clFullName2} );
@@ -110,20 +110,20 @@ function main()
    
    //主备节点执行查询
    var findConf = {a:sameValues};
-   query( dbclPrimary1, findConf );
-   query( dbclPrimary2, findConf );
-   query( dbclPrimary3, findConf );
-   query( dbclPrimary4, findConf );
+   query( dbclPrimary1, findConf, null, null, insertNum );
+   query( dbclPrimary2, findConf, null, null, insertNum  );
+   query( dbclPrimary3, findConf, null, null, insertNum  );
+   query( dbclPrimary4, findConf, null, null, insertNum  );
    
-	query( dbclSlave1, findConf );
-	query( dbclSlave2, findConf );
-   query( dbclSlave3, findConf );
-	query( dbclSlave4, findConf );
+	query( dbclSlave1, findConf, null, null, insertNum  );
+	query( dbclSlave2, findConf, null, null, insertNum  );
+   query( dbclSlave3, findConf, null, null, insertNum  );
+	query( dbclSlave4, findConf, null, null, insertNum  );
    
    //检查主备节点访问计划
    var findConf = {a:sameValues};
-   var expAccessPlan = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum},
-                        {ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}];
+   var expAccessPlan = [{ScanType:"tbscan", IndexName:""},
+                        {ScanType:"tbscan", IndexName:""}];
    var actAccessPlan = getCommonAccessPlans( db, {Collection: clFullName1} );
    checkSnapShotAccessPlans( clFullName1, expAccessPlan, actAccessPlan );
    var actAccessPlan = getCommonAccessPlans( db, {Collection: clFullName2} );
@@ -131,8 +131,8 @@ function main()
    var actAccessPlan = getCommonAccessPlans( db, {Collection: clFullName3} );
    checkSnapShotAccessPlans( clFullName3, expAccessPlan, actAccessPlan );
    
-   var expAccessPlan = [{ScanType:"ixscan", IndexName:"a", ReturnNum:insertNum},
-                      {ScanType:"ixscan", IndexName:"a", ReturnNum:insertNum}];
+   var expAccessPlan = [{ScanType:"ixscan", IndexName:"a"},
+                      {ScanType:"ixscan", IndexName:"a"}];
    var actAccessPlan = getCommonAccessPlans( db, {Collection: clFullName4} );
    checkSnapShotAccessPlans( clFullName4, expAccessPlan, actAccessPlan );
    

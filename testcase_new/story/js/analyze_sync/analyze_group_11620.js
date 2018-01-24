@@ -133,6 +133,94 @@ function main()
 
    checkSnapShotAccessPlans(clFullName, expAccessPlans, actAccessPlans); 
    
+   //drop cl
+   commDropCL( db, csName, clName, true );
+   
+   //create cl again
+   var dbcl = commCreateCLByOption( db, csName, clName, clOption, true );
+                                                          
+   //get master/slave datanode
+   var db1 = new Sdb(db);
+   db1.setSessionAttr( {PreferedInstance: "m"} );
+   var dbclPrimary = db1.getCS(csName).getCL(clName);
+   
+   db1 = new Sdb(db);
+   db1.setSessionAttr( {PreferedInstance: "s"} );
+   var dbclSlave = db1.getCS(csName).getCL(clName);
+                                                                                  	
+   //create index
+   commCreateIndex( dbcl, "a", {a : 1}, false );
+                                                    	
+   //insert
+   var insertNums = 3000;
+   var sameValues = 9000;
+   insertDiffDatas( dbcl, insertNums );
+   insertSameDatas( dbcl, insertNums, sameValues );
+                                                        	
+   //check before invoke analyze
+   checkStat( db, csName, clName, "a", false, false );
+                                                       	 
+   //check the query explain of master/slave nodes 
+   var findConf = {a : 9000};
+   var expExplains = [{ScanType:"ixscan", IndexName:"a", ReturnNum:insertNums}];
+                                                                           
+   var actExplains = getCommonExplain( dbclPrimary, findConf);
+   checkExplain( actExplains, expExplains );
+                                                    
+   var actExplains = getCommonExplain( dbclSlave, findConf);
+   checkExplain( actExplains, expExplains );
+                        
+   //query
+   query(dbclPrimary, findConf, null, null, insertNums);
+   query(dbclSlave, findConf, null, null, insertNums);
+   
+   //check out snapshot access plans
+	var accessFindOption = { Collection: clFullName };
+   var actAccessPlans = getCommonAccessPlans(db, accessFindOption);
+   var expAccessPlans = [{ScanType:"ixscan", IndexName:"a"},
+	                      {ScanType:"ixscan", IndexName:"a"}];  
+
+   checkSnapShotAccessPlans(clFullName, expAccessPlans, actAccessPlans); 
+                        
+   println("check result before analyze success in mode 2!");
+                                                              	
+   //invoke analyze
+   var options = {Mode : 2, GroupName : groupName};
+   analyze( db, options );
+                                                             	
+   //check after analyze
+   checkStat( db, csName, clName, "a", true, true );
+                                                          
+   //check out snapshot access plans
+	var accessFindOption = { Collection: clFullName };
+   var actAccessPlans = getCommonAccessPlans(db, accessFindOption);
+   var expAccessPlans = [];   
+   checkSnapShotAccessPlans(clFullName, expAccessPlans, actAccessPlans); 
+                                                          
+   //check the query explain of master/slave nodes 
+   var findConf = {a : 9000};
+   var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
+                                                                                    	
+   var actExplains = getCommonExplain( dbclPrimary, findConf);
+   checkExplain( actExplains, expExplains );
+                                                                      
+   var actExplains = getCommonExplain( dbclSlave, findConf);
+   checkExplain( actExplains, expExplains );
+
+   //query
+   query(dbclPrimary, findConf, null, null, insertNums);
+   query(dbclSlave, findConf, null, null, insertNums);
+   
+   //check out snapshot access plans
+	var accessFindOption = { Collection: clFullName };
+   var actAccessPlans = getCommonAccessPlans(db, accessFindOption);
+   var expAccessPlans = [{ScanType:"tbscan", IndexName:""},
+	                      {ScanType:"tbscan", IndexName:""}];  
+
+   checkSnapShotAccessPlans(clFullName, expAccessPlans, actAccessPlans); 
+  
+   println("check result before analyze success in mode 2!");
+   
    db1.close();
    commDropCS( db, csName, true, "drop CS in the end" );
 }
