@@ -599,6 +599,12 @@
                            "file": "SDB_SNAP_ACCESSPLANS",
                            "cn": "访问计划缓存快照",
                            "en": "SDB_SNAP_ACCESSPLANS"
+                        },
+                        {
+                           "id": 1516786163,
+                           "file": "SDB_SNAP_HEALTH",
+                           "cn": "节点健康检测快照",
+                           "en": "SDB_SNAP_HEALTH"
                         }
                      ]
                   },
