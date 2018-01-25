@@ -7,7 +7,7 @@
 resetSnapshot \- Reset snapshot. 
 .SH SYNOPSIS
 .PP
-\f[B]\f[I]db.resetSnapshot([cond])\f[]\f[]
+\f[B]\f[I]db.resetSnapshot([options])\f[]\f[]
 .SH CATEGORY
 .PP
 Sequoiadb
@@ -16,19 +16,72 @@ Sequoiadb
 .sp 2
 Reset snapshot.
 .sp 2
-\fBcond (json object)\fR
+\fBoptions (object)\fR
 .br
-       Selecting condition. It merely resets snapshot records
-       that match the conditions in "cond". If it is null, it
-       will reset all the snapshot records.
+       Specify the snapshot type, Session ID, and
+       location params, such as GroupID, GroupName, NodeID, HostName,
+       svcname, etc.
 .sp 2
-       \fBFormat\fR
+       \fBType\fR
 .br
-              The method "resetSnapshot()" contains the parameter
-              "cond". It is a json object.
+              Specify th snapshot type. "all" in default.
+              "sessions"
+              "sessions current"
+              "database"
+              "health"
+              "all"
+              Type: "health"
 .br
-              {["cond":"{"Field name 1":{"match 1":"value
-              1"},"Field name 2":{"match 2":"value 2"}...}"]}
+.sp 2
+       \fBSessionID\fR
+.br
+              Specify the session ID. all sessions in default.
+              SessionID: 1
+.sp 2
+       \fBGlobal\fR
+.br
+              Specify the command's location which is local or global.
+              Default is local mode.
+.br
+              Global:false  : run on local
+              Global:true   : run on global nodes
+.sp 2
+       \fBGroupID\fR
+.br
+              Specify the command's location by group ID.
+.br
+              GroupID:1000
+              GroupID:[1000, 1001, ...]
+.sp 2
+       \fBGroupName\fR
+.br
+              Specify the command's location by group name.
+.br
+              GroupName:"db1"
+              GroupName:["db1", "db2", ...]
+.sp 2
+       \fBNodeID\fR
+.br
+              Specify the command's location by node ID.
+.br
+              NodeID:1000
+              NodeID:[1000, 1001, ...]
+.sp 2
+       \fBHostName\fR
+.br
+              Specify the command's location by node name.
+              The param should be used with 'svcname'.
+.br
+              HostName:"host-01"
+              HostName:[ "centos-01", "ubuntu-02", ... ]
+.sp 2
+       \fBsvcname\fR
+.br
+              Specify the command's location by svcname.
+              The param should be used with 'HostName'.
+.br
+              svcname:"11820"
+              svcname:[ "11780", "11810", ... ]
 .sp 2
 
 .SH "Examples"
@@ -39,4 +92,4 @@ Reset snapshot.
 Reset snapshots that contain the value of "SessionID" greater
 than 1.
 .sp 2
-db.resetSnapshot({SessionID:{$gt:1}})
+db.resetSnapshot( { Type: "sessions", SessionID: 1 } )
