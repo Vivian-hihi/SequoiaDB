@@ -101,19 +101,19 @@ namespace engine
 
          if ( IXM_EXTENT_HAS_TYPE( indexType, IXM_EXTENT_TYPE_POSITIVE ) )
          {
-            type = IXM_EXTENT_TYPE_POSITIVE ;
+            type |= IXM_EXTENT_TYPE_POSITIVE ;
          }
-         else if ( IXM_EXTENT_HAS_TYPE( indexType, IXM_EXTENT_TYPE_REVERSE ) )
+         if ( IXM_EXTENT_HAS_TYPE( indexType, IXM_EXTENT_TYPE_REVERSE ) )
          {
-            type = IXM_EXTENT_TYPE_REVERSE ;
+            type |= IXM_EXTENT_TYPE_REVERSE ;
          }
-         else if ( IXM_EXTENT_HAS_TYPE( indexType, IXM_EXTENT_TYPE_2D ) )
+         if ( IXM_EXTENT_HAS_TYPE( indexType, IXM_EXTENT_TYPE_2D ) )
          {
-            type = IXM_EXTENT_TYPE_2D ;
+            type |= IXM_EXTENT_TYPE_2D ;
          }
-         else if ( IXM_EXTENT_HAS_TYPE( indexType, IXM_EXTENT_TYPE_TEXT ) )
+         if ( IXM_EXTENT_HAS_TYPE( indexType, IXM_EXTENT_TYPE_TEXT ) )
          {
-            type = IXM_EXTENT_TYPE_TEXT ;
+            type |= IXM_EXTENT_TYPE_TEXT ;
          }
 
       done:

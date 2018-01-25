@@ -115,7 +115,7 @@ namespace engine
       }
       if ( IXM_EXTENT_HAS_TYPE( type, IXM_EXTENT_TYPE_TEXT ) )
       {
-         appendString( szTmp, DMS_INDEXTYPE_TMP_STR_SZ, "text" ) ;
+         appendString( szTmp, DMS_INDEXTYPE_TMP_STR_SZ, "Text" ) ;
          OSS_BIT_CLEAR( type, IXM_EXTENT_TYPE_TEXT ) ;
       }
 
@@ -1890,44 +1890,44 @@ UINT32 _dmsDump::dumpDmsLobMeta( CHAR *inBuf, UINT32 inSize,
       const char *tag = NULL;
       len += ossSnprintf(outBuf + len, outSize -len, "Lobd Meta:"OSS_NEWLINE) ;
 
-      len += ossSnprintf(outBuf + len, outSize - len, 
-                                    " Lob Len        :%lld"OSS_NEWLINE, 
+      len += ossSnprintf(outBuf + len, outSize - len,
+                                    " Lob Len        :%lld"OSS_NEWLINE,
                                     lobMeta->_lobLen);
 
-      CHAR strTime[ OSS_TIMESTAMP_STRING_LEN + 1 ] = { 0 } ;    
+      CHAR strTime[ OSS_TIMESTAMP_STRING_LEN + 1 ] = { 0 } ;
       ossTimestamp tm(lobMeta->_createTime);
       ossTimestampToString(tm , strTime ) ;
-      len += ossSnprintf(outBuf + len, outSize - len, 
-                                    " Create Time    :%s (%llu)"OSS_NEWLINE, 
+      len += ossSnprintf(outBuf + len, outSize - len,
+                                    " Create Time    :%s (%llu)"OSS_NEWLINE,
                                     strTime, lobMeta->_createTime) ;
 
       tag = lobMeta->isDone()? "DMS_LOB_COMPLETE":"DMS_LOB_UNCOMPLETE";
-      len += ossSnprintf(outBuf + len, outSize - len, 
-                                    " Status         :%s (%u)"OSS_NEWLINE, 
+      len += ossSnprintf(outBuf + len, outSize - len,
+                                    " Status         :%s (%u)"OSS_NEWLINE,
                                     tag, lobMeta->_status);
 
       tag = (lobMeta->_version == DMS_LOB_META_CURRENT_VERSION )
                           ? "DMS_LOB_META_CURRENT_VERSION"
                           : NULL;
-                             
-      len += ossSnprintf(outBuf + len, outSize - len, 
-                                    " Version        :%s (%u)"OSS_NEWLINE, 
+
+      len += ossSnprintf(outBuf + len, outSize - len,
+                                    " Version        :%s (%u)"OSS_NEWLINE,
                                     tag, lobMeta->_version) ;
 
       tm = lobMeta->_createTime;
       ossTimestampToString(tm , strTime ) ;
-      len += ossSnprintf(outBuf + len, outSize - len, 
-                                    " Mod Time       :%s (%llu)"OSS_NEWLINE, 
+      len += ossSnprintf(outBuf + len, outSize - len,
+                                    " Mod Time       :%s (%llu)"OSS_NEWLINE,
                                     strTime, lobMeta->_modificationTime);
 
       tag = lobMeta->hasPiecesInfo()
                        ? "DMS_LOB_META_FLAG_PIECESINFO_INSIDE"
                        : "NO PIECESINFO";
-                       
+
       len += ossSnprintf(outBuf + len, outSize - len, " Flag           :%s (%u)"OSS_NEWLINE, tag, lobMeta->_flag);
 
       len += ossSnprintf(outBuf + len,
-                                   outSize - len, 
+                                   outSize - len,
                                    " PiecesInfo Num :%d"OSS_NEWLINE,
                                    lobMeta->_piecesInfoNum);
 
@@ -1936,13 +1936,13 @@ UINT32 _dmsDump::dumpDmsLobMeta( CHAR *inBuf, UINT32 inSize,
          goto exit;
 
       len += ossSnprintf(outBuf + len, outSize - len, " Pieces:");
-      _rtnLobPieces* piecesInfoBuf = (_rtnLobPieces*)(inBuf + DMS_LOB_META_LENGTH 
+      _rtnLobPieces* piecesInfoBuf = (_rtnLobPieces*)(inBuf + DMS_LOB_META_LENGTH
                                - sizeof( _rtnLobPieces ) * lobMeta->_piecesInfoNum);
       for(INT32 i = 0; i < lobMeta->_piecesInfoNum; i ++)
       {
-         len += ossSnprintf ( outBuf+len, outSize-len, 
+         len += ossSnprintf ( outBuf+len, outSize-len,
                                           "      { first:%u; last:%u }"OSS_NEWLINE,
-                                          piecesInfoBuf[i].first, 
+                                          piecesInfoBuf[i].first,
                                           piecesInfoBuf[i].last);
       }
    }
@@ -1953,9 +1953,9 @@ UINT32 _dmsDump::dumpDmsLobMeta( CHAR *inBuf, UINT32 inSize,
 
 }
 
-UINT32 _dmsDump::dumpDmsLobData(CHAR *inBuf, UINT32 inSize, 
-                              CHAR * outBuf, UINT32 outSize, 
-                              CHAR * addrPrefix, UINT32 options)
+UINT32 _dmsDump::dumpDmsLobData( CHAR *inBuf, UINT32 inSize,
+                                 CHAR * outBuf, UINT32 outSize,
+                                 CHAR * addrPrefix, UINT32 options )
 {
    UINT32 len           = 0 ;
    UINT32 hexDumpOption = 0 ;

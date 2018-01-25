@@ -917,6 +917,7 @@ namespace engine
          MON_IDX_LIST::iterator it ;
          for ( it = indexes.begin(); it!=indexes.end(); ++it )
          {
+            UINT16 idxType = IXM_EXTENT_TYPE_NONE ;
             monIndex &indexItem = (*it) ;
             BSONObj &indexObj = indexItem._indexDef ;
             BSONObj obj ;
@@ -952,6 +953,8 @@ namespace engine
                builder.append ( IXM_FIELD_NAME_SCAN_EXTLID,
                                 indexItem._scanExtLID ) ;
             }
+            indexItem.getIndexType( idxType ) ;
+            builder.append( FIELD_NAME_TYPE, getIndexTypeDesp( idxType ) ) ;
             obj = builder.obj() ;
             rc = context->monAppend( obj ) ;
             if ( rc )
