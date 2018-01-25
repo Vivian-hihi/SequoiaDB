@@ -538,7 +538,6 @@ sdbSEAdptFiles = [
       "tools/seadapter/seAdptMgr.cpp",
       "tools/seadapter/seAdptAgentSession.cpp",
       "tools/seadapter/seAdptIndexSession.cpp",
-      "tools/seadapter/pmdSeAdptTcpListener.cpp",
       "tools/seadapter/seAdptContext.cpp",
       "tools/seadapter/utilHttp.cpp",
       "tools/seadapter/utilESClt.cpp",
