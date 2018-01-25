@@ -34,15 +34,20 @@ class SdbResetSnapshot extends BaseOperator
       }
       else if( $paramNum === 'array' )
       {
-         $condition = array( 'SessionID' => 1 );
+         $condition = array( 'Type' => 'sessions', 'SessionID' => 1 );
          $cursor = $this -> db -> resetSnapshot( $condition );
       }
       else if( $paramNum === 'string' )
       {
-         $condition = '{SessionID: 1}';
+         $condition = '{Type: "sessions", SessionID: 1}';
          $cursor = $this -> db -> resetSnapshot( $condition );
       }
    }
+   /*
+   function checkResultBySnapshot()
+   {
+      $cursor = $this -> db -> snapshot( SDB_SNAP_SESSIONS_CURRENT );
+   }*/
    
    function dropCS( $csName, $ignoreNotExist )
    {
