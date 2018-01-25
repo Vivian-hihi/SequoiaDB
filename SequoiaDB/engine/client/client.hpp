@@ -3708,7 +3708,7 @@ namespace sdbclient
                                     selector, orderBy ) ;
       }
 
-/** \fn INT32 resetSnapshot ( const bson::BSONObj &condition )
+/** \fn INT32 resetSnapshot ( const bson::BSONObj &options )
     \brief Reset the snapshot.
     \param [in] options The control options:
 
@@ -3720,7 +3720,7 @@ namespace sdbclient
                           "all"
         SessionID       : (INT32) Specify the session ID to be reset.
         Other options   : Some of other options are as below: (please visit the official website to
-                          search "analyze" or "Location Elements" for more detail.)
+                          search "Location Elements" for more detail.)
                           GroupID   :INT32,
                           GroupName :String,
                           NodeID    :INT32,

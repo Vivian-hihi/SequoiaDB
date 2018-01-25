@@ -361,7 +361,7 @@ SDB_EXPORT INT32 sdbGetSnapshot ( sdbConnectionHandle cHandle,
                                   sdbCursorHandle *handle ) ;
 
 /** \fn INT32 sdbResetSnapshot ( sdbConnectionHandle cHandle,
- *                               bson *condition )
+ *                               bson *options )
     \brief Reset the snapshot
     \param [in] cHandle The connection handle
     \param [in] options The control options:
@@ -374,7 +374,7 @@ SDB_EXPORT INT32 sdbGetSnapshot ( sdbConnectionHandle cHandle,
                           "all"
         SessionID       : (INT32) Specify the session ID to be reset.
         Other options   : Some of other options are as below: (please visit the official website to
-                          search "analyze" or "Location Elements" for more detail.)
+                          search "Location Elements" for more detail.)
                           GroupID   :INT32,
                           GroupName :String,
                           NodeID    :INT32,
