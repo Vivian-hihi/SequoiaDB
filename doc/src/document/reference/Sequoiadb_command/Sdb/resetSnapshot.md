@@ -1,5 +1,5 @@
 ##语法##
-***db.resetSnapshot( [cond] )***
+***db.resetSnapshot( [options] )***
 
 重置快照。
 
@@ -15,7 +15,7 @@
  | ------ | ------ | -------| ---- |
  | Type   | 指定重置的[快照类型](database_management/monitoring/snapshot/snapshot.md)。取值：<br/>"sessions"<br/>"sessions current"<br/>"database"<br/>"health"<br/>"all" | "all" | Type: "sessions" |
  | SessionID | 指定重置的会话ID。 | 所有会话 | SessionID: 1 |
- | Location Elements | 命令位置参数项，详细见 [命令位置参数](reference/Sequoiadb_command/Overview/location.md) | 所有节点 | GroupName:"db1" |
+ | Location Elements | [命令位置参数](reference/Sequoiadb_command/Overview/location.md) | 所有节点 | GroupName:"db1" |
 
  > **Note:**
  >
@@ -27,11 +27,6 @@
 
 关于错误处理可以参考[常见错误处理指南](troubleshooting/general/general_guide.md)。
 
-##错误##
-
-| [错误码](reference/Sequoiadb_error_code.md) | 错误类型 | 描述 | 解决方法 |
-| ---- | -------------- | ------------ | ------------ |
-| -6   | SDB_INVALIDARG | 输入参数非法 | 参考以上描述 |
 ##示例##
 
 * 重置 SessionID 为1的快照。
