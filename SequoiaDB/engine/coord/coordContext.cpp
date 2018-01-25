@@ -1343,6 +1343,8 @@ namespace engine
 
       INT64 queryContextID = -1 ;
       rtnContextCoord * queryContext = NULL ;
+      BOOLEAN needResetSubQuery = TRUE ;
+      rtnQueryOptions subOptions( options ) ;
 
       rc = rtnCB->contextNew( RTN_CONTEXT_COORD, (rtnContext **)&queryContext,
                               queryContextID, cb ) ;
@@ -1356,7 +1358,24 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Failed to register explain processor, "
                    "rc: %d", rc ) ;
 
-      rc = queryContext->open( options, _enabledPreRead() ) ;
+      // Reset selector
+      if ( options.testFlag( FLG_QUERY_STRINGOUT ) )
+      {
+         needResetSubQuery = TRUE ;
+      }
+      else
+      {
+         rtnNeedResetSelector( options.getSelector(), options.getOrderBy(),
+                               needResetSubQuery ) ;
+      }
+
+      // Will not process selector in coord context
+      if ( !needResetSubQuery )
+      {
+         subOptions.setSelector( BSONObj() ) ;
+      }
+
+      rc = queryContext->open( subOptions, _enabledPreRead() ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to open main-collection context, "
                    "rc: %d", rc ) ;
 

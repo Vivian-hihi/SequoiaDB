@@ -750,20 +750,20 @@ namespace engine
          }
          else
          {
-            BOOLEAN needReset       = FALSE ;
+            BOOLEAN needResetSubQuery = FALSE ;
             rtnQueryOptions options ;
 
             if ( FLG_QUERY_STRINGOUT & pQueryMsg->flags )
             {
-               needReset = TRUE ;
+               needResetSubQuery = TRUE ;
             }
             else
             {
-               rtnNeedResetSelector( objSelector, objOrderby, needReset ) ;
+               rtnNeedResetSelector( objSelector, objOrderby, needResetSubQuery ) ;
             }
 
             // build new selector
-            if ( needReset )
+            if ( needResetSubQuery )
             {
                static BSONObj emptyObj = BSONObj() ;
                rc = _buildNewMsg( (const CHAR*)pMsg, &emptyObj, NULL,
@@ -780,11 +780,21 @@ namespace engine
             options.setCLFullName( pCollectionName ) ;
             options.setQuery( objQuery ) ;
             options.setOrderBy( objOrderby ) ;
-            options.setSelector( needReset ? objSelector : BSONObj() ) ;
             options.setHint( objHint ) ;
             options.setSkip( pQueryMsg->numToSkip ) ;
             options.setLimit( pQueryMsg->numToReturn ) ;
             options.resetFlag( pQueryMsg->flags ) ;
+
+            // The explain will reset the selector itself for sub-context
+            if ( OSS_BIT_TEST( pQueryMsg->flags, FLG_QUERY_EXPLAIN ) ||
+                 needResetSubQuery )
+            {
+               options.setSelector( objSelector ) ;
+            }
+            else
+            {
+               options.setSelector( BSONObj() ) ;
+            }
 
             // open context
             rc = _pContext->open( options,
