@@ -248,7 +248,7 @@ namespace engine
       SDB_DATA_STATUS_STR DEFINE
    */
    #define SDB_DATA_NORMAL_STR           "Normal"
-   #define SDB_DATA_REPAIRE_STR          "Repaire"
+   #define SDB_DATA_REPAIR_STR           "Repairing"
    #define SDB_DATA_FAULT_STR            "Fault"
 
    /*

@@ -242,7 +242,7 @@ namespace engine
       }
       if ( SDB_DB_REBUILDING == dbStatus || SDB_DB_FULLSYNC == dbStatus )
       {
-         return SDB_DATA_REPAIRE_STR ;
+         return SDB_DATA_REPAIR_STR ;
       }
       return SDB_DATA_FAULT_STR ;
    }

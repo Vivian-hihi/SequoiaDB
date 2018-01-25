@@ -545,7 +545,7 @@ namespace engine
       INT64 commitLimit       = 0 ;
       INT64 committedAS       = 0 ;
       INT64 VMLimitProc       = 0 ;
-      INT64 loadPctVM         = 0 ;
+      INT32 loadPctVM         = 0 ;
       INT64 allocatedVMProc   = 0 ;
       INT64 rss               = 0 ;
       ossProcLimits limInfo ;
