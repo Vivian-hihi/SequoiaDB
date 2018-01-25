@@ -6,32 +6,23 @@
 **************************************/
 var maincsName = COMMCSNAME + "_maincs_11625";
 var subcsName1 = COMMCSNAME + "_subcs_11625_1";
-var subcsName2 = COMMCSNAME + "_subcs_11625_2";
 var mainclName = COMMCLNAME + "_maincl_11625";
 var subclName1 = COMMCLNAME + "_subcl_11625_1";
 var subclName2 = COMMCLNAME + "_subcl_11625_2";
 var subclName3 = COMMCLNAME + "_subcl_11625_3";
 var subclName4 = COMMCLNAME + "_subcl_11625_4";
-var subclName5 = COMMCLNAME + "_subcl_11625_5";
-var subclName6 = COMMCLNAME + "_subcl_11625_6";
 var mainclFullName = maincsName + "." + mainclName;
 var subclFullName1 = maincsName + "." + subclName1;
 var subclFullName2 = maincsName + "." + subclName2;
 var subclFullName3 = subcsName1 + "." + subclName3;
 var subclFullName4 = subcsName1 + "." + subclName4;
-var subclFullName5 = subcsName2 + "." + subclName5;
-var subclFullName6 = subcsName2 + "." + subclName6;
 
 var maincl;
 
-var subclGroups1;
-var subclGroups2;
-var subclGroups3;
-var subclGroups4;
-var subclGroups5;
-var subclGroups6;
+var srcGroupName;
+var desGroupName;
 
-var insertDiffNum = 24000;
+var insertDiffNum = 16000;
 var insertSameNum = 2000;
 
 var db1;
@@ -67,38 +58,40 @@ function main()
    
    //清理环境
    commDropCS( db, subcsName1, true, "drop subcs before test" );
-   commDropCS( db, subcsName2, true, "drop subcs before test" );
    commDropCS( db, maincsName, true, "drop maincs before test" );
+   
+   //获取数据组
+   var temp = commGetGroups( db );
+   if(commIsStandalone(db) == false){
+      srcGroupName = temp[0][0].GroupName;
+      desGroupName = temp[1][0].GroupName;
+   }
+   println("srcGroupName:" + srcGroupName);
+   println("desGroupName:" + desGroupName);
    
    //创建主表cl
    var mainclOption = {IsMainCL: true, ShardingKey: {"a": 1}, ShardingType: "range"};
    maincl = commCreateCLByOption( db, maincsName, mainclName, mainclOption);
    
    //创建子表cl
-   var subclOption1 = {ShardingKey: {"a0": 1}, ShardingType: "range"};
+   var subclOption1 = {ShardingKey: {"a0": 1}, ShardingType: "range", Group: srcGroupName};
    commCreateCLByOption( db, maincsName, subclName1, subclOption1);
-   var subclOption2 = {ShardingKey: {"a0": 1}, ShardingType: "hash"};
+   var subclOption2 = {ShardingKey: {"a0": 1}, ShardingType: "hash", Group: srcGroupName};
    commCreateCLByOption( db, maincsName, subclName2, subclOption2);
    commCreateCLByOption( db, subcsName1, subclName3, subclOption1);
    commCreateCLByOption( db, subcsName1, subclName4, subclOption2);
-   commCreateCLByOption( db, subcsName2, subclName5, subclOption1);
-   commCreateCLByOption( db, subcsName2, subclName6, subclOption2);
    
    //子表切分
-   subclGroups1 = ClSplitOneTimes( maincsName, subclName1, {a0:2000}, {a0:4000} ); 
-   subclGroups2 = ClSplitOneTimes( maincsName, subclName2, 50, null );
-   subclGroups3 = ClSplitOneTimes( subcsName1, subclName3, {a0:10000}, {a0:12000} ); 
-   subclGroups4 = ClSplitOneTimes( subcsName1, subclName4, 50, null );
-   subclGroups5 = ClSplitOneTimes( subcsName2, subclName5, {a0:18000}, {a0:20000} ); 
-   subclGroups6 = ClSplitOneTimes( subcsName2, subclName6, 50, null );
+   split( maincsName, subclName1, srcGroupName, desGroupName, {a0:2000}, {a0:4000} );
+   split( maincsName, subclName2, srcGroupName, desGroupName, 50, null );
+   split( subcsName1, subclName3, srcGroupName, desGroupName, {a0:10000}, {a0:12000} );
+   split( subcsName1, subclName4, srcGroupName, desGroupName, 50, null );
    
    //attach cl
    maincl.attachCL( subclFullName2, {LowBound: {a:4000}, UpBound:{a:8000}} );
-   maincl.attachCL( subclFullName3, {LowBound: {a:8000}, UpBound:{a:12000}} );
-   maincl.attachCL( subclFullName5, {LowBound: {a:16000}, UpBound:{a:20000}} );
-   maincl.attachCL( subclFullName6, {LowBound: {a:20000}, UpBound:{a:24000}} );
    maincl.attachCL( subclFullName4, {LowBound: {a:12000}, UpBound:{a:16000}} );
    maincl.attachCL( subclFullName1, {LowBound: {a:0}, UpBound:{a:4000}} );
+   maincl.attachCL( subclFullName3, {LowBound: {a:8000}, UpBound:{a:12000}} );
    
    //创建索引
    commCreateIndex( maincl, "a1", {a1:1});
@@ -124,15 +117,28 @@ function main()
    checkStat( db, maincsName, subclName2, "$shard", true, true );
    checkStat( db, subcsName1, subclName3, "$shard", true, true );
    checkStat( db, subcsName1, subclName4, "$shard", true, true );
-   checkStat( db, subcsName2, subclName5, "$shard", true, true );
-   checkStat( db, subcsName2, subclName6, "$shard", true, true );
    
    checkStat( db, maincsName, subclName1, "a1", true, true );
    checkStat( db, maincsName, subclName2, "a1", true, true );
    checkStat( db, subcsName1, subclName3, "a1", true, true );
    checkStat( db, subcsName1, subclName4, "a1", true, true );
-   checkStat( db, subcsName2, subclName5, "a1", true, true );
-   checkStat( db, subcsName2, subclName6, "a1", true, true );
+   
+   //执行查询
+   var findConf = {a0:{$in:[0,10000]}};
+   query( dbclPrimary, findConf, null, null, (insertSameNum + 1)*2 );
+   query( dbclSlave, findConf, null, null, (insertSameNum + 1)*2  );
+   var findConf = {a1:{$in:[0,10000]}};
+   query( dbclPrimary, findConf, null, null, (insertSameNum + 1)*2 );
+   query( dbclSlave, findConf, null, null, (insertSameNum + 1)*2  );
+   
+   //检查访问计划快照
+   var tmp = [{GroupName:srcGroupName,ScanType:"ixscan",IndexName:"$shard"},
+              {GroupName:srcGroupName,ScanType:"ixscan",IndexName:"a1"},
+              {GroupName:desGroupName,ScanType:"ixscan",IndexName:"$shard"},
+              {GroupName:desGroupName,ScanType:"ixscan",IndexName:"a1"}];                    
+   var expAccessPlan = tmp.concat(tmp);
+   var actAccessPlan = getMainclAccessPlans( db, {Collection: mainclFullName} );
+   checkMainclAccessPlans( expAccessPlan, actAccessPlan );
    
    //主备节点上检查访问计划
    checkExplainAfterAnalyzeMaincl();
@@ -146,15 +152,33 @@ function main()
    checkStat( db, maincsName, subclName2, "$shard", true, false );
    checkStat( db, subcsName1, subclName3, "$shard", true, false );
    checkStat( db, subcsName1, subclName4, "$shard", true, false );
-   checkStat( db, subcsName2, subclName5, "$shard", true, false );
-   checkStat( db, subcsName2, subclName6, "$shard", true, false );
    
    checkStat( db, maincsName, subclName1, "a1", true, false );
    checkStat( db, maincsName, subclName2, "a1", true, false );
    checkStat( db, subcsName1, subclName3, "a1", true, false );
    checkStat( db, subcsName1, subclName4, "a1", true, false );
-   checkStat( db, subcsName2, subclName5, "a1", true, false );
-   checkStat( db, subcsName2, subclName6, "a1", true, false );
+   
+   //检查访问计划快照
+   var expAccessPlan = [];
+   var actAccessPlan = getMainclAccessPlans( db, {Collection: mainclFullName} );
+   checkMainclAccessPlans( expAccessPlan, actAccessPlan );
+   
+   //执行查询
+   var findConf = {a0:{$in:[0,10000]}};
+   query( dbclPrimary, findConf, null, null, (insertSameNum + 1)*2 );
+   query( dbclSlave, findConf, null, null, (insertSameNum + 1)*2  );
+   var findConf = {a1:{$in:[0,10000]}};
+   query( dbclPrimary, findConf, null, null, (insertSameNum + 1)*2 );
+   query( dbclSlave, findConf, null, null, (insertSameNum + 1)*2  );
+   
+   //检查访问计划快照
+   var tmp = [{GroupName:srcGroupName,ScanType:"ixscan",IndexName:"$shard"},
+              {GroupName:srcGroupName,ScanType:"ixscan",IndexName:"a1"},
+              {GroupName:desGroupName,ScanType:"ixscan",IndexName:"$shard"},
+              {GroupName:desGroupName,ScanType:"ixscan",IndexName:"a1"}];                    
+   var expAccessPlan = tmp.concat(tmp);
+   var actAccessPlan = getMainclAccessPlans( db, {Collection: mainclFullName} );
+   checkMainclAccessPlans( expAccessPlan, actAccessPlan );
    
    //主备节点上检查访问计划
    checkExplainBeforeAnalyze();
@@ -183,15 +207,33 @@ function main()
    checkStat( db, maincsName, subclName2, "$shard", true, false );
    checkStat( db, subcsName1, subclName3, "$shard", true, true );
    checkStat( db, subcsName1, subclName4, "$shard", true, false );
-   checkStat( db, subcsName2, subclName5, "$shard", true, false );
-   checkStat( db, subcsName2, subclName6, "$shard", true, false );
    
    checkStat( db, maincsName, subclName1, "a1", true, true );
    checkStat( db, maincsName, subclName2, "a1", true, false );
    checkStat( db, subcsName1, subclName3, "a1", true, true );
    checkStat( db, subcsName1, subclName4, "a1", true, false );
-   checkStat( db, subcsName2, subclName5, "a1", true, false );
-   checkStat( db, subcsName2, subclName6, "a1", true, false );
+   
+   //检查访问计划快照
+   var expAccessPlan = [];
+   var actAccessPlan = getMainclAccessPlans( db, {Collection: mainclFullName} );
+   checkMainclAccessPlans( expAccessPlan, actAccessPlan );
+   
+   //执行查询
+   var findConf = {a0:{$in:[0,10000]}};
+   query( dbclPrimary, findConf, null, null, (insertSameNum + 1)*2 );
+   query( dbclSlave, findConf, null, null, (insertSameNum + 1)*2  );
+   var findConf = {a1:{$in:[0,10000]}};
+   query( dbclPrimary, findConf, null, null, (insertSameNum + 1)*2 );
+   query( dbclSlave, findConf, null, null, (insertSameNum + 1)*2  );
+   
+   //检查访问计划快照
+   var tmp = [{GroupName:srcGroupName,ScanType:"ixscan",IndexName:"$shard"},
+              {GroupName:srcGroupName,ScanType:"ixscan",IndexName:"a1"},
+              {GroupName:desGroupName,ScanType:"ixscan",IndexName:"$shard"},
+              {GroupName:desGroupName,ScanType:"ixscan",IndexName:"a1"}];                    
+   var expAccessPlan = tmp.concat(tmp);
+   var actAccessPlan = getMainclAccessPlans( db, {Collection: mainclFullName} );
+   checkMainclAccessPlans( expAccessPlan, actAccessPlan );
    
    //主备节点上检查访问计划
    checkExplainAfterModifyStat();
@@ -224,15 +266,16 @@ function main()
    checkStat( db, maincsName, subclName2, "$shard", true, false );
    checkStat( db, subcsName1, subclName3, "$shard", true, true );
    checkStat( db, subcsName1, subclName4, "$shard", true, false );
-   checkStat( db, subcsName2, subclName5, "$shard", true, false );
-   checkStat( db, subcsName2, subclName6, "$shard", true, false );
    
    checkStat( db, maincsName, subclName1, "a1", true, true );
    checkStat( db, maincsName, subclName2, "a1", true, false );
    checkStat( db, subcsName1, subclName3, "a1", true, true );
    checkStat( db, subcsName1, subclName4, "a1", true, false );
-   checkStat( db, subcsName2, subclName5, "a1", true, false );
-   checkStat( db, subcsName2, subclName6, "a1", true, false );
+   
+   //检查访问计划快照
+   var expAccessPlan = [];
+   var actAccessPlan = getMainclAccessPlans( db, {Collection: mainclFullName} );
+   checkMainclAccessPlans( expAccessPlan, actAccessPlan );
    
    //主备节点上检查访问计划
    checkExplainBeforeAnalyze();
@@ -240,7 +283,6 @@ function main()
    
    //清理环境
    commDropCS( db, subcsName1 );
-   commDropCS( db, subcsName2 );
    commDropCS( db, maincsName );
    db1.close();
    db2.close();
@@ -253,25 +295,19 @@ function checkExplainBeforeAnalyze()
 {
    //子表分区键查询
    var findConf = {a0:{$in:[0,10000]}};
-   var expExplains = [{GroupName:subclGroups1[0].GroupName, Name: subclFullName1, 
+   var expExplains = [{GroupName:srcGroupName, Name: subclFullName1, 
                        ScanType:"ixscan", IndexName:"$shard", ReturnNum:insertSameNum + 1},
-                      {GroupName:subclGroups2[0].GroupName, Name: subclFullName2, 
+                      {GroupName:srcGroupName, Name: subclFullName2, 
                        ScanType:"ixscan", IndexName:"$shard", ReturnNum:0},
-                      {GroupName:subclGroups3[0].GroupName, Name: subclFullName3, 
+                      {GroupName:srcGroupName, Name: subclFullName3, 
                        ScanType:"ixscan", IndexName:"$shard", ReturnNum:0},
-                      {GroupName:subclGroups4[0].GroupName, Name: subclFullName4, 
+                      {GroupName:srcGroupName, Name: subclFullName4, 
                        ScanType:"ixscan", IndexName:"$shard", ReturnNum:0},
-                      {GroupName:subclGroups5[0].GroupName, Name: subclFullName5, 
+                      {GroupName:desGroupName, Name: subclFullName2, 
                        ScanType:"ixscan", IndexName:"$shard", ReturnNum:0},
-                      {GroupName:subclGroups6[0].GroupName, Name: subclFullName6, 
-                       ScanType:"ixscan", IndexName:"$shard", ReturnNum:0},
-                      {GroupName:subclGroups2[1].GroupName, Name: subclFullName2, 
-                       ScanType:"ixscan", IndexName:"$shard", ReturnNum:0},
-                      {GroupName:subclGroups3[1].GroupName, Name: subclFullName3, 
+                      {GroupName:desGroupName, Name: subclFullName3, 
                        ScanType:"ixscan", IndexName:"$shard", ReturnNum:insertSameNum + 1},
-                      {GroupName:subclGroups4[1].GroupName, Name: subclFullName4, 
-                       ScanType:"ixscan", IndexName:"$shard", ReturnNum:0},
-                      {GroupName:subclGroups6[1].GroupName, Name: subclFullName6, 
+                      {GroupName:desGroupName, Name: subclFullName4, 
                        ScanType:"ixscan", IndexName:"$shard", ReturnNum:0}];
   
    var actExplains = getMainclExplain( dbclPrimary, findConf);
@@ -284,29 +320,21 @@ function checkExplainBeforeAnalyze()
    
    //索引键查询
    var findConf = {a1:{$in:[0,10000]}};
-   var expExplains = [{GroupName:subclGroups1[0].GroupName, Name: subclFullName1, 
+   var expExplains = [{GroupName:srcGroupName, Name: subclFullName1, 
                        ScanType:"ixscan", IndexName:"a1", ReturnNum:insertSameNum + 1},
-                      {GroupName:subclGroups1[1].GroupName, Name: subclFullName1, 
+                      {GroupName:desGroupName, Name: subclFullName1, 
                        ScanType:"ixscan", IndexName:"a1", ReturnNum:0},
-                      {GroupName:subclGroups2[0].GroupName, Name: subclFullName2, 
+                      {GroupName:srcGroupName, Name: subclFullName2, 
                        ScanType:"ixscan", IndexName:"a1", ReturnNum:0},
-                      {GroupName:subclGroups2[1].GroupName, Name: subclFullName2, 
+                      {GroupName:desGroupName, Name: subclFullName2, 
                        ScanType:"ixscan", IndexName:"a1", ReturnNum:0},
-                      {GroupName:subclGroups3[0].GroupName, Name: subclFullName3, 
+                      {GroupName:srcGroupName, Name: subclFullName3, 
                        ScanType:"ixscan", IndexName:"a1", ReturnNum:0},
-                      {GroupName:subclGroups3[1].GroupName, Name: subclFullName3, 
+                      {GroupName:desGroupName, Name: subclFullName3, 
                        ScanType:"ixscan", IndexName:"a1", ReturnNum:insertSameNum + 1},
-                      {GroupName:subclGroups4[0].GroupName, Name: subclFullName4, 
+                      {GroupName:srcGroupName, Name: subclFullName4, 
                        ScanType:"ixscan", IndexName:"a1", ReturnNum:0},
-                      {GroupName:subclGroups4[1].GroupName, Name: subclFullName4, 
-                       ScanType:"ixscan", IndexName:"a1", ReturnNum:0},
-                      {GroupName:subclGroups5[0].GroupName, Name: subclFullName5, 
-                       ScanType:"ixscan", IndexName:"a1", ReturnNum:0},
-                      {GroupName:subclGroups5[1].GroupName, Name: subclFullName5, 
-                       ScanType:"ixscan", IndexName:"a1", ReturnNum:0},
-                      {GroupName:subclGroups6[0].GroupName, Name: subclFullName6, 
-                       ScanType:"ixscan", IndexName:"a1", ReturnNum:0},
-                      {GroupName:subclGroups6[1].GroupName, Name: subclFullName6, 
+                      {GroupName:desGroupName, Name: subclFullName4, 
                        ScanType:"ixscan", IndexName:"a1", ReturnNum:0}];
    
    var actExplains = getMainclExplain( dbclPrimary, findConf);
@@ -323,25 +351,19 @@ function checkExplainAfterAnalyzeMaincl()
 {
    //子表分区键查询
    var findConf = {a0:{$in:[0,10000]}};
-   var expExplains = [{GroupName:subclGroups1[0].GroupName, Name: subclFullName1, 
+   var expExplains = [{GroupName:srcGroupName, Name: subclFullName1, 
                        ScanType:"tbscan", IndexName:"", ReturnNum:insertSameNum + 1},
-                      {GroupName:subclGroups2[0].GroupName, Name: subclFullName2, 
+                      {GroupName:srcGroupName, Name: subclFullName2, 
                        ScanType:"ixscan", IndexName:"$shard", ReturnNum:0},
-                      {GroupName:subclGroups3[0].GroupName, Name: subclFullName3, 
+                      {GroupName:srcGroupName, Name: subclFullName3, 
                        ScanType:"ixscan", IndexName:"$shard", ReturnNum:0},
-                      {GroupName:subclGroups4[0].GroupName, Name: subclFullName4, 
+                      {GroupName:srcGroupName, Name: subclFullName4, 
                        ScanType:"ixscan", IndexName:"$shard", ReturnNum:0},
-                      {GroupName:subclGroups5[0].GroupName, Name: subclFullName5, 
+                      {GroupName:desGroupName, Name: subclFullName2, 
                        ScanType:"ixscan", IndexName:"$shard", ReturnNum:0},
-                      {GroupName:subclGroups6[0].GroupName, Name: subclFullName6, 
-                       ScanType:"ixscan", IndexName:"$shard", ReturnNum:0},
-                      {GroupName:subclGroups2[1].GroupName, Name: subclFullName2, 
-                       ScanType:"ixscan", IndexName:"$shard", ReturnNum:0},
-                      {GroupName:subclGroups3[1].GroupName, Name: subclFullName3, 
+                      {GroupName:desGroupName, Name: subclFullName3, 
                        ScanType:"tbscan", IndexName:"", ReturnNum:insertSameNum + 1},
-                      {GroupName:subclGroups4[1].GroupName, Name: subclFullName4, 
-                       ScanType:"ixscan", IndexName:"$shard", ReturnNum:0},
-                      {GroupName:subclGroups6[1].GroupName, Name: subclFullName6, 
+                      {GroupName:desGroupName, Name: subclFullName4, 
                        ScanType:"ixscan", IndexName:"$shard", ReturnNum:0}];
   
    var actExplains = getMainclExplain( dbclPrimary, findConf);
@@ -354,29 +376,21 @@ function checkExplainAfterAnalyzeMaincl()
    
    //索引键查询
    var findConf = {a1:{$in:[0,10000]}};
-   var expExplains = [{GroupName:subclGroups1[0].GroupName, Name: subclFullName1, 
+   var expExplains = [{GroupName:srcGroupName, Name: subclFullName1, 
                        ScanType:"tbscan", IndexName:"", ReturnNum:insertSameNum + 1},
-                      {GroupName:subclGroups1[1].GroupName, Name: subclFullName1, 
+                      {GroupName:desGroupName, Name: subclFullName1, 
                        ScanType:"ixscan", IndexName:"a1", ReturnNum:0},
-                      {GroupName:subclGroups2[0].GroupName, Name: subclFullName2, 
+                      {GroupName:srcGroupName, Name: subclFullName2, 
                        ScanType:"ixscan", IndexName:"a1", ReturnNum:0},
-                      {GroupName:subclGroups2[1].GroupName, Name: subclFullName2, 
+                      {GroupName:desGroupName, Name: subclFullName2, 
                        ScanType:"ixscan", IndexName:"a1", ReturnNum:0},
-                      {GroupName:subclGroups3[0].GroupName, Name: subclFullName3, 
+                      {GroupName:srcGroupName, Name: subclFullName3, 
                        ScanType:"ixscan", IndexName:"a1", ReturnNum:0},
-                      {GroupName:subclGroups3[1].GroupName, Name: subclFullName3, 
+                      {GroupName:desGroupName, Name: subclFullName3, 
                        ScanType:"tbscan", IndexName:"", ReturnNum:insertSameNum + 1},
-                      {GroupName:subclGroups4[0].GroupName, Name: subclFullName4, 
+                      {GroupName:srcGroupName, Name: subclFullName4, 
                        ScanType:"ixscan", IndexName:"a1", ReturnNum:0},
-                      {GroupName:subclGroups4[1].GroupName, Name: subclFullName4, 
-                       ScanType:"ixscan", IndexName:"a1", ReturnNum:0},
-                      {GroupName:subclGroups5[0].GroupName, Name: subclFullName5, 
-                       ScanType:"ixscan", IndexName:"a1", ReturnNum:0},
-                      {GroupName:subclGroups5[1].GroupName, Name: subclFullName5, 
-                       ScanType:"ixscan", IndexName:"a1", ReturnNum:0},
-                      {GroupName:subclGroups6[0].GroupName, Name: subclFullName6, 
-                       ScanType:"ixscan", IndexName:"a1", ReturnNum:0},
-                      {GroupName:subclGroups6[1].GroupName, Name: subclFullName6, 
+                      {GroupName:desGroupName, Name: subclFullName4, 
                        ScanType:"ixscan", IndexName:"a1", ReturnNum:0}];
    
    var actExplains = getMainclExplain( dbclPrimary, findConf);
@@ -393,25 +407,19 @@ function checkExplainAfterModifyStat()
 {
    //子表分区键查询
    var findConf = {a0:{$in:[0,10000]}};
-   var expExplains = [{GroupName:subclGroups1[0].GroupName, Name: subclFullName1, 
+   var expExplains = [{GroupName:srcGroupName, Name: subclFullName1, 
                        ScanType:"tbscan", IndexName:"", ReturnNum:insertSameNum + 1},
-                      {GroupName:subclGroups2[0].GroupName, Name: subclFullName2, 
+                      {GroupName:srcGroupName, Name: subclFullName2, 
                        ScanType:"ixscan", IndexName:"$shard", ReturnNum:0},
-                      {GroupName:subclGroups3[0].GroupName, Name: subclFullName3, 
+                      {GroupName:srcGroupName, Name: subclFullName3, 
                        ScanType:"tbscan", IndexName:"", ReturnNum:0},
-                      {GroupName:subclGroups4[0].GroupName, Name: subclFullName4, 
+                      {GroupName:srcGroupName, Name: subclFullName4, 
                        ScanType:"ixscan", IndexName:"$shard", ReturnNum:0},
-                      {GroupName:subclGroups5[0].GroupName, Name: subclFullName5, 
+                      {GroupName:desGroupName, Name: subclFullName2, 
                        ScanType:"ixscan", IndexName:"$shard", ReturnNum:0},
-                      {GroupName:subclGroups6[0].GroupName, Name: subclFullName6, 
-                       ScanType:"ixscan", IndexName:"$shard", ReturnNum:0},
-                      {GroupName:subclGroups2[1].GroupName, Name: subclFullName2, 
-                       ScanType:"ixscan", IndexName:"$shard", ReturnNum:0},
-                      {GroupName:subclGroups3[1].GroupName, Name: subclFullName3, 
+                      {GroupName:desGroupName, Name: subclFullName3, 
                        ScanType:"tbscan", IndexName:"", ReturnNum:insertSameNum + 1},
-                      {GroupName:subclGroups4[1].GroupName, Name: subclFullName4, 
-                       ScanType:"ixscan", IndexName:"$shard", ReturnNum:0},
-                      {GroupName:subclGroups6[1].GroupName, Name: subclFullName6, 
+                      {GroupName:desGroupName, Name: subclFullName4, 
                        ScanType:"ixscan", IndexName:"$shard", ReturnNum:0}];
   
    var actExplains = getMainclExplain( dbclPrimary, findConf);
@@ -424,29 +432,21 @@ function checkExplainAfterModifyStat()
    
    //索引键查询
    var findConf = {a1:{$in:[0,10000]}};
-   var expExplains = [{GroupName:subclGroups1[0].GroupName, Name: subclFullName1, 
+   var expExplains = [{GroupName:srcGroupName, Name: subclFullName1, 
                        ScanType:"tbscan", IndexName:"", ReturnNum:insertSameNum + 1},
-                      {GroupName:subclGroups1[1].GroupName, Name: subclFullName1, 
+                      {GroupName:desGroupName, Name: subclFullName1, 
                        ScanType:"tbscan", IndexName:"", ReturnNum:0},
-                      {GroupName:subclGroups2[0].GroupName, Name: subclFullName2, 
+                      {GroupName:srcGroupName, Name: subclFullName2, 
                        ScanType:"ixscan", IndexName:"a1", ReturnNum:0},
-                      {GroupName:subclGroups2[1].GroupName, Name: subclFullName2, 
+                      {GroupName:desGroupName, Name: subclFullName2, 
                        ScanType:"ixscan", IndexName:"a1", ReturnNum:0},
-                      {GroupName:subclGroups3[0].GroupName, Name: subclFullName3, 
+                      {GroupName:srcGroupName, Name: subclFullName3, 
                        ScanType:"tbscan", IndexName:"", ReturnNum:0},
-                      {GroupName:subclGroups3[1].GroupName, Name: subclFullName3, 
+                      {GroupName:desGroupName, Name: subclFullName3, 
                        ScanType:"tbscan", IndexName:"", ReturnNum:insertSameNum + 1},
-                      {GroupName:subclGroups4[0].GroupName, Name: subclFullName4, 
+                      {GroupName:srcGroupName, Name: subclFullName4, 
                        ScanType:"ixscan", IndexName:"a1", ReturnNum:0},
-                      {GroupName:subclGroups4[1].GroupName, Name: subclFullName4, 
-                       ScanType:"ixscan", IndexName:"a1", ReturnNum:0},
-                      {GroupName:subclGroups5[0].GroupName, Name: subclFullName5, 
-                       ScanType:"ixscan", IndexName:"a1", ReturnNum:0},
-                      {GroupName:subclGroups5[1].GroupName, Name: subclFullName5, 
-                       ScanType:"ixscan", IndexName:"a1", ReturnNum:0},
-                      {GroupName:subclGroups6[0].GroupName, Name: subclFullName6, 
-                       ScanType:"ixscan", IndexName:"a1", ReturnNum:0},
-                      {GroupName:subclGroups6[1].GroupName, Name: subclFullName6, 
+                      {GroupName:desGroupName, Name: subclFullName4, 
                        ScanType:"ixscan", IndexName:"a1", ReturnNum:0}];
    
    var actExplains = getMainclExplain( dbclPrimary, findConf);
