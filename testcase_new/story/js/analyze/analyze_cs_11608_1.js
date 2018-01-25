@@ -78,14 +78,14 @@ function main()
    //主备节点执行查询
    var findConf = {a:sameValues};
    query( dbclPrimary1, findConf, null, null, insertNum );
-   query( dbclPrimary2, findConf, null, null, insertNum );
-   query( dbclPrimary3, findConf, null, null, insertNum );
-   query( dbclPrimary4, findConf, null, null, insertNum );
+   query( dbclPrimary2, findConf, null, null, insertNum  );
+   query( dbclPrimary3, findConf, null, null, insertNum  );
+   query( dbclPrimary4, findConf, null, null, insertNum  );
    
-	query( dbclSlave1, findConf, null, null, insertNum );
-	query( dbclSlave2, findConf, null, null, insertNum );
-   query( dbclSlave3, findConf, null, null, insertNum );
-	query( dbclSlave4, findConf, null, null, insertNum );
+	query( dbclSlave1, findConf, null, null, insertNum  );
+	query( dbclSlave2, findConf, null, null, insertNum  );
+   query( dbclSlave3, findConf, null, null, insertNum  );
+	query( dbclSlave4, findConf, null, null, insertNum  );
 	
 	//检查访问计划快照
    var expAccessPlan = [{ScanType:"ixscan", IndexName:"a"},
@@ -110,10 +110,10 @@ function main()
    
    //主备节点执行查询
    var findConf = {a:sameValues};
-   query( dbclPrimary1, findConf, null, null, insertNum );
+   query( dbclPrimary1, findConf, null, null, insertNum  );
    query( dbclPrimary2, findConf, null, null, insertNum  );
    query( dbclPrimary3, findConf, null, null, insertNum  );
-   query( dbclPrimary4, findConf, null, null, insertNum  );
+   query( dbclPrimary4, findConf, null, null, insertNum );
    
 	query( dbclSlave1, findConf, null, null, insertNum  );
 	query( dbclSlave2, findConf, null, null, insertNum  );

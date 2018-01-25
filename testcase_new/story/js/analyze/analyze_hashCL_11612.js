@@ -6,31 +6,24 @@
 **************************************/
 function main()
 {
-   //独立模式及1组模式不执行该用例
-   try
-	{
-	   //判断独立模式
-	   if( true == commIsStandalone( db ) )
-      {
-         println( "run mode is standalone" );
-         return;
-      } 
-          
-      //判断1组模式
-      var allGroupName = getGroupName( db );       
-      if( 1 === allGroupName.length )
-      {
-         println("only one group");
-         return ;
-      }
-   }
-   catch( e )
+   //判断独立模式
+   if( true == commIsStandalone( db ) )
    {
-      throw e;
+      println( "run mode is standalone" );
+      return;
+   } 
+       
+   //判断1组模式
+   var allGroupName = getGroupName( db );       
+   if( 1 === allGroupName.length )
+   {
+      println("only one group");
+      return ;
    }
    
    var csName = COMMCSNAME + "_hash_11612";
    var clName = COMMCLNAME + "_11612";
+   var clFullName = csName + "." + clName;
    var insertNum = 4000;
 	var sameValues = 9000;
 	var domainName = "mydomain";
@@ -82,31 +75,26 @@ function main()
    checkStat( db, csName, clName, "$shard", false, false );
    checkStat( db, csName, clName, "a0", false, false );
    
-   //使用shard索引，检查主备节点访问计划
+   //在主备节点使用shard索引字段执行查询
    var findConf = {a:sameValues};
-   var expExplains = [{ScanType:"ixscan", IndexName:"$shard", GroupName:groups[0], ReturnNum:insertNum}];
+   query( dbclPrimary, findConf, null, null, insertNum );
+   query( dbclSlave, findConf, null, null, insertNum  );
    
-   var actExplains = getSplitExplain( dbclPrimary, findConf);
-   checkExplain( actExplains, expExplains );
-   
-   var actExplains = getSplitExplain( dbclSlave, findConf);
-   checkExplain( actExplains, expExplains );
-	
-	println("check $shard index query explain before analyze success!");
-	
-	//使用普通索引，检查主备节点访问计划
+	//在主备节点使用普通索引字段执行查询
    var findConf = {a0:sameValues};
-   var expExplains = [{ScanType:"ixscan", IndexName:"a0", GroupName:groups[1], ReturnNum:0},
-                      {ScanType:"ixscan", IndexName:"a0", GroupName:groups[0], ReturnNum:insertNum}];
+   query( dbclPrimary, findConf, null, null, insertNum );
+   query( dbclSlave, findConf, null, null, insertNum );
    
-   var actExplains = getSplitExplain( dbclPrimary, findConf);
-   checkExplain( actExplains, expExplains );
+	//检查访问计划快照
+   var expAccessPlan = [{ScanType:"ixscan", IndexName:"$shard",GroupName:groups[0]},
+                        {ScanType:"ixscan", IndexName:"a0", GroupName:groups[1]},
+                        {ScanType:"ixscan", IndexName:"a0", GroupName:groups[0]},
+                        {ScanType:"ixscan", IndexName:"$shard",GroupName:groups[0]},
+                        {ScanType:"ixscan", IndexName:"a0", GroupName:groups[1]},
+                        {ScanType:"ixscan", IndexName:"a0", GroupName:groups[0]}];
+   var actAccessPlan = getSplitAccessPlans( db, {Collection: clFullName} );
+   checkSnapShotAccessPlans( clFullName, expAccessPlan, actAccessPlan );
    
-   var actExplains = getSplitExplain( dbclSlave, findConf);
-   checkExplain( actExplains, expExplains );
-	
-	println("check common index query explain before analyze success!");
-
    //执行统计
    analyze( db, {Collection: csName + "." + clName} );
    
@@ -114,30 +102,31 @@ function main()
    checkStat( db, csName, clName, "$shard", true, true );
    checkStat( db, csName, clName, "a0", true, true );
    
-   //使用shard索引，检查主备节点访问计划
+   //检查访问计划快照
+   var expAccessPlan = [];
+   var actAccessPlan = getSplitAccessPlans( db, {Collection: clFullName} );
+   checkSnapShotAccessPlans( clFullName, expAccessPlan, actAccessPlan );
+   
+   //在主备节点使用shard索引字段执行查询
    var findConf = {a:sameValues};
-   var expExplains = [{ScanType:"tbscan", IndexName:"", GroupName:groups[0], ReturnNum:insertNum}];
+   query( dbclPrimary, findConf, null, null, insertNum );
+   query( dbclSlave, findConf, null, null, insertNum  );
    
-   var actExplains = getSplitExplain( dbclPrimary, findConf);
-   checkExplain( actExplains, expExplains );
-   
-   var actExplains = getSplitExplain( dbclSlave, findConf);
-   checkExplain( actExplains, expExplains );
-	
-	println("check $shard index query explain after analyze success!");
-	
-	//使用普通索引，检查主备节点访问计划
+   //在主备节点使用普通索引字段执行查询
    var findConf = {a0:sameValues};
-   var expExplains = [{ScanType:"ixscan", IndexName:"a0", GroupName:groups[1], ReturnNum:0},
-                      {ScanType:"tbscan", IndexName:"", GroupName:groups[0], ReturnNum:insertNum}];
+   query( dbclPrimary, findConf, null, null, insertNum );
+   query( dbclSlave, findConf, null, null, insertNum );
    
-   var actExplains = getSplitExplain( dbclPrimary, findConf);
-   checkExplain( actExplains, expExplains );
+	//检查访问计划快照
+   var expAccessPlan = [{ScanType:"tbscan", IndexName:"", GroupName:groups[0]},
+                        {ScanType:"ixscan", IndexName:"a0", GroupName:groups[1]},
+                        {ScanType:"tbscan", IndexName:"", GroupName:groups[0]},
+                        {ScanType:"tbscan", IndexName:"", GroupName:groups[0]},
+                        {ScanType:"ixscan", IndexName:"a0", GroupName:groups[1]},
+                        {ScanType:"tbscan", IndexName:"", GroupName:groups[0]}];
    
-   var actExplains = getSplitExplain( dbclSlave, findConf);
-   checkExplain( actExplains, expExplains );
-	
-	println("check common index query explain after analyze success!");
+   var actAccessPlan = getSplitAccessPlans( db, {Collection: clFullName} );
+   checkSnapShotAccessPlans( clFullName, expAccessPlan, actAccessPlan );
    
    //清理环境
    commDropCS( db, csName);

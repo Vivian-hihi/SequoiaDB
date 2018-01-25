@@ -7,7 +7,14 @@
 function main()
 {
    var clName = COMMCLNAME + "_11645";
+   var clFullName = COMMCSNAME + "." + clName;
    var insertNum = 2000;
+
+   var expAccessPlan1 = [{ScanType:"tbscan", IndexName:""},
+                         {ScanType:"tbscan", IndexName:""}];
+   var expAccessPlan2 = [{ScanType:"ixscan", IndexName:"a"},
+                         {ScanType:"ixscan", IndexName:"a"}];  
+   var expAccessPlan3 = [];
    
    //字符串
 	var sameValues = "a";
@@ -35,35 +42,32 @@ function main()
 	//检查统计信息
    checkStat( db, COMMCSNAME, clName, "a", false, false );
    
-   //检查主备节点访问计划
+   //执行查询
    var findConf = {a:sameValues};
-   var expExplains = [{ScanType:"ixscan", IndexName:"a", ReturnNum:insertNum}];
+   query( dbclPrimary, findConf, null, null, insertNum );
+   query( dbclSlave, findConf, null, null, insertNum  );
    
-   var actExplains = getCommonExplain( dbclPrimary, findConf);
-   checkExplain( actExplains, expExplains );
+   //检查访问计划快照
+   var actAccessPlan = getCommonAccessPlans( db, {Collection: clFullName} );
+   checkSnapShotAccessPlans( clFullName, expAccessPlan2, actAccessPlan );
    
-   var actExplains = getCommonExplain( dbclSlave, findConf);
-   checkExplain( actExplains, expExplains );
-	
-	println("dataType set string before analyze success!");
-
    //执行统计
    analyze( db, {Collection: COMMCSNAME + "." + clName, Index: "a"} );
    
    //检查统计信息
    checkStat( db, COMMCSNAME, clName, "a", true, true );
    
-   //检查主备节点访问计划
-   var findConf = {a:sameValues};
-   var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}];
+   //检查访问计划快照
+   var actAccessPlan = getCommonAccessPlans( db, {Collection: clFullName} );
+   checkSnapShotAccessPlans( clFullName, expAccessPlan3, actAccessPlan );
    
-   var actExplains = getCommonExplain( dbclPrimary, findConf);
-   checkExplain( actExplains, expExplains );
+   //执行查询
+   query( dbclPrimary, findConf, null, null, insertNum );
+   query( dbclSlave, findConf, null, null, insertNum  );
    
-   var actExplains = getCommonExplain( dbclSlave, findConf);
-   checkExplain( actExplains, expExplains );
-   
-   println("dataType set string after analyze success!");
+   //检查访问计划快照
+   var actAccessPlan = getCommonAccessPlans( db, {Collection: clFullName} );
+   checkSnapShotAccessPlans( clFullName, expAccessPlan1, actAccessPlan );
    
    //清除数据
    dbcl.truncate();
@@ -77,35 +81,36 @@ function main()
 	//检查统计信息
    checkStat( db, COMMCSNAME, clName, "a", false, false );
    
-   //检查主备节点访问计划
+   //检查访问计划快照
+   var actAccessPlan = getCommonAccessPlans( db, {Collection: clFullName} );
+   checkSnapShotAccessPlans( clFullName, expAccessPlan3, actAccessPlan );
+   
+   //执行查询
    var findConf = {a:sameValues};
-   var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}];
+   query( dbclPrimary, findConf, null, null, insertNum );
+   query( dbclSlave, findConf, null, null, insertNum  );
    
-   var actExplains = getCommonExplain( dbclPrimary, findConf);
-   checkExplain( actExplains, expExplains );
+   //检查访问计划快照
+   var actAccessPlan = getCommonAccessPlans( db, {Collection: clFullName} );
+   checkSnapShotAccessPlans( clFullName, expAccessPlan1, actAccessPlan );
    
-   var actExplains = getCommonExplain( dbclSlave, findConf);
-   checkExplain( actExplains, expExplains );
-	
-	println("dataType set bool before analyze success!");
-
    //执行统计
    analyze( db, {Collection: COMMCSNAME + "." + clName, Index: "a"} );
    
    //检查统计信息
    checkStat( db, COMMCSNAME, clName, "a", true, true );
    
-   //检查主备节点访问计划
-   var findConf = {a:sameValues};
-   var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}];
+   //检查访问计划快照
+   var actAccessPlan = getCommonAccessPlans( db, {Collection: clFullName} );
+   checkSnapShotAccessPlans( clFullName, expAccessPlan3, actAccessPlan );
    
-   var actExplains = getCommonExplain( dbclPrimary, findConf);
-   checkExplain( actExplains, expExplains );
+   //执行查询
+   query( dbclPrimary, findConf, null, null, insertNum );
+   query( dbclSlave, findConf, null, null, insertNum  );
    
-   var actExplains = getCommonExplain( dbclSlave, findConf);
-   checkExplain( actExplains, expExplains );
-   
-   println("dataType set bool after analyze success!");
+   //检查访问计划快照
+   var actAccessPlan = getCommonAccessPlans( db, {Collection: clFullName} );
+   checkSnapShotAccessPlans( clFullName, expAccessPlan1, actAccessPlan );
    
    //清除数据
    dbcl.truncate();
@@ -119,35 +124,36 @@ function main()
 	//检查统计信息
    checkStat( db, COMMCSNAME, clName, "a", false, false );
    
-   //检查主备节点访问计划
+   //检查访问计划快照
+   var actAccessPlan = getCommonAccessPlans( db, {Collection: clFullName} );
+   checkSnapShotAccessPlans( clFullName, expAccessPlan3, actAccessPlan );
+   
+   //执行查询
    var findConf = {a:sameValues};
-   var expExplains = [{ScanType:"ixscan", IndexName:"a", ReturnNum:insertNum}];
+   query( dbclPrimary, findConf, null, null, insertNum );
+   query( dbclSlave, findConf, null, null, insertNum  );
    
-   var actExplains = getCommonExplain( dbclPrimary, findConf);
-   checkExplain( actExplains, expExplains );
+   //检查访问计划快照
+   var actAccessPlan = getCommonAccessPlans( db, {Collection: clFullName} );
+   checkSnapShotAccessPlans( clFullName, expAccessPlan2, actAccessPlan );
    
-   var actExplains = getCommonExplain( dbclSlave, findConf);
-   checkExplain( actExplains, expExplains );
-	
-	println("dataType set timestamp before analyze success!");
-
    //执行统计
    analyze( db, {Collection: COMMCSNAME + "." + clName, Index: "a"} );
    
    //检查统计信息
    checkStat( db, COMMCSNAME, clName, "a", true, true );
    
-   //检查主备节点访问计划
-   var findConf = {a:sameValues};
-   var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}];
+   //检查访问计划快照
+   var actAccessPlan = getCommonAccessPlans( db, {Collection: clFullName} );
+   checkSnapShotAccessPlans( clFullName, expAccessPlan3, actAccessPlan );
    
-   var actExplains = getCommonExplain( dbclPrimary, findConf);
-   checkExplain( actExplains, expExplains );
+   //执行查询
+   query( dbclPrimary, findConf, null, null, insertNum );
+   query( dbclSlave, findConf, null, null, insertNum  );
    
-   var actExplains = getCommonExplain( dbclSlave, findConf);
-   checkExplain( actExplains, expExplains );
-   
-   println("dataType set timestamp after analyze success!");
+   //检查访问计划快照
+   var actAccessPlan = getCommonAccessPlans( db, {Collection: clFullName} );
+   checkSnapShotAccessPlans( clFullName, expAccessPlan1, actAccessPlan );
    
    //清除数据
    dbcl.truncate();
@@ -161,35 +167,36 @@ function main()
 	//检查统计信息
    checkStat( db, COMMCSNAME, clName, "a", false, false );
    
-   //检查主备节点访问计划
+   //检查访问计划快照
+   var actAccessPlan = getCommonAccessPlans( db, {Collection: clFullName} );
+   checkSnapShotAccessPlans( clFullName, expAccessPlan3, actAccessPlan );
+   
+   //执行查询
    var findConf = {a:sameValues};
-   var expExplains = [{ScanType:"ixscan", IndexName:"a", ReturnNum:insertNum}];
+   query( dbclPrimary, findConf, null, null, insertNum );
+   query( dbclSlave, findConf, null, null, insertNum  );
    
-   var actExplains = getCommonExplain( dbclPrimary, findConf);
-   checkExplain( actExplains, expExplains );
+   //检查访问计划快照
+   var actAccessPlan = getCommonAccessPlans( db, {Collection: clFullName} );
+   checkSnapShotAccessPlans( clFullName, expAccessPlan2, actAccessPlan );
    
-   var actExplains = getCommonExplain( dbclSlave, findConf);
-   checkExplain( actExplains, expExplains );
-	
-	println("dataType set date before analyze success!");
-
    //执行统计
    analyze( db, {Collection: COMMCSNAME + "." + clName, Index: "a"} );
    
    //检查统计信息
    checkStat( db, COMMCSNAME, clName, "a", true, true );
    
-   //检查主备节点访问计划
-   var findConf = {a:sameValues};
-   var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}];
+   //检查访问计划快照
+   var actAccessPlan = getCommonAccessPlans( db, {Collection: clFullName} );
+   checkSnapShotAccessPlans( clFullName, expAccessPlan3, actAccessPlan );
    
-   var actExplains = getCommonExplain( dbclPrimary, findConf);
-   checkExplain( actExplains, expExplains );
+   //执行查询
+   query( dbclPrimary, findConf, null, null, insertNum );
+   query( dbclSlave, findConf, null, null, insertNum  );
    
-   var actExplains = getCommonExplain( dbclSlave, findConf);
-   checkExplain( actExplains, expExplains );
-   
-   println("dataType set date after analyze success!");
+   //检查访问计划快照
+   var actAccessPlan = getCommonAccessPlans( db, {Collection: clFullName} );
+   checkSnapShotAccessPlans( clFullName, expAccessPlan1, actAccessPlan );
    
    //清除数据
    dbcl.truncate();
@@ -203,35 +210,37 @@ function main()
 	//检查统计信息
    checkStat( db, COMMCSNAME, clName, "a", false, false );
    
-   //检查主备节点访问计划
+   //检查访问计划快照
+   var actAccessPlan = getCommonAccessPlans( db, {Collection: clFullName} );
+   checkSnapShotAccessPlans( clFullName, expAccessPlan3, actAccessPlan );
+   
+   //执行查询
    var findConf = {a:sameValues};
-   var expExplains = [{ScanType:"ixscan", IndexName:"a", ReturnNum:insertNum}];
+   query( dbclPrimary, findConf, null, null, insertNum );
+   query( dbclSlave, findConf, null, null, insertNum  );
    
-   var actExplains = getCommonExplain( dbclPrimary, findConf);
-   checkExplain( actExplains, expExplains );
+   //检查访问计划快照
+   var actAccessPlan = getCommonAccessPlans( db, {Collection: clFullName} );
+   checkSnapShotAccessPlans( clFullName, expAccessPlan2, actAccessPlan );
    
-   var actExplains = getCommonExplain( dbclSlave, findConf);
-   checkExplain( actExplains, expExplains );
-	
-	println("dataType set date before analyze success!");
-
    //执行统计
    analyze( db, {Collection: COMMCSNAME + "." + clName, Index: "a"} );
    
    //检查统计信息
    checkStat( db, COMMCSNAME, clName, "a", true, true );
    
-   //检查主备节点访问计划
+   //检查访问计划快照
+   var actAccessPlan = getCommonAccessPlans( db, {Collection: clFullName} );
+   checkSnapShotAccessPlans( clFullName, expAccessPlan3, actAccessPlan );
+   
+   //执行查询
    var findConf = {a:sameValues};
-   var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNum}];
+   query( dbclPrimary, findConf, null, null, insertNum );
+   query( dbclSlave, findConf, null, null, insertNum  );
    
-   var actExplains = getCommonExplain( dbclPrimary, findConf);
-   checkExplain( actExplains, expExplains );
-   
-   var actExplains = getCommonExplain( dbclSlave, findConf);
-   checkExplain( actExplains, expExplains );
-   
-   println("dataType set date after analyze success!");
+   //检查访问计划快照
+   var actAccessPlan = getCommonAccessPlans( db, {Collection: clFullName} );
+   checkSnapShotAccessPlans( clFullName, expAccessPlan1, actAccessPlan );
    
    //清除数据
    dbcl.truncate();
@@ -256,8 +265,46 @@ function main()
    
 	//检查统计信息
    checkStat( db, COMMCSNAME, clName, "a", true, false );
-   println("check result after analyze success!");
    
+   //检查访问计划快照
+   var actAccessPlan = getCommonAccessPlans( db, {Collection: clFullName} );
+   checkSnapShotAccessPlans( clFullName, expAccessPlan3, actAccessPlan );
+   
+   //执行查询
+   var findConf = {a:sameValues1};
+   query( dbclPrimary, findConf, null, null, insertNum );
+   query( dbclSlave, findConf, null, null, insertNum  );
+   
+   var findConf = {a:{$et:sameValues2}};
+   query( dbclPrimary, findConf, null, null, insertNum );
+   query( dbclSlave, findConf, null, null, insertNum  );
+   
+   var findConf = {a:sameValues3};
+   query( dbclPrimary, findConf, null, null, insertNum );
+   query( dbclSlave, findConf, null, null, insertNum  );
+   
+   var findConf = {a:sameValues4};
+   query( dbclPrimary, findConf, null, null, insertNum );
+   query( dbclSlave, findConf, null, null, insertNum  );
+   
+   var findConf = {a:sameValues5};
+   query( dbclPrimary, findConf, null, null, insertNum );
+   query( dbclSlave, findConf, null, null, insertNum  );
+   
+   //检查访问计划快照
+   var expAccessPlan2 = [{ScanType:"ixscan", IndexName:"a"},
+                         {ScanType:"ixscan", IndexName:"a"},
+                         {ScanType:"ixscan", IndexName:"a"},
+                         {ScanType:"ixscan", IndexName:"a"},
+                         {ScanType:"ixscan", IndexName:"a"},
+                         {ScanType:"ixscan", IndexName:"a"},
+                         {ScanType:"ixscan", IndexName:"a"},
+                         {ScanType:"ixscan", IndexName:"a"},
+                         {ScanType:"ixscan", IndexName:"a"},
+                         {ScanType:"ixscan", IndexName:"a"}]
+   var actAccessPlan = getCommonAccessPlans( db, {Collection: clFullName} );
+   checkSnapShotAccessPlans( clFullName, expAccessPlan2, actAccessPlan );
+  
    //清理环境
    commDropCL( db, COMMCSNAME, clName, true, true,"drop CL in the end" );
    db1.close();

@@ -7,6 +7,7 @@
 function main()
 {
    var clName = COMMCLNAME + "_11615";
+   var clFullName = COMMCSNAME + "." + clName;
    var insertNum = 4000;
    
    //清理环境
@@ -32,35 +33,38 @@ function main()
 	//检查统计信息
    checkStat( db, COMMCSNAME, clName, "a", false, false );
    
-   //检查主备节点访问计划
+   //主备节点执行查询
    var findConf = {a:1000};
-   var expExplains = [{ScanType:"ixscan", IndexName:"a", ReturnNum:1}];
+   query( dbclPrimary, findConf, null, null, 1 );
+   query( dbclSlave, findConf, null, null, 1  );
    
-   var actExplains = getCommonExplain( dbclPrimary, findConf);
-   checkExplain( actExplains, expExplains );
+   //检查访问计划快照
+   var expAccessPlan = [{ScanType:"ixscan", IndexName:"a"},
+                        {ScanType:"ixscan", IndexName:"a"}];
+   var actAccessPlan = getCommonAccessPlans( db, {Collection: clFullName} );
+   checkSnapShotAccessPlans( clFullName, expAccessPlan, actAccessPlan );
    
-   var actExplains = getCommonExplain( dbclSlave, findConf);
-   checkExplain( actExplains, expExplains );
-	
-	println("check result before analyze success!");
-
    //执行统计
    analyze( db, {Collection: COMMCSNAME + "." + clName, Index: "a"} );
    
    //检查统计信息
    checkStat( db, COMMCSNAME, clName, "a", true, true );
    
+   //检查访问计划快照
+   var expAccessPlan = [];
+   var actAccessPlan = getCommonAccessPlans( db, {Collection: clFullName} );
+   checkSnapShotAccessPlans( clFullName, expAccessPlan, actAccessPlan );
+   
    //检查主备节点访问计划
    var findConf = {a:1000};
-   var expExplains = [{ScanType:"ixscan", IndexName:"a", ReturnNum:1}];
+   query( dbclPrimary, findConf, null, null, 1 );
+   query( dbclSlave, findConf, null, null, 1  );
    
-   var actExplains = getCommonExplain( dbclPrimary, findConf);
-   checkExplain( actExplains, expExplains );
-   
-   var actExplains = getCommonExplain( dbclSlave, findConf);
-   checkExplain( actExplains, expExplains );
-   
-   println("check result after analyze success!");
+   //检查访问计划快照
+   var expAccessPlan = [{ScanType:"ixscan", IndexName:"a"},
+                        {ScanType:"ixscan", IndexName:"a"}];
+   var actAccessPlan = getCommonAccessPlans( db, {Collection: clFullName} );
+   checkSnapShotAccessPlans( clFullName, expAccessPlan, actAccessPlan );
    
    //清理环境
    commDropCL( db, COMMCSNAME, clName, true, true,"drop CL in the end" );
