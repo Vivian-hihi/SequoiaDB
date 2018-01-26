@@ -183,6 +183,15 @@ namespace engine
                                   CHAR *pSortBuf,
                                   pmdEDUCB *cb ) ;
 
+   static INT32 _rtnPostAnalyzeAll ( const rtnAnalyzeParam & param,
+                                     _SDB_RTNCB *rtnCB,
+                                     _dpsLogWrapper *dpsCB ) ;
+
+   static INT32 _rtnPostAnalyzeCS ( const CHAR * pCSName,
+                                    const rtnAnalyzeParam & param,
+                                    _SDB_RTNCB *rtnCB,
+                                    _dpsLogWrapper *dpsCB ) ;
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNANALYZE, "rtnAnalyze" )
    INT32 rtnAnalyze ( const CHAR *pCSName,
                       const CHAR *pCLName,
@@ -321,6 +330,12 @@ namespace engine
       {
          // No collection space is found, need to do nothing except for clear
          // mode which need to clear cached plans as well
+         INT32 tmpRC = _rtnPostAnalyzeAll( param, rtnCB, dpsCB ) ;
+         if ( SDB_OK != tmpRC )
+         {
+            PD_LOG( PDWARNING, "Failed to process after analyze all, "
+                    "rc: %d", tmpRC ) ;
+         }
          goto done ;
       }
 
@@ -340,11 +355,11 @@ namespace engine
       {
          rc = _rtnAnalyzeAllStats( monCSList, param, cb, dmsCB, rtnCB, dpsCB ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to analyze, rc: %d", rc ) ;
-
-         // Notify backup nodes to clear old cached statistics
-         rc = rtnAnalyzeDpsLog( NULL, NULL, NULL, dpsCB ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to write analyze log, rc: %d", rc ) ;
       }
+
+      rc = _rtnPostAnalyzeAll( param, rtnCB, dpsCB ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to process after analyze all, "
+                   "rc: %d", rc ) ;
 
    done :
       PD_TRACE_EXITRC( SDB__RTNANALYZEALL, rc ) ;
@@ -402,19 +417,11 @@ namespace engine
          {
             // Collection space doesn't have storage unit, but might contain
             // main-collections
-            // Make sure main-collection plans are removed
-            rtnCB->getAPM()->invalidateSUPlans( pCSName ) ;
-
-            if ( param._mode != SDB_ANALYZE_MODE_RELOAD &&
-                 param._mode != SDB_ANALYZE_MODE_CLEAR )
+            INT32 tmpRC = _rtnPostAnalyzeCS( pCSName, param, rtnCB, dpsCB ) ;
+            if ( SDB_OK != tmpRC )
             {
-               // Notify backup nodes to clear old cached statistics
-               INT32 tmprc = rtnAnalyzeDpsLog( pCSName, NULL, NULL, dpsCB ) ;
-               if ( SDB_OK != tmprc )
-               {
-                  PD_LOG( PDERROR, "Failed to write analyze log, "
-                          "rc: %d", tmprc ) ;
-               }
+               PD_LOG( PDWARNING, "Failed to process after analyze CS [%s], "
+                       "rc: %d", pCSName, tmpRC ) ;
             }
          }
 
@@ -455,6 +462,9 @@ namespace engine
          rc = _rtnReloadCSStats( &monCS, param._needCheck, cb, dmsCB, rtnCB ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to reload statistics for "
                       "collection space [%s], rc: %d", pCSName, rc ) ;
+
+         // Make sure main-collection plans are removed
+         rtnCB->getAPM()->invalidateSUPlans( pCSName ) ;
       }
       else if ( param._mode == SDB_ANALYZE_MODE_CLEAR )
       {
@@ -478,11 +488,11 @@ namespace engine
 
          // Make sure main-collection plans are removed
          rtnCB->getAPM()->invalidateSUPlans( pCSName ) ;
-
-         // Notify backup nodes to clear old cached statistics
-         rc = rtnAnalyzeDpsLog( pCSName, NULL, NULL, dpsCB ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to write analyze log, rc: %d", rc ) ;
       }
+
+      rc = _rtnPostAnalyzeCS( pCSName, param, rtnCB, dpsCB ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to process after analyze CS [%s], "
+                   "rc: %d", pCSName, rc ) ;
 
    done :
       if ( suLocked )
@@ -1891,6 +1901,68 @@ namespace engine
    done :
       PD_TRACE_EXITRC( SDB_RTNANALYZEDPSLOG, rc ) ;
       return rc ;
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNPOSTANALYZEALL, "_rtnPostAnalyzeAll" )
+   INT32 _rtnPostAnalyzeAll ( const rtnAnalyzeParam & param,
+                              _SDB_RTNCB *rtnCB,
+                              _dpsLogWrapper *dpsCB )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_RTNPOSTANALYZEALL ) ;
+
+      SDB_ASSERT( rtnCB, "rtnCB is invalid" ) ;
+
+      // Make sure main-collection plans are removed
+      rtnCB->getAPM()->invalidateAllPlans() ;
+
+      if ( param._mode != SDB_ANALYZE_MODE_RELOAD &&
+           param._mode != SDB_ANALYZE_MODE_CLEAR )
+      {
+         // Notify backup nodes to clear old cached statistics
+         rc = rtnAnalyzeDpsLog( NULL, NULL, NULL, dpsCB ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to write analyze log, rc: %d", rc ) ;
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB_RTNPOSTANALYZEALL, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNPOSTANALYZECS, "_rtnPostAnalyzeCS" )
+   INT32 _rtnPostAnalyzeCS ( const CHAR * pCSName,
+                             const rtnAnalyzeParam & param,
+                             _SDB_RTNCB *rtnCB,
+                             _dpsLogWrapper *dpsCB )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_RTNPOSTANALYZECS ) ;
+
+      SDB_ASSERT( pCSName, "pCSName is invalid" ) ;
+      SDB_ASSERT( rtnCB, "rtnCB is invalid" ) ;
+
+      // Make sure main-collection plans are removed
+      rtnCB->getAPM()->invalidateSUPlans( pCSName ) ;
+
+      if ( param._mode != SDB_ANALYZE_MODE_RELOAD &&
+           param._mode != SDB_ANALYZE_MODE_CLEAR )
+      {
+         // Notify backup nodes to clear old cached statistics
+         rc = rtnAnalyzeDpsLog( pCSName, NULL, NULL, dpsCB ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to write analyze log, rc: %d", rc ) ;
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB_RTNPOSTANALYZECS, rc ) ;
+      return rc ;
+
    error :
       goto done ;
    }
