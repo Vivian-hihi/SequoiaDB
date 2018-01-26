@@ -1904,6 +1904,7 @@ namespace engine
       _syncStrategyStr[0] = 0 ;
 
       // audit mask check
+      _auditMask = 0 ;
       if ( SDB_OK != pdString2AuditMask( _auditMaskStr, _auditMask ) )
       {
          std::cerr << PMD_OPTION_AUDIT_MASK << " value error, use default"
