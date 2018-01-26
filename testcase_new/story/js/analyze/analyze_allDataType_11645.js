@@ -40,6 +40,7 @@ function main()
    var dbclSlave = db2.getCS(COMMCSNAME).getCL(clName);
 	
 	//检查统计信息
+   checkConsistency(db, COMMCSNAME, clName);
    checkStat( db, COMMCSNAME, clName, "a", false, false );
    
    //执行查询
@@ -55,6 +56,7 @@ function main()
    analyze( db, {Collection: COMMCSNAME + "." + clName, Index: "a"} );
    
    //检查统计信息
+   checkConsistency(db, COMMCSNAME, clName);
    checkStat( db, COMMCSNAME, clName, "a", true, true );
    
    //检查访问计划快照
@@ -79,6 +81,7 @@ function main()
 	insertSameDatas( dbcl, insertNum, sameValues );
 	
 	//检查统计信息
+   checkConsistency(db, COMMCSNAME, clName);
    checkStat( db, COMMCSNAME, clName, "a", false, false );
    
    //检查访问计划快照
@@ -98,6 +101,7 @@ function main()
    analyze( db, {Collection: COMMCSNAME + "." + clName, Index: "a"} );
    
    //检查统计信息
+   checkConsistency(db, COMMCSNAME, clName);
    checkStat( db, COMMCSNAME, clName, "a", true, true );
    
    //检查访问计划快照
@@ -122,6 +126,7 @@ function main()
 	insertSameDatas( dbcl, insertNum, sameValues );
 	
 	//检查统计信息
+   checkConsistency(db, COMMCSNAME, clName);
    checkStat( db, COMMCSNAME, clName, "a", false, false );
    
    //检查访问计划快照
@@ -141,6 +146,7 @@ function main()
    analyze( db, {Collection: COMMCSNAME + "." + clName, Index: "a"} );
    
    //检查统计信息
+   checkConsistency(db, COMMCSNAME, clName);
    checkStat( db, COMMCSNAME, clName, "a", true, true );
    
    //检查访问计划快照
@@ -165,6 +171,7 @@ function main()
 	insertSameDatas( dbcl, insertNum, sameValues );
 	
 	//检查统计信息
+   checkConsistency(db, COMMCSNAME, clName);
    checkStat( db, COMMCSNAME, clName, "a", false, false );
    
    //检查访问计划快照
@@ -184,6 +191,7 @@ function main()
    analyze( db, {Collection: COMMCSNAME + "." + clName, Index: "a"} );
    
    //检查统计信息
+   checkConsistency(db, COMMCSNAME, clName);
    checkStat( db, COMMCSNAME, clName, "a", true, true );
    
    //检查访问计划快照
@@ -208,6 +216,7 @@ function main()
 	insertSameDatas( dbcl, insertNum, sameValues );
 	
 	//检查统计信息
+   checkConsistency(db, COMMCSNAME, clName);
    checkStat( db, COMMCSNAME, clName, "a", false, false );
    
    //检查访问计划快照
@@ -227,6 +236,7 @@ function main()
    analyze( db, {Collection: COMMCSNAME + "." + clName, Index: "a"} );
    
    //检查统计信息
+   checkConsistency(db, COMMCSNAME, clName);
    checkStat( db, COMMCSNAME, clName, "a", true, true );
    
    //检查访问计划快照
@@ -264,6 +274,7 @@ function main()
    analyze( db, {Collection: COMMCSNAME + "." + clName, Index: "a"} );
    
 	//检查统计信息
+   checkConsistency(db, COMMCSNAME, clName);
    checkStat( db, COMMCSNAME, clName, "a", true, false );
    
    //检查访问计划快照

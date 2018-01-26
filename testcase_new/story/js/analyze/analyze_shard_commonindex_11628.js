@@ -55,6 +55,7 @@ function main()
    analyze( db, options );
                          
    //check before analyze success
+   checkConsistency(db, csName, clName);
    checkStat( db, csName, clName, "$shard", true, true );
    checkStat( db, csName, clName, "b", true, true );
    
@@ -115,6 +116,7 @@ function main()
    analyze( db, options2 );
                                                                            	
    //check after analyze with shard index
+   checkConsistency(db, csName, clName);
    checkStat( db, csName, clName, "$shard", true, false );
    checkStat( db, csName, clName, "b", true, false );
    
@@ -178,6 +180,7 @@ function main()
    var options2 = { Mode : 4, Collection : cl_full_name, Index:"b"};
    analyze( db, options2 );
 
+   checkConsistency(db, csName, clName);
    checkStat( db, csName, clName, "$shard", true, true );
    checkStat( db, csName, clName, "b", true, true );
    
@@ -232,6 +235,7 @@ function main()
    var options2 = { Mode : 5, Collection : cl_full_name, Index:"b" };
    analyze( db, options2 );
    
+   checkConsistency(db, csName, clName);
    checkStat( db, csName, clName, "$shard", true, true );
    checkStat( db, csName, clName, "b", true, true );
    
@@ -332,6 +336,7 @@ function main()
    var options = { Mode : 5, Collection : cl_full_name };
    analyze( db, options );
    
+   checkConsistency(db, csName, clName);
    checkStat( db, csName, clName, "$shard", true, true );
    checkStat( db, csName, clName, "b", true, true );
    

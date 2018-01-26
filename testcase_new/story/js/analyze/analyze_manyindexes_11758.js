@@ -37,7 +37,8 @@ function main()
    db1.setSessionAttr( {PreferedInstance: "s"} );
    var dbclSlave = db1.getCS(csName).getCL(clName);
 	                                     
-   //check before analyze         
+   //check before analyze 
+   checkConsistency(db, csName, clName);   
    checkStat( db, csName, clName, "a", false, false );
    checkStat( db, csName, clName, "ab", false, false );
                                                	
@@ -71,7 +72,8 @@ function main()
    var options = {Collection: cl_full_name};
    analyze( db, options );
                                                                                        
-   //check after analyze         
+   //check after analyze 
+   checkConsistency(db, csName, clName);      
    checkStat( db, csName, clName, "a", true, true );
    checkStat( db, csName, clName, "ab", true, true );
    
@@ -110,7 +112,8 @@ function main()
    var options = {Mode : 3, Collection: cl_full_name, Index: "a"};
    analyze( db, options );
                                                                                        
-   //check after truncate index analyze info          
+   //check after truncate index analyze info   
+   checkConsistency(db, csName, clName);      
    checkStat( db, csName, clName, "a", true, false );
    checkStat( db, csName, clName, "ab", true, true );
                                                	
@@ -154,7 +157,8 @@ function main()
    var options = {Mode : 4, Collection: cl_full_name, Index: "a"};
    analyze( db, options );
                                                                                        
-   //check after modify          
+   //check after modify 
+   checkConsistency(db, csName, clName);      
    checkStat( db, csName, clName, "a", true, true );
    
    //check out snapshot access plans
@@ -192,7 +196,8 @@ function main()
    var options = {Mode : 5, Collection: cl_full_name, Index: "a"};
    analyze( db, options );
                                                                                        
-   //check after truncate          
+   //check after truncate 
+   checkConsistency(db, csName, clName);      
    checkStat( db, csName, clName, "a", true, true );
    
    //check out snapshot access plans

@@ -42,6 +42,7 @@ function main()
    insertSameDatas( dbcl, insertNums, sameValues );
                                                         	
    //check before invoke analyze
+   checkConsistency(db, csName, clName);
    checkStat( db, csName, clName, "a", false, false );
                                                                  	
    //check the query explain of master/slave nodes 
@@ -84,6 +85,7 @@ function main()
    }
                                                                               	
    //check after analyze
+   checkConsistency(db, csName, clName);
    checkStat( db, csName, clName, "a", false, false );
    
    //check out snapshot access plans

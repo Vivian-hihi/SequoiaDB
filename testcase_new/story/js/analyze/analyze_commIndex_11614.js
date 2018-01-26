@@ -34,6 +34,7 @@ function main()
    var dbclSlave = db2.getCS(COMMCSNAME).getCL(clName);
 	
 	//检查统计信息
+   checkConsistency(db, COMMCSNAME, clName);
    checkStat( db, COMMCSNAME, clName, "a", false, false );
    checkStat( db, COMMCSNAME, clName, "a1", false, false );
    
@@ -58,6 +59,7 @@ function main()
    analyze( db, {Collection: COMMCSNAME + "." + clName, Index: "a"} );
    
    //检查统计信息
+   checkConsistency(db, COMMCSNAME, clName);
    checkStat( db, COMMCSNAME, clName, "a", true, true );
    checkStat( db, COMMCSNAME, clName, "a1", true, false );
    

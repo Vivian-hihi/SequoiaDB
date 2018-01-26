@@ -35,6 +35,7 @@ function main()
    var dbclSlave = db2.getCS(COMMCSNAME).getCL(clName);
    
    //检查统计信息
+   checkConsistency(db, COMMCSNAME, clName);
    checkStat( db, COMMCSNAME, clName, "$id", true, true );
    
    //执行查询
@@ -50,6 +51,7 @@ function main()
    analyze( db, {Mode:3, Collection: COMMCSNAME + "." + clName, Index:"$id"} );
    
    //检查统计信息
+   checkConsistency(db, COMMCSNAME, clName);
    checkStat( db, COMMCSNAME, clName, "$id", true, false );
    
    //检查访问计划快照
@@ -78,6 +80,7 @@ function main()
    analyze( db, {Mode:4, Collection: COMMCSNAME + "." + clName, Index:"$id"} );
    
    //检查统计信息
+   checkConsistency(db, COMMCSNAME, clName);
    checkStat( db, COMMCSNAME, clName, "$id", true, true );
    
    //检查访问计划快照信息
@@ -99,12 +102,14 @@ function main()
    updateIndexStateInfo( db, COMMCSNAME, clName, "$id", mcvValues, fracs );
    
    //检查统计信息
+   checkConsistency(db, COMMCSNAME, clName);
    checkStat( db, COMMCSNAME, clName, "$id", true, true );
    
    //再次清空缓存
    analyze( db, {Mode:5, Collection: COMMCSNAME + "." + clName, Index:"$id"} );
    
    //检查统计信息
+   checkConsistency(db, COMMCSNAME, clName);
    checkStat( db, COMMCSNAME, clName, "$id", true, true );
    
    //检查访问计划快照信息

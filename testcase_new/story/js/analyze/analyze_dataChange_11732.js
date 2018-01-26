@@ -40,6 +40,7 @@ function main()
    analyze( db, {Collection: csName + "." + clName, Index: "a"} );
    
 	//检查统计信息
+   checkConsistency(db, csName, clName);
    checkStat( db, csName, clName, "a", false, false );
    
    //执行查询
@@ -58,6 +59,7 @@ function main()
    analyze( db, {Collection: csName + "." + clName, Index: "a"} );
    
    //检查统计信息
+   checkConsistency(db, csName, clName);
    checkStat( db, csName, clName, "a", true, true );
    
    //检查访问计划快照
@@ -79,6 +81,7 @@ function main()
    analyze( db, {Collection: csName + "." + clName} );
    
 	//检查统计信息
+   checkConsistency(db, csName, clName);
    checkStat( db, csName, clName, "a", false, false );
    
    //检查访问计划快照
@@ -101,6 +104,7 @@ function main()
    analyze( db, {Collection: csName + "." + clName} );
    
    //检查统计信息
+   checkConsistency(db, csName, clName);
    checkStat( db, csName, clName, "a", true, true );
    
    //检查访问计划快照
@@ -122,6 +126,7 @@ function main()
    analyze( db, {CollectionSpace: csName} );
    
 	//检查统计信息
+   checkConsistency(db, csName, clName);
    checkStat( db, csName, clName, "a", false, false );
    
    //检查访问计划快照
@@ -144,6 +149,7 @@ function main()
    analyze( db, {CollectionSpace: csName} );
    
    //检查统计信息
+   checkConsistency(db, csName, clName);
    checkStat( db, csName, clName, "a", true, true );
    
    //检查访问计划快照

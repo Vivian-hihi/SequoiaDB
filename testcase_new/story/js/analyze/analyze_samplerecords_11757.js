@@ -28,6 +28,7 @@ function main()
    analyze( db, options );
                                                                                        
    //check SampleNum
+   checkConsistency(db, csName, clName);
    checkStat( db, csName, clName, "", false, false );
    
    //check out snapshot access plans
@@ -48,6 +49,7 @@ function main()
    analyze( db, options );
    
    //check SampleNum again 
+   checkConsistency(db, csName, clName);
    checkStat( db, csName, clName, "", false, false );
    
    //check out snapshot access plans
@@ -65,6 +67,7 @@ function main()
    analyze( db, options );
    
    //check SampleNum again 
+   checkConsistency(db, csName, clName);
    checkStat( db, csName, clName, "", false, false );
    
     //check out snapshot access plans

@@ -70,6 +70,10 @@ function main()
    var dbclSlave4 = db2.getCS(csName2).getCL(clName1);
    
 	//检查统计信息
+   checkConsistency(db, csName1, clName1);
+   checkConsistency(db, csName1, clName2);
+   checkConsistency(db, csName1, clName3);
+   checkConsistency(db, csName2, clName1);
    checkStat( db, csName1, clName1, "a", false, false );
    checkStat( db, csName1, clName2, "a", false, false );
    checkStat( db, csName1, clName3, "a", false, false );
@@ -103,6 +107,10 @@ function main()
    analyze( db, {CollectionSpace: csName1, Mode:2} );
    
    //检查统计信息
+   checkConsistency(db, csName1, clName1);
+   checkConsistency(db, csName1, clName2);
+   checkConsistency(db, csName1, clName3);
+   checkConsistency(db, csName2, clName1);
    checkStat( db, csName1, clName1, "a", true, true );
    checkStat( db, csName1, clName2, "a", true, true );
    checkStat( db, csName1, clName3, "a", true, true );

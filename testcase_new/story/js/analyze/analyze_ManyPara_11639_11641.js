@@ -55,6 +55,7 @@ function main()
    var dbclSlave = db2.getCS(csName).getCL(clName);
 	
 	//检查统计信息
+   checkConsistency(db, csName, clName);
    checkStat( db, csName, clName, "a", false, false );
    
    //执行查询
@@ -70,6 +71,7 @@ function main()
    analyze( db, {Collection: csName + "." + clName, Index: "a", GroupName: groupName} );
    
    //检查统计信息
+   checkConsistency(db, csName, clName);
    checkStat( db, csName, clName, "a", true, true );
    
    //检查访问计划快照
@@ -94,6 +96,7 @@ function main()
    analyze( db, {CollectionSpace: csName, GroupName: groupName, NodeID: nodeId} );
    
    //检查统计信息
+   checkConsistency(db, csName, clName);
    checkStat( db, csName, clName, "a", true, true );
    
    //执行查询
@@ -111,6 +114,7 @@ function main()
    analyze( db, {Collection: csName + "." + clName, GroupName: groupName, NodeID: nodeId} );
    
    //检查统计信息
+   checkConsistency(db, csName, clName);
    checkStat( db, csName, clName, "a", true, true );
    
    //检查访问计划快照
@@ -132,6 +136,7 @@ function main()
    analyze( db, {Collection: csName + "." + clName, Index: "a", NodeID: nodeId} );
    
    //检查统计信息
+   checkConsistency(db, csName, clName);
    checkStat( db, csName, clName, "a", true, true );
    
    //检查访问计划快照
@@ -153,6 +158,7 @@ function main()
    analyze( db, {Collection: csName + "." + clName, Index: "a", GroupName: groupName, NodeID: nodeId} );
    
    //检查统计信息
+   checkConsistency(db, csName, clName);
    checkStat( db, csName, clName, "a", true, true );
    
    //检查访问计划快照

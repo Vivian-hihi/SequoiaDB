@@ -40,6 +40,7 @@ function main()
    var dbclSlave = db2.getCS(COMMCSNAME).getCL(clName);
 	
 	//检查统计信息
+   checkConsistency(db, COMMCSNAME, clName);
    checkStat( db, COMMCSNAME, clName, "d", false, false );
    
    //执行查询
@@ -54,6 +55,7 @@ function main()
    analyze( db, {Collection: COMMCSNAME + "." + clName, Index: "d"} );
    
    //检查统计信息
+   checkConsistency(db, COMMCSNAME, clName);
    checkStat( db, COMMCSNAME, clName, "d", true, true );
    
    //检查访问计划快照

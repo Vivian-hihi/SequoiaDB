@@ -72,6 +72,7 @@ function main()
    var dbclSlave = db2.getCS(csName).getCL(clName);
 	
 	//检查统计信息
+   checkConsistency(db, csName, clName);
    checkStat( db, csName, clName, "$shard", false, false );
    checkStat( db, csName, clName, "a0", false, false );
    
@@ -99,6 +100,7 @@ function main()
    analyze( db, {Collection: csName + "." + clName} );
    
    //检查统计信息
+   checkConsistency(db, csName, clName);
    checkStat( db, csName, clName, "$shard", true, true );
    checkStat( db, csName, clName, "a0", true, true );
    

@@ -64,6 +64,8 @@ function main()
    ClSplitOneTimes( csName, clName2, 50 );
                                                        	
    //check before invoke analyze
+   checkConsistency(db, csName, clName1);
+   checkConsistency(db, csName, clName2);
    checkStat( db, csName, clName1, "$shard", false, false );
    checkStat( db, csName, clName1, "b", false, false );	
    checkStat( db, csName, clName2, "$shard", false, false );
@@ -149,6 +151,8 @@ function main()
    analyze( db, options );
                                                              
    //check after analyze
+   checkConsistency(db, csName, clName1);
+   checkConsistency(db, csName, clName2);
    checkStat( db, csName, clName1, "$shard", true, true );
    checkStat( db, csName, clName1, "b", true, true );	
    checkStat( db, csName, clName2, "$shard", true, true );

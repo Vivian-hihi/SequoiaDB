@@ -50,6 +50,7 @@ function main()
    var priNodeId = groupDetail[0][0].PrimaryNode;
                                              	
    //check before analyze success
+   checkConsistency(db, csName, clName);
    checkStat( db, csName, clName, "a", false, false );
                                           	
    //check the query explain before analyze
@@ -82,6 +83,7 @@ function main()
    analyze( db, options );
    
    //check after analyze success with cs+group
+   checkConsistency(db, csName, clName);
    checkStat( db, csName, clName, "a", true, true );     
 
    //check out snapshot access plans
@@ -119,7 +121,8 @@ function main()
    var options = { Mode : 3, Collection : csName + "." + clName };
    analyze( db, options );               
 
-   //check after truncate        
+   //check after truncate   
+   checkConsistency(db, csName, clName);   
    checkStat( db, csName, clName, "a", true, false );
 
    //check out snapshot access plans
@@ -155,6 +158,7 @@ function main()
    analyze( db, options );
    
    //check after analyze success with cs+node
+   checkConsistency(db, csName, clName);
    checkStat( db, csName, clName, "a", true, true );
                           
    //check out snapshot access plans
@@ -192,7 +196,8 @@ function main()
    var options = { Mode : 3, Collection : csName + "." + clName };
    analyze( db, options );               
 
-   //check after truncate        
+   //check after truncate  
+   checkConsistency(db, csName, clName);   
    checkStat( db, csName, clName, "a", true, false );
 
    //check out snapshot access plans
@@ -228,6 +233,7 @@ function main()
    analyze( db, options );
    
    //check after analyze success with cl+group
+   checkConsistency(db, csName, clName);
    checkStat( db, csName, clName, "a", true, true );
 
    //check out snapshot access plans
@@ -265,7 +271,8 @@ function main()
    var options = { Mode : 3, Collection : csName + "." + clName };
    analyze( db, options );               
 
-   //check after truncate        
+   //check after truncate      
+   checkConsistency(db, csName, clName);   
    checkStat( db, csName, clName, "a", true, false );
 
    //check out snapshot access plans
@@ -301,6 +308,7 @@ function main()
    analyze( db, options );
    
    //check after analyze success with cl+node
+   checkConsistency(db, csName, clName);
    checkStat( db, csName, clName, "a", true, true );
    
    //check out snapshot access plans
@@ -338,7 +346,8 @@ function main()
    var options = { Mode : 3, Collection : csName + "." + clName };
    analyze( db, options );               
 
-   //check after truncate        
+   //check after truncate   
+   checkConsistency(db, csName, clName);   
    checkStat( db, csName, clName, "a", true, false );
 
    //check out snapshot access plans
@@ -374,6 +383,7 @@ function main()
    analyze( db, options );
    
    //check after analyze success with group+node
+   checkConsistency(db, csName, clName);
    checkStat( db, csName, clName, "a", true, true );
    
    //check out snapshot access plans
@@ -411,7 +421,8 @@ function main()
    var options = { Mode : 3, Collection : csName + "." + clName };
    analyze( db, options );               
 
-   //check after truncate        
+   //check after truncate      
+   checkConsistency(db, csName, clName);   
    checkStat( db, csName, clName, "a", true, false );
    
    //check out snapshot access plans
@@ -484,18 +495,4 @@ function checkAnalyzeInvalidResult( options )
       }
    }
 }
-
-function querySameWithOutExplain(dbcl, findConf, sortConf, hintConf)
-{
-   if ( typeof(findConf) == "undefined" ) { findConf = null; }
-   if ( typeof(sortConf) == "undefined" ) { sortConf = null; }
-   if ( typeof(hintConf) == "undefined" ) { hintConf = null; }
-   
-   //执行查询
-   var rc = dbcl.find(findConf).sort(sortConf).hint(hintConf);
-   while(rc.next())
-   {
-   }
-}
-
 main();

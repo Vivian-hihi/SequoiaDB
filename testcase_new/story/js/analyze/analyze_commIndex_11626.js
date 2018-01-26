@@ -49,6 +49,7 @@ function main()
    var dbclSlave = db2.getCS(COMMCSNAME).getCL(clName);
    
    //检查统计信息
+   checkConsistency(db, COMMCSNAME, clName);
    checkStat( db, COMMCSNAME, clName, "a", true, true );
    checkStat( db, COMMCSNAME, clName, "a1", true, true );
    
@@ -66,6 +67,7 @@ function main()
    analyze( db, {Mode:3, Collection: COMMCSNAME + "." + clName, Index:"a"} );
    
    //检查统计信息
+   checkConsistency(db, COMMCSNAME, clName);
    checkStat( db, COMMCSNAME, clName, "a", true, false );
    checkStat( db, COMMCSNAME, clName, "a1", true, true );
    
@@ -89,6 +91,7 @@ function main()
    updateIndexStateInfo( db, COMMCSNAME, clName, "a", mcvValues, fracs );
    
    //检查统计信息
+   checkConsistency(db, COMMCSNAME, clName);
    checkStat( db, COMMCSNAME, clName, "a", true, true );
    checkStat( db, COMMCSNAME, clName, "a1", true, true );
    
@@ -100,6 +103,7 @@ function main()
    analyze( db, {Mode:4, Collection: COMMCSNAME + "." + clName, Index:"a"} );
    
    //检查统计信息
+   checkConsistency(db, COMMCSNAME, clName);
    checkStat( db, COMMCSNAME, clName, "a", true, true );
    checkStat( db, COMMCSNAME, clName, "a1", true, true );
    
@@ -126,6 +130,7 @@ function main()
    analyze( db, {Mode:5, Collection: COMMCSNAME + "." + clName, Index:"a"} );
    
    //检查统计信息
+   checkConsistency(db, COMMCSNAME, clName);
    checkStat( db, COMMCSNAME, clName, "a", true, true );
    checkStat( db, COMMCSNAME, clName, "a1", true, true );
    

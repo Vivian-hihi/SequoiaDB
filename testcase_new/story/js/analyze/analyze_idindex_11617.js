@@ -32,6 +32,7 @@ function main()
    insertDatas( dbcl, insertNums );
                                                          	
    //check before invoke analyze
+   checkConsistency(db, csName, clName);
    checkStat( db, csName, clName, "$id", false, false );
                                                              	
    //check the query explain of master/slave nodes 
@@ -63,6 +64,7 @@ function main()
    analyze( db, options );
                                                                          	
    //check after analyze
+   checkConsistency(db, csName, clName);
    checkStat( db, csName, clName, "$id", true, true );
    
    //check out snapshot access plans

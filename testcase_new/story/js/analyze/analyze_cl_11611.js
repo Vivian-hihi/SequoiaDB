@@ -69,6 +69,11 @@ function main()
    insertSameDatas( dbcl5, insertNums, sameValues );
                                                          	
    //check before invoke analyze
+   checkConsistency(db, csName, clName1);
+   checkConsistency(db, csName, clName2);
+   checkConsistency(db, csName, clName3);
+   checkConsistency(db, csName, clName3);
+   checkConsistency(db, csName, clName5);
    checkStat( db, csName, clName1, "", false, false );
    checkStat( db, csName, clName2, "", false, false );
    checkStat( db, csName, clName3, "a", false, false );
@@ -162,6 +167,11 @@ function main()
    }
                                         
    //check after analyze
+   checkConsistency(db, csName, clName1);
+   checkConsistency(db, csName, clName2);
+   checkConsistency(db, csName, clName3);
+   checkConsistency(db, csName, clName3);
+   checkConsistency(db, csName, clName5);
    checkStat( db, csName, clName1, "", true, false );
    checkStat( db, csName, clName2, "", false, false );
    checkStat( db, csName, clName3, "a", true, true );
@@ -269,6 +279,7 @@ function main()
    analyze( db, options );                                                      						
                                         
    //check after analyze
+   checkConsistency(db, csName, clName5);
    checkStat( db, csName, clName5, "a", true, true );
                    
    //check out snapshot access plans

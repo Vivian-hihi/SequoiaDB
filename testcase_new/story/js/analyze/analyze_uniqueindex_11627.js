@@ -38,6 +38,7 @@ function main()
    analyze( db, options );
                                                       
    //check before analyze success
+   checkConsistency(db, csName, clName);
    checkStat( db, csName, clName, "a", true, true );
    
    //check out snapshot access plans
@@ -74,6 +75,7 @@ function main()
    analyze( db, options );
                                                                          	
    //check after analyze success
+   checkConsistency(db, csName, clName);
    checkStat( db, csName, clName, "a", true, false );
                            
    //check out snapshot access plans
@@ -115,6 +117,7 @@ function main()
    analyze( db, options );
                                                             	
    //check after reload analyze success
+   checkConsistency(db, csName, clName);
    checkStat( db, csName, clName, "a", true, true );
    
    //check out snapshot access plans
@@ -148,7 +151,8 @@ function main()
    //truncate invalidate
    var options = { Mode : 5, Collection : cl_full_name };
    analyze( db, options );
-                                                               	
+                             
+   checkConsistency(db, csName, clName);                          
    checkStat( db, csName, clName, "a", true, true );
    
    //check out snapshot access plans
@@ -185,6 +189,7 @@ function main()
    updateIndexStateInfo( db, csName, clName, "a", mcvValues, fracs );
                                  	
    //check after reload analyze info
+   checkConsistency(db, csName, clName);
    checkStat( db, csName, clName, "a", true, true );
                                                	
    var findConf = {a : 1000};
@@ -216,6 +221,7 @@ function main()
    analyze( db, options );
                               	
    //check analyze after truncate invalidate
+   checkConsistency(db, csName, clName);
    checkStat( db, csName, clName, "a", true, true );
    
    //check out snapshot access plans

@@ -29,6 +29,7 @@ function main()
    analyze( db, {CollectionSpace: csName} );
    
    //检查统计信息
+   checkConsistency(db, csName, clName);
    checkStat( db, csName, clName, "a", false, false );
    
    //删除索引，插入数据，执行统计
@@ -37,6 +38,7 @@ function main()
    analyze( db, {CollectionSpace: csName} );
    
    //检查统计信息
+   checkConsistency(db, csName, clName);
    checkStat( db, csName, clName, "a", true, false );
    
    //删除数据，执行统计
@@ -44,6 +46,7 @@ function main()
    analyze( db, {CollectionSpace: csName} );
    
    //检查统计信息
+   checkConsistency(db, csName, clName);
    checkStat( db, csName, clName, "a", false, false );
    
    //删除cl，执行统计

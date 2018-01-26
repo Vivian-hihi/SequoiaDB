@@ -63,6 +63,8 @@ function main()
 	var groups2 = ClSplitOneTimes( csName, clName2, 50 );
 	
 	//check before invoke analyze
+   checkConsistency(db, csName, clName1);
+   checkConsistency(db, csName, clName2);
 	checkStat( db, csName, clName1, "$shard", false, false );
    checkStat( db, csName, clName1, "b", false, false );
 	checkStat( db, csName, clName2, "$shard", false, false );
@@ -80,6 +82,8 @@ function main()
    var options2 = { Collection: csName + "." + clName2 };
    analyze( db, options2 );
 	
+   checkConsistency(db, csName, clName1);
+   checkConsistency(db, csName, clName2);
    checkStat( db, csName, clName1, "$shard", true, true );
    checkStat( db, csName, clName2, "$shard", true, true );
    checkStat( db, csName, clName1, "b", true, true );
@@ -175,6 +179,8 @@ function main()
    analyze( db, options2 );
    
    //check analyze
+   checkConsistency(db, csName, clName1);
+   checkConsistency(db, csName, clName2);
    checkStat( db, csName, clName1, "$shard", true, false );
    checkStat( db, csName, clName2, "$shard", true, false );
    checkStat( db, csName, clName1, "b", true, false );
@@ -282,6 +288,8 @@ function main()
    analyze( db, options2 );
    
    //check analyze
+   checkConsistency(db, csName, clName1);
+   checkConsistency(db, csName, clName2);
    checkStat( db, csName, clName1, "$shard", true, true );
    checkStat( db, csName, clName2, "$shard", true, true );
    checkStat( db, csName, clName1, "b", true, true );
@@ -378,6 +386,8 @@ function main()
    analyze( db, options2 );
 	
    //check analyze
+   checkConsistency(db, csName, clName1);
+   checkConsistency(db, csName, clName2);
    checkStat( db, csName, clName1, "$shard", true, true );
    checkStat( db, csName, clName2, "$shard", true, true );
    checkStat( db, csName, clName1, "b", true, true );
@@ -478,6 +488,8 @@ function main()
    updateIndexStateInfo( db, csName, clName2, "b", mcvValues2, fracs );   
 
    //check analyze
+   checkConsistency(db, csName, clName1);
+   checkConsistency(db, csName, clName2);
    checkStat( db, csName, clName1, "$shard", true, true );
    checkStat( db, csName, clName2, "$shard", true, true );
    checkStat( db, csName, clName1, "b", true, true );
@@ -563,6 +575,8 @@ function main()
    analyze( db, options2 );
 	
    //check analyze
+   checkConsistency(db, csName, clName1);
+   checkConsistency(db, csName, clName2);
    checkStat( db, csName, clName1, "$shard", true, true );
    checkStat( db, csName, clName2, "$shard", true, true );
    checkStat( db, csName, clName1, "b", true, true );

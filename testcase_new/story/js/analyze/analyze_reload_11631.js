@@ -37,6 +37,7 @@ function main()
    commCreateIndex( dbcl, "a", {a : 1}, false );                                                                                            
                                           	
    //check before analyze success
+   checkConsistency(db, csName, clName);
    checkStat( db, csName, clName, "a", false, false );
                                                    	
    //check the query explain after analyze
@@ -68,6 +69,7 @@ function main()
    analyze( db, options );
                             	
    //check after analyze success
+   checkConsistency(db, csName, clName);
    checkStat( db, csName, clName, "a", true, true );
    
    //check out snapshot access plans
@@ -106,6 +108,7 @@ function main()
    analyze( db, options );
                             	
    //check after reload analyze success
+   checkConsistency(db, csName, clName);
    checkStat( db, csName, clName, "a", true, true );
    
    //check out snapshot access plans
