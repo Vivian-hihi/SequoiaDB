@@ -56,6 +56,7 @@ function main()
    analyze( db, {Collection: COMMCSNAME + "." + clName} );
    
    //检查统计信息
+   checkConsistency(db, COMMCSNAME, clName);
    checkStat( db, COMMCSNAME, clName, "a", true, true );
    
    //执行查询
@@ -70,6 +71,7 @@ function main()
    analyze( db, {Mode:3, Collection: COMMCSNAME + "." + clName} );
    
    //检查统计信息
+   checkConsistency(db, COMMCSNAME, clName);
    checkStat( db, COMMCSNAME, clName, "a", true, false );
    
    //检查访问计划快照
@@ -94,6 +96,7 @@ function main()
    analyze( db, {Mode: 4, GroupName: groupName} );
    
    //检查统计信息
+   checkConsistency(db, COMMCSNAME, clName);
    checkStat( db, COMMCSNAME, clName, "a", true, true );
    
    //检查访问计划快照
@@ -114,6 +117,7 @@ function main()
    updateIndexStateInfo( db, COMMCSNAME, clName, "a", mcvValues, fracs );
    
    //检查统计信息
+   checkConsistency(db, COMMCSNAME, clName);
    checkStat( db, COMMCSNAME, clName, "a", true, true );
    
    //检查访问计划快照
@@ -132,6 +136,7 @@ function main()
    analyze( db, {Mode:5, GroupName: groupName} );
    
    //检查统计信息
+   checkConsistency(db, COMMCSNAME, clName);
    checkStat( db, COMMCSNAME, clName, "a", true, true );
    
    //检查访问计划快照

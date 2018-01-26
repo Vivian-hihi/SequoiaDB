@@ -113,6 +113,11 @@ function main()
    dbclSlave = db2.getCS(maincsName).getCL(mainclName);
    
    //检查统计
+   checkConsistency(db, maincsName, subclName1); 
+   checkConsistency(db, maincsName, subclName2); 
+   checkConsistency(db, subcsName1, subclName3); 
+   checkConsistency(db, subcsName1, subclName4); 
+   
    checkStat( db, maincsName, subclName1, "$shard", false, false );
    checkStat( db, maincsName, subclName2, "$shard", false, false );
    checkStat( db, subcsName1, subclName3, "$shard", false, false );
@@ -131,6 +136,11 @@ function main()
    analyze( db, {Collection: mainclFullName, Index:"$shard"} );
    
    //检查统计
+   checkConsistency(db, maincsName, subclName1); 
+   checkConsistency(db, maincsName, subclName2); 
+   checkConsistency(db, subcsName1, subclName3); 
+   checkConsistency(db, subcsName1, subclName4); 
+   
    checkStat( db, maincsName, subclName1, "$shard", true, true );
    checkStat( db, maincsName, subclName2, "$shard", true, true );
    checkStat( db, subcsName1, subclName3, "$shard", true, true );
@@ -149,6 +159,11 @@ function main()
    analyze( db, {Collection: mainclFullName, Mode:3} );
    
    //检查统计
+   checkConsistency(db, maincsName, subclName1); 
+   checkConsistency(db, maincsName, subclName2); 
+   checkConsistency(db, subcsName1, subclName3); 
+   checkConsistency(db, subcsName1, subclName4); 
+   
    checkStat( db, maincsName, subclName1, "$shard", true, false );
    checkStat( db, maincsName, subclName2, "$shard", true, false );
    checkStat( db, subcsName1, subclName3, "$shard", true, false );
@@ -184,6 +199,11 @@ function main()
    analyze( db, {Collection: mainclFullName, Index:"a1"} );
    
    //检查统计
+   checkConsistency(db, maincsName, subclName1); 
+   checkConsistency(db, maincsName, subclName2); 
+   checkConsistency(db, subcsName1, subclName3); 
+   checkConsistency(db, subcsName1, subclName4); 
+   
    checkStat( db, maincsName, subclName1, "$shard", true, false );
    checkStat( db, maincsName, subclName2, "$shard", true, false );
    checkStat( db, subcsName1, subclName3, "$shard", true, false );
@@ -225,6 +245,11 @@ function main()
    commDropIndex( subcl4, "a1" );
    
    //检查统计
+   checkConsistency(db, maincsName, subclName1); 
+   checkConsistency(db, maincsName, subclName2); 
+   checkConsistency(db, subcsName1, subclName3); 
+   checkConsistency(db, subcsName1, subclName4); 
+   
    checkStat( db, maincsName, subclName1, "a1", true, true );
    checkStat( db, maincsName, subclName2, "a1", true, false );
    checkStat( db, subcsName1, subclName3, "a1", true, true );

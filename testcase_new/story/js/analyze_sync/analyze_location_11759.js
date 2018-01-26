@@ -41,7 +41,8 @@ function main()
    db1.setSessionAttr( {PreferedInstance: "s"} );
    var dbclSlave = db1.getCS(csName).getCL(clName);
    
-   //check before analyze         
+   //check before analyze    
+   checkConsistency(db, csName, clName);   
    checkStat( db, csName, clName, "a", false, false );
                                                	
    var findConf = {a : 9000};
@@ -90,7 +91,8 @@ function main()
    var options = { GroupID: groupId, GroupName: groupName };
    analyze( db, options );               
 
-   //check after correct analyze         
+   //check after correct analyze  
+   checkConsistency(db, csName, clName);    
    checkStat( db, csName, clName, "a", true, true );
    
    //check out snapshot access plans
@@ -126,7 +128,8 @@ function main()
    var options = { Mode : 3, Collection : csName + "." + clName };
    analyze( db, options );               
 
-   //check after truncate        
+   //check after truncate
+   checkConsistency(db, csName, clName);    
    checkStat( db, csName, clName, "a", true, false );
    
    //check out snapshot access plans
@@ -162,7 +165,8 @@ function main()
    var options = { NodeID: priNodeId };
    analyze( db, options );               
 
-   //check after correct analyze         
+   //check after correct analyze  
+   checkConsistency(db, csName, clName);    
    checkStat( db, csName, clName, "a", true, true );
                                                	
     //check out snapshot access plans
@@ -198,7 +202,8 @@ function main()
    var options = { Mode : 3, Collection : csName + "." + clName };
    analyze( db, options );               
 
-   //check after truncate          
+   //check after truncate   
+   checkConsistency(db, csName, clName);    
    checkStat( db, csName, clName, "a", true, false );
    
    //check out snapshot access plans
@@ -234,7 +239,8 @@ function main()
    var options = { HostName: priHostname, svcname: priSvcname };
    analyze( db, options );               
 
-   //check after correct analyze         
+   //check after correct analyze 
+   checkConsistency(db, csName, clName);    
    checkStat( db, csName, clName, "a", true, true );
    
    //check out snapshot access plans

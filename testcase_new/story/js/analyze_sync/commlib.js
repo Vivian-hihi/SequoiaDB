@@ -172,7 +172,46 @@ function getSlaveNodeLSNs(db, groups)
 }
 
 /************************************
-*@Description: 检查主备节点lsn是否一致
+*@Description: 检查主备节点lsn是否一致(超时600s)
+*@author:      zhaoyu
+*@createDate:  2017.11.8
+**************************************/
+function checkConsistency(db, csName, clName, groups)
+{
+   if( groups == undefined ){var groups = commGetCLGroups( db, csName + "." + clName );}
+   
+   //the longest waiting time is 600S
+   var lsnFlag = false;
+   var timeout = 600;
+   var doTimes = 0; 
+   
+   //get primary nodes
+   var primaryNodeLSNs = getPrimaryNodeLSNs(db, groups);
+   while(true)
+   {
+      lsnFlag = checkLSN(db, groups, primaryNodeLSNs);
+      if(!lsnFlag)
+      {
+         if(doTimes < timeout)
+         {
+            ++doTimes;
+            sleep(1000);
+         }
+         else
+         {
+            throw "check lsn time out";
+         }     
+      }
+      else 
+      {
+         break;
+      }
+   }
+   
+}
+
+/************************************
+*@Description: 获取当前主备节点lsn是否一致的状态
 *@author:      zhaoyu
 *@createDate:  2017.11.8
 **************************************/
@@ -181,7 +220,7 @@ function checkLSN(db, groups, primaryNodeLSNs)
    var slaveNodeLSNs = getSlaveNodeLSNs(db, groups);
  
    var checkLSN = true;
-   //比较各节点lsn
+   //比较主备节点lsn
    for(var i = 0; i < slaveNodeLSNs.length; ++i)
    {
       for(var j = 0; j < slaveNodeLSNs[i].length; ++j)
@@ -207,36 +246,6 @@ function checkStat( db, csName, clName, indexName, clExistStat, indexExistStat, 
    if( clExistStat == undefined ){ clExistStat = true;}
    if( indexExistStat == undefined ){ indexExistStat = true;}
    if( groups == undefined ){var groups = commGetCLGroups( db, csName + "." + clName );}
-   
-   //check lsn
-   //the longest waiting time is 600S
-   var lsnFlag = false;
-   var timeout = 600;
-   var doTimes = 0; 
-   
-   //get primary nodes
-   var primaryNodeLSNs = getPrimaryNodeLSNs(db, groups);
-   while(true)
-   {
-      lsnFlag = checkLSN(db, groups, primaryNodeLSNs);
-      //println("check primary and slave node lsn flag:" + lsnFlag);
-      if(!lsnFlag)
-      {
-         if(doTimes < timeout)
-         {
-            ++doTimes;
-            sleep(1000);
-         }
-         else
-         {
-            throw "check lsn time out";
-         }     
-      }
-      else 
-      {
-         break;
-      }
-   }
    
    //get all nodes
    var datas = getNodesInGroups(db, groups);

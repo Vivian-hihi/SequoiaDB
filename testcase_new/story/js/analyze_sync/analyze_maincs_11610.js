@@ -112,6 +112,10 @@ function main()
    dbclSlave = db2.getCS(maincsName).getCL(mainclName);
    
 	//检查统计信息
+   checkConsistency(db, maincsName, subclName1); 
+   checkConsistency(db, maincsName, subclName2); 
+   checkConsistency(db, subcsName1, subclName3); 
+   checkConsistency(db, subcsName1, subclName4); 
    checkStat( db, maincsName, subclName1, "$shard", false, false );
    checkStat( db, maincsName, subclName2, "$shard", false, false );
    checkStat( db, subcsName1, subclName3, "$shard", false, false );
@@ -151,6 +155,11 @@ function main()
    analyze( db, {CollectionSpace: maincsName} );
    
    //检查统计
+   checkConsistency(db, maincsName, subclName1); 
+   checkConsistency(db, maincsName, subclName2); 
+   checkConsistency(db, subcsName1, subclName3); 
+   checkConsistency(db, subcsName1, subclName4); 
+   
    checkStat( db, maincsName, subclName1, "$shard", true, true );
    checkStat( db, maincsName, subclName2, "$shard", true, true );
    checkStat( db, subcsName1, subclName3, "$shard", false, false );
@@ -197,6 +206,11 @@ function main()
    maincl.attachCL( subclFullName1, {LowBound: {a:0}, UpBound:{a:4000}} ); 
    
    //检查统计信息
+   checkConsistency(db, maincsName, subclName1); 
+   checkConsistency(db, maincsName, subclName2); 
+   checkConsistency(db, subcsName1, subclName3); 
+   checkConsistency(db, subcsName1, subclName4); 
+   
    checkStat( db, maincsName, subclName1, "$shard", true, true );
    checkStat( db, maincsName, subclName2, "$shard", true, true );
    checkStat( db, subcsName1, subclName3, "$shard", false, false );
@@ -245,6 +259,11 @@ function main()
    analyze( db, {CollectionSpace: subcsName1} );
    
    //检查统计信息
+   checkConsistency(db, maincsName, subclName1); 
+   checkConsistency(db, maincsName, subclName2); 
+   checkConsistency(db, subcsName1, subclName3); 
+   checkConsistency(db, subcsName1, subclName4); 
+   
    checkStat( db, maincsName, subclName1, "$shard", true, true );
    checkStat( db, maincsName, subclName2, "$shard", true, true );
    checkStat( db, subcsName1, subclName3, "$shard", true, true );
@@ -279,6 +298,11 @@ function main()
    maincl.attachCL( subclFullName3, {LowBound: {a:8000}, UpBound:{a:12000}} );
    
    //检查统计信息
+   checkConsistency(db, maincsName, subclName1); 
+   checkConsistency(db, maincsName, subclName2); 
+   checkConsistency(db, subcsName1, subclName3); 
+   checkConsistency(db, subcsName1, subclName4); 
+   
    checkStat( db, maincsName, subclName1, "$shard", true, true );
    checkStat( db, maincsName, subclName2, "$shard", true, true );
    checkStat( db, subcsName1, subclName3, "$shard", true, true );
@@ -308,6 +332,11 @@ function main()
    analyze( db, {CollectionSpace: maincsName} );
    
    //检查统计信息
+   checkConsistency(db, maincsName, subclName1); 
+   checkConsistency(db, maincsName, subclName2); 
+   checkConsistency(db, subcsName1, subclName3); 
+   checkConsistency(db, subcsName1, subclName4); 
+   
    checkStat( db, maincsName, subclName1, "$shard", true, true );
    checkStat( db, maincsName, subclName2, "$shard", true, true );
    checkStat( db, subcsName1, subclName3, "$shard", true, true );

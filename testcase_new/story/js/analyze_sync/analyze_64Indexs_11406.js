@@ -41,6 +41,7 @@ function main()
    analyze( db, {Collection:COMMCSNAME + "." + clName} );
    
    //检查统计信息
+   checkConsistency(db, COMMCSNAME, clName);
    for(var i=0; i<indexNum; i++)
    {
       checkStat( db, COMMCSNAME, clName, "a" + i, true, true );
@@ -68,6 +69,7 @@ function main()
    }
    
    //检查统计信息
+   checkConsistency(db, COMMCSNAME, clName);
    for(var i=0; i<indexNum; i++)
    {
       checkStat( db, COMMCSNAME, clName, "a" + i, true, false );

@@ -11,6 +11,12 @@ function main()
       println("skip standalone environment");
       return;
    } 
+   
+   if (2 > commGetGroupsNum(db))
+   {
+      println("group less than 2");
+      return ;
+   }
                                                	
    var csName = COMMCSNAME + "11620";
    commDropCS( db, csName, true, "drop CS in the beginning" );
@@ -20,93 +26,142 @@ function main()
                                                            		
    //create cl	
    var groups = commGetGroups(db);
-   var groupName = groups[0][0].GroupName;
+   var groupName1 = groups[0][0].GroupName;
+   var groupName2 = groups[1][0].GroupName;
                                                       	
-   var clOption = { Group : groupName };
-   var clName = COMMCLNAME + "11620";
-   var dbcl = commCreateCLByOption( db, csName, clName, clOption, true );
+   var clOption1 = { Group : groupName1 };
+   var clName1 = COMMCLNAME + "11620_1";
+   var dbcl1 = commCreateCLByOption( db, csName, clName1, clOption1, true );
+   
+   var clOption2 = { Group : groupName2 };
+   var clName2 = COMMCLNAME + "11620_2";
+   var dbcl2 = commCreateCLByOption( db, csName, clName2, clOption2, true );
                              
-   var clFullName = csName + "." + clName;
+   var clFullName1 = csName + "." + clName1;
+   var clFullName2 = csName + "." + clName2;
                              
    //get master/slave datanode
    var db1 = new Sdb(db);
    db1.setSessionAttr( {PreferedInstance: "m"} );
-   var dbclPrimary = db1.getCS(csName).getCL(clName);
+   var dbclPrimary1 = db1.getCS(csName).getCL(clName1);
+   var dbclPrimary2 = db1.getCS(csName).getCL(clName2);
    
    db1 = new Sdb(db);
    db1.setSessionAttr( {PreferedInstance: "s"} );
-   var dbclSlave = db1.getCS(csName).getCL(clName);
+   var dbclSlave1 = db1.getCS(csName).getCL(clName1);
+   var dbclSlave2 = db1.getCS(csName).getCL(clName2);
                                                                                   	
    //create index
-   commCreateIndex( dbcl, "a", {a : 1}, false );
+   commCreateIndex( dbcl1, "a", {a : 1}, false );
+   commCreateIndex( dbcl2, "a", {a : 1}, false );
                                                     	
    //insert
    var insertNums = 3000;
    var sameValues = 9000;
-   insertDiffDatas( dbcl, insertNums );
-   insertSameDatas( dbcl, insertNums, sameValues );
+   insertDiffDatas( dbcl1, insertNums );
+   insertSameDatas( dbcl1, insertNums, sameValues );
+   insertDiffDatas( dbcl2, insertNums );
+   insertSameDatas( dbcl2, insertNums, sameValues );
                                                         	
    //check before invoke analyze
-   checkStat( db, csName, clName, "a", false, false );
+   checkConsistency(db, csName, clName1);
+   checkConsistency(db, csName, clName2);
+   checkStat( db, csName, clName1, "a", false, false );
+   checkStat( db, csName, clName2, "a", false, false );
                                                        	 
    //check the query explain of master/slave nodes 
    var findConf = {a : 9000};
    var expExplains = [{ScanType:"ixscan", IndexName:"a", ReturnNum:insertNums}];
                                                                            
-   var actExplains = getCommonExplain( dbclPrimary, findConf);
-   checkExplain( actExplains, expExplains );
+   var actExplains1 = getCommonExplain( dbclPrimary1, findConf);
+   var actExplains2 = getCommonExplain( dbclPrimary2, findConf);
+   checkExplain( actExplains1, expExplains );
+   checkExplain( actExplains2, expExplains );
                                                     
-   var actExplains = getCommonExplain( dbclSlave, findConf);
-   checkExplain( actExplains, expExplains );
+   var actExplains = getCommonExplain( dbclSlave1, findConf);
+   var actExplains = getCommonExplain( dbclSlave2, findConf);
+   checkExplain( actExplains1, expExplains );
+   checkExplain( actExplains2, expExplains );
                         
    //query
-   query(dbclPrimary, findConf, null, null, insertNums);
-   query(dbclSlave, findConf, null, null, insertNums);
+   query(dbclPrimary1, findConf, null, null, insertNums);
+   query(dbclPrimary2, findConf, null, null, insertNums);
+   query(dbclSlave1, findConf, null, null, insertNums);
+   query(dbclSlave2, findConf, null, null, insertNums);
    
    //check out snapshot access plans
-	var accessFindOption = { Collection: clFullName };
-   var actAccessPlans = getCommonAccessPlans(db, accessFindOption);
+	var accessFindOption1 = { Collection: clFullName1 };
+   var accessFindOption2 = { Collection: clFullName2 };
+   
+   var actAccessPlans1 = getCommonAccessPlans(db, accessFindOption1);
+   var actAccessPlans2 = getCommonAccessPlans(db, accessFindOption2);
+   
    var expAccessPlans = [{ScanType:"ixscan", IndexName:"a"},
 	                      {ScanType:"ixscan", IndexName:"a"}];  
 
-   checkSnapShotAccessPlans(clFullName, expAccessPlans, actAccessPlans); 
+   checkSnapShotAccessPlans(clFullName1, expAccessPlans, actAccessPlans1);
+   checkSnapShotAccessPlans(clFullName2, expAccessPlans, actAccessPlans2);   
                         
    println("check result before analyze success!");
                                                               	
    //invoke analyze
-   var options = {GroupName : groupName};
+   var options = {GroupName : groupName1};
    analyze( db, options );
                                                              	
    //check after analyze
-   checkStat( db, csName, clName, "a", true, true );
+   checkConsistency(db, csName, clName1);
+   checkConsistency(db, csName, clName2);
+   checkStat( db, csName, clName1, "a", true, true );
+   checkStat( db, csName, clName2, "a", false, false );
                                                           
    //check out snapshot access plans
-	var accessFindOption = { Collection: clFullName };
-   var actAccessPlans = getCommonAccessPlans(db, accessFindOption);
-   var expAccessPlans = [];   
-   checkSnapShotAccessPlans(clFullName, expAccessPlans, actAccessPlans); 
-                                                          
+	var accessFindOption1 = { Collection: clFullName1 };
+   var accessFindOption2 = { Collection: clFullName2 };
+   
+   var actAccessPlans1 = getCommonAccessPlans(db, accessFindOption1);
+   var actAccessPlans2 = getCommonAccessPlans(db, accessFindOption2);
+   
+   var expAccessPlans1 = [];
+   var expAccessPlans2 = [{ScanType:"ixscan", IndexName:"a"},
+	                      {ScanType:"ixscan", IndexName:"a"}];  
+   
+   checkSnapShotAccessPlans(clFullName1, expAccessPlans1, actAccessPlans1);
+   checkSnapShotAccessPlans(clFullName2, expAccessPlans2, actAccessPlans2);   
+   
    //check the query explain of master/slave nodes 
    var findConf = {a : 9000};
-   var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
+   var expExplains1 = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
+   var expExplains2 = [{ScanType:"ixscan", IndexName:"a", ReturnNum:insertNums}];
                                                                                     	
-   var actExplains = getCommonExplain( dbclPrimary, findConf);
-   checkExplain( actExplains, expExplains );
+   var actExplains1 = getCommonExplain( dbclPrimary1, findConf);
+   var actExplains2 = getCommonExplain( dbclPrimary2, findConf);
+   checkExplain( actExplains1, expExplains1 );
+   checkExplain( actExplains2, expExplains2 );
                                                                       
-   var actExplains = getCommonExplain( dbclSlave, findConf);
-   checkExplain( actExplains, expExplains );
+   var actExplains = getCommonExplain( dbclSlave1, findConf);
+   var actExplains = getCommonExplain( dbclSlave2, findConf);
+   checkExplain( actExplains1, expExplains1 );
+   checkExplain( actExplains2, expExplains2 );
                                             
    //query
-   query(dbclPrimary, findConf, null, null, insertNums);
-   query(dbclSlave, findConf, null, null, insertNums);
+   query(dbclPrimary1, findConf, null, null, insertNums);
+   query(dbclPrimary2, findConf, null, null, insertNums);
+   query(dbclSlave1, findConf, null, null, insertNums);
+   query(dbclSlave2, findConf, null, null, insertNums);
    
-   //check out snapshot access plans
-	var accessFindOption = { Collection: clFullName };
-   var actAccessPlans = getCommonAccessPlans(db, accessFindOption);
-   var expAccessPlans = [{ScanType:"tbscan", IndexName:""},
-	                      {ScanType:"tbscan", IndexName:""}];  
+   var accessFindOption1 = { Collection: clFullName1 };
+   var accessFindOption2 = { Collection: clFullName2 };
+   
+   var actAccessPlans1 = getCommonAccessPlans(db, accessFindOption1);
+   var actAccessPlans2 = getCommonAccessPlans(db, accessFindOption2);
+   
+   var expAccessPlans1 = [{ScanType:"tbscan", IndexName:""},
+	                       {ScanType:"tbscan", IndexName:""}]; 
+   var expAccessPlans2 = [{ScanType:"ixscan", IndexName:"a"},
+	                       {ScanType:"ixscan", IndexName:"a"}];                           
 
-   checkSnapShotAccessPlans(clFullName, expAccessPlans, actAccessPlans); 
+   checkSnapShotAccessPlans(clFullName1, expAccessPlans1, actAccessPlans1);
+   checkSnapShotAccessPlans(clFullName2, expAccessPlans2, actAccessPlans2);   
                                             
    //analyze invalid groups
    var options1 = {GroupName : "SYSCoord"};
@@ -122,102 +177,82 @@ function main()
    println("check result after analyze success!");
    
    //query
-   query(dbclPrimary, findConf, null, null, insertNums);
-   query(dbclSlave, findConf, null, null, insertNums);
+   query(dbclPrimary1, findConf, null, null, insertNums);
+   query(dbclPrimary2, findConf, null, null, insertNums);
+   query(dbclSlave1, findConf, null, null, insertNums);
+   query(dbclSlave2, findConf, null, null, insertNums);
    
-   //check out snapshot access plans
-	var accessFindOption = { Collection: clFullName };
-   var actAccessPlans = getCommonAccessPlans(db, accessFindOption);
-   var expAccessPlans = [{ScanType:"tbscan", IndexName:""},
-	                      {ScanType:"tbscan", IndexName:""}];  
+   var accessFindOption1 = { Collection: clFullName1 };
+   var accessFindOption2 = { Collection: clFullName2 };
+   
+   var actAccessPlans1 = getCommonAccessPlans(db, accessFindOption1);
+   var actAccessPlans2 = getCommonAccessPlans(db, accessFindOption2);
+   
+   var expAccessPlans1 = [{ScanType:"tbscan", IndexName:""},
+	                       {ScanType:"tbscan", IndexName:""}]; 
+   var expAccessPlans2 = [{ScanType:"ixscan", IndexName:"a"},
+	                       {ScanType:"ixscan", IndexName:"a"}];                           
 
-   checkSnapShotAccessPlans(clFullName, expAccessPlans, actAccessPlans); 
-   
-   //drop cl
-   commDropCL( db, csName, clName, true );
-   
-   //create cl again
-   var dbcl = commCreateCLByOption( db, csName, clName, clOption, true );
-                                                          
-   //get master/slave datanode
-   var db1 = new Sdb(db);
-   db1.setSessionAttr( {PreferedInstance: "m"} );
-   var dbclPrimary = db1.getCS(csName).getCL(clName);
-   
-   db1 = new Sdb(db);
-   db1.setSessionAttr( {PreferedInstance: "s"} );
-   var dbclSlave = db1.getCS(csName).getCL(clName);
-                                                                                  	
-   //create index
-   commCreateIndex( dbcl, "a", {a : 1}, false );
-                                                    	
-   //insert
-   var insertNums = 3000;
-   var sameValues = 9000;
-   insertDiffDatas( dbcl, insertNums );
-   insertSameDatas( dbcl, insertNums, sameValues );
-                                                        	
-   //check before invoke analyze
-   checkStat( db, csName, clName, "a", false, false );
-                                                       	 
-   //check the query explain of master/slave nodes 
-   var findConf = {a : 9000};
-   var expExplains = [{ScanType:"ixscan", IndexName:"a", ReturnNum:insertNums}];
-                                                                           
-   var actExplains = getCommonExplain( dbclPrimary, findConf);
-   checkExplain( actExplains, expExplains );
-                                                    
-   var actExplains = getCommonExplain( dbclSlave, findConf);
-   checkExplain( actExplains, expExplains );
-                        
-   //query
-   query(dbclPrimary, findConf, null, null, insertNums);
-   query(dbclSlave, findConf, null, null, insertNums);
-   
-   //check out snapshot access plans
-	var accessFindOption = { Collection: clFullName };
-   var actAccessPlans = getCommonAccessPlans(db, accessFindOption);
-   var expAccessPlans = [{ScanType:"ixscan", IndexName:"a"},
-	                      {ScanType:"ixscan", IndexName:"a"}];  
-
-   checkSnapShotAccessPlans(clFullName, expAccessPlans, actAccessPlans); 
+   checkSnapShotAccessPlans(clFullName1, expAccessPlans1, actAccessPlans1);
+   checkSnapShotAccessPlans(clFullName2, expAccessPlans2, actAccessPlans2);                                                    
                         
    println("check result before analyze success in mode 2!");
                                                               	
    //invoke analyze
-   var options = {Mode : 2, GroupName : groupName};
+   var options = {Mode : 2, GroupName : groupName2};
    analyze( db, options );
-                                                             	
+                                                             	   
    //check after analyze
-   checkStat( db, csName, clName, "a", true, true );
+   checkConsistency(db, csName, clName1);
+   checkConsistency(db, csName, clName2);
+   checkStat( db, csName, clName1, "a", true, true );
+   checkStat( db, csName, clName2, "a", true, true );
                                                           
    //check out snapshot access plans
-	var accessFindOption = { Collection: clFullName };
-   var actAccessPlans = getCommonAccessPlans(db, accessFindOption);
-   var expAccessPlans = [];   
-   checkSnapShotAccessPlans(clFullName, expAccessPlans, actAccessPlans); 
-                                                          
+	var accessFindOption1 = { Collection: clFullName1 };
+   var accessFindOption2 = { Collection: clFullName2 };
+   
+   var actAccessPlans1 = getCommonAccessPlans(db, accessFindOption1);
+   var actAccessPlans2 = getCommonAccessPlans(db, accessFindOption2);
+   
+   var expAccessPlans1 = [{ScanType:"tbscan", IndexName:""},
+	                       {ScanType:"tbscan", IndexName:""}];
+   var expAccessPlans2 = [];  
+   
+   checkSnapShotAccessPlans(clFullName1, expAccessPlans1, actAccessPlans1);
+   checkSnapShotAccessPlans(clFullName2, expAccessPlans2, actAccessPlans2);   
+   
    //check the query explain of master/slave nodes 
    var findConf = {a : 9000};
    var expExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
                                                                                     	
-   var actExplains = getCommonExplain( dbclPrimary, findConf);
-   checkExplain( actExplains, expExplains );
+   var actExplains1 = getCommonExplain( dbclPrimary1, findConf);
+   var actExplains2 = getCommonExplain( dbclPrimary2, findConf);
+   checkExplain( actExplains1, expExplains );
+   checkExplain( actExplains2, expExplains );
                                                                       
-   var actExplains = getCommonExplain( dbclSlave, findConf);
-   checkExplain( actExplains, expExplains );
-
+   var actExplains = getCommonExplain( dbclSlave1, findConf);
+   var actExplains = getCommonExplain( dbclSlave2, findConf);
+   checkExplain( actExplains1, expExplains );
+   checkExplain( actExplains2, expExplains );
+                                            
    //query
-   query(dbclPrimary, findConf, null, null, insertNums);
-   query(dbclSlave, findConf, null, null, insertNums);
+   query(dbclPrimary1, findConf, null, null, insertNums);
+   query(dbclPrimary2, findConf, null, null, insertNums);
+   query(dbclSlave1, findConf, null, null, insertNums);
+   query(dbclSlave2, findConf, null, null, insertNums);
    
-   //check out snapshot access plans
-	var accessFindOption = { Collection: clFullName };
-   var actAccessPlans = getCommonAccessPlans(db, accessFindOption);
+   var accessFindOption1 = { Collection: clFullName1 };
+   var accessFindOption2 = { Collection: clFullName2 };
+   
+   var actAccessPlans1 = getCommonAccessPlans(db, accessFindOption1);
+   var actAccessPlans2 = getCommonAccessPlans(db, accessFindOption2);
+   
    var expAccessPlans = [{ScanType:"tbscan", IndexName:""},
-	                      {ScanType:"tbscan", IndexName:""}];  
-
-   checkSnapShotAccessPlans(clFullName, expAccessPlans, actAccessPlans); 
+	                      {ScanType:"tbscan", IndexName:""}]; 
+   
+   checkSnapShotAccessPlans(clFullName1, expAccessPlans, actAccessPlans1);
+   checkSnapShotAccessPlans(clFullName2, expAccessPlans, actAccessPlans2);   
   
    println("check result before analyze success in mode 2!");
    

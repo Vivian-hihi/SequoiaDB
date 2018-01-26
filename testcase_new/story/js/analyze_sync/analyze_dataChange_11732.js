@@ -57,6 +57,7 @@ function main()
    analyze( db, {GroupName: groupName} );
    
 	//检查统计信息
+   checkConsistency(db, csName, clName);
    checkStat( db, csName, clName, "a", false, false );
    
    //执行查询
@@ -75,6 +76,7 @@ function main()
    analyze( db, {GroupName: groupName} );
    
    //检查统计信息
+   checkConsistency(db, csName, clName);
    checkStat( db, csName, clName, "a", true, true );
    
    //检查访问计划快照
@@ -96,6 +98,7 @@ function main()
    analyze( db, {NodeID: nodeId} );
    
 	//检查统计信息
+   checkConsistency(db, csName, clName);
    checkStat( db, csName, clName, "a", false, false );
    
    //检查访问计划快照
@@ -118,6 +121,7 @@ function main()
    analyze( db, {NodeID: nodeId} );
    
    //检查统计信息
+   checkConsistency(db, csName, clName);
    checkStat( db, csName, clName, "a", true, true );
    
    //检查访问计划快照

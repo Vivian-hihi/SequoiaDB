@@ -75,6 +75,10 @@ function main()
    analyze( db );
    
    //检查统计信息
+   checkConsistency(db, csName1, clName1);
+   checkConsistency(db, csName1, clName2);
+   checkConsistency(db, csName2, clName1);
+   checkConsistency(db, csName2, clName2);
    checkStat( db, csName1, clName1, "a", true, true );
    checkStat( db, csName1, clName2, "a", true, true );
    checkStat( db, csName2, clName1, "a", true, true );
@@ -104,6 +108,10 @@ function main()
    analyze( db, {Mode:3, Collection: clFullName1} );
    
    //检查统计信息
+   checkConsistency(db, csName1, clName1);
+   checkConsistency(db, csName1, clName2);
+   checkConsistency(db, csName2, clName1);
+   checkConsistency(db, csName2, clName2);
    checkStat( db, csName1, clName1, "a", true, false );
    checkStat( db, csName1, clName2, "a", true, true );
    checkStat( db, csName2, clName1, "a", true, true );
@@ -152,6 +160,10 @@ function main()
    analyze( db, {Mode:4} );
    
    //检查统计信息
+   checkConsistency(db, csName1, clName1);
+   checkConsistency(db, csName1, clName2);
+   checkConsistency(db, csName2, clName1);
+   checkConsistency(db, csName2, clName2);
    checkStat( db, csName1, clName1, "a", true, true );
    checkStat( db, csName1, clName2, "a", true, true );
    checkStat( db, csName2, clName1, "a", true, true );
@@ -191,6 +203,10 @@ function main()
    analyze( db, {Mode:5} );
    
    //检查统计信息
+   checkConsistency(db, csName1, clName1);
+   checkConsistency(db, csName1, clName2);
+   checkConsistency(db, csName2, clName1);
+   checkConsistency(db, csName2, clName2);
    checkStat( db, csName1, clName1, "a", true, true );
    checkStat( db, csName1, clName2, "a", true, true );
    checkStat( db, csName2, clName1, "a", true, true );
