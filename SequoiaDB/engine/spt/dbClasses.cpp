@@ -171,14 +171,14 @@
 #define SDB_JSVAL_IS_OBJECT(x) \
    (JSVAL_IS_NULL(x) || JSVAL_IS_VOID(x) || ! JSVAL_IS_PRIMITIVE(x))
 
-#define GET_OBJ_FROM_ARG_ARR( cx, argc, argv, argNum, pJsObj, pBson, funcName ) \
+#define _GET_OBJ_FROM_ARG_ARR( cx, argc, argv, argNum, pJsObj, pBson, mode, funcName ) \
    do {                                                                        \
       if ( argc >= argNum ) {                                                  \
          if ( SDB_JSVAL_IS_OBJECT ( argv[argNum - 1] ) ) {                     \
             pJsObj = SDB_JSVAL_TO_OBJECT ( argv[argNum -1] ) ;                 \
             if ( pJsObj ) {                                                    \
                argv[argNum -1] = OBJECT_TO_JSVAL ( pJsObj ) ;                  \
-               VERIFY ( objToBson( cx , pJsObj , &pBson ) ) ;                  \
+               VERIFY ( objToBson( cx , pJsObj , &pBson, mode ) ) ;            \
             }                                                                  \
          }                                                                     \
          else {                                                                \
@@ -193,6 +193,11 @@
       }                                                                        \
    } while ( 0 )
 
+#define GET_OBJ_FROM_ARG_ARR( cx, argc, argv, argNum, pJsObj, pBson, funcName ) \
+        _GET_OBJ_FROM_ARG_ARR( cx, argc, argv, argNum, pJsObj, pBson, SPT_CONVERT_NORMAL, funcName )
+
+#define GET_MATCHER_FROM_ARG_ARR( cx, argc, argv, argNum, pJsObj, pBson, funcName ) \
+        _GET_OBJ_FROM_ARG_ARR( cx, argc, argv, argNum, pJsObj, pBson, SPT_CONVERT_MATCHER, funcName )
 
 #define NODE_NAME_SPLIT ':'
 #define SDB_DEF_COORD_NAME "localhost"
@@ -220,7 +225,8 @@ OSS_INLINE JSObject *SDB_JSVAL_TO_OBJECT( jsval x )
 
 // Caller should free *bs in the case of success
 // PD_TRACE_DECLARE_FUNCTION ( SDB_OBJ2BSON, "objToBson" )
-static JSBool objToBson ( JSContext *cx , JSObject *obj , bson ** bs )
+static JSBool objToBson ( JSContext *cx , JSObject *obj , bson ** bs,
+                          SPT_CONVERT_MODE mode = SPT_CONVERT_NORMAL )
 {
    PD_TRACE_ENTRY ( SDB_OBJ2BSON ) ;
    JSBool      ret         = JS_TRUE ;
@@ -229,7 +235,7 @@ static JSBool objToBson ( JSContext *cx , JSObject *obj , bson ** bs )
    VERIFY ( cx && obj && bs ) ;
 
    {
-      sptConvertor convertor( cx ) ;
+      sptConvertor convertor( cx, mode ) ;
       rc = convertor.toBson( obj, bs ) ;
       if( rc )
       {
@@ -809,7 +815,7 @@ static JSBool collection_raw_find ( JSContext *cx , uintN argc , jsval *vp )
       VERIFY ( objCond ) ;
       // bsonCond is freed in done
       // VERIFY ( objToBson( cx, objCond, &bsonCond ) ) ;
-      if ( JS_FALSE == objToBson ( cx , objCond , &bsonCond ) )
+      if ( JS_FALSE == objToBson ( cx , objCond , &bsonCond , SPT_CONVERT_MATCHER ) )
       {
          rc = SDB_INVALIDARG ;
          REPORT_RC ( JS_FALSE , "SdbCollection.rawFind()" , rc ) ;
@@ -1132,7 +1138,7 @@ static JSBool collection_update ( JSContext *cx , uintN argc , jsval *vp )
    // bsonRule is freed in done:
    VERIFY ( objToBson ( cx , objRule , &bsonRule ) ) ;
    // get optional object
-   GET_OBJ_FROM_ARG_ARR( cx, argc, argv, 2, objCond, bsonCond, "SdbCollection.update()" ) ;
+   GET_MATCHER_FROM_ARG_ARR( cx, argc, argv, 2, objCond, bsonCond, "SdbCollection.update()" ) ;
    GET_OBJ_FROM_ARG_ARR( cx, argc, argv, 3, objHint, bsonHint, "SdbCollection.update()" ) ;
    GET_OBJ_FROM_ARG_ARR( cx, argc, argv, 4, objOptions, bsonOptions,
                          "SdbCollection.update()" ) ;
@@ -1213,7 +1219,7 @@ static JSBool collection_upsert ( JSContext *cx , uintN argc , jsval *vp )
    VERIFY ( objToBson ( cx , objRule , &bsonRule ) ) ;
 
    // get optional object
-   GET_OBJ_FROM_ARG_ARR( cx, argc, argv, 2, objCond, bsonCond, "SdbCollection.upsert()" ) ;
+   GET_MATCHER_FROM_ARG_ARR( cx, argc, argv, 2, objCond, bsonCond, "SdbCollection.upsert()" ) ;
    GET_OBJ_FROM_ARG_ARR( cx, argc, argv, 3, objHint, bsonHint, "SdbCollection.upsert()" ) ;
    GET_OBJ_FROM_ARG_ARR( cx, argc, argv, 4, objSetOnInsert, bsonSetOnInsert, "SdbCollection.upsert()" ) ;
    GET_OBJ_FROM_ARG_ARR( cx, argc, argv, 5, objOptions, bsonOptions,
@@ -1303,7 +1309,7 @@ static JSBool collection_remove ( JSContext *cx , uintN argc , jsval *vp )
       JS_GetPrivate ( cx , JS_THIS_OBJECT ( cx , vp ) ) ;
    REPORT ( collection , "SdbCollection.remove(): no collection handle" ) ;
    // get option bsons
-   GET_OBJ_FROM_ARG_ARR( cx, argc, argv, 1, objCond, bsonCond, "SdbCollection.remove()" ) ;
+   GET_MATCHER_FROM_ARG_ARR( cx, argc, argv, 1, objCond, bsonCond, "SdbCollection.remove()" ) ;
    GET_OBJ_FROM_ARG_ARR( cx, argc, argv, 2, objHint, bsonHint, "SdbCollection.remove()" ) ;
    // delete
    rc = sdbDelete ( *collection , bsonCond , bsonHint ) ;
@@ -1742,7 +1748,7 @@ static JSBool collection_explain( JSContext *cx , uintN argc , jsval *vp )
 
    if ( NULL != objCondition )
    {
-      ret = objToBson ( cx , objCondition , &condition ) ;
+      ret = objToBson ( cx , objCondition , &condition , SPT_CONVERT_MATCHER ) ;
       VERIFY ( ret ) ;
    }
 
@@ -1843,7 +1849,7 @@ static JSBool collection_count ( JSContext *cx , uintN argc , jsval *vp )
       objCond = JSVAL_TO_OBJECT ( argv[0] ) ;
       VERIFY ( objCond ) ;
       // bsonCond is freed in done
-      VERIFY ( objToBson( cx, objCond, &bsonCond ) ) ;
+      VERIFY ( objToBson( cx, objCond, &bsonCond, SPT_CONVERT_MATCHER ) ) ;
    }
    else
    {
@@ -2452,7 +2458,7 @@ static JSBool collection_aggr ( JSContext *cx , uintN argc , jsval *vp )
          objElem = JSVAL_TO_OBJECT( argv[i] );
          if ( objElem )
          {
-            VERIFY( objToBson( cx, objElem, &bsonArray[i] ) );
+            VERIFY( objToBson( cx, objElem, &bsonArray[i], SPT_CONVERT_AGGREGATE ) );
          }
       }
       else
@@ -5791,7 +5797,7 @@ static JSBool sdb_list_domains ( JSContext *cx, uintN argc, jsval *vp )
    if ( objCond )
    {
       // bsonCond is freed in done:
-      VERIFY ( objToBson ( cx , objCond , &bsonCond ) ) ;
+      VERIFY ( objToBson ( cx , objCond , &bsonCond, SPT_CONVERT_MATCHER ) ) ;
    }
 
    if ( objSel )
@@ -6820,7 +6826,7 @@ static JSBool sdb_snapshot ( JSContext *cx , uintN argc , jsval *vp )
    if ( objCond )
    {
       // bsonCond is freed in done:
-      VERIFY ( objToBson ( cx , objCond , &bsonCond ) ) ;
+      VERIFY ( objToBson ( cx , objCond , &bsonCond , SPT_CONVERT_MATCHER ) ) ;
    }
 
    if ( objSel )
@@ -6937,7 +6943,7 @@ static JSBool sdb_list ( JSContext *cx , uintN argc , jsval *vp )
    if ( objCond )
    {
       // bsonCond is freed in done:
-      VERIFY ( objToBson ( cx , objCond , &bsonCond ) ) ;
+      VERIFY ( objToBson ( cx , objCond , &bsonCond, SPT_CONVERT_MATCHER ) ) ;
    }
 
    if ( objSel )
@@ -7644,7 +7650,7 @@ static JSBool sdb_list_backup ( JSContext *cx, uintN argc, jsval *vp )
    if ( objCond )
    {
       // bsonCond is freed in done:
-      VERIFY ( objToBson ( cx , objCond , &bsonCond ) ) ;
+      VERIFY ( objToBson ( cx , objCond , &bsonCond, SPT_CONVERT_MATCHER ) ) ;
    }
 
    if ( objSel )
@@ -7767,7 +7773,7 @@ static JSBool sdb_list_tasks ( JSContext *cx, uintN argc, jsval *vp )
    if ( objCond )
    {
       // bsonCond is freed in done:
-      VERIFY ( objToBson ( cx , objCond , &bsonCond ) ) ;
+      VERIFY ( objToBson ( cx , objCond , &bsonCond, SPT_CONVERT_MATCHER ) ) ;
    }
 
    if ( objSel )
