@@ -1173,10 +1173,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNINITCOMMAND, "rtnInitCommand" )
-   INT32 rtnInitCommand ( _rtnCommand *pCommand ,INT32 flags, INT64 numToSkip,
-                          INT64 numToReturn, const CHAR *pMatcherBuff,
-                          const CHAR *pSelectBuff, const CHAR *pOrderByBuff,
-                          const CHAR *pHintBuff )
+   INT32 rtnInitCommand ( _rtnCommand *pCommand, const rtnCommandOptions & options )
    {
       INT32 rc = SDB_INVALIDARG ;
       PD_TRACE_ENTRY ( SDB_RTNINITCOMMAND );
@@ -1184,8 +1181,7 @@ namespace engine
       {
          try
          {
-            rc = pCommand->init( flags, numToSkip, numToReturn, pMatcherBuff,
-                                 pSelectBuff, pOrderByBuff, pHintBuff ) ;
+            rc = pCommand->init( options ) ;
          }
          catch ( std::exception &e )
          {

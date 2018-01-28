@@ -77,11 +77,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSPLIT_INIT, "_rtnSplit::init" )
-   INT32 _rtnSplit::init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
-                           const CHAR * pMatcherBuff,
-                           const CHAR * pSelectBuff,
-                           const CHAR * pOrderByBuff,
-                           const CHAR * pHintBuff )
+   INT32 _rtnSplit::init ( const rtnCommandOptions & options )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSSPLIT_INIT ) ;
@@ -91,7 +87,7 @@ namespace engine
 
       try
       {
-         BSONObj boRequest ( pMatcherBuff ) ;
+         BSONObj boRequest = options.getQuery() ;
          BSONElement beName       = boRequest.getField ( CAT_COLLECTION_NAME ) ;
          BSONElement beTarget     = boRequest.getField ( CAT_TARGET_NAME ) ;
          BSONElement beSplitKey   = boRequest.getField ( CAT_SPLITVALUE_NAME ) ;
@@ -195,19 +191,14 @@ namespace engine
       return CMD_SPACE_NODE_ALL & ( ~CMD_SPACE_NODE_STANDALONE ) ;
    }
 
-   INT32 _rtnCancelTask::init( INT32 flags, INT64 numToSkip,
-                               INT64 numToReturn,
-                               const CHAR * pMatcherBuff,
-                               const CHAR * pSelectBuff,
-                               const CHAR * pOrderByBuff,
-                               const CHAR * pHintBuff )
+   INT32 _rtnCancelTask::init( const rtnCommandOptions & options )
    {
       INT32 rc = SDB_OK ;
 
       try
       {
-         BSONObj matcher( pMatcherBuff ) ;
-         BSONElement ele = matcher.getField( CAT_TASKID_NAME ) ;
+         BSONObj arg = options.getQuery() ;
+         BSONElement ele = arg.getField( CAT_TASKID_NAME ) ;
          if ( ele.eoo() || !ele.isNumber() )
          {
             PD_LOG( PDERROR, "Field[%s] type[%d] is error", CAT_TASKID_NAME,
@@ -270,18 +261,13 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSLINKCL_INIT, "_rtnLinkCollection::init" )
-   INT32 _rtnLinkCollection::init ( INT32 flags, INT64 numToSkip,
-                                    INT64 numToReturn,
-                                    const CHAR * pMatcherBuff,
-                                    const CHAR * pSelectBuff,
-                                    const CHAR * pOrderByBuff,
-                                    const CHAR * pHintBuff )
+   INT32 _rtnLinkCollection::init ( const rtnCommandOptions & options )
    {
       PD_TRACE_ENTRY ( SDB__CLSLINKCL_INIT ) ;
       INT32 rc = SDB_OK;
       try
       {
-         BSONObj arg ( pMatcherBuff ) ;
+         BSONObj arg = options.getQuery() ;
          rc = rtnGetStringElement ( arg, FIELD_NAME_NAME,
                                     &_collectionName ) ;
          if ( SDB_OK != rc )
@@ -298,7 +284,6 @@ namespace engine
                     FIELD_NAME_SUBCLNAME, rc ) ;
             goto error ;
          }
-         
       }
       catch( std::exception &e )
       {
@@ -404,13 +389,7 @@ namespace engine
       return CMD_SPACE_NODE_DATA | CMD_SPACE_NODE_CATA  ;
    }
 
-   INT32 _rtnInvalidateCache::init ( INT32 flags,
-                                     INT64 numToSkip,
-                                     INT64 numToReturn,
-                                     const CHAR *pMatcherBuff,
-                                     const CHAR *pSelectBuff,
-                                     const CHAR *pOrderByBuff,
-                                     const CHAR *pHintBuff )
+   INT32 _rtnInvalidateCache::init ( const rtnCommandOptions & options )
    {
       return SDB_OK ;
    }
@@ -452,39 +431,33 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNREELECT_INIT, "_rtnReelect::init" )
-   INT32 _rtnReelect::init ( INT32 flags, INT64 numToSkip,
-                             INT64 numToReturn,
-                             const CHAR *pMatcherBuff,
-                             const CHAR *pSelectBuff,
-                             const CHAR *pOrderByBuff,
-                             const CHAR *pHintBuff )
+   INT32 _rtnReelect::init ( const rtnCommandOptions & options )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNREELECT_INIT ) ;
-      BSONObj obj ;
       try
       {
-         obj = BSONObj( pMatcherBuff ) ;
-         BSONElement e = obj.getField( FIELD_NAME_REELECTION_TIMEOUT ) ;
+         BSONObj arg = options.getQuery() ;
+         BSONElement e = arg.getField( FIELD_NAME_REELECTION_TIMEOUT ) ;
          if ( !e.eoo() )
          {
             if ( !e.isNumber() )
             {
                PD_LOG( PDERROR, "invalid reelection msg:%s",
-                       obj.toString( FALSE, TRUE ).c_str() ) ;
+                       arg.toString( FALSE, TRUE ).c_str() ) ;
                rc = SDB_INVALIDARG ;
                goto error ;
             }
             _timeout = e.Number() ;
          }
 
-         e = obj.getField( FIELD_NAME_REELECTION_LEVEL ) ;
+         e = arg.getField( FIELD_NAME_REELECTION_LEVEL ) ;
          if ( !e.eoo() )
          {
             if ( !e.isNumber() )
             {
                PD_LOG( PDERROR, "invalid reelection msg:%s",
-                       obj.toString( FALSE, TRUE ).c_str() ) ;
+                       arg.toString( FALSE, TRUE ).c_str() ) ;
                rc = SDB_INVALIDARG ;
                goto error ;
             }
@@ -538,20 +511,14 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNFORCESTEPUP_INIT, "_rtnForceStepUp::init" )
-   INT32 _rtnForceStepUp::init( INT32 flags, INT64 numToSkip,
-                                INT64 numToReturn,
-                                const CHAR *pMatcherBuff,
-                                const CHAR *pSelectBuff,
-                                const CHAR *pOrderByBuff,
-                                const CHAR *pHintBuff )
+   INT32 _rtnForceStepUp::init( const rtnCommandOptions & options )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNFORCESTEPUP_INIT ) ;
-      BSONObj options ;
       try
       {
-         options = BSONObj( pMatcherBuff ).copy() ;
-         BSONElement e = options.getField( FIELD_NAME_FORCE_STEP_UP_TIME ) ;
+         BSONObj arg = options.getQuery() ;
+         BSONElement e = arg.getField( FIELD_NAME_FORCE_STEP_UP_TIME ) ;
          if ( e.isNumber() )
          {
             _seconds = e.Number() ;
@@ -624,23 +591,19 @@ namespace engine
       return TRUE ;
    }
 
-   INT32 _clsAlterDC::init( INT32 flags, INT64 numToSkip,
-                            INT64 numToReturn, const CHAR *pMatcherBuff,
-                            const CHAR *pSelectBuff,
-                            const CHAR *pOrderByBuff,
-                            const CHAR *pHintBuff )
+   INT32 _clsAlterDC::init( const rtnCommandOptions & options )
    {
       INT32 rc = SDB_OK ;
 
       try
       {
-         BSONObj query( pMatcherBuff ) ;
-         BSONElement eleAction = query.getField( FIELD_NAME_ACTION ) ;
+         BSONObj arg = options.getQuery() ;
+         BSONElement eleAction = arg.getField( FIELD_NAME_ACTION ) ;
          if ( String != eleAction.type() )
          {
             PD_LOG( PDERROR, "The field[%s] is not valid in command[%s]'s "
                     "param[%s]", FIELD_NAME_ACTION, NAME_ALTER_DC,
-                    query.toString().c_str() ) ;
+                    arg.toString().c_str() ) ;
             rc = SDB_INVALIDARG ;
             goto error ;
          }

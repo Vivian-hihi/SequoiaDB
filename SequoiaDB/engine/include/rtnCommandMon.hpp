@@ -57,11 +57,7 @@ namespace engine
          virtual ~_rtnMonInnerBase () ;
 
       public:
-         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
-                              const CHAR *pMatcherBuff,
-                              const CHAR *pSelectBuff,
-                              const CHAR *pOrderByBuff,
-                              const CHAR *pHintBuff ) ;
+         virtual INT32 init ( const rtnQueryOptions & options ) ;
 
          virtual INT32 doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
                               _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
@@ -78,14 +74,7 @@ namespace engine
          virtual BSONObj _getOptObj() const ;
 
       protected:
-         INT64                _numToReturn ;
-         INT64                _numToSkip ;
-         const CHAR           *_matcherBuff ;
-         const CHAR           *_selectBuff ;
-         const CHAR           *_orderByBuff ;
-         const CHAR           *_hintBuff ;
-
-         INT32                _flags ;
+         rtnQueryOptions      _options ;
    } ;
 
    /*

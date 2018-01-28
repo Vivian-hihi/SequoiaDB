@@ -101,12 +101,14 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_CATCTXNODE_COUNTNODE ) ;
 
       INT64 totalCount = 0;
-      BSONObj dummy ;
       pmdKRCB *krcb = pmdGetKRCB() ;
       SDB_RTNCB *pRtnCB = krcb->getRTNCB() ;
 
-      rc = rtnGetCount( pCollection, matcher, dummy,
-                        _pDmsCB, cb, pRtnCB, &totalCount ) ;
+      rtnQueryOptions options ;
+      options.setCLFullName( pCollection ) ;
+      options.setQuery( matcher ) ;
+
+      rc = rtnGetCount( options, _pDmsCB, cb, pRtnCB, &totalCount ) ;
       PD_RC_CHECK ( rc, PDERROR,
                     "Failed to get count on collection [%s] with [%s], rc: %d",
                     pCollection,

@@ -403,18 +403,13 @@ namespace engine
       return CMD_SNAPSHOT_RESET ;
    }
 
-   INT32 _rtnSnapshotReset::init( INT32 flags, INT64 numToSkip,
-                                  INT64 numToReturn,
-                                  const CHAR *pMatcherBuff,
-                                  const CHAR *pSelectBuff,
-                                  const CHAR *pOrderByBuff,
-                                  const CHAR *pHintBuff )
+   INT32 _rtnSnapshotReset::init( const rtnCommandOptions & options )
    {
       INT32 rc = SDB_OK ;
 
       try
       {
-         BSONObj obj( pMatcherBuff ) ;
+         BSONObj obj = options.getQuery() ;
          BOOLEAN hasSessionID = TRUE ;
          string type ;
 
