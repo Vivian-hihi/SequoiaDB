@@ -31,6 +31,7 @@
       <antcall target="compile_hive_connector"/>
       <antcall target="compile_hadoop_connector"/>
       <antcall target="compile_spark_connector"/>
+      <antcall target="compile_ssqloltp_plugin"/>
       <antcall target="build_driver_package"/>
       <if>
          <equals arg1="${IS_INCREMENTAL_COMPILE}" arg2="true"/>
@@ -218,6 +219,26 @@
       </exec>
       <exec executable="mvn" dir="${srccode_dir}/driver/java" failonerror="true" logError="true">
          <arg line=" clean package -Drevision=${fdw_svn} -Dmaven.test.skip=true" />
+      </exec>
+   </target>
+   
+   <target name="compile_ssqloltp_plugin">
+      <var name="src_dir" value="${srccode_dir}/tools/om_plugins/sql_oltp" />
+      <if>
+         <equals arg1="${IS_DEBUG}" arg2="true"/>
+         <then>
+            <svnversion dir="${src_dir}" version="fdw_svn" />
+            <var name="cmd_mvn" value="versions:set -DnewVersion=${sequoiadb_version}-r${fdw_svn}"/>
+         </then>
+         <else>
+            <var name="cmd_mvn" value="versions:set -DnewVersion=${sequoiadb_version}"/>
+         </else>
+      </if>
+      <exec executable="mvn" dir="${srccode_dir}/tools/om_plugins/sql_oltp" failonerror="true" logError="true">
+         <arg line=" ${cmd_mvn} " />
+      </exec>
+      <exec executable="mvn" dir="${srccode_dir}/tools/om_plugins/sql_oltp" failonerror="true" logError="true">
+         <arg line=" clean package -Drevision=${fdw_svn}" />
       </exec>
    </target>
    
@@ -516,6 +537,8 @@
       <mkdir dir="${release_db_dir}/web" />
       <mkdir dir="${release_db_dir}/www" />
       <mkdir dir="${release_db_dir}/spark" />
+      <mkdir dir="${release_db_dir}/plugins" />
+      <mkdir dir="${release_db_dir}/plugins/SequoiaSQL-OLTP" />
       
       <copy file="${srccode_dir}/driver/C#.Net/build/release/sequoiadb.dll" 
             tofile="${release_db_dir}/CSharp/sequoiadb.dll" />
@@ -554,6 +577,10 @@
       
       <copy todir="${release_db_dir}/spark" >
          <fileset dir="${srccode_dir}/driver/spark/target" includes="*.jar" />
+      </copy>
+      
+      <copy todir="${release_db_dir}/plugins/SequoiaSQL-OLTP" >
+         <fileset dir="${srccode_dir}/tools/om_plugins/sql_oltp/target" includes="*.jar" />
       </copy>
       
       <copy todir="${release_db_dir}/include">
