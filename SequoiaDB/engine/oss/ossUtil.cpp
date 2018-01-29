@@ -1962,6 +1962,87 @@ BOOLEAN ossProcLimits::getLimit( const CHAR *str,
     }
 }
 
+// This function return system errno, instead of sequoiadb error code
+INT32 ossProcLimits::setLimit( const CHAR *str, INT64 soft, INT64 hard )
+{
+   INT32 rc = 0 ;
+   soft = ( -1 == soft ) ? RLIM_INFINITY : soft ;
+   hard = ( -1 == hard ) ? RLIM_INFINITY : hard ;
+   struct rlimit lim = { soft, hard } ;
+   INT32 resource = 0 ;
+
+   if ( ossStrcmp( str, OSS_LIMIT_VIRTUAL_MEM ) == 0 )
+   {
+      resource = RLIMIT_AS ;
+   }
+   else if ( ossStrcmp( str, OSS_LIMIT_CORE_SZ ) == 0 )
+   {
+      resource = RLIMIT_CORE ;
+   }
+   else if ( ossStrcmp( str, OSS_LIMIT_CPU_TIME ) == 0 )
+   {
+      resource = RLIMIT_CPU ;
+   }
+   else if ( ossStrcmp( str, OSS_LIMIT_DATA_SEG_SZ ) == 0 )
+   {
+      resource = RLIMIT_DATA ;
+   }
+   else if ( ossStrcmp( str, OSS_LIMIT_FILE_SZ ) == 0 )
+   {
+      resource = RLIMIT_FSIZE ;
+   }
+   else if ( ossStrcmp( str, OSS_LIMIT_STACK_SIZE ) == 0 )
+   {
+      resource = RLIMIT_STACK ;
+   }
+   else if ( ossStrcmp( str, OSS_LIMIT_OPEN_FILE ) == 0 )
+   {
+      resource = RLIMIT_NOFILE ;
+   }
+   else if ( ossStrcmp( str, OSS_LIMIT_FILE_LOCK ) == 0 )
+   {
+      resource = RLIMIT_LOCKS ;
+   }
+   else if ( ossStrcmp( str, OSS_LIMIT_MEM_LOCK ) == 0 )
+   {
+      resource = RLIMIT_MEMLOCK ;
+   }
+   else if ( ossStrcmp( str, OSS_LIMIT_MSG_QUEUE ) == 0 )
+   {
+      resource = RLIMIT_MSGQUEUE ;
+   }
+   else if ( ossStrcmp( str, OSS_LIMIT_SCHE_PRIO ) == 0 )
+   {
+      resource = RLIMIT_RTPRIO ;
+   }
+   else if ( ossStrcmp( str, OSS_LIMIT_PROC_NUM ) == 0 )
+   {
+      resource = RLIMIT_NPROC ;
+   }
+   else
+   {
+      rc = SDB_SYS ;
+      goto error ;
+   }
+
+   rc = ::setrlimit( resource, &lim ) ;
+   if( rc != 0 )
+   {
+      rc = ossGetLastError() ;
+      PD_LOG( PDERROR, "failed to set limit of [%s], errno:%d", str, rc ) ;
+      goto error ;
+   }
+   else
+   {
+      _initRLimit( resource, str ) ;
+   }
+
+done :
+   return rc ;
+error :
+   goto done ;
+}
+
 #else
 INT32 ossProcLimits::init()
 {
@@ -1978,6 +2059,11 @@ BOOLEAN ossProcLimits::getLimit( const CHAR *str,
                                  INT64 &hard ) const
 {
    return TRUE ;
+}
+
+INT32 ossProcLimits::setLimit( const CHAR *str, INT64 soft, INT64 hard )
+{
+   return SDB_OK ;
 }
 
 std::string ossProcLimits::str()const
