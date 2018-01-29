@@ -1713,6 +1713,36 @@ public class Sequoiadb implements Closeable {
     }
 
     /**
+     * whether the replica group exists in the database or not
+     * 
+     * @param rgName replica group's name
+     * @return true or false
+     */
+    public boolean isRelicaGroupExist(String rgName) {
+        BSONObject rg = getDetailByName(rgName);
+        if (rg == null) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    /**
+     * whether the replica group exists in the database or not
+     *
+     * @param rgId id of replica group
+     * @return true or false
+     */
+    public boolean isReplicaGroupExist(int rgId) {
+        BSONObject rg = getDetailById(rgId);
+        if (rg == null) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    /**
      * Get replica group by name.
      * @param rgName replica group's name
      * @return A replica group object or null for not exit.
