@@ -131,7 +131,7 @@ public class Split10527C extends SdbTestBase {
 				cl.split(srcGroupName, destGroupName, (BSONObject) JSON.parse("{sk:"+beginNo+"}"), 
 						(BSONObject) JSON.parse("{sk:"+endNo+"}"));					
 			} catch (BaseException e) {				
-				if (e.getErrorCode() != -147) {
+				if (e.getErrorCode() != -147 && e.getErrorCode() != -23) {
 					throw e;
 				}
 			} finally {
