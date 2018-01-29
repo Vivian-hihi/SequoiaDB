@@ -6,6 +6,10 @@
 **************************************/
 function main()
 {
+   var allGroups = commGetGroups(db);
+   var groups = new Array();
+   for(var i=0; i< allGroups.length;i++){groups.push(allGroups[i][0].GroupName);}
+   
    var csName1 = COMMCSNAME + "_12973_1";
    var csName2 = COMMCSNAME + "_12973_2";
    var clName = COMMCLNAME + "_12973";
@@ -57,6 +61,9 @@ function main()
    //执行统计
    analyze( db );
    
+   //检查主备同步
+   checkConsistency(db, null, null, groups);
+   
    //检查统计信息
    checkStat( db, csName1, clName, "a", true, true );
    checkStat( db, csName2, clName, "a", true, true );
@@ -82,9 +89,13 @@ function main()
    //drop cs
    commDropCS( db, csName1);
    
-   //检查统计信息
    var groups = new Array();
    groups.push( groupName );
+   
+   //检查主备同步
+   checkConsistency(db, null, null, groups);
+   
+   //检查统计信息
    checkStat( db, csName1, clName, "a", false, false, groups );
    checkStat( db, csName2, clName, "a", true, true );
    
@@ -109,6 +120,9 @@ function main()
 	//获取主备节点
    var dbclPrimary1 = db1.getCS(csName1).getCL(clName);
    var dbclSlave1 = db2.getCS(csName1).getCL(clName);
+   
+   //检查主备同步
+   checkConsistency(db, null, null, groups);
    
    //检查统计信息
    checkStat( db, csName1, clName, "a", false, false );

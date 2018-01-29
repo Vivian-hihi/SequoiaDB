@@ -34,6 +34,9 @@ function main()
    db2.setSessionAttr( { PreferedInstance: "s" } );
    var dbclSlave = db2.getCS(COMMCSNAME).getCL(clName);
 	
+	//检查主备同步
+   checkConsistency(db, COMMCSNAME, clName);
+   
 	//检查统计信息
    checkStat( db, COMMCSNAME, clName, "a", false, false );
    checkStat( db, COMMCSNAME, clName, "b", false, false );
@@ -61,6 +64,9 @@ function main()
 
    //执行统计
    analyze( db, {Collection: COMMCSNAME + "." + clName} );
+   
+   //检查主备同步
+   checkConsistency(db, COMMCSNAME, clName);
    
    //检查统计信息
    checkStat( db, COMMCSNAME, clName, "a", true, true );
@@ -96,6 +102,9 @@ function main()
    //删除索引
    commDropIndex( dbcl, "a" );
    
+   //检查主备同步
+   checkConsistency(db, COMMCSNAME, clName);
+   
    //检查统计信息
    checkStat( db, COMMCSNAME, clName, "a", true, false );
    checkStat( db, COMMCSNAME, clName, "b", true, true );
@@ -129,6 +138,9 @@ function main()
    
    //再次创建相同索引
    commCreateIndex( dbcl, "a", {a:1});
+   
+   //检查主备同步
+   checkConsistency(db, COMMCSNAME, clName);
    
    //检查统计信息
    checkStat( db, COMMCSNAME, clName, "a", true, false );

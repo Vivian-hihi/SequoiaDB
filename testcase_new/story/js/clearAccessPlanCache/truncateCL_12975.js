@@ -6,6 +6,10 @@
 **************************************/
 function main()
 {
+   var allGroups = commGetGroups(db);
+   var groups = new Array();
+   for(var i=0; i< allGroups.length;i++){groups.push(allGroups[i][0].GroupName);}
+       
    var clName1 = COMMCLNAME + "_12975_1";
    var clName2 = COMMCLNAME + "_12975_2";
    var insertNum = 2000;
@@ -43,6 +47,9 @@ function main()
    var dbclSlave1 = db2.getCS(COMMCSNAME).getCL(clName1);
    var dbclSlave2 = db2.getCS(COMMCSNAME).getCL(clName2);
    
+   //检查主备同步
+   checkConsistency(db, null, null, groups);
+   
 	//检查统计信息
    checkStat( db, COMMCSNAME, clName1, "a", false, false );
    checkStat( db, COMMCSNAME, clName2, "a", false, false );
@@ -75,6 +82,9 @@ function main()
    //执行统计
    analyze( db, {Collection: COMMCSNAME + "." + clName1} );
    analyze( db, {Collection: COMMCSNAME + "." + clName2} );
+   
+   //检查主备同步
+   checkConsistency(db, null, null, groups);
    
    //检查统计信息
    checkStat( db, COMMCSNAME, clName1, "a", true, true );
@@ -118,6 +128,9 @@ function main()
    
    //truncate cl
    dbcl1.truncate();
+   
+   //检查主备同步
+   checkConsistency(db, null, null, groups);
    
    //检查统计信息
    checkStat( db, COMMCSNAME, clName1, "a", false, false );
@@ -165,6 +178,9 @@ function main()
    //再次插入相同数据
    insertDiffDatas( dbcl1, insertNum );
 	insertSameDatas( dbcl1, insertNum, sameValues );
+   
+   //检查主备同步
+   checkConsistency(db, null, null, groups);
    
    //检查统计信息
    checkStat( db, COMMCSNAME, clName1, "a", false, false );

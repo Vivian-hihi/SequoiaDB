@@ -17,6 +17,10 @@ function main()
       println("less than two groups");
       return;
    }
+   
+   var allGroups = commGetGroups(db);
+   var groups = new Array();
+   for(var i=0; i< allGroups.length;i++){groups.push(allGroups[i][0].GroupName);}
 	
    var csName = COMMCSNAME + "12981";
    commDropCS( db, csName, true, "drop CS in the beginning" );
@@ -56,6 +60,9 @@ function main()
    insertDiffDatas( dbcl2, insertNums );
    insertSameDatas( dbcl2, insertNums, sameValues );
 	
+	//检查主备同步
+   checkConsistency(db, null, null, groups);
+   
    //check before invoke analyze
    checkStat( db, csName, clName1, "$shard", false, false );
    checkStat( db, csName, clName2, "$shard", false, false );
@@ -99,6 +106,9 @@ function main()
    //invoke analyze
    var options = {CollectionSpace: csName};
    analyze( db, options );
+   
+   //检查主备同步
+   checkConsistency(db, null, null, groups);
                                                         	
    //check after analyze before alter
    checkStat( db, csName, clName1, "$shard", true, false );
@@ -158,6 +168,9 @@ function main()
    var alterOption2 = {ShardingKey: {a1 :1}, ShardingType: 'range'};
    alterCL( dbcl1, alterOption1 );
    alterCL( dbcl2, alterOption2 );
+   
+   //检查主备同步
+   checkConsistency(db, null, null, groups);
          
    //check alter before analyze       
    checkStat( db, csName, clName1, "$shard", true, false );
@@ -286,6 +299,8 @@ function main()
    var options = {CollectionSpace: csName};
    analyze( db, options );
 
+   //检查主备同步
+   checkConsistency(db, null, null, groups);
    
    checkStat( db, csName, clName1, "$shard", true, true );
    checkStat( db, csName, clName2, "$shard", true, true );

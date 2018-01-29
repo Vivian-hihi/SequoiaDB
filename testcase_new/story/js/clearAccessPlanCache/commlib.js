@@ -111,11 +111,12 @@ function getNodesInGroups(db, groups)
 
 /************************************
 *@Description: 获取主节点的lsn
-*@author:      zhaoyu
-*@createDate:  2017.11.8
+*@author:      liuxiaoxuan
+*@createDate:  2017.01.29
 **************************************/
 function getPrimaryNodeLSNs(db, groups)
 {
+   
    var datas = getNodesInGroups(db, groups);
    
    var LSNs = new Array();
@@ -127,11 +128,11 @@ function getPrimaryNodeLSNs(db, groups)
       { 
          var getSnapshot6 = eval( "(" + nodesInGroup[j].snapshot(6).toArray()[0] + ")" );
          
-         var currentLSN = getSnapshot6.CurrentLSN.Offset;
+         var completeLSN = getSnapshot6.CompleteLSN;
          var isPrimary = getSnapshot6.IsPrimary;
          if(isPrimary)
          {
-            LSNs[i][0] = currentLSN;
+            LSNs[i][0] = completeLSN;
             break;
          }   
       }
@@ -142,8 +143,8 @@ function getPrimaryNodeLSNs(db, groups)
 
 /************************************
 *@Description: 获取备节点的lsn
-*@author:      zhaoyu
-*@createDate:  2017.11.8
+*@author:      liuxiaoxuan
+*@createDate:  2017.01.29
 **************************************/
 function getSlaveNodeLSNs(db, groups)
 {
@@ -159,11 +160,11 @@ function getSlaveNodeLSNs(db, groups)
       { 
          var getSnapshot6 = eval( "(" + nodesInGroup[j].snapshot(6).toArray()[0] + ")" );
          
-         var currentLSN = getSnapshot6.CurrentLSN.Offset;
+         var completeLSN = getSnapshot6.CompleteLSN;
          var isPrimary = getSnapshot6.IsPrimary;
          if(!isPrimary)
          {
-            LSNs[i][f++] = currentLSN;
+            LSNs[i][f++] = completeLSN;
          }   
       }
    }
@@ -172,7 +173,48 @@ function getSlaveNodeLSNs(db, groups)
 }
 
 /************************************
-*@Description: 检查主备节点lsn是否一致
+*@Description: 检查cl所在组的主备节点lsn是否一致(超时600s)
+*@author:      liuxiaoxuan
+*@createDate:  2017.01.29
+**************************************/
+function checkConsistency(db, csName, clName, groups)
+{
+   if(csName == null) { var csName = "UNDEFINED"; }
+   if(clName == null) { var clName = "UNDEFINED"; }
+   if(groups == undefined) { var groups = commGetCLGroups( db, csName + "." + clName ); }
+   
+   //the longest waiting time is 600S
+   var lsnFlag = false;
+   var timeout = 600;
+   var doTimes = 0; 
+   
+   //get primary nodes
+   var primaryNodeLSNs = getPrimaryNodeLSNs(db, groups);
+   while(true)
+   {
+      lsnFlag = checkLSN(db, groups, primaryNodeLSNs);
+      if(!lsnFlag)
+      {
+         if(doTimes < timeout)
+         {
+            ++doTimes;
+            sleep(1000);
+         }
+         else
+         {
+            throw "check lsn time out";
+         }     
+      }
+      else 
+      {
+         break;
+      }
+   }
+   
+}
+
+/************************************
+*@Description: 获取当前主备节点lsn是否一致的状态
 *@author:      zhaoyu
 *@createDate:  2017.11.8
 **************************************/
@@ -181,7 +223,7 @@ function checkLSN(db, groups, primaryNodeLSNs)
    var slaveNodeLSNs = getSlaveNodeLSNs(db, groups);
  
    var checkLSN = true;
-   //比较各节点lsn
+   //比较主备节点lsn
    for(var i = 0; i < slaveNodeLSNs.length; ++i)
    {
       for(var j = 0; j < slaveNodeLSNs[i].length; ++j)
@@ -207,37 +249,7 @@ function checkStat( db, csName, clName, indexName, clExistStat, indexExistStat, 
    if( clExistStat == undefined ){ clExistStat = true;}
    if( indexExistStat == undefined ){ indexExistStat = true;}
    if( groups == undefined ){var groups = commGetCLGroups( db, csName + "." + clName );}
-   
-   //check lsn
-   //the longest waiting time is 600S
-   var lsnFlag = false;
-   var timeout = 600;
-   var doTimes = 0; 
-   
-   //get primary nodes
-   var primaryNodeLSNs = getPrimaryNodeLSNs(db, groups);
-   while(true)
-   {
-      lsnFlag = checkLSN(db, groups, primaryNodeLSNs);
-      //println("check primary and slave node lsn flag:" + lsnFlag);
-      if(!lsnFlag)
-      {
-         if(doTimes < timeout)
-         {
-            ++doTimes;
-            sleep(1000);
-         }
-         else
-         {
-            throw "check lsn time out";
-         }     
-      }
-      else 
-      {
-         break;
-      }
-   }
-   
+
    //get all nodes
    var datas = getNodesInGroups(db, groups);
    
@@ -871,4 +883,109 @@ function checkSnapShotAccessPlans( clFullName, expectAccessPlans, actAccessPlans
       }
    }
    println("check accessPlan snapshot success");
-}                                                                          
+} 
+
+/************************************
+*@Description: 按组获取主子表访问计划快照
+*@author:      zhaoyu
+*@createDate:  2018.1.24
+**************************************/
+function getMainclAccessPlans( db, findConf, sortConf, selectorConf )
+{
+   if ( typeof(findConf) == "undefined" ) { findConf = null; }
+   if ( typeof(sortConf) == "undefined" ) { sortConf = null; }
+   if ( typeof(selectorConf) == "undefined" ) { selectorConf = null; }
+   
+   //保存主子表所有组的访问计划
+   var accessPlans = new Array();
+   
+   var rc = db.snapshot(11, findConf, sortConf, selectorConf ).toArray();
+   for(var i= 0; i< rc.length; i++)
+   {
+      //保存单个组的访问计划快照
+      var groupAccessPlans = eval("(" + rc[i] + ")");
+      var accessPlanObj = {};
+      for( var f in groupAccessPlans)
+      {
+         if(f == "GroupName" || f == "ScanType" || f == "IndexName" )
+         {
+            accessPlanObj[f] = groupAccessPlans[f];
+         }
+      }
+      accessPlans.push(accessPlanObj);  
+   }
+   return accessPlans;
+   
+}
+
+/************************************
+*@Description: 检查访问计划快照
+*@author:      liuxiaoxuan
+*@createDate:  2018.01.15
+**************************************/
+function checkMainclAccessPlans( expAccessPlans, actAccessPlans )
+{
+   //校验计划个数
+   if( expAccessPlans.length !==  actAccessPlans.length )
+   {
+       println('expAccessPlans: ' + JSON.stringify(expAccessPlans) + ", actAccessPlans: " + JSON.stringify(actAccessPlans));
+       throw buildException("check length", "accessPlan length", "check failed!",
+								expAccessPlans.length, actAccessPlans.length);
+   }
+	
+   //校验查询计划，不校验元素顺序
+   var newExpAccessPlans = new Array();
+   var newActAccessPlans = new Array();
+   for(var i = 0; i < expAccessPlans.length; i++)
+	{
+      var newObj1 = objSortByKey(actAccessPlans[i]);
+      newActAccessPlans.push(newObj1);
+   
+      var newObj2 = objSortByKey(expAccessPlans[i]);
+      newExpAccessPlans.push(newObj2);   
+   }
+	    	 
+   for(var i = 0; i < expAccessPlans.length; i++)
+   {
+      if(JSON.stringify(newActAccessPlans).indexOf(JSON.stringify(newExpAccessPlans[i])) === -1
+            || JSON.stringify(newExpAccessPlans).indexOf(JSON.stringify(newActAccessPlans[i])) === -1)
+      {
+         throw buildException("check access plan", "access plan", "fail", 
+   		                  JSON.stringify(newExpAccessPlans), JSON.stringify(newActAccessPlans));
+      }
+   }
+   println("check accessPlan snapshot success");
+}
+
+                                                                     
+/************************************
+*@Description: split 
+*@author:      zhaoyu
+*@createdate:  2018.1.25
+**************************************/
+function split( csName, clName, srcGroupName, desGroupName, startCondition, endCondition )
+{
+   var CL = db.getCS(csName).getCL(clName);
+   try
+   {
+      println("--begin split") 
+   	if ( typeof(startCondition) === "number" ) //percentage split
+   	{
+   		CL.split( srcGroupName, desGroupName, startCondition );
+   	}
+   	else if ( typeof(startCondition) === "object" && endCondition === undefined ) //range split without end condition
+   	{
+   		CL.split( srcGroupName, desGroupName, startCondition );
+   		println("startCondition=" + startCondition)
+   	}
+   	else if ( typeof(startCondition) === "object" && typeof(endCondition) === "object" ) //range split with end condition
+   	{
+   		CL.split( srcGroupName, desGroupName, startCondition, endCondition );
+   	}	
+   	println("--end split")
+   
+   }catch(e)
+   {
+      throw e;
+   }
+}

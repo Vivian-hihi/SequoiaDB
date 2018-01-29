@@ -11,7 +11,11 @@ function main()
       println("not standalone enviroment");
       return;
    }
-                                                             	
+   
+   var allGroups = commGetGroups(db);
+   var groups = new Array();
+   for(var i=0; i< allGroups.length;i++){groups.push(allGroups[i][0].GroupName);}
+                                                                 	
    var csName = COMMCSNAME + "12980";
    commDropCS( db, csName, true, "drop CS in the beginning" );
                                                               	
@@ -51,6 +55,9 @@ function main()
    var dbclSlave1 = db1.getCS(csName).getCL(clName1);
    var dbclSlave2 = db1.getCS(csName).getCL(clName2);
 	
+	//检查主备同步
+   checkConsistency(db, null, null, groups);
+   
    //check before invoke analyze
    checkStat( db, csName, clName1, "a", false, false );
    checkStat( db, csName, clName2, "b", false, false );
@@ -84,6 +91,9 @@ function main()
    //invoke analyze
    var options = {CollectionSpace: csName};
    analyze( db, options );
+   
+   //检查主备同步
+   checkConsistency(db, null, null, groups);
                                                             
    //check after analyze
    checkStat( db, csName, clName1, "a", true, true );
@@ -142,6 +152,11 @@ function main()
              
    //check result after renameCL
    checkAnalyzeStatInfo(csName, newClName);
+   
+   //检查主备同步
+   checkConsistency(db, null, null, groups);
+   
+   //检查统计信息
    checkStat( db, csName, newClName, "a", true, true );
    checkStat( db, csName, clName2, "b", true, true );
    

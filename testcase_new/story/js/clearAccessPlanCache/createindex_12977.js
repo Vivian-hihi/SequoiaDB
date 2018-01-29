@@ -39,7 +39,10 @@ function main()
    //invoke analyze
    var options = {CollectionSpace: csName};
    analyze( db, options );
-                                                                                       
+    
+   //检查主备同步
+   checkConsistency(db, csName, clName);
+                                                                                      
    //check after analyze
    checkStat( db, csName, clName, "$id", true, false );
    checkStat( db, csName, clName, "a", true, false );
@@ -68,7 +71,10 @@ function main()
    
    //create id index
    createIdIndex( dbcl );
- 
+   
+   //检查主备同步
+   checkConsistency(db, csName, clName);
+   
    checkStat( db, csName, clName, "$id", true, false );
    checkStat( db, csName, clName, "a", true, false );
 
@@ -102,6 +108,9 @@ function main()
    
    //create common index
    commCreateIndex( dbcl, "a", {a : 1}, false );
+   
+   //检查主备同步
+   checkConsistency(db, csName, clName);
    
    checkStat( db, csName, clName, "$id", true, false );
    checkStat( db, csName, clName, "a", true, false );
@@ -138,6 +147,9 @@ function main()
    var options = {CollectionSpace: csName};
    analyze( db, options );
    
+   //检查主备同步
+   checkConsistency(db, csName, clName);
+   
    checkStat( db, csName, clName, "$id", true, true );
    checkStat( db, csName, clName, "a", true, true );
 
@@ -170,7 +182,10 @@ function main()
 
    //drop id index
    dropIdIndex( dbcl );
-
+   
+   //检查主备同步
+   checkConsistency(db, csName, clName);
+   
    //check analyze result
    checkStat( db, csName, clName, "$id", true, false );
    
