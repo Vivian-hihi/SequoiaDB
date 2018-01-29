@@ -1151,7 +1151,6 @@ namespace engine
       INT16 replSize = 0 ;
       INT16 w = 1 ;
       _rtnCommand *pCommand = NULL ;
-      CHAR mainCLName[ DMS_COLLECTION_FULL_NAME_SZ + 1 ] = { 0 } ;
 
       rc = msgExtractQuery ( (CHAR *)msg, &flags, &pCollectionName,
                              &numToSkip, &numToReturn, &pQueryBuff,
@@ -1165,6 +1164,7 @@ namespace engine
 
       if ( !rtnIsCommand ( pCollectionName ) )
       {
+         CHAR mainCLName[ DMS_COLLECTION_FULL_NAME_SZ + 1 ] = { 0 } ;
          rtnContextBase *pContext = NULL ;
          _pCollectionName = pCollectionName ;
 
@@ -1356,7 +1356,7 @@ namespace engine
          {
             rc = _checkCLStatusAndGetSth( pCommand->collectionFullName(),
                                           pQuery->version,
-                                          &_isMainCL, &replSize, mainCLName ) ;
+                                          &_isMainCL, &replSize ) ;
 
             if ( SDB_OK != rc )
             {
@@ -1371,11 +1371,6 @@ namespace engine
                   PD_LOG( PDERROR, "failed to calculate w:%d", rc ) ;
                   goto error ;
                }
-            }
-
-            if ( NULL != pCommand->getCommandOptions() )
-            {
-               pCommand->getCommandOptions()->setMainCLName( mainCLName ) ;
             }
          }
          else if ( CMD_CREATE_COLLECTIONSPACE == pCommand->type() ||
