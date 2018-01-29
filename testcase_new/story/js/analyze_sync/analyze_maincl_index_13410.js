@@ -270,6 +270,12 @@ function main()
    //指定主表cl的普通索引执行统计
    analyze( db, {Collection: mainclFullName, Index:"a1"} );
    
+   //检查主备一致
+   checkConsistency(db, maincsName, subclName1); 
+   checkConsistency(db, maincsName, subclName2); 
+   checkConsistency(db, subcsName1, subclName3); 
+   checkConsistency(db, subcsName1, subclName4); 
+   
    //检查访问计划快照
    var expAccessPlan = [];
    var actAccessPlan = getMainclAccessPlans( db, {Collection: mainclFullName} );
