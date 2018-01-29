@@ -48,7 +48,7 @@ private:
 private:
    char                          *pAddrs[SDB_COORD_NUM_MAX] ;
    int                           coord_num ;
-   //mysql_rwlock_t                addrs_mutex ;
+   pthread_rwlock_t              addrs_mutex ;
 } ;
 
 #define SDB_CONF_INST            sdb_conf::get_instance()

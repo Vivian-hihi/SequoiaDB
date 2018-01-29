@@ -42,7 +42,8 @@ using namespace sdbclient ;
 #define SDB_STR_BUF_STEP_SIZE    1024
 #define SDB_STR_BUF_SIZE         SDB_STR_BUF_STEP_SIZE
 
-static char *sdb_addr ;
+static char *sdb_addr = NULL ;
+static const char* SDB_ADDR_DFT = "localhost:11810" ;
 mysql_mutex_t sdb_mutex;
 static PSI_mutex_key key_mutex_sdb, key_mutex_SDB_SHARE_mutex ;
 bson::BSONObj empty_obj ;
@@ -56,10 +57,10 @@ static uchar* sdb_get_key( SDB_SHARE *share, size_t *length,
   return (uchar*) share->table_name;
 }
 
-static SDB_SHARE *get_share(const char *table_name, TABLE *table)
+static SDB_SHARE *get_sdb_share(const char *table_name, TABLE *table)
 {
    SDB_SHARE *share = NULL ;
-   char *tmp_name;
+   char *tmp_name = NULL ;
    uint length;
 
    mysql_mutex_lock(&sdb_mutex);
@@ -69,6 +70,8 @@ static SDB_SHARE *get_share(const char *table_name, TABLE *table)
     If share is not present in the hash, create a new share and
     initialize its members.
    */
+
+
    if ( !(share=(SDB_SHARE*) my_hash_search( &sdb_open_tables,
                                              (uchar*) table_name,
                                              length )))
@@ -85,7 +88,7 @@ static SDB_SHARE *get_share(const char *table_name, TABLE *table)
       share->use_count = 0 ;
       share->table_name_length = length ;
       share->table_name= tmp_name ;
-      my_stpcpy(share->table_name, table_name) ;
+      strncpy( share->table_name, table_name, length ) ;
 
       if ( my_hash_insert( &sdb_open_tables, (uchar*) share ))
       {
@@ -102,19 +105,22 @@ done:
    mysql_mutex_unlock( &sdb_mutex ) ;
   return share ;
 error:
-  my_free(share) ;
-  share = NULL ;
+   if ( share )
+   {
+      my_free(share) ;
+      share = NULL ;
+   }
   goto done ;
 }
 
-static int free_share(SDB_SHARE *share)
+static int free_sdb_share(SDB_SHARE *share)
 {
    mysql_mutex_lock(&sdb_mutex) ;
    if (!--share->use_count)
    {
-      my_hash_delete(&sdb_open_tables, (uchar*) share) ;
-      thr_lock_delete(&share->lock) ;
-      mysql_mutex_destroy(&share->mutex) ;
+      my_hash_delete( &sdb_open_tables, (uchar*) share ) ;
+      thr_lock_delete( &share->lock ) ;
+      mysql_mutex_destroy( &share->mutex ) ;
       my_free(share) ;
   }
   mysql_mutex_unlock(&sdb_mutex) ;
@@ -157,8 +163,8 @@ const char **ha_sdb::bas_ext() const
 
 ulonglong ha_sdb::table_flags() const
 {
-   return ( HA_REC_NOT_IN_SEQ | HA_NO_AUTO_INCREMENT 
-            | HA_BINLOG_ROW_CAPABLE | HA_BINLOG_STMT_CAPABLE | HA_CAN_REPAIR
+   return ( HA_REC_NOT_IN_SEQ | HA_NO_AUTO_INCREMENT | HA_NO_READ_LOCAL_LOCK
+            | HA_BINLOG_ROW_CAPABLE | HA_BINLOG_STMT_CAPABLE
             | HA_TABLE_SCAN_ON_INDEX | HA_NULL_IN_KEY | HA_CAN_INDEX_BLOBS ) ;
 }
 
@@ -195,7 +201,7 @@ int ha_sdb::open( const char *name, int mode, uint test_if_locked )
    int rc = 0 ;
    ref_length = SDB_ID_STR_LEN + 1 ; //length of _id
 
-   if ( !(share = get_share(name, table )))
+   if ( !(share = get_sdb_share(name, table )))
    {
       rc = SDB_ERR_OOM ;
       goto error ;
@@ -208,20 +214,29 @@ int ha_sdb::open( const char *name, int mode, uint test_if_locked )
       goto error ;
    }
 
-   rc = SDB_CL_MGR_INST->get_sdb_cl( ha_thd()->thread_id(),
-                                     db_name, table_name, cl ) ;
+   //rc = SDB_CONN_MGR_INST->get_sdb_conn( ha_thd()->thread_id(),
+   //                                      connection ) ;
+   rc = SDB_CONN_MGR_INST->get_sdb_conn( (my_thread_id)(ha_thd()->active_vio->mysql_socket.fd),
+                                         connection ) ;
+   if ( 0 != rc )
+   {
+      goto error ;
+   }
+   
+   rc = connection->get_cl( db_name, table_name, cl ) ;
    if ( 0 != rc )
    {
       goto error ;
    }
 
-   thr_lock_data_init( &share->lock, &lock_data, (void*) NULL ) ;
+   thr_lock_data_init( &share->lock, &lock_data, (void*)this ) ;
+   fd = ha_thd()->active_vio->mysql_socket.fd ;
 done:
    return rc ;
 error:
    if ( share )
    {
-      free_share( share ) ;
+      free_sdb_share( share ) ;
       share = NULL ;
    }
    goto done ;
@@ -230,7 +245,13 @@ error:
 int ha_sdb::close(void)
 {
    cl.clear() ;
-   return free_share( share) ;
+   connection.clear() ;
+   if ( share )
+   {
+      free_sdb_share( share ) ;
+      share = NULL ;
+   }
+   return 0;
 }
 
 int ha_sdb::row_to_obj( uchar *buf,  bson::BSONObj & obj )
@@ -1096,15 +1117,23 @@ int ha_sdb::obj_to_row( bson::BSONObj &obj, uchar *buf )
             {
                int lenTmp = 0 ;
                const char * dataTmp = befield.binData( lenTmp ) ;
-               (*field)->store( dataTmp, lenTmp,
+               if ( lenTmp < 0 )
+               {
+                  lenTmp = 0 ;
+               }
+               uint len = (*field)->pack_length() < (uint)lenTmp ?
+                           (*field)->pack_length() : (uint)lenTmp ;
+               (*field)->store( dataTmp, len,
                                 &my_charset_bin ) ;
                break ;
                               
             }
          case bson::String:
             {
+               uint len = (*field)->pack_length() < befield.valuestrsize() ?
+                           (*field)->pack_length() : befield.valuestrsize() ;
                (*field)->store( befield.valuestr(),
-                                befield.valuestrsize(),
+                                len,
                                 &my_charset_bin ) ;
                break ;
                               
@@ -1113,8 +1142,10 @@ int ha_sdb::obj_to_row( bson::BSONObj &obj, uchar *buf )
             {
                bson::bsonDecimal valTmp = befield.numberDecimal() ;
                string strValTmp = valTmp.toString() ;
+               uint len = (*field)->pack_length() < strValTmp.length() ?
+                           (*field)->pack_length() : strValTmp.length() ;
                (*field)->store( strValTmp.c_str(),
-                                strValTmp.length(),
+                                len,
                                 &my_charset_bin ) ;
                break ;
                               
@@ -1193,6 +1224,7 @@ error:
 int ha_sdb::cur_row( uchar *buf )
 {
    int rc = 0 ;
+   //assert(cl->get_tid() == ha_thd()->thread_id()) ;
    rc = cl->current( cur_rec ) ;
    if ( rc != 0 )
    {
@@ -1234,7 +1266,6 @@ int ha_sdb::rnd_next(uchar *buf)
    if ( first_read )
    {
       check_thread() ;
-
       rc = cl->query( condition ) ;
       condition = empty_obj ;
       if ( rc != 0 )
@@ -1243,6 +1274,8 @@ int ha_sdb::rnd_next(uchar *buf)
       }
       first_read = FALSE ;
    }
+   //assert(cl->get_tid() == ha_thd()->thread_id()) ;
+   assert( cl->get_tid() == (my_thread_id)(ha_thd()->active_vio->mysql_socket.fd )) ;
    ha_statistic_increment( &SSV::ha_read_rnd_next_count ) ;
    rc = next_row( cur_rec, buf ) ;
    if ( rc != 0 )
@@ -1264,6 +1297,7 @@ int ha_sdb::rnd_pos( uchar *buf, uchar *pos )
    objBuilder.appendOID( "_id", &tmpOid ) ;
    bson::BSONObj oidObj = objBuilder.obj() ;
 
+   //assert(cl->get_tid() == ha_thd()->thread_id()) ;
    rc = cl->query_one( oidObj, cur_rec ) ;
    if ( rc )
    {
@@ -1344,20 +1378,35 @@ int ha_sdb::extra( enum ha_extra_function operation )
 
 void ha_sdb::check_thread()
 {
-   if ( cl->get_tid() != ha_thd()->thread_id() )
+   int rc = 0 ;
+   //if ( cl->get_tid() != ha_thd()->thread_id() )
+   if ( cl->get_tid() != (my_thread_id)(ha_thd()->active_vio->mysql_socket.fd) )
    {
-      int rc = 0 ;
-
-      rc = SDB_CL_MGR_INST->get_sdb_cl( ha_thd()->thread_id(),
-                                        db_name, table_name, cl ) ;
+      //first_read = TRUE ;
+      //stats.records= 0;
+      sdb_conn_auto_ptr conn_tmp ;
+      //rc = SDB_CONN_MGR_INST->get_sdb_conn( ha_thd()->thread_id(),
+      //                                      conn_tmp ) ;
+      rc = SDB_CONN_MGR_INST->get_sdb_conn( (my_thread_id)(ha_thd()->active_vio->mysql_socket.fd),
+                                            conn_tmp ) ;
       if ( 0 != rc )
       {
          goto error ;
       }
+      
+      rc = conn_tmp->get_cl( db_name, table_name, cl ) ;
+      if ( 0 != rc )
+      {
+         goto error ;
+      }
+
+      connection = conn_tmp ;
+      fd = ha_thd()->active_vio->mysql_socket.fd ;
    }
 done:
    return ;
 error:
+   assert( FALSE ) ;
    goto done ;
 }
 
@@ -1561,6 +1610,7 @@ error:
 
 int ha_sdb::delete_all_rows(void)
 {
+   check_thread() ;
    if ( cl->is_transaction())
    {
       return cl->del();
@@ -1592,6 +1642,7 @@ ha_rows ha_sdb::records_in_range(uint inx, key_range *min_key,
 int ha_sdb::delete_table(const char *from)
 {
    int rc = 0 ;
+   sdb_conn_auto_ptr conn_tmp ;
 
    rc = sdb_parse_table_name( from, db_name, CS_NAME_MAX_SIZE+1,
                               table_name, CL_NAME_MAX_SIZE+1 ) ;
@@ -1600,9 +1651,17 @@ int ha_sdb::delete_table(const char *from)
       goto error ;
    }
 
-   rc = SDB_CL_MGR_INST->get_sdb_cl( ha_thd()->thread_id(),
-                                     db_name, table_name, cl,
-                                     FALSE ) ;
+
+   //rc = SDB_CONN_MGR_INST->get_sdb_conn( ha_thd()->thread_id(),
+   //                                      conn_tmp ) ;
+   rc = SDB_CONN_MGR_INST->get_sdb_conn( (my_thread_id)(ha_thd()->active_vio->mysql_socket.fd),
+                                         conn_tmp ) ;
+   if ( 0 != rc )
+   {
+      goto error ;
+   }
+   
+   rc = conn_tmp->get_cl( db_name, table_name, cl, FALSE ) ;
    if ( 0 != rc )
    {
       int rc_tmp = get_sdb_code( rc ) ;
@@ -1657,6 +1716,7 @@ int ha_sdb::create( const char *name, TABLE *form,
    int rc = 0 ;
    sdbCollectionSpace cs ;
    uint str_field_len = 0 ;
+   sdb_conn_auto_ptr conn_tmp ;
 
    for( Field **field = form->field ; *field ; field++ )
    {
@@ -1697,13 +1757,23 @@ int ha_sdb::create( const char *name, TABLE *form,
       goto error ;
    }
 
-   rc = SDB_CL_MGR_INST->create_sdb_cl( ha_thd()->thread_id(),
-                                        db_name, table_name,
-                                        cl ) ;
+   //rc = SDB_CONN_MGR_INST->get_sdb_conn( ha_thd()->thread_id(),
+   //                                      conn_tmp ) ;
+   rc = SDB_CONN_MGR_INST->get_sdb_conn( (my_thread_id)(ha_thd()->active_vio->mysql_socket.fd),
+                                         conn_tmp ) ;
    if ( 0 != rc )
    {
       goto error ;
    }
+   
+   rc = conn_tmp->get_cl( db_name, table_name, cl ) ;
+   if ( 0 != rc )
+   {
+      goto error ;
+   }
+
+   connection = conn_tmp ;
+   fd = ha_thd()->active_vio->mysql_socket.fd ;
 
 done:
    return rc ;
@@ -1719,11 +1789,35 @@ THR_LOCK_DATA **ha_sdb::store_lock( THD *thd, THR_LOCK_DATA **to,
    //       record is not matched, unlock_row() will be called.
    //       if lock_type == TL_READ then lock the record by s-lock
    //       if lock_type == TL_WIRTE then lock the record by x-lock
-   /*if (lock_type != TL_IGNORE && lock_data.type == TL_UNLOCK)
-   {
-      lock_data.type=lock_type ;
-   }
-   *to++= &lock_data ;*/
+/*  if (lock_type != TL_IGNORE && lock_data.type == TL_UNLOCK) 
+  {
+    /* 
+      Here is where we get into the guts of a row level lock.
+      If TL_UNLOCK is set 
+      If we are not doing a LOCK TABLE or DISCARD/IMPORT
+      TABLESPACE, then allow multiple writers 
+    */
+
+/*    if ((lock_type >= TL_WRITE_CONCURRENT_INSERT &&
+         lock_type <= TL_WRITE) && !thd_in_lock_tables(thd)
+        && !thd_tablespace_op(thd))
+      lock_type = TL_WRITE_ALLOW_WRITE;
+
+    /* 
+      In queries of type INSERT INTO t1 SELECT ... FROM t2 ...
+      MySQL would use the lock TL_READ_NO_INSERT on t2, and that
+      would conflict with TL_WRITE_ALLOW_WRITE, blocking all inserts
+      to t2. Convert the lock to a normal read lock to allow
+      concurrent inserts to t2. 
+    */
+
+/*    if (lock_type == TL_READ_NO_INSERT && !thd_in_lock_tables(thd)) 
+      lock_type = TL_READ;
+
+    lock_data.type=lock_type;
+  }
+
+  *to++= &lock_data;*/
    return to ;
 }
 
@@ -1815,7 +1909,9 @@ sdb_commit(
       goto done ;
    }
 
-   rc = SDB_CONN_MGR_INST->get_sdb_conn( thd->thread_id(),
+   //rc = SDB_CONN_MGR_INST->get_sdb_conn( thd->thread_id(),
+   //                                      connection ) ;
+   rc = SDB_CONN_MGR_INST->get_sdb_conn( (my_thread_id)(thd->active_vio->mysql_socket.fd),
                                          connection ) ;
    if ( 0 != rc )
    {
@@ -1857,7 +1953,9 @@ sdb_rollback(
       goto done ;
    }
 
-   rc = SDB_CONN_MGR_INST->get_sdb_conn( thd->thread_id(),
+   //rc = SDB_CONN_MGR_INST->get_sdb_conn( thd->thread_id(),
+   //                                      connection ) ;
+   rc = SDB_CONN_MGR_INST->get_sdb_conn( (my_thread_id)(thd->active_vio->mysql_socket.fd),
                                          connection ) ;
    if ( 0 != rc )
    {
@@ -1890,10 +1988,10 @@ static int sdb_init_func(void *p)
                         (my_hash_get_key) sdb_get_key,0,0,
                         key_memory_sdb_share);
    sdb_hton->state= SHOW_OPTION_YES ;
-   sdb_hton->db_type= DB_TYPE_PARTITION_DB ;
+   sdb_hton->db_type= DB_TYPE_UNKNOWN ;
    sdb_hton->create= sdb_create_handler ;
-   sdb_hton->flags= ( HTON_SUPPORT_LOG_TABLES | 
-                     HTON_NO_PARTITION) ;
+   sdb_hton->flags= ( HTON_SUPPORT_LOG_TABLES
+                     | HTON_NO_PARTITION ) ;
    sdb_hton->commit = sdb_commit ;
    sdb_hton->rollback = sdb_rollback ;
    return SDB_CONF_INST->parse_conn_addrs( sdb_addr ) ;
@@ -1931,7 +2029,7 @@ static MYSQL_SYSVAR_STR( conn_addr, sdb_addr,
                            PLUGIN_VAR_STR|PLUGIN_VAR_MEMALLOC,
                            "Sequoiadb addr",
                            sdb_conn_addrs_validate,
-                           NULL, "localhost:11810" ) ;
+                           NULL, SDB_ADDR_DFT ) ;
 static struct st_mysql_sys_var *sdb_vars[]={
    MYSQL_SYSVAR(conn_addr),
    NULL

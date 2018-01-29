@@ -38,6 +38,9 @@ private:
    sdb_adaptor & operator = (const sdb_adaptor & rh) { return *this ;}
 
 private:
+   int                                          conn_max ;
+   int                                          clear_num ;
+   Atomic_int32                                 conn_num ;
    std::map<my_thread_id, sdb_conn_auto_ptr>    conn_list ;
    pthread_rwlock_t                             rw_mutex ;
 } ;

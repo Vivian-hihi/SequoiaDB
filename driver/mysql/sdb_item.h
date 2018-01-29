@@ -249,8 +249,8 @@ public:
    virtual ~sdb_func_neg() {}
 
    virtual int to_bson( bson::BSONObj &obj ) = 0 ;
-   virtual const char *name() = 0 ;
-   virtual Item_func::Functype type() = 0 ;
+   virtual const char *name() { return "-" ; }
+   virtual Item_func::Functype type() { return Item_func::NEG_FUNC ; }
 
 protected:
    bool                    negated ;

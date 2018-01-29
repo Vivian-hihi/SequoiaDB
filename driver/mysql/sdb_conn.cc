@@ -244,6 +244,7 @@ void sdb_conn::clear_all_cl()
    iter = cl_list.begin() ;
    while( iter != cl_list.end() )
    {
+      assert( iter->second.ref() == 1 ) ;
       cl_list.erase( iter++ ) ;
    }
 done:

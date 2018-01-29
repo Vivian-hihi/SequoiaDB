@@ -176,7 +176,8 @@ void sdb_cond_ctx::push( Item *cond_item )
    {
       if ( NULL == cond_item
            || ( Item::COND_ITEM != cond_item->type()
-                && Item::FUNC_ITEM != cond_item->type() ))
+                && ( Item::FUNC_ITEM != cond_item->type()
+                     || cond_item->const_item() )))
       {
          rc = cur_item->push( cond_item ) ;
          if ( 0 != rc )
@@ -195,7 +196,12 @@ void sdb_cond_ctx::push( Item *cond_item )
                goto error ;
             }
          }
-         goto done ;
+
+         //func_item should go on to skip the param by create unkonw_func_item
+         if ( NULL == cond_item || Item::FUNC_ITEM != cond_item->type() )
+         {
+            goto done ;
+         }
       }
    }
          
@@ -289,6 +295,7 @@ sdb_item *sdb_cond_ctx::create_sdb_item( Item_func *cond_item )
       default:
          {
             item = new sdb_func_unkown( cond_item ) ;
+            update_stat( SDB_ERR_COND_PART_UNSUPPORTED ) ;
             break ;
          }
    }

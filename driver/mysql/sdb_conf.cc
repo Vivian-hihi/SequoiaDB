@@ -24,7 +24,10 @@ void sdb_conf::clear_coord_addrs( int num )
 {
    for( int i = 0 ; i < num ; i++ )
    {
-      my_free( pAddrs[i] ) ;
+      if ( pAddrs[i] )
+      {
+         free( pAddrs[i] ) ;
+      }
    }
 }
 
@@ -66,8 +69,9 @@ int sdb_conf::parse_conn_addrs( const char *conn_addr )
       }
       if( len > 0 )
       {
-         pAddrs[coord_num] = (char *)my_malloc( sdb_key_memory_conf_coord_addrs,
-                                                len+1, MYF(MY_WME) ) ;
+         //pAddrs[coord_num] = (char *)my_malloc( sdb_key_memory_conf_coord_addrs,
+         //                                       len+1, MYF(MY_WME) ) ;
+         pAddrs[coord_num] = (char *)malloc( len+1 ) ;
          if ( NULL == pAddrs[coord_num] )
          {
             rc = -1 ;
@@ -77,7 +81,11 @@ int sdb_conf::parse_conn_addrs( const char *conn_addr )
          pAddrs[coord_num][len] = 0 ;
          ++coord_num ;
       }
-      p += len+1;
+      p += len;
+      if ( *p == ',' )
+      {
+         p++ ;
+      }
    }
 
 done:

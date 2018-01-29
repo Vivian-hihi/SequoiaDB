@@ -66,6 +66,10 @@ public:
             {
                continue ;
             }
+            else
+            {
+               assert( FALSE ) ;
+            }
             break ;
          }
       }
@@ -102,6 +106,10 @@ public:
             else if ( EDEADLK != rc )
             {
                continue ;
+            }
+            else
+            {
+               assert( FALSE ) ;
             }
             break ;
          }

@@ -23,7 +23,6 @@
 typedef struct st_sdb_share {
   char *table_name;
   uint table_name_length, use_count ;
-
   mysql_mutex_t mutex;
   THR_LOCK lock;
 } SDB_SHARE;
@@ -194,6 +193,11 @@ public:
 
    int index_end();
 
+   uint lock_count( void ) const
+   {
+      return 0 ;
+   }
+
 
 
 
@@ -328,6 +332,7 @@ private:
 
 private:
    THR_LOCK_DATA                             lock_data ;
+   sdb_conn_auto_ptr                         connection ;
    sdb_cl_auto_ptr                           cl ;
    bool                                      first_read ;
    bson::BSONObj                             cur_rec ;
@@ -338,4 +343,5 @@ private:
    SDB_SHARE                                 *share ;
    char                                      db_name[CS_NAME_MAX_SIZE + 1] ;
    char                                      table_name[CL_NAME_MAX_SIZE + 1] ;
+   int                                       fd ;
 };
