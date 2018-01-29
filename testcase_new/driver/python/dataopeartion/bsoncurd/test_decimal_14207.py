@@ -16,7 +16,7 @@ class TestDecimal14207(testlib.SdbTestBase):
          self.db.drop_collection_space(self.cs_name)
 
    def test(self):
-      v=random.randint(-10,10)
+      v=random.randint(-100,100)/random.randint(1,100)
       d1=Decimal(v)
       d2=Decimal(v)
       self.assertTrue(d1==d2)
