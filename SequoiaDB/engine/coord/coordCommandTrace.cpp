@@ -69,13 +69,23 @@ namespace engine
       INT32 rc = SDB_OK ;
       contextID = -1 ;
 
+      INT32 flag ;
+      CHAR *pCMDName ;
+      SINT64 numToSkip ;
+      SINT64 numToReturn ;
+      CHAR *pQuery ;
+      CHAR *pFieldSelector ;
+      CHAR *pOrderBy ;
+      CHAR *pHint ;
       _rtnTraceStart tracestart ;
-      rtnCommandOptions options ;
 
-      rc = options.fromQueryMsg( (CHAR*)pMsg ) ;
+      rc = msgExtractQuery( (CHAR*)pMsg, &flag, &pCMDName, &numToSkip,
+                            &numToReturn, &pQuery, &pFieldSelector,
+                            &pOrderBy, &pHint );
       PD_RC_CHECK ( rc, PDERROR,
                     "Failed to extract query, rc = %d", rc ) ;
-      rc = tracestart.init ( options ) ;
+      rc = tracestart.init ( flag, numToSkip, numToReturn, pQuery,
+                             pFieldSelector, pOrderBy, pHint ) ;
       PD_RC_CHECK ( rc, PDERROR,
                     "Failed to init tracestart, rc = %d", rc ) ;
       rc = tracestart.doit ( cb, NULL, NULL, NULL, 0, NULL ) ;
@@ -109,13 +119,23 @@ namespace engine
       INT32 rc = SDB_OK;
       contextID = -1 ;
 
+      INT32 flag;
+      CHAR *pCMDName;
+      SINT64 numToSkip;
+      SINT64 numToReturn;
+      CHAR *pQuery;
+      CHAR *pFieldSelector;
+      CHAR *pOrderBy;
+      CHAR *pHint;
       _rtnTraceResume traceResume ;
-      rtnCommandOptions options ;
 
-      rc = options.fromQueryMsg( (CHAR*)pMsg ) ;
+      rc = msgExtractQuery( (CHAR*)pMsg, &flag, &pCMDName, &numToSkip,
+                            &numToReturn, &pQuery, &pFieldSelector,
+                            &pOrderBy, &pHint );
       PD_RC_CHECK ( rc, PDERROR,
                     "Failed to extract query, rc = %d", rc ) ;
-      rc = traceResume.init ( options ) ;
+      rc = traceResume.init ( flag, numToSkip, numToReturn, pQuery,
+                             pFieldSelector, pOrderBy, pHint ) ;
       PD_RC_CHECK ( rc, PDERROR,
                     "Failed to init tracestart, rc = %d", rc ) ;
       rc = traceResume.doit ( cb, NULL, NULL, NULL, 0, NULL ) ;
@@ -149,13 +169,23 @@ namespace engine
       INT32 rc = SDB_OK;
       contextID = -1 ;
 
+      INT32 flag;
+      CHAR *pCMDName;
+      SINT64 numToSkip;
+      SINT64 numToReturn;
+      CHAR *pQuery;
+      CHAR *pFieldSelector;
+      CHAR *pOrderBy;
+      CHAR *pHint;
       _rtnTraceStop tracestop ;
-      rtnCommandOptions options ;
 
-      rc = options.fromQueryMsg( (CHAR*)pMsg ) ;
+      rc = msgExtractQuery( (CHAR*)pMsg, &flag, &pCMDName, &numToSkip,
+                            &numToReturn, &pQuery, &pFieldSelector,
+                            &pOrderBy, &pHint );
       PD_RC_CHECK ( rc, PDERROR,
                     "Failed to extract query, rc = %d", rc ) ;
-      rc = tracestop.init ( options ) ;
+      rc = tracestop.init ( flag, numToSkip, numToReturn, pQuery,
+                            pFieldSelector, pOrderBy, pHint ) ;
       PD_RC_CHECK ( rc, PDERROR,
                     "Failed to init tracestop, rc = %d", rc ) ;
       rc = tracestop.doit ( cb, NULL, NULL, NULL, 0, NULL ) ;
@@ -191,13 +221,23 @@ namespace engine
       SDB_RTNCB *pRtncb                = pKrcb->getRTNCB();
       contextID = -1 ;
 
+      INT32 flag;
+      CHAR *pCMDName;
+      SINT64 numToSkip;
+      SINT64 numToReturn;
+      CHAR *pQuery;
+      CHAR *pFieldSelector;
+      CHAR *pOrderBy;
+      CHAR *pHint;
       _rtnTraceStatus tracestatus ;
-      rtnCommandOptions options ;
 
-      rc = options.fromQueryMsg( (CHAR*)pMsg ) ;
+      rc = msgExtractQuery( (CHAR*)pMsg, &flag, &pCMDName, &numToSkip,
+                            &numToReturn, &pQuery, &pFieldSelector,
+                            &pOrderBy, &pHint );
       PD_RC_CHECK ( rc, PDERROR,
                     "Failed to extract query, rc = %d", rc ) ;
-      rc = tracestatus.init ( options ) ;
+      rc = tracestatus.init ( flag, numToSkip, numToReturn, pQuery,
+                              pFieldSelector, pOrderBy, pHint ) ;
       PD_RC_CHECK ( rc, PDERROR,
                     "Failed to init tracestop, rc = %d", rc ) ;
       rc = tracestatus.doit ( cb, NULL, pRtncb, NULL, 0, &contextID ) ;

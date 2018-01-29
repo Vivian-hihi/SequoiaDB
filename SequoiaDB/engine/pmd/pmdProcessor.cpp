@@ -321,31 +321,43 @@ namespace engine
                                             INT64 &contextID )
    {
       INT32 rc = SDB_OK ;
+      INT32 flags = 0 ;
+      CHAR *pCollectionName = NULL ;
+      CHAR *pQueryBuff = NULL ;
+      CHAR *pFieldSelector = NULL ;
+      CHAR *pOrderByBuffer = NULL ;
+      CHAR *pHintBuffer = NULL ;
+      INT64 numToSkip = -1 ;
+      INT64 numToReturn = -1 ;
       _rtnCommand *pCommand = NULL ;
-      rtnCommandOptions options ;
 
-      rc = options.fromQueryMsg( (CHAR *)msg ) ;
+      rc = msgExtractQuery ( (CHAR *)msg, &flags, &pCollectionName,
+                             &numToSkip, &numToReturn, &pQueryBuff,
+                             &pFieldSelector, &pOrderByBuffer, &pHintBuffer ) ;
       PD_RC_CHECK( rc, PDERROR, "Session[%s] extract query msg failed, rc: %d",
                    getSession()->sessionName(), rc ) ;
 
-      if ( !rtnIsCommand ( options.getCLFullName() ) )
+      if ( !rtnIsCommand ( pCollectionName ) )
       {
-         rtnQueryOptions copiedOptions( options ) ;
          rtnContextBase *pContext = NULL ;
          try
          {
+            BSONObj matcher ( pQueryBuff ) ;
+            BSONObj selector ( pFieldSelector ) ;
+            BSONObj orderBy ( pOrderByBuffer ) ;
+            BSONObj hint ( pHintBuffer ) ;
             // add last op info
             MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), msg->opCode,
                                 "Collection:%s, Matcher:%s, Selector:%s, "
                                 "OrderBy:%s, Hint:%s, Skip:%llu, Limit:%lld, "
                                 "Flag:0x%08x(%u)",
-                                options.getCLFullName(),
-                                options.getQuery().toString().c_str(),
-                                options.getSelector().toString().c_str(),
-                                options.getOrderBy().toString().c_str(),
-                                options.getHint().toString().c_str(),
-                                options.getSkip(), options.getLimit(),
-                                options.getFlag(), options.getFlag() ) ;
+                                pCollectionName,
+                                matcher.toString().c_str(),
+                                selector.toString().c_str(),
+                                orderBy.toString().c_str(),
+                                hint.toString().c_str(),
+                                numToSkip, numToReturn,
+                                flags, flags ) ;
 
             /*
             PD_LOG ( PDDEBUG, "Session[%s] Query: Matcher: %s\nSelector: "
@@ -355,22 +367,22 @@ namespace engine
                      orderBy.toString().c_str(), hint.toString().c_str(),
                      numToSkip, numToReturn, flags ,flags ) ; */
 
-            // Send copied options to rtnQuery, which may change some flags
-            rc = rtnQuery( copiedOptions, eduCB(), _pDMSCB, _pRTNCB, contextID,
-                           &pContext, TRUE ) ;
+            rc = rtnQuery( pCollectionName, selector, matcher, orderBy,
+                           hint, flags, eduCB(), numToSkip, numToReturn,
+                           _pDMSCB, _pRTNCB, contextID, &pContext, TRUE ) ;
             /// AUDIT
-            PD_AUDIT_OP( options.testFlag( FLG_QUERY_MODIFY ) ? AUDIT_DML : AUDIT_DQL,
+            PD_AUDIT_OP( ( flags & FLG_QUERY_MODIFY ? AUDIT_DML : AUDIT_DQL ),
                          MSG_BS_QUERY_REQ, AUDIT_OBJ_CL,
-                         options.getCLFullName(), rc,
+                         pCollectionName, rc,
                          "ContextID:%lld, Matcher:%s, Selector:%s, OrderBy:%s, "
                          "Hint:%s, Skip:%llu, Limit:%lld, Flag:0x%08x(%u)",
                          contextID,
-                         options.getQuery().toString().c_str(),
-                         options.getSelector().toString().c_str(),
-                         options.getOrderBy().toString().c_str(),
-                         options.getHint().toString().c_str(),
-                         options.getSkip(), options.getLimit(),
-                         options.getFlag(), options.getFlag() ) ;
+                         matcher.toString().c_str(),
+                         selector.toString().c_str(),
+                         orderBy.toString().c_str(),
+                         hint.toString().c_str(),
+                         numToSkip, numToReturn,
+                         flags, flags ) ;
             /// Jduge error
             if ( rc )
             {
@@ -383,8 +395,7 @@ namespace engine
                pContext->setWriteInfo( dpsCB, 1 ) ;
             }
 
-            if ( options.testFlag( FLG_QUERY_WITH_RETURNDATA ) &&
-                 NULL != pContext )
+            if ( ( flags & FLG_QUERY_WITH_RETURNDATA ) && NULL != pContext )
             {
                rc = pContext->getMore( -1, buffObj, eduCB() ) ;
                if ( rc || pContext->eof() )
@@ -416,16 +427,18 @@ namespace engine
       }
       else
       {
-         rc = rtnParserCommand( options.getCLFullName(), &pCommand ) ;
+         rc = rtnParserCommand( pCollectionName, &pCommand ) ;
 
          if ( SDB_OK != rc )
          {
             PD_LOG ( PDERROR, "Parse command[%s] failed[rc:%d]",
-                     options.getCLFullName(), rc ) ;
+                     pCollectionName, rc ) ;
             goto error ;
          }
 
-         rc = rtnInitCommand( pCommand, options ) ;
+         rc = rtnInitCommand( pCommand , flags, numToSkip, numToReturn,
+                              pQueryBuff, pFieldSelector, pOrderByBuffer,
+                              pHintBuffer ) ;
          if ( SDB_OK != rc )
          {
             goto error ;
@@ -435,15 +448,14 @@ namespace engine
                               "Command:%s, Collection:%s, Match:%s, "
                               "Selector:%s, OrderBy:%s, Hint:%s, Skip:%llu, "
                               "Limit:%lld, Flag:0x%08x(%u)",
-                              options.getCLFullName(),
+                              pCollectionName,
                               pCommand->collectionFullName() ?
                               pCommand->collectionFullName() : "",
-                              options.getQuery().toString().c_str(),
-                              options.getSelector().toString().c_str(),
-                              options.getOrderBy().toString().c_str(),
-                              options.getHint().toString().c_str(),
-                              options.getSkip(), options.getLimit(),
-                              options.getFlag(), options.getFlag() ) ;
+                              BSONObj(pQueryBuff).toString().c_str(),
+                              BSONObj(pFieldSelector).toString().c_str(),
+                              BSONObj(pOrderByBuffer).toString().c_str(),
+                              BSONObj(pHintBuffer).toString().c_str(),
+                              numToSkip, numToReturn, flags, flags ) ;
 
          PD_LOG ( PDDEBUG, "Command: %s", pCommand->name () ) ;
 

@@ -94,16 +94,19 @@ namespace engine
    // will bypass fetching records by records. Instead it will read each extent
    // and get the _recCount in extent header for quick count
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNGETCOUNT, "rtnGetCount" )
-   INT32 rtnGetCount ( const rtnQueryOptions & options,
+   INT32 rtnGetCount ( const CHAR *pCollection,
+                       const BSONObj &matcher,
+                       const BSONObj &hint,
                        SDB_DMSCB *dmsCB,
                        _pmdEDUCB *cb,
                        SDB_RTNCB *rtnCB,
-                       INT64 *count )
+                       INT64 *count,
+                       INT32 flags )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNGETCOUNT ) ;
       SINT64 totalCount = 0 ;
-      const CHAR * pCollection = options.getCLFullName() ;
+      BSONObj obj ;
       SDB_ASSERT ( pCollection, "collection can't be NULL" ) ;
       SDB_ASSERT ( dmsCB, "dms control block can't be NULL" ) ;
       SDB_ASSERT ( count, "count can't be NULL" ) ;
@@ -119,27 +122,12 @@ namespace engine
                   pCollection, rc ) ;
          goto error ;
       }
-      if ( options.isQueryEmpty() )
-      {
-         // use quick extent header count
-         rc = su->countCollection ( pCollectionShortName, totalCount, cb ) ;
-         if ( rc )
-         {
-            PD_LOG ( PDERROR, "Failed to get count %s, rc: %d",
-                     pCollection, rc ) ;
-            goto error ;
-         }
-      }
-      else
+      if ( !matcher.isEmpty() )
       {
          rtnContextBase *pContextBase = NULL ;
          SINT64 queryContextID = -1 ;
-         rtnQueryOptions copiedOptions( options ) ;
-         copiedOptions.setSelector( BSONObj() ) ;
-         copiedOptions.setOrderBy( BSONObj() ) ;
-         copiedOptions.setLimit( -1 ) ;
-         copiedOptions.setSkip( 0 ) ;
-         rc = rtnQuery ( copiedOptions, cb, dmsCB, rtnCB, queryContextID,
+         rc = rtnQuery ( pCollection, obj, matcher, obj, hint, flags, cb,
+                         0, -1, dmsCB, rtnCB, queryContextID,
                          &pContextBase ) ;
          if ( rc )
          {
@@ -176,8 +164,7 @@ namespace engine
                   else
                   {
                      PD_LOG ( PDERROR, "Failed to fetch for count for "
-                              "collection %s, rc: %d", pCollection,
-                              rc ) ;
+                              "collecion %s, rc: %d", pCollection, rc ) ;
                      goto error ;
                   }
                }
@@ -188,6 +175,17 @@ namespace engine
                   totalCount += buffObj.recordNum() ;
                }
             }
+         }
+      }
+      else
+      {
+         // use quick extent header count
+         rc = su->countCollection ( pCollectionShortName, totalCount, cb ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to get count %s, rc: %d",
+                     pCollection, rc ) ;
+            goto error ;
          }
       }
 
@@ -204,11 +202,14 @@ namespace engine
       goto done ;
    }
 
-   INT32 rtnGetCount ( const rtnQueryOptions & options,
+   INT32 rtnGetCount ( const CHAR *pCollection,
+                       const BSONObj &matcher,
+                       const BSONObj &hint,
                        SDB_DMSCB *dmsCB,
                        _pmdEDUCB *cb,
                        SDB_RTNCB *rtnCB,
-                       rtnContext *context )
+                       rtnContext *context,
+                       INT32 flags )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNGETCOUNT ) ;
@@ -216,11 +217,12 @@ namespace engine
       BSONObj obj ;
       BSONObjBuilder ob ;
 
-      rc = rtnGetCount( options, dmsCB, cb, rtnCB, &totalCount ) ;
+      rc = rtnGetCount ( pCollection, matcher, hint, dmsCB, cb, rtnCB,
+                         &totalCount, flags ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to get count for collection %s, rc: %d",
-                  options.getCLFullName(), rc ) ;
+                  pCollection, rc ) ;
          goto error ;
       }
 
@@ -230,7 +232,7 @@ namespace engine
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to append context for collection %s, rc: %d",
-                  options.getCLFullName(), rc ) ;
+                  pCollection, rc ) ;
          goto error ;
       }
 
@@ -844,7 +846,10 @@ namespace engine
       goto done ;
    }
 
-   INT32 rtnGetQueryMeta( const rtnQueryOptions & options,
+   INT32 rtnGetQueryMeta( const CHAR *pCollectionName,
+                          const BSONObj &match,
+                          const BSONObj &orderby,
+                          const BSONObj &hint,
                           SDB_DMSCB *dmsCB,
                           pmdEDUCB *cb,
                           rtnContextDump *context )
@@ -865,11 +870,16 @@ namespace engine
       monContextCB monCtxCB ;
       rtnReturnOptions returnOptions ;
 
+      // Construct options
+      // matcher, selector, order, hint, collection, skip, limit, flag
+      rtnQueryOptions options( match, dummy, orderby, hint, pCollectionName,
+                               0, -1, 0 ) ;
+
       // This prevents other sessions drop the collectionspace during accessing
-      rc = rtnResolveCollectionNameAndLock ( options.getCLFullName(), dmsCB, &su,
+      rc = rtnResolveCollectionNameAndLock ( pCollectionName, dmsCB, &su,
                                              &pCollectionShortName, suID ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to resolve collection name %s",
-                   options.getCLFullName() ) ;
+                   pCollectionName ) ;
 
       rc = su->data()->getMBContext( &mbContext, pCollectionShortName, -1 ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get dms mb context, rc: %d", rc ) ;
@@ -880,7 +890,7 @@ namespace engine
       // plan is released in context destructor
       rc = apm->getAccessPlan( options, FALSE, su, mbContext, planRuntime ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get access plan for %s, "
-                   "context %lld, rc: %d", options.getCLFullName(),
+                   "context %lld, rc: %d", pCollectionName,
                    context->contextID(), rc ) ;
 
       if ( cb->getMonConfigCB()->timestampON )
@@ -892,7 +902,7 @@ namespace engine
 
       rc = mbContext->mbLock( SHARED ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to lock collection[%s], rc: %d",
-                   options.getCLFullName(), rc ) ;
+                   pCollectionName, rc ) ;
 
       if ( TBSCAN == planRuntime.getScanType() )
       {
@@ -912,7 +922,7 @@ namespace engine
       }
 
       PD_RC_CHECK( rc, PDERROR, "Failed to get collection[%s] query meta, "
-                   "rc: %d", options.getCLFullName(), rc ) ;
+                   "rc: %d", pCollectionName, rc ) ;
 
       endTime = krcb->getCurTime() ;
 
@@ -936,15 +946,22 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNGETCOMMANDENTRY, "rtnGetCommandEntry" )
    INT32 rtnGetCommandEntry ( RTN_COMMAND_TYPE command,
-                              const rtnCommandOptions & options,
+                              const CHAR *pCollectionName,
+                              const BSONObj &selector,
+                              const BSONObj &matcher,
+                              const BSONObj &orderBy,
+                              const BSONObj &hint,
+                              SINT32 flags,
                               pmdEDUCB *cb,
+                              SINT64 numToSkip,
+                              SINT64 numToReturn,
                               SDB_DMSCB *dmsCB,
                               SDB_RTNCB *rtnCB,
                               SINT64 &contextID )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNGETCOMMANDENTRY ) ;
-      SDB_ASSERT ( options.getCLFullName(), "collection name can't be NULL " ) ;
+      SDB_ASSERT ( pCollectionName, "collection name can't be NULL " ) ;
       SDB_ASSERT ( cb, "educb can't be NULL" ) ;
       SDB_ASSERT ( dmsCB, "dmsCB can't be NULL" ) ;
       SDB_ASSERT ( rtnCB, "runtimeCB can't be NULL" ) ;
@@ -958,10 +975,10 @@ namespace engine
          PD_LOG ( PDERROR, "Failed to create new context, rc: %d", rc ) ;
          goto error ;
       }
-      rc = context->open( options.getSelector(),
-                          options.getQuery(),
-                          options.isOrderByEmpty() ? options.getLimit() : -1,
-                          options.isOrderByEmpty() ? options.getSkip() : 0 ) ;
+      rc = context->open( selector,
+                          matcher,
+                          orderBy.isEmpty() ? numToReturn : -1,
+                          orderBy.isEmpty() ? numToSkip : 0 ) ;
       PD_RC_CHECK( rc, PDERROR, "Open context failed, rc: %d", rc ) ;
 
       // sample timetamp
@@ -974,27 +991,28 @@ namespace engine
       switch ( command )
       {
          case CMD_GET_INDEXES :
-            rc = rtnGetIndexes ( options.getCLFullName(), dmsCB, context ) ;
+            rc = rtnGetIndexes ( pCollectionName, dmsCB, context ) ;
             break ;
          case CMD_GET_COUNT :
-            rc = rtnGetCount ( options, dmsCB, cb, rtnCB, context ) ;
+            rc = rtnGetCount ( pCollectionName, matcher, hint, dmsCB, cb,
+                               rtnCB, context, flags ) ;
             break ;
          case CMD_GET_DATABLOCKS :
-            rc = rtnGetDatablocks( options.getCLFullName(), dmsCB, cb, context ) ;
+            rc = rtnGetDatablocks( pCollectionName, dmsCB, cb, context ) ;
             break ;
          default :
             rc = SDB_INVALIDARG ;
             break ;
       }
       PD_RC_CHECK( rc, PDERROR, "Dump collection[%s] info[command:%d] failed, "
-                   "rc: %d", options.getCLFullName(), command, rc ) ;
+                   "rc: %d", pCollectionName, command, rc ) ;
 
-      if ( !options.isOrderByEmpty() )
+      if ( !orderBy.isEmpty() )
       {
          rc = rtnSort( (rtnContext**)&context,
-                       options.getOrderBy(),
-                       cb, options.getSkip(),
-                       options.getLimit(), contextID ) ;
+                       orderBy,
+                       cb, numToSkip,
+                       numToReturn, contextID ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to sort, rc: %d", rc ) ;
       }
 

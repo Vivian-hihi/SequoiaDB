@@ -55,7 +55,11 @@ namespace engine
          virtual const CHAR * name () ;
          virtual RTN_COMMAND_TYPE type () ;
          virtual BOOLEAN      writable () ;
-         virtual INT32 init ( const rtnCommandOptions & options ) ;
+         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
+                              const CHAR *pMatcherBuff,
+                              const CHAR *pSelectBuff,
+                              const CHAR *pOrderByBuff,
+                              const CHAR *pHintBuff ) ;
          virtual INT32 doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
                               _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
                               INT16 w = 1, INT64 *pContextID = NULL ) ;
@@ -80,7 +84,11 @@ namespace engine
          virtual const CHAR * name () { return NAME_CANCEL_TASK ; }
          virtual RTN_COMMAND_TYPE type () { return CMD_CANCEL_TASK ; }
 
-         virtual INT32 init ( const rtnCommandOptions & options ) ;
+         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
+                              const CHAR *pMatcherBuff,
+                              const CHAR *pSelectBuff,
+                              const CHAR *pOrderByBuff,
+                              const CHAR *pHintBuff ) ;
          virtual INT32 doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
                               _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
                               INT16 w = 1, INT64 *pContextID = NULL ) ;
@@ -104,7 +112,11 @@ namespace engine
          virtual const CHAR * collectionFullName () ;
          virtual BOOLEAN      writable () { return TRUE ; }
 
-         virtual INT32 init ( const rtnCommandOptions & options ) ;
+         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn, 
+                              const CHAR *pMatcherBuff,
+                              const CHAR *pSelectBuff,
+                              const CHAR *pOrderByBuff,
+                              const CHAR *pHintBuff ) ;
          virtual INT32 doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
                               _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
                               INT16 w = 1, INT64 *pContextID = NULL  ) ;
@@ -141,7 +153,11 @@ namespace engine
       virtual const CHAR *name() { return NAME_INVALIDATE_CACHE ; }
       virtual RTN_COMMAND_TYPE type() { return CMD_INVALIDATE_CACHE ; }
       virtual INT32 spaceNode () ;
-      virtual INT32 init ( const rtnCommandOptions & options ) ;
+      virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
+                           const CHAR *pMatcherBuff,
+                           const CHAR *pSelectBuff,
+                           const CHAR *pOrderByBuff,
+                           const CHAR *pHintBuff ) ;
       virtual INT32 doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
                            _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
                            INT16 w = 1, INT64 *pContextID = NULL ) ;
@@ -159,7 +175,11 @@ namespace engine
    public:
       virtual const CHAR * name () { return NAME_REELECT ; }
       virtual RTN_COMMAND_TYPE type () { return CMD_REELECT ; }
-      virtual INT32 init ( const rtnCommandOptions & options ) ;
+      virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
+                              const CHAR *pMatcherBuff,
+                              const CHAR *pSelectBuff,
+                              const CHAR *pOrderByBuff,
+                              const CHAR *pHintBuff ) ;
       virtual INT32 doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
                            _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
                            INT16 w = 1, INT64 *pContextID = NULL ) ;
@@ -185,7 +205,11 @@ namespace engine
       virtual RTN_COMMAND_TYPE type () { return CMD_FORCE_STEP_UP ; }
       virtual INT32 spaceNode () ;
       virtual INT32 spaceService () ;
-      virtual INT32 init ( const rtnCommandOptions & options ) ;
+      virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
+                              const CHAR *pMatcherBuff,
+                              const CHAR *pSelectBuff,
+                              const CHAR *pOrderByBuff,
+                              const CHAR *pHintBuff ) ;
       virtual INT32 doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
                            _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
                            INT16 w = 1, INT64 *pContextID = NULL ) ;
@@ -209,7 +233,11 @@ namespace engine
          virtual RTN_COMMAND_TYPE type () { return CMD_ALTER_IMAGE ; }
          virtual BOOLEAN      writable () ;
 
-         virtual INT32 init ( const rtnCommandOptions & options ) ;
+         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn, 
+                              const CHAR *pMatcherBuff,
+                              const CHAR *pSelectBuff,
+                              const CHAR *pOrderByBuff,
+                              const CHAR *pHintBuff ) ;
          virtual INT32 doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
                               _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
                               INT16 w = 1, INT64 *pContextID = NULL ) ;

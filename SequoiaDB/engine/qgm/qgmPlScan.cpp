@@ -200,8 +200,6 @@ namespace engine
       if ( rtnIsCommand( pCLName ) )
       {
          INT32 serviceType = CMD_SPACE_SERVICE_SHARD ;
-         rtnCommandOptions options( _condition, selector, _orderby, _hint,
-                                    NULL, _skip, _return, 0 ) ;
          if ( eduCB->isFromLocal() )
          {
             serviceType = CMD_SPACE_SERVICE_LOCAL ;
@@ -213,7 +211,9 @@ namespace engine
                      pCLName, rc ) ;
             goto error ;
          }
-         rc = rtnInitCommand( pCommand, options ) ;
+         rc = rtnInitCommand( pCommand , 0, _skip, _return,
+                              _condition.objdata(), selector.objdata(),
+                              _orderby.objdata(), _hint.objdata() ) ;
          if ( SDB_OK != rc )
          {
             goto error ;
@@ -232,10 +232,10 @@ namespace engine
       }
       else
       {
-         rtnQueryOptions options( _condition, selector, _orderby, _hint,
-                                  pCLName, _skip, _return, 0 ) ;
          // close prefetch
-         rc = rtnQuery( options, eduCB, _dmsCB, _rtnCB, _contextID, NULL, FALSE ) ;
+         rc = rtnQuery ( pCLName, selector, _condition,
+                         _orderby, _hint, 0, eduCB, _skip, _return,
+                         _dmsCB, _rtnCB, _contextID, NULL, FALSE ) ;
          if ( SDB_OK != rc )
          {
             goto error ;

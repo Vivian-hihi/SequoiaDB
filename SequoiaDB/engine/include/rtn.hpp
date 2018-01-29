@@ -418,26 +418,42 @@ namespace engine
                                SDB_DPSCB *dpsCB,
                                BOOLEAN sysCall = FALSE ) ;
 
-   INT32 rtnGetCount ( const rtnQueryOptions & options,
+   INT32 rtnGetCount ( const CHAR *pCollection,
+                       const BSONObj &matcher,
+                       const BSONObj &hint,
                        SDB_DMSCB *dmsCB,
                        _pmdEDUCB *cb,
                        SDB_RTNCB *rtnCB,
-                       INT64 *count ) ;
+                       INT64 *count,
+                       INT32 flags = 0 ) ;
 
-   INT32 rtnGetCount ( const rtnQueryOptions & options,
+   INT32 rtnGetCount ( const CHAR *pCollection,
+                       const BSONObj &matcher,
+                       const BSONObj &hint,
                        SDB_DMSCB *dmsCB,
                        _pmdEDUCB *cb,
                        SDB_RTNCB *rtnCB,
-                       rtnContext *context ) ;
+                       rtnContext *context,
+                       INT32 flags = 0 ) ;
 
    INT32 rtnGetCommandEntry ( RTN_COMMAND_TYPE command,
-                              const rtnCommandOptions & options,
+                              const CHAR *pCollectionName,
+                              const BSONObj &selector,
+                              const BSONObj &matcher,
+                              const BSONObj &orderBy,
+                              const BSONObj &hint,
+                              SINT32 flags,
                               pmdEDUCB *cb,
+                              SINT64 numToSkip,
+                              SINT64 numToReturn,
                               SDB_DMSCB *dmsCB,
                               SDB_RTNCB *rtnCB,
                               SINT64 &contextID ) ;
 
-   INT32 rtnGetQueryMeta( const rtnQueryOptions & options,
+   INT32 rtnGetQueryMeta( const CHAR *pCollectionName,
+                          const BSONObj &match,
+                          const BSONObj &orderby,
+                          const BSONObj &hint,
                           SDB_DMSCB *dmsCB,
                           pmdEDUCB *cb,
                           _rtnContextDump *context ) ;
@@ -461,7 +477,10 @@ namespace engine
    BOOLEAN rtnIsCommand ( const CHAR *name ) ;
    INT32 rtnParserCommand ( const CHAR *name, _rtnCommand **ppCommand ) ;
    INT32 rtnReleaseCommand ( _rtnCommand **ppCommand ) ;
-   INT32 rtnInitCommand ( _rtnCommand *pCommand, const rtnCommandOptions & options ) ;
+   INT32 rtnInitCommand ( _rtnCommand *pCommand ,INT32 flags, INT64 numToSkip,
+                          INT64 numToReturn, const CHAR *pMatcherBuff,
+                          const CHAR *pSelectBuff, const CHAR *pOrderByBuff,
+                          const CHAR *pHintBuff ) ;
    INT32 rtnRunCommand ( _rtnCommand *pCommand, INT32 serviceType,
                          _pmdEDUCB *cb, SDB_DMSCB *dmsCB,
                          SDB_RTNCB *rtnCB, SDB_DPSCB *dpsCB,

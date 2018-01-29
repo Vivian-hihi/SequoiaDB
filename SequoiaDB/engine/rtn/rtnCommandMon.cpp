@@ -51,17 +51,32 @@ namespace engine
       _rtnMonInnerBase implement
    */
    _rtnMonInnerBase::_rtnMonInnerBase()
-   : _options()
+   :_matcherBuff ( NULL ), _selectBuff ( NULL ), _orderByBuff ( NULL ),
+    _hintBuff( NULL )
    {
+      _flags = 0 ;
+      _numToReturn = -1 ;
+      _numToSkip = 0 ;
    }
 
    _rtnMonInnerBase::~_rtnMonInnerBase()
    {
    }
 
-   INT32 _rtnMonInnerBase::init ( const rtnCommandOptions & options )
+   INT32 _rtnMonInnerBase::init ( INT32 flags, INT64 numToSkip,
+                                  INT64 numToReturn,
+                                  const CHAR * pMatcherBuff,
+                                  const CHAR * pSelectBuff,
+                                  const CHAR * pOrderByBuff,
+                                  const CHAR * pHintBuff )
    {
-      _options = options ;
+      _flags = flags ;
+      _numToReturn = numToReturn ;
+      _numToSkip = numToSkip ;
+      _matcherBuff = pMatcherBuff ;
+      _selectBuff = pSelectBuff ;
+      _orderByBuff = pOrderByBuff ;
+      _hintBuff = pHintBuff ;
 
       return SDB_OK ;
    }
@@ -125,14 +140,21 @@ namespace engine
       rtnContextDump *context = NULL ;
       rtnFetchBase *pFetch = NULL ;
 
+      BSONObj matcher ;
+      BSONObj selector ;
+      BSONObj orderBy ;
+      BSONObj hint ;
+
       try
       {
-         BSONObj matcher, nodeMatcher ;
+         BSONObj tmpMatcher ( _matcherBuff ) ;
+         BSONObj nodeMatcher ;
+         selector = BSONObj( _selectBuff ) ;
+         orderBy = BSONObj( _orderByBuff ) ;
+         hint = BSONObj( _hintBuff ) ;
 
-         rc = parseMatcher( _options.getQuery(), nodeMatcher, matcher, TRUE ) ;
+         rc = parseMatcher( tmpMatcher, nodeMatcher, matcher, TRUE ) ;
          PD_RC_CHECK( rc, PDERROR, "Parse matcher failed, rc: %d", rc ) ;
-
-         _options.setQuery( matcher ) ;
       }
       catch( std::exception &e )
       {
@@ -150,10 +172,10 @@ namespace engine
          goto error ;
       }
 
-      rc = context->open( _options.getSelector(),
-                          _options.getQuery(),
-                          _options.isOrderByEmpty() ? _options.getLimit() : -1,
-                          _options.isOrderByEmpty() ? _options.getSkip() : 0 ) ;
+      rc = context->open( selector,
+                          matcher,
+                          orderBy.isEmpty() ? _numToReturn : -1,
+                          orderBy.isEmpty() ? _numToSkip : 0 ) ;
       PD_RC_CHECK( rc, PDERROR, "Open context failed, rc: %d", rc ) ;
 
       // sample timetamp
@@ -170,10 +192,10 @@ namespace engine
       pFetch = NULL ;
 
       /// when has orderby
-      if ( !_options.isOrderByEmpty() )
+      if ( !orderBy.isEmpty() )
       {
-         rc = rtnSort( (rtnContext**)&context, _options.getOrderBy(), cb,
-                       _options.getSkip(), _options.getLimit(), *pContextID ) ;
+         rc = rtnSort( (rtnContext**)&context, orderBy, cb,
+                       _numToSkip, _numToReturn, *pContextID ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to sort, rc: %d", rc ) ;
       }
 
@@ -221,24 +243,28 @@ namespace engine
       INT32 buffObjNum = 0 ;
 
       vector< BSONObj > vecUserAggr ;
+      BSONObj matcher ;
+      BSONObj selector ;
+      BSONObj orderBy ;
+      BSONObj hint ;
 
       try
       {
-         rc = parseUserAggr( _options.getHint(), vecUserAggr ) ;
+         hint = BSONObj( _hintBuff ) ;
+
+         rc = parseUserAggr( hint, vecUserAggr ) ;
          PD_RC_CHECK( rc, PDERROR, "Parse user define aggr failed, rc: %d",
                       rc ) ;
 
          if ( vecUserAggr.size() > 0 )
          {
-            BSONObj matcher, nodeMatcher ;
-            rc = parseMatcher( _options.getQuery(), nodeMatcher, matcher, TRUE ) ;
+            BSONObj tmpMatcher ( _matcherBuff ) ;
+            BSONObj nodeMatcher ;
+            selector = BSONObj( _selectBuff ) ;
+            orderBy = BSONObj( _orderByBuff ) ;
+
+            rc = parseMatcher( tmpMatcher, nodeMatcher, matcher, TRUE ) ;
             PD_RC_CHECK( rc, PDERROR, "Parse matcher failed, rc: %d", rc ) ;
-            _options.setQuery( matcher ) ;
-         }
-         else
-         {
-            _options.setSelector( BSONObj() ) ;
-            _options.setOrderBy( BSONObj() ) ;
          }
       }
       catch( std::exception &e )
@@ -251,18 +277,18 @@ namespace engine
       if ( vecUserAggr.size() > 0 )
       {
          /// add new matcher
-         if ( !_options.isQueryEmpty() )
+         if ( !matcher.isEmpty() )
          {
-            rc = appendObj( BSON( AGGR_MATCH_PARSER_NAME << _options.getQuery() ),
+            rc = appendObj( BSON( AGGR_MATCH_PARSER_NAME << matcher ),
                             pOutBuff, buffSize, buffUsedSize, buffObjNum ) ;
             PD_RC_CHECK( rc, PDERROR, "Append new matcher failed, rc: %d",
                          rc ) ;
          }
 
          /// order by
-         if ( !_options.isOrderByEmpty() )
+         if ( orderBy.isEmpty() )
          {
-            rc = appendObj( BSON( AGGR_SORT_PARSER_NAME << _options.getOrderBy() ),
+            rc = appendObj( BSON( AGGR_SORT_PARSER_NAME << orderBy ),
                             pOutBuff, buffSize, buffUsedSize, buffObjNum ) ;
             PD_RC_CHECK( rc, PDERROR, "Append order by failed, rc: %d",
                          rc ) ;
@@ -279,7 +305,7 @@ namespace engine
 
          /// open context
          rc = openContext( pOutBuff, buffObjNum, getIntrCMDName(),
-                           _options.getSelector(), cb, *pContextID ) ;
+                           selector, cb, *pContextID ) ;
          PD_RC_CHECK( rc, PDERROR, "Open context failed, rc: %d", rc ) ;
       }
       else

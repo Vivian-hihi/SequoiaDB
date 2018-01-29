@@ -861,17 +861,26 @@ retry :
       PD_TRACE_ENTRY ( SDB__COORDCB__QUERYMSG ) ;
 
       INT32 rc                = SDB_OK ;
+      CHAR *pCollectionName   = NULL ;
+      CHAR *pQueryBuff        = NULL ;
+      CHAR *pFieldSelector    = NULL ;
+      CHAR *pOrderByBuffer    = NULL ;
+      CHAR *pHintBuffer       = NULL ;
+      INT32 flags             = 0 ;
+      INT64 numToSkip         = -1 ;
+      INT64 numToReturn       = -1 ;
       INT16 w                 = 1 ;
       _rtnCommand *pCommand   = NULL ;
-      rtnCommandOptions options ;
 
       /// extract msg
-      rc = options.fromQueryMsg( (CHAR *)pMsg ) ;
+      rc = msgExtractQuery ( (CHAR *)pMsg, &flags, &pCollectionName,
+                             &numToSkip, &numToReturn, &pQueryBuff,
+                             &pFieldSelector, &pOrderByBuffer, &pHintBuffer ) ;
       PD_RC_CHECK ( rc, PDERROR, "Extract query msg failed[rc:%d]", rc ) ;
 
 
       /// not allow query
-      if ( !rtnIsCommand ( options.getCLFullName() ) )
+      if ( !rtnIsCommand ( pCollectionName ) )
       {
          PD_LOG( PDERROR, "Receive unknown msg[opCode:(%d)%d, len: %d, "
                  "tid: %d, reqID: %lld, nodeID: %u.%u.%u]",
@@ -885,9 +894,9 @@ retry :
       }
 
       /// ready command
-      rc = rtnParserCommand( options.getCLFullName(), &pCommand ) ;
+      rc = rtnParserCommand( pCollectionName, &pCommand ) ;
       PD_RC_CHECK ( rc, PDERROR, "Parse command[%s] failed[rc:%d]",
-                    options.getCLFullName(), rc ) ;
+                    pCollectionName, rc ) ;
 
       if ( NULL != pCommand->collectionFullName() ||
            TRUE == pCommand->writable() )
@@ -912,7 +921,9 @@ retry :
          goto error ;
       }
 
-      rc = rtnInitCommand( pCommand, options ) ;
+      rc = rtnInitCommand( pCommand , flags, numToSkip, numToReturn,
+                           pQueryBuff, pFieldSelector, pOrderByBuffer,
+                           pHintBuffer ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
@@ -931,13 +942,12 @@ retry :
                            "Command:%s, Collection:%s, Match:%s, "
                            "Selector:%s, OrderBy:%s, Hint:%s, Skip:%llu, "
                            "Limit:%lld, Flag:0x%08x(%u)",
-                           options.getCLFullName(), _cmdCollectionName.c_str(),
-                           options.getQuery().toString().c_str(),
-                           options.getSelector().toString().c_str(),
-                           options.getOrderBy().toString().c_str(),
-                           options.getHint().toString().c_str(),
-                           options.getSkip(), options.getLimit(),
-                           options.getFlag(), options.getFlag() ) ;
+                           pCollectionName, _cmdCollectionName.c_str(),
+                           BSONObj(pQueryBuff).toString().c_str(),
+                           BSONObj(pFieldSelector).toString().c_str(),
+                           BSONObj(pOrderByBuffer).toString().c_str(),
+                           BSONObj(pHintBuffer).toString().c_str(),
+                           numToSkip, numToReturn, flags, flags ) ;
 
       /// run command
       if ( CMD_INVALIDATE_CACHE == pCommand->type() )

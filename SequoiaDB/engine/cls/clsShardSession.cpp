@@ -1297,10 +1297,6 @@ namespace engine
          _pCollectionName = NULL ;
          _cmdCollectionName.clear() ;
 
-         rtnCommandOptions options( pQueryBuff, pFieldSelector, pOrderByBuffer,
-                                    pHintBuffer, NULL, numToSkip, numToReturn,
-                                    flags ) ;
-
          rc = rtnParserCommand( pCollectionName, &pCommand ) ;
 
          if ( SDB_OK != rc )
@@ -1310,7 +1306,9 @@ namespace engine
             goto error ;
          }
 
-         rc = rtnInitCommand( pCommand, options ) ;
+         rc = rtnInitCommand( pCommand , flags, numToSkip, numToReturn,
+                              pQueryBuff, pFieldSelector, pOrderByBuffer,
+                              pHintBuffer ) ;
          if ( SDB_OK != rc )
          {
             goto error ;
@@ -2592,11 +2590,6 @@ namespace engine
 
          do
          {
-            rtnCommandOptions options( boNewMatcher.objdata(), pField, pOrderBy,
-                                       boSubHint.objdata(), pSubCLName,
-                                       subNumToSkip, subNumToReturn, flags ) ;
-            options.setMainCLName( pCollection ) ;
-
             rc = rtnParserCommand( pCommand, &pCommandTmp );
             if ( rc )
             {
@@ -2604,7 +2597,10 @@ namespace engine
                        "rc: %d", sessionName(), pCommand, rc ) ;
                break ;
             }
-            rc = rtnInitCommand( pCommandTmp, options ) ;
+            rc = rtnInitCommand( pCommandTmp, flags, subNumToSkip,
+                                 subNumToReturn, boNewMatcher.objdata(),
+                                 pField, pOrderBy,
+                                 boSubHint.objdata() ) ;
             if ( rc )
             {
                PD_LOG( PDERROR, "Session[%s]: Failed to init command[%s], "

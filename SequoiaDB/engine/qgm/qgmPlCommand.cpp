@@ -548,9 +548,10 @@ namespace engine
       }
       else if ( SQL_GRAMMAR::LISTCS == _commandType )
       {
+         BSONObj empty ;
          _rtnListCollectionspacesInner cmdListCS ;
-         rtnCommandOptions options ;
-         rc = cmdListCS.init( options ) ;
+         rc = cmdListCS.init( 0, 0, -1, empty.objdata(), empty.objdata(),
+                              empty.objdata(), empty.objdata() ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "Init command[list collectionspace] failed, "
@@ -567,9 +568,11 @@ namespace engine
       }
       else if ( SQL_GRAMMAR::LISTCL == _commandType )
       {
+         BSONObj empty ;
          _rtnListCollections cmdListCL ;
-         rtnCommandOptions options ;
-         rc = cmdListCL.init( options ) ;
+         rc = cmdListCL.init( 0, 0, -1, empty.objdata(),
+                              empty.objdata(), empty.objdata(),
+                              empty.objdata() ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "Init command[list collection] failed, rc: %d",

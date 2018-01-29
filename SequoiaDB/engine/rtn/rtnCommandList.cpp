@@ -652,7 +652,16 @@ namespace engine
 
    BSONObj _rtnListBackups::_getOptObj() const
    {
-      return _options.getHint() ;
+      try
+      {
+         BSONObj hintObj( _hintBuff ) ;
+         return hintObj ;
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+      }
+      return BSONObj() ;
    }
 
    const CHAR* _rtnListBackups::getIntrCMDName()
