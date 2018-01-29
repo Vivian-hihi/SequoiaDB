@@ -179,7 +179,7 @@
                 </changeOwnerAndGroup>
                 <changePermissions permissions="6755" files="${installdir}/bin/sdbomtool"/>
                 
-               <runProgram>
+                <runProgram>
                     <abortOnError>0</abortOnError>
                     <showMessageOnError>0</showMessageOnError>
                     <program>setcap</program>
