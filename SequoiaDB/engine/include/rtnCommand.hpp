@@ -88,6 +88,8 @@ namespace engine
                               _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
                               INT16 w = 1, INT64 *pContextID = NULL ) = 0 ;
 
+         virtual rtnCommandOptions * getCommandOptions () { return NULL ; }
+
       protected:
          INT32             _fromService ;
 
@@ -631,6 +633,8 @@ namespace engine
          virtual INT32 doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
                               _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
                               INT16 w = 1, INT64 *pContextID = NULL  ) ;
+         virtual rtnCommandOptions * getCommandOptions () { return &_options ; }
+
       protected:
          rtnCommandOptions _options ;
    } ;
