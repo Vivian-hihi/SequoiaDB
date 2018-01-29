@@ -66,6 +66,7 @@ function main()
       srcGroupName = temp[0][0].GroupName;
       desGroupName = temp[1][0].GroupName;
    }
+   var groups = [srcGroupName, desGroupName];
    println("srcGroupName:" + srcGroupName);
    println("desGroupName:" + desGroupName);
    
@@ -112,12 +113,9 @@ function main()
    //指定主表cl执行统计
    analyze( db, {Collection: mainclFullName} );
    
+   //检查指定的数据组
+   checkConsistency(db, null, null, groups);
    //检查统计
-   checkConsistency(db, maincsName, subclName1); 
-   checkConsistency(db, maincsName, subclName2); 
-   checkConsistency(db, subcsName1, subclName3); 
-   checkConsistency(db, subcsName1, subclName4); 
-   
    checkStat( db, maincsName, subclName1, "$shard", true, true );
    checkStat( db, maincsName, subclName2, "$shard", true, true );
    checkStat( db, subcsName1, subclName3, "$shard", true, true );
@@ -152,12 +150,9 @@ function main()
    //生成默认统计信息
    analyze( db, {Collection: mainclFullName, Mode:3} );
    
+   //检查指定的数据组
+   checkConsistency(db, null, null, groups);
    //检查统计
-   checkConsistency(db, maincsName, subclName1); 
-   checkConsistency(db, maincsName, subclName2); 
-   checkConsistency(db, subcsName1, subclName3); 
-   checkConsistency(db, subcsName1, subclName4); 
-   
    checkStat( db, maincsName, subclName1, "$shard", true, false );
    checkStat( db, maincsName, subclName2, "$shard", true, false );
    checkStat( db, subcsName1, subclName3, "$shard", true, false );
@@ -212,12 +207,9 @@ function main()
    //统计信息加载至缓存
    analyze( db, {Collection: mainclFullName, Mode:4} );
    
+   //检查指定的数据组
+   checkConsistency(db, null, null, groups);
    //检查统计
-   checkConsistency(db, maincsName, subclName1); 
-   checkConsistency(db, maincsName, subclName2); 
-   checkConsistency(db, subcsName1, subclName3); 
-   checkConsistency(db, subcsName1, subclName4); 
-   
    checkStat( db, maincsName, subclName1, "$shard", true, true );
    checkStat( db, maincsName, subclName2, "$shard", true, false );
    checkStat( db, subcsName1, subclName3, "$shard", true, true );
@@ -276,12 +268,9 @@ function main()
    //清空统计信息
    analyze( db, {Collection: mainclFullName, Mode:5} );
    
+   //检查指定的数据组
+   checkConsistency(db, null, null, groups);
    //检查统计
-   checkConsistency(db, maincsName, subclName1); 
-   checkConsistency(db, maincsName, subclName2); 
-   checkConsistency(db, subcsName1, subclName3); 
-   checkConsistency(db, subcsName1, subclName4); 
-   
    checkStat( db, maincsName, subclName1, "$shard", true, true );
    checkStat( db, maincsName, subclName2, "$shard", true, false );
    checkStat( db, subcsName1, subclName3, "$shard", true, true );

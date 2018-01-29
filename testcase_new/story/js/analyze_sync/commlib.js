@@ -111,8 +111,8 @@ function getNodesInGroups(db, groups)
 
 /************************************
 *@Description: 获取主节点的lsn
-*@author:      zhaoyu
-*@createDate:  2017.11.8
+*@author:      liuxiaoxuan
+*@createDate:  2017.01.29
 **************************************/
 function getPrimaryNodeLSNs(db, groups)
 {
@@ -127,11 +127,11 @@ function getPrimaryNodeLSNs(db, groups)
       { 
          var getSnapshot6 = eval( "(" + nodesInGroup[j].snapshot(6).toArray()[0] + ")" );
          
-         var currentLSN = getSnapshot6.CurrentLSN.Offset;
+         var completeLSN = getSnapshot6.CompleteLSN;
          var isPrimary = getSnapshot6.IsPrimary;
          if(isPrimary)
          {
-            LSNs[i][0] = currentLSN;
+            LSNs[i][0] = completeLSN;
             break;
          }   
       }
@@ -142,8 +142,8 @@ function getPrimaryNodeLSNs(db, groups)
 
 /************************************
 *@Description: 获取备节点的lsn
-*@author:      zhaoyu
-*@createDate:  2017.11.8
+*@author:      liuxiaoxuan
+*@createDate:  2017.01.29
 **************************************/
 function getSlaveNodeLSNs(db, groups)
 {
@@ -159,11 +159,11 @@ function getSlaveNodeLSNs(db, groups)
       { 
          var getSnapshot6 = eval( "(" + nodesInGroup[j].snapshot(6).toArray()[0] + ")" );
          
-         var currentLSN = getSnapshot6.CurrentLSN.Offset;
+         var completeLSN = getSnapshot6.CompleteLSN;
          var isPrimary = getSnapshot6.IsPrimary;
          if(!isPrimary)
          {
-            LSNs[i][f++] = currentLSN;
+            LSNs[i][f++] = completeLSN;
          }   
       }
    }
@@ -172,13 +172,15 @@ function getSlaveNodeLSNs(db, groups)
 }
 
 /************************************
-*@Description: 检查主备节点lsn是否一致(超时600s)
-*@author:      zhaoyu
-*@createDate:  2017.11.8
+*@Description: 检查cl所在组的主备节点lsn是否一致(超时600s)
+*@author:      liuxiaoxuan
+*@createDate:  2017.01.29
 **************************************/
 function checkConsistency(db, csName, clName, groups)
 {
-   if( groups == undefined ){var groups = commGetCLGroups( db, csName + "." + clName );}
+   if(csName == null) { var csName = "UNDEFINED"; }
+   if(clName == null) { var clName = "UNDEFINED"; }
+   if(groups == undefined) { var groups = commGetCLGroups( db, csName + "." + clName ); }
    
    //the longest waiting time is 600S
    var lsnFlag = false;

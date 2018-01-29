@@ -6,6 +6,11 @@
 **************************************/
 function main()
 {
+   //get all groups
+   var allGroups = commGetGroups(db);
+   var groups = new Array();
+   for( var i = 0 ; i < allGroups.length; ++i ) { groups.push(allGroups[i][0].GroupName); } 
+   
    var csName = COMMCSNAME + "11611";
    commDropCS( db, csName, true, "drop CS in the beginning" );
                                                              	
@@ -68,12 +73,10 @@ function main()
    insertDiffDatas( dbcl5, insertNums );
    insertSameDatas( dbcl5, insertNums, sameValues );
                                                          	
+   
+   //check all groups consistency
+   checkConsistency(db, null, null, groups);
    //check before invoke analyze
-   checkConsistency(db, csName, clName1);
-   checkConsistency(db, csName, clName2);
-   checkConsistency(db, csName, clName3);
-   checkConsistency(db, csName, clName3);
-   checkConsistency(db, csName, clName5);
    checkStat( db, csName, clName1, "", false, false );
    checkStat( db, csName, clName2, "", false, false );
    checkStat( db, csName, clName3, "a", false, false );
@@ -166,12 +169,9 @@ function main()
       analyze( db, options[i] );
    }
                                         
-   //check after analyze
-   checkConsistency(db, csName, clName1);
-   checkConsistency(db, csName, clName2);
-   checkConsistency(db, csName, clName3);
-   checkConsistency(db, csName, clName3);
-   checkConsistency(db, csName, clName5);
+   //check all groups consistency
+   checkConsistency(db, null, null, groups);
+   //check before invoke analyze
    checkStat( db, csName, clName1, "", true, false );
    checkStat( db, csName, clName2, "", false, false );
    checkStat( db, csName, clName3, "a", true, true );

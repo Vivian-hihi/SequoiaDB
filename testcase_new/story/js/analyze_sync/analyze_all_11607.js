@@ -17,7 +17,12 @@ function main()
       println("group less than 2");
       return ;
    }
-                                                                	
+                            
+   //get all groups
+   var allGroups = commGetGroups(db);
+   var groups = new Array();
+   for( var i = 0 ; i < allGroups.length; ++i ) { groups.push(allGroups[i][0].GroupName); } 
+                            
    var csName1 = COMMCSNAME + "11607_1";
    var csName2 = COMMCSNAME + "11607_2";
    var maincsName = "maincs11607";
@@ -28,7 +33,7 @@ function main()
    commCreateCS( db, csName1, false, "" );
    commCreateCS( db, csName2, false, "" );
    commCreateCS( db, maincsName, false, "" );
-                                                                 	
+                                        
    //create CLs
    var clName1 = COMMCLNAME + "11607_1";
    var dbCommCL1 = commCreateCLByOption( db, csName1, clName1 );
@@ -51,8 +56,7 @@ function main()
    
    //create subcl
    var subclName = "subcl11607";
-   var groups = commGetGroups(db);
-   var subclGroupName = groups[0][0].GroupName;
+   var subclGroupName = allGroups[0][0].GroupName;
    var sbuclOption = {Group: subclGroupName};
    var subcl = commCreateCLByOption( db, maincsName, subclName, sbuclOption );
       
@@ -130,15 +134,9 @@ function main()
    ClSplitOneTimes( csName1, clName3, 50 );
    ClSplitOneTimes( csName2, clName3, 50 );
                                                        	
+   //check all groups consistency
+   checkConsistency(db, null, null, groups);
    //check before invoke analyze
-   checkConsistency(db, csName1, clName1);
-   checkConsistency(db, csName1, clName2);
-   checkConsistency(db, csName1, clName3);
-   checkConsistency(db, csName2, clName1);
-   checkConsistency(db, csName2, clName2);
-   checkConsistency(db, csName2, clName3);
-   checkConsistency(db, maincsName, subclName);
-   
    checkStat( db, csName1, clName1, "a", false, false );	
    checkStat( db, csName2, clName1, "a", false, false );	
    checkStat( db, csName1, clName2, "$shard", false, false );
@@ -334,15 +332,9 @@ function main()
    //analyze
    analyze( db );
                                                              
+   //check all groups consistency
+   checkConsistency(db, null, null, groups);
    //check after analyze
-   checkConsistency(db, csName1, clName1);
-   checkConsistency(db, csName1, clName2);
-   checkConsistency(db, csName1, clName3);
-   checkConsistency(db, csName2, clName1);
-   checkConsistency(db, csName2, clName2);
-   checkConsistency(db, csName2, clName3);
-   checkConsistency(db, maincsName, subclName);
-   
    checkStat( db, csName1, clName1, "a", true, true );	
    checkStat( db, csName2, clName1, "a", true, true );	
    checkStat( db, csName1, clName2, "$shard", true, true );

@@ -66,6 +66,7 @@ function main()
       srcGroupName = temp[0][0].GroupName;
       desGroupName = temp[1][0].GroupName;
    }
+   var groups = [srcGroupName, desGroupName];
    println("srcGroupName:" + srcGroupName);
    println("desGroupName:" + desGroupName);
    
@@ -109,11 +110,9 @@ function main()
    db2.setSessionAttr( { PreferedInstance: "s" } );
    dbclSlave = db2.getCS(maincsName).getCL(mainclName);
    
+   //检查指定的数据组
+   checkConsistency(db, null, null, groups);
    //检查统计信息
-   checkConsistency(db, maincsName, subclName1); 
-   checkConsistency(db, maincsName, subclName2); 
-   checkConsistency(db, subcsName1, subclName3); 
-   checkConsistency(db, subcsName1, subclName4); 
    checkStat( db, maincsName, subclName1, "$shard", false, false );
    checkStat( db, maincsName, subclName2, "$shard", false, false );
    checkStat( db, subcsName1, subclName3, "$shard", false, false );
@@ -146,13 +145,10 @@ function main()
    
    //指定主表cl执行统计
    analyze( db, {Collection: mainclFullName} );
-   
+  
+   //检查指定的数据组
+   checkConsistency(db, null, null, groups);
    //检查统计
-   checkConsistency(db, maincsName, subclName1); 
-   checkConsistency(db, maincsName, subclName2); 
-   checkConsistency(db, subcsName1, subclName3); 
-   checkConsistency(db, subcsName1, subclName4); 
-   
    checkStat( db, maincsName, subclName1, "$shard", true, true );
    checkStat( db, maincsName, subclName2, "$shard", true, true );
    checkStat( db, subcsName1, subclName3, "$shard", true, true );
@@ -195,12 +191,9 @@ function main()
    maincl.attachCL( subclFullName1, {LowBound: {a:0}, UpBound:{a:4000}} );
    maincl.attachCL( subclFullName3, {LowBound: {a:8000}, UpBound:{a:12000}} );  
    
+   //检查指定的数据组
+   checkConsistency(db, null, null, groups);
    //检查统计信息
-   checkConsistency(db, maincsName, subclName1); 
-   checkConsistency(db, maincsName, subclName2); 
-   checkConsistency(db, subcsName1, subclName3); 
-   checkConsistency(db, subcsName1, subclName4); 
-   
    checkStat( db, maincsName, subclName1, "$shard", true, true );
    checkStat( db, maincsName, subclName2, "$shard", true, true );
    checkStat( db, subcsName1, subclName3, "$shard", true, true );

@@ -25,9 +25,11 @@ function main()
    commCreateCS( db, csName, false, "", csOption );
                                                            		
    //create cl	
-   var groups = commGetGroups(db);
-   var groupName1 = groups[0][0].GroupName;
-   var groupName2 = groups[1][0].GroupName;
+   var allGroups = commGetGroups(db);
+   var groupName1 = allGroups[0][0].GroupName;
+   var groupName2 = allGroups[1][0].GroupName; 
+   //get used groups
+   var groups = [groupName1, groupName2];
                                                       	
    var clOption1 = { Group : groupName1 };
    var clName1 = COMMCLNAME + "11620_1";
@@ -63,9 +65,9 @@ function main()
    insertDiffDatas( dbcl2, insertNums );
    insertSameDatas( dbcl2, insertNums, sameValues );
                                                         	
+   //check specify groups
+   checkConsistency(db, null, null, groups);
    //check before invoke analyze
-   checkConsistency(db, csName, clName1);
-   checkConsistency(db, csName, clName2);
    checkStat( db, csName, clName1, "a", false, false );
    checkStat( db, csName, clName2, "a", false, false );
                                                        	 
@@ -108,9 +110,9 @@ function main()
    var options = {GroupName : groupName1};
    analyze( db, options );
                                                              	
-   //check after analyze
-   checkConsistency(db, csName, clName1);
-   checkConsistency(db, csName, clName2);
+   //check specify groups
+   checkConsistency(db, null, null, groups);
+   //check before invoke analyze
    checkStat( db, csName, clName1, "a", true, true );
    checkStat( db, csName, clName2, "a", false, false );
                                                           
@@ -202,9 +204,9 @@ function main()
    var options = {Mode : 2, GroupName : groupName2};
    analyze( db, options );
                                                              	   
-   //check after analyze
-   checkConsistency(db, csName, clName1);
-   checkConsistency(db, csName, clName2);
+   //check specify groups
+   checkConsistency(db, null, null, groups);
+   //check before invoke analyze
    checkStat( db, csName, clName1, "a", true, true );
    checkStat( db, csName, clName2, "a", true, true );
                                                           

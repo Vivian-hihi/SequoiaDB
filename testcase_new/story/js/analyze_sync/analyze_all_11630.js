@@ -6,13 +6,18 @@
 **************************************/
 function main()
 {
+   //get all groups
+   var allGroups = commGetGroups(db);
+   var groups = new Array();
+   for( var i = 0 ; i < allGroups.length; ++i ) { groups.push(allGroups[i][0].GroupName); }
+   
    var csName1 = COMMCSNAME + "_11630_1";
    var clName1 = COMMCLNAME + "_11630_1";
    var csName2 = COMMCSNAME + "_11630_2";
    var clName2 = COMMCLNAME + "_11630_2";
    var insertNum = 2000;
 	var sameValues = 9000;
-	
+   
 	var clFullName1 = csName1 + "." + clName1;
 	var clFullName2 = csName1 + "." + clName2;
 	var clFullName3 = csName2 + "." + clName1;
@@ -74,11 +79,9 @@ function main()
    //执行统计
    analyze( db );
    
+   //检查所有组主备是否一致
+   checkConsistency(db, null, null, groups);
    //检查统计信息
-   checkConsistency(db, csName1, clName1);
-   checkConsistency(db, csName1, clName2);
-   checkConsistency(db, csName2, clName1);
-   checkConsistency(db, csName2, clName2);
    checkStat( db, csName1, clName1, "a", true, true );
    checkStat( db, csName1, clName2, "a", true, true );
    checkStat( db, csName2, clName1, "a", true, true );
@@ -107,11 +110,9 @@ function main()
    //生成默认统计信息
    analyze( db, {Mode:3, Collection: clFullName1} );
    
+   //检查所有组主备是否一致
+   checkConsistency(db, null, null, groups);
    //检查统计信息
-   checkConsistency(db, csName1, clName1);
-   checkConsistency(db, csName1, clName2);
-   checkConsistency(db, csName2, clName1);
-   checkConsistency(db, csName2, clName2);
    checkStat( db, csName1, clName1, "a", true, false );
    checkStat( db, csName1, clName2, "a", true, true );
    checkStat( db, csName2, clName1, "a", true, true );
@@ -159,11 +160,9 @@ function main()
    //统计信息加载至缓存
    analyze( db, {Mode:4} );
    
+   //检查所有组主备是否一致
+   checkConsistency(db, null, null, groups);
    //检查统计信息
-   checkConsistency(db, csName1, clName1);
-   checkConsistency(db, csName1, clName2);
-   checkConsistency(db, csName2, clName1);
-   checkConsistency(db, csName2, clName2);
    checkStat( db, csName1, clName1, "a", true, true );
    checkStat( db, csName1, clName2, "a", true, true );
    checkStat( db, csName2, clName1, "a", true, true );
@@ -202,11 +201,9 @@ function main()
    //清空统计信息
    analyze( db, {Mode:5} );
    
+   //检查所有组主备是否一致
+   checkConsistency(db, null, null, groups);
    //检查统计信息
-   checkConsistency(db, csName1, clName1);
-   checkConsistency(db, csName1, clName2);
-   checkConsistency(db, csName2, clName1);
-   checkConsistency(db, csName2, clName2);
    checkStat( db, csName1, clName1, "a", true, true );
    checkStat( db, csName1, clName2, "a", true, true );
    checkStat( db, csName2, clName1, "a", true, true );
