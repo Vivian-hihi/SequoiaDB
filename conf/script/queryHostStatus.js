@@ -131,14 +131,14 @@ function snapshotNetInfo()
          var oneExpect = expectArr[j] ;
          if ( oneNet[Name] == oneExpect[Name] )
          {
-            oneNet[Ip] = null ;
+            oneNet[IP] = null ;
             // add ip address into oneNet object
             for( var k = 0; k < listInfoArr.length; k++ )
             {
                var infoActual = listInfoArr[ k ] ;
                if( oneNet[Name] == infoActual[Name] )
                {
-                  oneNet[Ip] = infoActual[Ip] ;
+                  oneNet[IP] = infoActual[Ip] ;
                   break ;
                }
             }

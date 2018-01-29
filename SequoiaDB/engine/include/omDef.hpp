@@ -681,7 +681,7 @@ unique: true, enforced: true }"
    #define  OM_BSON_FIELD_NET_TXPACKETS      "TXPackets"
    #define  OM_BSON_FIELD_NET_TXERRORS       "TXErrors"
    #define  OM_BSON_FIELD_NET_TXDROPS        "TXDrops"
-   #define  OM_BSON_FIELD_NET_IP             "Ip"
+   #define  OM_BSON_FIELD_NET_IP             OM_HOST_FIELD_IP
    #define  OM_BUSINESS_CONFIG_SUBDIR        "config"
    #define  OM_BUSINESS_FILE_NAME            "business"
    #define  OM_BSON_BUSINESS_LIST            "BusinessList"
