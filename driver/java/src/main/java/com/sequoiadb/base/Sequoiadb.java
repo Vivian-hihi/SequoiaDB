@@ -1756,7 +1756,7 @@ public class Sequoiadb implements Closeable {
         AdminRequest request = new AdminRequest(AdminCommand.CREATE_GROUP, rg);
         SdbReply response = requestAndResponse(request);
         throwIfError(response, rgName);
-        return getReplicaGroup(rgName);
+        return new ReplicaGroup(this, rgName);
     }
 
     /**
