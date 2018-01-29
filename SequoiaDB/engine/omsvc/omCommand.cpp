@@ -1074,7 +1074,7 @@ namespace engine
                  rc, _errorMsg.getError() ) ;
          goto error ;
       }
-   
+
    done:
       if( confBuilder )
       {
@@ -1086,7 +1086,7 @@ namespace engine
       goto done ;
    }
 
-   
+
    INT32 omExtendBusinessCommand::_createExtendTask(
                                           const BSONObj& extendConfig,
                                           const BSONObj& hostsInfoForCluster,
@@ -1335,7 +1335,7 @@ namespace engine
    omShrinkBusinessCommand::~omShrinkBusinessCommand()
    {
    }
-   
+
    INT32 omShrinkBusinessCommand::doCommand()
    {
       INT32 rc = SDB_OK ;
@@ -1347,7 +1347,7 @@ namespace engine
       vector<simpleAddressInfo> addressList ;
 
       _setFileLanguageSep() ;
-      
+
       pmdGetThreadEDUCB()->resetInfo( EDU_INFO_ERROR ) ;
 
       rc = _getRestInfo( shrinkConfig ) ;
@@ -1399,7 +1399,7 @@ namespace engine
       restTool.sendRespone( rc, _errorMsg.getError() ) ;
       goto done ;
    }
-   
+
    INT32 omShrinkBusinessCommand::_getRestInfo( BSONObj &shrinkConfig )
    {
       INT32 rc = SDB_OK ;
@@ -1593,7 +1593,7 @@ namespace engine
                                    svcname.c_str(), rc ) ;
                PD_LOG( PDERROR, _errorMsg.getError() ) ;
                goto error ;
-               
+
             }
          }
       }
@@ -1825,7 +1825,7 @@ namespace engine
       BSONObj taskInfo ;
       BSONArray resultInfo ;
       omTaskTool taskTool( _cb, _localAgentHost, _localAgentService ) ;
-   
+
       rc = _generateTaskInfo( addressList, shrinkConfig, taskInfo ) ;
       if( rc )
       {
@@ -5158,7 +5158,7 @@ namespace engine
       }
 #endif
 
-      
+
       rc = configTool.readBuzTemplate( businessType, operationType,
                                        deployModList ) ;
       if( rc )
@@ -8109,7 +8109,7 @@ namespace engine
 
             resultEleBuilder.append( OM_TASKINFO_FIELD_HOSTNAME, hostName ) ;
             resultEleBuilder.append( OM_TASKINFO_FIELD_IP, ip ) ;
-            
+
             resultEleBuilder.append( OM_TASKINFO_FIELD_STATUS,
                                      OM_TASK_STATUS_INIT ) ;
             resultEleBuilder.append( OM_TASKINFO_FIELD_STATUS_DESC,
@@ -8639,6 +8639,11 @@ namespace engine
       BSONObj newTxDrop ;
       _seperateMegaBitValue( newTxDrop, txdropEle.numberLong() ) ;
 
+      BSONElement ip = oneNet.getField( OM_BSON_FIELD_NET_IP ) ;
+      if( ip.type() != String && ip.type() != jstNULL )
+      {
+         return ;
+      }
       oneNet = BSON( OM_BSON_FIELD_NET_NAME
                      << oneNet.getStringField( OM_BSON_FIELD_NET_NAME )
                      << OM_BSON_FIELD_NET_RXBYTES << newRxByte
@@ -8648,7 +8653,8 @@ namespace engine
                      << OM_BSON_FIELD_NET_TXBYTES << newTxByte
                      << OM_BSON_FIELD_NET_TXPACKETS << newTxPack
                      << OM_BSON_FIELD_NET_TXERRORS << newTxErr
-                     << OM_BSON_FIELD_NET_TXDROPS << newTxDrop ) ;
+                     << OM_BSON_FIELD_NET_TXDROPS << newTxDrop
+                     << OM_BSON_FIELD_NET_IP << ip ) ;
    }
 
    /*
@@ -9697,7 +9703,7 @@ namespace engine
                              OM_BSON_FIELD_HOST_PASSWD ) ;
          PD_LOG( PDERROR, _errorMsg.getError() ) ;
          goto error ;
-      }   
+      }
 
    done:
       return rc ;
@@ -9904,7 +9910,7 @@ namespace engine
       builder.append( OM_BUSINESS_FIELD_CLUSTERNAME, _clusterName ) ;
       builder.append( OM_BUSINESS_FIELD_NAME, _businessName ) ;
       builder.append( OM_BUSINESS_FIELD_TYPE, _businessType ) ;
-      
+
       builder.append( OM_AUTH_FIELD_USER, authUser ) ;
       builder.append( OM_AUTH_FIELD_PASSWD, authPwd ) ;
 
@@ -10068,7 +10074,7 @@ namespace engine
          PD_LOG( PDERROR, _errorMsg.getError() ) ;
          goto error ;
       }
-      
+
       if ( 0 == catalogNum && 0 == standaloneNum )
       {
          rc = SDB_INVALIDARG ;
@@ -10215,7 +10221,7 @@ namespace engine
       {
          BSONObj buzInfo ;
          BSONElement ele = configInfo.getField( OM_BSON_BUSINESS_INFO ) ;
-   
+
          if ( Object != ele.type() )
          {
             rc = SDB_INVALIDARG ;
@@ -10224,7 +10230,7 @@ namespace engine
             PD_LOG( PDERROR, _errorMsg.getError() ) ;
             goto error ;
          }
-   
+
          buzInfo = ele.embeddedObject() ;
 
          rc = _syncSequoiaDB( restTool, buzInfo ) ;
@@ -10887,7 +10893,7 @@ namespace engine
          PD_LOG( PDERROR, _errorMsg.getError() ) ;
          goto error ;
       }
-      
+
       serviceName = pluginInfo.getStringField( OM_PLUGINS_FIELD_SERVICENAME ) ;
 
       ossGetPort( serviceName.c_str(), port ) ;
@@ -11009,7 +11015,7 @@ namespace engine
 
       _restAdaptor->getHttpHeader( _restSession, OM_REST_HEAD_CLUSTERNAME,
                                    &pClusterName ) ;
-      _restAdaptor->getHttpHeader( _restSession, OM_REST_HEAD_BUSINESSNAME, 
+      _restAdaptor->getHttpHeader( _restSession, OM_REST_HEAD_BUSINESSNAME,
                                    &pBusinessName ) ;
       if ( NULL == pClusterName || NULL == pBusinessName )
       {
@@ -11078,7 +11084,7 @@ namespace engine
                                   contentLength ) ;
          }
       }
-      
+
       if ( rc )
       {
          if ( SDB_FNE == rc )
@@ -11940,7 +11946,7 @@ namespace engine
          PD_LOG( PDERROR, _errorMsg.getError() ) ;
          goto error ;
       }
-      
+
       if ( 0 == catalogNum && 0 == standaloneNum )
       {
          rc = SDB_INVALIDARG ;
@@ -12018,7 +12024,7 @@ namespace engine
       builder.append( OM_BUSINESS_FIELD_CLUSTERNAME, _clusterName ) ;
       builder.append( OM_BUSINESS_FIELD_NAME, _businessName ) ;
       builder.append( OM_BUSINESS_FIELD_TYPE, _businessType ) ;
-      
+
       builder.append( OM_AUTH_FIELD_USER, authUser ) ;
       builder.append( OM_AUTH_FIELD_PASSWD, authPwd ) ;
 
@@ -12420,7 +12426,6 @@ namespace engine
             PD_LOG( PDERROR, _errorMsg.getError() ) ;
             goto error ;
          }
-        
       }
 
    done:
@@ -12646,7 +12651,7 @@ namespace engine
                string tmpHostName ;
                string tmpIp ;
                string tmpAgentService ;
-               string tmpSshPort ;               
+               string tmpSshPort ;
 
                rc = dbTool.getHostInfoByAddress( hostName, hostInfo ) ;
                if ( rc )
@@ -12698,9 +12703,9 @@ namespace engine
 
                newHostInfoBuilder.append( OM_HOST_FIELD_NAME, tmpHostName ) ;
                newHostInfoBuilder.append( OM_HOST_FIELD_IP, tmpIp ) ;
-               newHostInfoBuilder.append( OM_HOST_FIELD_SSHPORT, tmpSshPort ) ; 
-               newHostInfoBuilder.append( OM_HOST_FIELD_USER, user ) ; 
-               newHostInfoBuilder.append( OM_HOST_FIELD_PASSWORD, pwd ) ; 
+               newHostInfoBuilder.append( OM_HOST_FIELD_SSHPORT, tmpSshPort ) ;
+               newHostInfoBuilder.append( OM_HOST_FIELD_USER, user ) ;
+               newHostInfoBuilder.append( OM_HOST_FIELD_PASSWORD, pwd ) ;
 
                hostsInfoBuilder.append( newHostInfoBuilder.obj() ) ;
             }
@@ -12756,7 +12761,7 @@ namespace engine
 
             resultEleBuilder.append( OM_TASKINFO_FIELD_HOSTNAME, hostName ) ;
             resultEleBuilder.append( OM_TASKINFO_FIELD_IP, hostIP ) ;
-            
+
             resultEleBuilder.append( OM_TASKINFO_FIELD_STATUS,
                                      OM_TASK_STATUS_INIT ) ;
             resultEleBuilder.append( OM_TASKINFO_FIELD_STATUS_DESC,
