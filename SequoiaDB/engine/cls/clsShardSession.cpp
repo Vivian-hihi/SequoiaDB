@@ -1151,6 +1151,7 @@ namespace engine
       INT16 replSize = 0 ;
       INT16 w = 1 ;
       _rtnCommand *pCommand = NULL ;
+      CHAR mainCLName[ DMS_COLLECTION_FULL_NAME_SZ + 1 ] = { 0 } ;
 
       rc = msgExtractQuery ( (CHAR *)msg, &flags, &pCollectionName,
                              &numToSkip, &numToReturn, &pQueryBuff,
@@ -1164,7 +1165,6 @@ namespace engine
 
       if ( !rtnIsCommand ( pCollectionName ) )
       {
-         CHAR mainCLName[ DMS_COLLECTION_FULL_NAME_SZ + 1 ] = { 0 } ;
          rtnContextBase *pContext = NULL ;
          _pCollectionName = pCollectionName ;
 
@@ -1354,7 +1354,7 @@ namespace engine
          {
             rc = _checkCLStatusAndGetSth( pCommand->collectionFullName(),
                                           pQuery->version,
-                                          &_isMainCL, &replSize ) ;
+                                          &_isMainCL, &replSize, mainCLName ) ;
 
             if ( SDB_OK != rc )
             {
@@ -1370,6 +1370,8 @@ namespace engine
                   goto error ;
                }
             }
+
+            pCommand->setMainCLName( mainCLName ) ;
          }
          else if ( CMD_CREATE_COLLECTIONSPACE == pCommand->type() ||
                    CMD_DROP_COLLECTIONSPACE == pCommand->type() )
@@ -2607,6 +2609,8 @@ namespace engine
                        "rc: %d", sessionName(), pCommand, rc ) ;
                break ;
             }
+
+            pCommandTmp->setMainCLName( pCollection ) ;
 
             rc = rtnRunCommand( pCommandTmp, CMD_SPACE_SERVICE_SHARD, _pEDUCB,
                                 _pDmsCB, _pRtnCB, _pDpsCB, w, &subContextID );

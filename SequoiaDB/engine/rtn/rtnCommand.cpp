@@ -1348,13 +1348,9 @@ namespace engine
    }
 
    _rtnGet::_rtnGet ()
-      :_collectionName ( NULL ), _matcherBuff ( NULL ), _selectBuff ( NULL ),
-      _orderByBuff ( NULL )
+   : _options(),
+     _hintExist( FALSE )
    {
-      _flags = 0 ;
-      _numToReturn = -1 ;
-      _numToSkip = 0 ;
-      _hintExist = FALSE ;
    }
 
    _rtnGet::~_rtnGet ()
@@ -1363,7 +1359,7 @@ namespace engine
 
    const CHAR *_rtnGet::collectionFullName ()
    {
-      return _collectionName ;
+      return _options.getCLFullName() ;
    }
 
    PD_TRACE_DECLARE_FUNCTION ( SDB__RTNGET_INIT, "_rtnGet::init" )
@@ -1373,26 +1369,32 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__RTNGET_INIT ) ;
-      _flags = flags ;
-      _numToReturn = numToReturn ;
-      _numToSkip = numToSkip ;
-      _matcherBuff = pMatcherBuff ;
-      _selectBuff = pSelectBuff ;
-      _orderByBuff = pOrderByBuff ;
 
-      BSONObj object ( pHintBuff ) ;
-      rc = rtnGetStringElement ( object, FIELD_NAME_COLLECTION,
-                                 &_collectionName ) ;
+      const CHAR * collection = NULL ;
+      BSONObj hint( pHintBuff ) ;
+      BSONObj realHint ;
+
+      _options.setFlag( flags ) ;
+      _options.setLimit( numToReturn ) ;
+      _options.setSkip( numToSkip ) ;
+      _options.setQuery( BSONObj( pMatcherBuff ) ) ;
+      _options.setSelector( BSONObj( pSelectBuff ) ) ;
+      _options.setOrderBy( BSONObj( pOrderByBuff ) ) ;
+
+      rc = rtnGetStringElement( hint, FIELD_NAME_COLLECTION, &collection ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get field[%s], rc: %d",
                    FIELD_NAME_COLLECTION, rc ) ;
 
-      rc = rtnGetObjElement( object, FIELD_NAME_HINT, _hintObj ) ;
+      _options.setCLFullName( collection ) ;
+
+      rc = rtnGetObjElement( hint, FIELD_NAME_HINT, realHint ) ;
       if ( SDB_FIELD_NOT_EXIST == rc )
       {
          rc = SDB_OK ;
       }
       else
       {
+         _options.setHint( realHint ) ;
          _hintExist = TRUE ;
       }
       PD_RC_CHECK( rc, PDERROR, "Failed to get field[%s], rc: %d",
@@ -1416,26 +1418,8 @@ namespace engine
       SDB_ASSERT ( cb, "educb can't be NULL" ) ;
       SDB_ASSERT ( pContextID, "context id can't be NULL" ) ;
 
-      BSONObj matcher ;
-      BSONObj selector ;
-      BSONObj orderBy ;
-
-      if ( _matcherBuff )
-      {
-         matcher = BSONObj( _matcherBuff ) ;
-      }
-      if ( _selectBuff )
-      {
-         selector = BSONObj( _selectBuff ) ;
-      }
-      if ( _orderByBuff )
-      {
-         orderBy = BSONObj( _orderByBuff ) ;
-      }
-
-      rc = rtnGetCommandEntry ( type(), _collectionName, selector, matcher,
-                                orderBy, _hintObj, _flags, cb , _numToSkip,
-                                _numToReturn, dmsCB, rtnCB, *pContextID ) ;
+      rc = rtnGetCommandEntry ( type(), _options, cb, dmsCB, rtnCB,
+                                *pContextID ) ;
       PD_TRACE_EXITRC ( SDB__RTNGET_DOIT, rc ) ;
       return rc ;
    }
@@ -1525,13 +1509,10 @@ namespace engine
 
       SDB_ASSERT( pContextID, "context id can't be NULL" ) ;
 
-      BSONObj matcher ( _matcherBuff ) ;
-      BSONObj orderBy ( _orderByBuff ) ;
-
       if ( !_hintExist )
       {
          /// compatiable with old version. Old version use selector for hint
-         _hintObj = BSONObj( _selectBuff ) ;
+         _options.setHint( _options.getSelector() ) ;
       }
 
       rc = rtnCB->contextNew( RTN_CONTEXT_DUMP, (rtnContext**)&context,
@@ -1548,13 +1529,13 @@ namespace engine
          context->getMonCB()->recordStartTimestamp() ;
       }
 
-      rc = rtnGetQueryMeta( _collectionName, matcher, orderBy, _hintObj,
-                            dmsCB, cb, context ) ;
+      rc = rtnGetQueryMeta( _options, dmsCB, cb, context ) ;
       PD_RC_CHECK( rc, PDERROR, "Get collection[%s] query meta failed, "
                    "matcher: %s, orderby: %s, hint: %s, rc: %d",
-                   _collectionName, matcher.toString().c_str(),
-                   orderBy.toString().c_str(),
-                   _hintObj.toString().c_str(), rc ) ;
+                   _options.getCLFullName(),
+                   _options.getQuery().toString().c_str(),
+                   _options.getOrderBy().toString().c_str(),
+                   _options.getHint().toString().c_str(), rc ) ;
 
    done:
       return rc ;

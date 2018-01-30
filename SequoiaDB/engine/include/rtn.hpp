@@ -418,42 +418,26 @@ namespace engine
                                SDB_DPSCB *dpsCB,
                                BOOLEAN sysCall = FALSE ) ;
 
-   INT32 rtnGetCount ( const CHAR *pCollection,
-                       const BSONObj &matcher,
-                       const BSONObj &hint,
+   INT32 rtnGetCount ( const rtnQueryOptions & options,
                        SDB_DMSCB *dmsCB,
                        _pmdEDUCB *cb,
                        SDB_RTNCB *rtnCB,
-                       INT64 *count,
-                       INT32 flags = 0 ) ;
+                       INT64 *count ) ;
 
-   INT32 rtnGetCount ( const CHAR *pCollection,
-                       const BSONObj &matcher,
-                       const BSONObj &hint,
+   INT32 rtnGetCount ( const rtnQueryOptions & options,
                        SDB_DMSCB *dmsCB,
                        _pmdEDUCB *cb,
                        SDB_RTNCB *rtnCB,
-                       rtnContext *context,
-                       INT32 flags = 0 ) ;
+                       rtnContext *context ) ;
 
    INT32 rtnGetCommandEntry ( RTN_COMMAND_TYPE command,
-                              const CHAR *pCollectionName,
-                              const BSONObj &selector,
-                              const BSONObj &matcher,
-                              const BSONObj &orderBy,
-                              const BSONObj &hint,
-                              SINT32 flags,
+                              const rtnQueryOptions & options,
                               pmdEDUCB *cb,
-                              SINT64 numToSkip,
-                              SINT64 numToReturn,
                               SDB_DMSCB *dmsCB,
                               SDB_RTNCB *rtnCB,
                               SINT64 &contextID ) ;
 
-   INT32 rtnGetQueryMeta( const CHAR *pCollectionName,
-                          const BSONObj &match,
-                          const BSONObj &orderby,
-                          const BSONObj &hint,
+   INT32 rtnGetQueryMeta( const rtnQueryOptions & options,
                           SDB_DMSCB *dmsCB,
                           pmdEDUCB *cb,
                           _rtnContextDump *context ) ;

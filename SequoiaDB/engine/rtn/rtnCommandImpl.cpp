@@ -94,19 +94,16 @@ namespace engine
    // will bypass fetching records by records. Instead it will read each extent
    // and get the _recCount in extent header for quick count
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNGETCOUNT, "rtnGetCount" )
-   INT32 rtnGetCount ( const CHAR *pCollection,
-                       const BSONObj &matcher,
-                       const BSONObj &hint,
+   INT32 rtnGetCount ( const rtnQueryOptions & options,
                        SDB_DMSCB *dmsCB,
                        _pmdEDUCB *cb,
                        SDB_RTNCB *rtnCB,
-                       INT64 *count,
-                       INT32 flags )
+                       INT64 *count )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNGETCOUNT ) ;
       SINT64 totalCount = 0 ;
-      BSONObj obj ;
+      const CHAR * pCollection = options.getCLFullName() ;
       SDB_ASSERT ( pCollection, "collection can't be NULL" ) ;
       SDB_ASSERT ( dmsCB, "dms control block can't be NULL" ) ;
       SDB_ASSERT ( count, "count can't be NULL" ) ;
@@ -122,12 +119,19 @@ namespace engine
                   pCollection, rc ) ;
          goto error ;
       }
-      if ( !matcher.isEmpty() )
+      if ( !options.isQueryEmpty() )
       {
          rtnContextBase *pContextBase = NULL ;
          SINT64 queryContextID = -1 ;
-         rc = rtnQuery ( pCollection, obj, matcher, obj, hint, flags, cb,
-                         0, -1, dmsCB, rtnCB, queryContextID,
+
+         BSONObj dummy ;
+         rtnQueryOptions copiedOptions( options ) ;
+         copiedOptions.setSelector( dummy ) ;
+         copiedOptions.setOrderBy( dummy ) ;
+         copiedOptions.setSkip( 0 ) ;
+         copiedOptions.setLimit( -1 ) ;
+
+         rc = rtnQuery ( copiedOptions, cb, dmsCB, rtnCB, queryContextID,
                          &pContextBase ) ;
          if ( rc )
          {
@@ -202,23 +206,20 @@ namespace engine
       goto done ;
    }
 
-   INT32 rtnGetCount ( const CHAR *pCollection,
-                       const BSONObj &matcher,
-                       const BSONObj &hint,
+   INT32 rtnGetCount ( const rtnQueryOptions & options,
                        SDB_DMSCB *dmsCB,
                        _pmdEDUCB *cb,
                        SDB_RTNCB *rtnCB,
-                       rtnContext *context,
-                       INT32 flags )
+                       rtnContext *context )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNGETCOUNT ) ;
+      const CHAR * pCollection = options.getCLFullName() ;
       SINT64 totalCount = 0 ;
       BSONObj obj ;
       BSONObjBuilder ob ;
 
-      rc = rtnGetCount ( pCollection, matcher, hint, dmsCB, cb, rtnCB,
-                         &totalCount, flags ) ;
+      rc = rtnGetCount( options, dmsCB, cb, rtnCB, &totalCount ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to get count for collection %s, rc: %d",
@@ -846,10 +847,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 rtnGetQueryMeta( const CHAR *pCollectionName,
-                          const BSONObj &match,
-                          const BSONObj &orderby,
-                          const BSONObj &hint,
+   INT32 rtnGetQueryMeta( const rtnQueryOptions & options,
                           SDB_DMSCB *dmsCB,
                           pmdEDUCB *cb,
                           rtnContextDump *context )
@@ -860,20 +858,21 @@ namespace engine
       SDB_RTNCB *rtnCB = krcb->getRTNCB() ;
       dmsStorageUnitID suID = DMS_INVALID_CS ;
       dmsStorageUnit *su = NULL ;
+      const CHAR * pCollectionName = options.getCLFullName() ;
       const CHAR *pCollectionShortName = NULL ;
       dmsMBContext *mbContext = NULL ;
       optAccessPlanRuntime planRuntime ;
       optAccessPlanManager *apm = NULL ;
-      BSONObj dummy ;
 
       ossTick startTime, endTime ;
       monContextCB monCtxCB ;
-      rtnReturnOptions returnOptions ;
 
-      // Construct options
-      // matcher, selector, order, hint, collection, skip, limit, flag
-      rtnQueryOptions options( match, dummy, orderby, hint, pCollectionName,
-                               0, -1, 0 ) ;
+      BSONObj dummy ;
+      rtnQueryOptions copiedOptions( options ) ;
+      copiedOptions.setSelector( dummy ) ;
+      copiedOptions.setSkip( 0 ) ;
+      copiedOptions.setFlag( 0 ) ;
+      copiedOptions.setLimit( -1 ) ;
 
       // This prevents other sessions drop the collectionspace during accessing
       rc = rtnResolveCollectionNameAndLock ( pCollectionName, dmsCB, &su,
@@ -888,7 +887,7 @@ namespace engine
       SDB_ASSERT ( apm, "apm shouldn't be NULL" ) ;
 
       // plan is released in context destructor
-      rc = apm->getAccessPlan( options, FALSE, su, mbContext, planRuntime ) ;
+      rc = apm->getAccessPlan( copiedOptions, FALSE, su, mbContext, planRuntime ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get access plan for %s, "
                    "context %lld, rc: %d", pCollectionName,
                    context->contextID(), rc ) ;
@@ -927,7 +926,7 @@ namespace engine
       endTime = krcb->getCurTime() ;
 
       monCtxCB.monQueryTimeInc( startTime, endTime ) ;
-      planRuntime.setQueryActivity( MON_SELECT, monCtxCB, returnOptions, TRUE ) ;
+      planRuntime.setQueryActivity( MON_SELECT, monCtxCB, copiedOptions, TRUE ) ;
 
    done:
       if ( su && mbContext )
@@ -946,21 +945,15 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNGETCOMMANDENTRY, "rtnGetCommandEntry" )
    INT32 rtnGetCommandEntry ( RTN_COMMAND_TYPE command,
-                              const CHAR *pCollectionName,
-                              const BSONObj &selector,
-                              const BSONObj &matcher,
-                              const BSONObj &orderBy,
-                              const BSONObj &hint,
-                              SINT32 flags,
+                              const rtnQueryOptions & options,
                               pmdEDUCB *cb,
-                              SINT64 numToSkip,
-                              SINT64 numToReturn,
                               SDB_DMSCB *dmsCB,
                               SDB_RTNCB *rtnCB,
                               SINT64 &contextID )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNGETCOMMANDENTRY ) ;
+      const CHAR * pCollectionName = options.getCLFullName() ;
       SDB_ASSERT ( pCollectionName, "collection name can't be NULL " ) ;
       SDB_ASSERT ( cb, "educb can't be NULL" ) ;
       SDB_ASSERT ( dmsCB, "dmsCB can't be NULL" ) ;
@@ -975,10 +968,10 @@ namespace engine
          PD_LOG ( PDERROR, "Failed to create new context, rc: %d", rc ) ;
          goto error ;
       }
-      rc = context->open( selector,
-                          matcher,
-                          orderBy.isEmpty() ? numToReturn : -1,
-                          orderBy.isEmpty() ? numToSkip : 0 ) ;
+      rc = context->open( options.getSelector(),
+                          options.getQuery(),
+                          options.isOrderByEmpty() ? options.getLimit() : -1,
+                          options.isOrderByEmpty() ? options.getSkip() : 0 ) ;
       PD_RC_CHECK( rc, PDERROR, "Open context failed, rc: %d", rc ) ;
 
       // sample timetamp
@@ -994,8 +987,7 @@ namespace engine
             rc = rtnGetIndexes ( pCollectionName, dmsCB, context ) ;
             break ;
          case CMD_GET_COUNT :
-            rc = rtnGetCount ( pCollectionName, matcher, hint, dmsCB, cb,
-                               rtnCB, context, flags ) ;
+            rc = rtnGetCount ( options, dmsCB, cb, rtnCB, context ) ;
             break ;
          case CMD_GET_DATABLOCKS :
             rc = rtnGetDatablocks( pCollectionName, dmsCB, cb, context ) ;
@@ -1007,12 +999,10 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Dump collection[%s] info[command:%d] failed, "
                    "rc: %d", pCollectionName, command, rc ) ;
 
-      if ( !orderBy.isEmpty() )
+      if ( !options.isOrderByEmpty() )
       {
-         rc = rtnSort( (rtnContext**)&context,
-                       orderBy,
-                       cb, numToSkip,
-                       numToReturn, contextID ) ;
+         rc = rtnSort( (rtnContext**)&context, options.getOrderBy(), cb,
+                       options.getSkip(), options.getLimit(), contextID ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to sort, rc: %d", rc ) ;
       }
 

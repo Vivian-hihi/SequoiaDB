@@ -41,6 +41,7 @@
 #include "msg.hpp"
 #include "migLoad.hpp"
 #include "rtnAlterRunner.hpp"
+#include "rtnQueryOptions.hpp"
 
 using namespace bson ;
 
@@ -88,6 +89,8 @@ namespace engine
          virtual INT32 doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
                               _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
                               INT16 w = 1, INT64 *pContextID = NULL ) = 0 ;
+
+         virtual void setMainCLName ( const CHAR * mainCL ) {}
 
       protected:
          INT32             _fromService ;
@@ -668,17 +671,15 @@ namespace engine
          virtual INT32 doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
                               _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
                               INT16 w = 1, INT64 *pContextID = NULL  ) ;
-      protected:
-         const CHAR           *_collectionName ;
-         INT64                _numToReturn ;
-         INT64                _numToSkip ;
-         const CHAR           *_matcherBuff ;
-         const CHAR           *_selectBuff ;
-         const CHAR           *_orderByBuff ;
-         BSONObj              _hintObj ;
-         BOOLEAN              _hintExist ;
-         INT32                _flags ;
 
+         virtual void setMainCLName ( const CHAR * mainCL )
+         {
+            _options.setMainCLName( mainCL ) ;
+         }
+
+      protected:
+         rtnQueryOptions      _options ;
+         BOOLEAN              _hintExist ;
    } ;
 
    class _rtnGetCount : public _rtnGet
