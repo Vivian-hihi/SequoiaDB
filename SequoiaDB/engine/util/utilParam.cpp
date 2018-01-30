@@ -575,6 +575,7 @@ namespace engine
          hasGot = procLim.getLimit( limStr.c_str(), curSoft, curHard ) ;
          if ( !hasGot )
          {
+            rc = SDB_SYS ;
             ossPrintf( "Error: Failed to get ulimit[%s]"OSS_NEWLINE,
                        limStr.c_str() ) ;
             goto error ;
