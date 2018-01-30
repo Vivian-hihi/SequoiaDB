@@ -51,13 +51,12 @@ function main ( db )
 
                // Start primary node in the end
                startNode( db, getRG, primHost, masterNode ) ;
+               break;
             }
          }
-         
-         if ( !result )
+         if ( result )
          {
-            println( "Don't change the primary node, node = " + masterNode ) ;
-            throw "ErrVotePrimary" ;
+            break ;
          }
       }
       else
@@ -65,6 +64,11 @@ function main ( db )
          println( "The nodes less than 3 in group : " + getRG +
                   ", cannot be stop." ) ;
       }
+   }
+   if ( !result )
+   {
+      println( "Don't change the primary node, node = " + masterNode ) ;
+      throw "ErrVotePrimary" ;
    }
 }
 
