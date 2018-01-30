@@ -223,7 +223,7 @@
    </target>
    
    <target name="compile_ssqloltp_plugin">
-      <var name="src_dir" value="${srccode_dir}/tools/om_plugins/sql_oltp" />
+      <var name="src_dir" value="${srccode_dir}/tools/om_plugins/sql_oltp/source" />
       <if>
          <equals arg1="${IS_DEBUG}" arg2="true"/>
          <then>
@@ -234,10 +234,10 @@
             <var name="cmd_mvn" value="versions:set -DnewVersion=${sequoiadb_version}"/>
          </else>
       </if>
-      <exec executable="mvn" dir="${srccode_dir}/tools/om_plugins/sql_oltp" failonerror="true" logError="true">
+      <exec executable="mvn" dir="${srccode_dir}/tools/om_plugins/sql_oltp/source" failonerror="true" logError="true">
          <arg line=" ${cmd_mvn} " />
       </exec>
-      <exec executable="mvn" dir="${srccode_dir}/tools/om_plugins/sql_oltp" failonerror="true" logError="true">
+      <exec executable="mvn" dir="${srccode_dir}/tools/om_plugins/sql_oltp/source" failonerror="true" logError="true">
          <arg line=" clean package -Drevision=${fdw_svn}" />
       </exec>
    </target>
@@ -580,8 +580,14 @@
       </copy>
       
       <copy todir="${release_db_dir}/plugins/SequoiaSQL-OLTP" >
-         <fileset dir="${srccode_dir}/tools/om_plugins/sql_oltp/target" includes="*.jar" />
+         <fileset dir="${srccode_dir}/tools/om_plugins/sql_oltp" includes="**/*" excludes="source/**/*"/>
       </copy>
+      
+      <copy todir="${release_db_dir}/plugins/SequoiaSQL-OLTP/bin" >
+         <fileset dir="${srccode_dir}/tools/om_plugins/sql_oltp/source/target" includes="*.jar" />
+      </copy>
+      
+      <delete dir="${release_db_dir}/plugins/SequoiaSQL-OLTP/source" failonerror="false"/>
       
       <copy todir="${release_db_dir}/include">
          <fileset dir="${srccode_dir}/client/include" includes="**/*" />
