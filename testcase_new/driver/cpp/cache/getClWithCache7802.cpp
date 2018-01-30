@@ -20,7 +20,7 @@ using namespace sdbclient ;
 using namespace bson ;
 using namespace std ;
 
-#define CACHE_TIME_INT 4000 /*millisecond*/
+#define CACHE_TIME_INT 3000 /*millisecond*/
 
 class turnOnCache7802 : public testBase 
 {
@@ -80,7 +80,7 @@ TEST_F( turnOnCache7802, getCollection )
    aliveTime1 = db.getLastAliveTime() ;
 
    // get cl from cache
-   ossSleep( CACHE_TIME_INT / 2 ) ; 
+   ossSleep( 1000 ) ; 
    rc = cs.getCollection( pClName, cl ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
    aliveTime2 = db.getLastAliveTime() ;
