@@ -1646,6 +1646,6 @@ class client(object):
                 raise SDBTypeError("options must be an instance of dict")
             bson_options = bson.BSON.encode(options)
 
-        rc = sdb.sdb_sync(self._client, bson_options)
+        rc = sdb.sdb_analyze(self._client, bson_options)
         raise_if_error(rc, "Failed to analyze")
 
