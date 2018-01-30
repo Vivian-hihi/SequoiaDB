@@ -267,7 +267,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       BSONElement ele ;
       BSONObj value ;
-      
+
       rc = omaGetObjElement( obj, objFieldName, value ) ;
       if ( rc )
       {
@@ -337,6 +337,8 @@ namespace engine
       cmdline += SDBCM_OPTION_PREFIX PMD_OPTION_CONFPATH ;
       cmdline += " " ;
       cmdline += pCfgPath ;
+      cmdline += " " ;
+      cmdline += SDBCM_OPTION_PREFIX PMD_OPTION_IGNOREULIMIT ;
       if ( useCurUser )
       {
          cmdline += " " ;
