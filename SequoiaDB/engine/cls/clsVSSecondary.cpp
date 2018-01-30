@@ -36,7 +36,6 @@
 #include "clsVSSecondary.hpp"
 #include "pdTrace.hpp"
 #include "clsTrace.hpp"
-#include "pmd.hpp"
 
 namespace engine
 {
@@ -142,7 +141,6 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__CLSVSSD_ACTIVE ) ;
       _timeout() = 0 ;
       _hasPrint = FALSE ;
-      g_startShiftTime = (INT32)pmdGetOptionCB()->startShiftTime() ;
 
       if ( _info()->groupSize() == 1 )
       {
