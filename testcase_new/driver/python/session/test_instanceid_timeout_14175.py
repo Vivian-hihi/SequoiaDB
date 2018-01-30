@@ -48,7 +48,7 @@ class TestSessiontimeout14175(testlib.SdbTestBase):
       
       # create cl in new group
       self.cs = self.db.create_collection_space(self.cs_name)
-      self.cl = self.cs.create_collection(self.cl_name, {'Group': self.data_rg_name})
+      self.cl = self.cs.create_collection(self.cl_name, {'Group': self.data_rg_name, 'ReplSize' : 0})
       
       # insert datas
       insert_nums = 50000

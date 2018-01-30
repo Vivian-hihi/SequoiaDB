@@ -41,7 +41,7 @@ def get_session_attri( db ):
    cursor.close()  
    return act_session_attr
    
-def random_str(length=1024):
+def random_str(length):
    s = ""
    r = Random()
    for i in range(length):

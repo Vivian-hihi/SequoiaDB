@@ -46,9 +46,9 @@ class TestSessionInstanceId14177(testlib.SdbTestBase):
       
       check_rg_master(data_rg)
       
-      # create maincl and subcls in new group
+      # create cl 
       self.cs = self.db.create_collection_space(self.cs_name)
-      self.cl = self.cs.create_collection(self.cl_name, {'Group' : self.data_rg_name})
+      self.cl = self.cs.create_collection(self.cl_name, {'Group' : self.data_rg_name, 'ReplSize' : 0})
       
       # insert datas
       insert_nums = 10000

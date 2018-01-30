@@ -66,14 +66,14 @@ class TestSessionInstanceId14176(testlib.SdbTestBase):
       # create maincl and subcls in new group
       self.cs = self.db.create_collection_space(self.cs_name)
       maincl_name = 'testmaincl14176';
-      self.maincl = self.cs.create_collection(maincl_name , {'IsMainCL': True, 'ShardingKey': {'a' : 1 }})
+      self.maincl = self.cs.create_collection(maincl_name , {'IsMainCL': True, 'ShardingKey': {'a' : 1 }, 'ReplSize' : 0})
       subcl_name1 = 'testsubcl14176_1';
-      self.subcl1 = self.cs.create_collection(subcl_name1 , {'Group' : self.data_rg_name})
+      self.subcl1 = self.cs.create_collection(subcl_name1 , {'Group' : self.data_rg_name, 'ReplSize' : 0})
       subcl_name2 = 'testsubcl14176_2';
       comm_group = testlib.get_data_groups()
       comm_groupname = comm_group[0]['GroupName']
       print('comm_groupname: ' + comm_groupname)
-      self.subcl2 = self.cs.create_collection(subcl_name2, {'Group' : comm_groupname})
+      self.subcl2 = self.cs.create_collection(subcl_name2, {'Group' : comm_groupname, 'ReplSize' : 0})
       
       # attach cls
       opt1 = {"LowBound": {'a':0}, "UpBound": {'a':10000}}

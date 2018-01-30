@@ -50,9 +50,9 @@ class TestSessionInstanceId14179(testlib.SdbTestBase):
       master_node = data_rg.get_master()
       master_svcname = master_node.get_servicename()
 
-      # create maincl and subcls in new group
+      # create cl
       self.cs = self.db.create_collection_space(self.cs_name)
-      self.cl = self.cs.create_collection(self.cl_name , {'Group' : self.data_rg_name})
+      self.cl = self.cs.create_collection(self.cl_name , {'Group' : self.data_rg_name, 'ReplSize' : 0})
       
       # insert datas
       insert_nums = 10000

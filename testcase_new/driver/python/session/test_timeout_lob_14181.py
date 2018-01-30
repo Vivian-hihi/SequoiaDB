@@ -12,32 +12,25 @@ from pysequoiadb.lob import LOB_WRITE
 
 class TestSessiontimeout14181(testlib.SdbTestBase):
    def setUp(self):
-      # check standalone
+      # skip standalone
       if testlib.is_standalone():
          self.skipTest('run mode is standalone')
-      if 2 > testlib.get_data_group_num():
-         self.skipTest('less than 2 groups')
       testlib.drop_cs(self.db, self.cs_name, ignore_not_exist = True)
 
    def test_session_timeout_14181(self):
 
       # create cs cl
       self.cs = self.db.create_collection_space(self.cs_name)
-      self.cl = self.cs.create_collection(self.cl_name)
+      self.cl = self.cs.create_collection(self.cl_name, {'ReplSize' : 0})
       
       # create lob
       lob = self.cl.create_lob(ObjectId('5a699c8081d089d50600006d'))
       
       # write lob
-      length = 256 * 1024
+      length = 20 * 1024 * 1024
       lob_data = random_str(length)
       lob.write(lob_data, len(lob_data))
-      lob.close()
-      
-      # get lob set session timeout 60s 
-      opt = {'Timeout' : 60000};
-      self.db.set_session_attri(options = opt) 
-      lob = self.cl.open_lob(ObjectId('5a699c8081d089d50600006d'), LOB_WRITE)
+      lob.close()    
       
       # set session attr timeout 1ms
       opt = {'Timeout' : 1};
@@ -45,21 +38,17 @@ class TestSessiontimeout14181(testlib.SdbTestBase):
    
       # write lob
       try:
-         length = 256 * 1024
+         lob = self.cl.open_lob(ObjectId('5a699c8081d089d50600006d'), LOB_WRITE)
+         length = 20 * 1024 * 1024
          lob_data = random_str(length)
          lob.write(lob_data, len(lob_data))
-         print('Need Error -13')
+         self.fail('Need Error -13')
       except SDBBaseError as e:
          if -13 != e.code:
-            print('check write lob timeout fail')  
+            self.fail('check write lob timeout fail: ' + e.detail)  
       finally:
          if(lob != None):
             lob.close()         
-            
-      # get lob set session timeout 60s 
-      opt = {'Timeout' : 60000};
-      self.db.set_session_attri(options = opt) 
-      lob = self.cl.open_lob(ObjectId('5a699c8081d089d50600006d'), LOB_WRITE)      
             
       # set session attr timeout 1ms
       opt = {'Timeout' : 1};
@@ -67,24 +56,26 @@ class TestSessiontimeout14181(testlib.SdbTestBase):
             
       # read lob
       try:
-         length = 256 * 1024
+         lob = self.cl.open_lob(ObjectId('5a699c8081d089d50600006d'), LOB_WRITE)
+         length = 20 * 1024 * 1024
          lob.read(length)
-         print('Need Error -13')
+         self.fail('Need Error -13')
       except SDBBaseError as e:
          if -13 != e.code:
-            print('check read lob timeout fail')           
+            self.fail('check read lob timeout fail: ' + str(e.detail))  
             
       # remove lob
       try:
+         lob = self.cl.open_lob(ObjectId('5a699c8081d089d50600006d'), LOB_WRITE)
          self.cl.remove_lob(ObjectId('5a699c8081d089d50600006d'))
-         print('Need Error -13')
+         self.fail('Need Error -13')
       except SDBBaseError as e:
          if -13 != e.code:
-            print('check remove lob timeout fail')       
+            self.fail('check read lob timeout fail: ' + str(e.detail))       
 
    def tearDown(self):
-      # set session timeout 60s at last
-      opt = {'Timeout' : 60000};
+      # set session no timeout at last
+      opt = {'Timeout' : -1};
       self.db.set_session_attri(options = opt) 
       try:
          testlib.drop_cs(self.db, self.cs_name)   
