@@ -420,17 +420,32 @@ namespace engine
                                     _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
-      clsTaskMgr *pTaskMgr = pmdGetKRCB()->getClsCB()->getTaskMgr() ;
+      SDB_RTNCB * pRtnCB = pmdGetKRCB()->getRTNCB() ;
+      clsCB * pClsCB = pmdGetKRCB()->getClsCB() ;
+      clsTaskMgr * pTaskMgr = pClsCB->getTaskMgr() ;
+      CHAR mainCL[ DMS_COLLECTION_FULL_NAME_SZ + 1 ] = { '\0' } ;
 
       if ( !isOpened() )
       {
          rc = SDB_DMS_CONTEXT_IS_CLOSE;
          goto error ;
       }
+
       _pCatAgent->lock_w () ;
-      _pCatAgent->clear ( _collectionName ) ;
+      _pCatAgent->clear ( _collectionName, mainCL ) ;
       _pCatAgent->release_w () ;
-      pmdGetKRCB()->getClsCB()->invalidateCata( _collectionName ) ;
+      pClsCB->invalidateCata( _collectionName ) ;
+
+      // Clear catalog info and cached plans of main-collection if needed
+      if ( '\0' != mainCL[ 0 ] )
+      {
+         _pCatAgent->lock_w() ;
+         _pCatAgent->clear( mainCL ) ;
+         _pCatAgent->release_w() ;
+         pRtnCB->getAPM()->invalidateCLPlans( mainCL ) ;
+         pClsCB->invalidateCache( mainCL, DPS_LOG_INVALIDCATA_TYPE_CATA |
+                                          DPS_LOG_INVALIDCATA_TYPE_PLAN ) ;
+      }
 
       // drop collection
       rc = _su->data()->dropCollection ( _clShortName, cb, getDPSCB(),

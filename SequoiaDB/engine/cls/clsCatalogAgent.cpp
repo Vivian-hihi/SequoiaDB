@@ -2554,7 +2554,8 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTAGENT_CLEAR, "_clsCatalogAgent::clear" )
-   INT32 _clsCatalogAgent::clear ( const CHAR* name )
+   INT32 _clsCatalogAgent::clear ( const CHAR* name,
+                                   CHAR * mainCL )
    {
       PD_TRACE_ENTRY ( SDB__CLSCTAGENT_CLEAR ) ;
       _clsCatalogSet *preSet = NULL ;
@@ -2569,6 +2570,13 @@ namespace engine
          {
             if ( ossStrcmp ( curSet->name(), name ) == 0 )
             {
+               if ( !curSet->getMainCLName().empty() &&
+                    mainCL != NULL )
+               {
+                  ossStrncpy( mainCL, curSet->getMainCLName().c_str(),
+                              DMS_COLLECTION_FULL_NAME_SZ ) ;
+                  mainCL[ DMS_COLLECTION_FULL_NAME_SZ ] = '\0' ;
+               }
                break ;
             }
             preSet = curSet ;

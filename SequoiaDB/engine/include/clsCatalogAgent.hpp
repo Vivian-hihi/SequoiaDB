@@ -350,7 +350,7 @@ namespace engine
          INT32   updateCatalog ( INT32 version, UINT32 groupID,
                                  const CHAR* objdata, UINT32 length,
                                  _clsCatalogSet **ppSet = NULL ) ;
-         INT32   clear ( const CHAR* name ) ;
+         INT32   clear ( const CHAR* name, CHAR * mainCL = NULL ) ;
          INT32   clearBySpaceName ( const CHAR* name,
                                     vector< string > *pRelatedCLs = NULL,
                                     _utilSet< string > * pMainCLs = NULL ) ;
