@@ -255,7 +255,7 @@ function checkMasterExist( groupName )
    {   
       var sleepInteval=10;
       var sleepDuration=0;
-      var maxSleepDuration=6000; 
+      var maxSleepDuration=10000; 
       var rc = db.exec("select IsPrimary,NodeName from $SNAPSHOT_SYSTEM where GroupName='" + groupName + "' and IsPrimary=true ");
       var num = rc.size();  
       while( num != 1 && sleepDuration < maxSleepDuration )
