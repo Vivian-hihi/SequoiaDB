@@ -1073,7 +1073,7 @@
             'name': '总容量',
             'type': 'pie',
             'radius': '100px',
-            'center': ['200px', '160px'],
+            'center': ['250px', '160px'],
             'data': [
                { 'value': 0, 'name': '可用容量' },
                { 'value': 0, 'name': '冗余容量' }

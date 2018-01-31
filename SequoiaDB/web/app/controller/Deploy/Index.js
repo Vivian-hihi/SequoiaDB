@@ -408,23 +408,6 @@
             'delay': 5000,
             'loop': true
          } ) ;
-
-         //查询是否有鉴权
-         var data = {
-            'cmd': 'query business authority',
-            'filter': JSON.stringify( { "BusinessName": moduleName } ) 
-         }
-         SdbRest.OmOperation( data, {
-            'success': function( authorityResult ){
-               if( authorityResult.length > 0 )
-               {
-                  $scope.moduleList[moduleIndex]['authority'] = authorityResult[0]['User'] ;
-               }
-            }
-         }, {
-            'showLoading': false
-         } ) ;
-
       }
 
       //获取sequoiadb的错误节点信息
@@ -633,6 +616,8 @@
          {
          case 'sequoiadb':
             $location.path( '/Data/SDB-Database/Index' ).search( { 'r': new Date().getTime() } ) ; break ;
+         case 'sequoiasql-oltp':
+            $location.path( '/Data/OLTP-Database/Index' ).search( { 'r': new Date().getTime() } ) ; break ;
          case 'sequoiasql':
             $location.path( '/Data/SQL-Metadata/Index' ).search( { 'r': new Date().getTime() } ) ; break ;
          case 'hdfs':
@@ -677,6 +662,22 @@
                      getErrNodes( index2, index ) ;
                   }
                }
+               
+               //查询鉴权
+               var data = {
+                  'cmd': 'query business authority',
+                  'filter': JSON.stringify( { "BusinessName": moduleInfo['BusinessName'] } ) 
+               }
+               SdbRest.OmOperation( data, {
+                  'success': function( authorityResult ){
+                     if( authorityResult.length > 0 )
+                     {
+                        $scope.moduleList[index2]['authority'] = authorityResult[0]['User'] ;
+                     }
+                  }
+               }, {
+                  'showLoading': false
+               } ) ;
             } ) ;
             $scope.HostNum = 0 ;
             $scope.HostListTable['body'] = [] ;
@@ -2571,7 +2572,7 @@
 
       //表单
       var authorityform = {
-         inputList: [
+         'inputList': [
             {
                "name": "BusinessName",
                "webName": $scope.autoLanguage( '业务名' ),
@@ -2619,6 +2620,10 @@
          {
             businessName = chooseBusinessName ;
          }
+         
+         authorityform['inputList'][1]['value'] = '' ;
+         authorityform['inputList'][2]['value'] = '' ;
+
          //关闭鉴权下拉菜单
          $scope.AuthorityDropdown['callback']['Close']() ;
          var form = authorityform ;

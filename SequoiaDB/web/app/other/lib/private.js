@@ -86,7 +86,7 @@ _IndexPublic.createRetryModel = function( $scope, errorInfo, okFun, title, conte
 
    if( errorInfo )
    {
-      if( errorInfo['cmd'].length == 0 )
+      if( !errorInfo['cmd'] || errorInfo['cmd'].length == 0 )
       {
          defaultError = sprintf( $scope.autoLanguage( '错误码: ?, ?。需要重试吗?' ), errorInfo['errno'], errorInfo['detail'].length > 0? errorInfo['detail'] : errorInfo['description'] ) ;
       }
@@ -277,15 +277,14 @@ _IndexBottom.getSystemTime = function( $scope )
 {
    setInterval( function(){
       var times = $.now() ;
-      $scope.$apply( function(){
-         var date = new Date( times ) ;
-         var year = date.getFullYear() ;
-         var hour = date.getHours() ;
-         var minute = date.getMinutes() ;
-         var second = date.getSeconds() ;
-         $scope.Bottom.year = year ;
-         $scope.Bottom.nowtime = pad( hour, 2 ) + ':' + pad( minute, 2 ) + ':' + pad( second, 2 ) ;
-      } ) ;
+      var date = new Date( times ) ;
+      var year = date.getFullYear() ;
+      var hour = date.getHours() ;
+      var minute = date.getMinutes() ;
+      var second = date.getSeconds() ;
+      $scope.Bottom.year = year ;
+      $scope.Bottom.nowtime = pad( hour, 2 ) + ':' + pad( minute, 2 ) + ':' + pad( second, 2 ) ;
+      $scope.$digest();
    }, 1000 ) ;
 }
 

@@ -455,7 +455,7 @@
       <Valid></Valid>
       <Display>edit box</Display>
       <Edit>true</Edit>
-      <Desc>TCP_KEEPCNT, in seconds; 0 selects the system default</Desc>
+      <Desc>TCP_KEEPCNT; 0 selects the system default</Desc>
       <Level>1</Level>
       <DynamicEdit>false</DynamicEdit>
       <BatchEdit>false</BatchEdit>

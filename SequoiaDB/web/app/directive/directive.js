@@ -3174,8 +3174,16 @@
                      }
                      else
                      {
-                        items[0][0]['value'] = '' ;
-                        items[0][1]['value'] = '' ;
+                        $.each( item, function( index, inputInfo ){
+                           if( typeof( inputInfo['default'] ) == 'undefined' )
+                           {
+                              inputInfo['value'] = '' ;
+                           }
+                           else
+                           {
+                              inputInfo['value'] = inputInfo['default'] ;
+                           }
+                        } ) ;
                      }
                   }
                   scope.onChange = function( inputInfo ){
@@ -6153,7 +6161,11 @@
                   //重绘当前页
                   var showCurrentPage = function(){
                      createTableContents( scope.loadStatus['page'] ) ;
-                     //scope.$digest() ;
+                     try
+                     {
+                        scope.$digest() ;
+                     }
+                     catch(e){}
                   }
 
                   //接口专用排序，跟表格的标题排序不同，不会存在状态中

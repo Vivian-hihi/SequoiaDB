@@ -486,6 +486,10 @@
          {
             options['showLoading'] = true ;
          }
+         if( typeof( options['v'] ) == 'undefined' )
+         {
+            options['v'] = 'v1' ;
+         }
          return options ;
       }
 
@@ -535,11 +539,33 @@
          cmd = data['cmd'] ;
          options['errJson'] = errJson ;
 
-         jsonArr = g._parseJson2( json, options['parseJson'], errJson ) ;
-         arrLen = jsonArr.length ;
-         if( options['parseJson'] == false && arrLen > 0 )
+         if( options['v'] == 'v1' )
          {
-            jsonArr[0] = JSON.parse( jsonArr[0] ) ;
+            jsonArr = g._parseJson2( json, options['parseJson'], errJson ) ;
+            arrLen = jsonArr.length ;
+            if( options['parseJson'] == false && arrLen > 0 )
+            {
+               jsonArr[0] = JSON.parse( jsonArr[0] ) ;
+            }
+         }
+         else if( options['v'] == 'v2' )
+         {
+            if( typeof( json ) == 'string' )
+            {
+               jsonArr = JSON.parse( json ) ;
+            }
+            else
+            {
+               jsonArr = json ;
+            }
+            if( isArray( jsonArr ) == false )
+            {
+               jsonArr = [ jsonArr ] ;
+            }
+            if( options['parseJson'] == false )
+            {
+               //还没实现
+            }
          }
 
          if( arrLen == 0 )
@@ -627,7 +653,14 @@
       g._eventError = function( type, url, data, event, options, XMLHttpRequest, textStatus, errorThrown ) {
          try
          {
-            event['error']( XMLHttpRequest, textStatus, errorThrown ) ;
+            if( event['error'] === emptyFunc )
+            {
+               Loading.close() ;
+            }
+            else
+            {
+               event['error']( XMLHttpRequest, textStatus, errorThrown ) ;
+            }
          }
          catch( e )
          {
@@ -677,6 +710,11 @@
                g._status = NORMAL ;
                g._lastErrorTask( { "cmd": g._lastErrorTaskCmd, "errno": -15, "description": "Network error", "detail": "Network error, request status unknown." } ) ;
                g._lastErrorTask = null ;
+
+               if( g._errorTask.length > 0 )
+               {
+                  Loading.cancel() ;
+               }
 
                $.each( g._errorTask, function( index, task ){
                   g._sendAjax( task['type'], task['url'], task['data'], task['event'], task['options'] ) ;
@@ -776,6 +814,11 @@
                g._eventSuccess( type, url, data, event, options, json, textStatus, jqXHR ) ;
             },
             'error': function( XMLHttpRequest, textStatus, errorThrown ) {
+               if( XMLHttpRequest.status == 404 )
+               {
+                  g._eventError( type, url, data, event, options, XMLHttpRequest, textStatus, errorThrown ) ;
+                  return ;
+               }
                if( g._errorNum == 0 )
                {
                   ++g._errorNum ;
@@ -962,10 +1005,6 @@
 
       //数据操作
       g.DataOperation = function( data, event, options ){
-         if( typeof( event ) == 'function' )
-         {
-            alert( JSON.stringify( data ) )
-         }
          var oldBefore = event ? event['before'] : null ;
          event['before'] = function( jqXHR ){
 	         var clusterName = SdbFunction.LocalData( 'SdbClusterName' ) ;
@@ -986,7 +1025,34 @@
          event = g._checkEvent( event ) ;
          options = g._checkOptions( options ) ;
          g._sendAjax( 'POST', '/', data, event, options ) ;
-         //g._insert( 'POST', '/', data, event, options, errJson ) ;
+      }
+
+      g.DataOperationV2 = function( path, data, event, options ){
+         var oldBefore = event ? event['before'] : null ;
+         event['before'] = function( jqXHR ){
+	         var clusterName = SdbFunction.LocalData( 'SdbClusterName' ) ;
+	         if( clusterName !== null )
+	         {
+		         jqXHR.setRequestHeader( 'SdbClusterName', clusterName ) ;
+	         }
+	         var businessName = SdbFunction.LocalData( 'SdbModuleName' )
+	         if( businessName !== null )
+	         {
+		         jqXHR.setRequestHeader( 'SdbBusinessName', businessName ) ;
+	         }
+            if( typeof( oldBefore ) == 'function' )
+            {
+               return oldBefore( jqXHR ) ;
+            }
+         }
+         if( typeof( options ) != 'object' )
+         {
+            options = {} ;
+         }
+         options['v'] = 'v2' ;
+         event = g._checkEvent( event ) ;
+         options = g._checkOptions( options ) ;
+         g._sendAjax( 'POST', path, data, event, options ) ;
       }
 
       //数据操作( 手工设置cluster和module )

@@ -18,6 +18,7 @@
    function _getBusinessList( async, func )
    {
       $.ajax( {
+         'method': 'post',
          'data': { 'cmd': 'query business', 'sort': JSON.stringify( { 'BusinessType': 1, 'BusinessName': 1, 'ClusterName': 1 } ) },
          'url': '/',
          'async': async,
@@ -82,7 +83,7 @@
       _loadPluginRoute( false, $routeProvider ) ;
       setInterval( function(){
          _loadPluginRoute( true, $routeProvider ) ;
-      }, 10000 )
+      }, 10000 ) ;
       //默认访问
       $routeProvider.otherwise( window.SdbSacManagerConf.defaultRoute ) ;
    } ) ;
