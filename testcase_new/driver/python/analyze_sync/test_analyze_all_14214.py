@@ -4,7 +4,7 @@
 # @author:     liuxiaoxuan 2018-01-29
 
 from lib import testlib
-from commlib import *
+from analyze_sync.commlib import *
 from pysequoiadb.error import SDBBaseError
 
 class TestAnalyzeAll14214(testlib.SdbTestBase):

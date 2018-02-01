@@ -5,10 +5,11 @@
 import unittest
 from lib import testlib
 from lib import sdbconfig
-from commlib import *
+from session.commlib import *
 from pysequoiadb.error import SDBBaseError
 from bson.objectid import ObjectId
 from pysequoiadb.lob import LOB_WRITE
+from pysequoiadb.lob import LOB_READ
 
 class TestSessiontimeout14181(testlib.SdbTestBase):
    def setUp(self):
@@ -56,22 +57,27 @@ class TestSessiontimeout14181(testlib.SdbTestBase):
             
       # read lob
       try:
-         lob = self.cl.open_lob(ObjectId('5a699c8081d089d50600006d'), LOB_WRITE)
+         lob = self.cl.open_lob(ObjectId('5a699c8081d089d50600006d'), LOB_READ)
          length = 20 * 1024 * 1024
          lob.read(length)
          self.fail('Need Error -13')
       except SDBBaseError as e:
          if -13 != e.code:
-            self.fail('check read lob timeout fail: ' + str(e.detail))  
+            self.fail('check read lob timeout fail: ' + str(e.detail)) 
+      finally:
+         if(lob != None):
+            lob.close() 				
             
       # remove lob
       try:
-         lob = self.cl.open_lob(ObjectId('5a699c8081d089d50600006d'), LOB_WRITE)
          self.cl.remove_lob(ObjectId('5a699c8081d089d50600006d'))
          self.fail('Need Error -13')
       except SDBBaseError as e:
          if -13 != e.code:
-            self.fail('check read lob timeout fail: ' + str(e.detail))       
+            self.fail('check read lob timeout fail: ' + str(e.detail))   
+      finally:
+         if(lob != None):
+            lob.close() 				
 
    def tearDown(self):
       # set session no timeout at last

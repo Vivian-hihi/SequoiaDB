@@ -4,7 +4,7 @@
 # @author:     liuxiaoxuan 2018-01-29
 
 from lib import testlib
-from commlib import *
+from analyze.commlib import *
 from pysequoiadb.error import (SDBBaseError, SDBEndOfCursor)
 
 class TestAnalyzeCl14216(testlib.SdbTestBase):

@@ -32,7 +32,6 @@ def get_split_explain(cursor):
 def get_sort_result(explain_result):
    new_result = list()
    for x in explain_result:
-      item = x.items()
-      item.sort()
+      item = sorted(x.items())
       new_result.append(item) 
    return new_result
