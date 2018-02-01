@@ -35,32 +35,6 @@ class SequoiaDB_Group_Test extends PHPUnit_Framework_TestCase
       $this -> assertNotEmpty( $cursor, 'list错误' ) ;
       return false ;
    }
-   
-   /**
-    * @depends test_connect
-    * @depends test_isStandlone
-    */
-   public function test_createGroup( $db, $isStandlone )
-   {
-      if( $isStandlone == false )
-      {
-         $err = $db -> createGroup( 'myGroup' ) ;
-         $this -> assertEquals( 0, $err['errno'], 'createGroup错误' ) ;
-      }
-   }
-   
-   /**
-    * @depends test_connect
-    * @depends test_isStandlone
-    */
-   public function test_createCataGroup( $db, $isStandlone )
-   {
-      if( $isStandlone == false )
-      {
-         $err = $db -> createCataGroup( '192.168.20.104', '20000', '/opt/sequoiadb/database/catalog/20000' ) ;
-         $this -> assertEquals( -200, $err['errno'], 'createCataGroup错误' ) ;
-      }
-   }
 
    /**
     * @depends test_connect
