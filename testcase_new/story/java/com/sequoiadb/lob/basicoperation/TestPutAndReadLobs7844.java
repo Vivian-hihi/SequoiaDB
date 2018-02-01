@@ -1,7 +1,6 @@
 package com.sequoiadb.lob.basicoperation;
 
 import java.util.Random;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingDeque;
 
 import org.bson.BSONObject;
@@ -35,9 +34,11 @@ public class TestPutAndReadLobs7844 extends SdbTestBase {
 	private CollectionSpace cs = null;
 	
 	private Random random = new Random();
-	private ConcurrentHashMap<ObjectId, String> id2md5 
-	                     = new ConcurrentHashMap<ObjectId, String>();
-	private LinkedBlockingDeque<ObjectId> oidQueue = new LinkedBlockingDeque<ObjectId>();
+	class LobInfo{
+		public ObjectId oid ;
+		public String md5 ;
+	}	
+	private LinkedBlockingDeque<LobInfo> lobInfoQue = new LinkedBlockingDeque<LobInfo>() ;
 	
     	
 	@BeforeClass
@@ -111,14 +112,14 @@ public class TestPutAndReadLobs7844 extends SdbTestBase {
         public void exec() throws BaseException, InterruptedException{
             try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")){                
                 DBCollection dbcl = db.getCollectionSpace(SdbTestBase.csName).getCollection(clName); 
-                ObjectId oid = oidQueue.take();	                
+                LobInfo lobinfotmp = lobInfoQue.take();
+                ObjectId oid = lobinfotmp.oid;	                
                 try( DBLob rLob = dbcl.openLob(oid,DBLob.SDB_LOB_READ)){                	
         			byte[] rbuff = new byte[(int) rLob.getSize()];
         			rLob.read(rbuff);        			
         			String curMd5 = LobOprUtils.getMd5(rbuff);
-        			String prevMd5 = id2md5.get(oid);
-        			Assert.assertEquals(curMd5, prevMd5);
-        			id2md5.remove(oid);        			
+        			String prevMd5 = lobinfotmp.md5;
+        			Assert.assertEquals(curMd5, prevMd5);      			
         		}       		
             }
         }
@@ -132,8 +133,10 @@ public class TestPutAndReadLobs7844 extends SdbTestBase {
 			
 			//save oid and md5
 			String prevMd5 = LobOprUtils.getMd5(wlobBuff);
-			oidQueue.offer(oid);			
-			id2md5.put(oid, prevMd5);			
+			LobInfo lobInfoTmp = new LobInfo();
+			lobInfoTmp.oid = oid ;
+			lobInfoTmp.md5 = prevMd5 ;		
+			lobInfoQue.offer(lobInfoTmp);			
 		}		
 	}		
 	

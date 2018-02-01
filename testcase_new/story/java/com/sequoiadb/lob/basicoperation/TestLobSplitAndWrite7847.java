@@ -13,8 +13,8 @@ import org.testng.annotations.BeforeClass;
 import org.testng.SkipException;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Random;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingDeque;
 
 import com.sequoiadb.base.CollectionSpace;
@@ -42,9 +42,7 @@ public class TestLobSplitAndWrite7847 extends SdbTestBase {
 	private Random random = new Random();
 	private String sourceRGName = "";
 	private String targetRGName = "";
-	private ConcurrentHashMap<ObjectId, String> id2md5 
-    			= new ConcurrentHashMap<ObjectId, String>();
-	private LinkedBlockingDeque<ObjectId> oidQueue = new LinkedBlockingDeque<ObjectId>();
+	private LinkedBlockingDeque<LobInfo> lobInfoQue = new LinkedBlockingDeque<LobInfo>() ;
 	
 	@BeforeClass
 	public void setUp(){
@@ -132,15 +130,14 @@ public class TestLobSplitAndWrite7847 extends SdbTestBase {
         public void exec() throws BaseException, InterruptedException{
             try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")){                
                 DBCollection dbcl = db.getCollectionSpace(SdbTestBase.csName).getCollection(clName); 
-                ObjectId oid = oidQueue.take();	
-                dbcl.removeLob(oid);
-                id2md5.remove(oid);                   			
+                LobInfo lobInfo = lobInfoQue.take();
+                ObjectId oid = lobInfo.oid;   
+                dbcl.removeLob(oid);                                			
         	}            
         }
     }
 		
-	private void checkLobData( ){		
-		int count = 0;
+	private void checkLobData( ){	
 		try(DBCursor listLob = dbcl.listLobs()){
 			while(listLob.hasNext()){
 				BasicBSONObject obj = (BasicBSONObject)listLob.getNext();
@@ -149,15 +146,38 @@ public class TestLobSplitAndWrite7847 extends SdbTestBase {
 					byte[] rbuff = new byte[(int) rLob.getSize()];
 					rLob.read(rbuff);
 					String curMd5 = LobOprUtils.getMd5(rbuff);
-        			String prevMd5 = id2md5.get(existOid);
-        			Assert.assertEquals(curMd5, prevMd5);        			  
-				}
-				count++;
+					String prevMd5 =  getLobMd5ByOid(existOid);
+	        		Assert.assertEquals(curMd5, prevMd5); 			  
+	        		Assert.assertEquals(curMd5, prevMd5,"the list oid:"+existOid.toString());      			  
+				}				
 			}	
 		}		
 		//the list lobnums must be consistent with the number of remaining digits in the actual map:id2md5
-		Assert.assertEquals(count, id2md5.size());		
-	}	
+		Assert.assertEquals(lobInfoQue.isEmpty(), true,"the remaining "+lobInfoQue.size()+" oids were not found!");		
+	}
+	
+	// find the md5 from expected queue
+		private String getLobMd5ByOid(ObjectId lobOid){
+			Iterator<LobInfo> iterator = lobInfoQue.iterator();
+			boolean found = false;
+			String findMd5 = "";
+			while(iterator.hasNext()){
+				LobInfo current = iterator.next();
+				ObjectId oid = current.getOid();				
+				if ( oid.equals(lobOid) ){				
+					findMd5 = current.getMd5();    			
+					lobInfoQue.remove(current);
+			    	found = true;
+			    	break;
+				}
+			}
+					
+			//if oid does not exist in the queue,than error
+			if (!found) {
+				throw new RuntimeException("oid[" + lobOid + "] not found");
+			}		
+			return findMd5;
+		}
 	
 	private class PutLobsTask extends SdbThreadBase {
         @Override
@@ -178,8 +198,7 @@ public class TestLobSplitAndWrite7847 extends SdbTestBase {
 			
 			//save oid and md5
 			String prevMd5 = LobOprUtils.getMd5(wlobBuff);
-			oidQueue.offer(oid);			
-			id2md5.put(oid, prevMd5);			
+			lobInfoQue.offer(new LobInfo( oid, prevMd5));			
 		}		
 	}	
 	
@@ -195,4 +214,20 @@ public class TestLobSplitAndWrite7847 extends SdbTestBase {
 		    Assert.assertTrue(false,"create cl fail "+e.getErrorType()+":"+e.getMessage());
 	    }
 	 }	
+	
+	private class LobInfo{
+		private ObjectId oid;
+		private String md5;
+		public LobInfo(ObjectId oid, String md5) {
+			this.oid = oid;
+			this.md5 = md5;
+		}
+		
+		public ObjectId getOid() {
+			return oid;
+		}
+		public String getMd5() {
+			return md5;
+		}
+    } 
 }
