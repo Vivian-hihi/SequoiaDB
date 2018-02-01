@@ -2392,7 +2392,7 @@ INT32 msgExtractTuplesAndData( const MsgLobTuple **begin, UINT32 *tuplesSize,
       const MsgLobTuple *t = *begin ;
       //UINT32 dataLen = ossRoundUpToMultipleX( t->columns.len, 4 ) ;
       UINT32 dataLen = t->columns.len ;
-      if ( sizeof( MsgLobTuple ) + dataLen <= *tuplesSize )
+      if ( sizeof( MsgLobTuple ) + dataLen < *tuplesSize )
       {
          *tuple = *begin ;
          *tuplesSize -= sizeof( MsgLobTuple ) + dataLen ;
