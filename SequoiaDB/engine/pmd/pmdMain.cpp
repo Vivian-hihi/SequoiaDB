@@ -230,10 +230,10 @@ namespace engine
       // 4. dump limit info
       {
          PD_LOG( PDEVENT, "dump limit info:\n%s",
-                 pmdGetLimit().str().c_str() ) ;
+                 pmdGetLimit()->str().c_str() ) ;
          INT64 sort = -1 ;
          INT64 hard = -1 ;
-         if ( !pmdGetLimit().getLimit( OSS_LIMIT_VIRTUAL_MEM, sort, hard ) )
+         if ( !pmdGetLimit()->getLimit( OSS_LIMIT_VIRTUAL_MEM, sort, hard ) )
          {
             PD_LOG( PDWARNING, "can not get limit of memory space!" ) ;
          }

@@ -153,7 +153,7 @@ namespace engine
 
    UINT64         pmdAcquireGlobalID() ;
 
-   ossProcLimits  pmdGetLimit() ;
+   ossProcLimits* pmdGetLimit() ;
 
    void           pmdIncErrNum( INT32 rc ) ;
    void           pmdResetErrNum() ;

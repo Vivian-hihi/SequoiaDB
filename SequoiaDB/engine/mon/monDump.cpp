@@ -352,36 +352,35 @@ namespace engine
       INT64 soft = -1 ;
       INT64 hard = -1 ;
       BOOLEAN isSucc = FALSE ;
-      ossProcLimits limInfo ;
+      ossProcLimits *limInfo = pmdGetLimit() ;
 
-      limInfo = pmdGetLimit() ;
       BSONObjBuilder limOb( ob.subobjStart( FIELD_NAME_ULIMIT ) ) ;
 
-      isSucc = limInfo.getLimit( OSS_LIMIT_CORE_SZ, soft, hard ) ;
+      isSucc = limInfo->getLimit( OSS_LIMIT_CORE_SZ, soft, hard ) ;
       if ( isSucc )
       {
          limOb.append( FIELD_NAME_CORESZ, soft ) ;
       }
 
-      isSucc = limInfo.getLimit( OSS_LIMIT_VIRTUAL_MEM, soft, hard ) ;
+      isSucc = limInfo->getLimit( OSS_LIMIT_VIRTUAL_MEM, soft, hard ) ;
       if ( isSucc )
       {
          limOb.append( FIELD_NAME_VM, soft ) ;
       }
 
-      isSucc = limInfo.getLimit( OSS_LIMIT_OPEN_FILE, soft, hard ) ;
+      isSucc = limInfo->getLimit( OSS_LIMIT_OPEN_FILE, soft, hard ) ;
       if ( isSucc )
       {
          limOb.append( FIELD_NAME_OPENFL, soft ) ;
       }
 
-      isSucc = limInfo.getLimit( OSS_LIMIT_PROC_NUM, soft, hard ) ;
+      isSucc = limInfo->getLimit( OSS_LIMIT_PROC_NUM, soft, hard ) ;
       if ( isSucc )
       {
          limOb.append( FIELD_NAME_NPROC, soft ) ;
       }
 
-      isSucc = limInfo.getLimit( OSS_LIMIT_FILE_SZ, soft, hard ) ;
+      isSucc = limInfo->getLimit( OSS_LIMIT_FILE_SZ, soft, hard ) ;
       if ( isSucc )
       {
          limOb.append( FIELD_NAME_FILESZ, soft ) ;
@@ -396,18 +395,17 @@ namespace engine
    INT32 monAppendFileDesp( BSONObjBuilder &ob )
    {
       PD_TRACE_ENTRY( SDB_MONAPPENDFILEDESP ) ;
-      INT32 loadPercent = -1 ;
-      INT64 totalNum    = -1 ;
-      INT64 freeNum     = -1 ;
-      INT64 usedNum     = -1 ;
-      INT64 softLimit   = -1 ;
-      INT64 hardLimit   = -1 ;
-      INT32 rc          = SDB_OK ;
-      ossProcLimits limInfo ;
+      INT32 loadPercent       = -1 ;
+      INT64 totalNum          = -1 ;
+      INT64 freeNum           = -1 ;
+      INT64 usedNum           = -1 ;
+      INT64 softLimit         = -1 ;
+      INT64 hardLimit         = -1 ;
+      INT32 rc                = SDB_OK ;
+      ossProcLimits *limInfo  = pmdGetLimit() ;
 
       // get total number in ulimit
-      limInfo = pmdGetLimit() ;
-      limInfo.getLimit( OSS_LIMIT_OPEN_FILE, softLimit, hardLimit ) ;
+      limInfo->getLimit( OSS_LIMIT_OPEN_FILE, softLimit, hardLimit ) ;
       totalNum = softLimit ;
 
       // get used number
@@ -548,7 +546,7 @@ namespace engine
       INT32 loadPctVM         = 0 ;
       INT64 allocatedVMProc   = 0 ;
       INT64 rss               = 0 ;
-      ossProcLimits limInfo ;
+      ossProcLimits *limInfo  = pmdGetLimit() ;
 
       // get memory of host
       rc = ossGetMemoryInfo( loadPctRAM, totalRAM, availRAM,
@@ -563,8 +561,7 @@ namespace engine
                    "rc = %d", rc ) ;
 
       // get limited virtual memory in ulimit
-      limInfo = pmdGetLimit() ;
-      limInfo.getLimit( OSS_LIMIT_VIRTUAL_MEM, softLimit, hardLimit ) ;
+      limInfo->getLimit( OSS_LIMIT_VIRTUAL_MEM, softLimit, hardLimit ) ;
 
       // caculate
       if ( 2 == overCommitMode )

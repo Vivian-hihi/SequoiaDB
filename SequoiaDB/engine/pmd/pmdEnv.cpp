@@ -130,9 +130,9 @@ namespace engine
       return s_sigNum ;
    }
 
-   ossProcLimits pmdGetLimit()
+   ossProcLimits* pmdGetLimit()
    {
-      return pmdGetSysInfo()->_limitInfo ;
+      return &( pmdGetSysInfo()->_limitInfo ) ;
    }
 
    void pmdIncErrNum( INT32 rc )
