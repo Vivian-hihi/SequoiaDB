@@ -1244,11 +1244,16 @@ namespace engine
       dmsStorageUnit *pSU = NULL ;
       dmsMBContext *mbContext = NULL ;
 
+      BOOLEAN writable = FALSE ;
       BOOLEAN allocatedBuf = FALSE ;
 
       rtnAnalyzeParam localParam( param ) ;
 
       MON_IDX_LIST monIdxList ;
+
+      rc = dmsCB->writable( cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc: %d", rc ) ;
+      writable = TRUE ;
 
       rc = dmsCB->nameToSUAndLock( pCSName, suID, &pSU, SHARED, OSS_ONE_SEC ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to lock collection space for "
@@ -1291,9 +1296,11 @@ namespace engine
 
       pSU->data()->releaseMBContext( mbContext ) ;
       dmsCB->suUnlock( suID, SHARED ) ;
+      dmsCB->writeDown( cb ) ;
       pSU = NULL ;
       suID = DMS_INVALID_SUID ;
       mbContext = NULL ;
+      writable = FALSE ;
 
       if ( monIdxList.empty() )
       {
@@ -1353,6 +1360,10 @@ namespace engine
       if ( DMS_INVALID_SUID != suID )
       {
          dmsCB->suUnlock( suID, SHARED ) ;
+      }
+      if ( writable )
+      {
+         dmsCB->writeDown( cb ) ;
       }
       PD_TRACE_EXITRC( SDB__RTNANALYZECLSTATS, rc ) ;
       return rc ;
@@ -1480,7 +1491,12 @@ namespace engine
       dmsMBContext *mbContext = NULL ;
       dmsExtentID indexExtID = DMS_INVALID_EXTENT ;
 
+      BOOLEAN writable = FALSE ;
       BOOLEAN allocatedBuf = FALSE ;
+
+      rc = dmsCB->writable( cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc: %d", rc ) ;
+      writable = TRUE ;
 
       rc = dmsCB->nameToSUAndLock( pCSName, suID, &pSU, SHARED, OSS_ONE_SEC ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to lock collection space for "
@@ -1570,6 +1586,10 @@ namespace engine
       if ( DMS_INVALID_SUID != suID )
       {
          dmsCB->suUnlock( suID, SHARED ) ;
+      }
+      if ( writable )
+      {
+         dmsCB->writeDown( cb ) ;
       }
       PD_TRACE_EXITRC( SDB__RTNANALYZEIXSTAT, rc ) ;
       return rc ;
@@ -1796,7 +1816,7 @@ namespace engine
       _rtnInternalSorting sorter( boOrder, pSortBuf,
                                   RTN_ANALYZE_SORT_BUF_SIZE, -1 ) ;
 
-      rc = rtnGetIndexSamples( pSU, indexCB, sampleRecords, totalRecords,
+      rc = rtnGetIndexSamples( pSU, indexCB, cb, sampleRecords, totalRecords,
                                fullScan, sorter, levels, pages ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get samples of index "
                    "[%s.%s %s], rc: %d", pCSName, pCLName, pIXName, rc ) ;

@@ -377,15 +377,19 @@ namespace engine
       return count ;
    }
 
-   static UINT32 _rtnIndexKeyNodeInfo ( dmsExtentID rootExtentID,
-                                        dmsStorageUnit *su,
-                                        UINT32 sampleRecords,
-                                        UINT64 totalRecords,
-                                        BOOLEAN fullScan,
-                                        UINT32 &targetLevel,
-                                        UINT32 &levelCount,
-                                        UINT32 &extentCount )
+   static INT32 _rtnIndexKeyNodeInfo ( dmsExtentID rootExtentID,
+                                       dmsStorageUnit * su,
+                                       pmdEDUCB * cb,
+                                       UINT32 sampleRecords,
+                                       UINT64 totalRecords,
+                                       BOOLEAN fullScan,
+                                       UINT32 & targetLevel,
+                                       UINT32 & levelCount,
+                                       UINT32 & extentCount,
+                                       UINT32 & targetKeyCount )
    {
+      INT32 rc = SDB_OK ;
+
       _utilList< dmsExtentID, 32 > extentIDStack ;
       UINT32 targetLevelKeyCount = 0 ;
       UINT64 curLevelKeyCount = 0, curLevelExtCount = 0,
@@ -404,6 +408,12 @@ namespace engine
 
       while ( curLevelExtCount > 0 )
       {
+         if ( cb->isInterrupted() )
+         {
+            rc = SDB_APP_INTERRUPT ;
+            goto error ;
+         }
+
          // Breadth-first search each levels
          for ( UINT32 extIdx = 0 ; extIdx < curLevelExtCount ; extIdx ++ )
          {
@@ -488,7 +498,12 @@ namespace engine
          }
       }
 
-      return targetLevelKeyCount ;
+      targetKeyCount = targetLevelKeyCount ;
+
+   done :
+      return rc ;
+   error :
+      goto done ;
    }
 
    static const CHAR* _rtnIndexKeyData( dmsExtentID extentID,
@@ -755,6 +770,7 @@ namespace engine
 
    INT32 rtnGetIndexSamples ( _dmsStorageUnit *su,
                               ixmIndexCB *indexCB,
+                              _pmdEDUCB * cb,
                               UINT32 sampleRecords,
                               UINT64 totalRecords,
                               BOOLEAN fullScan,
@@ -772,9 +788,12 @@ namespace engine
       UINT32 sampleMod  = 0 ;
       UINT32 sampleStep = 1 ;
       UINT32 sampleIndex = 0 ;
-      UINT32 keyNodeCount =
-            _rtnIndexKeyNodeInfo( rootID, su, sampleRecords, totalRecords,
-                                  fullScan, targetLevel, levels, pages ) ;
+      UINT32 keyNodeCount = 0 ;
+
+      rc = _rtnIndexKeyNodeInfo( rootID, su, cb, sampleRecords, totalRecords,
+                                 fullScan, targetLevel, levels, pages,
+                                 keyNodeCount ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to get index node info, rc: %d", rc ) ;
 
       PD_LOG( PDDEBUG, "Estimate index [%s] info levels %u pages %u",
               indexCB->getName(), levels, pages ) ;
@@ -791,6 +810,12 @@ namespace engine
 
       while ( sampleIndex < keyNodeCount )
       {
+         if ( cb->isInterrupted() )
+         {
+            rc = SDB_APP_INTERRUPT ;
+            goto error ;
+         }
+
          keyData = _rtnIndexGetKey( rootID, su, targetLevel, sampleIndex ) ;
          sampleIndex += sampleStep ;
 

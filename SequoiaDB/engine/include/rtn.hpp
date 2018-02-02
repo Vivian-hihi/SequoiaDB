@@ -93,6 +93,7 @@ namespace engine
 
    INT32 rtnGetIndexSamples ( _dmsStorageUnit *su,
                               ixmIndexCB *indexCB,
+                              _pmdEDUCB * cb,
                               UINT32 sampleRecords,
                               UINT64 totalRecords,
                               BOOLEAN fullScan,
