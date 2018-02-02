@@ -224,6 +224,31 @@ namespace engine
             }
          } while ( TRUE ) ;
       }
+      else if ( Object == e.type() )
+      {
+         _mthElemMatchIterator i( e.wrap(),
+                                  action->getMatchTree(),
+                                  n ) ;
+         do
+         {
+            BSONElement next ;
+            rc = i.next( next ) ;
+            if ( SDB_OK == rc )
+            {
+               builder.append( next ) ;
+            }
+            else if ( SDB_DMS_EOC == rc )
+            {
+               rc = SDB_OK ;
+               break ;
+            }
+            else
+            {
+               PD_LOG( PDERROR, "failed to get next element:%d", rc ) ;
+               goto error ;
+            }
+         } while ( TRUE ) ;
+      }
    done:
       PD_TRACE_EXITRC( SDB__MTHELEMMATCHBUILDN, rc ) ;
       return rc ;
@@ -1345,7 +1370,7 @@ namespace engine
                          bson::BSONObjBuilder &builder )
    {
       INT32 rc = SDB_OK ;
-      INT32 flag = 0 ; 
+      INT32 flag = 0 ;
       PD_TRACE_ENTRY( SDB__MTHDIVIDEBUILD ) ;
       BOOLEAN strictDataMode = action->getStrictDataMode() ;
       const BSONObj &obj = action->getArg() ;
@@ -1401,7 +1426,7 @@ namespace engine
                  fieldName, in.numberLong(), arg.numberLong(), rc ) ;
          goto error ;
       }
-      
+
       obj = builder.obj() ;
       if ( !obj.isEmpty() )
       {
