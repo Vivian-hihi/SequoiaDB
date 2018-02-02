@@ -55,7 +55,7 @@ class SequoiaDB_Group_Test extends PHPUnit_Framework_TestCase
          $this -> assertNotEquals( 0, $num, 'listGroup错误' ) ;
       }
    }
-   
+
    /**
     * @depends test_connect
     * @depends test_isStandlone
@@ -64,29 +64,11 @@ class SequoiaDB_Group_Test extends PHPUnit_Framework_TestCase
    {
       if( $isStandlone == false )
       {
-         $groupObj = $db -> getGroup( 'myGroup' ) ;
-         $err = $db -> getError() ;
-         $this -> assertEquals( 0, $err['errno'], 'getGroup错误' ) ;
-         $this -> assertNotEmpty( $groupObj, 'getGroup错误' ) ;
-         
-         //这个应该是不存在的
+         //it is not exist
          $groupObj = $db -> getGroup( 'myGroup1' ) ;
          $err = $db -> getError() ;
          $this -> assertNotEquals( 0, $err['errno'], 'getGroup错误' ) ;
          $this -> assertEmpty( $groupObj, 'getGroup错误' ) ;
-      }
-   }
-   
-   /**
-    * @depends test_connect
-    * @depends test_isStandlone
-    */
-   public function test_removeGroup( $db, $isStandlone )
-   {
-      if( $isStandlone == false )
-      {
-         $err = $db -> removeGroup( 'myGroup' ) ;
-         $this -> assertEquals( 0, $err['errno'], 'removeGroup错误' ) ;
       }
    }
 }
