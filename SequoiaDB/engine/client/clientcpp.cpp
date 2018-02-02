@@ -9428,7 +9428,8 @@ error :
    }
 
    INT32 _sdbImpl::traceStart( UINT32 traceBufferSize, const CHAR* component,
-                               const CHAR* breakpoint, const vector<UINT32> &tidVec )
+                               const CHAR* breakpoint,
+                               const vector<UINT32> &tidVec )
    {
       INT32 rc = SDB_OK ;
       BSONObj query ;

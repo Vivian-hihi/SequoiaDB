@@ -4994,13 +4994,7 @@ namespace sdbclient
          return pSDB->setPDLevel( level, options ) ;
       }
 
-      /** \fn INT32 msg(const CHAR* msg)
-          \brief Write a message to log
-          \param [in] msg The message that will be written to log
-          \retval SDB_OK Operation Success
-          \retval Others Operation Fail
-      */
-      INT32 msg( const CHAR* msg )
+      INT32 _msg( const CHAR* msg )
       {
          if( !pSDB )
             return SDB_NOT_CONNECTED ;
