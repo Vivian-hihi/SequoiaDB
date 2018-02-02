@@ -79,20 +79,35 @@
 
       <property name="remote_cmd1" 
          value="ant -f ${CI_WORK_DIR}/script/src/solve_result/env_detect.xml ${detect_target_name}" />
+         
+      <property name="remote_cmd_lsof" 
+         value="ant -f ${CI_WORK_DIR}/script/src/solve_result/env_detect.xml detect_handle_number -Dcontrol_host=${host.NAME}" />
    
       <for list="${testhost_list}" param="testhost" parallel="true">
          <sequential>         
-         <staf location="@{testhost}" service="PROCESS"
-               resultPrefix="remote_exec1"
-               request="START SHELL COMMAND ${remote_cmd1} WAIT STDERRTOSTDOUT RETURNSTDOUT"
-               throwBuildException="1"/>
-         <propertyregex property="remote_exec_rc1" input="${remote_exec1.result}" regexp="Return\ Code:\ (.*)\n" select="\1"/>
-         <if>
-            <equals arg1="${remote_exec_rc1}" arg2="0" />
-            <else>
-               <fail message="exec: ${remote_cmd1}, in host: @{testhost}, return code: ${remote_exec_rc1}"/>
-            </else>
-         </if>        
+            <staf location="@{testhost}" service="PROCESS"
+                  resultPrefix="remote_exec1"
+                  request="START SHELL COMMAND ${remote_cmd1} WAIT STDERRTOSTDOUT RETURNSTDOUT"
+                  throwBuildException="1"/>
+            <propertyregex property="remote_exec_rc1" input="${remote_exec1.result}" regexp="Return\ Code:\ (.*)\n" select="\1"/>
+            <if>
+               <equals arg1="${remote_exec_rc1}" arg2="0" />
+               <else>
+                  <fail message="exec: ${remote_cmd1}, in host: @{testhost}, return code: ${remote_exec_rc1}"/>
+               </else>
+            </if>        
+            
+            <staf location="@{testhost}" service="PROCESS"
+                  resultPrefix="remote_exec_lsof"
+                  request="START SHELL COMMAND ${remote_cmd_lsof} WAIT STDERRTOSTDOUT RETURNSTDOUT"
+                  throwBuildException="1"/>
+            <propertyregex property="remote_exec_lsof" input="${remote_exec_lsof.result}" regexp="Return\ Code:\ (.*)\n" select="\1"/>
+            <if>
+               <equals arg1="${remote_exec_lsof}" arg2="0" />
+               <else>
+                  <fail message="exec: ${remote_cmd_lsof}, in host: @{testhost}, return code: ${remote_exec_lsof}"/>
+               </else>
+            </if> 
          </sequential>
       </for>
       
@@ -405,6 +420,62 @@
       </if> 
    </target>
 
+   <target name="detect_handle_number">
+      <property file="${basedir}/src/conf/test.conf" />
+      <property name="report_dir" value="${CI_WORK_DIR}/report/env_detect"/>
+      <hostinfo prefix="host" />
+      <var name="output" unset="true"/>
+      <exec executable="sh" 
+            outputproperty="output" 
+            failonerror="false">
+         <arg value="-c"/>
+         <arg value="${INSTALL_DIR}/bin/sdblist -l |awk '{print $4}' | tail -n +2 | head -n -1 " />
+      </exec>
+      <var name="flag" value="false"/>
+      <var name="lsofinfo" value="hostname       pid    lsof_num"/>
+      <for list="${output}" param="itempid" delimiter="${line.separator}">
+         <sequential>
+            <var name="openfilenum" unset="true"/>
+            <exec executable="sh" 
+                  outputproperty="openfilenum" 
+                  failonerror="false">
+               <arg value="-c"/>
+               <arg value="lsof -p @{itempid} | wc -l | tail -n 2 | head -n 1 " />
+            </exec>
+            <var name="re" unset="true"/>
+            <var name="testresult" unset="true"/>
+            <exec executable="sh" 
+                  outputproperty="re" 
+                  resultproperty="testresult"
+                  failonerror="false">
+               <arg value="-c"/>
+               <arg value="test ${openfilenum} -le 200" />
+            </exec>
+            <var name="lsofinfo" value="${lsofinfo}&#10;${host.NAME}  @{itempid}   ${openfilenum}"/>
+            <if>
+               <equals arg1="${testresult}" arg2="1"/>
+               <then>
+                  <var name="flag" value="true"/>
+               </then>
+            </if>
+         </sequential>
+      </for>
+      <if>
+         <equals arg1="${flag}" arg2="true"/>
+         <then>
+            <copy file="${basedir}/src/test/exec_testcase/report_fail_temple.xml" tofile="${report_dir}/${host.NAME}_node_lsof_report.xml"/>
+            <replace file="${report_dir}/${host.NAME}_node_lsof_report.xml" token="ERROR_MESSAGE" value="${lsofinfo}"/>
+            <replace file="${report_dir}/${host.NAME}_node_lsof_report.xml" token="TESTCASE_TYPE" value="detect_env"/>
+            <replace file="${report_dir}/${host.NAME}_node_lsof_report.xml" token="TESTSUIT_NAME" value="detect_node"/>
+            <replace file="${report_dir}/${host.NAME}_node_lsof_report.xml" token="TESTCASE_NAME" value="node_lsof"/>
+            <staf location="local" service="FS"
+                  request="COPY FILE ${report_dir}/${host.NAME}_node_lsof_report.xml TODIRECTORY ${CI_WORK_DIR}/report/env_detect TOMACHINE ${control_host}"
+                  throwBuildException="1"/>
+         </then>
+      </if>
+   </target>
+   
+   
    <target name="detect_db_cluster">
       <detectenv envisok="envrc" casetype="detect_env" casename="db_group"
                     rptfullname="${report_dir}/after_detect_env_db_group.xml" />
