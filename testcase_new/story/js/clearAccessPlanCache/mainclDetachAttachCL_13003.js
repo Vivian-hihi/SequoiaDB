@@ -156,6 +156,9 @@ function main()
    //先detach子表,落在主表cs上
    maincl.detachCL(subclFullName1);
    
+   //检查主备同步                                                         
+   checkConsistency(db, null, null, ['SYSCatalogGroup']);  
+   
    //检查访问计划快照
    var expAccessPlan = [];
    var actAccessPlan = getMainclAccessPlans( db, {Collection: mainclFullName} );
@@ -198,6 +201,9 @@ function main()
    //attach该子表
    maincl.attachCL( subclFullName1, {LowBound: {a:0}, UpBound:{a:4000}} );
    
+   //检查主备同步                                               
+   checkConsistency(db, null, null, ['SYSCatalogGroup']); 
+   
    //检查访问计划快照
    var expAccessPlan = [];
    var actAccessPlan = getMainclAccessPlans( db, {Collection: mainclFullName} );
@@ -225,6 +231,10 @@ function main()
    
    //先detach子表,落在子表cs上
    maincl.detachCL(subclFullName3);
+   
+   //检查主备同步                                               
+   checkConsistency(db, null, null, ['SYSCatalogGroup']); 
+
    
    //检查访问计划快照
    var expAccessPlan = [];
@@ -268,6 +278,9 @@ function main()
    //attach该子表
    maincl.attachCL( subclFullName3, {LowBound: {a:16000}, UpBound:{a:18000}} );
    
+   //检查主备同步                                               
+   checkConsistency(db, null, null, ['SYSCatalogGroup']); 
+
    //检查访问计划快照
    var expAccessPlan = [];
    var actAccessPlan = getMainclAccessPlans( db, {Collection: mainclFullName} );

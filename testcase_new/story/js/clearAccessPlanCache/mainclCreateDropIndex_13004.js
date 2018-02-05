@@ -148,6 +148,9 @@ function main()
    //创建索引
    commCreateIndex( maincl, "a1", {a1:1});
    
+   //检查主备同步
+   checkConsistency(db, null, null, [srcGroupName, desGroupName]);
+   
    //检查访问计划快照
    var expAccessPlan = [];
    var actAccessPlan = getMainclAccessPlans( db, {Collection: mainclFullName} );
@@ -167,6 +170,9 @@ function main()
    
    //删除索引
    commDropIndex( maincl, "a1");
+   
+   //检查主备同步
+   checkConsistency(db, null, null, [srcGroupName, desGroupName]);
    
    //检查访问计划快照
    var expAccessPlan = [];
