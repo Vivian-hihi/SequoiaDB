@@ -28,7 +28,7 @@
 | Run.QueryTimeSpent               | 浮点型    | MERGE 执行耗时（单位：秒）                                                   |
 | Run.GetMores                     | 长整型    | 请求 MERGE 返回结果集的次数                                                  |
 | Run.ReturnNum                    | 长整型    | MERGE 返回记录个数                                                           |
-| SubCollections                   | 数组      | MERGE 的子操作（每个子表返回的查询的访问计划结果）                           |
+| SubCollections                   | 数组      | MERGE 的子操作（每个子表返回的查询的访问计划结果）<br>详细请参考：[数据节点的访问计划](database_management/access_plans/detailed_access_plan/collection_plan.md) |
 
 **示例**
 

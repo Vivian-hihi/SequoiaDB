@@ -29,7 +29,7 @@
 | Run.GetMores                | 长整型    | 请求 COORD-MERGE 返回结果集的次数                                        |
 | Run.ReturnNum               | 长整型    | COORD-MERGE 返回记录个数                                                 |
 | Run.WaitTimeSpent           | 浮点型    | COORD-MERGE 等待数据返回的时间（单位：秒，以秒为单位的粗略统计信息）     |
-| ChildOperators              | 数组      | COORD-MERGE 的子操作（每个数据组返回的查询的访问计划结果）               |
+| ChildOperators              | 数组      | COORD-MERGE 的子操作（每个数据组返回的查询的访问计划结果）<br>详细请参考：[主表的访问计划](database_management/access_plans/detailed_access_plan/main_collection_plan.md) 或者 [数据节点的访问计划](database_management/access_plans/detailed_access_plan/collection_plan.md) |
 
 **示例**
 
