@@ -245,7 +245,7 @@
       //节点列表
       $scope.NodeTable = {
          'title': {
-            'type':                       $scope.autoLanguage( '类型' ),
+            'type':                      $scope.autoLanguage( '类型' ),
             'nodeInfo.1.hostName':       $scope.autoLanguage( '主机名' ),
             'nodeInfo.1.svcname':        $scope.autoLanguage( '服务名' ),
             'nodeInfo.1.dbpath':         $scope.autoLanguage( '数据路径' ),
@@ -277,7 +277,7 @@
                   { 'key': $scope.autoLanguage( '全部' ),   'value': '' },
                   { 'key': $scope.autoLanguage( '已同步' ), 'value': filterSync },
                   { 'key': $scope.autoLanguage( '变化' ),   'value': filterChange },
-                  { 'key': $scope.autoLanguage( '无变化' ), 'value': 1 }
+                  { 'key': $scope.autoLanguage( '无变化' ), 'value': 0 }
                ],
                'nodeInfo.1.hostName': 'indexof',
                'nodeInfo.1.svcname': 'indexof',
