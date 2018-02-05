@@ -57,7 +57,6 @@ function main()
    checkRecords( csvRecs1, recs ) ;
    cl1.truncate() ;
    
-   /*
    testExprtImprtCsv2() ; // test import with type without precison
    cursor = cl1.find( {}, { _id: { $include: 0 } } ) ;
    recs = getRecords( cursor ) ;
@@ -69,7 +68,6 @@ function main()
    recs = getRecords( cursor ) ;
    checkRecords( csvRecs2, recs ) ;
    cl1.truncate() ;
-   */
    
    testExprtImprtJson() ;
    cursor = cl1.find( {}, { _id: { $include: 0 } } ) ;
