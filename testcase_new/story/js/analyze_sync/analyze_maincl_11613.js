@@ -66,7 +66,6 @@ function main()
       srcGroupName = temp[0][0].GroupName;
       desGroupName = temp[1][0].GroupName;
    }
-   var groups = [srcGroupName, desGroupName];
    println("srcGroupName:" + srcGroupName);
    println("desGroupName:" + desGroupName);
    
@@ -110,8 +109,9 @@ function main()
    db2.setSessionAttr( { PreferedInstance: "s" } );
    dbclSlave = db2.getCS(maincsName).getCL(mainclName);
    
-   //检查指定的数据组
-   checkConsistency(db, null, null, groups);
+   //检查主备同步
+   checkConsistency(db, null, null, [srcGroupName, desGroupName]);
+   
    //检查统计信息
    checkStat( db, maincsName, subclName1, "$shard", false, false );
    checkStat( db, maincsName, subclName2, "$shard", false, false );
@@ -145,9 +145,53 @@ function main()
    
    //指定主表cl执行统计
    analyze( db, {Collection: mainclFullName} );
-  
-   //检查指定的数据组
-   checkConsistency(db, null, null, groups);
+   
+   //检查主备同步
+   checkConsistency(db, null, null, [srcGroupName, desGroupName]);
+   
+   //检查统计
+   checkStat( db, maincsName, subclName1, "$shard", true, true );
+   checkStat( db, maincsName, subclName2, "$shard", true, true );
+   checkStat( db, subcsName1, subclName3, "$shard", true, true );
+   checkStat( db, subcsName1, subclName4, "$shard", true, true );
+   
+   checkStat( db, maincsName, subclName1, "a1", true, true );
+   checkStat( db, maincsName, subclName2, "a1", true, true );
+   checkStat( db, subcsName1, subclName3, "a1", true, true );
+   checkStat( db, subcsName1, subclName4, "a1", true, true );
+   
+   //检查访问计划快照
+   var expAccessPlan = [];
+   var actAccessPlan = getMainclAccessPlans( db, {Collection: mainclFullName} );
+   checkMainclAccessPlans( expAccessPlan, actAccessPlan );
+   
+   //执行查询
+   var findConf = {a0:{$in:[0,10000]}};
+   query( dbclPrimary, findConf, null, null, (insertSameNum + 1)*2 );
+   query( dbclSlave, findConf, null, null, (insertSameNum + 1)*2  );
+   var findConf = {a1:{$in:[0,10000]}};
+   query( dbclPrimary, findConf, null, null, (insertSameNum + 1)*2 );
+   query( dbclSlave, findConf, null, null, (insertSameNum + 1)*2  );
+   
+   //检查访问计划快照
+   var tmp = [{GroupName:srcGroupName,ScanType:"ixscan",IndexName:"$shard"},
+              {GroupName:desGroupName,ScanType:"ixscan",IndexName:"$shard"},
+              {GroupName:desGroupName,ScanType:"ixscan",IndexName:"a1"},
+              {GroupName:srcGroupName,ScanType:"ixscan",IndexName:"a1"}];                    
+   var expAccessPlan = tmp.concat(tmp);
+   var actAccessPlan = getMainclAccessPlans( db, {Collection: mainclFullName} );
+   checkMainclAccessPlans( expAccessPlan, actAccessPlan );
+   
+   //主备节点上检查访问计划
+   checkExplainAfterAnalyzeMaincl();
+   println("---check all explain after anlyze maincl success");
+   
+   //指定主表cl执行统计
+   analyze( db, {Mode:2, Collection: mainclFullName} );
+   
+   //检查主备同步
+   checkConsistency(db, null, null, [srcGroupName, desGroupName]);
+   
    //检查统计
    checkStat( db, maincsName, subclName1, "$shard", true, true );
    checkStat( db, maincsName, subclName2, "$shard", true, true );
@@ -191,8 +235,9 @@ function main()
    maincl.attachCL( subclFullName1, {LowBound: {a:0}, UpBound:{a:4000}} );
    maincl.attachCL( subclFullName3, {LowBound: {a:8000}, UpBound:{a:12000}} );  
    
-   //检查指定的数据组
-   checkConsistency(db, null, null, groups);
+   //检查主备同步
+   checkConsistency(db, null, null, [srcGroupName, desGroupName]);
+   
    //检查统计信息
    checkStat( db, maincsName, subclName1, "$shard", true, true );
    checkStat( db, maincsName, subclName2, "$shard", true, true );

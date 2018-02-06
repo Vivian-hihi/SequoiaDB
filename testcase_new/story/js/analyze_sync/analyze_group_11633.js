@@ -55,8 +55,10 @@ function main()
    //执行统计
    analyze( db, {Collection: COMMCSNAME + "." + clName} );
    
-   //检查统计信息
+   //检查主备同步
    checkConsistency(db, COMMCSNAME, clName);
+   
+   //检查统计信息
    checkStat( db, COMMCSNAME, clName, "a", true, true );
    
    //执行查询
@@ -68,10 +70,13 @@ function main()
    checkSnapShotAccessPlans( clFullName, expAccessPlan1, actAccessPlan );
    
    //生成默认统计信息
-   analyze( db, {Mode:3, Collection: COMMCSNAME + "." + clName} );
+   var groupName = getSrcGroup( COMMCSNAME, clName );
+   analyze( db, {Mode:3, Collection: COMMCSNAME + "." + clName, GroupName: groupName} );
+   
+   //检查主备同步
+   checkConsistency(db, COMMCSNAME, clName);
    
    //检查统计信息
-   checkConsistency(db, COMMCSNAME, clName);
    checkStat( db, COMMCSNAME, clName, "a", true, false );
    
    //检查访问计划快照
@@ -92,11 +97,12 @@ function main()
    updateIndexStateInfo( db, COMMCSNAME, clName, "a", mcvValues, fracs );
    
    //统计信息加载至缓存
-   var groupName = getSrcGroup( COMMCSNAME, clName );
    analyze( db, {Mode: 4, GroupName: groupName} );
    
-   //检查统计信息
+   //检查主备同步
    checkConsistency(db, COMMCSNAME, clName);
+   
+   //检查统计信息
    checkStat( db, COMMCSNAME, clName, "a", true, true );
    
    //检查访问计划快照
@@ -116,8 +122,10 @@ function main()
    var fracs = [500,100,9400];
    updateIndexStateInfo( db, COMMCSNAME, clName, "a", mcvValues, fracs );
    
-   //检查统计信息
+   //检查主备同步
    checkConsistency(db, COMMCSNAME, clName);
+   
+   //检查统计信息
    checkStat( db, COMMCSNAME, clName, "a", true, true );
    
    //检查访问计划快照
@@ -135,8 +143,10 @@ function main()
    //再次清空缓存
    analyze( db, {Mode:5, GroupName: groupName} );
    
-   //检查统计信息
+   //检查主备同步
    checkConsistency(db, COMMCSNAME, clName);
+   
+   //检查统计信息
    checkStat( db, COMMCSNAME, clName, "a", true, true );
    
    //检查访问计划快照
