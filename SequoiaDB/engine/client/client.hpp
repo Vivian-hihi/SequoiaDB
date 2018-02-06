@@ -3907,7 +3907,7 @@ namespace sdbclient
          {
             return SDB_NOT_CONNECTED ;
          }
-         RELEASE_INNER_HANDLE( cs.pCollectionSpace ) ;        
+         RELEASE_INNER_HANDLE( cs.pCollectionSpace ) ;
          return pSDB->getCollectionSpace ( pCollectionSpaceName,
                                            cs ) ;
       }
@@ -4994,7 +4994,7 @@ namespace sdbclient
          return pSDB->setPDLevel( level, options ) ;
       }
 
-      INT32 _msg( const CHAR* msg )
+      INT32 msg( const CHAR* msg )
       {
          if( !pSDB )
             return SDB_NOT_CONNECTED ;
