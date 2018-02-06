@@ -79,7 +79,7 @@ class setSessionAttr14209 extends PHPUnit_Framework_TestCase
       echo "\n---Begin to setSessionAttr[noCache, first].\n"; 
       $instanceid = 'M';
       $instanceMode = 'random';
-      $instanceTimeout = 20000;          
+      $instanceTimeout = 200000;          
       // setSessionAttr
       $err = self::$db -> setSessionAttr( array( 'PreferedInstance' => $instanceid, 'PreferedInstanceMode' => $instanceMode
             , 'Timeout' => $instanceTimeout ) );
@@ -95,7 +95,7 @@ class setSessionAttr14209 extends PHPUnit_Framework_TestCase
       echo "\n---Begin to setSessionAttr[noCache, second].\n"; 
       $instanceid = 's';
       $instanceMode = 'ordered';
-      $instanceTimeout = 40000;            
+      $instanceTimeout = 400000;            
       // setSessionAttr
       $err = self::$db -> setSessionAttr( array( 'PreferedInstance' => $instanceid, 'PreferedInstanceMode' => $instanceMode
             , 'Timeout' => $instanceTimeout ) );
@@ -113,7 +113,7 @@ class setSessionAttr14209 extends PHPUnit_Framework_TestCase
       echo "\n---Begin to setSessionAttr[cache].\n"; 
       $instanceid = 1;
       $instanceMode = 'random';
-      $instanceTimeout = 60000; 
+      $instanceTimeout = 600000; 
       
       // setSessionAttr
       $err = self::$db -> setSessionAttr( array( 'PreferedInstance' => $instanceid, 'PreferedInstanceMode' => $instanceMode
