@@ -1,4 +1,4 @@
-﻿package com.sequoiadb.meta;
+package com.sequoiadb.meta;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
@@ -21,7 +21,7 @@ import com.sequoiadb.testcommon.SdbTestBase;
  * @Date 2018-02-05
  * @Version 1.00
  */
-public class TestCreateCL14417 extends SdbTestBase {
+public class TestCreateCL14417 extends SdbTestBase{
 	private static Sequoiadb sdb = null;
 	private String csName = "cs_14417";
 	private String clName = "cl_14417";
@@ -81,3 +81,4 @@ public class TestCreateCL14417 extends SdbTestBase {
 		}
 	}
 }
+
