@@ -508,6 +508,18 @@ public class ReplicaGroup {
      * @param hostName  host name
      * @param port      port
      * @param dbPath    the path for node
+     * @return the created Node object
+     * @throws BaseException If error happens.
+     */
+    public Node createNode(String hostName, int port, String dbPath) throws BaseException {
+        return createNode(hostName, port, dbPath, new BasicBSONObject());
+    }
+
+    /**
+     * Create node.
+     * @param hostName  host name
+     * @param port      port
+     * @param dbPath    the path for node
      * @param configure configuration for this operation
      * @return the created Node object
      * @throws BaseException If error happens.
