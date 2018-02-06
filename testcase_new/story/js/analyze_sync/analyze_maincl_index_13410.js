@@ -350,6 +350,9 @@ function main()
    //指定主表cl的普通索引执行统计
    analyze( db, {Collection: mainclFullName, Index:"a1"} );
    
+   //检查主备同步
+   checkConsistency(db, null, null, [srcGroupName, desGroupName]);
+   
    //检查访问计划快照
    var expAccessPlan = [];
    var actAccessPlan = getMainclAccessPlans( db, {Collection: mainclFullName} );
