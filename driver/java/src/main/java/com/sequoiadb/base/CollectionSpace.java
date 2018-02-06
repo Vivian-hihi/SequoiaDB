@@ -130,6 +130,7 @@ public class CollectionSpace {
     /**
      * Create the named collection in current collection space.
      * @param collectionName The collection name
+     * @return the newly created object of collection
      * @throws BaseException If error happens.
      */
     public DBCollection createCollection(String collectionName)

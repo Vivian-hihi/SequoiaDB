@@ -1257,7 +1257,7 @@ public class DBCollection {
     /**
      * Create a index with name and key.
      * @param name     The index name
-     * @param key      The index key, like: {"key":1/-1}, ASC(1)/DESC(-1)
+     * @param key      The index keys in JSON format, like: "{\"a\":1, \"b\":-1}"
      * @param isUnique Whether the index elements are unique or not
      * @param enforced Whether the index is enforced unique This element is
      *                 meaningful when isUnique is set to true
@@ -1399,8 +1399,8 @@ public class DBCollection {
      * @param sourceGroupName   the source group name
      * @param destGroupName     the destination group name
      * @param splitCondition    the split condition
-     * @param splitEndCondition the split end condition or null
-     *                          eg:If we create a collection with the option {ShardingKey:{"age":1},ShardingType:"hash",Partition:2^10},
+     * @param splitEndCondition the split end condition or null, only usable when "ShardingType" is "range".
+     *                          eg:If we create a collection with the option {ShardingKey:{"age":1},ShardingType:"range"},
      *                          we can fill {age:30} as the splitCondition, and fill {age:60} as the splitEndCondition. when split,
      *                          the target group will get the records whose age's hash value are in [30,60). If splitEndCondition is null,
      *                          they are in [30,max).
@@ -1476,8 +1476,8 @@ public class DBCollection {
      * @param sourceGroupName   the source group name
      * @param destGroupName     the destination group name
      * @param splitCondition    the split condition
-     * @param splitEndCondition the split end condition or null
-     *                          eg:If we create a collection with the option {ShardingKey:{"age":1},ShardingType:"hash",Partition:2^10},
+     * @param splitEndCondition the split end condition or null, only usable when "ShardingType" is "range".
+     *                          eg:If we create a collection with the option {ShardingKey:{"age":1},ShardingType:"range"},
      *                          we can fill {age:30} as the splitCondition, and fill {age:60} as the splitEndCondition. when split,
      *                          the target group will get the records whose age's hash values are in [30,60). If splitEndCondition is null,
      *                          they are in [30,max).

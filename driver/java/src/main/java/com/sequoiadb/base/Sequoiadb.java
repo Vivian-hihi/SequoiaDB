@@ -61,10 +61,15 @@ public class Sequoiadb implements Closeable {
     private final static String DEFAULT_HOST = "127.0.0.1";
     private final static int DEFAULT_PORT = 11810;
 
+    /** specified the package size of the collections in current collection space to be 4K */
     public final static int SDB_PAGESIZE_4K = 4096;
+    /** specified the package size of the collections in current collection space to be 8K */
     public final static int SDB_PAGESIZE_8K = 8192;
+    /** specified the package size of the collections in current collection space to be 16K */
     public final static int SDB_PAGESIZE_16K = 16384;
+    /** specified the package size of the collections in current collection space to be 32K */
     public final static int SDB_PAGESIZE_32K = 32768;
+    /** specified the package size of the collections in current collection space to be 64K */
     public final static int SDB_PAGESIZE_64K = 65536;
     /**
      * 0 means using database's default pagesize, it 64k now
@@ -534,8 +539,9 @@ public class Sequoiadb implements Closeable {
     }
 
     /**
-     * Create the named collection space with default SDB_PAGESIZE_4K.
+     * Create the named collection space with default SDB_PAGESIZE_64K.
      * @param csName The collection space name
+     * @return the newly created collection space object
      * @throws BaseException If error happens.
      */
     public CollectionSpace createCollectionSpace(String csName)
@@ -923,7 +929,7 @@ public class Sequoiadb implements Closeable {
         }
         return colList;
     }
-    
+
     /**
      * Reset the snapshot.
      * @throws BaseException If error happens.

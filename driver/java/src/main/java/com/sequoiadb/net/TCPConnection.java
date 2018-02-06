@@ -122,7 +122,7 @@ public class TCPConnection implements IConnection {
                 output = socket.getOutputStream();
                 return;
             } catch (IOException ioe) {
-                lastError = new BaseException(SDBError.SDB_NETWORK, ioe);
+                lastError = new BaseException(SDBError.SDB_NETWORK, "failed to connect to " + address.toString(), ioe);
                 close();
             }
 
