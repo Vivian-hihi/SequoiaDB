@@ -43,6 +43,9 @@
 
 namespace engine
 {
+   #define RTN_LOB_ACCESS_PRIVILEGE_RETRY_TIMES     (3)
+   #define RTN_LOB_ACCESS_PRIVILEGE_RETRY_INTERVAL  (50) /* ms */
+
    class _rtnLobAccessInfo: public SDBObject
    {
    public:

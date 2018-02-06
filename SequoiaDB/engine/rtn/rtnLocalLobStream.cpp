@@ -99,7 +99,7 @@ namespace engine
          rc = _dmsCB->writable( cb ) ;
          if ( rc )
          {
-            PD_LOG( PDERROR, "database is not writable, rc = %d", rc ) ;
+            PD_LOG( PDERROR, "Database is not writable, rc = %d", rc ) ;
             goto error ;
          }
          _writeDMS = TRUE ;
@@ -109,7 +109,7 @@ namespace engine
                                             &_su, &clName, suID ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to resolve collection name:%s",
+         PD_LOG( PDERROR, "Failed to resolve collection name:%s",
                  fullName ) ;
          goto error ;
       }
@@ -117,26 +117,60 @@ namespace engine
       rc = _su->data()->getMBContext( &_mbContext, clName, -1 ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to resolve collection name:%s",
+         PD_LOG( PDERROR, "Failed to resolve collection name:%s",
                  clName ) ;
          goto error ;
       }
 
-      rc = sdbGetRTNCB()->getLobAccessManager()->getAccessPrivilege(
-                  fullName, oid, mode, uniqueId(),
-                  SDB_LOB_MODE_WRITE == _getMode() ? &_accessInfo : NULL ) ;
+      rc = _getAccessPrivilege( fullName, oid, mode ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to get lob privilege:%d", rc ) ;
+         PD_LOG( PDERROR, "Failed to get lob privilege:%d", rc ) ;
          goto error ;
       }
-      _hasLobPrivilege = TRUE ;
 
    done:
       PD_TRACE_EXITRC( SDB_RTNLOCALLOBSTREAM__PREPARE, rc ) ;
       return rc ;
    error:
       _closeInner( cb ) ;
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOCALLOBSTREAM__GETACCESSPRIVILEGE, "_rtnLocalLobStream::_getAccessPrivilege" )
+   INT32 _rtnLocalLobStream::_getAccessPrivilege( const CHAR *fullName,
+                                                     const bson::OID &oid,
+                                                     INT32 mode )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNLOCALLOBSTREAM__GETACCESSPRIVILEGE ) ;
+
+      for ( INT32 i = 0 ; i < RTN_LOB_ACCESS_PRIVILEGE_RETRY_TIMES ; i++ )
+      {
+         rc = sdbGetRTNCB()->getLobAccessManager()->getAccessPrivilege(
+                  fullName, oid, mode, uniqueId(),
+                  SDB_LOB_MODE_WRITE == mode ? &_accessInfo : NULL ) ;
+         if ( SDB_OK == rc )
+         {
+            _hasLobPrivilege = TRUE ;
+            break ;
+         }
+         else if ( SDB_LOB_IS_IN_USE == rc )
+         {
+            ossSleepmillis( RTN_LOB_ACCESS_PRIVILEGE_RETRY_INTERVAL ) ;
+            continue ;
+         }
+         else
+         {
+            PD_LOG( PDERROR, "Failed to get lob privilege:%d", rc ) ;
+            goto error ;
+         }
+      }
+
+   done:
+      PD_TRACE_EXITRC( SDB_RTNLOCALLOBSTREAM__GETACCESSPRIVILEGE, rc ) ;
+      return rc ;
+   error:
       goto done ;
    }
 

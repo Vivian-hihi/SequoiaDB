@@ -38,6 +38,7 @@
 #include "rtnTrace.hpp"
 #include "rtnLob.hpp"
 #include "clsMgr.hpp"
+#include "ossUtil.hpp"
 
 using namespace bson ;
 
@@ -166,22 +167,18 @@ namespace engine
 
       if ( _isMainShd )
       {
-         rc = sdbGetRTNCB()->getLobAccessManager()->getAccessPrivilege(
-                  _fullName, _oid, _mode, contextID(),
-                  SDB_LOB_MODE_WRITE == _mode ? &_accessInfo : NULL ) ;
+         rc = _getAccessPrivilege() ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to get lob privilege:%d", rc ) ;
+            PD_LOG( PDERROR, "Failed to get lob privilege:%d", rc ) ;
             goto error ;
          }
-
-         _hasLobPrivilege = TRUE ;
       }
 
       rc = _open( cb, data, read ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to open lob:%d", rc ) ;
+         PD_LOG( PDERROR, "Failed to open lob:%d", rc ) ;
          goto error ;
       }
       _isOpened = TRUE ;
@@ -506,6 +503,41 @@ namespace engine
       }
 
    done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCONTEXTSHDOFLOB__GETACCESSPRIVILEGE, "_rtnContextShdOfLob::_getAccessPrivilege" )
+   INT32 _rtnContextShdOfLob::_getAccessPrivilege()
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNCONTEXTSHDOFLOB__GETACCESSPRIVILEGE ) ;
+
+      for ( INT32 i = 0 ; i < RTN_LOB_ACCESS_PRIVILEGE_RETRY_TIMES ; i++ )
+      {
+         rc = sdbGetRTNCB()->getLobAccessManager()->getAccessPrivilege(
+                     _fullName, _oid, _mode, contextID(),
+                     SDB_LOB_MODE_WRITE == _mode ? &_accessInfo : NULL ) ;
+         if ( SDB_OK == rc )
+         {
+            _hasLobPrivilege = TRUE ;
+            break ;
+         }
+         else if ( SDB_LOB_IS_IN_USE == rc )
+         {
+            ossSleepmillis( RTN_LOB_ACCESS_PRIVILEGE_RETRY_INTERVAL ) ;
+            continue ;
+         }
+         else
+         {
+            PD_LOG( PDERROR, "Failed to get lob privilege:%d", rc ) ;
+            goto error ;
+         }
+      }
+
+   done:
+      PD_TRACE_EXITRC( SDB__RTNCONTEXTSHDOFLOB__GETACCESSPRIVILEGE, rc ) ;
       return rc ;
    error:
       goto done ;

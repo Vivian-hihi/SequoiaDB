@@ -111,6 +111,9 @@ namespace engine
                    _pmdEDUCB *cb,
                    CHAR *buf ) ;
 
+      INT32 _getAccessPrivilege( const CHAR *fullName,
+                                 const bson::OID &oid,
+                                 INT32 mode ) ;
 
    private:
       void        _closeInner( _pmdEDUCB *cb ) ;

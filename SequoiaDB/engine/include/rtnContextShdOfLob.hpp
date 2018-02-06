@@ -135,6 +135,8 @@ namespace engine
                    const CHAR **data,
                    UINT32 &read ) ;
 
+      INT32 _getAccessPrivilege() ;
+
       INT32 _parseOpenArgs( const bson::BSONObj &lob ) ;
 
       INT32 _meta2Obj( bson::BSONObj &obj ) ;
