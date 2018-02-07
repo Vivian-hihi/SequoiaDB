@@ -1517,7 +1517,29 @@ public class Sequoiadb implements Closeable {
         BSONObject newObj = new BasicBSONObject();
 
         newObj.putAll(options);
-        newObj.put(SdbConstants.FIELD_NAME_VERSION, SdbConstants.SDB_SETSESSIONATTR_V1);
+
+        if (options.containsField(SdbConstants.FIELD_NAME_PREFERED_INSTANCE))
+        {
+            // Add old version of preferred instance
+            Object value = options.get(SdbConstants.FIELD_NAME_PREFERED_INSTANCE);
+            if (value instanceof String) {
+                int v = PreferInstance.MASTER;
+                if (value.equals("M") || value.equals("m")) {
+                    v = PreferInstance.MASTER;
+                } else if (value.equals("S") || value.equals("s")) {
+                    v = PreferInstance.SLAVE;
+                } else if (value.equals("A") || value.equals("a")) {
+                    v = PreferInstance.ANYONE;
+                } else {
+                    throw new BaseException(SDBError.SDB_INVALIDARG, options.toString());
+                }
+                newObj.put(SdbConstants.FIELD_NAME_PREFERED_INSTANCE, v);
+            } else if (value instanceof Integer) {
+                newObj.put(SdbConstants.FIELD_NAME_PREFERED_INSTANCE, value);
+            }
+            // Add new version of preferred instance
+            newObj.put(SdbConstants.FIELD_NAME_PREFERED_INSTANCE_V1, value);
+        }
 
         clearSessionAttrCache();
 

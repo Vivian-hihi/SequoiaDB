@@ -71,6 +71,7 @@ final class SdbConstants {
     final static String FIELD_TOTAL = "Total";
     final static String FIELD_INDEX = "Index";
     final static String FIELD_NAME_PREFERED_INSTANCE = "PreferedInstance";
+    final static String FIELD_NAME_PREFERED_INSTANCE_V1 = "PreferedInstanceV1";
     final static String FIELD_NAME_RETYE = "ReturnType";
 
     final static String FIELD_NAME_ONLY_DETACH = "OnlyDetach";
@@ -93,7 +94,4 @@ final class SdbConstants {
     final static String OID = "_id";
 
     final static int FLG_UPDATE_UPSERT = 0x00000001;
-
-    final static int SDB_SETSESSIONATTR_V0 = 0;
-    final static int SDB_SETSESSIONATTR_V1 = 1;
 }
