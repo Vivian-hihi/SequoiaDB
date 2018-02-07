@@ -325,6 +325,7 @@ var FIELD_SECONDS                          = "Seconds" ;
 var FIELD_PRIMARY_NODE                     = PrimaryNode ;
 var FIELD_NODE_ID                          = "NodeID" ;
 var FIELD_NAME                             = Name ;
+var FIELD_NAME2                            = "name" ;
 var FIELD_CMD                              = "cmd" ;
 var FIELD_SAC_TASKID                       = "sactaskid" ;
 var FIELD_ADDRESS                          = "Address" ;
@@ -356,6 +357,7 @@ var FIELD_PORT2                            = "port" ;
 var FIELD_FROM                             = "From" ;
 var FIELD_TO                               = "To" ;
 var FIELD_OPTIONS                          = "Options" ;
+var FIELD_HTTP_NAME                        = "httpname" ;
 
 // Async task step
 var STEP_GENERATE_PLAN                     = "Generate plan" ;

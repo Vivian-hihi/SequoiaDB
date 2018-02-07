@@ -700,6 +700,20 @@ namespace engine
       INT64 _taskID ;
    } ;
 
+   /*
+      _omaStartPlugins
+   */
+   class _omaStartPlugins : public _omaCommand
+   {
+   DECLARE_OACMD_AUTO_REGISTER() ;
+
+   public:
+      _omaStartPlugins() ;
+      ~_omaStartPlugins() ;
+      virtual const CHAR* name () { return OMA_CMD_START_PLUGIN ; }
+      virtual INT32 init ( const CHAR *pInstallInfo ) ;
+   } ;
+
 } // namespace engine
 
 

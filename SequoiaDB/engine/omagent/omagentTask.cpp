@@ -9127,5 +9127,72 @@ namespace engine
       goto done ;
    }
 
+   /*
+      start plugins task
+   */
+   _omaStartPluginsTask::_omaStartPluginsTask( INT64 taskID )
+                                 :_omaTask( taskID )
+   {
+   }
+
+   _omaStartPluginsTask::~_omaStartPluginsTask()
+   {
+   }
+
+   INT32 _omaStartPluginsTask::init( const BSONObj &info, void *ptr )
+   {
+      INT32 rc = SDB_OK ;
+
+      // init environment for execute js
+      rc = initJsEnv() ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDWARNING, "Failed to init environment for executing js script, "
+                 "rc = %d", rc ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omaStartPluginsTask::doit()
+   {
+      INT32 rc = SDB_OK ;
+      _omaCommand* cmd = NULL ;
+      BSONObj argument ;
+      BSONObj result ;
+
+      cmd = getOmaCmdBuilder()->create( OMA_CMD_START_PLUGIN ) ;
+      if( cmd == NULL )
+      {
+         rc = SDB_OOM ;
+         PD_LOG( PDERROR, "Failed to create omagent command, command=%s",
+                 OMA_CMD_START_PLUGIN ) ;
+         goto error ;
+      }
+
+      rc = cmd->init( argument.objdata() ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to init omagent command, rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = cmd->doit( result ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to run omagent command, rc=%d", rc ) ;
+         goto error ;
+      }
+
+   done:
+      SAFE_OSS_DELETE( cmd ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
 } // namespace engine
 

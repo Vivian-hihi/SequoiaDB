@@ -128,6 +128,8 @@ namespace engine
    #define OMA_CMD_CREATE_RELATIONSHIP                OM_CREATE_RELATIONSHIP_REQ
    #define OMA_CMD_REMOVE_RELATIONSHIP                OM_REMOVE_RELATIONSHIP_REQ
 
+   #define OMA_CMD_START_PLUGIN                       "start plugins"
+
    /*
       oma background command
    */
@@ -246,6 +248,8 @@ namespace engine
    #define FILE_RUN_PSQL                    "runPsql.js"
    #define FILE_CLEAN_SSQL_EXEC             "cleanPsql.js"
    #define FILE_GET_PSQL                    "getPsql.js"
+
+   #define FILE_START_PLUGINS               "startPlugins.js"
 
    /*
       oma js argument type
