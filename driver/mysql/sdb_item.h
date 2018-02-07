@@ -89,7 +89,7 @@ public:
    virtual void update_stat() ;
    virtual int get_item_val( const char *field_name,
                              Item *item_val,
-                             enum_field_types type,
+                             Field *field,
                              bson::BSONObj &obj,
                              bson::BSONArrayBuilder *arr_builder = NULL ) ;
    virtual int to_bson( bson::BSONObj &obj ) = 0 ;

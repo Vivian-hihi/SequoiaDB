@@ -17,9 +17,11 @@ public:
 
    int init( sdb_conn *connection,
              char *cs, char *cl,
-             bool create = TRUE ) ;
+             bool create = FALSE,
+             const bson::BSONObj &options = sdbclient::_sdbStaticObject ) ;
 
-   int re_init( bool create = TRUE ) ;
+   int re_init( bool create = FALSE,
+                const bson::BSONObj &options = sdbclient::_sdbStaticObject ) ;
 
    int begin_transaction() ;
 

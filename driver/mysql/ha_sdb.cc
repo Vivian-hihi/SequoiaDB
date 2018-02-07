@@ -171,9 +171,9 @@ ulonglong ha_sdb::table_flags() const
 ulong ha_sdb::index_flags( uint inx, uint part, bool all_parts ) const
 {
    // TODO: SUPPORT SORT
-   //return ( HA_READ_NEXT | HA_READ_ORDER | HA_READ_RANGE | HA_DO_INDEX_COND_PUSHDOWN ) ;
-   return ( HA_READ_NEXT | HA_READ_RANGE | HA_DO_INDEX_COND_PUSHDOWN
-            | HA_READ_ORDER | HA_KEYREAD_ONLY ) ;
+   //HA_READ_NEXT | HA_KEYREAD_ONLY ;
+   return ( HA_READ_RANGE | HA_DO_INDEX_COND_PUSHDOWN
+            | HA_READ_ORDER ) ;
 }
 
 uint ha_sdb::max_supported_record_length() const
@@ -300,7 +300,7 @@ int ha_sdb::row_to_obj( uchar *buf,  bson::BSONObj & obj )
                {
                   my_decimal tmp_val ;
                   char buff[MAX_FIELD_WIDTH];
-                  String str(buff, sizeof(buff), &my_charset_bin);
+                  String str(buff, sizeof(buff), (*field)->charset() );
                   ((Field_num *)(*field))->val_decimal( &tmp_val ) ;
                   my_decimal2string(E_DEC_FATAL_ERROR, &tmp_val, 0, 0, 0, &str ) ;
                   obj_builder.appendDecimal( (*field)->field_name,
@@ -326,6 +326,7 @@ int ha_sdb::row_to_obj( uchar *buf,  bson::BSONObj & obj )
          case MYSQL_TYPE_LONG_BLOB:
          case MYSQL_TYPE_BLOB:
             {
+               Field_str *f = (Field_str *)(*field) ;
                if ( str_field_buf_size < (*field)->data_length() )
                {
                   uint32 str_buf_size_new = 0 ;
@@ -345,11 +346,20 @@ int ha_sdb::row_to_obj( uchar *buf,  bson::BSONObj & obj )
                                                    str_buf_size_new ) ;
                   str_field_buf_size = str_buf_size_new ;
                }
-               String val_tmp( str_field_buf, str_field_buf_size, &my_charset_bin ) ;
+               String val_tmp( str_field_buf, str_field_buf_size, (*field)->charset() ) ;
                (*field)->val_str( &val_tmp, &val_tmp ) ;
-               obj_builder.appendBinData( (*field)->field_name,
-                                           val_tmp.length(), bson::BinDataGeneral,
-                                           val_tmp.ptr() ) ;
+               if ( f->binary() )
+               {
+                  obj_builder.appendBinData( (*field)->field_name,
+                                             val_tmp.length(), bson::BinDataGeneral,
+                                             val_tmp.ptr() ) ;
+               }
+               else
+               {
+                  obj_builder.appendStrWithNoTerminating( (*field)->field_name,
+                                                        val_tmp.ptr(),
+                                                        val_tmp.length() ) ;
+               }
                break ;
             }
          case MYSQL_TYPE_VARCHAR:
@@ -375,7 +385,7 @@ int ha_sdb::row_to_obj( uchar *buf,  bson::BSONObj & obj )
                                                    str_buf_size_new ) ;
                   str_field_buf_size = str_buf_size_new ;
                }
-               String val_tmp( str_field_buf, str_field_buf_size, &my_charset_bin ) ;
+               String val_tmp( str_field_buf, str_field_buf_size, (*field)->charset() ) ;
                (*field)->val_str( &val_tmp, &val_tmp ) ;
                obj_builder.appendStrWithNoTerminating( (*field)->field_name,
                                                         val_tmp.ptr(),
@@ -394,7 +404,7 @@ int ha_sdb::row_to_obj( uchar *buf,  bson::BSONObj & obj )
                   goto error ;
                }
                char buff[MAX_FIELD_WIDTH];
-               String str(buff, sizeof(buff), &my_charset_bin);
+               String str(buff, sizeof(buff), (*field)->charset() );
                String unused;
                f->val_str( &str, &unused ) ;
                obj_builder.appendDecimal( (*field)->field_name,
@@ -425,7 +435,6 @@ int ha_sdb::row_to_obj( uchar *buf,  bson::BSONObj & obj )
             }
          case MYSQL_TYPE_TIMESTAMP2:
          case MYSQL_TYPE_TIMESTAMP:
-         case MYSQL_TYPE_DATETIME:
             {
                struct timeval tm ;
                int warnings= 0;
@@ -450,6 +459,32 @@ int ha_sdb::row_to_obj( uchar *buf,  bson::BSONObj & obj )
          case MYSQL_TYPE_NULL:
             //skip the null value
             break ;
+
+         case MYSQL_TYPE_DATETIME:
+            {
+               MYSQL_TIME ltime ;
+               if ( !(*field)->get_time( &ltime ) )
+               {
+                  struct tm tm_val ;
+                  tm_val.tm_sec = ltime.second ;
+                  tm_val.tm_min = ltime.minute ;
+                  tm_val.tm_hour = ltime.hour ;
+                  tm_val.tm_mday = ltime.day ;
+                  tm_val.tm_mon = ltime.month - 1 ;
+                  tm_val.tm_year = ltime.year - 1900 ;
+                  tm_val.tm_wday = 0 ;
+                  tm_val.tm_yday = 0 ;
+                  tm_val.tm_isdst = 0 ;
+                  time_t time_tmp = mktime( &tm_val ) ;
+                  unsigned long long time_val_tmp ;
+                  memcpy( (char *)&time_val_tmp, &(ltime.second_part), 4 ) ;
+                  memcpy( (char *)&time_val_tmp+4, &time_tmp, 4 ) ;
+                  obj_builder.appendTimestamp( (*field)->field_name,
+                                               time_val_tmp ) ;
+                  break ;
+               }
+               // go to default and return error ;
+            }
 
          default:
             {
@@ -778,10 +813,40 @@ void ha_sdb::get_text_key_val( const uchar *key_ptr,
       }
       memcpy( str_field_buf,
               key_ptr+key_part->store_length-key_part->length, 
-              key_part->length ) ; 
+              key_part->length ) ;
+
+      // TODO: Do we need to process the scene: end with space
+      /*if ( key_part->length > 0 && ' ' == str_field_buf[key_part->length-1] )
+      {
+         uint16 pos = key_part->length - 2 ;
+         char tmp[] = "( ){0,}$" ;
+         while( pos >= 0 && ' ' == str_field_buf[pos] )
+         {
+            --pos ;
+         }
+         ++pos ;
+         if ( 'e' == op_str[1] ) // $et
+         {
+            strcpy( str_field_buf + pos + 1, tmp ) ;
+            while( pos > 0 )
+            {
+               str_field_buf[pos] = str_field_buf[pos-1] ;
+               --pos ;
+            }
+            str_field_buf[0] = '^' ;
+            obj_builder.append( "$regex", str_field_buf ) ;
+            goto done ;
+         }
+         else if ( 'g' == op_str[1] ) // $gte
+         {
+            str_field_buf[pos] = 0 ;
+         }
+      }*/
       str_field_buf[key_part->length] = 0 ;
       obj_builder.append( op_str, str_field_buf ) ;
    }
+done:
+   return ;
 }
 
 void ha_sdb::get_text_key_range_obj( const uchar *start_key_ptr,
@@ -857,7 +922,7 @@ void ha_sdb::get_float_key_range_obj( const uchar *start_key_ptr,
    obj = obj_builder.obj() ;
 }
 
-int ha_sdb::build_match_obj( uint keynr,
+int ha_sdb::build_match_obj_by_start_stop_key( uint keynr,
                              const uchar *key_ptr,
                              key_part_map keypart_map,
                              enum ha_rkey_function find_flag,
@@ -985,7 +1050,7 @@ int ha_sdb::index_read_map( uchar *buf, const uchar *key_ptr,
    bson::BSONObj orderbyObj ;
    if ( condition.isEmpty() && NULL != key_ptr && keynr >= 0 )
    {
-      build_match_obj( (uint)keynr, key_ptr,
+      build_match_obj_by_start_stop_key( (uint)keynr, key_ptr,
                        keypart_map, find_flag,
                        condition ) ;
    }
@@ -995,6 +1060,7 @@ int ha_sdb::index_read_map( uchar *buf, const uchar *key_ptr,
    rc = cl->query( condition ) ;
    if ( rc )
    {
+      errnum = rc ;
       goto error ;
    }
    rc = index_next( buf ) ;
@@ -1121,19 +1187,15 @@ int ha_sdb::obj_to_row( bson::BSONObj &obj, uchar *buf )
                {
                   lenTmp = 0 ;
                }
-               uint len = (*field)->pack_length() < (uint)lenTmp ?
-                           (*field)->pack_length() : (uint)lenTmp ;
-               (*field)->store( dataTmp, len,
+               (*field)->store( dataTmp, lenTmp,
                                 &my_charset_bin ) ;
                break ;
                               
             }
          case bson::String:
             {
-               uint len = (*field)->pack_length() < befield.valuestrsize() ?
-                           (*field)->pack_length() : befield.valuestrsize() ;
                (*field)->store( befield.valuestr(),
-                                len,
+                                befield.valuestrsize()-1,
                                 &my_charset_bin ) ;
                break ;
                               
@@ -1142,10 +1204,8 @@ int ha_sdb::obj_to_row( bson::BSONObj &obj, uchar *buf )
             {
                bson::bsonDecimal valTmp = befield.numberDecimal() ;
                string strValTmp = valTmp.toString() ;
-               uint len = (*field)->pack_length() < strValTmp.length() ?
-                           (*field)->pack_length() : strValTmp.length() ;
                (*field)->store( strValTmp.c_str(),
-                                len,
+                                strValTmp.length(),
                                 &my_charset_bin ) ;
                break ;
                               
@@ -1717,6 +1777,7 @@ int ha_sdb::create( const char *name, TABLE *form,
    sdbCollectionSpace cs ;
    uint str_field_len = 0 ;
    sdb_conn_auto_ptr conn_tmp ;
+   bson::BSONObj options ;
 
    for( Field **field = form->field ; *field ; field++ )
    {
@@ -1757,6 +1818,15 @@ int ha_sdb::create( const char *name, TABLE *form,
       goto error ;
    }
 
+   if ( create_info && create_info->comment.str )
+   {
+      rc = bson::fromjson( create_info->comment.str, options ) ;
+      if ( 0 != rc )
+      {
+         goto error ;
+      }
+   }
+
    //rc = SDB_CONN_MGR_INST->get_sdb_conn( ha_thd()->thread_id(),
    //                                      conn_tmp ) ;
    rc = SDB_CONN_MGR_INST->get_sdb_conn( (my_thread_id)(ha_thd()->active_vio->mysql_socket.fd),
@@ -1766,7 +1836,7 @@ int ha_sdb::create( const char *name, TABLE *form,
       goto error ;
    }
    
-   rc = conn_tmp->get_cl( db_name, table_name, cl ) ;
+   rc = conn_tmp->create_cl( db_name, table_name, cl, options ) ;
    if ( 0 != rc )
    {
       goto error ;

@@ -49,10 +49,12 @@ public:
 
    int get_cl( char *cs_name, char *cl_name,
                sdb_cl_auto_ptr &cl_ptr,
-               bool create = TRUE ) ;
+               bool create = FALSE,
+               const bson::BSONObj &options = sdbclient::_sdbStaticObject ) ;
 
    int create_cl( char *cs_name, char *cl_name,
-                  sdb_cl_auto_ptr &cl_ptr ) ;
+                  sdb_cl_auto_ptr &cl_ptr,
+                  const bson::BSONObj &options = sdbclient::_sdbStaticObject ) ;
 
    void clear_cl( char *cs_name, char *cl_name ) ;
 

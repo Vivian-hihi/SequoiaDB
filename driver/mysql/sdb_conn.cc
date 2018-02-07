@@ -145,7 +145,8 @@ bool sdb_conn::is_transaction()
 
 int sdb_conn::get_cl( char *cs_name, char *cl_name,
                       sdb_cl_auto_ptr &cl_ptr,
-                      bool create )
+                      bool create,
+                      const bson::BSONObj &options )
 {
    int rc = SDB_ERR_OK ;
    std::map<std::string, sdb_cl_auto_ptr>::iterator iter ;
@@ -163,7 +164,8 @@ int sdb_conn::get_cl( char *cs_name, char *cl_name,
       cl_ptr = iter->second ;
       if ( create )
       {
-         rc = cl_ptr->init( this, cs_name, cl_name, create ) ;
+         rc = cl_ptr->init( this, cs_name, cl_name,
+                            create, options ) ;
          if ( rc != SDB_ERR_OK )
          {
             goto error ;
@@ -175,7 +177,7 @@ int sdb_conn::get_cl( char *cs_name, char *cl_name,
 
    {
    sdb_cl_auto_ptr tmp_cl( new sdb_cl() ) ;
-   rc = tmp_cl->init( this, cs_name, cl_name, create ) ;
+   rc = tmp_cl->init( this, cs_name, cl_name, create, options ) ;
    if ( rc != SDB_ERR_OK )
    {
       goto error ;
@@ -197,10 +199,11 @@ error:
 }
 
 int sdb_conn::create_cl( char *cs_name, char *cl_name,
-                         sdb_cl_auto_ptr &cl_ptr )
+                         sdb_cl_auto_ptr &cl_ptr,
+                         const bson::BSONObj &options )
 {
    int rc = 0 ;
-   rc = this->get_cl( cs_name, cl_name, cl_ptr, TRUE ) ;
+   rc = this->get_cl( cs_name, cl_name, cl_ptr, TRUE, options ) ;
    if( rc != 0 )
    {
       goto error ;

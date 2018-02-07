@@ -260,7 +260,7 @@ private:
 
    int cur_row( uchar *buf ) ;
 
-   int build_match_obj( uint keynr,
+   int build_match_obj_by_start_stop_key( uint keynr,
                         const uchar *key_ptr,
                         key_part_map keypart_map,
                         enum ha_rkey_function find_flag,

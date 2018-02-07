@@ -127,12 +127,13 @@ error:
 
 int sdb_func_item::get_item_val( const char *field_name,
                                 Item *item_val,
-                                enum_field_types type,
+                                Field *field,
                                 bson::BSONObj & obj,
                                 bson::BSONArrayBuilder *arr_builder )
 {
    int rc = SDB_ERR_OK ;
    int type_tmp ;
+   enum_field_types type = field->type() ;
    if ( ( MYSQL_TYPE_DOUBLE < type && type < MYSQL_TYPE_TINY_BLOB
        && MYSQL_TYPE_INT24 != type && MYSQL_TYPE_YEAR != type
        && MYSQL_TYPE_VARCHAR != type && MYSQL_TYPE_ENUM != type
@@ -192,10 +193,44 @@ int sdb_func_item::get_item_val( const char *field_name,
    {
       case Item::STRING_ITEM:
          {
+            const char *str = NULL ;
+            size_t len = 0 ;
             if ( *(item_val->item_name.ptr()) == '?' )
             {
-               rc = SDB_ERR_COND_UNKOWN_ITEM ;
-               goto error ;
+               str = item_val->str_value.ptr() ;
+               len = item_val->str_value.length() ;
+            }
+            else
+            {
+               str = item_val->item_name.ptr() ;
+               len = item_val->item_name.length() ;
+            }
+            if ( MYSQL_TYPE_TINY_BLOB == type || MYSQL_TYPE_MEDIUM_BLOB
+                 || MYSQL_TYPE_LONG_BLOB == type || MYSQL_TYPE_BLOB == type )
+            {
+               Field_str *f = (Field_str *)field ;
+               if ( f->binary() )
+               {
+                  if ( NULL == arr_builder )
+                  {
+                     bson::BSONObjBuilder obj_builder ;
+                     obj_builder.appendBinData(field_name,
+                                               len,
+                                               bson::BinDataGeneral,
+                                               str ) ;
+                     obj = obj_builder.obj() ;
+                  }
+                  else
+                  {
+                     /*
+                     bson::BSONObj obj_tmp
+                        = BSON( "$binary" << item_val->item_name.ptr()
+                                << "$type" << bson::BinDataGeneral ) ;
+                     arr_builder->append( obj_tmp ) ;*/
+                     rc = SDB_ERR_TYPE_UNSUPPORTED ;
+                  }
+                  break ;
+               }
             }
             if ( NULL == arr_builder )
             {
@@ -459,7 +494,7 @@ int sdb_func_cmp::to_bson( bson::BSONObj &obj )
    }
 
    rc = get_item_val( name_tmp, item_val,
-                      item_field->field->type(), obj_tmp ) ;
+                      item_field->field, obj_tmp ) ;
    if ( rc )
    {
       goto error ;
@@ -522,7 +557,7 @@ int sdb_func_between::to_bson( bson::BSONObj &obj )
    if ( negated )
    {
       rc = get_item_val( "$lt", item_start,
-                         item_field->field->type(), obj_tmp ) ;
+                         item_field->field, obj_tmp ) ;
       if ( rc )
       {
          goto error ;
@@ -530,7 +565,7 @@ int sdb_func_between::to_bson( bson::BSONObj &obj )
       obj_start = BSON( item_field->field_name << obj_tmp ) ;
 
       rc = get_item_val( "$gt", item_end,
-                         item_field->field->type(), obj_tmp ) ;
+                         item_field->field, obj_tmp ) ;
       if ( rc )
       {
          goto error ;
@@ -544,7 +579,7 @@ int sdb_func_between::to_bson( bson::BSONObj &obj )
    else
    {
       rc = get_item_val( "$gte", item_start,
-                         item_field->field->type(), obj_tmp ) ;
+                         item_field->field, obj_tmp ) ;
       if ( rc )
       {
          goto error ;
@@ -552,7 +587,7 @@ int sdb_func_between::to_bson( bson::BSONObj &obj )
       obj_start = BSON( item_field->field_name << obj_tmp ) ;
 
       rc = get_item_val( "$lte", item_end,
-                         item_field->field->type(), obj_tmp ) ;
+                         item_field->field, obj_tmp ) ;
       if ( rc )
       {
          goto error ;
@@ -617,7 +652,7 @@ int sdb_func_in::to_bson( bson::BSONObj &obj )
       item_tmp = para_list.pop() ;
       --para_num_cur ;
       rc = get_item_val( "", item_tmp,
-                         item_field->field->type(),
+                         item_field->field,
                          obj_tmp, &arr_builder ) ;
       if ( rc )
       {

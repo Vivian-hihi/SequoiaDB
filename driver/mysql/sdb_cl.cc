@@ -20,7 +20,8 @@ sdb_cl::~sdb_cl()
 }
 
 int sdb_cl::init( sdb_conn *connection,
-                  char *cs, char *cl, bool create )
+                  char *cs, char *cl, bool create,
+                  const bson::BSONObj &options )
 {
    int rc = SDB_ERR_OK ;
    if ( NULL == connection || NULL == cs || NULL == cl )
@@ -47,7 +48,7 @@ int sdb_cl::init( sdb_conn *connection,
       goto error ;
    }
 
-   rc = re_init( create ) ;
+   rc = re_init( create, options ) ;
 
 done:
    return rc ;
@@ -55,7 +56,8 @@ error:
    goto done ;
 }
 
-int sdb_cl::re_init( bool create )
+int sdb_cl::re_init( bool create,
+                     const bson::BSONObj &options )
 {
    int rc = SDB_ERR_OK ;
    sdbCollectionSpace cs ;
@@ -74,7 +76,7 @@ int sdb_cl::re_init( bool create )
    rc = cs.getCollection( cl_name, cl ) ;
    if ( SDB_DMS_NOTEXIST == rc && create )
    {
-      rc = cs.createCollection( cl_name, cl ) ;
+      rc = cs.createCollection( cl_name, options, cl ) ;
    }
    if ( rc != SDB_ERR_OK )
    {
