@@ -539,5 +539,6 @@ function main()
    db1.close();     
    commDropCS( db, csName1, true, "drop CS in the end" );
    commDropCS( db, csName2, true, "drop CS in the end" );
+	commDropCS( db, maincsName, true, "drop CS in the end" );
 }
 main();
