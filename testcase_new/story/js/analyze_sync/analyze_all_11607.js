@@ -68,16 +68,6 @@ function main()
    var clFullName23 = csName2 + "." + clName3;
    var mainclFullName = maincsName + "." + mainclName;
    var subclFullName = maincsName + "." + subclName;
-      
-   //create index
-   commCreateIndex( dbCommCL1, "a", {a : 1}, false );
-   commCreateIndex( dbCommCL2, "a", {a : 1}, false );
-   commCreateIndex( dbHashCL1, "b", {b : 1}, false );
-   commCreateIndex( dbHashCL2, "b", {b : 1}, false );
-   commCreateIndex( dbRangCL1, "b", {b : 1}, false );
-   commCreateIndex( dbRangCL2, "b", {b : 1}, false );
-   commCreateIndex( subcl, "a", {a : 1}, false );
-   commCreateIndex( subcl, "b", {b : 1}, false );
 
    //get master/slave datanode
    var db1 = new Sdb(db);
@@ -101,7 +91,7 @@ function main()
    var dbMainCLSlave = db1.getCS(maincsName).getCL(mainclName);
                
    //attach cl
-   maincl.attachCL( maincsName + "." + subclName, {LowBound: {a:0}, UpBound:{a:10000}} );
+   maincl.attachCL( subclFullName, {LowBound: {a:0}, UpBound:{a:10000}} );
                
    //insert datas
    var insertNums = 3000;
@@ -127,6 +117,16 @@ function main()
    
    insertDiffDatas( maincl, insertNums );
    insertSameDatas( maincl, insertNums, sameValues );
+	
+	//create index
+   commCreateIndex( dbCommCL1, "a", {a : 1}, false );
+   commCreateIndex( dbCommCL2, "a", {a : 1}, false );
+   commCreateIndex( dbHashCL1, "b", {b : 1}, false );
+   commCreateIndex( dbHashCL2, "b", {b : 1}, false );
+   commCreateIndex( dbRangCL1, "b", {b : 1}, false );
+   commCreateIndex( dbRangCL2, "b", {b : 1}, false );
+   commCreateIndex( maincl, "a", {a : 1} );
+   commCreateIndex( maincl, "b", {b : 1} );
                                                               	
    //split shard cls
    ClSplitOneTimes( csName1, clName2, 50 );
@@ -276,7 +276,7 @@ function main()
    var accessFindOption21 = { Collection: clFullName21 };
    var accessFindOption22 = { Collection: clFullName22 };
    var accessFindOption23 = { Collection: clFullName23 };
-   var accessFindOptionMainCL = { Collection: subclFullName};
+   var accessFindOptionMainCL = { Collection: mainclFullName};
    
    var actAccessPlans11 = getCommonAccessPlans(db, accessFindOption11); 
    var actAccessPlans12 = getSplitAccessPlans(db, accessFindOption12); 
@@ -284,7 +284,7 @@ function main()
    var actAccessPlans21 = getCommonAccessPlans(db, accessFindOption21);
    var actAccessPlans22 = getSplitAccessPlans(db, accessFindOption22);
    var actAccessPlans23 = getSplitAccessPlans(db, accessFindOption23);
-   var actAccessPlansMainCL = getCommonAccessPlans(db, accessFindOptionMainCL);
+   var actAccessPlansMainCL = getMainclAccessPlans(db, accessFindOptionMainCL);
    
    var expAccessPlans11 = [{ScanType:"ixscan", IndexName:"a"},
 	                        {ScanType:"ixscan", IndexName:"a"}];                     
@@ -314,18 +314,18 @@ function main()
                            {ScanType:"ixscan", IndexName:"$shard",GroupName :destRangGroupName2},
 	                        {ScanType:"ixscan", IndexName:"b",GroupName :srcRangGroupName2},
 	                        {ScanType:"ixscan", IndexName:"b",GroupName :destRangGroupName2}];
-   var expAccessPlansMainCL = [{ScanType:"ixscan", IndexName:"a"},
-	                            {ScanType:"ixscan", IndexName:"b"},
-	                            {ScanType:"ixscan", IndexName:"a"},
-	                            {ScanType:"ixscan", IndexName:"b"}];                           
-                     
+   var expAccessPlansMainCL = [{ScanType:"ixscan", IndexName:"a", GroupName:subclGroupName},
+	                            {ScanType:"ixscan", IndexName:"b", GroupName:subclGroupName},
+										 {ScanType:"ixscan", IndexName:"a", GroupName:subclGroupName},
+	                            {ScanType:"ixscan", IndexName:"b", GroupName:subclGroupName}];  
+	                                                                        
    checkSnapShotAccessPlans(clFullName11, expAccessPlans11, actAccessPlans11);
    checkSnapShotAccessPlans(clFullName12, expAccessPlans12, actAccessPlans12);
    checkSnapShotAccessPlans(clFullName13, expAccessPlans13, actAccessPlans13);
    checkSnapShotAccessPlans(clFullName21, expAccessPlans21, actAccessPlans21);
    checkSnapShotAccessPlans(clFullName22, expAccessPlans22, actAccessPlans22);
    checkSnapShotAccessPlans(clFullName23, expAccessPlans23, actAccessPlans23);
-   //checkSnapShotAccessPlans(subclFullName, expAccessPlansMainCL, actAccessPlansMainCL);
+   checkMainclAccessPlans(expAccessPlansMainCL, actAccessPlansMainCL);
           
    println("check result before analyze success!");
                    
@@ -355,7 +355,7 @@ function main()
    var accessFindOption21 = { Collection: clFullName21 };
    var accessFindOption22 = { Collection: clFullName22 };
    var accessFindOption23 = { Collection: clFullName23 };
-   var accessFindOptionMainCL = { Collection: subclFullName};
+   var accessFindOptionMainCL = { Collection: mainclFullName};
    
    var actAccessPlans11 = getCommonAccessPlans(db, accessFindOption11); 
    var actAccessPlans12 = getSplitAccessPlans(db, accessFindOption12); 
@@ -373,7 +373,7 @@ function main()
    checkSnapShotAccessPlans(clFullName21, expAccessPlans, actAccessPlans21);
    checkSnapShotAccessPlans(clFullName22, expAccessPlans, actAccessPlans22);
    checkSnapShotAccessPlans(clFullName23, expAccessPlans, actAccessPlans23);                                                   
-  // checkSnapShotAccessPlans(subclFullName, expAccessPlans, actAccessPlansMainCL);
+   checkMainclAccessPlans(expAccessPlans, actAccessPlansMainCL);
                                              
    //check the query explain of master/slave nodes 
    var findConf1 = {a : 9000};
@@ -419,8 +419,8 @@ function main()
    checkExplain( actHashExplains4, expHashExplains4 );
    checkExplain( actRangExplains3, expRangExplains3 );
    checkExplain( actRangExplains4, expRangExplains4 );
-   //checkExplain( actMainExplains1, expMainExplains1 );
-   //checkExplain( actMainExplains2, expMainExplains2 );
+   checkExplain( actMainExplains1, expMainExplains1 );
+   checkExplain( actMainExplains2, expMainExplains2 );
    
    //check slave
    var actCommExplains1 = getCommonExplain( dbCommCLSlave1, findConf1); 
@@ -446,8 +446,8 @@ function main()
    checkExplain( actHashExplains4, expHashExplains4 );
    checkExplain( actRangExplains3, expRangExplains3 );
    checkExplain( actRangExplains4, expRangExplains4 );
-   //checkExplain( actMainExplains1, expMainExplains1 );
-   //checkExplain( actMainExplains2, expMainExplains2 );
+   checkExplain( actMainExplains1, expMainExplains1 );
+   checkExplain( actMainExplains2, expMainExplains2 );
    
    //query
    query( dbCommCLPrimary1, findConf1, null, null, insertNums );
@@ -483,7 +483,7 @@ function main()
    var accessFindOption21 = { Collection: clFullName21 };
    var accessFindOption22 = { Collection: clFullName22 };
    var accessFindOption23 = { Collection: clFullName23 };
-   var accessFindOptionMainCL = { Collection: subclFullName};
+   var accessFindOptionMainCL = { Collection: mainclFullName};
     
    var actAccessPlans11 = getCommonAccessPlans(db, accessFindOption11); 
    var actAccessPlans12 = getSplitAccessPlans(db, accessFindOption12); 
@@ -491,7 +491,7 @@ function main()
    var actAccessPlans21 = getCommonAccessPlans(db, accessFindOption21);
    var actAccessPlans22 = getSplitAccessPlans(db, accessFindOption22);
    var actAccessPlans23 = getSplitAccessPlans(db, accessFindOption23);
-   var actAccessPlansMainCL = getCommonAccessPlans(db, accessFindOptionMainCL);
+   var actAccessPlansMainCL = getMainclAccessPlans(db, accessFindOptionMainCL);
    
    var expAccessPlans11 = [{ScanType:"tbscan", IndexName:""},
 	                        {ScanType:"tbscan", IndexName:""}];                     
@@ -521,20 +521,19 @@ function main()
                            {ScanType:"tbscan", IndexName:"",GroupName :destRangGroupName2},
 	                        {ScanType:"ixscan", IndexName:"b",GroupName :srcRangGroupName2},
 	                        {ScanType:"tbscan", IndexName:"",GroupName :destRangGroupName2}];                      
-   var expAccessPlansMainCL = [{ScanType:"tbscan", IndexName:""},
-                               {ScanType:"tbscan", IndexName:""},
-                               {ScanType:"tbscan", IndexName:""},
-                               {ScanType:"tbscan", IndexName:""}]   
-   
+   var expAccessPlansMainCL = [{ScanType:"tbscan", IndexName:"", GroupName:subclGroupName},
+                               {ScanType:"tbscan", IndexName:"", GroupName:subclGroupName},
+										 {ScanType:"tbscan", IndexName:"", GroupName:subclGroupName},
+                               {ScanType:"tbscan", IndexName:"", GroupName:subclGroupName}];  
+                                
    checkSnapShotAccessPlans(clFullName11, expAccessPlans11, actAccessPlans11);
    checkSnapShotAccessPlans(clFullName12, expAccessPlans12, actAccessPlans12);
    checkSnapShotAccessPlans(clFullName13, expAccessPlans13, actAccessPlans13);
    checkSnapShotAccessPlans(clFullName21, expAccessPlans21, actAccessPlans21);
    checkSnapShotAccessPlans(clFullName22, expAccessPlans22, actAccessPlans22);
    checkSnapShotAccessPlans(clFullName23, expAccessPlans23, actAccessPlans23);
-   //checkSnapShotAccessPlans(subclFullName, expAccessPlansMainCL, actAccessPlansMainCL);
-         
-         
+   checkMainclAccessPlans(expAccessPlansMainCL, actAccessPlansMainCL);
+              
    println("check result after analyze success!");
      
    db1.close();     
