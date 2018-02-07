@@ -105,7 +105,15 @@ namespace seadapter
          goto error ;
       }
 
-      // conf/log/SERVICE
+      // conf/log/seadapterlog
+      rc = utilCatPath( dialogPath, OSS_MAX_PATHSIZE, SDB_SEADPT_LOG_DIR ) ;
+      if ( rc )
+      {
+         ossPrintf( "Build log path failed: %d", rc ) ;
+         goto error ;
+      }
+
+      // conf/log/seadapterlog/SERVICE
       rc = utilCatPath( dialogPath, OSS_MAX_PATHSIZE,
                         sdbGetSeAdptOptions()->getDbService() ) ;
       if ( rc )
@@ -173,7 +181,7 @@ namespace seadapter
          goto error ;
       }
 
-      // conf/log/SERVICE/sdbseadapter.log
+      // conf/log/seadapterlog/SERVICE/sdbseadapter.log
       rc = utilCatPath( dialogPath, OSS_MAX_PATHSIZE,
                         SDB_SEADPT_LOG_FILE_NAME ) ;
       if ( rc )
