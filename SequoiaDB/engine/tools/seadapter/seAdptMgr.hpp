@@ -240,6 +240,7 @@ namespace seadapter
 
       void _genESIdxName( UINT32 csLID, UINT32 clLID, INT32 idxLID,
                           CHAR *esIdxName, UINT32 buffSize ) ;
+      void _genESIdxName( seIndexMeta &idxMeta ) ;
 
    private:
       indexMsgHandler         _indexMsgHandler ;

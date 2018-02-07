@@ -379,9 +379,10 @@ namespace engine
                                              pmdEDUCB* eduCB,
                                              dmsExtentID indexExtentID)
    : _dmsIndexBuilder( indexSU, dataSU, mbContext, eduCB, indexExtentID ),
-     _extHandler( NULL ),
-     _csLogicalID( DMS_INVALID_LOGICCSID )
+     _extHandler( NULL )
    {
+      ossMemset( _collectionName, 0, DMS_COLLECTION_NAME_SZ + 1 ) ;
+      ossMemset( _idxName, 0, IXM_INDEX_NAME_SIZE + 1 ) ;
    }
 
    _dmsIndexExtBuilder::~_dmsIndexExtBuilder()
@@ -402,7 +403,9 @@ namespace engine
       PD_CHECK( _extHandler, SDB_SYS, error, PDERROR,
                 "External data handle is NULL" ) ;
 
-      _csLogicalID = _suData->logicalID() ;
+      ossStrncpy( _collectionName, _mbContext->mb()->_collectionName,
+                  DMS_COLLECTION_NAME_SZ + 1 ) ;
+      ossStrncpy( _idxName, _indexCB->getName(), IXM_INDEX_NAME_SIZE + 1 ) ;
 
       // We are going to create the capped cs and cl. During the whole process,
       // no use of the index is allowed.
@@ -428,8 +431,8 @@ namespace engine
       BOOLEAN hasRebuild = FALSE ;
       INT32 idxID = 0 ;
 
-      rc = _extHandler->onRebuildTextIdx( _csLogicalID, _mbContext->clLID(),
-                                          _indexLID, _eduCB ) ;
+      rc = _extHandler->onRebuildTextIdx( _suData->getSuName(),
+                                          _collectionName, _idxName, _eduCB ) ;
       PD_RC_CHECK( rc, PDERROR, "External handle on text index rebuild "
                    "failed: %d", rc ) ;
       // Now the capped cs and cl have been created. So if any failure below,
@@ -488,10 +491,10 @@ namespace engine
          if ( ( SDB_DMS_NOTEXIST != rc ) && ( SDB_DMS_TRUNCATED != rc ) &&
               ( SDB_DMS_INVALID_INDEXCB != rc ) )
          {
-            INT32 rcTmp = _extHandler->onDropTextIdx( _csLogicalID,
-                                                      _mbContext->clLID(),
-                                                      _indexLID, _eduCB,
-                                                      NULL ) ;
+            INT32 rcTmp = _extHandler->onDropTextIdx( _suData->getSuName(),
+                                                      _collectionName,
+                                                      _idxName,
+                                                      _eduCB, NULL ) ;
             if ( rcTmp )
             {
                PD_LOG( PDERROR, "External operation on drop text index failed, "

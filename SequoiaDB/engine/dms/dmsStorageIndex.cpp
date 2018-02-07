@@ -205,9 +205,9 @@ namespace engine
                      }
                      else
                      {
-                        rc = extHandler->onOpenTextIdx( _pDataSu->logicalID(),
-                                                        _pDataSu->_dmsMME->_mbList[i]._logicalID,
-                                                        indexCB.getLogicalID() ) ;
+                        rc = extHandler->onOpenTextIdx( _pDataSu->getSuName(),
+                                                        _pDataSu->_dmsMME->_mbList[i]._collectionName,
+                                                        indexCB.getName() ) ;
                         PD_RC_CHECK( rc, PDERROR, "External on text index open "
                                      "failed[ %d ]", rc ) ;
                      }
@@ -834,8 +834,9 @@ namespace engine
          }
          else
          {
-            rc = extHandler->onDropAllIndexes( _pDataSu->logicalID(),
-                                               context->clLID(), cb, dpscb ) ;
+            rc = extHandler->onDropAllIndexes( _pDataSu->getSuName(),
+                                               context->mb()->_collectionName,
+                                               cb, dpscb ) ;
             PD_RC_CHECK( rc, PDERROR, "External operation on drop all index "
                          "failed, rc: %d", rc ) ;
          }
@@ -1015,7 +1016,6 @@ namespace engine
       dpsLogRecord &record  = info.getMergeBlock().record() ;
       UINT32 logRecSize            = 0 ;
       BSONObj indexDef ;
-      dmsExtentID idxLogicalID = DMS_INVALID_EXTENT ;
       IDmsExtDataHandler *extDataHandler = NULL ;
 
       rc = context->mbLock( EXCLUSIVE ) ;
@@ -1119,7 +1119,6 @@ namespace engine
                rc = SDB_SYS ;
                goto error ;
             }
-            idxLogicalID = indexCB.getLogicalID() ;
          }
 
          // truncate index, do remove root
@@ -1156,9 +1155,9 @@ namespace engine
 
          if ( extDataHandler )
          {
-            rc = extDataHandler->onDropTextIdx( _pDataSu->logicalID(),
-                                                context->clLID(),
-                                                idxLogicalID, cb, NULL ) ;
+            rc = extDataHandler->onDropTextIdx( _pDataSu->getSuName(),
+                                                context->mb()->_collectionName,
+                                                indexCB.getName(), cb, NULL ) ;
             PD_RC_CHECK( rc, PDERROR, "External data process of dropping "
                          "text index failed[ %d ]", rc ) ;
          }
@@ -1445,9 +1444,9 @@ namespace engine
                goto error ;
             }
 
-            rc = handler->onInsert( _pDataSu->logicalID(),
-                                    context->clLID(),
-                                    indexCB.getLogicalID(),
+            rc = handler->onInsert( _pDataSu->getSuName(),
+                                    context->mb()->_collectionName,
+                                    indexCB.getName(),
                                     indexCB, inputObj, cb ) ;
             PD_RC_CHECK( rc, PDERROR, "Insert on text index failed[ %d ]",
                          rc ) ;
@@ -1701,9 +1700,9 @@ namespace engine
                goto error ;
             }
 
-            rc = handler->onUpdate( _pDataSu->logicalID(),
-                                    context->clLID(),
-                                    indexCB.getLogicalID(),
+            rc = handler->onUpdate( _pDataSu->getSuName(),
+                                    context->mb()->_collectionName,
+                                    indexCB.getName(),
                                     indexCB, originalObj, newObj, cb ) ;
             PD_RC_CHECK( rc, PDERROR, "Update on text index failed[ %d ]",
                          rc ) ;
@@ -1836,9 +1835,9 @@ namespace engine
                goto error ;
             }
 
-            rc = handler->onDelete( _pDataSu->logicalID(),
-                                    context->clLID(),
-                                    indexCB.getLogicalID(),
+            rc = handler->onDelete( _pDataSu->getSuName(),
+                                    context->mb()->_collectionName,
+                                    indexCB.getName(),
                                     indexCB, inputObj, cb ) ;
             PD_RC_CHECK( rc, PDERROR, "Delete on text index failed[ %d ]",
                          rc ) ;

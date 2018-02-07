@@ -53,47 +53,41 @@ namespace engine
       virtual ~_IDmsExtDataHandler() {}
 
    public:
-      virtual INT32 onOpenTextIdx( UINT32 csLogialID, UINT32 clLogicalID,
-                                   dmsExtentID idxLogicalID ) = 0 ;
+      virtual INT32 onOpenTextIdx( const CHAR *csName, const CHAR *clName,
+                                   const CHAR *idxName ) = 0 ;
 
-      virtual INT32 onDelCS( UINT32 csLogicalID, _pmdEDUCB *cb,
+      virtual INT32 onDelCS( const CHAR *csName, _pmdEDUCB *cb,
                              BOOLEAN removeFiles, SDB_DPSCB *dpscb = NULL ) = 0 ;
 
-      virtual INT32 onDropAllIndexes( UINT32 csLogicalID, UINT32 clLogicalID,
+      virtual INT32 onDropAllIndexes( const CHAR *csName, const CHAR *clName,
                                       _pmdEDUCB *cb,
                                       SDB_DPSCB *dpscb = NULL ) = 0 ;
 
-      virtual INT32 onDropTextIdx( UINT32 csLogicalID,
-                                   UINT32 clLogicalID,
-                                   dmsExtentID idxLogicalID,
-                                   _pmdEDUCB *cb,
+      virtual INT32 onDropTextIdx( const CHAR *csName, const CHAR *clName,
+                                   const CHAR *idxName, _pmdEDUCB *cb,
                                    SDB_DPSCB *dpscb = NULL ) = 0 ;
-
-      virtual INT32 onRebuildTextIdx( UINT32 csLogicalID, UINT32 clLogicalID,
-                                      dmsExtentID idxLogicalId, _pmdEDUCB *cb,
+      
+      virtual INT32 onRebuildTextIdx( const CHAR *csName, const CHAR *clName,
+                                      const CHAR *idxName, _pmdEDUCB *cb,
                                       SDB_DPSCB *dpscb = NULL ) = 0 ;
-
-      virtual INT32 onInsert( UINT32 csLogicalID, UINT32 clLogicalID,
-                              dmsExtentID idxLogicalID,
-                              const ixmIndexCB &indexCB,
+      
+      virtual INT32 onInsert( const CHAR *csName, const CHAR *clName,
+                              const CHAR *idxName, const ixmIndexCB &indexCB,
                               const BSONObj &object, _pmdEDUCB* cb,
                               SDB_DPSCB *dpscb = NULL ) = 0 ;
 
-      virtual INT32 onDelete( UINT32 csLogicalID, UINT32 clLogicalID,
-                              dmsExtentID idxLogicalID,
-                              const ixmIndexCB &indexCB,
+      virtual INT32 onDelete( const CHAR *csName, const CHAR *clName,
+                              const CHAR *idxName, const ixmIndexCB &indexCB,
                               const BSONObj &object, _pmdEDUCB* cb,
                               SDB_DPSCB *dpscb = NULL ) = 0 ;
 
-      virtual INT32 onUpdate( UINT32 csLogicalID, UINT32 clLogicalID,
-                              dmsExtentID idxLogicalID,
-                              const ixmIndexCB &indexCB,
+      virtual INT32 onUpdate( const CHAR *csName, const CHAR *clName,
+                              const CHAR *idxName, const ixmIndexCB &indexCB,
                               const BSONObj &orignalObj, const BSONObj &newObj,
                               _pmdEDUCB* cb, SDB_DPSCB *dpscb = NULL ) = 0 ;
 
-      virtual INT32 onTruncateCL( UINT32 csLogicalID, UINT32 oldCLLogicalID,
-                                  UINT32 newCLLogicalID, _pmdEDUCB *cb,
-                                  SDB_DPSCB *dpsCB = NULL ) = 0 ;
+      virtual INT32 onTruncateCL( const CHAR *csName, const CHAR *clName,
+                                  _pmdEDUCB *cb, SDB_DPSCB *dpsCB = NULL ) = 0 ;
 
       virtual INT32 done( _pmdEDUCB *cb, SDB_DPSCB *dpscb = NULL ) = 0 ;
 

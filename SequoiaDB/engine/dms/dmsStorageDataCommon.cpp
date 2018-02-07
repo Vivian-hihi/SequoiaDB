@@ -2441,9 +2441,8 @@ namespace engine
          handler = getExtDataHandler() ;
          if ( handler )
          {
-            UINT32 oldLID = context->clLID() ;
-            UINT32 newLID = needChangeCLID ? newCLID : oldLID ;
-            rc = handler->onTruncateCL( logicalID(), oldLID, newLID,
+            rc = handler->onTruncateCL( getSuName(),
+                                        context->mb()->_collectionName,
                                         cb, dpscb ) ;
             PD_RC_CHECK( rc, PDERROR, "External operation on truncate "
                          "collection failed, rc: %d", rc ) ;

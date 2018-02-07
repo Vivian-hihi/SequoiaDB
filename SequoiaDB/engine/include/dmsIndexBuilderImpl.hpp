@@ -103,7 +103,8 @@ namespace engine
 
    private:
       IDmsExtDataHandler *_extHandler ;
-      UINT32 _csLogicalID ;
+      CHAR _collectionName[ DMS_COLLECTION_NAME_SZ + 1 ] ;
+      CHAR _idxName[ IXM_INDEX_NAME_SIZE + 1 ] ;
    } ;
    typedef _dmsIndexExtBuilder dmsIndexExtBuilder ;
 }

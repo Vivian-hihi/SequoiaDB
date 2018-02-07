@@ -51,15 +51,19 @@ namespace engine
 {
    struct _rtnExtProcessorMeta
    {
-      UINT32 _csLogicalID ;
-      UINT32 _clLogicalID ;
-      dmsExtentID _idxLogicalID ;
+      string _csName ;
+      string _clName ;
+      string _idxName ;
 
       _rtnExtProcessorMeta()
-      : _csLogicalID( DMS_INVALID_LOGICCSID ),
-        _clLogicalID( DMS_INVALID_LOGICCLID ),
-        _idxLogicalID( DMS_INVALID_EXTENT )
       {
+      }
+
+      void init( const CHAR *csName, const CHAR *clName, const CHAR *idxName )
+      {
+         _csName = string( csName ) ;
+         _clName = string( clName ) ;
+         _idxName = string( idxName ) ;
       }
    } ;
    typedef _rtnExtProcessorMeta rtnExtProcessorMeta ;
@@ -77,8 +81,8 @@ namespace engine
       _rtnExtDataProcessor() ;
       ~_rtnExtDataProcessor() ;
 
-      INT32 init( UINT32 csLogicalID, UINT32 clLogicalID,
-                  dmsExtentID idxLogicalID ) ;
+      INT32 init( const CHAR *csName, const CHAR *clName,
+                  const CHAR *idxName ) ;
 
       /*
        * Why prepare and done? The commit LSN should be the same on primary and
@@ -103,6 +107,16 @@ namespace engine
 
       const rtnExtProcessorMeta& getMeta() const { return _meta ; }
       INT32 updateMeta( const rtnExtProcessorMeta& meta ) ;
+      BOOLEAN isOwnedBy( const CHAR *csName, const CHAR *clName = NULL,
+                         const CHAR *idxName = NULL ) ;
+
+      static void getExtDataNames( const CHAR *csName,
+                                   const CHAR *clName,
+                                   const CHAR *idxName,
+                                   CHAR *extCSName,
+                                   UINT32 csNameBufSize,
+                                   CHAR *extCLName,
+                                   UINT32 clNameBufSize ) ;
 
    private:
       void _lock() ;
@@ -125,28 +139,31 @@ namespace engine
 
    class _rtnExtDataProcessorMgr : public SDBObject
    {
-      typedef std::map<string, rtnExtDataProcessor *>   PROCESSOR_MAP ;
-      typedef PROCESSOR_MAP::iterator                   PROCESSOR_MAP_ITR ;
+      typedef std::multimap<UINT32, rtnExtDataProcessor *>   PROCESSOR_MAP ;
+      typedef PROCESSOR_MAP::iterator                        PROCESSOR_MAP_ITR ;
    public:
       _rtnExtDataProcessorMgr() ;
       ~_rtnExtDataProcessorMgr () ;
 
-      INT32 addProcessor( UINT32 csLogicalID, UINT32 clLogicalID,
-                          dmsExtentID idxLogicalID,
+      INT32 addProcessor( const CHAR *csName, const CHAR *clName,
+                          const CHAR *idxName,
                           rtnExtDataProcessor** processor ) ;
 
-      void getProcessors( UINT32 csLogicalID,
+      void getProcessors( const CHAR *csName,
                           vector<rtnExtDataProcessor *> &processorVec ) ;
 
-      void getProcessors( UINT32 csLogicalID, UINT32 clLogicalID,
+      void getProcessors( const CHAR *csName, const CHAR *clName,
                           vector<rtnExtDataProcessor *> &processorVec ) ;
 
-      INT32 getProcessor( UINT32 csLogicalID, UINT32 clLogicalID,
-                          dmsExtentID idxLogicalID, rtnExtDataProcessor **processor,
-                          BOOLEAN create = FALSE ) ;
+      INT32 getProcessor( const CHAR *csName, const CHAR *clName,
+                          const CHAR *idxName,
+                          rtnExtDataProcessor **processor ) ;
 
       void delProcessor( rtnExtDataProcessor **processor ) ;
 
+   private:
+      UINT32 _genProcessorKey( const CHAR *csName, const CHAR *clName,
+                               const CHAR *idxName ) ;
    private:
       ossRWMutex     _mutex ;
       // Use a hash map to manage all the processors.

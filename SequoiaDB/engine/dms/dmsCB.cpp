@@ -1462,7 +1462,7 @@ namespace engine
       extHandler = pCSCB->_su->data()->getExtDataHandler() ;
       if ( extHandler )
       {
-         rc = extHandler->onDelCS( pCSCB->_su->LogicalCSID(), cb,
+         rc = extHandler->onDelCS( pCSCB->_su->CSName(), cb,
                                    removeFile, dpsCB ) ;
          PD_RC_CHECK( rc, PDERROR, "External operation on delete cs failed, "
                       "rc: %d", rc ) ;
@@ -1623,7 +1623,7 @@ namespace engine
       extHandler = pCSCB->_su->data()->getExtDataHandler() ;
       if ( extHandler )
       {
-         rc = extHandler->onDelCS( pCSCB->_su->LogicalCSID(),
+         rc = extHandler->onDelCS( pCSCB->_su->CSName(),
                                    cb, TRUE, dpsCB ) ;
          PD_RC_CHECK( rc, PDERROR, "External operation on drop CS[ %s ] failed,"
                       " rc: %d", pName, rc ) ;

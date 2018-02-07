@@ -880,7 +880,6 @@ namespace seadapter
       UINT32 csLogicalID = 0 ;
       UINT32 clLogicalID = 0 ;
       UINT32 idxLogicalID = 0 ;
-      CHAR esIdxName[ SDB_SEADPT_MAX_IDXNAME_SZ + 1 ] = { 0 } ;
 
       try
       {
@@ -948,8 +947,6 @@ namespace seadapter
                csLogicalID = (UINT32)lidObj.getIntField( "0" ) ;
                clLogicalID = (UINT32)lidObj.getIntField( "1" ) ;
                idxLogicalID = (UINT32)lidObj.getIntField( "2" ) ;
-               _genESIdxName( csLogicalID, clLogicalID, idxLogicalID,
-                              esIdxName, sizeof( esIdxName ) ) ;
             }
          }
 
@@ -963,7 +960,7 @@ namespace seadapter
          idxMeta.setCLLogicalID( clLogicalID ) ;
          idxMeta.setIdxLogicalID( idxLogicalID ) ;
 
-         idxMeta.setESIdxName( esIdxName ) ;
+         _genESIdxName( idxMeta ) ;
          idxMeta.setESIdxType( _peerGroupName ) ;
       }
       catch ( std::exception &e )
@@ -1279,7 +1276,7 @@ namespace seadapter
                  "running in READONLY mode" ) ;
       }
 
-      // When connect to primary node, start the index update timer.
+      // When connect to any node, start the index update timer.
       rc = _indexNetRtAgent.addTimer( SEADPT_IDX_UPDATE_INTERVAL,
                                       &_indexTimerHandler,
                                       _idxUpdateTimerID ) ;
@@ -1538,6 +1535,16 @@ namespace seadapter
    {
       ossSnprintf( esIdxName, buffSize, ES_SYS_PREFIX"_%u_%u_%d",
                    csLID, clLID, idxLID ) ;
+   }
+
+   void _seAdptCB::_genESIdxName( seIndexMeta &idxMeta )
+   {
+      std::string::size_type pos = idxMeta.getCappedCLName().find('.') ;
+      std::string cappedCLName = idxMeta.getCappedCLName().substr( pos + 1 ) ;
+      // ES index names should be in lower case.
+      std::transform( cappedCLName.begin(), cappedCLName.end(),
+                      cappedCLName.begin(), ::tolower ) ;
+      idxMeta.setESIdxName( cappedCLName.c_str() ) ;
    }
 
    seAdptCB* sdbGetSeAdapterCB()

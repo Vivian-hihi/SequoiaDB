@@ -60,18 +60,16 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSOR_INIT, "_rtnExtDataProcessor::init" )
-   INT32 _rtnExtDataProcessor::init( UINT32 csLogicalID, UINT32 clLogicalID,
-                                     dmsExtentID idxLogicalID )
+   INT32 _rtnExtDataProcessor::init( const CHAR *csName, const CHAR *clName,
+                                     const CHAR *idxName )
    {
       PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSOR_INIT ) ;
-      _meta._csLogicalID = csLogicalID ;
-      _meta._clLogicalID = clLogicalID ;
-      _meta._idxLogicalID = idxLogicalID ;
-      ossSnprintf( _cappedCSName, DMS_COLLECTION_SPACE_NAME_SZ,
-                   SYS_PREFIX"_%u_%u_%d", csLogicalID,
-                   clLogicalID, idxLogicalID ) ;
-      ossSnprintf( _cappedCLName, DMS_COLLECTION_NAME_SZ,
-                   "%s.%s", _cappedCSName, _cappedCSName ) ;
+
+      _meta.init( csName, clName, idxName ) ;
+
+      getExtDataNames( csName, clName, idxName, _cappedCSName,
+                       DMS_COLLECTION_SPACE_NAME_SZ + 1,
+                       _cappedCLName, DMS_COLLECTION_NAME_SZ + 1 ) ;
 
       PD_TRACE_EXIT( SDB__RTNEXTDATAPROCESSOR_INIT ) ;
       return SDB_OK ;
@@ -448,13 +446,71 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSOR_UPDATEMETA ) ;
-      rc = init( meta._csLogicalID, meta._clLogicalID, meta._idxLogicalID ) ;
+      rc = init( meta._csName.c_str(), meta._clName.c_str(),
+                 meta._idxName.c_str() ) ;
       PD_RC_CHECK( rc, PDERROR, "Init processor failed[ %d ]", rc ) ;
    done:
       PD_TRACE_EXITRC( SDB__RTNEXTDATAPROCESSOR_UPDATEMETA, rc ) ;
       return rc ;
    error:
       goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSOR__ISOWNEDBY, "_rtnExtDataProcessor::isOwnedBy" )
+   BOOLEAN _rtnExtDataProcessor::isOwnedBy( const CHAR *csName,
+                                            const CHAR *clName,
+                                            const CHAR *idxName )
+   {
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSOR__ISOWNEDBY ) ;
+      BOOLEAN result = FALSE ;
+
+      SDB_ASSERT( csName, "CS name can not be NULL" ) ;
+
+      if ( 0 == ossStrcmp( csName, _meta._csName.c_str() ) )
+      {
+         result = TRUE ;
+      }
+
+      if ( clName && 0 != ossStrcmp( clName, _meta._clName.c_str() ) && result )
+      {
+         result = FALSE ;
+      }
+
+      if ( idxName && 0 != ossStrcmp( idxName, _meta._idxName.c_str() )
+           && result )
+      {
+         result = FALSE ;
+      }
+
+      PD_TRACE_EXIT( SDB__RTNEXTDATAPROCESSOR__ISOWNEDBY ) ;
+      return result ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSOR_GETEXTDATANAMES, "_rtnExtDataProcessor::getExtDataNames" )
+   void _rtnExtDataProcessor::getExtDataNames( const CHAR *csName,
+                                               const CHAR *clName,
+                                               const CHAR *idxName,
+                                               CHAR *extCSName,
+                                               UINT32 csNameBufSize,
+                                               CHAR *extCLName,
+                                               UINT32 clNameBufSize )
+   {
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSOR_GETEXTDATANAMES ) ;
+      SDB_ASSERT( csName && clName && idxName, "Name is NULL" ) ;
+      string srcStr = string( csName ) + string( clName ) + string( idxName ) ;
+      UINT32 hashVal = ossHash( srcStr.c_str() ) ;
+      if ( extCSName && csNameBufSize > 0 )
+      {
+         ossSnprintf( extCSName, csNameBufSize,
+                      SYS_PREFIX"_%u", hashVal ) ;
+      }
+
+      if ( extCLName && clNameBufSize )
+      {
+         ossSnprintf( extCLName, clNameBufSize,
+                      SYS_PREFIX"_%u."SYS_PREFIX"_%u", hashVal, hashVal ) ;
+      }
+      PD_TRACE_EXIT( SDB__RTNEXTDATAPROCESSOR_GETEXTDATANAMES ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSOR__PREPARERECORD, "_rtnExtDataProcessor::_prepareRecord" )
@@ -621,20 +677,16 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSORMGR_ADDPROCESSOR, "_rtnExtDataProcessorMgr::addProcessor" )
-   INT32 _rtnExtDataProcessorMgr::addProcessor( UINT32 csLogicalID,
-                                                UINT32 clLogicalID,
-                                                dmsExtentID idxLogicalID,
+   INT32 _rtnExtDataProcessorMgr::addProcessor( const CHAR *csName,
+                                                const CHAR *clName,
+                                                const CHAR *idxName,
                                                 rtnExtDataProcessor** processor )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSORMGR_ADDPROCESSOR ) ;
       rtnExtDataProcessor *processorLocal = NULL ;
 
-      const INT32 keySize = 128 ;
-      CHAR fullName[ keySize ] = { 0 } ;
-
-      ossSnprintf( fullName, keySize, "%u_%u_%d", csLogicalID, clLogicalID,
-                   idxLogicalID ) ;
+      UINT32 key = _genProcessorKey( csName, clName, idxName ) ;
 
       processorLocal = SDB_OSS_NEW rtnExtDataProcessor() ;
       if ( !processorLocal )
@@ -644,20 +696,15 @@ namespace engine
          goto error ;
       }
 
-      rc = processorLocal->init( csLogicalID, clLogicalID, idxLogicalID ) ;
-      PD_RC_CHECK( rc, PDERROR, "Init external data processor failed[ %d ]",
-                   rc ) ;
+      rc = processorLocal->init( csName, clName, idxName ) ;
+      PD_RC_CHECK( rc, PDERROR, "Init external data processor for "
+                   "collection[ %s.%s ] and index[ %s ] failed[ %d ]",
+                   csName, clName, idxName, rc ) ;
 
       {
          ossScopedRWLock lock( &_mutex, EXCLUSIVE ) ;
-         PROCESSOR_MAP_ITR itr = _processorMap.find( string( fullName ) ) ;
-         if ( _processorMap.end() != itr )
-         {
-            SDB_OSS_DEL processorLocal ;
-            processorLocal = NULL ;
-            goto done ;
-         }
-         _processorMap[ string( fullName ) ] = processorLocal ;
+         _processorMap.insert( std::pair<UINT32, rtnExtDataProcessor *>
+                               ( key, processorLocal ) ) ;
       }
 
       if ( processor )
@@ -677,7 +724,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSORMGR_GETPROCESSORS, "_rtnExtDataProcessorMgr::getProcessors" )
-   void _rtnExtDataProcessorMgr::getProcessors( UINT32 csLogicalID,
+   void _rtnExtDataProcessorMgr::getProcessors( const CHAR *csName,
                                                 vector<rtnExtDataProcessor *> &processorVec )
    {
       PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSORMGR_GETPROCESSORS ) ;
@@ -685,7 +732,7 @@ namespace engine
       for ( PROCESSOR_MAP_ITR itr = _processorMap.begin();
             itr != _processorMap.end(); ++itr )
       {
-         if ( itr->second->getMeta()._csLogicalID == csLogicalID )
+         if ( itr->second->isOwnedBy( csName ) )
          {
             processorVec.push_back( itr->second ) ;
          }
@@ -694,8 +741,8 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSORMGR_GETPROCESSORS2, "_rtnExtDataProcessorMgr::getProcessors2" )
-   void _rtnExtDataProcessorMgr::getProcessors( UINT32 csLogicalID,
-                                                UINT32 clLogicalID,
+   void _rtnExtDataProcessorMgr::getProcessors( const CHAR *csName,
+                                                const CHAR *clName,
                                                 vector<rtnExtDataProcessor *> &processorVec )
    {
       PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSORMGR_GETPROCESSORS2 ) ;
@@ -703,8 +750,7 @@ namespace engine
       for ( PROCESSOR_MAP_ITR itr = _processorMap.begin();
             itr != _processorMap.end(); ++itr )
       {
-         if ( itr->second->getMeta()._csLogicalID == csLogicalID &&
-              itr->second->getMeta()._clLogicalID == clLogicalID )
+         if ( itr->second->isOwnedBy( csName, clName ) )
          {
             processorVec.push_back( itr->second ) ;
          }
@@ -713,39 +759,38 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSORMGR_GETPROCESSOR, "_rtnExtDataProcessorMgr::getProcessor" )
-   INT32 _rtnExtDataProcessorMgr::getProcessor( UINT32 csLogicalID,
-                                                UINT32 clLogicalID,
-                                                dmsExtentID idxLogicalID,
-                                                rtnExtDataProcessor **processor,
-                                                BOOLEAN create )
+   INT32 _rtnExtDataProcessorMgr::getProcessor( const CHAR *csName,
+                                                const CHAR *clName,
+                                                const CHAR *idxName,
+                                                rtnExtDataProcessor **processor )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSORMGR_GETPROCESSOR ) ;
       PROCESSOR_MAP_ITR itr ;
-      rtnExtDataProcessor* processorTmp = NULL ;
-      const INT32 keySize = 128 ;
-      CHAR fullName[ keySize ] = { 0 } ;
+      UINT32 key = 0 ;
 
-      ossSnprintf( fullName, keySize, "%u_%u_%d", csLogicalID, clLogicalID,
-                   idxLogicalID ) ;
+      if ( !csName || !clName || !idxName )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "cs/cl/index name invalid to get processor" ) ;
+         goto error ;
+      }
+      key = _genProcessorKey( csName, clName, idxName ) ;
 
+      *processor = NULL ;
       {
          ossScopedRWLock lock( &_mutex, SHARED ) ;
-         itr = _processorMap.find( fullName ) ;
-         if ( _processorMap.end() != itr )
+         std::pair<PROCESSOR_MAP_ITR, PROCESSOR_MAP_ITR> range =
+            _processorMap.equal_range( key ) ;
+         for ( PROCESSOR_MAP_ITR itr = range.first; itr != range.second; ++itr )
          {
-            processorTmp = itr->second ;
+            if ( itr->second->isOwnedBy( csName, clName, idxName ) )
+            {
+               *processor = itr->second ;
+               break ;
+            }
          }
       }
-
-      if ( !processorTmp && create )
-      {
-         INT32 rc = addProcessor( csLogicalID, clLogicalID, idxLogicalID,
-                                  &processorTmp ) ;
-         PD_RC_CHECK( rc, PDERROR, "Add external processor failed[ %d ]", rc ) ;
-         SDB_ASSERT( processorTmp, "Processor is NULL" ) ;
-      }
-      *processor = processorTmp ;
 
    done:
       PD_TRACE_EXITRC( SDB__RTNEXTDATAPROCESSORMGR_GETPROCESSOR, rc ) ;
@@ -770,6 +815,16 @@ namespace engine
          }
       }
       PD_TRACE_EXIT( SDB__RTNEXTDATAPROCESSORMGR_DELPROCESSOR ) ;
+   }
+
+   UINT32 _rtnExtDataProcessorMgr::_genProcessorKey( const CHAR *csName,
+                                                     const CHAR *clName,
+                                                     const CHAR *idxName )
+   {
+      SDB_ASSERT( csName && clName && idxName, "Names can not be NULL" ) ;
+
+      string srcStr = string( csName ) + string( clName ) + string( idxName ) ;
+      return ossHash( srcStr.c_str() ) ;
    }
 
    rtnExtDataProcessorMgr* rtnGetExtDataProcessorMgr()

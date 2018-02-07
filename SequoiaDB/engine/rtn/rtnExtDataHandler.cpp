@@ -176,23 +176,12 @@ namespace engine
       PD_TRACE_ENTRY( SDB__RTNEXTTRUNCATECTX_DONE ) ;
 
       for ( vector<rtnExtDataProcessor *>::iterator itr = _processors.begin();
-            itr != _processors.end(); )
+            itr != _processors.end(); ++itr )
       {
          rc = (*itr)->doDropP2( cb, NULL ) ;
          PD_RC_CHECK( rc, PDERROR, "Drop phase 2 failed[ %d ]", rc ) ;
-         if ( _oldCLLID != _newCLLID )
-         {
-            rtnExtDataProcessor* newProcessor = NULL ;
-            rtnExtProcessorMeta meta = (*itr)->getMeta() ;
-            edpMgr->delProcessor( &(*itr) ) ;
-            meta._clLogicalID = _newCLLID ;
-            rc = edpMgr->addProcessor( meta._csLogicalID, meta._clLogicalID,
-                                        meta._idxLogicalID, &newProcessor ) ;
-            PD_RC_CHECK( rc, PDERROR, "Add new processor failed[ %d ]", rc ) ;
-            rc = newProcessor->doRebuild( cb, dpscb ) ;
-            PD_RC_CHECK( rc, PDERROR, "Rebuild of index failed[ %d ]", rc ) ;
-         }
-         _processors.erase( itr ) ;
+         rc = (*itr)->doRebuild( cb, dpscb ) ;
+         PD_RC_CHECK( rc, PDERROR, "External data rebuild failed[ %d ]", rc ) ;
       }
 
    done:
@@ -351,16 +340,15 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ONOPENTEXTIDX, "_rtnExtDataHandler::onOpenTextIdx" )
-   INT32 _rtnExtDataHandler::onOpenTextIdx( UINT32 csLogialID,
-                                            UINT32 clLogicalID,
-                                            dmsExtentID idxLogicalID )
+   INT32 _rtnExtDataHandler::onOpenTextIdx( const CHAR *csName,
+                                            const CHAR *clName,
+                                            const CHAR *idxName )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONOPENTEXTIDX ) ;
       rtnExtDataProcessor *processor = NULL ;
 
-      rc = _edpMgr->addProcessor( csLogialID, clLogicalID,
-                                  idxLogicalID, &processor ) ;
+      rc = _edpMgr->addProcessor( csName, clName, idxName, &processor ) ;
       PD_RC_CHECK( rc, PDERROR, "Add external processor failed[ %d ]", rc ) ;
       SDB_ASSERT( processor, "processor is NULL" ) ;
 
@@ -372,7 +360,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ONDELCS, "_rtnExtDataHandler::onDelCS" )
-   INT32 _rtnExtDataHandler::onDelCS( UINT32 csLogicalID, pmdEDUCB *cb,
+   INT32 _rtnExtDataHandler::onDelCS( const CHAR *csName, pmdEDUCB *cb,
                                       BOOLEAN removeFiles, SDB_DPSCB *dpscb )
    {
       INT32 rc = SDB_OK ;
@@ -389,7 +377,7 @@ namespace engine
       }
       context->setRemoveFiles( removeFiles ) ;
 
-      _edpMgr->getProcessors( csLogicalID, processorVec ) ;
+      _edpMgr->getProcessors( csName, processorVec ) ;
       if ( 0 == processorVec.size() )
       {
          goto done ;
@@ -428,8 +416,8 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ONDROPALLINDEXES, "_rtnExtDataHandler::onDropAllIndexes" )
-   INT32 _rtnExtDataHandler::onDropAllIndexes( UINT32 csLogicalID,
-                                               UINT32 clLogicalID,
+   INT32 _rtnExtDataHandler::onDropAllIndexes( const CHAR *csName,
+                                               const CHAR *clName,
                                                pmdEDUCB *cb, SDB_DPSCB *dpscb )
    {
       INT32 rc = SDB_OK ;
@@ -437,7 +425,7 @@ namespace engine
       vector<rtnExtDataProcessor *> processorVec ;
       vector<rtnExtDataProcessor *> processorP1 ;
 
-      _edpMgr->getProcessors( csLogicalID, clLogicalID, processorVec ) ;
+      _edpMgr->getProcessors( csName, clName, processorVec ) ;
 
       for ( vector<rtnExtDataProcessor *>::iterator itr = processorVec.begin();
             itr != processorVec.end(); ++itr )
@@ -469,9 +457,9 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ONDROPTEXTIDX, "_rtnExtDataHandler::onDropTextIdx" )
-   INT32 _rtnExtDataHandler::onDropTextIdx( UINT32 csLogicalID,
-                                            UINT32 clLogicalID,
-                                            dmsExtentID idxLogicalID,
+   INT32 _rtnExtDataHandler::onDropTextIdx( const CHAR *csName,
+                                            const CHAR *clName,
+                                            const CHAR *idxName,
                                             pmdEDUCB *cb,
                                             SDB_DPSCB *dpscb )
    {
@@ -485,8 +473,7 @@ namespace engine
          goto done ;
       }
 
-      rc = _edpMgr->getProcessor( csLogicalID, clLogicalID,
-                                  idxLogicalID, &processor ) ;
+      rc = _edpMgr->getProcessor( csName, clName, idxName, &processor ) ;
       PD_RC_CHECK( rc, PDERROR, "Get external processor failed[ %d ]", rc ) ;
       if ( !processor )
       {
@@ -506,9 +493,9 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ONREBUILDTEXTIDX, "_rtnExtDataHandler::onRebuildTextIdx" )
-   INT32 _rtnExtDataHandler::onRebuildTextIdx( UINT32 csLogicalID,
-                                               UINT32 clLogicalID,
-                                               dmsExtentID idxLogicalID,
+   INT32 _rtnExtDataHandler::onRebuildTextIdx( const CHAR *csName,
+                                               const CHAR *clName,
+                                               const CHAR *idxName,
                                                pmdEDUCB *cb, SDB_DPSCB *dpscb )
    {
       INT32 rc = SDB_OK ;
@@ -533,26 +520,25 @@ namespace engine
                          || SDB_DB_FULLSYNC == dbStatus ) ? TRUE : FALSE ;
 
       SDB_ASSERT( cb, "eduCB is NULL" ) ;
-      if ( DMS_INVALID_LOGICCSID == csLogicalID ||
-           DMS_INVALID_LOGICCLID == clLogicalID ||
-           DMS_INVALID_EXTENT == idxLogicalID )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "Invalid id to rebuild text index, cs logical "
-                 "id[ %u ], cl logical id[ %u ], index logical id[ %d ]",
-                 csLogicalID, clLogicalID, idxLogicalID ) ;
-         goto error ;
-      }
 
-      rc = _edpMgr->getProcessor( csLogicalID, clLogicalID, idxLogicalID,
-                                  &processor, create ) ;
+      rc = _edpMgr->getProcessor( csName, clName, idxName, &processor ) ;
       PD_RC_CHECK( rc, PDERROR, "Get external processor for index "
                    "failed[ %d ]", rc ) ;
       if ( !processor )
       {
-         rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Get external data processor failed[ %d ]", rc ) ;
-         goto error ;
+         if ( create )
+         {
+            rc = _edpMgr->addProcessor( csName, clName, idxName, &processor ) ;
+            PD_RC_CHECK( rc, PDERROR, "Add processor for collection[ %s.%s ] "
+                         "and index[ %s ] failed[ %d ]", csName, clName,
+                         idxName, rc ) ;
+         }
+         else
+         {
+            rc = SDB_SYS ;
+            PD_LOG( PDERROR, "Get external data processor failed[ %d ]", rc ) ;
+            goto error ;
+         }
       }
 
       rc = processor->doRebuild( cb, NULL ) ;
@@ -566,8 +552,8 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ONINSERT, "_rtnExtDataHandler::onInsert" )
-   INT32 _rtnExtDataHandler::onInsert( UINT32 csLogicalID, UINT32 clLogicalID,
-                                       dmsExtentID idxLogicalID,
+   INT32 _rtnExtDataHandler::onInsert( const CHAR *csName, const CHAR *clName,
+                                       const CHAR *idxName,
                                        const ixmIndexCB &indexCB,
                                        const BSONObj &object, _pmdEDUCB* cb,
                                        SDB_DPSCB *dpscb )
@@ -597,8 +583,7 @@ namespace engine
 
       // At this point, we are still under the protection of the mb lock. So no
       // need to take lock here.
-      rc = _edpMgr->getProcessor( csLogicalID, clLogicalID, idxLogicalID,
-                                  &processor ) ;
+      rc = _edpMgr->getProcessor( csName, clName, idxName, &processor ) ;
       PD_RC_CHECK( rc, PDERROR, "Get external processor failed[ %d ]", rc ) ;
       SDB_ASSERT( processor, "Processor is NULL" ) ;
       if ( !processor )
@@ -630,8 +615,8 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ONDELETE, "_rtnExtDataHandler::onDelete" )
-   INT32 _rtnExtDataHandler::onDelete( UINT32 csLogicalID, UINT32 clLogicalID,
-                                       dmsExtentID idxLogicalID,
+   INT32 _rtnExtDataHandler::onDelete( const CHAR *csName, const CHAR *clName,
+                                       const CHAR *idxName,
                                        const ixmIndexCB &indexCB,
                                        const BSONObj &object, _pmdEDUCB* cb,
                                        SDB_DPSCB *dpscb )
@@ -661,8 +646,8 @@ namespace engine
 
       // At this point, we are still under the protection of the mb lock. So no
       // need to take lock here.
-      rc = _edpMgr->getProcessor( csLogicalID, clLogicalID,
-                                  idxLogicalID, &processor ) ;
+      rc = _edpMgr->getProcessor( csName, clName,
+                                  idxName, &processor ) ;
       PD_RC_CHECK( rc, PDERROR, "Get external processor failed[ %d ]", rc ) ;
       SDB_ASSERT( processor, "Processor is NULL" ) ;
       if ( !processor )
@@ -693,9 +678,8 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ONUPDATE, "_rtnExtDataHandler::onUpdate" )
-   INT32 _rtnExtDataHandler::onUpdate( UINT32 csLogicalID,
-                                       UINT32 clLogicalID,
-                                       dmsExtentID idxLogicalID,
+   INT32 _rtnExtDataHandler::onUpdate( const CHAR *csName, const CHAR *clName,
+                                       const CHAR *idxName,
                                        const ixmIndexCB &indexCB,
                                        const BSONObj &orignalObj,
                                        const BSONObj &newObj,
@@ -725,8 +709,7 @@ namespace engine
          newContext = TRUE ;
       }
 
-      rc = _edpMgr->getProcessor( csLogicalID, clLogicalID,
-                                  idxLogicalID, &processor ) ;
+      rc = _edpMgr->getProcessor( csName, clName, idxName, &processor ) ;
       PD_RC_CHECK( rc, PDERROR, "Get external processor failed[ %d ]", rc ) ;
       SDB_ASSERT( processor, "Processor is NULL" ) ;
       if ( !processor )
@@ -758,9 +741,8 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ONTRUNCATECL, "_rtnExtDataHandler::onTruncateCL" )
-   INT32 _rtnExtDataHandler::onTruncateCL( UINT32 csLogicalID,
-                                           UINT32 oldCLLogicalID,
-                                           UINT32 newCLLogicalID,
+   INT32 _rtnExtDataHandler::onTruncateCL( const CHAR *csName,
+                                           const CHAR *clName,
                                            pmdEDUCB *cb,
                                            SDB_DPSCB *dpsCB )
    {
@@ -778,7 +760,7 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Create new context failed[ %d ]", rc ) ;
       }
 
-      _edpMgr->getProcessors( csLogicalID, oldCLLogicalID, processors ) ;
+      _edpMgr->getProcessors( csName, clName, processors ) ;
       PD_RC_CHECK( rc, PDERROR, "Get processors failed[ %d ]", rc ) ;
 
       for ( vector<rtnExtDataProcessor *>::iterator itr = processors.begin();
@@ -788,7 +770,7 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Drop phase 1 failed[ %d ]", rc ) ;
          processorP1.push_back( *itr ) ;
       }
-      context->setCLLIDs( oldCLLogicalID, newCLLogicalID ) ;
+      //context->setCLLIDs( oldCLLogicalID, newCLLogicalID ) ;
       context->appendProcessors( processors ) ;
 
    done:
@@ -806,27 +788,6 @@ namespace engine
          }
       }
       goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_BUILDNAMES, "_rtnExtDataHandler::buildNames" )
-   void _rtnExtDataHandler::buildNames( const monCSSimple *csInfo,
-                                        const monCLSimple *clInfo,
-                                        const monIndex *idxInfo,
-                                        CHAR *cappedCLName,
-                                        UINT32 buffLen )
-   {
-      PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_BUILDNAMES ) ;
-      SDB_ASSERT( csInfo && clInfo && idxInfo && cappedCLName,
-                  "Invalid arguments to build names" ) ;
-
-      // The format of the capped collection space is
-      // SYS_<csLID>_<clLID>_<idxLID>, and the collection name is the same with
-      // collection space.
-      ossSnprintf( cappedCLName, buffLen,
-                   SYS_PREFIX"_%u_%u_%d."SYS_PREFIX"_%u_%u_%d",
-                   csInfo->_logicalID, clInfo->_logicalID, idxInfo->_indexLID,
-                   csInfo->_logicalID, clInfo->_logicalID, idxInfo->_indexLID ) ;
-      PD_TRACE_EXIT( SDB__RTNEXTDATAHANDLER_BUILDNAMES ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_DONE, "_rtnExtDataHandler::done" )

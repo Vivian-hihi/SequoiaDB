@@ -2810,8 +2810,11 @@ namespace engine
       PD_TRACE_ENTRY( SDB__CLSSHDMGR__BUILDTEXTIDXOBJ ) ;
 
       CHAR cappedCLName[ DMS_COLLECTION_FULL_NAME_SZ + 1 ] = { 0 } ;
-      rtnExtDataHandler::buildNames( csInfo, clInfo, idxInfo, cappedCLName,
-                                     DMS_COLLECTION_FULL_NAME_SZ + 1 ) ;
+
+      rtnExtDataProcessor::getExtDataNames( csInfo->_name, clInfo->_clname,
+                                            idxInfo->getIndexName(), NULL, 0,
+                                            cappedCLName,
+                                            DMS_COLLECTION_FULL_NAME_SZ + 1 ) ;
 
       try
       {
