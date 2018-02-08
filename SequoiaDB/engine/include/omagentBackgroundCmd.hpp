@@ -714,6 +714,20 @@ namespace engine
       virtual INT32 init ( const CHAR *pInstallInfo ) ;
    } ;
 
+   /*
+      _omaStopPlugins
+   */
+   class _omaStopPlugins : public _omaCommand
+   {
+   DECLARE_OACMD_AUTO_REGISTER() ;
+
+   public:
+      _omaStopPlugins() ;
+      ~_omaStopPlugins() ;
+      virtual const CHAR* name () { return OMA_CMD_STOP_PLUGIN ; }
+      virtual INT32 init ( const CHAR *pInstallInfo ) ;
+   } ;
+
 } // namespace engine
 
 

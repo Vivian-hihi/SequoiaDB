@@ -821,7 +821,58 @@ namespace engine
       // 4. set force
       _sessionMgr.setForced() ;
 
+      _runStopPluginTask() ;
+
       return SDB_OK ;
+   }
+
+   INT32 _omAgentMgr::_runStopPluginTask()
+   {
+      INT32 rc = SDB_OK ;
+      // new job
+      EDUID eduID = PMD_INVALID_EDUID ;
+      _omagentJob *pJob = NULL ;
+      _omaTask *pTask = NULL ;
+
+      pTask = SDB_OSS_NEW _omaStopPluginsTask( 0 ) ;
+      if ( NULL == pTask )
+      {
+         PD_LOG ( PDERROR, "Failed to alloc memory for running task "
+                  "with the plugin stop task" ) ;
+         rc = SDB_OOM ;
+         goto error ;
+      }
+
+      {
+         omaTaskPtr myTaskPtr( pTask ) ;
+         BSONObj info ;
+
+         pJob = SDB_OSS_NEW _omagentJob( myTaskPtr, info, NULL ) ;
+         if ( !pJob )
+         {
+            PD_LOG ( PDERROR, "Failed to alloc memory for running job "
+                     "with the plugin stop job" ) ;
+            rc = SDB_OOM ;
+            goto error ;
+         }
+
+         // start job
+         rc = rtnGetJobMgr()->startJob( pJob, RTN_JOB_MUTEX_NONE, &eduID,
+                                        FALSE ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to start plugin stop task, rc = %d",
+                     rc ) ;
+            goto done ;
+         }
+
+         pTask->setJobInfo( eduID ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _omAgentMgr::fini()

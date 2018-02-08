@@ -612,6 +612,21 @@ namespace engine
       INT32 doit() ;
    } ;
    typedef _omaStartPluginsTask omaStartPluginsTask ;
+
+   /*
+      stop plugins task
+   */
+   class _omaStopPluginsTask : public _omaTask
+   {
+   public:
+      _omaStopPluginsTask( INT64 taskID ) ;
+      virtual ~_omaStopPluginsTask() ;
+
+   public:
+      INT32 init( const BSONObj &info, void *ptr = NULL ) ;
+      INT32 doit() ;
+   } ;
+   typedef _omaStopPluginsTask omaStopPluginsTask ;
 }
 
 
