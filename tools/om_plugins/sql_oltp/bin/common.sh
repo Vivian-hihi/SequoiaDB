@@ -43,7 +43,7 @@ function getProcId()
 #Get the process id
 #$1 filename
 #$2 startup args
-function getProcIdddddd()
+function getProcIdTest()
 {
    local pid=""
    local procList=$(ps -ef|grep "$1"|grep -v grep);

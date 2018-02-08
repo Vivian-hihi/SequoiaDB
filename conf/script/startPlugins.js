@@ -25,10 +25,8 @@ var PD_LOGGER = new Logger( "startPlugins.js" ) ;
 
 var rootPath = "../plugins" ;
 
-function _throwError( e, msg, isThrow )
+function _throwError( rc, e, msg, isThrow )
 {
-   var rc = getLastError() ;
-
    if( rc == SDB_OK )
    {
       rc = SDB_SYS ;
@@ -75,7 +73,8 @@ function _stopPlugin( name, path )
    }
    catch( e )
    {
-      _throwError( e, sprintf( "plugin starter not found, name: ?", name ) ) ;
+      _throwError( getLastError(), e,
+                   sprintf( "plugin starter not found, name: ?", name ) ) ;
    }
 
    var c = new Cmd() ;
@@ -86,7 +85,7 @@ function _stopPlugin( name, path )
    }
    catch( e )
    {
-      _throwError( e, c.getLastOut() ) ;
+      _throwError( c.getLastRet(), e, c.getLastOut() ) ;
    }
 
    var result = c.getLastOut() ;
@@ -110,7 +109,8 @@ function _runPlugin( name, path )
    }
    catch( e )
    {
-      _throwError( e, sprintf( "plugin starter not found, name: ?", name ) ) ;
+      _throwError( getLastError(), e,
+                   sprintf( "plugin starter not found, name: ?", name ) ) ;
    }
 
    var c = new Cmd() ;
@@ -121,7 +121,7 @@ function _runPlugin( name, path )
    }
    catch( e )
    {
-      _throwError( e, c.getLastOut() ) ;
+      _throwError( c.getLastRet(), e, c.getLastOut() ) ;
    }
 
    var result = c.getLastOut() ;
@@ -131,6 +131,20 @@ function _runPlugin( name, path )
       PD_LOGGER.log( PDEVENT,
                      sprintf( "Plugin startup success, name: ?, result: ?",
                               name, result ) ) ;
+   }
+}
+
+function _setPermissions( path )
+{
+   var c = new Cmd() ;
+   var file = path + "/*.sh" ;
+
+   try
+   {
+      c.run( "chmod u+x " + file ) ;
+   }
+   catch( e )
+   {
    }
 }
 
@@ -144,7 +158,8 @@ function _startPlugins( isChange )
    }
    catch( e )
    {
-      _throwError( e, "Failed to get plugin list, path: " + rootPath ) ;
+      _throwError( getLastError(), e,
+                   sprintf( "Failed to get plugin list, path: ?", rootPath ) ) ;
    }
 
    if( pluginList.length == 0 )
@@ -158,6 +173,8 @@ function _startPlugins( isChange )
       var pluginName = pluginList[index] ;
       var pluginPath = rootPath + "/" + pluginName + "/bin" ;
 
+      _setPermissions( pluginPath ) ;
+
       if( isChange )
       {
          try
@@ -166,8 +183,10 @@ function _startPlugins( isChange )
          }
          catch( e )
          {
-            _throwError( e, sprintf( "Failed to stop plugin, name: ?",
-                                     pluginName ), false ) ;
+            _throwError( e.getErrCode(), e,
+                         sprintf( "Failed to stop plugin, name: ?",
+                                   pluginName ),
+                         false ) ;
          }
       }
 
@@ -177,8 +196,10 @@ function _startPlugins( isChange )
       }
       catch( e )
       {
-         _throwError( e, sprintf( "Failed to start plugin, name: ?",
-                                  pluginName ), false ) ;
+         _throwError( e.getErrCode(), e,
+                      sprintf( "Failed to start plugin, name: ?",
+                                pluginName ),
+                      false ) ;
       }
    }
 }
@@ -238,7 +259,8 @@ function _writePluginPublicConfig()
    }
    catch( e )
    {
-      _throwError( e, "Failed to generating plugins config file" ) ;
+      _throwError( getLastError(), e,
+                   "Failed to generating plugins config file" ) ;
    }
 
    return true ;

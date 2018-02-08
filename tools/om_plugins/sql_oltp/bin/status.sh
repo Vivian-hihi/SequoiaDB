@@ -9,7 +9,7 @@ extName="jar"
 
 
 #include common.sh
-source ./common.sh
+source "$currentPath/common.sh"
 
 binFileName=`getExecFileName $currentPath $binName $extName`
 if [ "$binFileName"x == ""x ]; then
