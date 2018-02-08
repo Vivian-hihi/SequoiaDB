@@ -110,31 +110,21 @@ function main()
       println("repeat do " + j + " times success!");
    }
    
+   //校验主备数据一致
+   checkConsistency(db, csName, clName);
+   
    //最终主备数据一致
-   db.setSessionAttr( { PreferedInstance: "s" } );
+   db1 = new Sdb(db);
+   db1.setSessionAttr( { PreferedInstance: "s" } );
+   dbcl = db1.getCS(csName).getCL(clName);
    
    //比较count结果
-   var flag = false;
-   for(var i=0; i< 300; i++)
+   actualNum = dbcl.count();
+   if(parseInt(actualNum) !== expectNum)
    {
-	  sleep(1000);
-	  actualNum = dbcl.count();
-	  if(parseInt(actualNum) !== expectNum)
-	  {
-		 continue;
-	  }else
-	  {
-		  flag = true;
-		  break;
-	  }
+      println("--slave node count failed!actualNum:" + actualNum + ",expectNum: " + expectNum);
+      throw "SECOND_COUNT_ERR";
    }
-   
-   if(flag !== true)
-   {
-	   println("after 300s,the second node is not the same the primary!actualNum:" + actualNum + ",expectNum:" + expectNum);
-	   throw "SECOND_NODE_COUNT_ERR";
-   }
-   println("--second node count success!actualNum:" + actualNum + ",expectNum: " + expectNum);
    
    //比较find结果
    try
