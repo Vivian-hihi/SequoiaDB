@@ -16,7 +16,7 @@
 
 *******************************************************************************/
 /*
-@description: sync business configure ( sequoiadb )
+@description: start om plugins
 @modify list:
    2018-02-05 JiaWen He  Init
 */
@@ -65,11 +65,11 @@ function _getPluginList()
 function _stopPlugin( name, path )
 {
    var rc = false ;
-   var startFile = path + "/stop.sh" ;
+   var stopFile = path + "/stop.sh" ;
 
    try
    {
-      rc = File.isFile( startFile ) ;
+      rc = File.isFile( stopFile ) ;
    }
    catch( e )
    {
@@ -81,7 +81,7 @@ function _stopPlugin( name, path )
 
    try
    {
-      c.run( startFile ) ;
+      c.run( stopFile ) ;
    }
    catch( e )
    {
