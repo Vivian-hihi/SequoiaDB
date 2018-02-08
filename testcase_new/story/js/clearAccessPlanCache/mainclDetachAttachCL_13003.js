@@ -157,7 +157,7 @@ function main()
    maincl.detachCL(subclFullName1);
    
    //检查主备同步                                                         
-   checkConsistency(db, null, null, ['SYSCatalogGroup']);  
+   checkConsistency(db, null, null, ['SYSCatalogGroup',srcGroupName, desGroupName]);  
    
    //检查访问计划快照
    var expAccessPlan = [];
@@ -183,7 +183,6 @@ function main()
               {GroupName:srcGroupName,ScanType:"ixscan",IndexName:"a1"}];                    
    var expAccessPlan = tmp.concat(tmp);
    var actAccessPlan = getSplitAccessPlans( db, {Collection: subclFullName1});
-   checkMainclAccessPlans( expAccessPlan, actAccessPlan );
    checkSnapShotAccessPlans( subclFullName1, expAccessPlan, actAccessPlan );
    
    //通过主表执行查询
@@ -202,7 +201,7 @@ function main()
    maincl.attachCL( subclFullName1, {LowBound: {a:0}, UpBound:{a:4000}} );
    
    //检查主备同步                                               
-   checkConsistency(db, null, null, ['SYSCatalogGroup']); 
+   checkConsistency(db, null, null, ['SYSCatalogGroup',srcGroupName, desGroupName]); 
    
    //检查访问计划快照
    var expAccessPlan = [];
@@ -214,7 +213,6 @@ function main()
               {GroupName:srcGroupName,ScanType:"ixscan",IndexName:"a1"}];                    
    var expAccessPlan = tmp.concat(tmp);
    var actAccessPlan = getSplitAccessPlans( db, {Collection: subclFullName1});
-   checkMainclAccessPlans( expAccessPlan, actAccessPlan );
    checkSnapShotAccessPlans( subclFullName1, expAccessPlan, actAccessPlan );
    
    //执行查询
@@ -233,7 +231,7 @@ function main()
    maincl.detachCL(subclFullName3);
    
    //检查主备同步                                               
-   checkConsistency(db, null, null, ['SYSCatalogGroup']); 
+   checkConsistency(db, null, null, ['SYSCatalogGroup',srcGroupName, desGroupName]); 
 
    
    //检查访问计划快照
@@ -260,7 +258,6 @@ function main()
               {GroupName:srcGroupName,ScanType:"ixscan",IndexName:"a1"}];                    
    var expAccessPlan = tmp.concat(tmp);
    var actAccessPlan = getSplitAccessPlans( db, {Collection: subclFullName3});
-   checkMainclAccessPlans( expAccessPlan, actAccessPlan );
    checkSnapShotAccessPlans( subclFullName3, expAccessPlan, actAccessPlan );
    
    //通过主表执行查询
@@ -279,7 +276,7 @@ function main()
    maincl.attachCL( subclFullName3, {LowBound: {a:16000}, UpBound:{a:18000}} );
    
    //检查主备同步                                               
-   checkConsistency(db, null, null, ['SYSCatalogGroup']); 
+   checkConsistency(db, null, null, ['SYSCatalogGroup',srcGroupName, desGroupName]); 
 
    //检查访问计划快照
    var expAccessPlan = [];
@@ -291,8 +288,7 @@ function main()
               {GroupName:srcGroupName,ScanType:"ixscan",IndexName:"a1"}];                    
    var expAccessPlan = tmp.concat(tmp);
    var actAccessPlan = getSplitAccessPlans( db, {Collection: subclFullName1});
-   checkMainclAccessPlans( expAccessPlan, actAccessPlan );
-   checkSnapShotAccessPlans( subclFullName1, expAccessPlan, actAccessPlan );
+   checkSnapShotAccessPlans( subclFullName3, expAccessPlan, actAccessPlan );
    
    //清理环境
    commDropCS( db, subcsName1 );
