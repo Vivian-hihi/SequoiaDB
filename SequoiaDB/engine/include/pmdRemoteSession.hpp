@@ -44,6 +44,7 @@
 #include <set>
 #include <vector>
 #include "../bson/bson.h"
+#include "utilList.hpp"
 
 using namespace bson ;
 using namespace std ;
@@ -87,6 +88,16 @@ namespace engine
                                        const MsgHeader *pReq,
                                        BOOLEAN isFirst ) = 0 ;
 
+         virtual INT32  onExpiredReply ( _pmdEDUCB * cb,
+                                         const MsgHeader * pReply )
+         {
+            return SDB_OK ;
+         }
+
+         virtual INT32  processExpiredContext ()
+         {
+            return SDB_OK ;
+         }
    } ;
    typedef _IRemoteSessionHandler IRemoteSessionHandler ;
 
@@ -208,6 +219,8 @@ namespace engine
 
    typedef set< UINT64 >                           SET_NODEID ;
    typedef map< UINT64, NET_HANDLE >               MAP_NODE2NET ;
+
+   typedef _utilList< std::pair< UINT64, INT64 > > CONTEXT_ID_MAP ;
 
    /*
       PMD_SUB_SESSION_FILTER define
@@ -336,7 +349,8 @@ namespace engine
          INT32    sendMsg( pmdSubSession *pSub ) ;
 
          INT32    waitReply1( BOOLEAN waitAll = FALSE,
-                              MAP_SUB_SESSIONPTR *pSubs = NULL ) ;
+                              MAP_SUB_SESSIONPTR *pSubs = NULL,
+                              BOOLEAN needTimeout = TRUE ) ;
          INT32    waitReply( BOOLEAN waitAll = FALSE,
                              VEC_SUB_SESSIONPTR *pSubs = NULL ) ;
 
@@ -463,7 +477,6 @@ namespace engine
          INT32                _curPos ;
 
          UINT64               _userData ;
-
    } ;
    typedef _pmdRemoteSessionSite pmdRemoteSessionSite ;
 

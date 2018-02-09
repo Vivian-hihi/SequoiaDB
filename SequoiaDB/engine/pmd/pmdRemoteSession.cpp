@@ -979,7 +979,8 @@ namespace engine
    }
 
    INT32 _pmdRemoteSession::waitReply1( BOOLEAN waitAll,
-                                        MAP_SUB_SESSIONPTR *pSubs )
+                                        MAP_SUB_SESSIONPTR *pSubs,
+                                        BOOLEAN needTimeout )
    {
       INT32 rc                      = SDB_OK ;
       pmdEDUEvent event ;
@@ -1036,22 +1037,36 @@ namespace engine
          // wait event
          if ( !_pEDUCB->waitEvent( event, timeout ) )
          {
-            _milliTimeout -= timeout ;
-            if ( 0 == replyNum || waitAll )
+            if ( needTimeout )
             {
-               if ( _milliTimeout <= 0 )
+               _milliTimeout -= timeout ;
+               if ( 0 == replyNum || waitAll )
                {
-                  rc = SDB_TIMEOUT ;
-                  goto error ;
+                  if ( _milliTimeout <= 0 )
+                  {
+                     rc = SDB_TIMEOUT ;
+                     goto error ;
+                  }
+               }
+               else
+               {
+                  if ( _milliTimeout <= 0 )
+                  {
+                     _milliTimeout = 1 ;
+                  }
+                  goto done ;
                }
             }
             else
             {
-               if ( _milliTimeout <= 0 )
+               if ( 0 == replyNum || waitAll )
                {
-                  _milliTimeout = 1 ;
+                  // do nothing
                }
-               goto done ;
+               else
+               {
+                  goto done ;
+               }
             }
             continue ;
          }
@@ -1089,6 +1104,10 @@ namespace engine
       }
 
    done:
+      if ( NULL != _pHandle )
+      {
+         _pHandle->processExpiredContext() ;
+      }
       return rc ;
    error:
       goto done ;
@@ -1536,6 +1555,10 @@ namespace engine
                     GET_REQUEST_TYPE(pReply->opCode), pReply->requestID,
                     pReply->messageLength,
                     routeID2String(pReply->routeID).c_str() ) ;
+            if ( pHandle )
+            {
+               pHandle->onExpiredReply( _pEDUCB, pReply ) ;
+            }
          }
       }
 

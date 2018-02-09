@@ -132,6 +132,8 @@ namespace engine
 
          virtual UINT32   getCachedRecordNum() ;
 
+         INT32   createSubContext ( MsgRouteID routeID, SINT64 contextID ) ;
+
       public:
          virtual std::string      name() const ;
          virtual RTN_CONTEXT_TYPE getType () const ;
@@ -146,7 +148,6 @@ namespace engine
 
       protected:
          OSS_INLINE BOOLEAN _requireExplicitSorting () const ;
-         INT32   _createSubContext ( MsgRouteID routeID, SINT64 contextID ) ;
          INT32   _prepareAllSubCtxDataByOrder( _pmdEDUCB *cb ) ;
          INT32   _getNonEmptyNormalSubCtx( _pmdEDUCB *cb, rtnSubContext*& subCtx ) ;
          INT32   _saveEmptyOrderedSubCtx( rtnSubContext* subCtx ) ;

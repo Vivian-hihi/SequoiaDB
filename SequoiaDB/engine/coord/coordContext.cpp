@@ -233,8 +233,8 @@ namespace engine
 
          if ( _prepareContextMap.size() > 0 )
          {
-            /// recv reply
-            _pSession->waitReply1( TRUE ) ;
+            /// recv reply, avoid timeout and kill with cascade
+            _pSession->waitReply1( TRUE, NULL, FALSE ) ;
          }
       }
 
@@ -492,6 +492,7 @@ namespace engine
       }
       return rc ;
    error:
+      _pSession->resetAllSubSession() ;
       goto done ;
    }
 
@@ -653,8 +654,8 @@ namespace engine
       goto done ;
    }
 
-   INT32 _rtnContextCoord::_createSubContext( MsgRouteID routeID,
-                                              SINT64 contextID )
+   INT32 _rtnContextCoord::createSubContext( MsgRouteID routeID,
+                                             SINT64 contextID )
    {
       INT32 rc = SDB_OK ;
       EMPTY_CONTEXT_MAP::iterator iter ;
@@ -722,7 +723,7 @@ namespace engine
          isEmpty = TRUE ;
       }
 
-      rc = _createSubContext( pReply->header.routeID, pReply->contextID ) ;
+      rc = createSubContext( pReply->header.routeID, pReply->contextID ) ;
       if ( rc )
       {
          goto error ;

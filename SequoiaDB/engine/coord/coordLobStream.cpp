@@ -1535,7 +1535,6 @@ namespace engine
       if ( pSession && !cb->isInterrupted() )
       {
          MsgOpKillContexts killMsg ;
-
          pmdSubSession *pSub = NULL ;
 
          killMsg.header.messageLength = sizeof ( MsgOpKillContexts ) ;
@@ -1563,8 +1562,8 @@ namespace engine
             }
          }
 
-         /// wait reply
-         rc = pSession->waitReply1( TRUE ) ;
+         /// wait reply, avoid timeout and kill with cascade
+         rc = pSession->waitReply1( TRUE, NULL, FALSE ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "Wait all reply failed, rc: %d", rc ) ;

@@ -37,6 +37,7 @@
 #include "pmdEDU.hpp"
 #include "pmd.hpp"
 #include "msgMessageFormat.hpp"
+#include "rtnCB.hpp"
 #include "../bson/bson.h"
 
 using namespace bson ;
@@ -251,10 +252,13 @@ namespace engine
    _coordRemoteHandler::_coordRemoteHandler()
    {
       _interruptWhenFailed = FALSE ;
+      _expiredContext = NULL ;
+      _expiredEDUCB = NULL ;
    }
 
    _coordRemoteHandler::~_coordRemoteHandler()
    {
+      processExpiredContext() ;
    }
 
    void _coordRemoteHandler::enableInterruptWhenFailed( BOOLEAN enable,
@@ -291,6 +295,79 @@ namespace engine
             pSession->stopSubSession() ;
          }
       }
+   }
+
+   INT32 _coordRemoteHandler::onExpiredReply ( _pmdEDUCB * cb,
+                                               const MsgHeader * pReply )
+   {
+      INT32 rc = SDB_OK ;
+
+      SDB_RTNCB * rtnCB = pmdGetKRCB()->getRTNCB() ;
+      INT64 contextID = -1 ;
+      MsgOpReply * pOpReply = NULL ;
+
+      if ( NULL == pReply ||
+           !IS_REPLY_TYPE( pReply->opCode ) )
+      {
+         goto done ;
+      }
+
+      pOpReply = (MsgOpReply *)pReply ;
+      if ( -1 == pOpReply->contextID )
+      {
+         goto done ;
+      }
+
+      if ( NULL != _expiredEDUCB && cb->getID() != _expiredEDUCB->getID() )
+      {
+         processExpiredContext() ;
+      }
+
+      PD_LOG( PDWARNING, "Received expired context [%lld] from node [%s]",
+              pOpReply->contextID, routeID2String( pReply->routeID ).c_str() ) ;
+
+      if ( NULL == _expiredContext )
+      {
+         rtnQueryOptions options ;
+         rc = rtnCB->contextNew ( RTN_CONTEXT_COORD,
+                                  (rtnContext**)&_expiredContext,
+                                  contextID, cb ) ;
+         PD_RC_CHECK( rc, PDWARNING, "Failed to create dummy coord context, "
+                      "rc: %d", rc ) ;
+
+         _expiredEDUCB = cb ;
+
+         rc = _expiredContext->open( options, FALSE ) ;
+         PD_RC_CHECK( rc, PDWARNING, "Failed to open dummy coord context, "
+                      "rc: %d", rc ) ;
+      }
+
+      rc = _expiredContext->createSubContext( pReply->routeID,
+                                              pOpReply->contextID ) ;
+      PD_RC_CHECK( rc, PDWARNING, "Failed to add sub-context to dummy coord "
+                   "context, rc: %d", rc ) ;
+
+   done :
+      return rc ;
+
+   error :
+      processExpiredContext() ;
+      goto done ;
+   }
+
+   INT32 _coordRemoteHandler::processExpiredContext ()
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( NULL != _expiredContext )
+      {
+         SDB_RTNCB * rtnCB = pmdGetKRCB()->getRTNCB() ;
+         rtnCB->contextDelete( _expiredContext->contextID(), _expiredEDUCB ) ;
+         _expiredContext = NULL ;
+         _expiredEDUCB = NULL ;
+      }
+
+      return rc ;
    }
 
 }
