@@ -84,7 +84,7 @@ final class AdminCommand {
     final static String SNAP_TRANSACTIONS_CURRENT = PREFIX + "snapshot transactions current";
     final static String SNAP_ACCESSPLANS = PREFIX + "snapshot accessplans";
     final static String SNAP_HEALTH = PREFIX + "snapshot health";
-    
+
     final static String RESET_SNAPSHOT = PREFIX + "snapshot reset";
 
     final static String CREATE_PROCEDURE = PREFIX + "create procedure";

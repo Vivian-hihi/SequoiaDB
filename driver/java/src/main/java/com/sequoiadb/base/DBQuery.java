@@ -24,6 +24,7 @@ import java.util.Map;
 
 /**
  * Query expression of SequoiaDB.
+ *
  * @see DBCollection#query(DBQuery)
  */
 public class DBQuery {
@@ -74,9 +75,9 @@ public class DBQuery {
     public static final int FLG_QUERY_PREPARE_MORE = 0x00004000;
 
     /**
-      * The sharding key in update rule is not filtered,
-      * when executing queryAndUpdate.
-      */
+     * The sharding key in update rule is not filtered,
+     * when executing queryAndUpdate.
+     */
     public static final int FLG_QUERY_KEEP_SHARDINGKEY_IN_UPDATE = 0x00008000;
 
     final static Map<Integer, Integer> flagsMap = new HashMap<Integer, Integer>();
@@ -106,6 +107,7 @@ public class DBQuery {
 
     /**
      * Set modified rule.
+     *
      * @param modifier The modified rule BSONObject
      */
     public void setModifier(BSONObject modifier) {
@@ -121,6 +123,7 @@ public class DBQuery {
 
     /**
      * Set selective rule.
+     *
      * @param selector The selective rule BSONObject
      */
     public void setSelector(BSONObject selector) {
@@ -136,6 +139,7 @@ public class DBQuery {
 
     /**
      * Set matching rule.
+     *
      * @param matcher The matching rule BSONObject
      */
     public void setMatcher(BSONObject matcher) {
@@ -151,6 +155,7 @@ public class DBQuery {
 
     /**
      * Set ordered rule.
+     *
      * @param orderBy The ordered rule BSONObject
      */
     public void setOrderBy(BSONObject orderBy) {
@@ -166,6 +171,7 @@ public class DBQuery {
 
     /**
      * Set specified access plan.
+     *
      * @param hint The specified access plan BSONObject
      */
     public void setHint(BSONObject hint) {
@@ -181,6 +187,7 @@ public class DBQuery {
 
     /**
      * Set the count of BSONObjects to skip.
+     *
      * @param skipRowsCount The count of BSONObjects to skip
      */
     public void setSkipRowsCount(Long skipRowsCount) {
@@ -196,6 +203,7 @@ public class DBQuery {
 
     /**
      * Set the count of BSONObjects to return.
+     *
      * @param returnRowsCount The count of BSONObjects to return
      */
     public void setReturnRowsCount(Long returnRowsCount) {
@@ -211,27 +219,28 @@ public class DBQuery {
 
     /**
      * Set the query flag.
+     *
      * @param flag The query flag as below:
-     *            DBQuery.FLG_QUERY_STRINGOUT
-     *            DBQuery.FLG_QUERY_FORCE_HINT
-     *            DBQuery.LG_QUERY_PARALLED
-     *            DBQuery.FLG_QUERY_WITH_RETURNDATA
+     *             DBQuery.FLG_QUERY_STRINGOUT
+     *             DBQuery.FLG_QUERY_FORCE_HINT
+     *             DBQuery.LG_QUERY_PARALLED
+     *             DBQuery.FLG_QUERY_WITH_RETURNDATA
      */
     public void setFlag(int flag) {
         this.flag = flag;
     }
 
     static int regulateFlags(final int flags) {
-        int erasedFlags = flags ;
-        int mergedFlags = 0 ;
+        int erasedFlags = flags;
+        int mergedFlags = 0;
         Iterator<Map.Entry<Integer, Integer>> entries = flagsMap.entrySet().iterator();
-        while(entries.hasNext()) {
-            Map.Entry<Integer,Integer> entry = entries.next();
+        while (entries.hasNext()) {
+            Map.Entry<Integer, Integer> entry = entries.next();
             if (((erasedFlags & entry.getKey()) != 0) && (entry.getKey() != entry.getValue())) {
                 erasedFlags &= ~entry.getKey();
                 mergedFlags |= entry.getValue();
             }
         }
-        return erasedFlags|mergedFlags;
+        return erasedFlags | mergedFlags;
     }
 }

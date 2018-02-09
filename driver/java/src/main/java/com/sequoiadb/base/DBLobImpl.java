@@ -85,14 +85,15 @@ class DBLobImpl implements DBLob {
 
     /**
      * Create a lob, lob's id will auto generate in this function.
-     * @throws BaseException If error happens.
-    public void open() {
-        open(null, SDB_LOB_CREATEONLY);
-    }
-
-    /**
-     * Open an existing lob with id.
+     *
      * @param id the lob's id
+     * @throws BaseException If error happens.
+     *                       public void open() {
+     *                       open(null, SDB_LOB_CREATEONLY);
+     *                       }
+     *                       <p>
+     *                       /**
+     *                       Open an existing lob with id.
      * @throws BaseException If error happens.
      */
     public void open(ObjectId id) {
@@ -101,6 +102,7 @@ class DBLobImpl implements DBLob {
 
     /**
      * Open an existing lob, or create a lob.
+     *
      * @param id   the lob's id
      * @param mode available mode is SDB_LOB_CREATEONLY or SDB_LOB_READ.
      *             SDB_LOB_CREATEONLY
@@ -116,15 +118,15 @@ class DBLobImpl implements DBLob {
         }
 
         if (mode != SDB_LOB_CREATEONLY &&
-            mode != SDB_LOB_READ &&
-            mode != SDB_LOB_WRITE) {
+                mode != SDB_LOB_READ &&
+                mode != SDB_LOB_WRITE) {
             throw new BaseException(SDBError.SDB_INVALIDARG, "mode is unsupported: " + mode);
         }
 
         if (mode == SDB_LOB_READ || mode == SDB_LOB_WRITE) {
             if (null == id) {
                 throw new BaseException(SDBError.SDB_INVALIDARG, "id must be specify"
-                    + " in mode:" + mode);
+                        + " in mode:" + mode);
             }
         }
 
@@ -158,7 +160,7 @@ class DBLobImpl implements DBLob {
         _lobSize = (Long) obj.get(FIELD_NAME_LOB_SIZE);
         _createTime = (Long) obj.get(FIELD_NAME_LOB_CREATE_TIME);
         if (obj.containsField(FIELD_NAME_LOB_MODIFICATION_TIME)) {
-            _modificationTime = (Long)obj.get(FIELD_NAME_LOB_MODIFICATION_TIME);
+            _modificationTime = (Long) obj.get(FIELD_NAME_LOB_MODIFICATION_TIME);
         } else {
             _modificationTime = _createTime;
         }
@@ -174,6 +176,7 @@ class DBLobImpl implements DBLob {
 
     /**
      * Get the lob's id.
+     *
      * @return the lob's id
      */
     @Override
@@ -183,6 +186,7 @@ class DBLobImpl implements DBLob {
 
     /**
      * Get the size of lob.
+     *
      * @return the lob's size
      */
     @Override
@@ -192,6 +196,7 @@ class DBLobImpl implements DBLob {
 
     /**
      * Get the create time of lob.
+     *
      * @return the lob's create time
      */
     @Override
@@ -201,6 +206,7 @@ class DBLobImpl implements DBLob {
 
     /**
      * Get the last modification time of lob.
+     *
      * @return the lob's last modification time
      */
     @Override
@@ -210,6 +216,7 @@ class DBLobImpl implements DBLob {
 
     /**
      * Close the lob.
+     *
      * @throws BaseException If error happens.
      */
     @Override
@@ -226,13 +233,14 @@ class DBLobImpl implements DBLob {
             ResultSet resultSet = response.getResultSet();
             BSONObject obj = resultSet.getNext();
             if (obj != null && obj.containsField(FIELD_NAME_LOB_MODIFICATION_TIME)) {
-                _modificationTime = (Long)obj.get(FIELD_NAME_LOB_MODIFICATION_TIME);
+                _modificationTime = (Long) obj.get(FIELD_NAME_LOB_MODIFICATION_TIME);
             }
         }
     }
 
     /**
      * Write bytes from the input stream to this lob.
+     *
      * @param in the input stream.
      * @throws BaseException If error happens.
      */
@@ -259,6 +267,7 @@ class DBLobImpl implements DBLob {
     /**
      * Write <code>b.length</code> bytes from the specified
      * byte array to this lob.
+     *
      * @param b the data.
      * @throws BaseException If error happens.
      */
@@ -270,6 +279,7 @@ class DBLobImpl implements DBLob {
     /**
      * Write <code>len</code> bytes from the specified
      * byte array starting at offset <code>off</code> to this lob.
+     *
      * @param b   the data.
      * @param off the start offset in the data.
      * @param len the number of bytes to write.
@@ -301,7 +311,7 @@ class DBLobImpl implements DBLob {
         int writeLen = 0;
         while (leftLen > 0) {
             writeLen = (leftLen < SDB_LOB_MAX_WRITE_DATA_LENGTH) ?
-                leftLen : SDB_LOB_MAX_WRITE_DATA_LENGTH;
+                    leftLen : SDB_LOB_MAX_WRITE_DATA_LENGTH;
             _write(b, offset, writeLen);
             leftLen -= writeLen;
             offset += writeLen;
@@ -311,6 +321,7 @@ class DBLobImpl implements DBLob {
 
     /**
      * Read data from this lob into the output stream.
+     *
      * @param out the output stream.
      * @throws BaseException If error happens.
      */
@@ -338,6 +349,7 @@ class DBLobImpl implements DBLob {
     /**
      * Read up to <code>b.length</code> bytes of data from this
      * lob into an array of bytes.
+     *
      * @param b the buffer into which the data is read.
      * @return the total number of bytes read into the buffer, or
      * <code>-1</code> if there is no more data because the end of
@@ -353,6 +365,7 @@ class DBLobImpl implements DBLob {
     /**
      * Read up to <code>len</code> bytes of data from this lob into
      * an array of bytes.
+     *
      * @param b   the buffer into which the data is read.
      * @param off the start offset in the destination array <code>b</code>.
      * @param len the maximum number of bytes read.
@@ -396,6 +409,7 @@ class DBLobImpl implements DBLob {
      * is set to SDB_LOB_SEEK_SET, SDB_LOB_SEEK_CUR, or SDB_LOB_SEEK_END,
      * the offset is relative to the start of the lob, the current
      * position of lob, or the end of lob.
+     *
      * @param size     the adding size.
      * @param seekType SDB_LOB_SEEK_SET/SDB_LOB_SEEK_CUR/SDB_LOB_SEEK_END
      * @throws BaseException If error happens.
@@ -407,10 +421,10 @@ class DBLobImpl implements DBLob {
         }
 
         if (_mode != SDB_LOB_READ &&
-            _mode != SDB_LOB_CREATEONLY &&
-            _mode != SDB_LOB_WRITE) {
+                _mode != SDB_LOB_CREATEONLY &&
+                _mode != SDB_LOB_WRITE) {
             throw new BaseException(SDBError.SDB_OPTION_NOT_SUPPORT, "seek() is not supported"
-                + " in mode=" + _mode);
+                    + " in mode=" + _mode);
         }
 
         if (SDB_LOB_SEEK_SET == seekType) {
@@ -421,7 +435,7 @@ class DBLobImpl implements DBLob {
             _currentOffset = size;
         } else if (SDB_LOB_SEEK_CUR == seekType) {
             if ((_currentOffset + size >= _lobSize && _mode == SDB_LOB_READ)
-                || (_currentOffset + size < 0)) {
+                    || (_currentOffset + size < 0)) {
                 throw new BaseException(SDBError.SDB_INVALIDARG,
                         "out of bound, _currentOffset=" + _currentOffset + ", lobSize=" + _lobSize);
             }
@@ -444,6 +458,7 @@ class DBLobImpl implements DBLob {
 
     /**
      * Lock LOB section for writing.
+     *
      * @param offset lock start position
      * @param length lock length, -1 means lock to the end of lob
      * @throws BaseException If error happens..
@@ -456,7 +471,7 @@ class DBLobImpl implements DBLob {
 
         if (offset < 0 || length < -1 || length == 0) {
             throw new BaseException(SDBError.SDB_INVALIDARG,
-                "out of bound, offset=" + offset + ", length=" + length);
+                    "out of bound, offset=" + offset + ", length=" + length);
         }
 
         if (_mode != SDB_LOB_WRITE) {
@@ -470,6 +485,7 @@ class DBLobImpl implements DBLob {
 
     /**
      * Lock LOB section for writing and seek to the offset position.
+     *
      * @param offset lock start position
      * @param length lock length, -1 means lock to the end of lob
      * @throws BaseException If error happens..
@@ -501,9 +517,9 @@ class DBLobImpl implements DBLob {
     private boolean _hasDataCached() {
         int remaining = (_cachedDataBuff != null) ? _cachedDataBuff.remaining() : 0;
         return (_cachedDataBuff != null && 0 < remaining &&
-            0 <= _cachedOffset &&
-            _cachedOffset <= _currentOffset &&
-            _currentOffset < (_cachedOffset + remaining));
+                0 <= _cachedOffset &&
+                _cachedOffset <= _currentOffset &&
+                _currentOffset < (_cachedOffset + remaining));
     }
 
     private int _readInCache(byte[] buf, int off, int needRead) {
@@ -565,8 +581,8 @@ class DBLobImpl implements DBLob {
         long offsetInEngine = response.getOffset();
         if (_currentOffset != offsetInEngine) {
             throw new BaseException(SDBError.SDB_SYS,
-                "local read offset(" + _currentOffset +
-                    ") is not equal with what we expect(" + offsetInEngine + ")");
+                    "local read offset(" + _currentOffset +
+                            ") is not equal with what we expect(" + offsetInEngine + ")");
         }
 
         int retLobLen = response.getLobLen();
@@ -577,7 +593,7 @@ class DBLobImpl implements DBLob {
         int remainLen = _cachedDataBuff.remaining();
         if (remainLen != retLobLen) {
             throw new BaseException(SDBError.SDB_SYS, "the remaining in buffer(" + remainLen +
-                ") is not equal with what we expect(" + retLobLen + ")");
+                    ") is not equal with what we expect(" + retLobLen + ")");
         }
 
         // if what we got is more than what we expect,

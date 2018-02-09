@@ -55,6 +55,7 @@ public class Domain {
 
     /**
      * Alter current domain.
+     *
      * @param options the options user wants to alter:
      *                <ul>
      *                <li>Groups:    The list of replica groups' names which the domain is going to contain.
@@ -86,6 +87,7 @@ public class Domain {
 
     /**
      * List all the collection spaces in current domain.
+     *
      * @return the cursor of result
      * @throws BaseException If error happens.
      */
@@ -95,6 +97,7 @@ public class Domain {
 
     /**
      * List all the collections in current domain.
+     *
      * @return the cursor of result
      * @throws BaseException If error happens.
      */

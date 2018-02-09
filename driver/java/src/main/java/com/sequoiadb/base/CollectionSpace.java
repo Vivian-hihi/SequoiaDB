@@ -35,6 +35,7 @@ public class CollectionSpace {
 
     /**
      * Return the name of current collection space.
+     *
      * @return The collection space name
      */
     public String getName() {
@@ -43,6 +44,7 @@ public class CollectionSpace {
 
     /**
      * Get the Sequoiadb instance of current collection space belongs to.
+     *
      * @return Sequoiadb object
      */
     public Sequoiadb getSequoiadb() {
@@ -60,12 +62,13 @@ public class CollectionSpace {
 
     /**
      * Get the named collection.
+     *
      * @param collectionName The collection name
      * @return The collection object or null for collection not exist
      * @throws BaseException If error happens.
      */
     public DBCollection getCollection(String collectionName)
-        throws BaseException {
+            throws BaseException {
         // get cl from cache
         String collectionFullName = name + "." + collectionName;
         if (sequoiadb.fetchCache(collectionFullName)) {
@@ -83,6 +86,7 @@ public class CollectionSpace {
 
     /**
      * Verify the existence of collection in current collection space.
+     *
      * @param collectionName The collection name
      * @return True if collection existed or False if not existed
      * @throws BaseException If error happens.
@@ -111,6 +115,7 @@ public class CollectionSpace {
 
     /**
      * Get all the collection names of current collection space.
+     *
      * @return A list of collection names
      * @throws BaseException If error happens.
      */
@@ -129,17 +134,19 @@ public class CollectionSpace {
 
     /**
      * Create the named collection in current collection space.
+     *
      * @param collectionName The collection name
      * @return the newly created object of collection
      * @throws BaseException If error happens.
      */
     public DBCollection createCollection(String collectionName)
-        throws BaseException {
+            throws BaseException {
         return createCollection(collectionName, null);
     }
 
     /**
      * Create collection by options.
+     *
      * @param collectionName The collection name
      * @param options        The options for creating collection, including
      *                       "ShardingKey", "ReplSize", "IsMainCL" and "Compressed" informations,
@@ -171,6 +178,7 @@ public class CollectionSpace {
 
     /**
      * Drop current collection space.
+     *
      * @throws BaseException If error happens.
      * @see com.sequoiadb.base.Sequoiadb#dropCollectionSpace(String)
      * @deprecated Use Sequoiadb.dropCollectionSpace() instead.
@@ -181,6 +189,7 @@ public class CollectionSpace {
 
     /**
      * Remove the named collection of current collection space.
+     *
      * @param collectionName The collection name
      * @throws BaseException If error happens.
      */

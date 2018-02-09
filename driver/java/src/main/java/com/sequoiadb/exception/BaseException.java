@@ -111,6 +111,7 @@ public class BaseException extends RuntimeException {
 
     /**
      * Get the error message.
+     *
      * @return The error message.
      */
     @Override
@@ -130,6 +131,7 @@ public class BaseException extends RuntimeException {
 
     /**
      * Get the error type.
+     *
      * @return The error type.
      */
     public String getErrorType() {
@@ -138,6 +140,7 @@ public class BaseException extends RuntimeException {
 
     /**
      * Get the error code.
+     *
      * @return The error code.
      */
     public int getErrorCode() {

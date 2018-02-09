@@ -54,24 +54,28 @@ public interface DBLob extends Closeable {
 
     /**
      * Get the lob's id.
+     *
      * @return the lob's id
      */
     ObjectId getID();
 
     /**
      * Get the size of lob.
+     *
      * @return the lob's size
      */
     long getSize();
 
     /**
      * Get the create time of lob.
+     *
      * @return the lob's create time
      */
     long getCreateTime();
 
     /**
      * Get the last modification time of lob.
+     *
      * @return the lob's last modification time
      */
     long getModificationTime();
@@ -79,6 +83,7 @@ public interface DBLob extends Closeable {
     /**
      * Write bytes from the input stream to this lob.
      * user need to close the input stream
+     *
      * @param in the input stream.
      * @throws BaseException If error happens.
      */
@@ -87,6 +92,7 @@ public interface DBLob extends Closeable {
     /**
      * Write <code>b.length</code> bytes from the specified
      * byte array to this lob.
+     *
      * @param b the data.
      * @throws BaseException If error happens.
      */
@@ -95,6 +101,7 @@ public interface DBLob extends Closeable {
     /**
      * Write <code>len</code> bytes from the specified
      * byte array starting at offset <code>off</code> to this lob.
+     *
      * @param b   the data.
      * @param off the start offset in the data.
      * @param len the number of bytes to write.
@@ -105,6 +112,7 @@ public interface DBLob extends Closeable {
     /**
      * Read the content to the output stream.
      * user need to close the output stream.
+     *
      * @param out the output stream.
      * @throws BaseException If error happens.
      */
@@ -113,6 +121,7 @@ public interface DBLob extends Closeable {
     /**
      * Read up to <code>b.length</code> bytes of data from this lob into
      * an array of bytes.
+     *
      * @param b the buffer into which the data is read.
      * @return the total number of bytes read into the buffer, or <code>-1</code> if
      * there is no more data because the end of the file has been
@@ -124,6 +133,7 @@ public interface DBLob extends Closeable {
     /**
      * Read up to <code>len</code> bytes of data from this lob into
      * an array of bytes.
+     *
      * @param b   the buffer into which the data is read.
      * @param off the start offset in the destination array <code>b</code>.
      * @param len the maximum number of bytes read.
@@ -141,7 +151,8 @@ public interface DBLob extends Closeable {
      * SDB_LOB_SEEK_CUR, or SDB_LOB_SEEK_END, the offset is
      * relative to the start of the lob, the current position
      * of lob, or the end of lob.
-     * @param size the adding size.
+     *
+     * @param size     the adding size.
      * @param seekType SDB_LOB_SEEK_SET/SDB_LOB_SEEK_CUR/SDB_LOB_SEEK_END
      * @throws BaseException If error happens..
      */
@@ -149,6 +160,7 @@ public interface DBLob extends Closeable {
 
     /**
      * Lock LOB section for write mode.
+     *
      * @param offset lock start position
      * @param length lock length, -1 means lock to the end of lob
      * @throws BaseException If error happens..
@@ -157,6 +169,7 @@ public interface DBLob extends Closeable {
 
     /**
      * Lock LOB section for write mode and seek to the offset position.
+     *
      * @param offset lock start position
      * @param length lock length, -1 means lock to the end of lob
      * @throws BaseException If error happens..
@@ -165,6 +178,7 @@ public interface DBLob extends Closeable {
 
     /**
      * Close the lob.
+     *
      * @throws BaseException If error happens.
      */
     void close() throws BaseException;

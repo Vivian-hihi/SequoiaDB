@@ -23,6 +23,7 @@ import java.util.List;
 
 /**
  * SequoiaDB Data Source
+ *
  * @deprecated Use com.sequoiadb.datasource.SequoiadbDatasource instead.
  */
 @Deprecated
@@ -37,6 +38,7 @@ public class SequoiadbDatasource extends com.sequoiadb.datasource.SequoiadbDatas
      * get them back for use. When connection pool get a unavailable address to connect,
      * the default timeout is 100ms, and default retry time is 0. Parameter nwOpt can
      * can change both of the default value.
+     *
      * @param urls     the addresses of coord nodes, can't be null or empty,
      *                 e.g."ubuntu1:11810","ubuntu2:11810",...
      * @param username the user name for logging sequoiadb
@@ -68,6 +70,7 @@ public class SequoiadbDatasource extends com.sequoiadb.datasource.SequoiadbDatas
      * get them back for use. When connection pool get a unavailable address to connect,
      * the default timeout is 100ms, and default retry time is 0. Parameter nwOpt can
      * can change both of the default value.
+     *
      * @param urls     the addresses of coord nodes, can't be null or empty,
      *                 e.g."ubuntu1:11810","ubuntu2:11810",...
      * @param username the user name for logging sequoiadb

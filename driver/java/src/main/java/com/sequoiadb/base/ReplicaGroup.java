@@ -73,11 +73,12 @@ public class ReplicaGroup {
         BSONObject group = sdb.getDetailByName(name);
         this.isCataRG = (name == Sequoiadb.CATALOG_GROUP_NAME);
         this.id = Integer.parseInt(group.get(
-            SdbConstants.FIELD_NAME_GROUPID).toString());
+                SdbConstants.FIELD_NAME_GROUPID).toString());
     }
 
     /**
      * Get the amount of the nodes with the specified status.
+     *
      * @param status Node.NodeStatus
      * @return the amount of the nodes with the specified status
      * @throws BaseException If error happens.
@@ -101,6 +102,7 @@ public class ReplicaGroup {
 
     /**
      * Get detail info of current replicaGroup
+     *
      * @return the detail info
      * @throws BaseException If error happens.
      */
@@ -110,6 +112,7 @@ public class ReplicaGroup {
 
     /**
      * Get the master node of current replica group.
+     *
      * @return the master node
      * @throws BaseException If error happens.
      */
@@ -133,11 +136,11 @@ public class ReplicaGroup {
         }
         // check and extract the information of primary node
         Object primaryNodeObj = groupInfoObj.get(SdbConstants.FIELD_NAME_PRIMARY);
-        if (primaryNodeObj == null ) {
+        if (primaryNodeObj == null) {
             throw new BaseException(SDBError.SDB_RTN_NO_PRIMARY_FOUND);
         } else if (!(primaryNodeObj instanceof Number)) {
             throw new BaseException(SDBError.SDB_SYS, "invalid primary node's information: " + primaryNodeObj.toString());
-        } else if (primaryNodeObj.equals(Integer.valueOf(-1))){ // TODO: test it
+        } else if (primaryNodeObj.equals(Integer.valueOf(-1))) { // TODO: test it
             throw new BaseException(SDBError.SDB_RTN_NO_PRIMARY_FOUND);
         }
         BSONObject primaryData = null;
@@ -176,6 +179,7 @@ public class ReplicaGroup {
 
     /**
      * Get the random slave node of current replica group, when have no slave node, return master node.
+     *
      * @return the slave node
      * @throws BaseException If error happens.
      */
@@ -187,6 +191,7 @@ public class ReplicaGroup {
     /**
      * Get the slave node in the specified positions,
      * when have no slave node in the specified positions, return master node.
+     *
      * @param positions The positions of nodes, can be 1-7.
      * @return the slave node
      * @throws BaseException If error happens.
@@ -197,7 +202,7 @@ public class ReplicaGroup {
             return getSlave(list);
         } else {
             list = new ArrayList<Integer>();
-            for(int pos : positions) {
+            for (int pos : positions) {
                 list.add(pos);
             }
             return getSlave(list);
@@ -250,7 +255,7 @@ public class ReplicaGroup {
             hasPrimary = false;
         } else if (!(primaryNodeId instanceof Number)) {
             throw new BaseException(SDBError.SDB_SYS, "invalid primary node's information: " + primaryNodeId.toString());
-        } else if (primaryNodeId.equals(Integer.valueOf(-1))){
+        } else if (primaryNodeId.equals(Integer.valueOf(-1))) {
             hasPrimary = false;
         }
         // try to mark the position of primary node in the nodes list,
@@ -272,32 +277,31 @@ public class ReplicaGroup {
         // try to generate positions
         int nodeCount = nodesInfoList.size();
         if (needGeneratePosition) {
-            for(int i = 0; i < nodeCount; i++) {
-                if ( hasPrimary && primaryNodePosition == i + 1 )
-                {
-                    continue ;
+            for (int i = 0; i < nodeCount; i++) {
+                if (hasPrimary && primaryNodePosition == i + 1) {
+                    continue;
                 }
                 validPositions.add(i + 1);
             }
         }
         // get a node position to create Node
-        int nodeIndex = -1 ;
+        int nodeIndex = -1;
         BSONObject nodeInfoObj = null;
         // we must use "nodeCount" to compare first, since "validPositions" may be generate by us when
         // "needGeneratePosition" is true.
         if (nodeCount == 1) {
-            nodeInfoObj = (BSONObject)nodesInfoList.get(0);
+            nodeInfoObj = (BSONObject) nodesInfoList.get(0);
         } else if (validPositions.size() == 1) {
             // position is start from 1, so we need to decrease 1
             nodeIndex = (validPositions.get(0) - 1) % nodeCount;
-            nodeInfoObj = (BSONObject)nodesInfoList.get(nodeIndex);
+            nodeInfoObj = (BSONObject) nodesInfoList.get(nodeIndex);
         } else {
             int position = 0;
             Random rand = new Random();
             int[] flags = new int[7];
             List<Integer> includePrimaryPositions = new ArrayList<Integer>();
             List<Integer> excludePrimaryPositions = new ArrayList<Integer>();
-            for(int pos : validPositions) {
+            for (int pos : validPositions) {
                 if (pos <= nodeCount) {
                     nodeIndex = pos - 1;
                     if (flags[nodeIndex] == 0) {
@@ -329,7 +333,7 @@ public class ReplicaGroup {
                 }
             }
             nodeIndex = (position - 1) % nodeCount;
-            nodeInfoObj = (BSONObject)nodesInfoList.get(nodeIndex);
+            nodeInfoObj = (BSONObject) nodesInfoList.get(nodeIndex);
         }
         int nodeId = Integer.parseInt(nodeInfoObj.get(SdbConstants.FIELD_NAME_NODEID).toString());
         String hostName = nodeInfoObj.get(SdbConstants.FIELD_NAME_HOST).toString();
@@ -353,7 +357,7 @@ public class ReplicaGroup {
     }
 
     /**
-     *whether the specified node exists in current group or not
+     * whether the specified node exists in current group or not
      *
      * @param hostName
      * @param port
@@ -415,6 +419,7 @@ public class ReplicaGroup {
 
     /**
      * Attach node.
+     *
      * @param hostName  host name
      * @param port      port
      * @param configure configuration for this operation
@@ -431,9 +436,9 @@ public class ReplicaGroup {
         if (configure != null) {
             for (String key : configure.keySet()) {
                 if (key.equals(SdbConstants.FIELD_NAME_GROUPNAME)
-                    || key.equals(SdbConstants.FIELD_NAME_HOST)
-                    || key.equals(SdbConstants.PMD_OPTION_SVCNAME)
-                    || key.equals(SdbConstants.FIELD_NAME_ONLY_ATTACH)) {
+                        || key.equals(SdbConstants.FIELD_NAME_HOST)
+                        || key.equals(SdbConstants.PMD_OPTION_SVCNAME)
+                        || key.equals(SdbConstants.FIELD_NAME_ONLY_ATTACH)) {
                     continue;
                 }
 
@@ -450,6 +455,7 @@ public class ReplicaGroup {
 
     /**
      * Detach node.
+     *
      * @param hostName  host name
      * @param port      port
      * @param configure configuration for this operation
@@ -461,14 +467,14 @@ public class ReplicaGroup {
         config.put(SdbConstants.FIELD_NAME_GROUPNAME, name);
         config.put(SdbConstants.FIELD_NAME_HOST, hostName);
         config.put(SdbConstants.PMD_OPTION_SVCNAME,
-            Integer.toString(port));
+                Integer.toString(port));
         config.put(SdbConstants.FIELD_NAME_ONLY_DETACH, true);
         if (configure != null) {
             for (String key : configure.keySet()) {
                 if (key.equals(SdbConstants.FIELD_NAME_GROUPNAME)
-                    || key.equals(SdbConstants.FIELD_NAME_HOST)
-                    || key.equals(SdbConstants.PMD_OPTION_SVCNAME)
-                    || key.equals(SdbConstants.FIELD_NAME_ONLY_DETACH)) {
+                        || key.equals(SdbConstants.FIELD_NAME_HOST)
+                        || key.equals(SdbConstants.PMD_OPTION_SVCNAME)
+                        || key.equals(SdbConstants.FIELD_NAME_ONLY_DETACH)) {
                     continue;
                 }
 
@@ -484,6 +490,7 @@ public class ReplicaGroup {
 
     /**
      * Create node.
+     *
      * @param hostName  host name
      * @param port      port
      * @param dbPath    the path for node
@@ -500,14 +507,15 @@ public class ReplicaGroup {
                 obj.put(key, configure.get(key));
             }
         }
-    	return createNode(hostName, port, dbPath, obj);
+        return createNode(hostName, port, dbPath, obj);
     }
 
     /**
      * Create node.
-     * @param hostName  host name
-     * @param port      port
-     * @param dbPath    the path for node
+     *
+     * @param hostName host name
+     * @param port     port
+     * @param dbPath   the path for node
      * @return the created Node object
      * @throws BaseException If error happens.
      */
@@ -517,6 +525,7 @@ public class ReplicaGroup {
 
     /**
      * Create node.
+     *
      * @param hostName  host name
      * @param port      port
      * @param dbPath    the path for node
@@ -530,13 +539,13 @@ public class ReplicaGroup {
         config.put(SdbConstants.FIELD_NAME_GROUPNAME, name);
         config.put(SdbConstants.FIELD_NAME_HOST, hostName);
         config.put(SdbConstants.PMD_OPTION_SVCNAME,
-            Integer.toString(port));
+                Integer.toString(port));
         config.put(SdbConstants.PMD_OPTION_DBPATH, dbPath);
         if (configure != null && !configure.isEmpty()) {
             for (String key : configure.keySet()) {
                 if (key.equals(SdbConstants.FIELD_NAME_GROUPNAME)
-                    || key.equals(SdbConstants.FIELD_NAME_HOST)
-                    || key.equals(SdbConstants.PMD_OPTION_SVCNAME)) {
+                        || key.equals(SdbConstants.FIELD_NAME_HOST)
+                        || key.equals(SdbConstants.PMD_OPTION_SVCNAME)) {
                     continue;
                 }
                 config.put(key, configure.get(key));
@@ -546,14 +555,15 @@ public class ReplicaGroup {
         AdminRequest request = new AdminRequest(AdminCommand.CREATE_NODE, config);
         SdbReply response = sequoiadb.requestAndResponse(request);
         String msg = "node = " + hostName + ":" + port +
-            ", dbPath = " + dbPath +
-            ", configure = " + configure;
+                ", dbPath = " + dbPath +
+                ", configure = " + configure;
         sequoiadb.throwIfError(response, msg);
         return getNode(hostName, port);
     }
 
     /**
      * Remove node.
+     *
      * @param hostName  host name
      * @param port      port
      * @param configure configuration for this operation
@@ -565,12 +575,12 @@ public class ReplicaGroup {
         config.put(SdbConstants.FIELD_NAME_GROUPNAME, name);
         config.put(SdbConstants.FIELD_NAME_HOST, hostName);
         config.put(SdbConstants.PMD_OPTION_SVCNAME,
-            Integer.toString(port));
+                Integer.toString(port));
         if (configure != null) {
             for (String key : configure.keySet()) {
                 if (key.equals(SdbConstants.FIELD_NAME_GROUPNAME)
-                    || key.equals(SdbConstants.FIELD_NAME_HOST)
-                    || key.equals(SdbConstants.PMD_OPTION_SVCNAME)) {
+                        || key.equals(SdbConstants.FIELD_NAME_HOST)
+                        || key.equals(SdbConstants.PMD_OPTION_SVCNAME)) {
                     continue;
                 }
                 config.put(key, configure.get(key));
@@ -580,12 +590,13 @@ public class ReplicaGroup {
         AdminRequest request = new AdminRequest(AdminCommand.REMOVE_NODE, config);
         SdbReply response = sequoiadb.requestAndResponse(request);
         String msg = "node = " + hostName + ":" + port +
-            ", configure = " + configure;
+                ", configure = " + configure;
         sequoiadb.throwIfError(response, msg);
     }
 
     /**
      * Start current replica group.
+     *
      * @throws BaseException If error happens.
      */
     public void start() throws BaseException {
@@ -599,6 +610,7 @@ public class ReplicaGroup {
 
     /**
      * Stop current replica group.
+     *
      * @throws BaseException If error happens.
      */
     public void stop() throws BaseException {
@@ -612,6 +624,7 @@ public class ReplicaGroup {
 
     /**
      * Judge whether current replicaGroup is catalog replica group or not.
+     *
      * @return true is while false is not
      */
     public boolean isCatalog() {
@@ -678,9 +691,9 @@ public class ReplicaGroup {
         for (Object obj : serviceInfos) {
             BSONObject service = (BSONObject) obj;
             if (service.get(SdbConstants.FIELD_NAME_SERVICETYPE)
-                .toString().equals("0")) {
+                    .toString().equals("0")) {
                 port = Integer.parseInt(service.get(
-                    SdbConstants.FIELD_NAME_SERVICENAME).toString());
+                        SdbConstants.FIELD_NAME_SERVICENAME).toString());
                 break;
             }
         }

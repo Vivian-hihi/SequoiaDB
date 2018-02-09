@@ -88,6 +88,7 @@ public class Node {
 
     /**
      * Disconnect from current node.
+     *
      * @throws BaseException If error happens.
      */
     public void disconnect() throws BaseException {
@@ -96,6 +97,7 @@ public class Node {
 
     /**
      * Connect to current node with the same username and password.
+     *
      * @return The Sequoiadb instance of current node.
      * @throws BaseException If error happens.
      */
@@ -104,12 +106,13 @@ public class Node {
             sequoiadb.close();
         }
         sequoiadb = new Sequoiadb(hostName, port, rg.getSequoiadb().getUserName(),
-            rg.getSequoiadb().getPassword());
+                rg.getSequoiadb().getPassword());
         return sequoiadb;
     }
 
     /**
      * Connect to current node with username and password.
+     *
      * @param username user name
      * @param password pass word
      * @return The Sequoiadb instance of current node.
@@ -125,6 +128,7 @@ public class Node {
 
     /**
      * Get the Sequoiadb of current node.
+     *
      * @return The Sequoiadb object of current node.
      */
     public Sequoiadb getSdb() {
@@ -133,6 +137,7 @@ public class Node {
 
     /**
      * Get the hostname of current node.
+     *
      * @return Hostname of current node.
      */
     public String getHostName() {
@@ -141,6 +146,7 @@ public class Node {
 
     /**
      * Get the port of current node.
+     *
      * @return The port of current node.
      */
     public int getPort() {
@@ -149,6 +155,7 @@ public class Node {
 
     /**
      * Get the name of current node.
+     *
      * @return The name of current node.
      */
     public String getNodeName() {
@@ -157,6 +164,7 @@ public class Node {
 
     /**
      * Get the status of current node.
+     *
      * @return The status of current node.
      * @throws BaseException If error happens.
      * @deprecated The status of node are invalid, never use this api again.
@@ -182,6 +190,7 @@ public class Node {
 
     /**
      * Start current node.
+     *
      * @throws BaseException If error happens.
      */
     public void start() throws BaseException {
@@ -190,6 +199,7 @@ public class Node {
 
     /**
      * Stop current node.
+     *
      * @throws BaseException If error happens.
      */
     public void stop() throws BaseException {

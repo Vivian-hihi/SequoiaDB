@@ -52,6 +52,7 @@ public class DBCursor implements Closeable {
 
     /**
      * Judge whether the next document exists or not.
+     *
      * @return true for next data exists while false for not
      * @throws BaseException If error happens.
      */
@@ -78,10 +79,11 @@ public class DBCursor implements Closeable {
 
     /**
      * Judge whether next raw data exists.
+     *
      * @return true for next raw data exists while false for not
-     * @exception BaseException If error happens.
-     * @deprecated always use DBCursor.hasNext()
+     * @throws BaseException If error happens.
      * @see #hasNext()
+     * @deprecated always use DBCursor.hasNext()
      */
     @Deprecated
     public boolean hasNextRaw() throws BaseException {
@@ -92,6 +94,7 @@ public class DBCursor implements Closeable {
      * Get next document.
      * Calling this function after the cursor have been closed
      * will throw BaseException with error SDB_RTN_CONTEXT_NOTEXIST
+     *
      * @return the next date or null if the cursor is empty
      * or the cursor is closed
      * @throws BaseException If error happens.
@@ -110,6 +113,7 @@ public class DBCursor implements Closeable {
      * Get raw date of next record.
      * Calling this function after the cursor have been closed
      * will throw BaseException with error SDB_RTN_CONTEXT_NOTEXIST
+     *
      * @return a byte array of raw date of next record or null
      * if the cursor is empty
      * @throws BaseException If error happens.
@@ -128,6 +132,7 @@ public class DBCursor implements Closeable {
      * Get current document.
      * Calling this function after the cursor have been closed
      * will throw BaseException with error SDB_RTN_CONTEXT_NOTEXIST
+     *
      * @return the current date or null if the cursor is empty
      * @throws BaseException If error happens.
      */
@@ -166,6 +171,7 @@ public class DBCursor implements Closeable {
 
     /**
      * Close the cursor.
+     *
      * @throws BaseException If error happens.
      */
     @Override

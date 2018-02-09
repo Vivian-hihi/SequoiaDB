@@ -38,6 +38,7 @@ public class ClientOptions {
 
     /**
      * Set caching the name of collection space and collection in client or not.
+     *
      * @param enable True or false.
      */
     public void setEnableCache(boolean enable) {
@@ -56,6 +57,7 @@ public class ClientOptions {
      * and collection in client in milliseconds.
      * This value should not be less than 0, or it will be set to the default value,
      * default value is 300*1000ms.
+     *
      * @param interval The interval in milliseconds.
      */
     public void setCacheInterval(long interval) {

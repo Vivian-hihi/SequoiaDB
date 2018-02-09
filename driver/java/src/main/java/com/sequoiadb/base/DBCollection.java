@@ -47,13 +47,14 @@ public class DBCollection {
     public static final int FLG_INSERT_CONTONDUP = 0x00000001;
 
     /**
-      * The sharding key in update rule is not filtered,
-      * when executing update or upsert.
-      */
+     * The sharding key in update rule is not filtered,
+     * when executing update or upsert.
+     */
     public static final int FLG_UPDATE_KEEP_SHARDINGKEY = 0x00008000;
 
     /**
      * Get the name of current collection.
+     *
      * @return The collection name
      */
     public String getName() {
@@ -62,6 +63,7 @@ public class DBCollection {
 
     /**
      * Get the full name of specified collection in current collection space.
+     *
      * @return The full name of specified collection
      */
     public String getFullName() {
@@ -70,6 +72,7 @@ public class DBCollection {
 
     /**
      * Get the full name of specified collection in current collection space.
+     *
      * @return The full name of specified collection.
      */
     public String getCSName() {
@@ -78,6 +81,7 @@ public class DBCollection {
 
     /**
      * Get the Sequoiadb instance of current collection.
+     *
      * @return Sequoiadb instance
      */
     public Sequoiadb getSequoiadb() {
@@ -86,6 +90,7 @@ public class DBCollection {
 
     /**
      * Get the CollectionSpace instance of current collection.
+     *
      * @return CollectionSpace instance
      */
     public CollectionSpace getCollectionSpace() {
@@ -96,6 +101,7 @@ public class DBCollection {
      * Set the main keys used in save(). if no main keys are set, use the
      * default main key "_id".
      * Every time invokes this method, it will remove the main keys set in the last time.
+     *
      * @param keys the main keys specified by user. the main key should exist in the
      *             object
      * @throws BaseException when keys is null
@@ -134,6 +140,7 @@ public class DBCollection {
     /**
      * Insert a document into current collection, if the document
      * does not contain field "_id", it will be added.
+     *
      * @param insertor The Bson object of insertor, can't be null
      * @return the value of the filed "_id"
      * @throws BaseException If error happens.
@@ -160,6 +167,7 @@ public class DBCollection {
     /**
      * Insert a document into current collection, if the document
      * does not contain field "_id", it will be added.
+     *
      * @param insertor The string of insertor
      * @return the value of the filed "_id"
      * @throws BaseException If error happens.
@@ -174,6 +182,7 @@ public class DBCollection {
 
     /**
      * Insert a bulk of bson objects into current collection.
+     *
      * @param insertor The Bson object of insertor list, can't be null
      * @param flag     available value is FLG_INSERT_CONTONDUP or 0.
      *                 if flag = FLG_INSERT_CONTONDUP, bulkInsert will continue when Duplicate
@@ -198,6 +207,7 @@ public class DBCollection {
 
     /**
      * Insert a bulk of bson objects into current collection.
+     *
      * @param insertor The Bson object of insertor list, can't be null.
      *                 insert will interrupt when Duplicate key exist.
      * @throws BaseException If error happens.
@@ -210,19 +220,20 @@ public class DBCollection {
     /**
      * Insert an object into current collection.
      * When flag is set to 0, it won't work to update the ShardingKey field, but the other fields take effect.
+     *
      * @param type            The object of insertor, can't be null
      * @param ignoreNullValue true:if type's inner value is null, it will not save to collection;
-     * @param flag     the update flag, default to be 0. Please see the definition
-     *                 of follow flags for more detail.
-     *                 <ul>
-     *                 <li>DBCollection.FLG_UPDATE_KEEP_SHARDINGKEY
-     *                 </ul>
+     * @param flag            the update flag, default to be 0. Please see the definition
+     *                        of follow flags for more detail.
+     *                        <ul>
+     *                        <li>DBCollection.FLG_UPDATE_KEEP_SHARDINGKEY
+     *                        </ul>
      * @throws BaseException 1.when the type is not support, throw BaseException with the type "SDB_INVALIDARG"
-     *                        2.when offer main keys by setMainKeys(), and try to update "_id" field,
-     *                        it may get a BaseException with the type of "SDB_IXM_DUP_KEY"
+     *                       2.when offer main keys by setMainKeys(), and try to update "_id" field,
+     *                       it may get a BaseException with the type of "SDB_IXM_DUP_KEY"
      * @see com.sequoiadb.base.DBCollection#setMainKeys(String[])
      */
-    public /*! @cond x*/ <T> /*! @endcond */ void save(T type, Boolean ignoreNullValue, 
+    public /*! @cond x*/ <T> /*! @endcond */ void save(T type, Boolean ignoreNullValue,
                                                        int flag) throws BaseException {
         // transform java object to bson object
         BSONObject obj;
@@ -264,17 +275,18 @@ public class DBCollection {
             }
         }
     }
-    
+
     /**
      * Insert an object into current collection
      * when save include update shardingKey field, the shardingKey modify action is not take effect, but the other
      * field update is take effect.
+     *
      * @param type            The object of insertor, can't be null
      * @param ignoreNullValue true:if type's inner value is null, it will not save to collection;
      *                        false:if type's inner value is null, it will save to collection too.
      * @throws BaseException 1.when the type is not support, throw BaseException with the type "SDB_INVALIDARG"
-     *                        2.when offer main keys by setMainKeys(), and try to update "_id" field,
-     *                        it may get a BaseException with the type of "SDB_IXM_DUP_KEY"
+     *                       2.when offer main keys by setMainKeys(), and try to update "_id" field,
+     *                       it may get a BaseException with the type of "SDB_IXM_DUP_KEY"
      * @see com.sequoiadb.base.DBCollection#setMainKeys(String[])
      */
     public /*! @cond x*/ <T> /*! @endcond */ void save(T type, Boolean ignoreNullValue) throws BaseException {
@@ -285,10 +297,11 @@ public class DBCollection {
      * Insert an object into current collection.
      * when save include update shardingKey field, the shardingKey modify action is not take effect, but the other
      * field update is take effect.
+     *
      * @param type The object of insertor, can't be null
      * @throws BaseException 1.when the type is not support, throw BaseException with the type "SDB_INVALIDARG"
-     *                        2.when offer main keys by setMainKeys(), and try to update "_id" field,
-     *                        it may get a BaseException with the type of "SDB_IXM_DUP_KEY"
+     *                       2.when offer main keys by setMainKeys(), and try to update "_id" field,
+     *                       it may get a BaseException with the type of "SDB_IXM_DUP_KEY"
      * @see com.sequoiadb.base.DBCollection#setMainKeys(String[])
      */
     public /*! @cond x*/ <T> /*! @endcond */ void save(T type) throws BaseException {
@@ -298,18 +311,19 @@ public class DBCollection {
     /**
      * Insert an object into current collection.
      * When flag is set to 0, it won't work to update the ShardingKey field, but the other fields take effect.
+     *
      * @param type            The List instance of insertor, can't be null or empty
      * @param ignoreNullValue true:if type's inner value is null, it will not save to collection;
-     * @param flag     the update flag, default to be 0. Please see the definition
-     *                 of follow flags for more detail.
-     *                 <ul>
-     *                 <li>DBCollection.FLG_UPDATE_KEEP_SHARDINGKEY
-     *                 </ul>
+     * @param flag            the update flag, default to be 0. Please see the definition
+     *                        of follow flags for more detail.
+     *                        <ul>
+     *                        <li>DBCollection.FLG_UPDATE_KEEP_SHARDINGKEY
+     *                        </ul>
      * @throws BaseException 1.while the input argument is null or the List instance is empty
-     *                        2.while the type is not support, throw BaseException with the type "SDB_INVALIDARG"
-     *                        3.while offer main keys by setMainKeys(), and try to update "_id" field,
-     *                          it may get a BaseException with the type of "SDB_IXM_DUP_KEY" when the "_id" field you
-     *                          want to update to had been existing in database
+     *                       2.while the type is not support, throw BaseException with the type "SDB_INVALIDARG"
+     *                       3.while offer main keys by setMainKeys(), and try to update "_id" field,
+     *                       it may get a BaseException with the type of "SDB_IXM_DUP_KEY" when the "_id" field you
+     *                       want to update to had been existing in database
      * @see com.sequoiadb.base.DBCollection#setMainKeys(String[])
      */
     public /*! @cond x*/ <T> /*! @endcond */ void save(List<T> type, Boolean ignoreNullValue,
@@ -367,19 +381,20 @@ public class DBCollection {
             }
         }
     }
-    
+
     /**
      * Insert an object into current collection.
      * when save include update shardingKey field, the shardingKey modify action is not take effect, but the other
      * field update is take effect.
+     *
      * @param type            The List instance of insertor, can't be null or empty
      * @param ignoreNullValue true:if type's inner value is null, it will not save to collection;
      *                        false:if type's inner value is null, it will save to collection too.
      * @throws BaseException 1.while the input argument is null or the List instance is empty
-     *                        2.while the type is not support, throw BaseException with the type "SDB_INVALIDARG"
-     *                        3.while offer main keys by setMainKeys(), and try to update "_id" field,
-     *                          it may get a BaseException with the type of "SDB_IXM_DUP_KEY" when the "_id" field you
-     *                          want to update to had been existing in database
+     *                       2.while the type is not support, throw BaseException with the type "SDB_INVALIDARG"
+     *                       3.while offer main keys by setMainKeys(), and try to update "_id" field,
+     *                       it may get a BaseException with the type of "SDB_IXM_DUP_KEY" when the "_id" field you
+     *                       want to update to had been existing in database
      * @see com.sequoiadb.base.DBCollection#setMainKeys(String[])
      */
     public /*! @cond x*/ <T> /*! @endcond */ void save(List<T> type, Boolean ignoreNullValue) throws BaseException {
@@ -390,12 +405,13 @@ public class DBCollection {
      * Insert an object into current collection.
      * when save include update shardingKey field, the shardingKey modify action is not take effect, but the other
      * field update is take effect.
+     *
      * @param type The List instance of insertor, can't be null or empty
      * @throws BaseException 1.while the input argument is null or the List instance is empty
-     *                        2.while the type is not support, throw BaseException with the type "SDB_INVALIDARG"
-     *                        3.while offer main keys by setMainKeys(), and try to update "_id" field,
-     *                          it may get a BaseException with the type of "SDB_IXM_DUP_KEY" when the "_id" field you
-     *                          want to update to had been existing in database
+     *                       2.while the type is not support, throw BaseException with the type "SDB_INVALIDARG"
+     *                       3.while offer main keys by setMainKeys(), and try to update "_id" field,
+     *                       it may get a BaseException with the type of "SDB_IXM_DUP_KEY" when the "_id" field you
+     *                       want to update to had been existing in database
      * @see com.sequoiadb.base.DBCollection#setMainKeys(String[])
      */
     public /*! @cond x*/ <T> /*! @endcond */ void save(List<T> type) throws BaseException {
@@ -404,6 +420,7 @@ public class DBCollection {
 
     /**
      * Set whether ensure OID of record when bulk insert records to SequoiaDB.
+     *
      * @param flag whether ensure OID of record
      */
     public void ensureOID(boolean flag) {
@@ -419,6 +436,7 @@ public class DBCollection {
 
     /**
      * Insert a bulk of bson objects into current collection.
+     *
      * @param insertor The Bson object of insertor list, can't be null
      * @param flag     available value is FLG_INSERT_CONTONDUP or 0.
      *                 if flag = FLG_INSERT_CONTONDUP, bulkInsert will continue when Duplicate
@@ -434,6 +452,7 @@ public class DBCollection {
 
     /**
      * Delete the matching BSONObject of current collection.
+     *
      * @param matcher The matching condition, delete all the documents if null
      * @throws BaseException If error happens.
      */
@@ -443,6 +462,7 @@ public class DBCollection {
 
     /**
      * Delete the matching of current collection.
+     *
      * @param matcher The matching condition, delete all the documents if null
      * @throws BaseException If error happens.
      */
@@ -456,6 +476,7 @@ public class DBCollection {
 
     /**
      * Delete the matching bson's string of current collection.
+     *
      * @param matcher The matching condition, delete all the documents if null
      * @param hint    Specified the index used to scan data. e.g. {"":"ageIndex"} means
      *                using index "ageIndex" to scan data(index scan);
@@ -477,6 +498,7 @@ public class DBCollection {
 
     /**
      * Delete the matching BSONObject of current collection.
+     *
      * @param matcher The matching condition, delete all the documents if null
      * @param hint    Specified the index used to scan data. e.g. {"":"ageIndex"} means
      *                using index "ageIndex" to scan data(index scan);
@@ -485,7 +507,7 @@ public class DBCollection {
      * @throws BaseException If error happens.
      */
     public void delete(BSONObject matcher, BSONObject hint)
-        throws BaseException {
+            throws BaseException {
         DeleteRequest request = new DeleteRequest(collectionFullName, matcher, hint);
         SdbReply response = sequoiadb.requestAndResponse(request);
         if (response.getFlag() != 0) {
@@ -498,6 +520,7 @@ public class DBCollection {
     /**
      * Update the document of current collection.
      * It won't work to update the ShardingKey field, but the other fields take effect.
+     *
      * @param query DBQuery with matching condition, updating rule and hint
      * @throws BaseException If error happens.
      */
@@ -508,6 +531,7 @@ public class DBCollection {
     /**
      * Update the BSONObject of current collection.
      * It won't work to update the ShardingKey field, but the other fields take effect.
+     *
      * @param matcher  The matching condition, update all the documents if null
      * @param modifier The updating rule, can't be null
      * @param hint     Specified the index used to scan data. e.g. {"":"ageIndex"} means
@@ -517,13 +541,14 @@ public class DBCollection {
      * @throws BaseException If error happens.
      */
     public void update(BSONObject matcher, BSONObject modifier, BSONObject hint)
-        throws BaseException {
+            throws BaseException {
         _update(0, matcher, modifier, hint);
     }
 
     /**
      * Update the BSONObject of current collection.
      * When flag is set to 0, it won't work to update the ShardingKey field, but the other fields take effect.
+     *
      * @param matcher  The matching condition, update all the documents if null
      * @param modifier The updating rule, can't be null
      * @param hint     Specified the index used to scan data. e.g. {"":"ageIndex"} means
@@ -545,6 +570,7 @@ public class DBCollection {
     /**
      * Update the BSONObject of current collection.
      * It won't work to update the ShardingKey field, but the other fields take effect.
+     *
      * @param matcher  The matching condition, update all the documents if null
      * @param modifier The updating rule, can't be null or empty
      * @param hint     Specified the index used to scan data. e.g. {"":"ageIndex"} means
@@ -554,7 +580,7 @@ public class DBCollection {
      * @throws BaseException If error happens.
      */
     public void update(String matcher, String modifier, String hint)
-        throws BaseException {
+            throws BaseException {
         BSONObject ma = null;
         BSONObject mo = null;
         BSONObject hi = null;
@@ -573,6 +599,7 @@ public class DBCollection {
     /**
      * Update the BSONObject of current collection.
      * When flag is set to 0, it won't work to update the ShardingKey field, but the other fields take effect.
+     *
      * @param matcher  The matching condition, update all the documents if null
      * @param modifier The updating rule, can't be null or empty
      * @param hint     Specified the index used to scan data. e.g. {"":"ageIndex"} means
@@ -587,7 +614,7 @@ public class DBCollection {
      * @throws BaseException If error happens.
      */
     public void update(String matcher, String modifier, String hint, int flag)
-        throws BaseException {
+            throws BaseException {
         BSONObject ma = null;
         BSONObject mo = null;
         BSONObject hi = null;
@@ -606,6 +633,7 @@ public class DBCollection {
     /**
      * Update the BSONObject of current collection, insert if no matching.
      * It won't work to update the ShardingKey field, but the other fields take effect.
+     *
      * @param matcher  The matching condition, update all the documents
      *                 if null(that's to say, we match all the documents)
      * @param modifier The updating rule, can't be null
@@ -616,13 +644,14 @@ public class DBCollection {
      * @throws BaseException If error happens.
      */
     public void upsert(BSONObject matcher, BSONObject modifier, BSONObject hint)
-        throws BaseException {
+            throws BaseException {
         _update(SdbConstants.FLG_UPDATE_UPSERT, matcher, modifier, hint);
     }
 
     /**
      * Update the BSONObject of current collection, insert if no matching.
      * It won't work to update the ShardingKey field, but the other fields take effect.
+     *
      * @param matcher     The matching condition, update all the documents
      *                    if null(that's to say, we match all the documents)
      * @param modifier    The updating rule, can't be null
@@ -641,6 +670,7 @@ public class DBCollection {
     /**
      * Update the BSONObject of current collection, insert if no matching.
      * When flag is set to 0, it won't work to update the ShardingKey field, but the other fields take effect.
+     *
      * @param matcher     The matching condition, update all the documents
      *                    if null(that's to say, we match all the documents)
      * @param modifier    The updating rule, can't be null
@@ -674,6 +704,7 @@ public class DBCollection {
 
     /**
      * Explain query of current collection.
+     *
      * @param matcher    the matching rule, return all the documents if null
      * @param selector   the selective rule, return the whole document if null
      * @param orderBy    the ordered rule, never sort if null
@@ -718,11 +749,12 @@ public class DBCollection {
         }
 
         return query(matcher, selector, orderBy, innerHint, skipRows,
-            returnRows, flag);
+                returnRows, flag);
     }
 
     /**
      * Get all documents of current collection.
+     *
      * @return a DBCursor instance of the result
      * @throws BaseException If error happens.
      */
@@ -732,6 +764,7 @@ public class DBCollection {
 
     /**
      * Get the matching documents in current collection.
+     *
      * @param matcher the matching rule, return all the documents if null
      * @return a DBCursor instance of the result or null if no any matched document
      * @throws BaseException If error happens.
@@ -742,12 +775,13 @@ public class DBCollection {
             return query();
         }
         return query(matcher.getMatcher(), matcher.getSelector(),
-            matcher.getOrderBy(), matcher.getHint(), matcher.getSkipRowsCount(),
-            matcher.getReturnRowsCount(), matcher.getFlag());
+                matcher.getOrderBy(), matcher.getHint(), matcher.getSkipRowsCount(),
+                matcher.getReturnRowsCount(), matcher.getFlag());
     }
 
     /**
      * Get the matching documents in current collection.
+     *
      * @param matcher  the matching rule, return all the documents if null
      * @param selector the selective rule, return the whole document if null
      * @param orderBy  the ordered rule, never sort if null
@@ -765,6 +799,7 @@ public class DBCollection {
 
     /**
      * Get the matching documents in current collection.
+     *
      * @param matcher  the matching rule, return all the documents if null
      * @param selector the selective rule, return the whole document if null
      * @param orderBy  the ordered rule, never sort if null
@@ -791,6 +826,7 @@ public class DBCollection {
 
     /**
      * Get the matching documents in current collection.
+     *
      * @param matcher  the matching rule, return all the documents if null
      * @param selector the selective rule, return the whole document if null
      * @param orderBy  the ordered rule, never sort if null
@@ -808,6 +844,7 @@ public class DBCollection {
 
     /**
      * Get the matching documents in current collection.
+     *
      * @param matcher  the matching rule, return all the documents if null
      * @param selector the selective rule, return the whole document if null
      * @param orderBy  the ordered rule, never sort if null
@@ -850,6 +887,7 @@ public class DBCollection {
 
     /**
      * Get the matching documents in current collection.
+     *
      * @param matcher    the matching rule, return all the documents if null
      * @param selector   the selective rule, return the whole document if null
      * @param orderBy    the ordered rule, never sort if null
@@ -887,6 +925,7 @@ public class DBCollection {
 
     /**
      * Get the matching documents in current collection.
+     *
      * @param matcher    the matching rule, return all the documents if null
      * @param selector   the selective rule, return the whole document if null
      * @param orderBy    the ordered rule, never sort if null
@@ -908,6 +947,7 @@ public class DBCollection {
 
     /**
      * Get the matching documents in current collection.
+     *
      * @param matcher    the matching rule, return all the documents if null
      * @param selector   the selective rule, return the whole document if null
      * @param orderBy    the ordered rule, never sort if null
@@ -919,7 +959,7 @@ public class DBCollection {
      * @param returnRows return the specified amount of documents,
      *                   when returnRows is 0, return nothing,
      *                   when returnRows is -1, return all the documents
-     * @param flags     the query flags, default to be 0. Please see the definition
+     * @param flags      the query flags, default to be 0. Please see the definition
      *                   of follow flags for more detail. Usage:
      *                   e.g. set ( DBQuery.FLG_QUERY_FORCE_HINT | DBQuery.FLG_QUERY_WITH_RETURNDATA ) to param flag
      *                   <ul>
@@ -945,8 +985,8 @@ public class DBCollection {
         }
 
         QueryRequest request = new QueryRequest(collectionFullName,
-            matcher, selector, orderBy, hint,
-            skipRows, returnRows, newFlags);
+                matcher, selector, orderBy, hint,
+                skipRows, returnRows, newFlags);
         SdbReply response = sequoiadb.requestAndResponse(request);
 
         int flag = response.getFlag();
@@ -955,11 +995,11 @@ public class DBCollection {
                 return null;
             } else {
                 String msg = "matcher = " + matcher +
-                    ", selector = " + selector +
-                    ", orderBy = " + orderBy +
-                    ", hint = " + hint +
-                    ", skipRows = " + skipRows +
-                    ", returnRows = " + returnRows;
+                        ", selector = " + selector +
+                        ", orderBy = " + orderBy +
+                        ", hint = " + hint +
+                        ", skipRows = " + skipRows +
+                        ", returnRows = " + returnRows;
                 sequoiadb.throwIfError(response, msg);
             }
         }
@@ -972,6 +1012,7 @@ public class DBCollection {
 
     /**
      * Get one matched document from current collection.
+     *
      * @param matcher  the matching rule, return all the documents if null
      * @param selector the selective rule, return the whole document if null
      * @param orderBy  the ordered rule, never sort if null
@@ -1001,6 +1042,7 @@ public class DBCollection {
 
     /**
      * Get one document from current collection.
+     *
      * @return the document or null if no any document in current collection
      * @throws BaseException If error happens.
      */
@@ -1010,6 +1052,7 @@ public class DBCollection {
 
     /**
      * Get all the indexes of current collection
+     *
      * @return DBCursor of indexes
      * @throws BaseException If error happens.
      */
@@ -1039,7 +1082,7 @@ public class DBCollection {
                                      BSONObject orderBy, BSONObject hint, BSONObject update,
                                      long skipRows, long returnRows, int flag,
                                      boolean isUpdate, boolean returnNew)
-        throws BaseException {
+            throws BaseException {
         BSONObject modify = new BasicBSONObject();
 
         if (isUpdate) {
@@ -1048,12 +1091,12 @@ public class DBCollection {
             }
 
             modify.put(SdbConstants.FIELD_NAME_OP,
-                SdbConstants.FIELD_OP_VALUE_UPDATE);
+                    SdbConstants.FIELD_OP_VALUE_UPDATE);
             modify.put(SdbConstants.FIELD_NAME_OP_UPDATE, update);
             modify.put(SdbConstants.FIELD_NAME_RETURNNEW, returnNew);
         } else {
             modify.put(SdbConstants.FIELD_NAME_OP,
-                SdbConstants.FIELD_OP_VALUE_REMOVE);
+                    SdbConstants.FIELD_OP_VALUE_REMOVE);
             modify.put(SdbConstants.FIELD_NAME_OP_REMOVE, true);
         }
 
@@ -1065,13 +1108,14 @@ public class DBCollection {
 
         flag |= DBQuery.FLG_QUERY_MODIFY;
         return query(matcher, selector, orderBy, newHint,
-            skipRows, returnRows, flag);
+                skipRows, returnRows, flag);
     }
 
     /**
      * Get the matching documents in current collection and update.
      * In order to make the update take effect, user must travel
      * the DBCursor returned by this function.
+     *
      * @param matcher    the matching rule, return all the documents if null
      * @param selector   the selective rule, return the whole document if null
      * @param orderBy    the ordered rule, never sort if null
@@ -1101,15 +1145,16 @@ public class DBCollection {
     public DBCursor queryAndUpdate(BSONObject matcher, BSONObject selector,
                                    BSONObject orderBy, BSONObject hint, BSONObject update,
                                    long skipRows, long returnRows, int flag, boolean returnNew)
-        throws BaseException {
+            throws BaseException {
         return _queryAndModify(matcher, selector, orderBy, hint, update,
-            skipRows, returnRows, flag, true, returnNew);
+                skipRows, returnRows, flag, true, returnNew);
     }
 
     /**
      * Get the matching documents in current collection and remove.
      * In order to make the remove take effect, user must travel
      * the DBCursor returned by this function.
+     *
      * @param matcher    the matching rule, return all the documents if null
      * @param selector   the selective rule, return the whole document if null
      * @param orderBy    the ordered rule, never sort if null
@@ -1136,13 +1181,14 @@ public class DBCollection {
     public DBCursor queryAndRemove(BSONObject matcher, BSONObject selector,
                                    BSONObject orderBy, BSONObject hint,
                                    long skipRows, long returnRows, int flag)
-        throws BaseException {
+            throws BaseException {
         return _queryAndModify(matcher, selector, orderBy, hint, null,
-            skipRows, returnRows, flag, false, false);
+                skipRows, returnRows, flag, false, false);
     }
 
     /**
      * Get all of or one of the indexes in current collection.
+     *
      * @param name The index name, returns all of the indexes if this parameter
      *             is null
      * @return DBCursor of indexes
@@ -1155,7 +1201,7 @@ public class DBCollection {
 
         BSONObject condition = new BasicBSONObject();
         condition.put(SdbConstants.IXM_INDEXDEF + "."
-            + SdbConstants.IXM_NAME, name);
+                + SdbConstants.IXM_NAME, name);
 
         BSONObject obj = new BasicBSONObject();
         obj.put(SdbConstants.FIELD_COLLECTION, collectionFullName);
@@ -1177,6 +1223,7 @@ public class DBCollection {
 
     /**
      * Create a index with name and key.
+     *
      * @param name           The index name
      * @param key            The index key, like: {"key":1/-1}, ASC(1)/DESC(-1)
      * @param isUnique       Whether the index elements are unique or not
@@ -1204,15 +1251,15 @@ public class DBCollection {
 
         BSONObject hint = new BasicBSONObject();
         hint.put(SdbConstants.IXM_FIELD_NAME_SORT_BUFFER_SIZE,
-            sortBufferSize);
+                sortBufferSize);
 
         AdminRequest request = new AdminRequest(AdminCommand.CREATE_INDEX, createObj, hint);
         SdbReply response = sequoiadb.requestAndResponse(request);
 
         if (response.getFlag() != 0) {
             String msg = "name = " + name +
-                ", key = " + key +
-                ", isUnique = " + isUnique;
+                    ", key = " + key +
+                    ", isUnique = " + isUnique;
             sequoiadb.throwIfError(response, msg);
         }
 
@@ -1221,6 +1268,7 @@ public class DBCollection {
 
     /**
      * Create a index with name and key.
+     *
      * @param name           The index name
      * @param key            The index key, like: {"key":1/-1}, ASC(1)/DESC(-1)
      * @param isUnique       Whether the index elements are unique or not
@@ -1241,6 +1289,7 @@ public class DBCollection {
 
     /**
      * Create a index with name and key
+     *
      * @param name     The index name
      * @param key      The index key, like: {"key":1/-1}, ASC(1)/DESC(-1)
      * @param isUnique Whether the index elements are unique or not
@@ -1251,11 +1300,12 @@ public class DBCollection {
     public void createIndex(String name, BSONObject key, boolean isUnique,
                             boolean enforced) throws BaseException {
         createIndex(name, key, isUnique, enforced,
-            SdbConstants.IXM_SORT_BUFFER_DEFAULT_SIZE);
+                SdbConstants.IXM_SORT_BUFFER_DEFAULT_SIZE);
     }
 
     /**
      * Create a index with name and key.
+     *
      * @param name     The index name
      * @param key      The index keys in JSON format, like: "{\"a\":1, \"b\":-1}"
      * @param isUnique Whether the index elements are unique or not
@@ -1270,18 +1320,19 @@ public class DBCollection {
             k = (BSONObject) JSON.parse(key);
         }
         createIndex(name, k, isUnique, enforced,
-            SdbConstants.IXM_SORT_BUFFER_DEFAULT_SIZE);
+                SdbConstants.IXM_SORT_BUFFER_DEFAULT_SIZE);
     }
 
     /**
      * Create the id index.
+     *
      * @param options can be empty or specify option. e.g. {SortBufferSize:64}
      * @throws BaseException If error happens.
      */
     public void createIdIndex(BSONObject options) throws BaseException {
         BSONObject tmp = new BasicBSONObject();
         tmp.put(SdbConstants.FIELD_NAME_NAME,
-            SdbConstants.SDB_ALTER_CRT_ID_INDEX);
+                SdbConstants.SDB_ALTER_CRT_ID_INDEX);
         if (options == null || options.isEmpty()) {
             tmp.put(SdbConstants.FIELD_NAME_ARGS, null);
         } else {
@@ -1296,12 +1347,13 @@ public class DBCollection {
 
     /**
      * Drop the id index.
+     *
      * @throws BaseException If error happens.
      */
     public void dropIdIndex() throws BaseException {
         BSONObject tmp = new BasicBSONObject();
         tmp.put(SdbConstants.FIELD_NAME_NAME,
-            SdbConstants.SDB_ALTER_DROP_ID_INDEX);
+                SdbConstants.SDB_ALTER_DROP_ID_INDEX);
         tmp.put(SdbConstants.FIELD_NAME_ARGS, null);
 
         BSONObject options = new BasicBSONObject();
@@ -1311,6 +1363,7 @@ public class DBCollection {
 
     /**
      * Remove the named index of current collection.
+     *
      * @param name The index name
      * @throws BaseException If error happens.
      */
@@ -1330,6 +1383,7 @@ public class DBCollection {
 
     /**
      * Get the amount of documents in current collection.
+     *
      * @return the amount of matching documents
      * @throws BaseException If error happens.
      */
@@ -1339,6 +1393,7 @@ public class DBCollection {
 
     /**
      * Get the amount of matching documents in current collection.
+     *
      * @param matcher the matching rule
      * @return the amount of matching documents
      * @throws BaseException If error happens.
@@ -1353,6 +1408,7 @@ public class DBCollection {
 
     /**
      * Get the amount of matching documents in current collection.
+     *
      * @param matcher The matching rule, when condition is null, the return amount contains all the records.
      * @return the amount of matching documents
      * @throws BaseException If error happens.
@@ -1363,6 +1419,7 @@ public class DBCollection {
 
     /**
      * Get the count of matching BSONObject in current collection.
+     *
      * @param matcher The matching rule, when condition is null, the return amount contains all the records.
      * @param hint    Specified the index used to scan data. e.g. {"":"ageIndex"} means
      *                using index "ageIndex" to scan data(index scan);
@@ -1383,7 +1440,7 @@ public class DBCollection {
 
         if (response.getFlag() != 0) {
             String msg = "condition = " + matcher +
-                ", hint = " + hint;
+                    ", hint = " + hint;
             sequoiadb.throwIfError(response, msg);
         }
 
@@ -1396,6 +1453,7 @@ public class DBCollection {
 
     /**
      * Split the specified collection from source group to target group by range.
+     *
      * @param sourceGroupName   the source group name
      * @param destGroupName     the destination group name
      * @param splitCondition    the split condition
@@ -1409,8 +1467,8 @@ public class DBCollection {
     public void split(String sourceGroupName, String destGroupName,
                       BSONObject splitCondition, BSONObject splitEndCondition) throws BaseException {
         if ((null == sourceGroupName || sourceGroupName.equals("")) ||
-            (null == destGroupName || destGroupName.equals("")) ||
-            null == splitCondition) {
+                (null == destGroupName || destGroupName.equals("")) ||
+                null == splitCondition) {
             throw new BaseException(SDBError.SDB_INVALIDARG, "null parameter");
         }
 
@@ -1428,9 +1486,9 @@ public class DBCollection {
 
         if (response.getFlag() != 0) {
             String msg = "sourceGroupName = " + sourceGroupName +
-                ", destGroupName = " + destGroupName +
-                ", splitCondition = " + splitCondition +
-                ", splitEndCondition = " + splitEndCondition;
+                    ", destGroupName = " + destGroupName +
+                    ", splitCondition = " + splitCondition +
+                    ", splitEndCondition = " + splitEndCondition;
             sequoiadb.throwIfError(response, msg);
         }
 
@@ -1439,6 +1497,7 @@ public class DBCollection {
 
     /**
      * Split the specified collection from source group to target group by percent.
+     *
      * @param sourceGroupName the source group name
      * @param destGroupName   the destination group name
      * @param percent         the split percent, Range:(0,100]
@@ -1447,8 +1506,8 @@ public class DBCollection {
     public void split(String sourceGroupName, String destGroupName,
                       double percent) throws BaseException {
         if ((null == sourceGroupName || sourceGroupName.equals("")) ||
-            (null == destGroupName || destGroupName.equals("")) ||
-            (percent <= 0.0 || percent > 100.0)) {
+                (null == destGroupName || destGroupName.equals("")) ||
+                (percent <= 0.0 || percent > 100.0)) {
             throw new BaseException(SDBError.SDB_INVALIDARG);
         }
 
@@ -1463,8 +1522,8 @@ public class DBCollection {
 
         if (response.getFlag() != 0) {
             String msg = "sourceGroupName = " + sourceGroupName +
-                ", destGroupName = " + destGroupName +
-                ", percent = " + percent;
+                    ", destGroupName = " + destGroupName +
+                    ", percent = " + percent;
             sequoiadb.throwIfError(response, msg);
         }
 
@@ -1473,6 +1532,7 @@ public class DBCollection {
 
     /**
      * Split the specified collection from source group to target group by range asynchronously.
+     *
      * @param sourceGroupName   the source group name
      * @param destGroupName     the destination group name
      * @param splitCondition    the split condition
@@ -1491,8 +1551,8 @@ public class DBCollection {
                            BSONObject splitCondition,
                            BSONObject splitEndCondition) throws BaseException {
         if ((null == sourceGroupName || sourceGroupName.equals("")) ||
-            (null == destGroupName || destGroupName.equals("")) ||
-            null == splitCondition) {
+                (null == destGroupName || destGroupName.equals("")) ||
+                null == splitCondition) {
             throw new BaseException(SDBError.SDB_INVALIDARG);
         }
 
@@ -1511,9 +1571,9 @@ public class DBCollection {
 
         if (response.getFlag() != 0) {
             String msg = "sourceGroupName = " + sourceGroupName +
-                ", destGroupName = " + destGroupName +
-                ", splitCondition = " + splitCondition +
-                ", splitEndCondition = " + splitEndCondition;
+                    ", destGroupName = " + destGroupName +
+                    ", splitCondition = " + splitCondition +
+                    ", splitEndCondition = " + splitEndCondition;
             sequoiadb.throwIfError(response, msg);
         }
 
@@ -1535,6 +1595,7 @@ public class DBCollection {
 
     /**
      * Split the specified collection from source group to target group by percent asynchronously.
+     *
      * @param sourceGroupName the source group name
      * @param destGroupName   the destination group name
      * @param percent         the split percent, Range:(0,100]
@@ -1544,8 +1605,8 @@ public class DBCollection {
     public long splitAsync(String sourceGroupName, String destGroupName,
                            double percent) throws BaseException {
         if ((null == sourceGroupName || sourceGroupName.equals("")) ||
-            (null == destGroupName || destGroupName.equals("")) ||
-            (percent <= 0.0 || percent > 100.0)) {
+                (null == destGroupName || destGroupName.equals("")) ||
+                (percent <= 0.0 || percent > 100.0)) {
             throw new BaseException(SDBError.SDB_INVALIDARG);
         }
 
@@ -1561,8 +1622,8 @@ public class DBCollection {
 
         if (response.getFlag() != 0) {
             String msg = "sourceGroupName = " + sourceGroupName +
-                ", destGroupName = " + destGroupName +
-                ", percent = " + percent;
+                    ", destGroupName = " + destGroupName +
+                    ", percent = " + percent;
             sequoiadb.throwIfError(response, msg);
         }
 
@@ -1585,11 +1646,12 @@ public class DBCollection {
 
     /**
      * Execute aggregate operation in current collection.
+     *
      * @param objs The Bson object of rule list, can't be null
      * @throws BaseException If error happens.
      */
     public DBCursor aggregate(List<BSONObject> objs)
-        throws BaseException {
+            throws BaseException {
         if (objs == null || objs.size() == 0) {
             throw new BaseException(SDBError.SDB_INVALIDARG);
         }
@@ -1614,6 +1676,7 @@ public class DBCollection {
 
     /**
      * Get index blocks' or data blocks' information for concurrent query.
+     *
      * @param matcher    the matching rule, return all the meta information if null
      * @param orderBy    the ordered rule, never sort if null
      * @param hint       Specified the index used to scan data. e.g. {"":"ageIndex"} means
@@ -1634,19 +1697,16 @@ public class DBCollection {
                                  BSONObject hint, long skipRows,
                                  long returnRows, int flag) throws BaseException {
         BSONObject newHint = new BasicBSONObject();
-        newHint.put("Collection", this.collectionFullName);       
-        if ( null == hint || hint.isEmpty() )
-        {
+        newHint.put("Collection", this.collectionFullName);
+        if (null == hint || hint.isEmpty()) {
             BSONObject empty = new BasicBSONObject();
             newHint.put("Hint", empty);
-        }
-        else
-        {
+        } else {
             newHint.put("Hint", hint);
         }
-        
+
         QueryRequest request = new QueryRequest(AdminCommand.GET_QUERYMETA, matcher, null, orderBy, newHint,
-            skipRows, returnRows, flag);
+                skipRows, returnRows, flag);
         SdbReply response = sequoiadb.requestAndResponse(request);
 
         int flags = response.getFlag();
@@ -1655,10 +1715,10 @@ public class DBCollection {
                 return null;
             } else {
                 String msg = "query = " + matcher +
-                    ", hint = " + hint +
-                    ", orderBy = " + orderBy +
-                    ", skipRows = " + skipRows +
-                    ", returnRows = " + returnRows;
+                        ", hint = " + hint +
+                        ", orderBy = " + orderBy +
+                        ", skipRows = " + skipRows +
+                        ", returnRows = " + returnRows;
                 sequoiadb.throwIfError(response, msg);
             }
         }
@@ -1671,6 +1731,7 @@ public class DBCollection {
 
     /**
      * Attach the specified collection.
+     *
      * @param subClFullName The full name of the sub-collection
      * @param options       The low boundary and up boundary
      *                      eg: {"LowBound":{a:1},"UpBound":{a:100}}
@@ -1678,8 +1739,8 @@ public class DBCollection {
      */
     public void attachCollection(String subClFullName, BSONObject options) throws BaseException {
         if (null == subClFullName || subClFullName.equals("") ||
-            null == options ||
-            null == collectionFullName || collectionFullName.equals("")) {
+                null == options ||
+                null == collectionFullName || collectionFullName.equals("")) {
             throw new BaseException(SDBError.SDB_INVALIDARG, "sub collection name or options is empty or null");
         }
 
@@ -1693,7 +1754,7 @@ public class DBCollection {
 
         if (response.getFlag() != 0) {
             String msg = "subCollectionName = " + subClFullName +
-                ", options = " + options;
+                    ", options = " + options;
             sequoiadb.throwIfError(response, msg);
         }
 
@@ -1702,12 +1763,13 @@ public class DBCollection {
 
     /**
      * Detach the specified collection.
+     *
      * @param subClFullName The full name of the sub-collection
      * @throws BaseException If error happens.
      */
     public void detachCollection(String subClFullName) throws BaseException {
         if (null == subClFullName || subClFullName.equals("") ||
-            null == collectionFullName || collectionFullName.equals("")) {
+                null == collectionFullName || collectionFullName.equals("")) {
             throw new BaseException(SDBError.SDB_INVALIDARG, subClFullName);
         }
 
@@ -1725,6 +1787,7 @@ public class DBCollection {
      * Alter the attributes of current collection.
      * Can't alter attributes about split in partition collection; After altering a collection to
      * be a partition collection, need to split this collection manually.
+     *
      * @param options The options for altering current collection are as below:
      *                <ul>
      *                <li>ReplSize     : Assign how many replica nodes need to be synchronized when a write request(insert, update, etc) is executed
@@ -1752,9 +1815,9 @@ public class DBCollection {
                 throw new BaseException(SDBError.SDB_INVALIDARG, options.toString());
             }
             newObj.put(SdbConstants.FIELD_NAME_ALTER_TYPE,
-                SdbConstants.SDB_ALTER_CL);
+                    SdbConstants.SDB_ALTER_CL);
             newObj.put(SdbConstants.FIELD_NAME_VERSION,
-                SdbConstants.SDB_ALTER_VERSION);
+                    SdbConstants.SDB_ALTER_VERSION);
             newObj.put(SdbConstants.FIELD_NAME_NAME, collectionFullName);
 
             if (options.containsField(SdbConstants.FIELD_NAME_OPTIONS)) {
@@ -1781,8 +1844,8 @@ public class DBCollection {
 
         if (response.getFlag() != 0) {
             String msg = "matcher = " + matcher +
-                ", modifier = " + modifier +
-                ", hint = " + hint;
+                    ", modifier = " + modifier +
+                    ", hint = " + hint;
             sequoiadb.throwIfError(response, msg);
         }
 
@@ -1791,6 +1854,7 @@ public class DBCollection {
 
     /**
      * Get all of the lobs in current collection.
+     *
      * @return DBCursor of lobs
      * @throws BaseException If error happens.
      */
@@ -1818,6 +1882,7 @@ public class DBCollection {
 
     /**
      * Create a lob.
+     *
      * @return DBLob object
      * @throws BaseException If error happens..
      */
@@ -1827,6 +1892,7 @@ public class DBCollection {
 
     /**
      * Create a lob with a given id.
+     *
      * @param id the lob's id. if id is null, it will be generated in
      *           this function
      * @return DBLob object
@@ -1842,7 +1908,8 @@ public class DBCollection {
 
     /**
      * Open an existing lob with id.
-     * @param id the lob's id.
+     *
+     * @param id   the lob's id.
      * @param mode open mode:
      *             DBLob.SDB_LOB_READ for reading,
      *             DBLob.SDB_LOB_WRITE for writing.
@@ -1863,6 +1930,7 @@ public class DBCollection {
 
     /**
      * Open an existing lob with id.
+     *
      * @param id the lob's id.
      * @return DBLob object
      * @throws BaseException If error happens.
@@ -1873,6 +1941,7 @@ public class DBCollection {
 
     /**
      * Remove an existing lob.
+     *
      * @param lobId the lob's id.
      * @throws BaseException If error happens..
      */
@@ -1889,7 +1958,8 @@ public class DBCollection {
 
     /**
      * Truncate an existing lob.
-     * @param lobId the lob's id.
+     *
+     * @param lobId  the lob's id.
      * @param length the truncate length
      * @throws BaseException If error happens.
      */
@@ -1911,6 +1981,7 @@ public class DBCollection {
 
     /**
      * Truncate the collection.
+     *
      * @throws BaseException If error happens.
      */
     public void truncate() throws BaseException {
@@ -1925,6 +1996,7 @@ public class DBCollection {
 
     /**
      * Pop records from the collection.
+     *
      * @param options the pop option for the operation, including a record LogicalID,
      *                and an optional Direction: 1 for forward pop and -1 for backward
      *                pop

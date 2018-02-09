@@ -20,6 +20,7 @@ import com.sequoiadb.datasource.DatasourceOptions;
 
 /**
  * The options for setting data source.
+ *
  * @deprecated use DatasourceOptions instead
  */
 @Deprecated

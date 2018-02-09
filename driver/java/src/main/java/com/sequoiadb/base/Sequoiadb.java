@@ -61,15 +61,25 @@ public class Sequoiadb implements Closeable {
     private final static String DEFAULT_HOST = "127.0.0.1";
     private final static int DEFAULT_PORT = 11810;
 
-    /** specified the package size of the collections in current collection space to be 4K */
+    /**
+     * specified the package size of the collections in current collection space to be 4K
+     */
     public final static int SDB_PAGESIZE_4K = 4096;
-    /** specified the package size of the collections in current collection space to be 8K */
+    /**
+     * specified the package size of the collections in current collection space to be 8K
+     */
     public final static int SDB_PAGESIZE_8K = 8192;
-    /** specified the package size of the collections in current collection space to be 16K */
+    /**
+     * specified the package size of the collections in current collection space to be 16K
+     */
     public final static int SDB_PAGESIZE_16K = 16384;
-    /** specified the package size of the collections in current collection space to be 32K */
+    /**
+     * specified the package size of the collections in current collection space to be 32K
+     */
     public final static int SDB_PAGESIZE_32K = 32768;
-    /** specified the package size of the collections in current collection space to be 64K */
+    /**
+     * specified the package size of the collections in current collection space to be 64K
+     */
     public final static int SDB_PAGESIZE_64K = 65536;
     /**
      * 0 means using database's default pagesize, it 64k now
@@ -179,6 +189,7 @@ public class Sequoiadb implements Closeable {
 
     /**
      * Initialize the configuration options for client.
+     *
      * @param options the configuration options for client
      */
     public static void initClient(ClientOptions options) {
@@ -188,6 +199,7 @@ public class Sequoiadb implements Closeable {
 
     /**
      * Get address of the remote server.
+     *
      * @return ServerAddress
      * @deprecated Use Sequoiadb.getHost() and Sequoiadb.getPort() instead.
      */
@@ -217,6 +229,7 @@ public class Sequoiadb implements Closeable {
 
     /**
      * Judge the endian of the physical computer
+     *
      * @return Big-Endian is true while Little-Endian is false
      * @deprecated Use getByteOrder() instead.
      */
@@ -243,10 +256,11 @@ public class Sequoiadb implements Closeable {
 
     /**
      * Use server address "127.0.0.1:11810".
+     *
      * @param username the user's name of the account
      * @param password the password of the account
      * @throws BaseException SDB_NETWORK means network error,
-     *                        SDB_INVALIDARG means wrong address or the address don't map to the hosts table.
+     *                       SDB_INVALIDARG means wrong address or the address don't map to the hosts table.
      * @deprecated do not use this Constructor, should provide server address explicitly
      */
     @Deprecated
@@ -262,7 +276,7 @@ public class Sequoiadb implements Closeable {
      *                       SDB_INVALIDARG means wrong address or the address don't map to the hosts table
      */
     public Sequoiadb(String connString, String username, String password)
-        throws BaseException {
+            throws BaseException {
         this(connString, username, password, (ConfigOptions) null);
     }
 
@@ -290,6 +304,7 @@ public class Sequoiadb implements Closeable {
 
     /**
      * Use a random valid address to connect to database.
+     *
      * @param connStrings The array of the coord's address.
      * @param username    The user's name of the account.
      * @param password    The password of the account.
@@ -353,7 +368,7 @@ public class Sequoiadb implements Closeable {
      *                       SDB_INVALIDARG means wrong address or the address don't map to the hosts table.
      */
     public Sequoiadb(String host, int port, String username, String password)
-        throws BaseException {
+            throws BaseException {
         this(host, port, username, password, null);
     }
 
@@ -417,13 +432,13 @@ public class Sequoiadb implements Closeable {
             String[] tmp = connString.split(":");
             if (tmp.length != 2) {
                 throw new BaseException(SDBError.SDB_INVALIDARG,
-                    String.format("Invalid connString: %s", connString));
+                        String.format("Invalid connString: %s", connString));
             }
             host = tmp[0].trim();
             port = Integer.parseInt(tmp[1].trim());
         } else {
             throw new BaseException(SDBError.SDB_INVALIDARG,
-                String.format("Invalid connString: %s", connString));
+                    String.format("Invalid connString: %s", connString));
         }
 
         init(host, port, username, password, options);
@@ -435,7 +450,7 @@ public class Sequoiadb implements Closeable {
 
         try {
             throwIfError(response, "failed to authenticate " + userName);
-        } catch (BaseException e){
+        } catch (BaseException e) {
             close();
             throw e;
         }
@@ -443,9 +458,10 @@ public class Sequoiadb implements Closeable {
 
     /**
      * Create an user in current database.
+     *
      * @param username The connection user name
      * @param password The connection password
-     * @exception BaseException If error happens.
+     * @throws BaseException If error happens.
      */
     public void createUser(String username, String password) throws BaseException {
         if (username == null || username.length() == 0 || password == null) {
@@ -459,9 +475,10 @@ public class Sequoiadb implements Closeable {
 
     /**
      * Remove the specified user from current database.
+     *
      * @param username The connection user name
      * @param password The connection password
-     * @exception BaseException If error happens.
+     * @throws BaseException If error happens.
      */
     public void removeUser(String username, String password) throws BaseException {
         AuthRequest request = new AuthRequest(username, password, AuthRequest.AuthType.DeleteUser);
@@ -471,6 +488,7 @@ public class Sequoiadb implements Closeable {
 
     /**
      * Disconnect from the server.
+     *
      * @throws BaseException If error happens.
      * @deprecated Use close() instead.
      */
@@ -481,6 +499,7 @@ public class Sequoiadb implements Closeable {
 
     /**
      * Release the resource of the connection.
+     *
      * @throws BaseException If error happens.
      * @since 2.2
      */
@@ -492,6 +511,7 @@ public class Sequoiadb implements Closeable {
 
     /**
      * Whether the connection has been closed or not.
+     *
      * @return return true when the connection has been closed
      * @since 2.2
      */
@@ -504,6 +524,7 @@ public class Sequoiadb implements Closeable {
 
     /**
      * Send a test message to database to test whether the connection is valid or not.
+     *
      * @return if the connection is valid, return true
      * @throws BaseException If error happens.
      */
@@ -524,13 +545,14 @@ public class Sequoiadb implements Closeable {
 
     /**
      * Change the connection options.
+     *
      * @param options The connection options
      * @throws BaseException If error happens.
      * @deprecated Create a new Sequoiadb instance instead..
      */
     @Deprecated
     public void changeConnectionOptions(ConfigOptions options)
-        throws BaseException {
+            throws BaseException {
         if (options == null) {
             throw new BaseException(SDBError.SDB_INVALIDARG, "options is null");
         }
@@ -540,17 +562,19 @@ public class Sequoiadb implements Closeable {
 
     /**
      * Create the named collection space with default SDB_PAGESIZE_64K.
+     *
      * @param csName The collection space name
      * @return the newly created collection space object
      * @throws BaseException If error happens.
      */
     public CollectionSpace createCollectionSpace(String csName)
-        throws BaseException {
+            throws BaseException {
         return createCollectionSpace(csName, SDB_PAGESIZE_DEFAULT);
     }
 
     /**
      * Create collection space.
+     *
      * @param csName   The name of collection space
      * @param pageSize The Page Size as below:
      *                 <ul>
@@ -565,7 +589,7 @@ public class Sequoiadb implements Closeable {
      * @throws BaseException If error happens.
      */
     public CollectionSpace createCollectionSpace(String csName, int pageSize)
-        throws BaseException {
+            throws BaseException {
         BSONObject options = new BasicBSONObject();
         options.put("PageSize", pageSize);
         return createCollectionSpace(csName, options);
@@ -573,6 +597,7 @@ public class Sequoiadb implements Closeable {
 
     /**
      * Create collection space.
+     *
      * @param csName  The name of collection space
      * @param options Contains configuration information for create collection space. The options are as below:
      *                <ul>
@@ -583,7 +608,7 @@ public class Sequoiadb implements Closeable {
      * @throws BaseException If error happens.
      */
     public CollectionSpace createCollectionSpace(String csName, BSONObject options)
-        throws BaseException {
+            throws BaseException {
         if (csName == null || csName.length() == 0) {
             throw new BaseException(SDBError.SDB_INVALIDARG, csName);
         }
@@ -606,6 +631,7 @@ public class Sequoiadb implements Closeable {
 
     /**
      * Remove the named collection space.
+     *
      * @param csName The collection space name
      * @throws BaseException If error happens.
      */
@@ -624,7 +650,7 @@ public class Sequoiadb implements Closeable {
     }
 
     /**
-     * @param csName The collection space name
+     * @param csName  The collection space name
      * @param options The control options:(Only take effect in coordinate nodes, can be null)
      *                <ul>
      *                <li>GroupID:int</li>
@@ -658,7 +684,7 @@ public class Sequoiadb implements Closeable {
     }
 
     /**
-     * @param csName The collection space name
+     * @param csName  The collection space name
      * @param options The control options:(Only take effect in coordinate nodes, can be null)
      *                <ul>
      *                <li>GroupID:int</li>
@@ -721,6 +747,7 @@ public class Sequoiadb implements Closeable {
 
     /**
      * Sync the database to disk.
+     *
      * @param options The control options:(can be null)
      *                <ul>
      *                <li>
@@ -761,6 +788,7 @@ public class Sequoiadb implements Closeable {
 
     /**
      * Sync the whole database to disk.
+     *
      * @throws BaseException If error happens.
      * @since 2.8
      */
@@ -770,33 +798,34 @@ public class Sequoiadb implements Closeable {
 
     /**
      * Analyze collection or index to collect statistics information
+     *
      * @param options The control options:(can be null)
-     *      <ul>
-     *          <li>
-     *              CollectionSpace: (String) Specify the collection space to be analyzed.
-     *          </li>
-     *          <li>
-     *              Collection: (String) Specify the collection to be analyzed.
-     *          </li>
-     *          <li>
-     *              Index: (String) Specify the index to be analyzed.
-     *          </li>
-     *          <li>
-     *              Mode: (Int32) Specify the analyze mode (default is 1):
-     *              <ul>
-     *                  <li>Mode 1 will analyze with data samples.</li>
-     *                  <li>Mode 2 will analyze with full data.</li>
-     *                  <li>Mode 3 will generate default statistics.</li>
-     *                  <li>Mode 4 will reload statistics into memory cache.</li>
-     *                  <li>Mode 5 will clear statistics from memory cache.</li>
-     *              </ul>
-     *          </li>
-     *          <li>
-     *              Other options: Some of other options are as below:(only take effect in coordinate nodes,
-     *              please visit the official website to search "analyze" or "Location Elements" for more detail.)
-     *              GroupID:int, GroupName:String, NodeID:int, HostName:String, svcname:String, ...
-     *          </li>
-     *      </ul>
+     *                <ul>
+     *                <li>
+     *                CollectionSpace: (String) Specify the collection space to be analyzed.
+     *                </li>
+     *                <li>
+     *                Collection: (String) Specify the collection to be analyzed.
+     *                </li>
+     *                <li>
+     *                Index: (String) Specify the index to be analyzed.
+     *                </li>
+     *                <li>
+     *                Mode: (Int32) Specify the analyze mode (default is 1):
+     *                <ul>
+     *                <li>Mode 1 will analyze with data samples.</li>
+     *                <li>Mode 2 will analyze with full data.</li>
+     *                <li>Mode 3 will generate default statistics.</li>
+     *                <li>Mode 4 will reload statistics into memory cache.</li>
+     *                <li>Mode 5 will clear statistics from memory cache.</li>
+     *                </ul>
+     *                </li>
+     *                <li>
+     *                Other options: Some of other options are as below:(only take effect in coordinate nodes,
+     *                please visit the official website to search "analyze" or "Location Elements" for more detail.)
+     *                GroupID:int, GroupName:String, NodeID:int, HostName:String, svcname:String, ...
+     *                </li>
+     *                </ul>
      * @throws BaseException If error happens.
      * @since 2.9
      */
@@ -808,6 +837,7 @@ public class Sequoiadb implements Closeable {
 
     /**
      * Analyze all collections and indexes to collect statistics information
+     *
      * @throws BaseException If error happens.
      * @since 2.9
      */
@@ -818,12 +848,13 @@ public class Sequoiadb implements Closeable {
     /**
      * Get the named collection space.
      * If the collection space not exit, throw BaseException with errcode SDB_DMS_CS_NOTEXIST.
+     *
      * @param csName The collection space name.
      * @return The collection space object.
      * @throws BaseException If error happens.
      */
     public CollectionSpace getCollectionSpace(String csName)
-        throws BaseException {
+            throws BaseException {
         // get cs object from cache
         if (fetchCache(csName)) {
             return new CollectionSpace(this, csName);
@@ -840,6 +871,7 @@ public class Sequoiadb implements Closeable {
 
     /**
      * Verify the existence of collection space.
+     *
      * @param csName The collection space name.
      * @return True if existed or false if not existed.
      * @throws BaseException If error happens.
@@ -866,6 +898,7 @@ public class Sequoiadb implements Closeable {
 
     /**
      * Get all the collection spaces.
+     *
      * @return Cursor of all collection space names.
      * @throws BaseException If error happens.
      */
@@ -875,6 +908,7 @@ public class Sequoiadb implements Closeable {
 
     /**
      * Get all the collection space names.
+     *
      * @return A list of all collection space names
      * @throws BaseException If error happens.
      */
@@ -892,6 +926,7 @@ public class Sequoiadb implements Closeable {
 
     /**
      * Get all the collections.
+     *
      * @return Cursor of all collections
      * @throws BaseException If error happens.
      */
@@ -901,6 +936,7 @@ public class Sequoiadb implements Closeable {
 
     /**
      * Get all the collection names.
+     *
      * @return A list of all collection names
      * @throws BaseException If error happens.
      */
@@ -918,6 +954,7 @@ public class Sequoiadb implements Closeable {
 
     /**
      * Get all the storage units.
+     *
      * @return A list of all storage units
      * @throws BaseException If error happens.
      */
@@ -932,6 +969,7 @@ public class Sequoiadb implements Closeable {
 
     /**
      * Reset the snapshot.
+     *
      * @throws BaseException If error happens.
      */
     public void resetSnapshot() throws BaseException {
@@ -939,37 +977,38 @@ public class Sequoiadb implements Closeable {
         SdbReply response = requestAndResponse(request);
         throwIfError(response);
     }
-    
+
     /**
      * Reset the snapshot.
+     *
      * @param options The control options:(can be null)
-     *      <ul>
-     *          <li>
-     *              Type: (String) Specify the snapshot type to be reset (default is "all"):
-     *              <ul>
-     *                  <li>"sessions"</li>
-     *                  <li>"sessions current"</li>
-     *                  <li>"database"</li>
-     *                  <li>"health"</li>
-     *                  <li>"all"</li>
-     *              </ul>
-     *          </li>
-     *          <li>
-     *              SessionID: (Int32) Specify the session ID to be reset.
-     *          </li>
-     *          <li>
-     *              Other options: Some of other options are as below:(please visit the official website to 
-     *              search "Location Elements" for more detail.)
-     *              <ul>
-     *                  <li>GroupID:int,</li>
-     *                  <li>GroupName:String,</li>
-     *                  <li>NodeID:int,</li>
-     *                  <li>HostName:String,</li>
-     *                  <li>svcname:String,</li>
-     *                  <li>...</li>
-     *              </ul>
-     *          </li>
-     *      </ul>
+     *                <ul>
+     *                <li>
+     *                Type: (String) Specify the snapshot type to be reset (default is "all"):
+     *                <ul>
+     *                <li>"sessions"</li>
+     *                <li>"sessions current"</li>
+     *                <li>"database"</li>
+     *                <li>"health"</li>
+     *                <li>"all"</li>
+     *                </ul>
+     *                </li>
+     *                <li>
+     *                SessionID: (Int32) Specify the session ID to be reset.
+     *                </li>
+     *                <li>
+     *                Other options: Some of other options are as below:(please visit the official website to
+     *                search "Location Elements" for more detail.)
+     *                <ul>
+     *                <li>GroupID:int,</li>
+     *                <li>GroupName:String,</li>
+     *                <li>NodeID:int,</li>
+     *                <li>HostName:String,</li>
+     *                <li>svcname:String,</li>
+     *                <li>...</li>
+     *                </ul>
+     *                </li>
+     *                </ul>
      * @throws BaseException If error happens.
      */
     public void resetSnapshot(BSONObject options) throws BaseException {
@@ -980,6 +1019,7 @@ public class Sequoiadb implements Closeable {
 
     /**
      * Get the information of specified type.
+     *
      * @param listType The list type as below:
      *                 <dl>
      *                 <dt>Sequoiadb.SDB_LIST_CONTEXTS             : Get all contexts list
@@ -1012,8 +1052,8 @@ public class Sequoiadb implements Closeable {
                 return null;
             } else {
                 String msg = "query = " + query +
-                    ", selector = " + selector +
-                    ", orderBy = " + orderBy;
+                        ", selector = " + selector +
+                        ", orderBy = " + orderBy;
                 throwIfError(response, msg);
             }
         }
@@ -1023,6 +1063,7 @@ public class Sequoiadb implements Closeable {
 
     /**
      * Flush the options to configuration file.
+     *
      * @param options The param of flush, pass {"Global":true} or {"Global":false}
      *                In cluster environment, passing {"Global":true} will flush data's and catalog's configuration file,
      *                while passing {"Global":false} will flush coord's configuration file
@@ -1037,6 +1078,7 @@ public class Sequoiadb implements Closeable {
 
     /**
      * Execute sql in database.
+     *
      * @param sql the SQL command.
      * @throws BaseException If error happens.
      */
@@ -1048,6 +1090,7 @@ public class Sequoiadb implements Closeable {
 
     /**
      * Execute sql in database.
+     *
      * @param sql the SQL command
      * @return the DBCursor of the result
      * @throws BaseException If error happens.
@@ -1070,6 +1113,7 @@ public class Sequoiadb implements Closeable {
 
     /**
      * Get snapshot of the database.
+     *
      * @param snapType The snapshot types are as below:
      *                 <dl>
      *                 <dt>Sequoiadb.SDB_SNAP_CONTEXTS             : Get all contexts' snapshot
@@ -1112,6 +1156,7 @@ public class Sequoiadb implements Closeable {
 
     /**
      * Get snapshot of the database.
+     *
      * @param snapType The snapshot types are as below:
      *                 <dl>
      *                 <dt>Sequoiadb.SDB_SNAP_CONTEXTS             : Get all contexts' snapshot
@@ -1147,8 +1192,8 @@ public class Sequoiadb implements Closeable {
                 return null;
             } else {
                 String msg = "matcher = " + matcher +
-                    ", selector = " + selector +
-                    ", orderBy = " + orderBy;
+                        ", selector = " + selector +
+                        ", orderBy = " + orderBy;
                 throwIfError(response, msg);
             }
         }
@@ -1191,6 +1236,7 @@ public class Sequoiadb implements Closeable {
 
     /**
      * Begin the transaction.
+     *
      * @throws BaseException If error happens.
      */
     public void beginTransaction() throws BaseException {
@@ -1201,6 +1247,7 @@ public class Sequoiadb implements Closeable {
 
     /**
      * Commit the transaction.
+     *
      * @throws BaseException If error happens.
      */
     public void commit() throws BaseException {
@@ -1211,6 +1258,7 @@ public class Sequoiadb implements Closeable {
 
     /**
      * Rollback the transaction.
+     *
      * @throws BaseException If error happens.
      */
     public void rollback() throws BaseException {
@@ -1221,6 +1269,7 @@ public class Sequoiadb implements Closeable {
 
     /**
      * Create a storage procedure.
+     *
      * @param code The code of storage procedure
      * @throws BaseException If error happens.
      */
@@ -1241,6 +1290,7 @@ public class Sequoiadb implements Closeable {
 
     /**
      * Remove a store procedure.
+     *
      * @param name The name of store procedure to be removed
      * @throws BaseException If error happens.
      */
@@ -1259,6 +1309,7 @@ public class Sequoiadb implements Closeable {
 
     /**
      * List the storage procedures.
+     *
      * @param condition The condition of list eg: {"name":"sum"}. return all if null
      * @throws BaseException If error happens.
      */
@@ -1268,6 +1319,7 @@ public class Sequoiadb implements Closeable {
 
     /**
      * Eval javascript code.
+     *
      * @param code The javascript code
      * @return The result of the eval operation, including the return value type,
      * the return data and the error message. If succeed to eval, error message is null,
@@ -1313,6 +1365,7 @@ public class Sequoiadb implements Closeable {
 
     /**
      * Backup the whole database or specified replica group.
+     *
      * @param options Contains a series of backup configuration infomations.
      *                Backup the whole cluster if null. The "options" contains 5 options as below.
      *                All the elements in options are optional.
@@ -1344,6 +1397,7 @@ public class Sequoiadb implements Closeable {
 
     /**
      * List the backups.
+     *
      * @param options  Contains configuration information for listing backups, list all the backups in the default backup path if null.
      *                 The "options" contains several options as below. All the elements in options are optional.
      *                 eg: {"GroupName":["rgName1", "rgName2"], "Path":"/opt/sequoiadb/backup", "Name":"backupName"}
@@ -1373,9 +1427,9 @@ public class Sequoiadb implements Closeable {
                 return null;
             } else {
                 String msg = "matcher = " + matcher +
-                    ", selector = " + selector +
-                    ", orderBy = " + orderBy +
-                    ", options = " + options;
+                        ", selector = " + selector +
+                        ", orderBy = " + orderBy +
+                        ", options = " + options;
                 throwIfError(response, msg);
             }
         }
@@ -1386,18 +1440,19 @@ public class Sequoiadb implements Closeable {
 
     /**
      * Remove the backups.
+     *
      * @param options Contains configuration information for removing backups, remove all the backups in the default backup path if null.
      *                The "options" contains several options as below. All the elements in options are optional.
      *                eg: {"GroupName":["rgName1", "rgName2"], "Path":"/opt/sequoiadb/backup", "Name":"backupName"}
-     *                 <ul>
-     *                 <li>GroupID     : Specified the group id of the backups, default to list all the backups of all the groups.
-     *                 <li>GroupName   : Specified the group name of the backups, default to list all the backups of all the groups.
-     *                 <li>Path        : Specified the path of the backups, default to use the backup path asigned in the configuration file.
-     *                 <li>Name        : Specified the name of backup, default to list all the backups.
-     *                 <li>IsSubDir    : Specified the "Path" is a subdirectory of the backup path assigned in the configuration file or not, default to be false.
-     *                 <li>Prefix      : Specified the prefix name of the backups, support for using wildcards("%g","%G","%h","%H","%s","%s"),such as: Prefix:"%g_bk_", default to not using wildcards.
-     *                 <li>Detail      : Display the detail of the backups or not, default to be false.
-     *                 </ul>
+     *                <ul>
+     *                <li>GroupID     : Specified the group id of the backups, default to list all the backups of all the groups.
+     *                <li>GroupName   : Specified the group name of the backups, default to list all the backups of all the groups.
+     *                <li>Path        : Specified the path of the backups, default to use the backup path asigned in the configuration file.
+     *                <li>Name        : Specified the name of backup, default to list all the backups.
+     *                <li>IsSubDir    : Specified the "Path" is a subdirectory of the backup path assigned in the configuration file or not, default to be false.
+     *                <li>Prefix      : Specified the prefix name of the backups, support for using wildcards("%g","%G","%h","%H","%s","%s"),such as: Prefix:"%g_bk_", default to not using wildcards.
+     *                <li>Detail      : Display the detail of the backups or not, default to be false.
+     *                </ul>
      * @throws BaseException If error happens.
      */
     public void removeBackup(BSONObject options) throws BaseException {
@@ -1408,6 +1463,7 @@ public class Sequoiadb implements Closeable {
 
     /**
      * List the tasks.
+     *
      * @param matcher  The matching rule, return all the documents if null
      * @param selector The selective rule, return the whole document if null
      * @param orderBy  The ordered rule, never sort if null
@@ -1424,6 +1480,7 @@ public class Sequoiadb implements Closeable {
 
     /**
      * Wait the tasks to finish.
+     *
      * @param taskIDs The array of task id
      * @throws BaseException If error happens.
      */
@@ -1449,6 +1506,7 @@ public class Sequoiadb implements Closeable {
 
     /**
      * Cancel the specified task.
+     *
      * @param taskID  The task id
      * @param isAsync The operation "cancel task" is async or not,
      *                "true" for async, "false" for sync. Default sync.
@@ -1469,40 +1527,38 @@ public class Sequoiadb implements Closeable {
         throwIfError(response);
     }
 
-    private void clearSessionAttrCache()
-    {
+    private void clearSessionAttrCache() {
         attributeCache = null;
     }
 
-    private BSONObject getSessionAttrCache()
-    {
+    private BSONObject getSessionAttrCache() {
         return attributeCache;
     }
 
-    private void setSessionAttrCache( BSONObject attribute )
-    {
+    private void setSessionAttrCache(BSONObject attribute) {
         attributeCache = attribute;
     }
 
     /**
      * Set the attributes of the current session.
+     *
      * @param options The configuration options for the current session.The options are as below:
      *                <ul>
      *                <li>PreferedInstance : Preferred instance for read request in the current session. Could be single value in "M", "m", "S", "s", "A", "a", 1-255, or BSON Array to include multiple values. e.g. { "PreferedInstance" : [ 1, 7 ] }.
-     *                    <ul>
-     *                        <li>"M", "m": read and write instance( master instance ). If multiple numeric instances are given with "M", matched master instance will be chosen in higher priority. If multiple numeric instances are given with "M" or "m", master instance will be chosen if no numeric instance is matched.</li>
-     *                        <li>"S", "s": read only instance( slave instance ). If multiple numeric instances are given with "S", matched slave instances will be chosen in higher priority. If multiple numeric instances are given with "S" or "s", slave instance will be chosen if no numeric instance is matched.</li>
-     *                        <li>"A", "a": any instance.</li>
-     *                        <li>1-255: the instance with specified instance ID.</li>
-     *                        <li>If multiple alphabet instances are given, only first one will be used.</li>
-     *                        <li>If matched instance is not found, will choose instance by random.</li>
-     *                    </ul>
+     *                <ul>
+     *                <li>"M", "m": read and write instance( master instance ). If multiple numeric instances are given with "M", matched master instance will be chosen in higher priority. If multiple numeric instances are given with "M" or "m", master instance will be chosen if no numeric instance is matched.</li>
+     *                <li>"S", "s": read only instance( slave instance ). If multiple numeric instances are given with "S", matched slave instances will be chosen in higher priority. If multiple numeric instances are given with "S" or "s", slave instance will be chosen if no numeric instance is matched.</li>
+     *                <li>"A", "a": any instance.</li>
+     *                <li>1-255: the instance with specified instance ID.</li>
+     *                <li>If multiple alphabet instances are given, only first one will be used.</li>
+     *                <li>If matched instance is not found, will choose instance by random.</li>
+     *                </ul>
      *                </li>
      *                <li>PreferedInstanceMode : The mode to choose query instance when multiple preferred instances are found in the current session. e.g. { "PreferedInstanceMode : "random" }.
-     *                    <ul>
-     *                        <li>"random": choose the instance from matched instances by random.</li>
-     *                        <li>"ordered": choose the instance from matched instances by the order of "PreferedInstance".</li>
-     *                    </ul>
+     *                <ul>
+     *                <li>"random": choose the instance from matched instances by random.</li>
+     *                <li>"ordered": choose the instance from matched instances by the order of "PreferedInstance".</li>
+     *                </ul>
      *                </li>
      *                <li>Timeout : The timeout (in ms) for operations in the current session. -1 means no timeout for operations. e.g. { "Timeout" : 10000 }.
      *                </li>
@@ -1518,8 +1574,7 @@ public class Sequoiadb implements Closeable {
 
         newObj.putAll(options);
 
-        if (options.containsField(SdbConstants.FIELD_NAME_PREFERED_INSTANCE))
-        {
+        if (options.containsField(SdbConstants.FIELD_NAME_PREFERED_INSTANCE)) {
             // Add old version of preferred instance
             Object value = options.get(SdbConstants.FIELD_NAME_PREFERED_INSTANCE);
             if (value instanceof String) {
@@ -1550,34 +1605,28 @@ public class Sequoiadb implements Closeable {
 
     /**
      * Get the attributes of the current session.
+     *
      * @return the BSONObject of the session attribute.
      * @throws BaseException If error happens.
      * @since 2.8.5
      */
     public BSONObject getSessionAttr() throws BaseException {
         BSONObject result = getSessionAttrCache();
-        if (null != result)
-        {
+        if (null != result) {
             return result;
         }
         AdminRequest request = new AdminRequest(AdminCommand.GET_SESSION_ATTRIBUTE);
         SdbReply response = requestAndResponse(request);
         throwIfError(response);
         ResultSet resultSet = response.getResultSet();
-        if (null != resultSet && resultSet.hasNext())
-        {
-            result=resultSet.getNext();
-            if ( null == result )
-            {
+        if (null != resultSet && resultSet.hasNext()) {
+            result = resultSet.getNext();
+            if (null == result) {
                 clearSessionAttrCache();
-            }
-            else
-            {
+            } else {
                 setSessionAttrCache(result);
             }
-        }
-        else
-        {
+        } else {
             clearSessionAttrCache();
         }
         return result;
@@ -1586,6 +1635,7 @@ public class Sequoiadb implements Closeable {
     /**
      * Close all the cursors created in current connection, we can't use those cursors to get
      * data again.
+     *
      * @throws BaseException If error happens.
      */
     public void closeAllCursors() throws BaseException {
@@ -1598,6 +1648,7 @@ public class Sequoiadb implements Closeable {
 
     /**
      * List all the replica group.
+     *
      * @return cursor of all collection space names
      * @throws BaseException If error happens.
      */
@@ -1607,6 +1658,7 @@ public class Sequoiadb implements Closeable {
 
     /**
      * Verify the existence of domain.
+     *
      * @param domainName the name of domain
      * @return True if existed or False if not existed
      * @throws BaseException If error happens.
@@ -1625,6 +1677,7 @@ public class Sequoiadb implements Closeable {
 
     /**
      * Create a domain.
+     *
      * @param domainName The name of the creating domain
      * @param options    The options for the domain. The options are as below:
      *                   <ul>
@@ -1660,6 +1713,7 @@ public class Sequoiadb implements Closeable {
 
     /**
      * Drop a domain.
+     *
      * @param domainName the name of the domain
      * @throws BaseException If error happens.
      */
@@ -1678,6 +1732,7 @@ public class Sequoiadb implements Closeable {
 
     /**
      * Get the specified domain.
+     *
      * @param domainName the name of the domain
      * @return the Domain instance
      * @throws BaseException If the domain not exit, throw BaseException with the error SDB_CAT_DOMAIN_NOT_EXIST.
@@ -1692,6 +1747,7 @@ public class Sequoiadb implements Closeable {
 
     /**
      * List domains.
+     *
      * @param matcher  the matching rule, return all the documents if null
      * @param selector the selective rule, return the whole document if null
      * @param orderBy  the ordered rule, never sort if null
@@ -1708,6 +1764,7 @@ public class Sequoiadb implements Closeable {
 
     /**
      * Get all the replica groups' name.
+     *
      * @return A list of all the replica groups' names.
      * @throws BaseException If error happens.
      */
@@ -1725,6 +1782,7 @@ public class Sequoiadb implements Closeable {
 
     /**
      * Get the information of the replica groups.
+     *
      * @return A list of information of the replica groups.
      * @throws BaseException If error happens.
      */
@@ -1742,7 +1800,7 @@ public class Sequoiadb implements Closeable {
 
     /**
      * whether the replica group exists in the database or not
-     * 
+     *
      * @param rgName replica group's name
      * @return true or false
      */
@@ -1772,12 +1830,13 @@ public class Sequoiadb implements Closeable {
 
     /**
      * Get replica group by name.
+     *
      * @param rgName replica group's name
      * @return A replica group object or null for not exit.
      * @throws BaseException If error happens.
      */
     public ReplicaGroup getReplicaGroup(String rgName)
-        throws BaseException {
+            throws BaseException {
         BSONObject rg = getDetailByName(rgName);
         if (rg == null) {
             throw new BaseException(SDBError.SDB_CLS_GRP_NOT_EXIST,
@@ -1788,6 +1847,7 @@ public class Sequoiadb implements Closeable {
 
     /**
      * Get replica group by id.
+     *
      * @param rgId replica group id
      * @return A replica group object or null for not exit.
      * @throws BaseException If error happens.
@@ -1803,6 +1863,7 @@ public class Sequoiadb implements Closeable {
 
     /**
      * Create replica group by name.
+     *
      * @param rgName replica group's name
      * @return A replica group object.
      * @throws BaseException If error happens.
@@ -1819,6 +1880,7 @@ public class Sequoiadb implements Closeable {
 
     /**
      * Remove replica group by name.
+     *
      * @param rgName replica group's name
      * @throws BaseException If error happens.
      */
@@ -1837,6 +1899,7 @@ public class Sequoiadb implements Closeable {
 
     /**
      * Active replica group by name.
+     *
      * @param rgName replica group name
      * @throws BaseException If error happens.
      */
@@ -1851,43 +1914,45 @@ public class Sequoiadb implements Closeable {
 
     /**
      * Create the replica Catalog group with the given options.
-     * @param hostName  The host name
-     * @param port      The port
-     * @param dbPath    The database path
-     * @param options The configure options
+     *
+     * @param hostName The host name
+     * @param port     The port
+     * @param dbPath   The database path
+     * @param options  The configure options
      * @throws BaseException If error happens.
      */
-    public void createReplicaCataGroup(String hostName, int port, String dbPath, 
-    		BSONObject options) {
-    		BSONObject obj = new BasicBSONObject();
-    		obj.put(SdbConstants.FIELD_NAME_HOST, hostName);
-    		obj.put(SdbConstants.PMD_OPTION_SVCNAME, Integer.toString(port));
-    		obj.put(SdbConstants.PMD_OPTION_DBPATH, dbPath);
-    		if (options != null) {
-    			for (String key : options.keySet()) {
-    				if (key.equals(SdbConstants.FIELD_NAME_HOST)
-    						|| key.equals(SdbConstants.PMD_OPTION_SVCNAME)
-    						|| key.equals(SdbConstants.PMD_OPTION_DBPATH)) {
-    					continue;
-    				}
-    				obj.put(key, options.get(key));
-    			}
-    		}
+    public void createReplicaCataGroup(String hostName, int port, String dbPath,
+                                       BSONObject options) {
+        BSONObject obj = new BasicBSONObject();
+        obj.put(SdbConstants.FIELD_NAME_HOST, hostName);
+        obj.put(SdbConstants.PMD_OPTION_SVCNAME, Integer.toString(port));
+        obj.put(SdbConstants.PMD_OPTION_DBPATH, dbPath);
+        if (options != null) {
+            for (String key : options.keySet()) {
+                if (key.equals(SdbConstants.FIELD_NAME_HOST)
+                        || key.equals(SdbConstants.PMD_OPTION_SVCNAME)
+                        || key.equals(SdbConstants.PMD_OPTION_DBPATH)) {
+                    continue;
+                }
+                obj.put(key, options.get(key));
+            }
+        }
 
-    		AdminRequest request = new AdminRequest(AdminCommand.CREATE_CATALOG_GROUP, obj);
-    		SdbReply response = requestAndResponse(request);
-    		throwIfError(response);
+        AdminRequest request = new AdminRequest(AdminCommand.CREATE_CATALOG_GROUP, obj);
+        SdbReply response = requestAndResponse(request);
+        throwIfError(response);
     }
-    
+
     /**
      * Create the replica Catalog group with the given options.
+     *
      * @param hostName  The host name
      * @param port      The port
      * @param dbPath    The database path
      * @param configure The configure options
      * @throws BaseException If error happens.
      * @deprecated Use "void createReplicaCataGroup(String hostName, int port, String dbPath,
-    		final BSONObject options)" instead.
+     * final BSONObject options)" instead.
      */
     public void createReplicaCataGroup(String hostName, int port,
                                        String dbPath, Map<String, String> configure) {
@@ -1989,7 +2054,7 @@ public class Sequoiadb implements Closeable {
     private void validateResponse(SdbRequest request, SdbResponse response) {
         if ((request.opCode() | MsgOpCode.RESP_MASK) != response.opCode()) {
             throw new BaseException(SDBError.SDB_UNKNOWN_MESSAGE,
-                ("request=" + request.opCode() + " response=" + response.opCode()));
+                    ("request=" + request.opCode() + " response=" + response.opCode()));
         }
     }
 
@@ -2112,6 +2177,7 @@ public class Sequoiadb implements Closeable {
 
     /**
      * Close the connection.
+     *
      * @throws BaseException If error happens.
      */
     @Override
