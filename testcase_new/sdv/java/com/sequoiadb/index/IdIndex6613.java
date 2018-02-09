@@ -156,10 +156,9 @@ public class IdIndex6613 extends SdbTestBase {
 		}
 	}
 	
-	private void insertData(DBCollection cl, int beginNo ,int endNo) {    	
-		for ( int i = beginNo; i < endNo; i+=5000){
-			List<BSONObject>list = new ArrayList<BSONObject>();	
-			for (int j = i + 0; j < i + 5000; j++) {				
+	private void insertData(DBCollection cl, int beginNo ,int endNo) { 
+		List<BSONObject>list = new ArrayList<BSONObject>();	
+		for ( int i = beginNo; i < endNo; i++){								
 				BSONObject obj = new BasicBSONObject();
 				obj.put("a", i);
 				obj.put("b", i);
@@ -174,9 +173,8 @@ public class IdIndex6613 extends SdbTestBase {
 				Date now = new Date();
 				obj.put("date",now);					
 				list.add(obj);					
-			}
-			cl.insert(list);			
-		}		
+		}	
+		cl.insert(list);
 	}	
 	
 
