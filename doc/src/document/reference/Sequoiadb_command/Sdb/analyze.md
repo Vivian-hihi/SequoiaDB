@@ -17,8 +17,8 @@
  | CollectionSpace | 指定需要分析的集合名称，字符串类型。默认值为空。 | 不能与Collection同时使用 |  CollectionSpace:"foo" |
  | Collection | 指定需要分析的集合名称，字符串类型。默认值为空。 | 不能与CollecitonSpace同时使用<br/>必须是Collection的全名 |  Collection:"foo.bar" |
  | Index | 指定需要分析的索引名称，字符串类型。默认值为空。 | 如果指定该参数，需要指定Collection参数 | Index:"index" |
- | SampleNum | 指定抽样的数据个数，整数类型，( 100 - 10000 )，默认值为 200 | 不能与SamplePercent同时使用 | SampleNum:1000 |
- | SamplePercent | 指定抽样的比例，浮点数类型，( 0.0 - 100.0 ) | 不能与SampleNum同时使用 | SamplePercent:50 |
+ | SampleNum | 指定抽样的数据个数，整数类型，范围为 100 - 10000 ，默认值为 200 | 不能与SamplePercent同时使用 | SampleNum:1000 |
+ | SamplePercent | 指定抽样的比例，浮点数类型，范围为：0.0 - 100.0 | 不能与SampleNum同时使用<br>集合数据个数和比例的乘积为抽样的数据个数，自动调整在 100 - 10000 之间（小于 100 调整为 100，大于 10000 调整为 10000）<br>缺省则不使用 SamplePercent，而选取 SampleNum 的默认值 200 | SamplePercent:50 |
  | Location Elements | 命令位置参数项，详细见 **[命令位置参数](reference/Sequoiadb_command/Overview/location.md)** | | GroupName:"db1" |
 
 2. **统计信息**

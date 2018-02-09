@@ -21,6 +21,9 @@
 | SysCPU      | 浮点型    | 访问计划内核态 CPU 使用时间（单位：秒） |
 | PlanPath    | BSON 对象 | 访问计划的具体执行操作 [MERGE](database_management/access_plans/detailed_access_plan/MERGE.md) |
 
+>   **Note:**
+>   [MERGE](database_management/access_plans/detailed_access_plan/MERGE.md) 中包含 [子表的访问计划](database_management/access_plans/detailed_access_plan/collection_plan.md)，即数据节点上的普通集合的访问计划
+
 **示例**
 
 ```

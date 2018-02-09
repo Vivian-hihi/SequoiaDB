@@ -28,7 +28,10 @@
 | MatchConfig.Parameterized | 布尔型    | 访问计划的匹配符是否支持参数化          |
 | MatchConfig.FuzzyOptr     | 布尔型    | 访问计划的匹配符是否支持模糊匹配        |
 | PlanPath                  | BSON 对象 | 访问计划的具体执行操作 [SORT](database_management/access_plans/detailed_access_plan/SORT.md)、[TBSCAN](database_management/access_plans/detailed_access_plan/TBSCAN.md) 或 [IXSCAN](database_management/access_plans/detailed_access_plan/IXSCAN.md) |
-| Search                    | BSON 对象 | 查询计划优化器搜索过的访问计划<br>Search 选项为 true 时显示 |
+| Search                    | BSON 对象 | 查询计划优化器搜索过的访问计划<br>Search 选项为 true 时显示<br>请参考 [基于代价的访问计划评估](database_management/access_plans/search_paths/overview.md) |
+
+>   **Note:**
+>   数据节点上的主表的访问计划请参考 [主表的访问计划](database_management/access_plans/detailed_access_plan/main_collection_plan.md)
 
 **示例**
 

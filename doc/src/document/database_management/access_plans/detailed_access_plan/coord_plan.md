@@ -15,11 +15,12 @@
 | Flag        | 整型      | 访问计划中指定的执行标志，默认值为 0    |
 | ReturnNum   | 长整型    | 访问计划返回记录的个数                  |
 | ElapsedTime | 浮点型    | 访问计划查询耗时（单位：秒）            |
-| IndexRead   | 长整型    | 访问计划扫描索引记录的个数              |
-| DataRead    | 长整型    | 访问计划扫描数据记录的个数              |
 | UserCPU     | 浮点型    | 访问计划用户态 CPU 使用时间（单位：秒） |
 | SysCPU      | 浮点型    | 访问计划内核态 CPU 使用时间（单位：秒） |
 | PlanPath    | BSON 对象 | 访问计划的具体执行操作 [COORD-MERGE](database_management/access_plans/detailed_access_plan/COORD_MERGE.md) |
+
+>   **Note:**
+>   [COORD-MERGE](database_management/access_plans/detailed_access_plan/COORD_MERGE.md) 中可能包含 [主表的访问计划](database_management/access_plans/detailed_access_plan/main_collection_plan.md) 或者 [数据节点的访问计划](database_management/access_plans/detailed_access_plan/collection_plan.md)
 
 **示例**
 
@@ -42,8 +43,6 @@
   "Flag": 0,
   "ReturnNum": 10,
   "ElapsedTime": 0.050839,
-  "IndexRead": 0,
-  "DataRead": 0,
   "UserCPU": 0,
   "SysCPU": 0,
   "PlanPath": {

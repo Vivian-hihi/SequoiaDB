@@ -1,6 +1,6 @@
 使用 [SdbQuery.explain\(\)](reference/Sequoiadb_command/SdbQuery/explain.md) 可以查看访问计划的搜索过程的信息。
 
-当 SdbQuery.explain() 的 Search 选项为 true 时，将展示以下信息（Evaluate 选项为 true 时显示 Constants 和 Inputs 字段）：
+当 SdbQuery.explain() 的 Search 选项为 true 时，将展示以下信息（Evaluate 选项为 true 时显示 Constants 和 Input 字段）：
 
 | 字段名                         | 类型      | 描述                                                                                 |
 | ------------------------------ | --------- | ------------------------------------------------------------------------------------ |
@@ -18,13 +18,13 @@
 | Options                        | BSON      | 生成访问计划使用的配置项，即 SequoiaDB 的配置                                        |
 | Options.optcostthreshold       | 整型      | SequoiaDB 的 --optcostthreshold 选项，查询优化器忽略 IO 影响的最小的页数<br>数据页数大于阈值时，估算访问计划代价时需要计算 IO 的代价<br>默认值为 20，0 表示一直需要计算 IO 代价，-1 表示从不计算代价 |
 | Options.sortbuf                | 整型      | SequoiaDB 的 --sortbuf 选项<br>排序缓存大小（单位：MB），默认值为 256 ，最小值为 128 |
-| Inputs                         | BSON 对象 | 生成访问计划使用的输入项，集合的统计信息<br>Evaluate 选项为 true 时显示              |
-| Inputs.Pages                   | 整型      | 集合的数据页个数                                                                     |
-| Inputs.Records                 | 长整型    | 集合的数据个数                                                                       |
-| Inputs.RecordSize              | 整型      | 集合的数据平均长度                                                                   |
-| Inputs.NeedEvalIO              | 布尔型    | 根据 Input.Pages 和 Options.optcostthreshold 判断是否需要计算 IO 代价                |
-| Inputs.CLEstFromStat           | 布尔型    | 是否使用集合的统计信息进行估算                                                       |
-| Inputs.CLStatTime              | 时间戳    | 使用的集合的统计信息的生成时间                                                       |
+| Input                          | BSON 对象 | 生成访问计划使用的输入项，集合的统计信息<br>Evaluate 选项为 true 时显示              |
+| Input.Pages                    | 整型      | 集合的数据页个数                                                                     |
+| Input.Records                  | 长整型    | 集合的数据个数                                                                       |
+| Input.RecordSize               | 整型      | 集合的数据平均长度                                                                   |
+| Input.NeedEvalIO               | 布尔型    | 根据 Input.Pages 和 Options.optcostthreshold 判断是否需要计算 IO 代价                |
+| Input.CLEstFromStat            | 布尔型    | 是否使用集合的统计信息进行估算                                                       |
+| Input.CLStatTime               | 时间戳    | 使用的集合的统计信息的生成时间                                                       |
 | SearchPaths                    | 数组      | 每个搜索过的访问计划的估算过程                                                       |
 
 >   **Note:**
