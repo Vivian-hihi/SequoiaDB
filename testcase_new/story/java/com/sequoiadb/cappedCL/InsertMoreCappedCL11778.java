@@ -39,17 +39,12 @@ public class InsertMoreCappedCL11778 extends SdbTestBase{
 	@BeforeClass
 	public void setUp() {
 		System.out.println(this.getClass().getName()+" begin at "+sdf.format(new Date()));
-		try {
-			sdb = new Sequoiadb(SdbTestBase.coordUrl, "","");
-			sdb.setSessionAttr((BSONObject)JSON.parse("{PreferedInstance:'M'}"));
-			cappedCLs = CappedCLUtils.createMoreCappedCL(sdb, cappedCSName_11778, cappedCLName_11778 ,csNum,clNum);
-		}catch(BaseException e) {
-			Assert.fail(e.getMessage());
-		}
+	   sdb = new Sequoiadb(SdbTestBase.coordUrl, "","");
+	   cappedCLs = CappedCLUtils.createMoreCappedCL(sdb, cappedCSName_11778, cappedCLName_11778 ,csNum,clNum);
 	}
 	
 	@Test
-    public void testGreatConcurrencyInsert() {
+   public void testGreatConcurrencyInsert() {
 		StringBuffer strBuffer = new StringBuffer();
 		
 		InsertThread insertThread = new InsertThread(strBuffer);
@@ -58,15 +53,27 @@ public class InsertMoreCappedCL11778 extends SdbTestBase{
 		
 		Assert.assertTrue(insertThread.isSuccess(),insertThread.getErrorMsg());
 		
-		//check all cappedCLs' logicalID
-		for(DBCollection cl : cappedCLs) {
-			if(cl != null) {
-				 Assert.assertTrue(CappedCLUtils.checkLogicalID(cl, strBuffer.length() ,this.getClass().getName()));
-			}
-		}			
+		//check primary and slave datas
+		sdb.setSessionAttr((BSONObject)JSON.parse("{PreferedInstance:'M'}"));
+		for(int csNo = 1; csNo <= csNum; csNo++) {
+         for(int clNo = 1; clNo <= clNum; clNo++) {  
+         	DBCollection primaryCL = sdb.getCollectionSpace(cappedCSName_11778 + csNo).getCollection(cappedCLName_11778 + clNo);
+			   Assert.assertTrue(CappedCLUtils.checkLogicalID(primaryCL, strBuffer.length(),this.getClass().getName()));
+         }
+      }
+      System.out.println("-------sueccess to check primary node-------");
+		
+		sdb.setSessionAttr((BSONObject)JSON.parse("{PreferedInstance:'S'}"));
+		for(int csNo = 1; csNo <= csNum; csNo++) {
+         for(int clNo = 1; clNo <= clNum; clNo++) {  
+			   DBCollection slaveCL = sdb.getCollectionSpace(cappedCSName_11778 + csNo).getCollection(cappedCLName_11778 + clNo);
+			   Assert.assertTrue(CappedCLUtils.checkLogicalID(slaveCL, strBuffer.length(),this.getClass().getName()));
+         }
+      }
+      System.out.println("-------sueccess to check slave node-------");
 	}
 	
-    @AfterClass
+   @AfterClass
 	public void tearDown() {
 		try {
 			for(int csNo = 1; csNo <= csNum; csNo++) {
@@ -76,7 +83,7 @@ public class InsertMoreCappedCL11778 extends SdbTestBase{
 				}
 			}
 		}catch (BaseException e) {
-			Assert.fail(e.getMessage());
+			e.printStackTrace();
 		}finally {
 			sdb.close();
 			System.out.println(this.getClass().getName()+" end at "+sdf.format(new Date()));
@@ -106,7 +113,6 @@ public class InsertMoreCappedCL11778 extends SdbTestBase{
             DBCollection cl = null;
             try{
                 db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-                db.setSessionAttr((BSONObject)JSON.parse("{PreferedInstance:'M'}"));               
                 
                 //insert records in all CLs
                 for(int csNo = 1; csNo <= csNum; csNo++) {

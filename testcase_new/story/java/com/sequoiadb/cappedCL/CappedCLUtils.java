@@ -41,6 +41,7 @@ public class CappedCLUtils {
 		BSONObject options_cl = new BasicBSONObject();
 		options_cl.put("Capped", true);
 		options_cl.put("Size", 8192);
+      options_cl.put("ReplSize", 0);
 		options_cl.put("AutoIndexId", false);
 		try {
 			CollectionSpace cs = sdb.getCollectionSpace(csName);
@@ -88,6 +89,7 @@ public class CappedCLUtils {
 					options_cl.put("Capped", true);
 					options_cl.put("Size", 8192);
 					options_cl.put("AutoIndexId", false);
+               options_cl.put("ReplSize", 0);
 					DBCollection cl = cs.createCollection(clName + clNo,options_cl);
 					dbCollections.add(cl);
 				}catch (BaseException e) {

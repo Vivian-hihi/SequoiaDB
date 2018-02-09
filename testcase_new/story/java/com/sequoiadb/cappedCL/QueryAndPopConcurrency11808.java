@@ -31,127 +31,127 @@ import com.sequoiadb.testcommon.SdbThreadBase;
 */
 public class QueryAndPopConcurrency11808 extends SdbTestBase{
 	
-	private Sequoiadb sdb = null;
-	private DBCollection cappedCL_11808 = null;
-	private String cappedCSName_11808 = "story_java_cappedCS_11808";
-	private String cappedCLName_11808 = "cappedCL_11808";
-	private List<Long> lids = new ArrayList<>();
-	private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
+   private Sequoiadb sdb = null;
+   private DBCollection cappedCL_11808 = null;
+   private String cappedCSName_11808 = "story_java_cappedCS_11808";
+   private String cappedCLName_11808 = "cappedCL_11808";
+   private List<Long> lids = new ArrayList<>();
+   private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
 	
+   @BeforeClass
+   public void setUp() {
+      System.out.println(this.getClass().getName()+" begin at "+sdf.format(new Date()));
+      boolean isCapped = true;
+      sdb = new Sequoiadb(SdbTestBase.coordUrl, "","");
+      cappedCL_11808 = CappedCLUtils.createCL(sdb, cappedCSName_11808, cappedCLName_11808, isCapped);
+      int recordNums = 10000;
+      insertRecords(recordNums);
+   }
 	
-	@BeforeClass
-	public void setUp() {
-		try {
-			boolean isCapped = true;
-			sdb = new Sequoiadb(SdbTestBase.coordUrl, "","");
-			sdb.setSessionAttr((BSONObject)JSON.parse("{PreferedInstance:'M'}"));
-			cappedCL_11808 = CappedCLUtils.createCL(sdb, cappedCSName_11808, cappedCLName_11808, isCapped);
-			int recordNums = 100;
-			insertRecords(recordNums);
-		}catch(BaseException e) {
-			Assert.fail(e.getMessage());
-		}
-	}
-	
-	@Test
-	public void testGreatConcurrencyQuery() {
-		QueryThread queryThread = new QueryThread();
-		PopThread popThread = new PopThread();
+   @Test
+   public void testGreatConcurrencyQuery() {
+      QueryThread queryThread = new QueryThread();
+      PopThread popThread = new PopThread();
 		
-		queryThread.start();	
-		popThread.start();
+      queryThread.start();	
+      popThread.start();
 		
-		Assert.assertTrue(queryThread.isSuccess(),queryThread.getErrorMsg());
-		Assert.assertTrue(popThread.isSuccess(),popThread.getErrorMsg());
+      Assert.assertTrue(queryThread.isSuccess(),queryThread.getErrorMsg());
+      Assert.assertTrue(popThread.isSuccess(),popThread.getErrorMsg());
 	}
 	
-	@AfterClass
-	public void tearDown() {
-		try {
-			CollectionSpace cs = sdb.getCollectionSpace(cappedCSName_11808);
-			if(cs != null && cs.isCollectionExist(cappedCLName_11808)) {
-				sdb.dropCollectionSpace(cappedCSName_11808);
-			}
-		}catch (BaseException e) {
-			Assert.fail(e.getMessage());
-		}finally {
-			sdb.close();
-		}
-	}
-	
-	public void insertRecords(int recordNums) {
-		 for(int i = 0; i < recordNums; i++) { 
-            BSONObject obj = (BSONObject)JSON.parse("{ a :" + i + "}"); 
-            cappedCL_11808.insert(obj);
-	     }
-		 
-		 //save logincalIds
-		 BSONObject orderBy = new BasicBSONObject();
-         orderBy.put("_id", 1);
-         DBCursor cursor = cappedCL_11808.query(null,null,orderBy,null);
-        
-         while(cursor.hasNext()) {
-         	long _id = (long)cursor.getNext().get("_id");
-         	lids.add(_id);
+   @AfterClass
+   public void tearDown() {
+      try {
+         CollectionSpace cs = sdb.getCollectionSpace(cappedCSName_11808);
+         if(cs != null && cs.isCollectionExist(cappedCLName_11808)) {
+            sdb.dropCollectionSpace(cappedCSName_11808);
          }
-         cursor.close();
-	}
+      }catch (BaseException e) {
+         e.printStackTrace();
+      }finally {
+         sdb.close();
+      }
+   }
 	
-	private class QueryThread extends SdbThreadBase{
+   public void insertRecords(int recordNums) {
+      for(int i = 0; i < recordNums; i++) { 
+         BSONObject obj = (BSONObject)JSON.parse("{ a :" + i + "}"); 
+         cappedCL_11808.insert(obj);
+      }
+		 
+      //save logincalIds
+      BSONObject orderBy = new BasicBSONObject();
+      orderBy.put("_id", 1);
+      DBCursor cursor = cappedCL_11808.query(null,null,orderBy,null);
+        
+      while(cursor.hasNext()) {
+         long _id = (long)cursor.getNext().get("_id");
+         lids.add(_id);
+      }
+      cursor.close();
+   }
+	
+   private class QueryThread extends SdbThreadBase{
     	
-    	@Override
-        public void exec() throws Exception{
-            Sequoiadb db = null;
-            DBCollection cl = null;
-            try{
-                db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-                db.setSessionAttr((BSONObject)JSON.parse("{PreferedInstance:'M'}"));
-                cl = db.getCollectionSpace(cappedCSName_11808).getCollection(cappedCLName_11808);
+      @Override
+      public void exec() throws Exception{
+         Sequoiadb db = null;
+         try{
+            db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
                 
-                int stringLength = 1;
-                CappedCLUtils.checkLogicalID(cl, stringLength, Thread.currentThread().getName());
-                
-            }catch(BaseException e){
-                if(e.getErrorCode() != -23 || e.getErrorCode() != -34){
-                    throw e;
-                }
-            }finally{
-                db.close();
-            }
-        }
-	}
+            //check primary and slave datas
+            db.setSessionAttr((BSONObject)JSON.parse("{PreferedInstance:'M'}"));
+            DBCollection primaryCL = db.getCollectionSpace(cappedCSName_11808).getCollection(cappedCLName_11808);
+            db.setSessionAttr((BSONObject)JSON.parse("{PreferedInstance:'S'}"));
+            DBCollection slaveCL = db.getCollectionSpace(cappedCSName_11808).getCollection(cappedCLName_11808);
+					 
+            int stringLength = 1;
+            CappedCLUtils.checkLogicalID(primaryCL, stringLength, Thread.currentThread().getName());
+            System.out.println("-------" + Thread.currentThread().getName() + ": sueccess to check primary node-------");
+            CappedCLUtils.checkLogicalID(slaveCL, stringLength, Thread.currentThread().getName());
+            System.out.println("-------" + Thread.currentThread().getName() + ": sueccess to check slave node-------");
 
-	
-	 private class PopThread extends SdbThreadBase{
+         }catch(BaseException e){
+            if(e.getErrorCode() != -23 || e.getErrorCode() != -34){
+               throw e;
+            }
+         }finally{
+            db.close();
+         }
+      }
+   }
+
+   private class PopThread extends SdbThreadBase{
 	    	
-	    	@Override
-	        public void exec() throws Exception{
-	            Sequoiadb db = null;
-	            DBCollection cl = null;
-	            try{
-	                db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-	                cl = db.getCollectionSpace(cappedCSName_11808).getCollection(cappedCLName_11808);
+      @Override
+      public void exec() throws Exception{
+         Sequoiadb db = null;
+         DBCollection cl = null;
+         try{
+            db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+            cl = db.getCollectionSpace(cappedCSName_11808).getCollection(cappedCLName_11808);
 	                 
-	                //start from middle , find a random logicalID
-	                int min = lids.size() / 2;
-	                int range = lids.size() / 2;
-	                int pos = min + new Random().nextInt(range);
-	                long logicalID = lids.get(pos);
-	                System.out.println("random logicalID: " + logicalID);
-	                // pop records 	 
-	                BSONObject popObj = new BasicBSONObject();
-	                popObj.put("LogicalID", logicalID);
-	                popObj.put("Direction", -1);
-	                cl.pop(popObj);
+            //start from middle , find a random logicalID
+            int min = lids.size() / 2;
+            int range = lids.size() / 2;
+            int pos = min + new Random().nextInt(range);
+            long logicalID = lids.get(pos);
+            System.out.println("random logicalID: " + logicalID);
+            // pop records 	 
+            BSONObject popObj = new BasicBSONObject();
+            popObj.put("LogicalID", logicalID);
+            popObj.put("Direction", -1);
+            cl.pop(popObj);
 	                
-	            }catch(BaseException e){
-	                if(e.getErrorCode() != -23 || e.getErrorCode() != -34){
-	                    throw e;
-	                }
-	            }finally{
-	                db.close();
-	            }
-	        }
-		}
+         }catch(BaseException e){
+            if(e.getErrorCode() != -23 || e.getErrorCode() != -34){
+               throw e;
+            }
+         }finally{
+            db.close();
+         }
+      }
+   }
 
 }
