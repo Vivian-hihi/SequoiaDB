@@ -31,14 +31,19 @@ if [ "$pid"x == ""x ]; then
 
    startupPlugin $currentPath "$javaPath -jar $currentPath/$binFileName" $omhttpname ""
 
-   pid=`getProcId $binFileName "--__omhttpname=$omhttpname"`
-   if [ "$pid"x == ""x ]; then
-      echo "Error: failed to start $binFileName" ;
-      exit 1
-   else
-      echo "Success: $binFileName is successfully started ($pid)" ;
-      exit 0
-   fi
+   for i in $(seq 1 10)
+   do
+      pid=`getProcId $binFileName "--__omhttpname=$omhttpname"`
+      if [ "$pid"x == ""x ]; then
+         sleep 1s
+      else
+         echo "Success: $binFileName is successfully started ($pid)" ;
+         exit 0
+      fi
+   done
+
+   echo "Error: failed to start $binFileName" ;
+   exit 1
 
 else
    echo "$binFileName is already started ($pid)";
