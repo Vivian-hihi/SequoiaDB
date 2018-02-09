@@ -70,20 +70,14 @@ public class Split508 extends SdbTestBase {
 
 	// 切分{a:0,b:10000} - {a:10000,b:0} 切分{a:20000,b:30000} {a:30000,b:20000}
 	@Test(dataProvider = "rangeProvider")
-	public void splitCLAndCheckResult(int aLowBound, int aUpBound, int bLowBound, int bUpBound) {
-		Sequoiadb sdb = null;
-		try{
-			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+	public void splitCLAndCheckResult(int aLowBound, int aUpBound, int bLowBound, int bUpBound) {		
+		try(Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "")){			
 			DBCollection dbcl = sdb.getCollectionSpace(csName).getCollection(clName);
 			dbcl.split(srcGroupName, destGroupName, (BSONObject) JSON.parse("{a:" + aLowBound + ",b:" + bLowBound + "}"),
 					(BSONObject) JSON.parse("{a:" + aUpBound + ",b:" + bUpBound + "}"));	
 			
 			//检查切分结果，比较范围内数据量 
 			checkResult(sdb, aLowBound, aUpBound);
-		}finally{
-			if ( sdb != null ){
-				sdb.disconnect();
-			}
 		}
 	}
 	
@@ -94,10 +88,8 @@ public class Split508 extends SdbTestBase {
 		long expected = 30000;
 		Assert.assertEquals(count, expected);
 		
-		//目标组上检查边界值数据
-		Sequoiadb destDataNode = null;
-		try{
-			destDataNode = commSdb.getReplicaGroup(destGroupName).getMaster().connect();			
+		//目标组上检查边界值数据		
+		try(Sequoiadb destDataNode = commSdb.getReplicaGroup(destGroupName).getMaster().connect()){					
 			DBCollection dbcl = destDataNode.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
 			//目标组含有{a:10000,b:10000}边界值记录			
 			Assert.assertEquals(dbcl.getCount("{a:10000,b:10000}"), 1);
@@ -108,10 +100,6 @@ public class Split508 extends SdbTestBase {
 			long destDataCount1 = destDataNode.getCollectionSpace(csName).getCollection(clName)
 					.getCount("{$or:[{a:{$lt:0}},{a:{$gte:10000,$lt:20000},{a:{$gt:30000}}]}");
 			Assert.assertEquals(destDataCount1, 0);
-		}finally{
-			if( destDataNode != null ){
-				destDataNode.disconnect();
-			}
 		}
 	}
 	
@@ -124,7 +112,7 @@ public class Split508 extends SdbTestBase {
 			Assert.fail(e.getMessage()+"\r\n"+SplitUtils.getKeyStack(e,this));
 		} finally {
 			if (commSdb != null) {
-				commSdb.disconnect();;
+				commSdb.close();;
 			}
 		}
 	}
@@ -132,10 +120,7 @@ public class Split508 extends SdbTestBase {
 	// 比对目标组数据量
 	private void checkResult(Sequoiadb sdb, int alowBound, int aUpBound) {
 		DBCursor dbc = null;
-		Sequoiadb destDataNode = null;
-		try{
-			destDataNode = sdb.getReplicaGroup(destGroupName).getMaster().connect();
-			
+		try(Sequoiadb destDataNode = sdb.getReplicaGroup(destGroupName).getMaster().connect()){			
 			DBCollection dbcl = destDataNode.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
 
 			// 逐条比对记录			
@@ -153,24 +138,21 @@ public class Split508 extends SdbTestBase {
 			dbc.close();
 			// 目标组含有本线程切分范围的数据
 			int expRecords = 10000;
-			Assert.assertEquals(count, expRecords );
-			
-		}finally{
-			if( destDataNode != null ){
-				destDataNode.disconnect();
-			}
+			Assert.assertEquals(count, expRecords );			
 		}
 	}	
 	
 	//insert 3W records
 	private void prepareData(DBCollection cl) {
-		for ( int i = 0; i < 30000; i+=10000){
+		int count=0;
+		for ( int i = 0; i < 3; i++){
 			List<BSONObject>list = new ArrayList<BSONObject>();	
-			for (int j = i + 0; j < i + 10000; j++) {				
-				BSONObject obj = (BSONObject) JSON.parse("{a:" + j +", b:"+j+", test:"+"'testasetatatatt'" + "}");				
+			for (int j = 0; j < 10000; j++) {	
+				int value = count++;
+				BSONObject obj = (BSONObject) JSON.parse("{a:" + value +", b:"+value+", test:"+"'testasetatatatt'" + "}");				
 				list.add(obj);					
 			}
-			cl.bulkInsert(list, 0);
+			cl.insert(list);
 		}		
 	}
 }
