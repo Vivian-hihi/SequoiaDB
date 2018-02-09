@@ -1447,7 +1447,12 @@ public class DBCollection {
         sequoiadb.upsertCache(collectionFullName);
 
         DBCursor cursor = new DBCursor(response, sequoiadb);
-        BSONObject object = cursor.getNext();
+        BSONObject object;
+        try {
+            object = cursor.getNext();
+        } finally {
+            cursor.close();
+        }
         return (Long) object.get(SdbConstants.FIELD_TOTAL);
     }
 
@@ -1582,7 +1587,12 @@ public class DBCollection {
             throw new BaseException(SDBError.SDB_CAT_TASK_NOTFOUND);
         }
 
-        BSONObject result = cursor.getNext();
+        BSONObject result;
+        try {
+            result = cursor.getNext();
+        } finally {
+            cursor.close();
+        }
         boolean flag = result.containsField(SdbConstants.FIELD_NAME_TASKID);
         if (!flag) {
             throw new BaseException(SDBError.SDB_CAT_TASK_NOTFOUND);
@@ -1632,7 +1642,12 @@ public class DBCollection {
             throw new BaseException(SDBError.SDB_CAT_TASK_NOTFOUND);
         }
 
-        BSONObject result = cursor.getNext();
+        BSONObject result;
+        try {
+            result = cursor.getNext();
+        } finally {
+            cursor.close();
+        }
         boolean flag = result.containsField(SdbConstants.FIELD_NAME_TASKID);
         if (!flag) {
             throw new BaseException(SDBError.SDB_CAT_TASK_NOTFOUND);

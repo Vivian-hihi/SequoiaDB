@@ -918,8 +918,12 @@ public class Sequoiadb implements Closeable {
             return null;
         }
         ArrayList<String> colList = new ArrayList<String>();
-        while (cursor.hasNext()) {
-            colList.add(cursor.getNext().get("Name").toString());
+        try {
+            while (cursor.hasNext()) {
+                colList.add(cursor.getNext().get("Name").toString());
+            }
+        } finally {
+            cursor.close();
         }
         return colList;
     }
@@ -946,8 +950,12 @@ public class Sequoiadb implements Closeable {
             return null;
         }
         ArrayList<String> colList = new ArrayList<String>();
-        while (cursor.hasNext()) {
-            colList.add(cursor.getNext().get("Name").toString());
+        try {
+            while (cursor.hasNext()) {
+                colList.add(cursor.getNext().get("Name").toString());
+            }
+        } finally {
+            cursor.close();
         }
         return colList;
     }
@@ -960,9 +968,16 @@ public class Sequoiadb implements Closeable {
      */
     public ArrayList<String> getStorageUnits() throws BaseException {
         DBCursor cursor = getList(SDB_LIST_STORAGEUNITS, null, null, null);
+        if (cursor == null) {
+            return null;
+        }
         ArrayList<String> colList = new ArrayList<String>();
-        while (cursor.hasNext()) {
-            colList.add(cursor.getNext().get("Name").toString());
+        try {
+            while (cursor.hasNext()) {
+                colList.add(cursor.getNext().get("Name").toString());
+            }
+        } finally {
+            cursor.close();
         }
         return colList;
     }
@@ -1672,7 +1687,15 @@ public class Sequoiadb implements Closeable {
         matcher.put(SdbConstants.FIELD_NAME_NAME, domainName);
 
         DBCursor cursor = getList(SDB_LIST_DOMAINS, matcher, null, null);
-        return (null != cursor && cursor.hasNext());
+        try {
+            if (cursor != null && cursor.hasNext())
+                return true;
+            else
+                return false;
+        } finally {
+            if (cursor != null)
+                cursor.close();
+        }
     }
 
     /**
@@ -1774,8 +1797,12 @@ public class Sequoiadb implements Closeable {
             return null;
         }
         ArrayList<String> colList = new ArrayList<String>();
-        while (cursor.hasNext()) {
-            colList.add(cursor.getNext().get("GroupName").toString());
+        try {
+            while (cursor.hasNext()) {
+                colList.add(cursor.getNext().get("GroupName").toString());
+            }
+        } finally {
+            cursor.close();
         }
         return colList;
     }
@@ -1792,8 +1819,12 @@ public class Sequoiadb implements Closeable {
             return null;
         }
         ArrayList<String> colList = new ArrayList<String>();
-        while (cursor.hasNext()) {
-            colList.add(cursor.getNext().toString());
+        try {
+            while (cursor.hasNext()) {
+                colList.add(cursor.getNext().toString());
+            }
+        } finally {
+            cursor.close();
         }
         return colList;
     }
@@ -2018,7 +2049,13 @@ public class Sequoiadb implements Closeable {
         if (cursor == null || !cursor.hasNext()) {
             return null;
         }
-        return cursor.getNext();
+        BSONObject result;
+        try {
+            result = cursor.getNext();
+        } finally {
+            cursor.close();
+        }
+        return result;
     }
 
     BSONObject getDetailById(int id) throws BaseException {
@@ -2029,7 +2066,13 @@ public class Sequoiadb implements Closeable {
         if (cursor == null || !cursor.hasNext()) {
             return null;
         }
-        return cursor.getNext();
+        BSONObject result;
+        try {
+            result = cursor.getNext();
+        } finally {
+            cursor.close();
+        }
+        return result;
     }
 
     private SysInfoResponse receiveSysInfoResponse() {
@@ -2240,6 +2283,9 @@ public class Sequoiadb implements Closeable {
          * Set result cursor.
          */
         public void setCursor(DBCursor cursor) {
+            if (this.cursor != null) {
+                this.cursor.close();
+            }
             this.cursor = cursor;
         }
 
