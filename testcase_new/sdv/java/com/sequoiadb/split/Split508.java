@@ -39,8 +39,7 @@ public class Split508 extends SdbTestBase {
 
 	@BeforeClass
 	public void setUp() {
-		commSdb = new Sequoiadb(coordUrl, "", "");
-		commSdb.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance: 'M'}"));
+		commSdb = new Sequoiadb(coordUrl, "", "");		
 		// 跳过 standAlone 和数据组不足的环境
 		CommLib commlib = new CommLib();
 		if (commlib.isStandAlone(commSdb)) {
@@ -83,10 +82,12 @@ public class Split508 extends SdbTestBase {
 	
 	@Test(dependsOnMethods="splitCLAndCheckResult")
 	private void checkAllResult(){
+		commSdb.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance: 'M'}"));
+		DBCollection cl = commSdb.getCollectionSpace(csName).getCollection(clName);
 		//coord上检查记录总数
 		long count = cl.getCount("{_id:{$isnull:0}}");
 		long expected = 30000;
-		Assert.assertEquals(count, expected);
+		Assert.assertEquals(count, expected);		
 		
 		//目标组上检查边界值数据		
 		try(Sequoiadb destDataNode = commSdb.getReplicaGroup(destGroupName).getMaster().connect()){					
@@ -97,7 +98,7 @@ public class Split508 extends SdbTestBase {
 			Assert.assertEquals(dbcl.getCount("{a:29999,b:29999}"), 1);
 
 			// 目标组不含切分范围外的数据
-			long destDataCount1 = destDataNode.getCollectionSpace(csName).getCollection(clName)
+			long destDataCount1 = destDataNode.getCollectionSpace(SdbTestBase.csName).getCollection(clName)
 					.getCount("{$or:[{a:{$lt:0}},{a:{$gte:10000,$lt:20000},{a:{$gt:30000}}]}");
 			Assert.assertEquals(destDataCount1, 0);
 		}
