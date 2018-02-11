@@ -1780,6 +1780,10 @@ namespace engine
          {
             continue ;
          }
+         else if ( !_pResource->isActive() )
+         {
+            continue ;
+         }
 
          idleLowSize = calIdleLowSize( &runSize, &idleSize, &poolSize ) ;
          while ( idleSize < idleLowSize )

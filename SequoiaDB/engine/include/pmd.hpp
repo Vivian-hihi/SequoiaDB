@@ -116,8 +116,6 @@ namespace engine
       INT32 init () ;
       void  destroy () ;
 
-      BOOLEAN isActive() const { return _isActive ; }
-
       void    setIsRestore( BOOLEAN isRestore ) { _isRestore = isRestore ; }
       BOOLEAN isRestore() const { return _isRestore ; }
 
@@ -134,6 +132,7 @@ namespace engine
       virtual BOOLEAN            isShutdown() const ;
       virtual BOOLEAN            isNormal() const ;
       virtual BOOLEAN            isAvailable( INT32 *pCode = NULL ) const ;
+      virtual BOOLEAN            isActive() const { return _isActive ; }
       virtual INT32              getShutdownCode() const ;
 
       virtual UINT32             getDBMode() const ;

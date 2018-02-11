@@ -555,6 +555,7 @@ namespace engine
          virtual BOOLEAN            isShutdown() const = 0 ;
          virtual BOOLEAN            isNormal() const = 0 ;
          virtual BOOLEAN            isAvailable( INT32 *pCode = NULL ) const = 0 ;
+         virtual BOOLEAN            isActive() const = 0 ;
          virtual INT32              getShutdownCode() const = 0 ;
 
          virtual UINT32             getDBMode() const = 0 ;
