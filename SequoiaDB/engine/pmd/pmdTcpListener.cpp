@@ -54,6 +54,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_PMDTCPLSTNENTPNT ) ;
       pmdKRCB *krcb = pmdGetKRCB() ;
+      pmdOptionsCB *optionCB = krcb->getOptionCB() ;
       monDBCB *mondbcb = krcb->getMonDBCB () ;
       pmdEDUMgr * eduMgr = cb->getEDUMgr() ;
       EDUID agentEDU = PMD_INVALID_EDUID ;
@@ -127,7 +128,6 @@ namespace engine
          }
 
          cb->incEventCount() ;
-         ++mondbcb->numConnects ;
 
          // assign the socket to the arg
          void *pData = NULL ;
@@ -141,14 +141,14 @@ namespace engine
          }
 
          mondbcb->connInc() ;
-         if ( mondbcb->isConnLimited() )
+         if ( mondbcb->isConnLimited( optionCB->getMaxConn() ) )
          {
             ossSocket newsock ( &s ) ;
             newsock.close () ;
             mondbcb->connDec();
             continue ;
          }
-         
+
          // now we have a tcp socket for a new connection, let's get an 
          // agent, Note the new new socket sent passing to startEDU
          rc = eduMgr->startEDU ( EDU_TYPE_AGENT, pData, &agentEDU ) ;
@@ -188,6 +188,11 @@ namespace engine
       }
       goto done ;
    }
+
+   /// Register
+   PMD_DEFINE_ENTRYPOINT( EDU_TYPE_TCPLISTENER, TRUE,
+                          pmdTcpListenerEntryPoint,
+                          "TCPListener" ) ;
 
 }
 

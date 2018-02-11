@@ -180,6 +180,7 @@ namespace engine
       EDU_TYPE_REPLAGENT,
       EDU_TYPE_RESTAGENT,
       EDU_TYPE_FAPAGENT,
+      EDU_TYPE_OMAAGENT,
 
       // Agent EDU Type END
       EDU_TYPE_AGENT_END,
@@ -216,8 +217,7 @@ namespace engine
       PMD_EDU_WAITING,
       // EDU should change status to idle when get into pool
       PMD_EDU_IDLE,
-      // Before terminating, EDU should set to destroy
-      PMD_EDU_DESTROY,
+
       PMD_EDU_UNKNOW,
       PMD_EDU_STATUS_MAXIMUM = PMD_EDU_UNKNOW
    } ;
@@ -226,7 +226,6 @@ namespace engine
    #define PMD_IS_EDU_RUNNING(x)       ( PMD_EDU_RUNNING  == x )
    #define PMD_IS_EDU_WAITING(x)       ( PMD_EDU_WAITING  == x )
    #define PMD_IS_EDU_IDLE(x)          ( PMD_EDU_IDLE     == x )
-   #define PMD_IS_EDU_DESTROY(x)       ( PMD_EDU_DESTROY  == x )
 
    /*
       SDB_TYPE_STR DEFINE

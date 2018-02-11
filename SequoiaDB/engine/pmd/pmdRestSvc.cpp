@@ -56,6 +56,7 @@ namespace engine
    {
       INT32 rc                = SDB_OK ;
       pmdKRCB *krcb           = pmdGetKRCB() ;
+      pmdOptionsCB *optionCB  = krcb->getOptionCB() ;
       monDBCB *mondbcb        = krcb->getMonDBCB () ;
       pmdEDUMgr *eduMgr       = cb->getEDUMgr() ;
       ossSocket *pListerner   = ( ossSocket* )pData ;
@@ -123,9 +124,7 @@ namespace engine
             }
          }
 
-
          cb->incEventCount() ;
-         ++mondbcb->numConnects ;
 
          // assign the socket to the arg
          void *pData = NULL ;
@@ -139,14 +138,13 @@ namespace engine
          }
 
          mondbcb->connInc();
-         if ( mondbcb->isConnLimited() )
+         if ( mondbcb->isConnLimited( optionCB->getMaxConn() ) )
          {
             ossSocket newsock ( &s ) ;
             newsock.close () ;
             mondbcb->connDec();
             continue ;
          }
-         
 
          // now we have a tcp socket for a new connection, let's get an agent
          // Note the new new socket sent passing to startEDU
@@ -170,6 +168,11 @@ namespace engine
    error :
       goto done ;
    }
+
+   /// Register
+   PMD_DEFINE_ENTRYPOINT( EDU_TYPE_RESTLISTENER, TRUE,
+                          pmdRestSvcEntryPoint,
+                          "RestListener" ) ;
 
    /*
       rest agent entry point
@@ -219,6 +222,11 @@ namespace engine
 
       return rc ;
    }
+
+   /// Register
+   PMD_DEFINE_ENTRYPOINT( EDU_TYPE_RESTAGENT, FALSE,
+                          pmdRestAgentEntryPoint,
+                          "RestAgent" ) ;
 
 }
 

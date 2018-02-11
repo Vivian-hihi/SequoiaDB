@@ -226,6 +226,7 @@ namespace engine
       HTTP_PARSE_COMMON httpCommon     = COM_GETFILE ;
       CHAR *pFilePath                  = NULL ;
       INT32 bodySize                   = 0 ;
+      monDBCB *mondbcb                 = pmdGetKRCB()->getMonDBCB () ;
 
       if ( !_pEDUCB )
       {
@@ -366,6 +367,7 @@ namespace engine
 
          // increase process event count
          _pEDUCB->incEventCount() ;
+         mondbcb->addReceiveNum() ;
 
          // activate edu
          if ( SDB_OK != ( rc = pEDUMgr->activateEDU( _pEDUCB ) ) )

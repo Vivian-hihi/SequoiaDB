@@ -96,13 +96,23 @@ namespace engine
       }                                                              \
    }
 
+   /*
+      Common Define
+   */
+   #define MON_APP_LASTOP_DESC_LEN                 ( 1024 )
+
+   /*
+      _monConfigCB define
+   */
    struct _monConfigCB : public SDBObject
    {
       BOOLEAN timestampON ;
    } ;
-   typedef struct _monConfigCB monConfigCB ;
+   typedef _monConfigCB monConfigCB ;
 
-
+   /*
+      MON_OPERATION_TYPES define
+   */
    enum MON_OPERATION_TYPES
    {
       MON_COUNTER_OPERATION_NONE = 0,
@@ -131,44 +141,52 @@ namespace engine
       MON_TIME_OPERATION_MAX = MON_TOTAL_WRITE_TIME
    } ;
 
+   /*
+      _monDBCB define
+   */
    class _monDBCB : public SDBObject
    {
    public :
-      UINT32 numConnects ;
+      volatile UINT64 totalDataRead ;
+      volatile UINT64 totalIndexRead ;
+      volatile UINT64 totalLobRead ;
+      volatile UINT64 totalDataWrite ;
+      volatile UINT64 totalIndexWrite ;
+      volatile UINT64 totalLobWrite ;
 
-      UINT64 totalDataRead ;
-      UINT64 totalIndexRead ;
-      UINT64 totalLobRead ;
-      UINT64 totalDataWrite ;
-      UINT64 totalIndexWrite ;
-      UINT64 totalLobWrite ;
+      volatile UINT64 totalUpdate ;
+      volatile UINT64 totalDelete ;
+      volatile UINT64 totalInsert ;
+      volatile UINT64 totalSelect ;  // total records into result set
+      volatile UINT64 totalRead ;    // total records readed from disk
 
-      UINT64 totalUpdate ;
-      UINT64 totalDelete ;
-      UINT64 totalInsert ;
-      UINT64 totalSelect ;  // total records into result set
-      UINT64 totalRead ;    // total records readed from disk
-      UINT32 receiveNum ;
+      volatile UINT64 receiveNum ;
 
-      UINT64 replUpdate ;   // IUD caused by replica copy
-      UINT64 replDelete ;
-      UINT64 replInsert ;
+      volatile UINT64 replUpdate ;   // IUD caused by replica copy
+      volatile UINT64 replDelete ;
+      volatile UINT64 replInsert ;
 
-      ossAtomicSigned64 _svcNetIn ;
-      ossAtomicSigned64 _svcNetOut ;
+      volatile UINT64 _svcNetIn ;
+      volatile UINT64 _svcNetOut ;
 
-      ossTickDelta totalReadTime ;
-      ossTickDelta totalWriteTime ;
-      ossTick      _activateTimeStampTick ;
-      ossTimestamp _activateTimestamp ;
+      ossTickDelta    totalReadTime ;
+      ossTickDelta    totalWriteTime ;
+      ossTimestamp    _activateTimestamp ;
+      ossTimestamp    _resetTimestamp ;
 
-      UINT64 totalLogSize;
+      /*
+         Must be Atomic for _curConns
+      */
+      ossAtomic32     _curConns ;
 
-      ossAtomicSigned32 _curConns;
-
-      BOOLEAN isConnLimited();
-      void connInc();
-      void connDec();
+   /*
+      Functions
+   */
+   public:
+      UINT32   getCurConns() { return _curConns.fetch() ; }
+      void     connInc() { _curConns.inc() ; }
+      void     connDec() { _curConns.dec() ; }
+      BOOLEAN  isConnLimited( UINT32 maxConn ) ;
 
       void monOperationTimeInc( MON_OPERATION_TYPES op, ossTickDelta &delta )
       {
@@ -252,89 +270,25 @@ namespace engine
          }
       }
 
-      void reset();
+      UINT64 getReceiveNum() { return receiveNum ; }
+      void   addReceiveNum() { ++receiveNum ; }
 
-      UINT32 getReceiveNum ()
-      {
-         return receiveNum ;
-      }
-      void addReceiveNum ()
-      {
-         ++receiveNum ;
-      }
+      void   svcNetInAdd( INT32 sendSize ) { _svcNetIn += sendSize ; }
+      void   svcNetOutAdd( INT32 recvSize ) { _svcNetOut += recvSize ; }
+      UINT64 svcNetIn() { return _svcNetIn ; }
+      UINT64 svcNetOut() { return _svcNetOut ; }
 
-      void svcNetInAdd( INT32 sendSize )
-      {
-         _svcNetIn.add( sendSize ) ;
-      }
-
-      void svcNetOutAdd( INT32 recvSize )
-      {
-         _svcNetOut.add( recvSize ) ;
-      }
-
-      INT64 svcNetIn()
-      {
-         return _svcNetIn.peek() ;
-      }
-
-      INT64 svcNetOut()
-      {
-         return _svcNetOut.peek() ;
-      }
-
-      _monDBCB()
-      :_svcNetIn(0),
-      _svcNetOut(0),
-      _curConns(0)
-      {
-         reset() ;
-         receiveNum = 0 ;
-         _activateTimeStampTick.clear() ;
-         _activateTimestamp.time = 0 ;
-         _activateTimestamp.microtm = 0 ;
-      }
-
-      _monDBCB &operator= ( const _monDBCB &rhs )
-      {
-         numConnects               = rhs.numConnects ;
-
-         totalDataRead             = rhs.totalDataRead ;
-         totalIndexRead            = rhs.totalIndexRead ;
-         totalLobRead              = rhs.totalLobRead ;
-         totalDataWrite            = rhs.totalDataWrite ;
-         totalIndexWrite           = rhs.totalIndexWrite ;
-         totalLobWrite             = rhs.totalLobWrite ;
-
-         totalUpdate               = rhs.totalUpdate ;
-         totalDelete               = rhs.totalDelete ;
-         totalInsert               = rhs.totalInsert ;
-         totalSelect               = rhs.totalSelect ;
-         totalRead                 = rhs.totalRead ;
-
-         replUpdate                = rhs.replUpdate ;
-         replDelete                = rhs.replDelete ;
-         replInsert                = rhs.replInsert ;
-
-         totalReadTime             = rhs.totalReadTime ;
-         totalWriteTime            = rhs.totalWriteTime ;
-         _activateTimestamp.time    = rhs._activateTimestamp.time;
-         _activateTimestamp.microtm = rhs._activateTimestamp.microtm ;
-         _activateTimeStampTick     = rhs._activateTimeStampTick ;
-
-         return *this ;
-      }
-
-      void recordActivateTimestamp()
-      {
-         _activateTimeStampTick.sample() ;
-         ossGetCurrentTime( _activateTimestamp ) ;
-      }
+      _monDBCB() ;
+      _monDBCB& operator= ( const _monDBCB &rhs ) ;
+      void   reset() ;
+      void   recordActivateTimestamp() ;
 
    } ;
-   typedef class _monDBCB  monDBCB ;
+   typedef _monDBCB monDBCB ;
 
-   #define MON_APP_LASTOP_DESC_LEN                 ( 1024 )
+   /*
+      _monAppCB define
+   */
    class _monAppCB : public SDBObject
    {
    public :
@@ -352,18 +306,18 @@ namespace engine
       UINT64 totalSelect ;  // total records into result set
       UINT64 totalRead ;    // total records readed from disk
 
-      ossTickDelta totalReadTime ;
-      ossTickDelta totalWriteTime ;
-      ossTick      _connectTimeStampTick ;
-      ossTimestamp _connectTimestamp ;
+      ossTickDelta   totalReadTime ;
+      ossTickDelta   totalWriteTime ;
+      ossTimestamp   _connectTimestamp ;
+      ossTimestamp   _resetTimestamp ;
 
-      INT32 _lastOpType ;
-      INT32 _cmdType ;
-      ossTick _lastOpBeginTime ;
-      ossTick _lastOpEndTime ;
-      ossTickDelta _readTimeSpent ;
-      ossTickDelta _writeTimeSpent ;
-      CHAR _lastOpDetail[ MON_APP_LASTOP_DESC_LEN + 1 ] ;
+      INT32          _lastOpType ;
+      INT32          _cmdType ;
+      ossTick        _lastOpBeginTime ;
+      ossTick        _lastOpEndTime ;
+      ossTickDelta   _readTimeSpent ;
+      ossTickDelta   _writeTimeSpent ;
+      CHAR           _lastOpDetail[ MON_APP_LASTOP_DESC_LEN + 1 ] ;
 
       void monOperationTimeInc( MON_OPERATION_TYPES op, ossTickDelta &delta )
       {
@@ -380,7 +334,7 @@ namespace engine
             default :
                break ;
          }
-         mondbcb->monOperationTimeInc ( op, delta ) ;
+         mondbcb->monOperationTimeInc( op, delta ) ;
       }
 
       void monOperationCountInc( MON_OPERATION_TYPES op, UINT64 delta = 1 )
@@ -434,19 +388,17 @@ namespace engine
             default:
                break ;
          }
-         mondbcb->monOperationCountInc ( op, delta ) ;
+         mondbcb->monOperationCountInc( op, delta ) ;
       }
 
-      void reset() ;
-
       _monAppCB() ;
-
       _monAppCB &operator= ( const _monAppCB &rhs ) ;
       _monAppCB &operator+= ( const _monAppCB &rhs ) ;
 
+      void reset() ;
+
       void recordConnectTimestamp()
       {
-         _connectTimeStampTick.sample() ;
          ossGetCurrentTime( _connectTimestamp ) ;
       }
 
@@ -458,7 +410,7 @@ namespace engine
       void saveLastOpDetail( const CHAR *format, ... ) ;
 
    } ;
-   typedef class _monAppCB  monAppCB ;
+   typedef _monAppCB  monAppCB ;
 
    /*
       _monContextCB define
@@ -467,9 +419,7 @@ namespace engine
    {
       public :
          _monContextCB () ;
-
          _monContextCB ( const _monContextCB & monCtxCB ) ;
-
          ~_monContextCB () ;
 
          void reset () ;
@@ -506,6 +456,26 @@ namespace engine
             _indexRead = indexRead ;
          }
 
+         OSS_INLINE UINT64 getLobRead() const
+         {
+            return _lobRead ;
+         }
+
+         OSS_INLINE void setLobRead( UINT64 lobRead )
+         {
+            _lobRead = lobRead ;
+         }
+
+         OSS_INLINE UINT64 getLobWrite() const
+         {
+            return _lobWrite ;
+         }
+
+         OSS_INLINE void setLobWrite( UINT64 lobWrite )
+         {
+            _lobWrite = lobWrite ;
+         }
+
          OSS_INLINE UINT32 getReturnBatches () const
          {
             return _returnBatches ;
@@ -524,16 +494,6 @@ namespace engine
          OSS_INLINE void setReturnRecords ( UINT64 returnRecords )
          {
             _returnRecords = returnRecords ;
-         }
-
-         OSS_INLINE const ossTick & getStartTimestampTick () const
-         {
-            return _startTimestampTick ;
-         }
-
-         OSS_INLINE void setStartTimestampTick ( const ossTick & startTimestampTick )
-         {
-            _startTimestampTick = startTimestampTick ;
          }
 
          OSS_INLINE const ossTimestamp & getStartTimestamp () const
@@ -579,7 +539,6 @@ namespace engine
          OSS_INLINE void recordStartTimestamp ()
          {
             ossGetCurrentTime( _startTimestamp ) ;
-            _startTimestampTick.sample() ;
          }
 
          OSS_INLINE void monReturnInc ( UINT32 batchDelta,
@@ -597,11 +556,15 @@ namespace engine
                case MON_DATA_READ :
                   monDataReadInc( delta ) ;
                   break ;
-
                case MON_INDEX_READ :
                   monIndexReadInc( delta ) ;
                   break ;
-
+               case MON_LOB_READ :
+                  monLobReadInc( delta ) ;
+                  break ;
+               case MON_LOB_WRITE :
+                  monLobWriteInc( delta ) ;
+                  break ;
                default:
                   break ;
             }
@@ -615,6 +578,16 @@ namespace engine
          OSS_INLINE void monIndexReadInc ( UINT64 delta )
          {
             _indexRead += delta ;
+         }
+
+         OSS_INLINE void monLobReadInc( UINT64 delta )
+         {
+            _lobRead += delta ;
+         }
+
+         OSS_INLINE void monLobWriteInc( UINT64 delta )
+         {
+            _lobWrite += delta ;
          }
 
          OSS_INLINE void monOperationTimeInc ( MON_OPERATION_TYPES op,
@@ -684,16 +657,19 @@ namespace engine
          INT64          _contextID ;
          UINT64         _dataRead ;
          UINT64         _indexRead ;
+         UINT64         _lobRead ;
+         UINT64         _lobWrite ;
          UINT32         _returnBatches ;
          UINT64         _returnRecords ;
          ossTimestamp   _startTimestamp ;
-         ossTick        _startTimestampTick ;
          ossTickDelta   _waitTime ;
          ossTickDelta   _queryTime ;
          ossTickDelta   _executeTime ;
    } ;
 
-   typedef class _monContextCB  monContextCB ;
+   typedef _monContextCB  monContextCB ;
 
 }
+
 #endif // MONCB_HPP_
+

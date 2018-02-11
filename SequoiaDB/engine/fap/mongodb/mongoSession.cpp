@@ -104,6 +104,7 @@ INT32 _mongoSession::run()
    CHAR *pBuff                  = NULL ;
    const CHAR *pBody            = NULL ;
    const CHAR *pInMsg           = NULL ;
+   engine::monDBCB *mondbcb     = engine::pmdGetKRCB()->getMonDBCB() ;
 
    if ( !_pEDUCB )
    {
@@ -183,6 +184,7 @@ INT32 _mongoSession::run()
             }
 
             _pEDUCB->incEventCount() ;
+            mondbcb->addReceiveNum() ;
             // activate edu
             if ( SDB_OK != ( rc = pmdEDUMgr->activateEDU( _pEDUCB ) ) )
             {

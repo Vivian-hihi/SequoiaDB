@@ -49,10 +49,10 @@
 #include "sdbInterface.hpp"
 #include "pdTrace.hpp"
 #include "dpsDef.hpp"
+#include "monCB.hpp"
+#include "monEDU.hpp"
 
 #if defined ( SDB_ENGINE )
-#include "monEDU.hpp"
-#include "monCB.hpp"
 #include "dpsLogDef.hpp"
 #include "dpsTransCB.hpp"
 #include "dpsTransLockDef.hpp"
@@ -74,11 +74,7 @@ namespace engine
    /*
       TOOL FUNCTIONS
    */
-   INT32       registerEDUName ( EDU_TYPES type, const CHAR * name,
-                                 BOOLEAN system ) ;
    const CHAR *getEDUStatusDesp ( EDU_STATUS status ) ;
-   const CHAR *getEDUName ( EDU_TYPES type ) ;
-   BOOLEAN     isSystemEDU ( EDU_TYPES type ) ;
 
    /*
       EDU CONTROL FLAG DEFINE
@@ -102,6 +98,9 @@ namespace engine
    */
    class _pmdEDUCB : public _IExecutor
    {
+      friend class _SDB_KRCB ;
+      friend class _pmdEDUMgr ;
+
    public:
       typedef std::multimap<UINT32,CHAR*>    CATCH_MAP ;
       typedef CATCH_MAP::iterator            CATCH_MAP_IT ;
@@ -109,7 +108,7 @@ namespace engine
       typedef std::map<CHAR*,UINT32>         ALLOC_MAP ;
       typedef ALLOC_MAP::iterator            ALLOC_MAP_IT ;
 
-      friend class _pmdEDUMgr ;
+      typedef std::set<INT64>                SET_CONTEXT ;
 
    public:
          /*
@@ -183,28 +182,31 @@ namespace engine
          virtual void      setTransID( UINT64 transID ) ;
          virtual void      setCurTransLsn( UINT64 lsn ) ;
 
+         /*
+            Context Related
+         */
+         virtual void      contextInsert( INT64 contextID ) ;
+         virtual void      contextDelete( INT64 contextID ) ;
+         virtual INT64     contextPeek() ;
+         virtual BOOLEAN   contextFind( INT64 contextID ) ;
+         virtual UINT32    contextNum() ;
+
    public:
-      _pmdEDUCB( _pmdEDUMgr *mgr, EDU_TYPES type ) ;
+      _pmdEDUCB( _pmdEDUMgr *mgr, INT32 type ) ;
       ~_pmdEDUCB() ;
 
       void        clear() ;
       string      toString() const ;
 
       EDU_STATUS  getStatus () const { return _status ; }
-      EDU_TYPES   getType () const { return _eduType ; }
+      INT32       getType () const { return _eduType ; }
 
       _pmdEDUMgr* getEDUMgr() { return _eduMgr ; }
 
-      void        setTID ( UINT32 tid ) { _tid = tid ; }
-      void        setType ( EDU_TYPES type ) ;
-
    #if defined ( _LINUX )
-      void        setThreadID ( pthread_t id ) { _threadID = id ; }
       pthread_t   getThreadID () const { return _threadID ; }
-      void        setThreadHdl( OSSTID hdl ) { _threadHdl = hdl ; }
       OSSTID      getThreadHandle() const { return _threadHdl ; }
    #elif defined ( _WINDOWS )
-      void        setThreadHdl( HANDLE hdl ) { _threadHdl = hdl ; }
       HANDLE      getThreadHandle() const { return _threadHdl ; }
    #endif
 
@@ -334,48 +336,17 @@ namespace engine
          return ret ;
       }
 
+      void contextCopy( SET_CONTEXT &contextList ) ;
+
+      void           resetMon() { _monApplCB.reset () ; }
+      monConfigCB*   getMonConfigCB() { return & _monCfgCB ; }
+      monAppCB*      getMonAppCB() { return & _monApplCB ; }
+      void           dumpInfo( monEDUSimple &simple ) ;
+      void           dumpInfo( monEDUFull &full ) ;
+
    #if defined ( SDB_ENGINE )
 
-      void  initMonAppCB()
-      {
-         _monApplCB.reset() ;
-         if ( _monCfgCB.timestampON )
-         {
-            _monApplCB.recordConnectTimestamp() ;
-         }
-      }
-      void resetMon () { _monApplCB.reset () ; }
-      monConfigCB * getMonConfigCB() { return & _monCfgCB ; }
-      monAppCB * getMonAppCB() { return & _monApplCB ; }
-
       ossEvent & getEvent () { return _event ; }
-
-      void contextInsert ( SINT64 contextID )
-      {
-         ossScopedLock _lock ( &_mutex, EXCLUSIVE ) ;
-         _contextList.insert ( contextID ) ;
-      }
-      void contextDelete ( SINT64 contextID )
-      {
-         ossScopedLock _lock ( &_mutex, EXCLUSIVE ) ;
-         _contextList.erase ( contextID ) ;
-      }
-      SINT64 contextPeek () ;
-      BOOLEAN contextFind ( SINT64 contextID )
-      {
-         ossScopedLock _lock ( &_mutex, SHARED ) ;
-         return _contextList.end() != _contextList.find( contextID ) ;
-      }
-      UINT32 contextNum ()
-      {
-         ossScopedLock _lock ( &_mutex, SHARED ) ;
-         return _contextList.size() ;
-      }
-      void contextCopy ( std::set<SINT64> &contextList )
-      {
-         ossScopedLock _lock ( &_mutex, SHARED ) ;
-         contextList = _contextList ;
-      }
 
       UINT64 getCurRequestID() const { return _curRequestID ; }
       UINT64 incCurRequestID() { return ++_curRequestID ; }
@@ -409,9 +380,6 @@ namespace engine
       void     setWaitLock( const dpsTransLockId &lockId ) ;
       void     clearWaitLock() ;
 
-      void     dumpInfo ( monEDUSimple &simple ) ;
-      void     dumpInfo ( monEDUFull &full ) ;
-
       void     dumpTransInfo( monTransInfo &transInfo ) ;
 
    #endif // SDB_ENGINE
@@ -426,13 +394,26 @@ namespace engine
       void     disconnect () ;
       void     force () ;
 
+   private:
+      void        setType( INT32 type ) ;
+      void        setTID ( UINT32 tid ) { _tid = tid ; }
+
+   #if defined ( _LINUX )
+      void        setThreadID ( pthread_t id ) { _threadID = id ; }
+      void        setThreadHdl( OSSTID hdl ) { _threadHdl = hdl ; }
+   #elif defined ( _WINDOWS )
+      void        setThreadHdl( HANDLE hdl ) { _threadHdl = hdl ; }
+   #endif
+
+      void        initMonAppCB() ;
+
    private :
       _pmdEDUMgr     *_eduMgr ;
       ossSpinSLatch  _mutex ;
       ossQueue<pmdEDUEvent> _queue ;
 
       EDU_STATUS     _status ;
-      EDU_TYPES      _eduType ;
+      INT32          _eduType ;
 
       string         _userName ;
       string         _passWord ;
@@ -462,15 +443,11 @@ namespace engine
 
       BOOLEAN                 _isDoRollback ;
 
-   #if defined ( SDB_ENGINE )
-
       monAppCB                _monApplCB ;
       monConfigCB             _monCfgCB ;
 
+   #if defined ( SDB_ENGINE )
       ossEvent                _event ;   // for cls replSet notify
-
-      std::set<SINT64>        _contextList ;
-
       UINT64                  _curRequestID ;
 
       // transaction related variables
@@ -509,36 +486,14 @@ namespace engine
       void                    *_alignedMem ;
       UINT32                   _alignedMemSize ;
 
+      SET_CONTEXT             _contextList ;
+
    };
    typedef class _pmdEDUCB pmdEDUCB ;
 
-   _pmdEDUCB *pmdGetThreadEDUCB () ;
-   _pmdEDUCB *pmdDeclareEDUCB ( _pmdEDUCB *p ) ;
-   void      pmdUndeclareEDUCB () ;
-
-   /*
-      ENTRY POINT
-   */
-   typedef INT32 (*pmdEntryPoint)( pmdEDUCB *, void * ) ;
-
-   pmdEntryPoint getEntryFuncByType ( EDU_TYPES type ) ;
-
-   INT32 pmdEDUEntryPoint ( EDU_TYPES type, pmdEDUCB *cb, void *arg ) ;
-   INT32 pmdEDUEntryPointWrapper ( EDU_TYPES type, pmdEDUCB *cb, void *arg ) ;
-
-   // array assignment later, can't inherit from SDBObject
-   struct _eduEntryInfo
-   {
-      EDU_TYPES         type ;
-      INT32             regResult ;
-      pmdEntryPoint     entryFunc ;
-   } ;
-
-#define ON_EDUTYPE_TO_ENTRY1(type, system, entry, desp) \
-   { type, registerEDUName(type, desp, system), entry }
-
-#define ON_EDUTYPE_TO_ENTRY2(type, system, entry) \
-   ON_EDUTYPE_TO_ENTRY1(type, system, entry, #type)
+   _pmdEDUCB* pmdGetThreadEDUCB() ;
+   _pmdEDUCB* pmdDeclareEDUCB( _pmdEDUCB *p ) ;
+   void       pmdUndeclareEDUCB() ;
 
    /*
       TOOL FUNCTIONS

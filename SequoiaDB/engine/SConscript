@@ -103,7 +103,8 @@ pmdFiles = [
       "pmd/pmdProcessor.cpp",
       "pmd/pmdProtocolEntryPoint.cpp",
       "pmd/pmdModuleLoader.cpp",
-      "pmd/pmdRestSession.cpp"
+      "pmd/pmdRestSession.cpp",
+      "pmd/pmdEntryPoint.cpp"
       ]
 migFiles = [
       "mig/migLoad.cpp"
@@ -550,6 +551,7 @@ aggrFiles = [
 
 netFiles = [
       "net/netEventHandler.cpp",
+      "net/netEventSuit.cpp",
       "net/netFrame.cpp",
       "net/netRoute.cpp",
       "net/netRouteAgent.cpp"

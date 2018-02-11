@@ -81,7 +81,7 @@ namespace engine
           * Before any one is found in the queue, the status of this thread is
           * wait. Once found, it will be changed to running.
           */
-         eduMgr->waitEDU( cb->getID() ) ;
+         eduMgr->waitEDU( cb ) ;
          /* Get the first item in the dictionary waiting list. */
          foundJob = dmsCB->dispatchDictJob( job ) ;
          if ( !foundJob )
@@ -96,7 +96,7 @@ namespace engine
             continue ;
          }
 
-         eduMgr->activateEDU( cb->getID() ) ;
+         eduMgr->activateEDU( cb ) ;
 
          /*
           * Check with the fetched storage unit id and mb id. Any arror happened

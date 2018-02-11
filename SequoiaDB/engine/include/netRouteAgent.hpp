@@ -57,9 +57,9 @@ namespace engine
          _netFrame* getFrame() { return &_frame ; }
 
       public:
-         OSS_INLINE void run()
+         OSS_INLINE void run( NET_START_THREAD_FUNC pFunc = NULL )
          {
-            return _frame.run() ;
+            _frame.run( pFunc ) ;
          }
 
          OSS_INLINE void stop()
@@ -111,9 +111,9 @@ namespace engine
             _frame.close() ;
          }
 
-         OSS_INLINE  io_service *ioservice()
+         OSS_INLINE  IIOService* ioservice()
          {
-            return &( _frame.ioservice() ) ;
+            return &_frame ;
          }
 
          OSS_INLINE INT32 route( const _MsgRouteID &id,
@@ -171,8 +171,6 @@ namespace engine
          INT64 netIn() ;
 
          INT64 netOut() ;
-
-         void resetMon() ;
 
       private:
          _netFrame _frame ;

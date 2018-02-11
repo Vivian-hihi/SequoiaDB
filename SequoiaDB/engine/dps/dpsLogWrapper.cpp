@@ -175,7 +175,6 @@ namespace engine
          PD_LOG( PDERROR, "Start dps log writer failed, rc: %d", rc ) ;
          goto error ;
       }
-      pEDUMgr->regSystemEDU( EDU_TYPE_LOGGW, eduID ) ;
 
       // dps trans rollback task
       rc = pEDUMgr->startEDU( EDU_TYPE_DPSROLLBACK, NULL, &eduID ) ;
@@ -184,7 +183,6 @@ namespace engine
          PD_LOG( PDERROR, "Start dps trans rollback failed, rc: %d", rc ) ;
          goto error ;
       }
-      pEDUMgr->regSystemEDU( EDU_TYPE_DPSROLLBACK, eduID ) ;
 
       // dps log archiving
       if ( pmdGetKRCB()->getOptionCB()->archiveOn() )
@@ -195,7 +193,6 @@ namespace engine
             PD_LOG( PDERROR, "Start dps log archiving failed, rc: %d", rc ) ;
             goto error ;
          }
-         pEDUMgr->regSystemEDU( EDU_TYPE_LOGARCHIVEMGR, eduID ) ;
       }
 
    done:

@@ -221,7 +221,6 @@ namespace engine
 
          INT64 netIn() ;
          INT64 netOut() ;
-         void resetMon() ;
 
       protected:
 

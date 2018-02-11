@@ -189,7 +189,6 @@ namespace engine
                                &eduID ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to start coord network edu, rc: %d",
                    rc ) ;
-      pEDUMgr->regSystemEDU ( EDU_TYPE_COORDNETWORK, eduID ) ;
       rc = pEDUMgr->waitUntil( eduID, PMD_EDU_RUNNING ) ;
       PD_RC_CHECK( rc, PDERROR, "Wait CoordNet active failed, rc: %d", rc ) ;
 
@@ -199,7 +198,6 @@ namespace engine
                                &eduID ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to start coord main controller edu, "
                    "rc: %d", rc ) ;
-      pEDUMgr->regSystemEDU( EDU_TYPE_COORDMGR, eduID ) ;
       rc = _attachEvent.wait( COORD_WAIT_EDU_ATTACH_TIMEOUT ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to wait coord manager edu "
                    "attach, rc: %d", rc ) ;

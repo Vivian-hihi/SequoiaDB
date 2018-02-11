@@ -54,6 +54,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_PMDTCPLSTNENTPNT ) ;
       pmdKRCB *krcb = pmdGetKRCB() ;
+      pmdOptionsCB *optionCB = krcb->getOptionCB() ;
       monDBCB *mondbcb = krcb->getMonDBCB () ;
       pmdEDUMgr * eduMgr = cb->getEDUMgr() ;
       EDUID agentEDU = PMD_INVALID_EDUID ;
@@ -106,9 +107,7 @@ namespace engine
             }
          }
 
-
          cb->incEventCount() ;
-         ++mondbcb->numConnects ;
 
          pmdEDUParam *pParam = SDB_OSS_NEW pmdEDUParam() ;
          // assign the socket to the pProtocolData
@@ -125,8 +124,8 @@ namespace engine
             continue ;
          }
 
-         mondbcb->connInc();
-         if ( mondbcb->isConnLimited() )
+         mondbcb->connInc() ;
+         if ( mondbcb->isConnLimited( optionCB->getMaxConn() ) )
          {
             ossSocket newsock ( &s ) ;
             newsock.close () ;
@@ -176,6 +175,11 @@ namespace engine
       }
       goto done ;
    }
+
+   /// Register
+   PMD_DEFINE_ENTRYPOINT( EDU_TYPE_FAPLISTENER, TRUE,
+                          pmdFapListenerEntryPoint,
+                          "FAPListener" ) ;
 
    INT32 pmdFapAgentEntryPoint( pmdEDUCB *cb, void *arg )
    {
@@ -229,5 +233,11 @@ namespace engine
    error:
       goto done ;
    }
+
+   /// Register
+   PMD_DEFINE_ENTRYPOINT( EDU_TYPE_FAPAGENT, FALSE,
+                          pmdFapAgentEntryPoint,
+                          "FAPAgent" ) ;
+
 
 }

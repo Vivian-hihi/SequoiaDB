@@ -41,393 +41,199 @@
 
 #include "core.hpp"
 #include "oss.hpp"
+#include "sdbInterface.hpp"
 #include "pmdEDU.hpp"
 #include "monEDU.hpp"
+#include "pmdEntryPoint.hpp"
 #include "ossLatch.hpp"
 #include "ossUtil.hpp"
-#include "ossSocket.hpp"
-#include <boost/asio.hpp>
+
 #include <map>
 #include <set>
 #include <string>
 
-using namespace boost::asio ;
-using namespace boost::asio::ip ;
 namespace engine
 {
 
-#define PMD_EDU_WAIT_PERIOD     (200)
-#define PMD_EDU_WAIT_ROUND      (600)
+   #define PMD_EDU_WAIT_PERIOD     (200)
+   #define PMD_EDU_WAIT_ROUND      (600)
 
-#define EDU_SYSTEM         0x0001
-#define EDU_USER           0x0002
-#define EDU_ALL            ( EDU_SYSTEM | EDU_USER )
+   /*
+      Property Define
+   */
+   #define EDU_SYSTEM            0x0001
+   #define EDU_USER              0x0002
+   #define EDU_ALL               ( EDU_SYSTEM | EDU_USER )
 
-   /* class for Engine Dispatchable Unit */
-   class _pmdEDUMgr : public SDBObject
+   typedef boost::shared_ptr<ossEvent>       pmdEventPtr ;
+
+   #define PMD_STOP_TIMEOUT      ( 600000 )  /// 10 mins
+
+   /*
+      _pmdEDUMgr define
+   */
+   class _pmdEDUMgr : public IExecutorMgr
    {
-   private :
-      // control blocks are cleared in class destructor
-      // control blocks are allocated in createNewEDU
-      // PMD_EDU_CREATING/PMD_EDU_RUNNING/PMD_EDU_WAITING
-      std::map<EDUID, pmdEDUCB*> _runQueue ;
-      std::map<EDUID, pmdEDUCB*> _idleQueue ;
-      std::map<UINT32, EDUID> _tid_eduid_map ;
-      std::vector < io_service *> _ioserviceList ;
+      typedef vector< IIOService* >       VEC_IOSERVICE ;
+      typedef map<EDUID, pmdEDUCB*>       MAP_EDUCB ;
+      typedef MAP_EDUCB::iterator         MAP_EDUCB_IT ;
+      typedef map<UINT32,EDUID>           MAP_TID2EDU ;
+      typedef MAP_TID2EDU::iterator       MAP_TID2EDU_IT ;
+      typedef map<INT32,EDUID>            MAP_SYSTEMEDU ;
+      typedef MAP_SYSTEMEDU::iterator     MAP_SYSTEMEDU_IT ;
 
-      ossSpinSLatch _mutex ;
-      // increamental-only EDU id
-      // 64 bit is big enough for most
-      EDUID _EDUID ;
+      public:
+         _pmdEDUMgr () ;
+         virtual ~_pmdEDUMgr () ;
 
-      // list of system EDUs
-      std::map<UINT32, EDUID> _mapSystemEDUS;
-      // no new requests are allowed
-      BOOLEAN _isQuiesced ;
+         virtual INT32     startEDU( INT32 type,
+                                     void *args,
+                                     EDUID *pEDUID = NULL,
+                                     const CHAR *pInitName = "" ) ;
 
-      BOOLEAN _isDestroyed ;
-      // for read operation
-   #ifdef EDUMGR_SLOCK
-   #undef EDUMGR_SLOCK
-   #endif
-   #define EDUMGR_SLOCK ossScopedLock _lock ( &_mutex, SHARED ) ;
+         virtual void      addIOService( IIOService *pIOService ) ;
+         virtual void      delIOSerivce( IIOService *pIOService ) ;
 
-      // for write operation
-   #ifdef EDUMGR_XLOCK
-   #undef EDUMGR_XLOCK
-   #endif
-   #define EDUMGR_XLOCK ossScopedLock _lock ( &_mutex, EXCLUSIVE ) ;
-   public :
-      _pmdEDUMgr () ;
-      ~_pmdEDUMgr () ;
+      public:
+         INT32             init( IResource *pResource ) ;
+         BOOLEAN           reset( INT64 timeout = PMD_STOP_TIMEOUT ) ;
+         UINT32            dumpAbnormalEDU() ;
 
-   public:
-      void addIOService( io_service *service ) ;
-      void deleteIOService ( io_service *service ) ;
+         UINT32            countIOService() ;
+         UINT32            size() ;
+         UINT32            sizeRun() ;
+         UINT32            sizeIdle() ;
+         UINT32            sizeSystem() ;
+         void              sizeInfo( UINT32 &runSize, UINT32 &idleSize ) ;
 
-      void reset () ;
+         EDUID             getSystemEDU( INT32 eduType ) ;
+         BOOLEAN           isSystemEDU( EDUID eduID ) ;
 
-      // get total number of threads in the manager
-      UINT32 size ()
-      {
-         EDUMGR_SLOCK
-         return ( UINT32 ) _runQueue.size () +  ( UINT32 ) _idleQueue.size () ;
-      }
-      UINT32 sizeRun ()
-      {
-         EDUMGR_SLOCK
-         return ( UINT32 ) _runQueue.size () ;
-      }
-      UINT32 sizeIdle ()
-      {
-         EDUMGR_SLOCK
-         return ( UINT32 ) _idleQueue.size () ;
-      }
-      UINT32 sizeSystem ()
-      {
-         EDUMGR_SLOCK
-         return _mapSystemEDUS.size() ;
-      }
-      EDUID getSystemEDU ( EDU_TYPES edu )
-      {
-         EDUID eduID = PMD_INVALID_EDUID;
-         EDUMGR_SLOCK
-         std::map<UINT32, EDUID>::iterator it = _mapSystemEDUS.find( edu ) ;
-         if ( it != _mapSystemEDUS.end() )
-         {
-            eduID = it->second  ;
-         }
-         return eduID ;
-      }
-      BOOLEAN isSystemEDU ( EDUID eduID )
-      {
-         EDUMGR_SLOCK
-         return _isSystemEDU ( eduID ) ;
-      }
-      void regSystemEDU ( EDU_TYPES edu, EDUID eduid )
-      {
-         EDUMGR_XLOCK
-         _mapSystemEDUS[ edu ] = eduid ;
-      }
-      BOOLEAN isQuiesced ()
-      {
-         EDUMGR_SLOCK
-         return _isQuiesced ;
-      }
-      void setQuiesced ( BOOLEAN b )
-      {
-         EDUMGR_XLOCK
-         _isQuiesced = b ;
-      }
-      BOOLEAN isDestroyed ()
-      {
-         EDUMGR_SLOCK
-         return _isDestroyed ;
-      }
+         BOOLEAN           isQuiesced() ;
+         BOOLEAN           isDestroyed() ;
 
-#if defined( SDB_ENGINE )
-      void dumpInfo ( std::set<monEDUSimple> &info ) ;
-      void dumpInfo ( std::set<monEDUFull> &info ) ;
+         INT32             waitEDU( EDUID eduID ) ;
+         INT32             waitEDU( pmdEDUCB *cb ) ;
 
-      INT32 dumpTransInfo( EDUID eduId, monTransInfo &transInfo ) ;
+         INT32             activateEDU( EDUID eduID ) ;
+         INT32             activateEDU( pmdEDUCB *cb ) ;
 
-      void resetMon ( BOOLEAN resetAll = TRUE, EDUID eduID = PMD_INVALID_EDUID )
-      {
-         std::map<EDUID, pmdEDUCB*>::iterator it ;
-         EDUMGR_SLOCK
-         for ( it = _runQueue.begin () ; it != _runQueue.end () ; it ++ )
-         {
-            if ( resetAll )
-            {
-               (*it).second->resetMon () ;
-               continue ;
-            }
-            else if ( eduID == (*it).first )
-            {
-               (*it).second->resetMon () ;
-               goto done ;
-            }
-         }
-         for ( it = _idleQueue.begin () ; it != _idleQueue.end () ; it ++ )
-         {
-            if ( resetAll )
-            {
-               (*it).second->resetMon () ;
-               continue ;
-            }
-            else if ( eduID == (*it).first )
-            {
-               (*it).second->resetMon () ;
-               goto done ;
-            }
-         }
+         INT32             createIdleEDU( EDUID *pEDUID ) ;
 
-      done:
-         return ;
-      }
-#endif // SDB_ENGINE
+         INT32             forceUserEDU( EDUID eduID ) ;
+         INT32             interruptUserEDU( EDUID eduID ) ;
+         INT32             disconnectUserEDU( EDUID eduID ) ;
 
-      static BOOLEAN isPoolable ( EDU_TYPES type )
-      {
-         return ( type > EDU_TYPE_AGENT_BEGIN ) &&
-                ( type < EDU_TYPE_AGENT_END ) ;
-      }
+         INT32             postEDUPost ( EDUID eduID,
+                                         pmdEDUEventTypes type,
+                                         pmdEDUMemTypes dataMemType = PMD_EDU_MEM_NONE,
+                                         void *pData = NULL,
+                                         UINT64 usrData = 0 ) ;
+
+         UINT32            interruptWritingEDUS() ;
+         UINT32            getWritingEDUCount( INT32 eduTypeFilter = -1,
+                                               UINT64 idThreshold = 0 ) ;
+
+         void              resetMon( EDUID eduID = PMD_INVALID_EDUID ) ;
+         void              dumpInfo( set<monEDUSimple> &info ) ;
+         void              dumpInfo( set<monEDUFull> &info ) ;
+
+#if defined(SDB_ENGINE)
+         INT32             dumpTransInfo( EDUID eduId,
+                                          monTransInfo &transInfo ) ;
+#endif //SDB_ENGINE
+
+         pmdEDUCB*         getEDUByID( EDUID eduID ) ;
+         INT32             getEDUTypeByID( EDUID eduID ) ;
+         pmdEDUCB*         getEDU() ;
+         pmdEDUCB*         getEDU( UINT32 tid ) ;
+
+         INT32             waitUntil( EDUID eduID,
+                                      EDU_STATUS status,
+                                      UINT32 waitPeriod = PMD_EDU_WAIT_PERIOD,
+                                      UINT32 waitRound = PMD_EDU_WAIT_ROUND ) ;
+         INT32             waitUntilByType( INT32 type,
+                                            EDU_STATUS status,
+                                            UINT32 waitPeriod = PMD_EDU_WAIT_PERIOD,
+                                            UINT32 waitRound = PMD_EDU_WAIT_ROUND ) ;
 
 #if defined (_LINUX)
-      void getEDUThreadID ( std::set<pthread_t> &tidList ) ;
-      void killByThreadID ( INT32 signo ) ;
-#endif
+         void              killByThreadID( INT32 signo ) ;
+         void              getEDUThreadID ( set<pthread_t> &tidList ) ;
+#endif //_LINUX
 
-   private :
-      INT32    createNewEDU ( EDU_TYPES type, void* arg, EDUID *eduid,
-                              const CHAR *pName ) ;
-      INT32    destroyAll () ;
-      INT32    _forceEDUs ( INT32 property = EDU_ALL ) ;
-      UINT32   _getEDUCount ( INT32 property = EDU_ALL ) ;
-      INT32    _forceIOService() ;
-      UINT32   _getIOServiceCount() ;
+      protected:
+         void              forceIOSerivce() ;
 
-      INT32    _interruptWritingEDUs() ;
-      UINT32   _getWritingEDUCount( INT32 eduTypeFilter = -1,
-                                    UINT64 idThreshold = 0 ) ;
+         INT32             createNewEDU ( INT32 type,
+                                          BOOLEAN isSystem,
+                                          void* arg,
+                                          EDUID *pEDUID,
+                                          const CHAR *pInitName ) ;
 
-      void setDestroyed ( BOOLEAN b )
-      {
-         EDUMGR_XLOCK
-         _isDestroyed = b ;
-      }
-      BOOLEAN _isSystemEDU ( EDUID eduID )
-      {
-         std::map<UINT32, EDUID>::iterator it = _mapSystemEDUS.begin() ;
-         while ( it != _mapSystemEDUS.end() )
-         {
-            if ( eduID == it->second )
-            {
-               return TRUE ;
-            }
-            ++it ;
-         }
-         return FALSE ;
-      }
+         pmdEDUCB*         getFromPool( INT32 type ) ;
 
-      /*
-       * This function must be called against a thread that either in
-       * PMD_EDU_WAITING or PMD_EDU_IDLE or PMD_EDU_CREATING status
-       * This function set the status to PMD_EDU_DESTROY and remove
-       * the control block from manager
-       * Parameter:
-       *   EDU ID (UINt64)
-       * Return:
-       *   SDB_OK (success)
-       *   SDB_SYS (the given eduid can't be found)
-       *   SDB_EDU_INVAL_STATUS (EDU is found but not with expected status)
-       */
-      INT32 destroyEDU ( EDUID eduID ) ;
-      /*
-       * This function must be called against a thread that either in creating
-       * or waiting status, it will return without any change if the agent is
-       * already in pool
-       * This function will change the status to PMD_EDU_IDLE and put to
-       * idlequeue, representing the EDU is pooled (no longer associate with
-       * any user activities)
-       * deactivateEDU supposed only happened to AGENT EDUs
-       * Any EDUs other than AGENT will be forwarded to destroyEDU and return
-       * SDB_SYS
-       * Parameter:
-       *   EDU ID (UINt64)
-       * Return:
-       *   SDB_OK (success)
-       *   SDB_SYS (the given eduid can't be found, or it's not AGENT)
-       *           (note that deactivate an non-AGENT EDU will cause the EDU
-       *            destroyed and SDB_SYS return)
-       *   SDB_EDU_INVAL_STATUS (EDU is found but not with expected status)
-       */
-      INT32 deactivateEDU ( EDUID eduID ) ;
-   public :
-      /*
-       * EDU Status Transition Table
-       * C: CREATING
-       * R: RUNNING
-       * W: WAITING
-       * I: IDLE
-       * D: DESTROY
-       * c: createNewEDU
-       * a: activateEDU
-       * d: destroyEDU
-       * w: waitEDU
-       * t: deactivateEDU
-       *   C   R   W   I   D  <--- from
-       * C c
-       * R a   -   a   a   -  <--- Creating/Idle/Waiting status can move to Running status
-       * W -   w   -   -   -  <--- Running status move to Waiting
-       * I t   -   t   -   -  <--- Creating/Waiting status move to Idle
-       * D d   -   d   d   -  <--- Creating / Waiting / Idle can be destroyed
-       * ^ To
-       */
+         void              _forceEDUs( INT32 property = EDU_ALL ) ;
+         UINT32            _getEDUCount( INT32 property = EDU_ALL ) ;
 
-      /*
-       * This function must be called against a thread that either in
-       * creating/idle or waiting status
-       * Threads in creating/waiting status should be sit in runqueue
-       * Threads in idle status should be sit in idlequeue
-       * This function set the status to PMD_END_RUNNING and bring
-       * the control block to runqueue if it was idle status
-       * Parameter:
-       *   EDU ID (UINt64)
-       * Return:
-       *   SDB_OK (success)
-       *   SDB_SYS (the given eduid can't be found)
-       *   SDB_EDU_INVAL_STATUS (EDU is found but not with expected status)
-       */
-      INT32    activateEDU ( EDUID eduID ) ;
-      INT32    activateEDU ( pmdEDUCB *cb ) ;
+         UINT32            _interruptWritingEDUs() ;
+         UINT32            _getWritingEDUCount( INT32 eduTypeFilter = -1,
+                                                UINT64 idThreshold = 0 ) ;
 
-      /*
-       * This function must be called against a thread that in running
-       * status
-       * Threads in running status will be put in PMD_EDU_WAITING and
-       * remain in runqueue
-       * Parameter:
-       *   EDU ID (UINt64)
-       * Return:
-       *   SDB_OK (success)
-       *   SDB_SYS (the given eduid can't be found)
-       *   SDB_EDU_INVAL_STATUS (EDU is found but not with expected status)
-       */
-      INT32    waitEDU ( EDUID eduID ) ;
-      INT32    waitEDU ( pmdEDUCB *cb ) ;
+         void              setDestroyed( BOOLEAN b ) ;
+         void              setQuiesced( BOOLEAN b ) ;
 
-      /*
-       * This function is called to get an EDU run the given function
-       * Depends on if there's any idle EDU, manager may choose an existing
-       * idle thread or creating a new threads to serve the request
-       * Parmaeter:
-       *   pmdEntryPoint ( void (*entryfunc) (pmdEDUCB*, void*) )
-       *   type (EDU type, PMD_TYPE_AGENT for example )
-       *   arg ( void*, pass to pmdEntryPoint )
-       * Output:
-       *   eduid ( UINt64, the edu id for the assigned EDU )
-       * Return:
-       *   SDB_OK (success)
-       *   SDB_SYS (internal error (edu id is reused) or creating thread fail)
-       *   SDB_OOM (failed to allocate memory)
-       *   SDB_INVALIDARG (the type is not valid )
-       */
-      INT32    startEDU ( EDU_TYPES type, void* arg, EDUID *eduid,
-                          const CHAR *pName = NULL ) ;
+         BOOLEAN           destroyAll( INT64 timeout = -1 ) ;
 
-      /*
-       * This function should post a message to EDU
-       * In each EDU control block there is a queue for message
-       * Posting EDU means adding an element to the queue
-       * If the EDU is doing some other activity at the moment, it may
-       * not able to consume the event right away
-       * There can be more than one event sitting in the queue
-       * The order is first in first out
-       * Parameter:
-       *   EDU Id ( EDUID )
-       *   enum pmdEDUEventTypes, in pmdDef.hpp
-       *   pointer for data
-       * Return:
-       *   SDB_OK ( success )
-       *   SDB_SYS ( given EDU ID can't be found )
-       */
-      INT32    postEDUPost ( EDUID eduID, pmdEDUEventTypes type,
-                             pmdEDUMemTypes dataMemType = PMD_EDU_MEM_NONE,
-                             void *pData = NULL,
-                             UINT64 usrData = 0 ) ;
+         void              setEDU ( UINT32 tid, EDUID eduid ) ;
+         void              returnEDU( pmdEDUCB *cb, BOOLEAN &destroyed ) ;
+         BOOLEAN           forceDestory( pmdEDUCB *cb, UINT32 idleTime ) ;
 
-      /*
-       * This function should return an waiting/creating EDU to pool
-       * (cannot be running)
-       * Pool will decide whether to destroy it or pool the EDU
-       * Any thread main function should detect the destroyed output
-       * deactivateEDU supposed only happened to AGENT EDUs
-       * Parameter:
-       *   EDU ID ( EDUID )
-       * Output:
-       *   Pointer for whether the EDU is destroyed
-       * Return:
-       *   SDB_OK ( success )
-       *   SDB_SYS ( given EDU ID can't be found )
-       *   SDB_EDU_INVAL_STATUS (EDU is found but not with expected status)
-       */
-      INT32    returnEDU ( EDUID eduID, BOOLEAN force, BOOLEAN* destroyed ) ;
+         pmdEDUCB*         findAndRemove( EDUID eduID ) ;
 
-      INT32    forceUserEDU ( EDUID eduID ) ;
+         UINT32            calIdleLowSize( UINT32 *pRunSize = NULL,
+                                           UINT32 *pIdleSize = NULL,
+                                           UINT32 *pPoolSize = NULL ) ;
 
-      INT32    interruptUserEDU( EDUID eduID ) ;
+      private:
+         BOOLEAN           _isSystemEDU( pmdEDUCB *cb ) ;
+         pmdEDUCB*         _getEDUByID( EDUID eduID ) ;
+         void              _postDestoryEDU( pmdEDUCB *cb ) ;
+         UINT32            _calIdleLowSize( UINT32 runSize,
+                                            UINT32 idleSize,
+                                            UINT32 poolSize ) ;
 
-      INT32    disconnectUserEDU( EDUID eduID ) ;
+      private:
+         VEC_IOSERVICE              _vecIOServices ;
+         ossSpinSLatch              _latch ;
+         EDUID                      _EDUID ;
 
-      INT32    interruptWritingEDUS() { return _interruptWritingEDUs() ; }
-      UINT32   getWritingEDUCount( INT32 eduTypeFilter = -1,
-                                   UINT64 idThreshold = 0 )
-      {
-         return _getWritingEDUCount( eduTypeFilter, idThreshold ) ;
-      }
+         MAP_EDUCB                  _mapRuns ;
+         MAP_EDUCB                  _mapIdles ;
 
-      pmdEDUCB *getEDU ( UINT32 tid ) ;
-      pmdEDUCB *getEDU () ;
-      pmdEDUCB *getEDUByID ( EDUID eduID ) ;
-      void setEDU ( UINT32 tid, EDUID eduid ) ;
-      // this function should be called in causious. This function does NOT
-      // guarantee to return whenever the EDU state change to expected value.
-      // However this function loop for every waitPeriod milliseconds until the
-      // EDU is detected to be staying in the expected status in next round.
-      // That means, if the EDU changed to expected status and then change to
-      // other value quick, this function may not able to detect such change
-      INT32 waitUntil ( EDUID eduID, EDU_STATUS status,
-                        UINT32 waitPeriod = PMD_EDU_WAIT_PERIOD,
-                        UINT32 waitRound = PMD_EDU_WAIT_ROUND ) ;
-      INT32 waitUntil ( EDU_TYPES type, EDU_STATUS status,
-                        UINT32 waitPeriod = PMD_EDU_WAIT_PERIOD,
-                        UINT32 waitRound = PMD_EDU_WAIT_ROUND ) ;
+         MAP_TID2EDU                _mapTid2Edu ;
+         MAP_SYSTEMEDU              _mapSystemEdu ;
 
-      EDU_TYPES getEDUTypeByID( EDUID eduID ) ;
+         BOOLEAN                    _isDestroyed ;
+         BOOLEAN                    _isQuiesced ;
 
+         IResource                  *_pResource ;
+         boost::thread              *_pMonitorThd ;
+
+         ossAutoEvent               _monitorEvent ;
+
+      private:
+         /*
+            Entry Functions define
+         */
+         INT32 pmdEDUEntryPointWrapper( pmdEDUCB *cb, pmdEventPtr ePtr ) ;
+         INT32 pmdEDUEntryPoint( pmdEDUCB *cb,
+                                 pmdEventPtr ePtr,
+                                 BOOLEAN &quitWithException ) ;
+         void  monitor() ;
    };
-   typedef class _pmdEDUMgr pmdEDUMgr ;
+   typedef _pmdEDUMgr pmdEDUMgr ;
+
 }
 
 #endif // PMDEDUMGR_HPP__

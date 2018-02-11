@@ -56,7 +56,6 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_PMDPIPELSTNNPNTPNT );
-      EDUID myEDUID = cb->getID () ;
       pmdEDUMgr * eduMgr = cb->getEDUMgr() ;
       CHAR tempBuffer [ PMD_WL_NPIPE_BUFSZ + 1 ] = {0} ;
       const CHAR *pSvcName = ( const CHAR* )pData ;
@@ -66,7 +65,7 @@ namespace engine
       BOOLEAN hasClosedStdFds = FALSE ;
 
       INT32 hasRead = 0 ;
-      rc = eduMgr->activateEDU ( myEDUID ) ;
+      rc = eduMgr->activateEDU ( cb ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to activate EDU, rc: %d", rc ) ;
@@ -234,6 +233,11 @@ namespace engine
       PMD_SHUTDOWN_DB( rc ) ;
       goto done ;
    }
+
+   /// Register
+   PMD_DEFINE_ENTRYPOINT( EDU_TYPE_PIPESLISTENER, TRUE,
+                          pmdPipeListenerEntryPoint,
+                          "PipeListener" ) ;
 }
 
 

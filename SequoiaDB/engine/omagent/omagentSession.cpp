@@ -91,7 +91,7 @@ namespace engine
 
    EDU_TYPES _omaSession::eduType() const
    {
-      return EDU_TYPE_AGENT ;
+      return EDU_TYPE_OMAAGENT ;
    }
 
    void _omaSession::onRecieve( const NET_HANDLE netHandle, MsgHeader * msg )

@@ -149,6 +149,7 @@
 #define FIELD_NAME_REPLUPDATE                "ReplUpdate"
 #define FIELD_NAME_REPLDELETE                "ReplDelete"
 #define FIELD_NAME_ACTIVETIMESTAMP           "ActivateTimestamp"
+#define FIELD_NAME_RESETTIMESTAMP            "ResetTimestamp"
 #define FIELD_NAME_USERCPU                   "UserCPU"
 #define FIELD_NAME_SYSCPU                    "SysCPU"
 #define FIELD_NAME_CONNECTTIMESTAMP          "ConnectTimestamp"

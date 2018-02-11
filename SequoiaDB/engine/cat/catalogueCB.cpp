@@ -237,16 +237,17 @@ namespace engine
                                &eduID ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to start cat main controller edu, "
                    "rc: %d", rc ) ;
-      pEDUMgr->regSystemEDU( EDU_TYPE_CATMGR, eduID ) ;
       rc = _catMainCtrl.getAttachEvent()->wait( CAT_WAIT_EDU_ATTACH_TIMEOUT ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to wait cat manager edu "
                    "attach, rc: %d", rc ) ;
 
       // 2. start net edu
-      pEDUMgr->startEDU ( EDU_TYPE_CATNETWORK, (netRouteAgent*)netWork(),
-                          &eduID ) ;
-      pEDUMgr->regSystemEDU ( EDU_TYPE_CATNETWORK, eduID ) ;
-      rc = pEDUMgr->waitUntil( EDU_TYPE_CATNETWORK, PMD_EDU_RUNNING ) ;
+      rc = pEDUMgr->startEDU ( EDU_TYPE_CATNETWORK,
+                               (netRouteAgent*)netWork(),
+                               &eduID ) ;
+      PD_RC_CHECK( rc, PDERROR, "Start CATNET failed, rc: %d", rc ) ;
+
+      rc = pEDUMgr->waitUntil( eduID, PMD_EDU_RUNNING ) ;
       PD_RC_CHECK( rc, PDERROR, "Wait CATNET active failed, rc: %d", rc ) ;
 
    done:

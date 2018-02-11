@@ -53,10 +53,9 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_PMDLOGGWENTPNT );
-      EDUID myEDUID = cb->getID () ;
       pmdEDUMgr * eduMgr = cb->getEDUMgr() ;
       SDB_DPSCB *dpsCb = ( SDB_DPSCB* )pData ;
-      rc = eduMgr->activateEDU ( myEDUID ) ;
+      rc = eduMgr->activateEDU ( cb ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to activate EDU" ) ;
@@ -78,7 +77,7 @@ namespace engine
       if ( rc )
       {
          PD_LOG ( PDSEVERE, "Failed to run tearDown(), rc = %d", rc ) ;
-         ossPanic () ;
+         ossPanic() ;
       }
 
    done :
@@ -95,6 +94,11 @@ namespace engine
       }
       goto done ;
    }
+
+   /// Register
+   PMD_DEFINE_ENTRYPOINT( EDU_TYPE_LOGGW, TRUE,
+                          pmdLoggWEntryPoint,
+                          "LogWriter" ) ;
 
 }
 

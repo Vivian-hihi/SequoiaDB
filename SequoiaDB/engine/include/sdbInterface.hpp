@@ -84,6 +84,8 @@ namespace engine
       SDB_IF_EVT_HANDLER,
       SDB_IF_EVT_HOLDER,
 
+      SDB_IF_CTXMGR,
+
       // THD MAX IF TYPE
       SDB_IF_MAX
    } ;
@@ -431,8 +433,53 @@ namespace engine
          virtual void      setTransID( UINT64 transID ) = 0 ;
          virtual void      setCurTransLsn( UINT64 lsn ) = 0 ;
 
+         /*
+            Context Related
+         */
+         virtual void      contextInsert( INT64 contextID ) = 0 ;
+         virtual void      contextDelete( INT64 contextID ) = 0 ;
+         virtual INT64     contextPeek() = 0 ;
+         virtual BOOLEAN   contextFind( INT64 contextID ) = 0 ;
+         virtual UINT32    contextNum() = 0 ;
+
    } ;
    typedef _IExecutor IExecutor ;
+
+   /*
+      _IIOService define
+   */
+   class _IIOService : public SDBObject
+   {
+      public:
+         _IIOService() {}
+         virtual ~_IIOService() {}
+
+      public:
+         virtual void      stop() = 0 ;
+         virtual void      resetMon() = 0 ;
+   } ;
+   typedef _IIOService IIOService ;
+
+   /*
+      _IExecutorMgr define
+   */
+   class _IExecutorMgr : public SDBObject
+   {
+      public:
+         _IExecutorMgr() {}
+         virtual ~_IExecutorMgr() {}
+
+      public:
+         virtual INT32     startEDU( INT32 type,
+                                     void *args,
+                                     EDUID *pEDUID = NULL,
+                                     const CHAR *pInitName = "" ) = 0 ;
+
+         virtual void      addIOService( IIOService *pIOService ) = 0 ;
+         virtual void      delIOSerivce( IIOService *pIOService ) = 0 ;
+
+   } ;
+   typedef _IExecutorMgr IExecutorMgr ;
 
    /*
       _IContext define
@@ -449,6 +496,20 @@ namespace engine
 
    } ;
    typedef _IContext IContext ;
+
+   /*
+      _IContextMgr define
+   */
+   class _IContextMgr : public SDBObject
+   {
+      public:
+         _IContextMgr() {}
+         virtual ~_IContextMgr() {}
+
+      public:
+         virtual void contextDelete( INT64 contextID, IExecutor *pExe ) = 0 ;
+   } ;
+   typedef _IContextMgr IContextMgr ;
 
    /*
       _IControlBlock define
@@ -486,6 +547,8 @@ namespace engine
          virtual IControlBlock*     getCBByType( SDB_CB_TYPE type ) = 0 ;
          virtual BOOLEAN            isCBValue( SDB_CB_TYPE type ) const = 0 ;
          virtual void*              getOrgPointByType( SDB_CB_TYPE type ) = 0 ;
+         virtual IExecutorMgr*      getExecutorMgr() = 0 ;
+         virtual IContextMgr*       getContextMgr() = 0 ;
 
          virtual SDB_DB_STATUS      getDBStatus() const = 0 ;
          virtual const CHAR*        getDBStatusDesp() const = 0 ;

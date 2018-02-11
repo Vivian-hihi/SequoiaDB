@@ -1843,7 +1843,7 @@ namespace engine
                  TRUE ) ;
 
       // --maxconn
-      rdxInt(pEX, PMD_OPTION_MAX_CONN,_maxconn, FALSE,
+      rdxUInt( pEX, PMD_OPTION_MAX_CONN,_maxconn, FALSE,
                TRUE, PMD_DFT_MAX_CONN, FALSE ) ;
       rdvMinMax( pEX, _maxconn, 0, 30000, TRUE ) ;
       // end map

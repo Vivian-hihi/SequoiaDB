@@ -77,5 +77,10 @@ namespace engine
       return rc ;
    }
 
+   /// Register
+   PMD_DEFINE_ENTRYPOINT( EDU_TYPE_AGENT, FALSE,
+                          pmdLocalAgentEntryPoint,
+                          "Agent" ) ;
+
 }
 

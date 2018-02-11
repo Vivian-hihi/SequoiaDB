@@ -68,6 +68,15 @@ namespace engine
       }
    }
 
+   void* _SDB_RTNCB::queryInterface( SDB_INTERFACE_TYPE type )
+   {
+      if ( SDB_IF_CTXMGR == type )
+      {
+         return dynamic_cast<IContextMgr*>( this ) ;
+      }
+      return IControlBlock::queryInterface( type ) ;
+   }
+
    INT32 _SDB_RTNCB::init ()
    {
       INT32 rc = SDB_OK ;
@@ -192,11 +201,12 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_RTNCB_CONTEXTDEL, "_SDB_RTNCB::contextDelete" )
-   void _SDB_RTNCB::contextDelete ( SINT64 contextID, pmdEDUCB *cb )
+   void _SDB_RTNCB::contextDelete ( INT64 contextID, IExecutor *pExe )
    {
       PD_TRACE_ENTRY ( SDB__SDB_RTNCB_CONTEXTDEL ) ;
 
       rtnContext *pContext = NULL ;
+      pmdEDUCB *cb = ( pmdEDUCB* )pExe ;
 
       if ( cb )
       {

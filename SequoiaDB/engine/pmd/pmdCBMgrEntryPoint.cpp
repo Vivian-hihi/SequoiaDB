@@ -56,7 +56,7 @@ namespace engine
 
       pObj->attachCB( cb ) ;
 
-      rc = pEDUMgr->activateEDU( cb->getID() ) ;
+      rc = pEDUMgr->activateEDU( cb ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG ( PDERROR, "Failed to active EDU" ) ;
@@ -70,9 +70,7 @@ namespace engine
          {
             cb->resetInterrupt() ;
             cb->resetInfo( EDU_INFO_ERROR ) ;
-#if defined( SDB_ENGINE )
             cb->resetLsn() ;
-#endif // SDB_ENGINE
 
             if ( PMD_EDU_EVENT_TERM == eventData._eventType )
             {
@@ -120,6 +118,31 @@ namespace engine
    error:
       goto done ;
    }
+
+   /// Register
+   PMD_DEFINE_ENTRYPOINT( EDU_TYPE_CLUSTER, TRUE,
+                          pmdCBMgrEntryPoint,
+                          "Cluster" ) ;
+
+   PMD_DEFINE_ENTRYPOINT( EDU_TYPE_CLUSTERSHARD, TRUE,
+                          pmdCBMgrEntryPoint,
+                          "ClusterShard" ) ;
+
+   PMD_DEFINE_ENTRYPOINT( EDU_TYPE_COORDMGR, TRUE,
+                          pmdCBMgrEntryPoint,
+                          "CoordMgr" ) ;
+
+   PMD_DEFINE_ENTRYPOINT( EDU_TYPE_CATMGR, TRUE,
+                          pmdCBMgrEntryPoint,
+                          "CatalogMgr" ) ;
+
+   PMD_DEFINE_ENTRYPOINT( EDU_TYPE_OMMGR, TRUE,
+                          pmdCBMgrEntryPoint,
+                          "OMManager" ) ;
+
+   PMD_DEFINE_ENTRYPOINT( EDU_TYPE_SEADPTMGR, TRUE,
+                          pmdCBMgrEntryPoint,
+                          "SeAdapterMgr" ) ;
 
 }
 

@@ -38,17 +38,22 @@
 
 namespace engine
 {
-   #define PMD_ASYNC_NET_TIMEOUT_MS 4294967295
 
-   class asyncTimeoutHandler : public _netTimeoutHandler
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDNETCALLBACKFUNC, "pmdNetCallbackFunc" )
+   INT32 pmdNetCallbackFunc( _netEventSuit *pSuit )
    {
-      public:
-         void handleTimeout( const UINT32 &millisec,
-                             const UINT32 &id )
-         {
-            return ;
-         }
-   } ;
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_PMDNETCALLBACKFUNC ) ;
+
+      rc = SDB_SYS ;
+      goto error ;
+
+   done:
+      PD_TRACE_EXITRC ( SDB_PMDNETCALLBACKFUNC, rc );
+      return rc ;
+   error:
+      goto done ;
+   }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDASYNCNETEP, "pmdAsyncNetEntryPoint" )
    INT32 pmdAsyncNetEntryPoint ( pmdEDUCB *cb, void *pData )
@@ -58,8 +63,6 @@ namespace engine
       pmdEDUMgr *pEDUMgr = cb->getEDUMgr () ;
       _netRouteAgent *pRouteAgent = (_netRouteAgent *)pData;
       BOOLEAN hasReg = FALSE ;
-      asyncTimeoutHandler timeHandler ;
-      UINT32 timerid = 0 ;
 
       rc = pEDUMgr->activateEDU( cb ) ;
       if ( SDB_OK != rc )
@@ -69,10 +72,6 @@ namespace engine
          goto error ;
       }
 
-      rc = pRouteAgent->addTimer( PMD_ASYNC_NET_TIMEOUT_MS,
-                                  &timeHandler, timerid ) ;
-      PD_RC_CHECK( rc, PDERROR, "Add coord timer failed, rc: %d", rc ) ;
-
       //start run
       PD_LOG ( PDEVENT, "Run %s[Type: %d] ...", getEDUName( cb->getType() ),
                cb->getType() ) ;
@@ -81,7 +80,7 @@ namespace engine
       hasReg = TRUE ;
       try
       {
-         pRouteAgent->run() ;
+         pRouteAgent->run( pmdNetCallbackFunc ) ;
       }
       catch ( std::exception &e )
       {
@@ -97,14 +96,46 @@ namespace engine
    done:
       if ( hasReg )
       {
-         pRouteAgent->removeTimer( timerid ) ;
-         pEDUMgr->deleteIOService ( pRouteAgent->ioservice() ) ;
+         pEDUMgr->delIOSerivce( pRouteAgent->ioservice() ) ;
       }
       PD_TRACE_EXITRC ( SDB_PMDASYNCNETEP, rc );
       return rc;
    error:
       goto done;
    }
+
+   /// Register
+   PMD_DEFINE_ENTRYPOINT( EDU_TYPE_REPR, TRUE,
+                          pmdAsyncNetEntryPoint,
+                          "ReplReader" ) ;
+
+   PMD_DEFINE_ENTRYPOINT( EDU_TYPE_SHARDR, TRUE,
+                          pmdAsyncNetEntryPoint,
+                          "ShardReader" ) ;
+
+   PMD_DEFINE_ENTRYPOINT( EDU_TYPE_CATNETWORK, TRUE,
+                          pmdAsyncNetEntryPoint,
+                          "CatalogNetwork" ) ;
+
+   PMD_DEFINE_ENTRYPOINT( EDU_TYPE_COORDNETWORK, TRUE,
+                          pmdAsyncNetEntryPoint,
+                          "CoordNetwork" ) ;
+
+   PMD_DEFINE_ENTRYPOINT( EDU_TYPE_OMNET, TRUE,
+                          pmdAsyncNetEntryPoint,
+                          "OMNet" ) ;
+
+   PMD_DEFINE_ENTRYPOINT( EDU_TYPE_RTNNETWORK, TRUE,
+                          pmdAsyncNetEntryPoint,
+                          "RtnNetwork" ) ;
+
+   PMD_DEFINE_ENTRYPOINT( EDU_TYPE_SE_SERVICE, TRUE,
+                          pmdAsyncNetEntryPoint,
+                          "SeService" ) ;
+
+   PMD_DEFINE_ENTRYPOINT( EDU_TYPE_SE_INDEXR, TRUE,
+                          pmdAsyncNetEntryPoint,
+                          "SeIndexerReader" ) ;
 
 }
 

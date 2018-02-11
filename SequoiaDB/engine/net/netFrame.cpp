@@ -44,6 +44,7 @@
 #include "msgMessageFormat.hpp"
 #include "pdTrace.hpp"
 #include "netTrace.hpp"
+#include "netRoute.hpp"
 #include <boost/bind.hpp>
 
 using namespace boost::asio::ip ;
@@ -51,6 +52,10 @@ using namespace boost::asio::ip ;
 namespace engine
 {
    #define NET_INNER_TIMER_INTERVAL       ( 2000 )
+   #define NET_DUMMY_TIMER_INTERVAL       ( 2147483647 )
+
+   #define NET_MBPS_MIN_VALUE             ( 102400 )     /// 100KB
+   #define NET_MBPS_THRESHOLD             ( 5242880 )    /// 5MB
 
    /*
       _netInnerTimeHandle implement
@@ -59,6 +64,7 @@ namespace engine
    {
       _pFrame = pFrame ;
       _timeID = 0 ;
+      _dummyTimerID = 0 ;
    }
 
    _netInnerTimeHandle::~_netInnerTimeHandle()
@@ -70,18 +76,15 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      rc = _pFrame->listen( _hostName.c_str(),
-                            _svcName.c_str() ) ;
-      if ( SDB_OK == rc || SDB_NET_ALREADY_LISTENED == rc )
+      if ( _timeID == id )
       {
-         _pFrame->removeTimer( _timeID ) ;
-
-         if ( SDB_OK == rc )
+         rc = _pFrame->listen( _hostName.c_str(), _svcName.c_str() ) ;
+         if ( SDB_OK == rc || SDB_NET_ALREADY_LISTENED == rc )
          {
-            _pFrame->_asyncAccept() ;
+            _pFrame->removeTimer( _timeID ) ;
+            PD_LOG( PDEVENT, "Restart listening on %s:%s succeed",
+                    _hostName.c_str(), _svcName.c_str() ) ;
          }
-         PD_LOG( PDEVENT, "Restart listening on %s:%s succeed",
-                 _hostName.c_str(), _svcName.c_str() ) ;
       }
    }
 
@@ -110,28 +113,39 @@ namespace engine
       }
    }
 
-   #define NET_INSERT_OPPO( a )\
-           _opposite.insert(make_pair( a->handle(), a))
-   #define NET_INSERT_ROUTE( a )\
-           _route.insert(make_pair(a->id().value, a))
-   #define NET_LISTEN_HOST "0.0.0.0"
-
-   typedef multimap<UINT64, NET_EH>::iterator MULTI_ITR ;
-
-   _netFrame::_netFrame( _netMsgHandler *handler ):
-                         _handler(handler),
-                         _acceptor(_ioservice),
-                         _handle(1),
-                         _timerID( NET_INVALID_TIMER_ID ),
-                         _netOut(0),
-                         _netIn(0),
-                         _innerTimeHandle(this)
+   INT32 _netInnerTimeHandle::startDummyTimer()
    {
+      return _pFrame->addTimer( NET_DUMMY_TIMER_INTERVAL,
+                                this, _dummyTimerID ) ;
+   }
+
+   /// define listen host
+   #define NET_LISTEN_HOST          "0.0.0.0"
+
+   /*
+      _netFrame implement
+   */
+   _netFrame::_netFrame( _netMsgHandler *handler, _netRoute *pRoute )
+   :_pRoute( pRoute ),
+    _mainSuitPtr( SDB_OSS_NEW netEventSuit( this ) ),
+    _handler( handler ),
+    _acceptor( _mainSuitPtr->getIOService() ),
+    _handle( 1 ),
+    _timerID( NET_INVALID_TIMER_ID ),
+    _netOut( 0 ),
+    _netIn( 0 ),
+    _innerTimeHandle( this )
+   {
+      _pThreadFunc = NULL ;
       _local.value = MSG_INVALID_ROUTEID ;
       _beatInterval = NET_HEARTBEAT_INTERVAL ;
       _beatTimeout = 0 ;
       _beatLastTick = pmdGetDBTick() ;
       _checkBeat = FALSE ;
+
+      _maxSockPerNode = 1 ;
+      _maxSockPerThread = 0 ;
+      _maxThreadNum = 0 ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_DECONS, "_netFrame::~_netFrame" )
@@ -145,24 +159,107 @@ namespace engine
       PD_TRACE_EXIT ( SDB__NETFRAME_DECONS );
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_RUN, "_netFrame::run" )
-   void _netFrame::run()
+   void _netFrame::setMaxSockPerNode( UINT32 maxSockPerNode )
    {
-      PD_TRACE_ENTRY ( SDB__NETFRAME_RUN );
-      if ( _acceptor.is_open() )
+      _maxSockPerNode = maxSockPerNode ;
+   }
+
+   void _netFrame::setMaxSockPerThread( UINT32 maxSockPerThread )
+   {
+      _maxSockPerThread = maxSockPerThread ;
+   }
+
+   void _netFrame::setMaxThreadNum( UINT32 maxThreadNum )
+   {
+      _maxThreadNum = maxThreadNum ;
+   }
+
+   void _netFrame::onRunSuitStart( netEvSuitPtr evSuitPtr )
+   {
+      /// do nothing
+   }
+
+   void _netFrame::onRunSuitStop( netEvSuitPtr evSuitPtr )
+   {
+      /// make sure all the netEventHandles have closed
+      _mtx.get() ;
+      _eraseSuit_i( evSuitPtr ) ;
+      _mtx.release() ;
+
+      _netEventSuit::SET_HANDLE setHandles = evSuitPtr->getHandles() ;
+      _netEventSuit::SET_HANDLE_IT itr = setHandles.begin() ;
+      while( itr != setHandles.end() )
       {
-         _asyncAccept() ;
+         close( *itr ) ;
+         ++itr ;
+      }
+   }
+
+   void _netFrame::onSuitTimer( netEvSuitPtr evSuitPtr )
+   {
+      ossScopedLock lock( &_mtx, EXCLUSIVE ) ;
+
+      if ( 0 == evSuitPtr->getHandleNum() )
+      {
+         /// stop the suit and remove it
+         evSuitPtr->stop() ;
+         _eraseSuit_i( evSuitPtr ) ;
+      }
+   }
+
+   UINT32 _netFrame::getEvSuitSize()
+   {
+      UINT32 size = 0 ;
+      _mtx.get_shared() ;
+      size = _vecEvSuit.size() ;
+      _mtx.release_shared() ;
+
+      return size ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_RUN, "_netFrame::run" )
+   INT32 _netFrame::run( NET_START_THREAD_FUNC pFunc )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB__NETFRAME_RUN ) ;
+
+      _pThreadFunc = pFunc ;
+
+      /// start dummy timer
+      rc = _innerTimeHandle.startDummyTimer() ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Start dummy timer failed, rc: %d", rc ) ;
+         goto error ;
       }
 
-      _ioservice.run() ;
+      /// run main suit ioservice
+      _mainSuitPtr->getIOService().run() ;
+
+      /// stop all evSuit
+      _stopAllEvSuit() ;
+
+      /// wait all evSuit stop
+      while( TRUE )
+      {
+         if ( getEvSuitSize() > 0 )
+         {
+            ossSleep( 200 ) ;
+            continue ;
+         }
+         break ;
+      }
 
       if ( _handler )
       {
          _handler->onStop() ;
       }
 
-      PD_TRACE_EXIT( SDB__NETFRAME_RUN );
-      return ;
+   done:
+      PD_TRACE_EXITRC( SDB__NETFRAME_RUN, rc );
+      return rc ;
+   error:
+      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_STOP, "_netFrame::stop" )
@@ -170,9 +267,38 @@ namespace engine
    {
       PD_TRACE_ENTRY ( SDB__NETFRAME_STOP );
       closeListen() ;
-      _ioservice.stop() ;
+      _mainSuitPtr->getIOService().stop() ;
+      _stopAllEvSuit() ;
       close() ;
       PD_TRACE_EXIT ( SDB__NETFRAME_STOP );
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_MAKESTAT, "_netFrame::makeStat" )
+   void _netFrame::makeStat( UINT32 timeout )
+   {
+      PD_TRACE_ENTRY ( SDB__NETFRAME_MAKESTAT ) ;
+      NET_EH eh ;
+      NET_HANDLE handle = NET_INVALID_HANDLE ;
+      MAP_EVENT_IT itr ;
+      UINT64 curTick = pmdGetDBTick() ;
+
+      while( TRUE )
+      {
+         _mtx.get_shared() ;
+         itr = _opposite.upper_bound( handle ) ;
+         if ( itr == _opposite.end() )
+         {
+            _mtx.release_shared() ;
+            break ;
+         }
+         eh = itr->second ;
+         handle = itr->first ;
+         _mtx.release_shared() ;
+
+         /// make stat
+         eh->makeStat( curTick ) ;
+      }
+      PD_TRACE_EXIT ( SDB__NETFRAME_MAKESTAT ) ;
    }
 
    void _netFrame::setBeatInfo( UINT32 beatTimeout, UINT32 beatInteval )
@@ -199,7 +325,7 @@ namespace engine
       MsgHeader beat ;
       NET_EH eh ;
       NET_HANDLE handle = NET_INVALID_HANDLE ;
-      map<NET_HANDLE, NET_EH>::iterator itr ;
+      MAP_EVENT_IT itr ;
 
       beat.messageLength = sizeof( MsgHeader ) ;
       beat.opCode = MSG_HEARTBEAT ;
@@ -238,7 +364,7 @@ namespace engine
    {
       NET_EH eh ;
       NET_HANDLE handle = NET_INVALID_HANDLE ;
-      map<NET_HANDLE, NET_EH>::iterator itr ;
+      MAP_EVENT_IT itr ;
       UINT64 spanTime = 0 ;
       MsgRouteID routeid ;
 
@@ -322,7 +448,7 @@ namespace engine
             }
          }
       }
-      catch ( std::exception& e )
+      catch ( std::exception& )
       {
          // ignore error
       }
@@ -336,16 +462,18 @@ namespace engine
       return ip ;
    }
 
-   NET_EH _netFrame::getEventHandle( const NET_HANDLE & handle )
+   NET_EH _netFrame::getEventHandle( const NET_HANDLE &handle )
    {
       NET_EH eh ;
+      MAP_EVENT_IT itr ;
+
       _mtx.get_shared() ;
-      map<NET_HANDLE, NET_EH>::iterator itr = _opposite.find( handle ) ;
+
+      itr = _opposite.find( handle ) ;
       if ( _opposite.end() != itr )
       {
          eh = itr->second ;
       }
-
       _mtx.release_shared() ;
 
       return eh ;
@@ -359,6 +487,7 @@ namespace engine
       SDB_ASSERT( NULL != serviceName, "serviceName should not be NULL" ) ;
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__NETFRAME_LISTEN );
+
       if ( _acceptor.is_open() )
       {
          rc = SDB_NET_ALREADY_LISTENED ;
@@ -369,7 +498,7 @@ namespace engine
       {
          /// here we bind 0.0.0.0.
          tcp::resolver::query query ( tcp::v4(), NET_LISTEN_HOST, serviceName ) ;
-         tcp::resolver resolver ( _ioservice ) ;
+         tcp::resolver resolver ( _mainSuitPtr->getIOService() ) ;
          tcp::resolver::iterator itr = resolver.resolve ( query ) ;
          ip::tcp::endpoint endpoint = *itr ;
          _acceptor.open( endpoint.protocol() ) ;
@@ -381,14 +510,17 @@ namespace engine
       {
          PD_LOG ( PDERROR, "Failed to listen on %s:%s, error:%s", hostName,
                   serviceName, e.what() ) ;
-         // In case of listen error, close the _acceptor, then the user is able
-         // to try to listen again.
-         closeListen() ;
          rc = SDB_NET_CANNOT_LISTEN ;
          goto error ;
       }
       /// set info
       _innerTimeHandle.setInfo( hostName, serviceName ) ;
+
+      rc = _asyncAccept() ;
+      if ( rc )
+      {
+         goto error ;
+      }
 
       PD_LOG( PDDEBUG, "listening on port %s", serviceName ) ;
 
@@ -396,6 +528,7 @@ namespace engine
       PD_TRACE_EXITRC ( SDB__NETFRAME_LISTEN, rc );
       return rc ;
    error:
+      closeListen() ;
       goto done ;
    }
 
@@ -409,7 +542,8 @@ namespace engine
 
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__NETFRAME_SYNNCCONN );
-      _netEventHandler *ev = SDB_OSS_NEW _netEventHandler( this ) ;
+      _netEventHandler *ev = SDB_OSS_NEW _netEventHandler( _getEvSuit( TRUE ),
+                                                           _handle.inc() ) ;
       if ( NULL == ev )
       {
          PD_LOG ( PDERROR, "Failed to malloc mem" ) ;
@@ -425,17 +559,150 @@ namespace engine
          }
 
          eh->id( id ) ;
+         eh->asyncRead() ;
+
+         /// add to map
          _mtx.get() ;
-         NET_INSERT_OPPO( eh ) ;
-         NET_INSERT_ROUTE( eh ) ;
+         _opposite.insert( make_pair( eh->handle(), eh ) ) ;
+         _route.insert( make_pair( eh->id().value, eh ) ) ;
          _mtx.release() ;
+
          // callback: handleConnect
          _handler->handleConnect( eh->handle(), id, TRUE ) ;
-         eh->asyncRead() ;
       }
 
    done:
       PD_TRACE_EXITRC ( SDB__NETFRAME_SYNNCCONN, rc );
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_SYNNCCONN2, "_netFrame::syncConnect" )
+   INT32 _netFrame::syncConnect( NET_EH &eh )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN hasConnect = FALSE ;
+      PD_TRACE_ENTRY ( SDB__NETFRAME_SYNNCCONN2 ) ;
+
+      eh->mtx().get() ;
+      if ( !eh->isConnected() )
+      {
+         if ( eh->isNew() )
+         {
+            MsgRouteID id = eh->id() ;
+            CHAR host[ OSS_MAX_HOSTNAME + 1 ] = { 0 } ;
+            CHAR service[ OSS_MAX_SERVICENAME + 1] = { 0 } ;
+
+            rc = _pRoute->route( id, host, OSS_MAX_HOSTNAME,
+                                 service, OSS_MAX_SERVICENAME ) ;
+            if ( SDB_OK == rc )
+            {
+               rc = eh->syncConnect( host, service ) ;
+               if ( SDB_OK == rc )
+               {
+                  hasConnect = TRUE ;
+                  eh->asyncRead() ;
+               }
+            }
+         }
+         else
+         {
+            rc = SDB_NETWORK ;
+         }
+      }
+      eh->mtx().release() ;
+
+      if ( rc )
+      {
+         goto error ;
+      }
+      if ( hasConnect )
+      {
+         // callback: handleConnect
+         _handler->handleConnect( eh->handle(), eh->id(), TRUE ) ;
+      }
+
+   done:
+      PD_TRACE_EXITRC ( SDB__NETFRAME_SYNNCCONN2, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME__GETHANDLE, "_netFrame::_getHandle" )
+   INT32 _netFrame::_getHandle( const _MsgRouteID &id, NET_EH &eh )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB__NETFRAME__GETHANDLE ) ;
+
+      MULMAP_ROUTE_IT_PAIR pitr ;
+      UINT32 sockNum = 0 ;
+      UINT32 minMBPS = 0 ;
+      OSS_LATCH_MODE mode = SHARED ;
+      UINT32 retryTimes = 0 ;
+
+      while( ++retryTimes <= 2 )
+      {
+         sockNum = 0 ;
+         ossScopedLock lock( &_mtx, mode ) ;
+
+         pitr = _route.equal_range( id.value ) ;
+         for ( MULMAP_ROUTE_IT mitr = pitr.first ; mitr != pitr.second ; ++mitr )
+         {
+            if ( 0 == sockNum )
+            {
+               eh = mitr->second ;
+               minMBPS = eh->getMBPS() ;
+            }
+            else if ( mitr->second->getMBPS() < minMBPS )
+            {
+               eh = mitr->second ;
+               minMBPS = eh->getMBPS() ;
+            }
+
+            ++sockNum ;
+
+            if ( minMBPS <= NET_MBPS_MIN_VALUE ||
+                 ( _maxSockPerNode > 0 && sockNum >= _maxSockPerNode ) )
+            {
+               break ;
+            }
+         }
+
+         if ( sockNum > 0 && minMBPS <= NET_MBPS_THRESHOLD )
+         {
+            break ;
+         }
+         else if ( 1 == retryTimes )
+         {
+            /// need to swith the lock
+            mode = EXCLUSIVE ;
+            continue ;
+         }
+         else
+         {
+            _netEventHandler *pEH = NULL ;
+            /// create a new socket
+            pEH = SDB_OSS_NEW _netEventHandler( _getEvSuit( FALSE ),
+                                                _handle.inc() ) ;
+            if ( !pEH )
+            {
+               rc = SDB_OOM ;
+               PD_LOG( PDERROR, "Allocate netEventHandler failed" ) ;
+               goto error ;
+            }
+            eh = NET_EH( pEH ) ;
+
+            eh->id( id ) ;
+            /// add to map
+            _opposite.insert( make_pair( eh->handle(), eh ) ) ;
+            _route.insert( make_pair( eh->id().value, eh ) ) ;
+         }
+      }
+
+   done:
+      PD_TRACE_EXITRC ( SDB__NETFRAME__GETHANDLE, rc );
       return rc ;
    error:
       goto done ;
@@ -452,18 +719,21 @@ namespace engine
       INT32 rc = SDB_OK ;
       MsgHeader *msgHeader = NULL ;
       PD_TRACE_ENTRY ( SDB__NETFRAME_SYNCSEND );
-      NET_EH eh;
+      NET_EH eh ;
 
-      _mtx.get_shared() ;
-      MULTI_ITR itr =  _route.find( id.value ) ;
-      if ( _route.end() == itr )
+      rc = _getHandle( id, eh ) ;
+      if ( rc )
       {
-         _mtx.release_shared() ;
-         rc = SDB_NET_NOT_CONNECT ;
          goto error ;
       }
-      eh = itr->second ;
-      _mtx.release_shared() ;
+      else if ( !eh->isConnected() )
+      {
+         rc = syncConnect( eh ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+      }
 
       msgHeader = ( MsgHeader* )header ;
       if ( MSG_INVALID_ROUTEID == msgHeader->routeID.value )
@@ -502,9 +772,10 @@ namespace engine
       MsgHeader *msgHeader = NULL ;
       PD_TRACE_ENTRY ( SDB__NETFRAME_SYNCSEND2 );
       NET_EH eh ;
+      MAP_EVENT_IT itr ;
 
       _mtx.get_shared() ;
-      map<NET_HANDLE, NET_EH>::iterator itr = _opposite.find( handle ) ;
+      itr = _opposite.find( handle ) ;
       if ( _opposite.end() == itr )
       {
          _mtx.release_shared() ;
@@ -545,9 +816,10 @@ namespace engine
                   "handle should not be invalid" ) ;
       INT32 rc = SDB_OK ;
       NET_EH eh ;
+      MAP_EVENT_IT itr ;
+
       _mtx.get_shared() ;
-      map<NET_HANDLE, NET_EH>::iterator itr =
-                                _opposite.find( handle ) ;
+      itr = _opposite.find( handle ) ;
       if ( _opposite.end() == itr )
       {
          _mtx.release_shared() ;
@@ -587,8 +859,10 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__NETFRAME_SYNCSEND3 );
       UINT32 headLen = header->messageLength - bodyLen ;
       NET_EH eh ;
+      MAP_EVENT_IT itr ;
+
       _mtx.get_shared() ;
-      map<NET_HANDLE, NET_EH>::iterator itr = _opposite.find( handle ) ;
+      itr = _opposite.find( handle ) ;
       if ( _opposite.end() == itr )
       {
          _mtx.release_shared() ;
@@ -636,7 +910,7 @@ namespace engine
 
       INT32 rc = SDB_OK ;
       NET_EH eh ;
-      map<NET_HANDLE, NET_EH>::iterator itHandle ;
+      MAP_EVENT_IT itHandle ;
 
       header->messageLength = sizeof( MsgHeader ) + netCalcIOVecSize( iov ) ;
       if ( header->messageLength > SDB_MAX_MSG_LENGTH )
@@ -671,9 +945,8 @@ namespace engine
       }
       _netOut.add( sizeof(MsgHeader) ) ;
 
-      for ( netIOVec::const_iterator itr = iov.begin();
-            itr != iov.end();
-            itr++ )
+      for ( netIOVec::const_iterator itr = iov.begin() ; itr != iov.end();
+            ++itr )
       {
          SDB_ASSERT( NULL != itr->iovBase, "should not be NULL" ) ;
 
@@ -710,17 +983,22 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__NETFRAME_SYNCSEND4 );
       UINT32 headLen = header->messageLength - bodyLen ;
-      NET_EH eh;
-      _mtx.get_shared() ;
-      MULTI_ITR itr =  _route.find( id.value ) ;
-      if ( _route.end() == itr )
+      NET_EH eh ;
+
+      rc = _getHandle( id, eh ) ;
+      if ( rc )
       {
-         _mtx.release_shared() ;
-         rc = SDB_NET_NOT_CONNECT ;
          goto error ;
       }
-      eh = itr->second ;
-      _mtx.release_shared() ;
+      else if ( !eh->isConnected() )
+      {
+         rc = syncConnect( eh ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+      }
+
       if ( MSG_INVALID_ROUTEID == header->routeID.value )
       {
          header->routeID = _local ;
@@ -765,7 +1043,6 @@ namespace engine
       PD_TRACE_ENTRY( SDB__NETFRAME_SYNCSENDV ) ;
       INT32 rc = SDB_OK ;
       NET_EH eh ;
-      MULTI_ITR itr ;
 
       header->messageLength = sizeof( MsgHeader ) + netCalcIOVecSize( iov ) ;
       if ( header->messageLength > SDB_MAX_MSG_LENGTH )
@@ -779,16 +1056,19 @@ namespace engine
          header->routeID = _local ;
       }
 
-      _mtx.get_shared() ;
-      itr = _route.find( id.value ) ;
-      if ( _route.end() == itr )
+      rc = _getHandle( id, eh ) ;
+      if ( rc )
       {
-         _mtx.release_shared() ;
-         rc = SDB_NET_NOT_CONNECT ;
          goto error ;
       }
-      eh = itr->second ;
-      _mtx.release_shared() ;
+      else if ( !eh->isConnected() )
+      {
+         rc = syncConnect( eh ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+      }
 
       eh->mtx().get() ;
       if ( pHandle )
@@ -804,9 +1084,8 @@ namespace engine
       }
       _netOut.add( sizeof(MsgHeader) ) ;
 
-      for ( netIOVec::const_iterator itr = iov.begin();
-            itr != iov.end();
-            itr++ )
+      for ( netIOVec::const_iterator itr = iov.begin() ; itr != iov.end() ;
+            ++itr )
       {
          SDB_ASSERT( NULL != itr->iovBase, "should not be NULL" ) ;
 
@@ -835,26 +1114,26 @@ namespace engine
    void _netFrame::close( const _MsgRouteID &id )
    {
       PD_TRACE_ENTRY ( SDB__NETFRAME_CLOSE );
+      MULMAP_ROUTE_IT_PAIR pitr ;
+
       _mtx.get_shared() ;
-      pair<MULTI_ITR, MULTI_ITR> pitr = _route.equal_range( id.value ) ;
-      for ( MULTI_ITR mitr=pitr.first;
-            mitr != pitr.second;
-            mitr++ )
+      pitr = _route.equal_range( id.value ) ;
+      for ( MULMAP_ROUTE_IT mitr = pitr.first ; mitr != pitr.second ; ++mitr )
       {
          mitr->second->close() ;
       }
       _mtx.release_shared() ;
       PD_TRACE_EXIT ( SDB__NETFRAME_CLOSE );
-      return ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_CLOSE2, "_netFrame::close" )
    void _netFrame::close()
    {
       PD_TRACE_ENTRY ( SDB__NETFRAME_CLOSE2 );
+      MAP_EVENT_IT itr ;
+
       _mtx.get_shared() ;
-      map<NET_HANDLE, NET_EH>::iterator itr =
-                                 _opposite.begin() ;
+      itr = _opposite.begin() ;
       for ( ; itr != _opposite.end(); itr++ )
       {
          itr->second->close() ;
@@ -877,10 +1156,10 @@ namespace engine
    void _netFrame::close( const NET_HANDLE &handle )
    {
       PD_TRACE_ENTRY( SDB__NETFRAME_CLOSE3 ) ;
+      MAP_EVENT_IT itr ;
 
       _mtx.get_shared() ;
-      map<NET_HANDLE, NET_EH>::iterator itr =
-                                  _opposite.find( handle ) ;
+      itr = _opposite.find( handle ) ;
       if ( _opposite.end() != itr )
       {
          itr->second->close() ;
@@ -893,41 +1172,49 @@ namespace engine
       }
 
       PD_TRACE_EXIT( SDB__NETFRAME_CLOSE3 ) ;
-      return ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_ADDTIMER, "_netFrame::addTimer" )
-   INT32 _netFrame::addTimer( UINT32 millsec, _netTimeoutHandler *handler,
+   INT32 _netFrame::addTimer( UINT32 millsec,
+                              _netTimeoutHandler *handler,
                               UINT32 &timerid )
    {
       INT32 rc = SDB_OK ;
+      _netTimer *t = NULL ;
+      timerid = NET_INVALID_TIMER_ID ;
+      NET_TH timer ;
       PD_TRACE_ENTRY ( SDB__NETFRAME_ADDTIMER );
 
-      timerid = NET_INVALID_TIMER_ID ;
-
-      _mtx.get() ;
-      _netTimer *t = SDB_OSS_NEW _netTimer( millsec,
-                                            ++_timerID,
-                                            _ioservice,
-                                            handler ) ;
-      if ( NULL == t )
+      t = SDB_OSS_NEW _netTimer( millsec, ++_timerID,
+                                 _mainSuitPtr->getIOService(),
+                                 handler ) ;
+      if ( !t )
       {
+         PD_LOG( PDERROR, "Allocate netTimer failed" ) ;
          rc = SDB_OOM ;
          goto error ;
       }
-      {
-         NET_TH timer(t) ;
-         _timers.insert( std::make_pair(timer->id(), timer ));
-         _mtx.release() ;
-         timerid = timer->id() ;
-         timer->asyncWait() ;
-      }
+
+      timer = NET_TH( t ) ;
+      t = NULL ;
+
+      /// lock
+      _mtx.get() ;
+      _timers.insert( std::make_pair( timer->id(), timer ) ) ;
+      /// release
+      _mtx.release() ;
+
+      timerid = timer->id() ;
+      timer->asyncWait() ;
 
    done:
+      if ( t )
+      {
+         SDB_OSS_DEL t ;
+      }
       PD_TRACE_EXITRC ( SDB__NETFRAME_ADDTIMER, rc );
       return rc ;
    error:
-      _mtx.release() ;
       goto done ;
    }
 
@@ -935,23 +1222,24 @@ namespace engine
    INT32 _netFrame::removeTimer( UINT32 id )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB__NETFRAME_REMTIMER );
+      MAP_TIMMER_IT it ;
+      PD_TRACE_ENTRY ( SDB__NETFRAME_REMTIMER ) ;
+
       _mtx.get() ;
-      map<UINT32, NET_TH>::iterator itr = _timers.find( id ) ;
-      if ( _timers.end() == itr )
+      it = _timers.find( id ) ;
+      if ( _timers.end() == it )
       {
          rc = SDB_NET_TIMER_ID_NOT_FOUND ;
-         goto error ;
       }
-
-      itr->second->cancel() ;
-      _timers.erase(itr) ;
-   done:
+      else
+      {
+         it->second->cancel() ;
+         _timers.erase( it ) ;
+      }
       _mtx.release() ;
-      PD_TRACE_EXITRC ( SDB__NETFRAME_REMTIMER, rc );
+
+      PD_TRACE_EXITRC ( SDB__NETFRAME_REMTIMER, rc ) ;
       return rc ;
-   error:
-      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_HNDMSG, "_netFrame::handleMsg" )
@@ -1013,25 +1301,146 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME__ADDRT, "_netFrame::_addRoute" )
    void _netFrame::_addRoute( NET_EH eh )
    {
-      PD_TRACE_ENTRY ( SDB__NETFRAME__ADDRT );
+      PD_TRACE_ENTRY ( SDB__NETFRAME__ADDRT ) ;
+
       _mtx.get() ;
-      NET_INSERT_ROUTE( eh ) ;
+      _route.insert( make_pair( eh->id().value, eh ) ) ;
       _mtx.release() ;
+
       PD_TRACE_EXIT ( SDB__NETFRAME__ADDRT );
-      return ;
+   }
+
+   void _netFrame::_eraseSuit_i( netEvSuitPtr &ptr )
+   {
+      VEC_EVSUIT_IT itr = _vecEvSuit.begin() ;
+      while( itr != _vecEvSuit.end() )
+      {
+         if ( (*itr).get() == ptr.get() )
+         {
+            _vecEvSuit.erase( itr ) ;
+            break ;
+         }
+         ++itr ;
+      }
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME__GETEVSUIT, "_netFrame::_getEvSuit" )
+   netEvSuitPtr _netFrame::_getEvSuit( BOOLEAN needLock )
+   {
+      netEventSuit *pSuit = NULL ;
+      netEvSuitPtr ptr = _mainSuitPtr ;
+      BOOLEAN hasLock = FALSE ;
+      PD_TRACE_ENTRY ( SDB__NETFRAME__GETEVSUIT ) ;
+
+      if ( _pThreadFunc && _maxSockPerThread > 0 )
+      {
+         VEC_EVSUIT_IT itr ;
+         UINT32 minSockNum = ptr->getHandleNum() ;
+         UINT32 curSockNum = 0 ;
+
+         if ( needLock )
+         {
+            _mtx.get() ;
+            hasLock = TRUE ;
+         }
+
+         itr = _vecEvSuit.begin() ;
+         while( itr != _vecEvSuit.end() )
+         {
+            curSockNum = (*itr)->getHandleNum() ;
+            if ( curSockNum < minSockNum )
+            {
+               minSockNum = curSockNum ;
+               ptr = (*itr) ;
+
+               if ( minSockNum < _maxSockPerThread )
+               {
+                  /// find
+                  goto done ;
+               }
+            }
+            ++itr ;
+         }
+
+         /// when all suit's socket is >= _maxSockPerThread
+         if ( 0 == _maxThreadNum || _vecEvSuit.size() < _maxThreadNum )
+         {
+            /// create new
+            pSuit = SDB_OSS_NEW netEventSuit( this ) ;
+            if ( pSuit )
+            {
+               /// start thread
+               INT32 rc = _pThreadFunc( pSuit ) ;
+               if ( rc )
+               {
+                  PD_LOG( PDERROR, "Call _pThreadFunc failed, rc: %d", rc ) ;
+                  goto done ;
+               }
+
+               ptr = netEvSuitPtr( pSuit ) ;
+               pSuit = NULL ;
+               _vecEvSuit.push_back( ptr ) ;
+            }
+         }
+      }
+
+   done:
+      if ( hasLock )
+      {
+         _mtx.release() ;
+      }
+      if ( pSuit )
+      {
+         SDB_OSS_DEL pSuit ;
+      }
+      PD_TRACE_EXIT( SDB__NETFRAME__GETEVSUIT ) ;
+      return ptr ;
+   }
+
+   void _netFrame::_stopAllEvSuit()
+   {
+      _mtx.get_shared() ;
+      for ( UINT32 i = 0 ; i < _vecEvSuit.size() ; ++i )
+      {
+         _vecEvSuit[ i ]->stop() ;
+      }
+      _mtx.release_shared() ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME__ASYNCAPT, "_netFrame::_asyncAccept" )
-   void _netFrame::_asyncAccept()
+   INT32 _netFrame::_asyncAccept()
    {
-      PD_TRACE_ENTRY ( SDB__NETFRAME__ASYNCAPT );
-      NET_EH handler( SDB_OSS_NEW _netEventHandler(this) ) ;
-      _acceptor.async_accept(handler->socket(),
-                             boost::bind(&_netFrame::_acceptCallback,
-                                         this,
-                                         handler,
-                                         boost::asio::placeholders::error)) ;
-      PD_TRACE_EXIT ( SDB__NETFRAME__ASYNCAPT );
+      INT32 rc = SDB_OK ;
+      _netEventHandler *pEH = NULL ;
+      NET_EH eh ;
+      PD_TRACE_ENTRY ( SDB__NETFRAME__ASYNCAPT ) ;
+
+      pEH = SDB_OSS_NEW _netEventHandler( _getEvSuit( TRUE ), _handle.inc() ) ;
+      if ( !pEH )
+      {
+         rc = SDB_OOM ;
+         PD_LOG( PDERROR, "Allocate netEventHandler failed" ) ;
+         goto error ;
+      }
+
+      eh = NET_EH( pEH ) ;
+      pEH = NULL ;
+
+      _acceptor.async_accept( eh->socket(),
+                              boost::bind( &_netFrame::_acceptCallback,
+                                           this,
+                                           eh,
+                                           boost::asio::placeholders::error ) ) ;
+
+   done:
+      if ( pEH )
+      {
+         SDB_OSS_DEL pEH ;
+      }
+      PD_TRACE_EXITRC( SDB__NETFRAME__ASYNCAPT, rc ) ;
+      return rc ;
+   error:
+      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME__APTCALLBCK, "_netFrame::_acceptCallback" )
@@ -1059,13 +1468,16 @@ namespace engine
       }
 
       eh->setOpt() ;
+      eh->asyncRead() ;
+
+      /// add to map
       _mtx.get() ;
-      NET_INSERT_OPPO(eh) ;
+      _opposite.insert( make_pair( eh->handle(), eh ) ) ;
       _mtx.release() ;
+
       // callback: handleConnect
       _handler->handleConnect( eh->handle(), eh->id(), FALSE ) ;
       _asyncAccept() ;
-      eh->asyncRead() ;
 
    done:
       PD_TRACE_EXIT ( SDB__NETFRAME__APTCALLBCK ) ;
@@ -1076,16 +1488,18 @@ namespace engine
    void _netFrame::_erase( const NET_HANDLE &handle )
    {
       PD_TRACE_ENTRY ( SDB__NETFRAME__ERASE );
+      MAP_EVENT_IT itr ;
+      MULMAP_ROUTE_IT_PAIR pitr ;
+
       _mtx.get() ;
-      map<NET_HANDLE, NET_EH>::iterator itr = _opposite.find( handle ) ;
+      itr = _opposite.find( handle ) ;
       if ( _opposite.end() == itr )
       {
          goto done ;
       }
-      {
-      pair<MULTI_ITR, MULTI_ITR> pitr = _route.equal_range(
-                                        itr->second->id().value) ;
-      for ( MULTI_ITR mitr=pitr.first ; mitr != pitr.second ; mitr++ )
+
+      pitr = _route.equal_range( itr->second->id().value ) ;
+      for ( MULMAP_ROUTE_IT mitr = pitr.first ; mitr != pitr.second ; ++mitr )
       {
          if ( mitr->second->handle() == handle )
          {
@@ -1094,11 +1508,10 @@ namespace engine
          }
       }
       _opposite.erase( itr ) ;
-      }
+
    done:
       _mtx.release() ;
       PD_TRACE_EXIT ( SDB__NETFRAME__ERASE );
-      return ;
    }
 
    INT64 _netFrame::netIn()

@@ -84,6 +84,7 @@ namespace engine
       CHAR *pBuff             = NULL ;
       INT32 buffSize          = 0 ;
       pmdEDUMgr *pmdEDUMgr    = NULL ;
+      monDBCB *mondbcb        = pmdGetKRCB()->getMonDBCB () ;
 
       if ( !_pEDUCB )
       {
@@ -201,6 +202,7 @@ namespace engine
 
             // increase process event count
             _pEDUCB->incEventCount() ;
+            mondbcb->addReceiveNum() ;
             pBuff[ msgSize ] = 0 ;
             // activate edu
             if ( SDB_OK != ( rc = pmdEDUMgr->activateEDU( _pEDUCB ) ) )

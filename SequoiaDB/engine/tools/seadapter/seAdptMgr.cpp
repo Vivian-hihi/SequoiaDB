@@ -389,7 +389,6 @@ namespace seadapter
       rc = pEDUMgr->startEDU( EDU_TYPE_SEADPTMGR, (_pmdObjBase*)this, &eduID ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to start search engine adapter manager "
                    "edu, rc: %d", rc ) ;
-      pEDUMgr->regSystemEDU( EDU_TYPE_SEADPTMGR, eduID ) ;
       rc = _attachEvent.wait( SEADPT_WAIT_CB_ATTACH_TIMEOUT ) ;
       PD_RC_CHECK( rc, PDERROR, "Wait search engine adapter manager edu attach "
                    "failed, rc: %d", rc ) ;
@@ -398,7 +397,6 @@ namespace seadapter
       rc = pEDUMgr->startEDU( EDU_TYPE_SE_INDEXR, &_indexNetRtAgent, &eduID ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to start search engine adapter net, "
                    "rc: %d", rc ) ;
-      pEDUMgr->regSystemEDU( EDU_TYPE_SE_INDEXR, eduID ) ;
       rc = pEDUMgr->waitUntil( eduID, PMD_EDU_RUNNING ) ;
       PD_RC_CHECK( rc, PDERROR, "Wait indexer reader network daemons active "
                    "failed[ %d ]", rc ) ;
@@ -407,7 +405,6 @@ namespace seadapter
       rc = pEDUMgr->startEDU( EDU_TYPE_SE_SERVICE, (void *)&_svcRtAgent,
                               &eduID ) ;
       PD_RC_CHECK( rc, PDERROR, "Start service listener failed[ %d ]", rc ) ;
-      pEDUMgr->regSystemEDU( EDU_TYPE_SE_SERVICE, eduID ) ;
       rc = pEDUMgr->waitUntil( eduID, PMD_EDU_RUNNING ) ;
       PD_RC_CHECK( rc, PDERROR, "Wait service listener active failed[ %d ]",
                    rc ) ;
@@ -1303,12 +1300,6 @@ namespace seadapter
          PD_LOG ( PDERROR, "Failed to create EDU[type:%d(%s)], rc = %d",
                   type, getEDUName( (EDU_TYPES)type ), rc );
          goto error ;
-      }
-
-      //Resiter EDU Type
-      if ( regSys )
-      {
-         pEDUMgr->regSystemEDU( (EDU_TYPES)type, eduID ) ;
       }
 
       //Wait edu running

@@ -234,10 +234,11 @@ namespace engine
          EDUID agentEDU = PMD_INVALID_EDUID ;
          pmdEDUMgr *eduMgr = krcb->getEDUMgr() ;
          // Then start windows listener thread for "backdoor" listening
-         eduMgr->startEDU ( EDU_TYPE_PIPESLISTENER,
-                            (void*)sdbGetOMAgentOptions()->getCMServiceName(),
-                            &agentEDU ) ;
-         eduMgr->regSystemEDU ( EDU_TYPE_PIPESLISTENER, agentEDU ) ;
+         rc = eduMgr->startEDU ( EDU_TYPE_PIPESLISTENER,
+                                 (void*)sdbGetOMAgentOptions()->getCMServiceName(),
+                                 &agentEDU ) ;
+         PD_RC_CHECK( rc, PDERROR, "Start PIPELISTENER failed, rc: %d",
+                      rc ) ;
 
          rc = eduMgr->waitUntil( agentEDU, PMD_EDU_RUNNING ) ;
          PD_RC_CHECK( rc, PDERROR, "Wait pipe listener to running "

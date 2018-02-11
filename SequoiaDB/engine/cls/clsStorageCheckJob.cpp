@@ -81,9 +81,9 @@ namespace engine
           * Before any one is found in the queue, the status of this thread is
           * wait. Once found, it will be changed to running.
           */
-         pEduMgr->waitEDU( cb->getID() ) ;
+         pEduMgr->waitEDU( cb ) ;
          cb->waitEvent( event, secInterval ) ;
-         pEduMgr->activateEDU( cb->getID() ) ;
+         pEduMgr->activateEDU( cb ) ;
 
          // Check stop signal first
          if ( PMD_IS_DB_DOWN() ||

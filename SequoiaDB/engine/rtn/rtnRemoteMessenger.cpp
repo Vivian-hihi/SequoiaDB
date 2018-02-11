@@ -167,7 +167,6 @@ namespace engine
                              &eduID ) ;
       PD_RC_CHECK( rc, PDERROR, "Start external search network failed[ %d ]",
                    rc ) ;
-      eduMgr->regSystemEDU( EDU_TYPE_RTNNETWORK, eduID ) ;
       rc = eduMgr->waitUntil( eduID, PMD_EDU_RUNNING ) ;
       PD_RC_CHECK( rc, PDERROR, "Wait external search net active failed[ %d ]",
                    rc ) ;

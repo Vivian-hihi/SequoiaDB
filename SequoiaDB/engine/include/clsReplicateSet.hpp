@@ -261,7 +261,6 @@ namespace engine
 
          INT64 netIn() ;
          INT64 netOut() ;
-         void resetMon() ;
 
          INT32 reelect( CLS_REELECTION_LEVEL lvl,
                         UINT32 seconds,

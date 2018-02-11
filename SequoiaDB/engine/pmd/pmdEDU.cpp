@@ -39,58 +39,22 @@
 #include "core.hpp"
 #include <stdio.h>
 #include "pd.hpp"
-#include "ossEDU.hpp"
 #include "ossMem.hpp"
 #include "pmdEDU.hpp"
-#include "pmdEDUMgr.hpp"
+#include "pmdEntryPoint.hpp"
 #include "pmd.hpp"
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
 #include <map>
-
-#if defined ( SDB_ENGINE )
-#include "rtnCB.hpp"
-#endif // SDB_ENGINE
 
 namespace engine
 {
    const UINT32 EDU_MEM_ALIGMENT_SIZE  = 1024 ; // must for times for 4
    const UINT32 EDU_MAX_CATCH_SIZE     = 16*1024*1024 ;
 
-   static std::map<EDU_TYPES, std::string> mapEDUName ;
-   static std::map<EDU_TYPES,EDU_TYPES>    mapEDUTypeSys ;
-
    /*
       TOOL FUNCTIONS
    */
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_REGEDUNAME, "registerEDUName" )
-   INT32 registerEDUName ( EDU_TYPES type, const CHAR * name, BOOLEAN system )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB_REGEDUNAME );
-      std::map<EDU_TYPES, std::string>::iterator it =
-         mapEDUName.find ( type ) ;
-      if ( it != mapEDUName.end() )
-      {
-         PD_LOG ( PDERROR, "EDU type confict[type:%d, %s<->%s]", (INT32)type,
-            it->second.c_str(), name ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-
-      mapEDUName[type] = std::string( name ) ;
-
-      if ( system )
-      {
-         mapEDUTypeSys[type] = type ;
-      }
-   done :
-      PD_TRACE_EXIT ( SDB_REGEDUNAME );
-      return rc ;
-   error :
-      goto done ;
-   }
-
    const CHAR * getEDUStatusDesp ( EDU_STATUS status )
    {
       const CHAR *desp = "Unknown" ;
@@ -109,9 +73,6 @@ namespace engine
          case PMD_EDU_IDLE :
             desp = "Idle" ;
             break ;
-         case PMD_EDU_DESTROY :
-            desp = "Destroying" ;
-            break ;
          default :
             break ;
       }
@@ -119,28 +80,10 @@ namespace engine
       return desp ;
    }
 
-   const CHAR * getEDUName( EDU_TYPES type )
-   {
-      std::map<EDU_TYPES, std::string>::iterator it =
-         mapEDUName.find ( type ) ;
-      if ( it != mapEDUName.end() )
-      {
-         return it->second.c_str() ;
-      }
-
-      return "Unknow" ;
-   }
-
-   BOOLEAN isSystemEDU ( EDU_TYPES type )
-   {
-      std::map<EDU_TYPES,EDU_TYPES>::iterator it = mapEDUTypeSys.find( type ) ;
-      return it == mapEDUTypeSys.end() ? FALSE : TRUE ;
-   }
-
    /*
       _pmdEDUCB implement
    */
-   _pmdEDUCB::_pmdEDUCB( _pmdEDUMgr *mgr, EDU_TYPES type )
+   _pmdEDUCB::_pmdEDUCB( _pmdEDUMgr *mgr, INT32 type )
    {
       _eduMgr           = mgr ;
       _eduID            = PMD_INVALID_EDUID ;
@@ -186,8 +129,6 @@ namespace engine
       _transRC          = SDB_OK ;
 
       _curRequestID     = 1 ;
-
-      _monCfgCB = *( (monConfigCB*)(pmdGetKRCB()->getMonCB()) ) ;
 #endif // SDB_ENGINE
 
       _pErrorBuff = (CHAR *)SDB_OSS_MALLOC( EDU_ERROR_BUFF_SIZE + 1 ) ;
@@ -320,10 +261,8 @@ namespace engine
       _pRemoteSite = NULL ;
    }
 
-   void _pmdEDUCB::setType ( EDU_TYPES type )
+   void _pmdEDUCB::setType ( INT32 type )
    {
-      SDB_ASSERT ( PMD_EDU_IDLE == _status,
-                   "Type can't be changed during active" ) ;
       _eduType = type ;
    }
 
@@ -867,6 +806,66 @@ namespace engine
       _curTransLSN = lsn ;
    }
 
+   void _pmdEDUCB::contextInsert( INT64 contextID )
+   {
+      ossScopedLock _lock ( &_mutex, EXCLUSIVE ) ;
+      _contextList.insert ( contextID ) ;
+   }
+
+   void _pmdEDUCB::contextDelete( INT64 contextID )
+   {
+      ossScopedLock _lock ( &_mutex, EXCLUSIVE ) ;
+      _contextList.erase ( contextID ) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_CONTXTPEEK, "_pmdEDUCB::contextPeek" )
+   INT64 _pmdEDUCB::contextPeek()
+   {
+      PD_TRACE_ENTRY ( SDB__PMDEDUCB_CONTXTPEEK );
+      ossScopedLock _lock ( &_mutex, EXCLUSIVE ) ;
+      SINT64 contextID = -1 ;
+      SET_CONTEXT::const_iterator it ;
+      if ( _contextList.empty() )
+      {
+         goto done ;
+      }
+      it = _contextList.begin() ;
+      contextID = (*it) ;
+      _contextList.erase(it) ;
+
+   done :
+      PD_TRACE1 ( SDB__PMDEDUCB_CONTXTPEEK, PD_PACK_LONG(contextID) );
+      PD_TRACE_EXIT ( SDB__PMDEDUCB_CONTXTPEEK );
+      return contextID ;
+   }
+
+   BOOLEAN _pmdEDUCB::contextFind( INT64 contextID )
+   {
+      ossScopedLock _lock ( &_mutex, SHARED ) ;
+      return _contextList.end() != _contextList.find( contextID ) ;
+   }
+
+   UINT32 _pmdEDUCB::contextNum()
+   {
+      ossScopedLock _lock ( &_mutex, SHARED ) ;
+      return _contextList.size() ;
+   }
+
+   void _pmdEDUCB::contextCopy( _pmdEDUCB::SET_CONTEXT &contextList )
+   {
+      ossScopedLock _lock ( &_mutex, SHARED ) ;
+      contextList = _contextList ;
+   }
+
+   void _pmdEDUCB::initMonAppCB()
+   {
+      _monApplCB.reset() ;
+      if ( _monCfgCB.timestampON )
+      {
+         _monApplCB.recordConnectTimestamp() ;
+      }
+   }
+
    void _pmdEDUCB::incEventCount( UINT32 step )
    {
       _processEventCount += step ;
@@ -899,48 +898,6 @@ namespace engine
       {
          _lockInfo[i].reset() ;
       }
-   }
-
-#if defined ( SDB_ENGINE )
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_CONTXTPEEK, "_pmdEDUCB::contextPeek" )
-   SINT64 _pmdEDUCB::contextPeek ()
-   {
-      PD_TRACE_ENTRY ( SDB__PMDEDUCB_CONTXTPEEK );
-      ossScopedLock _lock ( &_mutex, EXCLUSIVE ) ;
-      SINT64 contextID = -1 ;
-      std::set<SINT64>::const_iterator it ;
-      if ( _contextList.empty() )
-         goto done ;
-      it = _contextList.begin() ;
-      contextID = (*it) ;
-      _contextList.erase(it) ;
-   done :
-      PD_TRACE1 ( SDB__PMDEDUCB_CONTXTPEEK, PD_PACK_LONG(contextID) );
-      PD_TRACE_EXIT ( SDB__PMDEDUCB_CONTXTPEEK );
-      return contextID ;
-   }
-
-   void _pmdEDUCB::clearTransInfo()
-   {
-      _curTransID = DPS_INVALID_TRANS_ID ;
-      _relatedTransLSN = DPS_INVALID_LSN_OFFSET ;
-      _curTransLSN = DPS_INVALID_LSN_OFFSET ;
-      dpsTransCB *pTransCB = pmdGetKRCB()->getTransCB();
-      if ( pTransCB )
-      {
-         pTransCB->transLockReleaseAll( this );
-      }
-      delTransaction() ;
-   }
-
-   void _pmdEDUCB::setWaitLock( const dpsTransLockId &lockId )
-   {
-      _waitLock = lockId ;
-   }
-
-   void _pmdEDUCB::clearWaitLock()
-   {
-      _waitLock.reset() ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB___PMDEDUCB_DUMPINFO, "_pmdEDUCB::dumpInfo" )
@@ -1003,6 +960,30 @@ namespace engine
       }
 
       PD_TRACE_EXIT ( SDB___PMDEDUCB_DUMPINFO2 );
+   }
+
+#if defined ( SDB_ENGINE )
+   void _pmdEDUCB::clearTransInfo()
+   {
+      _curTransID = DPS_INVALID_TRANS_ID ;
+      _relatedTransLSN = DPS_INVALID_LSN_OFFSET ;
+      _curTransLSN = DPS_INVALID_LSN_OFFSET ;
+      dpsTransCB *pTransCB = pmdGetKRCB()->getTransCB();
+      if ( pTransCB )
+      {
+         pTransCB->transLockReleaseAll( this );
+      }
+      delTransaction() ;
+   }
+
+   void _pmdEDUCB::setWaitLock( const dpsTransLockId &lockId )
+   {
+      _waitLock = lockId ;
+   }
+
+   void _pmdEDUCB::clearWaitLock()
+   {
+      _waitLock.reset() ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_GETTRANSLOCK, "_pmdEDUCB::getTransLock" )
@@ -1203,237 +1184,6 @@ namespace engine
    }
 
 #endif // SDB_ENGINE
-
-   /*
-      edu entry point functions
-   */
-   INT32 pmdEDUEntryPointWrapper ( EDU_TYPES type, pmdEDUCB *cb, void *arg )
-   {
-#if defined (_WINDOWS)
-      __try
-      {
-#endif
-         // register TLS, this must happen at very beginning of each thread
-         return pmdEDUEntryPoint ( type, pmdDeclareEDUCB ( cb ), arg ) ;
-#if defined (_WINDOWS)
-      }
-      __except ( engine::ossEDUExceptionFilter ( GetExceptionInformation() ) )
-      {}
-#endif
-      return SDB_SYS ;
-   }
-
-   // main entry point for all EDUs
-   // it will call individual main function for each EDU type
-   // entry points are defined in getEntryFuncByType
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDEDUENTPNT, "pmdEDUEntryPoint" )
-   INT32 pmdEDUEntryPoint ( EDU_TYPES type, pmdEDUCB *cb, void *arg )
-   {
-      INT32       rc           = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB_PMDEDUENTPNT );
-#if defined ( SDB_ENGINE )
-      pmdKRCB     *krcb        = pmdGetKRCB () ;
-#endif
-      EDUID       myEDUID      = cb->getID () ; // edu id for myself
-      pmdEDUMgr  *eduMgr       = cb->getEDUMgr() ; // the manager class
-      pmdEDUEvent event ;
-      BOOLEAN     eduDestroyed = FALSE ;
-      BOOLEAN     isForced     = FALSE ;
-      CHAR        eduName[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
-
-      // save kernel thread id ( Linux ), or thread handle ( windows )
-#if defined (_WINDOWS)
-      HANDLE      tHdl = NULL ;
-      BOOLEAN     isHdlCreated = false ;
-
-      if ( DuplicateHandle( GetCurrentProcess(), GetCurrentThread(),
-                            GetCurrentProcess(), &tHdl, 0, false, 
-                            DUPLICATE_SAME_ACCESS ) )
-      {
-         isHdlCreated = true ;
-      }
-#elif defined (_LINUX )
-      OSSTID tHdl = ossGetCurrentThreadID() ;
-      cb->setThreadID ( ossPThreadSelf() ) ;
-#endif
-      cb->setThreadHdl( tHdl ) ;
-      cb->setTID ( ossGetCurrentThreadID() ) ;
-      eduMgr->setEDU ( ossGetCurrentThreadID(), myEDUID ) ;
-
-      PD_LOG ( PDEVENT, "Start thread[%d] for EDU[ID:%lld, type:%s, Name:%s]",
-               ossGetCurrentThreadID(), myEDUID, getEDUName( type ),
-               cb->getName() ) ;
-
-      while ( !eduDestroyed )
-      {
-         type = cb->getType () ;
-         // currently the thread status should be either WAITING or CREATING
-         // usually we don't expect agent sitting in creating for long time
-         // the thread spawning the agent supposed to post event immediately
-         // after the thread is created
-         if ( !cb->waitEvent ( event, OSS_ONE_SEC, TRUE ) )
-         {
-            // if don't receive anything in 1000 milliseconds,
-            // we should check "killed" mark for this session
-            // if we continue to run, then run
-            if ( cb->isForced () )
-            {
-               // we break the main loop, then we go ahead to call
-               // destroyEDU to destroy the memory
-               // this should be safe because in this code path
-               // the status of edu cannot be RUNNING
-               // then in either CREATING/IDLE/WAITING status
-               // it should be safe for us to destroy it
-               isForced = TRUE ;
-            }
-            else
-            {
-               continue ;
-            }
-         }
-
-         initCurAuditMask( getAuditMask() ) ;
-
-         if ( !isForced && PMD_EDU_EVENT_RESUME == event._eventType )
-         {
-            // set EDU status to wait
-            eduMgr->waitEDU ( cb->getID () ) ;
-            // find their main function entry by type
-            pmdEntryPoint entryFunc = getEntryFuncByType ( cb->getType() ) ;
-            if ( NULL == entryFunc )
-            {
-               PD_LOG ( PDERROR , "EDU[type=%d] entry point func is NULL",
-                        cb->getType() ) ;
-               PMD_SHUTDOWN_DB( SDB_SYS ) ;
-               rc = SDB_SYS ;
-            }
-            else
-            {
-#if defined ( SDB_ENGINE )
-               // initial monCfgCB
-               *(cb->getMonConfigCB() ) = *( (monConfigCB*)(krcb->getMonCB()) );
-               // initial monAppCB
-               cb->initMonAppCB() ;
-#endif // SDB_ENGINE
-
-               rc = entryFunc ( cb, event._Data ) ;
-
-               // copy name
-               ossStrncpy( eduName, cb->getName(), OSS_MAX_PATHSIZE ) ;
-            }
-
-            if ( PMD_IS_DB_UP() )
-            {
-               if ( isSystemEDU( cb->getType() ) )
-               {
-                  PD_LOG ( PDSEVERE, "System EDU[ID:%lld, type:%s] exit "
-                           "with %d", cb->getID(), getEDUName(cb->getType()),
-                           rc ) ;
-                  PMD_SHUTDOWN_DB( rc ) ;
-               }
-               else if ( SDB_OK != rc )
-               {
-                  PD_LOG ( PDWARNING, "EDU[ID:%lld, type:%s, Name:%s] exit "
-                           "with %d", cb->getID(), getEDUName(cb->getType()),
-                           cb->getName(), rc ) ;
-               }
-            }
-
-            // set EDU status to wait
-            eduMgr->waitEDU ( cb->getID () ) ;
-         }
-         else if ( !isForced && PMD_EDU_EVENT_TERM != event._eventType )
-         {
-            //the event is error
-            PD_LOG ( PDERROR, "Recieve the error event[type=%d] in "
-                     "EDU[ID:%lld, type:%s]", event._eventType, myEDUID,
-                     getEDUName(cb->getType()) ) ;
-            rc = SDB_SYS ;
-         }
-         else if ( !isForced && PMD_EDU_EVENT_TERM == event._eventType &&
-                   cb->isForced () )
-         {
-            isForced = TRUE ;
-         }
-
-         // release the event data
-         if ( !isForced )
-         {
-            pmdEduEventRelase( event, cb ) ;
-            event.reset () ;
-
-            if ( cb->isForced() )
-            {
-               isForced = TRUE ;
-            }
-         }
-
-         // call return EDU to return the EDU to pool. pool will decide whether
-         // to destroy it or continue let it run
-         // eduDestroyed argument will be assigned when pool want to destroy
-         // the thread
-
-#if defined ( SDB_ENGINE )
-         //reset and clear
-         cb->resetMon() ;
-
-         //delete all leak context
-         {
-            SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
-            SINT64 contextID = -1 ;
-            while ( -1 != (contextID = cb->contextPeek() ) )
-            {
-               rtnCB->contextDelete( contextID, NULL ) ;
-               PD_LOG ( PDWARNING, "EDU[%lld,%s] context[%d] leaked",
-                        myEDUID, getEDUName(type), contextID ) ;
-            }
-         }
-
-         // make sure lock released
-         cb->assertLocks() ;
-
-#endif // SDB_ENGINE
-
-         cb->clear() ;
-         rc = eduMgr->returnEDU ( cb->getID (), isForced, &eduDestroyed ) ;
-
-         // otherwise let's check rc and report error if it's not OK
-         if ( SDB_OK != rc )
-         {
-            PD_LOG ( PDERROR, "Invalid EDU Status for EDU[TID:%d, ID:%lld, "
-                     "type:%s, Name: %s]", ossGetCurrentThreadID(), myEDUID,
-                     getEDUName( type ), eduName ) ;
-         }
-         else if ( !eduDestroyed )
-         {
-            PD_LOG( PDINFO, "Push thread[%d] for EDU[ID:%lld, Type:%s, "
-                    "Name: %s] to thread pool", ossGetCurrentThreadID(),
-                    myEDUID, getEDUName( type ), eduName ) ;
-         }
-      }
-
-      /// Call the thread exit hook function to release thread local variables
-      if ( pmdGetEDUHook() )
-      {
-         PMD_ON_EDU_EXIT_FUNC pFunc = pmdGetEDUHook() ;
-         pFunc() ;
-      }
-      // undeclare must happen after all TLS access
-      pmdUndeclareEDUCB () ;
-      PD_LOG ( PDEVENT, "Terminating thread[%d] for EDU[ID:%lld, Type:%s, "
-               "Name: %s]", ossGetCurrentThreadID(), myEDUID,
-               getEDUName( type ), eduName ) ;
-
-   #if defined (_WINDOWS)
-      // close handle
-      if ( isHdlCreated )
-      {
-         CloseHandle( tHdl ) ;
-      }
-   #endif
-      PD_TRACE_EXITRC ( SDB_PMDEDUENTPNT, rc );
-      return rc ;
-   }
 
    static OSS_THREAD_LOCAL _pmdEDUCB *__eduCB ;
 

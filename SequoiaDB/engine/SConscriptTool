@@ -121,6 +121,7 @@ ossFiles = [
 
 netFiles = [
       "net/netEventHandler.cpp",
+      "net/netEventSuit.cpp",
       "net/netFrame.cpp",
       "net/netRoute.cpp",
       "net/netRouteAgent.cpp"
@@ -152,6 +153,8 @@ pmdMTFiles = [
       "pmd/pmd.cpp",
       "pmd/pmdEDU.cpp",
       "pmd/pmdEDUMgr.cpp",
+      "pmd/pmdEntryPoint.cpp",
+      "mon/monCB.cpp",
       "pmd/pmdAsyncSessionAgent.cpp",
       "pmd/pmdInnerClient.cpp",
       "pmd/pmdAsyncHandler.cpp",
@@ -485,7 +488,6 @@ sdbListMain = [
       ]
 
 sdbcmMain = [
-      "pmd/pmdOMAgentEDUEntryPoint.cpp",
       "pmd/pmdCMMain.cpp",
       ]
 
@@ -534,7 +536,6 @@ sdbSEAdptFiles = [
       "rest/http_parser.cpp",
       "tools/seadapter/pmdSEAdptMain.cpp",
       "tools/seadapter/seAdptOptionsMgr.cpp",
-      "tools/seadapter/pmdSeAdptEDUEntryPoint.cpp",
       "tools/seadapter/seAdptMgr.cpp",
       "tools/seadapter/seAdptAgentSession.cpp",
       "tools/seadapter/seAdptIndexSession.cpp",

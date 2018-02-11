@@ -37,16 +37,22 @@
 *******************************************************************************/
 #include "monCB.hpp"
 #include "pmd.hpp"
-#include "clsMgr.hpp"
-#include "clsReplicateSet.hpp"
 #include "rtnCommand.hpp"
 
 namespace engine
 {
+
+   /*
+      _monDBCB implement
+   */
+   _monDBCB::_monDBCB()
+   :_curConns( 0 )
+   {
+      reset() ;
+   }
+
    void _monDBCB::reset()
    {
-      numConnects     = 0 ;
-
       totalDataRead   = 0 ;
       totalIndexRead  = 0 ;
       totalLobRead    = 0 ;
@@ -60,33 +66,81 @@ namespace engine
       totalSelect     = 0 ;
       totalRead       = 0 ;
 
+      receiveNum      = 0 ;
+
       replUpdate      = 0 ;
       replInsert      = 0 ;
       replDelete      = 0 ;
 
+      _svcNetIn       = 0 ;
+      _svcNetOut      = 0 ;
+
       totalReadTime.clear() ;
       totalWriteTime.clear() ;
 
-      _svcNetIn.poke( 0 ) ;
-      _svcNetOut.poke( 0 ) ;
-
-      pmdKRCB *pKrcb = pmdGetKRCB() ;
-      SDB_ROLE role = pKrcb->getDBRole() ;
-      if ( SDB_ROLE_DATA == role || SDB_ROLE_CATALOG == role )
-      {
-         sdbGetShardCB()->resetMon() ;
-         sdbGetReplCB()->resetMon() ;
-      }
+      ossGetCurrentTime( _resetTimestamp ) ;
    }
 
+   _monDBCB& _monDBCB::operator= ( const _monDBCB &rhs )
+   {
+      totalDataRead             = rhs.totalDataRead ;
+      totalIndexRead            = rhs.totalIndexRead ;
+      totalLobRead              = rhs.totalLobRead ;
+      totalDataWrite            = rhs.totalDataWrite ;
+      totalIndexWrite           = rhs.totalIndexWrite ;
+      totalLobWrite             = rhs.totalLobWrite ;
+
+      totalUpdate               = rhs.totalUpdate ;
+      totalDelete               = rhs.totalDelete ;
+      totalInsert               = rhs.totalInsert ;
+      totalSelect               = rhs.totalSelect ;
+      totalRead                 = rhs.totalRead ;
+
+      receiveNum                = rhs.receiveNum ;
+
+      replUpdate                = rhs.replUpdate ;
+      replDelete                = rhs.replDelete ;
+      replInsert                = rhs.replInsert ;
+
+      _svcNetIn                 = rhs._svcNetIn ;
+      _svcNetOut                = rhs._svcNetOut ;
+
+      totalReadTime             = rhs.totalReadTime ;
+      totalWriteTime            = rhs.totalWriteTime ;
+      _activateTimestamp        = rhs._activateTimestamp ;
+      _resetTimestamp           = rhs._resetTimestamp ;
+
+      return *this ;
+   }
+
+   void _monDBCB::recordActivateTimestamp()
+   {
+      ossGetCurrentTime( _activateTimestamp ) ;
+      _resetTimestamp = _activateTimestamp ;
+   }
+
+   BOOLEAN _monDBCB::isConnLimited( UINT32 maxConn )
+   {
+      if ( maxConn > 0 && _curConns.fetch() > maxConn )
+      {
+         return TRUE ;
+      }
+      return FALSE ;
+   }
+
+   /*
+      _monAppCB implement
+   */
    _monAppCB::_monAppCB()
    {
-      reset () ;
+      reset() ;
       mondbcb = pmdGetKRCB()->getMonDBCB() ;
    }
+
    _monAppCB &_monAppCB::operator= ( const _monAppCB &rhs )
    {
-      mondbcb                   = pmdGetKRCB()->getMonDBCB() ;
+      mondbcb                   = rhs.mondbcb ;
+
       totalDataRead             = rhs.totalDataRead ;
       totalIndexRead            = rhs.totalIndexRead ;
       totalLobRead              = rhs.totalLobRead ;
@@ -102,20 +156,20 @@ namespace engine
 
       totalReadTime             = rhs.totalReadTime ;
       totalWriteTime            = rhs.totalWriteTime ;
-      _connectTimestamp.time    = rhs._connectTimestamp.time;
-      _connectTimestamp.microtm = rhs._connectTimestamp.microtm ;
-      _connectTimeStampTick     = rhs._connectTimeStampTick ;
+      _connectTimestamp         = rhs._connectTimestamp ;
+      _resetTimestamp           = rhs._resetTimestamp ;
 
-      _lastOpType = rhs._lastOpType ;
-      _cmdType = rhs._cmdType ;
-      _lastOpBeginTime = rhs._lastOpBeginTime ;
-      _lastOpEndTime = rhs._lastOpEndTime ;
-      _readTimeSpent = rhs._readTimeSpent ;
-      _writeTimeSpent = rhs._writeTimeSpent ;
+      _lastOpType               = rhs._lastOpType ;
+      _cmdType                  = rhs._cmdType ;
+      _lastOpBeginTime          = rhs._lastOpBeginTime ;
+      _lastOpEndTime            = rhs._lastOpEndTime ;
+      _readTimeSpent            = rhs._readTimeSpent ;
+      _writeTimeSpent           = rhs._writeTimeSpent ;
       ossStrcpy( _lastOpDetail, rhs._lastOpDetail ) ;
 
       return *this ;
    }
+
    _monAppCB &_monAppCB::operator+= ( const _monAppCB &rhs )
    {
       totalDataRead              += rhs.totalDataRead ;
@@ -133,8 +187,6 @@ namespace engine
 
       totalReadTime              += rhs.totalReadTime ;
       totalWriteTime             += rhs.totalWriteTime ;
-      _connectTimestamp.time     += rhs._connectTimestamp.time;
-      _connectTimestamp.microtm  += rhs._connectTimestamp.microtm ;
 
       _readTimeSpent             += rhs._readTimeSpent ;
       _writeTimeSpent            += rhs._writeTimeSpent ;
@@ -159,9 +211,8 @@ namespace engine
 
       totalReadTime.clear() ;
       totalWriteTime.clear() ;
-      _connectTimeStampTick.clear() ;
-      _connectTimestamp.time = 0 ;
-      _connectTimestamp.microtm = 0 ;
+
+      ossGetCurrentTime( _resetTimestamp ) ;
 
       _lastOpType = MSG_NULL ;
       _cmdType = CMD_UNKNOW ;
@@ -169,7 +220,7 @@ namespace engine
       _lastOpEndTime.clear() ;
       _readTimeSpent.clear() ;
       _writeTimeSpent.clear() ;
-      ossMemset( _lastOpDetail, 0, sizeof(_lastOpDetail) ) ;
+      ossMemset( _lastOpDetail, 0, sizeof( _lastOpDetail ) ) ;
    }
 
    void _monAppCB::startOperator()
@@ -214,6 +265,8 @@ namespace engine
                }
             }
          case MSG_BS_GETMORE_REQ :
+         /// LOB
+         case MSG_BS_LOB_READ_REQ :
             {
                _readTimeSpent += delta ;
                break ;
@@ -221,6 +274,11 @@ namespace engine
          case MSG_BS_INSERT_REQ :
          case MSG_BS_UPDATE_REQ :
          case MSG_BS_DELETE_REQ :
+         /// LOB
+         case MSG_BS_LOB_WRITE_REQ :
+         case MSG_BS_LOB_REMOVE_REQ :
+         case MSG_BS_LOB_UPDATE_REQ :
+         case MSG_BS_LOB_TRUNCATE_REQ :
             {
                _writeTimeSpent += delta ;
                break ;
@@ -263,10 +321,11 @@ namespace engine
    : _contextID( -1 ),
      _dataRead( 0 ),
      _indexRead( 0 ),
+     _lobRead( 0 ),
+     _lobWrite( 0 ),
      _returnBatches( 0 ),
      _returnRecords( 0 ),
      _startTimestamp(),
-     _startTimestampTick(),
      _waitTime(),
      _queryTime(),
      _executeTime()
@@ -277,10 +336,11 @@ namespace engine
    : _contextID( monCtxCB._contextID ),
      _dataRead( monCtxCB._dataRead ),
      _indexRead( monCtxCB._indexRead ),
+     _lobRead( monCtxCB._lobRead ),
+     _lobWrite( monCtxCB._lobWrite ),
      _returnBatches( monCtxCB._returnBatches ),
      _returnRecords( monCtxCB._returnRecords ),
      _startTimestamp( monCtxCB._startTimestamp ),
-     _startTimestampTick( monCtxCB._startTimestampTick ),
      _waitTime( monCtxCB._waitTime ),
      _queryTime( monCtxCB._queryTime ),
      _executeTime( monCtxCB._executeTime )
@@ -296,10 +356,11 @@ namespace engine
       _contextID     = -1 ;
       _dataRead      = 0 ;
       _indexRead     = 0 ;
+      _lobRead       = 0 ;
+      _lobWrite      = 0 ;
       _returnBatches = 0 ;
       _returnRecords = 0 ;
       _startTimestamp.clear() ;
-      _startTimestampTick.clear() ;
       _waitTime.clear() ;
       _queryTime.clear() ;
       _executeTime.clear() ;
@@ -310,6 +371,8 @@ namespace engine
       _contextID        = monCtxCB._contextID ;
       _dataRead         = monCtxCB._dataRead ;
       _indexRead        = monCtxCB._indexRead ;
+      _lobRead          = monCtxCB._lobRead ;
+      _lobWrite         = monCtxCB._lobWrite ;
       _returnBatches    = monCtxCB._returnBatches ;
       _returnRecords    = monCtxCB._returnRecords ;
       _startTimestamp   = monCtxCB._startTimestamp ;
@@ -320,26 +383,5 @@ namespace engine
       return ( *this ) ;
    }
 
-
-   
-   BOOLEAN _monDBCB::isConnLimited()
-   {
-      if ( ( pmdGetOptionCB()->getMaxConn() != 0 )
-            && ( _curConns.fetch() > pmdGetOptionCB()->getMaxConn() )  )
-      {
-         return TRUE;
-      }
-      return FALSE;
-   }
-
-   void _monDBCB::connInc()
-   {
-      _curConns.inc();
-   }
-
-   void _monDBCB::connDec()
-   {
-      _curConns.dec();
-   }
-
 }
+

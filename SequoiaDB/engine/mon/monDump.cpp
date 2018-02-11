@@ -753,7 +753,7 @@ namespace engine
       CHAR   CPUTime[ MON_CPU_USAGE_STR_SIZE ] = { 0 } ;
 
       PD_TRACE_ENTRY ( SDB_MONDBDUMP ) ;
-      ob.append( FIELD_NAME_TOTALNUMCONNECTS, (SINT64)mondbcb->numConnects ) ;
+      ob.append( FIELD_NAME_TOTALNUMCONNECTS, (SINT64)mondbcb->getCurConns() ) ;
       ob.append( FIELD_NAME_TOTALDATAREAD,    (SINT64)mondbcb->totalDataRead ) ;
       ob.append( FIELD_NAME_TOTALINDEXREAD,   (SINT64)mondbcb->totalIndexRead ) ;
       ob.append( FIELD_NAME_TOTALDATAWRITE,   (SINT64)mondbcb->totalDataWrite ) ;
@@ -775,6 +775,8 @@ namespace engine
                   (SINT64)(seconds*1000 + microseconds / 1000 ) ) ;
       ossTimestampToString ( mondbcb->_activateTimestamp, timestamp ) ;
       ob.append ( FIELD_NAME_ACTIVETIMESTAMP, timestamp ) ;
+      ossTimestampToString ( mondbcb->_resetTimestamp, timestamp ) ;
+      ob.append ( FIELD_NAME_RESETTIMESTAMP, timestamp ) ;
       ossSnprintf( CPUTime, sizeof(CPUTime), "%u.%06u",
                    userTime.seconds, userTime.microsec ) ;
       ob.append( FIELD_NAME_USERCPU, CPUTime ) ;
@@ -834,6 +836,9 @@ namespace engine
       ossTimestamp tmpTm = full._monApplCB._connectTimestamp ;
       ossTimestampToString( tmpTm, timestamp ) ;
       ob.append ( FIELD_NAME_CONNECTTIMESTAMP, timestamp ) ;
+      tmpTm = full._monApplCB._resetTimestamp ;
+      ossTimestampToString( tmpTm, timestamp ) ;
+      ob.append ( FIELD_NAME_RESETTIMESTAMP, timestamp ) ;
 
       /// add last op info
       monDumpLastOpInfo( ob, full._monApplCB ) ;
@@ -1010,7 +1015,7 @@ namespace engine
             }
             else
             {
-               mgr->resetMon ( FALSE, eduID ) ;
+               mgr->resetMon( eduID ) ;
             }
             break ;
          }
@@ -1312,8 +1317,8 @@ namespace engine
          pmdKRCB *pKrcb = pmdGetKRCB() ;
          monDBCB *pdbCB = pKrcb->getMonDBCB() ;
          SDB_ROLE role = pKrcb->getDBRole() ;
-         ob.append( FIELD_NAME_SVC_NETIN, pdbCB->svcNetIn() ) ;
-         ob.append( FIELD_NAME_SVC_NETOUT, pdbCB->svcNetOut() ) ;
+         ob.append( FIELD_NAME_SVC_NETIN, (INT64)pdbCB->svcNetIn() ) ;
+         ob.append( FIELD_NAME_SVC_NETOUT, (INT64)pdbCB->svcNetOut() ) ;
          if ( SDB_ROLE_DATA == role ||
               SDB_ROLE_CATALOG == role )
          {
@@ -2657,7 +2662,7 @@ namespace engine
                      (SINT32)mgr->sizeSystem() ) ;
          ob.append ( FIELD_NAME_CURRENTCONTEXTS, (SINT32)rtnCB->contextNum() ) ;
          ob.append ( FIELD_NAME_RECEIVECOUNT,
-                     (SINT32)mondbcb->getReceiveNum() ) ;
+                     (INT64)mondbcb->getReceiveNum() ) ;
          ob.append ( FIELD_NAME_ROLE, krcb->getOptionCB()->dbroleStr() ) ;
 
          {

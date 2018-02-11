@@ -3013,10 +3013,5 @@ namespace engine
       return _pNetRtAgent->netOut() ;
    }
 
-   void _clsShardMgr::resetMon()
-   {
-      return _pNetRtAgent->resetMon() ;
-   }
-
 }
 

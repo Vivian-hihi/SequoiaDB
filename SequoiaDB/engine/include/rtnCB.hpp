@@ -62,7 +62,7 @@ namespace engine
    /*
       _SDB_RTNCB define
    */
-   class _SDB_RTNCB : public _IControlBlock
+   class _SDB_RTNCB : public _IControlBlock, public _IContextMgr
    {
    private :
       typedef utilConcurrentMap<INT64, rtnContext*> RTN_CTX_MAP ;
@@ -83,6 +83,10 @@ namespace engine
                                           // index information.
       ossAtomicSigned64    _textIdxVersion ;
 
+   public:
+      virtual void contextDelete( INT64 contextID, IExecutor *pExe ) ;
+      virtual void* queryInterface( SDB_INTERFACE_TYPE type ) ;
+
    public :
       _SDB_RTNCB() ;
       virtual ~_SDB_RTNCB() ;
@@ -98,8 +102,6 @@ namespace engine
 
       SINT32 contextNew ( RTN_CONTEXT_TYPE type, rtnContext **context,
                           SINT64 &contextID, _pmdEDUCB * pEDUCB ) ;
-
-      void contextDelete ( SINT64 contextID, _pmdEDUCB *cb ) ;
 
       rtnContext *contextFind ( SINT64 contextID, _pmdEDUCB *cb = NULL ) ;
 

@@ -784,16 +784,10 @@ namespace engine
          goto error ;
       }
 
-      //Resiter EDU Type
-      if ( regSys )
-      {
-         pEDUMgr->regSystemEDU( (EDU_TYPES)type, eduID ) ;
-      }
-
       //Wait edu running
       if ( PMD_EDU_UNKNOW != waitStatus )
       {
-         rc = pEDUMgr->waitUntil( (EDU_TYPES)type, waitStatus ) ;
+         rc = pEDUMgr->waitUntil( eduID, waitStatus ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "Failed to wait EDU[type:%d(%s)] to "

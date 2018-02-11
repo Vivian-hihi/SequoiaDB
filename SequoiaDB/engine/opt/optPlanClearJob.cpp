@@ -76,7 +76,7 @@ namespace engine
           */
          pEduMgr->waitEDU( cb->getID() ) ;
          rc = clearEvent->wait( OPT_PLANCLEARJOB_WAIT_INTERVAL ) ;
-         pEduMgr->activateEDU( cb->getID() ) ;
+         pEduMgr->activateEDU( cb ) ;
 
          // The database is shutting down
          if ( PMD_IS_DB_DOWN() ||

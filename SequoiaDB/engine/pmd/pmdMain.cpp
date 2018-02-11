@@ -301,7 +301,6 @@ namespace engine
          eduMgr->startEDU ( EDU_TYPE_PIPESLISTENER,
                             (void*)pmdGetOptionCB()->getServiceAddr(),
                             &agentEDU ) ;
-         eduMgr->regSystemEDU ( EDU_TYPE_PIPESLISTENER, agentEDU ) ;
 
          rc = eduMgr->waitUntil( agentEDU, PMD_EDU_RUNNING ) ;
          PD_RC_CHECK( rc, PDERROR, "Wait pipe listener to running "
