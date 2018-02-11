@@ -245,6 +245,7 @@ namespace engine
 
          // Set match runtime and query info
          setMatchRuntime( planRuntime->getMatchRuntime() ) ;
+         setCLScanInfo( planRuntime->getCLScanInfo() ) ;
       }
    }
 
@@ -273,6 +274,12 @@ namespace engine
       }
       _clScanInfo = NULL ;
       _ownedPlanInfo = FALSE ;
+   }
+
+   void _optAccessPlanRuntime::setCLScanInfo ( optCLScanInfo * clScanInfo )
+   {
+      deleteCLScanInfo() ;
+      _clScanInfo = clScanInfo ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTAPRTM_BINDPLANINFO, "_optAccessPlanRuntime::bindPlanInfo" )

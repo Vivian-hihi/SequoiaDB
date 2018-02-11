@@ -382,17 +382,6 @@ namespace engine
          _needSearch = TRUE ;
       }
 
-      // Estimate option
-      rc = _parseBoolOption ( options, FIELD_NAME_ESTIMATE, _needEstimate,
-                              hasOption, _needDetail ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to parse %s option, rc: %d",
-                   FIELD_NAME_ESTIMATE, rc ) ;
-
-      if ( hasOption )
-      {
-         _needDetail = TRUE ;
-      }
-
       // Filter option, convert to mask
       rc = _parseMaskOption( options, FIELD_NAME_FILTER, hasMask,
                              _explainMask ) ;
@@ -402,13 +391,23 @@ namespace engine
       if ( hasMask )
       {
          _needDetail = TRUE ;
-         _needEstimate = TRUE ;
       }
 
       // Location option
       rc = _parseLocationOption ( options, hasOption ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to parse %s option, rc: %d",
                    FIELD_NAME_LOCATION, rc ) ;
+
+      if ( hasOption )
+      {
+         _needDetail = TRUE ;
+      }
+
+      // Estimate option
+      rc = _parseBoolOption ( options, FIELD_NAME_ESTIMATE, _needEstimate,
+                              hasOption, _needDetail ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to parse %s option, rc: %d",
+                   FIELD_NAME_ESTIMATE, rc ) ;
 
       if ( hasOption )
       {
@@ -448,6 +447,31 @@ namespace engine
 
    error :
       goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNEXPBASE__PARSELOCFILTER, "_rtnExplainBase::_parseLocationOption" )
+   INT32 _rtnExplainBase::_parseLocationOption ( const BSONObj & explainOptions,
+                                                 BOOLEAN & hasOption )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_RTNEXPBASE__PARSELOCFILTER ) ;
+
+      // We doesn't need "Location" option
+      // but it need to make sure "Detail" option is enabled
+      if ( explainOptions.hasField( FIELD_NAME_SUB_COLLECTIONS ) ||
+           explainOptions.hasField( FIELD_NAME_LOCATION ) )
+      {
+         hasOption = TRUE ;
+      }
+      else
+      {
+         hasOption = FALSE ;
+      }
+
+      PD_TRACE_EXITRC( SDB_RTNEXPBASE__PARSELOCFILTER, rc ) ;
+
+      return rc ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNEXPBASE__PARSEBOOLOPT, "_rtnExplainBase::_parseBoolOption" )

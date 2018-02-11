@@ -114,13 +114,8 @@ namespace engine
 
          INT32 _parseExplainOptions ( const BSONObj & options ) ;
 
-         OSS_INLINE virtual INT32 _parseLocationOption (
-                                             const BSONObj & explainOptions,
-                                             BOOLEAN & hasOption )
-         {
-            hasOption = FALSE ;
-            return SDB_OK ;
-         }
+         virtual INT32 _parseLocationOption ( const BSONObj & explainOptions,
+                                              BOOLEAN & hasOption ) ;
 
       private :
          INT32 _parseBoolOption ( const BSONObj & options,

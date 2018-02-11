@@ -175,6 +175,8 @@ namespace engine
 
          void deleteCLScanInfo () ;
 
+         void setCLScanInfo ( optCLScanInfo * clScanInfo ) ;
+
          INT32 bindPlanInfo ( const CHAR *pCLFullName,
                               dmsStorageUnit *su,
                               dmsMBContext *mbContext,
@@ -233,6 +235,11 @@ namespace engine
          }
 
          OSS_INLINE const optCLScanInfo * getCLScanInfo () const
+         {
+            return _clScanInfo ;
+         }
+
+         OSS_INLINE optCLScanInfo * getCLScanInfo ()
          {
             return _clScanInfo ;
          }
