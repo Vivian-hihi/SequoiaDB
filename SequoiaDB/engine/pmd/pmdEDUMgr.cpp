@@ -63,8 +63,8 @@ namespace engine
    */
    _pmdEDUMgr::_pmdEDUMgr() :
    _EDUID(1),
-   _isQuiesced(FALSE),
-   _isDestroyed(FALSE)
+   _isDestroyed(FALSE),
+   _isQuiesced(FALSE)
    {
       _pResource = NULL ;
       _pMonitorThd = NULL ;
@@ -1125,7 +1125,6 @@ namespace engine
       INT32     rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__PMDEDUMGR_STARTEDU ) ;
 
-      EDUID     eduID = PMD_INVALID_EDUID ;
       pmdEDUCB* eduCB = NULL ;
       pmdEPFactory &factory = pmdGetEPFactory() ;
       const pmdEPItem *pItem = NULL ;
@@ -1470,8 +1469,6 @@ namespace engine
    {
       INT32   rc        = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__PMDEDUMGR_ATVEDU );
-      UINT32  eduStatus = PMD_EDU_CREATING ;
-      pmdEDUCB* eduCB   = NULL ;
       MAP_EDUCB_IT it ;
 
       ossScopedLock lock( &_latch, SHARED ) ;
