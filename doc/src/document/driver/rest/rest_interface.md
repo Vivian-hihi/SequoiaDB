@@ -190,8 +190,34 @@
 |          | 说明                                      | 例子            |
 |----------|-------------------------------------------|-----------------|
 | 请求头   | 同通用请求头                              |                 |
-| 请求内容 | cmd: analyze<<br>options: 设定分析模式、指定集合空间以及命令位置参数 | cmd=analyze<br>cmd=analyze&options={Collection:"foo.bar"} |
+| 请求内容 | cmd: analyze<br>options: 设定分析模式、指定集合空间以及命令位置参数 | cmd=analyze<br>cmd=analyze&options={Collection:"foo.bar"} |
 | 说明     | 请参考 [db.analyze\(\)](reference/Sequoiadb_command/Sdb/analyze.md) |                 |
 | 响应头   | 同通用响应头                              |                 |
 | 响应内容 | {<br>errno: 返回值，0表示成功，其他为失败<br>description: 失败时的错误描述<br>} | { "errno": 0 } |
 | 说明     |                                           |                 |
+
+##查询快照##
+
+|          | 说明                                            | 例子                                                                                  |
+|----------|-------------------------------------------------|---------------------------------------------------------------------------------------|
+| 请求头   | 同通用请求头                                    |                                                                                       |
+| 请求内容 | cmd: snapshot [type]<br>sort: 待排序字段名（可选参数，可不填）<br>selector: 查询结果列（可选参数，可不填）<br>filter: 查询条件（可选参数，可不填） | cmd=snapshot health&filter={"IsPrimary":false}&selector={"NodeName":null}&sort={"NodeName":-1} |
+| 说明     | 请参考 [db.snapshot\(\)](reference/Sequoiadb_command/Sdb/snapshot.md) |                                                                                       |
+| 响应头   | 同通用响应头                                    |                                                                                       |
+| 响应内容 | {<br>errno: 返回值，0表示成功，其他为失败<br>description: 失败时的错误描述<br>}<br>{<br>返回快照<br>}<br>... | { "errno": 0 }{ "NodeName": "ubuntu-test-03:41000" }{ "NodeName": "ubuntu-test-03:40000" } |
+| 说明     |                                                 |       
+
+> **Note:**
+>
+> [type]指快照类型，分别有：  
+> contexts  
+> contexts current  
+> sessions  
+> sessions current  
+> collections  
+> collectionspaces  
+> database  
+> system  
+> catalog  
+> accessplans  
+> health  
