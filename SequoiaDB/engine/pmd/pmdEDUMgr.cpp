@@ -1017,6 +1017,7 @@ namespace engine
                SDB_ASSERT( PMD_EDU_IDLE != cb->getStatus(),
                            "Status can't be idle" ) ;
                cb->setStatus( PMD_EDU_IDLE ) ;
+               cb->setType( PMD_EDU_UNKNOW ) ;
             }
          }
          /// In idle map
