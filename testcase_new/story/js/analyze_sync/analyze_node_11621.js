@@ -102,6 +102,25 @@ function main()
    var actAccessPlan = getCommonAccessPlans( db, {Collection: clFullName} );
    checkSnapShotAccessPlans( clFullName, expAccessPlan1, actAccessPlan );
    
+   //指定主节点执行统计, Mode:2
+   analyze( db, {Mode:2, NodeID:nodeId} );
+   
+   //检查统计信息
+   checkConsistency(db, COMMCSNAME, clName); 
+   checkStat( db, COMMCSNAME, clName, "a", true, true );
+   
+   //检查访问计划快照
+   var actAccessPlan = getCommonAccessPlans( db, {Collection: clFullName} );
+   checkSnapShotAccessPlans( clFullName, expAccessPlan3, actAccessPlan );
+   
+   //执行查询
+   query( dbclPrimary, findConf, null, null, insertNum );
+   query( dbclSlave, findConf, null, null, insertNum  );
+   
+   //检查访问计划快照
+   var actAccessPlan = getCommonAccessPlans( db, {Collection: clFullName} );
+   checkSnapShotAccessPlans( clFullName, expAccessPlan1, actAccessPlan );
+   
    //指定备节点执行统计
    var slaveNode = db.getRG(groupName).getSlave();
    var nodeId = parseInt(slaveNode.getNodeDetail().split(":")[0]);
@@ -124,6 +143,25 @@ function main()
    var nodeId = parseInt(cataNode.getNodeDetail().split(":")[0]);
    println("nodeId:" + nodeId);
    analyze( db, {NodeID:nodeId} );
+   
+   //检查统计信息
+   checkConsistency(db, COMMCSNAME, clName); 
+   checkStat( db, COMMCSNAME, clName, "a", true, true );
+ 
+   //检查访问计划快照
+   var actAccessPlan = getCommonAccessPlans( db, {Collection: clFullName} );
+   checkSnapShotAccessPlans( clFullName, expAccessPlan1, actAccessPlan );
+   
+   //执行查询
+   query( dbclPrimary, findConf, null, null, insertNum );
+   query( dbclSlave, findConf, null, null, insertNum  );
+   
+   //检查访问计划快照
+   var actAccessPlan = getCommonAccessPlans( db, {Collection: clFullName} );
+   checkSnapShotAccessPlans( clFullName, expAccessPlan1, actAccessPlan );
+   
+   //指定cata节点执行统计,Mode:2
+   analyze( db, {Mode:2, NodeID:nodeId} );
    
    //检查统计信息
    checkConsistency(db, COMMCSNAME, clName); 

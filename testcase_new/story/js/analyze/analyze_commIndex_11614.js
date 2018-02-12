@@ -85,6 +85,37 @@ function main()
    var actAccessPlan = getCommonAccessPlans( db, {Collection: clFullName} );
    checkSnapShotAccessPlans( clFullName, expAccessPlan, actAccessPlan );
    
+   //执行统计，Mode:2
+   //执行统计
+   analyze( db, {Mode : 2, Collection: COMMCSNAME + "." + clName, Index: "a"} );
+   
+   //检查统计信息
+   checkConsistency(db, COMMCSNAME, clName);
+   checkStat( db, COMMCSNAME, clName, "a", true, true );
+   checkStat( db, COMMCSNAME, clName, "a1", true, false );
+   
+   //检查访问计划快照
+   var expAccessPlan = [];
+   var actAccessPlan = getCommonAccessPlans( db, {Collection: clFullName} );
+   checkSnapShotAccessPlans( clFullName, expAccessPlan, actAccessPlan );
+   
+   //执行查询
+   var findConf = {a:sameValues};
+   query( dbclPrimary, findConf, null, null, insertNum );
+   query( dbclSlave, findConf, null, null, insertNum  );
+   
+   var findConf = {a1:sameValues};
+   query( dbclPrimary, findConf, null, null, insertNum );
+   query( dbclSlave, findConf, null, null, insertNum  );
+   
+   //检查访问计划快照
+   var expAccessPlan = [{ScanType:"tbscan", IndexName:""},
+                        {ScanType:"ixscan", IndexName:"a1"},
+                        {ScanType:"tbscan", IndexName:""},
+                        {ScanType:"ixscan", IndexName:"a1"}];
+   var actAccessPlan = getCommonAccessPlans( db, {Collection: clFullName} );
+   checkSnapShotAccessPlans( clFullName, expAccessPlan, actAccessPlan );
+   
    //删除索引
    commDropIndex( dbcl, "a" );
    

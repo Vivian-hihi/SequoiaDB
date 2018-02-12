@@ -235,7 +235,98 @@ function main()
    checkSnapShotAccessPlans(clFullName1, expAccessPlans1, actAccessPlans1);
    checkSnapShotAccessPlans(clFullName2, expAccessPlans2, actAccessPlans2);
                                                                   
-   println("check result after analyze success!");
+   println("check result after analyze success default mode:1!");
+   
+   //invoke analyze
+   var options = {Mode: 2, CollectionSpace: csName};
+   analyze( db, options );
+                                                             
+   //check after analyze
+   checkConsistency(db, csName, clName1);
+   checkConsistency(db, csName, clName2);
+   checkStat( db, csName, clName1, "$shard", true, true );
+   checkStat( db, csName, clName1, "b", true, true );	
+   checkStat( db, csName, clName2, "$shard", true, true );
+   checkStat( db, csName, clName2, "b", true, true );
+                                                       
+   //check out snapshot access plans
+	var accessFindOption1 = { Collection: clFullName1 };
+   var accessFindOption2 = { Collection: clFullName2 };
+	
+   var actAccessPlans1 = getSplitAccessPlans(db, accessFindOption1);
+   var actAccessPlans2 = getSplitAccessPlans(db, accessFindOption2);
+   
+   var expAccessPlans = [];
+                      
+   checkSnapShotAccessPlans(clFullName1, expAccessPlans, actAccessPlans1);
+   checkSnapShotAccessPlans(clFullName2, expAccessPlans, actAccessPlans2);
+                                                       
+   //check the query explain of master/slave nodes 
+   var findConf1 = {a : 9000};
+   var findConf2 = {b : 9000};
+   
+   var expExplains1 = [{ScanType:"tbscan", IndexName:"",
+                        GroupName :srcGroupName1, ReturnNum:insertNums}];
+   var expExplains2 = [{ScanType:"tbscan", IndexName:"",GroupName :srcGroupName1, ReturnNum:insertNums},
+                       {ScanType:"ixscan", IndexName:"b",GroupName :destGroupName1, ReturnNum:0}];    
+   var expExplains3 = [{ScanType:"tbscan", IndexName:"",GroupName :destGroupName2, ReturnNum:insertNums}];          
+   var expExplains4 = [{ScanType:"ixscan", IndexName:"b",GroupName :srcGroupName2, ReturnNum:0},
+                       {ScanType:"tbscan", IndexName:"",GroupName :destGroupName2, ReturnNum:insertNums}];
+	
+   var actExplains1 = getSplitExplain( dbclPrimary1, findConf1);
+   var actExplains2 = getSplitExplain( dbclPrimary1, findConf2);
+   var actExplains3 = getSplitExplain( dbclPrimary2, findConf1);
+   var actExplains4 = getSplitExplain( dbclPrimary2, findConf2);
+   
+   checkExplain( actExplains1, expExplains1 );
+   checkExplain( actExplains2, expExplains2 );
+   checkExplain( actExplains3, expExplains3 );
+   checkExplain( actExplains4, expExplains4 );
+                                                             	
+   var actExplains1 = getSplitExplain( dbclSlave1, findConf1);
+   var actExplains2 = getSplitExplain( dbclSlave1, findConf2);
+   var actExplains3 = getSplitExplain( dbclSlave2, findConf1);
+   var actExplains4 = getSplitExplain( dbclSlave2, findConf2);
+   
+   checkExplain( actExplains1, expExplains1 );
+   checkExplain( actExplains2, expExplains2 );
+   checkExplain( actExplains3, expExplains3 );
+   checkExplain( actExplains4, expExplains4 );
+   
+   //query
+   query(dbclPrimary1, findConf1, null, null, insertNums);
+   query(dbclPrimary1, findConf2, null, null, insertNums);
+   query(dbclPrimary2, findConf1, null, null, insertNums);
+   query(dbclPrimary2, findConf2, null, null, insertNums);
+   query(dbclSlave1, findConf1, null, null, insertNums);
+   query(dbclSlave1, findConf2, null, null, insertNums);
+   query(dbclSlave2, findConf1, null, null, insertNums);
+   query(dbclSlave2, findConf2, null, null, insertNums);
+   
+   //check out snapshot access plans
+	var accessFindOption1 = { Collection: clFullName1 };
+   var accessFindOption2 = { Collection: clFullName2 };
+	
+   var actAccessPlans1 = getSplitAccessPlans(db, accessFindOption1);
+   var actAccessPlans2 = getSplitAccessPlans(db, accessFindOption2);
+   
+   var expAccessPlans1 = [{ScanType:"tbscan", IndexName:"", GroupName :srcGroupName1 },
+                          {ScanType:"tbscan", IndexName:"",GroupName :srcGroupName1},
+                          {ScanType:"ixscan", IndexName:"b",GroupName :destGroupName1},
+	                       {ScanType:"tbscan", IndexName:"", GroupName :srcGroupName1 },
+                          {ScanType:"tbscan", IndexName:"",GroupName :srcGroupName1},
+                          {ScanType:"ixscan", IndexName:"b",GroupName :destGroupName1}];
+   var expAccessPlans2 = [{ScanType:"tbscan", IndexName:"",GroupName :destGroupName2},
+	                       {ScanType:"ixscan", IndexName:"b",GroupName :srcGroupName2},
+                          {ScanType:"tbscan", IndexName:"",GroupName :destGroupName2},
+                          {ScanType:"tbscan", IndexName:"",GroupName :destGroupName2},
+	                       {ScanType:"ixscan", IndexName:"b",GroupName :srcGroupName2},
+                          {ScanType:"tbscan", IndexName:"",GroupName :destGroupName2}];
+                      
+   checkSnapShotAccessPlans(clFullName1, expAccessPlans1, actAccessPlans1);
+   checkSnapShotAccessPlans(clFullName2, expAccessPlans2, actAccessPlans2);
+                                                                  
+   println("check result after analyze success with mode:2!");
        
    db1.close();       
    commDropCS( db, csName, true, "drop CS in the end" );

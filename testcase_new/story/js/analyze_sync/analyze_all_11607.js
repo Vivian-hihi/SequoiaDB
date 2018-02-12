@@ -534,7 +534,214 @@ function main()
    checkSnapShotAccessPlans(clFullName23, expAccessPlans23, actAccessPlans23);
    checkMainclAccessPlans(expAccessPlansMainCL, actAccessPlansMainCL);
               
-   println("check result after analyze success!");
+   println("check result after analyze all success!");
+   
+   //analyze
+   analyze( db, {Mode : 2} );
+                                                             
+   //check all groups consistency
+   checkConsistency(db, null, null, groups);
+   //check after analyze
+   checkStat( db, csName1, clName1, "a", true, true );	
+   checkStat( db, csName2, clName1, "a", true, true );	
+   checkStat( db, csName1, clName2, "$shard", true, true );
+   checkStat( db, csName2, clName2, "$shard", true, true );
+   checkStat( db, csName1, clName3, "$shard", true, true );
+   checkStat( db, csName2, clName3, "$shard", true, true );
+   checkStat( db, csName1, clName2, "b", true, true );
+   checkStat( db, csName2, clName2, "b", true, true );
+   checkStat( db, csName1, clName3, "b", true, true );
+   checkStat( db, csName2, clName3, "b", true, true );
+   checkStat( db, maincsName, subclName, "a", true, true );
+   checkStat( db, maincsName, subclName, "b", true, true );
+                                                        
+   //check out snapshot access plans
+	var accessFindOption11 = { Collection: clFullName11 };
+   var accessFindOption12 = { Collection: clFullName12 };
+   var accessFindOption13 = { Collection: clFullName13 };
+   var accessFindOption21 = { Collection: clFullName21 };
+   var accessFindOption22 = { Collection: clFullName22 };
+   var accessFindOption23 = { Collection: clFullName23 };
+   var accessFindOptionMainCL = { Collection: mainclFullName};
+   
+   var actAccessPlans11 = getCommonAccessPlans(db, accessFindOption11); 
+   var actAccessPlans12 = getSplitAccessPlans(db, accessFindOption12); 
+   var actAccessPlans13 = getSplitAccessPlans(db, accessFindOption13); 
+   var actAccessPlans21 = getCommonAccessPlans(db, accessFindOption21);
+   var actAccessPlans22 = getSplitAccessPlans(db, accessFindOption22);
+   var actAccessPlans23 = getSplitAccessPlans(db, accessFindOption23);
+   var actAccessPlansMainCL = getCommonAccessPlans(db, accessFindOptionMainCL);
+   
+   var expAccessPlans = [];                              
+                     
+   checkSnapShotAccessPlans(clFullName11, expAccessPlans, actAccessPlans11);
+   checkSnapShotAccessPlans(clFullName12, expAccessPlans, actAccessPlans12);
+   checkSnapShotAccessPlans(clFullName13, expAccessPlans, actAccessPlans13);
+   checkSnapShotAccessPlans(clFullName21, expAccessPlans, actAccessPlans21);
+   checkSnapShotAccessPlans(clFullName22, expAccessPlans, actAccessPlans22);
+   checkSnapShotAccessPlans(clFullName23, expAccessPlans, actAccessPlans23);                                                   
+   checkMainclAccessPlans(expAccessPlans, actAccessPlansMainCL);
+                                             
+   //check the query explain of master/slave nodes 
+   var findConf1 = {a : 9000};
+   var findConf2 = {b : 9000};
+   
+   var expCommExplains = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums}];
+   var expHashExplains1 = [{ScanType:"tbscan", IndexName:"",GroupName :srcHashGroupName1, ReturnNum:insertNums}];
+   var expHashExplains2 = [{ScanType:"tbscan", IndexName:"",GroupName :srcHashGroupName2, ReturnNum:insertNums}];
+   var expRangExplains1 = [{ScanType:"tbscan", IndexName:"",GroupName :destRangGroupName1, ReturnNum:insertNums}];
+   var expRangExplains2 = [{ScanType:"tbscan", IndexName:"",GroupName :destRangGroupName2, ReturnNum:insertNums}];
+   var expHashExplains3 = [{ScanType:"tbscan", IndexName:"",GroupName :srcHashGroupName1, ReturnNum:insertNums},
+                           {ScanType:"ixscan", IndexName:"b",GroupName :destHashGroupName1, ReturnNum:0}];                    	                     
+	var expHashExplains4 = [{ScanType:"tbscan", IndexName:"",GroupName :srcHashGroupName2, ReturnNum:insertNums},
+	                        {ScanType:"ixscan", IndexName:"b",GroupName :destHashGroupName2, ReturnNum:0}];
+   var expRangExplains3 = [{ScanType:"ixscan", IndexName:"b",GroupName :srcRangGroupName1, ReturnNum:0},
+                           {ScanType:"tbscan", IndexName:"",GroupName :destRangGroupName1, ReturnNum:insertNums}];                    	                     
+	var expRangExplains4 = [{ScanType:"ixscan", IndexName:"b",GroupName :srcRangGroupName2, ReturnNum:0},
+	                        {ScanType:"tbscan", IndexName:"",GroupName :destRangGroupName2, ReturnNum:insertNums}];
+   var expMainExplains1 = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums, Name:subclFullName, GroupName:subclGroupName}];
+   var expMainExplains2 = [{ScanType:"tbscan", IndexName:"", ReturnNum:insertNums, Name:subclFullName, GroupName:subclGroupName}];   
+  
+   //check primary
+   var actCommExplains1 = getCommonExplain( dbCommCLPrimary1, findConf1); 
+   var actCommExplains2 = getCommonExplain( dbCommCLPrimary2, findConf1); 
+   var actHashExplains1 = getSplitExplain( dbHashCLPrimary1, findConf1); 
+   var actHashExplains2 = getSplitExplain( dbHashCLPrimary2, findConf1); 
+   var actRangExplains1 = getSplitExplain( dbRangCLPrimary1, findConf1); 
+   var actRangExplains2 = getSplitExplain( dbRangCLPrimary2, findConf1); 
+   var actHashExplains3 = getSplitExplain( dbHashCLPrimary1, findConf2); 
+   var actHashExplains4 = getSplitExplain( dbHashCLPrimary2, findConf2); 
+   var actRangExplains3 = getSplitExplain( dbRangCLPrimary1, findConf2); 
+   var actRangExplains4 = getSplitExplain( dbRangCLPrimary2, findConf2); 
+   var actMainExplains1 = getMainclExplain( dbMainCLPrimary, findConf1 );
+   var actMainExplains2 = getMainclExplain( dbMainCLPrimary, findConf2 );   
+   
+   checkExplain( actCommExplains1, expCommExplains );
+   checkExplain( actCommExplains2, expCommExplains );
+   checkExplain( actHashExplains1, expHashExplains1 );                                                    	
+   checkExplain( actHashExplains2, expHashExplains2 );
+   checkExplain( actRangExplains1, expRangExplains1 );
+   checkExplain( actRangExplains2, expRangExplains2 );
+   checkExplain( actHashExplains3, expHashExplains3 );      
+   checkExplain( actHashExplains4, expHashExplains4 );
+   checkExplain( actRangExplains3, expRangExplains3 );
+   checkExplain( actRangExplains4, expRangExplains4 );
+   checkExplain( actMainExplains1, expMainExplains1 );
+   checkExplain( actMainExplains2, expMainExplains2 );
+   
+   //check slave
+   var actCommExplains1 = getCommonExplain( dbCommCLSlave1, findConf1); 
+   var actCommExplains2 = getCommonExplain( dbCommCLSlave2, findConf1); 
+   var actHashExplains1 = getSplitExplain( dbHashCLSlave1, findConf1); 
+   var actHashExplains2 = getSplitExplain( dbHashCLSlave2, findConf1); 
+   var actRangExplains1 = getSplitExplain( dbRangCLSlave1, findConf1); 
+   var actRangExplains2 = getSplitExplain( dbRangCLSlave2, findConf1); 
+   var actHashExplains3 = getSplitExplain( dbHashCLSlave1, findConf2); 
+   var actHashExplains4 = getSplitExplain( dbHashCLSlave2, findConf2); 
+   var actRangExplains3 = getSplitExplain( dbRangCLSlave1, findConf2); 
+   var actRangExplains4 = getSplitExplain( dbRangCLSlave2, findConf2); 
+   var actMainExplains1 = getMainclExplain( dbMainCLSlave, findConf1 );
+   var actMainExplains2 = getMainclExplain( dbMainCLSlave, findConf2 );
+   
+   checkExplain( actCommExplains1, expCommExplains );
+   checkExplain( actCommExplains2, expCommExplains );
+   checkExplain( actHashExplains1, expHashExplains1 );                                                    	
+   checkExplain( actHashExplains2, expHashExplains2 );
+   checkExplain( actRangExplains1, expRangExplains1 );
+   checkExplain( actRangExplains2, expRangExplains2 );
+   checkExplain( actHashExplains3, expHashExplains3 );                                                    	
+   checkExplain( actHashExplains4, expHashExplains4 );
+   checkExplain( actRangExplains3, expRangExplains3 );
+   checkExplain( actRangExplains4, expRangExplains4 );
+   checkExplain( actMainExplains1, expMainExplains1 );
+   checkExplain( actMainExplains2, expMainExplains2 );
+   
+   //query
+   query( dbCommCLPrimary1, findConf1, null, null, insertNums );
+   query( dbHashCLPrimary1, findConf1, null, null, insertNums );
+   query( dbHashCLPrimary1, findConf2, null, null, insertNums );
+   query( dbRangCLPrimary1, findConf1, null, null, insertNums );
+   query( dbRangCLPrimary1, findConf2, null, null, insertNums );
+   query( dbCommCLPrimary2, findConf1, null, null, insertNums );
+   query( dbHashCLPrimary2, findConf1, null, null, insertNums );
+   query( dbHashCLPrimary2, findConf2, null, null, insertNums );
+   query( dbRangCLPrimary2, findConf1, null, null, insertNums );
+   query( dbRangCLPrimary2, findConf2, null, null, insertNums );
+   query( dbMainCLPrimary, findConf1, null, null, insertNums );
+   query( dbMainCLPrimary, findConf2, null, null, insertNums );
+   
+   query( dbCommCLSlave1, findConf1, null, null, insertNums );
+   query( dbHashCLSlave1, findConf1, null, null, insertNums );
+   query( dbHashCLSlave1, findConf2, null, null, insertNums );
+   query( dbRangCLSlave1, findConf1, null, null, insertNums );
+   query( dbRangCLSlave1, findConf2, null, null, insertNums );
+   query( dbCommCLSlave2, findConf1, null, null, insertNums );
+   query( dbHashCLSlave2, findConf1, null, null, insertNums );
+   query( dbHashCLSlave2, findConf2, null, null, insertNums );
+   query( dbRangCLSlave2, findConf1, null, null, insertNums );
+   query( dbRangCLSlave2, findConf2, null, null, insertNums );
+   query( dbMainCLSlave, findConf1, null, null, insertNums );
+   query( dbMainCLSlave, findConf2, null, null, insertNums );
+   
+   //check out snapshot access plans
+	var accessFindOption11 = { Collection: clFullName11 };
+   var accessFindOption12 = { Collection: clFullName12 };
+   var accessFindOption13 = { Collection: clFullName13 };
+   var accessFindOption21 = { Collection: clFullName21 };
+   var accessFindOption22 = { Collection: clFullName22 };
+   var accessFindOption23 = { Collection: clFullName23 };
+   var accessFindOptionMainCL = { Collection: mainclFullName};
+    
+   var actAccessPlans11 = getCommonAccessPlans(db, accessFindOption11); 
+   var actAccessPlans12 = getSplitAccessPlans(db, accessFindOption12); 
+   var actAccessPlans13 = getSplitAccessPlans(db, accessFindOption13); 
+   var actAccessPlans21 = getCommonAccessPlans(db, accessFindOption21);
+   var actAccessPlans22 = getSplitAccessPlans(db, accessFindOption22);
+   var actAccessPlans23 = getSplitAccessPlans(db, accessFindOption23);
+   var actAccessPlansMainCL = getMainclAccessPlans(db, accessFindOptionMainCL);
+   
+   var expAccessPlans11 = [{ScanType:"tbscan", IndexName:""},
+	                        {ScanType:"tbscan", IndexName:""}];                     
+   var expAccessPlans12 = [{ScanType:"tbscan", IndexName:"",GroupName :srcHashGroupName1},
+	                        {ScanType:"tbscan", IndexName:"",GroupName :srcHashGroupName1},
+                           {ScanType:"ixscan", IndexName:"b",GroupName :destHashGroupName1}, 
+                           {ScanType:"tbscan", IndexName:"",GroupName :srcHashGroupName1},
+	                        {ScanType:"tbscan", IndexName:"",GroupName :srcHashGroupName1},
+                           {ScanType:"ixscan", IndexName:"b",GroupName :destHashGroupName1}];                             
+   var expAccessPlans13 = [{ScanType:"tbscan", IndexName:"",GroupName :destRangGroupName1},
+	                        {ScanType:"ixscan", IndexName:"b",GroupName :srcRangGroupName1},
+                           {ScanType:"tbscan", IndexName:"",GroupName :destRangGroupName1},
+                           {ScanType:"tbscan", IndexName:"",GroupName :destRangGroupName1},
+	                        {ScanType:"ixscan", IndexName:"b",GroupName :srcRangGroupName1},
+                           {ScanType:"tbscan", IndexName:"",GroupName :destRangGroupName1}];
+   var expAccessPlans21 = [{ScanType:"tbscan", IndexName:""},
+	                        {ScanType:"tbscan", IndexName:""}]; 
+   var expAccessPlans22 = [{ScanType:"tbscan", IndexName:"",GroupName :srcHashGroupName2},
+                           {ScanType:"tbscan", IndexName:"",GroupName :srcHashGroupName2},
+	                        {ScanType:"ixscan", IndexName:"b",GroupName :destHashGroupName2},
+                           {ScanType:"tbscan", IndexName:"",GroupName :srcHashGroupName2},
+                           {ScanType:"tbscan", IndexName:"",GroupName :srcHashGroupName2},
+	                        {ScanType:"ixscan", IndexName:"b",GroupName :destHashGroupName2}];
+   var expAccessPlans23 = [{ScanType:"tbscan", IndexName:"",GroupName :destRangGroupName2},
+	                        {ScanType:"ixscan", IndexName:"b",GroupName :srcRangGroupName2},
+	                        {ScanType:"tbscan", IndexName:"",GroupName :destRangGroupName2},
+                           {ScanType:"tbscan", IndexName:"",GroupName :destRangGroupName2},
+	                        {ScanType:"ixscan", IndexName:"b",GroupName :srcRangGroupName2},
+	                        {ScanType:"tbscan", IndexName:"",GroupName :destRangGroupName2}];                      
+   var expAccessPlansMainCL = [{ScanType:"tbscan", IndexName:"", GroupName:subclGroupName},
+                               {ScanType:"tbscan", IndexName:"", GroupName:subclGroupName},
+										 {ScanType:"tbscan", IndexName:"", GroupName:subclGroupName},
+                               {ScanType:"tbscan", IndexName:"", GroupName:subclGroupName}];  
+                                
+   checkSnapShotAccessPlans(clFullName11, expAccessPlans11, actAccessPlans11);
+   checkSnapShotAccessPlans(clFullName12, expAccessPlans12, actAccessPlans12);
+   checkSnapShotAccessPlans(clFullName13, expAccessPlans13, actAccessPlans13);
+   checkSnapShotAccessPlans(clFullName21, expAccessPlans21, actAccessPlans21);
+   checkSnapShotAccessPlans(clFullName22, expAccessPlans22, actAccessPlans22);
+   checkSnapShotAccessPlans(clFullName23, expAccessPlans23, actAccessPlans23);
+   checkMainclAccessPlans(expAccessPlansMainCL, actAccessPlansMainCL);
+              
+   println("check result after analyze success with mode:2!");
      
    db1.close();     
    commDropCS( db, csName1, true, "drop CS in the end" );
