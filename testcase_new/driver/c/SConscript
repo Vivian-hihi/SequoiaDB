@@ -62,6 +62,7 @@ testFiles = [
    [ "./misc/snapshotTrans.cpp" ], # conf
    [ "./misc/masterSlave.cpp" ], # sync
    [ "./misc/snapshotSys14118.cpp" ],
+   [ "./misc/resetSnapshot14424.cpp" ], # sync
    [ "./load/loadUnloadCS.cpp" ],
    [ "./load/reloadConf.cpp" ],
    [ "./load/rename.cpp" ],
