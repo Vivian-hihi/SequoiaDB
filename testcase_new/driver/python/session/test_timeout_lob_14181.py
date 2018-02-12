@@ -34,12 +34,15 @@ class TestSessiontimeout14181(testlib.SdbTestBase):
       lob.close()    
       
       # set session attr timeout 1ms
+      newdb1 = testlib.default_db()
+      newcl1 = newdb1.get_collection(self.cs_name + '.' + self.cl_name)
+      
       opt = {'Timeout' : 1};
-      self.db.set_session_attri(options = opt)
+      newdb1.set_session_attri(options = opt)
    
       # write lob
       try:
-         lob = self.cl.open_lob(ObjectId('5a699c8081d089d50600006d'), LOB_WRITE)
+         lob = newcl1.open_lob(ObjectId('5a699c8081d089d50600006d'), LOB_WRITE)
          length = 20 * 1024 * 1024
          lob_data = random_str(length)
          lob.write(lob_data, len(lob_data))
@@ -51,13 +54,9 @@ class TestSessiontimeout14181(testlib.SdbTestBase):
          if(lob != None):
             lob.close()         
             
-      # set session attr timeout 1ms
-      opt = {'Timeout' : 1};
-      self.db.set_session_attri(options = opt)
-            
       # read lob
       try:
-         lob = self.cl.open_lob(ObjectId('5a699c8081d089d50600006d'), LOB_READ)
+         lob = newcl1.open_lob(ObjectId('5a699c8081d089d50600006d'), LOB_READ)
          length = 20 * 1024 * 1024
          lob.read(length)
          self.fail('Need Error -13')
@@ -70,19 +69,18 @@ class TestSessiontimeout14181(testlib.SdbTestBase):
             
       # remove lob
       try:
-         self.cl.remove_lob(ObjectId('5a699c8081d089d50600006d'))
+         newcl1.remove_lob(ObjectId('5a699c8081d089d50600006d'))
          self.fail('Need Error -13')
       except SDBBaseError as e:
          if -13 != e.code:
             self.fail('check read lob timeout fail: ' + str(e.detail))   
       finally:
          if(lob != None):
-            lob.close() 				
+            lob.close() 		
 
-   def tearDown(self):
-      # set session no timeout at last
-      opt = {'Timeout' : -1};
-      self.db.set_session_attri(options = opt) 
+      newdb1.disconnect()            
+
+   def tearDown(self): 
       try:
          testlib.drop_cs(self.db, self.cs_name)   
          self.db.disconnect()
