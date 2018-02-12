@@ -33,7 +33,7 @@ namespace engine
    typedef _rtnDictCreatorJob rtnDictCreatorJob ;
 
    INT32 startDictCreatorJob ( EDUID *pEDUID,
-                       UINT32 scanInterval = RTN_DEFAULT_DICT_SCAN_INTERVAL ) ;
+                               UINT32 scanInterval = RTN_DEFAULT_DICT_SCAN_INTERVAL ) ;
 }
 
 #endif /* RTN_DICT_CREATOR_JOB_HPP_ */

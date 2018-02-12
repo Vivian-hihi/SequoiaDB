@@ -64,6 +64,8 @@ namespace engine
          virtual BOOLEAN muteXOn ( const _rtnBaseJob *pOther ) ;
          virtual INT32 doit () ;
 
+         virtual BOOLEAN reuseEDU() const { return TRUE ; }
+
       private:
          _dmsStorageBase            *_pSUBase ;
          CHAR                       _name[ DMS_EXTEND_JOB_NAME_LEN + 1 ] ;

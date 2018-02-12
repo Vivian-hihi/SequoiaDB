@@ -116,6 +116,8 @@ namespace engine
          virtual BOOLEAN muteXOn ( const _rtnBaseJob *pOther ) ;
          virtual INT32 doit () ;
 
+         virtual BOOLEAN reuseEDU() const { return TRUE ; }
+
       protected:
          void           _doUnit( _utilCacheUnit *pUnit ) ;
 

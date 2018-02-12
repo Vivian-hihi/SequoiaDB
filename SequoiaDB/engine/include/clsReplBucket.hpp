@@ -262,6 +262,8 @@ namespace engine
          virtual BOOLEAN muteXOn ( const _rtnBaseJob *pOther ) ;
          virtual INT32 doit () ;
 
+         virtual BOOLEAN reuseEDU() const { return TRUE ; }
+
       private:
          clsBucket               *_pBucket ;
          INT32                   _timeout ;

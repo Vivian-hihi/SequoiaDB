@@ -131,6 +131,8 @@ namespace engine
          virtual BOOLEAN muteXOn ( const _rtnBaseJob *pOther ) = 0 ;
          virtual INT32 doit () = 0 ;
 
+         virtual BOOLEAN reuseEDU() const { return FALSE ; }
+
       private:
          ossSpinXLatch        _latchIn ;
          ossSpinXLatch        _latchOut ;
