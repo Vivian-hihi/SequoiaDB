@@ -44,9 +44,6 @@ public class HttpController {
         if (Sql == null || Sql.trim().length() == 0) {
             return outputResult(-1, "Sql is NULL", "", content);
         }
-        if (DbName == null || DbName.trim().length() == 0) {
-            DbName = "postgres";
-        }
 
         Sql = Sql.trim();
 
@@ -65,11 +62,20 @@ public class HttpController {
 
         StringBuilder sqlUser = new StringBuilder();
         StringBuilder sqlPasswd = new StringBuilder();
+        StringBuilder sqlDbName = new StringBuilder();
 
         try {
-            dbo.getSsqlAccountInfo(ClusterName, BusinessName, sqlUser, sqlPasswd);
+            dbo.getSsqlAccountInfo(ClusterName, BusinessName, sqlUser, sqlPasswd, sqlDbName);
         } catch (BaseException e) {
             return outputResult(e.getErrorCode(), "Failed to get " + BusinessName + " auth info", e.getMessage(), content);
+        }
+
+        if (DbName == null || DbName.trim().length() == 0) {
+            if (sqlDbName.toString().length() > 0) {
+                DbName = sqlDbName.toString();
+            } else {
+                DbName = "postgres";
+            }
         }
 
         try {

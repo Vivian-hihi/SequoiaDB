@@ -79,6 +79,7 @@ function _removeWithSequoiaDB( PD_LOGGER )
 {
    var result = {} ;
    var fromBuz       = BUS_JSON[FIELD_FROM] ;
+   var fromDbName    = fromBuz[FIELD_DB_NAME] ;
    var fromBuzInfo   = fromBuz[FIELD_INFO] ;
    var fromBuzConfig = fromBuz[FIELD_CONFIG] ;
    var fromBuzName   = fromBuzInfo[FIELD_BUSINESS_NAME] ;
@@ -132,7 +133,7 @@ function _removeWithSequoiaDB( PD_LOGGER )
    {
       var command = sprintf( 'drop server ?;', serverName ) ;
 
-      _execSql( PD_LOGGER, port, cmd, installPath, command ) ;
+      _execSql( PD_LOGGER, port, cmd, installPath, command, fromDbName ) ;
    }
    catch( e )
    {
@@ -145,7 +146,7 @@ function _removeWithSequoiaDB( PD_LOGGER )
    try
    {
       var command = 'drop extension sdb_fdw;' ;
-      _execSql( PD_LOGGER, port, cmd, installPath, command ) ;
+      _execSql( PD_LOGGER, port, cmd, installPath, command, fromDbName ) ;
    }
    catch( e )
    {

@@ -9318,108 +9318,59 @@ namespace engine
    {
    }
 
-   INT32 omSetBusinessAuthCommand::_getBusinessAuthInfo( string &businessName,
-                                                         string &userName,
-                                                         string &passwd )
-   {
-      INT32 rc = SDB_OK ;
-      const CHAR *pBusinessName = NULL ;
-      const CHAR *pUserName     = NULL ;
-      const CHAR *pPasswd       = NULL ;
-
-      _restAdaptor->getQuery( _restSession, OM_REST_BUSINESS_NAME,
-                              &pBusinessName ) ;
-      if ( NULL == pBusinessName )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "get rest field failed:field=%s",
-                     OM_REST_BUSINESS_NAME ) ;
-         goto error ;
-      }
-
-      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_LOGIN_NAME,
-                              &pUserName ) ;
-      if ( NULL == pUserName )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "get rest field failed:field=%s",
-                     OM_REST_FIELD_LOGIN_NAME ) ;
-         goto error ;
-      }
-
-      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_LOGIN_PASSWD,
-                              &pPasswd ) ;
-      if ( NULL == pPasswd )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "get rest field failed:field=%s",
-                     OM_REST_FIELD_LOGIN_PASSWD ) ;
-         goto error ;
-      }
-
-      businessName = pBusinessName ;
-      userName     = pUserName ;
-      passwd       = pPasswd ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
    INT32 omSetBusinessAuthCommand::doCommand()
    {
-      INT32 rc        = SDB_OK ;
-      INT64 updateNum = 0 ;
-      BSONObj selector ;
-      BSONObj updator ;
-      BSONObj hint ;
+      INT32 rc = SDB_OK ;
       string businessName ;
       string userName ;
       string passwd ;
+      string dbName ;
+      BSONObj authOptions ;
+      omDatabaseTool dbTool( _cb ) ;
+      omArgOptions option( _restAdaptor, _restSession ) ;
+      omRestTool restTool( _restAdaptor, _restSession ) ;
 
-      rc = _getBusinessAuthInfo( businessName, userName, passwd ) ;
-      if ( SDB_OK != rc )
+      _setFileLanguageSep() ;
+
+      pmdGetThreadEDUCB()->resetInfo( EDU_INFO_ERROR ) ;
+
+      rc = option.parseRestArg( "sss|s",
+                             OM_REST_FIELD_BUSINESS_NAME, &businessName,
+                             OM_REST_FIELD_USER,          &userName,
+                             OM_REST_FIELD_PASSWORD,      &passwd,
+                             OM_REST_FIELD_DB_NAME,       &dbName ) ;
+      if ( rc )
       {
-         PD_LOG( PDERROR, "get rest field failed:rc=%d", rc ) ;
+         _errorMsg.setError( TRUE, option.getErrorMsg() ) ;
+         PD_LOG( PDERROR, "failed to parse rest arg: rc=%d", rc ) ;
          goto error ;
       }
 
+      if ( FALSE == dbTool.isBusinessExist( businessName ) )
       {
-         BSONObj businessInfo ;
-         _getBusinessInfo( businessName, businessInfo ) ;
-         if ( businessInfo.isEmpty() )
-         {
-            rc = SDB_INVALIDARG ;
-            pmdGetThreadEDUCB()->resetInfo( EDU_INFO_ERROR ) ;
-            PD_LOG_MSG( PDERROR, "business is not exist:business=%s",
-                        businessName.c_str() ) ;
-            goto error ;
-         }
-      }
-
-      selector = BSON( OM_AUTH_FIELD_BUSINESS_NAME << businessName ) ;
-      {
-         BSONObj tmp = BSON( OM_AUTH_FIELD_BUSINESS_NAME << businessName
-                             << OM_AUTH_FIELD_USER << userName
-                             << OM_AUTH_FIELD_PASSWD << passwd ) ;
-         updator = BSON( "$set" << tmp ) ;
-      }
-
-      rc = rtnUpdate( OM_CS_DEPLOY_CL_BUSINESS_AUTH, selector, updator, hint,
-                      FLG_UPDATE_UPSERT, _cb, &updateNum ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "set business authority failed:info=%s,rc=%d",
-                 selector.toString().c_str(), rc ) ;
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "business does not exist: name=%s",
+                             businessName.c_str() ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
          goto error ;
       }
 
-      _sendOKRes2Web() ;
+      authOptions = BSON( OM_BSON_DB_NAME << dbName ) ;
+
+      rc = dbTool.upsertAuth( businessName, userName, passwd, authOptions ) ;
+      if ( rc )
+      {
+         _errorMsg.setError( TRUE, "failed to set business auth,rc=%d", rc ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      restTool.sendOkRespone() ;
+
    done:
       return rc ;
    error:
-      _sendErrorRes2Web( rc, omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ) ;
+      restTool.sendRespone( rc, _errorMsg.getError() ) ;
       goto done ;
    }
    // *****************omRemoveBusinessAuthCommand*****************************

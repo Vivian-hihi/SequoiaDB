@@ -1982,6 +1982,22 @@ namespace engine
                                   string &authUser, string &authPasswd )
    {
       INT32 rc = SDB_OK ;
+      BSONObj authInfo ;
+
+      rc = getAuth( businessName, authInfo ) ;
+      if( SDB_OK == rc )
+      {
+         authUser = authInfo.getStringField( OM_AUTH_FIELD_USER ) ;
+         authPasswd = authInfo.getStringField( OM_AUTH_FIELD_PASSWD ) ;
+      }
+
+      return rc ;
+   }
+
+   INT32 omDatabaseTool::getAuth( const string &businessName,
+                                  BSONObj &authInfo )
+   {
+      INT32 rc = SDB_OK ;
       SINT64 contextID = -1 ;
       BSONObj selector ;
       BSONObj order ;
@@ -2019,9 +2035,10 @@ namespace engine
 
          {
             BSONObj result( buffObj.data() ) ;
+            BSONObj filter = BSON( "_id" << "" ) ;
+            BSONObj newResult = result.filterFieldsUndotted( filter, FALSE ) ;
 
-            authUser = result.getStringField( OM_AUTH_FIELD_USER ) ;
-            authPasswd = result.getStringField( OM_AUTH_FIELD_PASSWD ) ;
+            authInfo = newResult.copy() ;
          }
       }
 
@@ -2039,14 +2056,22 @@ namespace engine
                                      const string &authUser,
                                      const string &authPasswd )
    {
+      BSONObj options ;
+
+      return upsertAuth( businessName, authUser, authPasswd, options ) ;
+   }
+
+   INT32 omDatabaseTool::upsertAuth( const string &businessName,
+                                     const string &authUser,
+                                     const string &authPasswd,
+                                     BSONObj &options )
+   {
       INT32 rc = SDB_OK ;
       INT64 updateNum = 0 ;
       BSONObj condition = BSON( OM_AUTH_FIELD_BUSINESS_NAME << businessName ) ;
-      BSONObj updator = BSON( "$replace" <<
-            BSON( OM_AUTH_FIELD_BUSINESS_NAME << businessName <<
-                  OM_AUTH_FIELD_USER << authUser <<
-                  OM_AUTH_FIELD_PASSWD << authPasswd ) ) ;
+      BSONObj updator ;
       BSONObj hint ;
+      BSONObjBuilder updatorBuilder ;
 
       if ( authUser.empty() )
       {
@@ -2061,6 +2086,13 @@ namespace engine
          PD_LOG( PDERROR, "password cannot be empty" ) ;
          goto error ;
       }
+
+      updatorBuilder.append( OM_AUTH_FIELD_BUSINESS_NAME, businessName ) ;
+      updatorBuilder.append( OM_AUTH_FIELD_USER, authUser ) ;
+      updatorBuilder.append( OM_AUTH_FIELD_PASSWD, authPasswd ) ;
+      updatorBuilder.appendElements( options ) ;
+
+      updator = BSON( "$replace" << updatorBuilder.obj() ) ;
 
       rc = rtnUpdate( OM_CS_DEPLOY_CL_BUSINESS_AUTH, condition, updator, hint,
                       FLG_UPDATE_UPSERT | FLG_UPDATE_RETURNNUM,

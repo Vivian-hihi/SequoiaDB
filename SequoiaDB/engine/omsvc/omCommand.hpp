@@ -988,18 +988,14 @@ namespace engine
 
    class omSetBusinessAuthCommand : public omAuthCommand
    {
-      public:
-         omSetBusinessAuthCommand( restAdaptor *pRestAdaptor,
-                                   pmdRestSession *pRestSession ) ;
-         virtual ~omSetBusinessAuthCommand() ;
+   public:
+      omSetBusinessAuthCommand( restAdaptor *pRestAdaptor,
+                                pmdRestSession *pRestSession ) ;
 
-      public:
-         virtual INT32   doCommand() ;
+      virtual ~omSetBusinessAuthCommand() ;
 
-      protected:
-         INT32           _getBusinessAuthInfo( string &businessName,
-                                               string &userName,
-                                               string &passwd ) ;
+   public:
+      virtual INT32 doCommand() ;
    } ;
 
    class omRemoveBusinessAuthCommand : public omAuthCommand

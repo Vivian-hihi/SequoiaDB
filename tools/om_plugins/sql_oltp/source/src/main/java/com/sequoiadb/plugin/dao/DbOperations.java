@@ -50,7 +50,7 @@ public class DbOperations {
         }
     }
 
-    public synchronized void getSsqlAccountInfo(String clusterName, String businessName, StringBuilder user, StringBuilder passwd) {
+    public synchronized void getSsqlAccountInfo(String clusterName, String businessName, StringBuilder user, StringBuilder passwd, StringBuilder defaultDb) {
         connect();
 
         CollectionSpace cs = db.getCollectionSpace("SYSDEPLOY");
@@ -64,6 +64,7 @@ public class DbOperations {
             BSONObject record = cur.getNext();
             user.append((String) record.get("User"));
             passwd.append((String) record.get("Passwd"));
+            defaultDb.append((String) record.get("DbName"));
         }
 
         if (user.length() == 0) {

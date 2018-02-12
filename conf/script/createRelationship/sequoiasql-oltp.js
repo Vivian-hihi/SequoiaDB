@@ -75,6 +75,7 @@ function _relationWithSequoiaDB( PD_LOGGER )
 {
    var result = {} ;
    var fromBuz       = BUS_JSON[FIELD_FROM] ;
+   var fromDbName    = fromBuz[FIELD_DB_NAME] ;
    var fromBuzInfo   = fromBuz[FIELD_INFO] ;
    var fromBuzConfig = fromBuz[FIELD_CONFIG] ;
    var fromBuzName   = fromBuzInfo[FIELD_BUSINESS_NAME] ;
@@ -247,7 +248,7 @@ function _relationWithSequoiaDB( PD_LOGGER )
    try
    {
       var command = 'create extension sdb_fdw;' ;
-      _execSql( PD_LOGGER, port, cmd, installPath, command ) ;
+      _execSql( PD_LOGGER, port, cmd, installPath, command, fromDbName ) ;
    }
    catch( e )
    {
@@ -260,7 +261,7 @@ function _relationWithSequoiaDB( PD_LOGGER )
       var command = sprintf( 'create server ? foreign data wrapper' +
                              ' sdb_fdw options(?);', serverName, serialize ) ;
 
-      _execSql( PD_LOGGER, port, cmd, installPath, command ) ;
+      _execSql( PD_LOGGER, port, cmd, installPath, command, fromDbName ) ;
    }
    catch( e )
    {
