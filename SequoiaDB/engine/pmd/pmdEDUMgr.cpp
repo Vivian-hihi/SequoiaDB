@@ -1013,11 +1013,19 @@ namespace engine
             /// add to idle map
             if ( !toDestory )
             {
-               _mapIdles[ cb->getID() ] = cb ;
-               SDB_ASSERT( PMD_EDU_IDLE != cb->getStatus(),
-                           "Status can't be idle" ) ;
-               cb->setStatus( PMD_EDU_IDLE ) ;
-               cb->setType( PMD_EDU_UNKNOW ) ;
+               try
+               {
+                  _mapIdles[ cb->getID() ] = cb ;
+                  SDB_ASSERT( PMD_EDU_IDLE != cb->getStatus(),
+                              "Status can't be idle" ) ;
+                  cb->setStatus( PMD_EDU_IDLE ) ;
+                  cb->setType( PMD_EDU_UNKNOW ) ;
+               }
+               catch( std::exception &e )
+               {
+                  PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+                  toDestory = TRUE ;
+               }
             }
          }
          /// In idle map
@@ -1065,12 +1073,12 @@ namespace engine
 
       _latch.get() ;
 
-      if ( _mapIdles.end() != ( it = _mapIdles.find( cb->getID() ) ) )
+      if ( _mapIdles.end() != ( it = _mapIdles.find( eduID ) ) )
       {
          cb = it->second ;
          _mapIdles.erase( it ) ;
       }
-      else if ( _mapRuns.end() != ( it = _mapRuns.find( cb->getID() ) ) )
+      else if ( _mapRuns.end() != ( it = _mapRuns.find( eduID ) ) )
       {
          cb = it->second ;
          _mapRuns.erase( it ) ;
@@ -1218,13 +1226,15 @@ namespace engine
       // set to creating status
       cb->setStatus ( PMD_EDU_IDLE ) ;
 
-      _latch.get() ;
-      newID = _EDUID++ ;
-      cb->setID( newID ) ;
-      /// add to map
-      _mapIdles[ newID ] = cb ;
-      addMap = TRUE ;
-      _latch.release () ;
+      /// need to use ossScopedLock to prevent lock leak when exception
+      {
+         ossScopedLock lock( &_latch, EXCLUSIVE ) ;
+         newID = _EDUID++ ;
+         cb->setID( newID ) ;
+         /// add to map
+         _mapIdles[ newID ] = cb ;
+         addMap = TRUE ;
+      }
 
       // create a new thread here
       try
@@ -1265,14 +1275,12 @@ namespace engine
       }
 
    done :
-      PD_TRACE_EXITRC ( SDB__PMDEDUMGR_CRTNEWEDU, rc );
       return rc ;
    error :
       if ( addMap )
       {
-         _latch.get() ;
+         ossScopedLock lock( &_latch, EXCLUSIVE ) ;
          _mapIdles.erase( newID ) ;
-         _latch.release() ;
       }
       if ( cb )
       {
@@ -1328,23 +1336,25 @@ namespace engine
          cb->setName( pInitName ) ;
       }
 
-      _latch.get() ;
-      newID = _EDUID++ ;
-      cb->setID( newID ) ;
-      /// add to map
-      _mapRuns[ newID ] = cb ;
-      addMap = TRUE ;
-      /// add to system map
-      if ( isSystem )
+      /// need to use ossScopedLock to prevent lock leak when exception
       {
-         _mapSystemEdu[ type ] = newID ;
-      }
+         ossScopedLock lock( &_latch, EXCLUSIVE ) ;
+         newID = _EDUID++ ;
+         cb->setID( newID ) ;
+         /// add to map
+         _mapRuns[ newID ] = cb ;
+         addMap = TRUE ;
+         /// add to system map
+         if ( isSystem )
+         {
+            _mapSystemEdu[ type ] = newID ;
+         }
 
-      /// post resume event before thread start
-      cb ->postEvent( pmdEDUEvent( PMD_EDU_EVENT_RESUME,
-                                   PMD_EDU_MEM_NONE,
-                                   arg ) ) ;
-      _latch.release () ;
+         /// post resume event before thread start
+         cb ->postEvent( pmdEDUEvent( PMD_EDU_EVENT_RESUME,
+                                      PMD_EDU_MEM_NONE,
+                                      arg ) ) ;
+      }
 
       // create a new thread here
       try
@@ -1390,13 +1400,12 @@ namespace engine
    error :
       if ( addMap )
       {
-         _latch.get() ;
+         ossScopedLock lock( &_latch, EXCLUSIVE ) ;
          _mapRuns.erase( newID ) ;
          if ( isSystem )
          {
             _mapSystemEdu.erase( type ) ;
          }
-         _latch.release() ;
       }
       if ( cb )
       {
@@ -1539,9 +1548,8 @@ namespace engine
 
    void _pmdEDUMgr::setEDU( UINT32 tid, EDUID eduid )
    {
-      _latch.get() ;
+      ossScopedLock lock( &_latch, EXCLUSIVE ) ;
       _mapTid2Edu[ tid ] = eduid ;
-      _latch.release() ;
    }
 
    pmdEDUCB* _pmdEDUMgr::getEDU()
