@@ -1,19 +1,14 @@
 package com.sequoiadb.crud.compress.lzw;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
 import org.bson.BSONObject;
 import org.bson.util.JSON;
 import org.testng.Assert;
-import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.crud.compress.snappy.SnappyUilts;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
 
@@ -29,7 +24,6 @@ import com.sequoiadb.testcommon.SdbTestBase;
 public class TestLzw6643 extends SdbTestBase {
     private Sequoiadb sdb = null;
     private String clName = "cl_6643";
-    private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
     
     @BeforeClass
     public void setUp() {
@@ -37,9 +31,6 @@ public class TestLzw6643 extends SdbTestBase {
             sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         }catch(BaseException e){
             Assert.fail(e.getMessage());
-        }
-        if (SnappyUilts.isStandAlone(sdb)){
-            throw new SkipException("is standalone skip testcase");
         }
     }
     
@@ -71,11 +62,13 @@ public class TestLzw6643 extends SdbTestBase {
             }catch(BaseException e){
                 Assert.assertEquals(e.getErrorCode(), -6, e.getMessage());
             }
-            try{
-                cs.createCollection(clName, (BSONObject)JSON.parse("{Compression: 'lzw', Compressed: false}"));
-                throw new BaseException(-10000, "cl shouldn't been created successfully");
-            }catch(BaseException e){
-                Assert.assertEquals(e.getErrorCode(), -6, e.getMessage());
+            if (!LzwUtils.isStandAlone(db)) { // standalone doesn't handle this status for JIRA-2210
+                try{
+                    cs.createCollection(clName, (BSONObject)JSON.parse("{Compression: 'lzw', Compressed: false}"));
+                    throw new BaseException(-10000, "cl shouldn't been created successfully");
+                }catch(BaseException e){
+                    Assert.assertEquals(e.getErrorCode(), -6, e.getMessage());
+                }
             }
         }catch(BaseException e){
             Assert.fail(e.getMessage());
