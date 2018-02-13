@@ -1608,11 +1608,8 @@
          <en>Yes</en>
          <cn>是</cn>
       </reloadable>
-      <reloadstrategy>
-         <en>Restrict the max number of clients connecting to the engine, range is [0,30000], default:0, 0:disable restriction</en>
-         <cn>指定允许连接到引擎的客户端的最大数量，取值范围为[0,30000], 默认值是0，0表示不限制</cn>
-      </reloadstrategy>
       <default>0</default>
+      <typeofweb>num</typeofweb>
    </opt>
 
    <opt>
