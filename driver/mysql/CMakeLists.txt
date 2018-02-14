@@ -24,7 +24,8 @@ sdb_condition.cc
 sdb_item.cc
 sdb_cl.cc
 sdb_adaptor.cc
-sdb_err_code.cc)
+sdb_err_code.cc
+sdb_idx.cc)
 
 INCLUDE_DIRECTORIES(
 ./sequoiadb

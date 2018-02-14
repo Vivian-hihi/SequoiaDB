@@ -16,7 +16,7 @@
 #ifndef SDB_ERR_CODE__H
 #define SDB_ERR_CODE__H
 
-#define IS_SDB_NET_ERR(rc) ( SDB_NETWORK_CLOSE == rc || SDB_NETWORK == rc || SDB_NOT_CONNECTED == rc )
+#define IS_SDB_NET_ERR(rc) ( SDB_NETWORK_CLOSE == rc || SDB_NETWORK == rc || SDB_NOT_CONNECTED == rc || SDB_SYS == rc )
 
 enum SDB_ERR_CODE
 {

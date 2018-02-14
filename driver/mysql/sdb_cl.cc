@@ -60,8 +60,10 @@ int sdb_cl::re_init( bool create,
                      const bson::BSONObj &options )
 {
    int rc = SDB_ERR_OK ;
+   int retry_times = 2 ;
    sdbCollectionSpace cs ;
 
+retry:
    rc = p_conn->get_sdb().getCollectionSpace( cs_name, cs ) ;
    if ( SDB_DMS_CS_NOTEXIST == rc && create )
    {
@@ -86,6 +88,15 @@ int sdb_cl::re_init( bool create,
 done:
    return rc ;
 error:
+   if ( IS_SDB_NET_ERR(rc) )
+   {
+      bool is_transaction = p_conn->is_transaction() ;
+      if( 0 == p_conn->connect() && !is_transaction
+          && retry_times-- > 0 )
+      {
+         goto retry ;
+      }
+   }
    convert_sdb_code( rc ) ;
    goto done ;
 }
@@ -341,6 +352,10 @@ int sdb_cl::create_index( const bson::BSONObj &indexDef,
    int retry_times = 2 ;
 retry:
    rc = cl.createIndex( indexDef, pName, isUnique, isEnforced ) ;
+   if ( SDB_IXM_REDEF == rc )
+   {
+      rc = SDB_ERR_OK ;
+   }
    if ( rc != SDB_ERR_OK )
    {
       goto error ;
@@ -367,6 +382,10 @@ int sdb_cl::drop_index( const char *pName )
    int retry_times = 2 ;
 retry:
    rc = cl.dropIndex( pName ) ;
+   if ( SDB_IXM_NOTEXIST == rc )
+   {
+      rc = SDB_ERR_OK ;
+   }
    if ( rc != SDB_ERR_OK )
    {
       goto error ;

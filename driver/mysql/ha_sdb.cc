@@ -30,6 +30,7 @@
 #include "sdb_util.h"
 #include "sdb_condition.h"
 #include "sdb_err_code.h"
+#include "sdb_idx.h"
 
 using namespace sdbclient ;
 
@@ -172,7 +173,7 @@ ulong ha_sdb::index_flags( uint inx, uint part, bool all_parts ) const
 {
    // TODO: SUPPORT SORT
    //HA_READ_NEXT | HA_KEYREAD_ONLY ;
-   return ( HA_READ_RANGE | HA_DO_INDEX_COND_PUSHDOWN
+   return ( HA_READ_RANGE | HA_DO_INDEX_COND_PUSHDOWN | HA_READ_NEXT
             | HA_READ_ORDER ) ;
 }
 
@@ -1047,17 +1048,29 @@ int ha_sdb::index_read_map( uchar *buf, const uchar *key_ptr,
 {
    int rc = 0 ;
    int errnum = 0 ;
-   bson::BSONObj orderbyObj ;
-   if ( condition.isEmpty() && NULL != key_ptr && keynr >= 0 )
+   bson::BSONObj orderbyObj, hint, condition_idx ;
+   bson::BSONObjBuilder cond_builder ;
+   const char *idx_name = NULL ;
+   if ( NULL != key_ptr && keynr >= 0 )
    {
       build_match_obj_by_start_stop_key( (uint)keynr, key_ptr,
                        keypart_map, find_flag,
-                       condition ) ;
+                       condition_idx ) ;
    }
-      //sort
-      //(gdb) p range_scan_direction 
-      //$69 = handler::RANGE_SCAN_ASC
-   rc = cl->query( condition ) ;
+   cond_builder.appendElements( condition ) ;
+   cond_builder.appendElements( condition_idx ) ;
+   condition = cond_builder.obj() ;
+   //TODO:how to choose the best index ?
+   //TODO:how to choose the best index ?
+   //TODO:how to choose the best index ?
+   //TODO:how to choose the best index ?
+   /*idx_name = sdb_get_idx_name( table->key_info + keynr ) ;
+   if ( idx_name )
+   {
+      hint = BSON( "" << idx_name ) ;
+   }*/
+   rc = cl->query( condition, sdbclient::_sdbStaticObject,
+                   sdbclient::_sdbStaticObject, hint ) ;
    if ( rc )
    {
       errnum = rc ;
@@ -1601,11 +1614,10 @@ int ha_sdb::create_index( Alter_inplace_info *ha_alter_info )
 
       //TODO: parse primary-key-index ;
       rc = cl->create_index( keyObj, keyInfo->name, FALSE, FALSE ) ;
-      if ( rc && rc != SDB_IXM_REDEF && rc != SDB_IXM_EXIST_COVERD_ONE )
+      if ( rc )
       {
          goto error ;
       }
-      rc = 0 ;
    }
 done:
    return rc ;
@@ -1627,11 +1639,10 @@ int ha_sdb::drop_index( Alter_inplace_info *ha_alter_info )
       KEY *keyInfo = NULL ;
       keyInfo = ha_alter_info->index_drop_buffer[i] ;
       rc = cl->drop_index( keyInfo->name ) ;
-      if ( rc && rc != SDB_IXM_NOTEXIST )
+      if ( rc )
       {
          goto error ;
       }
-      rc = 0 ;
    }
 done:
    return rc ;
