@@ -68,7 +68,13 @@ TEST_F( snapshotPlanTest14515, AccessPlan )
    ASSERT_EQ( SDB_OK, rc ) << "fail to close cursor" ;
    sdbReleaseCursor( cursor ) ;
 
-   rc = sdbGetSnapshot( db, SDB_SNAP_ACCESSPLANS, NULL, NULL, NULL, &cursor ) ;
+   CHAR clFullName[ 2*MAX_NAME_SIZE+2 ] = { 0 } ;
+   sprintf( clFullName, "%s%s%s", csName, ".", clName ) ;
+   bson_init( &cond ) ;
+   bson_append_string( &cond, "Collection", clFullName ) ;
+   bson_finish( &cond ) ;
+   rc = sdbGetSnapshot( db, SDB_SNAP_ACCESSPLANS, &cond, NULL, NULL, &cursor ) ;
+   bson_destroy( &cond ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to snapshot AccessPlan" ;
    bson obj ;
    bson_init( &obj ) ;
