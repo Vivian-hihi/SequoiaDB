@@ -159,9 +159,8 @@ namespace engine
       {
          SDB_ASSERT( offset >= (INT32)DMS_EXTENT_METADATA_SZ,
                      "offset is invalid" ) ;
-         INT32 distance = offset - DMS_EXTENT_METADATA_SZ - _writePos ;
          _writePos = offset - DMS_EXTENT_METADATA_SZ ;
-         _freeSpace -= distance ;
+         _freeSpace = DMS_CAP_EXTENT_SZ - offset ;
       }
 
       // For debug purpose.
