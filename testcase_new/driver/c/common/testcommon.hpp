@@ -49,6 +49,7 @@ using namespace std ;
 #define SERVER_NAME3          "58200"
 
 #define NAME_LEN              255
+#define MAX_NAME_SIZE         127
 
 #define CHECK_MSG(fmt, args ...) printf("%s[%d]:"fmt,__FILE__,__LINE__,##args)
 
