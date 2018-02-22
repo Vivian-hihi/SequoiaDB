@@ -1551,6 +1551,10 @@ namespace engine
       {
          extent->_firstRecordOffset = DMS_INVALID_OFFSET ;
          extent->_lastRecordOffset = DMS_INVALID_OFFSET ;
+         if ( direction < 0 )
+         {
+            extent->_freeSpace += totalSize ;
+         }
       }
       else if ( direction >= 0 )
       {
