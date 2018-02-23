@@ -120,9 +120,6 @@
                <compilecase type="java"   srcdir="${case_basedir}/${case_reltdir}"/>
             </case>
             
-            <case value="tdd_c">
-               <compilecase type="c"      srcdir="${case_basedir}/${case_reltdir}"/>
-            </case>
             <case value="driver_c">
                <compilecase type="c"      srcdir="${case_basedir}/${case_reltdir}"/>
             </case>
@@ -387,9 +384,6 @@
                   
                   <switch value="${testcase_type}">
                   
-                     <case value="tdd_c">
-                        <var name="exec_file" value="${basedir}/src/test/exec_testcase/exec_c_case.xml"/>
-                     </case>
                      <case value="tdd_cpp">
                         <var name="exec_file" value="${basedir}/src/test/exec_testcase/exec_c_case.xml"/>
                      </case>
@@ -459,7 +453,7 @@
       <if>
          <isset property="TESTCASE_TYPE"/>
          <else>           
-            <var name="TESTCASE_TYPE" value="tdd_c,tdd_cpp,tdd_php,tdd_mongoc,
+            <var name="TESTCASE_TYPE" value="tdd_cpp,tdd_php,tdd_mongoc,
                                              story_java,story_js,
                                              sdv_java,sdv_js,
                                              driver_c,driver_cpp,driver_java,driver_php" />
