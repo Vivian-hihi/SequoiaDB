@@ -78,7 +78,9 @@
             request="START SHELL COMMAND chmod 777 ${INSTALL_DIR}/driver -R WAIT 10m RETURNSTDERR"
             throwBuildException="1"/-->
       
-      <copy file="${INSTALL_DIR}/driver/Java/sequoiadb.jar" todir="${INSTALL_DIR}/java"/>
+      <copy todir="${INSTALL_DIR}/java">
+         <fileset dir="${INSTALL_DIR}/driver/Java" includes="sequoiadb*.jar"/>
+      </copy>
       <copy todir="${INSTALL_DIR}/java/jdk">
          <fileset dir="${INSTALL_DIR}/java/jdk_linux64" includes="**/*"/>
       </copy>
