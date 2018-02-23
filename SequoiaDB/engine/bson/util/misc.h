@@ -70,7 +70,6 @@ namespace bson {
     }
 
     struct Date_t {
-        // TODO: make signed (and look for related TODO's)
         long long millis;
         Date_t(): millis(0) {}
         Date_t(long long m): millis(m) {}
