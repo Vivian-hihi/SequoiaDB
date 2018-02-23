@@ -129,7 +129,7 @@ function setInsertTimeout(csName, clName)
       var dbcl = db.getCS(csName).getCL(clName);
       db.setSessionAttr( { Timeout : 1} );
       var docs = [];
-      for( var i = 0; i < number; ++i )
+      for( var i = 0; i < 10000; ++i )
       {      
          var no = i;
          var a = i;
