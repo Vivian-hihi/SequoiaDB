@@ -849,7 +849,33 @@
                      "en": "Statistics"
                   }
                ]
-            }
+            },
+			{
+				"id": 1519293107,
+				"dir": "text_search",
+				"cn": "全文检索",
+				"en": "Text search",
+				"contents": [
+					{
+						"id": 1519293420,
+						"file": "overview",
+						"cn": "概述",
+						"en": "Overview"
+					},
+					{
+						"id": 1519348573,
+						"file": "sdbseadapter",
+						"cn": "搜索引擎适配器",
+						"en": "Search engine adapter"
+					},
+					{
+						"id": 1519348584,
+						"file": "text_search_grammer",
+						"cn": "全文检索语法",
+						"en": "Text search grammer"
+					}
+				]
+			}
          ]
       },
       {
