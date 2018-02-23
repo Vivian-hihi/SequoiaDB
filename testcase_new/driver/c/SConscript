@@ -113,6 +113,7 @@ testFiles = [
    [ "./crud/queryMeta.cpp" ],
    [ "./crud/specialDecimal_14004.cpp" ],
    [ "./crud/snapshotPlan14515.cpp" ],
+   [ "./crud/pop14506.cpp" ],
    [ "./paraVerify/lobFunc14388.cpp" ],
    [ "./paraVerify/sdbFunc14277.cpp" ],
    [ "./sessionAttr/instanceid14158.cpp" ] # sync
