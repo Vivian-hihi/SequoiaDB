@@ -27,7 +27,9 @@ class TestSnapshot14510(testlib.SdbTestBase):
       
       # query
       cond = {'a' : 2000}
-      self.query(cond)
+      select = { 'a': { '$include': 1 } }
+      sort = {'_id': 1}
+      self.query(condition = cond, selector = select, order_by = sort)
       
       # get snapshot accessplan
       expect_accessplan = [{'ScanType': 'ixscan', 'IndexName': 'a', 'ReturnNum': insert_nums}]
@@ -41,9 +43,9 @@ class TestSnapshot14510(testlib.SdbTestBase):
       if self.should_clean_env():
          self.db.drop_collection_space(self.cs_name)
 
-   def query(self, cond):
+   def query(self, **kwargs):
       try:
-         cursor = self.cl.query(condition = cond)
+         cursor = self.cl.query(**kwargs)
          while True:
             try:
                cursor.next()
@@ -66,8 +68,7 @@ class TestSnapshot14510(testlib.SdbTestBase):
                cursor.close()
                break
       except SDBBaseError as e:
-         self.fail('get snapshot accessplan fail: ' + e.detail)
-         
+         self.fail('get snapshot accessplan fail: ' + e.detail) 
       return act_accessplan  
 
    def insert_datas(self, insert_nums):
