@@ -7,6 +7,7 @@ import sys
 from pysequoiadb import SDBInvalidArgument
 from pysequoiadb import SDBTypeError
 from pysequoiadb.lob import LOB_WRITE
+from pysequoiadb.lob import LOB_READ
 from lib import testlib
 from lob import util
 
@@ -279,18 +280,23 @@ class LobRandoWrite(testlib.SdbTestBase):
       lob = self.cl.create_lob()
       lob.write(self.data, 1024)
       lob.close()
-      t1 = lob.get_modification_time()
+      createTime = lob.get_create_time()
+      initModTime = lob.get_modification_time()
+      self.assertTrue( createTime < initModTime )
 
       oid = lob.get_oid()
-      import time
-      time.sleep(1)
       lob = self.cl.open_lob(oid, LOB_WRITE)
       lob.seek(0, 0)
       lob.write(self.data, 100)
       lob.close()
-      t2 = lob.get_modification_time()
+      writeModTime = lob.get_modification_time()
+      self.assertTrue( initModTime < writeModTime )
 
-      self.assertTrue(t2 > t1)
+      lob = self.cl.open_lob(oid, LOB_READ)
+      lob.read(100)
+      lob.close()
+      readModTime = lob.get_modification_time()
+      self.assertTrue( readModTime == writeModTime )
 
    def __create_empty_lob(self):
       lob = self.cl.create_lob()

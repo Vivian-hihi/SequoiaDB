@@ -55,7 +55,6 @@ TEST_F( getLobModTime13416, lobWrite )
    OID oid ;
    UINT64 createTime ;
    UINT64 initModTime ;
-   UINT64 createModTime ;
    UINT64 writeModTime ;
    UINT64 readModTime ;
    const CHAR *writeBuf = "0123456789ABCDEabcde" ;
@@ -66,49 +65,36 @@ TEST_F( getLobModTime13416, lobWrite )
 
    // create lob
    rc = cl.createLob( lob ) ;
-   ASSERT_EQ( SDB_OK, rc ) << "fail to create lob" ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   rc = lob.close() ;
    createTime = lob.getCreateTime() ;
    initModTime = lob.getModificationTime() ;
-   rc = lob.close() ;
-   ASSERT_EQ( SDB_OK, rc ) << "fail to close lob" ;
-   ASSERT_EQ( createTime, initModTime ) 
+   ASSERT_EQ( SDB_OK, rc ) ;
+   EXPECT_LT( createTime, initModTime ) 
          << "wrong modification time after init" ;
 
-   // check modification time 
-   rc = lob.getOid( oid ) ;
-   ASSERT_EQ( SDB_OK, rc ) << "fail to get oid" ;
-   rc = cl.openLob( lob, oid, SDB_LOB_WRITE ) ;
-   ASSERT_EQ( SDB_OK, rc ) << "fail to open lob" ;
-   createModTime = lob.getModificationTime() ;
-   ASSERT_LT( initModTime, createModTime ) 
-         << "wrong modification time after creating" ;
-
    // modify lob
+   rc = lob.getOid( oid ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   rc = cl.openLob( lob, oid, SDB_LOB_WRITE ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
    rc = lob.write( writeBuf, wBufSize ) ;
-   ASSERT_EQ( SDB_OK, rc ) << "fail to write lob" ;
+   ASSERT_EQ( SDB_OK, rc ) ;
    rc = lob.close() ;
-   ASSERT_EQ( SDB_OK, rc ) << "fail to close lob" ;
-
-   // check modification time
-   rc = cl.openLob( lob, oid, SDB_LOB_READ ) ;
-   ASSERT_EQ( SDB_OK, rc ) << "fail to open lob" ;
+   ASSERT_EQ( SDB_OK, rc ) ;
    writeModTime = lob.getModificationTime() ;
-   ASSERT_LT( createModTime, writeModTime ) 
+   EXPECT_LT( initModTime, writeModTime ) 
          << "wrong modification time after modifying" ;
 
    // not modify lob
+   rc = cl.openLob( lob, oid, SDB_LOB_READ ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
    rc = lob.read( rBufSize, readBuf, &read ) ;
    ASSERT_EQ( rBufSize, read ) << "long read length is wrong" ;
-   ASSERT_EQ( SDB_OK, rc ) << "fail to read lob" ;
+   ASSERT_EQ( SDB_OK, rc ) ;
    rc = lob.close() ;
-   ASSERT_EQ( SDB_OK, rc ) << "fail to close lob" ;
-
-   // check modification time
-   rc = cl.openLob( lob, oid, SDB_LOB_READ ) ;
-   ASSERT_EQ( SDB_OK, rc ) << "fail to open lob" ;
+   ASSERT_EQ( SDB_OK, rc ) ;
    readModTime = lob.getModificationTime() ;
-   rc = lob.close() ;
-   ASSERT_EQ( SDB_OK, rc ) << "fail to close lob" ;
-   ASSERT_EQ( writeModTime, readModTime ) 
+   EXPECT_EQ( writeModTime, readModTime ) 
          << "wrong modification time when no modification" ;
 }
