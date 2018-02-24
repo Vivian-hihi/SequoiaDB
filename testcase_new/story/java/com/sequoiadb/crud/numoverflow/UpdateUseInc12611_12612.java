@@ -1,8 +1,5 @@
 package com.sequoiadb.crud.numoverflow;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.testng.Assert;
@@ -35,13 +32,6 @@ public class UpdateUseInc12611_12612 extends SdbTestBase{
 	private static DBCollection cl = null; 
 	
 	
-	String []records = {"{'no':-2147483648,'long':{'$numberLong':'-9223372036854775808'},'test':1}",
-			"{'no':{a:{b:1073741823}},'string':'123','test':2}",
-			"{'no':[-2147483648,[2147483647],{'$numberLong':'9223372036854775807'}],test:3}",
-			"{'no':2147483647,'long':{'$numberLong':'9223372036854775807'},'test':4}",
-			"{'no':2147483647,'long':{'$numberLong':'9223372036854775807'},'test':5}"};
-	
-	
 	@DataProvider(name = "operData")
 	public Object[][] generateIntDatas(){
 		String []expRecords1 = {"{'no':-2147493648,'long':{'$numberLong':'-9223372036854775808'},'test':1}"};
@@ -50,10 +40,10 @@ public class UpdateUseInc12611_12612 extends SdbTestBase{
 		String []expRecords4 = {"{'no':{a:{b:2147493647}},'string':'123','test':2}"};
 		String []expRecords5 = {"{'no':[-2147483648,[3221225471],{'$numberLong':'9223372036854775807'}],test:3}"};
 		String []expRecords6 = {"{'no':[-2147483648,[3221225471],{'$decimal':'9223372036854775808'}],test:3}"};
-		String []expRecords7 = {"{'no':2147483646.5,'long':9223372036854775807},'test':4}"};
-		String []expRecords8 = {"{'no':2147483646.5,'long':9223372036854775806.5},'test':4}"};
-		String []expRecords9 = {"{'no':2147483647.5,'long':9223372036854775807},'test':5}"};
-		String []expRecords10 = {"{'no':2147483647.5,'long':9223372036854775807.5},'test':5}"};
+		String []expRecords7 = {"{'no':2147483646.5,'long':9223372036854775807,'test':4}"};
+		String []expRecords8 = {"{'no':2147483646.5,'long':9223372036854775806.5,'test':4}"};
+		String []expRecords9 = {"{'no':-2147483649,'long':-9223372036854775808,'test':5}"};
+		String []expRecords10 = {"{'no':-2147483649,'long':{$decimal:'-9223372036854775809'},'test':5}"};
 		
 		String expJavaLong = "class java.lang.Long";
 		String expJavaDouble = "class java.lang.Double";
@@ -64,19 +54,18 @@ public class UpdateUseInc12611_12612 extends SdbTestBase{
 		
 		return new Object[][]{
 			//the parameters: int matcherValue,String updateName, String updateValue, String []expRecords,String expTypeToSdb,Boolean isVerifyTypeToJava, String expTypeToJava
-			new Object[]{1,"no",new Long(-10000),expRecords1,expLongType,true,expJavaLong},
-			new Object[]{1,"no",new Long(1073746824),expRecords2,expLongType,true,expJavaLong},
-			new Object[]{1,"long",new Integer(-1073746824),expRecords3,expDecimalType,true,expJavaDecimal},
-			new Object[]{2,"no.a.b",new Long(1073751824),expRecords4,expLongType,false,null},
+			new Object[]{ 1, "no", new Long(-10000), expRecords1, expLongType, true, expJavaLong},
+			new Object[]{ 1, "no", new Long(1073746824), expRecords2, expLongType, true, expJavaLong},
+			new Object[]{ 1, "long", new Integer(-1073746824), expRecords3, expDecimalType, true, expJavaDecimal},
+			new Object[]{ 2, "no.a.b", new Long(1073751824), expRecords4, expLongType, false, null},
 			
 			//SEQUOIADBMAINSTREAM-2795
-//			new Object[]{3,"no.1.0",new Long(1073741824),expRecords5,expLongType,false,null},
-//			new Object[]{3,"no.2",new Integer(1),expRecords6,expDecimalType,false,null},
-			//SEQUOIADBMAINSTREAM-2820
-//			new Object[]{4,"no",new Double(-0.5),expRecords7,expJavaDouble,true,expDoubleType},
-//			new Object[]{4,"long",new Double(-0.5),expRecords8,expJavaDouble,true,expDoubleType},
-//			new Object[]{5,"no",new Double(0.5),expRecords9,expJavaDouble,true,expDoubleType},
-//			new Object[]{5,"long",new Double(0.5),expRecords10,expJavaDouble,true,expDoubleType},
+//			new Object[]{ 3, "no.1.0",new Long(1073741824),expRecords5,expLongType,false,null},
+//			new Object[]{ 3, "no.2",new Integer(1),expRecords6,expDecimalType,false,null},
+			new Object[]{ 4, "no", new Double(-0.5), expRecords7, expDoubleType, true, expJavaDouble},
+			new Object[]{ 4, "long", new Double(-0.5), expRecords8, expDoubleType, true, expJavaDouble},
+			new Object[]{ 5, "no", new Integer(-1), expRecords9, expLongType, true, expJavaLong},
+			new Object[]{ 5, "long", new Integer(-1), expRecords10, expDecimalType, true, expJavaDecimal},
 //			
 		};
 	}
@@ -95,7 +84,7 @@ public class UpdateUseInc12611_12612 extends SdbTestBase{
 		        			"{'no':{a:{b:1073741823}},'string':'123','test':2}",
 		        			"{'no':[-2147483648,[2147483647],{'$numberLong':'9223372036854775807'}],test:3}",
 		        			"{'no':2147483647,'long':{'$numberLong':'9223372036854775807'},'test':4}",
-		        			"{'no':2147483647,'long':{'$numberLong':'9223372036854775807'},'test':5}"};
+		        			"{'no':-2147483648,'long':{'$numberLong':'-9223372036854775808'},'test':5}"};
 
 		NumOverflowUtils.insert(cl, records);
 	}
