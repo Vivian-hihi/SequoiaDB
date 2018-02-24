@@ -771,9 +771,6 @@ namespace seadapter
                   // new indexing work should be started.
                   _localIdxVer = SEADPT_INIT_TEXT_INDEX_VERSION ;
                }
-               // If data node is slave, no indexing work should be started.
-               // So just return.
-               goto done ;
             }
          }
 
