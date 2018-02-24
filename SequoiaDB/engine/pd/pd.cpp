@@ -49,9 +49,9 @@
 #include "utilStr.hpp"
 #include "ossIO.hpp"
 
-//#ifndef SDB_CLIENT
+#if defined ( SDB_ENGINE ) || defined ( SDB_FMP ) || defined ( SDB_TOOL )
 #include "ossPath.hpp"
-//#endif //SDB_CLIENT
+#endif //SDB_ENGINE || SDB_FMP || SDB_TOOL
 
 #include "pdTrace.hpp"
 
@@ -250,7 +250,7 @@ OSS_NEWLINE"File:%s"OSS_NEWLINE"Message:"OSS_NEWLINE"%s"OSS_NEWLINE OSS_NEWLINE;
 /* extern variables */
 
 // driver don't use the code
-//#ifndef SDB_CLIENT
+#if defined ( SDB_ENGINE ) || defined ( SDB_FMP ) || defined ( SDB_TOOL )
 
 static void _pdRemoveOutOfDataFiles( pdCfgInfo &info )
 {
@@ -315,7 +315,7 @@ static INT32 _pdLogArchive( pdCfgInfo &info )
    return rc ;
 }
 
-//#endif // SDB_CLIENT
+#endif //SDB_ENGINE || SDB_FMP || SDB_TOOL
 
 // PD_TRACE_DECLARE_FUNCTION ( SDB_PDLOGFILEWRITE, "pdLogFileWrite" )
 // return code is errno
@@ -337,9 +337,9 @@ static INT32 pdLogFileWrite ( _pdLogType type, const CHAR *pData )
    //   logFile._logFile.Close() ;
    //}
 
-//#ifndef SDB_CLIENT
+#if defined ( SDB_ENGINE ) || defined ( SDB_FMP ) || defined ( SDB_TOOL )
 open:
-//#endif // SDB_CLIENT
+#endif //SDB_ENGINE || SDB_FMP || SDB_TOOL
 
    /// check file whether exist
    if ( !logFile._logFile.isExist() )
@@ -373,7 +373,7 @@ open:
       logFile._logFile.seekToEnd () ;
    }
 
-//#ifndef SDB_CLIENT
+#if defined ( SDB_ENGINE ) || defined ( SDB_FMP ) || defined ( SDB_TOOL )
    // if file size up the limit
    if ( logFile._fileSize + dataSize > info._pdFileMaxSize )
    {
@@ -381,7 +381,7 @@ open:
       _pdLogArchive( info ) ;
       goto open ;
    }
-//#endif // SDB_CLIENT
+#endif //SDB_ENGINE || SDB_FMP || SDB_TOOL
 
    PD_TRACE1 ( SDB_PDLOGFILEWRITE, PD_PACK_RAW ( pData, dataSize ) ) ;
    rc = logFile._logFile.Write ( pData, dataSize ) ;
