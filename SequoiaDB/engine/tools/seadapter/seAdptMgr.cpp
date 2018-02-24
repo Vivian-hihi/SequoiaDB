@@ -1527,12 +1527,13 @@ namespace seadapter
 
    void _seAdptCB::_genESIdxName( seIndexMeta &idxMeta )
    {
+      // ES index name is in the format of cappedCLName_groupName.
       std::string::size_type pos = idxMeta.getCappedCLName().find('.') ;
       std::string cappedCLName = idxMeta.getCappedCLName().substr( pos + 1 ) ;
+      std::string esIdx = cappedCLName + "_" + _peerGroupName ;
       // ES index names should be in lower case.
-      std::transform( cappedCLName.begin(), cappedCLName.end(),
-                      cappedCLName.begin(), ::tolower ) ;
-      idxMeta.setESIdxName( cappedCLName.c_str() ) ;
+      std::transform( esIdx.begin(), esIdx.end(), esIdx.begin(), ::tolower ) ;
+      idxMeta.setESIdxName( esIdx.c_str() ) ;
    }
 
    seAdptCB* sdbGetSeAdapterCB()
