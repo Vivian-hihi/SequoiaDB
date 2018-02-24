@@ -61,6 +61,12 @@
                            "file": "cluster",
                            "cn": "集群模式",
                            "en": "Cluster"
+                        },
+                        {
+                           "id": 1519446630,
+                           "file": "ssql_installation",
+                           "cn": "SequoiaSQL安装部署",
+                           "en": "SequoiaSQL Installation and Deployment"
                         }
                      ]
                   },
