@@ -1,6 +1,8 @@
 package com.sequoiadb.monitor;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.bson.BSONObject;
@@ -36,12 +38,15 @@ public class ResetSnapshot14423 extends SdbTestBase {
     @BeforeClass
     public void setUp() {
         try {
+            System.out.println(this.getClass().getName()+" begin at "
+                    +new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:S").format(new Date()));
+            
             sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             if (CommLib.isStandAlone(sdb)) {
                 throw new SkipException("skip standalone");
             }
             cs = sdb.getCollectionSpace(SdbTestBase.csName);
-            groupName = new CommLib().getDataGroupNames(sdb).get(0);
+            groupName = CommLib.getDataGroupNames(sdb).get(0);
             BSONObject opt = new BasicBSONObject("Group", groupName);
             DBCollection cl = cs.createCollection(clName, opt);
             List<BSONObject> docs = new ArrayList<BSONObject>();
@@ -84,6 +89,8 @@ public class ResetSnapshot14423 extends SdbTestBase {
             Assert.fail(e.getMessage());
         } finally {
             sdb.close();
+            System.out.println(this.getClass().getName()+" end at "
+                    +new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:S").format(new Date()));
         }
     }
 
