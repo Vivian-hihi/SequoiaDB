@@ -65,7 +65,6 @@ SequoiaDB shell 运行如下：
       "_id": 2,
       "class": 2,
       "students": {
-        "name": "LinWu",
         "age": 18
       }
     }
