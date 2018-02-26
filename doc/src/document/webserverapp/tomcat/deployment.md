@@ -1,6 +1,6 @@
 ###环境准备###
 
-安装pg，参考[pg部署](connector\postgresql\deployment.md)
+安装pg，参考[pg部署](connector/postgresql/deployment.md)
 
 ###安装配置###
 
