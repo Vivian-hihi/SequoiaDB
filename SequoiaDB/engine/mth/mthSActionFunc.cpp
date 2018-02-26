@@ -226,16 +226,15 @@ namespace engine
       }
       else if ( Object == e.type() )
       {
-         _mthElemMatchIterator i( e.wrap(),
-                                  action->getMatchTree(),
-                                  n ) ;
+         _mthElemMatchIterator i( e.embeddedObject(), action->getMatchTree(),
+                                  n, FALSE ) ;
          do
          {
             BSONElement next ;
             rc = i.next( next ) ;
             if ( SDB_OK == rc )
             {
-               builder.append( next ) ;
+               builder.append( fieldName, next.wrap() ) ;
             }
             else if ( SDB_DMS_EOC == rc )
             {
