@@ -127,7 +127,7 @@ namespace engine
 
       // write start-up info, ignore error
       rc = logger->init() ;
-      if ( SDB_OK == rc )
+      if ( SDB_OK != rc )
       {
          PD_LOG( PDWARNING, "Failed to init start-up logger, rc: %d", rc );
          rc = SDB_OK ;
