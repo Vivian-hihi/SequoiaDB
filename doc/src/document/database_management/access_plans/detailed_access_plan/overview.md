@@ -73,7 +73,7 @@
 
 详细的访问计划中有以下操作：
 
-1.  [COORD-MERGE](database_management/access_plans/detailed_access_plan/COORD-MERGE.md)：对应一个协调节点上的查询上下文对象。
+1.  [COORD-MERGE](database_management/access_plans/detailed_access_plan/COORD_MERGE.md)：对应一个协调节点上的查询上下文对象。
 2.  [MERGE](database_management/access_plans/detailed_access_plan/MERGE.md)：对应一个数据节点上的主表查询上下文对象。
 3.  [SORT](database_management/access_plans/detailed_access_plan/SORT.md)：对应一个数据节点上的排序上下文对象。
 4.  [TBSCAN](database_management/access_plans/detailed_access_plan/TBSCAN.md)：对应一个数据节点上的全表扫描上下文对象。
