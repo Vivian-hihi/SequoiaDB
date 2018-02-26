@@ -263,6 +263,11 @@ namespace engine
       }
 
    done :
+      if ( readBuf )
+      {
+         SDB_OSS_FREE( readBuf ) ;
+         readBuf = NULL ;
+      }
       PD_TRACE_EXITRC( SDB__PMDSTARTHSTLOG__LOADLOG, rc ) ;
       return rc ;
    error :
