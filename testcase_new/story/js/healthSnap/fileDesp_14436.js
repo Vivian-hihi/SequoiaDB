@@ -33,7 +33,7 @@ function getFileDespBySnap( db, GID, NID )
    {
       GID = parseInt( GID );
       NID = parseInt( NID );
-      cond.NodeID = [ GID, NID ];
+      cond.NodeID = { $et: [ GID, NID ] };
    }
 
    var cur = db.snapshot( SDB_SNAP_HEALTH, cond );
