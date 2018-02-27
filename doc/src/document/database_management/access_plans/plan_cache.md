@@ -54,7 +54,7 @@
 1.  参数化：```{ a : { $gt : { $param : 0, $ctype : 10 } }, { b : { $et : { $param : 1, $ctype : 15 } }```
 2.  参数：```[ 100, 'a' ]``` 和 ```[ 200, 'b' ]```
 3.  $param 为参数在参数列表中的位置
-4.  $ctype 为参数的[比较优先级](data_model/document.md#字段类型)，整数是 10，字符串是 15
+4.  $ctype 为参数的[比较优先级](data_model/datatype/datatype.md)，整数是 10，字符串是 15
 
 ###OPT_PLAN_FUZZYOPTR###
 
@@ -74,7 +74,7 @@
 1.  参数化：```{ a : { $gt : { $param : [ 0, 1 ], $ctype : 10 } }```
 2.  参数：```[ 100, false ]``` 和 ```[ 200, true ]```
 3.  $param 为参数在参数列表中的位置，及操作符本身的配置（生成的参数表示是否需要相等比较）
-4.  $ctype 为参数的[比较优先级](data_model/document.md#字段类型)
+4.  $ctype 为参数的[比较优先级](data_model/datatype/datatype.md)
 
 ##访问计划缓存快照##
 
