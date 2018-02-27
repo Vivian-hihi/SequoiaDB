@@ -373,11 +373,10 @@ public class ReplicaGroup {
     }
 
     /**
+     * Get node by node's name (IP:PORT).
      * @param nodeName The name of the node
      * @return the specified node
      * @throws com.sequoiadb.exception.BaseException
-     * @fn Node getNode(String nodeName)
-     * @brief Get node by node's name (IP:PORT).
      */
     public Node getNode(String nodeName) throws BaseException {
         // check arguemnt
@@ -401,12 +400,11 @@ public class ReplicaGroup {
     }
 
     /**
+     * Get node by hostName and port.
      * @param hostName host name
      * @param port     port
      * @return the Node object
      * @throws com.sequoiadb.exception.BaseException
-     * @fn Node getNode(String hostName, int port)
-     * @brief Get node by hostName and port.
      */
     public Node getNode(String hostName, int port) throws BaseException {
         Node node = getNodeByMetaInfo(hostName, port);

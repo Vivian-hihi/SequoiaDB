@@ -155,7 +155,7 @@ public class DatasourceOptions implements Cloneable {
      * when it creating a connection. That means when user get a connection out from the Datasource,
      * if user reset the session attribute of the connection, Datasource will keep the latest changes of the setting.
      *
-     * @param PreferedInstance Could be single value in "M", "m", "S", "s", "A", "a", "1"-"255", or multiple values of them.
+     * @param preferedInstance Could be single value in "M", "m", "S", "s", "A", "a", "1"-"255", or multiple values of them.
      *          <ul>
      *              <li>"M", "m": read and write instance( master instance ). If multiple numeric instances are given with "M", matched master instance will be chosen in higher priority. If multiple numeric instances are given with "M" or "m", master instance will be chosen if no numeric instance is matched.</li>
      *              <li>"S", "s": read only instance( slave instance ). If multiple numeric instances are given with "S", matched slave instances will be chosen in higher priority. If multiple numeric instances are given with "S" or "s", slave instance will be chosen if no numeric instance is matched.</li>
