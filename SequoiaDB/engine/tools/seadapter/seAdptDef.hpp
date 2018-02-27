@@ -53,7 +53,7 @@ namespace seadapter
 
    #define SDB_SEADPT_EXE_FILE_NAME    "sdbseadapter"
    #define SDB_SEADPT_CFG_FILE_NAME    SDB_SEADPT_EXE_FILE_NAME".conf"
-   #define SDB_SEADPT_LOG_DIR          "log"
+   #define SDB_SEADPT_LOG_DIR          "sdbseadapterlog"
    #define SDB_SEADPT_LOG_FILE_NAME    SDB_SEADPT_EXE_FILE_NAME".log"
 }
 
