@@ -1310,23 +1310,23 @@ INT64 _dpsDumper::_dumpMeta( const dpsMetaData& meta,
       {
          for( lastFileId++ ; lastFileId < fMeta.index ; lastFileId++ )
          {
-               len += ossSnprintf( pBuffer + len, bufferSize - len,
-                                   OSS_NEWLINE"ERROR: Log File Name "
-                                   "(sequoiadbLog.%d) is Missing"OSS_NEWLINE,
-                                   lastFileId ) ;
+            len += ossSnprintf( pBuffer + len, bufferSize - len,
+                                OSS_NEWLINE"ERROR: Log File Name "
+                                "(sequoiadbLog.%d) is Missing"OSS_NEWLINE,
+                                lastFileId ) ;
          }
       }
       else
       {
          UINT32 lostFileNum = fMeta.logID - meta.metaList[lastIndex].logID - 1 ;
          UINT32 totalN = lastFileId - fMeta.index + lostFileNum + 1;
-         
-         for (UINT32 i = 0; i < lostFileNum; i++)
+
+         for ( UINT32 i = 0; i < lostFileNum; i++ )
          {
-               len += ossSnprintf( pBuffer + len, bufferSize - len,
-                                   OSS_NEWLINE"ERROR: Log File Name "
-                                   "(sequoiadbLog.%d) is Missing"OSS_NEWLINE,
-                                   ++lastFileId % totalN ) ;
+            len += ossSnprintf( pBuffer + len, bufferSize - len,
+                                OSS_NEWLINE"ERROR: Log File Name "
+                                "(sequoiadbLog.%d) is Missing"OSS_NEWLINE,
+                                ++lastFileId % totalN ) ;
          }
       }
 
