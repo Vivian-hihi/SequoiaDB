@@ -20,7 +20,7 @@ NULL.
 
 ##RETURN VALUE##
 
-The [error object](reference/Sequoiadb_command/BSONObj/BSONObj.md) of last operation.
+The error object of last operation.
 
 The error object contains the follow 3 fields:
 
