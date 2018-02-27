@@ -47,7 +47,7 @@ function main( db )
       // verify
       var retObj = JSON.parse( ret ) ;
       var cnt = retObj["ExtraField2"] ;
-      if( '{"nestObj":"element match query"}' != JSON.stringify(cnt) )
+       if( '{"nestObj":"element match query"}' != JSON.stringify(cnt) )
       {
          println( 'expect {"nestObj":"element match query"} , actual count: ' + JSON.stringify(cnt) ) ;
          throw "ErrCountRecord" ;
@@ -66,8 +66,7 @@ function main( db )
       {
          if( -6 != e )
          {
-            println( "failed to test the query : " + e ) ;
-            throw e ;
+				throw e ;
          }
       }
 
@@ -83,7 +82,6 @@ function main( db )
       {
          if( -6 != e )
          {
-            println( "failed to test the query : " + e ) ;
             throw e ;
          }
       }
