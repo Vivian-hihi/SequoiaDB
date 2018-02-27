@@ -695,10 +695,11 @@ INT32 _dpsDumper::_changeFileName()
 {
    static UINT32 fileId = 0;
    UINT32 len = 0;
-   ossMemset(dstPath + dstPathLen, 0, OSS_MAX_PATHSIZE - dstPathLen + 1);
-   len = ossSnprintf(dstPath + dstPathLen, 
-               OSS_MAX_PATHSIZE -dstPathLen + 1, ".%d", fileId++);
-   if (dstPathLen + len >= OSS_MAX_PATHSIZE)
+   ossMemset( dstPath + dstPathLen, 0, OSS_MAX_PATHSIZE - dstPathLen + 1 ) ;
+   len = ossSnprintf( dstPath + dstPathLen, 
+                      OSS_MAX_PATHSIZE - dstPathLen + 1,
+                      ".%d", fileId++ ) ;
+   if ( dstPathLen + len >= OSS_MAX_PATHSIZE)
    {
       LogError("outpath (%s) length is too long", dstPath);
       return SDB_INVALIDPATH;
@@ -828,11 +829,11 @@ INT32 _dpsDumper::doDataExchange( engine::pmdCfgExchange *pEx )
 {
    resetResult() ;
 
-   rdxPath( pEx, DPS_DUMP_SOURCE, srcPath, OSS_MAX_PATHSIZE,
-            FALSE, FALSE, "./" ) ;
+   rdxPathRaw( pEx, DPS_DUMP_SOURCE, srcPath, OSS_MAX_PATHSIZE,
+               FALSE, FALSE, "./" ) ;
 
-   rdxPath( pEx, DPS_DUMP_OUTPUT, dstPath, OSS_MAX_PATHSIZE,
-            FALSE, FALSE, "./" ) ;
+   rdxPathRaw( pEx, DPS_DUMP_OUTPUT, dstPath, OSS_MAX_PATHSIZE,
+               FALSE, FALSE, "./" ) ;
 
    rdxString( pEx, DPS_DUMP_NAME, name,
               OSS_MAX_PATHSIZE, FALSE, FALSE, "" ) ;
