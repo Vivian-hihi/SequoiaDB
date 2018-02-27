@@ -620,7 +620,8 @@ INT32 _dpsDumper::process( const po::options_description &desc,
       }
       catch( boost::bad_lexical_cast& e )
       {
-         std::cout << "Unable to cast lsn to UINT64" << std::endl ;
+         std::cout << "Unable to cast lsn to UINT64: " << e.what()
+                   << std::endl ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -962,7 +963,7 @@ retry:
          SDB_OSS_FREE( _metaContent ) ;
          _metaContentSize = 0 ;
 
-         _metaContent =(CHAR*)SDB_OSS_MALLOC( _metaContent, validLen ) ;
+         _metaContent =(CHAR*)SDB_OSS_MALLOC( validLen ) ;
          if( !_metaContent )
          {
             LogError( "Failed to allocate memory for %lld bytes",
