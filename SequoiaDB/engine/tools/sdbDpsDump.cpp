@@ -493,14 +493,22 @@ error:
 
 
 
-_dpsDumper::_dpsDumper() : _metaContent(NULL), _filter(NULL)
+_dpsDumper::_dpsDumper()
+: _metaContent( NULL ),
+  _metaContentSize( 0 ),
+  _filter( NULL )
 {
 
 }
 
 _dpsDumper::~_dpsDumper()
 {
-
+   if ( _metaContent )
+   {
+      SDB_OSS_FREE( _metaContent ) ;
+      _metaContent = NULL ;
+      _metaContentSize = 0 ;
+   }
 }
 
 INT32 _dpsDumper::initialize( INT32 argc, CHAR** argv,
@@ -541,6 +549,18 @@ INT32 _dpsDumper::initialize( INT32 argc, CHAR** argv,
       rc = SDB_PMD_VERSION_ONLY ;
       goto done ;
    }
+
+   /// alloc memory
+   _metaContent = ( CHAR* )SDB_OSS_MALLOC( BLOCK_SIZE + 1 ) ;
+   if ( !_metaContent )
+   {
+      std::cout << "Failed to alloc " << BLOCK_SIZE << " bytes memory"
+                << std::endl ;
+      rc = SDB_OOM ;
+      goto error ;
+   }
+   _metaContentSize = BLOCK_SIZE ;
+   ossMemset( _metaContent, 0 , BLOCK_SIZE ) ;
 
 done:
    return rc ;
@@ -750,7 +770,8 @@ INT32 _dpsDumper::dump()
    rc = _getSortedFileMap( srcPath, mapFiles ) ;
    if( SDB_OK != rc )
    {
-      LogError( "Failed to get Files from path %s, please check, rc = %d", srcPath, rc ) ;
+      LogError( "Failed to get Files from path %s, please check, rc = %d",
+                srcPath, rc ) ;
       goto error ;
    }
 
@@ -805,23 +826,12 @@ INT32 _dpsDumper::parseMeta( CHAR *buffer )
 INT32 _dpsDumper::doDataExchange( engine::pmdCfgExchange *pEx )
 {
    resetResult() ;
-   CHAR path[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
 
-   rdxString( pEx, DPS_DUMP_SOURCE, path,
-              OSS_MAX_PATHSIZE, FALSE, FALSE, "./" ) ;
-   if ( NULL == ossGetRealPath(path, srcPath, OSS_MAX_PATHSIZE))
-   {
-      LogEvent( "Failed to get real path of source: %s", srcPath ) ;
-      ossStrncpy( srcPath, "./", OSS_MAX_PATHSIZE ) ;
-   }
+   rdxPath( pEx, DPS_DUMP_SOURCE, srcPath, OSS_MAX_PATHSIZE,
+            FALSE, FALSE, "./" ) ;
 
-   rdxString( pEx, DPS_DUMP_OUTPUT, path,
-              OSS_MAX_PATHSIZE, FALSE, FALSE, "./" ) ;
-   if ( NULL == ossGetRealPath(path, dstPath, OSS_MAX_PATHSIZE))
-   {
-      LogEvent( "Failed to get real path of destination: %s", dstPath ) ;
-      ossStrncpy( dstPath, "./", OSS_MAX_PATHSIZE ) ;
-   }
+   rdxPath( pEx, DPS_DUMP_OUTPUT, dstPath, OSS_MAX_PATHSIZE,
+            FALSE, FALSE, "./" ) ;
 
    rdxString( pEx, DPS_DUMP_NAME, name,
               OSS_MAX_PATHSIZE, FALSE, FALSE, "" ) ;
@@ -868,7 +878,7 @@ BOOLEAN _dpsDumper::_validCheck( const po::variables_map &vm )
    return valid ;
 }
 
-INT32 _dpsDumper::_analysisMeta(map<UINT32, string > &mapFiles)
+INT32 _dpsDumper::_analysisMeta( map<UINT32, string > &mapFiles )
 {
    INT32 rc = SDB_OK ;
    BOOLEAN _isDir  = FALSE;
@@ -888,7 +898,9 @@ INT32 _dpsDumper::_analysisMeta(map<UINT32, string > &mapFiles)
    }
 
    //get start file id to dump log record.
-   for (map<UINT32, string>::iterator it = mapFiles.begin(); it != mapFiles.end(); ++it )
+   for ( map<UINT32, string>::iterator it = mapFiles.begin() ;
+         it != mapFiles.end() ;
+         ++it )
    {
       dpsFileMeta meta;
       rc = _metaFilte( it->second.c_str(), it->first, meta ) ;
@@ -901,60 +913,71 @@ INT32 _dpsDumper::_analysisMeta(map<UINT32, string > &mapFiles)
       rc = SDB_OK ;
       _meta.metaList.push_back( meta ) ;
    }
-      
-   _meta.fileCount = _meta.metaList.size();
-   _meta.fileBegin = DPS_INVALID_LOG_FILE_ID;
-   
+
+   _meta.fileCount = _meta.metaList.size() ;
+   _meta.fileBegin = DPS_INVALID_LOG_FILE_ID ;
+
    // find begin file
-   for(i = 0 ; i < _meta.fileCount; ++i)
+   for( i = 0 ; i < _meta.fileCount ; ++i )
    {
       const dpsFileMeta &meta = _meta.metaList[i] ;
       if( DPS_INVALID_LOG_FILE_ID == meta.logID )
       {
-         continue;
+         continue ;
       }
 
       if( DPS_INVALID_LOG_FILE_ID == _meta.fileBegin
          || ( meta.logID < _meta.metaList[_meta.fileBegin].logID &&
-              _meta.metaList[_meta.fileBegin].logID - meta.logID < DPS_INVALID_LOG_FILE_ID / 2 )
+              _meta.metaList[_meta.fileBegin].logID - meta.logID <
+              DPS_INVALID_LOG_FILE_ID / 2 )
          || ( meta.logID > _meta.metaList[_meta.fileBegin].logID &&
-              meta.logID - _meta.metaList[_meta.fileBegin].logID > DPS_INVALID_LOG_FILE_ID / 2 ) )
+              meta.logID - _meta.metaList[_meta.fileBegin].logID >
+              DPS_INVALID_LOG_FILE_ID / 2 ) )
       {
-         _meta.fileBegin = i;
+         _meta.fileBegin = i ;
       }
    }
 
    // find work file
-   _meta.fileWork = _meta.fileBegin;
+   _meta.fileWork = _meta.fileBegin ;
    for(i = 1; i < _meta.fileCount; i++)
    {
-      id = ( _meta.fileWork + 1) % _meta.fileCount;
-      if (_meta.metaList[id].logID == DPS_INVALID_LOG_FILE_ID)
+      id = ( _meta.fileWork + 1) % _meta.fileCount ;
+      if ( _meta.metaList[id].logID == DPS_INVALID_LOG_FILE_ID )
       {
-         break;
+         break ;
       }
-      ++_meta.fileWork;
-      _meta.fileWork = _meta.fileWork % _meta.fileCount;
+      ++_meta.fileWork ;
+      _meta.fileWork = _meta.fileWork % _meta.fileCount ;
    }
 
    if( 0 < _meta.fileCount )
    {
+      /// Init Size
       UINT64 validLen = 0 ;
-      UINT64 bufferSize = 4096 ;
 
 retry:
-      _metaContent = ( CHAR * )SDB_OSS_REALLOC( _metaContent , bufferSize + 1 ) ;
-      if( NULL == _metaContent )
+      if ( validLen > _metaContentSize )
       {
-         LogError( "Failed to allocate %lld bytes", bufferSize + 1 ) ;
-         rc = SDB_OOM ;
-         goto error ;
+         SDB_OSS_FREE( _metaContent ) ;
+         _metaContentSize = 0 ;
+
+         _metaContent =(CHAR*)SDB_OSS_MALLOC( _metaContent, validLen ) ;
+         if( !_metaContent )
+         {
+            LogError( "Failed to allocate memory for %lld bytes",
+                      validLen ) ;
+            rc = SDB_OOM ;
+            goto error ;
+         }
+         _metaContentSize = validLen ;
+         ossMemset( _metaContent, 0, _metaContentSize ) ;
       }
 
-      validLen = _dumpMeta( _meta, _metaContent, bufferSize ) ;
-      if( validLen >= bufferSize )
+      validLen = _dumpMeta( _meta, _metaContent, _metaContentSize ) ;
+      if( validLen >= _metaContentSize )
       {
-         bufferSize += validLen ;
+         validLen += BLOCK_SIZE ;
          goto retry ;
       }
    }
@@ -965,9 +988,9 @@ error:
    goto done ;
 }
 
-static BOOLEAN isNumb(string &str)
+static BOOLEAN isNumb( string &str )
 {
-   for(UINT32 i = 0; i < str.length(); i++)
+   for(UINT32 i = 0 ; i < str.length() ; i++)
    {
       if(str[i] > '9' || str[i] < '0')
       {
@@ -977,7 +1000,8 @@ static BOOLEAN isNumb(string &str)
    return TRUE;
 }
 
-void putMatchFileIntoMap(map<UINT32, string > &mapFiles, const fs::path &filePath)
+void putMatchFileIntoMap( map<UINT32, string > &mapFiles,
+                          const fs::path &filePath)
 {
    const static UINT32 MATCH_SIZE = strlen(REPLOG_NAME_PREFIX);
    string fileName = filePath.filename().string();
@@ -988,11 +1012,13 @@ void putMatchFileIntoMap(map<UINT32, string > &mapFiles, const fs::path &filePat
       {
          return;
       }
-      mapFiles.insert( pair<UINT32, string>( ossAtoi(sequenceId.c_str()), filePath.string()) );
+      mapFiles.insert( pair<UINT32, string>( ossAtoi(sequenceId.c_str()),
+                                             filePath.string()) );
    }
 }
 
-INT32 _dpsDumper::_getSortedFileMap(const CHAR *dirPath, map<UINT32, string > &mapFiles)
+INT32 _dpsDumper::_getSortedFileMap( const CHAR *dirPath,
+                                     map<UINT32, string > &mapFiles)
 {
    INT32 rc = SDB_OK ;
    try
@@ -1000,21 +1026,26 @@ INT32 _dpsDumper::_getSortedFileMap(const CHAR *dirPath, map<UINT32, string > &m
       fs::path dbDir ( dirPath ) ;
       fs::directory_iterator end_iter ;
 
-      if ( !fs::exists ( dbDir ))
-
-      if (!fs::is_directory ( dbDir ) )
+      if ( !fs::exists ( dbDir ) )
       {
-         putMatchFileIntoMap(mapFiles, dbDir);
+         rc = SDB_FE ;
+         goto error ;
+      }
+      else if ( !fs::is_directory ( dbDir ) )
+      {
+         putMatchFileIntoMap( mapFiles, dbDir ) ;
          goto done ;
       }
 
-      for ( fs::directory_iterator dir_iter ( dbDir ); dir_iter != end_iter; ++dir_iter )
+      for ( fs::directory_iterator dir_iter ( dbDir ) ;
+            dir_iter != end_iter ;
+            ++dir_iter )
       {
          try
          {
             if ( fs::is_regular_file ( dir_iter->status() ) )
             {
-               putMatchFileIntoMap(mapFiles, dir_iter->path());
+               putMatchFileIntoMap( mapFiles, dir_iter->path() ) ;
             }
          }
          catch( std::exception &e )
@@ -1028,20 +1059,21 @@ INT32 _dpsDumper::_getSortedFileMap(const CHAR *dirPath, map<UINT32, string > &m
    }
    catch ( fs::filesystem_error& e )
    {
-      if ( e.code() == boost::system::errc::permission_denied ||
-           e.code() == boost::system::errc::operation_not_permitted )
+      if ( e.code().value() == boost::system::errc::permission_denied ||
+           e.code().value() == boost::system::errc::operation_not_permitted )
       {
          rc = SDB_PERM ;
       }
-      else if( e.code() == boost::system::errc::too_many_files_open ||
-               e.code() == boost::system::errc::too_many_files_open_in_system )
+      else if( e.code().value() == boost::system::errc::too_many_files_open ||
+               e.code().value() ==
+               boost::system::errc::too_many_files_open_in_system )
       {
          rc = SDB_TOO_MANY_OPEN_FD ;
       }
       else
       {
-         PD_LOG( PDERROR, "Enum directory[%s] failed, errno: %d",
-                 dirPath, e.code() ) ;
+         PD_LOG( PDERROR, "Enum directory[%s] failed: %s,%d",
+                 dirPath, e.what(), e.code().value() ) ;
          rc = SDB_IO ;
       }
       goto error ;
@@ -1232,7 +1264,8 @@ error:
 
 
 INT64 _dpsDumper::_dumpMeta( const dpsMetaData& meta,
-                             CHAR* pBuffer, const UINT64 bufferSize )
+                             CHAR* pBuffer,
+                             const UINT64 bufferSize )
 {
    SDB_ASSERT( pBuffer, "pOutBuffer cannot be NULL " ) ;
    UINT64 len = 0 ;
@@ -1266,49 +1299,56 @@ INT64 _dpsDumper::_dumpMeta( const dpsMetaData& meta,
                        ) ;
 
    // print lost file name
-   fileIndex = _meta.fileBegin;
-   lastIndex = fileIndex;
+   fileIndex = _meta.fileBegin ;
+   lastIndex = fileIndex ;
    lastFileId = meta.metaList[lastIndex].index;
    for (UINT32 i = 0; i < meta.metaList.size(); ++i)
    {
-      const dpsFileMeta& fMeta = meta.metaList[fileIndex] ;
+      const dpsFileMeta& fMeta = meta.metaList[ fileIndex ] ;
 
       if (lastFileId <= fMeta.index)
       {
-         for(lastFileId++; lastFileId < fMeta.index; lastFileId++)
+         for( lastFileId++ ; lastFileId < fMeta.index ; lastFileId++ )
          {
                len += ossSnprintf( pBuffer + len, bufferSize - len,
-                             OSS_NEWLINE"ERROR: Log File Name (sequoiadbLog.%d) is Missing"OSS_NEWLINE,
-                             lastFileId) ;
+                                   OSS_NEWLINE"ERROR: Log File Name "
+                                   "(sequoiadbLog.%d) is Missing"OSS_NEWLINE,
+                                   lastFileId ) ;
          }
       }
       else
       {
-         UINT32 lostFileNum = fMeta.logID -  meta.metaList[lastIndex].logID -1;
+         UINT32 lostFileNum = fMeta.logID - meta.metaList[lastIndex].logID - 1 ;
          UINT32 totalN = lastFileId - fMeta.index + lostFileNum + 1;
          
          for (UINT32 i = 0; i < lostFileNum; i++)
          {
                len += ossSnprintf( pBuffer + len, bufferSize - len,
-                             OSS_NEWLINE"ERROR: Log File Name (sequoiadbLog.%d) is Missing"OSS_NEWLINE,
-                             ++lastFileId % totalN) ;
+                                   OSS_NEWLINE"ERROR: Log File Name "
+                                   "(sequoiadbLog.%d) is Missing"OSS_NEWLINE,
+                                   ++lastFileId % totalN ) ;
          }
       }
 
       // foreach file meta
       len += ossSnprintf( pBuffer + len, bufferSize - len,
-                          OSS_NEWLINE"Log File Name: sequoiadbLog.%d"OSS_NEWLINE,
+                          OSS_NEWLINE"Log File Name: sequoiadbLog.%d"
+                          OSS_NEWLINE,
                           fMeta.index) ;
       len += ossSnprintf( pBuffer + len, bufferSize - len,
                           "Logic ID     : %d"OSS_NEWLINE, fMeta.logID ) ;
       len += ossSnprintf( pBuffer + len, bufferSize - len,
-                          "First LSN    : 0x%08lx"OSS_NEWLINE, fMeta.firstLSN ) ;
+                          "First LSN    : 0x%08lx"OSS_NEWLINE,
+                          fMeta.firstLSN ) ;
       len += ossSnprintf( pBuffer + len, bufferSize - len,
-                          "Last  LSN    : 0x%08lx"OSS_NEWLINE, fMeta.lastLSN ) ;
+                          "Last  LSN    : 0x%08lx"OSS_NEWLINE,
+                          fMeta.lastLSN ) ;
       len += ossSnprintf( pBuffer + len, bufferSize - len,
-                          "Valid Size   : %lld bytes"OSS_NEWLINE, fMeta.validSize ) ;
+                          "Valid Size   : %lld bytes"OSS_NEWLINE,
+                          fMeta.validSize ) ;
       len += ossSnprintf( pBuffer + len, bufferSize - len,
-                          "Rest Size    : %lld bytes"OSS_NEWLINE, fMeta.restSize ) ;
+                          "Rest Size    : %lld bytes"OSS_NEWLINE,
+                          fMeta.restSize ) ;
       lastIndex = fileIndex;
       lastFileId = fMeta.index;
       ++fileIndex;
@@ -1319,7 +1359,9 @@ INT64 _dpsDumper::_dumpMeta( const dpsMetaData& meta,
    return len ;
 }
 
-INT32 _dpsDumper::_checkLogFile( OSSFILE& file, INT64& size, const CHAR *filename )
+INT32 _dpsDumper::_checkLogFile( OSSFILE& file,
+                                 INT64& size,
+                                 const CHAR *filename )
 {
    SDB_ASSERT( filename, "filename cannot null" ) ;
 
@@ -1357,8 +1399,10 @@ error:
    goto done;
 }
 
-INT32 _dpsDumper::_readRecordHead( OSSFILE& in, const INT64 offset,
-                                 const INT64 fileSize, CHAR *pRecordHeadBuffer )
+INT32 _dpsDumper::_readRecordHead( OSSFILE& in,
+                                   const INT64 offset,
+                                   const INT64 fileSize,
+                                   CHAR *pRecordHeadBuffer )
 {
    SDB_ASSERT( offset < fileSize, "offset out of range " ) ;
    SDB_ASSERT( pRecordHeadBuffer, "OutBuffer cannot be NULL " ) ;
@@ -1406,8 +1450,10 @@ error:
    goto done ;
 }
 
-INT32 _dpsDumper::_readRecord( OSSFILE& in, const INT64 offset,
-                               const INT64 fileSize, const INT64 readLen,
+INT32 _dpsDumper::_readRecord( OSSFILE& in,
+                               const INT64 offset,
+                               const INT64 fileSize,
+                               const INT64 readLen,
                                CHAR *pOutBuffer )
 {
    INT32 rc = SDB_OK ;
@@ -1441,9 +1487,13 @@ error:
    goto done ;
 }
 
-INT32 _dpsDumper::_readLogHead( OSSFILE &in, INT64& offset, const INT64 fileSize,
-                                CHAR *pOutBuffer, const INT64 bufferSize,
-                                CHAR *pOutHeader, INT64& outLen )
+INT32 _dpsDumper::_readLogHead( OSSFILE &in,
+                                INT64& offset,
+                                const INT64 fileSize,
+                                CHAR *pOutBuffer,
+                                const INT64 bufferSize,
+                                CHAR *pOutHeader,
+                                INT64& outLen )
 {
    SDB_ASSERT( fileSize > DPS_LOG_HEAD_LEN,
                "fileSize must gt than DPS_LOG_HEAD_LEN" ) ;
@@ -1506,9 +1556,11 @@ error:
    goto done ;
 }
 
-INT32 _dpsDumper::_writeTo( OSSFILE &file, const CHAR* pContent, BOOLEAN console )
+INT32 _dpsDumper::_writeTo( OSSFILE &file,
+                            const CHAR* pContent,
+                            BOOLEAN console )
 {
-   const static UINT32 FILE_MAX_SIZE = 500*1024*1024;
+   const static UINT32 FILE_MAX_SIZE = 500 * 1024 * 1024;
    static UINT32 curFileSize = 0;
    
    INT32 rc        = SDB_OK ;
@@ -1568,7 +1620,8 @@ error:
 }
 
 INT32 _dpsDumper::filte( dpsDumpFilter *filter,
-                         OSSFILE &out, const CHAR *filename )
+                         OSSFILE &out,
+                         const CHAR *filename )
 {
    SDB_ASSERT( filter, "filter is NULL" ) ;
    SDB_ASSERT( filename, "filename cannot be NULL" ) ;
@@ -1814,8 +1867,10 @@ error:
    goto done ;
 }
 
-INT32 _dpsDumper::_seekToLsnMatched( OSSFILE &in, INT64 &offset,
-                                     const INT64 fileSize, INT32 &prevCount )
+INT32 _dpsDumper::_seekToLsnMatched( OSSFILE &in,
+                                     INT64 &offset,
+                                     const INT64 fileSize,
+                                     INT32 &prevCount )
 {
    SDB_ASSERT( offset >= DPS_LOG_HEAD_LEN, "offset lt DPS_LOG_HEAD_LEN" ) ;
    INT32 rc     = SDB_OK ;
@@ -1876,7 +1931,9 @@ error:
    goto done ;
 }
 
-INT32 _dpsDumper::_seekToEnd( OSSFILE &in, INT64 &offset, const INT64 fileSize )
+INT32 _dpsDumper::_seekToEnd( OSSFILE &in,
+                              INT64 &offset,
+                              const INT64 fileSize )
 {
    SDB_ASSERT( offset >= DPS_LOG_HEAD_LEN, "offset lt DPS_LOG_HEAD_LEN" ) ;
    INT32 rc    = SDB_OK ;

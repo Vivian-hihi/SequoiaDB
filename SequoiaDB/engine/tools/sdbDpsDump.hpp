@@ -72,7 +72,7 @@
    ( DPS_FILTER_COMMANDS_STRING( DPS_DUMP_LSN,       ",l" ), boost::program_options::value< std::string >(), "specify the lsn, -a/-b may help" ) \
    ( DPS_FILTER_COMMANDS_STRING( DPS_DUMP_LAST,      ",e" ), boost::program_options::value< INT32 >(), "specify the number of last records of file to display ")\
    ( DPS_FILTER_COMMANDS_STRING( DPS_DUMP_SOURCE,    ",s" ), boost::program_options::value<std::string>(), "specify source log file path, default: current path" ) \
-   ( DPS_FILTER_COMMANDS_STRING( DPS_DUMP_OUTPUT,    ",o" ), boost::program_options::value< std::string >(), "specify output file path, default: screen output" ) \
+   ( DPS_FILTER_COMMANDS_STRING( DPS_DUMP_OUTPUT,    ",o" ), boost::program_options::value< std::string >(), "specify output file or path, default: screen output" ) \
    ( DPS_FILTER_COMMANDS_STRING( DPS_DUMP_LSN_AHEAD, ",a" ), boost::program_options::value< INT32 >(), "specify the number of records to display before the lsn specified by -l/--lsn" ) \
    ( DPS_FILTER_COMMANDS_STRING( DPS_DUMP_LSN_BACK,  ",b" ), boost::program_options::value< INT32 >(), "specify the number of records to display after the lsn specified by -l/--lsn" )
 
@@ -286,8 +286,10 @@ public:
       std::cout << desc << std::endl ;
    }
 
-   INT32 initialize( INT32 argc, char** agrv,
-                     po::options_description &desc, po::variables_map &vm ) ;
+   INT32 initialize( INT32 argc,
+                     char** agrv,
+                     po::options_description &desc,
+                     po::variables_map &vm ) ;
 
    INT32 prepare( po::variables_map &vm );
 
@@ -355,6 +357,7 @@ public:
    UINT32   dstPathLen;
 private:
    CHAR    *_metaContent;
+   UINT64   _metaContentSize ;
    dpsDumpFilter *_filter ;
    dpsMetaData _meta ;
 };
