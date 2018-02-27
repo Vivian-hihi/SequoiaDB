@@ -885,7 +885,9 @@ INT32 _dpsDumper::_analysisMeta( map<UINT32, string > &mapFiles )
    INT32 rc = SDB_OK ;
    BOOLEAN _isDir  = FALSE;
    UINT32 i = 0;
-   UINT32 id = 0;
+   UINT32 id = 0 ;
+   UINT32 beginLogID = DPS_INVALID_LOG_FILE_ID ;
+
    rc = isDir( srcPath, _isDir ) ;
    if( SDB_FNE == rc || SDB_PERM == rc )
    {
@@ -917,7 +919,7 @@ INT32 _dpsDumper::_analysisMeta( map<UINT32, string > &mapFiles )
    }
 
    _meta.fileCount = _meta.metaList.size() ;
-   _meta.fileBegin = DPS_INVALID_LOG_FILE_ID ;
+   _meta.fileBegin = 0 ;
 
    // find begin file
    for( i = 0 ; i < _meta.fileCount ; ++i )
@@ -928,23 +930,19 @@ INT32 _dpsDumper::_analysisMeta( map<UINT32, string > &mapFiles )
          continue ;
       }
 
-      if( DPS_INVALID_LOG_FILE_ID == _meta.fileBegin
-         || ( meta.logID < _meta.metaList[_meta.fileBegin].logID &&
-              _meta.metaList[_meta.fileBegin].logID - meta.logID <
-              DPS_INVALID_LOG_FILE_ID / 2 )
-         || ( meta.logID > _meta.metaList[_meta.fileBegin].logID &&
-              meta.logID - _meta.metaList[_meta.fileBegin].logID >
-              DPS_INVALID_LOG_FILE_ID / 2 ) )
+      if( DPS_INVALID_LOG_FILE_ID == beginLogID ||
+          DPS_FILEID_COMPARE( meta.logID, beginLogID ) < 0 )
       {
+         beginLogID = meta.logID ;
          _meta.fileBegin = i ;
       }
    }
 
    // find work file
    _meta.fileWork = _meta.fileBegin ;
-   for(i = 1; i < _meta.fileCount; i++)
+   for( i = 1 ; i < _meta.fileCount ; ++i )
    {
-      id = ( _meta.fileWork + 1) % _meta.fileCount ;
+      id = ( _meta.fileWork + 1 ) % _meta.fileCount ;
       if ( _meta.metaList[id].logID == DPS_INVALID_LOG_FILE_ID )
       {
          break ;
