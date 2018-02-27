@@ -315,8 +315,9 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Phase 1 of dropping collection space[ %s ] "
                    "failed[ %d ]", _cappedCSName, rc ) ;
       rtnCB->incTextIdxVersion() ;
-   done:
       _lock() ;
+
+   done:
       PD_TRACE_EXITRC( SDB__RTNEXTDATAPROCESSOR_DODROPP1, rc ) ;
       return rc ;
    error:
