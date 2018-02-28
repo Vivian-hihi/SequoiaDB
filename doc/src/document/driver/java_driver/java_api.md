@@ -9,24 +9,6 @@
 
 **Version 2.10**
 
-1. com.sequoiadb.base.DBCollection接口变更：
-
-	* 增加openLob(ObjectId id, int mode)方法，其中mode取值为DBLob.SDB_LOB_READ或DBLob.SDB_LOB_WRITE。
-	* 增加truncateLob方法。
-
-2. com.sequoiadb.base.DBLob接口变更：
-
-	* 增加lock方法。
- 	* 增加lockAndSeek方法。
-	* 增加getModificationTime方法。
-	* seek方法原来只能在读lob模式下使用，现在该方法支持在创建的lob或写lob模式下使用。
-
-3. com.sequoiadb.base.ReplicaGroup接口变更：
-
-	* getSlave方法增加可指定节点位置的参数。
-
-**Version 2.9**
-
 1. com.sequoiadb.base.Sequoiadb接口变更： 
 
     * 删除getConnection方法，IConnection是内部网络通信接口，不再对外开放。
@@ -46,6 +28,8 @@
 2. com.sequoiadb.base.DBCollection接口变更：
 
 	* getCollection方法要获取的collection不存在时，不再返回null而是抛出异常。
+	* 增加openLob(ObjectId id, int mode)方法，其中mode取值为DBLob.SDB_LOB_READ或DBLob.SDB_LOB_WRITE。
+	* 增加truncateLob方法。
 
 3. com.sequoiadb.base.DBCusor接口变更：
 
@@ -53,23 +37,31 @@
 	* getNext和getNextRaw方法可以混合交替使用。
 	* 废弃hasNextRaw接口，可使用hasNext取代该接口。
 
-4. 废弃com.sequoiadb.base.SequoiadbDatasource类，增加com.sequoiadb.datasource.SequoiadbDatasource类。
+4. com.sequoiadb.base.DBLob接口变更：
+
+	* 增加lock方法。
+ 	* 增加lockAndSeek方法。
+	* 增加getModificationTime方法。
+	* seek方法原来只能在读lob模式下使用，现在该方法支持在创建的lob或写lob模式下使用。
 
 5. com.sequoiadb.base.ReplicaGroup接口变更：
 
 	* 废弃getNodeNum接口，该接口描述的节点状态信息不准确。
+	* getSlave方法增加可指定节点位置的参数。
 
 6. com.sequoiadb.base.Node接口变更：
 
 	* 废弃getStatus接口，该接口描述的节点状态信息不准确。
 
-7. 删除DataCenter接口，待相关功能发布之后再提供接口。
+7. 废弃com.sequoiadb.base.SequoiadbDatasource类，增加com.sequoiadb.datasource.SequoiadbDatasource类。
 
-8. org.bson.BSONObject接口实现java.io.Serializable接口。
+8. 删除DataCenter接口，待相关功能发布之后再提供接口。
 
-9. org.bson.types.BSONTimestamp支持从java.util.Date和java.sql.Timestamp构造，并增加转换为java.util.Date和java.sql.Timestamp的方法。
+9. org.bson.BSONObject接口实现java.io.Serializable接口。
 
-10. BSONObject支持java.sql.Timestamp，将java.sql.Timestamp编码为timestamp类型。
+10. org.bson.types.BSONTimestamp支持从java.util.Date和java.sql.Timestamp构造，并增加转换为java.util.Date和java.sql.Timestamp的方法。
+
+11. BSONObject支持java.sql.Timestamp，将java.sql.Timestamp编码为timestamp类型。
 
 **Version 1.10**
 
