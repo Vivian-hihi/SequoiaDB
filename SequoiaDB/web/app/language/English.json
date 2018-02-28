@@ -111,6 +111,7 @@
    "创建关联": "Create Relation",
    "创建集合": "Create Collection",
    "创建集合空间": "Create Collection Space",
+   "创建集合空间。": "Create Collection Space.",
    "创建集合空间失败": "Failed to create collection space",
    "创建集合失败": "Failed to create collection",
    "创建集群": "Create Cluster",
