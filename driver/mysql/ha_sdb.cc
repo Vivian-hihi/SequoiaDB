@@ -1060,15 +1060,11 @@ int ha_sdb::index_read_map( uchar *buf, const uchar *key_ptr,
    cond_builder.appendElements( condition ) ;
    cond_builder.appendElements( condition_idx ) ;
    condition = cond_builder.obj() ;
-   //TODO:how to choose the best index ?
-   //TODO:how to choose the best index ?
-   //TODO:how to choose the best index ?
-   //TODO:how to choose the best index ?
-   /*idx_name = sdb_get_idx_name( table->key_info + keynr ) ;
+   idx_name = sdb_get_idx_name( table->key_info + keynr ) ;
    if ( idx_name )
    {
       hint = BSON( "" << idx_name ) ;
-   }*/
+   }
    rc = cl->query( condition, sdbclient::_sdbStaticObject,
                    sdbclient::_sdbStaticObject, hint ) ;
    if ( rc )
