@@ -310,6 +310,27 @@ namespace engine
                      goto done ;
                   }
                }
+               // for combined condition by $and, $or, $not
+               else if ( Array == ele.type() )
+               {
+                  BSONObjIterator subItr( ele.embeddedObject() ) ;
+                  while ( subItr.more() )
+                  {
+                     BSONElement subEle = subItr.next() ;
+                     if ( Object == subEle.type() )
+                     {
+                        rc = _findFieldInObj( subEle.Obj(), fieldName, found ) ;
+                        if ( rc )
+                        {
+                           goto error ;
+                        }
+                        if ( found )
+                        {
+                           goto done ;
+                        }
+                     }
+                  }
+               }
             }
          }
       }
