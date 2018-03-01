@@ -11,6 +11,8 @@ import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.types.BSONDecimal;
 import org.bson.types.BSONTimestamp;
+import org.bson.util.JSON;
+import org.bson.util.JSONParseException;
 import org.junit.*;
 import org.junit.rules.ExpectedException;
 
@@ -65,7 +67,7 @@ public class Bug_JIRA_ {
 
     @Test
     public void jira2163_insert_invalid_binary() {
-        thrown.expect(IllegalArgumentException.class);
+        thrown.expect(JSONParseException.class);
         cl.insert("{ a: { '$binary': 'd29ybGQ', '$type': '1' } } ");
     }
 
