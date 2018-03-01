@@ -315,7 +315,7 @@ namespace seadapter
 
       // Get the full url for operation.
       ossSnprintf( url, UTIL_SE_MAX_URL_SIZE, "%s/%s/%s", index, type, id ) ;
-      rc = _http.post( url, newData, &status, &reply, &replyLen ) ;
+      rc = _http.put( url, newData, &status, &reply, &replyLen ) ;
       rc = _processReply( rc, reply, replyLen, bsonObj ) ;
       PD_RC_CHECK( rc, PDERROR, "Process request reply failed[ %d ]", rc ) ;
 
