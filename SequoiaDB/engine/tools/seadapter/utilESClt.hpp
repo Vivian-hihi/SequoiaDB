@@ -54,6 +54,7 @@
 #define UTIL_SE_MAX_URL_SIZE              2048
 #define UTIL_ES_DFT_SCROLL_SIZE           1000
 #define UTIL_SE_MAX_TYPE_SZ               255
+#define UTIL_SE_BULK_DFT_FILTERPATH       "filter_path=errors,took,items.index._id,items.index.status"
 using std::string ;
 
 namespace seadapter
@@ -120,7 +121,8 @@ namespace seadapter
                            const CHAR *filterPath = NULL ) ;
          void clearScroll( const string& scrollId ) ;
 
-         INT32 bulk( const CHAR *index, const CHAR *type, const CHAR *data ) ;
+         INT32 bulk( const CHAR *index, const CHAR *type, const CHAR *data,
+                     const CHAR *filterPath = UTIL_SE_BULK_DFT_FILTERPATH) ;
 
       private:
          OSS_INLINE INT32 _processReply( INT32 returnCode, const CHAR *reply,
