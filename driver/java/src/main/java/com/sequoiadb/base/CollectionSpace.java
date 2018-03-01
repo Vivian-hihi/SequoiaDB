@@ -64,7 +64,7 @@ public class CollectionSpace {
      * Get the named collection.
      *
      * @param collectionName The collection name
-     * @return The collection object or null for collection not exist
+     * @return the object of the specified collection, or an exception when the collection does not exist.
      * @throws BaseException If error happens.
      */
     public DBCollection getCollection(String collectionName)
@@ -151,7 +151,7 @@ public class CollectionSpace {
      * @param options        The options for creating collection, including
      *                       "ShardingKey", "ReplSize", "IsMainCL" and "Compressed" informations,
      *                       no options, if null
-     * @return the created DBCollection
+     * @return the newly created object of collection
      * @throws BaseException Tf error happens.
      */
     public DBCollection createCollection(String collectionName,

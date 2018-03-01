@@ -850,7 +850,7 @@ public class Sequoiadb implements Closeable {
      * If the collection space not exit, throw BaseException with errcode SDB_DMS_CS_NOTEXIST.
      *
      * @param csName The collection space name.
-     * @return The collection space object.
+     * @return the object of the specified collection space, or an exception when the collection space does not exist.
      * @throws BaseException If error happens.
      */
     public CollectionSpace getCollectionSpace(String csName)
