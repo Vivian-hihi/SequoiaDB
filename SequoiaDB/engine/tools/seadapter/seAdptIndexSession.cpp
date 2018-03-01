@@ -985,6 +985,8 @@ namespace seadapter
                      rc = item.setSourceData( sourceObj.toString(false, true).c_str(),
                                               sourceObj.toString(false, true).length(),
                                               TRUE ) ;
+                     PD_RC_CHECK( rc, PDERROR, "Set source data failed[ %d ]",
+                                  rc ) ;
                      rc = _bulkProcess( item ) ;
                      PD_RC_CHECK( rc, PDERROR, "Bulk processing item "
                                   "failed[ %d ]", rc ) ;
