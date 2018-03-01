@@ -312,3 +312,10 @@
 | SDB_STRTGY_TASK_NOT_EXISTED | -312 | 任务不存在 |
 | SDB_DPS_LOG_NOT_ARCHIVED | -313 | 复制日志未归档 |
 | SDB_DS_NOT_INIT | -314 | 连接池未初始化 |
+| SDB_OPERATION_INCOMPATIBLE | -315 | 操作类型与操作对象不兼容 |
+| SDB_CAT_CLUSTER_IS_DEACTIVED | -316 | 集群为非激活状态 |
+| SDB_LOB_IS_IN_USE | -317 | LOB当前正在使用 |
+| SDB_VALUE_OVERFLOW | -318 | 数值运算出现溢出 |
+| SDB_LOB_PIECESINFO_OVERFLOW | -319 | LOB切片信息溢出 |
+| SDB_LOB_LOCK_CONFLICTED | -320 | LOB锁冲突 |
+| SDB_DMS_TRUNCATED | -321 | 集合被清空 |

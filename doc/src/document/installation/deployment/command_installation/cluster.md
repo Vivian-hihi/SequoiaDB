@@ -22,29 +22,29 @@
 
 **说明：**
 
-（1）本节按照高可用部署为例，介绍配置和启动步骤；
+1. 本节以[高可用](planning_database_deployment.md)的方式部署为例，介绍配置和启动步骤。
 
-（2）以下操作步骤假设 SequoiaDB 程序安装在 /opt/sequoiadb 目录下；
+2. 以下操作步骤假设 SequoiaDB 程序安装在 /opt/sequoiadb 目录下。
 
-（3）sdb服务进程全部以 sdbadmin 用户运行，请确保所有数据库目录都赋予 sdbadmin 读写权限。
+3. SequoiaDB 服务进程全部以 sdbadmin 用户运行，请确保所有数据库目录都赋予 sdbadmin 读写权限。
 
 - 步骤一：检查 SequoiaDB 的配置服务状态
   1. 在每台数据库服务器上检查 SequoiaDB 配置服务状态：
 
      ```lang-javascript
-     $ service sdbcm status
+     # service sdbcm status
      ```
   2. 确认系统提示“sdbcm is running”表示服务正在运行，否则请执行如下命令重新配置服务程序：
 
      ```lang-javascript
-     $ service sdbcm start
+     # service sdbcm start
      ```
 
-- 步骤二：启动一个临时协调节点（该节点只是为了创建其它节点而临时使用，后面会删除）
+- 步骤二：启动一个临时协调节点（该节点只是为了创建其它节点而临时使用，安装完毕后需要删除该节点）
   1. 切换到 sdbadmin 用户
 
      ```lang-javascript
-     $ su sdbadmin
+     # su - sdbadmin
      ```
   2. 在任意一台数据库服务器上（以下步骤都只需要在这台服务器上操作），启动 SequoiaDB Shell 控制台
 
@@ -82,15 +82,12 @@
      ```
 
 
-     sdbserver1：第一个服务器主机名；
+     sdbserver1：第一台服务器主机名。
 
-     11800：为编目节点服务端口（该端口配置不要与随机端口冲突，以下其它端口的配置也需要注意）；
+     11800：为编目节点服务端口。
 
-     /opt/sequoiadb/database/cata/11800：为编目节点的数据文件存放路径；
+     /opt/sequoiadb/database/cata/11800：为编目节点的数据文件存放路径。
 
-     >**Note:**  
-     >如果配置路径不以“/”开头，数据文件存放路径将是数据库管理员用户(默认为sdbadmin)的主目录(默认为/home/sequoiadb) + 配置的路径。
-请确保存放路径的权限，如果 SequoiaDB 采用的默认安装，那么给路径赋予 sdbadmin 权限，下同。
   3. 添加另外两个编目节点
 
      ```lang-javascript
@@ -98,6 +95,8 @@
      > var node1 = cataRG.createNode("sdbserver2", 11800,"/opt/sequoiadb/database/cata/11800")
      > var node2 = cataRG.createNode("sdbserver3", 11800,"/opt/sequoiadb/database/cata/11800")
      ```
+  	>**Note:**  
+  	> createNode() 的第一个参数建议使用“主机名”。
   4. 启动编目节点组
 
      ```lang-javascript
@@ -105,8 +104,6 @@
      > node2.start()
      ```
 
-  >**Note:**  
-  >创建节点的第一个参数必须为“主机名”，而不能使主机的 IP。
 
 - 步骤四：通过命令配置和启动数据节点
   1. 创建数据节点组
@@ -123,7 +120,7 @@
      ```
 
      >**Note:**  
-     >创建节点的第一个参数必须为“主机名”，而不能是主机的 IP。
+  		> createNode() 的第一个参数建议使用“主机名”。
   3. 启动数据节点组
 
      ```lang-javascript

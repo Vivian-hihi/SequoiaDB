@@ -130,7 +130,7 @@ Since v1.0.
 4. specifed which index to be use to query.
 
 	```lang-javascript
-	> db.foo.test.find( {age: {$exists:1} } ).hint( { "": "ageIndex" } )
+   > db.foo.test.find( {age: {$exists:1} } ).hint( { "": "ageIndex" } )
 	{
   		"_id": {
     		"$oid": "5812feb6c842af52b6000007"
