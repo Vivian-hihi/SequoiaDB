@@ -19,8 +19,6 @@ package org.bson.types;
 import java.io.Serializable;
 import java.math.BigDecimal;
 
-import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.exception.SDBError;
 import org.bson.BSON;
 import org.bson.util.JSON;
 
@@ -363,15 +361,12 @@ public class BSONDecimal implements Comparable<BSONDecimal>, Serializable {
 	 * <pre>
 	 * new BigDecimal(this.getValue()) // &quot;this&quot; means current BSONDecimal object
 	 * </pre>
-	 * <p>
-	 *  But, we can't convert a MAX/MIN/NAN value of BSONDecimal to BigDecimal.
-	 * <p/>
 	 * @return a BigDecimal object
+	 * @throws UnsupportedOperationException we can't convert a MAX/MIN/NAN value of BSONDecimal to BigDecimal.
 	 */
 	public BigDecimal toBigDecimal() {
 		if (_isMax(this) || _isMin(this) || _isNan(this)) {
-			throw new BaseException(SDBError.SDB_INVALIDARG,
-					String.format("can't convert %s to BigDecimal", _getValue()));
+			throw new UnsupportedOperationException(String.format("can't convert %s to BigDecimal", _getValue()));
 		}
 		return new BigDecimal(this.getValue());
 	}
