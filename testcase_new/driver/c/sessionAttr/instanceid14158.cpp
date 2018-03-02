@@ -599,6 +599,7 @@ TEST_F( sessionAttrTest14158, opTimeout )
    ASSERT_EQ( SDB_OK, rc ) ;
 }
 
+/*
 TEST_F( sessionAttrTest14158, lobTimeout )
 {
    INT32 rc = SDB_OK ;
@@ -657,3 +658,4 @@ timeout:
    ASSERT_EQ( SDB_OK, rc ) ;
    goto done ;
 }
+*/
