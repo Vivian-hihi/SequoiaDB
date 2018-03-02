@@ -87,7 +87,7 @@ public class SqlOperations {
 
         for (int i = 1; i <= columnCount; i++) {
             String columnName = metaData.getColumnLabel(i);
-            String value = rs.getString(columnName);
+            String value = rs.getString(i);
             bson.put(columnName, value);
         }
 
