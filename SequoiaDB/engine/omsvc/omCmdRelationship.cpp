@@ -72,7 +72,8 @@ namespace engine
 
       pmdGetThreadEDUCB()->resetInfo( EDU_INFO_ERROR ) ;
 
-      rc = option.parseRestArg( "ssj",
+      rc = option.parseRestArg( "sssj",
+                             OM_REST_FIELD_NAME,    &_name,
                              OM_REST_FIELD_FROM,    &_fromBuzName,
                              OM_REST_FIELD_TO,      &_toBuzName,
                              OM_REST_FIELD_OPTIONS, &options ) ;
@@ -170,7 +171,7 @@ namespace engine
          goto error ;
       }
 
-      if ( TRUE == dbTool.isRelationshipExist( _fromBuzName, _toBuzName ) )
+      if ( TRUE == dbTool.isRelationshipExist( _name ) )
       {
          rc = SDB_INVALIDARG ;
          _errorMsg.setError( TRUE, "relationship already exist: from=%s, to=%s",
@@ -238,7 +239,8 @@ namespace engine
          goto error ;
       }
 
-      rc = dbTool.createRelationship( _fromBuzName, _toBuzName, options ) ;
+      rc = dbTool.createRelationship( _name, _fromBuzName, _toBuzName,
+                                      options ) ;
       if ( rc )
       {
          _errorMsg.setError( TRUE, "failed to create relationship: rc=%d", rc ) ;
@@ -263,6 +265,8 @@ namespace engine
       list<BSONObj> fromBuzConfig ;
       list<BSONObj> toBuzConfig ;
       omDatabaseTool dbTool( _cb ) ;
+
+      requestBuilder.append( OM_BSON_NAME, _name ) ;
 
       //from business config
       rc = dbTool.getConfigByBusiness( _fromBuzName, fromBuzConfig ) ;
@@ -446,8 +450,7 @@ namespace engine
 
       pmdGetThreadEDUCB()->resetInfo( EDU_INFO_ERROR ) ;
 
-      rc = option.parseRestArg( "ss", OM_REST_FIELD_FROM, &_fromBuzName,
-                                      OM_REST_FIELD_TO,   &_toBuzName) ;
+      rc = option.parseRestArg( "s", OM_REST_FIELD_NAME, &_name) ;
       if ( rc )
       {
          _errorMsg.setError( TRUE, option.getErrorMsg() ) ;
@@ -487,17 +490,18 @@ namespace engine
       string businessType ;
       omDatabaseTool dbTool( _cb ) ;
 
-      //get from business info
-      rc = dbTool.getOneBusinessInfo( _fromBuzName, fromBuzInfo ) ;
-      if ( SDB_DMS_RECORD_NOTEXIST == rc )
+      rc = dbTool.getRelationshipInfo( _name, _fromBuzName, _toBuzName ) ;
+      if ( rc )
       {
-         rc = SDB_INVALIDARG ;
-         _errorMsg.setError( TRUE, "business does not exist: %s",
-                             _fromBuzName.c_str() ) ;
+         _errorMsg.setError( TRUE, "relationship does not exist: %s",
+                             _name.c_str() ) ;
          PD_LOG( PDERROR, _errorMsg.getError() ) ;
          goto error ;
       }
-      else if ( rc )
+
+      //get from business info
+      rc = dbTool.getOneBusinessInfo( _fromBuzName, fromBuzInfo ) ;
+      if ( rc )
       {
          _errorMsg.setError( TRUE, "failed to get business info,rc=%d", rc ) ;
          PD_LOG( PDERROR, _errorMsg.getError() ) ;
@@ -506,15 +510,7 @@ namespace engine
 
       //get to business info
       rc = dbTool.getOneBusinessInfo( _toBuzName, toBuzInfo ) ;
-      if ( SDB_DMS_RECORD_NOTEXIST == rc )
-      {
-         rc = SDB_INVALIDARG ;
-         _errorMsg.setError( TRUE, "business does not exist: %s",
-                             _toBuzName.c_str() ) ;
-         PD_LOG( PDERROR, _errorMsg.getError() ) ;
-         goto error ;
-      }
-      else if ( rc )
+      if ( rc )
       {
          _errorMsg.setError( TRUE, "failed to get business info,rc=%d", rc ) ;
          PD_LOG( PDERROR, _errorMsg.getError() ) ;
@@ -522,7 +518,7 @@ namespace engine
       }
 
       //get relationship options
-      rc = dbTool.getRelationshipOptions( _fromBuzName, _toBuzName, options ) ;
+      rc = dbTool.getRelationshipOptions( _name, options ) ;
       if ( SDB_DMS_RECORD_NOTEXIST == rc )
       {
          _errorMsg.setError( TRUE, "relationship does not exist: from=%s, to=%s",
@@ -596,7 +592,7 @@ namespace engine
           goto error ;
        }
 
-       rc = dbTool.removeRelationship( _fromBuzName, _toBuzName ) ;
+       rc = dbTool.removeRelationship( _name ) ;
        if ( rc )
        {
           _errorMsg.setError( TRUE, "failed to create relationship: rc=%d", rc ) ;
@@ -621,6 +617,8 @@ namespace engine
       list<BSONObj> fromBuzConfig ;
       list<BSONObj> toBuzConfig ;
       omDatabaseTool dbTool( _cb ) ;
+
+      requestBuilder.append( OM_BSON_NAME, _name ) ;
 
       //from business config
       rc = dbTool.getConfigByBusiness( _fromBuzName, fromBuzConfig ) ;

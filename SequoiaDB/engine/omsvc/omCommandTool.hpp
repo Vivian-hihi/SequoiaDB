@@ -241,18 +241,17 @@ namespace engine
                         const string &clusterName ) ;
 
       //relationship
-      INT32 createRelationship( const string &fromBuzName,
+      INT32 createRelationship( const string &name,
+                                const string &fromBuzName,
                                 const string &toBuzName,
                                 const BSONObj &options ) ;
-      BOOLEAN isRelationshipExist( const string &fromBuzName,
-                                   const string &toBuzName ) ;
+      BOOLEAN isRelationshipExist( const string &name ) ;
       BOOLEAN isRelationshipExistByBusiness( const string &businessName ) ;
-      INT32 getRelationshipOptions( const string &fromBuzName,
-                                    const string &toBuzName,
-                                    BSONObj &options ) ;
+      INT32 getRelationshipInfo( const string &name,
+                                 string &fromBuzName, string &toBuzName ) ;
+      INT32 getRelationshipOptions( const string &name, BSONObj &options ) ;
       INT32 getRelationshipList( list<BSONObj> &relationshipList ) ;
-      INT32 removeRelationship( const string &fromBuzName,
-                                const string &toBuzName ) ;
+      INT32 removeRelationship( const string &name ) ;
 
       //plugin
       BOOLEAN isPluginExist( const string &name ) ;

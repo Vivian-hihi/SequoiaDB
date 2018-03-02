@@ -2678,7 +2678,8 @@ namespace engine
       goto done ;
    }
 
-   INT32 omDatabaseTool::createRelationship( const string &fromBuzName,
+   INT32 omDatabaseTool::createRelationship( const string &name,
+                                             const string &fromBuzName,
                                              const string &toBuzName,
                                              const BSONObj &options )
    {
@@ -2686,7 +2687,8 @@ namespace engine
       time_t now = time( NULL ) ;
       BSONObj record ;
       BSONObjBuilder builder ;
-   
+
+      builder.append( OM_RELATIONSHIP_FIELD_NAME, name ) ;
       builder.append( OM_RELATIONSHIP_FIELD_FROM, fromBuzName ) ;
       builder.append( OM_RELATIONSHIP_FIELD_TO, toBuzName ) ;
       builder.append( OM_RELATIONSHIP_FIELD_OPTIONS, options ) ;
@@ -2707,13 +2709,11 @@ namespace engine
       goto done ;
    }
 
-   BOOLEAN omDatabaseTool::isRelationshipExist( const string &fromBuzName,
-                                                const string &toBuzName )
+   BOOLEAN omDatabaseTool::isRelationshipExist( const string &name )
    {
       INT32 rc = SDB_OK ;
       BOOLEAN isExist = TRUE ;
-      BSONObj condition = BSON( OM_RELATIONSHIP_FIELD_FROM << fromBuzName <<
-                                OM_RELATIONSHIP_FIELD_TO   << toBuzName ) ;
+      BSONObj condition = BSON( OM_RELATIONSHIP_FIELD_NAME << name ) ;
       BSONObj selector ;
       BSONObj info ;
 
@@ -2746,21 +2746,45 @@ namespace engine
       return isExist ;
    }
 
-   INT32 omDatabaseTool::getRelationshipOptions( const string &fromBuzName,
-                                                 const string &toBuzName,
-                                                 BSONObj &options )
+   INT32 omDatabaseTool::getRelationshipInfo( const string &name,
+                                              string &fromBuzName,
+                                              string &toBuzName )
    {
       INT32 rc = SDB_OK ;
-      BSONObj condition = BSON( OM_RELATIONSHIP_FIELD_FROM << fromBuzName <<
-                                OM_RELATIONSHIP_FIELD_TO   << toBuzName ) ;
+      BSONObj condition = BSON( OM_RELATIONSHIP_FIELD_NAME << name ) ;
       BSONObj selector ;
       BSONObj info ;
 
       rc = _getOneRelationship( condition, selector, info ) ;
       if ( rc )
       {
-         PD_LOG( PDERROR, "failed to get info, from=%s, to=%d",
-                 fromBuzName.c_str(), toBuzName.c_str(), rc ) ;
+         PD_LOG( PDERROR, "failed to get info: name=%s, rc=%d",
+                 name.c_str(), rc ) ;
+         goto error ;
+      }
+
+      fromBuzName = info.getStringField( OM_RELATIONSHIP_FIELD_FROM ) ;
+      toBuzName = info.getStringField( OM_RELATIONSHIP_FIELD_TO ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omDatabaseTool::getRelationshipOptions( const string &name,
+                                                 BSONObj &options )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj condition = BSON( OM_RELATIONSHIP_FIELD_NAME << name ) ;
+      BSONObj selector ;
+      BSONObj info ;
+
+      rc = _getOneRelationship( condition, selector, info ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to get info: name=%s, rc=%d",
+                 name.c_str(), rc ) ;
          goto error ;
       }
 
@@ -2832,12 +2856,10 @@ namespace engine
       goto done ;
    }
 
-   INT32 omDatabaseTool::removeRelationship( const string &fromBuzName,
-                                             const string &toBuzName )
+   INT32 omDatabaseTool::removeRelationship( const string &name )
    {
       INT32 rc = SDB_OK ;
-      BSONObj condition = BSON( OM_RELATIONSHIP_FIELD_FROM << fromBuzName <<
-                                OM_RELATIONSHIP_FIELD_TO   << toBuzName ) ;
+      BSONObj condition = BSON( OM_RELATIONSHIP_FIELD_NAME << name ) ;
       BSONObj hint ;
 
       rc = rtnDelete( OM_CS_DEPLOY_CL_RELATIONSHIP, condition, hint, 0, _cb ) ;

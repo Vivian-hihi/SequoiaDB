@@ -285,13 +285,13 @@ _IDX1\",key: {"OM_BUSINESS_FIELD_NAME":1}, unique: true, enforced: true }"
 
    /******* SYSRELATIONSHIP *******/
    #define OM_CS_DEPLOY_CL_RELATIONSHIP         OM_CS_DEPLOY".SYSRELATIONSHIP"
+   #define OM_RELATIONSHIP_FIELD_NAME           "Name"
    #define OM_RELATIONSHIP_FIELD_FROM           "From"
    #define OM_RELATIONSHIP_FIELD_TO             "To"
    #define OM_RELATIONSHIP_FIELD_OPTIONS        "Options"
    #define OM_RELATIONSHIP_FIELD_CREATETIME     "CreateTime"
    #define OM_CS_DEPLOY_CL_RELATIONSHIPIDX1     "{name:\"SYSDEPLOY_RELATIONSHIP\
-_IDX1\",key: {"OM_RELATIONSHIP_FIELD_FROM":1,"OM_RELATIONSHIP_FIELD_TO":1}, \
-unique: true, enforced: true }"
+_IDX1\",key: {"OM_RELATIONSHIP_FIELD_NAME":1}, unique: true, enforced: true }"
 
    /******* SYSPLUGINS *******/
    #define OM_CS_DEPLOY_CL_PLUGINS              OM_CS_DEPLOY".SYSPLUGINS"
