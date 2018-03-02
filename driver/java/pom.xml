@@ -165,26 +165,15 @@
                 </plugins>
             </build>
         </profile>
-
         <profile>
-            <id>dev</id>
+            <id>disable-javadoc-doclint</id>
             <activation>
-                <activeByDefault>true</activeByDefault>
+                <jdk>[1.8,)</jdk>
             </activation>
             <properties>
-                <single.host>192.168.20.42</single.host>
-                <single.port>50000</single.port>
-                <single.username> </single.username>
-                <single.password> </single.password>
-                <single.group>db1</single.group>
-                <node.host> susetzb</node.host>
-                <node.port> 20000</node.port>
-                <cluster.urls>192.168.20.42:50000</cluster.urls>
-                <cluster.username> </cluster.username>
-                <cluster.password> </cluster.password>
+                <additionalparam>-Xdoclint:none</additionalparam>
             </properties>
         </profile>
-
     </profiles>
 
     <reporting>
