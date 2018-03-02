@@ -1,4 +1,4 @@
-<form class="Form" ng-if="Setting.Type != 'grid'">
+<form class="Form" ng-if="Setting.Type != 'grid'&&Setting.Type != 'table'">
    <div class="FormGroup" ng-repeat="inputInfo in Setting.inputList track by $index">
       <table class="table">
          <tbody>
@@ -38,12 +38,27 @@
    <div class="GridBody">
       <div class="GridTr" ng-repeat="tr in Setting.inputList track by $index">
          <div class="GridTd" ng-repeat="td in tr track by $index" ng-class="{'undefined':'Ellipsis','true':'Ellipsis'}[td.ellipsis]" ng-style="{'word-break':(data.options.grid.tdModel == 'auto' || !data.options.grid.tdModel ? 'break-all' : '' ) }" ng-switch on="td.type">
-            <input ng-switch-when="string" type="text" class="form-control" ng-model="td.value"/>
-            <input ng-switch-when="checkbox" type="checkbox" ng-model="td.value"/>
+            <input ng-switch-when="string" type="text" class="form-control" ng-model="td.value" />
+            <input ng-switch-when="checkbox" type="checkbox" ng-model="td.value" />
             <span ng-switch-when="textual">{{td.value}}</span>
             <select class="form-control" ng-switch-when="select" ng-model="td.value" ng-options="selectList.value as selectList.key for selectList in td.valid"></select>
          </div>
          <div class="clear-float"></div>
       </div>
    </div>
+</div>
+<div class="Grid" ng-if="Setting.Type == 'table'" ng-grid="Setting.Grid" style="border-bottom:1px solid #E3E7E8;">
+   <table class="table border loosen" style="width:100%;">
+      <tr>
+         <td style="background-color:#F1F4F5; font-size:95%; font-weight:100;" ng-repeat="title in Setting.GridTitle track by $index">{{title.text}}</td>
+      </tr>
+      <tr class="" ng-repeat="tr in Setting.inputList track by $index">
+         <td class="" ng-repeat="td in tr track by $index" ng-class="{'undefined':'Ellipsis','true':'Ellipsis'}[td.ellipsis]" ng-style="{'word-break':(data.options.grid.tdModel == 'auto' || !data.options.grid.tdModel ? 'break-all' : '' ) }" ng-switch on="td.type">
+            <input ng-switch-when="string" type="text" class="form-control" ng-model="td.value" />
+            <input ng-switch-when="checkbox" type="checkbox" ng-disabled="td.disabled" ng-model="td.value" />
+            <span ng-switch-when="textual">{{td.value}}</span>
+            <select class="form-control" ng-switch-when="select" ng-model="td.value" ng-options="selectList.value as selectList.key for selectList in td.valid"></select>
+         </td>
+      </tr>
+   </table>
 </div>

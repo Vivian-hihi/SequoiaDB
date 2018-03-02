@@ -3081,7 +3081,7 @@
                      return $scope.Setting.checkInput( $scope.Setting.inputList, customCheckFun ) ;
                   }
                   $scope.data.getValue = function(){
-                     if( $scope.Setting.Type == 'grid' )
+                     if( $scope.Setting.Type == 'grid' || $scope.Setting.Type == 'table' )
                      {
                         return $scope.Setting.getValue2( $scope.Setting.inputList ) ;
                      }

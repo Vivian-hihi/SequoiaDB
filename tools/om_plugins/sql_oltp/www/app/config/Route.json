@@ -1,0 +1,31 @@
+{
+   "route": [
+      {
+         "path": "/Data/OLTP-Database/Index",
+         "options": {
+            "templateUrl": "./app/template/Data/OLTP/Database/Index.html",
+            "resolve": [
+               "./app/controller/Data/OLTP/Database/Index.js"
+            ]
+         }
+      },
+      {
+         "path": "/Data/OLTP-Operate/Data",
+         "options": {
+            "templateUrl": "./app/template/Data/OLTP/Operate/Data.html",
+            "resolve": [
+               "./app/controller/Data/OLTP/Operate/Data.js"
+            ]
+         }
+      },
+      {
+         "path": "/Data/OLTP-Operate/Structure",
+         "options": {
+            "templateUrl": "./app/template/Data/OLTP/Operate/Structure.html",
+            "resolve": [
+               "./app/controller/Data/OLTP/Operate/Structure.js"
+            ]
+         }
+      }
+   ]
+}

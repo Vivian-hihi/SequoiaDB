@@ -1510,6 +1510,12 @@ function sqlEscape( sql )
    return "'" + sql.replace( /'/g, "\\'" ) + "'" ;
 }
 
+//添加双引号
+function addQuotes( field )
+{
+   return '"' + field + '"' ;
+}
+
 //判断IP地址
 function IsIPAddress( ip )
 {

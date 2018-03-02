@@ -2615,7 +2615,7 @@
       }
 
       //打开 设置鉴权 弹窗
-      $scope.ShowSetAuthority = function( businessName ){
+      $scope.ShowSetAuthority = function( businessName, businessType ){
          if( typeof( businessName ) == 'undefined' )
          {
             businessName = chooseBusinessName ;
@@ -2623,6 +2623,23 @@
          
          authorityform['inputList'][1]['value'] = '' ;
          authorityform['inputList'][2]['value'] = '' ;
+
+         if( businessType == 'sequoiasql-oltp' )
+         {
+            authorityform['inputList'][3] = {
+               "name": "DbName",
+               "webName": $scope.autoLanguage( '默认数据库' ),
+               "type": "string",
+               "value": ""
+            } ;
+         }
+         else
+         {
+            if( typeof( authorityform['inputList'][3] ) != 'undefined' )
+            {
+               authorityform['inputList'][3] = {} ;
+            }
+         }
 
          //关闭鉴权下拉菜单
          $scope.AuthorityDropdown['callback']['Close']() ;
@@ -2640,6 +2657,10 @@
                      'User': formVal['User'],
                      'Passwd': formVal['Password']
                   } ;
+                  if( businessType == 'sequoiasql-oltp' && typeof( formVal['DbName'] ) != 'undefined' )
+                  {
+                     data['DbName'] = formVal['DbName'] ;
+                  }
                   SdbRest.OmOperation( data, {
                      'success': function( SetAuthorityResult ){
                         queryModule() ;

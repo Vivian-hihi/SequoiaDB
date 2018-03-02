@@ -85,7 +85,7 @@
                   <div form-create para="authorityForm"></div>
                </div>
                <div ng-dropdown="config in AuthorityDropdown.config" dropdown-callback="AuthorityDropdown.callback">
-                  <label class="Ellipsis" style="padding:5px 10px;display:block;" ng-show="config.value == 'edit'" ng-click="ShowSetAuthority()">{{config.field}}</label>
+                  <label class="Ellipsis" style="padding:5px 10px;display:block;" ng-show="config.value == 'edit'" ng-click="ShowSetAuthority(moduleInfo['BusinessName'],moduleInfo['BusinessType'])">{{config.field}}</label>
                   <label class="Ellipsis" style="padding:5px 10px;display:block;" ng-show="config.value == 'delete'" ng-click="DropAuthorityModel()">{{config.field}}</label>
                </div>
                <div style="height:50px;">
@@ -95,11 +95,11 @@
                   <div class="pull-left" ng-container="{offsetX:-100,height:40}">
                      <div class="Ellipsis2" style="font-weight:bold;height:21px;">
                         <span ng-if="(moduleInfo['BusinessType']=='sequoiadb'&&moduleInfo['DeployMod']=='distribution')||moduleInfo['BusinessType']=='sequoiasql-oltp'">
-                           <a class="linkButton" style="font-size:90%;" ng-if="moduleInfo['authority']" ng-attr="{'data-desc':autoLanguage('鉴权已开启。')}" ng-click="OpenShowAuthorityDropdown($event,moduleInfo['BusinessName'])">
+                           <a class="linkButton" style="font-size:90%;" ng-if="moduleInfo['authority']" ng-attr="{'data-desc':autoLanguage('鉴权已开启。')}" ng-click="OpenShowAuthorityDropdown($event,moduleInfo['BusinessName'],moduleInfo['BusinessType'])">
                               <i class="fa fa-lock"></i>
                               <span>{{autoLanguage("鉴权")}} </span>
                            </a>
-                           <a class="linkButton" style="font-size:90%;" ng-if="moduleInfo['authority'] == undefined" ng-click="ShowSetAuthority(moduleInfo['BusinessName'])" ng-attr="{'data-desc':autoLanguage('未开启鉴权，点击设置。')}">
+                           <a class="linkButton" style="font-size:90%;" ng-if="moduleInfo['authority'] == undefined" ng-click="ShowSetAuthority(moduleInfo['BusinessName'],moduleInfo['BusinessType'])" ng-attr="{'data-desc':autoLanguage('未开启鉴权，点击设置。')}">
                               <i class="fa fa-unlock"></i>
                               <span>{{autoLanguage("鉴权")}} </span>
                            </a>
