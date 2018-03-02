@@ -7,7 +7,7 @@
 # mkdir -p mysql-5.7.18/storage/sequoiadb/sequoiadb/lib
 # cp /opt/sequoiadb/lib/libstaticsdbcpp.a mysql-5.7.18/storage/sequoiadb/sequoiadb/lib
 # cd mysql-5.7.18
-# cmake . -DWITH_BOOST=../thirdparty/boost/boost_1_59_0/ -DCMAKE_INSTALL_PREFIX=/opt/mysql -DMYSQL_DATADIR=/opt/mysql/data
+# cmake . -DWITH_BOOST=../thirdparty/boost/boost_1_59_0/ -DCMAKE_INSTALL_PREFIX=/opt/mysql -DMYSQL_DATADIR=/opt/mysql/data -DCMAKE_BUILD_TYPE=Release
 # make -j 4
 # make install
 
