@@ -69,9 +69,6 @@ TEST_F( clParaVerify, getDataBlocks )
    ASSERT_EQ( SDB_INVALIDARG, rc ) ;
    rc = sdbGetDataBlocks( cs, NULL, NULL, NULL, NULL, 0, -1, &cursor ) ;
    ASSERT_EQ( SDB_CLT_INVALID_HANDLE, rc ) ;
-   sdbCollectionHandle tmpCl ;
-   rc = sdbGetDataBlocks( tmpCl, NULL, NULL, NULL, NULL, 0, -1, &cursor ) ;
-   ASSERT_EQ( SDB_INVALIDARG, rc ) ;
    rc = sdbGetDataBlocks( cl, NULL, NULL, NULL, NULL, 0, -1, NULL ) ;
    ASSERT_EQ( SDB_INVALIDARG, rc ) ;
 }
