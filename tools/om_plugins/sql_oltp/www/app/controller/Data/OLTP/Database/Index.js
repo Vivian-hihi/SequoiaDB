@@ -296,7 +296,7 @@
          var data = { 'Sql': sql, 'DbName': $scope.CurrentDbName } ;
          SdbRest.DataOperationV2( '/sql', data, {
             'success': function( result ){
-               queryTable( $scope.CurrentDbName ) ;
+               queryTableList( $scope.CurrentDbName ) ;
             },
             'failed': function( errorInfo ){
                _IndexPublic.createRetryModel( $scope, errorInfo, function(){
