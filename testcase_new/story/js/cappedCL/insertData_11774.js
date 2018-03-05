@@ -12,7 +12,7 @@ function main()
    var csOption = {Capped:true};
    commCreateCS( db, csName, false, "", csOption );
    
-   var clName = COMMCLNAME + "_11795";
+   var clName = COMMCLNAME + "11774";
    var clOption = {Capped:true, Size:1024, AutoIndexId:false};
    var dbcl = commCreateCLByOption( db, csName, clName, clOption, true, true );
    
