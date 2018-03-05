@@ -2837,6 +2837,7 @@
          var option = {} ;
          option['transaction']      = config['transaction'] ;
          option['preferedinstance'] = config['preferedinstance'] ;
+         option['DbName']           = config['DbName'] ;
 
          if( config['address'].length > 0 )
          {
@@ -2848,6 +2849,7 @@
          
          var data = {
             'cmd'    : 'create relationship',
+            'Name'   : config['Name'],
             'From'   : config['From'],
             'To'     : config['To'],
             'Options': JSON.stringify( option )
@@ -2855,7 +2857,7 @@
          SdbRest.OmOperation( data, {
             'success': function( result ){
                $scope.Components.Confirm.type = 4 ;
-               $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '?、?关联成功。' ), config['From'], config['To'] ) ;
+               $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '创建关联成功：?' ), config['Name'] ) ;
                $scope.Components.Confirm.isShow = true ;
                $scope.Components.Confirm.noClose = true ;
                $scope.Components.Confirm.normalOK = true ;
@@ -2879,16 +2881,15 @@
       }
 
       //解除关联
-      var removeRelation = function( config ){
+      var removeRelation = function( name ){
          var data = {
             'cmd' : 'remove relationship',
-            'From': config['From'],
-            'To'  : config['To']
+            'Name'  : name
          }
          SdbRest.OmOperation( data, {
             'success': function( SetAuthorityResult ){
                $scope.Components.Confirm.type = 4 ;
-               $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '?、?解除关联成功。' ), config['From'], config['To'] ) ;
+               $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '解除关联成功：?' ), name ) ;
                $scope.Components.Confirm.isShow = true ;
                $scope.Components.Confirm.noClose = true ;
                $scope.Components.Confirm.normalOK = true ;
@@ -2902,7 +2903,7 @@
             },
             'failed': function( errorInfo ){
                _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-                  removeRelation( config ) ;
+                  removeRelation( name ) ;
                   return true ;
                } ) ;
             }
@@ -2987,7 +2988,7 @@
                 $.each( nodeList, function( nodeIndex, nodeInfo ){
                   if( nodeInfo['Role'] == 'coord' || nodeInfo['Role'] == 'standalone' )
                   {
-                     $scope.CreateRelationWindow['config']['inputList'][5]['valid']['list'].push( {
+                     $scope.CreateRelationWindow['config']['inputList'][7]['valid']['list'].push( {
                         'key': nodeInfo['HostName'] + ':' + nodeInfo['ServiceName'],
                         'value': nodeInfo['HostName'] + ':' + nodeInfo['ServiceName'],
                         'checked': false
@@ -2999,7 +3000,7 @@
                   }
                } ) ;
             }
-            $scope.CreateRelationWindow['config']['inputList'][5]['valid']['list'] = [] ;
+            $scope.CreateRelationWindow['config']['inputList'][7]['valid']['list'] = [] ;
             if( typeof( $scope.moduleList[index]['BusinessInfo'] ) == 'undefined' )
             {
                var moduleName = $scope.moduleList[index]['BusinessName'] ;
@@ -3023,9 +3024,20 @@
                eachNodeList( $scope.moduleList[index]['BusinessInfo']['NodeList'] ) ;
             }
          }
-
          $scope.CreateRelationWindow['config'] = {
             inputList: [
+               {
+                  "name": 'Name',
+                  "webName": $scope.autoLanguage( '关联名' ),
+                  "type": "string",
+                  "required": true,
+                  "value": '',
+                  "valid": {
+                     "min": 1,
+                     "max": 63,
+                     "regex": "^[a-zA-Z]+[0-9a-zA-Z_]*$"
+                  }
+               },
                {
                   "name": "Type",
                   "webName": $scope.autoLanguage( '关联类型' ),
@@ -3042,7 +3054,15 @@
                   "required": true,
                   "type": "select",
                   "value": '',
-                  "valid": []
+                  "valid": [],
+                  "onChange": function( name, key, value ){
+                     $scope.CreateRelationWindow['config']['inputList'][0]['value'] = sprintf(
+                        '?_?_?',
+                        value,
+                        $scope.moduleList[$scope.CreateRelationWindow['config']['inputList'][3]['value']]['BusinessName'],
+                        $scope.CreateRelationWindow['config']['inputList'][4]['value']
+                     ) ;
+                  }
                },
                {
                   "name": "To",
@@ -3053,6 +3073,33 @@
                   "valid":[],
                   "onChange": function( name, key, value ){
                      listCoordNodes( value ) ;
+                     $scope.CreateRelationWindow['config']['inputList'][0]['value'] = sprintf(
+                        '?_?_?',
+                        $scope.CreateRelationWindow['config']['inputList'][2]['value'],
+                        $scope.moduleList[value]['BusinessName'],
+                        $scope.CreateRelationWindow['config']['inputList'][4]['value']
+                     ) ;
+                  }
+               },
+               {
+                  "name": 'DbName',
+                  "webName": $scope.autoLanguage( '数据库' ),
+                  "type": "string",
+                  "required": true,
+                  "value": "",
+                  "valid": {
+                     "min": 1,
+                     "max": 63,
+                     "regex": "^[a-zA-Z_]+[0-9a-zA-Z_]*$",
+                     "regexError": sprintf( $scope.pAutoLanguage( '?由字母和数字或\"_\"组成，并且以字母或\"_\"起头。' ), $scope.pAutoLanguage( '数据表名' ) )
+                  },
+                  "onChange": function( name, key, value ){
+                     $scope.CreateRelationWindow['config']['inputList'][0]['value'] = sprintf(
+                        '?_?_?',
+                        $scope.CreateRelationWindow['config']['inputList'][2]['value'],
+                        $scope.moduleList[$scope.CreateRelationWindow['config']['inputList'][3]['value']]['BusinessName'],
+                        key
+                     ) ;
                   }
                },
                {
@@ -3097,10 +3144,11 @@
          } ;
 
          
+         
          $.each( $scope.moduleList, function( index, moduleInfo ){
             if( moduleInfo['BusinessType'] == 'sequoiasql-oltp' )
             {
-               $scope.CreateRelationWindow['config']['inputList'][1]['valid'].push(
+               $scope.CreateRelationWindow['config']['inputList'][2]['valid'].push(
                   { 'key': moduleInfo['BusinessName'], 'value': moduleInfo['BusinessName'] }
                ) ;
             }
@@ -3110,10 +3158,10 @@
                if( chooseModule == -1 )
                {
                   chooseModule = index ;
-                  $scope.CreateRelationWindow['config']['inputList'][2]['value'] = chooseModule ;
+                  $scope.CreateRelationWindow['config']['inputList'][3]['value'] = chooseModule ;
                   listCoordNodes( chooseModule ) ;
                }
-               $scope.CreateRelationWindow['config']['inputList'][2]['valid'].push(
+               $scope.CreateRelationWindow['config']['inputList'][3]['valid'].push(
                   { 'key': moduleInfo['BusinessName'], 'value': index }
                ) ;
             }
@@ -3122,7 +3170,12 @@
                return ;
             }
          } ) ;
-         $scope.CreateRelationWindow['config']['inputList'][1]['value'] = $scope.CreateRelationWindow['config']['inputList'][1]['valid'][0]['value'] ;
+         $scope.CreateRelationWindow['config']['inputList'][2]['value'] = $scope.CreateRelationWindow['config']['inputList'][2]['valid'][0]['value'] ;
+         $scope.CreateRelationWindow['config']['inputList'][0]['value'] = sprintf(
+            '?_?',
+            $scope.CreateRelationWindow['config']['inputList'][2]['value'],
+            $scope.moduleList[$scope.CreateRelationWindow['config']['inputList'][3]['value']]['BusinessName']
+         ) ;
          $scope.CreateRelationWindow['callback']['SetOkButton']( $scope.autoLanguage( '确定' ), function(){
             var isAllClear = $scope.CreateRelationWindow['config'].check() ;
             if( isAllClear )
@@ -3149,6 +3202,7 @@
          {
             return;
          }
+
          $scope.RemoveRelationWindow['config'] = {
             inputList: [
                {
@@ -3162,26 +3216,29 @@
                   ]
                },
                {
-                  "name": "Relationship",
-                  "webName": $scope.autoLanguage( '关联的业务' ),
+                  "name": "Name",
+                  "webName": $scope.autoLanguage( '关联名' ),
                   "type": "select",
                   "required": true,
-                  "value": 0,
+                  "value": '',
                   "valid": []
                }
             ]
          } ;
+
          $.each( $scope.RelationshipList, function( index, relationInfo ){
             $scope.RemoveRelationWindow['config']['inputList'][1]['valid'].push(
-               { 'key': relationInfo['From'] + '，' + relationInfo['To'], 'value': index }
+               { 'key': relationInfo['Name'], 'value': relationInfo['Name'] }
             ) ;
          } ) ;
+         $scope.RemoveRelationWindow['config']['inputList'][1]['value'] = $scope.RemoveRelationWindow['config']['inputList'][1]['valid'][0]['value'] ;
+
          $scope.RemoveRelationWindow['callback']['SetOkButton']( $scope.autoLanguage( '确定' ), function(){
             var isAllClear = $scope.RemoveRelationWindow['config'].check() ;
             if( isAllClear )
             {
                var formVal = $scope.RemoveRelationWindow['config'].getValue() ;
-               removeRelation( $scope.RelationshipList[formVal['Relationship']] ) ;
+               removeRelation( formVal['Name'] ) ;
             }
             return isAllClear ;
          } ) ;
@@ -3199,10 +3256,20 @@
       $scope.ShowRelationship = function( moduleName ){
          $scope.RelationshipWindow['config'] = [] ;
          $.each( $scope.RelationshipList, function( index, info ){
-            if( moduleName == info['From'] || moduleName == info['To'] )
+            if( moduleName == info['From'] )
             {
-               $scope.RelationshipWindow['config'].push( info ) ;
+               info['where'] = 'From' ;
             }
+            else if( moduleName == info['To'] )
+            {
+               info['where'] = 'To' ;
+            }
+            else
+            {
+               return ;
+            }
+            $scope.RelationshipWindow['config'].push( info ) ;
+
          } ) ;
          $scope.RelationshipWindow['callback']['SetTitle']( $scope.autoLanguage( '关联信息' ) ) ;
          $scope.RelationshipWindow['callback']['Open']() ;
