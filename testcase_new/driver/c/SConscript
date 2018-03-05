@@ -116,6 +116,7 @@ testFiles = [
    [ "./crud/pop14506.cpp" ],
    [ "./paraVerify/lobFunc14388.cpp" ],
    [ "./paraVerify/sdbFunc14277.cpp" ],
+   [ "./paraVerify/clFunc14281.cpp" ],
    [ "./sessionAttr/instanceid14158.cpp" ] # sync
 ]
 
