@@ -380,12 +380,14 @@ namespace seadapter
    {
       INT32 rc = SDB_OK ;
       UINT32 writePos = 0 ;
+      const CHAR *upsertStr = ",\"doc_as_upsert\":true" ;
+      UINT32 upsertLen = ossStrlen( upsertStr ) ;
 
       // The source data of update is in the following format:
       //    {"doc":{field1:val1, field2:val2,...,fieldn:valn}}\n
 
       // One byte for the extra '\n' at the end of the line.
-      if ( size < (INT32)( _srcDataLen + BULK_UPDATE_PREFIX_LEN +
+      if ( size < (INT32)( _srcDataLen + BULK_UPDATE_PREFIX_LEN + upsertLen +
                            BULK_UPDATE_SUFFIX_LEN + 1 ) )
       {
          rc = SDB_INVALIDARG ;
@@ -397,6 +399,8 @@ namespace seadapter
       writePos = BULK_UPDATE_PREFIX_LEN ;
       ossStrncpy( buffer + writePos, _sourceData, _srcDataLen ) ;
       writePos += _srcDataLen ;
+      ossStrncpy( buffer + writePos, upsertStr, upsertLen ) ;
+      writePos += upsertLen ;
       ossStrncpy( buffer + writePos, BULK_UPDATE_SUFFIX,
                   BULK_UPDATE_SUFFIX_LEN ) ;
       writePos += BULK_UPDATE_SUFFIX_LEN ;
