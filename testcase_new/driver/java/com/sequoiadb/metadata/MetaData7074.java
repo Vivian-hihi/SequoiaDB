@@ -6,7 +6,6 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Collections;
-import java.util.Comparator;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
@@ -22,7 +21,6 @@ import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Domain;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.sdb.TestClose11320;
 import com.sequoiadb.testcommon.SdbTestBase;
 
 
