@@ -181,7 +181,15 @@ namespace engine
       }
 
       // wait edu attach in
-      pJob->waitAttach () ;
+      while( SDB_OK != pJob->waitAttach( OSS_ONE_SEC ) )
+      {
+         if ( !_eduMgr->getEDUByID( newEDUID ) )
+         {
+            /// The edu has terminate due to some exception
+            rc = SDB_SYS ;
+            goto error ;
+         }
+      }
       // add to map
       _mapJobs[newEDUID] = pJob ;
       //_mapResult[newEDUID] = SDB_OK ;
@@ -253,48 +261,41 @@ namespace engine
    _rtnBaseJob::_rtnBaseJob ()
    {
       _pEDUCB = NULL ;
-      _latchIn.try_get () ;
+      _evtIn.reset() ;
+      _evtOut.signal() ;
    }
 
    _rtnBaseJob::~_rtnBaseJob ()
    {
-      _latchIn.release () ;
    }
 
    INT32 _rtnBaseJob::attachIn ( pmdEDUCB * cb )
    {
       _pEDUCB = cb ;
-      _latchOut.try_get () ;
-      _latchIn.release () ;
+      _evtOut.reset() ;
+      _evtIn.signal() ;
       return SDB_OK ;
    }
 
    INT32 _rtnBaseJob::attachOut ()
    {
-      _latchOut.release () ;
+      _evtOut.signal() ;
       _pEDUCB = NULL ;
       return SDB_OK ;      
    }
 
-   INT32 _rtnBaseJob::waitAttach ()
+   INT32 _rtnBaseJob::waitAttach ( INT64 millsec )
    {
-      _latchIn.get () ;
-      return SDB_OK ;
+      return _evtIn.wait( millsec ) ;
    }
 
-   INT32 _rtnBaseJob::waitDetach ()
+   INT32 _rtnBaseJob::waitDetach ( INT64 millsec )
    {
-      _latchOut.get () ;
-      _latchOut.release () ;
-      return SDB_OK ;
+      return _evtOut.wait( millsec ) ;
    }
 
    pmdEDUCB * _rtnBaseJob::eduCB ()
    {
-      if ( !_pEDUCB )
-      {
-         return pmdGetThreadEDUCB() ;
-      }
       return _pEDUCB ;
    }
 
