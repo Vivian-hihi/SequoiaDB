@@ -16,43 +16,47 @@ function main()
    var clOption = {Capped:true, Size:1024, AutoIndexId:false};
    var dbcl = commCreateCLByOption( db, csName, clName, clOption, true, true );
    
-   //多次循环使扩文件
+   //获取主备节点
+   var db1 = new Sdb(db);
+   db1.setSessionAttr( { PreferedInstance: "m" } );
+   var dbclPrimary = db1.getCS(csName).getCL(clName);
+   var db2 = new Sdb(db);
+   db2.setSessionAttr( { PreferedInstance: "s" } );
+   var dbclSlave = db2.getCS(csName).getCL(clName);
+   
+   //多次循环插入使扩文件
    var repeatNum = 10;
    for(var i = 0;i < repeatNum; i++)
    {
       //插入1个块的记录
-      insertNum = 32768;
+      insertNum = 32767;
       stringLength = 969;
       var recordHead = 55;
-      var gap = 1024 - 36;
       var expectRecords = insertFixedLengthDatas( dbcl, insertNum, stringLength, "a" );
-      println("--insert data success!");
-      
-      //校验每次插入的第一条记录
-      var expRecsFirstRecord = [];
-      var expectIDs1 = [];
-      var tempId1 = insertNum * i;
-      var recordLength = stringLength + recordHead;
-      expectIDs1.push(tempId1 * (recordLength) + i * gap);
-      checkLogicalID( dbcl, null, null, {_id:1}, 1, tempId1, expectIDs1);
-      println("--check first record logical ID success!");
-      
-      expRecsFirstRecord.push(expectRecords[0]);
-      checkRecords( dbcl, null, null, {_id:1}, 1, tempId1, expRecsFirstRecord );
-      println("--check first record data success!");
-      
-      //校验每次插入的最后一条记录
-      var expRecsLastRecord = [];
-      var expectIDs2 = [];
-      var tempId2 = insertNum * (i + 1) -1;
-      expectIDs2.push(tempId2 * (recordLength) + (i + 1) * gap);
-      checkLogicalID( dbcl, null, null, {_id:1}, 1, tempId2, expectIDs2);
-      println("--check last record logical ID success!");
-      
-      expRecsLastRecord.push(expectRecords[insertNum -1]);
-      checkRecords( dbcl, null, null, {_id:1}, 1, tempId2, expRecsLastRecord );
-      println("--check last record data success!");
    }
+   println("--insert data success!");
+   
+   //计算多个块内的预期的_id值
+   var expIDs = [];
+   var expID = 0;
+   for(var i=0; i<repeatNum; i++)
+   {
+      for(var j=0; j< insertNum; j++)
+      {
+         expIDs.push(expID);
+         expID = expID + stringLength + recordHead;
+      }
+      
+      //跨块时，加上块尾的空隙
+      var expID = expID + 988;
+   }
+   
+   //检查主备节点一致
+   checkConsistency(db, csName, clName);
+   
+   //校验多个块内的_id值
+   checkLogicalID( dbclPrimary, null, null, {_id:1}, -1, 0, expIDs);
+   checkLogicalID( dbclSlave, null, null, {_id:1}, -1, 0, expIDs);
    
    //插入记录使扩展文件后，检查记录数
    var expectCount = repeatNum * insertNum;
@@ -60,57 +64,129 @@ function main()
    println("--check count success!");
    
    //逆向pop单个块
-   var skipNum = (insertNum -1) * (repeatNum - 1);
+   var skipNum = (repeatNum - 1) * insertNum;
    var logicalID = getLogicalID(dbcl, null, null, {_id:1}, 1, skipNum);
    pop( dbcl, logicalID[0], -1 );
    
-   var expectIDs = [];
-   expectIDs.push((skipNum -1) * (recordLength) + (repeatNum - 2) * gap);
-   checkLogicalID( dbcl, null, null, {_id:1}, 1, skipNum - 1, expectIDs);
-   println("--check last record logical ID success!");
+   //计算多个块内的预期的_id值
+   var expIDs = [];
+   var expID = 0;
+   for(var i=0; i<repeatNum-1; i++)
+   {
+      for(var j=0; j< insertNum; j++)
+      {
+         expIDs.push(expID);
+         expID = expID + stringLength + recordHead;
+      }
+      
+      //跨块时，加上块尾的空隙
+      var expID = expID + 988;
+   }
    
+   //检查主备节点一致
+   checkConsistency(db, csName, clName);
+   
+   //校验多个块内的_id值
+   checkLogicalID( dbclPrimary, null, null, {_id:1}, -1, 0, expIDs);
+   checkLogicalID( dbclSlave, null, null, {_id:1}, -1, 0, expIDs);
+   
+   //检查记录数
    expectCount = skipNum;
    checkCount( dbcl, null, expectCount);
    println("--check count success!");
    
-   //逆向pop多个块
-   var skipNum = (insertNum -1) * (repeatNum - 3);
+   //逆向pop 2个块
+   var skipNum = insertNum * (repeatNum - 3);
    var logicalID = getLogicalID(dbcl, null, null, {_id:1}, 1, skipNum);
    pop( dbcl, logicalID[0], -1 );
    
-   var expectIDs = [];
-   expectIDs.push((skipNum -1) * recordLength + (repeatNum - 4) * gap);
-   checkLogicalID( dbcl, null, null, {_id:1}, 1, skipNum - 1, expectIDs);
-   println("--check last record logical ID success!");
+   //计算多个块内的预期的_id值
+   var expIDs = [];
+   var expID = 0;
+   for(var i=0; i<repeatNum-3; i++)
+   {
+      for(var j=0; j< insertNum; j++)
+      {
+         expIDs.push(expID);
+         expID = expID + stringLength + recordHead;
+      }
+      
+      //跨块时，加上块尾的空隙
+      var expID = expID + 988;
+   }
    
+   //检查主备节点一致
+   checkConsistency(db, csName, clName);
+   
+   //校验多个块内的_id值
+   checkLogicalID( dbclPrimary, null, null, {_id:1}, -1, 0, expIDs);
+   checkLogicalID( dbclSlave, null, null, {_id:1}, -1, 0, expIDs);
+   
+   //检查记录数
    expectCount = skipNum;
    checkCount( dbcl, null, expectCount);
    println("--check count success!");
    
    //正向pop单个块
-   var skipNum = insertNum - 2;
+   var skipNum = insertNum - 1;
    var logicalID = getLogicalID(dbcl, null, null, {_id:1}, 1, skipNum);
    pop( dbcl, logicalID[0], 1 );
    
-   var expectIDs = [];
-   expectIDs.push(recordLength * ( skipNum + 1) + gap);
-   checkLogicalID( dbcl, null, null, {_id:1}, 1, null, expectIDs);
-   println("--check last record logical ID success!");
+   //计算多个块内的预期的_id值
+   var expIDs = [];
+   var expID = 33554396;
+   for(var i=0; i<repeatNum-4; i++)
+   {
+      for(var j=0; j< insertNum; j++)
+      {
+         expIDs.push(expID);
+         expID = expID + stringLength + recordHead;
+      }
+      
+      //跨块时，加上块尾的空隙
+      var expID = expID + 988;
+   }
    
-   expectCount = expectCount - skipNum - 1;
+   //检查主备节点一致
+   checkConsistency(db, csName, clName);
+   
+   //校验多个块内的_id值
+   checkLogicalID( dbclPrimary, null, null, {_id:1}, -1, 0, expIDs);
+   checkLogicalID( dbclSlave, null, null, {_id:1}, -1, 0, expIDs);
+   
+   //检查记录数
+   expectCount = expectCount - 32767;
    checkCount( dbcl, null, expectCount);
    println("--check count success!");
    
-   //正向pop多个块
-   var skipNum = (insertNum - 1) * 3 - 1;
+   //正向pop 3个块
+   var skipNum = insertNum * 3 - 1;
    var logicalID = getLogicalID(dbcl, null, null, {_id:1}, 1, skipNum);
    pop( dbcl, logicalID[0], 1 );
    
-   var expectIDs = [];
-   expectIDs.push((skipNum + insertNum) * recordLength + 4 * gap);
-   checkLogicalID( dbcl, null, null, {_id:1}, 1, null, expectIDs);
-   println("--check last record logical ID success!");
+   //计算多个块内的预期的_id值
+   var expIDs = [];
+   var expID = 134217584;
+   for(var i=0; i<repeatNum-7; i++)
+   {
+      for(var j=0; j< insertNum; j++)
+      {
+         expIDs.push(expID);
+         expID = expID + stringLength + recordHead;
+      }
+      
+      //跨块时，加上块尾的空隙
+      var expID = expID + 988;
+   }
    
+   //检查主备节点一致
+   checkConsistency(db, csName, clName);
+   
+   //校验多个块内的_id值
+   checkLogicalID( dbclPrimary, null, null, {_id:1}, -1, 0, expIDs);
+   checkLogicalID( dbclSlave, null, null, {_id:1}, -1, 0, expIDs);
+   
+   //检查记录数
    expectCount = expectCount - skipNum - 1;
    checkCount( dbcl, null, expectCount);
    println("--check count success!");

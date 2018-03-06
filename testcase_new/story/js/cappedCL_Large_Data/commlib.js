@@ -47,6 +47,8 @@ function checkLogicalID( dbcl, findConf, selectConf, sortConf, limitConf, skipCo
    {
       throw buildException("checkLogicalID", e, null, null, e);
    }
+   
+   println("check logical id success!");
 }
 
 /************************************
