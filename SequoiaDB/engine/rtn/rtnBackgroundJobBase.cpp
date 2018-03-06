@@ -296,6 +296,10 @@ namespace engine
 
    pmdEDUCB * _rtnBaseJob::eduCB ()
    {
+      if ( !_pEDUCB )
+      {
+         return pmdGetThreadEDUCB() ;
+      }
       return _pEDUCB ;
    }
 
