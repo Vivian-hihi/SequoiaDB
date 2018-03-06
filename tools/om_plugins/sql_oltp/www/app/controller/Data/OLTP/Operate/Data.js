@@ -411,7 +411,7 @@
                var isFirst = true ;
                var sql = sprintf( 'SELECT * FROM ?', addQuotes( SdbSwap.tbName ) ) ;
                $.each( formValue['filter']['condition'], function( index, info ){
-                  if( info['field'].length > 0 && info['value'].length > 0 )
+                  if( info['field'].length > 0 && ( info['value'].length > 0 || info['logic'] == 'IS NULL' || info['logic'] == 'IS NOT NULL' ) )
                   {
                      var field   = addQuotes( info['field'] ) ;
                      var operate = info['logic'] ;
@@ -433,8 +433,6 @@
                      case '<':
                      case '<=':
                      case '<>':
-                        sql += field + ' ' + operate + ' ' + sqlEscape( param ) ;
-                        break ;
                      case 'LIKE':
                      case 'NOT LIKE':
                         sql += field + ' ' + operate + ' ' + sqlEscape( param ) ;
@@ -442,9 +440,10 @@
                      case 'BETWEEN':
                      case 'NOT BETWEEN':
                         var paramArr = param.split( ',', 2 ) ;
-                        if( paramArr.length > 0 )
+                        sql += field + ' ' + operate + ' ' + sqlEscape( paramArr[0] ) ;
+                        if( paramArr.length > 1 )
                         {
-                           sql += field + ' ' + operate + ' ' + sqlEscape( paramArr[0] ) + ' AND ' + sqlEscape( paramArr[1] ) ;
+                           sql += ' AND ' + sqlEscape( paramArr[1] ) ;
                         }
                         break ;
                      case 'IS NULL':
@@ -543,7 +542,7 @@
                         "webName": $scope.pAutoLanguage( "匹配条件" ),
                         "type": "list",
                         "valid": {
-                           "min": 1
+                           "min": 0
                         },
                         "child": [
                            [
@@ -625,9 +624,13 @@
                            "placeholder": $scope.pAutoLanguage( "值" ),
                            "type": "string",
                            "value": "",
-                           "valid": {
-                              "min": 1
-                           }
+                           "valid": {}
+                        },
+                        {
+                           "name": "null",
+                           "webName": $scope.pAutoLanguage( "空" ),
+                           "type": "checkbox",
+                           "value": false
                         }
                      ]
                   ]
@@ -651,20 +654,27 @@
                var formValue = $scope.UpdateWindow['config'].getValue() ;
                var sql = sprintf( 'UPDATE ? SET ', addQuotes( SdbSwap.tbName ) ) ;
                $.each( formValue['updator'], function( index, fieldInfo ){
-                  sql += addQuotes( fieldInfo['field'] ) + ' = ' + sqlEscape( fieldInfo['value'] ) ;
+                  if( fieldInfo['null'] == true )
+                  {
+                     sql += addQuotes( fieldInfo['field'] ) + ' = NULL ' ;
+                  }
+                  else
+                  {
+                     sql += addQuotes( fieldInfo['field'] ) + ' = ' + sqlEscape( fieldInfo['value'] ) ;
+                  }
                   if( index + 1 < formValue['updator'].length )
                   {
                      sql += ', ' ;
                   }
                } ) ;
                var isFirst = true ;
-               sql += ' WHERE ' ;
                $.each( formValue['filter']['condition'], function( index, filterInfo ){
                   var field = addQuotes( filterInfo['field'] ) ;
-                  if( typeof( filterInfo['value'] ) == 'string' && filterInfo['value'].length > 0 || filterInfo['logic'] == 'IS NULL' || filterInfo['logic'] == 'IS NOT NULL' )
+                  if( filterInfo['field'].length > 0 && ( filterInfo['value'].length > 0 || filterInfo['logic'] == 'IS NULL' || filterInfo['logic'] == 'IS NOT NULL' ) )
                   {
                      if( isFirst )
                      {
+                        sql += ' WHERE ' ;
                         isFirst = false ;
                      }
                      else
@@ -680,8 +690,6 @@
                      case '<':
                      case '<=':
                      case '<>':
-                        sql += field + ' ' + filterInfo['logic'] + ' ' + sqlEscape( filterInfo['value'] ) ;
-                        break ;
                      case 'LIKE':
                      case 'NOT LIKE':
                         sql += field + ' ' + filterInfo['logic'] + ' ' + sqlEscape( filterInfo['value'] ) ;
@@ -689,9 +697,10 @@
                      case 'BETWEEN':
                      case 'NOT BETWEEN':
                         var paramArr = filterInfo['value'].split( ',', 2 ) ;
+                        sql += field + ' ' + filterInfo['logic'] + ' ' + sqlEscape( paramArr[0] ) ;
                         if( paramArr.length > 1 )
                         {
-                           sql += field + ' ' + filterInfo['logic'] + ' ' + sqlEscape( paramArr[0] ) + ' AND ' + sqlEscape( paramArr[1] ) ;
+                           sql += ' AND ' + sqlEscape( paramArr[1] ) ;
                         }
                         break ;
                      case 'IS NULL':
@@ -700,6 +709,7 @@
                         break ;
                      case 'IN':
                      case 'NOT IN':
+                        alert(filterInfo['logic'])
                         var tmp = trim( filterInfo['value'] ) ;
                         if( tmp.charAt(0) == '(' && tmp.charAt(tmp.length - 1) == ')' )
                         {
@@ -869,19 +879,20 @@
                                  "value": ">",
                                  "default": ">",
                                  "valid": [
-                                    { "key": ">", "value": ">" },
-                                    { "key": ">=", "value": ">=" },
-                                    { "key": "<", "value": "<" },
-                                    { "key": "<=", "value": "<=" },
-                                    { "key": "<>", "value": "<>" },
-                                    { "key": "=", "value": "=" },
-                                    { "key": "size", "value": "size" },
-                                    { "key": "regex", "value": "regex" },
-                                    { "key": "type", "value": "type" },
-                                    { "key": "IS NULL", "value": "null" },
-                                    { "key": "IS NOT NULL", "value": "notnull" },
-                                    { "key": "IS EXISTS", "value": "exists" },
-                                    { "key": "IS NOT EXISTS", "value": "notexists" }
+                                    { 'key': '=', 'value': '=' },
+                                    { 'key': '>', 'value': '>' },
+                                    { 'key': '>=', 'value': '>=' },
+                                    { 'key': '<', 'value': '<' },
+                                    { 'key': '<=', 'value': '<=' },
+                                    { 'key': '<>', 'value': '<>' },
+                                    { 'key': 'LIKE', 'value': 'LIKE' },
+                                    { 'key': 'NOT LIKE', 'value': 'NOT LIKE' },
+                                    { 'key': 'IN(...)', 'value': 'IN' },
+                                    { 'key': 'NOT IN(...)', 'value': 'NOT IN' },
+                                    { 'key': 'BETWEEN', 'value': 'BETWEEN' },
+                                    { 'key': 'NOT BETWEEN', 'value': 'NOT BETWEEN' },
+                                    { 'key': 'IS NULL', 'value': 'IS NULL' },
+                                    { 'key': 'IS NOT NULL', 'value': 'IS NOT NULL' }
                                  ]
                               },
                               {
@@ -918,22 +929,90 @@
             {
                var formValue = $scope.DeleteWindow['config'].getValue() ;
                var sql = sprintf( 'DELETE FROM ?' ,addQuotes( SdbSwap.tbName ) ) ;
+               var isFirst = true ;
                var condition = '' ;
-               $.each( formValue['filter']['condition'], function( index, filterInfo ){
-                  if( isEmpty( filterInfo['field'] ) || isEmpty( filterInfo['value'] ) )
+               $.each( formValue['filter']['condition'], function( index, info ){
+                  if( info['field'].length > 0 && ( info['value'].length > 0 || info['logic'] == 'IS NULL' || info['logic'] == 'IS NOT NULL' ) )
                   {
-                     return ;
-                  }
-                  if( index == 0 )
-                  {
-                     condition += ' WHERE ' ;
-                  }
-                  condition += addQuotes( filterInfo['field'] ) + ' ' + filterInfo['logic'] + ' ' + sqlEscape( filterInfo['value'] ) ;
-                  if( index + 1 < formValue['filter']['condition'].length )
-                  {
-                     condition += ' ' + formValue['filter']['model'] + ' ' ;
+                     var field   = addQuotes( info['field'] ) ;
+                     var operate = info['logic'] ;
+                     var param   = info['value'] ;
+                     if( isFirst == true )
+                     {
+                        condition += ' WHERE ' ;
+                        isFirst = false ;
+                     }
+                     else
+                     {
+                        condition += ' AND ' ;
+                     }
+                     switch( operate )
+                     {
+                     case '=':
+                     case '>':
+                     case '>=':
+                     case '<':
+                     case '<=':
+                     case '<>':
+                     case 'LIKE':
+                     case 'NOT LIKE':
+                        condition += field + ' ' + operate + ' ' + sqlEscape( param ) ;
+                        break ;
+                     case 'BETWEEN':
+                     case 'NOT BETWEEN':
+                        var paramArr = param.split( ',', 2 ) ;
+                        condition += field + ' ' + operate + ' ' + sqlEscape( paramArr[0] ) ;
+                        if( paramArr.length > 1 )
+                        {
+                           condition += ' AND ' + sqlEscape( paramArr[1] ) ;
+                        }
+                        break ;
+                     case 'IS NULL':
+                     case 'IS NOT NULL':
+                        condition += field + ' ' + operate ;
+                        break ;
+                     case 'IN':
+                     case 'NOT IN':
+                        var tmp = trim( param ) ;
+                        if( tmp.charAt(0) == '(' && tmp.charAt(tmp.length - 1) == ')' )
+                        {
+                           condition += field + ' ' + operate + ' ' + tmp ;
+                        }
+                        else
+                        {
+                           var paramArr = param.split( ',' ) ;
+                           if( paramArr.length > 0 )
+                           {
+                              condition += field + ' ' + operate + ' (' ;
+                              $.each( paramArr, function( index, subPara ){
+                                 if( index > 0 )
+                                 {
+                                    condition += ',' ;
+                                 }
+                                 condition += sqlEscape( subPara ) ;
+                              } ) ;
+                              condition += ')' ;
+                           }
+                        }
+                        break ;
+                     }
                   }
                } ) ;
+               //$.each( formValue['filter']['condition'], function( index, filterInfo ){
+               //   if( isEmpty( filterInfo['field'] ) || isEmpty( filterInfo['value'] ) )
+               //   {
+               //      return ;
+               //   }
+               //   if( index == 0 )
+               //   {
+               //      condition += ' WHERE ' ;
+               //   }
+               //   condition += addQuotes( filterInfo['field'] ) + ' ' + filterInfo['logic'] + ' ' + sqlEscape( filterInfo['value'] ) ;
+               //   if( index + 1 < formValue['filter']['condition'].length )
+               //   {
+               //      condition += ' ' + formValue['filter']['model'] + ' ' ;
+               //   }
+               //} ) ;
 
                sql += condition ;
 
@@ -1108,7 +1187,7 @@
          var ctid = '' ;
          if( SdbSwap.tbType == 'table' )
          {
-            var querySql = sprint( 'SELECT ctid FROM ? WHERE ', addQuotes( SdbSwap.tbName ) ) ;
+            var querySql = sprintf( 'SELECT ctid FROM ? WHERE ', addQuotes( SdbSwap.tbName ) ) ;
             var tempNum = 1 ;
             $.each( data, function( key, value ){
                if( tempNum > 1 )

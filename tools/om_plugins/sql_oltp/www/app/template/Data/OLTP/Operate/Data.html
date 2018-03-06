@@ -53,13 +53,13 @@
          </label>
       </div> 
 
-      <button class="topBtn" ng-click="ShowQueryWindow()"><i class="fa fa-search"></i> {{pAutoLanguage("查询")}}</button>
-      <button class="topBtn" ng-click="ShowInsertWindow()"><i class="fa fa-plus"></i> {{pAutoLanguage("插入")}}</button>
-      <button class="topBtn" ng-click="ShowUpdateWindow()"><i class="fa fa-edit"></i> {{pAutoLanguage("更新")}}</button>
-      <button class="topBtn" ng-click="ShowDeleteWindow()"><i class="fa fa-remove"></i> {{pAutoLanguage("删除")}}</button>
+      <button class="topBtn" ng-click="ShowQueryWindow()" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1050]"><i class="fa fa-search"></i> {{pAutoLanguage("查询")}}</button>
+      <button class="topBtn" ng-click="ShowInsertWindow()" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1050]"><i class="fa fa-plus"></i> {{pAutoLanguage("插入")}}</button>
+      <button class="topBtn" ng-click="ShowUpdateWindow()" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1050]"><i class="fa fa-edit"></i> {{pAutoLanguage("更新")}}</button>
+      <button class="topBtn" ng-click="ShowDeleteWindow()" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1050]"><i class="fa fa-remove"></i> {{pAutoLanguage("删除")}}</button>
       <span style="border-left:2px solid #aaa;vertical-align:middle;"></span>&nbsp;
-      <button class="topBtn" ng-click="ShowExecHistory()">{{pAutoLanguage("执行记录")}}</button>
-      <button class="topBtn" ng-click="ShowFieldList($event)">{{pAutoLanguage("选择字段")}}&nbsp;<i class="fa fa-caret-down"></i></button>
+      <button class="topBtn" ng-click="ShowExecHistory()" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1050]">{{pAutoLanguage("执行记录")}}</button>
+      <button class="topBtn" ng-click="ShowFieldList($event)" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1050]">{{pAutoLanguage("选择字段")}}&nbsp;<i class="fa fa-caret-down"></i></button>
 
       <div class="clear-float"></div>
    </div>
