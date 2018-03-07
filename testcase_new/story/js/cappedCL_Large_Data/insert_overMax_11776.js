@@ -28,7 +28,6 @@ function main()
    //获取随机长度的字符串
    var minLength = 1;
    var maxLength = 16 * 1024 ;
-   var range = maxLength - minLength;
    var expIDs = [];
    var recordHead = 55;
    var expID = 0 ;
@@ -40,15 +39,14 @@ function main()
    
    var minRecordNum = 0;
    var maxRecordNum = insertNum - 1;
-   var range = maxRecordNum - minRecordNum;
-   var repeatNum = 30;
+   var repeatNum = 5;
    for(var j = 0 ; j< repeatNum; j++)
    {
       println("--blockID:" + blockID);
       println("--insertNum:" + insertNum);
       for(var i=0; i<insertNum; i++)
       {
-         var stringLength = Math.ceil( minLength + Math.random() * range );
+         var stringLength = Math.ceil( minLength + Math.random() * (maxLength - minLength) );
          
          //计算不定长度记录的预期_id值
          var recordLength = stringLength + recordHead;
@@ -112,7 +110,7 @@ function main()
       checkLogicalID( dbclSlave, null, null, {_id:1}, -1, 0, expIDs);
       
       //随机获取某条记录的logicalID
-      var skipNum = Math.ceil( minRecordNum + Math.random() * range );
+      var skipNum = Math.ceil( minRecordNum + Math.random() * (maxRecordNum - minRecordNum) );
       println("--skipNum:" + skipNum);
       var logicalID = getLogicalID(dbcl, null, null, {_id:1}, 1, skipNum);
       
