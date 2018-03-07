@@ -16,40 +16,100 @@ function main()
    var clOption = {Capped:true, Size:1024, AutoIndexId:false};
    var dbcl = commCreateCLByOption( db, csName, clName, clOption, true, true );
    
-   //插入500万条记录，数据长度随机，使数据文件被扩展一次
-   var insertTimes = 10;
-   for(var i =0; i < insertTimes; i++)
-   {
-      var rd = new commDataGenerator();
-      var recordNum = 10000;
-      var recs = rd.getRecords( recordNum, [ "int", "string", "bool", "date", 
-                                             "binary", "regex", "null" ],['a'] );
-      insertDatas( dbcl, recs );
-   }
-   println("--insert data success!");
+   //获取主备节点
+   var db1 = new Sdb(db);
+   db1.setSessionAttr( { PreferedInstance: "m" } );
+   var dbclPrimary = db1.getCS(csName).getCL(clName);
+   var db2 = new Sdb(db);
+   db2.setSessionAttr( { PreferedInstance: "s" } );
+   var dbclSlave = db2.getCS(csName).getCL(clName);
    
-   var expectNum = recordNum * insertTimes;
-   var direction =1;
+   //获取随机长度的字符串
+   var minLength = 0;
+   var maxLength = 16 * 1024 ;
+   var range = maxLength - minLength;
+   var expIDs = [];
+   var recordHead = 55;
+   var expID = 0 ;
+   var nextExpID = 0;
+   //var preExpID = 0;
+   var blockID = 1;
+   var docs = [];
+   var insertNum = 100000;
+   var expectNum = 0;
    
    //循环pop、查询、插入，logicaID随机
-   var repeatNum = 10;
+   var repeatNum = 20;
    for(var j = 0 ; j< repeatNum; j++)
    {
+      println("--blockID:" + blockID);
+      for(var i=0; i<insertNum; i++)
+      {
+         var stringLength = Math.ceil( minLength + Math.random() * range );
+         
+         //计算不定长度记录的预期_id值
+         var recordLength = stringLength + recordHead;
+         if( recordLength % 4 !==0 )
+         {
+            recordLength  += (4 - recordLength % 4);
+         }
+         
+         //生成不定长度的字符串记录
+         var doc = new StringBuffer();
+         doc.append(stringLength, "a");
+         var strings = doc.toString();
+         
+         docs.push({a:strings}) ;
+         if ( docs.length % 1000 == 0){
+            dbcl.insert( docs );
+            docs = [];
+         }
+     
+         //处理跨块的情况
+         nextExpID = expID + recordLength;
+         if( blockID == Math.floor(nextExpID/33554396))
+         {
+            expID = 33554396 * blockID++;
+            nextExpID = expID + recordLength;
+         }
+         
+         expIDs.push(expID);
+         expID = nextExpID ;
+      }
+      
+      if( docs.length != 0 ){
+         dbcl.insert( docs );
+         docs = [];
+      }
+      println("--insert data success!");
+      
+      //检查主备节点一致
+      checkConsistency(db, csName, clName);
+   
+      //比较count结果
+      expectNum = expectNum + insertNum;
+      checkCount( dbclPrimary, null, expectNum);
+      checkCount( dbclSlave, null, expectNum);
+      
+      //校验多个块内的_id值
+      checkLogicalID( dbclPrimary, null, null, {_id:1}, -1, 0, expIDs);
+      checkLogicalID( dbclSlave, null, null, {_id:1}, -1, 0, expIDs);
+      
       //随机获取某条记录的logicalID
-      var min = 0;
-      var max = repeatNum * recordNum;
-      var range = max - min;
-      var skipNum = Math.ceil( min + Math.random() * range );
+      var minRecordNum = 0;
+      var maxRecordNum = expectNum;
+      var range = maxRecordNum - minRecordNum;
+      var skipNum = Math.ceil( minRecordNum + Math.random() * range );
+      println("--skipNum:" + skipNum);
       var logicalID = getLogicalID(dbcl, null, null, {_id:1}, 1, skipNum);
-      println("--get logicalID success!");
       
       //随机设置pop方向
-      if(skipNum % 2 === 0)
+      if((parseInt(Math.random()*10)) % 2 === 0)
       {
-         direction= -1;
+         var direction= 1;
       }else
       {
-         direction= 1;
+         var direction= -1;
       }
       
       //执行pop
@@ -59,56 +119,32 @@ function main()
       if(direction == -1)
       {
          expectNum = skipNum;
+         expID = logicalID[0];
+         blockID = Math.floor(expID/33554396) + 1;
+         expIDs.splice(skipNum);
       }else
       {
          expectNum = expectNum - skipNum - 1;
-      }
-      checkCount( dbcl, null, expectNum);
-      println("--count success! expectNum: " + expectNum);
-      
-      //比较find结果
-      try
-      {
-         dbcl.find().sort({_id:1}).limit(1);
-         dbcl.find().sort({_id:1}).limit(1).skip(expectNum-1);
-      }catch(e)
-      {
-         throw buildException("find data 1", e, null, null, e);
-      }
-      println("--find data success!");
-      
-      //再次insert 500万条记录
-      for(var i =0; i < insertTimes; i++)
-      {
-         var rd = new commDataGenerator();
-         var recs = rd.getRecords( recordNum, [ "int", "string", "bool", "date", 
-                                                "binary", "regex", "null" ],['a'] );
-         insertDatas( dbcl, recs );
+         expIDs = expIDs.splice(skipNum + 1);
       }
       
-      println("--insert data afer pop success!");
-      
-      expectNum = expectNum + max;
-      max = expectNum;
+      //检查主备节点一致
+      checkConsistency(db, csName, clName);
       
       //比较count结果
-      checkCount( dbcl, null, expectNum);
-      println("--count success after pop! expectNum: " + expectNum);
+      checkCount( dbclPrimary, null, expectNum);
+      checkCount( dbclSlave, null, expectNum);
+      println("--count success! expectNum: " + expectNum);
       
-      //比较find结果
-      try
-      {
-         dbcl.find().sort({_id:1}).limit(1);
-         dbcl.find().sort({_id:1}).limit(1).skip(expectNum-1);
-      }catch(e)
-      {
-         throw buildException("find data 2", e, null, null, e);
-      }
-      println("--find data after pop success!repeatNum : " + j);
+      //校验多个块内的_id值
+      //println("expIDs:" + expIDs);
+      checkLogicalID( dbclPrimary, null, null, {_id:1}, -1, 0, expIDs);
+      checkLogicalID( dbclSlave, null, null, {_id:1}, -1, 0, expIDs);
    }
-   
+      
    commDropCS( db, csName, true, "drop CS in the end" );
-   
+   db1.close();
+   db2.close();
 }
 
 main();

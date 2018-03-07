@@ -192,5 +192,7 @@ function main()
    println("--check count success!");
    
    commDropCS( db, csName, true, "drop CS in the end" );
+   db1.close();
+   db2.close();
 }
 main();
