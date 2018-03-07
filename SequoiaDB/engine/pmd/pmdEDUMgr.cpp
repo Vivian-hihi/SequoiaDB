@@ -797,6 +797,22 @@ namespace engine
       return _getWritingEDUCount( eduTypeFilter, idThreshold ) ;
    }
 
+   void _pmdEDUMgr::resetIOService()
+   {
+      VEC_IOSERVICE::iterator itIO ;
+      IIOService *pIOService = NULL ;
+
+      ossScopedLock lock( &_latch, SHARED ) ;
+
+      itIO = _vecIOServices.begin() ;
+      while( itIO != _vecIOServices.end() )
+      {
+         pIOService = *itIO ;
+         pIOService->resetMon() ;
+         ++itIO ;
+      }
+   }
+
    void _pmdEDUMgr::resetMon( EDUID eduID )
    {
       MAP_EDUCB_IT it ;
@@ -829,20 +845,6 @@ namespace engine
          {
             cb->resetMon() ;
             goto done ;
-         }
-      }
-
-      /// reset io service
-      if ( PMD_INVALID_EDUID == eduID )
-      {
-         VEC_IOSERVICE::iterator itIO ;
-         IIOService *pIOService = NULL ;
-         itIO = _vecIOServices.begin() ;
-         while( itIO != _vecIOServices.end() )
-         {
-            pIOService = *itIO ;
-            pIOService->resetMon() ;
-            ++itIO ;
          }
       }
 
