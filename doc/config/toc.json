@@ -1172,6 +1172,32 @@
                   }
                ]
             }
+            {
+               "id": 1432193713,
+               "dir": "mysql",
+               "cn": "MySQL",
+               "en": "MySQL",
+               "contents": [
+                  {
+                     "id": 1432193714,
+                     "file": "overview",
+                     "cn": "概述",
+                     "en": "Overview"
+                  },
+                  {
+                     "id": 1432193715,
+                     "file": "install",
+                     "cn": "安装",
+                     "en": "Install"
+                  },
+                  {
+                     "id": 1432193716,
+                     "file": "connection",
+                     "cn": "连接",
+                     "en": "Connection"
+                  }
+               ]
+            }
          ]
       },
       {
