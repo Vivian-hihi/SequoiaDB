@@ -26,7 +26,7 @@ function main()
    var dbclSlave = db2.getCS(csName).getCL(clName);
    
    //获取随机长度的字符串
-   var minLength = 0;
+   var minLength = 1;
    var maxLength = 16 * 1024 ;
    var range = maxLength - minLength;
    var expIDs = [];
