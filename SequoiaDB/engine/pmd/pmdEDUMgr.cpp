@@ -554,11 +554,14 @@ namespace engine
       return count ;
    }
 
-   void _pmdEDUMgr::sizeInfo( UINT32 &runSize, UINT32 &idleSize )
+   void _pmdEDUMgr::sizeInfo( UINT32 &runSize,
+                              UINT32 &idleSize,
+                              UINT32 &sysSize )
    {
       _latch.get_shared() ;
       runSize = _mapRuns.size() ;
       idleSize = _mapIdles.size() ;
+      sysSize = _mapSystemEdu.size() ;
       _latch.release_shared() ;
    }
 
@@ -849,12 +852,15 @@ namespace engine
 
    UINT32 _pmdEDUMgr::_calIdleLowSize( UINT32 runSize,
                                        UINT32 idleSize,
+                                       UINT32 sysSize,
                                        UINT32 poolSize )
    {
       UINT32 idleLowSize = 0 ;
 
-      if ( poolSize > 0 && poolSize > runSize )
+      if ( poolSize > 0 && poolSize + sysSize > runSize )
       {
+         poolSize += sysSize ;
+
          if ( poolSize - runSize > PMD_EDU_IDLE_LOW_SIZE )
          {
             idleLowSize = PMD_EDU_IDLE_LOW_SIZE ;
@@ -869,13 +875,15 @@ namespace engine
 
    UINT32 _pmdEDUMgr::calIdleLowSize( UINT32 *pRunSize,
                                       UINT32 *pIdleSize,
+                                      UINT32 *pSysSize,
                                       UINT32 *pPoolSize )
    {
       UINT32 runSize = 0 ;
       UINT32 idleSize = 0 ;
+      UINT32 sysSize = 0 ;
       UINT32 maxPool = pmdGetOptionCB()->getMaxPooledEDU() ;
 
-      sizeInfo( runSize, idleSize ) ;
+      sizeInfo( runSize, idleSize, sysSize ) ;
 
       if ( pRunSize )
       {
@@ -885,12 +893,16 @@ namespace engine
       {
          *pIdleSize = idleSize ;
       }
+      if ( pSysSize )
+      {
+         *pSysSize = sysSize ;
+      }
       if ( pPoolSize )
       {
          *pPoolSize = maxPool ;
       }
 
-      return _calIdleLowSize( runSize, idleSize, maxPool ) ;
+      return _calIdleLowSize( runSize, idleSize, sysSize, maxPool ) ;
    }
 
    BOOLEAN _pmdEDUMgr::forceDestory( pmdEDUCB *cb, UINT32 idleTime )
@@ -906,15 +918,17 @@ namespace engine
       {
          UINT32 runSize = 0 ;
          UINT32 idleSize = 0 ;
+         UINT32 sysSize = 0 ;
          UINT32 maxPool = 0 ;
          UINT32 idleLowSize = 0 ;
 
-         idleLowSize = calIdleLowSize( &runSize, &idleSize, &maxPool ) ;
+         idleLowSize = calIdleLowSize( &runSize, &idleSize,
+                                       &sysSize, &maxPool ) ;
          if ( idleSize < idleLowSize )
          {
             goto done ;
          }
-         else if ( runSize + idleSize <= maxPool &&
+         else if ( runSize + idleSize - sysSize <= maxPool &&
                    idleTime <= PMD_EDU_IDLE_MAX_TIME )
          {
             goto done ;
@@ -1116,6 +1130,7 @@ namespace engine
 
       if ( _mapIdles.size() < _calIdleLowSize( _mapRuns.size(),
                                                _mapIdles.size(),
+                                               _mapSystemEdu.size(),
                                                maxPool ) )
       {
          /// Notify monitor thread
@@ -1765,6 +1780,7 @@ namespace engine
       EDUID eduID = PMD_INVALID_EDUID ;
       UINT32 runSize = 0 ;
       UINT32 idleSize = 0 ;
+      UINT32 sysSize = 0 ;
       UINT32 poolSize = 0 ;
       UINT32 idleLowSize = 0 ;
 
@@ -1779,7 +1795,8 @@ namespace engine
             continue ;
          }
 
-         idleLowSize = calIdleLowSize( &runSize, &idleSize, &poolSize ) ;
+         idleLowSize = calIdleLowSize( &runSize, &idleSize,
+                                       &sysSize, &poolSize ) ;
          while ( idleSize < idleLowSize )
          {
             rc = createIdleEDU( &eduID ) ;
@@ -1793,7 +1810,8 @@ namespace engine
             }
 
             PD_LOG( PDDEBUG, "Create Idle edu[ID:%lld]", eduID ) ;
-            idleLowSize = calIdleLowSize( &runSize, &idleSize, &poolSize ) ;
+            idleLowSize = calIdleLowSize( &runSize, &idleSize,
+                                          &sysSize, &poolSize ) ;
          }
       }
    }
