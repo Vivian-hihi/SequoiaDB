@@ -25,7 +25,7 @@ function main()
    var dbclSlave = db2.getCS(csName).getCL(clName);
    
    //获取随机长度的字符串
-   var minLength = 0;
+   var minLength = 1;
    var maxLength = 16 * 1024 ;
    var range = maxLength - minLength;
    var expIDs = [];
@@ -35,7 +35,7 @@ function main()
    //var preExpID = 0;
    var blockID = 1;
    var docs = [];
-   var insertNum = 100000;
+   var maxInsertNum = 1000000;
    var expectNum = 0;
    
    //循环pop、查询、插入，logicaID随机
@@ -43,6 +43,10 @@ function main()
    for(var j = 0 ; j< repeatNum; j++)
    {
       println("--blockID:" + blockID);
+      
+      var insertNum = (parseInt(1 + Math.random()* (maxInsertNum -1)));
+      println("--insertNum:" + insertNum);
+      
       for(var i=0; i<insertNum; i++)
       {
          var stringLength = Math.ceil( minLength + Math.random() * range );
