@@ -49,7 +49,7 @@ SDB_SNAP_HEALH
 | FileDesp.TotalNum    | 长整型 | 节点进程文件句柄限制 |
 | FileDesp.FreeNum     | 长整型 | 节点进程剩余的文件句柄个数 |
 | StartHistory         | 数组   | 节点启动历史（只取最新的十条记录） |
-| CrashHistory         | 数组   | 节点崩溃后启动历史（只取最新的十条记录） |
+| AbnormalHistory      | 数组   | 节点异常后启动历史（只取最新的十条记录） |
 | DiffLSNWithPrimary   | 长整型 | 与主节点的 LSN 差异 |
 
 > Note:
