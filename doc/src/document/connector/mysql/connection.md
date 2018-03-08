@@ -45,31 +45,31 @@
 
 ##配置说明##
 
-.配置SequoiaDB连接地址  
-	默认的SequoiaDB连接地址为“localhost:11810”，可以通过以下两种方式修改该地址：  
-	(1)修改配置文件/etc/my.cnf，在[mysqld]下添加如下配置：  
+1. 配置SequoiaDB连接地址  
+   默认的SequoiaDB连接地址为“localhost:11810”，可以通过以下两种方式修改该地址：  
+   (1)修改配置文件/etc/my.cnf，在[mysqld]下添加如下配置：  
 
  ```lang-javascript
  sequoiadb_conn_addr=192.168.20.37:11810,192.168.20.38:11810
  ```
 
-	注意：修改配置文件后需要重新启动MySQL服务
+	  注意：修改配置文件后需要重新启动MySQL服务
 
-	(2)通过MySQL shell修改
+   (2)通过MySQL shell修改  
 
  ```lang-javascript
  mysql> SET GLOBAL sequoiadb_conn_addr='192.168.20.37:11810,192.168.20.38:11810';
  ```
 
-	 注意：通过shell方式进行的配置为临时有效，当重启MySQL服务后配置将失效。如果需要配置永久生效则必须通过修改配置文件。  
+	  注意：通过shell方式进行的配置为临时有效，当重启MySQL服务后配置将失效。如果需要配置永久生效则必须通过修改配置文件。  
  
  配置完成后，可以通过以下命令查看配置结果
 
  ```lang-javascript
-	mysql> show variables like 'sequoiadb%';
+ mysql> show variables like 'sequoiadb%';
  ```
  
-. 建表参数  
+2. 建表参数  
  在mysql上创建表时，可以通过comment参数传入配置信息，comment参数为json格式，具体配置参数如下表：
  
 | 参数名 | 参数类型 | 描述 | 是否必填 |
@@ -79,6 +79,6 @@
  示例：  
  在SequoiaDB上创建分区键为“{a:1,b:-1}”，分区类型为范围分区的集合cl  
 
-	```lang-javascript
-	mysql> create table cl(a int, b int, c text) engine = SequoiaDB comment="{cl_options:{ShardingKey:{a:1,b:-1},ShardingType:\"range\"}}";
-	```
+ ```lang-javascript
+ mysql> create table cl(a int, b int, c text) engine = SequoiaDB comment="{cl_options:{ShardingKey:{a:1,b:-1},ShardingType:\"range\"}}";
+ ```
