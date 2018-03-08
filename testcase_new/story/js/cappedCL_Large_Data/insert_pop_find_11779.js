@@ -34,11 +34,11 @@ function main()
    //var preExpID = 0;
    var blockID = 1;
    var docs = [];
-   var maxInsertNum = 10000;
+   var maxInsertNum = 100000;
    var expectNum = 0;
    
    //循环pop、查询、插入，logicaID随机
-   var repeatNum = 5;
+   var repeatNum = 30;
    for(var j = 0 ; j< repeatNum; j++)
    {
       println("--blockID:" + blockID);

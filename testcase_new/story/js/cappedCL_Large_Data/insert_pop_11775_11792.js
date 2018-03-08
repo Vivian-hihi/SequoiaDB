@@ -25,7 +25,7 @@ function main()
    var dbclSlave = db2.getCS(csName).getCL(clName);
    
    //多次循环插入使扩文件
-   var repeatNum = 10;
+   var repeatNum = 30;
    for(var i = 0;i < repeatNum; i++)
    {
       //插入1个块的记录
