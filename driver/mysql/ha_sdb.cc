@@ -47,8 +47,7 @@ using namespace sdbclient ;
 #define SDB_FIELD_MAX_LEN        (16*1024*1024)
 #define SDB_STR_BUF_STEP_SIZE    1024
 #define SDB_STR_BUF_SIZE         SDB_STR_BUF_STEP_SIZE
-
-const volatile static char sdb_ver_info[] = SDB_VER_INFO ;
+const static char sdb_ver_info[] = SDB_VER_INFO ;
 static char *sdb_addr = NULL ;
 static const char* SDB_ADDR_DFT = "localhost:11810" ;
 mysql_mutex_t sdb_mutex;
@@ -1979,6 +1978,11 @@ done:
 Item *ha_sdb::idx_cond_push(uint keyno, Item* idx_cond)
 {
    return idx_cond;
+}
+
+const char *ha_sdb::get_version()
+{
+   return sdb_ver_info;
 }
 
 static handler *sdb_create_handler(handlerton *hton,
