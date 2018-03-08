@@ -171,27 +171,20 @@ do                                                            \
    {
       if ( _connection )
       {
-         // if the cursor had been closed manually
-         // it would be unregister in function close()
-         // so no need to do here
          if ( !_isClosed )
          {
             if ( -1 != _contextID )
             {
                _killCursor () ;
             }
-            _connection->_unregCursor ( this ) ;
          }
+         // unregister the cursor anyway
+         _detachConnection() ;
       }
       if ( _collection )
       {
-         // if the cursor had been closed manually
-         // it would be unregister in function close()
-         // so no need to do here
-         if ( !_isClosed )
-         {
-            _collection->_unregCursor ( this ) ;
-         }
+         // unregister the cursor anyway
+         _detachCollection();
       }
       if ( _pSendBuffer )
       {
@@ -208,20 +201,50 @@ do                                                            \
       }
    }
 
-   void _sdbCursorImpl::_setCollection ( _sdbCollectionImpl *collection )
+   void _sdbCursorImpl::_attachConnection ( _sdbImpl *connection )
    {
-      _collection = collection ;
-      if ( _collection )
+      if ( NULL != connection )
+      {
+         _connection = connection ;
+         _connection->_regCursor ( this ) ;
+      }
+   }
+
+   void _sdbCursorImpl::_attachCollection ( _sdbCollectionImpl *collection )
+   {
+      if ( NULL != collection )
+      {
+         _collection = collection ;
          _collection->_regCursor ( this ) ;
+      }
    }
 
-   void _sdbCursorImpl::_setConnection ( _sdb *connection )
+   void _sdbCursorImpl::_detachConnection()
    {
-      _connection = (_sdbImpl*)connection ;
-      _connection->_regCursor ( this ) ;
+      if ( NULL != _connection )
+      {
+         _connection->_unregCursor( this ) ;
+         _connection = NULL ;
+      }
+   }
+   
+   void _sdbCursorImpl::_detachCollection()
+   {
+      if ( NULL != _collection )
+      {
+         _collection->_unregCursor( this ) ;
+         _collection = NULL ;
+      }
    }
 
-   void _sdbCursorImpl::_killCursor ()
+   void _sdbCursorImpl::_close()
+   {
+      _isClosed = TRUE ;
+      _contextID  = -1 ;
+      _offset     = -1 ;
+   }
+
+   INT32 _sdbCursorImpl::_killCursor ()
    {
       INT32 rc         = SDB_OK ;
       SINT64 contextID = 0 ;
@@ -263,7 +286,7 @@ do                                                            \
       {
          _connection->unlock () ;
       }
-      return ;
+      return rc ;
    error :
       goto done ;
    }
@@ -317,24 +340,15 @@ do                                                            \
       }
       return rc ;
    error :
-      // release resource kept in cursor
       if ( SDB_DMS_EOC != rc )
       {
-         _killCursor () ;
+         _killCursor() ;
       }
-      _isClosed = TRUE ;
-      _contextID  = -1 ;
-      _offset     = -1 ;
-      if ( _connection )
-      {
-         _connection->_unregCursor ( this ) ;
-         _connection = NULL ;
-      }
-      if ( _collection )
-      {
-         _collection->_unregCursor ( this ) ;
-         _collection = NULL ;
-      }
+      // clean up
+      _close() ;
+      // unregister
+      _detachConnection() ;
+      _detachCollection() ;
       goto done ;
    }
 
@@ -505,11 +519,18 @@ do                                                            \
    {
       INT32 rc = SDB_OK ;
       BOOLEAN locked = FALSE ;
-      BOOLEAN result ;
-      SINT64 contextID = 0 ;
       // check wether the cursor had been close or not
       if ( _isClosed || -1 == _contextID )
       {
+         // unregister
+         if ( NULL != _connection )
+         {
+            _detachConnection() ;
+         }
+         if ( NULL != _collection )
+         {
+            _detachCollection() ;
+         }
          goto done ;
       }
       if ( NULL == _connection )
@@ -517,39 +538,21 @@ do                                                            \
          rc = SDB_NOT_CONNECTED ;
          goto error ;
       }
-      rc = clientBuildKillContextsMsg( &_pSendBuffer, &_sendBufferSize, 0, 1,
-                                       &_contextID, _connection->_endianConvert ) ;
+      // kill context
+      rc = _killCursor() ;
       if ( rc )
       {
          goto error ;
       }
-      _connection->lock () ;
-      locked = TRUE ;
-      rc = _connection->_send ( _pSendBuffer ) ;
-      if ( rc )
-      {
-         goto error ;
-      }
-      rc = _connection->_recvExtract ( &_pReceiveBuffer, &_receiveBufferSize,
-                                       contextID, result ) ;
-      if ( rc )
-      {
-         goto error ;
-      }
-      // check return msg header
-      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
-      _contextID = -1 ;
-      _isClosed = TRUE ;
+      _close() ;
       // unreg from _connecton  and _collection
+      // we can't set _connection to be NULL right now,
+      // we should do it in the end of this function
       if ( _connection )
       {
          _connection->_unregCursor ( this ) ;
       }
-      if ( _collection )
-      {
-         _collection->_unregCursor ( this ) ;
-         _collection = NULL ;
-      }
+      _detachCollection() ;
    done :
       if ( locked )
       {
@@ -851,11 +854,13 @@ do                                                            \
 
    _sdbCollectionImpl::~_sdbCollectionImpl ()
    {
+      std::set<ossValuePtr> copySet ;
       std::set<ossValuePtr>::iterator it ;
-      // if there's any opened cursor, we should mark their collection NULL
-      for ( it = _cursors.begin(); it != _cursors.end(); ++it )
+      // if there's any opened cursor, we should unregister them
+      copySet = _cursors ;
+      for ( it = copySet.begin(); it != copySet.end(); ++it )
       {
-         ((_sdbCursorImpl*)(*it))->_setCollection ( NULL ) ;
+         ((_sdbCursorImpl*)(*it))->_detachCollection() ;
       }
       _cursors.clear() ;
 
@@ -961,6 +966,25 @@ do                                                            \
    void* _sdbCollectionImpl::_getConnection ()
    {
       return _connection ;
+   }
+
+   void _sdbCollectionImpl::_dropConnection()
+   {
+      _connection = NULL ;
+   }
+
+   void _sdbCollectionImpl::_regCursor ( _sdbCursorImpl *cursor )
+   {
+      lock () ;
+      _cursors.insert ( (ossValuePtr)cursor ) ;
+      unlock () ;
+   }
+      
+   void _sdbCollectionImpl::_unregCursor ( _sdbCursorImpl * cursor )
+   {
+      lock () ;
+      _cursors.erase ( (ossValuePtr)cursor ) ;
+      unlock () ;
    }
 
    INT32 _sdbCollectionImpl::getCount ( SINT64 &count,
@@ -1453,9 +1477,9 @@ do                                                            \
          }
       }
 
-      // register cursor to collection
-      // but, it seems no use
-      ((_sdbCursorImpl*)pCursor)->_setCollection ( this ) ;
+      // register cursor to collection, we had register cursor in connection
+      // when we build it
+      ((_sdbCursorImpl*)pCursor)->_attachCollection( this ) ;
 
       // return cursor
       *cursor = pCursor ;
@@ -1644,9 +1668,9 @@ do                                                            \
          rc = SDB_OOM ;
          goto error ;
       }
-      ((_sdbCursorImpl*)*cursor)->_setCollection ( this ) ;
+      ((_sdbCursorImpl*)*cursor)->_attachConnection ( _connection ) ;
+      ((_sdbCursorImpl*)*cursor)->_attachCollection ( this ) ;
       ((_sdbCursorImpl*)*cursor)->_contextID = contextID ;
-      ((_sdbCursorImpl*)*cursor)->_setConnection ( _connection ) ;
    done :
       return rc ;
    error :
@@ -1902,9 +1926,9 @@ do                                                            \
          rc = SDB_OOM ;
          goto error ;
       }
-      ((_sdbCursorImpl*)*cursor)->_setCollection ( NULL ) ;
+      ((_sdbCursorImpl*)*cursor)->_attachConnection ( _connection ) ;
+      ((_sdbCursorImpl*)*cursor)->_attachCollection ( this ) ;
       ((_sdbCursorImpl*)*cursor)->_contextID = contextID ;
-      ((_sdbCursorImpl*)*cursor)->_setConnection ( _connection ) ;
 
    exit:
       return rc ;
@@ -2292,9 +2316,9 @@ do                                                            \
          rc = SDB_OOM ;
          goto error ;
       }
-      ((_sdbCursorImpl*)cursor)->_setCollection ( NULL ) ;
+      ((_sdbCursorImpl*)cursor)->_attachConnection ( _connection ) ;
+      ((_sdbCursorImpl*)cursor)->_attachCollection ( this ) ;
       ((_sdbCursorImpl*)cursor)->_contextID = contextID ;
-      ((_sdbCursorImpl*)cursor)->_setConnection ( _connection ) ;
       // there should only 1 record read
       rc = cursor->next ( countObj ) ;
       if ( rc )
@@ -2404,9 +2428,9 @@ do                                                            \
          rc = SDB_OOM ;
          goto error ;
       }
-      ((_sdbCursorImpl*)cursor)->_setCollection ( NULL ) ;
+      ((_sdbCursorImpl*)cursor)->_attachConnection ( _connection ) ;
+      ((_sdbCursorImpl*)cursor)->_attachCollection ( this ) ;
       ((_sdbCursorImpl*)cursor)->_contextID = contextID ;
-      ((_sdbCursorImpl*)cursor)->_setConnection ( _connection ) ;
       // there should only 1 record read
       rc = cursor->next ( countObj ) ;
       if ( rc )
@@ -2500,9 +2524,9 @@ do                                                            \
          rc = SDB_OOM ;
          goto error ;
       }
-      ((_sdbCursorImpl*)*cursor)->_setCollection( this ) ;
+      ((_sdbCursorImpl*)*cursor)->_attachConnection( _connection ) ;
+      ((_sdbCursorImpl*)*cursor)->_attachCollection( this ) ;
       ((_sdbCursorImpl*)*cursor)->_contextID = contextID ;
-      ((_sdbCursorImpl*)*cursor)->_setConnection( _connection ) ;
 
    done:
       if ( locked )
@@ -2948,8 +2972,8 @@ error:
          goto error ;
       }
       // set attribute of the newly created _sdbLob object
-      ((_sdbLobImpl*)*lob)->_setConnection( _connection ) ;
-      ((_sdbLobImpl*)*lob)->_setCollection( this ) ;
+      ((_sdbLobImpl*)*lob)->_attachConnection( _connection ) ;
+      ((_sdbLobImpl*)*lob)->_attachCollection( this ) ;
       ((_sdbLobImpl*)*lob)->_oid = oidObj ;
       ((_sdbLobImpl*)*lob)->_contextID = contextID ;
       ((_sdbLobImpl*)*lob)->_isOpen = TRUE ;
@@ -3264,8 +3288,8 @@ error:
          goto error ;
       }
       // set attribute of the newly created _sdbLob object
-      ((_sdbLobImpl*)*lob)->_setConnection( _connection ) ;
-      ((_sdbLobImpl*)*lob)->_setCollection( this ) ;
+      ((_sdbLobImpl*)*lob)->_attachConnection( _connection ) ;
+      ((_sdbLobImpl*)*lob)->_attachCollection( this ) ;
       ((_sdbLobImpl*)*lob)->_oid = oid ;
       ((_sdbLobImpl*)*lob)->_contextID = contextID ;
       ((_sdbLobImpl*)*lob)->_isOpen = TRUE ;
@@ -3534,9 +3558,9 @@ error:
             rc = SDB_OOM ;
             goto error ;
          }
-         ((_sdbCursorImpl*)*cursor)->_setCollection ( this ) ;
+         ((_sdbCursorImpl*)*cursor)->_attachConnection ( _connection ) ;
+         ((_sdbCursorImpl*)*cursor)->_attachCollection ( this ) ;
          ((_sdbCursorImpl*)*cursor)->_contextID = contextID ;
-         ((_sdbCursorImpl*)*cursor)->_setConnection ( _connection ) ;
       }
 
    done:
@@ -3546,19 +3570,6 @@ error:
    error:
       goto done ;
    }
-/*
-   //PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETLOBOBJ, "_sdbCollectionImpl::getLobObj" )
-   _sdbLob* _sdbCollectionImpl::getLobObj ()
-   {
-      PD_TRACE_ENTRY ( SDB_CLIENT_GETLOBOBJ ) ;
-      _sdbLobImpl* pLob = NULL ;
-      pLob = new(std::nothrow) _sdbLobImpl () ;
-      pLob->_setCollection ( this ) ;
-      pLob->_setConnection ( _connection ) ;
-      return (_sdbLob*)( pLob ) ;
-      PD_TRACE_EXIT ( SDB_CLIENT_GETLOBOBJ );
-   }
-*/
 
    INT32 _sdbCollectionImpl::truncate()
    {
@@ -5583,8 +5594,11 @@ error :
          {
             close() ;
          }
-         _connection->_unregLob ( this ) ;
-         _connection = NULL ;
+         _detachConnection() ;
+      }
+      if ( _collection )
+      {
+         _detachCollection() ;
       }
       if ( _pSendBuffer )
       {
@@ -5598,7 +5612,7 @@ error :
       }
    }
 
-   void _sdbLobImpl::_setConnection ( _sdb *connection )
+   void _sdbLobImpl::_attachConnection ( _sdb *connection )
    {
       _connection = (_sdbImpl*)connection ;
       if ( _connection )
@@ -5607,9 +5621,23 @@ error :
       }
    }
 
-   void _sdbLobImpl::_setCollection ( _sdbCollectionImpl *collection )
+   void _sdbLobImpl::_attachCollection ( _sdbCollectionImpl *collection )
    {
       _collection = collection ;
+   }
+
+   void _sdbLobImpl::_detachConnection()
+   {
+      if ( NULL != _connection )
+      {
+         _connection->_unregLob( this ) ;
+         _connection = NULL ;
+      }
+   }
+   
+   void _sdbLobImpl::_detachCollection()
+   { 
+      _collection = NULL ;
    }
 
    void _sdbLobImpl::_close()
@@ -5796,6 +5824,14 @@ error :
       // check wether the lob had been close or not
       if ( !_isOpen || -1 == _contextID )
       {
+         if ( NULL != _connection )
+         {
+            _detachConnection() ;
+         }
+         if ( NULL != _collection )
+         {
+            _detachCollection() ;
+         }
          goto done ;
       }
       // check
@@ -5855,11 +5891,22 @@ error :
             goto error ;
          }
       }
-
+      // unreg from _connecton  and _collection
+      // we can't set _connection to be NULL right now,
+      // we should do it in the end of this function
+      if ( _connection )
+      {
+         _connection->_unregLob ( this ) ;
+      }
+      _detachCollection() ;
    done:
       if ( locked )
       {
          _connection->unlock() ;
+      }
+      if ( SDB_OK == rc )
+      {
+         _connection = NULL ;
       }
       return rc ;
    error:
@@ -6312,40 +6359,60 @@ error :
 
    _sdbImpl::~_sdbImpl ()
    {
+      std::set<ossValuePtr> copySet ;
       std::set<ossValuePtr>::iterator it ;
-      // if there's any opened cursor, we should mark them not-connected before
-      // releasing connection memory
-      for ( it = _cursors.begin(); it != _cursors.end(); ++it )
+      // detach handles
+      // when we remove element in the set, we should copy the set,
+      // and the traverse the copy, for we need to remove elements in the 
+      // original set
+
+      // release cursors
+      copySet = _cursors ;
+      for ( it = copySet.begin(); it != copySet.end(); ++it )
       {
-         ((_sdbCursorImpl*)(*it))->_dropConnection () ;
+         ((_sdbCursorImpl*)(*it))->_detachConnection () ;
       }
-      for ( it = _collections.begin(); it != _collections.end(); ++it )
+      // release collections
+      copySet = _collections ;
+      for ( it = copySet.begin(); it != copySet.end(); ++it )
       {
          ((_sdbCollectionImpl*)(*it))->_dropConnection () ;
       }
-      for ( it = _collectionspaces.begin(); it != _collectionspaces.end(); ++it)
+      // release collection spaces
+      copySet = _collectionspaces ;
+      for ( it = copySet.begin(); it != copySet.end(); ++it)
       {
          ((_sdbCollectionSpaceImpl*)(*it))->_dropConnection () ;
       }
-      for ( it = _nodes.begin(); it != _nodes.end(); ++it )
+      // release nodes
+      copySet = _nodes ;
+      for ( it = copySet.begin(); it != copySet.end(); ++it )
       {
          ((_sdbNodeImpl*)(*it))->_dropConnection () ;
       }
-      for ( it = _replicaGroups.begin(); it != _replicaGroups.end(); ++it )
+      // release _replicaGroups
+      copySet = _replicaGroups ;
+      for ( it = copySet.begin(); it != copySet.end(); ++it )
       {
          ((_sdbReplicaGroupImpl*)(*it))->_dropConnection () ;
       }
-      for ( it = _domains.begin(); it != _domains.end(); ++it )
+      // release _domains
+      copySet = _domains ;
+      for ( it = copySet.begin(); it != copySet.end(); ++it )
       {
          ((_sdbDomainImpl*)(*it))->_dropConnection () ;
       }
-      for ( it = _dataCenters.begin(); it != _dataCenters.end(); ++it )
+      // release data center
+      copySet = _dataCenters ;
+      for ( it = copySet.begin(); it != copySet.end(); ++it )
       {
          ((_sdbDataCenterImpl*)(*it))->_dropConnection () ;
       }
-      for ( it = _lobs.begin(); it != _lobs.end(); ++it )
+      // release lobs
+      copySet = _lobs ;
+      for ( it = copySet.begin(); it != copySet.end(); ++it )
       {
-         ((_sdbLobImpl*)(*it))->_dropConnection () ;
+         ((_sdbLobImpl*)(*it))->_detachConnection () ;
       }
       if ( NULL != _tb )
       {
@@ -6385,7 +6452,7 @@ error :
    }
 
    INT32 _sdbImpl::_connect ( const CHAR *pHostName,
-                             UINT16 port )
+                              UINT16 port )
    {
       INT32 rc = SDB_OK ;
       if ( _sock )
@@ -6436,6 +6503,126 @@ error :
          delete _sock ;
       _sock = NULL ;
       goto done ;
+   }
+
+   void _sdbImpl::_regCursor ( _sdbCursorImpl *cursor )
+   {
+         ossPrintf("sdb insert  cursor handle: %u\n", (ossValuePtr)cursor) ; 
+         lock () ;
+         _cursors.insert ( (ossValuePtr)cursor ) ;
+         unlock () ;
+   }
+   
+   void _sdbImpl::_regCollection ( _sdbCollectionImpl *collection )
+   {
+      lock () ;
+      _collections.insert ( (ossValuePtr)collection ) ;
+      unlock () ;
+   }
+
+   void _sdbImpl::_regCollectionSpace ( _sdbCollectionSpaceImpl *collectionspace )
+   {
+      lock () ;
+      _collectionspaces.insert ( (ossValuePtr)collectionspace ) ;
+      unlock () ;
+   }
+
+   void _sdbImpl::_regNode ( _sdbNodeImpl *node )
+   {
+      lock () ;
+      _nodes.insert ( (ossValuePtr)node ) ;
+      unlock () ;
+   }
+
+   void _sdbImpl::_regReplicaGroup ( _sdbReplicaGroupImpl *replicaGroup )
+   {
+      lock () ;
+      _replicaGroups.insert ( (ossValuePtr)replicaGroup ) ;
+      unlock () ;
+   }
+   void _sdbImpl::_regDomain ( _sdbDomainImpl *domain )
+   {
+      lock () ;
+      _domains.insert ( (ossValuePtr)domain ) ;
+      unlock () ;
+   }
+
+   void _sdbImpl::_regDataCenter ( _sdbDataCenterImpl *dc )
+   {
+      lock () ;
+      _dataCenters.insert ( (ossValuePtr)dc ) ;
+      unlock () ;
+   }
+
+   void _sdbImpl::_regLob ( _sdbLobImpl *lob )
+   {
+      ossPrintf("sdb insert  lob handle: %u\n", (ossValuePtr)lob) ; 
+      lock () ;
+      _lobs.insert ( (ossValuePtr)lob ) ;
+      unlock () ;
+   }
+
+   void _sdbImpl::_unregCursor ( _sdbCursorImpl *cursor )
+   {
+      ossPrintf("sdb remove cursor handle: %u\n", (ossValuePtr)cursor) ;
+      lock () ;
+      _cursors.erase ( (ossValuePtr)cursor ) ;
+      unlock () ;
+   }
+
+   void _sdbImpl::_unregCollection ( _sdbCollectionImpl *collection )
+   {
+      lock () ;
+      _collections.erase ( (ossValuePtr)collection ) ;
+      unlock () ;
+   }
+
+   void _sdbImpl::_unregCollectionSpace ( _sdbCollectionSpaceImpl *collectionspace )
+   {
+      lock () ;
+      _collectionspaces.erase ( (ossValuePtr)collectionspace ) ;
+      unlock () ;
+   }
+
+   void _sdbImpl::_unregNode ( _sdbNodeImpl *node )
+   {
+      lock () ;
+      _nodes.erase ( (ossValuePtr)node ) ;
+      unlock () ;
+   }
+
+   void _sdbImpl::_unregReplicaGroup ( _sdbReplicaGroupImpl *replicaGroup )
+   {
+      lock () ;
+      _replicaGroups.erase ( (ossValuePtr)replicaGroup ) ;
+      unlock () ;
+   }
+
+   void _sdbImpl::_unregDomain ( _sdbDomainImpl *domain )
+   {
+      lock () ;
+      _domains.erase ( (ossValuePtr)domain ) ;
+      unlock () ;
+   }
+
+   void _sdbImpl::_unregDataCenter ( _sdbDataCenterImpl *dc )
+   {
+      lock () ;
+      _dataCenters.erase ( (ossValuePtr)dc ) ;
+      unlock () ;
+   }
+
+   void _sdbImpl::_unregLob ( _sdbLobImpl *lob )
+   {
+      ossPrintf("sdb remove lob handle: %u\n", (ossValuePtr)lob) ;
+      lock () ;
+      _lobs.erase ( (ossValuePtr)lob ) ;
+      unlock () ;
+   }
+
+   hashTable* _sdbImpl::_getCachedContainer() const
+   {
+      return _tb ;
    }
 
    INT32 _sdbImpl::connect( const CHAR *pHostName,
@@ -6806,9 +6993,8 @@ error :
          rc = SDB_OOM ;
          goto error ;
       }
-      ((_sdbCursorImpl*)*result)->_setCollection ( NULL ) ;
+      ((_sdbCursorImpl*)*result)->_attachConnection ( this ) ;
       ((_sdbCursorImpl*)*result)->_contextID = contextID ;
-      ((_sdbCursorImpl*)*result)->_setConnection ( this ) ;
    exit :
       return rc ;
    done :
@@ -6947,9 +7133,8 @@ error :
          rc = SDB_OOM ;
          goto error ;
       }
-      ((_sdbCursorImpl*)*result)->_setCollection ( NULL ) ;
+      ((_sdbCursorImpl*)*result)->_attachConnection ( this ) ;
       ((_sdbCursorImpl*)*result)->_contextID = contextID ;
-      ((_sdbCursorImpl*)*result)->_setConnection ( this ) ;
    exit:
       return rc ;
    done :
@@ -7163,9 +7348,8 @@ error :
          rc = SDB_OOM ;
          goto error ;
       }
-      ((_sdbCursorImpl*)cursor)->_setCollection ( NULL ) ;
+      ((_sdbCursorImpl*)cursor)->_attachConnection ( this ) ;
       ((_sdbCursorImpl*)cursor)->_contextID = contextID ;
-      ((_sdbCursorImpl*)cursor)->_setConnection ( this ) ;
 
       // if we can get info from _ppBuffer, do it
       if ( NULL != ppBuffer )
@@ -7309,9 +7493,8 @@ error :
          rc = SDB_OOM ;
          goto error ;
       }
-      ((_sdbCursorImpl*)cursor)->_setCollection ( NULL ) ;
+      ((_sdbCursorImpl*)cursor)->_attachConnection ( this ) ;
       ((_sdbCursorImpl*)cursor)->_contextID = -1 ;
-      ((_sdbCursorImpl*)cursor)->_setConnection ( this ) ;
 
       *ppCursor = cursor ;
 
@@ -7986,9 +8169,8 @@ error :
          rc = SDB_OOM ;
          goto error ;
       }
-      ((_sdbCursorImpl*)*result)->_setCollection ( NULL ) ;
+      ((_sdbCursorImpl*)*result)->_attachConnection ( this ) ;
       ((_sdbCursorImpl*)*result)->_contextID = contextID ;
-      ((_sdbCursorImpl*)*result)->_setConnection ( this ) ;
    done :
       if ( locked )
       {
@@ -8305,9 +8487,8 @@ error :
          rc = SDB_OOM ;
          goto error ;
       }
-      ((_sdbCursorImpl*)*cursor)->_setCollection ( NULL ) ;
+      ((_sdbCursorImpl*)*cursor)->_attachConnection ( this ) ;
       ((_sdbCursorImpl*)*cursor)->_contextID = contextID ;
-      ((_sdbCursorImpl*)*cursor)->_setConnection ( this ) ;
 
       replyHeader = ( const MsgOpReply * )_pReceiveBuffer ;
       if ( 1 == replyHeader->numReturned &&
@@ -8446,9 +8627,8 @@ error :
          rc = SDB_OOM ;
          goto error ;
       }
-      ((_sdbCursorImpl*)*cursor)->_setCollection ( NULL ) ;
+      ((_sdbCursorImpl*)*cursor)->_attachConnection ( this ) ;
       ((_sdbCursorImpl*)*cursor)->_contextID = contextID ;
-      ((_sdbCursorImpl*)*cursor)->_setConnection ( this ) ;
    done :
       if ( locked )
           unlock () ;
@@ -8894,8 +9074,8 @@ error :
       cursors = _cursors ;
       for ( it = cursors.begin(); it != cursors.end(); ++it )
       {
-         ((_sdbCursorImpl*)(*it))->_dropConnection () ;
-         ((_sdbCursorImpl*)(*it))->_dropCollection () ;
+         ((_sdbCursorImpl*)(*it))->_detachConnection () ;
+         ((_sdbCursorImpl*)(*it))->_detachCollection () ;
          ((_sdbCursorImpl*)(*it))->_close () ;
       }
       _cursors.clear();
@@ -8903,8 +9083,8 @@ error :
       lobs = _lobs ;
       for ( it = lobs.begin(); it != lobs.end(); ++it )
       {
-         ((_sdbLobImpl*)(*it))->_dropConnection () ;
-         ((_sdbLobImpl*)(*it))->_dropCollection () ;
+         ((_sdbLobImpl*)(*it))->_detachConnection () ;
+         ((_sdbLobImpl*)(*it))->_detachCollection () ;
          ((_sdbLobImpl*)(*it))->_close () ;
       }
       _lobs.clear() ;
