@@ -60,6 +60,7 @@ SDB_SNAP_DATABASE
 | TotalReadTime         | 长整型 | 总读取时间（单位：毫秒）                                                        |
 | TotalWriteTime        | 长整型 | 总写入时间（单位：毫秒）                                                        |
 | ActivateTimestamp     | 时间戳 | 数据库节点启动时间                                                              |
+| ResetTimestamp        | 时间戳 | 重置快照的时间                               |
 | UserCPU               | 浮点数 | 用户 CPU（单位：秒）                                                            |
 | SysCPU                | 浮点数 | 系统 CPU（单位：秒）                                                            |
 | freeLogSpace          | 长整型 | 空闲日志空间（单位：字节）                                                      |
@@ -182,6 +183,7 @@ SDB_SNAP_DATABASE
   "TotalReadTime": 0,
   "TotalWriteTime": 0,
   "ActivateTimestamp": "2014-08-07-13.04.16.248083",
+  "ResetTimestamp": "2014-08-07-13.04.16.248083",
   "UserCPU": "7.980000",
   "SysCPU": "10.700000",
   "freeLogSpace": 1342177280,

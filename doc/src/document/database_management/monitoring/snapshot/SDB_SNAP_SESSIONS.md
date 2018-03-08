@@ -34,6 +34,7 @@ SDB_SNAP_SESSIONS
 | ReadTimeSpent     | 长整型        | 读取记录的时间（单位：毫秒）                       |
 | WriteTimeSpent    | 长整型        | 写入记录的时间（单位：毫秒）                       |
 | ConnectTimestamp  | 时间戳        | 连接发起时间                                       |
+| ResetTimestamp    | 时间戳        | 重置快照的时间                                     |
 | LastOpType        | 字符串        | 最后一次操作的类型，如：insert，update             |
 | LastOpBegin       | 字符串        | 最后一次操作的起始时间                             |
 | LastOpEnd         | 字符串        | 最后一次操作的结束时间                             |
@@ -70,6 +71,7 @@ SDB_SNAP_SESSIONS
   "ReadTimeSpent": 0,
   "WriteTimeSpent": 0,
   "ConnectTimestamp": "2013-09-27-13.28.38.927465",
+  "ResetTimestamp": "2013-09-27-13.28.38.927465",
   "LastOpType": "unknow",
   "LastOpBegin": "--",
   "LastOpEnd": "--",
