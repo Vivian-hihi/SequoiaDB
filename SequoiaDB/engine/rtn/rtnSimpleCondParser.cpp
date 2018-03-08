@@ -196,6 +196,7 @@ namespace engine
 
       parent = node->getParent() ;
       parent->updateChild( node, normalNode, newEle ) ;
+      _textNode = normalNode ;
 
    done:
       PD_TRACE_EXITRC( SDB__RTNSIMPLECONDPARSETREE_UPDATENODE, rc ) ;

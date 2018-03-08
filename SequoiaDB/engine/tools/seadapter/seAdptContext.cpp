@@ -227,6 +227,9 @@ namespace seadapter
          PD_RC_CHECK( rc, PDERROR, "Reactive ES client failed[ %d ]", rc ) ;
       }
 
+      rc = searchResult.init() ;
+      PD_RC_CHECK( rc, PDERROR, "Result buffer init failed[ %d ]", rc ) ;
+
       // If the text index query is inside a $not clause, try to fetch all
       // the documents which match the condition. Because if that is done in
       // more than one round, the result on SDB node will be wrong.
@@ -255,11 +258,8 @@ namespace seadapter
       PD_LOG( PDDEBUG, "The new in condition is: %s",
               inCond.toString().c_str() ) ;
 
-      if ( textNode )
-      {
-         rc = _condTree.updateNode( textNode, inCond.firstElement() ) ;
-         PD_RC_CHECK( rc, PDERROR, "Update condition node failed[ %d ]", rc ) ;
-      }
+      rc = _condTree.updateNode( textNode, inCond.firstElement() ) ;
+      PD_RC_CHECK( rc, PDERROR, "Update condition node failed[ %d ]", rc ) ;
 
       newQuery = _condTree.toBson() ;
       PD_LOG( PDDEBUG, "After transformation, the query is: %s",
@@ -281,6 +281,8 @@ namespace seadapter
       utilCommObjBuff searchResult ;
       BSONObj inCond ;
       REBUILD_ITEM_MAP rebuildItems ;
+      rtnCondNode *textNode = NULL ;
+      BSONObj newQuery ;
 
       objBuff.reset() ;
 
@@ -299,7 +301,16 @@ namespace seadapter
       rc = _buildInCond( searchResult, inCond ) ;
       PD_RC_CHECK( rc, PDERROR, "Build the $in condition failed[ %d ]", rc ) ;
 
-      rebuildItems[ SE_QUERY_REBLD_QUERY ] = &inCond ;
+      textNode = _condTree.getTextNode() ;
+      SDB_ASSERT( textNode, "Text node pointer should not be NULL" ) ;
+      rc = _condTree.updateNode( textNode, inCond.firstElement() ) ;
+      PD_RC_CHECK( rc, PDERROR, "Update condition node failed[ %d ]", rc ) ;
+
+      newQuery = _condTree.toBson() ;
+      PD_LOG( PDDEBUG, "After transformation, the query is: %s",
+              newQuery.toString().c_str() ) ;
+
+      rebuildItems[ SE_QUERY_REBLD_QUERY ] = &newQuery ;
       rc = _queryRebuilder.rebuild( rebuildItems, objBuff ) ;
       PD_RC_CHECK( rc, PDERROR, "Rebuild the query message failed[ %d ]", rc ) ;
 
