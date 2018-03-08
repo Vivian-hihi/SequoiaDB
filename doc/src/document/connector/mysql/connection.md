@@ -19,6 +19,7 @@
  mysql> show storage engines;
  ```
 当显示出现以下记录时，说明SequoiaDB插件安装成功
+
  ```lang-javascript
  | SequoiaDB | YES | SequoiaDB storage engine | YES | NO | NO |
  ```
