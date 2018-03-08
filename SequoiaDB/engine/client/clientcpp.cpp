@@ -239,7 +239,7 @@ do                                                            \
 
    void _sdbCursorImpl::_close()
    {
-      _isClosed = TRUE ;
+      _isClosed   = TRUE ;
       _contextID  = -1 ;
       _offset     = -1 ;
    }
@@ -522,15 +522,6 @@ do                                                            \
       // check wether the cursor had been close or not
       if ( _isClosed || -1 == _contextID )
       {
-         // unregister
-         if ( NULL != _connection )
-         {
-            _detachConnection() ;
-         }
-         if ( NULL != _collection )
-         {
-            _detachCollection() ;
-         }
          goto done ;
       }
       if ( NULL == _connection )
@@ -545,14 +536,6 @@ do                                                            \
          goto error ;
       }
       _close() ;
-      // unreg from _connecton  and _collection
-      // we can't set _connection to be NULL right now,
-      // we should do it in the end of this function
-      if ( _connection )
-      {
-         _connection->_unregCursor ( this ) ;
-      }
-      _detachCollection() ;
    done :
       if ( locked )
       {
@@ -560,7 +543,15 @@ do                                                            \
       }
       if ( SDB_OK == rc )
       {
-         _connection = NULL ;
+         // unregister anyway
+         if ( NULL != _connection )
+         {
+            _detachConnection() ;
+         }
+         if ( NULL != _collection )
+         {
+            _detachCollection() ;
+         }
       }
       return rc ;
    error :
@@ -5824,14 +5815,6 @@ error :
       // check wether the lob had been close or not
       if ( !_isOpen || -1 == _contextID )
       {
-         if ( NULL != _connection )
-         {
-            _detachConnection() ;
-         }
-         if ( NULL != _collection )
-         {
-            _detachCollection() ;
-         }
          goto done ;
       }
       // check
@@ -5891,14 +5874,6 @@ error :
             goto error ;
          }
       }
-      // unreg from _connecton  and _collection
-      // we can't set _connection to be NULL right now,
-      // we should do it in the end of this function
-      if ( _connection )
-      {
-         _connection->_unregLob ( this ) ;
-      }
-      _detachCollection() ;
    done:
       if ( locked )
       {
@@ -5906,7 +5881,15 @@ error :
       }
       if ( SDB_OK == rc )
       {
-         _connection = NULL ;
+         // unregister anyway
+         if ( NULL != _connection )
+         {
+            _detachConnection() ;
+         }
+         if ( NULL != _collection )
+         {
+            _detachCollection() ;
+         }
       }
       return rc ;
    error:
@@ -6507,10 +6490,9 @@ error :
 
    void _sdbImpl::_regCursor ( _sdbCursorImpl *cursor )
    {
-         ossPrintf("sdb insert  cursor handle: %u\n", (ossValuePtr)cursor) ; 
-         lock () ;
-         _cursors.insert ( (ossValuePtr)cursor ) ;
-         unlock () ;
+      lock () ;
+      _cursors.insert ( (ossValuePtr)cursor ) ;
+      unlock () ;
    }
    
    void _sdbImpl::_regCollection ( _sdbCollectionImpl *collection )
@@ -6556,7 +6538,6 @@ error :
 
    void _sdbImpl::_regLob ( _sdbLobImpl *lob )
    {
-      ossPrintf("sdb insert  lob handle: %u\n", (ossValuePtr)lob) ; 
       lock () ;
       _lobs.insert ( (ossValuePtr)lob ) ;
       unlock () ;
@@ -6564,7 +6545,6 @@ error :
 
    void _sdbImpl::_unregCursor ( _sdbCursorImpl *cursor )
    {
-      ossPrintf("sdb remove cursor handle: %u\n", (ossValuePtr)cursor) ;
       lock () ;
       _cursors.erase ( (ossValuePtr)cursor ) ;
       unlock () ;
@@ -6614,7 +6594,6 @@ error :
 
    void _sdbImpl::_unregLob ( _sdbLobImpl *lob )
    {
-      ossPrintf("sdb remove lob handle: %u\n", (ossValuePtr)lob) ;
       lock () ;
       _lobs.erase ( (ossValuePtr)lob ) ;
       unlock () ;
