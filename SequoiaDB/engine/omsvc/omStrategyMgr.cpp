@@ -57,7 +57,7 @@ namespace engine
    {
    }
 
-   _omStrategyMgr::_omStrategyMgr( const omStrategyMgr &others )
+   _omStrategyMgr::_omStrategyMgr( const _omStrategyMgr &others )
    {
       m_curTaskID = others.m_curTaskID ;
       m_curRuleID = others.m_curRuleID ;
