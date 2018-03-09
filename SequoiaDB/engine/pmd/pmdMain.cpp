@@ -47,7 +47,7 @@
 #include "pmdController.hpp"
 #include "rtnBackgroundJob.hpp"
 #include "pmdEnv.hpp"
-#include "pmdStartupHstLogger.hpp"
+#include "pmdStartupHistoryLogger.hpp"
 
 using namespace std;
 using namespace bson;
@@ -108,7 +108,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       SDB_START_TYPE startType = SDB_START_NORMAL ;
       BOOLEAN bOk = TRUE ;
-      pmdStartupHstLogger *logger = pmdGetStartupHstLogger() ;
+      pmdStartupHistoryLogger *logger = pmdGetStartupHstLogger() ;
 
       // analysis the start type
       rc = pmdGetStartup().init( pmdGetOptionCB()->getDbPath() ) ;

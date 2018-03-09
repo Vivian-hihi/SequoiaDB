@@ -15,7 +15,7 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program. If not, see <http://www.gnu.org/license/>.
 
-   Source File Name = pmdStartupHstLogger.cpp
+   Source File Name = pmdStartupHistoryLogger.cpp
 
    Descriptive Name = pmd start-up history logger
 
@@ -32,7 +32,7 @@
 
 *******************************************************************************/
 
-#include "pmdStartupHstLogger.hpp"
+#include "pmdStartupHistoryLogger.hpp"
 #include "pmdTrace.hpp"
 #include "pmd.hpp"
 #include "ossProc.hpp"
@@ -62,19 +62,19 @@ namespace engine
       return isOk ;
    }
 
-   _pmdStartupHstLogger::_pmdStartupHstLogger ()
+   _pmdStartupHistoryLogger::_pmdStartupHistoryLogger ()
    : _initOk( FALSE )
    {
       ossMemset( _fileName, 0, OSS_MAX_PATHSIZE + 1 ) ;
    }
 
-   _pmdStartupHstLogger::~_pmdStartupHstLogger ()
+   _pmdStartupHistoryLogger::~_pmdStartupHistoryLogger ()
    {
       _file.close() ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDSTARTHSTLOG_INIT, "_pmdStartupHstLogger::init" )
-   INT32 _pmdStartupHstLogger::init()
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDSTARTHSTLOG_INIT, "_pmdStartupHistoryLogger::init" )
+   INT32 _pmdStartupHistoryLogger::init()
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__PMDSTARTHSTLOG_INIT ) ;
@@ -84,11 +84,11 @@ namespace engine
       INT32 permission = OSS_RU | OSS_WU | OSS_RG | OSS_RO ;
 
       // 1. open file
-      rc = _buildFileName() ;
-      if ( SDB_OK != rc )
-      {
-         goto error ;
-      }
+      rc = utilBuildFullPath( pmdGetOptionCB()->getDbPath(),
+                              PMD_STARTUPHST_FILE_NAME,
+                              OSS_MAX_PATHSIZE, _fileName ) ;
+      PD_RC_CHECK ( rc, PDERROR, "Failed to build full file path , "
+                    "rc: %d", rc ) ;
 
       rc = ossFile::exists( _fileName, isExist ) ;
       PD_RC_CHECK ( rc, PDERROR, "Failed to check existence of file[%s], "
@@ -142,68 +142,8 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDSTARTHSTLOG__BUILDFN, "_buildFileName::_buildFileName" )
-   INT32 _pmdStartupHstLogger::_buildFileName()
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__PMDSTARTHSTLOG__BUILDFN ) ;
-
-      BOOLEAN doCreatePath                 = FALSE ;
-      CHAR runPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
-      CHAR curPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
-      CHAR svcPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
-      CHAR* relativePath                   = NULL ;
-      const CHAR* svcName                  = pmdGetKRCB()->getSvcname() ;
-
-      // 1. build path name: "conf/run/[svcname]"
-      rc = ossGetEWD( curPath, OSS_MAX_PATHSIZE ) ;
-      PD_RC_CHECK ( rc, PDERROR, "Failed to build get current path, "
-                    "rc: %d", rc ) ;
-
-      relativePath = ".." OSS_FILE_SEP PMD_CONF_DIR_NAME
-                     OSS_FILE_SEP PMD_RUN_DIR_NAME ;
-      rc = utilBuildFullPath( curPath, relativePath,
-                              OSS_MAX_PATHSIZE, runPath ) ;
-      PD_RC_CHECK ( rc, PDERROR, "Failed to build run path , ", svcName, rc ) ;
-
-      rc = utilBuildFullPath( runPath, svcName, OSS_MAX_PATHSIZE, svcPath ) ;
-      PD_RC_CHECK ( rc, PDERROR, "Failed to build run path for service[%s], "
-                    "rc: %d", svcName, rc ) ;
-
-      // 2. create path, if not exists
-      rc = ossAccess( svcPath, OSS_MODE_WRITE ) ;
-      if ( SDB_FNE == rc )
-      {
-         rc = ossMkdir ( svcPath ) ;
-         PD_RC_CHECK ( rc, PDERROR, "Failed to create directory: %s, rc: %d",
-                       svcPath, rc ) ;
-         doCreatePath = TRUE ;
-      }
-      else if ( rc != SDB_OK )
-      {
-         PD_LOG ( PDERROR, "Failed to access path: %s, rc: %d", svcPath, rc ) ;
-         goto error ;
-      }
-
-      // 3. build file name: "conf/run/[svcname]/sdb.id"
-      rc = utilBuildFullPath( svcPath, PMD_DFT_RUN, OSS_MAX_PATHSIZE,
-                              _fileName ) ;
-      PD_RC_CHECK ( rc, PDERROR, "Failed to build full file name for sdb.id, "
-                    "rc: %d", rc ) ;
-
-   done :
-      PD_TRACE_EXITRC( SDB__PMDSTARTHSTLOG__BUILDFN, rc ) ;
-      return rc ;
-   error :
-      if ( doCreatePath )
-      {
-         ossDelete( svcPath ) ;
-      }
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDSTARTHSTLOG__LOADLOG, "_pmdStartupHstLogger::_loadLogs" )
-   INT32 _pmdStartupHstLogger::_loadLogs()
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDSTARTHSTLOG__LOADLOG, "_pmdStartupHistoryLogger::_loadLogs" )
+   INT32 _pmdStartupHistoryLogger::_loadLogs()
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__PMDSTARTHSTLOG__LOADLOG ) ;
@@ -274,8 +214,8 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDSTARTHSTLOG__CLREARLY, "_pmdStartupHstLogger::_clearEarlyLogs" )
-   INT32 _pmdStartupHstLogger::_clearEarlyLogs()
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDSTARTHSTLOG__CLREARLY, "_pmdStartupHistoryLogger::_clearEarlyLogs" )
+   INT32 _pmdStartupHistoryLogger::_clearEarlyLogs()
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__PMDSTARTHSTLOG__CLREARLY ) ;
@@ -353,8 +293,8 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDSTARTHSTLOG__LOG, "_pmdStartupHstLogger::_log" )
-   INT32 _pmdStartupHstLogger::_log()
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDSTARTHSTLOG__LOG, "_pmdStartupHistoryLogger::_log" )
+   INT32 _pmdStartupHistoryLogger::_log()
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__PMDSTARTHSTLOG__LOG ) ;
@@ -385,8 +325,8 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDSTARTHSTLOG_GETLATEST, "_pmdStartupHstLogger::getLatestLogs" )
-   INT32 _pmdStartupHstLogger::getLatestLogs( UINT32 num,
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDSTARTHSTLOG_GETLATEST, "_pmdStartupHistoryLogger::getLatestLogs" )
+   INT32 _pmdStartupHistoryLogger::getLatestLogs( UINT32 num,
                                               vector<pmdStartupLog> &vecLogs )
    {
       INT32 rc = SDB_OK ;
@@ -412,8 +352,8 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDSTARTHSTLOG_CLRALL, "_pmdStartupHstLogger::clearAll" )
-   INT32 _pmdStartupHstLogger::clearAll()
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDSTARTHSTLOG_CLRALL, "_pmdStartupHistoryLogger::clearAll" )
+   INT32 _pmdStartupHistoryLogger::clearAll()
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__PMDSTARTHSTLOG_CLRALL ) ;
@@ -437,9 +377,9 @@ namespace engine
       goto done ;
    }
 
-   pmdStartupHstLogger* pmdGetStartupHstLogger ()
+   pmdStartupHistoryLogger* pmdGetStartupHstLogger ()
    {
-      static pmdStartupHstLogger _startupLogger ;
+      static pmdStartupHistoryLogger _startupLogger ;
       return &_startupLogger ;
    }
 
