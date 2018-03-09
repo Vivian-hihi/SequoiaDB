@@ -421,8 +421,6 @@ namespace engine
 
       ossScopedLock lock( &m_mutex ) ;
 
-      clearRuleIDIncVal() ;
-
       rc = checkTaskStrategyInfo( strategyInfo, cb ) ;
       if ( rc )
       {
