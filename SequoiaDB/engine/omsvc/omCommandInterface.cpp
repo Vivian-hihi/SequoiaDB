@@ -948,7 +948,7 @@ namespace engine
    }
 
    INT32 omRestCommandBase::_parseIPsField( const CHAR *input,
-                                            std::set<std::string> &IPs )
+                                            set< string > &IPs )
    {
       INT32 rc = SDB_OK ;
       const CHAR *pCur = input ;
@@ -962,7 +962,7 @@ namespace engine
             {
                if ( TRUE == ossNetIpIsValid( pBegin, nLen ) )
                {
-                  std::string ip( pBegin, nLen ) ;
+                  string ip( pBegin, nLen ) ;
                   IPs.insert( ip ) ;
                }
                else

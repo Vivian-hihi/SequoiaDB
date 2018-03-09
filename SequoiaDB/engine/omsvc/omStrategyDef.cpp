@@ -34,38 +34,112 @@
 #include "pd.hpp"
 
 using namespace bson ;
+
 namespace engine
 {
-   void _omTaskStrategyInfo::setTaskID( INT64 newTaskID )
+
+   /*
+      _omTaskStrategyInfo implement
+   */
+   _omTaskStrategyInfo::_omTaskStrategyInfo()
    {
-      taskID = newTaskID ;
+      _id         = 0 ;
+      _nice       = 0 ;
+      _taskID     = 0 ;
    }
 
-   INT32 _omTaskStrategyInfo::toBSON( BSONObj &obj )
+   void _omTaskStrategyInfo::setTaskID( INT64 newTaskID )
    {
-      BSONArrayBuilder arrBuilder ;
-      std::set<std::string>::iterator iter = ips.begin() ;
-      while( iter != ips.end() )
+      _taskID = newTaskID ;
+   }
+
+   BOOLEAN _omTaskStrategyInfo::isIPInSet( const string &ip ) const
+   {
+      if ( _ips.find( ip ) != _ips.end() )
       {
-         if ( !iter->empty() )
-         {
-            arrBuilder.append( *iter ) ;
-         }
-         ++iter ;
+         return TRUE ;
       }
+      return TRUE ;
+   }
+
+   void _omTaskStrategyInfo::setID( INT64 id )
+   {
+      _id = id ;
+   }
+
+   void _omTaskStrategyInfo::setNice( INT32 nice )
+   {
+      if ( nice > OM_TASK_STRATEGY_NICE_MAX )
+      {
+         _nice = OM_TASK_STRATEGY_NICE_MAX ;
+      }
+      else if ( nice < OM_TASK_STRATEGY_NICE_MIN )
+      {
+         _nice = OM_TASK_STRATEGY_NICE_MIN ;
+      }
+      else
+      {
+         _nice = nice ;
+      }
+   }
+
+   void _omTaskStrategyInfo::setTaskName( const string &name )
+   {
+      _taskName = name ;
+   }
+
+   void _omTaskStrategyInfo::setUserName( const string &userName )
+   {
+      _userName = userName ;
+   }
+
+   void _omTaskStrategyInfo::clearIPSet()
+   {
+      _ips.clear() ;
+   }
+
+   BOOLEAN _omTaskStrategyInfo::addIP( const string &ip )
+   {
+      return _ips.insert( ip ).second ;
+   }
+
+   void _omTaskStrategyInfo::delIP( const string &ip )
+   {
+      _ips.erase( ip ) ;
+   }
+
+   void _omTaskStrategyInfo::setIPSet( const SET_IP &ipSet )
+   {
+      _ips = ipSet ;
+   }
+
+   BSONObj _omTaskStrategyInfo::toBSON() const
+   {
+      BSONObjBuilder builder( 1024 ) ;
 
       // userName and ips maybe empty,
       // we keep the empty field in the record to uniform query interface
-      BSONObjBuilder objBuilder ;
-      objBuilder.append( OM_REST_FIELD_RULE_ID, _id ) ;
-      objBuilder.append( OM_REST_FIELD_TASK_ID, taskID ) ;
-      objBuilder.append( OM_REST_FIELD_TASK_NAME, taskName ) ;
-      objBuilder.append( OM_REST_FIELD_NICE, nice ) ;
-      objBuilder.append( OM_REST_FIELD_USER_NAME, userName ) ;
-      objBuilder.appendArray( OM_REST_FIELD_IPS, arrBuilder.arr() ) ;
+      builder.append( OM_REST_FIELD_RULE_ID, getID() ) ;
+      builder.append( OM_REST_FIELD_TASK_ID, getTaskID() ) ;
+      builder.append( OM_REST_FIELD_TASK_NAME, getTaskName() ) ;
+      builder.append( OM_REST_FIELD_NICE, getNice() ) ;
+      builder.append( OM_REST_FIELD_USER_NAME, getUserName() ) ;
 
-      obj = objBuilder.obj() ;
-      return SDB_OK ;
+      BSONArrayBuilder arr( builder.subarrayStart( OM_REST_FIELD_IPS ) ) ;
+
+      SET_IP::const_iterator cit = _ips.begin() ;
+      while( cit != _ips.end() )
+      {
+         if ( !cit->empty() )
+         {
+            arr.append( *cit ) ;
+         }
+         ++cit ;
+      }
+
+      arr.done() ;
+
+      return builder.obj() ;
    }
 
    INT32 _omTaskStrategyInfo::fromBSON( const BSONObj &obj )
@@ -74,49 +148,96 @@ namespace engine
       BSONElement beField ;
       BSONObj ipsObj ;
 
+      /// RuleID
       beField = obj.getField( OM_REST_FIELD_RULE_ID ) ;
-      PD_CHECK( beField.isNumber(), SDB_INVALIDARG, error, PDERROR,
-                "Failed to parse the field(%s)1", OM_REST_FIELD_RULE_ID ) ;
-      _id = beField.numberLong() ;
-
-      beField = obj.getField( OM_REST_FIELD_TASK_ID ) ;
-      PD_CHECK( beField.isNumber(), SDB_INVALIDARG, error, PDERROR,
-                "Failed to parse the field(%s)1", OM_REST_FIELD_TASK_ID ) ;
-      taskID = beField.numberLong() ;
-
-      beField = obj.getField( OM_REST_FIELD_TASK_NAME ) ;
-      PD_CHECK( beField.type() == String, SDB_INVALIDARG, error, PDERROR,
-                "Failed to parse the field(%s)1", OM_REST_FIELD_TASK_NAME ) ;
-      taskName = beField.str();
-
-      beField = obj.getField( OM_REST_FIELD_NICE ) ;
-      PD_CHECK( beField.isNumber(), SDB_INVALIDARG, error, PDERROR,
-                "Failed to parse the field(%s)1", OM_REST_FIELD_NICE ) ;
-      taskID = beField.numberInt() ;
-
-      beField = obj.getField( OM_REST_FIELD_USER_NAME ) ;
-      PD_CHECK( beField.type() == String, SDB_INVALIDARG, error, PDERROR,
-                "Failed to parse the field(%s)1", OM_REST_FIELD_USER_NAME ) ;
-      userName = beField.str();
-
-      beField = obj.getField( OM_REST_FIELD_IPS ) ;
-      PD_CHECK( beField.type() == Array, SDB_INVALIDARG, error, PDERROR,
-                "Failed to parse the field(%s)1", OM_REST_FIELD_IPS ) ;
+      if ( !beField.isNumber() )
       {
-      BSONObjIterator iter( beField.embeddedObject() ) ;
-      BSONElement beTmp ;
-      while( iter.more() )
-      {
-         std::string strTmp ;
-         beTmp = iter.next() ;
-         PD_CHECK( beField.type() == String, SDB_INVALIDARG, error, PDERROR,
-                  "Failed to parse the field(%s)1", OM_REST_FIELD_IPS ) ;
-         strTmp = beTmp.str() ;
-         if ( !strTmp.empty() )
-         {
-            ips.insert( strTmp ) ;
-         }
+         PD_LOG( PDERROR, "Field[%s] must be number",
+                 beField.toString( TRUE, TRUE ).c_str() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
       }
+      setID( beField.numberLong() ) ;
+
+      /// TaskID
+      beField = obj.getField( OM_REST_FIELD_TASK_ID ) ;
+      if ( !beField.isNumber() )
+      {
+         PD_LOG( PDERROR, "Field[%s] must be number",
+                 beField.toString( TRUE, TRUE ).c_str() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      setTaskID( beField.numberLong() ) ;
+
+      /// TaskName
+      beField = obj.getField( OM_REST_FIELD_TASK_NAME ) ;
+      if ( String != beField.type() )
+      {
+         PD_LOG( PDERROR, "Field[%s] must be string",
+                 beField.toString( TRUE, TRUE ).c_str() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      setTaskName( beField.str() ) ;
+
+      /// Nice
+      beField = obj.getField( OM_REST_FIELD_NICE ) ;
+      if ( !beField.isNumber() )
+      {
+         PD_LOG( PDERROR, "Field[%s] must be number",
+                 beField.toString( TRUE, TRUE ).c_str() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      setNice( beField.numberInt() ) ;
+
+      /// UserName
+      beField = obj.getField( OM_REST_FIELD_USER_NAME ) ;
+      if ( String != beField.type() )
+      {
+         PD_LOG( PDERROR, "Field[%s] must be string",
+                 beField.toString( TRUE, TRUE ).c_str() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      setUserName( beField.str() ) ;
+
+      /// IPs
+      beField = obj.getField( OM_REST_FIELD_IPS ) ;
+      if ( Array != beField.type() )
+      {
+         PD_LOG( PDERROR, "Field[%s] must be string array",
+                 beField.toString( TRUE, TRUE ).c_str() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      else
+      {
+         /// clear ip
+         clearIPSet() ;
+
+         string tmpStr ;
+         BSONElement e ;
+         BSONObjIterator itr( beField.embeddedObject() ) ;
+         while( itr.more() )
+         {
+            e = itr.next() ;
+            if ( String != beField.type() )
+            {
+               PD_LOG( PDERROR, "Field[%s] must be string array",
+                       beField.toString( TRUE, TRUE ).c_str() ) ;
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
+            tmpStr = e.str() ;
+
+            /// skip empty string
+            if ( !tmpStr.empty() )
+            {
+               addIP( tmpStr ) ;
+            }
+         }
       }
 
    done:
@@ -124,4 +245,5 @@ namespace engine
    error:
       goto done ;
    }
+
 }

@@ -37,44 +37,68 @@
 #include "../bson/bson.h"
 #include <boost/shared_ptr.hpp>
 
+using namespace bson ;
+using namespace std ;
 
 namespace engine
 {
-#define OM_TASK_STRATEGY_NICE_MAX                  19
-#define OM_TASK_STRATEGY_NICE_MIN                  -20
-#define OM_TASK_STRATEGY_NICE_DEF                  0
-#define OM_TASK_STRATEGY_INVALID_VER               -1
+   /*
+      Common Define
+   */
+   #define OM_TASK_STRATEGY_NICE_MAX                  ( 19 )
+   #define OM_TASK_STRATEGY_NICE_MIN                  ( -20 )
+   #define OM_TASK_STRATEGY_NICE_DEF                  ( 0 )
+   #define OM_TASK_STRATEGY_INVALID_VER               ( -1 )
 
-   typedef struct _omTaskStrategyInfo
+   typedef set<string>                 SET_IP ;
+
+   /*
+      _omTaskStrategyInfo Define
+   */
+   class _omTaskStrategyInfo
    {
-   private:
-      INT64                      taskID ;
-   public:
-      INT64                      _id  ;
-      INT32                      nice ;
-      std::string                taskName ;
-      std::string                userName ;
-      std::set<std::string>      ips ;
-
-   public:
       friend class omStrategyMgr ;
-      _omTaskStrategyInfo()
-      {
-         _id = 0 ;
-         nice = 0 ;
-         taskID = 0 ;
-      }
+      public:
+         _omTaskStrategyInfo() ;
 
-      INT32 toBSON( bson::BSONObj &obj ) ;
-      INT32 fromBSON( const bson::BSONObj &obj ) ;
+         BSONObj  toBSON() const ;
+         INT32    fromBSON( const BSONObj &obj ) ;
 
-      BOOLEAN isMatch( const std::string &userName, const std::string &ip ) ;
+         BOOLEAN  isMatch( const string &userName, const string &ip ) const ;
 
-   protected:
-      void setTaskID( INT64 newTaskID ) ;
+         INT64    getTaskID() const { return _taskID ; }
+         INT64    getID() const { return _id ; }
+         INT32    getNice() const { return _nice ; }
+         const string& getTaskName() const { return _taskName ; }
+         const string& getUserName() const { return _userName ; }
+         const SET_IP* getIPSet() const { return &_ips ; }
+         UINT32   getIPCount() const { return _ips.size() ; }
+         BOOLEAN  isIPInSet( const string& ip ) const ;
 
-   }omTaskStrategyInfo ;
+         void     setID( INT64 id ) ;
+         void     setNice( INT32 nice ) ;
+         void     setTaskName( const string& name ) ;
+         void     setUserName( const string& userName ) ;
+         void     clearIPSet() ;
+         BOOLEAN  addIP( const string& ip ) ;
+         void     delIP( const string& ip ) ;
+         void     setIPSet( const SET_IP& ipSet ) ;
 
-   typedef boost::shared_ptr< omTaskStrategyInfo >          taskStrategyInfoPtr ;
+      protected:
+         void     setTaskID( INT64 newTaskID ) ;
+
+      private:
+         INT64                      _taskID ;
+         INT64                      _id ;
+         INT32                      _nice ;
+         string                     _taskName ;
+         string                     _userName ;
+         SET_IP                     _ips ;
+   } ;
+   typedef _omTaskStrategyInfo omTaskStrategyInfo ;
+
+   typedef boost::shared_ptr< omTaskStrategyInfo >    taskStrategyInfoPtr ;
+
 }
-#endif
+
+#endif // OM_STRATEGY_DEF_HPP_
