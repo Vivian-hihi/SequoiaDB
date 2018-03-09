@@ -13,7 +13,7 @@ function main()
    commCreateCS( db, csName, false, "", csOption );
    
    var clName = COMMCLNAME + "_11779";
-   var clOption = {Capped:true, Size:1024, AutoIndexId:false};
+   var clOption = {Capped:true, Size:102400, AutoIndexId:false};
    var dbcl = commCreateCLByOption( db, csName, clName, clOption, true, true );
    
    //获取主备节点
