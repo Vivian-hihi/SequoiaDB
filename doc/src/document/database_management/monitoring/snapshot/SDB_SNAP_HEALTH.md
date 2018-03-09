@@ -32,6 +32,7 @@ SDB_SNAP_HEALH
 | Ulimit.OpenFiles     | 长整型 | 节点进程的文件句柄数限制 |
 | Ulimit.NumProc       | 长整型 | 节点进程的线程数限制（-1表示unlimited） |
 | Ulimit.FileSize      | 长整型 | 节点进程的文件大小限制（-1表示unlimited） |
+| ResetTimestamp       | 时间戳 | 重置快照的时间 |
 | ErrNum.SDB_OOM       | 长整型 | 节点发生错误 SDB_OOM 的次数 |
 | ErrNum.SDB_NOSPC     | 长整型 | 节点发生错误 SDB_NOSPC 的次数 |
 | ErrNum.SDB_TOO_MANY_OPEN_FD | 长整型 | 节点发生错误 SDB_TOO_MANY_OPEN_FD 的次数 |
@@ -96,6 +97,7 @@ SDB_SNAP_HEALH
     "NumProc": 23948,
     "FileSize": -1
   },
+  "ResetTimestamp": "2018-03-09-09.47.04.826497",
   "ErrNum": {
     "SDB_OOM": 0,
     "SDB_NOSPC": 0,
