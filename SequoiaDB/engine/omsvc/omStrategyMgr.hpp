@@ -53,7 +53,7 @@ namespace engine
    {
       public:
          _omStrategyMgr() ;
-         ~omStrategyMgr() ;
+         ~_omStrategyMgr() ;
 
          INT32 init( pmdEDUCB *cb ) ;
 
