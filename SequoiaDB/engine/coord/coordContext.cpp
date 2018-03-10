@@ -79,11 +79,11 @@ namespace engine
       }
    }
 
-   INT64 _rtnContextCoord::getSessionMilliTimeout () const
+   INT64 _rtnContextCoord::getWaitTime() const
    {
-      if ( NULL != _pSession )
+      if ( _pSession )
       {
-         return _pSession->getMilliTimeout() ;
+         return _pSession->getTotalWaitTime() ;
       }
       return 0 ;
    }
@@ -233,8 +233,8 @@ namespace engine
 
          if ( _prepareContextMap.size() > 0 )
          {
-            /// recv reply, avoid timeout and kill with cascade
-            _pSession->waitReply1( TRUE, NULL, FALSE ) ;
+            /// recv reply
+            _pSession->waitReply1( TRUE ) ;
          }
       }
 
@@ -492,7 +492,6 @@ namespace engine
       }
       return rc ;
    error:
-      _pSession->resetAllSubSession() ;
       goto done ;
    }
 
@@ -654,8 +653,8 @@ namespace engine
       goto done ;
    }
 
-   INT32 _rtnContextCoord::createSubContext( MsgRouteID routeID,
-                                             SINT64 contextID )
+   INT32 _rtnContextCoord::_createSubContext( MsgRouteID routeID,
+                                              SINT64 contextID )
    {
       INT32 rc = SDB_OK ;
       EMPTY_CONTEXT_MAP::iterator iter ;
@@ -723,7 +722,7 @@ namespace engine
          isEmpty = TRUE ;
       }
 
-      rc = createSubContext( pReply->header.routeID, pReply->contextID ) ;
+      rc = _createSubContext( pReply->header.routeID, pReply->contextID ) ;
       if ( rc )
       {
          goto error ;
@@ -1178,9 +1177,7 @@ namespace engine
                                                       BOOLEAN preRead )
    : _rtnContextCoord( contextID, eduID, preRead ),
      _rtnExplainMainBase( &_explainCoordPath ),
-     _explainCoordPath( &_planAllocator ),
-     _startSessionTimeout( 0 ),
-     _endSessionTimeout( 0 )
+     _explainCoordPath( &_planAllocator )
    {
    }
 
@@ -1387,7 +1384,6 @@ namespace engine
 
       if ( _needRun )
       {
-         _startSessionTimeout = queryContext->getSessionMilliTimeout() * 1000 ;
          queryContext->setEnableMonContext( TRUE ) ;
       }
 
@@ -1428,8 +1424,7 @@ namespace engine
          PD_CHECK( NULL != coordContext, SDB_SYS, error, PDERROR,
                    "Failed to get coord context" ) ;
 
-         _endSessionTimeout = coordContext->getSessionMilliTimeout() * 1000 ;
-         waitTime.fromUINT64( _startSessionTimeout - _endSessionTimeout ) ;
+         waitTime.fromUINT64( getWaitTime() * 1000 ) ;
          _explainCoordPath.getContextMonitor().setWaitTime( waitTime ) ;
       }
 
