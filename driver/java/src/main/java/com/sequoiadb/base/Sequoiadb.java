@@ -1693,8 +1693,9 @@ public class Sequoiadb implements Closeable {
             else
                 return false;
         } finally {
-            if (cursor != null)
+            if (cursor != null) {
                 cursor.close();
+            }
         }
     }
 
@@ -2045,15 +2046,17 @@ public class Sequoiadb implements Closeable {
         BSONObject condition = new BasicBSONObject();
         condition.put(SdbConstants.FIELD_NAME_GROUPNAME, name);
 
-        DBCursor cursor = getList(Sequoiadb.SDB_LIST_GROUPS, condition, null, null);
-        if (cursor == null || !cursor.hasNext()) {
-            return null;
-        }
         BSONObject result;
+        DBCursor cursor = getList(Sequoiadb.SDB_LIST_GROUPS, condition, null, null);
         try {
+            if (cursor == null || !cursor.hasNext()) {
+                return null;
+            }
             result = cursor.getNext();
         } finally {
-            cursor.close();
+            if (cursor != null) {
+                cursor.close();
+            }
         }
         return result;
     }
@@ -2062,15 +2065,17 @@ public class Sequoiadb implements Closeable {
         BSONObject condition = new BasicBSONObject();
         condition.put(SdbConstants.FIELD_NAME_GROUPID, id);
 
-        DBCursor cursor = getList(Sequoiadb.SDB_LIST_GROUPS, condition, null, null);
-        if (cursor == null || !cursor.hasNext()) {
-            return null;
-        }
         BSONObject result;
+        DBCursor cursor = getList(Sequoiadb.SDB_LIST_GROUPS, condition, null, null);
         try {
+            if (cursor == null || !cursor.hasNext()) {
+                return null;
+            }
             result = cursor.getNext();
         } finally {
-            cursor.close();
+            if (cursor != null) {
+                cursor.close();
+            }
         }
         return result;
     }
