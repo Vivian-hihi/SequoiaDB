@@ -38,6 +38,7 @@ testFiles = [
    [ "./concurrent/concurrentLob.cpp" ], 
    [ "./concurrent/concurrentNode.cpp" ], # sync
    [ "./concurrent/concurrentRg.cpp" ], # sync
+   [ "./concurrent/concurrentOidGen.cpp" ],
    [ "./misc/JSCompatible.cpp" ],
    [ "./misc/analyze.cpp" ],
    [ "./misc/attachAndDetachNode.cpp" ], # sync
