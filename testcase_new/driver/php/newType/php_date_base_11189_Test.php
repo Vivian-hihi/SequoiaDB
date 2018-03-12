@@ -11,7 +11,7 @@ define('Cur_Path', dirname(__FILE__));
 include_once Cur_Path.'/../func.php';
 
 class DateType11189 extends BaseOperator 
-{  
+{     
    public function __construct()
    {
       parent::__construct();
@@ -29,10 +29,10 @@ class DateType11189 extends BaseOperator
       return $this -> commCreateCL( $csName, $clName, $options, true );
    }
    
-   function insertRecs( $clDB )
+   function insertRecs( $clDB, $localDate )
    {
       $recsArray = array( 
-         //array( 'a' => 0,  'b' => new SequoiaDate() ),  //nonsuport
+         array( 'a' => 0,  'b' => $localDate ), 
          array( 'a' => 1,  'b' => new SequoiaDate( "1901-01-01" ) ), 
          array( 'a' => 2,  'b' => new SequoiaDate( "9999-12-31" ) ), 
          array( 'a' => 3,  'b' => new SequoiaDate( "0001-01-01T00:00:00.000Z" ) ), 
@@ -46,11 +46,13 @@ class DateType11189 extends BaseOperator
          array( 'a' => 11, 'b' => new SequoiaDate( "-2147483648" ) ), 
          array( 'a' => 12, 'b' => new SequoiaDate( "2147483648" ) ),
          array( 'a' => 13, 'b' => new SequoiaDate( "-9223372036854775808" ) ), 
-         array( 'a' => 14, 'b' => new SequoiaDate( "9223372036854775807" ) ), 
+         array( 'a' => 14, 'b' => new SequoiaDate(  "9223372036854775807" ) ), 
          array( 'a' => 15, 'b' => new SequoiaDate( "2209017600" ) ), 
          array( 'a' => 16, 'b' => new SequoiaDate( "253402272000" ) ), 
          array( 'a' => 17, 'b' => new SequoiaDate( "2209017601" ) ), 
-         array( 'a' => 18, 'b' => new SequoiaDate( "253402272001" ) )
+         array( 'a' => 18, 'b' => new SequoiaDate( "253402272001" ) ),
+         //array( 'a' => 19, 'b' => new SequoiaDate( -9223372036854775808 ) ), 
+         //array( 'a' => 20, 'b' => new SequoiaDate(  9223372036854775807 ) )
       );
       
       for( $i = 0; $i < count( $recsArray ); $i++ )
@@ -85,6 +87,7 @@ class TestDate11189 extends PHPUnit_Framework_TestCase
    private static $csName;
    private static $clName;
    private static $clDB;
+   private static $localDate;
    
    public static function setUpBeforeClass()
    {
@@ -93,6 +96,7 @@ class TestDate11189 extends PHPUnit_Framework_TestCase
       echo "\n---Begin to ready parameter.\n";
       self::$csName = self::$dbh -> COMMCSNAME;
       self::$clName = self::$dbh -> COMMCLNAME;
+      self::$localDate = new SequoiaDate();
       
       echo "\n---Begin to drop cl in the begin.\n";
       self::$dbh -> dropCL( self::$csName, self::$clName, true );
@@ -105,7 +109,7 @@ class TestDate11189 extends PHPUnit_Framework_TestCase
    {
       echo "\n---Begin to insert records.\n";
       
-      self::$dbh -> insertRecs( self::$clDB );
+      self::$dbh -> insertRecs( self::$clDB, self::$localDate );
       $errno = self::$dbh -> getErrno();
       $this -> assertEquals( 0, $errno );
    }
@@ -119,10 +123,10 @@ class TestDate11189 extends PHPUnit_Framework_TestCase
       $errno = self::$dbh -> getErrno();
       $this -> assertEquals( -29, $errno );
       
-      $this -> assertCount( 18, $actRecsArray );
+      $this -> assertCount( 19, $actRecsArray );
       
       $expRecsArray = array( 
-         //array( 'a' => 0,  'b' => new SequoiaDate() ),  //nonsuport
+         array( 'a' => 0,  'b' => self::$localDate ), 
          array( 'a' => 1,  'b' => "1901-01-01" ), 
          array( 'a' => 2,  'b' => "9999-12-31" ), 
          array( 'a' => 3,  'b' => "0001-01-01" ), 
@@ -140,14 +144,25 @@ class TestDate11189 extends PHPUnit_Framework_TestCase
          array( 'a' => 15, 'b' => "1970-01-26" ), 
          array( 'a' => 16, 'b' => "1978-01-12" ), 
          array( 'a' => 17, 'b' => "1970-01-26" ), 
-         array( 'a' => 18, 'b' => "1978-01-12" )
+         array( 'a' => 18, 'b' => "1978-01-12" ),
+         //array( 'a' => 19, 'b' => "-9223372036854775808" ), 
+         //array( 'a' => 20, 'b' => "9223372036854775807" )
       );
       
       for ($i = 0; $i < count( $expRecsArray ); $i++ )
       {
-         $this -> assertEquals( $expRecsArray[$i]['b'], $actRecsArray[$i]['b'] -> __toString() );
+         $this -> assertEquals( $expRecsArray[$i]['b'], $actRecsArray[$i]['b'] -> __toString(), '$i = '.$i );
       }
    }
+   /*
+   function test_dropCL()
+   {
+      echo "\n---Begin to drop cl in the end.\n";
+      
+      self::$dbh -> dropCL( self::$csName, self::$clName, false );
+      $errno = self::$dbh -> getErrno();
+      $this -> assertEquals( 0, $errno );
+   }*/
   
 }
 ?>

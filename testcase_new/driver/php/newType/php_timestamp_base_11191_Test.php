@@ -29,13 +29,10 @@ class DateType11191 extends BaseOperator
       return $this -> commCreateCL( $csName, $clName, $options, true );
    }
    
-   function insertRecs( $clDB )
+   function insertRecs( $clDB, $localTime )
    {
-     // var_dump( new SequoiaTimestamp( "-2147483648" ) -> __toString() );
-     // var_dump( new SequoiaTimestamp( "2147483647" ) -> __toString() );
-      
       $recsArray = array( 
-         //array( 'a' => 0,  'b' => new SequoiaTimestamp() ),  //nonsuport
+         array( 'a' => 0,  'b' => $localTime ), 
          array( 'a' => 1,  'b' => new SequoiaTimestamp( "1902-01-01-00:00:00.000000" ) ), 
          array( 'a' => 2,  'b' => new SequoiaTimestamp( "2037-12-31-23:59:59.999999" ) ), 
          array( 'a' => 3,  'b' => new SequoiaTimestamp( "1902-01-01T00:00:00.000Z" ) ), 
@@ -78,6 +75,7 @@ class TestDate11191 extends PHPUnit_Framework_TestCase
    private static $csName;
    private static $clName;
    private static $clDB;
+   private static $localTime;
    
    public static function setUpBeforeClass()
    {
@@ -86,6 +84,7 @@ class TestDate11191 extends PHPUnit_Framework_TestCase
       echo "\n---Begin to ready parameter.\n";
       self::$csName = self::$dbh -> COMMCSNAME;
       self::$clName = self::$dbh -> COMMCLNAME;
+      self::$localTime = new SequoiaTimestamp();
       
       echo "\n---Begin to drop cl in the begin.\n";
       self::$dbh -> dropCL( self::$csName, self::$clName, true );
@@ -98,7 +97,7 @@ class TestDate11191 extends PHPUnit_Framework_TestCase
    {
       echo "\n---Begin to insert records.\n";
       
-      self::$dbh -> insertRecs( self::$clDB );
+      self::$dbh -> insertRecs( self::$clDB, self::$localTime );
       $errno = self::$dbh -> getErrno();
       $this -> assertEquals( 0, $errno );
    }
@@ -112,16 +111,16 @@ class TestDate11191 extends PHPUnit_Framework_TestCase
       $errno = self::$dbh -> getErrno();
       $this -> assertEquals( -29, $errno );
       
-      $this -> assertCount( 6, $actRecsArray );
+      $this -> assertCount( 7, $actRecsArray );
       
       $expRecsArray = array( 
-         //array( 'a' => 0,  'b' => new SequoiaTimestamp() ),  //nonsuport
+         array( 'a' => 0,  'b' => self::$localTime ), 
          array( 'a' => 1,  'b' => "1902-01-01-00.00.00.000000" ), 
          array( 'a' => 2,  'b' => "2037-12-31-23.59.59.999999" ), 
          array( 'a' => 3,  'b' => "1902-01-01-08.05.52.000000" ), 
-         array( 'a' => 4,  'b' => "2038-01-01-07.59.59.999000" ), 
+         array( 'a' => 4,  'b' => "2037-01-01-07.59.59.999000" ), 
          array( 'a' => 5,  'b' => "1902-01-01-00.05.52.000000" ), 
-         array( 'a' => 6,  'b' => "2037-12-31-23.59.59.999000" )
+         array( 'a' => 6,  'b' => "2038-12-31-23.59.59.999000" )
          //array( 'a' => 7,  'b' => "1905-05-06-03.20.00.000000" ) 
          //array( 'a' => 8,  'b' => "1904-05-06-03.20.00.000000" )
       );
