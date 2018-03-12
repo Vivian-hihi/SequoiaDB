@@ -1013,6 +1013,7 @@ namespace engine
                }
                ++itPending ;
                ++replyNum ;
+               --totalUnReplyNum ;
             }
             _mapPendingSubSession.clear() ;
          }
