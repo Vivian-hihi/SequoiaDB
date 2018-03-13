@@ -246,32 +246,32 @@ namespace engine
 
       // --defaultPort
       rdxString( pEX, SDBCM_CONF_DFTPORT , _dftSvcName,
-                 sizeof( _dftSvcName ), FALSE, FALSE,
+                 sizeof( _dftSvcName ), FALSE, PMD_CFG_CHANGE_FORBIDDEN,
                  _dftSvcName ) ;
       // --$hostname$_Port
       rdxString( pEX, _hostKey.c_str(), _cmServiceName,
-                 sizeof( _cmServiceName ), FALSE, FALSE,
+                 sizeof( _cmServiceName ), FALSE, PMD_CFG_CHANGE_FORBIDDEN,
                  _dftSvcName ) ;
       // --RestartCount
-      rdxInt( pEX, SDBCM_RESTART_COUNT, _restartCount, FALSE, TRUE,
+      rdxInt( pEX, SDBCM_RESTART_COUNT, _restartCount, FALSE, PMD_CFG_CHANGE_RUN,
               _restartCount ) ;
       // --RestartInterval
-      rdxInt( pEX, SDBCM_RESTART_INTERVAL, _restartInterval, FALSE, TRUE,
+      rdxInt( pEX, SDBCM_RESTART_INTERVAL, _restartInterval, FALSE, PMD_CFG_CHANGE_RUN,
               _restartInterval ) ;
       // --AutoStart
-      rdxBooleanS( pEX, SDBCM_AUTO_START, _autoStart, FALSE, TRUE,
+      rdxBooleanS( pEX, SDBCM_AUTO_START, _autoStart, FALSE, PMD_CFG_CHANGE_RUN,
                    _autoStart ) ;
       // --DiagLevel
-      rdxInt( pEX, SDBCM_DIALOG_LEVEL, _diagLevel, FALSE, TRUE,
+      rdxInt( pEX, SDBCM_DIALOG_LEVEL, _diagLevel, FALSE, PMD_CFG_CHANGE_RUN,
               _diagLevel ) ;
       // --OMAddress
       rdxString( pEX, SDBCM_CONF_OMADDR, _omAddress, sizeof( _omAddress ),
-                 FALSE, FALSE, "", FALSE ) ;
+                 FALSE, PMD_CFG_CHANGE_FORBIDDEN, "", FALSE ) ;
       // --IsGeneral
       rdxBooleanS( pEX, SDBCM_CONF_ISGENERAL, _isGeneralAgent, FALSE,
-                   FALSE, FALSE, FALSE ) ;
+                   PMD_CFG_CHANGE_FORBIDDEN, FALSE, FALSE ) ;
       // --EnableWatch
-      rdxBooleanS( pEX, SDBCM_ENABLE_WATCH, _enableWatch, FALSE, TRUE,
+      rdxBooleanS( pEX, SDBCM_ENABLE_WATCH, _enableWatch, FALSE, PMD_CFG_CHANGE_RUN,
                    _enableWatch ) ;
 
       //  end map configs }}
