@@ -62,6 +62,27 @@ class DecimalType14015 extends BaseOperator
       return $findRecsArray;
    }
    
+   function removeRecs( $clDB )
+   {
+      $recs0 = array( 'a' => 0, 'b' => new SequoiaDecimal( 'MAX' ) );
+      $recs1 = array( 'a' => 1, 'b' => new SequoiaDecimal( 'MIN' ) );
+      $recs2 = array( 'a' => 2, 'b' => new SequoiaDecimal( 'NAN' ) );
+      $recs3 = array( 'a' => 3, 'b' => new SequoiaDecimal( 'INF' ) );
+      $recs4 = array( 'a' => 4, 'b' => new SequoiaDecimal( '-INF' ) );
+      $recs5 = array( 'a' => 5, 'b' => new SequoiaDecimal( 'max' ) );
+      $recs6 = array( 'a' => 6, 'b' => new SequoiaDecimal( 'min' ) );
+      $recs7 = array( 'a' => 7, 'b' => new SequoiaDecimal( 'nan' ) );
+      $recs8 = array( 'a' => 8, 'b' => new SequoiaDecimal( 'inf' ) );
+      $recs9 = array( 'a' => 9, 'b' => new SequoiaDecimal( '-inf' ) );
+      
+      $recsArray = array( $recs0, $recs1, $recs2, $recs3, $recs4, $recs5, $recs6, $recs7, $recs8, $recs9 );
+      for( $i = 0; $i < count( $recsArray ); $i++ )
+      {  
+         //var_dump("i = " + $i);
+         $clDB -> remove( $recsArray[$i] );
+      }
+   }
+   
    function dropCL( $csName, $clName,$ignoreNotExist )
    {
       $this -> commDropCL( $csName, $clName, $ignoreNotExist );
@@ -125,6 +146,20 @@ class TestDecimal14015 extends PHPUnit_Framework_TestCase
       
       $this -> assertEquals( $expDecimal2, $recsArray[2]['b'] );
       $this -> assertEquals( $expDecimal2, $recsArray[7]['b'] );
+   }
+   
+   function test_remove()
+   {
+      echo "\n---Begin to remove records.\n";
+      
+      self::$dbh -> removeRecs( self::$clDB );
+      $errno = self::$dbh -> getErrno();
+      $this -> assertEquals( 0, $errno );
+      
+      $recsArray = self::$dbh -> findRecs( self::$clDB );      
+      $errno = self::$dbh -> getErrno();
+      $this -> assertEquals( -29, $errno );      
+      $this -> assertCount( 0, $recsArray );      
    }
    
    public static function tearDownAfterClass()
