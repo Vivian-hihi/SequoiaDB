@@ -952,7 +952,10 @@ namespace seadapter
                          "failed[ %d ]", rc ) ;
             switch ( oprType )
             {
+               // In case of update, we are going to update the whole document,
+               // not part of it. So indexing should be done instead of updating.
                case RTN_EXT_INSERT:
+               case RTN_EXT_UPDATE:
                   {
                      utilESActionIndex item( _indexName.c_str(),
                                              _typeName.c_str() ) ;
@@ -981,38 +984,6 @@ namespace seadapter
                                   "failed[ %d ]", rc ) ;
                   }
                   break ;
-               case RTN_EXT_UPDATE:
-                  {
-                     utilESActionUpdate item( _indexName.c_str(),
-                                              _typeName.c_str() ) ;
-                     rc = item.setID( origOID ) ;
-                     PD_RC_CHECK( rc, PDERROR, "Set _id for action "
-                                  "failed[ %d ]", rc ) ;
-                     rc = item.setSourceData( sourceObj.toString(false, true).c_str(),
-                                              sourceObj.toString(false, true).length(),
-                                              TRUE ) ;
-                     PD_RC_CHECK( rc, PDERROR, "Set source data failed[ %d ]",
-                                  rc ) ;
-                     rc = _bulkProcess( item ) ;
-                     PD_RC_CHECK( rc, PDERROR, "Bulk processing item "
-                                  "failed[ %d ]", rc ) ;
-                  }
-                  break ;
-               /*
-               case RTN_EXT_TRUNCATE:
-                  // Truncate(actuall delete by type) can not be done in bulk
-                  // operation. So wait for the current bulk to finish.
-                  rc = _bulkFinish() ;
-                  PD_RC_CHECK( rc, PDERROR, "Finish operation of bulk "
-                               "failed[ %d ]", rc ) ;
-                  rc = _esClt->deleteAllByType( _indexName.c_str(),
-                                                _typeName.c_str() ) ;
-                  PD_RC_CHECK( rc, PDERROR, "Delete all documents for index[ %s ] "
-                               "and type[ %s ] failed[ %d ]", _indexName.c_str(),
-                               _typeName.c_str(), rc ) ;
-                  finished = TRUE ;
-                  break ;
-               */
                default:
                   PD_LOG( PDERROR, "Invalid operation type[ %d ] in source data",
                           oprType ) ;
