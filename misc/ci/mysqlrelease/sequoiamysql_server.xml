@@ -67,29 +67,6 @@
                 </throwError>
             </actionList>
         </actionDefinition>
-        <actionDefinition name="checkHostnameIp">
-            <actionList>
-                <showWarning text="${msg(Install.WarnMsg.checkHostname)}">
-                    <ruleEvaluationLogic>or</ruleEvaluationLogic>
-                    <ruleList>
-                        <compareText text="${machine_hostname}" logic="equals" value="localhost"/>
-                        <compareText text="${machine_hostname}" logic="equals" value="(none)"/>
-                        <compareTextLength text="${machine_hostname}" logic="equals" length="0"/>
-                    </ruleList>
-                </showWarning>
-                <showWarning text="${msg(Install.WarnMsg.checkHostnameIp)}">
-                    <ruleEvaluationLogic>or</ruleEvaluationLogic>
-                    <ruleList>
-                        <hostValidation>
-                            <host>${machine_hostname}</host>
-                            <type>hostname</type>
-                            <condition>is_not_valid</condition>
-                        </hostValidation>
-                        <compareText logic="equals" text="${machine_ipaddr}" value="127.0.0.1"/>
-                    </ruleList>
-                </showWarning>
-            </actionList>
-        </actionDefinition>
    
    </functionDefinitionList>
 
@@ -251,9 +228,6 @@
         </actionGroup>
         <!--check disk-->
         <checkFreeDiskSpaceFunction/>
-
-        <!--check hostname and ip-->
-        <checkHostnameIp/>
 
         <!--check umask-->
         <checkUmaskFunction/>
