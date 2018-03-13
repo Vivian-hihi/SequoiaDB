@@ -55,8 +55,10 @@ class DateType11189 extends BaseOperator
          array( 'a' => 20, 'b' => new SequoiaDate(  9223372036854775807 ) ), 
          array( 'a' => 21, 'b' => new SequoiaDate( -2147483648 ) ), 
          array( 'a' => 22, 'b' => new SequoiaDate(  2147483647 ) ), 
-         array( 'a' => 23, 'b' => new SequoiaDate( -9223372036854775809 ) ),  // avalid value
-         array( 'a' => 24, 'b' => new SequoiaDate(  9223372036854775808 ) )   // avalid value
+         array( 'a' => 23, 'b' => new SequoiaDate( -9223372036854775809 ) ),    // avalid value
+         array( 'a' => 24, 'b' => new SequoiaDate(  9223372036854775808 ) ),    // avalid value
+         array( 'a' => 25, 'b' => new SequoiaDate( "-9223372036854775809" ) ),  // avalid value
+         array( 'a' => 26, 'b' => new SequoiaDate(  "9223372036854775808" ) )   // avalid value
       );
       
       for( $i = 0; $i < count( $recsArray ); $i++ )
@@ -127,7 +129,7 @@ class TestDate11189 extends PHPUnit_Framework_TestCase
       $errno = self::$dbh -> getErrno();
       $this -> assertEquals( -29, $errno );
       
-      $this -> assertCount( 25, $actRecsArray );
+      $this -> assertCount( 27, $actRecsArray );
       
       $expRecsArray = array( 
          array( 'a' => 0,  'b' => self::$localDate ), 
@@ -150,11 +152,13 @@ class TestDate11189 extends PHPUnit_Framework_TestCase
          array( 'a' => 17, 'b' => "1970-01-26" ), 
          array( 'a' => 18, 'b' => "1978-01-12" ),
          array( 'a' => 19, 'b' => "-9223372036854775807" ),  
-         array( 'a' => 20, 'b' => "9223372036854775807" ), 
+         array( 'a' => 20, 'b' =>  "9223372036854775807" ), 
          array( 'a' => 21, 'b' => "1969-12-07" ),  // -2147483648
          array( 'a' => 22, 'b' => "1970-01-26" ),  //  2147483647
          array( 'a' => 23, 'b' => "1970-01-01" ),  // -9223372036854775809
-         array( 'a' => 24, 'b' => "1970-01-01" )   //  9223372036854775808
+         array( 'a' => 24, 'b' => "1970-01-01" ),  //  9223372036854775808
+         array( 'a' => 25, 'b' =>  "9223372036854775807" ), // avalid
+         array( 'a' => 26, 'b' => "-9223372036854775808" )  // avalid
       );
       
       for ($i = 0; $i < count( $expRecsArray ); $i++ )

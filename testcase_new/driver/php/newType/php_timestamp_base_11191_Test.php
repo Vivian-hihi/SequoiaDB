@@ -43,8 +43,10 @@ class DateType11191 extends BaseOperator
          array( 'a' => 8,  'b' => new SequoiaTimestamp( "2147483647" ) ), 
          array( 'a' => 9,  'b' => new SequoiaTimestamp( -2147483648 ) ), 
          array( 'a' => 10,  'b' => new SequoiaTimestamp( 2147483647 ) ), 
-         array( 'a' => 11,  'b' => new SequoiaTimestamp( -2147483649 ) ), 
-         array( 'a' => 12,  'b' => new SequoiaTimestamp( 2147483648 ) )
+         array( 'a' => 11,  'b' => new SequoiaTimestamp( -2147483649 ) ),   // avalid
+         array( 'a' => 12,  'b' => new SequoiaTimestamp( 2147483648 ) ),    // avalid
+         array( 'a' => 13,  'b' => new SequoiaTimestamp( "-2147483649" ) ),  // avalid
+         array( 'a' => 14,  'b' => new SequoiaTimestamp(  "2147483648" ) )   // avalid
       );
       
       for( $i = 0; $i < count( $recsArray ); $i++ )
@@ -115,7 +117,7 @@ class TestDate11191 extends PHPUnit_Framework_TestCase
       $errno = self::$dbh -> getErrno();
       $this -> assertEquals( -29, $errno );
       
-      $this -> assertCount( 13, $actRecsArray );
+      $this -> assertCount( 15, $actRecsArray );
       
       $expRecsArray = array( 
          array( 'a' => 0,  'b' => self::$localTime ), 
@@ -125,12 +127,14 @@ class TestDate11191 extends PHPUnit_Framework_TestCase
          array( 'a' => 4,  'b' => "2037-12-31" ), 
          array( 'a' => 5,  'b' => "1902-01-01" ), 
          array( 'a' => 6,  'b' => "2037-12-31" ), 
-         array( 'a' => 7,  'b' => "1901-12-14" ),  //"-2147483648"
-         array( 'a' => 8,  'b' => "2038-01-19" ),            // "2147483647"
+         array( 'a' => 7,  'b' => "1901-12-14" ),    //"-2147483648"
+         array( 'a' => 8,  'b' => "2038-01-19" ),    // "2147483647"
          array( 'a' => 9,  'b' => "1901-12-14" ),    // -2147483648
          array( 'a' => 10,  'b' => "2038-01-19" ),   //  2147483647
-         array( 'a' => 11,  'b' => "2038-01-19" ),   // -2147483649  //avalid
-         array( 'a' => 12,  'b' => "1901-12-14" )    //  2147483648  //avalid
+         array( 'a' => 11,  'b' => "2038-01-19" ),   // -2147483649   //avalid
+         array( 'a' => 12,  'b' => "1901-12-14" ),   //  2147483648   //avalid
+         array( 'a' => 13,  'b' => "2038-01-19" ),  // "-2147483649"  //avalid
+         array( 'a' => 14,  'b' => "1901-12-14" )   //  "2147483648"  //avalid
       );
       
       for ($i = 0; $i < count( $expRecsArray ); $i++ )
