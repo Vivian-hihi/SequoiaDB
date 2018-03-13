@@ -26,13 +26,13 @@ var flag = true;
 
 function main()
 {
-   var csName = COMMCSNAME + "_11777_2";
+   var csName = COMMCSNAME + "_11777_3";
    commDropCS( db, csName, true, "drop CS in the beginning" );
    
    var csOption = {Capped:true};
    commCreateCS( db, csName, false, "", csOption );
    
-   var clName = COMMCLNAME + "_11777_2";
+   var clName = COMMCLNAME + "_11777_3";
    var clOption = {Capped:true, Size:maxSize, AutoIndexId:false, OverWrite:false};
    var dbcl = commCreateCLByOption( db, csName, clName, clOption, true, true );
    
@@ -58,7 +58,7 @@ function main()
    checkLogicalID( dbclPrimary, null, null, {_id:1}, -1, 0, expIDs);
    checkLogicalID( dbclSlave, null, null, {_id:1}, -1, 0, expIDs);
    
-   var repeatNum = 10;
+   var repeatNum = 5;
    for(var j = 0 ; j< repeatNum; j++)
    {
       //随机获取某条记录的logicalID
