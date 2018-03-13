@@ -168,3 +168,56 @@ TEST_F( sdb14032, opDb )
    rc = db.analyze() ;
    EXPECT_EQ( SDB_NOT_CONNECTED, rc ) << "analyze shouldn't be executed" ;
 }
+
+TEST_F( sdb14032, opDb1 )
+{
+   INT32 rc = SDB_OK ;
+
+   // forceSession
+   SINT64 sessionId = 64 ;
+   rc = db.forceSession( sessionId ) ;
+   EXPECT_EQ( SDB_NOT_CONNECTED, rc ) << "forceSession shouldn't be executed" ;
+   
+   // forceStepUp
+   rc = db.forceStepUp() ;
+   EXPECT_EQ( SDB_NOT_CONNECTED, rc ) << "forceStepUp shouldn't be executed" ;
+
+   // invalidateCache
+   rc = db.invalidateCache() ;
+   EXPECT_EQ( SDB_NOT_CONNECTED, rc ) << "invalidateCache shouldn't be executed" ;
+   
+   // reloadConfig
+   rc = db.reloadConfig() ;
+   EXPECT_EQ( SDB_NOT_CONNECTED, rc ) << "reloadConfig shouldn't be executed" ;
+   
+   // setPDLevel
+   rc = db.setPDLevel( 5 ) ;
+   EXPECT_EQ( SDB_NOT_CONNECTED, rc ) << "setPDLevel shouldn't be executed" ;
+
+   // trace
+   UINT32 traceBufSize = 256 ;
+   rc = db.traceStart( traceBufSize ) ;
+   EXPECT_EQ( SDB_NOT_CONNECTED, rc ) << "traceStart shouldn't be executed" ;
+   rc = db.traceResume() ;
+   EXPECT_EQ( SDB_NOT_CONNECTED, rc ) << "traceResume shouldn't be executed" ;
+   sdbCursor cursor ;
+   rc = db.traceStatus( cursor ) ;
+   EXPECT_EQ( SDB_NOT_CONNECTED, rc ) << "traceStatus shouldn't be executed" ;
+   rc = db.traceStop( NULL ) ;
+   EXPECT_EQ( SDB_NOT_CONNECTED, rc ) << "traceStop shouldn't be executed" ;
+
+   // msg
+   const CHAR* message = "ABCDEEDCBA" ;
+   rc = db.msg( message ) ;
+   EXPECT_EQ( SDB_NOT_CONNECTED, rc ) << "msg shouldn't be executed" ;
+   
+   // unloadCS loadCS renameCollectionSpace
+   const CHAR* csName = "testCs" ;
+   rc = db.unloadCS( csName ) ;
+   EXPECT_EQ( SDB_NOT_CONNECTED, rc ) << "unloadCS shouldn't be executed" ;
+   rc = db.loadCS( csName ) ;
+   EXPECT_EQ( SDB_NOT_CONNECTED, rc ) << "loadCS shouldn't be executed" ;
+   const CHAR* newCsName = "testCs_1" ;
+   rc = db.renameCollectionSpace( csName, newCsName ) ;
+   EXPECT_EQ( SDB_NOT_CONNECTED, rc ) << "renameCollectionSpace shouldn't be executed" ;
+}

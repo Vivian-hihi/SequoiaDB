@@ -137,6 +137,8 @@ TEST_F( sdbCollection14035, opCL )
    EXPECT_EQ( SDB_NOT_CONNECTED, rc ) << "open lob shouldn't be executed" ;
    rc = cl.listLobs( cursor ) ;
    EXPECT_EQ( SDB_NOT_CONNECTED, rc ) << "list lobs shouldn't be executed" ;
+   rc = cl.listLobPieces( cursor ) ;
+   EXPECT_EQ( SDB_NOT_CONNECTED, rc ) << "listLobPieces shouldn't be executed" ;
 
    // truncate
    rc = cl.truncate() ;

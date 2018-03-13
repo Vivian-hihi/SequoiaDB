@@ -100,5 +100,9 @@ TEST_F( opRG12743, opRG )
    EXPECT_EQ( SDB_NOT_CONNECTED, rc ) << "attach node shouldn't succeed" ;
    rc = rg.detachNode( "localhost", "1234" ) ;
    EXPECT_EQ( SDB_NOT_CONNECTED, rc ) << "detach node shouldn't succeed" ;
+
+   // reelect
+   rc = rg.reelect() ;
+   EXPECT_EQ( SDB_NOT_CONNECTED, rc ) << "reelect shouldn't succeed" ;
 }
 

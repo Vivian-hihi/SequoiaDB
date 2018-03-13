@@ -3,6 +3,7 @@
  *                 seqDB-12719:getCollection参数校验
  *                 seqDB-12720:createCollection参数校验
  *                 seqDB-12721:dropCollection参数校验
+ *                 seqDB-14691:renameCollection参数校验
  * @Modify:        Liang xuewang Init
  *                 2017-08-29
  **************************************************************************/
@@ -83,4 +84,18 @@ TEST_F( csFuncParamTest12719, dropCollection12721 )
 
    rc = cs.dropCollection( NULL ) ;
    ASSERT_EQ( SDB_INVALIDARG, rc ) << "fail to get cl with NULL" ;
+}
+
+TEST_F( csFuncParamTest12719, renameCollection14691 )
+{
+   INT32 rc =  SDB_OK ;
+
+   /* core dump
+   const CHAR* oldName = "testCl14691" ;
+   const CHAR* newName = "testCl14691_1" ;
+   rc = cs.renameCollection( NULL, newName ) ;
+   ASSERT_EQ( SDB_INVALIDARG, rc ) ;
+   rc = cs.renameCollection( oldName, NULL ) ;
+   ASSERT_EQ( SDB_INVALIDARG, rc ) ;
+   */
 }

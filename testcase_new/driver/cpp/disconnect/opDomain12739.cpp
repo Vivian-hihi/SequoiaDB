@@ -70,4 +70,6 @@ TEST_F( opDomain12739, opDoamin )
    EXPECT_EQ( SDB_NOT_CONNECTED, rc ) << "list cs in domain shouldn't succeed" ;
    rc = domain.listCollectionsInDomain( cursor ) ;
    EXPECT_EQ( SDB_NOT_CONNECTED, rc ) << "list cl in domain shouldn't succeed" ;
+   rc = domain.listReplicaGroupInDomain( cursor ) ;
+   EXPECT_EQ( SDB_NOT_CONNECTED, rc ) << "listReplicaGroupInDomain shouldn't succeed" ;
 }

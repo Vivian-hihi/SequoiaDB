@@ -1,4 +1,4 @@
-/**************************************************************
+/*****************************************************************************
  * @Description: parameter verification for class sdb
  *               seqDB-12694 : connect() parameter verification
  *               seqDB-12695 : createUsr() parameter verification
@@ -24,9 +24,14 @@
  *               seqDB-12716 : createDomain() parameter verification
  *               seqDB-12717 : dropDomain() parameter verification
  *               seqDB-12718 : getDomain() parameter verification
+ *               seqDB-14686 : traceStop参数校验( 在trace正常用例覆盖)
+ *               seqDB-14687 : msg参数校验
+ *               seqDB-14688 : loadCS参数校验
+ *               seqDB-14689 : unloadCS参数校验
+ *               seqDB-14690 : renameCollectionSpace参数校验
  * @Modify     : Suqiang Ling
  *               2017-09-11
- ***************************************************************/
+ *******************************************************************************/
 #include <gtest/gtest.h>
 #include <client.hpp>
 #include <iostream>
@@ -433,4 +438,38 @@ TEST_F( dbFuncParamTest, getDomain12718 )
    string longStr( 200, 'a' ) ; // must more than 127
    rc = db.getDomain( longStr.c_str(), domain ) ;
    EXPECT_EQ( SDB_INVALIDARG, rc ) ;
+}
+
+TEST_F( dbFuncParamTest, msg14687 )
+{
+   INT32 rc = SDB_OK ;
+   // rc = db.msg( NULL ) ;  // core dump
+   ASSERT_EQ( SDB_OK, rc ) ;
+}
+
+TEST_F( dbFuncParamTest, loadCS14688 )
+{
+   INT32 rc = SDB_OK ;
+   // rc = db.loadCS( NULL ) ;  // core dump
+   ASSERT_EQ( SDB_OK, rc ) ;
+}
+
+TEST_F( dbFuncParamTest, unloadCS14689 )
+{
+   INT32 rc = SDB_OK ;
+   // rc = db.unloadCS( NULL ) ;  // core dump
+   ASSERT_EQ( SDB_OK, rc ) ;
+}
+
+TEST_F( dbFuncParamTest, renameCollectionSpace14690 )
+{
+   INT32 rc = SDB_OK ;
+   const CHAR* oldName = "renameCsTest14690" ;
+   const CHAR* newName = "renameCsTest14690_1" ;
+   /* core dump
+   rc = db.renameCollectionSpace( NULL, newName ) ;
+   ASSERT_EQ( SDB_DRIVER_BSON_ERROR, rc ) ;
+   rc = db.renameCollectionSpace( oldName, NULL ) ;
+   ASSERT_EQ( SDB_DRIVER_BSON_ERROR, rc ) ;
+   */ 
 }

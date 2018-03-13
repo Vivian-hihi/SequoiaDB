@@ -66,3 +66,14 @@ TEST_F( opCS12740, opCS )
    rc = cs.dropCollection( pClName ) ;
    EXPECT_EQ( SDB_NOT_CONNECTED, rc ) << "drop cl shouldn't succeed" ;
 }
+
+TEST_F( opCS12740, opCS1 )
+{
+   INT32 rc = SDB_OK ;
+
+   // renameCollection
+   const CHAR* oldClName = "testCl" ;
+   const CHAR* newClName = "testCl_1" ;
+   rc = cs.renameCollection( oldClName, newClName ) ;
+   EXPECT_EQ( SDB_NOT_CONNECTED, rc ) << "renameCollection shouldn't succeed" ;
+}

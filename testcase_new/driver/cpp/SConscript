@@ -32,6 +32,9 @@ testFiles = [
    [ "./meta/cs12511_12659.cpp" ],
    [ "./meta/cl12512_12747.cpp" ],
    [ "./meta/cl12660.cpp" ],
+   [ "./meta/loadUnloadCS14680.cpp" ],
+   [ "./meta/renameCsCl14681.cpp" ],
+   [ "./meta/listGroupInDomain14685.cpp" ], # sync
    [ "./index/index12514.cpp" ],
    [ "./index/idIndex12515.cpp" ],
    [ "./cursor/closeCursor12685_12686.cpp" ],
@@ -42,6 +45,13 @@ testFiles = [
    [ "./dbOpr/evalJS12525.cpp" ],
    [ "./dbOpr/trans12520_12675.cpp" ],  # config
    [ "./dbOpr/sql12676_12678.cpp" ],
+   [ "./dbOpr/forceSession14673.cpp" ],
+   [ "./dbOpr/forceStepUp14674.cpp" ], # sync
+   [ "./dbOpr/invalidateCache14675.cpp" ], # sync
+   [ "./dbOpr/reloadConf14676.cpp" ], # sync
+   [ "./dbOpr/setPDLevel14677.cpp" ], # sync
+   [ "./dbOpr/trace14678.cpp" ], # sync
+   [ "./dbOpr/msg14679.cpp" ],
    [ "./disconnect/opCL12741.cpp" ],
    [ "./disconnect/opSdb12531.cpp" ],
    [ "./disconnect/opDomain12739.cpp" ],
@@ -66,6 +76,7 @@ testFiles = [
    [ "./crud/crud12513.cpp" ],
    [ "./crud/aggregate12518.cpp" ],
    [ "./crud/pop14505.cpp" ],
+   [ "./crud/getCount14682.cpp" ],
    [ "./decimal/absAndGetSign8892.cpp" ],
    [ "./decimal/add8895.cpp" ],
    [ "./decimal/append8865.cpp" ],
@@ -96,6 +107,7 @@ testFiles = [
    [ "./cls/getSlaveMultiPos13785.cpp" ], # sync
    [ "./cls/getSlaveNoPos13786.cpp" ], # sync
    [ "./cls/getSlaveParaCheck13787.cpp" ],
+   [ "./cls/reelect14684.cpp" ], # sync
    [ "./cache/createClWithCache7800.cpp" ],
    [ "./cache/getCsWithCache7801.cpp" ],
    [ "./cache/getClWithCache7802.cpp" ],
@@ -111,6 +123,7 @@ testFiles = [
    [ "./lob/lobClose12554_12665.cpp" ],
    [ "./lob/closeAllCursors11063.cpp" ],
    [ "./lob/lobMode12737_12738.cpp" ],
+   [ "./lob/listLobPieces14683.cpp" ],
    [ "./misc/analyze11667.cpp" ],
    [ "./misc/sync12237.cpp" ],
    [ "./misc/flushConf12476.cpp" ],
