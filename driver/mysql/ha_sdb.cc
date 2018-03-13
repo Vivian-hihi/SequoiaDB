@@ -972,7 +972,7 @@ int ha_sdb::rnd_pos( uchar *buf, uchar *pos )
    bson::BSONObj oidObj = objBuilder.obj() ;
 
    //assert(cl->get_tid() == ha_thd()->thread_id()) ;
-   rc = cl->query_one( oidObj, cur_rec ) ;
+   rc = cl->query_one( cur_rec, oidObj ) ;
    if ( rc )
    {
       goto error ;
