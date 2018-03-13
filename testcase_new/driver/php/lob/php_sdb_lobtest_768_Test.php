@@ -6,7 +6,7 @@
 ****************************************************/
 <?php
    define('Cur_Path', dirname(__FILE__));
-   include_once Cur_Path.'/lib/lob.php';
+   include_once Cur_Path.'/../commlib/lob.php';
    include_once Cur_Path.'/../global.php';
    class LobTest extends PHPUnit_Framework_TestCase
    {
