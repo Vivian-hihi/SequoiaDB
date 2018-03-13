@@ -36,11 +36,15 @@ class DateType11191 extends BaseOperator
          array( 'a' => 1,  'b' => new SequoiaTimestamp( "1902-01-01-00:00:00.000000" ) ), 
          array( 'a' => 2,  'b' => new SequoiaTimestamp( "2037-12-31-23:59:59.999999" ) ), 
          array( 'a' => 3,  'b' => new SequoiaTimestamp( "1902-01-01T00:00:00.000Z" ) ), 
-         array( 'a' => 4,  'b' => new SequoiaTimestamp( "2037-12-31T23:59:59.999Z" ) ), 
+         array( 'a' => 4,  'b' => new SequoiaTimestamp( "2037-12-31T12:59:59.999Z" ) ), 
          array( 'a' => 5,  'b' => new SequoiaTimestamp( "1902-01-01T00:00:00.000+0800" ) ), 
-         array( 'a' => 6,  'b' => new SequoiaTimestamp( "2038-01-01T10:00:00.000+0800" ) )
-         //array( 'a' => 7,  'b' => new SequoiaTimestamp( "-2147483648" ) ), 
-         //array( 'a' => 8,  'b' => new SequoiaTimestamp( "2147483647" ) )
+         array( 'a' => 6,  'b' => new SequoiaTimestamp( "2037-12-31T12:59:59.999+0800" ) ), 
+         array( 'a' => 7,  'b' => new SequoiaTimestamp( "-2147483648" ) ), 
+         array( 'a' => 8,  'b' => new SequoiaTimestamp( "2147483647" ) ), 
+         array( 'a' => 9,  'b' => new SequoiaTimestamp( -2147483648 ) ), 
+         array( 'a' => 10,  'b' => new SequoiaTimestamp( 2147483647 ) ), 
+         array( 'a' => 11,  'b' => new SequoiaTimestamp( -2147483649 ) ), 
+         array( 'a' => 12,  'b' => new SequoiaTimestamp( 2147483648 ) )
       );
       
       for( $i = 0; $i < count( $recsArray ); $i++ )
@@ -111,29 +115,31 @@ class TestDate11191 extends PHPUnit_Framework_TestCase
       $errno = self::$dbh -> getErrno();
       $this -> assertEquals( -29, $errno );
       
-      $this -> assertCount( 7, $actRecsArray );
+      $this -> assertCount( 13, $actRecsArray );
       
       $expRecsArray = array( 
          array( 'a' => 0,  'b' => self::$localTime ), 
          array( 'a' => 1,  'b' => "1902-01-01-00.00.00.000000" ), 
          array( 'a' => 2,  'b' => "2037-12-31-23.59.59.999999" ), 
-         array( 'a' => 3,  'b' => "1902-01-01-08.05.52.000000" ), 
-         array( 'a' => 4,  'b' => "2037-01-01-07.59.59.999000" ), 
-         array( 'a' => 5,  'b' => "1902-01-01-00.05.52.000000" ), 
-         array( 'a' => 6,  'b' => "2038-12-31-23.59.59.999000" )
-         //array( 'a' => 7,  'b' => "1905-05-06-03.20.00.000000" ) 
-         //array( 'a' => 8,  'b' => "1904-05-06-03.20.00.000000" )
+         array( 'a' => 3,  'b' => "1902-01-01" ), 
+         array( 'a' => 4,  'b' => "2037-12-31" ), 
+         array( 'a' => 5,  'b' => "1902-01-01" ), 
+         array( 'a' => 6,  'b' => "2037-12-31" ), 
+         array( 'a' => 7,  'b' => "1901-12-14" ),  //"-2147483648"
+         array( 'a' => 8,  'b' => "2038-01-19" ),            // "2147483647"
+         array( 'a' => 9,  'b' => "1901-12-14" ),    // -2147483648
+         array( 'a' => 10,  'b' => "2038-01-19" ),   //  2147483647
+         array( 'a' => 11,  'b' => "2038-01-19" ),   // -2147483649  //avalid
+         array( 'a' => 12,  'b' => "1901-12-14" )    //  2147483648  //avalid
       );
       
       for ($i = 0; $i < count( $expRecsArray ); $i++ )
       {
-         if ( $i < 2 ) {
-            $this -> assertEquals( $expRecsArray[$i]['b'], $actRecsArray[$i]['b'] -> __toString() );
-         } else if ($i == 2 || $i == 4 ){
-            $this -> assertContains( "1902-01-01", $actRecsArray[$i]['b'] -> __toString(), '$i = '.$i );
-         } else if ($i == 3 || $i == 5){
-            $this -> assertContains( "2038-01-01", $actRecsArray[$i]['b'] -> __toString(), '$i = '.$i );
-         } 
+         if ( $i < 3 ) {
+            $this -> assertEquals( $expRecsArray[$i]['b'], $actRecsArray[$i]['b'] -> __toString(), '$i = '.$i );
+         } else {
+            $this -> assertContains( $expRecsArray[$i]['b'], $actRecsArray[$i]['b'] -> __toString(), '$i = '.$i );
+         }
       }
    }
    

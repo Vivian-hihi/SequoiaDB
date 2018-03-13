@@ -51,8 +51,12 @@ class DateType11189 extends BaseOperator
          array( 'a' => 16, 'b' => new SequoiaDate( "253402272000" ) ), 
          array( 'a' => 17, 'b' => new SequoiaDate( "2209017601" ) ), 
          array( 'a' => 18, 'b' => new SequoiaDate( "253402272001" ) ),
-         //array( 'a' => 19, 'b' => new SequoiaDate( -9223372036854775808 ) ), 
-         //array( 'a' => 20, 'b' => new SequoiaDate(  9223372036854775807 ) )
+         array( 'a' => 19, 'b' => new SequoiaDate( -9223372036854775807 ) ), // php has no 64 bits, the largest int 32 bits
+         array( 'a' => 20, 'b' => new SequoiaDate(  9223372036854775807 ) ), 
+         array( 'a' => 21, 'b' => new SequoiaDate( -2147483648 ) ), 
+         array( 'a' => 22, 'b' => new SequoiaDate(  2147483647 ) ), 
+         array( 'a' => 23, 'b' => new SequoiaDate( -9223372036854775809 ) ),  // avalid value
+         array( 'a' => 24, 'b' => new SequoiaDate(  9223372036854775808 ) )   // avalid value
       );
       
       for( $i = 0; $i < count( $recsArray ); $i++ )
@@ -123,7 +127,7 @@ class TestDate11189 extends PHPUnit_Framework_TestCase
       $errno = self::$dbh -> getErrno();
       $this -> assertEquals( -29, $errno );
       
-      $this -> assertCount( 19, $actRecsArray );
+      $this -> assertCount( 25, $actRecsArray );
       
       $expRecsArray = array( 
          array( 'a' => 0,  'b' => self::$localDate ), 
@@ -145,8 +149,12 @@ class TestDate11189 extends PHPUnit_Framework_TestCase
          array( 'a' => 16, 'b' => "1978-01-12" ), 
          array( 'a' => 17, 'b' => "1970-01-26" ), 
          array( 'a' => 18, 'b' => "1978-01-12" ),
-         //array( 'a' => 19, 'b' => "-9223372036854775808" ), 
-         //array( 'a' => 20, 'b' => "9223372036854775807" )
+         array( 'a' => 19, 'b' => "-9223372036854775807" ),  
+         array( 'a' => 20, 'b' => "9223372036854775807" ), 
+         array( 'a' => 21, 'b' => "1969-12-07" ),  // -2147483648
+         array( 'a' => 22, 'b' => "1970-01-26" ),  //  2147483647
+         array( 'a' => 23, 'b' => "1970-01-01" ),  // -9223372036854775809
+         array( 'a' => 24, 'b' => "1970-01-01" )   //  9223372036854775808
       );
       
       for ($i = 0; $i < count( $expRecsArray ); $i++ )
@@ -154,15 +162,17 @@ class TestDate11189 extends PHPUnit_Framework_TestCase
          $this -> assertEquals( $expRecsArray[$i]['b'], $actRecsArray[$i]['b'] -> __toString(), '$i = '.$i );
       }
    }
-   /*
-   function test_dropCL()
+   
+   public static function tearDownAfterClass()
    {
       echo "\n---Begin to drop cl in the end.\n";
       
       self::$dbh -> dropCL( self::$csName, self::$clName, false );
       $errno = self::$dbh -> getErrno();
-      $this -> assertEquals( 0, $errno );
-   }*/
+      if ($errno != 0) {
+          throw new Exception("failed to drop cl, errno=".$errno);
+      }
+   }
   
 }
 ?>
