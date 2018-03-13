@@ -272,6 +272,7 @@ namespace seadapter
    done:
       return rc ;
    error:
+      _setQueryBusyFlag( FALSE ) ;
       goto done ;
    }
 
