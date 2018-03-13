@@ -168,8 +168,15 @@ namespace engine
                else
                {
                   rc = _prepareNextSubContext( cb ) ;
-                  PD_RC_CHECK( rc, PDERROR, "Prepare next sub context "
-                               "failed[ %d ]", rc ) ;
+                  if ( rc )
+                  {
+                     if ( SDB_DMS_EOC != rc )
+                     {
+                        PD_LOG( PDERROR, "Prepare next sub context "
+                                "failed[ %d ]", rc ) ;
+                     }
+                     goto error ;
+                  }
                   if ( !_subContext )
                   {
                      rc = SDB_DMS_EOC ;
@@ -369,8 +376,15 @@ namespace engine
 
       rc = rtnGetMore( _subContext->contextID(), maxNumToReturn,
                        contextBuf, cb, rtnCB ) ;
-      PD_RC_CHECK( rc, PDERROR, "Get more for context[ %lld ] failed[ %d ]",
-                   _subContext->contextID(), rc ) ;
+      if ( rc )
+      {
+         if ( SDB_DMS_EOC != rc )
+         {
+            PD_LOG( PDERROR, "Get more for context[ %lld ] failed[ %d ]",
+                    _subContext->contextID(), rc ) ;
+         }
+         goto error ;
+      }
 
       {
          _subContext->setBuffer( contextBuf ) ;
