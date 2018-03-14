@@ -161,7 +161,7 @@ TEST_F( sdbParaVerify, snapshot )
    ASSERT_EQ( SDB_INVALIDARG, rc ) ;
    rc = sdbGetSnapshot( cs, snapType, NULL, NULL, NULL, &cursor ) ;
    ASSERT_EQ( SDB_CLT_INVALID_HANDLE, rc ) ;
-   rc = sdbGetSnapshot( db, 13, NULL, NULL, NULL, &cursor ) ;
+   rc = sdbGetSnapshot( db, 14, NULL, NULL, NULL, &cursor ) ;
    ASSERT_EQ( SDB_INVALIDARG, rc ) ;
    rc = sdbGetSnapshot( db, snapType, NULL, NULL, NULL, NULL ) ;
    ASSERT_EQ( SDB_INVALIDARG, rc ) ;
