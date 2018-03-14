@@ -53,16 +53,19 @@
     </CodeAnalysisDependentAssemblyPaths>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Crud\DataType\MinKeyAndMaxKey14582.cs" />
-    <Compile Include="Crud\DataType\NullData14583.cs" />
-    <Compile Include="Crud\DataType\OidData14591.cs" />
+    <Compile Include="Crud\DataType\Bool14590.cs" />
+    <Compile Include="Crud\DataType\Regex14586.cs" />
     <Compile Include="Crud\Insert\Insert14528.cs" />
     <Compile Include="Crud\Insert\Insert14529.cs" />
     <Compile Include="Crud\Insert\BulkInsert14531.cs" />
     <Compile Include="Crud\Insert\Insert14532.cs" />
-    <Compile Include="Crud\Update\UpsertShardingKey12647.cs" />
-    <Compile Include="Crud\Update\UpdateShardingKey12645.cs" />
-    <Compile Include="Crud\Update\Update14534.cs" />
+    <Compile Include="Crud\Query\Count14544.cs" />
+    <Compile Include="Crud\Query\Cursor14581.cs" />
+    <Compile Include="Crud\Query\QueryWithFlag14545.cs" />
+    <Compile Include="Crud\Update\QueryAndUpdate12646.cs" />
+    <Compile Include="Crud\Update\QueryAndUpdate14537.cs" />
+    <Compile Include="Crud\Update\UpdateParamVerify14538.cs" />
+    <Compile Include="Crud\Update\Upsert14535.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TestCommon\Common.cs" />
     <Compile Include="TestCommon\Config.cs" />

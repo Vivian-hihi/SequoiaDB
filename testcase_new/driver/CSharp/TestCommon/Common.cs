@@ -20,21 +20,21 @@ namespace CSharp.TestCommon
         {
             try
             {
-                sdb.ListReplicaGroups();
-            }
-            catch (BaseException e)
+			    sdb.ListReplicaGroups();
+		    }
+            catch(BaseException e)
             {
                 if (e.ErrorCode == -159) // -159: The operation is for coord node only
                     return true;
-            }
+			}
             return false;
-        }
+		}
 
         /// <summary>
         /// judge whether two BsonDocuments equal. 
         /// this func can adapt disorder key.
         /// </summary>
-        public static bool isEquals(BsonDocument a, BsonDocument b)
+        public static bool IsEqual(BsonDocument a, BsonDocument b)
         {
             if (a.ElementCount != b.ElementCount)
                 return false;
@@ -44,6 +44,18 @@ namespace CSharp.TestCommon
                 if (!b.Contains(name))
                     return false;
                 if (!a.GetElement(name).Equals(b.GetElement(name)))
+                    return false;
+            }
+            return true;
+        }
+
+        public static bool IsEqual(List<BsonDocument> a, List<BsonDocument> b)
+        {
+            if (a.Count != b.Count)
+                return false;
+            for (int i = 0; i < a.Count; ++i)
+            {
+                if (!IsEqual(a.ElementAt(i), b.ElementAt(i)))
                     return false;
             }
             return true;
