@@ -76,31 +76,12 @@ namespace engine
       m_pDmsCB = m_pKrCB->getDMSCB() ;
       m_pRtnCB = m_pKrCB->getRTNCB() ;
 
-      rc = rtnTestAndCreateCL( OM_CS_STRATEGY_CL_BUSINESS_TASK_PRO,
+      rc = rtnTestAndCreateCL( OM_CS_STRATEGY_CL_STRATEGY_PRO,
                                cb, m_pDmsCB, NULL, TRUE ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Failed to create collection[%s], rc: %d",
-                 OM_CS_STRATEGY_CL_BUSINESS_TASK_PRO, rc ) ;
-         goto error ;
-      }
-
-      rc = fromjson ( OM_STRATEGY_BUSINESSTASKPROIDX1, indexDef ) ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Parse index define[%s] failed, rc: %d",
-                 OM_STRATEGY_BUSINESSTASKPROIDX1, rc ) ;
-         goto error ;
-      }
-
-      rc = rtnTestAndCreateIndex( OM_CS_STRATEGY_CL_BUSINESS_TASK_PRO,
-                                  indexDef, cb, m_pDmsCB, NULL, TRUE ) ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Create index[%s] on collection[%s] failed, rc: %d",
-                 indexDef.toString().c_str(),
-                 OM_CS_STRATEGY_CL_BUSINESS_TASK_PRO,
-                 rc ) ;
+                 OM_CS_STRATEGY_CL_STRATEGY_PRO, rc ) ;
          goto error ;
       }
 
@@ -148,10 +129,10 @@ namespace engine
       }
       strategyInfo.setTaskID( taskID ) ;
 
-      if ( strategyInfo.getID() >= m_curRuleID ||
-           strategyInfo.getID() <= 0 )
+      if ( strategyInfo.getRuleID() >= m_curRuleID ||
+           strategyInfo.getRuleID() <= 0 )
       {
-         strategyInfo.setID( incRuleID() ) ;
+         strategyInfo.setRuleID( incRuleID() ) ;
       }
 
    done:
@@ -179,20 +160,20 @@ namespace engine
          BSONObj matcher = BSON( OM_REST_FIELD_RULE_ID <<
                                  BSON( "$gte" << beginID ) ) ;
 
-         rc = rtnUpdate( OM_CS_STRATEGY_CL_BUSINESS_TASK_PRO,
+         rc = rtnUpdate( OM_CS_STRATEGY_CL_STRATEGY_PRO,
                          matcher, updator, s_emptyObj, 0, cb,
                          &updatedNum ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "Update[%s] on collection[%s] failed, rc: %d",
                     updator.toString().c_str(),
-                    OM_CS_STRATEGY_CL_BUSINESS_TASK_PRO,
+                    OM_CS_STRATEGY_CL_STRATEGY_PRO,
                     rc ) ;
             goto error ;
          }
          PD_LOG( PDINFO, "Updated %lld records on collection[%s] by "
                  "condition[%s]", updatedNum,
-                 OM_CS_STRATEGY_CL_BUSINESS_TASK_PRO,
+                 OM_CS_STRATEGY_CL_STRATEGY_PRO,
                  matcher.toString().c_str() ) ;
 
          incRuleID() ;
@@ -223,20 +204,20 @@ namespace engine
          BSONObj matcher = BSON( OM_REST_FIELD_RULE_ID <<
                                  BSON( "$gt" << beginID ) ) ;
 
-         rc = rtnUpdate( OM_CS_STRATEGY_CL_BUSINESS_TASK_PRO,
+         rc = rtnUpdate( OM_CS_STRATEGY_CL_STRATEGY_PRO,
                          matcher, updator, s_emptyObj, 0, cb,
                          &updatedNum ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "Update[%s] on collection[%s] failed, rc: %d",
                     updator.toString().c_str(),
-                    OM_CS_STRATEGY_CL_BUSINESS_TASK_PRO,
+                    OM_CS_STRATEGY_CL_STRATEGY_PRO,
                     rc ) ;
             goto error ;
          }
          PD_LOG( PDINFO, "Updated %lld records on collection[%s] by "
                  "condition[%s]", updatedNum,
-                 OM_CS_STRATEGY_CL_BUSINESS_TASK_PRO,
+                 OM_CS_STRATEGY_CL_STRATEGY_PRO,
                  matcher.toString().c_str() ) ;
 
          decRuleID() ;
@@ -343,14 +324,14 @@ namespace engine
       SINT64 contextID = -1 ;
       rtnContextBuf buffObj ;
 
-      rc = rtnQuery( OM_CS_STRATEGY_CL_BUSINESS_TASK_PRO,
+      rc = rtnQuery( OM_CS_STRATEGY_CL_STRATEGY_PRO,
                      selector, matcher, orderBy, s_emptyObj,
                      FLG_QUERY_WITH_RETURNDATA, cb, 0, 1,
                      m_pDmsCB, m_pRtnCB, contextID ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Query on collection[%s] failed, rc: %d",
-                 OM_CS_STRATEGY_CL_BUSINESS_TASK_PRO, rc ) ;
+                 OM_CS_STRATEGY_CL_STRATEGY_PRO, rc ) ;
          goto error ;
       }
 
@@ -385,14 +366,14 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       static BSONObj orderBy = BSON( OM_REST_FIELD_RULE_ID << 1 ) ;
-      rc = rtnQuery( OM_CS_STRATEGY_CL_BUSINESS_TASK_PRO,
+      rc = rtnQuery( OM_CS_STRATEGY_CL_STRATEGY_PRO,
                      s_emptyObj, s_emptyObj, orderBy, s_emptyObj,
                      FLG_QUERY_WITH_RETURNDATA, cb, 0, -1,
                      m_pDmsCB, m_pRtnCB, contextID ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Query on collection[%s] failed, rc: %d",
-                 OM_CS_STRATEGY_CL_BUSINESS_TASK_PRO, rc ) ;
+                 OM_CS_STRATEGY_CL_STRATEGY_PRO, rc ) ;
          goto error ;
       }
 
@@ -428,7 +409,7 @@ namespace engine
          goto error ;
       }
 
-      rc = incRecordRuleID( strategyInfo.getID(), cb ) ;
+      rc = incRecordRuleID( strategyInfo.getRuleID(), cb ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Increase rule ID failed, rc: %d", rc ) ;
@@ -437,13 +418,13 @@ namespace engine
       hasIncRuleID = TRUE ;
 
       obj = strategyInfo.toBSON() ;
-      rc = rtnInsert( OM_CS_STRATEGY_CL_BUSINESS_TASK_PRO,
+      rc = rtnInsert( OM_CS_STRATEGY_CL_STRATEGY_PRO,
                       obj, 1, 0, cb ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Insert strategy info to collection[%s] failed, "
                  "rc: %d", obj.toString().c_str(),
-                 OM_CS_STRATEGY_CL_BUSINESS_TASK_PRO,
+                 OM_CS_STRATEGY_CL_STRATEGY_PRO,
                  rc ) ;
          goto error ;
       }
@@ -453,7 +434,7 @@ namespace engine
    error:
       if ( hasIncRuleID )
       {
-         decRecordRuleID( strategyInfo.getID(), cb ) ;
+         decRecordRuleID( strategyInfo.getRuleID(), cb ) ;
       }
       goto done ;
    }
@@ -479,20 +460,20 @@ namespace engine
       BSONObj matcher = BSON( OM_REST_FIELD_RULE_ID << id ) ;
 
       ossScopedLock lock( &m_mutex ) ;
-      rc = rtnUpdate( OM_CS_STRATEGY_CL_BUSINESS_TASK_PRO,
+      rc = rtnUpdate( OM_CS_STRATEGY_CL_STRATEGY_PRO,
                       matcher, updator, s_emptyObj, 0, cb,
                       &updatedNum ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Update[%s] on collection[%s] failed, rc: %d",
                  updator.toString().c_str(),
-                 OM_CS_STRATEGY_CL_BUSINESS_TASK_PRO,
+                 OM_CS_STRATEGY_CL_STRATEGY_PRO,
                  rc ) ;
          goto error ;
       }
       PD_LOG( PDINFO, "Update %lld records on collection[%s] by "
               "condition[%s]", updatedNum,
-              OM_CS_STRATEGY_CL_BUSINESS_TASK_PRO,
+              OM_CS_STRATEGY_CL_STRATEGY_PRO,
               matcher.toString().c_str() ) ;
 
    done:
@@ -528,20 +509,20 @@ namespace engine
          BSONObj matcher = BSON( OM_REST_FIELD_RULE_ID << id ) ;
 
          ossScopedLock lock( &m_mutex ) ;
-         rc = rtnUpdate( OM_CS_STRATEGY_CL_BUSINESS_TASK_PRO,
+         rc = rtnUpdate( OM_CS_STRATEGY_CL_STRATEGY_PRO,
                          matcher, updator, s_emptyObj, 0, cb,
                          &updatedNum ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "Update[%s] on collection failed, rc: %d",
                     updator.toString().c_str(),
-                    OM_CS_STRATEGY_CL_BUSINESS_TASK_PRO,
+                    OM_CS_STRATEGY_CL_STRATEGY_PRO,
                     rc ) ;
             goto error ;
          }
          PD_LOG( PDINFO, "Update %lld records on collection[%s] by "
                  "condition[%s]", updatedNum,
-                 OM_CS_STRATEGY_CL_BUSINESS_TASK_PRO,
+                 OM_CS_STRATEGY_CL_STRATEGY_PRO,
                  matcher.toString().c_str() ) ;
       }
 
@@ -575,20 +556,20 @@ namespace engine
          BSONObj matcher = BSON( OM_REST_FIELD_RULE_ID << id ) ;
 
          ossScopedLock lock( &m_mutex ) ;
-         rc = rtnUpdate( OM_CS_STRATEGY_CL_BUSINESS_TASK_PRO,
+         rc = rtnUpdate( OM_CS_STRATEGY_CL_STRATEGY_PRO,
                          matcher, updator, s_emptyObj, 0, cb,
                          &updatedNum ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "Update[%s] on collection failed, rc: %d",
                     updator.toString().c_str(),
-                    OM_CS_STRATEGY_CL_BUSINESS_TASK_PRO,
+                    OM_CS_STRATEGY_CL_STRATEGY_PRO,
                     rc ) ;
             goto error ;
          }
          PD_LOG( PDINFO, "Update %lld records on collection[%s] by "
                  "condition[%s]", updatedNum,
-                 OM_CS_STRATEGY_CL_BUSINESS_TASK_PRO,
+                 OM_CS_STRATEGY_CL_STRATEGY_PRO,
                  matcher.toString().c_str() ) ;
       }
 
@@ -611,20 +592,20 @@ namespace engine
       BSONObj matcher = BSON( OM_REST_FIELD_RULE_ID << id ) ;
 
       ossScopedLock lock( &m_mutex ) ;
-      rc = rtnUpdate( OM_CS_STRATEGY_CL_BUSINESS_TASK_PRO,
+      rc = rtnUpdate( OM_CS_STRATEGY_CL_STRATEGY_PRO,
                       matcher, updator, s_emptyObj, 0, cb,
                       &updatedNum ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Update[%s] on collection failed, rc: %d",
                  updator.toString().c_str(),
-                 OM_CS_STRATEGY_CL_BUSINESS_TASK_PRO,
+                 OM_CS_STRATEGY_CL_STRATEGY_PRO,
                  rc ) ;
          goto error ;
       }
       PD_LOG( PDINFO, "Update %lld records on collection[%s] by "
               "condition[%s]", updatedNum,
-              OM_CS_STRATEGY_CL_BUSINESS_TASK_PRO,
+              OM_CS_STRATEGY_CL_STRATEGY_PRO,
               matcher.toString().c_str() ) ;
 
    done:
@@ -648,18 +629,18 @@ namespace engine
       {
          BSONObj matcher = BSON( OM_REST_FIELD_RULE_ID << id ) ;
 
-         rc = rtnDelete( OM_CS_STRATEGY_CL_BUSINESS_TASK_PRO, matcher,
+         rc = rtnDelete( OM_CS_STRATEGY_CL_STRATEGY_PRO, matcher,
                          s_emptyObj, 0, cb, &delNum ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "Delete[%s] on collection[%s] failed, rc: %d",
                     matcher.toString().c_str(),
-                    OM_CS_STRATEGY_CL_BUSINESS_TASK_PRO ) ;
+                    OM_CS_STRATEGY_CL_STRATEGY_PRO ) ;
             goto error ;
          }
          PD_LOG( PDINFO, "Delete %lld records on collection[%s] by "
                  "condition[%s]", delNum,
-                 OM_CS_STRATEGY_CL_BUSINESS_TASK_PRO,
+                 OM_CS_STRATEGY_CL_STRATEGY_PRO,
                  matcher.toString().c_str() ) ;
 
          rc = decRecordRuleID( id, cb ) ;

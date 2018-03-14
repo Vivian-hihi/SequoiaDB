@@ -513,6 +513,10 @@ namespace engine
          {
             return _vecCat ;
          }
+         OSS_INLINE vector< _pmdAddrPair > omAddrs() const
+         {
+            return _vecOm ;
+         }
          OSS_INLINE const CHAR *getTmpPath() const
          {
             return _dmsTmpBlkPath ;
