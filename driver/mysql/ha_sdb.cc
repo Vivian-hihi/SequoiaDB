@@ -616,22 +616,62 @@ error:
       return -1 ;
    }
 
-   int ha_sdb::index_first(uchar *buf)
-   {
-      return -1 ;
-   }
-
    int ha_sdb::index_last(uchar *buf)
    {
       return -1 ;
    }
+
+int ha_sdb::index_first(uchar *buf)
+{
+   int rc = 0 ;
+   bson::BSONObj hint ;
+   const char *idx_name = NULL ;
+   idx_name = sdb_get_idx_name( table->key_info + keynr ) ;
+   if ( idx_name )
+   {
+      hint = BSON( "" << idx_name ) ;
+   }
+   rc = cl->query( condition, sdbclient::_sdbStaticObject,
+                   sdbclient::_sdbStaticObject, hint ) ;
+   if ( rc )
+   {
+      goto error ;
+   }
+   rc = index_next( buf ) ;
+   switch(rc)
+   {
+      case SDB_OK:
+         {
+         	table->status = 0 ;
+   		   break;
+         }
+
+      case SDB_DMS_EOC:
+      case HA_ERR_END_OF_FILE:
+         {
+            rc = HA_ERR_KEY_NOT_FOUND ;
+            table->status = STATUS_NOT_FOUND ;
+            break ;
+         }
+
+      default:
+         {
+            table->status = STATUS_NOT_FOUND ;
+            break ;
+         }
+   }
+done:
+   condition = empty_obj ;
+   return rc ;
+error:
+   goto done ;
+}
 
 int ha_sdb::index_read_map( uchar *buf, const uchar *key_ptr,
                             key_part_map keypart_map,
                             enum ha_rkey_function find_flag )
 {
    int rc = 0 ;
-   int errnum = 0 ;
    bson::BSONObj orderbyObj, hint, condition_idx ;
    bson::BSONObjBuilder cond_builder ;
    const char *idx_name = NULL ;
@@ -644,7 +684,6 @@ int ha_sdb::index_read_map( uchar *buf, const uchar *key_ptr,
    }
    if ( rc )
    {
-      errnum = rc ;
       goto error ;
    }
    if ( !condition.isEmpty() )
@@ -666,7 +705,6 @@ int ha_sdb::index_read_map( uchar *buf, const uchar *key_ptr,
                    sdbclient::_sdbStaticObject, hint ) ;
    if ( rc )
    {
-      errnum = rc ;
       goto error ;
    }
    rc = index_next( buf ) ;
@@ -674,7 +712,6 @@ int ha_sdb::index_read_map( uchar *buf, const uchar *key_ptr,
    {
       case SDB_OK:
          {
-            errnum = 0 ;
          	table->status = 0 ;
    		   break;
          }
@@ -682,21 +719,20 @@ int ha_sdb::index_read_map( uchar *buf, const uchar *key_ptr,
       case SDB_DMS_EOC:
       case HA_ERR_END_OF_FILE:
          {
-            errnum = HA_ERR_KEY_NOT_FOUND ;
+            rc = HA_ERR_KEY_NOT_FOUND ;
             table->status = STATUS_NOT_FOUND ;
             break ;
          }
 
       default:
          {
-            errnum = rc ;
             table->status = STATUS_NOT_FOUND ;
             break ;
          }
    }
 done:
    condition = empty_obj ;
-   return errnum ;
+   return rc ;
 error:
    goto done ;
 }
