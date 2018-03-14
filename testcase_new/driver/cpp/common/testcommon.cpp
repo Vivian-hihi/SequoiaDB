@@ -185,3 +185,90 @@ done:
 error:
    goto done ;
 }
+
+/********************************************************************
+ * get current lsn of data node or cata node
+ * return 0 if success, return errno if fail
+ *
+ ********************************************************************/
+INT32 getCurrentLsn( sdb& db, UINT64* offset, UINT32* version )
+{
+   INT32 rc = SDB_OK ;
+
+   sdbCursor cursor ;
+   BSONObj obj ;
+   BSONElement element ;
+   BSONObj subobj ;
+
+   rc = db.getSnapshot( cursor, SDB_SNAP_DATABASE ) ;
+   CHECK_RC( SDB_OK, rc, "fail to get snapshot database" ) ;
+   rc = cursor.next( obj ) ;
+   CHECK_RC( SDB_OK, rc, "fail to next" ) ;
+   element = obj.getField( "CurrentLSN" ) ;
+   CHECK_RC( Object, element.type(), "fail to check CurrentLSN type" ) ;
+   subobj = element.Obj() ;
+   *offset = subobj.getField( "Offset" ).numberLong() ;
+   *version = subobj.getField( "Version" ).numberInt() ;
+   rc = cursor.close() ;
+   CHECK_RC( SDB_OK, rc, "fail to close cursor" ) ;
+
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
+/********************************************************************
+ * wait group nodes lsn equal
+ * this can only be used when sync run test case
+ * return 0 if success, return errno if fail
+ *
+ ********************************************************************/
+INT32 waitSync( sdb& db, const CHAR* rgName )
+{
+   INT32 rc = SDB_OK ;
+
+   sdbReplicaGroup rg ;
+   vector<string> nodes ;
+   sdbNode master ;
+   sdb dataDb ;
+   UINT64 offset, offset1 ;
+   UINT32 version, version1 ;
+
+   rc = db.getReplicaGroup( rgName, rg ) ;
+   CHECK_RC( SDB_OK, rc, "fail to get group" ) ;
+   rc = rg.getMaster( master ) ;
+   CHECK_RC( SDB_OK, rc, "fail to get master" ) ;
+   rc = master.connect( dataDb ) ;
+   CHECK_RC( SDB_OK, rc, "fail to connect master" ) ;
+   rc = getCurrentLsn( dataDb, &offset, &version ) ;
+   CHECK_RC( SDB_OK, rc, "fail to getCurrentLsn" ) ;
+   dataDb.disconnect() ;
+   cout << "master lsn: " << offset << " " << version << endl ;
+
+   rc = getGroupNodes( db, rgName, nodes ) ;
+   CHECK_RC( SDB_OK, rc, "fail to get group nodes" ) ;
+   for( INT32 i = 0;i < nodes.size();i++ )
+   {
+      size_t idx = nodes[i].find_first_of( ":" ) ;
+      string strHost = nodes[i].substr( 0, idx ) ;
+      const CHAR* host = strHost.c_str() ;
+      string strSvc = nodes[i].substr( idx+1 ) ;
+      const CHAR* svc = strSvc.c_str() ;
+      cout << "check node: " << host << " " << svc << endl ;
+
+      rc = dataDb.connect( host, svc, "", "" ) ;
+      CHECK_RC( SDB_OK, rc, "fail to connect node" ) ;
+      do {
+         rc = getCurrentLsn( dataDb, &offset1, &version1 ) ;
+         CHECK_RC( SDB_OK, rc, "fail to getCurrentLsn" ) ;
+         ossSleep( 1000 ) ;
+      } while( offset1 != offset || version1 != version ) ; 
+      dataDb.disconnect() ;
+   }
+
+done:
+   return rc ;
+error:
+   goto done ;
+}

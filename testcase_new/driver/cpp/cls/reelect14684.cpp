@@ -67,7 +67,11 @@ TEST_F( reelectTest, reelect )
    ASSERT_EQ( SDB_OK, rc ) << "fail to get master" ;
    cout << "Before reelect, master: " << master.getNodeName() << endl ;
 
-   rc = rg.reelect() ;
+   rc = waitSync( db, rgName ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   BSONObj option = BSON( "Seconds" << 90 ) ;
+   rc = rg.reelect( option ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to reelect" ;
 
    rc = rg.getMaster( master ) ;      
