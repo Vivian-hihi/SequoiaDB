@@ -72,12 +72,6 @@
   <ItemGroup>
     <Content Include="Config.xml" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\CsharpTest\CsharpTest.csproj">
-      <Project>{9AFC249E-2539-4AD3-AAF4-BE4C6FA0E27F}</Project>
-      <Name>CsharpTest</Name>
-    </ProjectReference>
-  </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
