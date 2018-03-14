@@ -1,7 +1,0 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
-<TestConfig>
-  <UserName></UserName>
-  <Password></Password>
-  <Coord>192.168.31.3:11810</Coord>
-  <CHANGEDPREFIX>story_csharp_test</CHANGEDPREFIX>
-</TestConfig>
