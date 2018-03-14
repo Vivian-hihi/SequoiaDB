@@ -38,7 +38,6 @@
 #include "pmd.hpp"
 #include "pmdController.hpp"
 #include "pmdStartup.hpp"
-#include "coordOmStrategyJob.hpp"
 #include "pdTrace.hpp"
 #include "coordTrace.hpp"
 
@@ -89,11 +88,6 @@ namespace engine
    netRouteAgent* _CoordCB::getRouteAgent()
    {
       return _pAgent ;
-   }
-
-   pmdRemoteSessionMgr* _CoordCB::getRSManager()
-   {
-      return &_remoteSessionMgr ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__COORDCB_INIT, "_CoordCB::init" )
@@ -208,6 +202,7 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Failed to wait coord manager edu "
                    "attach, rc: %d", rc ) ;
 
+
       // 3. set timer, and send register msg
       // if this coord is created before all catalog, don't need to register
       _resource.getCataNodeAddrList( catalogAddrList ) ;
@@ -223,13 +218,6 @@ namespace engine
          }
 
          _sendRegisterMsg () ;
-      }
-
-      // 4. start om strategy sync job
-      rc = coordStartOmStrategyJob( NULL ) ;
-      if ( rc )
-      {
-         goto error ;
       }
 
    done:
