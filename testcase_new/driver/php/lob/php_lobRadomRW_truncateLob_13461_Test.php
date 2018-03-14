@@ -140,6 +140,21 @@ class LobTest13461 extends PHPUnit_Framework_TestCase
       self::$LobUtils -> checkLobContent( self::$oid, $readLen, $expStr );
    }
    
+   public function test_truncateLob04()
+   {
+      echo "\n---Begin to truncate lob[ length = 0 ].\n"; 
+      $readLen = 0;
+      $expStr = subStr( self::$rdmStr, 0, $readLen );
+      //var_dump($expStr);
+      
+      $err = self::$cl -> truncateLob( self::$oid, $readLen);
+      $this -> assertEquals( 0, $err['errno'] );
+      
+      echo "   Begin to check the lob.\n";
+      self::$LobUtils -> checkLobExist( self::$oid );
+      self::$LobUtils -> checkLobContent( self::$oid, $readLen, $expStr );
+   }
+   
    public static function tearDownAfterClass()
    {
       echo "\n---Begin to dropCS in the end.\n"; 
