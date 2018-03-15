@@ -139,7 +139,7 @@ namespace engine
 
       /// Init om proxy
       pOmProxy = SDB_OSS_NEW coordOmProxy() ;
-      if ( !_pOmProxy )
+      if ( !pOmProxy )
       {
          PD_LOG( PDERROR, "Allocate om proxy failed" ) ;
          rc = SDB_OOM ;
