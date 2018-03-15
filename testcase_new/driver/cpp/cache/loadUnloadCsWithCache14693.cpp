@@ -75,6 +75,12 @@ TEST_F( loadUnloadCsWithCache14693, loadUnloadCS )
 {
    INT32 rc = SDB_OK ;
 
+   if( isStandalone( db ) )
+   {
+      cout << "Run mode is standalone" << endl ;
+      return ;
+   }
+
    // before unloadCS, get cs from cache
    clock_t diff1 = 0 ;
    rc = getTimeOfGetCs( db, csName, &diff1 ) ;
