@@ -26,6 +26,7 @@ namespace CSharp.Crud.Query
         [TestInitialize()]
         public void SetUp()
         {
+            Console.WriteLine(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss:fff") + " begin: " + this.GetType().ToString());
             sdb = new Sequoiadb(SdbTestBase.coordUrl);
             sdb.Connect();
         }
@@ -54,12 +55,13 @@ namespace CSharp.Crud.Query
         }
 
         [TestCleanup()]
-        public void tearDown()
+        public void TearDown()
         {
             if (sdb != null)
             {
                 sdb.Disconnect();    
             }
+            Console.WriteLine(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss:fff") + " end  : " + this.GetType().ToString());
         }
 
         private bool IsCursorClosed(DBCursor cursor)

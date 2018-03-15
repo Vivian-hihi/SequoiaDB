@@ -16,13 +16,13 @@ namespace CSharp.TestCommon
             return x.CompareTo(y);
         }
 
-        public static bool isStandalone(Sequoiadb sdb)
+        public static bool IsStandalone(Sequoiadb sdb)
         {
             try
             {
 			    sdb.ListReplicaGroups();
 		    }
-            catch(BaseException e)
+            catch (BaseException e)
             {
                 if (e.ErrorCode == -159) // -159: The operation is for coord node only
                     return true;
