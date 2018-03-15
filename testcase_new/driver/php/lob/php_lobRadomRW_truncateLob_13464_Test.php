@@ -106,7 +106,7 @@ class LobTest13464 extends PHPUnit_Framework_TestCase
    {
       echo "\n---Begin to truncate lob[ length avalid(e.g:'test') ].\n"; 
       //$err = self::$cl -> truncateLob( self::$oid, "test111");
-      //$this -> assertEquals( -6, $err['errno'] ); //bug
+      //$this -> assertEquals( -6, $err['errno'] ); //bug:SEQUOIADBMAINSTREAM-3349
    }
    
    /* SequoiaINT64 is wrong when it goes beyond the int64 boundary, so the truncateLob point is not measured      
