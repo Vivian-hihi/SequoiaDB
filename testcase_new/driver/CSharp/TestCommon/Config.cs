@@ -22,7 +22,7 @@ namespace CSharp.TestCommon
         public Config()
         {
             XmlSerializer serializer = new XmlSerializer(typeof(TestConfig));
-            FileStream fs = new FileStream(@"..\CSharp\Config.xml", FileMode.Open);
+            FileStream fs = new FileStream(@"..\..\sequoiadb\CSharp\Config.xml", FileMode.Open);
             conf = (TestConfig)serializer.Deserialize(fs);
             fs.Close();
         }
