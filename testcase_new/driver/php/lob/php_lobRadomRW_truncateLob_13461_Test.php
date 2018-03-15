@@ -103,56 +103,56 @@ class LobTest13461 extends PHPUnit_Framework_TestCase
    public function test_truncateLob01()
    {
       echo "\n---Begin to truncate lob[ length = lobLen ].\n"; 
-      $readLen = self::$lobLen;
+      $len = self::$lobLen;
       $expStr = self::$rdmStr;
       
-      $err = self::$cl -> truncateLob( self::$oid, $readLen);
+      $err = self::$cl -> truncateLob( self::$oid, $len);
       $this -> assertEquals( 0, $err['errno'] );
       
       echo "   Begin to check the lob.\n";
-      self::$LobUtils -> checkLobContent( self::$oid, $readLen, $expStr );
+      self::$LobUtils -> checkLobContent( self::$oid, $len, $expStr );
    }
    
    public function test_truncateLob02()
    {
       echo "\n---Begin to truncate lob[ length = (lobLen+1) ].\n"; 
-      $readLen = self::$lobLen + 1;
+      $len = self::$lobLen + 1;
       $expStr = self::$rdmStr;
             
-      $err = self::$cl -> truncateLob( self::$oid, $readLen);
+      $err = self::$cl -> truncateLob( self::$oid, $len);
       $this -> assertEquals( 0, $err['errno'] );
       
       echo "   Begin to check the lob.\n";
-      self::$LobUtils -> checkLobContent( self::$oid, $readLen, $expStr );
+      self::$LobUtils -> checkLobContent( self::$oid, $len, $expStr );
    }
    
    public function test_truncateLob03()
    {
       echo "\n---Begin to truncate lob[ length = (lobLen-1) ].\n"; 
-      $readLen = self::$lobLen - 1;
-      $expStr = subStr( self::$rdmStr, 0, $readLen );
+      $len = self::$lobLen - 1;
+      $expStr = subStr( self::$rdmStr, 0, $len );
       //var_dump($expStr);
       
-      $err = self::$cl -> truncateLob( self::$oid, $readLen);
+      $err = self::$cl -> truncateLob( self::$oid, $len);
       $this -> assertEquals( 0, $err['errno'] );
       
       echo "   Begin to check the lob.\n";
-      self::$LobUtils -> checkLobContent( self::$oid, $readLen, $expStr );
+      self::$LobUtils -> checkLobContent( self::$oid, $len, $expStr );
    }
    
    public function test_truncateLob04()
    {
       echo "\n---Begin to truncate lob[ length = 0 ].\n"; 
-      $readLen = 0;
-      $expStr = subStr( self::$rdmStr, 0, $readLen );
+      $len = 0;
+      $expStr = subStr( self::$rdmStr, 0, $len );
       //var_dump($expStr);
       
-      $err = self::$cl -> truncateLob( self::$oid, $readLen);
+      $err = self::$cl -> truncateLob( self::$oid, $len);
       $this -> assertEquals( 0, $err['errno'] );
       
       echo "   Begin to check the lob.\n";
       self::$LobUtils -> checkLobExist( self::$oid );
-      self::$LobUtils -> checkLobContent( self::$oid, $readLen, $expStr );
+      self::$LobUtils -> checkLobContent( self::$oid, $len, $expStr );
    }
    
    public static function tearDownAfterClass()
