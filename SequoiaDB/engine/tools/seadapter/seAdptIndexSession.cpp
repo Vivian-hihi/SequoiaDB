@@ -39,6 +39,7 @@
 #include "seAdptIndexSession.hpp"
 #include "seAdptMgr.hpp"
 #include "seAdptDef.hpp"
+#include "utilESUtil.hpp"
 
 #define SEADPT_FIELD_NAME_RID        "_rid"
 #define SEADPT_FIELD_NAME_LID        "_lid"
@@ -726,18 +727,34 @@ namespace seadapter
             goto done ;
          }
 
-         sourceObj = origObj.getObjectField( "_source" ) ;
-         if ( !sourceObj.isEmpty() && !sourceObj.isValid() )
          {
-            PD_LOG( PDERROR, "_source field is invalid. Object: %s",
-                    origObj.toString().c_str() ) ;
-            rc = SDB_SYS ;
-            goto error ;
-         }
+            BSONObjBuilder builder ;
+            BSONObj source = origObj.getObjectField( "_source" ) ;
+            if ( !source.isEmpty() && !source.isValid() )
+            {
+               PD_LOG( PDERROR, "_source field is invalid. Object: %s",
+                       origObj.toString().c_str() ) ;
+               rc = SDB_SYS ;
+               goto error ;
+            }
 
-         PD_LOG( PDDEBUG, "Operation type: %d, _lid: %lld, _id: %s, "
-                 "_source: %s", oprType, logicalID,
-                 *origOID, sourceObj.toString().c_str() ) ;
+            // Only keep the string fields. Fields of other type(include oid)
+            // will be ignored.
+            for ( BSONObj::iterator eleItr = source.begin(); eleItr.more(); )
+            {
+               BSONElement ele = eleItr.next() ;
+               if ( String == ele.type() )
+               {
+                  builder.append( ele ) ;
+               }
+            }
+
+            sourceObj = builder.obj() ;
+
+            PD_LOG( PDDEBUG, "Operation type: %d, _lid: %lld, _id: %s, "
+                    "_source: %s", oprType, logicalID,
+                    *origOID, sourceObj.toString().c_str() ) ;
+         }
       }
       catch ( std::exception &e )
       {
@@ -824,16 +841,23 @@ namespace seadapter
                goto error ;
             }
 
+            // Only keep the string fields. Fields of other type(include oid)
+            // will be ignored.
             for ( BSONObj::iterator eleItr = itr->begin(); eleItr.more(); )
             {
                BSONElement ele = eleItr.next() ;
-               if ( jstOID != ele.type() )
+               if ( String == ele.type() )
                {
                   builder.append( ele ) ;
                }
             }
 
             sourceObj = builder.done() ;
+            // If no string field at all, ignore the whole document.
+            if ( sourceObj.isEmpty() )
+            {
+               continue ;
+            }
 
             {
                utilESActionIndex item( _indexName.c_str(), _typeName.c_str() ) ;
@@ -951,6 +975,23 @@ namespace seadapter
             rc = _parseSrcData( *itr, oprType, &origOID, logicalID, sourceObj ) ;
             PD_RC_CHECK( rc, PDERROR, "Get id string and source object "
                          "failed[ %d ]", rc ) ;
+
+
+            if ( sourceObj.isEmpty() )
+            {
+               if ( RTN_EXT_INSERT == oprType )
+               {
+                  // Nothing should be inserted.
+                  continue ;
+               }
+               else if ( RTN_EXT_UPDATE == oprType )
+               {
+                  // If no index field of type string, the document should be
+                  // removed. So we directly change it into delete.
+                  oprType = RTN_EXT_DELETE ;
+               }
+            }
+
             switch ( oprType )
             {
                // In case of update, we are going to update the whole document,
@@ -1166,6 +1207,9 @@ namespace seadapter
                  "Start all over again and the index will be re-created",
                  _indexName.c_str() ) ;
 
+         rc = _createIndex() ;
+         PD_RC_CHECK( rc, PDERROR, "Create index failed[ %d ]", rc ) ;
+
          rc = _queryLastCappedRecLID() ;
          if ( rc )
          {
@@ -1185,11 +1229,10 @@ namespace seadapter
             PD_LOG( PDEVENT, "Commit mark for index[ %s ] "
                     "dose not exist. Index will be dropped and recreated",
                     _indexName.c_str() ) ;
-            rc = _esClt->dropIndex( _indexName.c_str() ) ;
-            PD_RC_CHECK( rc, PDERROR, "Drop index[ %s ] on search engine "
-                         "failed[ %d ]", _indexName.c_str(), rc ) ;
-            PD_LOG( PDEVENT, "Index[ %s ] dropped successfully",
-                    _indexName.c_str() ) ;
+            rc = _createIndex( TRUE ) ;
+            PD_RC_CHECK( rc, PDERROR, "Create index by force failed[ %d ]",
+                         rc ) ;
+
             rc = _queryLastCappedRecLID() ;
             PD_RC_CHECK( rc, PDERROR, "Query last logical id failed[ %d ]", rc ) ;
             _switchStatus( SEADPT_SESSION_STAT_QUERY_LAST_LID ) ;
@@ -1300,26 +1343,10 @@ namespace seadapter
    INT32 _seAdptIndexSession::_startOver()
    {
       INT32 rc = SDB_OK ;
-      BOOLEAN found = FALSE ;
 
-      rc = _ensureESClt() ;
-      PD_RC_CHECK( rc, PDERROR, "The search engine client is not active[ %d ]",
-                   rc ) ;
+      rc = _createIndex( TRUE ) ;
+      PD_RC_CHECK( rc, PDERROR, "Create index by force failed[ %d ]", rc ) ;
 
-      rc = _esClt->indexExist( _indexName.c_str(), found ) ;
-      PD_RC_CHECK( rc, PDERROR, "Check index[ %s ] existence on search engine "
-                   "failed[ %d ]", _indexName.c_str(), rc ) ;
-
-      if ( found )
-      {
-         rc = _esClt->dropIndex( _indexName.c_str() ) ;
-         PD_RC_CHECK( rc, PDERROR, "Drop index[ %s ] on search engine "
-                         "failed[ %d ]", _indexName.c_str(), rc ) ;
-         PD_LOG( PDEVENT, "Index[ %s ] dropped successfully",
-                 _indexName.c_str() ) ;
-      }
-
-      // _switchStatus( SEADPT_SESSION_STAT_BEGIN ) ;
       _switchStatus( SEADPT_SESSION_STAT_CONSULT ) ;
       _setQueryBusyFlag( FALSE ) ;
 
@@ -1412,6 +1439,73 @@ namespace seadapter
          rc = _esClt->bulk( _indexName.c_str(), _typeName.c_str(),
                             _bulkBuilder.getData() ) ;
          PD_RC_CHECK( rc, PDERROR, "Bulk operation failed[ %d ]", rc ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _seAdptIndexSession::_createIndex( BOOLEAN force )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN found = FALSE ;
+
+      rc = _ensureESClt() ;
+      PD_RC_CHECK( rc, PDERROR, "The search engine client is not active[ %d ]",
+                   rc ) ;
+
+      rc = _esClt->indexExist( _indexName.c_str(), found ) ;
+      PD_RC_CHECK( rc, PDERROR, "Check index[ %s ] existence on search engine "
+                   "failed[ %d ]", _indexName.c_str(), rc ) ;
+
+      if ( found )
+      {
+         if ( force )
+         {
+            rc = _esClt->dropIndex( _indexName.c_str() ) ;
+            PD_RC_CHECK( rc, PDERROR, "Drop index[ %s ] on search engine "
+                            "failed[ %d ]", _indexName.c_str(), rc ) ;
+            PD_LOG( PDEVENT, "Index[ %s ] dropped successfully",
+                    _indexName.c_str() ) ;
+         }
+         else
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "Duplicated index[ %s ] exists on search engine, "
+                    "rc[ %d ]", _indexName.c_str(), rc ) ;
+            goto error ;
+         }
+      }
+
+      try
+      {
+         BSONObj mappingObj ;
+         utilESMapping mapping( _indexName.c_str(), _typeName.c_str() ) ;
+
+         BSONObjIterator itr( _indexDef ) ;
+         while ( itr.more() )
+         {
+            BSONElement ele = itr.next() ;
+            mapping.addProperty( ele.fieldName(), ES_TEXT ) ;
+         }
+
+         rc = mapping.toObj( mappingObj ) ;
+         PD_RC_CHECK( rc, PDERROR, "Build mapping object failed[ %d ]", rc ) ;
+
+         rc = _esClt->createIndex( _indexName.c_str(),
+                                   mappingObj.toString( FALSE, TRUE).c_str() ) ;
+         PD_RC_CHECK( rc, PDERROR, "Create index[ %s ] with mapping[ %s ] on "
+                      "search engine failed[ %d ]", _indexName.c_str(),
+                      mappingObj.toString( FALSE, TRUE).c_str(), rc ) ;
+
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Unexpected exception occurred: %s", e.what() ) ;
+         goto error ;
       }
 
    done:

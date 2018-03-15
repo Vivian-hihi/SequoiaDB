@@ -193,7 +193,6 @@ namespace seadapter
 
       string indexName ;
       string typeName ;
-      utilCommObjBuff resultObjs ;
       seIdxMetaMgr *idxMetaCache = NULL ;
       BOOLEAN cacheLocked = FALSE ;
 
