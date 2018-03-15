@@ -2,6 +2,6 @@
 <TestConfig>
   <UserName></UserName>
   <Password></Password>
-  <Coord>192.168.31.3:11810</Coord>
+  <Coord>192.168.28.192:11810</Coord>
   <CHANGEDPREFIX>story_csharp_test</CHANGEDPREFIX>
 </TestConfig>
