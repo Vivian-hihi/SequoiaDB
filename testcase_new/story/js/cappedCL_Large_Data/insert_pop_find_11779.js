@@ -38,7 +38,7 @@ function main()
    var expectNum = 0;
    
    //循环pop、查询、插入，logicaID随机
-   var repeatNum = 5;
+   var repeatNum = 3;
    for(var j = 0 ; j< repeatNum; j++)
    {
       println("--blockID:" + blockID);

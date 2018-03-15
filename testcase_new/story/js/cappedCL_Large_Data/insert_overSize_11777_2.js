@@ -9,6 +9,8 @@ var minLength = 1;
 var maxLength = 16 * 1024 ;
 var range = maxLength - minLength;
 var recordHead = 55;
+var stringLength = 1;
+var recordLength = stringLength + recordHead;
 
 //预期结果定义
 var expIDs = [];
@@ -58,7 +60,7 @@ function main()
    checkLogicalID( dbclPrimary, null, null, {_id:1}, -1, 0, expIDs);
    checkLogicalID( dbclSlave, null, null, {_id:1}, -1, 0, expIDs);
    
-   var repeatNum = 15;
+   var repeatNum = 10;
    for(var j = 0 ; j< repeatNum; j++)
    {
       //随机获取某条记录的logicalID
@@ -108,9 +110,10 @@ function main()
          
          //计算预期最大的_id值
          var popBlock = Math.floor(logicalID[0]/oneBlockMaxLID);
-         blockID += popBlock;
+         //blockID = blockID + popBlock;
          maxLogicalID = maxLogicalID + popBlock * oneBlockMaxLID;
          println("--popBlock:" + popBlock);
+         println("--blockID:" + blockID);
          println("--maxLogicalID:" + maxLogicalID);
          insertDataOverSize(dbcl);
          
@@ -137,6 +140,18 @@ function main()
          blockID = 1;
          maxLogicalID = maxSize/32 * oneBlockMaxLID;
          insertDataOverSize(dbcl);
+         
+         //检查主备节点一致
+         checkConsistency(db, csName, clName);
+         
+         //比较count结果
+         checkCount( dbclPrimary, null, expectNum);
+         checkCount( dbclSlave, null, expectNum);
+         println("--count success! expectNum: " + expectNum);
+         
+         //校验多个块内的_id值
+         checkLogicalID( dbclPrimary, null, null, {_id:1}, -1, 0, expIDs);
+         checkLogicalID( dbclSlave, null, null, {_id:1}, -1, 0, expIDs);
       }
    }
    
@@ -150,10 +165,10 @@ function insertDataOverSize(dbcl)
 {
    while(flag)
    {
-      var stringLength = Math.ceil( minLength + Math.random() * range );
+      stringLength = Math.ceil( minLength + Math.random() * range );
       
       //计算不定长度记录的预期_id值
-      var recordLength = stringLength + recordHead;
+      recordLength = stringLength + recordHead;
       if( recordLength % 4 !==0 )
       {
          recordLength  += (4 - recordLength % 4);
@@ -165,28 +180,44 @@ function insertDataOverSize(dbcl)
       var strings = doc.toString();
       
       //处理跨块的情况
-      
       nextExpID = expID + recordLength;
-      if( blockID == Math.floor(nextExpID/oneBlockMaxLID))
-      {
-         expID = oneBlockMaxLID * blockID++;
-         //nextExpID = expID + recordLength;
-      }
-      
       if(nextExpID < maxLogicalID )
       {
+         if( blockID == Math.floor(nextExpID/oneBlockMaxLID))
+         {
+            expID = oneBlockMaxLID * blockID++;
+            nextExpID = expID + recordLength;
+            println("expID:" + expID);
+            println("nextExpID:" + nextExpID);
+         }
+         
+         /*try
+         {
+            dbcl.insert( {a:strings} );
+         }catch(e)
+         {
+            println("expID:" + expID);
+            println("recordLength:" + recordLength);
+            println("nextExpID:" + nextExpID);
+            throw e;
+         }*/
          dbcl.insert( {a:strings} );
          expIDs.push(expID);
          expectNum++;
          
          //lid=expID的记录实际并未插入到集合中，也未添加到expIDs中
-         nextExpID = expID + recordLength;
+         //nextExpID = expID + recordLength;
          expID = nextExpID ;
       }else
       {
          try
          {
+            //println("stringLength:" + stringLength);
             dbcl.insert( {a:strings} );
+            /*println("expID:" + expID);
+            println("nextExpID:" + nextExpID);
+            println("expIDs:" + expIDs);*/
+            
             throw "NEED_ERROR";
          }catch(e)
          {
@@ -199,6 +230,7 @@ function insertDataOverSize(dbcl)
          }
       }
    }
+   //println("expIDs:" + expIDs);
    println("--blockID:" + blockID);
    
 }
