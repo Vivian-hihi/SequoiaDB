@@ -46,6 +46,7 @@
 #include "omCommandTool.hpp"
 #include "ossVer.h"
 #include "omStrategyMgr.hpp"
+#include "omStrategyObserverJob.hpp"
 
 using namespace bson ;
 
@@ -1150,6 +1151,13 @@ namespace engine
                               &eduID ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to start om net, rc: %d", rc ) ;
 
+      /// start om strategy observer job
+      rc = omStartStrategyObserverJob() ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
       // start update plugin user timer (24 hour)
       _updateTimestamp = (INT64)time( NULL ) ;
       _updatePluinUsrTimer = setTimer(
@@ -1174,6 +1182,7 @@ namespace engine
    {
       _pKrcb->unregEventHandler( this ) ;
       _rsManager.fini() ;
+      omGetStrategyMgr()->fini() ;
 
       _mapID2Host.clear() ;
       _mapHost2ID.clear() ;
