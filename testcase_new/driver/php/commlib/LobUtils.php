@@ -2,8 +2,7 @@
 @description:      lob operate, warp class
 @testlink cases:   seqDB-7681-7689
 @modify list:
-        2016-4-27 wenjing wang init
-        2018-3-14 huangxiaoni modify
+        2018-3-14 huangxiaoni init
 ****************************************************/
 <?php
 class LobUtils
@@ -45,14 +44,39 @@ class LobUtils
       }
       return $str;
    }
+   
+   public function writeLob( $oid, $str )
+   {
+      $lobObj = $this -> cl -> openLob( $oid, SDB_LOB_CREATEONLY );
+      $errno = $this -> db -> getError()['errno'];
+      if( 0 !== $errno )
+      {
+         throw new Exception( "errno = ".$errno.", failed to open the lob[".$oid."]." );
+      }
+      
+      $err = $lobObj -> write( $str );
+      $errno = $this -> db -> getError()['errno'];
+      if( 0 !== $errno )
+      {
+         throw new Exception( "errno = ".$errno.", failed to write the lob[".$oid."]." );
+      }
+      
+      $err = $lobObj -> close();
+      $errno = $this -> db -> getError()['errno'];
+      if( 0 !== $errno )
+      {
+         throw new Exception( "errno = ".$errno.", failed to close the lob[".$oid."]." );
+      }
+   }
       
    public function checkLobExist( $oid )
    {
       $isExist = false;
       $cursor = $this -> cl -> listLob();
-      if( 0 !== $this -> db -> getError()['errno'] )
+      $errno = $this -> db -> getError()['errno'];
+      if( 0 !== $errno )
       {
-         throw new Exception( "failed to exec listLob." );
+         throw new Exception( "errno = ".$errno.", failed to exec listLob." );
       }
           
       while( $record = $cursor -> next() )
@@ -64,32 +88,35 @@ class LobUtils
          }
       }
       
-      if( !isExist )
+      if( !$isExist )
       {
-         throw new Exception( "failed to check lob[".$oid."]." );
+         throw new Exception( "failed to check lob[".$oid."], expect lob is exist, but not exist." );
       }
    }
       
    public function checkLobContent( $oid, $readLen, $expStr )
    {
       $lobObj = $this -> cl -> openLob( $oid, SDB_LOB_READ );
-      if( 0 !== $this -> db -> getError()['errno'] )
+      $errno = $this -> db -> getError()['errno'];
+      if( 0 !== $errno )
       {
-         throw new Exception( "failed to open lob[".$oid."]." );
+         throw new Exception( "errno = ".$errno.", failed to open the lob[".$oid."]." );
       }
             
       $readStr = $lobObj -> read( $readLen );
-      if( 0 !== $this -> db -> getError()['errno'] )
+      $errno = $this -> db -> getError()['errno'];
+      if( 0 !== $errno )
       {
-         throw new Exception( "failed to read lob[".$oid."]." );
+         throw new Exception( "errno = ".$errno.", failed to read the lob[".$oid."]." );
       }
       //echo "----readStr-----\n";
       //var_dump($readStr);
       
       $err = $lobObj -> close();
-      if( 0 !== $this -> db -> getError()['errno'] )
+      $errno = $this -> db -> getError()['errno'];
+      if( 0 !== $errno )
       {
-         throw new Exception( "failed to close lob[".$oid."]." );
+         throw new Exception( "errno = ".$errno.", failed to close the lob[".$oid."]." );
       }
       
       $actMd5 = md5( $readStr );
