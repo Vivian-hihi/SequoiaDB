@@ -1282,7 +1282,8 @@ namespace engine
 
       // need to clear the query task
       if ( SDB_DMS_EOC == res->flags ||
-           SDB_OM_TASK_NOT_EXIST == res->flags )
+           SDB_OM_TASK_NOT_EXIST == res->flags ||
+           ( SDB_OK == res->flags && 0 == res->numReturned ) )
       {
          _mgrLatch.get() ;
          _mapTaskQuery.erase ( msg->requestID ) ;
