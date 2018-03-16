@@ -124,6 +124,8 @@ namespace seadapter
          INT32 bulk( const CHAR *index, const CHAR *type, const CHAR *data,
                      const CHAR *filterPath = UTIL_SE_BULK_DFT_FILTERPATH) ;
 
+         const CHAR* getLastErrMsg() const ;
+
       private:
          OSS_INLINE INT32 _processReply( INT32 returnCode, const CHAR *reply,
                                          INT32 replyLen, BSONObj &resultObj,
@@ -141,8 +143,9 @@ namespace seadapter
          INT32 _removeDocMeta( const BSONObj &fullObj, BSONObj &newObj ) ;
 
       private:
-         utilHttp _http;
-         BOOLEAN _readOnly;
+         utilHttp    _http;
+         BOOLEAN     _readOnly;
+         const CHAR *_errMsg ;
    };
    typedef _utilESClt utilESClt ;
 
@@ -159,6 +162,10 @@ namespace seadapter
 
       if ( SDB_OK == returnCode )
       {
+         if ( _errMsg )
+         {
+            _errMsg = NULL ;
+         }
          // Request process successfully. Let's get the result in BSONObj format.
          if ( transform && reply && replyLen > 0 )
          {
@@ -171,6 +178,7 @@ namespace seadapter
       else
       {
          rc = returnCode ;
+         _errMsg = reply ;
          if ( reply && replyLen > 0 )
          {
             PD_LOG( PDERROR, "Request processed failed[ %d ], respond "
