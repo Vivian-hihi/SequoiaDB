@@ -205,7 +205,7 @@ namespace engine
             else if ( PMD_CFG_CHANGE_RUN == changeLevel )
             {
                value = readValue ;
-               (*_pMapKeyField)[ pFieldName ] = pmdParamValue( readValue, FALSE,
+               (*_pMapKeyField)[ pFieldName ] = pmdParamValue( readValue, TRUE,
                                                                fieldStatus,
                                                                changeLevel ) ;
             }
@@ -214,13 +214,14 @@ namespace engine
                MAP_K2V::iterator it = _pMapKeyField->find( pFieldName ) ;
                if ( _pMapKeyField->end() != it )
                {
-                  it->second._hasMapped = TRUE ;
-                  it->second._hasField = fieldStatus ;
+                  it->second._hasField = FALSE ;
+                  it->second._hasMapped = fieldStatus ;
                }
                else
                {
-                  (*_pMapKeyField)[ pFieldName ] = pmdParamValue( readValue, FALSE,
-                                                                  fieldStatus, 
+                  (*_pMapKeyField)[ pFieldName ] = pmdParamValue( readValue,
+                                                                  fieldStatus,
+                                                                  TRUE, 
                                                                   changeLevel ) ;
                }
             }
@@ -262,7 +263,7 @@ namespace engine
             else if ( PMD_CFG_CHANGE_RUN == changeLevel )
             {
                value = defaultValue ;
-               (*_pMapKeyField)[ pFieldName ] = pmdParamValue( defaultValue, FALSE,
+               (*_pMapKeyField)[ pFieldName ] = pmdParamValue( defaultValue, TRUE,
                                                                fieldStatus,
                                                                changeLevel ) ;
             }
@@ -288,7 +289,9 @@ namespace engine
       rc = readInt( pFieldName, value, changeLevel ) ;
       if ( SDB_FIELD_NOT_EXIST == rc )
       {
-         if ( PMD_CFG_STEP_PRECHG == _cfgStep )
+         if ( PMD_CFG_STEP_PRECHG == _cfgStep ||
+              ( PMD_CFG_STEP_CHG == _cfgStep &&
+                PMD_CFG_CHANGE_FORBIDDEN == changeLevel ) )
          {
             rc = SDB_OK ;
             goto done ;
@@ -370,7 +373,7 @@ done:
             {
                ossStrncpy( pValue, readValue.c_str(), len ) ;
                pValue[ len - 1 ] = 0 ;
-               (*_pMapKeyField)[ pFieldName ] = pmdParamValue( readValue, FALSE,
+               (*_pMapKeyField)[ pFieldName ] = pmdParamValue( readValue, TRUE,
                                                                fieldStatus,
                                                                changeLevel ) ;
             }
@@ -379,13 +382,14 @@ done:
                MAP_K2V::iterator it = _pMapKeyField->find( pFieldName ) ;
                if ( _pMapKeyField->end() != it )
                {
-                  it->second._hasMapped = TRUE ;
-                  it->second._hasField = fieldStatus ;
+                  it->second._hasField = FALSE ;
+                  it->second._hasMapped = fieldStatus ;
                }
                else
                {
-                  (*_pMapKeyField)[ pFieldName ] = pmdParamValue( readValue, FALSE,
-                                                                  fieldStatus, 
+                  (*_pMapKeyField)[ pFieldName ] = pmdParamValue( readValue,
+                                                                  fieldStatus,
+                                                                  TRUE, 
                                                                   changeLevel ) ;
                }
             }
@@ -430,7 +434,7 @@ done:
             {
                ossStrncpy( pValue, pDefault, len ) ;
                pValue[ len - 1 ] = 0 ;
-               (*_pMapKeyField)[ pFieldName ] = pmdParamValue( pDefault, FALSE,
+               (*_pMapKeyField)[ pFieldName ] = pmdParamValue( pDefault, TRUE,
                                                                fieldStatus,
                                                                changeLevel ) ;
             }
@@ -456,7 +460,9 @@ done:
       rc = readString( pFieldName, pValue, len, changeLevel ) ;
       if ( SDB_FIELD_NOT_EXIST == rc && pDefault )
       {
-         if ( PMD_CFG_STEP_PRECHG == _cfgStep )
+         if ( PMD_CFG_STEP_PRECHG == _cfgStep ||
+              ( PMD_CFG_STEP_CHG == _cfgStep &&
+                PMD_CFG_CHANGE_FORBIDDEN == changeLevel ) )
          {
             rc = SDB_OK ;
             goto done ;
@@ -901,15 +907,17 @@ done:
                case PMD_CFG_CHANGE_FORBIDDEN :
                   if ( TRUE == it->second._hasField )
                   {
-                     forbidArrBuilder.append( it->first ) ;
-                     if ( TRUE == it->second._hasMapped)
+                     if ( TRUE == it->second._hasMapped )
                      {
-                        strStream << it->first << "=" << it->second._value
-                                  << OSS_NEWLINE ;
+                        forbidArrBuilder.append( it->first ) ;
                      }
                   }
-                  else if ( FALSE == it->second._hasMapped )
+                  else
                   {
+                     if ( TRUE == it->second._hasMapped)
+                     {
+                        forbidArrBuilder.append( it->first ) ;
+                     }
                      strStream << it->first << "=" << it->second._value
                                << OSS_NEWLINE ;
                   }
