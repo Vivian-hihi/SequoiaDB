@@ -349,7 +349,7 @@ namespace seadapter
          else
          {
             PD_LOG_MSG( PDERROR, "Initialize scroll for index[ %s ] and "
-                        "type[ %s ] failed[ %d ], query string: %s."
+                        "type[ %s ] failed[ %d ], query string: %s.",
                         _indexName.c_str(), _type.c_str(), rc,
                         queryCond.c_str() ) ;
          }
