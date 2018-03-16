@@ -82,5 +82,22 @@ namespace CSharp.Crud.Lob
             return true;
         }
 
+        public static ObjectId CreateAndWriteLob(DBCollection dbcl,  byte[] data)
+        {
+            DBLob lob = dbcl.CreateLob();
+            lob.Write(data);
+            ObjectId oid = lob.GetID();
+            lob.Close();
+            return oid;
+        }
+
+        public static void CreateAndWriteLob(DBCollection dbcl, ObjectId id, byte[] data)
+        {
+            DBLob lob = dbcl.CreateLob(id);
+            lob.Write(data);
+            ObjectId oid = lob.GetID();
+            lob.Close();
+        }   
+
     }
 }
