@@ -146,7 +146,7 @@ namespace engine
          BOOLEAN           _findTaskItem( const string &name,
                                           coordTaskInfoItem **ppItem ) ;
 
-         voi               _clear( BOOLEAN hasLocked, BOOLEAN needNotify ) ;
+         void              _clear( BOOLEAN hasLocked, BOOLEAN needNotify ) ;
 
       private:
          INT32                         _lastVersion ;
