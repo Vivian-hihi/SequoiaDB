@@ -35,6 +35,7 @@
 
 #include "omStrategyDef.hpp"
 #include "ossLatch.hpp"
+#include "ossEvent.hpp"
 
 #include <map>
 #include <set>
@@ -117,8 +118,6 @@ namespace engine
 
          void              clear( BOOLEAN hasLocked ) ;
 
-         void              updateLastVersion( INT32 version ) ;
-
          INT32             getTaskStrategy( const string &taskName,
                                             const string &userName,
                                             const string &ip,
@@ -128,7 +127,11 @@ namespace engine
          INT32             update( _pmdEDUCB *cb,
                                    INT64 timeout = -1 ) ;
 
+         INT32             waitChange( INT64 millisec ) ;
+
       protected:
+         void              updateLastVersion( INT32 version ) ;
+
          INT32             insertTaskInfo( const vector<omTaskInfoPtr> &vecTaskInfo,
                                            BOOLEAN hasLocked ) ;
 
@@ -148,6 +151,7 @@ namespace engine
          omTaskStrategyInfoPtr         _defaultPtr ;
          MAP_TASK_INFO                 _mapTaskInfo ;
          ossSpinSLatch                 _latch ;
+         ossAutoEvent                  _changeEvent ;
 
    } ;
    typedef _coordOmStrategyAgent coordOmStrategyAgent ;

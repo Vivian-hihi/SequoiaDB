@@ -88,6 +88,7 @@ namespace engine
 
          void        invalidateCataInfo() ;
          void        invalidateGroupInfo( UINT64 identify = 0 ) ;
+         void        invalidateStrategy() ;
 
          _netRouteAgent*   getRouteAgent() ;
          _IOmProxy*        getOmProxy() ;

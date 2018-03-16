@@ -1715,6 +1715,14 @@ namespace engine
       return count ;
    }
 
+   void _coordResource::invalidateStrategy()
+   {
+      if ( _pOmStrategyAgent )
+      {
+         _pOmStrategyAgent->clear( FALSE ) ;
+      }
+   }
+
    void _coordResource::invalidateCataInfo()
    {
       _cataMutex.get() ;

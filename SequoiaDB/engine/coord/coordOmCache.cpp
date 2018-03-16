@@ -253,6 +253,7 @@ namespace engine
       _mapTaskInfo.clear() ;
 
       _lastVersion = OM_TASK_STRATEGY_INVALID_VER ;
+      _changeEvent.signal() ;
 
       if ( !hasLocked )
       {
@@ -463,6 +464,11 @@ namespace engine
       return rc ;
    }
 
+   INT32 _coordOmStrategyAgent::waitChange( INT64 millisec )
+   {
+      return _changeEvent.wait( millisec ) ;
+   }
+
    INT32 _coordOmStrategyAgent::update( _pmdEDUCB *cb,
                                         INT64 timeout )
    {
@@ -485,7 +491,7 @@ namespace engine
       }
 
       /// check version
-      if ( getLastVersion() == metaInfo.getVersion() )
+      if ( isValid() && getLastVersion() == metaInfo.getVersion() )
       {
          goto done ;
       }

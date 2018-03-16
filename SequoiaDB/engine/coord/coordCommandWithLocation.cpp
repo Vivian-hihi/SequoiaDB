@@ -183,6 +183,7 @@ namespace engine
       /// invalidate local catalog cache and group cache
       _pResource->invalidateCataInfo() ;
       _pResource->invalidateGroupInfo() ;
+      _pResource->invalidateStrategy() ;
       return SDB_OK ;
    }
 
