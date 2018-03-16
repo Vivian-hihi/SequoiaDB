@@ -84,6 +84,7 @@
     <Compile Include="Crud\Delete\InsertUpdateDelete14595.cs" />
     <Compile Include="Crud\Delete\InsertUpdateDelete14597.cs" />
     <Compile Include="Crud\Delete\Numberlong13652.cs" />
+    <Compile Include="Crud\Delete\Explain12475.cs" />
     <Compile Include="Crud\Lob\LobUtils.cs" /> 
     <Compile Include="Crud\Lob\Lob13466.cs" />     
     <Compile Include="Properties\AssemblyInfo.cs" />
