@@ -68,6 +68,9 @@
     <Compile Include="Crud\Update\QueryAndUpdate14537.cs" />
     <Compile Include="Crud\Update\UpdateParamVerify14538.cs" />
     <Compile Include="Crud\Update\Upsert14535.cs" />
+    <Compile Include="Crud\Delete\DeleteAllRecord14539.cs" />
+    <Compile Include="Crud\Delete\DeleteMatcherRecord14540.cs" />
+    <Compile Include="Crud\Delete\QueryAndRemove14541.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TestCommon\Common.cs" />
     <Compile Include="TestCommon\Config.cs" />
