@@ -192,7 +192,7 @@ namespace engine
 
    void _coordOmStrategyAgent::fini()
    {
-      clear( FALSE ) ;
+      clear() ;
    }
 
    BOOLEAN _coordOmStrategyAgent::isValid() const
