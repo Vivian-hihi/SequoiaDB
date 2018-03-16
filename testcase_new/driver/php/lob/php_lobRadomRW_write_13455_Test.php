@@ -1,5 +1,5 @@
 /****************************************************
-@description:      lob truncate
+@description:      random write lob
 @testlink cases:   seqDB-13455
 @modify list:
         2018-3-13 huangxiaoni init
