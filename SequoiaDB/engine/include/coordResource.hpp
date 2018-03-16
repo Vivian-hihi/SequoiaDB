@@ -156,6 +156,8 @@ namespace engine
                                                const CHAR *pSvcName ) ;
 
          CoordGroupInfoPtr    getOmGroupInfo() ;
+         INT32                updateOmGroupInfo( CoordGroupInfoPtr &groupPtr,
+                                                 _pmdEDUCB *cb ) ;
 
       public:
 
@@ -180,6 +182,7 @@ namespace engine
 
       protected:
          void        setCataGroupInfo( CoordGroupInfoPtr &groupPtr ) ;
+         void        setOmGroupInfo( CoordGroupInfoPtr &groupPtr ) ;
          void        addGroupInfo( CoordGroupInfoPtr &groupPtr ) ;
 
          UINT32      checkAndRemoveCataInfoBySub( const CHAR *collectionName ) ;
@@ -229,7 +232,7 @@ namespace engine
                                            const CHAR *collectionName,
                                            CoordCataInfoPtr &cataPtr ) ;
 
-         INT32       _buildOmGroupInfo() ;
+         BSONObj     _buildOmGroupInfo() ;
 
       private:
          MAP_GROUP_INFO                   _mapGroupInfo ;

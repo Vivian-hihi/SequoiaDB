@@ -420,6 +420,14 @@
 #define FIELD_NAME_TEXT                      "$Text"
 #define FIELD_NAME_CONFIGS                   "Configs"
 
+/// strategy field begin
+#define FIELD_NAME_NICE                      "Nice"
+#define FIELD_NAME_TASK_NAME                 "TaskName"
+#define FIELD_NAME_CONTAINER_NAME            "ContainerName"
+#define FIELD_NAME_IP                        "IP"
+#define FIELD_NAME_TASK_ID                   "TaskID"
+/// strategy field end
+
 #define FIELD_NAME_ANALYZE_MODE              "Mode"
 #define FIELD_NAME_ANALYZE_NUM               "SampleNum"
 #define FIELD_NAME_ANALYZE_PERCENT           "SamplePercent"
