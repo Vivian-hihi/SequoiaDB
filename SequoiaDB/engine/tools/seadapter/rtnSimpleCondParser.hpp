@@ -44,8 +44,9 @@
 #include "rtnSimpleCondNode.hpp"
 
 using namespace bson ;
+using namespace engine ;
 
-namespace engine
+namespace seadapter
 {
    // Factory takes care of creating and releasing nodes of a parse tree.
    class _rtnCondNodeFactory : public SDBObject
