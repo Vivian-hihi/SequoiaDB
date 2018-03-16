@@ -20,7 +20,9 @@ class LobTest13452 extends PHPUnit_Framework_TestCase
    
    private static $oid;
    private static $lobLen = 10;
+   private static $offset;
    private static $writeStr;
+   private static $writeStr2;
    
    public static function setUpBeforeClass()
    {        
@@ -82,12 +84,12 @@ class LobTest13452 extends PHPUnit_Framework_TestCase
    {
       echo "\n---Begin to write lob.\n"; 
       $mode = SDB_LOB_CREATEONLY;
-      $offset = 2;
+      self::$offset = 2;
       $whence = SDB_LOB_SET;
-      $writeStr = self::$LobUtils -> getRandomStr( self::$lobLen - $offset );
+      self::$writeStr2 = self::$LobUtils -> getRandomStr( self::$lobLen - self::$offset );
       
-      $this -> writeBySeek( $mode, $offset, $whence, $writeStr );
-      $this -> readBySeek( $offset, $whence, $writeStr );
+      $this -> writeBySeek( $mode, self::$offset, $whence, self::$writeStr2 );
+      $this -> readBySeek( self::$offset, $whence, self::$writeStr2 );
       $this -> readLobInfo();
    }
    
@@ -95,13 +97,16 @@ class LobTest13452 extends PHPUnit_Framework_TestCase
    {
       echo "\n---Begin to write lob again.\n"; 
       $mode = SDB_LOB_WRITE;
-      $offset = 4;
+      $offset3 = 4;
       $whence = SDB_LOB_SET;
-      $writeStr = self::$LobUtils -> getRandomStr( self::$lobLen - $offset );
+      $writeStr3 = self::$LobUtils -> getRandomStr( self::$lobLen - $offset3 );
       
-      $this -> writeBySeek( $mode, $offset, $whence, $writeStr );
-      $this -> readBySeek( $offset, $whence, $writeStr );
+      $this -> writeBySeek( $mode, $offset3, $whence, $writeStr3 );
+      $this -> readBySeek( $offset3, $whence, $writeStr3 );
       $this -> readLobInfo();
+      
+      $tmpStr = subStr( self::$writeStr2, 0, self::$offset ).$writeStr3;
+      $this -> readBySeek( $offset3 - self::$offset, $whence, $tmpStr );
    }
    
    public function writeBySeek( $mode, $offset, $whence, $writeStr2 )
@@ -137,6 +142,7 @@ class LobTest13452 extends PHPUnit_Framework_TestCase
       
       $newStr = $lobObj -> read( self::$lobLen - $offset );
       $this -> assertEquals( 0, $err['errno'] );
+      var_dump($newStr);
       
       echo "   Begin to close lob.\n"; 
       $err = $lobObj -> close();
