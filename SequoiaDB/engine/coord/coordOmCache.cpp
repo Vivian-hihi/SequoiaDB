@@ -456,14 +456,11 @@ namespace engine
          pTaskInfoItem->insertStrategy( ptr ) ;
       }
 
-   done:
       if ( needRelease )
       {
          unlock( EXCLUSIVE ) ;
       }
       return rc ;
-   error:
-      goto done ;
    }
 
    INT32 _coordOmStrategyAgent::update( _pmdEDUCB *cb,

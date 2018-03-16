@@ -1004,7 +1004,9 @@ namespace engine
       MsgHeader *msg = NULL ;
       INT32 rc = SDB_OK ;
 
-      rc = msgBuildQueryMsg ( &pBuff, &buffSize, clFullName, 0, requestID,
+      /// Must user Flag with FLG_QUERY_WITH_RETURNDATA
+      rc = msgBuildQueryMsg ( &pBuff, &buffSize, clFullName,
+                              FLG_QUERY_WITH_RETURNDATA, requestID,
                               0, -1, match, NULL, NULL, NULL ) ;
       if ( SDB_OK != rc )
       {
