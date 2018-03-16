@@ -55,6 +55,8 @@
   <ItemGroup>
     <Compile Include="Crud\DataType\Bool14590.cs" />
     <Compile Include="Crud\DataType\Regex14586.cs" />
+    <Compile Include="Crud\DataType\NumberLongData14594.cs" />
+    <Compile Include="Crud\DataType\TimestampData14588.cs" />
     <Compile Include="Crud\Insert\Insert14528.cs" />
     <Compile Include="Crud\Insert\Insert14529.cs" />
     <Compile Include="Crud\Insert\BulkInsert14531.cs" />
