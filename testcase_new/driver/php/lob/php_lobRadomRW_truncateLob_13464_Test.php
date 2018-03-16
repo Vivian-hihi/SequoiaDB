@@ -20,7 +20,7 @@ class LobTest13464 extends PHPUnit_Framework_TestCase
    
    private static $oid;
    private static $lobLen = 10;
-   private static $rdmStr;
+   private static $writeStr;
    
    public static function setUpBeforeClass()
    {        
@@ -67,8 +67,8 @@ class LobTest13464 extends PHPUnit_Framework_TestCase
       self::$LobUtils = new LobUtils( self::$db, self::$cl );
       self::$oid = self::$LobUtils -> getOid();
       //var_dump("oid = ".self::$oid);
-      self::$rdmStr = self::$LobUtils -> getRandomStr( self::$lobLen );
-      self::$LobUtils -> writeLob( self::$oid, self::$rdmStr );
+      self::$writeStr = self::$LobUtils -> getRandomStr( self::$lobLen );
+      self::$LobUtils -> writeLob( self::$oid, self::$writeStr );
    }
    
    public function setUp()
@@ -106,7 +106,7 @@ class LobTest13464 extends PHPUnit_Framework_TestCase
    {
       echo "\n---Begin to truncate lob[ length avalid(e.g:'test') ].\n"; 
       //$err = self::$cl -> truncateLob( self::$oid, "test111");
-      //$this -> assertEquals( -6, $err['errno'] ); //bug:SEQUOIADBMAINSTREAM-3349
+      //$this -> assertEquals( -6, $err['errno'] ); //bug
    }
    
    /* SequoiaINT64 is wrong when it goes beyond the int64 boundary, so the truncateLob point is not measured      
@@ -128,7 +128,7 @@ class LobTest13464 extends PHPUnit_Framework_TestCase
       $this -> assertEquals( 0, $err['errno'] );
       
       echo "   Begin to check the lob.\n";
-      self::$LobUtils -> checkLobContent( self::$oid, self::$lobLen, self::$rdmStr );
+      self::$LobUtils -> checkLobContent( self::$oid, self::$lobLen, self::$writeStr );
    }
    
    public static function tearDownAfterClass()

@@ -20,7 +20,7 @@ class LobTest13461 extends PHPUnit_Framework_TestCase
    
    private static $oid;
    private static $lobLen = 10;
-   private static $rdmStr;
+   private static $writeStr;
    
    public static function setUpBeforeClass()
    {        
@@ -67,8 +67,8 @@ class LobTest13461 extends PHPUnit_Framework_TestCase
       self::$LobUtils = new LobUtils( self::$db, self::$cl );
       self::$oid = self::$LobUtils -> getOid();
       //var_dump("oid = ".self::$oid);
-      self::$rdmStr = self::$LobUtils -> getRandomStr( self::$lobLen );
-      //var_dump("str = ".self::$rdmStr);
+      self::$writeStr = self::$LobUtils -> getRandomStr( self::$lobLen );
+      //var_dump("str = ".self::$writeStr);
    }
    
    public function setUp()
@@ -88,7 +88,7 @@ class LobTest13461 extends PHPUnit_Framework_TestCase
       $this -> assertEquals( 0, self::$db -> getError()['errno'] );
       
       echo "   Begin to write lob.\n"; 
-      $err = $lobObj -> write( self::$rdmStr );
+      $err = $lobObj -> write( self::$writeStr );
       $this -> assertEquals( 0, $err['errno'] );
       
       echo "   Begin to close lob.\n"; 
@@ -97,14 +97,14 @@ class LobTest13461 extends PHPUnit_Framework_TestCase
       
       echo "   Begin to check the lob.\n";
       self::$LobUtils -> checkLobExist( self::$oid );
-      self::$LobUtils -> checkLobContent( self::$oid, self::$lobLen, self::$rdmStr );
+      self::$LobUtils -> checkLobContent( self::$oid, self::$lobLen, self::$writeStr );
    }
    
    public function test_truncateLob01()
    {
       echo "\n---Begin to truncate lob[ length = lobLen ].\n"; 
       $len = self::$lobLen;
-      $expStr = self::$rdmStr;
+      $expStr = self::$writeStr;
       
       $err = self::$cl -> truncateLob( self::$oid, $len);
       $this -> assertEquals( 0, $err['errno'] );
@@ -117,7 +117,7 @@ class LobTest13461 extends PHPUnit_Framework_TestCase
    {
       echo "\n---Begin to truncate lob[ length = (lobLen+1) ].\n"; 
       $len = self::$lobLen + 1;
-      $expStr = self::$rdmStr;
+      $expStr = self::$writeStr;
             
       $err = self::$cl -> truncateLob( self::$oid, $len);
       $this -> assertEquals( 0, $err['errno'] );
@@ -130,7 +130,7 @@ class LobTest13461 extends PHPUnit_Framework_TestCase
    {
       echo "\n---Begin to truncate lob[ length = (lobLen-1) ].\n"; 
       $len = self::$lobLen - 1;
-      $expStr = subStr( self::$rdmStr, 0, $len );
+      $expStr = subStr( self::$writeStr, 0, $len );
       //var_dump($expStr);
       
       $err = self::$cl -> truncateLob( self::$oid, $len);
@@ -144,7 +144,7 @@ class LobTest13461 extends PHPUnit_Framework_TestCase
    {
       echo "\n---Begin to truncate lob[ length = 0 ].\n"; 
       $len = 0;
-      $expStr = subStr( self::$rdmStr, 0, $len );
+      $expStr = subStr( self::$writeStr, 0, $len );
       //var_dump($expStr);
       
       $err = self::$cl -> truncateLob( self::$oid, $len);
