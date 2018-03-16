@@ -28,6 +28,7 @@ namespace CSharp.Crud.Delete
         [TestInitialize()]
         public void SetUp()
         {
+            Console.WriteLine(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss:fff") + " begin: " + this.GetType().ToString());
             sdb = new Sequoiadb(SdbTestBase.coordUrl);
             sdb.Connect();
             cs = sdb.GetCollecitonSpace(SdbTestBase.csName);
@@ -112,6 +113,7 @@ namespace CSharp.Crud.Delete
                 {
                     sdb.Disconnect();
                 }
+                Console.WriteLine(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss:fff") + " end: " + this.GetType().ToString());
             }
         }
 
