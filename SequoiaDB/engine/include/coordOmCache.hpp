@@ -116,7 +116,7 @@ namespace engine
          void              lock( OSS_LATCH_MODE mode ) ;
          void              unlock( OSS_LATCH_MODE mode ) ;
 
-         void              clear( BOOLEAN hasLocked ) ;
+         void              clear() ;
 
          INT32             getTaskStrategy( const string &taskName,
                                             const string &userName,
@@ -145,6 +145,8 @@ namespace engine
 
          BOOLEAN           _findTaskItem( const string &name,
                                           coordTaskInfoItem **ppItem ) ;
+
+         voi               _clear( BOOLEAN hasLocked, BOOLEAN needNotify ) ;
 
       private:
          INT32                         _lastVersion ;

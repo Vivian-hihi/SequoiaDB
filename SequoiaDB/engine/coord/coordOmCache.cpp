@@ -235,7 +235,7 @@ namespace engine
       }
    }
 
-   void _coordOmStrategyAgent::clear( BOOLEAN hasLocked )
+   void _coordOmStrategyAgent::_clear( BOOLEAN hasLocked, BOOLEAN needNotify )
    {
       MAP_TASK_INFO_IT it ;
 
@@ -253,12 +253,21 @@ namespace engine
       _mapTaskInfo.clear() ;
 
       _lastVersion = OM_TASK_STRATEGY_INVALID_VER ;
-      _changeEvent.signal() ;
+
+      if ( needNotify )
+      {
+         _changeEvent.signal() ;
+      }
 
       if ( !hasLocked )
       {
          unlock( EXCLUSIVE ) ;
       }
+   }
+
+   void _coordOmStrategyAgent::clear()
+   {
+      _clear( FALSE, TRUE ) ;
    }
 
    void _coordOmStrategyAgent::_mergeRuleID( const SET_RULEID &left,
@@ -497,7 +506,8 @@ namespace engine
       }
 
       /// First clear
-      clear( TRUE ) ;
+      _clear( TRUE, FALSE ) ;
+
       /// Then update task info
       rc = accessor.getTaskInfoFromOm( vecTaskInfo, cb, NULL ) ;
       if ( rc )

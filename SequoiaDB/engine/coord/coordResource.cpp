@@ -1747,7 +1747,7 @@ namespace engine
    {
       if ( _pOmStrategyAgent )
       {
-         _pOmStrategyAgent->clear( FALSE ) ;
+         _pOmStrategyAgent->clear() ;
       }
    }
 
