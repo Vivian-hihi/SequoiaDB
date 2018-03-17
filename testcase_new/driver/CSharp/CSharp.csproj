@@ -53,7 +53,10 @@
     </CodeAnalysisDependentAssemblyPaths>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Crud\DataType\BinData14587.cs" />
     <Compile Include="Crud\DataType\Bool14590.cs" />
+    <Compile Include="Crud\DataType\DateTime14589.cs" />
+    <Compile Include="Crud\DataType\Decimal14592.cs" />
     <Compile Include="Crud\DataType\Regex14586.cs" />
     <Compile Include="Crud\DataType\NumberLongData14594.cs" />
     <Compile Include="Crud\DataType\TimestampData14588.cs" />
@@ -73,7 +76,7 @@
     <Compile Include="Crud\Update\QueryAndUpdate12646.cs" />
     <Compile Include="Crud\Update\QueryAndUpdate14537.cs" />
     <Compile Include="Crud\Update\UpdateParamVerify14538.cs" />
-    <Compile Include="Crud\Update\Upsert14535.cs" />    
+    <Compile Include="Crud\Update\Upsert14535.cs" />
     <Compile Include="Crud\Update\Update14534.cs" />
     <Compile Include="Crud\Update\UpdateShardingKey12645.cs" />
     <Compile Include="Crud\Update\UpsertShardingKey12647.cs" />
@@ -85,8 +88,8 @@
     <Compile Include="Crud\Delete\InsertUpdateDelete14597.cs" />
     <Compile Include="Crud\Delete\Numberlong13652.cs" />
     <Compile Include="Crud\Delete\Explain12475.cs" />
-    <Compile Include="Crud\Lob\LobUtils.cs" /> 
-    <Compile Include="Crud\Lob\Lob13466.cs" />     
+    <Compile Include="Crud\Lob\LobUtils.cs" />
+    <Compile Include="Crud\Lob\Lob13466.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TestCommon\Common.cs" />
     <Compile Include="TestCommon\Config.cs" />

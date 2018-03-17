@@ -76,7 +76,8 @@ namespace CSharp.Crud.DataType
             {
                 new BsonDocument("a", "White"),
                 new BsonDocument("a", "white"),
-                new BsonDocument("a", "Black")
+                new BsonDocument("a", "Black"),
+                new BsonDocument("a", new BsonRegularExpression("^a"))
             };
             cl.BulkInsert(insertDocs, 0);
         }
@@ -103,7 +104,8 @@ namespace CSharp.Crud.DataType
             {
                 new BsonDocument{ { "a", "White" }, { "b", 1 } },
                 new BsonDocument{ { "a", "white" }, { "b", 1 } },
-                new BsonDocument{ { "a", "Black" } }
+                new BsonDocument{ { "a", "Black" } },
+                new BsonDocument("a", new BsonRegularExpression("^a"))
             };
             List<BsonDocument> actDocs = QueryAndReturn(cl, null);
             Assert.IsTrue(Common.IsEqual(expDocs, actDocs), 
@@ -117,7 +119,7 @@ namespace CSharp.Crud.DataType
             long count = cl.GetCount(matcher);
             Assert.AreEqual(0, count);
             count = cl.GetCount(null);
-            Assert.AreEqual(1, count);
+            Assert.AreEqual(2, count);
         }
 
         private List<BsonDocument> QueryAndReturn(DBCollection cl, BsonDocument matcher)

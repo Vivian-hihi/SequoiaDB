@@ -38,10 +38,10 @@ namespace CSharp.Crud.DataType
         [TestMethod()]
         public void TestBool14590()
         {
-            BsonDocument oldDoc = new BsonDocument{ { "a", true }, { "b", false } };
+            BsonDocument oldDoc = new BsonDocument{ { "a", BsonBoolean.True }, { "b", BsonBoolean.False } };
             cl.Insert(oldDoc);
             
-            BsonDocument newDoc = new BsonDocument{ { "a", false }, { "b", true } };
+            BsonDocument newDoc = new BsonDocument{ { "a", BsonBoolean.False }, { "b", BsonBoolean.True } };
             BsonDocument modifier = new BsonDocument("$set", newDoc);
             cl.Update(/*matcher*/null, modifier, /*hint*/null);
             
