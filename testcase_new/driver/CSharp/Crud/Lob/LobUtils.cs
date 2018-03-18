@@ -9,10 +9,10 @@ using SequoiaDB.Bson;
 namespace CSharp.Crud.Lob
 {
     /**
-    * description:   public call function for test lob        
-    * author:        wuyan
-    * date:          2018/3/15
-   */
+     * description:   public call function for test lob        
+     * author:        wuyan
+     * date:          2018/3/15
+     */
 
     public class LobUtils
     {
@@ -54,19 +54,15 @@ namespace CSharp.Crud.Lob
 
         public static void AssertByteArrayEqual(byte[] actual, byte[] expect, string msg)
         {
-
-
             if (!CompareByteArray(actual, expect))
             {
-
                 Assert.Fail("\nexpect: " + System.Text.Encoding.Default.GetString(expect)
-                    + "\nbut actual: " + System.Text.Encoding.Default.GetString(actual) + "\n" + msg + "\n");
-                
+                    + "\nbut actual: " + System.Text.Encoding.Default.GetString(actual) + "\n" + msg + "\n");   
             }
         }
 
         /**
-	     * compare byte array	     *
+	     * compare byte array
 	     * @param byte array1,byte array2
 	     * @return false/true
 	     */
@@ -95,7 +91,6 @@ namespace CSharp.Crud.Lob
         {
             DBLob lob = dbcl.CreateLob(id);
             lob.Write(data);
-            ObjectId oid = lob.GetID();
             lob.Close();
         }   
 

@@ -70,6 +70,10 @@
     <Compile Include="Crud\Insert\Insert14529.cs" />
     <Compile Include="Crud\Insert\BulkInsert14531.cs" />
     <Compile Include="Crud\Insert\Insert14532.cs" />
+    <Compile Include="Crud\Lob\LockParamVerify13476.cs" />
+    <Compile Include="Crud\Lob\ModificationTime13470.cs" />
+    <Compile Include="Crud\Lob\LockAndSeekParamVerify13477.cs" />
+    <Compile Include="Crud\Lob\TruncateLob13478.cs" />
     <Compile Include="Crud\Query\Count14544.cs" />
     <Compile Include="Crud\Query\Cursor14581.cs" />
     <Compile Include="Crud\Query\QueryWithFlag14545.cs" />
