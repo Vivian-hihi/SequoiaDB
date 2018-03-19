@@ -783,6 +783,12 @@
                            "file": "SDB_SNAP_HEALTH",
                            "cn": "节点健康检测快照",
                            "en": "SDB_SNAP_HEALTH"
+                        },
+                        {
+                           "id": 1521423973,
+                           "file": "SDB_SNAP_CONFIG",
+                           "cn": "配置快照",
+                           "en": "SDB_SNAP_CONFIG"
                         }
                      ]
                   },
@@ -1819,6 +1825,18 @@
                            "file": "reloadConf",
                            "cn": "reloadConf()",
                            "en": "reloadConf()"
+                        },
+                        {
+                           "id": 1521424274,
+                           "file": "updateConf",
+                           "cn": "updateConf()",
+                           "en": "updateConf()"
+                        },
+                        {
+                           "id": 1521424296,
+                           "file": "deleteConf",
+                           "cn": "deleteConf()",
+                           "en": "deleteConf()"
                         },
                         {
                            "id": 1432190808,
