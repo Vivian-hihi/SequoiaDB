@@ -1050,7 +1050,7 @@ namespace engine
       else if ( ossStrcasecmp( pSubCommand, 
                                OM_TASK_STRATEGY_ADD_REQ ) == 0 )
       {
-         commandIf = SDB_OSS_NEW omStrategyTaskInsert( pAdptor, this ) ;
+         commandIf = SDB_OSS_NEW omStrategyInsert( pAdptor, this ) ;
       }
       else if ( ossStrcasecmp( pSubCommand, 
                                OM_TASK_STRATEGY_UPDATE_NICE_REQ ) == 0 )
