@@ -54,9 +54,18 @@ class TestSessiontimeout14181(testlib.SdbTestBase):
          if(lob != None):
             lob.close()         
             
+      newdb1.disconnect()    
+
+      # set session attr timeout 1ms
+      newdb2 = testlib.default_db()
+      newcl2 = newdb2.get_collection(self.cs_name + '.' + self.cl_name)
+      
+      opt = {'Timeout' : 1};
+      newdb2.set_session_attri(options = opt)
+
       # read lob
       try:
-         lob = newcl1.open_lob(ObjectId('5a699c8081d089d50600006d'), LOB_READ)
+         lob = newcl2.open_lob(ObjectId('5a699c8081d089d50600006d'), LOB_READ)
          length = 20 * 1024 * 1024
          lob.read(length)
          self.fail('Need Error -13')
@@ -66,10 +75,19 @@ class TestSessiontimeout14181(testlib.SdbTestBase):
       finally:
          if(lob != None):
             lob.close() 				
-            
+       
+      newdb2.disconnect()    
+     
+      # set session attr timeout 1ms
+      newdb3 = testlib.default_db()
+      newcl3 = newdb3.get_collection(self.cs_name + '.' + self.cl_name)
+      
+      opt = {'Timeout' : 1};
+      newdb3.set_session_attri(options = opt)
+
       # remove lob
       try:
-         newcl1.remove_lob(ObjectId('5a699c8081d089d50600006d'))
+         newcl3.remove_lob(ObjectId('5a699c8081d089d50600006d'))
          self.fail('Need Error -13')
       except SDBBaseError as e:
          if -13 != e.code:
@@ -78,7 +96,7 @@ class TestSessiontimeout14181(testlib.SdbTestBase):
          if(lob != None):
             lob.close() 		
 
-      newdb1.disconnect()            
+      newdb3.disconnect()           
 
    def tearDown(self): 
       try:
