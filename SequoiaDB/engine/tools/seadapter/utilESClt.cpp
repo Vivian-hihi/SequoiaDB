@@ -437,8 +437,48 @@ namespace seadapter
                                   const CHAR *query, utilCommObjBuff &objBuff,
                                   BOOLEAN withMeta )
    {
-      // TODO:
-      return SDB_OK ;
+      INT32 rc = SDB_OK ;
+      const CHAR *reply = NULL ;
+      INT32 replyLen = 0 ;
+      HTTP_STATUS_CODE status = 0 ;
+      std::ostringstream endUrl ;
+      BSONObj fullObj ;
+
+      ES_CLT_ARG_CHK2( index, type ) ;
+
+      if ( !query )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "Query condition is NULL" ) ;
+         goto error ;
+      }
+
+      endUrl << index << "/" << type << "/_search" ;
+
+      rc = objBuff.reset() ;
+      PD_RC_CHECK( rc, PDERROR, "Reset object buffer failed[ %d ]", rc ) ;
+
+      rc = _http.get( endUrl.str().c_str(), query, &status, &reply, &replyLen ) ;
+      if ( withMeta )
+      {
+         rc = _processReply( rc, reply, replyLen, fullObj ) ;
+         PD_RC_CHECK( rc, PDERROR, "Process request reply failed[ %d ]", rc ) ;
+         rc = objBuff.appendObj( fullObj ) ;
+         PD_RC_CHECK( rc, PDERROR, "Append object to buffer failed[ %d ]", rc ) ;
+      }
+      else
+      {
+         rc = _processReply( rc, reply,replyLen, fullObj ) ;
+         PD_RC_CHECK( rc, PDERROR, "Process request reply failed[ %d ]", rc ) ;
+
+         rc = _getResultObjs( fullObj, objBuff ) ;
+         PD_RC_CHECK( rc, PDERROR, "Get result objects failed[ %d ]" ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _utilESClt::getDocCount( const CHAR *index, const CHAR *type,
@@ -628,8 +668,6 @@ namespace seadapter
                    rc ) ;
 
       scrollId = string( replyObj.getStringField( ES_SCROLL_ID_KEY ) ) ;
-      scrollId = "{ \"scroll_id\" : \"" + scrollId + "\" }" ;
-
       PD_LOG( PDDEBUG, "scroll id returned: %s", scrollId.c_str() ) ;
 
    done:
@@ -647,19 +685,25 @@ namespace seadapter
       BSONObj replyObj ;
       HTTP_STATUS_CODE status = 0 ;
       string endUrl = "_search/scroll?scroll=1m" ;
+      string scrollIdStr = "{ \"scroll_id\" : \"" + scrollId + "\" }" ;
 
       if ( filterPath )
       {
          endUrl = endUrl + "&" + filterPath ;
       }
 
-      rc = _http.post( endUrl.c_str(), scrollId.c_str(),
+      rc = _http.post( endUrl.c_str(), scrollIdStr.c_str(),
                        &status, &reply, &replyLen ) ;
       rc = _processReply( rc, reply, replyLen, replyObj ) ;
       PD_RC_CHECK( rc, PDERROR, "Process request reply failed[ %d ]", rc ) ;
 
       rc = _getResultObjs( replyObj, result ) ;
       PD_RC_CHECK( rc, PDERROR, "Get objects from reply failed[ %d ]", rc ) ;
+
+      // The initial search request and each ssubsequent scroll request returns
+      // a new _scroll_id. Only the most recent _scroll_id should be used.
+      scrollId = string( replyObj.getStringField( ES_SCROLL_ID_KEY ) ) ;
+      PD_LOG( PDDEBUG, "scroll id returned: %s", scrollId.c_str() ) ;
 
    done:
       return rc ;
@@ -669,7 +713,8 @@ namespace seadapter
 
    void _utilESClt::clearScroll( const std::string& scrollId )
    {
-      _http.remove("/_search/scroll", scrollId.c_str(), NULL, NULL, NULL );
+      string endUrl = "_search/scroll/" + scrollId ;
+      _http.remove( endUrl.c_str(), NULL, NULL, NULL, NULL );
    }
 
    INT32 _utilESClt::bulk( const CHAR *index, const CHAR *type,
