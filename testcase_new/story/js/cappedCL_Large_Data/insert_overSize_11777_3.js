@@ -60,7 +60,7 @@ function main()
    checkLogicalID( dbclPrimary, null, null, {_id:1}, -1, 0, expIDs);
    checkLogicalID( dbclSlave, null, null, {_id:1}, -1, 0, expIDs);
    
-   var repeatNum = 3;
+   var repeatNum = 2;
    for(var j = 0 ; j< repeatNum; j++)
    {
       //随机获取某条记录的logicalID

@@ -39,7 +39,7 @@ function main()
    
    var minRecordNum = 0;
    var maxRecordNum = insertNum - 1;
-   var repeatNum = 30;
+   var repeatNum = 10;
    for(var j = 0 ; j< repeatNum; j++)
    {
       println("--blockID:" + blockID);
