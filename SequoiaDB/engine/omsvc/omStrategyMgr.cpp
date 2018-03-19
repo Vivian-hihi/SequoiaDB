@@ -1414,6 +1414,7 @@ namespace engine
          {
             continue ;
          }
+         rc = SDB_OK ;
          break ;
       }
       taskID = i ;
@@ -1462,6 +1463,7 @@ namespace engine
          {
             continue ;
          }
+         rc = SDB_OK ;
          break ;
       }
       ruleID = i ;
