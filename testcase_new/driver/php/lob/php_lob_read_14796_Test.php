@@ -1,6 +1,6 @@
 /****************************************************
 @description:      random write lob
-@testlink cases:   seqDB-13458
+@testlink cases:   seqDB-14796
 @modify list:
         2018-3-13 huangxiaoni init
 ****************************************************/
@@ -8,14 +8,14 @@
 define('Cur_Path', dirname(__FILE__));
 include_once Cur_Path.'/../commlib/LobUtils.php';
 include_once Cur_Path.'/../global.php';
-class LobTest13458 extends PHPUnit_Framework_TestCase
+class LobTest14796 extends PHPUnit_Framework_TestCase
 {
    private static $LobUtils;
    private static $skipTestCase = false;
    
    private static $db;
    private static $cl;
-   private static $csName = "php13458";
+   private static $csName = "php14796";
    private static $clName = "cl";
    
    private static $oid;

@@ -142,7 +142,7 @@ class LobTest13452 extends PHPUnit_Framework_TestCase
       
       $newStr = $lobObj -> read( self::$lobLen - $offset );
       $this -> assertEquals( 0, $err['errno'] );
-      var_dump($newStr);
+      //var_dump($newStr);
       
       echo "   Begin to close lob.\n"; 
       $err = $lobObj -> close();
