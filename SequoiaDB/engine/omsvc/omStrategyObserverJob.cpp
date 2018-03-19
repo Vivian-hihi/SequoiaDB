@@ -87,6 +87,7 @@ namespace engine
                                                 item._bizName,
                                                 eduCB() ) ;
             }
+            setBiz.clear() ;
          }
       }
 
