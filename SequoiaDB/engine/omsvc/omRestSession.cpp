@@ -745,7 +745,7 @@ namespace engine
       omRestCommandBase *pCommand = NULL ;
       restAdaptor *pAdptor = sdbGetPMDController()->getRestAdptor() ;
 
-      PD_LOG( PDEVENT, "OM: getfile command:file=%s", pFilePath ) ;
+      PD_LOG( PDDEBUG, "OM: getfile command:file=%s", pFilePath ) ;
 
       pCommand = SDB_OSS_NEW omGetFileCommand( pAdptor, this,
                                                _wwwRootPath.c_str(),
