@@ -9,16 +9,16 @@ using SequoiaDB.Bson;
 namespace CSharp.Crud.Lob
 {
     /**
-    * description:   seek and write lob 
-    *                  test interface:  seek (long offset, long length) ；void Open(ObjectId id, int mode)
-    * testcase:      13466  
+    * description:   no seek ,then write lob 
+    *                  test interface:  void Open(ObjectId id)
+    * testcase:      13468 
     * author:        wuyan
-    * date:          2018/3/15
+    * date:          2018/3/16
    */
     [TestClass]
-    public class Lob13466
+    public class Lob13468
     {
-        private const string clName = "writeLob13466";
+        private const string clName = "writeLob13468";
         private Sequoiadb sdb = null;
         private CollectionSpace cs = null;
         private DBCollection cl = null;
@@ -35,18 +35,16 @@ namespace CSharp.Crud.Lob
         }
         
         [TestMethod()]
-        public void TestLob13466()
+        public void TestLob13468()
         {
-            int writeLobSize = 1024 * 200;
-            int offset = 1024 * 2;         
+            int writeLobSize = 1024 * 10;                   
             testLobBuff = LobUtils.GetRandomBytes(writeLobSize);
-            ObjectId oid = SeekAndWriteLob(testLobBuff, offset);
+            ObjectId oid = LobUtils.CreateAndWriteLob( cl, testLobBuff );
 
-            int rewriteOffset = 1024 * 3;            
-		    byte[] rewriteBuff = LobUtils.GetRandomBytes(writeLobSize);           
-            	    
-		    SeekAndRewriteLob(oid, rewriteBuff, rewriteOffset);			
-		    ReadAndcheckResult( oid, rewriteBuff, offset, rewriteOffset);		
+            int writeLobSize1 = 1024 * 3;            
+		    byte[] rewriteBuff = LobUtils.GetRandomBytes(writeLobSize1);            
+		    NoSeekAndRewriteLob( oid, rewriteBuff);			
+		    ReadAndcheckResult( oid, rewriteBuff);		
         }
 
         [TestCleanup()]
@@ -66,35 +64,38 @@ namespace CSharp.Crud.Lob
             }                   
         }
 
-        private ObjectId SeekAndWriteLob(byte[] writeBuff,int offset)
+        private ObjectId WriteLob(byte[] writeBuff)
         {		    
 		    DBLob lob = cl.CreateLob() ;			
-			lob.Seek(offset, DBLob.SDB_LOB_SEEK_SET);
 			lob.Write(writeBuff);		    
 			ObjectId oid = lob.GetID();	
 	        lob.Close();
             return oid;	
 		}	
 
-        private void SeekAndRewriteLob(ObjectId oid, byte[] writeBuff,int offset)
+        private void NoSeekAndRewriteLob(ObjectId oid, byte[] writeBuff)
         {		
-		    DBLob lob = cl.OpenLob(oid ,DBLob.SDB_LOB_WRITE);		
-			lob.Seek(offset, DBLob.SDB_LOB_SEEK_SET);
+		    DBLob lob = cl.OpenLob(oid , DBLob.SDB_LOB_WRITE);				
 			lob.Write(writeBuff);
             lob.Close();    
 		}	
 	
-        private void ReadAndcheckResult( ObjectId oid, byte[] rewriteBuff,int offset,int rewriteoffset) 
+        private void ReadAndcheckResult( ObjectId oid, byte[] rewriteBuff) 
         {
-		    testLobBuff =LobUtils.AppendBuff(testLobBuff, rewriteBuff, rewriteoffset-offset);            
-		    byte[] readLobBuff = new byte[testLobBuff.Length];		
+            //check the all write lob     
+		    testLobBuff =LobUtils.AppendBuff(testLobBuff, rewriteBuff, 0);          
 		    DBLob lob = cl.OpenLob(oid, DBLob.SDB_LOB_READ);
-			lob.Seek(offset, DBLob.SDB_LOB_SEEK_SET);
+            byte[] readLobBuff = new byte[lob.GetSize()];	
 			lob.Read(readLobBuff);
-            lob.Close();            
-               
-			//check the all write lob             
-            LobUtils.AssertByteArrayEqual(readLobBuff, testLobBuff);	
+            lob.Close();  			        
+            LobUtils.AssertByteArrayEqual(readLobBuff, testLobBuff);
+	
+            //check the rewritelob
+            byte[] reReadLobBuff = new byte[rewriteBuff.Length];
+            DBLob rlob = cl.OpenLob(oid, DBLob.SDB_LOB_READ);
+            rlob.Read(reReadLobBuff);
+            rlob.Close();
+            LobUtils.AssertByteArrayEqual(reReadLobBuff, rewriteBuff);
         }
         
     }
