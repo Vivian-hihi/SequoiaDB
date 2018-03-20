@@ -67,7 +67,7 @@ namespace CSharp.Crud.Delete
                 Assert.AreEqual("{ \"$and\" : [{ \"sub\" : { \"$et\" : \"test\" } }] }", doc.GetValue("Query").ToString());
                
             }
- 
+            cursor.Close();
         }
 
         [TestCleanup()]
@@ -75,7 +75,7 @@ namespace CSharp.Crud.Delete
         {
             try
             {
-                //cs.DropCollection(clName);
+                cs.DropCollection(clName);
                 Console.WriteLine(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss:fff") + " end  : " + this.GetType().ToString());
             }
             catch (BaseException e)
