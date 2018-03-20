@@ -31,6 +31,10 @@ namespace CSharp.Crud.Update
             Console.WriteLine(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss:fff") + " begin: " + this.GetType().ToString());
             sdb = new Sequoiadb(SdbTestBase.coordUrl);
             sdb.Connect();
+            if (Common.IsStandalone(sdb))
+            {
+                return;
+            }
             cs = sdb.GetCollecitonSpace(SdbTestBase.csName);
             BsonDocument options = new BsonDocument
                                 {
@@ -48,6 +52,10 @@ namespace CSharp.Crud.Update
         [TestMethod()]
         public void TestUpsertShardingKey12647()
         {
+            if (Common.IsStandalone(sdb))
+            {
+                return;
+            }
             MatchUpsert();
             NoMatchUpsert();
             NoUpsertShardingKey();
@@ -58,8 +66,11 @@ namespace CSharp.Crud.Update
         {
             try
             {
-                cs.DropCollection(clName);
-                Console.WriteLine(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss:fff") + " end  : " + this.GetType().ToString());
+                if (Common.IsStandalone(sdb))
+                {
+                    return;
+                }
+                cs.DropCollection(clName);                
             }
             finally
             {
@@ -67,6 +78,7 @@ namespace CSharp.Crud.Update
                 {
                     sdb.Disconnect();
                 }
+                Console.WriteLine(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss:fff") + " end  : " + this.GetType().ToString());
             }
         }
 
