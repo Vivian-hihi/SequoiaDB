@@ -112,6 +112,7 @@ class setSessionAttr1415602 extends PHPUnit_Framework_TestCase
    }
 
   // metadata operations sometimes do not hit the point
+  /*
    public function test_createCS()
    {       
       echo "\n---Begin to createCS.\n";
@@ -126,7 +127,7 @@ class setSessionAttr1415602 extends PHPUnit_Framework_TestCase
       $this -> assertEquals( -13, $err['errno'] ); 
       
       $tmpDB -> close();
-   }
+   }*/
    
    public function test_createCL()
    {  
