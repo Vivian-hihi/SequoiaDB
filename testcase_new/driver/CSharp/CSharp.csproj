@@ -74,8 +74,10 @@
     <Compile Include="Crud\Lob\ModificationTime13470.cs" />
     <Compile Include="Crud\Lob\LockAndSeekParamVerify13477.cs" />
     <Compile Include="Crud\Lob\TruncateLob13478.cs" />
+    <Compile Include="Crud\Lob\LockAndWrite14794.cs" />
     <Compile Include="Crud\Query\Count14544.cs" />
     <Compile Include="Crud\Query\Cursor14581.cs" />
+    <Compile Include="Crud\Query\Query14543.cs" />
     <Compile Include="Crud\Query\QueryWithFlag14545.cs" />
     <Compile Include="Crud\Update\QueryAndUpdate12646.cs" />
     <Compile Include="Crud\Update\QueryAndUpdate14537.cs" />
@@ -83,6 +85,7 @@
     <Compile Include="Crud\Update\Upsert14535.cs" />
     <Compile Include="Crud\Update\Update14534.cs" />
     <Compile Include="Crud\Update\UpdateShardingKey12645.cs" />
+    <Compile Include="Crud\Update\Upsert14536.cs" />
     <Compile Include="Crud\Update\UpsertShardingKey12647.cs" />
     <Compile Include="Crud\Delete\DeleteAllRecord14539.cs" />
     <Compile Include="Crud\Delete\DeleteMatcherRecord14540.cs" />

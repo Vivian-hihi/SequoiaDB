@@ -10,9 +10,9 @@ using SequoiaDB.Bson;
 namespace CSharp.Crud.Lob
 {
     /**
-     * description: TuncateLob() parameter verification
+     * description: test TruncateLob()
      *              interface: TruncateLob(ObjectId id, long length)
-     * testcase:    13478
+     * testcase:    13478, 13475
      * author:      linsuqiang
      * date:        2018/3/17
      */
@@ -57,9 +57,13 @@ namespace CSharp.Crud.Lob
             // legal parameter
             cl.TruncateLob(oid, maxLong);
             cl.TruncateLob(oid, lobSize / 2);
+
+            // basic function
             long expLobSize = lobSize / 2;
-            long actLobSize = GetLobSize(cl, oid);
-            Assert.AreEqual(expLobSize, actLobSize);
+            long actLobSize1 = GetSizeByListLob(cl, oid);
+            long actLobSize2 = GetSizeByDBLob(cl, oid);
+            Assert.AreEqual(expLobSize, actLobSize1);
+            Assert.AreEqual(actLobSize1, actLobSize2);
         }
 
         [TestCleanup()]
@@ -95,7 +99,7 @@ namespace CSharp.Crud.Lob
             }
         }
 
-        private long GetLobSize(DBCollection cl, ObjectId oid)
+        private long GetSizeByListLob(DBCollection cl, ObjectId oid)
         {
             bool foundOid = false;
             long lobSize = -1;
@@ -114,6 +118,14 @@ namespace CSharp.Crud.Lob
             cursor.Close();
             if (!foundOid)
                 throw new ApplicationException("oid not found");
+            return lobSize;
+        }
+
+        private long GetSizeByDBLob(DBCollection cl, ObjectId oid)
+        {
+            DBLob lob = cl.OpenLob(oid);
+            long lobSize = lob.GetSize();
+            lob.Close();
             return lobSize;
         }
     }
