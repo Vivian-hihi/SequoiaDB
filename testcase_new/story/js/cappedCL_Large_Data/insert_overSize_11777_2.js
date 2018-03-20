@@ -191,16 +191,6 @@ function insertDataOverSize(dbcl)
             println("nextExpID:" + nextExpID);
          }
          
-         /*try
-         {
-            dbcl.insert( {a:strings} );
-         }catch(e)
-         {
-            println("expID:" + expID);
-            println("recordLength:" + recordLength);
-            println("nextExpID:" + nextExpID);
-            throw e;
-         }*/
          dbcl.insert( {a:strings} );
          expIDs.push(expID);
          expectNum++;
@@ -212,12 +202,7 @@ function insertDataOverSize(dbcl)
       {
          try
          {
-            //println("stringLength:" + stringLength);
-            dbcl.insert( {a:strings} );
-            /*println("expID:" + expID);
-            println("nextExpID:" + nextExpID);
-            println("expIDs:" + expIDs);*/
-            
+				dbcl.insert( {a:strings} );
             throw "NEED_ERROR";
          }catch(e)
          {

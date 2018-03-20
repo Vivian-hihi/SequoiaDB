@@ -60,7 +60,7 @@ function main()
    checkLogicalID( dbclPrimary, null, null, {_id:1}, -1, 0, expIDs);
    checkLogicalID( dbclSlave, null, null, {_id:1}, -1, 0, expIDs);
    
-   var repeatNum = 2;
+   var repeatNum = 1;
    for(var j = 0 ; j< repeatNum; j++)
    {
       //随机获取某条记录的logicalID
@@ -191,16 +191,6 @@ function insertDataOverSize(dbcl)
             println("nextExpID:" + nextExpID);
          }
          
-         /*try
-         {
-            dbcl.insert( {a:strings} );
-         }catch(e)
-         {
-            println("expID:" + expID);
-            println("recordLength:" + recordLength);
-            println("nextExpID:" + nextExpID);
-            throw e;
-         }*/
          dbcl.insert( {a:strings} );
          expIDs.push(expID);
          expectNum++;
@@ -212,12 +202,7 @@ function insertDataOverSize(dbcl)
       {
          try
          {
-            //println("stringLength:" + stringLength);
             dbcl.insert( {a:strings} );
-            /*println("expID:" + expID);
-            println("nextExpID:" + nextExpID);
-            println("expIDs:" + expIDs);*/
-            
             throw "NEED_ERROR";
          }catch(e)
          {
