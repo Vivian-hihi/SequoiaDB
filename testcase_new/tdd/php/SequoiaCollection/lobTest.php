@@ -96,6 +96,24 @@ class cl_LOB_Test extends PHPUnit_Framework_TestCase
       }
       $this -> assertEquals( 1, $num, 'listLobPieces错误' ) ;
    }
+
+   /**
+    * @depends test_Connect
+    * @depends test_select_cs
+    * @depends test_select_cl
+    */
+   public function test_truncateLob( $db, $cs, $cl )
+   {
+      $err = $cl->truncateLob( "123456789012345678901234", "test" ) ;
+      $this -> assertEquals( -6, $err['errno'], 'truncateLob错误' ) ;
+      $err = $db -> getError() ;
+      $this -> assertEquals( -6, $err['errno'], 'truncateLob错误' ) ;
+
+      $err = $cl->truncateLob( "123456789012345678901234", "1" ) ;
+      $this -> assertEquals( 0, $err['errno'], 'truncateLob错误' ) ;
+      $err = $db -> getError() ;
+      $this -> assertEquals( 0, $err['errno'], 'truncateLob错误' ) ;
+   }
    
    /**
     * @depends test_Connect
