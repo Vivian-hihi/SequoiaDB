@@ -37,14 +37,10 @@ var csvRecs = [ "{\"" + key + "\":{\"$date\":\"1900-01-01\"}}",
                 "{\"" + key + "\":{\"$date\":\"9999-12-31\"}}",
                 "{\"" + key + "\":{\"$date\":\"0001-01-01\"}}",
                 "{\"" + key + "\":{\"$date\":\"0001-01-01\"}}",
-                "{\"" + key + "\":{\"$date\":\"9999-12-31\"}}" ] ;
-var jsonRecs = [ "{\"" + key + "\":{\"$date\":\"1900-01-01\"}}", 
-                 "{\"" + key + "\":{\"$date\":\"9999-12-31\"}}",
-                 "{\"" + key + "\":{\"$date\":\"0001-01-01\"}}",
-                 "{\"" + key + "\":{\"$date\":\"0001-01-01\"}}",
-                 "{\"" + key + "\":{\"$date\":\"9999-12-31\"}}",
-                 "{\"" + key + "\":{\"$date\":9007199254740992}}", 
-                 "{\"" + key + "\":{\"$date\":-9007199254740992}}" ] ;
+                "{\"" + key + "\":{\"$date\":\"9999-12-31\"}}",
+                "{\"" + key + "\":{\"$date\":9007199254740992}}",
+                "{\"" + key + "\":{\"$date\":-9007199254740992}}" ] ;
+var jsonRecs = csvRecs ;
 
 main() ;
 
@@ -68,10 +64,6 @@ function main()
    
    commDropCL( db, csname, clname ) ;
    commDropCL( db, csname, clname1 ) ;
-   
-   // when sdbimprt csv with date to be 9007199254740992 or -9007199254740992
-   // parse failed, it wil make a rec file, the file need to be removed
-   rmRecFile( csname, clname1 ) ;
 }
 
 function testExprtImprtCsv()
@@ -99,7 +91,7 @@ function testExprtImprtCsv()
              " --file " + csvfile +
              " --type csv" +
              " --headerline true" +
-             " --fields='" + key + " date'" ;
+             " --fields='" + key + " autodate'" ;
    testRunCommand( command ) ;
    
    cmd.run( "rm -rf " + csvfile ) ; 
