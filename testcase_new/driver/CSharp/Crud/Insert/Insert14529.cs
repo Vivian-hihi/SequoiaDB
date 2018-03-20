@@ -9,11 +9,11 @@ using SequoiaDB.Bson;
 namespace CSharp.Crud.Insert
 {
     /**
-     * TestCase-14529:specify oid insert record,and check the insert retrun oid
-     * test interface:  insert (BsonDocument record)
-     * author:  wuyan
-     * date:    2018/3/9
-     * version: 1.0
+     * description:   specify oid insert record,and check the insert retrun oid     
+     *                  test interface:  insert (BsonDocument record)
+     * testcase:      14529  
+     * author:        wuyan
+     * date:          2018/3/15
     */
     [TestClass]
     public class Insert14529
@@ -63,15 +63,15 @@ namespace CSharp.Crud.Insert
         {
             try
             {
-                cs.DropCollection(clName);
-                Console.WriteLine(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss:fff") + " end  : " + this.GetType().ToString());
+                cs.DropCollection(clName);                
             }            
             finally
             {
                 if (sdb != null)
                 {
                     sdb.Disconnect();    
-                }                
+                }
+                Console.WriteLine(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss:fff") + " end  : " + this.GetType().ToString());
             }                   
         }
         

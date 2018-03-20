@@ -46,15 +46,15 @@ namespace CSharp.Crud.Insert
         {
             try
             {
-               cs.DropCollection(clName);
-               Console.WriteLine(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss:fff") + " end  : " + this.GetType().ToString());
+               cs.DropCollection(clName);               
             }            
             finally
             {
                 if (sdb != null)
                 {
                     sdb.Disconnect();    
-                }                
+                }
+                Console.WriteLine(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss:fff") + " end  : " + this.GetType().ToString());
             }                   
         }
 

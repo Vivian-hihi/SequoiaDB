@@ -47,8 +47,7 @@ namespace CSharp.Crud.Insert
         {
             try
             {
-                cs.DropCollection(clName);
-                Console.WriteLine(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss:fff") + " end  : " + this.GetType().ToString());
+                cs.DropCollection(clName);                
             }
             finally
             {
@@ -56,6 +55,7 @@ namespace CSharp.Crud.Insert
                 {
                     sdb.Disconnect();
                 }
+                Console.WriteLine(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss:fff") + " end  : " + this.GetType().ToString());
             }
         }
 
@@ -68,6 +68,7 @@ namespace CSharp.Crud.Insert
                 ObjectId id = ObjectId.GenerateNewId();
                 BsonMinKey minKey = BsonMinKey.Value;
                 string str = "32345.067891234567890123456789" + i;
+                byte[] b = new byte[] {1,2,3};
                 obj.Add("_id", id).
                             Add("operation", "BulkInsert").
                             Add("date", DateTime.Now.ToString()).
@@ -77,7 +78,7 @@ namespace CSharp.Crud.Insert
                             Add("long", 9223372036854775807L).
                             Add("decimal", new BsonDecimal(str, 23, 5)).
                             Add("bool", true).
-                    //Add("binary", new BsonBinaryData(regex)).
+                            Add("binary", new BsonBinaryData(b)).
                             Add("arr", new BsonArray() { "test", 123 }).
                             Add("null", null).
                             Add("obj", new BsonDocument("a", "testobj")).
