@@ -21,7 +21,7 @@ namespace CSharp.Crud.DataType
         private Sequoiadb sdb = null;
         private CollectionSpace cs = null;
         private DBCollection cl = null;
-        private const string clName = "ObjectTypeData_14594";
+        private const string clName = "ObjectTypeData_14595";
 
         [TestInitialize()]
         public void SetUp()
@@ -46,8 +46,7 @@ namespace CSharp.Crud.DataType
         {
             try
             {
-                cs.DropCollection(clName);
-                Console.WriteLine(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss:fff") + " end  : " + this.GetType().ToString());
+                cs.DropCollection(clName);                
             }
             finally
             {
@@ -55,6 +54,7 @@ namespace CSharp.Crud.DataType
                 {
                     sdb.Disconnect();
                 }
+                Console.WriteLine(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss:fff") + " end  : " + this.GetType().ToString());
             }
         }
 
@@ -62,39 +62,41 @@ namespace CSharp.Crud.DataType
         {
             //insert date                         
             BsonDocument insertor1 = new BsonDocument 
-                 { 
-                     { "a", new BsonDocument 
-                         { 
-                             { "test", "testobj"} 
-                         }
-                     }, 
-                     { "b", 1 } 
-                 };
+            { 
+                {  "a", 
+                    new BsonDocument 
+                    { 
+                        { "test", "testobj"} 
+                    }
+                }, 
+                { "b", 1 } 
+            };
             BsonDocument insertor2 = new BsonDocument 
-                { 
-                    { "a", 
-                        new BsonDocument
-                        {
-                            { "test1",
-                                new BsonDocument
-                                {
-                                    {"test2", long.MaxValue},
-                                    {"test22", 123.45}
-                                }
+            { 
+                { "a", 
+                    new BsonDocument
+                    {
+                        { "test1",
+                            new BsonDocument
+                            {
+                                {"test2", long.MaxValue},
+                                {"test22", 123.45}
                             }
                         }
-                    }, 
-                    { "b", 2 } };
+                    }
+                }, 
+                { "b", 2 }
+            };
             BsonDocument insertor3 = new BsonDocument 
-                { 
-                    { "a",
-                        new BsonDocument 
-                        {
-                            {"arr", new BsonArray() { "test", 123 }}
-                        }
-                    }, 
-                    { "b", 3 }
-                };                      
+            { 
+                { "a",
+                    new BsonDocument 
+                    {
+                        {"arr", new BsonArray() { "test", 123 }}
+                    }
+                }, 
+                { "b", 3 }
+            };                      
             cl.Insert(insertor1);
             cl.Insert(insertor2);
             cl.Insert(insertor3);   

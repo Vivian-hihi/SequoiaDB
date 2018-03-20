@@ -46,8 +46,7 @@ namespace CSharp.Crud.DataType
         {
             try
             {
-                cs.DropCollection(clName);
-                Console.WriteLine(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss:fff") + " end  : " + this.GetType().ToString());
+                cs.DropCollection(clName);                
             }
             finally
             {
@@ -55,6 +54,7 @@ namespace CSharp.Crud.DataType
                 {
                     sdb.Disconnect();
                 }
+                Console.WriteLine(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss:fff") + " end  : " + this.GetType().ToString());
             }
         }
 
@@ -90,10 +90,10 @@ namespace CSharp.Crud.DataType
             cl.Update(matcher, modifier, null);
             //check result
             long updateCount = cl.GetCount(new BsonDocument 
-                                        { 
-                                            {"_id", new BsonObjectId("2f088e93b01cccc069000000") }  ,
-                                            { "b", 1}
-                                        });
+                                           {
+                                               {"_id", new BsonObjectId("2f088e93b01cccc069000000") }  ,
+                                               { "b", 1}
+                                           });
             Assert.AreEqual(1, updateCount);
 
             //update Oid to  other type            
@@ -102,10 +102,10 @@ namespace CSharp.Crud.DataType
             cl.Update(matcher1, modifier1, null);
             //check result
             long updateCount1 = cl.GetCount(new BsonDocument 
-                                        { 
-                                            { "_id", new BsonArray() { "testoid" } }  ,
-                                            { "b", 3 }
-                                        });
+                                           { 
+                                               { "_id", new BsonArray() { "testoid" } }  ,
+                                               { "b", 3 }
+                                           });
             Assert.AreEqual(1, updateCount1);
             Assert.AreEqual(3, cl.GetCount(null));
         }

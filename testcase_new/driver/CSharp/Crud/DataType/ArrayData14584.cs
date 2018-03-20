@@ -30,8 +30,7 @@ namespace CSharp.Crud.DataType
             sdb = new Sequoiadb(SdbTestBase.coordUrl);
             sdb.Connect();
             cs = sdb.GetCollecitonSpace(SdbTestBase.csName);
-            cl = cs.CreateCollection(clName);
-          
+            cl = cs.CreateCollection(clName);          
         }
 
         [TestMethod()]
@@ -47,8 +46,7 @@ namespace CSharp.Crud.DataType
         {
             try
             {
-                cs.DropCollection(clName);
-                Console.WriteLine(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss:fff") + " end  : " + this.GetType().ToString());
+                cs.DropCollection(clName);                
             }
             finally
             {
@@ -56,17 +54,19 @@ namespace CSharp.Crud.DataType
                 {
                     sdb.Disconnect();
                 }
+                Console.WriteLine(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss:fff") + " end  : " + this.GetType().ToString());
             }
         }
 
         private void InsertAndQueryArrayData()
         {
-            //insert date                         
+            //insert date : {a:["test", 123],b:1}                   
             BsonDocument insertor1 = new BsonDocument 
-                 { 
-                     { "a", new BsonArray() { "test", 123 }},                          
-                     { "b", 1 } 
-                 };
+            { 
+                { "a", new BsonArray() { "test", 123 }},                          
+                { "b", 1 } 
+            };
+            //insert data { a: [ "test1",[ { "$regex": "^a","$options": "i"}, {"test1": {"$binary": "Fxg=", "$type": "0"}}]],b:2}
             BsonDocument insertor2 = new BsonDocument 
                 { 
                     { "a", new BsonArray() {
@@ -79,31 +79,44 @@ namespace CSharp.Crud.DataType
                                            }
                     }, 
                     { "b", 2 } };
+            //insert { a:[{ "arr": ["testarr",{"obj": "testobj"}] },496], b:3}
             BsonDocument insertor3 = new BsonDocument 
+            { 
                 { 
-                    { "a", new BsonArray()
+                    "a", 
+                    new BsonArray()
+                    {
+                        new BsonDocument 
                         {
-                            new BsonDocument 
                             {
-                                {"arr", new BsonArray() { "testarr", new BsonDocument { {"obj","testobj"} } }}
-                            },
-                            123
-                        }
+                                "arr", 
+                                new BsonArray() 
+                                { 
+                                    "testarr", 
+                                    new BsonDocument 
+                                    { 
+                                        {"obj","testobj"} 
+                                    } 
+                                }
+                             }
+                        },
+                        496
+                    }
                         
-                    }, 
-                    { "b", 3 }
-                };                      
+                }, 
+                { "b", 3 }
+            };                      
             cl.Insert(insertor1);
             cl.Insert(insertor2);
             cl.Insert(insertor3);   
           
             //test query        
             BsonDocument matcherConf1 = new BsonDocument { { "a.1", 123 } };
-            QueryAndCheckResult(insertor1, insertor1);
+            QueryAndCheckResult(matcherConf1, insertor1);
             BsonDocument matcherConf2 = new BsonDocument { { "a.1.1.test1", new BsonBinaryData(new byte[] { 23, 24 }) } };
-            QueryAndCheckResult(insertor2, insertor2);
+            QueryAndCheckResult(matcherConf2, insertor2);
             BsonDocument matcherConf3 = new BsonDocument { { "a.0.arr.1.obj", "testobj" } };
-            QueryAndCheckResult(insertor3, insertor3);
+            QueryAndCheckResult(matcherConf3, insertor3);
             
 
             //check insert records num 
