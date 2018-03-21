@@ -344,6 +344,15 @@
     </componentList>
     
     <postInstallationActionList>
+        <!--update installdir/support-files/mysql.server-->
+        <substitute>
+            <files>${installdir}/support-files/mysql.server</files>
+            <type>exact</type>
+            <substitutionList>
+                <substitution pattern="/opt/sequoiasql/mysql" value="${installdir}"/>
+            </substitutionList>
+        </substitute>
+        
         <!--write /etc/default/sequoiasqloltp-->
         <deleteFile path="${sys_conf_file}"/>
         <touchFile path="${sys_conf_file}"/>
