@@ -180,7 +180,7 @@
       <var name="cmd" value="build sequoiamysql_server.xml --setvars project.version=${tmp_sdb_version} --setvars platform=${platform} --setvars edition=${edition_str} --setvars project.outputDirectory=${release_dir} --setvars sql_type=mysql"/>
       <echo>exec cmd: builder ${cmd}</echo>
       <echo>exec in dir: ${mysqltarget}</echo>
-      <exec executable="builder" dir="${mysqltarget}" failonerror="true" logError="true">
+      <exec executable="builder" dir="${mysqltarget}/../" failonerror="true" logError="true">
          <arg line="${cmd}" />
       </exec>
    </target>
