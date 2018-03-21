@@ -61,7 +61,7 @@
                         <checkFreeDiskSpace>
                             <logic>less_or_equal</logic>
                             <path>${installdir}</path>
-                            <size>100000</size>
+                            <size>1000000</size>
                         </checkFreeDiskSpace>
                     </ruleList>
                 </throwError>
