@@ -98,7 +98,10 @@
    </target>
    
    <target name="compile_mysql">
-      <var name="mysqltarget" value="${release_dir}/mysql"/>
+      <var name="mysqltarget" value="/opt/sequoiasql/mysql"/>
+      <delete dir="/opt/sequoiasql" failonerror="false"/>
+      <mkdir dir="/opt/sequoiasql"/>
+      <mkdir dir="${mysqltarget}"/>
       <!--copy diver/mysql/* to ${MYSQL_SRCCODE}/storage/sequoiadb-->
       <copy todir="${MYSQL_SRCCODE}/storage/sequoiadb">
          <fileset dir="${srccode_dir}/driver/mysql" includes="**/**" />
