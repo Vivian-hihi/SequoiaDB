@@ -90,12 +90,10 @@ TEST_F( csFuncParamTest12719, renameCollection14691 )
 {
    INT32 rc =  SDB_OK ;
 
-   /* core dump
    const CHAR* oldName = "testCl14691" ;
    const CHAR* newName = "testCl14691_1" ;
    rc = cs.renameCollection( NULL, newName ) ;
    ASSERT_EQ( SDB_INVALIDARG, rc ) ;
    rc = cs.renameCollection( oldName, NULL ) ;
    ASSERT_EQ( SDB_INVALIDARG, rc ) ;
-   */
 }

@@ -443,22 +443,22 @@ TEST_F( dbFuncParamTest, getDomain12718 )
 TEST_F( dbFuncParamTest, msg14687 )
 {
    INT32 rc = SDB_OK ;
-   // rc = db.msg( NULL ) ;  // core dump
-   ASSERT_EQ( SDB_OK, rc ) ;
+   rc = db.msg( NULL ) ;
+   ASSERT_EQ( SDB_INVALIDARG, rc ) ;
 }
 
 TEST_F( dbFuncParamTest, loadCS14688 )
 {
    INT32 rc = SDB_OK ;
-   // rc = db.loadCS( NULL ) ;  // core dump
-   ASSERT_EQ( SDB_OK, rc ) ;
+   rc = db.loadCS( NULL ) ;
+   ASSERT_EQ( SDB_INVALIDARG, rc ) ;
 }
 
 TEST_F( dbFuncParamTest, unloadCS14689 )
 {
    INT32 rc = SDB_OK ;
-   // rc = db.unloadCS( NULL ) ;  // core dump
-   ASSERT_EQ( SDB_OK, rc ) ;
+   rc = db.unloadCS( NULL ) ;
+   ASSERT_EQ( SDB_INVALIDARG, rc ) ;
 }
 
 TEST_F( dbFuncParamTest, renameCollectionSpace14690 )
@@ -466,10 +466,8 @@ TEST_F( dbFuncParamTest, renameCollectionSpace14690 )
    INT32 rc = SDB_OK ;
    const CHAR* oldName = "renameCsTest14690" ;
    const CHAR* newName = "renameCsTest14690_1" ;
-   /* core dump
    rc = db.renameCollectionSpace( NULL, newName ) ;
-   ASSERT_EQ( SDB_DRIVER_BSON_ERROR, rc ) ;
+   ASSERT_EQ( SDB_INVALIDARG, rc ) ;
    rc = db.renameCollectionSpace( oldName, NULL ) ;
-   ASSERT_EQ( SDB_DRIVER_BSON_ERROR, rc ) ;
-   */ 
+   ASSERT_EQ( SDB_INVALIDARG, rc ) ;
 }
