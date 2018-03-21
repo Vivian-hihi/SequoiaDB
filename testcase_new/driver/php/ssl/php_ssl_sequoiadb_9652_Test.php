@@ -20,7 +20,7 @@ class sslTest965202 extends PHPUnit_Framework_TestCase
       $err = self::$db -> connect($address, '', '', true);
       if ( $err['errno'] != 0 )
       {
-         throw new Exception("failed to connect db");
+         throw new Exception("failed to connect db, errno=".$err['errno']);
       }
    }
 
