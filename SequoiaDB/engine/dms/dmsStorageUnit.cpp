@@ -2839,6 +2839,19 @@ namespace engine
          indexItem._version = indexCB.version () ;
          // copy the index def to it's owned buffer
          indexItem._indexDef = indexCB.getDef().copy () ;
+         if ( IXM_EXTENT_HAS_TYPE( IXM_EXTENT_TYPE_TEXT,
+                                   indexCB.getIndexType() ) )
+         {
+            if ( _storageInfo._extDataHandler )
+            {
+               _storageInfo._extDataHandler->getExtDataName( CSName(),
+                                                mb->_collectionName,
+                                                indexCB.getName(),
+                                                indexItem._extDataName,
+                                                DMS_COLLECTION_FULL_NAME_SZ + 1 ) ;
+            }
+         }
+
          // add
          resultIndexes.push_back ( indexItem ) ;
       }
@@ -2877,6 +2890,18 @@ namespace engine
             resultIndex._version = indexCB.version () ;
             // copy the index def to it's owned buffer
             resultIndex._indexDef = indexCB.getDef().copy () ;
+            if ( IXM_EXTENT_HAS_TYPE( IXM_EXTENT_TYPE_TEXT,
+                                      indexCB.getIndexType() ) )
+            {
+               if ( _storageInfo._extDataHandler )
+               {
+                  _storageInfo._extDataHandler->getExtDataName( CSName(),
+                                                   mb->_collectionName,
+                                                   indexCB.getName(),
+                                                   resultIndex._extDataName,
+                                                   DMS_COLLECTION_FULL_NAME_SZ + 1 ) ;
+               }
+            }
 
             rc = SDB_OK ;
             break ;

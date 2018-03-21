@@ -922,6 +922,7 @@ namespace engine
             UINT16 idxType = IXM_EXTENT_TYPE_NONE ;
             monIndex &indexItem = (*it) ;
             BSONObj &indexObj = indexItem._indexDef ;
+            const CHAR *extDataName = NULL ;
             BSONObj obj ;
             BSONObjBuilder builder( MON_DUMP_DFT_BUILDER_SZ ) ;
             BSONObjBuilder ob (builder.subobjStart(IXM_FIELD_NAME_INDEX_DEF )) ;
@@ -957,6 +958,11 @@ namespace engine
             }
             indexItem.getIndexType( idxType ) ;
             builder.append( FIELD_NAME_TYPE, getIndexTypeDesp( idxType ) ) ;
+            extDataName = indexItem.getExtDataName() ;
+            if ( ossStrlen( extDataName ) > 0 )
+            {
+               builder.append( FIELD_NAME_EXTERNAL_DATA_NAME, extDataName ) ;
+            }
             obj = builder.obj() ;
             rc = context->monAppend( obj ) ;
             if ( rc )
