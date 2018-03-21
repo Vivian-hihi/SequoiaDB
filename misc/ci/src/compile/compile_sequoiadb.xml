@@ -343,7 +343,7 @@
    </target>
    
    <target name="compile_php_driver">
-      <property name="php_version_list" value="5.3.3,5.3.8,5.3.10,5.3.15,5.4.6,5.5.0,5.6.0" />
+      <property name="php_version_list" value="5.3.3,5.3.8,5.3.10,5.3.15,5.4.6,5.5.0,5.6.0,7.0.0,7.1.11" />
       <var name="src_dir" value="${srccode_dir}/driver/php" />
       
       <delete dir="${src_dir}/release" failonerror="false"/>
