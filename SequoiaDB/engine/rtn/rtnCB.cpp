@@ -91,22 +91,6 @@ namespace engine
 
       sdbGetDMSCB()->setIxmKeySorterCreator( creator ) ;
 
-      // Remote messenger should be enabled on data node to support text search.
-      if ( SDB_ROLE_DATA == pmdGetDBRole() )
-      {
-         _remoteMessenger = SDB_OSS_NEW rtnRemoteMessenger() ;
-         if ( !_remoteMessenger )
-         {
-            rc = SDB_OOM ;
-            PD_LOG( PDERROR, "Allocate memory for remote messenger failed, "
-                    "size[ %d ]", sizeof( rtnRemoteMessenger ) ) ;
-            goto error ;
-         }
-         rc = _remoteMessenger->init() ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to initialize remote messenger, "
-                      "rc: %d", rc ) ;
-      }
-
       // The error of initialization of APM could be ignore
       // Only data and catalog nodes could initialize plan cache
       _accessPlanManager.init(
@@ -123,34 +107,20 @@ namespace engine
    done:
       return rc ;
    error:
-      if ( _remoteMessenger )
-      {
-         SDB_OSS_DEL _remoteMessenger ;
-         _remoteMessenger = NULL ;
-      }
       goto done ;
    }
 
    INT32 _SDB_RTNCB::active ()
    {
-      INT32 rc = SDB_OK ;
-
-      if ( SDB_ROLE_DATA == pmdGetDBRole() )
-      {
-         SDB_ASSERT( _remoteMessenger, "Remote messenger should not be NULL" ) ;
-         rc = _remoteMessenger->active() ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to active remote messenger, "
-                      "rc: %d", rc) ;
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
+      return SDB_OK ;
    }
 
    INT32 _SDB_RTNCB::deactive ()
    {
+      if ( _remoteMessenger )
+      {
+         _remoteMessenger->deactive() ;
+      }
       return SDB_OK ;
    }
 
@@ -278,6 +248,41 @@ namespace engine
                contextID, type, getContextTypeDesp(type) ) ;
 
       return SDB_OK ;
+   }
+
+   INT32 _SDB_RTNCB::prepareRemoteMessenger()
+   {
+      INT32 rc = SDB_OK ;
+
+      // Remote messenger should be enabled on data node to support text search.
+      if ( SDB_ROLE_DATA == pmdGetDBRole() )
+      {
+         _remoteMessenger = SDB_OSS_NEW rtnRemoteMessenger() ;
+         if ( !_remoteMessenger )
+         {
+            rc = SDB_OOM ;
+            PD_LOG( PDERROR, "Allocate memory for remote messenger failed, "
+                    "size[ %d ]", sizeof( rtnRemoteMessenger ) ) ;
+            goto error ;
+         }
+         rc = _remoteMessenger->init() ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to initialize remote messenger, "
+                      "rc: %d", rc ) ;
+      }
+
+      rc = _remoteMessenger->active() ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to active remote messenger, "
+                   "rc: %d", rc) ;
+
+   done:
+      return rc ;
+   error:
+      if ( _remoteMessenger )
+      {
+         SDB_OSS_DEL _remoteMessenger ;
+         _remoteMessenger = NULL ;
+      }
+      goto done ;
    }
 
    /*

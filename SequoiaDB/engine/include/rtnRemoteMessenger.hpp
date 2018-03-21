@@ -94,6 +94,7 @@ namespace engine
 
       INT32 init() ;
       INT32 active() ;
+      void deactive() ;
       INT32 setTarget( const _MsgRouteID &id, const CHAR *host,
                        const CHAR *service ) ;
       INT32 setLocalID( const MsgRouteID &id ) ;
@@ -104,13 +105,19 @@ namespace engine
 
       INT32 removeSession( UINT64 sessionID, pmdEDUCB *cb ) ;
       void removeSession( pmdEDUCB *cb ) ;
-      BOOLEAN isReady() const { return _ready ; }
+
+      OSS_INLINE BOOLEAN isReady()
+      {
+         ossScopedRWLock lock( &_lock, SHARED ) ;
+         return _ready ;
+      }
 
    private:
       pmdRemoteSessionMgr  _rsMgr ;
       rtnMsgHandler        _msgHandler ;
       netRouteAgent        _routeAgent ;
       rtnRSHandler         _rsHandler ;
+      ossRWMutex           _lock ;
       BOOLEAN              _ready ;
       UINT64               _targetNodeID ;
    } ;
