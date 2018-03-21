@@ -326,9 +326,9 @@
          "contents": [
             {
                "id": 1519627277,
-               "dir": "sequoiasql",
-               "cn": "SequoiaSQL",
-               "en": "SequoiaSQL",
+               "dir": "sequoiasql_pg",
+               "cn": "Sequoiasql-pg",
+               "en": "Sequoiasql-pg",
                "contents": [
                   {
                      "id": 1519627741,
@@ -367,6 +367,40 @@
                      "file": "SQL_to_Sequoiadb_mapping",
                      "cn": "SQL to SequoiaDB 映射表",
                      "en": "Mapping Table from SQL to SequoiaDB"
+                  }
+               ]
+            },
+            {
+               "id": 1521595228,
+               "dir": "sequoiasql_mysql",
+               "cn": "Sequoiasql-mysql",
+               "en": "Sequoiasql-mysql",
+               "contents": [
+                  {
+                     "id": 1521595241,
+                     "file": "overview",
+                     "cn": "概述",
+                     "en": "Overview"
+                  },
+                  {
+                     "id": 1521595254,
+                     "dir": "install",
+                     "cn": "安装",
+                     "en": "Installation",
+                     "contents": [
+                        {
+                           "id": 1521595270,
+                           "file": "install_deploy",
+                           "cn": "安装部署",
+                           "en": "Install and Deploy"
+                        },
+                        {
+                           "id": 1521595283,
+                           "file": "connect",
+                           "cn": "连接",
+                           "en": "Connect"
+                        }
+                     ]
                   }
                ]
             }
@@ -1178,32 +1212,6 @@
                   }
                ]
             },
-            {
-               "id": 1432193713,
-               "dir": "mysql",
-               "cn": "MySQL",
-               "en": "MySQL",
-               "contents": [
-                  {
-                     "id": 1432193714,
-                     "file": "overview",
-                     "cn": "概述",
-                     "en": "Overview"
-                  },
-                  {
-                     "id": 1432193715,
-                     "file": "install",
-                     "cn": "安装",
-                     "en": "Install"
-                  },
-                  {
-                     "id": 1432193716,
-                     "file": "connection",
-                     "cn": "连接",
-                     "en": "Connection"
-                  }
-               ]
-            }
          ]
       },
       {
