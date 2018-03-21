@@ -41,7 +41,7 @@ class DataOperator02 extends BaseOperator
       //nomal data type, count: 7
       $null   = json_encode( array( 'a' => 0, 'b' => null, 'c' => 'dataType' ) );
       $int32  = json_encode( array( 'a' => 1, 'b' => 2147483647, 'c' => 'dataType' ) );
-      $double = json_encode( array( 'a' => 2, 'b' => 1.7E+308, 'c' => 'dataType' ) );
+      $double = "{ 'a': 2, 'b': 1.7E+308, 'c': 'dataType' }";
       $string = json_encode( array( 'a' => 3, 'b' => 'test', 'c' => 'dataType' ) );
       $bool   = json_encode( array( 'a' => 4, 'b' => true, 'c' => 'dataType' ) );
       $array  = json_encode( array( 'a' => 5, 'b' => array( array( 'b1' => 1 ) ), 'c' => 'dataType' ) );
