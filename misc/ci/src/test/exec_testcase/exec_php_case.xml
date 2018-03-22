@@ -44,6 +44,8 @@
       <execallcase phpversion="php5dot4" testcasedir="${testcase_dir}" reportdir="${report_dir}"/>
       <execallcase phpversion="php5dot5" testcasedir="${testcase_dir}" reportdir="${report_dir}"/>
       <execallcase phpversion="php5dot6" testcasedir="${testcase_dir}" reportdir="${report_dir}"/>
+      <execallcase phpversion="php7dot0" testcasedir="${testcase_dir}" reportdir="${report_dir}"/>
+      <execallcase phpversion="php7dot1" testcasedir="${testcase_dir}" reportdir="${report_dir}"/>
    </target>   
    
    <macrodef name="delemptysuit">       
@@ -208,6 +210,22 @@
                <var name="php_exe" value="/opt/php_5.6.0/bin/php"/>
                <var name="ini_cmd" value="-c /opt/php_5.6.0/lib/php.ini"/>
                <var name="libxml2_dir" value="/opt/php_5.6.0/libxml2/lib"/>
+            </then>
+         </if>
+         <if>
+            <equals arg1="@{phpver}" arg2="php7dot0" />
+            <then>
+               <var name="php_exe" value="/opt/php_7.0.0/bin/php"/>
+               <var name="ini_cmd" value="-c /opt/php_7.0.0/lib/php.ini"/>
+               <var name="libxml2_dir" value="/opt/php_7.0.0/libxml2/lib"/>
+            </then>
+         </if>
+         <if>
+            <equals arg1="@{phpver}" arg2="php7dot1" />
+            <then>
+               <var name="php_exe" value="/opt/php_7.1.11/bin/php"/>
+               <var name="ini_cmd" value="-c /opt/php_7.1.11/lib/php.ini"/>
+               <var name="libxml2_dir" value="/opt/php_7.1.11/libxml2/lib"/>
             </then>
          </if>
          
