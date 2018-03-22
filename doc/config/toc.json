@@ -383,24 +383,16 @@
                      "en": "Overview"
                   },
                   {
-                     "id": 1521595254,
-                     "dir": "install",
-                     "cn": "安装",
-                     "en": "Installation",
-                     "contents": [
-                        {
-                           "id": 1521595270,
-                           "file": "install_deploy",
-                           "cn": "安装部署",
-                           "en": "Install and Deploy"
-                        },
-                        {
-                           "id": 1521595283,
-                           "file": "connection",
-                           "cn": "连接",
-                           "en": "Connect"
-                        }
-                     ]
+                     "id": 1521595270,
+                     "file": "install_deploy",
+                     "cn": "安装部署",
+                     "en": "Install and Deploy"
+                  },
+                  {
+                     "id": 1521595283,
+                     "file": "connection",
+                     "cn": "连接",
+                     "en": "Connect"
                   }
                ]
             }

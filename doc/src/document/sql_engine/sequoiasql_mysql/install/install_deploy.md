@@ -99,14 +99,7 @@
  # chown -R sdbadmin:sdbadmin_group /opt/sequoiasql/mysql/
  ```
 
-
-3. 安装SequoiaDB插件
-
- ```lang-javascript
- # cp ha_sequoiadb.so /opt/sequoiasql/mysql/lib/plugin/
- ```
-
-4. 指定MySQL启动用户
+3. 指定MySQL启动用户
 
   编辑/etc/my.cnf，将如下两行添加至文件中：
 
@@ -115,7 +108,7 @@
    user=sdbadmin
  ```   
 
-5. 启动MySQL
+4. 启动MySQL
 
  ```lang-javascript
  # service mysqld start
