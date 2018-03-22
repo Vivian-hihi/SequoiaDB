@@ -96,7 +96,7 @@
 
  ```lang-javascript
  # /opt/sequoiasql/mysql/bin/mysqld --basedir=/opt/sequoiasql/mysql/ --datadir=/opt/sequoiasql/mysql/data/ --initialize-insecure
- # chown -R mysql:mysql /opt/sequoiasql/mysql/
+ # chown -R sdbadmin:sdbadmin_group /opt/sequoiasql/mysql/
  ```
 
 
