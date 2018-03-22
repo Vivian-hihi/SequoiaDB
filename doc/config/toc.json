@@ -326,7 +326,7 @@
          "contents": [
             {
                "id": 1519627277,
-               "dir": "sequoiasql_pg",
+               "dir": "sequoiasql_pgsql",
                "cn": "Sequoiasql-pg",
                "en": "Sequoiasql-pg",
                "contents": [
