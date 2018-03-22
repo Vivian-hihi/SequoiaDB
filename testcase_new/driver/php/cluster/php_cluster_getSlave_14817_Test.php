@@ -10,18 +10,14 @@ include_once Cur_Path.'/../global.php';
 
 class TestGetSlave14817 extends PHPUnit_Framework_TestCase
 {
-   protected static $db;
+   private static $db;
    
    public static function setUpBeforeClass()
    {
       self::$db = new Sequoiadb();
       $err = self::$db -> connect(globalParameter::getHostName().':'. 
                                   globalParameter::getCoordPort()) ;
-      if( $err['errno'] != 0 )
-      {
-         echo "fail to connect db, error code: ".$err['errno'];
-         return ;
-      }
+      self::assertEquals( 0, self::$db -> getError()['errno'] );
    }
    
    function test()

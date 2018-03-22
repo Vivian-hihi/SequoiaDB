@@ -82,7 +82,7 @@ class ResetSnapshot14425 extends BaseOperator
 
 class TestResetSnapshot14425 extends PHPUnit_Framework_TestCase
 {
-   protected static $dbh;
+   private static $dbh;
    private static $csName;
    private static $clName;
    private static $rgName;
@@ -121,10 +121,7 @@ class TestResetSnapshot14425 extends PHPUnit_Framework_TestCase
    function test()
    {
       if( self::$dbh -> commIsStandlone() )
-      {
-         echo "\n---Skip standalone mode\n";
          return ;
-      }
       $dataDB = self::$dbh -> connectNodeMaster( self::$rgName );
 
       self::$dbh -> createStatisInfo( $dataDB, self::$csName, self::$clName);
@@ -137,6 +134,8 @@ class TestResetSnapshot14425 extends PHPUnit_Framework_TestCase
    
    public static function tearDownAfterClass()
    {
+      if( self::$dbh -> commIsStandlone() )
+         return ;
       $err = self::$dbh -> commDropCL( self::$csName, self::$clName, false );
       self::$dbh -> checkErrno( 0, $err );
    }
