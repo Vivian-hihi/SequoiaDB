@@ -8,6 +8,7 @@ import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
 import org.bson.BSONObject;
 import org.bson.util.JSON;
+import org.bson.util.JSONParseException;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -54,18 +55,18 @@ public class BinFormatTest6608 extends SdbTestBase{
 		// 		throw e;
 		// }
 
-		BSONObject doc2 = (BSONObject) JSON.parse("{ a: { '$binary': 'aGVsbG8gd29ybGQ', '$type': '1' } } ");
 		try {
+			BSONObject doc2 = (BSONObject) JSON.parse("{ a: { '$binary': 'aGVsbG8gd29ybGQ', '$type': '1' } } ");
 			cl.insert(doc2);
 			Assert.fail(doc2 + " should not be inserted");
-		} catch(IllegalArgumentException e) {
+		} catch(JSONParseException e) {
 		}
 
 		String doc3 = "{ a: { '$binary': 'aGVsbG8gd29ybGQ', '$type': '1' } } ";
 		try {
 			cl.insert(doc3);
 			Assert.fail(doc3 + " should not be inserted");
-		} catch(IllegalArgumentException e) {
+		} catch(JSONParseException e) {
 		}
 	}
 
