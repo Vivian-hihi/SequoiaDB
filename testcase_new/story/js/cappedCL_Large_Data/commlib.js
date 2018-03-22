@@ -17,6 +17,7 @@ function checkCount( dbcl, findConf, expectCount)
    {
       throw buildException("checkCount", e, null, null, e);
    }
+   println("check count success!");
 }
 
 /************************************
