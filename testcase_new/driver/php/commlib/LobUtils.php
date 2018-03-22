@@ -110,6 +110,7 @@ class LobUtils
          throw new Exception( "errno = ".$errno.", failed to read the lob[".$oid."]." );
       }
       //echo "----readStr-----\n";
+      //var_dump($expStr);
       //var_dump($readStr);
       
       $err = $lobObj -> close();
@@ -129,4 +130,3 @@ class LobUtils
    
 }
 ?>
-
