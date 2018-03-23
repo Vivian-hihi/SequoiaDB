@@ -198,7 +198,8 @@ namespace engine
          {
             if ( PMD_CFG_CHANGE_REBOOT == changeLevel )
             {
-               (*_pMapKeyField)[ pFieldName ] = pmdParamValue( readValue, FALSE,
+               (*_pMapKeyField)[ pFieldName ] = pmdParamValue( readValue,
+                                                               !fieldStatus,
                                                                fieldStatus,
                                                                changeLevel ) ;
             }
@@ -256,7 +257,8 @@ namespace engine
 
             if ( PMD_CFG_CHANGE_REBOOT == changeLevel )
             {
-               (*_pMapKeyField)[ pFieldName ] = pmdParamValue( defaultValue, FALSE,
+               (*_pMapKeyField)[ pFieldName ] = pmdParamValue( defaultValue,
+                                                               !fieldStatus,
                                                                fieldStatus,
                                                                changeLevel ) ;
             }
@@ -366,7 +368,8 @@ done:
          {
             if ( PMD_CFG_CHANGE_REBOOT == changeLevel )
             {
-               (*_pMapKeyField)[ pFieldName ] = pmdParamValue( readValue, FALSE,
+               (*_pMapKeyField)[ pFieldName ] = pmdParamValue( readValue,
+                                                               !fieldStatus,
                                                                fieldStatus,
                                                                changeLevel ) ;
             }
@@ -427,7 +430,8 @@ done:
 
             if ( PMD_CFG_CHANGE_REBOOT == changeLevel )
             {
-               (*_pMapKeyField)[ pFieldName ] = pmdParamValue( pDefault, FALSE,
+               (*_pMapKeyField)[ pFieldName ] = pmdParamValue( pDefault,
+                                                               !fieldStatus,
                                                                fieldStatus,
                                                                changeLevel ) ;
             }
@@ -861,6 +865,10 @@ done:
       pmdCfgExchange ex2( &mapKeyField, userConfig, TRUE, PMD_CFG_STEP_CHG ) ;
       pmdCfgExchange ex3( &mapKeyField, userConfig, TRUE, PMD_CFG_STEP_RESTORE ) ;
 
+      // save old cfg
+      rc = toBSON( oldCfg, PMD_CFG_MASK_SKIP_UNFIELD ) ;
+      PD_RC_CHECK( rc, PDERROR, "Save old config failed, rc: %d", rc ) ;
+
       // stage 1, mark cfg from config file
       rc = doDataExchange( &ex1 ) ;
 
@@ -895,16 +903,26 @@ done:
             switch ( it->second._level )
             {
                case PMD_CFG_CHANGE_RUN :
-                  strStream << it->first << "=" << it->second._value
-                               << OSS_NEWLINE ;
+                  if ( !( useDefault &&
+                       !(FALSE == it->second._hasField &&
+                         FALSE == it->second._hasMapped ) ) )
+                  {
+                     strStream << it->first << "=" << it->second._value
+                            << OSS_NEWLINE ;
+                  }
                   break ;
                case PMD_CFG_CHANGE_REBOOT :
                   if ( TRUE == it->second._hasField )
                   {
                      rebootArrBuilder.append( it->first ) ;
                   }
-                  strStream << it->first << "=" << it->second._value
-                         << OSS_NEWLINE ;
+                  if ( !( useDefault &&
+                       !(FALSE == it->second._hasField &&
+                         FALSE == it->second._hasMapped ) ) )
+                  {
+                     strStream << it->first << "=" << it->second._value
+                            << OSS_NEWLINE ;
+                  }
                   break ;
                case PMD_CFG_CHANGE_FORBIDDEN :
                   if ( TRUE == it->second._hasField )
