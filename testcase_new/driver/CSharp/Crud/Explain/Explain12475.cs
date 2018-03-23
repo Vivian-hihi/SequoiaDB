@@ -7,7 +7,7 @@ using SequoiaDB;
 using CSharp.TestCommon;
 using SequoiaDB.Bson;
 
-namespace CSharp.Crud.Delete
+namespace CSharp.Crud.Explain
 {
     /**
       * description: explain

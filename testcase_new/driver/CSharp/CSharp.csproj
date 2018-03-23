@@ -93,10 +93,10 @@
     <Compile Include="Crud\Delete\DeleteMatcherRecord14540.cs" />
     <Compile Include="Crud\Delete\QueryAndRemove14541.cs" />
     <Compile Include="Crud\Delete\Delete14542.cs" />
-    <Compile Include="Crud\Delete\InsertUpdateDelete14595.cs" />
-    <Compile Include="Crud\Delete\InsertUpdateDelete14597.cs" />
-    <Compile Include="Crud\Delete\Numberlong13652.cs" />
-    <Compile Include="Crud\Delete\Explain12475.cs" />
+    <Compile Include="Crud\DataType\InsertUpdateDelete14595.cs" />
+    <Compile Include="Crud\DataType\InsertUpdateDelete14597.cs" />
+    <Compile Include="Crud\DataType\Numberlong13652.cs" />
+    <Compile Include="Crud\Explain\Explain12475.cs" />
     <Compile Include="Crud\Lob\LobUtils.cs" />
     <Compile Include="Crud\Lob\Lob13466.cs" />
     <Compile Include="Crud\Lob\Lob13404.cs" />
