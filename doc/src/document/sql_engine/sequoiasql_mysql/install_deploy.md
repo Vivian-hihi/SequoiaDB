@@ -92,14 +92,7 @@
  # chkconfig --add mysqld
  ```
 
-2. 初始化数据库
-
- ```lang-javascript
- # /opt/sequoiasql/mysql/bin/mysqld --basedir=/opt/sequoiasql/mysql/ --datadir=/opt/sequoiasql/mysql/data/ --initialize-insecure
- # chown -R sdbadmin:sdbadmin_group /opt/sequoiasql/mysql/
- ```
-
-3. 指定MySQL启动用户
+2. 指定MySQL启动用户
 
   编辑/etc/my.cnf，将如下两行添加至文件中：
 
@@ -107,6 +100,13 @@
    [mysqld]
    user=sdbadmin
  ```   
+
+3. 初始化数据库
+
+ ```lang-javascript
+ # /opt/sequoiasql/mysql/bin/mysqld --basedir=/opt/sequoiasql/mysql/ --datadir=/opt/sequoiasql/mysql/data/ --initialize-insecure
+ # chown -R sdbadmin:sdbadmin_group /opt/sequoiasql/mysql/
+ ```
 
 4. 启动MySQL
 
