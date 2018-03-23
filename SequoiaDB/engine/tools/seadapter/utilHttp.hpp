@@ -39,9 +39,6 @@
 #define UTIL_HTTP_HPP_
 
 #include "ossSocket.hpp"
-
-// Note: include utilHttpDef.hpp before http_parser.hpp, to use
-//       HTTP_MAX_HEADER_SIZE defined by ourself.
 #include "utilHttpDef.hpp"
 #include "http_parser.hpp"
 #include <string>
@@ -71,7 +68,8 @@ namespace seadapter
          // The format of the uri should be like "192.168.1.100:9200".
          // If you call init multiple times, only the last call will take
          // affect.
-         INT32 init( const string &uri, BOOLEAN keepAlive = TRUE ) ;
+         INT32 init( const string &uri, BOOLEAN keepAlive = TRUE,
+                     INT32 timeout = HTTP_OPRATION_TIMEOUT ) ;
          void reset() ;
 
          OSS_INLINE BOOLEAN isConnected() const
@@ -202,6 +200,7 @@ namespace seadapter
 
          INT32 _extendRecvBuff() ;
          const CHAR* _getHeaderItemVal( const CHAR *key ) ;
+         void _cleanup() ;
 
    private:
       BOOLEAN        _init ;
@@ -210,6 +209,7 @@ namespace seadapter
       string         _urn ;
       INT32          _port ;
       ossSocket      *_socket ;
+      INT32          _timeout ;  // timeout for the socket to send and receive
       CHAR           *_sendBuf ;
       UINT32         _sendBufSize ;
       CHAR           *_recvBuf ;

@@ -44,6 +44,7 @@ namespace seadapter
 {
    _utilESCltMgr::_utilESCltMgr( UINT32 cacheNum )
    {
+      _timeout = 0 ;
       _cacheNum = cacheNum ;
    }
 
@@ -57,7 +58,7 @@ namespace seadapter
       }
    }
 
-   INT32 _utilESCltMgr::init( const std::string &url )
+   INT32 _utilESCltMgr::init( const std::string &url, INT32 timeout )
    {
       INT32 rc = SDB_OK ;
 
@@ -68,6 +69,7 @@ namespace seadapter
          goto error ;
       }
       _url = url ;
+      _timeout = timeout ;
 
    done:
       return rc ;
@@ -102,7 +104,7 @@ namespace seadapter
                  "rc: %d", rc ) ;
          goto error ;
       }
-      rc = client->init( _url ) ;
+      rc = client->init( _url, FALSE, _timeout ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Failed to init search engine client, rc: %d",

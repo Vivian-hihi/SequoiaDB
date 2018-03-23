@@ -64,8 +64,11 @@
 #define HTTP_REQ_POST_STR        "POST"
 #define HTTP_REQ_DELETE_STR      "DELETE"
 
-   // Default send and receive buffer size: 1MB.
-#define HTTP_DEF_BUF_SIZE        ( 1024 * 1024 )
+// Default send and receive buffer size: 1MB.
+#undef   HTTP_DEF_BUF_SIZE
+#define  HTTP_DEF_BUF_SIZE        ( 1024 * 1024 )
+
+#define HTTP_OPRATION_TIMEOUT    10000
 
 #endif /* UTIL_HTTP_DEF_HPP_ */
 

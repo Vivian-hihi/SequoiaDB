@@ -94,8 +94,6 @@
 #define REST_STRING_CHUNKED_END "0\r\n\r\n"
 #define REST_STRING_CHUNKED_END_SIZE (sizeof( REST_STRING_CHUNKED_END ) - 1)
 
-#define REST_OPRATION_TIMEOUT    10000
-
 namespace seadapter
 {
    _utilHttp::_utilHttp()
@@ -103,6 +101,7 @@ namespace seadapter
      _keepAlive( TRUE ),
      _port( 0 ),
      _socket( NULL ),
+     _timeout( HTTP_OPRATION_TIMEOUT ),
      _sendBuf( NULL ),
      _sendBufSize( 0 ),
      _recvBuf( NULL ),
@@ -116,7 +115,7 @@ namespace seadapter
       reset() ;
    }
 
-   INT32 _utilHttp::init( const string &uri, BOOLEAN keepAlive )
+   INT32 _utilHttp::init( const string &uri, BOOLEAN keepAlive, INT32 timeout )
    {
       INT32 rc = SDB_OK ;
       http_parser_settings *parserSettings = NULL ;
@@ -129,10 +128,11 @@ namespace seadapter
       }
 
       rc = _parseUri( uri ) ;
-      PD_RC_CHECK( rc, PDERROR, "Parse uri[ %s ] failed", uri.c_str() ) ;
+      PD_RC_CHECK( rc, PDERROR, "Parse uri[ %s ] failed[ %d ]",
+                   uri.c_str(), rc ) ;
 
       rc = _connectBySocket() ;
-      PD_RC_CHECK( rc, PDERROR, "Prepare socket failed[ %d ]", rc ) ;
+      PD_RC_CHECK( rc, PDERROR, "Connect by socket failed[ %d ]", rc ) ;
 
       _sendBuf = ( CHAR *)SDB_OSS_MALLOC( HTTP_DEF_BUF_SIZE ) ;
       if ( !_sendBuf )
@@ -176,55 +176,22 @@ namespace seadapter
 
       _parserSetting = parserSettings ;
       _keepAlive = keepAlive ;
+      _timeout = timeout ;
       _init = TRUE ;
 
    done:
       return rc ;
    error:
-      reset() ;
+      _cleanup() ;
       goto done ;
    }
 
    void _utilHttp::reset()
    {
-      if ( !_init )
+      if ( _init )
       {
-         goto done ;
+         _cleanup() ;
       }
-
-      _init = FALSE ;
-      _keepAlive = TRUE ;
-      _url.clear() ;
-      _urn.clear() ;
-      _port = 0 ;
-
-      if ( _socket )
-      {
-         _socket->close() ;
-         SDB_OSS_DEL _socket ;
-         _socket = NULL ;
-      }
-
-      if ( _sendBuf )
-      {
-         SDB_OSS_FREE( _sendBuf ) ;
-         _sendBuf = NULL ;
-         _sendBufSize = 0 ;
-      }
-      if ( _recvBuf )
-      {
-         SDB_OSS_FREE( _recvBuf ) ;
-         _recvBuf = NULL ;
-         _recvBufSize = 0 ;
-      }
-      if ( _parserSetting )
-      {
-         SDB_OSS_FREE( _parserSetting ) ;
-         _parserSetting = NULL ;
-      }
-
-   done:
-      return ;
    }
 
    INT32 _utilHttp::request( const CHAR *method, const CHAR *endUrl,
@@ -234,7 +201,7 @@ namespace seadapter
                              INT32 *replyLen, const CHAR *contentType )
    {
       INT32 rc = SDB_OK ;
-      BOOLEAN onlyHead = 0 == ossStrcmp( method, HTTP_REQ_HEAD_STR ) ;
+      BOOLEAN onlyHead = FALSE ;
 
       if ( !_init )
       {
@@ -256,6 +223,8 @@ namespace seadapter
          rc = SDB_INVALIDARG ;
          goto error ;
       }
+
+      onlyHead = ( 0 == ossStrcmp( method, HTTP_REQ_HEAD_STR ) ) ;
 
       // If the connection has been cut, we need to connect again.
       if( !isConnected() )
@@ -402,9 +371,7 @@ namespace seadapter
          rc = SDB_OK ;
       }
 
-      rc = _socket->setKeepAlive( _keepAlive, OSS_SOCKET_KEEP_IDLE,
-                                  OSS_SOCKET_KEEP_INTERVAL,
-                                  OSS_SOCKET_KEEP_CONTER ) ;
+      rc = _socket->setKeepAlive() ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Set socket keep alive failed[ %d ]", rc ) ;
@@ -497,9 +464,9 @@ namespace seadapter
       requestStr += string( "\r\n" ) ;
       // We only accept reply in json format.
       requestStr += string( "Accept: application/json\r\n" ) ;
-      if( _keepAlive )
+      if( !_keepAlive )
       {
-         requestStr += string( "Connection: Keep-Alive\r\n" ) ;
+         requestStr += string( "Connection: close\r\n" ) ;
       }
 
       // If no data, it's done.
@@ -588,7 +555,7 @@ namespace seadapter
       {
          INT32 sendSize = 0 ;
          rc = _socket->send( &request[offset], reqSize - offset, sendSize,
-                             HTTP_REQ_TIMEOUT ) ;
+                             _timeout ) ;
          offset += sendSize ;
          if ( rc )
          {
@@ -721,7 +688,7 @@ namespace seadapter
       while ( headerSize < HTTP_MAX_HEADER_SIZE )
       {
          rc = _socket->recv( _recvBuf + headerSize, remainSize,
-                             curRecvSize, REST_OPRATION_TIMEOUT, 0, FALSE ) ;
+                             curRecvSize, _timeout, 0, FALSE ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to receive data, rc: %d", rc ) ;
          _recvBuf[ headerSize + curRecvSize + 1 ] = '\0' ;
          headFound = _checkEndOfHeader( _recvBuf + headerSize,
@@ -797,8 +764,7 @@ namespace seadapter
          }
          else
          {
-            // TODO: check if the buffer is enough. If not, need to reallocate.
-            //    Note that the pointers in parser may not be used any more.
+            // Note that the pointers in parser may not be used any more.
             contentLen = ossAtoi( itemPtr ) ;
             bodyTotalLen = contentLen ;
             bodyRemainLen = contentLen - bodyPartLen ;
@@ -822,8 +788,7 @@ namespace seadapter
          while ( bodyRemainLen > 0 )
          {
             rc = _socket->recv( _recvBuf + totalRecv, bodyRemainLen,
-                                curRecvSize, REST_OPRATION_TIMEOUT,
-                                0, FALSE ) ;
+                                curRecvSize, _timeout, 0, FALSE ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to receive data, rc: %d", rc ) ;
             bodyRemainLen -= curRecvSize ;
             totalRecv += curRecvSize ;
@@ -1051,6 +1016,42 @@ namespace seadapter
 
       it = _connection._requestHeaders.find( key ) ;
       return ( it == _connection._requestHeaders.end() ) ? NULL : it->second ;
+   }
+
+   void _utilHttp::_cleanup()
+   {
+      _init = FALSE ;
+      _keepAlive = TRUE ;
+      _url.clear() ;
+      _urn.clear() ;
+      _port = 0 ;
+
+      if ( _socket )
+      {
+         _socket->close() ;
+         SDB_OSS_DEL _socket ;
+         _socket = NULL ;
+      }
+
+      _timeout = HTTP_OPRATION_TIMEOUT ;
+
+      if ( _sendBuf )
+      {
+         SDB_OSS_FREE( _sendBuf ) ;
+         _sendBuf = NULL ;
+         _sendBufSize = 0 ;
+      }
+      if ( _recvBuf )
+      {
+         SDB_OSS_FREE( _recvBuf ) ;
+         _recvBuf = NULL ;
+         _recvBufSize = 0 ;
+      }
+      if ( _parserSetting )
+      {
+         SDB_OSS_FREE( _parserSetting ) ;
+         _parserSetting = NULL ;
+      }
    }
 }
 
