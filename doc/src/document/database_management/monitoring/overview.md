@@ -39,6 +39,7 @@
 *   [当前事务快照](database_management/monitoring/snapshot/SDB_SNAP_TRANSACTIONS_CURRENT.md)
 *   [访问计划缓存快照](database_management/monitoring/snapshot/SDB_SNAP_ACCESSPLANS.md)
 *   [节点健康检测快照](database_management/monitoring/snapshot/SDB_SNAP_HEALTH.md)
+*   [配置快照](database_management/monitoring/snapshot/SDB_SNAP_CONFIGS.md)
 
 
 ##列表##

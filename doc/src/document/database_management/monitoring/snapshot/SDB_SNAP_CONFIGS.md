@@ -1,12 +1,12 @@
 ##描述##
 
-配置快照 SDB_SNAP_CONFIG 列出数据库中指定节点的配置信息。
+配置快照 SDB_SNAP_CONFIGS 列出数据库中指定节点的配置信息。
 
 每一个节点上的配置信息为一条记录。
 
 ##标示##
 
-SDB_SNAP_CONFIG
+SDB_SNAP_CONFIGS
 
 ###字段信息###
 
@@ -17,7 +17,7 @@ SDB_SNAP_CONFIG
 查看数据组 db1 中数据节点 20000 上的配置信息
 
 ```lang-javascript
-> db.snapshot( SDB_SNAP_CONFIG, { GroupName:'db1', SvcName:'20000' } )
+> db.snapshot( SDB_SNAP_CONFIGS, { GroupName:'db1', SvcName:'20000' } )
 {
   "confpath": "/home/sequoiadb/conf/local/20000/",
   "dbpath": "/home/equoiadb/20000/",
