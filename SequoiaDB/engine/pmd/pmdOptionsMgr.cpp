@@ -866,7 +866,7 @@ done:
       pmdCfgExchange ex3( &mapKeyField, userConfig, TRUE, PMD_CFG_STEP_RESTORE ) ;
 
       // save old cfg
-      rc = toBSON( oldCfg, PMD_CFG_MASK_SKIP_UNFIELD ) ;
+      rc = toBSON( oldCfg, 0 ) ;
       PD_RC_CHECK( rc, PDERROR, "Save old config failed, rc: %d", rc ) ;
 
       // stage 1, mark cfg from config file
