@@ -40,7 +40,7 @@
 #define SDB_SNAP_TRANSACTIONS_CURRENT 10
 #define SDB_SNAP_ACCESSPLANS      11
 #define SDB_SNAP_HEALTH           12
-#define SDB_SNAP_CONFIG           13
+#define SDB_SNAP_CONFIGS          13
 
 // define value for list
 #define SDB_LIST_CONTEXTS         0
