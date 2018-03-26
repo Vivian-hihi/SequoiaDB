@@ -26,7 +26,7 @@ class TestAnalyzeCl14240 extends PHPUnit_Framework_TestCase
    
    function test()
    {
-      $inexistClFullName = 'analyze14540.foolish_name_xcvebcjd';
+      $inexistClFullName = 'analyze14240.foolish_name_xcvebcjd';
       $err = self::$db -> analyze( array( "Collection" => $inexistClFullName ) );
       analyzeUtils::checkErrno( -23, $err['errno'] );
    }
