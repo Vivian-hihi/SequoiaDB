@@ -176,7 +176,7 @@ namespace engine
             {
                break ;
             }
-         } while( popCount < expectPopCount && count < expectNum )
+         } while( popCount < expectPopCount && count < expectNum ) ;
 
          /// update ratio
          ptr->updateAdjustRatio( expectNum, calcCount, popCount ) ;
