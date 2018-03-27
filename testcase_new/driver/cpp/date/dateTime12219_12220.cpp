@@ -105,7 +105,7 @@ TEST( dateTest14702, toString )
       253402271999000,    // 9999-12-31 23:59:59
    } ;
    string dates[] = {
-      "Sat Jan  1 00:00:00 0\n",  // TODO: \n need to removed
+      "Sat Jan  1 00:00:00 0",
       "Fri Dec 31 23:59:59 9999"
    } ;
    INT32 size = sizeof( mills ) / sizeof( mills[0] ) ;
