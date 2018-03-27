@@ -226,13 +226,6 @@ namespace seadapter
       PD_RC_CHECK( rc, PDERROR, "Initialize query rebuilder failed[ %d ]",
                    rc ) ;
 
-      // The search result should only contain _id objects.
-      if ( !_esClt->isActive() )
-      {
-         rc = _esClt->active() ;
-         PD_RC_CHECK( rc, PDERROR, "Reactive ES client failed[ %d ]", rc ) ;
-      }
-
       rc = searchResult.init() ;
       PD_RC_CHECK( rc, PDERROR, "Result buffer init failed[ %d ]", rc ) ;
 
@@ -505,7 +498,7 @@ namespace seadapter
             }
          }
 
-         totalNum = result.getObjNum() ;
+         totalNum += result.getObjNum() ;
 
          // Two conditions to terminate this loop:
          // 1. Number exceeds the limit.

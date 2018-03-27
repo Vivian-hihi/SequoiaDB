@@ -42,7 +42,7 @@
 #include "seAdptOptionsMgr.hpp"
 #include "pmdAsyncSession.hpp"
 #include "pmdAsyncHandler.hpp"
-#include "utilESCltMgr.hpp"
+#include "utilESCltFactory.hpp"
 #include "seAdptMsgHandler.hpp"
 #include "seAdptIdxMetaMgr.hpp"
 
@@ -132,7 +132,7 @@ namespace seadapter
       virtual void onSessionDestoryed( pmdAsyncSession *pSession ) ;
 
       INT32 refreshTasks( BSONObj &obj ) ;
-      void  stopAllIndexer() ;
+      void  stopAllIndexer( const NET_HANDLE &handle ) ;
 
    protected:
       virtual SDB_SESSION_TYPE _prepareCreate( UINT64 sessionID,
@@ -194,7 +194,7 @@ namespace seadapter
       virtual void onTimer( UINT64 timerID, UINT32 interval ) ;
 
       seAdptOptionsMgr*    getOptions() ;
-      utilESCltMgr*        getSeCltMgr() ;
+      utilESCltFactory*    getSeCltFactory() ;
       seSvcSessionMgr*     getSeAgentMgr() ;
       seIndexSessionMgr*   getIdxSessionMgr() ;
       netRouteAgent*       getIdxRouteAgent() ;
@@ -214,6 +214,9 @@ namespace seadapter
 
       INT32 syncUpdateCLVersion( const CHAR *collectionName, INT64 millsec,
                                  pmdEDUCB *cb, INT32 &version ) ;
+
+      void resetIdxVersion() ;
+
    private:
       INT32 _startSvcListener() ;
       INT32 _initSdbAddr() ;
@@ -234,13 +237,15 @@ namespace seadapter
       INT32 _onCatalogResMsg( NET_HANDLE handle, MsgHeader *msg ) ;
       INT32 _sendCataQueryReq( const BSONObj &query, const BSONObj &selector,
                                UINT64 requestID, _pmdEDUCB *cb ) ;
-      INT32 _updateIndexInfo( BSONObj &obj, BOOLEAN &updated,
-                              BOOLEAN &upgrade ) ;
+      INT32 _updateIndexInfo( const NET_HANDLE &handle, BSONObj &obj,
+                              BOOLEAN &updated, BOOLEAN &upgrade ) ;
       INT32 _parseIndexInfo( const BSONElement *ele, seIndexMeta &idxMeta ) ;
 
       void _genESIdxName( UINT32 csLID, UINT32 clLID, INT32 idxLID,
                           CHAR *esIdxName, UINT32 buffSize ) ;
       void _genESIdxName( seIndexMeta &idxMeta ) ;
+
+      BOOLEAN _isESOnline() ;
 
    private:
       indexMsgHandler         _indexMsgHandler ;
@@ -265,7 +270,7 @@ namespace seadapter
                                                 // accorrdingly.
       CHAR                    _peerGroupName[ OSS_MAX_GROUPNAME_SIZE + 1 ] ;
 
-      utilESCltMgr            _seCltMgr ;
+      utilESCltFactory        _seCltFactory ;
       MsgRouteID              _selfRouteID ;
       ossSpinSLatch           _seLatch ;
       VECINNERPARAM           _vecInnerSessionParam ;
@@ -279,13 +284,15 @@ namespace seadapter
       INT64                   _localIdxVer ;
       seIdxMetaMgr            _idxMetaCache ;
       MsgHeader              *_regMsgBuff ;
+      utilESClt              *_esClt ;          // Used to check ES status.
+      BOOLEAN                 _indexerOn ;
    } ;
    typedef _seAdptCB seAdptCB ;
 
    seAdptCB* sdbGetSeAdapterCB() ;
    seAdptOptionsMgr* sdbGetSeAdptOptions() ;
    seSvcSessionMgr* sdbGetSeAgentCB() ;
-   utilESCltMgr* sdbGetSeCltMgr() ;
+   utilESCltFactory* sdbGetSeCltFactory() ;
 }
 
 #endif /* SE_ADPTMGR_HPP_ */

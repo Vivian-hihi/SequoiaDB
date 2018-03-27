@@ -2538,6 +2538,13 @@ namespace engine
       MSG_ROUTE_SERVICE_TYPE svcType = MSG_ROUTE_CAT_SERVICE ;
       CHAR groupName[ OSS_MAX_GROUPNAME_SIZE + 1 ] = { 0 } ;
 
+      pmdGetKRCB()->getGroupName( groupName, OSS_MAX_GROUPNAME_SIZE + 1 ) ;
+      if ( 0 == ossStrlen( groupName ) )
+      {
+         rc = SDB_REPL_GROUP_NOT_ACTIVE ;
+         goto error ;
+      }
+
       // The remote messenger will be initialized and activated when the adapter
       // registers for the first time.
       messenger = rtnCB->getRemoteMessenger() ;
@@ -2619,7 +2626,6 @@ namespace engine
          // information ). The search engine adapter needs the catalog information
          // to get collection version when query.
          builder.appendBool( FIELD_NAME_IS_PRIMARY, pmdIsPrimary() ) ;
-         pmdGetKRCB()->getGroupName( groupName, OSS_MAX_GROUPNAME_SIZE + 1 ) ;
          builder.append( FIELD_NAME_GROUPNAME, groupName ) ;
 
          tmpPos = _cataGrpItem.getPrimaryPos() ;
@@ -2669,7 +2675,7 @@ namespace engine
          reply->flags = rc ;
          reply->startFrom = 0 ;
          reply->numReturned = rc ? -1 : 1 ;
-         if ( SDB_OK == rc )
+         if ( SDB_OK == rc && !myInfoObj.isEmpty() )
          {
             ossMemcpy( (CHAR *)reply + sizeof( MsgAuthReply ),
                        myInfoObj.objdata(), myInfoObj.objsize() ) ;
@@ -2759,7 +2765,7 @@ namespace engine
       // always be in it. If version not the same, all text indices information
       // will also be in it.
       rc = _dumpTextIdxInfo( localVersion, textIdxInfo,
-                             (localVersion == peerVersion) ) ;
+                             ( localVersion == peerVersion ) ) ;
       PD_RC_CHECK( rc, PDERROR, "Dump text indices information failed[ %d ]",
                    rc ) ;
 
