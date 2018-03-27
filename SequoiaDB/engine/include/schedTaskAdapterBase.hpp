@@ -38,6 +38,8 @@
 #include "pmdDef.hpp"
 #include "schedTaskQue.hpp"
 
+using namespace bson ;
+
 namespace engine
 {
 
@@ -66,6 +68,8 @@ namespace engine
 
          UINT32               prepare( INT64 millisec ) ;
 
+         void                 dump( BSONObjBuilder &builder ) ;
+
       protected:
 
          virtual INT32        _onInit( SCHED_TASK_QUE_TYPE queType ) = 0 ;
@@ -76,6 +80,8 @@ namespace engine
          virtual INT32        _onPush( const pmdEDUEvent &event,
                                        INT64 priority,
                                        const schedInfo *pInfo ) = 0 ;
+
+         virtual SCHED_TYPE   _getType () const = 0 ;
 
       protected:
 

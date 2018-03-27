@@ -43,6 +43,69 @@ namespace engine
 
    #define SCHED_REMAINING_NUM_DFT              ( 500 )
 
+   #define SCHED_TYPE_NONE_STR                  "NONE"
+   #define SCHED_TYPE_FIFO_STR                  "FIFO"
+   #define SCHED_TYPE_PRIORITY_STR              "PRIORITY"
+   #define SCHED_TYPE_CONTAINER_STR             "CONTAINER"
+
+   /*
+      Common functions
+   */
+   const CHAR* schedType2String( SCHED_TYPE type )
+   {
+      const CHAR *pStr = "Unknow" ;
+
+      switch ( type )
+      {
+         case SCHED_TYPE_NONE:
+            pStr = SCHED_TYPE_NONE_STR ;
+            break ;
+         case SCHED_TYPE_FIFO :
+            pStr = SCHED_TYPE_FIFO_STR ;
+            break ;
+         case SCHED_TYPE_PRIORITY :
+            pStr = SCHED_TYPE_PRIORITY_STR ;
+            break ;
+         case SCHED_TYPE_CONTAINER :
+            pStr = SCHED_TYPE_CONTAINER_STR ;
+            break ;
+         default:
+            break ;
+      }
+
+      return pStr ;
+   }
+
+   SCHED_TYPE schedString2Type( const CHAR *pStr )
+   {
+      SCHED_TYPE type = SCHED_TYPE_DEFAULT ;
+
+      if ( pStr )
+      {
+         if ( 0 == ossStrcasecmp( pStr, SCHED_TYPE_NONE_STR ) )
+         {
+            type = SCHED_TYPE_NONE ;
+         }
+         else if ( 0 == ossStrcasecmp( pStr, SCHED_TYPE_FIFO_STR ) )
+         {
+            type = SCHED_TYPE_FIFO ;
+         }
+         else if ( 0 == ossStrcasecmp( pStr, SCHED_TYPE_PRIORITY_STR ) )
+         {
+            type = SCHED_TYPE_PRIORITY ;
+         }
+         else if ( 0 == ossStrcasecmp( pStr, SCHED_TYPE_CONTAINER_STR ) )
+         {
+            type = SCHED_TYPE_CONTAINER ;
+         }
+      }
+
+      return type ;
+   }
+
+   /*
+      _schedInfo implement
+   */
    _schedInfo::_schedInfo()
    :_nice( SCHED_NICE_DFT ),
     _taskID( SCHED_TASK_ID_DFT )
@@ -181,6 +244,11 @@ namespace engine
    void _schedTaskInfo::setTaskLimit( UINT32 limit )
    {
       _limitTaskNum = limit ;
+   }
+
+   UINT32 _schedTaskInfo::getRunTaskNum()
+   {
+      return _runTaskNum.fetch() ;
    }
 
    void _schedTaskInfo::beginATask()

@@ -34,6 +34,8 @@
 #include "pmdEnv.hpp"
 #include "pd.hpp"
 
+using namespace bson ;
+
 namespace engine
 {
 
@@ -163,6 +165,16 @@ namespace engine
       _doNotify.swap( 0 ) ;
 
       return preparedNum ;
+   }
+
+   void _schedTaskAdapterBase::dump( BSONObjBuilder &builder )
+   {
+      builder.append( FIELD_NAME_SCHDLR_TYPE, ( INT32 )_getType() ) ;
+      builder.append( FIELD_NAME_SCHDLR_TYPE_DESP,
+                      schedType2String( _getType() ) ) ;
+      builder.append( FIELD_NAME_RUN, (INT32)_pTaskInfo->getRunTaskNum() ) ;
+      builder.append( FIELD_NAME_WAIT, (INT32)_eventNum.fetch() ) ;
+      builder.append( FIELD_NAME_SCHDLR_TIMES, (INT64)_hardNum.fetch() ) ;
    }
 
    void _schedTaskAdapterBase::_push2Que( const pmdEDUEvent &event )

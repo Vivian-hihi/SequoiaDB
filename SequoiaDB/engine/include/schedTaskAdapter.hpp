@@ -62,8 +62,11 @@ namespace engine
                                        INT64 priority,
                                        const schedInfo *pInfo ) ;
 
+         virtual SCHED_TYPE   _getType () const { return _type ; }
+
       private:
          schedTaskQueBase        *_pTaskQue ;
+         SCHED_TYPE              _type ;
 
    } ;
    typedef _schedFIFOAdapter schedFIFOAdapter ;
@@ -87,6 +90,11 @@ namespace engine
          virtual INT32        _onPush( const pmdEDUEvent &event,
                                        INT64 priority,
                                        const schedInfo *pInfo ) ;
+
+         virtual SCHED_TYPE   _getType () const
+         {
+            return SCHED_TYPE_CONTAINER ;
+         }
 
       private:
          schedTaskContanierMgr            *_pMgr ;

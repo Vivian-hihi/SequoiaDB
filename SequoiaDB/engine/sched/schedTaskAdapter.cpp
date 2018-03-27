@@ -43,6 +43,7 @@ namespace engine
    */
    _schedFIFOAdapter::_schedFIFOAdapter()
    {
+      _type = SCHED_TYPE_FIFO ;
    }
 
    _schedFIFOAdapter::~_schedFIFOAdapter()
@@ -57,10 +58,12 @@ namespace engine
       if ( SCHED_TASK_FIFO_QUE == queType )
       {
          _pTaskQue = SDB_OSS_NEW schedFIFOTaskQue() ;
+         _type = SCHED_TYPE_FIFO ;
       }
       else
       {
          _pTaskQue = SDB_OSS_NEW schedPriorityTaskQue() ;
+         _type = SCHED_TYPE_PRIORITY ;
       }
 
       if ( !_pTaskQue )
