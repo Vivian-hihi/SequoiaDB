@@ -152,6 +152,11 @@ namespace engine
       if ( SDB_OK == _pTaskInfo->getAndWaitRemaingTask( millisec,
                                                         expectNum ) )
       {
+         UINT32 cacheNum = _cacheNum.fetch() ;
+         if ( expectNum > cacheNum )
+         {
+            expectNum = cacheNum ;
+         }
          preparedNum = _onPrepared( expectNum ) ;
       }
 

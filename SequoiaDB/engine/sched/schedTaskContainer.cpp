@@ -461,7 +461,7 @@ namespace engine
       MAP_CONTAINERPTR::iterator it ;
 
       ossScopedLock lock( &_latch ) ;
-      it = _mapContanier.up_bound( ptr->getName() ) ;
+      it = _mapContanier.upper_bound( ptr->getName() ) ;
       if ( it == _mapContanier.end() )
       {
          _lastPtr = _mapContanier.begin()->second ;
@@ -487,7 +487,7 @@ namespace engine
       }
       else
       {
-         it = _mapContanier.up_bound( _curPtr->getName() ) ;
+         it = _mapContanier.upper_bound( _curPtr->getName() ) ;
          if ( it == _mapContanier.end() )
          {
             _curPtr = _mapContanier.begin()->second ;

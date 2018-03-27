@@ -153,41 +153,39 @@ namespace engine
 
       _pMgr->resumeIterator() ;
 
-      while( _pMgr->nextIterator( ptr ) )
+      while( count < expectNum && _pMgr->nextIterator( ptr ) )
       {
+         savePtr = ptr ;
          calcCount = ptr->calcCount( expectNum ) ;
          expectPopCount = (UINT32)( calcCount + 0.50 ) ;
          popCount = 0 ;
 
-         if ( count < expectNum )
+         do
          {
-            savePtr = ptr ;
-
-            while( popCount < expectPopCount &&
-                   count < expectNum )
+            if ( ptr->pop( event, SCHED_PREPARE_POP_TIMEWAIT ) )
             {
-               if ( ptr->pop( event, SCHED_PREPARE_POP_TIMEWAIT ) )
+               /// control msg not cal count
+               if ( !_isControlMsg( event ) )
                {
-                  /// control msg not cal count
-                  if ( !_isControlMsg( event ) )
-                  {
-                     ++popCount ;
-                     ++count ;
-                  }
-                  _push2Que( event ) ;
+                  ++popCount ;
+                  ++count ;
                }
-               else
-               {
-                  break ;
-               }
+               _push2Que( event ) ;
             }
-         }
+            else
+            {
+               break ;
+            }
+         } while( popCount < expectPopCount && count < expectNum )
 
          /// update ratio
          ptr->updateAdjustRatio( expectNum, calcCount, popCount ) ;
       }
 
-      _pMgr->pauseIterator( savePtr ) ;
+      if ( savePtr.get() )
+      {
+         _pMgr->pauseIterator( savePtr ) ;
+      }
 
       return count ;
    }
