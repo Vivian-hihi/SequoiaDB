@@ -31,15 +31,6 @@
    </target>
    
    <target name="clean">
-      <echo>make clean in dir ${MYSQL_SRCCODE}</echo>
-      <exec executable="make" dir="${MYSQL_SRCCODE}" failonerror="true" logError="true">
-         <arg line=" clean " />
-      </exec>
-      
-      <echo>find ./* -name CMakeCache.txt | xargs rm -f in dir ${MYSQL_SRCCODE}</echo>
-      <exec executable="/bin/sh" dir="${MYSQL_SRCCODE}" failonerror="true" logError="true">
-         <arg line=" -c find ./* -name CMakeCache.txt | xargs rm -f " />
-      </exec>
    
       <delete dir="${release_dir}/mysql" failonerror="false"/>
       <mkdir dir="${release_dir}/mysql"/>
