@@ -17,7 +17,7 @@ import com.sequoiadb.base.Node;
 import com.sequoiadb.base.ReplicaGroup;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.metadata.CommLib;
+import com.sequoiadb.clustermanager.CommLib;
 import com.sequoiadb.net.ServerAddress;
 import com.sequoiadb.testcommon.SdbTestBase;
 
