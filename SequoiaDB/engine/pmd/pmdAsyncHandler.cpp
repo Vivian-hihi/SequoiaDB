@@ -116,10 +116,12 @@ namespace engine
       _pmdAsyncMsgHandler implement
    */
    // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDMSGHND, "_pmdAsyncMsgHandler::_pmdAsyncMsgHandler" )
-   _pmdAsyncMsgHandler::_pmdAsyncMsgHandler( _pmdAsycSessionMgr *pSessionMgr )
+   _pmdAsyncMsgHandler::_pmdAsyncMsgHandler( _pmdAsycSessionMgr *pSessionMgr,
+                                             _schedTaskAdapterBase *pTaskAdapter )
    {
       PD_TRACE_ENTRY ( SDB__PMDMSGHND ) ;
       _pSessionMgr   = pSessionMgr ;
+      _pTaskAdapter  = pTaskAdapter ;
       _pMgrEDUCB     = NULL ;
       PD_TRACE_EXIT ( SDB__PMDMSGHND ) ;
    }
@@ -154,8 +156,8 @@ namespace engine
    // This function will not be used concurrently, so we don't need to latch it
    // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDMSGHND_HNDMSG, "_pmdAsyncMsgHandler::handleMsg" )
    INT32 _pmdAsyncMsgHandler::handleMsg( const NET_HANDLE & handle,
-                                         const _MsgHeader * header,
-                                         const CHAR * msg)
+                                         const _MsgHeader *header,
+                                         const CHAR *msg )
    {
       //If TID not Zero, implicate external business require form client
       //or repl sync messages
@@ -168,7 +170,15 @@ namespace engine
       }
       else if ( header->TID != 0 )
       {
-         rc = _handleSessionMsg ( handle, header, msg ) ;
+         if ( _pTaskAdapter )
+         {
+            rc = _handleAdapterMsg( handle, header, msg ) ;
+         }
+         /// When _handleAdapterMsg failed, need call _handleSessionMsg
+         if ( !_pTaskAdapter || rc )
+         {
+            rc = _handleSessionMsg ( handle, header, msg ) ;
+         }
       }
       //Other msg will push to cb queue
       else
@@ -232,16 +242,14 @@ namespace engine
       PD_TRACE_EXIT ( SDB__PMDMSGHND_ONSTOP ) ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDMSGHND_HNDSNMSG, "_pmdAsyncMsgHandler::_handleSessionMsg" )
-   INT32 _pmdAsyncMsgHandler::_handleSessionMsg ( const NET_HANDLE &handle,
-                                                  const _MsgHeader *header,
-                                                  const CHAR *msg )
+   INT32 _pmdAsyncMsgHandler::_handleAdapterMsg( const NET_HANDLE &handle,
+                                                 const _MsgHeader *header,
+                                                 const CHAR *msg )
    {
-      INT32 rc        = SDB_OK ;
+      INT32 rc = SDB_OK ;
+      pmdAsyncSession *pSession = NULL ;
       BOOLEAN bCreate = TRUE ;
-      PD_TRACE_ENTRY ( SDB__PMDMSGHND_HNDSNMSG );
       UINT64 sessionID = 0 ;
-      _pmdAsyncSession *pSession = NULL ;
 
       // if opcode is disconnect or interrupt, we don't expect to create
       // new session
@@ -251,105 +259,42 @@ namespace engine
       {
          bCreate = FALSE ;
       }
-
       sessionID = _pSessionMgr->makeSessionID( handle, header ) ;
 
-      // Find the associated session if exist
-      // If the session doesn't exist, we'll check bCreate, if bCreate=TRUE it
-      // will create one, otherwise will not
-      rc = _pSessionMgr->getSession( sessionID ,
-                                     PMD_SESSION_PASSIVE,
-                                     handle, bCreate,
-                                     header->opCode,
-                                     NULL,
-                                     &pSession ) ;
-      // Determine whether a session is created or retreived
+      rc = _pSessionMgr->getSessionObj( sessionID, TRUE, bCreate,
+                                        PMD_SESSION_PASSIVE,
+                                        handle, header->opCode,
+                                        NULL, &pSession ) ;
       if ( rc )
       {
-         // If session is not retreived
-         if ( !bCreate )
-         {
-            if ( MSG_BS_DISCONNECT == header->opCode )
-            {
-               _pSessionMgr->onNoneSessionDisconnect( sessionID ) ;
-            }
-            // It's okay if we don't expect one
-            rc = SDB_OK ;
-            goto done ;
-         }
-         // Otherwise log the message
-         PD_LOG ( PDERROR, "Failed to create session[ID:%lld], rc: %d",
-                  sessionID, rc ) ;
-
-         rc = _pSessionMgr->onErrorHanding( rc, header, handle,
-                                            sessionID, NULL ) ;
-         if ( rc )
-         {
-            goto error ;
-         }
-         else
-         {
-            goto done ;
-         }
+         goto error ;
       }
 
-      // On recieve
-      pSession->onRecieve ( handle, (_MsgHeader*)header ) ;
-
-      // Check the received code
-      if ( MSG_BS_DISCONNECT == header->opCode )
+      rc = _pTaskAdapter->push( handle, header, pSession->getSchedInfo() ) ;
+      if ( rc )
       {
-         PD_LOG ( PDINFO, "Session[%s] recieved disconnect message",
-                  pSession->sessionName() ) ;
-         _pSessionMgr->onSessionDisconnect( pSession ) ;
-         // Session will be released and we don't need to push message
-         rc = _pSessionMgr->releaseSession( pSession, TRUE ) ;
-         if ( rc )
-         {
-            PD_LOG ( PDWARNING, "Failed to release session, rc = %d", rc ) ;
-            rc = SDB_OK ;
-         }
-         goto done ;
-      }
-      else if ( MSG_BS_INTERRUPTE == header->opCode )
-      {
-         PD_LOG ( PDINFO, "Session[%s] recieved interrupt message",
-                  pSession->sessionName() ) ;
-         pSession->eduCB()->interrupt() ;
-         // For interrupt message, we have to continue in order to push the
-         // message
-      }
-      else if ( MSG_BS_INTERRUPTE_SELF == header->opCode )
-      {
-         PD_LOG( PDEVENT, "Session[%s] recieved interrupt self message",
-                 pSession->sessionName() ) ;
-         pSession->eduCB()->interrupt() ;
-         goto done ;
+         goto error ;
       }
 
-      // push the mssage into session manager
-      rc = _pSessionMgr->pushMessage( pSession, header, handle ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG ( PDERROR, "Failed to push message, rc = %d", rc ) ;
-
-         rc = _pSessionMgr->onErrorHanding( rc, header, handle,
-                                            sessionID, pSession ) ;
-         if ( rc )
-         {
-            goto error ;
-         }
-         else
-         {
-            goto done ;
-         }
-      }
+      pSession->incPendingMsgNum() ;
 
    done:
-      PD_TRACE_EXITRC ( SDB__PMDMSGHND_HNDSNMSG, rc ) ;
+      if ( pSession )
+      {
+         _pSessionMgr->holdOut( pSession ) ;
+      }
       return rc ;
    error:
       goto done ;
+   }
+
+   INT32 _pmdAsyncMsgHandler::_handleSessionMsg ( const NET_HANDLE &handle,
+                                                  const _MsgHeader *header,
+                                                  const CHAR *msg )
+   {
+      return _pSessionMgr->dispatchMsg( handle, header,
+                                        PMD_EDU_MEM_NONE,
+                                        FALSE ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDMSGHND_HNDMAINMSG, "_pmdAsyncMsgHandler::_handleMainMsg" )

@@ -270,6 +270,14 @@ namespace engine
       goto done ;
    }
 
+   void _schedTaskContanierMgr::fini()
+   {
+      _mapContanier.clear() ;
+      _defaultPtr = schedTaskContanierPtr() ;
+      _lastPtr = _defaultPtr ;
+      _curPtr = _defaultPtr ;
+   }
+
    void _schedTaskContanierMgr::_flushWeight()
    {
       UINT64 totalWeight = 0 ;

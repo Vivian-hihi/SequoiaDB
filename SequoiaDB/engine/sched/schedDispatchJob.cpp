@@ -32,6 +32,7 @@
 
 #include "schedDispatchJob.hpp"
 #include "schedTaskAdapterBase.hpp"
+#include "pmdAsyncSession.hpp"
 #include "pd.hpp"
 
 namespace engine

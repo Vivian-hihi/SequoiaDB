@@ -82,6 +82,8 @@ namespace engine
 
       _fullSyncIgnoreTimes = 0 ;
 
+      _info.setNice( SCHED_NICE_MIN ) ;
+
       PD_TRACE_EXIT ( SDB__CLSDSTREPSN__CLSDSTREPSN );
    }
 
@@ -1102,6 +1104,8 @@ namespace engine
       _repl = sdbGetReplCB() ;
 
       _lastProcRequestID = 0 ;
+
+      _info.setNice( SCHED_NICE_MIN ) ;
 
       PD_TRACE_EXIT ( SDB__CLSSRCREPSN__CLSREPSN );
    }

@@ -1880,7 +1880,10 @@ done:
       _enableMixCmp = PMD_DFT_ENABLE_MIX_CMP ;
       _planCacheLevel = OPT_PLAN_PARAMETERIZED ;
       _instanceID = PMD_DFT_INSTANCE_ID ;
-      _maxconn = PMD_DFT_MAX_CONN;
+      _maxconn = PMD_DFT_MAX_CONN ;
+
+      _svcSchedulerType = 0 ;
+      _svcMaxConcurrency= 0 ;
 
 #ifdef SDB_ENTERPRISE
 
@@ -2218,6 +2221,15 @@ done:
       rdxUInt( pEX, PMD_OPTION_MAX_CONN,_maxconn, FALSE,
                PMD_CFG_CHANGE_RUN, PMD_DFT_MAX_CONN, FALSE ) ;
       rdvMinMax( pEX, _maxconn, 0, 30000, TRUE ) ;
+
+      // --svcscheduler
+      rdxUInt( pEX, PMD_OPTION_SVCSCHEDULER, _svcSchedulerType, FALSE,
+               PMD_CFG_CHANGE_REBOOT, 0, FALSE ) ;
+
+      // --svcmaxconcurrency
+      rdxUInt( pEX, PMD_OPTION_SVC_MAX_CONCURRENCY, _svcMaxConcurrency, FALSE,
+               PMD_CFG_CHANGE_RUN, 0, FALSE ) ;
+
       // end map
 
       return getResult () ;

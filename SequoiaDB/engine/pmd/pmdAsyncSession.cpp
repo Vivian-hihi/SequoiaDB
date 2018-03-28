@@ -46,6 +46,8 @@ using namespace bson ;
 namespace engine
 {
 
+   #define PMD_SESSION_FORCE_TIMEOUT         ( 1800 * OSS_ONE_SEC )
+
    /*
       _pmdSessionMeta implement
    */
@@ -68,6 +70,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDSN, "_pmdAsyncSession::_pmdAsyncSession" )
    _pmdAsyncSession::_pmdAsyncSession( UINT64 sessionID )
+   :_pendingMsgNum( 0 ), _holdCount( 0 )
    {
       PD_TRACE_ENTRY ( SDB__PMDSN ) ;
       _lockFlag    = FALSE ;
@@ -80,6 +83,9 @@ namespace engine
 
       _evtIn.reset() ;
       _evtOut.signal() ;
+      _detachEvent.signal() ;
+
+      _isClosed    = TRUE ;
 
       PD_TRACE_EXIT ( SDB__PMDSN ) ;
    }
@@ -90,6 +96,41 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__PMDSN_DESC ) ;
       clear() ;
       PD_TRACE_EXIT ( SDB__PMDSN_DESC ) ;
+   }
+
+   UINT32 _pmdAsyncSession::getPendingMsgNum()
+   {
+      return _pendingMsgNum.fetch() ;
+   }
+
+   UINT32 _pmdAsyncSession::incPendingMsgNum()
+   {
+      return _pendingMsgNum.inc() ;
+   }
+
+   UINT32 _pmdAsyncSession::decPendingmsgNum()
+   {
+      return _pendingMsgNum.dec() ;
+   }
+
+   BOOLEAN _pmdAsyncSession::hasHold()
+   {
+      return _holdCount.compare( 0 ) ;
+   }
+
+   const schedInfo* _pmdAsyncSession::getSchedInfo() const
+   {
+      return &_info ;
+   }
+
+   void _pmdAsyncSession::_holdIn()
+   {
+      _holdCount.inc() ;
+   }
+
+   void _pmdAsyncSession::_holdOut()
+   {
+      _holdCount.dec() ;
    }
 
    UINT64 _pmdAsyncSession::identifyID()
@@ -148,6 +189,7 @@ namespace engine
       _evtOut.reset() ;
       _evtIn.signal() ;
       _detachEvent.reset() ;
+      _isClosed = FALSE ;
 
       _onAttach () ;
 
@@ -168,7 +210,16 @@ namespace engine
       if ( SDB_OK != _detachEvent.wait( 0 ) &&
            _pSessionMgr->forceNotify( sessionID(), eduCB() ) )
       {
-         _detachEvent.wait( 300 * OSS_ONE_SEC ) ;
+         _detachEvent.wait( PMD_SESSION_FORCE_TIMEOUT ) ;
+      }
+
+      _detachEvent.signal() ;
+      _isClosed = TRUE ;
+
+      /// wait holdout
+      while( hasHold() )
+      {
+         ossSleep( 100 ) ;
       }
 
       _onDetach () ;
@@ -185,6 +236,7 @@ namespace engine
    void _pmdAsyncSession::forceBack()
    {
       _detachEvent.signalAll() ;
+      _isClosed = TRUE ;
    }
 
    BOOLEAN _pmdAsyncSession::isDetached () const
@@ -197,12 +249,18 @@ namespace engine
       return _pEDUCB ? TRUE : FALSE ;
    }
 
+   BOOLEAN _pmdAsyncSession::isClosed() const
+   {
+      return _isClosed ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDSN_CLEAR, "_pmdAsyncSession::clear" )
    void _pmdAsyncSession::clear()
    {
       _reset() ;
 
       _evtIn.reset() ;
+      _pendingMsgNum.swap( 0 ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDSN_RESET, "_pmdAsyncSession::_reset" )
@@ -620,16 +678,24 @@ namespace engine
       }
       _mapSession.clear () ;
 
+      it = _mapPendingSession.begin() ;
+      while( it != _mapPendingSession.end() )
+      {
+         _releaseSession( it->second ) ;
+         ++it ;
+      }
+      _mapPendingSession.clear() ;
+
       while ( _deqCacheSessions.size () > 0 )
       {
-         _releaseSession_i( _deqCacheSessions.front (), FALSE, FALSE ) ;
+         _releaseSession( _deqCacheSessions.front () ) ;
          _deqCacheSessions.pop_front () ;
       }
       _cacheSessionNum = 0 ;
 
       while ( _deqDeletingSessions.size() > 0 )
       {
-         _releaseSession_i ( _deqDeletingSessions.front(), FALSE, FALSE ) ;
+         _releaseSession ( _deqDeletingSessions.front() ) ;
          _deqDeletingSessions.pop_front() ;
       }
 
@@ -693,22 +759,54 @@ namespace engine
       pmdAsyncSession *pSession = NULL ;
       DEQSESSION tmpDeletingSessions ;
       DEQSESSION::iterator it ;
+      MAPSESSION_IT itPending ;
 
-      /// check _deqShdDeletingSessions and push to tmpDeletingSessions
-      _deqDeletingMutex.get() ;
-      it = _deqDeletingSessions.begin() ;
-      while ( it != _deqDeletingSessions.end() )
+      /// check pending session and push to tmpDeletingSessions
+      {
+         ossScopedLock lock( &_metaLatch ) ;
+         itPending = _mapPendingSession.begin() ;
+         while( itPending != _mapPendingSession.end() )
+         {
+            pSession = itPending->second ;
+
+            if ( 0 == pSession->getPendingMsgNum() &&
+                 !pSession->hasHold() )
+            {
+               tmpDeletingSessions.push_back( pSession ) ;
+               _mapPendingSession.erase( itPending++ ) ;
+               continue ;
+            }
+            ++itPending ;
+         }
+      }
+
+      /// release the session
+      it = tmpDeletingSessions.begin() ;
+      while( it != tmpDeletingSessions.end() )
       {
          pSession = *it ;
-         if ( !pSession->isDetached() )
-         {
-            ++it ;
-            continue ;
-         }
-         tmpDeletingSessions.push_back( pSession ) ;
-         it = _deqDeletingSessions.erase( it ) ;
+         ++it ;
+
+         _releaseSession( pSession ) ;
       }
-      _deqDeletingMutex.release() ;
+      tmpDeletingSessions.clear() ;
+
+      /// check _deqShdDeletingSessions and push to tmpDeletingSessions
+      {
+         ossScopedLock lock( &_deqDeletingMutex ) ;
+         it = _deqDeletingSessions.begin() ;
+         while ( it != _deqDeletingSessions.end() )
+         {
+            pSession = *it ;
+            if ( !pSession->isDetached() )
+            {
+               ++it ;
+               continue ;
+            }
+            tmpDeletingSessions.push_back( pSession ) ;
+            it = _deqDeletingSessions.erase( it ) ;
+         }
+      }
 
       /// release the session
       it = tmpDeletingSessions.begin() ;
@@ -724,87 +822,236 @@ namespace engine
       PD_TRACE_EXIT( PMD_SESSMGR_ONTIMER ) ;
    }
 
-   // This function do not latch since it shouldn't be called by
-   // multiple threads
-   // PD_TRACE_DECLARE_FUNCTION ( PMD_SESSMGR_PUSHMSG, "_pmdAsycSessionMgr::pushMessage" )
-   INT32 _pmdAsycSessionMgr::pushMessage( pmdAsyncSession *pSession,
-                                          const MsgHeader *header,
-                                          const NET_HANDLE &handle )
+   void _pmdAsycSessionMgr::holdOut( pmdAsyncSession *pSession )
+   {
+      pSession->_holdOut() ;
+   }
+
+   INT32 _pmdAsycSessionMgr::dispatchMsg( const NET_HANDLE &handle,
+                                          const MsgHeader *pMsg,
+                                          pmdEDUMemTypes memType,
+                                          BOOLEAN decPending )
+   {
+      INT32 rc        = SDB_OK ;
+      _pmdAsyncSession *pSession = NULL ;
+      BOOLEAN bCreate = TRUE ;
+      UINT64 sessionID = 0 ;
+
+      // if opcode is disconnect or interrupt, we don't expect to create
+      // new session
+      if ( MSG_BS_DISCONNECT == pMsg->opCode ||
+           MSG_BS_INTERRUPTE == pMsg->opCode ||
+           MSG_BS_INTERRUPTE_SELF == pMsg->opCode )
+      {
+         bCreate = FALSE ;
+      }
+      sessionID = makeSessionID( handle, pMsg ) ;
+
+      // Find the associated session if exist
+      // If the session doesn't exist, we'll check bCreate, if bCreate=TRUE it
+      // will create one, otherwise will not
+      rc = getSession( sessionID ,
+                       TRUE,
+                       PMD_SESSION_PASSIVE,
+                       handle, bCreate, pMsg->opCode,
+                       NULL, &pSession ) ;
+      // Determine whether a session is created or retreived
+      if ( rc )
+      {
+         // If session is not retreived
+         if ( !bCreate )
+         {
+            if ( MSG_BS_DISCONNECT == pMsg->opCode )
+            {
+               _metaLatch.get() ;
+               onNoneSessionDisconnect( sessionID ) ;
+               _metaLatch.release() ;
+            }
+            // It's okay if we don't expect one
+            rc = SDB_OK ;
+            goto done ;
+         }
+         // Otherwise log the message
+         PD_LOG ( PDERROR, "Failed to create session[ID:%lld], rc: %d",
+                  sessionID, rc ) ;
+
+         rc = onErrorHanding( rc, pMsg, handle, sessionID, NULL ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+         else
+         {
+            goto done ;
+         }
+      }
+
+      if ( decPending )
+      {
+         pSession->decPendingmsgNum() ;
+      }
+
+      // On recieve
+      pSession->onRecieve ( handle, (_MsgHeader*)pMsg ) ;
+
+      // Check the received code
+      if ( MSG_BS_DISCONNECT == pMsg->opCode )
+      {
+         PD_LOG ( PDINFO, "Session[%s] recieved disconnect message",
+                  pSession->sessionName() ) ;
+
+         _metaLatch.get() ;
+         onSessionDisconnect( pSession ) ;
+         _metaLatch.release() ;
+
+         // Session will be released and we don't need to push message
+         holdOut( pSession ) ;
+         rc = releaseSession( pSession, TRUE ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDWARNING, "Failed to release session, rc = %d", rc ) ;
+            rc = SDB_OK ;
+         }
+         pSession = NULL ;
+         goto done ;
+      }
+      else if ( MSG_BS_INTERRUPTE == pMsg->opCode )
+      {
+         PD_LOG ( PDINFO, "Session[%s] recieved interrupt message",
+                  pSession->sessionName() ) ;
+         pSession->eduCB()->interrupt() ;
+         // For interrupt message, we have to continue in order to push the
+         // message
+      }
+      else if ( MSG_BS_INTERRUPTE_SELF == pMsg->opCode )
+      {
+         PD_LOG( PDEVENT, "Session[%s] recieved interrupt self message",
+                 pSession->sessionName() ) ;
+         pSession->eduCB()->interrupt() ;
+         goto done ;
+      }
+
+      // push the mssage into session manager
+      rc = _pushMessage( pSession, pMsg, memType, handle ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG ( PDERROR, "Failed to push message, rc = %d", rc ) ;
+
+         rc = onErrorHanding( rc, pMsg, handle, sessionID, pSession ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+         else
+         {
+            goto done ;
+         }
+      }
+
+   done:
+      if ( pSession )
+      {
+         holdOut( pSession ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( PMD_SESSMGR_PUSHMSG, "_pmdAsycSessionMgr::_pushMessage" )
+   INT32 _pmdAsycSessionMgr::_pushMessage( pmdAsyncSession *pSession,
+                                           const MsgHeader *header,
+                                           pmdEDUMemTypes memType,
+                                           const NET_HANDLE &handle )
    {
       INT32 rc                = SDB_OK ;
       PD_TRACE_ENTRY ( PMD_SESSMGR_PUSHMSG ) ;
       CHAR *pNewBuff          = NULL ;
-      UINT32 buffSize         = 0 ;
       UINT64 userData         = 0 ; // 0: memPool, 1: alloc
-      pmdEDUMemTypes memType  = PMD_EDU_MEM_NONE ;
-      pmdBuffInfo * pBuffInfo = pSession->frontBuffer () ;
-      // loop through all free slots
-      while ( pBuffInfo && pBuffInfo->isFree() )
-      {
-         if ( !pNewBuff && pBuffInfo->size >= (UINT32)header->messageLength )
-         {
-            pNewBuff = pBuffInfo->pBuffer ;
-            buffSize = pBuffInfo->size ;
-         }
-         else //release memory to pool
-         {
-            _memPool.release( pBuffInfo->pBuffer, pBuffInfo->size ) ;
-         }
-         pSession->popBuffer () ;
-         pBuffInfo = pSession->frontBuffer () ;
-      }
-      // if we cannot find any free slots
-      if ( !pNewBuff && !pSession->isBufferFull() )
-      {
-         // let's allocate memory from pool
-         pNewBuff = _memPool.alloc ( header->messageLength, buffSize ) ;
-         // if unable to allocate from pool, let's dump warning message and
-         // and keep calling oss malloc to get memory
-         if ( !pNewBuff )
-         {
-            PD_LOG ( PDWARNING, "Memory pool assign memory failed[size:%d]",
-                     header->messageLength ) ;
-         }
-      }
-      // if memory is got from existing pool, let's assign to the session
-      if ( pNewBuff )
-      {
-         rc = pSession->pushBuffer ( pNewBuff, buffSize ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG ( PDERROR, "push buffer failed in session[%s, rc:%d]", 
-                     pSession->sessionName(), rc ) ;
-            _memPool.release ( pNewBuff, buffSize ) ;
-            SDB_ASSERT ( 0, "why the buffer is full??? check" ) ;
-            goto error ;
-         }
 
-         // copyMsg will NOT allocate memory inside
-         // so we don't need to set PMD_EDU_MEM_ALLOC
-         pNewBuff = (CHAR*)pSession->copyMsg( (const CHAR*)header,
-                                              header->messageLength ) ;
-         if ( NULL == pNewBuff )
+      if ( pSession->isClosed() )
+      {
+         rc = SDB_APP_INTERRUPT ;
+         goto error ;
+      }
+
+      if ( PMD_EDU_MEM_NONE == memType )
+      {
+         UINT32 buffSize         = 0 ;
+         pmdBuffInfo * pBuffInfo = pSession->frontBuffer () ;
+         // loop through all free slots
+         while ( pBuffInfo && pBuffInfo->isFree() )
          {
-            PD_LOG ( PDERROR, "Unable to find a previous valid memory" ) ;
-            rc = SDB_SYS ;
-            goto error ;
+            if ( !pNewBuff && pBuffInfo->size >= (UINT32)header->messageLength )
+            {
+               pNewBuff = pBuffInfo->pBuffer ;
+               buffSize = pBuffInfo->size ;
+            }
+            else //release memory to pool
+            {
+               _memPool.release( pBuffInfo->pBuffer, pBuffInfo->size ) ;
+            }
+            pSession->popBuffer () ;
+            pBuffInfo = pSession->frontBuffer () ;
+         }
+         // if we cannot find any free slots
+         if ( !pNewBuff && !pSession->isBufferFull() )
+         {
+            // let's allocate memory from pool
+            pNewBuff = _memPool.alloc ( header->messageLength, buffSize ) ;
+            // if unable to allocate from pool, let's dump warning message and
+            // and keep calling oss malloc to get memory
+            if ( !pNewBuff )
+            {
+               PD_LOG ( PDWARNING, "Memory pool assign memory failed[size:%d]",
+                        header->messageLength ) ;
+            }
+         }
+         // if memory is got from existing pool, let's assign to the session
+         if ( pNewBuff )
+         {
+            rc = pSession->pushBuffer ( pNewBuff, buffSize ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG ( PDERROR, "push buffer failed in session[%s, rc:%d]", 
+                        pSession->sessionName(), rc ) ;
+               _memPool.release ( pNewBuff, buffSize ) ;
+               SDB_ASSERT ( 0, "why the buffer is full??? check" ) ;
+               goto error ;
+            }
+
+            // copyMsg will NOT allocate memory inside
+            // so we don't need to set PMD_EDU_MEM_ALLOC
+            pNewBuff = (CHAR*)pSession->copyMsg( (const CHAR*)header,
+                                                 header->messageLength ) ;
+            if ( NULL == pNewBuff )
+            {
+               PD_LOG ( PDERROR, "Unable to find a previous valid memory" ) ;
+               rc = SDB_SYS ;
+               goto error ;
+            }
+         }
+         else
+         {
+            // if memory is not able to allocated from pool, we have to use
+            // ossmalloc to get from OS
+            pNewBuff = ( CHAR* )SDB_OSS_MALLOC( header->messageLength ) ;
+            if ( !pNewBuff )
+            {
+               PD_LOG( PDERROR, "Failed to alloc msg[size: %d] in session[%s]",
+                       header->messageLength, pSession->sessionName() ) ;
+               rc = SDB_OOM ;
+               goto error ;
+            }
+            ossMemcpy( pNewBuff, (void*)header, header->messageLength ) ;
+            userData = 1 ;
+            memType  = PMD_EDU_MEM_ALLOC ;
          }
       }
       else
       {
-         // if memory is not able to allocated from pool, we have to use
-         // ossmalloc to get from OS
-         pNewBuff = ( CHAR* )SDB_OSS_MALLOC( header->messageLength ) ;
-         if ( !pNewBuff )
-         {
-            PD_LOG( PDERROR, "Failed to alloc msg[size: %d] in session[%s]",
-                    header->messageLength, pSession->sessionName() ) ;
-            rc = SDB_OOM ;
-            goto error ;
-         }
-         ossMemcpy( pNewBuff, (void*)header, header->messageLength ) ;
          userData = 1 ;
-         memType  = PMD_EDU_MEM_ALLOC ;
+         pNewBuff = ( CHAR* )header ;
       }
 
       // post edu event
@@ -818,36 +1065,57 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( PMD_SESSMGR_GETSESSION, "_pmdAsycSessionMgr::getSession" )
-   INT32 _pmdAsycSessionMgr::getSession( UINT64 sessionID,
-                                         INT32 startType,
-                                         const NET_HANDLE handle,
-                                         BOOLEAN bCreate, INT32 opCode,
-                                         void *data,
-                                         pmdAsyncSession **ppSession )
+   // PD_TRACE_DECLARE_FUNCTION ( PMD_SESSMGR_GETSESSIONOBJ, "_pmdAsycSessionMgr::getSessionObj" )
+   INT32 _pmdAsycSessionMgr::getSessionObj( UINT64 sessionID,
+                                            BOOLEAN withHold,
+                                            BOOLEAN bCreate,
+                                            INT32 startType,
+                                            const NET_HANDLE &handle,
+                                            INT32 opCode,
+                                            void *data,
+                                            pmdAsyncSession **ppSession,
+                                            BOOLEAN *pIsPending )
    {
       INT32 rc                     = SDB_OK ;
-      PD_TRACE_ENTRY ( PMD_SESSMGR_GETSESSION );
+      PD_TRACE_ENTRY ( PMD_SESSMGR_GETSESSIONOBJ );
       pmdAsyncSession *pSession    = NULL ;
       SDB_SESSION_TYPE sessionType = SDB_SESSION_MAX ;
-      NET_EH eh ;
+      MAPSESSION_IT it ;
+      BOOLEAN isPending            = FALSE ;
 
-      // check if there's already session for the sessionID
-      MAPSESSION_IT it = _mapSession.find( sessionID ) ;
-      if ( it != _mapSession.end() )
       {
-         pSession = it->second ;
+         ossScopedLock lock( &_metaLatch ) ;
 
-         // need to attach meta
-         if ( !pSession->getMeta() && pSession->canAttachMeta() &&
-              NET_INVALID_HANDLE != handle )
+         // check if there's already session for the sessionID
+         if ( _mapSession.end() != ( it = _mapSession.find( sessionID ) ) )
          {
-            // we can safely ignore the return code from _attachSessionMeta
-            // if for any reason we were not able to attach, we can do
-            // it next time
-            _attachSessionMeta( pSession, handle ) ;
+            pSession = it->second ;
          }
-         goto done ;
+         else if ( _mapPendingSession.end() !=
+                   ( it = _mapPendingSession.find( sessionID ) ) )
+         {
+            pSession = it->second ;
+            isPending = TRUE ;
+         }
+
+         if ( pSession )
+         {
+            // need to attach meta
+            if ( !pSession->getMeta() && pSession->canAttachMeta() &&
+                 NET_INVALID_HANDLE != handle )
+            {
+               // we can safely ignore the return code from _attachSessionMeta
+               // if for any reason we were not able to attach, we can do
+               // it next time
+               _attachSessionMeta( pSession, handle ) ;
+            }
+
+            if ( withHold )
+            {
+               pSession->_holdIn() ;
+            }
+            goto done ;
+         }
       }
 
       // if we are not asked for create new session, let's simply return
@@ -904,37 +1172,38 @@ namespace engine
          pSession->setSessionMgr( this ) ;
       }
 
-      // set session info
-      _mapSession[ sessionID ] = pSession ;
-      pSession->startType( startType ) ;
-      pSession->sessionID( sessionID ) ;
-
       PD_LOG ( PDEVENT, "Create session[%s,StartType:%d]",
                pSession->sessionName(), startType ) ;
 
-      _onSessionNew( pSession ) ;
-
-      // attach meta
-      if ( !pSession->getMeta() && pSession->canAttachMeta() &&
-           NET_INVALID_HANDLE != handle )
+      // set session info
       {
-         rc = _attachSessionMeta( pSession, handle ) ;
-         if ( rc )
+         ossScopedLock lock( &_metaLatch ) ;
+
+         _onSessionNew( pSession ) ;
+
+         _mapSession[ sessionID ] = pSession ;
+         pSession->startType( startType ) ;
+         pSession->sessionID( sessionID ) ;
+
+         // attach meta
+         if ( !pSession->getMeta() && pSession->canAttachMeta() &&
+              NET_INVALID_HANDLE != handle )
          {
             // if the session is not able to attached with metadata,
             // it cann't do much thing anyway
             // so we don't bother to start the session if we can't attach meta
-            PD_LOG ( PDERROR, "Unable to attach metadata, rc = %d", rc ) ;
-            goto error ;
+            rc = _attachSessionMeta( pSession, handle ) ;
+            if ( rc )
+            {
+               PD_LOG ( PDERROR, "Unable to attach metadata, rc = %d", rc ) ;
+               goto error ;
+            }
          }
-      }
 
-      //Start session EDU
-      rc = _startSessionEDU( pSession ) ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "Failed to start session EDU, rc = %d", rc ) ;
-         goto error ;
+         if ( withHold )
+         {
+            pSession->_holdIn() ;
+         }
       }
 
    done:
@@ -942,11 +1211,74 @@ namespace engine
       {
          *ppSession = pSession ;
       }
-      PD_TRACE_EXIT ( PMD_SESSMGR_GETSESSION );
+      if ( pIsPending )
+      {
+         *pIsPending = isPending ;
+      }
+      PD_TRACE_EXITRC( PMD_SESSMGR_GETSESSIONOBJ, rc ) ;
       return rc ;
    error:
       if ( pSession )
       {
+         releaseSession ( pSession ) ;
+         pSession = NULL ;
+      }
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( PMD_SESSMGR_GETSESSION, "_pmdAsycSessionMgr::getSession" )
+   INT32 _pmdAsycSessionMgr::getSession( UINT64 sessionID,
+                                         BOOLEAN withHold,
+                                         INT32 startType,
+                                         const NET_HANDLE &handle,
+                                         BOOLEAN bCreate,
+                                         INT32 opCode,
+                                         void *data,
+                                         pmdAsyncSession **ppSession )
+   {
+      INT32 rc                     = SDB_OK ;
+      PD_TRACE_ENTRY ( PMD_SESSMGR_GETSESSION ) ;
+      pmdAsyncSession *pSession = NULL ;
+      BOOLEAN isPending = FALSE ;
+
+      rc = getSessionObj( sessionID, withHold, bCreate,
+                          startType, handle, opCode,
+                          data, &pSession, &isPending ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      if ( isPending )
+      {
+         SDB_ASSERT( pSession->isClosed(), "Session must be closed" ) ;
+         goto done ;
+      }
+      else if ( !pSession->isAttached() )
+      {
+         //Start session EDU
+         rc = _startSessionEDU( pSession ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to start session EDU, rc = %d", rc ) ;
+            goto error ;
+         }
+      }
+
+   done:
+      if ( ppSession )
+      {
+         *ppSession = pSession ;
+      }
+      PD_TRACE_EXITRC ( PMD_SESSMGR_GETSESSION, rc );
+      return rc ;
+   error:
+      if ( pSession )
+      {
+         if ( withHold )
+         {
+            holdOut( pSession ) ;
+         }
          releaseSession ( pSession ) ;
          pSession = NULL ;
       }
@@ -1038,10 +1370,18 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( PMD_SESSMGR_RLSSS ) ;
       // clear session map
-      MAPSESSION_IT it = _mapSession.find( pSession->sessionID() ) ;
+      MAPSESSION_IT it ;
+
+      ossScopedLock lock( &_metaLatch ) ;
+
+      it = _mapSession.find( pSession->sessionID() ) ;
       if ( it != _mapSession.end() )
       {
          _mapSession.erase( it ) ;
+      }
+      else
+      {
+         goto done ;
       }
 
       // release session
@@ -1079,9 +1419,14 @@ namespace engine
 
       onSessionDestoryed( pSession ) ;
 
+      if ( pSession->hasHold() || 0 != pSession->getPendingMsgNum() )
+      {
+         _mapPendingSession[ pSession->sessionID() ] = pSession ;
+         goto done ;
+      }
       // if we don't need to relase it rightaway, we can push the request to
       // delete queue and return
-      if ( delay || !pSession->isDetached() )
+      else if ( delay || !pSession->isDetached() )
       {
          ossScopedLock lock ( &_deqDeletingMutex ) ;
          _deqDeletingSessions.push_back ( pSession ) ;
@@ -1154,6 +1499,13 @@ namespace engine
          rc = SDB_INVALIDARG ;
          goto error ;
       }
+      else if ( MSG_BS_DISCONNECT == pReqMsg->opCode ||
+                MSG_BS_INTERRUPTE == pReqMsg->opCode ||
+                MSG_BS_INTERRUPTE_SELF == pReqMsg->opCode )
+      {
+         /// not reply
+         goto done ;
+      }
 
       reply.header.opCode = MAKE_REPLY_TYPE( pReqMsg->opCode ) ;
       reply.header.requestID = pReqMsg->requestID ;
@@ -1183,23 +1535,28 @@ namespace engine
    {
       PD_TRACE_ENTRY ( PMD_SESSMGR_HDLSNCLOSE ) ;
       pmdAsyncSession *pSession = NULL ;
-      MAPSESSION_IT it = _mapSession.begin() ;
-      // iterate all sessions
-      while ( it != _mapSession.end() )
+
       {
-         pSession = it->second ;
-         // release the session
-         if ( pSession->netHandle() == handle )
+         ossScopedLock lock( &_metaLatch ) ;
+         MAPSESSION_IT it = _mapSession.begin() ;
+         // iterate all sessions
+         while ( it != _mapSession.end() )
          {
-            PD_LOG ( PDEVENT, "Session[%s, handle:%d] closed",
-                     pSession->sessionName(), pSession->netHandle() ) ;
-            onSessionHandleClose( pSession ) ;
-            _releaseSession_i( pSession, TRUE, TRUE ) ;
-            _mapSession.erase( it++ ) ;
-            continue ;
+            pSession = it->second ;
+            // release the session
+            if ( pSession->netHandle() == handle )
+            {
+               PD_LOG ( PDEVENT, "Session[%s, handle:%d] closed",
+                        pSession->sessionName(), pSession->netHandle() ) ;
+               onSessionHandleClose( pSession ) ;
+               _releaseSession_i( pSession, TRUE, TRUE ) ;
+               _mapSession.erase( it++ ) ;
+               continue ;
+            }
+            ++it ;
          }
-         ++it ;
       }
+
       // create a timer if it doesn't exist
       if ( NET_INVALID_TIMER_ID == _handleCloseTimerID )
       {
@@ -1264,6 +1621,8 @@ namespace engine
    {
       PD_TRACE_ENTRY ( PMD_SESSMGR_CHKSNMETA ) ;
 
+      ossScopedLock lock( &_metaLatch ) ;
+
       MAPMETA_IT it = _mapMeta.begin() ;
       while ( it != _mapMeta.end() )
       {
@@ -1297,14 +1656,17 @@ namespace engine
          sessionID = _forceSessions.front() ;
          _forceSessions.pop_front() ;
 
-         MAPSESSION_IT itSession = _mapSession.find( sessionID ) ;
-         if ( itSession == _mapSession.end() )
          {
-            continue ;
+            ossScopedLock metaLock( &_metaLatch ) ;
+            MAPSESSION_IT itSession = _mapSession.find( sessionID ) ;
+            if ( itSession == _mapSession.end() )
+            {
+               continue ;
+            }
+            pSession = itSession->second ;
+            _releaseSession_i( pSession, FALSE, TRUE ) ;
+            _mapSession.erase( itSession ) ;
          }
-         pSession = itSession->second ;
-         _releaseSession_i( pSession, FALSE, TRUE ) ;
-         _mapSession.erase( itSession ) ;
       }
 
       // remove the timer if it's already exist
@@ -1324,12 +1686,18 @@ namespace engine
       PD_TRACE_ENTRY ( PMD_SESSMGR_CHKSN ) ;
 
       pmdAsyncSession *pSession = NULL ;
+
+      ossScopedLock lock( &_metaLatch ) ;
+
       MAPSESSION_IT it = _mapSession.begin() ;
       while ( it != _mapSession.end() )
       {
          pSession = it->second ;
 
-         if ( !pSession->isProcess() && pSession->timeout( interval ) )
+         if ( 0 == pSession->getPendingMsgNum() &&
+              !pSession->hasHold() &&
+              !pSession->isProcess() &&
+              pSession->timeout( interval ) )
          {
             PD_LOG ( PDEVENT, "Session[%s] timeout", pSession->sessionName() ) ;
             _releaseSession_i ( pSession, TRUE, TRUE ) ;

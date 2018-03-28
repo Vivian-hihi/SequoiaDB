@@ -1324,6 +1324,7 @@ namespace seadapter
          seAdptSessionInfo &info = *itr ;
          if ( info.type != type ||
               SDB_OK == pSessionMgr->getSession( info.sessionID,
+                                                 FALSE,
                                                  info.startType,
                                                  NET_INVALID_HANDLE,
                                                  FALSE, 0, NULL,
@@ -1333,7 +1334,8 @@ namespace seadapter
             continue ;
          }
 
-         rc = pSessionMgr->getSession( info.sessionID, info.startType,
+         rc = pSessionMgr->getSession( info.sessionID, FALSE,
+                                       info.startType,
                                        NET_INVALID_HANDLE, TRUE, 0,
                                        info.data,
                                        &pSession ) ;

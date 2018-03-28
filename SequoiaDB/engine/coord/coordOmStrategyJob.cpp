@@ -98,7 +98,7 @@ namespace engine
          goto done ;
       }
 
-      while( !eduCB()->isInterrupted() )
+      while( !eduCB()->isForced() )
       {
          if ( timeCount >= timeWait )
          {
@@ -113,6 +113,7 @@ namespace engine
             {
                timeWait = COORD_OM_UPDATE_OPR_RETRY ;
             }
+            eduCB()->incEventCount( 1 ) ;
          }
          else if ( SDB_OK == pOmAgent->waitChange( OSS_ONE_SEC ) )
          {

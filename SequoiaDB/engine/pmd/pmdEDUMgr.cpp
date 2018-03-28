@@ -394,7 +394,7 @@ namespace engine
       if ( ( it = _mapRuns.find( eduID ) ) != _mapRuns.end() )
       {
          cb = it->second ;
-         isSystem = _isSystemEDU( cb ) ;
+         isSystem = ( _isSystemEDU( cb ) || cb->isLocked() ) ;
       }
       else if ( ( it = _mapIdles.find( eduID ) ) != _mapIdles.end() )
       {
@@ -434,7 +434,7 @@ namespace engine
       if ( ( it = _mapRuns.find( eduID ) ) != _mapRuns.end() )
       {
          cb = it->second ;
-         isSystem = _isSystemEDU( cb ) ;
+         isSystem = ( _isSystemEDU( cb ) || cb->isLocked() ) ;
       }
       else if ( ( it = _mapIdles.find( eduID ) ) != _mapIdles.end() )
       {
@@ -473,7 +473,7 @@ namespace engine
       if ( ( it = _mapRuns.find( eduID ) ) != _mapRuns.end() )
       {
          cb = it->second ;
-         isSystem = _isSystemEDU( cb ) ;
+         isSystem = ( _isSystemEDU( cb ) || cb->isLocked() ) ;
       }
       else if ( ( it = _mapIdles.find( eduID ) ) != _mapIdles.end() )
       {
@@ -1011,6 +1011,10 @@ namespace engine
          {
             toDestory = TRUE ;
          }
+         else if ( cb->isLocked() )
+         {
+            toDestory = TRUE ;
+         }
          else if ( 0 == pmdGetOptionCB()->getMaxPooledEDU() )
          {
             toDestory = TRUE ;
@@ -1535,6 +1539,22 @@ namespace engine
       goto done ;
    }
 
+   void _pmdEDUMgr::lockEDU( pmdEDUCB *cb )
+   {
+      if ( cb )
+      {
+         cb->setLock( TRUE ) ;
+      }
+   }
+
+   void _pmdEDUMgr::unlockEDU( pmdEDUCB *cb )
+   {
+      if ( cb )
+      {
+         cb->setLock( FALSE ) ;
+      }
+   }
+
    pmdEDUCB *_pmdEDUMgr::getEDU( UINT32 tid )
    {
       MAP_TID2EDU_IT itTid ;
@@ -1965,9 +1985,9 @@ namespace engine
             {
                if ( pItem->isSystem() )
                {
-                  PD_LOG( PDSEVERE, "System EDU[ID:%lld, type:%s] exit "
-                          "with %d. Restart DB", cb->getID(),
-                          pItem->_name.c_str(), rc ) ;
+                  PD_LOG( PDSEVERE, "System EDU[ID:%lld, type:%s, Name:%s] "
+                          "exit with %d. Restart DB", cb->getID(),
+                          pItem->_name.c_str(), cb->getName(), rc ) ;
                   PMD_RESTART_DB( rc ) ;
                }
                else if ( SDB_OK != rc )
