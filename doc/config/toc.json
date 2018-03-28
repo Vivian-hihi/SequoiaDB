@@ -812,9 +812,9 @@
                         },
                         {
                            "id": 1521423973,
-                           "file": "SDB_SNAP_CONFIG",
+                           "file": "SDB_SNAP_CONFIGS",
                            "cn": "配置快照",
-                           "en": "SDB_SNAP_CONFIG"
+                           "en": "SDB_SNAP_CONFIGS"
                         }
                      ]
                   },
