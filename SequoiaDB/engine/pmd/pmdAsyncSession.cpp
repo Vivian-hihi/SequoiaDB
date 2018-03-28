@@ -115,7 +115,7 @@ namespace engine
 
    BOOLEAN _pmdAsyncSession::hasHold()
    {
-      return _holdCount.compare( 0 ) ;
+      return _holdCount.compare( 0 ) ? FALSE : TRUE ;
    }
 
    const schedInfo* _pmdAsyncSession::getSchedInfo() const

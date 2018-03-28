@@ -78,7 +78,7 @@ namespace engine
 
    BOOLEAN _schedTaskContanier::hasHold()
    {
-      return _holdNum.compare( 0 ) ;
+      return _holdNum.compare( 0 ) ? FALSE : TRUE ;
    }
 
    schedTaskQueBase* _schedTaskContanier::getTaskQue()
