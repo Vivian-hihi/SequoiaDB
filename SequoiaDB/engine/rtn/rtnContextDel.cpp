@@ -333,6 +333,7 @@ namespace engine
    {
       INT32 rc                = SDB_OK ;
       dmsStorageUnitID suID   = DMS_INVALID_CS ;
+      IDmsExtDataHandler *extHandler = NULL ;
 
       ossStrncpy( _collectionName, pCollectionName,
                   DMS_COLLECTION_FULL_NAME_SZ ) ;
@@ -357,6 +358,15 @@ namespace engine
                       "Get transaction-lock of collection(%s) failed(rc=%d)",
                       pCollectionName, rc ) ;
          _hasLock = TRUE ;
+      }
+
+      extHandler = _su->data()->getExtDataHandler() ;
+      if ( extHandler )
+      {
+         rc = extHandler->onDelCL( _su->CSName(), _clShortName,
+                                   cb, getDPSCB() ) ;
+         PD_RC_CHECK( rc, PDERROR, "External operation on delete cl failed, "
+                      "rc: %d", rc ) ;
       }
 
    done:
@@ -512,6 +522,24 @@ namespace engine
    void _rtnContextDelCL::_clean( _pmdEDUCB *cb )
    {
       INT32 rcTmp = SDB_OK;
+      IDmsExtDataHandler *extHandler = NULL ;
+
+      if ( _su && _su->data() )
+      {
+         extHandler = _su->data()->getExtDataHandler() ;
+         if ( extHandler )
+         {
+            if ( _hasDropped )
+            {
+               extHandler->done( DMS_EXTOPR_TYPE_DROPCL, cb ) ;
+            }
+            else
+            {
+               extHandler->abortOperation( DMS_EXTOPR_TYPE_DROPCL, cb ) ;
+            }
+         }
+      }
+
       rcTmp = _releaseLock( cb ) ;
       if ( rcTmp )
       {
@@ -521,6 +549,7 @@ namespace engine
       {
          _su->data()->releaseMBContext( _mbContext ) ;
       }
+
       // unlock su
       if ( _pDmsCB && _su )
       {
@@ -535,6 +564,7 @@ namespace engine
                                                cb, getDPSCB() ) ;
          }
       }
+
       if ( _gotDmsCBWrite )
       {
          _pDmsCB->writeDown( cb ) ;

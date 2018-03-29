@@ -431,8 +431,9 @@ namespace engine
       BOOLEAN hasRebuild = FALSE ;
       INT32 idxID = 0 ;
 
-      rc = _extHandler->onRebuildTextIdx( _suData->getSuName(),
-                                          _collectionName, _idxName, _eduCB ) ;
+      rc = _extHandler->onRebuildTextIdx( _suData->getSuName(), _collectionName,
+                                          _idxName, _indexCB->keyPattern(),
+                                          _eduCB ) ;
       PD_RC_CHECK( rc, PDERROR, "External handle on text index rebuild "
                    "failed: %d", rc ) ;
       // Now the capped cs and cl have been created. So if any failure below,

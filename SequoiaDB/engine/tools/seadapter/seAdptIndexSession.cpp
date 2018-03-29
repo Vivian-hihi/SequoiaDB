@@ -178,8 +178,19 @@ namespace seadapter
             {
                SDB_ASSERT( 1 == docObjs.size(),
                            "Returned object number is wrong" ) ;
-               _lastPopLID =
-                  docObjs[0].getField(SEADPT_FIELD_NAME_ID).Number() ;
+               try
+               {
+                  _lastPopLID =
+                     docObjs[0].getField(SEADPT_FIELD_NAME_ID).Number() ;
+               }
+               catch ( std::exception &e )
+               {
+                  PD_LOG( PDERROR, "Unexpected exception occurred: %s",
+                          e.what() ) ;
+                  rc = SDB_SYS ;
+                  goto error ;
+               }
+
                // Remember the logical id of the last record in capped
                // collection. After finishing processing the original
                // collection, we'll start here.

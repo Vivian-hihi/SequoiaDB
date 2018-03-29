@@ -50,6 +50,31 @@
 
 namespace engine
 {
+   INT32 _rtnExtProcessorMeta::init( const CHAR *csName, const CHAR *clName,
+                                     const CHAR *idxName,
+                                     const BSONObj &idxKeyDef )
+   {
+      INT32 rc = SDB_OK ;
+
+      _csName = string( csName ) ;
+      _clName = string( clName ) ;
+      _idxName = string( idxName ) ;
+      try
+      {
+         _idxKeyDef = idxKeyDef.copy() ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Unexpected exception occurred: %s", e.what() ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    _rtnExtDataProcessor::_rtnExtDataProcessor()
    {
       ossMemset( _cappedCSName, 0, DMS_COLLECTION_SPACE_NAME_SZ + 1 ) ;
@@ -62,23 +87,28 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSOR_INIT, "_rtnExtDataProcessor::init" )
    INT32 _rtnExtDataProcessor::init( const CHAR *csName, const CHAR *clName,
-                                     const CHAR *idxName )
+                                     const CHAR *idxName,
+                                     const BSONObj &idxKeyDef )
    {
+      INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSOR_INIT ) ;
 
-      _meta.init( csName, clName, idxName ) ;
+      rc = _meta.init( csName, clName, idxName, idxKeyDef ) ;
+      PD_RC_CHECK( rc, PDERROR, "Processor meta init failed[ %d ]", rc ) ;
 
       getExtDataNames( csName, clName, idxName, _cappedCSName,
                        DMS_COLLECTION_SPACE_NAME_SZ + 1,
                        _cappedCLName, DMS_COLLECTION_NAME_SZ + 1 ) ;
 
       PD_TRACE_EXIT( SDB__RTNEXTDATAPROCESSOR_INIT ) ;
-      return SDB_OK ;
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSOR_PREPAREINSERT, "_rtnExtDataProcessor::prepareInsert" )
-   INT32 _rtnExtDataProcessor::prepareInsert( const ixmIndexCB &indexCB,
-                                              const BSONObj &inputObj,
+   INT32 _rtnExtDataProcessor::prepareInsert( const BSONObj &inputObj,
                                               BSONObj &recordObj )
    {
       INT32 rc = SDB_OK ;
@@ -89,7 +119,7 @@ namespace engine
       try
       {
          BSONElement ele ;
-         ixmIndexKeyGen keygen( &indexCB, GEN_OBJ_KEEP_FIELD_NAME ) ;
+         ixmIndexKeyGen keygen( _meta._idxKeyDef, GEN_OBJ_KEEP_FIELD_NAME ) ;
          // If any field is an array, it should keep that format instead of
          // being breaking into separate objects.
          rc = keygen.getKeys( inputObj, keySet, NULL, TRUE, FALSE, TRUE ) ;
@@ -141,8 +171,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSOR_PREPAREDELETE, "_rtnExtDataProcessor::prepareDelete" )
-   INT32 _rtnExtDataProcessor::prepareDelete( const ixmIndexCB &indexCB,
-                                              const BSONObj &inputObj,
+   INT32 _rtnExtDataProcessor::prepareDelete( const BSONObj &inputObj,
                                               BSONObj &recordObj )
    {
       INT32 rc = SDB_OK ;
@@ -153,7 +182,7 @@ namespace engine
       try
       {
          BSONElement ele ;
-         ixmIndexKeyGen keygen( &indexCB, GEN_OBJ_KEEP_FIELD_NAME ) ;
+         ixmIndexKeyGen keygen( _meta._idxKeyDef, GEN_OBJ_KEEP_FIELD_NAME ) ;
          // If any field is an array, it should keep that format instead of
          // being breaking into separate objects.
          rc = keygen.getKeys( inputObj, keySet, NULL, TRUE, FALSE, TRUE ) ;
@@ -199,8 +228,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSOR_PREPAREUPDATE, "_rtnExtDataProcessor::prepareUpdate" )
-   INT32 _rtnExtDataProcessor::prepareUpdate( const ixmIndexCB &indexCB,
-                                              const BSONObj &originalObj,
+   INT32 _rtnExtDataProcessor::prepareUpdate( const BSONObj &originalObj,
                                               const BSONObj &newObj,
                                               BSONObj &recordObj )
    {
@@ -216,7 +244,7 @@ namespace engine
 
          // Check if the keys of the index are the same with before. If yes,
          // nothing needs to be done.
-         ixmIndexKeyGen keygen( &indexCB, GEN_OBJ_KEEP_FIELD_NAME ) ;
+         ixmIndexKeyGen keygen( _meta._idxKeyDef, GEN_OBJ_KEEP_FIELD_NAME ) ;
          rc = keygen.getKeys( originalObj, keySetOri, NULL,
                               TRUE, FALSE, TRUE ) ;
          PD_RC_CHECK( rc, PDERROR, "Generate key from object[ %s ] "
@@ -227,7 +255,7 @@ namespace engine
 
          if ( 0 == keySetNew.size() )
          {
-            rc = prepareDelete( indexCB, originalObj, recordObj ) ;
+            rc = prepareDelete( originalObj, recordObj ) ;
             PD_RC_CHECK( rc, PDERROR, "Prepare for delete failed[ %d ]", rc ) ;
             goto done ;
          }
@@ -457,7 +485,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSOR_UPDATEMETA ) ;
       rc = init( meta._csName.c_str(), meta._clName.c_str(),
-                 meta._idxName.c_str() ) ;
+                 meta._idxName.c_str(), meta._idxKeyDef ) ;
       PD_RC_CHECK( rc, PDERROR, "Init processor failed[ %d ]", rc ) ;
    done:
       PD_TRACE_EXITRC( SDB__RTNEXTDATAPROCESSOR_UPDATEMETA, rc ) ;
@@ -694,6 +722,7 @@ namespace engine
    INT32 _rtnExtDataProcessorMgr::addProcessor( const CHAR *csName,
                                                 const CHAR *clName,
                                                 const CHAR *idxName,
+                                                const BSONObj &idxKeyDef,
                                                 rtnExtDataProcessor** processor )
    {
       INT32 rc = SDB_OK ;
@@ -710,7 +739,7 @@ namespace engine
          goto error ;
       }
 
-      rc = processorLocal->init( csName, clName, idxName ) ;
+      rc = processorLocal->init( csName, clName, idxName, idxKeyDef ) ;
       PD_RC_CHECK( rc, PDERROR, "Init external data processor for "
                    "collection[ %s.%s ] and index[ %s ] failed[ %d ]",
                    csName, clName, idxName, rc ) ;

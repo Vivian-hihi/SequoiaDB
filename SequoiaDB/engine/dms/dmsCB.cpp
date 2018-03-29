@@ -1481,7 +1481,7 @@ namespace engine
 
       if ( extHandler )
       {
-         rc = extHandler->done( cb, dpsCB ) ;
+         rc = extHandler->done( DMS_EXTOPR_TYPE_DROPCS, cb, dpsCB ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "External done operation failed, rc: %d", rc ) ;
@@ -1516,7 +1516,7 @@ namespace engine
    error :
       if ( extHandler && !extOprFinish )
       {
-         extHandler->abortOperation( cb ) ;
+         extHandler->abortOperation( DMS_EXTOPR_TYPE_DROPCS, cb ) ;
       }
       goto done ;
    }
@@ -1620,6 +1620,11 @@ namespace engine
       _mutex.get_shared () ;
       rc = _CSCBNameLookup( pName, &pCSCB ) ;
       _mutex.release_shared () ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
       extHandler = pCSCB->_su->data()->getExtDataHandler() ;
       if ( extHandler )
       {
@@ -1643,7 +1648,7 @@ namespace engine
    error :
       if ( extHandler )
       {
-         extHandler->abortOperation( cb ) ;
+         extHandler->abortOperation( DMS_EXTOPR_TYPE_DROPCS, cb ) ;
       }
       goto done ;
    }
@@ -1683,7 +1688,7 @@ namespace engine
          extHandler = pCSCB->_su->data()->getExtDataHandler() ;
          if ( extHandler )
          {
-            rc = extHandler->abortOperation( cb ) ;
+            rc = extHandler->abortOperation( DMS_EXTOPR_TYPE_DROPCS, cb ) ;
             PD_RC_CHECK( rc, PDERROR, "External operation on drop CS[ %s ] "
                          "failed, rc: %d", pName, rc ) ;
          }
@@ -1724,7 +1729,7 @@ namespace engine
       extHandler = pCSCB->_su->data()->getExtDataHandler() ;
       if ( extHandler )
       {
-         rc = extHandler->done( cb, dpsCB ) ;
+         rc = extHandler->done( DMS_EXTOPR_TYPE_DROPCS, cb, dpsCB ) ;
          PD_RC_CHECK( rc, PDERROR, "External operation on drop CS[ %s ] failed,"
                       " rc: %d", pName, rc ) ;
       }

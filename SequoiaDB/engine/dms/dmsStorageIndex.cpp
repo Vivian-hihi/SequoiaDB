@@ -207,7 +207,8 @@ namespace engine
                      {
                         rc = extHandler->onOpenTextIdx( _pDataSu->getSuName(),
                                                         _pDataSu->_dmsMME->_mbList[i]._collectionName,
-                                                        indexCB.getName() ) ;
+                                                        indexCB.getName(),
+                                                        indexCB.keyPattern() ) ;
                         PD_RC_CHECK( rc, PDERROR, "External on text index open "
                                      "failed[ %d ]", rc ) ;
                      }
@@ -823,25 +824,6 @@ namespace engine
       rc = context->mbLock( EXCLUSIVE ) ;
       PD_RC_CHECK( rc, PDERROR, "dms mb context lock failed, rc: %d" ) ;
 
-      if ( context->mbStat()->_textIdxNum > 0 )
-      {
-         IDmsExtDataHandler* extHandler = _pDataSu->getExtDataHandler() ;
-         if ( !extHandler )
-         {
-            rc = SDB_SYS ;
-            PD_LOG( PDERROR, "External data handler is NULL" ) ;
-            goto error ;
-         }
-         else
-         {
-            rc = extHandler->onDropAllIndexes( _pDataSu->getSuName(),
-                                               context->mb()->_collectionName,
-                                               cb, dpscb ) ;
-            PD_RC_CHECK( rc, PDERROR, "External operation on drop all index "
-                         "failed, rc: %d", rc ) ;
-         }
-      }
-
       while ( DMS_INVALID_EXTENT != context->mb()->_indexExtent[0] )
       {
          ixmIndexCB indexCB( context->mb()->_indexExtent[0], this, context ) ;
@@ -1119,6 +1101,11 @@ namespace engine
                rc = SDB_SYS ;
                goto error ;
             }
+            rc = extDataHandler->onDropTextIdx( _pDataSu->getSuName(),
+                                                context->mb()->_collectionName,
+                                                indexCB.getName(), cb, NULL ) ;
+            PD_RC_CHECK( rc, PDERROR, "External data process of dropping "
+                         "text index failed[ %d ]", rc ) ;
          }
 
          // truncate index, do remove root
@@ -1153,21 +1140,22 @@ namespace engine
             goto error ;
          }
 
-         if ( extDataHandler )
-         {
-            rc = extDataHandler->onDropTextIdx( _pDataSu->getSuName(),
-                                                context->mb()->_collectionName,
-                                                indexCB.getName(), cb, NULL ) ;
-            PD_RC_CHECK( rc, PDERROR, "External data process of dropping "
-                         "text index failed[ %d ]", rc ) ;
-         }
-
          // copy back
          ossMemmove (&context->mb()->_indexExtent[indexID],
                      &context->mb()->_indexExtent[indexID+1],
                      sizeof(dmsExtentID)*(DMS_COLLECTION_MAX_INDEX-indexID-1));
          context->mb()->_indexExtent[DMS_COLLECTION_MAX_INDEX-1] =
             DMS_INVALID_EXTENT ;
+         if ( extDataHandler )
+         {
+            rc = extDataHandler->done( DMS_EXTOPR_TYPE_DROPIDX, cb ) ;
+            if ( rc )
+            {
+               // Report the error, but not go to error. Manually cleanup maybe
+               // needed.
+               PD_LOG( PDERROR, "External operation failed, rc: %d", rc ) ;
+            }
+         }
       }
       context->mb()->_numIndexes -- ;
 
