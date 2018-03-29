@@ -167,6 +167,7 @@ namespace engine
          BOOLEAN isDetached () const ;
 
          BOOLEAN isClosed() const ;
+         void    close() ;
 
       public:
          UINT64      sessionID () const ;

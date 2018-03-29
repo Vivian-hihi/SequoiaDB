@@ -215,7 +215,6 @@ namespace engine
 
       _detachEvent.signal() ;
       _isClosed = TRUE ;
-
       /// wait holdout
       while( hasHold() )
       {
@@ -236,7 +235,6 @@ namespace engine
    void _pmdAsyncSession::forceBack()
    {
       _detachEvent.signalAll() ;
-      _isClosed = TRUE ;
    }
 
    BOOLEAN _pmdAsyncSession::isDetached () const
@@ -252,6 +250,11 @@ namespace engine
    BOOLEAN _pmdAsyncSession::isClosed() const
    {
       return _isClosed ;
+   }
+
+   void _pmdAsyncSession::close()
+   {
+      _isClosed = TRUE ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDSN_CLEAR, "_pmdAsyncSession::clear" )
@@ -935,7 +938,11 @@ namespace engine
       rc = _pushMessage( pSession, pMsg, memType, handle ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG ( PDERROR, "Failed to push message, rc = %d", rc ) ;
+         PD_LOG ( PDERROR, "Failed to push message[Len:%u, opCode:%d, "
+                  "TID:%u, RequestID:%llu, RouteID:%d.%d], rc = %d",
+                  pMsg->messageLength, pMsg->opCode, pMsg->TID,
+                  pMsg->requestID, pMsg->routeID.columns.groupID,
+                  pMsg->routeID.columns.nodeID, rc ) ;
 
          rc = onErrorHanding( rc, pMsg, handle, sessionID, pSession ) ;
          if ( rc )
@@ -1422,6 +1429,8 @@ namespace engine
 
       if ( pSession->hasHold() || 0 != pSession->getPendingMsgNum() )
       {
+         PD_LOG( PDEVENT, "Change session[%s] to pending",
+                 pSession->sessionName() ) ;
          _mapPendingSession[ pSession->sessionID() ] = pSession ;
          goto done ;
       }

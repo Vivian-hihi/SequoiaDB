@@ -88,13 +88,20 @@ namespace engine
          {
             cb->resetInterrupt() ;
          }
+         else
+         {
+            pSession->close() ;
+         }
          cb->resetInfo( EDU_INFO_ERROR ) ;
          cb->resetLsn() ;
 
          if ( cb->waitEvent( event, OSS_ONE_SEC, TRUE ) )
          {
             /// reset again to avoid set interrupt self
-            cb->resetInterrupt() ;
+            if ( !cb->isDisconnected() )
+            {
+               cb->resetInterrupt() ;
+            }
             if ( PMD_EDU_EVENT_TERM == event._eventType )
             {
                PD_LOG ( PDDEBUG, "EDU[%lld, %s] is terminated", cb->getID(),
