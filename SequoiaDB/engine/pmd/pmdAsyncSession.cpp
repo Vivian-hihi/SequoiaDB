@@ -176,6 +176,7 @@ namespace engine
       PD_LOG( PDINFO, "Session[%s] attach edu[%d]", sessionName(),
               cb->getID() ) ;
 
+      _isClosed = FALSE ;
       _pEDUCB = cb ;
       _eduID  = cb->getID() ;
       _pEDUCB->setName( sessionName() ) ;
@@ -189,7 +190,6 @@ namespace engine
       _evtOut.reset() ;
       _evtIn.signal() ;
       _detachEvent.reset() ;
-      _isClosed = FALSE ;
 
       _onAttach () ;
 
