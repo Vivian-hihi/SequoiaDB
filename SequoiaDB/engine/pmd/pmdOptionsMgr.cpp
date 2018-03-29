@@ -869,11 +869,11 @@ done:
       rc = toBSON( oldCfg, 0 ) ;
       PD_RC_CHECK( rc, PDERROR, "Save old config failed, rc: %d", rc ) ;
 
-      // stage 1, mark cfg from config file
-      rc = doDataExchange( &ex1 ) ;
-
       _mutex.get() ;
       locked = TRUE ;
+
+      // stage 1, mark cfg from config file
+      rc = doDataExchange( &ex1 ) ;
 
       // stage 2, update new cfg
       if ( !useDefault )
