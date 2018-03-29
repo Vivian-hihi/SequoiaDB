@@ -978,6 +978,8 @@ namespace engine
 
       if ( pSession->isClosed() )
       {
+         PD_LOG( PDWARNING, "Session[%s] is closed, Pending msg num:%d",
+                 pSession->sessionName(), pSession->getPendingMsgNum() ) ;
          rc = SDB_APP_INTERRUPT ;
          goto error ;
       }
@@ -1429,8 +1431,9 @@ namespace engine
 
       if ( pSession->hasHold() || 0 != pSession->getPendingMsgNum() )
       {
-         PD_LOG( PDEVENT, "Change session[%s] to pending",
-                 pSession->sessionName() ) ;
+         PD_LOG( PDEVENT, "Change session[%s] to pending queue, Its pending "
+                 "msg number:%d", pSession->sessionName(),
+                 pSession->getPendingMsgNum() ) ;
          _mapPendingSession[ pSession->sessionID() ] = pSession ;
          goto done ;
       }
