@@ -141,11 +141,12 @@ protected:
 
    INT32 fini()
    {
-      INT32 rc = SDB_OK ;
-      do { 
+      INT32 rc = SDB_OK ; 
+      rc = sdbDropCollectionSpace( db, csName ) ;
+      if( rc == SDB_LOCK_FAILED )
+      {
          rc = sdbDropCollectionSpace( db, csName ) ;
-         sleep( 1 ) ;
-      } while( rc == SDB_LOCK_FAILED ) ;
+      }
       CHECK_RC( SDB_OK, rc, "fail to drop cs %s", csName ) ;
       rc = sdbRemoveReplicaGroup( db, rgName ) ;
       CHECK_RC( SDB_OK, rc, "fail to remove rg %s", rgName ) ;
