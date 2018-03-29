@@ -1256,6 +1256,9 @@ int ha_sdb::create_index( Alter_inplace_info *ha_alter_info )
                     || keyPart->field->binary() )))
          {
             rc = HA_ERR_UNSUPPORTED ;
+            my_printf_error( rc,
+                             "column '%-.192s' cannot be used in key specification.",
+                             MYF(0), keyPart->field->field_name ) ;
             goto error ;
          }
          // TODO: ASC or DESC
