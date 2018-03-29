@@ -78,6 +78,17 @@ namespace engine
       pCoord->getRSManager()->unregEUD( eduCB() ) ;
    }
 
+   BOOLEAN _coordOmStrategyJob::isSystem() const
+   {
+      pmdKRCB *krcb = pmdGetKRCB() ;
+      CoordCB *pCoord = krcb->getCoordCB() ;
+      coordResource *pResource = pCoord->getResource() ;
+      coordOmStrategyAgent *pOmAgent = pResource->getOmStrategyAgent() ;
+      CoordGroupInfoPtr omGroupPtr = pResource->getOmGroupInfo() ;
+
+      return 0 == omGroupPtr->nodeCount() ? FALSE : TRUE ;
+   }
+
    INT32 _coordOmStrategyJob::doit ()
    {
       INT32 rc = SDB_OK ;

@@ -53,7 +53,7 @@ namespace engine
          virtual BOOLEAN muteXOn ( const _rtnBaseJob *pOther ) ;
          virtual INT32 doit () ;
 
-         virtual BOOLEAN isSystem() const { return TRUE ; }
+         virtual BOOLEAN isSystem() const ;
 
       protected:
          virtual void _onAttach() ;
