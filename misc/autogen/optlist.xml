@@ -1699,18 +1699,18 @@
       <name>PMD_OPTION_SVC_MAX_CONCURRENCY</name>
       <long>svcmaxconcurrency</long>
       <description>
-         <en>Specify the maximun concurrency number in scheduler. 0 for unlimited. default is 0. </en>
-         <cn>指定任务执行的最大并发数，0表示不限制。默认值为0。</cn>
+         <en>Specify the maximun concurrency number in scheduler. 0 for unlimited. default is 100. </en>
+         <cn>指定任务执行的最大并发数，0表示不限制。默认值为500。</cn>
       </description>
       <reloadable>
          <en>Yes</en>
          <cn>是</cn>
       </reloadable>
       <detail>
-         <en>1.Specify the maximun concurrency number in scheduler. 0 for unlimited. default is 0.<fig></fig>
+         <en>1.Specify the maximun concurrency number in scheduler. 0 for unlimited. default is 100.<fig></fig>
              2.It does not take effect when 'svcscheduler' is 0.
          </en>
-         <cn>1、指定任务执行的最大并发数，0表示不限制。默认值为0。<fig></fig>
+         <cn>1、指定任务执行的最大并发数，0表示不限制。默认值为100。<fig></fig>
              2、当'svcscheduler'取值为0时，该参数不生效。
          </cn>
       </detail>
