@@ -9,7 +9,7 @@ deleteConf - delete node configuration, restoring to its default value.
 Sdb
 
 ##DESCRIPTION##
-Delete node configuration, restore to its default value and reload all configurations. Some configurations require restart to take effect, some are not allowed to be changed. 
+Restore configurations to their default values, reload to take effect and delete configurations from configuration file. Some configurations require restart to take effect, some are not allowed to be changed. 
 
 ##PARAMETERS##
 
@@ -78,7 +78,6 @@ Delete node configuration, restore to its default value and reload all configura
 
 **Note:**
 
-* Both configurations that take effect immediately and require restart will be written into config file and become permanent.
 * Configurations that require restart or that is not allowed to change will provide more detailed information through error message return value.
 * If the default value equals the current value of a certain configuration, then error message will not be reported.
 * If no location parameter is provided, the default value will be {Global:true}, i.e., effective on all nodes.

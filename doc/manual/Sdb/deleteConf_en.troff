@@ -13,8 +13,8 @@ deleteConf \- delete node configuration, restoring to its default value.
 Sdb
 .SH DESCRIPTION
 .PP
-Delete node configuration, restore to its default value and reload all
-configurations.
+Restore configurations to their default values, reload to take effect and delete
+configurations from configuration file.
 Some configurations require restart to take effect, some are not allowed to be
 changed.
 .SH PARAMETERS
@@ -116,9 +116,6 @@ NodeSelect:"all"
 .RE
 .PP
 \f[B]Note:\f[]
-.IP \[bu] 2
-Both configurations that take effect immediately and require restart will be
-written into config file and become permanent.
 .IP \[bu] 2
 Configurations that require restart or that is not allowed to change will
 provide more detailed information through error message return value.
