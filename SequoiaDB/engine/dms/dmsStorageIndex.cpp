@@ -673,6 +673,13 @@ namespace engine
          indexType = indexCB.getIndexType() ;
          if ( IXM_EXTENT_HAS_TYPE( IXM_EXTENT_TYPE_TEXT, indexType ) )
          {
+            BSONObj keys = indexCB.keyPattern() ;
+            if ( keys.hasField( "_id" ) )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR, "Text index can't include _id field" ) ;
+               goto error ;
+            }
             if ( context->mbStat()->_textIdxNum >= DMS_MAX_TEXT_IDX_NUM )
             {
                rc = SDB_DMS_MAX_INDEX ;
