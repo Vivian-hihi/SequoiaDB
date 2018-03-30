@@ -6329,6 +6329,7 @@ static INT32 _sdbQueryAndModify ( sdbCollectionHandle cHandle,
    BSON_APPEND( newHint, FIELD_NAME_MODIFY, &modify, bson ) ;
    BSON_FINISH( newHint ) ;
 
+   flag &= ~FLG_QUERY_EXPLAIN ;
    flag |= FLG_QUERY_MODIFY ;
 
    rc = sdbQuery1( cHandle, condition, select, orderBy, &newHint,

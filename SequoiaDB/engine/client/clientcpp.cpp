@@ -1490,7 +1490,8 @@ do                                                            \
    {
       INT32 rc = SDB_OK ;
       sdbCursor cursor ;
-
+      flag &= ~FLG_QUERY_EXPLAIN ;
+      flag |= FLG_QUERY_WITH_RETURNDATA ;
       rc = query( cursor,
                   condition,
                   selected,
@@ -1498,7 +1499,7 @@ do                                                            \
                   hint,
                   numToSkip,
                   1,
-                  flag | FLG_QUERY_WITH_RETURNDATA ) ;
+                  flag ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
@@ -1571,6 +1572,7 @@ do                                                            \
          goto error ;
       }
 
+      flag &= ~FLG_QUERY_EXPLAIN ;
       flag |= FLG_QUERY_MODIFY ;
 
       rc = query( cursor, condition, selected, orderBy, newHint,
