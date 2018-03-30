@@ -109,18 +109,18 @@ testFiles = [
    [ "./cls/getSlaveNoPos13786.cpp" ], # sync
    [ "./cls/getSlaveParaCheck13787.cpp" ],
    [ "./cls/reelect14684.cpp" ], # sync
-   [ "./cache/createClWithCache7800.cpp" ],
-   [ "./cache/getCsWithCache7801.cpp" ],
-   [ "./cache/getClWithCache7802.cpp" ],
-   [ "./cache/getClWithCache7803.cpp" ],
-   [ "./cache/dropCsWithCache7806.cpp" ],
-   [ "./cache/dropClWithCache7807.cpp" ],
-   [ "./cache/dropCsWithCache7808.cpp" ],
-   [ "./cache/dropClWithCache7809.cpp" ],
-   [ "./cache/opClWithCache7810.cpp" ],
-   [ "./cache/getMulClAfterDropCsWithCache7812.cpp" ],
+   # [ "./cache/createClWithCache7800.cpp" ], # cache test need not to be automated
+   # [ "./cache/getCsWithCache7801.cpp" ],
+   # [ "./cache/getClWithCache7802.cpp" ],
+   # [ "./cache/getClWithCache7803.cpp" ],
+   # [ "./cache/dropCsWithCache7806.cpp" ],
+   # [ "./cache/dropClWithCache7807.cpp" ],
+   # [ "./cache/dropCsWithCache7808.cpp" ],
+   # [ "./cache/dropClWithCache7809.cpp" ],
+   # [ "./cache/opClWithCache7810.cpp" ],
+   # [ "./cache/getMulClAfterDropCsWithCache7812.cpp" ],
    # [ "./cache/loadUnloadCsWithCache14693.cpp" ], # no need
-   [ "./cache/renameCsClWithCache14694.cpp" ],
+   # [ "./cache/renameCsClWithCache14694.cpp" ],
    # [ "./cache/getCountWithCache14695.cpp" ], # no need
    # [ "./cache/listLobPiecesWithCache14696.cpp" ], # no need
    [ "./lob/lobOpr12516.cpp" ],
