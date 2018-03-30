@@ -1248,6 +1248,7 @@ int ha_sdb::create_index( Alter_inplace_info *ha_alter_info )
       {
          if ( keyPart->field->type() < MYSQL_TYPE_TINY
             || ( keyPart->field->type() > MYSQL_TYPE_DOUBLE
+               && keyPart->field->type() != MYSQL_TYPE_VARCHAR
                && keyPart->field->type() != MYSQL_TYPE_LONGLONG
                && keyPart->field->type() != MYSQL_TYPE_INT24
                && keyPart->field->type() != MYSQL_TYPE_VAR_STRING
