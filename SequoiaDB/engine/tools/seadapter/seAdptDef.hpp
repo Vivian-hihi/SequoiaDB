@@ -45,6 +45,7 @@ namespace seadapter
    #define SDB_SEADPT_DIAGLEVEL        "diaglevel"
    #define SDB_SEADPT_SE_HOST          "searchenginehost"
    #define SDB_SEADPT_SE_PORT          "searchengineport"
+   #define SDB_SEADPT_BULK_BUFF_SIZE   "bulkbuffsize"
    #define SDB_SEADPT_GRP_ID           65536
    #define SDB_SEADPT_NODE_ID          0
    #define SDB_SEADPT_SVC_ID           0

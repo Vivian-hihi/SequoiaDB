@@ -42,7 +42,9 @@
 
 using namespace engine ;
 
-#define SEADPT_DFT_TIMEOUT    10000
+#define SEADPT_DFT_TIMEOUT          10000
+#define SEADPT_BULK_BUFF_SIZE       10
+#define SEADPT_SE_DFT_SERVICE       "9200"
 
 #define COMMANDS_OPTIONS \
    ( PMD_COMMANDS_STRING (PMD_OPTION_HELP, ",h"), "help" ) \
@@ -53,6 +55,7 @@ using namespace engine ;
    ( SDB_SEADPT_DNODE_PORT, boost::program_options::value<string>(), "Data node service name or port" ) \
    ( SDB_SEADPT_SE_HOST, boost::program_options::value<string>(), "Search engine address" ) \
    ( SDB_SEADPT_SE_PORT, boost::program_options::value<string>(), "Search engine service name or port" ) \
+   ( SDB_SEADPT_BULK_BUFF_SIZE, boost::program_options::value<int>(), "Bulk operation buffer size,unit:MB,default:10,value range:[1-32]" ) \
    ( PMD_COMMANDS_STRING (PMD_OPTION_OPERATOR_TIMEOUT, ",t"), boost::program_options::value<int>(), "Rest operation timeout in millisecond,default:10000,value range[0-3600000]" )
 
 namespace seadapter
@@ -67,6 +70,7 @@ namespace seadapter
       ossMemset( _seService, 0, sizeof( _seService ) ) ;
       _diagLevel = PDWARNING ;
       _timeout = SEADPT_DFT_TIMEOUT ;
+      _bulkBuffSize = SEADPT_BULK_BUFF_SIZE ;
    }
 
    INT32 _seAdptOptionsMgr::init( INT32 argc, CHAR **argv,
@@ -180,18 +184,33 @@ namespace seadapter
    {
       resetResult() ;
 
-      rdxString( pEX, SDB_SEADPT_DNODE_HOST, _dbHost,
-                 sizeof( _dbHost ), TRUE, PMD_CFG_CHANGE_FORBIDDEN , _dbHost ) ;
+      rdxString( pEX, SDB_SEADPT_DNODE_HOST, _dbHost, sizeof( _dbHost ),
+                 TRUE, PMD_CFG_CHANGE_FORBIDDEN , "" ) ;
+      rdvNotEmpty( pEX, _dbHost ) ;
+
       rdxString( pEX, SDB_SEADPT_DNODE_PORT, _dbService,
-                 sizeof( _dbService ), TRUE, PMD_CFG_CHANGE_FORBIDDEN, _dbService ) ;
-      rdxInt( pEX, SDB_SEADPT_DIAGLEVEL, _diagLevel,
-              FALSE, PMD_CFG_CHANGE_FORBIDDEN, _diagLevel ) ;
+                 sizeof( _dbService ), TRUE, PMD_CFG_CHANGE_FORBIDDEN, "" ) ;
+      rdvNotEmpty( pEX, _dbService ) ;
+
+      rdxUShort( pEX, SDB_SEADPT_DIAGLEVEL, _diagLevel,
+                 FALSE, PMD_CFG_CHANGE_RUN, (UINT16)PDWARNING ) ;
+      rdvMinMax( pEX, _diagLevel, PDSEVERE, PDDEBUG, TRUE ) ;
+
       rdxString( pEX, SDB_SEADPT_SE_HOST, _seHost, sizeof( _seHost ),
-                 TRUE, PMD_CFG_CHANGE_FORBIDDEN, _seHost ) ;
-      rdxString( pEX, SDB_SEADPT_SE_PORT, _seService,
-                 sizeof( _seService ), TRUE, PMD_CFG_CHANGE_FORBIDDEN, _seService ) ;
+                 TRUE, PMD_CFG_CHANGE_FORBIDDEN, "" ) ;
+      rdvNotEmpty( pEX, _seHost ) ;
+
+      rdxString( pEX, SDB_SEADPT_SE_PORT, _seService, sizeof( _seService ),
+                 TRUE, PMD_CFG_CHANGE_FORBIDDEN, SEADPT_SE_DFT_SERVICE ) ;
+      rdvNotEmpty( pEX, _seService ) ;
+
       rdxInt( pEX, PMD_OPTION_OPERATOR_TIMEOUT, _timeout,
-              FALSE, PMD_CFG_CHANGE_FORBIDDEN, _timeout ) ;
+              FALSE, PMD_CFG_CHANGE_FORBIDDEN, SEADPT_DFT_TIMEOUT ) ;
+      rdvMinMax( pEX, _timeout, 0, 3600000, TRUE ) ;
+
+      rdxInt( pEX, SDB_SEADPT_BULK_BUFF_SIZE, _bulkBuffSize,
+              FALSE, PMD_CFG_CHANGE_RUN, SEADPT_BULK_BUFF_SIZE ) ;
+      rdvMinMax( pEX, _bulkBuffSize, 1, 32, TRUE ) ;
 
       return getResult() ;
    }
@@ -225,6 +244,11 @@ namespace seadapter
    INT32 _seAdptOptionsMgr::getTimeout() const
    {
       return _timeout ;
+   }
+
+   INT32 _seAdptOptionsMgr::getBulkBuffSize() const
+   {
+      return _bulkBuffSize ;
    }
 }
 

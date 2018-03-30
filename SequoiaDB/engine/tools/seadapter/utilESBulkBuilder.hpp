@@ -63,8 +63,8 @@
 #include <string>
 
 // Max and default data size of _bulk operation.
-#define UTIL_ESBULK_MAX_SIZE        (16 * 1024 * 1024)
-#define UTIL_ESBULK_DFT_SIZE        (10 * 1024 * 1024)
+#define UTIL_ESBULK_MAX_SIZE        16
+#define UTIL_ESBULK_DFT_SIZE        10
 
 // Space size for the action name and format characters, such as '{', ':'.
 #define UTIL_ESBULK_MIN_META_SIZE   64
@@ -92,7 +92,7 @@ namespace seadapter
                               BOOLEAN copy = FALSE ) ;
 
          // Estimate the output size requirement for output.
-         INT32 outSizeEstimate() const  ;
+         UINT32 outSizeEstimate() const  ;
          INT32 output( CHAR *buffer, INT32 size, INT32 &length,
                        BOOLEAN withIndex = TRUE, BOOLEAN withType = TRUE,
                        BOOLEAN withID = TRUE ) const ;
@@ -200,17 +200,19 @@ namespace seadapter
          INT32 init( UINT32 bufferSize = UTIL_ESBULK_DFT_SIZE ) ;
          BOOLEAN isInit() const { return ( NULL != _buffer ) ; }
          void reset() ;
-         INT32 getFreeSize() const ;
+         UINT32 getFreeSize() const ;
          INT32 appendItem( const utilESBulkActionBase &item,
                            BOOLEAN withIndex = TRUE, BOOLEAN withType = TRUE,
                            BOOLEAN withID = TRUE ) ;
          const CHAR* getData() const { return _buffer ; }
-         INT32 getDataLen() const { return _dataLen ; }
+         UINT32 getDataLen() const { return _dataLen ; }
+         UINT32 getItemNum() const { return _itemNum ; }
 
       private:
          CHAR  *_buffer ;
-         INT32 _capacity ;
-         INT32 _dataLen ;
+         UINT32 _capacity ;
+         UINT32 _dataLen ;
+         UINT32 _itemNum ;
    } ;
    typedef _utilESBulkBuilder utilESBulkBuilder ;
 }

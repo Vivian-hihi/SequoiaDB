@@ -134,6 +134,8 @@ namespace seadapter
       INT32 refreshTasks( BSONObj &obj ) ;
       void  stopAllIndexer( const NET_HANDLE &handle ) ;
 
+      INT32 setOptionMgr( const seAdptOptionsMgr *optionMgr ) ;
+      const seAdptOptionsMgr *getOptionMgr() const { return _optionMgr ; }
    protected:
       virtual SDB_SESSION_TYPE _prepareCreate( UINT64 sessionID,
                                                INT32 startType,
@@ -154,10 +156,11 @@ namespace seadapter
       TASK_SESSION_ITEM* _findTask( const seIndexMeta *idxMeta ) ;
 
    private:
-      _seAdptCB            *_pAdptCB ;
-      TASK_SESSION_MAP     _taskSessionMap ;
-      UINT32               _indexSessionTimer ;
-      UINT32               _innerSessionID ;
+      _seAdptCB               *_pAdptCB ;
+      const seAdptOptionsMgr  *_optionMgr ;
+      TASK_SESSION_MAP         _taskSessionMap ;
+      UINT32                   _indexSessionTimer ;
+      UINT32                   _innerSessionID ;
    } ;
    typedef _seIndexSessionMgr seIndexSessionMgr ;
 

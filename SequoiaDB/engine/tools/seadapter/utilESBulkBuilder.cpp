@@ -144,7 +144,7 @@ namespace seadapter
       goto done ;
    }
 
-   INT32 _utilESBulkActionBase::outSizeEstimate() const
+   UINT32 _utilESBulkActionBase::outSizeEstimate() const
    {
       return ( UTIL_ESBULK_MIN_META_SIZE + _index.length() +
                _type.length() + _id.length() + _srcDataLen ) ;
@@ -158,7 +158,7 @@ namespace seadapter
       INT32 metaLen = 0 ;
       INT32 dataLen = 0 ;
 
-      if ( size < outSizeEstimate() )
+      if ( (UINT32)size < outSizeEstimate() )
       {
          rc = SDB_INVALIDARG ;
          PD_LOG( PDERROR, "Buffer size[%d] is too small", size ) ;
@@ -477,6 +477,7 @@ namespace seadapter
    INT32 _utilESBulkBuilder::init( UINT32 bufferSize )
    {
       INT32 rc = SDB_OK ;
+      UINT32 capacity = 0 ;
 
       if ( 0 == bufferSize || bufferSize > UTIL_ESBULK_MAX_SIZE )
       {
@@ -485,6 +486,7 @@ namespace seadapter
          goto error ;
       }
 
+      capacity = bufferSize * 1024 * 1024 ;
       if ( _buffer )
       {
          SDB_ASSERT( _capacity, "_capacity is 0" ) ;
@@ -493,17 +495,18 @@ namespace seadapter
          goto error ;
       }
 
-      _buffer = (CHAR *)SDB_OSS_MALLOC( bufferSize ) ;
+      _buffer = (CHAR *)SDB_OSS_MALLOC( capacity ) ;
       if ( !_buffer )
       {
          rc = SDB_OOM ;
          PD_LOG( PDERROR, "Allocate memory for bulk buffer failed, requested "
-                 "size[ %d ]", bufferSize ) ;
+                 "size[ %u ]", capacity ) ;
          goto error ;
       }
 
-      ossMemset( _buffer, 0, bufferSize ) ;
-      _capacity = bufferSize ;
+      ossMemset( _buffer, 0, capacity ) ;
+      _capacity = capacity ;
+      _itemNum = 0 ;
 
    done:
       return rc ;
@@ -516,9 +519,10 @@ namespace seadapter
    {
       ossMemset( _buffer, 0, _capacity ) ;
       _dataLen = 0 ;
+      _itemNum = 0 ;
    }
 
-   INT32 _utilESBulkBuilder::getFreeSize() const
+   UINT32 _utilESBulkBuilder::getFreeSize() const
    {
       return ( _capacity - _dataLen ) ;
    }
@@ -542,6 +546,7 @@ namespace seadapter
                         withType, withID ) ;
       PD_RC_CHECK( rc, PDERROR, "Append bulk item failed[ %d ]", rc ) ;
       _dataLen += itemLen ;
+      _itemNum++ ;
 
    done:
       return rc ;

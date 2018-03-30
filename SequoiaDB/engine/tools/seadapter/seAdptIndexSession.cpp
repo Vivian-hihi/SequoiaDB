@@ -1337,7 +1337,15 @@ namespace seadapter
       }
       else
       {
-         rc = _bulkBuilder.init() ;
+         UINT32 bulkBuffSize = UTIL_ESBULK_DFT_SIZE ;
+         const seAdptOptionsMgr *optionMgr =
+            ((seIndexSessionMgr *)_pSessionMgr)->getOptionMgr() ; ;
+         if ( optionMgr )
+         {
+            bulkBuffSize = optionMgr->getBulkBuffSize() ;
+         }
+
+         rc = _bulkBuilder.init( bulkBuffSize ) ;
          PD_RC_CHECK( rc, PDERROR, "Initialize bulk builder failed[ %d ]",
                       rc ) ;
       }
@@ -1355,12 +1363,22 @@ namespace seadapter
       // go on with the next batch of data.
       if ( actionItem.outSizeEstimate() > _bulkBuilder.getFreeSize() )
       {
-         PD_LOG( PDDEBUG, "Bulk operation data: %s",
-                 _bulkBuilder.getData() ) ;
-         rc = _esClt->bulk( _indexName.c_str(), _typeName.c_str(),
-                            _bulkBuilder.getData() ) ;
-         PD_RC_CHECK( rc, PDERROR, "Bulk operation failed[ %d ]" ) ;
-         _bulkBuilder.reset() ;
+         if ( _bulkBuilder.getItemNum() > 0 )
+         {
+            PD_LOG( PDDEBUG, "Bulk operation data: %s",
+                    _bulkBuilder.getData() ) ;
+            rc = _esClt->bulk( _indexName.c_str(), _typeName.c_str(),
+                               _bulkBuilder.getData() ) ;
+            PD_RC_CHECK( rc, PDERROR, "Bulk operation failed[ %d ]" ) ;
+            _bulkBuilder.reset() ;
+         }
+         else
+         {
+            // Buffer is not enough.
+            rc = SDB_SYS ;
+            PD_LOG( PDERROR, "Bulk operation buffer is not enough" ) ;
+            goto error ;
+         }
       }
       rc = _bulkBuilder.appendItem( actionItem, FALSE, FALSE, TRUE ) ;
       PD_RC_CHECK( rc, PDERROR, "Append item to bulk builder failed[ %d ]",

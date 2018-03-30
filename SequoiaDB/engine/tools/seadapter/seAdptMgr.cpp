@@ -112,6 +112,7 @@ namespace seadapter
    _seIndexSessionMgr::_seIndexSessionMgr( _seAdptCB *pAdptCB )
    {
       _pAdptCB = pAdptCB ;
+      _optionMgr = NULL ;
       _indexSessionTimer = NET_INVALID_TIMER_ID ;
       _innerSessionID = 0 ;
    }
@@ -189,6 +190,23 @@ namespace seadapter
       handleSessionClose( handle ) ;
       _pAdptCB->cleanInnerSession( SEADPT_SESSION_INDEX ) ;
       _taskSessionMap.clear() ;
+   }
+
+   INT32 _seIndexSessionMgr::setOptionMgr( const seAdptOptionsMgr *optionMgr )
+   {
+      INT32 rc = SDB_OK ;
+      if ( !optionMgr )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      _optionMgr = optionMgr ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    SDB_SESSION_TYPE _seIndexSessionMgr::_prepareCreate( UINT64 sessionID,
@@ -352,6 +370,10 @@ namespace seadapter
       PD_RC_CHECK( rc, PDERROR, "Init index session manager failed[ %d ]",
                    rc ) ;
 
+      rc = _idxSessionMgr.setOptionMgr( &_options ) ;
+      PD_RC_CHECK( rc, PDERROR, "Set option manager in index session manager "
+                   "failed[ %d ]", rc ) ;
+
       rc = _svcSessionMgr.init( &_svcRtAgent, &_svcTimerHandler,
                                 60 * OSS_ONE_SEC ) ;
       PD_RC_CHECK( rc, PDERROR, "Init service session manager failed[ %d ]",
@@ -360,6 +382,9 @@ namespace seadapter
       // Initialize search engine client manager.
       seSvcPath = std::string( _options.getSeHost() ) + ":"
                   + std::string( _options.getSeService() ) ;
+
+      // TODO: In future, if we can connect to adapter and change the
+      // configuration value, just set the option manager in the factory.
       rc = _seCltFactory.init( seSvcPath, _options.getTimeout() ) ;
       if ( rc )
       {
