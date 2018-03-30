@@ -130,5 +130,19 @@ namespace SequoiaDB
             return erasedFlags | mergedFlags;
         }
 
+        internal static int EraseFlags(int flags, params int[] erasedFlags)
+        {
+            if (erasedFlags == null || erasedFlags.Length == 0) {
+                return flags;
+            }
+            int newFlags = flags;
+            foreach(int flag in erasedFlags) {
+                if ((newFlags & flag) != 0) {
+                    newFlags &= ~flag;
+                }
+            }
+            return newFlags;
+        }
+
    }
 }

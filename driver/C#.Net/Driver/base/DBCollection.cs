@@ -767,6 +767,7 @@ namespace SequoiaDB
             }
             newHint.Add(SequoiadbConstants.FIELD_MODIFY, modify);
 
+            flag = DBQuery.EraseFlags(flag, DBQuery.FLG_QUERY_EXPLAIN);
             flag |= DBQuery.FLG_QUERY_MODIFY;
             return Query(query, selector, orderBy, newHint, skipRows, returnRows, flag);
         }
