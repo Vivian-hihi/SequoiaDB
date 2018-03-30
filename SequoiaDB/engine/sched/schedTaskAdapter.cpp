@@ -145,9 +145,9 @@ namespace engine
 
    UINT32 _schedContainerAdapter::_onPrepared( UINT32 expectNum )
    {
-      UINT32 count ;
+      UINT32 count = 0 ;
 
-      FLOAT64 calcCount ;
+      FLOAT64 calcCount = 0.0 ;
       UINT32 popCount = 0 ;
       UINT32 expectPopCount = 0 ;
       schedTaskContanierPtr ptr ;
