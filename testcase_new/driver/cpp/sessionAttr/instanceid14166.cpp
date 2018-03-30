@@ -123,6 +123,10 @@ protected:
    {
       INT32 rc = SDB_OK ;
       rc = db.dropCollectionSpace( csName ) ;
+      if( rc == SDB_LOCK_FAILED )
+      {
+         rc = db.dropCollectionSpace( csName ) ;
+      }
       CHECK_RC( SDB_OK, rc, "fail to drop cs %s", csName ) ;
       rc = db.removeReplicaGroup( rgName ) ;
       CHECK_RC( SDB_OK, rc, "fail to remove rg %s", rgName ) ;
