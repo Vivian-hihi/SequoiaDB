@@ -20,6 +20,7 @@ import org.bson.BSONObject;
 
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -242,5 +243,31 @@ public class DBQuery {
             }
         }
         return erasedFlags | mergedFlags;
+    }
+
+    static int eraseFlags(final int flags, List<Integer> erasedFlags) {
+        if (erasedFlags == null || erasedFlags.size() == 0) {
+            return flags;
+        }
+        int newFlags = flags;
+        for(int flag : erasedFlags) {
+            if ((newFlags & flag) != 0) {
+                newFlags &= ~flag;
+            }
+        }
+        return newFlags;
+    }
+
+    static int filterFlags(final int flags, List<Integer> reservedFlags) {
+        if (reservedFlags == null || reservedFlags.size() == 0) {
+            return flags;
+        }
+        int newFlags = 0;
+        for(int flag : reservedFlags) {
+            if ((flag & flags) != 0) {
+                newFlags |= flag;
+            }
+        }
+        return newFlags;
     }
 }
