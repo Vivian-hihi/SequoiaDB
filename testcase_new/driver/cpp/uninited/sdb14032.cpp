@@ -221,3 +221,16 @@ TEST_F( sdb14032, opDb1 )
    rc = db.renameCollectionSpace( csName, newCsName ) ;
    EXPECT_EQ( SDB_NOT_CONNECTED, rc ) << "renameCollectionSpace shouldn't be executed" ;
 }
+
+TEST_F( sdb14032, opDb2 )
+{
+   INT32 rc = SDB_OK ;
+
+   // updateConfig deleteConfig
+   BSONObj config = BSON( "maxconn" << 0 ) ;
+   BSONObj option = BSON( "svcname" << ARGS->svcName() ) ;
+   rc = db.updateConfig( config, option ) ;
+   EXPECT_EQ( SDB_NOT_CONNECTED, rc ) ;
+   rc = db.deleteConfig( config, option ) ;
+   EXPECT_EQ( SDB_NOT_CONNECTED, rc ) ;
+}
