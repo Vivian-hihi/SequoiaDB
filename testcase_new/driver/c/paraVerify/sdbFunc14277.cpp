@@ -35,6 +35,8 @@
  *                  seqDB-14351:renameCS参数校验
  *                  seqDB-14352:setInterruptFunc参数校验
  *                  seqDB-14353:analyze参数校验
+ *                  seqDB-14876:sdbUpdateConfig参数校验
+ *                  seqDB-14877:sdbDeleteConfig参数校验
  * @Modify      :   Liang xuewang
  *                  2018-01-30
  **************************************************************************/
@@ -925,4 +927,60 @@ TEST_F( sdbParaVerify, analyze )
    ASSERT_EQ( SDB_INVALIDARG, rc ) ;
    rc = sdbAnalyze( cs, NULL ) ;
    ASSERT_EQ( SDB_CLT_INVALID_HANDLE, rc ) ;
+}
+
+TEST_F( sdbParaVerify, updateConf )
+{
+   INT32 rc = SDB_OK ;
+
+   // test sdbUpdateConfig
+   bson config ;
+   bson_init( &config ) ;
+   bson_append_int( &config, "maxconn", 0 ) ;
+   bson_finish( &config ) ;
+   bson option ;
+   bson_init( &option ) ;
+   bson_append_string( &option, "svcname", ARGS->svcName() ) ;
+   bson_finish( &option ) ;
+   rc = sdbUpdateConfig( NULL, &config, &option ) ;
+   ASSERT_EQ( SDB_INVALIDARG, rc ) ;
+   rc = sdbUpdateConfig( SDB_INVALID_HANDLE, &config, &option ) ;
+   ASSERT_EQ( SDB_INVALIDARG, rc ) ;
+   rc = sdbUpdateConfig( cs, &config, &option ) ;
+   ASSERT_EQ( SDB_CLT_INVALID_HANDLE, rc ) ;
+
+   rc = sdbUpdateConfig( db, NULL, &option ) ;
+   ASSERT_EQ( SDB_DRIVER_BSON_ERROR, rc ) ;  // TODO: better return SDB_INVALIDARG
+   rc = sdbUpdateConfig( db, &config, NULL ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   bson_destroy( &config ) ;
+   bson_destroy( &option ) ;
+}
+
+TEST_F( sdbParaVerify, deleteConf )
+{
+   INT32 rc = SDB_OK ;
+
+   // test sdbDeleteConfig
+   bson config ;
+   bson_init( &config ) ;
+   bson_append_int( &config, "maxconn", 1 ) ;
+   bson_finish( &config ) ;
+   bson option ;
+   bson_init( &option ) ;
+   bson_append_string( &option, "svcname", ARGS->svcName() ) ;
+   bson_finish( &option ) ;
+   rc = sdbDeleteConfig( NULL, &config, &option ) ;
+   ASSERT_EQ( SDB_INVALIDARG, rc ) ;
+   rc = sdbDeleteConfig( SDB_INVALID_HANDLE, &config, &option ) ;
+   ASSERT_EQ( SDB_INVALIDARG, rc ) ;
+   rc = sdbDeleteConfig( cs, &config, &option ) ;
+   ASSERT_EQ( SDB_CLT_INVALID_HANDLE, rc ) ;
+
+   rc = sdbDeleteConfig( db, NULL, &option ) ;
+   ASSERT_EQ( SDB_DRIVER_BSON_ERROR, rc ) ;  // TODO: better return SDB_INVALIDARG
+   rc = sdbDeleteConfig( db, &config, NULL ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   bson_destroy( &config ) ;
+   bson_destroy( &option ) ;
 }
