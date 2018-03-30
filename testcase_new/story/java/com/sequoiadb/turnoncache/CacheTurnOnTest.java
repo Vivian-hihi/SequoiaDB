@@ -321,7 +321,7 @@ public class CacheTurnOnTest extends SdbTestBase{
             }
 			getCL(db_check);
 			System.out.println(System.currentTimeMillis());
-			db_check.dumpCache();
+			//db_check.dumpCache();
 			Assert.assertFalse(true, "must is SDB_DMS_CS_NOTEXIST");
 		}catch(BaseException e){
 			Assert.assertEquals(e.getErrorCode(), 
