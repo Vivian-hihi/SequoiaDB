@@ -34,10 +34,22 @@ class DepreOperator03 extends BaseOperator
       return $rgDB -> getMaster();
    }
    
+   function getNodeNum( $rgDB )
+   {
+      return $rgDB -> getNodeNum( 0 );
+   }
+   
    function getNodeName( $nodeDB )
    {
       return $nodeDB -> getNodeName();
    }
+   
+   /** the interface has bean deleted
+   function getNodeStatus( $nodeDB )
+   {
+      return $nodeDB -> getStatus();
+   }
+   */
    
 }
 
@@ -85,6 +97,16 @@ class TestDepre03 extends PHPUnit_Framework_TestCase
       $this -> assertEquals( 0, $errno );
    }
    
+   function test_getNodeNum()
+   {
+      echo "\n---Begin to getNodeNum.\n";
+      $num = self::$dbh -> getNodeNum( self::$rgDB );
+      
+      $errno = self::$dbh -> getErrno();
+      $this -> assertEquals( 0, $errno );
+      $this -> assertEquals( -1, $num );
+   }
+   
    function test_getNodeName()
    {
       echo "\n---Begin to getNodeName.\n";
@@ -94,5 +116,17 @@ class TestDepre03 extends PHPUnit_Framework_TestCase
       $this -> assertEquals( 0, $errno );
       $this -> assertNotEmpty( $name );
    }
+   
+   /*
+   function test_getNodeStatus()
+   {
+      echo "\n---Begin to getNodeStatus.\n";
+      $status = self::$dbh -> getNodeStatus( self::$nodeDB );
+      var_dump($status);
+      $errno = self::$dbh -> getErrno();
+      $this -> assertEquals( 0, $errno );
+      $this -> assertNotEmpty( $status );
+   }
+   */
 }
 ?>
