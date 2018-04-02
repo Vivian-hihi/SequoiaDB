@@ -152,6 +152,34 @@ error:
    goto done ;
 }
 
+INT32 insertDoc( sdbConnectionHandle db, const CHAR* csName, 
+                 const CHAR* clName )
+{
+   INT32 rc = SDB_OK ;
+   sdbCSHandle cs ;
+   sdbCollectionHandle cl ;
+   bson doc ;
+   bson_init( &doc ) ;
+
+   rc = sdbGetCollectionSpace( db, csName, &cs ) ;
+   CHECK_RC( SDB_OK, rc, "fail to get cs" ) ;
+   rc = sdbGetCollection1( cs, clName, &cl ) ;
+   CHECK_RC( SDB_OK, rc, "fail to get cl" ) ;
+
+   bson_append_int( &doc, "a", 1 ) ;
+   bson_append_string( &doc, "b", "test" ) ;
+   bson_finish( &doc ) ;
+   rc = sdbInsert( cl, &doc ) ;
+   CHECK_RC( SDB_OK, rc, "fail to insert" ) ;
+done:
+   bson_destroy( &doc ) ;
+   sdbReleaseCollection( cl ) ;
+   sdbReleaseCS( cs ) ;
+   return rc ;
+error:
+   goto done ;
+}
+
 INT32 getLSN( sdbConnectionHandle db, SINT64* offset, INT32* version )
 {
    INT32 rc = SDB_OK ;
@@ -297,10 +325,12 @@ TEST( reloadConf, weight )
    rc = sdbStartNode( node ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to start node" ;
 
-   // create cs cl in rg in case rg have no dps log
+   // create cs cl and insert doc in rg in case rg have no dps log
    const CHAR* csName = "reloadConfTestCs" ;
    const CHAR* clName = "reloadConfTestCl" ;
    rc = createCsClInRg( db, rg, csName, clName ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   rc = insertDoc( db, csName, clName ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
 
    // wait sync
@@ -334,7 +364,7 @@ TEST( reloadConf, weight )
    {
       printf( "node %s:%s is not master node.\n", host, svc ) ;
    }
-   // ASSERT_TRUE( isMaster ) << "fail to check node to be master after reelect" ;	
+   ASSERT_TRUE( isMaster ) << "fail to check node to be master after reelect" ;	
 
    // drop cs 
    rc = sdbDropCollectionSpace( db, csName ) ;
