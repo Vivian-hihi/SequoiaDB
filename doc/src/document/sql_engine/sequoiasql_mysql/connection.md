@@ -23,21 +23,23 @@
  ```lang-javascript
  | SequoiaDB | YES | SequoiaDB storage engine | YES | NO | NO |
  ```
+4. 配置SequoiaDB连接地址
+   默认的SequoiaDB连接地址为“localhost:11810”，如需修改可通过命令行或配置文件的方式进行修改，具体修改方法详见后面的[配置说明](sql_engine/sequoiasql_mysql/connection.md#配置说明)
 
-4. 创建数据库实例
+5. 创建数据库实例
 
  ```lang-javascript
  mysql> create database cs;
  mysql> use cs;
  ```
 
-5. 创建表
+6. 创建表
 
  ```lang-javascript
  mysql> create table cl(a int, c text) engine = SequoiaDB comment="{cl_options:{ShardingKey:{a:1,b:-1},ShardingType:\"range\"}}";
  ```
 
-6. 数据操作
+7. 数据操作
 
  ```lang-javascript
  mysql> insert into cl values(1, "SequoiaDB test");
@@ -83,3 +85,27 @@
  ```lang-javascript
  mysql> create table cl(a int, b int, c text) engine = SequoiaDB comment="{cl_options:{ShardingKey:{a:1,b:-1},ShardingType:\"range\"}}";
  ```
+
+##附录##
+
+数据类型对应关系
+
+	| MySQL           | SequoiaDB         | 备注                                                              |
+	| --------------- | ----------------- | ----------------------------------------------------------------- |
+	| TINYINT         | INT               |                                                                   |
+	| SMALLINT        | INT               |                                                                   |
+	| MEDIUMINT       | INT               |                                                                   |
+	| INT             | INT               |                                                                   |
+	| BIGINT          | LONG LONG         |                                                                   |
+	| FLOAT           | DOUBLE            |                                                                   |
+	| DOUBLE          | DOUBLE            |                                                                   |
+	| DECIMAL         | DECIMAL           |                                                                   |
+	| DATE            | DATE              |                                                                   |
+	| DATETIME        | TIMESTAMP         |取值范围：1902-01-01 00:00:00.000000 至 2037-12-31 23:59:59.999999 |
+	| TIMESTAMP       | TIMESTAMP         |取值范围：1902-01-01 00:00:00.000000 至 2037-12-31 23:59:59.999999 |
+	| CHAR            | STRING            |                                                                   |
+	| VARCHAR         | STRING            |                                                                   |
+	| TEXT            | STRING            |                                                                   |
+	| BINARY          | BINARY            |                                                                   |
+	| BLOB            | BINARY            |                                                                   |
+	| NULL            | UNDEFINE          |                                                                   |
