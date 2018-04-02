@@ -11,7 +11,7 @@ import org.bson.util.JSON;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
+import com.sequoiadb.testcommon.CommLib;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -33,6 +33,9 @@ public class TestLob13252 extends SdbTestBase {
         csName = SdbTestBase.csName;
         clName = "cl_" + this.getClass().getSimpleName();
         db = new Sequoiadb(coordUrl, "", "");
+        if (comm.isStandAlone(db)) {
+            throw new SkipException("can not support standalone");
+        }
         cs = db.getCollectionSpace(csName);
 
         dbcl = cs.createCollection(clName,
