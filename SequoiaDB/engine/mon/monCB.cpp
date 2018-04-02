@@ -43,6 +43,20 @@ namespace engine
 {
 
    /*
+      Global functions
+   */
+   static monSvcTaskInfo** _monGetDefaultTaskInfo()
+   {
+      static monSvcTaskInfo *s_pDfaultTaskInfo = NULL ;
+      return &s_pDfaultTaskInfo ;
+   }
+
+   void monSetDefaultTaskInfo( monSvcTaskInfo *pTaskInfo )
+   {
+      *_monGetDefaultTaskInfo() = pTaskInfo ;
+   }
+
+   /*
       _monDBCB implement
    */
    _monDBCB::_monDBCB()
@@ -134,12 +148,15 @@ namespace engine
    _monAppCB::_monAppCB()
    {
       reset() ;
+
+      _taskInfo = *_monGetDefaultTaskInfo() ;
       mondbcb = pmdGetKRCB()->getMonDBCB() ;
    }
 
    _monAppCB &_monAppCB::operator= ( const _monAppCB &rhs )
    {
       mondbcb                   = rhs.mondbcb ;
+      _taskInfo                 = rhs._taskInfo ;
 
       totalDataRead             = rhs.totalDataRead ;
       totalIndexRead            = rhs.totalIndexRead ;
@@ -192,6 +209,23 @@ namespace engine
       _writeTimeSpent            += rhs._writeTimeSpent ;
 
       return *this ;
+   }
+
+   void _monAppCB::setSvcTaskInfo( monSvcTaskInfo *pSvcTaskInfo )
+   {
+      if ( pSvcTaskInfo )
+      {
+         _taskInfo = pSvcTaskInfo ;
+      }
+      else if ( _taskInfo != *_monGetDefaultTaskInfo() )
+      {
+         _taskInfo = *_monGetDefaultTaskInfo() ;
+      }
+   }
+
+   monSvcTaskInfo* _monAppCB::getSvcTaskInfo()
+   {
+      return _taskInfo ;
    }
 
    void _monAppCB::reset()
@@ -381,6 +415,44 @@ namespace engine
       _executeTime      = monCtxCB._executeTime ;
 
       return ( *this ) ;
+   }
+
+   /*
+      _monSvcTaskInfo implement
+   */
+   _monSvcTaskInfo::_monSvcTaskInfo()
+   {
+      reset() ;
+
+      _startTimestamp = _resetTimestamp ;
+      _taskID = 0 ;
+      _totalContexts = 0 ;
+      ossMemset( _taskName, 0, sizeof( _taskName ) ) ;
+   }
+
+   void _monSvcTaskInfo::setTaskInfo( UINT64 taskID, const CHAR *taskName )
+   {
+      _taskID = taskID ;
+      ossStrncpy( _taskName, taskName, MON_SVC_TASK_NAME_LEN ) ;
+   }
+
+   void _monSvcTaskInfo::reset()
+   {
+      _totalTime           = 0 ;
+      _totalDataRead       = 0 ;
+      _totalIndexRead      = 0 ;
+      _totalLobRead        = 0 ;
+      _totalDataWrite      = 0 ;
+      _totalIndexWrite     = 0 ;
+      _totalLobWrite       = 0 ;
+      _totalUpdate         = 0 ;
+      _totalDelete         = 0 ;
+      _totalInsert         = 0 ;
+      _totalSelect         = 0 ;
+      _totalRead           = 0 ;
+      _totalWrite          = 0 ;
+
+      ossGetCurrentTime( _resetTimestamp ) ;
    }
 
 }

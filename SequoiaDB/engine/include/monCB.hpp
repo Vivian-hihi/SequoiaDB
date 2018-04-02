@@ -286,13 +286,125 @@ namespace engine
    } ;
    typedef _monDBCB monDBCB ;
 
+   #define MON_SVC_TASK_NAME_LEN             ( 127 )
+   /*
+      _monSvcTaskInfo define
+   */
+   class _monSvcTaskInfo : public SDBObject
+   {
+   private:
+      UINT64                        _taskID ;
+      CHAR                          _taskName[ MON_SVC_TASK_NAME_LEN + 1 ] ;
+
+   public:
+      volatile UINT64               _totalTime ;
+      volatile UINT64               _totalContexts ;
+      volatile UINT64               _totalDataRead ;
+      volatile UINT64               _totalIndexRead ;
+      volatile UINT64               _totalLobRead ;
+      volatile UINT64               _totalDataWrite ;
+      volatile UINT64               _totalIndexWrite ;
+      volatile UINT64               _totalLobWrite ;
+      volatile UINT64               _totalUpdate ;
+      volatile UINT64               _totalDelete ;
+      volatile UINT64               _totalInsert ;
+      volatile UINT64               _totalSelect ;
+      volatile UINT64               _totalRead ;
+      volatile UINT64               _totalWrite ;
+
+      ossTimestamp                  _startTimestamp ;
+      ossTimestamp                  _resetTimestamp ;
+
+   public:
+      _monSvcTaskInfo() ;
+
+      void setTaskInfo( UINT64 taskID, const CHAR* taskName ) ;
+
+      UINT64         getTaskID() const { return _taskID ; }
+      const CHAR*    getTaskName() const { return _taskName ; }
+
+      void monContextInc( INT64 delta = 1 )
+      {
+         _totalContexts += delta ;
+      }
+
+      void monOperationCountInc( MON_OPERATION_TYPES op,
+                                 INT64 delta = 1 )
+      {
+         switch ( op )
+         {
+            case MON_DATA_READ :
+               _totalDataRead += delta ;
+               break ;
+            case MON_INDEX_READ :
+               _totalIndexRead += delta ;
+               break ;
+            case MON_LOB_READ :
+               _totalLobRead += delta ;
+               break ;
+            case MON_DATA_WRITE :
+               _totalDataWrite += delta ;
+               break ;
+            case MON_INDEX_WRITE :
+               _totalIndexWrite += delta ;
+               break ;
+            case MON_LOB_WRITE :
+               _totalLobWrite += delta ;
+               break ;
+            case MON_UPDATE :
+               _totalUpdate += delta ;
+               _totalWrite += delta ;
+               break ;
+            case MON_DELETE :
+               _totalDelete += delta ;
+               _totalWrite += delta ;
+               break ;
+            case MON_INSERT :
+               _totalInsert+= delta ;
+               _totalWrite+= delta ;
+               break ;
+            case MON_SELECT :
+               _totalSelect += delta ;
+               break ;
+            case MON_READ :
+               _totalRead += delta ;
+               break ;
+            default:
+               break ;
+         }
+      }
+
+      void monOperationTimeInc( MON_OPERATION_TYPES op,
+                                INT64 delta = 1 )
+      {
+         switch ( op )
+         {
+            case MON_TOTAL_READ_TIME :
+            case MON_TOTAL_WRITE_TIME :
+               _totalTime += delta ;
+               break ;
+            default:
+               break ;
+         }
+      }
+
+      void reset() ;
+   } ;
+   typedef _monSvcTaskInfo monSvcTaskInfo ;
+
+   void  monSetDefaultTaskInfo( monSvcTaskInfo *pTaskInfo ) ;
+
    /*
       _monAppCB define
    */
    class _monAppCB : public SDBObject
    {
+   private:
+      monSvcTaskInfo    *_taskInfo ;
+
    public :
-      monDBCB *mondbcb ;
+      monDBCB           *mondbcb ;
+
       UINT64 totalDataRead ;
       UINT64 totalIndexRead ;
       UINT64 totalLobRead ;
@@ -389,11 +501,19 @@ namespace engine
                break ;
          }
          mondbcb->monOperationCountInc( op, delta ) ;
+
+         if ( _taskInfo )
+         {
+            _taskInfo->monOperationCountInc( op, delta ) ;
+         }
       }
 
       _monAppCB() ;
       _monAppCB &operator= ( const _monAppCB &rhs ) ;
       _monAppCB &operator+= ( const _monAppCB &rhs ) ;
+
+      void setSvcTaskInfo( monSvcTaskInfo *pSvcTaskInfo ) ;
+      monSvcTaskInfo* getSvcTaskInfo() ;
 
       void reset() ;
 

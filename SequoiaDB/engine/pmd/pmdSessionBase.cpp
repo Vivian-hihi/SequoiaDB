@@ -174,6 +174,21 @@ namespace engine
       return 0 ;
    }
 
+   void _pmdSession::setSchedInfoVersion( INT32 version )
+   {
+      _info.setVersion( version ) ;
+   }
+
+   INT32 _pmdSession::getSchedInfoVersion() const
+   {
+      return _info.getVersion() ;
+   }
+
+   void* _pmdSession::getSchedInfoPtr()
+   {
+      return (void*)&_info ;
+   }
+
    INT32 _pmdSession::allocBuff( UINT32 len, CHAR **ppBuff, UINT32 *pRealSize )
    {
       INT32 rc = SDB_OK ;
@@ -356,6 +371,7 @@ namespace engine
    void _pmdProcessor::detachSession()
    {
       SDB_ASSERT( _pSession, "Session can't be NULL" ) ;
+      eduCB()->getMonAppCB()->setSvcTaskInfo( NULL ) ;
       _onDetach() ;
       _pSession = NULL ;
    }

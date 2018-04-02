@@ -500,7 +500,7 @@ namespace engine
       }
 
       /// check version
-      if ( isValid() && getLastVersion() == metaInfo.getVersion() )
+      if ( getLastVersion() == metaInfo.getVersion() )
       {
          goto done ;
       }

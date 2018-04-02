@@ -105,6 +105,9 @@ namespace engine
          INT32                   _onInterruptSelfMsg() ;
          INT32                   _onDisconnectMsg() ;
 
+         INT32                   _updateVCS( const CHAR *fullName,
+                                             const BSONObj &updator ) ;
+
       protected:
          _SDB_KRCB *             _pKrcb ;
          _SDB_DMSCB *            _pDMSCB ;

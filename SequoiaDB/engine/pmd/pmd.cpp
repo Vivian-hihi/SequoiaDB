@@ -305,6 +305,13 @@ namespace engine
       INT32 index = 0 ;
       IControlBlock *pCB = NULL ;
 
+      rc = _svcTaskMgr.init() ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Init service task manager failed, rc: %d", rc ) ;
+         goto error ;
+      }
+
       rc = _eduMgr.init( this ) ;
       if ( rc )
       {
@@ -468,6 +475,8 @@ namespace engine
          PD_LOG( PDSEVERE, "Stop all EDUs timeout, crashed." ) ;
          ossPanic() ;
       }
+
+      _svcTaskMgr.fini() ;
    }
 
    void _SDB_KRCB::onConfigChange ( UINT32 changeID )

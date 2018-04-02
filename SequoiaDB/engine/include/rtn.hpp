@@ -89,6 +89,8 @@ namespace engine
                           std::vector< BSONObj > &idxBlocks,
                           std::vector< dmsRecordID > &idxRIDs ) ;
 
+   BSONObj rtnUpdator2Obj( const BSONObj &source, const BSONObj &updator ) ;
+
    class _rtnInternalSorting ;
 
    INT32 rtnGetIndexSamples ( _dmsStorageUnit *su,

@@ -76,9 +76,11 @@ namespace engine
       pmdEDUEvent event ;
       pmdBuffInfo *pBuffInfo = NULL ;
       MsgHeader *pMsg = NULL ;
-      INT32 timeDiff = 0 ;
+      INT64 timeDiff = 0 ;
       pmdKRCB *krcb    = pmdGetKRCB() ;
       monDBCB *mondbcb = krcb->getMonDBCB () ;
+      NET_HANDLE netHandle = 0 ;
+      UINT32 poolType = 0 ;
 
       pmdAsyncSessionScope assitScope( pSession, cb ) ;
 
@@ -112,12 +114,17 @@ namespace engine
             {
                mondbcb->addReceiveNum() ;
 
-               if ( 0 == event._userData )
+               PMD_UNMAKE_SESSION_USERDATA( event._userData,
+                                            netHandle,
+                                            poolType ) ;
+
+               if ( PMD_SESSION_MSG_INPOOL == poolType )
                {
                   pBuffInfo = ( pmdBuffInfo* )( event._Data ) ;
                   pMsg = ( MsgHeader* )( pBuffInfo->pBuffer ) ;
 
-                  timeDiff = (INT32)(time( NULL ) - pBuffInfo->addTime) ;
+                  timeDiff = (INT64)( ossGetCurrentMicroseconds() -
+                                      pBuffInfo->addTime ) ;
                }
                else
                {
@@ -127,23 +134,24 @@ namespace engine
                }
 
                // if msg in the buff time over 2 seconds
-               if ( timeDiff > 2 )
+               if ( timeDiff > 2000000 )
                {
                   PD_LOG( PDINFO, "Session[%s] msg[opCode:[%d]%d, requestID: "
-                          "%lld, TID: %d, Len: %d] stay over %d seconds",
+                          "%lld, TID: %d, Len: %d] stay over %lld usecs",
                           pSession->sessionName(), IS_REPLY_TYPE(pMsg->opCode),
                           GET_REQUEST_TYPE(pMsg->opCode), pMsg->requestID,
                           pMsg->TID, pMsg->messageLength, timeDiff ) ;
                }
 
-               pSession->dispatchMsg ( pSession->netHandle(), pMsg,
-                                       &timeDiff ) ;
+               pSession->onDispatchMsgBegin( netHandle, pMsg ) ;
+               pSession->dispatchMsg ( netHandle, pMsg, &timeDiff ) ;
+               pSession->onDispatchMsgEnd( timeDiff ) ;
 
                // if msg processed time over 20 seconds
-               if ( timeDiff > 20 )
+               if ( timeDiff > 20000000 )
                {
                   PD_LOG( PDINFO, "Session[%s] msg[opCode:[%d]%d, requestID: "
-                          "%lld, TID: %d, Len: %d] processed over %d seconds",
+                          "%lld, TID: %d, Len: %d] processed over %lld usecs",
                           pSession->sessionName(), IS_REPLY_TYPE(pMsg->opCode),
                           GET_REQUEST_TYPE(pMsg->opCode), pMsg->requestID,
                           pMsg->TID, pMsg->messageLength, timeDiff ) ;

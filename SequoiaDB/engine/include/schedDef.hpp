@@ -78,6 +78,10 @@ namespace engine
    const CHAR* schedType2String( SCHED_TYPE type ) ;
    SCHED_TYPE  schedString2Type( const CHAR *pStr ) ;
 
+   #define SCHED_INVALID_VERSION                      ( -1 )
+   #define SCHED_UNKNWON_VERSION                      ( 0 )
+   #define SCHED_BEGIN_VERSION                        ( 1 )
+
    /*
       _schedInfo define
    */
@@ -88,9 +92,10 @@ namespace engine
          ~_schedInfo() ;
 
          BSONObj  toBSON() const ;
-         INT32    fromBSON( const BSONObj &obj ) ;
+         INT32    fromBSON( const BSONObj &obj, BOOLEAN withRestore ) ;
 
          void     reset() ;
+         BOOLEAN  isDefault() const ;
 
          INT32    getNice() const { return _nice ; }
          INT64    getTaskID() const { return _taskID ; }
@@ -107,6 +112,10 @@ namespace engine
          void     setIP( const CHAR* ip ) ;
          void     setUserName( const CHAR* userName ) ;
 
+         void     incVersion () ;
+         INT32    getVersion () const ;
+         void     setVersion ( INT32 version ) ;
+
       private:
          INT32                _nice ;
          INT64                _taskID ;
@@ -115,6 +124,8 @@ namespace engine
          CHAR                 _containerName[ SCHED_CONTIANER_NAME_LEN + 1 ] ;
          CHAR                 _userName[ SCHED_USER_NAME_LEN + 1 ] ;
          CHAR                 _ip[ SCHED_IP_STR_LEN + 1 ] ;
+
+         INT32                _version ;
 
    } ;
    typedef _schedInfo schedInfo ;

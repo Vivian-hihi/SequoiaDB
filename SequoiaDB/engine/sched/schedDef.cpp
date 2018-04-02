@@ -117,6 +117,8 @@ namespace engine
 
       setTaskName( SCHED_TASK_NAME_DFT ) ;
       setContainerName( SCHED_SYS_CONTAINER_NAME ) ;
+
+      _version = SCHED_INVALID_VERSION ;
    }
 
    _schedInfo::~_schedInfo()
@@ -127,9 +129,27 @@ namespace engine
    {
       _nice = SCHED_NICE_DFT ;
       _taskID = SCHED_TASK_ID_DFT ;
+      _version = SCHED_INVALID_VERSION ;
 
       setTaskName( SCHED_TASK_NAME_DFT ) ;
       setContainerName( SCHED_SYS_CONTAINER_NAME ) ;
+
+      setUserName( "" ) ;
+      setIP( "" ) ;
+   }
+
+   BOOLEAN _schedInfo::isDefault() const
+   {
+      if ( SCHED_NICE_DFT == _nice &&
+           SCHED_TASK_ID_DFT == _taskID &&
+           0 == ossStrcmp( _taskName, SCHED_TASK_NAME_DFT ) &&
+           0 == ossStrcmp( _containerName, SCHED_SYS_CONTAINER_NAME ) &&
+           _userName[0] == '\0' &&
+           _ip[0] == '\0' )
+      {
+         return TRUE ;
+      }
+      return FALSE ;
    }
 
    BSONObj _schedInfo::toBSON() const
@@ -145,9 +165,17 @@ namespace engine
       return bobObj.obj() ;
    }
 
-   INT32 _schedInfo::fromBSON( const BSONObj &obj )
+   INT32 _schedInfo::fromBSON( const BSONObj &obj, BOOLEAN withRestore )
    {
       BSONElement beField ;
+      INT32 oldVersion = getVersion() ;
+      BSONObj oldObj = toBSON() ;
+
+      if ( withRestore )
+      {
+         reset() ;
+         setVersion( oldVersion ) ;
+      }
 
       beField = obj.getField( FIELD_NAME_NICE ) ;
       if( beField.isNumber() )
@@ -185,6 +213,15 @@ namespace engine
          setIP( beField.valuestr() ) ;
       }
 
+      if ( isDefault() )
+      {
+         setVersion( SCHED_INVALID_VERSION ) ;
+      }
+      else if ( 0 != oldObj.woCompare( toBSON() ) )
+      {
+         incVersion() ;
+      }
+
       return SDB_OK ;
    }
 
@@ -211,22 +248,48 @@ namespace engine
 
    void _schedInfo::setTaskName( const CHAR* taskName )
    {
+      _taskName[0] = 0 ;
       ossStrncpy( _taskName, taskName, SCHED_TASK_NAME_LEN ) ;
    }
 
    void _schedInfo::setContainerName( const CHAR* containerName )
    {
+      _containerName[0] = 0 ;
       ossStrncpy( _containerName, containerName, SCHED_CONTIANER_NAME_LEN ) ;
    }
 
    void _schedInfo::setIP( const CHAR *ip )
    {
+      _ip[0] = 0 ;
       ossStrncpy( _ip, ip, SCHED_IP_STR_LEN ) ;
    }
 
    void _schedInfo::setUserName( const CHAR* userName )
    {
+      _userName[0] = 0 ;
       ossStrncpy( _userName, userName, SCHED_USER_NAME_LEN ) ;
+   }
+
+   void _schedInfo::incVersion()
+   {
+      if ( _version >= SCHED_BEGIN_VERSION )
+      {
+         ++_version ;
+      }
+      else
+      {
+         _version = SCHED_BEGIN_VERSION ;
+      }
+   }
+
+   INT32 _schedInfo::getVersion() const
+   {
+      return _version ;
+   }
+
+   void _schedInfo::setVersion( INT32 version )
+   {
+      _version = version ;
    }
 
    /*

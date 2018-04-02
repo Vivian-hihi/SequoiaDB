@@ -73,6 +73,18 @@ namespace engine
       PMD_SESSION_PASSIVE  = 2   //passive
    };
 
+   #define PMD_SESSION_MSG_INPOOL   ( 0 )
+   #define PMD_SESSION_MSG_UNPOOL   ( 1 )
+
+   #define PMD_MAKE_SESSION_USERDATA( netHandle, poolType ) \
+      ( ( UINT64 )( netHandle ) | ( (UINT64)(poolType) << 63 ) )
+
+   #define PMD_UNMAKE_SESSION_USERDATA( userData, netHandle, poolType ) \
+      do { \
+         netHandle = ( UINT64 )( userData ) & ~( (UINT64)1 << 63 ) ; \
+         poolType = ( UINT64 )( userData ) >> 63 ; \
+      } while( 0 )
+
    class _pmdAsycSessionMgr ;
 
    /*
@@ -84,7 +96,7 @@ namespace engine
       CHAR     *pBuffer ;
       UINT32   size ;
       INT32    useFlag ;
-      time_t   addTime ;
+      UINT64   addTime ;   /// uses
 
       BOOLEAN isAlloc () { return useFlag == PMD_BUFF_ALLOC ? TRUE : FALSE ; }
       BOOLEAN isUsing () { return useFlag == PMD_BUFF_USING ? TRUE : FALSE ; }
@@ -148,12 +160,24 @@ namespace engine
          virtual INT32           getServiceType() const ;
          virtual IClient*        getClient() { return &_client ; }
 
+         virtual void               setSchedInfoVersion( INT32 version ) ;
+         virtual INT32              getSchedInfoVersion() const ;
+         virtual void*              getSchedInfoPtr() ;
+
          virtual EDU_TYPES       eduType () const = 0 ;
          virtual const CHAR*     className() const = 0 ;
 
          virtual void    onRecieve ( const NET_HANDLE netHandle,
                                      MsgHeader * msg ) ;
          virtual BOOLEAN timeout ( UINT32 interval ) ;
+
+         virtual void    onDispatchMsgBegin( const NET_HANDLE netHandle,
+                                             const MsgHeader *pHeader )
+         {
+         }
+         virtual void    onDispatchMsgEnd( INT64 costUsecs )
+         {
+         }
 
          virtual void clear() ;
          virtual BOOLEAN canAttachMeta() const { return TRUE ; }

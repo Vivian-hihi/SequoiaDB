@@ -168,9 +168,6 @@ namespace engine
 
          virtual INT32     run() ;
 
-         // run1() will take place of run()
-//         INT32             run1() ;
-
       public:
          httpConnection*   getRestConn() { return &_restConn ; }
          CHAR*             getFixBuff() ;

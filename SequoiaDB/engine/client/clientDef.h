@@ -41,6 +41,7 @@
 #define SDB_SNAP_ACCESSPLANS      11
 #define SDB_SNAP_HEALTH           12
 #define SDB_SNAP_CONFIGS          13
+#define SDB_SNAP_SVCTASKS         14
 
 // define value for list
 #define SDB_LIST_CONTEXTS         0
@@ -56,6 +57,7 @@
 #define SDB_LIST_TASKS            10
 #define SDB_LIST_TRANSACTIONS     11
 #define SDB_LIST_TRANSACTIONS_CURRENT 12
+#define SDB_LIST_SVCTASKS         14
 #define SDB_LIST_CL_IN_DOMAIN     129
 #define SDB_LIST_CS_IN_DOMAIN     130
 

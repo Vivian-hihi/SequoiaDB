@@ -48,11 +48,11 @@ namespace engine
       _pmdObjBase *pObj = ( _pmdObjBase* )pData ;
       pmdEDUMgr *pEDUMgr = cb->getEDUMgr() ;
       pmdEDUEvent eventData;
-      INT32 timeSpan = 0 ;
-      INT32 maxMsgTime = pObj->getMaxProcMsgTime() ;
-      INT32 maxEventTime = pObj->getMaxProcEventTime() ;
-      INT32 *pMsgTimeSpan = maxMsgTime >= 0 ? &timeSpan : NULL ;
-      INT32 *pEventTimeSpan = maxEventTime >= 0 ? &timeSpan : NULL ;
+      INT64 timeSpan = 0 ; /// usec
+      INT64 maxMsgTime = pObj->getMaxProcMsgTime() * 1000000 ;
+      INT64 maxEventTime = pObj->getMaxProcEventTime() * 1000000 ;
+      INT64 *pMsgTimeSpan = maxMsgTime >= 0 ? &timeSpan : NULL ;
+      INT64 *pEventTimeSpan = maxEventTime >= 0 ? &timeSpan : NULL ;
 
       pObj->attachCB( cb ) ;
 

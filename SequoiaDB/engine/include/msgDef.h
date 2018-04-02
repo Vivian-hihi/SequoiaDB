@@ -496,6 +496,7 @@
 #define CMD_NAME_LIST_TASKS                  "list tasks"
 #define CMD_NAME_LIST_TRANSACTIONS           "list transactions"
 #define CMD_NAME_LIST_TRANSACTIONS_CUR       "list transactions current"
+#define CMD_NAME_LIST_SVCTASKS               "list service tasks"
 #define CMD_NAME_RENAME_COLLECTION           "rename collection"
 #define CMD_NAME_RENAME_COLLECTIONSPACE      "rename collectionspace"
 #define CMD_NAME_REORG_OFFLINE               "reorg offline"
@@ -517,6 +518,7 @@
 #define CMD_NAME_SNAPSHOT_ACCESSPLANS        "snapshot accessplans"
 #define CMD_NAME_SNAPSHOT_HEALTH             "snapshot health"
 #define CMD_NAME_SNAPSHOT_CONFIGS            "snapshot configs"
+#define CMD_NAME_SNAPSHOT_SVCTASKS           "snapshot service tasks"
 #define CMD_NAME_TEST_COLLECTION             "test collection"
 #define CMD_NAME_TEST_COLLECTIONSPACE        "test collectionspace"
 #define CMD_NAME_CREATE_GROUP                "create group"
@@ -581,6 +583,7 @@
 #define CMD_NAME_SNAPSHOT_ACCESSPLANS_INTR   "SNAPSHOT_ACCESSPLANS"
 #define CMD_NAME_SNAPSHOT_HEALTH_INTR        "SNAPSHOT_HEALTH"
 #define CMD_NAME_SNAPSHOT_CONFIGS_INTR       "SNAPSHOT_CONFIGS"
+#define CMD_NAME_SNAPSHOT_SVCTASKS_INTR      "SNAPSHOT_SVCTASKS"
 
 #define CMD_NAME_LIST_COLLECTION_INTR        "LIST_CL"
 #define CMD_NAME_LIST_SPACE_INTR             "LIST_CS"
@@ -596,6 +599,10 @@
 #define CMD_NAME_LIST_USER_INTR              "LIST_USER"
 #define CMD_NAME_LIST_TASK_INTR              "LIST_TASK"
 #define CMD_NAME_LIST_DOMAIN_INTR            "LIST_DOMAIN"
+#define CMD_NAME_LIST_SVCTASKS_INTR          "LIST_SVCTASKS"
+
+#define SYS_VIRTUAL_CS                       CMD_ADMIN_PREFIX"SYS_VCS"
+#define SYS_CL_SESSION_INFO                  SYS_VIRTUAL_CS".SYS_SESSION_INFO"
 
 #define CMD_VALUE_NAME_CREATE                "create image"
 #define CMD_VALUE_NAME_REMOVE                "remove image"

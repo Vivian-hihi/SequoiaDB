@@ -144,6 +144,10 @@ namespace engine
       _passwd = "" ;
       _logout = TRUE ;
       _delayLogin = FALSE ;
+
+      /// clear task info
+      _monTaskInfoPtr = monSvcTaskInfoPtr() ;
+
       _pmdAsyncSession::clear() ;
    }
 
@@ -164,6 +168,28 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__CLSSHDSESS_ONRV ) ;
       ossGetCurrentTime( _lastRecvTime ) ;
       PD_TRACE_EXIT ( SDB__CLSSHDSESS_ONRV ) ;
+   }
+
+   void _clsShdSession::onDispatchMsgBegin( const NET_HANDLE netHandle,
+                                            const MsgHeader *pHeader )
+   {
+      _pTaskInfo->beginATask() ;
+   }
+
+   void _clsShdSession::onDispatchMsgEnd( INT64 costUsecs )
+   {
+      monSvcTaskInfo *pInfo = NULL ;
+      _pTaskInfo->doneATask() ;
+
+      if ( costUsecs > 0 )
+      {
+         pInfo = eduCB()->getMonAppCB()->getSvcTaskInfo() ;
+         if ( pInfo )
+         {
+            pInfo->monOperationTimeInc( MON_TOTAL_WRITE_TIME,
+                                        costUsecs ) ;
+         }
+      }
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDSESS_TMOUT, "_clsShdSession::timeout" )
@@ -332,8 +358,6 @@ namespace engine
       {
          _login() ;
       }
-
-      _pTaskInfo->beginATask() ;
 
       while ( loop )
       {
@@ -599,7 +623,6 @@ namespace engine
          pmdIncErrNum( _replyHeader.flags ) ;
       }
    done:
-      _pTaskInfo->doneATask() ;
       eduCB()->writingDB( FALSE ) ;
       MON_END_OP( _pEDUCB->getMonAppCB() ) ;
       PD_TRACE_EXITRC ( SDB__CLSSHDSESS__ONOPMSG, rc ) ;
@@ -843,12 +866,7 @@ namespace engine
       INT16 clientW = pUpdate->w ;
       INT16 replSize = 0 ;
 
-      rc = _checkWriteStatus() ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDWARNING, "failed to check write status:%d", rc ) ;
-         goto error ;
-      }
+      static UINT32 s_vcsNameLen = ossStrlen( SYS_VIRTUAL_CS"." ) ;
 
       rc = msgExtractUpdate( (CHAR*)msg, &flags, &pCollectionName,
                              &pMatcherBuffer, &pUpdatorBuffer, &pHintBuffer );
@@ -859,6 +877,35 @@ namespace engine
          goto error ;
       }
       _pCollectionName = pCollectionName ;
+
+      /// When update virtual cs
+      if ( 0 == ossStrncmp( pCollectionName, SYS_VIRTUAL_CS".",
+                            s_vcsNameLen ) )
+      {
+         try
+         {
+            BSONObj objUpdator( pUpdatorBuffer ) ;
+            rc = _updateVCS( pCollectionName, objUpdator ) ;
+            if ( rc )
+            {
+               goto error ;
+            }
+            goto done ;
+         }
+         catch( std::exception &e )
+         {
+            PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+      }
+
+      rc = _checkWriteStatus() ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDWARNING, "failed to check write status:%d", rc ) ;
+         goto error ;
+      }
 
       rc = _checkCLStatusAndGetSth( pCollectionName, pUpdate->version,
                                     &_isMainCL, &replSize, mainCLName ) ;
@@ -4265,6 +4312,35 @@ namespace engine
       }
 
       return rc ;
+   }
+
+   INT32 _clsShdSession::_updateVCS( const CHAR *fullName,
+                                     const BSONObj &updator )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( 0 == ossStrcmp( fullName, SYS_CL_SESSION_INFO ) )
+      {
+         schedTaskMgr *pSvcTaskMgr = pmdGetKRCB()->getSvcTaskMgr() ;
+
+         _info.fromBSON( updator, FALSE ) ;
+
+         /// update task info
+         _monTaskInfoPtr = pSvcTaskMgr->getTaskInfoPtr( _info.getTaskID(),
+                                                        _info.getTaskName() ) ;
+         /// update monApp's info
+         eduCB()->getMonAppCB()->setSvcTaskInfo( _monTaskInfoPtr.get() ) ;
+      }
+      else
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 }
 

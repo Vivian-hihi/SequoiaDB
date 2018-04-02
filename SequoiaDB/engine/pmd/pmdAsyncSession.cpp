@@ -123,6 +123,11 @@ namespace engine
       return &_info ;
    }
 
+   void* _pmdAsyncSession::getSchedInfoPtr()
+   {
+      return (void*)&_info ;
+   }
+
    void _pmdAsyncSession::_holdIn()
    {
       _holdCount.inc() ;
@@ -160,6 +165,17 @@ namespace engine
    {
       return CMD_SPACE_SERVICE_SHARD ;
    }
+
+   void _pmdAsyncSession::setSchedInfoVersion( INT32 version )
+   {
+      _info.setVersion( version ) ;
+   }
+
+   INT32 _pmdAsyncSession::getSchedInfoVersion() const
+   {
+      return _info.getVersion() ;
+   }
+
 
    // This function will be called by another thread to attach a CB into the
    // session thread
@@ -220,6 +236,7 @@ namespace engine
       {
          ossSleep( 100 ) ;
       }
+      _pEDUCB->getMonAppCB()->setSvcTaskInfo( NULL ) ;
 
       _onDetach () ;
 
@@ -264,6 +281,7 @@ namespace engine
 
       _evtIn.reset() ;
       _pendingMsgNum.swap( 0 ) ;
+      _info.reset() ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDSN_RESET, "_pmdAsyncSession::_reset" )
@@ -552,7 +570,7 @@ namespace engine
       _buffArray[_buffEnd].pBuffer = pBuffer ;
       _buffArray[_buffEnd].size    = size ;
       _buffArray[_buffEnd].useFlag = PMD_BUFF_ALLOC ;
-      _buffArray[_buffEnd].addTime = time( NULL ) ;
+      _buffArray[_buffEnd].addTime = ossGetCurrentMicroseconds() ;
 
       _buffEnd = _incBuffPos( _buffEnd ) ;
 
@@ -974,7 +992,8 @@ namespace engine
       INT32 rc                = SDB_OK ;
       PD_TRACE_ENTRY ( PMD_SESSMGR_PUSHMSG ) ;
       CHAR *pNewBuff          = NULL ;
-      UINT64 userData         = 0 ; // 0: memPool, 1: alloc
+      UINT64 userData         = PMD_MAKE_SESSION_USERDATA( handle,
+                                           PMD_SESSION_MSG_INPOOL ) ;
 
       if ( pSession->isClosed() )
       {
@@ -1053,13 +1072,15 @@ namespace engine
                goto error ;
             }
             ossMemcpy( pNewBuff, (void*)header, header->messageLength ) ;
-            userData = 1 ;
+            userData = PMD_MAKE_SESSION_USERDATA( handle,
+                                                  PMD_SESSION_MSG_UNPOOL ) ;
             memType  = PMD_EDU_MEM_ALLOC ;
          }
       }
       else
       {
-         userData = 1 ;
+         userData = PMD_MAKE_SESSION_USERDATA( handle,
+                                               PMD_SESSION_MSG_UNPOOL ) ;
          pNewBuff = ( CHAR* )header ;
       }
 

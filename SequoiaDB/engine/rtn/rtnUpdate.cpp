@@ -392,5 +392,38 @@ namespace engine
       goto done ;
    }
 
+   BSONObj rtnUpdator2Obj( const BSONObj &source, const BSONObj &updator )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj obj ;
+      mthModifier modifier ;
+
+      try
+      {
+         rc = modifier.loadPattern( updator ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Load pattern[%s] failed, rc: %d",
+                    updator.toString().c_str(), rc ) ;
+            goto done ;
+         }
+         rc = modifier.modify( source, obj ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Make modify[%s] failed, rc: %d",
+                    updator.toString().c_str(), rc ) ;
+            goto done ;
+         }
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         goto done ;
+      }
+
+   done:
+      return obj ;
+   }
+
 }
 

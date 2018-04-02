@@ -53,6 +53,7 @@
 #include "coordQueryOperator.hpp"
 #include "coordInterruptOperator.hpp"
 #include "pmdController.hpp"
+#include "schedDef.hpp"
 
 using namespace bson ;
 
@@ -190,7 +191,7 @@ namespace engine
       return rtnMsg( (MsgOpMsg*)msg ) ;
    }
 
-   INT32 _pmdDataProcessor::_onUpdateReqMsg( MsgHeader * msg, SDB_DPSCB *dpsCB )
+   INT32 _pmdDataProcessor::_onUpdateReqMsg( MsgHeader *msg, SDB_DPSCB *dpsCB )
    {
       INT32 rc    = SDB_OK ;
       INT32 flags = 0 ;
@@ -198,12 +199,35 @@ namespace engine
       CHAR *pSelectorBuffer = NULL ;
       CHAR *pUpdatorBuffer  = NULL ;
       CHAR *pHintBuffer     = NULL ;
+      static UINT32 s_vcsNameLen = ossStrlen( SYS_VIRTUAL_CS"." ) ;
 
       rc = msgExtractUpdate( (CHAR*)msg, &flags, &pCollectionName,
                              &pSelectorBuffer, &pUpdatorBuffer,
                              &pHintBuffer );
       PD_RC_CHECK( rc, PDERROR, "Session[%s] extract update message failed, "
                    "rc: %d", getSession()->sessionName(), rc ) ;
+
+      /// When update virtual cs
+      if ( 0 == ossStrncmp( pCollectionName, SYS_VIRTUAL_CS".",
+                            s_vcsNameLen ) )
+      {
+         try
+         {
+            BSONObj objUpdator( pUpdatorBuffer ) ;
+            rc = _updateVCS( pCollectionName, objUpdator ) ;
+            if ( rc )
+            {
+               goto error ;
+            }
+            goto done ;
+         }
+         catch( std::exception &e )
+         {
+            PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+      }
 
       try
       {
@@ -245,6 +269,40 @@ namespace engine
       {
          PD_LOG ( PDERROR, "Session[%s] Failed to create selector and updator "
                   "for update: %s", getSession()->sessionName(), e.what () ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _pmdDataProcessor::_updateVCS( const CHAR *fullName,
+                                        const BSONObj &updator )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( 0 == ossStrcmp( fullName, SYS_CL_SESSION_INFO ) )
+      {
+         schedTaskMgr *pSvcTaskMgr = pmdGetKRCB()->getSvcTaskMgr() ;
+         schedInfo *pInfo = ( schedInfo* )getSession()->getSchedInfoPtr() ;
+         BSONObj objSrc = pInfo->toBSON() ;
+         BSONObj objDest ;
+
+         objDest = rtnUpdator2Obj( objSrc, updator ) ;
+
+         pInfo->fromBSON( objDest, TRUE ) ;
+
+         /// update task info
+         _monTaskInfoPtr = pSvcTaskMgr->getTaskInfoPtr( pInfo->getTaskID(),
+                                                        pInfo->getTaskName() ) ;
+         /// update monApp's info
+         eduCB()->getMonAppCB()->setSvcTaskInfo( _monTaskInfoPtr.get() ) ;
+      }
+      else
+      {
          rc = SDB_INVALIDARG ;
          goto error ;
       }

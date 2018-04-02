@@ -52,6 +52,7 @@
 #include "pmdMemPool.hpp"
 #include "pmdSyncMgr.hpp"
 #include "monCB.hpp"
+#include "schedTaskMgr.hpp"
 
 namespace engine
 {
@@ -220,6 +221,7 @@ namespace engine
 
       monConfigCB    _monCfgCB ;
       monDBCB        _monDBCB ;
+      schedTaskMgr   _svcTaskMgr ;
 
    public :
       pmdEDUMgr* getEDUMgr ()
@@ -257,6 +259,10 @@ namespace engine
       OSS_INLINE monDBCB * getMonDBCB ()
       {
          return &_monDBCB ;
+      }
+      OSS_INLINE schedTaskMgr* getSvcTaskMgr()
+      {
+         return &_svcTaskMgr ;
       }
       void setMonCB( monConfigCB & monCB )
       {

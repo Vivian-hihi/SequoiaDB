@@ -2228,7 +2228,7 @@ done:
 
       // --svcmaxconcurrency
       rdxUInt( pEX, PMD_OPTION_SVC_MAX_CONCURRENCY, _svcMaxConcurrency, FALSE,
-               PMD_CFG_CHANGE_RUN, 0, FALSE ) ;
+               PMD_CFG_CHANGE_RUN, 100, FALSE ) ;
 
       // end map
 

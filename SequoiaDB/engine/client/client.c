@@ -1497,6 +1497,9 @@ static INT32 _sdbGetList ( sdbConnectionHandle cHandle,
    case SDB_LIST_TRANSACTIONS_CURRENT :
       p = CMD_ADMIN_PREFIX CMD_NAME_LIST_TRANSACTIONS_CUR ;
       break ;
+   case SDB_LIST_SVCTASKS :
+      p = CMD_ADMIN_PREFIX CMD_NAME_LIST_SVCTASKS ;
+      break ;
    case SDB_LIST_CS_IN_DOMAIN :
       p = CMD_ADMIN_PREFIX CMD_NAME_LIST_CS_IN_DOMAIN ;
       break ;
@@ -2404,6 +2407,9 @@ SDB_EXPORT INT32 sdbGetSnapshot ( sdbConnectionHandle cHandle,
       break ;
    case SDB_SNAP_CONFIGS :
       p = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_CONFIGS ;
+      break ;
+   case SDB_SNAP_SVCTASKS :
+      p = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_SVCTASKS ;
       break ;
    default :
       rc = SDB_INVALIDARG ;

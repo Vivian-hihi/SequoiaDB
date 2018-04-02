@@ -34,6 +34,7 @@
 #define CLS_SHARD_SESSION_HPP_
 
 #include "pmdAsyncSession.hpp"
+#include "schedTaskMgr.hpp"
 #include "rtn.hpp"
 
 using namespace bson ;
@@ -85,6 +86,10 @@ namespace engine
          virtual void    onRecieve ( const NET_HANDLE netHandle,
                                      MsgHeader * msg ) ;
          virtual BOOLEAN timeout ( UINT32 interval ) ;
+
+         virtual void    onDispatchMsgBegin( const NET_HANDLE netHandle,
+                                             const MsgHeader *pHeader ) ;
+         virtual void    onDispatchMsgEnd( INT64 costUsecs ) ;
 
          BOOLEAN isSetLogout() const ;
          BOOLEAN isDelayLogin() const ;
@@ -247,6 +252,8 @@ namespace engine
                            INT32 version,
                            SINT64 &contextID );
 
+         INT32 _updateVCS( const CHAR *fullName, const BSONObj &updator ) ;
+
          INT32 _getSubCLList( const BSONObj &matcher,
                               const CHAR *pCollectionName,
                               BSONObj &boNewMatcher,
@@ -304,7 +311,9 @@ namespace engine
          BOOLEAN                _delayLogin ;
          string                 _username ;
          string                 _passwd ;
-   };
+
+         monSvcTaskInfoPtr      _monTaskInfoPtr ;
+   } ;
 
 }
 

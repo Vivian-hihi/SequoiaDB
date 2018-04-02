@@ -113,7 +113,8 @@ pmdFiles = [
       "sched/schedTaskAdapter.cpp",
       "sched/schedTaskAdapterBase.cpp",
       "sched/schedPrepareJob.cpp",
-      "sched/schedDispatchJob.cpp"
+      "sched/schedDispatchJob.cpp",
+      "sched/schedTaskMgr.cpp"
       ]
 migFiles = [
       "mig/migLoad.cpp"

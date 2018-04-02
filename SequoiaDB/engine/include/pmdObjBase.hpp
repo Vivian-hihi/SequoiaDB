@@ -117,11 +117,11 @@ namespace engine
       public:
          OSS_INLINE BOOLEAN isProcess () const { return _bProcess ; }
          OSS_INLINE INT32   dispatch ( pmdEDUEvent *event,
-                                       INT32 *pTime = NULL ) ;
+                                       INT64 *pTime = NULL ) ;
          OSS_INLINE INT32   dispatchEvent ( pmdEDUEvent *event,
-                                            INT32 *pTime = NULL ) ;
+                                            INT64 *pTime = NULL ) ;
          OSS_INLINE INT32   dispatchMsg( NET_HANDLE handle, MsgHeader* msg,
-                                         INT32 *pTime = NULL ) ;
+                                         INT64 *pTime = NULL ) ;
          virtual void   onTimer ( UINT64 timerID, UINT32 interval ) { }
 
       protected:
@@ -181,7 +181,7 @@ namespace engine
       EVENT_FUNC              pEventFn ;
    };
 
-   OSS_INLINE INT32 _pmdObjBase::dispatch ( pmdEDUEvent * event, INT32 *pTime )
+   OSS_INLINE INT32 _pmdObjBase::dispatch ( pmdEDUEvent * event, INT64 *pTime )
    {
       if ( event->_eventType == PMD_EDU_EVENT_MSG )
       {
@@ -194,12 +194,13 @@ namespace engine
    }
 
    OSS_INLINE INT32 _pmdObjBase::dispatchMsg( NET_HANDLE handle, MsgHeader* msg,
-                                              INT32 *pTime )
+                                              INT64 *pTime )
    {
       _bProcess = TRUE ;
-      INT32 rc = SDB_OK;
-      time_t bTime = 0 ;
-      INT32  diffTime = 0 ;
+      INT32 rc = SDB_OK ;
+
+      UINT64 bTime = 0 ;
+      INT64  diffTime = 0 ;
 
       _lastEvent._Data = msg ;
       _lastEvent._dataMemType = PMD_EDU_MEM_NONE ;
@@ -217,9 +218,9 @@ namespace engine
                && msgMap->entries[index].msgType <= (UINT32)(msg->opCode)
                && msgMap->entries[index].msgEndType >= (UINT32)(msg->opCode) )
             {
-               bTime = time( NULL ) ;
+               bTime = ossGetCurrentMicroseconds() ;
                rc =  (this->*(msgMap->entries[index].pMsgFn))( handle, msg ) ;
-               diffTime = (INT32)(time( NULL ) - bTime) ;
+               diffTime = (INT64)( ossGetCurrentMicroseconds() - bTime) ;
                if ( SDB_OK != rc )
                {
                   PD_LOG( PDDEBUG, "[%s]Process func[%s] failed[rc = %d]",
@@ -231,9 +232,9 @@ namespace engine
          }
       }
 
-      bTime = time( NULL ) ;
+      bTime = ossGetCurrentMicroseconds() ;
       rc = _defaultMsgFunc( handle, msg ) ;
-      diffTime = (INT32)(time( NULL ) - bTime) ;
+      diffTime = (INT64)( ossGetCurrentMicroseconds() - bTime) ;
 
    done:
       _bProcess = FALSE ;
@@ -242,10 +243,10 @@ namespace engine
       {
          *pTime = diffTime ;
       }
-      else if ( diffTime > 10 )
+      else if ( diffTime > 10000000 )
       {
          PD_LOG( PDDEBUG, "[%s] Process msg[opCode:[%d]%d, requestID: %lld, "
-                 "TID: %d, Len: %d] over %d seconds", name(),
+                 "TID: %d, Len: %d] over %lld usecs", name(),
                  IS_REPLY_TYPE(msg->opCode), GET_REQUEST_TYPE(msg->opCode),
                  msg->requestID, msg->TID, msg->messageLength, diffTime ) ;
       }
@@ -253,12 +254,12 @@ namespace engine
    }
 
    OSS_INLINE INT32 _pmdObjBase::dispatchEvent( pmdEDUEvent * event,
-                                                INT32 *pTime )
+                                                INT64 *pTime )
    {
       _bProcess = TRUE ;
       INT32 rc = SDB_OK;
-      time_t bTime = 0 ;
-      INT32  diffTime = 0 ;
+      UINT64 bTime = 0 ;
+      INT64  diffTime = 0 ;
 
       _lastEvent = *event ;
 
@@ -274,13 +275,13 @@ namespace engine
                && msgMap->entries[index].msgEndType >=
                   (UINT32)(event->_eventType) )
             {
-               bTime = time( NULL ) ;
+               bTime = ossGetCurrentMicroseconds() ;
                rc =  (this->*(msgMap->entries[index].pEventFn))( event );
-               diffTime = (INT32)(time( NULL ) - bTime) ;
+               diffTime = (INT64)( ossGetCurrentMicroseconds() - bTime) ;
                if ( SDB_OK != rc )
                {
                   PD_LOG( PDDEBUG, "[%s]Process func[%s] failed[rc = %d]",
-                     name(), msgMap->entries[index].pFncName, rc );
+                          name(), msgMap->entries[index].pFncName, rc );
                }
                goto done;
             }
@@ -293,16 +294,16 @@ namespace engine
       {
          PMD_EVENT_MESSAGES *timeMsg = (PMD_EVENT_MESSAGES*)( event->_Data );
 
-         bTime = time( NULL ) ;
+         bTime = ossGetCurrentMicroseconds() ;
          _onTimer( timeMsg->timeoutMsg.timerID, timeMsg->timeoutMsg.interval,
                    timeMsg->timeoutMsg.occurTime ) ;
-         diffTime = (INT32)(time( NULL ) - bTime) ;
+         diffTime = (INT64)( ossGetCurrentMicroseconds() - bTime) ;
       }
       else //Default Func
       {
-         bTime = time( NULL ) ;
+         bTime = ossGetCurrentMicroseconds() ;
          rc = _defaultEventFunc( event );
-         diffTime = (INT32)(time( NULL ) - bTime) ;
+         diffTime = (INT64)( ossGetCurrentMicroseconds() - bTime) ;
       }
 
    done:
@@ -312,9 +313,9 @@ namespace engine
       {
          *pTime = diffTime ;
       }
-      else if ( diffTime > 5 )
+      else if ( diffTime > 5000000 )
       {
-         PD_LOG( PDINFO, "[%s] Process event[type:%d] over %d seconds", name(),
+         PD_LOG( PDINFO, "[%s] Process event[type:%d] over %lld usecs", name(),
                  event->_eventType, diffTime ) ;
       }
 
