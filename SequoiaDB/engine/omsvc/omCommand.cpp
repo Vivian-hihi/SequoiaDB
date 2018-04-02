@@ -11188,7 +11188,8 @@ namespace engine
       bizName = pValTmp ;
 
       /// check business exist
-      if ( !_isBusinessExist( clsName, bizName ) )
+      if ( !_isClusterExist( clsName ) ||
+           !_isBusinessExist( clsName, bizName ) )
       {
          _errorDetail = string( "cluster or business is not exist" ) ;
          rc = SDB_INVALIDARG ;
