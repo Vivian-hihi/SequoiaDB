@@ -58,6 +58,7 @@ namespace SequoiaDB
         public const string TRANSACTIONS_CURRENT = "transactions current";
         public const string ACCESSPLANS = "accessplans";
         public const string HEALTH = "health";
+        public const string CONFIGS = "configs";
         public const string CS_IN_DOMAIN = "collectionspaces in domain";
         public const string CL_IN_DOMAIN = "collections in domain";
 
@@ -89,6 +90,8 @@ namespace SequoiaDB
 
         public const string CMD_NAME_ALTER_DC = "alter dc";
         public const string CMD_NAME_GET_DCINFO = "get dcinfo";
+        public const string CMD_NAME_UPDATE_CONFIG = "update config";
+        public const string CMD_NAME_DELETE_CONFIG = "delete config";
         public const string CMD_VALUE_NAME_CREATE = "create image";
         public const string CMD_VALUE_NAME_REMOVE = "remove image";
         public const string CMD_VALUE_NAME_ATTACH = "attach groups";
@@ -163,6 +166,7 @@ namespace SequoiaDB
         public const string FIELD_NAME_CLUSTERNAME = "ClusterName";
         public const string FIELD_NAME_BUSINESSNAME = "BusinessName";
         public const string FIELD_NAME_DATACENTER = "DataCenter";
+        public const string FIELD_NAME_CONFIGS = "Configs";
 
         public const string FIELD_MODIFY = "$Modify";
         public const string FIELD_OP = "OP";

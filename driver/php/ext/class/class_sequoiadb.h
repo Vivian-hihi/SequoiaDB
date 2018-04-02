@@ -78,6 +78,8 @@ PHP_METHOD( SequoiaDB, removeUser ) ;
 
 //config
 PHP_METHOD( SequoiaDB, flushConfigure ) ;
+PHP_METHOD( SequoiaDB, updateConfig ) ;
+PHP_METHOD( SequoiaDB, deleteConfig ) ;
 
 //procedure
 PHP_METHOD( SequoiaDB, listProcedure ) ;

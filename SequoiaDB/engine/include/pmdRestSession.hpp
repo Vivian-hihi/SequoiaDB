@@ -391,7 +391,8 @@ namespace engine
                                                    MsgHeader ** msg ) ;
          INT32       _convertSnapshotHealth ( restAdaptor * pAdaptor,
                                               MsgHeader ** msg ) ;
-
+         INT32       _convertSnapshotConfigs ( restAdaptor * pAdaptor,
+                                              MsgHeader ** msg ) ;
          INT32       _buildExecMsg( CHAR **ppBuffer, INT32 *bufferSize,
                                     const CHAR *pSql, UINT64 reqID ) ;
          INT32       _convertExec( restAdaptor *pAdaptor, MsgHeader **msg ) ;
@@ -402,6 +403,8 @@ namespace engine
          INT32       _convertLogin( restAdaptor *pAdaptor, MsgHeader **msg ) ;
 
          INT32       _convertAnalyze ( restAdaptor * pAdaptor, MsgHeader ** msg ) ;
+         INT32       _convertUpdateConfig( restAdaptor * pAdaptor, MsgHeader ** msg ) ;
+         INT32       _convertDeleteConfig( restAdaptor * pAdaptor, MsgHeader ** msg ) ;
 
       private:
          pmdRestSession    *_restSession ;

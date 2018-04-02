@@ -221,3 +221,26 @@
 > catalog  
 > accessplans  
 > health  
+> configs  
+
+##更新配置参数##
+
+|          | 说明                                      | 例子            |
+|----------|-------------------------------------------|-----------------|
+| 请求头   | 同通用请求头                              |                 |
+| 请求内容 | cmd: update config<br>configs: 配置参数，包含配置名和配置值<br>options: 命令位置参数 | cmd=update config<br>cmd=update config&configs={'diagnum':27}&options={'svcname':'20000'} |
+| 说明     | 请参考 [db.updateConf\(\)](reference/Sequoiadb_command/Sdb/updateConf.md) |                 |
+| 响应头   | 同通用响应头                              |                 |
+| 响应内容 | {<br>errno: 返回值，0表示成功，其他为失败<br>description: 失败时的错误描述<br>} | { "errno": 0 } |
+| 说明     |
+
+##删除配置参数##
+
+|          | 说明                                      | 例子            |
+|----------|-------------------------------------------|-----------------|
+| 请求头   | 同通用请求头                              |                 |
+| 请求内容 | cmd: delete config<br>configs: 配置参数，包含配置名和配置值<br>options: 命令位置参数 | cmd=update config<br>cmd=update config&configs={'diagnum':1}&options={'svcname':'20000'} |
+| 说明     | 请参考 [db.deleteConf\(\)](reference/Sequoiadb_command/Sdb/deleteConf.md) |                 |
+| 响应头   | 同通用响应头                              |                 |
+| 响应内容 | {<br>errno: 返回值，0表示成功，其他为失败<br>description: 失败时的错误描述<br>} | { "errno": 0 } |
+| 说明     |

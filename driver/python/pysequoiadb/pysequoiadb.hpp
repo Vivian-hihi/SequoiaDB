@@ -31,6 +31,8 @@ __METHOD_DECLARE(sdb_transaction_begin) ;
 __METHOD_DECLARE(sdb_transaction_commit) ;
 __METHOD_DECLARE(sdb_transaction_rollback) ;
 __METHOD_DECLARE(sdb_flush_configure) ;
+__METHOD_DECLARE(sdb_update_config) ;
+__METHOD_DECLARE(sdb_delete_config) ;
 __METHOD_DECLARE(sdb_create_JS_procedure) ;
 __METHOD_DECLARE(sdb_remove_procedure) ;
 __METHOD_DECLARE(sdb_list_procedures) ;

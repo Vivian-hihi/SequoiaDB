@@ -482,10 +482,11 @@ class client(object):
                     10    : Get current session's transaction snapshot
                     11    : Get cached access plan snapshot
                     12    : Get node health detection snapshot
+                    13    : Get node configuration's snapshot
         """
         if not isinstance(snap_type, int):
             raise SDBTypeError("snap type must be an instance of int")
-        if snap_type < 0 or snap_type > 12:
+        if snap_type < 0 or snap_type > 13:
             raise SDBTypeError("snap_type value is invalid")
 
         bson_condition = None
@@ -1077,6 +1078,54 @@ class client(object):
 
         bson_options = bson.BSON.encode(options)
         rc = sdb.sdb_flush_configure(self._client, bson_options)
+        raise_if_error(rc, "Failed to flush configure")
+
+    def update_config(self, configs, options):
+        """Force the node to update configs online.
+        Parameters:
+           Name      Type  Info:
+           configs   dict  The specific configuration parameters to update
+           options   dict  The configure information, pass {"Global":true} or
+                                 {"Global":false} In cluster environment, passing
+                                 {"Global":true} will flush data's and catalog's
+                                 configuration file, while passing {"Global":false} will
+                                 flush coord's configuration file. In stand-alone
+                                 environment, both them have the same behaviour.
+        Exceptions:
+           pysequoiadb.error.SDBBaseError
+        """
+        if not isinstance(configs, dict):
+            raise SDBTypeError("configs must be an instance of dict")
+        if not isinstance(options, dict):
+            raise SDBTypeError("options must be an instance of dict")
+
+        bson_configs = bson.BSON.encode(configs)
+        bson_options = bson.BSON.encode(options)
+        rc = sdb.sdb_update_config(self._client, bson_configs, bson_options)
+        raise_if_error(rc, "Failed to flush configure")
+
+    def delete_config(self, configs, options):
+        """Force the node to delete configs online.
+        Parameters:
+           Name      Type  Info:
+           configs   dict  The specific configuration parameters to delete
+           options   dict  The configure information, pass {"Global":true} or
+                                 {"Global":false} In cluster environment, passing
+                                 {"Global":true} will flush data's and catalog's
+                                 configuration file, while passing {"Global":false} will
+                                 flush coord's configuration file. In stand-alone
+                                 environment, both them have the same behaviour.
+        Exceptions:
+           pysequoiadb.error.SDBBaseError
+        """
+        if not isinstance(configs, dict):
+            raise SDBTypeError("configs must be an instance of dict")
+        if not isinstance(options, dict):
+            raise SDBTypeError("options must be an instance of dict")
+
+        bson_configs = bson.BSON.encode(configs)
+        bson_options = bson.BSON.encode(options)
+        rc = sdb.sdb_delete_config(self._client, bson_configs, bson_options)
         raise_if_error(rc, "Failed to flush configure")
 
     def create_procedure(self, code):

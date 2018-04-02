@@ -50,6 +50,8 @@ class SequoiaDB
    define( "SDB_SNAP_ACCESSPLANS",         11 ) ;
    /** Get the snapshot of node health detection. */
    define( "SDB_SNAP_HEALTH", 12 ) ;
+   /** Get the snapshot of node configurations. */
+   define( "SDB_SNAP_CONFIGS", 13 ) ;
 
    /**
     * Get the snapshot of all the collections.
@@ -498,6 +500,7 @@ class SequoiaDB
     *                                                               SDB_SNAP_TRANSACTIONS_CURRENT
     *                                                               SDB_SNAP_ACCESSPLANS
     *                                                               SDB_SNAP_HEALTH
+    *                                                               SDB_SNAP_CONFIGS
     *                                                               @endcode
     *
     * @param $condition an array or the string argument. The matching rule, match all the documents if null.
@@ -1337,6 +1340,78 @@ class SequoiaDB
     * @endcode
    */
    public function flushConfigure( array|string $options ){}
+
+   /**
+    * Force the node to update config from file and take effect.
+    *
+    * @param $configs the specific configuration parameters to update
+    * @param $options The control options:(Only take effect in coordinate nodes)
+    *                                                  @code
+    *                                                  GroupID:INT32,
+    *                                                  GroupName:String,
+    *                                                  NodeID:INT32,
+    *                                                  HostName:String,
+    *                                                  svcname:String,
+    *                                                  ...
+    *                                                  @endcode
+    *
+    * @return Returns the result, default return array.
+    *
+    * @retval array   array( 'errno' => 0 )
+    * @retval string  { "errno": 0 }
+    *
+    * Example:
+    * @code
+    * $db = new SequoiaDB() ;
+    * $err = $db -> connect( "192.168.1.10:11810" ) ;
+    * if( $err['errno'] != 0 ) {
+    *    echo "Failed to connect database, error code: ".$err['errno'] ;
+    *    return ;
+    * }
+    * $err = $db -> updateConfig( '{"diagnum":20}', '{"svcname":"20000"}' ) ;
+    * if( $err['errno'] != 0 ) {
+    *    echo "Failed to call updateConfig, error code: ".$err['errno'] ;
+    *    return ;
+    * }
+    * @endcode
+   */
+   public function updateConfig( array|string $configs, array|string $options ){}
+
+   /**
+    * Force the node to delete config from file and take effect.
+    *
+    * @param $configs the specific configuration parameters to delete
+    * @param $options The control options:(Only take effect in coordinate nodes)
+    *                                                  @code
+    *                                                  GroupID:INT32,
+    *                                                  GroupName:String,
+    *                                                  NodeID:INT32,
+    *                                                  HostName:String,
+    *                                                  svcname:String,
+    *                                                  ...
+    *                                                  @endcode
+    *
+    * @return Returns the result, default return array.
+    *
+    * @retval array   array( 'errno' => 0 )
+    * @retval string  { "errno": 0 }
+    *
+    * Example:
+    * @code
+    * $db = new SequoiaDB() ;
+    * $err = $db -> connect( "192.168.1.10:11810" ) ;
+    * if( $err['errno'] != 0 ) {
+    *    echo "Failed to connect database, error code: ".$err['errno'] ;
+    *    return ;
+    * }
+    * $err = $db -> deleteConfig( '{"diagnum":1}', '{"svcname":"20000"}' ) ;
+    * if( $err['errno'] != 0 ) {
+    *    echo "Failed to call deleteConfig, error code: ".$err['errno'] ;
+    *    return ;
+    * }
+    * @endcode
+   */
+   public function deleteConfig( array|string $configs, array|string $options ){}
 
    /**
     * List store procedures.

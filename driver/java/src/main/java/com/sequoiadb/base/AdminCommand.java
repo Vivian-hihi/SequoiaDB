@@ -53,6 +53,8 @@ final class AdminCommand {
     final static String GET_SESSION_ATTRIBUTE = PREFIX + "get session attribute";
     final static String SYNC_DB = PREFIX + "sync db";
     final static String EXPORT_CONFIG = PREFIX + "export configuration";
+    final static String UPDATE_CONFIG = PREFIX + "update config";
+    final static String DELETE_CONFIG = PREFIX + "delete config";
     final static String ANALYZE = PREFIX + "analyze";
 
     final static String LIST_CONTEXTS = PREFIX + "list contexts";
@@ -84,6 +86,7 @@ final class AdminCommand {
     final static String SNAP_TRANSACTIONS_CURRENT = PREFIX + "snapshot transactions current";
     final static String SNAP_ACCESSPLANS = PREFIX + "snapshot accessplans";
     final static String SNAP_HEALTH = PREFIX + "snapshot health";
+    final static String SNAP_CONFIGS = PREFIX + "snapshot configs";
 
     final static String RESET_SNAPSHOT = PREFIX + "snapshot reset";
 

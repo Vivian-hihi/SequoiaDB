@@ -943,12 +943,18 @@ namespace engine
                                  &RestToMSGTransfer::_convertSnapshotAccessPlans },
          { CMD_NAME_SNAPSHOT_HEALTH,
                                  &RestToMSGTransfer::_convertSnapshotHealth },
+         { CMD_NAME_SNAPSHOT_CONFIGS,
+                                 &RestToMSGTransfer::_convertSnapshotConfigs },
          { CMD_NAME_LIST_LOBS,   &RestToMSGTransfer::_convertListLobs },
          { OM_LOGIN_REQ,         &RestToMSGTransfer::_convertLogin },
          { REST_CMD_NAME_EXEC,   &RestToMSGTransfer::_convertExec },
          { CMD_NAME_FORCE_SESSION,
                                  &RestToMSGTransfer::_convertForceSession },
-         { CMD_NAME_ANALYZE,     &RestToMSGTransfer::_convertAnalyze }
+         { CMD_NAME_ANALYZE,     &RestToMSGTransfer::_convertAnalyze },
+         { CMD_NAME_UPDATE_CONFIG,
+                                 &RestToMSGTransfer::_convertUpdateConfig },
+         { CMD_NAME_DELETE_CONFIG,
+                                 &RestToMSGTransfer::_convertDeleteConfig }
       } ;
 
       len = sizeof( s_commandArray ) / sizeof( restCommand2Func ) ;
@@ -4096,6 +4102,41 @@ namespace engine
       goto done ;
    }
 
+   INT32 RestToMSGTransfer::_convertSnapshotConfigs ( restAdaptor * pAdaptor,
+                                                     MsgHeader ** msg )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj selector ;
+      BSONObj order ;
+      BSONObj match ;
+      CHAR *pBuff           = NULL ;
+      INT32 buffSize        = 0 ;
+      const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_CONFIGS ;
+
+      rc = _convertListBase( pAdaptor, match, selector, order ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "convert snapshot failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &match,
+                             &selector, &order, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d",
+                     pCommand, rc ) ;
+         goto error ;
+      }
+
+      *msg = ( MsgHeader * )pBuff ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 RestToMSGTransfer::_buildExecMsg( CHAR **ppBuffer, INT32 *bufferSize,
                                            const CHAR *pSql, UINT64 reqID )
    {
@@ -4353,6 +4394,144 @@ namespace engine
          BSONObjBuilder builder ;
          builder.appendElements( options ) ;
          query = builder.obj() ;
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG_MSG( PDERROR, "Failed to create BSON object: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1,
+                             &query, NULL, NULL, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d",
+                     pCommand, rc ) ;
+         goto error ;
+      }
+
+      *msg = ( MsgHeader * )pBuff ;
+
+   done:
+      return rc ;
+
+   error:
+      goto done ;
+   }
+
+   INT32 RestToMSGTransfer::_convertUpdateConfig ( restAdaptor * pAdaptor,
+                                              MsgHeader ** msg )
+   {
+      INT32 rc = SDB_OK ;
+
+      INT32 buffSize = 0 ;
+      CHAR *pBuff = NULL ;
+      const CHAR *pConfigs    = NULL ;
+      const CHAR *pOptions    = NULL ;
+      const CHAR *pCommand   = CMD_ADMIN_PREFIX CMD_NAME_UPDATE_CONFIG ;
+      BSONObj query ;
+      BSONObj configs ;
+      BSONObj options ;
+
+      pAdaptor->getQuery( _restSession, FIELD_NAME_CONFIGS, &pConfigs ) ;
+      if( NULL != pConfigs )
+      {
+         rc = fromjson( pConfigs, configs, 0 ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG_MSG( PDERROR, "field's format error:field=%s, value=%s",
+                        FIELD_NAME_CONFIGS, pConfigs ) ;
+            goto error ;
+         }
+      }
+      pAdaptor->getQuery( _restSession, FIELD_NAME_OPTIONS, &pOptions ) ;
+      if( NULL != pOptions )
+      {
+         rc = fromjson( pOptions, options, 0 ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG_MSG( PDERROR, "field's format error:field=%s, value=%s",
+                        FIELD_NAME_OPTIONS, pOptions ) ;
+            goto error ;
+         }
+      }
+
+      try
+      {
+         BSONObjBuilder queryBuilder ;
+         queryBuilder.appendElements( options ) ;
+         queryBuilder.append( FIELD_NAME_CONFIGS, configs ) ;
+         query = queryBuilder.obj() ;
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG_MSG( PDERROR, "Failed to create BSON object: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1,
+                             &query, NULL, NULL, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d",
+                     pCommand, rc ) ;
+         goto error ;
+      }
+
+      *msg = ( MsgHeader * )pBuff ;
+
+   done:
+      return rc ;
+
+   error:
+      goto done ;
+   }
+
+   INT32 RestToMSGTransfer::_convertDeleteConfig ( restAdaptor * pAdaptor,
+                                              MsgHeader ** msg )
+   {
+      INT32 rc = SDB_OK ;
+
+      INT32 buffSize = 0 ;
+      CHAR *pBuff = NULL ;
+      const CHAR *pConfigs    = NULL ;
+      const CHAR *pOptions    = NULL ;
+      const CHAR *pCommand   = CMD_ADMIN_PREFIX CMD_NAME_DELETE_CONFIG ;
+      BSONObj query ;
+      BSONObj configs ;
+      BSONObj options ;
+
+      pAdaptor->getQuery( _restSession, FIELD_NAME_CONFIGS, &pConfigs ) ;
+      if( NULL != pConfigs )
+      {
+         rc = fromjson( pConfigs, configs, 0 ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG_MSG( PDERROR, "field's format error:field=%s, value=%s",
+                        FIELD_NAME_CONFIGS, pConfigs ) ;
+            goto error ;
+         }
+      }
+      pAdaptor->getQuery( _restSession, FIELD_NAME_OPTIONS, &pOptions ) ;
+      if( NULL != pOptions )
+      {
+         rc = fromjson( pOptions, options, 0 ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG_MSG( PDERROR, "field's format error:field=%s, value=%s",
+                        FIELD_NAME_OPTIONS, pOptions ) ;
+            goto error ;
+         }
+      }
+
+      try
+      {
+         BSONObjBuilder queryBuilder ;
+         queryBuilder.appendElements( options ) ;
+         queryBuilder.append( FIELD_NAME_CONFIGS, configs ) ;
+         query = queryBuilder.obj() ;
       }
       catch( std::exception &e )
       {

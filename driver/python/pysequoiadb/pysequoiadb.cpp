@@ -727,6 +727,70 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
+__METHOD_IMP(sdb_update_config)
+{
+   INT32 rc                    = 0 ;
+   PYOBJECT *obj               = NULL ;
+   PYOBJECT *bson_configs       = NULL ;
+   PYOBJECT *bson_options       = NULL ;
+   sdb *client                 = NULL ;
+   const bson::BSONObj *configs = NULL ;
+   const bson::BSONObj *options = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS( args, "OOO", &obj, &bson_configs, &bson_options ) )
+   {
+      rc = SDB_INVALIDARGS ;
+      goto done ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_configs, configs ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_options, options ) ;
+
+   rc = client->updateConfig( *configs, *options ) ;
+   if ( rc )
+   {
+      goto done ;
+   }
+
+done:
+   DELETE_CPPOBJECT( configs ) ;
+   DELETE_CPPOBJECT( options ) ;
+   return MAKE_RETURN_INT( rc ) ;
+}
+
+__METHOD_IMP(sdb_delete_config)
+{
+   INT32 rc                    = 0 ;
+   PYOBJECT *obj               = NULL ;
+   PYOBJECT *bson_configs       = NULL ;
+   PYOBJECT *bson_options       = NULL ;
+   sdb *client                 = NULL ;
+   const bson::BSONObj *configs = NULL ;
+   const bson::BSONObj *options = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS( args, "OOO", &obj, &bson_configs, &bson_options ) )
+   {
+      rc = SDB_INVALIDARGS ;
+      goto done ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_configs, configs ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_options, options ) ;
+
+   rc = client->deleteConfig( *configs, *options ) ;
+   if ( rc )
+   {
+      goto done ;
+   }
+
+done:
+   DELETE_CPPOBJECT( configs ) ;
+   DELETE_CPPOBJECT( options ) ;
+   return MAKE_RETURN_INT( rc ) ;
+}
+
 __METHOD_IMP(sdb_create_JS_procedure)
 {
    INT32 rc              = 0 ;
@@ -4157,6 +4221,8 @@ static PyMethodDef sequoiadb_methods[] = {
    {"sdb_transaction_commit",          sdb_transaction_commit,          METH_VARARGS},
    {"sdb_transaction_rollback",        sdb_transaction_rollback,        METH_VARARGS},
    {"sdb_flush_configure",             sdb_flush_configure,             METH_VARARGS},
+   {"sdb_update_config",               sdb_update_config,               METH_VARARGS},
+   {"sdb_delete_config",               sdb_delete_config,               METH_VARARGS},
    {"sdb_create_JS_procedure",         sdb_create_JS_procedure,         METH_VARARGS},
    {"sdb_remove_procedure",            sdb_remove_procedure,            METH_VARARGS},
    {"sdb_list_procedures",             sdb_list_procedures,             METH_VARARGS},

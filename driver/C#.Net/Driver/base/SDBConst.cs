@@ -33,6 +33,7 @@
         public const int SDB_SNAP_TRANSACTIONS_CURRENT = 10;
         public const int SDB_SNAP_ACCESSPLANS      = 11;
         public const int SDB_SNAP_HEALTH           = 12;
+        public const int SDB_SNAP_CONFIGS          = 13;
 
         public const int SDB_LIST_CONTEXTS         = 0;
         public const int SDB_LIST_CONTEXTS_CURRENT = 1;

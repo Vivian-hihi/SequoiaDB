@@ -1442,6 +1442,102 @@ error:
    goto done ;
 }
 
+//update config
+PHP_METHOD( SequoiaDB, updateConfig )
+{
+   INT32 rc = SDB_OK ;
+   zval *pConfigs = NULL ;
+   zval *pOptions = NULL ;
+   zval *pThisObj = getThis() ;
+   sdbConnectionHandle connection = SDB_INVALID_HANDLE ;
+   bson configs ;
+   bson options ;
+   bson_init( &configs ) ;
+   bson_init( &options ) ;
+   PHP_SET_ERRNO_OK( TRUE, pThisObj ) ;
+   if ( PHP_GET_PARAMETERS( "z|z", &pConfigs, &pOptions ) == FAILURE )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+   PHP_READ_HANDLE( pThisObj,
+                    connection,
+                    sdbConnectionHandle,
+                    SDB_HANDLE_NAME,
+                    connectionDesc ) ;
+   rc = php_auto2Bson( pOptions, &options TSRMLS_CC ) ;
+   if( rc )
+   {
+      goto error ;
+   }
+   rc = php_auto2Bson( pConfigs, &configs TSRMLS_CC ) ;
+   if( rc )
+   {
+      goto error ;
+   }
+   rc = sdbUpdateConfig( connection, &configs, &options ) ;
+   if( rc )
+   {
+      goto error ;
+   }
+done:
+   bson_destroy( &configs ) ;
+   bson_destroy( &options ) ;
+   PHP_RETURN_AUTO_ERROR( TRUE, pThisObj, rc ) ;
+   return ;
+error:
+   PHP_SET_ERROR( TRUE, pThisObj, rc ) ;
+   goto done ;
+}
+
+//delete config
+PHP_METHOD( SequoiaDB, deleteConfig )
+{
+   INT32 rc = SDB_OK ;
+   zval *pConfigs = NULL ;
+   zval *pOptions = NULL ;
+   zval *pThisObj = getThis() ;
+   sdbConnectionHandle connection = SDB_INVALID_HANDLE ;
+   bson configs ;
+   bson options ;
+   bson_init( &configs ) ;
+   bson_init( &options ) ;
+   PHP_SET_ERRNO_OK( TRUE, pThisObj ) ;
+   if ( PHP_GET_PARAMETERS( "z|z", &pConfigs, &pOptions ) == FAILURE )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+   PHP_READ_HANDLE( pThisObj,
+                    connection,
+                    sdbConnectionHandle,
+                    SDB_HANDLE_NAME,
+                    connectionDesc ) ;
+   rc = php_auto2Bson( pOptions, &options TSRMLS_CC ) ;
+   if( rc )
+   {
+      goto error ;
+   }
+   rc = php_auto2Bson( pConfigs, &configs TSRMLS_CC ) ;
+   if( rc )
+   {
+      goto error ;
+   }
+   rc = sdbDeleteConfig( connection, &configs, &options ) ;
+   if( rc )
+   {
+      goto error ;
+   }
+done:
+   bson_destroy( &configs ) ;
+   bson_destroy( &options ) ;
+   PHP_RETURN_AUTO_ERROR( TRUE, pThisObj, rc ) ;
+   return ;
+error:
+   PHP_SET_ERROR( TRUE, pThisObj, rc ) ;
+   goto done ;
+}
+
 //procedure
 PHP_METHOD( SequoiaDB, listProcedure )
 {

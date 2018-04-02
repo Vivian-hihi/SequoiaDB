@@ -117,6 +117,8 @@ const zend_function_entry sdbFun[] = {
    PHP_ME( SequoiaDB, removeUser,            NULL, ZEND_ACC_PUBLIC )
    //config
    PHP_ME( SequoiaDB, flushConfigure,        NULL, ZEND_ACC_PUBLIC )
+   PHP_ME( SequoiaDB, updateConfig,          NULL, ZEND_ACC_PUBLIC )
+   PHP_ME( SequoiaDB, deleteConfig,          NULL, ZEND_ACC_PUBLIC )
    //procedure
    PHP_ME( SequoiaDB, listProcedure,         NULL, ZEND_ACC_PUBLIC )
    PHP_ME( SequoiaDB, createJsProcedure,     NULL, ZEND_ACC_PUBLIC )
@@ -531,6 +533,7 @@ PHP_MINIT_FUNCTION(sequoiadb)
    PHP_REGISTER_LONG_CONSTANT( "SDB_SNAP_TRANSACTIONS_CURRENT",10 ) ;
    PHP_REGISTER_LONG_CONSTANT( "SDB_SNAP_ACCESSPLANS",         11 ) ;
    PHP_REGISTER_LONG_CONSTANT( "SDB_SNAP_HEALTH",              12 ) ;
+   PHP_REGISTER_LONG_CONSTANT( "SDB_SNAP_CONFIGS",             13 ) ;
 
    /* waste */
    PHP_REGISTER_LONG_CONSTANT( "SDB_SNAP_COLLECTION",          4 ) ;

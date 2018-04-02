@@ -115,6 +115,7 @@ public class Sequoiadb implements Closeable {
     public final static int SDB_SNAP_TRANSACTIONS_CURRENT = 10;
     public final static int SDB_SNAP_ACCESSPLANS = 11;
     public final static int SDB_SNAP_HEALTH = 12;
+    public final static int SDB_SNAP_CONFIGS = 13;
 
     public final static int FMP_FUNC_TYPE_INVALID = -1;
     public final static int FMP_FUNC_TYPE_JS = 0;
@@ -1092,6 +1093,52 @@ public class Sequoiadb implements Closeable {
     }
 
     /**
+     * Force the node to update configs online.
+     *
+     * @param configs The specific configuration parameters to update
+     * @param options Options The control options:(Only take effect in coordinate nodes)
+     *                GroupID:INT32,
+     *                GroupName:String,
+     *                NodeID:INT32,
+     *                HostName:String,
+     *                svcname:String,
+     *                ...
+     * @throws BaseException If error happens.
+     */
+    public void updateConfig(BSONObject configs, BSONObject options) throws BaseException {
+        BSONObject newObj = new BasicBSONObject();
+        newObj.putAll(options);
+        newObj.put("Configs", configs);
+
+        AdminRequest request = new AdminRequest(AdminCommand.UPDATE_CONFIG, newObj);
+        SdbReply response = requestAndResponse(request);
+        throwIfError(response);
+    }
+
+    /**
+     * Force the node to delete configs online.
+     *
+     * @param configs The specific configuration parameters to delete
+     * @param options Options The control options:(Only take effect in coordinate nodes)
+     *                GroupID:INT32,
+     *                GroupName:String,
+     *                NodeID:INT32,
+     *                HostName:String,
+     *                svcname:String,
+     *                ...
+     * @throws BaseException If error happens.
+     */
+    public void deleteConfig(BSONObject configs, BSONObject options) throws BaseException {
+        BSONObject newObj = new BasicBSONObject();
+        newObj.putAll(options);
+        newObj.put("Configs", configs);
+
+        AdminRequest request = new AdminRequest(AdminCommand.DELETE_CONFIG, newObj);
+        SdbReply response = requestAndResponse(request);
+        throwIfError(response);
+    }
+
+    /**
      * Execute sql in database.
      *
      * @param sql the SQL command.
@@ -1144,6 +1191,7 @@ public class Sequoiadb implements Closeable {
      *                 <dt>Sequoiadb.SDB_SNAP_TRANSACTIONS_CURRENT : Get the snapshot of current transactions
      *                 <dt>Sequoiadb.SDB_SNAP_ACCESSPLANS          : Get the snapshot of cached access plans
      *                 <dt>Sequoiadb.SDB_SNAP_HEALTH               : Get the snapshot of node health detection
+     *                 <dt>Sequoiadb.SDB_SNAP_CONFIGS              : Get the snapshot of node configurations
      *                 </dl>
      * @param matcher  the matching rule, match all the documents if null
      * @param selector the selective rule, return the whole document if null
@@ -1187,6 +1235,7 @@ public class Sequoiadb implements Closeable {
      *                 <dt>Sequoiadb.SDB_SNAP_TRANSACTIONS_CURRENT : Get snapshot of all the transactions
      *                 <dt>SequoiaDB.SDB_SNAP_ACCESSPLANS          : Get the snapshot of cached access plans
      *                 <dt>Sequoiadb.SDB_SNAP_HEALTH               : Get the snapshot of node health detection
+     *                 <dt>Sequoiadb.SDB_SNAP_CONFIGS              : Get the snapshot of node configurations
      *                 </dl>
      * @param matcher  the matching rule, match all the documents if null
      * @param selector the selective rule, return the whole document if null
@@ -1244,6 +1293,8 @@ public class Sequoiadb implements Closeable {
                 return AdminCommand.SNAP_ACCESSPLANS;
             case SDB_SNAP_HEALTH:
                 return AdminCommand.SNAP_HEALTH;
+            case SDB_SNAP_CONFIGS:
+                return AdminCommand.SNAP_CONFIGS;
             default:
                 throw new BaseException(SDBError.SDB_INVALIDARG, String.format("Invalid snapshot type: %d", snapType));
         }

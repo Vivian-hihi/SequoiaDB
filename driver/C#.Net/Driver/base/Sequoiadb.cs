@@ -741,6 +741,7 @@ namespace SequoiaDB
          *      SDBConst.SDB_SNAP_TRANSACTIONS_CURRENT
          *      SDBConst.SDB_SNAP_ACCESSPLANS
          *      SDBConst.SDB_SNAP_HEALTH
+         *      SDBConst.SDB_SNAP_CONFIGS
          *      
          *  \param matcher The matching condition or null
          *  \param selector The selective rule or null
@@ -806,6 +807,10 @@ namespace SequoiaDB
                 case SDBConst.SDB_SNAP_HEALTH:
                     command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.SNAP_CMD + " " +
                            SequoiadbConstants.HEALTH;
+                    break;
+                case SDBConst.SDB_SNAP_CONFIGS:
+                    command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.SNAP_CMD + " " +
+                           SequoiadbConstants.CONFIGS;
                     break;  
                 default:
                     throw new BaseException("SDB_INVALIDARG");
@@ -1856,6 +1861,70 @@ namespace SequoiaDB
         public void Analyze()
         {
             Analyze(new BsonDocument());
+        }
+
+        /** \fn DBCursor UpdateConfig(BsonDocument configs, BsonDocument options)
+         *  \brief Force the node to update configs online
+         *  \param configs the specific configuration parameters to update 
+         *  \param options The control options:(Only take effect in coordinate nodes)
+                GroupID:INT32,
+                GroupName:String,
+                NodeID:INT32,
+                HostName:String,
+                svcname:String,
+                ...
+         *  \return void
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+         */
+        public void UpdateConfig(BsonDocument configs, BsonDocument options)
+        {
+            // build cmd
+            string command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.CMD_NAME_UPDATE_CONFIG;
+
+            // build object
+            BsonDocument newObj = new BsonDocument();
+            newObj.Merge(options);
+            newObj.Add(SequoiadbConstants.FIELD_NAME_CONFIGS, configs);
+
+            SDBMessage rtn = AdminCommand(command, newObj, null, null, null);
+            int flags = rtn.Flags;
+            if (flags != 0)
+            {
+                throw new BaseException(flags);
+            }
+        }
+
+        /** \fn DBCursor DeleteConfig(BsonDocument configs, BsonDocument options)
+         *  \brief Force the node to update configs online
+         *  \param configs the specific configuration parameters to update 
+         *  \param options The control options:(Only take effect in coordinate nodes)
+                GroupID:INT32,
+                GroupName:String,
+                NodeID:INT32,
+                HostName:String,
+                svcname:String,
+                ...
+         *  \return void
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+         */
+        public void DeleteConfig(BsonDocument configs, BsonDocument options)
+        {
+            // build cmd
+            string command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.CMD_NAME_DELETE_CONFIG;
+
+            // build object
+            BsonDocument newObj = new BsonDocument();
+            newObj.Merge(options);
+            newObj.Add(SequoiadbConstants.FIELD_NAME_CONFIGS, configs);
+
+            SDBMessage rtn = AdminCommand(command, newObj, null, null, null);
+            int flags = rtn.Flags;
+            if (flags != 0)
+            {
+                throw new BaseException(flags);
+            }
         }
 
         private SDBMessage CreateCS(string csName, BsonDocument options)
