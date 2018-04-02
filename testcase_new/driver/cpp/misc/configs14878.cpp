@@ -17,14 +17,17 @@ using namespace std ;
 class confTest14878 : public testBase
 {
 protected:
+   sdbReplicaGroup rg ;
    CHAR host[ MAX_NAME_SIZE+1 ] ;
    CHAR svc[ MAX_NAME_SIZE+1 ] ;
+   CHAR dbPath[ MAX_NAME_SIZE+1 ] ;
    
    void SetUp()
    {
       testBase::SetUp() ;
       memset( host, 0, MAX_NAME_SIZE+1 ) ;
       memset( svc, 0, MAX_NAME_SIZE+1 ) ;
+      memset( dbPath, 0, MAX_NAME_SIZE+1 ) ;
    }
    void TearDown()
    {
@@ -35,25 +38,39 @@ protected:
    {
       INT32 rc = SDB_OK ;
       vector<string> groups ;
-      vector<string> nodes ;
       const CHAR* rgName ;
-      string nodename ;
-      string hostname ;
-      string svcname ;
-      INT32 pos ;
+      sdbNode node ;
 
       rc = getGroups( db, groups ) ;
       CHECK_RC( SDB_OK, rc, "fail to get groups" ) ;
       rgName = groups[0].c_str() ;
-      rc = getGroupNodes( db, rgName, nodes ) ;
-      CHECK_RC( SDB_OK, rc, "fail to group nodes" ) ;
-      pos = nodes[0].find_first_of( ":" ) ;
-      hostname = nodes[0].substr( 0, pos ) ;
-      svcname = nodes[0].substr( pos+1 ) ;
-      strcpy( host, hostname.c_str() ) ;
-      strcpy( svc, svcname.c_str() ) ;
-      printf( "node: %s:%s\n", host, svc ) ;
+      rc = db.getReplicaGroup( rgName, rg ) ;
+      CHECK_RC( SDB_OK, rc, "fail to get group" ) ;
+      rc = getLocalHost( host, MAX_NAME_SIZE ) ;
+      CHECK_RC( SDB_OK, rc, "fail to get local hostname" ) ;
+      strcpy( svc, ARGS->rsrvPortBegin() ) ;
+      sprintf( dbPath, "%s%s%s", ARGS->rsrvNodeDir(), "data/", svc ) ;
+      
+      cout << "create node: " << host << ":" << svc << " dbPath: " << dbPath << endl ;
+      rc = rg.createNode( host, svc, dbPath ) ;
+      CHECK_RC( SDB_OK, rc, "fail to create node" ) ;
+      rc = rg.getNode( host, svc, node ) ;
+      CHECK_RC( SDB_OK, rc, "fail to get node" ) ;
+      rc = node.start() ;
+      CHECK_RC( SDB_OK, rc, "fail to start node" ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
 
+   INT32 fini()
+   {
+      INT32 rc = SDB_OK ;
+      
+      cout << "remove node: " << host << ":" << svc << endl ;
+      rc = rg.removeNode( host, svc ) ;
+      CHECK_RC( SDB_OK, rc, "fail to remove node" ) ;      
    done:
       return rc ;
    error:
@@ -114,5 +131,8 @@ TEST_F( confTest14878, upDelConf )
    // check delete
    rc = getNodeWeight( &weight ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
-   ASSERT_EQ( 10, weight ) << "fail to check delete" ; 
+   ASSERT_EQ( 10, weight ) << "fail to check delete" ;
+
+   rc = fini() ;
+   ASSERT_EQ( SDB_OK, rc ) ;
 }
