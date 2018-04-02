@@ -86,9 +86,7 @@
  mysql> create table cl(a int, b int, c text) engine = SequoiaDB comment="{cl_options:{ShardingKey:{a:1,b:-1},ShardingType:\"range\"}}";
  ```
 
-##附录##
-
-数据类型对应关系
+##数据类型对应关系##
 
 	| MySQL           | SequoiaDB         | 备注                                                              |
 	| --------------- | ----------------- | ----------------------------------------------------------------- |
