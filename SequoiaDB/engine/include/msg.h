@@ -469,7 +469,7 @@ struct _MsgOPPacket
    SINT32         realOpCode ;
    CHAR           reserved[20] ;
 } ;
-typedef _MsgOPPacket MsgOPPacket ;
+typedef struct _MsgOPPacket MsgOPPacket ;
 
 // If set, the database will insert the supplied object into the collection if
 // no matching document is found.
