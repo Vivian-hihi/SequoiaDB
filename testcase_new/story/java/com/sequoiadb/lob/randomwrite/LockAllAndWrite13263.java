@@ -63,7 +63,7 @@ public class LockAllAndWrite13263 extends SdbTestBase {
     @Test
     public void testLob() {
         try {
-            int lobSize = 1 * 1024 * 1024;
+            int lobSize = 16 * 1024 * 1024;
             byte[] data = RandomWriteLobUtil.getRandomBytes(lobSize);
             ObjectId oid = RandomWriteLobUtil.createAndWriteLob(cl, data);
             
