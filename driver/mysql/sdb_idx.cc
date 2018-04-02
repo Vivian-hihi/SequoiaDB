@@ -3,6 +3,79 @@
 #endif
 
 #include "sdb_idx.h"
+#include "sdb_cl.h"
+#include "sql_table.h"
+
+int sdb_create_index( const KEY *keyInfo, sdb_cl_auto_ptr cl )
+{
+   const KEY_PART_INFO *keyPart ;
+   const KEY_PART_INFO *keyEnd ;
+   int rc = 0 ;
+   bson::BSONObj keyObj ;
+   BOOLEAN isUnique=FALSE, isEnforced=FALSE ;
+
+   bson::BSONObjBuilder keyObjBuilder ;
+   keyPart = keyInfo->key_part ;
+   keyEnd = keyPart + keyInfo->user_defined_key_parts ;
+   for( ; keyPart != keyEnd ; ++keyPart )
+   {
+      if ( keyPart->field->type() < MYSQL_TYPE_TINY
+         || ( keyPart->field->type() > MYSQL_TYPE_DOUBLE
+            && keyPart->field->type() != MYSQL_TYPE_VARCHAR
+            && keyPart->field->type() != MYSQL_TYPE_LONGLONG
+            && keyPart->field->type() != MYSQL_TYPE_INT24
+            && keyPart->field->type() != MYSQL_TYPE_VAR_STRING
+            && keyPart->field->type() != MYSQL_TYPE_STRING
+            && ( keyPart->field->type() != MYSQL_TYPE_BLOB
+                 || keyPart->field->binary() )))
+      {
+         rc = HA_ERR_UNSUPPORTED ;
+         my_printf_error( rc,
+                          "column '%-.192s' cannot be used in key specification.",
+                          MYF(0), keyPart->field->field_name ) ;
+         goto error ;
+      }
+      // TODO: ASC or DESC
+      keyObjBuilder.append( keyPart->field->field_name,
+                            1 ) ;
+   }
+   keyObj = keyObjBuilder.obj() ;
+
+   if ( !strcmp( keyInfo->name, primary_key_name ))
+   {
+      isUnique = TRUE ;
+      isEnforced = TRUE ;
+   }
+
+   if ( keyInfo->flags & HA_NOSAME )
+   {
+      isUnique = TRUE ;
+   }
+
+   rc = cl->create_index( keyObj, keyInfo->name, isUnique, isEnforced ) ;
+   if ( rc )
+   {
+      goto error ;
+   }
+done:
+   return rc ;
+error :
+   goto done ;
+}
+
+int sdb_drop_index( const KEY *keyInfo, sdb_cl_auto_ptr cl )
+{
+   int rc = 0 ;
+   rc = cl->drop_index( keyInfo->name ) ;
+   if ( rc )
+   {
+      goto error ;
+   }
+done:
+   return rc ;
+error :
+   goto done ;
+}
 
 const char * sdb_get_idx_name( KEY * key_info )
 {

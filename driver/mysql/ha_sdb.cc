@@ -1241,35 +1241,7 @@ int ha_sdb::create_index( Alter_inplace_info *ha_alter_info )
    {
       keyInfo
          = &ha_alter_info->key_info_buffer[ha_alter_info->index_add_buffer[i]] ;
-      bson::BSONObjBuilder keyObjBuilder ;
-      keyPart = keyInfo->key_part ;
-      keyEnd = keyPart + keyInfo->user_defined_key_parts ;
-      for( ; keyPart != keyEnd ; ++keyPart )
-      {
-         if ( keyPart->field->type() < MYSQL_TYPE_TINY
-            || ( keyPart->field->type() > MYSQL_TYPE_DOUBLE
-               && keyPart->field->type() != MYSQL_TYPE_VARCHAR
-               && keyPart->field->type() != MYSQL_TYPE_LONGLONG
-               && keyPart->field->type() != MYSQL_TYPE_INT24
-               && keyPart->field->type() != MYSQL_TYPE_VAR_STRING
-               && keyPart->field->type() != MYSQL_TYPE_STRING
-               && ( keyPart->field->type() != MYSQL_TYPE_BLOB
-                    || keyPart->field->binary() )))
-         {
-            rc = HA_ERR_UNSUPPORTED ;
-            my_printf_error( rc,
-                             "column '%-.192s' cannot be used in key specification.",
-                             MYF(0), keyPart->field->field_name ) ;
-            goto error ;
-         }
-         // TODO: ASC or DESC
-         keyObjBuilder.append( keyPart->field->field_name,
-                               1 ) ;
-      }
-      bson::BSONObj keyObj = keyObjBuilder.obj() ;
-
-      //TODO: parse primary-key-index ;
-      rc = cl->create_index( keyObj, keyInfo->name, FALSE, FALSE ) ;
+      rc = sdb_create_index( keyInfo, cl ) ;
       if ( rc )
       {
          goto error ;
@@ -1294,7 +1266,7 @@ int ha_sdb::drop_index( Alter_inplace_info *ha_alter_info )
    {
       KEY *keyInfo = NULL ;
       keyInfo = ha_alter_info->index_drop_buffer[i] ;
-      rc = cl->drop_index( keyInfo->name ) ;
+      rc = sdb_drop_index( keyInfo, cl ) ;
       if ( rc )
       {
          goto error ;
@@ -1342,6 +1314,15 @@ bool ha_sdb::inplace_alter_table( TABLE *altered_table,
          rs = true ;
          goto error ;
       }
+   }
+   if ( ha_alter_info->handler_flags
+      & ~(inplace_online_addidx | inplace_online_dropidx) )
+   {
+      my_printf_error( HA_ERR_UNSUPPORTED,
+                       "Storage engine doesn't support the operation.",
+                       MYF(0) ) ;
+      rs = true ;
+      goto error ;
    }
 done:
    return rs ;
@@ -1533,6 +1514,15 @@ int ha_sdb::create( const char *name, TABLE *form,
    connection = conn_tmp ;
    //fd = ha_thd()->active_vio->mysql_socket.fd ;
    fd = ha_thd()->thread_id() ;
+
+   for( int i=0 ; i<form->s->keys; i++)
+   {
+      rc = sdb_create_index( form->s->key_info+i, cl ) ;
+      if ( 0 != rc )
+      {
+         goto error ;
+      }
+   }
 
 done:
    return rc ;
