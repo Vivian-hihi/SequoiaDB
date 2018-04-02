@@ -670,8 +670,8 @@
             name: 'Read',
             itemStyle: {
                normal: {
-                  color: '#2EC7C9',
-                  lineStyle: { color: '#9ECCB7' }
+                  color: '#D9534F',
+                  lineStyle: { color: '#D9534F' }
                }
             },
             type: 'line',
@@ -694,8 +694,8 @@
             name: 'Update',
             itemStyle: {
                normal: {
-                  color: '#869B74',
-                  lineStyle: { color: '#9ECCB7' }
+                  color: '#225A22',
+                  lineStyle: { color: '#225A22' }
                }
             },
             type: 'line',

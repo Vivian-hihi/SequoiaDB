@@ -253,17 +253,16 @@
                else
                {
                   var diff = [] ;
-                  diff.push( ( $scope.DbInfo['TotalInsert'] - SumInfo['TotalInsert'] ) / 5 ) ;
-                  diff.push( ( $scope.DbInfo['TotalRead']   - SumInfo['TotalRead'] ) / 5 ) ;
-                  diff.push( ( $scope.DbInfo['TotalDelete'] - SumInfo['TotalDelete'] ) / 5 ) ;
-                  diff.push( ( $scope.DbInfo['TotalUpdate'] - SumInfo['TotalUpdate'] ) / 5 ) ;
-                  if( diff[0] < 0 )
-                     diff = 0 ;
+                  diff.push( ( $scope.DbInfo['TotalInsert'] < 0 ? 0 : $scope.DbInfo['TotalInsert'] - SumInfo['TotalInsert'] ) / 5 ) ;
+                  diff.push( ( $scope.DbInfo['TotalRead']   < 0 ? 0 : $scope.DbInfo['TotalRead']   - SumInfo['TotalRead'] )   / 5 ) ;
+                  diff.push( ( $scope.DbInfo['TotalDelete'] < 0 ? 0 : $scope.DbInfo['TotalDelete'] - SumInfo['TotalDelete'] ) / 5 ) ;
+                  diff.push( ( $scope.DbInfo['TotalUpdate'] < 0 ? 0 : $scope.DbInfo['TotalUpdate'] - SumInfo['TotalUpdate'] ) / 5 ) ;
+
                   $scope.charts['Module']['value'] = [ [ 0, diff[0], true, false ], [ 1, diff[1], true, false ], [ 2, diff[2], true, false ], [ 3, diff[3], true, false ] ] ;
                   SumInfo['TotalInsert'] = $scope.DbInfo['TotalInsert'] ;
                   SumInfo['TotalUpdate'] = $scope.DbInfo['TotalUpdate'] ;
                   SumInfo['TotalDelete'] = $scope.DbInfo['TotalDelete'] ;
-                  SumInfo['TotalRead'] = $scope.DbInfo['TotalRead'] ;
+                  SumInfo['TotalRead']   = $scope.DbInfo['TotalRead'] ;
                }
             },
             'failed': function( errorInfo ){
@@ -468,11 +467,6 @@
 
       //跳转至资源
       $scope.GotoResources = function(){
-         if( window.Config['Edition'] != 'Enterprise' )
-         {
-            _IndexPublic.createCommunityModel( $scope ) ;
-            return ;
-         }
          $location.path( '/Monitor/SDB-Resources/Session' ).search( { 'r': new Date().getTime() } ) ;
       } ;
 
@@ -483,11 +477,6 @@
 
       //跳转至主机列表
       $scope.GotoHostList = function(){
-         if( window.Config['Edition'] != 'Enterprise' )
-         {
-            _IndexPublic.createCommunityModel( $scope ) ;
-            return ;
-         }
          $location.path( '/Monitor/SDB-Host/List/Index' ).search( { 'r': new Date().getTime() } ) ;
       } ;
 
@@ -503,11 +492,6 @@
 
       //跳转至节点列表
       $scope.GotoNodeList = function(){
-         if( window.Config['Edition'] != 'Enterprise' )
-         {
-            _IndexPublic.createCommunityModel( $scope ) ;
-            return ;
-         }
          if( moduleMode == 'distribution' )
          {
             $location.path( '/Monitor/SDB-Nodes/Nodes' ).search( { 'r': new Date().getTime() } ) ;
