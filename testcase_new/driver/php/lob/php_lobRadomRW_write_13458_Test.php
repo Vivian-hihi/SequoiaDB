@@ -98,15 +98,15 @@ class LobTest13458 extends PHPUnit_Framework_TestCase
       $len2 = -1;
       $err = $lobObj -> lock( $offset2, $len2 );
       $this -> assertEquals( 0, $err['errno'] );
-      /*
+      
       echo "   Begin to seek lob[ seek2Offset = 1, mode = SDB_LOB_SET ].\n"; 
       $whence = SDB_LOB_SET;
       $err = $lobObj -> seek( $offset1, $whence );
       $this -> assertEquals( 0, $err['errno'] );
-      */
+      
       echo "   Begin to write lob again.\n"; 
       //var_dump(self::$writeStr);
-      $writeLen2 = self::$writeLen - $offset1;
+      $writeLen2 = self::$writeLen;
       $writeStr2 = self::$LobUtils -> getRandomStr( $writeLen2 );
       //var_dump($writeStr2);
       $err = $lobObj -> write( $writeStr2 );
@@ -117,8 +117,9 @@ class LobTest13458 extends PHPUnit_Framework_TestCase
       $this -> assertEquals( 0, $err['errno'] );
       
       echo "   Begin to check the lob.\n";
-      $readStr = subStr( self::$writeStr, 0, $offset1 ).$writeStr2;
-      self::$LobUtils -> checkLobContent( self::$oid, self::$writeLen, $readStr );
+      $readStr = substr(self::$writeStr, 0, $offset1).$writeStr2;
+      //var_dump($readStr);
+      self::$LobUtils -> checkLobContent( self::$oid, $offset + $writeLen2 + 1, $readStr );
    }
    
    public static function tearDownAfterClass()

@@ -58,7 +58,7 @@ class LobTest14796 extends PHPUnit_Framework_TestCase
       $err = self::$db -> getError();
       if( $err['errno'] != 0 ) 
       {
-         echo "Failed to exec selesctCL, error code: ".$err['errno'];
+         echo "Failed to exec selectCL, error code: ".$err['errno'];
          self::$skipTestCase = true;
          return;
       }
@@ -110,7 +110,7 @@ class LobTest14796 extends PHPUnit_Framework_TestCase
       $lobObj = self::$cl -> openLob( self::$oid, SDB_LOB_READ );
       $this -> assertEquals( 0, self::$db -> getError()['errno'] );
       
-      $err = $lobObj -> seek( 1, SDB_LOB_CUR );
+      $err = $lobObj -> seek( $offset, SDB_LOB_CUR );
       $this -> assertEquals( 0, $err['errno'] );
       
       $rData = $lobObj -> read( self::$writeLen );
@@ -118,20 +118,21 @@ class LobTest14796 extends PHPUnit_Framework_TestCase
       
       $err = $lobObj -> close();
       $this -> assertEquals( 0, $err['errno'] );
-      /*
+      
       $actMd5 = md5( $rData );
       $expMd5 = md5( subStr(self::$writeStr, $offset, self::$writeLen ) );
-      $this -> assertEquals( $actMd5, $expMd5 );*/
-      //var_dump("rData = ".$rData);
+      $this -> assertEquals( $actMd5, $expMd5 );
    }
    
    public function test_seekAndReadLobForEnd()
    {
       echo "\n---Begin to read lob[1, SDB_LOB_END].\n"; 
+      $offset = 1;
+      
       $lobObj = self::$cl -> openLob( self::$oid, SDB_LOB_READ );
       $this -> assertEquals( 0, self::$db -> getError()['errno'] );
-      /*
-      $err = $lobObj -> seek( -1, SDB_LOB_END );      
+      
+      $err = $lobObj -> seek( $offset, SDB_LOB_END );
       $this -> assertEquals( 0, $err['errno'] );
       
       $rData = $lobObj -> read( self::$writeLen );
@@ -141,9 +142,11 @@ class LobTest14796 extends PHPUnit_Framework_TestCase
       $this -> assertEquals( 0, $err['errno'] );      
       
       $actMd5 = md5( $rData );
-      $expMd5 = md5( subStr( self::$writeStr, $offset, self::$writeLen ) );
-      $this -> assertEquals( $actMd5, $expMd5 );*/
-      //var_dump("rData = ".$rData);
+      $expMd5 = md5( subStr(self::$writeStr, self::$writeLen - $offset, self::$writeLen ) );
+      //var_dump("wData = \n".self::$writeStr."\n");
+      //var_dump("rData = \n".$rData."\n");
+      //var_dump("eData = \n".subStr(self::$writeStr, self::$writeLen - $offset, self::$writeLen )."\n");
+      $this -> assertEquals( $actMd5, $expMd5 );
    }
    
    public static function tearDownAfterClass()
