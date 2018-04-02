@@ -335,6 +335,9 @@ int ha_sdb::row_to_obj( uchar *buf,  bson::BSONObj & obj )
                                    (*field)->val_real() ) ;
                break ;
             }
+         case MYSQL_TYPE_VARCHAR:
+         case MYSQL_TYPE_STRING:
+         case MYSQL_TYPE_VAR_STRING:
          case MYSQL_TYPE_TINY_BLOB:
          case MYSQL_TYPE_MEDIUM_BLOB:
          case MYSQL_TYPE_LONG_BLOB:
@@ -374,36 +377,6 @@ int ha_sdb::row_to_obj( uchar *buf,  bson::BSONObj & obj )
                                                         val_tmp.ptr(),
                                                         val_tmp.length() ) ;
                }
-               break ;
-            }
-         case MYSQL_TYPE_VARCHAR:
-         case MYSQL_TYPE_STRING:
-         case MYSQL_TYPE_VAR_STRING:
-            {
-               if ( str_field_buf_size < (*field)->data_length() )
-               {
-                  uint32 str_buf_size_new = 0 ;
-                  if ( (*field)->data_length() >= SDB_FIELD_MAX_LEN )
-                  {
-                     my_printf_error( ER_TOO_BIG_FIELDLENGTH,
-                                      ER(ER_TOO_BIG_FIELDLENGTH),
-                                      MYF(0), (*field)->field_name,
-                                      static_cast<ulong>(SDB_FIELD_MAX_LEN-1));
-                     rc = -1 ;
-                     goto error ;
-                  }
-                  str_buf_size_new
-                     = ( (*field)->data_length() / SDB_STR_BUF_STEP_SIZE + 1 )
-                       * SDB_STR_BUF_STEP_SIZE ;
-                  str_field_buf = (char *)realloc( str_field_buf,
-                                                   str_buf_size_new ) ;
-                  str_field_buf_size = str_buf_size_new ;
-               }
-               String val_tmp( str_field_buf, str_field_buf_size, (*field)->charset() ) ;
-               (*field)->val_str( &val_tmp, &val_tmp ) ;
-               obj_builder.appendStrWithNoTerminating( (*field)->field_name,
-                                                        val_tmp.ptr(),
-                                                        val_tmp.length() ) ;
                break ;
             }
          case MYSQL_TYPE_NEWDECIMAL:
