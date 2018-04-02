@@ -199,9 +199,10 @@ function main( db )
       return ;
    }
    
-   // get a data group
-   var groups = getDataGroups( db ) ; 
-   var rgName = groups[0] ;
+   // create a group with 3 nodes and start
+   var rgName = "testGroup14828" ;
+   var nodesNum = 3 ; 
+   createAndStartGroup( db, rgName, nodesNum ) ;
    var nodes = getGroupNodes( db, rgName ) ;
    
    // test update multi run conf in a group
@@ -212,6 +213,9 @@ function main( db )
    
    // test update multi forbid conf in a group 
    updateForbid( db, rgName, nodes ) ;
+   
+   // remove group in the end
+   removeGroup( db, rgName ) ;
 }
 
 main( db ) ;

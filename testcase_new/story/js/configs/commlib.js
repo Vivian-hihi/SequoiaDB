@@ -295,6 +295,53 @@ function removeNode( rg, host, svc )
 }
 
 /************************************************************************
+ * @Description : create group and start
+ *                db: connection handle, can't be standalone
+ *                rgName: group name
+ *                nodesNum: node num, node svc like 26000 26010 ....
+ * @author      : Liang XueWang
+ ************************************************************************/
+function createAndStartGroup( db, rgName, nodesNum )
+{
+   try
+   {
+      var rg = db.createRG( rgName ) ;
+      var host = getLocalHostName() ;
+      for( var i = 0;i < nodesNum;i++ )
+      {
+         var svc = parseInt( RSRVPORTBEGIN ) + 10*i ;
+         var dbPath = RSRVNODEDIR + "data/" + svc ;
+         println( "create node: " + host + ":" + svc + " dbpath: " + dbPath ) ;
+         rg.createNode( host, svc, dbPath ) ;
+      }
+      println( "start group" ) ;
+      rg.start() ;
+   }
+   catch( e )
+   {
+      throw buildException( "createAndStartGroup", e, "create and start group", 0, e ) ;
+   }
+}
+
+/************************************************************************
+ * @Description : remove group
+ *                db: connection handle, can't be standalone
+ *                rgName: group name
+ * @author      : Liang XueWang
+ ************************************************************************/
+function removeGroup( db, rgName )
+{
+   try
+   {
+      db.removeRG( rgName ) ;
+   }
+   catch( e )
+   {
+      throw buildException( "removeGroup", e, "remove group " + rgName, 0, e ) ;
+   }
+}
+
+/************************************************************************
  * @Description : update config
  *                db: connection handle
  *                config: update config object
