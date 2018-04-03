@@ -1,12 +1,8 @@
 package com.sequoiadb.lob.randomwrite;
 
-import java.io.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
-import java.util.logging.Logger;
-
+import com.sequoiadb.base.*;
+import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.exception.SDBError;
 import com.sequoiadb.testcommon.SdbTestBase;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
@@ -14,15 +10,14 @@ import org.bson.types.BasicBSONList;
 import org.bson.types.ObjectId;
 import org.bson.util.JSON;
 import org.testng.Assert;
-
-import com.sequoiadb.base.CollectionSpace;
-import com.sequoiadb.base.DBCollection;
-import com.sequoiadb.base.DBCursor;
-import com.sequoiadb.base.DBLob;
-import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.exception.SDBError;
 import org.testng.annotations.DataProvider;
+
+import java.io.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Random;
+import java.util.logging.Logger;
 
 /**
  * FileName: RandomWriteLobUtil.java
@@ -143,12 +138,45 @@ class RandomWriteLobUtil {
     }
 
     static void assertByteArrayEqual(byte[] actual, byte[] expect, String msg) {
-        if (actual.length < 10240 && expect.length < 10240) {
-            if (!Arrays.equals(actual, expect))
-                Assert.fail("\nexpect: " + Arrays.toString(expect)
-                        + "\nbut actual: " + Arrays.toString(actual) + "\n" + msg + "\n");
-        } else {
-            Assert.assertEquals(actual, expect, msg);
+        if (!Arrays.equals(actual, expect)) {
+            // get caller class name
+            StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+            String classFullName = stackTrace[2].getClassName();
+            String[] classNameArr = classFullName.split("\\.");
+            String callerClassName = classNameArr[classNameArr.length - 1];
+
+            String workDirPath = SdbTestBase.getWorkDir();
+            File workDir = new File(workDirPath);
+            if (!workDir.isDirectory())
+                throw new RuntimeException("the path can not use: " + workDirPath);
+
+            File fileActual = new File(workDirPath + File.separator + callerClassName + "_actual");
+            File fileExpect = new File(workDirPath + File.separator + callerClassName + "_expect");
+            try {
+                if (fileActual.exists()) {
+                    fileActual.delete();
+                    fileActual.createNewFile();
+                }
+                if (fileExpect.exists()) {
+                    fileExpect.delete();
+                    fileExpect.createNewFile();
+                }
+
+                try (FileOutputStream out = new FileOutputStream(fileActual)) {
+                    out.write(actual);
+                    out.flush();
+                }
+                try (FileOutputStream out = new FileOutputStream(fileExpect)) {
+                    out.write(expect);
+                    out.flush();
+                }
+
+                Assert.fail(msg + "; data is written into files in " + workDirPath);
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
