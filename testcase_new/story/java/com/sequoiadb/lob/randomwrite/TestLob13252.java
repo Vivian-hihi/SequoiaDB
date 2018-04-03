@@ -14,6 +14,7 @@ import org.testng.annotations.Test;
 import com.sequoiadb.testcommon.CommLib;
 import java.util.List;
 import java.util.logging.Logger;
+import org.testng.SkipException;
 
 import static com.sequoiadb.lob.randomwrite.RandomWriteLobUtil.*;
 
