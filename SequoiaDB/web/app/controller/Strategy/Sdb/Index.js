@@ -91,11 +91,15 @@
          SdbRest.OmOperation( data, {
             'success': function( info ){
                $scope.Components.Confirm.type = 4 ;
-               $scope.Components.Confirm.context = $scope.autoLanguage( '添加成功！' ) ;
+               $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '添加成功！' ) ) ;
                $scope.Components.Confirm.isShow = true ;
+               $scope.Components.Confirm.noClose = true ;
+               $scope.Components.Confirm.normalOK = true ;
                $scope.Components.Confirm.okText = $scope.autoLanguage( '确定' ) ;
                $scope.Components.Confirm.ok = function(){
+                  $scope.Components.Confirm.normalOK = false ;
                   $scope.Components.Confirm.isShow = false ;
+                  $scope.Components.Confirm.noClose = false ;
                }
                $scope.QueryTasksList() ;
             },
@@ -122,9 +126,13 @@
                $scope.Components.Confirm.type = 4 ;
                $scope.Components.Confirm.context = $scope.autoLanguage( '修改任务状态成功！' ) ;
                $scope.Components.Confirm.isShow = true ;
+               $scope.Components.Confirm.noClose = true ;
+               $scope.Components.Confirm.normalOK = true ;
                $scope.Components.Confirm.okText = $scope.autoLanguage( '确定' ) ;
                $scope.Components.Confirm.ok = function(){
+                  $scope.Components.Confirm.normalOK = false ;
                   $scope.Components.Confirm.isShow = false ;
+                  $scope.Components.Confirm.noClose = false ;
                }
                $scope.QueryTasksList() ;
             },
@@ -150,9 +158,13 @@
                $scope.Components.Confirm.type = 4 ;
                $scope.Components.Confirm.context = $scope.autoLanguage( '删除成功！' ) ;
                $scope.Components.Confirm.isShow = true ;
+               $scope.Components.Confirm.noClose = true ;
+               $scope.Components.Confirm.normalOK = true ;
                $scope.Components.Confirm.okText = $scope.autoLanguage( '确定' ) ;
                $scope.Components.Confirm.ok = function(){
+                  $scope.Components.Confirm.normalOK = false ;
                   $scope.Components.Confirm.isShow = false ;
+                  $scope.Components.Confirm.noClose = false ;
                }
                $scope.QueryTasksList() ;
             },

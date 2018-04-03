@@ -121,9 +121,13 @@
                $scope.Components.Confirm.type = 4 ;
                $scope.Components.Confirm.context = $scope.autoLanguage( '添加策略配置成功！' ) ;
                $scope.Components.Confirm.isShow = true ;
+               $scope.Components.Confirm.noClose = true ;
+               $scope.Components.Confirm.normalOK = true ;
                $scope.Components.Confirm.okText = $scope.autoLanguage( '确定' ) ;
                $scope.Components.Confirm.ok = function(){
+                  $scope.Components.Confirm.normalOK = false ;
                   $scope.Components.Confirm.isShow = false ;
+                  $scope.Components.Confirm.noClose = false ;
                }
                $scope.QueryStrategyList() ;
             },
@@ -169,9 +173,13 @@
                $scope.Components.Confirm.type = 4 ;
                $scope.Components.Confirm.context = $scope.autoLanguage( '立即生效策略配置成功！' ) ;
                $scope.Components.Confirm.isShow = true ;
+               $scope.Components.Confirm.noClose = true ;
+               $scope.Components.Confirm.normalOK = true ;
                $scope.Components.Confirm.okText = $scope.autoLanguage( '确定' ) ;
                $scope.Components.Confirm.ok = function(){
+                  $scope.Components.Confirm.normalOK = false ;
                   $scope.Components.Confirm.isShow = false ;
+                  $scope.Components.Confirm.noClose = false ;
                }
                $scope.QueryStrategyList() ;
             },
@@ -198,9 +206,13 @@
                $scope.Components.Confirm.type = 4 ;
                $scope.Components.Confirm.context = $scope.autoLanguage( '修改策略配置成功！' ) ;
                $scope.Components.Confirm.isShow = true ;
+               $scope.Components.Confirm.noClose = true ;
+               $scope.Components.Confirm.normalOK = true ;
                $scope.Components.Confirm.okText = $scope.autoLanguage( '确定' ) ;
                $scope.Components.Confirm.ok = function(){
+                  $scope.Components.Confirm.normalOK = false ;
                   $scope.Components.Confirm.isShow = false ;
+                  $scope.Components.Confirm.noClose = false ;
                }
                $scope.QueryStrategyList() ;
             },
@@ -227,9 +239,13 @@
                $scope.Components.Confirm.type = 4 ;
                $scope.Components.Confirm.context = $scope.autoLanguage( '修改策略配置成功！' ) ;
                $scope.Components.Confirm.isShow = true ;
+               $scope.Components.Confirm.noClose = true ;
+               $scope.Components.Confirm.normalOK = true ;
                $scope.Components.Confirm.okText = $scope.autoLanguage( '确定' ) ;
                $scope.Components.Confirm.ok = function(){
+                  $scope.Components.Confirm.normalOK = false ;
                   $scope.Components.Confirm.isShow = false ;
+                  $scope.Components.Confirm.noClose = false ;
                }
                $scope.QueryStrategyList() ;
             },
@@ -256,9 +272,13 @@
                $scope.Components.Confirm.type = 4 ;
                $scope.Components.Confirm.context = $scope.autoLanguage( '修改策略配置成功！' ) ;
                $scope.Components.Confirm.isShow = true ;
+               $scope.Components.Confirm.noClose = true ;
+               $scope.Components.Confirm.normalOK = true ;
                $scope.Components.Confirm.okText = $scope.autoLanguage( '确定' ) ;
                $scope.Components.Confirm.ok = function(){
+                  $scope.Components.Confirm.normalOK = false ;
                   $scope.Components.Confirm.isShow = false ;
+                  $scope.Components.Confirm.noClose = false ;
                }
                $scope.QueryStrategyList() ;
             },
@@ -307,9 +327,13 @@
                $scope.Components.Confirm.type = 4 ;
                $scope.Components.Confirm.context = $scope.autoLanguage( '修改策略配置成功！' ) ;
                $scope.Components.Confirm.isShow = true ;
+               $scope.Components.Confirm.noClose = true ;
+               $scope.Components.Confirm.normalOK = true ;
                $scope.Components.Confirm.okText = $scope.autoLanguage( '确定' ) ;
                $scope.Components.Confirm.ok = function(){
+                  $scope.Components.Confirm.normalOK = false ;
                   $scope.Components.Confirm.isShow = false ;
+                  $scope.Components.Confirm.noClose = false ;
                }
                $scope.QueryStrategyList() ;
             },
