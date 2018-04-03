@@ -1257,11 +1257,11 @@ namespace engine
       _pCatCB->incPacketLevel() ;
 
       pos += sizeof( MsgHeader ) ;
-      while( pos < msg->messageLength )
+      while( pos < pMsg->messageLength )
       {
-         pTmpMsg = ( MsgHeader* )( ( CHAR*)msg + pos ) ;
+         pTmpMsg = ( MsgHeader* )( ( CHAR*)pMsg + pos ) ;
 
-         rc = _processMsg( handle, msg ) ;
+         rc = _processMsg( handle, pTmpMsg ) ;
          if ( rc )
          {
             break ;

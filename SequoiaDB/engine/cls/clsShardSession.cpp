@@ -3765,7 +3765,7 @@ namespace engine
       {
          pTmpMsg = ( MsgHeader* )( ( CHAR*)msg + pos ) ;
 
-         rc = _onOPMsg( handle, msg ) ;
+         rc = _onOPMsg( handle, pTmpMsg ) ;
          if ( rc )
          {
             goto error ;
