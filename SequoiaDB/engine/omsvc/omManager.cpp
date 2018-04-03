@@ -2144,10 +2144,6 @@ namespace engine
       {
          _needReply = FALSE ;
       }
-      else if ( _inPacketLevel > 0 )
-      {
-         _needReply = FALSE ;
-      }
       else
       {
          _needReply = TRUE ;
@@ -2220,7 +2216,7 @@ namespace engine
          _addContext( handle, pMsg->TID, contextID );
       }
 
-      if ( _needReply )
+      if ( _needReply && _inPacketLevel > 0 )
       {
          if ( rc && 0 == buffObj.size() )
          {

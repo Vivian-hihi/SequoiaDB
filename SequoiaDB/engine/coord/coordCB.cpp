@@ -623,16 +623,12 @@ retry :
       _replyHeader.header.TID           = pMsg->TID ;
       _replyHeader.header.routeID.value = 0 ;
 
-      if ( _inPacketLevel > 0 )
-      {
-         _needReply = FALSE ;
-      }
-      else if ( MSG_BS_INTERRUPTE      == pMsg->opCode ||
-                MSG_BS_INTERRUPTE_SELF == pMsg->opCode ||
-                MSG_BS_DISCONNECT      == pMsg->opCode ||
-                MSG_COM_REMOTE_DISC    == pMsg->opCode ||
-                MSG_CLS_GINFO_UPDATED  == pMsg->opCode ||
-                MSG_CAT_GRP_CHANGE_NTY == pMsg->opCode )
+      if ( MSG_BS_INTERRUPTE      == pMsg->opCode ||
+           MSG_BS_INTERRUPTE_SELF == pMsg->opCode ||
+           MSG_BS_DISCONNECT      == pMsg->opCode ||
+           MSG_COM_REMOTE_DISC    == pMsg->opCode ||
+           MSG_CLS_GINFO_UPDATED  == pMsg->opCode ||
+           MSG_CAT_GRP_CHANGE_NTY == pMsg->opCode )
       {
          _needReply = FALSE ;
       }
@@ -726,7 +722,7 @@ retry :
          _addContext( handle, pMsg->TID, contextID );
       }
 
-      if ( _needReply )
+      if ( _needReply && _inPacketLevel > 0 )
       {
          if ( rc && 0 == buffObj.size() )
          {
