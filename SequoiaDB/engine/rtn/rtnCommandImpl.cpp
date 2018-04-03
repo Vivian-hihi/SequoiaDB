@@ -1808,6 +1808,12 @@ namespace engine
       SDB_ASSERT ( dmsCB, "dms control block can't be NULL" ) ;
       dmsStorageUnit *su = NULL ;
       dmsStorageUnitID suID = DMS_INVALID_CS ;
+
+      if ( 0 == ossStrcmp( pCollectionSpace, SYS_VIRTUAL_CS ) )
+      {
+         goto done ;
+      }
+
       rc = dmsCB->nameToSUAndLock ( pCollectionSpace, suID, &su ) ;
       if ( SDB_OK != rc )
       {
@@ -1899,6 +1905,12 @@ namespace engine
       dmsStorageUnit *su = NULL ;
       const CHAR *pCollectionShortName = NULL ;
       UINT16 cID ;
+
+      if ( 0 == ossStrcmp( pCollection, SYS_CL_SESSION_INFO ) )
+      {
+         goto done ;
+      }
+
       rc = rtnResolveCollectionNameAndLock ( pCollection, dmsCB, &su,
                                              &pCollectionShortName, suID ) ;
       if ( rc )

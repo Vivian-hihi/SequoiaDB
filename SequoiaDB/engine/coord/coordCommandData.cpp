@@ -297,8 +297,33 @@ namespace engine
       coordCommandFactory *pFactory = coordGetFactory() ;
       coordOperator *pOperator = NULL ;
       rtnContextBuf buffObj ;
+      CHAR *pQuery = NULL ;
 
       contextID = -1 ;
+
+      rc = msgExtractQuery( (CHAR*)pMsg, NULL, NULL, NULL, NULL,
+                            &pQuery, NULL, NULL, NULL ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Extract query message failed, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      try
+      {
+         BSONObj objQuery( pQuery ) ;
+         BSONElement e = objQuery.getField( FIELD_NAME_NAME ) ;
+         if ( 0 == ossStrcmp( e.valuestrsafe(), SYS_VIRTUAL_CS ) )
+         {
+            goto done ;
+         }
+      }
+      catch( std::excpetion &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
 
       rc = pFactory->create( CMD_NAME_LIST_COLLECTIONSPACES, pOperator ) ;
       if ( rc )
@@ -379,8 +404,33 @@ namespace engine
       coordCommandFactory *pFactory = coordGetFactory() ;
       coordOperator *pOperator = NULL ;
       rtnContextBuf buffObj ;
+      CHAR *pQuery = NULL ;
 
       contextID                        = -1 ;
+
+      rc = msgExtractQuery( (CHAR*)pMsg, NULL, NULL, NULL, NULL,
+                            &pQuery, NULL, NULL, NULL ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Extract query message failed, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      try
+      {
+         BSONObj objQuery( pQuery ) ;
+         BSONElement e = objQuery.getField( FIELD_NAME_NAME ) ;
+         if ( 0 == ossStrcmp( e.valuestrsafe(), SYS_CL_SESSION_INFO ) )
+         {
+            goto done ;
+         }
+      }
+      catch( std::excpetion &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
 
       rc = pFactory->create( CMD_NAME_LIST_COLLECTIONS, pOperator ) ;
       if ( rc )

@@ -286,7 +286,7 @@ namespace engine
       {
          timeout = pPropSite->getOperationTimeout() ;
       }
-      _pSession = _pSite->addSession( timeout, NULL ) ;
+      _pSession = _pSite->addSession( timeout, &_handler ) ;
       if ( !_pSession )
       {
          PD_LOG( PDERROR, "Create remote session failed in session[%s]",

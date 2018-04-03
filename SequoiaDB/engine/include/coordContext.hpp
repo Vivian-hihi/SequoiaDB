@@ -42,6 +42,7 @@
 #include "rtnContextMain.hpp"
 #include "rtnContextExplain.hpp"
 #include "coordDef.hpp"
+#include "coordRemoteHandle.hpp"
 
 using namespace bson ;
 
@@ -179,6 +180,7 @@ namespace engine
          /// error info
          ROUTE_RC_MAP               _nokRC ;
 
+         _coordNoSessionInitHandler _handler ;
          _pmdRemoteSessionSite      *_pSite ;
          _pmdRemoteSession          *_pSession ;
    } ;
