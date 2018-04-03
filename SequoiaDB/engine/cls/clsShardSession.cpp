@@ -551,13 +551,7 @@ namespace engine
          loop = FALSE ;
       }
 
-      if ( _inPacketLevel > 0 )
-      {
-         _pendingContextID = contextID ;
-         _pendingBuff = buffObj ;
-         goto done ;
-      }
-      else if ( MSG_BS_INTERRUPTE == msg->opCode )
+      if ( MSG_BS_INTERRUPTE == msg->opCode )
       {
          //not to reply
          goto done ;
@@ -619,17 +613,25 @@ namespace engine
          }
       }
 
-      _replyHeader.header.messageLength += buffObj.size() ;
-      _replyHeader.flags = rc ;
-      _replyHeader.contextID = contextID ;
-      _replyHeader.numReturned = buffObj.recordNum() ;
-      _replyHeader.startFrom = startFrom ;
-
-      rc = _reply ( &_replyHeader, buffObj.data(), buffObj.size() ) ;
-
-      if ( _replyHeader.flags != SDB_OK )
+      if ( _inPacketLevel > 0 )
       {
-         pmdIncErrNum( _replyHeader.flags ) ;
+         _pendingContextID = contextID ;
+         _pendingBuff = buffObj ;
+      }
+      else
+      {
+         _replyHeader.header.messageLength += buffObj.size() ;
+         _replyHeader.flags = rc ;
+         _replyHeader.contextID = contextID ;
+         _replyHeader.numReturned = buffObj.recordNum() ;
+         _replyHeader.startFrom = startFrom ;
+
+         rc = _reply ( &_replyHeader, buffObj.data(), buffObj.size() ) ;
+
+         if ( _replyHeader.flags != SDB_OK )
+         {
+            pmdIncErrNum( _replyHeader.flags ) ;
+         }
       }
  
    done:

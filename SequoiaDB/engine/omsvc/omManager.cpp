@@ -2227,12 +2227,7 @@ namespace engine
          _addContext( handle, pMsg->TID, contextID );
       }
 
-      if ( _inPacketLevel > 0 )
-      {
-         _pendingContextID = contextID ;
-         _pendingBuff = buffObj ;
-      }
-      else if ( _needReply )
+      if ( _needReply )
       {
          if ( rc && 0 == buffObj.size() )
          {
@@ -2241,19 +2236,27 @@ namespace engine
             buffObj = rtnContextBuf( _errorInfo ) ;
          }
 
-         /// send reply
-         _replyHeader.header.messageLength = sizeof( MsgOpReply ) +
-                                             buffObj.size();
-         _replyHeader.flags                = rc ;
-         _replyHeader.contextID            = contextID ;
-         _replyHeader.startFrom            = (INT32)buffObj.getStartFrom() ;
-         _replyHeader.numReturned          = buffObj.recordNum() ;
-
-         rc = _reply( handle, &_replyHeader, buffObj.data(),
-                      buffObj.size() ) ;
-         if ( rc )
+         if ( _inPacketLevel > 0 )
          {
-            PD_LOG ( PDERROR, "failed to send reply, rc: %d", rc ) ;
+            _pendingContextID = contextID ;
+            _pendingBuff = buffObj ;
+         }
+         else
+         {
+            /// send reply
+            _replyHeader.header.messageLength = sizeof( MsgOpReply ) +
+                                                buffObj.size();
+            _replyHeader.flags                = rc ;
+            _replyHeader.contextID            = contextID ;
+            _replyHeader.startFrom            = (INT32)buffObj.getStartFrom() ;
+            _replyHeader.numReturned          = buffObj.recordNum() ;
+
+            rc = _reply( handle, &_replyHeader, buffObj.data(),
+                         buffObj.size() ) ;
+            if ( rc )
+            {
+               PD_LOG ( PDERROR, "failed to send reply, rc: %d", rc ) ;
+            }
          }
       }
 

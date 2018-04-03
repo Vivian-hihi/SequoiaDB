@@ -1243,6 +1243,7 @@ namespace engine
       INT32 pos = 0 ;
       MsgHeader *pTmpMsg = NULL ;
       MsgOpReply reply ;
+      BOOLEAN hasDec = FALSE ;
 
       /// init reply
       reply.contextID               = -1;
@@ -1260,19 +1261,29 @@ namespace engine
       while( pos < pMsg->messageLength )
       {
          pTmpMsg = ( MsgHeader* )( ( CHAR*)pMsg + pos ) ;
+         pos += pTmpMsg->messageLength ;
+
+         /// Is the last
+         if ( pos >= pMsg->messageLength )
+         {
+            _pCatCB->decPacketLevel() ;
+            hasDec = TRUE ;
+         }
 
          rc = _processMsg( handle, pTmpMsg ) ;
          if ( rc )
          {
             break ;
          }
-         pos += pTmpMsg->messageLength ;
       }
 
-      _pCatCB->decPacketLevel() ;
+      if ( !hasDec )
+      {
+         _pCatCB->decPacketLevel() ;
 
-      reply.flags = rc ;
-      _pCatCB->sendReply( handle, &reply, rc ) ;
+         reply.flags = rc ;
+         _pCatCB->sendReply( handle, &reply, rc ) ;
+      }
 
       return rc ;
    }
