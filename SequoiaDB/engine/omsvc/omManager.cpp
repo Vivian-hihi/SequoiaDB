@@ -2027,9 +2027,9 @@ namespace engine
       pos += sizeof( MsgHeader ) ;
       while( pos < msg->messageLength )
       {
-         pTmpMsg = ( MsgHeader* )( ( CHAR*)msg + pos ) ;
+         pTmpMsg = ( MsgHeader* )( ( CHAR*)header + pos ) ;
 
-         rc = _processMsg( handle, msg ) ;
+         rc = _processMsg( handle, pTmpMsg ) ;
          if ( rc )
          {
             goto error ;
