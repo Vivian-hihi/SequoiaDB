@@ -37,6 +37,10 @@
 #include "pmdEDU.hpp"
 #include "pmd.hpp"
 #include "msgMessageFormat.hpp"
+#include "schedDef.hpp"
+#include "coordCB.hpp"
+#include "coordResource.hpp"
+#include "msgMessage.hpp"
 #include "../bson/bson.h"
 
 using namespace bson ;
@@ -72,6 +76,7 @@ namespace engine
       /// do nothing
    }
 
+   /*
    INT32 _coordRemoteHandlerBase::onSendConnect( _pmdSubSession *pSub,
                                                  const MsgHeader *pReq,
                                                  BOOLEAN isFirst )
@@ -102,6 +107,99 @@ namespace engine
       if ( pInitSession )
       {
          pSite->removeSession( pInitSession ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+   */
+
+   INT32 _coordRemoteHandlerBase::onSendConnect( _pmdSubSession *pSub,
+                                                 const MsgHeader *pReq,
+                                                 BOOLEAN isFirst )
+   {
+      return _buildPacketWithSessionInit( pSub->parent(), pSub ) ;
+   }
+
+   INT32 _coordRemoteHandlerBase::_buildPacketWithSessionInit( _pmdRemoteSession *pSession,
+                                                               _pmdSubSession *pSub )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj objInfo ;
+      CHAR *pBuff = NULL ;
+      MsgComSessionInitReq *pInitReq = NULL ;
+      UINT32 msgLength = sizeof( MsgComSessionInitReq ) ;
+      pmdEDUCB *cb = pSession->getEDUCB() ;
+
+      const CHAR *pRemoteIP = "" ;
+      UINT16 remotePort = 0 ;
+
+      if ( cb->getSession() )
+      {
+         IClient *pClient = cb->getSession()->getClient() ;
+         if ( pClient )
+         {
+            pRemoteIP = pClient->getFromIPAddr() ;
+            remotePort = pClient->getFromPort() ;
+         }
+      }
+
+      /// construct info
+      try
+      {
+         objInfo = BSON( SDB_AUTH_USER << cb->getUserName() <<
+                         SDB_AUTH_PASSWD << cb->getPassword() <<
+                         FIELD_NAME_HOST << pmdGetKRCB()->getHostName() <<
+                         PMD_OPTION_SVCNAME << pmdGetOptionCB()->getServiceAddr() <<
+                         FIELD_NAME_REMOTE_IP << pRemoteIP <<
+                         FIELD_NAME_REMOTE_PORT << (INT32)remotePort ) ;
+         msgLength += objInfo.objsize() ;
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      /// allocate memory
+      rc = cb->allocBuff( msgLength, &pBuff, NULL ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Alloc memory failed, size: %u, rc: %d",
+                 msgLength, rc ) ;
+         goto error ;
+      }
+      pInitReq = (MsgComSessionInitReq*)pBuff ;
+
+      /// init message
+      pInitReq->header.messageLength = msgLength ;
+      pInitReq->header.opCode = MSG_COM_SESSION_INIT_REQ ;
+      pInitReq->header.requestID = 0 ;
+      pInitReq->header.routeID.value = 0 ;
+      pInitReq->header.TID = cb->getTID() ;
+      pInitReq->dstRouteID.value = pSub->getNodeIDUInt() ;
+      pInitReq->srcRouteID.value = pmdGetNodeID().value ;
+      pInitReq->localIP = _netFrame::getLocalAddress() ;
+      pInitReq->peerIP = 0 ;
+      pInitReq->localPort = pmdGetLocalPort() ;
+      pInitReq->peerPort = 0 ;
+      pInitReq->localTID = cb->getTID() ;
+      pInitReq->localSessionID = cb->getID() ;
+      ossMemset( pInitReq->reserved, 0, sizeof( pInitReq->reserved ) ) ;
+      ossMemcpy( pInitReq->data, objInfo.objdata(), objInfo.objsize() ) ;
+
+      rc = _buildPacket( pSession, pSub, ( MsgHeader*)pBuff ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+   done:
+      if ( pBuff )
+      {
+         cb->releaseBuff( pBuff ) ;
+         pBuff = NULL ;
       }
       return rc ;
    error:
@@ -222,6 +320,200 @@ namespace engine
       {
          cb->releaseBuff( pBuff ) ;
          pBuff = NULL ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _coordRemoteHandlerBase::onSend( _pmdRemoteSession *pSession,
+                                          _pmdSubSession *pSub )
+   {
+      INT32 rc = SDB_OK ;
+      pmdEDUCB *cb = pSession->getEDUCB() ;
+      pmdRemoteSessionSite* pSite = NULL ;
+      coordResource *pResource = pmdGetKRCB()->getCoordCB()->getResource() ;
+      INT32 version = SCHED_INVALID_VERSION ;
+      INT32 nodeSiteVer = SCHED_INVALID_VERSION ;
+      schedItem *pItem = NULL ;
+      schedInfo *pInfo = NULL ;
+      MsgRouteID nodeID = pSub->getNodeID() ;
+      pSite = ( pmdRemoteSessionSite* )cb->getRemoteSite() ;
+
+      /// is not data node, ignored
+      if ( nodeID.columns.groupID < DATA_GROUP_ID_BEGIN ||
+           nodeID.columns.groupID > DATA_GROUP_ID_END )
+      {
+         goto done ;
+      }
+
+      pItem = (schedItem*)cb->getSession()->getSchedItemPtr() ;
+      if ( !pItem )
+      {
+         goto done ;
+      }
+      pInfo = &(pItem->_info) ;
+      version = pInfo->getVersion() ;
+      nodeSiteVer = pSite->getNodeSchedVer( nodeID.value ) ;
+
+      if ( SCHED_UNKNWON_VERSION == version ||
+           ( pResource->getOmGroupInfo()->nodeCount() > 0 &&
+             version != nodeSiteVer ) )
+      {
+         /// update task info
+         coordOmStrategyAgent *pAgent = pResource->getOmStrategyAgent() ;
+         omTaskStrategyInfoPtr ptr ;
+
+         rc = pAgent->getTaskStrategy( pInfo->getTaskName(),
+                                       pInfo->getUserName(),
+                                       pInfo->getIP(),
+                                       ptr,
+                                       FALSE ) ;
+         if ( SDB_OK == rc )
+         {
+            pInfo->fromBSON( ptr->toBSON(), FALSE ) ;
+         }
+      }
+
+      if ( pInfo->getVersion() != nodeSiteVer )
+      {
+         /// rebuild message
+         rc = _buildPacketWithUpdateSched( pSession, pSub, pInfo->toBSON() ) ;
+         if ( SDB_OK == rc )
+         {
+            pSite->setNodeSchedVer( nodeID.value, pInfo->getVersion() ) ;
+         }
+      }
+
+   done:
+      /// ignore error
+      return SDB_OK ;
+   }
+
+   INT32 _coordRemoteHandlerBase::_buildPacket( _pmdRemoteSession *pSession,
+                                                _pmdSubSession *pSub,
+                                                MsgHeader *pHeader )
+   {
+      INT32 rc = SDB_OK ;
+      UINT32 totalLen = 0 ;
+      UINT32 pos = 0 ;
+      MsgHeader *pOldHeader = pSub->getReqMsg() ;
+      pmdEDUCB *cb = pSession->getEDUCB() ;
+      CHAR *pBuff = NULL ;
+
+      if ( pSub->getIODatas()->size() > 0 )
+      {
+         pOldHeader->messageLength = sizeof( MsgHeader ) +
+                                     pSub->getIODataLen() ;
+      }
+
+      totalLen = pHeader->messageLength + pOldHeader->messageLength ;
+
+      if ( MSG_PACKET != pOldHeader->opCode )
+      {
+         totalLen += sizeof( MsgHeader ) ;
+      }
+
+      rc = cb->allocBuff( totalLen, &pBuff, NULL ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Allocate memory[%u] failed, rc: %d",
+                 totalLen, rc ) ;
+         goto error ;
+      }
+      else
+      {
+         MsgHeader *pMsgPacket = NULL ;
+         /// packet
+         pMsgPacket = ( MsgHeader* )( pBuff + pos ) ;
+         pos += sizeof( MsgHeader ) ;
+
+         /// new add
+         ossMemcpy( pBuff + pos, (void*)pHeader, pHeader->messageLength ) ;
+         MsgHeader *pNewAdd = ( MsgHeader* )( pBuff + pos ) ;
+         pNewAdd->requestID = pOldHeader->requestID ;
+         pNewAdd->routeID.value = pOldHeader->routeID.value ;
+         pNewAdd->TID = pOldHeader->TID ;
+         pos += pHeader->messageLength ;
+
+         if ( MSG_PACKET == pOldHeader->opCode )
+         {
+            ossMemcpy( pBuff + pos, (void*)pOldHeader, sizeof( MsgHeader ) ) ;
+            pos += sizeof( MsgHeader ) ;
+         }
+         else
+         {
+            pMsgPacket->opCode = MSG_PACKET ;
+            pMsgPacket->requestID = pOldHeader->requestID ;
+            pMsgPacket->routeID.value = pOldHeader->routeID.value ;
+            pMsgPacket->TID = pOldHeader->TID ;
+         }
+         pMsgPacket->messageLength = totalLen ;
+
+         /// old
+         if ( pSub->getIODatas()->size() > 0 )
+         {
+            ossMemcpy( pBuff + pos, (void*)pOldHeader, sizeof( MsgHeader ) ) ;
+            pos += sizeof( MsgHeader ) ;
+
+            netIOVec *pIOVec = pSub->getIODatas() ;
+            for ( UINT32 i = 0 ; i < pIOVec->size() ; ++i )
+            {
+               netIOV &ioItem = (*pIOVec)[i] ;
+               ossMemcpy( pBuff + pos, ioItem.iovBase, ioItem.iovLen ) ;
+               pos += ioItem.iovLen ;
+            }
+         }
+         else
+         {
+            ossMemcpy( pBuff + pos, (void*)pOldHeader,
+                       pOldHeader->messageLength ) ;
+            pos += pOldHeader->messageLength ;
+         }
+
+         /// set sub session
+         pSub->clearIODatas() ;
+         pSub->setReqMsg( (MsgHeader*)pBuff, PMD_EDU_MEM_SELF ) ;
+         pBuff = NULL ;
+      }
+
+   done:
+      if ( pBuff )
+      {
+         cb->releaseBuff( pBuff ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _coordRemoteHandlerBase::_buildPacketWithUpdateSched( _pmdRemoteSession *pSession,
+                                                               _pmdSubSession *pSub,
+                                                               const BSONObj &objSched )
+   {
+      INT32 rc = SDB_OK ;
+      pmdEDUCB *cb = pSession->getEDUCB() ;
+      CHAR *pBuff = NULL ;
+      INT32 buffSize = 0 ;
+
+      rc = msgBuildUpdateMsg( &pBuff, &buffSize, SYS_CL_SESSION_INFO,
+                              0, 0, NULL,  &objSched, NULL, cb ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Build update message failed, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      rc = _buildPacket( pSession, pSub, ( MsgHeader* )pBuff ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+   done:
+      if ( pBuff )
+      {
+         msgReleaseBuffer( pBuff, cb ) ;
       }
       return rc ;
    error:

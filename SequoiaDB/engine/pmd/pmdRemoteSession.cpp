@@ -33,6 +33,7 @@
 #include "pmdRemoteSession.hpp"
 #include "pmdEDU.hpp"
 #include "msgMessage.hpp"
+#include "schedDef.hpp"
 
 #include "../bson/bson.h"
 
@@ -851,6 +852,16 @@ namespace engine
       *pSub->getAddPos() = _pSite->addAssitNode(
          pSub->getNodeID().columns.nodeID ) ;
 
+      if ( _pHandle )
+      {
+         rc = _pHandle->onSend( this, pSub ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "OnSend failed, rc: %d", rc ) ;
+            goto error ;
+         }
+      }
+
       // first connect
       if ( NET_INVALID_HANDLE == pSub->getHandle() && _pHandle )
       {
@@ -1213,11 +1224,13 @@ namespace engine
    void _pmdRemoteSessionSite::addNodeNet( UINT64 nodeID, NET_HANDLE handle )
    {
       _mapNode2Net[ nodeID ] = handle ;
+      _mapNode2Ver.erase( nodeID ) ;
    }
 
    void _pmdRemoteSessionSite::removeNodeNet( UINT64 nodeID )
    {
       _mapNode2Net.erase( nodeID ) ;
+      _mapNode2Ver.erase( nodeID ) ;
    }
 
    NET_HANDLE _pmdRemoteSessionSite::getNodeNet( UINT64 nodeID )
@@ -1401,6 +1414,24 @@ namespace engine
          ++count ;
       }
       return count ;
+   }
+
+   INT32 _pmdRemoteSessionSite::getNodeSchedVer( UINT64 nodeID ) const
+   {
+      INT32 ver = SCHED_INVALID_VERSION ;
+      MAP_NODE_2_SHCEDVER::const_iterator it ;
+
+      it = _mapNode2Ver.find( nodeID ) ;
+      if ( it != _mapNode2Ver.end() )
+      {
+         ver = it->second ;
+      }
+      return ver ;
+   }
+
+   void _pmdRemoteSessionSite::setNodeSchedVer( UINT64 nodeID, INT32 ver )
+   {
+      _mapNode2Ver[ nodeID ] = ver ;
    }
 
    INT32 _pmdRemoteSessionSite::processEvent( pmdEDUEvent &event,

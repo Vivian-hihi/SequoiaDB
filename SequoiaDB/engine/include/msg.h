@@ -53,6 +53,7 @@ enum MSG_TYPE
    MSG_HEARTBEAT_RES                   = MAKE_REPLY_TYPE(MSG_HEARTBEAT),
 
    MSG_PACKET                          = 2,
+   MSG_PACKET_RES                      = MAKE_REPLY_TYPE(MSG_PACKET),
 
    //shard msg
    MSG_BS_MSG_REQ                      = 1000,
@@ -461,15 +462,6 @@ struct _MsgInternalReplyHeader
    SINT32     res ;
 } ;
 typedef struct _MsgInternalReplyHeader MsgInternalReplyHeader ;
-
-struct _MsgOPPacket
-{
-   MsgHeader      header ;
-   SINT32         count ;
-   SINT32         realOpCode ;
-   CHAR           reserved[20] ;
-} ;
-typedef struct _MsgOPPacket MsgOPPacket ;
 
 // If set, the database will insert the supplied object into the collection if
 // no matching document is found.

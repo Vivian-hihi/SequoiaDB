@@ -301,9 +301,7 @@ namespace engine
          virtual INT32              getServiceType() const = 0 ;
          virtual IClient*           getClient() = 0 ;
 
-         virtual void               setSchedInfoVersion( INT32 version ) = 0 ;
-         virtual INT32              getSchedInfoVersion() const = 0 ;
-         virtual void*              getSchedInfoPtr() = 0 ;
+         virtual void*              getSchedItemPtr() = 0 ;
 
       protected:
          virtual void               _onAttach () {}

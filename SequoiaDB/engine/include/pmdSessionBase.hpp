@@ -39,7 +39,6 @@
 #include "sdbInterface.hpp"
 #include "pmdProcessorBase.hpp"
 #include "pmdExternClient.hpp"
-#include "schedDef.hpp"
 #include "schedTaskMgr.hpp"
 
 #include <string>
@@ -64,9 +63,7 @@ namespace engine
          virtual UINT32    identifyTID() ;
          virtual UINT64    identifyEDUID() ;
 
-         virtual void      setSchedInfoVersion( INT32 version ) ;
-         virtual INT32     getSchedInfoVersion() const ;
-         virtual void*     getSchedInfoPtr() ;
+         virtual void*     getSchedItemPtr() ;
 
          virtual void            clear() ;
 
@@ -134,7 +131,7 @@ namespace engine
          _dpsLogWrapper                   *_pDPSCB ;
          BOOLEAN                          _awaitingHandshake ;
 
-         schedInfo                        _info ;
+         schedItem                        _infoItem ;
 
       protected:
          CHAR                             *_pBuff ;
@@ -166,7 +163,6 @@ namespace engine
 
       protected:
          pmdSession                 *_pSession ;
-         monSvcTaskInfoPtr          _monTaskInfoPtr ;
 
    } ;
    typedef _pmdProcessor pmdProcessor ;

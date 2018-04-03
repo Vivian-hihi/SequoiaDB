@@ -39,6 +39,10 @@
 #include "pmdRemoteSession.hpp"
 #include "coordDef.hpp"
 
+#include "../bson/bson.h"
+
+using namespace bson ;
+
 namespace engine
 {
 
@@ -72,11 +76,26 @@ namespace engine
                                        const MsgHeader *pReq,
                                        BOOLEAN isFirst ) ;
 
+         virtual INT32  onSend( _pmdRemoteSession *pSession,
+                                _pmdSubSession *pSub ) ;
+
       protected:
 
          INT32          _sessionInit( _pmdRemoteSession *pSession,
                                       const MsgRouteID &nodeID,
                                       _pmdEDUCB *cb ) ;
+
+         INT32          _buildPacket( _pmdRemoteSession *pSession,
+                                      _pmdSubSession *pSub,
+                                      MsgHeader *pHeader ) ;
+
+         INT32          _buildPacketWithUpdateSched( _pmdRemoteSession *pSession,
+                                                     _pmdSubSession *pSub,
+                                                     const BSONObj &objSched ) ;
+
+         INT32          _buildPacketWithSessionInit( _pmdRemoteSession *pSession,
+                                                     _pmdSubSession *pSub ) ;
+
    } ;
    typedef _coordRemoteHandlerBase coordRemoteHandlerBase ;
 

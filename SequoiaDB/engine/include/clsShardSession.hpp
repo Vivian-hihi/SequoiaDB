@@ -34,7 +34,6 @@
 #define CLS_SHARD_SESSION_HPP_
 
 #include "pmdAsyncSession.hpp"
-#include "schedTaskMgr.hpp"
 #include "rtn.hpp"
 
 using namespace bson ;
@@ -178,6 +177,8 @@ namespace engine
 
          INT32 _onRemoveLobReq( MsgHeader *msg ) ;
 
+         INT32 _onPacketMsg( NET_HANDLE handle, MsgHeader *msg ) ;
+
       private:
          INT32 _getShardingKey( const CHAR* clName,
                                 BSONObj &shardingKey ) ;
@@ -312,7 +313,7 @@ namespace engine
          string                 _username ;
          string                 _passwd ;
 
-         monSvcTaskInfoPtr      _monTaskInfoPtr ;
+         UINT32                 _inPacketLevel ;
    } ;
 
 }

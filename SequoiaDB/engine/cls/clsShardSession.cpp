@@ -110,7 +110,9 @@ namespace engine
       _logout    = TRUE ;
       _delayLogin= FALSE ;
 
-      _info.setNice( SCHED_NICE_MIN ) ;
+      _inPacketLevel = 0 ;
+
+      _info._info.setNice( SCHED_NICE_MIN ) ;
 
       PD_TRACE_EXIT ( SDB__CLSSDSESS__CLSSHDSESS ) ;
    }
@@ -144,9 +146,6 @@ namespace engine
       _passwd = "" ;
       _logout = TRUE ;
       _delayLogin = FALSE ;
-
-      /// clear task info
-      _monTaskInfoPtr = monSvcTaskInfoPtr() ;
 
       _pmdAsyncSession::clear() ;
    }
@@ -372,6 +371,9 @@ namespace engine
 
          switch ( msg->opCode )
          {
+            case MSG_PACKET :
+               rc = _onPacketMsg( handle, msg ) ;
+               break ;
             case MSG_BS_UPDATE_REQ :
                isNeedRollback = TRUE ;
                rc = _onUpdateReqMsg ( handle, msg, contextID ) ;
@@ -548,7 +550,11 @@ namespace engine
          loop = FALSE ;
       }
 
-      if ( MSG_BS_INTERRUPTE == msg->opCode )
+      if ( _inPacketLevel > 0 )
+      {
+         goto done ;
+      }
+      else if ( MSG_BS_INTERRUPTE == msg->opCode )
       {
          //not to reply
          goto done ;
@@ -622,6 +628,7 @@ namespace engine
       {
          pmdIncErrNum( _replyHeader.flags ) ;
       }
+ 
    done:
       eduCB()->writingDB( FALSE ) ;
       MON_END_OP( _pEDUCB->getMonAppCB() ) ;
@@ -866,8 +873,6 @@ namespace engine
       INT16 clientW = pUpdate->w ;
       INT16 replSize = 0 ;
 
-      static UINT32 s_vcsNameLen = ossStrlen( SYS_VIRTUAL_CS"." ) ;
-
       rc = msgExtractUpdate( (CHAR*)msg, &flags, &pCollectionName,
                              &pMatcherBuffer, &pUpdatorBuffer, &pHintBuffer );
       if ( SDB_OK != rc )
@@ -880,7 +885,7 @@ namespace engine
 
       /// When update virtual cs
       if ( 0 == ossStrncmp( pCollectionName, SYS_VIRTUAL_CS".",
-                            s_vcsNameLen ) )
+                            SYS_VIRTUAL_CS_LEN ) )
       {
          try
          {
@@ -3747,6 +3752,34 @@ namespace engine
       goto done ;
    }
 
+   INT32 _clsShdSession::_onPacketMsg( NET_HANDLE handle, MsgHeader *msg )
+   {
+      INT32 rc = SDB_OK ;
+      UINT32 pos = 0 ;
+      MsgHeader *pTmpMsg = NULL ;
+
+      ++_inPacketLevel ;
+
+      pos += sizeof( MsgHeader ) ;
+      while( pos < msg->messageLength )
+      {
+         pTmpMsg = ( MsgHeader* )( ( CHAR*)msg + pos ) ;
+
+         rc = _onOPMsg( handle, msg ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+         pos += pTmpMsg->messageLength ;
+      }
+
+   done:
+      --_inPacketLevel ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _clsShdSession::_testMainCollection( const CHAR *fullName )
    {
       INT32 rc = SDB_OK ;
@@ -4323,13 +4356,13 @@ namespace engine
       {
          schedTaskMgr *pSvcTaskMgr = pmdGetKRCB()->getSvcTaskMgr() ;
 
-         _info.fromBSON( updator, FALSE ) ;
+         _info._info.fromBSON( updator, FALSE ) ;
 
          /// update task info
-         _monTaskInfoPtr = pSvcTaskMgr->getTaskInfoPtr( _info.getTaskID(),
-                                                        _info.getTaskName() ) ;
+         _info._ptr = pSvcTaskMgr->getTaskInfoPtr( _info._info.getTaskID(),
+                                                   _info._info.getTaskName() ) ;
          /// update monApp's info
-         eduCB()->getMonAppCB()->setSvcTaskInfo( _monTaskInfoPtr.get() ) ;
+         eduCB()->getMonAppCB()->setSvcTaskInfo( _info._ptr.get() ) ;
       }
       else
       {

@@ -34,6 +34,7 @@
 
 #include "monCB.hpp"
 #include "ossLatch.hpp"
+#include "schedDef.hpp"
 #include <boost/shared_ptr.hpp>
 #include <map>
 #include <set>
@@ -46,6 +47,22 @@ namespace engine
    typedef boost::shared_ptr<monSvcTaskInfo>    monSvcTaskInfoPtr ;
    typedef map< UINT64, monSvcTaskInfoPtr >     MAP_SVCTASKINFO_PTR ;
    typedef MAP_SVCTASKINFO_PTR::iterator        MAP_SVCTASKINFO_PTR_IT ;
+
+   /*
+      _schedItem define
+   */
+   struct _schedItem
+   {
+      schedInfo            _info ;
+      monSvcTaskInfoPtr    _ptr ;
+
+      void reset()
+      {
+         _info.reset() ;
+         _ptr = monSvcTaskInfoPtr() ;
+      }
+   } ;
+   typedef _schedItem schedItem ;
 
    /*
       _schedTaskMgr define

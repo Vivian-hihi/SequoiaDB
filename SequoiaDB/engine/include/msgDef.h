@@ -602,6 +602,7 @@
 #define CMD_NAME_LIST_SVCTASKS_INTR          "LIST_SVCTASKS"
 
 #define SYS_VIRTUAL_CS                       CMD_ADMIN_PREFIX"SYS_VCS"
+#define SYS_VIRTUAL_CS_LEN                   sizeof( SYS_VIRTUAL_CS )
 #define SYS_CL_SESSION_INFO                  SYS_VIRTUAL_CS".SYS_SESSION_INFO"
 
 #define CMD_VALUE_NAME_CREATE                "create image"

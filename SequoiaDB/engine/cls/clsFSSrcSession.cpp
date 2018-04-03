@@ -107,7 +107,7 @@ namespace engine
       _disconnectMsg.TID = CLS_TID( sessionID ) ;
       _disconnectMsg.requestID = 0 ;
 
-      _info.setNice( SCHED_NICE_MIN ) ;
+      _info._info.setNice( SCHED_NICE_MIN ) ;
    }
 
    _clsDataSrcBaseSession::~_clsDataSrcBaseSession ()

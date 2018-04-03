@@ -44,7 +44,7 @@
 #include "ossEvent.hpp"
 #include "sdbInterface.hpp"
 #include "pmdInnerClient.hpp"
-#include "schedDef.hpp"
+#include "schedTaskMgr.hpp"
 
 #include <map>
 #include <deque>
@@ -160,9 +160,7 @@ namespace engine
          virtual INT32           getServiceType() const ;
          virtual IClient*        getClient() { return &_client ; }
 
-         virtual void               setSchedInfoVersion( INT32 version ) ;
-         virtual INT32              getSchedInfoVersion() const ;
-         virtual void*              getSchedInfoPtr() ;
+         virtual void*           getSchedItemPtr() ;
 
          virtual EDU_TYPES       eduType () const = 0 ;
          virtual const CHAR*     className() const = 0 ;
@@ -259,7 +257,7 @@ namespace engine
          _pmdAsycSessionMgr   *_pSessionMgr ;
          pmdInnerClient       _client ;
 
-         schedInfo            _info ;
+         schedItem            _info ;
 
       private:
          ossEvent             _evtIn ;

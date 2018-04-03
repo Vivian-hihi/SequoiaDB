@@ -68,6 +68,11 @@ namespace engine
 
       virtual BOOLEAN needRollback() const ;
 
+   protected:
+      INT32 _updateVCS( const CHAR *fullName,
+                        const BSONObj &updator,
+                        _pmdEDUCB *cb ) ;
+
    private:
       virtual INT32 _execute( _pmdEDUCB *eduCB ) ;
 

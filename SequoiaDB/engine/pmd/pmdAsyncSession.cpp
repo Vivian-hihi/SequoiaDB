@@ -120,10 +120,10 @@ namespace engine
 
    const schedInfo* _pmdAsyncSession::getSchedInfo() const
    {
-      return &_info ;
+      return &( _info._info ) ;
    }
 
-   void* _pmdAsyncSession::getSchedInfoPtr()
+   void* _pmdAsyncSession::getSchedItemPtr()
    {
       return (void*)&_info ;
    }
@@ -165,17 +165,6 @@ namespace engine
    {
       return CMD_SPACE_SERVICE_SHARD ;
    }
-
-   void _pmdAsyncSession::setSchedInfoVersion( INT32 version )
-   {
-      _info.setVersion( version ) ;
-   }
-
-   INT32 _pmdAsyncSession::getSchedInfoVersion() const
-   {
-      return _info.getVersion() ;
-   }
-
 
    // This function will be called by another thread to attach a CB into the
    // session thread

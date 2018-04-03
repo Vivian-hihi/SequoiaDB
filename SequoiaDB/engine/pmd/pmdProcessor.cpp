@@ -76,6 +76,7 @@ namespace engine
                                         BOOLEAN &needReply )
    {
       INT32 rc = SDB_OK ;
+      UINT64 bTime = ossGetCurrentMicroseconds() ;
 
       SDB_ASSERT( getSession(), "Must attach session at first" ) ;
 
@@ -183,6 +184,17 @@ namespace engine
       }
 
    done:
+      UINT64 eTime = ossGetCurrentMicroseconds() ;
+      if ( eTime > bTime )
+      {
+         monSvcTaskInfo *pInfo = NULL ;
+         pInfo = eduCB()->getMonAppCB()->getSvcTaskInfo() ;
+         if ( pInfo )
+         {
+            pInfo->monOperationTimeInc( MON_TOTAL_WRITE_TIME,
+                                        eTime - bTime ) ;
+         }
+      }
       return rc ;
    }
 
@@ -199,7 +211,6 @@ namespace engine
       CHAR *pSelectorBuffer = NULL ;
       CHAR *pUpdatorBuffer  = NULL ;
       CHAR *pHintBuffer     = NULL ;
-      static UINT32 s_vcsNameLen = ossStrlen( SYS_VIRTUAL_CS"." ) ;
 
       rc = msgExtractUpdate( (CHAR*)msg, &flags, &pCollectionName,
                              &pSelectorBuffer, &pUpdatorBuffer,
@@ -209,7 +220,7 @@ namespace engine
 
       /// When update virtual cs
       if ( 0 == ossStrncmp( pCollectionName, SYS_VIRTUAL_CS".",
-                            s_vcsNameLen ) )
+                            SYS_VIRTUAL_CS_LEN ) )
       {
          try
          {
@@ -287,19 +298,19 @@ namespace engine
       if ( 0 == ossStrcmp( fullName, SYS_CL_SESSION_INFO ) )
       {
          schedTaskMgr *pSvcTaskMgr = pmdGetKRCB()->getSvcTaskMgr() ;
-         schedInfo *pInfo = ( schedInfo* )getSession()->getSchedInfoPtr() ;
-         BSONObj objSrc = pInfo->toBSON() ;
+         schedItem *pItem = ( schedItem* )getSession()->getSchedItemPtr() ;
+         BSONObj objSrc = pItem->_info.toBSON() ;
          BSONObj objDest ;
 
          objDest = rtnUpdator2Obj( objSrc, updator ) ;
 
-         pInfo->fromBSON( objDest, TRUE ) ;
+         pItem->_info.fromBSON( objDest, TRUE ) ;
 
          /// update task info
-         _monTaskInfoPtr = pSvcTaskMgr->getTaskInfoPtr( pInfo->getTaskID(),
-                                                        pInfo->getTaskName() ) ;
+         pItem->_ptr = pSvcTaskMgr->getTaskInfoPtr( pItem->_info.getTaskID(),
+                                                    pItem->_info.getTaskName() ) ;
          /// update monApp's info
-         eduCB()->getMonAppCB()->setSvcTaskInfo( _monTaskInfoPtr.get() ) ;
+         eduCB()->getMonAppCB()->setSvcTaskInfo( pItem->_ptr.get() ) ;
       }
       else
       {
@@ -1592,6 +1603,8 @@ namespace engine
                                          BOOLEAN &needReply )
    {
       INT32 rc = SDB_OK ;
+      UINT64 bTime = ossGetCurrentMicroseconds() ;
+      UINT64 eTime = 0 ;
 
       rc = _processCoordMsg( msg, contextID, contextBuff ) ;
       if ( SDB_COORD_UNKNOWN_OP_REQ == rc )
@@ -1613,6 +1626,17 @@ namespace engine
          }
       }
 
+      eTime = ossGetCurrentMicroseconds() ;
+      if ( eTime > bTime )
+      {
+         monSvcTaskInfo *pInfo = NULL ;
+         pInfo = eduCB()->getMonAppCB()->getSvcTaskInfo() ;
+         if ( pInfo )
+         {
+            pInfo->monOperationTimeInc( MON_TOTAL_WRITE_TIME,
+                                        eTime - bTime ) ;
+         }
+      }
       return rc ;
    }
 

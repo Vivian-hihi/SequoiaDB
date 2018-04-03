@@ -87,6 +87,12 @@ namespace engine
                                        const MsgHeader *pReq,
                                        BOOLEAN isFirst ) = 0 ;
 
+         virtual INT32  onSend( _pmdRemoteSession *pSession,
+                                _pmdSubSession *pSub )
+         {
+            return SDB_OK ;
+         }
+
          virtual INT32  onExpiredReply ( _pmdRemoteSessionSite *pSite,
                                          const MsgHeader *pReply )
          {
@@ -398,6 +404,9 @@ namespace engine
       typedef map< UINT64, pmdRemoteSession >         MAP_REMOTE_SESSION ;
       typedef MAP_REMOTE_SESSION::iterator            MAP_REMOTE_SESSION_IT ;
 
+      typedef map< UINT64, INT32 >                    MAP_NODE_2_SHCEDVER ;
+      typedef MAP_NODE_2_SHCEDVER::iterator           MAP_NODE_2_SHCEDVER_IT ;
+
       typedef set< UINT16 >                           SET_NODES ;
 
       struct posAndNode
@@ -428,6 +437,9 @@ namespace engine
          const MAP_NODE2NET& getAllNodesMap() { return _mapNode2Net ; }
          const MAP_NODE2NET* getAddNodesMapPtr() { return &_mapNode2Net ; }
          UINT32   getAllNodeID( SET_NODEID &setNodes ) ;
+
+         INT32    getNodeSchedVer( UINT64 nodeID ) const ;
+         void     setNodeSchedVer( UINT64 nodeID, INT32 ver ) ;
 
       public:
 
@@ -471,6 +483,8 @@ namespace engine
          INT32                _curPos ;
 
          UINT64               _userData ;
+
+         MAP_NODE_2_SHCEDVER  _mapNode2Ver ;
    } ;
    typedef _pmdRemoteSessionSite pmdRemoteSessionSite ;
 

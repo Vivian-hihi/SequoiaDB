@@ -174,19 +174,9 @@ namespace engine
       return 0 ;
    }
 
-   void _pmdSession::setSchedInfoVersion( INT32 version )
+   void* _pmdSession::getSchedItemPtr()
    {
-      _info.setVersion( version ) ;
-   }
-
-   INT32 _pmdSession::getSchedInfoVersion() const
-   {
-      return _info.getVersion() ;
-   }
-
-   void* _pmdSession::getSchedInfoPtr()
-   {
-      return (void*)&_info ;
+      return (void*)&_infoItem ;
    }
 
    INT32 _pmdSession::allocBuff( UINT32 len, CHAR **ppBuff, UINT32 *pRealSize )

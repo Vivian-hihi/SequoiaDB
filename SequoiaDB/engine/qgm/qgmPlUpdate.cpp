@@ -139,21 +139,45 @@ namespace engine
       {
          SDB_DMSCB *dmsCB = krcb->getDMSCB() ;
          SDB_DPSCB *dpsCB = krcb->getDPSCB() ;
+         string clName = _collection.toString() ;
 
          if ( dpsCB && eduCB->isFromLocal() && !dpsCB->isLogLocal() )
          {
              dpsCB = NULL ;
          }
-         rc = rtnUpdate( _collection.toString().c_str(),
-                         _condition,
-                         _updater,
-                         hint,
-                         _flag, eduCB, dmsCB, dpsCB ) ;
-         if( SDB_OK != rc )
+
+         /// When update virtual cs
+         if ( 0 == ossStrncmp( clName.c_str(), SYS_VIRTUAL_CS".",
+                               SYS_VIRTUAL_CS_LEN ) )
          {
-            goto error ;
+            try
+            {
+               BSONObj objUpdator( _updater ) ;
+               rc = _updateVCS( clName.c_str(), objUpdator, eduCB ) ;
+               if ( rc )
+               {
+                  goto error ;
+               }
+               goto done ;
+            }
+            catch( std::exception &e )
+            {
+               PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+               rc = SDB_SYS ;
+               goto error ;
+            }
+         }
+         else
+         {
+            rc = rtnUpdate( clName.c_str(), _condition, _updater, hint,
+                            _flag, eduCB, dmsCB, dpsCB ) ;
+            if( SDB_OK != rc )
+            {
+               goto error ;
+            }
          }
       }
+
    done:
       if ( pMsg )
       {
@@ -164,4 +188,40 @@ namespace engine
    error:
       goto done ;
    }
+
+   INT32 _qgmPlUpdate::_updateVCS( const CHAR *fullName,
+                                   const BSONObj &updator,
+                                   pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( 0 == ossStrcmp( fullName, SYS_CL_SESSION_INFO ) )
+      {
+         schedTaskMgr *pSvcTaskMgr = pmdGetKRCB()->getSvcTaskMgr() ;
+         schedItem *pItem = ( schedItem* )cb->getSession()->getSchedItemPtr() ;
+         BSONObj objSrc = pItem->_info.toBSON() ;
+         BSONObj objDest ;
+
+         objDest = rtnUpdator2Obj( objSrc, updator ) ;
+
+         pItem->_info.fromBSON( objDest, TRUE ) ;
+
+         /// update task info
+         pItem->_ptr = pSvcTaskMgr->getTaskInfoPtr( pItem->_info.getTaskID(),
+                                                    pItem->_info.getTaskName() ) ;
+         /// update monApp's info
+         cb->getMonAppCB()->setSvcTaskInfo( pItem->_ptr.get() ) ;
+      }
+      else
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
 }
