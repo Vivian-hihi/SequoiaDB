@@ -94,11 +94,33 @@ namespace engine
       _SDB_KRCB *krcb = pmdGetKRCB() ;
       SDB_ROLE role = krcb->getDBRole() ;
       BSONObj hint ;
+      string clName = _collection.toString() ;
 
       CHAR *pMsg = NULL ;
       INT32 msgSize = 0 ;
 
-      if ( SDB_ROLE_COORD == role )
+      /// When update virtual cs
+      if ( 0 == ossStrncmp( clName.c_str(), SYS_VIRTUAL_CS".",
+                            SYS_VIRTUAL_CS_LEN ) )
+      {
+         try
+         {
+            BSONObj objUpdator( _updater ) ;
+            rc = _updateVCS( clName.c_str(), objUpdator, eduCB ) ;
+            if ( rc )
+            {
+               goto error ;
+            }
+            goto done ;
+         }
+         catch( std::exception &e )
+         {
+            PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+      }
+      else if ( SDB_ROLE_COORD == role )
       {
          CoordCB *pCoord = krcb->getCoordCB() ;
          coordUpdateOperator opr ;
@@ -114,7 +136,7 @@ namespace engine
          }
          /// build message
          rc = msgBuildUpdateMsg( &pMsg, &msgSize,
-                                 _collection.toString().c_str(),
+                                 clName.c_str(),
                                  _flag, 0,
                                  &_condition,
                                  &_updater,
@@ -139,42 +161,17 @@ namespace engine
       {
          SDB_DMSCB *dmsCB = krcb->getDMSCB() ;
          SDB_DPSCB *dpsCB = krcb->getDPSCB() ;
-         string clName = _collection.toString() ;
 
          if ( dpsCB && eduCB->isFromLocal() && !dpsCB->isLogLocal() )
          {
              dpsCB = NULL ;
          }
 
-         /// When update virtual cs
-         if ( 0 == ossStrncmp( clName.c_str(), SYS_VIRTUAL_CS".",
-                               SYS_VIRTUAL_CS_LEN ) )
+         rc = rtnUpdate( clName.c_str(), _condition, _updater, hint,
+                         _flag, eduCB, dmsCB, dpsCB ) ;
+         if( SDB_OK != rc )
          {
-            try
-            {
-               BSONObj objUpdator( _updater ) ;
-               rc = _updateVCS( clName.c_str(), objUpdator, eduCB ) ;
-               if ( rc )
-               {
-                  goto error ;
-               }
-               goto done ;
-            }
-            catch( std::exception &e )
-            {
-               PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
-               rc = SDB_SYS ;
-               goto error ;
-            }
-         }
-         else
-         {
-            rc = rtnUpdate( clName.c_str(), _condition, _updater, hint,
-                            _flag, eduCB, dmsCB, dpsCB ) ;
-            if( SDB_OK != rc )
-            {
-               goto error ;
-            }
+            goto error ;
          }
       }
 
