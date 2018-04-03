@@ -318,9 +318,9 @@ class RandomWriteLobUtil {
         @DataProvider(name = "lobSizeDataProvider")
         public static Object[][] lobSizeDataProvider() {
             return new Object[][]{
-                    {1024},
                     {1024*1024},
-                    {1024*1024*10}
+                    {1024*1024*10},
+                    {1024*1024*100}
             };
         }
     }
