@@ -119,7 +119,7 @@ class LobTest13458 extends PHPUnit_Framework_TestCase
       echo "   Begin to check the lob.\n";
       $readStr = substr(self::$writeStr, 0, $offset1).$writeStr2;
       //var_dump($readStr);
-      self::$LobUtils -> checkLobContent( self::$oid, $offset + $writeLen2 + 1, $readStr );
+      self::$LobUtils -> checkLobContent( self::$oid, $offset1 + $writeLen2 + 1, $readStr );
    }
    
    public static function tearDownAfterClass()
