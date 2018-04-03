@@ -722,7 +722,7 @@ retry :
          _addContext( handle, pMsg->TID, contextID );
       }
 
-      if ( _needReply && _inPacketLevel > 0 )
+      if ( _needReply && _inPacketLevel == 0 )
       {
          if ( rc && 0 == buffObj.size() )
          {
