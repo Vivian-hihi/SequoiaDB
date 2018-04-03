@@ -2025,7 +2025,7 @@ namespace engine
       ++_inPacketLevel ;
 
       pos += sizeof( MsgHeader ) ;
-      while( pos < msg->messageLength )
+      while( pos < header->messageLength )
       {
          pTmpMsg = ( MsgHeader* )( ( CHAR*)header + pos ) ;
 
