@@ -33,6 +33,7 @@ public class TestLob13252 extends SdbTestBase {
         csName = SdbTestBase.csName;
         clName = "cl_" + this.getClass().getSimpleName();
         db = new Sequoiadb(coordUrl, "", "");
+        CommLib comm = new CommLib();
         if (comm.isStandAlone(db)) {
             throw new SkipException("can not support standalone");
         }
