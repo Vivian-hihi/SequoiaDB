@@ -62,6 +62,8 @@ namespace engine
       _curSysNodeId        = SYS_NODE_ID_BEGIN;
       _primaryID.value     = MSG_INVALID_ROUTEID ;
       _isActived           = FALSE ;
+
+      _inPacketLevel       = 0 ;
    }
 
    sdbCatalogueCB::~sdbCatalogueCB()
@@ -964,7 +966,7 @@ namespace engine
       }
 
    done :
-      if ( !isDelayed() && pReply )
+      if ( !isDelayed() && pReply && _inPacketLevel == 0 )
       {
          BSONObj errInfo ;
 

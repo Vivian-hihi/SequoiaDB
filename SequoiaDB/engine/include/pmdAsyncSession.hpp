@@ -161,6 +161,7 @@ namespace engine
          virtual IClient*        getClient() { return &_client ; }
 
          virtual void*           getSchedItemPtr() ;
+         virtual void            setSchedItemVer( INT32 ver ) ;
 
          virtual EDU_TYPES       eduType () const = 0 ;
          virtual const CHAR*     className() const = 0 ;

@@ -179,6 +179,11 @@ namespace engine
       return (void*)&_infoItem ;
    }
 
+   void _pmdSession::setSchedItemVer( INT32 ver )
+   {
+      _infoItem._info.setVersion( ver ) ;
+   }
+
    INT32 _pmdSession::allocBuff( UINT32 len, CHAR **ppBuff, UINT32 *pRealSize )
    {
       INT32 rc = SDB_OK ;

@@ -122,6 +122,7 @@ namespace engine
                                       MsgHeader* msg ) ;
 
       INT32 _processMsg ( const NET_HANDLE &handle, MsgHeader *pMsg ) ;
+      INT32 _processPacketMsg( const NET_HANDLE &handle, MsgHeader *pMsg ) ;
 
       void _delayEvent ( pmdEDUEvent &event ) ;
 

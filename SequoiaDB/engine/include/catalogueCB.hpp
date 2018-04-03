@@ -171,6 +171,10 @@ namespace engine
                            UINT32 replyDataLen = 0,
                            BOOLEAN needSync = TRUE ) ;
 
+         void     incPacketLevel() { ++_inPacketLevel ; }
+         void     decPacketLevel() { --_inPacketLevel ; }
+         UINT32   getPacketLevel() const { return _inPacketLevel ; }
+
          void fillErrReply ( const MsgOpReply *pReply, MsgOpReply *pErrReply,
                              INT32 rc ) ;
 
@@ -197,6 +201,8 @@ namespace engine
          BOOLEAN              _isActived ;
 
          VEC_EVENT_HANDLER    _vecEventHandler ;
+
+         UINT32               _inPacketLevel ;
    } ;
 
    /*

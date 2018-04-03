@@ -1126,6 +1126,11 @@ namespace engine
 
       switch ( pMsg->opCode )
       {
+      case MSG_PACKET:
+         {
+            rc = _processPacketMsg( handle, pMsg ) ;
+            break ;
+         }
       case MSG_BS_QUERY_REQ:
          {
             rc = _processQueryMsg( handle, pMsg );
@@ -1227,6 +1232,47 @@ namespace engine
                  pMsg->routeID.columns.groupID, pMsg->routeID.columns.nodeID,
                  pMsg->routeID.columns.serviceID, rc ) ;
       }
+
+      return rc ;
+   }
+
+   INT32 catMainController::_processPacketMsg( const NET_HANDLE &handle,
+                                               MsgHeader *pMsg )
+   {
+      INT32 rc = SDB_OK ;
+      UINT32 pos = 0 ;
+      MsgHeader *pTmpMsg = NULL ;
+      MsgOpReply reply ;
+
+      /// init reply
+      reply.contextID               = -1;
+      reply.numReturned             = 0;
+      reply.startFrom               = 0;
+      reply.header.messageLength    = sizeof( MsgOpReply ) ;
+      reply.header.opCode           = MAKE_REPLY_TYPE(pMsg->opCode) ;
+      reply.header.requestID        = pMsg->requestID;
+      reply.header.routeID.value    = 0 ;
+      reply.header.TID              = pMsg->TID ;
+
+      _pCatCB->incPacketLevel() ;
+
+      pos += sizeof( MsgHeader ) ;
+      while( pos < msg->messageLength )
+      {
+         pTmpMsg = ( MsgHeader* )( ( CHAR*)msg + pos ) ;
+
+         rc = _processMsg( handle, msg ) ;
+         if ( rc )
+         {
+            break ;
+         }
+         pos += pTmpMsg->messageLength ;
+      }
+
+      _pCatCB->decPacketLevel() ;
+
+      reply.flags = rc ;
+      _pCatCB->sendReply( handle, &reply, rc ) ;
 
       return rc ;
    }

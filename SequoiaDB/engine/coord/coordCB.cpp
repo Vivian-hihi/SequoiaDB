@@ -69,6 +69,7 @@ namespace engine
    {
       _shdServiceName[0]  = 0 ;
       _selfNodeID.value   = MSG_INVALID_ROUTEID ;
+      _inPacketLevel = 0 ;
       ossMemset( (void*)&_replyHeader, 0, sizeof(_replyHeader) ) ;
    }
 
@@ -622,12 +623,16 @@ retry :
       _replyHeader.header.TID           = pMsg->TID ;
       _replyHeader.header.routeID.value = 0 ;
 
-      if ( MSG_BS_INTERRUPTE      == pMsg->opCode ||
-           MSG_BS_INTERRUPTE_SELF == pMsg->opCode ||
-           MSG_BS_DISCONNECT      == pMsg->opCode ||
-           MSG_COM_REMOTE_DISC    == pMsg->opCode ||
-           MSG_CLS_GINFO_UPDATED  == pMsg->opCode ||
-           MSG_CAT_GRP_CHANGE_NTY == pMsg->opCode )
+      if ( _inPacketLevel > 0 )
+      {
+         _needReply = FALSE ;
+      }
+      else if ( MSG_BS_INTERRUPTE      == pMsg->opCode ||
+                MSG_BS_INTERRUPTE_SELF == pMsg->opCode ||
+                MSG_BS_DISCONNECT      == pMsg->opCode ||
+                MSG_COM_REMOTE_DISC    == pMsg->opCode ||
+                MSG_CLS_GINFO_UPDATED  == pMsg->opCode ||
+                MSG_CAT_GRP_CHANGE_NTY == pMsg->opCode )
       {
          _needReply = FALSE ;
       }
@@ -657,6 +662,9 @@ retry :
       _onMsgBegin( pMsg ) ;
       switch ( pMsg->opCode )
       {
+         case MSG_PACKET:
+            rc = _processPacketMsg( handle, pMsg ) ;
+            break ;
          case MSG_BS_QUERY_REQ:
             rc = _processQueryMsg( pMsg, buffObj, contextID );
             break;
@@ -1070,6 +1078,35 @@ retry :
       }
 
       return rc ;
+   }
+
+   INT32 _CoordCB::_processPacketMsg( const NET_HANDLE &handle,
+                                      MsgHeader *header )
+   {
+      INT32 rc = SDB_OK ;
+      UINT32 pos = 0 ;
+      MsgHeader *pTmpMsg = NULL ;
+
+      ++_inPacketLevel ;
+
+      pos += sizeof( MsgHeader ) ;
+      while( pos < msg->messageLength )
+      {
+         pTmpMsg = ( MsgHeader* )( ( CHAR*)msg + pos ) ;
+
+         rc = _processMsg( handle, msg ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+         pos += pTmpMsg->messageLength ;
+      }
+
+   done:
+      --_inPacketLevel ;
+      return rc ;
+   error:
+      goto done ;
    }
 
    //PD_TRACE_DECLARE_FUNCTION ( SDB__COORDCB__DELCTXHDL, "_CoordCB::_delContextByHandle" )

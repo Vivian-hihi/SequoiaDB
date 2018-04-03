@@ -302,6 +302,7 @@ namespace engine
          virtual IClient*           getClient() = 0 ;
 
          virtual void*              getSchedItemPtr() = 0 ;
+         virtual void               setSchedItemVer( INT32 ver ) = 0 ;
 
       protected:
          virtual void               _onAttach () {}

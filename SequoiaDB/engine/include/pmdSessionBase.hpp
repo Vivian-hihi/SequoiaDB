@@ -64,6 +64,7 @@ namespace engine
          virtual UINT64    identifyEDUID() ;
 
          virtual void*     getSchedItemPtr() ;
+         virtual void      setSchedItemVer( INT32 ver ) ;
 
          virtual void            clear() ;
 

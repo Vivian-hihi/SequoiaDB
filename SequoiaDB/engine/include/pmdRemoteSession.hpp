@@ -509,6 +509,8 @@ namespace engine
          pmdRemoteSessionSite*   registerEDU( _pmdEDUCB *cb ) ;
          void                    unregEUD( _pmdEDUCB *cb ) ;
 
+         void                    setAllSiteSchedVer( INT32 ver ) ;
+
          pmdRemoteSessionSite*   getSite( _pmdEDUCB *cb ) ;
          pmdRemoteSessionSite*   getSite( UINT32 tid ) ;
 

@@ -1746,6 +1746,21 @@ namespace engine
       cb->detachRemoteSite() ;
    }
 
+   void _pmdRemoteSessionMgr::setAllSiteSchedVer( INT32 ver )
+   {
+      pmdRemoteSessionSite *pSite = NULL ;
+      MAP_TID_2_EDU_IT it ;
+
+      ossScopedLock lock( &_edusLatch, SHARED ) ;
+      it = _mapTID2EDU.begin() ;
+      while( it != _mapTID2EDU.end() )
+      {
+         pSite = &( it->second ) ;
+         pSite->eduCB()->getSession()->setSchedItemVer( ver ) ;
+         ++it ;
+      }
+   }
+
    netRouteAgent* _pmdRemoteSessionMgr::getAgent()
    {
       return _pAgent ;

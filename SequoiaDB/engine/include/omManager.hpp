@@ -258,6 +258,9 @@ namespace engine
          INT32             _processRemoteDisc( NET_HANDLE handle,
                                                MsgHeader *pMsg ) ;
 
+         INT32             _processPacketMsg( const NET_HANDLE &handle,
+                                              MsgHeader *pMsg ) ;
+
          INT32             _onAgentUpdateTaskReq( NET_HANDLE handle, 
                                                   MsgHeader *pMsg ) ;
 
@@ -294,6 +297,7 @@ namespace engine
          MsgOpReply                             _replyHeader ;
          BOOLEAN                                _needReply ;
          BSONObj                                _errorInfo ;
+         UINT32                                 _inPacketLevel ;
 
          INT64                                  _updateTimestamp ;
          UINT64                                 _updatePluinUsrTimer ;

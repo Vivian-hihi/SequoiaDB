@@ -32,6 +32,7 @@
 #include "coordOmStrategyJob.hpp"
 #include "pmd.hpp"
 #include "coordCB.hpp"
+#include "schedDef.hpp"
 
 namespace engine
 {
@@ -99,6 +100,7 @@ namespace engine
       CoordGroupInfoPtr omGroupPtr ;
       INT64 timeCount = 0 ;
       INT64 timeWait = COORD_OM_UPDATE_OPR_RETRY ;
+      INT32 lastVer = 0 ;
 
       omGroupPtr = pResource->getOmGroupInfo() ;
 
@@ -114,11 +116,18 @@ namespace engine
          if ( timeCount >= timeWait )
          {
             timeCount = 0 ;
+            lastVer = pOmAgent->getLastVersion() ;
             /// do update
             rc = pOmAgent->update( eduCB(), COORD_OM_UPDATE_OPR_TIMEOUT ) ;
             if ( SDB_OK == rc )
             {
                timeWait = COORD_OM_UPDATE_OPR_INTERVAL ;
+
+               if ( lastVer != pOmAgent->getLastVersion() )
+               {
+                  pCoord->getRSManager()->setAllSiteSchedVer(
+                     SCHED_UNKNWON_VERSION ) ;
+               }
             }
             else
             {

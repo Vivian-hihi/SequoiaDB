@@ -90,6 +90,7 @@ namespace engine
 
       _myNodeID.value      = MSG_INVALID_ROUTEID ;
       _needReply           = TRUE ;
+      _inPacketLevel       = 0 ;
       ossMemset( (void*)&_replyHeader, 0, sizeof(_replyHeader) ) ;
    }
 
@@ -2014,6 +2015,35 @@ namespace engine
       return SDB_OK ;
    }
 
+   INT32 _omManager::_processPacketMsg( const NET_HANDLE &handle,
+                                        MsgHeader *header )
+   {
+      INT32 rc = SDB_OK ;
+      UINT32 pos = 0 ;
+      MsgHeader *pTmpMsg = NULL ;
+
+      ++_inPacketLevel ;
+
+      pos += sizeof( MsgHeader ) ;
+      while( pos < msg->messageLength )
+      {
+         pTmpMsg = ( MsgHeader* )( ( CHAR*)msg + pos ) ;
+
+         rc = _processMsg( handle, msg ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+         pos += pTmpMsg->messageLength ;
+      }
+
+   done:
+      --_inPacketLevel ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
    void _omManager::_addContext( const UINT32 &handle,
                                  UINT32 tid,
                                  INT64 contextID )
@@ -2114,6 +2144,10 @@ namespace engine
       {
          _needReply = FALSE ;
       }
+      else if ( _inPacketLevel > 0 )
+      {
+         _needReply = FALSE ;
+      }
       else
       {
          _needReply = TRUE ;
@@ -2138,6 +2172,9 @@ namespace engine
       _onMsgBegin( pMsg ) ;
       switch ( pMsg->opCode )
       {
+         case MSG_PACKET:
+            rc = _processPacketMsg( handle, pMsg ) ;
+            break ;
          case MSG_BS_QUERY_REQ:
             rc = _processQueryMsg( pMsg, buffObj, contextID );
             break;

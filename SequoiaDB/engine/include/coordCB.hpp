@@ -115,6 +115,8 @@ namespace engine
                                      MsgHeader * header ) ;
          INT32 _processDisconnectMsg( const NET_HANDLE & handle,
                                       MsgHeader * header ) ;
+         INT32 _processPacketMsg( const NET_HANDLE & handle,
+                                  MsgHeader * header ) ;
          void _delContextByHandle( const UINT32 &handle ) ;
          void _delContext( const UINT32 &handle, UINT32 tid ) ;
          void _delContextByID( INT64 contextID, BOOLEAN rtnDel ) ;
@@ -154,6 +156,8 @@ namespace engine
          MsgOpReply                    _replyHeader ;
          BOOLEAN                       _needReply ;
          BSONObj                       _errorInfo ;
+
+         UINT32                        _inPacketLevel ;
    } ;
    typedef _CoordCB CoordCB ;
 

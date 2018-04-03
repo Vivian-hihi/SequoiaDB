@@ -128,6 +128,11 @@ namespace engine
       return (void*)&_info ;
    }
 
+   void _pmdAsyncSession::setSchedItemVer( INT32 ver )
+   {
+      _info._info.setVersion( ver ) ;
+   }
+
    void _pmdAsyncSession::_holdIn()
    {
       _holdCount.inc() ;
