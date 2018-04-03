@@ -318,7 +318,7 @@ namespace engine
             goto done ;
          }
       }
-      catch( std::excpetion &e )
+      catch( std::exception &e )
       {
          PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
          rc = SDB_SYS ;
@@ -425,7 +425,7 @@ namespace engine
             goto done ;
          }
       }
-      catch( std::excpetion &e )
+      catch( std::exception &e )
       {
          PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
          rc = SDB_SYS ;
