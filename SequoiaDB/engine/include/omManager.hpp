@@ -259,7 +259,9 @@ namespace engine
                                                MsgHeader *pMsg ) ;
 
          INT32             _processPacketMsg( const NET_HANDLE &handle,
-                                              MsgHeader *pMsg ) ;
+                                              MsgHeader *pMsg,
+                                              INT64 &contextID,
+                                              rtnContextBuf &buf ) ;
 
          INT32             _onAgentUpdateTaskReq( NET_HANDLE handle, 
                                                   MsgHeader *pMsg ) ;
@@ -298,6 +300,8 @@ namespace engine
          BOOLEAN                                _needReply ;
          BSONObj                                _errorInfo ;
          UINT32                                 _inPacketLevel ;
+         INT64                                  _pendingContextID ;
+         rtnContextBuf                          _pendingBuff ;
 
          INT64                                  _updateTimestamp ;
          UINT64                                 _updatePluinUsrTimer ;

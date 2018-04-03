@@ -111,6 +111,7 @@ namespace engine
       _delayLogin= FALSE ;
 
       _inPacketLevel = 0 ;
+      _pendingContextID = -1 ;
 
       _info._info.setNice( SCHED_NICE_MIN ) ;
 
@@ -372,7 +373,7 @@ namespace engine
          switch ( msg->opCode )
          {
             case MSG_PACKET :
-               rc = _onPacketMsg( handle, msg ) ;
+               rc = _onPacketMsg( handle, msg, contextID, buffObj ) ;
                break ;
             case MSG_BS_UPDATE_REQ :
                isNeedRollback = TRUE ;
@@ -552,6 +553,8 @@ namespace engine
 
       if ( _inPacketLevel > 0 )
       {
+         _pendingContextID = contextID ;
+         _pendingBuff = buffObj ;
          goto done ;
       }
       else if ( MSG_BS_INTERRUPTE == msg->opCode )
@@ -3752,7 +3755,10 @@ namespace engine
       goto done ;
    }
 
-   INT32 _clsShdSession::_onPacketMsg( NET_HANDLE handle, MsgHeader *msg )
+   INT32 _clsShdSession::_onPacketMsg( NET_HANDLE handle,
+                                       MsgHeader *msg,
+                                       INT64 &contextID,
+                                       rtnContextBuf &buf )
    {
       INT32 rc = SDB_OK ;
       INT32 pos = 0 ;
@@ -3775,6 +3781,14 @@ namespace engine
 
    done:
       --_inPacketLevel ;
+      if ( 0 == _inPacketLevel )
+      {
+         contextID = _pendingContextID ;
+         _pendingContextID = -1 ;
+         buf = _pendingBuff ;
+         _pendingBuff = rtnContextBuf() ;
+      }
+
       return rc ;
    error:
       goto done ;

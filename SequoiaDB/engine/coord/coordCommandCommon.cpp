@@ -454,7 +454,7 @@ namespace engine
       {
          queryOpt.setCLFullName( clName.c_str() ) ;
       }
-      queryOpt.clearFlag( FLG_QUERY_WITH_RETURNDATA ) ;
+      queryOpt.setFlag( FLG_QUERY_WITH_RETURNDATA ) ;
 
       // query on catalog
       rc = queryOnCatalog( queryOpt, cb, contextID, buf ) ;

@@ -177,7 +177,10 @@ namespace engine
 
          INT32 _onRemoveLobReq( MsgHeader *msg ) ;
 
-         INT32 _onPacketMsg( NET_HANDLE handle, MsgHeader *msg ) ;
+         INT32 _onPacketMsg( NET_HANDLE handle,
+                             MsgHeader *msg,
+                             INT64 &contextID,
+                             rtnContextBuf &buf ) ;
 
       private:
          INT32 _getShardingKey( const CHAR* clName,
@@ -314,6 +317,8 @@ namespace engine
          string                 _passwd ;
 
          UINT32                 _inPacketLevel ;
+         INT64                  _pendingContextID ;
+         rtnContextBuf          _pendingBuff ;
    } ;
 
 }
