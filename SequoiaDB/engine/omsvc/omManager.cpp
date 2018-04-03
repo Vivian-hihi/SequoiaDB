@@ -2019,7 +2019,7 @@ namespace engine
                                         MsgHeader *header )
    {
       INT32 rc = SDB_OK ;
-      UINT32 pos = 0 ;
+      INT32 pos = 0 ;
       MsgHeader *pTmpMsg = NULL ;
 
       ++_inPacketLevel ;

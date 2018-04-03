@@ -1240,7 +1240,7 @@ namespace engine
                                                MsgHeader *pMsg )
    {
       INT32 rc = SDB_OK ;
-      UINT32 pos = 0 ;
+      INT32 pos = 0 ;
       MsgHeader *pTmpMsg = NULL ;
       MsgOpReply reply ;
 

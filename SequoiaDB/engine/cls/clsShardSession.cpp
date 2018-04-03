@@ -3755,7 +3755,7 @@ namespace engine
    INT32 _clsShdSession::_onPacketMsg( NET_HANDLE handle, MsgHeader *msg )
    {
       INT32 rc = SDB_OK ;
-      UINT32 pos = 0 ;
+      INT32 pos = 0 ;
       MsgHeader *pTmpMsg = NULL ;
 
       ++_inPacketLevel ;
