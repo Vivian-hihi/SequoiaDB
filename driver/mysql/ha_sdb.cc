@@ -1413,6 +1413,7 @@ int ha_sdb::create( const char *name, TABLE *form,
    uint str_field_len = 0 ;
    sdb_conn_auto_ptr conn_tmp ;
    bson::BSONObj options ;
+   bson::BSONObj comments ;
 
    for( Field **field = form->field ; *field ; field++ )
    {
@@ -1455,7 +1456,6 @@ int ha_sdb::create( const char *name, TABLE *form,
 
    if ( create_info && create_info->comment.str )
    {
-      bson::BSONObj comments ;
       bson::BSONElement beOptions ;
       rc = bson::fromjson( create_info->comment.str, comments ) ;
       if ( 0 != rc )
