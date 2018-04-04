@@ -1219,6 +1219,8 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       BOOLEAN needRollback = FALSE ;
+      UINT64 bTime = ossGetCurrentMicroseconds() ;
+      UINT64 eTime = 0 ;
       CoordCB *pCoordCB = _pKrcb->getCoordCB() ;
       coordResource *pResource = pCoordCB->getResource() ;
 
@@ -1466,6 +1468,17 @@ namespace engine
       }
 
    done:
+      eTime = ossGetCurrentMicroseconds() ;
+      if ( eTime > bTime )
+      {
+         monSvcTaskInfo *pInfo = NULL ;
+         pInfo = eduCB()->getMonAppCB()->getSvcTaskInfo() ;
+         if ( pInfo )
+         {
+            pInfo->monOperationTimeInc( MON_TOTAL_WRITE_TIME,
+                                        eTime - bTime ) ;
+         }
+      }
       return rc ;
    error:
       goto done ;
@@ -1603,8 +1616,6 @@ namespace engine
                                          BOOLEAN &needReply )
    {
       INT32 rc = SDB_OK ;
-      UINT64 bTime = ossGetCurrentMicroseconds() ;
-      UINT64 eTime = 0 ;
 
       rc = _processCoordMsg( msg, contextID, contextBuff ) ;
       if ( SDB_COORD_UNKNOWN_OP_REQ == rc )
@@ -1626,17 +1637,6 @@ namespace engine
          }
       }
 
-      eTime = ossGetCurrentMicroseconds() ;
-      if ( eTime > bTime )
-      {
-         monSvcTaskInfo *pInfo = NULL ;
-         pInfo = eduCB()->getMonAppCB()->getSvcTaskInfo() ;
-         if ( pInfo )
-         {
-            pInfo->monOperationTimeInc( MON_TOTAL_WRITE_TIME,
-                                        eTime - bTime ) ;
-         }
-      }
       return rc ;
    }
 

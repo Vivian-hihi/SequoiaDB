@@ -410,7 +410,7 @@ namespace engine
                                                rtnContext *pContext,
                                                pmdEDUCB *cb )
    {
-      return pContext->append( BSON( FIELD_NAME_TOTAL << 1 ) ) ;
+      return pContext->append( BSON( FIELD_NAME_TOTAL << (INT64)1 ) ) ;
    }
 
    /*
