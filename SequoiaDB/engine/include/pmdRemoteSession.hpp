@@ -196,6 +196,7 @@ namespace engine
          MsgHeader                  *_pReqMsg ;
          pmdEDUMemTypes             _memType ;
          netIOVec                   _ioDatas ;
+         INT32                      _reqOpCode ;
 
          pmdEDUEvent                _event ;
          BOOLEAN                    _isProcessed ;

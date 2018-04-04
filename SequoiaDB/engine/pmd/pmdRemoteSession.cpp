@@ -51,6 +51,7 @@ namespace engine
       _nodeID.value     = MSG_INVALID_ROUTEID ;
       _reqID            = 0 ;
       _pReqMsg          = NULL ;
+      _reqOpCode        = 0 ;
       _isSend           = FALSE ;
       _isDisconnect     = TRUE ;
       _memType          = PMD_EDU_MEM_NONE ;
@@ -198,6 +199,13 @@ namespace engine
       else
       {
          event._dataMemType = PMD_EDU_MEM_NONE ;
+      }
+
+      /// reset reply opCode
+      if ( _event._Data )
+      {
+         pRsp = ( MsgHeader* )_event._Data ;
+         pRsp->opCode = MAKE_REPLY_TYPE( _reqOpCode ) ;
       }
    }
 
@@ -848,6 +856,7 @@ namespace engine
       pSub->getReqMsg()->requestID = pSub->getReqID() ;
       pSub->getReqMsg()->routeID.value = MSG_INVALID_ROUTEID ;
       pSub->getReqMsg()->TID = _pEDUCB->getTID() ;
+      pSub->_reqOpCode = pSub->getReqMsg()->opCode ;
       // add to assit node
       *pSub->getAddPos() = _pSite->addAssitNode(
          pSub->getNodeID().columns.nodeID ) ;
@@ -1224,7 +1233,6 @@ namespace engine
    void _pmdRemoteSessionSite::addNodeNet( UINT64 nodeID, NET_HANDLE handle )
    {
       _mapNode2Net[ nodeID ] = handle ;
-      _mapNode2Ver.erase( nodeID ) ;
    }
 
    void _pmdRemoteSessionSite::removeNodeNet( UINT64 nodeID )

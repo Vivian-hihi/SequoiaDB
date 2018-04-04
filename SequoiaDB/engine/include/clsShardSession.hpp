@@ -180,7 +180,8 @@ namespace engine
          INT32 _onPacketMsg( NET_HANDLE handle,
                              MsgHeader *msg,
                              INT64 &contextID,
-                             rtnContextBuf &buf ) ;
+                             rtnContextBuf &buf,
+                             INT32 &startFrom ) ;
 
       private:
          INT32 _getShardingKey( const CHAR* clName,
@@ -318,6 +319,7 @@ namespace engine
 
          UINT32                 _inPacketLevel ;
          INT64                  _pendingContextID ;
+         INT32                  _pendingStartFrom ;
          rtnContextBuf          _pendingBuff ;
    } ;
 

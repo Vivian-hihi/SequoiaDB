@@ -112,6 +112,7 @@ namespace engine
 
       _inPacketLevel = 0 ;
       _pendingContextID = -1 ;
+      _pendingStartFrom = 0 ;
 
       _info._info.setNice( SCHED_NICE_MIN ) ;
 
@@ -373,7 +374,7 @@ namespace engine
          switch ( msg->opCode )
          {
             case MSG_PACKET :
-               rc = _onPacketMsg( handle, msg, contextID, buffObj ) ;
+               rc = _onPacketMsg( handle, msg, contextID, buffObj, startFrom ) ;
                break ;
             case MSG_BS_UPDATE_REQ :
                isNeedRollback = TRUE ;
@@ -617,6 +618,7 @@ namespace engine
       {
          _pendingContextID = contextID ;
          _pendingBuff = buffObj ;
+         _pendingStartFrom = startFrom ;
       }
       else
       {
@@ -3760,7 +3762,8 @@ namespace engine
    INT32 _clsShdSession::_onPacketMsg( NET_HANDLE handle,
                                        MsgHeader *msg,
                                        INT64 &contextID,
-                                       rtnContextBuf &buf )
+                                       rtnContextBuf &buf,
+                                       INT32 &startFrom )
    {
       INT32 rc = SDB_OK ;
       INT32 pos = 0 ;
@@ -3789,6 +3792,8 @@ namespace engine
          _pendingContextID = -1 ;
          buf = _pendingBuff ;
          _pendingBuff = rtnContextBuf() ;
+         startFrom = _pendingStartFrom ;
+         _pendingStartFrom = 0 ;
       }
 
       return rc ;
