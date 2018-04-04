@@ -139,17 +139,12 @@ class RandomWriteLobUtil {
 
     static void assertByteArrayEqual(byte[] actual, byte[] expect, String msg) {
         if (!Arrays.equals(actual, expect)) {
-            // get caller class name
-            StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
-            String classFullName = stackTrace[2].getClassName();
-            String[] classNameArr = classFullName.split("\\.");
-            String callerClassName = classNameArr[classNameArr.length - 1];
-
             String workDirPath = SdbTestBase.getWorkDir();
             File workDir = new File(workDirPath);
             if (!workDir.isDirectory())
                 throw new RuntimeException("the path can not use: " + workDirPath);
 
+            String callerClassName = getCallerName();
             File fileActual = new File(workDirPath + File.separator + callerClassName + "_actual");
             File fileExpect = new File(workDirPath + File.separator + callerClassName + "_expect");
             try {
@@ -178,6 +173,22 @@ class RandomWriteLobUtil {
                 e.printStackTrace();
             }
         }
+    }
+
+    private static String getCallerName() {
+        StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+        String thisClassName = stackTrace[1].getClassName();
+        String currClassName = null;
+        for (int i = 2; i < stackTrace.length; ++i) {
+            currClassName = stackTrace[i].getClassName();
+            if (!currClassName.equals(thisClassName)) {
+                break;
+            }
+        }
+        String classFullName = currClassName;
+        String[] classNameArr = classFullName.split("\\.");
+        String simpleClassName = classNameArr[classNameArr.length - 1];
+        return simpleClassName;
     }
 
     /**
