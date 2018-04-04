@@ -943,7 +943,7 @@ namespace engine
 
    const CHAR* _coordCMDListSvcTasks::getIntrCMDName()
    {
-      return CMD_NAME_LIST_SVCTASKS_INTR ;
+      return CMD_ADMIN_PREFIX CMD_NAME_LIST_SVCTASKS_INTR ;
    }
 
    const CHAR* _coordCMDListSvcTasks::getInnerAggrContent()
