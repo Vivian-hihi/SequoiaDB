@@ -4501,6 +4501,8 @@
             $scope.event = {} ;      //事件
             $scope.lastScope = [] ;  //最后一次创建的scope
             $scope.lastLi = [] ;
+            $scope.mouseX = 0 ;
+            $scope.mouseY = 0 ;
             $scope.mask = $compile( $( '<div></div>' ).attr( 'ng-mousedown', 'close()' ).addClass( 'mask-screen unalpha' ) )( $scope ) ;  //遮罩
             $scope.ulBox = $( '<ul class="dropdown-menu"></ul>' ).css( { 'position': 'relative' } ) ;  //下拉菜单外框
             $scope.divBox = $( '<div></div>' ).css( { 'position': 'absolute', 'left': 0, 'top': 0, 'z-index': 10000 } ) ; //下拉菜单移动框
@@ -4514,6 +4516,13 @@
             return {
                pre: function preLink( scope, element, attributes ){},
                post: function postLink( scope, element, attributes ){
+
+                  var isIE78 = false ;
+                  var browser = SdbFunction.getBrowserInfo() ;
+                  if( browser[0] == 'ie' && ( browser[1] == 7 || browser[1] == 8 ) )
+                  {
+                     isIE78 = true ;
+                  }
 
                   scope.$on( '$destroy', function(){
                      //主scope释放，子的scope也要释放
@@ -4607,6 +4616,14 @@
                      } ) ;
                   }
 
+                  if( isIE78 )
+                  {
+                     $( 'body' ).mouseup( function( event ){
+                        scope.mouseX = event.clientX ;
+                        scope.mouseY = event.clientY ;
+                     } ) ;
+                  }
+
                   //重绘
                   var resizeFun = function(){
                      if( scope.status == 0 )
@@ -4620,8 +4637,28 @@
                      var eleHeight  = $( ele ).outerHeight() ;
                      var menuWidth  = $( ulBox ).outerWidth() ;
                      var menuHeight = $( ulBox ).outerHeight() ;
-                     var left = $( ele ).offset().left ;
-                     var top  = $( ele ).offset().top ;
+                     var left, top ;
+
+                     if( isIE78 == false )
+                     {
+                        left = $( ele ).offset().left ;
+                        top  = $( ele ).offset().top ;
+                     }
+                     else
+                     {
+                        //如果是IE7或者IE8
+                        left = scope.mouseX - 80 ;
+                        top  = scope.mouseY + 10 ;
+                        if( left < 0 )
+                        {
+                           left = 0 ;
+                        }
+                        if( top < 0 )
+                        {
+                           top = 0 ;
+                        }
+                     }
+
                      if( left + menuWidth > bodyWidth )
                      {
                         left = bodyWidth - menuWidth ;
@@ -5925,7 +5962,6 @@
                                  {
                                     //如果table-key属性是$auto，那么说明开发者也不知道字段名字，那么将通过标题找到对应字段
                                     if( tableKey == '$auto' || hasAuto == true )
-                                    if( scope['table']['options']['isRenderHide'] == false )
                                     {
                                        var newAutoHtml = autoHtml ;
                                        hasAuto = true ;
