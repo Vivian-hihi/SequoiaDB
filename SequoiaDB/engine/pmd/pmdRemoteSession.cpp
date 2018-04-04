@@ -1749,6 +1749,7 @@ namespace engine
    void _pmdRemoteSessionMgr::setAllSiteSchedVer( INT32 ver )
    {
       pmdRemoteSessionSite *pSite = NULL ;
+      ISession *pSession = NULL ;
       MAP_TID_2_EDU_IT it ;
 
       ossScopedLock lock( &_edusLatch, SHARED ) ;
@@ -1756,7 +1757,11 @@ namespace engine
       while( it != _mapTID2EDU.end() )
       {
          pSite = &( it->second ) ;
-         pSite->eduCB()->getSession()->setSchedItemVer( ver ) ;
+         pSession = pSite->eduCB()->getSession() ;
+         if ( pSession )
+         {
+            pSession->setSchedItemVer( ver ) ;
+         }
          ++it ;
       }
    }

@@ -88,7 +88,7 @@ namespace engine
                {
                   MsgHeader *pMsg = (MsgHeader*)(eventData._Data) ;
                   PD_LOG( PDWARNING, "[%s] Process msg[opCode:[%d]%d, "
-                          "requestID: %lld, TID: %d, Len: %d] over %d seconds",
+                          "requestID: %lld, TID: %d, Len: %d] over %d millsecs",
                           pObj->name(), IS_REPLY_TYPE(pMsg->opCode),
                           GET_REQUEST_TYPE(pMsg->opCode), pMsg->requestID,
                           pMsg->TID, pMsg->messageLength, timeSpan ) ;
@@ -100,7 +100,7 @@ namespace engine
                if ( pEventTimeSpan && timeSpan > maxEventTime )
                {
                   PD_LOG( PDWARNING, "[%s] Process event[type:%d] over %d "
-                          "seconds", pObj->name(), eventData._eventType,
+                          "millsecs", pObj->name(), eventData._eventType,
                           timeSpan ) ;
                }
             }
