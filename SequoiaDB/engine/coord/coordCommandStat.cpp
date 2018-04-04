@@ -105,7 +105,7 @@ namespace engine
       }
 
       if ( 0 == ossStrncmp( queryConf._realCLName.c_str(),
-                            SYS_VIRTUAL_CS,
+                            SYS_VIRTUAL_CS".",
                             SYS_VIRTUAL_CS_LEN ) )
       {
          rc = _executeOnVCL( queryConf._realCLName.c_str(), cb, contextID ) ;
