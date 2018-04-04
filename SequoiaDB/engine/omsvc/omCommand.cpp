@@ -6270,8 +6270,10 @@ namespace engine
             }
 
             newNodeConfigBuilder.appendElements( oneNodeConfig ) ;
+
             if ( OM_BUSINESS_SEQUOIADB == _businessType )
             {
+               stringstream ss ;
                string user    = hostInfo.getStringField( OM_HOST_FIELD_USER ) ;
                string passwd  = hostInfo.getStringField(
                                                       OM_HOST_FIELD_PASSWORD ) ;
@@ -6282,18 +6284,15 @@ namespace engine
                newNodeConfigBuilder.append( OM_TASKINFO_FIELD_PASSWD, passwd ) ;
                newNodeConfigBuilder.append( OM_TASKINFO_FIELD_SSHPORT,
                                             sshPort ) ;
-            }
-            newNodeConfigBuilder.append( OM_TASKINFO_FIELD_INSTALLPATH,
-                                         installPath ) ;
-
-            {
-               stringstream ss ;
 
                ss << pmdGetKRCB()->getHostName() << ":"
                   << pmdGetKRCB()->getOptionCB()->getOMService() ;
 
                newNodeConfigBuilder.append( OM_BSON_OM_ADDR, ss.str() ) ;
             }
+
+            newNodeConfigBuilder.append( OM_TASKINFO_FIELD_INSTALLPATH,
+                                         installPath ) ;
 
             nodesConfigBuilder.append( newNodeConfigBuilder.obj() ) ;
 
