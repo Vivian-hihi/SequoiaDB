@@ -948,7 +948,7 @@ namespace engine
 
    const CHAR* _coordCMDListSvcTasks::getInnerAggrContent()
    {
-      return COORD_SNAPSHOTSVCTASKS_INPUT ;
+      return COORD_EMPTY_AGGR_CONTEXT ;
    }
 
    /*
