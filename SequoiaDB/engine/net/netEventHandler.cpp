@@ -696,6 +696,11 @@ namespace engine
       _sock.shutdown( boost::asio::ip::tcp::socket::shutdown_both,
                       ec ) ;
       _isConnected = FALSE ;
+
+      if ( _isNew )
+      {
+         _evSuitPtr->getFrame()->_erase( handle() ) ;
+      }
    }
 
 }
