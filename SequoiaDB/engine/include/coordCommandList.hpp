@@ -518,6 +518,33 @@ namespace engine
    } ;
    typedef _coordCMDListLobs coordCMDListLobs ;
 
+   /*
+      _coordCMDListSvcTasks define
+   */
+   class _coordCMDListSvcTasks: public _coordCMDMonBase
+   {
+      COORD_DECLARE_CMD_AUTO_REGISTER() ;
+      public:
+         _coordCMDListSvcTasks() ;
+         virtual ~_coordCMDListSvcTasks() ;
+      private:
+         virtual const CHAR *getIntrCMDName() ;
+         virtual const CHAR *getInnerAggrContent() ;
+   } ;
+   typedef _coordCMDListSvcTasks coordCMDListSvcTasks ;
+
+   /*
+      _coordCMDListSvcTasksIntr define
+   */
+   class _coordCMDListSvcTasksIntr : public _coordCMDListIntrBase
+   {
+      COORD_DECLARE_CMD_AUTO_REGISTER() ;
+      public:
+         _coordCMDListSvcTasksIntr() ;
+         virtual ~_coordCMDListSvcTasksIntr() ;
+   } ;
+   typedef _coordCMDListSvcTasksIntr coordCMDListSvcTasksIntr ;
+
 }
 
 #endif // COORD_COMMAND_LIST_HPP__

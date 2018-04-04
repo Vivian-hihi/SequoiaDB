@@ -926,5 +926,45 @@ namespace engine
       goto done ;
    }
 
+   /*
+      _coordCMDListSvcTasks implement
+   */
+   COORD_IMPLEMENT_CMD_AUTO_REGISTER( _coordCMDListSvcTasks,
+                                      CMD_NAME_LIST_SVCTASKS,
+                                      TRUE ) ;
+
+   _coordCMDListSvcTasks::_coordCMDListSvcTasks()
+   {
+   }
+
+   _coordCMDListSvcTasks::~_coordCMDListSvcTasks()
+   {
+   }
+
+   const CHAR* _coordCMDListSvcTasks::getIntrCMDName()
+   {
+      return CMD_NAME_LIST_SVCTASKS_INTR ;
+   }
+
+   const CHAR* _coordCMDListSvcTasks::getInnerAggrContent()
+   {
+      return COORD_SNAPSHOTSVCTASKS_INPUT ;
+   }
+
+   /*
+      _coordCMDListSvcTasksIntr implement
+   */
+   COORD_IMPLEMENT_CMD_AUTO_REGISTER( _coordCMDListSvcTasksIntr,
+                                      CMD_NAME_LIST_SVCTASKS_INTR,
+                                      TRUE ) ;
+
+   _coordCMDListSvcTasksIntr::_coordCMDListSvcTasksIntr()
+   {
+   }
+
+   _coordCMDListSvcTasksIntr::~_coordCMDListSvcTasksIntr()
+   {
+   }
+
 }
 

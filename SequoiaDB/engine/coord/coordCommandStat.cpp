@@ -200,7 +200,7 @@ namespace engine
                                                      rtnContext *pContext,
                                                      pmdEDUCB *cb )
    {
-      return SDB_INVALIDARG ;
+      return SDB_OK ;
    }
 
    /*
