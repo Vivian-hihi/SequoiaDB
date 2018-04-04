@@ -650,5 +650,44 @@ namespace engine
    {
    }
 
+   /*
+      _coordCMDSnapshotSvcTasks implement
+   */
+   COORD_IMPLEMENT_CMD_AUTO_REGISTER( _coordCMDSnapshotSvcTasks,
+                                      CMD_NAME_SNAPSHOT_SVCTASKS,
+                                      TRUE ) ;
+
+   _coordCMDSnapshotSvcTasks::_coordCMDSnapshotSvcTasks()
+   {
+   }
+
+   _coordCMDSnapshotSvcTasks::~_coordCMDSnapshotSvcTasks()
+   {
+   }
+
+   const CHAR* _coordCMDSnapshotSvcTasks::getIntrCMDName()
+   {
+      return CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_SVCTASKS_INTR ;
+   }
+
+   const CHAR* _coordCMDSnapshotSvcTasks::getInnerAggrContent()
+   {
+      return COORD_SNAPSHOTSVCTASKS_INPUT ;
+   }
+
+   /*
+      _coordCMDSnapshotSvcTasksIntr implement
+   */
+   COORD_IMPLEMENT_CMD_AUTO_REGISTER( _coordCMDSnapshotSvcTasksIntr,
+                                      CMD_NAME_SNAPSHOT_SVCTASKS_INTR,
+                                      TRUE ) ;
+   _coordCMDSnapshotSvcTasksIntr::_coordCMDSnapshotSvcTasksIntr()
+   {
+   }
+
+   _coordCMDSnapshotSvcTasksIntr::~_coordCMDSnapshotSvcTasksIntr()
+   {
+   }
+
 }
 

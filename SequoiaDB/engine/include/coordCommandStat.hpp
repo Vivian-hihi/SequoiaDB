@@ -62,7 +62,17 @@ namespace engine
          virtual INT32 generateResult( rtnContext *pContext,
                                        pmdEDUCB *cb ) = 0 ;
 
+         virtual INT32 generateVCLResult( const CHAR *pCLName,
+                                          rtnContext *pContext,
+                                          pmdEDUCB *cb ) ;
+
          virtual BOOLEAN openEmptyContext() const { return FALSE ; }
+
+      private:
+         INT32   _executeOnVCL( const CHAR *pCLName,
+                                pmdEDUCB *cb,
+                                INT64 &contextID ) ;
+
    } ;
    typedef _coordCMDStatisticsBase coordCMDStatisticsBase ;
 
@@ -97,6 +107,9 @@ namespace engine
       private :
          virtual INT32 generateResult( rtnContext *pContext,
                                        pmdEDUCB *cb ) ;
+         virtual INT32 generateVCLResult( const CHAR *pCLName,
+                                          rtnContext *pContext,
+                                          pmdEDUCB *cb ) ;
          virtual BOOLEAN openEmptyContext() const { return TRUE ; }
    } ;
    typedef _coordCMDGetCount coordCMDGetCount ;

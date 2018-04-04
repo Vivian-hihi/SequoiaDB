@@ -478,5 +478,32 @@ namespace engine
    } ;
    typedef _coordCMDSnapshotConfigsIntr coordCMDSnapshotConfigsIntr ;
 
+   /*
+      _coordCMDSnapshotSvcTasks define
+   */
+   class _coordCMDSnapshotSvcTasks : public _coordCMDMonBase
+   {
+      COORD_DECLARE_CMD_AUTO_REGISTER() ;
+      public:
+         _coordCMDSnapshotSvcTasks() ;
+         virtual ~_coordCMDSnapshotSvcTasks() ;
+      private:
+         virtual const CHAR *getIntrCMDName() ;
+         virtual const CHAR *getInnerAggrContent() ;
+   } ;
+   typedef _coordCMDSnapshotSvcTasks coordCMDSnapshotSvcTasks ;
+
+   /*
+      _coordCMDSnapshotSvcTasksIntr define
+   */
+   class _coordCMDSnapshotSvcTasksIntr : public _coordCMDSnapshotIntrBase
+   {
+      COORD_DECLARE_CMD_AUTO_REGISTER() ;
+      public:
+         _coordCMDSnapshotSvcTasksIntr() ;
+         virtual ~_coordCMDSnapshotSvcTasksIntr() ;
+   } ;
+   typedef _coordCMDSnapshotSvcTasksIntr coordCMDSnapshotSvcTasksIntr ;
+
 }
 #endif // COORD_COMMAND_SNAPSHOT_HPP__

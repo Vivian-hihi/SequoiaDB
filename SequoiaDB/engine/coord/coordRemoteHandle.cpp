@@ -438,8 +438,8 @@ namespace engine
 
          if ( MSG_PACKET == pOldHeader->opCode )
          {
-            ossMemcpy( pBuff + pos, (void*)pOldHeader, sizeof( MsgHeader ) ) ;
-            pos += sizeof( MsgHeader ) ;
+            ossMemcpy( (void*)pMsgPacket, (void*)pOldHeader,
+                       sizeof( MsgHeader ) ) ;
          }
          else
          {
@@ -453,8 +453,12 @@ namespace engine
          /// old
          if ( pSub->getIODatas()->size() > 0 )
          {
-            ossMemcpy( pBuff + pos, (void*)pOldHeader, sizeof( MsgHeader ) ) ;
-            pos += sizeof( MsgHeader ) ;
+            if ( MSG_PACKET != pOldHeader->opCode )
+            {
+               ossMemcpy( pBuff + pos, (void*)pOldHeader,
+                          sizeof( MsgHeader ) ) ;
+               pos += sizeof( MsgHeader ) ;
+            }
 
             netIOVec *pIOVec = pSub->getIODatas() ;
             for ( UINT32 i = 0 ; i < pIOVec->size() ; ++i )
@@ -466,9 +470,16 @@ namespace engine
          }
          else
          {
-            ossMemcpy( pBuff + pos, (void*)pOldHeader,
-                       pOldHeader->messageLength ) ;
-            pos += pOldHeader->messageLength ;
+            CHAR *pCopyData = ( CHAR* )pOldHeader ;
+            UINT32 copyLen = pOldHeader->messageLength ;
+
+            if ( MSG_PACKET == pOldHeader->opCode )
+            {
+               pCopyData += sizeof( MsgHeader ) ;
+               copyLen -= sizeof( MsgHeader ) ;
+            }
+            ossMemcpy( pBuff + pos, pCopyData,copyLen ) ;
+            pos += copyLen ;
          }
 
          /// set sub session

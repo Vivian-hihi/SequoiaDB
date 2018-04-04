@@ -104,23 +104,37 @@ namespace engine
                        "error:%s", e.what() ) ;
       }
 
-      rc = queryOpr.init( _pResource, cb, getTimeout() ) ;
-      if ( rc )
+      if ( 0 == ossStrncmp( queryConf._realCLName.c_str(),
+                            SYS_VIRTUAL_CS,
+                            SYS_VIRTUAL_CS_LEN ) )
       {
-         PD_LOG( PDERROR, "Init query operator failed, rc: %d", rc ) ;
-         goto error ;
+         rc = _executeOnVCL( queryConf._realCLName.c_str(), cb, contextID ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Execute on VCL failed, rc: %d", rc ) ;
+            goto error ;
+         }
       }
+      else
+      {
+         rc = queryOpr.init( _pResource, cb, getTimeout() ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Init query operator failed, rc: %d", rc ) ;
+            goto error ;
+         }
 
-      rc = queryOpr.queryOrDoOnCL( pMsg, cb, &pContext,
-                                   sendOpt, &queryConf, buf ) ;
-      PD_RC_CHECK( rc, PDERROR, "Query failed, rc: %d", rc ) ;
+         rc = queryOpr.queryOrDoOnCL( pMsg, cb, &pContext,
+                                      sendOpt, &queryConf, buf ) ;
+         PD_RC_CHECK( rc, PDERROR, "Query failed, rc: %d", rc ) ;
 
-      // statistics the result
-      rc = generateResult( pContext, cb ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to execute statistics, rc: %d", rc ) ;
+         // statistics the result
+         rc = generateResult( pContext, cb ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to execute statistics, rc: %d", rc ) ;
 
-      contextID = pContext->contextID() ;
-      pContext->reopen() ;
+         contextID = pContext->contextID() ;
+         pContext->reopen() ;
+      }
 
    done:
       PD_TRACE_EXITRC ( COORD_CMDSTATBASE_EXE, rc ) ;
@@ -131,6 +145,62 @@ namespace engine
          pRtncb->contextDelete( pContext->contextID(), cb ) ;
       }
       goto done ;
+   }
+
+   INT32 _coordCMDStatisticsBase::_executeOnVCL( const CHAR *pCLName,
+                                                 pmdEDUCB *cb,
+                                                 INT64 &contextID )
+   {
+      INT32 rc = SDB_OK ;
+      rtnContextCoord *pContext = NULL ;
+      SDB_RTNCB *pRtncb = pmdGetKRCB()->getRTNCB() ;
+      rtnQueryOptions defaultOptions ;
+
+      if ( 0 != ossStrcmp( pCLName, SYS_CL_SESSION_INFO ) )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      rc = pRtncb->contextNew( RTN_CONTEXT_COORD,
+                               (rtnContext**)&pContext,
+                               contextID, cb ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Create context failed, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      rc = pContext->open( defaultOptions, FALSE ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Open context failed, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      rc = generateVCLResult( pCLName, pContext, cb ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Generate VCL result failed, rc: %d", rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      if ( contextID != -1 )
+      {
+         pRtncb->contextDelete( contextID , cb ) ;
+         contextID = -1 ;
+      }
+      goto done ;
+   }
+
+   INT32 _coordCMDStatisticsBase::generateVCLResult( const CHAR *pCLName,
+                                                     rtnContext *pContext,
+                                                     pmdEDUCB *cb )
+   {
+      return SDB_INVALIDARG ;
    }
 
    /*
@@ -334,6 +404,13 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   INT32 _coordCMDGetCount::generateVCLResult( const CHAR *pCLName,
+                                               rtnContext *pContext,
+                                               pmdEDUCB *cb )
+   {
+      return pContext->append( BSON( FIELD_NAME_TOTAL << 1 ) ) ;
    }
 
    /*
