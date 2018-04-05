@@ -346,6 +346,11 @@ namespace engine
          handle = itr->first ;
          _mtx.release_shared() ;
 
+         if ( eh->isNew() )
+         {
+            continue ;
+         }
+
          /// send msg
          if ( pmdGetTickSpanTime( eh->getLastBeatTick() ) >= _beatInterval &&
               ( -1 == serviceType ||
@@ -380,6 +385,11 @@ namespace engine
          eh = itr->second ;
          handle = itr->first ;
          _mtx.release_shared() ;
+
+         if ( eh->isNew() )
+         {
+            continue ;
+         }
 
          spanTime = pmdGetTickSpanTime( eh->getLastRecvTick() ) ;
          /// check break
@@ -604,6 +614,13 @@ namespace engine
                   hasConnect = TRUE ;
                   eh->asyncRead() ;
                }
+            }
+
+            if ( rc )
+            {
+               PD_LOG( PDEVENT, "TEST::::: handle:%lld, use_count:%d",
+                       eh->handle(), eh.use_count() ) ;
+               _erase( eh->handle() ) ;
             }
          }
          else
