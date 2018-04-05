@@ -618,8 +618,7 @@ namespace engine
 
             if ( rc )
             {
-               PD_LOG( PDEVENT, "TEST::::: handle:%lld, use_count:%d",
-                       eh->handle(), eh.use_count() ) ;
+               eh->close() ;
                _erase( eh->handle() ) ;
             }
          }
