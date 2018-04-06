@@ -505,6 +505,8 @@ namespace engine
 
    class _rtnListSvcTasksInner : public _rtnListInner
    {
+      DECLARE_CMD_AUTO_REGISTER()
+
       public:
          _rtnListSvcTasksInner() ;
          virtual ~_rtnListSvcTasksInner() ;
