@@ -1438,13 +1438,18 @@ namespace engine
       goto done ;
    }
 
-   void monDumpSvcTaskInfo( BSONObjBuilder &ob, const monSvcTaskInfo *pInfo )
+   void monDumpSvcTaskInfo( BSONObjBuilder &ob,
+                            const monSvcTaskInfo *pInfo,
+                            BOOLEAN exceptIDName )
    {
       CHAR   timestamp[ OSS_TIMESTAMP_STRING_LEN + 1] = { 0 } ;
       ossTimestamp tmpTime ;
 
-      ob.append( FIELD_NAME_TASK_ID, (INT64)pInfo->getTaskID() ) ;
-      ob.append( FIELD_NAME_TASK_NAME, pInfo->getTaskName() ) ;
+      if ( !exceptIDName )
+      {
+         ob.append( FIELD_NAME_TASK_ID, (INT64)pInfo->getTaskID() ) ;
+         ob.append( FIELD_NAME_TASK_NAME, pInfo->getTaskName() ) ;
+      }
       ob.append( FIELD_NAME_TOTALTIME, (INT64)( pInfo->_totalTime / 1000 ) ) ;
       ob.append( FIELD_NAME_TOTALCONTEXTS, (INT64)pInfo->_totalContexts ) ;
       ob.append( FIELD_NAME_TOTALDATAREAD, (INT64)pInfo->_totalDataRead ) ;
@@ -3870,7 +3875,8 @@ namespace engine
             BSONObjBuilder builder ;
             builder.appendElements( _info ) ;
             monDumpSvcTaskInfo( builder,
-                                cb->getMonAppCB()->getSvcTaskInfo() ) ;
+                                cb->getMonAppCB()->getSvcTaskInfo(),
+                                TRUE ) ;
             _info = builder.obj() ;
          }
       }

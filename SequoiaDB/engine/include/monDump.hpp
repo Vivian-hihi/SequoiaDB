@@ -112,7 +112,9 @@ namespace engine
 
    INT32 monDumpLastOpInfo( BSONObjBuilder &ob, const monAppCB &moncb ) ;
 
-   void  monDumpSvcTaskInfo( BSONObjBuilder &ob, const monSvcTaskInfo *pInfo ) ;
+   void  monDumpSvcTaskInfo( BSONObjBuilder &ob,
+                             const monSvcTaskInfo *pInfo,
+                             BOOLEAN exceptIDName = FALSE ) ;
 
    /*
       _monTransFetcher define

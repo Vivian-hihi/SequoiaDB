@@ -372,6 +372,20 @@ namespace engine
          if ( SDB_OK == rc )
          {
             pInfo->fromBSON( ptr->toBSON(), FALSE ) ;
+
+            if ( pItem->_ptr.get() &&
+                 ( pItem->_ptr->getTaskID() != pInfo->getTaskID() ||
+                   0 != ossStrcmp( pItem->_ptr->getTaskName(),
+                                   pInfo->getTaskName() ) ) )
+            {
+               schedTaskMgr *pSvcTaskMgr = pmdGetKRCB()->getSvcTaskMgr() ;
+               /// update task info
+               pItem->_ptr = pSvcTaskMgr->getTaskInfoPtr(
+                                                pItem->_info.getTaskID(),
+                                                pItem->_info.getTaskName() ) ;
+               /// update monApp's info
+               cb->getMonAppCB()->setSvcTaskInfo( pItem->_ptr.get() ) ;
+            }
          }
       }
 
