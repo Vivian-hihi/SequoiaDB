@@ -313,7 +313,8 @@ namespace engine
       {
          BSONObj objQuery( pQuery ) ;
          BSONElement e = objQuery.getField( FIELD_NAME_NAME ) ;
-         if ( 0 == ossStrcmp( e.valuestrsafe(), SYS_PREFIX SYS_VIRTUAL_CS ) )
+         if ( 0 == ossStrcmp( e.valuestrsafe(),
+                              CMD_ADMIN_PREFIX SYS_VIRTUAL_CS ) )
          {
             goto done ;
          }
@@ -421,7 +422,7 @@ namespace engine
          BSONObj objQuery( pQuery ) ;
          BSONElement e = objQuery.getField( FIELD_NAME_NAME ) ;
          if ( 0 == ossStrcmp( e.valuestrsafe(),
-                              SYS_PREFIX SYS_CL_SESSION_INFO ) )
+                              CMD_ADMIN_PREFIX SYS_CL_SESSION_INFO ) )
          {
             goto done ;
          }

@@ -877,6 +877,83 @@ namespace engine
       return MON_MASK_NODE_NAME | MON_MASK_GROUP_NAME ;
    }
 
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnListSvcTasks)
+   /*
+      _rtnListSvcTasks implement
+   */
+   _rtnListSvcTasks::_rtnListSvcTasks()
+   {
+   }
+
+   _rtnListSvcTasks::~_rtnListSvcTasks()
+   {
+   }
+
+   const CHAR *_rtnListSvcTasks::name ()
+   {
+      return CMD_NAME_LIST_SVCTASKS ;
+   }
+   RTN_COMMAND_TYPE _rtnListSvcTasks::type ()
+   {
+      return CMD_LIST_SVCTASKS ;
+   }
+
+   INT32 _rtnListSvcTasks::_getFetchType() const
+   {
+      return RTN_FETCH_SVCTASKS ;
+   }
+
+   BOOLEAN _rtnListSvcTasks::_isCurrent() const
+   {
+      return FALSE ;
+   }
+
+   UINT32 _rtnListSvcTasks::_addInfoMask() const
+   {
+      return MON_MASK_NODE_NAME ;
+   }
+
+   const CHAR* _rtnListSvcTasks::getIntrCMDName()
+   {
+      return CMD_NAME_LIST_SVCTASKS_INTR ;
+   }
+
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnListSvcTasksInner)
+   /*
+      _rtnListSvcTasksInner implement
+   */
+   _rtnListSvcTasksInner::_rtnListSvcTasksInner()
+   {
+   }
+
+   _rtnListSvcTasksInner::~_rtnListSvcTasksInner()
+   {
+   }
+
+   const CHAR *_rtnListSvcTasksInner::name ()
+   {
+      return CMD_NAME_LIST_SVCTASKS_INTR ;
+   }
+   RTN_COMMAND_TYPE _rtnListSvcTasksInner::type ()
+   {
+      return CMD_LIST_SVCTASKS ;
+   }
+
+   INT32 _rtnListSvcTasksInner::_getFetchType() const
+   {
+      return RTN_FETCH_SVCTASKS ;
+   }
+
+   BOOLEAN _rtnListSvcTasksInner::_isCurrent() const
+   {
+      return FALSE ;
+   }
+
+   UINT32 _rtnListSvcTasksInner::_addInfoMask() const
+   {
+      return MON_MASK_NODE_NAME ;
+   }
+
 }
 
 

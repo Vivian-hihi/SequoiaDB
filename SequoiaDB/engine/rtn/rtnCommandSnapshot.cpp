@@ -1012,11 +1012,7 @@ namespace engine
 
    UINT32 _rtnSnapshotConfigs::_addInfoMask() const
    {
-      return MON_MASK_NODE_NAME |
-             MON_MASK_IS_PRIMARY |
-             MON_MASK_SERVICE_STATUS |
-             MON_MASK_LSN_INFO |
-             MON_MASK_NODEID ;
+      return MON_MASK_NODE_NAME ;
    }
 
    const CHAR* _rtnSnapshotConfigs::getIntrCMDName()
@@ -1047,11 +1043,7 @@ namespace engine
 
    UINT32 _rtnSnapshotConfigsInner::_addInfoMask() const
    {
-      return MON_MASK_NODE_NAME |
-             MON_MASK_IS_PRIMARY |
-             MON_MASK_SERVICE_STATUS |
-             MON_MASK_LSN_INFO |
-             MON_MASK_NODEID ;
+      return MON_MASK_NODE_NAME ;
    }
 
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnSnapshotVCLSessionInfoInner)
@@ -1078,6 +1070,65 @@ namespace engine
    UINT32 _rtnSnapshotVCLSessionInfoInner::_addInfoMask() const
    {
       return 0 ;
+   }
+
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnSnapshotSvcTasks)
+
+   const CHAR* _rtnSnapshotSvcTasks::name()
+   {
+      return NAME_SNAPSHOT_SVCTASKS ;
+   }
+
+   RTN_COMMAND_TYPE _rtnSnapshotSvcTasks::type()
+   {
+      return CMD_SNAPSHOT_SVCTASKS ;
+   }
+
+   INT32 _rtnSnapshotSvcTasks::_getFetchType() const
+   {
+      return RTN_FETCH_SVCTASKS ;
+   }
+
+   BOOLEAN _rtnSnapshotSvcTasks::_isCurrent() const
+   {
+      return FALSE ;
+   }
+
+   UINT32 _rtnSnapshotSvcTasks::_addInfoMask() const
+   {
+      return MON_MASK_NODE_NAME ;
+   }
+
+   const CHAR* _rtnSnapshotSvcTasks::getIntrCMDName()
+   {
+      return CMD_NAME_SNAPSHOT_SVCTASKS_INTR ;
+   }
+
+   IMPLEMENT_CMD_AUTO_REGISTER( _rtnSnapshotSvcTasksInner )
+
+   const CHAR* _rtnSnapshotSvcTasksInner::name()
+   {
+      return CMD_NAME_SNAPSHOT_SVCTASKS_INTR ;
+   }
+
+   RTN_COMMAND_TYPE _rtnSnapshotSvcTasksInner::type()
+   {
+      return CMD_SNAPSHOT_SVCTASKS ;
+   }
+
+   INT32 _rtnSnapshotSvcTasksInner::_getFetchType() const
+   {
+      return RTN_FETCH_SVCTASKS ;
+   }
+
+   BOOLEAN _rtnSnapshotSvcTasksInner::_isCurrent() const
+   {
+      return FALSE ;
+   }
+
+   UINT32 _rtnSnapshotSvcTasksInner::_addInfoMask() const
+   {
+      return MON_MASK_NODE_NAME ;
    }
 
 }

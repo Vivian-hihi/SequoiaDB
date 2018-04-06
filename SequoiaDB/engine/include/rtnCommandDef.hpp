@@ -84,6 +84,7 @@ namespace engine
 #define NAME_SNAPSHOT_ACCESSPLANS            CMD_NAME_SNAPSHOT_ACCESSPLANS
 #define NAME_SNAPSHOT_HEALTH                 CMD_NAME_SNAPSHOT_HEALTH
 #define NAME_SNAPSHOT_CONFIGS                CMD_NAME_SNAPSHOT_CONFIGS
+#define NAME_SNAPSHOT_SVCTASKS               CMD_NAME_SNAPSHOT_SVCTASKS
 #define NAME_TEST_COLLECTION                 CMD_NAME_TEST_COLLECTION
 #define NAME_TEST_COLLECTIONSPACE            CMD_NAME_TEST_COLLECTIONSPACE
 #define NAME_SET_PDLEVEL                     CMD_NAME_SET_PDLEVEL
@@ -187,6 +188,7 @@ namespace engine
       CMD_LIST_TRANS_CURRENT                 = 56,
       CMD_CREATE_PROCEDURE                   = 57,
       CMD_REMOVE_PROCEDURE                   = 58,
+      CMD_LIST_SVCTASKS                      = 59,
 
       CMD_RENAME_COLLECTION                  = 60,
       CMD_RENAME_COLLECTIONSPACE             = 61,
@@ -214,6 +216,7 @@ namespace engine
       CMD_SNAPSHOT_HEALTH                    = 103,
       CMD_SNAPSHOT_CONFIGS                   = 104,
       CMD_SNAPSHOT_VCL_SESSIONINFO           = 105,
+      CMD_SNAPSHOT_SVCTASKS                  = 106,
 
       CMD_TEST_COLLECTION                    = 110,
       CMD_TEST_COLLECTIONSPACE               = 111,

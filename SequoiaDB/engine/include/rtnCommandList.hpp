@@ -483,6 +483,41 @@ namespace engine
          virtual UINT32  _addInfoMask() const ;
    } ;
 
+   class _rtnListSvcTasks : public _rtnList
+   {
+      DECLARE_CMD_AUTO_REGISTER()
+
+      public:
+         _rtnListSvcTasks() ;
+         virtual ~_rtnListSvcTasks() ;
+
+         virtual const CHAR * name () ;
+         virtual RTN_COMMAND_TYPE type () ;
+
+      protected:
+         virtual INT32   _getFetchType() const ;
+         virtual BOOLEAN _isCurrent() const ;
+         virtual UINT32  _addInfoMask() const ;
+
+      private:
+         virtual const CHAR *getIntrCMDName() ;
+   } ;
+
+   class _rtnListSvcTasksInner : public _rtnListInner
+   {
+      public:
+         _rtnListSvcTasksInner() ;
+         virtual ~_rtnListSvcTasksInner() ;
+
+         virtual const CHAR * name () ;
+         virtual RTN_COMMAND_TYPE type () ;
+
+      protected:
+         virtual INT32   _getFetchType() const ;
+         virtual BOOLEAN _isCurrent() const ;
+         virtual UINT32  _addInfoMask() const ;
+   } ;
+
 }
 
 #endif //RTN_COMMAND_LIST_HPP_

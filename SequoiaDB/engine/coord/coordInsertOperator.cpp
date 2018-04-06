@@ -125,7 +125,7 @@ namespace engine
          goto error ;
       }
 
-      if ( 0 == ossStrncmp( pCollectionName, SYS_PREFIX SYS_VIRTUAL_CS".",
+      if ( 0 == ossStrncmp( pCollectionName, CMD_ADMIN_PREFIX SYS_VIRTUAL_CS".",
                             SYS_VIRTUAL_CS_LEN + 1 ) )
       {
          rc = SDB_COORD_UNKNOWN_OP_REQ ;

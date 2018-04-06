@@ -208,7 +208,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      if ( 0 == ossStrcmp( fullName, SYS_PREFIX SYS_CL_SESSION_INFO ) )
+      if ( 0 == ossStrcmp( fullName, CMD_ADMIN_PREFIX SYS_CL_SESSION_INFO ) )
       {
          schedTaskMgr *pSvcTaskMgr = pmdGetKRCB()->getSvcTaskMgr() ;
          schedItem *pItem = ( schedItem* )getSession()->getSchedItemPtr() ;
@@ -242,7 +242,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      if ( 0 == ossStrcmp( fullName, SYS_PREFIX SYS_CL_SESSION_INFO ) )
+      if ( 0 == ossStrcmp( fullName, CMD_ADMIN_PREFIX SYS_CL_SESSION_INFO ) )
       {
          schedTaskMgr *pSvcTaskMgr = pmdGetKRCB()->getSvcTaskMgr() ;
          schedItem *pItem = ( schedItem* )getSession()->getSchedItemPtr() ;
@@ -272,7 +272,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      if ( 0 == ossStrcmp( fullName, SYS_PREFIX SYS_CL_SESSION_INFO ) )
+      if ( 0 == ossStrcmp( fullName, CMD_ADMIN_PREFIX SYS_CL_SESSION_INFO ) )
       {
          schedTaskMgr *pSvcTaskMgr = pmdGetKRCB()->getSvcTaskMgr() ;
          schedItem *pItem = ( schedItem* )getSession()->getSchedItemPtr() ;
@@ -313,7 +313,7 @@ namespace engine
                    "rc: %d", getSession()->sessionName(), rc ) ;
 
       /// When update virtual cs
-      if ( 0 == ossStrncmp( pCollectionName, SYS_PREFIX SYS_VIRTUAL_CS".",
+      if ( 0 == ossStrncmp( pCollectionName, CMD_ADMIN_PREFIX SYS_VIRTUAL_CS".",
                             SYS_VIRTUAL_CS_LEN + 1 ) )
       {
          try
@@ -398,7 +398,7 @@ namespace engine
                    getSession()->sessionName(), rc ) ;
 
       /// When insert virtual cs
-      if ( 0 == ossStrncmp( pCollectionName, SYS_PREFIX SYS_VIRTUAL_CS".",
+      if ( 0 == ossStrncmp( pCollectionName, CMD_ADMIN_PREFIX SYS_VIRTUAL_CS".",
                             SYS_VIRTUAL_CS_LEN + 1 ) )
       {
          try
@@ -644,7 +644,7 @@ namespace engine
                    getSession()->sessionName(), rc ) ;
 
       /// When delete virtual cs
-      if ( 0 == ossStrncmp( pCollectionName, SYS_PREFIX SYS_VIRTUAL_CS".",
+      if ( 0 == ossStrncmp( pCollectionName, CMD_ADMIN_PREFIX SYS_VIRTUAL_CS".",
                             SYS_VIRTUAL_CS_LEN + 1 ) )
       {
          try

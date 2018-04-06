@@ -109,7 +109,7 @@ namespace engine
       string clName = _collection.toString() ;
 
       /// When delete virtual cs
-      if ( 0 == ossStrncmp( clName.c_str(), SYS_PREFIX SYS_VIRTUAL_CS".",
+      if ( 0 == ossStrncmp( clName.c_str(), CMD_ADMIN_PREFIX SYS_VIRTUAL_CS".",
                             SYS_VIRTUAL_CS_LEN + 1 ) )
       {
          rc = _deleteVCS( clName.c_str(), _condition, eduCB ) ;
@@ -178,7 +178,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      if ( 0 == ossStrcmp( fullName, SYS_PREFIX SYS_CL_SESSION_INFO ) )
+      if ( 0 == ossStrcmp( fullName, CMD_ADMIN_PREFIX SYS_CL_SESSION_INFO ) )
       {
          schedTaskMgr *pSvcTaskMgr = pmdGetKRCB()->getSvcTaskMgr() ;
          schedItem *pItem = ( schedItem* )cb->getSession()->getSchedItemPtr() ;
