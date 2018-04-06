@@ -3863,12 +3863,12 @@ namespace engine
          _info = pItem->_info.toBSON() ;
          _hitEnd = FALSE ;
 
-         if ( pItem->_ptr.get() )
+         if ( cb->getMonAppCB()->getSvcTaskInfo() )
          {
             BSONObjBuilder builder ;
             builder.appendElements( _info ) ;
-            monDumpSvcTaskInfo( builder, pItem->_ptr.get() ) ;
-
+            monDumpSvcTaskInfo( builder,
+                                cb->getMonAppCB()->getSvcTaskInfo() ) ;
             _info = builder.obj() ;
          }
       }
