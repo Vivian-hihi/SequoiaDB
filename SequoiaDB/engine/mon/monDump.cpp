@@ -1007,6 +1007,7 @@ namespace engine
             mgr->resetIOService() ;
             pmdResetErrNum () ;
             startLogger->clearAll() ;
+            krcb->getSvcTaskMgr()->reset() ;
             break ;
          }
          case CMD_SNAPSHOT_DATABASE :
@@ -1036,6 +1037,11 @@ namespace engine
          {
             pmdResetErrNum () ;
             startLogger->clearAll() ;
+            break ;
+         }
+         case CMD_SNAPSHOT_SVCTASKS :
+         {
+            krcb->getSvcTaskMgr()->reset() ;
             break ;
          }
          default :
@@ -1428,6 +1434,24 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   void monDumpSvcTaskInfo( BSONObjBuilder &ob, const monSvcTaskInfo *pInfo )
+   {
+      ob.append( FIELD_NAME_TASK_NAME, pInfo->_taskName ) ;
+      ob.append( FIELD_NAME_TASK_ID, (INT64)pInfo->_taskID) ;
+      ob.append( FIELD_NAME_TOTALTIME, (INT64)( pInfo->_totalTime / 1000 ) ) ;
+      ob.append( FIELD_NAME_TOTALCONTEXTS, (INT64)pInfo->_totalContexts ) ;
+      ob.append( FIELD_NAME_TOTALDATAREAD, (INT64)pInfo->_totalDataRead ) ;
+      ob.append( FIELD_NAME_TOTALINDEXREAD, (INT64)pInfo->_totalIndexRead ) ;
+      ob.append( FIELD_NAME_TOTALDATAWRITE, (INT64)pInfo->_totalDataWrite ) ;
+      ob.append( FIELD_NAME_TOTALINDEXWRITE, (INT64)pInfo->_totalIndexWrite ) ;
+      ob.append( FIELD_NAME_TOTALUPDATE, (INT64)pInfo->_totalUpdate ) ;
+      ob.append( FIELD_NAME_TOTALDELETE, (INT64)pInfo->_totalDelete ) ;
+      ob.append( FIELD_NAME_TOTALINSERT, (INT64)pInfo->_totalInsert ) ;
+      ob.append( FIELD_NAME_TOTALSELECT, (INT64)pInfo->_totalSelect ) ;
+      ob.append( FIELD_NAME_TOTALREAD, (INT64)pInfo->_totalRead ) ;
+      ob.append( FIELD_NAME_TOTALWRITE, (INT64)pInfo->_totalWrite ) ;
    }
 
    /*
@@ -3801,23 +3825,23 @@ namespace engine
    }
 
    /*
-      _monVCLSessionInfo implement
+      _monVCLSessionInfoFetch implement
    */
-   IMPLEMENT_FETCH_AUTO_REGISTER( _monVCLSessionInfo, RTN_FETCH_VCL_SESSIONINFO )
-   _monVCLSessionInfo::_monVCLSessionInfo()
+   IMPLEMENT_FETCH_AUTO_REGISTER( _monVCLSessionInfoFetch, RTN_FETCH_VCL_SESSIONINFO )
+   _monVCLSessionInfoFetch::_monVCLSessionInfoFetch()
    {
-      _hitEnd = FALSE ;
+      _hitEnd = TRUE ;
    }
 
-   _monVCLSessionInfo::~_monVCLSessionInfo()
+   _monVCLSessionInfoFetch::~_monVCLSessionInfoFetch()
    {
    }
 
-   INT32 _monVCLSessionInfo::init( pmdEDUCB *cb,
-                                   BOOLEAN isCurrent,
-                                   BOOLEAN isDetail,
-                                   UINT32 addInfoMask,
-                                   const BSONObj obj )
+   INT32 _monVCLSessionInfoFetch::init( pmdEDUCB *cb,
+                                        BOOLEAN isCurrent,
+                                        BOOLEAN isDetail,
+                                        UINT32 addInfoMask,
+                                        const BSONObj obj )
    {
       ISession *pSession = cb->getSession() ;
 
@@ -3825,6 +3849,16 @@ namespace engine
       {
          schedItem *pItem = ( schedItem* )pSession->getSchedItemPtr() ;
          _info = pItem->_info.toBSON() ;
+         _hitEnd = FALSE ;
+
+         if ( pItem->_ptr.get() )
+         {
+            BSONObjBuilder builder ;
+            builder.appendElements( _info ) ;
+            monDumpSvcTaskInfo( builder, pItem->_ptr.get() ) ;
+
+            _info = builder.obj() ;
+         }
       }
       else
       {
@@ -3834,17 +3868,17 @@ namespace engine
       return SDB_OK ;
    }
 
-   const CHAR* _monVCLSessionInfo::getName() const
+   const CHAR* _monVCLSessionInfoFetch::getName() const
    {
       return SYS_CL_SESSION_INFO ;
    }
 
-   BOOLEAN _monVCLSessionInfo::isHitEnd() const
+   BOOLEAN _monVCLSessionInfoFetch::isHitEnd() const
    {
       return _hitEnd ;
    }
 
-   INT32 _monVCLSessionInfo::fetch( BSONObj & obj )
+   INT32 _monVCLSessionInfoFetch::fetch( BSONObj & obj )
    {
       INT32 rc = SDB_OK ;
 
@@ -3857,6 +3891,63 @@ namespace engine
          obj = _info ;
          _hitEnd = TRUE ;
       }
+
+      return rc ;
+   }
+
+   IMPLEMENT_FETCH_AUTO_REGISTER( _monSvcTasksFetch, RTN_FETCH_SVCTASKS )
+   /*
+      _monSvcTasksFetch implement
+   */
+   _monSvcTasksFetch::_monSvcTasksFetch()
+   {
+      _addInfoMask = 0 ;
+      _hitEnd = TRUE ;
+      _isDetail= TRUE ;
+   }
+
+   _monSvcTasksFetch::~_monSvcTasksFetch()
+   {
+   }
+
+   INT32 _monSvcTasksFetch::init( pmdEDUCB *cb,
+                                  BOOLEAN isCurrent,
+                                  BOOLEAN isDetail,
+                                  UINT32 addInfoMask,
+                                  const BSONObj obj )
+   {
+      schedTaskMgr *pMgr = pmdGetKRCB()->getSvcTaskMgr() ;
+
+      _isDetail = isDetail ;
+      _addInfoMask = addInfoMask ;
+      _mapSvcTask = pMgr->getTaskInfos() ;
+
+      if ( _mapSvcTask.empty() )
+      {
+         _hitEnd = TRUE ;
+      }
+      else
+      {
+         _hitEnd = FALSE ;
+      }
+
+      return SDB_OK ;
+   }
+
+   const CHAR* _monSvcTasksFetch::getName() const
+   {
+      return _isDetail ? CMD_NAME_SNAPSHOT_SVCTASKS :
+                         CMD_NAME_LIST_SVCTASKS ;
+   }
+
+   BOOLEAN _monSvcTasksFetch::isHitEnd() const
+   {
+      return _hitEnd ;
+   }
+
+   INT32 _monSvcTasksFetch::fetch( BSONObj &obj )
+   {
+      INT32 rc = SDB_OK ;
 
       return rc ;
    }

@@ -112,6 +112,8 @@ namespace engine
 
    INT32 monDumpLastOpInfo( BSONObjBuilder &ob, const monAppCB &moncb ) ;
 
+   void  monDumpSvcTaskInfo( BSONObjBuilder &ob, const monSvcTaskInfo *pInfo ) ;
+
    /*
       _monTransFetcher define
    */
@@ -607,15 +609,15 @@ namespace engine
    typedef _monConfigsFetch monConfigsFetch ;
 
    /*
-      _monVCLSessionInfo define
+      _monVCLSessionInfoFetch define
    */
-   class _monVCLSessionInfo : public rtnFetchBase
+   class _monVCLSessionInfoFetch : public rtnFetchBase
    {
       DECLARE_FETCH_AUTO_REGISTER()
 
       public:
-         _monVCLSessionInfo() ;
-         virtual ~_monVCLSessionInfo() ;
+         _monVCLSessionInfoFetch() ;
+         virtual ~_monVCLSessionInfoFetch() ;
 
          virtual INT32        init( pmdEDUCB *cb,
                                     BOOLEAN isCurrent,
@@ -633,7 +635,39 @@ namespace engine
          BOOLEAN                 _hitEnd ;
          BSONObj                 _info ;
    } ;
-   typedef _monVCLSessionInfo monVCLSessionInfo ;
+   typedef _monVCLSessionInfoFetch monVCLSessionInfoFetch ;
+
+   /*
+      _monSvcTasksFetch define
+   */
+   class _monSvcTasksFetch : public rtnFetchBase
+   {
+      DECLARE_FETCH_AUTO_REGISTER()
+
+      public:
+         _monSvcTasksFetch() ;
+         virtual ~_monSvcTasksFetch() ;
+
+         virtual INT32        init( pmdEDUCB *cb,
+                                    BOOLEAN isCurrent,
+                                    BOOLEAN isDetail,
+                                    UINT32 addInfoMask,
+                                    const BSONObj obj = BSONObj() ) ;
+
+         virtual const CHAR*  getName() const ;
+
+      public:
+         virtual BOOLEAN   isHitEnd() const ;
+         virtual INT32     fetch( BSONObj &obj ) ;
+
+      private:
+         UINT32                  _addInfoMask ;
+         BOOLEAN                 _hitEnd ;
+         BOOLEAN                 _isDetail ;
+
+         MAP_SVCTASKINFO_PTR     _mapSvcTask ;
+   } ;
+   typedef _monSvcTasksFetch monSvcTasksFetch ;
 
 }
 

@@ -443,6 +443,10 @@ namespace engine
          {
             _type = CMD_SNAPSHOT_HEALTH ;
          }
+         else if ( VALUE_NAME_SVCTASKS == type )
+         {
+            _type = CMD_SNAPSHOT_SVCTASKS ;
+         }
          else if ( VALUE_NAME_ALL == type )
          {
             _type = CMD_SNAPSHOT_ALL ; ;

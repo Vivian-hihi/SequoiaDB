@@ -219,6 +219,7 @@ namespace engine
                                    _pmdEDUCB * pEDUCB )
    {
       SDB_ASSERT ( context, "context pointer can't be NULL" ) ;
+      monSvcTaskInfo *pTaskInfo = NULL ;
 
       // if hit max signed 64 bit integer?
       if ( _contextIdGenerator.fetch() < 0 )
@@ -243,6 +244,12 @@ namespace engine
       _contextMap.insert( _contextId, *context ) ;
       pEDUCB->contextInsert( _contextId ) ;
       contextID = _contextId ;
+
+      pTaskInfo = pEDUCB->getMonAppCB()->getSvcTaskInfo() ;
+      if ( pTaskInfo )
+      {
+         pTaskInfo->monContextInc( 1 ) ;
+      }
 
       PD_LOG ( PDDEBUG, "Create new context(contextID=%lld, type: %d[%s])",
                contextID, type, getContextTypeDesp(type) ) ;
