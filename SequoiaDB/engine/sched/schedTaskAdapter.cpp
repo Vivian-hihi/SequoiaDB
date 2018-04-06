@@ -197,7 +197,6 @@ namespace engine
                                           INT64 priority,
                                           const schedInfo *pInfo )
    {
-      INT32 rc = SDB_OK ;
       schedTaskContanierPtr ptr ;
       string containerName = pInfo->getContianerName() ;
 
