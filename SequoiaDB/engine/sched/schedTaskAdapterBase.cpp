@@ -189,6 +189,11 @@ namespace engine
       builder.append( FIELD_NAME_SCHDLR_TIMES, (INT64)_hardNum.fetch() ) ;
    }
 
+   void _schedTaskAdapterBase::resetDump()
+   {
+      _hardNum.swap( 0 ) ;
+   }
+
    void _schedTaskAdapterBase::_push2Que( const pmdEDUEvent &event )
    {
       _queue.push( event, 0 ) ;

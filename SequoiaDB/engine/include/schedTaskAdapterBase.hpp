@@ -69,6 +69,7 @@ namespace engine
          UINT32               prepare( INT64 millisec ) ;
 
          void                 dump( BSONObjBuilder &builder ) ;
+         void                 resetDump() ;
 
       protected:
 

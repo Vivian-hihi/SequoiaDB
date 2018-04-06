@@ -1287,6 +1287,14 @@ namespace engine
       }
    }
 
+   void _clsMgr::resetDumpSchedInfo()
+   {
+      if ( _pShardAdapter )
+      {
+         _pShardAdapter->resetDump() ;
+      }
+   }
+
    // Register async internal sessions
    // The function itself doesn't start session. Instead the function place
    // a request in _vecInnerSessionParam vector so that another daemon will

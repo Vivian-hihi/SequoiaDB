@@ -1008,12 +1008,14 @@ namespace engine
             pmdResetErrNum () ;
             startLogger->clearAll() ;
             krcb->getSvcTaskMgr()->reset() ;
+            sdbGetClsCB()->resetDumpSchedInfo() ;
             break ;
          }
          case CMD_SNAPSHOT_DATABASE :
          {
             mondbcb->reset() ;
             mgr->resetIOService() ;
+            sdbGetClsCB()->resetDumpSchedInfo() ;
             break ;
          }
          case CMD_SNAPSHOT_SESSIONS :

@@ -261,6 +261,7 @@ namespace engine
          INT32    invalidatePlan ( const CHAR *name ) ;
 
          void     dumpSchedInfo( BSONObjBuilder &builder ) ;
+         void     resetDumpSchedInfo() ;
 
       protected:
 
