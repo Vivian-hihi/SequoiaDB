@@ -3,7 +3,6 @@
 script_path=$(cd `dirname $0`; pwd)
 comm_script_path=${script_path}/..
 js_file="${comm_script_path}/define.js"
-js_file="${js_file};${comm_script_path}/error.js"
 js_file="${js_file};${comm_script_path}/common.js"
 js_file="${js_file};${comm_script_path}/log.js"
 js_file="${js_file};${comm_script_path}/func.js"
