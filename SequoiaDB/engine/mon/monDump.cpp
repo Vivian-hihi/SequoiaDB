@@ -1438,8 +1438,8 @@ namespace engine
 
    void monDumpSvcTaskInfo( BSONObjBuilder &ob, const monSvcTaskInfo *pInfo )
    {
-      ob.append( FIELD_NAME_TASK_NAME, pInfo->_taskName ) ;
-      ob.append( FIELD_NAME_TASK_ID, (INT64)pInfo->_taskID) ;
+      ob.append( FIELD_NAME_TASK_NAME, pInfo->getTaskName() ) ;
+      ob.append( FIELD_NAME_TASK_ID, (INT64)pInfo->getTaskID() ) ;
       ob.append( FIELD_NAME_TOTALTIME, (INT64)( pInfo->_totalTime / 1000 ) ) ;
       ob.append( FIELD_NAME_TOTALCONTEXTS, (INT64)pInfo->_totalContexts ) ;
       ob.append( FIELD_NAME_TOTALDATAREAD, (INT64)pInfo->_totalDataRead ) ;
@@ -3948,6 +3948,34 @@ namespace engine
    INT32 _monSvcTasksFetch::fetch( BSONObj &obj )
    {
       INT32 rc = SDB_OK ;
+      MAP_SVCTASKINFO_PTR_IT it ;
+
+      if ( _hitEnd )
+      {
+         rc = SDB_DMS_EOC ;
+      }
+      else
+      {
+         BSONObjBuilder builder ;
+         it = _mapSvcTask.begin() ;
+
+         monAppendSystemInfo( builder, _addInfoMask ) ;
+
+         if ( _isDetail )
+         {
+            monDumpSvcTaskInfo( builder, it->second.get() ) ;
+         }
+         else
+         {
+            const monSvcTaskInfo *pInfo = it->second.get() ;
+            builder.append( FIELD_NAME_TASK_NAME, pInfo->_taskName ) ;
+            builder.append( FIELD_NAME_TASK_ID, (INT64)pInfo->_taskID) ;
+         }
+         obj = builder.obj() ;
+
+         _mapSvcTask.erase( it ) ;
+         _hitEnd = _mapSvcTask.empty() ? TRUE : FALSE ;
+      }
 
       return rc ;
    }
