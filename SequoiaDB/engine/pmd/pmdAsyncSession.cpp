@@ -912,7 +912,7 @@ namespace engine
       // Check the received code
       if ( MSG_BS_DISCONNECT == pMsg->opCode )
       {
-         PD_LOG ( PDINFO, "Session[%s] recieved disconnect message",
+         PD_LOG ( PDEVENT, "Session[%s] recieved disconnect message",
                   pSession->sessionName() ) ;
 
          _metaLatch.get() ;
@@ -932,7 +932,7 @@ namespace engine
       }
       else if ( MSG_BS_INTERRUPTE == pMsg->opCode )
       {
-         PD_LOG ( PDINFO, "Session[%s] recieved interrupt message",
+         PD_LOG ( PDEVENT, "Session[%s] recieved interrupt message",
                   pSession->sessionName() ) ;
          pSession->eduCB()->interrupt() ;
          // For interrupt message, we have to continue in order to push the

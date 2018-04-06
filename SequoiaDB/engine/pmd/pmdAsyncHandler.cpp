@@ -270,13 +270,14 @@ namespace engine
          goto error ;
       }
 
+      /// First inc
+      pSession->incPendingMsgNum() ;
       rc = _pTaskAdapter->push( handle, header, pSession->getSchedInfo() ) ;
       if ( rc )
       {
+         pSession->decPendingmsgNum() ;
          goto error ;
       }
-
-      pSession->incPendingMsgNum() ;
 
    done:
       if ( pSession )
