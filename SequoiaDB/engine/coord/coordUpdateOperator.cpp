@@ -140,8 +140,8 @@ namespace engine
          goto error ;
       }
 
-      if ( 0 == ossStrncmp( pCollectionName, SYS_VIRTUAL_CS".",
-                            SYS_VIRTUAL_CS_LEN ) )
+      if ( 0 == ossStrncmp( pCollectionName, SYS_PREFIX SYS_VIRTUAL_CS".",
+                            SYS_VIRTUAL_CS_LEN + 1 ) )
       {
          rc = SDB_COORD_UNKNOWN_OP_REQ ;
          goto error ;

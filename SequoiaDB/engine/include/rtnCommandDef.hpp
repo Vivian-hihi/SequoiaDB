@@ -213,6 +213,7 @@ namespace engine
       CMD_SNAPSHOT_ACCESSPLANS               = 102,
       CMD_SNAPSHOT_HEALTH                    = 103,
       CMD_SNAPSHOT_CONFIGS                   = 104,
+      CMD_SNAPSHOT_VCL_SESSIONINFO           = 105,
 
       CMD_TEST_COLLECTION                    = 110,
       CMD_TEST_COLLECTIONSPACE               = 111,

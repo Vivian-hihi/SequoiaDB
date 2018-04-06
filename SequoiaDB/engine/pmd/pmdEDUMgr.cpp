@@ -554,6 +554,46 @@ namespace engine
       return count ;
    }
 
+   UINT32 _pmdEDUMgr::sizeByType( INT32 type )
+   {
+      UINT32 count = 0 ;
+      MAP_EDUCB_IT it ;
+      _latch.get_shared() ;
+
+      it = _mapRuns.begin() ;
+      while( it != _mapRuns.end() )
+      {
+         if ( it->second->getType() == type )
+         {
+            ++count ;
+         }
+         ++it ;
+      }
+      _latch.release_shared() ;
+
+      return count ;
+   }
+
+   UINT32 _pmdEDUMgr::sizeWithSession()
+   {
+      UINT32 count = 0 ;
+      MAP_EDUCB_IT it ;
+      _latch.get_shared() ;
+
+      it = _mapRuns.begin() ;
+      while( it != _mapRuns.end() )
+      {
+         if ( NULL != it->second->getSession() )
+         {
+            ++count ;
+         }
+         ++it ;
+      }
+      _latch.release_shared() ;
+
+      return count ;
+   }
+
    void _pmdEDUMgr::sizeInfo( UINT32 &runSize,
                               UINT32 &idleSize,
                               UINT32 &sysSize )

@@ -104,6 +104,8 @@ namespace engine
          UINT32            sizeRun() ;
          UINT32            sizeIdle() ;
          UINT32            sizeSystem() ;
+         UINT32            sizeByType( INT32 type ) ;
+         UINT32            sizeWithSession() ;
          void              sizeInfo( UINT32 &runSize,
                                      UINT32 &idleSize,
                                      UINT32 &sysSize ) ;

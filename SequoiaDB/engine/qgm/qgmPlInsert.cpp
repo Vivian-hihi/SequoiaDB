@@ -176,6 +176,16 @@ namespace engine
          }
          else
          {
+            /// When insert virtual cs
+            if ( 0 == ossStrncmp( _fullName.c_str(), SYS_PREFIX SYS_VIRTUAL_CS".",
+                                  SYS_VIRTUAL_CS_LEN + 1 ) )
+            {
+               rc = _insertVCS( _fullName.c_str(), obj, eduCB ) ;
+               if ( rc )
+               {
+                  goto error ;
+               }
+            }
             if ( SDB_ROLE_COORD == _role )
             {
                rc = msgBuildInsertMsg ( &pMsg,
@@ -229,5 +239,36 @@ namespace engine
    {
       SDB_ASSERT( FALSE, "impossble" ) ;
       return SDB_SYS ;
+   }
+
+   INT32 _qgmPlInsert::_insertVCS( const CHAR *fullName,
+                                   const BSONObj &insertor,
+                                   _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( 0 == ossStrcmp( fullName, SYS_PREFIX SYS_CL_SESSION_INFO ) )
+      {
+         schedTaskMgr *pSvcTaskMgr = pmdGetKRCB()->getSvcTaskMgr() ;
+         schedItem *pItem = ( schedItem* )cb->getSession()->getSchedItemPtr() ;
+
+         pItem->_info.fromBSON( insertor, TRUE ) ;
+
+         /// update task info
+         pItem->_ptr = pSvcTaskMgr->getTaskInfoPtr( pItem->_info.getTaskID(),
+                                                    pItem->_info.getTaskName() ) ;
+         /// update monApp's info
+         cb->getMonAppCB()->setSvcTaskInfo( pItem->_ptr.get() ) ;
+      }
+      else
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 }

@@ -203,6 +203,100 @@ namespace engine
       return rtnMsg( (MsgOpMsg*)msg ) ;
    }
 
+   INT32 _pmdDataProcessor::_updateVCS( const CHAR *fullName,
+                                        const BSONObj &updator )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( 0 == ossStrcmp( fullName, SYS_PREFIX SYS_CL_SESSION_INFO ) )
+      {
+         schedTaskMgr *pSvcTaskMgr = pmdGetKRCB()->getSvcTaskMgr() ;
+         schedItem *pItem = ( schedItem* )getSession()->getSchedItemPtr() ;
+         BSONObj objSrc = pItem->_info.toBSON() ;
+         BSONObj objDest ;
+
+         objDest = rtnUpdator2Obj( objSrc, updator ) ;
+
+         pItem->_info.fromBSON( objDest, TRUE ) ;
+
+         /// update task info
+         pItem->_ptr = pSvcTaskMgr->getTaskInfoPtr( pItem->_info.getTaskID(),
+                                                    pItem->_info.getTaskName() ) ;
+         /// update monApp's info
+         eduCB()->getMonAppCB()->setSvcTaskInfo( pItem->_ptr.get() ) ;
+      }
+      else
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _pmdDataProcessor::_insertVCS( const CHAR *fullName,
+                                        const BSONObj &insertor )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( 0 == ossStrcmp( fullName, SYS_PREFIX SYS_CL_SESSION_INFO ) )
+      {
+         schedTaskMgr *pSvcTaskMgr = pmdGetKRCB()->getSvcTaskMgr() ;
+         schedItem *pItem = ( schedItem* )getSession()->getSchedItemPtr() ;
+
+         pItem->_info.fromBSON( insertor, TRUE ) ;
+
+         /// update task info
+         pItem->_ptr = pSvcTaskMgr->getTaskInfoPtr( pItem->_info.getTaskID(),
+                                                    pItem->_info.getTaskName() ) ;
+         /// update monApp's info
+         eduCB()->getMonAppCB()->setSvcTaskInfo( pItem->_ptr.get() ) ;
+      }
+      else
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _pmdDataProcessor::_deleteVCS( const CHAR *fullName,
+                                        const BSONObj &deletor )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( 0 == ossStrcmp( fullName, SYS_PREFIX SYS_CL_SESSION_INFO ) )
+      {
+         schedTaskMgr *pSvcTaskMgr = pmdGetKRCB()->getSvcTaskMgr() ;
+         schedItem *pItem = ( schedItem* )getSession()->getSchedItemPtr() ;
+
+         pItem->_info.reset() ;
+
+         /// update task info
+         pItem->_ptr = pSvcTaskMgr->getTaskInfoPtr( pItem->_info.getTaskID(),
+                                                    pItem->_info.getTaskName() ) ;
+         /// update monApp's info
+         eduCB()->getMonAppCB()->setSvcTaskInfo( pItem->_ptr.get() ) ;
+      }
+      else
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _pmdDataProcessor::_onUpdateReqMsg( MsgHeader *msg, SDB_DPSCB *dpsCB )
    {
       INT32 rc    = SDB_OK ;
@@ -219,8 +313,8 @@ namespace engine
                    "rc: %d", getSession()->sessionName(), rc ) ;
 
       /// When update virtual cs
-      if ( 0 == ossStrncmp( pCollectionName, SYS_VIRTUAL_CS".",
-                            SYS_VIRTUAL_CS_LEN ) )
+      if ( 0 == ossStrncmp( pCollectionName, SYS_PREFIX SYS_VIRTUAL_CS".",
+                            SYS_VIRTUAL_CS_LEN + 1 ) )
       {
          try
          {
@@ -290,40 +384,6 @@ namespace engine
       goto done ;
    }
 
-   INT32 _pmdDataProcessor::_updateVCS( const CHAR *fullName,
-                                        const BSONObj &updator )
-   {
-      INT32 rc = SDB_OK ;
-
-      if ( 0 == ossStrcmp( fullName, SYS_CL_SESSION_INFO ) )
-      {
-         schedTaskMgr *pSvcTaskMgr = pmdGetKRCB()->getSvcTaskMgr() ;
-         schedItem *pItem = ( schedItem* )getSession()->getSchedItemPtr() ;
-         BSONObj objSrc = pItem->_info.toBSON() ;
-         BSONObj objDest ;
-
-         objDest = rtnUpdator2Obj( objSrc, updator ) ;
-
-         pItem->_info.fromBSON( objDest, TRUE ) ;
-
-         /// update task info
-         pItem->_ptr = pSvcTaskMgr->getTaskInfoPtr( pItem->_info.getTaskID(),
-                                                    pItem->_info.getTaskName() ) ;
-         /// update monApp's info
-         eduCB()->getMonAppCB()->setSvcTaskInfo( pItem->_ptr.get() ) ;
-      }
-      else
-      {
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
    INT32 _pmdDataProcessor::_onInsertReqMsg( MsgHeader * msg )
    {
       INT32 rc    = SDB_OK ;
@@ -336,6 +396,28 @@ namespace engine
                              &pInsertor, count ) ;
       PD_RC_CHECK( rc, PDERROR, "Session[%s] extrace insert msg failed, rc: %d",
                    getSession()->sessionName(), rc ) ;
+
+      /// When insert virtual cs
+      if ( 0 == ossStrncmp( pCollectionName, SYS_PREFIX SYS_VIRTUAL_CS".",
+                            SYS_VIRTUAL_CS_LEN + 1 ) )
+      {
+         try
+         {
+            BSONObj objInsertor( pInsertor ) ;
+            rc = _insertVCS( pCollectionName, objInsertor ) ;
+            if ( rc )
+            {
+               goto error ;
+            }
+            goto done ;
+         }
+         catch( std::exception &e )
+         {
+            PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+      }
 
       try
       {
@@ -560,6 +642,28 @@ namespace engine
                               &pDeletorBuffer, &pHintBuffer ) ;
       PD_RC_CHECK( rc, PDERROR, "Session[%s] extract delete msg failed, rc: %d",
                    getSession()->sessionName(), rc ) ;
+
+      /// When delete virtual cs
+      if ( 0 == ossStrncmp( pCollectionName, SYS_PREFIX SYS_VIRTUAL_CS".",
+                            SYS_VIRTUAL_CS_LEN + 1 ) )
+      {
+         try
+         {
+            BSONObj objDeletor( pDeletorBuffer ) ;
+            rc = _deleteVCS( pCollectionName, objDeletor ) ;
+            if ( rc )
+            {
+               goto error ;
+            }
+            goto done ;
+         }
+         catch( std::exception &e )
+         {
+            PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+      }
 
       try
       {

@@ -193,6 +193,7 @@
 #define FIELD_NAME_CURRENTACTIVESESSIONS     "CurrentActiveSessions"
 #define FIELD_NAME_CURRENTIDLESESSIONS       "CurrentIdleSessions"
 #define FIELD_NAME_CURRENTSYSTEMSESSIONS     "CurrentSystemSessions"
+#define FIELD_NAME_CURRENTTASKSESSIONS       "CurrentTaskSessions"
 #define FIELD_NAME_CURRENTCONTEXTS           "CurrentContexts"
 #define FIELD_NAME_SESSIONS                  "Sessions"
 #define FIELD_NAME_STATUS                    "Status"
@@ -601,7 +602,7 @@
 #define CMD_NAME_LIST_DOMAIN_INTR            "LIST_DOMAIN"
 #define CMD_NAME_LIST_SVCTASKS_INTR          "LIST_SVCTASKS"
 
-#define SYS_VIRTUAL_CS                       CMD_ADMIN_PREFIX"SYS_VCS"
+#define SYS_VIRTUAL_CS                       "SYS_VCS"
 #define SYS_VIRTUAL_CS_LEN                   sizeof( SYS_VIRTUAL_CS )
 #define SYS_CL_SESSION_INFO                  SYS_VIRTUAL_CS".SYS_SESSION_INFO"
 

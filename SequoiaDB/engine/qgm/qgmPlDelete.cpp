@@ -106,8 +106,15 @@ namespace engine
       SDB_ROLE role = krcb->getDBRole() ;
       CHAR *msg = NULL ;
       INT32 bufSize = 0 ;
+      string clName = _collection.toString() ;
 
-      if ( SDB_ROLE_COORD == role )
+      /// When delete virtual cs
+      if ( 0 == ossStrncmp( clName.c_str(), SYS_PREFIX SYS_VIRTUAL_CS".",
+                            SYS_VIRTUAL_CS_LEN + 1 ) )
+      {
+         rc = _deleteVCS( clName.c_str(), _condition, eduCB ) ;
+      }
+      else if ( SDB_ROLE_COORD == role )
       {
          CoordCB *pCoord = krcb->getCoordCB() ;
          INT64 contextID = -1 ;
@@ -115,7 +122,7 @@ namespace engine
 
          coordDeleteOperator opr ;
          rc = msgBuildDeleteMsg( &msg, &bufSize,
-                                 _collection.toString().c_str(),
+                                 clName.c_str(),
                                  0, 0,
                                  _condition.isEmpty() ? NULL : &_condition,
                                  NULL, eduCB ) ;
@@ -144,7 +151,7 @@ namespace engine
          }
          SDB_DMSCB *dmsCB = krcb->getDMSCB() ;
          BSONObj empty ;
-         rc = rtnDelete( _collection.toString().c_str(),
+         rc = rtnDelete( clName.c_str(),
                          _condition, empty, 0, eduCB,
                          dmsCB, dpsCB ) ;
       }
@@ -164,4 +171,36 @@ namespace engine
    error:
       goto done ;
    }
+
+   INT32 _qgmPlDelete::_deleteVCS( const CHAR *fullName,
+                                   const BSONObj &deletor,
+                                   _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( 0 == ossStrcmp( fullName, SYS_PREFIX SYS_CL_SESSION_INFO ) )
+      {
+         schedTaskMgr *pSvcTaskMgr = pmdGetKRCB()->getSvcTaskMgr() ;
+         schedItem *pItem = ( schedItem* )cb->getSession()->getSchedItemPtr() ;
+
+         pItem->_info.reset() ;
+
+         /// update task info
+         pItem->_ptr = pSvcTaskMgr->getTaskInfoPtr( pItem->_info.getTaskID(),
+                                                    pItem->_info.getTaskName() ) ;
+         /// update monApp's info
+         cb->getMonAppCB()->setSvcTaskInfo( pItem->_ptr.get() ) ;
+      }
+      else
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
 }

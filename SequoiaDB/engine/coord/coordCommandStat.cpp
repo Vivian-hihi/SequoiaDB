@@ -105,8 +105,8 @@ namespace engine
       }
 
       if ( 0 == ossStrncmp( queryConf._realCLName.c_str(),
-                            SYS_VIRTUAL_CS".",
-                            SYS_VIRTUAL_CS_LEN ) )
+                            SYS_PREFIX SYS_VIRTUAL_CS".",
+                            SYS_VIRTUAL_CS_LEN + 1 ) )
       {
          rc = _executeOnVCL( queryConf._realCLName.c_str(), cb, contextID ) ;
          if ( rc )
@@ -156,7 +156,7 @@ namespace engine
       SDB_RTNCB *pRtncb = pmdGetKRCB()->getRTNCB() ;
       rtnQueryOptions defaultOptions ;
 
-      if ( 0 != ossStrcmp( pCLName, SYS_CL_SESSION_INFO ) )
+      if ( 0 != ossStrcmp( pCLName, SYS_PREFIX SYS_CL_SESSION_INFO ) )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
@@ -410,7 +410,9 @@ namespace engine
                                                rtnContext *pContext,
                                                pmdEDUCB *cb )
    {
-      return pContext->append( BSON( FIELD_NAME_TOTAL << (INT64)1 ) ) ;
+      INT32 rc = SDB_OK ;
+      rc = pContext->append( BSON( FIELD_NAME_TOTAL << (INT64)1 ) ) ;
+      return rc ;
    }
 
    /*

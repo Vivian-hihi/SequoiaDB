@@ -61,6 +61,11 @@ namespace engine
          return SDB_SYS ;
       }
 
+   protected:
+      INT32 _deleteVCS( const CHAR *fullName,
+                        const BSONObj &deletor,
+                        _pmdEDUCB *cb ) ;
+
    private:
       qgmDbAttr _collection ;
       BSONObj _condition ;

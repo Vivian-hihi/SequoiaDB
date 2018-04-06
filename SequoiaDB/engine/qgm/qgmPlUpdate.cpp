@@ -100,23 +100,12 @@ namespace engine
       INT32 msgSize = 0 ;
 
       /// When update virtual cs
-      if ( 0 == ossStrncmp( clName.c_str(), SYS_VIRTUAL_CS".",
-                            SYS_VIRTUAL_CS_LEN ) )
+      if ( 0 == ossStrncmp( clName.c_str(), SYS_PREFIX SYS_VIRTUAL_CS".",
+                            SYS_VIRTUAL_CS_LEN + 1 ) )
       {
-         try
+         rc = _updateVCS( clName.c_str(), _updater, eduCB ) ;
+         if ( rc )
          {
-            BSONObj objUpdator( _updater ) ;
-            rc = _updateVCS( clName.c_str(), objUpdator, eduCB ) ;
-            if ( rc )
-            {
-               goto error ;
-            }
-            goto done ;
-         }
-         catch( std::exception &e )
-         {
-            PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
-            rc = SDB_SYS ;
             goto error ;
          }
       }
@@ -192,7 +181,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      if ( 0 == ossStrcmp( fullName, SYS_CL_SESSION_INFO ) )
+      if ( 0 == ossStrcmp( fullName, SYS_PREFIX SYS_CL_SESSION_INFO ) )
       {
          schedTaskMgr *pSvcTaskMgr = pmdGetKRCB()->getSvcTaskMgr() ;
          schedItem *pItem = ( schedItem* )cb->getSession()->getSchedItemPtr() ;

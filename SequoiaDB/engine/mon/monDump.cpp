@@ -2668,6 +2668,8 @@ namespace engine
                      (SINT32)mgr->sizeIdle () ) ;
          ob.append ( FIELD_NAME_CURRENTSYSTEMSESSIONS,
                      (SINT32)mgr->sizeSystem() ) ;
+         ob.append( FIELD_NAME_CURRENTTASKSESSIONS,
+                     (SINT32)mgr->sizeByType( EDU_TYPE_BACKGROUND_JOB ) ) ;
          ob.append ( FIELD_NAME_CURRENTCONTEXTS, (SINT32)rtnCB->contextNum() ) ;
          ob.append ( FIELD_NAME_RECEIVECOUNT,
                      (INT64)mondbcb->getReceiveNum() ) ;
@@ -3796,6 +3798,67 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   /*
+      _monVCLSessionInfo implement
+   */
+   IMPLEMENT_FETCH_AUTO_REGISTER( _monVCLSessionInfo, RTN_FETCH_VCL_SESSIONINFO )
+   _monVCLSessionInfo::_monVCLSessionInfo()
+   {
+      _hitEnd = FALSE ;
+   }
+
+   _monVCLSessionInfo::~_monVCLSessionInfo()
+   {
+   }
+
+   INT32 _monVCLSessionInfo::init( pmdEDUCB *cb,
+                                   BOOLEAN isCurrent,
+                                   BOOLEAN isDetail,
+                                   UINT32 addInfoMask,
+                                   const BSONObj obj )
+   {
+      ISession *pSession = cb->getSession() ;
+
+      if ( pSession )
+      {
+         schedItem *pItem = ( schedItem* )pSession->getSchedItemPtr() ;
+         _info = pItem->_info.toBSON() ;
+      }
+      else
+      {
+         _hitEnd = TRUE ;
+      }
+
+      return SDB_OK ;
+   }
+
+   const CHAR* _monVCLSessionInfo::getName() const
+   {
+      return SYS_CL_SESSION_INFO ;
+   }
+
+   BOOLEAN _monVCLSessionInfo::isHitEnd() const
+   {
+      return _hitEnd ;
+   }
+
+   INT32 _monVCLSessionInfo::fetch( BSONObj & obj )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( _hitEnd )
+      {
+         rc = SDB_DMS_EOC ;
+      }
+      else
+      {
+         obj = _info ;
+         _hitEnd = TRUE ;
+      }
+
+      return rc ;
    }
 
 }

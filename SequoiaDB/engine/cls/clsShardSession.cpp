@@ -891,8 +891,8 @@ namespace engine
       _pCollectionName = pCollectionName ;
 
       /// When update virtual cs
-      if ( 0 == ossStrncmp( pCollectionName, SYS_VIRTUAL_CS".",
-                            SYS_VIRTUAL_CS_LEN ) )
+      if ( 0 == ossStrncmp( pCollectionName, SYS_PREFIX SYS_VIRTUAL_CS".",
+                            SYS_VIRTUAL_CS_LEN + 1 ) )
       {
          try
          {
@@ -1018,13 +1018,6 @@ namespace engine
       INT16 clientW = pInsert->w ;
       INT16 replSize = 0 ;
 
-      rc = _checkWriteStatus() ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDWARNING, "failed to check write status:%d", rc ) ;
-         goto error ;
-      }
-
       rc = msgExtractInsert ( (CHAR*)msg,  &flags, &pCollectionName,
                               &pInsertorBuffer, recordNum ) ;
       if ( SDB_OK != rc )
@@ -1034,6 +1027,13 @@ namespace engine
          goto error ;
       }
       _pCollectionName = pCollectionName ;
+
+      rc = _checkWriteStatus() ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDWARNING, "failed to check write status:%d", rc ) ;
+         goto error ;
+      }
 
       rc = _checkCLStatusAndGetSth( pCollectionName,
                                     pInsert->version,
@@ -1110,22 +1110,22 @@ namespace engine
       INT16 clientW = pDelete->w ;
       INT16 replSize = 0 ;
 
+      rc = msgExtractDelete ( (CHAR *)msg , &flags, &pCollectionName,
+                              &pMatcherBuffer, &pHintBuffer ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG ( PDERROR, "Session[%s] extract delete msg failed[rc:%d]",
+                  sessionName(), rc ) ;
+         goto error ;
+      }
+      _pCollectionName = pCollectionName ;
+
       rc = _checkWriteStatus() ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDWARNING, "failed to check write status:%d", rc ) ;
          goto error ;
       }
-
-      rc = msgExtractDelete ( (CHAR *)msg , &flags, &pCollectionName,
-                              &pMatcherBuffer, &pHintBuffer ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG ( PDERROR, "Session[%s] extract delete msg failed[rc:%d]",
-            sessionName(), rc ) ;
-         goto error ;
-      }
-      _pCollectionName = pCollectionName ;
 
       rc = _checkCLStatusAndGetSth( pCollectionName, pDelete->version,
                                     &_isMainCL, &replSize, mainCLName ) ;
@@ -4373,7 +4373,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      if ( 0 == ossStrcmp( fullName, SYS_CL_SESSION_INFO ) )
+      if ( 0 == ossStrcmp( fullName, SYS_PREFIX SYS_CL_SESSION_INFO ) )
       {
          schedTaskMgr *pSvcTaskMgr = pmdGetKRCB()->getSvcTaskMgr() ;
 

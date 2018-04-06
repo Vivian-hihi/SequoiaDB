@@ -68,6 +68,11 @@ namespace engine
 
       INT32 _nextRecord( _pmdEDUCB *eduCB, BSONObj &obj ) ;
 
+   protected:
+      INT32 _insertVCS( const CHAR *fullName,
+                        const BSONObj &insertor,
+                        _pmdEDUCB *cb ) ;
+
    private:
       string         _fullName ;
       BSONObj        _insertor ;

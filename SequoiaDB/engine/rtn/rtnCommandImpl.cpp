@@ -1809,7 +1809,7 @@ namespace engine
       dmsStorageUnit *su = NULL ;
       dmsStorageUnitID suID = DMS_INVALID_CS ;
 
-      if ( 0 == ossStrcmp( pCollectionSpace, SYS_VIRTUAL_CS ) )
+      if ( 0 == ossStrcmp( pCollectionSpace, SYS_PREFIX SYS_VIRTUAL_CS ) )
       {
          goto done ;
       }
@@ -1906,7 +1906,7 @@ namespace engine
       const CHAR *pCollectionShortName = NULL ;
       UINT16 cID ;
 
-      if ( 0 == ossStrcmp( pCollection, SYS_CL_SESSION_INFO ) )
+      if ( 0 == ossStrcmp( pCollection, SYS_PREFIX SYS_CL_SESSION_INFO ) )
       {
          goto done ;
       }

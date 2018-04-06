@@ -572,6 +572,23 @@ namespace engine
          virtual UINT32  _addInfoMask() const ;
    } ;
 
+   class _rtnSnapshotVCLSessionInfoInner : public _rtnSnapshotInner
+   {
+      DECLARE_CMD_AUTO_REGISTER()
+
+      public:
+         _rtnSnapshotVCLSessionInfoInner() {}
+         virtual ~_rtnSnapshotVCLSessionInfoInner() {}
+
+         virtual const CHAR * name () ;
+         virtual RTN_COMMAND_TYPE type () ;
+
+      protected:
+         virtual INT32   _getFetchType() const ;
+         virtual BOOLEAN _isCurrent() const ;
+         virtual UINT32  _addInfoMask() const ;
+   } ;
+
 }
 
 #endif //RTN_COMMAND_SNAPSHOT_HPP_

@@ -82,6 +82,8 @@ namespace engine
       RTN_FETCH_HEALTH,                /// node health check
       RTN_FETCH_CONFIGS,               /// config
 
+      RTN_FETCH_VCL_SESSIONINFO,       /// VCL session info
+
       RTN_FETCH_MAX
    } ;
 

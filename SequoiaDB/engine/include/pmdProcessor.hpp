@@ -108,6 +108,12 @@ namespace engine
          INT32                   _updateVCS( const CHAR *fullName,
                                              const BSONObj &updator ) ;
 
+         INT32                   _insertVCS( const CHAR *fullName,
+                                             const BSONObj &insertor ) ;
+
+         INT32                   _deleteVCS( const CHAR *fullName,
+                                             const BSONObj &deletor ) ;
+
       protected:
          _SDB_KRCB *             _pKrcb ;
          _SDB_DMSCB *            _pDMSCB ;

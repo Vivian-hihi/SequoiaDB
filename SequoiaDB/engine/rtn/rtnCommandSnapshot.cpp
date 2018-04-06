@@ -1054,4 +1054,30 @@ namespace engine
              MON_MASK_NODEID ;
    }
 
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnSnapshotVCLSessionInfoInner)
+   const CHAR *_rtnSnapshotVCLSessionInfoInner::name ()
+   {
+      return SYS_CL_SESSION_INFO ;
+   }
+
+   RTN_COMMAND_TYPE _rtnSnapshotVCLSessionInfoInner::type ()
+   {
+      return CMD_SNAPSHOT_VCL_SESSIONINFO ;
+   }
+
+   INT32 _rtnSnapshotVCLSessionInfoInner::_getFetchType() const
+   {
+      return RTN_FETCH_VCL_SESSIONINFO ;
+   }
+
+   BOOLEAN _rtnSnapshotVCLSessionInfoInner::_isCurrent() const
+   {
+      return TRUE ;
+   }
+
+   UINT32 _rtnSnapshotVCLSessionInfoInner::_addInfoMask() const
+   {
+      return 0 ;
+   }
+
 }

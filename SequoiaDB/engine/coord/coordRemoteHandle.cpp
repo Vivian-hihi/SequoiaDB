@@ -507,7 +507,7 @@ namespace engine
       CHAR *pBuff = NULL ;
       INT32 buffSize = 0 ;
 
-      rc = msgBuildUpdateMsg( &pBuff, &buffSize, SYS_CL_SESSION_INFO,
+      rc = msgBuildUpdateMsg( &pBuff, &buffSize, SYS_PREFIX SYS_CL_SESSION_INFO,
                               0, 0, NULL,  &objSched, NULL, cb ) ;
       if ( rc )
       {
