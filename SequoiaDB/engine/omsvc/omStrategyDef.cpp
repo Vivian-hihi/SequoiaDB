@@ -299,7 +299,6 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       BSONElement beField ;
-      BSONObj ipsObj ;
 
       /// RuleID
       beField = obj.getField( OM_REST_FIELD_RULE_ID ) ;
@@ -420,7 +419,7 @@ namespace engine
          while( itr.more() )
          {
             e = itr.next() ;
-            if ( String != beField.type() )
+            if ( String != e.type() )
             {
                PD_LOG( PDERROR, "Field[%s] must be string array",
                        beField.toString( TRUE, TRUE ).c_str() ) ;
