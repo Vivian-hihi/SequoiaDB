@@ -1438,8 +1438,8 @@ namespace engine
 
    void monDumpSvcTaskInfo( BSONObjBuilder &ob, const monSvcTaskInfo *pInfo )
    {
-      ob.append( FIELD_NAME_TASK_NAME, pInfo->getTaskName() ) ;
       ob.append( FIELD_NAME_TASK_ID, (INT64)pInfo->getTaskID() ) ;
+      ob.append( FIELD_NAME_TASK_NAME, pInfo->getTaskName() ) ;
       ob.append( FIELD_NAME_TOTALTIME, (INT64)( pInfo->_totalTime / 1000 ) ) ;
       ob.append( FIELD_NAME_TOTALCONTEXTS, (INT64)pInfo->_totalContexts ) ;
       ob.append( FIELD_NAME_TOTALDATAREAD, (INT64)pInfo->_totalDataRead ) ;
@@ -3968,8 +3968,8 @@ namespace engine
          else
          {
             const monSvcTaskInfo *pInfo = it->second.get() ;
-            builder.append( FIELD_NAME_TASK_NAME, pInfo->_taskName ) ;
-            builder.append( FIELD_NAME_TASK_ID, (INT64)pInfo->_taskID) ;
+            builder.append( FIELD_NAME_TASK_ID, (INT64)pInfo->getTaskID() ) ;
+            builder.append( FIELD_NAME_TASK_NAME, pInfo->getTaskName() ) ;
          }
          obj = builder.obj() ;
 

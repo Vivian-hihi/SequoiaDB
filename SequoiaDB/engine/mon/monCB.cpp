@@ -426,7 +426,6 @@ namespace engine
 
       _startTimestamp = _resetTimestamp ;
       _taskID = 0 ;
-      _totalContexts = 0 ;
       ossMemset( _taskName, 0, sizeof( _taskName ) ) ;
    }
 
@@ -451,6 +450,7 @@ namespace engine
       _totalSelect         = 0 ;
       _totalRead           = 0 ;
       _totalWrite          = 0 ;
+      _totalContexts       = 0 ;
 
       ossGetCurrentTime( _resetTimestamp ) ;
    }
