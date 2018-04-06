@@ -509,6 +509,7 @@ namespace engine
       BOOLEAN locked = FALSE ;
       BOOLEAN againTry = FALSE ;
       UINT32 timeout = 0 ;
+      monSvcTaskInfo *pOldInfo = NULL ;
 
       while ( timeout < OSS_ONE_SEC )
       {
@@ -552,6 +553,9 @@ namespace engine
       if ( _pMonAppCB && cb->getID() != eduID() )
       {
          cb->getMonAppCB()->reset() ;
+         /// save task info
+         pOldInfo = cb->getMonAppCB()->getSvcTaskInfo() ;
+         cb->getMonAppCB()->setSvcTaskInfo( _pMonAppCB->getSvcTaskInfo() ) ;
       }
       rc = _prepareDataMonitor( cb ) ;
       _prefetchRet = rc ;
@@ -565,6 +569,8 @@ namespace engine
          *_pMonAppCB += *cb->getMonAppCB() ;
          _monCtxCB.monDataReadInc( cb->getMonAppCB()->totalDataRead ) ;
          cb->getMonAppCB()->reset() ;
+         /// restore task info
+         cb->getMonAppCB()->setSvcTaskInfo( pOldInfo ) ;
       }
 
       if ( SDB_OK == rc && isEmpty() && isOpened() && !eof() &&
