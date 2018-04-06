@@ -419,9 +419,9 @@ function processSnapshot( db, snapType, nodeArr, timestamp )
 
 function getTable( operationType, type )
 {
-   var snapshotTable = ["", "", "", "", "CL_CL_DETAIL_INFO", "", "CL_DATABASE_INFO", "CL_SYSTEM_INFO", "", "", "", "CL_TASK_INFO" ] ;
+   var snapshotTable = ["", "", "", "", "CL_CL_DETAIL_INFO", "", "CL_DATABASE_INFO", "CL_SYSTEM_INFO", "", "", "", "", "", "", "CL_TASK_INFO" ] ;
    // TODO: add the actual table name here
-   var listTable = ["", "", "", "", "CL_CL_LIST_INFO", "CL_CS_LIST_INFO", "", "CL_GROUP_LIST_INFO", "", "", "", "", "" ] ;
+   var listTable = ["", "", "", "", "CL_CL_LIST_INFO", "CL_CS_LIST_INFO", "", "CL_GROUP_LIST_INFO", "", "", "", "", "", "", "" ] ;
    if ( OP_TYPE_GET_SNAPSHOT == operationType )
    {
       if ( type < 0 || type >= SNAPSHOT_TYPE_MAX )
@@ -738,8 +738,8 @@ var CS_CMBC_STAT="CS_CMBC_STAT" ;
 var CL_LOG_INFO="CL_LOG_INFO" ;
 var OP_TYPE_GET_SNAPSHOT = 0 ;
 var OP_TYPE_GET_LIST = 1 ;
-var SNAPSHOT_TYPE_MAX=12 ;
-var LIST_TYPE_MAX=13 ;
+var SNAPSHOT_TYPE_MAX=15 ;
+var LIST_TYPE_MAX=15 ;
 var RG_LIST ;
 var CUR_DATE = new Date() ;
 var IGNORE_FIELDS = [ "NodeID" ] ;
