@@ -184,6 +184,8 @@ namespace engine
                       schedType2String( _getType() ) ) ;
       builder.append( FIELD_NAME_RUN, (INT32)_pTaskInfo->getRunTaskNum() ) ;
       builder.append( FIELD_NAME_WAIT, (INT32)_eventNum.fetch() ) ;
+      builder.append( FIELD_NAME_SCHDLR_MGR_EVT_NUM,
+                      (INT32)_cacheNum.fetch() ) ;
       builder.append( FIELD_NAME_SCHDLR_TIMES, (INT64)_hardNum.fetch() ) ;
    }
 

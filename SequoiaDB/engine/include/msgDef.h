@@ -436,6 +436,7 @@
 #define FIELD_NAME_SCHDLR_TYPE               "SchdlrType"
 #define FIELD_NAME_SCHDLR_TYPE_DESP          "SchdlrTypeDesp"
 #define FIELD_NAME_SCHDLR_TIMES              "SchdlrTimes"
+#define FIELD_NAME_SCHDLR_MGR_EVT_NUM        "SchdlrMgrEvtNum"
 /// strategy field end
 
 #define FIELD_NAME_ANALYZE_MODE              "Mode"

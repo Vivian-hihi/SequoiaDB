@@ -1282,6 +1282,7 @@ namespace engine
          builder.append( FIELD_NAME_RUN,
                         (INT32)_shardSessionMgr.getTaskInfo()->getRunTaskNum() ) ;
          builder.append( FIELD_NAME_WAIT, 0 ) ;
+         builder.append( FIELD_NAME_SCHDLR_MGR_EVT_NUM, 0 ) ;
          builder.append( FIELD_NAME_SCHDLR_TIMES, (INT64)0 ) ;
       }
    }
