@@ -114,6 +114,7 @@ namespace engine
                goto done ;
             }
             pItem = ( schedItem* )getSession()->getSchedItemPtr() ;
+            pItem->_info.setUserName( getClient()->getUsername() ) ;
             pItem->_info.setIP( getClient()->getLocalIPAddr() ) ;
          }
 
