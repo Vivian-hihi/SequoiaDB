@@ -212,5 +212,25 @@
 #define COORD_SNAPSHOTSVCTASKS_INPUT   "{$match:{$and:[{TaskID:{$exists:1}},\
                                           {TaskID:{$ne:null}}]}}"
 
+#define COORD_SNAPSHOTSVCTASKS_INPUT   "{$group:{\
+                                             _id:{TaskID:\"$TaskID\"},\
+                                             TaskName:{$first:\"$TaskName\"},\
+                                             TaskID:{$first:\"$TaskID\"},\
+                                             Time:{$sum:\"$Time\"},\
+                                             TotalContexts:{$sum:\"$TotalContexts\"},\
+                                             TotalDataRead:{$sum:\"$TotalDataRead\"},\
+                                             TotalIndexRead:{$sum:\"$TotalIndexRead\"},\
+                                             TotalDataWrite:{$sum:\"$TotalDataWrite\"},\
+                                             TotalIndexWrite:{$sum:\"$TotalIndexWrite\"},\
+                                             TotalUpdate:{$sum:\"$TotalUpdate\"},\
+                                             TotalDelete:{$sum:\"$TotalDelete\"},\
+                                             TotalInsert:{$sum:\"$TotalInsert\"},\
+                                             TotalSelect:{$sum:\"$TotalSelect\"},\
+                                             TotalRead:{$sum:\"$TotalRead\"},\
+                                             TotalWrite:{$sum:\"$TotalWrite\"}\
+                                             }\
+                                        }\n\
+                                        {$match:{$and:[{TaskName:{$exists:1}},\
+                                                       {TaskName:{$ne:null}}]}}"
 
 #endif // COORD_SNAPSHOT_DEF_HPP__

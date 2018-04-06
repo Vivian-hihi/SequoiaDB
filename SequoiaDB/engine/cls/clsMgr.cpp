@@ -1268,6 +1268,24 @@ namespace engine
       goto done ;
    }
 
+   void _clsMgr::dumpSchedInfo( BSONObjBuilder &builder )
+   {
+      if ( _pShardAdapter )
+      {
+         _pShardAdapter->dump( builder ) ;
+      }
+      else
+      {
+         builder.append( FIELD_NAME_SCHDLR_TYPE, ( INT32 )SCHED_TYPE_NONE ) ;
+         builder.append( FIELD_NAME_SCHDLR_TYPE_DESP,
+                         schedType2String( SCHED_TYPE_NONE ) ) ;
+         builder.append( FIELD_NAME_RUN,
+                        (INT32)_shardSessionMgr.getTaskInfo()->getRunTaskNum() ) ;
+         builder.append( FIELD_NAME_WAIT, 0 ) ;
+         builder.append( FIELD_NAME_SCHDLR_TIMES, (INT64)0 ) ;
+      }
+   }
+
    // Register async internal sessions
    // The function itself doesn't start session. Instead the function place
    // a request in _vecInnerSessionParam vector so that another daemon will

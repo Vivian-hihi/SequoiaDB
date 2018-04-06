@@ -54,6 +54,8 @@
 #include <vector>
 #include <string>
 
+using namespace bson ;
+
 namespace engine
 {
 
@@ -257,6 +259,8 @@ namespace engine
          INT32    invalidateCata ( const CHAR *name ) ;
          INT32    invalidateStatistics () ;
          INT32    invalidatePlan ( const CHAR *name ) ;
+
+         void     dumpSchedInfo( BSONObjBuilder &builder ) ;
 
       protected:
 

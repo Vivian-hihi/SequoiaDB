@@ -1438,6 +1438,9 @@ namespace engine
 
    void monDumpSvcTaskInfo( BSONObjBuilder &ob, const monSvcTaskInfo *pInfo )
    {
+      CHAR   timestamp[ OSS_TIMESTAMP_STRING_LEN + 1] = { 0 } ;
+      ossTimestamp tmpTime ;
+
       ob.append( FIELD_NAME_TASK_ID, (INT64)pInfo->getTaskID() ) ;
       ob.append( FIELD_NAME_TASK_NAME, pInfo->getTaskName() ) ;
       ob.append( FIELD_NAME_TOTALTIME, (INT64)( pInfo->_totalTime / 1000 ) ) ;
@@ -1452,6 +1455,13 @@ namespace engine
       ob.append( FIELD_NAME_TOTALSELECT, (INT64)pInfo->_totalSelect ) ;
       ob.append( FIELD_NAME_TOTALREAD, (INT64)pInfo->_totalRead ) ;
       ob.append( FIELD_NAME_TOTALWRITE, (INT64)pInfo->_totalWrite ) ;
+
+      tmpTime = pInfo->_startTimestamp ;
+      ossTimestampToString( tmpTime, timestamp ) ;
+      ob.append ( FIELD_NAME_STARTTIMESTAMP, timestamp ) ;
+      tmpTime = pInfo->_resetTimestamp ;
+      ossTimestampToString( tmpTime, timestamp ) ;
+      ob.append ( FIELD_NAME_RESETTIMESTAMP, timestamp ) ;
    }
 
    /*
@@ -2725,6 +2735,8 @@ namespace engine
          monDBDumpProcMemInfo( ob ) ;
          monDBDumpStorageInfo( ob ) ;
          monDBDumpNetInfo( ob ) ;
+
+         sdbGetClsCB()->dumpSchedInfo( ob ) ;
 
          obj = ob.obj () ;
       }
