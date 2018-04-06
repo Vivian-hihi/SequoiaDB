@@ -108,7 +108,8 @@ namespace engine
    */
    _schedInfo::_schedInfo()
    :_nice( SCHED_NICE_DFT ),
-    _taskID( SCHED_TASK_ID_DFT )
+    _taskID( SCHED_TASK_ID_DFT ),
+    _ruleID( SCHED_INVALID_RULEID )
    {
       ossMemset( _taskName, 0, sizeof( _taskName ) ) ;
       ossMemset( _containerName, 0, sizeof( _containerName ) ) ;
@@ -129,6 +130,7 @@ namespace engine
    {
       _nice = SCHED_NICE_DFT ;
       _taskID = SCHED_TASK_ID_DFT ;
+      _ruleID = SCHED_INVALID_RULEID ;
       _version = SCHED_INVALID_VERSION ;
 
       setTaskName( SCHED_TASK_NAME_DFT ) ;
@@ -157,6 +159,7 @@ namespace engine
       BSONObjBuilder bobObj ;
       bobObj.append( FIELD_NAME_NICE, _nice ) ;
       bobObj.append( FIELD_NAME_TASKID, _taskID ) ;
+      bobObj.append( FIELD_NAME_RULEID, _ruleID ) ;
       bobObj.append( FIELD_NAME_TASK_NAME, _taskName ) ;
       bobObj.append( FIELD_NAME_CONTAINER_NAME, _containerName ) ;
       bobObj.append( FIELD_NAME_USER, _userName ) ;
@@ -187,6 +190,12 @@ namespace engine
       if( beField.isNumber() )
       {
          setTaskID( beField.numberLong() ) ;
+      }
+
+      beField = obj.getField( FIELD_NAME_RULEID ) ;
+      if( beField.isNumber() )
+      {
+         setRuleID( beField.numberLong() ) ;
       }
 
       beField= obj.getField( FIELD_NAME_TASK_NAME ) ;
@@ -244,6 +253,11 @@ namespace engine
    void _schedInfo::setTaskID( INT64 taskID )
    {
       _taskID = taskID ;
+   }
+
+   void _schedInfo::setRuleID( INT64 ruleID )
+   {
+      _ruleID = ruleID ;
    }
 
    void _schedInfo::setTaskName( const CHAR* taskName )

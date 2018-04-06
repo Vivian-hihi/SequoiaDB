@@ -55,6 +55,7 @@ namespace engine
    #define SCHED_NICE_MIN                             ( -20 )
 
    #define SCHED_TASK_ID_DFT                          ( 0 )
+   #define SCHED_INVALID_RULEID                       ( 0 )
 
    #define SCHED_TASK_NAME_LEN                        ( 127 )
    #define SCHED_CONTIANER_NAME_LEN                   ( 127 )
@@ -99,6 +100,7 @@ namespace engine
 
          INT32    getNice() const { return _nice ; }
          INT64    getTaskID() const { return _taskID ; }
+         INT64    getRuleID() const { return _ruleID ; }
 
          const CHAR*    getTaskName() const { return _taskName ; }
          const CHAR*    getContianerName() const { return _containerName ; }
@@ -107,6 +109,7 @@ namespace engine
 
          void     setNice( INT32 nice ) ;
          void     setTaskID( INT64 taskID ) ;
+         void     setRuleID( INT64 ruleID ) ;
          void     setTaskName( const CHAR* taskName ) ;
          void     setContainerName( const CHAR* containerName ) ;
          void     setIP( const CHAR* ip ) ;
@@ -119,6 +122,7 @@ namespace engine
       private:
          INT32                _nice ;
          INT64                _taskID ;
+         INT64                _ruleID ;
 
          CHAR                 _taskName[ SCHED_TASK_NAME_LEN + 1 ] ;
          CHAR                 _containerName[ SCHED_CONTIANER_NAME_LEN + 1 ] ;

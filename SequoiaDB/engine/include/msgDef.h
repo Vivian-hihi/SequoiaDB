@@ -247,6 +247,7 @@
 #define FIELD_NAME_RECEIVECOUNT              "ReceivedEvents"
 #define FIELD_NAME_TASKTYPE                  "TaskType"
 #define FIELD_NAME_TASKID                    "TaskID"
+#define FIELD_NAME_RULEID                    "RuleID"
 #define FIELD_NAME_SOURCEID                  "SourceID"
 #define FIELD_NAME_TARGETID                  "TargetID"
 #define FIELD_NAME_ASYNC                     "Async"

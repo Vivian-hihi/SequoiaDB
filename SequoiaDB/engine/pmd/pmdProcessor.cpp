@@ -83,6 +83,13 @@ namespace engine
       if ( MSG_AUTH_VERIFY_REQ == msg->opCode )
       {
          rc = getClient()->authenticate( msg ) ;
+         if ( SDB_OK == rc )
+         {
+            schedItem *pItem = NULL ;
+            pItem = ( schedItem* )getSession()->getSchedItemPtr() ;
+            pItem->_info.setUserName( getClient()->getUsername() ) ;
+            pItem->_info.setIP( getClient()->getLocalIPAddr() ) ;
+         }
       }
       else if ( MSG_BS_INTERRUPTE == msg->opCode )
       {
@@ -100,11 +107,14 @@ namespace engine
       {
          if ( !getClient()->isAuthed() )
          {
+            schedItem *pItem = NULL ;
             rc = getClient()->authenticate( "", "" ) ;
             if ( rc )
             {
                goto done ;
             }
+            pItem = ( schedItem* )getSession()->getSchedItemPtr() ;
+            pItem->_info.setIP( getClient()->getLocalIPAddr() ) ;
          }
 
          switch( msg->opCode )

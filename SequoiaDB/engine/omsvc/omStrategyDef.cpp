@@ -262,35 +262,50 @@ namespace engine
       return builder.obj() ;
    }
 
-   BSONObj _omTaskStrategyInfo::toBSON() const
+   BSONObj _omTaskStrategyInfo::toBSON( UINT32 mask ) const
    {
       BSONObjBuilder builder( 1024 ) ;
 
       // userName and ips maybe empty,
       // we keep the empty field in the record to uniform query interface
-      builder.append( OM_BSON_CLUSTER_NAME, getClusterName() ) ;
-      builder.append( OM_BSON_BUSINESS_NAME, getBusinessName() ) ;
-      builder.append( OM_REST_FIELD_TASK_NAME, getTaskName() ) ;
-      builder.append( OM_REST_FIELD_RULE_ID, getRuleID() ) ;
-      builder.append( OM_REST_FIELD_TASK_ID, getTaskID() ) ;
-      builder.append( OM_REST_FIELD_SORT_ID, getSortID() ) ;
-      builder.append( OM_REST_FIELD_NICE, getNice() ) ;
-      builder.append( OM_REST_FIELD_STATUS, getStatus() ) ;
-      builder.append( OM_REST_FIELD_USER_NAME, getUserName() ) ;
 
-      BSONArrayBuilder arr( builder.subarrayStart( OM_REST_FIELD_IPS ) ) ;
-
-      SET_IP::const_iterator cit = _ips.begin() ;
-      while( cit != _ips.end() )
+      if ( mask & OM_STRATEGY_MASK_CLSINFO )
       {
-         if ( !cit->empty() )
-         {
-            arr.append( *cit ) ;
-         }
-         ++cit ;
+         builder.append( OM_BSON_CLUSTER_NAME, getClusterName() ) ;
+         builder.append( OM_BSON_BUSINESS_NAME, getBusinessName() ) ;
       }
 
-      arr.done() ;
+      if ( mask & OM_STRATEGY_MASK_BASEINFO )
+      {
+         builder.append( OM_REST_FIELD_TASK_NAME, getTaskName() ) ;
+         builder.append( OM_REST_FIELD_RULE_ID, getRuleID() ) ;
+         builder.append( OM_REST_FIELD_TASK_ID, getTaskID() ) ;
+         builder.append( OM_REST_FIELD_NICE, getNice() ) ;
+         builder.append( OM_REST_FIELD_SORT_ID, getSortID() ) ;
+         builder.append( OM_REST_FIELD_STATUS, getStatus() ) ;
+      }
+
+      if ( mask & OM_STRATEGY_MASK_USER )
+      {      
+         builder.append( OM_REST_FIELD_USER_NAME, getUserName() ) ;
+      }
+
+      if ( mask & OM_STRATEGY_MASK_IPS )
+      {
+         BSONArrayBuilder arr( builder.subarrayStart( OM_REST_FIELD_IPS ) ) ;
+
+         SET_IP::const_iterator cit = _ips.begin() ;
+         while( cit != _ips.end() )
+         {
+            if ( !cit->empty() )
+            {
+               arr.append( *cit ) ;
+            }
+            ++cit ;
+         }
+
+         arr.done() ;
+      }
 
       return builder.obj() ;
    }

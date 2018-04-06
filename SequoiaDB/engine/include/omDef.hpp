@@ -668,7 +668,6 @@ _IDX1\",key: {"OM_RELATIONSHIP_FIELD_NAME":1}, unique: true, enforced: true }"
    /// Strategy fields begin ==>
    #define  OM_REST_FIELD_TASK_ID            "TaskID"
    #define  OM_REST_FIELD_RULE_ID            "RuleID"
-   #define  OM_REST_FIELD_MAX_RULE_ID        "MaxRuleID"
    #define  OM_REST_FIELD_USER_NAME          "UserName"
    #define  OM_REST_FIELD_TASK_NAME          "TaskName"
    #define  OM_REST_FIELD_IPS                "IPs"

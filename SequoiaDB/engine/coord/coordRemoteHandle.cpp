@@ -371,7 +371,7 @@ namespace engine
                                        FALSE ) ;
          if ( SDB_OK == rc )
          {
-            pInfo->fromBSON( ptr->toBSON(), FALSE ) ;
+            pInfo->fromBSON( ptr->toBSON( OM_STRATEGY_MASK_BASEINFO ), FALSE ) ;
 
             if ( pItem->_ptr.get() &&
                  ( pItem->_ptr->getTaskID() != pInfo->getTaskID() ||

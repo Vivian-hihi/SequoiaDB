@@ -50,7 +50,7 @@ namespace engine
    #define OM_TASK_STRATEGY_NICE_MIN                  SCHED_NICE_MIN
    #define OM_TASK_STRATEGY_NICE_DFT                  SCHED_NICE_DFT
    #define OM_TASK_STRATEGY_INVALID_VER               ( -1 )
-   #define OM_TASK_STRATEGY_INVALID_RULE_ID           ( 0 )
+   #define OM_TASK_STRATEGY_INVALID_RULE_ID           SCHED_INVALID_RULEID
    #define OM_TASK_STRATEGY_INVALID_SORTID            ( -1 )
    #define OM_TASK_STRATEGY_INVALID_TASK_ID           SCHED_TASK_ID_DFT
    #define OM_TASK_STRATEGY_TASK_NAME_DFT             SCHED_TASK_NAME_DFT
@@ -96,6 +96,13 @@ namespace engine
    } ;
    typedef _omStrategyMetaInfo omStrategyMetaInfo ;
 
+   #define OM_STRATEGY_MASK_CLSINFO             0x00000001
+   #define OM_STRATEGY_MASK_BASEINFO            0x00000002
+   #define OM_STRATEGY_MASK_USER                0x00000004
+   #define OM_STRATEGY_MASK_IPS                 0x00000008
+
+   #define OM_STRATEGY_MASK_ALL                 0xFFFFFFFF
+
    /*
       _omTaskStrategyInfo Define
    */
@@ -108,7 +115,7 @@ namespace engine
 
          BOOLEAN  isValid() const ;
 
-         BSONObj  toBSON() const ;
+         BSONObj  toBSON( UINT32 mask = OM_STRATEGY_MASK_ALL ) const ;
          BSONObj  toMatcher() const ;
          INT32    fromBSON( const BSONObj &obj ) ;
 
