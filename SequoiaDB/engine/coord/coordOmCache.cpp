@@ -118,6 +118,7 @@ namespace engine
       {
          _search( _mapUserName, "", setID ) ;
       }
+      return setID.size() ;
    }
 
    UINT32 _coordTaskInfoItem::searchByIP( const string &ip,
