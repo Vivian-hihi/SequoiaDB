@@ -845,12 +845,18 @@ namespace engine
    INT32 _pmdAsycSessionMgr::dispatchMsg( const NET_HANDLE &handle,
                                           const MsgHeader *pMsg,
                                           pmdEDUMemTypes memType,
-                                          BOOLEAN decPending )
+                                          BOOLEAN decPending,
+                                          BOOLEAN *hasDispatched )
    {
       INT32 rc        = SDB_OK ;
       _pmdAsyncSession *pSession = NULL ;
       BOOLEAN bCreate = TRUE ;
       UINT64 sessionID = 0 ;
+
+      if ( hasDispatched )
+      {
+         *hasDispatched = FALSE ;
+      }
 
       // if opcode is disconnect or interrupt, we don't expect to create
       // new session
@@ -904,6 +910,24 @@ namespace engine
       if ( decPending )
       {
          pSession->decPendingmsgNum() ;
+      }
+
+      /// When session is closed
+      if ( pSession->isClosed() )
+      {
+         PD_LOG( PDWARNING, "Session[%s] is closed, Pending msg num:%d",
+                 pSession->sessionName(), pSession->getPendingMsgNum() ) ;
+
+         rc = onErrorHanding( SDB_APP_INTERRUPT, pMsg, handle,
+                              sessionID, pSession ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+         else
+         {
+            goto done ;
+         }
       }
 
       // On recieve
@@ -965,6 +989,10 @@ namespace engine
          {
             goto done ;
          }
+      }
+      else if ( hasDispatched )
+      {
+         *hasDispatched = TRUE ;
       }
 
    done:

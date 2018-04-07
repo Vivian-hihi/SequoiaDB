@@ -74,6 +74,7 @@ namespace engine
       MsgHeader *pHeader = NULL ;
       NET_HANDLE handle = NET_INVALID_HANDLE ;
       pmdEDUMemTypes memType = PMD_EDU_MEM_NONE ;
+      BOOLEAN hasDispatched = FALSE ;
 
       while( !eduCB()->isForced() )
       {
@@ -86,9 +87,10 @@ namespace engine
                         "Mem type must be PMD_EDU_MEM_ALLOC" ) ;
 
             rc = _pSessionMgr->dispatchMsg( handle, pHeader,
-                                            memType, TRUE ) ;
+                                            memType, TRUE,
+                                            &hasDispatched ) ;
 
-            if ( rc )
+            if ( !hasDispatched )
             {
                SDB_OSS_FREE( ( CHAR* )pHeader ) ;
             }

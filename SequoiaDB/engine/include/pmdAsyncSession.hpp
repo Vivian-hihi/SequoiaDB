@@ -316,7 +316,8 @@ namespace engine
          INT32                dispatchMsg( const NET_HANDLE &handle,
                                            const MsgHeader *pMsg,
                                            pmdEDUMemTypes memType,
-                                           BOOLEAN decPending ) ;
+                                           BOOLEAN decPending,
+                                           BOOLEAN *hasDispatched = NULL ) ;
 
          INT32                getSessionObj( UINT64 sessionID,
                                              BOOLEAN withHold,
