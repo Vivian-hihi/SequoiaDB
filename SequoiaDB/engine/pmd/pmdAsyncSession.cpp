@@ -1276,7 +1276,6 @@ namespace engine
 
       if ( isPending )
       {
-         SDB_ASSERT( pSession->isClosed(), "Session must be closed" ) ;
          goto done ;
       }
       else if ( !pSession->isAttached() )
