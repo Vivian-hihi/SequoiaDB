@@ -434,6 +434,7 @@ namespace engine
       string clName ;
       BSONObj outSelector ;
       rtnQueryOptions queryOpt ;
+      BSONElement ele ;
 
       // parse msg
       rc = queryOpt.fromQueryMsg( (CHAR*)pMsg ) ;
@@ -451,11 +452,14 @@ namespace engine
          goto error ;
       }
 
-      if ( 0 == ossStrncmp( queryOpt._fullName,
+      ele = queryOpt._query.getField( FIELD_NAME_NAME ) ;
+      if ( String == ele.type() &&
+           0 == ossStrncmp( ele.valuestr(),
                             CMD_ADMIN_PREFIX SYS_VIRTUAL_CS".",
                             SYS_VIRTUAL_CS_LEN + 1 ) )
       {
-         rc = _processQueryVCS( queryOpt, cb, contextID, buf ) ;
+         rc = _processQueryVCS( queryOpt, ele.valuestr(),
+                                cb, contextID, buf ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "Process query VCS failed, rc: %d", rc ) ;
@@ -505,6 +509,7 @@ namespace engine
    }
 
    INT32 _coordCMDQueryBase::_processQueryVCS( rtnQueryOptions &queryOpt,
+                                               const CHAR *pName,
                                                pmdEDUCB *cb,
                                                INT64 &contextID,
                                                rtnContextBuf *buf )
@@ -530,7 +535,7 @@ namespace engine
          goto error ;
       }
 
-      rc = _processVCS( queryOpt, pContext ) ;
+      rc = _processVCS( queryOpt, pName, pContext ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Process VCS failed, rc: %d", rc ) ;
@@ -549,6 +554,7 @@ namespace engine
    }
 
    INT32 _coordCMDQueryBase::_processVCS( rtnQueryOptions &queryOpt,
+                                          const CHAR *pName,
                                           rtnContext *pContext )
    {
       return SDB_INVALIDARG ;

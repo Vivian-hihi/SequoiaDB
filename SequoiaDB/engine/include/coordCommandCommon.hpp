@@ -163,10 +163,12 @@ namespace engine
                                  BSONObj &outSelector ) = 0 ;
 
       virtual INT32 _processVCS( rtnQueryOptions &queryOpt,
+                                 const CHAR *pName,
                                  rtnContext *pContext ) ;
 
    protected:
       INT32       _processQueryVCS( rtnQueryOptions &queryOpt,
+                                    const CHAR *pName,
                                     pmdEDUCB *cb,
                                     INT64 &contextID,
                                     rtnContextBuf *buf ) ;

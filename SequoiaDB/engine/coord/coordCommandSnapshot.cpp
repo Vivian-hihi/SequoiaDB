@@ -561,15 +561,15 @@ namespace engine
    }
 
    INT32 _coordCMDSnapshotCata::_processVCS( rtnQueryOptions &queryOpt,
+                                             const CHAR *pName,
                                              rtnContext *pContext )
    {
       INT32 rc = SDB_OK ;
 
-      if ( 0 == ossStrcmp( queryOpt._fullName,
+      if ( 0 == ossStrcmp( pName,
                            CMD_ADMIN_PREFIX SYS_CL_SESSION_INFO ) )
       {
-         pContext->append( BSON( FIELD_NAME_NAME <<
-                                 CMD_ADMIN_PREFIX SYS_CL_SESSION_INFO <<
+         pContext->append( BSON( FIELD_NAME_NAME << pName <<
                                  FIELD_NAME_VERSION << 1 ) ) ;
       }
       else

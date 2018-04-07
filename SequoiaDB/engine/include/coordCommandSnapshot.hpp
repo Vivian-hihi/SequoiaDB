@@ -407,6 +407,7 @@ namespace engine
                                     BSONObj &outSelector ) ;
 
          virtual INT32 _processVCS( rtnQueryOptions &queryOpt,
+                                    const CHAR *pName,
                                     rtnContext *pContext ) ;
    } ;
    typedef _coordCMDSnapshotCata coordCMDSnapshotCata ;
