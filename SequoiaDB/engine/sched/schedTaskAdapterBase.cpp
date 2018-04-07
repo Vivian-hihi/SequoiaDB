@@ -123,7 +123,7 @@ namespace engine
       event._eventType = PMD_EDU_EVENT_MSG ;
       event._userData = ( UINT64 )handle ;
 
-      priority = (INT64)pmdGetDBTick() + pInfo->getNice() * 3 ;
+      priority = (INT64)pmdGetDBTick() + pInfo->getNice() * 100 ;
 
       rc = _onPush( event, priority, pInfo ) ;
       if ( rc )
