@@ -209,9 +209,6 @@
 
 #define COORD_SNAPSHOTCONTEXTSCUR_INPUT   COORD_SNAPSHOTCONTEXTS_INPUT
 
-#define COORD_SNAPSHOTSVCTASKS_INPUT   "{$match:{$and:[{TaskID:{$exists:1}},\
-                                          {TaskID:{$ne:null}}]}}"
-
 #define COORD_SNAPSHOTSVCTASKS_INPUT   "{$group:{\
                                              _id:{TaskID:\"$TaskID\"},\
                                              TaskName:{$first:\"$TaskName\"},\

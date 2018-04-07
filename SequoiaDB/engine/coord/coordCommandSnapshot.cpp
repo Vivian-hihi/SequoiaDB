@@ -574,7 +574,7 @@ namespace engine
       }
       else
       {
-         rc = _coordCMDQueryBase::_processVCS( queryOpt, pContext ) ;
+         rc = _coordCMDQueryBase::_processVCS( queryOpt, pName, pContext ) ;
       }
 
       return rc ;
