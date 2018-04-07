@@ -405,6 +405,9 @@ namespace engine
          virtual INT32 _preProcess( rtnQueryOptions &queryOpt,
                                     string &clName,
                                     BSONObj &outSelector ) ;
+
+         virtual INT32 _processVCS( rtnQueryOptions &queryOpt,
+                                    rtnContext *pContext ) ;
    } ;
    typedef _coordCMDSnapshotCata coordCMDSnapshotCata ;
 

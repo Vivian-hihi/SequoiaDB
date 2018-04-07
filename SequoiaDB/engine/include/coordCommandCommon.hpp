@@ -161,6 +161,16 @@ namespace engine
       virtual INT32 _preProcess( rtnQueryOptions &queryOpt,
                                  string &clName,
                                  BSONObj &outSelector ) = 0 ;
+
+      virtual INT32 _processVCS( rtnQueryOptions &queryOpt,
+                                 rtnContext *pContext ) ;
+
+   protected:
+      INT32       _processQueryVCS( rtnQueryOptions &queryOpt,
+                                    pmdEDUCB *cb,
+                                    INT64 &contextID,
+                                    rtnContextBuf *buf ) ;
+
    } ;
    typedef _coordCMDQueryBase coordCMDQueryBase ;
 

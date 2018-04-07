@@ -450,19 +450,34 @@ namespace engine
                  queryOpt.toString().c_str(), rc ) ;
          goto error ;
       }
-      if ( !clName.empty() )
-      {
-         queryOpt.setCLFullName( clName.c_str() ) ;
-      }
-      queryOpt.setFlag( FLG_QUERY_WITH_RETURNDATA ) ;
 
-      // query on catalog
-      rc = queryOnCatalog( queryOpt, cb, contextID, buf ) ;
-      if ( rc )
+      if ( 0 == ossStrncmp( queryOpt._fullName,
+                            CMD_ADMIN_PREFIX SYS_VIRTUAL_CS".",
+                            SYS_VIRTUAL_CS_LEN + 1 ) )
       {
-         PD_LOG( PDERROR, "Query on catalog[%s] failed, rc: %d",
-                 queryOpt.toString().c_str(), rc ) ;
-         goto error ;
+         rc = _processQueryVCS( queryOpt, cb, contextID, buf ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Process query VCS failed, rc: %d", rc ) ;
+            goto error ;
+         }
+      }
+      else
+      {
+         if ( !clName.empty() )
+         {
+            queryOpt.setCLFullName( clName.c_str() ) ;
+         }
+         queryOpt.setFlag( FLG_QUERY_WITH_RETURNDATA ) ;
+
+         // query on catalog
+         rc = queryOnCatalog( queryOpt, cb, contextID, buf ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Query on catalog[%s] failed, rc: %d",
+                    queryOpt.toString().c_str(), rc ) ;
+            goto error ;
+         }
       }
 
       if ( !outSelector.isEmpty() && -1 != contextID )
@@ -487,6 +502,56 @@ namespace engine
          contextID = -1 ;
       }
       goto done ;
+   }
+
+   INT32 _coordCMDQueryBase::_processQueryVCS( rtnQueryOptions &queryOpt,
+                                               pmdEDUCB *cb,
+                                               INT64 &contextID,
+                                               rtnContextBuf *buf )
+   {
+      INT32 rc = SDB_OK ;
+      rtnContextCoord *pContext = NULL ;
+      SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
+
+      rc = rtnCB->contextNew( RTN_CONTEXT_COORD,
+                              ( rtnContext**)&pContext,
+                              contextID,
+                              cb ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Create context failed, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      rc = pContext->open( queryOpt, FALSE ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Open context failed, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      rc = _processVCS( queryOpt, pContext ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Process VCS failed, rc: %d", rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      if ( -1 != contextID )
+      {
+         rtnCB->contextDelete( contextID, cb ) ;
+         contextID = -1 ;
+      }
+      goto done ;
+   }
+
+   INT32 _coordCMDQueryBase::_processVCS( rtnQueryOptions &queryOpt,
+                                          rtnContext *pContext )
+   {
+      return SDB_INVALIDARG ;
    }
 
 }

@@ -560,6 +560,26 @@ namespace engine
       return SDB_OK ;
    }
 
+   INT32 _coordCMDSnapshotCata::_processVCS( rtnQueryOptions &queryOpt,
+                                             rtnContext *pContext )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( 0 == ossStrcmp( queryOpt._fullName,
+                           CMD_ADMIN_PREFIX SYS_CL_SESSION_INFO ) )
+      {
+         pContext->append( BSON( FIELD_NAME_NAME <<
+                                 CMD_ADMIN_PREFIX SYS_CL_SESSION_INFO <<
+                                 FIELD_NAME_VERSION << 1 ) ) ;
+      }
+      else
+      {
+         rc = _coordCMDQueryBase::_processVCS( queryOpt, pContext ) ;
+      }
+
+      return rc ;
+   }
+
    /*
       _coordCMDSnapshotCataIntr implement
    */
