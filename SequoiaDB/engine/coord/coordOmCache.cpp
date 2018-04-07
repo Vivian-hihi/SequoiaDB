@@ -113,7 +113,11 @@ namespace engine
    UINT32 _coordTaskInfoItem::searchByUser( const string &userName,
                                             SET_RULEID &setID ) const
    {
-      return _search( _mapUserName, userName, setID ) ;
+      _search( _mapUserName, userName, setID ) ;
+      if ( !userName.empty() )
+      {
+         _search( _mapUserName, "", setID ) ;
+      }
    }
 
    UINT32 _coordTaskInfoItem::searchByIP( const string &ip,

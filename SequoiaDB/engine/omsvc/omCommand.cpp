@@ -12077,6 +12077,72 @@ namespace engine
       goto done ;
    }
 
+   omStrategyUpdateUser::omStrategyUpdateUser( restAdaptor *pRestAdaptor, 
+                                               pmdRestSession *pRestSession )
+   : omStrategyCmdBase( pRestAdaptor, pRestSession )
+   {
+   }
+
+   omStrategyUpdateUser::~omStrategyUpdateUser()
+   {
+   }
+
+   INT32 omStrategyUpdateUser::doCommand()
+   {
+      INT32 rc = SDB_OK ;
+      INT64 ruleId = 0 ;
+      const CHAR *pValTmp = NULL ;
+      string clsName, bizName ;
+
+      SDB_ASSERT( _restAdaptor != NULL && _restSession != NULL,
+                  "_restAdaptor and _restSession can't be null!" ) ;
+
+      rc = _getAndCheckBusiness( clsName, bizName ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_RULE_ID,
+                              &pValTmp ) ;
+      if ( NULL == pValTmp || 0 == pValTmp[0] ||
+           !ossIsInteger( pValTmp ) )
+      {
+          _errorDetail = string( "Failed to get the field("
+                                 OM_REST_FIELD_RULE_ID")" ) ;
+          rc = SDB_INVALIDARG ;
+          goto error ;
+      }
+      ruleId = ossAtoll( pValTmp ) ;
+
+      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_USER_NAME,
+                              &pValTmp ) ;
+      if ( NULL == pValTmp )
+      {
+          _errorDetail = string( "Failed to get the field("
+                                  OM_REST_FIELD_USER_NAME")" ) ;
+          rc = SDB_INVALIDARG ;
+          goto error ;
+      }
+
+      rc = omGetStrategyMgr()->updateStrategyUserById( pValTmp, ruleId,
+                                                       clsName, bizName,
+                                                       _cb ) ;
+      if ( rc != SDB_OK )
+      {
+         _errorDetail = string( "Failed to update task strategy user" ) ;
+         goto error ;
+      }
+      _sendOKRes2Web() ;
+
+   done:
+      return rc ;
+   error:
+      _sendErrorRes2Web( rc, _errorDetail ) ;
+      PD_LOG( PDERROR, "%s, rc: %d", _errorDetail.c_str(), rc ) ;
+      goto done ;
+   }
+
    omStrategyFlush::omStrategyFlush( restAdaptor * pRestAdaptor,
                                      pmdRestSession * pRestSession )
    : omStrategyCmdBase( pRestAdaptor, pRestSession )

@@ -1082,6 +1082,11 @@ namespace engine
       {
          commandIf = SDB_OSS_NEW omStrategyUpdateSortID( pAdptor, this ) ;
       }
+      else if ( ossStrcasecmp( pSubCommand,
+                               OM_TASK_STRATEGY_UPDATE_USER_REQ ) == 0 )
+      {
+         commandIf = SDB_OSS_NEW omStrategyUpdateUser( pAdptor, this ) ;
+      }
       else if ( ossStrcasecmp( pSubCommand, 
                                OM_TASK_ADD_REQ ) == 0 )
       {

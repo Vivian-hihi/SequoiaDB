@@ -110,6 +110,12 @@ namespace engine
          if ( it != _mapTaskInfo.end() )
          {
             ptr = it->second ;
+
+            /// Update name
+            if ( 0 != ossStrcmp( ptr->getTaskName(), taskName ) )
+            {
+               ptr->setTaskInfo( taskID, taskName ) ;
+            }
          }
          else
          {

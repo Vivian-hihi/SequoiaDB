@@ -1388,6 +1388,63 @@ namespace engine
       goto done ;
    }
 
+   INT32 _omStrategyMgr::updateStrategyUserById( const CHAR *userName,
+                                                 INT64 ruleID,
+                                                 const string &clsName,
+                                                 const string &bizName,
+                                                 pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      INT64 updatedNum = 0 ;
+      BSONObj matcher ;
+      BSONObj updator ;
+
+      if ( clsName.empty() || bizName.empty() )
+      {
+         PD_LOG( PDWARNING, "ClusterName, BusinessName "
+                 "can't be empty" ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      updator = BSON( "$set" << BSON( OM_REST_FIELD_USER_NAME << userName ) ) ;
+      matcher = BSON( OM_BSON_CLUSTER_NAME << clsName <<
+                      OM_BSON_BUSINESS_NAME << bizName <<
+                      OM_REST_FIELD_RULE_ID << ruleID ) ;
+
+      {
+         ossScopedLock lock( &m_mutex ) ;
+         rc = rtnUpdate( OM_CS_STRATEGY_CL_STRATEGY_PRO,
+                         matcher, updator, s_emptyObj, 0, cb,
+                         &updatedNum ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Update[%s] on collection[%s] failed, rc: %d",
+                    updator.toString().c_str(),
+                    OM_CS_STRATEGY_CL_STRATEGY_PRO,
+                    rc ) ;
+            goto error ;
+         }
+         else if ( 0 == updatedNum )
+         {
+            rc = SDB_RULE_ID_IS_NOT_EXIST ;
+            goto error ;
+         }
+
+         rc = _updateMeta( clsName, bizName, cb ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Update meta failed, rc: %d", rc ) ;
+            goto error ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _omStrategyMgr::allocateTaskID( const string &clsName,
                                          const string &bizName,
                                          pmdEDUCB *cb,

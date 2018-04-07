@@ -168,6 +168,12 @@ namespace engine
                                          const string &bizName,
                                          pmdEDUCB *cb ) ;
 
+         INT32 updateStrategyUserById( const CHAR *userName,
+                                       INT64 ruleID,
+                                       const string &clsName,
+                                       const string &bizName,
+                                       pmdEDUCB *cb ) ;
+
          void  flushStrategy( const string &clsName,
                               const string &bizName,
                               pmdEDUCB *cb ) ;

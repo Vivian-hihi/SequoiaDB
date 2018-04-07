@@ -1377,6 +1377,20 @@ namespace engine
          ~omStrategyUpdateSortID() ;
    } ;
 
+   class omStrategyUpdateUser : public omStrategyCmdBase
+   {
+      public:
+
+         virtual INT32   doCommand() ;
+
+      public:
+
+         omStrategyUpdateUser( restAdaptor *pRestAdaptor, 
+                               pmdRestSession *pRestSession ) ;
+
+         ~omStrategyUpdateUser() ;
+   } ;
+
    class omStrategyFlush : public omStrategyCmdBase
    {
       public:
