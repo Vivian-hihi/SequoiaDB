@@ -788,8 +788,8 @@
       <name>PMD_OPTION_TRACEBUFSZ</name>
       <long>tracebufsz</long>
       <description>
-         <en>Trace buffer size, default:268435456, value range:[524288,1073741824]</en>
-         <cn>启动时开启跟踪的缓冲区大小,默认值:268435456,取值范围:[524288,1073741824]</cn>
+         <en>Trace buffer size(MB), default:256, value range:[1,1024]</en>
+         <cn>启动时开启跟踪的缓冲区大小(MB),默认值:256,取值范围:[1,1024]</cn>
       </description>
       <type>int</type>
       <hidden>true</hidden>
