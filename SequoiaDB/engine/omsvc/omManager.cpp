@@ -2176,39 +2176,43 @@ namespace engine
       rtnContextBuf buffObj ;
       INT64 contextID = -1 ;
 
-      _onMsgBegin( pMsg ) ;
-      switch ( pMsg->opCode )
+      if ( MSG_PACKET == pMsg->opCode )
       {
-         case MSG_PACKET:
-            rc = _processPacketMsg( handle, pMsg, contextID, buffObj ) ;
-            break ;
-         case MSG_BS_QUERY_REQ:
-            rc = _processQueryMsg( pMsg, buffObj, contextID );
-            break;
-         case MSG_BS_GETMORE_REQ :
-            rc = _processGetMoreMsg( pMsg, buffObj, contextID ) ;
-            break ;
-         case MSG_BS_KILL_CONTEXT_REQ:
-            rc = _processKillContext( pMsg ) ;
-            break;
-         case MSG_COM_SESSION_INIT_REQ :
-            rc = _processSessionInit( pMsg ) ;
-            break;
-         case MSG_BS_INTERRUPTE :
-            rc = _processInterruptMsg( handle, pMsg ) ;
-            break ;
-         case MSG_BS_DISCONNECT :
-            rc = _processDisconnectMsg( handle, pMsg ) ;
-            break ;
-         case MSG_COM_REMOTE_DISC :
-            rc = _processRemoteDisc( handle, pMsg ) ;
-            break ;
-         case MSG_BS_INTERRUPTE_SELF :
-            rc = SDB_OK ;
-            break ;
-         default :
-            rc = SDB_CLS_UNKNOW_MSG ;
-            break ;
+         rc = _processPacketMsg( handle, pMsg, contextID, buffObj ) ;
+      }
+      else
+      {
+         _onMsgBegin( pMsg ) ;
+         switch ( pMsg->opCode )
+         {
+            case MSG_BS_QUERY_REQ:
+               rc = _processQueryMsg( pMsg, buffObj, contextID );
+               break;
+            case MSG_BS_GETMORE_REQ :
+               rc = _processGetMoreMsg( pMsg, buffObj, contextID ) ;
+               break ;
+            case MSG_BS_KILL_CONTEXT_REQ:
+               rc = _processKillContext( pMsg ) ;
+               break;
+            case MSG_COM_SESSION_INIT_REQ :
+               rc = _processSessionInit( pMsg ) ;
+               break;
+            case MSG_BS_INTERRUPTE :
+               rc = _processInterruptMsg( handle, pMsg ) ;
+               break ;
+            case MSG_BS_DISCONNECT :
+               rc = _processDisconnectMsg( handle, pMsg ) ;
+               break ;
+            case MSG_COM_REMOTE_DISC :
+               rc = _processRemoteDisc( handle, pMsg ) ;
+               break ;
+            case MSG_BS_INTERRUPTE_SELF :
+               rc = SDB_OK ;
+               break ;
+            default :
+               rc = SDB_CLS_UNKNOW_MSG ;
+               break ;
+         }
       }
 
       if ( rc && SDB_DMS_EOC != rc )

@@ -362,6 +362,12 @@ namespace engine
 
       while ( loop )
       {
+         if ( MSG_PACKET == msg->opCode )
+         {
+            rc = _onPacketMsg( handle, msg, contextID, buffObj, startFrom ) ;
+            break ;
+         }
+
          rc = _checkClusterActive( msg ) ;
          if ( rc )
          {
@@ -373,9 +379,6 @@ namespace engine
 
          switch ( msg->opCode )
          {
-            case MSG_PACKET :
-               rc = _onPacketMsg( handle, msg, contextID, buffObj, startFrom ) ;
-               break ;
             case MSG_BS_UPDATE_REQ :
                isNeedRollback = TRUE ;
                rc = _onUpdateReqMsg ( handle, msg, contextID ) ;

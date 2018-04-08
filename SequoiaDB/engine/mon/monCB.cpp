@@ -273,6 +273,7 @@ namespace engine
          _lastOpEndTime = pmdGetKRCB()->getCurTime() ;
          ossTickDelta delta = _lastOpEndTime - _lastOpBeginTime ;
          opTimeSpentInc( delta ) ;
+         _lastOpBeginTime.clear() ;
       }
    }
 

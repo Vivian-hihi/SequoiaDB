@@ -1092,29 +1092,36 @@ namespace engine
 
       _isDelayed = FALSE ;
 
-      _pCatCB->onBeginCommand( msg ) ;
-
-      if ( MSG_CAT_CATALOGUE_BEGIN < (UINT32)msg->opCode &&
-           (UINT32)msg->opCode < MSG_CAT_CATALOGUE_END )
+      if ( MSG_PACKET == msg->opCode )
       {
-         rc = _pCatCB->getCatlogueMgr()->processMsg( handle, msg ) ;
-      }
-      else if  ( MSG_CAT_NODE_BEGIN < (UINT32)msg->opCode &&
-                 (UINT32)msg->opCode < MSG_CAT_NODE_END )
-      {
-         rc = _pCatCB->getCatNodeMgr()->processMsg( handle, msg ) ;
-      }
-      else if ( MSG_CAT_DC_BEGIN < (UINT32)msg->opCode &&
-                (UINT32)msg->opCode < MSG_CAT_DC_END )
-      {
-         rc = _pCatCB->getCatDCMgr()->processMsg( handle, msg ) ;
+         rc = _processPacketMsg( handle, msg ) ;
       }
       else
       {
-         rc = _processMsg( handle, msg ) ;
-      }
+         _pCatCB->onBeginCommand( msg ) ;
 
-      _pCatCB->onEndCommand( msg, rc ) ;
+         if ( MSG_CAT_CATALOGUE_BEGIN < (UINT32)msg->opCode &&
+              (UINT32)msg->opCode < MSG_CAT_CATALOGUE_END )
+         {
+            rc = _pCatCB->getCatlogueMgr()->processMsg( handle, msg ) ;
+         }
+         else if  ( MSG_CAT_NODE_BEGIN < (UINT32)msg->opCode &&
+                    (UINT32)msg->opCode < MSG_CAT_NODE_END )
+         {
+            rc = _pCatCB->getCatNodeMgr()->processMsg( handle, msg ) ;
+         }
+         else if ( MSG_CAT_DC_BEGIN < (UINT32)msg->opCode &&
+                   (UINT32)msg->opCode < MSG_CAT_DC_END )
+         {
+            rc = _pCatCB->getCatDCMgr()->processMsg( handle, msg ) ;
+         }
+         else
+         {
+            rc = _processMsg( handle, msg ) ;
+         }
+
+         _pCatCB->onEndCommand( msg, rc ) ;
+      }
 
       return rc ;
    }
@@ -1126,11 +1133,6 @@ namespace engine
 
       switch ( pMsg->opCode )
       {
-      case MSG_PACKET:
-         {
-            rc = _processPacketMsg( handle, pMsg ) ;
-            break ;
-         }
       case MSG_BS_QUERY_REQ:
          {
             rc = _processQueryMsg( handle, pMsg );
