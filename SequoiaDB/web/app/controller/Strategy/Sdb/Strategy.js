@@ -292,7 +292,7 @@
       }
 
       //删除策略IPs
-      var deleteIPs = function( ruleID, IPs, newIPs ){
+      var deleteIPs = function( ruleID, IPs, isAddIPs, newIPs ){
          var data = {
             'cmd': 'del svc task strategy IPs',
             'ClusterName': clusterName,
@@ -302,7 +302,25 @@
          } ;
          SdbRest.OmOperation( data, {
             'success': function( info ){
-               addIPs( ruleID, newIPs ) ;
+               if( isAddIPs )
+               {
+                  addIPs( ruleID, newIPs ) ;
+               }
+               else
+               {
+                  $scope.Components.Confirm.type = 4 ;
+                  $scope.Components.Confirm.context = $scope.autoLanguage( '修改策略配置成功！' ) ;
+                  $scope.Components.Confirm.isShow = true ;
+                  $scope.Components.Confirm.noClose = true ;
+                  $scope.Components.Confirm.normalOK = true ;
+                  $scope.Components.Confirm.okText = $scope.autoLanguage( '确定' ) ;
+                  $scope.Components.Confirm.ok = function(){
+                     $scope.Components.Confirm.normalOK = false ;
+                     $scope.Components.Confirm.isShow = false ;
+                     $scope.Components.Confirm.noClose = false ;
+                  }
+                  $scope.QueryStrategyList() ;
+               }
             },
             'failed': function( errorInfo ){
                _IndexPublic.createRetryModel( $scope, errorInfo, function(){
@@ -340,6 +358,39 @@
             'failed': function( errorInfo ){
                _IndexPublic.createRetryModel( $scope, errorInfo, function(){
                   addIPs( ruleID, IPs ) ;
+                  return true ;
+               } ) ;
+            }
+         } ) ;
+      }
+
+      //修改username
+      var updateUserName = function( ruleID, userName ){
+         var data = {
+            'cmd': 'update svc task strategy user',
+            'ClusterName': clusterName,
+            'BusinessName': moduleName,
+            'RuleID': ruleID,
+            'UserName': userName
+         } ;
+         SdbRest.OmOperation( data, {
+            'success': function( info ){
+               $scope.Components.Confirm.type = 4 ;
+               $scope.Components.Confirm.context = $scope.autoLanguage( '修改策略配置成功！' ) ;
+               $scope.Components.Confirm.isShow = true ;
+               $scope.Components.Confirm.noClose = true ;
+               $scope.Components.Confirm.normalOK = true ;
+               $scope.Components.Confirm.okText = $scope.autoLanguage( '确定' ) ;
+               $scope.Components.Confirm.ok = function(){
+                  $scope.Components.Confirm.normalOK = false ;
+                  $scope.Components.Confirm.isShow = false ;
+                  $scope.Components.Confirm.noClose = false ;
+               }
+               $scope.QueryStrategyList() ;
+            },
+            'failed': function( errorInfo ){
+               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                  updateUserName( ruleID, userName ) ;
                   return true ;
                } ) ;
             }
@@ -607,8 +658,7 @@
                "name": 'userName',
                "webName": 'UserName',
                "type": "string",
-               "value": strategyInfo['UserName'],
-               "disabled": true
+               "value": strategyInfo['UserName']
             },
             {
                "name": 'IPs',
@@ -638,14 +688,33 @@
                {
                   updateNice( strategyInfo['RuleID'], formValue['nice'] ) ;
                }
+
                if( strategyInfo['SortID'] != formValue['sortID'] )
                {
                   updateSort( strategyInfo['RuleID'], formValue['sortID'] ) ;
                }
+
                if( strategyInfo['IPs'] != formValue['IPs'] )
                {
-                  deleteIPs( strategyInfo['RuleID'], strategyInfo['IPs'], formValue['IPs'] ) ;
+                  if( strategyInfo['IPs'].length == 0 )
+                  {
+                     addIPs( strategyInfo['RuleID'], formValue['IPs'] ) ;
+                  }
+                  else if( formValue['IPs'].length == 0 )
+                  {
+                     deleteIPs( strategyInfo['RuleID'], strategyInfo['IPs'], false ) ;
+                  }
+                  else
+                  {
+                     deleteIPs( strategyInfo['RuleID'], strategyInfo['IPs'], true, formValue['IPs'] ) ;
+                  }
                }
+
+               if( strategyInfo['UserName'] != formValue['userName'] )
+               {
+                  updateUserName( strategyInfo['RuleID'], formValue['userName'] ) ;
+               }
+
                if( strategyInfo['Status'] != formValue['status'] )
                {
                   updateStatus( strategyInfo['RuleID'], ( formValue['status'] == true ? 1 : 0 ) ) ;
