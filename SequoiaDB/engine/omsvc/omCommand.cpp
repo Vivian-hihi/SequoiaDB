@@ -11240,6 +11240,13 @@ namespace engine
       }
       inputInfo.setTaskName( pValTmp ) ;
 
+      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_STATUS,
+                              &pValTmp ) ;
+      if ( pValTmp && 0 != pValTmp[0] )
+      {
+         inputInfo.setStatus( ossAtoi( pValTmp ) ) ;
+      }
+
       inputInfo.setCreator( _restSession->getLoginUserName() ) ;
       inputInfo.makeCreateTime() ;
 
@@ -11521,6 +11528,13 @@ namespace engine
           goto error ;
       }
       inputInfo.setNice( ossAtoi( pValTmp ) ) ;
+
+      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_STATUS,
+                              &pValTmp ) ;
+      if ( pValTmp && 0 != pValTmp[0] )
+      {
+         inputInfo.setStatus( ossAtoi( pValTmp ) ) ;
+      }
 
       _restAdaptor->getQuery( _restSession, OM_REST_FIELD_SORT_ID,
                               &pValTmp ) ;

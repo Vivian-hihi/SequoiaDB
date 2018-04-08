@@ -298,7 +298,8 @@ namespace engine
             valueOffset = i + 1 ;
             pValueBuf = pBuffer + valueOffset ;
          }
-         else if ( pBuffer[i] == '&' || ( i + 1 == length ) )
+
+         if ( pBuffer[i] == '&' || ( i >= length ) )
          {
             pKeyBuf = pBuffer + keyOffset ;
             keyLen = valueOffset - keyOffset - 1 ;
