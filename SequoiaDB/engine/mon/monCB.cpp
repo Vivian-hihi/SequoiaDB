@@ -67,27 +67,27 @@ namespace engine
 
    void _monDBCB::reset()
    {
-      totalDataRead   = 0 ;
-      totalIndexRead  = 0 ;
-      totalLobRead    = 0 ;
-      totalDataWrite  = 0 ;
-      totalIndexWrite = 0 ;
-      totalLobWrite   = 0 ;
+      ossAtomicExchange64( &totalDataRead, 0 ) ;
+      ossAtomicExchange64( &totalIndexRead, 0 ) ;
+      ossAtomicExchange64( &totalLobRead, 0 ) ;
+      ossAtomicExchange64( &totalDataWrite, 0 ) ;
+      ossAtomicExchange64( &totalIndexWrite, 0 ) ;
+      ossAtomicExchange64( &totalLobWrite, 0 ) ;
 
-      totalUpdate     = 0 ;
-      totalDelete     = 0 ;
-      totalInsert     = 0 ;
-      totalSelect     = 0 ;
-      totalRead       = 0 ;
+      ossAtomicExchange64( &totalUpdate, 0 ) ;
+      ossAtomicExchange64( &totalDelete, 0 ) ;
+      ossAtomicExchange64( &totalInsert, 0 ) ;
+      ossAtomicExchange64( &totalSelect, 0 ) ;
+      ossAtomicExchange64( &totalRead, 0 ) ;
 
-      receiveNum      = 0 ;
+      ossAtomicExchange64( &receiveNum, 0 ) ;
 
-      replUpdate      = 0 ;
-      replInsert      = 0 ;
-      replDelete      = 0 ;
+      ossAtomicExchange64( &replUpdate, 0 ) ;
+      ossAtomicExchange64( &replInsert, 0 ) ;
+      ossAtomicExchange64( &replDelete, 0 ) ;
 
-      _svcNetIn       = 0 ;
-      _svcNetOut      = 0 ;
+      ossAtomicExchange64( &_svcNetIn, 0 ) ;
+      ossAtomicExchange64( &_svcNetOut, 0 ) ;
 
       totalReadTime.clear() ;
       totalWriteTime.clear() ;
@@ -437,20 +437,20 @@ namespace engine
 
    void _monSvcTaskInfo::reset()
    {
-      _totalTime           = 0 ;
-      _totalDataRead       = 0 ;
-      _totalIndexRead      = 0 ;
-      _totalLobRead        = 0 ;
-      _totalDataWrite      = 0 ;
-      _totalIndexWrite     = 0 ;
-      _totalLobWrite       = 0 ;
-      _totalUpdate         = 0 ;
-      _totalDelete         = 0 ;
-      _totalInsert         = 0 ;
-      _totalSelect         = 0 ;
-      _totalRead           = 0 ;
-      _totalWrite          = 0 ;
-      _totalContexts       = 0 ;
+      ossAtomicExchange64( &_totalTime, 0 ) ;
+      ossAtomicExchange64( &_totalDataRead, 0 ) ;
+      ossAtomicExchange64( &_totalIndexRead, 0 ) ;
+      ossAtomicExchange64( &_totalLobRead, 0 ) ;
+      ossAtomicExchange64( &_totalDataWrite, 0 ) ;
+      ossAtomicExchange64( &_totalIndexWrite, 0 ) ;
+      ossAtomicExchange64( &_totalLobWrite, 0 ) ;
+      ossAtomicExchange64( &_totalUpdate, 0 ) ;
+      ossAtomicExchange64( &_totalDelete, 0 ) ;
+      ossAtomicExchange64( &_totalInsert, 0 ) ;
+      ossAtomicExchange64( &_totalSelect, 0 ) ;
+      ossAtomicExchange64( &_totalRead, 0 ) ;
+      ossAtomicExchange64( &_totalWrite, 0 ) ;
+      ossAtomicExchange64( &_totalContexts, 0 ) ;
 
       ossGetCurrentTime( _resetTimestamp ) ;
    }

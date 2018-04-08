@@ -1270,7 +1270,7 @@ namespace engine
             hasDec = TRUE ;
          }
 
-         rc = _processMsg( handle, pTmpMsg ) ;
+         rc = _defaultMsgFunc( handle, pTmpMsg ) ;
          if ( rc )
          {
             break ;
