@@ -172,28 +172,7 @@ function _getNodeConfig( hostRemoval, hostList, hostName, svcname, groupName )
    try
    {
       index = hostRemoval[hostName] ;
-
       config = _getConfig( hostName, svcname ) ;
-      if( config[FIELD_ROLE] == FIELD_COORD ||
-          config[FIELD_ROLE] == FIELD_CATALOG )
-      {
-         config[FIELD_DATAGROUPNAME] = "" ;
-         deployMod = OMA_DEPLOY_CLUSTER ;
-      }
-      else if( config[FIELD_ROLE] == FIELD_DATA )
-      {
-         config[FIELD_DATAGROUPNAME] = groupName ;
-         deployMod = OMA_DEPLOY_CLUSTER ;
-      }
-      else if( config[FIELD_ROLE] == OMA_DEPLOY_STANDALONE )
-      {
-         config[FIELD_DATAGROUPNAME] = "" ;
-         deployMod = OMA_DEPLOY_STANDALONE ;
-      }
-      else
-      {
-         return ;
-      }
    }
    catch( e )
    {
@@ -214,7 +193,29 @@ function _getNodeConfig( hostRemoval, hostList, hostName, svcname, groupName )
    config[FIELD_CLUSTER_NAME2] = clusterName ;
    config[FIELD_BUSINESS_NAME2] = businessName ;
    config[FIELD_OM_ADDR] = omaddr ;
+
    _updateConfig( hostName, svcname, null, config ) ;
+
+   if( config[FIELD_ROLE] == FIELD_COORD ||
+       config[FIELD_ROLE] == FIELD_CATALOG )
+   {
+      config[FIELD_DATAGROUPNAME] = "" ;
+      deployMod = OMA_DEPLOY_CLUSTER ;
+   }
+   else if( config[FIELD_ROLE] == FIELD_DATA )
+   {
+      config[FIELD_DATAGROUPNAME] = groupName ;
+      deployMod = OMA_DEPLOY_CLUSTER ;
+   }
+   else if( config[FIELD_ROLE] == OMA_DEPLOY_STANDALONE )
+   {
+      config[FIELD_DATAGROUPNAME] = "" ;
+      deployMod = OMA_DEPLOY_STANDALONE ;
+   }
+   else
+   {
+      return ;
+   }
 
    if( isNaN( index ) == true )
    {
