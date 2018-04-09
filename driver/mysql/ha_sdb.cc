@@ -17,7 +17,8 @@
    #define MYSQL_SERVER
 #endif
 
-#include "sql_class.h"  
+#include "sql_class.h"
+#include "sql_table.h"
 #include "ha_sdb.h"
 #include <mysql/plugin.h>
 #include <include/client.hpp>
@@ -55,8 +56,14 @@ using namespace sdbclient ;
 #define SDB_STR_BUF_STEP_SIZE    1024
 #define SDB_STR_BUF_SIZE         SDB_STR_BUF_STEP_SIZE
 const static char sdb_ver_info[] = SDB_VER_INFO ;
-static char *sdb_addr = NULL ;
-static const char* SDB_ADDR_DFT = "localhost:11810" ;
+
+//configuration parameter
+static char *                 sdb_addr                = NULL ;
+static const char*            SDB_ADDR_DFT            = "localhost:11810" ;
+static my_bool                SDB_USE_PARTITION_DFT   = TRUE ;
+static my_bool                sdb_use_partition       = SDB_USE_PARTITION_DFT ;
+
+
 mysql_mutex_t sdb_mutex;
 static PSI_mutex_key key_mutex_sdb, key_mutex_SDB_SHARE_mutex ;
 bson::BSONObj empty_obj ;
@@ -1205,8 +1212,6 @@ error:
 
 int ha_sdb::create_index( Alter_inplace_info *ha_alter_info )
 {
-   const KEY_PART_INFO *keyPart ;
-   const KEY_PART_INFO *keyEnd ;
    const KEY *keyInfo ;
    int rc = 0 ;
 
@@ -1254,7 +1259,6 @@ error :
 bool ha_sdb::inplace_alter_table( TABLE *altered_table,
                                   Alter_inplace_info *ha_alter_info )
 {
-   THD *thd = current_thd ;
    bool rs = false ;
    int rc = 0 ;
 
@@ -1405,6 +1409,151 @@ error:
    goto done ;
 }
 
+int ha_sdb::get_sharding_key( TABLE *form,
+                              bson::BSONObj &sharding_key )
+{
+   int rc = 0 ;
+   const KEY *shard_idx = NULL ;
+
+   for( int i=0 ; i<form->s->keys; i++)
+   {
+      const KEY *key_info = form->s->key_info + i ;
+      if ( !strcmp(key_info->name, primary_key_name ))
+      {
+         shard_idx = key_info ;
+         break ;
+      }
+      if ( NULL == shard_idx
+           && ( key_info->flags & HA_NOSAME ))
+      {
+         shard_idx = key_info ;
+      }
+   }
+   if ( NULL != shard_idx )
+   {
+      bson::BSONObjBuilder sharding_key_builder ;
+      const KEY_PART_INFO *key_part ;
+      const KEY_PART_INFO *key_end ;
+
+      // check unique-idx if include sharding-key
+      for( int i=0 ; i<form->s->keys; i++)
+      {
+         const KEY *key_info = form->s->key_info + i ;
+         if ( (key_info->flags & HA_NOSAME)
+              && key_info != shard_idx )
+         {
+            key_part = shard_idx->key_part ;
+            key_end = key_part + shard_idx->user_defined_key_parts ;
+            for( ; key_part != key_end ; ++key_part )
+            {
+               const KEY_PART_INFO *key_part_tmp = key_info->key_part ;
+               const KEY_PART_INFO *key_end_tmp
+                  = key_part_tmp + key_info->user_defined_key_parts ;
+               for( ; key_part_tmp != key_end_tmp ; ++key_part_tmp )
+               {
+                  if ( 0 == strcmp( key_part->field->field_name,
+                                    key_part_tmp->field->field_name ) )
+                  {
+                     break ;
+                  }
+               }
+
+               if ( key_part_tmp == key_end_tmp )
+               {
+                  rc = SDB_INVALIDARG ;
+                  my_printf_error( rc,
+                                   "The unique index('%-.192s') must include the field: '%-.192s'",
+                                   MYF(0), key_info->name, key_part->field->field_name ) ;
+                  goto error ;
+               }
+            }
+         }
+      }
+
+      key_part = shard_idx->key_part ;
+      key_end = key_part + shard_idx->user_defined_key_parts ;
+      for( ; key_part != key_end ; ++key_part )
+      {
+         sharding_key_builder.append( key_part->field->field_name,
+                                      1 ) ;
+      }
+      sharding_key = sharding_key_builder.obj() ;
+   }
+   else
+   {
+      Field **field = form->field ;
+      if ( *field )
+      {
+         sharding_key = BSON( (*field)->field_name << 1 ) ;
+      }
+   }
+
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
+int ha_sdb::get_cl_options( TABLE *form,
+                            HA_CREATE_INFO *create_info,
+                            bson::BSONObj &options,
+                            my_bool use_partition )
+{
+   int rc = 0 ;
+   bson::BSONObj sharding_key ;
+
+   if ( create_info && create_info->comment.str )
+   {
+      bson::BSONElement beOptions ;
+      bson::BSONObj comments ;
+
+      rc = bson::fromjson( create_info->comment.str, comments ) ;
+      if ( 0 != rc )
+      {
+         my_printf_error( rc,
+                          "Failed to parse comment: '%-.192s'",
+                          MYF(0), create_info->comment.str ) ;
+         goto error ;
+      }
+
+      beOptions = comments.getField( "table_options" ) ;
+      if ( beOptions.type() == bson::Object )
+      {
+         options = beOptions.embeddedObject().copy() ;
+         goto done ;
+      }
+      if ( beOptions.type() != bson::EOO )
+      {
+         rc = SDB_INVALIDARG ;
+         my_printf_error( rc,
+                          "Failed to parse cl_options!",
+                          MYF(0) ) ;
+         goto error ;
+      }
+   }
+
+   //TODO: get sdb_auto_split from configure
+   if ( !use_partition )
+   {
+      goto done ;
+   }
+   rc = get_sharding_key( form, sharding_key ) ;
+   if ( rc != 0 )
+   {
+      goto error ;
+   }
+   if ( !sharding_key.isEmpty() )
+   {
+      options = BSON( "ShardingKey" << sharding_key
+                      << "EnsureShardingIndex" << false ) ;
+   }
+
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
 int ha_sdb::create( const char *name, TABLE *form,
                     HA_CREATE_INFO *create_info)
 {
@@ -1414,6 +1563,9 @@ int ha_sdb::create( const char *name, TABLE *form,
    sdb_conn_auto_ptr conn_tmp ;
    bson::BSONObj options ;
    bson::BSONObj comments ;
+   my_bool use_partition ;
+
+   fd = ha_thd()->thread_id() ;
 
    for( Field **field = form->field ; *field ; field++ )
    {
@@ -1454,19 +1606,11 @@ int ha_sdb::create( const char *name, TABLE *form,
       goto error ;
    }
 
-   if ( create_info && create_info->comment.str )
+   use_partition = SDB_CONF_INST->get_use_partition() ;
+   rc = get_cl_options( form, create_info, options, use_partition ) ;
+   if ( 0 != rc )
    {
-      bson::BSONElement beOptions ;
-      rc = bson::fromjson( create_info->comment.str, comments ) ;
-      if ( 0 != rc )
-      {
-         goto error ;
-      }
-      beOptions = comments.getField( "cl_options" ) ;
-      if ( beOptions.type() == bson::Object )
-      {
-         options = beOptions.embeddedObject() ;
-      }
+      goto error ;
    }
 
    rc = SDB_CONN_MGR_INST->get_sdb_conn( ha_thd()->thread_id(),
@@ -1477,7 +1621,18 @@ int ha_sdb::create( const char *name, TABLE *form,
    {
       goto error ;
    }
-   
+
+   //TODO: get sdb_auto_split from configure
+   if ( use_partition )
+   {
+      rc = conn_tmp->create_global_domain_cs( SDB_CONF_INST->get_global_domain_name(),
+                                              db_name ) ;
+   }
+   if ( rc != 0 )
+   {
+      goto error ;
+   }
+
    rc = conn_tmp->create_cl( db_name, table_name, cl, options ) ;
    if ( 0 != rc )
    {
@@ -1486,7 +1641,6 @@ int ha_sdb::create( const char *name, TABLE *form,
 
    connection = conn_tmp ;
    //fd = ha_thd()->active_vio->mysql_socket.fd ;
-   fd = ha_thd()->thread_id() ;
 
    for( int i=0 ; i<form->s->keys; i++)
    {
@@ -1500,6 +1654,7 @@ int ha_sdb::create( const char *name, TABLE *form,
 done:
    return rc ;
 error:
+   convert_sdb_code( rc ) ;
    goto done ;
 }
 
@@ -1512,7 +1667,7 @@ THR_LOCK_DATA **ha_sdb::store_lock( THD *thd, THR_LOCK_DATA **to,
    //       if lock_type == TL_READ then lock the record by s-lock
    //       if lock_type == TL_WIRTE then lock the record by x-lock
 /*  if (lock_type != TL_IGNORE && lock_data.type == TL_UNLOCK) 
-  {
+  {*/
     /* 
       Here is where we get into the guts of a row level lock.
       If TL_UNLOCK is set 
@@ -1523,7 +1678,7 @@ THR_LOCK_DATA **ha_sdb::store_lock( THD *thd, THR_LOCK_DATA **to,
 /*    if ((lock_type >= TL_WRITE_CONCURRENT_INSERT &&
          lock_type <= TL_WRITE) && !thd_in_lock_tables(thd)
         && !thd_tablespace_op(thd))
-      lock_type = TL_WRITE_ALLOW_WRITE;
+      lock_type = TL_WRITE_ALLOW_WRITE;*/
 
     /* 
       In queries of type INSERT INTO t1 SELECT ... FROM t2 ...
@@ -1753,6 +1908,17 @@ static int sdb_conn_addrs_validate( THD * thd,
    return SDB_CONF_INST->parse_conn_addrs( conn_addr_tmp ) ;
 }
 
+static void sdb_use_partition_update( THD * thd,
+                                       struct st_mysql_sys_var *var,
+                                       void *save,
+                                       const void *value )
+{
+   my_bool use_partition = *static_cast<my_bool*>(save)
+      = *static_cast<const my_bool*>(value) ;
+
+   SDB_CONF_INST->set_use_partition( use_partition ) ;
+}
+
 static struct st_mysql_storage_engine sdb_storage_engine=
 { MYSQL_HANDLERTON_INTERFACE_VERSION };
 
@@ -1761,8 +1927,15 @@ static MYSQL_SYSVAR_STR( conn_addr, sdb_addr,
                            "Sequoiadb addr",
                            sdb_conn_addrs_validate,
                            NULL, SDB_ADDR_DFT ) ;
+static MYSQL_SYSVAR_BOOL( use_partition, sdb_use_partition,
+                           PLUGIN_VAR_RQCMDARG,
+                           "create partition table on sequoiadb",
+                           NULL, sdb_use_partition_update,
+                           SDB_USE_PARTITION_DFT ) ;
+
 static struct st_mysql_sys_var *sdb_vars[]={
    MYSQL_SYSVAR(conn_addr),
+   MYSQL_SYSVAR(use_partition),
    NULL
 };
 

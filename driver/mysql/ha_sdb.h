@@ -266,6 +266,11 @@ private:
 
    int drop_index( Alter_inplace_info *ha_alter_info ) ;
 
+   int get_cl_options( TABLE *form, HA_CREATE_INFO *create_info,
+                       bson::BSONObj &options, my_bool use_partition ) ;
+
+   int get_sharding_key( TABLE *form, bson::BSONObj &options ) ;
+
 private:
    THR_LOCK_DATA                             lock_data ;
    sdb_conn_auto_ptr                         connection ;

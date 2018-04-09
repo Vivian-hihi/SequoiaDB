@@ -62,6 +62,10 @@ public:
 
    bool is_idle() ;
 
+   int create_global_domain( const char *domain_name ) ;
+
+   int create_global_domain_cs( const char *domain_name, char *cs_name ) ;
+
 private:
    sdbclient::sdb                                  connection ;
    bool                                            transactionon ;

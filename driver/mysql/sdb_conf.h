@@ -35,6 +35,15 @@ public:
 
    int get_coord_num() ;
 
+   const char * get_global_domain_name()
+   {
+      return "mysql_storage_engine_domain" ;
+   }
+
+   void set_use_partition( my_bool val ) ;
+
+   my_bool get_use_partition() ;
+
 private:
 
    sdb_conf() ;
@@ -49,6 +58,7 @@ private:
    char                          *pAddrs[SDB_COORD_NUM_MAX] ;
    int                           coord_num ;
    pthread_rwlock_t              addrs_mutex ;
+   my_bool                       use_partition ;
 } ;
 
 #define SDB_CONF_INST            sdb_conf::get_instance()

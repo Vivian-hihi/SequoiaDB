@@ -103,3 +103,13 @@ int sdb_conf::get_coord_num()
 {
    return coord_num ;
 }
+
+void sdb_conf::set_use_partition( my_bool val )
+{
+   use_partition = val ;
+}
+
+my_bool sdb_conf::get_use_partition()
+{
+   return use_partition ;
+}

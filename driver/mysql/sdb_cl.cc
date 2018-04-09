@@ -64,21 +64,35 @@ int sdb_cl::re_init( bool create,
    sdbCollectionSpace cs ;
 
 retry:
-   rc = p_conn->get_sdb().getCollectionSpace( cs_name, cs ) ;
-   if ( SDB_DMS_CS_NOTEXIST == rc && create )
+   if ( !create )
+   {
+      rc = p_conn->get_sdb().getCollectionSpace( cs_name, cs ) ;
+   }
+   else
    {
       rc = p_conn->get_sdb().createCollectionSpace( cs_name,
                                           4096, cs ) ;
+      if ( SDB_DMS_CS_EXIST == rc )
+      {
+         rc = p_conn->get_sdb().getCollectionSpace( cs_name, cs ) ;
+      }
    }
    if ( rc != SDB_ERR_OK )
    {
       goto error ;
    }
 
-   rc = cs.getCollection( cl_name, cl ) ;
-   if ( SDB_DMS_NOTEXIST == rc && create )
+   if ( !create )
+   {
+      rc = cs.getCollection( cl_name, cl ) ;
+   }
+   else
    {
       rc = cs.createCollection( cl_name, options, cl ) ;
+      if ( SDB_DMS_EXIST == rc )
+      {
+         rc = cs.getCollection( cl_name, cl ) ;
+      }
    }
    if ( rc != SDB_ERR_OK )
    {
