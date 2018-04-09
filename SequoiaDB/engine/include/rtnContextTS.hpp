@@ -62,7 +62,8 @@ namespace engine
       protected:
          virtual BOOLEAN _requireExplicitSorting () const ;
          virtual INT32   _prepareAllSubCtxDataByOrder( _pmdEDUCB *cb ) ;
-         virtual INT32   _getNonEmptyNormalSubCtx( _pmdEDUCB *cb, rtnSubContext*& subCtx ) ;
+         virtual INT32   _getNonEmptyNormalSubCtx( _pmdEDUCB *cb,
+                                                   rtnSubContext*& subCtx ) ;
          virtual INT32   _saveEmptyOrderedSubCtx( rtnSubContext* subCtx ) ;
          virtual INT32   _saveEmptyNormalSubCtx( rtnSubContext* subCtx ) ;
          virtual INT32   _saveNonEmptyNormalSubCtx( rtnSubContext* subCtx ) ;

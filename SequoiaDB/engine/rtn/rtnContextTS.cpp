@@ -107,6 +107,8 @@ namespace engine
       rc = _options.getOwned() ;
       PD_RC_CHECK( rc, PDERROR, "Get owned of query options failed[ %d ]",
                    rc ) ;
+      _numToReturn = _options.getLimit() ;
+      _numToSkip = _options.getSkip() ;
 
 #ifdef _DEBUG
       PD_LOG( PDDEBUG, "Options for search: %s", options.toString().c_str() ) ;
@@ -325,8 +327,7 @@ namespace engine
       // Do a query, and get another subcontext.
       rc = rtnQuery( _options.getCLFullName(), objList[1], objList[0],
                      objList[2], objList[3], _options.getFlag(), eduCB,
-                     _options.getSkip(), _options.getLimit(), dmsCB, rtnCB,
-                     subContextID ) ;
+                     0, -1, dmsCB, rtnCB, subContextID ) ;
       PD_RC_CHECK( rc, PDERROR, "Query data on collection[ %s ] failed[ %d ]",
                    _options.getCLFullName(), rc ) ;
       if ( _subContext )

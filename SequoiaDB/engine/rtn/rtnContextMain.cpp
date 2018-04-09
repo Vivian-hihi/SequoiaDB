@@ -202,7 +202,7 @@ namespace engine
                PD_LOG ( PDERROR, "Failed to get the data, rc: %d", rc ) ;
                goto error ;
             }
- 
+
             try
             {
                BSONObj obj( data );
@@ -457,7 +457,6 @@ namespace engine
       return rc;
    error:
       goto done;
-   
    }
 
    INT32 _rtnContextMain::_processSubContext ( rtnSubContext * subContext,

@@ -76,6 +76,17 @@ namespace engine
 
    private:
       rtnContextBuf        _buffer ;
+      // Why do we need this _startPos?
+      // Because of the difference between the truncation of this context and
+      // the rtnContextBuf we use above.
+      // The context buffer is read only(except the truncation operation). So
+      // when pop of this context is called, the buffer dose not actually pop
+      // out the objects. It just move its iterator forward. As for truncation,
+      // the buffer will always count from the BEGINNING(including those who
+      // have been popped). But this is not the case in this context. So we
+      // handle this difference by using this member, to make truncation working
+      // properly.
+      INT32                _startPos ;
       INT32                _remainNum ;
    };
    typedef class _rtnSubCLContext rtnSubCLContext ;

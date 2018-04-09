@@ -106,6 +106,12 @@ namespace engine
       {
          _buffSize = offset ;
       }
+
+      if ( offset < _curOffset )
+      {
+         _curOffset = offset ;
+      }
+
       if ( recordNum < _recordNum )
       {
          _recordNum = recordNum ;

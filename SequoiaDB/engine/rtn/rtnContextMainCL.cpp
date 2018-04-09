@@ -48,6 +48,7 @@ namespace engine
                                        INT64 contextID )
       : _rtnSubContext( orderBy, keyGen, contextID )
    {
+      _startPos = 0 ;
       _remainNum = 0;
    }
 
@@ -64,15 +65,32 @@ namespace engine
    {
       INT32 rc = SDB_OK;
       BSONObj obj;
+
+      if ( _remainNum <= 0 )
+      {
+         goto done ;
+      }
+
       _isOrderKeyChange = TRUE;
       _remainNum--;
-      rc = _buffer.nextObj( obj );
       if ( _remainNum <= 0 )
       {
          rtnContextBuf emptyBuf;
          _buffer = emptyBuf;
+         _startPos = 0 ;
       }
-      return rc;
+      else
+      {
+         rc = _buffer.nextObj( obj );
+         PD_RC_CHECK( rc, PDERROR, "Get next object in buffer failed, rc: %d",
+                      rc ) ;
+         _startPos++ ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _rtnSubCLContext::popN( INT32 num )
@@ -101,6 +119,7 @@ namespace engine
    INT32 _rtnSubCLContext::popAll()
    {
       _isOrderKeyChange = TRUE;
+      _startPos = 0 ;
       _remainNum = 0;
       rtnContextBuf emptyBuf;
       _buffer = emptyBuf;
@@ -119,8 +138,18 @@ namespace engine
 
    INT32 _rtnSubCLContext::truncate ( INT32 num )
    {
+      INT32 rc = SDB_OK ;
+
       SDB_ASSERT( num >= 0, "num can't <0 " ) ;
-      return _buffer.truncate( (UINT32) num ) ;
+      // Why? Please refer to the comment of the _startPos.
+      rc = _buffer.truncate( (UINT32)( _startPos + num ) ) ;
+      PD_RC_CHECK( rc, PDERROR, "Truncate context buffer failed, rc: %d", rc ) ;
+
+      _remainNum = _buffer.recordNum() - _startPos ;
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _rtnSubCLContext::getOrderKey( _rtnOrderKey& orderKey )
@@ -608,7 +637,7 @@ namespace engine
          SDB_ASSERT( subCtx->recordNum() > 0, "no data for sub ctx" ) ;
 
          iter = _subContextMap.erase( iter ) ;
-         
+
          rc = _saveNonEmptyOrderedSubCtx( subCtx ) ;
          if ( rc != SDB_OK )
          {
