@@ -71,7 +71,6 @@ namespace seadapter
          INT32 init( const string &uri, BOOLEAN readOnly = FALSE,
                      INT32 timeout = UTIL_SE_DFT_TIMEOUT ) ;
          BOOLEAN isActive() ;
-         INT32 active() ;
          INT32 getSEInfo( BSONObj &infoObj ) ;
          INT32 indexExist( const CHAR *index, BOOLEAN &exist ) ;
          INT32 createIndex( const CHAR *index, const CHAR *data = NULL ) ;

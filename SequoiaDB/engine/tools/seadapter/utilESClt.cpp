@@ -149,19 +149,6 @@ namespace seadapter
       return ( SDB_OK == _http.get( NULL, NULL ) ) ? TRUE : FALSE ;
    }
 
-   INT32 _utilESClt::active()
-   {
-      INT32 rc = SDB_OK ;
-
-      rc = _http.reconnect() ;
-      PD_RC_CHECK( rc, PDERROR, "Activate client failed[ %d ]", rc ) ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
    INT32 _utilESClt::getSEInfo( BSONObj &infoObj )
    {
       INT32 rc = SDB_OK ;

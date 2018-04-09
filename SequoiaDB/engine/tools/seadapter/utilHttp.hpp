@@ -77,26 +77,6 @@ namespace seadapter
             return ( _socket && _socket->isConnected() ) ;
          }
 
-         OSS_INLINE INT32 reconnect()
-         {
-            INT32 rc = SDB_OK ;
-
-            if ( !_socket )
-            {
-               PD_LOG( PDEVENT, "Not initialized yet" ) ;
-               rc = SDB_INVALIDARG ;
-               goto error ;
-            }
-
-            rc = _connectBySocket() ;
-            PD_RC_CHECK( rc, PDERROR, "Create connection by socket "
-                         "failed[ %d ]", rc ) ;
-         done:
-            return rc ;
-         error:
-            goto done ;
-         }
-
          // Generic request.
          INT32 request( const CHAR *method,
                         const CHAR *endUrl,
