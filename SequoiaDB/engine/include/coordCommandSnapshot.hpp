@@ -479,6 +479,7 @@ namespace engine
       public:
          _coordCMDSnapshotConfigsIntr() ;
          virtual ~_coordCMDSnapshotConfigsIntr() ;
+         virtual void _preSet( pmdEDUCB *cb, coordCtrlParam &ctrlParam ) ;
    } ;
    typedef _coordCMDSnapshotConfigsIntr coordCMDSnapshotConfigsIntr ;
 

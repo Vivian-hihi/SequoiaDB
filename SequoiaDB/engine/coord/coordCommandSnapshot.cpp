@@ -670,6 +670,13 @@ namespace engine
    {
    }
 
+   void _coordCMDSnapshotConfigsIntr::_preSet( pmdEDUCB *cb,
+                                               coordCtrlParam &ctrlParam )
+   {
+      // catalog / data has been set with default 1
+      ctrlParam._role[ SDB_ROLE_COORD ] = 1 ;
+   }
+
    /*
       _coordCMDSnapshotSvcTasks implement
    */
