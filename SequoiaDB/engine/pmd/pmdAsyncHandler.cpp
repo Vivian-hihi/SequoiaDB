@@ -251,11 +251,16 @@ namespace engine
       BOOLEAN bCreate = TRUE ;
       UINT64 sessionID = 0 ;
 
-      // if opcode is disconnect or interrupt, we don't expect to create
-      // new session
-      if ( MSG_BS_DISCONNECT == header->opCode ||
-           MSG_BS_INTERRUPTE == header->opCode ||
-           MSG_BS_INTERRUPTE_SELF == header->opCode )
+      // if opcode is disconnect, we don't push the message
+      if ( MSG_BS_DISCONNECT == header->opCode )
+      {
+         rc = SDB_CLS_UNKNOW_MSG ;
+         goto error ;
+      }
+      // if opcode is interrupt or interrupt self, we don't expect to
+      // create new session
+      else if ( MSG_BS_INTERRUPTE == header->opCode ||
+                MSG_BS_INTERRUPTE_SELF == header->opCode )
       {
          bCreate = FALSE ;
       }

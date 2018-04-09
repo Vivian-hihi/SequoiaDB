@@ -795,20 +795,20 @@ namespace engine
          }
       }
 
-      /// release the session
-      it = tmpDeletingSessions.begin() ;
-      while( it != tmpDeletingSessions.end() )
-      {
-         pSession = *it ;
-         ++it ;
-
-         _releaseSession( pSession ) ;
-      }
-      tmpDeletingSessions.clear() ;
-
       /// check _deqShdDeletingSessions and push to tmpDeletingSessions
       {
          ossScopedLock lock( &_deqDeletingMutex ) ;
+
+         it = tmpDeletingSessions.begin() ;
+         while( it != tmpDeletingSessions.end() )
+         {
+            pSession = *it ;
+            ++it ;
+            /// push to deleting que
+            _deqDeletingSessions.push_back( pSession ) ;
+         }
+         tmpDeletingSessions.clear() ;
+
          it = _deqDeletingSessions.begin() ;
          while ( it != _deqDeletingSessions.end() )
          {
@@ -915,10 +915,11 @@ namespace engine
       /// When session is closed
       if ( pSession->isClosed() )
       {
-         PD_LOG( PDWARNING, "Session[%s] is closed, Pending msg num:%d",
-                 pSession->sessionName(), pSession->getPendingMsgNum() ) ;
+         rc = SDB_APP_INTERRUPT ;
+         PD_LOG( PDWARNING, "Session[%s] is closed, Pending msg num:%d, rc:%d",
+                 pSession->sessionName(), pSession->getPendingMsgNum(), rc ) ;
 
-         rc = onErrorHanding( SDB_APP_INTERRUPT, pMsg, handle,
+         rc = onErrorHanding( rc, pMsg, handle,
                               sessionID, pSession ) ;
          if ( rc )
          {
@@ -929,9 +930,6 @@ namespace engine
             goto done ;
          }
       }
-
-      // On recieve
-      pSession->onRecieve ( handle, (_MsgHeader*)pMsg ) ;
 
       // Check the received code
       if ( MSG_BS_DISCONNECT == pMsg->opCode )
@@ -969,6 +967,9 @@ namespace engine
          pSession->eduCB()->interrupt() ;
          goto done ;
       }
+
+      // On recieve
+      pSession->onRecieve ( handle, (_MsgHeader*)pMsg ) ;
 
       // push the mssage into session manager
       rc = _pushMessage( pSession, pMsg, memType, handle ) ;
@@ -1019,9 +1020,9 @@ namespace engine
 
       if ( pSession->isClosed() )
       {
-         PD_LOG( PDWARNING, "Session[%s] is closed, Pending msg num:%d",
-                 pSession->sessionName(), pSession->getPendingMsgNum() ) ;
          rc = SDB_APP_INTERRUPT ;
+         PD_LOG( PDWARNING, "Session[%s] is closed, Pending msg num:%d, rc:%d",
+                 pSession->sessionName(), pSession->getPendingMsgNum(), rc ) ;
          goto error ;
       }
 
@@ -1147,7 +1148,21 @@ namespace engine
                    ( it = _mapPendingSession.find( sessionID ) ) )
          {
             pSession = it->second ;
-            isPending = TRUE ;
+
+            if ( 0 == pSession->getPendingMsgNum() && !pSession->hasHold() )
+            {
+               /// release
+               _mapPendingSession.erase( it ) ;
+
+               /// push to deleting que
+               ossScopedLock lock ( &_deqDeletingMutex ) ;
+               _deqDeletingSessions.push_back ( pSession ) ;
+               pSession = NULL ;
+            }
+            else
+            {
+               isPending = TRUE ;
+            }
          }
 
          if ( pSession )
