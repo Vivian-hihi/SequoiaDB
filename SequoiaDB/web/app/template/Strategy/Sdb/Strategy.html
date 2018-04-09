@@ -17,7 +17,7 @@
    <div ng-container="{height:30,marginBottom:10}">
       <button class="topBtn" ng-click="QueryStrategyList()"><i class="fa fa-refresh"></i> {{autoLanguage("刷新")}}</button>
       <button class="topBtn" ng-click="ShowCreateStrategy()"><i class="fa fa-plus"></i> {{autoLanguage("添加策略配置项")}}</button>
-      <button class="topBtn" ng-class="{true:'disabled'}[StrategyTable['body']==0]" ng-disabled="StrategyTable['body']==0" ng-click="ShowFlushStrategy()">{{autoLanguage("立即生效策略")}}</button>
+      <button class="topBtn" ng-click="ShowFlushStrategy()">{{autoLanguage("立即生效策略")}}</button>
    </div>
 
    <div ng-show="StrategyTable['body'].length == 0">
