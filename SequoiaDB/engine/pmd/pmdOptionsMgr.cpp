@@ -864,6 +864,8 @@ done:
       pmdCfgExchange ex1( &mapKeyField, fileConfig, TRUE, PMD_CFG_STEP_PRECHG ) ;
       pmdCfgExchange ex2( &mapKeyField, userConfig, TRUE, PMD_CFG_STEP_CHG ) ;
       pmdCfgExchange ex3( &mapKeyField, userConfig, TRUE, PMD_CFG_STEP_RESTORE ) ;
+      MAP_K2V::iterator itKV ;
+      BSONObjIterator iter( fileConfig ) ;
 
       // save old cfg
       rc = toBSON( oldCfg, 0 ) ;
@@ -908,7 +910,7 @@ done:
                          FALSE == it->second._hasMapped ) ) )
                   {
                      strStream << it->first << "=" << it->second._value
-                            << OSS_NEWLINE ;
+                               << OSS_NEWLINE ;
                   }
                   break ;
                case PMD_CFG_CHANGE_REBOOT :
@@ -921,7 +923,7 @@ done:
                          FALSE == it->second._hasMapped ) ) )
                   {
                      strStream << it->first << "=" << it->second._value
-                            << OSS_NEWLINE ;
+                               << OSS_NEWLINE ;
                   }
                   break ;
                case PMD_CFG_CHANGE_FORBIDDEN :
@@ -950,6 +952,21 @@ done:
                _mapKeyValue[ it->first ] = it->second ;
             }
             ++it ;
+         }
+
+         // add remaining configs in config file back
+         while ( iter.more() )
+         {
+            BSONElement e = iter.next() ;
+
+            itKV = mapKeyField.find( e.fieldName() ) ;
+            if ( itKV != mapKeyField.end() )
+            {
+               continue ;
+            }
+
+            strStream << e.fieldName() << "=" << e.valuestrsafe()
+                      << OSS_NEWLINE ;
          }
 
          // contents to write to config file
