@@ -56,7 +56,7 @@ using namespace engine ;
    ( SDB_SEADPT_SE_HOST, boost::program_options::value<string>(), "Search engine address" ) \
    ( SDB_SEADPT_SE_PORT, boost::program_options::value<string>(), "Search engine service name or port" ) \
    ( SDB_SEADPT_BULK_BUFF_SIZE, boost::program_options::value<int>(), "Bulk operation buffer size,unit:MB,default:10,value range:[1-32]" ) \
-   ( PMD_COMMANDS_STRING (PMD_OPTION_OPERATOR_TIMEOUT, ",t"), boost::program_options::value<int>(), "Rest operation timeout in millisecond,default:10000,value range[0-3600000]" )
+   ( PMD_COMMANDS_STRING (PMD_OPTION_OPERATOR_TIMEOUT, ",t"), boost::program_options::value<int>(), "Rest operation timeout in millisecond,default:10000,value range[3000-3600000]" )
 
 namespace seadapter
 {
@@ -206,7 +206,7 @@ namespace seadapter
 
       rdxInt( pEX, PMD_OPTION_OPERATOR_TIMEOUT, _timeout,
               FALSE, PMD_CFG_CHANGE_FORBIDDEN, SEADPT_DFT_TIMEOUT ) ;
-      rdvMinMax( pEX, _timeout, 0, 3600000, TRUE ) ;
+      rdvMinMax( pEX, _timeout, 3000, 3600000, TRUE ) ;
 
       rdxInt( pEX, SDB_SEADPT_BULK_BUFF_SIZE, _bulkBuffSize,
               FALSE, PMD_CFG_CHANGE_RUN, SEADPT_BULK_BUFF_SIZE ) ;
