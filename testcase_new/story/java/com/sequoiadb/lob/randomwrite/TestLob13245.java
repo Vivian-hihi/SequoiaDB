@@ -6,11 +6,13 @@ import com.sequoiadb.base.DBLob;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.SDBError;
+import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 import org.bson.BSONObject;
 import org.bson.types.ObjectId;
 import org.bson.util.JSON;
 import org.testng.Assert;
+import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -37,6 +39,10 @@ public class TestLob13245 extends SdbTestBase {
         csName = SdbTestBase.csName;
         clName = "cl_" + this.getClass().getSimpleName();
         db = new Sequoiadb(coordUrl, "", "");
+        CommLib comm = new CommLib();
+        if (comm.isStandAlone(db)) {
+            throw new SkipException("can not support standalone");
+        }
         cs = db.getCollectionSpace(csName);
         List<String> groupNames = RandomWriteLobUtil.getDataGroups(db);
 
