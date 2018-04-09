@@ -2048,6 +2048,17 @@ public class Sequoiadb implements Closeable {
         createReplicaCataGroup(hostName, port, dbPath, obj);
     }
 
+    /**
+     * this API is for test purpose
+     *
+     * @param message
+     */
+    public void msg(String message) {
+        TestRequest request = new TestRequest(message);
+        SdbReply response = requestAndResponse(request);
+        throwIfError(response);
+    }
+
     private String getListCommand(int listType) {
         switch (listType) {
             case SDB_LIST_CONTEXTS:

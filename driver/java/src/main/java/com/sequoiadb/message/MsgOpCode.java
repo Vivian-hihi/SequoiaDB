@@ -27,6 +27,9 @@ public final class MsgOpCode {
 
     public static final int RESP_MASK = 0x80000000;
 
+    public static final int MSG_REQ = 1000;
+    public static final int MSG_RESP = RESP_MASK | MSG_REQ;
+
     public static final int UPDATE_REQ = 2001;
     public static final int UPDATE_RESP = RESP_MASK | UPDATE_REQ;
 

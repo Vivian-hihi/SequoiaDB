@@ -2015,7 +2015,7 @@ public class DBCollection {
      * @throws BaseException If error happens.
      */
     public void pop(BSONObject options) throws BaseException {
-        if (null == options) {
+        if (options == null) {
             throw new BaseException(SDBError.SDB_INVALIDARG, "options is null");
         }
 
@@ -2028,7 +2028,7 @@ public class DBCollection {
             throw new BaseException(SDBError.SDB_INVALIDARG, options.toString());
         }
         Object directObj = options.get(SdbConstants.FIELD_NAME_DIRECTION);
-        if (null == directObj) {
+        if (directObj == null) {
             newObj.put(SdbConstants.FIELD_NAME_DIRECTION, 1);
         } else if (directObj instanceof Integer) {
             newObj.put(SdbConstants.FIELD_NAME_DIRECTION, directObj);
