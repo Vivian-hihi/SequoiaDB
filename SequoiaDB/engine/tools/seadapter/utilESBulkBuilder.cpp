@@ -120,7 +120,7 @@ namespace seadapter
 
       if ( copy )
       {
-         _sourceData = (CHAR *)SDB_OSS_MALLOC( length ) ;
+         _sourceData = (CHAR *)SDB_OSS_MALLOC( length + 1 ) ;
          if ( !_sourceData )
          {
             rc = SDB_OOM ;
@@ -268,7 +268,7 @@ namespace seadapter
    {
    }
 
-   utilESBulkActionType _utilESActionCreate::getType() const
+   utilESBulkActionType _utilESActionCreate::getActionType() const
    {
       return UTIL_ES_ACTION_CREATE ;
    }
@@ -314,7 +314,7 @@ namespace seadapter
    {
    }
 
-   utilESBulkActionType _utilESActionIndex::getType() const
+   utilESBulkActionType _utilESActionIndex::getActionType() const
    {
       return UTIL_ES_ACTION_INDEX ;
    }
@@ -360,7 +360,7 @@ namespace seadapter
    {
    }
 
-   utilESBulkActionType _utilESActionUpdate::getType() const
+   utilESBulkActionType _utilESActionUpdate::getActionType() const
    {
       return UTIL_ES_ACTION_UPDATE ;
    }
@@ -422,7 +422,7 @@ namespace seadapter
    {
    }
 
-   utilESBulkActionType _utilESActionDelete::getType() const
+   utilESBulkActionType _utilESActionDelete::getActionType() const
    {
       return UTIL_ES_ACTION_DELETE ;
    }

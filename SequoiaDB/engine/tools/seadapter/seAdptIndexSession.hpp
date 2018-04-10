@@ -119,6 +119,7 @@ namespace seadapter
       INT32 _bulkPrepare() ;
       INT32 _bulkProcess( const utilESBulkActionBase &actionItem ) ;
       INT32 _bulkFinish() ;
+      INT32 _processBigItem( const utilESBulkActionBase &actionItem ) ;
       INT32 _createIndex( BOOLEAN force = FALSE ) ;
       INT32 _dropIndex() ;
 

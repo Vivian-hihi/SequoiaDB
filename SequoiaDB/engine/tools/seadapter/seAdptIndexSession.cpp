@@ -1374,10 +1374,11 @@ namespace seadapter
          }
          else
          {
-            // Buffer is not enough.
-            rc = SDB_SYS ;
-            PD_LOG( PDERROR, "Bulk operation buffer is not enough" ) ;
-            goto error ;
+            // Buffer is not enough. Process it separately instead of using
+            // _bulk.
+            rc = _processBigItem( actionItem ) ;
+            PD_RC_CHECK( rc, PDERROR, "Process big item failed[ %d ]", rc ) ;
+            goto done ;
          }
       }
       rc = _bulkBuilder.appendItem( actionItem, FALSE, FALSE, TRUE ) ;
@@ -1403,6 +1404,26 @@ namespace seadapter
          PD_RC_CHECK( rc, PDERROR, "Bulk operation failed[ %d ]", rc ) ;
       }
 
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _seAdptIndexSession::_processBigItem( const utilESBulkActionBase &actionItem )
+   {
+      INT32 rc = SDB_OK ;
+
+      // Currently only index and update may exceed bulk buffer. They both use
+      // the indexDocument interface.
+      SDB_ASSERT( UTIL_ES_ACTION_INDEX == actionItem.getActionType(),
+                  "Type is not index" ) ;
+
+      rc = _esClt->indexDocument( actionItem.getIndexName().c_str(),
+                                  actionItem.getTypeName().c_str(),
+                                  actionItem.getID().c_str(),
+                                  actionItem.getSrcData() ) ;
+      PD_RC_CHECK( rc, PDERROR, "Index document failed[ %d ]", rc ) ;
    done:
       return rc ;
    error:

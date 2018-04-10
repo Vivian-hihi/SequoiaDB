@@ -97,7 +97,12 @@ namespace seadapter
                        BOOLEAN withIndex = TRUE, BOOLEAN withType = TRUE,
                        BOOLEAN withID = TRUE ) const ;
 
-         virtual utilESBulkActionType getType() const = 0 ;
+         const std::string& getIndexName() const { return _index ; }
+         const std::string& getTypeName() const { return _type ; }
+         const std::string& getID() const { return _id ; }
+         const CHAR* getSrcData() const { return _sourceData ; }
+
+         virtual utilESBulkActionType getActionType() const = 0 ;
 
       protected:
          INT32 _outputActionAndMeta( CHAR *buffer, INT32 size, INT32 &length,
@@ -129,7 +134,7 @@ namespace seadapter
          _utilESActionCreate( const CHAR *index, const CHAR *type ) ;
          virtual ~_utilESActionCreate() ;
 
-         utilESBulkActionType getType() const ;
+         utilESBulkActionType getActionType() const ;
 
       private:
          virtual INT32 _outputSrcData( CHAR *buffer, INT32 size,
@@ -146,7 +151,7 @@ namespace seadapter
          _utilESActionIndex( const CHAR *index, const CHAR *type ) ;
          virtual ~_utilESActionIndex() ;
 
-         utilESBulkActionType getType() const ;
+         utilESBulkActionType getActionType() const ;
 
       private:
          virtual INT32 _outputSrcData( CHAR *buffer, INT32 size,
@@ -163,7 +168,7 @@ namespace seadapter
          _utilESActionUpdate( const CHAR *index, const CHAR *type ) ;
          virtual ~_utilESActionUpdate() ;
 
-         utilESBulkActionType getType() const ;
+         utilESBulkActionType getActionType() const ;
 
       private:
          virtual INT32 _outputSrcData( CHAR *buffer, INT32 size,
@@ -180,7 +185,7 @@ namespace seadapter
          _utilESActionDelete( const CHAR *index, const CHAR *type ) ;
          virtual ~_utilESActionDelete() ;
 
-         utilESBulkActionType getType() const ;
+         utilESBulkActionType getActionType() const ;
 
       private:
          virtual INT32 _outputSrcData( CHAR *buffer, INT32 size,
