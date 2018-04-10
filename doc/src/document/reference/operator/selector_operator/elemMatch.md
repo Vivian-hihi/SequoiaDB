@@ -118,36 +118,36 @@ SequoiaDB shell 运行如下：
         "age": 18
       }
     }
-	{
-  		"_id": 3,
-  		"class": 3,
-  		"students": [
-    	{
-      		"name": "ZhangSan",
-      		"age": 18,
-      		"course": [
-        	{
-          		"math": 1
-        	},
-        	{
-          		"english": 0
-        	}
-      	]
-    	},
-    	{
-      		"name": "WangErmazi",
-      		"age": 18,
-      		"course": [
-        	{
-          		"math": 0
-        	},
-        	{
-          		"english": 0
-        	}
-      		]
-    	}
-  		]
-	}
+    {
+      "_id": 3,
+      "class": 3,
+      "students": [
+        {
+          "name": "ZhangSan",
+          "age": 18,
+          "course": [
+            {
+              "math": 1
+            },
+            {
+              "english": 0
+            }
+          ]
+        },
+        {
+          "name": "WangErmazi",
+          "age": 18,
+          "course": [
+            {
+              "math": 0
+            },
+            {
+              "english": 0
+            }
+          ]
+        }
+      ]
+    }
     Return 3 row(s).
   ```
 
