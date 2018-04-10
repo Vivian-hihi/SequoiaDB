@@ -8478,6 +8478,12 @@ static JSBool sdb_update_config ( JSContext *cx , uintN argc , jsval *vp )
       opSpecified = TRUE ;
    }
 
+   if ( NULL == objConfigs )
+   {
+      rc = SDB_INVALIDARG ;
+      REPORT_RC ( JS_FALSE, "Sdb.updateConf()", rc ) ;
+   }
+
    connection = (sdbConnectionHandle *)
       JS_GetPrivate ( cx , JS_THIS_OBJECT ( cx , vp ) ) ;
    REPORT ( connection , "Sdb.updateConf(): no connection handle" ) ;
@@ -8537,6 +8543,12 @@ static JSBool sdb_delete_config ( JSContext *cx , uintN argc , jsval *vp )
       rc = c.toBson( objOptions, &options ) ;
       VERIFY ( SDB_OK == rc ) ;
       opSpecified = TRUE ;
+   }
+
+   if ( NULL == objConfigs )
+   {
+      rc = SDB_INVALIDARG ;
+      REPORT_RC ( JS_FALSE, "Sdb.deleteConf()", rc ) ;
    }
 
    connection = (sdbConnectionHandle *)
