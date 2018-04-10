@@ -693,13 +693,16 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Create new context failed[ %d ]", rc ) ;
       }
 
+      // If the current context is not DROPIDX, the current operation may be
+      // dropping cs or cl. Nothing should be done in that cases.
       if ( DMS_EXTOPR_TYPE_DROPIDX == context->getType() )
       {
          rc = _edpMgr->getProcessor( csName, clName, idxName, &processor ) ;
          PD_RC_CHECK( rc, PDERROR, "Get external processor failed[ %d ]", rc ) ;
          if ( !processor )
          {
-            goto done ;
+            // The context needs to be deleted. So go to error instead of done.
+            goto error ;
          }
 
          context->setRemoveFiles( TRUE ) ;
@@ -730,6 +733,7 @@ namespace engine
       PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONREBUILDTEXTIDX ) ;
       SDB_DB_STATUS dbStatus = pmdGetKRCB()->getDBStatus() ;
       rtnExtDataProcessor *processor = NULL ;
+      BOOLEAN newProcessor = FALSE ;
 
       // Index will be rebuilt in the following cases:
       // 1. One new index is created.
@@ -761,6 +765,7 @@ namespace engine
             PD_RC_CHECK( rc, PDERROR, "Add processor for collection[ %s.%s ] "
                          "and index[ %s ] failed[ %d ]", csName, clName,
                          idxName, rc ) ;
+            newProcessor = TRUE ;
          }
          else
          {
@@ -777,6 +782,10 @@ namespace engine
       PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER_ONREBUILDTEXTIDX, rc ) ;
       return rc ;
    error:
+      if ( newProcessor )
+      {
+         _edpMgr->delProcessor( &processor ) ;
+      }
       goto done ;
    }
 
