@@ -72,7 +72,7 @@
       <if>
          <equals arg1="${USE_ARCHIVE}" arg2="true"/>
          <then>
-            <propertyregex property="dbversionpre" input="${tmp_sdb_version}" regexp="(\d.\d)(.*)" select="\1" casesensitive="false"/>
+            <propertyregex property="dbversionpre" input="${tmp_sdb_version}" regexp="([0-9]*\d.[0-9]*\d)(.*)" select="\1" casesensitive="false"/>
             <delete dir="${CI_WORK_DIR}" failonerror="false"/>
             <mkdir dir="${CI_WORK_DIR}"/>
             <var name="driver_src_dir" value="${DB_PACKAGE_DIR}/SequoiaDB/SequoiaDB ${dbversionpre}/x86_64/driver-${tmp_sdb_version}"/>
