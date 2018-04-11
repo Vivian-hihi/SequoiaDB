@@ -63,7 +63,7 @@ public class ConcurrentRewriteLob13270 extends SdbTestBase {
 		sdb.setSessionAttr(new BasicBSONObject("PreferedInstance", "M"));
 		cs = sdb.getCollectionSpace(SdbTestBase.csName);
 		String clOptions = "{ShardingKey:{no:1},ShardingType:'hash',Partition:1024,"
-				+ "ReplSize:0,Compressed:true,Group:'group1'}";
+				+ "ReplSize:0,Compressed:true}";
 		cl = RandomWriteLobUtil.createCL(cs, clName, clOptions );
 		
 		//put lob		
