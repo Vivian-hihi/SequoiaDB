@@ -393,6 +393,12 @@
                      "file": "connection",
                      "cn": "使用",
                      "en": "Connect"
+                  },
+                  {
+                     "id": 1521595284,
+                     "file": "attention",
+                     "cn": "注意事项",
+                     "en": "attention"
                   }
                ]
             }
