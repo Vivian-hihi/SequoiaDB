@@ -1,8 +1,9 @@
 package com.sequoiadb.lob.randomwrite;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import com.sequoiadb.base.*;
+import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.testcommon.SdbTestBase;
+import com.sequoiadb.testcommon.SdbThreadBase;
 import org.bson.BSONObject;
 import org.bson.types.ObjectId;
 import org.bson.util.JSON;
@@ -11,14 +12,8 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.sequoiadb.base.CollectionSpace;
-import com.sequoiadb.base.DBCollection;
-import com.sequoiadb.base.DBCursor;
-import com.sequoiadb.base.DBLob;
-import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.testcommon.SdbTestBase;
-import com.sequoiadb.testcommon.SdbThreadBase;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @FileName seqDB-13319: 并发加锁写lob过程中执行truncate 
@@ -130,14 +125,14 @@ public class WriteAndTruncate13319 extends SdbTestBase {
         @Override
         public void exec() throws Exception {
             Sequoiadb db = null;
-            DBLob lob = null;
             try {
                 db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
                 DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
-                lob = cl.openLob(oid, DBLob.SDB_LOB_WRITE);
+                DBLob lob = cl.openLob(oid, DBLob.SDB_LOB_WRITE);
                 
                 lob.lockAndSeek(part.getOffset(), part.getLength());
                 lob.write(part.getData());
+                lob.close();
             } catch (BaseException e) {
                 int errCode = e.getErrorCode();
                 if (errCode != -4 &&          // -4: file not exist
@@ -146,9 +141,6 @@ public class WriteAndTruncate13319 extends SdbTestBase {
                     throw e;
                 }
             } finally {
-                if (null != lob) {
-                    lob.close();
-                }
                 if (null != db) {
                     db.close();
                 }
