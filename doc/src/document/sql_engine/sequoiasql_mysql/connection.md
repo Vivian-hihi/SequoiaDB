@@ -67,7 +67,7 @@
 
  ```
 
-   对“c”字段创建索引并执行相同查询时，访问计划信息如下：
+   对“c”字段创建索引并执行相同查询时将会使用该索引，具体访问计划信息如下：
  
  ```lang-javascript
  mysql> alter table cl add index idx_c(c(20));
@@ -136,7 +136,22 @@
  ```
  
 2. 配置分区表  
-   默认情况下，在mysql上创建表将同步在SequoiaDB上创建对应的分区表，分区键默认使用主键，如果没有主键则使用唯一键，如果没有唯一键则使用第一个字段。也可以通过将配置参数“sequoiadb_use_partition”设置为“OFF”禁止使用默认分区表，该配置参数可以在shell命令行和配置文件中修改。  
+   默认情况下，在mysql上创建表将同步在SequoiaDB上创建对应的分区表。
+   分区键优先使用主键字段，如果建表时没有创建主键则使用唯一键，如果没有创建唯一键则使用第一个字段。
+   用户可以通过将配置参数“sequoiadb_use_partition”设置为“OFF”禁止创建默认分区表，该配置参数同样可以在shell命令行和配置文件中修改：
+   (1)修改配置文件/etc/my.cnf，在[mysqld]下添加如下配置：  
+
+ ```lang-javascript
+ sequoiadb_use_partition=OFF
+ ```
+
+	  注意：修改配置文件后需要重新启动MySQL服务
+
+   (2)通过MySQL shell修改  
+
+ ```lang-javascript
+ mysql> SET GLOBAL sequoiadb_use_partition=OFF;
+ ```
 
 3. 建表参数  
    在mysql上创建表时，也可以通过comment参数传入自定义分区表配置，comment参数为json格式，具体配置参数如下表：
@@ -151,6 +166,7 @@
  ```lang-javascript
  mysql> create table cl(a int, b int, c text) engine = SequoiaDB comment="{table_options:{ShardingKey:{a:1,b:-1},ShardingType:\"range\"}}";
  ```
+
 
 ##数据类型对应关系##
 
