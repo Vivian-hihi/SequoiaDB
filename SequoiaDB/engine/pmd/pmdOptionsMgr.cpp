@@ -1966,9 +1966,13 @@ done:
       // --diagnum
       rdxInt( pEX, PMD_OPTION_DIAGLOG_NUM, _dialogFileNum, FALSE, PMD_CFG_CHANGE_RUN,
               PD_DFT_FILE_NUM ) ;
+      rdvMinMax( pEX, _dialogFileNum, PD_MIN_FILE_NUM,
+                 OSS_SINT32_MAX, TRUE ) ;
       // --auditnum
       rdxInt( pEX, PMD_OPTION_AUDIT_NUM, _auditFileNum, FALSE, PMD_CFG_CHANGE_RUN,
               PD_DFT_FILE_NUM ) ;
+      rdvMinMax( pEX, _auditFileNum, PD_MIN_FILE_NUM,
+                 OSS_SINT32_MAX, TRUE ) ;
       // --auditmask
       rdxString( pEX, PMD_OPTION_AUDIT_MASK, _auditMaskStr, sizeof(_auditMaskStr),
                  FALSE, PMD_CFG_CHANGE_RUN, AUDIT_MASK_DFT_STR ) ;

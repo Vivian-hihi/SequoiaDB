@@ -39,6 +39,7 @@
 #include "pdErr.hpp"
 
 #define PD_DFT_FILE_NUM             (20)
+#define PD_MIN_FILE_NUM             (-1)
 #define PD_DFT_FILE_SZ              (100)
 #define PD_DFT_DIAGLOG              "sdbdiag.log"
 #define PD_DFT_AUDIT                "sdbaudit.log"
