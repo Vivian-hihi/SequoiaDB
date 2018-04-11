@@ -76,6 +76,7 @@
     <Compile Include="Crud\Lob\LockAndSeekParamVerify13477.cs" />
     <Compile Include="Crud\Lob\TruncateLob13478.cs" />
     <Compile Include="Crud\Lob\LockAndWrite14794.cs" />
+    <Compile Include="Crud\Lob\SeekWriteAndReadLob14888.cs" />
     <Compile Include="Crud\Query\Count14544.cs" />
     <Compile Include="Crud\Query\Cursor14581.cs" />
     <Compile Include="Crud\Query\Query14543.cs" />
