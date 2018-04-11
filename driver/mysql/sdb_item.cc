@@ -73,11 +73,23 @@ sdb_func_item::sdb_func_item()
    :para_num_cur(0),
    para_num_max(1)
 {
+   l_child = NULL ;
+   r_child = NULL ;
 }
 
 sdb_func_item::~sdb_func_item()
 {
    para_list.pop() ;
+   if ( l_child != NULL )
+   {
+      delete l_child ;
+      l_child = NULL ;
+   }
+   if ( r_child != NULL )
+   {
+      delete r_child ;
+      r_child = NULL ;
+   }
 }
 
 void sdb_func_item::update_stat()
@@ -96,12 +108,33 @@ int sdb_func_item::push( sdb_item *cond_item )
       rc = SDB_ERR_COND_UNEXPECTED_ITEM ;
       goto error ;
    }
-   rc = push(((sdb_func_unkown *)cond_item)->get_func_item()) ;
-   if ( rc != SDB_ERR_OK )
+
+   if ( ((sdb_func_unkown *)cond_item)->get_func_item()->const_item() )
    {
-      goto error ;
+      rc = push(((sdb_func_unkown *)cond_item)->get_func_item()) ;
+      if ( rc != SDB_ERR_OK )
+      {
+         goto error ;
+      }
+      delete cond_item ;
    }
-   delete cond_item ;
+   else
+   {
+      if ( l_child != NULL || r_child != NULL )
+      {
+         rc = SDB_ERR_COND_UNEXPECTED_ITEM ;
+         goto error ;
+      }
+      if ( para_num_cur != 0 )
+      {
+         r_child = cond_item ;
+      }
+      else
+      {
+         l_child = cond_item ;
+      }
+      update_stat() ;
+   }
 done:
    return rc ;
 error:
@@ -124,6 +157,16 @@ done:
 error:
    rc = SDB_ERR_COND_UNSUPPORTED ;
    goto done ;
+}
+
+int sdb_func_item::pop( Item *&para_item )
+{
+   if ( para_list.is_empty() )
+   {
+      return SDB_ERR_EOF ;
+   }
+   para_item = para_list.pop() ;
+   return SDB_ERR_OK ;
 }
 
 /*int sdb_func_item::get_item_val( const char *field_name,
@@ -649,23 +692,6 @@ sdb_func_unkown::~sdb_func_unkown()
 {
 }
 
-int sdb_func_unkown::push( Item *cond_item )
-{
-   int rc = SDB_ERR_OK ;
-   DBUG_ASSERT( !is_finished ) ;
-
-   if ( is_finished )
-   {
-      rc = SDB_ERR_COND_UNEXPECTED_ITEM ;
-      goto error ;
-   }
-   update_stat() ;
-done:
-   return rc ;
-error:
-   goto done ;
-}
-
 sdb_func_unary_op::sdb_func_unary_op()
 {
    para_num_max = 1 ;
@@ -693,6 +719,12 @@ int sdb_func_isnull::to_bson( bson::BSONObj &obj )
    if ( !is_finished )
    {
       rc = SDB_ERR_COND_INCOMPLETED ;
+      goto error ;
+   }
+
+   if ( l_child != NULL || r_child != NULL )
+   {
+      rc = SDB_ERR_COND_UNKOWN_ITEM ;
       goto error ;
    }
 
@@ -765,6 +797,254 @@ sdb_func_cmp::~sdb_func_cmp()
 {
 }
 
+int sdb_func_cmp::to_bson_with_child( bson::BSONObj &obj )
+{
+   int rc = SDB_ERR_OK ;
+   sdb_item *child = NULL ;
+   Item *field1 = NULL, *field2 = NULL, *field3 = NULL, *item_tmp ;
+   Item_func *func = NULL ;
+   sdb_func_unkown *sdb_func = NULL ;
+   bool cmp_inverse = FALSE ;
+   bool op_inverse = FALSE ;
+   bson::BSONObj obj_tmp ;
+   bson::BSONObjBuilder builder_tmp ;
+
+   if ( r_child != NULL )
+   {
+      child = r_child ;
+      cmp_inverse = TRUE ;
+   }
+   else
+   {
+      child = l_child ;
+   }
+
+   if ( child->type() != Item_func::UNKNOWN_FUNC
+        || !child->finished()
+        || ((sdb_func_item*)child)->get_para_num() != 2
+        || this->get_para_num() != 2 )
+   {
+      rc = SDB_ERR_COND_UNEXPECTED_ITEM ;
+      goto error ;
+   }
+   sdb_func = (sdb_func_unkown *)child ;
+   item_tmp = sdb_func->get_func_item() ;
+   if ( item_tmp->type() != Item::FUNC_ITEM )
+   {
+      rc = SDB_ERR_COND_UNEXPECTED_ITEM ;
+      goto error ;
+   }
+   func = (Item_func *)item_tmp ;
+   if ( func->functype() != Item_func::UNKNOWN_FUNC )
+   {
+      rc = SDB_ERR_COND_UNEXPECTED_ITEM ;
+      goto error ;
+   }
+
+   sdb_func->pop( field1 ) ;
+   sdb_func->pop( field2 ) ;
+   field3 = para_list.pop() ;
+
+   if ( Item::FIELD_ITEM == field1->type() )
+   {
+      if ( Item::FIELD_ITEM == field2->type() )
+      {
+         if ( Item::FIELD_ITEM == field3->type()
+              || ( 0 != strcmp(func->func_name(), "-")
+              && 0 != strcmp(func->func_name(), "/") ) )
+         {
+            rc = SDB_ERR_COND_UNEXPECTED_ITEM ;
+            goto error ;
+         }
+
+         if ( 0 == strcmp(func->func_name(), "-") )
+         {
+            // field1 - field2 < num
+            rc = get_item_val( "$add", field3,
+                               ((Item_field *)field2)->field,
+                               obj_tmp ) ;
+         }
+         else
+         {
+            // field1 / field2 < num
+            rc = get_item_val( "$multiply", field3,
+                               ((Item_field *)field2)->field,
+                               obj_tmp ) ;
+         }
+         if ( rc != SDB_ERR_OK )
+         {
+            goto error ;
+         }
+         builder_tmp.appendElements( obj_tmp ) ;
+         obj_tmp = BSON( (cmp_inverse ? this->name() : this->inverse_name())
+                        << BSON( "$field" << ((Item_field *)field1)->field->field_name ) ) ;
+         builder_tmp.appendElements( obj_tmp ) ;
+         obj_tmp = builder_tmp.obj() ;
+         obj = BSON( ((Item_field *)field2)->field_name << obj_tmp ) ;
+      }
+      else
+      {
+         if ( Item::FIELD_ITEM == field3->type() )
+         {
+            // field1 - num < field3
+            obj_tmp = BSON( (cmp_inverse ?  this->inverse_name() : this->name())
+                            << BSON( "$field" << ((Item_field *)field3)->field->field_name ) ) ;
+         }
+         else
+         {
+            // field1 - num1 < num3
+            rc = get_item_val( (cmp_inverse ?  this->inverse_name() : this->name()),
+                                field3, ((Item_field *)field1)->field, obj_tmp ) ;
+            if ( rc != SDB_ERR_OK )
+            {
+               goto error ;
+            }
+         }
+         builder_tmp.appendElements( obj_tmp ) ;
+         if ( 0 == strcmp(func->func_name(), "+") )
+         {
+            rc = get_item_val( "$add", field2, ((Item_field *)field1)->field, obj_tmp ) ;
+         }
+         else if ( 0 == strcmp(func->func_name(), "-") )
+         {
+            rc = get_item_val( "$subtract", field2, ((Item_field *)field1)->field, obj_tmp ) ;
+         }
+         else if ( 0 == strcmp(func->func_name(), "*") )
+         {
+            rc = get_item_val( "$multiply", field2, ((Item_field *)field1)->field, obj_tmp ) ;
+         }
+         else if ( 0 == strcmp(func->func_name(), "/") )
+         {
+            rc = get_item_val( "$divide", field2, ((Item_field *)field1)->field, obj_tmp ) ;
+         }
+         else
+         {
+            rc = SDB_ERR_COND_UNEXPECTED_ITEM ;
+         }
+         if ( rc != SDB_ERR_OK )
+         {
+            goto error ;
+         }
+         builder_tmp.appendElements( obj_tmp ) ;
+         obj_tmp = builder_tmp.obj() ;
+         obj = BSON( ((Item_field *)field1)->field->field_name << obj_tmp ) ;
+      }
+   }
+   else
+   {
+      if ( Item::FIELD_ITEM == field3->type() )
+      {
+         // num + field2 < field3
+         if ( 0 == strcmp(func->func_name(), "+") )
+         {
+            rc = get_item_val( "$add", field1, ((Item_field *)field2)->field, obj_tmp ) ;
+         }
+         else if (0 == strcmp(func->func_name(), "*") )
+         {
+            rc = get_item_val( "$multiply", field1, ((Item_field *)field2)->field, obj_tmp ) ;
+         }
+         else
+         {
+            rc = SDB_ERR_COND_UNEXPECTED_ITEM ;
+         }
+         if ( rc != SDB_ERR_OK )
+         {
+            goto error ;
+         }
+         builder_tmp.appendElements( obj_tmp ) ;
+         obj_tmp = BSON( (cmp_inverse ? this->inverse_name() : this->name())
+                         << BSON( "$field" << ((Item_field *)field3)->field->field_name ) ) ;
+         builder_tmp.appendElements( obj_tmp ) ;
+         obj = BSON( ((Item_field *)field2)->field->field_name << builder_tmp.obj() ) ;
+      }
+      else
+      {
+         if ( 0 == strcmp( func->func_name(), "+") )
+         {
+            // num1 + field2 < num3
+            rc = get_item_val( "$add", field1, ((Item_field *)field2)->field, obj_tmp ) ;
+            if ( rc !=  SDB_ERR_OK )
+            {
+               goto error ;
+            }
+            builder_tmp.appendElements( obj_tmp ) ;
+            rc = get_item_val( (cmp_inverse ? this->inverse_name() : this->name()),
+                               field3, ((Item_field *)field2)->field, obj_tmp ) ;
+            if ( rc !=  SDB_ERR_OK )
+            {
+               goto error ;
+            }
+            builder_tmp.appendElements( obj_tmp ) ;
+            obj = BSON( ((Item_field *)field2)->field->field_name << builder_tmp.obj() ) ;
+         }
+         else if ( 0 == strcmp( func->func_name(), "-") )
+         {
+            // num1 - field2 < num3   =>   num1 < num3 + field2
+            rc = get_item_val( "$add", field3, ((Item_field *)field2)->field, obj_tmp ) ;
+            if ( rc !=  SDB_ERR_OK )
+            {
+               goto error ;
+            }
+            builder_tmp.appendElements( obj_tmp ) ;
+            rc = get_item_val( (cmp_inverse ? this->name() : this->inverse_name()),
+                               field1, ((Item_field *)field2)->field, obj_tmp ) ;
+            if ( rc !=  SDB_ERR_OK )
+            {
+               goto error ;
+            }
+            builder_tmp.appendElements( obj_tmp ) ;
+            obj = BSON( ((Item_field *)field2)->field->field_name << builder_tmp.obj() ) ;
+         }
+         else if ( 0 == strcmp( func->func_name(), "*") )
+         {
+            // num1 * field2 < num3
+            rc = get_item_val( "$multiply", field1, ((Item_field *)field2)->field, obj_tmp ) ;
+            if ( rc !=  SDB_ERR_OK )
+            {
+               goto error ;
+            }
+            builder_tmp.appendElements( obj_tmp ) ;
+            rc = get_item_val( (cmp_inverse ? this->inverse_name() : this->name()),
+                               field3, ((Item_field *)field2)->field, obj_tmp ) ;
+            if ( rc !=  SDB_ERR_OK )
+            {
+               goto error ;
+            }
+            builder_tmp.appendElements( obj_tmp ) ;
+            obj = BSON( ((Item_field *)field2)->field->field_name << builder_tmp.obj() ) ;            
+         }
+         else if ( 0 == strcmp( func->func_name(), "/") )
+         {
+            // num1 / field2 < num3   =>   num1 < num3 + field2
+            rc = get_item_val( "$multiply", field3, ((Item_field *)field2)->field, obj_tmp ) ;
+            if ( rc !=  SDB_ERR_OK )
+            {
+               goto error ;
+            }
+            builder_tmp.appendElements( obj_tmp ) ;
+            rc = get_item_val( (cmp_inverse ? this->name() : this->inverse_name()),
+                               field1, ((Item_field *)field2)->field, obj_tmp ) ;
+            if ( rc !=  SDB_ERR_OK )
+            {
+               goto error ;
+            }
+            builder_tmp.appendElements( obj_tmp ) ;
+            obj = BSON( ((Item_field *)field2)->field->field_name << builder_tmp.obj() ) ;
+         }
+         else
+         {
+            rc = SDB_ERR_COND_UNEXPECTED_ITEM ;
+            goto error ;
+         }
+      }
+   }
+
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
 int sdb_func_cmp::to_bson( bson::BSONObj &obj )
 {
    int rc = SDB_ERR_OK ;
@@ -782,6 +1062,16 @@ int sdb_func_cmp::to_bson( bson::BSONObj &obj )
    {
       rc = SDB_ERR_COND_INCOMPLETED ;
       goto error ;
+   }
+
+   if ( l_child != NULL || r_child != NULL )
+   {
+      rc = to_bson_with_child( obj ) ;
+      if ( rc != SDB_ERR_OK )
+      {
+         goto error ;
+      }
+      goto done ;
    }
 
    while( para_num_cur )
@@ -886,6 +1176,12 @@ int sdb_func_between::to_bson( bson::BSONObj &obj )
       goto error ;
    }
 
+   if ( l_child != NULL || r_child != NULL )
+   {
+      rc = SDB_ERR_COND_UNKOWN_ITEM ;
+      goto error ;
+   }
+
    DBUG_ASSERT( !para_list.is_empty() ) ;
    item_tmp = para_list.pop() ;
    if ( Item::FIELD_ITEM != item_tmp->type() )
@@ -980,6 +1276,12 @@ int sdb_func_in::to_bson( bson::BSONObj &obj )
    if ( !is_finished )
    {
       rc = SDB_ERR_COND_INCOMPLETED ;
+      goto error ;
+   }
+
+   if ( l_child != NULL || r_child != NULL )
+   {
+      rc = SDB_ERR_COND_UNKOWN_ITEM ;
       goto error ;
    }
 

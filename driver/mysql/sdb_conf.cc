@@ -6,6 +6,7 @@ PSI_memory_key sdb_key_memory_conf_coord_addrs ;
 
 sdb_conf::sdb_conf()
 {
+   use_partition = TRUE ;
 }
 
 sdb_conf::~sdb_conf()

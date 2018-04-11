@@ -285,4 +285,7 @@ private:
    char                                      db_name[CS_NAME_MAX_SIZE + 1] ;
    char                                      table_name[CL_NAME_MAX_SIZE + 1] ;
    int                                       fd ;
+   time_t                                    last_flush_time ;
+   int                                       used_times ;
+   long long                                 rec_num ;
 };

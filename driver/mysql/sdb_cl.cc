@@ -486,6 +486,32 @@ error:
    goto done ;
 }
 
+int sdb_cl::get_count( long long &count )
+{
+   int rc = SDB_ERR_OK ;
+   int retry_times = 2 ;
+retry:
+   rc = cl.getCount( count ) ;
+   if ( rc != SDB_ERR_OK )
+   {
+      goto error ;
+   }
+done:
+   return rc ;
+error:
+   if ( IS_SDB_NET_ERR(rc) )
+   {
+      bool is_transaction = p_conn->is_transaction() ;
+      if( 0 == p_conn->connect() && !is_transaction
+          && retry_times-- > 0 )
+      {
+         goto retry ;
+      }
+   }
+   convert_sdb_code( rc ) ;
+   goto done ;
+}
+
 sdb_cl_ref_ptr::sdb_cl_ref_ptr( sdb_cl *collection )
 {
    DBUG_ASSERT( collection != NULL ) ;

@@ -156,6 +156,7 @@ ha_sdb::ha_sdb(handlerton * hton, TABLE_SHARE * table_arg)
    str_field_buf = (char *)malloc( str_field_buf_size ) ;
    share = NULL ;
    first_read = TRUE ;
+   used_times = 0 ;
    memset( db_name, 0, CS_NAME_MAX_SIZE+1 ) ;
    memset( table_name, 0, CL_NAME_MAX_SIZE+1 ) ;
 }
@@ -1028,23 +1029,45 @@ void ha_sdb::position( const uchar *record )
 int ha_sdb::info( uint flag )
 {
    int rc = 0 ;
-   //long long count = 0 ;
+
+   if ( used_times++ % 100 == 0 )
+   {
+      rc = cl->get_count( rec_num ) ;
+      if ( rc != 0  )
+      {
+         goto error ;
+      }
+      last_flush_time = time( NULL ) ;
+      used_times = 1 ;
+   }
+   else if ( used_times % 10 == 0 )
+   {
+      time_t cur_time = time( NULL ) ;
+      // flush rec_num every 5 minutes
+      if ( difftime( cur_time, last_flush_time ) > 5*60 )
+      {
+         rc = cl->get_count( rec_num ) ;
+         if ( rc != 0  )
+         {
+            goto error ;
+         }
+         last_flush_time = cur_time ;
+         used_times = 1 ;
+      }
+   }
+   if ( used_times != 1 )
+   {
+      goto done ;
+   }
 
    //TODO: fill the stats with actual info.
-   stats.data_file_length = 107374182400LL ; //100*1024*1024*1024
+   stats.data_file_length = (rec_num * 1024) + 32 * 1024 * 1024  ;
    stats.max_data_file_length = 1099511627776LL ; //1*1024*1024*1024*1024
-   stats.index_file_length = 1073741824LL ; //1*1024*1024*1024
+   stats.index_file_length = (rec_num * 100 ) + 32 * 1024 * 1024 ;
    stats.max_index_file_length = 10737418240LL ; //10*1024*1024*1024
    stats.delete_length = 0 ;
    stats.auto_increment_value = 0 ;
-
-   /*rc = cl.getCount( count ) ;
-   if ( rc != 0  )
-   {
-      goto error ;
-   }*/
-
-   stats.records = 10000 ;
+   stats.records = rec_num ;
    stats.deleted = 0 ;
    stats.mean_rec_length = 1024 ;
    stats.create_time = 0 ;
@@ -1415,7 +1438,7 @@ int ha_sdb::get_sharding_key( TABLE *form,
    int rc = 0 ;
    const KEY *shard_idx = NULL ;
 
-   for( int i=0 ; i<form->s->keys; i++)
+   for( uint i=0 ; i<form->s->keys; i++)
    {
       const KEY *key_info = form->s->key_info + i ;
       if ( !strcmp(key_info->name, primary_key_name ))
@@ -1436,7 +1459,7 @@ int ha_sdb::get_sharding_key( TABLE *form,
       const KEY_PART_INFO *key_end ;
 
       // check unique-idx if include sharding-key
-      for( int i=0 ; i<form->s->keys; i++)
+      for( uint i=0 ; i<form->s->keys; i++)
       {
          const KEY *key_info = form->s->key_info + i ;
          if ( (key_info->flags & HA_NOSAME)
@@ -1642,7 +1665,7 @@ int ha_sdb::create( const char *name, TABLE *form,
    connection = conn_tmp ;
    //fd = ha_thd()->active_vio->mysql_socket.fd ;
 
-   for( int i=0 ; i<form->s->keys; i++)
+   for( uint i=0 ; i<form->s->keys; i++)
    {
       rc = sdb_create_index( form->s->key_info+i, cl ) ;
       if ( 0 != rc )
@@ -1880,7 +1903,9 @@ static int sdb_init_func(void *p)
                      | HTON_NO_PARTITION ) ;
    sdb_hton->commit = sdb_commit ;
    sdb_hton->rollback = sdb_rollback ;
-   return SDB_CONF_INST->parse_conn_addrs( sdb_addr ) ;
+   SDB_CONF_INST->parse_conn_addrs( sdb_addr ) ;
+   SDB_CONF_INST->set_use_partition( sdb_use_partition ) ;
+   return 0 ;
 }
 
 static int sdb_done_func(void *p)
@@ -1918,6 +1943,25 @@ static void sdb_use_partition_update( THD * thd,
 
    SDB_CONF_INST->set_use_partition( use_partition ) ;
 }
+/*static int sdb_use_partition_validate( THD * thd,
+                                        struct st_mysql_sys_var *var,
+                                        void *save,
+                                        struct st_mysql_value *value )
+{
+   char buff[4] = {0} ;
+   int len = sizeof( buff ) ;
+   const char *p_tmp = NULL ;
+   my_bool use_partition = TRUE ;
+   p_tmp = value->val_str( value, buff, &len ) ;
+   if ( 0 == strcmp(p_tmp, "OFF") )
+   {
+      use_partition = FALSE ;
+   }
+
+   SDB_CONF_INST->set_use_partition( use_partition ) ;
+   *(my_bool *)save = use_partition ;
+   return 0 ;
+}*/
 
 static struct st_mysql_storage_engine sdb_storage_engine=
 { MYSQL_HANDLERTON_INTERFACE_VERSION };
@@ -1928,7 +1972,7 @@ static MYSQL_SYSVAR_STR( conn_addr, sdb_addr,
                            sdb_conn_addrs_validate,
                            NULL, SDB_ADDR_DFT ) ;
 static MYSQL_SYSVAR_BOOL( use_partition, sdb_use_partition,
-                           PLUGIN_VAR_RQCMDARG,
+                           PLUGIN_VAR_BOOL|PLUGIN_VAR_MEMALLOC,
                            "create partition table on sequoiadb",
                            NULL, sdb_use_partition_update,
                            SDB_USE_PARTITION_DFT ) ;

@@ -80,6 +80,7 @@ public:
 
    int drop() ;
 
+   int get_count( long long &count ) ;
 
 private:
 
