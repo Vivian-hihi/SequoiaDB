@@ -4,7 +4,7 @@
 1. 登录MySQL shell
 
  ```lang-javascript
- # mysql -u root -p
+ # /opt/sequoiasql/mysql/bin/mysql -u root -p
  ```
 
 2. 加载SequoiaDB插件
