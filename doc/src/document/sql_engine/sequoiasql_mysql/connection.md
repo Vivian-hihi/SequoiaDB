@@ -36,14 +36,45 @@
 6. 创建表
 
  ```lang-javascript
- mysql> create table cl(a int, c text) engine = SequoiaDB comment="{cl_options:{ShardingKey:{a:1,b:-1},ShardingType:\"range\"}}";
+ mysql> create table cl(a int, b int, c text, primary key(a, b) ) engine = SequoiaDB ;
+ mysql> create table cl1(a int, b int, unique index idx_a(a) ) engine = SequoiaDB ;
  ```
 
-7. 数据操作
+7. 基本数据操作
 
  ```lang-javascript
- mysql> insert into cl values(1, "SequoiaDB test");
- mysql> select * from cl;
+ mysql> insert into cl values(1, 101, "SequoiaDB test");
+ mysql> insert into cl values(2, 102, "SequoiaDB test");
+ mysql> insert into cl1 values(1, 99);
+ mysql> select * from cl order by b asc limit 1;
+ mysql> select * from cl, cl1 where cl.a=cl1.a;
+ mysql> update cl set c="My test" where a=1;
+ mysql> delete from cl where b=102;
+ ```
+
+8. 存储过程
+
+ ```lang-javascript
+ mysql> delimiter //
+ mysql> create procedure delete_match()
+     -> begin
+     -> delete from cl where a=1;
+     -> end//
+ mysql> delimiter ;
+ mysql> call delete_match();
+ ```
+
+9. 视图
+
+ ```lang-javascript
+ mysql> create view
+     -> v1
+     -> as select
+     -> cl.a,cl.c,cl1.b
+     -> from
+     -> cl,cl1
+     -> where cl.a=cl1.a;
+ mysql> select * from v1;
  ```
 
 ##配置说明##
@@ -72,18 +103,21 @@
  mysql> show variables like 'sequoiadb%';
  ```
  
-2. 建表参数  
- 在mysql上创建表时，可以通过comment参数传入配置信息，comment参数为json格式，具体配置参数如下表：
+2. 配置分区表  
+   默认情况下，在mysql上创建表将同步在SequoiaDB上创建对应的分区表，分区键默认使用主键，如果没有主键则使用唯一键，如果没有唯一键则使用第一个字段。也可以通过将配置参数“sequoiadb_use_partition”设置为OFF禁止使用默认分区表，该配置参数可以在shell命令行和配置文件中修改。  
+
+3. 建表参数  
+ 在mysql上创建表时，也可以通过comment参数传入自定义分区表配置，comment参数为json格式，具体配置参数如下表：
  
 | 参数名 | 参数类型 | 描述 | 是否必填 |
 | ------ | --- | ------ | ------ |
-| cl_options | json | 创建集合的相关参数。详见SequoiaDB集合相关参数，如：分区键(ShardingKey)、分区类型(ShardingType)等均在options中添加。| 否	|
+| table_options | json | 创建集合的相关参数。详见SequoiaDB集合相关参数，如：分区键(ShardingKey)、分区类型(ShardingType)等均在options中添加。| 否	|
 
  示例：  
  在SequoiaDB上创建分区键为“{a:1,b:-1}”，分区类型为范围分区的集合cl  
 
  ```lang-javascript
- mysql> create table cl(a int, b int, c text) engine = SequoiaDB comment="{cl_options:{ShardingKey:{a:1,b:-1},ShardingType:\"range\"}}";
+ mysql> create table cl(a int, b int, c text) engine = SequoiaDB comment="{table_options:{ShardingKey:{a:1,b:-1},ShardingType:\"range\"}}";
  ```
 
 ##数据类型对应关系##
