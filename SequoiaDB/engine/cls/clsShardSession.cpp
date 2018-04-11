@@ -239,6 +239,12 @@ namespace engine
       setIdentifyInfo( ip, port, info._tid, info._eduid ) ;
       _username = info._username ;
       _passwd = info._passwd ;
+
+      if ( !info._objSchedInfo.isEmpty() )
+      {
+         _updateVCS( CMD_ADMIN_PREFIX SYS_CL_SESSION_INFO,
+                     info._objSchedInfo ) ;
+      }
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDSESS__ONDETACH, "_clsShdSession::_onDetach" )

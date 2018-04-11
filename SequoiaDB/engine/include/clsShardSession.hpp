@@ -59,6 +59,8 @@ namespace engine
       string   _username ;
       string   _passwd ;
 
+      BSONObj  _objSchedInfo ;
+
       _clsIdentifyInfo()
       {
          _id = 0 ;

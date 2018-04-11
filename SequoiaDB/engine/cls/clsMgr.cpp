@@ -308,6 +308,10 @@ namespace engine
             {
                info._passwd = pSession->getClient()->getPassword() ;
             }
+            if ( !pSession->getSchedInfo()->isDefault() )
+            {
+               info._objSchedInfo = pSession->getSchedInfo()->toBSON() ;
+            }
             _mapIdentifys[ pSession->sessionID() ] = info ;
          }
       }
