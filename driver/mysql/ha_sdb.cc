@@ -1167,7 +1167,9 @@ enum_alter_inplace_result ha_sdb::check_if_supported_inplace_alter(
       | Alter_inplace_info::ADD_UNIQUE_INDEX
       | Alter_inplace_info::DROP_UNIQUE_INDEX
       | Alter_inplace_info::ADD_PK_INDEX
-      | Alter_inplace_info::DROP_PK_INDEX ;
+      | Alter_inplace_info::DROP_PK_INDEX
+      | Alter_inplace_info::ALTER_COLUMN_NOT_NULLABLE
+      | Alter_inplace_info::ALTER_COLUMN_NULLABLE ;
 
    if ( ha_alter_info->handler_flags & ~inplace_online_operations )
    {
@@ -1288,12 +1290,14 @@ bool ha_sdb::inplace_alter_table( TABLE *altered_table,
    Alter_inplace_info::HA_ALTER_FLAGS inplace_online_addidx
       = Alter_inplace_info::ADD_INDEX
       | Alter_inplace_info::ADD_UNIQUE_INDEX
-      | Alter_inplace_info::ADD_PK_INDEX ;
+      | Alter_inplace_info::ADD_PK_INDEX
+      | Alter_inplace_info::ALTER_COLUMN_NOT_NULLABLE;
 
    Alter_inplace_info::HA_ALTER_FLAGS inplace_online_dropidx
       = Alter_inplace_info::DROP_INDEX
       | Alter_inplace_info::DROP_UNIQUE_INDEX
-      | Alter_inplace_info::DROP_PK_INDEX ;
+      | Alter_inplace_info::DROP_PK_INDEX
+      | Alter_inplace_info::ALTER_COLUMN_NULLABLE ;
 
    if ( ha_alter_info->handler_flags & inplace_online_addidx )
    {
@@ -1416,12 +1420,15 @@ int ha_sdb::rename_table(const char * from, const char * to)
    int rc = 0 ;
    switch( thd_sql_command(thd) )
    {
-   case SQLCOM_CREATE_INDEX:
+   /*case SQLCOM_CREATE_INDEX:
       //TODO:***********
       break ;
    case SQLCOM_DROP_INDEX:
       //TODO:************
       break ;
+   case SQLCOM_ALTER_TABLE:
+      //TODO:************
+      break ;*/
    default:
       rc = -1 ;
       goto error ;
@@ -1568,7 +1575,8 @@ int ha_sdb::get_cl_options( TABLE *form,
    if ( !sharding_key.isEmpty() )
    {
       options = BSON( "ShardingKey" << sharding_key
-                      << "EnsureShardingIndex" << false ) ;
+                      << "EnsureShardingIndex" << false
+                      << "Compressed" << true ) ;
    }
 
 done:
