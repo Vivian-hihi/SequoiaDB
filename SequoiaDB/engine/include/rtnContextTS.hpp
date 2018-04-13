@@ -83,10 +83,6 @@ namespace engine
       private:
          pmdEDUCB*            _eduCB ;
          rtnQueryOptions      _options ;
-         pmdRemoteSessionSite *_remoteSessionSite ;
-         pmdRemoteSession     *_remoteSession ;
-         SINT64               _subCtxID ;    // Context to fetch data from local
-                                             // after get new query from ES.
          UINT64               _remoteSessionID ;
          rtnSubCLContext      *_subContext ;
    } ;

@@ -48,7 +48,6 @@ namespace engine
    : rtnContextMain( contextID, eduID )
    {
       _eduCB = NULL ;
-      _remoteSession = NULL ;
       _remoteSessionID = 0 ;
       _subContext = NULL ;
    }
@@ -58,7 +57,7 @@ namespace engine
       SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
       rtnRemoteMessenger *messenger = rtnCB->getRemoteMessenger() ;
 
-      messenger->removeSession( pmdGetThreadEDUCB() ) ;
+      messenger->removeSession( _remoteSessionID, pmdGetThreadEDUCB() ) ;
       if ( _subContext )
       {
          if ( _subContext->contextID() )
@@ -109,6 +108,7 @@ namespace engine
                    rc ) ;
       _numToReturn = _options.getLimit() ;
       _numToSkip = _options.getSkip() ;
+      _eduCB = eduCB ;
 
 #ifdef _DEBUG
       PD_LOG( PDDEBUG, "Options for search: %s", options.toString().c_str() ) ;

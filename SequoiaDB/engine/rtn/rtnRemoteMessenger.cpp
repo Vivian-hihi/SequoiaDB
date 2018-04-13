@@ -281,6 +281,45 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNREMOTEMESSENGER_REMOVESESSION, "_rtnRemoteMessenger::removeSession" )
+   INT32 _rtnRemoteMessenger::removeSession( UINT64 sessionID, pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNREMOTEMESSENGER_REMOVESESSION ) ;
+      pmdRemoteSessionSite* site = _rsMgr.getSite( cb ) ;
+
+      if ( !site )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Remote session site is NULL" ) ;
+         goto error ;
+      }
+
+      if ( site->sessionCount() > 0 )
+      {
+         pmdRemoteSession* session = site->getSession( sessionID ) ;
+         if ( !session )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "Session with id[ %llu ] dose not exist",
+                    sessionID ) ;
+            goto error ;
+         }
+         site->removeSession( session ) ;
+      }
+      // If it's the last session in the session site, unregister.
+      if ( 0 == site->sessionCount() )
+      {
+         _rsMgr.unregEUD( cb ) ;
+      }
+
+   done:
+      PD_TRACE_EXITRC( SDB__RTNREMOTEMESSENGER_REMOVESESSION, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNREMOTEMESSENGER_SEND, "_rtnRemoteMessenger::send" )
    INT32 _rtnRemoteMessenger::send( UINT64 sessionID, const MsgHeader *msg,
                                     pmdEDUCB *cb )
@@ -350,50 +389,6 @@ namespace engine
       return rc ;
    error:
       goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNREMOTEMESSENGER_REMOVESESSION, "_rtnRemoteMessenger::removeSession" )
-   INT32 _rtnRemoteMessenger::removeSession( UINT64 sessionID, pmdEDUCB *cb )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNREMOTEMESSENGER_REMOVESESSION ) ;
-      pmdRemoteSessionSite* site = _rsMgr.getSite( cb ) ;
-
-      if ( !site )
-      {
-         rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Remote session site is NULL" ) ;
-         goto error ;
-      }
-
-      // If it's the last session in the session site, unregister.
-      if ( 1 == site->sessionCount() )
-      {
-         _rsMgr.unregEUD( cb ) ;
-      }
-      else
-      {
-         pmdRemoteSession* session = site->getSession( sessionID ) ;
-         if ( !session )
-         {
-            rc = SDB_INVALIDARG ;
-            PD_LOG( PDERROR, "Session with id[ %llu ] dose not exist",
-                    sessionID ) ;
-            goto error ;
-         }
-         site->removeSession( session ) ;
-      }
-
-   done:
-      PD_TRACE_EXITRC( SDB__RTNREMOTEMESSENGER_REMOVESESSION, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   void _rtnRemoteMessenger::removeSession( pmdEDUCB *cb )
-   {
-      _rsMgr.unregEUD( cb ) ;
    }
 }
 
