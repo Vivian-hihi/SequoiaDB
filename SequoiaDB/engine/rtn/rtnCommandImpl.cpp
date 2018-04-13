@@ -993,8 +993,12 @@ namespace engine
          PD_LOG ( PDERROR, "Failed to create new context, rc: %d", rc ) ;
          goto error ;
       }
+
+      // For count(), the condition is pushed down to rtnQuery. So passing an
+      // empty one to open() here. Otherwise count() with text search condition
+      // will fail.
       rc = context->open( options.getSelector(),
-                          options.getQuery(),
+                          ( CMD_GET_COUNT == command ) ? BSONObj() : options.getQuery(),
                           options.isOrderByEmpty() ? options.getLimit() : -1,
                           options.isOrderByEmpty() ? options.getSkip() : 0 ) ;
       PD_RC_CHECK( rc, PDERROR, "Open context failed, rc: %d", rc ) ;
