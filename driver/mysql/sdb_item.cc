@@ -841,8 +841,12 @@ int sdb_func_cmp::to_bson_with_child( bson::BSONObj &obj )
       goto error ;
    }
 
-   sdb_func->pop( field1 ) ;
-   sdb_func->pop( field2 ) ;
+   if( sdb_func->pop( field1 )
+       || sdb_func->pop( field2 ) )
+   {
+      rc = SDB_ERR_COND_UNEXPECTED_ITEM ;
+      goto error ;
+   }
    field3 = para_list.pop() ;
 
    if ( Item::FIELD_ITEM == field1->type() )
