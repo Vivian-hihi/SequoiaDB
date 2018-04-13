@@ -685,7 +685,7 @@ namespace engine
          goto error ;
       }
 
-      if ( length > 0 && offset + length < 0 )
+      if ( length > 0 && ( OSS_SINT64_MAX - offset - length ) < 0 )
       {
          rc = SDB_INVALIDARG ;
          PD_LOG( PDERROR, "Lock length overflowed, offset:%lld, length:%lld, rc=%d",
