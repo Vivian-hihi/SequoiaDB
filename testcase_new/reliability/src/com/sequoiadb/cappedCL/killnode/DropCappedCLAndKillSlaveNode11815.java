@@ -86,7 +86,7 @@ public class DropCappedCLAndKillSlaveNode11815 extends SdbTestBase {
 
             //check status
             Assert.assertEquals(taskMgr.isAllSuccess(), true, taskMgr.getErrorMsg());
-            Assert.assertEquals(groupMgr.checkBusinessWithLSN(600),true);
+            Assert.assertEquals(groupMgr.checkBusinessWithLSN(1200),true);
             GroupWrapper catalogGroup = groupMgr.getGroupByName("SYSCatalogGroup");
             Assert.assertEquals(catalogGroup.checkInspect(60),true);
 

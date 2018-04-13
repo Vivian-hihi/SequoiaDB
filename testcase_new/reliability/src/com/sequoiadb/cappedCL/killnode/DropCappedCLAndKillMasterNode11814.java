@@ -79,8 +79,8 @@ public class DropCappedCLAndKillMasterNode11814 extends SdbTestBase{
 			//TaskMgr check if there is any exception
 			Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
 			
-			//check whether the cluster is normal and lsn consistency ,the longest waiting time is 600S
-         Assert.assertEquals(groupMgr.checkBusinessWithLSN(600), true, "check LSN consistency fail");
+			//check whether the cluster is normal and lsn consistency ,the longest waiting time is 20 mins
+         Assert.assertEquals(groupMgr.checkBusinessWithLSN(1200), true, "check LSN consistency fail");
          
          //check data consistency
          Assert.assertEquals(dataGroup.checkInspect(60), true, "data is different on " + dataGroup.getGroupName());
