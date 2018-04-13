@@ -69,6 +69,7 @@ static PSI_mutex_key key_mutex_sdb, key_mutex_SDB_SHARE_mutex ;
 bson::BSONObj empty_obj ;
 static HASH sdb_open_tables;
 static PSI_memory_key key_memory_sdb_share;
+static PSI_memory_key sdb_key_memory_blobroot;
 
 static uchar* sdb_get_key( SDB_SHARE *share, size_t *length,
                            my_bool not_used MY_ATTRIBUTE((unused)))
@@ -159,6 +160,8 @@ ha_sdb::ha_sdb(handlerton * hton, TABLE_SHARE * table_arg)
    used_times = 0 ;
    memset( db_name, 0, CS_NAME_MAX_SIZE+1 ) ;
    memset( table_name, 0, CL_NAME_MAX_SIZE+1 ) ;
+   init_alloc_root(sdb_key_memory_blobroot,
+                   &blobroot, 8*1024, 0 ) ;
 }
 
 ha_sdb::~ha_sdb()
@@ -168,6 +171,7 @@ ha_sdb::~ha_sdb()
       free( str_field_buf ) ;
       str_field_buf_size = 0 ;
    }
+   free_root(&blobroot, MYF(0));
 }
 
 static const char *ha_sdb_exts[] = {
@@ -653,7 +657,7 @@ int ha_sdb::index_read_map( uchar *buf, const uchar *key_ptr,
                             enum ha_rkey_function find_flag )
 {
    int rc = 0 ;
-   bson::BSONObj orderbyObj, hint, condition_idx ;
+   bson::BSONObj order, hint, condition_idx ;
    bson::BSONObjBuilder cond_builder ;
    const char *idx_name = NULL ;
    if ( NULL != key_ptr && keynr >= 0 )
@@ -682,8 +686,15 @@ int ha_sdb::index_read_map( uchar *buf, const uchar *key_ptr,
    {
       hint = BSON( "" << idx_name ) ;
    }
+
+   rc = sdb_get_idx_order( table->key_info + keynr,  order ) ;
+   if ( rc )
+   {
+      goto error ;
+   }
+
    rc = cl->query( condition, sdbclient::_sdbStaticObject,
-                   sdbclient::_sdbStaticObject, hint ) ;
+                   order, hint ) ;
    if ( rc )
    {
       goto error ;
@@ -733,6 +744,7 @@ int ha_sdb::index_end()
 {
    cl->close() ;
    keynr = -1 ;
+   free_root(&blobroot, MYF(0));
    return 0 ;
 }
 
@@ -762,6 +774,7 @@ int ha_sdb::rnd_init(bool scan)
 int ha_sdb::rnd_end()
 {
    cl->close() ;
+   free_root(&blobroot, MYF(0));
    return 0 ;
 }
 
@@ -772,6 +785,8 @@ int ha_sdb::obj_to_row( bson::BSONObj &obj, uchar *buf )
    int rc = 0 ;
    bool read_all ;
    my_bitmap_map *org_bitmap;
+
+   free_root( &blobroot, MYF(0) ) ;
    memset( buf, 0, table->s->null_bytes ) ;
 
    read_all= !bitmap_is_clear_all(table->write_set) ;
@@ -903,6 +918,22 @@ int ha_sdb::obj_to_row( bson::BSONObj &obj, uchar *buf )
             (*field)->store( "", 0, &my_charset_bin ) ;
             rc = SDB_ERR_TYPE_UNSUPPORTED ;
             goto error ;
+      }
+      if ( (*field)->flags & BLOB_FLAG )
+      {
+         Field_blob *blob = *(Field_blob**)field ;
+         uchar *src, *dst;
+         uint length, packlength;
+
+         packlength = blob->pack_length_no_ptr();
+         length = blob->get_length(blob->ptr) ;
+         memcpy( &src, blob->ptr+packlength, sizeof(char*) );
+         if( src )
+         {
+            dst = (uchar*)alloc_root( &blobroot, length ) ;
+            memmove(dst, src, length ) ;
+            memcpy(blob->ptr+packlength, &dst, sizeof(char*) ) ;
+         }
       }
    }
 done:
@@ -1782,7 +1813,8 @@ static handler *sdb_create_handler(handlerton *hton,
 static PSI_memory_info all_sdb_memory[] =
 {
    { &key_memory_sdb_share, "SDB_SHARE", PSI_FLAG_GLOBAL },
-   { &sdb_key_memory_conf_coord_addrs, "coord_addrs", PSI_FLAG_GLOBAL }
+   { &sdb_key_memory_conf_coord_addrs, "coord_addrs", PSI_FLAG_GLOBAL },
+   { &sdb_key_memory_blobroot, "blobroot", 0 }
 };
 
 static PSI_mutex_info all_sdb_mutexes[] = 

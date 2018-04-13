@@ -26,6 +26,8 @@ int sdb_drop_index( const KEY *keyInfo, sdb_cl_auto_ptr cl ) ;
 
 const char *sdb_get_idx_name( KEY *key_info ) ;
 
+int sdb_get_idx_order( KEY * key_info, bson::BSONObj &order ) ;
+
 int build_match_obj_by_start_stop_key( uint keynr,
                                        const uchar *key_ptr,
                                        key_part_map keypart_map,

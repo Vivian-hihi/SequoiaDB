@@ -288,4 +288,5 @@ private:
    time_t                                    last_flush_time ;
    int                                       used_times ;
    long long                                 rec_num ;
+   MEM_ROOT                                  blobroot ;
 };

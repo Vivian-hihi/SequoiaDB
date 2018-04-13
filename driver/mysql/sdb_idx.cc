@@ -5,6 +5,7 @@
 #include "sdb_idx.h"
 #include "sdb_cl.h"
 #include "sql_table.h"
+#include "sdb_err_code.h"
 
 int sdb_create_index( const KEY *keyInfo, sdb_cl_auto_ptr cl )
 {
@@ -84,6 +85,30 @@ const char * sdb_get_idx_name( KEY * key_info )
       return key_info->name ;
    }
    return NULL ;
+}
+
+int sdb_get_idx_order( KEY * key_info, bson::BSONObj &order )
+{
+   int rc = SDB_ERR_OK ;
+   const KEY_PART_INFO *keyPart ;
+   const KEY_PART_INFO *keyEnd ;
+   bson::BSONObjBuilder obj_builder ;
+   if ( !key_info )
+   {
+      return SDB_ERR_INVALID_ARG ;
+   }
+   keyPart = key_info->key_part ;
+   keyEnd = keyPart + key_info->user_defined_key_parts ;
+   for( ; keyPart != keyEnd ; ++keyPart )
+   {
+      obj_builder.append( keyPart->field->field_name, 1 ) ;
+   }
+   order = obj_builder.obj() ;
+
+done:
+   return rc ;
+error:
+   goto done ;
 }
 
 typedef union _sdb_key_common_type
