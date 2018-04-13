@@ -189,7 +189,7 @@ INT32 getLSN( sdbConnectionHandle db, SINT64* offset, INT32* version )
    bson_init( &obj ) ;
    bson_iterator it, sub_it ;
 
-   bson_append_string( &sel, "CompleteLSN", "" ) ;
+   bson_append_string( &sel, "CurrentLSN", "" ) ;
    bson_finish( &sel ) ;
    rc = sdbGetSnapshot( db, SDB_SNAP_DATABASE, NULL, &sel, NULL, &cursor ) ;
    CHECK_RC( SDB_OK, rc, "fail to get snapshot database" ) ;
@@ -197,7 +197,7 @@ INT32 getLSN( sdbConnectionHandle db, SINT64* offset, INT32* version )
    rc = sdbNext( cursor, &obj ) ;
    CHECK_RC( SDB_OK, rc, "fail to get next" ) ;
 
-   bson_find( &it, &obj, "CompleteLSN" ) ;
+   bson_find( &it, &obj, "CurrentLSN" ) ;
    bson_iterator_subiterator( &it, &sub_it ) ;
    bson_iterator_next( &sub_it ) ;
    *offset = bson_iterator_long( &sub_it ) ;
