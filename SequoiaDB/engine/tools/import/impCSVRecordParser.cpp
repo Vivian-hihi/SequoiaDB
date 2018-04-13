@@ -31,6 +31,7 @@
 #include "impCSVRecordParser.hpp"
 #include "../client/base64c.h"
 #include "ossUtil.h"
+#include "impUtil.hpp"
 #include "pd.hpp"
 #include <cctype>
 #include <cmath>
@@ -150,6 +151,7 @@ namespace import
 
    #define LEFT_BRACKET           ('(')
    #define RIGHT_BRACKET          (')')
+   #define DOUBLE_QUOTES          ('"')
    #define COMMA                  (',')
 
    #define CSV_MAX_STRING_SIZE (1024 * 1024 * 16)
@@ -518,6 +520,115 @@ namespace import
       goto done;
    }
 
+   static INT32 _parseTimestampFmt( const CHAR *data, INT32 length,
+                                    CSVFieldOpt &opt )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 len = length;
+      INT32 fmtLen = 0 ;
+      CHAR* fmtStart = NULL ;
+      CHAR* str = (CHAR*)data;
+
+      if ( LEFT_BRACKET != *str )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      str++ ;
+      len-- ;
+
+      _skipSpace( &str, len ) ;
+
+      if ( 0 == len )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      if ( DOUBLE_QUOTES != *str )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      str++ ;
+      len-- ;
+
+      fmtStart = str ;
+
+      while( TRUE )
+      {
+         if ( len <= 0 )
+         {
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
+         if ( DOUBLE_QUOTES == *str )
+         {
+            break ;
+         }
+
+         str++ ;
+         len-- ;
+         fmtLen++ ;
+      }
+
+      str++ ;
+      len-- ;
+      
+      _skipSpace(&str, len);
+
+      if (0 == len)
+      {
+         rc = SDB_INVALIDARG;
+         goto error;
+      }
+
+      if (RIGHT_BRACKET != *str)
+      {
+         rc = SDB_INVALIDARG;
+         goto error;
+      }
+
+      str++;
+      len--;
+
+      _skipSpace(&str, len);
+
+      if (0 != len)
+      {
+         rc = SDB_INVALIDARG;
+         goto error;
+      }
+
+      {
+         string fmtStr( fmtStart, fmtLen ) ;
+
+         rc = checkDateTimeFormat( fmtStr ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+
+         if ( fmtLen > CSV_TIMESTAMP_FMT_MAX_LEN )
+         {
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
+         opt.hasOpt = TRUE ;
+         opt.opt.timestampOpt.fmtLength = fmtLen ;
+         ossStrncpy( opt.opt.timestampOpt.format, fmtStart, fmtLen ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    static inline INT32 _convertToCSVType(const CHAR* data,
                                          INT32 length,
                                          CSV_TYPE& type,
@@ -666,6 +777,21 @@ namespace import
          if (CSV_STR_TYPE_EQ(CSV_STR_TIMESTAMP, str, length))
          {
             type = CSV_TYPE_TIMESTAMP;
+         }
+         else if ( length > (INT32)CSV_STR_TIMESTAMP_SIZE &&
+                   ossStrncasecmp( str, CSV_STR_TIMESTAMP,
+                                   CSV_STR_TIMESTAMP_SIZE ) == 0 )
+         {
+            // timestamp("YYYY-MM-DD-HH.mm.ss")
+            rc = _parseTimestampFmt( data + CSV_STR_TIMESTAMP_SIZE,
+                                     length - CSV_STR_TIMESTAMP_SIZE,
+                                     opt ) ;
+            if ( rc )
+            {
+               PD_LOG(PDERROR, "invalid timestamp type");
+               goto error;
+            }
+            type = CSV_TYPE_TIMESTAMP ;
          }
          break;
       default:
@@ -2692,6 +2818,70 @@ namespace import
       goto done;
    }
 
+   static inline INT32 _stringToTimeZone( CHAR **ppStr, INT32 &strLen,
+                                          INT32 &gmtoff  )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 valueLength = 0;
+      INT32 hourStrLen  = 0 ;
+      INT32 gmtHour     = 0 ;
+      INT32 gmtMinute   = 0 ;
+      INT32 countMinute = 0 ;
+      CHAR *str = *ppStr ;
+
+      if( !isdigit( str[1] ) || !isdigit( str[2] ) || !isdigit( str[3] ) )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      if( isdigit( str[4] ) )
+      {
+         // xxxx
+         hourStrLen = 2 ;
+      }
+      else
+      {
+         // xxx
+         hourStrLen = 1 ;
+      }
+
+      str++;
+      strLen--;
+
+      rc = _str2i( str, hourStrLen, gmtHour, valueLength ) ;
+      if ( rc )
+      {
+         goto error;
+      }
+      str += valueLength;
+      strLen -= valueLength;
+
+      rc = _str2i( str, 2, gmtMinute, valueLength ) ;
+      if ( rc )
+      {
+         goto error;
+      }
+      str += valueLength;
+      strLen -= valueLength;
+
+      countMinute = gmtHour * 60 + gmtMinute ;
+
+      if ( IMP_UTIL_TIMEZONE_MAX < countMinute )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      gmtoff = countMinute * 60 ;
+
+   done:
+      *ppStr = str ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
    /*
     * year: YYYY
     * month: MM
@@ -2705,11 +2895,12 @@ namespace import
     */
    static inline INT32 _stringToDateTime(const CHAR* data, INT32 dataLength,
                                          const CHAR* format, INT32 formatLength,
-                                         struct tm* time, INT32& microsec)
+                                         struct tm* time, INT32& microsec,
+                                         BOOLEAN &isLocalTime, INT32 &gmtoff)
    {
       INT32 year = 0;
-      INT32 month = 0;
-      INT32 day = 0;
+      INT32 month = 1;
+      INT32 day = 1;
       INT32 hour = 0;
       INT32 minute = 0;
       INT32 second = 0;
@@ -2869,6 +3060,126 @@ namespace import
             fmtLen -= 6;
             mxs = TRUE;
             break;
+         // time zone: +/-XXXX
+         case 'Z':
+         {
+            INT32 gmtHour = 0 ;
+            INT32 gmtMinute = 0 ;
+            INT32 hourStrLen = 0 ;
+            INT32 sign = 1 ;
+
+            fmt++;
+            fmtLen--;
+
+            if( '+' == str[0] )
+            {
+               sign = 1 ;
+            }
+            else if ( '-' == str[0] )
+            {
+               sign = -1 ;
+            }
+            else if ( 'Z' == str[0] )
+            {
+               isLocalTime = FALSE ;
+               break ;
+            }
+            else
+            {
+               break ;
+            }
+
+            rc = _stringToTimeZone( &str, strLen, gmtoff ) ;
+            if ( rc )
+            {
+               goto error ;
+            }
+
+            gmtoff *= sign ;
+            isLocalTime = FALSE ;
+
+            break ;
+         }
+         case '+':
+         case '-':
+         {
+            INT32 sign = 1 ;
+            INT32 hour = 0 ;
+            INT32 minute = 0 ;
+
+            if ( '-' == fmt[0] )
+            {
+               sign = -1 ;
+            }
+
+            if ( !isdigit( fmt[1] ) )
+            {
+               if (*str != *fmt)
+               {
+                  rc = SDB_INVALIDARG;
+                  goto error;
+               }
+               str++;
+               strLen--;
+               fmt++;
+               fmtLen--;
+               break;
+            }
+
+            SDB_ASSERT( isdigit(fmt[2]) &&
+                        isdigit(fmt[3]), "invalid format of time zone");
+
+            if ( '+' == str[0] )
+            {
+               sign = 1 ;
+            }
+            else if ( '-' == str[0] )
+            {
+               sign = -1 ;
+            }
+            else if ( 'Z' == str[0] )
+            {
+               str++;
+               strLen--;
+               fmt++;
+               fmtLen--;
+               isLocalTime = FALSE ;
+               break ;
+            }
+            else
+            {
+               rc = _stringToTimeZone( &fmt, fmtLen, gmtoff ) ;
+               if ( rc )
+               {
+                  goto error ;
+               }
+               gmtoff *= sign ;
+               isLocalTime = FALSE ;
+               break ;
+            }
+
+            rc = _stringToTimeZone( &str, strLen, gmtoff ) ;
+            if ( rc )
+            {
+               goto error ;
+            }
+
+            gmtoff *= sign ;
+            isLocalTime = FALSE ;
+
+            if ( isdigit( fmt[4] ) )
+            {
+               fmt += 4 ;
+               fmtLen -= 4 ;
+            }
+            else
+            {
+               fmt += 3 ;
+               fmtLen -= 3 ;
+            }
+
+            break;
+         }
          // any charcater: *
          case '*':
             str++;
@@ -2890,6 +3201,46 @@ namespace import
          }
       }
 
+      if ( 0 >= strLen && 4 <= fmtLen )
+      {
+         while( TRUE )
+         {
+            INT32 sign = 1 ;
+            INT32 hour = 0 ;
+            INT32 minute = 0 ;
+
+            if ( '+' == fmt[0] )
+            {
+               sign = 1 ;
+            }
+            else if ( '-' == fmt[0] )
+            {
+               sign = -1 ;
+            }
+            else
+            {
+               break ;
+            }
+
+            if ( !isdigit( fmt[1] ) )
+            {
+               break;
+            }
+
+            SDB_ASSERT( isdigit(fmt[2]) &&
+                        isdigit(fmt[3]), "invalid format of time zone");
+
+            rc = _stringToTimeZone( &fmt, fmtLen, gmtoff ) ;
+            if ( rc )
+            {
+               goto error ;
+            }
+            gmtoff *= sign ;
+            isLocalTime = FALSE ;
+            break ;
+         }
+      }
+
       ossMemset(time, 0, sizeof(struct tm));
       time->tm_year = year;
       time->tm_mon  = month - 1;
@@ -2905,7 +3256,7 @@ namespace import
    }
 
    static inline INT32 _stringToTimestamp(CSVString& data, BOOLEAN autoTimestamp,
-                                          CSVTimestamp& value)
+                                          CSVTimestamp& value, CSVFieldOpt& opt)
    {
       CHAR* str = data.str;
       INT32 rc = SDB_OK;
@@ -2946,13 +3297,27 @@ namespace import
       if (hasNonDigit || !autoTimestamp)
       {
          struct tm t ;
+         BOOLEAN isLocalTime = TRUE ;
          INT32 microsec = 0;
+         INT32 gmtoff = 0 ;
          time_t timep;
 
          ossMemset(&t, 0, sizeof(t));
-         rc = _stringToDateTime(data.str, data.length,
-                                TIME_FORMAT, TIME_FORMAT_LEN,
-                                &t, microsec);
+
+         if ( FALSE == opt.hasOpt || 0 == opt.opt.timestampOpt.fmtLength )
+         {
+            rc = _stringToDateTime(data.str, data.length,
+                                   TIME_FORMAT, TIME_FORMAT_LEN,
+                                   &t, microsec, isLocalTime, gmtoff);
+         }
+         else
+         {
+            rc = _stringToDateTime(data.str, data.length,
+                                   opt.opt.timestampOpt.format,
+                                   opt.opt.timestampOpt.fmtLength,
+                                   &t, microsec, isLocalTime, gmtoff);
+         }
+
          if (SDB_OK != rc)
          {
             PD_LOG(PDERROR, "failed to scan timepstamp, rc=%d", rc);
@@ -2982,7 +3347,14 @@ namespace import
          t.tm_year -= RELATIVE_YEAR;
 
          /* create integer time representation */
-         timep = mktime(&t);
+         if ( isLocalTime )
+         {
+            timep = mktime(&t);
+         }
+         else
+         {
+            timep = timegm(&t) - gmtoff;
+         }
          if( !ossIsTimestampValid( timep ) )
          {
             rc = SDB_INVALIDARG;
@@ -3087,13 +3459,15 @@ namespace import
       if (hasNonDigit || !autoDate)
       {
          struct tm t;
+         BOOLEAN isLocalTime = TRUE ;
          INT32 microsec = 0;
+         INT32 gmtoff = 0 ;
          time_t timep;
 
          ossMemset(&t, 0, sizeof(t));
          rc = _stringToDateTime(data.str, data.length,
                                 DATE_FORMAT, DATE_FORMAT_LEN,
-                                &t, microsec);
+                                &t, microsec, isLocalTime, gmtoff);
          if (SDB_OK != rc)
          {
             PD_LOG(PDERROR, "failed to scan date");
@@ -3113,7 +3487,14 @@ namespace import
          t.tm_year -= RELATIVE_YEAR;
 
          /* create integer time representation */
-         timep = mktime(&t);
+         if ( isLocalTime )
+         {
+            timep = mktime(&t);
+         }
+         else
+         {
+            timep = timegm(&t) - gmtoff;
+         }
          value = (INT64)timep * 1000 + microsec/1000;
       }
       else
@@ -3622,7 +4003,7 @@ namespace import
          {
             goto error;
          }
-         rc = _stringToTimestamp(fieldValue.strVal, autoDateTime, fieldValue.timestampVal);
+         rc = _stringToTimestamp(fieldValue.strVal, autoDateTime, fieldValue.timestampVal, opt);
          if (SDB_OK != rc)
          {
             goto error;

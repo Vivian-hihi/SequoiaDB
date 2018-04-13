@@ -40,8 +40,11 @@ using namespace std;
 
 namespace import
 {
+   #define IMP_UTIL_TIMEZONE_MAX 720
+
    UINT32 RC2ShellRC(INT32 rc);
    INT32 parseFileList(const string& fileList, vector<string>& files);
+   INT32 checkDateTimeFormat(const string& format) ;
 }
 
 #endif /* IMP_UTIL_HPP_ */
