@@ -884,23 +884,6 @@ int sdb_func_cmp::to_bson_with_child( bson::BSONObj &obj )
       }
       else
       {
-         if ( Item::FIELD_ITEM == field3->type() )
-         {
-            // field1 - num < field3
-            obj_tmp = BSON( (cmp_inverse ?  this->inverse_name() : this->name())
-                            << BSON( "$field" << ((Item_field *)field3)->field->field_name ) ) ;
-         }
-         else
-         {
-            // field1 - num1 < num3
-            rc = get_item_val( (cmp_inverse ?  this->inverse_name() : this->name()),
-                                field3, ((Item_field *)field1)->field, obj_tmp ) ;
-            if ( rc != SDB_ERR_OK )
-            {
-               goto error ;
-            }
-         }
-         builder_tmp.appendElements( obj_tmp ) ;
          if ( 0 == strcmp(func->func_name(), "+") )
          {
             rc = get_item_val( "$add", field2, ((Item_field *)field1)->field, obj_tmp ) ;
@@ -924,6 +907,23 @@ int sdb_func_cmp::to_bson_with_child( bson::BSONObj &obj )
          if ( rc != SDB_ERR_OK )
          {
             goto error ;
+         }
+         builder_tmp.appendElements( obj_tmp ) ;
+         if ( Item::FIELD_ITEM == field3->type() )
+         {
+            // field1 - num < field3
+            obj_tmp = BSON( (cmp_inverse ?  this->inverse_name() : this->name())
+                            << BSON( "$field" << ((Item_field *)field3)->field->field_name ) ) ;
+         }
+         else
+         {
+            // field1 - num1 < num3
+            rc = get_item_val( (cmp_inverse ?  this->inverse_name() : this->name()),
+                                field3, ((Item_field *)field1)->field, obj_tmp ) ;
+            if ( rc != SDB_ERR_OK )
+            {
+               goto error ;
+            }
          }
          builder_tmp.appendElements( obj_tmp ) ;
          obj_tmp = builder_tmp.obj() ;
