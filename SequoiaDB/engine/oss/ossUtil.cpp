@@ -138,7 +138,7 @@ void ossTimestampToString( ossTimestamp &Tm, CHAR * pStr )
 void ossStringToTimestamp( const CHAR * pStr, ossTimestamp &Tm )
 {
    PD_TRACE_ENTRY ( SDB_STR2OSSTS );
-   struct tm tmp ;
+   struct tm tmp = { 0 } ;
    CHAR format[] = "%04d-%02d-%02d-%02d.%02d.%02d.%06d" ;
 
    ossSscanf( pStr, format, &tmp.tm_year, &tmp.tm_mon, &tmp.tm_mday,
@@ -1968,7 +1968,7 @@ INT32 ossProcLimits::setLimit( const CHAR *str, INT64 soft, INT64 hard )
    INT32 rc = 0 ;
    soft = ( -1 == soft ) ? RLIM_INFINITY : soft ;
    hard = ( -1 == hard ) ? RLIM_INFINITY : hard ;
-   struct rlimit lim = { soft, hard } ;
+   struct rlimit lim = { (rlim_t) soft, (rlim_t) hard } ;
    INT32 resource = 0 ;
 
    if ( ossStrcmp( str, OSS_LIMIT_VIRTUAL_MEM ) == 0 )
