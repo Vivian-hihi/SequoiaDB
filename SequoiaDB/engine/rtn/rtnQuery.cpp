@@ -374,20 +374,22 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNQUERYWITHTS ) ;
-      INT64 tmpContextID = -1 ;
       rtnContextTS *contextTS = NULL ;
 
-      if ( options.testFlag( FLG_QUERY_EXPLAIN ) )
+      contextID = -1 ;
+
+      if ( options.testFlag( FLG_QUERY_EXPLAIN )
+           || options.testFlag( FLG_QUERY_MODIFY ) )
       {
          rc = SDB_OPTION_NOT_SUPPORT ;
-         PD_LOG( PDERROR, "Explain query with text search condition is not "
+         PD_LOG( PDERROR, "Operation with text search condition is not "
                  "support yet" ) ;
          goto error ;
       }
       else
       {
          rc = rtnCB->contextNew( RTN_CONTEXT_TS, (rtnContext **)&contextTS,
-                                 tmpContextID, cb ) ;
+                                 contextID, cb ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to create new text search context, "
                       "rc: %d", rc ) ;
          if ( options.canPrepareMore() )
@@ -395,7 +397,10 @@ namespace engine
             contextTS->setPrepareMoreData( TRUE ) ;
          }
 
-         rc = contextTS->open( options, cb ) ;
+         rtnQueryOptions subOption( options ) ;
+         subOption.setSkip( 0 ) ;
+         subOption.setLimit( -1 ) ;
+         rc = contextTS->open( subOption, cb ) ;
          if ( rc )
          {
             if ( SDB_DMS_EOC != rc )
@@ -405,6 +410,13 @@ namespace engine
             }
             goto error ;
          }
+
+         if ( !options.isOrderByEmpty() )
+         {
+            rc = rtnSort( (rtnContext**)&contextTS, options.getOrderBy(), cb,
+                          options.getSkip(), options.getLimit(), contextID ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to sort, rc: %d", rc ) ;
+         }
       }
 
       if ( cb->getMonConfigCB()->timestampON )
@@ -412,7 +424,6 @@ namespace engine
          contextTS->getMonCB()->recordStartTimestamp() ;
       }
 
-      contextID = tmpContextID ;
       if ( ppContext )
       {
          *ppContext = contextTS ;
@@ -422,9 +433,9 @@ namespace engine
       PD_TRACE_EXITRC( SDB_RTNQUERYWITHTS, rc ) ;
       return rc ;
    error:
-      if ( -1 != tmpContextID )
+      if ( -1 != contextID )
       {
-         rtnCB->contextDelete( tmpContextID, cb ) ;
+         rtnCB->contextDelete( contextID, cb ) ;
       }
       goto done ;
    }
