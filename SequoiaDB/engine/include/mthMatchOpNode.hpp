@@ -1068,7 +1068,9 @@ namespace engine
 
          OSS_INLINE virtual BOOLEAN _flagAcceptUndefined ()
          {
-            return TRUE ;
+            // For { $exists : 1 } return FALSE if undefined
+            // For { $exists : 0 } return TRUE if undefined
+            return _toMatch.trueValue() ? FALSE : TRUE ;
          }
    } ;
 
@@ -1156,7 +1158,9 @@ namespace engine
 
          OSS_INLINE virtual BOOLEAN _flagAcceptUndefined ()
          {
-            return TRUE ;
+            // For { $isnull : 1 } return TRUE if undefined
+            // For { $isnull : 0 } return FALSE if undefined
+            return _toMatch.trueValue() ? TRUE : FALSE ;
          }
    } ;
 

@@ -2293,6 +2293,7 @@ namespace engine
          //xxx.xxx.xxx
          *p = '\0' ;
          BSONElement ele = obj.getField( pTmpFieldName ) ;
+         *p = '.' ;
          if ( ele.type() == Object || ele.type() == Array )
          {
             //xxx.$1.xxx
