@@ -187,5 +187,65 @@ namespace DriverTest
             record = cur.Next();
             Assert.IsNull(record);
         }
+
+        [TestMethod()]
+        public void DomainSetAttributesTest()
+        {
+            string dmName = "testDomain";
+            string group1Name = config.conf.Groups[0].GroupName;
+            string group2Name = config.conf.Groups[1].GroupName;
+
+            Domain dm = null;
+
+            /// IsDomainExist
+            bool flag = sdb.IsDomainExist(dmName);
+            Assert.IsFalse(flag);
+
+            /// getDomain
+            try
+            {
+                dm = sdb.GetDomain(dmName);
+            }
+            catch (BaseException e)
+            {
+                Assert.IsTrue(e.ErrorType.Equals("SDB_CAT_DOMAIN_NOT_EXIST"));
+            }
+
+            /// createDomain
+            dm = null;
+
+            {
+                BsonDocument options = new BsonDocument();
+                BsonArray arr = new BsonArray();
+                arr.Add(group1Name);
+                options.Add(SequoiadbConstants.FIELD_GROUPS, arr);
+                dm = sdb.CreateDomain(dmName, options);
+                Assert.IsNotNull(dm);
+            }
+
+            {
+                BsonDocument options = new BsonDocument();
+                BsonArray arr = new BsonArray();
+                arr.Add(group2Name);
+                options.Add(SequoiadbConstants.FIELD_GROUPS, arr);
+                dm.AddGroups(options);
+            }
+
+            {
+                BsonDocument options = new BsonDocument();
+                BsonArray arr = new BsonArray();
+                arr.Add(group2Name);
+                options.Add(SequoiadbConstants.FIELD_GROUPS, arr);
+                dm.RemoveGroups(options);
+            }
+
+            {
+                BsonDocument options = new BsonDocument();
+                options.Add("AutoSplit", true);
+                dm.SetAttributes(options);
+            }
+
+            sdb.DropDomain(dmName);
+        }
     }
 }

@@ -1331,6 +1331,9 @@ namespace SequoiaDB
          *     ShardingKey  : Assign the sharding key
          *     ShardingType : Assign the sharding type
          *     Partition    : When the ShardingType is "hash", need to assign Partition, it's the bucket number for hash, the range is [2^3,2^20]
+         *     CompressionType : The compression type of data, could be "snappy" or "lzw"
+         *     EnsureShardingIndex : Assign to true to build sharding index
+         *     StrictDataMode : Using strict date mode in numeric operations or not
          *                    e.g. {RepliSize:0, ShardingKey:{a:1}, ShardingType:"hash", Partition:1024}
          * \note Can't alter attributes about split in partition collection; After altering a collection to
          *       be a partition collection, need to split this collection manually
@@ -1355,6 +1358,20 @@ namespace SequoiaDB
             {
                 _Alter1(options);
             }
+        }
+
+        private void _AlterInternal(string taskName, BsonDocument arguments, Boolean allowNullArgs)
+        {
+            if (null == arguments && !allowNullArgs)
+            {
+                throw new BaseException("SDB_INVALIDARG");
+            }
+            BsonDocument alterObj = new BsonDocument();
+            BsonDocument tmpObj = new BsonDocument();
+            tmpObj.Add(SequoiadbConstants.FIELD_NAME, taskName);
+            tmpObj.Add(SequoiadbConstants.FIELD_NAME_ARGS, arguments);
+            alterObj.Add(SequoiadbConstants.FIELD_NAME_ALTER, tmpObj);
+            Alter(alterObj);
         }
 
         /** \fn DBCursor ListLobs()
@@ -1573,22 +1590,7 @@ namespace SequoiaDB
          */
         public void CreateIdIndex(BsonDocument options)
         {
-            BsonDocument newObj = new BsonDocument();
-            BsonDocument subObj = new BsonDocument();
-
-            subObj.Add(SequoiadbConstants.FIELD_NAME, SequoiadbConstants.SDB_ALTER_CRT_ID_INDEX);
-            if (null == options)
-            {
-                subObj.Add(SequoiadbConstants.FIELD_NAME_ARGS, null);
-            }
-            else
-            {
-                subObj.Add(SequoiadbConstants.FIELD_NAME_ARGS, options);
-            }
-
-            newObj.Add(SequoiadbConstants.FIELD_NAME_ALTER, subObj);
-
-            Alter(newObj);
+            _AlterInternal(SequoiadbConstants.SDB_ALTER_CRT_ID_INDEX, options, true);
         }
 
         /** \fn void DropIdIndex()
@@ -1599,15 +1601,78 @@ namespace SequoiaDB
          */
         public void DropIdIndex()
         {
-            BsonDocument newObj = new BsonDocument();
-            BsonDocument subObj = new BsonDocument();
+            _AlterInternal(SequoiadbConstants.SDB_ALTER_DROP_ID_INDEX, null, true);
+        }
 
-            subObj.Add(SequoiadbConstants.FIELD_NAME, SequoiadbConstants.SDB_ALTER_DROP_ID_INDEX);
-            subObj.Add(SequoiadbConstants.FIELD_NAME_ARGS, BsonNull.Value);
+        /** \fn void EnableSharding(BsonDocument options)
+         * \brief Alter the attributes of current collection to enable sharding
+         * \param options The options for altering current collection:
+         *
+         *     ShardingKey  : Assign the sharding key
+         *     ShardingType : Assign the sharding type
+         *     Partition    : When the ShardingType is "hash", need to assign Partition, it's the bucket number for hash, the range is [2^3,2^20]
+         *     EnsureShardingIndex : Assign to true to build sharding index
+         * \exception SequoiaDB.BaseException
+         * \exception System.Exception
+         */
+        public void EnableSharding(BsonDocument options)
+        {
+            _AlterInternal(SequoiadbConstants.SDB_ALTER_ENABLE_SHARDING, options, false);
+        }
 
-            newObj.Add(SequoiadbConstants.FIELD_NAME_ALTER, subObj);
+        /** \fn void DisableSharding()
+         * \brief Alter the attributes of current collection to disable sharding
+         * \exception SequoiaDB.BaseException
+         * \exception System.Exception
+         */
+        public void DisableSharding()
+        {
+            _AlterInternal(SequoiadbConstants.SDB_ALTER_DISABLE_SHARDING, null, true);
+        }
 
-            Alter(newObj);
+        /** \fn void EnableCompression(BsonDocument options)
+         * \brief Alter the attributes of current collection to enable compression
+         * \param options The options for altering current collection:
+         *
+         *     CompressionType : The compression type of data, could be "snappy" or "lzw"
+         * \exception SequoiaDB.BaseException
+         * \exception System.Exception
+         */
+        public void EnableCompression(BsonDocument options)
+        {
+            _AlterInternal(SequoiadbConstants.SDB_ALTER_ENABLE_COMPRESSION, options, true);
+        }
+
+        /** \fn void DisableCompression()
+         * \brief Alter the attributes of current collection to enable compression
+         * \exception SequoiaDB.BaseException
+         * \exception System.Exception
+         */
+        public void DisableCompression()
+        {
+            _AlterInternal(SequoiadbConstants.SDB_ALTER_DISABLE_COMPRESSION, null, true);
+        }
+
+        /** \fn void SetAttributes(BsonDocument options)
+         * \brief Alter the attributes of current collection to set attributes
+         * \param options The options for altering current collection:
+         *
+         *     ReplSize     : Assign how many replica nodes need to be synchronized when a write request(insert, update, etc) is executed
+         *     ShardingKey  : Assign the sharding key
+         *     ShardingType : Assign the sharding type
+         *     Partition    : When the ShardingType is "hash", need to assign Partition, it's the bucket number for hash, the range is [2^3,2^20]
+         *     CompressionType : The compression type of data, could be "snappy" or "lzw"
+         *     EnsureShardingIndex : Assign to true to build sharding index
+         *     StrictDataMode : Using strict date mode in numeric operations or not
+         *                    e.g. {RepliSize:0, ShardingKey:{a:1}, ShardingType:"hash", Partition:1024}
+         * \note Can't alter attributes about split in partition collection; After altering a collection to
+         *       be a partition collection, need to split this collection manually
+         * \exception SequoiaDB.BaseException
+         * \exception System.Exception
+         */
+        public void SetAttributes(BsonDocument options)
+        {
+            _AlterInternal(SequoiadbConstants.SDB_ALTER_SET_ATTRIBUTES, options, false);
         }
 
         private BsonDocument _TryGenOID(BsonDocument obj, bool ensureOID)

@@ -61,6 +61,7 @@ namespace SequoiaDB
         public const string CONFIGS = "configs";
         public const string CS_IN_DOMAIN = "collectionspaces in domain";
         public const string CL_IN_DOMAIN = "collections in domain";
+        public const string ALTER_CS = "alter collectionspace";
 
         public const string COLLECTION = "collection";
         public const string CREATE_INX = "create index";
@@ -186,6 +187,18 @@ namespace SequoiaDB
 
         public const string SDB_ALTER_CRT_ID_INDEX = "create id index";
         public const string SDB_ALTER_DROP_ID_INDEX = "drop id index";
+        public const string SDB_ALTER_ENABLE_SHARDING = "enable sharding";
+        public const string SDB_ALTER_DISABLE_SHARDING = "disable sharding";
+        public const string SDB_ALTER_ENABLE_COMPRESSION = "enable compression";
+        public const string SDB_ALTER_DISABLE_COMPRESSION = "disable compression";
+        public const string SDB_ALTER_SET_ATTRIBUTES = "set attributes";
+        public const string SDB_ALTER_SET_DOMAIN = "set domain";
+        public const string SDB_ALTER_REMOVE_DOMAIN = "remove domain";
+        public const string SDB_ALTER_ENABLE_CAPPED = "enable capped";
+        public const string SDB_ALTER_DISABLE_CAPPED = "disable capped";
+        public const string SDB_ALTER_ADD_GROUPS = "add groups";
+        public const string SDB_ALTER_SET_GROUPS = "set groups";
+        public const string SDB_ALTER_REMOVE_GROUPS = "remove groups";
 
         public const string FIELD_SET_ON_INSERT = "$SetOnInsert";
 

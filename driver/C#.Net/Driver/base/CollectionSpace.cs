@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System;
 using SequoiaDB.Bson;
 
 /** \namespace SequoiaDB
@@ -243,5 +244,138 @@ namespace SequoiaDB
             rtnMessage = SDBMessageHelper.CheckRetMsgHeader(sdbMessage, rtnMessage);
             return rtnMessage;
         }
+
+
+       /** \fn void Alter ( BsonDocument options )
+        *  \brief Alter collection space.
+        *  \param [in] options The options of collection space to be changed, e.g. { "PageSize": 4096, "Domain": "mydomain" }.
+        *
+        *          PageSize     : The page size of the collection space
+        *          LobPageSize  : The page size of LOB objects in the collection space
+        *          Domain       : The domain which the collection space belongs to
+        *  \exception SequoiaDB.BaseException
+        *  \exception System.Exception
+        */
+       public void Alter(BsonDocument options)
+       {
+           // check argument
+           if (null == options)
+           {
+               throw new BaseException("SDB_INVALIDARG");
+           }
+           // build a bson to send
+           BsonElement elem;
+           bool flag = false;
+           BsonDocument newObj = new BsonDocument();
+           newObj.Add(SequoiadbConstants.FIELD_NAME_ALTER_TYPE, SequoiadbConstants.SDB_ALTER_CS);
+           newObj.Add(SequoiadbConstants.FIELD_NAME_VERSION, SequoiadbConstants.SDB_ALTER_VERSION);
+           newObj.Add(SequoiadbConstants.FIELD_NAME, this.name);
+           // append alters
+           flag = options.TryGetElement(SequoiadbConstants.FIELD_NAME_ALTER, out elem);
+           if (true == flag && elem.Value.IsBsonDocument)
+           {
+               newObj.Add(elem);
+           }
+           else
+           {
+               throw new BaseException("SDB_INVALIDARG");
+           }
+           // append options
+           flag = false;
+           flag = options.TryGetElement(SequoiadbConstants.FIELD_OPTIONS, out elem);
+           if (true == flag)
+           {
+               if (elem.Value.IsBsonDocument)
+               {
+                   newObj.Add(elem);
+               }
+               else
+               {
+                   throw new BaseException("SDB_INVALIDARG");
+               }
+           }
+
+           // cmd
+           string command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.ALTER_CS;
+           // run command
+           BsonDocument dummyObj = new BsonDocument();
+           SDBMessage rtn = AdminCommand(command, newObj, dummyObj, dummyObj, dummyObj);
+           int flags = rtn.Flags;
+           if (flags != 0)
+           {
+               throw new BaseException(flags);
+           }
+       }
+
+       private void _AlterInternal(string taskName, BsonDocument arguments, Boolean allowNullArgs)
+       {
+           if (null == arguments && !allowNullArgs)
+           {
+               throw new BaseException("SDB_INVALIDARG");
+           }
+           BsonDocument alterObj = new BsonDocument();
+           BsonDocument tmpObj = new BsonDocument();
+           tmpObj.Add(SequoiadbConstants.FIELD_NAME, taskName);
+           tmpObj.Add(SequoiadbConstants.FIELD_NAME_ARGS, arguments);
+           alterObj.Add(SequoiadbConstants.FIELD_NAME_ALTER, tmpObj);
+           Alter(alterObj);
+       }
+
+       /** \fn void SetDomain ( BsonDocument options )
+        *  \brief Alter collection space to set domain
+        *  \param [in] options The options of collection space to be changed.
+        *          Domain       : The domain which the collection space belongs to
+        *  \exception SequoiaDB.BaseException
+        *  \exception System.Exception
+        */
+       public void SetDomain(BsonDocument options)
+       {
+           _AlterInternal(SequoiadbConstants.SDB_ALTER_SET_DOMAIN, options, false);
+       }
+
+       /** \fn void RemoveDomain()
+        *  \brief Alter collection space to remove domain
+        *  \exception SequoiaDB.BaseException
+        *  \exception System.Exception
+        */
+       public void RemoveDomain()
+       {
+           _AlterInternal(SequoiadbConstants.SDB_ALTER_REMOVE_DOMAIN, null, true);
+       }
+
+       /** \fn void EnableCapped()
+        *  \brief Alter collection space to enable capped
+        *  \exception SequoiaDB.BaseException
+        *  \exception System.Exception
+        */
+       public void EnableCapped()
+       {
+           _AlterInternal(SequoiadbConstants.SDB_ALTER_ENABLE_CAPPED, null, true);
+       }
+
+       /** \fn void DisableCapped()
+        *  \brief Alter collection space to disable capped
+        *  \exception SequoiaDB.BaseException
+        *  \exception System.Exception
+        */
+       public void DisableCapped()
+       {
+           _AlterInternal(SequoiadbConstants.SDB_ALTER_DISABLE_CAPPED, null, true);
+       }
+
+       /** \fn void SetAttributes( BsonDocument options )
+        *  \brief Alter collection space.
+        *  \param [in] options The options of collection space to be changed, e.g. { "PageSize": 4096, "Domain": "mydomain" }.
+        *
+        *          PageSize     : The page size of the collection space
+        *          LobPageSize  : The page size of LOB objects in the collection space
+        *          Domain       : The domain which the collection space belongs to
+        *  \exception SequoiaDB.BaseException
+        *  \exception System.Exception
+        */
+       public void SetAttributes(BsonDocument options)
+       {
+           _AlterInternal(SequoiadbConstants.SDB_ALTER_SET_ATTRIBUTES, options, false);
+       }
    }
 }

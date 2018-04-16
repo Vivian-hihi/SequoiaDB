@@ -1090,6 +1090,23 @@ namespace DriverTest
         }
 
         [TestMethod()]
+        public void EnableShardingTest()
+        {
+            DBCollection coll = null;
+            BsonDocument options = null;
+            string clName_alter = "shardingCLTest";
+            coll = cs.CreateCollection(clName_alter);
+            // alter collecton attrubute
+            options = new BsonDocument {
+                {"ShardingKey", new BsonDocument{{"a",1}}},
+                {"ShardingType", "hash"},
+                {"Partition", 4096},
+                {"AutoSplit", true}
+            };
+            coll.EnableSharding(options);
+        }
+
+        [TestMethod()]
         public void QueryExplainAPITest()
         {
             int num = 100;

@@ -2,6 +2,7 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
+using SequoiaDB.Bson;
 
 namespace DriverTest
 {
@@ -81,6 +82,20 @@ namespace DriverTest
             cs.DropCollection(clName);
             Assert.IsFalse(cs.IsCollectionExist(clName));
             sdb.DropCollectionSpace(csName);
+            sdb.Disconnect();
+        }
+
+        [TestMethod()]
+        public void AlterTest()
+        {
+            CollectionSpace cs = null;
+            Sequoiadb sdb = new Sequoiadb(config.conf.Coord.Address);
+            sdb.Connect(config.conf.UserName, config.conf.Password);
+            cs = sdb.CreateCollectionSpace("testCS");
+            BsonDocument options = new BsonDocument();
+            options.Add("PageSize", 8192);
+            cs.SetAttributes(options);
+            sdb.DropCollectionSpace("testCS");
             sdb.Disconnect();
         }
     }
