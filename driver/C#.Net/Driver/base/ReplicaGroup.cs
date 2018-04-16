@@ -338,17 +338,46 @@ namespace SequoiaDB
 
         /** \fn Node GetSlave(params int[] positions)
          *  \brief Get the slave node of current group
-         *  \param positions The positions of nodes
+         *  \param positions The positions of nodes.
+         *  \param positions The positions of nodes.
+         *      The position of a node is depended on the index of the node
+         *      defined in catalog. But the beginning position of a node is start
+         *      from 1 instead of 0, so it can be 1-7. 
          *  \return The fitted node or null
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
         public Node GetSlave(params int[] positions)
         {
+            List<int> list = null;
+            if (positions == null || positions.Length == 0) {
+                return GetSlave(list);
+            } else {
+                list = new List<int>();
+                foreach (int pos in positions)
+                {
+                    list.Add(pos);
+                }
+                return GetSlave(list);
+            }
+        }
+
+        /** \fn Node GetSlave(IList<int> positions)
+         *  \brief Get the slave node of current group
+         *  \param positions The positions of nodes.
+         *      The position of a node is depended on the index of the node
+         *      defined in catalog. But the beginning position of a node is start
+         *      from 1 instead of 0, so it can be 1-7. 
+         *  \return The fitted node or null
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+         */
+        public Node GetSlave(IList<int> positions)
+        {
             bool needGeneratePosition = false;
             List<int> validPositions = new List<int>();
             // check arguements 
-            if (positions == null || positions.Length == 0)
+            if (positions == null || positions.Count == 0)
             {
                 needGeneratePosition = true;
             }

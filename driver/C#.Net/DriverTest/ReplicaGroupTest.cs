@@ -321,6 +321,39 @@ namespace DriverTest
                     Assert.AreNotEqual(master.NodeName, slave.NodeName);
                 }
             }
+            // case 5: use IList<int>
+            List<int> list = new List<int>();
+            list.Add(pos1);
+            list.Add(pos2);
+            slave = group.GetSlave(list);
+            Console.WriteLine(String.Format("case3: group is: {0}, master is: {1}, slave is: {2}", groupName,
+            master == null ? null : master.NodeName,
+            slave == null ? null : slave.NodeName));
+            if (nodeCount == 1)
+            {
+                Assert.AreEqual(master.NodeName, slave.NodeName);
+            }
+            else
+            {
+                if ((pos1 % nodeCount == pos2 % nodeCount) &&
+                    (primaryNodePosition == (pos1 - 1) % nodeCount + 1))
+                {
+                    Assert.AreEqual(master.NodeName, slave.NodeName);
+                }
+                else
+                {
+                    Assert.AreNotEqual(master.NodeName, slave.NodeName);
+                }
+            }
+            // case 6: null test
+            List<int> list2 = null;
+            slave = group.GetSlave(list2);
+            Assert.IsNotNull(slave);
+            slave = group.GetSlave(null);
+            Assert.IsNotNull(slave);
+            list2 = new List<int>();
+            slave = group.GetSlave(list2);
+
         }
 
         [TestMethod()]
