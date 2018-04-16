@@ -19,7 +19,7 @@ public class TestRequest extends SdbRequest {
         opCode = MsgOpCode.MSG_REQ;
 
         this.message = message == null ? "" : message;
-        length += Helper.alignedSize(this.message.length() + 1);
+        length += this.message.length() + 1;
     }
 
     @Override
@@ -28,10 +28,6 @@ public class TestRequest extends SdbRequest {
             out.put(message.getBytes("UTF-8"));
             out.put((byte) 0); // end of string
             int length = message.length() + 1;
-            int paddingLen = Helper.alignedSize(length) - length;
-            if (paddingLen > 0) {
-                out.put(new byte[paddingLen]);
-            }
         } catch (UnsupportedEncodingException e) {
             throw new BaseException(SDBError.SDB_INVALIDARG, e);
         }
