@@ -1377,6 +1377,27 @@ class collection(object):
         rc = sdb.cl_truncate(self._cl)
         raise_if_error(rc, "Truncate failed")
 
+    def alter(self, options):
+        """Alter the collection.
+        Parameters:
+           Name         Type     Info:
+           options      dict     The options to alter
+                                 ReplSize     : Assign how many replica nodes need to be synchronized when a write request(insert, update, etc) is executed
+                                 ShardingKey  : Assign the sharding key
+                                 ShardingType : Assign the sharding type
+                                 Partition    : When the ShardingType is "hash", need to assign Partition, it's the bucket number for hash, the range is [2^3,2^20]
+                                 CompressionType : The compression type of data, could be "snappy" or "lzw"
+                                 EnsureShardingIndex : Assign to true to build sharding index
+                                 StrictDataMode : Using strict date mode in numeric operations or not
+        Exceptions:
+           pysequoiadb.error.SDBBaseError
+        """
+        if not isinstance(options, dict):
+            raise SDBTypeError("options must be an instance of dict")
+        bson_options = bson.BSON.encode(options)
+        rc = sdb.cl_alter(self._cl, bson_options)
+        raise_if_error(rc, "Alter collection failed")
+
     def create_id_index(self, options=None):
         """Create the id index.
 
@@ -1404,3 +1425,74 @@ class collection(object):
         """
         rc = sdb.cl_drop_id_index(self._cl)
         raise_if_error(rc, "Drop id index failed")
+
+    def enable_sharding(self, options):
+        """Alter the collection to enable sharding.
+        Parameters:
+           Name         Type     Info:
+           options      dict     The options to alter
+                                 ShardingKey  : Assign the sharding key
+                                 ShardingType : Assign the sharding type
+                                 Partition    : When the ShardingType is "hash", need to assign Partition, it's the bucket number for hash, the range is [2^3,2^20]
+                                 EnsureShardingIndex : Assign to true to build sharding index
+        Exceptions:
+           pysequoiadb.error.SDBBaseError
+        """
+        if not isinstance(options, dict):
+            raise SDBTypeError("options must be an instance of dict")
+        bson_options = bson.BSON.encode(options)
+        rc = sdb.cl_enable_sharding(self._cl, bson_options)
+        raise_if_error(rc, "Enable sharding failed")
+
+    def disable_sharding(self):
+        """Alter the collection to disable sharding.
+        Exceptions:
+           pysequoiadb.error.SDBBaseError
+        """
+        rc = sdb.cl_disable_sharding(self._cl)
+        raise_if_error(rc, "Disable sharding failed")
+
+    def enable_compression(self, options):
+        """Alter the collection to enable compression.
+        Parameters:
+           Name         Type     Info:
+           options      dict     The options to alter
+                                 CompressionType : The compression type of data, could be "snappy" or "lzw"
+        Exceptions:
+           pysequoiadb.error.SDBBaseError
+        """
+        if not isinstance(options, dict):
+            raise SDBTypeError("options must be an instance of dict")
+        bson_options = bson.BSON.encode(options)
+        rc = sdb.cl_enable_compression(self._cl, bson_options)
+        raise_if_error(rc, "Enable compression failed")
+
+    def disable_compression(self):
+        """Alter the collection to disable compression.
+        Exceptions:
+           pysequoiadb.error.SDBBaseError
+        """
+        rc = sdb.cl_disable_compression(self._cl)
+        raise_if_error(rc, "Disable compression failed")
+
+    def set_attributes(self, options):
+        """Alter the collection.
+        Parameters:
+           Name         Type     Info:
+           options      dict     The options to alter
+                                 ReplSize     : Assign how many replica nodes need to be synchronized when a write request(insert, update, etc) is executed
+                                 ShardingKey  : Assign the sharding key
+                                 ShardingType : Assign the sharding type
+                                 Partition    : When the ShardingType is "hash", need to assign Partition, it's the bucket number for hash, the range is [2^3,2^20]
+                                 CompressionType : The compression type of data, could be "snappy" or "lzw"
+                                 EnsureShardingIndex : Assign to true to build sharding index
+                                 StrictDataMode : Using strict date mode in numeric operations or not
+        Exceptions:
+           pysequoiadb.error.SDBBaseError
+        """
+        if not isinstance(options, dict):
+            raise SDBTypeError("options must be an instance of dict")
+        bson_options = bson.BSON.encode(options)
+        rc = sdb.cl_set_attributes(self._cl, bson_options)
+        raise_if_error(rc, "Set attributes failed")
+

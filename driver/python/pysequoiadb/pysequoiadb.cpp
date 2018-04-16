@@ -1595,6 +1595,159 @@ done :
    return MAKE_RETURN_INT_PYSTRING( rc, cs_name ) ;
 }
 
+__METHOD_IMP(cs_alter)
+{
+   INT32 rc          = 0 ;
+   PYOBJECT *obj     = NULL ;
+   PYOBJECT *bson_options = NULL ;
+   sdbCollectionSpace *cs = NULL ;
+   const bson::BSONObj* options = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS( args, "OO", &obj, &bson_options ) )
+   {
+      rc = SDB_INVALIDARGS ;
+      goto done ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT( obj, sdbCollectionSpace, cs ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_options, options ) ;
+
+   rc = cs->alterCollectionSpace( *options ) ;
+   if ( SDB_OK != rc )
+   {
+      goto done ;
+   }
+
+done:
+   return MAKE_RETURN_INT( rc ) ;
+}
+
+__METHOD_IMP(cs_set_domain)
+{
+   INT32 rc          = 0 ;
+   PYOBJECT *obj     = NULL ;
+   PYOBJECT *bson_options = NULL ;
+   sdbCollectionSpace *cs = NULL ;
+   const bson::BSONObj* options = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS( args, "OO", &obj, &bson_options ) )
+   {
+      rc = SDB_INVALIDARGS ;
+      goto done ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT( obj, sdbCollectionSpace, cs ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_options, options ) ;
+
+   rc = cs->setDomain( *options ) ;
+   if ( SDB_OK != rc )
+   {
+      goto done ;
+   }
+
+done:
+   return MAKE_RETURN_INT( rc ) ;
+}
+
+__METHOD_IMP(cs_remove_domain)
+{
+   INT32 rc          = 0 ;
+   PYOBJECT *obj     = NULL ;
+   sdbCollectionSpace *cs = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
+   {
+      rc = SDB_INVALIDARGS ;
+      goto done ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT( obj, sdbCollectionSpace, cs ) ;
+
+   rc = cs->removeDomain() ;
+   if ( SDB_OK != rc )
+   {
+      goto done ;
+   }
+
+done:
+   return MAKE_RETURN_INT( rc ) ;
+}
+
+__METHOD_IMP(cs_enable_capped)
+{
+   INT32 rc          = 0 ;
+   PYOBJECT *obj     = NULL ;
+   sdbCollectionSpace *cs = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
+   {
+      rc = SDB_INVALIDARGS ;
+      goto done ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT( obj, sdbCollectionSpace, cs ) ;
+
+   rc = cs->enableCapped() ;
+   if ( SDB_OK != rc )
+   {
+      goto done ;
+   }
+
+done:
+   return MAKE_RETURN_INT( rc ) ;
+}
+
+__METHOD_IMP(cs_disable_capped)
+{
+   INT32 rc          = 0 ;
+   PYOBJECT *obj     = NULL ;
+   sdbCollectionSpace *cs = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
+   {
+      rc = SDB_INVALIDARGS ;
+      goto done ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT( obj, sdbCollectionSpace, cs ) ;
+
+   rc = cs->disableCapped() ;
+   if ( SDB_OK != rc )
+   {
+      goto done ;
+   }
+
+done:
+   return MAKE_RETURN_INT( rc ) ;
+}
+
+__METHOD_IMP(cs_set_attributes)
+{
+   INT32 rc          = 0 ;
+   PYOBJECT *obj     = NULL ;
+   PYOBJECT *bson_options = NULL ;
+   sdbCollectionSpace *cs = NULL ;
+   const bson::BSONObj* options = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS( args, "OO", &obj, &bson_options ) )
+   {
+      rc = SDB_INVALIDARGS ;
+      goto done ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT( obj, sdbCollectionSpace, cs ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_options, options ) ;
+
+   rc = cs->setAttributes( *options ) ;
+   if ( SDB_OK != rc )
+   {
+      goto done ;
+   }
+
+done:
+   return MAKE_RETURN_INT( rc ) ;
+}
+
 ///< implement collection
 __METHOD_IMP(create_cl)
 {
@@ -2580,6 +2733,31 @@ error:
    goto done ;
 }
 
+__METHOD_IMP(cl_alter)
+{
+   INT32 rc                         = SDB_OK ;
+   PYOBJECT *obj                    = NULL ;
+   PYOBJECT *option                 = NULL ;
+   sdbCollection *cl                = NULL ;
+   const bson::BSONObj *bson_option = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS(args, "OO", &obj, &option) )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT( obj, sdbCollection, cl ) ;
+   CAST_PYBSON_TO_CPPBSON( option, bson_option ) ;
+   rc = cl->alterCollection(*bson_option) ;
+
+done:
+   DELETE_CPPOBJECT( bson_option ) ;
+   return MAKE_RETURN_INT(rc) ;
+error:
+   goto done ;
+}
+
 __METHOD_IMP(cl_create_id_index)
 {
    INT32 rc                         = SDB_OK ;
@@ -2621,6 +2799,123 @@ __METHOD_IMP(cl_drop_id_index)
    rc = cl->dropIdIndex() ;
 
 done:
+   return MAKE_RETURN_INT(rc) ;
+error:
+   goto done ;
+}
+
+__METHOD_IMP(cl_enable_sharding)
+{
+   INT32 rc                         = SDB_OK ;
+   PYOBJECT *obj                    = NULL ;
+   PYOBJECT *option                 = NULL ;
+   sdbCollection *cl                = NULL ;
+   const bson::BSONObj *bson_option = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS(args, "OO", &obj, &option) )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT( obj, sdbCollection, cl ) ;
+   CAST_PYBSON_TO_CPPBSON( option, bson_option ) ;
+   rc = cl->enableSharding(*bson_option) ;
+
+done:
+   DELETE_CPPOBJECT( bson_option ) ;
+   return MAKE_RETURN_INT(rc) ;
+error:
+   goto done ;
+}
+
+__METHOD_IMP(cl_disable_sharding)
+{
+   INT32 rc                         = SDB_OK ;
+   PYOBJECT *obj                    = NULL ;
+   sdbCollection *cl                = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS(args, "O", &obj) )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT( obj, sdbCollection, cl ) ;
+   rc = cl->disableSharding() ;
+
+done:
+   return MAKE_RETURN_INT(rc) ;
+error:
+   goto done ;
+}
+
+__METHOD_IMP(cl_enable_compression)
+{
+   INT32 rc                         = SDB_OK ;
+   PYOBJECT *obj                    = NULL ;
+   PYOBJECT *option                 = NULL ;
+   sdbCollection *cl                = NULL ;
+   const bson::BSONObj *bson_option = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS(args, "OO", &obj, &option) )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT( obj, sdbCollection, cl ) ;
+   CAST_PYBSON_TO_CPPBSON( option, bson_option ) ;
+   rc = cl->enableCompression(*bson_option) ;
+
+done:
+   DELETE_CPPOBJECT( bson_option ) ;
+   return MAKE_RETURN_INT(rc) ;
+error:
+   goto done ;
+}
+
+__METHOD_IMP(cl_disable_compression)
+{
+   INT32 rc                         = SDB_OK ;
+   PYOBJECT *obj                    = NULL ;
+   sdbCollection *cl                = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS(args, "O", &obj) )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT( obj, sdbCollection, cl ) ;
+   rc = cl->disableCompression() ;
+
+done:
+   return MAKE_RETURN_INT(rc) ;
+error:
+   goto done ;
+}
+
+__METHOD_IMP(cl_set_attributes)
+{
+   INT32 rc                         = SDB_OK ;
+   PYOBJECT *obj                    = NULL ;
+   PYOBJECT *option                 = NULL ;
+   sdbCollection *cl                = NULL ;
+   const bson::BSONObj *bson_option = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS(args, "OO", &obj, &option) )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT( obj, sdbCollection, cl ) ;
+   CAST_PYBSON_TO_CPPBSON( option, bson_option ) ;
+   rc = cl->setAttributes(*bson_option) ;
+
+done:
+   DELETE_CPPOBJECT( bson_option ) ;
    return MAKE_RETURN_INT(rc) ;
 error:
    goto done ;
@@ -2844,6 +3139,114 @@ __METHOD_IMP(domain_alter)
    CAST_PYBSON_TO_CPPBSON( bson_options, options ) ;
 
    rc = domain->alterDomain( *options ) ;
+   if ( SDB_OK != rc )
+   {
+      goto done ;
+   }
+
+done:
+   return MAKE_RETURN_INT( rc ) ;
+}
+
+__METHOD_IMP(domain_add_groups)
+{
+   INT32 rc          = 0 ;
+   PYOBJECT *obj     = NULL ;
+   PYOBJECT *bson_options = NULL ;
+   sdbDomain *domain = NULL ;
+   const bson::BSONObj* options = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS( args, "OO", &obj, &bson_options ) )
+   {
+      rc = SDB_INVALIDARGS ;
+      goto done ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT( obj, sdbDomain, domain ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_options, options ) ;
+
+   rc = domain->addGroups( *options ) ;
+   if ( SDB_OK != rc )
+   {
+      goto done ;
+   }
+
+done:
+   return MAKE_RETURN_INT( rc ) ;
+}
+
+__METHOD_IMP(domain_set_groups)
+{
+   INT32 rc          = 0 ;
+   PYOBJECT *obj     = NULL ;
+   PYOBJECT *bson_options = NULL ;
+   sdbDomain *domain = NULL ;
+   const bson::BSONObj* options = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS( args, "OO", &obj, &bson_options ) )
+   {
+      rc = SDB_INVALIDARGS ;
+      goto done ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT( obj, sdbDomain, domain ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_options, options ) ;
+
+   rc = domain->setGroups( *options ) ;
+   if ( SDB_OK != rc )
+   {
+      goto done ;
+   }
+
+done:
+   return MAKE_RETURN_INT( rc ) ;
+}
+
+__METHOD_IMP(domain_remove_groups)
+{
+   INT32 rc          = 0 ;
+   PYOBJECT *obj     = NULL ;
+   PYOBJECT *bson_options = NULL ;
+   sdbDomain *domain = NULL ;
+   const bson::BSONObj* options = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS( args, "OO", &obj, &bson_options ) )
+   {
+      rc = SDB_INVALIDARGS ;
+      goto done ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT( obj, sdbDomain, domain ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_options, options ) ;
+
+   rc = domain->removeGroups( *options ) ;
+   if ( SDB_OK != rc )
+   {
+      goto done ;
+   }
+
+done:
+   return MAKE_RETURN_INT( rc ) ;
+}
+
+__METHOD_IMP(domain_set_attributes)
+{
+   INT32 rc          = 0 ;
+   PYOBJECT *obj     = NULL ;
+   PYOBJECT *bson_options = NULL ;
+   sdbDomain *domain = NULL ;
+   const bson::BSONObj* options = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS( args, "OO", &obj, &bson_options ) )
+   {
+      rc = SDB_INVALIDARGS ;
+      goto done ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT( obj, sdbDomain, domain ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_options, options ) ;
+
+   rc = domain->setAttributes( *options ) ;
    if ( SDB_OK != rc )
    {
       goto done ;
@@ -4254,6 +4657,12 @@ static PyMethodDef sequoiadb_methods[] = {
    {"cs_create_collection_use_opt",    cs_create_collection_use_opt,    METH_VARARGS},
    {"cs_drop_collection",              cs_drop_collection,              METH_VARARGS},
    {"cs_get_collection_space_name",    cs_get_collection_space_name,    METH_VARARGS},
+   {"cs_alter",                        cs_alter,                        METH_VARARGS},
+   {"cs_set_domain",                   cs_set_domain,                   METH_VARARGS},
+   {"cs_remove_domain",                cs_remove_domain,                METH_VARARGS},
+   {"cs_enable_capped",                cs_enable_capped,                METH_VARARGS},
+   {"cs_disable_capped",               cs_disable_capped,               METH_VARARGS},
+   {"cs_set_attributes",               cs_set_attributes,               METH_VARARGS},
    /** cl */
    {"create_cl",                       create_cl,                       METH_VARARGS},
    {"release_cl",                      release_cl,                      METH_VARARGS},
@@ -4287,8 +4696,14 @@ static PyMethodDef sequoiadb_methods[] = {
    {"cl_list_lobs",                    cl_list_lobs,                    METH_VARARGS},
    {"cl_explain",                      cl_explain,                      METH_VARARGS},
    {"cl_truncate",                     cl_truncate,                     METH_VARARGS},
+   {"cl_alter",                        cl_alter,                        METH_VARARGS},
    {"cl_create_id_index",              cl_create_id_index,              METH_VARARGS},
    {"cl_drop_id_index",                cl_drop_id_index,                METH_VARARGS},
+   {"cl_enable_sharding",              cl_enable_sharding,              METH_VARARGS},
+   {"cl_disable_sharding",             cl_disable_sharding,             METH_VARARGS},
+   {"cl_enable_compression",           cl_enable_compression,           METH_VARARGS},
+   {"cl_disable_compression",          cl_disable_compression,          METH_VARARGS},
+   {"cl_set_attributes",               cl_set_attributes,               METH_VARARGS},
    /** cr */
    {"create_cursor",                   create_cursor,                   METH_VARARGS},
    {"release_cursor",                  release_cursor,                  METH_VARARGS},
@@ -4299,6 +4714,10 @@ static PyMethodDef sequoiadb_methods[] = {
    {"create_domain",                   create_domain,                   METH_VARARGS},
    {"release_domain",                  release_domain,                  METH_VARARGS},
    {"domain_alter",                    domain_alter,                    METH_VARARGS},
+   {"domain_add_groups",               domain_add_groups,               METH_VARARGS},
+   {"domain_set_groups",               domain_set_groups,               METH_VARARGS},
+   {"domain_remove_groups",            domain_remove_groups,            METH_VARARGS},
+   {"domain_set_attributes",           domain_set_attributes,           METH_VARARGS},
    {"domain_list_cs",                  domain_list_cs,                  METH_VARARGS},
    {"domain_list_cl",                  domain_list_cl,                  METH_VARARGS},
    /** gp */
