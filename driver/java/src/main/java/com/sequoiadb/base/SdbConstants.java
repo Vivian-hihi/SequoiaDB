@@ -53,8 +53,22 @@ final class SdbConstants {
 
     final static int SDB_ALTER_VERSION = 1;
     final static String SDB_ALTER_CL = "collection";
+    final static String SDB_ALTER_CS = "collection space";
+    final static String SDB_ALTER_DOMAIN = "domain";
     final static String SDB_ALTER_CRT_ID_INDEX = "create id index";
     final static String SDB_ALTER_DROP_ID_INDEX = "drop id index";
+    final static String SDB_ALTER_ENABLE_SHARDING = "enable sharding";
+    final static String SDB_ALTER_DISABLE_SHARDING = "disable sharding";
+    final static String SDB_ALTER_ENABLE_COMPRESSION = "enable compression";
+    final static String SDB_ALTER_DISABLE_COMPRESSION = "disable compression";
+    final static String SDB_ALTER_SET_ATTRIBUTES = "set attributes" ;
+    final static String SDB_ALTER_SET_DOMAIN = "set domain";
+    final static String SDB_ALTER_REMOVE_DOMAIN = "remove domain";
+    final static String SDB_ALTER_ENABLE_CAPPED = "enable capped";
+    final static String SDB_ALTER_DISABLE_CAPPED = "disable capped";
+    final static String SDB_ALTER_ADD_GROUPS = "add groups";
+    final static String SDB_ALTER_SET_GROUPS = "set groups";
+    final static String SDB_ALTER_REMOVE_GROUPS = "remove groups";
 
     final static String FIELD_NAME_MODIFY = "$Modify";
     final static String FIELD_NAME_OP = "OP";

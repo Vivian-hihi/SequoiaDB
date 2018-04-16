@@ -28,6 +28,7 @@ final class AdminCommand {
     final static String UNLOAD_CS = PREFIX + "unload collectionspace";
     final static String RENAME_CS = PREFIX + "rename collectionspace";
     final static String TEST_CS = PREFIX + "test collectionspace";
+    final static String ALTER_CS = PREFIX + "alter collectionspace";
 
     final static String TEST_CL = PREFIX + "test collection";
     final static String CREATE_CL = PREFIX + "create collection";

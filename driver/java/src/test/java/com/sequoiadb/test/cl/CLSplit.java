@@ -549,4 +549,30 @@ public class CLSplit {
         System.out.println("Finish testing splitAsyncTaskTest()");
         System.out.println("");
     }
+
+    @Test
+    public void enableSharding() {
+        // cl
+        BSONObject conf = new BasicBSONObject();
+        conf.put("ShardingKey", new BasicBSONObject("a", 1));
+        conf.put("ShardingType", "hash");
+        conf.put("Partition", 1024);
+        conf.put("ReplSize", 0);
+        cl = cs.createCollection(Constants.TEST_CL_NAME_1, conf);
+        // insert record
+        int num = 1000;
+        ConstantsInsert.insertRecords(cl, num);
+        // check the record num in the database
+        long recordNum = cl.getCount();
+        assertTrue(num == recordNum);
+
+        BSONObject option1 = new BasicBSONObject();
+        option1.put("ShardingKey", new BasicBSONObject("b", 1));
+        option1.put("AutoSplit", true);
+        cl.enableSharding(option1);
+        BSONObject option2 = new BasicBSONObject();
+        option2.put("CompressionType","snappy");
+        cl.enableCompression(option2);
+        cs.dropCollection(Constants.TEST_CL_NAME_1);
+    }
 }

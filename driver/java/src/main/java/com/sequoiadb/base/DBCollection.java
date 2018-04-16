@@ -1325,44 +1325,6 @@ public class DBCollection {
     }
 
     /**
-     * Create the id index.
-     *
-     * @param options can be empty or specify option. e.g. {SortBufferSize:64}
-     * @throws BaseException If error happens.
-     */
-    public void createIdIndex(BSONObject options) throws BaseException {
-        BSONObject tmp = new BasicBSONObject();
-        tmp.put(SdbConstants.FIELD_NAME_NAME,
-                SdbConstants.SDB_ALTER_CRT_ID_INDEX);
-        if (options == null || options.isEmpty()) {
-            tmp.put(SdbConstants.FIELD_NAME_ARGS, null);
-        } else {
-            tmp.put(SdbConstants.FIELD_NAME_ARGS, options);
-        }
-
-
-        BSONObject innerOptions = new BasicBSONObject();
-        innerOptions.put(SdbConstants.FIELD_NAME_ALTER, tmp);
-        alterCollection(innerOptions);
-    }
-
-    /**
-     * Drop the id index.
-     *
-     * @throws BaseException If error happens.
-     */
-    public void dropIdIndex() throws BaseException {
-        BSONObject tmp = new BasicBSONObject();
-        tmp.put(SdbConstants.FIELD_NAME_NAME,
-                SdbConstants.SDB_ALTER_DROP_ID_INDEX);
-        tmp.put(SdbConstants.FIELD_NAME_ARGS, null);
-
-        BSONObject options = new BasicBSONObject();
-        options.put(SdbConstants.FIELD_NAME_ALTER, tmp);
-        alterCollection(options);
-    }
-
-    /**
      * Remove the named index of current collection.
      *
      * @param name The index name
@@ -1795,6 +1757,18 @@ public class DBCollection {
         sequoiadb.upsertCache(collectionFullName);
     }
 
+    private void _alterInternal(String taskName, BSONObject options, boolean allowNullArgs) throws BaseException {
+        if (null == options && !allowNullArgs) {
+            throw new BaseException(SDBError.SDB_INVALIDARG, "options is null");
+        }
+        BSONObject argumentObj = new BasicBSONObject();
+        argumentObj.put(SdbConstants.FIELD_NAME_NAME, taskName);
+        argumentObj.put(SdbConstants.FIELD_NAME_ARGS, options);
+        BSONObject alterObject = new BasicBSONObject();
+        alterObject.put(SdbConstants.FIELD_NAME_ALTER, argumentObj);
+        alterCollection(alterObject);
+    }
+
     /**
      * Alter the attributes of current collection.
      * Can't alter attributes about split in partition collection; After altering a collection to
@@ -1806,6 +1780,9 @@ public class DBCollection {
      *                <li>ShardingKey   : Assign the sharding key
      *                <li>ShardingType        : Assign the sharding type
      *                <li>Partition        : When the ShardingType is "hash", need to assign Partition, it's the bucket number for hash, the range is [2^3,2^20].
+     *                <li>CompressionType  : The compression type of data, could be "snappy" or "lzw"
+     *                <li>EnsureShardingIndex : Assign to true to build sharding index
+     *                <li>StrictDataMode : Using strict date mode in numeric operations or not
      *                e.g. {RepliSize:0, ShardingKey:{a:1}, ShardingType:"hash", Partition:1024}
      *                </ul>
      * @throws BaseException If error happens.
@@ -1840,13 +1817,100 @@ public class DBCollection {
                     throw new BaseException(SDBError.SDB_INVALIDARG, options.toString());
                 }
             }
-
         }
 
         AdminRequest request = new AdminRequest(AdminCommand.ALTER_COLLECTION, newObj);
         SdbReply response = sequoiadb.requestAndResponse(request);
         sequoiadb.throwIfError(response, options);
         sequoiadb.upsertCache(collectionFullName);
+    }
+
+    /**
+     * Create the id index.
+     *
+     * @param options can be empty or specify option. e.g. {SortBufferSize:64}
+     * @throws BaseException If error happens.
+     */
+    public void createIdIndex(BSONObject options) throws BaseException {
+        _alterInternal(SdbConstants.SDB_ALTER_CRT_ID_INDEX, options, true);
+    }
+
+    /**
+     * Drop the id index.
+     *
+     * @throws BaseException If error happens.
+     */
+    public void dropIdIndex() throws BaseException {
+        _alterInternal(SdbConstants.SDB_ALTER_DROP_ID_INDEX, null, true);
+    }
+
+    /**
+     * Alter the attributes of current collection to enable sharding
+     *
+     * @param options The options for altering current collection are as below:
+     *                <ul>
+     *                <li>ShardingKey   : Assign the sharding key
+     *                <li>ShardingType  : Assign the sharding type
+     *                <li>Partition     : When the ShardingType is "hash", need to assign Partition, it's the bucket number for hash, the range is [2^3,2^20].
+     *                <li>EnsureShardingIndex : Assign to true to build sharding index
+     *                </ul>
+     * @throws BaseException If error happens.
+     */
+    public void enableSharding(BSONObject options) throws BaseException {
+        _alterInternal(SdbConstants.SDB_ALTER_ENABLE_SHARDING, options, false);
+    }
+
+    /**
+     * Alter the attributes of current collection to disable sharding
+     * 
+     * @throws BaseException If error happens.
+     */
+    public void disableSharding() throws BaseException {
+        _alterInternal(SdbConstants.SDB_ALTER_DISABLE_SHARDING, null, true);
+    }
+
+    /**
+     * Alter the attributes of current collection to enable compression
+     *
+     * @param options The options for altering current collection are as below:
+     *                <ul>
+     *                <li>CompressionType  : The compression type of data, could be "snappy" or "lzw"
+     *                </ul>
+     * @throws BaseException If error happens.
+     */
+    public void enableCompression(BSONObject options) throws BaseException {
+        _alterInternal(SdbConstants.SDB_ALTER_ENABLE_COMPRESSION, options, true);
+    }
+
+    /**
+     * Alter the attributes of current collection to disable compression
+     * 
+     * @throws BaseException If error happens.
+     */
+    public void disableCompression() throws BaseException {
+        _alterInternal(SdbConstants.SDB_ALTER_DISABLE_COMPRESSION, null, true);
+    }
+
+    /**
+     * Alter the attributes of current collection
+     * Can't alter attributes about split in partition collection; After altering a collection to
+     * be a partition collection, need to split this collection manually.
+     *
+     * @param options The options for altering current collection are as below:
+     *                <ul>
+     *                <li>ReplSize     : Assign how many replica nodes need to be synchronized when a write request(insert, update, etc) is executed
+     *                <li>ShardingKey   : Assign the sharding key
+     *                <li>ShardingType        : Assign the sharding type
+     *                <li>Partition        : When the ShardingType is "hash", need to assign Partition, it's the bucket number for hash, the range is [2^3,2^20].
+     *                <li>CompressionType  : The compression type of data, could be "snappy" or "lzw"
+     *                <li>EnsureShardingIndex : Assign to true to build sharding index
+     *                <li>StrictDataMode : Using strict date mode in numeric operations or not
+     *                e.g. {RepliSize:0, ShardingKey:{a:1}, ShardingType:"hash", Partition:1024}
+     *                </ul>
+     * @throws BaseException If error happens.
+     */
+    public void setAttributes(BSONObject options) throws BaseException {
+        _alterInternal(SdbConstants.SDB_ALTER_SET_ATTRIBUTES, options, false);
     }
 
     private void _update(int flag, BSONObject matcher, BSONObject modifier,

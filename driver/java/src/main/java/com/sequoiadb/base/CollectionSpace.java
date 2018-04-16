@@ -208,4 +208,112 @@ public class CollectionSpace {
         sequoiadb.throwIfError(response, collectionName);
         sequoiadb.removeCache(collectionFullName);
     }
+
+    private void _alterInternal(String taskName, BSONObject options, boolean allowNullArgs) throws BaseException {
+        if (null == options && !allowNullArgs) {
+            throw new BaseException(SDBError.SDB_INVALIDARG, "options is null");
+        }
+        BSONObject argumentObj = new BasicBSONObject();
+        argumentObj.put(SdbConstants.FIELD_NAME_NAME, taskName);
+        argumentObj.put(SdbConstants.FIELD_NAME_ARGS, options);
+        BSONObject alterObject = new BasicBSONObject();
+        alterObject.put(SdbConstants.FIELD_NAME_ALTER, argumentObj);
+        alterCollectionSpace(alterObject);
+    }
+
+    /**
+     * Alter the current collection space.
+     *
+     * @param options: The options of the collection space:
+     *                <ul>
+     *                <li>Domain : the domain of collection space.
+     *                <li>PageSize : page size of collection space.
+     *                <li>LobPageSize : LOB page size of collection space.
+     *                </ul>
+     * @throws BaseException If error happens.
+     */
+    public void alterCollectionSpace(BSONObject options) throws BaseException {
+        if (null == options) {
+            throw new BaseException(SDBError.SDB_INVALIDARG, "options is null");
+        }
+
+        BSONObject newObj = new BasicBSONObject();
+        Object tmpAlter = options.get(SdbConstants.FIELD_NAME_ALTER);
+        if (tmpAlter instanceof BasicBSONObject) {
+            newObj.put(SdbConstants.FIELD_NAME_ALTER, tmpAlter);
+        } else {
+            throw new BaseException(SDBError.SDB_INVALIDARG, options.toString());
+        }
+        newObj.put(SdbConstants.FIELD_NAME_ALTER_TYPE, SdbConstants.SDB_ALTER_CS);
+        newObj.put(SdbConstants.FIELD_NAME_VERSION, SdbConstants.SDB_ALTER_VERSION);
+        newObj.put(SdbConstants.FIELD_NAME_NAME, name);
+
+        if (options.containsField(SdbConstants.FIELD_NAME_OPTIONS)) {
+            Object tmpOptions = options.get(SdbConstants.FIELD_NAME_OPTIONS);
+            if (tmpOptions instanceof BasicBSONObject) {
+                newObj.put(SdbConstants.FIELD_NAME_OPTIONS, tmpOptions);
+            } else {
+                throw new BaseException(SDBError.SDB_INVALIDARG, options.toString());
+            }
+        }
+
+        AdminRequest request = new AdminRequest(AdminCommand.ALTER_CS, newObj);
+        SdbReply response = sequoiadb.requestAndResponse(request);
+        sequoiadb.throwIfError(response);
+    }
+
+    /**
+     * Alter the current collection space to set domain
+     *
+     * @param options: The options of the collection space:
+     *                <ul>
+     *                <li>Domain : the domain of collection space.
+     *                </ul>
+     * @throws BaseException If error happens.
+     */
+    public void setDomain(BSONObject options) throws BaseException {
+        _alterInternal(SdbConstants.SDB_ALTER_SET_DOMAIN, options, false);
+    }
+
+    /**
+     * Alter the current collection space to remove domain
+     *
+     * @throws BaseException If error happens.
+     */
+    public void removeDomain() throws BaseException {
+        _alterInternal(SdbConstants.SDB_ALTER_REMOVE_DOMAIN, null, true);
+    }
+
+    /**
+     * Alter the current collection space to enable capped
+     *
+     * @throws BaseException If error happens.
+     */
+    public void enableCapped() throws BaseException {
+        _alterInternal(SdbConstants.SDB_ALTER_ENABLE_CAPPED, null, true);
+    }
+
+    /**
+     * Alter the current collection space to disable capped
+     *
+     * @throws BaseException If error happens.
+     */
+    public void disableCapped() throws BaseException {
+        _alterInternal(SdbConstants.SDB_ALTER_DISABLE_CAPPED, null, true);
+    }
+
+    /**
+     * Alter the current collection space to set attributes.
+     *
+     * @param options: The options of the collection space:
+     *                <ul>
+     *                <li>Domain : the domain of collection space.
+     *                <li>PageSize : page size of collection space.
+     *                <li>LobPageSize : LOB page size of collection space.
+     *                </ul>
+     * @throws BaseException If error happens.
+     */
+    public void setAttributes(BSONObject options) throws BaseException {
+        _alterInternal(SdbConstants.SDB_ALTER_SET_ATTRIBUTES, options, false);
+    }
 }
