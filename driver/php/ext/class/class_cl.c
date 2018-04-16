@@ -120,6 +120,168 @@ error:
    goto done ;
 }
 
+PHP_METHOD( SequoiaCL, enableSharding )
+{
+   INT32 rc = SDB_OK ;
+   zval *pOptions = NULL ;
+   zval *pThisObj = getThis() ;
+   sdbCollectionHandle cl = SDB_INVALID_HANDLE ;
+   bson options ;
+   bson_init( &options ) ;
+   PHP_SET_ERRNO_OK( FALSE, pThisObj ) ;
+   if ( PHP_GET_PARAMETERS( "|z", &pOptions ) == FAILURE )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+   PHP_READ_HANDLE( pThisObj,
+                    cl,
+                    sdbCollectionHandle,
+                    SDB_CL_HANDLE_NAME,
+                    clDesc ) ;
+   rc = php_auto2Bson( pOptions, &options TSRMLS_CC ) ;
+   if( rc )
+   {
+      goto error ;
+   }
+   rc = sdbCLEnableSharding( cl, &options ) ;
+   if( rc )
+   {
+      goto error ;
+   }
+done:
+   PHP_RETURN_AUTO_ERROR( FALSE, pThisObj, rc ) ;
+   bson_destroy( &options ) ;
+   return ;
+error:
+   PHP_SET_ERROR( FALSE, pThisObj, rc ) ;
+   goto done ;
+}
+
+PHP_METHOD( SequoiaCL, disableSharding )
+{
+   INT32 rc = SDB_OK ;
+   zval *pThisObj = getThis() ;
+   sdbCollectionHandle cl = SDB_INVALID_HANDLE ;
+   PHP_SET_ERRNO_OK( FALSE, pThisObj ) ;
+   PHP_READ_HANDLE( pThisObj,
+                    cl,
+                    sdbCollectionHandle,
+                    SDB_CL_HANDLE_NAME,
+                    clDesc ) ;
+   rc = sdbCLDisableSharding( cl ) ;
+   if( rc )
+   {
+      goto error ;
+   }
+done:
+   PHP_RETURN_AUTO_ERROR( FALSE, pThisObj, rc ) ;
+   return ;
+error:
+   PHP_SET_ERROR( FALSE, pThisObj, rc ) ;
+   goto done ;
+}
+
+PHP_METHOD( SequoiaCL, enableCompression )
+{
+   INT32 rc = SDB_OK ;
+   zval *pOptions = NULL ;
+   zval *pThisObj = getThis() ;
+   sdbCollectionHandle cl = SDB_INVALID_HANDLE ;
+   bson options ;
+   bson_init( &options ) ;
+   PHP_SET_ERRNO_OK( FALSE, pThisObj ) ;
+   if ( PHP_GET_PARAMETERS( "|z", &pOptions ) == FAILURE )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+   PHP_READ_HANDLE( pThisObj,
+                    cl,
+                    sdbCollectionHandle,
+                    SDB_CL_HANDLE_NAME,
+                    clDesc ) ;
+   rc = php_auto2Bson( pOptions, &options TSRMLS_CC ) ;
+   if( rc )
+   {
+      goto error ;
+   }
+   rc = sdbCLEnableCompression( cl, &options ) ;
+   if( rc )
+   {
+      goto error ;
+   }
+done:
+   PHP_RETURN_AUTO_ERROR( FALSE, pThisObj, rc ) ;
+   bson_destroy( &options ) ;
+   return ;
+error:
+   PHP_SET_ERROR( FALSE, pThisObj, rc ) ;
+   goto done ;
+}
+
+PHP_METHOD( SequoiaCL, disableCompression )
+{
+   INT32 rc = SDB_OK ;
+   zval *pThisObj = getThis() ;
+   sdbCollectionHandle cl = SDB_INVALID_HANDLE ;
+   PHP_SET_ERRNO_OK( FALSE, pThisObj ) ;
+   PHP_READ_HANDLE( pThisObj,
+                    cl,
+                    sdbCollectionHandle,
+                    SDB_CL_HANDLE_NAME,
+                    clDesc ) ;
+   rc = sdbCLDisableCompression( cl ) ;
+   if( rc )
+   {
+      goto error ;
+   }
+done:
+   PHP_RETURN_AUTO_ERROR( FALSE, pThisObj, rc ) ;
+   return ;
+error:
+   PHP_SET_ERROR( FALSE, pThisObj, rc ) ;
+   goto done ;
+}
+
+PHP_METHOD( SequoiaCL, setAttributes )
+{
+   INT32 rc = SDB_OK ;
+   zval *pOptions = NULL ;
+   zval *pThisObj = getThis() ;
+   sdbCollectionHandle cl = SDB_INVALID_HANDLE ;
+   bson options ;
+   bson_init( &options ) ;
+   PHP_SET_ERRNO_OK( FALSE, pThisObj ) ;
+   if ( PHP_GET_PARAMETERS( "|z", &pOptions ) == FAILURE )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+   PHP_READ_HANDLE( pThisObj,
+                    cl,
+                    sdbCollectionHandle,
+                    SDB_CL_HANDLE_NAME,
+                    clDesc ) ;
+   rc = php_auto2Bson( pOptions, &options TSRMLS_CC ) ;
+   if( rc )
+   {
+      goto error ;
+   }
+   rc = sdbCLSetAttributes( cl, &options ) ;
+   if( rc )
+   {
+      goto error ;
+   }
+done:
+   PHP_RETURN_AUTO_ERROR( FALSE, pThisObj, rc ) ;
+   bson_destroy( &options ) ;
+   return ;
+error:
+   PHP_SET_ERROR( FALSE, pThisObj, rc ) ;
+   goto done ;
+}
+
 PHP_METHOD( SequoiaCL, split )
 {
    INT32 rc = SDB_OK ;

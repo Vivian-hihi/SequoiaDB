@@ -98,6 +98,111 @@ class SequoiaCL
    public function alter( array|string $options ){}
 
    /**
+    * Alter collection to enable sharding.
+    *
+    * @param $options an array or the string argument. New collection options.
+    *
+    * @return Returns the result, default return array.
+    *
+    * @retval array   array( 'errno' => 0 )
+    * @retval string  { "errno": 0 }
+    *
+    * Example: Alter collection to enable sharding
+    * @code
+    * $err = $cl -> enableSharding( array( 'ShardingKey' => array( 'a' => 1 ) ) ) ;
+    * if( $err['errno'] != 0 ) {
+    *    echo "Failed to alter collection options, error code: ".$err['errno'] ;
+    *    return ;
+    * }
+    * @endcode
+   */
+   public function enableSharding( array|string $options ){}
+
+   /**
+    * Alter collection to disable sharding.
+    *
+    * @param $options an array or the string argument. New collection options.
+    *
+    * @return Returns the result, default return array.
+    *
+    * @retval array   array( 'errno' => 0 )
+    * @retval string  { "errno": 0 }
+    *
+    * Example: Alter collection to disable sharding
+    * @code
+    * $err = $cl -> disableSharding() ;
+    * if( $err['errno'] != 0 ) {
+    *    echo "Failed to alter collection options, error code: ".$err['errno'] ;
+    *    return ;
+    * }
+    * @endcode
+   */
+   public function enableSharding(){}
+
+   /**
+    * Alter collection to enable compression.
+    *
+    * @param $options an array or the string argument. New collection options.
+    *
+    * @return Returns the result, default return array.
+    *
+    * @retval array   array( 'errno' => 0 )
+    * @retval string  { "errno": 0 }
+    *
+    * Example: Alter collection to enable compression
+    * @code
+    * $err = $cl -> enableCompression( array( 'CompressionType' => 'lzw' ) ;
+    * if( $err['errno'] != 0 ) {
+    *    echo "Failed to alter collection options, error code: ".$err['errno'] ;
+    *    return ;
+    * }
+    * @endcode
+   */
+   public function enableCompression( array|string $options ){}
+
+   /**
+    * Alter collection to disable compression.
+    *
+    * @param $options an array or the string argument. New collection options.
+    *
+    * @return Returns the result, default return array.
+    *
+    * @retval array   array( 'errno' => 0 )
+    * @retval string  { "errno": 0 }
+    *
+    * Example: Alter collection to disable compression
+    * @code
+    * $err = $cl -> disableCompression() ;
+    * if( $err['errno'] != 0 ) {
+    *    echo "Failed to alter collection options, error code: ".$err['errno'] ;
+    *    return ;
+    * }
+    * @endcode
+   */
+   public function enableCompression(){}
+
+   /**
+    * Alter collection options.
+    *
+    * @param $options an array or the string argument. New collection options.
+    *
+    * @return Returns the result, default return array.
+    *
+    * @retval array   array( 'errno' => 0 )
+    * @retval string  { "errno": 0 }
+    *
+    * Example: Alter collection option ReplSize
+    * @code
+    * $err = $cl -> setAttributes( array( 'ReplSize' => -1 ) ) ;
+    * if( $err['errno'] != 0 ) {
+    *    echo "Failed to alter collection options, error code: ".$err['errno'] ;
+    *    return ;
+    * }
+    * @endcode
+   */
+   public function setAttributes( array|string $options ){}
+
+   /**
     * Split the specified collection from source replica group to target by percent.
     *
     * @param $sourceGroup the string argument. The source replica group name.

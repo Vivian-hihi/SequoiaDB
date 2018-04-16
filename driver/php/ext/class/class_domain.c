@@ -63,6 +63,158 @@ error:
    goto done ;
 }
 
+PHP_METHOD( SequoiaDomain, addGroups )
+{
+   INT32 rc = SDB_OK ;
+   zval *pOptions = NULL ;
+   zval *pThisObj = getThis() ;
+   sdbDomainHandle domain = SDB_INVALID_HANDLE ;
+   bson options ;
+   bson_init( &options ) ;
+   PHP_SET_ERRNO_OK( FALSE, pThisObj ) ;
+   if ( PHP_GET_PARAMETERS( "z", &pOptions ) == FAILURE )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+   PHP_READ_HANDLE( pThisObj,
+                    domain,
+                    sdbDomainHandle,
+                    SDB_DOMAIN_HANDLE_NAME,
+                    domainDesc ) ;
+   rc = php_auto2Bson( pOptions, &options TSRMLS_CC ) ;
+   if( rc )
+   {
+      goto error ;
+   }
+   rc = sdbDomainAddGroups( domain, &options ) ;
+   if( rc )
+   {
+      goto error ;
+   }
+done:
+   bson_destroy( &options ) ;
+   PHP_RETURN_AUTO_ERROR( FALSE, pThisObj, rc ) ;
+   return ;
+error:
+   PHP_SET_ERROR( FALSE, pThisObj, rc ) ;
+   goto done ;
+}
+
+PHP_METHOD( SequoiaDomain, setGroups )
+{
+   INT32 rc = SDB_OK ;
+   zval *pOptions = NULL ;
+   zval *pThisObj = getThis() ;
+   sdbDomainHandle domain = SDB_INVALID_HANDLE ;
+   bson options ;
+   bson_init( &options ) ;
+   PHP_SET_ERRNO_OK( FALSE, pThisObj ) ;
+   if ( PHP_GET_PARAMETERS( "z", &pOptions ) == FAILURE )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+   PHP_READ_HANDLE( pThisObj,
+                    domain,
+                    sdbDomainHandle,
+                    SDB_DOMAIN_HANDLE_NAME,
+                    domainDesc ) ;
+   rc = php_auto2Bson( pOptions, &options TSRMLS_CC ) ;
+   if( rc )
+   {
+      goto error ;
+   }
+   rc = sdbDomainSetGroups( domain, &options ) ;
+   if( rc )
+   {
+      goto error ;
+   }
+done:
+   bson_destroy( &options ) ;
+   PHP_RETURN_AUTO_ERROR( FALSE, pThisObj, rc ) ;
+   return ;
+error:
+   PHP_SET_ERROR( FALSE, pThisObj, rc ) ;
+   goto done ;
+}
+
+PHP_METHOD( SequoiaDomain, removeGroups )
+{
+   INT32 rc = SDB_OK ;
+   zval *pOptions = NULL ;
+   zval *pThisObj = getThis() ;
+   sdbDomainHandle domain = SDB_INVALID_HANDLE ;
+   bson options ;
+   bson_init( &options ) ;
+   PHP_SET_ERRNO_OK( FALSE, pThisObj ) ;
+   if ( PHP_GET_PARAMETERS( "z", &pOptions ) == FAILURE )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+   PHP_READ_HANDLE( pThisObj,
+                    domain,
+                    sdbDomainHandle,
+                    SDB_DOMAIN_HANDLE_NAME,
+                    domainDesc ) ;
+   rc = php_auto2Bson( pOptions, &options TSRMLS_CC ) ;
+   if( rc )
+   {
+      goto error ;
+   }
+   rc = sdbDomainRemoveGroups( domain, &options ) ;
+   if( rc )
+   {
+      goto error ;
+   }
+done:
+   bson_destroy( &options ) ;
+   PHP_RETURN_AUTO_ERROR( FALSE, pThisObj, rc ) ;
+   return ;
+error:
+   PHP_SET_ERROR( FALSE, pThisObj, rc ) ;
+   goto done ;
+}
+
+PHP_METHOD( SequoiaDomain, setAttributes )
+{
+   INT32 rc = SDB_OK ;
+   zval *pOptions = NULL ;
+   zval *pThisObj = getThis() ;
+   sdbDomainHandle domain = SDB_INVALID_HANDLE ;
+   bson options ;
+   bson_init( &options ) ;
+   PHP_SET_ERRNO_OK( FALSE, pThisObj ) ;
+   if ( PHP_GET_PARAMETERS( "z", &pOptions ) == FAILURE )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+   PHP_READ_HANDLE( pThisObj,
+                    domain,
+                    sdbDomainHandle,
+                    SDB_DOMAIN_HANDLE_NAME,
+                    domainDesc ) ;
+   rc = php_auto2Bson( pOptions, &options TSRMLS_CC ) ;
+   if( rc )
+   {
+      goto error ;
+   }
+   rc = sdbDomainSetAttributes( domain, &options ) ;
+   if( rc )
+   {
+      goto error ;
+   }
+done:
+   bson_destroy( &options ) ;
+   PHP_RETURN_AUTO_ERROR( FALSE, pThisObj, rc ) ;
+   return ;
+error:
+   PHP_SET_ERROR( FALSE, pThisObj, rc ) ;
+   goto done ;
+}
+
 PHP_METHOD( SequoiaDomain, listCS )
 {
    INT32 rc = SDB_OK ;

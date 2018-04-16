@@ -179,4 +179,124 @@ class SequoiaCS
     * @endcode
    */
    public function dropCL( string $name ){}
+
+   /**
+    * Alter the specified collection space.
+    *
+    * @param $options   the array or string argument. The options to alter.
+    *
+    * @return Returns the result, default return array.
+    *
+    * @retval array   array( 'errno' => 0 )
+    * @retval string  { "errno": 0 }
+    *
+    * Example:
+    * @code
+    * $err = $cs -> alter( array( 'PageSize' => 4096 ) ;
+    * if( $err['errno'] != 0 ) {
+    *    echo "Failed to alter collection space, error code: ".$err['errno'] ;
+    *    return ;
+    * }
+    * @endcode
+   */
+   public function alter( array|string $options ){}
+
+   /**
+    * Alter the specified collection space to set domain.
+    *
+    * @param $options   the array or string argument. The options to alter.
+    *
+    * @return Returns the result, default return array.
+    *
+    * @retval array   array( 'errno' => 0 )
+    * @retval string  { "errno": 0 }
+    *
+    * Example:
+    * @code
+    * $err = $cs -> setDomain( array( 'Domain' => 'domain' ) ;
+    * if( $err['errno'] != 0 ) {
+    *    echo "Failed to alter collection space, error code: ".$err['errno'] ;
+    *    return ;
+    * }
+    * @endcode
+   */
+   public function setDomain( array|string $options ){}
+
+   /**
+    * Alter the specified collection space to remove domain.
+    *
+    * @return Returns the result, default return array.
+    *
+    * @retval array   array( 'errno' => 0 )
+    * @retval string  { "errno": 0 }
+    *
+    * Example:
+    * @code
+    * $err = $cs -> removeDomain() ;
+    * if( $err['errno'] != 0 ) {
+    *    echo "Failed to alter collection space, error code: ".$err['errno'] ;
+    *    return ;
+    * }
+    * @endcode
+   */
+   public function removeDomain(){}
+
+   /**
+    * Alter the specified collection space to enable capped.
+    *
+    * @return Returns the result, default return array.
+    *
+    * @retval array   array( 'errno' => 0 )
+    * @retval string  { "errno": 0 }
+    *
+    * Example:
+    * @code
+    * $err = $cs -> enableCapped() ;
+    * if( $err['errno'] != 0 ) {
+    *    echo "Failed to alter collection space, error code: ".$err['errno'] ;
+    *    return ;
+    * }
+    * @endcode
+   */
+   public function enableCapped(){}
+
+   /**
+    * Alter the specified collection space to disable capped.
+    *
+    * @return Returns the result, default return array.
+    *
+    * @retval array   array( 'errno' => 0 )
+    * @retval string  { "errno": 0 }
+    *
+    * Example:
+    * @code
+    * $err = $cs -> disableCapped() ;
+    * if( $err['errno'] != 0 ) {
+    *    echo "Failed to alter collection space, error code: ".$err['errno'] ;
+    *    return ;
+    * }
+    * @endcode
+   */
+   public function disableCapped(){}
+
+   /**
+    * Alter the specified collection space.
+    *
+    * @param $options   the array or string argument. The options to alter.
+    *
+    * @return Returns the result, default return array.
+    *
+    * @retval array   array( 'errno' => 0 )
+    * @retval string  { "errno": 0 }
+    *
+    * Example:
+    * @code
+    * $err = $cs -> setAttributes( array( 'PageSize' => 4096 ) ;
+    * if( $err['errno'] != 0 ) {
+    *    echo "Failed to alter collection space, error code: ".$err['errno'] ;
+    *    return ;
+    * }
+    * @endcode
+   */
+   public function setAttributes( array|string $options ){}
 }

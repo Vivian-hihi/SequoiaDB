@@ -24,6 +24,11 @@ PHP_METHOD( SequoiaCL, __construct ) ;
 //cl
 PHP_METHOD( SequoiaCL, drop ) ;
 PHP_METHOD( SequoiaCL, alter ) ;
+PHP_METHOD( SequoiaCL, enableSharding ) ;
+PHP_METHOD( SequoiaCL, disableSharding ) ;
+PHP_METHOD( SequoiaCL, enableCompression ) ;
+PHP_METHOD( SequoiaCL, disableCompression ) ;
+PHP_METHOD( SequoiaCL, setAttributes ) ;
 PHP_METHOD( SequoiaCL, split ) ;
 PHP_METHOD( SequoiaCL, splitAsync ) ;
 PHP_METHOD( SequoiaCL, getFullName ) ;

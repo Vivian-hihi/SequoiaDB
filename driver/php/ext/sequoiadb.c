@@ -177,6 +177,12 @@ const zend_function_entry csFun[] = {
    PHP_ME( SequoiaCS, createCL,        NULL, ZEND_ACC_PUBLIC )
    PHP_ME( SequoiaCS, getCL,           NULL, ZEND_ACC_PUBLIC )
    PHP_ME( SequoiaCS, dropCL,          NULL, ZEND_ACC_PUBLIC )
+   PHP_ME( SequoiaCS, alter,           NULL, ZEND_ACC_PUBLIC )
+   PHP_ME( SequoiaCS, setDomain,       NULL, ZEND_ACC_PUBLIC )
+   PHP_ME( SequoiaCS, removeDomain,    NULL, ZEND_ACC_PUBLIC )
+   PHP_ME( SequoiaCS, enableCapped,    NULL, ZEND_ACC_PUBLIC )
+   PHP_ME( SequoiaCS, disableCapped,   NULL, ZEND_ACC_PUBLIC )
+   PHP_ME( SequoiaCS, setAttributes,   NULL, ZEND_ACC_PUBLIC )
    PHP_MALIAS( SequoiaCS, selectCollection,
                              selectCL, NULL, ZEND_ACC_PUBLIC )
    PHP_MALIAS( SequoiaCS, dropCollection,
@@ -189,6 +195,11 @@ const zend_function_entry clFun[] = {
    //cl
    PHP_ME( SequoiaCL, drop,           NULL, ZEND_ACC_PUBLIC )
    PHP_ME( SequoiaCL, alter,          NULL, ZEND_ACC_PUBLIC )
+   PHP_ME( SequoiaCL, enableSharding, NULL, ZEND_ACC_PUBLIC )
+   PHP_ME( SequoiaCL, disableSharding, NULL, ZEND_ACC_PUBLIC )
+   PHP_ME( SequoiaCL, enableCompression, NULL, ZEND_ACC_PUBLIC )
+   PHP_ME( SequoiaCL, disableCompression, NULL, ZEND_ACC_PUBLIC )
+   PHP_ME( SequoiaCL, setAttributes,  NULL, ZEND_ACC_PUBLIC )
    PHP_ME( SequoiaCL, split,          NULL, ZEND_ACC_PUBLIC )
    PHP_ME( SequoiaCL, splitAsync,     NULL, ZEND_ACC_PUBLIC )
    PHP_ME( SequoiaCL, getFullName,    NULL, ZEND_ACC_PUBLIC )
@@ -271,6 +282,10 @@ const zend_function_entry nodeFun[] = {
 const zend_function_entry domainFun[] = {
    PHP_ME( SequoiaDomain, __construct,  NULL, ZEND_ACC_PRIVATE|ZEND_ACC_CTOR )
    PHP_ME( SequoiaDomain, alter,        NULL, ZEND_ACC_PUBLIC )
+   PHP_ME( SequoiaDomain, addGroups,    NULL, ZEND_ACC_PUBLIC )
+   PHP_ME( SequoiaDomain, setGroups,    NULL, ZEND_ACC_PUBLIC )
+   PHP_ME( SequoiaDomain, removeGroups, NULL, ZEND_ACC_PUBLIC )
+   PHP_ME( SequoiaDomain, setAttributes, NULL, ZEND_ACC_PUBLIC )
    PHP_ME( SequoiaDomain, listCS,       NULL, ZEND_ACC_PUBLIC )
    PHP_ME( SequoiaDomain, listCL,       NULL, ZEND_ACC_PUBLIC )
    PHP_ME( SequoiaDomain, listGroup,    NULL, ZEND_ACC_PUBLIC )

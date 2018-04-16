@@ -22,6 +22,10 @@
 PHP_METHOD( SequoiaDomain, __construct ) ;
 
 PHP_METHOD( SequoiaDomain, alter ) ;
+PHP_METHOD( SequoiaDomain, addGroups ) ;
+PHP_METHOD( SequoiaDomain, setGroups ) ;
+PHP_METHOD( SequoiaDomain, removeGroups ) ;
+PHP_METHOD( SequoiaDomain, setAttributes ) ;
 PHP_METHOD( SequoiaDomain, listCS ) ;
 PHP_METHOD( SequoiaDomain, listCL ) ;
 PHP_METHOD( SequoiaDomain, listGroup ) ;
