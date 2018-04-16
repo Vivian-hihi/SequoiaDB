@@ -192,7 +192,10 @@ public class ReplicaGroup {
      * Get the slave node in the specified positions,
      * when have no slave node in the specified positions, return master node.
      *
-     * @param positions The positions of nodes, can be 1-7.
+     * @param positions The positions of nodes.
+     *                  The position of a node is depended on the index of the node
+     *                  defined in catalog. But the beginning position of a node is start
+     *                  from 1 instead of 0, so it can be 1-7.
      * @return the slave node
      * @throws BaseException If error happens.
      */
@@ -209,7 +212,18 @@ public class ReplicaGroup {
         }
     }
 
-    private Node getSlave(List<Integer> positions) throws BaseException {
+    /**
+     * Get the slave node in the specified positions,
+     * when have no slave node in the specified positions, return master node.
+     *
+     * @param positions the collection of nodes' positions.
+     *                  The position of a node is depended on the index of the node
+     *                  defined in catalog. But the beginning position of a node is start
+     *                  from 1 instead of 0, so it can be 1-7.
+     * @return the slave node
+     * @throws BaseException
+     */
+    public Node getSlave(Collection<Integer> positions) throws BaseException {
         boolean needGeneratePosition = false;
         List<Integer> validPositions = new ArrayList<Integer>();
         // check arguments

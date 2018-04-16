@@ -10,6 +10,7 @@ import org.bson.BSONObject;
 import org.bson.types.BasicBSONList;
 import org.junit.*;
 
+import java.util.Collection;
 import java.util.Random;
 
 import static org.junit.Assert.assertEquals;
@@ -288,7 +289,12 @@ public class SDBGetRG {
         }
 
         // case 4
-        slave= rg.getSlave(null);
+        int[] nullArray = null;
+        slave= rg.getSlave(nullArray);
+        int[] emptyArray = new int[0];
+        slave= rg.getSlave(emptyArray);
+        Collection<Integer> nullPoint = null;
+        slave= rg.getSlave(nullPoint);
         System.out.println(String.format("case4: group is: %s, master is: %s, slave is: %s", groupName,
                 master == null ? null : master.getNodeName(),
                 slave == null ? null : slave.getNodeName()));
