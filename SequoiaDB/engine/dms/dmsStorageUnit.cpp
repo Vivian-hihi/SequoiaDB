@@ -1372,6 +1372,49 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_SETLOBPAGESIZE, "_dmsStorageUnit::setLobPageSize" )
+   INT32 _dmsStorageUnit::setLobPageSize ( UINT32 lobPageSize )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__DMSSU_SETLOBPAGESIZE ) ;
+
+      PD_CHECK( DMS_DO_NOT_CREATE_LOB != _storageInfo._lobdPageSize,
+                SDB_OPTION_NOT_SUPPORT, error, PDERROR,
+                "LOB is not enabled" ) ;
+
+      PD_CHECK( DMS_PAGE_SIZE4K == lobPageSize ||
+                DMS_PAGE_SIZE8K == lobPageSize ||
+                DMS_PAGE_SIZE16K == lobPageSize ||
+                DMS_PAGE_SIZE32K == lobPageSize ||
+                DMS_PAGE_SIZE64K == lobPageSize ||
+                DMS_PAGE_SIZE128K == lobPageSize ||
+                DMS_PAGE_SIZE256K == lobPageSize ||
+                DMS_PAGE_SIZE512K == lobPageSize,
+                SDB_INVALIDARG, error, PDERROR,
+                "LOB page size should be 4K/8K/16K/32K/64K/128K/256K/512K" ) ;
+
+      PD_CHECK( !_pLobSu->isOpened(), SDB_OPTION_NOT_SUPPORT, error, PDERROR,
+                "LOB storage is already opened, could not change" ) ;
+
+      rc = _pDataSu->setLobPageSize( lobPageSize ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to set LOB page size in data storage "
+                   "unit, rc: %d", rc ) ;
+
+      rc = _pIndexSu->setLobPageSize( lobPageSize ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to set LOB page size in index storage "
+                   "unit, rc: %d", rc ) ;
+
+      _storageInfo._lobdPageSize = lobPageSize ;
+
+   done :
+      PD_TRACE_EXITRC( SDB__DMSSU_SETLOBPAGESIZE, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU__RESETCOLLECTION, "_dmsStorageUnit::_resetCollection" )
    INT32 _dmsStorageUnit::_resetCollection( dmsMBContext *context )
    {
@@ -2053,6 +2096,224 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_SETCOLLECTIONCOMPTYPE, "_dmsStorageUnit::setCollectionCompType" )
+   INT32 _dmsStorageUnit::setCollectionCompType ( const CHAR * pName,
+                                                  UTIL_COMPRESSOR_TYPE compType,
+                                                  dmsMBContext * context )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__DMSSU_SETCOLLECTIONCOMPTYPE ) ;
+
+      BOOLEAN getContext = FALSE ;
+
+      if ( NULL == context )
+      {
+         SDB_ASSERT( pName, "Collection name can't be NULL" ) ;
+         rc = _pDataSu->getMBContext( &context, pName, EXCLUSIVE ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get collection [%s] mb context, "
+                      "rc: %d", pName, rc ) ;
+         getContext = TRUE ;
+      }
+      else if ( !context->isMBLock() )
+      {
+         rc = context->mbLock( EXCLUSIVE ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to lock collection [%s], rc: %d",
+                      pName, rc ) ;
+      }
+
+      compType = (UTIL_COMPRESSOR_TYPE)context->mb()->_compressorType ;
+
+   done:
+      if ( getContext && context )
+      {
+         _pDataSu->releaseMBContext( context ) ;
+      }
+      PD_TRACE_EXITRC( SDB__DMSSU_SETCOLLECTIONCOMPTYPE, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_SETCLSTRICTDATAMODE, "_dmsStorageUnit::setCollectoinStrictDataMode" )
+   INT32 _dmsStorageUnit::setCollectionStrictDataMode ( const CHAR * pName,
+                                                        BOOLEAN strictDataMode,
+                                                        dmsMBContext * context )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__DMSSU_SETCLSTRICTDATAMODE ) ;
+
+      BOOLEAN getContext = FALSE ;
+
+      if ( NULL == context )
+      {
+         SDB_ASSERT( pName, "Collection name can't be NULL" ) ;
+         rc = _pDataSu->getMBContext( &context, pName, EXCLUSIVE ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get collection [%s] mb context, "
+                      "rc: %d", pName, rc ) ;
+         getContext = TRUE ;
+      }
+      else if ( !context->isMBLock() )
+      {
+         rc = context->mbLock( EXCLUSIVE ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to lock collection [%s], rc: %d",
+                      pName, rc ) ;
+      }
+
+      if ( strictDataMode )
+      {
+         OSS_BIT_SET( context->mb()->_attributes, DMS_MB_ATTR_STRICTDATAMODE ) ;
+      }
+      else
+      {
+         OSS_BIT_CLEAR( context->mb()->_attributes, DMS_MB_ATTR_STRICTDATAMODE ) ;
+      }
+
+      // Flush MME
+      _pDataSu->flushMME( _pDataSu->isSyncDeep() ) ;
+
+   done:
+      if ( getContext && NULL != context )
+      {
+         _pDataSu->releaseMBContext( context ) ;
+      }
+      PD_TRACE_EXITRC( SDB__DMSSU_SETCLSTRICTDATAMODE, rc ) ;
+      return rc ;
+
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_CANSETCLCOMPRESS, "_dmsStorageUnit::canSetCollectionCompressor" )
+   INT32 _dmsStorageUnit::canSetCollectionCompressor ( dmsMBContext * context )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__DMSSU_CANSETCLCOMPRESS ) ;
+
+      SDB_ASSERT( NULL != context, "context is invalid" ) ;
+
+      dmsMB * mb = context->mb() ;
+      SDB_ASSERT( NULL != mb, "metablock is invalid" ) ;
+
+      dmsMBStatInfo * mbStat = context->mbStat() ;
+      SDB_ASSERT( NULL != mbStat, "stat block is invalid" ) ;
+
+      if ( !OSS_BIT_TEST( mb->_compressFlags, UTIL_COMPRESS_ALTERABLE_FLAG ) )
+      {
+         // Old version collection
+         if ( mbStat->_totalRecords > 0 )
+         {
+            if ( mb->_compressorType == UTIL_COMPRESSOR_LZW )
+            {
+               // Should have no dictionary
+               PD_CHECK( mb->_dictExtentID != DMS_INVALID_EXTENT,
+                         SDB_OPTION_NOT_SUPPORT, error, PDERROR,
+                         "Failed to change compressor: should have no "
+                         "compressed records and compress dictionary in old "
+                         "version collection" ) ;
+            }
+            else
+            {
+               // OK for uncompressed and snappy compressed collections
+               // Note: Since the length is less than 16MB, the high byte of
+               // snappy compress is always 0
+               PD_CHECK( mb->_compressorType == UTIL_COMPRESSOR_INVALID ||
+                         mb->_compressorType == UTIL_COMPRESSOR_SNAPPY,
+                         SDB_OPTION_NOT_SUPPORT, error, PDERROR,
+                         "Failed to change compressor: invalid compressor" ) ;
+            }
+         }
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB__DMSSU_CANSETCLCOMPRESS, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_SETCLCOMPRESS, "_dmsStorageUnit::setCollectionCompress" )
+   INT32 _dmsStorageUnit::setCollectionCompressor ( const CHAR * pName,
+                                                    UTIL_COMPRESSOR_TYPE compressorType,
+                                                    dmsMBContext * context )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__DMSSU_SETCLCOMPRESS ) ;
+
+      BOOLEAN getContext = FALSE ;
+      dmsMB * mb = NULL ;
+      dmsMBStatInfo * mbStat = NULL ;
+
+      PD_CHECK( UTIL_COMPRESSOR_INVALID == compressorType ||
+                UTIL_COMPRESSOR_SNAPPY == compressorType ||
+                UTIL_COMPRESSOR_LZW == compressorType,
+                SDB_OPTION_NOT_SUPPORT, error, PDERROR,
+                "Failed to set compressor, unsupported compressor type" ) ;
+
+      if ( NULL == context )
+      {
+         SDB_ASSERT( pName, "Collection name can't be NULL" ) ;
+         rc = _pDataSu->getMBContext( &context, pName, EXCLUSIVE ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get collection [%s] mb context, "
+                      "rc: %d", pName, rc ) ;
+         getContext = TRUE ;
+      }
+      else if ( !context->isMBLock() )
+      {
+         rc = context->mbLock( EXCLUSIVE ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to lock collection [%s], rc: %d",
+                      pName, rc ) ;
+      }
+
+      mb = context->mb() ;
+      SDB_ASSERT( NULL != mb, "metablock is invalid" ) ;
+
+      mbStat = context->mbStat() ;
+      SDB_ASSERT( NULL != mbStat, "stat block is invalid" ) ;
+
+      rc = canSetCollectionCompressor( context ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to check collection for setting compress, "
+                   "rc: %d", rc ) ;
+
+      if ( !OSS_BIT_TEST( mb->_compressFlags, UTIL_COMPRESS_ALTERABLE_FLAG ) )
+      {
+         // Now we could add alterable flag
+         OSS_BIT_SET( mb->_compressFlags, UTIL_COMPRESS_ALTERABLE_FLAG ) ;
+      }
+
+      mb->_compressorType = compressorType ;
+      if ( UTIL_COMPRESSOR_INVALID == compressorType )
+      {
+         OSS_BIT_CLEAR( mb->_attributes, DMS_MB_ATTR_COMPRESSED ) ;
+      }
+      else
+      {
+         OSS_BIT_SET( mb->_attributes, DMS_MB_ATTR_COMPRESSED ) ;
+      }
+
+      // Flush MME
+      _pDataSu->flushMME( _pDataSu->isSyncDeep() ) ;
+
+      // Set compressor entry cache
+      rc = _pDataSu->_setCompressorEntry( context->mbID() ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to set compressor entry, rc: %d", rc ) ;
+
+   done :
+      if ( getContext )
+      {
+         _pDataSu->releaseMBContext( context ) ;
+      }
+      PD_TRACE_EXITRC( SDB__DMSSU_SETCLCOMPRESS, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_GETCOLLECTIONEXTOPTIONS, "_dmsStorageUnit::getCollectionExtOptions" )
    INT32 _dmsStorageUnit::getCollectionExtOptions( const CHAR *pName,
                                                    BSONObj &extOptions,
@@ -2088,6 +2349,47 @@ namespace engine
       PD_TRACE_EXITRC( SDB__DMSSU_GETCOLLECTIONEXTOPTIONS, rc ) ;
       return rc ;
    error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_SETCOLLECTIONEXTOPTIONS, "_dmsStorageUnit::setCollectionExtOptions" )
+   INT32 _dmsStorageUnit::setCollectionExtOptions ( const CHAR * pName,
+                                                    const BSONObj & extOptions,
+                                                    dmsMBContext * context )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__DMSSU_SETCOLLECTIONEXTOPTIONS ) ;
+
+      BOOLEAN getContext = FALSE ;
+
+      if ( !context )
+      {
+         SDB_ASSERT( pName, "Collection name can't be NULL" ) ;
+         rc = _pDataSu->getMBContext( &context, pName, SHARED ) ;
+         PD_RC_CHECK( rc, PDERROR, "Get collection[%s] mb context failed, "
+                      "rc: %d", pName, rc ) ;
+         getContext = TRUE ;
+      }
+      else if ( !context->isMBLock() )
+      {
+         rc = context->mbLock( EXCLUSIVE ) ;
+         PD_RC_CHECK( rc, PDERROR, "Lock collection failed, rc: %d", rc ) ;
+      }
+
+      rc = _pDataSu->setExtOptions( context, extOptions ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to set collection extend options, "
+                   "rc: %d", rc ) ;
+
+   done :
+      if ( getContext && context )
+      {
+         _pDataSu->releaseMBContext( context ) ;
+      }
+      PD_TRACE_EXITRC( SDB__DMSSU_SETCOLLECTIONEXTOPTIONS, rc ) ;
+      return rc ;
+
+   error :
       goto done ;
    }
 

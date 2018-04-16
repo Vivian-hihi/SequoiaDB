@@ -106,6 +106,7 @@ namespace engine
 #define NAME_JSON_LOAD                       CMD_NAME_JSON_LOAD
 #define NAME_TRUNCATE                        CMD_NAME_TRUNCATE
 #define NAME_ALTER_COLLECTION                CMD_NAME_ALTER_COLLECTION
+#define NAME_ALTER_COLLECTION_SPACE          CMD_NAME_ALTER_COLLECTION_SPACE
 #define NAME_ALTER_DC                        CMD_NAME_ALTER_DC
 #define NAME_SYNC_DB                         CMD_NAME_SYNC_DB
 #define NAME_POP                             CMD_NAME_POP
@@ -155,6 +156,7 @@ namespace engine
       CMD_CREATE_COLLECTIONSPACE             = 11,
       CMD_CREATE_INDEX                       = 12,
       CMD_ALTER_COLLECTION                   = 13,
+      CMD_ALTER_COLLECTIONSPACE              = 14,
 
       CMD_DROP_COLLECTION                    = 20,
       CMD_DROP_COLLECTIONSPACE               = 21,

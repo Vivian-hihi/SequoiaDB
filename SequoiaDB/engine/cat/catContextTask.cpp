@@ -141,7 +141,7 @@ namespace engine
 
          _hasUpdated = TRUE ;
       }
-      catch( std::exception &e )
+      catch( exception & e )
       {
          PD_LOG( PDWARNING, "Occur exception: %s", e.what() ) ;
          rc = SDB_SYS ;
@@ -563,7 +563,6 @@ namespace engine
 
       PD_TRACE_ENTRY ( SDB_CATCTXCREATEIDXTASK_CHECK_INT ) ;
 
-      std::set<UINT32> checkedSet ;
       clsCatalogSet cataSet( _dataName.c_str() );
 
       rc = catGetAndLockCollection( _dataName, _boData, cb,
@@ -936,4 +935,5 @@ namespace engine
    error :
       goto done ;
    }
+
 }

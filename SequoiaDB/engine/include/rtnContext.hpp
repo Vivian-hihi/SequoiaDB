@@ -85,6 +85,11 @@ namespace engine
       RTN_CONTEXT_OM_TRANSFER,
       RTN_CONTEXT_TS,            // Context of text search
 
+      /// Alter contexts
+      RTN_CONTEXT_ALTERCS,
+      RTN_CONTEXT_ALTERCL,
+      RTN_CONTEXT_ALTERMAINCL,
+
       /// Catalog contexts
 
       RTN_CONTEXT_CAT_BEGIN,
@@ -98,6 +103,7 @@ namespace engine
       RTN_CONTEXT_CAT_REMOVE_NODE,
       /// CollectionSpace related
       RTN_CONTEXT_CAT_DROP_CS,
+      RTN_CONTEXT_CAT_ALTER_CS,
       /// Collection related
       RTN_CONTEXT_CAT_CREATE_CL,
       RTN_CONTEXT_CAT_DROP_CL,

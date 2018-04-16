@@ -219,6 +219,10 @@ enum MSG_TYPE
    MSG_CAT_DROP_IDX_REQ               = 3140,
    MSG_CAT_DROP_IDX_RSP               = MAKE_REPLY_TYPE(MSG_CAT_DROP_IDX_REQ),
 
+   // alter collection space
+   MSG_CAT_ALTER_CS_REQ               = 3141,
+   MSG_CAT_ALTER_CS_RSP               = MAKE_REPLY_TYPE( MSG_CAT_ALTER_CS_REQ ),
+
    // all messages for CATALOGUE must be smaller than MSG_CAT_CATALOGUE_END
    MSG_CAT_CATALOGUE_END               = 3199,
 

@@ -229,9 +229,12 @@ namespace engine
                                                  const CoordGroupList &pGroupLst )
    {
       INT32 rc = SDB_OK ;
+
       PD_TRACE_ENTRY ( COORD_NODE3PHASE_DOONCATAP2 ) ;
 
-      rc = _processContext( cb, ppContext, 1 ) ;
+      rtnContextBuf buffObj ;
+
+      rc = _processContext( cb, ppContext, 1, buffObj ) ;
 
       PD_TRACE_EXITRC ( COORD_NODE3PHASE_DOONCATAP2, rc ) ;
 

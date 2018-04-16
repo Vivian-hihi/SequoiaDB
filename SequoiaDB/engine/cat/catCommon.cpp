@@ -377,6 +377,41 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATGETOBJCOUNT, "catGetObjectCount" )
+   INT32 catGetObjectCount ( const CHAR * collectionName,
+                             const BSONObj & selector,
+                             const BSONObj & matcher,
+                             const BSONObj & hint,
+                             pmdEDUCB * cb,
+                             INT64 & count )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( SDB_CATGETOBJCOUNT ) ;
+
+      pmdKRCB * krcb = pmdGetKRCB() ;
+      SDB_DMSCB * dmsCB = krcb->getDMSCB() ;
+      SDB_RTNCB * rtnCB = krcb->getRTNCB() ;
+
+      rtnQueryOptions options ;
+
+      options.setCLFullName( collectionName ) ;
+      options.setSelector( selector ) ;
+      options.setQuery( matcher ) ;
+      options.setHint( hint ) ;
+
+      rc = rtnGetCount( options, dmsCB, cb, rtnCB, &count ) ;
+      PD_RC_CHECK ( rc, PDERROR, "Failed to get count on collection [%s], "
+                    "rc: %d", collectionName, rc ) ;
+
+   done :
+      PD_TRACE_EXITRC( SDB_CATGETOBJCOUNT, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATGETGROUPOBJ, "catGetGroupObj" )
    INT32 catGetGroupObj( const CHAR * groupName, BOOLEAN dataGroupOnly,
                          BSONObj & obj, pmdEDUCB *cb  )
@@ -842,6 +877,67 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATGETSPLITGROUPS, "catGetSplitCandidateGroups" )
+   INT32 catGetSplitCandidateGroups ( const CHAR * collection,
+                                      map< string, UINT32 > & groups,
+                                      pmdEDUCB * cb )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_CATGETSPLITGROUPS ) ;
+
+      CHAR szSpace [ DMS_COLLECTION_SPACE_NAME_SZ + 1 ]  = {0} ;
+      CHAR szCollection [ DMS_COLLECTION_NAME_SZ + 1 ] = {0} ;
+
+      BSONObj csObj ;
+      BOOLEAN csExist = FALSE ;
+
+      const CHAR *domainName = NULL ;
+
+      rc = rtnResolveCollectionName( collection, ossStrlen( collection ),
+                                     szSpace, DMS_COLLECTION_SPACE_NAME_SZ,
+                                     szCollection, DMS_COLLECTION_NAME_SZ ) ;
+      PD_RC_CHECK( rc, PDERROR, "Resolve collection name[%s] failed, rc: %d",
+                   collection, rc ) ;
+
+      rc = catCheckSpaceExist( szSpace, csExist, csObj, cb ) ;
+      PD_RC_CHECK( rc, PDWARNING, "Check collection space[%s] exist failed, "
+                   "rc: %d", szSpace, rc ) ;
+      PD_CHECK( csExist, SDB_DMS_CS_NOTEXIST, error, PDWARNING,
+                "Collection space[%s] is not exist", szSpace ) ;
+
+      // get domain name
+      rc = rtnGetStringElement( csObj, CAT_DOMAIN_NAME, &domainName ) ;
+
+      // SYSTEM DOMAIN
+      if ( SDB_FIELD_NOT_EXIST == rc )
+      {
+         sdbGetCatalogueCB()->getGroupNameMap( groups, TRUE ) ;
+         rc = SDB_OK ;
+      }
+      // USER DOMAIN
+      else if ( SDB_OK == rc )
+      {
+         // Check domain exist
+         BSONObj domainObj ;
+
+         rc = catGetDomainObj( domainName, domainObj, cb ) ;
+         PD_RC_CHECK( rc, PDERROR, "Get domain[%s] failed, rc: %d",
+                      domainName, rc ) ;
+
+         rc = catGetDomainGroups( domainObj,  groups ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get groups from domain info[%s], "
+                      "rc: %d", domainObj.toString().c_str(), rc ) ;
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB_CATGETSPLITGROUPS, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATDELGRPFROMDOMAIN, "catDelGroupFromDomain" )
    INT32 catDelGroupFromDomain( const CHAR *domainName, const CHAR *groupName,
                                 UINT32 groupID, pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
@@ -891,6 +987,36 @@ namespace engine
       PD_TRACE_EXITRC ( SDB_CATDELGRPFROMDOMAIN, rc ) ;
       return rc ;
    error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATUPDATEDOMAIN, "catUpdateDomain" )
+   INT32 catUpdateDomain ( const CHAR * domainName,
+                           const BSONObj & domainObject,
+                           pmdEDUCB * cb,
+                           _SDB_DMSCB * dmsCB,
+                           _dpsLogWrapper * dpsCB,
+                           INT16 w )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_CATUPDATEDOMAIN ) ;
+
+      rtnQueryOptions queryOptions ;
+      queryOptions.setCLFullName( CAT_DOMAIN_COLLECTION ) ;
+      queryOptions.setQuery( BSON( CAT_DOMAINNAME_NAME << domainName ) ) ;
+
+      BSONObj updator = BSON( "$set" << domainObject ) ;
+
+      rc = rtnUpdate( queryOptions, updator, cb, dmsCB, dpsCB, w ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to update collection [%s], rc: %d",
+                   CAT_DOMAIN_COLLECTION, rc ) ;
+
+   done :
+      PD_TRACE_EXITRC( SDB_CATUPDATEDOMAIN, rc ) ;
+      return rc ;
+
+   error :
       goto done ;
    }
 
@@ -1066,17 +1192,32 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATRESTORECS, "catRestoreCS" )
-   INT32 catRestoreCS( const CHAR * csName, const BSONObj & oldInfo,
-                       pmdEDUCB * cb, SDB_DMSCB * dmsCB,
-                       SDB_DPSCB * dpsCB, INT16 w )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATUPDATECS, "catUpdateCS" )
+   INT32 catUpdateCS ( const CHAR * csName,
+                       const BSONObj & setObject,
+                       const BSONObj & unsetObject,
+                       pmdEDUCB * cb, _SDB_DMSCB * dmsCB,
+                       _dpsLogWrapper * dpsCB,
+                       INT16 w )
    {
       INT32 rc = SDB_OK ;
 
-      PD_TRACE_ENTRY ( SDB_CATRESTORECS ) ;
+      PD_TRACE_ENTRY( SDB_CATUPDATECS ) ;
+
       BSONObj boMatcher = BSON( CAT_COLLECTION_SPACE_NAME << csName ) ;
-      BSONObj updator   = BSON( "$set" << oldInfo ) ;
+      BSONObjBuilder updateBuilder ;
+      BSONObj updator ;
       BSONObj hint ;
+
+      if ( !setObject.isEmpty() )
+      {
+         updateBuilder.append( "$set", setObject ) ;
+      }
+      if ( !unsetObject.isEmpty() )
+      {
+         updateBuilder.append( "$unset", unsetObject ) ;
+      }
+      updator = updateBuilder.obj() ;
 
       rc = rtnUpdate( CAT_COLLECTION_SPACE_COLLECTION, boMatcher, updator,
                       hint, 0, cb, dmsCB, dpsCB, w ) ;
@@ -1085,10 +1226,11 @@ namespace engine
                    boMatcher.toString().c_str(),
                    updator.toString().c_str(), rc ) ;
 
-   done:
-      PD_TRACE_EXITRC ( SDB_CATRESTORECS, rc ) ;
+   done :
+      PD_TRACE_EXITRC( SDB_CATUPDATECS, rc ) ;
       return rc ;
-   error:
+
+   error :
       goto done ;
    }
 
@@ -1130,23 +1272,20 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATGETDOMAINCSS, "catGetDomainCSs" )
-   INT32 catGetDomainCSs( const BSONObj &domain, pmdEDUCB *cb,
-                          vector< string > &collectionSpaces )
+   INT32 catGetDomainCSs ( const CHAR * domain, pmdEDUCB * cb,
+                           _utilList< string > & collectionSpaces )
    {
       INT32 rc = SDB_OK ;
 
       PD_TRACE_ENTRY ( SDB_CATGETDOMAINCSS ) ;
       BSONObj matcher ;
       BSONObj dummyObj ;
-      SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
-      SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
+      SDB_DMSCB * dmsCB = pmdGetKRCB()->getDMSCB() ;
+      SDB_RTNCB * rtnCB = pmdGetKRCB()->getRTNCB() ;
       INT64 contextID = -1 ;
 
-      collectionSpaces.clear() ;
-
       // Query
-      matcher = BSON( CAT_DOMAIN_NAME <<
-                      domain.getField( CAT_DOMAINNAME_NAME ).valuestrsafe() ) ;
+      matcher = BSON( CAT_DOMAIN_NAME << domain ) ;
 
       rc = rtnQuery( CAT_COLLECTION_SPACE_COLLECTION, dummyObj, matcher,
                      dummyObj, dummyObj, 0, cb, 0, -1, dmsCB, rtnCB,
@@ -1176,9 +1315,9 @@ namespace engine
             {
                continue ;
             }
-            collectionSpaces.push_back ( csName.String() ) ;
+            collectionSpaces.push_back ( csName.valuestr() ) ;
          }
-         catch( std::exception &e )
+         catch( exception & e )
          {
             rtnKillContexts( 1 , &contextID, cb, rtnCB ) ;
             PD_LOG( PDERROR,
@@ -1188,10 +1327,12 @@ namespace engine
             goto error ;
          }
       }
-   done:
+
+   done :
       PD_TRACE_EXITRC ( SDB_CATGETDOMAINCSS, rc ) ;
       return rc ;
-   error:
+
+   error :
       goto done ;
    }
 
@@ -1256,8 +1397,8 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATUPDATECATALOG, "catUpdateCatalog" )
-   INT32 catUpdateCatalog( const CHAR * clFullName, const BSONObj & cataInfo,
-                           pmdEDUCB * cb, INT16 w )
+   INT32 catUpdateCatalog ( const CHAR * clFullName, const BSONObj & setInfo,
+                            const BSONObj & unsetInfo, pmdEDUCB * cb, INT16 w  )
    {
       INT32 rc = SDB_OK ;
       pmdKRCB *krcb = pmdGetKRCB() ;
@@ -1265,16 +1406,26 @@ namespace engine
       SDB_DPSCB *dpsCB = krcb->getDPSCB() ;
 
       PD_TRACE_ENTRY ( SDB_CATUPDATECATALOG ) ;
-      BSONObj hint ;
+      BSONObj hint, updator ;
       BSONObj match = BSON( CAT_CATALOGNAME_NAME << clFullName ) ;
-      BSONObj updator = BSON( "$inc" << BSON( CAT_VERSION_NAME << 1 ) <<
-                              "$set" << cataInfo ) ;
+      BSONObjBuilder updateBuilder ;
+
+      updateBuilder.append( "$inc", BSON( CAT_VERSION_NAME << 1 ) ) ;
+      if ( !setInfo.isEmpty() )
+      {
+         updateBuilder.append( "$set", setInfo ) ;
+      }
+      if ( !unsetInfo.isEmpty() )
+      {
+         updateBuilder.append( "$unset", unsetInfo ) ;
+      }
+      updator = updateBuilder.obj() ;
 
       rc = rtnUpdate( CAT_COLLECTION_INFO_COLLECTION,
                       match, updator, hint,
                       0, cb, dmsCB, dpsCB, w ) ;
       PD_RC_CHECK( rc, PDSEVERE, "Failed to update collection[%s] catalog info"
-                   "[%s], rc: %d", clFullName, cataInfo.toString().c_str(),
+                   "[%s], rc: %d", clFullName, setInfo.toString().c_str(),
                    rc ) ;
    done:
       PD_TRACE_EXITRC ( SDB_CATUPDATECATALOG, rc ) ;
@@ -1344,15 +1495,49 @@ namespace engine
                                 BOOLEAN includeSubCLGroups )
    {
       INT32 rc = SDB_OK ;
-      BSONObj matcher ;
-      BSONObj dummyObj ;
-      SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
-      SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
+
+      _utilSet< UINT32 > groupSet ;
+
+      rc = catGetCSGroups( csName, cb, groupSet, includeSubCLGroups ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to get groups of "
+                   "collection space [%s], rc: %d", csName, rc ) ;
+
+      for ( UINT32 i = 0 ; i < groups.size() ; ++i )
+      {
+         groupSet.insert( groups[ i ] ) ;
+      }
+      groups.clear() ;
+      for ( _utilSet< UINT32 >::iterator iterGroup = groupSet.begin() ;
+            iterGroup != groupSet.end() ;
+            iterGroup ++ )
+      {
+         groups.push_back( *iterGroup ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATGETCSGRPS, "catGetCSGroups" )
+   INT32 catGetCSGroups ( const CHAR * csName,
+                          pmdEDUCB * cb,
+                          _utilSet< UINT32 > & groups,
+                          BOOLEAN includeSubCLGroups )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_CATGETCSGRPS ) ;
+
+      SDB_DMSCB * dmsCB = pmdGetKRCB()->getDMSCB() ;
+      SDB_RTNCB * rtnCB = pmdGetKRCB()->getRTNCB() ;
       INT64 contextID = -1 ;
-      std::set< UINT32 > groupSet ;
-      std::set< UINT32 >::iterator itSet ;
+
       BSONObjBuilder builder ;
-      std::stringstream ss ;
+      stringstream ss ;
+
+      rtnQueryOptions queryOptions ;
 
       ss << "^" << csName << "\\." ;
 
@@ -1372,15 +1557,14 @@ namespace engine
          subCLObjBuilder.done() ;
          orBuilder.done() ;
       }
-      matcher = builder.obj() ;
+
+      queryOptions.setCLFullName( CAT_COLLECTION_INFO_COLLECTION ) ;
+      queryOptions.setQuery( builder.obj() ) ;
 
       // query
-      rc = rtnQuery( CAT_COLLECTION_INFO_COLLECTION, dummyObj, matcher,
-                     dummyObj, dummyObj, 0, cb, 0, -1, dmsCB, rtnCB,
-                     contextID ) ;
-      PD_RC_CHECK( rc, PDERROR, "Query collection[%s] failed, matcher: %s, "
-                   "rc: %d", CAT_COLLECTION_INFO_COLLECTION,
-                   matcher.toString().c_str(), rc ) ;
+      rc = rtnQuery( queryOptions, cb, dmsCB, rtnCB, contextID ) ;
+      PD_RC_CHECK( rc, PDERROR, "Query collection[%s] failed, "
+                   "rc: %d", CAT_COLLECTION_INFO_COLLECTION, rc ) ;
 
       // get more
       while ( TRUE )
@@ -1415,11 +1599,11 @@ namespace engine
                BSONElement eleGrpID = cataItemObj.getField( CAT_GROUPID_NAME ) ;
                if ( eleGrpID.isNumber() )
                {
-                  groupSet.insert( eleGrpID.numberInt() ) ;
+                  groups.insert( eleGrpID.numberInt() ) ;
                }
             }
          }
-         catch( std::exception &e )
+         catch( exception & e )
          {
             rtnKillContexts( 1 , &contextID, cb, rtnCB ) ;
             PD_LOG( PDERROR,
@@ -1430,22 +1614,11 @@ namespace engine
          }
       }
 
-      for ( UINT32 i = 0 ; i < groups.size() ; ++i )
-      {
-         groupSet.insert( groups[ i ] ) ;
-      }
-      groups.clear() ;
-
-      itSet = groupSet.begin() ;
-      while ( itSet != groupSet.end() )
-      {
-         groups.push_back( *itSet ) ;
-         ++itSet ;
-      }
-
-   done:
+   done :
+      PD_TRACE_EXITRC( SDB_CATGETCSGRPS, rc ) ;
       return rc ;
-   error:
+
+   error :
       goto done ;
    }
 
@@ -1507,6 +1680,31 @@ namespace engine
    done :
       PD_TRACE_EXITRC ( SDB_CATGETTASK, rc ) ;
       return rc;
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATGETTASKCOUNT, "catGetTaskCount" )
+   INT32 catGetTaskCount ( const CHAR * collection, pmdEDUCB * cb,  INT64 & count )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_CATGETTASKCOUNT ) ;
+
+      SDB_ASSERT( NULL != collection, "collection is invalid" ) ;
+
+      BSONObj dummyObj ;
+      BSONObj matcher = BSON( CAT_COLLECTION_NAME << collection ) ;
+
+      rc = catGetObjectCount( CAT_TASK_INFO_COLLECTION, dummyObj, matcher,
+                              dummyObj, cb, count ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to get task count of collection [%s], "
+                   "rc: %d", collection, rc ) ;
+
+   done :
+      PD_TRACE_EXITRC( SDB_CATGETTASKCOUNT, rc ) ;
+      return rc ;
+
    error :
       goto done ;
    }
@@ -1702,25 +1900,59 @@ namespace engine
                                   vector< UINT32 > &groups )
    {
       INT32 rc = SDB_OK ;
-      BSONObj matcher ;
-      BSONObj dummyObj ;
+
+      _utilSet< UINT32 > groupSet ;
+
+      rc = catGetCSTaskGroups( csName, cb, groupSet ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to get task groups of "
+                   "collection space [%s], rc: %d", csName, rc ) ;
+
+      for ( UINT32 i = 0 ; i < groups.size() ; ++i )
+      {
+         groupSet.insert( groups[ i ] ) ;
+      }
+      groups.clear() ;
+      for ( _utilSet< UINT32 >::iterator iterGroup = groupSet.begin() ;
+            iterGroup != groupSet.end() ;
+            iterGroup ++ )
+      {
+         groups.push_back( *iterGroup ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATGETCSTASKGRPS, "catGetCSTaskGroups" )
+   INT32 catGetCSTaskGroups ( const CHAR * csName,
+                              pmdEDUCB * cb,
+                              _utilSet< UINT32 > & groups )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_CATGETCSTASKGRPS ) ;
+
       SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
       SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
+
       INT64 contextID = -1 ;
-      std::set< UINT32 > groupSet ;
-      std::set< UINT32 >::iterator itSet ;
+
       BSONObjBuilder builder ;
-      std::stringstream ss ;
+      stringstream ss ;
+
+      rtnQueryOptions queryOptions ;
 
       ss << "^" << csName << "\\." ;
       builder.appendRegex( CAT_COLLECTION_NAME, ss.str() ) ;
-      matcher = builder.obj() ;
 
-      rc = rtnQuery( CAT_TASK_INFO_COLLECTION, dummyObj, matcher, dummyObj,
-                     dummyObj, 0, cb, 0, -1, dmsCB, rtnCB, contextID ) ;
-      PD_RC_CHECK( rc, PDERROR, "Query collection[%s] failed, matcher: %s, "
-                   "rc: %d", CAT_TASK_INFO_COLLECTION,
-                   matcher.toString().c_str(), rc ) ;
+      queryOptions.setCLFullName( CAT_TASK_INFO_COLLECTION ) ;
+      queryOptions.setQuery( builder.obj() ) ;
+
+      rc = rtnQuery( queryOptions, cb, dmsCB, rtnCB, contextID ) ;
+      PD_RC_CHECK( rc, PDERROR, "Query collection[%s] failed, "
+                   "rc: %d", CAT_TASK_INFO_COLLECTION, rc ) ;
 
       // get more
       while ( TRUE )
@@ -1739,7 +1971,7 @@ namespace engine
          {
             obj = BSONObj( contextBuf.data() ) ;
             BSONElement ele = obj.getField( CAT_TARGETID_NAME ) ;
-            groupSet.insert( ele.numberInt() ) ;
+            groups.insert( ele.numberInt() ) ;
          }
          catch( std::exception &e )
          {
@@ -1751,22 +1983,11 @@ namespace engine
          }
       }
 
-      for ( UINT32 i = 0 ; i < groups.size() ; ++i )
-      {
-         groupSet.insert( groups[ i ] ) ;
-      }
-      groups.clear() ;
-
-      itSet = groupSet.begin() ;
-      while ( itSet != groupSet.end() )
-      {
-         groups.push_back( *itSet ) ;
-         ++itSet ;
-      }
-
-   done:
+   done :
+      PD_TRACE_EXITRC( SDB_CATGETCSTASKGRPS, rc ) ;
       return rc ;
-   error:
+
+   error :
       goto done ;
    }
 
@@ -2125,6 +2346,9 @@ namespace engine
          break ;
       case MSG_CAT_DROP_SPACE_REQ :
          contextType = RTN_CONTEXT_CAT_DROP_CS ;
+         break ;
+      case MSG_CAT_ALTER_CS_REQ :
+         contextType = RTN_CONTEXT_CAT_ALTER_CS ;
          break ;
       case MSG_CAT_ALTER_COLLECTION_REQ :
          contextType = RTN_CONTEXT_CAT_ALTER_CL ;
@@ -2974,14 +3198,14 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALTERCLSTEP, "catAlterCLStep" )
    INT32 catAlterCLStep ( const std::string &clName, const BSONObj &boNewData,
-                          _pmdEDUCB *cb, SDB_DMSCB *pDmsCB, SDB_DPSCB *pDpsCB,
-                          INT16 w )
+                          const BSONObj & boUnsetData, _pmdEDUCB *cb,
+                          SDB_DMSCB *pDmsCB, SDB_DPSCB *pDpsCB, INT16 w )
    {
       INT32 rc = SDB_OK ;
 
       PD_TRACE_ENTRY ( SDB_CATALTERCLSTEP ) ;
 
-      rc = catUpdateCatalog( clName.c_str(), boNewData, cb, w ) ;
+      rc = catUpdateCatalog( clName.c_str(), boNewData, boUnsetData, cb, w ) ;
       PD_RC_CHECK ( rc, PDWARNING,
                     "Failed to alter collection [%s] with new info [%s], rc: %d",
                     clName.c_str(), boNewData.toString().c_str(), rc ) ;
@@ -3035,7 +3259,7 @@ namespace engine
       else
       {
          BSONObj subListObj = mainCLSet.toCataInfoBson() ;
-         rc = catUpdateCatalog( mainCLName.c_str(), subListObj, cb, w ) ;
+         rc = catUpdateCatalog( mainCLName.c_str(), subListObj, BSONObj(), cb, w ) ;
       }
       PD_RC_CHECK( rc, PDWARNING,
                    "Failed to update the catalog of main-collection [%s], rc: %d",
@@ -3071,7 +3295,7 @@ namespace engine
 
       {
          BSONObj newSubCLObj = subClBuilder.done() ;
-         rc = catUpdateCatalog( subCLName.c_str(), newSubCLObj, cb, w ) ;
+         rc = catUpdateCatalog( subCLName.c_str(), newSubCLObj, BSONObj(), cb, w ) ;
          PD_RC_CHECK( rc, PDWARNING,
                       "Failed to update the catalog of sub-collection [%s], rc: %d",
                       subCLName.c_str(), rc ) ;
@@ -3149,7 +3373,7 @@ namespace engine
       {
          // Update the catalog
          BSONObj subListObj = mainCLSet.toCataInfoBson() ;
-         rc = catUpdateCatalog( mainCLName.c_str(), subListObj, cb, w ) ;
+         rc = catUpdateCatalog( mainCLName.c_str(), subListObj, BSONObj(), cb, w ) ;
          PD_RC_CHECK( rc, PDWARNING,
                       "Failed to update the catalog of "
                       "main-collection [%s], rc: %d",
@@ -3225,7 +3449,7 @@ namespace engine
       {
          // Update the catalog
          BSONObj subListObj = mainCLSet.toCataInfoBson() ;
-         rc = catUpdateCatalog( mainCLName.c_str(), subListObj, cb, w ) ;
+         rc = catUpdateCatalog( mainCLName.c_str(), subListObj, BSONObj(), cb, w ) ;
          PD_RC_CHECK( rc, PDWARNING,
                       "Failed to update the catalog of "
                       "main-collection [%s], rc: %d",
@@ -3297,7 +3521,7 @@ namespace engine
                       "Field [%s] type [%d] error", CAT_COLLECTION_NAME,
                       eleTmp.type() ) ;
             clInfo._pCLName = eleTmp.valuestr() ;
-            fieldMask |= CAT_MASK_CLNAME ;
+            fieldMask |= UTIL_CL_NAME_FIELD ;
          }
          // sharding key
          else if ( ossStrcmp( eleTmp.fieldName(),
@@ -3312,7 +3536,7 @@ namespace engine
                       SDB_INVALIDARG, error, PDWARNING,
                       "Sharding key [%s] definition is invalid",
                       clInfo._shardingKey.toString().c_str() ) ;
-            fieldMask |= CAT_MASK_SHDKEY ;
+            fieldMask |= UTIL_CL_SHDKEY_FIELD ;
             clInfo._isSharding = TRUE ;
          }
          // repl size
@@ -3345,7 +3569,7 @@ namespace engine
                goto error ;
             }
 
-            fieldMask |= CAT_MASK_REPLSIZE ;
+            fieldMask |= UTIL_CL_REPLSIZE_FIELD ;
          }
          // ensure sharding index
          else if ( ossStrcmp( eleTmp.fieldName(), CAT_ENSURE_SHDINDEX ) == 0 )
@@ -3355,7 +3579,7 @@ namespace engine
                       "Field [%s] type [%d] error", CAT_ENSURE_SHDINDEX,
                       eleTmp.type() ) ;
             clInfo._enSureShardIndex = eleTmp.Bool() ;
-            fieldMask |= CAT_MASK_SHDIDX ;
+            fieldMask |= UTIL_CL_ENSURESHDIDX_FIELD ;
          }
          // sharding type
          else if ( ossStrcmp( eleTmp.fieldName(), CAT_SHARDING_TYPE ) == 0 )
@@ -3375,7 +3599,7 @@ namespace engine
                       "Field [%s] value [%s] should be [%s/%s]",
                       CAT_SHARDING_TYPE, clInfo._pShardingType,
                       CAT_SHARDING_TYPE_HASH, CAT_SHARDING_TYPE_RANGE ) ;
-            fieldMask |= CAT_MASK_SHDTYPE ;
+            fieldMask |= UTIL_CL_SHDTYPE_FIELD ;
 
             clInfo._isHash = ( 0 == ossStrcmp( clInfo._pShardingType,
                                                CAT_SHARDING_TYPE_HASH ) ) ;
@@ -3400,7 +3624,7 @@ namespace engine
                       "should between in[%d, %d]", CAT_SHARDING_PARTITION,
                       clInfo._shardPartition, CAT_SHARDING_PARTITION_MIN,
                       CAT_SHARDING_PARTITION_MAX ) ;
-            fieldMask |= CAT_MASK_SHDPARTITION ;
+            fieldMask |= UTIL_CL_PARTITION_FIELD ;
          }
          // compression flag
          else if ( ossStrcmp ( eleTmp.fieldName(),
@@ -3411,7 +3635,7 @@ namespace engine
                       "Field [%s] type [%d] error",
                       CAT_COMPRESSED, eleTmp.type() ) ;
             clInfo._isCompressed = eleTmp.boolean() ;
-            fieldMask |= CAT_MASK_COMPRESSED ;
+            fieldMask |= UTIL_CL_COMPRESSED_FIELD ;
          }
          // main-collection flag
          else if ( ossStrcmp( eleTmp.fieldName(),
@@ -3422,8 +3646,8 @@ namespace engine
                       "Field [%s] type [%d] error",
                       CAT_IS_MAINCL, eleTmp.type() ) ;
             clInfo._isMainCL = eleTmp.boolean() ;
-            fieldMask |= CAT_MASK_ISMAINCL ;
-            if ( !( fieldMask & CAT_MASK_SHDTYPE ) )
+            fieldMask |= UTIL_CL_ISMAINCL_FIELD ;
+            if ( !( fieldMask & UTIL_CL_SHDTYPE_FIELD ) )
             {
                clInfo._pShardingType = CAT_SHARDING_TYPE_RANGE ;
                clInfo._isHash = FALSE ;
@@ -3438,7 +3662,7 @@ namespace engine
                       "Field [%s] type [%d] error",
                       CAT_STRICTDATAMODE, eleTmp.type() ) ;
             clInfo._strictDataMode = eleTmp.boolean() ;
-            fieldMask |= CAT_MASK_STRICTDATAMODE ;
+            fieldMask |= UTIL_CL_STRICTDATAMODE_FIELD ;
          }
          // group specified
          else if ( 0 == ossStrcmp( eleTmp.fieldName(),
@@ -3472,7 +3696,7 @@ namespace engine
                       "Field [%s] type [%d] error",
                       CAT_DOMAIN_AUTO_SPLIT, eleTmp.type() ) ;
             clInfo._autoSplit = eleTmp.Bool() ;
-            fieldMask |= CAT_MASK_AUTOASPLIT ;
+            fieldMask |= UTIL_CL_AUTOSPLIT_FIELD ;
          }
          // auto rebalance
          else if ( 0 == ossStrcmp( eleTmp.fieldName(),
@@ -3483,7 +3707,7 @@ namespace engine
                       "Field [%s] type [%d] error",
                       CAT_DOMAIN_AUTO_REBALANCE, eleTmp.type() ) ;
             clInfo._autoRebalance = eleTmp.Bool() ;
-            fieldMask |= CAT_MASK_AUTOREBALAN ;
+            fieldMask |= UTIL_CL_AUTOREBALANCE_FIELD ;
          }
          // auto index id
          else if ( 0 == ossStrcmp( eleTmp.fieldName(),
@@ -3494,7 +3718,7 @@ namespace engine
                       "Field [%s] type [%d] error",
                       CAT_AUTO_INDEX_ID, eleTmp.type() ) ;
             clInfo._autoIndexId = eleTmp.Bool() ;
-            fieldMask |= CAT_MASK_AUTOINDEXID ;
+            fieldMask |= UTIL_CL_AUTOIDXID_FIELD ;
          }
          // compression type
          else if ( 0 == ossStrcmp( eleTmp.fieldName(),
@@ -3523,7 +3747,7 @@ namespace engine
                goto error ;
             }
 
-            fieldMask |= CAT_MASK_COMPRESSIONTYPE ;
+            fieldMask |= UTIL_CL_COMPRESSTYPE_FIELD ;
          }
          else if ( 0 == ossStrcmp( eleTmp.fieldName(), CAT_CAPPED_NAME ) )
          {
@@ -3532,7 +3756,7 @@ namespace engine
                       "Field [%s] type [%d] error",
                       CAT_CAPPED_NAME, eleTmp.type() ) ;
             clInfo._capped = eleTmp.boolean() ;
-            fieldMask |= CAT_MASK_CAPPED ;
+            fieldMask |= UTIL_CL_CAPPED_FIELD ;
          }
          else if ( 0 == ossStrcmp( eleTmp.fieldName(), CAT_CL_MAX_RECNUM ) )
          {
@@ -3543,7 +3767,7 @@ namespace engine
                       "Field [%s] type [%d] error",
                       CAT_CL_MAX_RECNUM, eleTmp.type() ) ;
             clInfo._maxRecNum = eleTmp.numberLong() ;
-            fieldMask |= CAT_MASK_CLMAXRECNUM ;
+            fieldMask |= UTIL_CL_MAXREC_FIELD ;
          }
          else if ( 0 == ossStrcmp( eleTmp.fieldName(), CAT_CL_MAX_SIZE ) )
          {
@@ -3556,7 +3780,7 @@ namespace engine
             // Always align the size upper to 32MB.
             clInfo._maxSize = ossRoundUpToMultipleX( eleTmp.numberLong() << 20,
                                                      MAX_CL_SIZE_ALIGN_SIZE ) ;
-            fieldMask |= CAT_MASK_CLMAXSIZE ;
+            fieldMask |= UTIL_CL_MAXSIZE_FIELD ;
          }
          else if ( 0 == ossStrcmp( eleTmp.fieldName(), CAT_CL_OVERWRITE ) )
          {
@@ -3565,7 +3789,7 @@ namespace engine
                       "Field [%s] type [%d] error",
                       CAT_CL_OVERWRITE, eleTmp.type() ) ;
             clInfo._overwrite = eleTmp.Bool() ;
-            fieldMask |= CAT_MASK_CLOVERWRITE ;
+            fieldMask |= UTIL_CL_OVERWRITE_FIELD ;
          }
          else
          {
@@ -3583,13 +3807,13 @@ namespace engine
                     SDB_INVALID_MAIN_CL_TYPE, error, PDWARNING,
                     "the sharding-type of main-collection must be range!" );
 
-         PD_CHECK( !( CAT_MASK_AUTOINDEXID & fieldMask ),
+         PD_CHECK( !( UTIL_CL_AUTOIDXID_FIELD & fieldMask ),
                    SDB_INVALIDARG, error, PDWARNING,
                    "can not set auto-index-id on main collection" ) ;
-         PD_CHECK( !( ( CAT_MASK_CAPPED & fieldMask ) ||
-                      ( CAT_MASK_CLMAXRECNUM & fieldMask ) ||
-                      ( CAT_MASK_CLMAXSIZE & fieldMask ) ||
-                      ( CAT_MASK_CLOVERWRITE & fieldMask ) ),
+         PD_CHECK( !( ( UTIL_CL_CAPPED_FIELD & fieldMask ) ||
+                      ( UTIL_CL_MAXREC_FIELD & fieldMask ) ||
+                      ( UTIL_CL_MAXSIZE_FIELD & fieldMask ) ||
+                      ( UTIL_CL_OVERWRITE_FIELD & fieldMask ) ),
                    SDB_INVALIDARG, error, PDWARNING,
                    "can not set Capped|Max|Size on main collection" ) ;
       }
@@ -3609,11 +3833,11 @@ namespace engine
                    "auto options only can be set when shard type is hash" ) ;
       }
 
-      if ( fieldMask & CAT_MASK_SHDIDX ||
-           fieldMask & CAT_MASK_SHDTYPE ||
-           fieldMask & CAT_MASK_SHDPARTITION )
+      if ( fieldMask & UTIL_CL_ENSURESHDIDX_FIELD ||
+           fieldMask & UTIL_CL_SHDTYPE_FIELD ||
+           fieldMask & UTIL_CL_PARTITION_FIELD )
       {
-         PD_CHECK( fieldMask & CAT_MASK_SHDKEY,
+         PD_CHECK( fieldMask & UTIL_CL_SHDKEY_FIELD,
                    SDB_INVALIDARG, error, PDWARNING,
                    "these arguments are legal only when sharding key is specified." ) ;
       }
@@ -3626,7 +3850,7 @@ namespace engine
 
       if ( clInfo._isCompressed )
       {
-         if ( 0 == ( fieldMask & CAT_MASK_COMPRESSIONTYPE ) )
+         if ( 0 == ( fieldMask & UTIL_CL_COMPRESSTYPE_FIELD ) )
          {
             clInfo._compressorType = UTIL_COMPRESSOR_SNAPPY ;
          }
@@ -3644,7 +3868,7 @@ namespace engine
       if ( !clInfo._capped && clInfo._maxSize )
       {
          clInfo._capped = TRUE ;
-         fieldMask |= CAT_MASK_CAPPED ;
+         fieldMask |= UTIL_CL_CAPPED_FIELD ;
       }
 
    done :
@@ -3654,9 +3878,9 @@ namespace engine
       goto done ;
    }
 
-   static INT32 _catBuildInitBound ( const BSONObj &shardingKey,
-                                     const Ordering & order,
-                                     BSONObj & lowBound, BSONObj & upBound )
+   INT32 catBuildInitRangeBound ( const BSONObj & shardingKey,
+                                  const Ordering & order,
+                                  BSONObj & lowBound, BSONObj & upBound )
    {
       INT32 index = 0 ;
       BSONObjBuilder lowBoundBD ;
@@ -3687,8 +3911,8 @@ namespace engine
       return SDB_OK ;
    }
 
-   static INT32 _catBuildHashBound( BSONObj &lowBound, BSONObj &upBound,
-                                    INT32 paritition )
+   INT32 catBuildInitHashBound ( BSONObj & lowBound, BSONObj & upBound,
+                                 INT32 paritition )
    {
       INT32 rc = SDB_OK ;
 
@@ -3698,13 +3922,31 @@ namespace engine
       return rc ;
    }
 
-   static INT32 _catBuildHashBound( BSONObj &lowBound, BSONObj &upBound,
-                                    INT32 beginBound, INT32 endBound )
+   INT32 catBuildHashBound ( BSONObj & lowBound, BSONObj & upBound,
+                             INT32 beginBound, INT32 endBound )
    {
       INT32 rc = SDB_OK ;
 
       lowBound = BSON("" << beginBound ) ;
       upBound = BSON("" << endBound )  ;
+
+      return rc ;
+   }
+
+   INT32 catBuildHashSplitTask ( const CHAR * collection,
+                                 const CHAR * srcGroup,
+                                 const CHAR * dstGroup,
+                                 UINT32 beginBound,
+                                 UINT32 endBound,
+                                 BSONObj & splitTask )
+   {
+      INT32 rc = SDB_OK ;
+
+      splitTask = BSON( CAT_COLLECTION_NAME << collection <<
+                        CAT_SOURCE_NAME << srcGroup <<
+                        CAT_TARGET_NAME << dstGroup <<
+                        CAT_SPLITVALUE_NAME << BSON( "" << beginBound ) <<
+                        CAT_SPLITENDVALUE_NAME << BSON( "" << endBound ) ) ;
 
       return rc ;
    }
@@ -3728,25 +3970,25 @@ namespace engine
       BSONObjBuilder builder ;
       CHAR szAttr[ 100 ] = { 0 } ;
 
-      if ( ( mask & CAT_MASK_COMPRESSED ) && clInfo._isCompressed )
+      if ( ( mask & UTIL_CL_COMPRESSED_FIELD ) && clInfo._isCompressed )
       {
          attribute |= DMS_MB_ATTR_COMPRESSED ;
       }
-      if ( ( mask & CAT_MASK_AUTOINDEXID ) && !clInfo._autoIndexId )
+      if ( ( mask & UTIL_CL_AUTOIDXID_FIELD ) && !clInfo._autoIndexId )
       {
          attribute |= DMS_MB_ATTR_NOIDINDEX ;
       }
-      if ( ( mask & CAT_MASK_CAPPED ) && clInfo._capped )
+      if ( ( mask & UTIL_CL_CAPPED_FIELD ) && clInfo._capped )
       {
          attribute |= DMS_MB_ATTR_CAPPED ;
       }
-      if ( ( mask & CAT_MASK_STRICTDATAMODE ) && clInfo._strictDataMode )
+      if ( ( mask & UTIL_CL_STRICTDATAMODE_FIELD ) && clInfo._strictDataMode )
       {
          attribute |= DMS_MB_ATTR_STRICTDATAMODE ;
       }
       mbAttr2String( attribute, szAttr, sizeof( szAttr ) - 1 ) ;
 
-      if ( mask & CAT_MASK_CLNAME )
+      if ( mask & UTIL_CL_NAME_FIELD )
       {
          builder.append( CAT_CATALOGNAME_NAME, clInfo._pCLName ) ;
       }
@@ -3757,7 +3999,7 @@ namespace engine
                       CAT_VERSION_BEGIN :
                       clInfo._version ) ;
 
-      if ( mask & CAT_MASK_REPLSIZE )
+      if ( mask & UTIL_CL_REPLSIZE_FIELD )
       {
          builder.append( CAT_CATALOG_W_NAME, clInfo._replSize ) ;
       }
@@ -3766,13 +4008,13 @@ namespace engine
       builder.append( FIELD_NAME_ATTRIBUTE_DESC, szAttr ) ;
 
       /// only record the options specified by user.
-      if ( ( mask & CAT_MASK_COMPRESSED ) && clInfo._isCompressed )
+      if ( ( mask & UTIL_CL_COMPRESSED_FIELD ) && clInfo._isCompressed )
       {
          builder.append( CAT_COMPRESSIONTYPE, clInfo._compressorType ) ;
          builder.append( FIELD_NAME_COMPRESSIONTYPE_DESC,
                          utilCompressType2String( clInfo._compressorType ) ) ;
       }
-      if ( mask & CAT_MASK_SHDKEY )
+      if ( mask & UTIL_CL_SHDKEY_FIELD )
       {
          builder.append( CAT_SHARDINGKEY_NAME, clInfo._shardingKey ) ;
          builder.appendBool( CAT_ENSURE_SHDINDEX, clInfo._enSureShardIndex ) ;
@@ -3821,7 +4063,7 @@ namespace engine
             cataItemBd.append ( CAT_CATALOGGROUPID_NAME, (INT32)grpID ) ;
             cataItemBd.append ( CAT_GROUPNAME_NAME, grpName ) ;
 
-            rc = _catBuildHashBound( lowBound, upBound, beginBound, endBound ) ;
+            rc = catBuildHashBound( lowBound, upBound, beginBound, endBound ) ;
             PD_RC_CHECK( rc, PDWARNING,
                          "Failed to build cata info bound, rc: %d",
                          rc ) ;
@@ -3870,13 +4112,13 @@ namespace engine
             if ( !clInfo._isHash )
             {
                Ordering order = Ordering::make( clInfo._shardingKey ) ;
-               rc = _catBuildInitBound ( clInfo._shardingKey, order ,
-                                         lowBound, upBound ) ;
+               rc = catBuildInitRangeBound ( clInfo._shardingKey, order ,
+                                             lowBound, upBound ) ;
             }
             else
             {
-               rc = _catBuildHashBound( lowBound, upBound,
-                                        clInfo._shardPartition ) ;
+               rc = catBuildInitHashBound( lowBound, upBound,
+                                           clInfo._shardPartition ) ;
             }
             PD_RC_CHECK( rc, PDWARNING,
                          "Failed to build cata info bound, rc: %d",
@@ -3889,32 +4131,32 @@ namespace engine
          sub.done () ;
       }
 
-      if ( mask & CAT_MASK_AUTOASPLIT )
+      if ( mask & UTIL_CL_AUTOSPLIT_FIELD )
       {
          builder.appendBool ( CAT_DOMAIN_AUTO_SPLIT, clInfo._autoSplit ) ;
       }
 
-      if ( mask & CAT_MASK_AUTOREBALAN )
+      if ( mask & UTIL_CL_AUTOREBALANCE_FIELD )
       {
          builder.appendBool ( CAT_DOMAIN_AUTO_REBALANCE, clInfo._autoRebalance ) ;
       }
 
-      if ( mask & CAT_MASK_AUTOINDEXID )
+      if ( mask & UTIL_CL_AUTOIDXID_FIELD )
       {
          builder.appendBool( CAT_AUTO_INDEX_ID, clInfo._autoIndexId ) ;
       }
 
-      if ( mask & CAT_MASK_CLMAXRECNUM )
+      if ( mask & UTIL_CL_MAXREC_FIELD )
       {
          builder.append( CAT_CL_MAX_RECNUM, (INT64)clInfo._maxRecNum ) ;
       }
 
-      if ( mask & CAT_MASK_CLMAXSIZE )
+      if ( mask & UTIL_CL_MAXSIZE_FIELD )
       {
          builder.append( CAT_CL_MAX_SIZE, (INT64)clInfo._maxSize ) ;
       }
 
-      if ( mask & CAT_MASK_CLOVERWRITE )
+      if ( mask & UTIL_CL_OVERWRITE_FIELD )
       {
          builder.appendBool( CAT_CL_OVERWRITE, clInfo._overwrite ) ;
       }

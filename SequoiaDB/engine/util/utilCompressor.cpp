@@ -43,28 +43,30 @@ namespace engine
 {
    utilCompressor* getCompressorByType( UTIL_COMPRESSOR_TYPE type )
    {
-      utilCompressor *compressor = NULL ;
+      utilCompressor * compressor = NULL ;
 
       static utilCompressorSnappy snappyCompressor ;
       static utilCompressorLZW lzwCompressor ;
       static utilCompressorLZ4 lz4Compressor ;
       static utilCompressorZlib zlibCompressor ;
+
       switch ( type )
       {
-         case UTIL_COMPRESSOR_LZW:
+         case UTIL_COMPRESSOR_SNAPPY :
+            compressor = &snappyCompressor ;
+            break ;
+         case UTIL_COMPRESSOR_LZW :
             compressor = &lzwCompressor ;
             break ;
-         case UTIL_COMPRESSOR_SNAPPY:
-            compressor = &snappyCompressor ;
-            break;
-         case UTIL_COMPRESSOR_LZ4:
+         case UTIL_COMPRESSOR_LZ4 :
             compressor = &lz4Compressor ;
-            break;
-         case UTIL_COMPRESSOR_ZLIB:
+            break ;
+         case UTIL_COMPRESSOR_ZLIB :
             compressor = &zlibCompressor ;
-            break;
-         default:
+            break ;
+         default :
             compressor = NULL ;
+            break ;
       }
 
       return compressor ;

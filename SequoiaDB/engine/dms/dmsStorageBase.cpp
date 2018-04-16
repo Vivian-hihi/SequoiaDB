@@ -1106,6 +1106,19 @@ namespace engine
       goto done ;
    }
 
+   INT32 _dmsStorageBase::setLobPageSize ( UINT32 lobPageSize )
+   {
+      INT32 rc = SDB_OK ;
+
+      _lobPageSize = lobPageSize ;
+      _pStorageInfo->_lobdPageSize = lobPageSize ;
+      _dmsHeader->_lobdPageSize = lobPageSize ;
+
+      flushHeader( TRUE ) ;
+
+      return rc ;
+   }
+
    INT32 _dmsStorageBase::_postOpen( INT32 cause )
    {
       INT32 rc = SDB_OK ;

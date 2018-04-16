@@ -55,6 +55,7 @@ namespace engine
       BOOLEAN     _openEmptyContext ;  // open context without sel & orderby ...
       BOOLEAN     _allCataGroups ;     // send to all catalog info groups,
                                        // don't use query to filter
+      BOOLEAN     _preRead ;           // enable pre-read for coord context
 
       coordQueryConf()
       {
@@ -62,6 +63,7 @@ namespace engine
          _updateAndGetCata = FALSE ;
          _openEmptyContext = FALSE ;
          _allCataGroups    = FALSE ;
+         _preRead          = TRUE ;
       }
    } ;
 

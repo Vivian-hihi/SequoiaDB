@@ -199,6 +199,9 @@ namespace engine
       virtual INT32 dumpExtOptions( dmsMBContext *context,
                                     BSONObj &extOptions ) ;
 
+      virtual INT32 setExtOptions ( dmsMBContext * context,
+                                    const BSONObj & extOptions ) ;
+
       OSS_INLINE dmsExtentInfo* getWorkExtInfo( UINT16 mbID ) ;
 
       virtual INT32 postDataRestored( dmsMBContext * context ) ;

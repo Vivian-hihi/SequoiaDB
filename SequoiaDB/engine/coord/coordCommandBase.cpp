@@ -487,6 +487,7 @@ namespace engine
       }
       queryConf._updateAndGetCata = firstUpdateCata ;
       queryConf._openEmptyContext = TRUE ;
+      queryConf._preRead = _flagCoordCtxPreRead() ;
 
       sendOpt._primary = TRUE ;
       sendOpt._pIgnoreRC = pIgnoreRC ;

@@ -1317,6 +1317,70 @@ namespace engine
 
             break ;
          }
+         case LOG_TYPE_ALTER :
+         {
+            len += ossSnprintf( outBuf + len, outSize - len,
+                                " Type   : %s(%d)"OSS_NEWLINE,
+                                "ALTER", LOG_TYPE_ALTER ) ;
+
+            dpsLogRecord::iterator itr ;
+            itr = this->find( DPS_LOG_PUBLIC_FULLNAME ) ;
+            if ( !itr.valid() )
+            {
+               len += ossSnprintf ( outBuf + len, outSize - len,
+                                    "*ERROR* : %s"OSS_NEWLINE,
+                                    "Failed to find fullname in record" ) ;
+               PD_LOG( PDERROR, "Failed to find fullname in record" ) ;
+               goto done ;
+            }
+            len += ossSnprintf ( outBuf + len, outSize - len,
+                                 " FullName : %s"OSS_NEWLINE,
+                                 itr.value() ) ;
+
+            itr = this->find( DPS_LOG_ALTER_OBJECT_TYPE ) ;
+            if ( !itr.valid() )
+            {
+               len += ossSnprintf ( outBuf + len, outSize - len,
+                                    "*ERROR* : %s"OSS_NEWLINE,
+                                    "Failed to find alter object type in record" ) ;
+               PD_LOG( PDERROR, "Failed to find alter object type in record" ) ;
+               goto done ;
+            }
+
+            {
+               INT32 type = *( INT32 * )( itr.value() ) ;
+               len += ossSnprintf ( outBuf + len, outSize - len,
+                                    " Type    : %d"OSS_NEWLINE,
+                                    type ) ;
+            }
+
+            itr = this->find( DPS_LOG_ALTER_OBJECT ) ;
+            if ( !itr.valid() )
+            {
+               len += ossSnprintf ( outBuf + len, outSize - len,
+                                    "*ERROR* : %s"OSS_NEWLINE,
+                                    "Failed to find alter object in record" ) ;
+               PD_LOG( PDERROR, "Failed to find alter object in record" ) ;
+               goto done ;
+            }
+
+            try
+            {
+               BSONObj obj( itr.value() ) ;
+               len += ossSnprintf ( outBuf + len, outSize - len,
+                                    " Alter : %s"OSS_NEWLINE,
+                                    obj.toString().c_str() ) ;
+            }
+            catch ( std::exception &e )
+            {
+               len += ossSnprintf ( outBuf + len, outSize - len,
+                                    "*ERROR* : %s: %s"OSS_NEWLINE,
+                                    "Invalid alter record", e.what() ) ;
+               goto done ;
+            }
+
+            break ;
+         }
          default:
          {
             // something goes wrong here, but let's just continue

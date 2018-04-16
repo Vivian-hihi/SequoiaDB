@@ -398,6 +398,18 @@ namespace engine
       return rs;
    }
 
+   /*
+      Local static variable define
+   */
+   static BSONObj s_idKeyObj = BSON( IXM_FIELD_NAME_KEY << BSON( DMS_ID_KEY_NAME << 1 ) <<
+                                     IXM_FIELD_NAME_NAME << IXM_ID_KEY_NAME <<
+                                     IXM_FIELD_NAME_UNIQUE << true <<
+                                     IXM_FIELD_NAME_V << 0 <<
+                                     IXM_FIELD_NAME_ENFORCED << true ) ;
+
+   BSONObj ixmGetIDIndexDefine ()
+   {
+      return s_idKeyObj ;
+   }
 
 }
-

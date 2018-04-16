@@ -46,6 +46,8 @@ using namespace bson ;
 
 namespace engine
 {
+   typedef std::vector< UINT32 > CAT_GROUP_LIST ;
+
    /*
     * _catCtxTaskBase define
     */
@@ -59,6 +61,8 @@ namespace engine
       void enableLocks () { _needLocks = TRUE ; }
 
       void disableLocks () { _needLocks = FALSE ; }
+
+      void disableUpdate () { _needUpdate = FALSE ; }
 
       virtual INT32 checkTask ( _pmdEDUCB *cb, catCtxLockMgr &lockMgr ) ;
 
@@ -282,6 +286,8 @@ namespace engine
       BOOLEAN _uniqueCheck ;
    } ;
 
+   typedef class _catCtxCreateIdxTask catCtxCreateIdxTask ;
+
    /*
     * _catCtxDropIdxTask define
     */
@@ -307,6 +313,8 @@ namespace engine
       std::string _idxName ;
       BSONObj _boIdx ;
    } ;
+
+   typedef class _catCtxDropIdxTask catCtxDropIdxTask ;
 
    /*
     * _catCtxDelCLsFromCSTask define
@@ -358,7 +366,7 @@ namespace engine
    protected :
       std::set<std::string> _mainCLLst ;
    } ;
+
 }
 
 #endif //CATCONTEXTBASETASK_HPP_
-

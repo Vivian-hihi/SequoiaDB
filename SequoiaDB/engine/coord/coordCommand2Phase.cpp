@@ -61,7 +61,7 @@ namespace engine
 
    coordCMDArguments* _coordCMD2Phase::_getArguments()
    {
-      return &_args ;
+      return NULL ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION( COORD_CMD2PHASE_EXE, "_coordCMD2Phase::execute" )
@@ -89,6 +89,7 @@ namespace engine
       CHAR *pRollbackMsgBuf = NULL ;
       INT32 rollbackMsgSize = 0 ;
 
+      coordCMDArguments arguments ;
       coordCMDArguments *pArguments = NULL ;
 
       contextID = -1 ;
@@ -99,7 +100,10 @@ namespace engine
        * 2. Sanity check for arguments
        ************************************************************************/
       pArguments = _getArguments() ;
-      PD_CHECK( pArguments, SDB_SYS, error, PDERROR, "Get arguments failed" ) ;
+      if ( NULL == pArguments )
+      {
+         pArguments = &arguments ;
+      }
 
       pArguments->_pBuf = buf ;
       // Extract message
@@ -488,7 +492,9 @@ namespace engine
 
       PD_TRACE_ENTRY ( COORD_CMD2PHASE_DOCOMMIT ) ;
 
-      rc = _processContext( cb, ppContext, -1 ) ;
+      rtnContextBuf buffObj ;
+
+      rc = _processContext( cb, ppContext, -1, buffObj ) ;
       if ( SDB_RTN_CONTEXT_NOTEXIST == rc )
       {
          PD_LOG( PDWARNING, "Do commit for command[%s] on [%s] failed, rc: %d",
@@ -503,7 +509,8 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION( COORD_CMD2PHASE_PROCESSCTX, "_coordCMD2Phase::_processContext" )
    INT32 _coordCMD2Phase::_processContext ( pmdEDUCB *cb,
                                             rtnContextCoord **ppContext,
-                                            SINT32 maxNumSteps )
+                                            SINT32 maxNumSteps,
+                                            rtnContextBuf & buffObj )
    {
       INT32 rc = SDB_OK ;
 
@@ -511,7 +518,6 @@ namespace engine
 
       pmdKRCB *pKrcb = pmdGetKRCB() ;
       _SDB_RTNCB *pRtncb = pKrcb->getRTNCB() ;
-      rtnContextBuf buffObj ;
 
       if ( !ppContext || !(*ppContext) )
       {

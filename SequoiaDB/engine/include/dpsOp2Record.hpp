@@ -285,7 +285,16 @@ namespace engine
    INT32 dpsRecord2LobTruncate( const CHAR *raw,
                                 const CHAR **fullName ) ;
 
+   INT32 dpsAlter2Record ( const CHAR * name,
+                           INT32 objectType,
+                           const bson::BSONObj & alterObject,
+                           dpsLogRecord & record ) ;
+
+   INT32 dpsRecord2Alter ( const CHAR * logRecord,
+                           const CHAR ** name,
+                           INT32 & objectType,
+                           bson::BSONObj & alterObject ) ;
+
 }
 
 #endif
-

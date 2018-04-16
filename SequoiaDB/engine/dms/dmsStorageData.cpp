@@ -102,7 +102,7 @@ namespace engine
       {
          // Step 1: Prepare the data, add OID and compress if necessary.
          recordData.setData( record.objdata(), record.objsize(),
-                             FALSE, TRUE ) ;
+                             UTIL_COMPRESSOR_INVALID, TRUE ) ;
          // verify whether the record got "_id" inside
          BSONElement ele = record.getField( DMS_ID_KEY_NAME ) ;
          const CHAR *pCheckErr = "" ;
@@ -134,7 +134,7 @@ namespace engine
                        record.objsize() - sizeof(UINT32) ) ;
             recordData.setData( pMergedData,
                                 oidEle.size() + record.objsize(),
-                                FALSE, TRUE ) ;
+                                UTIL_COMPRESSOR_INVALID, TRUE ) ;
             memReallocate = TRUE ;
          }
       }
@@ -228,7 +228,7 @@ namespace engine
          pRecord = recordRW.writePtr( 0 ) ;
 
          newRecordData.setData( newObj.objdata(), newObj.objsize(),
-                                FALSE, TRUE ) ;
+                                UTIL_COMPRESSOR_INVALID, TRUE ) ;
          dmsRecordSize = newRecordData.len() ;
 
          // compress data
@@ -254,7 +254,8 @@ namespace engine
 
                // set the compression data
                newRecordData.setData( compressedData, compressedDataSize,
-                                      TRUE, FALSE ) ;
+                                      compressorEntry->getCompressorType(),
+                                      FALSE ) ;
             }
          }
 
@@ -1016,14 +1017,15 @@ namespace engine
       }
 
       recordData.setData( pRecord->getData(), pRecord->getDataLength(),
-                          FALSE, TRUE ) ;
+                          UTIL_COMPRESSOR_INVALID, TRUE ) ;
 
       if ( pRecord->isCompressed() )
       {
          const CHAR *pUncompressData = NULL ;
          INT32 unCompressDataLen = 0 ;
          rc = dmsUncompress( cb, &_compressorEntry[ mbContext->mbID() ],
-                             pRecord->getData(), pRecord->getDataLength(),
+                             pRecord->getCompressType(), pRecord->getData(),
+                             pRecord->getDataLength(),
                              &pUncompressData, &unCompressDataLen ) ;
          if ( rc )
          {
@@ -1040,7 +1042,7 @@ namespace engine
             goto error ;
          }
          recordData.setData( pUncompressData, unCompressDataLen,
-                             FALSE, FALSE ) ;
+                             UTIL_COMPRESSOR_INVALID, FALSE ) ;
       }
       DMS_MON_OP_COUNT_INC( pMonAppCB, MON_DATA_READ, 1 ) ;
       DMS_MON_OP_COUNT_INC( pMonAppCB, MON_READ, 1 ) ;
@@ -1088,5 +1090,11 @@ namespace engine
    {
       return SDB_OK ;
    }
-}
 
+   INT32 _dmsStorageData::setExtOptions ( dmsMBContext * context,
+                                          const BSONObj & extOptions )
+   {
+      return SDB_OK ;
+   }
+
+}

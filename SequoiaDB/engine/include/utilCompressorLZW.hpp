@@ -62,6 +62,11 @@ namespace engine
                            CHAR *dest, UINT32 &destLen,
                            const utilDictHandle dictionary = NULL ) ;
 
+         virtual OSS_INLINE BOOLEAN needDictionay () const
+         {
+            return TRUE ;
+         }
+
       private:
          INT32 _compressLevelOne( utilLZWContext &context,
                                   const CHAR* source,

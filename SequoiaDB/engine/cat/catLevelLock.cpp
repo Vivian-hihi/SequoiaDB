@@ -40,6 +40,8 @@
 #include "catCommon.hpp"
 #include "rtn.hpp"
 
+using namespace std ;
+
 namespace engine
 {
 
@@ -477,6 +479,30 @@ namespace engine
    }
 
    /*
+      _catCSShardingLock implement
+    */
+   _catCSShardingLock::_catCSShardingLock ( const string & csName )
+   : _catOneLevelLock( CAT_LOCK_SHARDING, csName )
+   {
+   }
+
+   _catCSShardingLock::~_catCSShardingLock ()
+   {
+   }
+
+   /*
+      _catCLShardingLock implement
+    */
+   _catCLShardingLock::_catCLShardingLock ( const string & csName, const string & clName )
+   : _catTwoLevelLock( CAT_LOCK_SHARDING, csName, clName )
+   {
+   }
+
+   _catCLShardingLock::~_catCLShardingLock ()
+   {
+   }
+
+   /*
       _catGroupLock implement
    */
    _catGroupLock::_catGroupLock( const string &groupName )
@@ -557,6 +583,38 @@ namespace engine
       return _tryLockObject ( CAT_LOCK_DATA, csName, clFullName, mode ) ;
    }
 
+   BOOLEAN _catCtxLockMgr::tryLockCollectionSpaceSharding ( const string & csName,
+                                                            OSS_LATCH_MODE mode )
+   {
+      return _tryLockObject( CAT_LOCK_SHARDING, csName, mode ) ;
+   }
+
+   BOOLEAN _catCtxLockMgr::tryLockCollectionSharding ( const string & csName,
+                                                       const string & clFullName,
+                                                       OSS_LATCH_MODE mode )
+   {
+      return _tryLockObject( CAT_LOCK_SHARDING, csName, clFullName, mode ) ;
+   }
+
+   BOOLEAN _catCtxLockMgr::tryLockCollectionSharding ( const string & clFullName,
+                                                       OSS_LATCH_MODE mode )
+   {
+      INT32 rc = SDB_OK ;
+      CHAR csName[ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] = { 0 } ;
+
+      // Resolve collection space from collection full name
+      rc = rtnResolveCollectionSpaceName( clFullName.c_str(),
+                                          clFullName.size(),
+                                          csName,
+                                          DMS_COLLECTION_SPACE_NAME_SZ ) ;
+      if ( SDB_OK != rc )
+      {
+         return FALSE ;
+      }
+
+      return tryLockCollectionSharding( csName, clFullName, mode ) ;
+   }
+
    BOOLEAN _catCtxLockMgr::tryLockDomain (
          const std::string &domainName,
          OSS_LATCH_MODE mode )
@@ -596,6 +654,9 @@ namespace engine
       case CAT_LOCK_DOMAIN :
          pLock = SDB_OSS_NEW catDomainLock ( name ) ;
          break ;
+      case CAT_LOCK_SHARDING :
+         pLock = SDB_OSS_NEW catCSShardingLock( name ) ;
+         break ;
       default :
          break ;
       }
@@ -620,6 +681,9 @@ namespace engine
          break ;
       case CAT_LOCK_NODE :
          pLock = SDB_OSS_NEW catNodeLock ( parentName, name ) ;
+         break ;
+      case CAT_LOCK_SHARDING :
+         pLock = SDB_OSS_NEW catCLShardingLock( parentName, name ) ;
          break ;
       default :
          break ;

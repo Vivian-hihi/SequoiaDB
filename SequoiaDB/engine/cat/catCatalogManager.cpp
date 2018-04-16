@@ -580,8 +580,8 @@ namespace engine
                break ;
             case MSG_CAT_SPLIT_READY_REQ :
                // Generate task ID
-               taskID = _taskMgr.getTaskID() ;
-               rc = catSplitReady( boQuery, taskID, _pEduCB, w, returnGroupID, returnVersion ) ;
+               taskID = assignTaskID() ;
+               rc = catSplitReady( boQuery, taskID, TRUE, _pEduCB, w, returnGroupID, returnVersion ) ;
                break ;
             case MSG_CAT_SPLIT_CHGMETA_REQ :
                rc = catSplitChgMeta( boQuery, taskID, _pEduCB, w ) ;
@@ -929,6 +929,7 @@ namespace engine
       case MSG_CAT_DROP_COLLECTION_REQ :
       case MSG_CAT_CREATE_COLLECTION_SPACE_REQ :
       case MSG_CAT_DROP_SPACE_REQ :
+      case MSG_CAT_ALTER_CS_REQ :
       case MSG_CAT_ALTER_COLLECTION_REQ :
       case MSG_CAT_LINK_CL_REQ :
       case MSG_CAT_UNLINK_CL_REQ :
@@ -1083,6 +1084,7 @@ namespace engine
             rc = processCmdRmProcedures( pQuery ) ;
             break ;
          case MSG_CAT_DROP_SPACE_REQ :
+         case MSG_CAT_ALTER_CS_REQ :
          case MSG_CAT_CREATE_COLLECTION_REQ :
          case MSG_CAT_DROP_COLLECTION_REQ :
          case MSG_CAT_ALTER_COLLECTION_REQ :
@@ -1445,293 +1447,69 @@ namespace engine
 
       PD_TRACE_ENTRY ( SDB_CATALOGMGR_ALTERDOMAIN ) ;
 
-      BSONObj alterObj( pQuery ) ;
+      BSONObj alterObject( pQuery ) ;
+      BSONObj alterOptions ;
 
-      BSONElement eleDomainName ;
-      const CHAR *pDomainName = NULL ;
-      BSONObj domainObj ;
-      BSONElement eleOptions ;
-      BSONObjBuilder alterBuilder ;
-      BSONObjBuilder reqBuilder ;
-      BSONObj objReq ;
-      vector< string > vecGroups ;
+      BSONElement argElement ;
+      const CHAR * domain = NULL ;
 
-      catCtxLockMgr lockMgr ;
+      rtnAlterJob alterJob ;
 
       /// 1. be sure that the request is legal.
       /// 2. update the record of this domain.
 
-      eleDomainName = alterObj.getField( CAT_DOMAINNAME_NAME ) ;
-      if ( String != eleDomainName.type() )
+      argElement = alterObject.getField( CAT_DOMAINNAME_NAME ) ;
+      PD_CHECK( String == argElement.type(), SDB_INVALIDARG, error, PDERROR,
+                "Failed to alter domain: failed to get the field [%s] from query [%s]",
+                CAT_DOMAINNAME_NAME, alterObject.toString().c_str() ) ;
+      domain = argElement.valuestr() ;
+
+      PD_TRACE1( SDB_CATALOGMGR_ALTERDOMAIN, PD_PACK_STRING( domain ) ) ;
+
+      rc = alterJob.initialize( domain, RTN_ALTER_DOMAIN, alterObject ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to initialize alter job on "
+                   "domain [%s], rc: %d", domain, rc ) ;
+
+      if ( alterJob.isEmpty() )
       {
-         PD_LOG( PDERROR,
-                  "Failed to alter domain: "
-                  "failed to get the field [%s] from query [%s]",
-                  CAT_DOMAINNAME_NAME, alterObj.toString().c_str() ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
+         PD_CHECK( FALSE, SDB_INVALIDARG, error, PDERROR,
+                   "Failed to alter domain [%s]: failed to initialize alter job",
+                   domain ) ;
       }
-      pDomainName = eleDomainName.valuestr() ;
-
-      PD_TRACE1 ( SDB_CATALOGMGR_ALTERDOMAIN, PD_PACK_STRING(pDomainName) ) ;
-
-      eleOptions = alterObj.getField( CAT_OPTIONS_NAME ) ;
-      if ( Object != eleOptions.type() )
+      else
       {
-         PD_LOG( PDERROR,
-                 "Failed to alter domain: "
-                 "failed to get the field [%s] from query [%s]",
-                 CAT_OPTIONS_NAME, alterObj.toString().c_str() ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-
-      rc = catGetAndLockDomain( pDomainName, domainObj, _pEduCB,
-                                &lockMgr, EXCLUSIVE ) ;
-      PD_RC_CHECK( rc, PDERROR,
-                   "Failed to get domain [%s], rc: %d",
-                   pDomainName, rc ) ;
-
-      rc = catDomainOptionsExtract( eleOptions.embeddedObject(),
-                                    _pEduCB, &reqBuilder, &vecGroups ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR,
-                 "Failed to validate options object, rc: %d",
-                 rc ) ;
-         goto error ;
-      }
-
-      if ( !vecGroups.empty() )
-      {
-         // check group is active or not
-         rc = catCheckGroupsByName( vecGroups ) ;
-         PD_RC_CHECK( rc, PDERROR,
-                      "Failed to check groups for domain [%s], rc: %d",
-                      pDomainName, rc ) ;
-      }
-
-      // Lock data group which will be assigned to this domain
-      for ( UINT32 i = 0 ; i < vecGroups.size() ; ++i )
-      {
-         PD_CHECK( lockMgr.tryLockGroup( vecGroups[i], SHARED ),
-                   SDB_LOCK_FAILED, error, PDERROR,
-                   "Failed to lock group [%s]",
-                   vecGroups[i].c_str() );
-      }
-
-      objReq = reqBuilder.obj() ;
-
-      {
-         BSONElement groups = objReq.getField( CAT_GROUPS_NAME ) ;
-         if ( !groups.eoo() )
+         const RTN_ALTER_TASK_LIST & tasks = alterJob.getAlterTasks() ;
+         for ( RTN_ALTER_TASK_LIST::const_iterator iterTask = tasks.begin() ;
+               iterTask != tasks.end() ;
+               iterTask ++ )
          {
-            rc = _buildAlterGroups( domainObj, groups, alterBuilder ) ;
-            if ( SDB_OK != rc )
-            {
-               PD_LOG( PDERROR,
-                       "Failed to add groups to builder, rc: %d",
-                       rc ) ;
-               goto error ;
-            }
-         }
-      }
+            const rtnAlterTask * task = ( *iterTask ) ;
+            catCtxAlterDomainTask catTask( domain, task ) ;
+            catCtxLockMgr lockMgr ;
 
-      {
-         BSONElement autoSplit = objReq.getField( CAT_DOMAIN_AUTO_SPLIT ) ;
-         if ( !autoSplit.eoo() )
-         {
-            alterBuilder.append( autoSplit ) ;
-         }
-      }
+            rc = catTask.checkTask( _pEduCB, lockMgr ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to check alter task [%s] on "
+                         "domain [%s], rc: %d", task->getActionName(), domain,
+                         rc ) ;
 
-      {
-         BSONElement autoRebalance = objReq.getField( CAT_DOMAIN_AUTO_REBALANCE ) ;
-         if ( !autoRebalance.eoo() )
-         {
-            alterBuilder.append( autoRebalance ) ;
+            rc = catTask.execute( _pEduCB, _pDmsCB, _pDpsCB, _majoritySize() ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to execute alter task [%s] on "
+                         "domain [%s], rc: %d", task->getActionName(), domain,
+                         rc ) ;
          }
-      }
-
-      {
-         BSONObjBuilder matchBuilder ;
-         matchBuilder.append( eleDomainName ) ;
-         BSONObj alterObj = alterBuilder.obj() ;
-         BSONObj dummy ;
-         rc = rtnUpdate( CAT_DOMAIN_COLLECTION,
-                         matchBuilder.obj(),
-                         BSON( "$set" << alterObj ),
-                         dummy,
-                         0, _pEduCB, NULL ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR,
-                    "Failed to update domain info, rc: %d",
-                    rc ) ;
-            goto error ;
-         }
-
-         PD_LOG( PDDEBUG, "Altered domain [%s] to [%s]",
-                 pDomainName, alterObj.toString( FALSE, TRUE ).c_str() ) ;
       }
 
    done :
-      PD_TRACE_EXITRC ( SDB_CATALOGMGR_ALTERDOMAIN, rc ) ;
+      PD_TRACE_EXITRC( SDB_CATALOGMGR_ALTERDOMAIN, rc ) ;
       return rc ;
+
    error :
       goto done ;
    }
 
-   static INT32 _findGroupWillBeRemoved( const map<string, UINT32> &groupsInDomain,
-                                         const BSONElement &groupsInReq,
-                                         map<string, UINT32> &removed )
+   UINT64 catCatalogueManager::assignTaskID ()
    {
-      INT32 rc = SDB_OK ;
-      map<string, UINT32>::const_iterator itr = groupsInDomain.begin() ;
-      for ( ; itr != groupsInDomain.end(); itr++ )
-      {
-         BOOLEAN found = FALSE ;
-         /// ele mst be a array. we checked it in processCmdAlterDomain.
-         BSONObjIterator i( groupsInReq.embeddedObject() ) ;
-         while ( i.more() )
-         {
-            BSONElement ele = i.next() ;
-            if ( Object != ele.type() )
-            {
-               PD_LOG( PDERROR, "invalid groups info[%s]. it should be like",
-                       " {GroupID:int, GroupName:string}",
-                       groupsInReq.toString().c_str() ) ;
-               rc = SDB_SYS ;
-               goto error ;
-            }
-
-            {
-            BSONElement groupID =
-                    ele.embeddedObject().getField( CAT_GROUPID_NAME ) ;
-            if ( NumberInt != groupID.type() )
-            {
-               PD_LOG( PDERROR, "invalid groups info[%s]. it should be like",
-                       " {GroupID:int, GroupName:string}",
-                       groupsInReq.toString().c_str() ) ;
-               rc = SDB_SYS ;
-               goto error ;
-            }
-
-            if ( (UINT32)groupID.Int() == itr->second )
-            {
-               found = TRUE ;
-               break ;
-            }
-            }
-         }
-
-         if ( !found )
-         {
-            removed.insert( std::make_pair( itr->first, itr->second ) ) ;
-         }
-      }
-   done:
-      return rc ;
-   error:
-      goto done ;
+      return _taskMgr.getTaskID() ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR__BUILDALTERGROUPS, "catCatalogueManager::_buildAlterGroups" )
-   INT32 catCatalogueManager::_buildAlterGroups( const BSONObj &domain,
-                                                 const BSONElement &ele,
-                                                 BSONObjBuilder &builder )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB_CATALOGMGR__BUILDALTERGROUPS ) ;
-      map<string, UINT32> groupsInDomain ;
-      map<string, UINT32> toBeRemoved ;
-      BSONObj objToBeRemoved ;
-      BSONArrayBuilder arrBuilder ;
-
-      rc = catGetDomainGroups( domain, groupsInDomain ) ;
-      if ( SDB_CAT_NO_GROUP_IN_DOMAIN == rc )
-      {
-         /// empty domain
-         rc = SDB_OK ;
-      }
-      else if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to get groups from domain object:%d", rc ) ;
-         goto error ;
-      }
-
-      /// be sure that no data(of this domain) on the group witch will be remove from domain.
-      /// the groups will be added to domain are checked at before.
-      rc = _findGroupWillBeRemoved( groupsInDomain,
-                                    ele,
-                                    toBeRemoved ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to get the groups those to be removed:%d", rc) ;
-         goto error ;
-      }
-
-      if ( !toBeRemoved.empty() )
-      {
-         objToBeRemoved = arrBuilder.arr() ;
-         vector< string > collectionSpaces ;
-
-         /// Get collection spaces for domain
-         rc = catGetDomainCSs ( domain, _pEduCB, collectionSpaces ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "Failed to get collection spaces for domain:%d",
-                    rc ) ;
-            goto error ;
-         }
-         for ( UINT32 i = 0 ; i < collectionSpaces.size() ; ++i )
-         {
-            /// For each collection space:
-            /// 1. Get groups from collections
-            /// 2. Get groups under splitting tasks
-            vector< UINT32 > groups ;
-            rc = catGetCSGroupsFromCLs( collectionSpaces[i].c_str(),
-                                        _pEduCB,
-                                        groups,
-                                        FALSE ) ;
-            PD_RC_CHECK( rc, PDERROR,
-                         "Get collection space[%s] all groups failed, rc: %d",
-                         collectionSpaces[i].c_str(), rc ) ;
-            rc = catGetCSGroupsFromTasks( collectionSpaces[i].c_str(),
-                                          _pEduCB,
-                                          groups ) ;
-            PD_RC_CHECK( rc, PDERROR,
-                         "Get collection space[%s] all groups in task failed, "
-                         "rc: %d", collectionSpaces[i].c_str(), rc ) ;
-            /// Check whether the groups to be removed have data
-            if ( 0 == groups.size() )
-            {
-               continue ;
-            }
-            for ( map<string, UINT32>::const_iterator itr = toBeRemoved.begin();
-                  itr != toBeRemoved.end();
-                  itr++ )
-            {
-               if ( find( groups.begin(),
-                          groups.end(),
-                          (INT32)itr->second ) != groups.end() )
-               {
-                  PD_LOG( PDERROR, "clear data(of this domain) before remove it "
-                          "from domain. groups to be removed[%s]",
-                          objToBeRemoved.toString( TRUE, TRUE ).c_str() ) ;
-                  rc = SDB_DOMAIN_IS_OCCUPIED ;
-                  goto error ;
-               }
-            }
-         }
-      }
-
-      builder.append( ele ) ;
-   done:
-      PD_TRACE_EXITRC( SDB_CATALOGMGR__BUILDALTERGROUPS, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
 }
-

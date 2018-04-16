@@ -467,17 +467,6 @@ namespace engine
    }
 
    /*
-      Local static variable define
-   */
-   static BSONObj s_idKeyObj = BSON( IXM_FIELD_NAME_KEY <<
-                                     BSON( DMS_ID_KEY_NAME << 1 ) <<
-                                     IXM_FIELD_NAME_NAME << IXM_ID_KEY_NAME
-                                     << IXM_FIELD_NAME_UNIQUE <<
-                                     true << IXM_FIELD_NAME_V << 0 <<
-                                     IXM_FIELD_NAME_ENFORCED << true ) ;
-
-
-   /*
       _dmsStorageDataCommon implement
    */
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACOMMON, "_dmsStorageDataCommon::_dmsStorageDataCommon" )
@@ -709,10 +698,13 @@ namespace engine
       const dmsDictExtent *dictExtent = NULL ;
       dmsExtentID dictExtID = _dmsMME->_mbList[mbID]._dictExtentID ;
       UTIL_COMPRESSOR_TYPE type =
-         ( UTIL_COMPRESSOR_TYPE )_dmsMME->_mbList[mbID]._compressorType ;
+            ( UTIL_COMPRESSOR_TYPE )_dmsMME->_mbList[mbID]._compressorType ;
       utilCompressor *compressor = NULL ;
 
       dmsCompressorGuard compGuard( &_compressorEntry[mbID], EXCLUSIVE ) ;
+
+      // Set the compress flags whether the collection is compressed or not
+      _compressorEntry[mbID].setFlags( _dmsMME->_mbList[mbID]._compressFlags ) ;
 
       /*
        * If the compression type is lzw and the dictionary has not been created,
@@ -724,18 +716,12 @@ namespace engine
       }
 
       compressor = getCompressorByType( type ) ;
-      SDB_ASSERT( compressor, "compressor pointer should not be NULL" ) ;
       if ( !compressor )
       {
-         rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "Failed to get compressor for collection[%s], "
-                 "type: %d, rc: %d", _dmsMME->_mbList[mbID]._collectionName,
-                 type, rc ) ;
-         goto error ;
+         _compressorEntry[mbID].setCompressor( compressor ) ;
       }
-      _compressorEntry[mbID].setCompressor( compressor ) ;
 
-      if ( UTIL_COMPRESSOR_LZW == type )
+      if ( DMS_INVALID_EXTENT != dictExtID )
       {
          dmsExtRW rw = extent2RW( dictExtID, mbID ) ;
          rw.setNothrow( TRUE ) ;
@@ -753,10 +739,65 @@ namespace engine
                                                     dictExtent->_blockSize ) +
                                     DMS_DICTEXTENT_HEADER_SZ ) ) ;
       }
+
    done:
       PD_TRACE_EXITRC( SDB__DMSSTORAGEDATACOMMON__INITCOMPRESSORENTRY, rc ) ;
       return rc ;
    error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACOMMON__SETCOMPRESSORENTRY, "_dmsStorageDataCommon::_setCompressorEntry" )
+   INT32 _dmsStorageDataCommon::_setCompressorEntry ( UINT16 mbID )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__DMSSTORAGEDATACOMMON__SETCOMPRESSORENTRY ) ;
+
+      const dmsDictExtent * dictExtent = NULL ;
+      dmsExtentID dictExtID = _dmsMME->_mbList[mbID]._dictExtentID ;
+      UTIL_COMPRESSOR_TYPE type =
+            ( UTIL_COMPRESSOR_TYPE )_dmsMME->_mbList[mbID]._compressorType ;
+
+      dmsCompressorGuard compGuard( &_compressorEntry[mbID], EXCLUSIVE ) ;
+
+      _compressorEntry[ mbID ].setFlags( _dmsMME->_mbList[mbID]._compressFlags ) ;
+
+      if ( UTIL_COMPRESSOR_LZW == type && DMS_INVALID_EXTENT == dictExtID )
+      {
+         // Push the dictionary job later, set NULL for temporary
+         _compressorEntry[ mbID ].setCompressor( NULL ) ;
+         goto done ;
+      }
+      else
+      {
+         utilCompressor * compressor = getCompressorByType( type ) ;
+         _compressorEntry[ mbID ].setCompressor( compressor ) ;
+      }
+
+      if ( DMS_INVALID_EXTENT != dictExtID )
+      {
+         dmsExtRW rw = extent2RW( dictExtID, mbID ) ;
+         rw.setNothrow( TRUE ) ;
+         dictExtent = rw.readPtr<dmsDictExtent>() ;
+         PD_CHECK( NULL != dictExtent && dictExtent->validate( mbID ),
+                   SDB_DMS_CORRUPTED_EXTENT, error, PDERROR,
+                   "Dictionary extent is invalid. Extent id: %d",
+                   dictExtID ) ;
+
+         _compressorEntry[mbID].setDictionary(
+            (const utilDictHandle)( beginFixedAddr( dictExtID,
+                                                    dictExtent->_blockSize ) +
+                                    DMS_DICTEXTENT_HEADER_SZ ) ) ;
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB__DMSSTORAGEDATACOMMON__SETCOMPRESSORENTRY, rc ) ;
+      return rc ;
+
+   error :
+      // On error, set to NULL for safety
+      _compressorEntry[ mbID ].setCompressor( NULL ) ;
       goto done ;
    }
 
@@ -905,9 +946,7 @@ namespace engine
       /* Initialize compressor entries for collections. */
       for ( UINT16 i = 0 ; i < DMS_MME_SLOTS ; ++i )
       {
-         if ( DMS_IS_MB_INUSE( _dmsMME->_mbList[i]._flag ) &&
-              OSS_BIT_TEST( _dmsMME->_mbList[i]._attributes,
-                               DMS_MB_ATTR_COMPRESSED ) )
+         if ( DMS_IS_MB_INUSE( _dmsMME->_mbList[i]._flag ) )
          {
             rc = _initCompressorEntry( i ) ;
             PD_RC_CHECK( rc, PDERROR,
@@ -2082,7 +2121,7 @@ namespace engine
       // create $id index[s_idKeyObj]
       if ( !OSS_BIT_TEST( attributes, DMS_MB_ATTR_NOIDINDEX ) )
       {
-         rc = _pIdxSU->createIndex( context, s_idKeyObj, cb, NULL, TRUE ) ;
+         rc = _pIdxSU->createIndex( context, ixmGetIDIndexDefine(), cb, NULL, TRUE ) ;
          PD_RC_CHECK( rc, PDERROR, "Create $id index failed in collection[%s], "
                       "rc: %d", pName, rc ) ;
       }
@@ -2798,7 +2837,8 @@ namespace engine
 
                   // set the compression data
                   recordData.setData( compressedData, compressedDataSize,
-                                      TRUE, FALSE ) ;
+                                      compressorEntry->getCompressorType(),
+                                      FALSE ) ;
                }
                else if ( rc )
                {
@@ -3083,7 +3123,7 @@ namespace engine
             {
                recordData.setData( (const CHAR*)deletedDataPtr,
                                    *(UINT32*)deletedDataPtr,
-                                   FALSE, TRUE ) ;
+                                   UTIL_COMPRESSOR_INVALID, TRUE ) ;
                if ( pRecord->isCompressed() )
                {
                   recordData.setOrgData( NULL, _getRecordDataLen( pRecord ) ) ;
@@ -3305,7 +3345,7 @@ namespace engine
          {
             recordData.setData( (const CHAR*)updatedDataPtr,
                                 *(UINT32*)updatedDataPtr,
-                                FALSE, TRUE ) ;
+                                UTIL_COMPRESSOR_INVALID, TRUE ) ;
             if ( pRecord->isCompressed() )
             {
                recordData.setOrgData( NULL, _getRecordDataLen( pRecord ) ) ;
@@ -3584,10 +3624,11 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB__DMSSTORAGEDATACOMMON_SETCOMPRESSOR ) ;
 
+      UINT16 mbID = context->mbID() ;
+
       if ( OSS_BIT_TEST( context->mb()->_attributes,
                          DMS_MB_ATTR_COMPRESSED ) )
       {
-         UINT16 mbID = context->mbID() ;
          UTIL_COMPRESSOR_TYPE type =
             (UTIL_COMPRESSOR_TYPE)context->mb()->_compressorType ;
 
@@ -3598,6 +3639,9 @@ namespace engine
             _compressorEntry[mbID].setCompressor( getCompressorByType( type ) ) ;
          }
       }
+
+      _compressorEntry[mbID].setFlags( context->mb()->_compressFlags ) ;
+
       PD_TRACE_EXIT( SDB__DMSSTORAGEDATACOMMON_SETCOMPRESSOR ) ;
    }
 
@@ -3709,6 +3753,7 @@ namespace engine
          compressorEntry->setDictionary(
             (const utilDictHandle)( beginFixedAddr( dictExtID, pageNum ) +
                                     DMS_DICTEXTENT_HEADER_SZ ) ) ;
+         compressorEntry->setFlags( context->mb()->_compressFlags ) ;
       }
 
    done:

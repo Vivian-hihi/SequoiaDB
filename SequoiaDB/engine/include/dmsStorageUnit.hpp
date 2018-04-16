@@ -283,8 +283,9 @@ namespace engine
          INT32 remove () ;
 
          INT32 renameCS( const CHAR *pNewName ) ;
-         dmsStorageDataCommon *data() { return _pDataSu ; }
+         INT32 setLobPageSize ( UINT32 lobPageSize ) ;
 
+         dmsStorageDataCommon *data() { return _pDataSu ; }
          dmsStorageIndex   *index() { return _pIndexSu ; }
          dmsStorageLob     *lob() { return _pLobSu ; }
          utilCacheUnit     *cacheUnit() { return _pCacheUnit ; }
@@ -473,9 +474,26 @@ namespace engine
                                           UTIL_COMPRESSOR_TYPE &compType,
                                           dmsMBContext *context = NULL ) ;
 
+         INT32    setCollectionCompType ( const CHAR * pName,
+                                          UTIL_COMPRESSOR_TYPE compType,
+                                          dmsMBContext * context = NULL ) ;
+
+         INT32    setCollectionStrictDataMode ( const CHAR * pName,
+                                                BOOLEAN strictDataMode,
+                                                dmsMBContext * context = NULL ) ;
+
+         INT32    canSetCollectionCompressor ( dmsMBContext * context ) ;
+         INT32    setCollectionCompressor ( const CHAR * pName,
+                                            UTIL_COMPRESSOR_TYPE compressType,
+                                            dmsMBContext * context = NULL ) ;
+
          INT32    getCollectionExtOptions( const CHAR *pName,
                                            BSONObj &extOptions,
                                            dmsMBContext *context = NULL ) ;
+
+         INT32    setCollectionExtOptions ( const CHAR * pName,
+                                            const BSONObj & extOptions,
+                                            dmsMBContext * context = NULL ) ;
 
          //loadExtentA is not init extent records
          INT32    loadExtentA ( dmsMBContext *mbContext, const CHAR *pBuffer,

@@ -2418,5 +2418,86 @@ namespace engine
       goto done ;
    }
 
-}
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DPS_ALTER2RECORD, "dpsAlter2Record" )
+   INT32 dpsAlter2Record ( const CHAR * name,
+                           INT32 objectType,
+                           const bson::BSONObj & alterObject,
+                           dpsLogRecord & record )
+   {
+      INT32 rc = SDB_OK ;
 
+      PD_TRACE_ENTRY( SDB__DPS_ALTER2RECORD ) ;
+
+      dpsLogRecordHeader & header = record.head() ;
+
+      header._type = LOG_TYPE_ALTER ;
+
+      rc = record.push( DPS_LOG_PUBLIC_FULLNAME,
+                        ossStrlen( name ) + 1,
+                        name ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to push name to record, rc: %d", rc ) ;
+
+      rc = record.push( DPS_LOG_ALTER_OBJECT_TYPE, sizeof( INT32 ),
+                        ( const CHAR * )( &objectType ) ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to push alter objec type to record, "
+                   "rc: %d", rc ) ;
+
+      rc = record.push( DPS_LOG_ALTER_OBJECT, alterObject.objsize(),
+                        alterObject.objdata() ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to push alter object to record, "
+                   "rc: %d", rc ) ;
+
+      header._length = record.alignedLen() ;
+
+   done :
+      PD_TRACE_EXITRC( SDB__DPS_ALTER2RECORD, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( SDB__DPS_RECORD2ALTER, "dpsRecord2Alter" )
+   INT32 dpsRecord2Alter ( const CHAR * logRecord,
+                           const CHAR ** name,
+                           INT32 & objectType,
+                           bson::BSONObj & alterObject )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__DPS_RECORD2ALTER ) ;
+
+      SDB_ASSERT( NULL != logRecord, "Record can't be NULL" ) ;
+
+      dpsLogRecord record ;
+      dpsLogRecord::iterator iterRecord ;
+
+      rc = record.load( logRecord ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to load ix create record, rc: %d",rc ) ;
+
+      iterRecord = record.find( DPS_LOG_PUBLIC_FULLNAME ) ;
+      PD_CHECK( iterRecord.value(), SDB_SYS, error, PDERROR,
+                "Failed to find tag name in record" ) ;
+
+      ( *name ) = iterRecord.value() ;
+
+      iterRecord = record.find( DPS_LOG_ALTER_OBJECT_TYPE ) ;
+      PD_CHECK( iterRecord.value(), SDB_SYS, error, PDERROR,
+                "Failed to find tag alter object type in record" ) ;
+
+      objectType = *( (INT32 *)( iterRecord.value() ) ) ;
+
+      iterRecord = record.find( DPS_LOG_ALTER_OBJECT ) ;
+      PD_CHECK( iterRecord.value(), SDB_SYS, error, PDERROR,
+                "Failed to find tag alter object in record" ) ;
+
+      alterObject = BSONObj( iterRecord.value() ) ;
+
+   done :
+      PD_TRACE_EXITRC( SDB__DPS_RECORD2ALTER, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+}

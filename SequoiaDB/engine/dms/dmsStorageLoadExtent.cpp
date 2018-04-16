@@ -148,7 +148,7 @@ namespace engine
       try
       {
          recordData.setData( record.objdata(), record.objsize(),
-                             FALSE, TRUE ) ;
+                             UTIL_COMPRESSOR_INVALID, TRUE ) ;
          /* (0) */
          // verify whether the record got "_id" inside
          BSONElement ele = record.getField ( DMS_ID_KEY_NAME ) ;
@@ -183,7 +183,7 @@ namespace engine
                        record.objsize() - sizeof(UINT32) ) ;
             recordData.setData( pNewRecordData,
                                 oidEle.size() + record.objsize(),
-                                FALSE, TRUE ) ;
+                                UTIL_COMPRESSOR_INVALID, TRUE ) ;
             record = BSONObj( pNewRecordData ) ;
          }
          dmsrecordSize = recordData.len() ;
@@ -214,7 +214,8 @@ namespace engine
                dmsrecordSize = compressedDataSize + sizeof(UINT32) ;
                // set the compression data
                recordData.setData( compressedData, compressedDataSize,
-                                   TRUE, FALSE ) ;
+                                   compressorEntry->getCompressorType(),
+                                   FALSE ) ;
             }
             else if ( rc )
             {

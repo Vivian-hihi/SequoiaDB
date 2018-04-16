@@ -146,6 +146,52 @@ do                                                            \
       return rc ;
    }
 
+   static INT32 _sdbBuildAlterObject ( const CHAR * taskName,
+                                       const BSONObj * options,
+                                       BOOLEAN allowNullArgs,
+                                       BSONObj & alterObject )
+   {
+      INT32 rc = SDB_OK ;
+
+      try
+      {
+         BSONObjBuilder builder ;
+         BSONObjBuilder alterBuilder( builder.subobjStart( FIELD_NAME_ALTER ) ) ;
+
+         alterBuilder.append( FIELD_NAME_NAME, taskName ) ;
+
+         if ( NULL == options )
+         {
+            if ( allowNullArgs )
+            {
+               alterBuilder.appendNull( FIELD_NAME_ARGS ) ;
+            }
+            else
+            {
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
+         }
+         else
+         {
+            alterBuilder.append( FIELD_NAME_ARGS, *options ) ;
+         }
+
+         alterBuilder.done() ;
+         alterObject = builder.obj() ;
+      }
+      catch ( exception & e )
+      {
+         rc = SDB_DRIVER_BSON_ERROR ;
+         goto error ;
+      }
+
+   done :
+      return rc ;
+   error :
+      goto done ;
+   }
+
    /*
     * sdbCursorImpl
     * Cursor Implementation
@@ -2694,9 +2740,9 @@ error:
       collectionS = string (_collectionFullName) ;
       try
       {
-         bob.append( FIELD_NAME_ALTER_TYPE, SDB_ALTER_CL ) ;
+         bob.append( FIELD_NAME_ALTER_TYPE, SDB_CATALOG_CL ) ;
          bob.append( FIELD_NAME_VERSION, SDB_ALTER_VERSION ) ;
-         bob.append ( FIELD_NAME_NAME, collectionS ) ;
+         bob.append( FIELD_NAME_NAME, collectionS ) ;
 
          ele = options.getField( FIELD_NAME_ALTER ) ;
          if ( Object == ele.type() )
@@ -2792,6 +2838,33 @@ error:
    error :
       goto done ;
 
+   }
+
+   INT32 _sdbCollectionImpl::_alterInternal ( const CHAR * taskName,
+                                              const BSONObj * arguments,
+                                              BOOLEAN allowNullArgs )
+   {
+      INT32 rc = SDB_OK ;
+
+      BSONObj alterObject ;
+
+      rc = _sdbBuildAlterObject( taskName, arguments, allowNullArgs, alterObject ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+      rc = alterCollection( alterObject ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+   done :
+      return rc ;
+
+   error :
+      goto done ;
    }
 
    INT32 _sdbCollectionImpl::alterCollection ( const bson::BSONObj &options )
@@ -3622,56 +3695,37 @@ error:
 
    INT32 _sdbCollectionImpl::createIdIndex( const bson::BSONObj &options )
    {
-      INT32 rc = SDB_OK ;
-      BSONObjBuilder bob ;
-      BSONObj obj ;
-      BSONObj subObj ;
-
-      bob.append( FIELD_NAME_NAME, SDB_ALTER_CRT_ID_INDEX ) ;
-      if ( options.isEmpty() )
-      {
-         bob.appendNull( FIELD_NAME_ARGS ) ;
-      }
-      else
-      {
-         bob.append( FIELD_NAME_ARGS, options ) ;
-      }
-      subObj = bob.obj() ;
-      obj = BSON( FIELD_NAME_ALTER << subObj ) ;
-
-      rc = alterCollection( obj ) ;
-      if ( SDB_OK != rc )
-      {
-         goto error ;
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
+      return _alterInternal( SDB_ALTER_CL_CRT_ID_INDEX, &options, FALSE ) ;
    }
 
    INT32 _sdbCollectionImpl::dropIdIndex()
    {
-      INT32 rc = SDB_OK ;
-      BSONObjBuilder bob ;
-      BSONObj obj ;
-      BSONObj subObj ;
+      return _alterInternal( SDB_ALTER_CL_DROP_ID_INDEX, NULL, TRUE ) ;
+   }
 
-      bob.append( FIELD_NAME_NAME, SDB_ALTER_DROP_ID_INDEX ) ;
-      bob.appendNull( FIELD_NAME_ARGS ) ;
-      subObj = bob.obj() ;
-      obj = BSON( FIELD_NAME_ALTER << subObj ) ;
-      rc = alterCollection( obj ) ;
-      if ( SDB_OK != rc )
-      {
-         goto error ;
-      }
+   INT32 _sdbCollectionImpl::enableSharding ( const bson::BSONObj & options )
+   {
+      return _alterInternal( SDB_ALTER_CL_ENABLE_SHARDING, &options, FALSE ) ;
+   }
 
-   done:
-      return rc ;
-   error:
-      goto done ;
+   INT32 _sdbCollectionImpl::disableSharding ()
+   {
+      return _alterInternal( SDB_ALTER_CL_DISABLE_SHARDING, NULL, TRUE ) ;
+   }
+
+   INT32 _sdbCollectionImpl::enableCompression ( const bson::BSONObj & options )
+   {
+      return _alterInternal( SDB_ALTER_CL_ENABLE_COMPRESS, &options, TRUE ) ;
+   }
+
+   INT32 _sdbCollectionImpl::disableCompression ()
+   {
+      return _alterInternal( SDB_ALTER_CL_DISABLE_COMPRESS, NULL, TRUE ) ;
+   }
+
+   INT32 _sdbCollectionImpl::setAttributes ( const bson::BSONObj & options )
+   {
+      return _alterInternal( SDB_ALTER_CL_SET_ATTR, &options, FALSE ) ;
    }
 
    /*
@@ -5127,6 +5181,126 @@ error :
       goto done ;
    }
 
+   INT32 _sdbCollectionSpaceImpl::alterCollectionSpace ( const BSONObj & options )
+   {
+      INT32 rc            = SDB_OK ;
+
+      BOOLEAN result      = FALSE ;
+      BSONObjBuilder bob ;
+      BSONElement ele ;
+      BSONObj newObj ;
+      string collectionSpaceS ;
+      string command = string ( CMD_ADMIN_PREFIX CMD_NAME_ALTER_COLLECTION_SPACE ) ;
+
+      // check
+      if ( !_connection || '\0' == _collectionSpaceName[0] )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      // build bson
+      collectionSpaceS = string( _collectionSpaceName ) ;
+      try
+      {
+         bob.append( FIELD_NAME_ALTER_TYPE, SDB_CATALOG_CS ) ;
+         bob.append( FIELD_NAME_VERSION, SDB_ALTER_VERSION ) ;
+         bob.append( FIELD_NAME_NAME, collectionSpaceS ) ;
+
+         ele = options.getField( FIELD_NAME_ALTER ) ;
+         if ( Object == ele.type() )
+         {
+            bob.append( ele ) ;
+         }
+         else
+         {
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
+         ele = options.getField( FIELD_NAME_OPTIONS ) ;
+         if ( Object == ele.type() )
+         {
+            bob.append( ele ) ;
+         }
+         else if ( EOO != ele.type() )
+         {
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
+         newObj = bob.obj() ;
+      }
+      catch ( std::exception )
+      {
+         rc = SDB_DRIVER_BSON_ERROR ;
+         goto error ;
+      }
+
+      // run command
+      rc = _connection->_runCommand ( command.c_str(), result, &newObj ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+   done :
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   INT32 _sdbCollectionSpaceImpl::setDomain ( const BSONObj & options )
+   {
+      return _alterInternal( SDB_ALTER_CS_SET_DOMAIN, &options, FALSE ) ;
+   }
+
+   INT32 _sdbCollectionSpaceImpl::removeDomain ()
+   {
+      return _alterInternal( SDB_ALTER_CS_REMOVE_DOMAIN, NULL, TRUE ) ;
+   }
+
+   INT32 _sdbCollectionSpaceImpl::enableCapped ()
+   {
+      return _alterInternal( SDB_ALTER_CS_ENABLE_CAPPED, NULL, TRUE ) ;
+   }
+
+   INT32 _sdbCollectionSpaceImpl::disableCapped ()
+   {
+      return _alterInternal( SDB_ALTER_CS_DISABLE_CAPPED, NULL, TRUE ) ;
+   }
+
+   INT32 _sdbCollectionSpaceImpl::setAttributes ( const BSONObj & options )
+   {
+      return _alterInternal( SDB_ALTER_CS_SET_ATTR, &options, FALSE ) ;
+   }
+
+   INT32 _sdbCollectionSpaceImpl::_alterInternal ( const CHAR * taskName,
+                                                   const BSONObj * arguments,
+                                                   BOOLEAN allowNullArgs )
+   {
+      INT32 rc = SDB_OK ;
+
+      BSONObj alterObject ;
+
+      rc = _sdbBuildAlterObject( taskName, arguments, allowNullArgs, alterObject ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+      rc = alterCollectionSpace( alterObject ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+   done :
+      return rc ;
+   error :
+      goto done ;
+   }
+
    /*
     * sdbDomainImpl
     * SequoiaDB Domain Implementation
@@ -5191,16 +5365,113 @@ error :
 
    INT32 _sdbDomainImpl::alterDomain ( const bson::BSONObj &options )
    {
-      INT32 rc       = SDB_OK ;
-      BOOLEAN result = FALSE ;
+      INT32 rc            = SDB_OK ;
+      BSONElement ele ;
+
+      ele = options.getField( FIELD_NAME_ALTER ) ;
+      if ( EOO == ele.type() )
+      {
+         rc = _alterDomainV1( options ) ;
+      }
+      else
+      {
+         rc = _alterDomainV2( options ) ;
+      }
+
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+   done :
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   INT32 _sdbDomainImpl::_alterDomainV2 ( const bson::BSONObj & options )
+   {
+      INT32 rc            = SDB_OK ;
+
+      BOOLEAN result      = FALSE ;
+      BSONObjBuilder bob ;
+      BSONElement ele ;
       BSONObj newObj ;
-      BSONObjBuilder ob ;
+      string domainS ;
       string command = string ( CMD_ADMIN_PREFIX CMD_NAME_ALTER_DOMAIN ) ;
+
+      // check
       if ( !_connection || '\0' == _domainName[0] )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
       }
+
+      // build bson
+      domainS = string( _domainName ) ;
+      try
+      {
+         bob.append( FIELD_NAME_ALTER_TYPE, SDB_CATALOG_DOMAIN ) ;
+         bob.append( FIELD_NAME_VERSION, SDB_ALTER_VERSION ) ;
+         bob.append( FIELD_NAME_NAME, domainS ) ;
+
+         ele = options.getField( FIELD_NAME_ALTER ) ;
+         if ( Object == ele.type() )
+         {
+            bob.append( ele ) ;
+         }
+         else
+         {
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
+         ele = options.getField( FIELD_NAME_OPTIONS ) ;
+         if ( Object == ele.type() )
+         {
+            bob.append( ele ) ;
+         }
+         else if ( EOO != ele.type() )
+         {
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
+         newObj = bob.obj() ;
+      }
+      catch ( std::exception )
+      {
+         rc = SDB_DRIVER_BSON_ERROR ;
+         goto error ;
+      }
+
+      // run command
+      rc = _connection->_runCommand( command.c_str(), result, &newObj ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+   done :
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   INT32 _sdbDomainImpl::_alterDomainV1 ( const bson::BSONObj & options )
+   {
+      INT32 rc       = SDB_OK ;
+      BOOLEAN result = FALSE ;
+      BSONObj newObj ;
+      BSONObjBuilder ob ;
+      string command = string ( CMD_ADMIN_PREFIX CMD_NAME_ALTER_DOMAIN ) ;
+
+      if ( !_connection || '\0' == _domainName[0] )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
       // build bson
       try
       {
@@ -5213,6 +5484,7 @@ error :
          rc = SDB_DRIVER_BSON_ERROR ;
          goto error ;
       }
+
       // run command
       rc = _connection->_runCommand(command.c_str(), result, &newObj ) ;
       if ( rc )
@@ -5326,6 +5598,52 @@ error :
    done:
       return rc ;
    error:
+      goto done ;
+   }
+
+   INT32 _sdbDomainImpl::addGroups ( const BSONObj & options )
+   {
+      return _alterInternal( SDB_ALTER_DOMAIN_ADD_GROUPS, &options, FALSE ) ;
+   }
+
+   INT32 _sdbDomainImpl::setGroups ( const BSONObj & options )
+   {
+      return _alterInternal( SDB_ALTER_DOMAIN_SET_GROUPS, &options, FALSE ) ;
+   }
+
+   INT32 _sdbDomainImpl::removeGroups ( const BSONObj & options )
+   {
+      return _alterInternal( SDB_ALTER_DOMAIN_REMOVE_GROUPS, &options, FALSE ) ;
+   }
+
+   INT32 _sdbDomainImpl::setAttributes ( const bson::BSONObj & options )
+   {
+      return _alterInternal( SDB_ALTER_DOMAIN_SET_ATTR, &options, FALSE ) ;
+   }
+
+   INT32 _sdbDomainImpl::_alterInternal ( const CHAR * taskName,
+                                          const BSONObj * arguments,
+                                          BOOLEAN allowNullArgs )
+   {
+      INT32 rc = SDB_OK ;
+
+      BSONObj alterObject ;
+
+      rc = _sdbBuildAlterObject( taskName, arguments, allowNullArgs, alterObject ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+      rc = alterDomain( alterObject ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+   done :
+      return rc ;
+   error :
       goto done ;
    }
 

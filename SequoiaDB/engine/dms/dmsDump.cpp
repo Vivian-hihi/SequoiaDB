@@ -1358,23 +1358,30 @@ namespace engine
       }
 
       len += ossSnprintf ( outBuf + len, outSize - len,
-                           "       Flag        : 0x%02x (%s)"OSS_NEWLINE,
+                           "       Flag         : 0x%02x (%s)"OSS_NEWLINE,
                            flag, flagText ) ;
       len += ossSnprintf ( outBuf + len, outSize - len,
-                           "       Compressed  : %s"OSS_NEWLINE,
+                           "       Compressed   : %s"OSS_NEWLINE,
                            OSS_BIT_TEST ( flag, DMS_RECORD_FLAG_COMPRESSED ) ?
                            "True":"False" ) ;
+      if ( OSS_BIT_TEST ( flag, DMS_RECORD_FLAG_COMPRESSED ) )
+      {
+         len += ossSnprintf ( outBuf + len, outSize - len,
+                              "       CompressType : 0x%02x (%s)"OSS_NEWLINE,
+                              record->getCompressType(),
+                              utilCompressType2String( record->getCompressType() ) ) ;
+      }
       len += ossSnprintf ( outBuf + len, outSize - len,
-                           "       Record Size : %u"OSS_NEWLINE,
+                           "       Record Size  : %u"OSS_NEWLINE,
                            recordSize ) ;
       len += ossSnprintf ( outBuf + len, outSize - len,
-                           "       My Offset   : 0x%08x (%d)"OSS_NEWLINE,
+                           "       My Offset    : 0x%08x (%d)"OSS_NEWLINE,
                            record->_myOffset, record->_myOffset ) ;
       len += ossSnprintf ( outBuf + len, outSize - len,
-                           "       Prev Offset : 0x%08x (%d)"OSS_NEWLINE,
+                           "       Prev Offset  : 0x%08x (%d)"OSS_NEWLINE,
                            record->_previousOffset, record->_previousOffset ) ;
       len += ossSnprintf ( outBuf + len, outSize - len,
-                           "       Next Offset : 0x%08x (%d)"OSS_NEWLINE,
+                           "       Next Offset  : 0x%08x (%d)"OSS_NEWLINE,
                            record->_nextOffset, record->_nextOffset ) ;
 
       if ( DMS_INVALID_OFFSET != nextRecord &&  record->_myOffset!= nextRecord )
@@ -1453,20 +1460,27 @@ namespace engine
       }
 
       len += ossSnprintf ( outBuf + len, outSize - len,
-                           "       Flag        : 0x%02x (%s)"OSS_NEWLINE,
+                           "       Flag          : 0x%02x (%s)"OSS_NEWLINE,
                            flag, flagText ) ;
       len += ossSnprintf ( outBuf + len, outSize - len,
-                           "       Compressed  : %s"OSS_NEWLINE,
+                           "       Compressed    : %s"OSS_NEWLINE,
                            OSS_BIT_TEST ( flag, DMS_RECORD_FLAG_COMPRESSED ) ?
                            "True":"False" ) ;
+      if ( OSS_BIT_TEST ( flag, DMS_RECORD_FLAG_COMPRESSED ) )
+      {
+         len += ossSnprintf ( outBuf + len, outSize - len,
+                              "       CompressType  : 0x%02x (%s)"OSS_NEWLINE,
+                              record->getCompressType(),
+                              utilCompressType2String( record->getCompressType() ) ) ;
+      }
       len += ossSnprintf ( outBuf + len, outSize - len,
-                           "       Record Size : %u"OSS_NEWLINE,
+                           "       Record Size   : %u"OSS_NEWLINE,
                            record->getSize() ) ;
       len += ossSnprintf ( outBuf + len, outSize - len,
-                           "       Record Number: %u"OSS_NEWLINE,
+                           "       Record Number : %u"OSS_NEWLINE,
                            record->getRecordNo() ) ;
       len += ossSnprintf ( outBuf + len, outSize - len,
-                           "       LogicalID: %lld"OSS_NEWLINE,
+                           "       LogicalID     : %lld"OSS_NEWLINE,
                            record->getLogicalID() ) ;
 
       try

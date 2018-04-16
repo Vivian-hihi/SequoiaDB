@@ -1027,7 +1027,7 @@ SDB_EXPORT INT32 sdbCreateCollection1 ( sdbCSHandle cHandle,
                                         sdbCollectionHandle *handle ) ;
 
 /** \fn INT32 sdbAlterCollection ( sdbCollectionHandle cHandle,
-                                  bson *options  )
+                                   bson *options  )
     \brief Alter the specified collection
     \param [in] cHandle The colleciton handle
     \param [in] options The options are as following:
@@ -1036,7 +1036,10 @@ SDB_EXPORT INT32 sdbCreateCollection1 ( sdbCSHandle cHandle,
         ShardingKey  : Assign the sharding key
         ShardingType : Assign the sharding type
         Partition    : When the ShardingType is "hash", need to assign Partition, it's the bucket number for hash, the range is [2^3,2^20]
-                       e.g. {RepliSize:0, ShardingKey:{a:1}, ShardingType:"hash", Partition:1024}
+        CompressionType : The compression type of data, could be "snappy" or "lzw"
+        EnsureShardingIndex : Assign to true to build sharding index
+        StrictDataMode : Using strict date mode in numeric operations or not
+                         e.g. {RepliSize:0, ShardingKey:{a:1}, ShardingType:"hash", Partition:1024}
     \note Can't alter attributes about split in partition collection; After altering a collection to
           be a partition collection, need to split this collection manually
     \retval SDB_OK Operation Success
@@ -1084,6 +1087,75 @@ SDB_EXPORT INT32 sdbRenameCollection( sdbCSHandle cHandle,
                                       const CHAR *pOldName,
                                       const CHAR *pNewName,
                                       bson *options ) ;
+
+/** \fn INT32 sdbAlterCollectionSpace( sdbCSHandle cHandle,
+                                       bson * options )
+    \brief Alter the specified collection space
+    \param [in] cHandle The collection space handle
+    \param [in] options The options of collection space to be changed, e.g. { "PageSize": 4096, "Domain": "mydomain" }.
+
+        PageSize     : The page size of the collection space
+        LobPageSize  : The page size of LOB objects in the collection space
+        Domain       : The domain which the collection space belongs to
+
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbAlterCollectionSpace ( sdbCSHandle cHandle,
+                                           bson * options ) ;
+
+/** \fn INT32 sdbCSSetDomain( sdbCSHandle cHandle,
+                              bson * options )
+    \brief Alter the specified collection space to set domain
+    \param [in] cHandle The collection space handle
+    \param [in] options The options of collection space to be changed.
+
+        Domain : The domain which the collection space belongs to
+
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbCSSetDomain ( sdbCSHandle cHandle,
+                                  bson * options ) ;
+
+/** \fn INT32 sdbCSRemoveDomain( sdbCSHandle cHandle )
+    \brief Alter the specified collection space to remove domain
+    \param [in] cHandle The collection space handle
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbCSRemoveDomain ( sdbCSHandle cHandle ) ;
+
+/** \fn INT32 sdbCSEnableCapped( sdbCSHandle cHandle )
+    \brief Alter the specified collection space to enable capped
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbCSEnableCapped ( sdbCSHandle cHandle ) ;
+
+/** \fn INT32 sdbCSDisableCapped( sdbCSHandle cHandle )
+    \brief Alter the specified collection space to disable capped
+    \param [in] cHandle The collection space handle
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbCSDisableCapped ( sdbCSHandle cHandle ) ;
+
+/** \fn INT32 sdbCSSetAttributes( sdbCSHandle cHandle,
+                                  bson * options )
+    \brief Alter the specified collection space
+    \param [in] cHandle The collection space handle
+    \param [in] options The options of collection space to be changed, e.g. { "PageSize": 4096, "Domain": "mydomain" }.
+
+        PageSize     : The page size of the collection space
+        LobPageSize  : The page size of LOB objects in the collection space
+        Domain       : The domain which the collection space belongs to
+
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbCSSetAttributes ( sdbCSHandle cHandle,
+                                      bson * options ) ;
 
 /** \fn INT32 sdbGetCLName ( sdbCollectionHandle cHandle,
                              CHAR *pCLName, INT32 size )
@@ -2226,6 +2298,76 @@ SDB_EXPORT INT32 sdbListDomains ( sdbConnectionHandle cHandle,
 SDB_EXPORT INT32 sdbAlterDomain( sdbDomainHandle cHandle,
                                  const bson *options ) ;
 
+/** \fn INT32 sdbDomainAddGroups( sdbDomainHandle cHandle,
+                                  const bson *options ) ;
+    \brief alter the current domain.
+    \param [in] cHandle The domain handle
+    \param [in] options The options user wants to alter
+
+        Groups:    The list of replica groups' names to be added into the domain.
+                   eg: { "Groups": [ "group1", "group2", "group3" ] }, it means that domain
+                   changes to add "group1", "group2" and "group3".
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbDomainAddGroups ( sdbDomainHandle cHandle,
+                                      const bson * options ) ;
+
+/** \fn INT32 sdbDomainRemoveGroups( sdbDomainHandle cHandle,
+                                     const bson *options ) ;
+    \brief alter the current domain to remove groups.
+    \param [in] cHandle The domain handle
+    \param [in] options The options user wants to alter
+
+        Groups:    The list of replica groups' names to be removed from the domain.
+                   eg: { "Groups": [ "group1", "group2", "group3" ] }, it means that domain
+                   changes to remove "group1", "group2" and "group3".
+                   However, if a group has data in it, remove it out of domain will be failing.
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbDomainRemoveGroups ( sdbDomainHandle cHandle,
+                                         const bson * options ) ;
+
+/** \fn INT32 sdbDomainSetGroups( sdbDomainHandle cHandle,
+                                  const bson *options ) ;
+    \brief alter the current domain to set groups.
+    \param [in] cHandle The domain handle
+    \param [in] options The options user wants to alter
+
+        Groups:    The list of replica groups' names which the domain is going to contain.
+                   eg: { "Groups": [ "group1", "group2", "group3" ] }, it means that domain
+                   changes to be "group1" "group2" and "group3".
+                   We can add or remove groups in current domain. However, if a group has data
+                   in it, remove it out of domain will be failing.
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbDomainSetGroups ( sdbDomainHandle cHandle,
+                                      const bson * options ) ;
+
+/** \fn INT32 sdbDomainSetAttributes( sdbDomainHandle cHandle,
+                                      const bson *options ) ;
+    \brief alter the current domain.
+    \param [in] cHandle The domain handle
+    \param [in] options The options user wants to alter
+
+        Groups:    The list of replica groups' names which the domain is going to contain.
+                   eg: { "Groups": [ "group1", "group2", "group3" ] }, it means that domain
+                   changes to contain "group1" "group2" or "group3".
+                   We can add or remove groups in current domain. However, if a group has data
+                   in it, remove it out of domain will be failing.
+        AutoSplit: Alter current domain to have the ability of automatically split or not.
+                   If this option is set to be true, while creating collection(ShardingType is "hash") in this domain,
+                   the data of this collection will be split(hash split) into all the groups in this domain automatically.
+                   However, it won't automatically split data into those groups which were add into this domain later.
+                   eg: { "Groups": [ "group1", "group2", "group3" ], "AutoSplit: true" }
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbDomainSetAttributes ( sdbDomainHandle cHandle,
+                                          const bson * options ) ;
+
 /** \fn INT32 sdbListCollectionSpacesInDomain( sdbDomainHandle cHandle,
                                                sdbCursorHandle *cursor ) ;
     \brief list the collection spaces in domain.
@@ -2560,6 +2702,69 @@ SDB_EXPORT INT32 sdbCreateIdIndex( sdbCollectionHandle cHandle,
     \note delete, update and upsert do not work after index "$id" was drop
 */
 SDB_EXPORT INT32 sdbDropIdIndex( sdbCollectionHandle cHandle ) ;
+
+/** \fn INT32 sdbEnableSharding( sdbCollectionHandle cHandle, const bson *args )
+    \brief Enable sharding of collection
+    \param [in] cHandle The collection handle.
+    \param [in] args The arguments of sharding. e.g. { ShardingKey: { a: 1 } }
+
+         ShardingKey          : The key of sharding
+         ShardingType         : The type of sharding, "hash" or "range"
+         Partition            : The number of partitions of "hash" sharding
+         EnsureShardingIndex  : Whether to build sharding index
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbEnableSharding ( sdbCollectionHandle cHandle,
+                                     const bson * args ) ;
+
+/** \fn INT32 sdbDisableSharding( sdbCollectionHandle cHandle )
+    \brief Disable sharding of collection
+    \param [in] cHandle The collection handle
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbDisableSharding ( sdbCollectionHandle cHandle ) ;
+
+/** \fn INT32 sdbEnableCompression( sdbCollectionHandle cHandle, const bson *args )
+    \brief Enable compression of collection
+    \param [in] cHandle The collection handle.
+    \param [in] args The arguments of compression. e.g. { ShardingKey: { a: 1 } }
+
+         CompressionType      : The type of compression, "snappy" or "lzw"
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbEnableCompression ( sdbCollectionHandle cHandle,
+                                        const bson * args ) ;
+
+/** \fn INT32 sdbDisableCompression( sdbCollectionHandle cHandle )
+    \brief Disable compression of collection
+    \param [in] cHandle The collection handle
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbDisableCompression ( sdbCollectionHandle cHandle ) ;
+
+/** \fn INT32 sdbCLSetAttributes ( sdbCollectionHandle cHandle,
+                                   bson *options  )
+    \brief Alter the specified collection
+    \param [in] cHandle The collection handle
+    \param [in] options The options are as following:
+
+        ReplSize     : Assign how many replica nodes need to be synchronized when a write request(insert, update, etc) is executed
+        ShardingKey  : Assign the sharding key
+        ShardingType : Assign the sharding type
+        Partition    : When the ShardingType is "hash", need to assign Partition, it's the bucket number for hash, the range is [2^3,2^20]
+        CompressionType : The compression type of data, could be "snappy" or "lzw"
+        EnsureShardingIndex : Assign to true to build sharding index
+        StrictDataMode : Using strict date mode in numeric operations or not
+                         e.g. {RepliSize:0, ShardingKey:{a:1}, ShardingType:"hash", Partition:1024}
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbCLSetAttributes ( sdbCollectionHandle cHandle,
+                                      const bson * args ) ;
 
 /* \fn INT32 sdbGetDCName( sdbDCHandle cHandle, CHAR *pBuffer, INT32 size )
     \brief Get the name of the data center

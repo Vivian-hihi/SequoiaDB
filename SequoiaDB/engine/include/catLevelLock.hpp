@@ -63,6 +63,7 @@ namespace engine
       CAT_LOCK_DATA        = 1,  // for collectionspace,collection
       CAT_LOCK_NODE        = 2,  // for group,node
       CAT_LOCK_DOMAIN      = 3,  // for domain
+      CAT_LOCK_SHARDING    = 4,  // for sharding
 
       CAT_LOCK_MAX
    } ;
@@ -231,6 +232,30 @@ namespace engine
    typedef _catCLLock catCLLock ;
 
    /*
+      _catCSShardingLock define
+    */
+   class _catCSShardingLock : public _catOneLevelLock
+   {
+      public :
+         _catCSShardingLock ( const string & csName ) ;
+         virtual ~_catCSShardingLock () ;
+   } ;
+
+   typedef class _catCSShardingLock catCSShardingLock ;
+
+   /*
+      _catCLShardingLock define
+    */
+   class _catCLShardingLock : public _catTwoLevelLock
+   {
+      public :
+         _catCLShardingLock ( const string & csName, const string & clName ) ;
+         virtual ~_catCLShardingLock () ;
+   } ;
+
+   typedef class _catCLShardingLock catCLShardingLock ;
+
+   /*
       _catGroupLock define
    */
    class _catGroupLock : public _catOneLevelLock
@@ -286,6 +311,16 @@ namespace engine
 
       BOOLEAN tryLockCollection ( const std::string &clFullName,
                                   OSS_LATCH_MODE mode ) ;
+
+      BOOLEAN tryLockCollectionSpaceSharding ( const std::string & csName,
+                                               OSS_LATCH_MODE mode ) ;
+
+      BOOLEAN tryLockCollectionSharding ( const std::string & clFullName,
+                                          OSS_LATCH_MODE mode ) ;
+
+      BOOLEAN tryLockCollectionSharding ( const std::string & csName,
+                                          const std::string & clFullName,
+                                          OSS_LATCH_MODE mode ) ;
 
       BOOLEAN tryLockDomain ( const std::string &domainName,
                               OSS_LATCH_MODE mode ) ;

@@ -170,7 +170,8 @@ namespace engine
 
          virtual INT32 _processContext ( pmdEDUCB *cb,
                                          rtnContextCoord **ppContext,
-                                         SINT32 maxNumSteps ) ;
+                                         SINT32 maxNumSteps,
+                                         rtnContextBuf & buffObj ) ;
 
       protected :
          /*
@@ -193,9 +194,6 @@ namespace engine
             Rollback on Catalog before rollback on Data groups
          */
          virtual BOOLEAN _flagRollbackCataBeforeData () { return FALSE ; }
-
-      protected:
-         coordCMDArguments             _args ;
 
    } ;
    typedef _coordCMD2Phase coordCMD2Phase ;

@@ -4517,6 +4517,7 @@ INT32 prepareCompressor( OSSFILE &file, UINT32 pageSize, dmsMB *mb, UINT16 id,
    dmsCompressorGuard gard( &compressorEntry, EXCLUSIVE ) ;
 
    compressorEntry.setCompressor( getCompressorByType( type ) ) ;
+   compressorEntry.setFlags( mb->_compressFlags ) ;
 
    if ( DMS_INVALID_EXTENT != mb->_dictExtentID )
    {
@@ -4535,11 +4536,7 @@ INT32 prepareCompressor( OSSFILE &file, UINT32 pageSize, dmsMB *mb, UINT16 id,
          inspectDictPageState( pExpBuffer, mb->_dictExtentID, err ) ;
       }
 
-      if ( compressorEntry.getCompressor() &&
-           UTIL_COMPRESSOR_LZW == type )
-      {
-         compressorEntry.setDictionary( gDictBuffer + DMS_DICTEXTENT_HEADER_SZ ) ;
-      }
+      compressorEntry.setDictionary( gDictBuffer + DMS_DICTEXTENT_HEADER_SZ ) ;
    }
 
 done:

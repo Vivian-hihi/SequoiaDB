@@ -84,6 +84,17 @@ namespace engine
       virtual INT32 decompress( const CHAR *source, UINT32 sourceLen,
                                 CHAR *dest, UINT32 &destLen,
                                 const utilDictHandle dictionary = NULL ) = 0 ;
+
+      OSS_INLINE UTIL_COMPRESSOR_TYPE getType () const
+      {
+         return _type ;
+      }
+
+      virtual OSS_INLINE BOOLEAN needDictionay () const
+      {
+         return FALSE ;
+      }
+
    private:
       UTIL_COMPRESSOR_TYPE _type ;
    } ;

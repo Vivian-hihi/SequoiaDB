@@ -160,55 +160,18 @@ namespace engine
                                           pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
-      CHAR szSpace [ DMS_COLLECTION_SPACE_NAME_SZ + 1 ]  = {0} ;
-      CHAR szCollection [ DMS_COLLECTION_NAME_SZ + 1 ] = {0} ;
+
+      map< string, UINT32 > groups ;
 
       existed = FALSE ;
 
-      BSONObj csObj ;
-      BOOLEAN csExist = FALSE ;
+      rc = catGetSplitCandidateGroups( clFullName, groups, cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to get split candidate groups, "
+                   "rc: %d", rc ) ;
 
-      const CHAR *domainName = NULL ;
-
-      rc = rtnResolveCollectionName( clFullName, ossStrlen( clFullName ),
-                                     szSpace, DMS_COLLECTION_SPACE_NAME_SZ,
-                                     szCollection, DMS_COLLECTION_NAME_SZ ) ;
-      PD_RC_CHECK( rc, PDERROR, "Resolve collection name[%s] failed, rc: %d",
-                   clFullName, rc ) ;
-
-      rc = catCheckSpaceExist( szSpace, csExist, csObj, cb ) ;
-      PD_RC_CHECK( rc, PDWARNING, "Check collection space[%s] exist failed, "
-                   "rc: %d", szSpace, rc ) ;
-      PD_CHECK( csExist, SDB_DMS_CS_NOTEXIST, error, PDWARNING,
-                "Collection space[%s] is not exist", szSpace ) ;
-
-      // get domain name
-      rc = rtnGetStringElement( csObj, CAT_DOMAIN_NAME, &domainName ) ;
-      // SYSTEM DOMAIN
-      if ( SDB_FIELD_NOT_EXIST == rc )
+      if ( groups.find( groupName ) != groups.end() )
       {
          existed = TRUE ;
-         rc = SDB_OK ;
-         goto done ;
-      }
-      // USER DOMAIN
-      else if ( SDB_OK == rc )
-      {
-         // Check domain exist
-         BSONObj domainObj ;
-         map<string, UINT32> groups ;
-         rc = catGetDomainObj( domainName, domainObj, cb ) ;
-         PD_RC_CHECK( rc, PDERROR, "Get domain[%s] failed, rc: %d",
-                      domainName, rc ) ;
-
-         rc = catGetDomainGroups( domainObj,  groups ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to get groups from domain info[%s], "
-                      "rc: %d", domainObj.toString().c_str(), rc ) ;
-
-         if ( groups.find( groupName ) != groups.end() )
-         {
-            existed = TRUE ;
-         }
       }
 
    done:
@@ -451,6 +414,14 @@ namespace engine
                    "Failed to get the collection [%s]",
                    opCode, clName.c_str() ) ;
 
+      if ( needLock )
+      {
+         PD_CHECK( lockMgr.tryLockCollectionSharding( clName, SHARED ),
+                   SDB_LOCK_FAILED, error, PDWARNING,
+                   "Failed to lock collection [%s] for sharding",
+                   clName.c_str() ) ;
+      }
+
       // Update catalog set
       rc = cataSet.updateCatSet( boCollection ) ;
       PD_RC_CHECK( rc, PDERROR,
@@ -586,7 +557,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATSPLITREADY, "catSplitReady" )
    INT32 catSplitReady ( const BSONObj &splitInfo, UINT64 taskID,
-                         pmdEDUCB *cb, INT16 w,
+                         BOOLEAN needLock, pmdEDUCB *cb, INT16 w,
                          UINT32 &returnGroupID, INT32 &returnVersion )
    {
       INT32 rc = SDB_OK ;
@@ -622,7 +593,7 @@ namespace engine
          rc = _catCheckAndLockForSplitTask ( MSG_CAT_SPLIT_READY_REQ, clName,
                                              cataSet, splitInfo, cb,
                                              srcGroupID, srcName,
-                                             dstGroupID, dstName, TRUE ) ;
+                                             dstGroupID, dstName, needLock ) ;
          PD_RC_CHECK( rc, PDERROR,
                       "Failed to check and lock collections and groups, rc: %d",
                       rc ) ;
@@ -873,7 +844,7 @@ namespace engine
 
             // save new catalog info
             cataInfo = cataSet.toCataInfoBson() ;
-            rc = catUpdateCatalog( clName.c_str(), cataInfo, cb, w ) ;
+            rc = catUpdateCatalog( clName.c_str(), cataInfo, BSONObj(), cb, w ) ;
             PD_RC_CHECK( rc, PDSEVERE,
                          "Failed to update collection catalog, rc: %d",
                          rc ) ;
@@ -888,7 +859,7 @@ namespace engine
                // Increase main-collection's version
                BSONObj emptyObj;
                INT32 tmpRC = SDB_OK ;
-               tmpRC = catUpdateCatalog( mainCLName.c_str(), emptyObj, cb, w ) ;
+               tmpRC = catUpdateCatalog( mainCLName.c_str(), emptyObj, emptyObj, cb, w ) ;
                if ( SDB_OK != tmpRC )
                {
                   PD_LOG( PDWARNING,

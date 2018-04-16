@@ -722,6 +722,7 @@ namespace engine
    } ;
    typedef class _ixmIndexCB ixmIndexCB ;
 
+   bson::BSONObj ixmGetIDIndexDefine () ;
 }
 
 #endif /* IXM_HPP_ */

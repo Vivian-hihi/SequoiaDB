@@ -41,6 +41,7 @@
 #include "catSplit.hpp"
 #include "rtnContextBuff.hpp"
 #include "utilCompressor.hpp"
+#include "utilArguments.hpp"
 
 using namespace bson ;
 
@@ -58,24 +59,6 @@ namespace engine
       ASSIGN_FOLLOW     = 1,
       ASSIGN_RANDOM     = 2
    } ;
-
-   #define CAT_MASK_CLNAME          0x00000001
-   #define CAT_MASK_SHDKEY          0x00000002
-   #define CAT_MASK_REPLSIZE        0x00000004
-   #define CAT_MASK_SHDIDX          0x00000008
-   #define CAT_MASK_SHDTYPE         0x00000010
-   #define CAT_MASK_SHDPARTITION    0x00000020
-   #define CAT_MASK_COMPRESSED      0x00000040
-   #define CAT_MASK_ISMAINCL        0x00000080
-   #define CAT_MASK_AUTOASPLIT      0x00000100
-   #define CAT_MASK_AUTOREBALAN     0x00000200
-   #define CAT_MASK_AUTOINDEXID     0x00000400
-   #define CAT_MASK_COMPRESSIONTYPE 0x00000800
-   #define CAT_MASK_CAPPED          0x00001000
-   #define CAT_MASK_CLMAXRECNUM     0x00002000
-   #define CAT_MASK_CLMAXSIZE       0x00004000
-   #define CAT_MASK_CLOVERWRITE     0x00008000
-   #define CAT_MASK_STRICTDATAMODE  0x00010000
 
    struct _catCollectionInfo
    {
@@ -101,8 +84,6 @@ namespace engine
       INT64       _maxRecNum ;
       INT64       _maxSize ;
       BOOLEAN     _overwrite ;
-
-      std::vector<std::string>   _subCLList;
 
       _catCollectionInfo()
       {
@@ -183,6 +164,8 @@ namespace engine
       INT32 active() ;
       INT32 deactive() ;
 
+      UINT64 assignTaskID () ;
+
    // message process functions
    protected:
       INT32 processCommandMsg( const NET_HANDLE &handle, MsgHeader *pMsg,
@@ -217,10 +200,6 @@ namespace engine
 
    private:
       INT16 _majoritySize() ;
-
-      INT32 _buildAlterGroups( const BSONObj &domain,
-                               const BSONElement &ele,
-                               BSONObjBuilder &builder ) ;
 
    private:
       sdbCatalogueCB       *_pCatCB;

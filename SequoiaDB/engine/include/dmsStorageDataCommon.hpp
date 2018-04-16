@@ -260,7 +260,7 @@ namespace engine
       UINT8          _dictVersion ;
       UINT8          _compressorType ;
       UINT8          _lastCompressRatio ;
-      UINT8          _pad1[ 1 ] ;   // reserved
+      UINT8          _compressFlags ;
       // for stat
       UINT64         _totalLobs ;
       UINT64         _totalOrgDataLen ;
@@ -332,12 +332,13 @@ namespace engine
          _totalIndexFreeSpace    = 0 ;
          _totalLobPages          = 0 ;
          _totalLobs              = 0 ;
-         _compressorType         = compressType ;
+         _compressorType         = UTIL_COMPRESSOR_INVALID ;
          _dictVersion            = 0 ;
          _dictExtentID           = DMS_INVALID_EXTENT ;
          _newDictExtentID        = DMS_INVALID_EXTENT ;
          _dictStatPageID         = DMS_INVALID_EXTENT ;
          _lastCompressRatio      = 100 ;
+         _compressFlags          = UTIL_COMPRESS_ALTERABLE_FLAG ;
 
          _totalOrgDataLen        = 0 ;
          _totalDataLen           = 0 ;
@@ -361,7 +362,6 @@ namespace engine
          }
 
          // pad
-         ossMemset( _pad1, 0, sizeof( _pad1 ) ) ;
          ossMemset( _pad2, 0, sizeof( _pad2 ) ) ;
          ossMemset( _pad, 0, sizeof( _pad ) ) ;
       }
@@ -989,6 +989,9 @@ namespace engine
          virtual INT32 dumpExtOptions( dmsMBContext *context,
                                        BSONObj &extOptions ) = 0 ;
 
+         virtual INT32 setExtOptions ( dmsMBContext * context,
+                                       const BSONObj & extOptions ) = 0 ;
+
       protected:
          virtual INT32 _prepareAddCollection( const BSONObj *extOption,
                                               dmsExtentID &extOptExtent,
@@ -1129,6 +1132,8 @@ namespace engine
                                  UINT32 clLID, dmsExtentID extLID ) ;
 
          INT32          _initCompressorEntry( UINT16 mbID ) ;
+
+         INT32          _setCompressorEntry ( UINT16 mbID ) ;
 
          INT32          _truncateCollection ( dmsMBContext *context,
                                               BOOLEAN needChangeCLID = TRUE ) ;

@@ -38,6 +38,7 @@
 #include "pmdEDU.hpp"
 #include "dmsRecord.hpp"
 #include "dmsTrace.hpp"
+#include "utilCompressor.hpp"
 
 using namespace bson ;
 
@@ -45,7 +46,8 @@ namespace engine
 {
    _dmsCompressorEntry::_dmsCompressorEntry()
    : _compressor( NULL ),
-     _dictionary( UTIL_INVALID_DICT )
+     _dictionary( UTIL_INVALID_DICT ),
+     _flags( UTIL_COMPRESS_EMPTY_FLAG )
    {
    }
 
@@ -69,6 +71,16 @@ namespace engine
       PD_TRACE_EXIT( SDB__DMSCOMPRESSORENTRY_SETDICTIONARY ) ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSCOMPRESSORENTRY_SETFLAGS, "_dmsCompressorEntry::setFlags" )
+   void _dmsCompressorEntry::setFlags ( UINT8 flags )
+   {
+      PD_TRACE_ENTRY( SDB__DMSCOMPRESSORENTRY_SETFLAGS ) ;
+
+      _flags = flags ;
+
+      PD_TRACE_EXIT( SDB__DMSCOMPRESSORENTRY_SETFLAGS ) ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSCOMPRESSORENTRY_RESET, "_dmsCompressorEntry::reset" )
    void _dmsCompressorEntry::reset()
    {
@@ -76,6 +88,7 @@ namespace engine
 
       _compressor = NULL ;
       _dictionary = UTIL_INVALID_DICT ;
+      _flags = UTIL_COMPRESS_EMPTY_FLAG ;
 
       PD_TRACE_EXIT( SDB__DMSCOMPRESSORENTRY_RESET ) ;
    }
@@ -97,7 +110,7 @@ namespace engine
                   "Compressor entry pointer can't be NULL" ) ;
 
       _utilCompressor *compressor = compressorEntry->getCompressor() ;
-      const utilDictHandle dictionary = compressorEntry->getDictionary() ;
+      const utilDictHandle dictionary = compressorEntry->getDictionary( compressor ) ;
       SDB_ASSERT( compressor, "Compressor pointer can't be NULL" ) ;
       if ( !compressor )
       {
@@ -207,7 +220,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSUNCOMPRESS, "dmsUncompress" )
    INT32 dmsUncompress ( _pmdEDUCB *cb, _dmsCompressorEntry *compressorEntry,
-                         const CHAR *pInputData, INT32 inputSize,
+                         UINT8 compressType, const CHAR *pInputData, INT32 inputSize,
                          const CHAR **ppData, INT32 *pDataSize )
    {
       INT32 rc = SDB_OK ;
@@ -221,7 +234,15 @@ namespace engine
                   "Compressor entry pointer can't be NULL" ) ;
 
       _utilCompressor *compressor = compressorEntry->getCompressor() ;
+
+      /// The compress type of collection had been altered
+      if ( OSS_BIT_TEST( compressorEntry->getFlags(), UTIL_COMPRESS_ALTERABLE_FLAG ) )
+      {
+         compressor = getCompressorByType( (UTIL_COMPRESSOR_TYPE)compressType ) ;
+      }
+
       SDB_ASSERT( compressor, "Compressor pointer can't be NULL" ) ;
+
       /// To compitable with the bug:'When not use compress, the compressor
       /// be set to snappy, so the data maybe compressed with snappy. But,
       /// restart the node, the compressor be set to null, so can't
@@ -255,7 +276,7 @@ namespace engine
 
       rc = compressor->decompress( pInputData, inputSize, pBuff,
                                    uncompressedLen,
-                                   compressorEntry->getDictionary() ) ;
+                                   compressorEntry->getDictionary( compressor ) ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to decompress data, rc: %d", rc ) ;
 
       // assign return value

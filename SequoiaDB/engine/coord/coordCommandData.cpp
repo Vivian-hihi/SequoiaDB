@@ -246,11 +246,15 @@ namespace engine
                                                  const CoordGroupList &pGroupLst )
    {
       INT32 rc = SDB_OK ;
+
       PD_TRACE_ENTRY ( COORD_DATA3PHASE_DOONCATA2 ) ;
 
-      rc = _processContext( cb, ppContext, 1 ) ;
+      rtnContextBuf buffObj ;
+
+      rc = _processContext( cb, ppContext, 1, buffObj ) ;
 
       PD_TRACE_EXITRC ( COORD_DATA3PHASE_DOONCATA2, rc ) ;
+
       return rc ;
    }
 
@@ -263,12 +267,405 @@ namespace engine
                                                  const vector<BSONObj> &cataObjs )
    {
       INT32 rc = SDB_OK ;
+
       PD_TRACE_ENTRY ( COORD_DATA3PHASE_DOONDATA2 ) ;
 
-      rc = _processContext( cb, ppContext, 1 ) ;
+      rtnContextBuf buffObj ;
+
+      rc = _processContext( cb, ppContext, 1, buffObj ) ;
 
       PD_TRACE_EXITRC ( COORD_DATA3PHASE_DOONDATA2, rc ) ;
+
       return rc ;
+   }
+
+   /*
+      _coordAlterCMDArgument implement
+    */
+   _coordAlterCMDArguments::_coordAlterCMDArguments ()
+   : _coordCMDArguments(),
+     _task( NULL )
+   {
+   }
+
+   _coordAlterCMDArguments::~_coordAlterCMDArguments ()
+   {
+   }
+
+   void _coordAlterCMDArguments::clear ()
+   {
+      _boQuery = BSONObj() ;
+      _targetName.clear() ;
+      _ignoreRCList.clear() ;
+      _pBuf = NULL ;
+      _task = NULL ;
+   }
+
+   /*
+      _coordDataCMDAlter implement
+    */
+   _coordDataCMDAlter::_coordDataCMDAlter ()
+   : _coordDataCMD3Phase()
+   {
+   }
+
+   _coordDataCMDAlter::~_coordDataCMDAlter()
+   {
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( COORD_DATAALTER_EXECUTE, "_coordDataCMDAlter::execute" )
+   INT32 _coordDataCMDAlter::execute ( MsgHeader * pMsg,
+                                       pmdEDUCB * cb,
+                                       INT64 & contextID,
+                                       rtnContextBuf * buf )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( COORD_DATAALTER_EXECUTE ) ;
+
+      coordCMDArguments arguments ;
+      arguments._pBuf = buf ;
+
+      // Extract message
+      rc = _extractMsg ( pMsg, &arguments ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to extract message for command[%s], "
+                   "rc: %d", getName(), rc ) ;
+
+      // Parse the alter tasks
+      rc = _alterJob.initialize( NULL, _getObjectType(), arguments._boQuery ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to initialize alter job, "
+                   "rc: %d", rc ) ;
+
+      arguments._targetName = _alterJob.getObjectName() ;
+
+      if ( !_alterJob.isEmpty() )
+      {
+         const CHAR * objectName = _alterJob.getObjectName() ;
+         const rtnAlterOptions * options = _alterJob.getOptions() ;
+         const RTN_ALTER_TASK_LIST & taskList = _alterJob.getAlterTasks() ;
+
+         for ( RTN_ALTER_TASK_LIST::const_iterator taskIter = taskList.begin() ;
+               taskIter != taskList.end() ;
+               ++ taskIter )
+         {
+            CHAR * pTaskMsgBuf = NULL ;
+            INT32 taskMsgSize = 0 ;
+            BSONObj empty ;
+
+            const rtnAlterTask * task = ( *taskIter ) ;
+
+            rc = task->toCMDMessage( &pTaskMsgBuf, &taskMsgSize, objectName,
+                                     empty, 0, cb ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to build alter command, "
+                         "rc: %d", rc ) ;
+
+            _arguments.setTaskRunner( task ) ;
+
+            rc = _coordDataCMD3Phase::execute( pMsg, cb, contextID, buf ) ;
+            msgReleaseBuffer( pTaskMsgBuf, cb ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "Failed to execute command, rc: %d", rc ) ;
+               if ( options->isIgnoreException() )
+               {
+                   rc = SDB_OK ;
+               }
+               else
+               {
+                  break ;
+               }
+            }
+
+            _arguments.clear() ;
+         }
+      }
+
+   done :
+      // No context returned
+      contextID = -1 ;
+
+      PD_TRACE_EXITRC( COORD_DATAALTER_EXECUTE, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( COORD_ALTERCMD_PARSEMSG, "_coordDataCMDAlter::_parseMsg" )
+   INT32 _coordDataCMDAlter::_parseMsg ( MsgHeader *pMsg,
+                                         coordCMDArguments *pArgs )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( COORD_ALTERCMD_PARSEMSG ) ;
+
+      try
+      {
+         rc = rtnGetSTDStringElement( pArgs->_boQuery, FIELD_NAME_NAME,
+                                      pArgs->_targetName ) ;
+         PD_CHECK( SDB_OK == rc, SDB_INVALIDARG, error, PDERROR,
+                   "Get failed[%s] failed on command[%s], rc: %d",
+                   FIELD_NAME_NAME, getName(), rc ) ;
+
+         PD_CHECK( !pArgs->_targetName.empty(), SDB_INVALIDARG, error, PDERROR,
+                   "Failed to parse command [%s]: name is empty", getName() ) ;
+      }
+      catch ( exception & e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+   done :
+      PD_TRACE_EXITRC( COORD_ALTERCMD_PARSEMSG, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   coordCMDArguments * _coordDataCMDAlter::_getArguments ()
+   {
+      return ( coordCMDArguments * )( &_arguments ) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( COORD_DATAALTER_DOONCATA, "_coordDataCMDAlter::_doOnCataGroup" )
+   INT32 _coordDataCMDAlter::_doOnCataGroup ( MsgHeader * pMsg,
+                                              pmdEDUCB * cb,
+                                              rtnContextCoord ** ppContext,
+                                              coordCMDArguments * pArgs,
+                                              CoordGroupList * pGroupLst,
+                                              vector<BSONObj> * pReplyObjs )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( COORD_DATAALTER_DOONCATA ) ;
+
+      rc = _coordDataCMD3Phase::_doOnCataGroup( pMsg, cb, ppContext, pArgs,
+                                                pGroupLst, pReplyObjs ) ;
+
+      if ( NULL != pReplyObjs && !pReplyObjs->empty() )
+      {
+         for ( vector<BSONObj>::const_iterator iterReply = pReplyObjs->begin() ;
+               iterReply != pReplyObjs->end() ;
+               iterReply ++ )
+         {
+            rc = _extractPostTasks( (*iterReply) ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to extract post tasks, rc: %d" ) ;
+         }
+      }
+
+   done :
+      PD_TRACE_EXITRC( COORD_DATAALTER_DOONCATA, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( COORD_DATAALTER_DOONCATA2, "_coordDataCMDAlter::_doOnCataGroupP2" )
+   INT32 _coordDataCMDAlter::_doOnCataGroupP2 ( MsgHeader * pMsg,
+                                                pmdEDUCB * cb,
+                                                rtnContextCoord ** ppContext,
+                                                coordCMDArguments * pArgs,
+                                                const CoordGroupList & groupLst )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( COORD_DATAALTER_DOONCATA2 ) ;
+
+      const rtnAlterTask * task = _arguments.getTaskRunner() ;
+
+      if ( NULL != task && task->testFlags( RTN_ALTER_TASK_FLAG_3PHASE ) )
+      {
+         rtnContextBuf replyBuff ;
+
+         rc = _processContext( cb, ppContext, 1, replyBuff ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to process context, rc: %d", rc ) ;
+
+         while ( !replyBuff.eof() )
+         {
+            BSONObj reply ;
+            rc = replyBuff.nextObj( reply ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to get obj from obj buf, rc: %d",
+                         rc ) ;
+            rc = _extractPostTasks( reply ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to extract post tasks, rc: %d" ) ;
+         }
+      }
+      else
+      {
+         rc = _coordDataCMD2Phase::_doOnCataGroupP2( pMsg, cb, ppContext,
+                                                     pArgs, groupLst ) ;
+      }
+
+   done :
+      PD_TRACE_EXITRC( COORD_DATAALTER_DOONCATA2, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( COORD_DATAALTER_DOONDATA2, "_coordDataCMDAlter::_doOnDataGroupP2" )
+   INT32 _coordDataCMDAlter::_doOnDataGroupP2 ( MsgHeader * pMsg,
+                                                pmdEDUCB * cb,
+                                                rtnContextCoord ** ppContext,
+                                                coordCMDArguments * pArgs,
+                                                const CoordGroupList & groupLst,
+                                                const vector<BSONObj> & cataObjs )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( COORD_DATAALTER_DOONDATA2 ) ;
+
+      const rtnAlterTask * task = _arguments.getTaskRunner() ;
+
+      if ( NULL != task && task->testFlags( RTN_ALTER_TASK_FLAG_3PHASE ) )
+      {
+         rc = _coordDataCMD3Phase::_doOnDataGroupP2( pMsg, cb, ppContext,
+                                                     pArgs, groupLst,
+                                                     cataObjs ) ;
+      }
+      else
+      {
+         rc = _coordDataCMD2Phase::_doOnDataGroupP2( pMsg, cb, ppContext,
+                                                     pArgs, groupLst,
+                                                     cataObjs ) ;
+      }
+
+      PD_TRACE_EXITRC( COORD_DATAALTER_DOONDATA2, rc ) ;
+
+      return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( COORD_DATAALTER_ROLLBACKDATA, "_coordDataCMDAlter::_rollbackOnDataGroup" )
+   INT32 _coordDataCMDAlter::_rollbackOnDataGroup ( MsgHeader * pMsg,
+                                                    pmdEDUCB * cb,
+                                                    coordCMDArguments * pArgs,
+                                                    const CoordGroupList & groupLst )
+   {
+      INT32 rc = SDB_OK, tmprc = SDB_OK ;
+
+      PD_TRACE_ENTRY( COORD_DATAALTER_ROLLBACKDATA ) ;
+
+      rc = _coordDataCMD3Phase::_rollbackOnDataGroup( pMsg, cb, pArgs, groupLst ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to do commit, rc: %d", rc ) ;
+      }
+
+      tmprc = _cancelPostTasks( _arguments._targetName.c_str(),
+                                _arguments.getPostTasks(), cb ) ;
+      if ( SDB_OK != tmprc )
+      {
+         PD_LOG( PDWARNING, "Failed to cancel post tasks, rc: %d", tmprc ) ;
+      }
+
+      PD_TRACE_EXITRC( COORD_DATAALTER_ROLLBACKDATA, rc ) ;
+
+      return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( COORD_DATAALTER__DOCOMMIT, "_coordDataCMDAlter::_doCommit" )
+   INT32 _coordDataCMDAlter::_doCommit ( MsgHeader * pMsg,
+                                         pmdEDUCB * cb,
+                                         rtnContextCoord ** ppContext,
+                                         coordCMDArguments * pArgs )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( COORD_DATAALTER__DOCOMMIT ) ;
+
+      rc = _coordDataCMD3Phase::_doCommit( pMsg, cb, ppContext, pArgs ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to do commit, rc: %d", rc ) ;
+
+      // Execute post tasks
+      rc = _executePostTasks( _arguments._targetName.c_str(),
+                              _arguments.getPostTasks(), cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to execute post tasks, rc: %d", rc ) ;
+
+   done :
+      PD_TRACE_EXITRC( COORD_DATAALTER__DOCOMMIT, rc ) ;
+      return rc ;
+
+   error :
+      rc = _cancelPostTasks( _arguments._targetName.c_str(),
+                             _arguments.getPostTasks(), cb ) ;
+      goto done ;
+   }
+
+   INT32 _coordDataCMDAlter::_generateCataMsg ( MsgHeader * pMsg,
+                                                pmdEDUCB * cb,
+                                                coordCMDArguments * pArgs,
+                                                CHAR ** ppMsgBuf,
+                                                INT32 * pBufSize )
+   {
+      pMsg->opCode = _getCatalogMessageType() ;
+      *ppMsgBuf = ( CHAR * )pMsg ;
+      *pBufSize = pMsg->messageLength ;
+
+      return SDB_OK ;
+   }
+
+   void _coordDataCMDAlter::_releaseCataMsg ( CHAR * pMsgBuf,
+                                              INT32 bufSize,
+                                              pmdEDUCB * cb )
+   {
+      /// Nothing to be release
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( COORD_DATAALTER__EXTPOSTTASKS, "_coordDataCMDAlter::_extractPostTask" )
+   INT32 _coordDataCMDAlter::_extractPostTasks ( const BSONObj & reply )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( COORD_DATAALTER__EXTPOSTTASKS ) ;
+
+      if ( reply.hasField( CAT_TASKID_NAME ) )
+      {
+         BSONElement element = reply.getField( CAT_TASKID_NAME ) ;
+
+         if ( Array == element.type() )
+         {
+            BSONObjIterator iterTask( element.embeddedObject() ) ;
+            while ( iterTask.more() )
+            {
+               BSONElement beTask = iterTask.next() ;
+               PD_CHECK( beTask.isNumber(), SDB_SYS, error, PDERROR,
+                         "Failed to post task" ) ;
+               _arguments.addPostTask( (UINT64)beTask.numberLong() ) ;
+            }
+         }
+         else
+         {
+            rc = SDB_SYS ;
+            PD_LOG( PDERROR, "Failed to get task from reply" ) ;
+            goto error ;
+         }
+      }
+
+   done :
+      PD_TRACE_EXITRC( COORD_DATAALTER__EXTPOSTTASKS, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   INT32 _coordDataCMDAlter::_executePostTasks ( const CHAR * name,
+                                                 const _utilList< UINT64 > & postTasks,
+                                                 pmdEDUCB * cb )
+   {
+      return SDB_OK ;
+   }
+
+   INT32 _coordDataCMDAlter::_cancelPostTasks ( const CHAR * name,
+                                                const _utilList< UINT64 > & postTasks,
+                                                pmdEDUCB * cb )
+   {
+      return SDB_OK ;
    }
 
    /*
@@ -911,6 +1308,21 @@ namespace engine
    }
 
    /*
+      _coordCMDDropCollectionSpace implement
+    */
+   COORD_IMPLEMENT_CMD_AUTO_REGISTER( _coordCMDAlterCollectionSpace,
+                                      CMD_NAME_ALTER_COLLECTION_SPACE,
+                                      FALSE ) ;
+   _coordCMDAlterCollectionSpace::_coordCMDAlterCollectionSpace ()
+   : _coordDataCMDAlter()
+   {
+   }
+
+   _coordCMDAlterCollectionSpace::~_coordCMDAlterCollectionSpace ()
+   {
+   }
+
+   /*
       _coordCMDCreateCollection implement
    */
    COORD_IMPLEMENT_CMD_AUTO_REGISTER( _coordCMDCreateCollection,
@@ -1195,7 +1607,9 @@ namespace engine
 
       if ( pCtxForData )
       {
-         rc = _processContext( cb, &pCtxForData, -1 ) ;
+         rtnContextBuf buffObj ;
+
+         rc = _processContext( cb, &pCtxForData, -1, buffObj ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "Rollback-phase2 command[%s, targe:%s] on "
@@ -1396,11 +1810,12 @@ namespace engine
    COORD_IMPLEMENT_CMD_AUTO_REGISTER( _coordCMDAlterCollection,
                                       CMD_NAME_ALTER_COLLECTION,
                                       FALSE ) ;
-   _coordCMDAlterCollection::_coordCMDAlterCollection()
+   _coordCMDAlterCollection::_coordCMDAlterCollection ()
+   : _coordDataCMDAlter()
    {
    }
 
-   _coordCMDAlterCollection::~_coordCMDAlterCollection()
+   _coordCMDAlterCollection::~_coordCMDAlterCollection ()
    {
    }
 
@@ -1409,6 +1824,7 @@ namespace engine
                                                coordCMDArguments *pArgs )
    {
       INT32 rc = SDB_OK ;
+
       PD_TRACE_ENTRY ( COORD_ALTERCL_PARSEMSG ) ;
 
       try
@@ -1463,27 +1879,247 @@ namespace engine
    done :
       PD_TRACE_EXITRC ( COORD_ALTERCL_PARSEMSG, rc ) ;
       return rc ;
+
    error :
       goto done ;
    }
 
-   INT32 _coordCMDAlterCollection::_generateCataMsg ( MsgHeader *pMsg,
-                                                      pmdEDUCB *cb,
-                                                      coordCMDArguments *pArgs,
-                                                      CHAR **ppMsgBuf,
-                                                      INT32 *pBufSize )
+   INT32 _coordCMDAlterCollection::_doComplete ( MsgHeader *pMsg,
+                                                 pmdEDUCB * cb,
+                                                 coordCMDArguments * pArgs )
    {
-      pMsg->opCode = MSG_CAT_ALTER_COLLECTION_REQ ;
-      *ppMsgBuf = ( CHAR* )pMsg ;
-      *pBufSize = pMsg->messageLength ;
+      INT32 rc = SDB_OK ;
 
-      return SDB_OK ;
+      const CHAR * collection = pArgs->_targetName.c_str() ;
+      CoordCataInfoPtr cataPtr ;
+
+      rc = _coordDataCMDAlter::_doComplete( pMsg, cb, pArgs ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to do complete on collection [%s], "
+                   "rc: %d", collection, rc ) ;
+
+      rc = _pResource->updateCataInfo( collection, cataPtr, cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to update catalog info of "
+                   "collection [%s], rc: %d", collection, rc ) ;
+
+   done :
+      return rc ;
+
+   error :
+      goto done ;
    }
 
-   void _coordCMDAlterCollection::_releaseCataMsg( CHAR *pMsgBuf,
-                                                   INT32 bufSize,
-                                                   pmdEDUCB *cb )
+   // PD_TRACE_DECLARE_FUNCTION( COORD_ALTERCL__EXECPOSTTASKS, "_coordCMDAlterCollection::_executePostTasks" )
+   INT32 _coordCMDAlterCollection::_executePostTasks ( const CHAR * name,
+                                                       const _utilList< UINT64 > & postTasks,
+                                                       pmdEDUCB * cb )
    {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( COORD_ALTERCL__EXECPOSTTASKS ) ;
+
+      CHAR * msgBuff = NULL ;
+      INT32 msgSize = 0 ;
+      MsgHeader * msgHeader = NULL ;
+
+      vector<BSONObj> reply ;
+      BSONObj taskDesc ;
+
+      rc = _buildPostTasks( postTasks, taskDesc ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to build post task condition, rc: %d", rc ) ;
+
+      rc = msgBuildQueryMsg( &msgBuff, &msgSize, CAT_TASK_INFO_COLLECTION,
+                             0, 0, 0, -1, &taskDesc, NULL, NULL, NULL ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to build query message, rc: %d", rc ) ;
+
+
+      msgHeader = (MsgHeader *)msgBuff ;
+      msgHeader->opCode = MSG_CAT_QUERY_TASK_REQ ;
+
+      /// get task info from catalog.
+      rc = executeOnCataGroup( msgHeader, cb, NULL, &reply ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to get task info from catalog, rc: %d",
+                   rc ) ;
+
+      /// notify all groups to start task.
+      for ( vector<BSONObj>::const_iterator iterTask = reply.begin() ;
+            iterTask != reply.end() ;
+            iterTask ++ )
+      {
+         BSONElement group ;
+         CoordGroupList groupList ;
+
+         group = iterTask->getField( FIELD_NAME_TARGETID ) ;
+         PD_CHECK( NumberInt == group.type(), SDB_SYS, error, PDERROR,
+                   "Failed to parse task info [%s]: target id is not a integer",
+                   iterTask->toString().c_str() ) ;
+
+         groupList[ group.Int() ] = group.Int() ;
+
+         rc = msgBuildQueryMsg( &msgBuff, &msgSize, CMD_ADMIN_PREFIX CMD_NAME_SPLIT,
+                                0, 0, 0, -1, &(*iterTask), NULL, NULL, NULL ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to build split message, rc: %d", rc ) ;
+
+         msgHeader = (MsgHeader *)msgBuff ;
+         rc = executeOnCL( msgHeader, cb, name, FALSE, &groupList, NULL, NULL ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to notify group [%d] to split "
+                      "collection [%s], rc: %d", group.Int(), name, rc ) ;
+      }
+
+      rc = _waitPostTasks( taskDesc, cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to wait post tasks, rc: %d", rc ) ;
+
+   done :
+      if ( NULL != msgBuff )
+      {
+         msgReleaseBuffer( msgBuff, cb ) ;
+      }
+
+      PD_TRACE_EXITRC( COORD_ALTERCL__EXECPOSTTASKS, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( COORD_ALTERCL__CANCELPOSTTASKS, "_coordCMDAlterCollection::_cancelPostTasks" )
+   INT32 _coordCMDAlterCollection::_cancelPostTasks ( const CHAR * name,
+                                                      const _utilList< UINT64 > & postTasks,
+                                                      pmdEDUCB * cb )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( COORD_ALTERCL__CANCELPOSTTASKS ) ;
+
+      for ( _utilList< UINT64 >::const_iterator iterTask = postTasks.begin() ;
+            iterTask != postTasks.end() ;
+            iterTask ++ )
+      {
+         _cancelPostTask( (*iterTask), cb ) ;
+      }
+
+      PD_TRACE_EXITRC( COORD_ALTERCL__CANCELPOSTTASKS, rc ) ;
+
+      return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( COORD_ALTERCL__BLDPOSTTASKS, "_coordCMDAlterCollection::_buildPostTasks" )
+   INT32 _coordCMDAlterCollection::_buildPostTasks ( const _utilList< UINT64 > & postTasks,
+                                                     BSONObj & taskDesc )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( COORD_ALTERCL__BLDPOSTTASKS ) ;
+
+      BSONObjBuilder builder ;
+      BSONObjBuilder taskBuilder( builder.subobjStart( FIELD_NAME_TASKID ) ) ;
+      BSONArrayBuilder arrBuilder( taskBuilder.subarrayStart( "$in" ) ) ;
+      for ( _utilList<UINT64>::const_iterator iter = postTasks.begin() ;
+            iter != postTasks.end() ;
+            iter ++ )
+      {
+         arrBuilder.append( (INT64)( *iter ) ) ;
+      }
+      arrBuilder.done() ;
+      taskBuilder.done() ;
+      taskDesc = builder.obj() ;
+
+      PD_TRACE_EXITRC( COORD_ALTERCL__BLDPOSTTASKS, rc ) ;
+
+      return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( COORD_ALTERCL__WAITPOSTTASKS, "_coordCMDAlterCollection::_waitPostTasks" )
+   INT32 _coordCMDAlterCollection::_waitPostTasks ( const bson::BSONObj & taskDesc,
+                                                    pmdEDUCB * cb )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( COORD_ALTERCL__WAITPOSTTASKS ) ;
+
+      CHAR * msgBuff = NULL ;
+      INT32 msgSize = 0 ;
+      coordCommandFactory * factory = NULL ;
+      coordOperator * coordOperator = NULL ;
+
+      INT64 contextID = -1 ;
+      rtnContextBuf buf ;
+
+      rc = msgBuildQueryMsg( &msgBuff, &msgSize, CMD_ADMIN_PREFIX CMD_NAME_SPLIT,
+                             0, 0, 0, -1, &taskDesc, NULL, NULL, NULL, cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to build query task, rc: %d", rc ) ;
+
+      factory = coordGetFactory() ;
+      rc = factory->create( CMD_NAME_WAITTASK, coordOperator ) ;
+      PD_RC_CHECK( rc, PDWARNING, "Failed to create operator [%s], rc: %d",
+                   CMD_NAME_WAITTASK, rc ) ;
+
+      rc = coordOperator->init( _pResource, cb, getTimeout() ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to init operator [%s], rc: %d",
+                   CMD_NAME_WAITTASK, rc ) ;
+
+      rc = coordOperator->execute( (MsgHeader *)msgBuff, cb, contextID, &buf ) ;
+      PD_RC_CHECK( rc, PDWARNING, "Failed to execute operator [%s], rc: %d",
+                   CMD_NAME_WAITTASK, rc ) ;
+
+   done :
+      if ( NULL != msgBuff )
+      {
+         msgReleaseBuffer( msgBuff, cb ) ;
+      }
+      if ( NULL != coordOperator )
+      {
+         factory->release( coordOperator ) ;
+      }
+      PD_TRACE_EXITRC( COORD_ALTERCL__WAITPOSTTASKS, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( COORD_ALTERCL__CANCELPOSTTASK, "_coordCMDAlterCollection::_cancelPostTask" )
+   INT32 _coordCMDAlterCollection::_cancelPostTask ( UINT64 taskID,
+                                                     pmdEDUCB * cb )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( COORD_ALTERCL__CANCELPOSTTASK ) ;
+
+      CHAR * msgBuff = NULL ;
+      INT32 msgSize = 0 ;
+      MsgHeader * rollbackMsg = NULL ;
+      rtnContextBuf buff ;
+
+      try
+      {
+         BSONObj taskDesc = BSON( CAT_TASKID_NAME << (INT64)taskID ) ;
+         rc = msgBuildQueryMsg( &msgBuff, &msgSize, CMD_ADMIN_PREFIX CMD_NAME_SPLIT,
+                                0, 0, 0, -1, &taskDesc, NULL, NULL, NULL, cb ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to build split message, rc: %d", rc ) ;
+      }
+      catch ( exception & e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      rollbackMsg = (MsgHeader *)msgBuff ;
+      rollbackMsg->opCode = MSG_CAT_SPLIT_CANCEL_REQ ;
+
+      rc = executeOnCataGroup( rollbackMsg, cb, TRUE, NULL, NULL, &buff ) ;
+      PD_RC_CHECK( rc, PDWARNING, "Failed to cancel on catalog, rc: %d", rc ) ;
+
+   done :
+      if ( msgBuff )
+      {
+         msgReleaseBuffer( msgBuff, cb ) ;
+      }
+      PD_TRACE_EXITRC( COORD_ALTERCL__CANCELPOSTTASK, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
    }
 
    /*
@@ -3106,5 +3742,5 @@ namespace engine
    error:
       goto done ;
    }
-}
 
+}

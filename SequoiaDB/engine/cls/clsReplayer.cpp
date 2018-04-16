@@ -45,6 +45,7 @@
 #include "pdTrace.hpp"
 #include "clsTrace.hpp"
 #include "rtnLob.hpp"
+#include "rtnAlter.hpp"
 #include "utilCompressor.hpp"
 
 using namespace bson ;
@@ -824,6 +825,33 @@ namespace engine
 
             break ;
          }
+         case LOG_TYPE_ALTER :
+         {
+            const CHAR * objectName = NULL ;
+            RTN_ALTER_OBJECT_TYPE objectType = RTN_ALTER_INVALID_OBJECT ;
+            BSONObj alterObject ;
+
+            rc = dpsRecord2Alter( (CHAR *)recordHeader, &objectName,
+                                  (INT32 &)objectType, alterObject ) ;
+            if ( SDB_OK != rc )
+            {
+               goto error ;
+            }
+
+            while ( TRUE )
+            {
+               rc = rtnAlter( objectName, objectType, alterObject, eduCB, _dpsCB ) ;
+               if ( SDB_LOCK_FAILED == rc )
+               {
+                  ossSleep( 100 ) ;
+                  continue ;
+               }
+               break ;
+            }
+            PD_RC_CHECK( rc, PDERROR, "Failed to alter object, rc: %d", rc ) ;
+
+            break ;
+         }
          case LOG_TYPE_DUMMY :
          {
             rc = SDB_OK ;
@@ -1095,6 +1123,12 @@ namespace engine
             break ;
          }
          case LOG_TYPE_CL_TRUNC :
+         {
+            /// cant not rollback, return fail.
+            rc = SDB_CLS_REPLAY_LOG_FAILED ;
+            goto error ;
+         }
+         case LOG_TYPE_ALTER :
          {
             /// cant not rollback, return fail.
             rc = SDB_CLS_REPLAY_LOG_FAILED ;

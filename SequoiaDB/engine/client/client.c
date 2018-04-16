@@ -338,6 +338,97 @@ error :
    goto done ;
 }
 
+static INT32 _sdbBuildAlterObject ( const CHAR * taskName,
+                                    const bson * arguments,
+                                    BOOLEAN allowNullArgs,
+                                    bson * object )
+{
+   INT32 rc = SDB_OK ;
+
+   bson_iterator itr ;
+
+   if ( NULL == taskName || NULL == object )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   rc = bson_append_start_object( object, FIELD_NAME_ALTER ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_DRIVER_BSON_ERROR ;
+      goto error ;
+   }
+
+   rc = bson_append_string( object, FIELD_NAME_NAME, taskName ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_DRIVER_BSON_ERROR ;
+      goto error ;
+   }
+
+   if ( NULL == arguments )
+   {
+      if ( allowNullArgs )
+      {
+         rc = bson_append_null( object, FIELD_NAME_ARGS ) ;
+         if ( SDB_OK != rc )
+         {
+            rc = SDB_DRIVER_BSON_ERROR ;
+            goto error ;
+         }
+      }
+      else
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+   }
+   else
+   {
+      rc = bson_append_start_object( object, FIELD_NAME_ARGS ) ;
+      if ( SDB_OK != rc )
+      {
+         rc = SDB_DRIVER_BSON_ERROR ;
+         goto error ;
+      }
+      bson_iterator_init ( &itr, arguments ) ;
+      while ( BSON_EOO != bson_iterator_next ( &itr ) )
+      {
+         rc = bson_append_element( object, NULL, &itr ) ;
+         if ( SDB_OK != rc )
+         {
+            rc = SDB_DRIVER_BSON_ERROR ;
+            goto error ;
+         }
+      }
+      rc = bson_append_finish_object( object ) ;
+      if ( SDB_OK != rc )
+      {
+          rc = SDB_DRIVER_BSON_ERROR ;
+          goto error ;
+      }
+   }
+   rc = bson_append_finish_object( object ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_DRIVER_BSON_ERROR ;
+      goto error ;
+   }
+   rc = bson_finish( object ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_DRIVER_BSON_ERROR ;
+      goto error ;
+   }
+
+done :
+   return rc ;
+
+error :
+   goto done ;
+}
+
 static INT32 _reallocBuffer ( CHAR **ppBuffer, INT32 *buffersize,
                               INT32 newSize )
 {
@@ -4629,7 +4720,7 @@ static INT32 _sdbAlterCollectionV2( sdbCollectionHandle cHandle,
       goto error ;
    }
 
-   BSON_APPEND( obj, FIELD_NAME_ALTER_TYPE, SDB_ALTER_CL, string ) ;
+   BSON_APPEND( obj, FIELD_NAME_ALTER_TYPE, SDB_CATALOG_CL, string ) ;
    BSON_APPEND( obj, FIELD_NAME_VERSION, SDB_ALTER_VERSION, int ) ;
    BSON_APPEND( obj, FIELD_NAME_NAME, cs->_collectionFullName, string ) ;
    if ( BSON_OBJECT == bson_find( &itr, options, FIELD_NAME_ALTER ) )
@@ -4731,6 +4822,7 @@ SDB_EXPORT INT32 sdbAlterCollection ( sdbCollectionHandle cHandle,
    {
       goto error ;
    }
+
 done:
    return rc ;
 error:
@@ -4895,6 +4987,154 @@ done :
    return rc ;
 error :
    goto done ;
+}
+
+SDB_EXPORT INT32 sdbAlterCollectionSpace ( sdbCSHandle cHandle,
+                                           bson * options )
+{
+   INT32 rc = SDB_OK ;
+
+   const CHAR * command = CMD_ADMIN_PREFIX CMD_NAME_ALTER_COLLECTION_SPACE ;
+
+   sdbCSStruct * cs = ( sdbCSStruct * )cHandle ;
+   sdbConnectionStruct * connection = NULL ;
+
+   BOOLEAN bsoninit = FALSE ;
+   bson newObj ;
+   bson_iterator itr ;
+
+   BSON_INIT( newObj ) ;
+
+   HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_CS ) ;
+   connection = ( sdbConnectionStruct  *)( cs->_connection ) ;
+
+   if ( NULL == options )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   BSON_APPEND( newObj, FIELD_NAME_ALTER_TYPE, SDB_CATALOG_CS, string ) ;
+   BSON_APPEND( newObj, FIELD_NAME_VERSION, SDB_ALTER_VERSION, int ) ;
+   BSON_APPEND( newObj, FIELD_NAME_NAME, cs->_CSName, string ) ;
+   if ( BSON_OBJECT == bson_find( &itr, options, FIELD_NAME_ALTER ) )
+   {
+      rc = bson_append_element( &newObj, NULL, &itr ) ;
+      if ( SDB_OK != rc )
+      {
+         rc = SDB_DRIVER_BSON_ERROR ;
+         goto error ;
+      }
+   }
+   else
+   {
+       rc = SDB_INVALIDARG ;
+       goto error ;
+   }
+
+   /// optional
+   if ( BSON_OBJECT == bson_find( &itr, options, FIELD_NAME_OPTIONS ) )
+   {
+      rc = bson_append_element( &newObj, NULL, &itr ) ;
+      if ( SDB_OK != rc )
+      {
+         rc = SDB_DRIVER_BSON_ERROR ;
+         goto error ;
+      }
+   }
+   else if ( BSON_EOO != bson_find( &itr, options, FIELD_NAME_OPTIONS ) )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   BSON_FINISH( newObj ) ;
+
+   rc = _runCommand( cs->_connection, connection->_sock,
+                     &( connection->_pSendBuffer ),
+                     &( connection->_sendBufferSize ),
+                     &( connection->_pReceiveBuffer ),
+                     &( connection->_receiveBufferSize ),
+                     cs->_endianConvert, command, &newObj,
+                     NULL, NULL, NULL ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+done:
+   BSON_DESTROY( newObj ) ;
+   return rc ;
+error:
+   goto done ;
+}
+
+INT32 _sdbAlterCollectionSpaceInternal ( sdbCSHandle cHandle,
+                                         const CHAR * taskName,
+                                         const bson * options,
+                                         BOOLEAN allowNullArgs )
+{
+   INT32 rc = SDB_OK ;
+
+   sdbCSStruct * cs = ( sdbCSStruct * )cHandle ;
+   BOOLEAN bsoninit = FALSE ;
+   bson obj ;
+
+   BSON_INIT( obj ) ;
+
+   HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_CS ) ;
+
+   if ( NULL == taskName )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   rc = _sdbBuildAlterObject( taskName, options, allowNullArgs, &obj ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+   rc = sdbAlterCollectionSpace( cHandle, &obj ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+done :
+   BSON_DESTROY( obj ) ;
+   return rc ;
+
+error :
+   goto done ;
+}
+
+SDB_EXPORT INT32 sdbCSSetDomain ( sdbCSHandle cHandle,
+                                  bson * options )
+{
+   return _sdbAlterCollectionSpaceInternal( cHandle, SDB_ALTER_CS_SET_DOMAIN, options, FALSE ) ;
+}
+
+SDB_EXPORT INT32 sdbCSRemoveDomain ( sdbCSHandle cHandle )
+{
+   return _sdbAlterCollectionSpaceInternal( cHandle, SDB_ALTER_CS_REMOVE_DOMAIN, NULL, TRUE ) ;
+}
+
+SDB_EXPORT INT32 sdbCSEnableCapped ( sdbCSHandle cHandle )
+{
+   return _sdbAlterCollectionSpaceInternal( cHandle, SDB_ALTER_CS_ENABLE_CAPPED, NULL, TRUE ) ;
+}
+
+SDB_EXPORT INT32 sdbCSDisableCapped ( sdbCSHandle cHandle )
+{
+   return _sdbAlterCollectionSpaceInternal( cHandle, SDB_ALTER_CS_DISABLE_CAPPED, NULL, TRUE ) ;
+}
+
+SDB_EXPORT INT32 sdbCSSetAttributes ( sdbCSHandle cHandle,
+                                      bson * options )
+{
+   return _sdbAlterCollectionSpaceInternal( cHandle, SDB_ALTER_CS_SET_ATTR, options, FALSE ) ;
 }
 
 SDB_EXPORT INT32 sdbGetCLName ( sdbCollectionHandle cHandle,
@@ -8900,12 +9140,12 @@ SDB_EXPORT INT32 sdbListDomains ( sdbConnectionHandle cHandle,
                        selector, orderBy, handle ) ;
 }
 
-SDB_EXPORT INT32 sdbAlterDomain( sdbDomainHandle cHandle,
-                                 const bson *options )
+static INT32 _sdbAlterDomainV1 ( sdbCollectionHandle cHandle,
+                                 const bson * options  )
 {
    INT32 rc                = SDB_OK ;
-   const CHAR *command     = CMD_ADMIN_PREFIX CMD_NAME_ALTER_DOMAIN ;
-   sdbDomainStruct *domain = ( sdbDomainStruct * )cHandle  ;
+   const CHAR * command    = CMD_ADMIN_PREFIX CMD_NAME_ALTER_DOMAIN ;
+   sdbDomainStruct * domain = ( sdbDomainStruct * )cHandle ;
    BOOLEAN bsoninit        = FALSE ;
    bson newObj ;
 
@@ -8919,7 +9159,7 @@ SDB_EXPORT INT32 sdbAlterDomain( sdbDomainHandle cHandle,
 
    BSON_APPEND( newObj, FIELD_NAME_NAME, domain->_domainName, string ) ;
    BSON_APPEND( newObj, FIELD_NAME_OPTIONS, options, bson) ;
-   BSON_FINISH ( newObj ) ;
+   BSON_FINISH( newObj ) ;
 
    rc = _runCommand( domain->_connection, domain->_sock,
                      &( domain->_pSendBuffer ),
@@ -8933,11 +9173,183 @@ SDB_EXPORT INT32 sdbAlterDomain( sdbDomainHandle cHandle,
    {
       goto error ;
    }
+
+done :
+   BSON_DESTROY( newObj ) ;
+   return rc ;
+error :
+   goto done ;
+}
+
+static INT32 _sdbAlterDomainV2 ( sdbCollectionHandle cHandle,
+                                 const bson * options )
+{
+   INT32 rc = SDB_OK ;
+
+   const CHAR * command = CMD_ADMIN_PREFIX CMD_NAME_ALTER_DOMAIN ;
+   sdbDomainStruct * domain = ( sdbDomainStruct * )cHandle ;
+   BOOLEAN bsoninit = FALSE ;
+   bson_iterator itr ;
+   bson newObj ;
+
+   BSON_INIT( newObj ) ;
+   HANDLE_CHECK( cHandle, domain, SDB_HANDLE_TYPE_DOMAIN ) ;
+   if ( NULL == options )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   BSON_APPEND( newObj, FIELD_NAME_ALTER_TYPE, SDB_CATALOG_DOMAIN, string ) ;
+   BSON_APPEND( newObj, FIELD_NAME_VERSION, SDB_ALTER_VERSION, int ) ;
+   BSON_APPEND( newObj, FIELD_NAME_NAME, domain->_domainName, string ) ;
+   if ( BSON_OBJECT == bson_find( &itr, options, FIELD_NAME_ALTER ) )
+   {
+      rc = bson_append_element( &newObj, NULL, &itr ) ;
+      if ( SDB_OK != rc )
+      {
+         rc = SDB_DRIVER_BSON_ERROR ;
+         goto error ;
+      }
+   }
+   else
+   {
+       rc = SDB_INVALIDARG ;
+       goto error ;
+   }
+
+   /// optional
+   if ( BSON_OBJECT == bson_find( &itr, options, FIELD_NAME_OPTIONS ) )
+   {
+      rc = bson_append_element( &newObj, NULL, &itr ) ;
+      if ( SDB_OK != rc )
+      {
+         rc = SDB_DRIVER_BSON_ERROR ;
+         goto error ;
+      }
+   }
+   else if ( BSON_EOO != bson_find( &itr, options, FIELD_NAME_OPTIONS ) )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   BSON_FINISH( newObj ) ;
+
+   rc = _runCommand( domain->_connection, domain->_sock,
+                     &( domain->_pSendBuffer ),
+                     &( domain->_sendBufferSize ),
+                     &( domain->_pReceiveBuffer ),
+                     &( domain->_receiveBufferSize ),
+                     domain->_endianConvert,
+                     command, &newObj,
+                     NULL, NULL, NULL ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
 done:
    BSON_DESTROY( newObj ) ;
    return rc ;
 error:
    goto done ;
+}
+
+SDB_EXPORT INT32 sdbAlterDomain( sdbDomainHandle cHandle,
+                                 const bson *options )
+{
+   INT32 rc = SDB_OK ;
+   bson_iterator i ;
+
+   if ( NULL == options )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   if ( BSON_EOO == bson_find( &i, options, FIELD_NAME_ALTER ) )
+   {
+      rc = _sdbAlterDomainV1( cHandle, options ) ;
+   }
+   else
+   {
+      rc = _sdbAlterDomainV2( cHandle, options ) ;
+   }
+
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
+static INT32 _sdbAlterDomainInternal ( sdbDomainHandle cHandle,
+                                       const CHAR * taskName,
+                                       const bson * options,
+                                       BOOLEAN allowNullArgs )
+{
+   INT32 rc = SDB_OK ;
+
+   sdbDomainStruct *domain = ( sdbDomainStruct * )cHandle ;
+   BOOLEAN bsoninit = FALSE ;
+   bson obj ;
+
+   BSON_INIT( obj ) ;
+
+   HANDLE_CHECK( cHandle, domain, SDB_HANDLE_TYPE_DOMAIN ) ;
+
+   if ( NULL == taskName )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   rc = _sdbBuildAlterObject( taskName, options, allowNullArgs, &obj ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+   rc = sdbAlterDomain( cHandle, &obj ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+done:
+   BSON_DESTROY( obj ) ;
+   return rc ;
+error:
+   goto done ;
+}
+
+SDB_EXPORT INT32 sdbDomainAddGroups ( sdbDomainHandle cHandle,
+                                      const bson * options )
+{
+   return _sdbAlterDomainInternal( cHandle, SDB_ALTER_DOMAIN_ADD_GROUPS, options, FALSE ) ;
+}
+
+SDB_EXPORT INT32 sdbDomainRemoveGroups ( sdbDomainHandle cHandle,
+                                         const bson * options )
+{
+   return _sdbAlterDomainInternal( cHandle, SDB_ALTER_DOMAIN_REMOVE_GROUPS, options, FALSE ) ;
+}
+
+SDB_EXPORT INT32 sdbDomainSetGroups ( sdbDomainHandle cHandle,
+                                      const bson * options )
+{
+   return _sdbAlterDomainInternal( cHandle, SDB_ALTER_DOMAIN_SET_GROUPS, options, FALSE ) ;
+}
+
+SDB_EXPORT INT32 sdbDomainSetAttributes ( sdbDomainHandle cHandle,
+                                          const bson * options )
+{
+   return _sdbAlterDomainInternal( cHandle, SDB_ALTER_DOMAIN_SET_ATTR, options, FALSE ) ;
 }
 
 SDB_EXPORT INT32 sdbListCollectionSpacesInDomain( sdbDomainHandle cHandle,
@@ -10690,68 +11102,30 @@ error:
    goto done ;
 }
 
-SDB_EXPORT INT32 sdbCreateIdIndex( sdbCollectionHandle cHandle,
-                                   const bson *args )
+static INT32 _sdbAlterCollectionInternal ( sdbCollectionHandle cHandle,
+                                           const CHAR * taskName,
+                                           const bson * options,
+                                           BOOLEAN allowNullArgs )
 {
    INT32 rc = SDB_OK ;
-   sdbCollectionStruct *cs = (sdbCollectionStruct*)cHandle ;
+
+   sdbCollectionStruct * cl = (sdbCollectionStruct*)cHandle ;
    BOOLEAN bsoninit = FALSE ;
-   bson_iterator itr ;
    bson obj ;
 
    BSON_INIT( obj ) ;
-   HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
-   rc = bson_append_start_object( &obj, FIELD_NAME_ALTER ) ;
-   if ( SDB_OK != rc )
+
+   HANDLE_CHECK( cHandle, cl, SDB_HANDLE_TYPE_COLLECTION ) ;
+
+   if ( NULL == taskName )
    {
-      rc = SDB_DRIVER_BSON_ERROR ;
+      rc = SDB_INVALIDARG ;
       goto error ;
    }
-   rc = bson_append_string( &obj, FIELD_NAME_NAME, SDB_ALTER_CRT_ID_INDEX ) ;
+
+   rc = _sdbBuildAlterObject( taskName, options, allowNullArgs, &obj ) ;
    if ( SDB_OK != rc )
    {
-      rc = SDB_DRIVER_BSON_ERROR ;
-      goto error ;
-   }
-   if ( NULL == args )
-   {
-      rc = bson_append_null( &obj, FIELD_NAME_ARGS ) ;
-      if ( SDB_OK != rc )
-      {
-         rc = SDB_DRIVER_BSON_ERROR ;
-         goto error ;
-      }
-   }
-   else
-   {
-      rc = bson_append_start_object( &obj, FIELD_NAME_ARGS ) ;
-      if ( SDB_OK != rc )
-      {
-         rc = SDB_DRIVER_BSON_ERROR ;
-         goto error ;
-      }
-      bson_iterator_init ( &itr, args ) ;
-      while ( BSON_EOO != bson_iterator_next ( &itr ) )
-      {
-         BSON_APPEND( obj, NULL, &itr, element ) ;
-      }
-      rc = bson_append_finish_object( &obj ) ;
-      if ( SDB_OK != rc )
-      {
-          rc = SDB_DRIVER_BSON_ERROR ;
-          goto error ;
-      }
-   }
-   rc = bson_append_finish_object( &obj ) ;
-   if ( SDB_OK != rc )
-   {
-      rc = SDB_DRIVER_BSON_ERROR ;
-      goto error ;
-   }
-   rc = bson_finish( &obj ) ;
-   if ( SDB_OK != rc )
-   {
-      rc = SDB_DRIVER_BSON_ERROR ;
       goto error ;
    }
 
@@ -10768,57 +11142,43 @@ error:
    goto done ;
 }
 
+SDB_EXPORT INT32 sdbCreateIdIndex ( sdbCollectionHandle cHandle,
+                                    const bson * args )
+{
+   return _sdbAlterCollectionInternal( cHandle, SDB_ALTER_CL_CRT_ID_INDEX, args, TRUE ) ;
+}
+
 SDB_EXPORT INT32 sdbDropIdIndex( sdbCollectionHandle cHandle )
 {
-   INT32 rc = SDB_OK ;
-   sdbCollectionStruct *cs = (sdbCollectionStruct*)cHandle ;
-   BOOLEAN bsoninit = FALSE ;
-   bson obj ;
+   return _sdbAlterCollectionInternal( cHandle, SDB_ALTER_CL_DROP_ID_INDEX, NULL, TRUE ) ;
+}
 
-   BSON_INIT( obj ) ;
-   HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
-   rc = bson_append_start_object( &obj, FIELD_NAME_ALTER ) ;
-   if ( SDB_OK != rc )
-   {
-      rc = SDB_DRIVER_BSON_ERROR ;
-      goto error ;
-   }
-   rc = bson_append_string( &obj, FIELD_NAME_NAME, SDB_ALTER_DROP_ID_INDEX ) ;
-   if ( SDB_OK != rc )
-   {
-      rc = SDB_DRIVER_BSON_ERROR ;
-      goto error ;
-   }
-   rc = bson_append_null( &obj, FIELD_NAME_ARGS ) ;
-   if ( SDB_OK != rc )
-   {
-      rc = SDB_DRIVER_BSON_ERROR ;
-      goto error ;
-   }
-   rc = bson_append_finish_object( &obj ) ;
-   if ( SDB_OK != rc )
-   {
-      rc = SDB_DRIVER_BSON_ERROR ;
-      goto error ;
-   }
-   rc = bson_finish( &obj ) ;
-   if ( SDB_OK != rc )
-   {
-      rc = SDB_DRIVER_BSON_ERROR ;
-      goto error ;
-   }
+SDB_EXPORT INT32 sdbEnableSharding ( sdbCollectionHandle cHandle,
+                                     const bson * args )
+{
+   return _sdbAlterCollectionInternal( cHandle, SDB_ALTER_CL_ENABLE_SHARDING, args, FALSE ) ;
+}
 
-   rc = sdbAlterCollection( cHandle, &obj ) ;
-   if ( SDB_OK != rc )
-   {
-      goto error ;
-   }
+SDB_EXPORT INT32 sdbDisableSharding ( sdbCollectionHandle cHandle )
+{
+   return _sdbAlterCollectionInternal( cHandle, SDB_ALTER_CL_DISABLE_SHARDING, NULL, TRUE ) ;
+}
 
-done:
-   BSON_DESTROY( obj ) ;
-   return rc ;
-error:
-   goto done ;
+SDB_EXPORT INT32 sdbEnableCompression ( sdbCollectionHandle cHandle,
+                                        const bson * args )
+{
+   return _sdbAlterCollectionInternal( cHandle, SDB_ALTER_CL_ENABLE_COMPRESS, args, TRUE ) ;
+}
+
+SDB_EXPORT INT32 sdbDisableCompression ( sdbCollectionHandle cHandle )
+{
+   return _sdbAlterCollectionInternal( cHandle, SDB_ALTER_CL_DISABLE_COMPRESS, NULL, TRUE ) ;
+}
+
+SDB_EXPORT INT32 sdbCLSetAttributes ( sdbCollectionHandle cHandle,
+                                      const bson * args )
+{
+   return _sdbAlterCollectionInternal( cHandle, SDB_ALTER_CL_SET_ATTR, args, FALSE ) ;
 }
 
 static INT32 _setDCName ( sdbDCHandle cHandle,

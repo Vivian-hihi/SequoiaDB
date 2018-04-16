@@ -473,7 +473,6 @@
 #define CMD_ADMIN_PREFIX                     "$"
 #define CMD_NAME_BACKUP_OFFLINE              "backup offline"
 #define CMD_NAME_CREATE_COLLECTION           "create collection"
-#define CMD_NAME_ALTER_COLLECTION            "alter collection"
 #define CMD_NAME_CREATE_COLLECTIONSPACE      "create collectionspace"
 #define CMD_NAME_CREATE_INDEX                "create index"
 #define CMD_NAME_CANCEL_TASK                 "cancel task"
@@ -548,7 +547,6 @@
 #define CMD_NAME_TRACE_STATUS                "trace status"
 #define CMD_NAME_CREATE_DOMAIN               "create domain"
 #define CMD_NAME_DROP_DOMAIN                 "drop domain"
-#define CMD_NAME_ALTER_DOMAIN                "alter domain"
 #define CMD_NAME_ADD_DOMAIN_GROUP            "add domain group"
 #define CMD_NAME_REMOVE_DOMAIN_GROUP         "remove domain group"
 #define CMD_NAME_EXPORT_CONFIG               "export configuration"
@@ -667,6 +665,10 @@
 
 #define SDB_LOB_OID_LEN                      16
 
+#define SDB_SHARDING_PARTITION_DEFAULT    4096       // 2^12
+#define SDB_SHARDING_PARTITION_MIN        8          // 2^3
+#define SDB_SHARDING_PARTITION_MAX        1048576    // 2^20
+
 enum SDB_ROLE
 {
    SDB_ROLE_DATA = 0,
@@ -706,15 +708,116 @@ enum SDB_LOB_MODE
 
 #define SDB_ALTER_VERSION 1
 
-/// append only, do not change any existing types.
-#define SDB_ALTER_DB          "db"
-#define SDB_ALTER_CL          "collection"
-#define SDB_ALTER_CS          "collection space"
-#define SDB_ALTER_DOMAIN      "domain"
-#define SDB_ALTER_GROUP       "group"
-#define SDB_ALTER_NODE        "node"
+/// catalog objects
+#define SDB_CATALOG_DB        "db"
+#define SDB_CATALOG_CS        "collection space"
+#define SDB_CATALOG_CL        "collection"
+#define SDB_CATALOG_DOMAIN    "domain"
+#define SDB_CATALOG_GROUP     "group"
+#define SDB_CATALOG_NODE      "node"
+#define SDB_CATALOG_UNKNOWN   "unknown"
 
-#define SDB_ALTER_CRT_ID_INDEX     "create id index"
-#define SDB_ALTER_DROP_ID_INDEX    "drop id index"
+#define SDB_CATALOG_CL_ID_INDEX  "id index"
+#define SDB_CATALOG_CL_SHARDING  "sharding"
+#define SDB_CATALOG_CL_COMPRESS  "compression"
+
+#define SDB_CATALOG_CS_DOMAIN    SDB_CATALOG_DOMAIN
+#define SDB_CATALOG_CS_CAPPED    "capped"
+
+#define SDB_CATALOG_DOMAIN_GROUPS "groups"
+
+#define SDB_ALTER_ACTION_CREATE     "create"
+#define SDB_ALTER_ACTION_DROP       "drop"
+#define SDB_ALTER_ACTION_ENABLE     "enable"
+#define SDB_ALTER_ACTION_DISABLE    "disable"
+#define SDB_ALTER_ACTION_ADD        "add"
+#define SDB_ALTER_ACTION_SET        "set"
+#define SDB_ALTER_ACTION_REMOVE     "remove"
+#define SDB_ALTER_ACTION_SET_ATTR   "set attributes"
+
+#define SDB_ALTER_DELIMITER         " "
+
+/// alter collection
+#define CMD_NAME_ALTER_COLLECTION      "alter collection"
+
+/// create id index
+#define SDB_ALTER_CL_CRT_ID_INDEX      SDB_ALTER_ACTION_CREATE \
+                                       SDB_ALTER_DELIMITER \
+                                       SDB_CATALOG_CL_ID_INDEX
+
+/// drop id index
+#define SDB_ALTER_CL_DROP_ID_INDEX     SDB_ALTER_ACTION_DROP \
+                                       SDB_ALTER_DELIMITER \
+                                       SDB_CATALOG_CL_ID_INDEX
+
+/// enable sharding
+#define SDB_ALTER_CL_ENABLE_SHARDING   SDB_ALTER_ACTION_ENABLE \
+                                       SDB_ALTER_DELIMITER \
+                                       SDB_CATALOG_CL_SHARDING
+
+/// disable sharding
+#define SDB_ALTER_CL_DISABLE_SHARDING  SDB_ALTER_ACTION_DISABLE \
+                                       SDB_ALTER_DELIMITER \
+                                       SDB_CATALOG_CL_SHARDING
+
+/// enable compression
+#define SDB_ALTER_CL_ENABLE_COMPRESS   SDB_ALTER_ACTION_ENABLE \
+                                       SDB_ALTER_DELIMITER \
+                                       SDB_CATALOG_CL_COMPRESS
+
+/// disable compression
+#define SDB_ALTER_CL_DISABLE_COMPRESS  SDB_ALTER_ACTION_DISABLE \
+                                       SDB_ALTER_DELIMITER \
+                                       SDB_CATALOG_CL_COMPRESS
+
+/// set attributes
+#define SDB_ALTER_CL_SET_ATTR          SDB_ALTER_ACTION_SET_ATTR
+
+/// alter collection space
+#define CMD_NAME_ALTER_COLLECTION_SPACE   "alter collectionspace"
+
+/// set domain
+#define SDB_ALTER_CS_SET_DOMAIN           SDB_ALTER_ACTION_SET \
+                                          SDB_ALTER_DELIMITER \
+                                          SDB_CATALOG_CS_DOMAIN
+
+/// remove domain
+#define SDB_ALTER_CS_REMOVE_DOMAIN        SDB_ALTER_ACTION_REMOVE \
+                                          SDB_ALTER_DELIMITER \
+                                          SDB_CATALOG_CS_DOMAIN
+
+/// enable capped
+#define SDB_ALTER_CS_ENABLE_CAPPED        SDB_ALTER_ACTION_ENABLE \
+                                          SDB_ALTER_DELIMITER \
+                                          SDB_CATALOG_CS_CAPPED
+
+/// disable capped
+#define SDB_ALTER_CS_DISABLE_CAPPED       SDB_ALTER_ACTION_DISABLE \
+                                          SDB_ALTER_DELIMITER \
+                                          SDB_CATALOG_CS_CAPPED
+
+/// set attributes
+#define SDB_ALTER_CS_SET_ATTR             SDB_ALTER_ACTION_SET_ATTR
+
+/// alter domain
+#define CMD_NAME_ALTER_DOMAIN          "alter domain"
+
+/// add groups
+#define SDB_ALTER_DOMAIN_ADD_GROUPS    SDB_ALTER_ACTION_ADD \
+                                       SDB_ALTER_DELIMITER \
+                                       SDB_CATALOG_DOMAIN_GROUPS
+
+/// set groups
+#define SDB_ALTER_DOMAIN_SET_GROUPS    SDB_ALTER_ACTION_SET \
+                                       SDB_ALTER_DELIMITER \
+                                       SDB_CATALOG_DOMAIN_GROUPS
+
+/// remove groups
+#define SDB_ALTER_DOMAIN_REMOVE_GROUPS SDB_ALTER_ACTION_REMOVE \
+                                       SDB_ALTER_DELIMITER \
+                                       SDB_CATALOG_DOMAIN_GROUPS
+
+/// set attributes
+#define SDB_ALTER_DOMAIN_SET_ATTR      SDB_ALTER_ACTION_SET_ATTR
 
 #endif // MSGDEF_H__

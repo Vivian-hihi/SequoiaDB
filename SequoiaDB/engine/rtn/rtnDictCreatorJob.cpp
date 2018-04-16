@@ -366,8 +366,9 @@ namespace engine
       if ( UTIL_COMPRESSOR_LZW != mbContext->mb()->_compressorType )
       {
          /*
-          * The mbID has been reused, and the current collection's
-          * CompressionType is not configured.
+          * The mbID has been reused or compression type is altered, and the
+          * current collection's CompressionType is not configured for
+          * dictionary
           */
          goto done ;
       }

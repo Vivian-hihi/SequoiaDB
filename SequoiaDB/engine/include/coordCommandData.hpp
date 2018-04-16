@@ -38,6 +38,7 @@
 #define COORD_COMMAND_DATA_HPP__
 
 #include "coordCommand2Phase.hpp"
+#include "rtnAlterJob.hpp"
 
 using namespace bson ;
 
@@ -141,6 +142,130 @@ namespace engine
                                           const vector<BSONObj> &cataObjs ) ;
    } ;
    typedef _coordDataCMD3Phase coordDataCMD3Phase ;
+
+   /*
+      _coordAlterCMDArguments define
+    */
+   class _coordAlterCMDArguments : public _coordCMDArguments
+   {
+      public :
+         _coordAlterCMDArguments () ;
+         virtual ~_coordAlterCMDArguments () ;
+
+         OSS_INLINE const rtnAlterTask * getTaskRunner () const
+         {
+            return _task ;
+         }
+
+         OSS_INLINE void setTaskRunner ( const rtnAlterTask * task )
+         {
+            _task = task ;
+            _postTasks.clear() ;
+         }
+
+         OSS_INLINE BOOLEAN hasPostTasks () const
+         {
+            return _postTasks.size() > 0 ;
+         }
+
+         OSS_INLINE void addPostTask ( UINT64 postTask )
+         {
+            _postTasks.push_back( postTask ) ;
+         }
+
+         OSS_INLINE const _utilList<UINT64> & getPostTasks () const
+         {
+            return _postTasks ;
+         }
+
+         void clear () ;
+
+      protected :
+         const rtnAlterTask * _task ;
+         _utilList<UINT64>    _postTasks ;
+   } ;
+
+   typedef class _coordAlterCMDArguments coordAlterCMDArguments ;
+
+   /*
+      _coordDataCMDAlter define
+    */
+   class _coordDataCMDAlter : public _coordDataCMD3Phase
+   {
+      public :
+         _coordDataCMDAlter () ;
+         virtual ~_coordDataCMDAlter () ;
+
+         virtual INT32 execute ( MsgHeader * pMsg,
+                                 pmdEDUCB * cb,
+                                 INT64 & contextID,
+                                 rtnContextBuf * buf ) ;
+
+      protected :
+         virtual coordCMDArguments * _getArguments () ;
+
+         virtual INT32 _doOnCataGroup ( MsgHeader * pMsg,
+                                        pmdEDUCB * cb,
+                                        rtnContextCoord ** ppContext,
+                                        coordCMDArguments * pArgs,
+                                        CoordGroupList * pGroupLst,
+                                        vector<BSONObj> * pReplyObjs ) ;
+
+         virtual INT32 _doOnCataGroupP2 ( MsgHeader * pMsg,
+                                          pmdEDUCB * cb,
+                                          rtnContextCoord ** ppContext,
+                                          coordCMDArguments * pArgs,
+                                          const CoordGroupList & groupLst ) ;
+
+         virtual INT32 _doOnDataGroupP2 ( MsgHeader * pMsg,
+                                          pmdEDUCB * cb,
+                                          rtnContextCoord ** ppContext,
+                                          coordCMDArguments * pArgs,
+                                          const CoordGroupList & groupLst,
+                                          const vector<BSONObj> & cataObjs ) ;
+
+         virtual INT32 _rollbackOnDataGroup ( MsgHeader * pMsg,
+                                              pmdEDUCB * cb,
+                                              coordCMDArguments * pArgs,
+                                              const CoordGroupList & groupLst ) ;
+
+         virtual INT32 _doCommit ( MsgHeader *pMsg,
+                                   pmdEDUCB * cb,
+                                   rtnContextCoord **ppContext,
+                                   coordCMDArguments *pArgs ) ;
+
+         virtual INT32 _parseMsg ( MsgHeader * pMsg,
+                                   coordCMDArguments * pArgs ) ;
+
+         virtual INT32 _generateCataMsg ( MsgHeader * pMsg,
+                                          pmdEDUCB * cb,
+                                          coordCMDArguments * pArgs,
+                                          CHAR ** ppMsgBuf,
+                                          INT32 * pBufSize ) ;
+
+         virtual void _releaseCataMsg ( CHAR * pMsgBuf,
+                                        INT32 bufSize,
+                                        pmdEDUCB * cb ) ;
+
+         virtual RTN_ALTER_OBJECT_TYPE _getObjectType () const = 0 ;
+         virtual MSG_TYPE _getCatalogMessageType () const = 0 ;
+
+         virtual INT32 _extractPostTasks ( const bson::BSONObj & reply ) ;
+
+         virtual INT32 _executePostTasks ( const CHAR * name,
+                                           const _utilList< UINT64 > & postTasks,
+                                           pmdEDUCB * cb ) ;
+
+         virtual INT32 _cancelPostTasks ( const CHAR * name,
+                                          const _utilList< UINT64 > & postTasks,
+                                          pmdEDUCB * cb ) ;
+
+      protected :
+         coordAlterCMDArguments  _arguments ;
+         rtnAlterJob             _alterJob ;
+   } ;
+
+   typedef class _coordDataCMDAlter coordDataCMDAlter ;
 
    /*
       _coordCMDTestCollectionSpace define
@@ -280,6 +405,32 @@ namespace engine
    typedef _coordCMDDropCollectionSpace coordCMDDropCollectionSpace ;
 
    /*
+      _coordCMDAlterCollectionSpace define
+    */
+   class _coordCMDAlterCollectionSpace : public _coordDataCMDAlter
+   {
+      COORD_DECLARE_CMD_AUTO_REGISTER() ;
+
+      public :
+         _coordCMDAlterCollectionSpace () ;
+         virtual ~_coordCMDAlterCollectionSpace () ;
+
+      protected :
+         OSS_INLINE virtual RTN_ALTER_OBJECT_TYPE _getObjectType () const
+         {
+            return RTN_ALTER_COLLECTION_SPACE ;
+         }
+
+         OSS_INLINE virtual MSG_TYPE _getCatalogMessageType () const
+         {
+            return MSG_CAT_ALTER_CS_REQ ;
+         }
+
+         // Not a collection command
+         virtual BOOLEAN _flagDoOnCollection () { return FALSE ; }
+   } ;
+
+   /*
       _coordCMDCreateCollection define
    */
    class _coordCMDCreateCollection : public _coordDataCMD2Phase
@@ -375,26 +526,22 @@ namespace engine
 
    /*
       _coordCMDAlterCollection define
-   */
-   class _coordCMDAlterCollection : public _coordDataCMD2Phase
+    */
+   class _coordCMDAlterCollection : public _coordDataCMDAlter
    {
       COORD_DECLARE_CMD_AUTO_REGISTER() ;
+
       public:
-         _coordCMDAlterCollection() ;
-         virtual ~_coordCMDAlterCollection() ;
+         _coordCMDAlterCollection () ;
+         virtual ~_coordCMDAlterCollection () ;
+
       protected :
          virtual INT32 _parseMsg ( MsgHeader *pMsg,
                                    coordCMDArguments *pArgs ) ;
 
-         virtual INT32 _generateCataMsg ( MsgHeader *pMsg,
-                                          pmdEDUCB *cb,
-                                          coordCMDArguments *pArgs,
-                                          CHAR **ppMsgBuf,
-                                          INT32 *pBufSize ) ;
-
-         virtual void  _releaseCataMsg( CHAR *pMsgBuf,
-                                        INT32 bufSize,
-                                        pmdEDUCB *cb ) ;
+         virtual INT32 _doComplete ( MsgHeader *pMsg,
+                                     pmdEDUCB * cb,
+                                     coordCMDArguments *pArgs ) ;
 
       protected :
          /*
@@ -408,7 +555,33 @@ namespace engine
          */
          virtual BOOLEAN _flagUseGrpLstInCoord () { return TRUE ; }
 
+         OSS_INLINE virtual RTN_ALTER_OBJECT_TYPE _getObjectType () const
+         {
+            return RTN_ALTER_COLLECTION ;
+         }
+
+         OSS_INLINE virtual MSG_TYPE _getCatalogMessageType () const
+         {
+            return MSG_CAT_ALTER_COLLECTION_REQ ;
+         }
+
+         virtual INT32 _executePostTasks ( const CHAR * name,
+                                           const _utilList< UINT64 > & postTasks,
+                                           pmdEDUCB * cb ) ;
+
+         virtual INT32 _cancelPostTasks ( const CHAR * name,
+                                          const _utilList< UINT64 > & postTasks,
+                                          pmdEDUCB * cb ) ;
+
+         INT32 _buildPostTasks ( const _utilList< UINT64 > & postTasks,
+                                 bson::BSONObj & taskDesc ) ;
+
+         INT32 _waitPostTasks ( const bson::BSONObj & taskDesc,
+                                pmdEDUCB * cb ) ;
+
+         INT32 _cancelPostTask ( UINT64 taskID, pmdEDUCB * cb ) ;
    } ;
+
    typedef _coordCMDAlterCollection coordCMDAlterCollection ;
 
    /*

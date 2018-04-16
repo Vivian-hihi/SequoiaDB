@@ -258,6 +258,16 @@ INT32 msgExtractCMRequest ( CHAR *pBuffer, SINT32 *remoCode,
                             CHAR **arg1, CHAR **arg2,
                             CHAR **arg3, CHAR **arg4 ) ;
 
+INT32 msgBuildQueryCMDMsg ( CHAR ** ppBuffer,
+                            INT32 * pBufferSize,
+                            const CHAR * commandName,
+                            const BSONObj & boQuery,
+                            const BSONObj & boSelect,
+                            const BSONObj & boSort,
+                            const BSONObj & boHint,
+                            UINT64 reqID,
+                            engine::IExecutor * cb ) ;
+
 INT32 msgBuildDropCLMsg ( CHAR **ppBuffer, INT32 *bufferSize,
                           const CHAR *CollectionName, UINT64 reqID,
                           engine::IExecutor *cb = NULL ) ;

@@ -37,6 +37,7 @@
 #include "coordCommandDomain.hpp"
 #include "pdTrace.hpp"
 #include "coordTrace.hpp"
+#include "rtn.hpp"
 
 using namespace bson;
 
@@ -135,49 +136,17 @@ namespace engine
 
    /*
       _coordCMDAlterDomain implement
-   */
+    */
    COORD_IMPLEMENT_CMD_AUTO_REGISTER( _coordCMDAlterDomain,
                                       CMD_NAME_ALTER_DOMAIN,
                                       FALSE ) ;
-   _coordCMDAlterDomain::_coordCMDAlterDomain()
+   _coordCMDAlterDomain::_coordCMDAlterDomain ()
+   : _coordDataCMDAlter()
    {
    }
 
-   _coordCMDAlterDomain::~_coordCMDAlterDomain()
+   _coordCMDAlterDomain::~_coordCMDAlterDomain ()
    {
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION( COORD_ALTERDOMAIN_EXE, "_coordCMDAlterDomain::execute" )
-   INT32 _coordCMDAlterDomain::execute( MsgHeader *pMsg,
-                                        pmdEDUCB *cb,
-                                        INT64 &contextID,
-                                        rtnContextBuf *buf )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( COORD_ALTERDOMAIN_EXE ) ;
-
-      contextID = -1 ;
-
-      MsgOpQuery *forward  = (MsgOpQuery *)pMsg;
-      forward->header.opCode = MSG_CAT_ALTER_DOMAIN_REQ;
-
-      _printDebug ( (const CHAR*)pMsg, getName() ) ;
-
-      rc = executeOnCataGroup ( pMsg, cb, TRUE, NULL, NULL, buf ) ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "Execute on catalog failed in command[%s], "
-                  "rc: %d", getName(), rc ) ;
-         goto error ;
-      }
-
-   done:
-      PD_TRACE_EXITRC ( COORD_ALTERDOMAIN_EXE, rc ) ;
-      return rc ;
-   error :
-      goto done ;
    }
 
 }
-
-

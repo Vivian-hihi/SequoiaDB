@@ -38,6 +38,7 @@
 #include "pmd.hpp"
 #include "pmdCB.hpp"
 #include "rtnContextDel.hpp"
+#include "rtnContextAlter.hpp"
 #include "rtnContext.hpp"
 #include "dmsStorageUnit.hpp"
 #include "pdTrace.hpp"
@@ -46,6 +47,7 @@
 #include "ossMem.h"
 #include "rtnContextListLob.hpp"
 #include "rtnSessionProperty.hpp"
+#include "rtnAlter.hpp"
 #include "aggrDef.hpp"
 #include "utilCompressor.hpp"
 #include "msgMessageFormat.hpp"
@@ -3800,211 +3802,6 @@ namespace engine
       goto done ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER( _rtnAlterCollection )
-   _rtnAlterCollection::_rtnAlterCollection()
-   {
-
-   }
-
-   _rtnAlterCollection::~_rtnAlterCollection()
-   {
-
-   }
-
-   const CHAR *_rtnAlterCollection::collectionFullName()
-   {
-      if ( !_alterObj.isEmpty() )
-      {
-         return _alterObj.getField( FIELD_NAME_NAME ).valuestrsafe() ;
-      }
-      else
-      {
-         return RTN_ALTER_TYPE_CL == _runner.getJob().getType() &&
-                NULL != _runner.getJob().getName() ?
-                _runner.getJob().getName() : NULL ;
-      }
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION( SDB__RTNALTERCOLLECTION_INIT, "_rtnAlterCollection::init" )
-   INT32 _rtnAlterCollection::init( INT32 flags, INT64 numToSkip, INT64 numToReturn,
-                                    const CHAR *pMatcherBuff,
-                                    const CHAR *pSelectBuff,
-                                    const CHAR *pOrderByBuff,
-                                    const CHAR *pHintBuff )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNALTERCOLLECTION_INIT ) ;
-
-      try
-      {
-         BSONObj obj( pMatcherBuff ) ;
-         if ( obj.getField( FIELD_NAME_VERSION ).eoo() )
-         {
-            _alterObj = BSONObj( pMatcherBuff ) ;
-            BSONElement options ;
-            BSONElement clName = _alterObj.getField( FIELD_NAME_NAME ) ;
-            if ( String != clName.type() )
-            {
-               PD_LOG( PDERROR, "invalid alter object:%s",
-                       _alterObj.toString( FALSE, TRUE ).c_str() ) ;
-               rc = SDB_INVALIDARG ;
-               goto error ;
-            }
-
-            options = _alterObj.getField( FIELD_NAME_OPTIONS ) ;
-            if ( Object != options.type() )
-            {
-               PD_LOG( PDERROR, "invalid alter object:%s",
-                       _alterObj.toString( FALSE, TRUE ).c_str() ) ;
-               rc = SDB_INVALIDARG ;
-               goto error ;
-            }
-         }
-         else
-         {
-            rc = _runner.init( BSONObj( pMatcherBuff ) ) ;
-            if ( SDB_OK != rc )
-            {
-               PD_LOG( PDERROR, "failed to init rpc runner:%d", rc ) ;
-               goto error ;
-            }
-         }
-      }
-      catch ( std::exception &e )
-      {
-         PD_LOG( PDERROR, "unexpected error happened:%s",
-                 e.what() ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-   done:
-      PD_TRACE_EXITRC( SDB__RTNALTERCOLLECTION_INIT, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION( SDB__RTNALTERCOLLECTION_DOIT, "_rtnAlterCollection::doit" )
-   INT32 _rtnAlterCollection::doit( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
-                                    _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
-                                    INT16 w, INT64 *pContextID )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNALTERCOLLECTION_DOIT ) ;
-      if ( _alterObj.isEmpty() )
-      {
-         rc = _runner.run( cb, dpsCB ) ;
-
-         if ( CMD_SPACE_SERVICE_LOCAL == getFromService() )
-         {
-            /// AUDIT
-            PD_AUDIT_COMMAND( AUDIT_DDL, name(), AUDIT_OBJ_CL,
-                              _runner.getJob().getName(), rc,
-                              "Option:%s",
-                              _runner.getJob().getJobObj().toString().c_str() ) ;
-         }
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "failed to run alter command:%d", rc ) ;
-            goto error ;
-         }
-      }
-      else if ( getFromService() != CMD_SPACE_SERVICE_SHARD )
-      {
-         rc = SDB_RTN_CMD_NO_SERVICE_AUTH ;
-         PD_LOG( PDERROR, "this request should be from shard port" ) ;
-         goto error ;
-      }
-      else
-      {
-         rc = _handleOldVersion( cb, dmsCB, rtnCB,
-                                 dpsCB, w, pContextID ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "failed to alter collection:%d", rc ) ;
-            goto error ;
-         }
-      }
-   done:
-      PD_TRACE_EXITRC( SDB__RTNALTERCOLLECTION_DOIT, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION( SDB__RTNALTERCOLLECTION__HANDLEOLDVERSION, "_rtnAlterCollection::_handleOldVersion" )
-   INT32 _rtnAlterCollection::_handleOldVersion( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
-                                                 _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
-                                                 INT16 w, INT64 *pContextID )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNALTERCOLLECTION__HANDLEOLDVERSION ) ;
-      BSONObj idxDef ;
-      BSONObj options ;
-      BSONElement ensureIndex  ;
-      BSONElement shardingKey ;
-      options = _alterObj.getField( FIELD_NAME_OPTIONS ).embeddedObject() ;
-      shardingKey = options.getField( FIELD_NAME_SHARDINGKEY ) ;
-
-      /// should get catalog info to do some more judgements.
-      /// coord send the message with the newest catalog version
-      if ( Object != shardingKey.type() )
-      {
-         PD_LOG( PDDEBUG, "no sharding key in the alter object, do noting." ) ;
-         goto done ;
-      }
-
-      ensureIndex = options.getField( FIELD_NAME_ENSURE_SHDINDEX ) ;
-      if ( Bool == ensureIndex.type() &&
-           !ensureIndex.Bool() )
-      {
-         PD_LOG( PDDEBUG, "ensureShardingIndex is false, do nothing." ) ;
-         goto done ;
-      }
-
-      idxDef = BSON( IXM_FIELD_NAME_KEY << shardingKey.embeddedObject()
-                     << IXM_FIELD_NAME_NAME << IXM_SHARD_KEY_NAME
-                     << "v"<<0 ) ;
-
-      rc = rtnCreateIndexCommand( collectionFullName(),
-                                  idxDef,
-                                  cb, dmsCB, dpsCB, TRUE ) ;
-      if ( SDB_IXM_REDEF == rc || SDB_IXM_EXIST_COVERD_ONE == rc )
-      {
-         /// sharding key index already exists.
-         rc = SDB_OK ;
-         goto done ;
-      }
-      else if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to create sharding key index:%d", rc ) ;
-         goto error ;
-      }
-      else
-      {
-         /*
-         the version which is from coord has been updated.
-         we override the interface collectionFullName(). so
-         the local catalog info will be autoly updated before
-         this function is called.
-
-         catalog info has been updated, clear local's info.
-          it will download the last info when next request comes.
-         catAgent *catAgent = sdbGetShardCB()->getCataAgent() ;
-         catAgent->lock_w() ;
-         catAgent->clear( collectionFullName() ) ;
-         catAgent->release_w() ;
-          notify other secondary nodes to clear catalog info.
-         sdbGetClsCB()->invalidateCata( collectionFullName() ) ;
-        */
-      }
-   done:
-      PD_TRACE_EXITRC( SDB__RTNALTERCOLLECTION__HANDLEOLDVERSION, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
    IMPLEMENT_CMD_AUTO_REGISTER( _rtnSyncDB )
    _rtnSyncDB::_rtnSyncDB()
    {
@@ -4186,6 +3983,387 @@ namespace engine
                                           INT16 w, INT64 * pContextID )
    {
       return rtnUnloadCollectionSpace( _csName, cb, dmsCB ) ;
+   }
+
+   /*
+      _rtnAlterCommand implement
+    */
+   _rtnAlterCommand::_rtnAlterCommand ()
+   : _rtnCommand(),
+     _rtnAlterJobHolder()
+   {
+   }
+
+   _rtnAlterCommand::~_rtnAlterCommand ()
+   {
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( SDB__RTNALTERCMD_INIT, "_rtnAlterCommand::init" )
+   INT32 _rtnAlterCommand::init ( INT32 flags,
+                                  INT64 numToSkip,
+                                  INT64 numToReturn,
+                                  const CHAR * pMatcherBuff,
+                                  const CHAR * pSelectBuff,
+                                  const CHAR * pOrderByBuff,
+                                  const CHAR * pHintBuff )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__RTNALTERCMD_INIT ) ;
+
+      try
+      {
+         BSONObj alterObject( pMatcherBuff ) ;
+
+         rc = createAlterJob() ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to create alter job, rc: %d", rc ) ;
+
+         rc = _alterJob->initialize( NULL, _getObjectType(), alterObject ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to initialize alter job, rc: %d", rc ) ;
+      }
+      catch ( exception & e )
+      {
+         PD_LOG( PDERROR, "unexpected error happened: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB__RTNALTERCMD_INIT, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( SDB__RTNALTERCMD_DOIT, "_rtnAlterCommand::doit" )
+   INT32 _rtnAlterCommand::doit ( _pmdEDUCB * cb,
+                                  _SDB_DMSCB * dmsCB,
+                                  _SDB_RTNCB * rtnCB,
+                                  _dpsLogWrapper * dpsCB,
+                                  INT16 w,
+                                  INT64 * pContextID )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__RTNALTERCMD_DOIT ) ;
+
+      const CHAR * objectName = _alterJob->getObjectName() ;
+      const rtnAlterOptions * options = _alterJob->getOptions() ;
+      const RTN_ALTER_TASK_LIST & alterTasks = _alterJob->getAlterTasks() ;
+
+      if ( alterTasks.empty() )
+      {
+         goto done ;
+      }
+
+      if ( CMD_SPACE_SERVICE_LOCAL == getFromService() )
+      {
+         for ( RTN_ALTER_TASK_LIST::const_iterator iter = alterTasks.begin() ;
+               iter != alterTasks.end() ;
+               ++ iter )
+         {
+            const rtnAlterTask * task = ( *iter ) ;
+
+            if ( task->testFlags( RTN_ALTER_TASK_FLAG_SHARDONLY ) )
+            {
+               PD_LOG( PDWARNING, "Failed to execute task [%s]: the request should "
+                       "from SHARD port", task->getActionName() ) ;
+               if ( options->isIgnoreException() )
+               {
+                  continue ;
+               }
+               else
+               {
+                  rc = SDB_RTN_CMD_NO_SERVICE_AUTH ;
+                  goto error ;
+               }
+            }
+
+            rc = _executeTask ( objectName, task, options, cb,  dmsCB, rtnCB,
+                                dpsCB, w ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "Failed to run alter task [%s], rc: %d",
+                       task->getActionName(), rc ) ;
+               if ( options->isIgnoreException() )
+               {
+                  rc = SDB_OK ;
+                  continue ;
+               }
+               else
+               {
+                  goto error ;
+               }
+            }
+         }
+
+         /// AUDIT
+         PD_AUDIT_COMMAND( AUDIT_DDL, name(), _getAuditType(), objectName, rc,
+                           "Option:%s", _alterJob->getJobObject().toString().c_str() ) ;
+      }
+      else
+      {
+         const rtnAlterTask * task = NULL ;
+         PD_CHECK( 1 == alterTasks.size(), SDB_OPTION_NOT_SUPPORT,
+                   error, PDERROR, "Failed to execute alter job: "
+                   "should have only one task" ) ;
+
+         task = alterTasks.front() ;
+         if ( task->testFlags( RTN_ALTER_TASK_FLAG_3PHASE ) )
+         {
+            rc = _openContext( cb, rtnCB, pContextID ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to open context, alter "
+                         "collection space, rc: %d", rc ) ;
+         }
+         else
+         {
+            rc = _executeTask( objectName, task, options, cb, dmsCB, rtnCB, dpsCB, w ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to execute alter task [%s] on [%s], "
+                         "rc: %d", task->getActionName(), objectName, rc ) ;
+         }
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB__RTNALTERCMD_DOIT, rc ) ;
+      return rc ;
+
+   error :
+      if ( -1 != *pContextID )
+      {
+         rtnCB->contextDelete( *pContextID, cb ) ;
+         *pContextID = -1 ;
+      }
+      goto done ;
+   }
+
+   /*
+      _rtnAlterCollectionSpace implement
+    */
+   IMPLEMENT_CMD_AUTO_REGISTER( _rtnAlterCollectionSpace )
+
+   _rtnAlterCollectionSpace::_rtnAlterCollectionSpace ()
+   : _rtnAlterCommand()
+   {
+   }
+
+   _rtnAlterCollectionSpace::~_rtnAlterCollectionSpace ()
+   {
+   }
+
+
+   // PD_TRACE_DECLARE_FUNCTION( SDB__RTNALTERCOLLECTIONSPACE__EXECTASK, "_rtnAlterCollectionSpace::_executeTask" )
+   INT32 _rtnAlterCollectionSpace::_executeTask ( const CHAR * collectionSpace,
+                                                  const rtnAlterTask * task,
+                                                  const rtnAlterOptions * options,
+                                                  _pmdEDUCB * cb,
+                                                  _SDB_DMSCB * dmsCB,
+                                                  _SDB_RTNCB * rtnCB,
+                                                  _dpsLogWrapper * dpsCB,
+                                                  INT16 w )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__RTNALTERCOLLECTIONSPACE__EXECTASK ) ;
+
+      SDB_ASSERT( NULL != collectionSpace, "collection space is invalid" ) ;
+      SDB_ASSERT( NULL != task, "task is invalid" ) ;
+
+      switch ( task->getActionType() )
+      {
+         case RTN_ALTER_CS_SET_ATTRIBUTES :
+         {
+            PD_CHECK( task->testArgumentMask( UTIL_CS_CAPPED_FIELD |
+                                              UTIL_CS_PAGESIZE_FIELD ),
+                      SDB_DMS_CS_NOT_EMPTY, error, PDERROR,
+                      "Failed to check collection space, the collection space "
+                      "is not empty" ) ;
+            PD_CHECK( task->testArgumentMask( UTIL_CS_DOMAIN_FIELD ),
+                      SDB_RTN_CMD_NO_SERVICE_AUTH, error, PDERROR,
+                      "Failed to check collection space, should execute the "
+                      "command from SHARD port" ) ;
+            rc = rtnAlterCSSetAttributes( collectionSpace, task, options,
+                                          cb, dpsCB ) ;
+            break ;
+         }
+         case RTN_ALTER_CS_SET_DOMAIN :
+         case RTN_ALTER_CS_REMOVE_DOMAIN :
+         {
+            rc = SDB_RTN_CMD_NO_SERVICE_AUTH ;
+            PD_LOG( PDERROR, "Failed to check collection space, should "
+                    "execute the command from SHARD port" ) ;
+            break ;
+         }
+         case RTN_ALTER_CS_ENABLE_CAPPED :
+         case RTN_ALTER_CS_DISABLE_CAPPED :
+         {
+            rc = SDB_DMS_CS_NOT_EMPTY ;
+            PD_LOG( PDERROR, "Failed to check collection space, the collection "
+                    "space is not empty" ) ;
+            break ;
+         }
+         default :
+         {
+            rc = SDB_INVALIDARG ;
+            break ;
+         }
+      }
+
+      PD_RC_CHECK( rc, PDERROR, "Failed to execute task [%s] on collection space [%s], "
+                   "rc: %d", task->getActionName(), collectionSpace, rc ) ;
+
+   done :
+      PD_TRACE_EXITRC( SDB__RTNALTERCOLLECTIONSPACE__EXECTASK, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( SDB__RTNALTERCOLLECTIONSPACE__OPENCONTEXT, "_rtnAlterCollectionSpace::_openContext" )
+   INT32 _rtnAlterCollectionSpace::_openContext ( _pmdEDUCB * cb,
+                                                  _SDB_RTNCB * rtnCB,
+                                                  INT64 * pContextID )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__RTNALTERCOLLECTIONSPACE__OPENCONTEXT ) ;
+
+      rtnContextAlterCS * context = NULL ;
+      rc = rtnCB->contextNew( RTN_CONTEXT_ALTERCS, (rtnContext **)( &context ),
+                              *pContextID, cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to create context, rc: %d", rc ) ;
+
+      rc = context->open( (*this), cb, 1 ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to open context, alter "
+                   "collection space, rc: %d", rc ) ;
+
+   done :
+      PD_TRACE_EXITRC( SDB__RTNALTERCOLLECTIONSPACE__OPENCONTEXT, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   /*
+      _rtnAlterCollection implement
+    */
+   IMPLEMENT_CMD_AUTO_REGISTER( _rtnAlterCollection )
+
+   _rtnAlterCollection::_rtnAlterCollection ()
+   : _rtnAlterCommand()
+   {
+   }
+
+   _rtnAlterCollection::~_rtnAlterCollection()
+   {
+
+   }
+
+   const CHAR *_rtnAlterCollection::collectionFullName()
+   {
+      return ( NULL != _alterJob &&
+               RTN_ALTER_COLLECTION == _alterJob->getObjectType() ) ?
+             _alterJob->getObjectName() : NULL ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( SDB__RTNALTERCOLLECTION__EXECTASK, "_rtnAlterCollection::_executeTask" )
+   INT32 _rtnAlterCollection::_executeTask ( const CHAR * collection,
+                                             const rtnAlterTask * task,
+                                             const rtnAlterOptions * options,
+                                             _pmdEDUCB * cb,
+                                             _SDB_DMSCB * dmsCB,
+                                             _SDB_RTNCB * rtnCB,
+                                             _dpsLogWrapper * dpsCB,
+                                             INT16 w )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__RTNALTERCOLLECTION__EXECTASK ) ;
+
+      SDB_ASSERT( NULL != collection, "collection is invalid" ) ;
+      SDB_ASSERT( NULL != task, "task is invalid" ) ;
+
+      switch ( task->getActionType() )
+      {
+         case RTN_ALTER_CL_CREATE_ID_INDEX :
+         {
+            rc = rtnCreateIDIndex( collection, task, options, cb, dpsCB ) ;
+            break ;
+         }
+         case RTN_ALTER_CL_DROP_ID_INDEX :
+         {
+            rc = rtnDropIDIndex( collection, task, options, cb, dpsCB ) ;
+            break ;
+         }
+         case RTN_ALTER_CL_ENABLE_SHARDING :
+         {
+            rc = rtnEnableSharding( collection, task, options, cb, dpsCB ) ;
+            break ;
+         }
+         case RTN_ALTER_CL_DISABLE_SHARDING :
+         {
+            rc = rtnDisableSharding( collection, task, options, cb, dpsCB ) ;
+            break ;
+         }
+         case RTN_ALTER_CL_ENABLE_COMPRESS :
+         {
+            rc = rtnEnableCompress( collection, task, options, cb, dpsCB ) ;
+            break ;
+         }
+         case RTN_ALTER_CL_DISABLE_COMPRESS :
+         {
+            rc = rtnDisableCompress( collection, task, options, cb, dpsCB ) ;
+            break ;
+         }
+         case RTN_ALTER_CL_SET_ATTRIBUTES :
+         {
+            rc = rtnAlterCLSetAttributes( collection, task, options, cb, dpsCB ) ;
+            break ;
+         }
+         default :
+         {
+            rc = SDB_INVALIDARG ;
+            break ;
+         }
+      }
+
+      PD_RC_CHECK( rc, PDERROR, "Failed to execute task [%s] on collection [%s], "
+                   "rc: %d", task->getActionName(), collection, rc ) ;
+
+   done :
+      PD_TRACE_EXITRC( SDB__RTNALTERCOLLECTION__EXECTASK, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( SDB__RTNALTERCOLLECTION__OPENCONTEXT, "_rtnAlterCollection::_openContext" )
+   INT32 _rtnAlterCollection::_openContext ( _pmdEDUCB * cb,
+                                             _SDB_RTNCB * rtnCB,
+                                             INT64 * pContextID )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__RTNALTERCOLLECTION__OPENCONTEXT ) ;
+
+      rtnContextAlterCL * context = NULL ;
+      rc = rtnCB->contextNew( RTN_CONTEXT_ALTERCL, (rtnContext **)( &context ),
+                              *pContextID, cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to create context, rc: %d", rc ) ;
+
+      rc = context->open( (*this), cb, 1 ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to open context, alter "
+                   "collection space, rc: %d", rc ) ;
+
+   done :
+      PD_TRACE_EXITRC( SDB__RTNALTERCOLLECTION__OPENCONTEXT, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
    }
 
    IMPLEMENT_CMD_AUTO_REGISTER( _rtnAnalyze )

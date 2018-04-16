@@ -364,7 +364,7 @@ namespace engine
       }
 
       recordData.setData( obj.objdata(), obj.objsize(),
-                          FALSE, TRUE ) ;
+                          UTIL_COMPRESSOR_INVALID, TRUE ) ;
       dmsrecordSize = recordData.len() ;
 
       // compression
@@ -386,7 +386,8 @@ namespace engine
             dmsrecordSize = compressedDataSize + sizeof(UINT32) ;
             // set the compression data
             recordData.setData( compressedData, compressedDataSize,
-                                TRUE, FALSE ) ;
+                                compressorEntry->getCompressorType(),
+                                FALSE ) ;
          }
          else if ( rc )
          {

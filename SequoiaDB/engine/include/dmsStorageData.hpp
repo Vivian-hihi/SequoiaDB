@@ -63,6 +63,9 @@ namespace engine
       virtual INT32 dumpExtOptions( dmsMBContext *context,
                                     BSONObj &extOptions ) ;
 
+      virtual INT32 setExtOptions ( dmsMBContext * context,
+                                    const BSONObj & extOptions ) ;
+
       // the dataRecord is not owned
       // Caller must hold mb exclusive/shared lock
       INT32 fetch ( dmsMBContext *context,

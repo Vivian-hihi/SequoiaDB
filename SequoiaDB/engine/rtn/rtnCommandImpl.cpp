@@ -1313,7 +1313,7 @@ namespace engine
          try
          {
             BSONObj shardKeyObj = BSON ( "key"<<shardingKey<<"name"<<
-                                         IXM_SHARD_KEY_NAME<<"v"<<0 ) ;
+                                         IXM_SHARD_KEY_NAME<< IXM_FIELD_NAME_V <<0 ) ;
             rc = rtnCreateIndexCommand ( pCollection, shardKeyObj,
                                          cb, dmsCB, dpsCB, TRUE ) ;
             if ( SDB_IXM_REDEF == rc || SDB_IXM_EXIST_COVERD_ONE == rc )

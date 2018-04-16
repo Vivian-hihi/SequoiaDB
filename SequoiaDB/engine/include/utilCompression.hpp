@@ -57,6 +57,9 @@ namespace engine
       UTIL_COMP_BEST_COMPRESSION    = 3,
    } ;
 
+   #define UTIL_COMPRESS_EMPTY_FLAG       ( 0x00 )
+   #define UTIL_COMPRESS_ALTERABLE_FLAG   ( 0x01 )
+
 }
 
 #endif /* UTIL_COMPRESSION_HPP_ */

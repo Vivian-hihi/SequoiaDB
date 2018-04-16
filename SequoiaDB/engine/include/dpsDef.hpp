@@ -96,6 +96,7 @@ enum DPS_LOG_TYPE
    LOG_TYPE_LOB_TRUNCATE = 0x12,
    LOG_TYPE_CS_RENAME    = 0x13,
    LOG_TYPE_DATA_POP     = 0x14,
+   LOG_TYPE_ALTER        = 0x15
 } ;
 
 enum DPS_MOMENT

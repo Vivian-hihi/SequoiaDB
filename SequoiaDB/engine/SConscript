@@ -250,10 +250,6 @@ rtnFiles = [
       "rtn/rtnLobPieces.cpp",
       "rtn/rtnLobMetaCache.cpp",
       "rtn/rtnLobSections.cpp",
-      "rtn/rtnAlterFuncList.cpp",
-      "rtn/rtnAlterFuncs.cpp",
-      "rtn/rtnAlterRunner.cpp",
-      "rtn/rtnAlterJob.cpp",
       "rtn/rtnIxmKeySorter.cpp",
       "rtn/rtnDictCreatorJob.cpp",
       "rtn/rtnAnalyze.cpp",
@@ -262,7 +258,11 @@ rtnFiles = [
       "rtn/rtnExtDataProcessor.cpp",
       "rtn/rtnContextDataDispatcher.cpp",
       "rtn/rtnSessionProperty.cpp",
-      "rtn/rtnRemoteMessenger.cpp"
+      "rtn/rtnRemoteMessenger.cpp",
+      "rtn/rtnAlterJob.cpp",
+      "rtn/rtnAlterTask.cpp",
+      "rtn/rtnAlter.cpp",
+      "rtn/rtnContextAlter.cpp"
       ]
 
 msgFiles = [
@@ -498,7 +498,8 @@ catFiles = [
       "cat/catContext.cpp",
       "cat/catContextData.cpp",
       "cat/catContextNode.cpp",
-      "cat/catContextTask.cpp"
+      "cat/catContextTask.cpp",
+      "cat/catContextAlterTask.cpp"
       ]
 
 coordFiles = [

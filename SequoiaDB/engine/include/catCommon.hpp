@@ -84,6 +84,14 @@ namespace engine
                        pmdEDUCB *cb,
                        BSONObj &obj ) ;
 
+   /* Query and get count of objects */
+   INT32 catGetObjectCount ( const CHAR * collectionName,
+                             const BSONObj & selector,
+                             const BSONObj & matcher,
+                             const BSONObj & hint,
+                             pmdEDUCB * cb,
+                             INT64 & count ) ;
+
    /* Collection[CAT_NODE_INFO_COLLECTION] functions: */
    INT32 catGetGroupObj( const CHAR *groupName,
                          BOOLEAN dataGroupOnly,
@@ -115,12 +123,24 @@ namespace engine
    INT32 catAddGroup2Domain( const CHAR *domainName, const CHAR *groupName,
                              INT32 groupID, pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
                              _dpsLogWrapper *dpsCB, INT16 w ) ;
+
+   INT32 catGetSplitCandidateGroups ( const CHAR * collection,
+                                      std::map< std::string, UINT32 > & groups,
+                                      pmdEDUCB * cb ) ;
+
    /*
       Note: domainName == NULL, while del group from all domain
    */
    INT32 catDelGroupFromDomain( const CHAR *domainName, const CHAR *groupName,
                                 UINT32 groupID, pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
                                 _dpsLogWrapper *dpsCB, INT16 w ) ;
+
+   INT32 catUpdateDomain ( const CHAR * domainName,
+                           const BSONObj & domainObject,
+                           pmdEDUCB * cb,
+                           _SDB_DMSCB * dmsCB,
+                           _dpsLogWrapper * dpsCB,
+                           INT16 w ) ;
 
    /* Collection[CAT_COLLECTION_SPACE_COLLECTION] functions: */
    INT32 catAddCL2CS( const CHAR *csName, const CHAR *clName,
@@ -138,16 +158,18 @@ namespace engine
    INT32 catUpdateCSCLs( const string &csName, vector<string> &collections,
                          pmdEDUCB *cb, _SDB_DMSCB * dmsCB, _dpsLogWrapper * dpsCB,
                          INT16 w ) ;
-   INT32 catRestoreCS( const CHAR *csName, const BSONObj &oldInfo,
-                       pmdEDUCB *cb, _SDB_DMSCB * dmsCB,
+   INT32 catUpdateCS ( const CHAR * csName,
+                       const BSONObj & setObject,
+                       const BSONObj & unsetObject,
+                       pmdEDUCB * cb, _SDB_DMSCB * dmsCB,
                        _dpsLogWrapper * dpsCB,
                        INT16 w ) ;
    INT32 catCheckSpaceExist( const char *pSpaceName,
                              BOOLEAN &isExist,
                              BSONObj &obj,
                              pmdEDUCB *cb ) ;
-   INT32 catGetDomainCSs( const BSONObj &domain, pmdEDUCB *cb,
-                          vector< string > &collectionSpaces ) ;
+   INT32 catGetDomainCSs ( const CHAR * domain, pmdEDUCB * cb,
+                           _utilList< std::string > & collectionSpaces ) ;
 
    /* Collection[CAT_COLLECTION_INFO_COLLECTION] functions: */
    INT32 catRemoveCL( const CHAR *clFullName, pmdEDUCB *cb, _SDB_DMSCB * dmsCB,
@@ -158,8 +180,8 @@ namespace engine
                                   BSONObj &obj,
                                   pmdEDUCB *cb ) ;
 
-   INT32 catUpdateCatalog( const CHAR *clFullName, const BSONObj &cataInfo,
-                           pmdEDUCB *cb, INT16 w ) ;
+   INT32 catUpdateCatalog ( const CHAR * clFullName, const BSONObj & setInfo,
+                            const BSONObj & unsetInfo, pmdEDUCB * cb, INT16 w ) ;
 
    INT32 catUpdateCatalogByPush ( const CHAR * clFullName,
                                   const CHAR *field, const BSONObj &boObj,
@@ -171,10 +193,15 @@ namespace engine
    INT32 catGetCSGroupsFromCLs( const CHAR *csName, pmdEDUCB *cb,
                                 vector< UINT32 > &groups,
                                 BOOLEAN includeSubCLGroups = FALSE ) ;
+   INT32 catGetCSGroups ( const CHAR * csName,
+                          pmdEDUCB * cb,
+                          _utilSet< UINT32 > & groups,
+                          BOOLEAN includeSubCLGroups = FALSE ) ;
 
    /* Collection[CAT_TASK_INFO_COLLECTION] functions: */
    INT32 catAddTask( BSONObj & taskObj, pmdEDUCB *cb, INT16 w ) ;
    INT32 catGetTask( UINT64 taskID, BSONObj &obj, pmdEDUCB *cb ) ;
+   INT32 catGetTaskCount ( const CHAR * collection, pmdEDUCB * cb, INT64 & count ) ;
    INT32 catGetTaskStatus( UINT64 taskID, INT32 &status, pmdEDUCB *cb ) ;
    INT32 catUpdateTaskStatus( UINT64 taskID, INT32 status, pmdEDUCB *cb,
                               INT16 w ) ;
@@ -184,6 +211,9 @@ namespace engine
    INT32 catRemoveCLTasks( const string &clName, pmdEDUCB *cb, INT16 w ) ;
    INT32 catGetCSGroupsFromTasks( const CHAR *csName, pmdEDUCB *cb,
                                   vector< UINT32 > &groups ) ;
+   INT32 catGetCSTaskGroups ( const CHAR * csName,
+                              pmdEDUCB * cb,
+                              _utilSet< UINT32 > & groups ) ;
 
    /* Collection[CAT_HISTORY_COLLECTION] functions */
    INT32 catGetBucketVersion( const CHAR *pCLName, pmdEDUCB *cb ) ;
@@ -302,6 +332,7 @@ namespace engine
 
    /* Alter Collection */
    INT32 catAlterCLStep ( const string &clName, const BSONObj &boNewData,
+                          const BSONObj & boUnsetData,
                           _pmdEDUCB *cb,
                           SDB_DMSCB *pDmsCB,
                           SDB_DPSCB *pDpsCB,
@@ -343,6 +374,23 @@ namespace engine
                                       UINT32 &fieldMask,
                                       catCollectionInfo &clInfo,
                                       BOOLEAN needCLName ) ;
+
+   INT32 catBuildInitRangeBound ( const BSONObj & shardingKey,
+                                  const Ordering & order,
+                                  BSONObj & lowBound, BSONObj & upBound ) ;
+
+   INT32 catBuildInitHashBound ( BSONObj & lowBound, BSONObj & upBound,
+                                 INT32 paritition ) ;
+
+   INT32 catBuildHashBound ( BSONObj & lowBound, BSONObj & upBound,
+                             INT32 beginBound, INT32 endBound ) ;
+
+   INT32 catBuildHashSplitTask ( const CHAR * collection,
+                                 const CHAR * srcGroup,
+                                 const CHAR * dstGroup,
+                                 UINT32 beginBound,
+                                 UINT32 endBound,
+                                 BSONObj & splitTask ) ;
 
    /* Build Collection record */
    INT32 catBuildCatalogRecord ( const catCollectionInfo &clInfo,

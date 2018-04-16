@@ -43,6 +43,7 @@
 #include "rtn.hpp"
 
 using namespace bson ;
+using namespace std ;
 
 namespace engine
 {
@@ -408,6 +409,8 @@ namespace engine
 
                ++iterSubCL ;
             }
+
+            pCreateIdxTask->disableUpdate() ;
          }
          else
          {
@@ -500,7 +503,7 @@ namespace engine
       {
          const std::string &clName = pDropIdxTask->getDataName() ;
          const std::string &idxName = pDropIdxTask->getIdxName() ;
-         clsCatalogSet cataSet( clName.c_str() );
+         clsCatalogSet cataSet( clName.c_str() ) ;
 
          rc = cataSet.updateCatSet( pDropIdxTask->getDataObj() ) ;
          PD_RC_CHECK( rc, PDERROR,
@@ -545,6 +548,8 @@ namespace engine
 
                ++iterSubCL ;
             }
+
+            pDropIdxTask->disableUpdate() ;
          }
          else
          {
@@ -1023,6 +1028,194 @@ namespace engine
    }
 
    /*
+      _catCtxAlterCS implement
+    */
+   RTN_CTX_AUTO_REGISTER( _catCtxAlterCS, RTN_CONTEXT_CAT_ALTER_CS,
+                          "CAT_ALTER_CS" )
+
+   _catCtxAlterCS::_catCtxAlterCS ( INT64 contextID, UINT64 eduID )
+   : _catCtxDataMultiTaskBase( contextID, eduID )
+   {
+   }
+
+   _catCtxAlterCS::~_catCtxAlterCS ()
+   {
+      _onCtxDelete () ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXALTERCS_PARSEQUERY, "_catCtxAlterCS::_parseQuery" )
+   INT32 _catCtxAlterCS::_parseQuery ( _pmdEDUCB * cb )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_CATCTXALTERCS_PARSEQUERY ) ;
+
+      SDB_ASSERT( MSG_CAT_ALTER_CS_REQ == _cmdType, "Wrong command type" ) ;
+
+      try
+      {
+         rc = rtnGetSTDStringElement( _boQuery, CAT_COLLECTION_SPACE_NAME, _targetName ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get field [%s], rc: %d",
+                      CAT_COLLECTION_SPACE_NAME, rc ) ;
+
+         rc = _alterJob.initialize( _targetName.c_str(),
+                                    RTN_ALTER_COLLECTION_SPACE,
+                                    _boQuery ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to extract alter job, rc: %d",
+                      rc ) ;
+
+         PD_CHECK( RTN_ALTER_COLLECTION_SPACE == _alterJob.getObjectType(),
+                   SDB_INVALIDARG, error, PDERROR,
+                   "Wrong type of alter job" ) ;
+      }
+      catch ( exception & e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB_CATCTXALTERCS_PARSEQUERY, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXALTERCS_CHECK_INT, "_catCtxAlterCS::_checkInternal" )
+   INT32 _catCtxAlterCS::_checkInternal ( _pmdEDUCB * cb )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_CATCTXALTERCS_CHECK_INT ) ;
+
+      if ( _alterJob.isEmpty() )
+      {
+         goto done ;
+      }
+      else
+      {
+         const rtnAlterTask * task = NULL ;
+
+         PD_CHECK( 1 == _alterJob.getAlterTasks().size(), SDB_OPTION_NOT_SUPPORT,
+                   error, PDERROR, "Failed to check alter job: should have only one task" ) ;
+
+         task = _alterJob.getAlterTasks().front() ;
+         rc = _checkAlterTask( task, cb ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to check alter collection space command [%s],"
+                      "rc: %d", task->getActionName(), rc ) ;
+
+         if ( task->testFlags( RTN_ALTER_TASK_FLAG_3PHASE ) )
+         {
+            _executeAfterLock = FALSE ;
+         }
+         else
+         {
+            _executeAfterLock = TRUE ;
+         }
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB_CATCTXALTERCS_CHECK_INT, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXALTERCS__ADDALTERTASK, "_catCtxAlterCS::_addAlterTask" )
+   INT32 _catCtxAlterCS::_addAlterTask ( const string & collectionSpace,
+                                         const rtnAlterTask * task,
+                                         catCtxAlterCSTask ** catTask,
+                                         BOOLEAN pushExec )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_CATCTXALTERCS__ADDALTERTASK ) ;
+
+      SDB_ASSERT( NULL != task, "task is invalid" ) ;
+      SDB_ASSERT( NULL != catTask, "alter task is invalid" ) ;
+
+      catCtxAlterCSTask * tempTask = SDB_OSS_NEW catCtxAlterCSTask( collectionSpace, task ) ;
+      PD_CHECK( tempTask, SDB_OOM, error, PDERROR,
+                "Failed to create alter task [%s] on collection space [%s]",
+                task->getActionName(), collectionSpace.c_str() ) ;
+
+      _addTask( tempTask, pushExec ) ;
+      if ( catTask )
+      {
+         (*catTask) = tempTask ;
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB_CATCTXALTERCS__ADDALTERTASK, rc ) ;
+      return rc ;
+
+   error :
+      SAFE_OSS_DELETE( tempTask ) ;
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXALTERCS__CHKALTERTASK, "_catCtxAlterCS::_checkAlterTask" )
+   INT32 _catCtxAlterCS::_checkAlterTask ( const rtnAlterTask * task, _pmdEDUCB * cb )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_CATCTXALTERCS__CHKALTERTASK ) ;
+
+      catCtxLockMgr localLockMgr ;
+      catCtxLockMgr * lockMgr = &localLockMgr ;
+      catCtxAlterCSTask * catTask = NULL ;
+      set< UINT32 > groupSet ;
+
+      if ( task->testFlags( RTN_ALTER_TASK_FLAG_CONTEXTLOCK ) )
+      {
+         lockMgr = &_lockMgr ;
+      }
+
+      SDB_ASSERT( NULL != lockMgr, "lock manager is invalid" ) ;
+
+      rc = _addAlterTask( _targetName, task, &catTask, FALSE ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to add alter task [%s] on "
+                   "collection space [%s], rc: %d", task->getActionName(),
+                   _targetName.c_str(), rc ) ;
+
+      rc = catTask->checkTask( cb, *lockMgr ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to check alter task [%s] on "
+                   "collection space [%s], rc: %d", task->getActionName(),
+                   _targetName.c_str(), rc ) ;
+
+      rc = _pushExecTask( catTask ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to push collection task, "
+                   "rc: %d", rc ) ;
+
+      {
+         const CAT_GROUP_LIST & groups = catTask->getGroups() ;
+         for ( CAT_GROUP_LIST::const_iterator iterGroup = groups.begin() ;
+               iterGroup != groups.end() ;
+               iterGroup ++ )
+         {
+            groupSet.insert( (*iterGroup ) ) ;
+         }
+      }
+
+      for ( set< UINT32 >::iterator iterGroup = groupSet.begin() ;
+            iterGroup != groupSet.end() ;
+            iterGroup ++ )
+      {
+         _groupList.push_back( (*iterGroup) ) ;
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB_CATCTXALTERCS__CHKALTERTASK, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   /*
     * _catCtxCreateCL implement
     */
    RTN_CTX_AUTO_REGISTER( _catCtxCreateCL, RTN_CONTEXT_CAT_CREATE_CL,
@@ -1082,7 +1275,7 @@ namespace engine
       CHAR szSpace[ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] = {0} ;
       CHAR szCollection[ DMS_COLLECTION_NAME_SZ + 1 ] = {0} ;
       BSONObj boSpace, boDomain, boDummy ;
-      UINT32 fieldMask = 0 ;
+      UINT32 fieldMask = UTIL_ARG_FIELD_EMPTY ;
       catCollectionInfo clInfo ;
       std::map<std::string, UINT32> splitList ;
 
@@ -1179,7 +1372,7 @@ namespace engine
             if ( ( DMS_STORAGE_CAPPED == type ) && !clInfo._capped )
             {
                clInfo._capped = TRUE ;
-               fieldMask |= CAT_MASK_CAPPED ;
+               fieldMask |= UTIL_CL_CAPPED_FIELD ;
             }
          }
       }
@@ -1286,7 +1479,7 @@ namespace engine
          goto done ;
       }
 
-      if ( !( CAT_MASK_AUTOASPLIT & fieldMask ) )
+      if ( !( UTIL_CL_AUTOSPLIT_FIELD & fieldMask ) )
       {
          if ( clInfo._isSharding && clInfo._isHash )
          {
@@ -1294,12 +1487,12 @@ namespace engine
             if ( Bool == split.type() )
             {
                clInfo._autoSplit = split.Bool() ;
-               fieldMask |= CAT_MASK_AUTOASPLIT ;
+               fieldMask |= UTIL_CL_AUTOSPLIT_FIELD ;
             }
          }
       }
 
-      if ( !( CAT_MASK_AUTOREBALAN & fieldMask ) )
+      if ( !( UTIL_CL_AUTOREBALANCE_FIELD & fieldMask ) )
       {
          if ( clInfo._isSharding && clInfo._isHash )
          {
@@ -1307,7 +1500,7 @@ namespace engine
             if ( Bool == rebalance.type() )
             {
                clInfo._autoRebalance = rebalance.Bool() ;
-               fieldMask |= CAT_MASK_AUTOREBALAN ;
+               fieldMask |= UTIL_CL_AUTOREBALANCE_FIELD ;
             }
          }
       }
@@ -1908,7 +2101,7 @@ namespace engine
    : _catCtxIndexMultiTask( contextID, eduID )
    {
       _executeAfterLock = TRUE ;
-      _needRollback = FALSE ;
+      _needRollback = TRUE ;
    }
 
    _catCtxAlterCL::~_catCtxAlterCL ()
@@ -1923,8 +2116,6 @@ namespace engine
 
       PD_TRACE_ENTRY ( SDB_CATCTXALTERCL_PARSEQUERY ) ;
 
-      BOOLEAN isOld = FALSE ;
-
       SDB_ASSERT( MSG_CAT_ALTER_COLLECTION_REQ == _cmdType,
                   "Wrong command type" ) ;
 
@@ -1935,27 +2126,20 @@ namespace engine
                       "Failed to get field [%s], rc: %d",
                       CAT_COLLECTION_NAME, rc ) ;
 
-         isOld = _boQuery.getField( FIELD_NAME_VERSION ).eoo() ;
-         if ( isOld )
-         {
-            rc = rtnGetObjElement( _boQuery, CAT_OPTIONS_NAME, _alterFields ) ;
-            PD_RC_CHECK( rc, PDERROR,
-                         "Failed to get field [%s], rc: %d",
-                         CAT_OPTIONS_NAME, rc ) ;
-         }
-         else
-         {
-            rc = _alterJob.init( _boQuery ) ;
-            PD_RC_CHECK( rc, PDERROR,
-                         "Failed to extract alter job, rc: %d",
-                         rc ) ;
+         rc = _alterJob.initialize( _targetName.c_str(), RTN_ALTER_COLLECTION,
+                                    _boQuery ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to extract alter job, rc: %d",
+                      rc ) ;
 
-            PD_CHECK( _alterJob.getType() == RTN_ALTER_TYPE_CL,
-                      SDB_INVALIDARG, error, PDERROR,
-                      "Wrong type of alter job" ) ;
-         }
+         PD_CHECK( RTN_ALTER_COLLECTION == _alterJob.getObjectType(),
+                   SDB_INVALIDARG, error, PDERROR,
+                   "Failed to extract alter job: wrong type of alter job" ) ;
+
+         PD_CHECK( 1 >= _alterJob.getAlterTasks().size(),
+                   SDB_OPTION_NOT_SUPPORT, error, PDERROR,
+                   "Failed to extract alter job: not support multiple tasks" ) ;
       }
-      catch ( std::exception &e )
+      catch ( exception & e )
       {
          PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
          rc = SDB_INVALIDARG ;
@@ -1978,16 +2162,29 @@ namespace engine
 
       if ( _alterJob.isEmpty() )
       {
-         rc = _checkAlterCL( cb ) ;
+         goto done ;
       }
       else
       {
-         rc = _checkAlterCLJob( cb ) ;
-      }
+         const rtnAlterTask * task = NULL ;
 
-      PD_RC_CHECK( rc, PDERROR,
-                   "Failed to check Alter Collection command, rc: %d",
-                   rc ) ;
+         PD_CHECK( 1 == _alterJob.getAlterTasks().size(), SDB_OPTION_NOT_SUPPORT,
+                   error, PDERROR, "Failed to check alter job: should have only one task" ) ;
+
+         task = _alterJob.getAlterTasks().front() ;
+         rc = _checkAlterTask( task, cb ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to check alter collection command [%s],"
+                      "rc: %d", task->getActionName(), rc ) ;
+
+         if ( task->testFlags( RTN_ALTER_TASK_FLAG_3PHASE ) )
+         {
+            _executeAfterLock = FALSE ;
+         }
+         else
+         {
+            _executeAfterLock = TRUE ;
+         }
+      }
 
    done :
       PD_TRACE_EXITRC ( SDB_CATCTXALTERCL_CHECK_INT, rc ) ;
@@ -2005,11 +2202,19 @@ namespace engine
 
       if ( _alterJob.isEmpty() )
       {
-         rc = _executeAlterCL( cb, w ) ;
+         goto done ;
       }
       else
       {
-         rc = _executeAlterCLJob( cb, w ) ;
+         const rtnAlterTask * task = NULL ;
+
+         PD_CHECK( 1 == _alterJob.getAlterTasks().size(), SDB_SYS, error, PDERROR,
+                   "Failed to check alter job: should have only one task" ) ;
+
+         task = _alterJob.getAlterTasks().front() ;
+         rc = _executeAlterTask( task, cb, w ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to execute alter collection command [%s],"
+                      "rc: %d", task->getActionName(), rc ) ;
       }
 
       PD_RC_CHECK( rc, PDERROR,
@@ -2023,330 +2228,279 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXALTERCL_CHECK_ALTERCL, "_catCtxAlterCL::_checkAlterCL" )
-   INT32 _catCtxAlterCL::_checkAlterCL ( _pmdEDUCB *cb )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXALTERCL_CHECK_ALTERTASK, "_catCtxAlterCL::_checkAlterTask" )
+   INT32 _catCtxAlterCL::_checkAlterTask ( const rtnAlterTask * task,
+                                           _pmdEDUCB * cb )
    {
       INT32 rc = SDB_OK ;
 
-      PD_TRACE_ENTRY ( SDB_CATCTXALTERCL_CHECK_ALTERCL ) ;
+      PD_TRACE_ENTRY ( SDB_CATCTXALTERCL_CHECK_ALTERTASK ) ;
 
-      UINT32 fieldMask = 0 ;
-      BSONObj boCollection ;
-      catCollectionInfo newCLInfo ;
-      clsCatalogSet cataSet( _targetName.c_str() );
-      std::map<std::string, UINT32> splitList ;
-      BSONObj tmpObj ;
-      catCtxLockMgr lockMgr ;
+      set<string> collectionSet ;
+      catCtxLockMgr localLockMgr ;
+      catCtxAlterCLTask * catTask = NULL ;
+      catCtxLockMgr * lockMgr = NULL ;
 
-      rc = catGetAndLockCollection( _targetName, boCollection, cb,
-                                    &lockMgr, SHARED ) ;
-      PD_RC_CHECK( rc, PDERROR,
-                   "Failed to get the Collection [%s], rc: %d",
-                   _targetName.c_str(), rc ) ;
-
-      rc = cataSet.updateCatSet( boCollection );
-      PD_RC_CHECK( rc, PDERROR,
-                  "Failed to parse catalog info [%s], rc: %d",
-                  boCollection.toString().c_str(), rc );
-
-      // Build the new object
-      rc = catCheckAndBuildCataRecord( _alterFields, fieldMask,
-                                       newCLInfo, FALSE ) ;
-      PD_RC_CHECK( rc, PDERROR,
-                   "Check alter collection obj [%s] failed, rc: %d",
-                   _alterFields.toString().c_str(), rc ) ;
-
-      rc = _buildAlterFields( cataSet, fieldMask, newCLInfo, tmpObj ) ;
-      PD_RC_CHECK( rc, PDERROR,
-                   "Build alter collection obj [%s] failed, rc: %d",
-                   _alterFields.toString().c_str(), rc ) ;
-
-      rc = catGetCollectionGroupsCascade( _targetName, boCollection,
-                                          cb, _groupList ) ;
-      PD_RC_CHECK( rc, PDERROR,
-                   "Failed to collect groups of collection [%s], rc: %d",
-                   _targetName.c_str(), rc ) ;
-
-      rc = catLockGroups( _groupList, cb, lockMgr, SHARED ) ;
-      PD_RC_CHECK( rc, PDERROR,
-                   "Failed to lock groups, rc: %d", rc ) ;
-
-      /// Get updated collection object
-      _boTarget = tmpObj.getOwned() ;
-
-   done :
-      PD_TRACE_EXITRC( SDB_CATCTXALTERCL_CHECK_ALTERCL, rc ) ;
-      return rc ;
-   error :
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXALTERCL_CHECK_ALTERCLJOB, "_catCtxAlterCL::_checkAlterCLJob" )
-   INT32 _catCtxAlterCL::_checkAlterCLJob ( _pmdEDUCB *cb )
-   {
-      INT32 rc = SDB_OK ;
-
-      PD_TRACE_ENTRY ( SDB_CATCTXALTERCL_CHECK_ALTERCLJOB ) ;
-
-      BSONObj boTasks = _alterJob.getTasks() ;
-      BSONObjIterator iterTask( boTasks ) ;
-
-      while ( iterTask.more() )
+      if ( task->testFlags( RTN_ALTER_TASK_FLAG_CONTEXTLOCK ) )
       {
-         BSONElement e = iterTask.next() ;
-         if ( Object != e.type() )
+         lockMgr = &_lockMgr ;
+      }
+      else
+      {
+         lockMgr = &localLockMgr ;
+      }
+
+      SDB_ASSERT( NULL != lockMgr, "lock manager is invalid" ) ;
+
+      rc = _addAlterTask( _targetName, task, &catTask, FALSE ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to add alter task [%s] on "
+                   "collection [%s], rc: %d", task->getActionName(),
+                   _targetName.c_str(), rc ) ;
+
+      catTask->disableLocks() ;
+
+      rc = catTask->checkTask( cb, *lockMgr ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to check alter task [%s] on "
+                   "collection [%s], rc: %d", task->getActionName(),
+                   _targetName.c_str(), rc ) ;
+
+      rc = _addAlterSubTask( catTask, cb, *lockMgr, collectionSet,
+                             _groupList ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to add alter sub tasks [%s] on "
+                   "collection [%s], rc: %d", task->getActionName(),
+                   _targetName.c_str(), rc ) ;
+
+      rc = _pushExecTask( catTask ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to push collection task, "
+                   "rc: %d", rc ) ;
+
+      // Lock collections
+      for ( set<string>::iterator iterCL = collectionSet.begin() ;
+            iterCL != collectionSet.end() ;
+            iterCL ++ )
+      {
+         const string & collectionName = (*iterCL) ;
+         PD_CHECK( lockMgr->tryLockCollection( (*iterCL), SHARED ),
+                   SDB_LOCK_FAILED, error, PDWARNING,
+                   "Failed to lock collection [%s]", collectionName.c_str() ) ;
+
+         // Lock collections for sharding
+         if ( task->testFlags( RTN_ALTER_TASK_FLAG_SHARDLOCK ) )
          {
-            PD_LOG( PDERROR,
-                    "Invalid alter task: %s",
-                    e.toString( FALSE, TRUE ).c_str() ) ;
-            if ( _alterJob.getOptions().ignoreException )
-            {
-               continue ;
-            }
-            else
-            {
-               rc = SDB_INVALIDARG ;
-               goto error ;
-            }
-         }
-
-         BSONObj boTask = e.embeddedObject() ;
-         RTN_ALTER_FUNC_TYPE taskType = RTN_ALTER_FUNC_INVALID ;
-         std::string taskName ;
-
-         rc = rtnGetIntElement( boTask, FIELD_NAME_TASKTYPE,
-                                (INT32 &)taskType ) ;
-         PD_RC_CHECK( rc, PDERROR,
-                       "Failed to get field [%s], rc: %d",
-                       FIELD_NAME_TASKTYPE, rc ) ;
-
-         rc = rtnGetSTDStringElement( boTask, FIELD_NAME_NAME, taskName ) ;
-         PD_RC_CHECK( rc, PDERROR,
-                       "Failed to get field [%s], rc: %d",
-                       FIELD_NAME_NAME, rc ) ;
-
-         switch ( taskType )
-         {
-         case RTN_ALTER_CL_CRT_ID_IDX :
-         {
-            BSONObj boIdx = BSON(
-                  IXM_FIELD_NAME_KEY << BSON( DMS_ID_KEY_NAME << 1 ) <<
-                  IXM_FIELD_NAME_NAME << IXM_ID_KEY_NAME <<
-                  IXM_FIELD_NAME_UNIQUE << true <<
-                  IXM_FIELD_NAME_V << 0 <<
-                  IXM_FIELD_NAME_ENFORCED << true ) ;
-
-            PD_CHECK( 0 == taskName.compare( SDB_ALTER_CRT_ID_INDEX ),
-                      SDB_INVALIDARG, error, PDERROR,
-                      "Task name [%s] not matched, expected %s",
-                      taskName.c_str(), SDB_ALTER_CRT_ID_INDEX ) ;
-
-            // IdIndex is unique, but id is not in sharding key
-            rc = _addCreateIdxTasks( _targetName, IXM_ID_KEY_NAME,
-                                     boIdx, FALSE, cb ) ;
-            PD_RC_CHECK( rc, PDERROR,
-                         "Failed to add create ID index [%s] tasks, rc: %d",
-                         _targetName.c_str(), rc ) ;
-            break ;
-         }
-         case RTN_ALTER_CL_DROP_ID_IDX :
-            PD_CHECK( 0 == taskName.compare( SDB_ALTER_DROP_ID_INDEX ),
-                      SDB_INVALIDARG, error, PDERROR,
-                      "Task name [%s] not matched, expected %s",
-                      taskName.c_str(), SDB_ALTER_CRT_ID_INDEX ) ;
-
-            rc = _addDropIdxTasks ( _targetName, IXM_ID_KEY_NAME, cb ) ;
-            PD_RC_CHECK( rc, PDERROR,
-                         "Failed to add drop ID index [%s] tasks, rc: %d",
-                         _targetName.c_str(), rc ) ;
-            break ;
-         default :
-            rc = SDB_INVALIDARG ;
-            PD_LOG( PDERROR, "Unknown type of alter task %d", taskType ) ;
-            goto error ;
+            PD_CHECK( _lockMgr.tryLockCollectionSharding( collectionName,
+                                                          EXCLUSIVE ),
+                      SDB_LOCK_FAILED, error, PDWARNING,
+                      "Failed to lock collection [%s] for sharding",
+                      collectionName.c_str() ) ;
          }
       }
 
+      // Lock groups
+      rc = catLockGroups( _groupList, cb, *lockMgr, SHARED ) ;
+      PD_RC_CHECK( rc, PDWARNING, "Failed to lock groups, rc: %d", rc ) ;
+
    done :
-      PD_TRACE_EXITRC ( SDB_CATCTXALTERCL_CHECK_ALTERCLJOB, rc ) ;
+      PD_TRACE_EXITRC ( SDB_CATCTXALTERCL_CHECK_ALTERTASK, rc ) ;
       return rc ;
+
    error :
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXALTERCL_EXECUTE_ALTERCL, "_catCtxAlterCL::_executeAlterCL" )
-   INT32 _catCtxAlterCL::_executeAlterCL ( _pmdEDUCB *cb, INT16 w )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXALTERCL_EXECUTE_ALTERTASK, "_catCtxAlterCL::_executeAlterTask" )
+   INT32 _catCtxAlterCL::_executeAlterTask ( const rtnAlterTask * task,
+                                             _pmdEDUCB * cb,
+                                             INT16 w )
    {
       INT32 rc = SDB_OK ;
 
-      PD_TRACE_ENTRY ( SDB_CATCTXALTERCL_EXECUTE_ALTERCL ) ;
-
-      rc = catAlterCLStep( _targetName, _boTarget, cb, _pDmsCB, _pDpsCB, w ) ;
-      PD_RC_CHECK( rc, PDERROR,
-                   "Failed to alter collection [%s], rc: %d",
-                   _targetName.c_str(), rc ) ;
-
-   done :
-      PD_TRACE_EXITRC ( SDB_CATCTXALTERCL_EXECUTE_ALTERCL, rc ) ;
-      return rc ;
-   error :
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXALTERCL_EXECUTE_ALTERCLJOB, "_catCtxAlterCL::_executeAlterCLJob" )
-   INT32 _catCtxAlterCL::_executeAlterCLJob ( _pmdEDUCB *cb, INT16 w )
-   {
-      INT32 rc = SDB_OK ;
-
-      PD_TRACE_ENTRY ( SDB_CATCTXALTERCL_EXECUTE_ALTERCLJOB ) ;
+      PD_TRACE_ENTRY ( SDB_CATCTXALTERCL_EXECUTE_ALTERTASK ) ;
 
       rc = _catCtxDataMultiTaskBase::_executeInternal( cb, w ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to execute alter collection [%s] job, rc: %d",
                    _targetName.c_str(), rc ) ;
 
+      if ( 1 == _execTasks.size() )
+      {
+         catCtxAlterCLTask * task = dynamic_cast<catCtxAlterCLTask *>( _execTasks.front() ) ;
+         rc = task->startPostTasks( cb, _pDmsCB, _pDpsCB, w ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to start post tasks, rc: %d", rc ) ;
+      }
+
    done :
-      PD_TRACE_EXITRC ( SDB_CATCTXALTERCL_EXECUTE_ALTERCLJOB, rc ) ;
+      PD_TRACE_EXITRC ( SDB_CATCTXALTERCL_EXECUTE_ALTERTASK, rc ) ;
       return rc ;
+
    error :
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXALTERCL_BUILDALTERFIELD, "_catCtxAlterCL::_buildAlterFields" )
-   INT32 _catCtxAlterCL::_buildAlterFields ( clsCatalogSet &cataSet,
-                                             UINT32 mask,
-                                             const catCollectionInfo &alterInfo,
-                                             BSONObj &alterObj )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXALTERCL__ADDALTERTASK, "_catCtxAlterCL::_addAlterTask" )
+   INT32 _catCtxAlterCL::_addAlterTask ( const string & collection,
+                                         const rtnAlterTask * task,
+                                         catCtxAlterCLTask ** catTask,
+                                         BOOLEAN pushExec )
    {
       INT32 rc = SDB_OK ;
 
-      PD_TRACE_ENTRY ( SDB_CATCTXALTERCL_BUILDALTERFIELD ) ;
+      PD_TRACE_ENTRY ( SDB_CATCTXALTERCL__ADDALTERTASK ) ;
 
-      UINT32 attribute = 0 ;
-      clsCatalogSet::POSITION pos ;
-      clsCatalogItem *item = NULL ;
+      SDB_ASSERT( NULL != task, "task is invalid" ) ;
+      SDB_ASSERT( NULL != catTask, "alter task is invalid" ) ;
 
-      PD_CHECK( !( ( CAT_MASK_SHDKEY & mask ) && cataSet.isSharding() ),
-                SDB_OPTION_NOT_SUPPORT, error, PDERROR,
-                "Can not alter a sharding collection's shardingkey" ) ;
+      catCtxAlterCLTask * tempTask = SDB_OSS_NEW catCtxAlterCLTask( collection, task ) ;
+      PD_CHECK( tempTask, SDB_OOM, error, PDERROR,
+                "Failed to create alter task [%s] on collection [%s]",
+                task->getActionName(), collection.c_str() ) ;
 
-      PD_CHECK( !( CAT_MASK_ISMAINCL & mask ),
-                SDB_OPTION_NOT_SUPPORT, error, PDERROR,
-                "Can not change a collection to a main cl" ) ;
-
-      PD_CHECK( !( CAT_MASK_COMPRESSED & mask ),
-                SDB_OPTION_NOT_SUPPORT, error, PDERROR,
-                "can not alter attribute \"Compressed\"" ) ;
-
-      PD_CHECK( !( CAT_MASK_CLNAME & mask ),
-                SDB_OPTION_NOT_SUPPORT, error, PDERROR,
-                "Can not alter attribute \"Name\"" ) ;
-
-      if ( cataSet.isSharding() || cataSet.isMainCL() )
+      _addTask( tempTask, pushExec ) ;
+      if ( catTask )
       {
-         /// this is a splited collection or a main cl.
-         /// we can only change replsize or auto rebalance.
-         BSONObjBuilder builder ;
-         if ( mask & CAT_MASK_REPLSIZE )
-         {
-            builder.append( CAT_CATALOG_W_NAME, alterInfo._replSize ) ;
-         }
-         if ( mask & CAT_MASK_AUTOREBALAN )
-         {
-            builder.appendBool( CAT_DOMAIN_AUTO_REBALANCE,
-                                alterInfo._autoRebalance ) ;
-         }
-
-         alterObj = builder.obj() ;
-         goto done ;
-      }
-
-      pos = cataSet.getFirstItem() ;
-      item = cataSet.getNextItem( pos ) ;
-      PD_CHECK ( item, SDB_SYS, error, PDERROR,
-                 "Failed to get first item from catalog set" ) ;
-      attribute = cataSet.getAttribute() ;
-
-      // Check unsupported alter options for capped collection.
-      if ( OSS_BIT_TEST( attribute, DMS_MB_ATTR_CAPPED )  )
-      {
-         PD_CHECK( !( ( CAT_MASK_SHDKEY & mask ) ||
-                      ( CAT_MASK_SHDIDX & mask ) ||
-                      ( CAT_MASK_SHDTYPE & mask ) ||
-                      ( CAT_MASK_SHDPARTITION & mask ) ),
-                   SDB_OPTION_NOT_SUPPORT, error, PDERROR,
-                   "The arguments are illegal for capped collection" ) ;
-         if ( ( ( CAT_MASK_COMPRESSED & mask ) && alterInfo._isCompressed ) ||
-              ( ( CAT_MASK_COMPRESSIONTYPE & mask ) &&
-                ( UTIL_COMPRESSOR_INVALID != alterInfo._compressorType ) ) )
-         {
-            PD_LOG( PDERROR,
-                    "Compression is not supported on capped collection" ) ;
-            rc = SDB_OPTION_NOT_SUPPORT ;
-            goto error ;
-         }
-
-         if ( ( ( CAT_MASK_AUTOASPLIT & mask ) && alterInfo._autoSplit ) ||
-              ( ( CAT_MASK_AUTOINDEXID & mask ) && alterInfo._autoIndexId ) )
-         {
-            PD_LOG( PDERROR, "Autosplit|AutoIndexId is not supported "
-                    "on capped collection" ) ;
-            rc = SDB_OPTION_NOT_SUPPORT ;
-            goto error ;
-         }
-
-         if ( ( CAT_MASK_CAPPED & mask ) && !alterInfo._capped )
-         {
-            PD_LOG( PDERROR, "Can't change from capped collection to normal "
-                    "collection" ) ;
-            rc = SDB_OPTION_NOT_SUPPORT ;
-            goto error ;
-         }
-
-         if ( ( CAT_MASK_CLMAXSIZE & mask ) || ( CAT_MASK_CLMAXRECNUM & mask )
-              || ( CAT_MASK_CLOVERWRITE & mask ) )
-         {
-            PD_LOG( PDERROR, "Can't change Size|Max|OverWrite" ) ;
-            rc = SDB_OPTION_NOT_SUPPORT ;
-            goto error ;
-         }
-      }
-      else
-      {
-         // For normal collection, it can not be change to capped collection,
-         // or modify the Max|Size|OverWrite options.
-         if ( ( CAT_MASK_CAPPED & mask ) && alterInfo._capped )
-         {
-            PD_LOG( PDERROR, "Can't change from normal collection to capped "
-                    "collection" ) ;
-            rc = SDB_OPTION_NOT_SUPPORT ;
-            goto error ;
-         }
-         if ( ( CAT_MASK_CLMAXRECNUM & mask ) || ( CAT_MASK_CLMAXSIZE & mask )
-              || ( CAT_MASK_CLOVERWRITE & mask ) )
-         {
-            PD_LOG( PDERROR, "Max|Size|OverWrite is only supported on capped "
-                    "collection" ) ;
-            rc = SDB_OPTION_NOT_SUPPORT ;
-            goto error ;
-         }
-      }
-
-      {
-         std::vector<UINT32> groupLst ;
-         std::map<std::string, UINT32> splitLst ;
-
-         groupLst.push_back( item->getGroupID() ) ;
-         rc = catBuildCatalogRecord( alterInfo, mask, attribute,
-                                     groupLst, splitLst, alterObj ) ;
-         PD_RC_CHECK ( rc, PDERROR,
-                       "Failed to build cata record, rc: %d",
-                       rc ) ;
+         (*catTask) = tempTask ;
       }
 
    done :
-      PD_TRACE_EXITRC ( SDB_CATCTXALTERCL_BUILDALTERFIELD, rc ) ;
+      PD_TRACE_EXITRC( SDB_CATCTXALTERCL__ADDALTERTASK, rc ) ;
       return rc ;
+
+   error :
+      SAFE_OSS_DELETE( tempTask ) ;
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXALTERCL__ADDALTERSUBTASK, "_catCtxAlterCL::_addAlterSubTask" )
+   INT32 _catCtxAlterCL::_addAlterSubTask ( catCtxAlterCLTask * catTask,
+                                            pmdEDUCB * cb,
+                                            catCtxLockMgr & lockMgr,
+                                            set< string > & collectionSet,
+                                            vector< UINT32 > & groupList )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_CATCTXALTERCL__ADDALTERSUBTASK ) ;
+
+      try
+      {
+         const string & collectionName = catTask->getDataName() ;
+         clsCatalogSet cataSet( collectionName.c_str() ) ;
+
+         rc = cataSet.updateCatSet( catTask->getDataObj() ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to parse catalog info [%s], rc: %d",
+                      collectionName.c_str(), rc ) ;
+
+         if ( cataSet.isMainCL() )
+         {
+            vector< string > subCLList ;
+            const rtnAlterTask * alterTask = catTask->getTask() ;
+            vector< string >::iterator iterSubCL ;
+
+            PD_CHECK( alterTask->testFlags( RTN_ALTER_TASK_FLAG_MAINCLALLOW ),
+                      SDB_OPTION_NOT_SUPPORT, error, PDERROR,
+                      "Failed to check alter task [%s]: not supported "
+                      "in main-collection", alterTask->getActionName() ) ;
+
+            rc = cataSet.getSubCLList( subCLList );
+            PD_RC_CHECK( rc, PDERROR, "Failed to get sub-collection list of "
+                         "collection [%s], rc: %d", collectionName.c_str(), rc ) ;
+
+            for ( vector< string >::iterator iterSubCL = subCLList.begin() ;
+                  iterSubCL != subCLList.end() ;
+                  iterSubCL ++ )
+            {
+               const string & subCLName = (*iterSubCL) ;
+               catCtxAlterCLTask * subCLTask = NULL ;
+
+               rc = _addAlterTask( subCLName, alterTask, &subCLTask, TRUE ) ;
+               PD_RC_CHECK( rc, PDERROR, "Failed to add alter task [%s] on "
+                            "collection [%s], rc: %d", alterTask->getActionName(),
+                            subCLName.c_str(), rc ) ;
+
+               rc = subCLTask->checkTask( cb, lockMgr ) ;
+               PD_RC_CHECK( rc, PDERROR, "Failed to check alter task [%s] on "
+                            "collection [%s], rc: %d", alterTask->getActionName(),
+                            subCLName.c_str(), rc ) ;
+
+               rc = catGetCollectionGroupSet( subCLTask->getDataObj(),
+                                              _groupList ) ;
+               PD_RC_CHECK( rc, PDERROR,
+                            "Failed to collect groups for collection [%s], "
+                            "rc: %d",
+                            subCLName.c_str(), rc ) ;
+
+               collectionSet.insert( subCLName ) ;
+            }
+         }
+         else
+         {
+            rc = catGetCollectionGroupSet( catTask->getDataObj(), groupList ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to get groups for collection [%s], "
+                         "rc: %d", collectionName.c_str(), rc ) ;
+         }
+
+         collectionSet.insert( collectionName ) ;
+      }
+      catch( exception & e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB_CATCTXALTERCL__ADDALTERSUBTASK, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXALTERCL__MAKEREPLY, "_catCtxAlterCL::_makeReply" )
+   INT32 _catCtxAlterCL::_makeReply ( rtnContextBuf & buffObj )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_CATCTXALTERCL__MAKEREPLY ) ;
+
+      BOOLEAN containTasks = FALSE ;
+
+      if ( 1 == _execTasks.size() )
+      {
+         catCtxAlterCLTask * task = dynamic_cast<catCtxAlterCLTask *>( _execTasks.front() ) ;
+         PD_CHECK( NULL != task, SDB_SYS, error, PDERROR, "Failed to get alter collection task" ) ;
+
+         if ( !task->getPostTasks().empty() &&
+              !_groupList.empty() )
+         {
+            // Generate task list
+            BSONObjBuilder replyBuilder ;
+            BSONArrayBuilder taskBuilder( replyBuilder.subarrayStart( CAT_TASKID_NAME ) ) ;
+            const _utilList< UINT64 > & postTasks = task->getPostTasks() ;
+            for ( _utilList<UINT64>::const_iterator iterTask = postTasks.begin() ;
+                  iterTask != postTasks.end() ;
+                  iterTask ++ )
+            {
+               taskBuilder.append( (INT64)( *iterTask ) ) ;
+            }
+            taskBuilder.done() ;
+
+            // Generate group list
+            _pCatCB->makeGroupsObj( replyBuilder, _groupList, TRUE ) ;
+
+            buffObj = rtnContextBuf( replyBuilder.obj() ) ;
+            containTasks = TRUE ;
+         }
+      }
+
+      if ( !containTasks )
+      {
+         rc = _catCtxIndexMultiTask::_makeReply( buffObj ) ;
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB_CATCTXALTERCL__MAKEREPLY, rc ) ;
+      return rc ;
+
    error :
       goto done ;
    }

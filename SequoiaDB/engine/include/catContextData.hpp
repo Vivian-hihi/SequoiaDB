@@ -198,6 +198,42 @@ namespace engine
    typedef class _catCtxDropCS catCtxDropCS ;
 
    /*
+      _catCtxAlterCS define
+    */
+   class _catCtxAlterCS : public _catCtxDataMultiTaskBase
+   {
+      DECLARE_RTN_CTX_AUTO_REGISTER()
+
+      public :
+         _catCtxAlterCS ( INT64 contextID, UINT64 eduID ) ;
+
+         virtual ~_catCtxAlterCS () ;
+
+         virtual std::string name () const
+         {
+            return "CAT_ALTER_CS" ;
+         }
+
+         virtual RTN_CONTEXT_TYPE getType () const
+         {
+            return RTN_CONTEXT_CAT_ALTER_CS ;
+         }
+
+      protected :
+         INT32 _parseQuery ( _pmdEDUCB * cb ) ;
+         INT32 _checkInternal ( _pmdEDUCB * cb ) ;
+         INT32 _addAlterTask ( const string & collectionSpace,
+                               const rtnAlterTask * task,
+                               catCtxAlterCSTask ** catTask,
+                               BOOLEAN pushExec ) ;
+
+         INT32 _checkAlterTask ( const rtnAlterTask * task, _pmdEDUCB * cb ) ;
+
+      protected :
+         rtnAlterJob _alterJob ;
+   } ;
+
+   /*
     * _catCtxCreateCL define
     */
    class _catCtxCreateCL : public _catCtxDataBase
@@ -334,27 +370,26 @@ namespace engine
 
       virtual INT32 _executeInternal ( _pmdEDUCB *cb, INT16 w ) ;
 
-      /// no rollback
-      virtual INT32 _rollbackInternal ( _pmdEDUCB *cb, INT16 w )
-      { return SDB_OK ; }
+   protected :
+      INT32 _checkAlterTask ( const rtnAlterTask * task, _pmdEDUCB * cb ) ;
+      INT32 _executeAlterTask ( const rtnAlterTask * task, _pmdEDUCB * cb, INT16 w ) ;
+
+      INT32 _addAlterTask ( const std::string & collection,
+                            const rtnAlterTask * task,
+                            catCtxAlterCLTask ** catTask,
+                            BOOLEAN pushExec ) ;
+
+      INT32 _addAlterSubTask ( catCtxAlterCLTask * catTask,
+                               pmdEDUCB * cb,
+                               catCtxLockMgr & lockMgr,
+                               std::set< std::string > & collectionSet,
+                               std::vector< UINT32 > & groupList ) ;
+
+      virtual INT32 _makeReply ( rtnContextBuf &buffObj ) ;
 
    protected :
-      INT32 _checkAlterCL ( _pmdEDUCB *cb ) ;
-
-      INT32 _checkAlterCLJob ( _pmdEDUCB *cb ) ;
-
-      INT32 _executeAlterCL ( _pmdEDUCB *cb, INT16 w ) ;
-
-      INT32 _executeAlterCLJob ( _pmdEDUCB *cb, INT16 w ) ;
-
-      INT32 _buildAlterFields ( clsCatalogSet &cataSet,
-                                UINT32 mask,
-                                const catCollectionInfo &alterInfo,
-                                BSONObj &alterObj ) ;
-
-   protected :
-      BSONObj _alterFields ;
-      _rtnAlterJob _alterJob ;
+      BSONObj     _alterArguments ;
+      rtnAlterJob _alterJob ;
    } ;
 
    typedef class _catCtxAlterCL catCtxAlterCL ;

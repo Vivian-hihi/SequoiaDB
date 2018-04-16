@@ -450,6 +450,16 @@ namespace sdbclient
       virtual INT32 dropIdIndex() = 0 ;
 
       virtual INT32 pop ( const bson::BSONObj &option = _sdbStaticObject ) = 0 ;
+
+      virtual INT32 enableSharding ( const bson::BSONObj & options ) = 0 ;
+
+      virtual INT32 disableSharding () = 0 ;
+
+      virtual INT32 enableCompression ( const bson::BSONObj & options = _sdbStaticObject ) = 0 ;
+
+      virtual INT32 disableCompression () = 0 ;
+
+      virtual INT32 setAttributes ( const bson::BSONObj & options ) = 0 ;
    } ;
 
 /** \class sdbCollection
@@ -631,7 +641,6 @@ namespace sdbclient
                                           taskID ) ;
       }
 
-
 /** \fn INT32 alterCollection ( const bson::BSONObj &options )
     \brief Alter the current collection
     \param [in] options The modified options as following:
@@ -640,9 +649,10 @@ namespace sdbclient
         ShardingKey  : Assign the sharding key
         ShardingType : Assign the sharding type
         Partition    : When the ShardingType is "hash", need to assign Partition, it's the bucket number for hash, the range is [2^3,2^20]
+        CompressionType : The compression type of data, could be "snappy" or "lzw"
+        EnsureShardingIndex : Assign to true to build sharding index
+        StrictDataMode : Using strict date mode in numeric operations or not
                        e.g. {RepliSize:0, ShardingKey:{a:1}, ShardingType:"hash", Partition:1024}
-    \note Can't alter attributes about split in partition collection; After altering a collection to
-          be a partition collection, need to split this collection manually
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
@@ -1491,6 +1501,89 @@ namespace sdbclient
         return pCollection->dropIdIndex() ;
     }
 
+    /** \fn INT32 enableSharding ( const bson::BSONObj &options )
+        \brief Alter the current collection to enable sharding
+        \param [in] options The modified options as following:
+
+            ShardingKey  : Assign the sharding key
+            ShardingType : Assign the sharding type
+            Partition    : When the ShardingType is "hash", need to assign Partition, it's the bucket number for hash, the range is [2^3,2^20]
+            EnsureShardingIndex : Assign to true to build sharding index
+        \note Can't alter attributes about split in partition collection; After altering a collection to
+              be a partition collection, need to split this collection manually
+        \retval SDB_OK Operation Success
+        \retval Others Operation Fail
+    */
+    INT32 enableSharding ( const bson::BSONObj & options = _sdbStaticObject )
+    {
+       if ( !pCollection )
+          return SDB_NOT_CONNECTED ;
+       return pCollection->enableSharding( options ) ;
+    }
+
+    /** \fn INT32 disableSharding ()
+        \brief Alter the current collection to disable sharding
+        \retval SDB_OK Operation Success
+        \retval Others Operation Fail
+    */
+    INT32 disableSharding ()
+    {
+       if ( !pCollection )
+          return SDB_NOT_CONNECTED ;
+       return pCollection->disableSharding() ;
+    }
+
+    /** \fn INT32 enableCompression ( const bson::BSONObj &options )
+        \brief Alter the current collection to enable compression
+        \param [in] options The modified options as following:
+
+            CompressionType : The compression type of data, could be "snappy" or "lzw"
+        \retval SDB_OK Operation Success
+        \retval Others Operation Fail
+    */
+    INT32 enableCompression ( const bson::BSONObj & options = _sdbStaticObject )
+    {
+       if ( !pCollection )
+          return SDB_NOT_CONNECTED ;
+       return pCollection->enableCompression( options ) ;
+    }
+
+    /** \fn INT32 disableCompression ()
+        \brief Alter the current collection to disable compression
+        \retval SDB_OK Operation Success
+        \retval Others Operation Fail
+    */
+    INT32 disableCompression ()
+    {
+       if ( !pCollection )
+          return SDB_NOT_CONNECTED ;
+       return pCollection->disableCompression() ;
+    }
+
+    /** \fn INT32 setAttributes ( const bson::BSONObj &options )
+        \brief Alter the current collection
+        \param [in] options The modified options as following:
+
+            ReplSize     : Assign how many replica nodes need to be synchronized when a write request(insert, update, etc) is executed
+            ShardingKey  : Assign the sharding key
+            ShardingType : Assign the sharding type
+            Partition    : When the ShardingType is "hash", need to assign Partition, it's the bucket number for hash, the range is [2^3,2^20]
+            CompressionType : The compression type of data, could be "snappy" or "lzw"
+            EnsureShardingIndex : Assign to true to build sharding index
+            StrictDataMode : Using strict date mode in numeric operations or not
+                           e.g. {RepliSize:0, ShardingKey:{a:1}, ShardingType:"hash", Partition:1024}
+        \note Can't alter attributes about split in partition collection; After altering a collection to
+              be a partition collection, need to split this collection manually
+        \retval SDB_OK Operation Success
+        \retval Others Operation Fail
+    */
+    INT32 setAttributes ( const bson::BSONObj &options )
+    {
+       if ( !pCollection )
+          return SDB_NOT_CONNECTED ;
+       return pCollection->setAttributes( options ) ;
+    }
+
 /* \fn INT32 pop(const bson::BSONObj &option)
     \brief Pop records from a capped collection
     \param [in] option The arguments to pop records.
@@ -2238,6 +2331,17 @@ namespace sdbclient
       virtual INT32 renameCollection( const CHAR* oldName, const CHAR* newName,
                          const bson::BSONObj &options = _sdbStaticObject ) = 0 ;
 
+      virtual INT32 alterCollectionSpace ( const bson::BSONObj & options ) = 0 ;
+
+      virtual INT32 setDomain ( const bson::BSONObj & options ) = 0 ;
+
+      virtual INT32 removeDomain () = 0 ;
+
+      virtual INT32 enableCapped () = 0 ;
+
+      virtual INT32 disableCapped () = 0 ;
+
+      virtual INT32 setAttributes ( const bson::BSONObj & options ) = 0 ;
    } ;
 /** \class sdbCollectionSpace
     \brief Database operation interfaces of collection space
@@ -2475,6 +2579,106 @@ namespace sdbclient
             return SDB_NOT_CONNECTED ;
          return pCollectionSpace->renameCollection( oldName, newName, options ) ;
       }
+
+      /* \fn INT32 alterCollectionSpace ( const bson::BSONObj & options )
+          \brief Alter collection space.
+          \param [in] options The options of collection space to be changed, e.g. { "PageSize": 4096, "Domain": "mydomain" }.
+
+              PageSize     : The page size of the collection space
+              LobPageSize  : The page size of LOB objects in the collection space
+              Domain       : The domain which the collection space belongs to
+
+          \retval SDB_OK Operation Success
+          \retval Others Operation Fail
+       */
+      INT32 alterCollectionSpace ( const bson::BSONObj & options )
+      {
+         if ( NULL != pCollectionSpace )
+         {
+            return SDB_NOT_CONNECTED ;
+         }
+         return pCollectionSpace->alterCollectionSpace( options ) ;
+      }
+
+      /* \fn INT32 setDomain ( const bson::BSONObj & options )
+          \brief Alter collection space to set domain.
+          \param [in] options The options of collection space to be changed.
+
+              Domain       : The domain which the collection space belongs to
+
+          \retval SDB_OK Operation Success
+          \retval Others Operation Fail
+       */
+      INT32 setDomain ( const bson::BSONObj & options )
+      {
+         if ( NULL != pCollectionSpace )
+         {
+            return SDB_NOT_CONNECTED ;
+         }
+         return pCollectionSpace->setDomain( options ) ;
+      }
+
+      /* \fn INT32 removeDomain ()
+          \brief Alter collection space to remove domain.
+          \retval SDB_OK Operation Success
+          \retval Others Operation Fail
+       */
+      INT32 removeDomain ()
+      {
+         if ( NULL != pCollectionSpace )
+         {
+            return SDB_NOT_CONNECTED ;
+         }
+         return pCollectionSpace->removeDomain() ;
+      }
+
+      /* \fn INT32 enableCapped ()
+          \brief Alter collection space to enable capped.
+          \retval SDB_OK Operation Success
+          \retval Others Operation Fail
+       */
+      INT32 enableCapped ()
+      {
+         if ( NULL != pCollectionSpace )
+         {
+            return SDB_NOT_CONNECTED ;
+         }
+         return pCollectionSpace->enableCapped() ;
+      }
+
+      /* \fn INT32 disableCapped ()
+          \brief Alter collection space to disable capped.
+          \retval SDB_OK Operation Success
+          \retval Others Operation Fail
+       */
+      INT32 disableCapped ()
+      {
+         if ( NULL != pCollectionSpace )
+         {
+            return SDB_NOT_CONNECTED ;
+         }
+         return pCollectionSpace->disableCapped() ;
+      }
+
+      /* \fn INT32 setAttributes ( const bson::BSONObj & options )
+          \brief Alter collection space.
+          \param [in] options The options of collection space to be changed, e.g. { "PageSize": 4096, "Domain": "mydomain" }.
+
+              PageSize     : The page size of the collection space
+              LobPageSize  : The page size of LOB objects in the collection space
+              Domain       : The domain which the collection space belongs to
+
+          \retval SDB_OK Operation Success
+          \retval Others Operation Fail
+       */
+      INT32 setAttributes ( const bson::BSONObj & options )
+      {
+         if ( NULL != pCollectionSpace )
+         {
+            return SDB_NOT_CONNECTED ;
+         }
+         return pCollectionSpace->setAttributes( options ) ;
+      }
    } ;
 
    class DLLEXPORT _sdbDomain
@@ -2501,6 +2705,14 @@ namespace sdbclient
       virtual INT32 listReplicaGroupInDomain( _sdbCursor **cursor ) = 0 ;
 
       virtual INT32 listReplicaGroupInDomain( sdbCursor &cursor ) = 0 ;
+
+      virtual INT32 addGroups ( const bson::BSONObj & options ) = 0 ;
+
+      virtual INT32 setGroups ( const bson::BSONObj & options ) = 0 ;
+
+      virtual INT32 removeGroups ( const bson::BSONObj & options ) = 0 ;
+
+      virtual INT32 setAttributes ( const bson::BSONObj & options ) = 0 ;
    } ;
 
    /** \class  sdbDomain
@@ -2546,28 +2758,112 @@ namespace sdbclient
          return pDomain->getName() ;
       }
 
-/** \fn INT32 alterDomain( const bson::BSONObj &options ) ;
-    \brief Alter the current domain.
-    \param [in] options The options user wants to alter
+      /** \fn INT32 alterDomain( const bson::BSONObj &options ) ;
+          \brief Alter the current domain.
+          \param [in] options The options user wants to alter
 
-        Groups:    The list of replica groups' names which the domain is going to contain.
-                   eg: { "Groups": [ "group1", "group2", "group3" ] }, it means that domain
-                   changes to contain "group1" "group2" or "group3".
-                   We can add or remove groups in current domain. However, if a group has data
-                   in it, remove it out of domain will be failing.
-        AutoSplit: Alter current domain to have the ability of automatically split or not.
-                   If this option is set to be true, while creating collection(ShardingType is "hash") in this domain,
-                   the data of this collection will be split(hash split) into all the groups in this domain automatically.
-                   However, it won't automatically split data into those groups which were add into this domain later.
-                   eg: { "Groups": [ "group1", "group2", "group3" ], "AutoSplit: true" }
-    \retval SDB_OK Operation Success
-    \retval Others Operation Fail
-*/
+              Groups:    The list of replica groups' names which the domain is going to contain.
+                         eg: { "Groups": [ "group1", "group2", "group3" ] }, it means that domain
+                         changes to contain "group1" "group2" or "group3".
+                         We can add or remove groups in current domain. However, if a group has data
+                         in it, remove it out of domain will be failing.
+              AutoSplit: Alter current domain to have the ability of automatically split or not.
+                         If this option is set to be true, while creating collection(ShardingType is "hash") in this domain,
+                         the data of this collection will be split(hash split) into all the groups in this domain automatically.
+                         However, it won't automatically split data into those groups which were add into this domain later.
+                         eg: { "Groups": [ "group1", "group2", "group3" ], "AutoSplit: true" }
+          \retval SDB_OK Operation Success
+          \retval Others Operation Fail
+       */
       INT32 alterDomain ( const bson::BSONObj &options )
       {
          if ( !pDomain )
             return SDB_NOT_CONNECTED ;
          return pDomain->alterDomain ( options ) ;
+      }
+
+      /** \fn INT32 addGroups( const bson::BSONObj &options ) ;
+          \brief Add groups into the current domain.
+          \param [in] options The options user wants to alter
+
+              Groups:    The list of replica groups' names to be added into the domain.
+                         eg: { "Groups": [ "group1", "group2", "group3" ] }, it means that domain
+                         changes to add "group1" "group2" or "group3".
+          \retval SDB_OK Operation Success
+          \retval Others Operation Fail
+       */
+      INT32 addGroups ( const bson::BSONObj & options )
+      {
+         if ( NULL == pDomain )
+         {
+            return SDB_NOT_CONNECTED ;
+         }
+         return pDomain->addGroups( options ) ;
+      }
+
+      /** \fn INT32 setGroups( const bson::BSONObj &options ) ;
+          \brief Set the groups of the current domain.
+          \param [in] options The options user wants to alter
+
+              Groups:    The list of replica groups' names which the domain is going to contain.
+                         eg: { "Groups": [ "group1", "group2", "group3" ] }, it means that domain
+                         changes to contain "group1" "group2" or "group3".
+                         We can add or remove groups in current domain. However, if a group has data
+                         in it, remove it out of domain will be failing.
+          \retval SDB_OK Operation Success
+          \retval Others Operation Fail
+       */
+      INT32 setGroups ( const bson::BSONObj & options )
+      {
+         if ( NULL == pDomain )
+         {
+            return SDB_NOT_CONNECTED ;
+         }
+         return pDomain->setGroups( options ) ;
+      }
+
+      /** \fn INT32 removeGroups( const bson::BSONObj &options ) ;
+          \brief Remove groups from the current domain.
+          \param [in] options The options user wants to alter
+
+              Groups:    The list of replica groups' names which the domain is going to remove.
+                         eg: { "Groups": [ "group1", "group2", "group3" ] }, it means that domain
+                         changes to remove "group1" "group2" or "group3".
+                         If a group has data in it, remove it out of domain will be failing.
+          \retval SDB_OK Operation Success
+          \retval Others Operation Fail
+       */
+      INT32 removeGroups ( const bson::BSONObj & options )
+      {
+         if ( NULL == pDomain )
+         {
+            return SDB_NOT_CONNECTED ;
+         }
+         return pDomain->removeGroups( options ) ;
+      }
+
+      /** \fn INT32 setAttributes( const bson::BSONObj &options ) ;
+          \brief Alter the current domain.
+          \param [in] options The options user wants to alter
+
+              Groups:    The list of replica groups' names which the domain is going to contain.
+                         eg: { "Groups": [ "group1", "group2", "group3" ] }, it means that domain
+                         changes to contain "group1" "group2" or "group3".
+                         We can add or remove groups in current domain. However, if a group has data
+                         in it, remove it out of domain will be failing.
+              AutoSplit: Alter current domain to have the ability of automatically split or not.
+                         If this option is set to be true, while creating collection(ShardingType is "hash") in this domain,
+                         the data of this collection will be split(hash split) into all the groups in this domain automatically.
+                         However, it won't automatically split data into those groups which were add into this domain later.
+                         eg: { "Groups": [ "group1", "group2", "group3" ], "AutoSplit: true" }
+          \retval SDB_OK Operation Success
+          \retval Others Operation Fail
+       */
+      INT32 setAttributes ( const bson::BSONObj &options )
+      {
+         if ( !pDomain )
+            return SDB_NOT_CONNECTED ;
+         return pDomain->setAttributes( options ) ;
       }
 
 /** \fn INT32 listCollectionSpacesInDomain ( sdbCursor &cursor ) ;

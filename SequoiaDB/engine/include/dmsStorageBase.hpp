@@ -461,6 +461,8 @@ namespace engine
          INT32 renameStorage( const CHAR *csName,
                               const CHAR *suFileName ) ;
 
+         INT32 setLobPageSize ( UINT32 lobPageSize ) ;
+
          /// flush functions
          INT32 flushHeader( BOOLEAN sync = FALSE ) ;
          INT32 flushSME( BOOLEAN sync = FALSE ) ;

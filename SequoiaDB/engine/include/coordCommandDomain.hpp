@@ -38,6 +38,7 @@
 #define COORD_COMMAND_DOMAIN_HPP__
 
 #include "coordCommandBase.hpp"
+#include "coordCommandData.hpp"
 #include "coordFactory.hpp"
 
 using namespace bson ;
@@ -79,21 +80,49 @@ namespace engine
    } ;
    typedef _coordCMDDropDomain coordCMDDropDomain ;
 
+//   /*
+//      _coordCMDAlterDomain define
+//   */
+//   class _coordCMDAlterDomain : public _coordCommandBase
+//   {
+//      COORD_DECLARE_CMD_AUTO_REGISTER() ;
+//      public:
+//         _coordCMDAlterDomain() ;
+//         virtual ~_coordCMDAlterDomain() ;
+//
+//         virtual INT32 execute( MsgHeader *pMsg,
+//                                pmdEDUCB *cb,
+//                                INT64 &contextID,
+//                                rtnContextBuf *buf ) ;
+//   } ;
+//   typedef _coordCMDAlterDomain coordCMDAlterDomain ;
+
    /*
       _coordCMDAlterDomain define
-   */
-   class _coordCMDAlterDomain : public _coordCommandBase
+    */
+   class _coordCMDAlterDomain : public _coordDataCMDAlter
    {
       COORD_DECLARE_CMD_AUTO_REGISTER() ;
-      public:
-         _coordCMDAlterDomain() ;
-         virtual ~_coordCMDAlterDomain() ;
 
-         virtual INT32 execute( MsgHeader *pMsg,
-                                pmdEDUCB *cb,
-                                INT64 &contextID,
-                                rtnContextBuf *buf ) ;
+      public:
+         _coordCMDAlterDomain () ;
+         virtual ~_coordCMDAlterDomain () ;
+
+      protected :
+         OSS_INLINE virtual RTN_ALTER_OBJECT_TYPE _getObjectType () const
+         {
+            return RTN_ALTER_DOMAIN ;
+         }
+
+         OSS_INLINE virtual MSG_TYPE _getCatalogMessageType () const
+         {
+            return MSG_CAT_ALTER_DOMAIN_REQ ;
+         }
+
+         // Not a collection command
+         virtual BOOLEAN _flagDoOnCollection () { return FALSE ; }
    } ;
+
    typedef _coordCMDAlterDomain coordCMDAlterDomain ;
 
 }

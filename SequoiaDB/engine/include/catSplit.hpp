@@ -52,7 +52,7 @@ namespace engine
                            UINT32 &returnGroupID, INT32 &returnVersion ) ;
 
    INT32 catSplitReady ( const BSONObj &splitInfo, UINT64 taskID,
-                         pmdEDUCB *cb, INT16 w,
+                         BOOLEAN needLock, pmdEDUCB *cb, INT16 w,
                          UINT32 &returnGroupID, INT32 &returnVersion ) ;
 
    INT32 catSplitStart ( UINT64 taskID, pmdEDUCB *cb, INT16 w ) ;

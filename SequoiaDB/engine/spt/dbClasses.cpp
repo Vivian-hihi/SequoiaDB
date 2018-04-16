@@ -2746,6 +2746,198 @@ error:
    goto done ;
 }
 
+// PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_ENABLE_SHARDING, "collection_enable_sharding" )
+static JSBool collection_enable_sharding ( JSContext *cx , uintN argc , jsval *vp )
+{
+   PD_TRACE_ENTRY ( SDB_COLL_ENABLE_SHARDING ) ;
+
+   engine::sdbClearErrorInfo() ;
+   INT32 rc = SDB_OK ;
+   JSBool ret = JS_TRUE ;
+   sdbCollectionHandle *clHandle = NULL ;
+   JSObject *jsOptions = NULL ;
+   bson *obj = NULL ;
+
+   ret = JS_ConvertArguments ( cx , argc , JS_ARGV ( cx , vp ) ,
+                               "/o" , &jsOptions ) ;
+   REPORT ( ret , "SdbCollection.enableSharding(): wrong arguments" ) ;
+
+   if ( NULL != jsOptions )
+   {
+      if ( !objToBson( cx, jsOptions, &obj ) )
+      {
+         rc = SDB_INVALIDARG ;
+         REPORT_RC ( JS_FALSE , "SdbCollection.enableSharding():convert json to bson" , rc ) ;
+      }
+   }
+
+   clHandle = (sdbCollectionHandle *)
+      JS_GetPrivate ( cx , JS_THIS_OBJECT ( cx , vp ) ) ;
+   REPORT ( clHandle , "SdbCollection.enableSharding(): no collection handle" ) ;
+
+   rc = sdbEnableSharding( *clHandle, obj ) ;
+   REPORT_RC ( SDB_OK == rc,
+               "SdbCollection.enableSharding()" , rc ) ;
+
+   JS_SET_RVAL( cx, vp, JSVAL_VOID ) ;
+
+done :
+   SAFE_BSON_DISPOSE( obj ) ;
+   PD_TRACE_EXIT( SDB_COLL_ENABLE_SHARDING ) ;
+   return ret ;
+
+error :
+   goto done ;
+}
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_DISABLE_SHARDING, "collection_disable_sharding" )
+static JSBool collection_disable_sharding ( JSContext *cx , uintN argc , jsval *vp )
+{
+   PD_TRACE_ENTRY ( SDB_COLL_DISABLE_SHARDING ) ;
+
+   engine::sdbClearErrorInfo() ;
+   INT32 rc = SDB_OK ;
+   JSBool ret = JS_TRUE ;
+   sdbCollectionHandle *clHandle = NULL ;
+
+   REPORT ( 0 == argc ,
+            "SdbCollection.disableSharding(): wrong arguments" ) ;
+   clHandle = (sdbCollectionHandle *)
+      JS_GetPrivate ( cx , JS_THIS_OBJECT ( cx , vp ) ) ;
+   REPORT ( clHandle , "SdbCollection.disableSharding(): no collection handle" ) ;
+
+   rc = sdbDisableSharding( *clHandle ) ;
+   REPORT_RC ( SDB_OK == rc,
+               "SdbCollection.disableSharding()" , rc ) ;
+
+   JS_SET_RVAL( cx, vp, JSVAL_VOID ) ;
+
+done :
+   PD_TRACE_EXIT( SDB_COLL_DISABLE_SHARDING ) ;
+   return ret ;
+
+error :
+   goto done ;
+}
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_ENABLE_COMPRESSION, "collection_enable_compression" )
+static JSBool collection_enable_compression ( JSContext *cx , uintN argc , jsval *vp )
+{
+   PD_TRACE_ENTRY ( SDB_COLL_ENABLE_COMPRESSION ) ;
+
+   engine::sdbClearErrorInfo() ;
+   INT32 rc = SDB_OK ;
+   JSBool ret = JS_TRUE ;
+   sdbCollectionHandle *clHandle = NULL ;
+   JSObject *jsOptions = NULL ;
+   bson *obj = NULL ;
+
+   if ( argc > 0 )
+   {
+      ret = JS_ConvertArguments ( cx , argc , JS_ARGV ( cx , vp ) ,
+                                  "/o" , &jsOptions ) ;
+      REPORT ( ret , "SdbCollection.enableCompression(): wrong arguments" ) ;
+
+      if ( NULL != jsOptions )
+      {
+         if ( !objToBson( cx, jsOptions, &obj ) )
+         {
+            rc = SDB_INVALIDARG ;
+            REPORT_RC ( JS_FALSE , "SdbCollection.enableCompression():convert json to bson" , rc ) ;
+         }
+      }
+   }
+
+   clHandle = (sdbCollectionHandle *)
+      JS_GetPrivate ( cx , JS_THIS_OBJECT ( cx , vp ) ) ;
+   REPORT ( clHandle , "SdbCollection.enableCompression(): no collection handle" ) ;
+
+   rc = sdbEnableCompression( *clHandle, obj ) ;
+   REPORT_RC ( SDB_OK == rc,
+               "SdbCollection.enableCompression()" , rc ) ;
+
+   JS_SET_RVAL( cx, vp, JSVAL_VOID ) ;
+
+done :
+   SAFE_BSON_DISPOSE( obj ) ;
+   PD_TRACE_EXIT( SDB_COLL_ENABLE_COMPRESSION ) ;
+   return ret ;
+
+error :
+   goto done ;
+}
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_DISABLE_COMPRESSION, "collection_disable_compression" )
+static JSBool collection_disable_compression ( JSContext *cx , uintN argc , jsval *vp )
+{
+   PD_TRACE_ENTRY ( SDB_COLL_DISABLE_COMPRESSION ) ;
+
+   engine::sdbClearErrorInfo() ;
+   INT32 rc = SDB_OK ;
+   JSBool ret = JS_TRUE ;
+   sdbCollectionHandle *clHandle = NULL ;
+
+   REPORT ( 0 == argc ,
+            "SdbCollection.disableCompression(): wrong arguments" ) ;
+   clHandle = (sdbCollectionHandle *)
+      JS_GetPrivate ( cx , JS_THIS_OBJECT ( cx , vp ) ) ;
+   REPORT ( clHandle , "SdbCollection.disableCompression(): no collection handle" ) ;
+
+   rc = sdbDisableCompression( *clHandle ) ;
+   REPORT_RC ( SDB_OK == rc,
+               "SdbCollection.disableCompression()" , rc ) ;
+
+   JS_SET_RVAL( cx, vp, JSVAL_VOID ) ;
+
+done :
+   PD_TRACE_EXIT( SDB_COLL_DISABLE_COMPRESSION ) ;
+   return ret ;
+
+error :
+   goto done ;
+}
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_SET_ATTR, "collection_set_attributes" )
+static JSBool collection_set_attributes ( JSContext *cx , uintN argc , jsval *vp )
+{
+   PD_TRACE_ENTRY ( SDB_COLL_SET_ATTR ) ;
+
+   engine::sdbClearErrorInfo() ;
+   INT32 rc = SDB_OK ;
+   JSBool ret = JS_TRUE ;
+   sdbCollectionHandle *clHandle = NULL ;
+   JSObject *jsOptions = NULL ;
+   bson *obj = NULL ;
+
+   ret = JS_ConvertArguments( cx, argc, JS_ARGV( cx , vp ), "/o", &jsOptions ) ;
+   REPORT( ret, "SdbCollection.setAttributes(): wrong arguments" ) ;
+
+   if ( NULL != jsOptions )
+   {
+      if ( !objToBson( cx, jsOptions, &obj ) )
+      {
+         rc = SDB_INVALIDARG ;
+         REPORT_RC( JS_FALSE , "SdbCollection.setAttributes():convert json to bson" , rc ) ;
+      }
+   }
+
+   clHandle = (sdbCollectionHandle *) JS_GetPrivate( cx , JS_THIS_OBJECT ( cx , vp ) ) ;
+   REPORT( clHandle , "SdbCollection.setAttributes(): no collection handle" ) ;
+
+   rc = sdbCLSetAttributes( *clHandle, obj ) ;
+   REPORT_RC( SDB_OK == rc, "SdbCollection.setAttributes()" , rc ) ;
+
+   JS_SET_RVAL( cx, vp, JSVAL_VOID ) ;
+
+done :
+   SAFE_BSON_DISPOSE( obj ) ;
+   PD_TRACE_EXIT( SDB_COLL_SET_ATTR ) ;
+   return ret ;
+
+error :
+   goto done ;
+}
+
 static JSBool collection_get_query_meta( JSContext *cx , uintN argc , jsval *vp )
 {
    engine::sdbClearErrorInfo() ;
@@ -2870,6 +3062,11 @@ static JSFunctionSpec collection_functions[] = {
     JS_FS ( "createIdIndex", collection_crt_id_index, 0, 0 ),
     JS_FS ( "dropIdIndex", collection_drop_id_index, 0, 0 ),
     JS_FS ( "getQueryMeta", collection_get_query_meta, 0, 0 ),
+    JS_FS ( "enableSharding", collection_enable_sharding, 1, 0 ),
+    JS_FS ( "disableSharding", collection_disable_sharding, 0, 0 ),
+    JS_FS ( "enableCompression", collection_enable_compression, 1, 0 ),
+    JS_FS ( "disableCompression", collection_disable_compression, 0, 0 ),
+    JS_FS ( "setAttributes", collection_set_attributes, 1, 0 ),
     JS_FS_END
 } ;
 
@@ -4227,11 +4424,249 @@ error :
    goto done ;
 }
 
+// PD_TRACE_DECLARE_FUNCTION ( SDB_CS_ALTER, "cs_alter" )
+static JSBool cs_alter ( JSContext * cx, uintN argc, jsval * vp )
+{
+   PD_TRACE_ENTRY( SDB_CS_ALTER ) ;
+
+   engine::sdbClearErrorInfo() ;
+
+   INT32 rc = SDB_OK ;
+   JSBool ret = JS_TRUE ;
+   sdbCSHandle * cs = NULL ;
+
+   JSObject * argJSObj = NULL ;
+   jsval * argv = NULL ;
+   bson argObj ;
+   bson_init( &argObj ) ;
+
+   cs = (sdbCSHandle *) JS_GetPrivate( cx, JS_THIS_OBJECT( cx, vp ) ) ;
+   REPORT( cs , "SdbCS.alter(): no collection space handle" ) ;
+
+   REPORT( argc >= 1, "SdbCS.alter(): need one argument" ) ;
+
+   argv = JS_ARGV( cx, vp ) ;
+   REPORT( JSVAL_IS_OBJECT( argv[0] ), "SdbCS.alter(): need an object argument") ;
+
+   argJSObj = JSVAL_TO_OBJECT( argv[0] ) ;
+   VERIFY( argJSObj ) ;
+
+   {
+      sptConvertor c( cx ) ;
+      rc = c.toBson( argJSObj, &argObj ) ;
+      VERIFY( SDB_OK == rc ) ;
+   }
+
+   rc = sdbAlterCollectionSpace( *cs, &argObj ) ;
+   REPORT_RC( SDB_OK == rc, "SdbCS.alter()", rc ) ;
+
+   JS_SET_RVAL( cx, vp, JSVAL_VOID ) ;
+
+done :
+   bson_destroy( &argObj ) ;
+   PD_TRACE_EXIT( SDB_CS_ALTER ) ;
+   return ret ;
+
+error :
+   TRY_REPORT( cx, "SdbCS.alter(): false" ) ;
+   goto done ;
+}
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_CS_SET_DOMAIN, "cs_set_domain" )
+static JSBool cs_set_domain ( JSContext * cx, uintN argc, jsval * vp )
+{
+   PD_TRACE_ENTRY( SDB_CS_SET_DOMAIN ) ;
+
+   engine::sdbClearErrorInfo() ;
+
+   INT32 rc = SDB_OK ;
+   JSBool ret = JS_TRUE ;
+   sdbCSHandle * cs = NULL ;
+
+   JSObject * argJSObj = NULL ;
+   jsval * argv = NULL ;
+   bson argObj ;
+   bson_init( &argObj ) ;
+
+   cs = (sdbCSHandle *) JS_GetPrivate( cx, JS_THIS_OBJECT( cx, vp ) ) ;
+   REPORT( cs , "SdbCS.setDomain(): no collection space handle" ) ;
+
+   REPORT( argc >= 1, "SdbCS.setDomain(): need one argument" ) ;
+
+   argv = JS_ARGV( cx, vp ) ;
+   REPORT( JSVAL_IS_OBJECT( argv[0] ), "SdbCS.setDomain(): need an object argument") ;
+
+   argJSObj = JSVAL_TO_OBJECT( argv[0] ) ;
+   VERIFY( argJSObj ) ;
+
+   {
+      sptConvertor c( cx ) ;
+      rc = c.toBson( argJSObj, &argObj ) ;
+      VERIFY( SDB_OK == rc ) ;
+   }
+
+   rc = sdbCSSetDomain( *cs, &argObj ) ;
+   REPORT_RC( SDB_OK == rc, "SdbCS.setDomain()", rc ) ;
+
+   JS_SET_RVAL( cx, vp, JSVAL_VOID ) ;
+
+done :
+   bson_destroy( &argObj ) ;
+   PD_TRACE_EXIT( SDB_CS_SET_DOMAIN ) ;
+   return ret ;
+
+error :
+   TRY_REPORT( cx, "SdbCS.setDomain(): false" ) ;
+   goto done ;
+}
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_CS_RM_DOMAIN, "cs_remove_domain" )
+static JSBool cs_remove_domain ( JSContext * cx, uintN argc, jsval * vp )
+{
+   PD_TRACE_ENTRY( SDB_CS_RM_DOMAIN ) ;
+
+   engine::sdbClearErrorInfo() ;
+
+   INT32 rc = SDB_OK ;
+   JSBool ret = JS_TRUE ;
+   sdbCSHandle * cs = NULL ;
+
+   cs = (sdbCSHandle *) JS_GetPrivate( cx, JS_THIS_OBJECT( cx, vp ) ) ;
+   REPORT( cs , "SdbCS.removeDomain(): no collection space handle" ) ;
+
+   REPORT( 0 == argc , "SdbCS.removeDomain(): wrong arguments" ) ;
+
+   rc = sdbCSRemoveDomain( *cs ) ;
+   REPORT_RC( SDB_OK == rc, "SdbCS.removeDomain()", rc ) ;
+
+   JS_SET_RVAL( cx, vp, JSVAL_VOID ) ;
+
+done :
+   PD_TRACE_EXIT( SDB_CS_RM_DOMAIN ) ;
+   return ret ;
+
+error :
+   TRY_REPORT( cx , "SdbCS.removeDomain(): false" ) ;
+   goto done ;
+}
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_CS_ENABLE_CAPPED, "cs_enable_capped" )
+static JSBool cs_enable_capped ( JSContext * cx, uintN argc, jsval * vp )
+{
+   PD_TRACE_ENTRY( SDB_CS_ENABLE_CAPPED ) ;
+
+   engine::sdbClearErrorInfo() ;
+
+   INT32 rc = SDB_OK ;
+   JSBool ret = JS_TRUE ;
+   sdbCSHandle * cs = NULL ;
+
+   cs = (sdbCSHandle *) JS_GetPrivate( cx, JS_THIS_OBJECT( cx, vp ) ) ;
+   REPORT( cs , "SdbCS.enableCapped(): no collection space handle" ) ;
+
+   rc = sdbCSEnableCapped( *cs ) ;
+   REPORT_RC( SDB_OK == rc, "SdbCS.enableCapped()", rc ) ;
+
+   JS_SET_RVAL( cx, vp, JSVAL_VOID ) ;
+
+done :
+   PD_TRACE_EXIT( SDB_CS_ENABLE_CAPPED ) ;
+   return ret ;
+
+error :
+   TRY_REPORT( cx , "SdbCS.enableCapped(): false" ) ;
+   goto done ;
+}
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_CS_DISABLE_CAPPED, "cs_disable_capped" )
+static JSBool cs_disable_capped ( JSContext * cx, uintN argc, jsval * vp )
+{
+   PD_TRACE_ENTRY( SDB_CS_DISABLE_CAPPED ) ;
+
+   engine::sdbClearErrorInfo() ;
+
+   INT32 rc = SDB_OK ;
+   JSBool ret = JS_TRUE ;
+   sdbCSHandle * cs = NULL ;
+
+   cs = (sdbCSHandle *) JS_GetPrivate( cx, JS_THIS_OBJECT( cx, vp ) ) ;
+   REPORT( cs , "SdbCS.disableCapped(): no collection space handle" ) ;
+
+   REPORT( 0 == argc , "SdbCS.disableCapped(): wrong arguments" ) ;
+
+   rc = sdbCSDisableCapped( *cs ) ;
+   REPORT_RC( SDB_OK == rc, "SdbCS.disableCapped()", rc ) ;
+
+   JS_SET_RVAL( cx, vp, JSVAL_VOID ) ;
+
+done :
+   PD_TRACE_EXIT( SDB_CS_DISABLE_CAPPED ) ;
+   return ret ;
+
+error :
+   TRY_REPORT( cx , "SdbCS.disableCapped(): false" ) ;
+   goto done ;
+}
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_CS_SET_ATTR, "cs_set_attributes" )
+static JSBool cs_set_attributes ( JSContext * cx, uintN argc, jsval * vp )
+{
+   PD_TRACE_ENTRY( SDB_CS_SET_ATTR ) ;
+
+   engine::sdbClearErrorInfo() ;
+
+   INT32 rc = SDB_OK ;
+   JSBool ret = JS_TRUE ;
+   sdbCSHandle * cs = NULL ;
+
+   JSObject * argJSObj = NULL ;
+   jsval * argv = NULL ;
+   bson argObj ;
+   bson_init( &argObj ) ;
+
+   cs = (sdbCSHandle *) JS_GetPrivate( cx, JS_THIS_OBJECT( cx, vp ) ) ;
+   REPORT( cs , "SdbCS.setAttributes(): no collection space handle" ) ;
+
+   REPORT( argc >= 1, "SdbCS.setAttributes(): need one argument" ) ;
+
+   argv = JS_ARGV( cx, vp ) ;
+   REPORT( JSVAL_IS_OBJECT( argv[0] ), "SdbCS.setAttributes(): need an object argument") ;
+
+   argJSObj = JSVAL_TO_OBJECT( argv[0] ) ;
+   VERIFY( argJSObj ) ;
+
+   {
+      sptConvertor c( cx ) ;
+      rc = c.toBson( argJSObj, &argObj ) ;
+      VERIFY( SDB_OK == rc ) ;
+   }
+
+   rc = sdbCSSetAttributes( *cs, &argObj ) ;
+   REPORT_RC ( SDB_OK == rc, "SdbCS.setAttributes()", rc ) ;
+
+   JS_SET_RVAL ( cx , vp , JSVAL_VOID ) ;
+
+done :
+   bson_destroy( &argObj ) ;
+   PD_TRACE_EXIT( SDB_CS_SET_ATTR ) ;
+   return ret ;
+
+error :
+   TRY_REPORT ( cx , "SdbCS.setAttributes(): false" ) ;
+   goto done ;
+}
+
 static JSFunctionSpec cs_functions[] = {
    JS_FS ( "getCL" , cs_get_cl , 1 , 0 ) ,
    JS_FS ( "dropCL" , cs_drop_cl , 1 , 0 ) ,
    JS_FS ( "createCL" , cs_create_cl , 1 , 0 ) ,
    JS_FS ( "renameCL" , cs_rename_cl , 1 , 0 ) ,
+   JS_FS ( "alter", cs_alter, 1, 0 ),
+   JS_FS ( "setDomain", cs_set_domain, 1, 0 ),
+   JS_FS ( "removeDomain", cs_remove_domain, 0, 0 ),
+   JS_FS ( "enableCapped", cs_enable_capped, 0, 0 ),
+   JS_FS ( "disableCapped", cs_disable_capped, 0, 0 ),
+   JS_FS ( "setAttributes", cs_set_attributes, 1, 0 ),
    JS_FS_END
 } ;
 
@@ -4320,6 +4755,206 @@ done:
    return ret ;
 error:
    TRY_REPORT ( cx , "Domain.alter(): false" ) ;
+   goto done ;
+}
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_DOMAIN_ADD_GROUPS, "domain_add_groups" )
+static JSBool domain_add_groups ( JSContext * cx, uintN argc, jsval * vp )
+{
+   PD_TRACE_ENTRY( SDB_DOMAIN_ADD_GROUPS ) ;
+
+   engine::sdbClearErrorInfo() ;
+   INT32 rc = SDB_OK ;
+   JSBool ret = JS_TRUE ;
+   sdbDomainHandle *domain = NULL ;
+
+   JSObject *argJSObj = NULL ;
+   jsval *argv = NULL ;
+   bson argObj ;
+   bson_init( &argObj ) ;
+
+   domain = ( sdbDomainHandle * )
+            JS_GetPrivate ( cx, JS_THIS_OBJECT ( cx, vp ) ) ;
+   REPORT ( domain, "Domain.addGroups(): no domain handle" ) ;
+
+   REPORT ( argc >= 1,
+            "Domain.addGroups(): need one argument" ) ;
+
+   argv = JS_ARGV( cx, vp ) ;
+   REPORT( JSVAL_IS_OBJECT( argv[0] ),
+           "Domain.addGroups(): need an object argument") ;
+
+   argJSObj = JSVAL_TO_OBJECT( argv[0] ) ;
+   VERIFY( argJSObj ) ;
+
+   {
+      sptConvertor c( cx ) ;
+      rc = c.toBson( argJSObj, &argObj ) ;
+      VERIFY( SDB_OK == rc ) ;
+   }
+
+   rc = sdbDomainAddGroups( *domain, &argObj ) ;
+   REPORT_RC ( SDB_OK == rc, "Domain.addGroups()", rc ) ;
+
+   JS_SET_RVAL ( cx , vp , JSVAL_VOID ) ;
+
+done :
+   bson_destroy( &argObj ) ;
+   PD_TRACE_EXIT( SDB_DOMAIN_ADD_GROUPS ) ;
+   return ret ;
+
+error :
+   TRY_REPORT ( cx , "Domain.addGroups(): false" ) ;
+   goto done ;
+}
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_DOMAIN_RM_GROUPS, "domain_remove_groups" )
+static JSBool domain_remove_groups ( JSContext * cx, uintN argc, jsval * vp )
+{
+   PD_TRACE_ENTRY( SDB_DOMAIN_RM_GROUPS ) ;
+
+   engine::sdbClearErrorInfo() ;
+   INT32 rc = SDB_OK ;
+   JSBool ret = JS_TRUE ;
+   sdbDomainHandle *domain = NULL ;
+
+   JSObject *argJSObj = NULL ;
+   jsval *argv = NULL ;
+   bson argObj ;
+   bson_init( &argObj ) ;
+
+   domain = ( sdbDomainHandle * )
+            JS_GetPrivate ( cx, JS_THIS_OBJECT ( cx, vp ) ) ;
+   REPORT ( domain, "Domain.removeGroups(): no domain handle" ) ;
+
+   REPORT ( argc >= 1,
+            "Domain.removeGroups(): need one argument" ) ;
+
+   argv = JS_ARGV( cx, vp ) ;
+   REPORT( JSVAL_IS_OBJECT( argv[0] ),
+           "Domain.removeGroups(): need an object argument") ;
+
+   argJSObj = JSVAL_TO_OBJECT( argv[0] ) ;
+   VERIFY( argJSObj ) ;
+
+   {
+      sptConvertor c( cx ) ;
+      rc = c.toBson( argJSObj, &argObj ) ;
+      VERIFY( SDB_OK == rc ) ;
+   }
+
+   rc = sdbDomainRemoveGroups( *domain, &argObj ) ;
+   REPORT_RC ( SDB_OK == rc, "Domain.removeGroups()", rc ) ;
+
+   JS_SET_RVAL ( cx , vp , JSVAL_VOID ) ;
+
+done :
+   bson_destroy( &argObj ) ;
+   PD_TRACE_EXIT( SDB_DOMAIN_RM_GROUPS ) ;
+   return ret ;
+
+error :
+   TRY_REPORT ( cx , "Domain.removeGroups(): false" ) ;
+   goto done ;
+}
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_DOMAIN_SET_GROUPS, "domain_set_groups" )
+static JSBool domain_set_groups ( JSContext * cx, uintN argc, jsval * vp )
+{
+   PD_TRACE_ENTRY( SDB_DOMAIN_SET_GROUPS ) ;
+
+   engine::sdbClearErrorInfo() ;
+   INT32 rc = SDB_OK ;
+   JSBool ret = JS_TRUE ;
+   sdbDomainHandle *domain = NULL ;
+
+   JSObject *argJSObj = NULL ;
+   jsval *argv = NULL ;
+   bson argObj ;
+   bson_init( &argObj ) ;
+
+   domain = ( sdbDomainHandle * )
+            JS_GetPrivate ( cx, JS_THIS_OBJECT ( cx, vp ) ) ;
+   REPORT ( domain, "Domain.setGroups(): no domain handle" ) ;
+
+   REPORT ( argc >= 1,
+            "Domain.setGroups(): need one argument" ) ;
+
+   argv = JS_ARGV( cx, vp ) ;
+   REPORT( JSVAL_IS_OBJECT( argv[0] ),
+           "Domain.setGroups(): need an object argument") ;
+
+   argJSObj = JSVAL_TO_OBJECT( argv[0] ) ;
+   VERIFY( argJSObj ) ;
+
+   {
+      sptConvertor c( cx ) ;
+      rc = c.toBson( argJSObj, &argObj ) ;
+      VERIFY( SDB_OK == rc ) ;
+   }
+
+   rc = sdbDomainSetGroups( *domain, &argObj ) ;
+   REPORT_RC ( SDB_OK == rc, "Domain.setGroups()", rc ) ;
+
+   JS_SET_RVAL ( cx , vp , JSVAL_VOID ) ;
+
+done :
+   bson_destroy( &argObj ) ;
+   PD_TRACE_EXIT( SDB_DOMAIN_SET_GROUPS ) ;
+   return ret ;
+
+error :
+   TRY_REPORT ( cx , "Domain.setGroups(): false" ) ;
+   goto done ;
+}
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_DOMAIN_SET_ATTR, "domain_set_attributes" )
+static JSBool domain_set_attributes ( JSContext * cx, uintN argc, jsval * vp )
+{
+   PD_TRACE_ENTRY( SDB_DOMAIN_SET_ATTR ) ;
+
+   engine::sdbClearErrorInfo() ;
+   INT32 rc = SDB_OK ;
+   JSBool ret = JS_TRUE ;
+   sdbDomainHandle *domain = NULL ;
+
+   JSObject *argJSObj = NULL ;
+   jsval *argv = NULL ;
+   bson argObj ;
+   bson_init( &argObj ) ;
+
+   domain = ( sdbDomainHandle * )
+            JS_GetPrivate ( cx, JS_THIS_OBJECT ( cx, vp ) ) ;
+   REPORT ( domain, "Domain.setAttributes(): no domain handle" ) ;
+
+   REPORT ( argc >= 1,
+            "Domain.setAttributes(): need one argument" ) ;
+
+   argv = JS_ARGV( cx, vp ) ;
+   REPORT( JSVAL_IS_OBJECT( argv[0] ),
+           "Domain.setAttributes(): need an object argument") ;
+
+   argJSObj = JSVAL_TO_OBJECT( argv[0] ) ;
+   VERIFY( argJSObj ) ;
+
+   {
+      sptConvertor c( cx ) ;
+      rc = c.toBson( argJSObj, &argObj ) ;
+      VERIFY( SDB_OK == rc ) ;
+   }
+
+   rc = sdbDomainSetAttributes( *domain, &argObj ) ;
+   REPORT_RC ( SDB_OK == rc, "Domain.setAttributes()", rc ) ;
+
+   JS_SET_RVAL ( cx , vp , JSVAL_VOID ) ;
+
+done :
+   bson_destroy( &argObj ) ;
+   PD_TRACE_EXIT( SDB_DOMAIN_SET_ATTR ) ;
+   return ret ;
+
+error :
+   TRY_REPORT ( cx , "Domain.setAttributes(): false" ) ;
    goto done ;
 }
 
@@ -4439,6 +5074,10 @@ error:
 
 static JSFunctionSpec domain_functions[] = {
    JS_FS( "alter", domain_alter, 0, 0 ),
+   JS_FS( "addGroups", domain_add_groups, 0, 0 ),
+   JS_FS( "removeGroups", domain_remove_groups, 0, 0 ),
+   JS_FS( "setGroups", domain_set_groups, 0, 0 ),
+   JS_FS( "setAttributes", domain_set_attributes, 0, 0 ),
    JS_FS( "listCollectionSpaces", domain_list_cs, 0, 0 ),
    JS_FS( "listCollections", domain_list_cl, 0, 0 ),
    JS_FS( "listGroups", domain_list_group, 0, 0 ),

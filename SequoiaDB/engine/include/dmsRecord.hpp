@@ -42,6 +42,7 @@
 #include "../bson/bson.h"
 #include "oss.hpp"
 #include "ossUtil.hpp"
+#include "utilCompressor.hpp"
 
 namespace engine
 {
@@ -66,12 +67,13 @@ namespace engine
             reset() ;
          }
          _dmsRecordData( const CHAR *data, UINT32 len,
-                         BOOLEAN isCompress = FALSE,
+                         UINT8 compressType = UTIL_COMPRESSOR_INVALID,
                          BOOLEAN isOrgData = TRUE )
          {
             _data = data ;
             _len = len ;
-            _isCompress = isCompress ;
+
+            _compressType = compressType ;
 
             if ( isOrgData )
             {
@@ -96,10 +98,11 @@ namespace engine
          const CHAR* orgData() const { return _orgData ; }
          UINT32 orgLen() const { return _orgLen ; }
 
-         BOOLEAN isCompressed() const { return _isCompress ; }
+         BOOLEAN isCompressed() const { return UTIL_COMPRESSOR_INVALID != _compressType ; }
+         UINT8 getCompressType () const { return _compressType ; }
          FLOAT32 getCompressRatio() const
          {
-            if ( _isCompress && _len > 0 && _orgLen > 0 )
+            if ( isCompressed() && _len > 0 && _orgLen > 0 )
             {
                return ( (FLOAT32)_len ) / (FLOAT32)_orgLen ;
             }
@@ -107,12 +110,13 @@ namespace engine
          }
 
          void setData( const CHAR *data, UINT32 len,
-                       BOOLEAN compressed = FALSE,
+                       UINT8 compressType = UTIL_COMPRESSOR_INVALID,
                        BOOLEAN isOrgData = TRUE )
          {
             _data = data ;
             _len = len ;
-            _isCompress = compressed ;
+
+            _compressType = compressType ;
 
             if ( isOrgData )
             {
@@ -125,16 +129,12 @@ namespace engine
             _orgData = orgData ;
             _orgLen = orgLen ;
          }
-         void setCompress( BOOLEAN compressed )
-         {
-            _isCompress = compressed ;
-         }
 
          void reset()
          {
             _data = NULL ;
             _len = 0 ;
-            _isCompress = FALSE ;
+            _compressType = UTIL_COMPRESSOR_INVALID ;
             _orgData = NULL ;
             _orgLen = 0 ;
          }
@@ -148,7 +148,7 @@ namespace engine
          const CHAR     *_data ;
          UINT32         _len ;
 
-         BOOLEAN        _isCompress ;
+         UINT8          _compressType ;
 
          const CHAR     *_orgData ;
          UINT32         _orgLen ;
@@ -170,6 +170,7 @@ namespace engine
    #define DMS_RECORD_FLAG_DELETING          0x80
 
    #define DMS_RECORD_METADATA_SZ   sizeof(_dmsRecord)
+
    /*
       _dmsRecord defined
    */
@@ -252,6 +253,7 @@ namespace engine
          }
          return dmsRecordID() ;
       }
+
       UINT32 getSize() const
       {
 #if defined (SDB_BIG_ENDIAN)
@@ -260,9 +262,19 @@ namespace engine
          return (((*((const UINT32*)this))>>8)+1) ;
 #endif // SDB_BIG_ENDIAN
       }
+
+      UINT8 getCompressType () const
+      {
+#if defined (SDB_BIG_ENDIAN)
+         return ( (const UINT8 *)this + DMS_RECORD_METADATA_SZ )[ 0 ] ;
+#else
+         return ( (const UINT8 *)this + DMS_RECORD_METADATA_SZ )[ 3 ] ;
+#endif // SDB_BIG_ENDIAN
+      }
+
       UINT32 getDataLength() const
       {
-         return *(const UINT32*)((const CHAR*)this+DMS_RECORD_METADATA_SZ) ;
+         return ( *(const UINT32 *)( (const CHAR*)this + DMS_RECORD_METADATA_SZ ) ) & 0x00FFFFFF ;
       }
       /*
          Get disk data only, if compressed, not uncompressed
@@ -354,6 +366,17 @@ namespace engine
       (*((UINT32*)this) = (UINT32)getFlag() | ((UINT32)((size)-1)<<8)) ;
 #endif
       }
+
+      void setCompressType ( UINT8 type )
+      {
+         *(UINT32 *)( (CHAR *)this + DMS_RECORD_METADATA_SZ ) = type << 24 ;
+//#if defined (SDB_BIG_ENDIAN)
+//         ( (UINT8 *)this + DMS_RECORD_METADATA_SZ )[ 0 ] = type ;
+//#else
+//         ( (UINT8 *)this + DMS_RECORD_METADATA_SZ )[ 3 ] = type ;
+//#endif // SDB_BIG_ENDIAN
+      }
+
       /*
          Copy the data to disk directly
       */
@@ -366,7 +389,9 @@ namespace engine
          if ( data.isCompressed() )
          {
             setCompressed() ;
-            *(UINT32*)((CHAR*)this+DMS_RECORD_METADATA_SZ) = data.len() ;
+            UINT32 * temp = (UINT32 *)( (CHAR *)this + DMS_RECORD_METADATA_SZ ) ;
+            (*temp) = data.len() ;
+            (*temp) |= ( ( data.getCompressType() << 24 ) & 0xFF000000 ) ;
             ossMemcpy( (CHAR*)this+DMS_RECORD_METADATA_SZ+sizeof(UINT32),
                        data.data(), data.len() ) ;
          }
@@ -390,7 +415,8 @@ namespace engine
          else                                                           \
          {                                                              \
             INT32 uncompLen = 0 ;                                       \
-            rc = dmsUncompress( cb, compressorEntry,                    \
+            UINT8 compressType = pRecord->getCompressType() ;           \
+            rc = dmsUncompress( cb, compressorEntry, compressType,      \
                                 pRecord->getData(),                     \
                                 pRecord->getDataLength(),               \
                                 (const CHAR**)&(retPtr), &uncompLen ) ; \
@@ -492,6 +518,11 @@ namespace engine
       BOOLEAN isCompressed() const
       {
          return ((const dmsRecord*)this)->isCompressed() ;
+      }
+
+      UINT8 getCompressType () const
+      {
+         return ((const dmsRecord *)this)->getCompressType() ;
       }
 
       BYTE getState() const

@@ -1500,7 +1500,8 @@ namespace engine
 
          /// rename collection[space] should to remove catalog
          /// drop collection/space remove catalog in context already
-         if ( CMD_RENAME_COLLECTION == pCommand->type() )
+         if ( CMD_RENAME_COLLECTION == pCommand->type() ||
+              CMD_ALTER_COLLECTION == pCommand->type() )
          {
             _pCatAgent->lock_w () ;
             _pCatAgent->clear ( pCommand->collectionFullName() ) ;
@@ -3845,58 +3846,57 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       vector< string > subCLs ;
-      const _rtnAlterCollection *alterCommand =
-                 ( const _rtnAlterCollection * )command ;
-      const _rtnAlterJob &job = alterCommand->getRunner().getJob() ;
-      /// do nothing when it is old version
-      const BSONObj &tasks = job.isEmpty() ? BSONObj() : job.getTasks() ;
-      BSONObjIterator i( tasks ) ;
-      while ( i.more() )
+      const _rtnAlterCollection *alterCommand = ( const _rtnAlterCollection * )command ;
+
+      const rtnAlterJob * alterJob = alterCommand->getAlterJob() ;
+      SDB_ASSERT( NULL != alterJob, "alterJob is invalid" ) ;
+
+      const RTN_ALTER_TASK_LIST & alterTasks = alterJob->getAlterTasks() ;
+      const CHAR * collectionName = alterJob->getObjectName() ;
+
+      for ( RTN_ALTER_TASK_LIST::const_iterator iter = alterTasks.begin() ;
+            iter != alterTasks.end() ;
+            ++ iter )
       {
-         RTN_ALTER_FUNC_TYPE taskType = RTN_ALTER_FUNC_INVALID ;
-         BSONObj task ;
-         BSONElement e = i.next() ;
-         if ( Object != e.type() )
+         SINT64 contextID = -1 ;
+         const rtnAlterTask * task = ( *iter ) ;
+         RTN_ALTER_ACTION_TYPE actionType = task->getActionType() ;
+
+         if ( !task->testFlags( RTN_ALTER_TASK_FLAG_MAINCLALLOW ) )
          {
-            PD_LOG( PDERROR, "invalid task element" ) ;
-            rc = SDB_SYS ;
-            goto error ;
+            PD_LOG( PDINFO, "Failed to execute alter task [%s]: not supported "
+                    "in main-collection", task->getActionName() ) ;
          }
 
-         task = e.embeddedObject() ;
-         taskType = ( RTN_ALTER_FUNC_TYPE )
-                    ( task.getIntField( FIELD_NAME_TASKTYPE ) ) ;
-         if ( RTN_ALTER_CL_CRT_ID_IDX == taskType )
+         if ( RTN_ALTER_CL_CREATE_ID_INDEX == actionType )
          {
-            SINT64 contextID = -1 ;
-            BSONObj def = BSON( FIELD_NAME_INDEX
-                                << BSON( IXM_FIELD_NAME_KEY <<
-                                         BSON( DMS_ID_KEY_NAME << 1 ) <<
-                                         IXM_FIELD_NAME_NAME << IXM_ID_KEY_NAME
-                                         << IXM_FIELD_NAME_UNIQUE <<
-                                         true << IXM_FIELD_NAME_V << 0 <<
-                                         IXM_FIELD_NAME_ENFORCED << true ) );
-            rc = _createIndexOnMainCL( "", job.getName(),
-                                       def.objdata(), NULL,
+            static BSONObj def =  BSON( FIELD_NAME_INDEX << ixmGetIDIndexDefine() ) ;
+            rc = _createIndexOnMainCL( "", collectionName,
+                                       def.objdata(),
+                                       task->getArgument().objdata(),
                                        1, contextID, TRUE ) ;
          }
-         else if ( RTN_ALTER_CL_DROP_ID_IDX == taskType )
+         else if ( RTN_ALTER_CL_DROP_ID_INDEX == actionType )
          {
-            SINT64 contextID = -1 ;
             BSONObj def = BSON( FIELD_NAME_INDEX <<
                                 BSON( IXM_FIELD_NAME_NAME
                                       << IXM_ID_KEY_NAME ) ) ;
-            rc = _dropIndexOnMainCL( "", job.getName(),
+            rc = _dropIndexOnMainCL( "", collectionName,
                                      def.objdata(),
                                      1, contextID, TRUE ) ;
          }
+         else if ( RTN_ALTER_CL_SET_ATTRIBUTES == actionType )
+         {
+            // do nothing
+         }
          else
          {
-            PD_LOG( PDERROR, "unknown task type:%d", taskType ) ;
+            PD_LOG( PDERROR, "unknown task type:%d", actionType ) ;
             rc = SDB_SYS ;
             goto error ;
          }
       }
+
    done:
       return rc ;
    error:

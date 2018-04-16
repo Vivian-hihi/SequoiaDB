@@ -405,7 +405,7 @@ namespace engine
                ossMemcpy( writePos, copyPos, remainLen ) ;
             }
          }
-         recordData.setData( mergedData, totalSize, FALSE, TRUE ) ;
+         recordData.setData( mergedData, totalSize, UTIL_COMPRESSOR_INVALID, TRUE ) ;
          memReallocate = TRUE ;
       }
       catch ( std::exception &e )
@@ -695,7 +695,7 @@ namespace engine
       }
 
       recordData.setData( pRecord->getData(), pRecord->getDataLength(),
-                          FALSE, TRUE ) ;
+                          UTIL_COMPRESSOR_INVALID, TRUE ) ;
 
       if ( pRecord->isCompressed() )
       {
@@ -2303,5 +2303,63 @@ namespace engine
    error:
       goto done ;
    }
-}
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACAPPED_SETEXTOPTIONS, "_dmsStorageDataCapped::setExtOptions" )
+   INT32 _dmsStorageDataCapped::setExtOptions ( dmsMBContext * context,
+                                                const BSONObj & extOptions )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__DMSSTORAGEDATACAPPED_SETEXTOPTIONS ) ;
+
+      SDB_ASSERT( NULL != context, "context is invalid" ) ;
+
+      const CHAR * collection = NULL ;
+      UINT16 mbID = DMS_INVALID_MBID ;
+      dmsExtentID optExtentID = DMS_INVALID_EXTENT ;
+      dmsExtRW optExtRW ;
+      dmsCappedCLOptions options ;
+      dmsOptExtent * optExtent = NULL ;
+
+      PD_CHECK( context->isMBLock( EXCLUSIVE ), SDB_SYS, error, PDERROR,
+                "Caller should hold mb exclusive lock [%s]",
+                context->toString().c_str() ) ;
+
+      collection = context->mb()->_collectionName ;
+      mbID = context->mbID() ;
+      optExtentID = context->mb()->_mbOptExtentID ;
+
+      PD_CHECK( DMS_INVALID_EXTENT != optExtentID, SDB_SYS, error, PDERROR,
+                "Extend option extent id is invalid for "
+                "collection [%s]", collection ) ;
+
+      rc = _parseExtendOptions( &extOptions, options ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to parse options, rc: %d", rc ) ;
+
+      // Init the option page.
+      optExtRW = extent2RW( context->mb()->_mbOptExtentID, context->mbID() ) ;
+      optExtRW.setNothrow( TRUE ) ;
+      optExtent = optExtRW.writePtr<dmsOptExtent>( 0, pageSize() ) ;
+      PD_CHECK( NULL != optExtent && optExtent->_mbID == context->mbID(),
+                SDB_SYS, error, PDERROR,
+                "Invalid option extent[%d]", optExtent ) ;
+
+      optExtent->setOption( (const CHAR *)&options,
+                            sizeof( dmsCappedCLOptions )) ;
+
+      // Flush immediately to avoid corruption of this page in crash.
+      flushPages( context->mb()->_mbOptExtentID, pageSize(), isSyncDeep() ) ;
+
+      rc = optExtent->getOption( (CHAR **)&_options[ mbID ], NULL ) ;
+      PD_RC_CHECK( rc, PDERROR, "Get collection extend option from extent "
+                   "failed, rc: %d", rc ) ;
+      SDB_ASSERT( NULL != _options[ mbID ], "Option pointer should not be NULL" ) ;
+
+   done :
+      PD_TRACE_EXITRC( SDB__DMSSTORAGEDATACAPPED_SETEXTOPTIONS, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+}

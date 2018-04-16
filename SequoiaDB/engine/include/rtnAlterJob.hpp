@@ -24,6 +24,7 @@
    defect Date        Who Description
    ====== =========== === ==============================================
           08/05/2015  YW  Initial Draft
+          01/03/2018  HGM Improvement
 
    Last Changed =
 
@@ -32,82 +33,166 @@
 #ifndef RTN_ALTERJOB_HPP_
 #define RTN_ALTERJOB_HPP_
 
-#include "rtnAlterDef.hpp"
-#include "rtnAlterFuncList.hpp"
+#include "core.hpp"
+#include "oss.hpp"
+#include "ossUtil.hpp"
+#include "utilList.hpp"
+#include "utilMap.hpp"
+#include "rtnAlterTask.hpp"
+#include "rtnAlter.hpp"
+#include "../bson/bson.hpp"
 
 namespace engine
 {
+
+   typedef _utilStringMap< rtnAlterTaskSchema, RTN_ALTER_MAX_ACTION > RTN_ALTER_TASK_MAP ;
+   typedef _utilList< rtnAlterTask * > RTN_ALTER_TASK_LIST ;
+
+   /*
+      _rtnAlterTaskMap define
+    */
+   class _rtnAlterTaskMap : public SDBObject
+   {
+      public :
+         _rtnAlterTaskMap () ;
+         virtual ~_rtnAlterTaskMap () ;
+
+         const rtnAlterTaskSchema & getSetAttrTask ( RTN_ALTER_OBJECT_TYPE objectType ) const ;
+
+         const rtnAlterTaskSchema & getAlterTask ( RTN_ALTER_OBJECT_TYPE objectType,
+                                                   const CHAR * name ) const ;
+
+      protected :
+         void _initialize () ;
+         void _registerTask ( const CHAR * name,
+                              RTN_ALTER_OBJECT_TYPE objectType,
+                              RTN_ALTER_ACTION_TYPE actionType,
+                              UINT32 flags = RTN_ALTER_TASK_FLAG_EMPTY ) ;
+         RTN_ALTER_TASK_MAP * _getTaskMap ( RTN_ALTER_OBJECT_TYPE objectType ) ;
+         const RTN_ALTER_TASK_MAP * _getTaskMap ( RTN_ALTER_OBJECT_TYPE objectType ) const ;
+
+      protected :
+         RTN_ALTER_TASK_MAP   _collectionTaskMap ;
+         RTN_ALTER_TASK_MAP   _collectionSpaceTaskMap ;
+         RTN_ALTER_TASK_MAP   _domainTaskMap ;
+   } ;
+
+   typedef class _rtnAlterTaskMap rtnAlterTaskMap ;
+
+   const rtnAlterTaskMap & rtnGetAlterTaskMap () ;
+   const rtnAlterTaskSchema & rtnGetSetAttrTask ( RTN_ALTER_OBJECT_TYPE objectType ) ;
+   const rtnAlterTaskSchema & rtnGetAlterTask ( RTN_ALTER_OBJECT_TYPE objectType,
+                                                const CHAR * name ) ;
+
+   /*
+      _rtnAlterJob define
+    */
    class _rtnAlterJob : public SDBObject
    {
-   public:
-      _rtnAlterJob() ;
-      ~_rtnAlterJob() ;
+      public :
+         _rtnAlterJob () ;
+         virtual ~_rtnAlterJob () ;
 
-   public:
-      OSS_INLINE const _rtnAlterOptions &getOptions() const
-      {
-         return _options ;
-      }
+      public :
+         INT32 initialize ( const CHAR * objectName,
+                            RTN_ALTER_OBJECT_TYPE objectType,
+                            const bson::BSONObj & jobObject ) ;
 
-      OSS_INLINE RTN_ALTER_TYPE getType() const
-      {
-         return _type ;
-      }
+         OSS_INLINE RTN_ALTER_OBJECT_TYPE getObjectType () const
+         {
+            return _objectType ;
+         }
 
-      OSS_INLINE const CHAR *getName() const
-      {
-         return _name ;
-      }
+         OSS_INLINE const _rtnAlterOptions * getOptions () const
+         {
+            return &_options ;
+         }
 
-      OSS_INLINE INT32 getVersion() const
-      {
-         return _v ;
-      }
+         OSS_INLINE const RTN_ALTER_TASK_LIST & getAlterTasks () const
+         {
+            return _alterTasks ;
+         }
 
-      OSS_INLINE const bson::BSONObj &getOptionObj() const
-      {
-         return _optionsObj ;
-      }
+         OSS_INLINE const CHAR *getObjectName () const
+         {
+            return _objectName ;
+         }
 
-      OSS_INLINE const bson::BSONObj &getJobObj() const
-      {
-         return _obj ;
-      }
+         OSS_INLINE INT32 getVersion() const
+         {
+            return _version ;
+         }
 
-      OSS_INLINE const bson::BSONObj &getTasks() const
-      {
-         return _tasks ;
-      }
+         OSS_INLINE const bson::BSONObj & getJobObject () const
+         {
+            return _jobObject ;
+         }
 
-      OSS_INLINE BOOLEAN isEmpty() const
-      {
-         return _obj.isEmpty() ;
-      }
+         OSS_INLINE BOOLEAN isEmpty() const
+         {
+            return _alterTasks.empty() ;
+         }
 
-   public:
-      INT32 init( const bson::BSONObj &obj ) ;
+      protected :
+         static RTN_ALTER_OBJECT_TYPE _getObjectType ( const CHAR * name ) ;
 
-      void clear() ;
+         void _extractOptions ( const bson::BSONObj & obj ) ;
 
-   private:
-      RTN_ALTER_TYPE _getObjType( const CHAR *name ) const ;
+         INT32 _extractTask ( const bson::BSONObj & taskObject ) ;
 
-      void _extractOptions( const bson::BSONObj &obj ) ;
+         INT32 _createTask ( const rtnAlterTaskSchema & taskSchema,
+                             const bson::BSONObj & arguments ) ;
 
-      INT32 _extractTasks( const bson::BSONElement &tasks,
-                           bson::BSONArrayBuilder &builder ) ;
+         INT32 _extractSetAttrTask ( const bson::BSONObj & argument ) ;
 
-   private:
-      _rtnAlterOptions _options ;
-      RTN_ALTER_TYPE _type ;
-      const CHAR *_name ;
-      INT32 _v ;
-      bson::BSONObj _obj ;
-      bson::BSONObj _tasks ;
-      bson::BSONObj _optionsObj ;
-      _rtnAlterFuncList _fl ;
+         INT32 _extractTasks ( const bson::BSONElement & taskObjects ) ;
+
+         void _clearTasks () ;
+
+         void _clearJob () ;
+
+      protected :
+         RTN_ALTER_OBJECT_TYPE   _objectType ;
+         bson::BSONObj           _jobObject ;
+         rtnAlterOptions         _options ;
+         RTN_ALTER_TASK_LIST     _alterTasks ;
+         const CHAR *            _objectName ;
+         INT32                   _version ;
    } ;
+
+   typedef class _rtnAlterJob rtnAlterJob ;
+
+   /*
+      _rtnAlterJobHolder define
+    */
+   class _rtnAlterJobHolder ;
+   typedef class _rtnAlterJobHolder rtnAlterJobHolder ;
+
+   class _rtnAlterJobHolder
+   {
+      public :
+         _rtnAlterJobHolder () ;
+         virtual ~_rtnAlterJobHolder () ;
+
+         INT32 createAlterJob () ;
+         void deleteAlterJob () ;
+         void setAlterJob ( rtnAlterJobHolder & holder, BOOLEAN getOwned ) ;
+
+         OSS_INLINE rtnAlterJob * getAlterJob ()
+         {
+            return _alterJob ;
+         }
+
+         OSS_INLINE const rtnAlterJob * getAlterJob () const
+         {
+            return _alterJob ;
+         }
+
+      protected :
+         BOOLEAN        _ownedJob ;
+         rtnAlterJob *  _alterJob ;
+   } ;
+
 }
 
-#endif
-
+#endif // RTN_ALTERJOB_HPP_

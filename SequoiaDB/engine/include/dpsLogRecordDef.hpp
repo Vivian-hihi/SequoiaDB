@@ -174,8 +174,13 @@ namespace engine
       DPS_LOG_ANALYZE_IXNAME,
       DPS_LOG_ANALYZE_MODE
    } ;
+
+   enum DPS_LOG_ALTERCS
+   {
+      DPS_LOG_ALTER_OBJECT_TYPE = 1,
+      DPS_LOG_ALTER_OBJECT
+   } ;
+
 }
 
-
 #endif
-

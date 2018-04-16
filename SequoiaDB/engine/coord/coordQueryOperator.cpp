@@ -639,6 +639,7 @@ namespace engine
       BOOLEAN openEmptyContext = FALSE ;
       BOOLEAN updateCata = FALSE ;
       BOOLEAN allCataGroup = FALSE ;
+      BOOLEAN preRead = TRUE ;
 
       MsgRouteID errNodeID ;
       coordSendMsgIn inMsg( pMsg ) ;
@@ -658,6 +659,7 @@ namespace engine
             pRealCLName = pQueryConf->_realCLName.c_str() ;
          }
          allCataGroup = pQueryConf->_allCataGroups ;
+         preRead = pQueryConf->_preRead ;
       }
 
       SET_RC *pOldIgnoreRC = sendOpt._pIgnoreRC ;
@@ -746,7 +748,7 @@ namespace engine
          if ( openEmptyContext )
          {
             rtnQueryOptions defaultOptions ;
-            rc = _pContext->open( defaultOptions ) ;
+            rc = _pContext->open( defaultOptions, preRead ) ;
          }
          else
          {
@@ -797,9 +799,8 @@ namespace engine
             }
 
             // open context
-            rc = _pContext->open( options,
-                                  ( FLG_QUERY_MODIFY & pQueryMsg->flags )
-                                  ? FALSE : TRUE ) ;
+            preRead = ( FLG_QUERY_MODIFY & pQueryMsg->flags ) ? FALSE : TRUE ;
+            rc = _pContext->open( options, preRead ) ;
 
             // change some data
             if ( pQueryMsg->numToReturn > 0 && pQueryMsg->numToSkip > 0 )
@@ -926,7 +927,7 @@ namespace engine
       }
       else if ( SDB_OK == rcTmp && nokRC.empty() )
       {
-         if ( _pContext )
+         if ( _pContext && preRead )
          {
             _pContext->addSubDone( cb ) ;
          }

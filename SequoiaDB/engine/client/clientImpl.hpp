@@ -467,6 +467,16 @@ namespace sdbclient
 
       INT32 dropIdIndex() ;
 
+      INT32 enableSharding ( const bson::BSONObj & options ) ;
+
+      INT32 disableSharding () ;
+
+      INT32 enableCompression ( const bson::BSONObj & options = _sdbStaticObject ) ;
+
+      INT32 disableCompression () ;
+
+      INT32 setAttributes ( const bson::BSONObj & options ) ;
+
    private:
       INT32 _alterCollection1( const bson::BSONObj &options ) ;
       INT32 _alterCollection2( const bson::BSONObj &options ) ;
@@ -474,6 +484,9 @@ namespace sdbclient
                            BOOLEAN isUnique, BOOLEAN isEnforced,
                            INT32 sortBufferSize ) ;
 
+      INT32 _alterInternal ( const CHAR * taskName,
+                             const bson::BSONObj * argument,
+                             BOOLEAN allowNullArgs ) ;
    } ;
 
    typedef class _sdbCollectionImpl sdbCollectionImpl ;
@@ -736,6 +749,23 @@ namespace sdbclient
 
       INT32 renameCollection( const CHAR * oldName, const CHAR * newName,
                               const BSONObj & options = _sdbStaticObject ) ;
+
+      INT32 alterCollectionSpace ( const BSONObj & options ) ;
+
+      INT32 setDomain ( const BSONObj & options ) ;
+
+      INT32 removeDomain () ;
+
+      INT32 enableCapped () ;
+
+      INT32 disableCapped () ;
+
+      INT32 setAttributes ( const bson::BSONObj & options ) ;
+
+   protected :
+      INT32 _alterInternal ( const CHAR * taskName,
+                             const BSONObj * arguments,
+                             BOOLEAN allowNullArgs ) ;
    } ;
 
    typedef class _sdbCollectionSpaceImpl sdbCollectionSpaceImpl ;
@@ -801,6 +831,21 @@ namespace sdbclient
          RELEASE_INNER_HANDLE( cursor.pCursor ) ;
          return listReplicaGroupInDomain ( &cursor.pCursor ) ;
       }
+
+      INT32 addGroups ( const bson::BSONObj & options ) ;
+
+      INT32 setGroups ( const bson::BSONObj & options ) ;
+
+      INT32 removeGroups ( const bson::BSONObj & options ) ;
+
+      INT32 setAttributes ( const bson::BSONObj & options ) ;
+
+   protected :
+      INT32 _alterInternal ( const CHAR * taskName,
+                             const bson::BSONObj * arguments,
+                             BOOLEAN allowNullArgs ) ;
+      INT32 _alterDomainV1 ( const bson::BSONObj & options ) ;
+      INT32 _alterDomainV2 ( const bson::BSONObj & options ) ;
    } ;
    typedef class _sdbDomainImpl sdbDomainImpl ;
 
