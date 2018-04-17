@@ -2199,25 +2199,22 @@ namespace engine
                          "collection space [%s]: rc: %d", collectionSpace, rc ) ;
          }
 
-         if ( !occupiedGroups.empty() )
+         for ( _utilSet< UINT32 >::iterator iterGroup = removingGroups.begin() ;
+               iterGroup != removingGroups.end() ;
+               iterGroup ++ )
          {
-            for ( _utilSet< UINT32 >::iterator iterGroup = removingGroups.begin() ;
-                  iterGroup != removingGroups.end() ;
-                  iterGroup ++ )
-            {
-               UINT32 groupID = ( *iterGroup ) ;
-               const CHAR * groupName = catCB->groupID2Name( groupID ) ;
+            UINT32 groupID = ( *iterGroup ) ;
+            const CHAR * groupName = catCB->groupID2Name( groupID ) ;
 
-               // The group should not be occupied
-               PD_CHECK( occupiedGroups.end() == occupiedGroups.find( groupID ),
-                         SDB_DOMAIN_IS_OCCUPIED, error, PDERROR,
-                         "Failed to checkout removing groups from domain [%s]:"
-                         "clear data(of this domain) before remove it "
-                         "from domain. groups to be removed[%s]",
-                         _dataName.c_str(), groupName ) ;
+            // The group should not be occupied
+            PD_CHECK( occupiedGroups.end() == occupiedGroups.find( groupID ),
+                      SDB_DOMAIN_IS_OCCUPIED, error, PDERROR,
+                      "Failed to checkout removing groups from domain [%s]:"
+                      "clear data(of this domain) before remove it "
+                      "from domain. groups to be removed[%s]",
+                      _dataName.c_str(), groupName ) ;
 
-               _groupMap.erase( groupName ) ;
-            }
+            _groupMap.erase( groupName ) ;
          }
       }
 
