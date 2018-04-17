@@ -54,14 +54,15 @@ namespace seadapter
    {
       _seCltFactory = sdbGetSeCltFactory() ;
       _esClt = NULL ;
-      _context = NULL ;
+      _contextIDHWM = 0 ;
    }
 
    _seAdptAgentSession::~_seAdptAgentSession()
    {
-      if ( _context )
+      for ( CTX_MAP_ITR itr = _ctxMap.begin(); itr != _ctxMap.end(); )
       {
-         SDB_OSS_DEL _context ;
+         SDB_OSS_DEL itr->second ;
+         _ctxMap.erase( itr ) ;
       }
 
       // Be sure to release the client at last, because the context needs it to
@@ -113,6 +114,7 @@ namespace seadapter
       const CHAR *msgBody = NULL ;
       INT32 bodySize = 0 ;
       utilCommObjBuff objBuff ;
+      INT64 contextID = -1 ;
 
       rc = objBuff.init() ;
       if ( rc )
@@ -124,10 +126,10 @@ namespace seadapter
          switch ( msg->opCode )
          {
             case MSG_BS_QUERY_REQ:
-               rc = _onQueryReq( msg, objBuff ) ;
+               rc = _onQueryReq( msg, objBuff, contextID ) ;
                break ;
             case MSG_BS_GETMORE_REQ:
-               rc = _onGetmoreReq( msg, objBuff ) ;
+               rc = _onGetmoreReq( msg, objBuff, contextID ) ;
                break ;
             default:
                rc = SDB_UNKNOWN_MESSAGE ;
@@ -159,6 +161,7 @@ namespace seadapter
             msgBody = objBuff.data() ;
             bodySize = objBuff.dataSize() ;
             reply.numReturned = objBuff.getObjNum() ;
+            reply.contextID = contextID ;
          }
       }
       else
@@ -182,6 +185,7 @@ namespace seadapter
    // the items, then return the new message.
    INT32 _seAdptAgentSession::_onQueryReq( MsgHeader *msg,
                                            utilCommObjBuff &objBuff,
+                                           INT64 &contextID,
                                            pmdEDUCB *eduCB )
    {
       INT32 rc = SDB_OK ;
@@ -198,6 +202,7 @@ namespace seadapter
       string typeName ;
       seIdxMetaMgr *idxMetaCache = NULL ;
       BOOLEAN cacheLocked = FALSE ;
+      seAdptContextQuery *context = NULL ;
 
       rc = msgExtractQuery( (CHAR *)msg, &flag, &pCollectionName,
                             &numToSkip, &numToReturn, &pQuery, &pFieldSelector,
@@ -223,20 +228,13 @@ namespace seadapter
             }
          }
 
-         // Free the original context.
-         if ( _context )
-         {
-            SDB_OSS_DEL _context ;
-            _context = NULL ;
-         }
-
          rc = _selectIndex( pCollectionName, hint, newHint,
                             indexName, typeName ) ;
          PD_RC_CHECK( rc, PDERROR, "Select index failed[ %d ]", rc ) ;
 
-         _context = SDB_OSS_NEW seAdptContextQuery( indexName,
+         context = SDB_OSS_NEW seAdptContextQuery( indexName,
                                                     typeName, _esClt ) ;
-         if ( !_context )
+         if ( !context )
          {
             rc = SDB_OOM ;
             PD_LOG_MSG( PDERROR, "Allocate memory for query context failed, "
@@ -244,8 +242,8 @@ namespace seadapter
             goto error ;
          }
 
-         rc = _context->open( matcher, selector, orderBy,
-                              newHint, objBuff, eduCB ) ;
+         rc = context->open( matcher, selector, orderBy,
+                             newHint, objBuff, eduCB ) ;
          if ( rc )
          {
             if ( SDB_DMS_EOC != rc )
@@ -255,6 +253,8 @@ namespace seadapter
             }
             goto error ;
          }
+         contextID = _contextIDHWM++ ;
+         _ctxMap[ contextID ] = context ;
       }
       catch ( std::exception &e )
       {
@@ -272,10 +272,9 @@ namespace seadapter
       }
       return rc ;
    error:
-      if ( _context )
+      if ( context )
       {
-         SDB_OSS_DEL _context ;
-         _context = NULL ;
+         SDB_OSS_DEL context ;
       }
       goto done ;
    }
@@ -283,11 +282,24 @@ namespace seadapter
    // Generate another new message.
    INT32 _seAdptAgentSession::_onGetmoreReq( MsgHeader *msg,
                                              utilCommObjBuff &objBuff,
+                                             INT64 &contextID,
                                              pmdEDUCB *eduCB )
    {
       INT32 rc = SDB_OK ;
+      seAdptContextBase *context = NULL ;
 
-      rc = _context->getMore( 1, objBuff ) ;
+      contextID = ((MsgOpGetMore *)msg)->contextID ;
+
+      CTX_MAP_ITR itr = _ctxMap.find( contextID ) ;
+      if ( _ctxMap.end() == itr )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Context can not be found" ) ;
+         goto error ;
+      }
+
+      context = itr->second ;
+      rc = context->getMore( 1, objBuff ) ;
       if ( rc )
       {
          if ( SDB_DMS_EOC != rc )
@@ -300,6 +312,11 @@ namespace seadapter
    done:
       return rc ;
    error:
+      if ( itr != _ctxMap.end() )
+      {
+         SDB_OSS_DEL itr->second ;
+         _ctxMap.erase( itr ) ;
+      }
       goto done ;
    }
 

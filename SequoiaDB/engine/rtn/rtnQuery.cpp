@@ -397,10 +397,17 @@ namespace engine
             contextTS->setPrepareMoreData( TRUE ) ;
          }
 
-         rtnQueryOptions subOption( options ) ;
-         subOption.setSkip( 0 ) ;
-         subOption.setLimit( -1 ) ;
-         rc = contextTS->open( subOption, cb ) ;
+         if ( options.isOrderByEmpty() )
+         {
+            rc = contextTS->open( options, cb ) ;
+         }
+         else
+         {
+            rtnQueryOptions subOption( options ) ;
+            subOption.setSkip( 0 ) ;
+            subOption.setLimit( -1 ) ;
+            rc = contextTS->open( subOption, cb ) ;
+         }
          if ( rc )
          {
             if ( SDB_DMS_EOC != rc )

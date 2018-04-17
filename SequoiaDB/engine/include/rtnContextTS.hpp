@@ -73,8 +73,6 @@ namespace engine
          }
 
       private:
-         INT32 _prepareRemoteSession( _pmdEDUCB *eduCB ) ;
-         INT32 _getMoreFromRemote( pmdEDUCB *eduCB ) ;
          INT32 _prepareNextSubContext( pmdEDUCB *eduCB,
                                        BOOLEAN getMore = TRUE ) ;
          INT32 _prepareSubCtxData( pmdEDUCB *cb, INT32 maxNumToReturn ) ;
@@ -85,6 +83,7 @@ namespace engine
          rtnQueryOptions      _options ;
          UINT64               _remoteSessionID ;
          rtnSubCLContext      *_subContext ;
+         INT64                _remoteCtxID ;
    } ;
    typedef _rtnContextTS rtnContextTS ;
 }

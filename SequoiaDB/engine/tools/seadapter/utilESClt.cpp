@@ -633,7 +633,7 @@ namespace seadapter
 
       ES_CLT_ARG_CHK2( index, type ) ;
 
-      oss << index << "/" << type << "/_search?scroll=1m&size="
+      oss << index << "/" << type << "/_search?scroll=60m&size="
          << scrollSize;
       if ( filterPath )
       {
@@ -671,7 +671,7 @@ namespace seadapter
       INT32 replyLen = 0 ;
       BSONObj replyObj ;
       HTTP_STATUS_CODE status = 0 ;
-      string endUrl = "_search/scroll?scroll=1m" ;
+      string endUrl = "_search/scroll?scroll=60m" ;
       string scrollIdStr = "{ \"scroll_id\" : \"" + scrollId + "\" }" ;
 
       if ( filterPath )

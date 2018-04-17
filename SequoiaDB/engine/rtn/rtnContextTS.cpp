@@ -50,6 +50,7 @@ namespace engine
       _eduCB = NULL ;
       _remoteSessionID = 0 ;
       _subContext = NULL ;
+      _remoteCtxID = -1 ;
    }
 
    _rtnContextTS::~_rtnContextTS()
@@ -214,39 +215,6 @@ namespace engine
       return SDB_OK ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCONTEXTTS__GETMOREFROMREMOTE, "_rtnContextTS::_getMoreFromRemote" )
-   INT32 _rtnContextTS::_getMoreFromRemote( pmdEDUCB *eduCB )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNCONTEXTTS__GETMOREFROMREMOTE ) ;
-      MsgHeader *msg = NULL ;
-      INT32 msgSize = 0 ;
-      INT32 numToReturn = 0 ;
-      INT64 contextID = 0 ;
-      UINT64 reqID = 0 ;
-      SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
-      rtnRemoteMessenger *messenger = rtnCB->getRemoteMessenger() ;
-
-      rc = msgBuildGetMoreMsg( (CHAR **)&msg, &msgSize, numToReturn,
-                               contextID, reqID, eduCB ) ;
-      PD_RC_CHECK( rc, PDERROR, "Build get more message failed[ %d ]", rc ) ;
-
-      msg->opCode = MSG_BS_GETMORE_REQ ;
-
-      rc = messenger->send( _remoteSessionID, msg, eduCB ) ;
-      PD_RC_CHECK( rc, PDERROR, "Send message by remote messenger failed[ %d ]",
-                   rc ) ;
-
-      rc = _prepareNextSubContext( eduCB ) ;
-      PD_RC_CHECK( rc, PDERROR, "Wait and process reply for get more from "
-                   "search engine adapter failed[ %d ]", rc ) ;
-
-   done:
-      PD_TRACE_EXITRC( SDB__RTNCONTEXTTS__GETMOREFROMREMOTE, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCONTEXTTS__PREPARENEXTSUBCONTEXT, "_rtnContextTS::_prepareNextSubContext" )
    INT32 _rtnContextTS::_prepareNextSubContext( pmdEDUCB *eduCB,
@@ -256,7 +224,6 @@ namespace engine
       PD_TRACE_ENTRY( SDB__RTNCONTEXTTS__PREPARENEXTSUBCONTEXT ) ;
       MsgOpReply *reply = NULL ;
       INT32 flag = 0 ;
-      INT64 ctxID = 0 ;
       INT32 startFrom = 0 ;
       INT32 numReturned = 0 ;
       vector< BSONObj > objList ;
@@ -273,7 +240,7 @@ namespace engine
       if ( getMore )
       {
          rc = msgBuildGetMoreMsg( (CHAR **)&msg, &msgSize, numToReturn,
-                                  contextID(), reqID, eduCB ) ;
+                                  _remoteCtxID, reqID, eduCB ) ;
          PD_RC_CHECK( rc, PDERROR, "Build get more message failed[ %d ]", rc ) ;
 
          msg->opCode = MSG_BS_GETMORE_REQ ;
@@ -287,7 +254,7 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Receive reply by remote messenger failed"
                    "[ %d ]", rc ) ;
 
-      rc = msgExtractReply( (CHAR *)reply, &flag, &ctxID, &startFrom,
+      rc = msgExtractReply( (CHAR *)reply, &flag, &_remoteCtxID, &startFrom,
                             &numReturned, objList ) ;
       PD_RC_CHECK( rc, PDERROR, "Extract query respond message failed[ %d ]",
                    rc ) ;

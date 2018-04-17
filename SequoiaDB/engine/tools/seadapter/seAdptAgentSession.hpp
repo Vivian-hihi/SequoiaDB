@@ -38,6 +38,7 @@
 #ifndef SEADPT_AGENT_SESSION_HPP_
 #define SEADPT_AGENT_SESSION_HPP_
 
+#include <map>
 #include "pmdAsyncSession.hpp"
 #include "utilCommObjBuff.hpp"
 #include "seAdptMgr.hpp"
@@ -51,6 +52,8 @@ namespace seadapter
    class _seAdptAgentSession : public _pmdAsyncSession
    {
       DECLARE_OBJ_MSG_MAP()
+      typedef std::map<INT64, seAdptContextBase *>   CTX_MAP ;
+      typedef CTX_MAP::iterator                      CTX_MAP_ITR ;
    public:
       _seAdptAgentSession( UINT64 sessionID ) ;
       virtual ~_seAdptAgentSession() ;
@@ -71,10 +74,12 @@ namespace seadapter
 
       INT32 _onQueryReq( MsgHeader *msg,
                          utilCommObjBuff &objBuff,
+                         INT64 &contextID,
                          pmdEDUCB *eduCB = NULL ) ;
 
       INT32 _onGetmoreReq( MsgHeader *msg,
                            utilCommObjBuff &objBuff,
+                           INT64 &contextID,
                            pmdEDUCB *eduCB = NULL ) ;
 
       INT32 _reply( MsgOpReply *header, const CHAR *buff, UINT32 size ) ;
@@ -87,8 +92,9 @@ namespace seadapter
    private:
       utilESCltFactory  *_seCltFactory ;
       utilESClt         *_esClt ;
-      seAdptContextBase *_context ;
+      CTX_MAP           _ctxMap ;
       BSONObj           _errorInfo ;
+      INT64             _contextIDHWM ;
    } ;
    typedef _seAdptAgentSession seAdptAgentSession ;
 }
