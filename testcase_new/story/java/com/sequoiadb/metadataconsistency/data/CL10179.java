@@ -98,8 +98,7 @@ public class CL10179 extends SdbTestBase{
 				db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 				
 				BSONObject opt = new BasicBSONObject();
-				int i = random.nextInt(dataGroups.size());
-				opt.put("Group", dataGroups.get(i));
+				opt.put("ReplSize", 7);
 				CollectionSpace csDB = db.getCollectionSpace(csName);
 				if(csDB != null){
 					csDB.getCollection(clName).alterCollection(opt);
