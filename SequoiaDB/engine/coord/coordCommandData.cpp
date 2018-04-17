@@ -581,10 +581,13 @@ namespace engine
       rc = _coordDataCMD3Phase::_doCommit( pMsg, cb, ppContext, pArgs ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to do commit, rc: %d", rc ) ;
 
-      // Execute post tasks
-      rc = _executePostTasks( _arguments._targetName.c_str(),
-                              _arguments.getPostTasks(), cb ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to execute post tasks, rc: %d", rc ) ;
+      if ( !_arguments.getPostTasks().empty() )
+      {
+         // Execute post tasks
+         rc = _executePostTasks( _arguments._targetName.c_str(),
+                                 _arguments.getPostTasks(), cb ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to execute post tasks, rc: %d", rc ) ;
+      }
 
    done :
       PD_TRACE_EXITRC( COORD_DATAALTER__DOCOMMIT, rc ) ;
