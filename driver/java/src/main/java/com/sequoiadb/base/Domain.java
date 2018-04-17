@@ -53,7 +53,7 @@ public class Domain {
         this.sequoiadb = sequoiadb;
     }
 
-    private void _alterInternal(String taskName, BSONObject options, boolean allowNullArgs) throws BaseException {
+    private void alterInternal(String taskName, BSONObject options, boolean allowNullArgs) throws BaseException {
         if (null == options && !allowNullArgs) {
             throw new BaseException(SDBError.SDB_INVALIDARG, "options is null");
         }
@@ -128,7 +128,7 @@ public class Domain {
      * @throws BaseException If error happens.
      */
     public void addGroups(BSONObject options) throws BaseException {
-        _alterInternal(SdbConstants.SDB_ALTER_ADD_GROUPS, options, false);
+        alterInternal(SdbConstants.SDB_ALTER_ADD_GROUPS, options, false);
     }
 
     /**
@@ -141,7 +141,7 @@ public class Domain {
      * @throws BaseException If error happens.
      */
     public void setGroups(BSONObject options) throws BaseException {
-        _alterInternal(SdbConstants.SDB_ALTER_SET_GROUPS, options, false);
+        alterInternal(SdbConstants.SDB_ALTER_SET_GROUPS, options, false);
     }
 
     /**
@@ -155,7 +155,7 @@ public class Domain {
      * @throws BaseException If error happens.
      */
     public void removeGroups(BSONObject options) throws BaseException {
-        _alterInternal(SdbConstants.SDB_ALTER_REMOVE_GROUPS, options, false);
+        alterInternal(SdbConstants.SDB_ALTER_REMOVE_GROUPS, options, false);
     }
 
     /**
@@ -177,7 +177,7 @@ public class Domain {
      * @throws BaseException If error happens.
      */
     public void setAttributes(BSONObject options) throws BaseException {
-        _alterInternal(SdbConstants.SDB_ALTER_SET_ATTRIBUTES, options, false);
+        alterInternal(SdbConstants.SDB_ALTER_SET_ATTRIBUTES, options, false);
     }
 
     /**

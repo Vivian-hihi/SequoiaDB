@@ -209,7 +209,7 @@ public class CollectionSpace {
         sequoiadb.removeCache(collectionFullName);
     }
 
-    private void _alterInternal(String taskName, BSONObject options, boolean allowNullArgs) throws BaseException {
+    private void alterInternal(String taskName, BSONObject options, boolean allowNullArgs) throws BaseException {
         if (null == options && !allowNullArgs) {
             throw new BaseException(SDBError.SDB_INVALIDARG, "options is null");
         }
@@ -224,7 +224,7 @@ public class CollectionSpace {
     /**
      * Alter the current collection space.
      *
-     * @param options: The options of the collection space:
+     * @param options The options of the collection space:
      *                <ul>
      *                <li>Domain : the domain of collection space.
      *                <li>PageSize : page size of collection space.
@@ -265,14 +265,14 @@ public class CollectionSpace {
     /**
      * Alter the current collection space to set domain
      *
-     * @param options: The options of the collection space:
+     * @param options The options of the collection space:
      *                <ul>
      *                <li>Domain : the domain of collection space.
      *                </ul>
      * @throws BaseException If error happens.
      */
     public void setDomain(BSONObject options) throws BaseException {
-        _alterInternal(SdbConstants.SDB_ALTER_SET_DOMAIN, options, false);
+        alterInternal(SdbConstants.SDB_ALTER_SET_DOMAIN, options, false);
     }
 
     /**
@@ -281,7 +281,7 @@ public class CollectionSpace {
      * @throws BaseException If error happens.
      */
     public void removeDomain() throws BaseException {
-        _alterInternal(SdbConstants.SDB_ALTER_REMOVE_DOMAIN, null, true);
+        alterInternal(SdbConstants.SDB_ALTER_REMOVE_DOMAIN, null, true);
     }
 
     /**
@@ -290,7 +290,7 @@ public class CollectionSpace {
      * @throws BaseException If error happens.
      */
     public void enableCapped() throws BaseException {
-        _alterInternal(SdbConstants.SDB_ALTER_ENABLE_CAPPED, null, true);
+        alterInternal(SdbConstants.SDB_ALTER_ENABLE_CAPPED, null, true);
     }
 
     /**
@@ -299,13 +299,13 @@ public class CollectionSpace {
      * @throws BaseException If error happens.
      */
     public void disableCapped() throws BaseException {
-        _alterInternal(SdbConstants.SDB_ALTER_DISABLE_CAPPED, null, true);
+        alterInternal(SdbConstants.SDB_ALTER_DISABLE_CAPPED, null, true);
     }
 
     /**
      * Alter the current collection space to set attributes.
      *
-     * @param options: The options of the collection space:
+     * @param options The options of the collection space:
      *                <ul>
      *                <li>Domain : the domain of collection space.
      *                <li>PageSize : page size of collection space.
@@ -314,6 +314,6 @@ public class CollectionSpace {
      * @throws BaseException If error happens.
      */
     public void setAttributes(BSONObject options) throws BaseException {
-        _alterInternal(SdbConstants.SDB_ALTER_SET_ATTRIBUTES, options, false);
+        alterInternal(SdbConstants.SDB_ALTER_SET_ATTRIBUTES, options, false);
     }
 }

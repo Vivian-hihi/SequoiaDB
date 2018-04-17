@@ -1757,7 +1757,7 @@ public class DBCollection {
         sequoiadb.upsertCache(collectionFullName);
     }
 
-    private void _alterInternal(String taskName, BSONObject options, boolean allowNullArgs) throws BaseException {
+    private void alterInternal(String taskName, BSONObject options, boolean allowNullArgs) throws BaseException {
         if (null == options && !allowNullArgs) {
             throw new BaseException(SDBError.SDB_INVALIDARG, "options is null");
         }
@@ -1832,7 +1832,7 @@ public class DBCollection {
      * @throws BaseException If error happens.
      */
     public void createIdIndex(BSONObject options) throws BaseException {
-        _alterInternal(SdbConstants.SDB_ALTER_CRT_ID_INDEX, options, true);
+        alterInternal(SdbConstants.SDB_ALTER_CRT_ID_INDEX, options, true);
     }
 
     /**
@@ -1841,7 +1841,7 @@ public class DBCollection {
      * @throws BaseException If error happens.
      */
     public void dropIdIndex() throws BaseException {
-        _alterInternal(SdbConstants.SDB_ALTER_DROP_ID_INDEX, null, true);
+        alterInternal(SdbConstants.SDB_ALTER_DROP_ID_INDEX, null, true);
     }
 
     /**
@@ -1857,16 +1857,16 @@ public class DBCollection {
      * @throws BaseException If error happens.
      */
     public void enableSharding(BSONObject options) throws BaseException {
-        _alterInternal(SdbConstants.SDB_ALTER_ENABLE_SHARDING, options, false);
+        alterInternal(SdbConstants.SDB_ALTER_ENABLE_SHARDING, options, false);
     }
 
     /**
      * Alter the attributes of current collection to disable sharding
-     * 
+     *
      * @throws BaseException If error happens.
      */
     public void disableSharding() throws BaseException {
-        _alterInternal(SdbConstants.SDB_ALTER_DISABLE_SHARDING, null, true);
+        alterInternal(SdbConstants.SDB_ALTER_DISABLE_SHARDING, null, true);
     }
 
     /**
@@ -1879,16 +1879,16 @@ public class DBCollection {
      * @throws BaseException If error happens.
      */
     public void enableCompression(BSONObject options) throws BaseException {
-        _alterInternal(SdbConstants.SDB_ALTER_ENABLE_COMPRESSION, options, true);
+        alterInternal(SdbConstants.SDB_ALTER_ENABLE_COMPRESSION, options, true);
     }
 
     /**
      * Alter the attributes of current collection to disable compression
-     * 
+     *
      * @throws BaseException If error happens.
      */
     public void disableCompression() throws BaseException {
-        _alterInternal(SdbConstants.SDB_ALTER_DISABLE_COMPRESSION, null, true);
+        alterInternal(SdbConstants.SDB_ALTER_DISABLE_COMPRESSION, null, true);
     }
 
     /**
@@ -1910,7 +1910,7 @@ public class DBCollection {
      * @throws BaseException If error happens.
      */
     public void setAttributes(BSONObject options) throws BaseException {
-        _alterInternal(SdbConstants.SDB_ALTER_SET_ATTRIBUTES, options, false);
+        alterInternal(SdbConstants.SDB_ALTER_SET_ATTRIBUTES, options, false);
     }
 
     private void _update(int flag, BSONObject matcher, BSONObject modifier,
