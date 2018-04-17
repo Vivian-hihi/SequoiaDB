@@ -49,75 +49,55 @@ function main()
 	}
 	println("createCL " + COMMCLNAME + " at ReplicaGroup:" + sourceGroup + " finished");
 	
-	//rangeCL-noSplit altered to range-collection, expect fail
+	//rangeCL-noSplit altered to range-collection, expect succ
 	try{
 		rangeCL.alter({ShardingKey:{id:1},ShardingType:'range'});
-		throw 1;
 	}catch(e)
 	{
-		if(e == 1)
-		{
-			println("1 rangeCL altered to range-collection succ,but expect fail!");
-			throw e;
-		}
+	   println("1 rangeCL altered to range-collection fail, expect succ!");
+	   throw e;
 	}
+	
 	try{
 		rangeCL.alter({ShardingKey:{id:1,b:-1},ShardingType:'range'});
-		throw 1;
 	}catch(e)
 	{
-		if(e == 1)
-		{
-			println("2 rangeCL altered to range-collection succ,but expect fail!");
-			throw e;
-		}
+      println("2 rangeCL altered to range-collection fail,but expect succ!");
+	   throw e;
 	}
+	
 	try{
 		rangeCL.alter({ShardingKey:{b:-1,c:1},ShardingType:'range'});
-		throw 1;
 	}catch(e)
 	{
-		if(e == 1)
-		{
-			println("3 rangeCL altered to range-collection succ,but expect fail!");
-			throw e;
-		}
+	   println("3 rangeCL altered to range-collection fail,but expect succ!");
+	   throw e;
 	}
 	println("rangeCL-noSplit altered to range-collection finish!");
 	
-	//rangeCL-noSplit altered to hash-collection, expect fail
+	//rangeCL-noSplit altered to hash-collection, expect succ
 	try{
-		rangeCL.alter({ShardingKey:{id:1},ShardingType:'hash',Partition:4096});
-		throw 1;
+		rangeCL.alter({ShardingKey:{id:1},ShardingType:'hash',Partition:1024});
 	}catch(e)
 	{
-		if(e == 1)
-		{
-			println("1 rangeCL altered to hash-collection succ,but expect fail!");
-			throw e;
-		}
+	   println("1 rangeCL altered to hash-collection fail,but expect succ!");
+	   throw e;
 	}
+	
 	try{
 		rangeCL.alter({ShardingKey:{id:1,b:-1},ShardingType:'hash'});
-		throw 1;
 	}catch(e)
 	{
-		if(e == 1)
-		{
-			println("2 rangeCL altered to hash-collection succ,but expect fail!");
-			throw e;
-		}
+      println("2 rangeCL altered to hash-collection fail,but expect succ!");
+	   throw e;
 	}
+	
 	try{
-		rangeCL.alter({ShardingKey:{b:-1,c:1},ShardingType:'hash',Partition:1024});
-		throw 1;
+		rangeCL.alter({ShardingKey:{b:1,c:-1},ShardingType:'hash',Partition:4096});
 	}catch(e)
 	{
-		if(e == 1)
-		{
-			println("3 rangeCL altered to range-collection succ,but expect fail!");
-			throw e;
-		}
+	   println("3 rangeCL altered to range-collection fail,but expect succ!");
+	   throw e;
 	}
 	println("rangeCL-noSplit altered to hash-collection finish!");
 	
@@ -125,11 +105,12 @@ function main()
 	try{
 		if(groups_num>1){
 			var tarGroupIndex=-1;
-			var stepId = 1000;
-			var partId = 3;
-			var lowId = 0;
-			var highId = 0;
-			for(var i=0;i<partId;i++){
+			var stepPar = 1024;
+			var part = 3;
+			var lowPar = 0;
+			var highPar = 0;
+			for(var i=0;i<part;i++){
+			   //println("i = " + i);
 				tarGroupIndex++;
 				if(tarGroupIndex == groups_num)
 					tarGroupIndex=0;
@@ -138,10 +119,14 @@ function main()
 					i--;
 					continue;
 				}
-				lowId = (i-1)*stepId;
-				highId = i*stepId;
-				rangeCL.split(sourceGroup, grouplist[tarGroupIndex],{id:lowId},{id:highId});
-				println(COMMCLNAME+" split from "+sourceGroup+" to "+ grouplist[tarGroupIndex]+" {id:"+lowId+"} {id:"+highId+"}");
+				lowPar = i*stepPar;
+				highPar = (i+1)*stepPar;
+				/*println(sourceGroup);
+				println(grouplist[tarGroupIndex]);
+				println(lowPar);
+				println(highPar);*/
+				rangeCL.split(sourceGroup, grouplist[tarGroupIndex],{Partition:lowPar},{Partition:highPar});
+				println(COMMCLNAME+" split from "+sourceGroup+" to "+ grouplist[tarGroupIndex]+" {Partition:"+lowPar+"} {Partition:"+highPar+"}");
 			}
 			println("split succ!");
 		}

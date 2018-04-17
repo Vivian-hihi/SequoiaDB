@@ -36,14 +36,10 @@ println("create normalCL finished");
 //Compressed True to False,expect fail
 try{
 	normalCL.alter({ShardingKey:{id:1},ShardingType:'hash',Compressed:false});
-	throw 1;
 }catch(e)
 {
-	if(e == 1)
-	{
-		println("normalCL alters Compressed succ,but expect fail!");
-		throw e;
-	}
+   println("normalCL alters Compressed fail, but expect succ!");
+   throw e;
 }
 println("normalCL test finish!");
 
@@ -61,14 +57,10 @@ println("create rangeCL finished");
 
 try{
 	rangeCL.alter({Compressed:true});
-	throw 1;
 }catch(e)
 {
-	if(e == 1)
-	{
-		println("rangeCL alters Compressed succ,but expect fail!");
-		throw e;
-	}
+   println("rangeCL alters Compressed fail, but expect succ!");
+   throw e;
 }
 println("rangeCL test finish!");
 
@@ -86,14 +78,10 @@ println("create hashCL finished");
 
 try{
 	hashCL.alter({Compressed:true});
-	throw 1;
 }catch(e)
 {
-	if(e == 1)
-	{
-		println("hashCL alters Compressed succ,but expect fail!");
-		throw e;
-	}
+   println("hashCL alters Compressed succ,but expect fail!");
+   throw e;
 }
 println("hashCL test finish!");
 

@@ -59,14 +59,10 @@ println("create rangeCL finished");
 
 try{
 	rangeCL.alter({ShardingKey:{id:1},ShardingType:'range'});
-	throw 1;
 }catch(e)
 {
-	if(e == 1)
-	{
-		println("rangeCL alters ShardingKey succ,but expect fail!");
-		throw e;
-	}
+   println("rangeCL alters ShardingKey fail, but expect succ!");
+   throw e;
 }
 println("rangeCL test finish!");
 
@@ -84,14 +80,10 @@ println("create hashCL finished");
 
 try{
 	hashCL.alter({Partition:1024});
-	throw 1;
 }catch(e)
 {
-	if(e == 1)
-	{
-		println("hashCL alters Partition-num succ,but expect fail!");
-		throw e;
-	}
+   println("hashCL alters Compressed succ,but expect fail!");
+   throw e;
 }
 println("hashCL test finish!");
 

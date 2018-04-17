@@ -49,87 +49,65 @@ catch( e )
 	}
 	println("createCL " + COMMCLNAME + " at ReplicaGroup:" + sourceGroup + " finished");
 	
-	//hashCL-noSplit altered to range-collection, expect fail
-	try{
-		hashCL.alter({ShardingKey:{id:1},ShardingType:'range'});
-		throw 1;
-	}catch(e)
-	{
-		if(e == 1)
-		{
-			println("1 hashCL altered to range-collection succ,but expect fail!");
-			throw e;
-		}
-	}
-	try{
-		hashCL.alter({ShardingKey:{id:1,b:-1},ShardingType:'range'});
-		throw 1;
-	}catch(e)
-	{
-		if(e == 1)
-		{
-			println("2 hashCL altered to range-collection succ,but expect fail!");
-			throw e;
-		}
-	}
-	try{
-		hashCL.alter({ShardingKey:{b:-1,c:1},ShardingType:'range'});
-		throw 1;
-	}catch(e)
-	{
-		if(e == 1)
-		{
-			println("3 hashCL altered to range-collection succ,but expect fail!");
-			throw e;
-		}
-	}
-	println("hashCL-noSplit altered to range-collection finish!");
-	
 	//hashCL-noSplit altered to hash-collection, expect fail
 	try{
-		hashCL.alter({ShardingKey:{id:1},ShardingType:'hash',Partition:4096});
-		throw 1;
+		hashCL.alter({ShardingKey:{id:1},ShardingType:'hash',Partition:1024});
 	}catch(e)
 	{
-		if(e == 1)
-		{
-			println("1 hashCL altered to hash-collection succ,but expect fail!");
-			throw e;
-		}
+	   println("1 hashCL altered to hash-collection fail,but expect succ!");
+	   throw e;
 	}
 	try{
 		hashCL.alter({ShardingKey:{id:1,b:-1},ShardingType:'hash'});
-		throw 1;
 	}catch(e)
 	{
-		if(e == 1)
-		{
-			println("2 hashCL altered to hash-collection succ,but expect fail!");
-			throw e;
-		}
+      println("2 hashCL altered to hash-collection fail,but expect succ!");
+	   throw e;
 	}
 	try{
-		hashCL.alter({ShardingKey:{b:-1,c:1},ShardingType:'hash',Partition:1024});
-		throw 1;
+		hashCL.alter({ShardingKey:{b:1,c:-1},ShardingType:'hash',Partition:4096});
 	}catch(e)
 	{
-		if(e == 1)
-		{
-			println("3 hashCL altered to range-collection succ,but expect fail!");
-			throw e;
-		}
+	   println("3 hashCL altered to range-collection fail,but expect succ!");
+	   throw e;
 	}
 	println("hashCL-noSplit altered to hash-collection finish!");
 	
-	//split
+	//hashCL-noSplit altered to range-collection, expect fail
+	try{
+		hashCL.alter({ShardingKey:{id:1},ShardingType:'range'});
+	}catch(e)
+	{
+	   println("1 hashCL altered to range-collection fail, but expect succ!");
+	   throw e;
+	}
+	
+	try{
+		hashCL.alter({ShardingKey:{id:1,b:-1},ShardingType:'range'});
+	}catch(e)
+	{
+	   println("2 hashCL altered to range-collection fail,but expect succ!");
+	   throw e;
+	}
+	
+	try{
+		hashCL.alter({ShardingKey:{b:1,c:-1},ShardingType:'range'});
+	}catch(e)
+	{
+	   println("3 hashCL altered to range-collection fail,but expect succ!");
+	   throw e;
+	}
+	println("hashCL-noSplit altered to range-collection finish!");
+	
+	//split	
 	try{
 		if(groups_num>1){
 			var tarGroupIndex=-1;
-			var stepPar = 1024;
-			var part = 3;
-			var lowPar = 0;
-			var highPar = 0;
-			for(var i=0;i<part;i++){
+			var stepId = 1000;
+			var partId = 3;
+			var lowId = 0;
+			var highId = 0;
+			for(var i=0;i<partId;i++){
 				tarGroupIndex++;
 				if(tarGroupIndex == groups_num)
 					tarGroupIndex=0;
@@ -138,10 +116,14 @@ catch( e )
 					i--;
 					continue;
 				}
-				lowPar = i*stepPar;
-				highPar = (i+1)*stepPar;
-				hashCL.split(sourceGroup, grouplist[tarGroupIndex],{Partition:lowPar},{Partition:highPar});
-				println(COMMCLNAME+" split from "+sourceGroup+" to "+ grouplist[tarGroupIndex]+" {Partition:"+lowPar+"} {Partition:"+highPar+"}");
+				lowId = (i-1)*stepId;
+				highId = i*stepId;
+				/*println(sourceGroup);
+				println(grouplist[tarGroupIndex]);
+				println(lowId);
+				println(highId);*/
+				hashCL.split(sourceGroup, grouplist[tarGroupIndex],{b:lowId},{b:highId});
+				println(COMMCLNAME+" split from "+sourceGroup+" to "+ grouplist[tarGroupIndex]+" {id:"+lowId+"} {id:"+highId+"}");
 			}
 			println("split succ!");
 		}
@@ -156,7 +138,7 @@ catch( e )
 	
 	//insert data
 	try{
-		for(var i=0;i<3000;i++){hashCL.insert({id:i-1000,b:i,c:"abcdefghijkl"+i});}
+		for(var i=0;i<3000;i++){hashCL.insert({id:i,b:i-1000,c:"abcdefghijkl"+i});}
 	}catch(e)
 	{
 		println("insert-data fail! rc="+e);
@@ -172,10 +154,11 @@ catch( e )
 	{
 		if(e == 1)
 		{
-			println("4 hashCL altered to range-collection succ,but expect fail!");
+			println("1 hashCL altered to range-collection succ,but expect fail!");
 			throw e;
 		}
 	}
+	
 	try{
 		hashCL.alter({ShardingKey:{id:1,b:-1},ShardingType:'range'});
 		throw 1;
@@ -183,10 +166,11 @@ catch( e )
 	{
 		if(e == 1)
 		{
-			println("5 hashCL altered to range-collection succ,but expect fail!");
+			println("2 hashCL altered to range-collection succ,but expect fail!");
 			throw e;
-		}
+   	}
 	}
+	
 	try{
 		hashCL.alter({ShardingKey:{b:-1,c:1},ShardingType:'range'});
 		throw 1;
@@ -194,9 +178,9 @@ catch( e )
 	{
 		if(e == 1)
 		{
-			println("6 hashCL altered to range-collection succ,but expect fail!");
+			println("3 hashCL altered to range-collection succ,but expect fail!");
 			throw e;
-		}
+   	}
 	}
 	println("hashCL-splited altered to range-collection finish!");
 	
@@ -210,8 +194,9 @@ catch( e )
 		{
 			println("4 hashCL altered to hash-collection succ,but expect fail!");
 			throw e;
-		}
+   	}
 	}
+	
 	try{
 		hashCL.alter({ShardingKey:{id:1,b:-1},ShardingType:'hash'});
 		throw 1;
@@ -221,8 +206,9 @@ catch( e )
 		{
 			println("5 hashCL altered to hash-collection succ,but expect fail!");
 			throw e;
-		}
+   	}
 	}
+	
 	try{
 		hashCL.alter({ShardingKey:{b:-1,c:1},ShardingType:'hash',Partition:1024});
 		throw 1;
@@ -230,9 +216,9 @@ catch( e )
 	{
 		if(e == 1)
 		{
-			println("6 hashCL altered to range-collection succ,but expect fail!");
+			println("6 hashCL altered to hash-collection succ,but expect fail!");
 			throw e;
-		}
+   	}
 	}
 	println("hashCL-splited altered to hash-collection finish!");
 	
@@ -248,7 +234,7 @@ catch( e )
 			if(size>100)
 				break;
 			var ret = sel.current();
-			if(ret.toObj()['id']==1 && ret.toObj()['b']==1001 && ret.toObj()['c']=='abcdefghijkl1001')
+			if(ret.toObj()['id']==1 && ret.toObj()['b']==-999 && ret.toObj()['c']=='abcdefghijkl1')
 				flag = true;
 		}
 		if(size!=1)
@@ -266,7 +252,7 @@ catch( e )
 		else if(e==-2)
 		{	
 			println("record not expected!");
-			println("expected:{id:1,b:1001,c:'abcdefghijkl1001'}");
+			println("expected:{id:1,b:-999,c:'abcdefghijkl11'}");
 			println("returned:"+ret);
 		}
 		else
