@@ -174,7 +174,7 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Failed to get task count of collection [%s], "
                       "rc: %d", _dataName.c_str(), rc ) ;
 
-         PD_CHECK( 0 == taskCount, SDB_INVALIDARG, error, PDERROR,
+         PD_CHECK( 0 == taskCount, SDB_OPTION_NOT_SUPPORT, error, PDERROR,
                    "Failed to [%s]: should have no split tasks",
                    _task->getActionName() ) ;
       }
