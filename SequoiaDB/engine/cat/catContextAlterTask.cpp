@@ -509,7 +509,7 @@ namespace engine
       if ( localTask->containExtOptionArgument() )
       {
          PD_CHECK( OSS_BIT_TEST( cataSet.getAttribute(), DMS_MB_ATTR_CAPPED ),
-                   SDB_INVALIDARG, error, PDERROR,
+                   SDB_OPTION_NOT_SUPPORT, error, PDERROR,
                    "Failed to check capped arguments: collection [%s] is not capped",
                    _dataName.c_str() ) ;
       }
