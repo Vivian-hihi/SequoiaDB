@@ -75,6 +75,8 @@ public class Split10529A extends SdbTestBase {
 			splitThread = new Split();
 			splitThread.start();
 
+         splitThread.join();
+
 			// 修改CL
 			try {				
 				cl.alterCollection((BSONObject) JSON.parse("{ShardingKey:{nsk:1}}"));				
@@ -86,11 +88,10 @@ public class Split10529A extends SdbTestBase {
 			}	
 			
 			Assert.assertEquals(splitThread.isSuccess(), true, splitThread.getErrorMsg());
-		} finally {
-			if (splitThread != null) {
-				splitThread.join();
-			}			
-		}
+
+		} catch(Exception e) {
+         Assert.fail("split and alter task failed: " + e);
+      }
 	}
 
 	@AfterClass()

@@ -76,9 +76,8 @@ public class CreateMainCl22 extends SdbTestBase{
 		alterOptions.put("ShardingKey", shardingKey);
 		try{
 			cl.alterCollection(alterOptions);
-			Assert.fail("alter maincl success");
 		}catch(BaseException e){
-			Assert.assertEquals(e.getErrorCode(), -32,e.getMessage());
+			Assert.fail(e.getMessage());
 		}	
 	}	
 }
