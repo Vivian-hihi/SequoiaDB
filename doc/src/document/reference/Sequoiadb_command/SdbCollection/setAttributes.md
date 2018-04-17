@@ -1,10 +1,10 @@
 ##名称##
 
-alter - 修改集合的属性。
+setAttributes - 修改集合的属性。
 
 ##语法##
 
-**db.collectionspace.collection.alter(\<options\>)**
+**db.collectionspace.collection.setAttributes(\<options\>)**
 
 ##类别##
 
@@ -13,8 +13,6 @@ Collection
 ##描述##
 
 修改集合的属性。
-
-请参考 [db.collectionspace.collection.setAttributes\(\)](reference/Sequoiadb_command/SdbCollection/setAttributes.md)
 
 ##参数##
 
@@ -94,7 +92,7 @@ Collection
 
 ##错误##
 
-`alter()`函数常见异常如下：
+`setAttributes()`函数常见异常如下：
 
 | 错误码 | 错误类型 | 可能的原因 | 解决方法 |
 | ------ | --- | ------------ | ----------- |
@@ -106,7 +104,7 @@ Collection
 
 ##版本##
 
-v1.12及以上版本。
+v2.10及以上版本。
 
 ##示例##
 
@@ -114,12 +112,12 @@ v1.12及以上版本。
 
 	```lang-javascript
  	> db.foo.createCL('bar')
- 	> db.foo.bar.alter( { ShardingKey: { a: 1 }, ShardingType: "hash" } )
+ 	> db.foo.bar.setAttributes( { ShardingKey: { a: 1 }, ShardingType: "hash" } )
 	```
 
 2. 创建一个普通集合，然后将该集合修改为lzw压缩
 
     ```lang-javascript
     > db.foo.createCL('bar')
-    > db.foo.bar.alter( { CompressionType:'lzw' } )
+    > db.foo.bar.setAttributes( { CompressionType:'lzw' } )
     ```

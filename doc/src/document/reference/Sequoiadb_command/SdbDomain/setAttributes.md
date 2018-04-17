@@ -1,10 +1,8 @@
 ##语法##
 
-***domain.alter( \<options\> )***
+***domain.setAttributes( \<options\> )***
 
 修改域的属性。
-
-请参考 [domain.setAttributes\(\)](reference/Sequoiadb_command/SdbDomain/setAttributes.md)
 
 ##参数描述##
 
@@ -52,7 +50,7 @@
 * 从域中删除一个复制组 data2，添加另一个复制组 data3，最后域中包含 data1 和 data3 两个复制组
 
 ```lang-javascript
-> domain.alter( { Groups: ['data1', 'data3'] } )
+> domain.setAttributes( { Groups: ['data1', 'data3'] } )
 ```
 
 * 首先创建一个域，包含一个复制组，复制组中包含表 foo.bar。
@@ -64,7 +62,7 @@
 * 从域中删除原复制组，添加另一个复制组，将因把拥有数据的 group1 从域中删除而报错
 
 ```lang-javascript
-> domain.alter( { Groups: ['group2'] } )
+> domain.setAttributes( { Groups: ['group2'] } )
 (nofile):0 uncaught exception: -256
 Domain is not empty
 ```
