@@ -716,7 +716,7 @@ namespace engine
       }
 
       compressor = getCompressorByType( type ) ;
-      if ( !compressor )
+      if ( NULL != compressor )
       {
          _compressorEntry[mbID].setCompressor( compressor ) ;
       }

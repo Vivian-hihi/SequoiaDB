@@ -1364,7 +1364,8 @@ namespace engine
                            "       Compressed   : %s"OSS_NEWLINE,
                            OSS_BIT_TEST ( flag, DMS_RECORD_FLAG_COMPRESSED ) ?
                            "True":"False" ) ;
-      if ( OSS_BIT_TEST ( flag, DMS_RECORD_FLAG_COMPRESSED ) )
+      if ( OSS_BIT_TEST( flag, DMS_RECORD_FLAG_COMPRESSED ) &&
+           OSS_BIT_TEST( compressorEntry->getFlags(), UTIL_COMPRESS_ALTERABLE_FLAG ) )
       {
          len += ossSnprintf ( outBuf + len, outSize - len,
                               "       CompressType : 0x%02x (%s)"OSS_NEWLINE,

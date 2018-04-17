@@ -2208,7 +2208,7 @@ namespace engine
             if ( mb->_compressorType == UTIL_COMPRESSOR_LZW )
             {
                // Should have no dictionary
-               PD_CHECK( mb->_dictExtentID != DMS_INVALID_EXTENT,
+               PD_CHECK( mb->_dictExtentID == DMS_INVALID_EXTENT,
                          SDB_OPTION_NOT_SUPPORT, error, PDERROR,
                          "Failed to change compressor: should have no "
                          "compressed records and compress dictionary in old "
