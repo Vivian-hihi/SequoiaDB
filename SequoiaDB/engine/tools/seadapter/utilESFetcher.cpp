@@ -53,7 +53,6 @@ namespace seadapter
       _index = std::string( index ) ;
       _type = std::string( type ) ;
       _size = 0 ;
-      _more = TRUE ;
    }
 
    _utilESFetcher::~_utilESFetcher()
@@ -112,6 +111,8 @@ namespace seadapter
    _utilESPageFetcher::_utilESPageFetcher( const CHAR *index, const CHAR *type )
    : _utilESFetcher( index, type )
    {
+      _from = 0 ;
+      _fetchDone =  FALSE ;
    }
 
    _utilESPageFetcher::~_utilESPageFetcher()
@@ -123,16 +124,12 @@ namespace seadapter
       _from = from ;
    }
 
-   BOOLEAN _utilESPageFetcher::more()
-   {
-      return _more ;
-   }
-
    INT32 _utilESPageFetcher::fetch( utilCommObjBuff &result )
    {
       INT32 rc = SDB_OK ;
+      UINT32 origNum = result.getObjNum() ;
 
-      if ( _more )
+      if ( !_fetchDone )
       {
          rc = _clt->getDocument( _index.c_str(), _type.c_str(),
                                  _query.toString( FALSE, TRUE ).c_str(),
@@ -158,7 +155,13 @@ namespace seadapter
             }
             goto error ;
          }
-         _more = FALSE ;
+         _fetchDone = TRUE ;
+
+         if ( result.getObjNum() - origNum == 0 )
+         {
+            rc = SDB_DMS_EOC ;
+            goto error ;
+         }
       }
       else
       {
@@ -187,14 +190,10 @@ namespace seadapter
       }
    }
 
-   BOOLEAN _utilESScrollFetcher::more()
-   {
-      return _more ;
-   }
-
    INT32 _utilESScrollFetcher::fetch( utilCommObjBuff &result )
    {
       INT32 rc = SDB_OK ;
+      UINT32 origNum = result.getObjNum() ;
 
       if ( _scrollID.empty() )
       {
@@ -248,9 +247,10 @@ namespace seadapter
          }
       }
 
-      if ( 0 == result.getObjNum() )
+      if ( result.getObjNum() - origNum == 0 )
       {
-         _more = FALSE ;
+         rc = SDB_DMS_EOC ;
+         goto error ;
       }
 
    done:

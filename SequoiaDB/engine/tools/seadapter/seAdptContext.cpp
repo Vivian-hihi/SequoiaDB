@@ -454,14 +454,13 @@ namespace seadapter
          goto error ;
       }
 
-      if ( _esFetcher->more() )
+      rc = _esFetcher->fetch( result ) ;
+      if ( rc )
       {
-         rc = _esFetcher->fetch( result ) ;
-         PD_RC_CHECK( rc, PDERROR, "Fetch data from es failed[ %d ]", rc ) ;
-      }
-      else
-      {
-         rc = SDB_DMS_EOC ;
+         if ( SDB_DMS_EOC != rc )
+         {
+            PD_LOG( PDERROR, "Fetch data from es failed[ %d ]", rc ) ;
+         }
          goto error ;
       }
 
@@ -476,7 +475,6 @@ namespace seadapter
                                          UINT32 limitNum )
    {
       INT32 rc = SDB_OK ;
-      UINT32 totalNum = 0 ;
 
       result.reset() ;
 
@@ -489,7 +487,15 @@ namespace seadapter
          {
             if ( SDB_DMS_EOC == rc )
             {
-               break ;
+               if ( result.getObjNum() > 0 )
+               {
+                  rc = SDB_OK ;
+                  break ;
+               }
+               else
+               {
+                  goto error ;
+               }
             }
             else
             {
@@ -498,15 +504,14 @@ namespace seadapter
             }
          }
 
-         totalNum += result.getObjNum() ;
-
          // Two conditions to terminate this loop:
          // 1. Number exceeds the limit.
          // 2. The result buffer is full.
-         if ( totalNum > limitNum )
+         if ( result.getObjNum() > limitNum )
          {
             rc = SDB_INVALIDARG ;
-            PD_LOG( PDERROR, "Record number too large for the operation" ) ;
+            PD_LOG( PDERROR, "Record number[%u] too large for the operation",
+                    result.getObjNum() ) ;
             goto error ;
          }
       } while ( TRUE ) ;

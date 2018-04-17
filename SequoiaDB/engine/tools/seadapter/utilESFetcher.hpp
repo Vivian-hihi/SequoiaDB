@@ -64,7 +64,6 @@ namespace seadapter
          void setSize( INT64 size ) ;
          void setFilterPath( const CHAR *filterPath ) ;
 
-         virtual BOOLEAN more() = 0 ;
          virtual INT32 fetch( utilCommObjBuff &result ) = 0 ;
 
       protected:
@@ -74,7 +73,6 @@ namespace seadapter
          BSONObj        _query ;
          INT64          _size ;
          std::string    _filterPath ;
-         BOOLEAN        _more ;
    } ;
    typedef _utilESFetcher utilESFetcher ;
 
@@ -86,11 +84,10 @@ namespace seadapter
          virtual ~_utilESPageFetcher() ;
 
          void setFrom( INT64 from ) ;
-         virtual BOOLEAN more() ;
          virtual INT32 fetch( utilCommObjBuff &result ) ;
-
       private:
-         INT64 _from ;
+         INT64       _from ;
+         BOOLEAN     _fetchDone ;
    } ;
    typedef _utilESPageFetcher utilESPageFetcher ;
 
@@ -100,7 +97,6 @@ namespace seadapter
       public:
          _utilESScrollFetcher( const CHAR *index, const CHAR *type ) ;
          virtual ~_utilESScrollFetcher() ;
-         virtual BOOLEAN more() ;
          virtual INT32 fetch( utilCommObjBuff &result ) ;
 
       private:
