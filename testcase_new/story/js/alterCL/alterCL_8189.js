@@ -17,6 +17,10 @@ function main()
 			}
 		}
 		var groups_num = grouplist.length;
+		if(groups_num < 2) {
+		   println("groupsNum < 2, there is no enough data group");
+		   return;
+		}
 	}catch(e)
 	{
 		println("get ReplicaGroups info fail! rc="+e);
