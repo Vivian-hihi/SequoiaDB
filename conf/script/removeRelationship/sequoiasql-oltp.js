@@ -136,9 +136,16 @@ function _removeWithSequoiaDB( PD_LOGGER )
    }
    catch( e )
    {
-      var error = _getErrorMsg( getLastError(), e, "Failed to drop server" ) ;
-      PD_LOGGER.log( PDERROR, error ) ;
-      throw error ;
+      if( typeof( e ) == 'object' && typeof( e.message ) == 'string' && e.message.search(  /psql: FATAL:  database .* does not exist/g ) >= 0 )
+      {
+         PD_LOGGER.log( PDWARNING, "failed to drop server, database does not exist" ) ;
+      }
+      else
+      {
+         var error = _getErrorMsg( getLastError(), e, "Failed to drop server" ) ;
+         PD_LOGGER.log( PDERROR, error ) ;
+         throw error ;
+      }
    }
 
    //drop extension
@@ -149,8 +156,7 @@ function _removeWithSequoiaDB( PD_LOGGER )
    }
    catch( e )
    {
-      var error = _getErrorMsg( getLastError(), e, "Failed to drop extension" ) ;
-      PD_LOGGER.log( PDWARNING, error ) ;
+      PD_LOGGER.log( PDWARNING, "Failed to drop extension" ) ;
    }
 
    result[FIELD_ERRNO] = SDB_OK ;
