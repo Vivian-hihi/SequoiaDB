@@ -1943,6 +1943,12 @@
                      "en": "SdbCS",
                      "contents": [
                         {
+                           "id": 1524019770,
+                           "file": "alter",
+                           "cn": "alter()",
+                           "en": "alter()"
+                        },
+                        {
                            "id": 1432190821,
                            "file": "createCL",
                            "cn": "createCL()",
@@ -1959,6 +1965,24 @@
                            "file": "getCL",
                            "cn": "getCL()",
                            "en": "getCL()"
+                        },
+                        {
+                           "id": 1524019771,
+                           "file": "removeDomain",
+                           "cn": "removeDomain()",
+                           "en": "removeDomain()"
+                        },
+                        {
+                           "id": 1524019772,
+                           "file": "setAttributes",
+                           "cn": "setAttributes()",
+                           "en": "setAttributes()"
+                        },
+                        {
+                           "id": 1524019773,
+                           "file": "setDomain",
+                           "cn": "setDomain()",
+                           "en": "setDomain()"
                         }
                      ]
                   },
@@ -2017,6 +2041,18 @@
                            "en": "detachCL()"
                         },
                         {
+                           "id": 1524019500,
+                           "file": "disableCompression",
+                           "cn": "disableCompression()",
+                           "en": "disableCompression()"
+                        },
+                        {
+                           "id": 1524019501,
+                           "file": "disableSharding",
+                           "cn": "disableSharding()",
+                           "en": "disableSharding()"
+                        },
+                        {
                            "id": 1432190833,
                            "file": "dropIdIndex",
                            "cn": "dropIdIndex()",
@@ -2027,6 +2063,18 @@
                            "file": "dropIndex",
                            "cn": "dropIndex()",
                            "en": "dropIndex()"
+                        },
+                        {
+                           "id": 1524019502,
+                           "file": "enableCompression",
+                           "cn": "enableCompression()",
+                           "en": "enableCompression()"
+                        },
+                        {
+                           "id": 1524019503,
+                           "file": "enableSharding",
+                           "cn": "enableSharding()",
+                           "en": "enableSharding()"
                         },
                         {
                            "id": 1432190835,
@@ -2081,6 +2129,12 @@
                            "file": "remove",
                            "cn": "remove()",
                            "en": "remove()"
+                        },
+                        {
+                           "id": 1524019504,
+                           "file": "setAttributes",
+                           "cn": "setAttributes()",
+                           "en": "setAttributes()"
                         },
                         {
                            "id": 1432190844,
@@ -2345,6 +2399,12 @@
                      "en": "SdbDomain",
                      "contents": [
                         {
+                           "id": 1524019940,
+                           "file": "addGroups",
+                           "cn": "addGroups()",
+                           "en": "addGroups()"
+                        },
+                        {
                            "id": 1432190885,
                            "file": "alter",
                            "cn": "alter()",
@@ -2361,6 +2421,24 @@
                            "file": "listCollectionSpaces",
                            "cn": "listCollectionSpaces()",
                            "en": "listCollectionSpaces()"
+                        },
+                        {
+                           "id": 1524019941,
+                           "file": "removeGroups",
+                           "cn": "removeGroups()",
+                           "en": "removeGroups()"
+                        },
+                        {
+                           "id": 1524019942,
+                           "file": "setAttributes",
+                           "cn": "setAttributes()",
+                           "en": "setAttributes()"
+                        },
+                        {
+                           "id": 1524019943,
+                           "file": "setGroups",
+                           "cn": "setGroups()",
+                           "en": "setGroups()"
                         }
                      ]
                   },
