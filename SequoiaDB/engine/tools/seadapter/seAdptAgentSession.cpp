@@ -62,7 +62,7 @@ namespace seadapter
       for ( CTX_MAP_ITR itr = _ctxMap.begin(); itr != _ctxMap.end(); )
       {
          SDB_OSS_DEL itr->second ;
-         _ctxMap.erase( itr ) ;
+         _ctxMap.erase( itr++ ) ;
       }
 
       // Be sure to release the client at last, because the context needs it to
