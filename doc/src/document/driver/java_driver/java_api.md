@@ -31,6 +31,11 @@
 	* getCollection方法要获取的collection不存在时，不再返回null而是抛出异常。
 	* 增加openLob(ObjectId id, int mode)方法，其中mode取值为DBLob.SDB_LOB_READ或DBLob.SDB_LOB_WRITE。
 	* 增加truncateLob方法。
+	* 增加enableSharding方法，对集合启用分区功能
+	* 增加disableSharding方法，对集合关闭分区功能
+	* 增加enableCompression方法，对集合启用压缩功能
+	* 增加disableCompression方法，对集合关闭压缩功能
+	* 增加setAttributes方法，对集合的属性进行修改
 
 3. com.sequoiadb.base.DBCusor 内容变更：
 
@@ -48,6 +53,10 @@
 5. com.sequoiadb.base.Domain 内容变更：
 
    * 修复isDomainExist接口可能存在游标泄露的情况（SEQUOIADBMAINSTREAM-3264）。
+	* 增加addGroups方法，向域中添加数据组
+	* 增加setGroups方法，对域设置数据组
+	* 增加removeGroups方法，移除属于域的某些数据组
+	* 增加setAttributes方法，设置域的属性
 
 6. com.sequoiadb.base.ReplicaGroup 内容变更：
 
@@ -72,6 +81,13 @@
 12. org.bson.types.BSONTimestamp 支持从 java.util.Date和java.sql.Timestamp 构造，并增加转换为 java.util.Date和java.sql.Timestamp 的方法。
 
 13. BSONObject支持将 java.sql.Timestamp 编码为 timestamp 类型。
+
+14. com.sequoiadb.base.CollectionSpace 内容变更
+
+   * 增加alter方法，对集合空间的属性进行修改
+	* 增加setAttributes方法，对集合空间的属性进行修改
+	* 增加setDomain方法，修改集合空间所属的域
+	* 增加removeDomain方法，移除集合空间所属的域
 
 **Version 1.10**
 

@@ -7,6 +7,28 @@
 * 删除接口 - 不再兼容 
 * 废弃接口 - 保持兼容性
 
+**Version 2.10**
+
+1. 添加收集数据统计信息接口：
+
+   * sdbAnalyze，收集指定对象的统计信息
+
+2. 添加修改接口
+
+   * sdbEnableSharding，对集合启用分区功能
+	* sdbDisableSharding，对集合关闭分区功能
+	* sdbEnableCompression，对集合启用压缩功能
+	* sdbDisableCompression，对集合关闭压缩功能
+	* sdbCLSetAttributes，对集合的属性进行修改
+	* sdbAlterCollectionSpace，对集合空间的属性进行修改
+	* sdbCSSetAttributes，对集合空间的属性进行修改
+	* sdbCSSetDomain，修改集合空间所属的域
+	* sdbCSRemoveDomain，移除集合空间所属的域
+	* sdbDomainAddGroups，向域中添加数据组
+	* sdbDomainSetGroups，对域设置数据组
+	* sdbDomainRemoveGroups，移除属于域的某些数据组
+	* sdbDomainSetAttributes，设置域的属性
+
 **Version 1.10**
 
 1. 添加获取查询访问计划的接口：

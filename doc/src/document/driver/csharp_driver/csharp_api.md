@@ -11,16 +11,35 @@
 
 **Version 2.10**
 
-1. com.sequoiadb.base.DBCollection接口变更：
+1. SequoiaDB::DBCollection接口变更：
 
 	* 增加OpenLob(ObjectId id, int mode)方法，其中mode取值为DBLob.SDB_LOB_READ或DBLob.SDB_LOB_WRITE。
+	* 增加enableSharding方法，对集合启用分区功能
+	* 增加disableSharding方法，对集合关闭分区功能
+	* 增加enableCompression方法，对集合启用压缩功能
+	* 增加disableCompression方法，对集合关闭压缩功能
+	* 增加setAttributes方法，对集合的属性进行修改
 
-2. com.sequoiadb.base.DBLob接口变更：
+2. SequoiaDB::DBLob接口变更：
 
 	* 增加Lock方法。
  	* 增加LockAndSeek方法。
 	* 增加GetModificationTime方法。
 	* Seek方法原来只能在读lob模式下使用，现在该方法支持在创建的lob或写lob模式下使用。
+
+3. SequoiaDB::CollectionSpace接口变更
+
+   * 增加alter方法，对集合空间的属性进行修改
+	* 增加setAttributes方法，对集合空间的属性进行修改
+	* 增加setDomain方法，修改集合空间所属的域
+	* 增加removeDomain方法，移除集合空间所属的域
+
+4. SequoiaDB::Domain接口变更
+
+	* 增加addGroups方法，向域中添加数据组
+	* 增加setGroups方法，对域设置数据组
+	* 增加removeGroups方法，移除属于域的某些数据组
+	* 增加setAttributes方法，设置域的属性
 
 **Version 2.9**
 

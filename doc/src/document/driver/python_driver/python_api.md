@@ -2,6 +2,31 @@
 
 ##历史更新情况：##
 
+**Version 2.10**
+
+1. collection 类添加接口
+
+	* alter，对集合的属性进行修改
+   * enable_sharding，对集合启用分区功能
+	* disable_sharding，对集合关闭分区功能
+	* enable_compression，对集合启用压缩功能
+	* disable_compression，对集合关闭压缩功能
+	* set_attributes，对集合的属性进行修改
+
+2. collectionspace 类添加接口
+
+   * alter，对集合空间的属性进行修改
+	* set_attributes，对集合空间的属性进行修改
+	* set_domain，修改集合空间所属的域
+	* remove_domain，移除集合空间所属的域
+
+3. domain 类添加接口
+
+	* add_groups，向域中添加数据组
+	* set_groups，对域设置数据组
+	* remove_groups，移除属于域的某些数据组
+	* set_attributes，设置域的属性
+
 **Version 2.9**
 
 client 新增接口：
