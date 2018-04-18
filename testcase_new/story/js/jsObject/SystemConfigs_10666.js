@@ -9,7 +9,8 @@ SystemTest.prototype.testGetSystemConfigs = function()
 {
    this.init() ;
    
-   var type = [ "kernel", "vm", "fs", "debug", "dev", "abi", "net", "all" ] ;
+   //var type = [ "kernel", "vm", "fs", "debug", "dev", "abi", "net", "all" ] ;
+   var type = [ "all" ] ;
    // 动态变化的字段
    var except = [ "fs.dentry-state", "fs.inode-nr", "fs.inode-state",
                   "fs.file-nr", "kernel.ns_last_pid" ] ;
@@ -30,7 +31,7 @@ SystemTest.prototype.testGetSystemConfigs = function()
       else
          dir = "/proc/sys/" + type[i] ;
       var result = toolGetConfigs( this.cmd, dir ) ;
-      for( var k in configObj )
+      for( var k in result )
       {
          // 排除随机生成或动态变化的字段
          if( k.indexOf( "random" ) !== -1 ||
@@ -56,7 +57,7 @@ function toolGetConfigs( cmd, dir )
    var configObj = {} ;
    try
    {
-      var command = "find " + dir + " -type f" ;
+      var command = "find " + dir + " -type f -perm -o+r ! -mtime 0" ;
       var files = cmd.run( command ).split( "\n" ) ;
    }
    catch( e )
