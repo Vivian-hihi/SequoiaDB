@@ -4,6 +4,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import org.bson.BSONObject;
+import org.bson.BasicBSONObject;
 import org.bson.util.JSON;
 import org.testng.Assert;
 import org.testng.SkipException;
@@ -13,6 +14,7 @@ import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
+import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.crud.compress.snappy.SnappyUilts;
 import com.sequoiadb.exception.BaseException;
@@ -65,19 +67,10 @@ public class TestLzw6646 extends SdbTestBase {
         try{
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             CollectionSpace cs = sdb.getCollectionSpace(csName);
-            DBCollection cl = cs.createCollection(clName, (BSONObject)JSON.parse("{Compressed: true, CompressionType: 'lzw'}"));
-            try{
-                cl.alterCollection((BSONObject)JSON.parse("{CompressionType: 'snappy'}"));
-                throw new BaseException(-10000, "Parameter 'CompressionType' shouldn't been altered successfully");
-            }catch(BaseException e){
-                Assert.assertEquals(e.getErrorCode(), -6, e.getMessage());
-            }
-            try{
-                cl.alterCollection((BSONObject)JSON.parse("{Compressed: true, CompressionType: 'snappy'}"));
-                throw new BaseException(-10000, "Parameter 'CompressionType' shouldn't been altered successfully");
-            }catch(BaseException e){
-                Assert.assertEquals(e.getErrorCode(), -32, e.getMessage());
-            }
+            DBCollection cl = cs.createCollection(clName, (BSONObject)JSON.parse("{Compressed: true, "
+                    + "CompressionType: 'lzw'}"));
+            cl.alterCollection((BSONObject)JSON.parse("{CompressionType: 'snappy'}"));
+            Assert.assertEquals("snappy", getCompressType(cl));
         }catch(BaseException e){
             Assert.fail(e.getMessage());
         }finally{
@@ -85,5 +78,14 @@ public class TestLzw6646 extends SdbTestBase {
                 db.disconnect();
             }
         }
+    }
+    
+    private String getCompressType(DBCollection cl) {
+        Sequoiadb db = cl.getSequoiadb();
+        BSONObject cond = new BasicBSONObject("Name", cl.getFullName());
+        DBCursor cursor = db.getSnapshot(Sequoiadb.SDB_SNAP_CATALOG, cond, null, null);
+        String compressType = (String) cursor.getNext().get("CompressionTypeDesc");
+        cursor.close();
+        return compressType;
     }
 }

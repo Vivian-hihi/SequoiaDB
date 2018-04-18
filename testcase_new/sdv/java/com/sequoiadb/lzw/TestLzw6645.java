@@ -1,22 +1,21 @@
 package com.sequoiadb.lzw;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
+import com.sequoiadb.base.CollectionSpace;
+import com.sequoiadb.base.DBCollection;
+import com.sequoiadb.base.DBCursor;
+import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.crud.compress.snappy.SnappyUilts;
+import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.testcommon.SdbTestBase;
 import org.bson.BSONObject;
+import org.bson.BasicBSONObject;
+import org.bson.types.BasicBSONList;
 import org.bson.util.JSON;
 import org.testng.Assert;
 import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import com.sequoiadb.base.CollectionSpace;
-import com.sequoiadb.base.DBCollection;
-import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.crud.compress.snappy.SnappyUilts;
-import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.testcommon.SdbTestBase;
 
 /**
  * @FileName:seqDB-6645:修改CL为关闭压缩
@@ -29,12 +28,13 @@ import com.sequoiadb.testcommon.SdbTestBase;
 public class TestLzw6645 extends SdbTestBase {
     private Sequoiadb sdb = null;
     private String clName = "cl_6645";
-    private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
-    
+    private String dataGroupName = null;
+
     @BeforeClass
     public void setUp() {
         try{
             sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+            dataGroupName = LzwUtils2.getDataGroups(sdb).get(0);
         }catch(BaseException e){
             Assert.fail(e.getMessage());
         }
@@ -59,19 +59,16 @@ public class TestLzw6645 extends SdbTestBase {
         }
     }
     
-    @Test
+    @Test(enabled = false)
     public void test() {
         Sequoiadb db = null;
         try{
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             CollectionSpace cs = db.getCollectionSpace(csName);
-            try{
-                DBCollection cl = cs.createCollection(clName, (BSONObject)JSON.parse("{Compressed: true, CompressionType: 'lzw'}"));
-                cl.alterCollection((BSONObject)JSON.parse("{Compressed:false}"));
-                throw new BaseException(-10000, "Parameter 'Compressed' shouldn't been altered successfully");
-            }catch(BaseException e){
-                Assert.assertEquals(e.getErrorCode(), -32, e.getMessage());
-            }
+            DBCollection cl = cs.createCollection(clName, (BSONObject)JSON.parse("{Compressed: true, " +
+                    "CompressionType: 'lzw', Group: '" + dataGroupName + "'}"));
+            cl.alterCollection((BSONObject)JSON.parse("{Compressed:false}"));
+            Assert.assertFalse(isCompressed(cl, dataGroupName));
         }catch(BaseException e){
             Assert.fail(e.getMessage());
         }finally{
@@ -79,5 +76,21 @@ public class TestLzw6645 extends SdbTestBase {
                 db.disconnect();
             }
         }
+    }
+
+    private boolean isCompressed(DBCollection cl, String dataGroupName) {
+        Sequoiadb db = cl.getSequoiadb();
+        Sequoiadb dataDB = LzwUtils3.getDataDB(db, dataGroupName);
+
+        BSONObject nameBSON = new BasicBSONObject();
+        nameBSON.put("Name", csName + "." + clName);
+        DBCursor cursor = dataDB.getSnapshot(4, nameBSON, null, null);
+        BasicBSONList details = (BasicBSONList) cursor.getNext().get("Details");
+        cursor.close();
+        BSONObject detail = (BSONObject) details.get(0);
+
+        String attr = (String) detail.get("Attribute");
+        boolean isCompressed = attr.equals("Compressed");
+        return isCompressed;
     }
 }
