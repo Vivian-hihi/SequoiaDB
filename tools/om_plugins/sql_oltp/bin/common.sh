@@ -37,7 +37,7 @@ function getExecFileName()
 #$2 startup args
 function getProcId()
 {
-   echo $(ps -ef|grep "$1"|grep " $2$\| $2 "|grep -v grep|awk '{print $2}');
+   echo $(ps -efww|grep "$1"|grep " $2$\| $2 "|grep -v grep|awk '{print $2}');
 }
 
 #Get the process id
@@ -46,7 +46,7 @@ function getProcId()
 function getProcIdTest()
 {
    local pid=""
-   local procList=$(ps -ef|grep "$1"|grep -v grep);
+   local procList=$(ps -efww|grep "$1"|grep -v grep);
 
    IFS_old=$IFS
    IFS=$'\n'
