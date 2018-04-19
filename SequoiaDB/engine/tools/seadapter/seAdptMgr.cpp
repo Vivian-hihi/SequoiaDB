@@ -806,6 +806,7 @@ namespace seadapter
                           "mode" ) ;
                   setDataNodePrimary( FALSE ) ;
                   _idxSessionMgr.stopAllIndexer( handle ) ;
+                  _indexerOn = FALSE ;
                   // Reset the index version. If the mode change to full again,
                   // new indexing work should be started.
                   resetIdxVersion() ;
@@ -1467,9 +1468,15 @@ namespace seadapter
       PD_RC_CHECK( rc, PDERROR, "Update indices information failed[ %d ]",
                    rc ) ;
 
+      // There are several scenarios we should refresh index tasks:
+      // (1) Index information is updated.
+      // (2) Peer data node upgrades from slave to primary.
+      // (3) No upgrade or update, all index tasks stopped due to the connection
+      //     lost with ES. Now it's alive again. Tasks should be restarted.
       if ( _isESOnline() )
       {
-         if ( ( updated && isDataNodePrimary() ) || upgrade || !_indexerOn )
+         if ( ( updated && isDataNodePrimary() ) || upgrade ||
+              ( !_indexerOn && isDataNodePrimary() ) )
          {
             rc = _idxSessionMgr.refreshTasks( objVec[0] ) ;
             PD_RC_CHECK( rc, PDERROR, "Update text index information failed[ %d ]",
@@ -1514,6 +1521,7 @@ namespace seadapter
       PD_LOG( PDEVENT, "Network broken with data node. Stop all indexing jobs "
               "and try to register on data node again..." ) ;
       _idxSessionMgr.stopAllIndexer( handle ) ;
+      _indexerOn = FALSE ;
 
       rc = _resumeRegister() ;
       PD_RC_CHECK( rc, PDERROR, "Resume register failed[ %d ]", rc ) ;
