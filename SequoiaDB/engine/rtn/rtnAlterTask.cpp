@@ -1034,6 +1034,11 @@ namespace engine
                 "Failed to get field [%s]: it is not supported yet",
                 FIELD_NAME_ISMAINCL ) ;
 
+      PD_CHECK( !_argument.hasField( FIELD_NAME_DOMAIN_AUTO_REBALANCE ),
+                SDB_OPTION_NOT_SUPPORT, error, PDERROR,
+                "Failed to get field [%s]: it is not supported yet",
+                FIELD_NAME_DOMAIN_AUTO_REBALANCE ) ;
+
       // ReplSize and ShardingKey is allowed in main-collection
       if ( !testArgumentMask( ~( UTIL_CL_REPLSIZE_FIELD |
                                  UTIL_CL_SHDKEY_FIELD ) ) )
