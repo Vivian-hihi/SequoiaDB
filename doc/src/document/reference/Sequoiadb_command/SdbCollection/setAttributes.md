@@ -46,7 +46,7 @@ Collection
 
         格式：`ShardingType : "hash" | "range"`
 
-        * 集合只能存在于一个数据组中，或者集合为没有挂载子表的主表
+        * 集合只能存在于一个数据组中
 
     4. `Partition` ( *Int32* )：分区数。仅当选择 hash 分区时填写，
                                 代表了 hash 分区的个数。其值必须是2的幂。
@@ -54,7 +54,7 @@ Collection
 
         格式：`Partition : <分区数>`
 
-        * 集合只能存在于一个数据组中，或者集合为没有挂载子表的主表
+        * 集合只能存在于一个数据组中
     
     5. `AutoSplit` ( *Bool* )：标识新集合是否开启自动切分功能
 
@@ -62,27 +62,32 @@ Collection
 
         * 集合设置新的 hash 分区键后，可以使用该选项进行自动切分
 
-    6. `Compressed` ( *Bool* )：标识集合是否开启数据压缩功能。
+    6. `EnsureShardingIndex` ( *Bool* )：标识是否创建分区索引
+
+        * 默认值是 true
+
+    7. `Compressed` ( *Bool* )：标识集合是否开启数据压缩功能。
 
         格式：`Compressed : true | false`
 
         * 如果设置 Compressed 为 true，而没有指定 CompressionType，则 CompressionType 为 "snappy"
 
-    7. `CompressionType` ( *String* )：集合的压缩算法，"snappy" 或者 "lzw"。
+    8. `CompressionType` ( *String* )：集合的压缩算法，"snappy" 或者 "lzw"。
 
         * "snappy"：使用 snappy 算法压缩。
         * "lzw"：使用 lzw 算法压缩。
 
         格式：`CompressionType : "snappy" | "lzw"`
 
-    8. `StrictDataMode` ( *Bool* )：标识对该集合的操作是否开启严格数据类型模式
+    9. `StrictDataMode` ( *Bool* )：标识对该集合的操作是否开启严格数据类型模式
 
         格式：`StrictDataMode : true | false`
 
 	**Note:**
 
     * 各个选项的具体使用方式见 [db.collectionspace.createCL()](reference/Sequoiadb_command/SdbCS/createCL.md)。
-	* 分区集合不能修改与分区相关的属性。
+	* 分区集合不能修改与分区相关的属性，如 ShardingKey、Partition 等。
+    * EnsureShardingIndex 和 AutoSplit 仅对当前该次操作生效，仅当修改分区属性，如 ShardingKey 等时有效
 
 ##返回值##
 

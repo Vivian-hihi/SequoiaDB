@@ -34,7 +34,7 @@ Collection
 
         格式：`ShardingType : "hash" | "range"`
 
-        * 集合只能存在于一个数据组中，或者集合为没有挂载子表的主表
+        * 集合只能存在于一个数据组中
 
     3. `Partition` ( *Int32* )：分区数。仅当选择 hash 分区时填写，
                                 代表了 hash 分区的个数。其值必须是2的幂。
@@ -43,19 +43,24 @@ Collection
         格式：`Partition : <分区数>`
 
         * 默认值是：4096
-        * 集合只能存在于一个数据组中，或者集合为没有挂载子表的主表
+        * 集合只能存在于一个数据组中
     
-    4. `AutoSplit` ( *Bool* )：标识新集合是否开启自动切分功能
+    4. `AutoSplit` ( *Bool* )：标识是否开启自动切分功能
 
         格式：`AutoSplit : true | false`
 
         * 默认值是 false
         * 集合设置新的 hash 分区键后，可以使用该选项进行自动切分
 
+    5. `EnsureShardingIndex` ( *Bool* )：标识是否创建分区索引
+
+        * 默认值是 true
+
 	**Note:**
 
     * 各个选项的具体使用方式见 [db.collectionspace.createCL()](reference/Sequoiadb_command/SdbCS/createCL.md)。
 	* 分区集合不能修改与分区相关的属性。
+    * EnsureShardingIndex 和 AutoSplit 仅对当前该次操作生效，仅当修改分区属性，如 ShardingKey 等时有效
 
 ##返回值##
 

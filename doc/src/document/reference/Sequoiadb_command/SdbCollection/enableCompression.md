@@ -22,10 +22,14 @@ Collection
 
     1. `CompressionType` ( *String* )：集合的压缩算法，"snappy" 或者 "lzw"。
 
-        * "snappy"：使用 snappy 算法压缩。
+        * "snappy"：使用 snappy 算法压缩。（默认值）
         * "lzw"：使用 lzw 算法压缩。
 
         格式：`CompressionType : "snappy" | "lzw"`
+
+>  **Note:**
+>
+>  不显式设置 `CompressionType` 将默认把压缩算法修改为 "snappy"
 
 ##返回值##
 
