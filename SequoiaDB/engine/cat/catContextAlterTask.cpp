@@ -137,7 +137,12 @@ namespace engine
          }
          case RTN_ALTER_CL_ENABLE_SHARDING :
          {
-            rc = _checkEnableShard( cataSet, cb, lockMgr ) ;
+            const rtnCLEnableShardingTask * localTask =
+                        dynamic_cast< const rtnCLEnableShardingTask * >( _task ) ;
+            PD_CHECK( NULL != localTask, SDB_SYS, error, PDERROR, "Failed to get task" ) ;
+
+            rc = _checkEnableShard( cataSet, localTask->getShardingArgument(),
+                                    cb, lockMgr ) ;
             break ;
          }
          case RTN_ALTER_CL_DISABLE_SHARDING :
@@ -328,6 +333,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXALTERCLTASK__CHKENABLESHD, "_catCtxAlterCLTask::_checkEnableShard" )
    INT32 _catCtxAlterCLTask::_checkEnableShard ( const clsCatalogSet & cataSet,
+                                                 const rtnCLShardingArgument & argument,
                                                  _pmdEDUCB * cb,
                                                  catCtxLockMgr & lockMgr )
    {
@@ -342,7 +348,7 @@ namespace engine
 
       if ( cataSet.isMainCL() &&
            _task->testFlags( RTN_ALTER_TASK_FLAG_MAINCLALLOW ) &&
-           _task->testArgumentMask( UTIL_CL_SHDKEY_FIELD ) )
+           argument.testArgumentMask( UTIL_CL_SHDKEY_FIELD ) )
       {
          // Special case to alter sharding key of main-collection without any
          // sub-collections
@@ -356,26 +362,40 @@ namespace engine
                    "Failed to [%s]: Could not enable sharding in main-collection",
                    _task->getActionName() ) ;
 
-         if ( _task->testArgumentMask( UTIL_CL_AUTOSPLIT_FIELD ) )
+         if ( argument.testArgumentMask( UTIL_CL_AUTOSPLIT_FIELD ) &&
+              argument.isAutoSplit() )
          {
             // Should have sharding keys for auto split
             PD_CHECK( !cataSet.getShardingKey().isEmpty() ||
-                      _task->testArgumentMask( UTIL_CL_SHDKEY_FIELD ),
+                      argument.testArgumentMask( UTIL_CL_SHDKEY_FIELD ),
                       SDB_NO_SHARDINGKEY, error, PDERROR,
                       "Failed to [%s]: should have sharding key",
                       _task->getActionName() ) ;
+
+            // Should be hash sharding for auto split
+            if ( argument.testArgumentMask( UTIL_CL_SHDTYPE_FIELD ) )
+            {
+               // Altering to hash sharding
+               PD_CHECK( argument.isHashSharding(), SDB_OPTION_NOT_SUPPORT, error, PDERROR,
+                         "Failed to [%s]: enable AutoSplit should be hash sharding",
+                         _task->getActionName() ) ;
+            }
+            else
+            {
+               // Already hash sharding
+               PD_CHECK( cataSet.isHashSharding() || argument.isHashSharding(),
+                         SDB_OPTION_NOT_SUPPORT, error, PDERROR,
+                         "Failed to [%s]: enable AutoSplit should be hash sharding",
+                         _task->getActionName() ) ;
+            }
          }
 
-         if ( _task->getArgumentMask() != UTIL_CL_AUTOSPLIT_FIELD )
+         // Could be only executed on one group
+         PD_CHECK( 1 == cataSet.groupCount(), SDB_OPTION_NOT_SUPPORT, error, PDERROR,
+                   "Failed to [%s]: should have one group", _task->getActionName() ) ;
+         if ( cataSet.isSharding() )
          {
-            // Not only AutoSplit argument is changed, could be only executed
-            // on one group
-            PD_CHECK( 1 == cataSet.groupCount(), SDB_OPTION_NOT_SUPPORT, error, PDERROR,
-                      "Failed to [%s]: should have one group", _task->getActionName() ) ;
-            if ( cataSet.isSharding() )
-            {
-               PD_LOG( PDWARNING, "Sharding is already enabled" ) ;
-            }
+            PD_LOG( PDWARNING, "Sharding is already enabled" ) ;
          }
       }
 
@@ -496,7 +516,8 @@ namespace engine
 
       if ( localTask->containShardingArgument() )
       {
-         rc = _checkEnableShard( cataSet, cb, lockMgr ) ;
+         rc = _checkEnableShard( cataSet, localTask->getShardingArgument(),
+                                 cb, lockMgr ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to check shard arguments, rc: %d", rc ) ;
       }
 
@@ -1066,7 +1087,8 @@ namespace engine
 
          if ( argument.isAutoSplit() )
          {
-            PD_CHECK( argument.isHashSharding(), SDB_INVALIDARG, error, PDERROR,
+            PD_CHECK( argument.isHashSharding() && 1 == cataSet.groupCount(),
+                      SDB_INVALIDARG, error, PDERROR,
                       "Failed to fill sharding argument: "
                       "AutoSplit should be used in hash sharding only" ) ;
          }

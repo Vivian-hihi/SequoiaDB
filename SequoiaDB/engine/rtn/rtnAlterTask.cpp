@@ -338,8 +338,9 @@ namespace engine
 
       if ( _checkShardingKey )
       {
+         // Report no sharding key
          PD_CHECK( _argument.hasField( FIELD_NAME_SHARDINGKEY ),
-                   SDB_FIELD_NOT_EXIST, error, PDERROR,
+                   SDB_NO_SHARDINGKEY, error, PDERROR,
                    "Failed to get field [%s]", FIELD_NAME_SHARDINGKEY ) ;
       }
 

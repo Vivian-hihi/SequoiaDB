@@ -116,6 +116,7 @@ namespace engine
                                    catCtxLockMgr & lockMgr ) ;
 
          INT32 _checkEnableShard ( const clsCatalogSet & cataSet,
+                                   const rtnCLShardingArgument & argument,
                                    _pmdEDUCB * cb,
                                    catCtxLockMgr & lockMgr ) ;
 
