@@ -63,7 +63,7 @@
 #include <string>
 
 // Max and default data size of _bulk operation.
-#define UTIL_ESBULK_MAX_SIZE        16
+#define UTIL_ESBULK_MAX_SIZE        32
 #define UTIL_ESBULK_DFT_SIZE        10
 
 // Space size for the action name and format characters, such as '{', ':'.
