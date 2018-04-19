@@ -7679,7 +7679,7 @@ error :
 
       _pErrorBuf = NULL ;
       _errorBufSize = 0 ;
-      if ( replyFlag != SDB_OK && SDB_DMS_EOC != replyFlag )
+      if ( replyFlag != SDB_OK )
       {
          INT32 dataOff     = 0 ;
          INT32 dataSize    = 0 ;
