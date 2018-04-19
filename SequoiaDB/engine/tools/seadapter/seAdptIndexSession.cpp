@@ -502,7 +502,28 @@ namespace seadapter
 
    void _seAdptIndexSession::_onDetach()
    {
-      PD_LOG( PDDEBUG, "Indexer session detached" ) ;
+      INT32 rc = SDB_OK ;
+      MsgHeader *msg = NULL ;
+      INT32 bufSize = 0 ;
+      UINT64 requestID = 0 ;
+
+      if ( _queryCtxID >= 0 )
+      {
+         rc = msgBuildKillContextsMsg( (CHAR **)&msg, &bufSize, requestID,
+                                       1, &_queryCtxID ) ;
+         PD_RC_CHECK( rc, PDERROR, "Build kill context message failed[ %d ]",
+                      rc ) ;
+         msg->TID = SEADPT_TID( _sessionID ) ;
+         rc = sdbGetSeAdapterCB()->sendToDataNode( msg ) ;
+         PD_RC_CHECK( rc, PDERROR, "Send kill context message to data node "
+                      "failed[ %d ]", rc ) ;
+         _queryCtxID = -1 ;
+      }
+
+   done:
+      return ;
+   error:
+      goto done ;
    }
 
    void _seAdptIndexSession::_updateCLVersion( INT32 version )
@@ -1302,6 +1323,7 @@ namespace seadapter
       rc = sdbGetSeAdapterCB()->sendToDataNode( msg ) ;
       PD_RC_CHECK( rc, PDERROR, "Send kill context message to data node "
                    "failed[ %d ]", rc ) ;
+      _queryCtxID = -1 ;
 
    done:
       return rc ;
