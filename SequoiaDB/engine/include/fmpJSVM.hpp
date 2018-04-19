@@ -45,6 +45,10 @@ namespace engine
    class _sptContainer ;
    class _sptScope ;
 }
+namespace sdbclient
+{
+   class _sdbCursor ;
+}
 
 class _fmpJSVM : public _fmpVM
 {
@@ -69,7 +73,7 @@ private:
    engine::_sptContainer   *_engine ;
    engine::_sptScope       *_scope ;
    std::string             _cmd ;
-   void                    *_cursor ;
+   sdbclient::_sdbCursor*  _cursor ;
 } ;
 
 #endif

@@ -56,6 +56,10 @@ using namespace bson ;
 
 namespace sdbclient
 {
+   OSS_THREAD_LOCAL const CHAR* _pErrorBuf = NULL ;
+   OSS_THREAD_LOCAL INT32       _errorBufSize = 0 ;
+
+   static ERROR_ON_REPLY_FUNC _sdbErrorOnReplyCallback = NULL ;
    static BOOLEAN _sdbIsSrand = FALSE ;
 #if defined (_LINUX) || defined (_AIX)
    static UINT32 _sdbRandSeed = 0 ;
@@ -190,6 +194,62 @@ do                                                            \
       return rc ;
    error :
       goto done ;
+   }
+
+   static INT32 extractErrorObj( const CHAR *pErrorBuf,
+                                  INT32 *pFlag,
+                                  const CHAR **ppErr,
+                                  const CHAR **ppDetail )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj localObj ;
+
+      if ( !pErrorBuf )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      try
+      {
+         localObj.init( pErrorBuf ) ;
+      }
+      catch( std::exception &e )
+      {
+         rc = SDB_CORRUPTED_RECORD ;
+         goto error ;
+      }
+
+      {
+         BSONElement errnoEle = localObj.getField( OP_ERRNOFIELD ) ;
+         if ( pFlag && NumberInt == errnoEle.type() )
+         {
+            *pFlag = errnoEle.Int() ;
+         }
+      }
+      {
+         BSONElement descEle = localObj.getField( OP_ERRDESP_FIELD ) ;
+         if ( ppErr && String == descEle.type() )
+         {
+            *ppErr = descEle.String().c_str() ;
+         }
+      }
+      {
+         BSONElement detailEle = localObj.getField( OP_ERR_DETAIL ) ;
+         if ( ppDetail && String == detailEle.type() )
+         {
+            *ppDetail = detailEle.String().c_str() ;
+         }
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   SDB_EXPORT void sdbSetErrorOnReplyCallback( ERROR_ON_REPLY_FUNC func )
+   {
+      _sdbErrorOnReplyCallback = func ;
    }
 
    /*
@@ -3274,7 +3334,9 @@ error:
          goto error ;
       }
 
-      if ( SDB_LOB_READ != mode && SDB_LOB_WRITE != mode )
+      if ( SDB_LOB_CREATEONLY != mode &&
+           SDB_LOB_READ != mode &&
+           SDB_LOB_WRITE != mode )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
@@ -7614,13 +7676,35 @@ error :
       {
          goto error ;
       }
-      if ( replyFlag != SDB_OK )
+
+      _pErrorBuf = NULL ;
+      _errorBufSize = 0 ;
+      if ( replyFlag != SDB_OK && SDB_DMS_EOC != replyFlag )
       {
+         INT32 dataOff     = 0 ;
+         INT32 dataSize    = 0 ;
+         const CHAR *pErr  = NULL ;
+         const CHAR *pDetail = NULL ;
+
+         dataOff = ossRoundUpToMultipleX( sizeof(MsgOpReply), 4 ) ;
+         dataSize = ( ( MsgHeader* )( *ppBuffer ) )->messageLength - dataOff ;
+         /// save error info
+         if ( dataSize > 0 )
+         {
+            _pErrorBuf = ( *ppBuffer ) + dataOff ;
+            _errorBufSize = dataSize ;
+            if ( _sdbErrorOnReplyCallback &&
+                 SDB_OK == extractErrorObj( _pErrorBuf,
+                                             NULL, &pErr, &pDetail ) )
+            {
+               (*_sdbErrorOnReplyCallback)( _pErrorBuf, (UINT32)_errorBufSize,
+                                            replyFlag, pErr, pDetail ) ;
+            }
+         }
          result = FALSE ;
          rc = replyFlag ;
          goto done ;
       }
-
       result = TRUE ;
    done :
       return rc ;
@@ -8784,6 +8868,17 @@ error :
                         contextID, r ) ;
       if ( rc )
       {
+         if( FALSE == r )
+         {
+            try
+            {
+               errmsg.init( _pReceiveBuffer + sizeof( MsgOpReply ) ) ;
+            }
+            catch( std::exception &e )
+            {
+               rc = SDB_SYS ;
+            }
+         }
          goto error ;
       }
       // check return msg header

@@ -67,6 +67,7 @@ namespace engine
    {
       SPT_JSOP_GETPROP        = 53,
       SPT_JSOP_SETPROP        = 54,
+      SPT_JSOP_GETELEMENT     = 55,
       SPT_JSOP_CALL           = 58,
       SPT_JSOP_FUNAPPLY       = 78,
       SPT_JSOP_SETNAME        = 111,

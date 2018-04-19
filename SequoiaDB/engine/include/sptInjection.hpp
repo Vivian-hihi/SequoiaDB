@@ -299,8 +299,36 @@ namespace engine
    #define JS_ADD_GLOBAL_FUNC_WITHATTR( jsFuncName, funcName, attr ) \
            JS_ADD_STATIC_FUNC_WITHATTR( jsFuncName, funcName, attr )
 
+   #define JS_SET_CVT_TO_BOOL_FUNC( funcName ) \
+           setCVTToBoolFunc( funcName ) ;
+
+   #define JS_SET_CVT_TO_INT_FUNC( funcName ) \
+           setCVTToIntFunc( funcName ) ;
+
+   #define JS_SET_CVT_TO_DOUBLE_FUNC( funcName ) \
+           setCVTToDoubleFunc( funcName ) ;
+
+   #define JS_SET_CVT_TO_STRING_FUNC( funcName ) \
+           setCVTToStringFunc( funcName ) ;
+
+   #define JS_SET_CVT_TO_BSON_FUNC( funcName ) \
+           setCVTToBSONFunc( funcName ) ;
+
+   #define JS_SET_SPECIAL_FIELD_NAME( fieldName ) \
+           setSpecialFieldName( fieldName ) ;
+
+   #define JS_SET_JSOBJ_TO_BSON_FUNC( funcName ) \
+           setFMPToBSONFunc( funcName ) ;
+
+   #define JS_SET_JSOBJ_TO_CURSOR_FUNC( funcName ) \
+           setFMPToCursorFunc( funcName ) ;
+
+   #define JS_SET_BSON_TO_JSOBJ_FUNC( funcName ) \
+           setBSONToJSObjFunc( funcName ) ;
+
    #define JS_MAPPING_END() }
-                      
+
+
 }
 
 #endif

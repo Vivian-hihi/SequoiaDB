@@ -60,6 +60,7 @@
 #define FMP_RES_TYPE          "resType"
 #define FMP_RES_VALUE         "value"
 #define FMP_RES_CODE          "retCode"
+#define FMP_RES_CLASSNAME     "className"
 #define FMP_CONTROL_FIELD     "step"
 #define FMP_DIAG_PATH         "diag"
 #define FMP_SEQ_ID            "seqid"
@@ -89,6 +90,7 @@
 #define FMP_RES_TYPE_CL          SDB_SPD_RES_TYPE_CL
 #define FMP_RES_TYPE_RG          SDB_SPD_RES_TYPE_RG
 #define FMP_RES_TYPE_RN          SDB_SPD_RES_TYPE_RN
+#define FMP_RES_TYPE_SPECIALOBJ  SDB_SPD_RES_TYPE_SPECIALOBJ
 
 #define FMP_FUNC_TYPE_INVALID    -1
 #define FMP_FUNC_TYPE_JS         0

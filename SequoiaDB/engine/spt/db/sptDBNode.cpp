@@ -1,0 +1,247 @@
+/*******************************************************************************
+
+   Copyright (C) 2011-2014 SequoiaDB Ltd.
+
+   This program is free software: you can redistribute it and/or modify
+   it under the term of the GNU Affero General Public License, version 3,
+   as published by the Free Software Foundation.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warrenty of
+   MARCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program. If not, see <http://www.gnu.org/license/>.
+
+   Source File Name = sptDBNode.cpp
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+          24/10/2017  WJM  Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
+#include "sptDBNode.hpp"
+#include "sptDBRG.hpp"
+using sdbclient::_sdbReplicaGroup ;
+namespace engine
+{
+   #define SPT_NODE_NAME   "SdbNode"
+   JS_CONSTRUCT_FUNC_DEFINE( _sptDBNode, construct )
+   JS_DESTRUCT_FUNC_DEFINE( _sptDBNode, destruct )
+   JS_MEMBER_FUNC_DEFINE( _sptDBNode, connect )
+   JS_MEMBER_FUNC_DEFINE( _sptDBNode, start )
+   JS_MEMBER_FUNC_DEFINE( _sptDBNode, stop )
+
+   JS_BEGIN_MAPPING( _sptDBNode, SPT_NODE_NAME )
+      JS_ADD_CONSTRUCT_FUNC( construct )
+      JS_ADD_DESTRUCT_FUNC( destruct )
+      JS_ADD_MEMBER_FUNC( "connect", connect )
+      JS_ADD_MEMBER_FUNC( "start", start )
+      JS_ADD_MEMBER_FUNC( "stop", stop )
+      JS_SET_CVT_TO_BSON_FUNC( _sptDBNode::cvtToBSON )
+      JS_SET_JSOBJ_TO_BSON_FUNC( _sptDBNode::fmpToBSON )
+      JS_SET_BSON_TO_JSOBJ_FUNC( _sptDBNode::bsonToJSObj )
+   JS_MAPPING_END()
+
+   _sptDBNode::_sptDBNode( _sdbNode* pNode )
+   {
+      _node.pNode = pNode ;
+   }
+
+   _sptDBNode::~_sptDBNode()
+   {
+   }
+
+   INT32 _sptDBNode::construct( const _sptArguments &arg,
+                                _sptReturnVal &rval,
+                                bson::BSONObj &detail )
+   {
+      detail = BSON( SPT_ERR << "use of new SdbNode() is forbidden, you should use "
+                     "other functions to produce a SdbNode object" ) ;
+      return SDB_SYS ;
+   }
+
+   INT32 _sptDBNode::destruct()
+   {
+      return SDB_OK ;
+   }
+
+   INT32 _sptDBNode::connect( const _sptArguments &arg,
+                              _sptReturnVal &rval,
+                              bson::BSONObj &detail )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 isSecure = FALSE ;
+
+      rc = arg.getNative( 0, &isSecure, SPT_NATIVE_INT32 ) ;
+      if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
+      {
+         detail = BSON( SPT_ERR << "IsSecure must be bool" ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sptDBNode::start( const _sptArguments &arg,
+                            _sptReturnVal &rval,
+                            bson::BSONObj &detail )
+   {
+      INT32 rc = SDB_OK ;
+      rc = _node.start() ;
+      if( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << "Failed to start node" ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sptDBNode::stop( const _sptArguments &arg,
+                           _sptReturnVal &rval,
+                           bson::BSONObj &detail )
+   {
+      INT32 rc = SDB_OK ;
+      rc = _node.stop() ;
+      if( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << "Failed to stop node" ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sptDBNode::cvtToBSON( const CHAR* key, const sptObject &value,
+                                BOOLEAN isSpecialObj, BSONObjBuilder& builder,
+                                string &errMsg )
+   {
+      errMsg = "SdbNode can not be converted to bson" ;
+      return SDB_SYS ;
+   }
+
+   INT32 _sptDBNode::fmpToBSON( const sptObject &value, BSONObj &retObj,
+                                string &errMsg )
+   {
+      INT32 rc = SDB_OK ;
+      string nodeName ;
+      rc = value.getStringField( SPT_NODE_NAME_FIELD, nodeName ) ;
+      if( SDB_OK != rc )
+      {
+         errMsg = "Failed to get node _nodename field" ;
+         goto error ;
+      }
+      retObj = BSON( SPT_NODE_NAME_FIELD << nodeName ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sptDBNode::bsonToJSObj( sdbclient::sdb &db, const BSONObj &data,
+                                  _sptReturnVal &rval, bson::BSONObj &detail )
+   {
+      INT32 rc = SDB_OK ;
+      string fullName ;
+      string rgName ;
+      string nodename ;
+      string hostname ;
+      string svcname ;
+      size_t pos = 0 ;
+      _sdbReplicaGroup *pRG = NULL ;
+      sptDBRG *pSptRG = NULL ;
+      _sdbNode *pNode = NULL ;
+      INT32 nodeID = -1 ;
+
+      fullName = data.getStringField( SPT_NODE_NAME_FIELD ) ;
+      pos = fullName.find( ":" ) ;
+      if( pos == std::string::npos ||
+          pos >= fullName.size() - 1 )
+      {
+         rc = SDB_SYS ;
+         detail = BSON( SPT_ERR << "Invalid node name" ) ;
+         goto error ;
+      }
+      rgName = fullName.substr( 0, pos ) ;
+      nodename = fullName.substr( pos + 1 ) ;
+      rc = db.getReplicaGroup( rgName.c_str(), &pRG ) ;
+      if( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << "Failed to get ReplicaGroup" ) ;
+         goto error ;
+      }
+      {
+         size_t pos2 = nodename.find( ":" ) ;
+         if( pos2 == std::string::npos ||
+             pos2 >= nodename.size() - 1 )
+         {
+            rc = SDB_SYS ;
+            detail = BSON( SPT_ERR << "Invalid nodename" ) ;
+            goto error ;
+         }
+         hostname = nodename.substr( 0, pos2 ) ;
+         svcname = nodename.substr( pos2 + 1 ) ;
+         sptDBRG* pSptRG = SDB_OSS_NEW sptDBRG( pRG ) ;
+         if( NULL == pSptRG )
+         {
+            rc = SDB_OOM ;
+            detail = BSON( SPT_ERR << "Failed to new sptDBRG obj" ) ;
+            goto error ;
+         }
+         rc = pRG->getNode( hostname.c_str(), svcname.c_str(), &pNode ) ;
+         if( SDB_OK != rc )
+         {
+            detail = BSON( SPT_ERR << "Failed to get node" ) ;
+            goto error ;
+         }
+         rc = pNode->getNodeID( nodeID ) ;
+         if( SDB_OK != rc )
+         {
+            detail = BSON( SPT_ERR << "Failed to get node id" ) ;
+            goto error ;
+         }
+         SPT_SET_NODE_TO_RETURNVAL( pNode ) ;
+         rval.addReturnValProperty( SPT_NODE_HOSTNAME_FIELD )->
+            setValue( pNode->getHostName() ) ;
+         rval.addReturnValProperty( SPT_NODE_SVCNAME_FIELD )->
+            setValue( pNode->getServiceName() ) ;
+         rval.addReturnValProperty( SPT_NODE_NAME_FIELD )->
+            setValue( pNode->getNodeName() ) ;
+         rval.addReturnValProperty( SPT_NODE_NODEID_FIELD )->setValue( nodeID ) ;
+         rc = rval.addReturnValProperty( SPT_NODE_RG_FIELD )->
+            assignUsrObject< sptDBRG >( pSptRG ) ;
+         if( SDB_OK != rc )
+         {
+            detail = BSON( SPT_ERR << "Failed to set node _rg property" ) ;
+            goto error ;
+         }
+      }
+   done:
+      return rc ;
+   error:
+      if( NULL != pSptRG )
+      {
+         SDB_OSS_DEL pSptRG ;
+         pSptRG = NULL ;
+         pRG = NULL ;
+      }
+      SAFE_OSS_DELETE( pRG ) ;
+      SAFE_OSS_DELETE( pNode ) ;
+      goto done ;
+   }
+}

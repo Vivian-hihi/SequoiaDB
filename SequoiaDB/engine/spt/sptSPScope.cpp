@@ -39,15 +39,14 @@
 #include "sptBsonobj.hpp"
 #include "sptBsonobjArray.hpp"
 #include "sptGlobalFunc.hpp"
-#include "sptConvertor2.hpp"
-#include "sptConvertorHelper.hpp"
+#include "sptConvertor.hpp"
 #include "sptCommon.hpp"
 #include "spt.hpp"
 #include "sptFuncDef.hpp"
 #include "sptHelp.hpp"
 #include "sptInvoker.hpp"
 #include "../spt/js_in_cpp.hpp"
-
+#include "sptConvertorHelper.hpp"
 using namespace std ;
 
 namespace engine
@@ -283,7 +282,7 @@ namespace engine
       else if ( JSVAL_IS_STRING( jsrval ) )
       {
          std::string v ;
-         rc = sptConvertor2::toString( cx, jsrval, v ) ;
+         rc = sptConvertor::toString( cx, jsrval, v ) ;
          if ( SDB_OK != rc )
          {
             goto error ;
@@ -323,22 +322,7 @@ namespace engine
       else if ( JSVAL_IS_OBJECT( jsrval ) )
       {
          JSObject *obj = JSVAL_TO_OBJECT( jsrval ) ;
-         if ( JSObjIsBsonobj( cx, obj ) )
-         {
-            CHAR *rawData = NULL ;
-            rc = getBsonRawFromBsonClass( cx, obj, &rawData ) ;
-            if ( rc )
-            {
-               goto error ;
-            }
-            else if ( !rawData )
-            {
-               rc = SDB_SYS ;
-               goto error ;
-            }
-            builder.append( SPT_RVAL_KEY, bson::BSONObj( rawData ) ) ;
-         }
-         else if ( _sptBsonobj::__desc.isInstanceOf( cx, obj ) )
+         if ( _sptBsonobj::__desc.isInstanceOf( cx, obj ) )
          {
             _sptBsonobj *p = (_sptBsonobj*)JS_GetPrivate( cx, obj ) ;
             if ( NULL == p )
@@ -359,9 +343,11 @@ namespace engine
             }
             sub.done() ;
          }
-         else if ( !JSObjIsSdbObj( cx, JSVAL_TO_OBJECT( jsrval ) ) )
+         else if ( !sptGetObjFactory()->findObj(
+                     sptGetObjFactory()->getClassName( cx, obj ) ) )
          {
-            sptConvertor2 c( cx ) ;
+            // Not sdb obj
+            sptConvertor c( cx ) ;
             bson::BSONObj v ;
             rc = c.toBson( JSVAL_TO_OBJECT( jsrval ), v ) ;
             if ( SDB_OK != rc )
@@ -403,6 +389,7 @@ namespace engine
    INT32 _sptSPScope::start( UINT32 loadMask )
    {
       INT32 rc = SDB_OK ;
+      BSONObj::setJSCompatibility( TRUE ) ;
       if ( NULL != _runtime )
       {
          ossPrintf( "scope has already been started up"OSS_NEWLINE) ;
@@ -473,17 +460,6 @@ namespace engine
    INT32 _sptSPScope::_loadObj( UINT32 loadMask )
    {
       INT32 rc = SDB_OK ;
-
-      if ( loadMask & SPT_OBJ_MASK_STANDARD )
-      {
-         if ( !InitDbClasses( _context, _global ) )
-         {
-            ossPrintf( "Failed to init dbclass"OSS_NEWLINE ) ;
-            rc = SDB_SYS ;
-            goto error ;
-         }
-      }
-
       if ( loadMask & SPT_OBJ_MASK_USR )
       {
          SPT_VEC_OBJDESC vecObjs ;
@@ -520,6 +496,14 @@ namespace engine
 
    void _sptSPScope::shutdown()
    {
+      SPT_VEC_OBJDESC vecObjs ;
+      sptGetObjFactory()->getObjDescs( vecObjs ) ;
+      for ( UINT32 i = 0 ; i < vecObjs.size() ; ++i )
+      {
+         sptObjDesc *desc = (sptObjDesc*)vecObjs[ i ] ;
+         // JSObject will be free if destroy context, can't be accessed after
+         desc->setClassPrototype( NULL ) ;
+      }
       if ( NULL != _context )
       {
          sptPrivateData* p = (sptPrivateData*)JS_GetContextPrivate( _context ) ;
@@ -647,6 +631,11 @@ namespace engine
       JSFunctionSpec *fSpecs = NULL ;
       JSFunctionSpec *sfSpecs = NULL ;
 
+      if( NULL != desc->getPrototypeDef() )
+      {
+         // Class has been initialized
+         goto done ;
+      }
       if ( !desc->isIgnoredParent() )
       {
          parentDesc = desc->getParent() ;
@@ -655,6 +644,12 @@ namespace engine
             ossPrintf( "Get object[%s]'s parent object failed"OSS_NEWLINE,
                        desc->getJSClassName() ) ;
             rc = SDB_SYS ;
+            goto error ;
+         }
+         rc = _loadUsrClass( const_cast< sptObjDesc* >( parentDesc ) ) ;
+         if( SDB_OK != rc )
+         {
+            ossPrintf( "Failed to load parent class" ) ;
             goto error ;
          }
          parent_proto = (JSObject*)parentDesc->getPrototypeDef() ;
@@ -734,7 +729,6 @@ namespace engine
          sfSpecs[i].call = NULL ;
          sfSpecs[i].nargs = 0 ;
          sfSpecs[i].flags = 0 ;
-
          prototype = JS_InitClass( _context, /// context
                                    _global,  /// object
                                    parent_proto,  /// parent_proto
@@ -753,7 +747,6 @@ namespace engine
             rc = SDB_SYS ;
             goto error ;
          }
-
          desc->setClassPrototype( prototype ) ;
       }
 

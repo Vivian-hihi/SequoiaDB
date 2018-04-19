@@ -42,47 +42,17 @@
 #include "core.hpp"
 #include "jsapi.h"
 #include <string>
+#include "../bson/bson.hpp"
+using bson::BSONObj ;
 
-INT32 JSObj2BsonRaw( JSContext *cx, JSObject *obj, CHAR **raw ) ;
+namespace engine
+{
+   INT32 JSVal2String( JSContext *cx, const jsval &val, std::string &str ) ;
+   // caller should free the return pointer using SAFE_JS_FREE
+   CHAR *convertJsvalToString ( JSContext *cx , jsval val ) ;
 
-INT32 JSVal2String( JSContext *cx, const jsval &val, std::string &str ) ;
-
-// caller should free the return pointer using SAFE_JS_FREE
-CHAR *convertJsvalToString ( JSContext *cx , jsval val ) ;
-
-BOOLEAN JSObjIsQuery( JSContext *cx, JSObject *obj ) ;
-
-BOOLEAN JSObjIsCursor( JSContext *cx, JSObject *obj ) ;
-
-BOOLEAN JSObjIsCS( JSContext *cx, JSObject *obj ) ;
-
-BOOLEAN JSObjIsCL( JSContext *cx, JSObject *obj ) ;
-
-BOOLEAN JSObjIsRN( JSContext *cx, JSObject *obj ) ;
-
-BOOLEAN JSObjIsRG( JSContext *cx, JSObject *obj ) ;
-
-BOOLEAN JSObjIsSdbObj( JSContext *cx, JSObject *obj ) ;
-
-INT32 cursorNextRaw( void *cursor, CHAR **raw ) ;
-
-INT32 JSObj2Cursor( JSContext *cx, JSObject *obj, void **cursor ) ;
-
-BOOLEAN JSObjIsBsonobj( JSContext *cx, JSObject *obj ) ;
-
-INT32 getBsonRawFromBsonClass( JSContext *cx, JSObject *obj, CHAR **raw ) ;
-
-INT32 getCSNameFromObj( JSContext *cx, JSObject *obj,
-                        CHAR **csName ) ;
-
-INT32 getCLNameFromObj( JSContext *cx, JSObject *obj,
-                        CHAR **clName ) ;
-
-INT32 getRNNameFromObj( JSContext *cx, JSObject *obj,
-                        CHAR **rnName ) ;
-
-INT32 getRGNameFromObj( JSContext *cx, JSObject *obj,
-                        CHAR **rgName ) ;
+   INT32 cursorNextRecord( void *cursor, BSONObj &record ) ;
+}
 
 #endif
 

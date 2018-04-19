@@ -49,7 +49,7 @@
 
 #define SPT_OBJ_CNAME_PROPNAME      "__className__"
 #define SPT_OBJ_ID_PROPNAME         "__id__"
-
+#define SPT_SPE_OBJSTART            '$'
 namespace engine
 {
    /*

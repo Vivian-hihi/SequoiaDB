@@ -44,6 +44,7 @@
 #include "sptUsrRemote.hpp"
 #include "sptUsrFilter.hpp"
 #include "../client/common.h"
+#include "client.hpp"
 
 namespace engine
 {
@@ -62,7 +63,7 @@ namespace engine
    {
       sptGetObjFactory()->sortAndAssert() ;
       initCacheStrategy( FALSE, 0 ) ;
-      InitScopeEngine() ;
+      sdbclient::sdbSetErrorOnReplyCallback( (sdbclient::ERROR_ON_REPLY_FUNC)engine::sdbErrorCallback ) ;
       return SDB_OK ;
    }
 

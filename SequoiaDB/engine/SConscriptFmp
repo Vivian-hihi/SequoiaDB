@@ -15,13 +15,12 @@ bsonFiles = [
       ]
 
 sptFiles = [
-      "spt/dbClasses.cpp",
-      "spt/sptConvertor.cpp",
       "spt/sptConvertorHelper.cpp",
       "spt/sptCommon.cpp"
       ]
 
 spt2Files = [
+      "spt/sptSPObject.cpp",
       "spt/sptContainer.cpp",
       "spt/sptInvoker.cpp",
       "spt/sptObjDesc.cpp",
@@ -29,7 +28,7 @@ spt2Files = [
       "spt/sptScope.cpp",
       "spt/sptSPArguments.cpp",
       "spt/sptSPScope.cpp",
-      "spt/sptConvertor2.cpp",
+      "spt/sptConvertor.cpp",
       "spt/sptBsonobj.cpp",
       "spt/sptBsonobjArray.cpp",
       "spt/sptLibssh2Session.cpp",
@@ -57,7 +56,27 @@ spt2Files = [
       "spt/usrdef/sptUsrFileCommon.cpp",
       "spt/usrdef/sptUsrSystemCommon.cpp",
       "spt/usrdef/sptUsrCmdCommon.cpp",
-      "spt/usrdef/sptUsrOmaCommon.cpp"
+      "spt/usrdef/sptUsrOmaCommon.cpp",
+       "spt/db/sptDBSdb.cpp",
+       "spt/db/sptDBSecureSdb.cpp",
+       "spt/db/sptDBRG.cpp",
+       "spt/db/sptDBNode.cpp",
+       "spt/db/sptDBCS.cpp",
+       "spt/db/sptDBCL.cpp",
+       "spt/db/sptDBCursor.cpp",
+       "spt/db/sptDBDomain.cpp",
+       "spt/db/sptDBDC.cpp",
+       "spt/db/sptDBTimestamp.cpp",
+       "spt/db/sptDBBinData.cpp",
+       "spt/db/sptDBDate.cpp",
+       "spt/db/sptDBRegex.cpp",
+       "spt/db/sptDBMaxKey.cpp",
+       "spt/db/sptDBMinKey.cpp",
+       "spt/db/sptDBOID.cpp",
+       "spt/db/sptDBNumberLong.cpp",
+       "spt/db/sptDBNumberDecimal.cpp",
+       "spt/db/sptDBQuery.cpp",
+       "spt/db/sptDBCount.cpp"
       ]
 
 ssh2Files = [
@@ -167,9 +186,17 @@ clientCFiles = [
       "client/common.c",
       "client/network.c"
       ]
+clientcppFiles = [
+      "client/clientcpp.cpp",
+      "client/sdbDataSource.cpp",
+      "client/sdbDataSourceComm.cpp",
+      "client/sdbDataSourceStrategy.cpp",
+      "client/sdbDataSourceWorker.cpp"
+      ]
 
 #Client Driver
 fmpEnv.StaticLibrary('clientc', clientCFiles)
+fmpEnv.StaticLibrary('clientcpp', clientcppFiles)
 #BSON
 fmpEnv.StaticLibrary('bson', bsonFiles)
 #Operating System Services
@@ -189,6 +216,6 @@ fmpEnv.StaticLibrary('ssh2', ssh2Files)
 
 #
 sdbfmp = fmpEnv.Program("sdbfmp", fmpMain,
-      LIBDEPS=["oss","pd","util","clientc","fmp","bson","pmd", "spt","spt2", "ssh2"],
+      LIBDEPS=["oss","pd","util","clientc","clientcpp","fmp","bson","pmd", "spt","spt2", "ssh2"],
       _LIBDEPS='$_LIBDEPS_OBJS' )
 fmpEnv.Install( '#/bin', sdbfmp )

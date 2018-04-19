@@ -43,7 +43,7 @@
 #include "sptReturnVal.hpp"
 #include "sptCommon.hpp"
 #include "../bson/bson.hpp"
-
+#include <set>
 
 namespace engine
 {
@@ -108,7 +108,7 @@ namespace engine
          return rc ;
       error:
          _reportError( cx, rc, detail ) ;
-         goto done ;         
+         goto done ;
       }
 
       template<typename Func>
@@ -315,18 +315,19 @@ namespace engine
 
                if ( hasRet && found )
                {
-                  goto done ;
+                  //goto done ;
                }
             }
 
             if ( JSVAL_IS_STRING ( valID ) )
             {
                string idstr ;
+               std::set< string > funcSet ;
                args.getString( 0, idstr ) ;
-
-               /// member function will be called.
-               if ( T::__desc.getFuncMap().isMemberFunc( idstr.c_str() ) )
+               sptGetObjFactory()->getObjFuncNames( cx, obj, funcSet, TRUE ) ;
+               if( funcSet.end() != funcSet.find( idstr ) )
                {
+                  /// member function will be called.
                   goto done ;
                }
             }
@@ -414,7 +415,7 @@ namespace engine
                                 const bson::BSONObj &detail ) ;
 
       static UINT32 _getOpCode( JSContext *cx ) ;
- 
+
    } ;
    typedef class _sptInvoker sptInvoker ;
 }

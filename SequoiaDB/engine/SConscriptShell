@@ -7,13 +7,12 @@ if usesm:
     Import("smlib_file")
 
 sptFiles = [
-      "spt/dbClasses.cpp",
-      "spt/sptConvertor.cpp",
-      "spt/sptConvertorHelper.cpp",
-      "spt/sptCommon.cpp"
+      "spt/sptCommon.cpp",
+      "spt/sptConvertorHelper.cpp"
       ]
 
 spt2Files = [
+      "spt/sptSPObject.cpp",
       "spt/sptContainer.cpp",
       "spt/sptInvoker.cpp",
       "spt/sptObjDesc.cpp",
@@ -21,7 +20,7 @@ spt2Files = [
       "spt/sptScope.cpp",
       "spt/sptSPArguments.cpp",
       "spt/sptSPScope.cpp",
-      "spt/sptConvertor2.cpp",
+      "spt/sptConvertor.cpp",
       "spt/sptBsonobj.cpp",
       "spt/sptBsonobjArray.cpp",
       "spt/sptLibssh2Session.cpp",
@@ -50,7 +49,27 @@ spt2Files = [
       "spt/usrdef/sptUsrFileCommon.cpp",
       "spt/usrdef/sptUsrSystemCommon.cpp",
       "spt/usrdef/sptUsrCmdCommon.cpp",
-      "spt/usrdef/sptUsrOmaCommon.cpp"
+      "spt/usrdef/sptUsrOmaCommon.cpp",
+      "spt/db/sptDBSdb.cpp",
+      "spt/db/sptDBSecureSdb.cpp",
+      "spt/db/sptDBRG.cpp",
+      "spt/db/sptDBNode.cpp",
+      "spt/db/sptDBCS.cpp",
+      "spt/db/sptDBCL.cpp",
+      "spt/db/sptDBCursor.cpp",
+      "spt/db/sptDBDomain.cpp",
+      "spt/db/sptDBDC.cpp",
+      "spt/db/sptDBTimestamp.cpp",
+      "spt/db/sptDBBinData.cpp",
+      "spt/db/sptDBDate.cpp",
+      "spt/db/sptDBRegex.cpp",
+      "spt/db/sptDBMaxKey.cpp",
+      "spt/db/sptDBMinKey.cpp",
+      "spt/db/sptDBOID.cpp",
+      "spt/db/sptDBNumberLong.cpp",
+      "spt/db/sptDBNumberDecimal.cpp",
+      "spt/db/sptDBQuery.cpp",
+      "spt/db/sptDBCount.cpp"
       ]
 
 ossFiles = [
@@ -134,6 +153,14 @@ clientCFiles = [
       "client/network.c"
       ]
 
+clientcppFiles = [
+      "client/clientcpp.cpp",
+      "client/sdbDataSource.cpp",
+      "client/sdbDataSourceComm.cpp",
+      "client/sdbDataSourceStrategy.cpp",
+      "client/sdbDataSourceWorker.cpp"
+      ]
+
 ssh2Files = [
       "ssh2/agent.c",
       "ssh2/channel.c",
@@ -166,6 +193,7 @@ pmdFiles = [
 
 #Client Driver
 shellEnv.StaticLibrary('clientc', clientCFiles)
+shellEnv.StaticLibrary('clientcpp', clientcppFiles)
 #Operating System Services
 shellEnv.StaticLibrary('oss', ossFiles)
 #Problem Determination
@@ -183,10 +211,10 @@ shellEnv.StaticLibrary('pmd', pmdFiles)
 #Shell Executable
 #Shell Backend  Executable
 sdb = shellEnv.Program("sdb", shellMain,
-      LIBDEPS=["spt","oss","pd","util","clientc", "ssh2", "util2", "spt2", "pmd"],
+      LIBDEPS=["spt","oss","pd","util", "clientcpp", "clientc", "ssh2", "util2", "spt2", "pmd"],
       _LIBDEPS='$_LIBDEPS_OBJS' )
 sdbbp = shellEnv.Program("sdbbp", shellBpMain,
-      LIBDEPS=["spt","oss","pd","util","clientc", "ssh2", "util2", "spt2", "pmd"],
+      LIBDEPS=["spt","oss","pd","util","clientcpp", "clientc", "ssh2", "util2", "spt2", "pmd"],
       _LIBDEPS='$_LIBDEPS_OBJS' )
 shellEnv.Install( '#/bin', sdbbp )
 

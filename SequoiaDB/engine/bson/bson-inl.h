@@ -219,7 +219,7 @@ namespace bson {
         return *this;
     }
 
-    inline BSONObjBuilder& BSONObjBuilder::appendElementsWithoutName(BSONObj x) 
+    inline BSONObjBuilder& BSONObjBuilder::appendElementsWithoutName(BSONObj x)
     {
         BSONObjIterator it(x);
         while ( it.moreWithEOO() ) {
@@ -379,7 +379,7 @@ namespace bson {
     }
 
     inline string BSONObj::toString( bool isArray, bool full ) const {
-        if ( isEmpty() ) 
+        if ( isEmpty() )
         {
            if ( isArray )
            {
@@ -785,7 +785,15 @@ namespace bson {
             double valNum = number() ;
             if( isInf( valNum, &sign ) == false )
             {
-               s.appendDoubleNice( valNum );
+               // check NaN
+               if( valNum != valNum )
+           	   {
+           	      s << "NaN" ;
+           	   }
+			   else
+			   {
+                  s.appendDoubleNice( valNum ) ;
+			   }
             }
             else
             {

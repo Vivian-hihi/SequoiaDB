@@ -65,6 +65,9 @@ namespace engine
       sptProperty* addSelfProperty( const std::string &name,
                                     UINT32 attr = SPT_PROP_DEFAULT ) ;
 
+      void addSelfToReturnValProperty( const std::string &name,
+                                       UINT32 attr = SPT_PROP_DEFAULT ) ;
+
       const SPT_PROPERTIES& getReturnValProperties() const
       {
          return _valProperties ;
@@ -81,6 +84,15 @@ namespace engine
          return _val.assignUsrObject< T >( value ) ;
       }
 
+      BOOLEAN needAddSelfToReturnValProperty() const
+      {
+         return _needAddSelfToVal ;
+      }
+
+      const sptProperty& getAddSelfToReturnValProperty() const
+      {
+         return _addSelfToReturnValProperty ;
+      }
    private:
       /// Return val. If the val's field name is not empty, will
       /// add this val to self as property with the name
@@ -92,6 +104,9 @@ namespace engine
 
       /// properties of self. Will ignored the item its name is empty.
       SPT_PROPERTIES    _selfProperties ;
+
+      BOOLEAN           _needAddSelfToVal ;
+      sptProperty       _addSelfToReturnValProperty ;
    } ;
 
    typedef class _sptReturnVal sptReturnVal ;

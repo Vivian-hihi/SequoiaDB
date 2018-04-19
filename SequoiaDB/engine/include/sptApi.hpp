@@ -40,6 +40,7 @@
 #include "sptScope.hpp"
 #include "sptArguments.hpp"
 #include "sptReturnVal.hpp"
+#include "sptObject.hpp"
 
 #define SPT_CLASS_DEF( c )\
         ( (c)->__desc.getClassDef() )

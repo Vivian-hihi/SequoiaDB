@@ -549,6 +549,12 @@ namespace sdbclient
          return _nodeName ;
       }
 
+      INT32 getNodeID( INT32 &nodeID ) const
+      {
+         nodeID = _nodeID ;
+         return SDB_OK ;
+      }
+
       // stop the node
       INT32 stop () { return _stopStart ( FALSE ) ; }
 

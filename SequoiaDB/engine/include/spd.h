@@ -55,6 +55,7 @@ enum _SDB_SPD_RES_TYPE
    SDB_SPD_RES_TYPE_CL,       /**< Js return a collection handle */
    SDB_SPD_RES_TYPE_RG,       /**< Js return a replica group handle */
    SDB_SPD_RES_TYPE_RN,       /**< Js return a data node handle */
+   SDB_SPD_RES_TYPE_SPECIALOBJ, /**< Js return a special obj */
 } ;
 
 /** Js return type */

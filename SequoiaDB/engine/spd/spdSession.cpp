@@ -306,6 +306,12 @@ namespace engine
           BSONElement value = _resmsg.getField( FMP_RES_VALUE ) ;
           SDB_ASSERT( !value.eoo(), "impossible" ) ;
           builder.append( value ) ;
+          if( FMP_RES_TYPE_SPECIALOBJ == _resType )
+          {
+             BSONElement className = _resmsg.getField( FMP_RES_CLASSNAME ) ;
+             SDB_ASSERT( !className.eoo(), "impossible" ) ;
+             builder.append( className ) ;
+          }
           _resmsg = builder.obj() ;
        }
        }

@@ -409,33 +409,6 @@ Object.prototype.toString = function() {
    return this._rawToString() ;
 }
 
-// Bson
-Bson.prototype.toObj = function() {
-   return JSON.parse( this.toJson() ) ;
-}
-
-Bson.prototype.toString = function() {
-   if ( typeof(SDB_PRINT_JSON_FORMAT) == "undefined" ||
-        SDB_PRINT_JSON_FORMAT )
-   {
-      try
-      {
-         var obj = this.toObj();
-         var str = JSON.stringify ( obj, undefined, 2 ) ;
-         return str ;
-      }
-      catch ( e )
-      {
-         return this.toJson() ;
-      }
-   }
-   else
-   {
-      return this.toJson() ;
-   }
-}
-// end Bson
-
 // SdbCursor
 SdbCursor.prototype.toArray = function() {
    if ( this._arr )
@@ -520,16 +493,56 @@ CLCount.prototype._exec = function() {
 // end CLCount
 
 // SdbCollection
+
 SdbCollection.prototype.count = function( condition ) {
-   return new CLCount( this, condition ) ;
+   var count = new CLCount() ;
+   count._condition = {} ;
+   if( undefined != condition )
+   {
+      count._condition = condition ;
+   }
+   count._collection = this ;
+   count._hint = {} ;
+   return count ;
 }
 
 SdbCollection.prototype.find = function( query, select ) {
-   return new SdbQuery( this , query, select );
+   var queryObj = new SdbQuery();
+   queryObj._query = {};
+   queryObj._select = {} ;
+   if( undefined != query )
+   {
+      queryObj._query = query ;
+   }
+   if( undefined != select )
+   {
+      queryObj._select = select ;
+   }
+   queryObj._sort = {} ;
+   queryObj._hint = {} ;
+   queryObj._options = {} ;
+   queryObj._collection = this ;
+   return queryObj ;
 }
 
 SdbCollection.prototype.findOne = function( query, select ) {
-   return new SdbQuery( this , query, select ).limit( 1 ) ;
+   var queryObj = new SdbQuery() ;
+   queryObj._query = {};
+   queryObj._select = {} ;
+   if( undefined != query )
+   {
+      queryObj._query = query ;
+   }
+   if( undefined != select )
+   {
+      queryObj._select = select ;
+   }
+   queryObj._sort = {} ;
+   queryObj._hint = {} ;
+   queryObj._options = {} ;
+   queryObj._collection = this ;
+   queryObj.limit( 1 ) ;
+   return queryObj ;
 }
 
 SdbCollection.prototype.getIndex = function( name ) {
@@ -741,6 +754,10 @@ SdbQuery.prototype.count = function() {
 }
 
 SdbQuery.prototype.explain = function( options ) {
+   if( undefined == options )
+   {
+      options = {} ;
+   }
    return this._collection.explain( this._query,
                                     this._select,
                                     this._sort,
@@ -827,7 +844,10 @@ SdbCS.prototype.toString = function() {
 }
 
 SdbCS.prototype._resolveCL = function(clName) {
-   this.getCL(clName) ;
+   if( !this.hasOwnProperty( clName) )
+   {
+      this.getCL( clName ) ;
+   }
 }
 
 // end SdbCS
@@ -863,7 +883,10 @@ Sdb.prototype.listReplicaGroups = function() {
 }
 
 Sdb.prototype._resolveCS = function(csName) {
-   this.getCS( csName ) ;
+   if( !this.hasOwnProperty( csName ) )
+   {
+      return this.getCS( csName ) ;
+   }
 }
 
 Sdb.prototype.getCatalogRG = function() {

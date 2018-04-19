@@ -33,7 +33,7 @@
 #include "sptSPArguments.hpp"
 #include "sptSPDef.hpp"
 #include "pd.hpp"
-#include "sptConvertor2.hpp"
+#include "sptConvertor.hpp"
 #include "sptObjDesc.hpp"
 
 using namespace bson ;
@@ -125,12 +125,13 @@ namespace engine
    }
 
    INT32 _sptSPArguments::getBsonobj( UINT32 pos,
-                                      bson::BSONObj &value ) const
+                                      bson::BSONObj &value,
+                                      BOOLEAN strict ) const
    {
       INT32 rc = SDB_OK ;
       JSObject *jsObj = NULL ;
       jsval *val = NULL ;
-      sptConvertor2 convertor( _context ) ;
+      sptConvertor convertor( _context, strict ) ;
 
       if ( _argc <= pos )
       {
@@ -164,7 +165,57 @@ namespace engine
       rc = convertor.toBson( jsObj, value ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to convert jsobj to bsonobj:%d", rc ) ;
+         PD_LOG( PDERROR, convertor.getErrMsg().c_str() ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sptSPArguments::getArray( UINT32 pos, vector< bson::BSONObj > &value,
+                                    SPT_CONVERT_MODE mode )
+                                    const
+   {
+      INT32 rc = SDB_OK ;
+      JSObject *jsObj = NULL ;
+      jsval *val = NULL ;
+      sptConvertor convertor( _context, mode ) ;
+
+      if ( _argc <= pos )
+      {
+         rc = SDB_OUT_OF_BOUND ;
+         goto error ;
+      }
+
+      val = _getValAtPos( pos ) ;
+      if ( NULL == val )
+      {
+         PD_LOG( PDERROR, "failed to get val at pos" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      if ( !JSVAL_IS_OBJECT( *val ) )
+      {
+         PD_LOG( PDERROR, "jsval is not a object" ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      jsObj = JSVAL_TO_OBJECT( *val ) ;
+      if ( NULL == jsObj )
+      {
+         PD_LOG( PDERROR, "failed to convert jsval to object" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      rc = convertor.toObjArray( jsObj, value ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, convertor.getErrMsg().c_str() ) ;
          goto error ;
       }
    done:
@@ -284,7 +335,7 @@ namespace engine
    {
       jsval *val = NULL ;
       if ( _argc > pos && NULL != ( val = _getValAtPos( pos ) ) &&
-           JSVAL_TO_DOUBLE( *val ) )
+           JSVAL_IS_DOUBLE( *val ) )
       {
          return TRUE ;
       }
@@ -336,6 +387,20 @@ namespace engine
            NULL != ( jsObj = JSVAL_TO_OBJECT( *val ) ) &&
            string( objDesc.getJSClassName() ) ==
            sptGetObjFactory()->getClassName( _context, jsObj ) )
+      {
+         return TRUE ;
+      }
+      return FALSE ;
+   }
+
+   BOOLEAN _sptSPArguments::isArray( UINT32 pos ) const
+   {
+      jsval *val = NULL ;
+      JSObject *jsObj = NULL ;
+      if ( _argc > pos && NULL != ( val = _getValAtPos( pos ) ) &&
+           JSVAL_IS_OBJECT( *val ) &&
+           NULL != ( jsObj = JSVAL_TO_OBJECT( *val ) ) &&
+           JS_IsArrayObject( _context, jsObj ) )
       {
          return TRUE ;
       }

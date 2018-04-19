@@ -132,7 +132,6 @@ namespace engine
          if ( EOO == rpro.getType() )
          {
             *rvp = JSVAL_VOID ;
-            goto done ;
          }
          else if ( rpro.isObject() )
          {
@@ -165,9 +164,6 @@ namespace engine
                                        SPT_PROP_PERMANENT )->setValue(
                                        sdbGetGlobalID() ) ;
 
-            /// need to take over the object
-            rpro.takeoverObject() ;
-
             /// set the return val's properties
             if ( !rval.getReturnValProperties().empty() )
             {
@@ -178,7 +174,13 @@ namespace engine
                   goto error ;
                }
             }
-
+            if( rval.needAddSelfToReturnValProperty() )
+            {
+               jsval selfVal = OBJECT_TO_JSVAL( obj ) ;
+               const sptProperty& addProperty = rval.getAddSelfToReturnValProperty() ;
+               JS_DefineProperty( cx, jsObj, addProperty.getName().c_str(),
+                                  selfVal, 0, 0, addProperty.getAttr() ) ;
+            }
             val = OBJECT_TO_JSVAL( jsObj ) ;
          }
          else if ( rpro.isArray() )
@@ -224,7 +226,7 @@ namespace engine
          }
 
          /// set the return val to property
-         if ( obj && !rpro.getName().empty() )
+         if ( obj && !rpro.getName().empty() && EOO != rpro.getType() )
          {
             if ( rpro.isNeedDelete() )
             {
@@ -256,6 +258,8 @@ namespace engine
             }
          }
       }
+      /// need to take over the object
+      rpro.takeoverObject() ;
       *rvp = val ;
    done:
       return rc ;
@@ -299,7 +303,8 @@ namespace engine
                JS_DeleteProperty2( cx, obj, prop->getName().c_str(), &dval ) ;
             }
          }
-         else if ( bson::EOO == prop->getType() )
+
+         if ( bson::EOO == prop->getType() )
          {
             continue ;
          }
@@ -324,10 +329,6 @@ namespace engine
                rc = SDB_SYS ;
                goto error ;
             }
-
-            /// need to take over the object
-            prop->takeoverObject() ;
-
             val = OBJECT_TO_JSVAL( jsObj ) ;
          }
          else if ( prop->isArray() )
@@ -370,8 +371,9 @@ namespace engine
             rc = SDB_SYS ;
             goto error ;
          }
+         /// need to take over the object
+         prop->takeoverObject() ;
       }
-
    done:
       return rc ;
    error:

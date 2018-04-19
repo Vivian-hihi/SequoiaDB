@@ -98,5 +98,11 @@ namespace engine
       _val.setAttr( attr ) ;
    }
 
+   void _sptReturnVal::addSelfToReturnValProperty( const string &name,
+                                                   UINT32 attr )
+   {
+      _addSelfToReturnValProperty.setName( name ) ;
+      _addSelfToReturnValProperty.setAttr( attr ) ;
+   }
 }
 

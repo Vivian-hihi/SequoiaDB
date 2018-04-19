@@ -39,11 +39,54 @@
 #include "jsapi.h"
 #include <string>
 #include <vector>
-
+#include "client.hpp"
 using namespace std ;
 
 namespace engine
 {
+
+   class _sptReturnVal ;
+   class sptObject ;
+
+   #define SPT_CVT_FLAGS_OBJ_TO_BOOL    0x1
+   #define SPT_CVT_FLAGS_OBJ_TO_INT     0x2
+   #define SPT_CVT_FLAGS_OBJ_TO_DOUBLE  0x4
+   #define SPT_CVT_FLAGS_OBJ_TO_STRING  0x8
+   #define SPT_CVT_FLAGS_OBJ_TO_BSON    0x10
+
+   // Convertor mode define
+   enum SPT_CONVERT_MODE
+   {
+      SPT_CONVERT_NORMAL = 0,
+      SPT_CONVERT_MATCHER,
+      SPT_CONVERT_AGGREGATE
+   } ;
+
+   // Function type define
+   typedef INT32 (*CVT_TO_BSON_FUNC)( const CHAR* key, const sptObject &value,
+                                      BOOLEAN isSpecialObj,
+                                      bson::BSONObjBuilder& builder,
+                                      string &errMsg ) ;
+   typedef INT32 (*CVT_TO_BOOL_FUNC)( const sptObject &obj, BOOLEAN isSpecialObj,
+                                      BOOLEAN &retVal ) ;
+   typedef INT32 (*CVT_TO_INT_FUNC)( const sptObject &obj, BOOLEAN isSpecialObj,
+                                     INT32 &retVal ) ;
+   typedef INT32 (*CVT_TO_DOUBLE_FUNC)( const sptObject &obj,
+                                        BOOLEAN isSpecialObj,
+                                        FLOAT64 &retVal ) ;
+   typedef INT32 (*CVT_TO_STRING_FUNC)( const sptObject &obj,
+                                        BOOLEAN isSpecialObj,
+                                        string &retVal ) ;
+   typedef INT32 (*FMP_TO_BSON_FUNC)( const sptObject &value,
+                                      bson::BSONObj &retObj, string &errMsg ) ;
+   typedef INT32 (*FMP_TO_CURSOR_FUNC) ( const sptObject &value,
+                                         sdbclient::_sdbCursor** pCursor,
+                                         string &errMsg ) ;
+
+   typedef INT32 (*BSON_TO_JSOBJ_FUNC) ( sdbclient::sdb &db,
+                                         const bson::BSONObj &data,
+                                         _sptReturnVal &rval,
+                                         bson::BSONObj &detail ) ;
    /*
       _sptObjDesc define
    */
@@ -132,6 +175,65 @@ namespace engine
          return JS_InstanceOf( cx, obj, &_classDef, NULL ) ;
       }
 
+      std::string getSpecialFieldName() const
+      {
+         return _specialFieldName ;
+      }
+
+      void setSpecialFieldName( std::string fieldName )
+      {
+         _specialFieldName = fieldName ;
+      }
+
+      INT32 cvtToBSON( const CHAR* key, const sptObject &value,
+                       BOOLEAN isSpecialObj, bson::BSONObjBuilder& builder,
+                       string &errMsg ) const ;
+
+      void setCVTToBSONFunc( CVT_TO_BSON_FUNC pFunc ) ;
+
+      INT32 cvtToBool( const sptObject &obj, BOOLEAN isSpecialObj,
+                       BOOLEAN &retVal ) const ;
+
+      void setCVTToBoolFunc( CVT_TO_BOOL_FUNC pFunc ) ;
+
+      INT32 cvtToDouble( const sptObject &obj, BOOLEAN isSpecialObj,
+                         FLOAT64 &retVal ) const ;
+
+      void setCVTToDoubleFunc( CVT_TO_DOUBLE_FUNC pFunc ) ;
+
+      INT32 cvtToInt( const sptObject &obj, BOOLEAN isSpecialObj,
+                      INT32 &retVal ) const ;
+
+      void setCVTToIntFunc( CVT_TO_INT_FUNC pFunc ) ;
+
+      INT32 cvtToString( const sptObject &obj, BOOLEAN isSpecialObj,
+                         string &retVal ) const ;
+
+      void setCVTToStringFunc( CVT_TO_STRING_FUNC pFunc ) ;
+
+      INT32 fmpToBSON( const sptObject &value, bson::BSONObj &retObj,
+                       string &errMsg ) const ;
+
+      void setFMPToBSONFunc( FMP_TO_BSON_FUNC pFunc )
+      {
+         _fmpToBSONFunc = pFunc ;
+      }
+
+      INT32 fmpToCursor( const sptObject &value, sdbclient::_sdbCursor** pCursor,
+                         string &errMsg ) const ;
+
+      void setFMPToCursorFunc( FMP_TO_CURSOR_FUNC pFunc )
+      {
+         _fmpToCursorFunc = pFunc ;
+      }
+
+      INT32 bsonToJSObj( sdbclient::sdb &db, const bson::BSONObj &data,
+                         _sptReturnVal &rval, bson::BSONObj &detail ) const ;
+
+      void setBSONToJSObjFunc( BSON_TO_JSOBJ_FUNC pFunc )
+      {
+         _bsonToJSObjFunc = pFunc ;
+      }
    protected:
       std::string _jsClassName ;
       _sptFuncMap _funcMap ;
@@ -140,6 +242,17 @@ namespace engine
       const JSObject*   _prototypeDef ;
       const _sptObjDesc *_parent ;
       BOOLEAN     _isHide ;
+      // toBSON module
+      UINT32 _cvtFlags ;
+      std::string _specialFieldName ;
+      CVT_TO_BSON_FUNC _cvtToBSONFunc ;
+      CVT_TO_BOOL_FUNC _cvtToBoolFunc ;
+      CVT_TO_INT_FUNC _cvtToIntFunc ;
+      CVT_TO_DOUBLE_FUNC _cvtToDoubleFunc ;
+      CVT_TO_STRING_FUNC _cvtToStringFunc ;
+      FMP_TO_BSON_FUNC _fmpToBSONFunc ;
+      FMP_TO_CURSOR_FUNC _fmpToCursorFunc ;
+      BSON_TO_JSOBJ_FUNC _bsonToJSObjFunc ;
    } ;
    typedef class _sptObjDesc sptObjDesc ;
 
@@ -159,12 +272,15 @@ namespace engine
       public:
          void                 registerObj( const sptObjDesc *desc ) ;
          const sptObjDesc*    findObj( const string &objName ) const ;
-
+         INT32                getObjDesc( JSContext *cx, JSObject *obj,
+                                          BOOLEAN &isSpecialObj,
+                                          const sptObjDesc **pDesc ) const ;
+         const sptObjDesc*    findObjBySpecialFieldName( const string &fieldName ) const ;
          UINT32         getObjDescs( SPT_VEC_OBJDESC &vecObjDesc ) const ;
          BOOLEAN        isInstanceOf( JSContext *cx,
                                       JSObject *obj,
                                       const string &objName ) ;
-         string         getClassName( JSContext *cx, JSObject *obj ) ;
+         string         getClassName( JSContext *cx, JSObject *obj ) const ;
 
 
          /*

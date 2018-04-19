@@ -37,7 +37,7 @@
 #include "oss.hpp"
 #include "../bson/bson.hpp"
 #include "sptPrivateData.hpp"
-
+#include "sptObjDesc.hpp"
 namespace engine
 {
    enum SPT_NATIVE_TYPE
@@ -62,7 +62,13 @@ namespace engine
                                SPT_NATIVE_TYPE type ) const = 0 ;
       virtual INT32 getString( UINT32 pos, std::string &value,
                                BOOLEAN strict = TRUE ) const = 0 ;
-      virtual INT32 getBsonobj( UINT32 pos, bson::BSONObj &value ) const = 0 ;
+      virtual INT32 getBsonobj( UINT32 pos, bson::BSONObj &value,
+                                BOOLEAN strict = TRUE )
+                                const = 0 ;
+      // BSONObj and BSONArray may exceed the size limit
+      virtual INT32 getArray( UINT32 pos, vector< bson::BSONObj >&value,
+                              SPT_CONVERT_MODE mode = SPT_CONVERT_NORMAL )
+                              const = 0 ;
       virtual INT32 getUserObj( UINT32 pos, const _sptObjDesc &objDesc,
                                 const void** value ) const = 0 ;
       virtual sptPrivateData* getPrivateData() const = 0 ;
@@ -79,6 +85,7 @@ namespace engine
       virtual BOOLEAN isVoid( UINT32 pos ) const = 0 ;
       virtual BOOLEAN isUserObj( UINT32 pos,
                                  const _sptObjDesc &objDesc ) const = 0 ;
+      virtual BOOLEAN isArray( UINT32 pos ) const = 0 ;
       virtual string getUserObjClassName( UINT32 pos ) const = 0 ;
    } ;
    typedef class _sptArguments sptArguments ;

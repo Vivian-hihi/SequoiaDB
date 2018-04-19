@@ -1,10 +1,4 @@
-Bson.prototype.help = function() {
-   println("Bson methods:") ;
-   println("   toObj() - convert to javascript object") ;
-   println("   toJson() - convert to json string") ;
-}
-
-const help = function( val ) {
+ const help = function( val ) {
    if ( val == undefined )
    {
    	  println("   --Connect to database:");
