@@ -100,10 +100,10 @@ function wrongParameterType()
    }
    catch(e)
    {
-      if ( "Error: Sdb.createProcedure(): wrong arguments" != e )
+      if ( -6 != e )
       {
          throw buildException( "testExistPcd()", "", 'db.createProcedure("")', 
-                               "throw error: wrong arguments", e ); 
+                               "-6", e ); 
       }
    }
 }

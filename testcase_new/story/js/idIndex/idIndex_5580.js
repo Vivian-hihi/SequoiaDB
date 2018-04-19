@@ -13,7 +13,7 @@ function main( db )
    var idxCL = commCreateCLByOption(db, COMMCSNAME, clName, {AutoIndexId:false,ReplSize:0,Compressed:true}, true, true);
 
    // create Idindex
-   createIdIndex( idxCL ) ;
+   createIdIndex( idxCL, undefined, -6  ) ;
       
    // inspect the index
    inspecIndex( idxCL, "$id", "_id", 1 ) ;   

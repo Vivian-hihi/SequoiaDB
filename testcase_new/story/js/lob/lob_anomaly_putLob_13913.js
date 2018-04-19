@@ -19,7 +19,7 @@ function main( db )
    }
    catch( e )
    {
-      if( "Error: SdbCollection.listLobs(): wrong arguments" != e )
+      if( -6 != e )
       {
          println( "failed to execute listLobs with a parmeter, rc = " + e ) ;
          throw e ;
@@ -35,7 +35,7 @@ function main( db )
    }
    catch( e )
    {
-      if( "Error: SdbCollection.putLob(): wrong arguments" != e )
+      if( -259 != e )
       {
          println( "failed to execute put lob with no file, rc = " + e ) ;
          throw e ;
@@ -53,7 +53,7 @@ function main( db )
    }
    catch( e )
    {
-      if( "Error: SdbCollection.deleteLob(): wrong arguments" != e )
+      if( -259 != e )
       {
          println( "failed to execute delete lob with no file, rc = " + e ) ;
          throw e ;

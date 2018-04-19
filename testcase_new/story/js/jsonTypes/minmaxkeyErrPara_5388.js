@@ -15,17 +15,28 @@ function main(  )
    
    for( var i = 0; i < ErrPara.length; ++i )
    {
-      temp = MinKey(ErrPara[i]) ;
-      if( temp.toString() == mink.toString() )
-         println( ">success to test minkey with wrong parameter.") ;
-      else
-         throw( ">fail to test minkey with wrong parameter.") ;
-         
-      temp = MaxKey(ErrPara[i]) ;
-      if( temp.toString() == maxk.toString() )
-         println( ">success to test maxkey with wrong parameter.") ;
-      else
-         throw( ">fail to test maxkey with wrong parameter.") ;
+      try
+      {
+         temp = MinKey(ErrPara[i]) ;
+	  }
+      catch( e )
+      {
+         if( -6 == e )
+            println( ">success to test minkey with wrong parameter.") ;
+         else
+            throw( ">fail to test minkey with wrong parameter.") ;
+      } 
+      try
+      { 
+         temp = MaxKey(ErrPara[i]) ;
+      }
+      catch( e )
+      {
+         if( -6 == e )
+            println( ">success to test maxkey with wrong parameter.") ;
+         else
+            throw( ">fail to test maxkey with wrong parameter.") ;
+      }
    }
 }
 

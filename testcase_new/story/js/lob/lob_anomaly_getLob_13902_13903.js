@@ -24,7 +24,7 @@ function main( db )
    }
    catch( e )
    {
-      if( "Error: SdbCollection.getLob(): wrong arguments" != e )
+      if( -259 != e )
       {
          println( "failed to execute get lob with no file, rc = " + e ) ;
          throw e ;

@@ -58,7 +58,7 @@ function parameterCheck()
    }
    catch(e)
    {
-      if ( "Error: Sdb.removeProcedure(): wrong arguments" != e )
+      if ( -259 != e )
       {
          throw buildException( "parameterCheck()", "", 'db.removeProcedure()', 
                                "throw error: wrong arguments", e ); 
@@ -72,10 +72,10 @@ function parameterCheck()
    }
    catch(e)
    {
-      if ( -233 != e )
+      if ( -6 != e )
       {
          throw buildException( "parameterCheck()", "", 'db.removeProcedure(123)', 
-                               -233, e ); 
+                               -6, e ); 
       }
    }
 }

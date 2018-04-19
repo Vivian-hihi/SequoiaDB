@@ -41,12 +41,11 @@ function main( db )
    // 2. Create domain don't specify parameter[ERR] [Testing Point]
    try
    {
-      var errInfo = "Error: Sdb.createDomain(): need at least one argument" ;
       db.createDomain() ;
    }
    catch( e )
    {
-      if( errInfo != e )
+      if( -259 != e )
       {
          println( "create domain must specify parameter, rc = " + e ) ;
          throw e ;
