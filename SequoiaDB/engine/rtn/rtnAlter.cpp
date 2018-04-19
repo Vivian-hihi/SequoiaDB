@@ -593,6 +593,50 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNSETCOMPRESS_ARG, "rtnCollectionSetCompress" )
+   INT32 rtnCollectionSetCompress ( const CHAR * collection,
+                                    const rtnCLCompressArgument & argument,
+                                    _pmdEDUCB * cb,
+                                    _dmsMBContext * mbContext,
+                                    _dmsStorageUnit * su,
+                                    SDB_DMSCB * dmsCB )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_RTNSETCOMPRESS_ARG ) ;
+
+      if ( argument.isCompressed() )
+      {
+         // Alter the attribute only in below cases :
+         // 1. collection is no compressed
+         // 2. altering the compressor type, and old type of collection is
+         //    different
+         if ( !OSS_BIT_TEST( mbContext->mb()->_attributes, DMS_MB_ATTR_COMPRESSED ) ||
+              ( argument.testArgumentMask( UTIL_CL_COMPRESSTYPE_FIELD ) &&
+                mbContext->mb()->_compressorType != argument.getCompressorType() ) )
+         {
+            rc = rtnCollectionSetCompress( collection, argument.getCompressorType(),
+                                           cb, mbContext, su, dmsCB ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to set compressor on "
+                         "collection [%s], rc: %d", collection, rc ) ;
+         }
+      }
+      else
+      {
+         rc = rtnCollectionSetCompress( collection, UTIL_COMPRESSOR_INVALID,
+                                        cb, mbContext, su, dmsCB ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to set compressor on "
+                      "collection [%s], rc: %d", collection, rc ) ;
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB_RTNSETCOMPRESS_ARG, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNSETCOMPRESS, "rtnCollectionSetCompress" )
    INT32 rtnCollectionSetCompress ( const CHAR * collection,
                                     UTIL_COMPRESSOR_TYPE compressorType,
@@ -714,7 +758,7 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Failed to lock mb context [%s], rc: %d",
                    name, rc ) ;
 
-      rc = rtnCollectionSetCompress( name, localTask->getCompressArgument().getCompressorType(),
+      rc = rtnCollectionSetCompress( name, localTask->getCompressArgument(),
                                      cb, mbContext, su, dmsCB ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to set compress on collection [%s], rc: %d",
                    name, rc ) ;
@@ -896,8 +940,7 @@ namespace engine
       if ( localTask->containCompressArgument() )
       {
          const rtnCLCompressArgument & compressArgument = localTask->getCompressArgument() ;
-         rc = rtnCollectionSetCompress( collectionShortName,
-                                        compressArgument.getCompressorType(),
+         rc = rtnCollectionSetCompress( collectionShortName, compressArgument,
                                         cb, mbContext, su, dmsCB ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to set compressor on "
                       "collection [%s], rc: %d", collection, rc ) ;

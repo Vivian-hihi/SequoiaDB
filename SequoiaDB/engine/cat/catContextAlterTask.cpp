@@ -869,10 +869,19 @@ namespace engine
 
       if ( !cataSet.isMainCL() )
       {
-         OSS_BIT_SET( attribute, DMS_MB_ATTR_COMPRESSED ) ;
+         // Alter the attribute only in below cases :
+         // 1. collection is no compressed
+         // 2. altering the compressor type, and old type of collection is
+         //    different
+         if ( !OSS_BIT_TEST( cataSet.getAttribute(), DMS_MB_ATTR_COMPRESSED ) ||
+              ( argument.testArgumentMask( UTIL_CL_COMPRESSTYPE_FIELD ) &&
+                cataSet.getCompressType() != argument.getCompressorType() ) )
+         {
+            OSS_BIT_SET( attribute, DMS_MB_ATTR_COMPRESSED ) ;
 
-         setBuilder.append( CAT_COMPRESSIONTYPE, argument.getCompressorType() ) ;
-         setBuilder.append( FIELD_NAME_COMPRESSIONTYPE_DESC, argument.getCompressionName() ) ;
+            setBuilder.append( CAT_COMPRESSIONTYPE, argument.getCompressorType() ) ;
+            setBuilder.append( FIELD_NAME_COMPRESSIONTYPE_DESC, argument.getCompressionName() ) ;
+         }
       }
       else
       {
@@ -995,9 +1004,19 @@ namespace engine
 
       if ( localTask->containCompressArgument() )
       {
-         rc = _buildEnableCompressFields( cataSet, localTask->getCompressArgument(),
-                                          attribute, setBuilder, unsetBuilder ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to build shard fields, rc: %d", rc ) ;
+         rtnCLCompressArgument argument = localTask->getCompressArgument() ;
+
+         if ( argument.isCompressed() )
+         {
+            rc = _buildEnableCompressFields( cataSet, argument, attribute,
+                                             setBuilder, unsetBuilder ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to build shard fields, rc: %d", rc ) ;
+         }
+         else
+         {
+            rc = _buildDisableCompressFields( cataSet, attribute, setBuilder, unsetBuilder ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to build shard fields, rc: %d", rc ) ;
+         }
       }
 
       if ( localTask->containExtOptionArgument() )

@@ -96,6 +96,13 @@ namespace engine
                                       _SDB_DMSCB * dmsCB ) ;
 
    INT32 rtnCollectionSetCompress ( const CHAR * collection,
+                                    const rtnCLCompressArgument & argument,
+                                    _pmdEDUCB * cb,
+                                    _dmsMBContext * mbContext,
+                                    _dmsStorageUnit * su,
+                                    _SDB_DMSCB * dmsCB ) ;
+
+   INT32 rtnCollectionSetCompress ( const CHAR * collection,
                                     UTIL_COMPRESSOR_TYPE compressorType,
                                     _pmdEDUCB * cb,
                                     _dmsMBContext * mbContext,

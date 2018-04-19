@@ -592,7 +592,7 @@ namespace engine
                PD_CHECK( NULL != localTask, SDB_SYS, error, PDERROR,
                          "Failed to get alter task" ) ;
                rc = rtnCollectionSetCompress( collection,
-                                              localTask->getCompressArgument().getCompressorType(),
+                                              localTask->getCompressArgument(),
                                               cb, _mbContext, _su, _dmsCB ) ;
                break ;
             }

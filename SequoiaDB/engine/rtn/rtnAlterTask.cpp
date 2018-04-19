@@ -457,7 +457,7 @@ namespace engine
                                                     BOOLEAN checkCompressed )
    : _rtnAlterTaskArgument( argument ),
      _checkCompressed( checkCompressed ),
-     _compressed( TRUE ),
+     _compressed( FALSE ),
      _compressorName( utilCompressType2String( UTIL_COMPRESSOR_SNAPPY ) ),
      _compressorType( UTIL_COMPRESSOR_INVALID )
    {
@@ -529,29 +529,33 @@ namespace engine
          parsedArgumentMask( UTIL_CL_COMPRESSTYPE_FIELD ) ;
       }
 
-      if ( testArgumentMask( UTIL_CL_COMPRESSED_FIELD |
-                             UTIL_CL_COMPRESSTYPE_FIELD ) &&
-           !_compressed &&
-           _compressorType != UTIL_COMPRESSOR_INVALID )
+      if ( getArgumentMask() == ( UTIL_CL_COMPRESSED_FIELD |
+                                  UTIL_CL_COMPRESSTYPE_FIELD ) )
       {
-         rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "[%s] and [%s] are conflicts", FIELD_NAME_COMPRESSED,
-                 FIELD_NAME_COMPRESSIONTYPE ) ;
-         goto error ;
+         // Both Compressed and CompresssionType are set
+         if ( !_compressed && _compressorType != UTIL_COMPRESSOR_INVALID )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "[%s] and [%s] are conflicts", FIELD_NAME_COMPRESSED,
+                    FIELD_NAME_COMPRESSIONTYPE ) ;
+            goto error ;
+         }
       }
-      else if ( testArgumentMask( UTIL_CL_COMPRESSED_FIELD ) )
+      else if ( getArgumentMask() == UTIL_CL_COMPRESSED_FIELD )
       {
+         // Only Compressed is set
          if ( _compressed )
          {
-            _compressorType = UTIL_COMPRESSOR_INVALID ;
+            setCompress( UTIL_COMPRESSOR_SNAPPY ) ;
          }
          else
          {
-            _compressorType = UTIL_COMPRESSOR_SNAPPY ;
+            setCompress( UTIL_COMPRESSOR_INVALID ) ;
          }
       }
-      else if ( testArgumentMask( UTIL_CL_COMPRESSTYPE_FIELD ) )
+      else if ( getArgumentMask() == UTIL_CL_COMPRESSTYPE_FIELD )
       {
+         // Only CompresssionType is set
          if ( _compressorType == UTIL_COMPRESSOR_INVALID )
          {
             _compressed = FALSE ;
@@ -877,8 +881,8 @@ namespace engine
       if ( !_compressArgument.isCompressed() )
       {
          _compressArgument.setCompress( UTIL_COMPRESSOR_SNAPPY ) ;
-         _compressArgument.parsedArgumentMask( UTIL_CL_COMPRESSED_FIELD |
-                                               UTIL_CL_COMPRESSTYPE_FIELD ) ;
+         _compressArgument.setArgumentMask( UTIL_CL_COMPRESSED_FIELD |
+                                            UTIL_CL_COMPRESSTYPE_FIELD ) ;
       }
       parsedArgumentMask( _compressArgument.getArgumentMask(),
                           _compressArgument.getArgumentCount() ) ;
