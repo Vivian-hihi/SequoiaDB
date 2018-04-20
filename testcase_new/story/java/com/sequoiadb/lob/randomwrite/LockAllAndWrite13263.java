@@ -1,7 +1,12 @@
 package com.sequoiadb.lob.randomwrite;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
+import com.sequoiadb.base.CollectionSpace;
+import com.sequoiadb.base.DBCollection;
+import com.sequoiadb.base.DBLob;
+import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.testcommon.SdbTestBase;
+import com.sequoiadb.testcommon.SdbThreadBase;
 import org.bson.BSONObject;
 import org.bson.types.ObjectId;
 import org.bson.util.JSON;
@@ -10,13 +15,9 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.sequoiadb.base.CollectionSpace;
-import com.sequoiadb.base.DBCollection;
-import com.sequoiadb.base.DBLob;
-import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.testcommon.SdbTestBase;
-import com.sequoiadb.testcommon.SdbThreadBase;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @FileName seqDB-13263: 并发锁全部lob写入 
@@ -37,7 +38,9 @@ public class LockAllAndWrite13263 extends SdbTestBase {
     private final String clName = "writelob13263";
     private final int lobPageSize = 16 * 1024; // 16k
     private final int threadNum = 16;
-    
+    private AtomicInteger successTimes = new AtomicInteger(0);
+    private byte[] expData = null;
+
     private Sequoiadb sdb = null;
     private CollectionSpace cs = null;
     private DBCollection cl = null;
@@ -63,22 +66,30 @@ public class LockAllAndWrite13263 extends SdbTestBase {
     @Test
     public void testLob() {
         try {
-            int lobSize = 16 * 1024 * 1024;
+            int lobSize = 8 * 1024 * 1024;
             byte[] data = RandomWriteLobUtil.getRandomBytes(lobSize);
             ObjectId oid = RandomWriteLobUtil.createAndWriteLob(cl, data);
             
-            byte[] expData = data;
-            LobPart wholeLob = new LobPart(0, lobSize);
-            expData = updateExpData(expData, wholeLob);
-            
-            WriteLobThread wLobThrd = new WriteLobThread(oid, wholeLob);
-            wLobThrd.start(threadNum);
-            wLobThrd.join();
-            Assert.assertEquals(wLobThrd.getSuccessTimes(), 1, "write lob should succeed only once");
-            
+            expData = data;
+            List<LobPart> parts = new ArrayList<>(threadNum);
+            final int partSize = lobSize / threadNum;
+            for (int i = 0; i < threadNum; ++i) {
+                parts.add(new LobPart(partSize * i, partSize * (i + 1)));
+            }
+
+            List<WriteLobThread> thrdList = new ArrayList<>(threadNum);
+            for (int i = 0; i < threadNum; ++i) {
+                WriteLobThread wLobThrd = new WriteLobThread(oid, parts.get(i));
+                wLobThrd.start();
+                thrdList.add(wLobThrd);
+            }
+            for (int i = 0; i < threadNum; ++i) {
+                thrdList.get(i).join();
+            }
+
+            Assert.assertNotEquals( successTimes.get(), 0);
             byte[] actData = RandomWriteLobUtil.readLob(cl, oid);
             RandomWriteLobUtil.assertByteArrayEqual(actData, expData, "lob data is wrong");
-            
         } catch (BaseException e) {
             e.printStackTrace();
             Assert.fail(e.getMessage());
@@ -102,7 +113,6 @@ public class LockAllAndWrite13263 extends SdbTestBase {
     }
     
     private class WriteLobThread extends SdbThreadBase {
-        private AtomicInteger successTimes = new AtomicInteger(0);
         private ObjectId oid = null;
         private LobPart part = null;
         
@@ -116,15 +126,13 @@ public class LockAllAndWrite13263 extends SdbTestBase {
             try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
                 DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
                 try (DBLob lob = cl.openLob(oid, DBLob.SDB_LOB_WRITE)) {
-                    lob.lockAndSeek(part.getOffset(), part.getLength());
+                    lob.lock(0, lob.getSize());
+                    lob.seek(part.getOffset(), DBLob.SDB_LOB_SEEK_SET);
                     lob.write(part.getData());
+                    expData = updateExpData(expData, part);
                     successTimes.getAndIncrement();
                 }
             }
-        }
-        
-        public int getSuccessTimes() {
-            return successTimes.get();
         }
     }
     
