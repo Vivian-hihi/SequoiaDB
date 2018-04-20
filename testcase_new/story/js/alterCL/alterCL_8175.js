@@ -97,17 +97,31 @@ try{
 }
 println("create mainCL finished");
 
-try{
-	mainCL.alter({Compressed:true});
-	throw 1;
-}catch(e)
+if( true == commIsStandalone( db ) ) 
 {
-	if(e == 1)
-	{
-		println("mainCL alters Compressed succ,but expect fail!");
-		throw e;
-	}
+   try{
+   	mainCL.alter({Compressed:true});
+   }catch(e)
+   {
+      println("mainCL alters Compressed fail,but expect succ!");
+      throw e;
+   }  
 }
+else 
+{
+   try{
+	   mainCL.alter({Compressed:true});
+	   throw 1;
+   }catch(e)
+   {
+   	if(e == 1)
+   	{
+   		println("mainCL alters Compressed succ,but expect fail!");
+   		throw e;
+   	}
+   }
+}
+
 println("mainCL test finish!");
 
 //clean test-env
