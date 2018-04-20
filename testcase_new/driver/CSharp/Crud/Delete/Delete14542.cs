@@ -41,7 +41,7 @@ namespace CSharp.Crud.Delete
         {
             TestDeleteMatcher();
             TestDeleteMatcherAndHint();
-            //TestQueryAndRemove(); 
+            TestQueryAndRemove(); 
         }
 
         public void TestDeleteMatcher()
@@ -92,9 +92,16 @@ namespace CSharp.Crud.Delete
             cl.CreateIndex("ageIndex", key, true, true);
             List<BsonDocument> insertRecords = InsertDatas(20);
             //flag not in range
-            DBCursor cursor = cl.QueryAndRemove(null, null, null, null, 0, 5, -100);
-            Assert.AreEqual(null, cursor.Next());
-            cursor.Close(); ;
+            DBCursor cursor = cl.QueryAndRemove(null, null, null, new BsonDocument("", "$id"), 0, 2, -100);
+            int delRecord = 0;
+            while (cursor.Next() != null)
+            {
+                delRecord++;
+            }
+            cursor.Close();
+            Assert.AreEqual(delRecord, 2);
+            Assert.AreEqual(cl.GetCount(null), 18);
+            cursor.Close(); 
         }
 
         [TestCleanup()]
