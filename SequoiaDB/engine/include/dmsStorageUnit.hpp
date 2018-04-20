@@ -478,9 +478,18 @@ namespace engine
                                           UTIL_COMPRESSOR_TYPE compType,
                                           dmsMBContext * context = NULL ) ;
 
+         INT32    setCollectionAttribute ( const CHAR * pName,
+                                           UINT32 attributeMask,
+                                           BOOLEAN attributeValue,
+                                           dmsMBContext * context = NULL ) ;
+
          INT32    setCollectionStrictDataMode ( const CHAR * pName,
                                                 BOOLEAN strictDataMode,
                                                 dmsMBContext * context = NULL ) ;
+
+         INT32    setCollectionNoIDIndex ( const CHAR * pName,
+                                           BOOLEAN noIDIndex,
+                                           dmsMBContext * context = NULL ) ;
 
          INT32    canSetCollectionCompressor ( dmsMBContext * context ) ;
          INT32    setCollectionCompressor ( const CHAR * pName,

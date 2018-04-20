@@ -4212,6 +4212,9 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Failed to execute task [%s] on collection space [%s], "
                    "rc: %d", task->getActionName(), collectionSpace, rc ) ;
 
+      rc = rtnAlter2DPSLog( collectionSpace, task, options, dpsCB ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to write DPS log, rc: %d", rc ) ;
+
    done :
       PD_TRACE_EXITRC( SDB__RTNALTERCOLLECTIONSPACE__EXECTASK, rc ) ;
       return rc ;
@@ -4331,6 +4334,9 @@ namespace engine
 
       PD_RC_CHECK( rc, PDERROR, "Failed to execute task [%s] on collection [%s], "
                    "rc: %d", task->getActionName(), collection, rc ) ;
+
+      rc = rtnAlter2DPSLog( collection, task, options, dpsCB ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to write DPS log, rc: %d", rc ) ;
 
    done :
       PD_TRACE_EXITRC( SDB__RTNALTERCOLLECTION__EXECTASK, rc ) ;

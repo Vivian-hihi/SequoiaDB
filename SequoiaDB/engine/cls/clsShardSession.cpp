@@ -3852,15 +3852,24 @@ namespace engine
       SDB_ASSERT( NULL != alterJob, "alterJob is invalid" ) ;
 
       const RTN_ALTER_TASK_LIST & alterTasks = alterJob->getAlterTasks() ;
+      const rtnAlterOptions * options = alterJob->getOptions() ;
       const CHAR * collectionName = alterJob->getObjectName() ;
 
-      for ( RTN_ALTER_TASK_LIST::const_iterator iter = alterTasks.begin() ;
-            iter != alterTasks.end() ;
-            ++ iter )
+      BSONObj matcher = alterJob->getJobObject() ;
+      BSONObj newMatcher ;
+      vector< string > subCLList ;
+
+      // Get sub-collection list
+      rc = _getSubCLList( matcher, collectionName, newMatcher, subCLList ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to get sub-collection list of "
+                   "collection [%s], rc: %d", collectionName, rc ) ;
+
+      for ( RTN_ALTER_TASK_LIST::const_iterator iterTask = alterTasks.begin() ;
+            iterTask != alterTasks.end() ;
+            ++ iterTask )
       {
-         SINT64 contextID = -1 ;
-         const rtnAlterTask * task = ( *iter ) ;
-         RTN_ALTER_ACTION_TYPE actionType = task->getActionType() ;
+         const rtnAlterTask * task = ( *iterTask ) ;
+         vector< string >::iterator iterCL ;
 
          if ( !task->testFlags( RTN_ALTER_TASK_FLAG_MAINCLALLOW ) )
          {
@@ -3868,34 +3877,59 @@ namespace engine
                     "in main-collection", task->getActionName() ) ;
          }
 
-         if ( RTN_ALTER_CL_CREATE_ID_INDEX == actionType )
+         iterCL = subCLList.begin() ;
+         while ( iterCL != subCLList.end() )
          {
-            static BSONObj def =  BSON( FIELD_NAME_INDEX << ixmGetIDIndexDefine() ) ;
-            rc = _createIndexOnMainCL( "", collectionName,
-                                       def.objdata(),
-                                       task->getArgument().objdata(),
-                                       1, contextID, TRUE ) ;
+            INT32 rcTmp = SDB_OK ;
+            const CHAR * subCLName = iterCL->c_str() ;
+
+            rcTmp = rtnAlter( subCLName, task, options, cb, dpsCB ) ;
+            if ( rcTmp )
+            {
+               rcTmp = _processSubCLResult( rcTmp, subCLName, collectionName ) ;
+               if ( SDB_OK == rcTmp )
+               {
+                  continue ;
+               }
+            }
+
+            if ( SDB_OK != rcTmp )
+            {
+               PD_LOG( PDERROR, "Session[%s]: Alter sub-collection [%s] of "
+                       "main-collection[%s] failed, rc: %d", sessionName(),
+                       subCLName, collectionName, rcTmp ) ;
+
+               if ( SDB_OK == rc )
+               {
+                  rc = rcTmp ;
+               }
+            }
+
+            ++ iterCL ;
          }
-         else if ( RTN_ALTER_CL_DROP_ID_INDEX == actionType )
+         if ( SDB_OK != rc )
          {
-            BSONObj def = BSON( FIELD_NAME_INDEX <<
-                                BSON( IXM_FIELD_NAME_NAME
-                                      << IXM_ID_KEY_NAME ) ) ;
-            rc = _dropIndexOnMainCL( "", collectionName,
-                                     def.objdata(),
-                                     1, contextID, TRUE ) ;
-         }
-         else if ( RTN_ALTER_CL_SET_ATTRIBUTES == actionType )
-         {
-            // do nothing
-         }
-         else
-         {
-            PD_LOG( PDERROR, "unknown task type:%d", actionType ) ;
-            rc = SDB_SYS ;
-            goto error ;
+            PD_LOG( PDERROR, "Failed to run alter task [%s], rc: %d",
+                    task->getActionName(), rc ) ;
+            if ( options->isIgnoreException() )
+            {
+               rc = SDB_OK ;
+               continue ;
+            }
+            else
+            {
+               goto error ;
+            }
          }
       }
+
+      // Clear cached main-collection plans
+      // Note: cached sub-collection plans are cleared inside create-index
+      // of sub-collections
+      _pRtnCB->getAPM()->invalidateCLPlans( _pCollectionName ) ;
+
+      // Tell secondary nodes to clear cached main-collection plans
+      sdbGetClsCB()->invalidatePlan( _pCollectionName ) ;
 
    done:
       return rc ;

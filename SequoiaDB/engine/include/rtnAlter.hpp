@@ -47,6 +47,12 @@ namespace engine
    class _dmsMBContext ;
 
    INT32 rtnAlter ( const CHAR * name,
+                    const rtnAlterTask * task,
+                    const rtnAlterOptions * options,
+                    _pmdEDUCB * cb,
+                    _dpsLogWrapper * dpsCB ) ;
+
+   INT32 rtnAlter ( const CHAR * name,
                     RTN_ALTER_OBJECT_TYPE objectType,
                     bson::BSONObj alterObject,
                     _pmdEDUCB * cb,

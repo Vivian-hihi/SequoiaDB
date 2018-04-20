@@ -2135,14 +2135,15 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_SETCLSTRICTDATAMODE, "_dmsStorageUnit::setCollectoinStrictDataMode" )
-   INT32 _dmsStorageUnit::setCollectionStrictDataMode ( const CHAR * pName,
-                                                        BOOLEAN strictDataMode,
-                                                        dmsMBContext * context )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_SETCLATTR, "_dmsStorageUnit::setCollectionAttribute" )
+   INT32 _dmsStorageUnit::setCollectionAttribute ( const CHAR * pName,
+                                                   UINT32 attributeMask,
+                                                   BOOLEAN attributeValue,
+                                                   dmsMBContext * context )
    {
       INT32 rc = SDB_OK ;
 
-      PD_TRACE_ENTRY( SDB__DMSSU_SETCLSTRICTDATAMODE ) ;
+      PD_TRACE_ENTRY( SDB__DMSSU_SETCLATTR ) ;
 
       BOOLEAN getContext = FALSE ;
 
@@ -2161,13 +2162,13 @@ namespace engine
                       pName, rc ) ;
       }
 
-      if ( strictDataMode )
+      if ( attributeValue )
       {
-         OSS_BIT_SET( context->mb()->_attributes, DMS_MB_ATTR_STRICTDATAMODE ) ;
+         OSS_BIT_SET( context->mb()->_attributes, attributeMask ) ;
       }
       else
       {
-         OSS_BIT_CLEAR( context->mb()->_attributes, DMS_MB_ATTR_STRICTDATAMODE ) ;
+         OSS_BIT_CLEAR( context->mb()->_attributes, attributeMask ) ;
       }
 
       // Flush MME
@@ -2178,7 +2179,51 @@ namespace engine
       {
          _pDataSu->releaseMBContext( context ) ;
       }
+      PD_TRACE_EXITRC( SDB__DMSSU_SETCLATTR, rc ) ;
+      return rc ;
+
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_SETCLSTRICTDATAMODE, "_dmsStorageUnit::setCollectoinStrictDataMode" )
+   INT32 _dmsStorageUnit::setCollectionStrictDataMode ( const CHAR * pName,
+                                                        BOOLEAN strictDataMode,
+                                                        dmsMBContext * context )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__DMSSU_SETCLSTRICTDATAMODE ) ;
+
+      rc = setCollectionAttribute( pName, DMS_MB_ATTR_STRICTDATAMODE,
+                                   strictDataMode, context ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to set collection attribute, rc: %d",
+                   rc ) ;
+
+   done:
       PD_TRACE_EXITRC( SDB__DMSSU_SETCLSTRICTDATAMODE, rc ) ;
+      return rc ;
+
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_SETCLNOIDIDX, "_dmsStorageUnit::setCollectionNoIDIndex" )
+   INT32 _dmsStorageUnit::setCollectionNoIDIndex ( const CHAR * pName,
+                                                   BOOLEAN noIDIndex,
+                                                   dmsMBContext * context )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__DMSSU_SETCLNOIDIDX ) ;
+
+      rc = setCollectionAttribute( pName, DMS_MB_ATTR_NOIDINDEX,
+                                   noIDIndex, context ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to set collection attribute, rc: %d",
+                   rc ) ;
+
+   done:
+      PD_TRACE_EXITRC( SDB__DMSSU_SETCLNOIDIDX, rc ) ;
       return rc ;
 
    error:

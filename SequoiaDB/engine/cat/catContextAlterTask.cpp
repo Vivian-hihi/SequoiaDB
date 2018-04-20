@@ -566,8 +566,14 @@ namespace engine
       switch ( _task->getActionType() )
       {
          case RTN_ALTER_CL_CREATE_ID_INDEX :
+         {
+            OSS_BIT_CLEAR( attribute, DMS_MB_ATTR_NOIDINDEX ) ;
+            rc = SDB_OK ;
+            break ;
+         }
          case RTN_ALTER_CL_DROP_ID_INDEX :
          {
+            OSS_BIT_SET( attribute, DMS_MB_ATTR_NOIDINDEX ) ;
             rc = SDB_OK ;
             break ;
          }
@@ -1045,14 +1051,13 @@ namespace engine
 
       if ( localTask->testArgumentMask( UTIL_CL_AUTOIDXID_FIELD ) )
       {
+         // Note: no need to set DMS_MB_ATTR_NOIDINDEX if AutoIndexID is false,
+         // should set DMS_MB_ATTR_NOIDINDEX in dropIDIndex()
          if ( localTask->isAutoIndexID() )
-         {
-            OSS_BIT_SET( attribute, DMS_MB_ATTR_NOIDINDEX ) ;
-         }
-         else
          {
             OSS_BIT_CLEAR( attribute, DMS_MB_ATTR_NOIDINDEX ) ;
          }
+         setBuilder.appendBool( CAT_AUTO_INDEX_ID, localTask->isAutoIndexID() ) ;
       }
 
       if ( localTask->testArgumentMask( UTIL_CL_AUTOREBALANCE_FIELD ) )

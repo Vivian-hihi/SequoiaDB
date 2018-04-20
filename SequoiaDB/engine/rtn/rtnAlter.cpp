@@ -46,6 +46,80 @@ using namespace std ;
 namespace engine
 {
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNALTER_TASK, "rtnAlter" )
+   INT32 rtnAlter ( const CHAR * name,
+                    const rtnAlterTask * task,
+                    const rtnAlterOptions * options,
+                    _pmdEDUCB * cb,
+                    _dpsLogWrapper * dpsCB )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_RTNALTER_TASK ) ;
+
+      switch ( task->getActionType() )
+      {
+         case RTN_ALTER_CL_CREATE_ID_INDEX :
+         {
+            rc = rtnCreateIDIndex( name, task, options, cb, dpsCB ) ;
+            break ;
+         }
+         case RTN_ALTER_CL_DROP_ID_INDEX :
+         {
+            rc = rtnDropIDIndex( name, task, options, cb, dpsCB ) ;
+            break ;
+         }
+         case RTN_ALTER_CL_ENABLE_SHARDING :
+         {
+            rc = rtnEnableSharding( name, task, options, cb, dpsCB ) ;
+            break ;
+         }
+         case RTN_ALTER_CL_DISABLE_SHARDING :
+         {
+            rc = rtnDisableSharding( name, task, options, cb, dpsCB ) ;
+            break ;
+         }
+         case RTN_ALTER_CL_ENABLE_COMPRESS :
+         {
+            rc = rtnEnableCompress( name, task, options, cb, dpsCB ) ;
+            break ;
+         }
+         case RTN_ALTER_CL_DISABLE_COMPRESS :
+         {
+            rc = rtnDisableCompress( name, task, options, cb, dpsCB ) ;
+            break ;
+         }
+         case RTN_ALTER_CL_SET_ATTRIBUTES :
+         {
+            rc = rtnAlterCLSetAttributes( name, task, options, cb, dpsCB ) ;
+            break ;
+         }
+         case RTN_ALTER_CS_SET_ATTRIBUTES :
+         {
+            rc = rtnAlterCSSetAttributes( name, task, options, cb, dpsCB ) ;
+            break ;
+         }
+         default :
+         {
+            rc = SDB_INVALIDARG ;
+            break ;
+         }
+      }
+
+      PD_RC_CHECK( rc, PDERROR, "Failed to run alter task [%s], rc: %d",
+                   task->getActionName(), rc ) ;
+
+      rc = rtnAlter2DPSLog( name, task, options, dpsCB ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to write DPS log, rc: %d", rc ) ;
+
+   done :
+      PD_TRACE_EXITRC( SDB_RTNALTER_TASK, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNALTER, "rtnAlter" )
    INT32 rtnAlter ( const CHAR * name,
                     RTN_ALTER_OBJECT_TYPE objectType,
@@ -77,54 +151,7 @@ namespace engine
          {
             const rtnAlterTask * task = ( *iter ) ;
 
-            switch ( task->getActionType() )
-            {
-               case RTN_ALTER_CL_CREATE_ID_INDEX :
-               {
-                  rc = rtnCreateIDIndex( name, task, options, cb, dpsCB ) ;
-                  break ;
-               }
-               case RTN_ALTER_CL_DROP_ID_INDEX :
-               {
-                  rc = rtnDropIDIndex( name, task, options, cb, dpsCB ) ;
-                  break ;
-               }
-               case RTN_ALTER_CL_ENABLE_SHARDING :
-               {
-                  rc = rtnEnableSharding( name, task, options, cb, dpsCB ) ;
-                  break ;
-               }
-               case RTN_ALTER_CL_DISABLE_SHARDING :
-               {
-                  rc = rtnDisableSharding( name, task, options, cb, dpsCB ) ;
-                  break ;
-               }
-               case RTN_ALTER_CL_ENABLE_COMPRESS :
-               {
-                  rc = rtnEnableCompress( name, task, options, cb, dpsCB ) ;
-                  break ;
-               }
-               case RTN_ALTER_CL_DISABLE_COMPRESS :
-               {
-                  rc = rtnDisableCompress( name, task, options, cb, dpsCB ) ;
-                  break ;
-               }
-               case RTN_ALTER_CL_SET_ATTRIBUTES :
-               {
-                  rc = rtnAlterCLSetAttributes( name, task, options, cb, dpsCB ) ;
-                  break ;
-               }
-               case RTN_ALTER_CS_SET_ATTRIBUTES :
-               {
-                  rc = rtnAlterCSSetAttributes( name, task, options, cb, dpsCB ) ;
-                  break ;
-               }
-               default :
-               {
-                  rc = SDB_INVALIDARG ;
-                  break ;
-               }
-            }
+            rc = rtnAlter( name, task, options, cb, dpsCB ) ;
 
             if ( SDB_OK != rc )
             {
@@ -213,14 +240,36 @@ namespace engine
                   RTN_ALTER_CL_CREATE_ID_INDEX == task->getActionType(),
                   "task is invalid" ) ;
 
+      SDB_DMSCB * dmsCB = sdbGetDMSCB() ;
+
+      dmsStorageUnit * su = NULL ;
+      dmsStorageUnitID suID = DMS_INVALID_SUID ;
+      BOOLEAN writable = FALSE ;
+      const CHAR * collectionShortName = NULL ;
+      dmsMBContext * mbContext = NULL ;
+
       const rtnCLCreateIDIndexTask * localTask = dynamic_cast<const rtnCLCreateIDIndexTask *>( task ) ;
+      PD_CHECK( NULL != localTask, SDB_SYS, error, PDERROR,
+                "Failed to get create id index task" ) ;
+
+      rc = dmsCB->writable( cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc = %d", rc ) ;
+      writable = TRUE ;
+
+      rc = rtnResolveCollectionNameAndLock ( name, dmsCB, &su,
+                                             &collectionShortName, suID ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to resolve collection name %s, rc: %d",
+                   name, rc ) ;
+
+      rc = su->data()->getMBContext( &mbContext, collectionShortName, EXCLUSIVE ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to lock mb context [%s], rc: %d",
+                   name, rc ) ;
 
       PD_CHECK( NULL != localTask, SDB_INVALIDARG, error, PDERROR,
                 "Failed to get create id index task" ) ;
 
-      rc = rtnCreateIndexCommand( name, ixmGetIDIndexDefine(), cb,
-                                  sdbGetDMSCB(), dpsCB, TRUE,
-                                  localTask->getSortBufferSize() ) ;
+      rc = su->createIndex( collectionShortName, ixmGetIDIndexDefine(), cb, dpsCB,
+                            TRUE, mbContext, localTask->getSortBufferSize() ) ;
       if ( SDB_IXM_REDEF == rc || SDB_IXM_EXIST_COVERD_ONE == rc )
       {
          /// already exists
@@ -229,7 +278,23 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Failed to create id index on collection [%s], "
                    "rc: %d", name, rc ) ;
 
+      rc = su->setCollectionNoIDIndex( collectionShortName, FALSE, mbContext ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to set auto index id attribute "
+                   "on collection [%s], rc: %d", name, rc ) ;
+
    done :
+      if ( NULL != mbContext )
+      {
+         su->data()->releaseMBContext( mbContext ) ;
+      }
+      if ( DMS_INVALID_SUID != suID )
+      {
+         dmsCB->suUnlock( suID ) ;
+      }
+      if ( writable )
+      {
+         dmsCB->writeDown( cb ) ;
+      }
       PD_TRACE_EXITRC( SDB_RTNCREATEIDINDEX, rc ) ;
       return rc ;
 
@@ -254,10 +319,29 @@ namespace engine
                   RTN_ALTER_CL_DROP_ID_INDEX == task->getActionType(),
                   "task is invalid" ) ;
 
-      BSONObj obj = BSON( IXM_FIELD_NAME_NAME << IXM_ID_KEY_NAME ) ;
+      SDB_DMSCB * dmsCB = sdbGetDMSCB() ;
 
-      rc = rtnDropIndexCommand( name, obj.firstElement(), cb, sdbGetDMSCB(),
-                                dpsCB, TRUE ) ;
+      dmsStorageUnit * su = NULL ;
+      dmsStorageUnitID suID = DMS_INVALID_SUID ;
+      BOOLEAN writable = FALSE ;
+      const CHAR * collectionShortName = NULL ;
+      dmsMBContext * mbContext = NULL ;
+
+      rc = dmsCB->writable( cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc = %d", rc ) ;
+      writable = TRUE ;
+
+      rc = rtnResolveCollectionNameAndLock ( name, dmsCB, &su,
+                                             &collectionShortName, suID ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to resolve collection name %s, rc: %d",
+                   name, rc ) ;
+
+      rc = su->data()->getMBContext( &mbContext, collectionShortName, EXCLUSIVE ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to lock mb context [%s], rc: %d",
+                   name, rc ) ;
+
+      rc = su->dropIndex( collectionShortName, IXM_ID_KEY_NAME, cb, dpsCB,
+                          TRUE, mbContext ) ;
       if ( SDB_IXM_NOTEXIST == rc )
       {
          // Already dropped
@@ -266,7 +350,23 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Failed to drop id index on collection [%s], "
                    "rc: %d", name, rc ) ;
 
+      rc = su->setCollectionNoIDIndex( collectionShortName, TRUE, mbContext ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to set auto index id attribute "
+                   "on collection [%s], rc: %d", name, rc ) ;
+
    done :
+      if ( NULL != mbContext )
+      {
+         su->data()->releaseMBContext( mbContext ) ;
+      }
+      if ( DMS_INVALID_SUID != suID )
+      {
+         dmsCB->suUnlock( suID ) ;
+      }
+      if ( writable )
+      {
+         dmsCB->writeDown( cb ) ;
+      }
       PD_TRACE_EXITRC( SDB_RTNDROPIDINDEX, rc ) ;
       return rc ;
 
@@ -763,9 +863,6 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Failed to set compress on collection [%s], rc: %d",
                    name, rc ) ;
 
-      rc = rtnAlter2DPSLog( name, task, options, dpsCB ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to write DPS log, rc: %d", rc ) ;
-
    done :
       if ( NULL != mbContext )
       {
@@ -821,9 +918,6 @@ namespace engine
       rc = rtnCollectionSetCompress( name, UTIL_COMPRESSOR_INVALID, cb, mbContext, su, dmsCB ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to set compress on collection [%s], rc: %d",
                    name, rc ) ;
-
-      rc = rtnAlter2DPSLog( name, task, options, dpsCB ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to write DPS log, rc: %d", rc ) ;
 
    done :
       if ( NULL != mbContext )
@@ -967,16 +1061,22 @@ namespace engine
       }
 
       // $id index
-      if ( localTask->testArgumentMask( UTIL_CL_AUTOIDXID_FIELD ) &&
-           localTask->isAutoIndexID() )
+      if ( localTask->testArgumentMask( UTIL_CL_AUTOIDXID_FIELD ) )
       {
-         rc = su->createIndex( collection, ixmGetIDIndexDefine(), cb, NULL,
-                               TRUE, mbContext ) ;
-         if ( SDB_IXM_EXIST == rc )
+         if ( localTask->isAutoIndexID() )
          {
-            rc = SDB_OK ;
+            rc = su->createIndex( collection, ixmGetIDIndexDefine(), cb, NULL,
+                                  TRUE, mbContext ) ;
+            if ( SDB_IXM_REDEF == rc || SDB_IXM_EXIST_COVERD_ONE == rc )
+            {
+               rc = SDB_OK ;
+            }
+            PD_RC_CHECK( rc, PDERROR, "Failed to create id index" ) ;
+
+            rc = su->setCollectionNoIDIndex( collectionShortName, FALSE, mbContext ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to set auto index id attribute "
+                         "on collection [%s], rc: %d", collection, rc ) ;
          }
-         PD_RC_CHECK( rc, PDERROR, "Failed to create id index" ) ;
       }
 
    done :
@@ -1022,9 +1122,6 @@ namespace engine
       rc = rtnAlterCLSetAttributes( name, task, mbContext, su, dmsCB, cb ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to set attributes on collection [%s], "
                    "rc: %d", name, rc ) ;
-
-      rc = rtnAlter2DPSLog( name, task, options, dpsCB ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to write DPS log, rc: %d", rc ) ;
 
    done :
       if ( NULL != mbContext )
@@ -1122,9 +1219,6 @@ namespace engine
       rc = rtnAlterCSSetAttributes( name, task, su, dmsCB, cb ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to set attributes on collection space "
                    "[%s], rc: %d", name, rc ) ;
-
-      rc = rtnAlter2DPSLog( name, task, options, dpsCB ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to write DPS log, rc: %d", rc ) ;
 
    done :
       if ( DMS_INVALID_SUID != suID )
