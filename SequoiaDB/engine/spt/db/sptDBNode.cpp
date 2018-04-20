@@ -36,14 +36,12 @@ namespace engine
    #define SPT_NODE_NAME   "SdbNode"
    JS_CONSTRUCT_FUNC_DEFINE( _sptDBNode, construct )
    JS_DESTRUCT_FUNC_DEFINE( _sptDBNode, destruct )
-   JS_MEMBER_FUNC_DEFINE( _sptDBNode, connect )
    JS_MEMBER_FUNC_DEFINE( _sptDBNode, start )
    JS_MEMBER_FUNC_DEFINE( _sptDBNode, stop )
 
    JS_BEGIN_MAPPING( _sptDBNode, SPT_NODE_NAME )
       JS_ADD_CONSTRUCT_FUNC( construct )
       JS_ADD_DESTRUCT_FUNC( destruct )
-      JS_ADD_MEMBER_FUNC( "connect", connect )
       JS_ADD_MEMBER_FUNC( "start", start )
       JS_ADD_MEMBER_FUNC( "stop", stop )
       JS_SET_CVT_TO_BSON_FUNC( _sptDBNode::cvtToBSON )
@@ -72,25 +70,6 @@ namespace engine
    INT32 _sptDBNode::destruct()
    {
       return SDB_OK ;
-   }
-
-   INT32 _sptDBNode::connect( const _sptArguments &arg,
-                              _sptReturnVal &rval,
-                              bson::BSONObj &detail )
-   {
-      INT32 rc = SDB_OK ;
-      INT32 isSecure = FALSE ;
-
-      rc = arg.getNative( 0, &isSecure, SPT_NATIVE_INT32 ) ;
-      if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
-      {
-         detail = BSON( SPT_ERR << "IsSecure must be bool" ) ;
-         goto error ;
-      }
-   done:
-      return rc ;
-   error:
-      goto done ;
    }
 
    INT32 _sptDBNode::start( const _sptArguments &arg,

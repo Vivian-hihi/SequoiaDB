@@ -210,7 +210,7 @@ namespace engine
       {
          stringstream ss ;
          ss << SDB_DEF_COORD_PORT ;
-         username = SDB_DEF_COORD_NAME ;
+         hostname = SDB_DEF_COORD_NAME ;
          svcname = ss.str() ;
       }
       else if( SDB_OK != rc )
@@ -218,36 +218,37 @@ namespace engine
          detail = BSON( SPT_ERR << "Hostname must be string" ) ;
          goto error ;
       }
-
-      // Get svcname
-      rc = arg.getString( 1, svcname ) ;
-      if( SDB_OUT_OF_BOUND == rc )
+      else
       {
-         size_t pos = hostname.find( NODE_NAME_SPLIT ) ;
-         if( std::string::npos == pos )
+         // Get svcname
+         rc = arg.getString( 1, svcname ) ;
+         if( SDB_OUT_OF_BOUND == rc )
          {
-            stringstream ss ;
-            ss << SDB_DEF_COORD_PORT ;
-            svcname = ss.str() ;
+            size_t pos = hostname.find( NODE_NAME_SPLIT ) ;
+            if( std::string::npos == pos )
+            {
+               stringstream ss ;
+               ss << SDB_DEF_COORD_PORT ;
+               svcname = ss.str() ;
+            }
+            else
+            {
+               svcname = hostname.substr( pos + 1 ) ;
+               hostname = hostname.substr( 0, pos ) ;
+            }
          }
-         else
+         else if( SDB_OK != rc )
          {
-            svcname = hostname.substr( pos + 1 ) ;
-            hostname = hostname.substr( 0, pos ) ;
+            UINT16 port = 0 ;
+            rc = arg.getNative( 1, (void*)&port, SPT_NATIVE_INT16 ) ;
+            if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
+            {
+               detail = BSON( SPT_ERR << "Svcname must be string or int" ) ;
+               goto error ;
+            }
+            svcname = boost::lexical_cast< string >( port ) ;
          }
       }
-      else if( SDB_OK != rc )
-      {
-         UINT16 port = 0 ;
-         rc = arg.getNative( 1, (void*)&port, SPT_NATIVE_INT16 ) ;
-         if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
-         {
-            detail = BSON( SPT_ERR << "Svcname must be string or int" ) ;
-            goto error ;
-         }
-         svcname = boost::lexical_cast< string >( port ) ;
-      }
-
       if( arg.argc() > 2 )
       {
          // Get username

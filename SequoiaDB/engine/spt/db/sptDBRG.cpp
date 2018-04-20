@@ -399,6 +399,7 @@ namespace engine
          rc = utilSplitStr( nodename, splitStrVec, seperator ) ;
          if( SDB_OK != rc || splitStrVec.size() != NODE_NAME_SPLIT_VEC_SIZE )
          {
+            rc = SDB_INVALIDARG ;
             detail = BSON( SPT_ERR << "Failed to split node name" ) ;
             goto error ;
          }

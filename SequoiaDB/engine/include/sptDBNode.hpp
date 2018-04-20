@@ -54,10 +54,6 @@ namespace engine
 
       INT32 destruct() ;
 
-      INT32 connect( const _sptArguments &arg,
-                     _sptReturnVal &rval,
-                     bson::BSONObj &detail ) ;
-
       INT32 start( const _sptArguments &arg,
                    _sptReturnVal &rval,
                    bson::BSONObj &detail ) ;
