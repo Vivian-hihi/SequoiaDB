@@ -1,16 +1,16 @@
 /************************************
-*@Description: 创建固定集合空间集合，find查询数据 
+*@Description: 创建固定集合，使用_id字段执行查询
 *@author:      liuxiaoxuan
 *@createdate:  2018.4.18
-*@testlinkCase:seqDB-11799
+*@testlinkCase:seqDB-15125
 **************************************/
 
 var currentLastLogicalID = 0;
 var blockCounts = 1;
 function main()
 {
-   var csName = CHANGEDPREFIX + "_11799_large_CS";
-   var clName = CHANGEDPREFIX + "_11799_large_CL";
+   var csName = CHANGEDPREFIX + "_15125_large_CS";
+   var clName = CHANGEDPREFIX + "_15125_large_CL";
    
    //clean and createCS CL before test
    println( "---begin test---" );
@@ -67,32 +67,51 @@ function main()
    {
       allResults.push({a:i});
    }
-   
-   //check query without options   
-   checkLogicalID(dbcl, null, null, {_id : 1}, null, null, expLogicalIDs);
       
    //$gt、$lt
-   var gtObj = { a: { $gt: 0, $lt: 100}}; 
+   var gtObj = { _id: { $gt: 0, $lt: 5600}}; 
    checkQueryResult( dbcl, gtObj, null, {_id : 1}, allResults.slice(1, 100) )
    checkLogicalID(dbcl, gtObj, null, {_id : 1}, null, null, expLogicalIDs.slice(1, 100));
       
-   //$exists
-   var existsObj = { _id: {$exists: 1}};
-   checkQueryResult( dbcl, existsObj, null, {_id : 1}, allResults );
-   checkLogicalID(dbcl, existsObj, null, {_id : 1}, null, null, expLogicalIDs);
-    
-   //$or
-   var orObj = { $or: [{ _id: {$lt : 56} }, { a: { $gt: 100000 }}] }
-   var results = allResults.slice(0, 1).concat(allResults.slice(100101));
-   var expectIDs = expLogicalIDs.slice(0, 1).concat(expLogicalIDs.slice(100101));
-   checkQueryResult( dbcl, orObj, null, {_id : 1}, results );
-   checkLogicalID(dbcl, orObj, null, {_id : 1}, null, null, expectIDs);
+   //$gte、$lte
+   var gteObj = { _id: { $gte: 0, $lte: 5600}}; 
+   checkQueryResult( dbcl, gteObj, null, {_id : 1}, allResults.slice(0, 101) )
+   checkLogicalID(dbcl, gteObj, null, {_id : 1}, null, null, expLogicalIDs.slice(0, 101));
       
-   //$type(function)
-   var etObj = { a : {$et : 100000} }
-   var typeObj =  { "a": { "$type": 1 } }  
-   checkQueryResult( dbcl, etObj, typeObj, {_id : 1}, [{"a": 16}] );
-   checkLogicalID(dbcl, etObj, typeObj, {_id : 1}, null, null, expLogicalIDs.slice(100100, 100101));
+   //$et
+   var etObj = { _id : {$et : 56} }
+   checkQueryResult( dbcl, etObj, null, {_id : 1}, [{"a": 1}] );
+   checkLogicalID(dbcl, etObj, null, {_id : 1}, null, null, expLogicalIDs.slice(1, 2));
+      
+   //$ne
+   var neObj = { _id : {$ne : 0} }
+   checkQueryResult( dbcl, neObj, null, {_id : 1}, allResults.slice(1) );
+   checkLogicalID(dbcl, neObj, null, {_id : 1}, null, null, expLogicalIDs.slice(1));
+      
+   //$in
+   var inObj = { _id : {$in : [0, 56]} }
+   checkQueryResult( dbcl, inObj, null, {_id : 1}, allResults.slice(0, 2));
+   checkLogicalID(dbcl, inObj, null, {_id : 1}, null, null, expLogicalIDs.slice(0, 2));
+      
+   //$nin
+   var neObj = { _id : {$nin : [0, 56]} }
+   checkQueryResult( dbcl, neObj, null, {_id : 1}, allResults.slice(2) );
+   checkLogicalID(dbcl, neObj, null, {_id : 1}, null, null, expLogicalIDs.slice(2));
+   
+   //$mod
+   var modObj = { _id : {$mod : [100000000, 0]} }
+   checkQueryResult( dbcl, modObj, null, {_id : 1}, [{a : 0}] );
+   checkLogicalID(dbcl, modObj, null, {_id : 1}, null, null, expLogicalIDs.slice(0, 1));
+      
+   //$all
+   var allObj = { _id : {$all : [0]} }
+   checkQueryResult( dbcl, allObj, null, {_id : 1}, [{"a": 0}] );
+   checkLogicalID(dbcl, allObj, null, {_id : 1}, null, null, expLogicalIDs.slice(0, 1));
+   
+   //$field
+   var fieldObj = { '_id': {$field: 'a'}};
+   checkQueryResult( dbcl, fieldObj, null, {_id : 1}, [{"a": 0}] );
+   checkLogicalID(dbcl, fieldObj, null, {_id : 1}, null, null, expLogicalIDs.slice(0, 1));
    
    println( "---end the test---" );
    commDropCS( db, csName, true, "drop CS in the end" );
