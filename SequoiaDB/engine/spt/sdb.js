@@ -953,6 +953,13 @@ Sdb.prototype.stopRG = function() {
       }
    }
 }
+
+SecureSdb.prototype._resolveCS = function(csName) {
+   if( !this.hasOwnProperty( csName ) )
+   {
+      return this.getCS( csName ) ;
+   }
+}
 // end Sdb
 
 function printCallStack()

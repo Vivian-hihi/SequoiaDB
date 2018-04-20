@@ -34,10 +34,11 @@ namespace engine
 {
    JS_CONSTRUCT_FUNC_DEFINE( _sptDBSecureSdb, construct )
    JS_DESTRUCT_FUNC_DEFINE( _sptDBSecureSdb, destruct )
-
+   JS_RESOLVE_FUNC_DEFINE( _sptDBSecureSdb, resolve )
    JS_BEGIN_MAPPING_WITHPARENT( _sptDBSecureSdb, "SecureSdb", _sptDBSdb )
    JS_ADD_CONSTRUCT_FUNC(construct)
    JS_ADD_DESTRUCT_FUNC(destruct)
+   JS_ADD_RESOLVE_FUNC(resolve)
    JS_SET_CVT_TO_BSON_FUNC( _sptDBSecureSdb::cvtToBSON )
    JS_SET_JSOBJ_TO_BSON_FUNC( _sptDBSecureSdb::fmpToBSON )
    JS_SET_BSON_TO_JSOBJ_FUNC( _sptDBSecureSdb::bsonToJSObj )

@@ -285,8 +285,6 @@ namespace engine
 
       INT32 _getRGAndSetProperty( INT32 id, _sptReturnVal &rval,
                                   bson::BSONObj &detail ) ;
-      string _hostname ;
-      string _svcname ;
       sdb _sptSdb ;
    } ;
    typedef _sptDBSdb sptDBSdb ;
