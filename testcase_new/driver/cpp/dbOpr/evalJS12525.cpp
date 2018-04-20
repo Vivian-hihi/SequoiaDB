@@ -207,11 +207,14 @@ TEST_F( evalJSTest12525, cs12525 )
    BSONObj errmsg ; 
    rc = db.evalJS( code, type, cursor, errmsg ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to eval js" ;
-   ASSERT_EQ( SDB_SPD_RES_TYPE_CS, type ) ;
+   ASSERT_EQ( SDB_SPD_RES_TYPE_SPECIALOBJ, type ) ;
    BSONObj obj ;
    rc = cursor.next( obj ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to get next" ;
-   ASSERT_EQ( csName, obj.getField( "value" ).String() ) << "fail to check result" ;
+   ASSERT_EQ( "SdbCS", obj.getField( "className" ).String() ) 
+         << "wrong class name" ;
+   ASSERT_EQ( csName, obj.getField( "value" ).Obj().getField( "_name" ).String() ) 
+         << "fail to check result" ;
    rc = cursor.close() ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to close cursor" ;
              
@@ -241,11 +244,13 @@ TEST_F( evalJSTest12525, cl12525 )
    BSONObj errmsg ; 
    rc = db.evalJS( code, type, cursor, errmsg ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to eval js" ;
-   ASSERT_EQ( SDB_SPD_RES_TYPE_CL, type ) ;
+   ASSERT_EQ( SDB_SPD_RES_TYPE_SPECIALOBJ, type ) ;
    BSONObj obj ;
    rc = cursor.next( obj ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to get next" ;
-   ASSERT_EQ( "evalJSTestCs12525.evalJSTestCl12525", obj.getField( "value" ).String() ) << "fail to check result" ;
+   ASSERT_EQ( "SdbCollection", obj.getField( "className" ).String() ) << "wrong className" ;
+   ASSERT_EQ( "evalJSTestCs12525.evalJSTestCl12525", 
+              obj.getField( "value" ).Obj().getField( "_name" ).String() ) << "fail to check result" ;
    rc = cursor.close() ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to close cursor" ;
              
@@ -268,11 +273,13 @@ TEST_F( evalJSTest12525, rg12525 )
    BSONObj errmsg ; 
    rc = db.evalJS( code, type, cursor, errmsg ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to eval js" ;
-   ASSERT_EQ( SDB_SPD_RES_TYPE_RG, type ) ;
+   ASSERT_EQ( SDB_SPD_RES_TYPE_SPECIALOBJ, type ) ;
    BSONObj obj ;
    rc = cursor.next( obj ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to get next" ;
-   ASSERT_EQ( "SYSCoord", obj.getField( "value" ).String() ) << "fail to check result" ;
+   ASSERT_EQ( "SdbReplicaGroup", obj.getField( "className" ).String() ) << "wrong className" ;
+   ASSERT_EQ( "SYSCoord", obj.getField( "value" ).Obj().getField( "_name" ).String() ) 
+         << "fail to check result" ;
    rc = cursor.close() ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to close cursor" ;
 }
@@ -305,13 +312,13 @@ TEST_F( evalJSTest12525, rgNode12525 )
    BSONObj errmsg ; 
    rc = db.evalJS( code, type, cursor, errmsg ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to eval js" ;
-   ASSERT_EQ( SDB_SPD_RES_TYPE_RN, type ) ;
+   ASSERT_EQ( SDB_SPD_RES_TYPE_SPECIALOBJ, type ) ;
    BSONObj obj ;
    rc = cursor.next( obj ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to get next" ;
-   CHAR expect[100] ;
-   sprintf( expect, "%s%s%s", rgName, ":", nodeName ) ;
-   ASSERT_EQ( expect, obj.getField( "value" ).String() ) << "fail to check result" ;
+   ASSERT_EQ( "SdbNode", obj.getField( "className" ).String() ) << "wrong className" ;
+   ASSERT_EQ( nodeName, obj.getField( "value" ).Obj().getField( "_nodename" ).String() ) 
+         << "fail to check result" ;
    rc = cursor.close() ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to close cursor" ;
 }
