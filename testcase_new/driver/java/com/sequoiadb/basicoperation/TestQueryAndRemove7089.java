@@ -11,9 +11,7 @@ import org.bson.BasicBSONObject;
 import org.bson.util.JSON;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
@@ -137,6 +135,15 @@ public class TestQueryAndRemove7089 extends SdbTestBase{
             }
             Assert.assertEquals(actualList, expectedList, "Sequoiadb driver TestQueryAndRemove7089 checkQueryAndRemove" +
                     "actualList:" +actualList.toString() + "; expectedList:" + expectedList.toString());
+            cursor = 
+                    this.cl.queryAndRemove(matcher, selector, orderBy, hint, skipRows, 2, -100);
+            int actual = 0;
+            while( cursor.hasNext() ) {
+                cursor.getNext();
+                actual++;
+            }
+            cursor.close();
+            Assert.assertEquals(actual, 2);
         }catch (BaseException e) {
             Assert.fail("Sequoiadb driver TestQueryAndRemove7089 checkQueryAndRemove error:" + e.getMessage());
         }
