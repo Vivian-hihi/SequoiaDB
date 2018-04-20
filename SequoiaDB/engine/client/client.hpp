@@ -2698,7 +2698,7 @@ namespace sdbclient
        */
       INT32 alterCollectionSpace ( const bson::BSONObj & options )
       {
-         if ( NULL != pCollectionSpace )
+         if ( NULL == pCollectionSpace )
          {
             return SDB_NOT_CONNECTED ;
          }
@@ -2716,7 +2716,7 @@ namespace sdbclient
        */
       INT32 setDomain ( const bson::BSONObj & options )
       {
-         if ( NULL != pCollectionSpace )
+         if ( NULL == pCollectionSpace )
          {
             return SDB_NOT_CONNECTED ;
          }
@@ -2730,7 +2730,7 @@ namespace sdbclient
        */
       INT32 removeDomain ()
       {
-         if ( NULL != pCollectionSpace )
+         if ( NULL == pCollectionSpace )
          {
             return SDB_NOT_CONNECTED ;
          }
@@ -2744,7 +2744,7 @@ namespace sdbclient
        */
       INT32 enableCapped ()
       {
-         if ( NULL != pCollectionSpace )
+         if ( NULL == pCollectionSpace )
          {
             return SDB_NOT_CONNECTED ;
          }
@@ -2758,7 +2758,7 @@ namespace sdbclient
        */
       INT32 disableCapped ()
       {
-         if ( NULL != pCollectionSpace )
+         if ( NULL == pCollectionSpace )
          {
             return SDB_NOT_CONNECTED ;
          }
@@ -2778,7 +2778,7 @@ namespace sdbclient
        */
       INT32 setAttributes ( const bson::BSONObj & options )
       {
-         if ( NULL != pCollectionSpace )
+         if ( NULL == pCollectionSpace )
          {
             return SDB_NOT_CONNECTED ;
          }
