@@ -39,12 +39,11 @@
 #include "fmpDef.hpp"
 #include "clsCatalogAgent.hpp"
 #include "utilCommon.hpp"
+#include "utilArguments.hpp"
 
 #include "../bson/lib/md5.hpp"
 
 using namespace bson ;
-
-#define MAX_CL_SIZE_ALIGN_SIZE      (32 * 1024 * 1024)
 
 namespace engine
 {
@@ -3779,7 +3778,7 @@ namespace engine
                       CAT_CL_MAX_SIZE, eleTmp.type() ) ;
             // Always align the size upper to 32MB.
             clInfo._maxSize = ossRoundUpToMultipleX( eleTmp.numberLong() << 20,
-                                                     MAX_CL_SIZE_ALIGN_SIZE ) ;
+                                                     UTIL_MAX_CL_SIZE_ALIGN_SIZE ) ;
             fieldMask |= UTIL_CL_MAXSIZE_FIELD ;
          }
          else if ( 0 == ossStrcmp( eleTmp.fieldName(), CAT_CL_OVERWRITE ) )

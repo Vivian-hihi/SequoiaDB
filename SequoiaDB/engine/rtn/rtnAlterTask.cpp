@@ -636,7 +636,9 @@ namespace engine
          argElement = _argument.getField( FIELD_NAME_SIZE ) ;
          PD_CHECK( argElement.isNumber(), SDB_INVALIDARG, error, PDERROR,
                    "Failed to get field [%s]", FIELD_NAME_SIZE ) ;
-         _maxSize = (UINT64)argElement.numberLong() ;
+         // Round up to 32MB
+         _maxSize = (UINT64)ossRoundUpToMultipleX( argElement.numberLong() << 20,
+                                                   UTIL_MAX_CL_SIZE_ALIGN_SIZE ) ;
          parsedArgumentMask( UTIL_CL_MAXSIZE_FIELD ) ;
       }
 
@@ -645,6 +647,9 @@ namespace engine
          argElement = _argument.getField( FIELD_NAME_MAX ) ;
          PD_CHECK( argElement.isNumber(), SDB_INVALIDARG, error, PDERROR,
                    "Failed to get field [%s]", FIELD_NAME_MAX ) ;
+         PD_CHECK( argElement.numberLong() >= 0, SDB_INVALIDARG, error, PDERROR,
+                   "Failed to get field [%s]: should be positive value",
+                   FIELD_NAME_MAX ) ;
          _maxRec = (UINT64)argElement.numberLong() ;
          parsedArgumentMask( UTIL_CL_MAXREC_FIELD ) ;
       }
