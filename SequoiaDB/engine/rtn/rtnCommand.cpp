@@ -59,8 +59,6 @@
 using namespace bson ;
 using namespace std ;
 
-#define MAX_CL_SIZE_ALIGN_SIZE            ( 32 * 1024 * 1024 )
-
 // Unit is MB. This is the upper limit. It should be smaller than the maximum
 // size of the storage unit.
 #define MAX_CAP_CL_SIZE                   ( OSS_SINT64_MAX >> 20 )
@@ -694,7 +692,7 @@ namespace engine
             goto error ;
          }
          maxSize = ossRoundUpToMultipleX( maxSize << 20,
-                                          MAX_CL_SIZE_ALIGN_SIZE ) ;
+                                          UTIL_MAX_CL_SIZE_ALIGN_SIZE ) ;
          builder.append( FIELD_NAME_SIZE, maxSize ) ;
 
          // Max/OverWrite is optional.
