@@ -5265,30 +5265,38 @@ error :
       collectionSpaceS = string( _collectionSpaceName ) ;
       try
       {
-         bob.append( FIELD_NAME_ALTER_TYPE, SDB_CATALOG_CS ) ;
-         bob.append( FIELD_NAME_VERSION, SDB_ALTER_VERSION ) ;
-         bob.append( FIELD_NAME_NAME, collectionSpaceS ) ;
-
-         ele = options.getField( FIELD_NAME_ALTER ) ;
-         if ( Object == ele.type() )
+         if ( !options.hasField( FIELD_NAME_ALTER ) )
          {
-            bob.append( ele ) ;
+            bob.append( FIELD_NAME_NAME, collectionSpaceS ) ;
+            bob.append( FIELD_NAME_OPTIONS, options ) ;
          }
          else
          {
-            rc = SDB_INVALIDARG ;
-            goto error ;
-         }
+            bob.append( FIELD_NAME_ALTER_TYPE, SDB_CATALOG_CS ) ;
+            bob.append( FIELD_NAME_VERSION, SDB_ALTER_VERSION ) ;
+            bob.append( FIELD_NAME_NAME, collectionSpaceS ) ;
 
-         ele = options.getField( FIELD_NAME_OPTIONS ) ;
-         if ( Object == ele.type() )
-         {
-            bob.append( ele ) ;
-         }
-         else if ( EOO != ele.type() )
-         {
-            rc = SDB_INVALIDARG ;
-            goto error ;
+            ele = options.getField( FIELD_NAME_ALTER ) ;
+            if ( Object == ele.type() )
+            {
+               bob.append( ele ) ;
+            }
+            else
+            {
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
+
+            ele = options.getField( FIELD_NAME_OPTIONS ) ;
+            if ( Object == ele.type() )
+            {
+               bob.append( ele ) ;
+            }
+            else if ( EOO != ele.type() )
+            {
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
          }
 
          newObj = bob.obj() ;

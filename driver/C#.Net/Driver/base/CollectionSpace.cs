@@ -267,24 +267,19 @@ namespace SequoiaDB
            BsonElement elem;
            bool flag = false;
            BsonDocument newObj = new BsonDocument();
-           newObj.Add(SequoiadbConstants.FIELD_NAME_ALTER_TYPE, SequoiadbConstants.SDB_ALTER_CS);
-           newObj.Add(SequoiadbConstants.FIELD_NAME_VERSION, SequoiadbConstants.SDB_ALTER_VERSION);
-           newObj.Add(SequoiadbConstants.FIELD_NAME, this.name);
-           // append alters
            flag = options.TryGetElement(SequoiadbConstants.FIELD_NAME_ALTER, out elem);
-           if (true == flag && elem.Value.IsBsonDocument)
+           if (false == flag)
            {
-               newObj.Add(elem);
+               newObj.Add(SequoiadbConstants.FIELD_NAME, name);
+               newObj.Add(SequoiadbConstants.FIELD_OPTIONS, options);
            }
            else
            {
-               throw new BaseException("SDB_INVALIDARG");
-           }
-           // append options
-           flag = false;
-           flag = options.TryGetElement(SequoiadbConstants.FIELD_OPTIONS, out elem);
-           if (true == flag)
-           {
+               newObj.Add(SequoiadbConstants.FIELD_NAME_ALTER_TYPE, SequoiadbConstants.SDB_ALTER_CS);
+               newObj.Add(SequoiadbConstants.FIELD_NAME_VERSION, SequoiadbConstants.SDB_ALTER_VERSION);
+               newObj.Add(SequoiadbConstants.FIELD_NAME, name);
+
+               // append alters
                if (elem.Value.IsBsonDocument)
                {
                    newObj.Add(elem);
@@ -292,6 +287,21 @@ namespace SequoiaDB
                else
                {
                    throw new BaseException("SDB_INVALIDARG");
+               }
+
+               // append options
+               flag = false;
+               flag = options.TryGetElement(SequoiadbConstants.FIELD_OPTIONS, out elem);
+               if (true == flag)
+               {
+                   if (elem.Value.IsBsonDocument)
+                   {
+                       newObj.Add(elem);
+                   }
+                   else
+                   {
+                       throw new BaseException("SDB_INVALIDARG");
+                   }
                }
            }
 

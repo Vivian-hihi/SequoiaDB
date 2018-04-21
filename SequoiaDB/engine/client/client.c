@@ -5014,38 +5014,46 @@ SDB_EXPORT INT32 sdbAlterCollectionSpace ( sdbCSHandle cHandle,
       goto error ;
    }
 
-   BSON_APPEND( newObj, FIELD_NAME_ALTER_TYPE, SDB_CATALOG_CS, string ) ;
-   BSON_APPEND( newObj, FIELD_NAME_VERSION, SDB_ALTER_VERSION, int ) ;
-   BSON_APPEND( newObj, FIELD_NAME_NAME, cs->_CSName, string ) ;
-   if ( BSON_OBJECT == bson_find( &itr, options, FIELD_NAME_ALTER ) )
+   if ( BSON_EOO == bson_find( &itr, options, FIELD_NAME_ALTER ) )
    {
-      rc = bson_append_element( &newObj, NULL, &itr ) ;
-      if ( SDB_OK != rc )
-      {
-         rc = SDB_DRIVER_BSON_ERROR ;
-         goto error ;
-      }
+      BSON_APPEND( newObj, FIELD_NAME_NAME, cs->_CSName, string ) ;
+      BSON_APPEND( newObj, FIELD_NAME_OPTIONS, options, bson ) ;
    }
    else
    {
-       rc = SDB_INVALIDARG ;
-       goto error ;
-   }
-
-   /// optional
-   if ( BSON_OBJECT == bson_find( &itr, options, FIELD_NAME_OPTIONS ) )
-   {
-      rc = bson_append_element( &newObj, NULL, &itr ) ;
-      if ( SDB_OK != rc )
+      BSON_APPEND( newObj, FIELD_NAME_ALTER_TYPE, SDB_CATALOG_CS, string ) ;
+      BSON_APPEND( newObj, FIELD_NAME_VERSION, SDB_ALTER_VERSION, int ) ;
+      BSON_APPEND( newObj, FIELD_NAME_NAME, cs->_CSName, string ) ;
+      if ( BSON_OBJECT == bson_find( &itr, options, FIELD_NAME_ALTER ) )
       {
-         rc = SDB_DRIVER_BSON_ERROR ;
+         rc = bson_append_element( &newObj, NULL, &itr ) ;
+         if ( SDB_OK != rc )
+         {
+            rc = SDB_DRIVER_BSON_ERROR ;
+            goto error ;
+         }
+      }
+      else
+      {
+          rc = SDB_INVALIDARG ;
+          goto error ;
+      }
+
+      /// optional
+      if ( BSON_OBJECT == bson_find( &itr, options, FIELD_NAME_OPTIONS ) )
+      {
+         rc = bson_append_element( &newObj, NULL, &itr ) ;
+         if ( SDB_OK != rc )
+         {
+            rc = SDB_DRIVER_BSON_ERROR ;
+            goto error ;
+         }
+      }
+      else if ( BSON_EOO != bson_find( &itr, options, FIELD_NAME_OPTIONS ) )
+      {
+         rc = SDB_INVALIDARG ;
          goto error ;
       }
-   }
-   else if ( BSON_EOO != bson_find( &itr, options, FIELD_NAME_OPTIONS ) )
-   {
-      rc = SDB_INVALIDARG ;
-      goto error ;
    }
 
    BSON_FINISH( newObj ) ;

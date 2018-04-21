@@ -238,22 +238,27 @@ public class CollectionSpace {
         }
 
         BSONObject newObj = new BasicBSONObject();
-        Object tmpAlter = options.get(SdbConstants.FIELD_NAME_ALTER);
-        if (tmpAlter instanceof BasicBSONObject) {
-            newObj.put(SdbConstants.FIELD_NAME_ALTER, tmpAlter);
+        if (!options.containsField(SdbConstants.FIELD_NAME_ALTER)) {
+            newObj.put(SdbConstants.FIELD_NAME_NAME, name);
+            newObj.put(SdbConstants.FIELD_NAME_OPTIONS, options);
         } else {
-            throw new BaseException(SDBError.SDB_INVALIDARG, options.toString());
-        }
-        newObj.put(SdbConstants.FIELD_NAME_ALTER_TYPE, SdbConstants.SDB_ALTER_CS);
-        newObj.put(SdbConstants.FIELD_NAME_VERSION, SdbConstants.SDB_ALTER_VERSION);
-        newObj.put(SdbConstants.FIELD_NAME_NAME, name);
-
-        if (options.containsField(SdbConstants.FIELD_NAME_OPTIONS)) {
-            Object tmpOptions = options.get(SdbConstants.FIELD_NAME_OPTIONS);
-            if (tmpOptions instanceof BasicBSONObject) {
-                newObj.put(SdbConstants.FIELD_NAME_OPTIONS, tmpOptions);
+            Object tmpAlter = options.get(SdbConstants.FIELD_NAME_ALTER);
+            if (tmpAlter instanceof BasicBSONObject) {
+                newObj.put(SdbConstants.FIELD_NAME_ALTER, tmpAlter);
             } else {
                 throw new BaseException(SDBError.SDB_INVALIDARG, options.toString());
+            }
+            newObj.put(SdbConstants.FIELD_NAME_ALTER_TYPE, SdbConstants.SDB_ALTER_CS);
+            newObj.put(SdbConstants.FIELD_NAME_VERSION, SdbConstants.SDB_ALTER_VERSION);
+            newObj.put(SdbConstants.FIELD_NAME_NAME, name);
+
+            if (options.containsField(SdbConstants.FIELD_NAME_OPTIONS)) {
+                Object tmpOptions = options.get(SdbConstants.FIELD_NAME_OPTIONS);
+                if (tmpOptions instanceof BasicBSONObject) {
+                    newObj.put(SdbConstants.FIELD_NAME_OPTIONS, tmpOptions);
+                } else {
+                    throw new BaseException(SDBError.SDB_INVALIDARG, options.toString());
+                }
             }
         }
 
