@@ -1974,7 +1974,7 @@ namespace engine
          }
          if ( localTask->testArgumentMask( UTIL_DOMAIN_AUTOREBALANCE_FIELD ) )
          {
-            builder.appendBool( CAT_DOMAIN_AUTO_SPLIT, localTask->isAutoSplit() ) ;
+            builder.appendBool( CAT_DOMAIN_AUTO_REBALANCE, localTask->isAutoRebalance() ) ;
          }
       }
 
