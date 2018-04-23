@@ -1,7 +1,7 @@
 部署包是将指定的包部署到指定的主机中。目前只支持部署SequoiaSQL-OLTP包。
 
 > **Note:**  
-> 部署包之前需要将包放在SAC所在主机的安装路径package路径下，例：/opt/sequoiadb/package。
+> 部署包之前需要将包放在SAC所在主机的安装路径packet路径下，例：/opt/sequoiadb/packet。
 
 1. 从部署首页-主机页面勾选需要部署包的机器，点击主机操作-部署包进入配置页面填写参数。
 

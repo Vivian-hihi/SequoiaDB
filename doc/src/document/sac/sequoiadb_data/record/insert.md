@@ -1,6 +1,6 @@
 
 1. 演示已经创建 foo.bar 的集合，
-   集合创建可以参考[创建集合文档](sac/data_operation/collection/create_cl.md)。
+   集合创建可以参考[创建集合文档](sac/sequoiadb_data/collection/create_cl.md)。
 
    ![插入](sac/data_operation/record/insert_1.jpg)
 

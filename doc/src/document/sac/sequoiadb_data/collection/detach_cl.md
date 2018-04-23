@@ -1,5 +1,5 @@
 
-1. 演示已经创建好垂直分区的集合 foo.main 和 普通集合 foo.bar，并且把 foo.bar 挂载到 foo.main，挂载集合可以参考[挂载集合文档](sac/data_operation/collection/attach_cl.md)。
+1. 演示已经创建好垂直分区的集合 foo.main 和 普通集合 foo.bar，并且把 foo.bar 挂载到 foo.main，挂载集合可以参考[挂载集合文档](sac/sequoiadb_data/collection/attach_cl.md)。
 
    ![分离集合](sac/data_operation/collection/detach_cl_1.jpg)
 

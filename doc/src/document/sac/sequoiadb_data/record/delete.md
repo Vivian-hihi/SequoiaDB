@@ -15,7 +15,7 @@
 ```
 
 1. 演示已经在 foo.bar 的集合插入两条记录，
-   插入记录可以参考[插入文档](sac/data_operation/record/insert.md)。
+   插入记录可以参考[插入文档](sac/sequoiadb_data/record/insert.md)。
 
    ![删除](sac/data_operation/record/delete_1.jpg)
 

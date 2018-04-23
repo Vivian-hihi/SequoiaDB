@@ -7,7 +7,7 @@
 | [分区索引](basic_operation/sharding/sharding_index.md)      |
 | [数据切分](basic_operation/sharding/data_split.md)          |
 
-1. 演示已经创建 foo 的集合空间，集合空间创建可以参考[创建集合空间文档](sac/data_operation/collection_space/create_cs.md)。
+1. 演示已经创建 foo 的集合空间，集合空间创建可以参考[创建集合空间文档](sac/sequoiadb_data/collection_space/create_cs.md)。
 
    ![切分数据](sac/data_operation/collection/split_1.jpg)
 
