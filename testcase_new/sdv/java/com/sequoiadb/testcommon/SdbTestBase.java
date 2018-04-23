@@ -1,5 +1,7 @@
 package com.sequoiadb.testcommon;
 
+import java.io.File;
+
 import org.testng.Assert;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
@@ -38,6 +40,10 @@ public class SdbTestBase {
 			db = new Sequoiadb(coordUrl, "", "");
 			boolean ret = createCommonCS(db);
 			Assert.assertTrue(ret);
+			File workDirFile = new File(workDir);
+			if (!workDirFile.exists()) {
+			    workDirFile.mkdir();
+			}
 		}catch(BaseException e){
 			Assert.fail("connect " + coordUrl + ": " + e.getErrorCode());
 		}finally{

@@ -1,5 +1,7 @@
 package com.sequoiadb.testcommon;
 
+import java.io.File;
+
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Parameters;
@@ -36,6 +38,10 @@ public class SdbTestBase {
             db = new Sequoiadb(coordUrl, "", "");
             if (db.isCollectionSpaceExist(csName)) db.dropCollectionSpace(csName);
             db.createCollectionSpace(csName);
+            File workDirFile = new File(workDir);
+            if (!workDirFile.exists()) {
+                workDirFile.mkdir();
+            }
         } finally {
             if (db != null) {
                 db.disconnect();
