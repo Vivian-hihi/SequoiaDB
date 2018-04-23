@@ -278,10 +278,6 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Failed to create id index on collection [%s], "
                    "rc: %d", name, rc ) ;
 
-      rc = su->setCollectionNoIDIndex( collectionShortName, FALSE, mbContext ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to set auto index id attribute "
-                   "on collection [%s], rc: %d", name, rc ) ;
-
    done :
       if ( NULL != mbContext )
       {
@@ -349,10 +345,6 @@ namespace engine
       }
       PD_RC_CHECK( rc, PDERROR, "Failed to drop id index on collection [%s], "
                    "rc: %d", name, rc ) ;
-
-      rc = su->setCollectionNoIDIndex( collectionShortName, TRUE, mbContext ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to set auto index id attribute "
-                   "on collection [%s], rc: %d", name, rc ) ;
 
    done :
       if ( NULL != mbContext )
@@ -1072,10 +1064,6 @@ namespace engine
                rc = SDB_OK ;
             }
             PD_RC_CHECK( rc, PDERROR, "Failed to create id index" ) ;
-
-            rc = su->setCollectionNoIDIndex( collectionShortName, FALSE, mbContext ) ;
-            PD_RC_CHECK( rc, PDERROR, "Failed to set auto index id attribute "
-                         "on collection [%s], rc: %d", collection, rc ) ;
          }
       }
 
