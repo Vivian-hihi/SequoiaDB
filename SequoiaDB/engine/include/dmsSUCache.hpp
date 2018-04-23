@@ -50,8 +50,13 @@ namespace engine
    #define DMS_CACHE_TYPE_PLAN ( 1 )
    #define DMS_CACHE_TYPE_NUM  ( 2 )
 
+   #define DMS_SU_STACK_BITMAP_SIZE ( ( ( DMS_MME_SLOTS ) + \
+                                        ( UTIL_BITMAP_UNIT_MODULO ) ) / \
+                                      ( UTIL_BITMAP_UNIT_SIZE ) )
+
    typedef class _utilSUCache<UTIL_SU_CACHE_DFT_SIZE> dmsSUCache ;
    typedef class _IUtilSUCacheHolder<DMS_MME_SLOTS> IDmsSUCacheHolder ;
+   typedef class _utilStackBitmap<DMS_SU_STACK_BITMAP_SIZE> dmsSUCacheBitmap ;
 
    /*
       _dmsStatCache define
@@ -156,8 +161,8 @@ namespace engine
       protected :
          UINT32 _bucketModulo ;
          utilBitmap _cacheBitmap ;
-         _utilStackBitmap<DMS_MME_SLOTS> _paramInvalidBitmap ;
-         _utilStackBitmap<DMS_MME_SLOTS> _mainCLInvalidBitmap ;
+         dmsSUCacheBitmap _paramInvalidBitmap ;
+         dmsSUCacheBitmap _mainCLInvalidBitmap ;
    } ;
 
    typedef class _dmsCachedPlanMgr dmsCachedPlanMgr ;

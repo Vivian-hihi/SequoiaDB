@@ -48,7 +48,7 @@ namespace engine
    #define UTIL_BITMAP_UNIT_SIZE       ( 8 )
 
    // Modulo to index the unit in bitmap
-   #define UTIL_BITMAP_UNIT_MODULO     ( 7 )
+   #define UTIL_BITMAP_UNIT_MODULO     ( ( UTIL_BITMAP_UNIT_SIZE ) - 1 )
 
    // log2(unit size) in a bitmap unit
    #define UTIL_BITMAP_UNIT_LOG2SIZE   ( 3 )
