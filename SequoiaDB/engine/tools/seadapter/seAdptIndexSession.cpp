@@ -507,18 +507,13 @@ namespace seadapter
       INT32 bufSize = 0 ;
       UINT64 requestID = 0 ;
 
-      if ( _queryCtxID >= 0 )
-      {
-         rc = msgBuildKillContextsMsg( (CHAR **)&msg, &bufSize, requestID,
-                                       1, &_queryCtxID ) ;
-         PD_RC_CHECK( rc, PDERROR, "Build kill context message failed[ %d ]",
-                      rc ) ;
-         msg->TID = SEADPT_TID( _sessionID ) ;
-         rc = sdbGetSeAdapterCB()->sendToDataNode( msg ) ;
-         PD_RC_CHECK( rc, PDERROR, "Send kill context message to data node "
-                      "failed[ %d ]", rc ) ;
-         _queryCtxID = -1 ;
-      }
+      rc = msgBuildDisconnectMsg( (CHAR **)&msg, &bufSize, requestID ) ;
+      PD_RC_CHECK( rc, PDERROR, "Build disconnect message failed[ %d ]",
+                   rc ) ;
+      msg->TID = SEADPT_TID( _sessionID ) ;
+      rc = sdbGetSeAdapterCB()->sendToDataNode( msg ) ;
+      PD_RC_CHECK( rc, PDERROR, "Send disconnect message to data node "
+                   "failed[ %d ]", rc ) ;
 
    done:
       return ;
