@@ -83,20 +83,16 @@ function main()
    checkQueryResult( dbcl, etObj, null, {_id : 1}, [{"a": 1}] );
    checkLogicalID(dbcl, etObj, null, {_id : 1}, null, null, expLogicalIDs.slice(1, 2));
       
-   //$ne
-   var neObj = { _id : {$ne : 0} }
-   checkQueryResult( dbcl, neObj, null, {_id : 1}, allResults.slice(1) );
-   checkLogicalID(dbcl, neObj, null, {_id : 1}, null, null, expLogicalIDs.slice(1));
-      
-   //$in
+   //$$in
+   var neinObj = { "$and": [ { "_id": { "$ne": 0 } }, { "income": { "$lt": 10000 } } ] } 
    var inObj = { _id : {$in : [0, 56]} }
    checkQueryResult( dbcl, inObj, null, {_id : 1}, allResults.slice(0, 2));
    checkLogicalID(dbcl, inObj, null, {_id : 1}, null, null, expLogicalIDs.slice(0, 2));
       
-   //$nin
-   var neObj = { _id : {$nin : [0, 56]} }
-   checkQueryResult( dbcl, neObj, null, {_id : 1}, allResults.slice(2) );
-   checkLogicalID(dbcl, neObj, null, {_id : 1}, null, null, expLogicalIDs.slice(2));
+   //$ne、$nin
+   var neinObj = { "$and": [ { "_id": { "$ne": 0 } }, { _id : {$nin : [56, 112]}} ] } ;
+   checkQueryResult( dbcl, neinObj, null, {_id : 1}, allResults.slice(3) );
+   checkLogicalID(dbcl, neinObj, null, {_id : 1}, null, null, expLogicalIDs.slice(3));
    
    //$mod
    var modObj = { _id : {$mod : [100000000, 0]} }

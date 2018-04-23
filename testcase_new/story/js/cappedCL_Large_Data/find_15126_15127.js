@@ -79,9 +79,9 @@ function main()
    checkLogicalID(dbcl, orObj, null, {_id : 1}, null, null, [expLogicalIDs[0], expLogicalIDs[100199]]);
    
    //only _id, not   
-   var notObj = { $not : [{_id : 0 }, {_id : 56}] }
-   checkQueryResult( dbcl, notObj, null, {_id : 1}, allResults );
-   checkLogicalID(dbcl, notObj, null, {_id : 1}, null, null, expLogicalIDs);
+   var notObj = { $not : [{_id : {$ne: 0}} , {_id: {$gt : 0}}] }
+   checkQueryResult( dbcl, notObj, null, {_id : 1}, allResults.slice(0, 1) );
+   checkLogicalID(dbcl, notObj, null, {_id : 1}, null, null, expLogicalIDs.slice(0, 1));
    
    //only _id, and-and   
    var andandObj =  { $and: [{ $and : [{_id : 0}, {_id : {$in : [0, 56]}}] }, {_id : {$lt :5600}} ] }
@@ -134,9 +134,9 @@ function main()
    checkLogicalID(dbcl, orObj, null, {_id : 1}, null, null, expLogicalIDs.slice(0, 1).concat(expLogicalIDs.slice(100101)));
    
    //_id and other field, not   
-   var notObj = { $not : [{_id : 0}, {a : {$in : [0, 100000]}}] }
-   checkQueryResult( dbcl, notObj, null, {_id : 1}, allResults.slice(1) );
-   checkLogicalID(dbcl, notObj, null, {_id : 1}, null, null, expLogicalIDs.slice(1));
+   var notObj = { $not : [{_id : {$gt : 0}}, {a : {$in : [0, 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa']}}] };
+   checkQueryResult( dbcl, notObj, null, {_id : 1}, allResults.slice(0, 100).concat(allResults.slice(100100)) );
+   checkLogicalID(dbcl, notObj, null, {_id : 1}, null, null, expLogicalIDs.slice(0, 100).concat(expLogicalIDs.slice(100100)));
    
    //_id and other field, and-and   
    var andandObj = { $and: [{ $and : [{_id : 0}, {a : {$in : [0, 100000]}}] }, {a : 0} ] }
@@ -159,9 +159,9 @@ function main()
    checkLogicalID(dbcl, ornotObj, null, {_id : 1}, null, null, expLogicalIDs.slice(0, 100).concat(expLogicalIDs.slice(100100, 100101)) );
       
    //_id and other field, not-and
-   var notandObj =  { $not: [{ $and : [{_id : 0 }, {a : {$ne : 100000}}]}, {a : {$lt : 100000}} ] }
-   checkQueryResult( dbcl, notandObj, null, {_id : 1}, allResults.slice(1) );
-   checkLogicalID(dbcl, notandObj, null, {_id : 1}, null, null, expLogicalIDs.slice(1) );
+   var notandObj =  { $not: [{ $and : [{_id : {$gt : 0} }, {a : {$ne : 0}}]}, {a : { $et:  'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'}} ] };
+   checkQueryResult( dbcl, notandObj, null, {_id : 1}, allResults.slice(0, 100).concat(allResults.slice(100100))  );
+   checkLogicalID(dbcl, notandObj, null, {_id : 1}, null, null, expLogicalIDs.slice(0, 100).concat(expLogicalIDs.slice(100100))  );
       
    //_id and other field, and-and-or
    var andandorObj = { $and: [{ $and : [{_id : 0}, {a : {$in : [0, 100000]}}] }, { $or : [{_id : 0 }, {a : {$gt : 100000}}]}] }
