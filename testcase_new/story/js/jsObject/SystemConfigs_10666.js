@@ -39,7 +39,7 @@ SystemTest.prototype.testGetSystemConfigs = function()
             continue ;
          else if( getIndexInArray( k, except ) !== -1 )
             continue ;
-         else if( configObj[k] !== result[k] )
+         else if( typeof(configObj[k]) !== "undefined" && configObj[k] !== result[k] )
          {
             throw buildException( "testGetSystemConfigs", null, 
                   "test key: " + k + " " + this, "res: " + result[k], 
