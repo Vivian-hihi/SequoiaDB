@@ -27,18 +27,19 @@ function main( db )
    evalSdbCollection( db ) ;
    evalSdbCursor( db ) ;
    evalSdbQuery( db ) ;
-   evalSdbReplicaGroup( db ) ;
-   evalSdbNode( db ) ;
+   // TODO: comment for SEQUOIADBMAINSTREAM-3485
+   // evalSdbReplicaGroup( db ) ;
+   // evalSdbNode( db ) ;
    evalSdbDomain( db ) ;
    evalCLCount( db ) ;
-   evalBinData( db ) ;
-   evalObjectId( db ) ;
-   evalTimestamp( db ) ;
-   evalRegex( db ) ;
-   evalMinKey( db ) ;
-   evalMaxKey( db ) ;
-   evalNumberLong( db ) ;
-   evalSdbDate( db ) ;
+   // evalBinData( db ) ;
+   // evalObjectId( db ) ;
+   // evalTimestamp( db ) ;
+   // evalRegex( db ) ;
+   // evalMinKey( db ) ;
+   // evalMaxKey( db ) ;
+   // evalNumberLong( db ) ;
+   // evalSdbDate( db ) ;
    
    commDropCL( db, COMMCSNAME, clName ) ;
 }
@@ -55,9 +56,9 @@ function evalSdb( db )
    }
    catch( e )
    {
-      if( e !== -6 )
+      if( e !== -10 )
       {
-         throw buildException( "evalSdb", e, "get sdb", -6, e ) ;
+         throw buildException( "evalSdb", e, "get sdb", -10, e ) ;
       }
    }
    db.removeProcedure( "getSdb" ) ;
@@ -197,14 +198,10 @@ function evalSdbDomain( db )
    {
       var domain = db.eval( "getSdbDomain( \"" + COORDHOSTNAME + "\", " + 
                             "\"" + COORDSVCNAME + "\", \"" + domainName + "\" )" ) ;
-      throw 0 ;
    }
    catch( e )
    {
-      if( e !== -6 )
-      {
-         throw buildException( "evalSdbDomain", e, "get sdbDomain", -6, e ) ;
-      }
+      throw buildException( "evalSdbDomain", e, "get sdbDomain", -6, e ) ;
    }
    db.removeProcedure( "getSdbDomain" ) ;
    
