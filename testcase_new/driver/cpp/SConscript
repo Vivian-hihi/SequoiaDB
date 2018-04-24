@@ -54,13 +54,13 @@ testFiles = [
    [ "./dbOpr/trace14678.cpp" ], # sync
    [ "./dbOpr/msg14679.cpp" ],
    [ "./disconnect/opCL12741.cpp" ],
-   [ "./disconnect/opSdb12531.cpp" ],
-   [ "./disconnect/opDomain12739.cpp" ],
-   [ "./disconnect/opCS12740.cpp" ],
+   # [ "./disconnect/opSdb12531.cpp" ], # manual
+   # [ "./disconnect/opDomain12739.cpp" ], # manual
+   # [ "./disconnect/opCS12740.cpp" ], # manual
    [ "./disconnect/opCursor12742.cpp" ],
-   [ "./disconnect/opRG12743.cpp" ],
-   [ "./disconnect/opNode12744.cpp" ],
-   [ "./disconnect/opLob12745.cpp" ],
+   # [ "./disconnect/opRG12743.cpp" ], # manual
+   # [ "./disconnect/opNode12744.cpp" ], # manual
+   # [ "./disconnect/opLob12745.cpp" ], # manual
    [ "./split/splitRange12682.cpp" ],
    [ "./split/splitHash12683.cpp" ],
    [ "./split/task12527.cpp" ],
