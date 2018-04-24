@@ -185,7 +185,8 @@ namespace engine
                                      INT16 w ) ;
 
       protected :
-         _utilList< UINT64 > _postTasks ;
+         _utilList< UINT64 >     _postTasks ;
+         rtnCLShardingArgument   _rollbackShardArgument ;
    } ;
 
    typedef class _catCtxAlterCLTask catCtxAlterCLTask ;

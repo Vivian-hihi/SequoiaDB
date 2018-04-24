@@ -583,6 +583,14 @@ namespace engine
                         dynamic_cast< const rtnCLEnableShardingTask * >( _task ) ;
             PD_CHECK( NULL != localTask, SDB_SYS, error, PDERROR, "Failed to get task" ) ;
 
+            // Save old sharding arguments
+            rc = _fillShardingArgument( cataSet, _rollbackShardArgument ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to set rollback argument, "
+                         "rc: %d", rc ) ;
+
+            _rollbackShardArgument.setArgumentMask(
+                        localTask->getShardingArgument().getArgumentMask() ) ;
+
             rc = _buildEnableShardFields( cataSet, localTask->getShardingArgument(),
                                           attribute, setBuilder, unsetBuilder ) ;
             break ;
@@ -666,14 +674,34 @@ namespace engine
          }
          case RTN_ALTER_CL_ENABLE_SHARDING :
          {
-            rc = _buildDisableShardFields( cataSet, attribute, setBuilder, unsetBuilder ) ;
+            if ( _rollbackShardArgument.isSharding() )
+            {
+               rc = _buildEnableShardFields( cataSet, _rollbackShardArgument,
+                                             attribute, setBuilder,
+                                             unsetBuilder ) ;
+            }
+            else
+            {
+               rc = _buildDisableShardFields( cataSet, attribute, setBuilder,
+                                              unsetBuilder ) ;
+            }
             break ;
          }
          case RTN_ALTER_CL_SET_ATTRIBUTES :
          {
             if ( _task->testArgumentMask( UTIL_CL_SHDKEY_FIELD ) )
             {
-               rc = _buildDisableShardFields( cataSet, attribute, setBuilder, unsetBuilder ) ;
+               if ( _rollbackShardArgument.isSharding() )
+               {
+                  rc = _buildEnableShardFields( cataSet, _rollbackShardArgument,
+                                                attribute, setBuilder,
+                                                unsetBuilder ) ;
+               }
+               else
+               {
+                  rc = _buildDisableShardFields( cataSet, attribute, setBuilder,
+                                                 unsetBuilder ) ;
+               }
             }
             break ;
          }
@@ -683,7 +711,7 @@ namespace engine
             break ;
          }
       }
-      PD_RC_CHECK( rc, PDERROR, "Failed to build fields, rc: %d", rc ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to build rollback fields, rc: %d", rc ) ;
 
       // The attribute is changed
       if ( attribute != cataSet.getAttribute() )
@@ -999,6 +1027,13 @@ namespace engine
       if ( localTask->containShardingArgument() )
       {
          rtnCLShardingArgument argument = localTask->getShardingArgument() ;
+
+         // Save old sharding arguments
+         rc = _fillShardingArgument( cataSet, _rollbackShardArgument ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to set rollback argument, "
+                      "rc: %d", rc ) ;
+
+         _rollbackShardArgument.setArgumentMask( argument.getArgumentMask() ) ;
 
          rc = _fillShardingArgument( cataSet, argument ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to fill sharding arguments, rc: %d", rc ) ;
