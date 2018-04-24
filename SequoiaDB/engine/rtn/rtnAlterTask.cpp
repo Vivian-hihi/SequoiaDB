@@ -1232,7 +1232,11 @@ namespace engine
          argElement = _argument.getField( FIELD_NAME_PAGE_SIZE ) ;
          PD_CHECK( NumberInt == argElement.type(), SDB_INVALIDARG, error, PDERROR,
                    "Failed to get field [%s]", FIELD_NAME_PAGE_SIZE ) ;
-         _pageSize = argElement.numberInt() ;
+         if ( 0 != argElement.numberInt() )
+         {
+            // If value is 0, using the default value
+            _pageSize = argElement.numberInt() ;
+         }
          PD_CHECK ( _pageSize == DMS_PAGE_SIZE4K ||
                     _pageSize == DMS_PAGE_SIZE8K ||
                     _pageSize == DMS_PAGE_SIZE16K ||
@@ -1249,7 +1253,11 @@ namespace engine
          argElement = _argument.getField( FIELD_NAME_LOB_PAGE_SIZE ) ;
          PD_CHECK( NumberInt == argElement.type(), SDB_INVALIDARG, error, PDERROR,
                    "Failed to get field [%s]", FIELD_NAME_LOB_PAGE_SIZE ) ;
-         _lobPageSize = argElement.numberInt() ;
+         if ( 0 != argElement.numberInt() )
+         {
+            // If value is 0, using the default value
+            _lobPageSize = argElement.numberInt() ;
+         }
          PD_CHECK ( _lobPageSize == DMS_PAGE_SIZE4K ||
                     _lobPageSize == DMS_PAGE_SIZE8K ||
                     _lobPageSize == DMS_PAGE_SIZE16K ||
