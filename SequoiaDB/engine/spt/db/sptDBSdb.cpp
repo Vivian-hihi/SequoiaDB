@@ -601,6 +601,7 @@ namespace engine
       rval.getReturnVal().setName( pRG->getName() ) ;
       rval.getReturnVal().setAttr( SPT_PROP_READONLY ) ;
       rval.addReturnValProperty( "_name" )->setValue( pRG->getName() ) ;
+      rval.addSelfToReturnValProperty( SPT_RG_CONN_FIELD ) ;
    done:
       return rc ;
    error:
