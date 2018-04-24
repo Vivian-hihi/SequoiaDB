@@ -22,6 +22,7 @@ import com.sequoiadb.message.request.AdminRequest;
 import com.sequoiadb.message.response.SdbReply;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
+import org.bson.types.BasicBSONList;
 
 /**
  * Domain of SequoiaDB.
@@ -94,7 +95,8 @@ public class Domain {
             newObj.put(SdbConstants.FIELD_NAME_OPTIONS, options);
         } else {
             Object tmpAlter = options.get(SdbConstants.FIELD_NAME_ALTER);
-            if (tmpAlter instanceof BasicBSONObject) {
+            if (tmpAlter instanceof BasicBSONObject ||
+                tmpAlter instanceof BasicBSONList) {
                 newObj.put(SdbConstants.FIELD_NAME_ALTER, tmpAlter);
             } else {
                 throw new BaseException(SDBError.SDB_INVALIDARG, options.toString());

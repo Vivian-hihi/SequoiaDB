@@ -348,6 +348,7 @@ namespace engine
                taskIter != taskList.end() ;
                ++ taskIter )
          {
+            MsgHeader * pTaskMsg = NULL ;
             CHAR * pTaskMsgBuf = NULL ;
             INT32 taskMsgSize = 0 ;
             BSONObj empty ;
@@ -359,9 +360,10 @@ namespace engine
             PD_RC_CHECK( rc, PDERROR, "Failed to build alter command, "
                          "rc: %d", rc ) ;
 
+            pTaskMsg = (MsgHeader *)pTaskMsgBuf ;
             _arguments.setTaskRunner( task ) ;
 
-            rc = _coordDataCMD3Phase::execute( pMsg, cb, contextID, buf ) ;
+            rc = _coordDataCMD3Phase::execute( pTaskMsg, cb, contextID, buf ) ;
             msgReleaseBuffer( pTaskMsgBuf, cb ) ;
             if ( SDB_OK != rc )
             {

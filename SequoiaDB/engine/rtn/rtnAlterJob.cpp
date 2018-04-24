@@ -339,6 +339,13 @@ namespace engine
 
             _objectName = jobElement.valuestrsafe() ;
 
+            /// options is not necessary.
+            jobElement = jobObject.getField( FIELD_NAME_OPTIONS ) ;
+            if ( Object == jobElement.type() )
+            {
+               _extractOptions( jobElement.embeddedObject() ) ;
+            }
+
             /// alter list
             jobElement = _jobObject.getField( FIELD_NAME_ALTER ) ;
             PD_CHECK( jobElement.isABSONObj(), SDB_INVALIDARG, error, PDERROR,
@@ -347,13 +354,6 @@ namespace engine
 
             rc = _extractTasks( jobElement ) ;
             PD_RC_CHECK( rc, PDERROR, "failed to extract task list:%d", rc ) ;
-
-            /// options is not necessary.
-            jobElement = jobObject.getField( FIELD_NAME_OPTIONS ) ;
-            if ( Object == jobElement.type() )
-            {
-               _extractOptions( jobElement.embeddedObject() ) ;
-            }
          }
       }
       catch ( exception & e )
@@ -637,6 +637,10 @@ namespace engine
                          "type of task should be object" ) ;
 
                rc = _extractTask( taskElement.embeddedObject() ) ;
+               if ( SDB_OK != rc && _options.isIgnoreException() )
+               {
+                  rc = SDB_OK ;
+               }
                PD_RC_CHECK( rc, PDERROR, "Failed to extract alter task [%s], "
                             "rc: %d", taskElement.toString( TRUE, TRUE).c_str(),
                             rc ) ;

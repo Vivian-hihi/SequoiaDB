@@ -4710,6 +4710,7 @@ static INT32 _sdbAlterCollectionV2( sdbCollectionHandle cHandle,
    BOOLEAN bsoninit = FALSE ;
    bson_iterator itr ;
    bson obj ;
+   bson_type alterType = BSON_EOO ;
 
    BSON_INIT( obj ) ;
    HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
@@ -4723,7 +4724,10 @@ static INT32 _sdbAlterCollectionV2( sdbCollectionHandle cHandle,
    BSON_APPEND( obj, FIELD_NAME_ALTER_TYPE, SDB_CATALOG_CL, string ) ;
    BSON_APPEND( obj, FIELD_NAME_VERSION, SDB_ALTER_VERSION, int ) ;
    BSON_APPEND( obj, FIELD_NAME_NAME, cs->_collectionFullName, string ) ;
-   if ( BSON_OBJECT == bson_find( &itr, options, FIELD_NAME_ALTER ) )
+
+   alterType = bson_find( &itr, options, FIELD_NAME_ALTER ) ;
+
+   if ( BSON_OBJECT == alterType || BSON_ARRAY == alterType )
    {
       rc = bson_append_element( &obj, NULL, &itr ) ;
       if ( SDB_OK != rc )
@@ -5002,6 +5006,7 @@ SDB_EXPORT INT32 sdbAlterCollectionSpace ( sdbCSHandle cHandle,
    BOOLEAN bsoninit = FALSE ;
    bson newObj ;
    bson_iterator itr ;
+   bson_type alterType = BSON_EOO ;
 
    BSON_INIT( newObj ) ;
 
@@ -5014,7 +5019,8 @@ SDB_EXPORT INT32 sdbAlterCollectionSpace ( sdbCSHandle cHandle,
       goto error ;
    }
 
-   if ( BSON_EOO == bson_find( &itr, options, FIELD_NAME_ALTER ) )
+   alterType = bson_find( &itr, options, FIELD_NAME_ALTER ) ;
+   if ( BSON_EOO == alterType )
    {
       BSON_APPEND( newObj, FIELD_NAME_NAME, cs->_CSName, string ) ;
       BSON_APPEND( newObj, FIELD_NAME_OPTIONS, options, bson ) ;
@@ -5024,7 +5030,7 @@ SDB_EXPORT INT32 sdbAlterCollectionSpace ( sdbCSHandle cHandle,
       BSON_APPEND( newObj, FIELD_NAME_ALTER_TYPE, SDB_CATALOG_CS, string ) ;
       BSON_APPEND( newObj, FIELD_NAME_VERSION, SDB_ALTER_VERSION, int ) ;
       BSON_APPEND( newObj, FIELD_NAME_NAME, cs->_CSName, string ) ;
-      if ( BSON_OBJECT == bson_find( &itr, options, FIELD_NAME_ALTER ) )
+      if ( BSON_OBJECT == alterType || BSON_ARRAY == alterType )
       {
          rc = bson_append_element( &newObj, NULL, &itr ) ;
          if ( SDB_OK != rc )
@@ -9199,6 +9205,7 @@ static INT32 _sdbAlterDomainV2 ( sdbCollectionHandle cHandle,
    BOOLEAN bsoninit = FALSE ;
    bson_iterator itr ;
    bson newObj ;
+   bson_type alterType = BSON_EOO ;
 
    BSON_INIT( newObj ) ;
    HANDLE_CHECK( cHandle, domain, SDB_HANDLE_TYPE_DOMAIN ) ;
@@ -9211,7 +9218,9 @@ static INT32 _sdbAlterDomainV2 ( sdbCollectionHandle cHandle,
    BSON_APPEND( newObj, FIELD_NAME_ALTER_TYPE, SDB_CATALOG_DOMAIN, string ) ;
    BSON_APPEND( newObj, FIELD_NAME_VERSION, SDB_ALTER_VERSION, int ) ;
    BSON_APPEND( newObj, FIELD_NAME_NAME, domain->_domainName, string ) ;
-   if ( BSON_OBJECT == bson_find( &itr, options, FIELD_NAME_ALTER ) )
+
+   alterType = bson_find( &itr, options, FIELD_NAME_ALTER ) ;
+   if ( BSON_OBJECT == alterType || BSON_ARRAY == alterType )
    {
       rc = bson_append_element( &newObj, NULL, &itr ) ;
       if ( SDB_OK != rc )

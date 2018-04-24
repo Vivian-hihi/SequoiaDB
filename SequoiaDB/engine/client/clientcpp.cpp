@@ -2805,7 +2805,7 @@ error:
          bob.append( FIELD_NAME_NAME, collectionS ) ;
 
          ele = options.getField( FIELD_NAME_ALTER ) ;
-         if ( Object == ele.type() )
+         if ( Object == ele.type() || Array == ele.type() )
          {
             bob.append( ele ) ;
          }
@@ -5277,7 +5277,7 @@ error :
             bob.append( FIELD_NAME_NAME, collectionSpaceS ) ;
 
             ele = options.getField( FIELD_NAME_ALTER ) ;
-            if ( Object == ele.type() )
+            if ( Object == ele.type() || Array == ele.type() )
             {
                bob.append( ele ) ;
             }
@@ -5486,7 +5486,7 @@ error :
          bob.append( FIELD_NAME_NAME, domainS ) ;
 
          ele = options.getField( FIELD_NAME_ALTER ) ;
-         if ( Object == ele.type() )
+         if ( Object == ele.type() || Array == ele.type() )
          {
             bob.append( ele ) ;
          }

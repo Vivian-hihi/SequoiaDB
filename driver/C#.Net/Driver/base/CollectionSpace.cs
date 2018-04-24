@@ -280,7 +280,7 @@ namespace SequoiaDB
                newObj.Add(SequoiadbConstants.FIELD_NAME, name);
 
                // append alters
-               if (elem.Value.IsBsonDocument)
+               if (elem.Value.IsBsonDocument || elem.Value.IsBsonArray)
                {
                    newObj.Add(elem);
                }

@@ -1107,6 +1107,29 @@ namespace DriverTest
         }
 
         [TestMethod()]
+        public void MultiAlterTest()
+        {
+            DBCollection coll = null;
+            BsonDocument options = null;
+            string clName_alter = "shardingCLTest";
+            coll = cs.CreateCollection(clName_alter);
+            BsonArray alterArray = new BsonArray();
+            alterArray.Add(new BsonDocument{
+                {"Name","enable sharding"},
+                {"Args",new BsonDocument{
+                    {"ShardingKey", new BsonDocument{{"a",1}}},
+                    {"ShardingType", "hash"},
+                    {"Partition", 4096},
+                    {"AutoSplit", true}}}});
+            alterArray.Add(new BsonDocument{
+                {"Name","set attributes"},
+                {"Args",new BsonDocument{{"StrictDataMode", true}}}});
+            // alter collecton attrubute
+            options = new BsonDocument {{"Alter", alterArray }};
+            coll.Alter(options);
+        }
+
+        [TestMethod()]
         public void QueryExplainAPITest()
         {
             int num = 100;

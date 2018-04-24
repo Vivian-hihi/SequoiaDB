@@ -112,5 +112,27 @@ namespace DriverTest
             sdb.DropCollectionSpace("testCS");
             sdb.Disconnect();
         }
+
+        [TestMethod()]
+        public void AlterMultiTest()
+        {
+            CollectionSpace cs = null;
+            Sequoiadb sdb = new Sequoiadb(config.conf.Coord.Address);
+            sdb.Connect(config.conf.UserName, config.conf.Password);
+            cs = sdb.CreateCollectionSpace("testCS");
+            BsonArray alterArray = new BsonArray();
+            alterArray.Add(new BsonDocument{
+                {"Name","set attributes"},
+                {"Args",new BsonDocument{{"PageSize", 111}}}});
+            alterArray.Add(new BsonDocument{
+                {"Name","set attributes"},
+                {"Args",new BsonDocument{{"PageSize", 8192}}}});
+            BsonDocument options = new BsonDocument();
+            options.Add("Alter", alterArray);
+            options.Add("Options", new BsonDocument { {"IgnoreException", true } });
+            cs.Alter(options);
+            sdb.DropCollectionSpace("testCS");
+            sdb.Disconnect();
+        }
     }
 }

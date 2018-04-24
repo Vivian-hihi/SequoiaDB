@@ -119,7 +119,7 @@ namespace SequoiaDB
             newObj.Add(SequoiadbConstants.FIELD_NAME, this.name);
             // append alters
             flag = options.TryGetElement(SequoiadbConstants.FIELD_NAME_ALTER, out elem);
-            if (true == flag && elem.Value.IsBsonDocument)
+            if (true == flag && (elem.Value.IsBsonDocument || elem.Value.IsBsonArray))
             {
                 newObj.Add(elem);
             }
