@@ -1599,7 +1599,7 @@ namespace engine
          if ( eDetach.booleanSafe() && eKeep.booleanSafe() &&
               String == eHost.type() )
          {
-            CHAR confFile[OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+            CHAR confFile[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
             pmdOptionsCB nodeOptions ;
 
             utilBuildFullPath( sdbGetOMAgentOptions()->getLocalCfgPath(),
@@ -1608,7 +1608,8 @@ namespace engine
 
             if ( SDB_OK == nodeOptions.initFromFile( confFile, FALSE ) )
             {
-               nodeOptions.rmCatAddrItem( eHost.valuestr(), pSvcName ) ;
+               nodeOptions.rmCatAddrItem( eHost.valuestr(),
+                                          nodeOptions.catService() ) ;
                nodeOptions.reflush2File() ;
             }
          }
