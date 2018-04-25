@@ -3353,7 +3353,11 @@ namespace import
          }
          else
          {
+#if defined (_WINDOWS)
+            timep = _mkgmtime(&t) - gmtoff;
+#else
             timep = timegm(&t) - gmtoff;
+#endif
          }
          if( !ossIsTimestampValid( timep ) )
          {
@@ -3493,7 +3497,11 @@ namespace import
          }
          else
          {
+#if defined (_WINDOWS)
+            timep = _mkgmtime(&t) - gmtoff;
+#else
             timep = timegm(&t) - gmtoff;
+#endif
          }
          value = (INT64)timep * 1000 + microsec/1000;
       }
