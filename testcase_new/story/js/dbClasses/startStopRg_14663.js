@@ -53,8 +53,8 @@ function checkGroupStatus( db, groupname, status )
       }
       catch( e )
       {
-         if( status === "stop" && e === -15 ) 
-            ;  // when group stopped, connect throw -15, do nothing
+         if( status === "stop" && ( e === -15 || e === -79 ) ) 
+            ;  // when group stopped, connect throw -15 or -79, do nothing
          else
          {
             var expectErr = ( status === "stop" ) ? -15 : 0 ;
