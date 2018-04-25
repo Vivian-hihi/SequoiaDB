@@ -140,7 +140,7 @@ class domain(object):
             raise SDBTypeError("options must be an instance of dict")
         bson_options = bson.BSON.encode(options)
 
-        rc = sdb.domain_set_groups(self._domain, bson_options)
+        rc = sdb.domain_remove_groups(self._domain, bson_options)
         raise_if_error(rc, "Failed to remove groups of domain: %s" % self._domain_name)
 
     def set_attributes(self, options):
