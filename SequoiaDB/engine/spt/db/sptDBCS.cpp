@@ -407,10 +407,16 @@ namespace engine
                                  bson::BSONObj &detail )
    {
       INT32 rc = SDB_OK ;
+      if( arg.argc() != 0 )
+      {
+         rc = SDB_INVALIDARG ;
+         detail = BSON( SPT_ERR << "Wrong arguments" ) ;
+         goto error ;
+      }
       rc = _cs.enableCapped() ;
       if( SDB_OK != rc )
       {
-         detail = BSON( SPT_ERR << "Failed to enble capped" ) ;
+         detail = BSON( SPT_ERR << "Failed to enable capped" ) ;
          goto error ;
       }
    done:
@@ -433,7 +439,7 @@ namespace engine
       rc = _cs.disableCapped() ;
       if( SDB_OK != rc )
       {
-         detail = BSON( SPT_ERR << "Failed to enble capped" ) ;
+         detail = BSON( SPT_ERR << "Failed to disable capped" ) ;
          goto error ;
       }
    done:
