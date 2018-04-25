@@ -1575,13 +1575,6 @@ namespace engine
          _shardLatch.release () ;
       }
 
-      // if catalog group, get the primary from repl
-      if ( CATALOG_GROUPID == nodeID().columns.groupID )
-      {
-         replCB *pRepl = sdbGetReplCB() ;
-         primary = pRepl->getPrimary().columns.nodeID ;
-      }
-
       //update primary
       if ( primary != 0 )
       {
