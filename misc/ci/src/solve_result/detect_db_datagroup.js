@@ -53,7 +53,6 @@ function main( db )
    else
    {
       println( "Has " + errNodes.length + " nodes in fault before test-case: " ) ;
-      commPrint( errNodes ) ;
    }
 }
 
