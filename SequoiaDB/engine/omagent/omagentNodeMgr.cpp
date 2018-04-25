@@ -1596,7 +1596,7 @@ namespace engine
          BSONElement eDetach = argObj.getField( FIELD_NAME_ONLY_DETACH ) ;
          BSONElement eKeep = argObj.getField( FIELD_NAME_KEEP_DATA ) ;
 
-         if ( eDetach.booleanSafe() && !eKeep.booleanSafe() &&
+         if ( eDetach.booleanSafe() && eKeep.booleanSafe() &&
               String == eHost.type() )
          {
             CHAR confFile[OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
