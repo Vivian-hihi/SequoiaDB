@@ -201,9 +201,10 @@
 
       //获取字段列表
       var queryTableStruct = function(){
-         var sql = sprintf( "SELECT col.column_name,col.data_type, is_nullable FROM information_schema.columns col LEFT JOIN pg_description des\
-                   ON col.table_name::regclass = des.objoid AND col.ordinal_position = des.objsubid WHERE table_schema = 'public'\
-                   AND table_name = '?' ORDER BY ordinal_position", SdbSwap.tbName ) ;
+         //var sql = sprintf( "SELECT col.column_name,col.data_type, is_nullable FROM information_schema.columns col LEFT JOIN pg_description des\
+         //          ON col.table_name::regclass = des.objoid AND col.ordinal_position = des.objsubid WHERE table_schema = 'public'\
+         //          AND table_name = '?' ORDER BY ordinal_position", SdbSwap.tbName ) ;
+         var sql = sprintf( "SELECT column_name,data_type,is_nullable FROM information_schema.columns WHERE table_schema = 'public' AND table_name = '?'", SdbSwap.tbName) ;
          var data = { 'Sql': sql, 'DbName': SdbSwap.dbName } ;
          SdbRest.DataOperationV2( '/sql', data, {
             'success': function( result ){
@@ -1339,9 +1340,16 @@
    sacApp.controllerProvider.register( 'Data.OLTP.Data.InputBox.Ctrl', function( $scope, SdbSwap, SdbSignal ){
       
       $scope.SqlCommand = sprintf( 'SELECT * FROM ? LIMIT 30', addQuotes( SdbSwap.tbName ) ) ;
-
+      
       $scope.ExecQuery = function(){
-         SdbSignal.commit( 'exec_sql', { 'sql': $scope.SqlCommand, 'isUser': true, 'isUpdateSql': true, 'gotoFirst': true } ) ;
+         if( SdbSignal.commit( 'getTableLength' )[0] == 0 )
+         {
+            SdbSignal.commit( 'exec_sql', { 'sql': $scope.SqlCommand, 'isUser': true, 'isUpdateSql': true } ) ;
+         }
+         else
+         {
+            SdbSignal.commit( 'exec_sql', { 'sql': $scope.SqlCommand, 'isUser': true, 'isUpdateSql': true, 'gotoFirst': true } ) ;
+         }
       }
 
       SdbSignal.commit( 'exec_sql', { 'sql': $scope.SqlCommand, 'isUser': true, 'isUpdateSql': true } ) ;
