@@ -88,8 +88,6 @@ class BaseOperator
    **************************************** */  
    function commIsStandlone()
    {
-      echo "\n---Begin to judge standlone.\n";
-      
       $this ->db -> list( SDB_LIST_GROUPS );
       $this -> err = $this -> db -> getError();
       if( $this -> err['errno'] === -159 ) //-159: The operation is for coord node only
