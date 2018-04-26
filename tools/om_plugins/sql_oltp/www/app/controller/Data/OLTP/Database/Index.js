@@ -673,7 +673,7 @@
                {
                   var sql = 'CREATE TABLE ' + addQuotes( formVal1['tbName'] ) + ' ( ' ;
                }
-               var primaryKey = ',constraint ' + addQuotes( formVal1['tbName'] ) ;
+               var primaryKey = ',constraint ' + formVal1['tbName'] ;
                var primaryKey2 = ' primary key (' ;
                $.each( formVal2['fields'], function( index, fieldInfo ){
                   var subSql = '' ;
@@ -890,7 +890,7 @@
                   "valid": {
                      "min": 1,
                      "max": 63,
-                     "regex": "^[a-zA-Z]+[0-9a-zA-Z_]*$",
+                     "regex": "^[a-zA-Z_]+[0-9a-zA-Z_]*$",
                      "regexError": sprintf( $scope.pAutoLanguage( '?由字母和数字或\"_\"组成，并且以字母或\"_\"起头。' ), $scope.pAutoLanguage( '数据表名' ) )
                   }
                }
