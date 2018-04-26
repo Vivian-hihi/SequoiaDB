@@ -185,7 +185,7 @@ function _relationWithSequoiaDB( PD_LOGGER )
          {
             addressStr += ',' ;
          }
-         addressStr = sprintf( '?:?', customInfo[0], customInfo[1] ) ;
+         addressStr += sprintf( '?:?', customInfo[0], customInfo[1] ) ;
       }
 
       PD_LOGGER.log( PDEVENT, 'server address: ' + addressStr ) ;
