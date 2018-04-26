@@ -414,7 +414,8 @@ namespace engine
 
    _rtnContextAlterCL::_rtnContextAlterCL ( SINT64 contextID, UINT64 eduID )
    : _rtnContextAlterBase( contextID, eduID ),
-     _transLocked( FALSE ),
+     _logicalCSID( DMS_INVALID_LOGICCSID ),
+     _mbID( DMS_INVALID_MBID ),
      _su( NULL ),
      _mbContext( NULL )
    {
@@ -682,7 +683,8 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Failed to get transaction-lock of "
                       "collection [%s], rc: %d", collection, rc ) ;
 
-         _transLocked = TRUE ;
+         _logicalCSID = _su->LogicalCSID() ;
+         _mbID = _mbContext->mbID() ;
       }
 
    done :
@@ -699,10 +701,12 @@ namespace engine
 
       PD_TRACE_ENTRY( SDB__RTNALTERCLCTX__RELEASETRANS ) ;
 
-      if ( NULL != cb && _transLocked && NULL != _su && NULL != _mbContext )
+      if ( NULL != cb && DMS_INVALID_LOGICCSID != _logicalCSID &&
+           DMS_INVALID_MBID != _mbID )
       {
-         _transCB->transLockRelease( cb, _su->LogicalCSID(), _mbContext->mbID() ) ;
-         _transLocked = FALSE ;
+         _transCB->transLockRelease( cb, _logicalCSID, _mbID ) ;
+         _logicalCSID = DMS_INVALID_LOGICCSID ;
+         _mbID = DMS_INVALID_MBID ;
       }
 
       PD_TRACE_EXIT( SDB__RTNALTERCLCTX__RELEASETRANS ) ;

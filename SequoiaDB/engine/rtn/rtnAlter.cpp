@@ -489,10 +489,6 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Failed to set sharding, rc: %d", rc ) ;
 
    done :
-      PD_TRACE_EXITRC( SDB_RTNDISABLESHARDING, rc ) ;
-      return rc ;
-
-   error :
       if ( NULL != mbContext )
       {
          su->data()->releaseMBContext( mbContext ) ;
@@ -505,6 +501,10 @@ namespace engine
       {
          dmsCB->writeDown( cb ) ;
       }
+      PD_TRACE_EXITRC( SDB_RTNDISABLESHARDING, rc ) ;
+      return rc ;
+
+   error :
       goto done ;
    }
 

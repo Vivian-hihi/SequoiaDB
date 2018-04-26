@@ -168,7 +168,8 @@ namespace engine
          INT32 _checkExtOptions () ;
 
       protected :
-         BOOLEAN           _transLocked ;
+         UINT32            _logicalCSID ;
+         UINT16            _mbID ;
          _dmsStorageUnit * _su ;
          _dmsMBContext *   _mbContext ;
    } ;
