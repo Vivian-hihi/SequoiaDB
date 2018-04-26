@@ -137,7 +137,7 @@ class SequoiaCL
     * }
     * @endcode
    */
-   public function enableSharding(){}
+   public function disableSharding(){}
 
    /**
     * Alter collection to enable compression.
@@ -179,7 +179,7 @@ class SequoiaCL
     * }
     * @endcode
    */
-   public function enableCompression(){}
+   public function disableCompression(){}
 
    /**
     * Alter collection options.
