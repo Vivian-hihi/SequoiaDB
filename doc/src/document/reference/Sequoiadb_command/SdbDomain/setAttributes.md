@@ -16,7 +16,7 @@
 
     2.  `AutoSplit`：自动切分。
 
-        格式：`AutoSplit : true &#124; false`
+        格式：`AutoSplit : true | false`
 
 > **Note:**
 >
