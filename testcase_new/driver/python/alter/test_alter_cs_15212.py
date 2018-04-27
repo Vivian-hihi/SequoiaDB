@@ -42,20 +42,14 @@ class TestAlterCS15212(testlib.SdbTestBase):
       cs = self.db.create_collection_space(cs_name, {'Domain': self.domain_name1})
       
       # check before alter
-      self.check_domain_cs(domain1, [{'Name': cs_name}])
-      self.check_domain_cs(domain2, [])
-      
-      expect_cs_attri = [{'PageSize': 65536, 'LobPageSize': 262144}]
+      expect_cs_attri = [{'Domain': self.domain_name1, 'PageSize': 65536, 'LobPageSize': 262144}]
       self.check_collection_space_attrbutes(expect_cs_attri, condition = {'Name' : cs_name})
       
       # alter cs
       cs.alter(options = {'Domain': self.domain_name2, 'PageSize': 4096, 'LobPageSize': 8192})
       
       # check after alter
-      self.check_domain_cs(domain1, [])
-      self.check_domain_cs(domain2, [{'Name': cs_name}])
-      
-      expect_cs_attri = [{'PageSize': 4096, 'LobPageSize': 8192}]
+      expect_cs_attri = [{'Domain': self.domain_name2, 'PageSize': 4096, 'LobPageSize': 8192}]
       self.check_collection_space_attrbutes(expect_cs_attri, condition = {'Name' : cs_name})
       
       # bulk alter, ignore exception
@@ -67,22 +61,23 @@ class TestAlterCS15212(testlib.SdbTestBase):
       cs.alter(options = bulk_opts)
       
       # check after bulk alter
-      self.check_domain_cs(domain1, [{'Name': cs_name}])
-      self.check_domain_cs(domain2, [])
-      
-      expect_cs_attri = [{'PageSize': 16384, 'LobPageSize': 131072}]
+      expect_cs_attri = [{'Domain': self.domain_name1, 'PageSize': 16384, 'LobPageSize': 131072}]
       self.check_collection_space_attrbutes(expect_cs_attri, condition = {'Name' : cs_name})
       
       # bulk alter, not ignore exception, must fail
       bulk_opts = {'Alter':[ {'Name': 'set attributes', 'Args': {'Name':'cs'}}, 
-                             {'Name': 'set attributes', 'Args': {'PageSize': 16384}},                             
-                             {'Name': 'set attributes', 'Args': {'LobPageSize': 131072}}], 
+                             {'Name': 'set attributes', 'Args': {'PageSize': 65536}},                             
+                             {'Name': 'set attributes', 'Args': {'LobPageSize': 524288}}], 
                    'Options': {'IgnoreException': False}}              
       try:
          cs.alter(options = bulk_opts)
          self.fail('need alter fail')
       except SDBBaseError as e:     		
-         self.assertEqual(e.code, -6)                      
+         self.assertEqual(e.code, -6)     
+
+      # check after alter failed
+      expect_cs_attri = [{'Domain': self.domain_name1, 'PageSize': 16384, 'LobPageSize': 131072}]
+      self.check_collection_space_attrbutes(expect_cs_attri, condition = {'Name' : cs_name})         
       
       # drop cs
       self.db.drop_collection_space(cs_name)
@@ -101,13 +96,3 @@ class TestAlterCS15212(testlib.SdbTestBase):
       act_cs_attri = get_sort_result(act_cs_attri)
       expect_cs_attri = get_sort_result(expect_cs_attri)
       self.assertEqual(act_cs_attri, expect_cs_attri)
-      
-   def check_domain_cs(self, domain, expect_domain_cs):
-      act_domain_cs= list()
-      cursor = domain.list_collection_spaces()
-      while(True):
-         try:
-            act_domain_cs.append(cursor.next())
-         except SDBEndOfCursor:     		
-            break
-      self.assertEqual(act_domain_cs, expect_domain_cs)

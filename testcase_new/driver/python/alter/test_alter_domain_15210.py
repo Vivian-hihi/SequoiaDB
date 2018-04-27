@@ -37,6 +37,10 @@ class TestAlterDomain15210(testlib.SdbTestBase):
       # create domain
       self.db.create_domain(self.domain_name, { "Groups": group_names })
       
+      # create cs
+      cs_name = 'testalterdomain15210_cs'
+      self.db.create_collection_space(cs_name, {'Domain': self.domain_name})
+      
       # check result
       expect_domains = [{'Groups': group_names}]
       self.check_domain(expect_domains, condition = {'Name': self.domain_name})
@@ -64,9 +68,11 @@ class TestAlterDomain15210(testlib.SdbTestBase):
       
       # check domain
       expect_domains = [{'Groups': group_names}]
-      self.check_domain(expect_domains, condition = {'Name': self.domain_name})
+      self.check_domain(expect_domains, condition = {'Name': self.domain_name})    
 		 
    def tearDown(self):
+      # drop cs
+      self.db.drop_collection_space('testalterdomain15210_cs')
       # remove domain
       self.db.drop_domain(self.domain_name)
       self.db.disconnect()

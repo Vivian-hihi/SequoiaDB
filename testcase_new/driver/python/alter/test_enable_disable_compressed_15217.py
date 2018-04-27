@@ -13,7 +13,6 @@ class TestEnableDisableCompressed15217(testlib.SdbTestBase):
       # skip standalone
       if testlib.is_standalone():
          self.skipTest('run mode is standalone')
-      
       # create cs cl      
       testlib.drop_cs(self.db, self.cs_name, ignore_not_exist=True)
       self.cs = self.db.create_collection_space(self.cs_name)

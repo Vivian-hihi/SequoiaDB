@@ -23,7 +23,7 @@ class TestAlterDomain15224(testlib.SdbTestBase):
       except SDBBaseError as e:     		
          self.assertEqual(e.code, -214)
     
-      # get all groups
+      # get groups
       groups = testlib.get_data_groups()
       group_names = [x['GroupName'] for x in groups]
       
@@ -48,15 +48,18 @@ class TestAlterDomain15224(testlib.SdbTestBase):
       self.check_domain_cs(expect_bulk_attributes, condition = {'Name' : self.domain_name})
 
       # bulk alter, not ignore exception, must fail
-      bulk_opts = {'Alter': [ {'Name': 'set attributes', 'Args': { 'AutoSplit' : True}}, 
-                              {'Name': 'set attributes', 'Args': { 'Name': 'newdomain'}}, 
+      bulk_opts = {'Alter': [ {'Name': 'set attributes', 'Args': { 'Name': 'newdomain'}}, 
+                              {'Name': 'set attributes', 'Args': { 'AutoSplit' : False}}, 
                               {'Name': 'set attributes', 'Args': {'Groups' : group_names}}],
                    'Options': {'IgnoreException':False}}
       try:
          domain.alter(options = bulk_opts)  
          self.fail('need alter failed!')       
       except SDBBaseError as e:
-         self.assertEqual(e.code, -6)          
+         self.assertEqual(e.code, -6)       
+
+      # check after bulk fail
+      self.check_domain_cs(expect_bulk_attributes, condition = {'Name' : self.domain_name})         
       
    def tearDown(self):
       self.db.drop_domain(self.domain_name)

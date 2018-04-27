@@ -19,7 +19,7 @@ def get_collection_space_attrbutes(db, **kwargs):
          break
    
    # check useful key   
-   need_check_keys = ['PageSize', 'LobPageSize']
+   need_check_keys = ['Domain', 'PageSize', 'LobPageSize']
    for x in act_cs_attri:
       for key in x.copy():
          if key not in need_check_keys:
@@ -63,6 +63,8 @@ def get_domain_attrbutes(db, **kwargs):
    for x in domain_origin_attrs:
       items = dict()
       for key in x.copy():
+         if 'Name' == key:
+            items[key] = x[key] 
          if'AutoSplit' == key:
             items[key] = x[key]  
          elif 'Groups' == key:

@@ -35,7 +35,7 @@ class TestAlterDomain15211(testlib.SdbTestBase):
       domain = self.db.create_domain(self.domain_name, {'AutoSplit': False, "Groups": group_names})
       
       # check result before alter
-      expect_domain = [{'AutoSplit': False, 'Groups': group_names}]
+      expect_domain = [{'Name': self.domain_name, 'AutoSplit': False, 'Groups': group_names}]
       self.check_domain(expect_domain, condition = {'Name': self.domain_name})
       
       # alter attributes
@@ -44,8 +44,19 @@ class TestAlterDomain15211(testlib.SdbTestBase):
       domain.set_attributes(options = alter_opts)
      
       # check result after alter
-      expect_domain = [{'AutoSplit': True, 'Groups': group_names}]
+      expect_domain = [{'Name': self.domain_name, 'AutoSplit': True, 'Groups': group_names}]
       self.check_domain(expect_domain, condition = {'Name': self.domain_name}) 
+      
+      # alter domain name, must fail
+      try:
+         domain.set_attributes(options = {'Name' : 'newdomainname'})
+         self.fail('need alter fail')
+      except SDBBaseError as e:     		
+         self.assertEqual(e.code, -6)
+      
+      # check result after fail
+      expect_domain = [{'Name': self.domain_name, 'AutoSplit': True, 'Groups': group_names}]
+      self.check_domain(expect_domain, condition = {'Name': self.domain_name})
         
    def tearDown(self):
       # remove domain
