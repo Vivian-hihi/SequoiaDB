@@ -29,6 +29,41 @@ function checkAlterResult(clName, fieldName, expFieldValue)
    
 }
 
+//inspect the alter cs field is success or not.
+function checkAlterCSResult(csName, fieldName, expFieldValue)
+{
+   try
+	{	   
+      var rg = db.getRG("SYSCatalogGroup"); 
+      var dbca = new Sdb(rg.getMaster());
+      var cur = dbca.SYSCAT.SYSCOLLECTIONSPACES.find({"Name":csName});       
+      while( cur.next() )
+      {        
+         var tempinfo = cur.current().toObj();
+         var actFieldValue = tempinfo[fieldName];
+      }      
+      
+      if (expFieldValue  !== actFieldValue)
+      {
+         
+         println("---"+expFieldValue);
+         throw buildException("test fieldvalue", "check field", "", expFieldValue, actFieldValue);
+      }
+      
+	} 
+   catch( e )
+   {
+      throw buildException( "check alter cs result:", e);      
+   }
+   finally
+   {
+      if( dbca != null )
+      {
+         dbca.close()
+      }
+   }       
+}
+
 
 /************************************
 *@Description: check snapshot 
