@@ -661,6 +661,11 @@ namespace engine
                goto error ;
             }
             _accessInfo->setMetaCache( metaCache ) ;
+
+            if ( _reopened )
+            {
+               metaCache->setNeedMerge( TRUE ) ;
+            }
          }
          else
          {
