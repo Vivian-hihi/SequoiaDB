@@ -631,11 +631,6 @@ namespace engine
       JSFunctionSpec *fSpecs = NULL ;
       JSFunctionSpec *sfSpecs = NULL ;
 
-      if( NULL != desc->getPrototypeDef() )
-      {
-         // Class has been initialized
-         goto done ;
-      }
       if ( !desc->isIgnoredParent() )
       {
          parentDesc = desc->getParent() ;
