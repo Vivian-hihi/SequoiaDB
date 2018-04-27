@@ -144,7 +144,7 @@ PHP_METHOD( SequoiaCL, enableSharding )
    {
       goto error ;
    }
-   rc = sdbCLEnableSharding( cl, &options ) ;
+   rc = sdbEnableSharding( cl, &options ) ;
    if( rc )
    {
       goto error ;
@@ -169,7 +169,7 @@ PHP_METHOD( SequoiaCL, disableSharding )
                     sdbCollectionHandle,
                     SDB_CL_HANDLE_NAME,
                     clDesc ) ;
-   rc = sdbCLDisableSharding( cl ) ;
+   rc = sdbDisableSharding( cl ) ;
    if( rc )
    {
       goto error ;
@@ -206,7 +206,7 @@ PHP_METHOD( SequoiaCL, enableCompression )
    {
       goto error ;
    }
-   rc = sdbCLEnableCompression( cl, &options ) ;
+   rc = sdbEnableCompression( cl, &options ) ;
    if( rc )
    {
       goto error ;
@@ -231,7 +231,7 @@ PHP_METHOD( SequoiaCL, disableCompression )
                     sdbCollectionHandle,
                     SDB_CL_HANDLE_NAME,
                     clDesc ) ;
-   rc = sdbCLDisableCompression( cl ) ;
+   rc = sdbDisableCompression( cl ) ;
    if( rc )
    {
       goto error ;
