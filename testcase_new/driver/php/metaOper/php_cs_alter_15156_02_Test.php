@@ -61,8 +61,6 @@ class CSOperator15156_02 extends BaseOperator
       {
          echo "\nFailed to createCL. Errno: ". $errno ."\n";
       }
-		
-		return $csObj;
    }
    
    function alterCS( $csObj, $options )
