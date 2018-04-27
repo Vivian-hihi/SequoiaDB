@@ -129,15 +129,15 @@ public class LockAllAndWrite13263 extends SdbTestBase {
                     lob.lock(0, lob.getSize());
                     lob.seek(part.getOffset(), DBLob.SDB_LOB_SEEK_SET);
                     lob.write(part.getData());
-                    expData = updateExpData(expData, part);
+                    updateExpData(part);
                     successTimes.getAndIncrement();
                 }
             }
         }
     }
     
-    private byte[] updateExpData(byte[] expData, LobPart part) {
-        return RandomWriteLobUtil.appendBuff(expData, part.getData(), part.getOffset());
+    private synchronized void updateExpData(LobPart part) {
+        expData = RandomWriteLobUtil.appendBuff(expData, part.getData(), part.getOffset());
     }
     
 }
