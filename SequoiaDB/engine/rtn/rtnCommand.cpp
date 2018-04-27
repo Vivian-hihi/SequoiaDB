@@ -4171,12 +4171,12 @@ namespace engine
       {
          case RTN_ALTER_CS_SET_ATTRIBUTES :
          {
-            PD_CHECK( task->testArgumentMask( UTIL_CS_CAPPED_FIELD |
-                                              UTIL_CS_PAGESIZE_FIELD ),
+            PD_CHECK( !task->testArgumentMask( UTIL_CS_CAPPED_FIELD |
+                                               UTIL_CS_PAGESIZE_FIELD ),
                       SDB_DMS_CS_NOT_EMPTY, error, PDERROR,
                       "Failed to check collection space, the collection space "
                       "is not empty" ) ;
-            PD_CHECK( task->testArgumentMask( UTIL_CS_DOMAIN_FIELD ),
+            PD_CHECK( !task->testArgumentMask( UTIL_CS_DOMAIN_FIELD ),
                       SDB_RTN_CMD_NO_SERVICE_AUTH, error, PDERROR,
                       "Failed to check collection space, should execute the "
                       "command from SHARD port" ) ;

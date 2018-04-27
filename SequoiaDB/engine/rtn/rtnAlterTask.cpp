@@ -953,13 +953,16 @@ namespace engine
       rc = _shardingArgument.parseArgument() ;
       PD_RC_CHECK( rc, PDERROR, "Failed to parse sharding argument, rc: %d", rc ) ;
 
-      if ( UTIL_ARG_FIELD_EMPTY != _shardingArgument.getArgumentMask() &&
-           UTIL_CL_AUTOSPLIT_FIELD != _shardingArgument.getArgumentMask() )
+      if ( UTIL_ARG_FIELD_EMPTY != _shardingArgument.getArgumentMask() )
       {
-         setFlags( RTN_ALTER_TASK_FLAG_ROLLBACK |
-                   RTN_ALTER_TASK_FLAG_SHARDLOCK |
-                   RTN_ALTER_TASK_FLAG_3PHASE |
-                   RTN_ALTER_TASK_FLAG_CONTEXTLOCK ) ;
+         if ( UTIL_CL_AUTOSPLIT_FIELD != _shardingArgument.getArgumentMask() )
+         {
+            setFlags( RTN_ALTER_TASK_FLAG_ROLLBACK |
+                      RTN_ALTER_TASK_FLAG_SHARDLOCK |
+                      RTN_ALTER_TASK_FLAG_3PHASE |
+                      RTN_ALTER_TASK_FLAG_CONTEXTLOCK ) ;
+         }
+         setFlags( RTN_ALTER_TASK_FLAG_SHARDONLY ) ;
       }
 
       parsedArgumentMask( _shardingArgument.getArgumentMask(),
@@ -994,6 +997,7 @@ namespace engine
                    "Failed to get field [%s]", FIELD_NAME_DOMAIN_AUTO_REBALANCE ) ;
          _autoRebalance = argElement.boolean() ;
          parsedArgumentMask( UTIL_CL_AUTOREBALANCE_FIELD ) ;
+         setFlags( RTN_ALTER_TASK_FLAG_SHARDONLY ) ;
       }
 
       if ( _argument.hasField( FIELD_NAME_AUTO_INDEX_ID ) )
@@ -1020,6 +1024,7 @@ namespace engine
                    "Failed to get field [%s]: invalid repl size [%d]",
                    FIELD_NAME_W, _replSize ) ;
          parsedArgumentMask( UTIL_CL_REPLSIZE_FIELD ) ;
+         setFlags( RTN_ALTER_TASK_FLAG_SHARDONLY ) ;
       }
 
       if ( _argument.hasField( FIELD_NAME_STRICTDATAMODE ) )
@@ -1227,6 +1232,11 @@ namespace engine
       rc = _rtnCSSetDomainTask::_parseArgument() ;
       PD_RC_CHECK( rc, PDERROR, "Failed to parse argument, rc: %d", rc ) ;
 
+      if ( testArgumentMask( UTIL_CS_DOMAIN_FIELD ) )
+      {
+         setFlags( RTN_ALTER_TASK_FLAG_SHARDONLY ) ;
+      }
+
       if ( _argument.hasField( FIELD_NAME_PAGE_SIZE ) )
       {
          argElement = _argument.getField( FIELD_NAME_PAGE_SIZE ) ;
@@ -1246,6 +1256,7 @@ namespace engine
                     "Failed to get field [%s]: %s must be 4K/8K/16K/32K/64K",
                     FIELD_NAME_PAGE_SIZE, FIELD_NAME_PAGE_SIZE ) ;
          parsedArgumentMask( UTIL_CS_PAGESIZE_FIELD ) ;
+         setFlags( RTN_ALTER_TASK_FLAG_SHARDONLY ) ;
       }
 
       if ( _argument.hasField( FIELD_NAME_LOB_PAGE_SIZE ) )
@@ -1279,6 +1290,7 @@ namespace engine
                    "Failed to get field [%s]", FIELD_NAME_CAPPED ) ;
          _capped = argElement.boolean() ;
          parsedArgumentMask( UTIL_CS_CAPPED_FIELD ) ;
+         setFlags( RTN_ALTER_TASK_FLAG_SHARDONLY ) ;
       }
 
       PD_CHECK( _argumentCount == (UINT32)_argument.nFields(),

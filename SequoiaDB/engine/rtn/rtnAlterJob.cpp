@@ -99,14 +99,16 @@ namespace engine
                      ( RTN_ALTER_TASK_FLAG_ROLLBACK |
                        RTN_ALTER_TASK_FLAG_SHARDLOCK |
                        RTN_ALTER_TASK_FLAG_3PHASE |
-                       RTN_ALTER_TASK_FLAG_CONTEXTLOCK ) ) ;
+                       RTN_ALTER_TASK_FLAG_CONTEXTLOCK |
+                       RTN_ALTER_TASK_FLAG_SHARDONLY ) ) ;
 
       _registerTask( SDB_ALTER_CL_DISABLE_SHARDING,
                      RTN_ALTER_COLLECTION,
                      RTN_ALTER_CL_DISABLE_SHARDING,
-                     RTN_ALTER_TASK_FLAG_SHARDLOCK |
-                     RTN_ALTER_TASK_FLAG_3PHASE |
-                     RTN_ALTER_TASK_FLAG_CONTEXTLOCK ) ;
+                     ( RTN_ALTER_TASK_FLAG_SHARDLOCK |
+                       RTN_ALTER_TASK_FLAG_3PHASE |
+                       RTN_ALTER_TASK_FLAG_CONTEXTLOCK |
+                       RTN_ALTER_TASK_FLAG_SHARDONLY ) ) ;
 
       _registerTask( SDB_ALTER_CL_ENABLE_COMPRESS,
                      RTN_ALTER_COLLECTION,
@@ -127,19 +129,23 @@ namespace engine
       /// Collection space
       _registerTask( SDB_ALTER_CS_SET_DOMAIN,
                      RTN_ALTER_COLLECTION_SPACE,
-                     RTN_ALTER_CS_SET_DOMAIN ) ;
+                     RTN_ALTER_CS_SET_DOMAIN,
+                     RTN_ALTER_TASK_FLAG_SHARDONLY ) ;
 
       _registerTask( SDB_ALTER_CS_REMOVE_DOMAIN,
                      RTN_ALTER_COLLECTION_SPACE,
-                     RTN_ALTER_CS_REMOVE_DOMAIN ) ;
+                     RTN_ALTER_CS_REMOVE_DOMAIN,
+                     RTN_ALTER_TASK_FLAG_SHARDONLY ) ;
 
       _registerTask( SDB_ALTER_CS_ENABLE_CAPPED,
                      RTN_ALTER_COLLECTION_SPACE,
-                     RTN_ALTER_CS_ENABLE_CAPPED ) ;
+                     RTN_ALTER_CS_ENABLE_CAPPED,
+                     RTN_ALTER_TASK_FLAG_SHARDONLY ) ;
 
       _registerTask( SDB_ALTER_CS_DISABLE_CAPPED,
                      RTN_ALTER_COLLECTION_SPACE,
-                     RTN_ALTER_CS_DISABLE_CAPPED ) ;
+                     RTN_ALTER_CS_DISABLE_CAPPED,
+                     RTN_ALTER_TASK_FLAG_SHARDONLY ) ;
 
       _registerTask( SDB_ALTER_CS_SET_ATTR,
                      RTN_ALTER_COLLECTION_SPACE,
@@ -149,19 +155,23 @@ namespace engine
       /// Domain
       _registerTask( SDB_ALTER_DOMAIN_ADD_GROUPS,
                      RTN_ALTER_DOMAIN,
-                     RTN_ALTER_DOMAIN_ADD_GROUPS ) ;
+                     RTN_ALTER_DOMAIN_ADD_GROUPS,
+                     RTN_ALTER_TASK_FLAG_SHARDONLY ) ;
 
       _registerTask( SDB_ALTER_DOMAIN_SET_GROUPS,
                      RTN_ALTER_DOMAIN,
-                     RTN_ALTER_DOMAIN_SET_GROUPS ) ;
+                     RTN_ALTER_DOMAIN_SET_GROUPS,
+                     RTN_ALTER_TASK_FLAG_SHARDONLY ) ;
 
       _registerTask( SDB_ALTER_DOMAIN_REMOVE_GROUPS,
                      RTN_ALTER_DOMAIN,
-                     RTN_ALTER_DOMAIN_REMOVE_GROUPS ) ;
+                     RTN_ALTER_DOMAIN_REMOVE_GROUPS,
+                     RTN_ALTER_TASK_FLAG_SHARDONLY ) ;
 
       _registerTask( SDB_ALTER_DOMAIN_SET_ATTR,
                      RTN_ALTER_DOMAIN,
-                     RTN_ALTER_DOMAIN_SET_ATTRIBUTES ) ;
+                     RTN_ALTER_DOMAIN_SET_ATTRIBUTES,
+                     RTN_ALTER_TASK_FLAG_SHARDONLY ) ;
    }
 
    void _rtnAlterTaskMap::_registerTask ( const CHAR * name,
