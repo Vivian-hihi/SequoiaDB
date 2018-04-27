@@ -9,6 +9,20 @@ main();
 
 function main()
 {
+   if( commIsStandalone( db ) )
+   {
+      println( "Run mode is standalone" ) ;
+      return ;
+   }
+   //less two groups no split
+   var allGroupName = getGroupName(db,true);         
+   if( 1 === allGroupName.length )
+   {
+      println("--least two groups");
+      return ;
+   }
+   
+   
    println("---begin test---");
    var csName = COMMCSNAME;
    var clName = CHANGEDPREFIX + "_14945";
@@ -25,6 +39,7 @@ function main()
    var splitGroup = getSplitGroup( db, csName, clName );
    try
    {
+      println(splitGroup.srcGroup+" split to "+splitGroup.tarGroup);
       cl.split( splitGroup.srcGroup, splitGroup.tarGroup, 50 );
    }
    catch( e )
