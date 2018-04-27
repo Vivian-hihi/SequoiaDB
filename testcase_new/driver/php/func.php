@@ -99,6 +99,36 @@ class BaseOperator
    }
    
    /* ***************************************
+   *connect catalog
+   **************************************** */  
+   function commConnectCatalog()
+   {
+		$rgObj = $this -> db -> getGroup( $this -> CATALOG_GROUPNAME );
+      $this -> err = $this -> db -> getError();
+      if( $this -> err['errno'] !== 0 )
+      {
+         echo "\nFailed to get cataRG. Errno: ". $this -> err['errno'] ."\n";
+      }
+      
+		$nodeObj = $rgObj -> getMaster();
+      $this -> err = $this -> db -> getError();
+      if( $this -> err['errno'] !== 0 )
+      {
+         echo "\nFailed to get cataMaster. Errno: ". $this -> err['errno'] ."\n";
+      }
+		
+		$cataAddr = $nodeObj -> getName();
+      $cataDB = new SequoiaDB( $cataAddr );
+      $this -> err = $cataDB -> getError();
+      if( $this -> err['errno'] !== 0 )
+      {
+         echo "\nFailed to connect catalog. Errno: ". $this -> err['errno'] ."\n";
+      }
+		
+      return $cataDB;
+   }
+   
+   /* ***************************************
    *get dataRG Names
    **************************************** */  
    function commGetGroupNames()
