@@ -231,14 +231,14 @@ do                                                            \
          BSONElement descEle = localObj.getField( OP_ERRDESP_FIELD ) ;
          if ( ppErr && String == descEle.type() )
          {
-            *ppErr = descEle.String().c_str() ;
+            *ppErr = descEle.valuestr() ;
          }
       }
       {
          BSONElement detailEle = localObj.getField( OP_ERR_DETAIL ) ;
          if ( ppDetail && String == detailEle.type() )
          {
-            *ppDetail = detailEle.String().c_str() ;
+            *ppDetail = detailEle.valuestr() ;
          }
       }
    done:
