@@ -17,7 +17,8 @@ function main()
    
    testOneNode() ;
    testTwoNode() ;
-   testTwoNodeMasterPos() ;
+   //问题单：SEQUOIADBMAINSTREAM-3495
+   //testTwoNodeMasterPos() ;
    testThreeNode() ;
 }
 
