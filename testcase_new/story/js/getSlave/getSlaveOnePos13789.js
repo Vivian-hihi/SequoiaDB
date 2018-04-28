@@ -16,8 +16,8 @@ function main()
    }
    
    testOneNode() ;
-   testTwoNode() ;
-   testTwoNodeNoMaster() ;
+   //testTwoNode() ;
+   //testTwoNodeNoMaster() ;
 }
 
 // only one node in rg, test getSlave
@@ -143,7 +143,7 @@ function testTwoNodeNoMaster()
       var idx = ( i - 1 ) % 2 ;
       if( slave.toString() !== nodes[idx] )
       {
-         throw buildException( "testOneNode", null, "check getSlave", nodes[idx], slave ) ;
+         throw buildException( "testTwoNodeNoMaster", null, "check getSlave", nodes[idx], slave ) ;
       }
    }
    

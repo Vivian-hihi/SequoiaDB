@@ -15,7 +15,7 @@ function main()
       return ;
    }
    
-   testIllegalPos() ;
+   //testIllegalPos() ;
 }
 
 function testIllegalPos()
