@@ -710,7 +710,7 @@
                         primaryKey2 += ',' ;
                      }
                      primaryKey += ( '_' + fieldInfo['name'] ) ;
-                     primaryKey2 += fieldInfo['name'] ;
+                     primaryKey2 += addQuotes( fieldInfo['name'] ) ;
                   }
                   if( fieldInfo['unique'] == true )
                   {
@@ -862,6 +862,17 @@
             $scope.Components.Confirm.isShow = false ;
          }
       } ) ;
+
+      //删除数据表 弹窗
+      $scope.RemoveTableWindow = {
+         'config': {},
+         'callback': {}
+      } ;
+
+      //打开 删除数据表 弹窗
+      $scope.ShowRemoveTable = function(){
+         
+      }
 
       //修改表名 弹窗
       $scope.AlterTableWindow = {
