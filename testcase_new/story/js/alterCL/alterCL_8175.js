@@ -34,12 +34,28 @@ try{
 println("create normalCL finished");
 
 //Compressed True to False,expect fail
-try{
-	normalCL.alter({ShardingKey:{id:1},ShardingType:'hash',Compressed:false});
-}catch(e)
+if( true == commIsStandalone( db ) ) 
 {
-   println("normalCL alters Compressed fail, but expect succ!");
-   throw e;
+   try{
+		normalCL.alter({ShardingKey:{id:1},ShardingType:'hash',Compressed:false});
+   }catch(e)
+   {
+		if (-166 !== e) 
+		{
+			println("normalCL alters Compressed fail,but expect succ!");
+			throw e;
+		}
+   }
+}
+else 
+{
+   try{
+	   normalCL.alter({ShardingKey:{id:1},ShardingType:'hash',Compressed:false});
+   }catch(e)
+   {
+		println("normalCL alters Compressed fail,but expect succ!");
+		throw e;
+   }
 }
 println("normalCL test finish!");
 

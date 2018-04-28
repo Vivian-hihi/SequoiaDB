@@ -57,12 +57,28 @@ try{
 }
 println("create rangeCL finished");
 
-try{
-	rangeCL.alter({ShardingKey:{id:1},ShardingType:'range'});
-}catch(e)
+if( true == commIsStandalone( db ) ) 
 {
-   println("rangeCL alters ShardingKey fail, but expect succ!");
-   throw e;
+   try{
+		rangeCL.alter({ShardingKey:{id:1},ShardingType:'range'});
+   }catch(e)
+   {
+		if (-166 !== e) 
+		{
+			println("rangeCL alters ShardingKey fail, but expect succ!");
+			throw e;
+		}
+   }
+}
+else 
+{
+   try{
+	   rangeCL.alter({ShardingKey:{id:1},ShardingType:'range'});
+   }catch(e)
+   {
+		println("rangeCL alters ShardingKey fail, but expect succ!");
+		throw e;
+   }
 }
 println("rangeCL test finish!");
 
@@ -78,12 +94,28 @@ try{
 }
 println("create hashCL finished");
 
-try{
-	hashCL.alter({Partition:1024});
-}catch(e)
+if( true == commIsStandalone( db ) ) 
 {
-   println("hashCL alters Compressed succ,but expect fail!");
-   throw e;
+   try{
+		hashCL.alter({Partition:1024});
+   }catch(e)
+   {
+		if (-166 !== e) 
+		{
+			println("hashCL alters Compressed succ,but expect fail!");
+			throw e;
+		}
+   }
+}
+else 
+{
+   try{
+	   hashCL.alter({Partition:1024});
+   }catch(e)
+   {
+		println("hashCL alters Compressed succ,but expect fail!");
+		throw e;
+   }
 }
 println("hashCL test finish!");
 
