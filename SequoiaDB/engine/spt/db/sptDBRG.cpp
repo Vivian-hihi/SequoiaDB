@@ -149,7 +149,7 @@ namespace engine
             }
             posVec.push_back( pos ) ;
          }
-         rc = _rg.getSlave( &pNode ) ;
+         rc = _rg.getSlave( &pNode, posVec ) ;
          if( SDB_OK != rc )
          {
             detail = BSON( SPT_ERR << "Failed to get slave" ) ;
