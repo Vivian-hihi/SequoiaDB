@@ -104,6 +104,19 @@
     <Compile Include="Crud\Lob\Lob13468.cs" />
     <Compile Include="Cluster\TestGetSlave14891.cs" />
     <Compile Include="Monitor\TestSnapshotAccessplan14516.cs" />
+    <Compile Include="Meta\Common.cs" />
+    <Compile Include="Meta\Meta15186.cs" />
+    <Compile Include="Meta\Meta15187.cs" />
+    <Compile Include="Meta\Meta15188.cs" />
+    <Compile Include="Meta\Meta15189.cs" />
+    <Compile Include="Meta\Meta15190.cs" />
+    <Compile Include="Meta\Meta15191.cs" />
+    <Compile Include="Meta\Meta15192.cs" />
+    <Compile Include="Meta\Meta15193.cs" />
+    <Compile Include="Meta\Meta15225.cs" />
+    <Compile Include="Meta\Meta15232.cs" />
+    <Compile Include="Meta\Meta15238.cs" />
+    
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TestCommon\Common.cs" />
     <Compile Include="TestCommon\Config.cs" />
