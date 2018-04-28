@@ -127,9 +127,18 @@ class TestDomain15221 extends PHPUnit_Framework_TestCase
    function test_alterSetAttributes02()
    {
       echo "\n---Begin to alter[batch modify attributes, ignoreE is false].\n"; 
-		$options = '{ Alter:[ {Name:"set attributes", Args:{Groups:"'.self::$groupNames[1].'"}}, {Name:"set attributes", Args:{Name:"test15221"}}, {Name:"set attributes", Args:{AutoSplit:true}} ], Options:{IgnoreException:false} }'; //false 
+		$options = '{ Alter:[ {Name:"set attributes", Args:{Groups:"'.self::$groupNames[0].'"}}, {Name:"set attributes", Args:{Test:"test15221"}}, {Name:"set attributes", Args:{AutoSplit:false}} ], Options:{IgnoreException:false} }'; //false 
       self::$dbh -> alterDM( self::$dmObj, $options );
       $this -> assertEquals( -6, self::$dbh -> getErrno() ); 
+		
+      echo "   Begin to check results.\n"; 
+      $dmInfo = self::$dbh -> listDM( self::$dmName );
+		//var_dump($dmInfo);
+      $this -> assertEquals( 0, self::$dbh -> getErrno() );     
+      $this -> assertEquals( self::$dmName, $dmInfo['Name'] );
+      $this -> assertEquals( 1, count( $dmInfo['Groups'] ) );
+      //$this -> assertEquals( self::$groupNames[1], $dmInfo['Groups'][0]['GroupName'] );
+      $this -> assertTrue( $dmInfo['AutoSplit'] );
    }
    
    public static function tearDownAfterClass()

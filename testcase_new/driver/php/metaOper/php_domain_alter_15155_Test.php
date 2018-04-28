@@ -126,7 +126,7 @@ class TestDomain15155 extends PHPUnit_Framework_TestCase
    function test_alterSetAttributes02()
    {
       echo "\n---Begin to alter[setAttributes: Name].\n"; 
-      $options = array( 'Name' => 'test15155' );
+      $options = array( 'Test' => 'test15155' );
       self::$dbh -> alterSetAttributes( self::$dmObj, $options );
       $this -> assertEquals( -6, self::$dbh -> getErrno() ); 
    }

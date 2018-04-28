@@ -179,7 +179,7 @@ class TestCS15156_01 extends PHPUnit_Framework_TestCase
    function test_alterCS02()
    {
       echo "\n---Begin to alter[Name].\n"; 
-      $options = array( 'Name' => 'test15156_01' );
+      $options = array( 'Test' => 'test15156_01' );
       self::$dbh -> alterCS( self::$csObj, $options );
       $this -> assertEquals( -6, self::$dbh -> getErrno() );
    }

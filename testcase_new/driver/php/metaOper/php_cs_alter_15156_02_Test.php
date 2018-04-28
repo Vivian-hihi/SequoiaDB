@@ -179,7 +179,7 @@ class TestCS15156_02 extends PHPUnit_Framework_TestCase
    function test_alterCS02()
    {
       echo "\n---Begin to alter[batch modify attributes, ignoreE is false].\n"; 
-		$options = '{ Alter:[ {Name:"set attributes", Args:{Domain:"'.self::$dmName2.'", PageSize:4096}}, {Name:"set attributes", Args:{Name:"test15156_02"}}, {Name:"set attributes", Args:{LobPageSize:4096}} ], Options:{IgnoreException:false} }'; //false
+		$options = '{ Alter:[ {Name:"set attributes", Args:{Domain:"'.self::$dmName2.'", PageSize:4096}}, {Name:"set attributes", Args:{Test:"test15156_02"}}, {Name:"set attributes", Args:{LobPageSize:4096}} ], Options:{IgnoreException:false} }'; //false
       self::$dbh -> alterCS( self::$csObj, $options );
       $this -> assertEquals( -6, self::$dbh -> getErrno() );
    }
