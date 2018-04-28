@@ -9,11 +9,16 @@ main();
 
 function main()
 {
+   if( commIsStandalone( db ) )
+   {
+      println( "Run mode is standalone" ) ;
+      return ;
+   }
+   
    println("---begin test---");
    var csName = COMMCSNAME;
    var mainCLName = CHANGEDPREFIX + "_main_14959";
    var clName = CHANGEDPREFIX + "_14959";
-   
    
    var options = { IsMainCL: true, ShardingType: 'range', ShardingKey: {a: 1}};
    var mainCL = commCreateCLByOption( db, csName, mainCLName, options, true, false, "create CL in the begin");

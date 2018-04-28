@@ -14,6 +14,14 @@ function main()
       println( "Run mode is standalone" ) ;
       return ;
    }
+   //less two groups no split
+   var allGroupName = getGroupName(db,true);         
+   if( 1 === allGroupName.length )
+   {
+      println("--least two groups");
+      return ;
+   }
+   
    println("---begin test---");
    var csName = COMMCSNAME;
    var clName1 = CHANGEDPREFIX + "_14961_1";

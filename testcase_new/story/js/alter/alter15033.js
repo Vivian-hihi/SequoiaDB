@@ -9,6 +9,11 @@ main();
 
 function main()
 {
+   if( commIsStandalone( db ) )
+   {
+      println( "Run mode is standalone" ) ;
+      return ;
+   }
    println("---begin test---");
    var csName = COMMCSNAME;
    var clName1 = CHANGEDPREFIX + "_15033_1";
