@@ -867,6 +867,7 @@ namespace engine
          unsetBuilder.append( CAT_SHARDING_TYPE, 1 ) ;
          unsetBuilder.append( CAT_SHARDING_PARTITION, 1 ) ;
          unsetBuilder.append( CAT_INTERNAL_VERSION, 1 ) ;
+         unsetBuilder.append( CAT_DOMAIN_AUTO_SPLIT, 1 ) ;
 
          // Use set fields to remove low and up bounds
          //unsetBuilder.append( CAT_CATALOGINFO_NAME ".0." CAT_LOWBOUND_NAME, 1 ) ;
