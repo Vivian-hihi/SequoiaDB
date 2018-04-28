@@ -189,20 +189,23 @@ class TestCS15156_02 extends PHPUnit_Framework_TestCase
       echo "\n---Begin to clean env.\n"; 
       echo "   Begin to drop cs in the end.\n";      
       self::$dbh -> dropCS( self::$csName, false );
-      if( self::$dbh -> getErrno() !== 0 )
+		$errno = self::$dbh -> getErrno();
+      if( $errno !== 0 )
       {
          echo "\nFailed to dropCS. Errno: ". $errno ."\n";
       } 
 		
       echo "   Begin to drop domain in the end.\n"; 
       self::$dbh -> dropDM( self::$dmName1, false );
-      if( self::$dbh -> getErrno() !== 0 )
+		$errno = self::$dbh -> getErrno();
+      if( $errno !== 0 )
       {
          echo "\nFailed to dropDomain. Errno: ". $errno ."\n";
       }
 		
       self::$dbh -> dropDM( self::$dmName2, false );
-      if( self::$dbh -> getErrno() !== 0 )
+		$errno = self::$dbh -> getErrno();
+      if( $errno !== 0 )
       {
          echo "\nFailed to dropDomain. Errno: ". $errno ."\n";
       }
