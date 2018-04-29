@@ -37,6 +37,7 @@
 #include "sptDBCL.hpp"
 #include "sptDBNode.hpp"
 #include "sptDBDomain.hpp"
+#include "sptBsonobj.hpp"
 #include "ossSocket.hpp"
 #include "msgDef.hpp"
 #include "fmpDef.hpp"
@@ -104,6 +105,7 @@ namespace engine
    JS_MEMBER_FUNC_DEFINE( _sptDBSdb, listTasks )
    JS_MEMBER_FUNC_DEFINE( _sptDBSdb, waitTasks )
    JS_MEMBER_FUNC_DEFINE( _sptDBSdb, cancelTask )
+   JS_MEMBER_FUNC_DEFINE( _sptDBSdb, getSessionAttr )
    JS_MEMBER_FUNC_DEFINE( _sptDBSdb, setSessionAttr )
    JS_MEMBER_FUNC_DEFINE( _sptDBSdb, msg )
    JS_MEMBER_FUNC_DEFINE( _sptDBSdb, createDomain )
@@ -162,6 +164,7 @@ namespace engine
       JS_ADD_MEMBER_FUNC( "listTasks", listTasks )
       JS_ADD_MEMBER_FUNC( "waitTasks", waitTasks )
       JS_ADD_MEMBER_FUNC( "cancelTask", cancelTask )
+      JS_ADD_MEMBER_FUNC( "getSessionAttr", getSessionAttr )
       JS_ADD_MEMBER_FUNC( "setSessionAttr", setSessionAttr )
       JS_ADD_MEMBER_FUNC( "msg", msg )
       JS_ADD_MEMBER_FUNC( "createDomain", createDomain )
@@ -1871,6 +1874,45 @@ namespace engine
    done:
       return rc ;
    error:
+      goto done ;
+   }
+
+   INT32 _sptDBSdb::getSessionAttr ( const _sptArguments & arg,
+                                     _sptReturnVal & rval,
+                                     bson::BSONObj & detail )
+   {
+      INT32 rc = SDB_OK ;
+
+      bson::BSONObj result ;
+      sptBsonobj * sptResult = NULL ;
+
+      rc = _sptSdb.getSessionAttr( result ) ;
+      if ( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << "Failed to get session attributes" ) ;
+         goto error ;
+      }
+
+      sptResult = SDB_OSS_NEW sptBsonobj( result ) ;
+      if( NULL == sptResult )
+      {
+         rc = SDB_OOM ;
+         detail = BSON( SPT_ERR << "Failed to new sptBsonobj obj" ) ;
+         goto error ;
+      }
+
+      rc = rval.setUsrObjectVal< sptBsonobj >( sptResult ) ;
+      if( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << "Failed to set ret obj" ) ;
+         goto error ;
+      }
+
+   done :
+      return rc ;
+
+   error :
+      SAFE_OSS_DELETE( sptResult ) ;
       goto done ;
    }
 

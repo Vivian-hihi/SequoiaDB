@@ -193,6 +193,10 @@ namespace engine
                         _sptReturnVal &rval,
                         bson::BSONObj &detail ) ;
 
+      INT32 getSessionAttr ( const _sptArguments & arg,
+                             _sptReturnVal & rval,
+                             bson::BSONObj & detail ) ;
+
       INT32 setSessionAttr( const _sptArguments &arg,
                             _sptReturnVal &rval,
                             bson::BSONObj &detail ) ;
