@@ -260,7 +260,8 @@ namespace engine
    _rtnAlterJob::_rtnAlterJob ()
    : _objectType( RTN_ALTER_INVALID_OBJECT ),
      _objectName( NULL ),
-     _version( 0 )
+     _version( 0 ),
+     _parseRC( SDB_OK )
    {
    }
 
@@ -392,6 +393,7 @@ namespace engine
       _version = 0 ;
       _options.reset() ;
       _jobObject = BSONObj() ;
+      _parseRC = SDB_OK ;
 
       _clearTasks() ;
 
@@ -647,13 +649,35 @@ namespace engine
                          "type of task should be object" ) ;
 
                rc = _extractTask( taskElement.embeddedObject() ) ;
-               if ( SDB_OK != rc && _options.isIgnoreException() )
+               if ( SDB_OK != rc )
                {
-                  rc = SDB_OK ;
-               }
-               PD_RC_CHECK( rc, PDERROR, "Failed to extract alter task [%s], "
+                  if ( _options.isIgnoreException() )
+                  {
+                     // Ignore errors
+                     PD_LOG( PDWARNING, "Ignore failure to extract alter task [%s], "
                             "rc: %d", taskElement.toString( TRUE, TRUE).c_str(),
                             rc ) ;
+                     rc = SDB_OK ;
+                  }
+                  else
+                  {
+                     PD_LOG( PDERROR, "Failed to extract alter task [%s], "
+                             "rc: %d", taskElement.toString( TRUE, TRUE).c_str(),
+                             rc ) ;
+                     if ( _alterTasks.empty() )
+                     {
+                        // Failed to parse first task, report the error directly
+                        goto error ;
+                     }
+                     else
+                     {
+                        // Stop parsing, execute the parsed tasks
+                        _parseRC = rc ;
+                        rc = SDB_OK ;
+                        break ;
+                     }
+                  }
+               }
             }
             break ;
          }

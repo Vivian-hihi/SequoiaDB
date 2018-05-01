@@ -45,7 +45,7 @@ function alterCLName(dbcl)
    }
    catch( e )
    {           
-      if ( e != -6 )
+      if ( e != -32 )
       {
           throw buildException( "check alterCLName", e);    
       }      

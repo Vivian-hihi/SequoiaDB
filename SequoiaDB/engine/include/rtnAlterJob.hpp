@@ -133,6 +133,11 @@ namespace engine
             return _alterTasks.empty() ;
          }
 
+         OSS_INLINE INT32 getParseRC () const
+         {
+            return _parseRC ;
+         }
+
       protected :
          static RTN_ALTER_OBJECT_TYPE _getObjectType ( const CHAR * name ) ;
 
@@ -158,6 +163,7 @@ namespace engine
          RTN_ALTER_TASK_LIST     _alterTasks ;
          const CHAR *            _objectName ;
          INT32                   _version ;
+         INT32                   _parseRC ;
    } ;
 
    typedef class _rtnAlterJob rtnAlterJob ;

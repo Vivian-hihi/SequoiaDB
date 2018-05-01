@@ -4096,6 +4096,13 @@ namespace engine
             }
          }
 
+         if ( SDB_OK != _alterJob->getParseRC() )
+         {
+            // Report the parse error
+            rc = _alterJob->getParseRC() ;
+            goto error ;
+         }
+
          /// AUDIT
          PD_AUDIT_COMMAND( AUDIT_DDL, name(), _getAuditType(), objectName, rc,
                            "Option:%s", _alterJob->getJobObject().toString().c_str() ) ;

@@ -380,6 +380,13 @@ namespace engine
 
             _arguments.clear() ;
          }
+
+         if ( SDB_OK != _alterJob.getParseRC() )
+         {
+            // Report the parse error
+            rc = _alterJob.getParseRC() ;
+            goto error ;
+         }
       }
 
    done :

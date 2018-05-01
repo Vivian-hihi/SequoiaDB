@@ -1053,6 +1053,11 @@ namespace engine
                 "Failed to get field [%s]: it is not supported yet",
                 FIELD_NAME_DOMAIN_AUTO_REBALANCE ) ;
 
+      PD_CHECK( !_argument.hasField( FIELD_NAME_NAME ),
+                SDB_OPTION_NOT_SUPPORT, error, PDERROR,
+                "Failed to get field [%s]: it is not supported yet",
+                FIELD_NAME_NAME ) ;
+
       // ReplSize and ShardingKey is allowed in main-collection
       if ( !testArgumentMask( ~( UTIL_CL_REPLSIZE_FIELD |
                                  UTIL_CL_SHDKEY_FIELD ) ) )
@@ -1292,6 +1297,12 @@ namespace engine
          parsedArgumentMask( UTIL_CS_CAPPED_FIELD ) ;
          setFlags( RTN_ALTER_TASK_FLAG_SHARDONLY ) ;
       }
+
+      // Special non supported cases
+      PD_CHECK( !_argument.hasField( FIELD_NAME_NAME ),
+                SDB_OPTION_NOT_SUPPORT, error, PDERROR,
+                "Failed to get field [%s]: it is not supported yet",
+                FIELD_NAME_NAME ) ;
 
       PD_CHECK( _argumentCount == (UINT32)_argument.nFields(),
                 SDB_INVALIDARG, error, PDERROR,
