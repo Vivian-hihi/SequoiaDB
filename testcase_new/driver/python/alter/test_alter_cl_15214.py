@@ -102,17 +102,21 @@ class TestAlterCL15214(testlib.SdbTestBase):
       self.check_collection_attributes(expect_bulk_attributes, condition = {'Name' : self.cs_name + '.' + newcl_name})
 
       # bulk alter, not ignore exception, must fail
-      bulk_opts = {'Alter':[ {'Name':'set attributes', 'Args': {'Name':'cs.cl'}},
-                             {'Name': 'enable sharding', 'Args':{'ShardingKey':{'b':1},'ShardingType':'range'}}, 
-                             {'Name':'set attributes', 'Args': {'ReplSize':3}}], 
+      bulk_opts = {'Alter':[ {'Name':'set attributes', 'Args': {'ReplSize':3}},
+                             {'Name':'set attributes', 'Args': {'Name':'cs.cl'}},
+                             {'Name': 'enable sharding', 'Args':{'ShardingKey':{'b':1},'ShardingType':'range'}}],                    
                    'Options':{'IgnoreException': False}} 
       try:
          newcl.alter(options = bulk_opts)  
          self.fail('need alter failed!')       
       except SDBBaseError as e:
-         self.assertEqual(e.code, -6)  
+         self.assertEqual(e.code, -32)  
 
       # check after bulk fail
+      expect_bulk_attributes = [{'ShardingKey':{'a': 1},'ShardingType':'hash','AutoSplit':True,
+                                 'EnsureShardingIndex': True, 'Partition': 4096,
+                                 'CompressionType': 1, 'CompressionTypeDesc': 'lzw',
+                                 'AttributeDesc': 'Compressed | StrictDataMode', 'ReplSize': 3}]
       self.check_collection_attributes(expect_bulk_attributes, condition = {'Name' : self.cs_name + '.' + newcl_name})
           
    def tearDown(self):

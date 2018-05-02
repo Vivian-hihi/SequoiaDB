@@ -65,18 +65,18 @@ class TestAlterCS15212(testlib.SdbTestBase):
       self.check_collection_space_attrbutes(expect_cs_attri, condition = {'Name' : cs_name})
       
       # bulk alter, not ignore exception, must fail
-      bulk_opts = {'Alter':[ {'Name': 'set attributes', 'Args': {'Name':'cs'}}, 
-                             {'Name': 'set attributes', 'Args': {'PageSize': 65536}},                             
+      bulk_opts = {'Alter':[ {'Name': 'set attributes', 'Args': {'PageSize': 65536}},
+                             {'Name': 'set attributes', 'Args': {'Name':'cs'}},                          
                              {'Name': 'set attributes', 'Args': {'LobPageSize': 524288}}], 
                    'Options': {'IgnoreException': False}}              
       try:
          cs.alter(options = bulk_opts)
          self.fail('need alter fail')
       except SDBBaseError as e:     		
-         self.assertEqual(e.code, -6)     
+         self.assertEqual(e.code, -32)     
 
       # check after alter failed
-      expect_cs_attri = [{'Domain': self.domain_name1, 'PageSize': 16384, 'LobPageSize': 131072}]
+      expect_cs_attri = [{'Domain': self.domain_name1, 'PageSize': 65536, 'LobPageSize': 131072}]
       self.check_collection_space_attrbutes(expect_cs_attri, condition = {'Name' : cs_name})         
       
       # drop cs
