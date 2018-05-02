@@ -31,7 +31,7 @@ function main(db)
       checkAlterCSResult(csName, "LobPageSize", lobPageSize);   
       
       //clean
-      //commDropCS( db, csName, true, "clear cs" );       
+      commDropCS( db, csName, true, "clear cs" );       
    }
    catch( e )
    {
