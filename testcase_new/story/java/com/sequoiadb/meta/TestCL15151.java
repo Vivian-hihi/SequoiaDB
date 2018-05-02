@@ -51,7 +51,7 @@ public class TestCL15151 extends SdbTestBase{
                     ". the TestCase bigin at:" + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
         this.sdb = new Sequoiadb(coordAddr, "", "");
         dataGroupNames = Commlib.getDataGroups(this.sdb);
-        if (dataGroupNames.size() < 3 || Commlib.isStandAlone(sdb))
+        if (Commlib.isStandAlone(sdb))
         {
             throw new SkipException("data group less 3");
         }
