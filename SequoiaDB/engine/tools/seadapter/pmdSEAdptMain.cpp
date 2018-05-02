@@ -43,6 +43,7 @@
 #include "seAdptDef.hpp"
 #include "seAdptMgr.hpp"
 #include "omagentDef.hpp"
+#include "utilProcessLock.hpp"
 
 namespace seadapter
 {
@@ -158,7 +159,9 @@ namespace seadapter
       UINT32 startTimerCount = 0 ;
       CHAR verText[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
       CHAR dialogPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+      CHAR lockFilePath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
       po::variables_map vm ;
+      utilProcFlockMutex procMutex ;
 
       rc = pmdResolveArguments( argc, argv ) ;
       if ( SDB_PMD_HELP_ONLY == rc || SDB_PMD_VERSION_ONLY == rc )
@@ -179,6 +182,30 @@ namespace seadapter
          ossPrintf( "Failed to build dialog path(error=%d), exit"OSS_NEWLINE,
                     rc ) ;
          goto error ;
+      }
+
+      {
+         const CHAR *cfgFileName = sdbGetSeAdptOptions()->getCfgFileName() ;
+         const CHAR *pathEnd = ossStrrchr( cfgFileName, OSS_FILE_SEP_CHAR ) ;
+
+         ossStrncpy( lockFilePath, cfgFileName, pathEnd - cfgFileName ) ;
+         rc = utilCatPath( lockFilePath, OSS_MAX_PATHSIZE,
+                           SDB_SEADPT_LOCK_FILE_NAME ) ;
+
+         rc = procMutex.init( "sdbseadapter", (void *)lockFilePath ) ;
+         if ( rc )
+         {
+            ossPrintf( "Init process mutex failed[ %d ]"OSS_NEWLINE, rc ) ;
+            goto error ;
+         }
+
+         rc = procMutex.tryLock() ;
+         if ( rc )
+         {
+            ossPrintf( "Lock process mutex failed. Maybe another process is "
+                       "running using the same configuration file" ) ;
+            goto error ;
+         }
       }
 
       // conf/log/seadapterlog/SERVICE/sdbseadapter.log
@@ -258,6 +285,7 @@ namespace seadapter
       krcb->destroy() ;
       PD_LOG( PDEVENT, "Stop program, exit code: %d",
               krcb->getShutdownCode() ) ;
+      procMutex.destroy() ;
       return SDB_OK == rc ? 0 : 1 ;
    error:
       goto done ;

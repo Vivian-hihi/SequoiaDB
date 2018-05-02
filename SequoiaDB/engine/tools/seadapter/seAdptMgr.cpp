@@ -131,6 +131,7 @@ namespace seadapter
    {
       INT32 rc = SDB_OK ;
       BSONElement ele ;
+      std::set< UINT64 > obsoleteSessions ;
       seIdxMetaMgr* idxMetaCache = _pAdptCB->getIdxMetaCache() ;
 
       try
@@ -164,6 +165,15 @@ namespace seadapter
                   // we are generating the full task map.
                   taskMapTmp.insert( *taskItem ) ;
                }
+            }
+         }
+
+         for ( TASK_SESSION_MAP_ITR itr = _taskSessionMap.begin();
+               itr != _taskSessionMap.end(); itr++ )
+         {
+            if ( taskMapTmp.end() == taskMapTmp.find( itr->first ) )
+            {
+               obsoleteSessions.insert( itr->first ) ;
             }
          }
 
@@ -291,6 +301,24 @@ namespace seadapter
 
       return item ;
    }
+
+/*
+   void _seIndexSessionMgr::_cleanObsoleteSession( const NET_HANDLE &handle,
+                                                   std::set< UINT64 > sessionIDs )
+   {
+      MAPSESSION_IT sessionMapItr ;
+      for ( std::set< UINT64 >::iterator itr = sessionIDs.begin();
+            itr != sessionIDs.end(); ++itr )
+      {
+         sessionMapItr = _mapSessions.find( *itr ) ;
+         if ( sessionMapItr != _mapSessions.end() )
+         {
+            rc = _pushMessage( sessionMapItr->second, pMsg, memType, handle ) ;
+            sessionMapItr->second
+         }
+      }
+   }
+*/
 
    BEGIN_OBJ_MSG_MAP( _seAdptCB, _pmdObjBase )
       ON_MSG( MSG_AUTH_VERIFY_RES, _onRegisterRes )
