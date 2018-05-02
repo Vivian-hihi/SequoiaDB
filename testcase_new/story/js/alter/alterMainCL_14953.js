@@ -5,8 +5,8 @@
              test c: alter shardingKey,attach subcl
 @author£º2018-4-25 wuyan  Init
 ***************************************************************************** */
-var mainCLName = CHANGEDPREFIX + "_alterMaincl_14953"; 
-var subCLName  = CHANGEDPREFIX + "_alterSubcl_14953"; 
+var mainCLName = CHANGEDPREFIX + "_qalterMaincl_14953"; 
+var subCLName  = CHANGEDPREFIX + "_qalterSubcl_14953"; 
 
 main(db);
 function main(db)
