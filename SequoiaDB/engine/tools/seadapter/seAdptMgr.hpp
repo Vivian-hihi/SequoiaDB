@@ -224,6 +224,7 @@ namespace seadapter
       INT32 _startSvcListener() ;
       INT32 _initSdbAddr() ;
       INT32 _sendRegisterMsg() ;
+      INT32 _detectES() ;
       INT32 _resumeRegister() ;
       INT32 _startEDU( INT32 type, EDU_STATUS waitStatus,
                        void *args, BOOLEAN regSys ) ;
@@ -280,6 +281,7 @@ namespace seadapter
       UINT32                  _regTimerID ;        // For register adapter on data node.
       UINT32                  _idxUpdateTimerID ;  // For text index information update.
       UINT32                  _oneSecTimerID ;     // For session check by session managers.
+      UINT32                  _esDetectTimerID ;
       INT32                   _clVersion ;
       ossSpinSLatch           _verUpdateLock ;
       ossEvent                _cataEvent ;

@@ -345,6 +345,7 @@ namespace seadapter
       _regTimerID = NET_INVALID_TIMER_ID ;
       _idxUpdateTimerID = NET_INVALID_TIMER_ID ;
       _oneSecTimerID = NET_INVALID_TIMER_ID ;
+      _esDetectTimerID = NET_INVALID_TIMER_ID ;
       _clVersion = -1 ;
       _localIdxVer = SEADPT_INIT_TEXT_INDEX_VERSION ;
       _regMsgBuff = NULL ;
@@ -421,10 +422,6 @@ namespace seadapter
          goto error ;
       }
       PD_LOG( PDEVENT, "Search engine client manager init successfully" ) ;
-
-      rc = _seCltFactory.create( &_esClt ) ;
-      PD_RC_CHECK( rc, PDERROR, "Create search engine client failed[ %d ]",
-                   rc ) ;
 
       // Set the business status to not OK. Change to OK after successfully
       // registered on data node.
@@ -530,6 +527,10 @@ namespace seadapter
       {
          _sendRegisterMsg() ;
       }
+      else if ( timerID == _esDetectTimerID )
+      {
+         _detectES() ;
+      }
       else if ( timerID == _oneSecTimerID )
       {
          _idxSessionMgr.onTimer( interval ) ;
@@ -539,7 +540,8 @@ namespace seadapter
       {
          // Only send the index update request when adapter is successfully
          // registered.
-         if ( NET_INVALID_TIMER_ID == _regTimerID )
+         if ( NET_INVALID_TIMER_ID == _regTimerID
+              && NET_INVALID_TIMER_ID == _esDetectTimerID )
          {
             INT32 rc = _sendIdxUpdateReq() ;
             if ( rc )
@@ -1198,6 +1200,35 @@ namespace seadapter
       goto done ;
    }
 
+   INT32 _seAdptCB::_detectES()
+   {
+      INT32 rc = SDB_OK ;
+      utilESClt *clt = NULL ;
+
+      if ( _esClt )
+      {
+         goto done ;
+      }
+
+      rc = _seCltFactory.create( &clt ) ;
+      PD_RC_CHECK( rc, PDERROR, "Create search engine client failed[ %d ]",
+                   rc ) ;
+
+      _esClt = clt ;
+      _killTimer( _esDetectTimerID ) ;
+      _esDetectTimerID = NET_INVALID_TIMER_ID ;
+
+      if ( NET_INVALID_TIMER_ID == _regTimerID )
+      {
+         pmdGetKRCB()->setBusinessOK( TRUE ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _seAdptCB::_resumeRegister()
    {
       INT32 rc = SDB_OK ;
@@ -1301,7 +1332,10 @@ namespace seadapter
       _killTimer( _regTimerID ) ;
       _regTimerID = NET_INVALID_TIMER_ID ;
 
-      pmdGetKRCB()->setBusinessOK( TRUE ) ;
+      if ( NET_INVALID_TIMER_ID == _esDetectTimerID )
+      {
+         pmdGetKRCB()->setBusinessOK( TRUE ) ;
+      }
 
       PD_LOG( PDEVENT, "Search engine adapter registered on SequoiaDB data "
               "node successfully" ) ;
@@ -1568,13 +1602,19 @@ namespace seadapter
       //    second. Once success, the timer will be killed.
       rc = _indexNetRtAgent.addTimer( OSS_ONE_SEC, &_indexTimerHandler,
                                       _regTimerID ) ;
-      PD_RC_CHECK( rc, PDERROR, "Register timer failed[ %d ]", rc ) ;
+      PD_RC_CHECK( rc, PDERROR, "Register registration timer failed[ %d ]",
+                   rc ) ;
 
-      // 2. Set the one second timer. This is for session managers to check
+      // 2. Set the ES detection timer.
+      rc = _indexNetRtAgent.addTimer( OSS_ONE_SEC, &_indexTimerHandler,
+                                      _esDetectTimerID ) ;
+      PD_RC_CHECK( rc, PDERROR, "Register ES detect timer failed[ %d ]", rc ) ;
+
+      // 3. Set the one second timer. This is for session managers to check
       //    deleting sessions.
       rc = _indexNetRtAgent.addTimer( OSS_ONE_SEC, &_indexTimerHandler,
                                       _oneSecTimerID ) ;
-      PD_RC_CHECK( rc, PDERROR, "Register timer failed[ %d ]", rc ) ;
+      PD_RC_CHECK( rc, PDERROR, "Register one second timer failed[ %d ]", rc ) ;
 
    done:
       return rc ;
@@ -1607,7 +1647,7 @@ namespace seadapter
 
    BOOLEAN _seAdptCB::_isESOnline()
    {
-      return _esClt->isActive() ;
+      return ( _esClt && _esClt->isActive() ) ;
    }
 
    seAdptCB* sdbGetSeAdapterCB()
