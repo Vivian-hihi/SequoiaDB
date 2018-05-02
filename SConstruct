@@ -51,6 +51,8 @@ gtest_dir = join(engine_dir,'gtest')
 ncursesinclude_dir = join(engine_dir, 'ncurses/include')
 driver_dir = join(db_dir,'driver')
 java_dir = join(root_dir,'java')
+fuse_dir = join(thirdparty_dir, 'fuse')
+fuse_lib_dir = join(fuse_dir, 'lib')
 # --- options ----
 
 options = {}
@@ -479,7 +481,7 @@ elif guess_os == "win32":
         hdfsJniMdPath = join(java_dir,"jdk_win64/include/win32")
 
 env.Append(
-CPPPATH=[join(engine_dir,'include'),join(engine_dir,'client'),join(ssl_dir,'include'),join(lz4_dir,'include'),join(zlib_dir,'./'),join(snappy_dir,'include'),join(gtest_dir,'include'),pcre_dir, boost_dir, ssh2_dir, hdfsJniPath, hdfsJniMdPath] )
+CPPPATH=[join(engine_dir,'include'),join(engine_dir,'client'),join(ssl_dir,'include'),join(lz4_dir,'include'),join(zlib_dir,'./'),join(snappy_dir,'include'),join(gtest_dir,'include'),join(fuse_dir, 'include'), pcre_dir, boost_dir, ssh2_dir, hdfsJniPath, hdfsJniMdPath] )
 
 env.Append( CPPDEFINES=["__STDC_LIMIT_MACROS", "HAVE_CONFIG_H", "BOOST_THREAD_HAS_CONDATTR_SET_CLOCK_MONOTONIC"] )
 env.Append( CPPDEFINES=[ "SDB_DLL_BUILD" ] )
@@ -523,6 +525,14 @@ if guess_os == "linux":
         zlib_lib_dir_platform = join(zlib_lib_dir, 'linux64')
         lz4_lib_dir_platform = join(lz4_lib_dir, 'linux64')
         snappy_lib_dir_platform = join(snappy_lib_dir, 'linux64')
+        
+        env.Append(LIBS=['fuse'])
+        fuse_lib = join(fuse_lib_dir, 'libfuse.a')
+        Export("fuse_lib")
+        env.Append( CPPDEFINES="_FILE_OFFSET_BITS=64" )        
+        env.Append(CPPPATH = join(fuse_dir, "include"))
+        env.Append(EXTRALIBPATH=[fuse_lib_dir])
+        
     # in case for 32 bit linux or compiling 32 bit in 64 env
     elif guess_arch == "ia32":
         linux64 = False

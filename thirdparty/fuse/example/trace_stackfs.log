@@ -1,0 +1,58 @@
+Time : 1516069424147159 Pid : 27665 Tid : 27667 Opendir called on name : /home/users/yuweixing/libfuse-fuse_2_9_4/example/rootdir and inode : 1
+Time : 1516069424147320 Pid : 27665 Tid : 27666 Readdir called on name : /home/users/yuweixing/libfuse-fuse_2_9_4/example/rootdir and inode : 1
+Time : 1516069424160024 Pid : 27665 Tid : 27667 Lookup called on name : testLob50, parent ino : 1
+Time : 1516069424160196 Pid : 27665 Tid : 27666 Readdir called on name : /home/users/yuweixing/libfuse-fuse_2_9_4/example/rootdir and inode : 1
+Time : 1516069424160330 Pid : 27665 Tid : 27667 Releasedir called on name : /home/users/yuweixing/libfuse-fuse_2_9_4/example/rootdir and inode : 1
+Time : 1516069425307691 Pid : 27665 Tid : 27666 Opendir called on name : /home/users/yuweixing/libfuse-fuse_2_9_4/example/rootdir and inode : 1
+Time : 1516069425307792 Pid : 27665 Tid : 27667 Readdir called on name : /home/users/yuweixing/libfuse-fuse_2_9_4/example/rootdir and inode : 1
+Time : 1516069425308468 Pid : 27665 Tid : 27667 Lookup called on name : testLob50, parent ino : 1
+Time : 1516069425308543 Pid : 27665 Tid : 27667 Readdir called on name : /home/users/yuweixing/libfuse-fuse_2_9_4/example/rootdir and inode : 1
+Time : 1516069425308630 Pid : 27665 Tid : 27666 Releasedir called on name : /home/users/yuweixing/libfuse-fuse_2_9_4/example/rootdir and inode : 1
+Time : 1516069462326703 Pid : 27665 Tid : 27667 Opendir called on name : /home/users/yuweixing/libfuse-fuse_2_9_4/example/rootdir and inode : 1
+Time : 1516069462326840 Pid : 27665 Tid : 27666 Readdir called on name : /home/users/yuweixing/libfuse-fuse_2_9_4/example/rootdir and inode : 1
+Time : 1516069462326940 Pid : 27665 Tid : 27667 Lookup called on name : testLob50, parent ino : 1
+Time : 1516069462327020 Pid : 27665 Tid : 27666 Readdir called on name : /home/users/yuweixing/libfuse-fuse_2_9_4/example/rootdir and inode : 1
+Time : 1516069462327087 Pid : 27665 Tid : 27667 Releasedir called on name : /home/users/yuweixing/libfuse-fuse_2_9_4/example/rootdir and inode : 1
+Time : 1516069469188879 Pid : 27665 Tid : 27666 Lookup called on name : dir, parent ino : 1
+Time : 1516069469189003 Pid : 27665 Tid : 27667 Mkdir called with name : dir, parent ino : 1
+Time : 1516069861744911 Pid : 27665 Tid : 27667 Lookup called on name : dir, parent ino : 1
+Time : 1516069870800096 Pid : 27665 Tid : 27666 Opendir called on name : /home/users/yuweixing/libfuse-fuse_2_9_4/example/rootdir/dir and inode : 278542
+Time : 1516069870800288 Pid : 27665 Tid : 27667 Readdir called on name : /home/users/yuweixing/libfuse-fuse_2_9_4/example/rootdir/dir and inode : 278542
+Time : 1516069870800415 Pid : 27665 Tid : 27666 Readdir called on name : /home/users/yuweixing/libfuse-fuse_2_9_4/example/rootdir/dir and inode : 278542
+Time : 1516069870800716 Pid : 27665 Tid : 27667 Releasedir called on name : /home/users/yuweixing/libfuse-fuse_2_9_4/example/rootdir/dir and inode : 278542
+Time : 1516069945819969 Pid : 27665 Tid : 27666 Lookup called on name : temp, parent ino : 139978218703408
+Time : 1516069945820106 Pid : 27665 Tid : 27667 Create called on temp and parent ino : 278542
+Time : 1516069945820210 Pid : 27665 Tid : 27667 Create called, e.ino : 139978218703696
+Time : 1516069945820381 Pid : 27665 Tid : 27666 Flush called on name : /home/users/yuweixing/libfuse-fuse_2_9_4/example/rootdir/dir/temp and inode : 269416
+Time : 1516069945820433 Pid : 27665 Tid : 27667 Setattr called on name : /home/users/yuweixing/libfuse-fuse_2_9_4/example/rootdir/dir/temp and inode : 269416
+Time : 1516069945820566 Pid : 27665 Tid : 27666 Flush called on name : /home/users/yuweixing/libfuse-fuse_2_9_4/example/rootdir/dir/temp and inode : 269416
+Time : 1516069945820637 Pid : 27665 Tid : 27667 Release called on name : /home/users/yuweixing/libfuse-fuse_2_9_4/example/rootdir/dir/temp and inode : 269416 fd : 5 
+Time : 1516069948813415 Pid : 27665 Tid : 27666 Lookup called on name : temp1, parent ino : 139978218703408
+Time : 1516069948813593 Pid : 27665 Tid : 27667 Create called on temp1 and parent ino : 278542
+Time : 1516069948813662 Pid : 27665 Tid : 27667 Create called, e.ino : 139978218703840
+Time : 1516069948813783 Pid : 27665 Tid : 27666 Flush called on name : /home/users/yuweixing/libfuse-fuse_2_9_4/example/rootdir/dir/temp1 and inode : 269462
+Time : 1516069948813928 Pid : 27665 Tid : 27667 Setattr called on name : /home/users/yuweixing/libfuse-fuse_2_9_4/example/rootdir/dir/temp1 and inode : 269462
+Time : 1516069948814052 Pid : 27665 Tid : 27666 Flush called on name : /home/users/yuweixing/libfuse-fuse_2_9_4/example/rootdir/dir/temp1 and inode : 269462
+Time : 1516069948814208 Pid : 27665 Tid : 27667 Release called on name : /home/users/yuweixing/libfuse-fuse_2_9_4/example/rootdir/dir/temp1 and inode : 269462 fd : 5 
+Time : 1516069949593426 Pid : 27665 Tid : 27666 Opendir called on name : /home/users/yuweixing/libfuse-fuse_2_9_4/example/rootdir/dir and inode : 278542
+Time : 1516069949593554 Pid : 27665 Tid : 27667 Readdir called on name : /home/users/yuweixing/libfuse-fuse_2_9_4/example/rootdir/dir and inode : 278542
+Time : 1516069949593633 Pid : 27665 Tid : 27666 Lookup called on name : temp, parent ino : 139978218703408
+Time : 1516069949593678 Pid : 27665 Tid : 27667 Readdir called on name : /home/users/yuweixing/libfuse-fuse_2_9_4/example/rootdir/dir and inode : 278542
+Time : 1516069949594006 Pid : 27665 Tid : 27666 Releasedir called on name : /home/users/yuweixing/libfuse-fuse_2_9_4/example/rootdir/dir and inode : 278542
+Time : 1516069986925919 Pid : 27665 Tid : 27667 Opendir called on name : /home/users/yuweixing/libfuse-fuse_2_9_4/example/rootdir/dir and inode : 278542
+Time : 1516069986926096 Pid : 27665 Tid : 27666 Readdir called on name : /home/users/yuweixing/libfuse-fuse_2_9_4/example/rootdir/dir and inode : 278542
+Time : 1516069986926462 Pid : 27665 Tid : 27666 Lookup called on name : temp, parent ino : 139978218703408
+Time : 1516069986927161 Pid : 27665 Tid : 27666 Lookup called on name : temp1, parent ino : 139978218703408
+Time : 1516069986927274 Pid : 27665 Tid : 27667 Readdir called on name : /home/users/yuweixing/libfuse-fuse_2_9_4/example/rootdir/dir and inode : 278542
+Time : 1516069986927356 Pid : 27665 Tid : 27666 Releasedir called on name : /home/users/yuweixing/libfuse-fuse_2_9_4/example/rootdir/dir and inode : 278542
+Time : 1516084952331562 Pid : 27665 Tid : 27667 Statfs called with name : /home/users/yuweixing/libfuse-fuse_2_9_4/example/rootdir, and inode : 1
+Time : 1516086310199570 Pid : 27665 Tid : 27666 Statfs called with name : /home/users/yuweixing/libfuse-fuse_2_9_4/example/rootdir, and inode : 1
+Time : 1516095029835253 Pid : 27665 Tid : 27667 Statfs called with name : /home/users/yuweixing/libfuse-fuse_2_9_4/example/rootdir, and inode : 1
+Time : 1516416876728787 Pid : 27665 Tid : 27666 Statfs called with name : /home/users/yuweixing/libfuse-fuse_2_9_4/example/rootdir, and inode : 1
+Time : 1516598491926731 Pid : 27665 Tid : 27667 Statfs called with name : /home/users/yuweixing/libfuse-fuse_2_9_4/example/rootdir, and inode : 1
+Time : 1519366903559703 Pid : 27665 Tid : 27666 Forget name : /home/users/yuweixing/libfuse-fuse_2_9_4/example/rootdir/dir/temp1, inode : 269462 and lookup count : 2
+Time : 1519366903564347 Pid : 27665 Tid : 27667 Forget name : /home/users/yuweixing/libfuse-fuse_2_9_4/example/rootdir/dir/temp, inode : 269416 and lookup count : 3
+Time : 1519366903564424 Pid : 27665 Tid : 27667 Forget name : /home/users/yuweixing/libfuse-fuse_2_9_4/example/rootdir/dir, inode : 278542 and lookup count : 2
+Time : 1519366903564438 Pid : 27665 Tid : 27667 Forget name : /home/users/yuweixing/libfuse-fuse_2_9_4/example/rootdir/testLob50, inode : 270418 and lookup count : 3
+Time : 1519366903564445 Pid : 27665 Tid : 27667 Forget name : /home/users/yuweixing/libfuse-fuse_2_9_4/example/rootdir, inode : 1 and lookup count : 1
+Time : 1519366903578949 Pid : 27665 Tid : 27665 Function Trace : Unmount

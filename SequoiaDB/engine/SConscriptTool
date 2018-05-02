@@ -582,6 +582,21 @@ sdbSEAdptFiles = [
       "tools/seadapter/utilProcessLock.cpp"
       ]
 
+clientCPPFiles = [
+      "client/sdbDataSource.cpp",
+      "client/sdbDataSourceComm.cpp",
+      "client/sdbDataSourceStrategy.cpp",
+      "client/sdbDataSourceWorker.cpp"
+      ]	  
+	  
+sequoiaFSFiles = [
+      clientCPPFiles,
+      "tools/sequoiafs/sequoiaFS.cpp",
+      "tools/sequoiafs/sequoiaFSLruCache.cpp",
+      "tools/sequoiafs/sequoiaFSMain.cpp",
+      "tools/sequoiafs/sequoiaFSOptionMgr.cpp",
+    ]	  
+
 #cls
 toolEnv.StaticLibrary('cls', clsFiles)
 #ixm
@@ -703,6 +718,13 @@ sdbseadapter = toolEnv.Program("sdbseadapter",
 		 sdbSEAdptFiles,
 		 LIBDEPS=["pd","oss","msg","util","bson","pmd","pmdMT","net","rtnJob"],
 		 _LIBDEPS='$_LIBDEPS_OBJS' )
+		 
+if linux:
+    Import("fuse_lib")	
+    sequoiafs = toolEnv.Program("sequoiafs",
+		 sequoiaFSFiles,
+		 LIBDEPS=["bson", "oss", "pd", "util", "pmd", "client", "clientcpp", fuse_lib],
+		 _LIBDEPS='$_LIBDEPS_OBJS' )	
 
 toolEnv.Install( '#/bin', sdbimprt )
 toolEnv.Install( '#/bin', sdbexprt )
@@ -724,5 +746,6 @@ toolEnv.Install( '#/bin', sdbdpsdump )
 toolEnv.Install( '#/bin', sdbinspect )
 if linux:
    toolEnv.Install( '#/bin', sdbomtool )
-
+if linux:
+   toolEnv.Install('#/bin', sequoiafs)
 toolEnv.Install( '#/bin', sdbseadapter )
