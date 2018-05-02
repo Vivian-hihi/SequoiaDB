@@ -56,7 +56,10 @@
          <div ng-windows="form as AlterTableWindow.config" windows-callback="AlterTableWindow.callback">
             <div form-create para="form"></div>
          </div>
-         <div class="borderBox" style="padding:10px;overflow-y:auto;" ng-container="{offsetY:-122}">
+         <div ng-windows="form as RemoveTableWindow.config" windows-callback="RemoveTableWindow.callback">
+            <div form-create para="form"></div>
+         </div>
+         <div class="borderBox" style="padding:10px;overflow-y:auto;" ng-container="BoxHeight">
             <div><b>{{pAutoLanguage("数据库列表")}}：</b></div>
             <ul style="list-style:none;margin:10px 0 0 0;padding:0;font-size:110%;">
                <li class="linkButton Ellipsis" style="padding-bottom:5px;" ng-repeat="databaseName in DatabaseList track by $index" ng-click="ShowTableInfo(databaseName.datname)" ng-style="{true:{'font-weight':'bold','color':'#FF7547'} }[CurrentDbName == databaseName.datname]">
@@ -88,6 +91,13 @@
                      <td>
                         <a class="linkButton" ng-class="{'disabled':DatabaseList.length==0}" ng-click="ShowCreateTable()">
                            {{pAutoLanguage("创建数据表")}}
+                        </a>
+                     </td>
+                  </tr>
+                  <tr>
+                     <td>
+                        <a class="linkButton" ng-click="ShowRemoveTable()">
+                           {{pAutoLanguage("删除数据表")}}
                         </a>
                      </td>
                   </tr>

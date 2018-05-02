@@ -2,6 +2,7 @@
 //"use strict" ;
 (function(){
    var sacApp = window.SdbSacManagerModule ;
+
    //控制器
    sacApp.controllerProvider.register( 'Deploy.Index.Ctrl', function( $scope, $compile, $location, $rootScope, SdbFunction, SdbRest, Loading ){
 
@@ -1108,7 +1109,7 @@
                      "valid": {
                         "min": 1,
                         "max": 127,
-                        "regex": '^[0-9a-zA-Z]+$'
+                        'regex': '^[0-9a-zA-Z_-]+$'
                      }
                   },
                   {
@@ -1300,7 +1301,7 @@
                      "valid": {
                         "min": 1,
                         "max": 127,
-                        "regex": '^[0-9a-zA-Z]+$'
+                        'regex': '^[0-9a-zA-Z_-]+$'
                      }
                   },
                   {
@@ -1883,7 +1884,7 @@
                      "valid": {
                         'min': 1,
                         'max': 127,
-                        'regex': '^[0-9a-zA-Z]+$'
+                        'regex': '^[0-9a-zA-Z_-]+$'
                      }
                   },
                   {
@@ -2121,7 +2122,7 @@
                      "valid": {
                         'min': 1,
                         'max': 127,
-                        'regex': '^[0-9a-zA-Z]+$'
+                        'regex': '^[0-9a-zA-Z_-]+$'
                      }
                   },
                   {
@@ -2191,7 +2192,7 @@
                      "valid": {
                         "min": 1,
                         "max": 127,
-                        "regex": '^[0-9a-zA-Z]+$'
+                        'regex': '^[0-9a-zA-Z_-]+$'
                      }
                   },
                   {
@@ -2979,6 +2980,27 @@
             return ;
          }
 
+         //获取oltp数据库列表
+         var queryOltpDatabase = function( cluster, module ){
+            var sql = 'SELECT datname FROM pg_database WHERE datname NOT LIKE \'template0\' AND datname NOT LIKE \'template1\'' ;
+            var data = { 'Sql': sql } ;
+            SdbRest.DataOperationV21( cluster, module, '/sql', data, {
+               'success': function( dbList ){
+                  var oltpList = [] ;
+                  $.each( dbList, function( index, dbInfo ){
+                     oltpList.push( { 'key': dbInfo['datname'], 'value': dbInfo['datname'] } ) ;
+                  } ) ;
+                  $scope.CreateRelationWindow['config']['inputList'][4]['valid'] = oltpList ;
+               },
+               'failed': function( errorInfo ){
+                  _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                     queryDbList() ;
+                     return true ;
+                  } ) ;
+               }
+            } ) ;
+         }
+
          //被关联的业务
          var chooseModule = -1 ;
          
@@ -3024,6 +3046,7 @@
                eachNodeList( $scope.moduleList[index]['BusinessInfo']['NodeList'] ) ;
             }
          }
+         
          $scope.CreateRelationWindow['config'] = {
             inputList: [
                {
@@ -3062,6 +3085,7 @@
                         $scope.moduleList[$scope.CreateRelationWindow['config']['inputList'][3]['value']]['BusinessName'],
                         $scope.CreateRelationWindow['config']['inputList'][4]['value']
                      ) ;
+                     queryOltpDatabase( $scope.clusterList[$scope.currentCluster]['ClusterName'], value ) ;
                   }
                },
                {
@@ -3084,15 +3108,10 @@
                {
                   "name": 'DbName',
                   "webName": $scope.autoLanguage( '数据库' ),
-                  "type": "string",
+                  "type": "select",
                   "required": true,
                   "value": "",
-                  "valid": {
-                     "min": 1,
-                     "max": 63,
-                     "regex": "^[a-zA-Z_]+[0-9a-zA-Z_]*$",
-                     "regexError": sprintf( $scope.pAutoLanguage( '?由字母和数字或\"_\"组成，并且以字母或\"_\"起头。' ), $scope.pAutoLanguage( '数据表名' ) )
-                  },
+                  "valid":[],
                   "onChange": function( name, key, value ){
                      $scope.CreateRelationWindow['config']['inputList'][0]['value'] = sprintf(
                         '?_?_?',
@@ -3170,6 +3189,7 @@
                return ;
             }
          } ) ;
+         queryOltpDatabase( $scope.clusterList[$scope.currentCluster]['ClusterName'], $scope.CreateRelationWindow['config']['inputList'][2]['valid'][0]['key'] ) ;
          $scope.CreateRelationWindow['config']['inputList'][2]['value'] = $scope.CreateRelationWindow['config']['inputList'][2]['valid'][0]['value'] ;
          $scope.CreateRelationWindow['config']['inputList'][0]['value'] = sprintf(
             '?_?',

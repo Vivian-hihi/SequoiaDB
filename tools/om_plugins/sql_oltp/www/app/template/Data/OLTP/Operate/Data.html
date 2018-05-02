@@ -74,20 +74,37 @@
          <button ng-click="ExecQuery()" class="btn btn-primary">{{pAutoLanguage("执行")}}</button>
       </div>
    </div>
+
+  
    <div ng-container="{marginTop:10,offsetY:-275}" ng-controller="Data.OLTP.Data.Table.Ctrl">
+
+      <!--查看单条记录弹窗-->
+      <div ng-windows="list as DataWindow.config" windows-callback="DataWindow.callback">
+         <table class="table loosen border">
+            <tr>
+               <th style="width:40%;background-color:#F1F4F5;">key</th>
+               <th style="width:60%;background-color:#F1F4F5;">value</th>
+            </tr>
+            <tr ng-repeat="(key,value) in list track by $index">
+               <td>{{key}}</td>
+               <td>{{ReturnNull( value )}}</td>
+            </tr>
+         </table>
+      </div>
+
       <div ng-container="{}" ng-table="GridTable['options']" table-title="GridTable['title']" table-content="info in GridTable['body']" table-callback="GridTable['callback']">
          <div class="Ellipsis" table-key="#">{{$index+1}}</div>
          <div class="Ellipsis" table-key="operate">
-            <a class="linkButton" ng-click="ShowEditWindow( info )">
+            <a class="linkButton" ng-click="ShowEditWindow( $index )">
                <i class="fa fa-edit" ng-attr="{'data-desc':pAutoLanguage('编辑')}"></i>
             </a>
-            <a class="linkButton" ng-click="ShowRemoveData( info )">
+            <a class="linkButton" ng-click="ShowRemoveData( $index )">
                <i class="fa fa-remove" ng-attr="{'data-desc':pAutoLanguage('删除')}"></i>
             </a>
          </div>
-         <div class="Ellipsis" table-key="$auto">{{ReturnNull( $autoValue )}}</div>
+         <div class="Ellipsis" table-key="$auto">
+            <span class="linkButton" ng-click="ShowDataWindow( $index )">{{ReturnNull( $autoValue )}}</span>
+         </div>
       </div>
-
-
    </div>
 </div>

@@ -17,6 +17,10 @@
 
       SdbSwap.execSql = '' ;
 
+      SdbSwap.dataList = [] ;
+
+      SdbSwap.dataLengthList = [] ;
+
       //执行记录
       SdbSwap.execHistory = [] ;
 
@@ -101,19 +105,36 @@
          var data = { 'Sql': execSql, 'DbName': SdbSwap.dbName } ;
          SdbRest.DataOperationV2( '/sql', data, {
             'success': function( result ){
-
                if( isQuery )
                {
+                  SdbSwap.dataList = result ;
+                  SdbSwap.dataLengthList = [] ;
+                  var displayData = [] ;
+                  displayData = $.extend( true, [], result ) ;
+                  $.each( displayData, function( index, data ){
+                     SdbSwap.dataLengthList.push( false ) ;
+                     $.each( data, function( key, value ){
+                        if( value != null )
+                        {
+                           if( value.toString().length > 1024 )
+                           {
+                              displayData[index][key] = value.substring( 0, 1024 ) + '...' ;
+                              SdbSwap.dataLengthList[index] = true ;
+                           }
+                        }
+                     } ) ;
+                  } ) ;
+
                   if( isUpdateSql )
                   {
                      SdbSwap.lastQuerySql = sql ;
                   }
 
                   //设置表格显示
-                  SdbSignal.commit( 'setTableData', result ) ;
+                  SdbSignal.commit( 'setTableData', displayData ) ;
 
                   //更新表格标题
-                  SdbSignal.commit( 'setTableTitle', result ) ;
+                  SdbSignal.commit( 'setTableTitle', displayData ) ;
 
                   //查询记录数
                   queryCountData( isUser ) ;
@@ -179,7 +200,7 @@
    } ) ;
 
    //操作 控制器
-   sacApp.controllerProvider.register( 'Data.OLTP.Data.Operate.Ctrl', function( $scope, SdbSwap, SdbSignal, SdbRest ){
+   sacApp.controllerProvider.register( 'Data.OLTP.Data.Operate.Ctrl', function( $scope, $location, SdbSwap, SdbSignal, SdbRest ){
       
       //跳过记录数
       SdbSwap.offset = 0 ;
@@ -201,9 +222,6 @@
 
       //获取字段列表
       var queryTableStruct = function(){
-         //var sql = sprintf( "SELECT col.column_name,col.data_type, is_nullable FROM information_schema.columns col LEFT JOIN pg_description des\
-         //          ON col.table_name::regclass = des.objoid AND col.ordinal_position = des.objsubid WHERE table_schema = 'public'\
-         //          AND table_name = '?' ORDER BY ordinal_position", SdbSwap.tbName ) ;
          var sql = sprintf( "SELECT column_name,data_type,is_nullable FROM information_schema.columns WHERE table_schema = 'public' AND table_name = '?'", SdbSwap.tbName) ;
          var data = { 'Sql': sql, 'DbName': SdbSwap.dbName } ;
          SdbRest.DataOperationV2( '/sql', data, {
@@ -258,7 +276,7 @@
             }
          } ) ;
       }
-     
+      
       $scope.QueryWindow = {
          'config': {},
          'callback': {}
@@ -266,251 +284,260 @@
 
       //打开 查询弹窗
       $scope.ShowQueryWindow = function(){
-         var fieldsSelect = [] ;
-         $.each( fieldList, function( index, fieldInfo ){
-            fieldsSelect.push( { 'key': fieldInfo['column_name'], 'value': fieldInfo['column_name'] } ) ;
-         } ) ;
-         $scope.QueryWindow['config'] = {
-            'inputList': [
-               {
-                  "name": "filter",
-                  "webName": $scope.pAutoLanguage( '查询条件' ),
-                  "type": "group",
-                  "child": [
-                     {
-                        "name": "model",
-                        "webName": $scope.pAutoLanguage( "匹配模式" ),
-                        "type": "select",
-                        "value": "and",
-                        "valid": [
-                           { "key": $scope.pAutoLanguage( "满足所有条件" ), "value": "and" },
-                           { "key": $scope.pAutoLanguage( "满足任意条件" ), "value": "or" }
-                        ]
-                     },
-                     {
-                        "name": "condition",
-                        "webName": $scope.pAutoLanguage( "匹配条件" ),
-                        "type": "list",
-                        "valid": {
-                           "min": 0
-                        },
-                        "child": [
-                           [
-                              {
-                                 "name": "field",
-                                 "type": "select",
-                                 "value": '',
-                                 "default": fieldsSelect[0]['key'],
-                                 "valid": fieldsSelect
-                              },
-                              {
-                                 "name": "logic",
-                                 "type": "select",
-                                 "value": ">",
-                                 "default": ">",
-                                 "valid": [
-                                    { 'key': '=', 'value': '=' },
-                                    { 'key': '>', 'value': '>' },
-                                    { 'key': '>=', 'value': '>=' },
-                                    { 'key': '<', 'value': '<' },
-                                    { 'key': '<=', 'value': '<=' },
-                                    { 'key': '<>', 'value': '<>' },
-                                    { 'key': 'LIKE', 'value': 'LIKE' },
-                                    { 'key': 'NOT LIKE', 'value': 'NOT LIKE' },
-                                    { 'key': 'IN(...)', 'value': 'IN' },
-                                    { 'key': 'NOT IN(...)', 'value': 'NOT IN' },
-                                    { 'key': 'BETWEEN', 'value': 'BETWEEN' },
-                                    { 'key': 'NOT BETWEEN', 'value': 'NOT BETWEEN' },
-                                    { 'key': 'IS NULL', 'value': 'IS NULL' },
-                                    { 'key': 'IS NOT NULL', 'value': 'IS NOT NULL' }
-                                 ]
-                              },
-                              {
-                                 "name": "value",
-                                 "webName": $scope.pAutoLanguage( "值" ),
-                                 "placeholder": $scope.pAutoLanguage( "值" ),
-                                 "type": "string",
-                                 "value": "",
-                                 "valid": {
-                                    "min": 1
-                                 }
-                              }
-                           ]
-                        ]
-                     }
-                  ]
-               },
-               {
-                  "name": "sort",
-                  "webName": $scope.autoLanguage( "排序字段" ),
-                  "type": "list",
-                  "valid": {
-                     "min": 0,
-                     "max": 100
-                  },
-                  "child": [
-                     [
+         if( fieldList.length == 0 )
+         {
+            _IndexPublic.createInfoModel( $scope, $scope.pAutoLanguage( "当前数据表没有字段，无法进行该操作，是否前往表结构页面？" ), $scope.pAutoLanguage( '确定' ), function(){
+               $location.path( '/Data/OLTP-Operate/Structure' ).search( { 'r': new Date().getTime() } ) ;
+            } ) ;
+         }
+         else
+         {
+            var fieldsSelect = [] ;
+            $.each( fieldList, function( index, fieldInfo ){
+               fieldsSelect.push( { 'key': fieldInfo['column_name'], 'value': fieldInfo['column_name'] } ) ;
+            } ) ;
+            $scope.QueryWindow['config'] = {
+               'inputList': [
+                  {
+                     "name": "filter",
+                     "webName": $scope.pAutoLanguage( '查询条件' ),
+                     "type": "group",
+                     "child": [
                         {
-                           "name": "field",
+                           "name": "model",
+                           "webName": $scope.pAutoLanguage( "匹配模式" ),
                            "type": "select",
-                           "value": '',
-                           "default": fieldsSelect[0]['key'],
-                           "valid": fieldsSelect
-                        },
-                        {
-                           "name": "order",
-                           "type": "select",
-                           "value": "ASC",
+                           "value": "and",
                            "valid": [
-                              { "key": $scope.autoLanguage( "升序" ), "value": "ASC" },
-                              { "key": $scope.autoLanguage( "降序" ), "value": "DESC" }
+                              { "key": $scope.pAutoLanguage( "满足所有条件" ), "value": "and" },
+                              { "key": $scope.pAutoLanguage( "满足任意条件" ), "value": "or" }
+                           ]
+                        },
+                        {
+                           "name": "condition",
+                           "webName": $scope.pAutoLanguage( "匹配条件" ),
+                           "type": "list",
+                           "valid": {
+                              "min": 0
+                           },
+                           "child": [
+                              [
+                                 {
+                                    "name": "field",
+                                    "type": "select",
+                                    "value": '',
+                                    "default": '',
+                                    "valid": fieldsSelect
+                                 },
+                                 {
+                                    "name": "logic",
+                                    "type": "select",
+                                    "value": ">",
+                                    "default": ">",
+                                    "valid": [
+                                       { 'key': '=', 'value': '=' },
+                                       { 'key': '>', 'value': '>' },
+                                       { 'key': '>=', 'value': '>=' },
+                                       { 'key': '<', 'value': '<' },
+                                       { 'key': '<=', 'value': '<=' },
+                                       { 'key': '<>', 'value': '<>' },
+                                       { 'key': 'LIKE', 'value': 'LIKE' },
+                                       { 'key': 'NOT LIKE', 'value': 'NOT LIKE' },
+                                       { 'key': 'IN(...)', 'value': 'IN' },
+                                       { 'key': 'NOT IN(...)', 'value': 'NOT IN' },
+                                       { 'key': 'BETWEEN', 'value': 'BETWEEN' },
+                                       { 'key': 'NOT BETWEEN', 'value': 'NOT BETWEEN' },
+                                       { 'key': 'IS NULL', 'value': 'IS NULL' },
+                                       { 'key': 'IS NOT NULL', 'value': 'IS NOT NULL' }
+                                    ]
+                                 },
+                                 {
+                                    "name": "value",
+                                    "webName": $scope.pAutoLanguage( "值" ),
+                                    "placeholder": $scope.pAutoLanguage( "值" ),
+                                    "type": "string",
+                                    "value": "",
+                                    "valid": {
+                                       "min": 1
+                                    }
+                                 }
+                              ]
                            ]
                         }
                      ]
-                  ]
-               },
-               {
-                  "name": "returnnum",
-                  "webName": $scope.pAutoLanguage( "返回记录数" ),
-                  "required": true,
-                  "type": "int",
-                  "valid": {
-                     "min": 1,
-                     "max": 100
                   },
-                  "value": 30
-               },
-               {
-                  "name": "skip",
-                  "webName": $scope.pAutoLanguage( "跳过记录数" ),
-                  "required": true,
-                  "type": "int",
-                  "valid": {
-                     "min": 0,
-                     "max": 9007199254740991
-                  },
-                  "value": 0
-               },
-               {
-                  "name": "execType",
-                  "webName": $scope.pAutoLanguage( "执行模式" ),
-                  "type": "select",
-                  "value": 0,
-                  "valid": [
-                     { 'key': $scope.pAutoLanguage( "马上执行" ), 'value': 0 },
-                     { 'key': $scope.pAutoLanguage( "仅生成SQL" ), 'value': 1 }
-                  ]
-               }
-            ]
-         } ;
-         
-         $scope.QueryWindow['callback']['SetOkButton']( $scope.pAutoLanguage( '确定' ), function(){
-            var isClear = $scope.QueryWindow['config'].check() ;
-            if( isClear )
-            {
-               var formValue = $scope.QueryWindow['config'].getValue() ;
-               var isFirst = true ;
-               var sql = sprintf( 'SELECT * FROM ?', addQuotes( SdbSwap.tbName ) ) ;
-               $.each( formValue['filter']['condition'], function( index, info ){
-                  if( info['field'].length > 0 && ( info['value'].length > 0 || info['logic'] == 'IS NULL' || info['logic'] == 'IS NOT NULL' ) )
                   {
-                     var field   = addQuotes( info['field'] ) ;
-                     var operate = info['logic'] ;
-                     var param   = info['value'] ;
-                     if( isFirst == true )
+                     "name": "sort",
+                     "webName": $scope.autoLanguage( "排序字段" ),
+                     "type": "list",
+                     "valid": {
+                        "min": 0,
+                        "max": 100
+                     },
+                     "child": [
+                        [
+                           {
+                              "name": "field",
+                              "type": "select",
+                              "value": '',
+                              "default": fieldsSelect[0]['key'],
+                              "valid": fieldsSelect
+                           },
+                           {
+                              "name": "order",
+                              "type": "select",
+                              "value": "ASC",
+                              "valid": [
+                                 { "key": $scope.autoLanguage( "升序" ), "value": "ASC" },
+                                 { "key": $scope.autoLanguage( "降序" ), "value": "DESC" }
+                              ]
+                           }
+                        ]
+                     ]
+                  },
+                  {
+                     "name": "returnnum",
+                     "webName": $scope.pAutoLanguage( "返回记录数" ),
+                     "required": true,
+                     "type": "int",
+                     "valid": {
+                        "min": 1,
+                        "max": 100
+                     },
+                     "value": 30
+                  },
+                  {
+                     "name": "skip",
+                     "webName": $scope.pAutoLanguage( "跳过记录数" ),
+                     "required": true,
+                     "type": "int",
+                     "valid": {
+                        "min": 0,
+                        "max": 9007199254740991
+                     },
+                     "value": 0
+                  },
+                  {
+                     "name": "execType",
+                     "webName": $scope.pAutoLanguage( "执行模式" ),
+                     "type": "select",
+                     "value": 0,
+                     "valid": [
+                        { 'key': $scope.pAutoLanguage( "马上执行" ), 'value': 0 },
+                        { 'key': $scope.pAutoLanguage( "仅生成SQL" ), 'value': 1 }
+                     ]
+                  }
+               ]
+            } ;
+         
+            $scope.QueryWindow['callback']['SetOkButton']( $scope.pAutoLanguage( '确定' ), function(){
+               var isClear = $scope.QueryWindow['config'].check() ;
+               if( isClear )
+               {
+                  var formValue = $scope.QueryWindow['config'].getValue() ;
+                  var isFirst = true ;
+                  var sql = sprintf( 'SELECT * FROM ?', addQuotes( SdbSwap.tbName ) ) ;
+                  $.each( formValue['filter']['condition'], function( index, info ){
+                     if( info['field'].length > 0 && ( info['value'].length > 0 || info['logic'] == 'IS NULL' || info['logic'] == 'IS NOT NULL' ) )
                      {
-                        sql += ' WHERE ' ;
-                        isFirst = false ;
-                     }
-                     else
-                     {
-                        sql += ' AND ' ;
-                     }
-                     switch( operate )
-                     {
-                     case '=':
-                     case '>':
-                     case '>=':
-                     case '<':
-                     case '<=':
-                     case '<>':
-                     case 'LIKE':
-                     case 'NOT LIKE':
-                        sql += field + ' ' + operate + ' ' + sqlEscape( param ) ;
-                        break ;
-                     case 'BETWEEN':
-                     case 'NOT BETWEEN':
-                        var paramArr = param.split( ',', 2 ) ;
-                        sql += field + ' ' + operate + ' ' + sqlEscape( paramArr[0] ) ;
-                        if( paramArr.length > 1 )
+                        var field   = addQuotes( info['field'] ) ;
+                        var operate = info['logic'] ;
+                        var param   = info['value'] ;
+                        if( isFirst == true )
                         {
-                           sql += ' AND ' + sqlEscape( paramArr[1] ) ;
-                        }
-                        break ;
-                     case 'IS NULL':
-                     case 'IS NOT NULL':
-                        sql += field + ' ' + operate ;
-                        break ;
-                     case 'IN':
-                     case 'NOT IN':
-                        var tmp = trim( param ) ;
-                        if( tmp.charAt(0) == '(' && tmp.charAt(tmp.length - 1) == ')' )
-                        {
-                           sql += field + ' ' + operate + ' ' + tmp ;
+                           sql += ' WHERE ' ;
+                           isFirst = false ;
                         }
                         else
                         {
-                           var paramArr = param.split( ',' ) ;
-                           if( paramArr.length > 0 )
-                           {
-                              sql += field + ' ' + operate + ' (' ;
-                              $.each( paramArr, function( index, subPara ){
-                                 if( index > 0 )
-                                 {
-                                    sql += ',' ;
-                                 }
-                                 sql += sqlEscape( subPara ) ;
-                              } ) ;
-                              sql += ')' ;
-                           }
+                           sql += ' AND ' ;
                         }
-                        break ;
+                        switch( operate )
+                        {
+                        case '=':
+                        case '>':
+                        case '>=':
+                        case '<':
+                        case '<=':
+                        case '<>':
+                        case 'LIKE':
+                        case 'NOT LIKE':
+                           sql += field + ' ' + operate + ' ' + sqlEscape( param ) ;
+                           break ;
+                        case 'BETWEEN':
+                        case 'NOT BETWEEN':
+                           var paramArr = param.split( ',', 2 ) ;
+                           sql += field + ' ' + operate + ' ' + sqlEscape( paramArr[0] ) ;
+                           if( paramArr.length > 1 )
+                           {
+                              sql += ' AND ' + sqlEscape( paramArr[1] ) ;
+                           }
+                           break ;
+                        case 'IS NULL':
+                        case 'IS NOT NULL':
+                           sql += field + ' ' + operate ;
+                           break ;
+                        case 'IN':
+                        case 'NOT IN':
+                           var tmp = trim( param ) ;
+                           if( tmp.charAt(0) == '(' && tmp.charAt(tmp.length - 1) == ')' )
+                           {
+                              sql += field + ' ' + operate + ' ' + tmp ;
+                           }
+                           else
+                           {
+                              var paramArr = param.split( ',' ) ;
+                              if( paramArr.length > 0 )
+                              {
+                                 sql += field + ' ' + operate + ' (' ;
+                                 $.each( paramArr, function( index, subPara ){
+                                    if( index > 0 )
+                                    {
+                                       sql += ',' ;
+                                    }
+                                    sql += sqlEscape( subPara ) ;
+                                 } ) ;
+                                 sql += ')' ;
+                              }
+                           }
+                           break ;
+                        }
                      }
-                  }
-               } ) ;
-               isFirst = true ;
-               $.each( formValue['sort'], function( index, info ){
-                  if( info['field'].length > 0 )
-                  {
-                     if( isFirst == true )
+                  } ) ;
+                  isFirst = true ;
+                  $.each( formValue['sort'], function( index, info ){
+                     if( info['field'].length > 0 )
                      {
-                        sql += ' ORDER BY ' ;
-                        isFirst = false ;
+                        if( isFirst == true )
+                        {
+                           sql += ' ORDER BY ' ;
+                           isFirst = false ;
+                        }
+                        else
+                        {
+                           sql += ', ' ;
+                        }
+                        sql += sprintf( '? ?', addQuotes( info['field'] ), info['order'] ) ;
                      }
-                     else
-                     {
-                        sql += ', ' ;
-                     }
-                     sql += sprintf( '? ?', addQuotes( info['field'] ), info['order'] ) ;
-                  }
-               } ) ;
-               sql += sprintf( ' LIMIT ? OFFSET ?', formValue['returnnum'], formValue['skip'] ) ;
+                  } ) ;
+                  sql += sprintf( ' LIMIT ? OFFSET ?', formValue['returnnum'], formValue['skip'] ) ;
 
-               //执行
-               if( formValue['execType'] == 0 )
-               {
-                  SdbSignal.commit( 'exec_sql', { 'sql': sql, 'isUser': true, 'isUpdateSql': true, 'gotoFirst': true } ) ;
+                  //执行
+                  if( formValue['execType'] == 0 )
+                  {
+                     SdbSignal.commit( 'exec_sql', { 'sql': sql, 'isUser': true, 'isUpdateSql': true, 'gotoFirst': true } ) ;
+                  }
+                  else
+                  {
+                     SdbSignal.commit( 'updateSqlCommand', sql ) ;
+                  }
+                  $scope.QueryWindow['callback']['Close']() ;
                }
-               else
-               {
-                  SdbSignal.commit( 'updateSqlCommand', sql ) ;
-               }
-               $scope.QueryWindow['callback']['Close']() ;
-            }
-         } ) ;
-         $scope.QueryWindow['callback']['SetIcon']( '' ) ;
-         $scope.QueryWindow['callback']['SetTitle']( $scope.pAutoLanguage( '查询' ) ) ;
-         $scope.QueryWindow['callback']['Open']() ;
+            } ) ;
+            $scope.QueryWindow['callback']['SetIcon']( '' ) ;
+            $scope.QueryWindow['callback']['SetTitle']( $scope.pAutoLanguage( '查询' ) ) ;
+            $scope.QueryWindow['callback']['Open']() ;
+         }
       }
 
       //更新弹窗
@@ -521,237 +548,245 @@
 
       //打开 更新弹窗
       $scope.ShowUpdateWindow = function(){
-         $scope.UpdateWindow['config'] = {
-            'inputList': [
-               {
-                  "name": "filter",
-                  "webName": $scope.pAutoLanguage( '查询条件' ),
-                  "type": "group",
-                  "child": [
-                     {
-                        "name": "model",
-                        "webName": $scope.pAutoLanguage( "匹配模式" ),
-                        "type": "select",
-                        "value": "and",
-                        "valid": [
-                           { "key": $scope.pAutoLanguage( "满足所有条件" ), "value": "and" },
-                           { "key": $scope.pAutoLanguage( "满足任意条件" ), "value": "or" }
-                        ]
-                     },
-                     {
-                        "name": "condition",
-                        "webName": $scope.pAutoLanguage( "匹配条件" ),
-                        "type": "list",
-                        "valid": {
-                           "min": 0
-                        },
-                        "child": [
-                           [
-                              {
-                                 "name": "field",
-                                 "webName": $scope.pAutoLanguage( "字段名" ),
-                                 "placeholder": $scope.pAutoLanguage( "字段名" ),
-                                 "type": "string",
-                                 "value": "",
-                                 "valid": {
-                                    "min": 1,
-                                    "regex": "^[^/$].*",
-                                    "ban": "."
-                                 }
-                              },
-                              {
-                                 "name": "logic",
-                                 "type": "select",
-                                 "value": ">",
-                                 "default": ">",
-                                 "valid": [
-                                    { 'key': '=', 'value': '=' },
-                                    { 'key': '>', 'value': '>' },
-                                    { 'key': '>=', 'value': '>=' },
-                                    { 'key': '<', 'value': '<' },
-                                    { 'key': '<=', 'value': '<=' },
-                                    { 'key': '<>', 'value': '<>' },
-                                    { 'key': 'LIKE', 'value': 'LIKE' },
-                                    { 'key': 'NOT LIKE', 'value': 'NOT LIKE' },
-                                    { 'key': 'IN(...)', 'value': 'IN' },
-                                    { 'key': 'NOT IN(...)', 'value': 'NOT IN' },
-                                    { 'key': 'BETWEEN', 'value': 'BETWEEN' },
-                                    { 'key': 'NOT BETWEEN', 'value': 'NOT BETWEEN' },
-                                    { 'key': 'IS NULL', 'value': 'IS NULL' },
-                                    { 'key': 'IS NOT NULL', 'value': 'IS NOT NULL' }
-                                 ]
-                              },
-                              {
-                                 "name": "value",
-                                 "webName": $scope.pAutoLanguage( "值" ),
-                                 "placeholder": $scope.pAutoLanguage( "值" ),
-                                 "type": "string",
-                                 "value": "",
-                                 "valid": {
-                                    "min": 1
-                                 }
-                              }
+         if( fieldList.length == 0 )
+         {
+            _IndexPublic.createInfoModel( $scope, $scope.pAutoLanguage( "当前数据表没有字段，无法进行该操作，是否前往表结构页面？" ), $scope.pAutoLanguage( '确定' ), function(){
+               $location.path( '/Data/OLTP-Operate/Structure' ).search( { 'r': new Date().getTime() } ) ;
+            } ) ;
+         }
+         else
+         {
+            var fieldsSelect = [] ;
+            $.each( fieldList, function( index, fieldInfo ){
+               fieldsSelect.push( { 'key': fieldInfo['column_name'], 'value': fieldInfo['column_name'] } ) ;
+            } ) ;
+            $scope.UpdateWindow['config'] = {
+               'inputList': [
+                  {
+                     "name": "filter",
+                     "webName": $scope.pAutoLanguage( '查询条件' ),
+                     "type": "group",
+                     "child": [
+                        {
+                           "name": "model",
+                           "webName": $scope.pAutoLanguage( "匹配模式" ),
+                           "type": "select",
+                           "value": "and",
+                           "valid": [
+                              { "key": $scope.pAutoLanguage( "满足所有条件" ), "value": "and" },
+                              { "key": $scope.pAutoLanguage( "满足任意条件" ), "value": "or" }
                            ]
-                        ]
-                     }
-                  ]
-               },
-               {
-                  "name": "updator",
-                  "webName": $scope.pAutoLanguage( "更新操作" ),
-                  "type": "list",
-                  "desc": "",
-                  "required": true,
-                  "valid": {
-                     "min": 1
-                  },
-                  "child": [
-                     [
+                        },
                         {
-                           "name": "field",
-                           "webName": $scope.pAutoLanguage( "字段名" ),
-                           "placeholder": $scope.pAutoLanguage( "字段名" ),
-                           "type": "string",
-                           "value": "",
+                           "name": "condition",
+                           "webName": $scope.pAutoLanguage( "匹配条件" ),
+                           "type": "list",
                            "valid": {
-                              "min": 1,
-                              "regex": "^[^/$].*",
-                              "ban": "."
-                           }
-                        },
-                        {
-                           "name": "value",
-                           "webName": $scope.pAutoLanguage( "值" ),
-                           "placeholder": $scope.pAutoLanguage( "值" ),
-                           "type": "string",
-                           "value": "",
-                           "valid": {}
-                        },
-                        {
-                           "name": "null",
-                           "webName": $scope.pAutoLanguage( "空" ),
-                           "type": "checkbox",
-                           "value": false
+                              "min": 0
+                           },
+                           "child": [
+                              [
+                                 {
+                                    "name": "field",
+                                    "type": "select",
+                                    "value": '',
+                                    "default": fieldsSelect[0]['key'],
+                                    "valid": fieldsSelect
+                                 },
+                                 {
+                                    "name": "logic",
+                                    "type": "select",
+                                    "value": ">",
+                                    "default": ">",
+                                    "valid": [
+                                       { 'key': '=', 'value': '=' },
+                                       { 'key': '>', 'value': '>' },
+                                       { 'key': '>=', 'value': '>=' },
+                                       { 'key': '<', 'value': '<' },
+                                       { 'key': '<=', 'value': '<=' },
+                                       { 'key': '<>', 'value': '<>' },
+                                       { 'key': 'LIKE', 'value': 'LIKE' },
+                                       { 'key': 'NOT LIKE', 'value': 'NOT LIKE' },
+                                       { 'key': 'IN(...)', 'value': 'IN' },
+                                       { 'key': 'NOT IN(...)', 'value': 'NOT IN' },
+                                       { 'key': 'BETWEEN', 'value': 'BETWEEN' },
+                                       { 'key': 'NOT BETWEEN', 'value': 'NOT BETWEEN' },
+                                       { 'key': 'IS NULL', 'value': 'IS NULL' },
+                                       { 'key': 'IS NOT NULL', 'value': 'IS NOT NULL' }
+                                    ]
+                                 },
+                                 {
+                                    "name": "value",
+                                    "webName": $scope.pAutoLanguage( "值" ),
+                                    "placeholder": $scope.pAutoLanguage( "值" ),
+                                    "type": "string",
+                                    "value": "",
+                                    "valid": {
+                                       "min": 1
+                                    }
+                                 }
+                              ]
+                           ]
                         }
                      ]
-                  ]
-               },
+                  },
+                  {
+                     "name": "updator",
+                     "webName": $scope.pAutoLanguage( "更新操作" ),
+                     "type": "list",
+                     "desc": "",
+                     "required": true,
+                     "valid": {
+                        "min": 1
+                     },
+                     "child": [
+                        [
+                           {
+                              "name": "field",
+                              "webName": $scope.pAutoLanguage( "字段名" ),
+                              "placeholder": $scope.pAutoLanguage( "字段名" ),
+                              "type": "string",
+                              "value": "",
+                              "valid": {
+                                 "min": 1,
+                                 "regex": "^[^/$].*",
+                                 "ban": "."
+                              }
+                           },
+                           {
+                              "name": "value",
+                              "webName": $scope.pAutoLanguage( "值" ),
+                              "placeholder": $scope.pAutoLanguage( "值" ),
+                              "type": "string",
+                              "value": "",
+                              "valid": {}
+                           },
+                           {
+                              "name": "null",
+                              "webName": $scope.pAutoLanguage( "空" ),
+                              "type": "checkbox",
+                              "value": false
+                           }
+                        ]
+                     ]
+                  },
+                  {
+                     "name": "execType",
+                     "webName": $scope.pAutoLanguage( "执行模式" ),
+                     "type": "select",
+                     "value": 0,
+                     "valid": [
+                        { 'key': $scope.pAutoLanguage( "马上执行" ), 'value': 0 },
+                        { 'key': $scope.pAutoLanguage( "仅生成SQL" ), 'value': 1 }
+                     ]
+                  }
+               ]
+            } ;
+            $scope.UpdateWindow['callback']['SetOkButton']( $scope.pAutoLanguage( '确定' ), function(){
+               var isClear = $scope.UpdateWindow['config'].check() ;
+               if( isClear )
                {
-                  "name": "execType",
-                  "webName": $scope.pAutoLanguage( "执行模式" ),
-                  "type": "select",
-                  "value": 0,
-                  "valid": [
-                     { 'key': $scope.pAutoLanguage( "马上执行" ), 'value': 0 },
-                     { 'key': $scope.pAutoLanguage( "仅生成SQL" ), 'value': 1 }
-                  ]
-               }
-            ]
-         } ;
-         $scope.UpdateWindow['callback']['SetOkButton']( $scope.pAutoLanguage( '确定' ), function(){
-            var isClear = $scope.UpdateWindow['config'].check() ;
-            if( isClear )
-            {
-               var formValue = $scope.UpdateWindow['config'].getValue() ;
-               var sql = sprintf( 'UPDATE ? SET ', addQuotes( SdbSwap.tbName ) ) ;
-               $.each( formValue['updator'], function( index, fieldInfo ){
-                  if( fieldInfo['null'] == true )
-                  {
-                     sql += addQuotes( fieldInfo['field'] ) + ' = NULL ' ;
-                  }
-                  else
-                  {
-                     sql += addQuotes( fieldInfo['field'] ) + ' = ' + sqlEscape( fieldInfo['value'] ) ;
-                  }
-                  if( index + 1 < formValue['updator'].length )
-                  {
-                     sql += ', ' ;
-                  }
-               } ) ;
-               var isFirst = true ;
-               $.each( formValue['filter']['condition'], function( index, filterInfo ){
-                  var field = addQuotes( filterInfo['field'] ) ;
-                  if( filterInfo['field'].length > 0 && ( filterInfo['value'].length > 0 || filterInfo['logic'] == 'IS NULL' || filterInfo['logic'] == 'IS NOT NULL' ) )
-                  {
-                     if( isFirst )
+                  var formValue = $scope.UpdateWindow['config'].getValue() ;
+                  var sql = sprintf( 'UPDATE ? SET ', addQuotes( SdbSwap.tbName ) ) ;
+                  $.each( formValue['updator'], function( index, fieldInfo ){
+                     if( fieldInfo['null'] == true )
                      {
-                        sql += ' WHERE ' ;
-                        isFirst = false ;
+                        sql += addQuotes( fieldInfo['field'] ) + ' = NULL ' ;
                      }
                      else
                      {
-                        sql += ' ' + formValue['filter']['model'] + ' ' ;
+                        sql += addQuotes( fieldInfo['field'] ) + ' = ' + sqlEscape( fieldInfo['value'] ) ;
                      }
-
-                     switch( filterInfo['logic'] )
+                     if( index + 1 < formValue['updator'].length )
                      {
-                     case '=':
-                     case '>':
-                     case '>=':
-                     case '<':
-                     case '<=':
-                     case '<>':
-                     case 'LIKE':
-                     case 'NOT LIKE':
-                        sql += field + ' ' + filterInfo['logic'] + ' ' + sqlEscape( filterInfo['value'] ) ;
-                        break ;
-                     case 'BETWEEN':
-                     case 'NOT BETWEEN':
-                        var paramArr = filterInfo['value'].split( ',', 2 ) ;
-                        sql += field + ' ' + filterInfo['logic'] + ' ' + sqlEscape( paramArr[0] ) ;
-                        if( paramArr.length > 1 )
+                        sql += ', ' ;
+                     }
+                  } ) ;
+                  var isFirst = true ;
+                  $.each( formValue['filter']['condition'], function( index, filterInfo ){
+                     var field = addQuotes( filterInfo['field'] ) ;
+                     if( filterInfo['field'].length > 0 && ( filterInfo['value'].length > 0 || filterInfo['logic'] == 'IS NULL' || filterInfo['logic'] == 'IS NOT NULL' ) )
+                     {
+                        if( isFirst )
                         {
-                           sql += ' AND ' + sqlEscape( paramArr[1] ) ;
-                        }
-                        break ;
-                     case 'IS NULL':
-                     case 'IS NOT NULL':
-                        sql += field + ' ' + filterInfo['logic'] ;
-                        break ;
-                     case 'IN':
-                     case 'NOT IN':
-                        alert(filterInfo['logic'])
-                        var tmp = trim( filterInfo['value'] ) ;
-                        if( tmp.charAt(0) == '(' && tmp.charAt(tmp.length - 1) == ')' )
-                        {
-                           sql += field + ' ' + filterInfo['logic'] + ' ' + tmp ;
+                           sql += ' WHERE ' ;
+                           isFirst = false ;
                         }
                         else
                         {
-                           var paramArr = filterInfo['value'].split( ',' ) ;
+                           sql += ' ' + formValue['filter']['model'] + ' ' ;
+                        }
+
+                        switch( filterInfo['logic'] )
+                        {
+                        case '=':
+                        case '>':
+                        case '>=':
+                        case '<':
+                        case '<=':
+                        case '<>':
+                        case 'LIKE':
+                        case 'NOT LIKE':
+                           sql += field + ' ' + filterInfo['logic'] + ' ' + sqlEscape( filterInfo['value'] ) ;
+                           break ;
+                        case 'BETWEEN':
+                        case 'NOT BETWEEN':
+                           var paramArr = filterInfo['value'].split( ',', 2 ) ;
+                           sql += field + ' ' + filterInfo['logic'] + ' ' + sqlEscape( paramArr[0] ) ;
                            if( paramArr.length > 1 )
                            {
-                              sql += field + ' ' + filterInfo['logic'] + ' (' ;
-                              $.each( paramArr, function( index, subPara ){
-                                 if( index > 0 )
-                                 {
-                                    sql += ',' ;
-                                 }
-                                 sql += sqlEscape( subPara ) ;
-                              } ) ;
-                              sql += ')' ;
+                              sql += ' AND ' + sqlEscape( paramArr[1] ) ;
                            }
+                           break ;
+                        case 'IS NULL':
+                        case 'IS NOT NULL':
+                           sql += field + ' ' + filterInfo['logic'] ;
+                           break ;
+                        case 'IN':
+                        case 'NOT IN':
+                           alert(filterInfo['logic'])
+                           var tmp = trim( filterInfo['value'] ) ;
+                           if( tmp.charAt(0) == '(' && tmp.charAt(tmp.length - 1) == ')' )
+                           {
+                              sql += field + ' ' + filterInfo['logic'] + ' ' + tmp ;
+                           }
+                           else
+                           {
+                              var paramArr = filterInfo['value'].split( ',' ) ;
+                              if( paramArr.length > 1 )
+                              {
+                                 sql += field + ' ' + filterInfo['logic'] + ' (' ;
+                                 $.each( paramArr, function( index, subPara ){
+                                    if( index > 0 )
+                                    {
+                                       sql += ',' ;
+                                    }
+                                    sql += sqlEscape( subPara ) ;
+                                 } ) ;
+                                 sql += ')' ;
+                              }
+                           }
+                           break ;
                         }
-                        break ;
                      }
-                  }
-               } ) ;
+                  } ) ;
 
-               //执行
-               if( formValue['execType'] == 0 )
-               {
-                  SdbSignal.commit( 'execOperate', { 'sql': sql, 'type': '更新记录' } ) ;
+                  //执行
+                  if( formValue['execType'] == 0 )
+                  {
+                     SdbSignal.commit( 'execOperate', { 'sql': sql, 'type': '更新记录' } ) ;
+                  }
+                  else
+                  {
+                     SdbSignal.commit( 'updateSqlCommand', sql ) ;
+                  }
+                  $scope.UpdateWindow['callback']['Close']() ;
                }
-               else
-               {
-                  SdbSignal.commit( 'updateSqlCommand', sql ) ;
-               }
-               $scope.UpdateWindow['callback']['Close']() ;
-            }
-         } ) ;
-         $scope.UpdateWindow['callback']['SetIcon']( '' ) ;
-         $scope.UpdateWindow['callback']['SetTitle']( $scope.pAutoLanguage( '更新' ) ) ;
-         $scope.UpdateWindow['callback']['Open']() ;
+            } ) ;
+            $scope.UpdateWindow['callback']['SetIcon']( '' ) ;
+            $scope.UpdateWindow['callback']['SetTitle']( $scope.pAutoLanguage( '更新' ) ) ;
+            $scope.UpdateWindow['callback']['Open']() ;
+         }
       }
       
       //插入弹窗
@@ -762,34 +797,40 @@
 
       //打开 插入弹窗
       $scope.ShowInsertWindow = function(){
-         $scope.InsertWindow['config']['inputList'] = [] ;
-         $scope.InsertWindow['config'] = {
-            type: 'table',
-            gridTitle: [
-               { 'text': 'Column' },
-               { 'text': 'Type' },
-               { 'text': 'NULL' },
-               { 'text': 'Value' }
-            ],
-            grid: { 'tdModel': 'auto', 'gridModel': 'fixed', titleWidth: [ 30, 20, '100px', 50 ] },
-            inputList: $.extend( true, {}, insertGridData )
-         } ;
-         $scope.InsertWindow['callback']['SetOkButton']( $scope.pAutoLanguage( '确定'), function(){
-            $scope.ErrorTip = '' ;
-            var value = $scope.InsertWindow['config'].getValue() ;
-            var fields = '' ;
-            var params = '' ;
-            var isFirst = true ;
-            var sql = sprintf( 'INSERT INTO ? ', addQuotes( SdbSwap.tbName ) ) ;
-            var length = value.length ;
-            for( var i = 0; i < length; ++i )
-            {
-               var field   = addQuotes( value[i][0] ) ;
-               var operate = value[i][2] ;
-               var param   = value[i][3] ;
-
-               if( typeof( param ) == 'string' && param.length > 0 || operate == true )
+         if( fieldList.length == 0 )
+         {
+            _IndexPublic.createInfoModel( $scope, $scope.pAutoLanguage( "当前数据表没有字段，无法进行该操作，是否前往表结构页面？" ), $scope.pAutoLanguage( '确定' ), function(){
+               $location.path( '/Data/OLTP-Operate/Structure' ).search( { 'r': new Date().getTime() } ) ;
+            } ) ;
+         }
+         else
+         {
+            $scope.InsertWindow['config']['inputList'] = [] ;
+            $scope.InsertWindow['config'] = {
+               type: 'table',
+               gridTitle: [
+                  { 'text': 'Column' },
+                  { 'text': 'Type' },
+                  { 'text': 'NULL' },
+                  { 'text': 'Value' }
+               ],
+               grid: { 'tdModel': 'auto', 'gridModel': 'fixed', titleWidth: [ 30, 20, '100px', 50 ] },
+               inputList: $.extend( true, {}, insertGridData )
+            } ;
+            $scope.InsertWindow['callback']['SetOkButton']( $scope.pAutoLanguage( '确定'), function(){
+               $scope.ErrorTip = '' ;
+               var value = $scope.InsertWindow['config'].getValue() ;
+               var fields = '' ;
+               var params = '' ;
+               var isFirst = true ;
+               var sql = sprintf( 'INSERT INTO ? ', addQuotes( SdbSwap.tbName ) ) ;
+               var length = value.length ;
+               for( var i = 0; i < length; ++i )
                {
+                  var field   = addQuotes( value[i][0] ) ;
+                  var operate = value[i][2] ;
+                  var param   = value[i][3] ;
+                  
                   if( isFirst )
                   {
                      isFirst = false ;
@@ -802,30 +843,31 @@
                   fields += field ;
                   if( operate == false )
                   {
-                     params += sqlEscape( param ) ;
+                     if( typeof( param ) == 'undefined' )
+                     {
+                        params += '\'\'' ;
+                     }
+                     else
+                     {
+                        params += sqlEscape( param ) ;
+                     }
                   }
                   else
                   {
                      params += 'NULL' ;
                   }
                }
-            }
-            //没有填写
-            if( params.length < 1 )
-            {
-               $scope.ErrorTip = '至少填写一个字段值。' ;
-               return ;
-            }
-            fields = '(' + fields + ')' ;
-            params = 'VALUES (' + params + ')' ;
-            sql += fields + ' ' + params ;
-            SdbSignal.commit( 'execOperate', { 'sql': sql, 'type': '插入记录' } ) ;
-            $scope.InsertWindow['callback']['Close']() ;
+               fields = '(' + fields + ')' ;
+               params = 'VALUES (' + params + ')' ;
+               sql += fields + ' ' + params ;
+               SdbSignal.commit( 'execOperate', { 'sql': sql, 'type': '插入记录' } ) ;
+               $scope.InsertWindow['callback']['Close']() ;
 
-         } ) ;
-         $scope.InsertWindow['callback']['SetIcon']( '' ) ;
-         $scope.InsertWindow['callback']['SetTitle']( $scope.pAutoLanguage( '插入' ) ) ;
-         $scope.InsertWindow['callback']['Open']() ;;
+            } ) ;
+            $scope.InsertWindow['callback']['SetIcon']( '' ) ;
+            $scope.InsertWindow['callback']['SetTitle']( $scope.pAutoLanguage( '插入' ) ) ;
+            $scope.InsertWindow['callback']['Open']() ;
+         }
       }
 
       //删除弹窗
@@ -836,213 +878,221 @@
 
       //打开 删除弹窗
       $scope.ShowDeleteWindow = function(){
-         $scope.DeleteWindow['config'] = {
-            'inputList':[
-               {
-                  "name": "filter",
-                  "webName": $scope.pAutoLanguage( '删除条件' ),
-                  "type": "group",
-                  "child": [
-                     {
-                        "name": "model",
-                        "webName": $scope.pAutoLanguage( "匹配模式" ),
-                        "type": "select",
-                        "value": "and",
-                        "valid": [
-                           { "key": $scope.pAutoLanguage( "满足所有条件" ), "value": "and" },
-                           { "key": $scope.pAutoLanguage( "满足任意条件" ), "value": "or" }
-                        ]
-                     },
-                     {
-                        "name": "condition",
-                        "webName": $scope.pAutoLanguage( "匹配条件" ),
-                        "type": "list",
-                        "valid": {
-                           "min": 0
-                        },
-                        "child": [
-                           [
-                              {
-                                 "name": "field",
-                                 "webName": $scope.pAutoLanguage( "字段名" ),
-                                 "placeholder": $scope.pAutoLanguage( "字段名" ),
-                                 "type": "string",
-                                 "value": "",
-                                 "valid": {
-                                    "min": 1,
-                                    "regex": "^[^/$].*",
-                                    "ban": "."
-                                 }
-                              },
-                              {
-                                 "name": "logic",
-                                 "type": "select",
-                                 "value": ">",
-                                 "default": ">",
-                                 "valid": [
-                                    { 'key': '=', 'value': '=' },
-                                    { 'key': '>', 'value': '>' },
-                                    { 'key': '>=', 'value': '>=' },
-                                    { 'key': '<', 'value': '<' },
-                                    { 'key': '<=', 'value': '<=' },
-                                    { 'key': '<>', 'value': '<>' },
-                                    { 'key': 'LIKE', 'value': 'LIKE' },
-                                    { 'key': 'NOT LIKE', 'value': 'NOT LIKE' },
-                                    { 'key': 'IN(...)', 'value': 'IN' },
-                                    { 'key': 'NOT IN(...)', 'value': 'NOT IN' },
-                                    { 'key': 'BETWEEN', 'value': 'BETWEEN' },
-                                    { 'key': 'NOT BETWEEN', 'value': 'NOT BETWEEN' },
-                                    { 'key': 'IS NULL', 'value': 'IS NULL' },
-                                    { 'key': 'IS NOT NULL', 'value': 'IS NOT NULL' }
-                                 ]
-                              },
-                              {
-                                 "name": "value",
-                                 "webName": $scope.pAutoLanguage( "值" ),
-                                 "placeholder": $scope.pAutoLanguage( "值" ),
-                                 "type": "string",
-                                 "value": "",
-                                 "valid": {
-                                    "min": 1
-                                 }
-                              }
-                           ]
-                        ]
-                     }
-                  ]
-               },
-               {
-                  "name": "execType",
-                  "webName": $scope.pAutoLanguage( "执行模式" ),
-                  "type": "select",
-                  "value": 0,
-                  "valid": [
-                     { 'key': $scope.pAutoLanguage( "马上执行" ), 'value': 0 },
-                     { 'key': $scope.pAutoLanguage( "仅生成SQL" ), 'value': 1 }
-                  ]
-               }
-            ]
-         } ;
-
-         $scope.DeleteWindow['callback']['SetOkButton']( $scope.pAutoLanguage( '确定' ), function(){
-            var isClear = $scope.DeleteWindow['config'].check() ;
-            if( isClear )
-            {
-               var formValue = $scope.DeleteWindow['config'].getValue() ;
-               var sql = sprintf( 'DELETE FROM ?' ,addQuotes( SdbSwap.tbName ) ) ;
-               var isFirst = true ;
-               var condition = '' ;
-               $.each( formValue['filter']['condition'], function( index, info ){
-                  if( info['field'].length > 0 && ( info['value'].length > 0 || info['logic'] == 'IS NULL' || info['logic'] == 'IS NOT NULL' ) )
+         if( fieldList.length == 0 )
+         {
+            _IndexPublic.createInfoModel( $scope, $scope.pAutoLanguage( "当前数据表没有字段，无法进行该操作，是否前往表结构页面？" ), $scope.pAutoLanguage( '确定' ), function(){
+               $location.path( '/Data/OLTP-Operate/Structure' ).search( { 'r': new Date().getTime() } ) ;
+            } ) ;
+         }
+         else
+         {
+            var fieldsSelect = [] ;
+            $.each( fieldList, function( index, fieldInfo ){
+               fieldsSelect.push( { 'key': fieldInfo['column_name'], 'value': fieldInfo['column_name'] } ) ;
+            } ) ;
+            $scope.DeleteWindow['config'] = {
+               'inputList':[
                   {
-                     var field   = addQuotes( info['field'] ) ;
-                     var operate = info['logic'] ;
-                     var param   = info['value'] ;
-                     if( isFirst == true )
-                     {
-                        condition += ' WHERE ' ;
-                        isFirst = false ;
-                     }
-                     else
-                     {
-                        condition += ' AND ' ;
-                     }
-                     switch( operate )
-                     {
-                     case '=':
-                     case '>':
-                     case '>=':
-                     case '<':
-                     case '<=':
-                     case '<>':
-                     case 'LIKE':
-                     case 'NOT LIKE':
-                        condition += field + ' ' + operate + ' ' + sqlEscape( param ) ;
-                        break ;
-                     case 'BETWEEN':
-                     case 'NOT BETWEEN':
-                        var paramArr = param.split( ',', 2 ) ;
-                        condition += field + ' ' + operate + ' ' + sqlEscape( paramArr[0] ) ;
-                        if( paramArr.length > 1 )
+                     "name": "filter",
+                     "webName": $scope.pAutoLanguage( '删除条件' ),
+                     "type": "group",
+                     "child": [
                         {
-                           condition += ' AND ' + sqlEscape( paramArr[1] ) ;
+                           "name": "model",
+                           "webName": $scope.pAutoLanguage( "匹配模式" ),
+                           "type": "select",
+                           "value": "and",
+                           "valid": [
+                              { "key": $scope.pAutoLanguage( "满足所有条件" ), "value": "and" },
+                              { "key": $scope.pAutoLanguage( "满足任意条件" ), "value": "or" }
+                           ]
+                        },
+                        {
+                           "name": "condition",
+                           "webName": $scope.pAutoLanguage( "匹配条件" ),
+                           "type": "list",
+                           "valid": {
+                              "min": 0
+                           },
+                           "child": [
+                              [
+                                 {
+                                    "name": "field",
+                                    "type": "select",
+                                    "value": '',
+                                    "default": fieldsSelect[0]['key'],
+                                    "valid": fieldsSelect
+                                 },
+                                 {
+                                    "name": "logic",
+                                    "type": "select",
+                                    "value": ">",
+                                    "default": ">",
+                                    "valid": [
+                                       { 'key': '=', 'value': '=' },
+                                       { 'key': '>', 'value': '>' },
+                                       { 'key': '>=', 'value': '>=' },
+                                       { 'key': '<', 'value': '<' },
+                                       { 'key': '<=', 'value': '<=' },
+                                       { 'key': '<>', 'value': '<>' },
+                                       { 'key': 'LIKE', 'value': 'LIKE' },
+                                       { 'key': 'NOT LIKE', 'value': 'NOT LIKE' },
+                                       { 'key': 'IN(...)', 'value': 'IN' },
+                                       { 'key': 'NOT IN(...)', 'value': 'NOT IN' },
+                                       { 'key': 'BETWEEN', 'value': 'BETWEEN' },
+                                       { 'key': 'NOT BETWEEN', 'value': 'NOT BETWEEN' },
+                                       { 'key': 'IS NULL', 'value': 'IS NULL' },
+                                       { 'key': 'IS NOT NULL', 'value': 'IS NOT NULL' }
+                                    ]
+                                 },
+                                 {
+                                    "name": "value",
+                                    "webName": $scope.pAutoLanguage( "值" ),
+                                    "placeholder": $scope.pAutoLanguage( "值" ),
+                                    "type": "string",
+                                    "value": "",
+                                    "valid": {
+                                       "min": 1
+                                    }
+                                 }
+                              ]
+                           ]
                         }
-                        break ;
-                     case 'IS NULL':
-                     case 'IS NOT NULL':
-                        condition += field + ' ' + operate ;
-                        break ;
-                     case 'IN':
-                     case 'NOT IN':
-                        var tmp = trim( param ) ;
-                        if( tmp.charAt(0) == '(' && tmp.charAt(tmp.length - 1) == ')' )
+                     ]
+                  },
+                  {
+                     "name": "execType",
+                     "webName": $scope.pAutoLanguage( "执行模式" ),
+                     "type": "select",
+                     "value": 0,
+                     "valid": [
+                        { 'key': $scope.pAutoLanguage( "马上执行" ), 'value': 0 },
+                        { 'key': $scope.pAutoLanguage( "仅生成SQL" ), 'value': 1 }
+                     ]
+                  }
+               ]
+            } ;
+
+            $scope.DeleteWindow['callback']['SetOkButton']( $scope.pAutoLanguage( '确定' ), function(){
+               var isClear = $scope.DeleteWindow['config'].check() ;
+               if( isClear )
+               {
+                  var formValue = $scope.DeleteWindow['config'].getValue() ;
+                  var sql = sprintf( 'DELETE FROM ?' ,addQuotes( SdbSwap.tbName ) ) ;
+                  var isFirst = true ;
+                  var condition = '' ;
+                  $.each( formValue['filter']['condition'], function( index, info ){
+                     if( info['field'].length > 0 && ( info['value'].length > 0 || info['logic'] == 'IS NULL' || info['logic'] == 'IS NOT NULL' ) )
+                     {
+                        var field   = addQuotes( info['field'] ) ;
+                        var operate = info['logic'] ;
+                        var param   = info['value'] ;
+                        if( isFirst == true )
                         {
-                           condition += field + ' ' + operate + ' ' + tmp ;
+                           condition += ' WHERE ' ;
+                           isFirst = false ;
                         }
                         else
                         {
-                           var paramArr = param.split( ',' ) ;
-                           if( paramArr.length > 0 )
-                           {
-                              condition += field + ' ' + operate + ' (' ;
-                              $.each( paramArr, function( index, subPara ){
-                                 if( index > 0 )
-                                 {
-                                    condition += ',' ;
-                                 }
-                                 condition += sqlEscape( subPara ) ;
-                              } ) ;
-                              condition += ')' ;
-                           }
+                           condition += ' AND ' ;
                         }
-                        break ;
+                        switch( operate )
+                        {
+                        case '=':
+                        case '>':
+                        case '>=':
+                        case '<':
+                        case '<=':
+                        case '<>':
+                        case 'LIKE':
+                        case 'NOT LIKE':
+                           condition += field + ' ' + operate + ' ' + sqlEscape( param ) ;
+                           break ;
+                        case 'BETWEEN':
+                        case 'NOT BETWEEN':
+                           var paramArr = param.split( ',', 2 ) ;
+                           condition += field + ' ' + operate + ' ' + sqlEscape( paramArr[0] ) ;
+                           if( paramArr.length > 1 )
+                           {
+                              condition += ' AND ' + sqlEscape( paramArr[1] ) ;
+                           }
+                           break ;
+                        case 'IS NULL':
+                        case 'IS NOT NULL':
+                           condition += field + ' ' + operate ;
+                           break ;
+                        case 'IN':
+                        case 'NOT IN':
+                           var tmp = trim( param ) ;
+                           if( tmp.charAt(0) == '(' && tmp.charAt(tmp.length - 1) == ')' )
+                           {
+                              condition += field + ' ' + operate + ' ' + tmp ;
+                           }
+                           else
+                           {
+                              var paramArr = param.split( ',' ) ;
+                              if( paramArr.length > 0 )
+                              {
+                                 condition += field + ' ' + operate + ' (' ;
+                                 $.each( paramArr, function( index, subPara ){
+                                    if( index > 0 )
+                                    {
+                                       condition += ',' ;
+                                    }
+                                    condition += sqlEscape( subPara ) ;
+                                 } ) ;
+                                 condition += ')' ;
+                              }
+                           }
+                           break ;
+                        }
                      }
-                  }
-               } ) ;
-               //$.each( formValue['filter']['condition'], function( index, filterInfo ){
-               //   if( isEmpty( filterInfo['field'] ) || isEmpty( filterInfo['value'] ) )
-               //   {
-               //      return ;
-               //   }
-               //   if( index == 0 )
-               //   {
-               //      condition += ' WHERE ' ;
-               //   }
-               //   condition += addQuotes( filterInfo['field'] ) + ' ' + filterInfo['logic'] + ' ' + sqlEscape( filterInfo['value'] ) ;
-               //   if( index + 1 < formValue['filter']['condition'].length )
-               //   {
-               //      condition += ' ' + formValue['filter']['model'] + ' ' ;
-               //   }
-               //} ) ;
+                  } ) ;
+                  //$.each( formValue['filter']['condition'], function( index, filterInfo ){
+                  //   if( isEmpty( filterInfo['field'] ) || isEmpty( filterInfo['value'] ) )
+                  //   {
+                  //      return ;
+                  //   }
+                  //   if( index == 0 )
+                  //   {
+                  //      condition += ' WHERE ' ;
+                  //   }
+                  //   condition += addQuotes( filterInfo['field'] ) + ' ' + filterInfo['logic'] + ' ' + sqlEscape( filterInfo['value'] ) ;
+                  //   if( index + 1 < formValue['filter']['condition'].length )
+                  //   {
+                  //      condition += ' ' + formValue['filter']['model'] + ' ' ;
+                  //   }
+                  //} ) ;
 
-               sql += condition ;
+                  sql += condition ;
 
-               //执行
-               if( formValue['execType'] == 0 )
-               {
-                  if( condition.length < 1 )
+                  //执行
+                  if( formValue['execType'] == 0 )
                   {
-                     _IndexPublic.createInfoModel( $scope, $scope.pAutoLanguage( "执行当前的操作会删除所有记录！要继续吗？" ), $scope.pAutoLanguage( '继续' ), function(){
+                     if( condition.length < 1 )
+                     {
+                        _IndexPublic.createInfoModel( $scope, $scope.pAutoLanguage( "执行当前的操作会删除所有记录！要继续吗？" ), $scope.pAutoLanguage( '继续' ), function(){
+                           SdbSignal.commit( 'execOperate', { 'sql': sql, 'type': '删除记录' } ) ;
+                           $scope.DeleteWindow['callback']['Close']() ;
+                        } ) ;
+                     }
+                     else
+                     {
                         SdbSignal.commit( 'execOperate', { 'sql': sql, 'type': '删除记录' } ) ;
                         $scope.DeleteWindow['callback']['Close']() ;
-                     } ) ;
+                     }
                   }
                   else
                   {
-                     SdbSignal.commit( 'execOperate', { 'sql': sql, 'type': '删除记录' } ) ;
+                     SdbSignal.commit( 'updateSqlCommand', sql ) ;
                      $scope.DeleteWindow['callback']['Close']() ;
                   }
                }
-               else
-               {
-                  SdbSignal.commit( 'updateSqlCommand', sql ) ;
-                  $scope.DeleteWindow['callback']['Close']() ;
-               }
-            }
-         } ) ;
-         $scope.DeleteWindow['callback']['SetIcon']( '' ) ;
-         $scope.DeleteWindow['callback']['SetTitle']( $scope.pAutoLanguage( '删除' ) ) ;
-         $scope.DeleteWindow['callback']['Open']() ;
+            } ) ;
+            $scope.DeleteWindow['callback']['SetIcon']( '' ) ;
+            $scope.DeleteWindow['callback']['SetTitle']( $scope.pAutoLanguage( '删除' ) ) ;
+            $scope.DeleteWindow['callback']['Open']() ;
+         }
       }
 
       //编辑单条记录弹窗
@@ -1052,139 +1102,160 @@
       } ;
 
       //打开 编辑单条记录弹窗
-      SdbSignal.on( 'showEditWindow', function( data ){
-         $scope.ErrorTip = '' ;
-         $scope.EditWindow['config']['inputList'] = [] ;
-         $scope.EditWindow['config'] = {
-            type: 'table',
-            gridTitle: [
-               { 'text': 'Column' },
-               { 'text': 'Type' },
-               { 'text': 'Value' }
-            ],
-            grid: { 'tdModel': 'auto', 'gridModel': 'fixed', titleWidth: [ 30, 20, 50 ] },
-            inputList: []
-         } ;
-         
-         $.each( fieldList, function( index, fieldInfo ){
-            var insertLine = [
-               { 'type': 'textual', 'value': fieldInfo['column_name'] },
-               { 'type': 'textual', 'value': fieldInfo['data_type'] },
-               { 'type': 'string', 'value': data[fieldInfo['column_name']] }
-            ] ;
-            $scope.EditWindow['config']['inputList'].push( insertLine ) ;
-         } ) ;
-
-         $scope.EditWindow['callback']['SetOkButton']( $scope.pAutoLanguage( '确定' ), function(){
+      SdbSignal.on( 'showEditWindow', function( index ){
+         var showWindow = function( index )
+         {
+            var data = SdbSwap.dataList[index] ;
             $scope.ErrorTip = '' ;
-            var formValue = $scope.EditWindow['config'].getValue() ;
+            $scope.EditWindow['config']['inputList'] = [] ;
+            $scope.EditWindow['config'] = {
+               type: 'table',
+               gridTitle: [
+                  { 'text': 'Column' },
+                  { 'text': 'Type' },
+                  { 'text': 'Value' }
+               ],
+               grid: { 'tdModel': 'auto', 'gridModel': 'fixed', titleWidth: [ 30, 20, 50 ] },
+               inputList: []
+            } ;
+         
+            $.each( fieldList, function( index, fieldInfo ){
+               var insertLine = [
+                  { 'type': 'textual', 'value': fieldInfo['column_name'] },
+                  { 'type': 'textual', 'value': fieldInfo['data_type'] },
+                  { 'type': 'string', 'value': data[fieldInfo['column_name']] }
+               ] ;
+               $scope.EditWindow['config']['inputList'].push( insertLine ) ;
+            } ) ;
 
-            if( SdbSwap.tbType == 'table' )
-            {
-               var setSql = sprintf( 'UPDATE ? SET ', addQuotes( SdbSwap.tbName ) ) ;
-               var tempNum = 1 ;
-               $.each( formValue, function( index, fieldInfo ){
-                  if( fieldInfo[2] != data[fieldInfo[0]] )
-                  {
-                     if( tempNum > 1 )
+            $scope.EditWindow['callback']['SetOkButton']( $scope.pAutoLanguage( '确定' ), function(){
+               $scope.ErrorTip = '' ;
+               var formValue = $scope.EditWindow['config'].getValue() ;
+
+               if( SdbSwap.tbType == 'table' )
+               {
+                  var setSql = sprintf( 'UPDATE ? SET ', addQuotes( SdbSwap.tbName ) ) ;
+                  var tempNum = 1 ;
+                  $.each( formValue, function( index, fieldInfo ){
+                     if( fieldInfo[2] != data[fieldInfo[0]] )
                      {
-                        setSql += ', ' ;
+                        if( tempNum > 1 )
+                        {
+                           setSql += ', ' ;
+                        }
+                        setSql += addQuotes( fieldInfo[0] ) + ' = ' + sqlEscape( fieldInfo[2] ) ;
+                        ++ tempNum ;
                      }
-                     setSql += addQuotes( fieldInfo[0] ) + ' = ' + sqlEscape( fieldInfo[2] ) ;
-                     ++ tempNum ;
-                  }
-                  else
+                     else
+                     {
+                        return ;
+                     }
+                  } ) ;
+                  if( tempNum == 1 )
                   {
+                     $scope.ErrorTip = '请至少修改一个字段值。' ;
                      return ;
                   }
-               } ) ;
-               if( tempNum == 1 )
-               {
-                  $scope.ErrorTip = '请至少修改一个字段值。' ;
-                  return ;
-               }
 
-               var querySql = sprintf( 'SELECT ctid FROM ? WHERE ', addQuotes( SdbSwap.tbName ) ) ;
-               var tempNum = 1 ;
-               $.each( data, function( key, value ){
-                  if( tempNum > 1 )
-                  {
-                     querySql += ' AND ' ;
-                  }
-                  if( typeof( value ) == 'string' )
-                  {
-                     querySql += addQuotes( key ) + ' = ' + sqlEscape( value ) ;
-                  }
-                  else if( value === null )
-                  {
-                     querySql += addQuotes( key ) + ' IS NULL ' ;
-                  }
-                  else
-                  {
-                     querySql += addQuotes( key ) + ' = ' + value ;
-                  }
-                  ++ tempNum ;
-               } ) ;
-               querySql += ' LIMIT 1' ;
-               queryCtid( querySql, 'update', setSql ) ;
-
-            }
-            else
-            {
-               var sql = sprintf( 'UPDATE ? SET ', addQuotes( SdbSwap.tbName ) ) ;
-               var tempNum = 1 ;
-               $.each( formValue, function( index, fieldInfo ){
-                  if( fieldInfo[2] != data[fieldInfo[0]] )
-                  {
+                  var querySql = sprintf( 'SELECT ctid FROM ? WHERE ', addQuotes( SdbSwap.tbName ) ) ;
+                  var tempNum = 1 ;
+                  $.each( data, function( key, value ){
                      if( tempNum > 1 )
                      {
-                        sql += ', ' ;
+                        querySql += ' AND ' ;
                      }
-                     sql += addQuotes( fieldInfo[0] ) + ' = ' + sqlEscape( fieldInfo[2] ) ;
+                     if( typeof( value ) == 'string' )
+                     {
+                        querySql += addQuotes( key ) + ' = ' + sqlEscape( value ) ;
+                     }
+                     else if( value === null )
+                     {
+                        querySql += addQuotes( key ) + ' IS NULL ' ;
+                     }
+                     else
+                     {
+                        querySql += addQuotes( key ) + ' = ' + value ;
+                     }
                      ++ tempNum ;
-                  }
-                  else
+                  } ) ;
+                  querySql += ' LIMIT 1' ;
+                  queryCtid( querySql, 'update', setSql ) ;
+
+               }
+               else
+               {
+                  var sql = sprintf( 'UPDATE ? SET ', addQuotes( SdbSwap.tbName ) ) ;
+                  var tempNum = 1 ;
+                  $.each( formValue, function( index, fieldInfo ){
+                     if( fieldInfo[2] != data[fieldInfo[0]] )
+                     {
+                        if( tempNum > 1 )
+                        {
+                           sql += ', ' ;
+                        }
+                        sql += addQuotes( fieldInfo[0] ) + ' = ' + sqlEscape( fieldInfo[2] ) ;
+                        ++ tempNum ;
+                     }
+                     else
+                     {
+                        return ;
+                     }
+                  } ) ;
+                  if( tempNum == 1 )
                   {
+                     $scope.ErrorTip = '请至少修改一个字段值。' ;
                      return ;
                   }
-               } ) ;
-               if( tempNum == 1 )
-               {
-                  $scope.ErrorTip = '请至少修改一个字段值。' ;
-                  return ;
+                  sql += ' WHERE ' ;
+                  var tempNum = 1 ;
+                  $.each( data, function( key, value ){
+                     if( tempNum > 1 )
+                     {
+                        sql += ' AND ' ;
+                     }
+                     if( typeof( value ) == 'string' )
+                     {
+                        sql += addQuotes( key ) + ' = ' + sqlEscape( value ) ;
+                     }
+                     else if( value === null )
+                     {
+                        sql += addQuotes( key ) + ' IS NULL ' ;
+                     }
+                     else
+                     {
+                        sql += addQuotes( key ) + ' = ' + value ;
+                     }
+                     ++ tempNum ;
+                  } ) ;
+                  SdbSignal.commit( 'execOperate', { 'sql': sql, 'type': '更新记录' } ) ;
                }
-               sql += ' WHERE ' ;
-               var tempNum = 1 ;
-               $.each( data, function( key, value ){
-                  if( tempNum > 1 )
-                  {
-                     sql += ' AND ' ;
-                  }
-                  if( typeof( value ) == 'string' )
-                  {
-                     sql += addQuotes( key ) + ' = ' + sqlEscape( value ) ;
-                  }
-                  else if( value === null )
-                  {
-                     sql += addQuotes( key ) + ' IS NULL ' ;
-                  }
-                  else
-                  {
-                     sql += addQuotes( key ) + ' = ' + value ;
-                  }
-                  ++ tempNum ;
-               } ) ;
-               SdbSignal.commit( 'execOperate', { 'sql': sql, 'type': '更新记录' } ) ;
+               $scope.EditWindow['callback']['Close']() ;
+            } ) ;
+            $scope.EditWindow['callback']['SetIcon']( '' ) ;
+            $scope.EditWindow['callback']['SetTitle']( $scope.pAutoLanguage( '编辑记录' ) ) ;
+            $scope.EditWindow['callback']['Open']() ;
+         }
+         if( SdbSwap.dataLengthList[index] == true )
+         {
+            $scope.Components.Confirm.type = 2 ;
+            $scope.Components.Confirm.context = sprintf( $scope.pAutoLanguage( '该条数据过大，执行该操作可能会造成浏览器卡顿，是否继续？' ) ) ;
+            $scope.Components.Confirm.isShow = true ;
+            $scope.Components.Confirm.okText = $scope.pAutoLanguage( '确定' ) ;
+            $scope.Components.Confirm.ok = function(){
+               $scope.Components.Confirm.isShow = false ;
+               showWindow( index ) ;
             }
-            $scope.EditWindow['callback']['Close']() ;
-         } ) ;
-         $scope.EditWindow['callback']['SetIcon']( '' ) ;
-         $scope.EditWindow['callback']['SetTitle']( $scope.pAutoLanguage( '编辑记录' ) ) ;
-         $scope.EditWindow['callback']['Open']() ;
+         }
+         else
+         {
+            showWindow( index ) ;
+         }
+         
       } ) ;
 
       //删除单条记录弹窗
-      SdbSignal.on( 'showRemoveData', function( data ){
+      SdbSignal.on( 'showRemoveData', function( index ){
+         var data = SdbSwap.dataList[index] ;
          var ctid = '' ;
          if( SdbSwap.tbType == 'table' )
          {
@@ -1268,6 +1339,9 @@
          $scope.ExecHistoryWindow['config'] = SdbSwap.execHistory ;
          $scope.ExecHistoryWindow['callback']['SetIcon']( '' ) ;
          $scope.ExecHistoryWindow['callback']['SetTitle']( $scope.pAutoLanguage( '执行记录' ) ) ;
+         $scope.ExecHistoryWindow['callback']['SetCloseButton']( $scope.pAutoLanguage( '关闭' ), function(){
+            $scope.ExecHistoryWindow['callback']['Close']() ;
+         } ) ;
          $scope.ExecHistoryWindow['callback']['Open']() ;
       }
 
@@ -1512,6 +1586,42 @@
          }
       } ) ;
 
+      //查看单条记录弹窗
+      $scope.DataWindow = {
+         'config': {},
+         'callback': {}
+      } ;
+
+      //打开 单条记录 弹窗
+      $scope.ShowDataWindow = function( index ){
+         var showWindow = function( index ){
+            var data = SdbSwap.dataList[index] ;
+            $scope.DataWindow['config'] = data ;
+            $scope.DataWindow['callback']['SetTitle']( $scope.pAutoLanguage( '记录' ) ) ;
+            $scope.DataWindow['callback']['SetCloseButton']( $scope.pAutoLanguage( '关闭' ), function(){
+               $scope.DataWindow['callback']['Close']() ;
+            } ) ;
+            $scope.DataWindow['callback']['Open']() ;
+         }
+
+         if( SdbSwap.dataLengthList[index] == true )
+         {
+            $scope.Components.Confirm.type = 2 ;
+            $scope.Components.Confirm.context = sprintf( $scope.pAutoLanguage( '该条数据过大，执行该操作可能会造成浏览器卡顿，是否继续？' ) ) ;
+            $scope.Components.Confirm.isShow = true ;
+            $scope.Components.Confirm.okText = $scope.pAutoLanguage( '确定' ) ;
+            $scope.Components.Confirm.ok = function(){
+               $scope.Components.Confirm.isShow = false ;
+               showWindow( index ) ;
+            }
+         }
+         else
+         {
+            showWindow( index ) ;
+         }
+         
+      }
+
       //转换null显示
       $scope.ReturnNull = function( value ){
          value = value === null ? 'null' : value ;
@@ -1526,12 +1636,12 @@
          $scope.GridTable['callback']['SetTotalNum']( count ) ;
       } ) ;
 
-      $scope.ShowEditWindow = function( data ){
-         SdbSignal.commit( 'showEditWindow', data ) ;
+      $scope.ShowEditWindow = function( index ){
+         SdbSignal.commit( 'showEditWindow', index ) ;
       }
 
-      $scope.ShowRemoveData = function( data ){
-         SdbSignal.commit( 'showRemoveData', data ) ;
+      $scope.ShowRemoveData = function( index ){
+         SdbSignal.commit( 'showRemoveData', index ) ;
       }
    } ) ;
 

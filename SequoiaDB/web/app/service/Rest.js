@@ -1055,6 +1055,33 @@
          g._sendAjax( 'POST', path, data, event, options ) ;
       }
 
+      //手工设置cluster和module
+      g.DataOperationV21 = function( clusterName, businessName, path, data, event, options ){
+         var oldBefore = event ? event['before'] : null ;
+         event['before'] = function( jqXHR ){
+	         if( clusterName !== null )
+	         {
+		         jqXHR.setRequestHeader( 'SdbClusterName', clusterName ) ;
+	         }
+	         if( businessName !== null )
+	         {
+		         jqXHR.setRequestHeader( 'SdbBusinessName', businessName ) ;
+	         }
+            if( typeof( oldBefore ) == 'function' )
+            {
+               return oldBefore( jqXHR ) ;
+            }
+         }
+         if( typeof( options ) != 'object' )
+         {
+            options = {} ;
+         }
+         options['v'] = 'v2' ;
+         event = g._checkEvent( event ) ;
+         options = g._checkOptions( options ) ;
+         g._sendAjax( 'POST', path, data, event, options ) ;
+      }
+
       //数据操作( 手工设置cluster和module )
       g.DataOperation2 = function( clusterName, businessName, data, event, options, errJson ){
          var oldBefore = event ? event['before'] : null ;

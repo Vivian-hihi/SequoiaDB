@@ -92,6 +92,7 @@
                }
                else
                {
+                  SdbSwap.deleteTableList = [] ;
                   $.each( tableList, function( index, tableInfo ){
                      if( tableInfo['table_type'] == 'FOREIGN TABLE' )
                      {
@@ -110,6 +111,8 @@
                         'Owner': tableInfo['usename'],
                         'Description': ''
                      } ) ;
+
+                     SdbSwap.deleteTableList.push( { 'key': tableInfo['table_name'], 'value': index, 'type': tableInfo['table_type'] } ) ;
                   } ) ;
                }
 
@@ -356,10 +359,16 @@
       }
    } ) ;
 
-
    //弹窗操作控制器
-   sacApp.controllerProvider.register( 'Data.OLTP.Database.Window.Ctrl', function( $scope, $timeout, SdbSignal, SdbSwap, Loading ){
-      
+   sacApp.controllerProvider.register( 'Data.OLTP.Database.Window.Ctrl', function( $scope, $timeout, SdbFunction, SdbSignal, SdbSwap, Loading ){
+      //高度偏移量
+      $scope.BoxHeight = { 'offsetY': -149 } ;
+      //判断如果是Firefox浏览器的话，调整右侧表格高度
+      var browser = SdbFunction.getBrowserInfo() ;
+      if( browser[0] == 'firefox' )
+      {
+         $scope.BoxHeight = { 'offsetY': -164 } ;
+      }
       //创建数据表 弹窗
       $scope.CreateTableWindow = {
          'config': {},
@@ -871,6 +880,41 @@
 
       //打开 删除数据表 弹窗
       $scope.ShowRemoveTable = function(){
+         if( SdbSwap.deleteTableList.length > 0 )
+         {
+            $scope.RemoveTableWindow['config'] = {
+               inputList: [
+                  {
+                     "name": "tbName",
+                     "webName": $scope.pAutoLanguage( '数据表名' ),
+                     "type": "select",
+                     "required": true,
+                     "value": SdbSwap.deleteTableList[0]['value'],
+                     "valid": SdbSwap.deleteTableList
+                  }
+               ]
+            } ;
+            $scope.RemoveTableWindow['callback']['SetTitle']( $scope.pAutoLanguage( '删除数据表' ) ) ;
+            $scope.RemoveTableWindow['callback']['SetIcon']( 'fa-remove' ) ;
+            $scope.RemoveTableWindow['callback']['SetOkButton']( $scope.pAutoLanguage( '确定' ), function(){
+               var formVal = $scope.RemoveTableWindow['config'].getValue() ;
+               var sql = '' ;
+               var index = formVal['tbName'] ;
+               var tableName = SdbSwap.deleteTableList[index]['key'] ;
+               var tableType = SdbSwap.deleteTableList[index]['type'] ;
+               if( tableType == 'foreign table' )
+               {
+                  sql = 'drop foreign table ' + addQuotes( tableName ) ;
+               }
+               else
+               {
+                  sql = 'drop table ' + addQuotes( tableName ) ;
+               }
+               SdbSignal.commit( 'removeTable', sql ) ;
+               $scope.RemoveTableWindow['callback']['Close']() ;
+            } ) ;
+            $scope.RemoveTableWindow['callback']['Open']() ;
+         }
          
       }
 
