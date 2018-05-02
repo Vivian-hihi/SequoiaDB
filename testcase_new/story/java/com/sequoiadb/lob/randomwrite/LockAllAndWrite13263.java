@@ -19,6 +19,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import javax.xml.bind.DatatypeConverter;
+
 /**
  * @FileName seqDB-13263: 并发锁全部lob写入 
  * @Author linsuqiang
@@ -87,7 +89,7 @@ public class LockAllAndWrite13263 extends SdbTestBase {
                 thrdList.get(i).join();
             }
 
-            Assert.assertNotEquals( successTimes.get(), 0);
+            Assert.assertNotEquals(successTimes.get(), 0);
             byte[] actData = RandomWriteLobUtil.readLob(cl, oid);
             RandomWriteLobUtil.assertByteArrayEqual(actData, expData, "lob data is wrong");
         } catch (BaseException e) {
@@ -130,6 +132,10 @@ public class LockAllAndWrite13263 extends SdbTestBase {
                     lob.seek(part.getOffset(), DBLob.SDB_LOB_SEEK_SET);
                     lob.write(part.getData());
                     updateExpData(part);
+                    System.out.println("offset: " + part.getOffset());
+                    byte[] identifier = new byte[16];
+                    System.arraycopy(part.getData(), 0, identifier, 0, identifier.length);
+                    System.out.println("part head: " + DatatypeConverter.printHexBinary(identifier));
                     successTimes.getAndIncrement();
                 }
             }
