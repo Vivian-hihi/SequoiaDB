@@ -10,6 +10,7 @@ import org.bson.BasicBSONObject;
 import org.testng.Assert;
 import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
@@ -39,7 +40,7 @@ public class TestCS15150 extends SdbTestBase{
     private String domainName2 = "domain15150_2";
     private List<String> dataGroupNames = new ArrayList<String>();
     
-    @BeforeTest
+    @BeforeClass
     public void setUp() {
         String coordAddr = SdbTestBase.coordUrl;
         System.out.println("the TestCase Name:" + this.getClass().getName() + 

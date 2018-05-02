@@ -11,6 +11,7 @@ import org.bson.types.BasicBSONList;
 import org.testng.Assert;
 import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
@@ -43,7 +44,7 @@ public class TestCL15151 extends SdbTestBase{
     private String clName = "cl15151";
     private List<String> dataGroupNames = new ArrayList<String>();
     
-    @BeforeTest
+    @BeforeClass
     public void setUp() {
         String coordAddr = SdbTestBase.coordUrl;
         System.out.println("the TestCase Name:" + this.getClass().getName() + 
