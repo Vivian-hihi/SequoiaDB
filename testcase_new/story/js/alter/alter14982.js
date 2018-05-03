@@ -39,6 +39,7 @@ function main()
    println("---end the test---");
 }
 
+//true is catch -307,false is don't catch any error
 function checkAlterResult( cl, onlyCatch307 )
 {
    var str = null;
@@ -65,7 +66,7 @@ function checkAlterResult( cl, onlyCatch307 )
       {
          if( e !== -307 || !onlyCatch307 )
          {
-            throw e ;
+            throw buildException("checkAlterResult", e, "catch error", "success", e);
          }
       }
       
