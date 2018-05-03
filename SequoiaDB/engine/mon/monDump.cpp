@@ -3823,18 +3823,25 @@ namespace engine
          rc = SDB_DMS_EOC ;
          goto error ;
       }
-
-      // generate BSON return obj
-
-      rc = pmdGetOptionCB()->toBSON(obj, 0);
-
-      if ( rc != SDB_OK )
+      else
       {
-         PD_LOG ( PDERROR, "Failed to generate config snapshot.") ;
-         goto error ;
-      }
+         BSONObjBuilder ob( 1024 ) ;
+         BSONObj tmpObj ;
 
-      _hitEnd = TRUE ;
+         /// add system info
+         monAppendSystemInfo( ob, _addInfoMask ) ;
+
+         rc = pmdGetOptionCB()->toBSON( tmpObj, 0 ) ;
+         if ( rc != SDB_OK )
+         {
+            PD_LOG ( PDERROR, "Failed to generate config, rc: %d", rc ) ;
+            goto error ;
+         }
+         ob.appendElements( tmpObj ) ;
+         obj = ob.obj() ;
+
+         _hitEnd = TRUE ;
+      }
 
    done:
       PD_TRACE_EXITRC ( SDB__MONCONFIGSFETCH_FETCH, rc ) ;
