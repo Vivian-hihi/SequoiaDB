@@ -65,7 +65,7 @@ protected:
       {
          INT32 rc = db.dropCollectionSpace( csName.c_str() ) ;
          ASSERT_EQ( SDB_OK, rc ) << "fail to drop cs " << csName ;
-         if ( isStandalone( db ) )
+         if ( !isStandalone( db ) )
          {
             rc = db.dropDomain( domainName.c_str() ) ;
             ASSERT_EQ( SDB_OK, rc ) << "fail to dropDomain " << domainName ;
