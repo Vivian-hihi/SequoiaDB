@@ -43,8 +43,12 @@ public class TestDomain15147 extends SdbTestBase{
                     ". the TestCase bigin at:" + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
         this.sdb = new Sequoiadb(coordAddr, "", "");
         CommLib commLib = new CommLib();
+        if (commLib.isStandAlone(sdb))
+        {
+            throw new SkipException("is standalone");
+        }
         dataGroupNames = commLib.getDataGroups(this.sdb);
-        if (dataGroupNames.size() < 3 || commLib.isStandAlone(sdb))
+        if (dataGroupNames.size() < 3)
         {
             throw new SkipException("data group less 3");
         }
