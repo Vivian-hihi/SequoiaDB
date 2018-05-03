@@ -245,6 +245,10 @@ TEST_F( alterCLTest, EnableSharding   )
 TEST_F( alterCLTest, EnableCompression  )
 {
    INT32 rc = SDB_OK ;
+   if ( isStandalone( db ) )
+   {
+      return ;
+   }
    Check_Res ret ;
 
    bson_append_string( &opt, CompressionType, lzw ) ;
@@ -269,6 +273,10 @@ TEST_F( alterCLTest, EnableCompression  )
 TEST_F( alterCLTest, SetAttributes   )
 {
    INT32 rc = SDB_OK ;
+   if ( isStandalone( db ) )
+   {
+      return ;
+   }
    Check_Res ret ;
   
    bson_append_string( &opt, ShardingType, hash ) ;
@@ -292,6 +300,10 @@ TEST_F( alterCLTest, SetAttributes   )
 TEST_F( alterCLTest, alter  )
 {
    INT32 rc = SDB_OK ;
+   if ( isStandalone( db ) )
+   {
+      return ;
+   }
    Check_Res ret ;
     
    bson_append_string( &opt, ShardingType, hash ) ;

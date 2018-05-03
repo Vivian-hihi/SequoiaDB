@@ -72,7 +72,7 @@ protected:
    void TearDown()
    {
       INT32 rc = SDB_OK ;
-      if( shouldClear() )
+      if( !isStandalone( db ) && shouldClear() )
       {
          rc = sdbDropDomain( db, domainName ) ;
          ASSERT_EQ( SDB_OK, rc ) << "fail to drop domain " << domainName ;
