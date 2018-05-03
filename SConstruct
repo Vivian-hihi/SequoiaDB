@@ -1004,10 +1004,11 @@ if cov:
    
 if sequoiafs:
     sequoiafsEnv = toolEnv.Clone();
-    sequoiafsEnv.Append(LIBS=['fuse'])
-    sequoiafsEnv.Append(CPPDEFINES="_FILE_OFFSET_BITS=64" )        
-    sequoiafsEnv.Append(CPPPATH = join(fuse_dir, "include"))
-    sequoiafsEnv.Append(EXTRALIBPATH=[fuse_lib_dir])   
+    sequoiafsEnv.Append( LIBS=['fuse'] )
+    sequoiafsEnv.Append( CPPDEFINES="_FILE_OFFSET_BITS=64" )        
+    sequoiafsEnv.Append( CPPPATH = join(fuse_dir, "include") )
+    sequoiafsEnv.Append( EXTRALIBPATH=[fuse_lib_dir] )   
+    sequoiafsEnv.Append( LIBPATH=['$EXTRALIBPATH'] )  
 
 # The following symbols are exported for use in subordinate SConscript files.
 # Ideally, the SConscript files would be purely declarative.  They would only
