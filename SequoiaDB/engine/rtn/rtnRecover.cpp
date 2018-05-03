@@ -704,8 +704,21 @@ namespace engine
               !OSS_BIT_TEST( mbContext->mb()->_attributes,
                              DMS_MB_ATTR_COMPRESSED ) )
          {
-            PD_LOG( PDERROR, "Record[%d.%d] should not be compressed" ) ;
-            continue ;
+            // Skip the corrupted record in below cases:
+            // 1. old version compression which is not alterable
+            // 2. wrong compression type
+            if ( !OSS_BIT_TEST( mbContext->mb()->_compressFlags,
+                                UTIL_COMPRESS_ALTERABLE_FLAG ) )
+            {
+               PD_LOG( PDERROR, "Record[%d.%d] should not be compressed" ) ;
+               continue ;
+            }
+            else if ( NULL == getCompressorByType(
+                           (UTIL_COMPRESSOR_TYPE)pRecord->getCompressType() ) )
+            {
+               PD_LOG( PDERROR, "Record[%d.%d] with wrong compression type" ) ;
+               continue ;
+            }
          }
          /// extract data
          rc = _pSU->data()->extractData( mbContext, recordRW,
