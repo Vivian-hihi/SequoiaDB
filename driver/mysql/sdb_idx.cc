@@ -1,3 +1,18 @@
+/* Copyright (c) 2018, SequoiaDB and/or its affiliates. All rights reserved.
+
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation; version 2 of the License.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA */
+
 #ifndef MYSQL_SERVER
    #define MYSQL_SERVER
 #endif
@@ -95,7 +110,8 @@ int sdb_get_idx_order( KEY * key_info, bson::BSONObj &order )
    bson::BSONObjBuilder obj_builder ;
    if ( !key_info )
    {
-      return SDB_ERR_INVALID_ARG ;
+      rc = SDB_ERR_INVALID_ARG ;
+      goto error ;
    }
    keyPart = key_info->key_part ;
    keyEnd = keyPart + key_info->user_defined_key_parts ;

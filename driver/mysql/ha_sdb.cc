@@ -1,4 +1,4 @@
-/* Copyright (c) 2004, 2016, Oracle and/or its affiliates. All rights reserved.
+/* Copyright (c) 2018, SequoiaDB and/or its affiliates. All rights reserved.
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -2025,7 +2025,11 @@ static struct st_mysql_sys_var *sdb_vars[]={
 
 static char * get_sdb_plugin_info()
 {
-#define SDB_ENG_INFO          "SequoiaDB storage engine. "
+#ifdef SDB_ENTERPRISE
+   #define SDB_ENG_INFO          "SequoiaDB storage engine(Enterprise). "
+#else
+   #define SDB_ENG_INFO          "SequoiaDB storage engine(Community). "
+#endif
    static char sdb_plugin_info[256] = SDB_ENG_INFO ;
    char *pPos = &sdb_plugin_info[strlen(SDB_ENG_INFO)] ;
    const char *pVersion = &sdb_ver_info[strlen(SDB_VER_INFO_NAME)] ;

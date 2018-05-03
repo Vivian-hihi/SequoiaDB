@@ -1,3 +1,18 @@
+/* Copyright (c) 2018, SequoiaDB and/or its affiliates. All rights reserved.
+
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation; version 2 of the License.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA */
+
 #ifndef MYSQL_SERVER
    #define MYSQL_SERVER
 #endif
@@ -805,7 +820,6 @@ int sdb_func_cmp::to_bson_with_child( bson::BSONObj &obj )
    Item_func *func = NULL ;
    sdb_func_unkown *sdb_func = NULL ;
    bool cmp_inverse = FALSE ;
-   bool op_inverse = FALSE ;
    bson::BSONObj obj_tmp ;
    bson::BSONObjBuilder builder_tmp ;
 
