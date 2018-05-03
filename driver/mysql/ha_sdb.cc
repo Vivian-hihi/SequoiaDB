@@ -1983,25 +1983,6 @@ static void sdb_use_partition_update( THD * thd,
 
    SDB_CONF_INST->set_use_partition( use_partition ) ;
 }
-/*static int sdb_use_partition_validate( THD * thd,
-                                        struct st_mysql_sys_var *var,
-                                        void *save,
-                                        struct st_mysql_value *value )
-{
-   char buff[4] = {0} ;
-   int len = sizeof( buff ) ;
-   const char *p_tmp = NULL ;
-   my_bool use_partition = TRUE ;
-   p_tmp = value->val_str( value, buff, &len ) ;
-   if ( 0 == strcmp(p_tmp, "OFF") )
-   {
-      use_partition = FALSE ;
-   }
-
-   SDB_CONF_INST->set_use_partition( use_partition ) ;
-   *(my_bool *)save = use_partition ;
-   return 0 ;
-}*/
 
 static struct st_mysql_storage_engine sdb_storage_engine=
 { MYSQL_HANDLERTON_INTERFACE_VERSION };
@@ -2036,12 +2017,14 @@ static char * get_sdb_plugin_info()
    const char *pTmp = strchr( pVersion, '_' ) ;
    if ( pTmp != NULL )
    {
-      strncpy( pPos, "Sequoiadb: ", strlen("Sequoiadb: ") ) ;
-      pPos += strlen("Sequoiadb: ") ;
+#define SDB_COMMENT              "Sequoiadb:"
+#define SDB_PLUGIN_COMMENT       ", Plugin:"
+      strncpy( pPos, SDB_COMMENT, strlen(SDB_COMMENT) ) ;
+      pPos += strlen(SDB_COMMENT) ;
       strncpy( pPos, pVersion, pTmp - pVersion ) ;
       pPos += pTmp - pVersion ;
-      strncpy( pPos, ", Plugin:", strlen(", Plugin:") ) ;
-      pPos += strlen(", Plugin:") ;
+      strncpy( pPos, SDB_PLUGIN_COMMENT, strlen(SDB_PLUGIN_COMMENT) ) ;
+      pPos += strlen(SDB_PLUGIN_COMMENT) ;
       strncpy( pPos, pTmp + 1, strlen(pTmp+1) ) ;
       pPos[strlen(pTmp+1)] = 0 ;
    }
