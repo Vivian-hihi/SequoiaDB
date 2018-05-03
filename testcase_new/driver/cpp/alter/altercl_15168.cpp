@@ -137,6 +137,10 @@ BOOLEAN isSharding(const BSONObj& obj)
 TEST_F( alterCLTest, enableCompression )
 {
    INT32 rc = SDB_OK ;
+   if ( isStandalone( db ) )
+   {
+      return ;
+   }
    rc = cl.enableCompression(BSON(CompressionType << lzw));
    ASSERT_EQ( SDB_OK, rc ) << "fail to enableCompression " << clName ;
    
@@ -152,6 +156,10 @@ TEST_F( alterCLTest, enableCompression )
 TEST_F( alterCLTest, enableSharding )
 {
    INT32 rc = SDB_OK ;
+   if ( isStandalone( db ) )
+   {
+      return ;
+   }
    rc = cl.enableSharding( BSON(ShardingType << range << ShardingKey << BSON(id << 1)) );
    ASSERT_EQ( SDB_OK, rc ) << "fail to enableSharding " << clName ;
    BSONObj res = getCLAttr() ;
@@ -165,6 +173,10 @@ TEST_F( alterCLTest, enableSharding )
 TEST_F( alterCLTest, setAttributes )
 {
    INT32 rc = SDB_OK ;
+   if ( isStandalone( db ) )
+   {
+      return ;
+   }
    rc = cl.setAttributes(BSON(ShardingType<<range << ShardingKey << BSON(id << 1))) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to setAttributes " << clName ;
    BSONObj res = getCLAttr() ;
@@ -174,6 +186,10 @@ TEST_F( alterCLTest, setAttributes )
 TEST_F( alterCLTest, alter )
 {
    INT32 rc = SDB_OK ;
+   if ( isStandalone( db ) )
+   {
+      return ;
+   }
    rc = cl.alterCollection (BSON(ShardingType << range << ShardingKey << BSON(id << 1)) );
    ASSERT_EQ( SDB_OK, rc ) << "fail to alterCollection " << clName ;
    BSONObj res = getCLAttr() ;

@@ -41,6 +41,10 @@ protected:
       }
       ASSERT_EQ( SDB_OK, rc ) << "fail to createCollectionSpace " << csName ;
       
+      if ( isStandalone( db ) )
+      {
+         return ;
+      }
       rc = getGroups( db, groups ) ;
       ASSERT_EQ( SDB_OK, rc ) << "fail to getGroups " ;
       
@@ -61,8 +65,12 @@ protected:
       {
          INT32 rc = db.dropCollectionSpace( csName.c_str() ) ;
          ASSERT_EQ( SDB_OK, rc ) << "fail to drop cs " << csName ;
-         rc = db.dropDomain( domainName.c_str() ) ;
-         ASSERT_EQ( SDB_OK, rc ) << "fail to dropDomain " << domainName ;
+         if ( isStandalone( db ) )
+         {
+            rc = db.dropDomain( domainName.c_str() ) ;
+            ASSERT_EQ( SDB_OK, rc ) << "fail to dropDomain " << domainName ;
+         }
+         
       } 
       testBase::TearDown() ;
    }

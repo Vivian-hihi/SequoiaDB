@@ -48,7 +48,7 @@ protected:
    void TearDown()
    {
       INT32 rc = SDB_OK ;
-      if( shouldClear() )
+      if( isStandalone( db ) && shouldClear() )
       {
          rc = db.dropDomain( domainName.c_str() ) ;
          ASSERT_EQ( SDB_OK, rc ) << "fail to dropDomain " << domainName ; 
