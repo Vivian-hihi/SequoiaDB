@@ -28,7 +28,7 @@
    Change Activity:
    defect Date        Who Description
    ====== =========== === ==============================================
-          03/05/2015  YWX  Initial Draft
+          03/05/2018  YWX  Initial Draft
 
    Last Changed =
 
@@ -68,9 +68,6 @@
 #define SDB_SEQUOIAFS_USER_DEFAULT_NAME "sdbadmin"
 #define SDB_SEQUOIAFS_USER_DEFAULT_PASSWD "sdbadmin"
 
-//TODO: need to move to osserror.h
-#define SDB_PMD_HELP_FUSE_ONLY -313
-#define SDB_PMD_NOT_SPECIFY_AUTOCREATE -314
 namespace sequoiafs
 {
     class _sequoiafsOptionMgr : public engine::_pmdCfgRecord

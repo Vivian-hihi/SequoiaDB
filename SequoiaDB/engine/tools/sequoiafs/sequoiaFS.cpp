@@ -28,7 +28,7 @@
    Change Activity:
    defect Date        Who Description
    ====== =========== === ==============================================
-          03/05/2015  YWX  Initial Draft
+          03/05/2018  YWX  Initial Draft
 
    Last Changed =
 
@@ -204,8 +204,6 @@ INT32 getCollectionSpace(sdb &db, const CHAR *csName, sdbCollectionSpace &cs)
             ossPrintf("Failed to create collectionspace:%s, error=%d"OSS_NEWLINE, csName, rc);
             goto error;
         }
-
-        ossPrintf("Succeed to create collectionspace:%s"OSS_NEWLINE, csName);
     }
     else if(SDB_OK != rc)
     {
@@ -226,7 +224,6 @@ INT32 getCollection(sdbCollectionSpace &cs, const CHAR *clName, sdbCollection &c
     rc = cs.getCollection(clName, cl);
     if(SDB_DMS_NOTEXIST == rc)
     {
-        //ossPrintf("Collection:%s does not exist, creating a new collection"OSS_NEWLINE, clName);
         rc = cs.createCollection(clName, BSON("ReplSize" << 0), cl);        
         if(SDB_OK != rc)
         {
@@ -832,7 +829,7 @@ INT32 sequoiaFS::init(INT32 argc, CHAR **argv, vector<string> *options4fuse)
 
     //1. init options
     rc = optionMgr->init(argc, argv, options4fuse);
-    if(SDB_PMD_HELP_ONLY == rc || SDB_PMD_HELP_FUSE_ONLY == rc || SDB_PMD_VERSION_ONLY == rc)
+    if(SDB_PMD_HELP_ONLY == rc || SDB_PMD_VERSION_ONLY == rc)
     {
         rc = SDB_OK;
         goto done;

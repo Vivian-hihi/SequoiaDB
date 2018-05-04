@@ -28,7 +28,7 @@
    Change Activity:
    defect Date        Who Description
    ====== =========== === ==============================================
-          03/05/2015  YWX  Initial Draft
+          03/05/2018  YWX  Initial Draft
 
    Last Changed =
 
@@ -181,7 +181,7 @@ INT32 _sequoiafsOptionMgr::init(INT32 argc, CHAR **argv, vector<string> *options
     if(vmFromCmd.count(SDB_SEQUOIAFS_HELP_FUSE))
     {        
         unregisted_str.push_back("--help");
-        rc = SDB_PMD_HELP_FUSE_ONLY;
+        rc = SDB_PMD_HELP_ONLY;
         goto done;
     }    
 

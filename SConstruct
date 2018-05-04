@@ -287,7 +287,6 @@ linux64  = False
 windows = False
 aix = False
 xlc = False
-sequoiafs = False
 
 if guess_os == "aix":
     xlc = has_option("xlc")
@@ -526,7 +525,6 @@ if guess_os == "linux":
         zlib_lib_dir_platform = join(zlib_lib_dir, 'linux64')
         lz4_lib_dir_platform = join(lz4_lib_dir, 'linux64')
         snappy_lib_dir_platform = join(snappy_lib_dir, 'linux64')
-        sequoiafs = True
         fuse_lib = join(fuse_lib_dir, 'libfuse.a')        	        
         Export("fuse_lib")
     # in case for 32 bit linux or compiling 32 bit in 64 env
@@ -931,8 +929,6 @@ toolEnv = env.Clone() ;
 fmpEnv = None
 fmpEnv = env.Clone() ;
 
-sequoiafsEnv = None
-
 if windows:
     shellEnv.Append( LIBS=["winmm.lib"] )
     #env.Append( CPPFLAGS=" /TP " )
@@ -1002,13 +998,12 @@ if cov:
    fapEnv.Append( LINKFLAGS=" -fprofile-arcs " )
    
    
-if sequoiafs:
-    sequoiafsEnv = toolEnv.Clone();
-    sequoiafsEnv.Append( LIBS=['fuse'] )
-    sequoiafsEnv.Append( CPPDEFINES="_FILE_OFFSET_BITS=64" )        
-    sequoiafsEnv.Append( CPPPATH = join(fuse_dir, "include") )
-    sequoiafsEnv.Append( EXTRALIBPATH=[fuse_lib_dir] )   
-    sequoiafsEnv.Append( LIBPATH=['$EXTRALIBPATH'] )  
+if linux64:
+    toolEnv.Append( LIBS=['fuse'] )
+    toolEnv.Append( CPPDEFINES="_FILE_OFFSET_BITS=64" )        
+    toolEnv.Append( CPPPATH = join(fuse_dir, "include") )
+    toolEnv.Append( EXTRALIBPATH=[fuse_lib_dir] )   
+    toolEnv.Append( LIBPATH=['$EXTRALIBPATH'] )  
 
 # The following symbols are exported for use in subordinate SConscript files.
 # Ideally, the SConscript files would be purely declarative.  They would only
@@ -1028,7 +1023,7 @@ Export("clientCppEnv")
 Export("clientCEnv")
 Export("installSetup getSysInfo")
 Export("usesm")
-Export("windows linux nix aix")
+Export("windows linux nix aix linux64")
 if usesm:
    Export("smlib_file")
 Export("ssllib_file")
@@ -1046,8 +1041,6 @@ Export("hasSSL")
 Export("release")
 Export("debugBuild")
 Export("cov")
-Export("sequoiafs")	
-Export("sequoiafsEnv")
 # Generating Versioning information
 # In order to change the file location, we have to modify both win32 and linux
 # ossVer_Autogen.h is NOT in SVN, we have to generate this file by scons before

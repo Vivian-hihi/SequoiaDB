@@ -2,8 +2,7 @@ import os
 
 Import("toolEnv")
 Import("linux")
-Import("sequoiafs")
-Import("sequoiafsEnv")
+Import("linux64")
 
 bsonFiles = [
       "bson/bsonobj.cpp",
@@ -718,9 +717,9 @@ sdbseadapter = toolEnv.Program("sdbseadapter",
 		 LIBDEPS=["pd","oss","msg","util","bson","pmd","pmdMT","net","rtnJob"],
 		 _LIBDEPS='$_LIBDEPS_OBJS' )
 		 
-if sequoiafs:
-    Import("fuse_lib")	  	
-    sequoiafs = sequoiafsEnv.Program("sequoiafs",
+if linux64:
+    Import("fuse_lib")	  
+    sequoiafs = toolEnv.Program("sequoiafs",
         sequoiaFSFiles,
         LIBDEPS=["bson", "oss", "pd", "util", "pmd", "client", "clientcpp", fuse_lib],
         _LIBDEPS='$_LIBDEPS_OBJS' )	
@@ -745,6 +744,6 @@ toolEnv.Install( '#/bin', sdbdpsdump )
 toolEnv.Install( '#/bin', sdbinspect )
 if linux:
    toolEnv.Install( '#/bin', sdbomtool )
-if sequoiafs:
-   sequoiafsEnv.Install('#/bin', sequoiafs)
+if linux64:
+   toolEnv.Install('#/bin', sequoiafs)
 toolEnv.Install( '#/bin', sdbseadapter )
