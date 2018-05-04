@@ -2653,7 +2653,7 @@ error:
 
 
 /*change the access and modification times of lob*/
-INT32 sequoiaFS::utime(const CHAR *path, struct utimbuf * ubuf)
+INT32 sequoiaFS::utime(const CHAR *path, struct utimbuf * ubuf)
 {
     INT32 rc = SDB_OK;
     sdb *db = NULL;

@@ -590,7 +590,7 @@ namespace engine
       {
          PD_LOG_MSG( PDERROR, err.c_str() ) ;
          goto error ;
-      }
+      }
    done:
       return rc ;
    error:
@@ -1389,7 +1389,7 @@ namespace engine
             rc = SDB_INVALIDARG ;
             PD_LOG_MSG( PDERROR, "type must be string" ) ;
             goto error ;
-         }
+         }
          type =  _optionObj.getStringField( "type" ) ;
       }
 
