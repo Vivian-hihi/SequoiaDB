@@ -55,6 +55,7 @@ namespace engine
    class _sptProperty ;
 
    typedef std::vector<_sptProperty*>     SPT_PROP_ARRAY ;
+   typedef SPT_PROP_ARRAY                 SPT_SUB_PROPS ;
 
    /*
       _sptProperty define
@@ -169,6 +170,12 @@ namespace engine
       INT32 assignResultVal( const sptResultVal* value ) ;
 
       _sptProperty* addArrayItem() ;
+
+      _sptProperty* addSubProp( const std::string &name,
+                                UINT32 attr = SPT_PROP_DEFAULT ) ;
+
+      void          addBackwardProp( const std::string &name,
+                                     UINT32 attr = SPT_PROP_DEFAULT ) ;
 
       void  setAttr( UINT32 attr )
       {
@@ -296,18 +303,37 @@ namespace engine
          return _array ;
       }
 
-   private:
-      std::string _name ;
-      UINT64 _value ;
-      bson::BSONType _type ;
-      SPT_RELEASE_OBJ_FUNC _pReleaseFunc ;
-      const _sptObjDesc *_desc ;
-      UINT32   _attr ;
-      BOOLEAN  _deleted ;
-      // flag of js engine result value
-      BOOLEAN  _isRawData ;
+      const SPT_SUB_PROPS& getSubProps() const
+      {
+         return _subs ;
+      }
 
-      SPT_PROP_ARRAY       _array ;
+      const _sptProperty*  getBackwardProp() const
+      {
+         return _backwardProp ;
+      }
+
+      BOOLEAN hasBackwardProp() const
+      {
+         return ( _backwardProp && !_backwardProp->getName().empty() ) ?
+                TRUE : FALSE ;
+      }
+
+   private:
+      std::string             _name ;
+      UINT64                  _value ;
+      bson::BSONType          _type ;
+      SPT_RELEASE_OBJ_FUNC    _pReleaseFunc ;
+      const _sptObjDesc       *_desc ;
+      UINT32                  _attr ;
+      BOOLEAN                 _deleted ;
+      // flag of js engine result value
+      BOOLEAN                 _isRawData ;
+
+      SPT_PROP_ARRAY          _array ;
+
+      SPT_SUB_PROPS           _subs ;
+      _sptProperty            *_backwardProp ;
 
    private:
       /// Forbidden

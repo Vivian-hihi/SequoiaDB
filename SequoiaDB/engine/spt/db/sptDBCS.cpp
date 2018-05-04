@@ -132,22 +132,26 @@ namespace engine
          detail = BSON( SPT_ERR << "Failed to new sptCL obj" ) ;
          goto error ;
       }
+      pCL = NULL ;
+
       rc = rval.setUsrObjectVal< sptDBCL >( sptCL ) ;
       if( SDB_OK != rc )
       {
-         SAFE_OSS_DELETE( sptCL ) ;
-         pCL = NULL ;
          detail = BSON( SPT_ERR << "Failed to set return obj" ) ;
          goto error ;
       }
+      sptCL = NULL ;
+
       rval.getReturnVal().setName( clName ) ;
       rval.getReturnVal().setAttr( SPT_PROP_READONLY ) ;
       rval.addReturnValProperty( SPT_CL_NAME_FIELD )->setValue( clName ) ;
       rval.addSelfToReturnValProperty( SPT_CL_CS_FIELD ) ;
+
    done:
       return rc ;
    error:
       SAFE_OSS_DELETE( pCL ) ;
+      SAFE_OSS_DELETE( sptCL ) ;
       goto done ;
    }
 
@@ -284,6 +288,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       _sdbCollection *pCL = NULL ;
+      sptDBCL *sptCL = NULL ;
 
       rc = _cs.getCollection( clName.c_str(), &pCL ) ;
       if( SDB_OK != rc )
@@ -291,31 +296,34 @@ namespace engine
          detail = BSON( SPT_ERR << "Failed to get cl" ) ;
          goto error ;
       }
+
+      sptCL = SDB_OSS_NEW sptDBCL( pCL ) ;
+      if( NULL == sptCL )
       {
-         sptDBCL *sptCL = SDB_OSS_NEW sptDBCL( pCL ) ;
-         if( NULL == sptCL )
-         {
-            rc = SDB_OOM ;
-            detail = BSON( SPT_ERR << "Failed to new sptDBCL obj" ) ;
-            goto error ;
-         }
-         rc = rval.setUsrObjectVal< sptDBCL >( sptCL ) ;
-         if( SDB_OK != rc )
-         {
-            SAFE_OSS_DELETE( sptCL ) ;
-            pCL = NULL ;
-            detail = BSON( SPT_ERR << "Failed to set return obj" ) ;
-            goto error ;
-         }
-         rval.getReturnVal().setName( clName ) ;
-         rval.getReturnVal().setAttr( SPT_PROP_READONLY ) ;
-         rval.addReturnValProperty( SPT_CL_NAME_FIELD )->setValue( clName ) ;
-         rval.addSelfToReturnValProperty( SPT_CL_CS_FIELD ) ;
+         rc = SDB_OOM ;
+         detail = BSON( SPT_ERR << "Failed to new sptDBCL obj" ) ;
+         goto error ;
       }
+      pCL = NULL ;
+
+      rc = rval.setUsrObjectVal< sptDBCL >( sptCL ) ;
+      if( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << "Failed to set return obj" ) ;
+         goto error ;
+      }
+      sptCL = NULL ;
+
+      rval.getReturnVal().setName( clName ) ;
+      rval.getReturnVal().setAttr( SPT_PROP_READONLY ) ;
+      rval.addReturnValProperty( SPT_CL_NAME_FIELD )->setValue( clName ) ;
+      rval.addSelfToReturnValProperty( SPT_CL_CS_FIELD ) ;
+
    done:
       return rc ;
    error:
       SAFE_OSS_DELETE( pCL ) ;
+      SAFE_OSS_DELETE( sptCL ) ;
       goto done ;
    }
 
@@ -525,14 +533,16 @@ namespace engine
          detail = BSON( SPT_ERR << "Failed to new sptDBCS obj" ) ;
          goto error ;
       }
+      pCS = NULL ;
+
       rc = rval.setUsrObjectVal< sptDBCS >( pSptCS ) ;
       if( SDB_OK != rc )
       {
-         SAFE_OSS_DELETE( pSptCS ) ;
-         pCS = NULL ;
          detail = BSON( SPT_ERR << "Failed to set ret obj" ) ;
          goto error ;
       }
+      pSptCS = NULL ;
+
       rval.getReturnVal().setName( csName ) ;
       rval.getReturnVal().setAttr( SPT_PROP_READONLY ) ;
       rval.addReturnValProperty( SPT_CS_NAME_FIELD )->setValue( csName ) ;
@@ -541,6 +551,7 @@ namespace engine
       return rc ;
    error:
       SAFE_OSS_DELETE( pCS ) ;
+      SAFE_OSS_DELETE( pSptCS ) ;
       goto done ;
    }
 }

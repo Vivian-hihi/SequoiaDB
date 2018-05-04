@@ -394,11 +394,13 @@ namespace engine
 
       static INT32 setProperty( JSContext *cx,
                                 JSObject *obj,
-                                const SPT_PROPERTIES &properties ) ;
+                                const SPT_PROPERTIES &properties,
+                                JSObject *callerObj = NULL ) ;
 
       static INT32 setArrayElems( JSContext *cx,
                                   JSObject *obj,
-                                  const SPT_PROPERTIES &properties ) ;
+                                  const SPT_PROPERTIES &properties,
+                                  JSObject *callerObj = NULL ) ;
 
    private:
       static INT32 _getValFromProperty( JSContext *cx,

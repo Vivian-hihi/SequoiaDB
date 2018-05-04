@@ -141,11 +141,13 @@ namespace engine
       string nodename ;
       string hostname ;
       string svcname ;
-      size_t pos = 0 ;
+      size_t pos = 0, pos2 = 0 ;
       _sdbReplicaGroup *pRG = NULL ;
       sptDBRG *pSptRG = NULL ;
       _sdbNode *pNode = NULL ;
+      sptDBNode *pSptNode = NULL ;
       INT32 nodeID = -1 ;
+      sptProperty *pTmpProp = NULL ;
 
       fullName = data.getStringField( SPT_NODE_NAME_FIELD ) ;
       pos = fullName.find( ":" ) ;
@@ -156,6 +158,7 @@ namespace engine
          detail = BSON( SPT_ERR << "Invalid node name" ) ;
          goto error ;
       }
+
       rgName = fullName.substr( 0, pos ) ;
       nodename = fullName.substr( pos + 1 ) ;
       rc = db.getReplicaGroup( rgName.c_str(), &pRG ) ;
@@ -164,63 +167,97 @@ namespace engine
          detail = BSON( SPT_ERR << "Failed to get ReplicaGroup" ) ;
          goto error ;
       }
+
+      pos2 = nodename.find( ":" ) ;
+      if( pos2 == std::string::npos ||
+          pos2 >= nodename.size() - 1 )
       {
-         size_t pos2 = nodename.find( ":" ) ;
-         if( pos2 == std::string::npos ||
-             pos2 >= nodename.size() - 1 )
-         {
-            rc = SDB_SYS ;
-            detail = BSON( SPT_ERR << "Invalid nodename" ) ;
-            goto error ;
-         }
-         hostname = nodename.substr( 0, pos2 ) ;
-         svcname = nodename.substr( pos2 + 1 ) ;
-         sptDBRG* pSptRG = SDB_OSS_NEW sptDBRG( pRG ) ;
-         if( NULL == pSptRG )
-         {
-            rc = SDB_OOM ;
-            detail = BSON( SPT_ERR << "Failed to new sptDBRG obj" ) ;
-            goto error ;
-         }
-         rc = pRG->getNode( hostname.c_str(), svcname.c_str(), &pNode ) ;
-         if( SDB_OK != rc )
-         {
-            detail = BSON( SPT_ERR << "Failed to get node" ) ;
-            goto error ;
-         }
-         rc = pNode->getNodeID( nodeID ) ;
-         if( SDB_OK != rc )
-         {
-            detail = BSON( SPT_ERR << "Failed to get node id" ) ;
-            goto error ;
-         }
-         SPT_SET_NODE_TO_RETURNVAL( pNode ) ;
-         rval.addReturnValProperty( SPT_NODE_HOSTNAME_FIELD )->
-            setValue( pNode->getHostName() ) ;
-         rval.addReturnValProperty( SPT_NODE_SVCNAME_FIELD )->
-            setValue( pNode->getServiceName() ) ;
-         rval.addReturnValProperty( SPT_NODE_NAME_FIELD )->
-            setValue( pNode->getNodeName() ) ;
-         rval.addReturnValProperty( SPT_NODE_NODEID_FIELD )->setValue( nodeID ) ;
-         rc = rval.addReturnValProperty( SPT_NODE_RG_FIELD )->
-            assignUsrObject< sptDBRG >( pSptRG ) ;
-         if( SDB_OK != rc )
-         {
-            detail = BSON( SPT_ERR << "Failed to set node _rg property" ) ;
-            goto error ;
-         }
+         rc = SDB_SYS ;
+         detail = BSON( SPT_ERR << "Invalid nodename" ) ;
+         goto error ;
       }
+      hostname = nodename.substr( 0, pos2 ) ;
+      svcname = nodename.substr( pos2 + 1 ) ;
+
+      rc = pRG->getNode( hostname.c_str(), svcname.c_str(), &pNode ) ;
+      if( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << "Failed to get node" ) ;
+         goto error ;
+      }
+
+      pSptRG = SDB_OSS_NEW sptDBRG( pRG ) ;
+      if( NULL == pSptRG )
+      {
+         rc = SDB_OOM ;
+         detail = BSON( SPT_ERR << "Failed to new sptDBRG obj" ) ;
+         goto error ;
+      }
+      pRG = NULL ;
+
+      rc = pNode->getNodeID( nodeID ) ;
+      if( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << "Failed to get node id" ) ;
+         goto error ;
+      }
+
+      pSptNode = SDB_OSS_NEW sptDBNode( pNode ) ;
+      if( !pSptNode )
+      {
+         rc = SDB_OOM ;
+         detail = BSON( SPT_ERR << "Failed to alloc memory for sptDBNode" ) ;
+         goto error ;
+      }
+      pNode = NULL ;
+
+      rc = rval.setUsrObjectVal< sptDBNode >( pSptNode ) ;
+      if( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << "Failed to set return obj" ) ;
+         goto error ;
+      }
+      pSptNode = NULL ;
+
+      rval.addReturnValProperty( SPT_NODE_HOSTNAME_FIELD )->
+         setValue( pNode->getHostName() ) ;
+      rval.addReturnValProperty( SPT_NODE_SVCNAME_FIELD )->
+         setValue( pNode->getServiceName() ) ;
+      rval.addReturnValProperty( SPT_NODE_NAME_FIELD )->
+         setValue( pNode->getNodeName() ) ;
+      rval.addReturnValProperty( SPT_NODE_NODEID_FIELD )->setValue( nodeID ) ;
+
+      pTmpProp = rval.addReturnValProperty( SPT_NODE_RG_FIELD ) ;
+      if ( !pTmpProp )
+      {
+         rc = SDB_OOM ;
+         detail = BSON( SPT_ERR << "Failed to alloc memory" ) ;
+         goto error ;
+      }
+      rc = pTmpProp->assignUsrObject< sptDBRG >( pSptRG ) ;
+      if( rc )
+      {
+         detail = BSON( SPT_ERR << "Failed to set node _rg property" ) ;
+         goto error ;
+      }
+      pSptRG = NULL ;
+
+      pTmpProp->addBackwardProp( SPT_NODE_RG_FIELD ) ;
+      pTmpProp = pTmpProp->addSubProp( SPT_RG_NAME_FIELD ) ;
+      if ( !pTmpProp )
+      {
+         detail = BSON( SPT_ERR << "Failed to set node _rg property" ) ;
+         goto error ;
+      }
+      pTmpProp->setValue( rgName ) ;
+
    done:
       return rc ;
    error:
-      if( NULL != pSptRG )
-      {
-         SDB_OSS_DEL pSptRG ;
-         pSptRG = NULL ;
-         pRG = NULL ;
-      }
       SAFE_OSS_DELETE( pRG ) ;
       SAFE_OSS_DELETE( pNode ) ;
+      SAFE_OSS_DELETE( pSptRG ) ;
+      SAFE_OSS_DELETE( pSptNode ) ;
       goto done ;
    }
 }

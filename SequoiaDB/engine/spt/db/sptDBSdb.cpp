@@ -2576,26 +2576,26 @@ namespace engine
          detail = BSON( SPT_ERR << "Failed to new spt cs obj" ) ;
          goto error ;
       }
+      ptrCs = NULL ;
+
       rc = rval.setUsrObjectVal< sptDBCS >( sptCS ) ;
       if( SDB_OK != rc )
       {
          detail = BSON( SPT_ERR << "Failed to set user obj" ) ;
          goto error ;
       }
+      sptCS = NULL ;
+
       rval.getReturnVal().setName( csName ) ;
       rval.getReturnVal().setAttr( SPT_PROP_READONLY ) ;
       rval.addReturnValProperty( SPT_CS_NAME_FIELD )->setValue( csName ) ;
       rval.addSelfToReturnValProperty( SPT_CS_CONN_FIELD ) ;
+
    done:
       return rc ;
    error:
-      if( NULL != sptCS )
-      {
-         SDB_OSS_DEL sptCS ;
-         sptCS = NULL ;
-         ptrCs = NULL ;
-      }
       SAFE_OSS_DELETE( ptrCs ) ;
+      SAFE_OSS_DELETE( sptCS ) ;
       goto done ;
    }
 

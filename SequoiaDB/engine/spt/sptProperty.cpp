@@ -49,10 +49,13 @@ namespace engine
       _attr = SPT_PROP_DEFAULT ;
       _deleted = FALSE ;
       _isRawData = FALSE ;
+      _backwardProp = NULL ;
    }
 
    void _sptProperty::clear()
    {
+      UINT32 i = 0 ;
+
       if ( String == _type )
       {
          CHAR *p = ( CHAR * )_value ;
@@ -64,11 +67,24 @@ namespace engine
       }
 
       /// clear the array
-      for ( UINT32 i = 0 ; i < _array.size() ; ++i )
+      for ( i = 0 ; i < _array.size() ; ++i )
       {
          SDB_OSS_DEL _array[ i ] ;
       }
       _array.clear() ;
+
+      /// clear the subs
+      for ( i = 0 ; i < _subs.size() ; ++i )
+      {
+         SDB_OSS_DEL _subs[ i ] ;
+      }
+      _subs.clear() ;
+
+      if ( _backwardProp )
+      {
+         SDB_OSS_DEL _backwardProp ;
+         _backwardProp = NULL ;
+      }
 
       _value = 0 ;
       _pReleaseFunc = NULL ;
@@ -272,6 +288,30 @@ namespace engine
          _array.push_back( add ) ;
       }
       return add ;
+   }
+
+   _sptProperty* _sptProperty::addSubProp( const std::string &name,
+                                           UINT32 attr )
+   {
+      _sptProperty *add = SDB_OSS_NEW _sptProperty() ;
+      if ( add )
+      {
+         add->setName( name ) ;
+         add->setAttr( attr ) ;
+         _subs.push_back( add ) ;
+      }
+      return add ;
+   }
+
+   void _sptProperty::addBackwardProp( const std::string &name,
+                                       UINT32 attr )
+   {
+      _backwardProp = SDB_OSS_NEW _sptProperty() ;
+      if ( _backwardProp )
+      {
+         _backwardProp->setName( name ) ;
+         _backwardProp->setAttr( attr ) ;
+      }
    }
 
 }

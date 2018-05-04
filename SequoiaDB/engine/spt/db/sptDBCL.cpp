@@ -1893,6 +1893,8 @@ namespace engine
       _sdbCollection *pCL = NULL ;
       sptDBCL *sptCL = NULL ;
 
+      sptProperty *pTmpProp = NULL ;
+
       clFullName = data.getStringField( SPT_CL_NAME_FIELD ) ;
       pos = clFullName.find( "." ) ;
       if( pos == std::string::npos ||
@@ -1912,6 +1914,13 @@ namespace engine
          goto error ;
       }
 
+      rc = pCS->getCollection( clName.c_str(), &pCL ) ;
+      if( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << "Failed to get cl" ) ;
+         goto error ;
+      }
+
       sptCS = SDB_OSS_NEW sptDBCS( pCS ) ;
       if( NULL == sptCS )
       {
@@ -1919,13 +1928,7 @@ namespace engine
          detail = BSON( SPT_ERR << "Failed to new sptDBCS obj" ) ;
          goto error ;
       }
-
-      rc = pCS->getCollection( clName.c_str(), &pCL ) ;
-      if( SDB_OK != rc )
-      {
-         detail = BSON( SPT_ERR << "Failed to get cl" ) ;
-         goto error ;
-      }
+      pCS = NULL ;
 
       sptCL = SDB_OSS_NEW sptDBCL( pCL ) ;
       if( NULL == sptCL )
@@ -1934,32 +1937,52 @@ namespace engine
          detail = BSON( SPT_ERR << "Failed to new sptDBCL obj" ) ;
          goto error ;
       }
+      pCL = NULL ;
+
       rc = rval.setUsrObjectVal< sptDBCL >( sptCL ) ;
       if( SDB_OK != rc )
       {
-         SAFE_OSS_DELETE( sptCL ) ;
-         pCL = NULL ;
          detail = BSON( SPT_ERR << "Failed to set return obj" ) ;
          goto error ;
       }
+      sptCL = NULL ;
+
       rval.getReturnVal().setName( clName ) ;
       rval.getReturnVal().setAttr( SPT_PROP_READONLY ) ;
       rval.addReturnValProperty( SPT_CL_NAME_FIELD )->setValue( clName ) ;
-      rc = rval.addReturnValProperty( SPT_CL_CS_FIELD )->
-                                 assignUsrObject< sptDBCS >( sptCS ) ;
-      if( SDB_OK != rc )
+
+      pTmpProp = rval.addReturnValProperty( SPT_CL_CS_FIELD ) ;
+      if ( !pTmpProp )
       {
-         SAFE_OSS_DELETE( sptCS ) ;
-         pCS = NULL ;
+         rc = SDB_OOM ;
+         detail = BSON( SPT_ERR << "Failed to alloc memory" ) ;
+         goto error ;
+      }
+      rc = pTmpProp->assignUsrObject< sptDBCS >( sptCS ) ;
+      if ( rc )
+      {
          detail = BSON( SPT_ERR << "Failed to set return obj property" ) ;
          goto error ;
       }
+      sptCS = NULL ;
+
+      pTmpProp->addBackwardProp( SPT_CS_CONN_FIELD ) ;
+      pTmpProp = pTmpProp->addSubProp( SPT_CS_NAME_FIELD ) ;
+      if ( !pTmpProp )
+      {
+         rc = SDB_OOM ;
+         detail = BSON( SPT_ERR << "Failed to alloc memory" ) ;
+         goto error ;
+      }
+      pTmpProp->setValue( csName ) ;
 
    done:
       return rc ;
    error:
       SAFE_OSS_DELETE( pCL ) ;
       SAFE_OSS_DELETE( pCS ) ;
+      SAFE_OSS_DELETE( sptCL ) ;
+      SAFE_OSS_DELETE( sptCS ) ;
       goto done ;
    }
 }

@@ -43,7 +43,6 @@ namespace engine
 
    _sptReturnVal::_sptReturnVal()
    {
-      _needAddSelfToVal = TRUE ;
    }
 
    _sptReturnVal::~_sptReturnVal()
@@ -102,9 +101,7 @@ namespace engine
    void _sptReturnVal::addSelfToReturnValProperty( const string &name,
                                                    UINT32 attr )
    {
-      _needAddSelfToVal = TRUE ;
-      _addSelfToReturnValProperty.setName( name ) ;
-      _addSelfToReturnValProperty.setAttr( attr ) ;
+      _val.addBackwardProp( name, attr ) ;
    }
 }
 

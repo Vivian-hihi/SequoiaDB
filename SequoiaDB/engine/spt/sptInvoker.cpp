@@ -168,18 +168,19 @@ namespace engine
             if ( !rval.getReturnValProperties().empty() )
             {
                rc = _sptInvoker::setProperty( cx, jsObj,
-                                              rval.getReturnValProperties() ) ;
+                                              rval.getReturnValProperties(),
+                                              obj ) ;
                if ( SDB_OK != rc )
                {
                   goto error ;
                }
             }
-            if( rval.needAddSelfToReturnValProperty() )
+            if( rpro.hasBackwardProp() )
             {
                jsval selfVal = OBJECT_TO_JSVAL( obj ) ;
-               const sptProperty& addProperty = rval.getAddSelfToReturnValProperty() ;
-               JS_DefineProperty( cx, jsObj, addProperty.getName().c_str(),
-                                  selfVal, 0, 0, addProperty.getAttr() ) ;
+               const sptProperty* pAddProperty = rpro.getBackwardProp() ;
+               JS_DefineProperty( cx, jsObj, pAddProperty->getName().c_str(),
+                                  selfVal, 0, 0, pAddProperty->getAttr() ) ;
             }
             val = OBJECT_TO_JSVAL( jsObj ) ;
          }
@@ -195,7 +196,7 @@ namespace engine
                   rc = SDB_OOM ;
                   goto error ;
                }
-               rc = setArrayElems( cx, jsObj, elem ) ;
+               rc = setArrayElems( cx, jsObj, elem, obj ) ;
                if ( rc )
                {
                   PD_LOG( PDERROR, "Failed to set the array's elem "
@@ -269,10 +270,12 @@ namespace engine
 
    INT32 _sptInvoker::setProperty( JSContext *cx,
                                    JSObject *obj,
-                                   const SPT_PROPERTIES &properties )
+                                   const SPT_PROPERTIES &properties,
+                                   JSObject *callerObj )
    {
       INT32 rc = SDB_OK ;
       SPT_PROPERTIES::const_iterator itr = properties.begin() ;
+      sptProperty *pTmp = NULL ;
 
       for ( ; itr != properties.end(); itr++ )
       {
@@ -329,6 +332,42 @@ namespace engine
                rc = SDB_SYS ;
                goto error ;
             }
+
+            /*
+               Add the fixed property
+            */
+            pTmp = prop->addSubProp( SPT_OBJ_CNAME_PROPNAME,
+                                     SPT_PROP_READONLY| SPT_PROP_PERMANENT ) ;
+            if ( pTmp )
+            {
+               pTmp->setValue( prop->getObjDesc()->getJSClassName() ) ;
+            }
+            pTmp = prop->addSubProp( SPT_OBJ_ID_PROPNAME,
+                                     SPT_PROP_READONLY| SPT_PROP_PERMANENT ) ;
+            if ( pTmp )
+            {
+               pTmp->setValue( sdbGetGlobalID() ) ;
+            }
+
+            /// set the sub properties
+            if ( !prop->getSubProps().empty() )
+            {
+               rc = _sptInvoker::setProperty( cx, jsObj, prop->getSubProps(),
+                                              callerObj ) ;
+               if ( SDB_OK != rc )
+               {
+                  goto error ;
+               }
+            }
+
+            if( callerObj && prop->hasBackwardProp() )
+            {
+               jsval callVar = OBJECT_TO_JSVAL( callerObj ) ;
+               const sptProperty* pBwProp = prop->getBackwardProp() ;
+               JS_DefineProperty( cx, jsObj, pBwProp->getName().c_str(),
+                                  callVar, 0, 0, pBwProp->getAttr() ) ;
+            }
+
             val = OBJECT_TO_JSVAL( jsObj ) ;
          }
          else if ( prop->isArray() )
@@ -345,7 +384,7 @@ namespace engine
                rc = SDB_OOM ;
                goto error ;
             }
-            rc = setArrayElems( cx, jsObj, elem ) ;
+            rc = setArrayElems( cx, jsObj, elem, callerObj ) ;
             if ( rc )
             {
                PD_LOG( PDERROR, "Failed to set the array's elem "
@@ -371,6 +410,7 @@ namespace engine
             rc = SDB_SYS ;
             goto error ;
          }
+
          /// need to take over the object
          prop->takeoverObject() ;
       }
@@ -382,10 +422,12 @@ namespace engine
 
    INT32 _sptInvoker::setArrayElems( JSContext *cx,
                                      JSObject *obj,
-                                     const SPT_PROPERTIES &properties )
+                                     const SPT_PROPERTIES &properties,
+                                     JSObject *callerObj )
    {
       INT32 rc = SDB_OK ;
       UINT32 index = 0 ;
+      sptProperty *pTmp = NULL ;
       SPT_PROPERTIES::const_iterator itr = properties.begin() ;
 
       for ( ; itr != properties.end(); itr++ )
@@ -413,8 +455,40 @@ namespace engine
 
             JS_SetPrivate( cx, jsObj, prop->getValue() ) ;
 
-            /// need to take over the object
-            prop->takeoverObject() ;
+            /*
+               Add the fixed property
+            */
+            pTmp = prop->addSubProp( SPT_OBJ_CNAME_PROPNAME,
+                                     SPT_PROP_READONLY| SPT_PROP_PERMANENT ) ;
+            if ( pTmp )
+            {
+               pTmp->setValue( prop->getObjDesc()->getJSClassName() ) ;
+            }
+            pTmp = prop->addSubProp( SPT_OBJ_ID_PROPNAME,
+                                     SPT_PROP_READONLY| SPT_PROP_PERMANENT ) ;
+            if ( pTmp )
+            {
+               pTmp->setValue( sdbGetGlobalID() ) ;
+            }
+
+            /// set the sub properties
+            if ( !prop->getSubProps().empty() )
+            {
+               rc = _sptInvoker::setProperty( cx, jsObj, prop->getSubProps(),
+                                              callerObj ) ;
+               if ( SDB_OK != rc )
+               {
+                  goto error ;
+               }
+            }
+
+            if( callerObj && prop->hasBackwardProp() )
+            {
+               jsval callVar = OBJECT_TO_JSVAL( callerObj ) ;
+               const sptProperty* pBwProp = prop->getBackwardProp() ;
+               JS_DefineProperty( cx, jsObj, pBwProp->getName().c_str(),
+                                  callVar, 0, 0, pBwProp->getAttr() ) ;
+            }
 
             val = OBJECT_TO_JSVAL( jsObj ) ;
          }
@@ -432,7 +506,7 @@ namespace engine
                rc = SDB_OOM ;
                goto error ;
             }
-            rc = setArrayElems( cx, jsObj, elem ) ;
+            rc = setArrayElems( cx, jsObj, elem, callerObj ) ;
             if ( rc )
             {
                PD_LOG( PDERROR, "Failed to set the array's array elem "
@@ -458,6 +532,10 @@ namespace engine
             rc = SDB_SYS ;
             goto error ;
          }
+
+         /// need to take over the object
+         prop->takeoverObject() ;
+
          ++index ;
       }
 
