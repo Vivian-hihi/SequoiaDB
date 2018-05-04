@@ -1,3 +1,39 @@
+/*******************************************************************************
+
+
+   Copyright (C) 2011-2018 SequoiaDB Ltd.
+
+   This program is free software: you can redistribute it and/or modify
+   it under the term of the GNU Affero General Public License, version 3,
+   as published by the Free Software Foundation.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warrenty of
+   MARCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program. If not, see <http://www.gnu.org/license/>.
+
+   Source File Name = sequoiaFSOptionMgr.cpp
+
+   Descriptive Name = sequoiafs options manager.
+
+   When/how to use:  This program is used on sequoiafs. 
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+          03/05/2015  YWX  Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
+
 #include "sequoiaFSOptionMgr.hpp"
 #include "pmdOptionsMgr.hpp"
 #include "pmdDef.hpp"
@@ -54,9 +90,9 @@ INT32 _sequoiafsOptionMgr::init(INT32 argc, CHAR **argv, vector<string> *options
     UINT32 i = 0;
     namespace po = boost::program_options;
 
+    ossSnprintf(cfgTempPath, sizeof(cfgTempPath), "Usage:%s mountpoint [options]\n\nCommand options", argv[0]);
     //1. init options
-    po::options_description desc("Command options");
-    
+    po::options_description desc(cfgTempPath);    
     po::options_description display("Command options(display)");
     po::variables_map vmFromCmd;
     po::variables_map vmFromFile;  
@@ -158,6 +194,7 @@ INT32 _sequoiafsOptionMgr::init(INT32 argc, CHAR **argv, vector<string> *options
     }  
     
     tempPath = (vmFromCmd.count(SDB_SEQUOIAFS_CONF_PATH)) ? (vmFromCmd[SDB_SEQUOIAFS_CONF_PATH].as<string>().c_str()) : _cfgPath;
+    ossMemset(cfgTempPath, 0, sizeof(cfgTempPath));
     cfgPath = ossGetRealPath(tempPath, cfgTempPath, OSS_MAX_PATHSIZE);
     if(!cfgPath)
     {
