@@ -17,9 +17,10 @@
 
    Source File Name = utilMath.hpp
 
-   Descriptive Name =
+   Descriptive Name = math utility
 
-   When/how to use: 
+   When/how to use: this program may be used on binary and text-formatted
+   versions of Runtime component.
 
    Dependencies: N/A
 
@@ -27,8 +28,8 @@
 
    Change Activity:
    defect Date        Who Description
-   ====== =========== =========== ==============================================
-          
+   ====== =========== === ==============================================
+          09/04/2017  HAS Initial Draft
 
    Last Changed =
 
@@ -47,7 +48,7 @@ namespace engine
 {
 
 
-   // 
+   //
    // overflow check in basic operation
    //
    BOOLEAN utilAddIsOverflow( INT64 l, INT64 r, INT64 result ) ;
